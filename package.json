@@ -1,0 +1,37 @@
+{
+  "name": "benchkit",
+  "version": "0.2.0",
+  "description": "A harness-agnostic agent-development workflow: a planning pipeline plus a gated autonomous loop, where an external gate \u2014 never the model \u2014 decides when work is done. Works with Claude Code, Codex, and other AGENTS.md harnesses.",
+  "bin": {
+    "bench": "bin/bench",
+    "benchkit": "bin/bench"
+  },
+  "files": [
+    "bin/",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "README.md",
+    "HANDOFF.md",
+    ".claude/",
+    "projects/",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "claude-code",
+    "codex",
+    "agents",
+    "agentic",
+    "tdd",
+    "workflow",
+    "ai",
+    "llm"
+  ],
+  "engines": {
+    "node": ">=14"
+  },
+  "os": [
+    "darwin",
+    "linux"
+  ],
+  "license": "MIT"
+}

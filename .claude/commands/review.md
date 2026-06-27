@@ -1,0 +1,47 @@
+---
+description: Two-axis semantic review of a shift branch — Standards (does the diff follow this repo's conventions) and Spec (does it match what the spec asked for). Use after /build, before merge, to catch what the gate can't see. Advisory, not authoritative.
+---
+
+# /review — the check the gate can't run
+
+The gate is deterministic: tests, types, lint, conformance. It catches regressions
+and rule violations. It cannot tell whether you built the *right* thing the *right*
+way. `/review` is the semantic pass that can — and it's advisory: it surfaces
+findings for you, it has no authority to call anything done. The gate and you do.
+
+Run it on the branch diff against its merge-base, on two axes that stay separate.
+
+## Process
+
+1. **Pin the diff.** `git diff <base>...HEAD` (three-dot, against merge-base) and
+   `git log <base>..HEAD --oneline`. Default base is the project's default branch.
+   Confirm the ref resolves and the diff is non-empty before going further.
+
+2. **Find the sources.** Spec: `specs/<feature>.md` for this work (or the path I
+   give you). Standards: `CLAUDE.md`, `projects/<name>.md`, and any
+   `CONTRIBUTING`/conventions docs in the repo.
+
+3. **Spawn both axes in parallel sub-agents** (so they don't pollute each other's
+   context), each under ~400 words:
+
+   - **Standards** — every place the diff violates a documented convention. Cite
+     the rule. Separate hard violations from judgment calls. Skip anything the gate
+     already enforces — no point double-reporting what tooling caught.
+   - **Spec** — (a) requirements the spec asked for that are missing or partial;
+     (b) behavior in the diff that wasn't asked for (scope creep); (c) requirements
+     that look implemented but wrong. Quote the spec line for each finding.
+
+   If there's no spec, skip the Spec axis and say so.
+
+4. **Aggregate, don't merge.** Report under `## Standards` and `## Spec` headings,
+   findings kept separate. Do not rerank across axes or pick a single winner — the
+   separation is the point: code can pass one axis and fail the other (right thing,
+   wrong conventions, or clean conventions, wrong thing), and merging them lets one
+   mask the other. End with a per-axis count and the worst issue within each axis.
+
+## Where it sits
+
+`/review` is generation-shaping, not enforcement: run it, read the findings, decide
+what to fix. Then the deterministic gate (`/verify`) still has to be green, and the
+merge is still yours. Review tells you whether it's *good*; the gate tells you
+whether it's *done*; you decide whether it ships.
