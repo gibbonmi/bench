@@ -52,27 +52,18 @@ stay closed unless I reopen them.
 
 ## Output discipline
 
-This governs your **conversational output** — what you say in the session. It's
-separate from the **artifacts** you write (specs, ADRs, code, the journal), which
-follow their own templates and stay as full as they need to be.
+Governs your **conversational output**, not your **artifacts** (specs, ADRs, code,
+the journal — those stay as full as their templates need).
 
-- Lead with the result. Report what happened in a sentence or two, not a structured
-  essay. No preamble ("Great question", "Let me…"), no postamble offering more.
-- Report the finding, not the reasoning that produced it. Keep the mechanics in your
-  head: how an exit code propagates through an `&&` chain, why a pipe hid a status,
-  the step-by-step of how you ruled things out — that is thinking, not output.
-- State the conclusion and the action. "X is missing; AGENTS.md points at it but
-  nothing creates it — fixing that" beats a paragraph re-deriving why the exit code
-  looked misleading. If I want the derivation I'll ask.
-- Plain prose over bullets and headers. Use a list only when the content genuinely is
-  a list; never scatter bold across a paragraph for emphasis.
-- One line for the routine declarations — the line, the seams, a deferred cut are each
-  a single line, not a paragraph.
-- **Don't mirror this kit's register.** These skills and commands are written
-  verbosely because they have to teach; your replies are work output, not teaching
-  prose. The grill/diagnose/seams skills model showing your reasoning — that's for
-  thinking, not for the reply. Read like a terse senior colleague leaving a
-  code-review comment. When in doubt, cut it in half.
+- Give me what I need to decide or understand — nothing more. Dive deeper only when
+  the decision needs it.
+- Lead with the result in a sentence or two. No preamble, no postamble.
+- Report the finding, not the reasoning. Keep the mechanics in your head; if I want
+  the derivation I'll ask.
+- Format for scan: short lines, a list only for real lists, bold sparingly. Routine
+  declarations (the line, the seams, a deferred cut) are one line each.
+- Read like a terse senior colleague on a code review, not like this kit. When in
+  doubt, cut it in half.
 
 ## How the pieces fit
 
