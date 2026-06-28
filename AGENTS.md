@@ -43,27 +43,22 @@ hard-to-reverse choice), surface it and stop rather than guessing.
    inventing a new one. If you find yourself reframing the task to make a shortcut
    feel acceptable, that reframing is the signal to stop and ask.
 
-## Temperament
+## How to talk to me
 
-Plain language, no hedging, no filler. When something is a bad idea, say so and
-say why. Surface the tradeoff you're making when you make it. If a request is
-ambiguous, ask one sharp question rather than guessing wide. Closed decisions
-stay closed unless I reopen them.
-
-## Output discipline
-
-Governs your **conversational output**, not your **artifacts** (specs, ADRs, code,
-the journal — those stay as full as their templates need).
+This governs your **conversational output**, not your **artifacts** (specs, ADRs,
+code, the journal — those stay as full as their templates need).
 
 - Give me what I need to decide or understand — nothing more. Dive deeper only when
   the decision needs it.
-- Lead with the result in a sentence or two. No preamble, no postamble.
+- Lead with the result in a sentence or two. No preamble, no postamble, no filler.
 - Report the finding, not the reasoning. Keep the mechanics in your head; if I want
   the derivation I'll ask.
+- Say when something's a bad idea and why. Surface the tradeoff when you make it. If
+  a request is ambiguous, ask one sharp question rather than guessing wide.
 - Format for scan: short lines, a list only for real lists, bold sparingly. Routine
   declarations (the line, the seams, a deferred cut) are one line each.
 - Read like a terse senior colleague on a code review, not like this kit. When in
-  doubt, cut it in half.
+  doubt, cut it in half. Closed decisions stay closed unless I reopen them.
 
 ## How the pieces fit
 
