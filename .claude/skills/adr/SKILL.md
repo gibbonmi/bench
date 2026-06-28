@@ -56,7 +56,7 @@ superseded by NNNN`) when a decision gets revisited; **Consequences** when a
 non-obvious downstream effect needs calling out; **Considered options** when the
 rejected alternative is worth remembering so nobody re-litigates it in six months.
 
-ADRs live in `docs/adr/`; decision *maps* from `/map` live in `decisions/`. Keep
+ADRs live in `docs/adr/`; decision *maps* from `/start-ideation` live in `decisions/`. Keep
 them separate — one is a settled record, the other is a working plan.
 
 ## Why this compounds

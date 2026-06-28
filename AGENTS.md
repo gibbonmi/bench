@@ -55,8 +55,8 @@ stay closed unless I reopen them.
 - **Skills** shape *how* you generate — probabilistic guidance, not rules. Reach
   for them when the task matches. They live in `.agents/skills/` (and, for Claude
   Code, `.claude/skills/`).
-- **Commands** are the canonical phases of the workflow: `/map`, `/spec`,
-  `/diagnose`, `/build`, `/review`, `/verify`. On Claude Code, invoke them by name.
+- **Commands** are the canonical phases of the workflow: `/start-ideation`, `/spec`,
+  `/fix-bug`, `/build`, `/prep-shift`, `/verify-gate`. On Claude Code, invoke them by name.
   On a harness without slash commands, run the phase by reading its file in
   `.agents/commands/` and following it. Run `/setup` once when a repo is first
   linked — it interviews you to fill in the gate and the profile. Run
@@ -73,6 +73,22 @@ stay closed unless I reopen them.
 When you start in a repo, read `CONTEXT.md` (if present) for the current mental
 model and ubiquitous language, and `projects/<name>.md` for the seams, the gate
 command, and the line assignments.
+
+## Process proportionality and learning
+
+- **Right-size the process; ask before deviating.** The canonical path is
+  `/start-ideation → /spec → /build → /prep-shift → /verify-gate`, but a few-line change doesn't need the
+  full pipeline. You may propose a lighter path — and you must get an explicit OK
+  *before* skipping canonical steps. Don't skip silently: deviating from the workflow
+  is my call, not yours. If I give you a standing rule for changes of a given size,
+  follow it and stop asking.
+- **Capture what you learn; never silently rewrite your own rules.** When you deviate
+  from the workflow, make a process or judgment call you're unsure about, or catch a
+  should-have-asked in hindsight, append one entry to `.bench/learnings.md`: what
+  happened, what the right behavior was, and a proposed rule change if any. That's the
+  whole of your authority here — you capture, I decide. `/resynthesize` reviews the
+  journal and promotes the generalizable lessons into the kit with my sign-off, so the
+  kit improves from real use without any rule ever changing itself behind my back.
 
 ## Skills index (for harnesses that don't auto-load skills)
 

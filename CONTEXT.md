@@ -30,8 +30,8 @@ cold session reads this first to avoid drifting the vocabulary.
   learn the seams, lines, gate command, and (for UI repos) the design source.
 - **skill** — probabilistic guidance that shapes *how* the model generates
   (`.claude/skills/*/SKILL.md`). Reached for when the task matches; not a rule.
-- **command** — a canonical phase of the workflow (`/map`, `/spec`, `/diagnose`,
-  `/build`, `/review`, `/verify`, plus `/setup`, `/resynthesize`). Not "slash command
+- **command** — a canonical phase of the workflow (`/start-ideation`, `/spec`, `/fix-bug`,
+  `/build`, `/prep-shift`, `/verify-gate`, plus `/setup`, `/resynthesize`). Not "slash command
   template" in prose — command.
 
 ## Avoid

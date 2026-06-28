@@ -184,7 +184,7 @@ Switching harnesses is a no-op, by design. After `bench link`, the same repo is
 wired for all of them at once:
 
 - **Claude Code** reads `CLAUDE.md` (which imports `AGENTS.md`), auto-loads skills
-  from `.claude/skills/`, runs `/map`, `/spec`, … as slash commands, and fires the
+  from `.claude/skills/`, runs `/start-ideation`, `/spec`, … as slash commands, and fires the
   Stop and PreToolUse hooks.
 - **Codex / OpenCode / other AGENTS.md harnesses** read `AGENTS.md` natively, find
   skills in `.agents/skills/`, and run the commands by reading the file in
@@ -213,11 +213,11 @@ Two motions. The **planning motion** is conversational and human-paced; the
 ### Planning motion (you + the agent, interactive)
 
 ```
-loose idea ──/map──▶ decision map ──/spec──▶ spec (seams chosen) ──▶ ready to build
-   (skip /map if there's no real fog — go straight to /spec)
+loose idea ──/start-ideation──▶ decision map ──/spec──▶ spec (seams chosen) ──▶ ready to build
+   (skip /start-ideation if there's no real fog — go straight to /spec)
 ```
 
-- `/map` only when the idea needs more than one session of decisions. It uses
+- `/start-ideation` only when the idea needs more than one session of decisions. It uses
   `/grill` to surface them and writes `decisions/<topic>.md`. If there's no fog,
   it tells you to skip ahead.
 - `/spec` synthesizes the conversation into `specs/<feature>.md`: user stories
@@ -226,8 +226,8 @@ loose idea ──/map──▶ decision map ──/spec──▶ spec (seams cho
   the target is set by you, not invented mid-loop.
 
 There are two ways into the shift motion: the **feature path** above
-(`/map` → `/spec`) and the **bug path** (`/diagnose`). A bug doesn't get a spec —
-it already has one, the thing should work and doesn't. `/diagnose` builds a tight,
+(`/start-ideation` → `/spec`) and the **bug path** (`/fix-bug`). A bug doesn't get a spec —
+it already has one, the thing should work and doesn't. `/fix-bug` builds a tight,
 red-capable repro loop *first*; that loop becomes the gate the fix shift runs
 against, so the fix is done when the loop goes green, not when the agent says so.
 
@@ -244,7 +244,7 @@ bench shift "<objective>"
         ▶ you review the branch and own the merge
 ```
 
-`/build` and `/verify` are the manual equivalents when you want to drive a single
+`/build` and `/verify-gate` are the manual equivalents when you want to drive a single
 build by hand instead of running the loop. Same gate, same rules.
 
 ---
@@ -260,7 +260,7 @@ A typical feature — say, adding zone-entry events to the phase taxonomy:
 ```sh
 cd ~/src/regroup
 # 1. is the domain change settled? if not, map it.
-#    /map  →  grills the zone-entry decision, writes decisions/zone-entries.md
+#    /start-ideation  →  grills the zone-entry decision, writes decisions/zone-entries.md
 # 2. spec it — this picks the seam (the state machine) and the tests up front
 #    /spec →  specs/zone-entries.md with stories + the transition-test seam
 # 3. run the shift. heavy line, because the ontology is the uncertain seam.
@@ -321,7 +321,7 @@ building.
 
 | Bench piece | Pocock | Kun Chen | Your discovery |
 | --- | --- | --- | --- |
-| `/map`, `/spec`, `/build`, `/review`, `/verify` | decision-mapping, to-prd, implement, review | — | — |
+| `/start-ideation`, `/spec`, `/build`, `/prep-shift`, `/verify-gate` | decision-mapping, to-prd, implement, review | — | — |
 | `seams`, `tdd-at-seams`, `grill`, `adr`, `writing-great-skills` | codebase-design, tdd, grilling, writing-great-skills | — | stateless-reader docs; effort declaration |
 | `axi` skill | — | AXI spec | TOON-first pipeline; conformance-as-gate |
 | `design-system` skill + design gate | regroup-ui (canonical components) | — | design system as visual oracle (separate design repo) |
@@ -329,7 +329,7 @@ building.
 | `bench shift` (gated loop) | — | gnhf + no-mistakes | gate-on-green, not self-graded |
 | `/setup` (configure a repo) | setup-matt-pocock-skills | — | gate + profile + lines, interviewed |
 | `/resynthesize` (stay current) | — | — | re-run the synthesis vs upstream, 3 loops |
-| `/diagnose` (bug path) | diagnosing-bugs | — | repro loop as the bug's gate |
+| `/fix-bug` (bug path) | diagnosing-bugs | — | repro loop as the bug's gate |
 | design-it-twice in `seams` | codebase-design | — | high-effort line at the uncertain seam |
 | `bench shift` notes.md | — | gnhf (iteration context) | — |
 | `block-dangerous-git.sh` | git-guardrails | — | agent has no destructive authority |

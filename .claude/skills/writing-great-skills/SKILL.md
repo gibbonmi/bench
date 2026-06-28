@@ -19,7 +19,7 @@ output. Every rule below serves that.
 - **User-invoked** — `disable-model-invocation: true`; only you, by name, can fire
   it; zero context load, but *you* are the index that must remember it exists. Use
   for canonical phases you drive deliberately. In this kit: the commands
-  (`/map`, `/spec`, `/build`, `/review`, `/verify`).
+  (`/start-ideation`, `/spec`, `/build`, `/prep-shift`, `/verify-gate`).
 
 Pick model-invocation only when the agent or another skill must reach it on its own.
 

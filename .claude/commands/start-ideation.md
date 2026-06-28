@@ -2,7 +2,7 @@
 description: Turn a loose idea into a sequenced decision map. Use only when the idea needs more than one session of decisions before it can be built.
 ---
 
-# /map — push back the fog
+# /start-ideation — push back the fog
 
 Use this when an idea is too unresolved to spec yet — when there are open
 questions whose answers change what gets built. If the idea is already clear,

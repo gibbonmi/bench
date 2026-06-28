@@ -1,6 +1,6 @@
 ---
 name: grill
-description: Disciplined one-question-at-a-time elicitation to surface a decision or a spec. Use during /map tickets, before /spec when requirements are fuzzy, or any time I say "grill me" or the work can't proceed until an open question is resolved. Reach for this instead of asking five questions at once.
+description: Disciplined one-question-at-a-time elicitation to surface a decision or a spec. Use during /start-ideation tickets, before /spec when requirements are fuzzy, or any time I say "grill me" or the work can't proceed until an open question is resolved. Reach for this instead of asking five questions at once.
 ---
 
 # Grill
@@ -40,7 +40,7 @@ compose.
 
 ## What it feeds
 
-In `/map`, a grill is a ticket type — its output is a resolved decision recorded
+In `/start-ideation`, a grill is a ticket type — its output is a resolved decision recorded
 in the map (current state only). Before `/spec`, a grill closes the gaps so the
 spec can be synthesized without an interview. When you've grilled enough that the
 build path is clear, say so and hand to `/spec`.
