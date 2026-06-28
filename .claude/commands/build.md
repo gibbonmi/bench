@@ -33,7 +33,7 @@ if you hit the cap, stop and report.
   diff looks right. If the gate is red, the build continues or stops with an
   explanation; it never declares done on red.
 - Do not weaken a test or a check to reach green. If a check is wrong, surface it.
-- Once the gate is green, run `/review` — the semantic two-axis pass (Standards +
+- Once the gate is green, run `/prep-shift` — the semantic two-axis pass (Standards +
   Spec) that catches what the gate can't: right thing built the wrong way, or wrong
   thing built cleanly. Read its findings, fix what matters, re-run the gate.
 - Then summarize what changed in plain language and hand back. I own the merge;

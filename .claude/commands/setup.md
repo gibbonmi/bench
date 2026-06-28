@@ -96,7 +96,7 @@ Write `projects/<name>.md` from the example profiles in the kit as a template.
 > fast.
 
 Offer to seed it now (a short `/grill` pass over the core nouns) or to leave it for
-later — `/map` and `/spec` can create it lazily when terms get resolved. Don't force
+later — `/start-ideation` and `/spec` can create it lazily when terms get resolved. Don't force
 it.
 
 ## 3. Confirm, then write
@@ -108,7 +108,7 @@ checks, fix the wiring before declaring done.
 
 ## 4. Done
 
-Tell me what's now configured and that the working commands (`/map`, `/spec`,
-`/diagnose`, `/build`, `/review`, `/verify`) and `bench shift` will read from these
+Tell me what's now configured and that the working commands (`/start-ideation`, `/spec`,
+`/fix-bug`, `/build`, `/prep-shift`, `/verify-gate`) and `bench shift` will read from these
 files. Note that I can edit `.bench/gate.sh` and the profile directly later — re-running
 `/setup` is only for starting over.

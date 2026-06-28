@@ -2,7 +2,7 @@
 description: The bug path. Build a tight, red-capable repro loop first, then fix against it. Use whenever something is broken, throwing, failing, or slow — instead of /spec, which is the feature path. Reach for this the moment the work is "fix" rather than "build".
 ---
 
-# /diagnose — the repro loop is the oracle
+# /fix-bug — the repro loop is the oracle
 
 Bugs don't go through `/spec`. A bug already has a spec — the thing should work and
 doesn't. The whole discipline is building an external signal that goes red on *this*

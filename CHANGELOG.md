@@ -24,8 +24,8 @@ one entry per `/resynthesize` run; don't rewrite history.
 Baseline of what Bench incorporates from upstream. Adopted, with provenance in
 `README.md`:
 
-- **From Pocock:** `/map` (decision-mapping), `/spec` (to-prd), `/build` (implement),
-  `/review` (review), `/diagnose` (diagnosing-bugs), and the `seams` (codebase-design
+- **From Pocock:** `/start-ideation` (decision-mapping), `/spec` (to-prd), `/build` (implement),
+  `/prep-shift` (review), `/fix-bug` (diagnosing-bugs), and the `seams` (codebase-design
   + design-it-twice), `tdd-at-seams` (tdd), `adr` (domain-modeling ADR format),
   `grill` (grilling), `writing-great-skills` skills, plus the `block-dangerous-git`
   hook (git-guardrails).

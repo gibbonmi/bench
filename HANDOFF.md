@@ -52,7 +52,7 @@ commit only on green) and the git `pre-push` guard — both harness-independent.
 The kit exists as `bench.tar.gz`. Nothing is wired into a real repo yet — it's a
 kit, not yet installed. Contents:
 
-- Commands: `/setup` + `/resynthesize` (maintenance), `/map`, `/spec`, `/diagnose`, `/build`, `/review`, `/verify`
+- Commands: `/setup` + `/resynthesize` (maintenance), `/start-ideation`, `/spec`, `/fix-bug`, `/build`, `/prep-shift`, `/verify-gate`
 - Skills: `seams`, `tdd-at-seams`, `adr`, `axi`, `design-system`,
   `writing-great-skills`, `grill`
 - Hooks: `stop.sh` (completion oracle), `block-dangerous-git.sh` (git guard)
@@ -88,7 +88,7 @@ names `design-conformance` as contracts you implement.
    boundary. Then add "read CONTEXT.md first" to each profile.
 5. **Run one real shift end-to-end** on something low-stakes (a gl-axi command
    wrapper): `/spec` it, `bench shift`, confirm the gate gates, the Stop hook blocks
-   on red, `/review` runs, you merge.
+   on red, `/prep-shift` runs, you merge.
 6. **Optional / when needed:** an AXI SessionStart ambient-context hook
    (cold-session dashboard, pairs with CONTEXT.md); a `/handoff` command if you lose
    mid-task state; run `writing-great-skills` against the kit to prune.
@@ -106,7 +106,7 @@ gate runs against the design repo regardless of harness.
 The kit is near the legibility ceiling (6 workflow commands + 2 maintenance commands, 7 skills, 2 hooks, CLI,
 profiles). A new piece earns its place only if it fills a gap the existing layers
 can't — not because it's good in isolation. Watch the three check surfaces for
-sediment: the gate (`/verify`, deterministic, authoritative), `/review` (semantic,
+sediment: the gate (`/verify-gate`, deterministic, authoritative), `/prep-shift` (semantic,
 advisory), and the Stop hook. Keep them single-sourced — the gate command lives only
 in `.bench/gate.sh`. The urge to add a fourth check surface is the signal to prune.
 
