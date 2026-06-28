@@ -195,7 +195,7 @@ yourself — that is the whole point of capturing here instead.
 
 Format per entry:
 
-## <date> — <short title>  [open]
+## <date> — <short title>  [open|resolved]
 - **What happened:** …
 - **Right behavior:** …
 - **Proposed rule change:** … (or "none")
