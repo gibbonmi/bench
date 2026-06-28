@@ -38,7 +38,10 @@ No UI. There is **no design source** for this repo.
 The oracle for a kit, in layers (all green today):
 
 1. **Parse + validity** — `bash -n` on `bin/bench.sh` and the hooks; JSON parse on
-   `package.json` and `.claude/settings.json`.
+   `package.json` and `.claude/settings.json`. Plus two CLI invariants: the scripts
+   the harness execs by path are executable in git, and the CLI names the `.sh`
+   gate/done files that exist (an extensionless ref routes to auto-detect, not the
+   oracle).
 2. **Structure** — every `SKILL.md` carries frontmatter; every `package.json`
    `files[]` path resolves (npm-pack integrity).
 3. **Kit conformance** — the AGENTS.md index stays in sync with disk, both
