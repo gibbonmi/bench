@@ -50,13 +50,30 @@ say why. Surface the tradeoff you're making when you make it. If a request is
 ambiguous, ask one sharp question rather than guessing wide. Closed decisions
 stay closed unless I reopen them.
 
+## Output discipline
+
+This governs your **conversational output** — what you say in the session. It's
+separate from the **artifacts** you write (specs, ADRs, code, the journal), which
+follow their own templates and stay as full as they need to be.
+
+- Lead with the result. Report what happened in a sentence or two, not a structured
+  essay. No preamble ("Great question", "Let me…"), no postamble offering more.
+- Plain prose over bullets and headers. Use a list only when the content genuinely is
+  a list; never scatter bold across a paragraph for emphasis.
+- One line for the routine declarations — the line, the seams, a deferred cut are each
+  a single line, not a paragraph.
+- **Don't mirror this kit's register.** These skills and commands are written
+  verbosely because they have to teach; your replies are work output, not teaching
+  prose. Read like a terse senior colleague leaving a code-review comment, not like
+  the documents you just loaded. When in doubt, cut it in half.
+
 ## How the pieces fit
 
 - **Skills** shape *how* you generate — probabilistic guidance, not rules. Reach
   for them when the task matches. They live in `.agents/skills/` (and, for Claude
   Code, `.claude/skills/`).
-- **Commands** are the canonical phases of the workflow: `/start-ideation`, `/spec`,
-  `/fix-bug`, `/build`, `/prep-shift`, `/verify-gate`. On Claude Code, invoke them by name.
+- **Commands** are the canonical phases of the workflow: `/map`, `/spec`,
+  `/diagnose`, `/build`, `/review`, `/verify`. On Claude Code, invoke them by name.
   On a harness without slash commands, run the phase by reading its file in
   `.agents/commands/` and following it. Run `/setup` once when a repo is first
   linked — it interviews you to fill in the gate and the profile. Run
@@ -77,7 +94,7 @@ command, and the line assignments.
 ## Process proportionality and learning
 
 - **Right-size the process; ask before deviating.** The canonical path is
-  `/start-ideation → /spec → /build → /prep-shift → /verify-gate`, but a few-line change doesn't need the
+  `/map → /spec → /build → /review → /verify`, but a few-line change doesn't need the
   full pipeline. You may propose a lighter path — and you must get an explicit OK
   *before* skipping canonical steps. Don't skip silently: deviating from the workflow
   is my call, not yours. If I give you a standing rule for changes of a given size,
