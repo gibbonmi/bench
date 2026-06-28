@@ -1,74 +1,96 @@
 ---
-description: Re-synthesize Bench from its two upstream sources (Matt Pocock's skills and kunchenguid's tooling). Pull both, diff against what Bench already incorporates, assess each change for whether it improves the current iteration, and adopt the worthwhile ones only after three quality loops. Run periodically. Proposes; never auto-merges. Maintenance, not a workflow phase.
+description: Improve the kit from its two distinct sources — upstream sync (pull Matt Pocock's skills + kunchenguid's tooling and diff for changes) and learnings integration (drain .bench/learnings.md from real use). Run either alone or both; each proposes changes that pass three quality loops before adoption. Proposes, never auto-merges. Maintenance, not a workflow phase.
 disable-model-invocation: true
 ---
 
-# /resynthesize — re-run the synthesis against upstream
+# /resynthesize — improve the kit, from two separate sources
 
-Bench is a synthesis of two moving repos. This re-runs that synthesis against their
-latest state, so upstream improvements reach Bench without you re-reading both repos
-by hand. It **proposes; you merge.** It does not reopen a decision Bench already
-closed unless the upstream thing materially changed.
+Bench improves from two independent inputs, and they are not the same job:
 
-## 1. Pull and diff
+- **Upstream sync** — *others'* changes. Pull the two source repos and diff them
+  against what Bench already incorporates. External, periodic, version-driven.
+- **Learnings integration** — *your own* changes. Drain `.bench/learnings.md`, the
+  journal the agent appended to during real use. Internal, usage-driven, has nothing
+  to do with upstream.
+
+Pick one or both at the start; don't conflate them. Both feed the same review path
+(closed-decisions guard → assess → three quality loops → apply), but they come from
+different places and are recorded differently. It **proposes; you merge.**
+
+## 0. Choose the scope
+
+Ask (or take from my request) which to run: **upstream**, **learnings**, or **both**.
+If I just say "resynthesize," default to both but report them as two separate sections
+so I can see what came from where.
+
+## 1a. Upstream sync (only if upstream is in scope)
 
 - Pull `mattpocock/skills` and kunchenguid's repos (`axi`, `gnhf`, `treehouse`,
   `firstmate`, `no-mistakes`) at HEAD. Record the refs you pulled.
-- Read Bench's current synthesis record: the provenance table in `README.md` and
-  the entries in `CHANGELOG.md` from prior runs. This is the baseline — what Bench
-  already maps, folds, recommends, or has deliberately rejected.
-- Diff upstream against the baseline into three lists: **new** (skills or techniques
-  not in the baseline), **changed** (a mapped/folded item whose source file moved),
-  **gone** (something Bench uses that was deprecated upstream).
-- Read `.bench/learnings.md` — the usage journal. Its open entries are a *second*
-  source of candidate changes, this time from how the kit actually behaved in real
-  work, not from upstream. Treat each open learning as a proposed change to assess
-  alongside the upstream deltas. (This is the self-improvement path: the kit gets
-  better from its own use, but only through this reviewed, signed-off loop — a
-  learning never edits a rule on its own.)
+- Read the baseline: the provenance table in `README.md` and prior `CHANGELOG.md`
+  entries — what Bench already maps, folds, recommends, or rejected.
+- Diff upstream against the baseline into three lists: **new** (techniques not in the
+  baseline), **changed** (a mapped/folded item whose source moved), **gone**
+  (something Bench uses that was deprecated upstream).
+
+## 1b. Learnings integration (only if learnings is in scope)
+
+- Read `.bench/learnings.md`. Each **open** entry is a candidate change sourced from
+  how the kit actually behaved in real work — a deviation, a should-have-asked, a
+  recurring friction. This stream never touches the upstream repos; it's the kit
+  learning from itself.
+- Group entries that point at the same fix so one change resolves several, and note
+  any that are one-off context rather than a general rule (those get dismissed, not
+  promoted).
+
+Keep the two streams labeled through the rest of the run so every proposed change
+carries its origin (upstream vs learnings).
 
 ## 2. Respect closed decisions
 
-Before assessing anything, drop every delta the baseline already decided that hasn't
-materially changed upstream. If Bench rejected firstmate's fleet orchestrator, a
-commit that only edits its README does not reopen it. A closed decision reopens only
-on a material change — and when it does, say so and show the diff that justifies
-reopening. This guard is the point: a loop that re-litigates settled calls every run
-is worse than no loop. (It's also the failure mode that got the ECC harness rejected.)
+Drop every candidate the baseline already decided that hasn't materially changed.
+For **upstream**: a rejected item (e.g. firstmate's fleet orchestrator) does not
+reopen on a cosmetic commit — only a material change reopens it, and then you show the
+diff that justifies it. For **learnings**: an entry already marked resolved or
+dismissed is not re-litigated. A loop that re-opens settled calls every run is worse
+than no loop — it's the failure mode that got the ECC harness rejected.
 
 ## 3. Assess — propose, don't decide
 
-For each surviving delta, classify in one line: **Map** (fills a gap the existing
-layers can't), **Fold** (absorb into an existing piece), **Recommend** (note it,
-don't build), **Skip** (with the reason). The bar is the anti-sediment bar from
-`writing-great-skills`: a change earns its place only if it fills a real gap, never
-because it's good in isolation. Present the proposed set as a proposal.
+For each surviving candidate from either stream, classify in one line: **Map** (fills
+a gap the existing layers can't), **Fold** (absorb into an existing piece),
+**Recommend** (note it, don't build), **Skip** (with the reason). The bar is the
+anti-sediment bar from `writing-great-skills`: a change earns its place only if it
+fills a real gap, never because it's good in isolation. Present the proposed set with
+each item tagged upstream or learnings.
 
 ## 4. Three quality loops — all must pass before adoption
 
-Run these in order. A change that fails a loop is pruned or sent back, not shipped.
+Run in order; a change that fails a loop is pruned or sent back, not shipped.
 
-1. **Legibility loop.** Run `writing-great-skills` against each proposed change. Is
-   it a no-op? Does it duplicate an existing skill or command? Does it push the kit
-   past its legibility ceiling (the working-command surface, the skill count)? If so,
-   cut or fold it. A bigger kit is a cost, not a feature.
+1. **Legibility loop.** Run `writing-great-skills` against each change. No-op?
+   Duplicates an existing piece? Pushes the kit past its legibility ceiling? Cut or
+   fold it. A bigger kit is a cost, not a feature.
 2. **Consistency loop.** Apply to a working copy, then re-run the staleness audit:
-   grep for invariant-count drift, broken cross-references, stale paths, app-specific
-   leakage into core files, and an out-of-date provenance table. Fix every hit. The
-   kit must be consistent *after* the change, not just at the changed spot.
-3. **Dogfood loop — the oracle.** This is the external check and the one that
-   actually decides. Run a real shift on a real repo with the changed kit: `/spec` a
-   small task, `bench shift`, confirm the gate gates, the hooks fire, and `bench gate`
-   ends green. A change that reads well but breaks a real run is rejected. If you
-   can't run a dogfood shift, the re-synthesis is **not complete** — say so rather
-   than adopting on paper. This is Bench's own thesis turned on itself: the kit does
-   not grade its own update; a run does.
+   grep for invariant drift, broken cross-references, stale paths, app-specific
+   leakage into core files, an out-of-date provenance table. Fix every hit.
+3. **Dogfood loop — the oracle.** Run a real shift on a real repo with the changed
+   kit: `/spec` a small task, `bench shift`, confirm the gate gates, the hooks fire,
+   `bench gate` ends green. A change that reads well but breaks a real run is
+   rejected. If you can't run a dogfood shift, the re-synthesis is **not complete** —
+   say so rather than adopting on paper. The kit does not grade its own update; a run
+   does.
 
 ## 5. Apply and record
 
-Only after all three loops pass and I've signed off: apply, update the provenance
-table, and append a `CHANGELOG.md` entry — date, upstream refs, what was adopted,
-what was rejected and why. That entry is the baseline the next `/resynthesize` reads,
-so closed decisions stay closed and the kit's evolution stays legible. For any
-`.bench/learnings.md` entry you acted on, mark it resolved (promoted or dismissed,
-with one line of why) so it isn't re-reviewed. The merge is mine; never auto-apply.
+Only after the loops pass and I've signed off, apply — and record each stream where it
+belongs:
+
+- **Upstream** adoptions update the provenance table and append a `CHANGELOG.md` entry
+  (date, refs pulled, what was adopted, what was rejected and why). That entry is the
+  baseline the next upstream sync reads.
+- **Learnings** promotions land in the rule/skill/command they fix, get a `CHANGELOG.md`
+  line, and the source entries in `.bench/learnings.md` are marked resolved (promoted
+  or dismissed, one line of why) so they're never re-reviewed.
+
+The merge is mine; never auto-apply.

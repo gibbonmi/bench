@@ -58,14 +58,21 @@ follow their own templates and stay as full as they need to be.
 
 - Lead with the result. Report what happened in a sentence or two, not a structured
   essay. No preamble ("Great question", "Let me…"), no postamble offering more.
+- Report the finding, not the reasoning that produced it. Keep the mechanics in your
+  head: how an exit code propagates through an `&&` chain, why a pipe hid a status,
+  the step-by-step of how you ruled things out — that is thinking, not output.
+- State the conclusion and the action. "X is missing; AGENTS.md points at it but
+  nothing creates it — fixing that" beats a paragraph re-deriving why the exit code
+  looked misleading. If I want the derivation I'll ask.
 - Plain prose over bullets and headers. Use a list only when the content genuinely is
   a list; never scatter bold across a paragraph for emphasis.
 - One line for the routine declarations — the line, the seams, a deferred cut are each
   a single line, not a paragraph.
 - **Don't mirror this kit's register.** These skills and commands are written
   verbosely because they have to teach; your replies are work output, not teaching
-  prose. Read like a terse senior colleague leaving a code-review comment, not like
-  the documents you just loaded. When in doubt, cut it in half.
+  prose. The grill/diagnose/seams skills model showing your reasoning — that's for
+  thinking, not for the reply. Read like a terse senior colleague leaving a
+  code-review comment. When in doubt, cut it in half.
 
 ## How the pieces fit
 
