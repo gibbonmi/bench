@@ -53,7 +53,7 @@ because conflating them is how agent workflows rot:
 
 | Layer | What it is | Authority | Lives in |
 | --- | --- | --- | --- |
-| **Enforcement** | The gate + hooks | Hard. The agent can't override it. | `.claude/hooks/`, `.bench/gate`, `bench` |
+| **Enforcement** | The gate + hooks | Hard. The agent can't override it. | `.claude/hooks/`, `.bench/gate.sh`, `bench` |
 | **Generation-shaping** | Skills | Probabilistic. Nudges *how* the agent writes. | `.claude/skills/` |
 | **Workflow discipline** | Commands | Canonical phases you invoke by name. | `.claude/commands/` |
 
@@ -106,7 +106,7 @@ The kit is an npm package, so the fastest way to wire a repo is one command with
 ```sh
 cd ~/src/your-project
 npx benchkit link      # wire the kit into this repo for every harness
-npx benchkit init      # scaffold .bench/gate
+npx benchkit init      # scaffold .bench/gate.sh
 ```
 
 Run from `npx`, `link` copies the kit in (the npx cache is ephemeral, so it won't
@@ -114,7 +114,7 @@ leave dangling symlinks). Prefer to install once and get a durable `bench` comma
 
 ```sh
 npm i -g benchkit
-# or, from a clone:  ln -s ~/src/bench/bin/bench ~/.local/bin/bench
+# or, from a clone:  ln -s ~/src/bench/bin/bench.sh ~/.local/bin/bench
 cd ~/src/your-project
 bench link             # symlinks the kit in, so edits to a central kit propagate
 bench init
@@ -128,7 +128,7 @@ Either way, finish by configuring the repo in your agent (one-time, interactive)
 
 Setup is two halves, the same split as Pocock's `setup-matt-pocock-skills`. The
 **mechanical** half is the CLI: `link` wires the kit into the repo for every
-harness, and `init` scaffolds an empty `.bench/gate` — both deterministic, both
+harness, and `init` scaffolds an empty `.bench/gate.sh` — both deterministic, both
 idempotent. The **project-specific** half is `/setup`, a prompt-driven command your
 agent runs once: it explores the repo, then walks you through the gate (the
 load-bearing choice), the profile (seams + lines + design-source path), and an
@@ -157,7 +157,7 @@ issue tracker and domain layout under `docs/agents/`, `/setup` reads those if pr
 and won't re-ask.
 
 What Bench adds on top is the part Pocock's skills leave to you: the **gate** as an
-external oracle (`.bench/gate`), the **gated shift loop** that commits only on green,
+external oracle (`.bench/gate.sh`), the **gated shift loop** that commits only on green,
 the **declared line** (model + effort) per run, and the **profile** (`projects/<name>.md`)
 that names the seams. So migration is: run `link` and `init`, then run `/setup` — it
 detects the existing Pocock structure, reuses it, and only asks for the things Bench
@@ -201,7 +201,7 @@ interactive Stop hook but keep both backstops.
 
 Optional knobs (env): `BENCH_AGENT` (headless agent command, default `claude`),
 `BENCH_MAX_ITERS`, `BENCH_MAX_TOKENS`, `BENCH_GATE` (a gate command if you'd rather
-not ship `.bench/gate`).
+not ship `.bench/gate.sh`).
 
 ---
 
@@ -333,7 +333,7 @@ building.
 | design-it-twice in `seams` | codebase-design | — | high-effort line at the uncertain seam |
 | `bench shift` notes.md | — | gnhf (iteration context) | — |
 | `block-dangerous-git.sh` | git-guardrails | — | agent has no destructive authority |
-| Stop hook + `.bench/gate` | — | no-mistakes (external gate) | the gate is the oracle |
+| Stop hook + `.bench/gate.sh` | — | no-mistakes (external gate) | the gate is the oracle |
 | The line declaration | — | — | "suggest model and effort" |
 
 The combination is more than the parts: Pocock's pipeline gives the shift a real

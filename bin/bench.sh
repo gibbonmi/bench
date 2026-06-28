@@ -9,7 +9,7 @@
 #   bench init                 scaffold a project profile + default gate
 #
 # Config resolution for the gate, in order:
-#   1. ./.bench/gate           (executable in the repo — preferred)
+#   1. ./.bench/gate.sh        (executable in the repo — preferred)
 #   2. $BENCH_GATE             (a command string)
 #   3. auto-detect             (pnpm / npm / pyproject / cargo)
 set -euo pipefail
@@ -25,9 +25,10 @@ default_branch() { git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/
 # ---- gate: the oracle -------------------------------------------------------
 run_gate() {
   local root; root="$(repo_root)"
-  if [[ -x "$root/.bench/gate" ]]; then exec "$root/.bench/gate"; fi
+  if [[ -x "$root/.bench/gate.sh" ]]; then exec "$root/.bench/gate.sh"; fi
+  if [[ -x "$root/.bench/gate" ]]; then exec "$root/.bench/gate"; fi  # legacy: pre-.sh name
   if [[ -n "${BENCH_GATE:-}" ]]; then bash -c "$BENCH_GATE"; return $?; fi
-  # auto-detect — best-effort defaults; a project should ship .bench/gate instead
+  # auto-detect — best-effort defaults; a project should ship .bench/gate.sh instead
   if [[ -f "$root/pnpm-lock.yaml" ]]; then
     ( cd "$root" && pnpm -s typecheck && pnpm -s test && pnpm -s lint ); return $?
   elif [[ -f "$root/package.json" ]]; then
@@ -37,7 +38,7 @@ run_gate() {
   elif [[ -f "$root/Cargo.toml" ]]; then
     ( cd "$root" && cargo test --quiet && cargo clippy -q -- -D warnings ); return $?
   fi
-  echo "no gate found: add an executable .bench/gate or set BENCH_GATE" >&2
+  echo "no gate found: add an executable .bench/gate.sh or set BENCH_GATE" >&2
   return 3
 }
 
@@ -118,27 +119,29 @@ decides if it counts.
 EOF
 }
 
-# Override per project: an executable .bench/done that exits 0 when the objective
+# Override per project: an executable .bench/done.sh that exits 0 when the objective
 # is complete (e.g. all spec stories covered). Absent => run to the iteration cap.
 objective_met() {
   local root; root="$(repo_root)"
-  [[ -x "$root/.bench/done" ]] && "$root/.bench/done" "$1"
+  if   [[ -x "$root/.bench/done.sh" ]]; then "$root/.bench/done.sh" "$1"
+  elif [[ -x "$root/.bench/done"    ]]; then "$root/.bench/done" "$1"  # legacy: pre-.sh name
+  else return 1; fi
 }
 
 init() {
   local root; root="$(repo_root)"; mkdir -p "$root/.bench"
-  if [[ ! -e "$root/.bench/gate" ]]; then
-    cat > "$root/.bench/gate" <<'EOF'
+  if [[ ! -e "$root/.bench/gate.sh" && ! -e "$root/.bench/gate" ]]; then
+    cat > "$root/.bench/gate.sh" <<'EOF'
 #!/usr/bin/env bash
 # The external oracle for this repo. Exit 0 = done is allowed. Edit to taste.
 set -euo pipefail
 # Examples — uncomment what fits:
 #   mypy . && pytest -q && ruff check .
 #   pnpm -s typecheck && pnpm -s test && pnpm -s lint
-echo "edit .bench/gate to run this project's checks" >&2; exit 3
+echo "edit .bench/gate.sh to run this project's checks" >&2; exit 3
 EOF
-    chmod +x "$root/.bench/gate"
-    echo "scaffolded .bench/gate — edit it to run your real checks"
+    chmod +x "$root/.bench/gate.sh"
+    echo "scaffolded .bench/gate.sh — edit it to run your real checks"
   fi
   echo "see projects/<name>.md in the Bench kit for the profile template"
 }
@@ -198,7 +201,7 @@ link() {
   echo "  Claude Code: CLAUDE.md -> @AGENTS.md, .claude/{skills,commands,hooks}"
   echo "  AGENTS.md harnesses (Codex/OpenCode/...): AGENTS.md, .agents/{skills,commands}"
   echo "  enforcement: git pre-push guard + the bench shift loop (both harness-independent)"
-  echo "Run 'bench init' next to scaffold .bench/gate."
+  echo "Run 'bench init' next to scaffold .bench/gate.sh."
 }
 
 case "${1:-help}" in
@@ -210,7 +213,7 @@ case "${1:-help}" in
   *) cat <<EOF
 bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench link [symlink|copy]  wire the kit into this repo for every harness at once
-  bench init                 scaffold .bench/gate in the current repo
+  bench init                 scaffold .bench/gate.sh in the current repo
   bench gate                 run the project gate (the oracle)
   bench worktree             warm, isolated worktree subshell
   bench shift "<objective>"  gated loop: one small change per iteration, commit on green

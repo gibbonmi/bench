@@ -69,7 +69,7 @@ callers), say so as a separate finding, after the fix is in.
 ## How it meets the rest of Bench
 
 The Phase 1 loop is the project gate for the fix shift: add the repro as a test the
-gate runs (or point `.bench/gate` at the repro command), then run
+gate runs (or point `.bench/gate.sh` at the repro command), then run
 `bench shift "fix <bug>"` so the loop physically gates "done" on the bug going
 green. The seam decision in Phase 5 is the `seams` skill. Declare the line first — a
 hard bug is a high-effort shift.
