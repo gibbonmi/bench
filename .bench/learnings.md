@@ -67,3 +67,18 @@ file was skipped as speculative — only two exist._
 - **Proposed rule change:** Add to the grill skill and AGENTS.md "How to talk to me":
   a question without a recommendation is incomplete. Surface judgment, don't offer a
   blind menu.
+
+## 2026-06-28 — always recommend the proper next action  [open]
+- **What happened:** After finishing a step (e.g. writing the canary spec), I offered
+  next actions as a neutral menu — "/build or bench shift?" — and the user had to ask
+  for a recommendation. Same pattern as the questions learning, applied to hand-off
+  between workflow phases.
+- **Right behavior:** When handing back at a phase boundary, recommend the proper next
+  action, picked from the implementation type and the goal — e.g. /build interactively
+  for edits to the oracle or where a design call is still vetoable; bench shift for
+  locked-spec mechanical work. State the pick and the one-clause reason; the menu is
+  context, not the answer.
+- **Proposed rule change:** Generalize the questions rule to all hand-offs — every
+  command's exit ("offer to run /build or /shift") should lead with a recommended next
+  action keyed to type+goal, not a neutral either/or. Fold into AGENTS.md "How to talk
+  to me" alongside the questions rule.
