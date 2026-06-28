@@ -56,3 +56,14 @@ file was skipped as speculative — only two exist._
   the same change must (1) scaffold it in `init()` and (2) add a behavioral gate check.
   Consider generalizing gate check 1d to assert every kit-referenced `.bench/*` file
   is scaffolded.
+
+## 2026-06-28 — questions must carry a recommendation  [open]
+- **What happened:** During /start-ideation I asked two AskUserQuestion forks with
+  neutral options and no recommended pick. The user corrected me: always put forth a
+  recommendation when asking.
+- **Right behavior:** Lead every question with the option I'd choose and why — put the
+  recommended option first with "(Recommended)" per the AskUserQuestion convention; in
+  prose, state the pick and a one-clause reason.
+- **Proposed rule change:** Add to the grill skill and AGENTS.md "How to talk to me":
+  a question without a recommendation is incomplete. Surface judgment, don't offer a
+  blind menu.
