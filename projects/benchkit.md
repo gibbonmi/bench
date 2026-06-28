@@ -50,6 +50,12 @@ The oracle for a kit, in layers (all green today):
    breaks harnesses; it is the analog of gl-axi's `axi-conformance`.
 4. **shellcheck** — best-effort, runs only when installed (`-S warning`). Not a hard
    dependency; upgrades the shell lint automatically once present.
+5. **Canary (meta)** — the gate runs itself against deliberately-broken fixtures in
+   `tests/canary/` and asserts each goes red with its targeted error substring. Proves
+   the checks above still *bite*: a check rotted into an always-pass fails here. This
+   is the gate guarding the gate. Fixtures hide dot-dirs behind a `dot-` prefix (e.g.
+   `dot-claude`) so the harness doesn't load fixture skills as real ones; the canary
+   restores them at run time. See `specs/canary.md`.
 
 The gate file lives outside `package.json` `files[]`, so it never ships to consumers.
 

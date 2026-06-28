@@ -82,3 +82,31 @@ file was skipped as speculative — only two exist._
   command's exit ("offer to run /build or /shift") should lead with a recommended next
   action keyed to type+goal, not a neutral either/or. Fold into AGENTS.md "How to talk
   to me" alongside the questions rule.
+
+## 2026-06-28 — show spec/issue breakdowns as a table for approval before building  [open]
+- **What happened:** I presented the canary spec as prose and moved to /build on a
+  verbal OK. The user wants the breakdown shown in table form for explicit approval
+  *before* construction continues.
+- **Right behavior:** Before building from a spec (or any issue/work breakdown), render
+  it as a scannable table — e.g. user stories / seams / out-of-scope, or the issue list
+  with its slices — and get sign-off. Only then continue the workflow. The table is the
+  approval gate, not a prose aside.
+- **Proposed rule change:** /spec (and /to-issues) should emit a table summary at exit
+  and pause for approval before /build or /shift proceeds. The full spec file stays as
+  written; the table is the at-a-glance veto surface. Fold the "table for approval"
+  expectation into /spec and AGENTS.md "How to talk to me".
+
+## 2026-06-28 — clean summary + persistent progress visual at every stage boundary  [open]
+- **What happened:** Moving between workflow phases I dumped walls of text without a
+  crisp "what just happened / what's next." The user wants every stage transition to
+  carry a short summary and, ideally, a persistent visual of where we are in the
+  pipeline.
+- **Right behavior:** At each phase boundary (map→spec→build→prep-shift→verify-gate,
+  etc.) lead with a 2–3 line summary: what finished, the result, what's next. Maintain
+  a persistent progress visual — a Claude Code task list (TaskCreate/TaskUpdate) with
+  one task per phase, updated as phases complete — so the pipeline state is always
+  visible, not buried in prose.
+- **Proposed rule change:** Every command exit emits a compact stage summary, and the
+  workflow keeps a task-list progress tracker across phases. Fold into AGENTS.md "How
+  to talk to me" and each command's exit section. Keep prose minimal; the table/list
+  carries the state.
