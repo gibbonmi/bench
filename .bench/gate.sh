@@ -35,6 +35,15 @@ done
 bad_refs="$(grep -oE '\.bench/(gate|done)(\.sh)?' bin/bench.sh | grep -vE '\.sh$' | sort -u || true)"
 [ -z "$bad_refs" ] || err "bin/bench.sh has extensionless gate/done refs ($(echo "$bad_refs" | tr '\n' ' ')); the contract is .sh"
 
+# 1d. `bench init` must scaffold the self-learning journal. AGENTS.md tells agents to
+#     append to .bench/learnings.md and /resynthesize reads it; if init does not
+#     create it, the contract points at a file that never exists. Exercise the real
+#     init path in a throwaway repo rather than grepping for the literal.
+tmp="$(mktemp -d)"
+( cd "$tmp" && git init -q && bash "$root/bin/bench.sh" init >/dev/null 2>&1 )
+[ -f "$tmp/.bench/learnings.md" ] || err "bench init does not scaffold .bench/learnings.md (self-learning journal)"
+rm -rf "$tmp"
+
 # 2. JSON is valid.
 for f in package.json .claude/settings.json; do
   node -e 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"))' "$f" \

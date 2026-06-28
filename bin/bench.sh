@@ -183,6 +183,29 @@ EOF
     chmod +x "$root/.bench/gate.sh"
     echo "scaffolded .bench/gate.sh — edit it to run your real checks"
   fi
+  if [[ ! -e "$root/.bench/learnings.md" ]]; then
+    cat > "$root/.bench/learnings.md" <<'EOF'
+# Learnings — usage journal
+
+Append one entry when you deviate from the workflow, make a judgment call you're
+unsure about, or catch a should-have-asked in hindsight. You capture; the reviewer
+decides. `/resynthesize` reviews the open entries, promotes the generalizable ones
+into the kit with sign-off, and marks them resolved. Never rewrite a kit rule
+yourself — that is the whole point of capturing here instead.
+
+Format per entry:
+
+## <date> — <short title>  [open]
+- **What happened:** …
+- **Right behavior:** …
+- **Proposed rule change:** … (or "none")
+
+An entry only becomes `[resolved]` via /resynthesize.
+
+<!-- entries below -->
+EOF
+    echo "scaffolded .bench/learnings.md — the self-learning journal"
+  fi
   echo "see projects/<name>.md in the Bench kit for the profile template"
 }
 
