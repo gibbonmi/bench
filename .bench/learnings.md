@@ -17,7 +17,13 @@ An entry only becomes `[resolved]` via /resynthesize.
 
 <!-- entries below -->
 
-## 2026-06-27 — gate was red at HEAD; a commit claimed green without running it  [open]
+## 2026-06-27 — gate was red at HEAD; a commit claimed green without running it  [resolved: dismissed]
+_Resolved 2026-06-28 via /resynthesize: dismissed — already governed by invariant 1
+and /verify-gate's "never substitute the model's judgment for the gate." A pre-commit
+gate run would be a fourth check surface (HANDOFF says prune toward, not add), and the
+skipped-reference regression is now caught mechanically by the command↔index
+conformance check plus gate checks 1c/1d._
+
 - **What happened:** Fixing the missing `.bench/learnings.md` scaffold, I ran the
   full gate and found it red at clean HEAD — commit `cea2f42` renamed the commands
   and its message asserted "Gate green: the index<->disk conformance check confirms
@@ -33,7 +39,12 @@ An entry only becomes `[resolved]` via /resynthesize.
   not inspection. Possibly a Stop-hook check that the gate was run since the last
   edit.
 
-## 2026-06-27 — scaffolded files must be created by init, not just referenced  [open]
+## 2026-06-27 — scaffolded files must be created by init, not just referenced  [resolved: promoted]
+_Resolved 2026-06-28 via /resynthesize: promoted to HANDOFF "Discipline carried over"
+as a one-line maintainer rule. The executable fix (init scaffold + gate check 1d)
+already shipped in 724bf8c. The proposed generalization of check 1d to every `.bench/*`
+file was skipped as speculative — only two exist._
+
 - **What happened:** `bench init` scaffolded `.bench/gate.sh` but not
   `.bench/learnings.md`, while AGENTS.md (write side) and `/resynthesize` (read side)
   both depend on that file existing. The self-learning contract pointed at a path

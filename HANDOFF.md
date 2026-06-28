@@ -110,4 +110,8 @@ sediment: the gate (`/verify-gate`, deterministic, authoritative), `/prep-shift`
 advisory), and the Stop hook. Keep them single-sourced — the gate command lives only
 in `.bench/gate.sh`. The urge to add a fourth check surface is the signal to prune.
 
+Any `.bench/*` file the kit's prose tells an agent to read or append to must be
+scaffolded by `bench init` (guarded) and locked by a behavioral gate check that runs
+the real `init` path — a referenced-but-uncreated file is the `learnings.md` bug.
+
 Skills-to-Bench mapping: see the provenance table in `README.md`.

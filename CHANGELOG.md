@@ -5,6 +5,16 @@ already adopted from upstream, and what it deliberately rejected — so closed
 decisions stay closed and each re-synthesis is diffed against a known state. Append
 one entry per `/resynthesize` run; don't rewrite history.
 
+## Unreleased
+
+- **Learnings run (2026-06-28, scope: learnings).** Drained two open entries from
+  `.bench/learnings.md`. Promoted: a maintainer rule into HANDOFF — any `.bench/*`
+  file the kit's prose references must be scaffolded by `bench init` and locked by a
+  behavioral gate check (the `learnings.md` bug; executable fix already in `724bf8c`).
+  Dismissed: "gate green claimed without a run" — already governed by invariant 1 and
+  `/verify-gate`; a pre-commit gate run would be a fourth check surface. Skipped:
+  generalizing gate check 1d to every `.bench/*` file — speculative, only two exist.
+
 ## 0.2.0 — app-agnostic, npx-distributable, self-maintaining
 
 - Made the kit app-agnostic: removed the hockey/coach/puck framing and all
