@@ -51,5 +51,10 @@ The map is deliberately incomplete beyond the frontier. You are done when the
 path to the finish line is clear — no unresolved tickets blocking the build. At
 that point the map is closed; offer to move to `/spec`.
 
+A natural seam in the work is recorded as a decision in the map for *me* to make —
+it is never a reason to close the map early or to spin off a separate map or PRD on
+your own. Surfacing "this could be two slices" is useful; deciding to slice and
+deferring the rest is mine.
+
 If the first grill surfaces no real fog — no multi-session decisions — say so and
 recommend skipping straight to `/spec`. Don't manufacture tickets.
