@@ -29,7 +29,7 @@ Baseline of what Bench incorporates from upstream. Adopted, with provenance in
   + design-it-twice), `tdd-at-seams` (tdd), `adr` (domain-modeling ADR format),
   `grill` (grilling), `writing-great-skills` skills, plus the `block-dangerous-git`
   hook (git-guardrails).
-- **From kunchenguid:** the `axi` skill (AXI spec), the `.bench/gate` + Stop-hook
+- **From kunchenguid:** the `axi` skill (AXI spec), the `.bench/gate.sh` + Stop-hook
   external-oracle pattern (no-mistakes), the `bench shift` gated loop with
   notes-between-iterations (gnhf), and `bench worktree` (treehouse).
 - **Deliberately rejected:** firstmate's fleet orchestrator (overkill for solo work),

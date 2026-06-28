@@ -77,8 +77,14 @@ Ask for, with defaults proposed from exploration:
 - the 3–5 major seams — infer candidates from the codebase's module structure and
   propose them; the seams are wherever a stable interface already separates concerns
 - the design-source location if there's UI (submodule / package / path)
-- the line defaults: cheap model + low effort for plumbing at a known seam; top
-  model + high effort only for the genuinely uncertain seam
+- the line defaults, written as **tier → model bindings**. First discover what's
+  actually available — don't hardcode model names. Run `bench models` (it queries
+  the Anthropic model list when a key is set); if the harness uses subscription auth
+  and there's no key, read the harness's own list (`claude --help` / the `/model`
+  picker, `codex --help`). Bind **cheap / mid / top** to the cheapest, a middle, and
+  the most capable available model, confirm with me, and record the binding with the
+  date and harness. Then the routing by tier: cheap + low effort for plumbing at a
+  known seam; top + high effort only for the genuinely uncertain seam.
 
 Write `projects/<name>.md` from the example profiles in the kit as a template.
 

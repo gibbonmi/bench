@@ -25,7 +25,11 @@ hard-to-reverse choice), surface it and stop rather than guessing.
    justification. Cheap model + low effort for plumbing at a known seam; top model
    + high effort only for the seam where the answer is genuinely uncertain. No
    silent escalation. If a stage blows past its cap, stop and report rather than
-   grinding.
+   grinding. The tiers (cheap / mid / top) are abstract; resolve them to models
+   actually available in *this* harness — `projects/<name>.md` holds the binding,
+   and `bench models` (or the harness's own model list) refreshes it. If a named
+   model isn't available here, re-check and pick the nearest tier rather than
+   guessing or failing.
 
 3. **Document for the teammate who just walked in.**
    Project docs and ADRs describe the current decided state, addressed to someone

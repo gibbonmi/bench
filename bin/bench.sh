@@ -9,7 +9,7 @@
 #   bench init                 scaffold a project profile + default gate
 #
 # Config resolution for the gate, in order:
-#   1. ./.bench/gate.sh        (executable in the repo — preferred)
+#   1. ./.bench/gate           (executable in the repo — preferred)
 #   2. $BENCH_GATE             (a command string)
 #   3. auto-detect             (pnpm / npm / pyproject / cargo)
 set -euo pipefail
@@ -25,10 +25,9 @@ default_branch() { git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/
 # ---- gate: the oracle -------------------------------------------------------
 run_gate() {
   local root; root="$(repo_root)"
-  if [[ -x "$root/.bench/gate.sh" ]]; then exec "$root/.bench/gate.sh"; fi
-  if [[ -x "$root/.bench/gate" ]]; then exec "$root/.bench/gate"; fi  # legacy: pre-.sh name
+  if [[ -x "$root/.bench/gate" ]]; then exec "$root/.bench/gate"; fi
   if [[ -n "${BENCH_GATE:-}" ]]; then bash -c "$BENCH_GATE"; return $?; fi
-  # auto-detect — best-effort defaults; a project should ship .bench/gate.sh instead
+  # auto-detect — best-effort defaults; a project should ship .bench/gate instead
   if [[ -f "$root/pnpm-lock.yaml" ]]; then
     ( cd "$root" && pnpm -s typecheck && pnpm -s test && pnpm -s lint ); return $?
   elif [[ -f "$root/package.json" ]]; then
@@ -38,7 +37,7 @@ run_gate() {
   elif [[ -f "$root/Cargo.toml" ]]; then
     ( cd "$root" && cargo test --quiet && cargo clippy -q -- -D warnings ); return $?
   fi
-  echo "no gate found: add an executable .bench/gate.sh or set BENCH_GATE" >&2
+  echo "no gate found: add an executable .bench/gate or set BENCH_GATE" >&2
   return 3
 }
 
@@ -100,10 +99,47 @@ shift_loop() {
       git -C "$root" reset -q --hard; git -C "$root" clean -qfd
     fi
   done
+  # Implementation loop is done. Only NOW pay down structural debt, if the work
+  # pushed past the budget. Refactor at green — never mid-implementation: splitting
+  # before the feature's shape has settled produces premature, bad module boundaries.
+  # This is "only trigger a refactor once it's over the threshold", at the loop edge.
+  if ! structure >/dev/null 2>&1; then
+    echo "▶ structure over budget — refactor phase (split at green, not before)"
+    local rcap="${BENCH_REFACTOR_ITERS:-4}" r
+    for ((r=1; r<=rcap; r++)); do
+      structure >/dev/null 2>&1 && break
+      echo "── refactor $r/$rcap ──"
+      BENCH_SHIFT=1 "$AGENT" -p "$(refactor_prompt)" || true
+      if run_gate; then
+        git -C "$root" add -A -- ':!.bench-objective' ':!.bench-notes.md'
+        git -C "$root" diff --cached --quiet || \
+          git -C "$root" commit -q -m "refactor: reduce structural debt"
+        echo "  ✓ tests green — refactor $r committed"
+      else
+        echo "  ✗ refactor broke the gate — rolling back"
+        git -C "$root" reset -q --hard; git -C "$root" clean -qfd
+      fi
+    done
+    if structure >/dev/null 2>&1; then echo "  structure back under budget."
+    else echo "  ⚠ still over budget after $rcap passes — review manually, or run /improve-codebase-architecture for a deep pass."; fi
+  fi
   rm -f "$root/.bench-objective" "$root/.bench-notes.md"
   echo "■ shift done: $branch, $((i-1)) committed iteration(s), $(( ($(date +%s)-started)/60 ))m elapsed"
   echo "  review: git -C $root log --oneline origin/$(default_branch)..$branch"
   echo "  the merge is yours."
+}
+
+refactor_prompt() {
+  cat <<'EOF'
+The implementation is complete and tests are green, but the structure budget is
+exceeded. Run `bench structure` to see the flagged files and directories. Fix them
+by splitting along responsibility, using the deletion test from the seams skill: lift
+a cluster out only if extracting it *concentrates* complexity behind a real interface
+rather than just moving it. Never fragment a cohesive file to beat the line count — if
+a file is genuinely one deep module, leave it and say so. Group a crowded directory
+into a package with a clear entry point. Keep every test green; change structure, not
+behavior. Make one split, then stop — the loop re-checks and continues.
+EOF
 }
 
 iteration_prompt() {
@@ -119,29 +155,33 @@ decides if it counts.
 EOF
 }
 
-# Override per project: an executable .bench/done.sh that exits 0 when the objective
+# Override per project: an executable .bench/done that exits 0 when the objective
 # is complete (e.g. all spec stories covered). Absent => run to the iteration cap.
 objective_met() {
   local root; root="$(repo_root)"
-  if   [[ -x "$root/.bench/done.sh" ]]; then "$root/.bench/done.sh" "$1"
-  elif [[ -x "$root/.bench/done"    ]]; then "$root/.bench/done" "$1"  # legacy: pre-.sh name
-  else return 1; fi
+  [[ -x "$root/.bench/done" ]] && "$root/.bench/done" "$1"
 }
 
 init() {
   local root; root="$(repo_root)"; mkdir -p "$root/.bench"
-  if [[ ! -e "$root/.bench/gate.sh" && ! -e "$root/.bench/gate" ]]; then
-    cat > "$root/.bench/gate.sh" <<'EOF'
+  if [[ ! -e "$root/.bench/gate" ]]; then
+    cat > "$root/.bench/gate" <<'EOF'
 #!/usr/bin/env bash
-# The external oracle for this repo. Exit 0 = done is allowed. Edit to taste.
+# The external oracle for this repo — correctness only. Exit 0 = done is allowed.
 set -euo pipefail
-# Examples — uncomment what fits:
+# Stack checks — uncomment what fits:
 #   mypy . && pytest -q && ruff check .
 #   pnpm -s typecheck && pnpm -s test && pnpm -s lint
-echo "edit .bench/gate.sh to run this project's checks" >&2; exit 3
+#
+# Structural debt is NOT checked here. `bench shift` runs `bench structure` once the
+# implementation loop finishes and triggers a refactor pass only if a file or dir is
+# over budget — so splits happen at green, not mid-iteration. Uncomment the next line
+# only if you also want structure hard-blocked at the PR boundary (every commit):
+#   bench structure
+echo "edit .bench/gate to run this project's checks" >&2; exit 3
 EOF
-    chmod +x "$root/.bench/gate.sh"
-    echo "scaffolded .bench/gate.sh — edit it to run your real checks"
+    chmod +x "$root/.bench/gate"
+    echo "scaffolded .bench/gate — edit it to run your real checks"
   fi
   echo "see projects/<name>.md in the Bench kit for the profile template"
 }
@@ -167,6 +207,62 @@ done
 exit 0
 EOF
   chmod +x "$root/.git/hooks/pre-push"
+}
+
+# Best-effort model discovery. There is no universal cross-harness "list models"
+# command, so: query the Anthropic Models API when a key is present (authoritative),
+# otherwise point at the harness's own list. The agent/setup bind tiers from this.
+models() {
+  if [[ -n "${ANTHROPIC_API_KEY:-}" ]]; then
+    echo "Available models (Anthropic Models API):"
+    if ! curl -fsS https://api.anthropic.com/v1/models \
+          -H "x-api-key: $ANTHROPIC_API_KEY" \
+          -H "anthropic-version: 2023-06-01" \
+        | python3 -c 'import sys,json
+for m in json.load(sys.stdin).get("data",[]): print("  "+m["id"])'; then
+      echo "  (query failed — check the key, or read your harness model list)"
+    fi
+  else
+    cat <<'EOF'
+No ANTHROPIC_API_KEY set, so I can't query the model list directly. Discover from
+your harness instead, then bind the tiers (cheap / mid / top) in projects/<name>.md:
+  - Claude Code: `claude --help`, or the in-app /model picker
+  - Codex:       `codex --help`, or its model config
+  - or export ANTHROPIC_API_KEY and re-run `bench models`
+EOF
+  fi
+}
+
+# Deterministic, language-agnostic structural-debt check, for the gate. Flags files
+# over a line budget and directories with too many source files (the "30 scripts in
+# src/" smell). Thresholds via env. Exit 1 on violations so it gates. The *how* to
+# split is the seams skill's job — this only measures.
+structure() {
+  local root max_lines max_files exts files violations=0
+  root="$(repo_root)"
+  max_lines="${BENCH_MAX_LINES:-400}"
+  max_files="${BENCH_MAX_DIR_FILES:-12}"
+  exts='py|ts|tsx|js|jsx|go|rs|java|rb|kt|scala|cs|cpp|cc|c|h|hpp'
+  files=$(git -C "$root" ls-files 2>/dev/null | grep -E "\.($exts)\$" || true)
+  [[ -z "$files" ]] && { echo "structure: no tracked source files to check"; return 0; }
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    local n; n=$(wc -l < "$root/$f" 2>/dev/null || echo 0)
+    if (( n > max_lines )); then
+      echo "FILE TOO LONG   $n lines (max $max_lines)   $f"; violations=$((violations+1))
+    fi
+  done <<< "$files"
+  while read -r count dir; do
+    [[ -z "$count" ]] && continue
+    if (( count > max_files )); then
+      echo "DIR CROWDED     $count source files (max $max_files), group into modules   $dir/"; violations=$((violations+1))
+    fi
+  done <<< "$(printf '%s\n' "$files" | xargs -n1 dirname | sort | uniq -c)"
+  if (( violations > 0 )); then
+    echo "structural debt: $violations issue(s). Split along responsibility (see the seams skill); don't fragment to beat the number." >&2
+    return 1
+  fi
+  echo "structure ok (≤$max_lines lines/file, ≤$max_files source files/dir)"
 }
 
 # Wire the kit into the current repo for EVERY harness at once. Idempotent.
@@ -201,7 +297,7 @@ link() {
   echo "  Claude Code: CLAUDE.md -> @AGENTS.md, .claude/{skills,commands,hooks}"
   echo "  AGENTS.md harnesses (Codex/OpenCode/...): AGENTS.md, .agents/{skills,commands}"
   echo "  enforcement: git pre-push guard + the bench shift loop (both harness-independent)"
-  echo "Run 'bench init' next to scaffold .bench/gate.sh."
+  echo "Run 'bench init' next to scaffold .bench/gate."
 }
 
 case "${1:-help}" in
@@ -209,11 +305,15 @@ case "${1:-help}" in
   worktree) worktree ;;
   shift)    shift; shift_loop "${*:-improve the codebase}" ;;
   link)     shift; link "${1:-symlink}" ;;
+  models)   models ;;
+  structure) structure ;;
   init)     init ;;
   *) cat <<EOF
 bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench link [symlink|copy]  wire the kit into this repo for every harness at once
-  bench init                 scaffold .bench/gate.sh in the current repo
+  bench init                 scaffold .bench/gate in the current repo
+  bench models               discover models available in this harness (for the lines)
+  bench structure            flag oversized files + crowded dirs (wire into the gate)
   bench gate                 run the project gate (the oracle)
   bench worktree             warm, isolated worktree subshell
   bench shift "<objective>"  gated loop: one small change per iteration, commit on green

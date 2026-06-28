@@ -65,3 +65,38 @@ a hybrid if elements combine well. A menu isn't the deliverable; a strong read i
 This is what a high-effort line buys at the uncertain seam: not more code, but more
 interfaces considered before one is chosen. At a known seam, skip it — one design
 is fine.
+
+## Splitting when the structure gate fires
+
+`bench structure` fails the gate when a file outgrows its line budget or a directory
+collects too many source files. That's the signal to modularize *now*, mid-shift —
+not to defer it. But how you split decides whether you've reduced debt or just moved
+it:
+
+- **Split along responsibility, not line count.** Find the seam already latent in
+  the file — the cluster of functions with one reason to change — and lift it into
+  its own module behind a small interface. The line count drops as a side effect of
+  a real boundary, never as the goal.
+- **Apply the deletion test before every split.** Would extracting this cluster
+  *concentrate* complexity behind one interface, or just *move* it to another file?
+  Only "concentrates" is a real deepening; "just moves it" is fragmentation wearing
+  a refactor's clothes.
+
+Bench's **deep pass** is this skill applied broadly — run `bench structure` (tighten
+the budgets if needed) and work the deletion test across every flagged module — and
+it's fully self-contained; nothing outside the kit is required. The deletion test is
+borrowed from Pocock's `improve-codebase-architecture`, which Bench does *not* bundle:
+if you happen to have his skills installed, `/improve-codebase-architecture` is a
+richer external version of the same review (organic exploration, a visual before/after
+HTML report). It's an optional upgrade, never a dependency.
+- **Never fragment to beat the number.** Slicing a cohesive file into `part_a` /
+  `part_b` to dodge the limit is worse than the long file: it scatters one concept
+  across files with no interface between them. If you can't name the responsibility
+  the split isolates, don't split — the file may legitimately be one deep module, so
+  raise its budget in the gate instead.
+- **A crowded directory is an ungrouped module.** Thirty files in one dir means
+  several modules are hiding in a flat namespace. Group related files into a package
+  with a clear entry point; the package *is* the seam.
+
+The deep-module rule applies throughout: prefer a few files with real interfaces
+over many shallow ones. The gate measures the symptom; this is the cure.
