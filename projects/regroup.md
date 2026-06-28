@@ -39,7 +39,7 @@ the player surface; the shuttle slider, event chips, and timeline markers are
 canonical components composed, never restyled; the `regroup-ui` interaction skill and
 its screenshot loop are part of UI done-ness alongside this visual layer.
 
-## Gate (`.bench/gate`)
+## Gate (`.bench/gate.sh`)
 
 Logic shifts:
 ```

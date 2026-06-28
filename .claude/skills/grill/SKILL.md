@@ -17,8 +17,19 @@ compose.
   reject.
 - Go in dependency order — resolve the question that unblocks the most others
   first.
+- **Surface decisions; don't make them — and scoping is a decision.** Your job is to
+  expose the decision space, not to choose how to slice it. If you spot a natural
+  seam where the work could be split, *name it as a decision for me* — "there's a
+  clean boundary between X and Y; do you want this spec to stop at X?" — and then
+  keep grilling the rest. Naming a seam is surfacing. **Proposing to build one slice
+  now and defer the rest, and offering to "make a separate PRD" for it, is not** —
+  that's you making the scoping call and ending the session early to escape the open
+  work. Don't. Whether to slice is mine to decide, against a finished map; it is
+  never your exit from the grill. I am fine with a small scope — I am not fine with
+  you choosing it for me mid-conversation.
 - Stop when the fog is gone: when the remaining questions no longer change what
-  gets built. Don't pad with questions for their own sake.
+  gets built. Don't pad with questions for their own sake. A proposed slice is not
+  "fog gone" — it's an unanswered scoping question, so surface it and continue.
 
 ## Form
 

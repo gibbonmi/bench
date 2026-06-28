@@ -18,7 +18,7 @@ an agent gets higher accuracy at lower token cost than driving raw `glab`. The
   completes from flags alone (no interactive prompts) and that exit codes follow
   0/1/2 (incl. no-op = 0).
 
-## Gate (`.bench/gate`)
+## Gate (`.bench/gate.sh`)
 
 ```
 pytest -q && axi-conformance ./gl-axi && bench-glab-delta --assert

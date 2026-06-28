@@ -27,7 +27,7 @@ the agent never grades its own work.
 
 ### The layers
 
-- **Enforcement** (hard authority): `.bench/gate`, the git `pre-push` hook, and the
+- **Enforcement** (hard authority): `.bench/gate.sh`, the git `pre-push` hook, and the
   Claude Code hooks `stop.sh` + `block-dangerous-git.sh`.
 - **Generation-shaping** (probabilistic): the skills.
 - **Workflow discipline** (canonical phases): the commands.
@@ -56,23 +56,23 @@ kit, not yet installed. Contents:
 - Skills: `seams`, `tdd-at-seams`, `adr`, `axi`, `design-system`,
   `writing-great-skills`, `grill`
 - Hooks: `stop.sh` (completion oracle), `block-dangerous-git.sh` (git guard)
-- CLI `bin/bench`: `link`, `init`, `gate`, `worktree`, `shift`
+- CLI `bin/bench.sh`: `link`, `init`, `gate`, `worktree`, `shift`
 - Profiles: `projects/regroup.md`, `projects/gl-axi.md`
 - Instructions: `AGENTS.md` (canonical) + `CLAUDE.md` (import shim)
 
 Known stubs by design: `bench shift` assumes a headless agent (`claude -p`); the
-auto-detect gate is only a fallback (the real path is an explicit `.bench/gate`);
+auto-detect gate is only a fallback (the real path is an explicit `.bench/gate.sh`);
 the gl-axi gate names `axi-conformance` + `bench-glab-delta` and the Regroup gate
 names `design-conformance` as contracts you implement.
 
 ## Next steps (in order)
 
-1. **Install.** Symlink `bin/bench` onto PATH (a symlink, so it can find its kit),
+1. **Install.** Symlink `bin/bench.sh` onto PATH (a symlink, so it can find its kit),
    then in each repo run `bench link`, `bench init`, and `/setup` (the interactive
    configure step). Exact commands in `README.md`.
 2. **Stand up the gate in each repo** — the single load-bearing step; until the gate
    runs real checks the oracle is empty and the system is inert. `/setup` walks you
-   through this; or edit each `.bench/gate` directly:
+   through this; or edit each `.bench/gate.sh` directly:
    - Regroup: `mypy regroup && pytest -q && ruff check regroup` (+ design-conformance for UI).
    - gl-axi: `pytest -q && axi-conformance ./gl-axi && bench-glab-delta --assert`.
 3. **Implement the contracted gate checks** (referenced, not shipped):
@@ -108,6 +108,6 @@ profiles). A new piece earns its place only if it fills a gap the existing layer
 can't — not because it's good in isolation. Watch the three check surfaces for
 sediment: the gate (`/verify`, deterministic, authoritative), `/review` (semantic,
 advisory), and the Stop hook. Keep them single-sourced — the gate command lives only
-in `.bench/gate`. The urge to add a fourth check surface is the signal to prune.
+in `.bench/gate.sh`. The urge to add a fourth check surface is the signal to prune.
 
 Skills-to-Bench mapping: see the provenance table in `README.md`.

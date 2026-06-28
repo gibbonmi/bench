@@ -26,7 +26,26 @@ loop honest.
    State the seams explicitly and check they match my expectation before writing
    the spec.
 
-3. **Write `specs/<feature>.md`** using the template below.
+3. **Price every cut, in your time — not a human's.** Before anything is deferred,
+   estimate it in *agent* time, because that's the real cost here. The instinct to
+   defer is calibrated to humans who can't spare the afternoon; you can. Two rules
+   follow, and they are the point of this step:
+   - **No deferral under the threshold — this binds you, not me.** Anything under
+     ~30 minutes of your work that introduces no new architectural decision is
+     something you do *not* get to propose deferring — it's just part of this build,
+     so do it now and state the estimate out loud. But scope is mine: if *I* choose
+     to defer something small for my own reasons, record it in Out of scope with its
+     estimate and no argument. The rule stops you pitching the dodge; it never
+     overrides my call.
+   - **A cut must be a separate capability, not the rest of this one.** Something is
+     only legitimately out of scope if it has its own future spec — a distinct
+     feature. If it's "the rest of *this* feature" (the error cases, the other half
+     of the CRUD, the edge handling), it is not out of scope; it's an acceptance
+     criterion. Move it into the user stories and testing decisions so the **gate**
+     enforces it, rather than leaving it in a prose aside that disappears. You can't
+     ticket your way out of the spec's own breadth.
+
+4. **Write `specs/<feature>.md`** using the template below.
 
 ## Template
 
@@ -56,8 +75,18 @@ schema, a type) may be inlined, trimmed to the decision-rich part.
 - The gate command this feature must pass (defaults to the project gate).
 
 ## Out of scope
-What this explicitly does not cover.
+Each genuine cut as one line: **what** it is — why it's a *separate capability*
+(not just the rest of this feature) — **your** time estimate to build it later.
+Anything you can't defend as a separate capability, or that falls under the
+threshold, does not belong here — it goes into the user stories above. An empty
+section is a fine and common answer; a long one is a signal you're shrinking the
+target. (Borrows Pocock's `triage` OUT-OF-SCOPE convention: exclusions are
+decisions on the page, not silent omissions.)
 ```
+
+Every line in this section is something I can read and veto in one pass — which is
+the whole purpose. A deferral with a 15-minute estimate next to it usually argues
+against itself.
 
 When the spec is written, the build has a fixed target: the user stories set the
 breadth, the seams set where tests live, and the gate sets what "done" means.

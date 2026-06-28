@@ -5,7 +5,7 @@ disable-model-invocation: true
 
 # /setup — configure this repo for Bench
 
-`bench link` wired the kit in and `bench init` scaffolded an empty `.bench/gate`.
+`bench link` wired the kit in and `bench init` scaffolded an empty `.bench/gate.sh`.
 This fills in the parts that are specific to *this* repo and can't be hardcoded:
 the real gate, the profile, and the domain language. It's prompt-driven, not a
 script — explore, present what you found, confirm with me, then write. Assume I
@@ -18,7 +18,7 @@ Read the repo first; don't assume. Check, quietly:
 - `git remote -v` — is there a remote? GitHub, GitLab, or local-only?
 - the stack: `package.json` / `pyproject.toml` / `Cargo.toml` / `go.mod` — what
   language, test runner, type checker, linter are actually present?
-- `.bench/gate` — already filled, or still the scaffold stub?
+- `.bench/gate.sh` — already filled, or still the scaffold stub?
 - `projects/<name>.md` — does a profile already exist for this repo?
 - **existing Pocock structure** — `CONTEXT.md`, `docs/adr/`, `docs/agents/` (an
   `issue-tracker.md` / `domain.md` from `setup-matt-pocock-skills`). If present,
@@ -38,7 +38,7 @@ a time** — present a section, get my answer, move on. Don't dump all three at 
 ### Section A — the gate (the oracle)
 
 > The gate is the only thing that can call a shift "done." It's a script at
-> `.bench/gate` that exits zero when the repo is in a shippable state. Everything
+> `.bench/gate.sh` that exits zero when the repo is in a shippable state. Everything
 > else in Bench enforces it; nothing overrides it. This is the load-bearing
 > choice — if the gate is weak, the whole system is weak.
 
@@ -95,8 +95,8 @@ it.
 
 ## 3. Confirm, then write
 
-Show me drafts of `.bench/gate`, `projects/<name>.md`, and (if chosen) `CONTEXT.md`
-before writing. Let me edit. Then write them, make `.bench/gate` executable, and
+Show me drafts of `.bench/gate.sh`, `projects/<name>.md`, and (if chosen) `CONTEXT.md`
+before writing. Let me edit. Then write them, make `.bench/gate.sh` executable, and
 verify it runs (`bench gate`) — if it errors for a reason other than real failing
 checks, fix the wiring before declaring done.
 
@@ -104,5 +104,5 @@ checks, fix the wiring before declaring done.
 
 Tell me what's now configured and that the working commands (`/map`, `/spec`,
 `/diagnose`, `/build`, `/review`, `/verify`) and `bench shift` will read from these
-files. Note that I can edit `.bench/gate` and the profile directly later — re-running
+files. Note that I can edit `.bench/gate.sh` and the profile directly later — re-running
 `/setup` is only for starting over.
