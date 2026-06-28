@@ -3,9 +3,10 @@
 The Bench kit itself — a harness-agnostic agent-development workflow shipped as the
 npm package `benchkit`. It is not an application: it is shell + markdown + JSON that
 other repos consume. The deliverable is the `bench` CLI (`bin/bench.sh`), the working
-agreement (`AGENTS.md`), and the `.claude/` skills, commands, and hooks. Because the
-artifacts are plain files, the kit must work identically under Claude Code, Codex, and
-any other AGENTS.md harness — that portability is the product.
+agreement (`AGENTS.md`), the portable `.agents/` skills and commands, and harness
+adapters that call shared `.bench/hooks/` scripts. Because the artifacts are plain
+files, the kit must work identically under Claude Code, Codex, and any other
+AGENTS.md harness — that portability is the product.
 
 ## Seams (test here; everything else is free to change)
 
@@ -18,11 +19,15 @@ any other AGENTS.md harness — that portability is the product.
   operational shell surface. Stable command names and exit codes are the contract;
   the implementation behind each is free to change. Keep gate resolution
   (`.bench/gate.sh` → `$BENCH_GATE` → auto-detect) in one place.
-- **The kit content surface** (`.claude/skills/*/SKILL.md`, `.claude/commands/*.md`).
-  Harness-facing content. The contract is structural: every skill carries YAML
+- **The kit content surface** (`.agents/skills/*/SKILL.md`, `.agents/commands/*.md`).
+  Portable harness-facing content. The contract is structural: every skill carries YAML
   frontmatter (name + description) and follows progressive disclosure; every command
   is a phase the index names. The gate's conformance layer enforces the index ⇆ disk
-  sync.
+  sync. `.claude/` paths are adapters, not a second source of truth.
+- **The safe link contract** (`bench link`). The adoption surface. It must preserve
+  project-owned `AGENTS.md` text, install only a managed Bench block plus Bench-owned
+  assets, fail on same-named project-owned skills/commands/hooks, and be idempotent
+  through the link manifest.
 - **AGENTS.md** — the single canonical working agreement. `CLAUDE.md` only imports it;
   never duplicate content there. The four invariants and the skills/commands index
   live here, and the gate checks that the index matches what's on disk.
@@ -37,20 +42,25 @@ No UI. There is **no design source** for this repo.
 
 The oracle for a kit, in layers (all green today):
 
-1. **Parse + validity** — `bash -n` on `bin/bench.sh` and the hooks; JSON parse on
-   `package.json` and `.claude/settings.json`. Plus two CLI invariants: the scripts
-   the harness execs by path are executable in git, and the CLI names the `.sh`
-   gate/done files that exist (an extensionless ref routes to auto-detect, not the
-   oracle).
+1. **Parse + validity** — `bash -n` on `bin/bench.sh` and the shared hooks; JSON
+   parse on `package.json`, `.claude/settings.json`, and `.codex/hooks.json`. Plus
+   two CLI invariants: the scripts the harness execs by path are executable in git,
+   and the CLI names the `.sh` gate/done files that exist (an extensionless ref routes
+   to auto-detect, not the oracle).
 2. **Structure** — every `SKILL.md` carries frontmatter; every `package.json`
-   `files[]` path resolves (npm-pack integrity).
+   `files[]` path resolves and the dry-run npm package includes required install
+   assets while excluding local-only settings.
 3. **Kit conformance** — the AGENTS.md index stays in sync with disk, both
    directions: every skill dir is referenced, every indexed skill exists, every
    command file is referenced as `/name`. This is the check that silently rots and
    breaks harnesses; it is the analog of gl-axi's `axi-conformance`.
 4. **shellcheck** — best-effort, runs only when installed (`-S warning`). Not a hard
    dependency; upgrades the shell lint automatically once present.
-5. **Canary (meta)** — the gate runs itself against deliberately-broken fixtures in
+5. **Safe-link behavior** — the gate runs `bench link` against throwaway repos to
+   prove fresh installs, existing `AGENTS.md` preservation, relink idempotence,
+   same-name conflicts, modified-managed file protection, Codex/Claude hook adapters,
+   shared hooks, and default copy mode.
+6. **Canary (meta)** — the gate runs itself against deliberately-broken fixtures in
    `tests/canary/` and asserts each goes red with its targeted error substring. Proves
    the checks above still *bite*: a check rotted into an always-pass fails here. This
    is the gate guarding the gate. Fixtures hide dot-dirs behind a `dot-` prefix (e.g.
@@ -76,9 +86,9 @@ The gate file lives outside `package.json` `files[]`, so it never ships to consu
   convenience. `CLAUDE.md` is just a one-line import of it; edit `AGENTS.md`, not it.
 - `CONTEXT.md` pins the ubiquitous language (gate, oracle, shift, seam, line, …). Use
   those terms exactly; don't invent synonyms.
-- The kit's portability across harnesses is a closed decision. Anything Claude-only
-  (the Stop hook, the PreToolUse git guard) is an *extra* interactive layer on top of
-  the harness-independent substrate (the `bench shift` loop + the git `pre-push`
-  hook) — never the only thing enforcing an invariant.
+- The kit's portability across harnesses is a closed decision. Claude and Codex hook
+  adapters are interactive layers on top of shared `.bench/hooks/` scripts and the
+  harness-independent substrate (the `bench shift` loop + the git `pre-push` hook) —
+  never the only thing enforcing an invariant.
 - The two `projects/*.md` example profiles (gl-axi, regroup) are shipped templates,
   not live projects. This file (`benchkit.md`) is the profile for this repo.

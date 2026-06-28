@@ -16,14 +16,14 @@ fail=0
 err() { echo "gate: $*" >&2; fail=1; }
 
 # 1. Shell scripts parse.
-for f in bin/bench.sh .claude/hooks/*.sh; do
+for f in bin/bench.sh .bench/hooks/*.sh; do
   bash -n "$f" || err "bash syntax error in $f"
 done
 
 # 1b. Scripts the harness/CLI exec by path are executable in git. A fresh clone or
 #     npm install gets the git index mode; if it is 100644 the hooks fail at runtime
 #     with "permission denied" (exit 126) on every Stop and every Bash tool call.
-for f in bin/bench.sh .claude/hooks/*.sh; do
+for f in bin/bench.sh .bench/hooks/*.sh; do
   mode="$(git ls-files -s "$f" | awk '{print $1}')"
   [ -z "$mode" ] && continue   # untracked — not part of what ships
   [ "$mode" = "100755" ] || err "$f is not executable in git (mode $mode); the harness runs it as a command path"
@@ -44,14 +44,97 @@ tmp="$(mktemp -d)"
 [ -f "$tmp/.bench/learnings.md" ] || err "bench init does not scaffold .bench/learnings.md (self-learning journal)"
 rm -rf "$tmp"
 
+# 1e. `bench link` must safely incorporate Bench into an existing repo. This is the
+#     adoption seam: exercise the real CLI against throwaway repos so clobbering,
+#     duplicate managed blocks, unsafe conflicts, missing hook adapters, and wrong
+#     default link mode all fail at the oracle.
+check_link_contract() {
+  local repo="$1"
+  ( cd "$repo" && bash "$root/bin/bench.sh" link ) >"$repo/link.out" 2>&1
+}
+
+count_literal() {
+  local needle="$1" file="$2"
+  grep -oF "$needle" "$file" 2>/dev/null | wc -l | tr -d ' '
+}
+
+tmp="$(mktemp -d)"
+(
+  set -u
+  cd "$tmp"
+  git init -q
+  check_link_contract "$tmp"
+  [ -f AGENTS.md ] || { echo "fresh link did not create AGENTS.md"; exit 1; }
+  [ "$(count_literal '<!-- bench:start -->' AGENTS.md)" = "1" ] || { echo "fresh link did not create exactly one managed start marker"; exit 1; }
+  [ "$(count_literal '<!-- bench:end -->' AGENTS.md)" = "1" ] || { echo "fresh link did not create exactly one managed end marker"; exit 1; }
+  [ -f .bench/BENCH.md ] || { echo "fresh link did not install .bench/BENCH.md"; exit 1; }
+  [ -f .bench/link-manifest.tsv ] || { echo "fresh link did not write link manifest"; exit 1; }
+  [ -f .agents/commands/build.md ] || { echo "fresh link did not install portable commands"; exit 1; }
+  [ -f .agents/skills/seams/SKILL.md ] || { echo "fresh link did not install portable skills"; exit 1; }
+  [ -f .claude/README.md ] || { echo "fresh link did not install Claude adapter README"; exit 1; }
+  grep -qF '.agents/' .claude/README.md || { echo "Claude adapter README does not explain .agents"; exit 1; }
+  grep -qF '.bench/hooks/' .claude/README.md || { echo "Claude adapter README does not explain shared hooks"; exit 1; }
+  [ -e .claude/commands/build.md ] || { echo "fresh link did not install Claude command adapter"; exit 1; }
+  [ -e .claude/skills/seams/SKILL.md ] || { echo "fresh link did not install Claude skill adapter"; exit 1; }
+  [ -f .codex/hooks.json ] || { echo "fresh link did not install Codex hook adapter"; exit 1; }
+  [ -f .bench/hooks/block-dangerous-git.sh ] || { echo "fresh link did not install shared hook scripts"; exit 1; }
+  [ -x .git/hooks/pre-push ] || { echo "fresh link did not install git pre-push hook"; exit 1; }
+  [ ! -L .agents/commands/build.md ] || { echo "default link mode symlinked portable commands"; exit 1; }
+  bash "$root/bin/bench.sh" link >/dev/null 2>&1
+  [ "$(count_literal '<!-- bench:start -->' AGENTS.md)" = "1" ] || { echo "relink duplicated managed Bench block"; exit 1; }
+) || err "bench link safe fresh/relink contract failed ($(cat "$tmp/link.out" 2>/dev/null | tail -n 1))"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u
+  cd "$tmp"
+  git init -q
+  printf 'PROJECT RULES\n' > AGENTS.md
+  check_link_contract "$tmp"
+  grep -qF 'PROJECT RULES' AGENTS.md || { echo "existing AGENTS.md content was clobbered"; exit 1; }
+  [ "$(count_literal '<!-- bench:start -->' AGENTS.md)" = "1" ] || { echo "existing AGENTS.md did not get exactly one managed block"; exit 1; }
+) || err "bench link existing AGENTS.md contract failed ($(cat "$tmp/link.out" 2>/dev/null | tail -n 1))"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u
+  cd "$tmp"
+  git init -q
+  mkdir -p .agents/commands
+  printf 'project command\n' > .agents/commands/build.md
+  if bash "$root/bin/bench.sh" link >link.out 2>&1; then
+    echo "link succeeded despite a project-owned command conflict"; exit 1
+  fi
+  grep -qi 'conflict' link.out || { echo "conflict output did not explain the conflict"; exit 1; }
+  grep -qF 'project command' .agents/commands/build.md || { echo "conflicting project command was overwritten"; exit 1; }
+  [ ! -f .bench/link-manifest.tsv ] || { echo "conflicting link wrote a manifest despite failing"; exit 1; }
+) || err "bench link conflict contract failed ($(cat "$tmp/link.out" 2>/dev/null | tail -n 1))"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u
+  cd "$tmp"
+  git init -q
+  check_link_contract "$tmp"
+  printf '\nlocal edit\n' >> .agents/commands/build.md
+  if bash "$root/bin/bench.sh" link >relink.out 2>&1; then
+    echo "relink overwrote a locally modified managed file"; exit 1
+  fi
+  grep -qi 'modified' relink.out || { echo "modified-managed output did not explain the local edit"; exit 1; }
+) || err "bench link modified-managed contract failed ($(cat "$tmp/relink.out" 2>/dev/null | tail -n 1))"
+rm -rf "$tmp"
+
 # 2. JSON is valid.
-for f in package.json .claude/settings.json; do
+for f in package.json .claude/settings.json .codex/hooks.json; do
   node -e 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"))' "$f" \
     || err "invalid JSON in $f"
 done
 
 # 3. Every skill carries YAML frontmatter (first line is the --- fence).
-for f in .claude/skills/*/SKILL.md; do
+for f in .agents/skills/*/SKILL.md; do
   [ "$(head -1 "$f")" = "---" ] || err "$f missing frontmatter"
 done
 
@@ -63,25 +146,56 @@ node -e '
   process.exit(bad);
 ' || fail=1
 
+pack_json="$(npm_config_cache="${TMPDIR:-/tmp}/bench-npm-cache" npm pack --dry-run --json 2>/dev/null)" || {
+  err "npm pack --dry-run failed"
+  pack_json="[]"
+}
+printf '%s' "$pack_json" | node -e '
+  const fs = require("fs");
+  const packs = JSON.parse(fs.readFileSync(0, "utf8"));
+  const files = new Set((packs[0]?.files ?? []).map(f => f.path));
+  let bad = 0;
+  for (const required of [
+    ".agents/commands/build.md",
+    ".agents/skills/seams/SKILL.md",
+    ".bench/BENCH.md",
+    ".bench/hooks/stop.sh",
+    ".claude/README.md",
+    ".codex/hooks.json",
+  ]) {
+    if (!files.has(required)) {
+      console.error("gate: npm package missing " + required);
+      bad = 1;
+    }
+  }
+  for (const forbidden of [".claude/settings.local.json"]) {
+    if (files.has(forbidden)) {
+      console.error("gate: npm package includes local-only file " + forbidden);
+      bad = 1;
+    }
+  }
+  process.exit(bad);
+' || fail=1
+
 # 5. Kit conformance — AGENTS.md index stays in sync with disk, both directions.
 #    a) every skill dir is referenced in AGENTS.md
-for d in .claude/skills/*/; do
+for d in .agents/skills/*/; do
   name="$(basename "$d")"
   grep -q "$name" AGENTS.md || err "skill '$name' on disk but not referenced in AGENTS.md"
 done
 #    b) every skill the index names exists on disk
 for name in $(grep -oE 'skills/[a-z0-9-]+/SKILL\.md' AGENTS.md | sed -E 's#skills/([a-z0-9-]+)/SKILL\.md#\1#' | sort -u); do
-  [ -d ".claude/skills/$name" ] || err "AGENTS.md indexes skill '$name' with no .claude/skills/$name on disk"
+  [ -d ".agents/skills/$name" ] || err "AGENTS.md indexes skill '$name' with no .agents/skills/$name on disk"
 done
 #    c) every command file is referenced as /name in AGENTS.md
-for f in .claude/commands/*.md; do
+for f in .agents/commands/*.md; do
   name="$(basename "$f" .md)"
   grep -q "/$name" AGENTS.md || err "command '/$name' on disk but not referenced in AGENTS.md"
 done
 
 # 6. shellcheck — stronger shell lint, best-effort (runs only when installed).
 if command -v shellcheck >/dev/null 2>&1; then
-  shellcheck -S warning bin/bench.sh .claude/hooks/*.sh || err "shellcheck reported issues"
+  shellcheck -S warning bin/bench.sh .bench/hooks/*.sh || err "shellcheck reported issues"
 fi
 
 # 7. Canary — prove the gate's own checks still bite. For each known-broken fixture in

@@ -53,9 +53,9 @@ because conflating them is how agent workflows rot:
 
 | Layer | What it is | Authority | Lives in |
 | --- | --- | --- | --- |
-| **Enforcement** | The gate + hooks | Hard. The agent can't override it. | `.claude/hooks/`, `.bench/gate.sh`, `bench` |
-| **Generation-shaping** | Skills | Probabilistic. Nudges *how* the agent writes. | `.claude/skills/` |
-| **Workflow discipline** | Commands | Canonical phases you invoke by name. | `.claude/commands/` |
+| **Enforcement** | The gate + hooks | Hard. The agent can't override it. | `.bench/gate.sh`, `.bench/hooks/`, `.claude/`, `.codex/`, `bench` |
+| **Generation-shaping** | Skills | Probabilistic. Nudges *how* the agent writes. | `.agents/skills/` |
+| **Workflow discipline** | Commands | Canonical phases you invoke by name. | `.agents/commands/` |
 
 If a skill and the gate disagree, the gate wins. That ordering is the whole point.
 
@@ -67,28 +67,37 @@ If a skill and the gate disagree, the gate wins. That ordering is the whole poin
 bench/
 ├── AGENTS.md                 # canonical working agreement — every harness reads this
 ├── CLAUDE.md                 # one-line import of AGENTS.md (for Claude Code)
+├── .agents/
+│   ├── commands/             # portable workflow phases + maintenance commands
+│   │   ├── setup.md
+│   │   ├── resynthesize.md
+│   │   ├── start-ideation.md
+│   │   ├── spec.md
+│   │   ├── fix-bug.md
+│   │   ├── build.md
+│   │   ├── prep-shift.md
+│   │   └── verify-gate.md
+│   └── skills/               # portable generation-shaping skills
+│       ├── seams/
+│       ├── tdd-at-seams/
+│       ├── adr/
+│       ├── axi/
+│       ├── design-system/
+│       ├── writing-great-skills/
+│       └── grill/
+├── .bench/
+│   ├── BENCH.md              # full Bench operating guide installed into projects
+│   └── hooks/                # shared hook scripts used by harness adapters
+│       ├── stop.sh
+│       └── block-dangerous-git.sh
 ├── .claude/
-│   ├── settings.json         # wires the Stop hook
-│   ├── commands/             # workflow phases + two maintenance commands
-│   │   ├── setup.md          #   maintenance: interview to configure a repo (gate, profile)
-│   │   ├── resynthesize.md   #   maintenance: pull upstream, re-run the synthesis, 3 loops
-│   │   ├── map.md            #   loose idea → decision map (fog of war)
-│   │   ├── spec.md           #   conversation → PRD with seams chosen up front
-│   │   ├── diagnose.md       #   the bug path: build a red-capable repro loop first
-│   │   ├── build.md          #   implement at seams, declared line, TDD at seams
-│   │   ├── review.md         #   two-axis semantic review (Standards + Spec)
-│   │   └── verify.md         #   run the gate, report, don't self-grade
-│   ├── skills/               # generation-shaping
-│   │   ├── seams/            #   deep modules; the interface IS the test surface
-│   │   ├── tdd-at-seams/     #   TDD without the cost tax or over-fit-and-stop
-│   │   ├── adr/              #   stateless-reader, current-state docs
-│   │   ├── axi/              #   agent-ergonomic CLI design (for gl-axi)
-│   │   ├── design-system/    #   consume Claude Design's tokens + components (Regroup)
-│   │   ├── writing-great-skills/  # author + prune the kit's own skills
-│   │   └── grill/            #   one-question-at-a-time elicitation
-│   └── hooks/
-│       ├── stop.sh           # completion oracle: blocks "done" on a red gate
-│       └── block-dangerous-git.sh  # the agent has no force-push / reset / merge authority
+│   ├── README.md             # explains Claude adapter paths -> .agents and .bench/hooks
+│   ├── settings.json         # Claude Code adapter pointing at .bench/hooks
+│   ├── commands -> ../.agents/commands
+│   ├── skills -> ../.agents/skills
+│   └── hooks -> ../.bench/hooks
+├── .codex/
+│   └── hooks.json            # Codex adapter pointing at .bench/hooks
 ├── bin/
 │   └── bench                 # worktrees (treehouse-lite) + gated loop (gnhf-lite)
 └── projects/
@@ -116,7 +125,8 @@ leave dangling symlinks). Prefer to install once and get a durable `bench` comma
 npm i -g benchkit
 # or, from a clone:  ln -s ~/src/bench/bin/bench.sh ~/.local/bin/bench
 cd ~/src/your-project
-bench link             # symlinks the kit in, so edits to a central kit propagate
+bench link             # copies Bench-owned assets in safely
+bench link symlink     # optional dogfood mode: point installed assets at this kit
 bench init
 ```
 
@@ -136,20 +146,24 @@ optional `CONTEXT.md`, one decision at a time, and writes them. That second half
 the part that can't be hardcoded — the gate command, the seams, and the lines differ
 in every repo — so it's an interview, not a script.
 
-`bench link` is idempotent and harness-neutral: it writes `AGENTS.md` (the source
-of truth), a one-line `CLAUDE.md` that imports it, links the skills and commands
-into both `.claude/` and `.agents/`, installs the Claude Code hooks, and installs a
-git `pre-push` guard. Pass `link copy` to force self-contained files, or `link
-symlink` to force links back to the kit. (A global/symlinked CLI can locate its kit
-automatically; if you copy `bench` somewhere by hand, set `BENCH_KIT=/path/to/kit`.)
+`bench link` is idempotent and harness-neutral. It preserves project-owned files,
+adds or updates only the managed Bench block in `AGENTS.md`, installs the full guide
+at `.bench/BENCH.md`, copies portable skills and commands into `.agents/`, installs
+Claude and Codex hook adapters that call shared `.bench/hooks/` scripts, and installs
+a git `pre-push` guard. Copy mode is the default; use `bench link symlink` only when
+you intentionally want a dogfood repo to follow live edits in a central kit checkout.
+If a project already owns a same-named skill, command, or pre-push hook, `bench link`
+fails with a conflict report instead of overwriting it. If you copy `bench` somewhere
+by hand, set `BENCH_KIT=/path/to/kit`.
 
 ## Migrating from Matt Pocock's skills
 
 If a repo is already set up with Pocock's engineering skills, you're most of the way
 there — Bench builds on the same substrate, so adopt what's there rather than
 restarting. `bench link` won't clobber an existing `CONTEXT.md`, `docs/adr/`, or
-`AGENTS.md`; it adds Bench's skills and commands alongside them and writes the
-`CLAUDE.md` import only if one doesn't exist. The pieces line up directly: a Pocock
+project-owned `AGENTS.md`; it appends or replaces only the managed Bench block,
+adds Bench's portable skills and commands alongside non-conflicting project assets,
+and writes the `CLAUDE.md` import only if one doesn't exist. The pieces line up directly: a Pocock
 `CONTEXT.md` is read as-is (Bench's cold-session convention is the same file), and
 `docs/adr/` is exactly where Bench's `adr` skill already writes, so your decision
 records carry over untouched. Where Pocock's `setup-matt-pocock-skills` recorded an
@@ -184,20 +198,18 @@ Switching harnesses is a no-op, by design. After `bench link`, the same repo is
 wired for all of them at once:
 
 - **Claude Code** reads `CLAUDE.md` (which imports `AGENTS.md`), auto-loads skills
-  from `.claude/skills/`, runs `/start-ideation`, `/spec`, … as slash commands, and fires the
-  Stop and PreToolUse hooks.
+  through `.claude/skills/`, runs `/start-ideation`, `/spec`, … as slash commands,
+  and fires the Stop and PreToolUse hooks through `.claude/settings.json`.
 - **Codex / OpenCode / other AGENTS.md harnesses** read `AGENTS.md` natively, find
   skills in `.agents/skills/`, and run the commands by reading the file in
   `.agents/commands/` (they're phases, not slash commands, on these harnesses).
 
-There is one source of truth — `AGENTS.md` — so you edit one file and every harness
-sees it. The skills are plain markdown that ports to any agent. The two things that
-are genuinely Claude-Code-specific (slash-command auto-invocation and the Stop /
-PreToolUse hooks) **degrade, they don't break**: the enforcement that matters is
-harness-independent — the `bench shift` loop runs the gate after every iteration and
-commits only on green, and the git `pre-push` hook protects the default branch no
-matter which agent (or human) pushes. On a non-Claude harness you lose the
-interactive Stop hook but keep both backstops.
+There is one portable content surface: `.agents/{skills,commands}`. Claude Code uses
+adapter paths under `.claude/`; Codex uses `.codex/hooks.json`; both hook adapters call
+the same shared scripts in `.bench/hooks/`. The enforcement that matters remains
+harness-independent too: the `bench shift` loop runs the gate after every iteration
+and commits only on green, and the git `pre-push` hook protects the default branch no
+matter which agent (or human) pushes.
 
 Optional knobs (env): `BENCH_AGENT` (headless agent command, default `claude`),
 `BENCH_MAX_ITERS`, `BENCH_MAX_TOKENS`, `BENCH_GATE` (a gate command if you'd rather

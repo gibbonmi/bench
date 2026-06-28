@@ -12,7 +12,12 @@
     "CLAUDE.md",
     "README.md",
     "HANDOFF.md",
-    ".claude/",
+    ".agents/",
+    ".bench/BENCH.md",
+    ".bench/hooks/",
+    ".claude/README.md",
+    ".claude/settings.json",
+    ".codex/hooks.json",
     "CHANGELOG.md"
   ],
   "keywords": [

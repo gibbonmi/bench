@@ -38,14 +38,15 @@ the agent never grades its own work.
 `AGENTS.md` is the single source of truth, read by every harness. Claude Code reads
 it via a one-line `@AGENTS.md` import in `CLAUDE.md`; Codex/OpenCode/other AGENTS.md
 harnesses read it natively. `bench link` wires a repo for all harnesses at once
-(skills into `.claude/skills` *and* `.agents/skills`, commands into both, the
-Claude hooks, and the git guard), so switching harnesses is just running a different
-agent — no reconfiguration.
+(portable skills and commands into `.agents/`, Claude adapter paths through
+`.claude/`, Codex hooks through `.codex/hooks.json`, shared scripts in
+`.bench/hooks/`, and the git guard), so switching harnesses is just running a
+different agent — no reconfiguration.
 
-What degrades on non-Claude harnesses (degrades, doesn't break): slash-command
-auto-invocation (commands become "read the phase file") and the interactive Stop /
-PreToolUse hooks. What survives intact: the `bench shift` loop (gate-on-green,
-commit only on green) and the git `pre-push` guard — both harness-independent.
+What degrades on harnesses without native slash commands: command auto-invocation
+becomes "read the phase file." What survives intact: the portable `.agents/`
+content, shared hook scripts where the harness supports hooks, the `bench shift`
+loop (gate-on-green, commit only on green), and the git `pre-push` guard.
 
 ## Current state
 
@@ -55,7 +56,8 @@ kit, not yet installed. Contents:
 - Commands: `/setup` + `/resynthesize` (maintenance), `/start-ideation`, `/spec`, `/fix-bug`, `/build`, `/prep-shift`, `/verify-gate`
 - Skills: `seams`, `tdd-at-seams`, `adr`, `axi`, `design-system`,
   `writing-great-skills`, `grill`
-- Hooks: `stop.sh` (completion oracle), `block-dangerous-git.sh` (git guard)
+- Hooks: shared `.bench/hooks/stop.sh` (completion oracle) and
+  `.bench/hooks/block-dangerous-git.sh` (git guard), with Claude and Codex adapters
 - CLI `bin/bench.sh`: `link`, `init`, `gate`, `worktree`, `shift`
 - Profiles: `projects/regroup.md`, `projects/gl-axi.md`
 - Instructions: `AGENTS.md` (canonical) + `CLAUDE.md` (import shim)

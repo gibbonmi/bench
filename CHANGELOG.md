@@ -7,6 +7,13 @@ one entry per `/resynthesize` run; don't rewrite history.
 
 ## Unreleased
 
+- **Safe link dogfood slice (2026-06-28).** Made `bench link` copy by default,
+  preserve project-owned `AGENTS.md` content through a managed Bench block, fail on
+  same-name project-owned skills/commands/hooks, record installed assets in a link
+  manifest, install portable `.agents/` content with Claude/Codex adapters, and gate
+  the contract through throwaway-repo link checks plus npm package inspection. Added
+  `.claude/README.md` so users can see that Claude paths are adapters to `.agents/`
+  and shared `.bench/hooks/`.
 - **Learnings run (2026-06-28, scope: learnings).** Drained two open entries from
   `.bench/learnings.md`. Promoted: a maintainer rule into HANDOFF — any `.bench/*`
   file the kit's prose references must be scaffolded by `bench init` and locked by a
