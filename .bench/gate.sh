@@ -29,6 +29,12 @@ for f in bin/bench.sh .claude/hooks/*.sh; do
   [ "$mode" = "100755" ] || err "$f is not executable in git (mode $mode); the harness runs it as a command path"
 done
 
+# 1c. The CLI must name the gate/done files that actually exist (.bench/gate.sh,
+#     .bench/done.sh). An extensionless reference routes `bench gate` to auto-detect
+#     instead of the repo's oracle, so it is a hard error.
+bad_refs="$(grep -oE '\.bench/(gate|done)(\.sh)?' bin/bench.sh | grep -vE '\.sh$' | sort -u || true)"
+[ -z "$bad_refs" ] || err "bin/bench.sh has extensionless gate/done refs ($(echo "$bad_refs" | tr '\n' ' ')); the contract is .sh"
+
 # 2. JSON is valid.
 for f in package.json .claude/settings.json; do
   node -e 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"))' "$f" \
