@@ -20,6 +20,12 @@ closed unless the upstream thing materially changed.
 - Diff upstream against the baseline into three lists: **new** (skills or techniques
   not in the baseline), **changed** (a mapped/folded item whose source file moved),
   **gone** (something Bench uses that was deprecated upstream).
+- Read `.bench/learnings.md` — the usage journal. Its open entries are a *second*
+  source of candidate changes, this time from how the kit actually behaved in real
+  work, not from upstream. Treat each open learning as a proposed change to assess
+  alongside the upstream deltas. (This is the self-improvement path: the kit gets
+  better from its own use, but only through this reviewed, signed-off loop — a
+  learning never edits a rule on its own.)
 
 ## 2. Respect closed decisions
 
@@ -63,5 +69,6 @@ Run these in order. A change that fails a loop is pruned or sent back, not shipp
 Only after all three loops pass and I've signed off: apply, update the provenance
 table, and append a `CHANGELOG.md` entry — date, upstream refs, what was adopted,
 what was rejected and why. That entry is the baseline the next `/resynthesize` reads,
-so closed decisions stay closed and the kit's evolution stays legible. The merge is
-mine; never auto-apply.
+so closed decisions stay closed and the kit's evolution stays legible. For any
+`.bench/learnings.md` entry you acted on, mark it resolved (promoted or dismissed,
+with one line of why) so it isn't re-reviewed. The merge is mine; never auto-apply.
