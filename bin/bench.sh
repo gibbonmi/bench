@@ -541,6 +541,100 @@ roadmap() {
   cat "$file"
 }
 
+# ---- status: the ambient dashboard ------------------------------------------
+# `bench status` is the single renderer (SessionStart hook + on-demand). It reads cheap
+# repo state and a gate cache, ranks the signals that fire on a fixed severity ladder,
+# and prints a one-line lead, up to five rows, and a zero-severity roadmap footer.
+# Deterministic plain shell — no model at render time; the agent reading it adds judgment.
+# Show-only-on-signal: a signal with nothing to report prints no row.
+status() {
+  local root head cache; root="$(repo_root)"
+  head="$(git -C "$root" rev-parse HEAD 2>/dev/null || echo none)"
+  local -a rows=()   # "rank|signal|detail|action"
+  local footer=""
+
+  # rank 0 / 6 — gate, from the Stop-hook cache (never a cold run). red iff fresh-red;
+  # stale iff the cache sha != HEAD (a stale green is not a clean bill); else silent.
+  # The cache lives in the git dir (never tracked), so it can't pollute commits.
+  cache="$(git -C "$root" rev-parse --absolute-git-dir 2>/dev/null)/bench-last-gate"
+  if [[ -f "$cache" ]]; then
+    local cstatus csha _crest
+    read -r cstatus csha _crest < "$cache" || true
+    if [[ "$csha" != "$head" ]]; then
+      rows+=("6|gate|stale (cache ${csha:0:7}, HEAD ${head:0:7})|re-run the gate")
+    elif [[ "$cstatus" == "red" ]]; then
+      rows+=("0|gate|red|fix before commit")
+    fi
+  fi
+
+  # rank 1 — uncommitted / unpushed
+  local dirty="" ahead=""
+  dirty="$(git -C "$root" status --porcelain 2>/dev/null || true)"
+  if git -C "$root" rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
+    ahead="$(git -C "$root" log --oneline '@{u}..HEAD' 2>/dev/null || true)"
+  fi
+  if [[ -n "$dirty" || -n "$ahead" ]]; then
+    local d="uncommitted + unpushed"
+    [[ -n "$dirty" && -z "$ahead" ]] && d="uncommitted changes"
+    [[ -z "$dirty" && -n "$ahead" ]] && d="unpushed commits"
+    rows+=("1|git|$d|commit on green / push")
+  fi
+
+  # rank 2 — stray worktree / active shift
+  local wtc; wtc="$(git -C "$root" worktree list 2>/dev/null | wc -l | tr -d ' ' || true)"
+  if [[ "${wtc:-1}" -gt 1 ]]; then
+    rows+=("2|worktree|$((wtc-1)) extra worktree(s)|resume or clean up (bench worktree)")
+  fi
+
+  # rank 3 — open learnings (configurable floor)
+  local floor open=0; floor="${BENCH_LEARNINGS_FLOOR:-1}"
+  [[ -f "$root/.bench/learnings.md" ]] && open="$(grep -c '\[open\]' "$root/.bench/learnings.md" 2>/dev/null || true)"
+  if [[ "${open:-0}" -ge "$floor" && "${open:-0}" -gt 0 ]]; then
+    rows+=("3|learnings|$open open|/resynthesize")
+  fi
+
+  # rank 4 — structural debt (reuses bench structure)
+  local sviol; sviol="$(structure 2>/dev/null | grep -cE '^(FILE TOO LONG|DIR CROWDED)' || true)"
+  if [[ "${sviol:-0}" -gt 0 ]]; then
+    rows+=("4|structure|$sviol issue(s)|split (seams)")
+  fi
+
+  # rank 5 — unresolved decision map (open-ticket marker convention)
+  local maps=0
+  if [[ -d "$root/decisions" ]]; then
+    maps="$(grep -lE '^— \((open|deferred)|GRILL DEFERRED' "$root"/decisions/*.md 2>/dev/null | wc -l | tr -d ' ' || true)"
+  fi
+  if [[ "${maps:-0}" -gt 0 ]]; then
+    rows+=("5|decisions|$maps unresolved map(s)|/grill → /spec")
+  fi
+
+  # footer — roadmap count (zero severity: never ranked, never the lead, never budgeted)
+  if [[ -s "$root/ROADMAP.md" ]]; then
+    local n; n="$(grep -c '^- ' "$root/ROADMAP.md" 2>/dev/null || true)"
+    [[ "${n:-0}" -gt 0 ]] && footer="$n idea(s) parked — bench roadmap"
+  fi
+
+  # --- render ---
+  if [[ ${#rows[@]} -eq 0 ]]; then
+    echo "bench: clean — nothing pending"
+    [[ -n "$footer" ]] && echo "$footer"
+    return 0
+  fi
+  local sorted; sorted="$(printf '%s\n' "${rows[@]}" | sort -t'|' -k1,1n)"
+  local _r lead_signal _d lead_action
+  IFS='|' read -r _r lead_signal _d lead_action <<< "$(printf '%s\n' "$sorted" | head -1)"
+  echo "▶ $lead_action  ($lead_signal)"
+  local total shown=0; total="$(printf '%s\n' "$sorted" | grep -c .)"
+  while IFS='|' read -r _r signal detail action; do
+    [[ -z "$_r" ]] && continue
+    shown=$((shown+1))
+    [[ "$shown" -le 5 ]] && printf '  %-10s %-30s → %s\n' "$signal" "$detail" "$action"
+  done <<< "$sorted"
+  [[ "$total" -gt 5 ]] && echo "  +$((total-5)) more"
+  [[ -n "$footer" ]] && echo "$footer"
+  return 0
+}
+
 # Wire the kit into the current repo for EVERY harness at once. Idempotent.
 # After this, Claude Code and any AGENTS.md harness work in the same repo with no
 # per-switch reconfiguration — switching harnesses is just running a different agent.
@@ -582,6 +676,7 @@ case "${1:-help}" in
   init)     init ;;
   idea)     shift; idea "$@" ;;
   roadmap)  roadmap ;;
+  status)   status ;;
   *) cat <<EOF
 bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench link [copy|symlink]  safely wire the kit into this repo for every harness
@@ -590,6 +685,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench structure            flag oversized files + crowded dirs (wire into the gate)
   bench idea "<text>"        park an out-of-scope idea in ROADMAP.md (commit to nothing)
   bench roadmap              list parked ideas
+  bench status               ambient dashboard: what needs attention + the next action
   bench gate                 run the project gate (the oracle)
   bench worktree             warm, isolated worktree subshell
   bench shift "<objective>"  gated loop: one small change per iteration, commit on green

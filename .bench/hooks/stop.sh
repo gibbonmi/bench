@@ -15,9 +15,21 @@ set -euo pipefail
 [[ "${BENCH_STOP_CHECKED:-0}" == "1" ]] && exit 0
 export BENCH_STOP_CHECKED=1
 
+# Record the gate verdict for `bench status` to read (the ambient surface never runs
+# the gate cold). The cache lives in the git dir, so it is never tracked or committed:
+#   <status> <HEAD sha> <iso8601>
+record_gate() {
+  local gitdir
+  gitdir="$(git rev-parse --absolute-git-dir 2>/dev/null)" || return 0
+  printf '%s %s %s\n' "$1" "$(git rev-parse HEAD 2>/dev/null || echo none)" \
+    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$gitdir/bench-last-gate"
+}
+
 if bench gate >/tmp/bench-gate.out 2>&1; then
+  record_gate green
   exit 0   # green — allow the agent to stop
 fi
+record_gate red
 
 {
   echo "BLOCKED: the gate is red, so this shift is not done."

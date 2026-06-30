@@ -16,10 +16,16 @@ AGENTS.md harness — that portability is the product.
   conformant tree (green) and a broken one (red); never by trusting a reading of the
   diff.
 - **The `bench` CLI subcommands** (`gate`, `worktree`, `shift`, `init`, `link`,
-  `models`, `structure`, `idea`, `roadmap`). The operational shell surface. Stable
-  command names and exit codes are the contract; the implementation behind each is free
-  to change. Keep gate resolution (`.bench/gate.sh` → `$BENCH_GATE` → auto-detect) in
+  `models`, `structure`, `idea`, `roadmap`, `status`). The operational shell surface.
+  Stable command names and exit codes are the contract; the implementation behind each is
+  free to change. Keep gate resolution (`.bench/gate.sh` → `$BENCH_GATE` → auto-detect) in
   one place.
+- **The ambient dashboard** (`bench status`). The single deterministic renderer the
+  SessionStart hook and the user both call: it ranks the signals that fire on a fixed
+  severity ladder and leads with the next action. Reads gate state from the **gate cache**
+  (`<git-dir>/bench-last-gate`, written by the Stop hook) — never a cold gate run. The
+  contract (gate-tested): show-only-on-signal, a five-row budget, a stale-green that is
+  not a clean bill, and a zero-severity roadmap footer that never leads.
 - **The roadmap capture sink** (`bench idea` / `bench roadmap` → `ROADMAP.md`). The
   capture-and-forget surface: park an out-of-scope idea, commit to nothing, promote it
   later only via `/start-ideation`. The contract (gate-tested in a throwaway repo):

@@ -78,6 +78,8 @@ tmp="$(mktemp -d)"
   [ -e .claude/skills/seams/SKILL.md ] || { echo "fresh link did not install Claude skill adapter"; exit 1; }
   [ -f .codex/hooks.json ] || { echo "fresh link did not install Codex hook adapter"; exit 1; }
   [ -f .bench/hooks/block-dangerous-git.sh ] || { echo "fresh link did not install shared hook scripts"; exit 1; }
+  [ -f .bench/hooks/session-start.sh ] || { echo "fresh link did not install the SessionStart hook"; exit 1; }
+  grep -q 'SessionStart' .claude/settings.json || { echo "fresh link .claude/settings.json has no SessionStart wiring"; exit 1; }
   [ -x .git/hooks/pre-push ] || { echo "fresh link did not install git pre-push hook"; exit 1; }
   [ ! -L .agents/commands/build.md ] || { echo "default link mode symlinked portable commands"; exit 1; }
   bash "$root/bin/bench.sh" link >/dev/null 2>&1
@@ -154,6 +156,107 @@ tmp="$(mktemp -d)"
   : > ROADMAP.md
   bash "$root/bin/bench.sh" roadmap | grep -qi 'empty' || { echo "roadmap on present-but-empty file did not report empty"; exit 1; }
 ) || err "bench idea/roadmap contract failed"
+rm -rf "$tmp"
+
+# 1g. `bench status` — the ambient-feedback surface renderer. Construct repo state in
+#     throwaway repos and assert the rendered output: the all-clear line, the gate
+#     signal resolved from the cache (red / stale / silent), each signal's action
+#     string, the zero-severity roadmap footer, and the five-row budget with a `+k more`
+#     tail. Deterministic plain shell, so it is fully contract-testable here.
+gci() { git -c user.email=bench@local -c user.name=bench "$@"; }
+# A — clean repo → all-clear, no footer.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
+  out="$(bash "$root/bin/bench.sh" status)"
+  grep -qiF 'clean — nothing pending' <<<"$out" || { echo "clean repo did not report all-clear"; exit 1; }
+) || err "bench status clean contract failed"
+rm -rf "$tmp"
+# B — clean + committed ROADMAP.md → footer present, never the lead.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  printf -- '- 2026-06-30  an idea\n' > ROADMAP.md; gci add -A; gci commit -q -m s
+  out="$(bash "$root/bin/bench.sh" status)"
+  grep -qiF 'clean — nothing pending' <<<"$out" || { echo "footer repo lost the all-clear line"; exit 1; }
+  grep -qF 'parked — bench roadmap' <<<"$out" || { echo "roadmap footer missing"; exit 1; }
+  if grep -qE '^▶.*bench roadmap' <<<"$out"; then echo "roadmap footer became the lead"; exit 1; fi
+) || err "bench status footer contract failed"
+rm -rf "$tmp"
+# C — gate cache present but sha != HEAD → stale row, and NOT a clean bill.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
+  printf 'green deadbeefdeadbeefdeadbeefdeadbeefdeadbeef 2026-06-30T00:00:00Z\n' > "$(gci rev-parse --absolute-git-dir)/bench-last-gate"
+  out="$(bash "$root/bin/bench.sh" status)"
+  grep -qF 're-run the gate' <<<"$out" || { echo "stale gate cache did not surface re-run"; exit 1; }
+  if grep -qiF 'clean — nothing pending' <<<"$out"; then echo "stale green read as a clean bill"; exit 1; fi
+) || err "bench status stale-gate contract failed"
+rm -rf "$tmp"
+# D — gate cache green AND fresh (sha == HEAD) → gate silent → all-clear.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
+  printf 'green %s 2026-06-30T00:00:00Z\n' "$(gci rev-parse HEAD)" > "$(gci rev-parse --absolute-git-dir)/bench-last-gate"
+  out="$(bash "$root/bin/bench.sh" status)"
+  grep -qiF 'clean — nothing pending' <<<"$out" || { echo "fresh-green gate was not silent"; exit 1; }
+) || err "bench status fresh-green contract failed"
+rm -rf "$tmp"
+# E — decision-map marker alone → the /grill → /spec action string.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir decisions; printf '### Answer\n— (deferred)\n' > decisions/x.md; gci add -A; gci commit -q -m s
+  out="$(bash "$root/bin/bench.sh" status)"
+  grep -qF '/grill → /spec' <<<"$out" || { echo "unresolved decision map did not surface /grill"; exit 1; }
+) || err "bench status decisions contract failed"
+rm -rf "$tmp"
+# F — six signals firing → gate red leads; budget caps at five rows + `+1 more`; the
+#     lowest-priority signal (the decision map) is dropped under the tail.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench; printf -- '- a [open]\n' > .bench/learnings.md
+  seq 401 | sed 's/^/x = /' > big.py
+  mkdir decisions; printf '### Answer\n— (deferred)\n' > decisions/x.md
+  gci add -A; gci commit -q -m s
+  printf 'red %s 2026-06-30T00:00:00Z\n' "$(gci rev-parse HEAD)" > "$(gci rev-parse --absolute-git-dir)/bench-last-gate"
+  echo dirty > dirty.txt
+  gci worktree add -q --detach "$tmp/wt2" HEAD 2>/dev/null
+  out="$(bash "$root/bin/bench.sh" status)"
+  head -1 <<<"$out" | grep -qF 'fix before commit' || { echo "red gate did not lead the budget case"; exit 1; }
+  grep -qF '+1 more' <<<"$out" || { echo "six signals did not trigger the +k more tail"; exit 1; }
+  grep -qF '/resynthesize' <<<"$out" || { echo "learnings dropped from the top five"; exit 1; }
+  grep -qF 'split (seams)' <<<"$out" || { echo "structure dropped from the top five"; exit 1; }
+  grep -qF 'commit on green / push' <<<"$out" || { echo "git signal action string missing"; exit 1; }
+  grep -qF 'resume or clean up' <<<"$out" || { echo "worktree signal action string missing"; exit 1; }
+  if grep -qF '/grill → /spec' <<<"$out"; then echo "lowest-priority signal not dropped under the budget"; exit 1; fi
+  rows="$(grep -cE '^  [a-z]' <<<"$out")"
+  [ "$rows" -le 5 ] || { echo "budget exceeded five rows ($rows)"; exit 1; }
+) || err "bench status budget contract failed"
+rm -rf "$tmp"
+# G — the Stop hook records the gate verdict to the git-dir cache, in the format
+#     `bench status` reads back. Run it armed (BENCH_SHIFT=1) in a throwaway repo.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
+  BENCH_SHIFT=1 BENCH_STOP_CHECKED=0 bash "$root/.bench/hooks/stop.sh" >/dev/null 2>&1 || true
+  cache="$(gci rev-parse --absolute-git-dir)/bench-last-gate"
+  [ -f "$cache" ] || { echo "Stop hook did not write the gate cache"; exit 1; }
+  grep -qE '^(green|red) [0-9a-f]+ [0-9T:Z-]+$' "$cache" || { echo "gate cache not <status> <sha> <iso8601>"; exit 1; }
+) || err "bench status gate-cache write contract failed"
+rm -rf "$tmp"
+# H — BENCH_LEARNINGS_FLOOR moves the open-learnings threshold (a single open learning is
+#     silent at floor 2, surfaced at floor 1).
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench; printf -- '- a [open]\n' > .bench/learnings.md; gci add -A; gci commit -q -m s
+  hi="$(BENCH_LEARNINGS_FLOOR=2 bash "$root/bin/bench.sh" status)"
+  if grep -qF '/resynthesize' <<<"$hi"; then echo "floor=2 still surfaced a single open learning"; exit 1; fi
+  lo="$(BENCH_LEARNINGS_FLOOR=1 bash "$root/bin/bench.sh" status)"
+  grep -qF '/resynthesize' <<<"$lo" || { echo "floor=1 did not surface the open learning"; exit 1; }
+) || err "bench status learnings-floor contract failed"
 rm -rf "$tmp"
 
 # 2. JSON is valid.

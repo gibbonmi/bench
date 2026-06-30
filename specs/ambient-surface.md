@@ -50,7 +50,7 @@ fast and never runs the gate cold.
     count.
 16. As a user, I want structural debt surfaced with "split."
 17. As a user, I want an unresolved decision map surfaced with "/grill → /spec."
-18. As a user, I want parked roadmap ideas shown as a passive footer count (`N ideas
+18. As a user, I want parked roadmap ideas shown as a passive footer count (`N idea(s)
     parked — bench roadmap`), never an action row, never inside the five-row budget.
 19. As a user, I want the dashboard to appear automatically at SessionStart in Claude
     Code.
@@ -85,17 +85,21 @@ fast and never runs the gate cold.
 - **Concision (#4):** show-only-on-signal; hard five-row budget with a `+k more` tail;
   one-line lead headline; an all-clear line when nothing fires. The footer is outside the
   budget.
-- **Gate signal from a cache file** `.bench/last-gate` (format: `<status> <sha>
-  <iso8601>`). Resolution: **red** iff status=red and sha == HEAD; **stale** iff sha !=
-  HEAD (whatever the status — a stale green is never a clean bill, #2); **silent** iff
-  (green and fresh) or no cache at all.
+- **Gate signal from a cache file in the git dir** —
+  `$(git rev-parse --absolute-git-dir)/bench-last-gate` (format: `<status> <sha>
+  <iso8601>`). Chosen over `.bench/last-gate`: the git dir is never tracked, so the cache
+  can't pollute commits or read as dirty and needs no `.gitignore` management — story 21
+  for free, and it works for consumers automatically. Resolution: **red** iff status=red
+  and sha == HEAD; **stale** iff sha != HEAD (whatever the status — a stale green is never
+  a clean bill, #2); **silent** iff (green and fresh) or no cache at all.
 - **Cache writer: the Stop hook** (`.bench/hooks/stop.sh`), composing the existing
   completion-oracle seam. It already runs `bench gate` and branches on the verdict; it
-  writes `.bench/last-gate` in both branches. This is chosen over "the shift loop writes
-  it" (#2's tentative phrasing) because `run_gate` **execs** the gate, so the in-process
-  loop cannot act after a gate run — whereas the Stop hook runs the gate as a subprocess
-  and already holds the verdict. *(Open for veto; see Out of scope re: the exec defect.)*
-- **Cache is runtime state:** gitignored, never in `package.json` `files[]`.
+  writes the cache in both branches. This is chosen over "the shift loop writes it"
+  (#2's tentative phrasing) because `run_gate` **execs** the gate, so the in-process loop
+  cannot act after a gate run — whereas the Stop hook runs the gate as a subprocess and
+  already holds the verdict. *(Open for veto; see Out of scope re: the exec defect.)*
+- **Cache is runtime state:** lives in the git dir (never tracked), never in
+  `package.json` `files[]`.
 - **SessionStart trigger:** a shared `.bench/hooks/session-start.sh` runs `bench status`;
   the Claude Code adapter wires it under `.claude/settings.json` `hooks.SessionStart`.
   `bench link` installs the shared hook and the adapter (the link contract already
@@ -124,8 +128,8 @@ fast and never runs the gate cold.
   footer appears iff `ROADMAP.md` is non-empty and is never the lead; gate **red** (fresh
   red cache), gate **stale** (sha mismatch), and gate **silent** (fresh green cache, and
   no cache).
-- **Cache write:** a focused assertion that the Stop hook writes `.bench/last-gate` in a
-  format `bench status` reads back (round-trip), exercised with `BENCH_SHIFT=1`.
+- **Cache write:** a focused assertion that the Stop hook writes `<git-dir>/bench-last-gate`
+  in a format `bench status` reads back (round-trip), exercised with `BENCH_SHIFT=1`.
 - **Canary fixture** (`tests/canary/`): a `bench status` that drops a signal (e.g. always
   prints clean) must make the gate go red, proving the renderer contract bites. Follow the
   existing fixture shape.
