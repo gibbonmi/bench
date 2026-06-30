@@ -30,8 +30,8 @@ cold session reads this first to avoid drifting the vocabulary.
   learn the seams, lines, gate command, and (for UI repos) the design source.
 - **skill** — probabilistic guidance that shapes *how* the model generates
   (`.claude/skills/*/SKILL.md`). Reached for when the task matches; not a rule.
-- **command** — a canonical phase of the workflow (`/start-ideation`, `/spec`, `/fix-bug`,
-  `/build`, `/prep-shift`, `/verify-gate`, plus `/setup`, `/resynthesize`). Not "slash command
+- **command** — a canonical phase of the workflow (`/bench-ideate`, `/bench-spec`, `/bench-diagnose`,
+  `/bench-build`, `/bench-review`, `/bench-qa`, plus `/bench-setup`, `/resynthesize`). Not "slash command
   template" in prose — command.
 - **roadmap** — the capture-and-forget sink at `ROADMAP.md` (repo root): out-of-scope
   ideas parked with `bench idea`, committing to nothing, listed with `bench roadmap`.
@@ -39,7 +39,7 @@ cold session reads this first to avoid drifting the vocabulary.
   work you've queued to do) — roadmap.
 - **park** — to capture an idea on the **roadmap** without committing to it
   (`bench idea "<text>"`). A *parked idea* graduates into committed work only when
-  `/start-ideation` pulls it into a decision map. Not "stash", not "file" — park.
+  `/bench-ideate` pulls it into a decision map. Not "stash", not "file" — park.
 - **ambient dashboard** — what `bench status` prints: the cold-session + on-demand view
   of what needs attention. The feature that renders it is the *ambient-feedback surface*;
   the printed thing is the ambient dashboard. Not "status report", not "summary".

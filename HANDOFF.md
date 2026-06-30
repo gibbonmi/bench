@@ -53,9 +53,9 @@ loop (gate-on-green, commit only on green), and the git `pre-push` guard.
 The kit exists as `bench.tar.gz`. Nothing is wired into a real repo yet — it's a
 kit, not yet installed. Contents:
 
-- Commands: `/setup` + `/resynthesize` (maintenance), `/start-ideation`, `/spec`, `/fix-bug`, `/build`, `/prep-shift`, `/verify-gate`
-- Skills: `seams`, `tdd-at-seams`, `adr`, `axi`, `design-system`,
-  `writing-great-skills`, `grill`
+- Commands: `/bench-setup` + `/resynthesize` (maintenance), `/bench-ideate`, `/bench-spec`, `/bench-diagnose`, `/bench-build`, `/bench-review`, `/bench-qa`
+- Skills: `bench-craft-seams`, `bench-craft-tdd`, `bench-craft-adr`, `bench-craft-cli`, `bench-craft-design-system`,
+  `bench-craft-skills`, `bench-craft-grill`
 - Hooks: shared `.bench/hooks/stop.sh` (completion oracle) and
   `.bench/hooks/block-dangerous-git.sh` (git guard), with Claude and Codex adapters
 - CLI `bin/bench.sh`: `link`, `init`, `gate`, `worktree`, `shift`
@@ -70,10 +70,10 @@ names `design-conformance` as contracts you implement.
 ## Next steps (in order)
 
 1. **Install.** Symlink `bin/bench.sh` onto PATH (a symlink, so it can find its kit),
-   then in each repo run `bench link`, `bench init`, and `/setup` (the interactive
+   then in each repo run `bench link`, `bench init`, and `/bench-setup` (the interactive
    configure step). Exact commands in `README.md`.
 2. **Stand up the gate in each repo** — the single load-bearing step; until the gate
-   runs real checks the oracle is empty and the system is inert. `/setup` walks you
+   runs real checks the oracle is empty and the system is inert. `/bench-setup` walks you
    through this; or edit each `.bench/gate.sh` directly:
    - Regroup: `mypy regroup && pytest -q && ruff check regroup` (+ design-conformance for UI).
    - gl-axi: `pytest -q && axi-conformance ./gl-axi && bench-glab-delta --assert`.
@@ -89,11 +89,11 @@ names `design-conformance` as contracts you implement.
    `CoordinateProvider`, the shuttle slider. gl-axi: AXI vocabulary, the output
    boundary. Then add "read CONTEXT.md first" to each profile.
 5. **Run one real shift end-to-end** on something low-stakes (a gl-axi command
-   wrapper): `/spec` it, `bench shift`, confirm the gate gates, the Stop hook blocks
-   on red, `/prep-shift` runs, you merge.
+   wrapper): `/bench-spec` it, `bench shift`, confirm the gate gates, the Stop hook blocks
+   on red, `/bench-review` runs, you merge.
 6. **Optional / when needed:** an AXI SessionStart ambient-context hook
    (cold-session dashboard, pairs with CONTEXT.md); a `/handoff` command if you lose
-   mid-task state; run `writing-great-skills` against the kit to prune.
+   mid-task state; run `bench-craft-skills` against the kit to prune.
 
 ## Design system note
 
@@ -108,7 +108,7 @@ gate runs against the design repo regardless of harness.
 The kit is near the legibility ceiling (6 workflow commands + 2 maintenance commands, 7 skills, 2 hooks, CLI,
 profiles). A new piece earns its place only if it fills a gap the existing layers
 can't — not because it's good in isolation. Watch the three check surfaces for
-sediment: the gate (`/verify-gate`, deterministic, authoritative), `/prep-shift` (semantic,
+sediment: the gate (`/bench-qa`, deterministic, authoritative), `/bench-review` (semantic,
 advisory), and the Stop hook. Keep them single-sourced — the gate command lives only
 in `.bench/gate.sh`. The urge to add a fourth check surface is the signal to prune.
 

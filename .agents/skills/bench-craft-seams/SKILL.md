@@ -1,6 +1,6 @@
 ---
-name: seams
-description: Vocabulary and principles for placing test seams and designing deep modules. Use whenever deciding where a test should attach, whether to introduce an abstraction, how to make code testable, or when /spec is picking seams. Reach for this any time the question is "where does the interface go" or "is this the right boundary to test" — even on small changes.
+name: bench-craft-seams
+description: Vocabulary and principles for placing test seams and designing deep modules. Use whenever deciding where a test should attach, whether to introduce an abstraction, how to make code testable, or when /bench-spec is picking seams. Reach for this any time the question is "where does the interface go" or "is this the right boundary to test" — even on small changes.
 ---
 
 # Seams
@@ -30,7 +30,7 @@ Callers and tests cross the same seam. Test through the interface, exercising
 observable behavior — not private internals. If you want to test *past* the
 interface, the module is the wrong shape; fix the shape, don't reach around it.
 
-This is why `/spec` picks seams before `/build` runs: a test attached to a
+This is why `/bench-spec` picks seams before `/bench-build` runs: a test attached to a
 well-placed seam checks behavior the user cares about, so an agent can't satisfy
 it by over-fitting to incidental implementation detail. A test attached to an
 internal is something the agent can game.

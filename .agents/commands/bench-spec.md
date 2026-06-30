@@ -2,14 +2,14 @@
 description: Turn the current conversation into a build spec — user stories, pre-agreed test seams, and testing decisions. Use before any build that is more than a trivial change. No interview; synthesize what we've already discussed.
 ---
 
-# /spec — lock the seams before the loop runs
+# /bench-spec — lock the seams before the loop runs
 
 Synthesize the current conversation and codebase understanding into a spec the
 build loop can run against. Do **not** interview me — use what you already know.
 If something load-bearing is genuinely missing, ask one question, then proceed.
 
 The point of this command is to decide the **seams and the tests before any code
-is written**, so that when `/build` runs TDD it tests at a seam I chose, against a
+is written**, so that when `/bench-build` runs TDD it tests at a seam I chose, against a
 notion of "correct" I defined — not one the agent invents mid-loop and then
 over-fits to. This is the single most important step for keeping an autonomous
 loop honest.
@@ -22,7 +22,7 @@ loop honest.
 
 2. **Pick the seams.** Sketch where this feature will be tested. Prefer an
    existing seam to a new one. Use the highest seam that exercises the real
-   behavior — the fewer seams, the better; one is ideal. (See the `seams` skill.)
+   behavior — the fewer seams, the better; one is ideal. (See the `bench-craft-seams` skill.)
    State the seams explicitly and check they match my expectation before writing
    the spec.
 
@@ -94,5 +94,5 @@ breadth, the seams set where tests live, and the gate sets what "done" means.
 Before any build starts, emit a scannable approval table — user stories / seams /
 out of scope — and pause for my sign-off. The full spec file stays as written; the
 table is the at-a-glance veto surface. Only after I approve, lead with the recommended
-next action — `/build` interactively, or a `/shift` for locked-spec mechanical work —
+next action — `/bench-build` interactively, or a `/shift` for locked-spec mechanical work —
 and a one-clause why, not a neutral either/or.

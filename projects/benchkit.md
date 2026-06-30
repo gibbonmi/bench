@@ -28,7 +28,7 @@ AGENTS.md harness — that portability is the product.
   not a clean bill, and a zero-severity roadmap footer that never leads.
 - **The roadmap capture sink** (`bench idea` / `bench roadmap` → `ROADMAP.md`). The
   capture-and-forget surface: park an out-of-scope idea, commit to nothing, promote it
-  later only via `/start-ideation`. The contract (gate-tested in a throwaway repo):
+  later only via `/bench-ideate`. The contract (gate-tested in a throwaway repo):
   `idea` appends one dated line and creates the file; a no-arg `idea` errors without
   appending; `roadmap` reports empty when there's nothing parked. `ROADMAP.md` is
   per-consumer content — never in the kit's `package.json` `files[]`.
@@ -88,7 +88,7 @@ The gate file lives outside `package.json` `files[]`, so it never ships to consu
 
 - **Skill / command / doc authoring** → **top model, high effort**. Prose that shapes
   agent behavior is the genuinely uncertain, high-leverage seam; the
-  `writing-great-skills` and `adr` skills apply. Spend here.
+  `bench-craft-skills` and `bench-craft-adr` skills apply. Spend here.
 - **`bench` CLI shell plumbing** → cheap model, low–medium effort at the known seam.
   Mechanical once the gate-resolution and worktree-pool shapes exist.
 - **Gate / conformance logic** → mid effort. Correctness of the oracle matters more

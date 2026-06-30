@@ -24,7 +24,7 @@ UI is **not** a unit-test seam. It is gated by the design system, the
 
 Visual decisions live in the **separate Regroup design repo** (tokens + canonical
 component inventory), consumed here as a submodule / package / pinned path. See the
-`design-system` skill. It is the source of truth for every color, spacing, type,
+`bench-craft-design-system` skill. It is the source of truth for every color, spacing, type,
 and motion value, and for every component. UI work **composes** from it and
 **references tokens** — it never hardcodes a value or regenerates a canonical
 component. A missing token or variant is a design decision: add it in the design
@@ -63,7 +63,7 @@ Never regenerate the canonical shuttle slider — compose it.
   The genuinely uncertain seam; spend here.
 - **CoordinateProvider plumbing, Pydantic models, store wiring** → cheap model,
   low–medium effort at the known seam.
-- **UI components** → mid model with `design-system` + `regroup-ui` + the
+- **UI components** → mid model with `bench-craft-design-system` + `regroup-ui` + the
   screenshot loop. The loop and the conformance gate, not raw model strength, are
   what catch the failures here.
 

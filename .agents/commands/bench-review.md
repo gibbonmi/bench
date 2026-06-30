@@ -1,12 +1,12 @@
 ---
-description: Two-axis semantic review of a shift branch — Standards (does the diff follow this repo's conventions) and Spec (does it match what the spec asked for). Use after /build, before merge, to catch what the gate can't see. Advisory, not authoritative.
+description: Two-axis semantic review of a shift branch — Standards (does the diff follow this repo's conventions) and Spec (does it match what the spec asked for). Use after /bench-build, before merge, to catch what the gate can't see. Advisory, not authoritative.
 ---
 
-# /prep-shift — the check the gate can't run
+# /bench-review — the check the gate can't run
 
 The gate is deterministic: tests, types, lint, conformance. It catches regressions
 and rule violations. It cannot tell whether you built the *right* thing the *right*
-way. `/prep-shift` is the semantic pass that can — and it's advisory: it surfaces
+way. `/bench-review` is the semantic pass that can — and it's advisory: it surfaces
 findings for you, it has no authority to call anything done. The gate and you do.
 
 Run it on the branch diff against its merge-base, on two axes that stay separate.
@@ -41,7 +41,7 @@ Run it on the branch diff against its merge-base, on two axes that stay separate
 
 ## Where it sits
 
-`/prep-shift` is generation-shaping, not enforcement: run it, read the findings, decide
-what to fix. Then the deterministic gate (`/verify-gate`) still has to be green, and the
+`/bench-review` is generation-shaping, not enforcement: run it, read the findings, decide
+what to fix. Then the deterministic gate (`/bench-qa`) still has to be green, and the
 merge is still yours. Review tells you whether it's *good*; the gate tells you
 whether it's *done*; you decide whether it ships.

@@ -60,7 +60,7 @@ than no loop — it's the failure mode that got the ECC harness rejected.
 For each surviving candidate from either stream, classify in one line: **Map** (fills
 a gap the existing layers can't), **Fold** (absorb into an existing piece),
 **Recommend** (note it, don't build), **Skip** (with the reason). The bar is the
-anti-sediment bar from `writing-great-skills`: a change earns its place only if it
+anti-sediment bar from `bench-craft-skills`: a change earns its place only if it
 fills a real gap, never because it's good in isolation. Present the proposed set with
 each item tagged upstream or learnings.
 
@@ -68,14 +68,14 @@ each item tagged upstream or learnings.
 
 Run in order; a change that fails a loop is pruned or sent back, not shipped.
 
-1. **Legibility loop.** Run `writing-great-skills` against each change. No-op?
+1. **Legibility loop.** Run `bench-craft-skills` against each change. No-op?
    Duplicates an existing piece? Pushes the kit past its legibility ceiling? Cut or
    fold it. A bigger kit is a cost, not a feature.
 2. **Consistency loop.** Apply to a working copy, then re-run the staleness audit:
    grep for invariant drift, broken cross-references, stale paths, app-specific
    leakage into core files, an out-of-date provenance table. Fix every hit.
 3. **Dogfood loop — the oracle.** Run a real shift on a real repo with the changed
-   kit: `/spec` a small task, `bench shift`, confirm the gate gates, the hooks fire,
+   kit: `/bench-spec` a small task, `bench shift`, confirm the gate gates, the hooks fire,
    `bench gate` ends green. A change that reads well but breaks a real run is
    rejected. If you can't run a dogfood shift, the re-synthesis is **not complete** —
    say so rather than adopting on paper. The kit does not grade its own update; a run

@@ -3,7 +3,7 @@ description: Configure this repo for Bench — fill in the gate, the project pro
 disable-model-invocation: true
 ---
 
-# /setup — configure this repo for Bench
+# /bench-setup — configure this repo for Bench
 
 `bench link` wired the kit in and `bench init` scaffolded an empty `.bench/gate.sh`.
 This fills in the parts that are specific to *this* repo and can't be hardcoded:
@@ -95,8 +95,8 @@ Write `projects/<name>.md` from the example profiles in the kit as a template.
 > term per concept and list the ones to avoid). Optional, but it pays for itself
 > fast.
 
-Offer to seed it now (a short `/grill` pass over the core nouns) or to leave it for
-later — `/start-ideation` and `/spec` can create it lazily when terms get resolved. Don't force
+Offer to seed it now (a short `/bench-craft-grill` pass over the core nouns) or to leave it for
+later — `/bench-ideate` and `/bench-spec` can create it lazily when terms get resolved. Don't force
 it.
 
 ## 3. Confirm, then write
@@ -108,7 +108,7 @@ checks, fix the wiring before declaring done.
 
 ## 4. Done
 
-Tell me what's now configured and that the working commands (`/start-ideation`, `/spec`,
-`/fix-bug`, `/build`, `/prep-shift`, `/verify-gate`) and `bench shift` will read from these
+Tell me what's now configured and that the working commands (`/bench-ideate`, `/bench-spec`,
+`/bench-diagnose`, `/bench-build`, `/bench-review`, `/bench-qa`) and `bench shift` will read from these
 files. Note that I can edit `.bench/gate.sh` and the profile directly later — re-running
-`/setup` is only for starting over.
+`/bench-setup` is only for starting over.

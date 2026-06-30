@@ -1,5 +1,5 @@
 ---
-name: axi
+name: bench-craft-cli
 description: Design standards for building CLI tools that agents drive through the shell — TOON output, minimal schemas, structured errors, ambient context. Use whenever building, modifying, or reviewing gl-axi or any agent-facing CLI. Reach for this on any command output, flag, error message, or exit code in an agent-facing tool.
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: writing-great-skills
+name: bench-craft-skills
 description: Principles for writing and editing skills so they fire reliably and stay lean. Use whenever creating, editing, reviewing, or pruning any skill — the kit's own skills or your project's. Reach for this any time you're about to add or change a SKILL.md.
 ---
 
@@ -14,12 +14,12 @@ output. Every rule below serves that.
 - **Model-invoked** — keeps a `description`, so the agent can fire it on its own and
   other skills can reach it. Costs context load (the description sits in the window
   every turn). Use when the agent must reach the skill autonomously. In this kit:
-  `seams`, `tdd-at-seams`, `adr`, `axi`, `design-system`, `grill` — the agent
+  `bench-craft-seams`, `bench-craft-tdd`, `bench-craft-adr`, `bench-craft-cli`, `bench-craft-design-system`, `bench-craft-grill` — the agent
   reaches for them mid-work.
 - **User-invoked** — `disable-model-invocation: true`; only you, by name, can fire
   it; zero context load, but *you* are the index that must remember it exists. Use
   for canonical phases you drive deliberately. In this kit: the commands
-  (`/start-ideation`, `/spec`, `/build`, `/prep-shift`, `/verify-gate`).
+  (`/bench-ideate`, `/bench-spec`, `/bench-build`, `/bench-review`, `/bench-qa`).
 
 Pick model-invocation only when the agent or another skill must reach it on its own.
 

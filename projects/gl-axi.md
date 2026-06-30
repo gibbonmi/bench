@@ -2,7 +2,7 @@
 
 An agent-optimized GitLab CLI: an AXI-conformant wrapper over `glab`, designed so
 an agent gets higher accuracy at lower token cost than driving raw `glab`. The
-`axi` skill is the design spec; this profile makes conformance a gate check.
+`bench-craft-cli` skill is the design spec; this profile makes conformance a gate check.
 
 ## Seams (test here)
 

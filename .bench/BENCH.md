@@ -84,11 +84,11 @@ code, the journal — those stay as full as their templates need).
 
 Use the canonical phases when the work needs them:
 
-1. `/start-ideation` for unresolved decisions.
-2. `/spec` to lock stories, seams, and gate expectations.
-3. `/build` to implement at the chosen seams.
-4. `/prep-shift` for semantic review against standards and spec.
-5. `/verify-gate` to report the gate result.
+1. `/bench-ideate` for unresolved decisions.
+2. `/bench-spec` to lock stories, seams, and gate expectations.
+3. `/bench-build` to implement at the chosen seams.
+4. `/bench-review` for semantic review against standards and spec.
+5. `/bench-qa` to report the gate result.
 
 Small mechanical changes can use the lighter path, but skipping the canonical
 workflow is a reviewer decision.

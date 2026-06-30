@@ -146,3 +146,24 @@ close a map while any remain._
 - **Proposed rule change:** /grill and /start-ideation should, at the exit that declares a
   map closed, scan for unfilled Answer placeholders (`^— \((open|deferred)` / `GRILL
   DEFERRED`) and refuse to close while any remain. One-line guard in each command's exit.
+
+## 2026-06-30 — rename sed over-matched separator slashes and a $-anchored exclude regex leaked out-of-scope files  [open]
+- **What happened:** Building the mechanical command/skill rename, I drove the
+  reference updates with `sed 's#/spec\b#/bench-spec#g'` (and `/build`, `/setup`,
+  `/grill`) across the doc surface. Two bugs: (1) the exclude filter
+  `grep -vE '^(decisions/|…)$'` was `$`-anchored, so `decisions/` only excluded a file
+  literally named "decisions/" — every `decisions/*.md` (out of scope, historical) got
+  edited anyway. (2) `/spec\b` matched **separator slashes** in prose — `map/spec/issue`,
+  `Install/setup`, `agent/setup` — corrupting concept words the spec explicitly
+  protected. The gate stayed green throughout (it doesn't read prose), so only the
+  semantic `/bench-review` pass plus a "word-char before the new identifier" scan caught it.
+- **Right behavior:** For a rename sed, (a) build the exclude list with *prefix* matching
+  and dry-run it against the real file list before editing; (b) anchor an
+  invocation pattern so a leading separator can't read as a command — match `/cmd`
+  only when preceded by whitespace/start/punctuation, never bare, since `word/cmd` is a
+  path or separator, not an invocation; (c) after editing, scan for any replacement
+  preceded by a word-char and eyeball each — the gate will not catch prose corruption.
+- **Proposed rule change:** Give the rename path (or a future `bench rename` helper) two
+  guards: dry-run the scope filter and show in/out before touching files, and flag every
+  replacement where the matched identifier is preceded by a word character for human
+  review. Fold a one-line "rename hygiene" note into the build guidance.

@@ -49,7 +49,7 @@ fast and never runs the gate cold.
 15. As a user, I want open learnings (≥ a floor) surfaced with "/resynthesize" and the
     count.
 16. As a user, I want structural debt surfaced with "split."
-17. As a user, I want an unresolved decision map surfaced with "/grill → /spec."
+17. As a user, I want an unresolved decision map surfaced with "/bench-craft-grill → /bench-spec."
 18. As a user, I want parked roadmap ideas shown as a passive footer count (`N idea(s)
     parked — bench roadmap`), never an action row, never inside the five-row budget.
 19. As a user, I want the dashboard to appear automatically at SessionStart in Claude
@@ -66,7 +66,7 @@ fast and never runs the gate cold.
 
 - **New `bench status` subcommand — the single renderer.** Deterministic plain shell, no
   model in the loop (#3): it reads repo state plus the gate cache, computes a fixed
-  severity ladder, and emits scannable structured output per the `axi` skill — a one-line
+  severity ladder, and emits scannable structured output per the `bench-craft-cli` skill — a one-line
   lead, then signal rows (`signal · detail · action`), then the footer. The agent reading
   it applies judgment; the renderer never does.
 - **Severity ladder** (rank, lower = more urgent; lead = the lowest-rank present signal's
@@ -78,8 +78,8 @@ fast and never runs the gate cold.
   | 1 | uncommitted / unpushed | `git status --porcelain` non-empty, or commits ahead of upstream | commit on green / push |
   | 2 | stray worktree / active shift | `git worktree list` shows > 1 | resume or clean up (`bench worktree`) |
   | 3 | open learnings | `grep -c '[open]' .bench/learnings.md` ≥ floor | `/resynthesize` (+count) |
-  | 4 | structural debt | `bench structure` exits non-zero | split (seams) (+count) |
-  | 5 | unresolved decision map | a `decisions/*.md` holds an open-ticket marker | `/grill` → `/spec` |
+  | 4 | structural debt | `bench structure` exits non-zero | split (bench-craft-seams) (+count) |
+  | 5 | unresolved decision map | a `decisions/*.md` holds an open-ticket marker | `/bench-craft-grill` → `/bench-spec` |
   | 6 | gate stale | cache exists but sha != HEAD | re-run the gate |
 
 - **Concision (#4):** show-only-on-signal; hard five-row budget with a `+k more` tail;

@@ -2,11 +2,11 @@
 description: Turn a loose idea into a sequenced decision map. Use only when the idea needs more than one session of decisions before it can be built.
 ---
 
-# /start-ideation — push back the fog
+# /bench-ideate — push back the fog
 
 Use this when an idea is too unresolved to spec yet — when there are open
 questions whose answers change what gets built. If the idea is already clear,
-skip straight to `/spec`.
+skip straight to `/bench-spec`.
 
 The output is a single compact markdown file, `decisions/<topic>.md`, git-tracked.
 It is loaded whole into every planning session, so keep it tight. Link to assets;
@@ -31,7 +31,7 @@ Each ticket is sized to one focused session. Three kinds:
 
 - **Research** — read docs/APIs/local code, produce a short summary asset.
 - **Prototype** — write throwaway code to answer "how should it look/behave."
-- **Grill** — converse to surface the decision. Use `/grill`. The default.
+- **Grill** — converse to surface the decision. Use `/bench-craft-grill`. The default.
 
 ## Starting from the roadmap
 
@@ -53,7 +53,7 @@ its status.
 
 ## Two modes
 
-**Bootstrap** (loose idea in): run a `/grill` pass to surface the open decisions,
+**Bootstrap** (loose idea in): run a `/bench-craft-grill` pass to surface the open decisions,
 write the map with the frontier identified and the trivially-decidable tickets
 resolved inline, then stop. Building the map is one session's work — do not also
 resolve tickets.
@@ -71,7 +71,7 @@ declaring the map closed, scan it for unwritten answers — any ticket still hol
 `— (open` / `— (deferred` placeholder or a `GRILL DEFERRED` banner — and refuse to
 close while any remain; a decision made in conversation but not written into the map
 is not recorded. Then close the map and lead with the recommended next action
-(usually `/spec`) and a one-clause why.
+(usually `/bench-spec`) and a one-clause why.
 
 A natural seam in the work is recorded as a decision in the map for *me* to make —
 it is never a reason to close the map early or to spin off a separate map or PRD on
@@ -79,4 +79,4 @@ your own. Surfacing "this could be two slices" is useful; deciding to slice and
 deferring the rest is mine.
 
 If the first grill surfaces no real fog — no multi-session decisions — say so and
-recommend skipping straight to `/spec`. Don't manufacture tickets.
+recommend skipping straight to `/bench-spec`. Don't manufacture tickets.

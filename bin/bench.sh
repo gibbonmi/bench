@@ -135,7 +135,7 @@ refactor_prompt() {
   cat <<'EOF'
 The implementation is complete and tests are green, but the structure budget is
 exceeded. Run `bench structure` to see the flagged files and directories. Fix them
-by splitting along responsibility, using the deletion test from the seams skill: lift
+by splitting along responsibility, using the deletion test from the bench-craft-seams skill: lift
 a cluster out only if extracting it *concentrates* complexity behind a real interface
 rather than just moving it. Never fragment a cohesive file to beat the line count — if
 a file is genuinely one deep module, leave it and say so. Group a crowded directory
@@ -489,7 +489,7 @@ EOF
 # Deterministic, language-agnostic structural-debt check, for the gate. Flags files
 # over a line budget and directories with too many source files (the "30 scripts in
 # src/" smell). Thresholds via env. Exit 1 on violations so it gates. The *how* to
-# split is the seams skill's job — this only measures.
+# split is the bench-craft-seams skill's job — this only measures.
 structure() {
   local root max_lines max_files exts files violations=0
   root="$(repo_root)"
@@ -512,7 +512,7 @@ structure() {
     fi
   done <<< "$(printf '%s\n' "$files" | xargs -n1 dirname | sort | uniq -c)"
   if (( violations > 0 )); then
-    echo "structural debt: $violations issue(s). Split along responsibility (see the seams skill); don't fragment to beat the number." >&2
+    echo "structural debt: $violations issue(s). Split along responsibility (see the bench-craft-seams skill); don't fragment to beat the number." >&2
     return 1
   fi
   echo "structure ok (≤$max_lines lines/file, ≤$max_files source files/dir)"
@@ -521,7 +521,7 @@ structure() {
 # ---- roadmap: capture an idea without committing to it ----------------------
 # `bench idea "<text>"` parks an out-of-scope idea in ROADMAP.md at the repo root and
 # exits — no prompt, no workflow, no spec. Append-only, one dated line per entry; the
-# file is a dumb sink (no status, no lifecycle). `/start-ideation` promotes a parked
+# file is a dumb sink (no status, no lifecycle). `/bench-ideate` promotes a parked
 # idea into a decision map. `bench roadmap` prints the list on demand.
 idea() {
   local root text
@@ -598,7 +598,7 @@ status() {
   # rank 4 — structural debt (reuses bench structure)
   local sviol; sviol="$(structure 2>/dev/null | grep -cE '^(FILE TOO LONG|DIR CROWDED)' || true)"
   if [[ "${sviol:-0}" -gt 0 ]]; then
-    rows+=("4|structure|$sviol issue(s)|split (seams)")
+    rows+=("4|structure|$sviol issue(s)|split (bench-craft-seams)")
   fi
 
   # rank 5 — unresolved decision map (open-ticket marker convention)
@@ -607,7 +607,7 @@ status() {
     maps="$(grep -lE '^— \((open|deferred)|GRILL DEFERRED' "$root"/decisions/*.md 2>/dev/null | wc -l | tr -d ' ' || true)"
   fi
   if [[ "${maps:-0}" -gt 0 ]]; then
-    rows+=("5|decisions|$maps unresolved map(s)|/grill → /spec")
+    rows+=("5|decisions|$maps unresolved map(s)|/bench-craft-grill → /bench-spec")
   fi
 
   # footer — roadmap count (zero severity: never ranked, never the lead, never budgeted)

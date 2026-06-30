@@ -1,6 +1,6 @@
 ---
-name: grill
-description: Disciplined one-question-at-a-time elicitation to surface a decision or a spec. Use during /start-ideation tickets, before /spec when requirements are fuzzy, or any time I say "grill me" or the work can't proceed until an open question is resolved. Reach for this instead of asking five questions at once.
+name: bench-craft-grill
+description: Disciplined one-question-at-a-time elicitation to surface a decision or a spec. Use during /bench-ideate tickets, before /bench-spec when requirements are fuzzy, or any time I say "grill me" or the work can't proceed until an open question is resolved. Reach for this instead of asking five questions at once.
 ---
 
 # Grill
@@ -41,10 +41,10 @@ If a question can be answered by exploring the codebase, explore the codebase in
 
 ## What it feeds
 
-In `/start-ideation`, a grill is a ticket type — its output is a resolved decision recorded
-in the map (current state only). Before `/spec`, a grill closes the gaps so the
+In `/bench-ideate`, a grill is a ticket type — its output is a resolved decision recorded
+in the map (current state only). Before `/bench-spec`, a grill closes the gaps so the
 spec can be synthesized without an interview. When you've grilled enough that the
-build path is clear, say so and hand to `/spec`.
+build path is clear, say so and hand to `/bench-spec`.
 
 Before you call a map resolved, scan it for unwritten answers — any ticket whose
 Answer is still a `— (open` / `— (deferred` placeholder or whose section carries a

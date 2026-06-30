@@ -24,10 +24,10 @@ reappears in this file.
 - **Skills** shape *how* you generate — probabilistic guidance, not rules. Reach
   for them when the task matches. They live in `.agents/skills/` (and, for Claude
   Code, `.claude/skills/`).
-- **Commands** are the canonical phases of the workflow: `/start-ideation`, `/spec`,
-  `/fix-bug`, `/build`, `/prep-shift`, `/verify-gate`. On Claude Code, invoke them by name.
+- **Commands** are the canonical phases of the workflow: `/bench-ideate`, `/bench-spec`,
+  `/bench-diagnose`, `/bench-build`, `/bench-review`, `/bench-qa`. On Claude Code, invoke them by name.
   On a harness without slash commands, run the phase by reading its file in
-  `.agents/commands/` and following it. Run `/setup` once when a repo is first
+  `.agents/commands/` and following it. Run `/bench-setup` once when a repo is first
   linked — it interviews you to fill in the gate and the profile. Run
   `/resynthesize` periodically to pull upstream improvements into the kit.
 - **The gate and the hooks** are enforcement, with authority you do not have. The
@@ -46,7 +46,7 @@ command, and the line assignments.
 ## Process proportionality and learning
 
 - **Right-size the process; ask before deviating.** The canonical path is
-  `/start-ideation → /spec → /build → /prep-shift → /verify-gate`, but a few-line change doesn't need the
+  `/bench-ideate → /bench-spec → /bench-build → /bench-review → /bench-qa`, but a few-line change doesn't need the
   full pipeline. You may propose a lighter path — and you must get an explicit OK
   *before* skipping canonical steps. Don't skip silently: deviating from the workflow
   is my call, not yours. If I give you a standing rule for changes of a given size,
@@ -64,10 +64,10 @@ command, and the line assignments.
 Claude Code loads these on its own. On Codex/GPT/other harnesses, read the file
 when the trigger applies — or paste it as context:
 
-- placing a test / designing an interface → `.agents/skills/seams/SKILL.md`
-- writing tests first → `.agents/skills/tdd-at-seams/SKILL.md`
-- recording a decision or writing docs → `.agents/skills/adr/SKILL.md`
-- building an agent-facing CLI (gl-axi) → `.agents/skills/axi/SKILL.md`
-- any UI work → `.agents/skills/design-system/SKILL.md` + your project's design source
-- surfacing a decision one question at a time → `.agents/skills/grill/SKILL.md`
-- writing or pruning a skill → `.agents/skills/writing-great-skills/SKILL.md`
+- placing a test / designing an interface → `.agents/skills/bench-craft-seams/SKILL.md`
+- writing tests first → `.agents/skills/bench-craft-tdd/SKILL.md`
+- recording a decision or writing docs → `.agents/skills/bench-craft-adr/SKILL.md`
+- building an agent-facing CLI (gl-axi) → `.agents/skills/bench-craft-cli/SKILL.md`
+- any UI work → `.agents/skills/bench-craft-design-system/SKILL.md` + your project's design source
+- surfacing a decision one question at a time → `.agents/skills/bench-craft-grill/SKILL.md`
+- writing or pruning a skill → `.agents/skills/bench-craft-skills/SKILL.md`
