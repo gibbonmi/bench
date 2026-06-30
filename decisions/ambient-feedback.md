@@ -1,8 +1,10 @@
 # Ambient feedback — surface the state that drives the next action
 
-> **GRILL DEFERRED.** This map is captured but unresolved. Do not resolve the tickets
-> from prose — run `/grill` on it at the **start of the next session**, one ticket at
-> a time, then record answers here. Frontier is identified, not decided.
+> **GRILLED & RESOLVED (2026-06-30).** All tickets (#1–#9) decided and recorded below.
+> Grown to two related features — the ambient-feedback **surface** (#1–#6) and the
+> **roadmap/icebox** capture-and-forget sink (#7–#9, linked via the surface footer in
+> #8). **Decided: two specs, roadmap (B) first.** B is **built** (`specs/roadmap.md`,
+> `bench idea`/`bench roadmap`). Next action: `/spec` on A (the surface).
 
 ## Vision (the core thesis)
 
@@ -22,8 +24,8 @@ and ends in a recommended action.
 - **Task list** (TaskCreate/TaskUpdate) — the persistent progress visual adopted this
   session.
 - **`.bench/learnings.md`** — the journal; `grep -c '[open]'` = current open count (4).
-- **Large-file "after every run" trigger** — *referenced by the user but NOT found in
-  this repo's `.claude/` (no PostToolUse hook).* Location/existence to confirm in #6.
+- **Large-file check** — exists as `bench structure` (a manual CLI subcommand), NOT a
+  hook and NOT wired to any cadence. See #6 (resolved).
 
 ## #1: What is the feedback surface, and on what cadence?
 
@@ -36,7 +38,13 @@ on-demand `bench status`, or a combination? Cadence trades freshness against noi
 "after every run" is the exact wall-of-text risk the user just flagged.
 
 ### Answer
-— (deferred to next session's grill)
+Resolved (grill, 2026-06-30). **One renderer, two triggers:** a single source computes
+the feedback, surfaced automatically at **SessionStart** (cold, once per session) and
+callable **on-demand** as `bench status`. **No per-run cadence** — "after every run" is
+rejected as the wall-of-text risk, and #6 established there is no post-run hook to ride
+anyway, so building one would be opting into the noise. SessionStart already fires a
+dashboard hook, making the cold surface cheap to wire; the single renderer the hook and
+the user both call gives one source of truth (feeds #5).
 
 ## #2: Which signals are relevant, and how are they prioritized?
 
@@ -50,7 +58,30 @@ decision maps. Which subset earns a place, and how is the list ranked so the mos
 action-relevant item leads? A dashboard that shows everything shows nothing.
 
 ### Answer
-— (deferred to next session's grill)
+Resolved (grill, 2026-06-30). **Six signals, ranked by a severity ladder** — the
+highest-severity present signal becomes the lead recommendation; the rest render as a
+compact list (budget/threshold mechanics are #4).
+
+| Rank | Signal | Source (cheap) | Implied action |
+|---|---|---|---|
+| — | **Gate red/green** | **cached last-shift result** (not a cold run) | red → fix before commit |
+| 1 | Uncommitted / unpushed changes | `git status --porcelain`, `git cherry` | commit on green / push |
+| 2 | Active shift or stray worktree | `git worktree list` | resume or clean up |
+| 3 | Open-learnings count | `grep -c '[open]' .bench/learnings.md` | `/resynthesize` |
+| 4 | Structural debt | `bench structure` | split (seams) |
+| 5 | Unresolved decision map | open tickets in `decisions/*.md` | `/grill` → `/spec` |
+
+**Gate signal (kept, via cache).** Running the full gate cold is too slow for a
+SessionStart hook, so the renderer never runs it — instead the **shift loop writes a
+cached last-gate result** (`bench shift` already runs the gate after each iteration).
+The renderer reads that cache. A **red** cached gate is the top blocker (outranks
+everything — it is the #3 thesis example). Open mechanism detail for spec/#5: what
+writes the cache and what it stores (status + commit sha + timestamp), and how the
+renderer flags **staleness** when the working tree has changed since the cached sha
+(green-but-stale must not read as a clean bill).
+
+**One drop:** in-session task list — ephemeral, not on disk, unreadable by a shell
+renderer.
 
 ## #3: How does it compute the recommended *next action*, not just dump metrics?
 
@@ -77,7 +108,100 @@ of text. What keeps it small — a hard line/row budget, show-only-on-change, se
 threshold (surface a signal only when it crosses a bound, like a file growing past N)?
 
 ### Answer
-— (deferred to next session's grill)
+Resolved (grill, 2026-06-30). **Three mechanics together:**
+1. **Show-only-on-signal** — a signal with nothing to report emits no row (no "✓ all
+   clean" spam). Per-signal trigger bounds: gate row only when **red or stale** (green
+   + fresh is silent), git only when dirty/unpushed, learnings only when count ≥ 1
+   (configurable floor), structure only on a violation, maps only on an unresolved
+   ticket.
+2. **Hard row budget** — cap at the **top 5 by severity**; if more fire, show 5 and a
+   `+k more` tail so the worst case stays bounded.
+3. **One-line lead** — the single highest-severity recommendation as a headline above
+   the compact list.
+
+**All-clear:** when nothing fires, collapse to one terse line (`bench: clean — nothing
+pending`), never a table of green checks.
+
+## #7: Capture an out-of-scope idea without committing to it (the roadmap/icebox)
+
+Type: Grill
+
+### Question
+While building, the user gets an idea that is out of scope for the current build. There
+is no kit mechanism to capture it without commitment — decision maps imply intent to
+resolve, specs are committed work, issues are a backlog you'll work. Need a pure
+capture-and-forget sink: captured, visible when the user chooses to look, and exerting
+**zero** workflow obligation. What is the capture command, the storage, and where it
+lives?
+
+### Answer
+— (open — grill in progress)
+
+## #8: Does the roadmap appear on the ambient surface, and at what severity?
+
+Blocked by: #2, #4, #7
+Type: Grill
+
+### Question
+The surface's whole job is to surface the *next action*; a parked idea is explicitly
+**not** one — surfacing it as an action item would defeat the capture-without-nagging
+purpose. Does the roadmap show on the dashboard at all, and if so how — a passive
+count, never in the severity ladder, never the lead?
+
+### Answer
+— (open — blocked by #7)
+
+## #9: Promotion — how a parked idea graduates into committed work
+
+Blocked by: #7
+
+Type: Grill
+
+### Question
+When the user decides to act on a parked idea, how does it leave the roadmap and enter
+the real workflow (`/start-ideation`, `/spec`, or `/to-issues`)? Is capture append-only
+with manual pruning, or does the roadmap carry status/lifecycle? The commitment point
+is the graduation, not the capture.
+
+### Answer
+Resolved (grill, 2026-06-30). **Capture append-only; no status/lifecycle in the
+roadmap** — once committed, an idea's real state lives in its map/spec/issue, so the
+roadmap stays a dumb sink (avoids two sources of truth).
+
+**`/start-ideation` is the promotion seam.** When `/start-ideation` is invoked **on its
+own** — i.e. with no specific idea already in hand from the conversation — it reads
+`ROADMAP.md` and **asks the user which parked items, if any, they want to pull up** to
+ideate on. The chosen item seeds the ideation session. When `/start-ideation` is already
+carrying a fresh idea from the conversation, it proceeds with that and does not
+interrupt with the roadmap prompt. `/spec` and `/to-issues` remain valid manual entry
+points for an idea clear enough to skip ideation.
+
+**On pull, the line is auto-removed** from `ROADMAP.md` at the moment `/start-ideation`
+**creates the ideation map** from the pulled idea (decided 2026-06-30). Not at
+selection: an abandoned pull that never writes a map keeps its line. The roadmap thus
+holds only un-promoted ideas, with no manual cleanup.
+
+**Build implication:** this changes `/start-ideation`'s command file — it must learn to
+read the roadmap and offer items on a cold invocation. Captured here so the spec covers
+it; the command edit is a build task, not part of this map.
+
+## Open scoping decision (the user's call) — one spec or two?
+
+The map resolved into **two related but separable features**:
+
+- **A — the ambient-feedback surface** (#1–#6): one renderer, surfaced at SessionStart
+  + on-demand `bench status`; six signals on a severity ladder; show-only-on-signal +
+  5-row budget + one-line lead; gate read from a shift-written cache.
+- **B — the roadmap/icebox** (#7–#9): `bench idea` capture → append-only `ROADMAP.md`
+  → `bench roadmap` view; promotion via `/start-ideation` on a cold invoke.
+
+They touch at exactly one seam: B's non-empty roadmap shows as a zero-severity **footer
+count** on A's surface (#8). Otherwise each builds and ships without the other.
+
+**Decided (2026-06-30): two specs, roadmap (B) first.** B is small and independently
+useful and solves the live capture pain; it ships in one short build. A (the larger
+surface) follows, and reads B's `ROADMAP.md` for its footer as its closing wire-up
+(B-first means the footer has data to read the moment A lands).
 
 ## #5: Compose an existing seam or add a `bench status` command?
 
@@ -104,4 +228,17 @@ not-yet-built? Its existence and shape determine whether ambient feedback extend
 or replaces it.
 
 ### Answer
-— (deferred to next session's grill)
+Resolved (research, 2026-06-30). It is **`bench structure`** (`bin/bench.sh:491`), a
+manual CLI subcommand — **not** a hook, and **not** wired to run after every run. No
+PostToolUse hook exists in this repo's `.claude/` or the global `~/.claude/`; the only
+hooks are Stop (`stop.sh`), PreToolUse git-guard (`block-dangerous-git.sh`), and a
+global SessionStart (gl-axi). `bench structure` flags files >400 lines
+(`BENCH_MAX_LINES`) and dirs >12 source files (`BENCH_MAX_DIR_FILES`), but only over
+source-code extensions (`py|ts|tsx|js|...`) — it would **not** catch a growing
+`learnings.md`, decision map, or other markdown/JSON. Its help text labels it "(wire
+into the gate)": the check is built but bound to no automatic cadence.
+
+Consequence for the map: there is **no existing post-run trigger to extend**. Ambient
+feedback either wires `bench structure` (and other signals) into a cadence — the gate,
+SessionStart, or a new surface — or stands up its own. This sharpens #1 (no free
+"after every run" seam exists) and #5 (composing means *wiring*, not *extending*).
