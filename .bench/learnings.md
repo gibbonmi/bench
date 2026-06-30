@@ -110,3 +110,18 @@ file was skipped as speculative — only two exist._
   workflow keeps a task-list progress tracker across phases. Fold into AGENTS.md "How
   to talk to me" and each command's exit section. Keep prose minimal; the table/list
   carries the state.
+
+## 2026-06-30 — declared a decision map "resolved" while two tickets were unwritten  [open]
+- **What happened:** After grilling decisions/ambient-feedback.md I set the header to
+  "GRILLED & RESOLVED" and moved to /spec, but tickets #3 and #5 still held "— (deferred)"
+  placeholder answers — the decisions were made in conversation but never written into the
+  map. Caught only when /spec re-read the map for feature A. (Ironically, the very
+  `bench status` decision-map signal built this session keys on those exact placeholder
+  markers and would have flagged it.)
+- **Right behavior:** Before marking a map resolved or handing it to /spec, verify every
+  ticket's Answer is actually written — scan for the open/deferred placeholder markers and
+  confirm none remain. A decision agreed in chat but absent from the artifact is not
+  recorded; the artifact is the source of truth, not the conversation.
+- **Proposed rule change:** /grill and /start-ideation should, at the exit that declares a
+  map closed, scan for unfilled Answer placeholders (`^— \((open|deferred)` / `GRILL
+  DEFERRED`) and refuse to close while any remain. One-line guard in each command's exit.
