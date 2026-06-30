@@ -1,0 +1,1 @@
+- 2026-06-30  /spec: visualize the seam — emit an ASCII data-flow diagram (inputs → renderer/seam → outputs → triggers, with the test-attach point marked) so the seam is legible before approving /build

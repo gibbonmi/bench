@@ -95,7 +95,16 @@ learnings → run /resynthesize", "spec written, no build → /build")? Rules ta
 priority ladder, or model judgment at render time?
 
 ### Answer
-— (deferred to next session's grill)
+Resolved (grill, 2026-06-30). **Deterministic rules table evaluated by the renderer —
+no model at render time.** Each signal carries a fixed `(severity, action-string)`; the
+renderer emits the ranked signals as structured output (axi/TOON) plus one lead
+recommendation = the highest-severity present signal's action. Model judgment is
+deliberately **not** in the renderer: it is plain shell inside a hook (no model in the
+loop), and determinism makes it cheap, testable, and canary-able. Judgment lives one
+layer up — the **agent** reads the dashboard and tailors the next-action call to live
+context (the hand-off / recommend-next-action learning). Net: the renderer always "ends
+in a recommended action" for the human at SessionStart, and hands the agent structured
+signals to reason over.
 
 ## #4: How does it stay concise and non-noisy?
 
@@ -215,7 +224,15 @@ user both call? Invariant 4 (compose before inventing) and the legibility ceilin
 bear on this — a new surface must fill a gap the existing layers can't.
 
 ### Answer
-— (deferred to next session's grill)
+Resolved (follows from #1 + #6, 2026-06-30). **Both — compose the trigger, invent the
+renderer.** Add a new `bench status` subcommand as the single renderer (the one source
+of truth from #1), and **compose the existing SessionStart hook** by having it call
+`bench status` rather than standing up a new surface type. #6 established there is no
+post-run trigger to extend, so "compose" here means wiring the existing SessionStart
+hook plus the existing signal sources (`bench structure`, git, `learnings.md`) *into*
+the renderer — not extending a trigger that doesn't exist. The new subcommand clears the
+invariant-4 bar because it fills a gap no existing layer covers: one deterministic
+source both the hook and the user invoke.
 
 ## #6: Confirm the large-file trigger — where, and what does it report?
 
