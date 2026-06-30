@@ -19,8 +19,9 @@ unit of agent work in a clean worktree), and a shift only counts if it
 
 ## The four invariants
 
-Everything here exists to enforce these. They're in `AGENTS.md` so they're always
-on, and the load-bearing ones are also wired into hooks so they're not just vibes.
+Everything here exists to enforce these. They're canonical in `.bench/BENCH.md` (the
+guide `bench link` ships, so they reach every project) and the load-bearing ones are
+also wired into hooks so they're not just vibes.
 
 1. **The gate is the oracle — the agent never grades its own work.** "Done" means
    the gate exits zero (tests, types, lint, project conformance), not that the

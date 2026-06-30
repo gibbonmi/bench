@@ -343,6 +343,23 @@ done
 si=".agents/commands/start-ideation.md"
 grep -qF 'ROADMAP.md' "$si" || err "/start-ideation does not reference ROADMAP.md (roadmap promotion seam)"
 grep -qiE 'remove|delete' "$si" || err "/start-ideation does not describe removing a promoted roadmap entry"
+#    e) shared platform rules are single-sourced. The four invariants and the
+#       communication rules are canonical in .bench/BENCH.md and referenced from
+#       AGENTS.md — never copied back into AGENTS.md. Each marker must live in BENCH.md
+#       and be absent from AGENTS.md (the drift this guards), and AGENTS.md must keep its
+#       pointer to the canonical file.
+ss_markers=(
+  "you never grade your own work"
+  "Declare the line before a long run"
+  "Document for the teammate who just walked in"
+  "One small change at a time, repo stays green"
+  "Clear beats dense"
+)
+for m in "${ss_markers[@]}"; do
+  grep -qF "$m" .bench/BENCH.md || err "shared rule missing from canonical .bench/BENCH.md: \"$m\""
+  ! grep -qF "$m" AGENTS.md || err "shared rule duplicated in AGENTS.md (it must live only in .bench/BENCH.md): \"$m\""
+done
+grep -qF 'canonical in `.bench/BENCH.md`' AGENTS.md || err "AGENTS.md lost its pointer to the canonical .bench/BENCH.md shared rules"
 
 # 6. shellcheck — stronger shell lint, best-effort (runs only when installed).
 if command -v shellcheck >/dev/null 2>&1; then

@@ -20,8 +20,8 @@ cold session reads this first to avoid drifting the vocabulary.
   "budget" alone — the line is the whole routing decision.
 - **worktree** — a warm, isolated, reusable git worktree from the pool
   (`bench worktree`). Where a shift runs without touching the main checkout.
-- **invariant** — one of the four non-negotiable rules in `AGENTS.md` that override
-  convenience. Not "guideline", not "best practice" — invariant.
+- **invariant** — one of the four non-negotiable rules (canonical in `.bench/BENCH.md`)
+  that override convenience. Not "guideline", not "best practice" — invariant.
 - **harness** — the agent runtime that reads `AGENTS.md` (Claude Code, Codex,
   OpenCode, …). The kit is harness-agnostic by design.
 - **kit** — benchkit itself: the shipped workflow (CLI + working agreement + skills +

@@ -41,9 +41,11 @@ AGENTS.md harness — that portability is the product.
   project-owned `AGENTS.md` text, install only a managed Bench block plus Bench-owned
   assets, fail on same-named project-owned skills/commands/hooks, and be idempotent
   through the link manifest.
-- **AGENTS.md** — the single canonical working agreement. `CLAUDE.md` only imports it;
-  never duplicate content there. The four invariants and the skills/commands index
-  live here, and the gate checks that the index matches what's on disk.
+- **AGENTS.md** — the canonical working agreement for project-owned content. `CLAUDE.md`
+  imports it (and `.bench/BENCH.md`); never duplicate content there. The four invariants
+  and the communication rules are canonical in `.bench/BENCH.md`; the skills/commands
+  index lives here. The gate checks the index matches disk, and that the shared rules are
+  not copied back into AGENTS.md.
 
 No UI. There is **no design source** for this repo.
 
@@ -95,8 +97,9 @@ The gate file lives outside `package.json` `files[]`, so it never ships to consu
 
 ## Notes for cold sessions
 
-- Read `AGENTS.md` first — the four invariants and the working agreement override
-  convenience. `CLAUDE.md` is just a one-line import of it; edit `AGENTS.md`, not it.
+- Read `AGENTS.md` first — the working agreement. The four invariants and the
+  communication rules are canonical in `.bench/BENCH.md` (AGENTS.md points there); read
+  that too. `CLAUDE.md` imports both; edit `AGENTS.md` or `.bench/BENCH.md`, not it.
 - `CONTEXT.md` pins the ubiquitous language (gate, oracle, shift, seam, line, …). Use
   those terms exactly; don't invent synonyms.
 - The kit's portability across harnesses is a closed decision. Claude and Codex hook
