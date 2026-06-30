@@ -100,6 +100,17 @@ workflow is a reviewer decision.
 - `bench gate` runs the oracle.
 - `bench worktree` opens a reusable isolated worktree.
 - `bench shift "<objective>"` runs the gated loop.
+- `bench idea "<text>"` parks an idea on the roadmap, committing to nothing.
+- `bench roadmap` lists the parked ideas.
+
+## Capture
+
+Parking an idea is conversational — never a CLI chore for the reviewer. When the
+reviewer wants to set an idea aside, or you spot a tangent worth not losing, **you**
+run `bench idea "<text>"`; they never type it. Offer once when a clear tangent
+appears, then let it go — don't nag. Parked ideas land in `ROADMAP.md` and graduate
+into committed work only through `/bench-ideate`. If `bench` isn't on PATH, append the
+dated line (`- YYYY-MM-DD  <text>`) to `ROADMAP.md` yourself.
 
 ## Hook Layers
 
