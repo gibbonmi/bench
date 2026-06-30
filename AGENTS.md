@@ -29,7 +29,8 @@ reappears in this file.
   On a harness without slash commands, run the phase by reading its file in
   `.agents/commands/` and following it. Run `/bench-setup` once when a repo is first
   linked — it interviews you to fill in the gate and the profile. Run
-  `/resynthesize` periodically to pull upstream improvements into the kit.
+  `/bench-update` periodically to pull upstream improvements into the kit, and
+  `/bench-learn` to fold the learnings journal back in.
 - **The gate and the hooks** are enforcement, with authority you do not have. The
   enforcement that matters is harness-independent: the `bench shift` loop runs the
   gate after every iteration and commits only on green, and a git `pre-push` hook
@@ -55,7 +56,7 @@ command, and the line assignments.
   from the workflow, make a process or judgment call you're unsure about, or catch a
   should-have-asked in hindsight, append one entry to `.bench/learnings.md`: what
   happened, what the right behavior was, and a proposed rule change if any. That's the
-  whole of your authority here — you capture, I decide. `/resynthesize` reviews the
+  whole of your authority here — you capture, I decide. `/bench-learn` reviews the
   journal and promotes the generalizable lessons into the kit with my sign-off, so the
   kit improves from real use without any rule ever changing itself behind my back.
 
@@ -71,3 +72,4 @@ when the trigger applies — or paste it as context:
 - any UI work → `.agents/skills/bench-craft-design-system/SKILL.md` + your project's design source
 - surfacing a decision one question at a time → `.agents/skills/bench-craft-grill/SKILL.md`
 - writing or pruning a skill → `.agents/skills/bench-craft-skills/SKILL.md`
+- evaluating a change to the kit itself → `.agents/skills/bench-craft-synthesis/SKILL.md`

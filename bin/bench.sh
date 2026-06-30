@@ -191,7 +191,7 @@ EOF
 
 Append one entry when you deviate from the workflow, make a judgment call you're
 unsure about, or catch a should-have-asked in hindsight. You capture; the reviewer
-decides. `/resynthesize` reviews the open entries, promotes the generalizable ones
+decides. `/bench-learn` reviews the open entries, promotes the generalizable ones
 into the kit with sign-off, and marks them resolved. Never rewrite a kit rule
 yourself — that is the whole point of capturing here instead.
 
@@ -202,7 +202,7 @@ Format per entry:
 - **Right behavior:** …
 - **Proposed rule change:** … (or "none")
 
-An entry only becomes `[resolved]` via /resynthesize.
+An entry only becomes `[resolved]` via /bench-learn.
 
 <!-- entries below -->
 EOF
@@ -592,7 +592,7 @@ status() {
   local floor open=0; floor="${BENCH_LEARNINGS_FLOOR:-1}"
   [[ -f "$root/.bench/learnings.md" ]] && open="$(grep -c '\[open\]' "$root/.bench/learnings.md" 2>/dev/null || true)"
   if [[ "${open:-0}" -ge "$floor" && "${open:-0}" -gt 0 ]]; then
-    rows+=("3|learnings|$open open|/resynthesize")
+    rows+=("3|learnings|$open open|/bench-learn")
   fi
 
   # rank 4 — structural debt (reuses bench structure)

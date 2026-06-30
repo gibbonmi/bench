@@ -36,7 +36,7 @@ bad_refs="$(grep -oE '\.bench/(gate|done)(\.sh)?' bin/bench.sh | grep -vE '\.sh$
 [ -z "$bad_refs" ] || err "bin/bench.sh has extensionless gate/done refs ($(echo "$bad_refs" | tr '\n' ' ')); the contract is .sh"
 
 # 1d. `bench init` must scaffold the self-learning journal. AGENTS.md tells agents to
-#     append to .bench/learnings.md and /resynthesize reads it; if init does not
+#     append to .bench/learnings.md and /bench-learn reads it; if init does not
 #     create it, the contract points at a file that never exists. Exercise the real
 #     init path in a throwaway repo rather than grepping for the literal.
 tmp="$(mktemp -d)"
@@ -226,7 +226,7 @@ tmp="$(mktemp -d)"
   out="$(bash "$root/bin/bench.sh" status)"
   head -1 <<<"$out" | grep -qF 'fix before commit' || { echo "red gate did not lead the budget case"; exit 1; }
   grep -qF '+1 more' <<<"$out" || { echo "six signals did not trigger the +k more tail"; exit 1; }
-  grep -qF '/resynthesize' <<<"$out" || { echo "learnings dropped from the top five"; exit 1; }
+  grep -qF '/bench-learn' <<<"$out" || { echo "learnings dropped from the top five"; exit 1; }
   grep -qF 'split (bench-craft-seams)' <<<"$out" || { echo "structure dropped from the top five"; exit 1; }
   grep -qF 'commit on green / push' <<<"$out" || { echo "git signal action string missing"; exit 1; }
   grep -qF 'resume or clean up' <<<"$out" || { echo "worktree signal action string missing"; exit 1; }
@@ -253,9 +253,9 @@ tmp="$(mktemp -d)"
   set -u; cd "$tmp"; git init -q
   mkdir -p .bench; printf -- '- a [open]\n' > .bench/learnings.md; gci add -A; gci commit -q -m s
   hi="$(BENCH_LEARNINGS_FLOOR=2 bash "$root/bin/bench.sh" status)"
-  if grep -qF '/resynthesize' <<<"$hi"; then echo "floor=2 still surfaced a single open learning"; exit 1; fi
+  if grep -qF '/bench-learn' <<<"$hi"; then echo "floor=2 still surfaced a single open learning"; exit 1; fi
   lo="$(BENCH_LEARNINGS_FLOOR=1 bash "$root/bin/bench.sh" status)"
-  grep -qF '/resynthesize' <<<"$lo" || { echo "floor=1 did not surface the open learning"; exit 1; }
+  grep -qF '/bench-learn' <<<"$lo" || { echo "floor=1 did not surface the open learning"; exit 1; }
 ) || err "bench status learnings-floor contract failed"
 rm -rf "$tmp"
 # 1h. `bench shift` must iterate the gated loop, not die at the first gate. Regression:

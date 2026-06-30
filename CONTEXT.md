@@ -31,7 +31,7 @@ cold session reads this first to avoid drifting the vocabulary.
 - **skill** — probabilistic guidance that shapes *how* the model generates
   (`.claude/skills/*/SKILL.md`). Reached for when the task matches; not a rule.
 - **command** — a canonical phase of the workflow (`/bench-ideate`, `/bench-spec`, `/bench-diagnose`,
-  `/bench-build`, `/bench-review`, `/bench-qa`, plus `/bench-setup`, `/resynthesize`). Not "slash command
+  `/bench-build`, `/bench-review`, `/bench-qa`, plus `/bench-setup`, `/bench-update`, `/bench-learn`). Not "slash command
   template" in prose — command.
 - **roadmap** — the capture-and-forget sink at `ROADMAP.md` (repo root): out-of-scope
   ideas parked with `bench idea`, committing to nothing, listed with `bench roadmap`.

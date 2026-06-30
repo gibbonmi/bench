@@ -70,22 +70,24 @@ bench/
 ├── CLAUDE.md                 # one-line import of AGENTS.md (for Claude Code)
 ├── .agents/
 │   ├── commands/             # portable workflow phases + maintenance commands
-│   │   ├── setup.md
-│   │   ├── resynthesize.md
-│   │   ├── start-ideation.md
-│   │   ├── spec.md
-│   │   ├── fix-bug.md
-│   │   ├── build.md
-│   │   ├── prep-shift.md
-│   │   └── verify-gate.md
+│   │   ├── bench-setup.md
+│   │   ├── bench-update.md
+│   │   ├── bench-learn.md
+│   │   ├── bench-ideate.md
+│   │   ├── bench-spec.md
+│   │   ├── bench-diagnose.md
+│   │   ├── bench-build.md
+│   │   ├── bench-review.md
+│   │   └── bench-qa.md
 │   └── skills/               # portable generation-shaping skills
-│       ├── seams/
-│       ├── tdd-at-seams/
-│       ├── adr/
-│       ├── axi/
-│       ├── design-system/
-│       ├── writing-great-skills/
-│       └── grill/
+│       ├── bench-craft-seams/
+│       ├── bench-craft-tdd/
+│       ├── bench-craft-adr/
+│       ├── bench-craft-cli/
+│       ├── bench-craft-design-system/
+│       ├── bench-craft-skills/
+│       ├── bench-craft-grill/
+│       └── bench-craft-synthesis/
 ├── .bench/
 │   ├── BENCH.md              # full Bench operating guide installed into projects
 │   └── hooks/                # shared hook scripts used by harness adapters
@@ -181,7 +183,7 @@ flow is replaced; Bench wraps it in enforcement it didn't have.
 
 ## Keeping Bench current
 
-Both upstream repos move. `/resynthesize` re-runs the synthesis against their latest
+Both upstream repos move. `/bench-update` re-runs the synthesis against their latest
 state: it pulls Pocock's skills and kunchenguid's tooling, diffs them against what
 Bench already incorporates (the provenance table and `CHANGELOG.md` are the record),
 and proposes adoptions — then runs three quality loops before anything ships. The
@@ -341,7 +343,8 @@ building.
 | `bench worktree` | — | treehouse | — |
 | `bench shift` (gated loop) | — | gnhf + no-mistakes | gate-on-green, not self-graded |
 | `/bench-setup` (configure a repo) | setup-matt-pocock-skills | — | gate + profile + lines, interviewed |
-| `/resynthesize` (stay current) | — | — | re-run the synthesis vs upstream, 3 loops |
+| `/bench-update` (sync upstream) | — | — | re-run the synthesis vs upstream, 3 loops |
+| `/bench-learn` (drain learnings) | — | — | the kit learns from its own use, 3 loops |
 | `/bench-diagnose` (bug path) | diagnosing-bugs | — | repro loop as the bug's gate |
 | design-it-twice in `bench-craft-seams` | codebase-design | — | high-effort line at the uncertain seam |
 | `bench shift` notes.md | — | gnhf (iteration context) | — |

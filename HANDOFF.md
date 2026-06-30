@@ -53,9 +53,9 @@ loop (gate-on-green, commit only on green), and the git `pre-push` guard.
 The kit exists as `bench.tar.gz`. Nothing is wired into a real repo yet — it's a
 kit, not yet installed. Contents:
 
-- Commands: `/bench-setup` + `/resynthesize` (maintenance), `/bench-ideate`, `/bench-spec`, `/bench-diagnose`, `/bench-build`, `/bench-review`, `/bench-qa`
+- Commands: `/bench-setup` + `/bench-update` + `/bench-learn` (maintenance), `/bench-ideate`, `/bench-spec`, `/bench-diagnose`, `/bench-build`, `/bench-review`, `/bench-qa`
 - Skills: `bench-craft-seams`, `bench-craft-tdd`, `bench-craft-adr`, `bench-craft-cli`, `bench-craft-design-system`,
-  `bench-craft-skills`, `bench-craft-grill`
+  `bench-craft-skills`, `bench-craft-grill`, `bench-craft-synthesis`
 - Hooks: shared `.bench/hooks/stop.sh` (completion oracle) and
   `.bench/hooks/block-dangerous-git.sh` (git guard), with Claude and Codex adapters
 - CLI `bin/bench.sh`: `link`, `init`, `gate`, `worktree`, `shift`

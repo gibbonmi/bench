@@ -2,7 +2,7 @@
 
 Append one entry when you deviate from the workflow, make a judgment call you're
 unsure about, or catch a should-have-asked in hindsight. You capture; the reviewer
-decides. `/resynthesize` reviews the open entries, promotes the generalizable ones
+decides. `/bench-learn` reviews the open entries, promotes the generalizable ones
 into the kit with sign-off, and marks them resolved. Never rewrite a kit rule
 yourself — that is the whole point of capturing here instead.
 
@@ -13,7 +13,7 @@ Format per entry:
 - **Right behavior:** …
 - **Proposed rule change:** … (or "none")
 
-An entry only becomes `[resolved]` via /resynthesize.
+An entry only becomes `[resolved]` via /bench-learn.
 
 <!-- entries below -->
 
@@ -167,3 +167,18 @@ close a map while any remain._
   guards: dry-run the scope filter and show in/out before touching files, and flag every
   replacement where the matched identifier is preceded by a word character for human
   review. Fold a one-line "rename hygiene" note into the build guidance.
+
+## 2026-06-30 — rename completeness sweep missed bare basenames in tree/list docs  [open]
+- **What happened:** The merged command/skill rename slice swept for `/cmd`
+  invocations and `<dir>/<name>` path forms, but README's file-tree listing names
+  commands and skills as *bare basenames* (`setup.md`, `seams/`) with the
+  `commands/`/`skills/` prefix on a separate line. Those evaded the sweep and shipped
+  stale; the resynthesize-split slice found the entire tree block still pre-rename and
+  fixed it there.
+- **Right behavior:** A rename completeness sweep must also match bare basenames in
+  enumerated contexts (file trees, bulleted inventories), not only the slash- and
+  path-anchored forms. Grep the old stems as whole words and eyeball, rather than
+  trusting the anchored patterns to find everything.
+- **Proposed rule change:** Fold "also sweep bare basenames in trees/lists" into the
+  same rename-hygiene note as the separator-slash learning above — they're one rule:
+  a rename isn't done until the stems are gone in *every* form, anchored or not.

@@ -1,9 +1,9 @@
 # Bench changelog
 
-The synthesis record. `/resynthesize` reads this as its baseline — what Bench
+The synthesis record. `/bench-update` reads this as its baseline — what Bench
 already adopted from upstream, and what it deliberately rejected — so closed
 decisions stay closed and each re-synthesis is diffed against a known state. Append
-one entry per `/resynthesize` run; don't rewrite history.
+one entry per `/bench-update` or `/bench-learn` run; don't rewrite history.
 
 ## Unreleased
 
