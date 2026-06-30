@@ -86,6 +86,12 @@ The gate file lives outside `package.json` `files[]`, so it never ships to consu
 
 ## Lines (model + effort routing)
 
+**Tier → model** (this harness; refresh with `bench models`; set 2026-06-30):
+cheap = Haiku 4.5 (`claude-haiku-4-5`) · mid = Sonnet 5 (`claude-sonnet-5`) · top =
+Opus 4.8 (`claude-opus-4-8`). Once work is planned, default execution to **mid
+(Sonnet 5)**; escalate to top only for the genuinely uncertain seam — no silent
+escalation.
+
 - **Skill / command / doc authoring** → **top model, high effort**. Prose that shapes
   agent behavior is the genuinely uncertain, high-leverage seam; the
   `bench-craft-skills` and `bench-craft-adr` skills apply. Spend here.
