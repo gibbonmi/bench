@@ -1,1 +1,2 @@
 - 2026-06-30  /spec: visualize the seam — emit an ASCII data-flow diagram (inputs → renderer/seam → outputs → triggers, with the test-attach point marked) so the seam is legible before approving /build
+- 2026-06-30  Single-source the shared working agreement: benchkit's AGENTS.md and the installed .bench/BENCH.md both carry Core Rules + Communication and can drift. Make BENCH.md (or a shared fragment) the one source both read, so a rule edited once reaches consumers and the dev repo.
