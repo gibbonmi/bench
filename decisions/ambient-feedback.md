@@ -144,7 +144,12 @@ capture-and-forget sink: captured, visible when the user chooses to look, and ex
 lives?
 
 ### Answer
-— (open — grill in progress)
+Resolved (grill, 2026-06-30; shipped in `specs/roadmap.md`). `bench idea "<text>"` parks
+the idea — one shot, appends and exits, no prompt, no grill, no spec. Storage is a single
+append-only `ROADMAP.md` at the repo root, one dated line per entry (`- YYYY-MM-DD
+<text>`), committed and product-facing. No IDs, no status. `bench roadmap` prints it on
+demand. Root over `.bench/icebox.md` because visibility is the whole point — "I can see
+it."
 
 ## #8: Does the roadmap appear on the ambient surface, and at what severity?
 
@@ -158,7 +163,12 @@ purpose. Does the roadmap show on the dashboard at all, and if so how — a pass
 count, never in the severity ladder, never the lead?
 
 ### Answer
-— (open — blocked by #7)
+Resolved (grill, 2026-06-30; shipped in feature A). Footer count only. When `ROADMAP.md`
+is non-empty the surface shows one passive line (`N idea(s) parked — bench roadmap`) at
+**severity zero**: never in the severity ladder, never the lead recommendation, and not
+counted against the five-row budget. Empty roadmap → no line. This threads "I can see it"
+without "I'll work on it" — the surface acknowledges the roadmap without ever nudging the
+user to act on it.
 
 ## #9: Promotion — how a parked idea graduates into committed work
 
