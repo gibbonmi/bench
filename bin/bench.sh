@@ -25,7 +25,9 @@ default_branch() { git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/
 # ---- gate: the oracle -------------------------------------------------------
 run_gate() {
   local root; root="$(repo_root)"
-  if [[ -x "$root/.bench/gate.sh" ]]; then exec "$root/.bench/gate.sh"; fi
+  # Run, do not exec: the shift loop calls `if run_gate` inline, so an exec here would
+  # replace the bench process at the first gate check and the loop would never iterate.
+  if [[ -x "$root/.bench/gate.sh" ]]; then "$root/.bench/gate.sh"; return $?; fi
   if [[ -n "${BENCH_GATE:-}" ]]; then bash -c "$BENCH_GATE"; return $?; fi
   # auto-detect — best-effort defaults; a project should ship .bench/gate.sh instead
   if [[ -f "$root/pnpm-lock.yaml" ]]; then

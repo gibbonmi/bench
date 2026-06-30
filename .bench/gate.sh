@@ -258,6 +258,19 @@ tmp="$(mktemp -d)"
   grep -qF '/resynthesize' <<<"$lo" || { echo "floor=1 did not surface the open learning"; exit 1; }
 ) || err "bench status learnings-floor contract failed"
 rm -rf "$tmp"
+# 1h. `bench shift` must iterate the gated loop, not die at the first gate. Regression:
+#     run_gate used to `exec` the repo gate, replacing the bench process on iteration 1's
+#     gate check, so the loop never reached its commit/break/"shift done". Drive the loop
+#     with a no-op agent and a trivial green gate in a throwaway repo; assert it completes.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench; printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  gci add -A; gci commit -q -m init
+  out="$(BENCH_AGENT=true BENCH_MAX_ITERS=1 BENCH_HOME="$tmp/.bh" bash "$root/bin/bench.sh" shift noop 2>&1)" || true
+  grep -qF 'shift done' <<<"$out" || { echo "bench shift loop did not complete (run_gate exec'd the gate?)"; exit 1; }
+) || err "bench shift gated-loop contract failed"
+rm -rf "$tmp"
 
 # 2. JSON is valid.
 for f in package.json .claude/settings.json .codex/hooks.json; do
