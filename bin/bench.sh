@@ -516,6 +516,31 @@ structure() {
   echo "structure ok (≤$max_lines lines/file, ≤$max_files source files/dir)"
 }
 
+# ---- roadmap: capture an idea without committing to it ----------------------
+# `bench idea "<text>"` parks an out-of-scope idea in ROADMAP.md at the repo root and
+# exits — no prompt, no workflow, no spec. Append-only, one dated line per entry; the
+# file is a dumb sink (no status, no lifecycle). `/start-ideation` promotes a parked
+# idea into a decision map. `bench roadmap` prints the list on demand.
+idea() {
+  local root text
+  root="$(repo_root)"
+  text="$*"
+  if [[ -z "${text//[[:space:]]/}" ]]; then
+    echo 'usage: bench idea "<text>"' >&2
+    return 2
+  fi
+  printf '%s  %s\n' "- $(date +%F)" "$text" >> "$root/ROADMAP.md"
+  echo "parked: $text"
+}
+
+roadmap() {
+  local root file
+  root="$(repo_root)"
+  file="$root/ROADMAP.md"
+  [[ -s "$file" ]] || { echo "roadmap empty"; return 0; }
+  cat "$file"
+}
+
 # Wire the kit into the current repo for EVERY harness at once. Idempotent.
 # After this, Claude Code and any AGENTS.md harness work in the same repo with no
 # per-switch reconfiguration — switching harnesses is just running a different agent.
@@ -555,12 +580,16 @@ case "${1:-help}" in
   models)   models ;;
   structure) structure ;;
   init)     init ;;
+  idea)     shift; idea "$@" ;;
+  roadmap)  roadmap ;;
   *) cat <<EOF
 bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench link [copy|symlink]  safely wire the kit into this repo for every harness
   bench init                 scaffold .bench/gate.sh in the current repo
   bench models               discover models available in this harness (for the lines)
   bench structure            flag oversized files + crowded dirs (wire into the gate)
+  bench idea "<text>"        park an out-of-scope idea in ROADMAP.md (commit to nothing)
+  bench roadmap              list parked ideas
   bench gate                 run the project gate (the oracle)
   bench worktree             warm, isolated worktree subshell
   bench shift "<objective>"  gated loop: one small change per iteration, commit on green

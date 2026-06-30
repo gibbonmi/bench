@@ -33,6 +33,24 @@ Each ticket is sized to one focused session. Three kinds:
 - **Prototype** — write throwaway code to answer "how should it look/behave."
 - **Grill** — converse to surface the decision. Use `/grill`. The default.
 
+## Starting from the roadmap
+
+`ROADMAP.md` (repo root) is the capture-and-forget sink: ideas parked with `bench idea`
+that the user committed to nothing. This command is where a parked idea graduates into
+committed work.
+
+When invoked **cold** — no specific idea already in hand from the conversation — read
+`ROADMAP.md` and offer the parked items, asking which (if any) to pull up. The chosen
+entry seeds the bootstrap below. When you are already carrying a fresh idea from the
+conversation, proceed with it and do **not** interrupt with the roadmap prompt; if the
+roadmap is empty or absent, say so and continue.
+
+When a pulled idea actually becomes a map — i.e. you write `decisions/<topic>.md` from
+it — **remove that entry's line from `ROADMAP.md`** in the same step: promotion means it
+is no longer merely parked. A pull the user abandons before any map is written leaves
+the line untouched. The roadmap carries no status of its own; the line's presence *is*
+its status.
+
 ## Two modes
 
 **Bootstrap** (loose idea in): run a `/grill` pass to surface the open decisions,

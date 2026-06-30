@@ -15,10 +15,17 @@ AGENTS.md harness — that portability is the product.
   highest seam — if the gate is weak, the whole system is weak. Test by feeding it a
   conformant tree (green) and a broken one (red); never by trusting a reading of the
   diff.
-- **The `bench` CLI subcommands** (`gate`, `worktree`, `shift`, `init`). The
-  operational shell surface. Stable command names and exit codes are the contract;
-  the implementation behind each is free to change. Keep gate resolution
-  (`.bench/gate.sh` → `$BENCH_GATE` → auto-detect) in one place.
+- **The `bench` CLI subcommands** (`gate`, `worktree`, `shift`, `init`, `link`,
+  `models`, `structure`, `idea`, `roadmap`). The operational shell surface. Stable
+  command names and exit codes are the contract; the implementation behind each is free
+  to change. Keep gate resolution (`.bench/gate.sh` → `$BENCH_GATE` → auto-detect) in
+  one place.
+- **The roadmap capture sink** (`bench idea` / `bench roadmap` → `ROADMAP.md`). The
+  capture-and-forget surface: park an out-of-scope idea, commit to nothing, promote it
+  later only via `/start-ideation`. The contract (gate-tested in a throwaway repo):
+  `idea` appends one dated line and creates the file; a no-arg `idea` errors without
+  appending; `roadmap` reports empty when there's nothing parked. `ROADMAP.md` is
+  per-consumer content — never in the kit's `package.json` `files[]`.
 - **The kit content surface** (`.agents/skills/*/SKILL.md`, `.agents/commands/*.md`).
   Portable harness-facing content. The contract is structural: every skill carries YAML
   frontmatter (name + description) and follows progressive disclosure; every command

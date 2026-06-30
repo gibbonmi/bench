@@ -33,6 +33,13 @@ cold session reads this first to avoid drifting the vocabulary.
 - **command** — a canonical phase of the workflow (`/start-ideation`, `/spec`, `/fix-bug`,
   `/build`, `/prep-shift`, `/verify-gate`, plus `/setup`, `/resynthesize`). Not "slash command
   template" in prose — command.
+- **roadmap** — the capture-and-forget sink at `ROADMAP.md` (repo root): out-of-scope
+  ideas parked with `bench idea`, committing to nothing, listed with `bench roadmap`.
+  Append-only, no status or lifecycle. Not "icebox", not "backlog" (a backlog implies
+  work you've queued to do) — roadmap.
+- **park** — to capture an idea on the **roadmap** without committing to it
+  (`bench idea "<text>"`). A *parked idea* graduates into committed work only when
+  `/start-ideation` pulls it into a decision map. Not "stash", not "file" — park.
 
 ## Avoid
 
@@ -40,3 +47,4 @@ cold session reads this first to avoid drifting the vocabulary.
 - "task" / "session" when you mean a **shift**.
 - "boundary" / "abstraction point" when you mean a **seam**.
 - "framework" / "tooling" when you mean the **kit**.
+- "icebox" / "backlog" when you mean the **roadmap**.

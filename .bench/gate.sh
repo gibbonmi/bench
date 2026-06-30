@@ -127,6 +127,35 @@ tmp="$(mktemp -d)"
 ) || err "bench link modified-managed contract failed ($(cat "$tmp/relink.out" 2>/dev/null | tail -n 1))"
 rm -rf "$tmp"
 
+# 1f. `bench idea` / `bench roadmap` — the capture-and-forget roadmap sink. Exercise the
+#     real CLI in a throwaway repo: roadmap reports empty when absent, idea creates
+#     ROADMAP.md and appends a dated line, a no-arg idea errors without appending a blank
+#     entry, and roadmap prints parked ideas. A regression here means the capture path
+#     silently stopped working.
+tmp="$(mktemp -d)"
+(
+  set -u
+  cd "$tmp"
+  git init -q
+  bash "$root/bin/bench.sh" roadmap | grep -qi 'empty' || { echo "roadmap on absent file did not report empty"; exit 1; }
+  bash "$root/bin/bench.sh" idea "ship dark mode" >/dev/null 2>&1
+  [ -f ROADMAP.md ] || { echo "idea did not create ROADMAP.md"; exit 1; }
+  grep -qE '^- [0-9]{4}-[0-9]{2}-[0-9]{2}  ship dark mode$' ROADMAP.md || { echo "idea entry not dated '- YYYY-MM-DD  <text>'"; exit 1; }
+  before="$(wc -l < ROADMAP.md)"
+  if bash "$root/bin/bench.sh" idea >/dev/null 2>&1; then echo "no-arg idea succeeded; should error"; exit 1; fi
+  after="$(wc -l < ROADMAP.md)"
+  [ "$before" = "$after" ] || { echo "no-arg idea appended a blank entry"; exit 1; }
+  bash "$root/bin/bench.sh" roadmap | grep -qF 'ship dark mode' || { echo "roadmap did not print the parked idea"; exit 1; }
+  # The capture guarantee is "all words after the subcommand are the idea" — the join
+  # is $* not $1, so exercise the unquoted multi-word form a single-arg test can't tell apart.
+  bash "$root/bin/bench.sh" idea capture all the words >/dev/null 2>&1
+  grep -qE '^- [0-9]{4}-[0-9]{2}-[0-9]{2}  capture all the words$' ROADMAP.md || { echo "idea did not join unquoted multi-word args (\$* not \$1)"; exit 1; }
+  # Empty is the absence of parked ideas whether the file is missing or present-but-blank.
+  : > ROADMAP.md
+  bash "$root/bin/bench.sh" roadmap | grep -qi 'empty' || { echo "roadmap on present-but-empty file did not report empty"; exit 1; }
+) || err "bench idea/roadmap contract failed"
+rm -rf "$tmp"
+
 # 2. JSON is valid.
 for f in package.json .claude/settings.json .codex/hooks.json; do
   node -e 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"))' "$f" \
@@ -192,6 +221,12 @@ for f in .agents/commands/*.md; do
   name="$(basename "$f" .md)"
   grep -q "/$name" AGENTS.md || err "command '/$name' on disk but not referenced in AGENTS.md"
 done
+#    d) the roadmap promotion seam — /start-ideation must name ROADMAP.md and the
+#       auto-remove-on-map-creation behavior, or the only path that drains a parked idea
+#       silently rots. The capture sink (bench idea) is useless without this graduation.
+si=".agents/commands/start-ideation.md"
+grep -qF 'ROADMAP.md' "$si" || err "/start-ideation does not reference ROADMAP.md (roadmap promotion seam)"
+grep -qiE 'remove|delete' "$si" || err "/start-ideation does not describe removing a promoted roadmap entry"
 
 # 6. shellcheck — stronger shell lint, best-effort (runs only when installed).
 if command -v shellcheck >/dev/null 2>&1; then
