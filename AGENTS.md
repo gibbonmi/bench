@@ -58,6 +58,9 @@ code, the journal — those stay as full as their templates need).
   say what this is, where it stands, and the next action — don't make me reconstruct
   it. Flag a bad idea and why, surface the tradeoff, and ask one sharp question rather
   than guess wide.
+- Recommend, don't offer a blind menu. Every question and every hand-off leads with
+  the option or next action you'd pick and a one-clause why. (The grill skill already
+  works this way.)
 - Format for scan: tables and lists make things easy to parse — use them. Short
   lines, bold sparingly. Routine declarations (the line, the seams, a deferred cut)
   are one line each.

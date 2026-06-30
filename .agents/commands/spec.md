@@ -90,4 +90,9 @@ against itself.
 
 When the spec is written, the build has a fixed target: the user stories set the
 breadth, the seams set where tests live, and the gate sets what "done" means.
-Offer to run `/build` or kick off a `/shift`.
+
+Before any build starts, emit a scannable approval table — user stories / seams /
+out of scope — and pause for my sign-off. The full spec file stays as written; the
+table is the at-a-glance veto surface. Only after I approve, lead with the recommended
+next action — `/build` interactively, or a `/shift` for locked-spec mechanical work —
+and a one-clause why, not a neutral either/or.

@@ -44,3 +44,9 @@ In `/start-ideation`, a grill is a ticket type — its output is a resolved deci
 in the map (current state only). Before `/spec`, a grill closes the gaps so the
 spec can be synthesized without an interview. When you've grilled enough that the
 build path is clear, say so and hand to `/spec`.
+
+Before you call a map resolved, scan it for unwritten answers — any ticket whose
+Answer is still a `— (open` / `— (deferred` placeholder or whose section carries a
+`GRILL DEFERRED` banner — and refuse to close while any remain. A decision made in
+conversation but not written into the map is not recorded; the artifact is the source
+of truth, not the chat.

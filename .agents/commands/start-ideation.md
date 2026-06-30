@@ -66,8 +66,12 @@ other tickets, update or delete them.
 ## The exit
 
 The map is deliberately incomplete beyond the frontier. You are done when the
-path to the finish line is clear — no unresolved tickets blocking the build. At
-that point the map is closed; offer to move to `/spec`.
+path to the finish line is clear — no unresolved tickets blocking the build. Before
+declaring the map closed, scan it for unwritten answers — any ticket still holding a
+`— (open` / `— (deferred` placeholder or a `GRILL DEFERRED` banner — and refuse to
+close while any remain; a decision made in conversation but not written into the map
+is not recorded. Then close the map and lead with the recommended next action
+(usually `/spec`) and a one-clause why.
 
 A natural seam in the work is recorded as a decision in the map for *me* to make —
 it is never a reason to close the map early or to spin off a separate map or PRD on

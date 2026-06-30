@@ -21,6 +21,8 @@ Communication is part of the work — write so the reviewer can act, not decode.
 - Cut the derivation; keep the one-clause *why* behind a judgment or recommendation.
 - Write so I can pick it up cold, as if I'd been away a week and forgotten the thread:
   say what this is, where it stands, and the next action.
+- Recommend, don't offer a blind menu: every question and hand-off leads with the
+  pick you'd make and a one-clause why.
 - Format for scan: tables and lists parse fast; short lines, bold sparingly.
 - Clear beats dense — one main point per message, plain sentences first, don't cram.
 

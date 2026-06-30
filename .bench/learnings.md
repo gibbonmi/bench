@@ -57,7 +57,11 @@ file was skipped as speculative — only two exist._
   Consider generalizing gate check 1d to assert every kit-referenced `.bench/*` file
   is scaffolded.
 
-## 2026-06-28 — questions must carry a recommendation  [open]
+## 2026-06-28 — questions must carry a recommendation  [resolved: promoted]
+_Resolved 2026-06-30 via /resynthesize: promoted to AGENTS.md "How to talk to me"
+(mirrored in .bench/BENCH.md) as the "recommend, don't offer a blind menu" rule,
+covering both questions and hand-offs._
+
 - **What happened:** During /start-ideation I asked two AskUserQuestion forks with
   neutral options and no recommended pick. The user corrected me: always put forth a
   recommendation when asking.
@@ -68,7 +72,11 @@ file was skipped as speculative — only two exist._
   a question without a recommendation is incomplete. Surface judgment, don't offer a
   blind menu.
 
-## 2026-06-28 — always recommend the proper next action  [open]
+## 2026-06-28 — always recommend the proper next action  [resolved: promoted]
+_Resolved 2026-06-30 via /resynthesize: promoted together with the questions learning
+into the single "recommend, don't offer a blind menu" rule (AGENTS.md / BENCH.md) — it
+applies to every question and every phase hand-off._
+
 - **What happened:** After finishing a step (e.g. writing the canary spec), I offered
   next actions as a neutral menu — "/build or bench shift?" — and the user had to ask
   for a recommendation. Same pattern as the questions learning, applied to hand-off
@@ -83,7 +91,10 @@ file was skipped as speculative — only two exist._
   action keyed to type+goal, not a neutral either/or. Fold into AGENTS.md "How to talk
   to me" alongside the questions rule.
 
-## 2026-06-28 — show spec/issue breakdowns as a table for approval before building  [open]
+## 2026-06-28 — show spec/issue breakdowns as a table for approval before building  [resolved: promoted]
+_Resolved 2026-06-30 via /resynthesize: promoted to the /spec exit — emit a
+stories/seams/out-of-scope approval table and pause for sign-off before any build._
+
 - **What happened:** I presented the canary spec as prose and moved to /build on a
   verbal OK. The user wants the breakdown shown in table form for explicit approval
   *before* construction continues.
@@ -96,7 +107,13 @@ file was skipped as speculative — only two exist._
   written; the table is the at-a-glance veto surface. Fold the "table for approval"
   expectation into /spec and AGENTS.md "How to talk to me".
 
-## 2026-06-28 — clean summary + persistent progress visual at every stage boundary  [open]
+## 2026-06-28 — clean summary + persistent progress visual at every stage boundary  [resolved: split]
+_Resolved 2026-06-30 via /resynthesize: split. The stage-summary half is promoted —
+covered by the "pick it up cold (what / where / next)" bullet in AGENTS.md / BENCH.md.
+The persistent task-list tracker is dismissed: TaskCreate/TaskUpdate are
+Claude-Code-only, so mandating them in harness-shared rules leaks one harness into the
+core; it also went unused all session._
+
 - **What happened:** Moving between workflow phases I dumped walls of text without a
   crisp "what just happened / what's next." The user wants every stage transition to
   carry a short summary and, ideally, a persistent visual of where we are in the
@@ -111,7 +128,11 @@ file was skipped as speculative — only two exist._
   to talk to me" and each command's exit section. Keep prose minimal; the table/list
   carries the state.
 
-## 2026-06-30 — declared a decision map "resolved" while two tickets were unwritten  [open]
+## 2026-06-30 — declared a decision map "resolved" while two tickets were unwritten  [resolved: promoted]
+_Resolved 2026-06-30 via /resynthesize: promoted to the /grill and /start-ideation
+exits — scan for unfilled "— (open|deferred)" / "GRILL DEFERRED" markers and refuse to
+close a map while any remain._
+
 - **What happened:** After grilling decisions/ambient-feedback.md I set the header to
   "GRILLED & RESOLVED" and moved to /spec, but tickets #3 and #5 still held "— (deferred)"
   placeholder answers — the decisions were made in conversation but never written into the
