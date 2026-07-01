@@ -11,12 +11,13 @@ set -uo pipefail
 
 root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "gate: not in a git repo" >&2; exit 3; }
 cd "$root"
+gate_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 fail=0
 err() { echo "gate: $*" >&2; fail=1; }
 
 # 1. Shell scripts parse.
-for f in bin/bench.sh .bench/hooks/*.sh; do
+for f in bin/*.sh .bench/gate-*.sh .bench/hooks/*.sh; do
   bash -n "$f" || err "bash syntax error in $f"
 done
 
@@ -35,354 +36,10 @@ done
 bad_refs="$(grep -oE '\.bench/(gate|done)(\.sh)?' bin/bench.sh | grep -vE '\.sh$' | sort -u || true)"
 [ -z "$bad_refs" ] || err "bin/bench.sh has extensionless gate/done refs ($(echo "$bad_refs" | tr '\n' ' ')); the contract is .sh"
 
-# 1d. `bench init` must scaffold the self-learning journal. AGENTS.md tells agents to
-#     append to .bench/learnings.md and /bench-integrate-learnings reads it; if init does not
-#     create it, the contract points at a file that never exists. Exercise the real
-#     init path in a throwaway repo rather than grepping for the literal.
-tmp="$(mktemp -d)"
-( cd "$tmp" && git init -q && bash "$root/bin/bench.sh" init >/dev/null 2>&1 )
-[ -f "$tmp/.bench/learnings.md" ] || err "bench init does not scaffold .bench/learnings.md (self-learning journal)"
-rm -rf "$tmp"
-
-# 1e. `bench link` must safely incorporate Bench into an existing repo. This is the
-#     adoption seam: exercise the real CLI against throwaway repos so clobbering,
-#     duplicate managed blocks, unsafe conflicts, missing hook adapters, and wrong
-#     default link mode all fail at the oracle.
-check_link_contract() {
-  local repo="$1"
-  ( cd "$repo" && bash "$root/bin/bench.sh" link ) >"$repo/link.out" 2>&1
-}
-
-count_literal() {
-  local needle="$1" file="$2"
-  grep -oF "$needle" "$file" 2>/dev/null | wc -l | tr -d ' '
-}
-
-tmp="$(mktemp -d)"
-(
-  set -u
-  cd "$tmp"
-  git init -q
-  check_link_contract "$tmp"
-  [ -f AGENTS.md ] || { echo "fresh link did not create AGENTS.md"; exit 1; }
-  [ "$(count_literal '<!-- bench:start -->' AGENTS.md)" = "1" ] || { echo "fresh link did not create exactly one managed start marker"; exit 1; }
-  [ "$(count_literal '<!-- bench:end -->' AGENTS.md)" = "1" ] || { echo "fresh link did not create exactly one managed end marker"; exit 1; }
-  [ -f .bench/BENCH.md ] || { echo "fresh link did not install .bench/BENCH.md"; exit 1; }
-  [ -f .bench/link-manifest.tsv ] || { echo "fresh link did not write link manifest"; exit 1; }
-  [ -f .agents/commands/bench-implement-spec.md ] || { echo "fresh link did not install portable commands"; exit 1; }
-  [ -f .agents/skills/bench-craft-seams/SKILL.md ] || { echo "fresh link did not install portable skills"; exit 1; }
-  [ -f .agents/skills/bench-implement-spec/SKILL.md ] || { echo "fresh link did not install Codex command adapter skills"; exit 1; }
-  [ -f .agents/skills/bench-implement-spec/agents/openai.yaml ] || { echo "fresh link did not install Codex command adapter metadata"; exit 1; }
-  [ -f .claude/README.md ] || { echo "fresh link did not install Claude adapter README"; exit 1; }
-  grep -qF '.agents/' .claude/README.md || { echo "Claude adapter README does not explain .agents"; exit 1; }
-  grep -qF '.bench/hooks/' .claude/README.md || { echo "Claude adapter README does not explain shared hooks"; exit 1; }
-  [ -e .claude/commands/bench-implement-spec.md ] || { echo "fresh link did not install Claude command adapter"; exit 1; }
-  [ -e .claude/skills/bench-craft-seams/SKILL.md ] || { echo "fresh link did not install Claude skill adapter"; exit 1; }
-  [ -f .codex/hooks.json ] || { echo "fresh link did not install Codex hook adapter"; exit 1; }
-  [ -f .bench/hooks/block-dangerous-git.sh ] || { echo "fresh link did not install shared hook scripts"; exit 1; }
-  [ -f .bench/hooks/session-start.sh ] || { echo "fresh link did not install the SessionStart hook"; exit 1; }
-  grep -q 'SessionStart' .claude/settings.json || { echo "fresh link .claude/settings.json has no SessionStart wiring"; exit 1; }
-  [ -x .git/hooks/pre-push ] || { echo "fresh link did not install git pre-push hook"; exit 1; }
-  [ ! -L .agents/commands/bench-implement-spec.md ] || { echo "default link mode symlinked portable commands"; exit 1; }
-  bash "$root/bin/bench.sh" link >/dev/null 2>&1
-  [ "$(count_literal '<!-- bench:start -->' AGENTS.md)" = "1" ] || { echo "relink duplicated managed Bench block"; exit 1; }
-) || err "bench link safe fresh/relink contract failed ($(cat "$tmp/link.out" 2>/dev/null | tail -n 1))"
-rm -rf "$tmp"
-
-tmp="$(mktemp -d)"
-(
-  set -u
-  cd "$tmp"
-  git init -q
-  printf 'PROJECT RULES\n' > AGENTS.md
-  check_link_contract "$tmp"
-  grep -qF 'PROJECT RULES' AGENTS.md || { echo "existing AGENTS.md content was clobbered"; exit 1; }
-  [ "$(count_literal '<!-- bench:start -->' AGENTS.md)" = "1" ] || { echo "existing AGENTS.md did not get exactly one managed block"; exit 1; }
-) || err "bench link existing AGENTS.md contract failed ($(cat "$tmp/link.out" 2>/dev/null | tail -n 1))"
-rm -rf "$tmp"
-
-tmp="$(mktemp -d)"
-(
-  set -u
-  cd "$tmp"
-  git init -q
-  mkdir -p .agents/commands
-  printf 'project command\n' > .agents/commands/bench-implement-spec.md
-  if bash "$root/bin/bench.sh" link >link.out 2>&1; then
-    echo "link succeeded despite a project-owned command conflict"; exit 1
-  fi
-  grep -qi 'conflict' link.out || { echo "conflict output did not explain the conflict"; exit 1; }
-  grep -qF 'project command' .agents/commands/bench-implement-spec.md || { echo "conflicting project command was overwritten"; exit 1; }
-  [ ! -f .bench/link-manifest.tsv ] || { echo "conflicting link wrote a manifest despite failing"; exit 1; }
-) || err "bench link conflict contract failed ($(cat "$tmp/link.out" 2>/dev/null | tail -n 1))"
-rm -rf "$tmp"
-
-tmp="$(mktemp -d)"
-(
-  set -u
-  cd "$tmp"
-  git init -q
-  check_link_contract "$tmp"
-  printf '\nlocal edit\n' >> .agents/commands/bench-implement-spec.md
-  if bash "$root/bin/bench.sh" link >relink.out 2>&1; then
-    echo "relink overwrote a locally modified managed file"; exit 1
-  fi
-  grep -qi 'modified' relink.out || { echo "modified-managed output did not explain the local edit"; exit 1; }
-) || err "bench link modified-managed contract failed ($(cat "$tmp/relink.out" 2>/dev/null | tail -n 1))"
-rm -rf "$tmp"
-
-# 1f. `bench idea` / `bench roadmap` — the capture-and-forget roadmap sink. Exercise the
-#     real CLI in a throwaway repo: roadmap reports empty when absent, idea creates
-#     ROADMAP.md and appends a dated line, a no-arg idea errors without appending a blank
-#     entry, and roadmap prints parked ideas. A regression here means the capture path
-#     silently stopped working.
-tmp="$(mktemp -d)"
-(
-  set -u
-  cd "$tmp"
-  git init -q
-  bash "$root/bin/bench.sh" roadmap | grep -qi 'empty' || { echo "roadmap on absent file did not report empty"; exit 1; }
-  bash "$root/bin/bench.sh" idea "ship dark mode" >/dev/null 2>&1
-  [ -f ROADMAP.md ] || { echo "idea did not create ROADMAP.md"; exit 1; }
-  grep -qE '^- [0-9]{4}-[0-9]{2}-[0-9]{2}  ship dark mode$' ROADMAP.md || { echo "idea entry not dated '- YYYY-MM-DD  <text>'"; exit 1; }
-  before="$(wc -l < ROADMAP.md)"
-  if bash "$root/bin/bench.sh" idea >/dev/null 2>&1; then echo "no-arg idea succeeded; should error"; exit 1; fi
-  after="$(wc -l < ROADMAP.md)"
-  [ "$before" = "$after" ] || { echo "no-arg idea appended a blank entry"; exit 1; }
-  bash "$root/bin/bench.sh" roadmap | grep -qF 'ship dark mode' || { echo "roadmap did not print the parked idea"; exit 1; }
-  # The capture guarantee is "all words after the subcommand are the idea" — the join
-  # is $* not $1, so exercise the unquoted multi-word form a single-arg test can't tell apart.
-  bash "$root/bin/bench.sh" idea capture all the words >/dev/null 2>&1
-  grep -qE '^- [0-9]{4}-[0-9]{2}-[0-9]{2}  capture all the words$' ROADMAP.md || { echo "idea did not join unquoted multi-word args (\$* not \$1)"; exit 1; }
-  # Empty is the absence of parked ideas whether the file is missing or present-but-blank.
-  : > ROADMAP.md
-  bash "$root/bin/bench.sh" roadmap | grep -qi 'empty' || { echo "roadmap on present-but-empty file did not report empty"; exit 1; }
-) || err "bench idea/roadmap contract failed"
-rm -rf "$tmp"
-
-# 1g. `bench status` — the ambient-feedback surface renderer. Construct repo state in
-#     throwaway repos and assert the rendered output: the all-clear line, the gate
-#     signal resolved from the cache (red / stale / silent), each signal's action
-#     string, the zero-severity roadmap footer, and the five-row budget with a `+k more`
-#     tail. Deterministic plain shell, so it is fully contract-testable here.
-gci() { git -c user.email=bench@local -c user.name=bench "$@"; }
-# A — clean repo → all-clear, no footer.
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
-  out="$(bash "$root/bin/bench.sh" status)"
-  grep -qiF 'clean — nothing pending' <<<"$out" || { echo "clean repo did not report all-clear"; exit 1; }
-) || err "bench status clean contract failed"
-rm -rf "$tmp"
-# B — clean + committed ROADMAP.md → footer present, never the lead.
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q
-  printf -- '- 2026-06-30  an idea\n' > ROADMAP.md; gci add -A; gci commit -q -m s
-  out="$(bash "$root/bin/bench.sh" status)"
-  grep -qiF 'clean — nothing pending' <<<"$out" || { echo "footer repo lost the all-clear line"; exit 1; }
-  grep -qF 'parked — bench roadmap' <<<"$out" || { echo "roadmap footer missing"; exit 1; }
-  if grep -qE '^▶.*bench roadmap' <<<"$out"; then echo "roadmap footer became the lead"; exit 1; fi
-) || err "bench status footer contract failed"
-rm -rf "$tmp"
-# C — gate cache present but sha != HEAD → stale row, and NOT a clean bill.
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
-  printf 'green deadbeefdeadbeefdeadbeefdeadbeefdeadbeef 2026-06-30T00:00:00Z\n' > "$(gci rev-parse --absolute-git-dir)/bench-last-gate"
-  out="$(bash "$root/bin/bench.sh" status)"
-  grep -qF 're-run the gate' <<<"$out" || { echo "stale gate cache did not surface re-run"; exit 1; }
-  if grep -qiF 'clean — nothing pending' <<<"$out"; then echo "stale green read as a clean bill"; exit 1; fi
-) || err "bench status stale-gate contract failed"
-rm -rf "$tmp"
-# D — gate cache green AND fresh (sha == HEAD) → gate silent → all-clear.
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
-  printf 'green %s 2026-06-30T00:00:00Z\n' "$(gci rev-parse HEAD)" > "$(gci rev-parse --absolute-git-dir)/bench-last-gate"
-  out="$(bash "$root/bin/bench.sh" status)"
-  grep -qiF 'clean — nothing pending' <<<"$out" || { echo "fresh-green gate was not silent"; exit 1; }
-) || err "bench status fresh-green contract failed"
-rm -rf "$tmp"
-# E — decision-map marker alone → the craft-grill → /bench-write-spec action string.
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q
-  mkdir decisions; printf '### Answer\n— (deferred)\n' > decisions/x.md; gci add -A; gci commit -q -m s
-  out="$(bash "$root/bin/bench.sh" status)"
-  grep -qF 'craft-grill → /bench-write-spec' <<<"$out" || { echo "unresolved decision map did not surface craft-grill"; exit 1; }
-) || err "bench status decisions contract failed"
-rm -rf "$tmp"
-# F — six signals firing → gate red leads; budget caps at five rows + `+1 more`; the
-#     lowest-priority signal (the decision map) is dropped under the tail.
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q
-  mkdir -p .bench; printf -- '- a [open]\n' > .bench/learnings.md
-  seq 401 | sed 's/^/x = /' > big.py
-  mkdir decisions; printf '### Answer\n— (deferred)\n' > decisions/x.md
-  gci add -A; gci commit -q -m s
-  printf 'red %s 2026-06-30T00:00:00Z\n' "$(gci rev-parse HEAD)" > "$(gci rev-parse --absolute-git-dir)/bench-last-gate"
-  echo dirty > dirty.txt
-  gci worktree add -q --detach "$tmp/wt2" HEAD 2>/dev/null
-  out="$(bash "$root/bin/bench.sh" status)"
-  head -1 <<<"$out" | grep -qF 'fix before commit' || { echo "red gate did not lead the budget case"; exit 1; }
-  grep -qF '+1 more' <<<"$out" || { echo "six signals did not trigger the +k more tail"; exit 1; }
-  grep -qF '/bench-integrate-learnings' <<<"$out" || { echo "learnings dropped from the top five"; exit 1; }
-  grep -qF 'split (craft-seams)' <<<"$out" || { echo "structure dropped from the top five"; exit 1; }
-  grep -qF 'commit on green / push' <<<"$out" || { echo "git signal action string missing"; exit 1; }
-  grep -qF 'resume or clean up' <<<"$out" || { echo "worktree signal action string missing"; exit 1; }
-  if grep -qF 'craft-grill → /bench-write-spec' <<<"$out"; then echo "lowest-priority signal not dropped under the budget"; exit 1; fi
-  rows="$(grep -cE '^  [a-z]' <<<"$out")"
-  [ "$rows" -le 5 ] || { echo "budget exceeded five rows ($rows)"; exit 1; }
-) || err "bench status budget contract failed"
-rm -rf "$tmp"
-# G — the Stop hook records the gate verdict to the git-dir cache, in the format
-#     `bench status` reads back. Run it armed (BENCH_SHIFT=1) in a throwaway repo.
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
-  BENCH_SHIFT=1 BENCH_STOP_CHECKED=0 bash "$root/.bench/hooks/stop.sh" >/dev/null 2>&1 || true
-  cache="$(gci rev-parse --absolute-git-dir)/bench-last-gate"
-  [ -f "$cache" ] || { echo "Stop hook did not write the gate cache"; exit 1; }
-  grep -qE '^(green|red) [0-9a-f]+ [0-9T:Z-]+$' "$cache" || { echo "gate cache not <status> <sha> <iso8601>"; exit 1; }
-) || err "bench status gate-cache write contract failed"
-rm -rf "$tmp"
-# H — BENCH_LEARNINGS_FLOOR moves the open-learnings threshold (a single open learning is
-#     silent at floor 2, surfaced at floor 1).
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q
-  mkdir -p .bench; printf -- '- a [open]\n' > .bench/learnings.md; gci add -A; gci commit -q -m s
-  hi="$(BENCH_LEARNINGS_FLOOR=2 bash "$root/bin/bench.sh" status)"
-  if grep -qF '/bench-integrate-learnings' <<<"$hi"; then echo "floor=2 still surfaced a single open learning"; exit 1; fi
-  lo="$(BENCH_LEARNINGS_FLOOR=1 bash "$root/bin/bench.sh" status)"
-  grep -qF '/bench-integrate-learnings' <<<"$lo" || { echo "floor=1 did not surface the open learning"; exit 1; }
-) || err "bench status learnings-floor contract failed"
-rm -rf "$tmp"
-# 1h. `bench shift` must iterate the gated loop, not die at the first gate. Regression:
-#     run_gate used to `exec` the repo gate, replacing the bench process on iteration 1's
-#     gate check, so the loop never reached its commit/break/"shift done". Drive the loop
-#     with a no-op agent and a trivial green gate in a throwaway repo; assert it completes.
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q
-  mkdir -p .bench; printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
-  gci add -A; gci commit -q -m init
-  out="$(BENCH_AGENT=true BENCH_MAX_ITERS=1 BENCH_HOME="$tmp/.bh" bash "$root/bin/bench.sh" shift noop 2>&1)" || true
-  grep -qF 'shift done' <<<"$out" || { echo "bench shift loop did not complete (run_gate exec'd the gate?)"; exit 1; }
-) || err "bench shift gated-loop contract failed"
-rm -rf "$tmp"
-
-# 1i. `bench shift` post-implementation hardening. Exercise the real loop with controlled
-#     agents so the refactor tail cannot drift into unrelated files, report phantom
-#     commits, burn refactor retries after a no-op, leave scratch files on Ctrl-C, or lose
-#     the `.bench/done.sh` early-completion path.
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q
-  mkdir -p .bench; printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
-  seq 401 | sed 's/^/x = /' > preexisting.py
-  gci add -A; gci commit -q -m init
-  out="$(BENCH_AGENT=true BENCH_MAX_ITERS=1 BENCH_REFACTOR_ITERS=1 BENCH_HOME="$tmp/.bh" bash "$root/bin/bench.sh" shift noop 2>&1)" || true
-  grep -qF 'shift done' <<<"$out" || { echo "shift with unrelated structural debt did not complete"; exit 1; }
-  if grep -qF 'refactor phase' <<<"$out"; then echo "pre-existing structural debt triggered refactor phase"; exit 1; fi
-) || err "bench shift touched-scope structure contract failed"
-rm -rf "$tmp"
-
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q
-  mkdir -p .bench; printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
-  cat > agent <<'EOF'
-#!/usr/bin/env bash
-if [ ! -f made-big ]; then
-  seq 401 | sed 's/^/x = /' > touched.py
-  : > made-big
-fi
-EOF
-  chmod +x agent
-  gci add -A; gci commit -q -m init
-  out="$(BENCH_AGENT="$tmp/agent" BENCH_MAX_ITERS=1 BENCH_REFACTOR_ITERS=3 BENCH_HOME="$tmp/.bh" bash "$root/bin/bench.sh" shift make-big 2>&1)" || true
-  grep -qF 'refactor phase' <<<"$out" || { echo "touched over-budget file did not trigger refactor phase"; exit 1; }
-  grep -qF 'refactor 1 made no staged change' <<<"$out" || { echo "no-op refactor pass did not report no staged change"; exit 1; }
-  if grep -qF 'refactor 2/' <<<"$out"; then echo "no-op refactor pass did not exit early"; exit 1; fi
-  if grep -qF 'refactor 1 committed' <<<"$out"; then echo "no-op refactor pass reported a phantom commit"; exit 1; fi
-  if grep -qF '/improve-codebase-architecture' <<<"$out"; then echo "shift fallback suggests an unbundled command"; exit 1; fi
-  [ "$(gci rev-list --count HEAD)" = "2" ] || { echo "no-op refactor created an unexpected commit"; exit 1; }
-) || err "bench shift refactor no-op contract failed"
-rm -rf "$tmp"
-
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q
-  mkdir -p .bench; printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
-  cat > interrupt-agent <<'EOF'
-#!/usr/bin/env bash
-kill -INT "$PPID"
-exit 130
-EOF
-  chmod +x interrupt-agent
-  gci add -A; gci commit -q -m init
-  interrupt_log="$(mktemp)"
-  if BENCH_AGENT="$tmp/interrupt-agent" BENCH_MAX_ITERS=2 BENCH_HOME="$tmp/.bh" bash "$root/bin/bench.sh" shift interrupt >"$interrupt_log" 2>&1; then
-    echo "interrupted shift exited successfully"; exit 1
-  fi
-  rm -f "$interrupt_log"
-  [ ! -e .bench-objective ] || { echo "interrupted shift left .bench-objective"; exit 1; }
-  [ ! -e .bench-notes.md ] || { echo "interrupted shift left .bench-notes.md"; exit 1; }
-  sleep 1
-  out="$(BENCH_AGENT=true BENCH_MAX_ITERS=1 BENCH_HOME="$tmp/.bh" bash "$root/bin/bench.sh" shift after-interrupt 2>&1)" || { printf '%s\n' "$out"; exit 1; }
-  grep -qF 'shift done' <<<"$out" || { echo "follow-up shift after interrupt did not complete"; exit 1; }
-) || err "bench shift interrupt cleanup contract failed"
-rm -rf "$tmp"
-
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q
-  mkdir -p .bench
-  printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
-  printf '#!/usr/bin/env bash\n[ -f step1.txt ]\n' > .bench/done.sh; chmod +x .bench/done.sh
-  cat > agent <<'EOF'
-#!/usr/bin/env bash
-n=0; [ -f count ] && n="$(cat count)"
-n=$((n + 1))
-printf '%s\n' "$n" > count
-printf '%s\n' "$n" > "step$n.txt"
-EOF
-  chmod +x agent
-  gci add -A; gci commit -q -m init
-  out="$(BENCH_AGENT="$tmp/agent" BENCH_MAX_ITERS=3 BENCH_HOME="$tmp/.bh" bash "$root/bin/bench.sh" shift done-early 2>&1)" || true
-  grep -qF 'objective met.' <<<"$out" || { echo ".bench/done.sh did not mark the objective met"; exit 1; }
-  if grep -qF 'iteration 2/3' <<<"$out"; then echo ".bench/done.sh did not stop before the second iteration"; exit 1; fi
-  grep -qF '1 committed iteration(s)' <<<"$out" || { echo "shift summary did not report the committed iteration count"; exit 1; }
-) || err "bench shift done.sh early-completion contract failed"
-rm -rf "$tmp"
-
-# 1j. `bench worktree` contract: lease a pooled worktree, release it, clean dirty files
-#     made inside the subshell, and reuse the same clean path on the next invocation.
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
-  cat > wt-shell <<'EOF'
-#!/usr/bin/env bash
-: "${BENCH_WT_RECORD:?}"
-pwd >> "$BENCH_WT_RECORD"
-[ -f .lease ] || { echo "lease missing"; exit 7; }
-[ ! -e dirty.txt ] || { echo "dirty file carried into reused worktree"; exit 8; }
-echo dirty > dirty.txt
-EOF
-  chmod +x wt-shell
-  record="$tmp/paths"
-  BENCH_HOME="$tmp/.bh" BENCH_WT_RECORD="$record" SHELL="$tmp/wt-shell" bash "$root/bin/bench.sh" worktree >wt1.out 2>&1
-  BENCH_HOME="$tmp/.bh" BENCH_WT_RECORD="$record" SHELL="$tmp/wt-shell" bash "$root/bin/bench.sh" worktree >wt2.out 2>&1
-  mapfile -t paths < "$record"
-  [ "${#paths[@]}" = "2" ] || { echo "worktree shell did not run twice"; exit 1; }
-  [ "${paths[0]}" = "${paths[1]}" ] || { echo "worktree pool did not reuse a clean released path"; exit 1; }
-  [ ! -f "${paths[1]}/.lease" ] || { echo "worktree lease was not removed on release"; exit 1; }
-  [ ! -f "${paths[1]}/dirty.txt" ] || { echo "worktree release did not clean dirty files"; exit 1; }
-) || err "bench worktree lease/reuse contract failed"
-rm -rf "$tmp"
+# shellcheck source=/dev/null
+. "$gate_dir/gate-link-contracts.sh"
+# shellcheck source=/dev/null
+. "$gate_dir/gate-runtime-contracts.sh"
 
 # 2. JSON is valid.
 for f in package.json .claude/settings.json .codex/hooks.json; do
@@ -433,8 +90,10 @@ printf '%s' "$pack_json" | node -e '
   const packs = JSON.parse(fs.readFileSync(0, "utf8"));
   const files = new Set((packs[0]?.files ?? []).map(f => f.path));
   let bad = 0;
-  for (const required of [
-    ".agents/commands/bench-implement-spec.md",
+	  for (const required of [
+	    "bin/bench-link.sh",
+	    "bin/bench-status.sh",
+	    ".agents/commands/bench-implement-spec.md",
     ".agents/skills/bench-craft-seams/SKILL.md",
     ".agents/skills/bench-implement-spec/SKILL.md",
     ".agents/skills/bench-implement-spec/agents/openai.yaml",
@@ -608,6 +267,11 @@ for (const file of ["HANDOFF.md", ".bench/BENCH.md"]) {
 }
 process.exit(bad);
 NODE
+
+grep -qF 'session-start.sh' README.md || err "README layout omits .bench/hooks/session-start.sh"
+grep -qF 'bench.sh' README.md || err "README layout omits the real bin/bench.sh filename"
+grep -qF 'benchkit.md' README.md || err "README layout omits projects/benchkit.md"
+! grep -qF '│   └── bench                 #' README.md || err "README layout still names bin/bench instead of bin/bench.sh"
 
 # 6. shellcheck — stronger shell lint, best-effort (runs only when installed).
 if command -v shellcheck >/dev/null 2>&1; then

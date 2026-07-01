@@ -44,7 +44,8 @@ AGENTS.md harness — that portability is the product.
 - **The safe link contract** (`bench link`). The adoption surface. It must preserve
   project-owned `AGENTS.md` text, install only a managed Bench block plus Bench-owned
   assets, fail on same-named project-owned skills/commands/hooks, and be idempotent
-  through the link manifest.
+  through the link manifest. It also installs the `.bench/bin/` local CLI set the
+  shared hooks use when no global `bench` command is on PATH.
 - **AGENTS.md** — the canonical working agreement for project-owned content. `CLAUDE.md`
   imports it (and `.bench/BENCH.md`); never duplicate content there. The four invariants
   and the communication rules are canonical in `.bench/BENCH.md`; the craft skill and

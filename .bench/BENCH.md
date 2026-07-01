@@ -72,6 +72,8 @@ code, the journal — those stay as full as their templates need).
   Bench-managed block.
 - `.bench/gate.sh` is the project gate.
 - `.bench/learnings.md` is the usage journal for process learnings.
+- `.bench/bin/` is the local CLI copy `bench link` installs for hooks, so Stop and
+  SessionStart do not depend on a global `bench` on PATH.
 - `.agents/commands/` contains portable Bench command phases.
 - `.agents/skills/` contains portable Bench skills.
 - `.bench/hooks/` contains shared hook scripts used by harness adapters.
@@ -148,6 +150,8 @@ Git safety is layered:
 
 - The git `pre-push` hook blocks direct pushes to the default branch.
 - Claude Code and Codex hook adapters call the shared scripts in `.bench/hooks/`.
+- Linked repos carry a local `.bench/bin/` CLI set for those hooks; a globally
+  installed `bench` is convenient for humans, not required for hook execution.
 - The `bench shift` loop commits only after the gate is green.
 
 Harness hooks improve ergonomics, but the git hook and gate remain the

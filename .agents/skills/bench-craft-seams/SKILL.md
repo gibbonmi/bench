@@ -68,10 +68,11 @@ is fine.
 
 ## Splitting when the structure gate fires
 
-`bench structure` fails the gate when a file outgrows its line budget or a directory
-collects too many source files. That's the signal to modularize *now*, mid-shift —
-not to defer it. But how you split decides whether you've reduced debt or just moved
-it:
+`bench structure` flags structural debt when a file outgrows its line budget or a
+directory collects too many source files. `bench shift` checks touched files after
+the implementation loop is green and then runs a bounded refactor pass; projects may
+also wire `bench structure` into the gate when they want structure to hard-block the
+PR boundary. But how you split decides whether you've reduced debt or just moved it:
 
 - **Split along responsibility, not line count.** Find the seam already latent in
   the file — the cluster of functions with one reason to change — and lift it into

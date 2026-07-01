@@ -25,7 +25,21 @@ record_gate() {
     "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$gitdir/bench-last-gate"
 }
 
-if bench gate >/tmp/bench-gate.out 2>&1; then
+bench_cmd() {
+  local root candidate
+  root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+  if [[ -n "$root" ]]; then
+    for candidate in "$root/.bench/bin/bench.sh" "$root/bin/bench.sh"; do
+      [[ -x "$candidate" ]] && { printf '%s\n' "$candidate"; return 0; }
+    done
+  fi
+  command -v bench 2>/dev/null || return 1
+}
+
+gate_out="${TMPDIR:-/tmp}/bench-gate.$$"
+trap 'rm -f "$gate_out"' EXIT
+
+if cmd="$(bench_cmd)" && "$cmd" gate >"$gate_out" 2>&1; then
   record_gate green
   exit 0   # green — allow the agent to stop
 fi
@@ -35,6 +49,10 @@ record_gate red
   echo "BLOCKED: the gate is red, so this shift is not done."
   echo "Fix the failing checks at the seam — do not weaken or skip a check —"
   echo "then stop again. Gate output:"
-  tail -n 30 /tmp/bench-gate.out
+  if [[ -s "$gate_out" ]]; then
+    tail -n 30 "$gate_out"
+  else
+    echo "could not locate bench; expected .bench/bin/bench.sh, bin/bench.sh, or bench on PATH"
+  fi
 } >&2
 exit 2

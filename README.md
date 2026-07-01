@@ -91,6 +91,7 @@ bench/
 ├── .bench/
 │   ├── BENCH.md              # full Bench operating guide installed into projects
 │   └── hooks/                # shared hook scripts used by harness adapters
+│       ├── session-start.sh
 │       ├── stop.sh
 │       └── block-dangerous-git.sh
 ├── .claude/
@@ -102,8 +103,11 @@ bench/
 ├── .codex/
 │   └── hooks.json            # Codex adapter pointing at .bench/hooks
 ├── bin/
-│   └── bench                 # worktrees (treehouse-lite) + gated loop (gnhf-lite)
+│   ├── bench.sh              # worktrees (treehouse-lite) + gated loop (gnhf-lite)
+│   ├── bench-link.sh         # safe link/install helpers
+│   └── bench-status.sh       # status, roadmap, models, structure helpers
 └── projects/
+    ├── benchkit.md           # seams, gate, lines for this kit
     ├── regroup.md            # seams, gate, lines for Regroup
     └── gl-axi.md             # seams, gate, AXI conformance for gl-axi
 ```
@@ -152,8 +156,9 @@ in every repo — so it's an interview, not a script.
 `bench link` is idempotent and harness-neutral. It preserves project-owned files,
 adds or updates only the managed Bench block in `AGENTS.md`, installs the full guide
 at `.bench/BENCH.md`, copies portable skills and commands into `.agents/`, installs
-Claude and Codex hook adapters that call shared `.bench/hooks/` scripts, and installs
-a git `pre-push` guard. Copy mode is the default; use `bench link symlink` only when
+Claude and Codex hook adapters that call shared `.bench/hooks/` scripts, installs a
+local hook CLI set under `.bench/bin/`, and installs a git `pre-push` guard. Copy
+mode is the default; use `bench link symlink` only when
 you intentionally want a dogfood repo to follow live edits in a central kit checkout.
 If a project already owns a same-named skill, command, or pre-push hook, `bench link`
 fails with a conflict report instead of overwriting it. If you copy `bench` somewhere

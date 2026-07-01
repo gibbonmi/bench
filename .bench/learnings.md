@@ -17,6 +17,19 @@ An entry only becomes `[resolved]` via /bench-integrate-learnings.
 
 <!-- entries below -->
 
+## 2026-07-01 — direct defect-fix pass used for review findings  [open]
+- **What happened:** After a defect review, the reviewer asked to fix all reported
+  findings. I used a direct fix-and-gate path rather than the full
+  `/bench-shape-idea -> /bench-write-spec -> /bench-implement-spec ->
+  /bench-review-implementation -> /bench-final-check` chain.
+- **Right behavior:** For a bounded set of concrete review findings, a direct
+  defect-fix path is acceptable when the reviewer asks for the fixes, but the
+  deviation should still be captured so `/bench-integrate-learnings` can decide
+  whether this class deserves a standing shortcut.
+- **Proposed rule change:** Consider a standing rule that confirmed review
+  findings may use a direct fix-and-gate path, with regression checks for behavior
+  defects and one journal entry when no standing rule exists.
+
 ## 2026-07-01 — approved lighter path still needs a journal entry  [open]
 - **What happened:** The reviewer approved handling the defect report with two short
   specs plus direct implementation, instead of running the full
