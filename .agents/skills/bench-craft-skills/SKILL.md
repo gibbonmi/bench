@@ -14,8 +14,9 @@ output. Every rule below serves that.
 - **Model-invoked** — keeps a `description`, so the agent can fire it on its own and
   other skills can reach it. Costs context load (the description sits in the window
   every turn). Use when the agent must reach the skill autonomously. In this kit:
-  `craft-seams`, `craft-tdd`, `craft-adr`, `craft-cli`, `craft-design-system`, `craft-grill`, `craft-synthesis` — the agent
-  reaches for them mid-work.
+  `craft-seams`, `craft-tdd`, `craft-adr`, `craft-cli`, `craft-design-system`, `craft-grill`, `craft-synthesis`, and
+  `craft-skills` itself (`craft-synthesis` runs it against every kit change) — the
+  agent reaches for them mid-work.
 - **User-invoked** — `disable-model-invocation: true`; only you, by name, can fire
   it. It is not a candidate for implicit matching, but *you* are the index that must
   remember it exists. Use for canonical phases or workflows the reviewer drives

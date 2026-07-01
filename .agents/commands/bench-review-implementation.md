@@ -31,8 +31,9 @@ Run it on the branch diff against its merge-base, on two axes that stay separate
    Confirm the ref resolves and the diff is non-empty before going further.
 
 2. **Find the sources.** Spec: `specs/<feature>.md` for this work (or the path I
-   give you). Standards: `CLAUDE.md`, `projects/<name>.md`, and any
-   `CONTRIBUTING`/conventions docs in the repo.
+   give you). Standards: `AGENTS.md` and `.bench/BENCH.md` — the working agreement
+   and shared platform rules; `CLAUDE.md` is import pointers only — plus
+   `projects/<name>.md` and any `CONTRIBUTING`/conventions docs in the repo.
 
 3. **Spawn both axes in parallel sub-agents** (so they don't pollute each other's
    context), each under ~400 words:

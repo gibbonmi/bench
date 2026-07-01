@@ -93,8 +93,10 @@ HTML report). It's an optional upgrade, never a dependency.
 - **Never fragment to beat the number.** Slicing a cohesive file into `part_a` /
   `part_b` to dodge the limit is worse than the long file: it scatters one concept
   across files with no interface between them. If you can't name the responsibility
-  the split isolates, don't split — the file may legitimately be one deep module, so
-  raise its budget in the gate instead.
+  the split isolates, don't split — the file may legitimately be one deep module.
+  There is no per-file budget: either raise the global cap (`BENCH_MAX_LINES`) as a
+  deliberate reviewer-approved change, or record the exception in the learnings
+  journal for the reviewer to rule on.
 - **A crowded directory is an ungrouped module.** Thirty files in one dir means
   several modules are hiding in a flat namespace. Group related files into a package
   with a clear entry point; the package *is* the seam.

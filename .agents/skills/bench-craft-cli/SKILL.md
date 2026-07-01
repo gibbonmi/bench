@@ -1,13 +1,16 @@
 ---
 name: craft-cli
-description: Design standards for building CLI tools that agents drive through the shell — TOON output, minimal schemas, structured errors, ambient context. Use whenever building, modifying, or reviewing gl-axi or any agent-facing CLI. Reach for this on any command output, flag, error message, or exit code in an agent-facing tool.
+description: Design standards for building CLI tools that agents drive through the shell — TOON output, minimal schemas, structured errors, ambient context. Use whenever building, modifying, or reviewing gl-axi or any agent-facing CLI whose project declares AXI conformance. Not for tools with their own declared output contract (bench itself: plain text, stderr errors, documented exit codes). Reach for this on any command output, flag, error message, or exit code in an AXI-conformant tool.
 ---
 
 # AXI — Agent eXperience Interface
 
 Standards for a CLI an agent uses by shell execution. The goal is higher accuracy
 at lower token cost than either a raw CLI or an MCP server. For gl-axi, treat
-these as the conformance target the gate checks. Full spec: https://axi.md
+these as the conformance target the gate checks. They apply where the project
+declares AXI conformance — a tool with its own documented output contract (bench's
+plain-text stderr/exit-code contract, for one) is out of this skill's scope; do
+not "fix" such a tool toward these rules. Full spec: https://axi.md
 
 ## The principles
 

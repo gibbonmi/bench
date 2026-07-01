@@ -30,8 +30,10 @@ loop honest.
 ## Process
 
 1. **Read the current state.** Explore the repo. Use the project's vocabulary.
-   Respect existing ADRs in the area you're touching — read `decisions/` and any
-   `projects/<name>.md`.
+   Respect settled ADRs in the area you're touching — read `docs/adr/` when
+   present, plus any `projects/<name>.md`. `decisions/` holds working maps, not
+   settled records: treat an open map as questions to respect, never as decisions
+   already made.
 
 2. **Pick the seams.** Sketch where this feature will be tested. Prefer an
    existing seam to a new one. Use the highest seam that exercises the real

@@ -27,9 +27,10 @@ opinion about whether the work is good, it reports what the gate says.
 bench gate
 ```
 
-`bench gate` runs the project's gate command (from `projects/<name>.md`, falling
-back to the kit default: typecheck → test → lint, plus any project conformance
-check such as AXI conformance for gl-axi).
+`bench gate` runs the project's gate: an executable `.bench/gate.sh` when present,
+else the `$BENCH_GATE` command string, else stack auto-detect (typecheck → test →
+lint). `projects/<name>.md` documents what the gate covers — it never selects the
+gate; to change what runs, change `.bench/gate.sh`.
 
 ## Report
 

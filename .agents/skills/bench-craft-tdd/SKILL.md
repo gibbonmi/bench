@@ -37,6 +37,10 @@ minimum to pass its own tests, then stop. So:
    (move logic to where the data lives), primitive obsession (introduce value
    objects), and existing code the new code just revealed as a problem.
 
+Inside a `bench shift` iteration, complete red→green within the same iteration: a
+red gate rolls the worktree back and deletes uncommitted work, so a test left
+failing when the iteration ends is destroyed, not carried to the next one.
+
 ## Acceptance rows
 
 When `/bench-write-spec` includes an acceptance coverage map, treat each
