@@ -1,8 +1,9 @@
 # Bench handoff
 
-Pick-up doc for a fresh session or harness. Read `README.md`, `AGENTS.md`,
-`.bench/BENCH.md`, `CONTEXT.md`, and `projects/benchkit.md` first; this file is the
-short current-state index for what ships.
+Pick-up doc for a fresh session or harness. Package consumers should read
+`README.md`, `AGENTS.md`, `.bench/BENCH.md`, and this file first. Kit development in
+this repository also uses `CONTEXT.md` and `projects/benchkit.md`; those are
+repo-only development context, not npm package contents.
 
 ## Current shape
 
@@ -26,7 +27,8 @@ adapter import shim, not a source of truth.
   `bench roadmap`, `bench status`, `bench gate`, `bench worktree`, `bench shift`
 - Hooks: shared `.bench/hooks/stop.sh`, `.bench/hooks/session-start.sh`, and
   `.bench/hooks/block-dangerous-git.sh`, with Claude and Codex adapters
-- Profiles: `projects/benchkit.md` plus shipped example profiles under `projects/`
+- Profiles: linked repos own their profile. The kit-development profiles under
+  `projects/` are repo-only development context, not npm package contents.
 
 ## How to continue
 

@@ -73,48 +73,9 @@ for f in .agents/skills/*/SKILL.md; do
   esac
 done
 
-# 4. Every path in package.json files[] exists (npm-pack integrity).
-node -e '
-  const fs = require("fs"), p = require("./package.json");
-  let bad = 0;
-  for (const f of p.files) if (!fs.existsSync(f)) { console.error("gate: package.json files[] missing " + f); bad = 1; }
-  process.exit(bad);
-' || fail=1
-
-pack_json="$(npm_config_cache="${TMPDIR:-/tmp}/bench-npm-cache" npm pack --dry-run --json 2>/dev/null)" || {
-  err "npm pack --dry-run failed"
-  pack_json="[]"
-}
-printf '%s' "$pack_json" | node -e '
-  const fs = require("fs");
-  const packs = JSON.parse(fs.readFileSync(0, "utf8"));
-  const files = new Set((packs[0]?.files ?? []).map(f => f.path));
-  let bad = 0;
-	  for (const required of [
-	    "bin/bench-link.sh",
-	    "bin/bench-status.sh",
-	    ".agents/commands/bench-implement-spec.md",
-    ".agents/skills/bench-craft-seams/SKILL.md",
-    ".agents/skills/bench-implement-spec/SKILL.md",
-    ".agents/skills/bench-implement-spec/agents/openai.yaml",
-    ".bench/BENCH.md",
-    ".bench/hooks/stop.sh",
-    ".claude/README.md",
-    ".codex/hooks.json",
-  ]) {
-    if (!files.has(required)) {
-      console.error("gate: npm package missing " + required);
-      bad = 1;
-    }
-  }
-  for (const forbidden of [".claude/settings.local.json"]) {
-    if (files.has(forbidden)) {
-      console.error("gate: npm package includes local-only file " + forbidden);
-      bad = 1;
-    }
-  }
-  process.exit(bad);
-' || fail=1
+# 4. Package and installable-surface contracts.
+# shellcheck source=/dev/null
+. "$gate_dir/gate-package-contracts.sh"
 
 # 5. Kit conformance — AGENTS.md index stays in sync with disk, both directions.
 #    a) every skill dir is referenced in AGENTS.md
