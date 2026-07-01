@@ -16,6 +16,12 @@ tmp="$(mktemp -d)"
   bash "$root/bin/bench.sh" roadmap | grep -qF 'ship dark mode' || { echo "roadmap did not print the parked idea"; exit 1; }
   bash "$root/bin/bench.sh" idea capture all the words >/dev/null 2>&1
   grep -qE '^- [0-9]{4}-[0-9]{2}-[0-9]{2}  capture all the words$' ROADMAP.md || { echo "idea did not join unquoted multi-word args (\$* not \$1)"; exit 1; }
+  # A hand-edited ROADMAP.md whose last line lacks a trailing newline must not swallow
+  # the next entry onto the same physical line (that also undercounts the '^- ' tally
+  # roadmap/status read). Regression for the newline-normalization in idea().
+  printf -- '- 2026-06-01  hand added' > ROADMAP.md
+  bash "$root/bin/bench.sh" idea "after handedit" >/dev/null 2>&1
+  [ "$(grep -c '^- ' ROADMAP.md)" = "2" ] || { echo "idea merged onto a newline-less last line ('^- ' count != 2)"; exit 1; }
   : > ROADMAP.md
   bash "$root/bin/bench.sh" roadmap | grep -qi 'empty' || { echo "roadmap on present-but-empty file did not report empty"; exit 1; }
 ) || err "bench idea/roadmap contract failed"

@@ -67,14 +67,19 @@ structure_check() {
 }
 
 idea() {
-  local root text
+  local root text file
   root="$(repo_root)"
   text="$*"
   if [[ -z "${text//[[:space:]]/}" ]]; then
     echo 'usage: bench idea "<text>"' >&2
     return 2
   fi
-  printf '%s  %s\n' "- $(date +%F)" "$text" >> "$root/ROADMAP.md"
+  file="$root/ROADMAP.md"
+  # Normalize a missing trailing newline before appending, or a hand-edited file
+  # whose last line lacks one would swallow this entry onto the same physical line
+  # (and break the `^- ` count that `roadmap`/`status` rely on).
+  [[ -s "$file" && -n "$(tail -c1 "$file")" ]] && printf '\n' >> "$file"
+  printf '%s  %s\n' "- $(date +%F)" "$text" >> "$file"
   echo "parked: $text"
 }
 
