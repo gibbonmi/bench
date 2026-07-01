@@ -3,3 +3,6 @@
 - 2026-07-01  Build a semantic parser for future specs' acceptance coverage maps, so Bench can detect missing or malformed coverage rows instead of only anchoring workflow prose.
 - 2026-07-01  Skill and command suggestions should use the active harness prefix: suggest slash-command forms only where '/' is valid, and suggest Codex '$bench-*' adapters in Codex instead of '/bench-*', so the recommendation surface matches what the reviewer can invoke.
 - 2026-07-01  Build a viewable Bench dashboard for humans to see project moving pieces at a glance, inspired by the saved ui_examples image styling and animated characters that move based on what they are doing. Low priority; shape in a future session.
+- 2026-07-01  per-path structure budgets (real version of craft-seams escape hatch)
+- 2026-07-01  worktree lease staleness + TOCTOU hardening for the pool
+- 2026-07-01  status: stop nagging about warm pooled worktrees as 'extra'

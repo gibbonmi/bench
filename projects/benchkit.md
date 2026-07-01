@@ -96,11 +96,14 @@ The gate file lives outside `package.json` `files[]`, so it never ships to consu
 
 ## Lines (model + effort routing)
 
-**Tier → model** (this harness; refresh with `bench models`; set 2026-06-30):
-cheap = Haiku 4.5 (`claude-haiku-4-5`) · mid = Sonnet 5 (`claude-sonnet-5`) · top =
-Opus 4.8 (`claude-opus-4-8`). Once work is planned, default execution to **mid
-(Sonnet 5)**; escalate to top only for the genuinely uncertain seam — no silent
-escalation.
+**Tier → model** (this harness; refresh with `bench models`; set 2026-07-01):
+cheap = Haiku 4.5 (`claude-haiku-4-5`) · mid = Sonnet 4.6 (`claude-sonnet-4-6`) ·
+top = Opus 4.8 (`claude-opus-4-8`). Sonnet 5 is out of the rotation by reviewer
+directive. Caveat for Claude Code delegation: the Agent tool addresses models by
+tier alias only, and its bare `sonnet` resolves to Sonnet 5 — so in-session
+delegates run on Opus until the alias is confirmed to bind 4.6; headless
+`BENCH_AGENT` runs can target `claude-sonnet-4-6` directly. Tier moves still get
+declared — no silent escalation.
 
 - **Skill / command / doc authoring** → **top model, high effort**. Prose that shapes
   agent behavior is the genuinely uncertain, high-leverage seam; the
