@@ -99,7 +99,10 @@ and run inside a pooled worktree, or document that users must enter `bench workt
 before running a shift.
 
 ### Answer
-— (pending)
+Shift owns the worktree. `bench shift` acquires a pooled worktree, runs the gated loop
+inside it against the main checkout's committed `HEAD`, and leaves the `bench/shift-<ts>`
+branch for review — the main checkout is never switched, reset, or cleaned. Specified in
+`specs/shift-in-worktree.md`.
 
 ## #4: What is the harness command contract for autonomous shifts?
 
