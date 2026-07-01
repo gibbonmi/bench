@@ -1,5 +1,10 @@
 # Bench command & skill renaming — mechanical slice
 
+<!-- command-currency: historical -->
+
+Historical implementation spec. It intentionally names pre-rename commands and skill
+paths while documenting the rename that removed them.
+
 Implements the mechanical renames decided in `decisions/bench-naming.md`. The two
 behavior changes from that map (the `resynthesize` split, the capture wiring) are
 out of scope here — this slice is pure rename + reference fixes.

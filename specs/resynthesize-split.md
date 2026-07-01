@@ -1,4 +1,9 @@
-# Split resynthesize into bench-update + bench-learn
+# Split the synthesis maintenance command
+
+<!-- command-currency: historical -->
+
+Historical implementation spec. The shipped commands now use the verbose names
+`/bench-update-kit` and `/bench-integrate-learnings`.
 
 Implements decision #4 of `decisions/bench-naming.md`: `resynthesize` becomes two
 commands reading two different inputs, with their shared review discipline extracted

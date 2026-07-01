@@ -274,6 +274,116 @@ tmp="$(mktemp -d)"
 ) || err "bench shift gated-loop contract failed"
 rm -rf "$tmp"
 
+# 1i. `bench shift` post-implementation hardening. Exercise the real loop with controlled
+#     agents so the refactor tail cannot drift into unrelated files, report phantom
+#     commits, burn refactor retries after a no-op, leave scratch files on Ctrl-C, or lose
+#     the `.bench/done.sh` early-completion path.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench; printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  seq 401 | sed 's/^/x = /' > preexisting.py
+  gci add -A; gci commit -q -m init
+  out="$(BENCH_AGENT=true BENCH_MAX_ITERS=1 BENCH_REFACTOR_ITERS=1 BENCH_HOME="$tmp/.bh" bash "$root/bin/bench.sh" shift noop 2>&1)" || true
+  grep -qF 'shift done' <<<"$out" || { echo "shift with unrelated structural debt did not complete"; exit 1; }
+  if grep -qF 'refactor phase' <<<"$out"; then echo "pre-existing structural debt triggered refactor phase"; exit 1; fi
+) || err "bench shift touched-scope structure contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench; printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  cat > agent <<'EOF'
+#!/usr/bin/env bash
+if [ ! -f made-big ]; then
+  seq 401 | sed 's/^/x = /' > touched.py
+  : > made-big
+fi
+EOF
+  chmod +x agent
+  gci add -A; gci commit -q -m init
+  out="$(BENCH_AGENT="$tmp/agent" BENCH_MAX_ITERS=1 BENCH_REFACTOR_ITERS=3 BENCH_HOME="$tmp/.bh" bash "$root/bin/bench.sh" shift make-big 2>&1)" || true
+  grep -qF 'refactor phase' <<<"$out" || { echo "touched over-budget file did not trigger refactor phase"; exit 1; }
+  grep -qF 'refactor 1 made no staged change' <<<"$out" || { echo "no-op refactor pass did not report no staged change"; exit 1; }
+  if grep -qF 'refactor 2/' <<<"$out"; then echo "no-op refactor pass did not exit early"; exit 1; fi
+  if grep -qF 'refactor 1 committed' <<<"$out"; then echo "no-op refactor pass reported a phantom commit"; exit 1; fi
+  if grep -qF '/improve-codebase-architecture' <<<"$out"; then echo "shift fallback suggests an unbundled command"; exit 1; fi
+  [ "$(gci rev-list --count HEAD)" = "2" ] || { echo "no-op refactor created an unexpected commit"; exit 1; }
+) || err "bench shift refactor no-op contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench; printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  cat > interrupt-agent <<'EOF'
+#!/usr/bin/env bash
+kill -INT "$PPID"
+exit 130
+EOF
+  chmod +x interrupt-agent
+  gci add -A; gci commit -q -m init
+  interrupt_log="$(mktemp)"
+  if BENCH_AGENT="$tmp/interrupt-agent" BENCH_MAX_ITERS=2 BENCH_HOME="$tmp/.bh" bash "$root/bin/bench.sh" shift interrupt >"$interrupt_log" 2>&1; then
+    echo "interrupted shift exited successfully"; exit 1
+  fi
+  rm -f "$interrupt_log"
+  [ ! -e .bench-objective ] || { echo "interrupted shift left .bench-objective"; exit 1; }
+  [ ! -e .bench-notes.md ] || { echo "interrupted shift left .bench-notes.md"; exit 1; }
+  sleep 1
+  out="$(BENCH_AGENT=true BENCH_MAX_ITERS=1 BENCH_HOME="$tmp/.bh" bash "$root/bin/bench.sh" shift after-interrupt 2>&1)" || { printf '%s\n' "$out"; exit 1; }
+  grep -qF 'shift done' <<<"$out" || { echo "follow-up shift after interrupt did not complete"; exit 1; }
+) || err "bench shift interrupt cleanup contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench
+  printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  printf '#!/usr/bin/env bash\n[ -f step1.txt ]\n' > .bench/done.sh; chmod +x .bench/done.sh
+  cat > agent <<'EOF'
+#!/usr/bin/env bash
+n=0; [ -f count ] && n="$(cat count)"
+n=$((n + 1))
+printf '%s\n' "$n" > count
+printf '%s\n' "$n" > "step$n.txt"
+EOF
+  chmod +x agent
+  gci add -A; gci commit -q -m init
+  out="$(BENCH_AGENT="$tmp/agent" BENCH_MAX_ITERS=3 BENCH_HOME="$tmp/.bh" bash "$root/bin/bench.sh" shift done-early 2>&1)" || true
+  grep -qF 'objective met.' <<<"$out" || { echo ".bench/done.sh did not mark the objective met"; exit 1; }
+  if grep -qF 'iteration 2/3' <<<"$out"; then echo ".bench/done.sh did not stop before the second iteration"; exit 1; fi
+  grep -qF '1 committed iteration(s)' <<<"$out" || { echo "shift summary did not report the committed iteration count"; exit 1; }
+) || err "bench shift done.sh early-completion contract failed"
+rm -rf "$tmp"
+
+# 1j. `bench worktree` contract: lease a pooled worktree, release it, clean dirty files
+#     made inside the subshell, and reuse the same clean path on the next invocation.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
+  cat > wt-shell <<'EOF'
+#!/usr/bin/env bash
+: "${BENCH_WT_RECORD:?}"
+pwd >> "$BENCH_WT_RECORD"
+[ -f .lease ] || { echo "lease missing"; exit 7; }
+[ ! -e dirty.txt ] || { echo "dirty file carried into reused worktree"; exit 8; }
+echo dirty > dirty.txt
+EOF
+  chmod +x wt-shell
+  record="$tmp/paths"
+  BENCH_HOME="$tmp/.bh" BENCH_WT_RECORD="$record" SHELL="$tmp/wt-shell" bash "$root/bin/bench.sh" worktree >wt1.out 2>&1
+  BENCH_HOME="$tmp/.bh" BENCH_WT_RECORD="$record" SHELL="$tmp/wt-shell" bash "$root/bin/bench.sh" worktree >wt2.out 2>&1
+  mapfile -t paths < "$record"
+  [ "${#paths[@]}" = "2" ] || { echo "worktree shell did not run twice"; exit 1; }
+  [ "${paths[0]}" = "${paths[1]}" ] || { echo "worktree pool did not reuse a clean released path"; exit 1; }
+  [ ! -f "${paths[1]}/.lease" ] || { echo "worktree lease was not removed on release"; exit 1; }
+  [ ! -f "${paths[1]}/dirty.txt" ] || { echo "worktree release did not clean dirty files"; exit 1; }
+) || err "bench worktree lease/reuse contract failed"
+rm -rf "$tmp"
+
 # 2. JSON is valid.
 for f in package.json .claude/settings.json .codex/hooks.json; do
   node -e 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"))' "$f" \
@@ -400,6 +510,104 @@ for m in "${ss_markers[@]}"; do
   ! grep -qF "$m" AGENTS.md || err "shared rule duplicated in AGENTS.md (it must live only in .bench/BENCH.md): \"$m\""
 done
 grep -qF 'canonical in `.bench/BENCH.md`' AGENTS.md || err "AGENTS.md lost its pointer to the canonical .bench/BENCH.md shared rules"
+
+#    g) living docs must name commands that exist now. Historical decision maps and
+#       explicitly-marked historical specs may mention old command names, but the cold
+#       pickup surface and living specs must not point agents at dead slash commands.
+node <<'NODE' || fail=1
+const fs = require("fs");
+const path = require("path");
+
+let bad = 0;
+const err = msg => { console.error("gate: " + msg); bad = 1; };
+
+const commandsDir = ".agents/commands";
+const valid = new Set();
+if (fs.existsSync(commandsDir)) {
+  for (const f of fs.readdirSync(commandsDir)) {
+    if (f.endsWith(".md")) valid.add("/" + path.basename(f, ".md"));
+  }
+}
+for (const external of ["/model"]) valid.add(external);
+
+const files = [];
+for (const f of [
+  "README.md",
+  "AGENTS.md",
+  ".bench/BENCH.md",
+  ".bench/learnings.md",
+  "CONTEXT.md",
+  "HANDOFF.md",
+]) {
+  if (fs.existsSync(f)) files.push(f);
+}
+if (fs.existsSync("specs")) {
+  for (const f of fs.readdirSync("specs").sort()) {
+    if (f.endsWith(".md")) files.push(path.join("specs", f));
+  }
+}
+if (fs.existsSync("CHANGELOG.md")) files.push("CHANGELOG.md");
+
+const knownStale = new Set([
+  "/resynthesize",
+  "/spec",
+  "/grill",
+  "/start-ideation",
+  "/setup",
+  "/build",
+  "/prep-shift",
+  "/fix-bug",
+  "/verify-gate",
+  "/map",
+  "/diagnose",
+  "/review",
+  "/verify",
+  "/shift",
+]);
+const ref = /(^|[\s([`"'])\/([A-Za-z][A-Za-z0-9_-]*[A-Za-z0-9])/g;
+for (const file of files) {
+  let text = fs.readFileSync(file, "utf8");
+  if (text.includes("command-currency: historical")) continue;
+  if (file === ".bench/learnings.md") {
+    text = text.split("<!-- entries below -->")[0];
+  }
+  if (file === "CHANGELOG.md") {
+    text = text.split(/\n## /)[0];
+  }
+  const lines = text.split(/\n/);
+  for (let i = 0; i < lines.length; i++) {
+    let m;
+    ref.lastIndex = 0;
+    while ((m = ref.exec(lines[i])) !== null) {
+      const token = "/" + m[2];
+      if (!valid.has(token) && (token.startsWith("/bench-") || knownStale.has(token))) {
+        err(`stale command reference ${token} in ${file}:${i + 1}`);
+      }
+    }
+  }
+}
+process.exit(bad);
+NODE
+
+#    h) shipped cold-pickup docs that list CLI commands must list the real subcommands
+#       from bin/bench.sh. HANDOFF.md ships in the npm package, and .bench/BENCH.md is
+#       the operating guide installed into consumer repos.
+node <<'NODE' || fail=1
+const fs = require("fs");
+
+let bad = 0;
+const err = msg => { console.error("gate: " + msg); bad = 1; };
+const bench = fs.readFileSync("bin/bench.sh", "utf8");
+const commands = [...bench.matchAll(/^  ([a-z][a-z-]*)\)\s/gm)].map(m => m[1]).sort();
+for (const file of ["HANDOFF.md", ".bench/BENCH.md"]) {
+  if (!fs.existsSync(file)) continue;
+  const text = fs.readFileSync(file, "utf8");
+  for (const cmd of commands) {
+    if (!text.includes(`bench ${cmd}`)) err(`${file} does not list CLI command 'bench ${cmd}'`);
+  }
+}
+process.exit(bad);
+NODE
 
 # 6. shellcheck — stronger shell lint, best-effort (runs only when installed).
 if command -v shellcheck >/dev/null 2>&1; then

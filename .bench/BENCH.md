@@ -124,11 +124,14 @@ Codex phase adapters installed by Bench:
 
 - `bench link` safely incorporates Bench into a repo.
 - `bench init` scaffolds `.bench/gate.sh` and `.bench/learnings.md`.
+- `bench models` discovers available models for binding the line.
+- `bench structure` flags oversized files and crowded source directories.
+- `bench idea "<text>"` parks an idea on the roadmap, committing to nothing.
+- `bench roadmap` lists the parked ideas.
+- `bench status` prints the ambient dashboard.
 - `bench gate` runs the oracle.
 - `bench worktree` opens a reusable isolated worktree.
 - `bench shift "<objective>"` runs the gated loop.
-- `bench idea "<text>"` parks an idea on the roadmap, committing to nothing.
-- `bench roadmap` lists the parked ideas.
 
 ## Capture
 

@@ -3,10 +3,16 @@
 # Fuses a warm worktree pool (treehouse-lite) with a gated loop (gnhf-lite),
 # where the gate is the external oracle: a shift only commits on green.
 #
+#   bench link                 safely wire the kit into this repo
+#   bench init                 scaffold .bench/gate.sh and .bench/learnings.md
+#   bench models               discover model ids for line binding
+#   bench structure            flag oversized files and crowded directories
+#   bench idea "<text>"        park an out-of-scope idea
+#   bench roadmap              list parked ideas
+#   bench status               print the ambient dashboard
 #   bench gate                 run the project gate; exit code is the verdict
 #   bench worktree             drop into a warm, isolated worktree subshell
 #   bench shift "<objective>"  run the gated loop toward an objective
-#   bench init                 scaffold a project profile + default gate
 #
 # Config resolution for the gate, in order:
 #   1. ./.bench/gate.sh        (executable in the repo — preferred)
@@ -21,6 +27,12 @@ MAX_TOKENS="${BENCH_MAX_TOKENS:-4000000}"
 
 repo_root() { git rev-parse --show-toplevel 2>/dev/null || { echo "not in a git repo" >&2; exit 1; }; }
 default_branch() { git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@' || echo main; }
+shift_scratch_status() {
+  git -C "$1" status --porcelain | grep -vE '^[ MADRCU?!]{2} \.bench-(objective|notes\.md)$' || true
+}
+cleanup_shift_scratch() {
+  rm -f "$1/.bench-objective" "$1/.bench-notes.md"
+}
 
 # ---- gate: the oracle -------------------------------------------------------
 run_gate() {
@@ -73,13 +85,17 @@ worktree() {
 
 # ---- shift: the gated loop --------------------------------------------------
 shift_loop() {
-  local objective="$1" root branch i started tokens=0
+  local objective="$1" root branch base i started tokens=0 committed=0
   root="$(repo_root)"
-  [[ -z "$(git -C "$root" status --porcelain)" ]] || { echo "working tree not clean; commit or stash first" >&2; exit 1; }
+  [[ -z "$(shift_scratch_status "$root")" ]] || { echo "working tree not clean; commit or stash first" >&2; exit 1; }
+  base="$(git -C "$root" rev-parse HEAD)"
   branch="bench/shift-$(date +%Y%m%d-%H%M%S)"
   git -C "$root" switch -q -c "$branch"
   printf '%s\n' "$objective" > "$root/.bench-objective"
   : > "$root/.bench-notes.md"   # carried between iterations so each learns from the last
+  BENCH_SHIFT_ROOT="$root"
+  trap 'cleanup_shift_scratch "$BENCH_SHIFT_ROOT"' EXIT
+  trap 'cleanup_shift_scratch "$BENCH_SHIFT_ROOT"; exit 130' INT TERM
   echo "▶ shift on $branch — objective: $objective"
   echo "  caps: $MAX_ITERS iterations, ~$MAX_TOKENS tokens. Ctrl-C to pull the line."
   started=$(date +%s)
@@ -94,6 +110,7 @@ shift_loop() {
         echo "  gate green, no change this iteration — objective likely met."; break
       fi
       git -C "$root" commit -q -m "shift: iteration $i — $objective"
+      committed=$((committed+1))
       echo "  ✓ green — committed iteration $i"
       if objective_met "$objective"; then echo "  objective met."; break; fi
     else
@@ -105,28 +122,33 @@ shift_loop() {
   # pushed past the budget. Refactor at green — never mid-implementation: splitting
   # before the feature's shape has settled produces premature, bad module boundaries.
   # This is "only trigger a refactor once it's over the threshold", at the loop edge.
-  if ! structure >/dev/null 2>&1; then
+  if ! structure_touched_since "$base" >/dev/null 2>&1; then
     echo "▶ structure over budget — refactor phase (split at green, not before)"
-    local rcap="${BENCH_REFACTOR_ITERS:-4}" r
+    local rcap="${BENCH_REFACTOR_ITERS:-4}" r attempted=0
     for ((r=1; r<=rcap; r++)); do
-      structure >/dev/null 2>&1 && break
+      structure_touched_since "$base" >/dev/null 2>&1 && break
+      attempted="$r"
       echo "── refactor $r/$rcap ──"
       BENCH_SHIFT=1 "$AGENT" -p "$(refactor_prompt)" || true
       if run_gate; then
         git -C "$root" add -A -- ':!.bench-objective' ':!.bench-notes.md'
-        git -C "$root" diff --cached --quiet || \
-          git -C "$root" commit -q -m "refactor: reduce structural debt"
-        echo "  ✓ tests green — refactor $r committed"
+        if git -C "$root" diff --cached --quiet; then
+          echo "  gate green, refactor $r made no staged change - stopping refactor phase"
+          break
+        fi
+        git -C "$root" commit -q -m "refactor: reduce structural debt"
+        echo "  ✓ tests green - refactor $r committed"
       else
         echo "  ✗ refactor broke the gate — rolling back"
         git -C "$root" reset -q --hard; git -C "$root" clean -qfd
       fi
     done
-    if structure >/dev/null 2>&1; then echo "  structure back under budget."
-    else echo "  ⚠ still over budget after $rcap passes — review manually, or run /improve-codebase-architecture for a deep pass."; fi
+    if structure_touched_since "$base" >/dev/null 2>&1; then echo "  structure back under budget."
+    else echo "  ⚠ still over budget after ${attempted:-$rcap} refactor pass(es) - review manually, or run a Bench deep pass with bench structure and craft-seams."; fi
   fi
-  rm -f "$root/.bench-objective" "$root/.bench-notes.md"
-  echo "■ shift done: $branch, $((i-1)) committed iteration(s), $(( ($(date +%s)-started)/60 ))m elapsed"
+  trap - EXIT INT TERM
+  cleanup_shift_scratch "$root"
+  echo "■ shift done: $branch, $committed committed iteration(s), $(( ($(date +%s)-started)/60 ))m elapsed"
   echo "  review: git -C $root log --oneline origin/$(default_branch)..$branch"
   echo "  the merge is yours."
 }
@@ -491,15 +513,32 @@ EOF
 # src/" smell). Thresholds via env. Exit 1 on violations so it gates. The *how* to
 # split is the craft-seams skill's job — this only measures.
 structure() {
-  local root max_lines max_files exts files violations=0
+  structure_check all ""
+}
+
+structure_touched_since() {
+  local root base files
+  root="$(repo_root)"
+  base="$1"
+  files="$(git -C "$root" diff --name-only --diff-filter=ACMR "$base"..HEAD || true)"
+  structure_check touched "$files"
+}
+
+structure_check() {
+  local mode="$1" scoped_files="$2" root max_lines max_files exts files violations=0
   root="$(repo_root)"
   max_lines="${BENCH_MAX_LINES:-400}"
   max_files="${BENCH_MAX_DIR_FILES:-12}"
   exts='py|ts|tsx|js|jsx|go|rs|java|rb|kt|scala|cs|cpp|cc|c|h|hpp'
-  files=$(git -C "$root" ls-files 2>/dev/null | grep -E "\.($exts)\$" || true)
+  if [[ "$mode" == all ]]; then
+    files=$(git -C "$root" ls-files 2>/dev/null | grep -E "\.($exts)\$" || true)
+  else
+    files=$(printf '%s\n' "$scoped_files" | grep -E "\.($exts)\$" || true)
+  fi
   [[ -z "$files" ]] && { echo "structure: no tracked source files to check"; return 0; }
   while IFS= read -r f; do
     [[ -z "$f" ]] && continue
+    [[ -f "$root/$f" ]] || continue
     local n; n=$(wc -l < "$root/$f" 2>/dev/null || echo 0)
     if (( n > max_lines )); then
       echo "FILE TOO LONG   $n lines (max $max_lines)   $f"; violations=$((violations+1))

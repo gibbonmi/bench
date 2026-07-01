@@ -20,7 +20,7 @@ A capture-and-forget sink. `bench idea "<text>"` appends the idea to a plain
 `ROADMAP.md` at the repo root and exits — no prompts, no workflow, no spec. `bench
 roadmap` prints the parked list when I choose to look. The file is a dumb append-only
 sink: no status, no lifecycle. When I later decide to act on a parked idea,
-`/bench-ideate` (invoked cold) offers my parked items and pulls the chosen one into a
+`/bench-shape-idea` (invoked cold) offers my parked items and pulls the chosen one into a
 new decision map, removing its line.
 
 ## User stories
@@ -42,12 +42,12 @@ new decision map, removing its line.
 9. As a builder running either subcommand outside a git repo, I get the same
    not-in-a-repo error as every other `bench` subcommand.
 10. As a builder, `bench` help lists `bench idea` and `bench roadmap`.
-11. As a builder running `/bench-ideate` cold (no idea already in hand), I'm shown my
+11. As a builder running `/bench-shape-idea` cold (no idea already in hand), I'm shown my
     parked ideas and asked which, if any, to pull up.
-12. As a builder, when `/bench-ideate` creates a map from a pulled idea, that idea's
+12. As a builder, when `/bench-shape-idea` creates a map from a pulled idea, that idea's
     line is auto-removed from `ROADMAP.md`; an abandoned pull that writes no map keeps
     its line.
-13. As a builder running `/bench-ideate` already carrying a fresh idea, I'm not
+13. As a builder running `/bench-shape-idea` already carrying a fresh idea, I'm not
     interrupted with the roadmap prompt.
 14. As a builder, the roadmap carries no status or lifecycle — removing an idea is a
     manual file edit or the promotion above; nothing in the file tracks state.
@@ -69,7 +69,7 @@ new decision map, removing its line.
   not part of the kit package.
 - **No status/lifecycle** in the file (#9). The sink stays dumb; an idea's real state,
   once committed, lives in its map/spec/issue.
-- **Promotion is agent-side**, via a `/bench-ideate` command-file edit, not shell:
+- **Promotion is agent-side**, via a `/bench-shape-idea` command-file edit, not shell:
   a cold invoke reads `ROADMAP.md`, offers the parked items, seeds the map from the
   chosen one, and deletes that line when it writes the map. No `bench` removal command.
 - **Out of B:** the ambient surface and its footer count that *renders* this roadmap —
@@ -89,7 +89,7 @@ new decision map, removing its line.
   appends nothing; `roadmap` prints entries; `roadmap` on empty says empty.
 - **Canary fixture** (`tests/canary/`) so the new contract can't rot into an always-pass
   — a broken `bench.sh` + an `EXPECT` substring, following the existing fixture shape.
-- **`/bench-ideate` promotion** is agent-instruction, not shell, so it's verified by
+- **`/bench-shape-idea` promotion** is agent-instruction, not shell, so it's verified by
   reading the command file; add a kit-conformance grep to the gate asserting the command
   references `ROADMAP.md` and the auto-remove-on-map-creation behavior, so the
   instruction can't silently disappear.
@@ -102,7 +102,7 @@ new decision map, removing its line.
   A genuinely separate capability with its own spec; decided two-specs-B-first. Est:
   several hours (renderer, signals, ladder, SessionStart wiring, gate-result cache).
 - **`bench roadmap promote <n>` / status fields.** #9 decided promotion is manual via
-  `/bench-ideate`; a CLI promote helper or lifecycle tracking is a distinct future
+  `/bench-shape-idea`; a CLI promote helper or lifecycle tracking is a distinct future
   command, not the rest of this one. Est ~30 min if ever wanted.
 - **CLI removal/editing of entries** (`bench idea --remove`, reorder). Manual file edit
   is the answer; a CLI editor is a separate capability. Est ~30 min.

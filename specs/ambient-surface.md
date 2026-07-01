@@ -46,10 +46,10 @@ fast and never runs the gate cold.
     repo.
 13. As a user, I want uncommitted/unpushed changes surfaced with "commit / push."
 14. As a user, I want a stray worktree or active shift surfaced with "resume or clean up."
-15. As a user, I want open learnings (≥ a floor) surfaced with "/bench-learn" and the
+15. As a user, I want open learnings (≥ a floor) surfaced with "/bench-integrate-learnings" and the
     count.
 16. As a user, I want structural debt surfaced with "split."
-17. As a user, I want an unresolved decision map surfaced with "/bench-craft-grill → /bench-spec."
+17. As a user, I want an unresolved decision map surfaced with "craft-grill → /bench-write-spec."
 18. As a user, I want parked roadmap ideas shown as a passive footer count (`N idea(s)
     parked — bench roadmap`), never an action row, never inside the five-row budget.
 19. As a user, I want the dashboard to appear automatically at SessionStart in Claude
@@ -77,9 +77,9 @@ fast and never runs the gate cold.
   | 0 | gate red | cache status=red **and** fresh (sha == HEAD) | fix before commit |
   | 1 | uncommitted / unpushed | `git status --porcelain` non-empty, or commits ahead of upstream | commit on green / push |
   | 2 | stray worktree / active shift | `git worktree list` shows > 1 | resume or clean up (`bench worktree`) |
-  | 3 | open learnings | `grep -c '[open]' .bench/learnings.md` ≥ floor | `/bench-learn` (+count) |
+  | 3 | open learnings | `grep -c '[open]' .bench/learnings.md` ≥ floor | `/bench-integrate-learnings` (+count) |
   | 4 | structural debt | `bench structure` exits non-zero | split (bench-craft-seams) (+count) |
-  | 5 | unresolved decision map | a `decisions/*.md` holds an open-ticket marker | `/bench-craft-grill` → `/bench-spec` |
+  | 5 | unresolved decision map | a `decisions/*.md` holds an open-ticket marker | `craft-grill` → `/bench-write-spec` |
   | 6 | gate stale | cache exists but sha != HEAD | re-run the gate |
 
 - **Concision (#4):** show-only-on-signal; hard five-row budget with a `+k more` tail;

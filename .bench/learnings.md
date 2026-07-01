@@ -2,7 +2,7 @@
 
 Append one entry when you deviate from the workflow, make a judgment call you're
 unsure about, or catch a should-have-asked in hindsight. You capture; the reviewer
-decides. `/bench-learn` reviews the open entries, promotes the generalizable ones
+decides. `/bench-integrate-learnings` reviews the open entries, promotes the generalizable ones
 into the kit with sign-off, and marks them resolved. Never rewrite a kit rule
 yourself — that is the whole point of capturing here instead.
 
@@ -13,9 +13,20 @@ Format per entry:
 - **Right behavior:** …
 - **Proposed rule change:** … (or "none")
 
-An entry only becomes `[resolved]` via /bench-learn.
+An entry only becomes `[resolved]` via /bench-integrate-learnings.
 
 <!-- entries below -->
+
+## 2026-07-01 — approved lighter path still needs a journal entry  [open]
+- **What happened:** The reviewer approved handling the defect report with two short
+  specs plus direct implementation, instead of running the full
+  `/bench-shape-idea -> /bench-write-spec -> /bench-implement-spec ->
+  /bench-review-implementation -> /bench-final-check` path.
+- **Right behavior:** Ask before deviating, then capture the deviation and why in the
+  journal so `/bench-integrate-learnings` can decide whether it generalizes.
+- **Proposed rule change:** Add a short "approved light path" note to the workflow
+  guidance: when the reviewer explicitly approves a scoped shortcut, still append one
+  learning entry unless a standing rule already covers that class of work.
 
 ## 2026-06-27 — gate was red at HEAD; a commit claimed green without running it  [resolved: dismissed]
 _Resolved 2026-06-28 via /resynthesize: dismissed — already governed by invariant 1

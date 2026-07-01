@@ -19,7 +19,7 @@ one entry per `/bench-update-kit` or `/bench-integrate-learnings` run; don't rew
   file the kit's prose references must be scaffolded by `bench init` and locked by a
   behavioral gate check (the `learnings.md` bug; executable fix already in `724bf8c`).
   Dismissed: "gate green claimed without a run" — already governed by invariant 1 and
-  `/verify-gate`; a pre-commit gate run would be a fourth check surface. Skipped:
+  `/bench-final-check`; a pre-commit gate run would be a fourth check surface. Skipped:
   generalizing gate check 1d to every `.bench/*` file — speculative, only two exist.
 - **Communication made first-class + portable; four learnings drained (2026-06-30,
   scope: learnings).** Sharpened AGENTS.md "How to talk to me" — clarity over density,
@@ -27,8 +27,8 @@ one entry per `/bench-update-kit` or `/bench-integrate-learnings` run; don't rew
   keep the one-clause why and enough context to resume cold), and "recommend, don't
   offer a blind menu." Shipped it to consumers via a new Communication section in
   `.bench/BENCH.md`. Promoted from `.bench/learnings.md`: recommend-at-every-question-
-  and-hand-off; approval-table-before-build (`/spec` exit); scan-for-unwritten-answers-
-  before-closing-a-map (`/grill` + `/start-ideation` exits). Dismissed: the persistent
+  and-hand-off; approval-table-before-build (`/bench-write-spec` exit); scan-for-unwritten-answers-
+  before-closing-a-map (`craft-grill` + `/bench-shape-idea` exits). Dismissed: the persistent
   task-list progress tracker — `TaskCreate/TaskUpdate` are Claude-Code-only, so
   mandating them in harness-shared rules leaks one harness into the core.
 
