@@ -299,7 +299,40 @@ for (const file of ["HANDOFF.md", ".bench/BENCH.md"]) {
 process.exit(bad);
 NODE
 
-#    i) acceptance coverage maps are now part of the feature-build workflow. These
+#    i) command-first usability anchors. The reviewer-facing README must start from
+#       the command path, and every command phase must orient the reviewer at entry
+#       and hand them off at exit. Keep this structural; prose quality is review.
+node <<'NODE' || fail=1
+const fs = require("fs");
+const path = require("path");
+
+let bad = 0;
+const err = msg => { console.error("gate: " + msg); bad = 1; };
+
+if (!fs.existsSync("README.md")) {
+  err("README.md missing");
+} else {
+  const readme = fs.readFileSync("README.md", "utf8");
+  const firstH2 = (readme.match(/^## .+$/m) || [""])[0];
+  if (firstH2 !== "## Reviewer quick start") {
+    err(`README first H2 is '${firstH2 || "(none)"}'; expected '## Reviewer quick start'`);
+  }
+}
+
+const commandsDir = ".agents/commands";
+if (fs.existsSync(commandsDir)) {
+  for (const f of fs.readdirSync(commandsDir).filter(f => f.endsWith(".md")).sort()) {
+    const file = path.join(commandsDir, f);
+    const text = fs.readFileSync(file, "utf8");
+    if (!/^## Entry orientation$/m.test(text)) err(`${file} missing Entry orientation`);
+    if (!/^## Exit handoff$/m.test(text)) err(`${file} missing Exit handoff`);
+  }
+}
+
+process.exit(bad);
+NODE
+
+#    j) acceptance coverage maps are now part of the feature-build workflow. These
 #       anchors are intentionally structural: they prove the command/skill surfaces
 #       still carry the contract, while semantic completeness stays a review/dogfood
 #       responsibility.

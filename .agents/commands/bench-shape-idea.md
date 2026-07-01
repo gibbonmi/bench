@@ -4,6 +4,20 @@ description: Turn a loose idea into a sequenced decision map. Use only when the 
 
 # /bench-shape-idea — push back the fog
 
+## Entry orientation
+
+This is the decision-mapping phase. Use it when the idea has unresolved questions
+whose answers change what gets built. It produces or resumes a compact
+`decisions/<topic>.md` map, with the current frontier recorded and resolved
+answers written into the file.
+
+## Exit handoff
+
+Close by reporting which decision map changed, which tickets are resolved or still
+open, and whether the map is ready for a spec. The recommended next command is
+`/bench-write-spec` when no unresolved ticket still blocks the build; otherwise it
+is another focused `/bench-shape-idea` resume on the next open ticket.
+
 Use this when an idea is too unresolved to spec yet — when there are open
 questions whose answers change what gets built. If the idea is already clear,
 skip straight to `/bench-write-spec`.

@@ -4,6 +4,19 @@ description: Implement a spec (or a clearly-scoped change) at the pre-agreed sea
 
 # /bench-implement-spec — do the work at the seams
 
+## Entry orientation
+
+This is the implementation phase. It starts from an approved spec or a tiny change
+with an obvious seam, declares the line, works vertical slices at the agreed seams,
+and uses the acceptance coverage map to keep the build target fixed.
+
+## Exit handoff
+
+Close by reporting the implemented stories, the acceptance coverage status for
+each row, the gate result, and any semantic review findings already fixed. The
+recommended next command is `/bench-review-implementation` when semantic review has
+not run yet; otherwise it is `/bench-final-check`.
+
 Implement the spec at the seams it names. If there's no spec, the change must be
 small enough that the seam is obvious; if it isn't, stop and run `/bench-write-spec` first.
 

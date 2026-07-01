@@ -4,6 +4,20 @@ description: Run the external gate (types, tests, lint, project conformance) and
 
 # /bench-final-check — the gate is the oracle
 
+## Entry orientation
+
+This is the final verification phase. It runs the external gate and reports the
+oracle result; it does not substitute model judgment for tests, types, lint, or
+project conformance.
+
+## Exit handoff
+
+Close by reporting the gate result plainly. On green, no further Bench command is
+required; hand back for the reviewer to merge or decide what ships. On red, report
+the first failing check and the smallest reproduction, then recommend the command
+that fits the failure: usually `/bench-implement-spec` for a feature regression or
+`/bench-debug` for a bug.
+
 Run the gate and report. The gate is the oracle; this command does not form an
 opinion about whether the work is good, it reports what the gate says.
 

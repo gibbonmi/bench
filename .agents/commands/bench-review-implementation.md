@@ -4,6 +4,19 @@ description: Two-axis semantic review of a shift branch — Standards (does the 
 
 # /bench-review-implementation — the check the gate can't run
 
+## Entry orientation
+
+This is the semantic review phase. It reviews the branch diff against two separate
+axes: documented standards and the approved spec. It produces findings the gate
+cannot see, without claiming authority over done-ness.
+
+## Exit handoff
+
+Close by reporting Standards findings and Spec findings separately, with counts
+and the worst issue in each axis. The recommended next command is
+`/bench-implement-spec` when findings need fixes, or `/bench-final-check` when the
+review is clean or the reviewer accepts the residual risk.
+
 The gate is deterministic: tests, types, lint, conformance. It catches regressions
 and rule violations. It cannot tell whether you built the *right* thing the *right*
 way. `/bench-review-implementation` is the semantic pass that can — and it's advisory: it surfaces

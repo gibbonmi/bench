@@ -44,7 +44,11 @@ quick start, the current philosophy-first explanation, or a split between review
 and worker setup?
 
 ### Answer
-— (open)
+The README should lead with a **reviewer-first command quick start**: show the
+Bench phase commands the reviewer invokes in their harness, then explain that the
+worker runs the `bench` CLI underneath. Philosophy, provenance, and CLI mechanics
+belong after that first command path, because they are supporting context rather
+than the primary operating surface.
 
 ## #3: How does the setup phase hide or expose `bench link` and `bench init`?
 
@@ -58,7 +62,12 @@ agent to run the setup phase, with the command responsible for running or checki
 maintainer prerequisite before slash commands work?
 
 ### Answer
-— (open)
+Reviewer-facing setup is **ask the agent to run `/bench-setup-repo`**. That setup
+phase is responsible for checking whether `bench link` and `bench init` have already
+run, running or instructing the worker-facing CLI steps when needed, then walking the
+reviewer through the repo-specific gate, profile, lines, and optional domain
+language. `bench link` and `bench init` remain documented as maintainer/worker
+mechanics, not as the first thing a reviewer must learn.
 
 ## #4: What handoff contract should every slash command satisfy?
 
@@ -70,7 +79,14 @@ For each command, what must the reviewer be told at entry and exit so they can s
 oriented without reading the CLI substrate?
 
 ### Answer
-— (open)
+Every Bench command has an **entry orientation** and an **exit handoff**.
+
+At entry, the command tells the reviewer what this phase is for, what artifact or
+state it will produce, and where it sits in the workflow. At exit, it tells the
+reviewer what changed, the current gate or artifact state, and the single
+recommended next command. CLI details such as `bench shift`, `bench status`, and
+`bench gate` appear only when they affect the next action or explain the reported
+state.
 
 ## #5: Where should CLI details live?
 
@@ -83,4 +99,9 @@ worker-facing, then decide where CLI details such as `bench shift`, `bench statu
 `bench link`, and `bench init` belong.
 
 ### Answer
-— (open)
+README top-level onboarding and command phase descriptions are
+**reviewer-facing**: they describe the command workflow, the expected conversation,
+and the artifact or state each phase produces. CLI details live in a clearly labeled
+**worker and maintainer CLI** section, with `.bench/BENCH.md` serving as the
+operational reference for exact `bench link`, `bench init`, `bench status`,
+`bench shift`, and `bench gate` mechanics.

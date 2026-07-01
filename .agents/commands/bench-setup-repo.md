@@ -1,15 +1,47 @@
 ---
-description: Configure this repo for Bench — fill in the gate, the project profile (seams + lines + design repo), and optionally seed CONTEXT.md. Run once per repo, after `bench link` and `bench init`. This is one-time setup, not a workflow phase.
+description: Configure this repo for Bench — check link/init wiring, fill in the gate, the project profile (seams + lines + design repo), and optionally seed CONTEXT.md. Run once per repo. This is one-time setup, not a workflow phase.
 disable-model-invocation: true
 ---
 
 # /bench-setup-repo — configure this repo for Bench
 
-`bench link` wired the kit in and `bench init` scaffolded an empty `.bench/gate.sh`.
-This fills in the parts that are specific to *this* repo and can't be hardcoded:
-the real gate, the profile, and the domain language. It's prompt-driven, not a
-script — explore, present what you found, confirm with me, then write. Assume I
-might not remember what a term means; explain each one briefly before asking.
+## Entry orientation
+
+This is the one-time setup phase. It first checks whether the repo is linked and
+initialized, handling the worker-facing `bench link` / `bench init` steps when
+needed. Then it fills in the parts that are specific to *this* repo and cannot be
+hardcoded: the real gate, the profile, and the domain language. It produces a
+configured `.bench/gate.sh`, a `projects/<name>.md` profile, and optionally
+`CONTEXT.md`.
+
+## Exit handoff
+
+Close by reporting what setup wrote or confirmed, whether the gate ran green, and
+the configured profile path. The recommended next command is `/bench-shape-idea`
+when there is unresolved product fog, `/bench-write-spec` when the first build is
+already clear, or `/bench-debug` when setup was prompted by a concrete bug.
+
+## 0. Preflight link/init
+
+Before the repo-specific interview, check the mechanical setup. Do this quietly
+and report only what matters:
+
+- If `.bench/BENCH.md`, `.agents/commands/`, or the managed Bench block in
+  `AGENTS.md` is missing, run `bench link` if the CLI is available. If it is not
+  available, run `npx benchkit link` from the repo. If neither can run, stop with
+  the exact command the reviewer or maintainer needs to make available.
+- If `.bench/gate.sh` is missing, run `bench init` if the CLI is available. If it
+  is not available, run `npx benchkit init`. If `.bench/gate.sh` exists, do not
+  overwrite it.
+- If `bench link` or `bench init` reports a project-owned conflict, stop and
+  surface the conflict. Resolving ownership is the reviewer's call.
+- After a successful link/init step, continue with the repo-specific setup below;
+  do not make the reviewer rerun this command just because the mechanical half was
+  missing.
+
+This command is prompt-driven, not a blind script: explore, present what you
+found, confirm with me, then write. Assume I might not remember what a term means;
+explain each one briefly before asking.
 
 ## 1. Explore
 

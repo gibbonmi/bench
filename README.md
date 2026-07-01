@@ -1,7 +1,70 @@
 # Bench
 
-A local agent-development workflow that fuses **Matt Pocock's planning pipeline**
-with **kunchenguid's operational substrate**, held together by four invariants.
+A command-first workflow for doing agent work in small, gated phases. You invoke
+the Bench phase for the work in front of you; the agent runs the CLI substrate
+underneath.
+
+---
+
+## Reviewer quick start
+
+In Claude Code, run Bench as slash commands:
+
+```text
+/bench-setup-repo
+/bench-shape-idea
+/bench-write-spec
+/bench-debug
+/bench-implement-spec
+/bench-review-implementation
+/bench-final-check
+```
+
+In Codex, invoke the matching adapter skills:
+
+```text
+$bench-setup-repo
+$bench-shape-idea
+$bench-write-spec
+$bench-debug
+$bench-implement-spec
+$bench-review-implementation
+$bench-final-check
+```
+
+Maintenance commands follow the same pattern: `/bench-update-kit` and
+`/bench-integrate-learnings` in Claude Code, or `$bench-update-kit` and
+`$bench-integrate-learnings` in Codex.
+
+Other AGENTS.md harnesses read the matching file under `.agents/commands/` when
+they do not expose a native command or skill surface.
+
+For a new repo, ask the agent to run `/bench-setup-repo` or `$bench-setup-repo`.
+That phase checks whether Bench is linked and initialized, handles the
+worker-facing setup steps when needed, then walks you through the project-specific
+gate, profile, lines, and optional `CONTEXT.md`.
+
+For feature work, use the command path:
+
+```text
+loose idea -> /bench-shape-idea -> /bench-write-spec -> /bench-implement-spec -> /bench-review-implementation -> /bench-final-check
+```
+
+Skip `/bench-shape-idea` when there is no real fog and go straight to
+`/bench-write-spec`. For bugs, use `/bench-debug` instead of the feature path; it
+builds the repro loop first.
+
+Each command should orient you at entry, then hand you off at exit with what
+changed, the current artifact or gate state, and the single next command it
+recommends. The CLI commands below are the worker and maintainer substrate, not the
+reviewer's first operating surface.
+
+---
+
+## Why Bench exists
+
+Bench fuses **Matt Pocock's planning pipeline** with **kunchenguid's operational
+substrate**, held together by four invariants.
 
 Pocock gives the brain: how to turn a loose idea into a sequenced plan, a spec
 with the seams chosen up front, and a build that tests in the right places. Kun
@@ -114,9 +177,12 @@ bench/
 
 ---
 
-## Install
+## Worker and maintainer CLI
 
-The kit is an npm package, so the fastest way to wire a repo is one command with
+The reviewer-facing setup path is the setup command above. The worker-facing
+mechanics underneath are the `bench` CLI commands here.
+
+Bench ships as an npm package, so the fastest way for the worker to wire a repo is
 `npx` — nothing to clone, no global install:
 
 ```sh
@@ -137,21 +203,24 @@ bench link symlink     # optional dogfood mode: point installed assets at this k
 bench init
 ```
 
-Either way, finish by configuring the repo in your agent (one-time, interactive):
+The reviewer action is the setup phase, not those CLI calls:
 
 ```
 /bench-setup-repo
+# or, in Codex:
+$bench-setup-repo
 ```
 
 Setup is two halves, the same split as Pocock's `setup-matt-pocock-skills`. The
 **mechanical** half is the CLI: `link` wires the kit into the repo for every
 harness, and `init` scaffolds an empty `.bench/gate.sh` — both deterministic, both
-idempotent. The **project-specific** half is `/bench-setup-repo`, a prompt-driven command your
-agent runs once: it explores the repo, then walks you through the gate (the
-load-bearing choice), the profile (seams + lines + design-source path), and an
-optional `CONTEXT.md`, one decision at a time, and writes them. That second half is
-the part that can't be hardcoded — the gate command, the seams, and the lines differ
-in every repo — so it's an interview, not a script.
+idempotent. `/bench-setup-repo` checks whether those steps already happened, runs
+or reports the worker-facing step that is still needed, then continues into the
+**project-specific** half: it explores the repo, walks the reviewer through the
+gate (the load-bearing choice), the profile (seams + lines + design-source path),
+and an optional `CONTEXT.md`, one decision at a time, and writes them. That second
+half is the part that can't be hardcoded — the gate command, the seams, and the
+lines differ in every repo — so it's an interview, not a script.
 
 `bench link` is idempotent and harness-neutral. It preserves project-owned files,
 adds or updates only the managed Bench block in `AGENTS.md`, installs the full guide
@@ -181,10 +250,11 @@ and won't re-ask.
 What Bench adds on top is the part Pocock's skills leave to you: the **gate** as an
 external oracle (`.bench/gate.sh`), the **gated shift loop** that commits only on green,
 the **declared line** (model + effort) per run, and the **profile** (`projects/<name>.md`)
-that names the seams. So migration is: run `link` and `init`, then run `/bench-setup-repo` — it
-detects the existing Pocock structure, reuses it, and only asks for the things Bench
-introduces (the gate command, the seams, the lines). Nothing about Pocock's planning
-flow is replaced; Bench wraps it in enforcement it didn't have.
+that names the seams. So migration is: ask the agent to run `/bench-setup-repo` —
+it checks the link/init mechanics, detects the existing Pocock structure, reuses
+it, and only asks for the things Bench introduces (the gate command, the seams,
+the lines). Nothing about Pocock's planning flow is replaced; Bench wraps it in
+enforcement it didn't have.
 
 ## Keeping Bench current
 

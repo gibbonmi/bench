@@ -4,6 +4,20 @@ description: The bug path. Build a tight, red-capable repro loop first, then fix
 
 # /bench-debug — the repro loop is the oracle
 
+## Entry orientation
+
+This is the bug path. Use it when something is broken, throwing, failing, or slow.
+It produces a tight red-capable repro loop first, then uses that loop as the
+external signal for diagnosis and the fix.
+
+## Exit handoff
+
+Close by reporting the repro command, the confirmed cause, the fix state, whether
+the repro loop and regression check are green, and any architecture finding that
+would have prevented the bug. The recommended next command is `/bench-final-check`
+once the loop and project gate are ready; if the fix needs semantic review against
+a written spec, run `/bench-review-implementation` first.
+
 Bugs don't go through `/bench-write-spec`. A bug already has a spec — the thing should work and
 doesn't. The whole discipline is building an external signal that goes red on *this*
 bug, and that signal becomes the gate the fix shift runs against. Same invariant as

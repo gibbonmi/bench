@@ -4,6 +4,19 @@ description: Turn the current conversation into a build spec — user stories, p
 
 # /bench-write-spec — lock the seams before the loop runs
 
+## Entry orientation
+
+This is the feature-spec phase. It turns the current conversation, decision map,
+and codebase context into `specs/<feature>.md`: user stories, implementation
+decisions, pre-agreed seams, testing decisions, and the gate that defines done.
+
+## Exit handoff
+
+Close by showing the approval table for user stories, seams, acceptance coverage,
+and out of scope. Stop for reviewer sign-off. After approval, the recommended next
+command is `/bench-implement-spec` for an interactive build, or `bench shift` only
+when the spec is locked and the work is mechanical enough for the autonomous loop.
+
 Synthesize the current conversation and codebase understanding into a spec the
 build loop can run against. Do **not** interview me — use what you already know.
 If something load-bearing is genuinely missing, ask one question, then proceed.

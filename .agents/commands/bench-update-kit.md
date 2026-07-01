@@ -5,6 +5,19 @@ disable-model-invocation: true
 
 # /bench-update-kit — sync the kit against upstream
 
+## Entry orientation
+
+This is the upstream maintenance phase. It compares Bench against the current
+external source repos, tags candidate changes as upstream-sourced, and runs them
+through the synthesis discipline before proposing any adoption.
+
+## Exit handoff
+
+Close by reporting the pulled refs, each candidate's classification, which changes
+passed the synthesis loops, and what record would change if the reviewer accepts
+the proposal. The recommended next command is `/bench-final-check` after accepted
+changes are applied; otherwise no build-phase command follows a rejected proposal.
+
 Bring *others'* improvements into the kit. This is the external, version-driven
 input — the counterpart to `/bench-integrate-learnings`, which drains your own usage journal. It
 **proposes; you merge.**

@@ -5,6 +5,19 @@ disable-model-invocation: true
 
 # /bench-integrate-learnings — drain the learnings journal into the kit
 
+## Entry orientation
+
+This is the local maintenance phase. It drains `.bench/learnings.md`, groups
+open entries by the kit change they imply, tags candidates as learnings-sourced,
+and runs them through the synthesis discipline before proposing any promotion.
+
+## Exit handoff
+
+Close by reporting which learnings were promoted, dismissed, or left open, which
+kit artifacts changed, and whether the source entries were marked resolved. The
+recommended next command is `/bench-final-check` after accepted promotions are
+applied; otherwise no build-phase command follows a rejected proposal.
+
 Fold *your own* changes — the friction the agent logged during real use — back into
 the kit. This is the internal, usage-driven input — the counterpart to `/bench-update-kit`,
 which syncs against upstream. It has nothing to do with the source repos. It
