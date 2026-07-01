@@ -56,7 +56,19 @@ seam, red-capable signal, and why the signal catches the failure. Too little lea
 room for vague coverage; too much turns every spec into ceremony.
 
 ### Answer
-— (open)
+Resolved (grill, 2026-07-01). The smallest useful acceptance coverage row has
+five fields:
+
+- `story` — the user story this row protects.
+- `behavior` — the observable behavior the caller/user should see.
+- `seam` — where the test attaches.
+- `red signal` — the command or test that must fail before the behavior exists.
+- `why it catches the failure` — the short explanation that proves this signal
+  would catch a real miss instead of merely exercising code.
+
+This is the minimum shape that ties story breadth to caller-visible behavior,
+places the test at a chosen seam, and forces the agent to explain why the signal is
+protective rather than decorative.
 
 ## #3: What does "red-capable" mean for new feature behavior?
 
@@ -70,7 +82,14 @@ fails before code, prove a documented edge case fails, or merely assert the
 intended post-build behavior?
 
 ### Answer
-— (open)
+Resolved (grill, 2026-07-01). For feature work, a red signal means the
+named command or test has already been run before implementation and fails because
+the mapped behavior is absent or wrong at the chosen seam.
+
+If the signal already passes, the row is already covered or is testing the wrong
+thing; do not count it as new TDD coverage. If the signal cannot be run before
+implementation, the spec must say why and mark the row as not TDD-able rather
+than pretending it has a red signal.
 
 ## #4: How does `/bench-implement-spec` prove it covered the map?
 

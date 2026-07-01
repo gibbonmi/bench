@@ -1,5 +1,9 @@
 # shift in worktree
 
+> **Status (2026-06-30):** Approved by the reviewer. Implementation is deferred — the
+> TDD / testing-contract updates land first (parallel work), then this builds against
+> them. Do not run `/bench-implement-spec` on this spec yet.
+
 ## Problem
 
 `CONTEXT.md`, `README.md`, and the `bin/bench.sh` header all promise that a **shift**
