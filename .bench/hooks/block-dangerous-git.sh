@@ -63,6 +63,42 @@ def git_invocations():
             yield tokens[j], tokens[j + 1 :]
 
 
+def has_explicit_pathspec(args):
+    if "--" not in args:
+        return False
+    return any(arg != "" for arg in args[args.index("--") + 1 :])
+
+
+def is_pathspec_file_arg(arg):
+    return arg == "--pathspec-from-file" or arg.startswith("--pathspec-from-file=")
+
+
+def has_pathspec_file(args):
+    return any(is_pathspec_file_arg(arg) for arg in args)
+
+
+def restore_has_pathspec(args):
+    opts_with_arg = {"-s", "--source"}
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg == "--":
+            return any(rest != "" for rest in args[i + 1 :])
+        if is_pathspec_file_arg(arg):
+            return True
+        if arg in opts_with_arg:
+            i += 2
+            continue
+        if any(arg.startswith(f"{opt}=") for opt in opts_with_arg if opt.startswith("--")):
+            i += 1
+            continue
+        if arg.startswith("-"):
+            i += 1
+            continue
+        return True
+    return False
+
+
 for subcommand, args in git_invocations():
     if subcommand == "push":
         print("git push")
@@ -78,8 +114,13 @@ for subcommand, args in git_invocations():
     if subcommand == "branch" and any(arg in {"-D", "-d", "--delete"} for arg in args):
         print("git branch -D")
         break
-    if subcommand in {"checkout", "restore"} and "." in args:
-        print(f"git {subcommand} .")
+    if subcommand == "checkout" and (
+        "." in args or has_explicit_pathspec(args) or has_pathspec_file(args)
+    ):
+        print("git checkout path")
+        break
+    if subcommand == "restore" and ("." in args or restore_has_pathspec(args)):
+        print("git restore path")
         break
     if subcommand == "rebase":
         print("history rewrite")

@@ -365,6 +365,14 @@ tmp="$(mktemp -d)"
   run_guard 'git -C . push'
   run_guard 'git -C /tmp reset --hard'
   run_guard 'git -C . clean -fd'
+  run_guard 'git branch -D old-work'
+  run_guard 'git rebase main'
+  run_guard 'git checkout -- README.md'
+  run_guard 'git checkout --pathspec-from-file=paths.txt'
+  run_guard 'git checkout --pathspec-from-file paths.txt'
+  run_guard 'git restore README.md'
+  run_guard 'git restore --pathspec-from-file=paths.txt'
+  run_guard 'git restore --pathspec-from-file paths.txt'
   allowed="$(printf '{"tool_input":{"command":"git -C . status --short"}}\n' | bash "$guard" 2>&1)" || { printf '%s\n' "$allowed"; echo "guard blocked harmless git status"; exit 1; }
 ) || err "block-dangerous-git global-option contract failed"
 rm -rf "$tmp"
