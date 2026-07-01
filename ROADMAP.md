@@ -1,3 +1,4 @@
 - 2026-06-30  /spec: visualize the seam — emit an ASCII data-flow diagram (inputs → renderer/seam → outputs → triggers, with the test-attach point marked) so the seam is legible before approving /build
 - 2026-06-30  Refresh or retire HANDOFF.md: it names AGENTS.md as 'the single source of truth' for the invariants (now canonical in .bench/BENCH.md) and still carries leftover Regroup-specific refs that 0.2.0 removed from core. Not gated.
 - 2026-06-30  bench-craft-skills: should it require good/bad output examples in new skills (Pocock-style contrastive examples for interfaces)? Content change to the skill, not gated.
+- 2026-07-01  Build a semantic parser for future specs' acceptance coverage maps, so Bench can detect missing or malformed coverage rows instead of only anchoring workflow prose.

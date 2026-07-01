@@ -17,6 +17,20 @@ An entry only becomes `[resolved]` via /bench-integrate-learnings.
 
 <!-- entries below -->
 
+## 2026-07-01 — rank valuable out-of-scope cuts before handoff  [open]
+- **What happened:** While approving `specs/tdd-acceptance-coverage.md`, the reviewer
+  called out an out-of-scope semantic parser as something valuable to build later.
+  Out-of-scope sections often contain high-value future ideas, but an unranked list is
+  easy to forget once the current feature is done.
+- **Right behavior:** Treat out-of-scope lists as a capture surface, not just a scope
+  boundary. Before handing off a spec, identify any high-value cuts, rank or call out
+  the ones worth preserving, and park concrete future features on the roadmap when
+  they should not disappear.
+- **Proposed rule change:** Update `/bench-write-spec` so its Out of scope section
+  asks for value-ranked cuts or an explicit "parked on roadmap" note for high-value
+  future functionality. The section should still separate future capabilities from
+  the current feature, but it should not bury the next good idea.
+
 ## 2026-07-01 — direct defect-fix pass used for review findings  [open]
 - **What happened:** After a defect review, the reviewer asked to fix all reported
   findings. I used a direct fix-and-gate path rather than the full
