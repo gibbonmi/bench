@@ -31,6 +31,32 @@ gci() { git -c user.email=bench@local -c user.name=bench "$@"; }
 
 tmp="$(mktemp -d)"
 (
+  set -u
+  cd "$tmp"
+  git init -q
+  mkdir -p .bench sub
+  printf '{"ok":true}\n' > package.json
+  printf '#!/usr/bin/env bash\n[ -f package.json ]\n' > .bench/gate.sh
+  chmod +x .bench/gate.sh
+  ( cd sub && bash "$root/bin/bench.sh" gate ) || { echo ".bench/gate.sh did not run from repo root"; exit 1; }
+) || err "bench gate repo-root cwd contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u
+  cd "$tmp"
+  git init -q
+  mkdir sub
+  printf '{"ok":true}\n' > package.json
+  printf '#!/usr/bin/env bash\n[ -f package.json ]\n' > gate-root.sh
+  chmod +x gate-root.sh
+  ( cd sub && BENCH_GATE=./gate-root.sh bash "$root/bin/bench.sh" gate ) || { echo "BENCH_GATE did not run from repo root"; exit 1; }
+) || err "bench gate BENCH_GATE cwd contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
   set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
   out="$(bash "$root/bin/bench.sh" status)"
   grep -qiF 'clean — nothing pending' <<<"$out" || { echo "clean repo did not report all-clear"; exit 1; }

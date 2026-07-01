@@ -8,6 +8,11 @@ its scratch files on interruption, and stop when the agent makes no refactor cha
 The current tail can scan unrelated repo history, report a commit when none happened,
 leave scratch files after Ctrl-C, and point at an unbundled command.
 
+The pooled worktree cleanup has one more isolation leak: release resets tracked files
+and removes untracked non-ignored files, but ignored artifacts survive. A later
+interactive `bench worktree` or `bench shift` can observe build/cache state from the
+previous lease even though the pool advertises a clean worktree.
+
 ## Solution
 
 Keep the implementation loop shape, but harden the post-implementation path:
@@ -16,6 +21,8 @@ Keep the implementation loop shape, but harden the post-implementation path:
   that touched scope.
 - Clean `.bench-objective` and `.bench-notes.md` on normal exit, interrupt, and
   termination.
+- Clean ignored artifacts on worktree release, so reuse starts from a truly clean
+  worktree rather than a porcelain-clean one.
 - Keep those scratch files from tripping the clean-tree precondition if a prior run
   was interrupted.
 - In the refactor loop, commit only when there is a staged change, say "no change"
@@ -38,6 +45,8 @@ Keep the implementation loop shape, but harden the post-implementation path:
    Bench capabilities unless it clearly labels an external optional skill.
 6. As a kit developer, I want the gate to exercise these behaviors through the real
    CLI in throwaway repos.
+7. As a user reusing a pooled worktree, I want ignored build/cache artifacts removed
+   before the next lease, so hidden state cannot cross shifts.
 
 ## Implementation decisions
 
@@ -52,6 +61,9 @@ Keep the implementation loop shape, but harden the post-implementation path:
   the refactor phase into unrelated work.
 - **Scratch cleanup:** install a trap after scratch files are created. The trap removes
   only Bench scratch files and otherwise leaves the user's working tree alone.
+- **Pool cleanliness:** release must clean both untracked non-ignored files and ignored
+  artifacts in the pooled worktree. The main checkout is never cleaned; this policy
+  applies only to the leased worktree Bench owns.
 - **Clean-tree precondition:** ignore reserved Bench scratch files in the status check.
   This is defense-in-depth for previously interrupted runs.
 
@@ -69,7 +81,18 @@ Keep the implementation loop shape, but harden the post-implementation path:
     as a bundled command.
 - Add a separate `bench worktree` contract: create a pooled worktree, dirty it during
   the subshell, release it, then run `bench worktree` again and prove the same path is
-  reset and reused.
+  reset and reused. Include an ignored artifact in that dirty state and prove it is
+  gone on the second lease.
+
+### Acceptance coverage map
+
+| story | behavior | seam | red signal | why it catches the failure |
+|---|---|---|---|---|
+| 1 | Pre-existing structural debt outside the shift does not trigger the refactor phase. | `bench shift` CLI | Already covered by the runtime contract for unrelated over-budget source. | The loop must only react to files touched by the shift. |
+| 2, 3 | A no-op refactor reports no staged change, creates no phantom commit, and exits early. | `bench shift` CLI | Already covered by the runtime contract for the touched over-budget no-op refactor case. | It catches the false "committed" output and wasted retry behavior at the CLI seam. |
+| 4 | Interrupted shifts remove scratch files and release the worktree lease. | `bench shift` CLI | Already covered by the runtime interrupt contract. | It proves the next shift can start without manual cleanup. |
+| 5 | Unresolved structure guidance names only bundled Bench capabilities. | `bench shift` CLI output | Already covered by the runtime contract that rejects `/improve-codebase-architecture` in fallback output. | It catches a handoff that points at an unbundled command as if it ships. |
+| 7 | Ignored artifacts created during one pooled worktree lease are absent on the next lease of the same path. | `bench worktree` CLI | Observed red before implementation: a throwaway repo with `ignored/` in `.gitignore`, first lease writes `ignored/leak.txt`, second lease sees that file and exits non-zero. | Current release uses `git clean -fd`, which leaves ignored files behind. |
 
 ## Out of scope
 

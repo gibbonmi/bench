@@ -17,6 +17,11 @@ idempotent. Full Bench operating guidance lives outside the project instruction
 file, and Claude/Codex hook adapters point at shared hook scripts instead of
 duplicating policy.
 
+The installable surface also has to stay truthful after packaging. A shipped pickup
+doc must not claim that repo-only development artifacts are present in the npm
+tarball, and package checks should catch that class of drift alongside missing or
+forbidden files.
+
 ## User stories
 
 1. As a reviewer linking Bench into a repo with existing instructions, I want my
@@ -55,6 +60,9 @@ duplicating policy.
     development can still dogfood live changes when that is the intended choice.
 15. As a kit maintainer, I want package contents to include only the assets needed
     for safe setup, so local settings files cannot be published by accident.
+16. As a package consumer, I want shipped docs to describe only assets that actually
+    ship or clearly label repo-only development context, so cold sessions are not
+    sent looking for files absent from an installed package.
 
 ## Implementation decisions
 
@@ -93,6 +101,10 @@ duplicating policy.
 - Package contents should be an allowlist for the installable kit surface. Local
   settings and repo-only development artifacts are excluded even if they live under
   an otherwise installed directory.
+- Shipped docs are part of the installable surface. If a shipped doc lists installable
+  assets, the claim must agree with the package allowlist; repo-only profiles,
+  specs, decisions, tests, and local examples must be described as development
+  context rather than package contents.
 
 ## Testing decisions
 
@@ -123,7 +135,17 @@ duplicating policy.
   `.claude` adapter relationship to `.agents` and `.bench/hooks`.
 - **Package case:** a dry-run package inspection proves required install assets are
   included and local-only settings are excluded.
+- **Docs/package truth case:** a shipped-doc check proves installable-surface claims
+  do not name repo-only paths as shipped assets.
 - **Gate command:** `bench gate`.
+
+### Acceptance coverage map
+
+| story | behavior | seam | red signal | why it catches the failure |
+|---|---|---|---|---|
+| 1-14 | `bench link` preserves project-owned files, installs Bench-owned assets, and wires shared hook adapters without partial clobbering. | `bench link` CLI | Already covered by the existing safe-link throwaway repo contracts. | Those contracts exercise the real link command and filesystem results. |
+| 15 | The npm tarball includes required install assets and excludes local-only settings. | Project gate: package dry-run | Already covered by the existing dry-run package inspection. | It protects the package allowlist from accidental local-file publication. |
+| 16 | Shipped docs do not claim repo-only profiles or other excluded development artifacts are package contents. | Project gate: package/docs conformance | Observed red before implementation: `HANDOFF.md` says profiles under `projects/` ship, while `npm pack --dry-run --json` excludes `projects/`. | This catches the exact installable-surface drift: a cold package consumer receives the doc but not the referenced repo-only path. |
 
 ## Out of scope
 

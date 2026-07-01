@@ -1,7 +1,10 @@
 # Dogfood improvements — make the kit safe to install and true to its promises
 
-> **FIRST SLICE SPEC'D.** Install/setup safety is captured in
-> `specs/safe-link.md`. Remaining tickets stay open for later slices.
+> **ARCHITECTURE REVIEW TRIAGED.** Install/setup safety is captured in
+> `specs/safe-link.md`. Shift ownership is captured in
+> `specs/shift-in-worktree.md`. The 2026-07-01 architecture review pulled the next
+> concrete defects into specs where the build target is clear, and left only the
+> genuinely decision-shaped items open.
 
 ## Grounding — what the assessment found
 
@@ -29,6 +32,23 @@
   or inline `.codex/config.toml` lifecycle hooks, including `PreToolUse` and `Stop`,
   gated by project trust and hook review. Bench can ship a Codex hook adapter, but
   the harness-independent safety still belongs in `bench` and git hooks.
+- **Gate execution leak:** `bench gate` resolves the repo root but runs
+  `.bench/gate.sh` and `$BENCH_GATE` in the caller's current directory, unlike the
+  auto-detected gate path. The gate seam is therefore shallower than its contract.
+- **Worktree cleanup leak:** the pooled worktree release path resets tracked files
+  but leaves ignored artifacts behind, so a later `bench worktree` or `bench shift`
+  can observe state from a previous run.
+- **Git-safety classifier gap:** the destructive-git guard blocks broad reset/clean
+  forms but misses path-level checkout/restore commands that can discard user edits.
+- **Structure path handling gap:** `bench structure` counts crowded directories by
+  piping paths through whitespace-splitting shell tools, so paths with spaces are
+  reported incorrectly.
+- **Installable-surface drift:** package contents exclude repo-only profiles while a
+  shipped pickup doc claimed those profiles ship. The package allowlist, link plan,
+  and shipped-doc claims need one installable-surface truth.
+- **Line cap honesty:** `BENCH_MAX_TOKENS` is printed as a shift cap but is not
+  enforced or measured. That may be acceptable, but the product meaning needs a
+  decision before changing behavior.
 
 ## #1: What is the first dogfood slice?
 
@@ -117,6 +137,11 @@ loop.
 ### Answer
 — (pending)
 
+Current known constraint from the architecture review: the loop invokes
+`"$AGENT" -p <prompt>`, so a portable contract must either define an adapter command
+that accepts `-p` everywhere or move prompt delivery behind a harness-specific
+adapter.
+
 ## #5: What must the package never publish?
 
 Blocked by: #1
@@ -128,7 +153,11 @@ a gate check that proves local-only files such as `.claude/settings.local.json`
 cannot enter the tarball.
 
 ### Answer
-— (pending)
+Resolved by the safe-link slice for the concrete package-local-settings problem:
+local-only settings must not enter the npm tarball, and the gate's dry-run package
+inspection proves that. The remaining package issue is not "what never publishes" but
+"what shipped docs may claim about the installable surface"; that is tracked in #11
+and folded into `specs/safe-link.md`.
 
 ## #6: Which README claims must be synced after the chosen build?
 
@@ -140,4 +169,102 @@ After the implementation scope is chosen, identify every README claim affected b
 that scope and update only those claims so docs describe the current decided state.
 
 ### Answer
-— (pending)
+Resolved for command-name drift by `specs/doc-command-currency.md`. The architecture
+review found a different docs/package mismatch: a shipped pickup doc claimed
+repo-only profiles under `projects/` ship even though the npm package excludes them.
+That installable-surface claim is tracked in #11.
+
+## #7: What is the gate execution contract?
+
+Blocked by: #1
+Type: Research
+
+### Question
+`bench gate` knows the repo root, but project gates run in the caller's current
+directory while auto-detected gates run at the root. Should the contract be "gates
+run from wherever the user invoked Bench" or "all oracle commands run at the repo
+root"?
+
+### Answer
+All oracle commands run at the repo root. The gate is the highest seam in Bench, and
+callers should not need to remember cwd rules to use it correctly. The build target is
+`specs/gate-execution-contract.md`: deepen the gate execution module so `.bench/gate.sh`,
+`$BENCH_GATE`, auto-detect, `bench shift`, and the Stop hook all share the same root
+semantics.
+
+## #8: What does a clean pooled worktree mean?
+
+Blocked by: #3
+Type: Research
+
+### Question
+The worktree pool currently treats a porcelain-clean tree as reusable, but ignored
+artifacts can survive `git clean -fd`. Is "clean" only tracked-file clean, or must it
+mean no carryover state a later shift can observe?
+
+### Answer
+Clean means no carryover state a later shift or interactive worktree can observe,
+including ignored artifacts. This belongs in the existing worktree reuse spec instead
+of a parallel spec; `specs/shift-loop-hardening.md` now owns the ignored-artifact
+regression case.
+
+## #9: What should the destructive-git guard classify as blocked?
+
+Blocked by: #1
+Type: Research
+
+### Question
+The guard blocks broad destructive operations, but path-level `git checkout -- file`
+and `git restore file` can still discard user edits. Should the guard stay as a small
+denylist, or should it classify destructive git intent more deeply?
+
+### Answer
+Classify destructive intent more deeply while keeping harmless read commands
+allowed. The build target is `specs/git-safety-classifier.md`: make the hook adapter
+call one classifier that blocks path-level checkout/restore alongside the existing
+push, hard reset, force clean, branch delete, and rebase blocks.
+
+## #10: How should `bench structure` handle pathnames?
+
+Blocked by: #1
+Type: Research
+
+### Question
+`bench structure` is an agent-facing CLI. Should it assume simple pathnames, or does
+the CLI contract require paths with spaces to render correct file and directory
+signals?
+
+### Answer
+The CLI must handle normal git pathnames, including spaces, without corrupting
+directory counts. The build target is `specs/structure-path-safety.md`: deepen the
+structure module's file-list handling so source files and crowded-directory counts do
+not pass through whitespace-splitting tools.
+
+## #11: How does the installable surface stay truthful?
+
+Blocked by: #5, #6
+Type: Research
+
+### Question
+Package contents, `bench link`, README layout, and HANDOFF all describe what ships or
+installs. Should Bench keep checking only package contents, or also check that shipped
+docs do not claim repo-only assets are in the package?
+
+### Answer
+Shipped docs may only claim assets that are actually in the installable surface, or
+must label repo-only artifacts as local development context. This is part of the
+existing safe-link/package contract, not a new surface; `specs/safe-link.md` now owns
+the docs/package truth row.
+
+## #12: What should `BENCH_MAX_TOKENS` mean?
+
+Blocked by: #4
+Type: Grill
+
+### Question
+`BENCH_MAX_TOKENS` is printed as a shift cap but not enforced or measured. Should
+Bench enforce it, remove it, rename it to an advisory line value, or move token caps
+entirely into the declared line outside the CLI?
+
+### Answer
+— (open)

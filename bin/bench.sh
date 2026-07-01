@@ -50,8 +50,8 @@ run_gate() {
   local root; root="$(repo_root)"
   # Run, do not exec: the shift loop calls `if run_gate` inline, so an exec here would
   # replace the bench process at the first gate check and the loop would never iterate.
-  if [[ -x "$root/.bench/gate.sh" ]]; then "$root/.bench/gate.sh"; return $?; fi
-  if [[ -n "${BENCH_GATE:-}" ]]; then bash -c "$BENCH_GATE"; return $?; fi
+  if [[ -x "$root/.bench/gate.sh" ]]; then ( cd "$root" && "$root/.bench/gate.sh" ); return $?; fi
+  if [[ -n "${BENCH_GATE:-}" ]]; then ( cd "$root" && bash -c "$BENCH_GATE" ); return $?; fi
   # auto-detect — best-effort defaults; a project should ship .bench/gate.sh instead
   if [[ -f "$root/pnpm-lock.yaml" ]]; then
     ( cd "$root" && pnpm -s typecheck && pnpm -s test && pnpm -s lint ); return $?
