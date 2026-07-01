@@ -135,12 +135,20 @@ Claude Code, Codex, and OpenCode without hardcoding Claude's `-p` flag into the
 loop.
 
 ### Answer
-— (pending)
+`bench shift` calls a configured adapter command, not a provider CLI directly. The
+adapter contract is: Bench invokes one executable with the generated prompt as its
+single argument while setting `BENCH_SHIFT=1`; the adapter translates that into the
+harness-native noninteractive command and returns the harness exit code. Claude Code
+maps to `claude -p`, Codex maps to `codex exec`, and OpenCode maps to `opencode run`,
+so Bench owns the loop while each harness owns its own prompt delivery flags.
 
-Current known constraint from the architecture review: the loop invokes
-`"$AGENT" -p <prompt>`, so a portable contract must either define an adapter command
-that accepts `-p` everywhere or move prompt delivery behind a harness-specific
-adapter.
+There is **no shipped default adapter**. An unconfigured adapter fails with a clear
+"configure your harness adapter" error, not a silent `claude -p` that a non-Claude
+install cannot run. This matches the kit's harness-neutral stance: a mis-invocation
+becomes a legible error instead of a wrong-CLI call. The implementation seam is the
+adapter command, never `"$AGENT" -p <prompt>`; a configured value carrying arguments
+belongs in a wrapper script rather than a shell string, so the loop avoids quoting
+ambiguity and never parses provider-specific flags.
 
 ## #5: What must the package never publish?
 
@@ -267,4 +275,13 @@ Bench enforce it, remove it, rename it to an advisory line value, or move token 
 entirely into the declared line outside the CLI?
 
 ### Answer
-— (open)
+Remove it. `BENCH_MAX_TOKENS`/`MAX_TOKENS` is only printed as a shift cap
+(bench.sh:145) — never measured, enforced, or passed to the agent — so it reads as
+enforcement while doing nothing. `MAX_ITERS` is the real, enforceable shift bound and
+stays. The token cap lives only in the declared line (invariant #2), a
+conversational/spec discipline where it is already canonical; a decorative CLI knob
+duplicating it dishonestly is worse than no knob. Enforcement is not portably
+possible anyway — the #4 adapter contract returns only an exit code, so there is no
+token telemetry to measure against. A genuine autonomous-shift budget, if ever
+wanted, is a new capability with real measurement, not this resurrected var. The
+build: delete the var and the cap line; leave the iteration bound untouched.
