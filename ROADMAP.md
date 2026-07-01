@@ -2,3 +2,5 @@
 - 2026-06-30  Refresh or retire HANDOFF.md: it names AGENTS.md as 'the single source of truth' for the invariants (now canonical in .bench/BENCH.md) and still carries leftover Regroup-specific refs that 0.2.0 removed from core. Not gated.
 - 2026-06-30  bench-craft-skills: should it require good/bad output examples in new skills (Pocock-style contrastive examples for interfaces)? Content change to the skill, not gated.
 - 2026-07-01  Build a semantic parser for future specs' acceptance coverage maps, so Bench can detect missing or malformed coverage rows instead of only anchoring workflow prose.
+- 2026-07-01  Skill and command suggestions should use the active harness prefix: suggest slash-command forms only where '/' is valid, and suggest Codex '$bench-*' adapters in Codex instead of '/bench-*', so the recommendation surface matches what the reviewer can invoke.
+- 2026-07-01  Build a viewable Bench dashboard for humans to see project moving pieces at a glance, inspired by the saved ui_examples image styling and animated characters that move based on what they are doing. Low priority; shape in a future session.

@@ -9,8 +9,9 @@
 ## Grounding
 
 - Bench's command files are the canonical workflow phases:
-  `/bench-setup`, `/bench-ideate`, `/bench-spec`, `/bench-diagnose`,
-  `/bench-build`, `/bench-review`, `/bench-qa`, and `/resynthesize`.
+  `/bench-setup-repo`, `/bench-shape-idea`, `/bench-write-spec`,
+  `/bench-debug`, `/bench-implement-spec`, `/bench-review-implementation`,
+  `/bench-final-check`, `/bench-update-kit`, and `/bench-integrate-learnings`.
 - Codex scans `.agents/skills/**/SKILL.md` for skills. Skills can be invoked
   explicitly with `$skill-name` or through `/skills`, and can also be selected
   implicitly from their descriptions.
@@ -35,7 +36,7 @@ Resolved from grill. For Bench commands in Codex, "work with Codex" means the
 phases are first-class Codex-invokable as explicit `$bench-*` skills. Literal
 top-level `/bench-*` slash-menu entries are not the target because the Codex
 surface that provides user-defined slash entries is custom prompts, and custom
-prompts are deprecated. The acceptable Codex user surface is `$bench-ideate` or
+prompts are deprecated. The acceptable Codex user surface is `$bench-shape-idea` or
 selection through `/skills`, backed by the same canonical phase files in
 `.agents/commands/`.
 

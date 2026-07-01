@@ -17,7 +17,11 @@ An entry only becomes `[resolved]` via /bench-integrate-learnings.
 
 <!-- entries below -->
 
-## 2026-07-01 — rank valuable out-of-scope cuts before handoff  [open]
+## 2026-07-01 — rank valuable out-of-scope cuts before handoff  [resolved: promoted]
+_Resolved 2026-07-01 via /bench-integrate-learnings: promoted to
+`/bench-write-spec` Out of scope guidance — rank high-value cuts and park concrete
+future features on the roadmap when they should not disappear._
+
 - **What happened:** While approving `specs/tdd-acceptance-coverage.md`, the reviewer
   called out an out-of-scope semantic parser as something valuable to build later.
   Out-of-scope sections often contain high-value future ideas, but an unranked list is
@@ -31,7 +35,11 @@ An entry only becomes `[resolved]` via /bench-integrate-learnings.
   future functionality. The section should still separate future capabilities from
   the current feature, but it should not bury the next good idea.
 
-## 2026-07-01 — direct defect-fix pass used for review findings  [open]
+## 2026-07-01 — direct defect-fix pass used for review findings  [resolved: promoted]
+_Resolved 2026-07-01 via /bench-integrate-learnings: promoted to `.bench/BENCH.md`
+Workflow — concrete reviewer-requested review findings may use direct fix plus
+focused regression checks plus the gate._
+
 - **What happened:** After a defect review, the reviewer asked to fix all reported
   findings. I used a direct fix-and-gate path rather than the full
   `/bench-shape-idea -> /bench-write-spec -> /bench-implement-spec ->
@@ -44,7 +52,11 @@ An entry only becomes `[resolved]` via /bench-integrate-learnings.
   findings may use a direct fix-and-gate path, with regression checks for behavior
   defects and one journal entry when no standing rule exists.
 
-## 2026-07-01 — approved lighter path still needs a journal entry  [open]
+## 2026-07-01 — approved lighter path still needs a journal entry  [resolved: promoted]
+_Resolved 2026-07-01 via /bench-integrate-learnings: promoted with the direct
+defect-fix shortcut. Other deviations still need explicit approval unless a standing
+rule covers them._
+
 - **What happened:** The reviewer approved handling the defect report with two short
   specs plus direct implementation, instead of running the full
   `/bench-shape-idea -> /bench-write-spec -> /bench-implement-spec ->
@@ -185,7 +197,11 @@ close a map while any remain._
   map closed, scan for unfilled Answer placeholders (`^— \((open|deferred)` / `GRILL
   DEFERRED`) and refuse to close while any remain. One-line guard in each command's exit.
 
-## 2026-06-30 — rename sed over-matched separator slashes and a $-anchored exclude regex leaked out-of-scope files  [open]
+## 2026-06-30 — rename sed over-matched separator slashes and a $-anchored exclude regex leaked out-of-scope files  [resolved: promoted]
+_Resolved 2026-07-01 via /bench-integrate-learnings: promoted as rename/refactor
+hygiene in `/bench-implement-spec`, and folded into the broader command-currency gate
+hardening._
+
 - **What happened:** Building the mechanical command/skill rename, I drove the
   reference updates with `sed 's#/spec\b#/bench-spec#g'` (and `/build`, `/setup`,
   `/grill`) across the doc surface. Two bugs: (1) the exclude filter
@@ -206,7 +222,11 @@ close a map while any remain._
   replacement where the matched identifier is preceded by a word character for human
   review. Fold a one-line "rename hygiene" note into the build guidance.
 
-## 2026-06-30 — rename completeness sweep missed bare basenames in tree/list docs  [open]
+## 2026-06-30 — rename completeness sweep missed bare basenames in tree/list docs  [resolved: promoted]
+_Resolved 2026-07-01 via /bench-integrate-learnings: promoted into the same
+rename/refactor hygiene note in `/bench-implement-spec`; broad renames must verify
+old stems in slash, Codex adapter, bare basename, and path forms._
+
 - **What happened:** The merged command/skill rename slice swept for `/cmd`
   invocations and `<dir>/<name>` path forms, but README's file-tree listing names
   commands and skills as *bare basenames* (`setup.md`, `seams/`) with the
@@ -221,7 +241,11 @@ close a map while any remain._
   same rename-hygiene note as the separator-slash learning above — they're one rule:
   a rename isn't done until the stems are gone in *every* form, anchored or not.
 
-## 2026-06-30 — Bench usage guidance went into AGENTS.md instead of BENCH.md  [open]
+## 2026-06-30 — Bench usage guidance went into AGENTS.md instead of BENCH.md  [resolved: promoted]
+_Resolved 2026-07-01 via /bench-integrate-learnings: recorded as already promoted.
+`.bench/BENCH.md` owns Harness Invocation and the gate checks Codex adapter
+documentation there; `AGENTS.md` stays a pointer surface._
+
 - **What happened:** While adding Codex `$bench-*` command adapters, I documented how
   to invoke them in `AGENTS.md` and in `bench-craft-skills`. The reviewer corrected
   that instructions about how Bench is used belong in `.bench/BENCH.md`, with
@@ -235,7 +259,12 @@ close a map while any remain._
   needs one. Gate checks for command-adapter documentation should point at
   `.bench/BENCH.md`, not force usage prose into `AGENTS.md`.
 
-## 2026-06-30 — reference cleanup after a refactor must cover every surface, and the guard that enforces it  [open]
+## 2026-06-30 — reference cleanup after a refactor must cover every surface, and the guard that enforces it  [resolved: promoted]
+_Resolved 2026-07-01 via /bench-integrate-learnings: promoted into the
+command-currency gate. It now scans `.agents/**`, non-historical `decisions/`, slash
+commands, Codex `$bench-*` adapters, and exact historical markers, with canaries for
+Codex adapter drift and prose-only marker mentions._
+
 - **What happened:** A full audit (with the gate green throughout) found the phase/command
   rename had left dead references across every surface the command-currency check does not
   scan: a live command file recommended `/shift` (`bench-write-spec.md`), a live spec

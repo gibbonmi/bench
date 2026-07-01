@@ -21,7 +21,8 @@ index plus command adapters.
 ## Solution
 
 Define the current living-doc surface and make the gate fail on stale command names
-there. Refresh the cold-pickup docs at the same time.
+there, including Codex `$bench-*` adapter references. Refresh the cold-pickup docs
+at the same time.
 
 Living docs for command currency:
 
@@ -32,10 +33,11 @@ Living docs for command currency:
 - `CONTEXT.md`
 - `HANDOFF.md`
 - `specs/`, except files explicitly marked `command-currency: historical`
+- `decisions/`, except files explicitly marked `command-currency: historical`
+- `.agents/**`
 
 Archival or deliberation records:
 
-- `decisions/`
 - dated release/history entries in `CHANGELOG.md`
 
 `CHANGELOG.md` keeps historical command names inside dated entries, but its header and
@@ -47,7 +49,8 @@ Unreleased/current guidance must use the live command names.
    exist now.
 2. As a kit maintainer, I want `HANDOFF.md` to be a current pickup doc or not ship at
    all.
-3. As a kit maintainer, I want the gate to catch command-name drift in living docs.
+3. As a kit maintainer, I want the gate to catch command-name drift in living docs,
+   command/skill bodies, and non-historical decision maps.
 4. As a reader of history, I want old command names to remain in historical decision
    and changelog context where they describe what was true at the time.
 
@@ -56,21 +59,23 @@ Unreleased/current guidance must use the live command names.
 - **Keep `HANDOFF.md`.** It ships in `package.json`, so rewrite it as a short
   current-state pickup guide that points at the canonical docs and lists the full CLI
   surface.
-- **Gate helper:** derive valid slash command names from `.agents/commands/*.md`.
-  Scan the living files for slash-command-looking tokens and fail when a token is not
-  in the valid set or a small allowed external set.
+- **Gate helper:** derive valid slash command names and Codex adapter names from
+  `.agents/commands/*.md`. Scan the living files for slash-command-looking and
+  `$bench-*` tokens, and fail when a token is not in the valid set or a small allowed
+  external set.
 - **Allowed external tokens:** keep only real, intentional non-Bench references such as
   `/model` if they appear on the living surface. Do not allow historical Bench aliases
   such as bench-learn, bench-update, resynthesize, spec, or build.
-- **History stays history:** do not gate `decisions/` or historical changelog entries.
-  If stale names in those files become confusing later, rewrite or retire the file as a
-  separate doc decision.
+- **History stays explicit:** old command names may remain only in specs or decisions
+  marked with `command-currency: historical` on its own line, or in dated changelog
+  history. The marker must not work when merely mentioned in prose.
 
 ## Testing decisions
 
 - **Seam:** `bench gate`, because the behavior is conformance of the repo's shipped and
   working docs.
-- Add a gate check that fails on stale slash-command names in living docs.
+- Add a gate check that fails on stale slash-command names and stale `$bench-*`
+  adapter names in living docs.
 - Add or update a canary fixture for the command-currency check, so the check must
   prove it bites.
 

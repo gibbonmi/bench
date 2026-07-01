@@ -1,3 +1,5 @@
+<!-- command-currency: historical -->
+
 # Human-facing Bench phase names
 
 ## Problem

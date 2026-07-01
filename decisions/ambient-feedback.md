@@ -4,7 +4,7 @@
 > Grown to two related features — the ambient-feedback **surface** (#1–#6) and the
 > **roadmap/icebox** capture-and-forget sink (#7–#9, linked via the surface footer in
 > #8). **Decided: two specs, roadmap (B) first.** B is **built** (`specs/roadmap.md`,
-> `bench idea`/`bench roadmap`). Next action: `/spec` on A (the surface).
+> `bench idea`/`bench roadmap`). Next action: `/bench-write-spec` on A (the surface).
 
 ## Vision (the core thesis)
 
@@ -67,9 +67,9 @@ compact list (budget/threshold mechanics are #4).
 | — | **Gate red/green** | **cached last-shift result** (not a cold run) | red → fix before commit |
 | 1 | Uncommitted / unpushed changes | `git status --porcelain`, `git cherry` | commit on green / push |
 | 2 | Active shift or stray worktree | `git worktree list` | resume or clean up |
-| 3 | Open-learnings count | `grep -c '[open]' .bench/learnings.md` | `/resynthesize` |
+| 3 | Open-learnings count | `grep -c '[open]' .bench/learnings.md` | `/bench-integrate-learnings` |
 | 4 | Structural debt | `bench structure` | split (seams) |
-| 5 | Unresolved decision map | open tickets in `decisions/*.md` | `/grill` → `/spec` |
+| 5 | Unresolved decision map | open tickets in `decisions/*.md` | `craft-grill` → `/bench-write-spec` |
 
 **Gate signal (kept, via cache).** Running the full gate cold is too slow for a
 SessionStart hook, so the renderer never runs it — instead the **shift loop writes a
@@ -91,7 +91,7 @@ Type: Grill
 ### Question
 The thesis is "assist the next action," not "report numbers." Given the signals, how
 does the surface derive a recommendation (e.g. "gate red → fix before commit", "4 open
-learnings → run /resynthesize", "spec written, no build → /build")? Rules table,
+learnings → run `/bench-integrate-learnings`", "spec written, no build → `/bench-implement-spec`")? Rules table,
 priority ladder, or model judgment at render time?
 
 ### Answer
@@ -178,7 +178,7 @@ Type: Grill
 
 ### Question
 When the user decides to act on a parked idea, how does it leave the roadmap and enter
-the real workflow (`/start-ideation`, `/spec`, or `/to-issues`)? Is capture append-only
+the real workflow (`/bench-shape-idea`, `/bench-write-spec`, or issue creation)? Is capture append-only
 with manual pruning, or does the roadmap carry status/lifecycle? The commitment point
 is the graduation, not the capture.
 
@@ -187,20 +187,20 @@ Resolved (grill, 2026-06-30). **Capture append-only; no status/lifecycle in the
 roadmap** — once committed, an idea's real state lives in its map/spec/issue, so the
 roadmap stays a dumb sink (avoids two sources of truth).
 
-**`/start-ideation` is the promotion seam.** When `/start-ideation` is invoked **on its
+**`/bench-shape-idea` is the promotion seam.** When `/bench-shape-idea` is invoked **on its
 own** — i.e. with no specific idea already in hand from the conversation — it reads
 `ROADMAP.md` and **asks the user which parked items, if any, they want to pull up** to
-ideate on. The chosen item seeds the ideation session. When `/start-ideation` is already
+ideate on. The chosen item seeds the ideation session. When `/bench-shape-idea` is already
 carrying a fresh idea from the conversation, it proceeds with that and does not
-interrupt with the roadmap prompt. `/spec` and `/to-issues` remain valid manual entry
+interrupt with the roadmap prompt. `/bench-write-spec` and issue creation remain valid manual entry
 points for an idea clear enough to skip ideation.
 
-**On pull, the line is auto-removed** from `ROADMAP.md` at the moment `/start-ideation`
+**On pull, the line is auto-removed** from `ROADMAP.md` at the moment `/bench-shape-idea`
 **creates the ideation map** from the pulled idea (decided 2026-06-30). Not at
 selection: an abandoned pull that never writes a map keeps its line. The roadmap thus
 holds only un-promoted ideas, with no manual cleanup.
 
-**Build implication:** this changes `/start-ideation`'s command file — it must learn to
+**Build implication:** this changes `/bench-shape-idea`'s command file — it must learn to
 read the roadmap and offer items on a cold invocation. Captured here so the spec covers
 it; the command edit is a build task, not part of this map.
 
@@ -212,7 +212,7 @@ The map resolved into **two related but separable features**:
   + on-demand `bench status`; six signals on a severity ladder; show-only-on-signal +
   5-row budget + one-line lead; gate read from a shift-written cache.
 - **B — the roadmap/icebox** (#7–#9): `bench idea` capture → append-only `ROADMAP.md`
-  → `bench roadmap` view; promotion via `/start-ideation` on a cold invoke.
+  → `bench roadmap` view; promotion via `/bench-shape-idea` on a cold invoke.
 
 They touch at exactly one seam: B's non-empty roadmap shows as a zero-severity **footer
 count** on A's surface (#8). Otherwise each builds and ships without the other.

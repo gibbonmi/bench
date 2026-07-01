@@ -25,12 +25,13 @@ Is Bench presented to the reviewer as a CLI workflow, or as a command workflow w
 the agent runs CLI commands underneath?
 
 ### Answer
-Resolved from the feedback thread. Bench is presented as a **slash-command workflow
-plus conversation**. The reviewer asks for `/bench-setup`, `/bench-ideate`,
-`/bench-spec`, `/bench-build`, `/bench-review`, and `/bench-qa`. The worker runs
-`bench link`, `bench init`, `bench gate`, `bench status`, and `bench shift` as
-infrastructure. Documentation can still describe the CLI, but not as the primary
-thing the reviewer operates.
+Resolved from the feedback thread. Bench is presented as a **harness command workflow
+plus conversation**. In Claude Code, the reviewer invokes `/bench-setup-repo`,
+`/bench-shape-idea`, `/bench-write-spec`, `/bench-implement-spec`,
+`/bench-review-implementation`, and `/bench-final-check`; in Codex, the same phases
+use `$bench-*` adapter skills. The worker runs `bench link`, `bench init`,
+`bench gate`, `bench status`, and `bench shift` as infrastructure. Documentation can
+still describe the CLI, but not as the primary thing the reviewer operates.
 
 ## #2: What should the README lead with?
 
@@ -45,14 +46,14 @@ and worker setup?
 ### Answer
 — (open)
 
-## #3: How does `/bench-setup` hide or expose `bench link` and `bench init`?
+## #3: How does the setup phase hide or expose `bench link` and `bench init`?
 
 Blocked by: #1
 Type: Grill
 
 ### Question
 If the reviewer never runs the CLI, should install/setup docs tell them to ask the
-agent to run `/bench-setup`, with the command responsible for running or checking
+agent to run the setup phase, with the command responsible for running or checking
 `bench link` and `bench init`; or should the CLI bootstrap remain an explicit
 maintainer prerequisite before slash commands work?
 

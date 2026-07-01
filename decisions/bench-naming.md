@@ -1,3 +1,5 @@
+<!-- command-currency: historical -->
+
 # Bench command & skill renaming
 
 Rename every Bench-owned command and skill into a `bench-*` namespace whose name

@@ -19,9 +19,10 @@ of Bench's harness-neutral promise.
 
 ## User stories
 
-1. As a Codex reviewer, I want to invoke each Bench phase as `$bench-setup`,
-   `$bench-ideate`, `$bench-spec`, `$bench-diagnose`, `$bench-build`,
-   `$bench-review`, and `$bench-qa`, so I do not need to know the command file path.
+1. As a Codex reviewer, I want to invoke each Bench phase as `$bench-setup-repo`,
+   `$bench-shape-idea`, `$bench-write-spec`, `$bench-debug`,
+   `$bench-implement-spec`, `$bench-review-implementation`, and
+   `$bench-final-check`, so I do not need to know the command file path.
 2. As a Codex reviewer, I want maintenance phases such as the synthesis commands to
    have the same adapter treatment, so every installed Bench command has one
    discoverable Codex invocation path.
@@ -44,8 +45,8 @@ of Bench's harness-neutral promise.
 
 Use `.agents/skills/<command-name>/SKILL.md` for each command adapter. The skill
 frontmatter `name:` matches the command basename, which gives the Codex invocation
-form `$<command-name>`; for example, the `bench-spec` command gets a `bench-spec`
-skill.
+form `$<command-name>`; for example, the `bench-write-spec` command gets a
+`bench-write-spec` skill.
 
 Adapter skill bodies stay tiny. Each one tells the agent to read the matching
 `.agents/commands/<command-name>.md` file completely and follow it as the active

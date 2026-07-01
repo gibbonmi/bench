@@ -1,3 +1,5 @@
+<!-- command-currency: historical -->
+
 # Human-facing skill names — make Bench phases self-explanatory in Codex
 
 > **GRILLED & RESOLVED (2026-06-30).** Rename the portable `.agents` phase surface to

@@ -58,11 +58,11 @@ structurally valid," but not "does a skill actually trigger and produce sane out
 ### Answer
 **Out of scope for the gate — deliberately.** Behavioral skill firing is
 non-deterministic and needs an agent, so it stays out of the deterministic oracle.
-Recommend handling it out of band (a periodic manual or `/resynthesize`-time smoke
+Recommend handling it out of band (a periodic manual or `/bench-update-kit`-time smoke
 check), never as a gate check. Recorded here so a future session doesn't try to build
 agent-behavior testing into the gate.
 
-## Build shape (for /spec)
+## Build shape (for `/bench-write-spec`)
 
 A `tests/canary/` (or similar) tree of broken mini-repo fixtures + one gate check
 that runs each through the gate and asserts the expected RED. Small, deterministic,

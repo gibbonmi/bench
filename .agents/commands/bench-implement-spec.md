@@ -30,6 +30,10 @@ if you hit the cap, stop and report.
   full gate once at the end.
 - Smallest diffs that advance a story. Read before you write. Compose existing
   seams before inventing new ones.
+- For broad renames or reference refactors, dry-run the file scope before editing,
+  then verify old stems in every form: `/name`, `$name`, bare basenames in
+  inventories, and `dir/name` path forms. Separator slashes inside prose are not
+  command invocations.
 
 ## Close on green
 

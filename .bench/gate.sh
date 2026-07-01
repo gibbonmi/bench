@@ -170,9 +170,10 @@ for m in "${ss_markers[@]}"; do
 done
 grep -qF 'canonical in `.bench/BENCH.md`' AGENTS.md || err "AGENTS.md lost its pointer to the canonical .bench/BENCH.md shared rules"
 
-#    g) living docs must name commands that exist now. Historical decision maps and
-#       explicitly-marked historical specs may mention old command names, but the cold
-#       pickup surface and living specs must not point agents at dead slash commands.
+#    g) living docs must name commands that exist now. Historical specs/maps may
+#       mention old command names only when explicitly marked on a line by itself, but
+#       the cold pickup surface, live maps, and command/skill bodies must not point
+#       agents at dead slash commands or Codex $bench-* adapters.
 node <<'NODE' || fail=1
 const fs = require("fs");
 const path = require("path");
@@ -181,15 +182,39 @@ let bad = 0;
 const err = msg => { console.error("gate: " + msg); bad = 1; };
 
 const commandsDir = ".agents/commands";
-const valid = new Set();
+const validSlash = new Set();
 if (fs.existsSync(commandsDir)) {
   for (const f of fs.readdirSync(commandsDir)) {
-    if (f.endsWith(".md")) valid.add("/" + path.basename(f, ".md"));
+    if (f.endsWith(".md")) validSlash.add("/" + path.basename(f, ".md"));
   }
 }
-for (const external of ["/model"]) valid.add(external);
+for (const external of ["/model"]) validSlash.add(external);
+
+const validCodex = new Set(
+  [...validSlash]
+    .filter(token => token.startsWith("/bench-"))
+    .map(token => "$" + token.slice(1))
+);
 
 const files = [];
+const addFile = file => {
+  if (fs.existsSync(file)) files.push(file);
+};
+const walk = dir => {
+  if (!fs.existsSync(dir)) return;
+  for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+    const file = path.join(dir, ent.name);
+    if (ent.isDirectory()) {
+      walk(file);
+    } else if (
+      ent.name === "SKILL.md" ||
+      /\.(md|ya?ml|json|sh)$/.test(ent.name)
+    ) {
+      files.push(file);
+    }
+  }
+};
+
 for (const f of [
   "README.md",
   "AGENTS.md",
@@ -197,15 +222,11 @@ for (const f of [
   ".bench/learnings.md",
   "CONTEXT.md",
   "HANDOFF.md",
-]) {
-  if (fs.existsSync(f)) files.push(f);
-}
-if (fs.existsSync("specs")) {
-  for (const f of fs.readdirSync("specs").sort()) {
-    if (f.endsWith(".md")) files.push(path.join("specs", f));
-  }
-}
-if (fs.existsSync("CHANGELOG.md")) files.push("CHANGELOG.md");
+  "CHANGELOG.md",
+]) addFile(f);
+walk("specs");
+walk("decisions");
+walk(".agents");
 
 const knownStale = new Set([
   "/resynthesize",
@@ -223,10 +244,13 @@ const knownStale = new Set([
   "/verify",
   "/shift",
 ]);
-const ref = /(^|[\s([`"'])\/([A-Za-z][A-Za-z0-9_-]*[A-Za-z0-9])/g;
-for (const file of files) {
+const historicalMarker = /^<!-- command-currency: historical -->$/m;
+const slashRef = /(^|[\s([`"'])\/([A-Za-z][A-Za-z0-9_-]*[A-Za-z0-9])/g;
+const codexRef = /(^|[\s([`"'])\$([A-Za-z][A-Za-z0-9_-]*[A-Za-z0-9])/g;
+
+for (const file of [...new Set(files)].sort()) {
   let text = fs.readFileSync(file, "utf8");
-  if (text.includes("command-currency: historical")) continue;
+  if (historicalMarker.test(text)) continue;
   if (file === ".bench/learnings.md") {
     text = text.split("<!-- entries below -->")[0];
   }
@@ -236,11 +260,18 @@ for (const file of files) {
   const lines = text.split(/\n/);
   for (let i = 0; i < lines.length; i++) {
     let m;
-    ref.lastIndex = 0;
-    while ((m = ref.exec(lines[i])) !== null) {
+    slashRef.lastIndex = 0;
+    while ((m = slashRef.exec(lines[i])) !== null) {
       const token = "/" + m[2];
-      if (!valid.has(token) && (token.startsWith("/bench-") || knownStale.has(token))) {
+      if (!validSlash.has(token) && (token.startsWith("/bench-") || knownStale.has(token))) {
         err(`stale command reference ${token} in ${file}:${i + 1}`);
+      }
+    }
+    codexRef.lastIndex = 0;
+    while ((m = codexRef.exec(lines[i])) !== null) {
+      const token = "$" + m[2];
+      if (token.startsWith("$bench-") && !validCodex.has(token)) {
+        err(`stale Codex adapter reference ${token} in ${file}:${i + 1}`);
       }
     }
   }

@@ -95,7 +95,9 @@ Anything you can't defend as a separate capability, or that falls under the
 threshold, does not belong here — it goes into the user stories above. An empty
 section is a fine and common answer; a long one is a signal you're shrinking the
 target. (Borrows Pocock's `triage` OUT-OF-SCOPE convention: exclusions are
-decisions on the page, not silent omissions.)
+decisions on the page, not silent omissions.) Rank any high-value cuts worth
+preserving, and park concrete future features on the roadmap when they should not
+disappear after this spec.
 ```
 
 Every line in this section is something I can read and veto in one pass — which is
@@ -109,5 +111,5 @@ Before any build starts, emit a scannable approval table — user stories / seam
 acceptance coverage / out of scope — and pause for my sign-off. The full spec file
 stays as written; the table is the at-a-glance veto surface. Only after I approve,
 lead with the recommended next action — `/bench-implement-spec` interactively, or a
-`/shift` for locked-spec mechanical work — and a one-clause why, not a neutral
+`bench shift` for locked-spec mechanical work — and a one-clause why, not a neutral
 either/or.

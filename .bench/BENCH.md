@@ -93,7 +93,10 @@ Use the canonical phases when the work needs them:
 5. `/bench-final-check` to report the gate result.
 
 Small mechanical changes can use the lighter path, but skipping the canonical
-workflow is a reviewer decision.
+workflow is a reviewer decision. A reviewer-requested fix for concrete review
+findings may use a direct fix-and-gate path; run focused regression checks for
+behavior defects, then the gate. Other deviations still need explicit approval
+unless a standing rule covers them.
 
 ## Harness Invocation
 

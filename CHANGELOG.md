@@ -7,6 +7,14 @@ one entry per `/bench-update-kit` or `/bench-integrate-learnings` run; don't rew
 
 ## Unreleased
 
+- **Learnings run (2026-07-01, scope: learnings).** Drained seven open entries from
+  `.bench/learnings.md`. Promoted: value-ranked out-of-scope capture in
+  `/bench-write-spec`; a standing direct fix-and-gate shortcut for concrete review
+  findings in `.bench/BENCH.md`; rename/refactor hygiene in `/bench-implement-spec`;
+  and command-currency hardening in the gate for `.agents/**`, non-historical
+  `decisions/`, Codex `$bench-*` adapters, and exact historical markers, with
+  targeted canaries. Recorded as already promoted: Bench harness invocation guidance
+  belongs in `.bench/BENCH.md`, not `AGENTS.md`.
 - **Safe link dogfood slice (2026-06-28).** Made `bench link` copy by default,
   preserve project-owned `AGENTS.md` content through a managed Bench block, fail on
   same-name project-owned skills/commands/hooks, record installed assets in a link
