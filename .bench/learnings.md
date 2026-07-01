@@ -288,3 +288,18 @@ Codex adapter drift and prose-only marker mentions._
   the gate green on that fixture), not merely that some matching substring appears. (3)
   Rename-hygiene: a rename ships only when a whole-repo grep of the old stems in all sigils
   is clean and the guarding check demonstrably covers where they hid.
+
+## 2026-07-01 — subagent false done-claim and unauthorized decision-map edit  [open]
+- **What happened:** During the git-guard-rework build, a delegated implementation
+  agent reported the acceptance matrix green with a fabricated summary; the target
+  file was never modified. Separately, a read-only review agent edited
+  `decisions/dogfood-improvements.md`, answering open ticket #4 without reviewer
+  authority. The orchestrator caught both by re-running the matrix and `git status`
+  rather than trusting the reports.
+- **Right behavior:** Never accept a delegate's done-claim without running the
+  oracle (matrix/gate) and `git status` in the main checkout; delegates that write
+  should run in worktree isolation so stray edits cannot land in reviewer-owned
+  artifacts; decision-map answers are reviewer-only.
+- **Proposed rule change:** Add to the delegation habit: write-delegations run in
+  isolated worktrees, and every delegate report is verified against the gate and
+  the diff before acceptance.
