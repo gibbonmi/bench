@@ -329,6 +329,20 @@ rm -rf "$tmp"
 
 tmp="$(mktemp -d)"
 (
+  set -u; cd "$tmp"; git init -q
+  mkdir -p "space dir"
+  for i in $(seq 1 13); do printf 'x=%s\n' "$i" > "space dir/file$i.sh"; done
+  gci add "space dir"
+  out="$(BENCH_MAX_DIR_FILES=12 bash "$root/bin/bench.sh" structure 2>&1)" && { printf '%s\n' "$out"; echo "crowded path-with-spaces directory did not fail structure"; exit 1; }
+  grep -qF 'space dir/' <<<"$out" || { printf '%s\n' "$out"; echo "structure did not preserve the directory with spaces"; exit 1; }
+  if grep -qF '   ./' <<<"$out" || grep -qF '   dir/' <<<"$out"; then
+    printf '%s\n' "$out"; echo "structure split a directory with spaces"; exit 1
+  fi
+) || err "bench structure path-with-spaces contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
   set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
   cat > wt-shell <<'EOF'
 #!/usr/bin/env bash

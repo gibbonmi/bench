@@ -53,12 +53,29 @@ structure_check() {
       echo "FILE TOO LONG   $n lines (max $max_lines)   $f"; violations=$((violations+1))
     fi
   done <<< "$files"
-  while read -r count dir; do
-    [[ -z "$count" ]] && continue
-    if (( count > max_files )); then
-      echo "DIR CROWDED     $count source files (max $max_files), group into modules   $dir/"; violations=$((violations+1))
+  local current_dir="" dir="" dir_count=0 saw_dir=0
+  while IFS= read -r dir; do
+    if (( saw_dir == 0 )) || [[ "$dir" != "$current_dir" ]]; then
+      if (( saw_dir == 1 && dir_count > max_files )); then
+        echo "DIR CROWDED     $dir_count source files (max $max_files), group into modules   $current_dir/"; violations=$((violations+1))
+      fi
+      current_dir="$dir"
+      dir_count=1
+      saw_dir=1
+    else
+      dir_count=$((dir_count+1))
     fi
-  done <<< "$(printf '%s\n' "$files" | xargs -n1 dirname | sort | uniq -c)"
+  done < <(
+    while IFS= read -r f; do
+      [[ -z "$f" ]] && continue
+      dir="${f%/*}"
+      [[ "$dir" == "$f" ]] && dir="."
+      printf '%s\n' "$dir"
+    done <<< "$files" | sort
+  )
+  if (( saw_dir == 1 && dir_count > max_files )); then
+    echo "DIR CROWDED     $dir_count source files (max $max_files), group into modules   $current_dir/"; violations=$((violations+1))
+  fi
   if (( violations > 0 )); then
     echo "structural debt: $violations issue(s). Split along responsibility (see the craft-seams skill); don't fragment to beat the number." >&2
     return 1
