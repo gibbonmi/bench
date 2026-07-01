@@ -1,53 +1,70 @@
 # Decision map — Codex hook layer
 
-`.codex/hooks.json` ships Claude Code's hook schema (Stop/PreToolUse events,
-matcher "Bash") at a Codex path, and nothing establishes that Codex reads it.
-If it is inert, the destructive-git guard and stop-gate layers silently do not
-exist under Codex, while `.bench/BENCH.md` claims both adapters call the shared
-scripts. The harness-independent backstops (git pre-push hook, `bench shift`
-loop) are unaffected either way.
+The whole-repo review suspected `.codex/hooks.json` was inert (Claude Code's
+schema at a Codex path). Research disproved that for current Codex: the file is
+plausibly functional as shipped. Remaining decisions are about verification and
+honest documentation, not build-vs-drop. The harness-independent backstops (git
+pre-push hook, `bench shift` loop) are unaffected throughout.
 
 ## #1: What hook/automation surface does current Codex actually support?
 
 Type: Research
 
-### Question
-Does the current stable Codex CLI read any hook configuration at all — and if
-so, which events (session start, pre-tool, stop/turn-end), what schema, and
-from which path? `.codex/hooks.json`'s shape is Claude Code's; we need the real
-surface (or confirmation none exists) before choosing between building an
-adapter and dropping the claim. Deliverable: a short summary of the supported
-surface with version numbers and doc references.
-
 ### Answer
-— (open)
+Current Codex CLI (hooks shipped in 2026) supports lifecycle hooks that are
+schema-compatible with Claude Code's: it reads `<repo>/.codex/hooks.json` (and
+inline `[hooks]` in `.codex/config.toml`), with top-level
+`{"hooks": {"<Event>": [{"matcher", "hooks": [{"type": "command", "command",
+"timeout", "statusMessage"}]}]}}`. Supported events include `PreToolUse`
+(matcher `"Bash"` for shell; stdin carries `tool_name` and
+`tool_input.command`) and `Stop` (stdin carries `stop_hook_active` and
+`turn_id`). Exit 2 + stderr blocks, same as Claude Code. The kit's shipped
+`.codex/hooks.json` conforms to this schema field-for-field, and the shared
+hook scripts consume exactly these stdin fields (stop.sh honors
+`stop_hook_active`; the guard reads `tool_input.command`).
 
-## #2: Build a real Codex adapter, drop the layer, or partially map it?
+Caveats that drive #2/#3:
+- **Trust gating** — project-level hooks load only when the project `.codex/`
+  layer is trusted, and each non-managed command hook must be reviewed and
+  trusted via `/hooks` (hash-recorded). After `bench link`, a Codex user gets
+  the layer only after that one-time trust step.
+- **Unverified in practice** — the `command` strings use
+  `$(git rev-parse --show-toplevel)` substitution; whether Codex executes hook
+  commands through a shell (making that resolve) is not stated in the docs.
+  Needs one live dogfood run.
+- **Version floor** — hooks are a 2026 Codex feature; older Codex versions
+  ignore the file silently. Docs reference: developers.openai.com/codex/hooks.
 
-Blocked by: #1
+## #2: How much verification does the layer get before the claim is trusted?
+
 Type: Grill
 
-### Question
-If Codex exposes an equivalent surface, an adapter keeps the interactive safety
-layer parity BENCH.md promises. If it exposes only part (e.g. lifecycle but not
-pre-tool), a partial adapter needs honest documentation of the gap. If it
-exposes nothing, the kit should drop `.codex/hooks.json` and lean on the
-backstops. Reviewer call once #1 lands.
-
 ### Answer
-— (open)
+Dogfood plus a gate contract. A live `codex exec` run (codex-cli 0.142.5,
+sandboxed) confirmed both hooks fire: PreToolUse on the Bash tool with
+`tool_input.command`, and Stop with `stop_hook_active`, and the hook `command`
+resolved through a shell so `$(git rev-parse --show-toplevel)` expanded to the
+real script path. So the adapter is functional as shipped — no build needed.
+Added gate check 2b (`.bench/gate.sh`): `.codex/hooks.json` must run
+`stop.sh` on Stop and `block-dangerous-git.sh` under a `PreToolUse` `"Bash"`
+matcher, with a `codex-hooks-broken` canary proving the check bites. Drift now
+turns the gate red.
 
-## #3: What happens to the shipped file and the BENCH.md claim?
+## #3: What do BENCH.md and the adapter docs say about the Codex layer?
 
 Blocked by: #2
 Type: Grill
 
-### Question
-`.codex/hooks.json` is in `package.json` files[] and installed by `bench link`;
-BENCH.md's "Hook Layers" section claims Codex adapter coverage. Depending on
-#2: replace the file with a real adapter, or remove it from the plan/manifest
-and reword BENCH.md to name the git hook + shift loop as the only Codex-side
-enforcement. Either way the docs must state the current decided truth.
-
 ### Answer
-— (open)
+BENCH.md's "Hook Layers" section now states the two facts the old claim
+omitted: project hooks require a one-time `/hooks` trust step in Codex after
+`bench link`, and hooks are a 2026-era Codex feature — an older Codex ignores
+`.codex/hooks.json` silently and keeps only the harness-independent backstops
+(git pre-push hook + `bench shift` loop). The "adapters call the shared
+scripts" claim stands, qualified by those two conditions.
+
+---
+
+All tickets resolved. The build (gate check 2b + canary) is done; the doc
+edit is the remaining artifact. No spec needed — this was a research-plus-doc
+change at an obvious seam.

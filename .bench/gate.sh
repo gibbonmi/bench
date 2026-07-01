@@ -51,6 +51,34 @@ for f in package.json .claude/settings.json .codex/hooks.json; do
   fi
 done
 
+# 2b. The Codex hook adapter must carry the two enforcement layers Codex actually
+#     runs (verified against codex-cli: it loads .codex/hooks.json, fires PreToolUse
+#     with tool_name "Bash" and Stop with stop_hook_active, and shells out the
+#     command so the git-rev-parse substitution resolves). A drift here silently
+#     drops the git guard or the stop gate under Codex.
+if [ -f .codex/hooks.json ]; then
+  node <<'NODE' || fail=1
+const fs = require("fs");
+let bad = 0;
+const err = m => { console.error("gate: " + m); bad = 1; };
+let cfg;
+try { cfg = JSON.parse(fs.readFileSync(".codex/hooks.json", "utf8")); }
+catch { process.exit(0); } // invalid JSON already reported by check 2
+const hooks = (cfg && cfg.hooks) || {};
+const cmds = event => (hooks[event] || [])
+  .flatMap(g => (g.hooks || []).map(h => h.command || ""));
+const stop = cmds("Stop");
+if (!stop.some(c => c.includes(".bench/hooks/stop.sh")))
+  err("codex hooks.json Stop event does not run .bench/hooks/stop.sh");
+const pre = (hooks.PreToolUse || []);
+if (!pre.some(g => g.matcher === "Bash"))
+  err("codex hooks.json PreToolUse Bash matcher missing");
+if (!cmds("PreToolUse").some(c => c.includes(".bench/hooks/block-dangerous-git.sh")))
+  err("codex hooks.json PreToolUse does not run .bench/hooks/block-dangerous-git.sh");
+process.exit(bad);
+NODE
+fi
+
 # 3. Every skill carries YAML frontmatter (first line is the --- fence).
 for f in .agents/skills/*/SKILL.md; do
   [ "$(head -1 "$f")" = "---" ] || err "$f missing frontmatter"

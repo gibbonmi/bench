@@ -153,6 +153,9 @@ Git safety is layered:
 
 - The git `pre-push` hook blocks direct pushes to the default branch.
 - Claude Code and Codex hook adapters call the shared scripts in `.bench/hooks/`.
+  Codex loads `.codex/hooks.json` only after you trust it once via `/hooks`
+  (its project-hook trust step), and only on a Codex build new enough to support
+  hooks; an older Codex ignores the file and keeps just the backstops below.
 - Linked repos carry a local `.bench/bin/` CLI set for those hooks; a globally
   installed `bench` is convenient for humans, not required for hook execution.
 - The `bench shift` loop commits only after the gate is green.
