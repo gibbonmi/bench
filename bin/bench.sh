@@ -23,7 +23,6 @@ set -euo pipefail
 BENCH_HOME="${BENCH_HOME:-$HOME/.bench}"
 AGENT="${BENCH_AGENT:-claude}"          # headless agent command; override per harness
 MAX_ITERS="${BENCH_MAX_ITERS:-12}"
-MAX_TOKENS="${BENCH_MAX_TOKENS:-4000000}"
 
 repo_root() { git rev-parse --show-toplevel 2>/dev/null || { echo "not in a git repo" >&2; exit 1; }; }
 default_branch() { git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@' || echo main; }
@@ -142,7 +141,7 @@ shift_loop() {
   trap 'shift_cleanup "$BENCH_SHIFT_ROOT"; exit 130' INT TERM
   echo "▶ shift on $branch — objective: $objective"
   echo "  worktree: $root"
-  echo "  caps: $MAX_ITERS iterations, ~$MAX_TOKENS tokens. Ctrl-C to pull the line."
+  echo "  cap: $MAX_ITERS iterations. Ctrl-C to pull the line."
   started=$(date +%s)
   for ((i=1; i<=MAX_ITERS; i++)); do
     echo "── iteration $i/$MAX_ITERS ──"

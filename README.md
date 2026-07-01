@@ -293,8 +293,8 @@ and commits only on green, and the git `pre-push` hook protects the default bran
 matter which agent (or human) pushes.
 
 Optional knobs (env): `BENCH_AGENT` (headless agent command, default `claude`),
-`BENCH_MAX_ITERS`, `BENCH_MAX_TOKENS`, `BENCH_GATE` (a gate command if you'd rather
-not ship `.bench/gate.sh`).
+`BENCH_MAX_ITERS`, `BENCH_GATE` (a gate command if you'd rather not ship
+`.bench/gate.sh`).
 
 ---
 
