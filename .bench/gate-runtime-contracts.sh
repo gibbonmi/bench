@@ -344,6 +344,7 @@ rm -rf "$tmp"
 tmp="$(mktemp -d)"
 (
   set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
+  printf 'ignored/\n' > .gitignore; gci add .gitignore; gci commit -q -m ignore
   cat > wt-shell <<'EOF'
 #!/usr/bin/env bash
 : "${BENCH_WT_RECORD:?}"
@@ -351,7 +352,9 @@ pwd >> "$BENCH_WT_RECORD"
 lease="$(git rev-parse --git-path bench-lease)"
 [ -f "$lease" ] || { echo "lease missing"; exit 7; }
 [ ! -e dirty.txt ] || { echo "dirty file carried into reused worktree"; exit 8; }
+[ ! -e ignored/leak.txt ] || { echo "ignored artifact carried into reused worktree"; exit 9; }
 echo dirty > dirty.txt
+mkdir -p ignored; echo leak > ignored/leak.txt
 EOF
   chmod +x wt-shell
   record="$tmp/paths"
@@ -362,6 +365,7 @@ EOF
   [ "${paths[0]}" = "${paths[1]}" ] || { echo "worktree pool did not reuse a clean released path"; exit 1; }
   [ ! -f "$(git -C "${paths[1]}" rev-parse --git-path bench-lease)" ] || { echo "worktree lease was not removed on release"; exit 1; }
   [ ! -f "${paths[1]}/dirty.txt" ] || { echo "worktree release did not clean dirty files"; exit 1; }
+  [ ! -f "${paths[1]}/ignored/leak.txt" ] || { echo "worktree release did not clean ignored artifacts"; exit 1; }
 ) || err "bench worktree lease/reuse contract failed"
 rm -rf "$tmp"
 

@@ -92,7 +92,7 @@ worktree_acquire() {
   else
     git -C "$wt" reset -q --hard >/dev/null 2>&1 || true
   fi
-  git -C "$wt" clean -qfd
+  git -C "$wt" clean -qfdx
   : > "$(worktree_lease_file "$wt")"
   printf '%s\n' "${wt%/}"
 }
@@ -103,7 +103,7 @@ worktree_release() {
   rm -f "$(worktree_lease_file "$wt")"
   git -C "$wt" switch -q --detach >/dev/null 2>&1 || true
   git -C "$wt" reset -q --hard >/dev/null 2>&1 || true
-  git -C "$wt" clean -qfd >/dev/null 2>&1 || true
+  git -C "$wt" clean -qfdx >/dev/null 2>&1 || true
   rm -f "$(worktree_lease_file "$wt")"
 }
 
@@ -160,7 +160,7 @@ shift_loop() {
       if ( cd "$root" && objective_met "$objective" ); then echo "  objective met."; break; fi
     else
       echo "  ✗ red gate — rolling back iteration $i, retrying"
-      git -C "$root" reset -q --hard; git -C "$root" clean -qfd
+      git -C "$root" reset -q --hard; git -C "$root" clean -qfdx
     fi
   done
   # Implementation loop is done. Only NOW pay down structural debt, if the work
@@ -185,7 +185,7 @@ shift_loop() {
         echo "  ✓ tests green - refactor $r committed"
       else
         echo "  ✗ refactor broke the gate — rolling back"
-        git -C "$root" reset -q --hard; git -C "$root" clean -qfd
+        git -C "$root" reset -q --hard; git -C "$root" clean -qfdx
       fi
     done
     if ( cd "$root" && structure_touched_since "$base" >/dev/null 2>&1 ); then echo "  structure back under budget."
