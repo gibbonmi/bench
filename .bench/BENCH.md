@@ -84,14 +84,41 @@ code, the journal — those stay as full as their templates need).
 
 Use the canonical phases when the work needs them:
 
-1. `/bench-ideate` for unresolved decisions.
-2. `/bench-spec` to lock stories, seams, and gate expectations.
-3. `/bench-build` to implement at the chosen seams.
-4. `/bench-review` for semantic review against standards and spec.
-5. `/bench-qa` to report the gate result.
+1. `/bench-shape-idea` for unresolved decisions.
+2. `/bench-write-spec` to lock stories, seams, and gate expectations.
+3. `/bench-implement-spec` to implement at the chosen seams.
+4. `/bench-review-implementation` for semantic review against standards and spec.
+5. `/bench-final-check` to report the gate result.
 
 Small mechanical changes can use the lighter path, but skipping the canonical
 workflow is a reviewer decision.
+
+## Harness Invocation
+
+The canonical phase bodies live in `.agents/commands/`. Harnesses may expose those
+phases differently:
+
+- **Claude Code:** invoke the phase directly as a slash command, e.g. `/bench-write-spec`.
+- **Codex:** invoke the matching explicit skill, e.g. `$bench-write-spec`; each `$bench-*`
+  adapter reads the canonical command file and follows it. These adapters are
+  explicit-only (`allow_implicit_invocation: false`) because workflow phases are
+  reviewer-chosen entry points, not background generation guidance.
+  Model-invoked Bench guidance uses visible `craft-*` skill names, leaving `$bench`
+  for phases a reviewer deliberately runs.
+- **Other AGENTS.md harnesses:** read the phase file in `.agents/commands/` and
+  follow it when no native command or skill surface exists.
+
+Codex phase adapters installed by Bench:
+
+- `$bench-setup-repo` → `.agents/commands/bench-setup-repo.md`
+- `$bench-shape-idea` → `.agents/commands/bench-shape-idea.md`
+- `$bench-write-spec` → `.agents/commands/bench-write-spec.md`
+- `$bench-debug` → `.agents/commands/bench-debug.md`
+- `$bench-implement-spec` → `.agents/commands/bench-implement-spec.md`
+- `$bench-review-implementation` → `.agents/commands/bench-review-implementation.md`
+- `$bench-final-check` → `.agents/commands/bench-final-check.md`
+- `$bench-update-kit` → `.agents/commands/bench-update-kit.md`
+- `$bench-integrate-learnings` → `.agents/commands/bench-integrate-learnings.md`
 
 ## Commands
 
@@ -109,7 +136,7 @@ Parking an idea is conversational — never a CLI chore for the reviewer. When t
 reviewer wants to set an idea aside, or you spot a tangent worth not losing, **you**
 run `bench idea "<text>"`; they never type it. Offer once when a clear tangent
 appears, then let it go — don't nag. Parked ideas land in `ROADMAP.md` and graduate
-into committed work only through `/bench-ideate`. If `bench` isn't on PATH, append the
+into committed work only through `/bench-shape-idea`. If `bench` isn't on PATH, append the
 dated line (`- YYYY-MM-DD  <text>`) to `ROADMAP.md` yourself.
 
 ## Hook Layers

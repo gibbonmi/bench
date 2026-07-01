@@ -1,6 +1,6 @@
 ---
-name: bench-craft-tdd
-description: How to apply test-driven development without the cost blowup or the over-fit-and-stop failure. Use whenever writing tests first, doing red-green-refactor, or building at a seam that /bench-spec marked for TDD. Reach for this before starting any TDD pass to bound where and how it applies.
+name: craft-tdd
+description: How to apply test-driven development without the cost blowup or the over-fit-and-stop failure. Use whenever writing tests first, doing red-green-refactor, or building at a seam that /bench-write-spec marked for TDD. Reach for this before starting any TDD pass to bound where and how it applies.
 ---
 
 # TDD at seams
@@ -14,7 +14,7 @@ on the productive side.
 TDD every line and you pay a large cost tax for ceremony and watch the loop do the
 minimum to pass its own tests, then stop. So:
 
-- TDD **only** at the seams `/bench-spec` named. At those seams the test target is
+- TDD **only** at the seams `/bench-write-spec` named. At those seams the test target is
   external — I chose the seam and the behavior — so passing the test means
   matching my spec, not the agent's guess.
 - Off the marked seams, write the code and let the gate catch regressions.
@@ -33,7 +33,7 @@ minimum to pass its own tests, then stop. So:
 3. **Refactor** — clean up with the test green. A good test survives this; if your
    refactor breaks it, the test was attached to an internal — re-place the seam.
    Look for: duplication (extract), long methods (private helpers, tests stay on
-   the interface), shallow modules (combine or deepen — see `bench-craft-seams`), feature envy
+   the interface), shallow modules (combine or deepen — see `craft-seams`), feature envy
    (move logic to where the data lives), primitive obsession (introduce value
    objects), and existing code the new code just revealed as a problem.
 

@@ -2,7 +2,7 @@
 description: Run the external gate (types, tests, lint, project conformance) and report findings. Use to check whether work is actually done, or to diagnose a red gate. Never use the model's own judgment as a substitute.
 ---
 
-# /bench-qa — the gate is the oracle
+# /bench-final-check — the gate is the oracle
 
 Run the gate and report. The gate is the oracle; this command does not form an
 opinion about whether the work is good, it reports what the gate says.
@@ -27,7 +27,7 @@ check such as AXI conformance for gl-axi).
   real when the gate is green again.
 
 If a check itself looks wrong (a flaky test, an over-tight lint rule), say so
-explicitly and stop. Changing a gate check is my call, not a step inside `/bench-qa`.
+explicitly and stop. Changing a gate check is my call, not a step inside `/bench-final-check`.
 
 ## Findings that the gate can't see
 

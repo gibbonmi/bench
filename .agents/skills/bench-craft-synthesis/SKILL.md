@@ -1,11 +1,11 @@
 ---
-name: bench-craft-synthesis
-description: The discipline for safely folding a candidate change into the Bench kit — respect closed decisions, assess by the gap it fills, pass three quality loops (legibility, consistency, dogfood), and propose rather than merge. Use whenever evaluating a change to the kit itself, from either source. Reach for this from /bench-update and /bench-learn, or any time you're deciding whether a kit change earns its place.
+name: craft-synthesis
+description: The discipline for safely folding a candidate change into the Bench kit — respect closed decisions, assess by the gap it fills, pass three quality loops (legibility, consistency, dogfood), and propose rather than merge. Use whenever evaluating a change to the kit itself, from either source. Reach for this from /bench-update-kit and /bench-integrate-learnings, or any time you're deciding whether a kit change earns its place.
 ---
 
 # Synthesis — fold a change into the kit without bloating it
 
-This is the shared middle of `/bench-update` (upstream changes) and `/bench-learn`
+This is the shared middle of `/bench-update-kit` (upstream changes) and `/bench-integrate-learnings`
 (learnings changes). Those commands gather candidates and record results; this skill
 is what happens in between — the same discipline regardless of where a candidate came
 from. The root virtue is **anti-sediment**: the kit growing is a *cost*, and a change
@@ -33,21 +33,21 @@ For each surviving candidate, classify in one line:
 - **Recommend** — note it; don't build it.
 - **Skip** — with the reason.
 
-The bar is the anti-sediment bar from `bench-craft-skills`: gap-filling, not
+The bar is the anti-sediment bar from `craft-skills`: gap-filling, not
 goodness-in-isolation. Present the proposed set with each item's origin tag.
 
 ## Three quality loops — all must pass before adoption
 
 Run in order; a change that fails a loop is pruned or sent back, not shipped.
 
-1. **Legibility loop.** Run `bench-craft-skills` against each change. No-op?
+1. **Legibility loop.** Run `craft-skills` against each change. No-op?
    Duplicates an existing piece? Pushes the kit past its legibility ceiling? Cut or
    fold it.
 2. **Consistency loop.** Apply to a working copy, then re-run the staleness audit:
    grep for invariant drift, broken cross-references, stale paths, app-specific
    leakage into core files, an out-of-date provenance table. Fix every hit.
 3. **Dogfood loop — the oracle.** Run a real shift on a real repo with the changed
-   kit: `/bench-spec` a small task, `bench shift`, confirm the gate gates, the hooks
+   kit: `/bench-write-spec` a small task, `bench shift`, confirm the gate gates, the hooks
    fire, `bench gate` ends green. A change that reads well but breaks a real run is
    rejected. If you can't run a dogfood shift, the synthesis is **not complete** — say
    so rather than adopting on paper. The kit does not grade its own update; a run does.
@@ -55,6 +55,6 @@ Run in order; a change that fails a loop is pruned or sent back, not shipped.
 ## Propose; the reviewer merges
 
 Never auto-apply. After the loops pass and the reviewer has signed off, hand back to
-the calling command to record the result — `/bench-update` to the provenance table and
-CHANGELOG, `/bench-learn` into the fixed artifact and the resolved learnings entry.
+the calling command to record the result — `/bench-update-kit` to the provenance table and
+CHANGELOG, `/bench-integrate-learnings` into the fixed artifact and the resolved learnings entry.
 The merge is the reviewer's.

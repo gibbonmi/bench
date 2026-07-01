@@ -36,7 +36,7 @@ bad_refs="$(grep -oE '\.bench/(gate|done)(\.sh)?' bin/bench.sh | grep -vE '\.sh$
 [ -z "$bad_refs" ] || err "bin/bench.sh has extensionless gate/done refs ($(echo "$bad_refs" | tr '\n' ' ')); the contract is .sh"
 
 # 1d. `bench init` must scaffold the self-learning journal. AGENTS.md tells agents to
-#     append to .bench/learnings.md and /bench-learn reads it; if init does not
+#     append to .bench/learnings.md and /bench-integrate-learnings reads it; if init does not
 #     create it, the contract points at a file that never exists. Exercise the real
 #     init path in a throwaway repo rather than grepping for the literal.
 tmp="$(mktemp -d)"
@@ -69,19 +69,21 @@ tmp="$(mktemp -d)"
   [ "$(count_literal '<!-- bench:end -->' AGENTS.md)" = "1" ] || { echo "fresh link did not create exactly one managed end marker"; exit 1; }
   [ -f .bench/BENCH.md ] || { echo "fresh link did not install .bench/BENCH.md"; exit 1; }
   [ -f .bench/link-manifest.tsv ] || { echo "fresh link did not write link manifest"; exit 1; }
-  [ -f .agents/commands/bench-build.md ] || { echo "fresh link did not install portable commands"; exit 1; }
+  [ -f .agents/commands/bench-implement-spec.md ] || { echo "fresh link did not install portable commands"; exit 1; }
   [ -f .agents/skills/bench-craft-seams/SKILL.md ] || { echo "fresh link did not install portable skills"; exit 1; }
+  [ -f .agents/skills/bench-implement-spec/SKILL.md ] || { echo "fresh link did not install Codex command adapter skills"; exit 1; }
+  [ -f .agents/skills/bench-implement-spec/agents/openai.yaml ] || { echo "fresh link did not install Codex command adapter metadata"; exit 1; }
   [ -f .claude/README.md ] || { echo "fresh link did not install Claude adapter README"; exit 1; }
   grep -qF '.agents/' .claude/README.md || { echo "Claude adapter README does not explain .agents"; exit 1; }
   grep -qF '.bench/hooks/' .claude/README.md || { echo "Claude adapter README does not explain shared hooks"; exit 1; }
-  [ -e .claude/commands/bench-build.md ] || { echo "fresh link did not install Claude command adapter"; exit 1; }
+  [ -e .claude/commands/bench-implement-spec.md ] || { echo "fresh link did not install Claude command adapter"; exit 1; }
   [ -e .claude/skills/bench-craft-seams/SKILL.md ] || { echo "fresh link did not install Claude skill adapter"; exit 1; }
   [ -f .codex/hooks.json ] || { echo "fresh link did not install Codex hook adapter"; exit 1; }
   [ -f .bench/hooks/block-dangerous-git.sh ] || { echo "fresh link did not install shared hook scripts"; exit 1; }
   [ -f .bench/hooks/session-start.sh ] || { echo "fresh link did not install the SessionStart hook"; exit 1; }
   grep -q 'SessionStart' .claude/settings.json || { echo "fresh link .claude/settings.json has no SessionStart wiring"; exit 1; }
   [ -x .git/hooks/pre-push ] || { echo "fresh link did not install git pre-push hook"; exit 1; }
-  [ ! -L .agents/commands/bench-build.md ] || { echo "default link mode symlinked portable commands"; exit 1; }
+  [ ! -L .agents/commands/bench-implement-spec.md ] || { echo "default link mode symlinked portable commands"; exit 1; }
   bash "$root/bin/bench.sh" link >/dev/null 2>&1
   [ "$(count_literal '<!-- bench:start -->' AGENTS.md)" = "1" ] || { echo "relink duplicated managed Bench block"; exit 1; }
 ) || err "bench link safe fresh/relink contract failed ($(cat "$tmp/link.out" 2>/dev/null | tail -n 1))"
@@ -105,12 +107,12 @@ tmp="$(mktemp -d)"
   cd "$tmp"
   git init -q
   mkdir -p .agents/commands
-  printf 'project command\n' > .agents/commands/bench-build.md
+  printf 'project command\n' > .agents/commands/bench-implement-spec.md
   if bash "$root/bin/bench.sh" link >link.out 2>&1; then
     echo "link succeeded despite a project-owned command conflict"; exit 1
   fi
   grep -qi 'conflict' link.out || { echo "conflict output did not explain the conflict"; exit 1; }
-  grep -qF 'project command' .agents/commands/bench-build.md || { echo "conflicting project command was overwritten"; exit 1; }
+  grep -qF 'project command' .agents/commands/bench-implement-spec.md || { echo "conflicting project command was overwritten"; exit 1; }
   [ ! -f .bench/link-manifest.tsv ] || { echo "conflicting link wrote a manifest despite failing"; exit 1; }
 ) || err "bench link conflict contract failed ($(cat "$tmp/link.out" 2>/dev/null | tail -n 1))"
 rm -rf "$tmp"
@@ -121,7 +123,7 @@ tmp="$(mktemp -d)"
   cd "$tmp"
   git init -q
   check_link_contract "$tmp"
-  printf '\nlocal edit\n' >> .agents/commands/bench-build.md
+  printf '\nlocal edit\n' >> .agents/commands/bench-implement-spec.md
   if bash "$root/bin/bench.sh" link >relink.out 2>&1; then
     echo "relink overwrote a locally modified managed file"; exit 1
   fi
@@ -202,13 +204,13 @@ tmp="$(mktemp -d)"
   grep -qiF 'clean — nothing pending' <<<"$out" || { echo "fresh-green gate was not silent"; exit 1; }
 ) || err "bench status fresh-green contract failed"
 rm -rf "$tmp"
-# E — decision-map marker alone → the /bench-craft-grill → /bench-spec action string.
+# E — decision-map marker alone → the craft-grill → /bench-write-spec action string.
 tmp="$(mktemp -d)"
 (
   set -u; cd "$tmp"; git init -q
   mkdir decisions; printf '### Answer\n— (deferred)\n' > decisions/x.md; gci add -A; gci commit -q -m s
   out="$(bash "$root/bin/bench.sh" status)"
-  grep -qF '/bench-craft-grill → /bench-spec' <<<"$out" || { echo "unresolved decision map did not surface /bench-craft-grill"; exit 1; }
+  grep -qF 'craft-grill → /bench-write-spec' <<<"$out" || { echo "unresolved decision map did not surface craft-grill"; exit 1; }
 ) || err "bench status decisions contract failed"
 rm -rf "$tmp"
 # F — six signals firing → gate red leads; budget caps at five rows + `+1 more`; the
@@ -226,11 +228,11 @@ tmp="$(mktemp -d)"
   out="$(bash "$root/bin/bench.sh" status)"
   head -1 <<<"$out" | grep -qF 'fix before commit' || { echo "red gate did not lead the budget case"; exit 1; }
   grep -qF '+1 more' <<<"$out" || { echo "six signals did not trigger the +k more tail"; exit 1; }
-  grep -qF '/bench-learn' <<<"$out" || { echo "learnings dropped from the top five"; exit 1; }
-  grep -qF 'split (bench-craft-seams)' <<<"$out" || { echo "structure dropped from the top five"; exit 1; }
+  grep -qF '/bench-integrate-learnings' <<<"$out" || { echo "learnings dropped from the top five"; exit 1; }
+  grep -qF 'split (craft-seams)' <<<"$out" || { echo "structure dropped from the top five"; exit 1; }
   grep -qF 'commit on green / push' <<<"$out" || { echo "git signal action string missing"; exit 1; }
   grep -qF 'resume or clean up' <<<"$out" || { echo "worktree signal action string missing"; exit 1; }
-  if grep -qF '/bench-craft-grill → /bench-spec' <<<"$out"; then echo "lowest-priority signal not dropped under the budget"; exit 1; fi
+  if grep -qF 'craft-grill → /bench-write-spec' <<<"$out"; then echo "lowest-priority signal not dropped under the budget"; exit 1; fi
   rows="$(grep -cE '^  [a-z]' <<<"$out")"
   [ "$rows" -le 5 ] || { echo "budget exceeded five rows ($rows)"; exit 1; }
 ) || err "bench status budget contract failed"
@@ -253,9 +255,9 @@ tmp="$(mktemp -d)"
   set -u; cd "$tmp"; git init -q
   mkdir -p .bench; printf -- '- a [open]\n' > .bench/learnings.md; gci add -A; gci commit -q -m s
   hi="$(BENCH_LEARNINGS_FLOOR=2 bash "$root/bin/bench.sh" status)"
-  if grep -qF '/bench-learn' <<<"$hi"; then echo "floor=2 still surfaced a single open learning"; exit 1; fi
+  if grep -qF '/bench-integrate-learnings' <<<"$hi"; then echo "floor=2 still surfaced a single open learning"; exit 1; fi
   lo="$(BENCH_LEARNINGS_FLOOR=1 bash "$root/bin/bench.sh" status)"
-  grep -qF '/bench-learn' <<<"$lo" || { echo "floor=1 did not surface the open learning"; exit 1; }
+  grep -qF '/bench-integrate-learnings' <<<"$lo" || { echo "floor=1 did not surface the open learning"; exit 1; }
 ) || err "bench status learnings-floor contract failed"
 rm -rf "$tmp"
 # 1h. `bench shift` must iterate the gated loop, not die at the first gate. Regression:
@@ -283,6 +285,27 @@ for f in .agents/skills/*/SKILL.md; do
   [ "$(head -1 "$f")" = "---" ] || err "$f missing frontmatter"
 done
 
+# 3b. Craft guidance is model-invoked, not a human-run Bench phase. Its installed
+#     directories stay bench-craft-* for stable paths, but the visible skill names
+#     must be craft-* so `$bench` menus show only human-run phase adapters.
+skill_name() {
+  awk -F': *' '$1 == "name" { print $2; exit }' "$1"
+}
+for d in .agents/skills/bench-craft-*/; do
+  base="$(basename "$d")"
+  expected="craft-${base#bench-craft-}"
+  actual="$(skill_name "$d/SKILL.md")"
+  [ "$actual" = "$expected" ] || err "craft skill '$base' visible name is '$actual'; expected '$expected'"
+done
+for f in .agents/skills/*/SKILL.md; do
+  dir="$(basename "$(dirname "$f")")"
+  actual="$(skill_name "$f")"
+  [ -f ".agents/commands/$dir.md" ] && continue # command adapters intentionally expose bench-* names
+  case "$actual" in
+    bench-*) err "non-command skill '$dir' uses bench-* visible name '$actual'" ;;
+  esac
+done
+
 # 4. Every path in package.json files[] exists (npm-pack integrity).
 node -e '
   const fs = require("fs"), p = require("./package.json");
@@ -301,8 +324,10 @@ printf '%s' "$pack_json" | node -e '
   const files = new Set((packs[0]?.files ?? []).map(f => f.path));
   let bad = 0;
   for (const required of [
-    ".agents/commands/bench-build.md",
+    ".agents/commands/bench-implement-spec.md",
     ".agents/skills/bench-craft-seams/SKILL.md",
+    ".agents/skills/bench-implement-spec/SKILL.md",
+    ".agents/skills/bench-implement-spec/agents/openai.yaml",
     ".bench/BENCH.md",
     ".bench/hooks/stop.sh",
     ".claude/README.md",
@@ -326,6 +351,7 @@ printf '%s' "$pack_json" | node -e '
 #    a) every skill dir is referenced in AGENTS.md
 for d in .agents/skills/*/; do
   name="$(basename "$d")"
+  [ -f ".agents/commands/$name.md" ] && continue # command adapters are documented in .bench/BENCH.md
   grep -q "$name" AGENTS.md || err "skill '$name' on disk but not referenced in AGENTS.md"
 done
 #    b) every skill the index names exists on disk
@@ -337,13 +363,27 @@ for f in .agents/commands/*.md; do
   name="$(basename "$f" .md)"
   grep -q "/$name" AGENTS.md || err "command '/$name' on disk but not referenced in AGENTS.md"
 done
-#    d) the roadmap promotion seam — /bench-ideate must name ROADMAP.md and the
+#    d) every command has an explicit Codex skill adapter. Codex does not scan
+#       .agents/commands as an invocation surface, so each command phase needs a
+#       thin $bench-* skill that delegates to the canonical command file.
+for f in .agents/commands/*.md; do
+  name="$(basename "$f" .md)"
+  adapter=".agents/skills/$name/SKILL.md"
+  metadata=".agents/skills/$name/agents/openai.yaml"
+  [ -f "$adapter" ] || { err "command '$name' has no Codex adapter skill at $adapter"; continue; }
+  grep -qE "^name:[[:space:]]*$name$" "$adapter" || err "Codex adapter '$name' frontmatter name does not match command"
+  grep -qF ".agents/commands/$name.md" "$adapter" || err "Codex adapter '$name' does not reference .agents/commands/$name.md"
+  [ -f "$metadata" ] || { err "Codex adapter '$name' missing agents/openai.yaml explicit-invocation metadata"; continue; }
+  grep -qF "allow_implicit_invocation: false" "$metadata" || err "Codex adapter '$name' does not disable implicit invocation"
+  grep -qF "\$$name" .bench/BENCH.md || err "Codex adapter '$name' is not documented in .bench/BENCH.md"
+done
+#    e) the roadmap promotion seam — /bench-shape-idea must name ROADMAP.md and the
 #       auto-remove-on-map-creation behavior, or the only path that drains a parked idea
 #       silently rots. The capture sink (bench idea) is useless without this graduation.
-si=".agents/commands/bench-ideate.md"
-grep -qF 'ROADMAP.md' "$si" || err "/bench-ideate does not reference ROADMAP.md (roadmap promotion seam)"
-grep -qiE 'remove|delete' "$si" || err "/bench-ideate does not describe removing a promoted roadmap entry"
-#    e) shared platform rules are single-sourced. The four invariants and the
+si=".agents/commands/bench-shape-idea.md"
+grep -qF 'ROADMAP.md' "$si" || err "/bench-shape-idea does not reference ROADMAP.md (roadmap promotion seam)"
+grep -qiE 'remove|delete' "$si" || err "/bench-shape-idea does not describe removing a promoted roadmap entry"
+#    f) shared platform rules are single-sourced. The four invariants and the
 #       communication rules are canonical in .bench/BENCH.md and referenced from
 #       AGENTS.md — never copied back into AGENTS.md. Each marker must live in BENCH.md
 #       and be absent from AGENTS.md (the drift this guards), and AGENTS.md must keep its

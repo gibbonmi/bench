@@ -70,15 +70,15 @@ bench/
 ├── CLAUDE.md                 # one-line import of AGENTS.md (for Claude Code)
 ├── .agents/
 │   ├── commands/             # portable workflow phases + maintenance commands
-│   │   ├── bench-setup.md
-│   │   ├── bench-update.md
-│   │   ├── bench-learn.md
-│   │   ├── bench-ideate.md
-│   │   ├── bench-spec.md
-│   │   ├── bench-diagnose.md
-│   │   ├── bench-build.md
-│   │   ├── bench-review.md
-│   │   └── bench-qa.md
+│   │   ├── bench-setup-repo.md
+│   │   ├── bench-update-kit.md
+│   │   ├── bench-integrate-learnings.md
+│   │   ├── bench-shape-idea.md
+│   │   ├── bench-write-spec.md
+│   │   ├── bench-debug.md
+│   │   ├── bench-implement-spec.md
+│   │   ├── bench-review-implementation.md
+│   │   └── bench-final-check.md
 │   └── skills/               # portable generation-shaping skills
 │       ├── bench-craft-seams/
 │       ├── bench-craft-tdd/
@@ -136,13 +136,13 @@ bench init
 Either way, finish by configuring the repo in your agent (one-time, interactive):
 
 ```
-/bench-setup
+/bench-setup-repo
 ```
 
 Setup is two halves, the same split as Pocock's `setup-matt-pocock-skills`. The
 **mechanical** half is the CLI: `link` wires the kit into the repo for every
 harness, and `init` scaffolds an empty `.bench/gate.sh` — both deterministic, both
-idempotent. The **project-specific** half is `/bench-setup`, a prompt-driven command your
+idempotent. The **project-specific** half is `/bench-setup-repo`, a prompt-driven command your
 agent runs once: it explores the repo, then walks you through the gate (the
 load-bearing choice), the profile (seams + lines + design-source path), and an
 optional `CONTEXT.md`, one decision at a time, and writes them. That second half is
@@ -168,26 +168,26 @@ project-owned `AGENTS.md`; it appends or replaces only the managed Bench block,
 adds Bench's portable skills and commands alongside non-conflicting project assets,
 and writes the `CLAUDE.md` import only if one doesn't exist. The pieces line up directly: a Pocock
 `CONTEXT.md` is read as-is (Bench's cold-session convention is the same file), and
-`docs/adr/` is exactly where Bench's `bench-craft-adr` skill already writes, so your decision
+`docs/adr/` is exactly where Bench's `craft-adr` skill already writes, so your decision
 records carry over untouched. Where Pocock's `setup-matt-pocock-skills` recorded an
-issue tracker and domain layout under `docs/agents/`, `/bench-setup` reads those if present
+issue tracker and domain layout under `docs/agents/`, `/bench-setup-repo` reads those if present
 and won't re-ask.
 
 What Bench adds on top is the part Pocock's skills leave to you: the **gate** as an
 external oracle (`.bench/gate.sh`), the **gated shift loop** that commits only on green,
 the **declared line** (model + effort) per run, and the **profile** (`projects/<name>.md`)
-that names the seams. So migration is: run `link` and `init`, then run `/bench-setup` — it
+that names the seams. So migration is: run `link` and `init`, then run `/bench-setup-repo` — it
 detects the existing Pocock structure, reuses it, and only asks for the things Bench
 introduces (the gate command, the seams, the lines). Nothing about Pocock's planning
 flow is replaced; Bench wraps it in enforcement it didn't have.
 
 ## Keeping Bench current
 
-Both upstream repos move. `/bench-update` re-runs the synthesis against their latest
+Both upstream repos move. `/bench-update-kit` re-runs the synthesis against their latest
 state: it pulls Pocock's skills and kunchenguid's tooling, diffs them against what
 Bench already incorporates (the provenance table and `CHANGELOG.md` are the record),
 and proposes adoptions — then runs three quality loops before anything ships. The
-first loop is anti-sediment (`bench-craft-skills`: does the change earn its place
+first loop is anti-sediment (`craft-skills`: does the change earn its place
 or just enlarge the kit?), the second is a consistency audit (re-grep for stale
 references, invariant drift, app-specific leakage), and the third is the dogfood loop
 — a real shift on a real repo with the changed kit, which is the only loop with the
@@ -201,11 +201,14 @@ Switching harnesses is a no-op, by design. After `bench link`, the same repo is
 wired for all of them at once:
 
 - **Claude Code** reads `CLAUDE.md` (which imports `AGENTS.md`), auto-loads skills
-  through `.claude/skills/`, runs `/bench-ideate`, `/bench-spec`, … as slash commands,
+  through `.claude/skills/`, runs `/bench-shape-idea`, `/bench-write-spec`, … as slash commands,
   and fires the Stop and PreToolUse hooks through `.claude/settings.json`.
-- **Codex / OpenCode / other AGENTS.md harnesses** read `AGENTS.md` natively, find
-  skills in `.agents/skills/`, and run the commands by reading the file in
-  `.agents/commands/` (they're phases, not slash commands, on these harnesses).
+- **Codex** reads `AGENTS.md`, finds skills in `.agents/skills/`, and uses the
+  `$bench-*` phase adapters documented in `.bench/BENCH.md`. Model-invoked Bench
+  guidance uses visible `craft-*` names so `$bench` stays phase-only.
+- **OpenCode / other AGENTS.md harnesses** read `AGENTS.md` natively and run commands
+  by reading the file in `.agents/commands/` when they do not expose a native command
+  or skill invocation surface.
 
 There is one portable content surface: `.agents/{skills,commands}`. Claude Code uses
 adapter paths under `.claude/`; Codex uses `.codex/hooks.json`; both hook adapters call
@@ -228,21 +231,21 @@ Two motions. The **planning motion** is conversational and human-paced; the
 ### Planning motion (you + the agent, interactive)
 
 ```
-loose idea ──/bench-ideate──▶ decision map ──/bench-spec──▶ spec (seams chosen) ──▶ ready to build
-   (skip /bench-ideate if there's no real fog — go straight to /bench-spec)
+loose idea ──/bench-shape-idea──▶ decision map ──/bench-write-spec──▶ spec (seams chosen) ──▶ ready to build
+   (skip /bench-shape-idea if there's no real fog — go straight to /bench-write-spec)
 ```
 
-- `/bench-ideate` only when the idea needs more than one session of decisions. It uses
-  `/bench-craft-grill` to surface them and writes `decisions/<topic>.md`. If there's no fog,
+- `/bench-shape-idea` only when the idea needs more than one session of decisions. It uses
+  `craft-grill` to surface them and writes `decisions/<topic>.md`. If there's no fog,
   it tells you to skip ahead.
-- `/bench-spec` synthesizes the conversation into `specs/<feature>.md`: user stories
+- `/bench-write-spec` synthesizes the conversation into `specs/<feature>.md`: user stories
   (the breadth), the **seams chosen before any code exists** (where tests attach),
   and the gate that defines done. This step is what keeps the later loop honest —
   the target is set by you, not invented mid-loop.
 
 There are two ways into the shift motion: the **feature path** above
-(`/bench-ideate` → `/bench-spec`) and the **bug path** (`/bench-diagnose`). A bug doesn't get a spec —
-it already has one, the thing should work and doesn't. `/bench-diagnose` builds a tight,
+(`/bench-shape-idea` → `/bench-write-spec`) and the **bug path** (`/bench-debug`). A bug doesn't get a spec —
+it already has one, the thing should work and doesn't. `/bench-debug` builds a tight,
 red-capable repro loop *first*; that loop becomes the gate the fix shift runs
 against, so the fix is done when the loop goes green, not when the agent says so.
 
@@ -259,7 +262,7 @@ bench shift "<objective>"
         ▶ you review the branch and own the merge
 ```
 
-`/bench-build` and `/bench-qa` are the manual equivalents when you want to drive a single
+`/bench-implement-spec` and `/bench-final-check` are the manual equivalents when you want to drive a single
 build by hand instead of running the loop. Same gate, same rules.
 
 ---
@@ -275,9 +278,9 @@ A typical feature — say, adding zone-entry events to the phase taxonomy:
 ```sh
 cd ~/src/regroup
 # 1. is the domain change settled? if not, map it.
-#    /bench-ideate  →  grills the zone-entry decision, writes decisions/zone-entries.md
+#    /bench-shape-idea  →  grills the zone-entry decision, writes decisions/zone-entries.md
 # 2. spec it — this picks the seam (the state machine) and the tests up front
-#    /bench-spec →  specs/zone-entries.md with stories + the transition-test seam
+#    /bench-write-spec →  specs/zone-entries.md with stories + the transition-test seam
 # 3. run the shift. heavy line, because the ontology is the uncertain seam.
 BENCH_MAX_ITERS=8 bench shift "add zone-entry events to the phase taxonomy per specs/zone-entries.md"
 # each iteration commits only if mypy + pytest + ruff pass. you review the branch.
@@ -295,7 +298,7 @@ what catches the failures there.
 Your Regroup design system lives in its own repo and plugs in as the **visual
 oracle** — the third gate axis after tests (behavior) and the screenshot loop
 (interaction). Regroup consumes it as a submodule/package/pinned path; the
-`bench-craft-design-system` skill makes the agent consume it rather than reinvent it: every
+`craft-design-system` skill makes the agent consume it rather than reinvent it: every
 value references a token, every component composes from the inventory, and the
 design-conformance check fails the build on raw hex, hardcoded spacing, or a
 duplicated component.
@@ -309,7 +312,7 @@ only on the committed artifacts.
 
 ## Integrating it into gl-axi
 
-`projects/gl-axi.md` is the profile, and the `bench-craft-cli` skill is the design spec. The
+`projects/gl-axi.md` is the profile, and the `craft-cli` skill is the design spec. The
 key move: **AXI conformance is a gate check**, so the thing you're building is held
 to its own standard by an external oracle.
 
@@ -321,7 +324,7 @@ cd ~/src/gl-axi
 #   bench-glab-delta       — your paired per-task harness vs raw glab, deterministic asserts
 #
 # add a new command wrapper — cheap line, it's mechanical once the boundary exists
-bench shift "add 'mr list' wrapper emitting TOON per the bench-craft-cli skill, with a conformance test"
+bench shift "add 'mr list' wrapper emitting TOON per the craft-cli skill, with a conformance test"
 ```
 
 Because the conformance check and your paired-delta harness are deterministic
@@ -336,17 +339,17 @@ building.
 
 | Bench piece | Pocock | Kun Chen | Your discovery |
 | --- | --- | --- | --- |
-| `/bench-ideate`, `/bench-spec`, `/bench-build`, `/bench-review`, `/bench-qa` | decision-mapping, to-prd, implement, review | — | — |
-| `bench-craft-seams`, `bench-craft-tdd`, `bench-craft-grill`, `bench-craft-adr`, `bench-craft-skills` | codebase-design, tdd, grilling, writing-great-skills | — | stateless-reader docs; effort declaration |
-| `bench-craft-cli` skill | — | AXI spec | TOON-first pipeline; conformance-as-gate |
-| `bench-craft-design-system` skill + design gate | regroup-ui (canonical components) | — | design system as visual oracle (separate design repo) |
+| `/bench-shape-idea`, `/bench-write-spec`, `/bench-implement-spec`, `/bench-review-implementation`, `/bench-final-check` | decision-mapping, to-prd, implement, review | — | — |
+| `craft-seams`, `craft-tdd`, `craft-grill`, `craft-adr`, `craft-skills` | codebase-design, tdd, grilling, writing-great-skills | — | stateless-reader docs; effort declaration |
+| `craft-cli` skill | — | AXI spec | TOON-first pipeline; conformance-as-gate |
+| `craft-design-system` skill + design gate | regroup-ui (canonical components) | — | design system as visual oracle (separate design repo) |
 | `bench worktree` | — | treehouse | — |
 | `bench shift` (gated loop) | — | gnhf + no-mistakes | gate-on-green, not self-graded |
-| `/bench-setup` (configure a repo) | setup-matt-pocock-skills | — | gate + profile + lines, interviewed |
-| `/bench-update` (sync upstream) | — | — | re-run the synthesis vs upstream, 3 loops |
-| `/bench-learn` (drain learnings) | — | — | the kit learns from its own use, 3 loops |
-| `/bench-diagnose` (bug path) | diagnosing-bugs | — | repro loop as the bug's gate |
-| design-it-twice in `bench-craft-seams` | codebase-design | — | high-effort line at the uncertain seam |
+| `/bench-setup-repo` (configure a repo) | setup-matt-pocock-skills | — | gate + profile + lines, interviewed |
+| `/bench-update-kit` (sync upstream) | — | — | re-run the synthesis vs upstream, 3 loops |
+| `/bench-integrate-learnings` (drain learnings) | — | — | the kit learns from its own use, 3 loops |
+| `/bench-debug` (bug path) | diagnosing-bugs | — | repro loop as the bug's gate |
+| design-it-twice in `craft-seams` | codebase-design | — | high-effort line at the uncertain seam |
 | `bench shift` notes.md | — | gnhf (iteration context) | — |
 | `block-dangerous-git.sh` | git-guardrails | — | agent has no destructive authority |
 | Stop hook + `.bench/gate.sh` | — | no-mistakes (external gate) | the gate is the oracle |

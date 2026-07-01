@@ -182,3 +182,17 @@ close a map while any remain._
 - **Proposed rule change:** Fold "also sweep bare basenames in trees/lists" into the
   same rename-hygiene note as the separator-slash learning above — they're one rule:
   a rename isn't done until the stems are gone in *every* form, anchored or not.
+
+## 2026-06-30 — Bench usage guidance went into AGENTS.md instead of BENCH.md  [open]
+- **What happened:** While adding Codex `$bench-*` command adapters, I documented how
+  to invoke them in `AGENTS.md` and in `bench-craft-skills`. The reviewer corrected
+  that instructions about how Bench is used belong in `.bench/BENCH.md`, with
+  `AGENTS.md` only pointing there.
+- **Right behavior:** Put harness invocation and Bench operating guidance in
+  `.bench/BENCH.md`; keep `AGENTS.md` as the project-owned working agreement and
+  pointer surface. Skills may describe skill-authoring principles, but not become the
+  canonical operating guide for Bench phase usage.
+- **Proposed rule change:** When adding or changing Bench usage instructions, update
+  `.bench/BENCH.md` first and only add a short pointer elsewhere if that surface
+  needs one. Gate checks for command-adapter documentation should point at
+  `.bench/BENCH.md`, not force usage prose into `AGENTS.md`.

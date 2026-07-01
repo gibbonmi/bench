@@ -1,5 +1,5 @@
 ---
-name: bench-craft-adr
+name: craft-adr
 description: How to write decision records and project docs for an agent or teammate with no memory of the project's history. Use whenever recording an architectural decision, updating project docs, writing a README, or capturing why something is the way it is. Reach for this any time you're about to document a change — document the resulting state, not the change.
 ---
 
@@ -56,7 +56,7 @@ superseded by NNNN`) when a decision gets revisited; **Consequences** when a
 non-obvious downstream effect needs calling out; **Considered options** when the
 rejected alternative is worth remembering so nobody re-litigates it in six months.
 
-ADRs live in `docs/adr/`; decision *maps* from `/bench-ideate` live in `decisions/`. Keep
+ADRs live in `docs/adr/`; decision *maps* from `/bench-shape-idea` live in `decisions/`. Keep
 them separate — one is a settled record, the other is a working plan.
 
 ## Why this compounds

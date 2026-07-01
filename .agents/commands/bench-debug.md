@@ -1,10 +1,10 @@
 ---
-description: The bug path. Build a tight, red-capable repro loop first, then fix against it. Use whenever something is broken, throwing, failing, or slow — instead of /bench-spec, which is the feature path. Reach for this the moment the work is "fix" rather than "build".
+description: The bug path. Build a tight, red-capable repro loop first, then fix against it. Use whenever something is broken, throwing, failing, or slow — instead of /bench-write-spec, which is the feature path. Reach for this the moment the work is "fix" rather than "build".
 ---
 
-# /bench-diagnose — the repro loop is the oracle
+# /bench-debug — the repro loop is the oracle
 
-Bugs don't go through `/bench-spec`. A bug already has a spec — the thing should work and
+Bugs don't go through `/bench-write-spec`. A bug already has a spec — the thing should work and
 doesn't. The whole discipline is building an external signal that goes red on *this*
 bug, and that signal becomes the gate the fix shift runs against. Same invariant as
 everything else in Bench: the agent never decides the bug is fixed; a check it
@@ -71,5 +71,5 @@ callers), say so as a separate finding, after the fix is in.
 The Phase 1 loop is the project gate for the fix shift: add the repro as a test the
 gate runs (or point `.bench/gate.sh` at the repro command), then run
 `bench shift "fix <bug>"` so the loop physically gates "done" on the bug going
-green. The seam decision in Phase 5 is the `bench-craft-seams` skill. Declare the line first — a
+green. The seam decision in Phase 5 is the `craft-seams` skill. Declare the line first — a
 hard bug is a high-effort shift.

@@ -24,13 +24,12 @@ reappears in this file.
 - **Skills** shape *how* you generate — probabilistic guidance, not rules. Reach
   for them when the task matches. They live in `.agents/skills/` (and, for Claude
   Code, `.claude/skills/`).
-- **Commands** are the canonical phases of the workflow: `/bench-ideate`, `/bench-spec`,
-  `/bench-diagnose`, `/bench-build`, `/bench-review`, `/bench-qa`. On Claude Code, invoke them by name.
-  On a harness without slash commands, run the phase by reading its file in
-  `.agents/commands/` and following it. Run `/bench-setup` once when a repo is first
-  linked — it interviews you to fill in the gate and the profile. Run
-  `/bench-update` periodically to pull upstream improvements into the kit, and
-  `/bench-learn` to fold the learnings journal back in.
+- **Commands** are the canonical phases of the workflow: `/bench-shape-idea`, `/bench-write-spec`,
+  `/bench-debug`, `/bench-implement-spec`, `/bench-review-implementation`, `/bench-final-check`. On Claude Code, invoke them by name.
+  On other harnesses, use the invocation details in `.bench/BENCH.md`. Run
+  `/bench-setup-repo` once when a repo is first linked — it interviews you to fill in the gate and the profile. Run
+  `/bench-update-kit` periodically to pull upstream improvements into the kit, and
+  `/bench-integrate-learnings` to fold the learnings journal back in.
 - **The gate and the hooks** are enforcement, with authority you do not have. The
   enforcement that matters is harness-independent: the `bench shift` loop runs the
   gate after every iteration and commits only on green, and a git `pre-push` hook
@@ -47,7 +46,7 @@ command, and the line assignments.
 ## Process proportionality and learning
 
 - **Right-size the process; ask before deviating.** The canonical path is
-  `/bench-ideate → /bench-spec → /bench-build → /bench-review → /bench-qa`, but a few-line change doesn't need the
+  `/bench-shape-idea → /bench-write-spec → /bench-implement-spec → /bench-review-implementation → /bench-final-check`, but a few-line change doesn't need the
   full pipeline. You may propose a lighter path — and you must get an explicit OK
   *before* skipping canonical steps. Don't skip silently: deviating from the workflow
   is my call, not yours. If I give you a standing rule for changes of a given size,
@@ -56,7 +55,7 @@ command, and the line assignments.
   from the workflow, make a process or judgment call you're unsure about, or catch a
   should-have-asked in hindsight, append one entry to `.bench/learnings.md`: what
   happened, what the right behavior was, and a proposed rule change if any. That's the
-  whole of your authority here — you capture, I decide. `/bench-learn` reviews the
+  whole of your authority here — you capture, I decide. `/bench-integrate-learnings` reviews the
   journal and promotes the generalizable lessons into the kit with my sign-off, so the
   kit improves from real use without any rule ever changing itself behind my back.
 

@@ -1,12 +1,12 @@
 ---
-description: Upstream sync — pull Matt Pocock's skills + kunchenguid's tooling, diff against what Bench already incorporates, and propose what to adopt. Runs each candidate through the bench-craft-synthesis discipline; records adoptions in the provenance table + CHANGELOG. Proposes, never auto-merges. Maintenance, not a workflow phase.
+description: Upstream sync — pull Matt Pocock's skills + kunchenguid's tooling, diff against what Bench already incorporates, and propose what to adopt. Runs each candidate through the craft-synthesis discipline; records adoptions in the provenance table + CHANGELOG. Proposes, never auto-merges. Maintenance, not a workflow phase.
 disable-model-invocation: true
 ---
 
-# /bench-update — sync the kit against upstream
+# /bench-update-kit — sync the kit against upstream
 
 Bring *others'* improvements into the kit. This is the external, version-driven
-input — the counterpart to `/bench-learn`, which drains your own usage journal. It
+input — the counterpart to `/bench-integrate-learnings`, which drains your own usage journal. It
 **proposes; you merge.**
 
 ## 1. Pull and diff (the input)
@@ -21,7 +21,7 @@ input — the counterpart to `/bench-learn`, which drains your own usage journal
 
 ## 2. Run the synthesis discipline
 
-Hand the candidates to `bench-craft-synthesis`; it owns the discipline end to end
+Hand the candidates to `craft-synthesis`; it owns the discipline end to end
 (respect closed decisions, assess, the three quality loops, propose-don't-merge).
 Don't restate it here.
 
@@ -29,6 +29,6 @@ Don't restate it here.
 
 Only after the loops pass and I've signed off, apply and record: update the provenance
 table and append a `CHANGELOG.md` entry (date, refs pulled, what was adopted, what was
-rejected and why). That entry is the baseline the next `/bench-update` reads.
+rejected and why). That entry is the baseline the next `/bench-update-kit` reads.
 
 The merge is mine; never auto-apply.
