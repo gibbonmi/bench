@@ -125,9 +125,77 @@ tmp="$(mktemp -d)"
   set -u; cd "$tmp"; git init -q
   mkdir -p .bench; printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
   gci add -A; gci commit -q -m init
-  out="$(BENCH_AGENT=true BENCH_MAX_ITERS=1 BENCH_HOME="$tmp/.bh" bash "$root/bin/bench.sh" shift noop 2>&1)" || true
+  home="$(mktemp -d)"
+  before_branch="$(gci branch --show-current)"
+  before_status="$(gci status --porcelain)"
+  out="$(BENCH_AGENT=true BENCH_MAX_ITERS=1 BENCH_HOME="$home" bash "$root/bin/bench.sh" shift noop 2>&1)" || true
   grep -qF 'shift done' <<<"$out" || { echo "bench shift loop did not complete (run_gate exec'd the gate?)"; exit 1; }
+  branch="$(sed -n 's/^■ shift done: \([^,]*\),.*/\1/p' <<<"$out")"
+  [ -n "$branch" ] || { echo "shift summary did not name the branch"; exit 1; }
+  [ "$(gci branch --show-current)" = "$before_branch" ] || { echo "bench shift changed the main checkout branch"; exit 1; }
+  [ "$(gci status --porcelain)" = "$before_status" ] || { echo "bench shift dirtied the main checkout"; exit 1; }
+  gci rev-parse --verify "$branch" >/dev/null || { echo "shift branch was not preserved"; exit 1; }
+  if gci worktree list --porcelain | grep -qF "branch refs/heads/$branch"; then echo "released worktree still holds the shift branch"; exit 1; fi
+  [ -z "$(find "$home" -name bench-lease -print 2>/dev/null)" ] || { echo "shift worktree lease was not released"; exit 1; }
+  rm -rf "$home"
 ) || err "bench shift gated-loop contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench; printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  cat > agent <<'EOF'
+#!/usr/bin/env bash
+printf 'shifted\n' > shifted.txt
+EOF
+  chmod +x agent
+  gci add -A; gci commit -q -m init
+  home="$(mktemp -d)"
+  before_branch="$(gci branch --show-current)"
+  before_head="$(gci rev-parse HEAD)"
+  before_status="$(gci status --porcelain)"
+  out="$(BENCH_AGENT="$tmp/agent" BENCH_MAX_ITERS=1 BENCH_HOME="$home" bash "$root/bin/bench.sh" shift isolate 2>&1)" || true
+  grep -qF '1 committed iteration(s)' <<<"$out" || { echo "shift did not commit the green iteration"; exit 1; }
+  branch="$(sed -n 's/^■ shift done: \([^,]*\),.*/\1/p' <<<"$out")"
+  [ -n "$branch" ] || { echo "shift summary did not name the branch"; exit 1; }
+  [ "$(gci branch --show-current)" = "$before_branch" ] || { echo "shift changed the main checkout branch"; exit 1; }
+  [ "$(gci rev-parse HEAD)" = "$before_head" ] || { echo "shift moved main checkout HEAD"; exit 1; }
+  [ "$(gci status --porcelain)" = "$before_status" ] || { echo "shift dirtied the main checkout"; exit 1; }
+  gci cat-file -e "$branch:shifted.txt" || { echo "shift branch does not contain the committed work"; exit 1; }
+  [ "$(gci rev-list --count "$before_head..$branch")" = "1" ] || { echo "shift branch has the wrong commit count"; exit 1; }
+  if gci worktree list --porcelain | grep -qF "branch refs/heads/$branch"; then echo "released worktree still holds the shift branch"; exit 1; fi
+  [ -z "$(find "$home" -name bench-lease -print 2>/dev/null)" ] || { echo "shift worktree lease was not released"; exit 1; }
+  rm -rf "$home"
+) || err "bench shift worktree-isolation contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench; printf '#!/usr/bin/env bash\nexit 1\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  cat > agent <<'EOF'
+#!/usr/bin/env bash
+printf 'red\n' > red.txt
+EOF
+  chmod +x agent
+  gci add -A; gci commit -q -m init
+  home="$(mktemp -d)"
+  before_branch="$(gci branch --show-current)"
+  before_head="$(gci rev-parse HEAD)"
+  before_status="$(gci status --porcelain)"
+  out="$(BENCH_AGENT="$tmp/agent" BENCH_MAX_ITERS=1 BENCH_HOME="$home" bash "$root/bin/bench.sh" shift red-rollback 2>&1)" || true
+  grep -qF 'red gate' <<<"$out" || { echo "red shift did not report rollback"; exit 1; }
+  branch="$(sed -n 's/^■ shift done: \([^,]*\),.*/\1/p' <<<"$out")"
+  [ -n "$branch" ] || { echo "red shift summary did not name the branch"; exit 1; }
+  [ "$(gci branch --show-current)" = "$before_branch" ] || { echo "red shift changed the main checkout branch"; exit 1; }
+  [ "$(gci rev-parse HEAD)" = "$before_head" ] || { echo "red shift moved main checkout HEAD"; exit 1; }
+  [ "$(gci status --porcelain)" = "$before_status" ] || { echo "red shift dirtied the main checkout"; exit 1; }
+  if gci cat-file -e "$branch:red.txt" 2>/dev/null; then echo "red shift preserved rolled-back work"; exit 1; fi
+  [ "$(gci rev-list --count "$before_head..$branch")" = "0" ] || { echo "red shift branch gained a commit"; exit 1; }
+  [ -z "$(find "$home" -name bench-lease -print 2>/dev/null)" ] || { echo "red shift worktree lease was not released"; exit 1; }
+  rm -rf "$home"
+) || err "bench shift red-rollback isolation contract failed"
 rm -rf "$tmp"
 
 tmp="$(mktemp -d)"
@@ -136,9 +204,11 @@ tmp="$(mktemp -d)"
   mkdir -p .bench; printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
   seq 401 | sed 's/^/x = /' > preexisting.py
   gci add -A; gci commit -q -m init
-  out="$(BENCH_AGENT=true BENCH_MAX_ITERS=1 BENCH_REFACTOR_ITERS=1 BENCH_HOME="$tmp/.bh" bash "$root/bin/bench.sh" shift noop 2>&1)" || true
+  home="$(mktemp -d)"
+  out="$(BENCH_AGENT=true BENCH_MAX_ITERS=1 BENCH_REFACTOR_ITERS=1 BENCH_HOME="$home" bash "$root/bin/bench.sh" shift noop 2>&1)" || true
   grep -qF 'shift done' <<<"$out" || { echo "shift with unrelated structural debt did not complete"; exit 1; }
   if grep -qF 'refactor phase' <<<"$out"; then echo "pre-existing structural debt triggered refactor phase"; exit 1; fi
+  rm -rf "$home"
 ) || err "bench shift touched-scope structure contract failed"
 rm -rf "$tmp"
 
@@ -155,13 +225,16 @@ fi
 EOF
   chmod +x agent
   gci add -A; gci commit -q -m init
-  out="$(BENCH_AGENT="$tmp/agent" BENCH_MAX_ITERS=1 BENCH_REFACTOR_ITERS=3 BENCH_HOME="$tmp/.bh" bash "$root/bin/bench.sh" shift make-big 2>&1)" || true
+  home="$(mktemp -d)"
+  out="$(BENCH_AGENT="$tmp/agent" BENCH_MAX_ITERS=1 BENCH_REFACTOR_ITERS=3 BENCH_HOME="$home" bash "$root/bin/bench.sh" shift make-big 2>&1)" || true
   grep -qF 'refactor phase' <<<"$out" || { echo "touched over-budget file did not trigger refactor phase"; exit 1; }
   grep -qF 'refactor 1 made no staged change' <<<"$out" || { echo "no-op refactor pass did not report no staged change"; exit 1; }
   if grep -qF 'refactor 2/' <<<"$out"; then echo "no-op refactor pass did not exit early"; exit 1; fi
   if grep -qF 'refactor 1 committed' <<<"$out"; then echo "no-op refactor pass reported a phantom commit"; exit 1; fi
   if grep -qF '/improve-codebase-architecture' <<<"$out"; then echo "shift fallback suggests an unbundled command"; exit 1; fi
-  [ "$(gci rev-list --count HEAD)" = "2" ] || { echo "no-op refactor created an unexpected commit"; exit 1; }
+  branch="$(sed -n 's/^■ shift done: \([^,]*\),.*/\1/p' <<<"$out")"
+  [ "$(gci rev-list --count HEAD.."$branch")" = "1" ] || { echo "no-op refactor created an unexpected commit"; exit 1; }
+  rm -rf "$home"
 ) || err "bench shift refactor no-op contract failed"
 rm -rf "$tmp"
 
@@ -176,16 +249,19 @@ exit 130
 EOF
   chmod +x interrupt-agent
   gci add -A; gci commit -q -m init
+  home="$(mktemp -d)"
   interrupt_log="$(mktemp)"
-  if BENCH_AGENT="$tmp/interrupt-agent" BENCH_MAX_ITERS=2 BENCH_HOME="$tmp/.bh" bash "$root/bin/bench.sh" shift interrupt >"$interrupt_log" 2>&1; then
+  if BENCH_AGENT="$tmp/interrupt-agent" BENCH_MAX_ITERS=2 BENCH_HOME="$home" bash "$root/bin/bench.sh" shift interrupt >"$interrupt_log" 2>&1; then
     echo "interrupted shift exited successfully"; exit 1
   fi
   rm -f "$interrupt_log"
   [ ! -e .bench-objective ] || { echo "interrupted shift left .bench-objective"; exit 1; }
   [ ! -e .bench-notes.md ] || { echo "interrupted shift left .bench-notes.md"; exit 1; }
+  [ -z "$(find "$home" -name bench-lease -print 2>/dev/null)" ] || { echo "interrupted shift left a leased worktree"; exit 1; }
   sleep 1
-  out="$(BENCH_AGENT=true BENCH_MAX_ITERS=1 BENCH_HOME="$tmp/.bh" bash "$root/bin/bench.sh" shift after-interrupt 2>&1)" || { printf '%s\n' "$out"; exit 1; }
+  out="$(BENCH_AGENT=true BENCH_MAX_ITERS=1 BENCH_HOME="$home" bash "$root/bin/bench.sh" shift after-interrupt 2>&1)" || { printf '%s\n' "$out"; exit 1; }
   grep -qF 'shift done' <<<"$out" || { echo "follow-up shift after interrupt did not complete"; exit 1; }
+  rm -rf "$home"
 ) || err "bench shift interrupt cleanup contract failed"
 rm -rf "$tmp"
 
@@ -204,10 +280,14 @@ printf '%s\n' "$n" > "step$n.txt"
 EOF
   chmod +x agent
   gci add -A; gci commit -q -m init
-  out="$(BENCH_AGENT="$tmp/agent" BENCH_MAX_ITERS=3 BENCH_HOME="$tmp/.bh" bash "$root/bin/bench.sh" shift done-early 2>&1)" || true
+  home="$(mktemp -d)"
+  out="$(BENCH_AGENT="$tmp/agent" BENCH_MAX_ITERS=3 BENCH_HOME="$home" bash "$root/bin/bench.sh" shift done-early 2>&1)" || true
   grep -qF 'objective met.' <<<"$out" || { echo ".bench/done.sh did not mark the objective met"; exit 1; }
   if grep -qF 'iteration 2/3' <<<"$out"; then echo ".bench/done.sh did not stop before the second iteration"; exit 1; fi
   grep -qF '1 committed iteration(s)' <<<"$out" || { echo "shift summary did not report the committed iteration count"; exit 1; }
+  branch="$(sed -n 's/^■ shift done: \([^,]*\),.*/\1/p' <<<"$out")"
+  gci cat-file -e "$branch:step1.txt" || { echo "done.sh shift branch does not contain the completed work"; exit 1; }
+  rm -rf "$home"
 ) || err "bench shift done.sh early-completion contract failed"
 rm -rf "$tmp"
 
@@ -228,7 +308,8 @@ tmp="$(mktemp -d)"
 #!/usr/bin/env bash
 : "${BENCH_WT_RECORD:?}"
 pwd >> "$BENCH_WT_RECORD"
-[ -f .lease ] || { echo "lease missing"; exit 7; }
+lease="$(git rev-parse --git-path bench-lease)"
+[ -f "$lease" ] || { echo "lease missing"; exit 7; }
 [ ! -e dirty.txt ] || { echo "dirty file carried into reused worktree"; exit 8; }
 echo dirty > dirty.txt
 EOF
@@ -239,7 +320,7 @@ EOF
   mapfile -t paths < "$record"
   [ "${#paths[@]}" = "2" ] || { echo "worktree shell did not run twice"; exit 1; }
   [ "${paths[0]}" = "${paths[1]}" ] || { echo "worktree pool did not reuse a clean released path"; exit 1; }
-  [ ! -f "${paths[1]}/.lease" ] || { echo "worktree lease was not removed on release"; exit 1; }
+  [ ! -f "$(git -C "${paths[1]}" rev-parse --git-path bench-lease)" ] || { echo "worktree lease was not removed on release"; exit 1; }
   [ ! -f "${paths[1]}/dirty.txt" ] || { echo "worktree release did not clean dirty files"; exit 1; }
 ) || err "bench worktree lease/reuse contract failed"
 rm -rf "$tmp"

@@ -329,12 +329,12 @@ against, so the fix is done when the loop goes green, not when the agent says so
 ```
 bench shift "<objective>"
    │
-   ├─ clean worktree, fresh branch
+   ├─ pooled worktree, fresh branch; main checkout untouched
    ├─ iterate: one small change ▶ run gate   (notes.md carried between iterations)
    │     gate green ▶ commit the iteration
    │     gate red   ▶ roll back, retry  (Stop hook blocks "done" on red)
    └─ stop at: objective met │ iteration cap │ you pull the line (Ctrl-C)
-        ▶ you review the branch and own the merge
+        ▶ you review the branch from the main checkout and own the merge
 ```
 
 `/bench-implement-spec` and `/bench-final-check` are the manual equivalents when you want to drive a single

@@ -11,8 +11,8 @@
 - **Release blocker:** `bench link` replaces existing `AGENTS.md`,
   `.claude/skills`, `.claude/commands`, `.agents/skills`, and `.agents/commands`,
   while the README says it will add alongside existing setup.
-- **Promise mismatch:** docs say `bench shift` runs in an isolated worktree, but the
-  implementation switches branches in the current checkout.
+- **Shift isolation:** `bench shift` now owns a pooled worktree and leaves the main
+  checkout untouched; the old promise mismatch is resolved by making the promise true.
 - **Portability gap:** the autonomous loop assumes a Claude-style `agent -p
   <prompt>` interface, so non-Claude harness support needs either a wrapper
   contract or clearer documentation.
@@ -101,8 +101,8 @@ before running a shift.
 ### Answer
 Shift owns the worktree. `bench shift` acquires a pooled worktree, runs the gated loop
 inside it against the main checkout's committed `HEAD`, and leaves the `bench/shift-<ts>`
-branch for review — the main checkout is never switched, reset, or cleaned. Specified in
-`specs/shift-in-worktree.md`.
+branch for review — the main checkout is never switched, reset, or cleaned. Implemented
+from `specs/shift-in-worktree.md`.
 
 ## #4: What is the harness command contract for autonomous shifts?
 

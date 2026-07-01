@@ -12,7 +12,7 @@
 #   bench status               print the ambient dashboard
 #   bench gate                 run the project gate; exit code is the verdict
 #   bench worktree             drop into a warm, isolated worktree subshell
-#   bench shift "<objective>"  run the gated loop toward an objective
+#   bench shift "<objective>"  run the gated loop in a pooled worktree
 #
 # Config resolution for the gate, in order:
 #   1. ./.bench/gate.sh        (executable in the repo — preferred)
@@ -32,6 +32,17 @@ shift_scratch_status() {
 }
 cleanup_shift_scratch() {
   rm -f "$1/.bench-objective" "$1/.bench-notes.md"
+}
+
+worktree_pool() {
+  local root key
+  root="$1"
+  key="$(basename "$root")-$(echo "$root" | cksum | cut -d' ' -f1)"
+  printf '%s\n' "$BENCH_HOME/worktrees/$key"
+}
+
+worktree_lease_file() {
+  git -C "$1" rev-parse --git-path bench-lease
 }
 
 # ---- gate: the oracle -------------------------------------------------------
@@ -56,55 +67,89 @@ run_gate() {
 }
 
 # ---- worktree: warm, isolated, reusable -------------------------------------
-worktree() {
-  local root key pool wt
-  root="$(repo_root)"
-  key="$(basename "$root")-$(echo "$root" | cksum | cut -d' ' -f1)"
-  pool="$BENCH_HOME/worktrees/$key"; mkdir -p "$pool"
+worktree_acquire() {
+  local root reset_ref reset_mode pool wt
+  root="$1"
+  reset_ref="${2:-}"
+  reset_mode="${3:-hard}"
+  pool="$(worktree_pool "$root")"; mkdir -p "$pool"
   git -C "$root" fetch -q origin 2>/dev/null || true
-  # find a clean, unleased worktree in the pool
   for d in "$pool"/*/; do
     [[ -d "$d/.git" || -f "$d/.git" ]] || continue
-    [[ -f "$d/.lease" ]] && continue
+    [[ -f "$(worktree_lease_file "$d")" ]] && continue
     if [[ -z "$(git -C "$d" status --porcelain 2>/dev/null)" ]]; then wt="$d"; break; fi
   done
   if [[ -z "${wt:-}" ]]; then
     wt="$pool/$(date +%s)-$$"; git -C "$root" worktree add -q --detach "$wt" "origin/$(default_branch)" 2>/dev/null \
       || git -C "$root" worktree add -q --detach "$wt"
   fi
-  git -C "$wt" reset -q --hard "origin/$(default_branch)" 2>/dev/null || true
+  git -C "$wt" switch -q --detach >/dev/null 2>&1 || true
+  if [[ -n "$reset_ref" ]]; then
+    if ! git -C "$wt" reset -q --hard "$reset_ref"; then
+      [[ "$reset_mode" == soft ]] || return 1
+      git -C "$wt" reset -q --hard >/dev/null 2>&1 || true
+    fi
+  else
+    git -C "$wt" reset -q --hard >/dev/null 2>&1 || true
+  fi
   git -C "$wt" clean -qfd
-  : > "$wt/.lease"
-  echo "🪵 worktree: $wt  (exit to release)" >&2
-  ( cd "$wt" && "${SHELL:-bash}" ) || true
-  rm -f "$wt/.lease"
+  : > "$(worktree_lease_file "$wt")"
+  printf '%s\n' "${wt%/}"
+}
+
+worktree_release() {
+  local wt="$1"
+  [[ -n "$wt" ]] || return 0
+  rm -f "$(worktree_lease_file "$wt")"
+  git -C "$wt" switch -q --detach >/dev/null 2>&1 || true
   git -C "$wt" reset -q --hard >/dev/null 2>&1 || true
   git -C "$wt" clean -qfd >/dev/null 2>&1 || true
+  rm -f "$(worktree_lease_file "$wt")"
+}
+
+worktree() {
+  local root target wt
+  root="$(repo_root)"
+  target="origin/$(default_branch)"
+  wt="$(worktree_acquire "$root" "$target" soft)"
+  echo "🪵 worktree: $wt  (exit to release)" >&2
+  ( cd "$wt" && "${SHELL:-bash}" ) || true
+  worktree_release "$wt"
   echo "🪵 released" >&2
 }
 
 # ---- shift: the gated loop --------------------------------------------------
+shift_cleanup() {
+  local wt="${1:-}"
+  [[ -n "$wt" ]] || return 0
+  cleanup_shift_scratch "$wt"
+  worktree_release "$wt"
+}
+
 shift_loop() {
-  local objective="$1" root branch base i started tokens=0 committed=0
-  root="$(repo_root)"
-  [[ -z "$(shift_scratch_status "$root")" ]] || { echo "working tree not clean; commit or stash first" >&2; exit 1; }
-  base="$(git -C "$root" rev-parse HEAD)"
+  local objective="$1" main_root root wt branch base i started tokens=0 committed=0
+  main_root="$(repo_root)"
+  [[ -z "$(git -C "$main_root" status --porcelain)" ]] || { echo "working tree not clean; commit or stash first" >&2; exit 1; }
+  base="$(git -C "$main_root" rev-parse HEAD)"
+  wt="$(worktree_acquire "$main_root" "$base" hard)"
+  root="$wt"
   branch="bench/shift-$(date +%Y%m%d-%H%M%S)"
   git -C "$root" switch -q -c "$branch"
   printf '%s\n' "$objective" > "$root/.bench-objective"
   : > "$root/.bench-notes.md"   # carried between iterations so each learns from the last
   BENCH_SHIFT_ROOT="$root"
-  trap 'cleanup_shift_scratch "$BENCH_SHIFT_ROOT"' EXIT
-  trap 'cleanup_shift_scratch "$BENCH_SHIFT_ROOT"; exit 130' INT TERM
+  trap 'shift_cleanup "$BENCH_SHIFT_ROOT"' EXIT
+  trap 'shift_cleanup "$BENCH_SHIFT_ROOT"; exit 130' INT TERM
   echo "▶ shift on $branch — objective: $objective"
+  echo "  worktree: $root"
   echo "  caps: $MAX_ITERS iterations, ~$MAX_TOKENS tokens. Ctrl-C to pull the line."
   started=$(date +%s)
   for ((i=1; i<=MAX_ITERS; i++)); do
     echo "── iteration $i/$MAX_ITERS ──"
     # one bounded iteration: agent makes one small change toward the objective.
     # BENCH_SHIFT=1 arms the Stop hook so the agent cannot declare done on red.
-    BENCH_SHIFT=1 "$AGENT" -p "$(iteration_prompt "$objective")" || true
-    if run_gate; then
+    ( cd "$root" && BENCH_SHIFT=1 "$AGENT" -p "$(iteration_prompt "$objective")" ) || true
+    if ( cd "$root" && run_gate ); then
       git -C "$root" add -A -- ':!.bench-objective' ':!.bench-notes.md'
       if git -C "$root" diff --cached --quiet; then
         echo "  gate green, no change this iteration — objective likely met."; break
@@ -112,7 +157,7 @@ shift_loop() {
       git -C "$root" commit -q -m "shift: iteration $i — $objective"
       committed=$((committed+1))
       echo "  ✓ green — committed iteration $i"
-      if objective_met "$objective"; then echo "  objective met."; break; fi
+      if ( cd "$root" && objective_met "$objective" ); then echo "  objective met."; break; fi
     else
       echo "  ✗ red gate — rolling back iteration $i, retrying"
       git -C "$root" reset -q --hard; git -C "$root" clean -qfd
@@ -122,15 +167,15 @@ shift_loop() {
   # pushed past the budget. Refactor at green — never mid-implementation: splitting
   # before the feature's shape has settled produces premature, bad module boundaries.
   # This is "only trigger a refactor once it's over the threshold", at the loop edge.
-  if ! structure_touched_since "$base" >/dev/null 2>&1; then
+  if ! ( cd "$root" && structure_touched_since "$base" >/dev/null 2>&1 ); then
     echo "▶ structure over budget — refactor phase (split at green, not before)"
     local rcap="${BENCH_REFACTOR_ITERS:-4}" r attempted=0
     for ((r=1; r<=rcap; r++)); do
-      structure_touched_since "$base" >/dev/null 2>&1 && break
+      ( cd "$root" && structure_touched_since "$base" >/dev/null 2>&1 ) && break
       attempted="$r"
       echo "── refactor $r/$rcap ──"
-      BENCH_SHIFT=1 "$AGENT" -p "$(refactor_prompt)" || true
-      if run_gate; then
+      ( cd "$root" && BENCH_SHIFT=1 "$AGENT" -p "$(refactor_prompt)" ) || true
+      if ( cd "$root" && run_gate ); then
         git -C "$root" add -A -- ':!.bench-objective' ':!.bench-notes.md'
         if git -C "$root" diff --cached --quiet; then
           echo "  gate green, refactor $r made no staged change - stopping refactor phase"
@@ -143,13 +188,15 @@ shift_loop() {
         git -C "$root" reset -q --hard; git -C "$root" clean -qfd
       fi
     done
-    if structure_touched_since "$base" >/dev/null 2>&1; then echo "  structure back under budget."
+    if ( cd "$root" && structure_touched_since "$base" >/dev/null 2>&1 ); then echo "  structure back under budget."
     else echo "  ⚠ still over budget after ${attempted:-$rcap} refactor pass(es) - review manually, or run a Bench deep pass with bench structure and craft-seams."; fi
   fi
   trap - EXIT INT TERM
   cleanup_shift_scratch "$root"
+  git -C "$root" switch -q --detach >/dev/null 2>&1 || true
+  worktree_release "$root"
   echo "■ shift done: $branch, $committed committed iteration(s), $(( ($(date +%s)-started)/60 ))m elapsed"
-  echo "  review: git -C $root log --oneline origin/$(default_branch)..$branch"
+  echo "  review: git -C $main_root log --oneline ${base}..$branch"
   echo "  the merge is yours."
 }
 
@@ -280,7 +327,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench status               ambient dashboard: what needs attention + the next action
   bench gate                 run the project gate (the oracle)
   bench worktree             warm, isolated worktree subshell
-  bench shift "<objective>"  gated loop: one small change per iteration, commit on green
+  bench shift "<objective>"  gated loop in a pooled worktree; commit on green
 EOF
   ;;
 esac

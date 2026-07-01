@@ -1,18 +1,15 @@
 # shift in worktree
 
-> **Status (2026-06-30):** Approved by the reviewer. Implementation is deferred — the
-> TDD / testing-contract updates land first (parallel work), then this builds against
-> them. Do not run `/bench-implement-spec` on this spec yet.
+> **Status (2026-07-01):** Implemented. `bench shift` now runs the gated loop inside
+> a pooled worktree, leaves the main checkout untouched, and preserves the
+> `bench/shift-<ts>` branch for review.
 
 ## Problem
 
-`CONTEXT.md`, `README.md`, and the `bin/bench.sh` header all promise that a **shift**
-runs in an isolated **worktree** "without touching the main checkout." It does not.
-`shift_loop` runs in place in the main checkout: it `git switch -c`es the checkout onto
-a `bench/shift-<ts>` branch, runs the agent there, and on a red iteration runs
-`git reset --hard` + `git clean -fd` **on the main checkout**. The pooled worktree the
-docs describe exists only behind the separate, manual `bench worktree` subshell, which
-the loop never calls.
+`CONTEXT.md`, `README.md`, and the `bin/bench.sh` header promise that a **shift**
+runs in an isolated **worktree** "without touching the main checkout." The product
+truth is that `bench shift` owns that isolation itself: the reviewer should not
+have to enter `bench worktree` before running a shift.
 
 The gap has two costs. A user who trusts the promise runs `bench shift` in their main
 checkout expecting a sandbox, and instead finds their checkout switched to another
