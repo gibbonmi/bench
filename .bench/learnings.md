@@ -220,3 +220,28 @@ close a map while any remain._
   `.bench/BENCH.md` first and only add a short pointer elsewhere if that surface
   needs one. Gate checks for command-adapter documentation should point at
   `.bench/BENCH.md`, not force usage prose into `AGENTS.md`.
+
+## 2026-06-30 — reference cleanup after a refactor must cover every surface, and the guard that enforces it  [open]
+- **What happened:** A full audit (with the gate green throughout) found the phase/command
+  rename had left dead references across every surface the command-currency check does not
+  scan: a live command file recommended `/shift` (`bench-write-spec.md`), a live spec
+  invoked seven dead `$bench-*` adapters (`specs/codex-command-integration.md`), decision
+  maps named a dead `/bench-*` slate, `CONTEXT.md`'s ubiquitous language still described
+  pre-rename behavior, and one spec even self-exempted from the check by quoting its
+  `command-currency: historical` marker in prose. Separately, two canaries meant to prove
+  the frontmatter and index checks still bite were non-biting — they fired on an
+  empty-glob artifact, not their target, so they would pass even if those checks rotted to
+  always-pass. Green was not coverage. Extends [[the bare-basename sweep learning above]].
+- **Right behavior:** A refactor's reference cleanup is not done until the old stems are
+  gone in *every* sigil (`/name`, `$name`, bare, `dir/name`) on *every* surface — commands,
+  skills, specs, decisions, vocabulary docs, changelog — AND the automated check that
+  guards against the drift actually covers those surfaces AND a canary proves that check
+  bites for its specific target, not incidentally. Any "rot guard" (currency scan, canary)
+  must itself be verified to bite, or it silently becomes decoration.
+- **Proposed rule change:** (1) The command-currency check must scan `.agents/**` and
+  `decisions/`, tokenize `$`-prefixed forms as well as `/`, and treat the historical
+  exemption only when the marker is on its own line — not any substring. (2) Every canary
+  must assert it fails *because of its fixture's defect* (e.g. reverting the defect makes
+  the gate green on that fixture), not merely that some matching substring appears. (3)
+  Rename-hygiene: a rename ships only when a whole-repo grep of the old stems in all sigils
+  is clean and the guarding check demonstrably covers where they hid.
