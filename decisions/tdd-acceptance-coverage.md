@@ -1,10 +1,9 @@
 # TDD acceptance coverage — make feature builds prove the promised behavior
 
-> **BOOTSTRAPPED (2026-06-30).** Comparison against Matt Pocock's engineering skills
-> found that Bench already has the bug-fix discipline in `/bench-debug`; the gap is
-> the feature-build path. It says TDD happens at pre-agreed seams, but it does not
-> force a behavior-to-test inventory that proves every promised story has a
-> red-capable signal before implementation proceeds.
+> **RESOLVED (2026-07-01).** All tickets (#1-#6) are decided. The build path is
+> clear: `/bench-write-spec` should write the implementation spec for adding
+> acceptance coverage maps to the feature-build workflow, and that spec must
+> dogfood the five-field map decided here.
 
 ## Grounding
 
@@ -103,7 +102,18 @@ to catch omissions? The goal is to prevent "green on a few tests, unfinished on 
 story breadth" without adding a noisy checklist to every tiny change.
 
 ### Answer
-— (open)
+Resolved (grill, 2026-07-01). `/bench-implement-spec` proves coverage in
+two lightweight ways:
+
+- During the build, each vertical slice names the acceptance coverage row it is
+  turning red-to-green.
+- Before the final gate, the agent emits a compact coverage table showing every
+  row as `green`, `already covered`, or `not TDD-able`, with the recorded reason
+  for any row that could not start from a red signal.
+
+`/bench-review-implementation` still audits omissions, but implementation cannot
+outsource basic coverage accounting to review. The build phase must show that
+every mapped behavior was closed or explicitly classified before it claims green.
 
 ## #5: What quality bar prevents shallow or internal tests?
 
@@ -117,7 +127,25 @@ methods, call counts, database peeking instead of interface behavior, or tests t
 would pass while the user-visible behavior is broken.
 
 ### Answer
-— (open)
+Resolved (research, 2026-07-01). The existing `craft-seams` and
+`craft-tdd` principles are correct but not sufficient by themselves for the new
+acceptance coverage map. The quality bar should be folded into the map/test
+validity wording, not left implicit across multiple skills.
+
+Valid rows and tests must be rejected when they:
+
+- attach below the chosen seam or test private/internal behavior;
+- mock internal collaborators or assert call counts/order instead of observable
+  behavior;
+- verify by peeking around the interface instead of through the chosen seam;
+- use a signal that would still pass while the mapped user-visible behavior is
+  broken;
+- describe implementation shape rather than caller-visible behavior.
+
+Mocks remain allowed at real system boundaries such as time, randomness, network,
+filesystem, or external APIs when the seam requires it. The point is not "no
+mocks"; it is "no internal test doubles that let an agent satisfy the test while
+missing the behavior."
 
 ## #6: What proves this kit change actually works?
 
@@ -132,4 +160,22 @@ behavior. The proof must fit Bench's anti-sediment bar: real gap filled, no broa
 process bloat.
 
 ### Answer
-— (open)
+Resolved (research, 2026-07-01). This kit change is proven only when it is
+dogfooded through the workflow it changes. Adoption requires three proofs:
+
+1. **Self-use in the implementation spec.** The spec for this change must include
+   an acceptance coverage map using the decided five-field row shape. Rows should
+   cover the spec template, `craft-tdd` row/test validity, and
+   `/bench-implement-spec` closeout behavior.
+2. **Shift closeout against the map.** The implementation pass must name each row
+   as it turns red-to-green and end with the compact coverage table from #4 before
+   the gate. Any row that cannot start red is classified as `already covered` or
+   `not TDD-able` with a reason.
+3. **Real dogfood run after the edits.** With the changed kit in the working tree,
+   run a small real Bench planning/build path on this repo or another linked repo:
+   `/bench-write-spec` for a tiny behavior change, then a build/shift that closes
+   the coverage map, then `/bench-review-implementation`, then `bench gate`.
+
+A static wording check can support the proof, but cannot replace it. If the real
+dogfood run cannot be completed, the synthesis is incomplete and the change stays
+proposed rather than adopted.
