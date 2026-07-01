@@ -268,6 +268,27 @@ for (const file of ["HANDOFF.md", ".bench/BENCH.md"]) {
 process.exit(bad);
 NODE
 
+#    i) acceptance coverage maps are now part of the feature-build workflow. These
+#       anchors are intentionally structural: they prove the command/skill surfaces
+#       still carry the contract, while semantic completeness stays a review/dogfood
+#       responsibility.
+require_anchor() {
+  file="$1"
+  needle="$2"
+  grep -qF "$needle" "$file" || err "$file missing acceptance coverage anchor: $needle"
+}
+require_anchor ".agents/commands/bench-write-spec.md" "acceptance coverage map"
+require_anchor ".agents/commands/bench-write-spec.md" "why it catches the failure"
+require_anchor ".agents/commands/bench-write-spec.md" "red signal"
+require_anchor ".agents/skills/bench-craft-tdd/SKILL.md" "acceptance row"
+require_anchor ".agents/skills/bench-craft-tdd/SKILL.md" "not TDD-able"
+require_anchor ".agents/skills/bench-craft-tdd/SKILL.md" "call count"
+require_anchor ".agents/commands/bench-implement-spec.md" "coverage table"
+require_anchor ".agents/commands/bench-implement-spec.md" "already covered"
+require_anchor ".agents/commands/bench-implement-spec.md" "turning red-to-green"
+require_anchor ".agents/commands/bench-review-implementation.md" "acceptance coverage map"
+require_anchor ".agents/commands/bench-review-implementation.md" "mapped behavior"
+
 grep -qF 'session-start.sh' README.md || err "README layout omits .bench/hooks/session-start.sh"
 grep -qF 'bench.sh' README.md || err "README layout omits the real bin/bench.sh filename"
 grep -qF 'benchkit.md' README.md || err "README layout omits projects/benchkit.md"

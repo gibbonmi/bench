@@ -29,7 +29,10 @@ Run it on the branch diff against its merge-base, on two axes that stay separate
      already enforces — no point double-reporting what tooling caught.
    - **Spec** — (a) requirements the spec asked for that are missing or partial;
      (b) behavior in the diff that wasn't asked for (scope creep); (c) requirements
-     that look implemented but wrong. Quote the spec line for each finding.
+     that look implemented but wrong. If the spec has an acceptance coverage map,
+     also audit each coverage row: missing, partial, falsely-classified, or
+     unclosed mapped behavior is a Spec finding. Quote the spec line for each
+     finding.
 
    If there's no spec, skip the Spec axis and say so.
 

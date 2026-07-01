@@ -22,6 +22,10 @@ if you hit the cap, stop and report.
 - Work the user stories in vertical slices, not all-tests-first horizontal ones.
 - Use **TDD only at the pre-agreed seams** (see `craft-tdd`). Elsewhere, write
   the code and let the gate catch regressions. TDD everything is the cost trap.
+- If the spec has an acceptance coverage map, each vertical slice names the
+  coverage row it is turning red-to-green before editing that slice. Rows marked
+  `already covered` or `not TDD-able` keep their recorded reason; don't silently
+  upgrade them into TDD coverage.
 - Run typecheck and the relevant single test file frequently as you go. Run the
   full gate once at the end.
 - Smallest diffs that advance a story. Read before you write. Compose existing
@@ -33,6 +37,9 @@ if you hit the cap, stop and report.
   diff looks right. If the gate is red, the build continues or stops with an
   explanation; it never declares done on red.
 - Do not weaken a test or a check to reach green. If a check is wrong, surface it.
+- Before the final gate, emit a compact coverage table for every acceptance row:
+  `green`, `already covered`, or `not TDD-able`. If any mapped behavior is missing,
+  partial, or unclassified, the build is not ready for the gate.
 - Once the gate is green, run `/bench-review-implementation` — the semantic two-axis pass (Standards +
   Spec) that catches what the gate can't: right thing built the wrong way, or wrong
   thing built cleanly. Read its findings, fix what matters, re-run the gate.

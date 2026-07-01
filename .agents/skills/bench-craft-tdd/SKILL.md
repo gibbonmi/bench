@@ -37,6 +37,29 @@ minimum to pass its own tests, then stop. So:
    (move logic to where the data lives), primitive obsession (introduce value
    objects), and existing code the new code just revealed as a problem.
 
+## Acceptance rows
+
+When `/bench-write-spec` includes an acceptance coverage map, treat each
+acceptance row as the unit of TDD coverage. A valid row has `story`, `behavior`,
+`seam`, `red signal`, and `why it catches the failure`.
+
+- `behavior` is caller-visible. It is not a data shape, private method, or
+  implementation step.
+- `seam` is where callers cross the interface and where the test attaches.
+- `red signal` is a command or test already run before implementation that failed
+  because the mapped behavior is absent or wrong. If it already passes, classify
+  the row as `already covered`; if it cannot run before implementation, classify it
+  as `not TDD-able` with the reason.
+- `why it catches the failure` explains why this signal would fail when the mapped
+  user-visible behavior is broken.
+
+Reject rows and tests that attach below the chosen seam, test private behavior,
+mock an internal collaborator, use an internal test double to satisfy the test
+without the behavior, assert call count or call order, peek around the interface,
+or describe implementation shape instead of observable behavior. Mocks are fine at
+real system boundaries — time, randomness, network, filesystem, external APIs —
+when the seam requires them.
+
 ## The oracle is the gate, not you
 
 A green test you wrote is not proof of done. Done is `bench gate` green across the

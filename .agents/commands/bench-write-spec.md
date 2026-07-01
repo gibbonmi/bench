@@ -45,7 +45,16 @@ loop honest.
      enforces it, rather than leaving it in a prose aside that disappears. You can't
      ticket your way out of the spec's own breadth.
 
-4. **Write `specs/<feature>.md`** using the template below.
+4. **Map acceptance coverage.** For non-trivial feature work, add an
+   **acceptance coverage map** to Testing decisions before implementation begins.
+   Each row ties a user story to one observable behavior at a chosen seam, with
+   these fields: `story`, `behavior`, `seam`, `red signal`, and
+   `why it catches the failure`. The red signal is the command or test that has
+   already been run and failed because the mapped behavior is absent or wrong. If
+   the behavior is already covered or cannot start red, say so in the row instead
+   of pretending it is TDD coverage.
+
+5. **Write `specs/<feature>.md`** using the template below.
 
 ## Template
 
@@ -74,6 +83,11 @@ schema, a type) may be inlined, trimmed to the decision-rich part.
 - Which seams get tested, and the prior art (similar tests already in the repo).
 - The gate command this feature must pass (defaults to the project gate).
 
+### Acceptance coverage map
+| story | behavior | seam | red signal | why it catches the failure |
+|---|---|---|---|---|
+| <story #> | <observable behavior> | <test seam> | <observed red command/test, or already covered / not TDD-able with reason> | <why this signal would fail if the behavior were missing> |
+
 ## Out of scope
 Each genuine cut as one line: **what** it is — why it's a *separate capability*
 (not just the rest of this feature) — **your** time estimate to build it later.
@@ -92,7 +106,8 @@ When the spec is written, the build has a fixed target: the user stories set the
 breadth, the seams set where tests live, and the gate sets what "done" means.
 
 Before any build starts, emit a scannable approval table — user stories / seams /
-out of scope — and pause for my sign-off. The full spec file stays as written; the
-table is the at-a-glance veto surface. Only after I approve, lead with the recommended
-next action — `/bench-implement-spec` interactively, or a `/shift` for locked-spec mechanical work —
-and a one-clause why, not a neutral either/or.
+acceptance coverage / out of scope — and pause for my sign-off. The full spec file
+stays as written; the table is the at-a-glance veto surface. Only after I approve,
+lead with the recommended next action — `/bench-implement-spec` interactively, or a
+`/shift` for locked-spec mechanical work — and a one-clause why, not a neutral
+either/or.

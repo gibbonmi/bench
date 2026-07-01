@@ -73,10 +73,12 @@ The oracle for a kit, in layers (all green today):
    assets while excluding local-only settings.
 3. **Kit conformance** — the AGENTS.md index stays in sync with disk for craft
    skills and command references; every indexed skill exists, every craft skill
-   exposes a `craft-*` visible name, every command file is referenced as `/name`, and
-   every command has an explicit Codex `$bench-*` adapter documented in
-   `.bench/BENCH.md`. This is the check that silently rots and breaks harnesses; it is
-   the analog of gl-axi's `axi-conformance`.
+   exposes a `craft-*` visible name, every command file is referenced as `/name`, every
+   command has an explicit Codex `$bench-*` adapter documented in `.bench/BENCH.md`,
+   and the feature-build workflow keeps the acceptance-coverage anchors in
+   `/bench-write-spec`, `craft-tdd`, `/bench-implement-spec`, and
+   `/bench-review-implementation`. This is the check that silently rots and breaks
+   harnesses; it is the analog of gl-axi's `axi-conformance`.
 4. **shellcheck** — best-effort, runs only when installed (`-S warning`). Not a hard
    dependency; upgrades the shell lint automatically once present.
 5. **Safe-link behavior** — the gate runs `bench link` against throwaway repos to
