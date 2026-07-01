@@ -17,9 +17,17 @@ minimum to pass its own tests, then stop. So:
 - TDD **only** at the seams `/bench-write-spec` named. At those seams the test target is
   external — I chose the seam and the behavior — so passing the test means
   matching my spec, not the agent's guess.
-- Off the marked seams, write the code and let the gate catch regressions.
-- The breadth comes from the spec's user stories, not from what tests the agent
-  could imagine. If a story isn't covered, that's a gap to fix, not a stop.
+- Off the marked seams, write the code and let the gate catch regressions —
+  remembering the gate only catches what some test observes. If off-seam code
+  carries behavior no seam can observe, that is a seam-set defect: surface it,
+  don't skip it.
+- The spec's user stories are the breadth **floor, not the ceiling**. At a marked
+  seam, enumerate the failure modes of the behavior — error path, empty/absent
+  input, boundary values, malformed input, interrupted/partial state, re-run
+  idempotency, hostile environment — and propose them as coverage rows for the
+  reviewer to veto; never silently skip an edge the spec forgot. The over-fit guard constrains what *correct* means (the reviewer chose
+  the seam and the semantics), never which inputs get exercised. If a story isn't
+  covered, that's a gap to fix, not a stop.
 
 ## The cycle
 

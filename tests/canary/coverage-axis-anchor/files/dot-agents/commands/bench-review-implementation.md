@@ -1,18 +1,18 @@
 ---
-description: Three-axis semantic review of a shift branch — Standards (does the diff follow this repo's conventions), Spec (does it match what the spec asked for), and Coverage (what breaking inputs does nothing exercise). Use after /bench-implement-spec, before merge, to catch what the gate can't see. Advisory, not authoritative.
+description: Two-axis semantic review of a shift branch — Standards (does the diff follow this repo's conventions) and Spec (does it match what the spec asked for). Use after /bench-implement-spec, before merge, to catch what the gate can't see. Advisory, not authoritative.
 ---
 
 # /bench-review-implementation — the check the gate can't run
 
 ## Entry orientation
 
-This is the semantic review phase. It reviews the branch diff against three
-separate axes: documented standards, the approved spec, and coverage gaps. It
-produces findings the gate cannot see, without claiming authority over done-ness.
+This is the semantic review phase. It reviews the branch diff against two separate
+axes: documented standards and the approved spec. It produces findings the gate
+cannot see, without claiming authority over done-ness.
 
 ## Exit handoff
 
-Close by reporting Standards, Spec, and Coverage findings separately, with counts
+Close by reporting Standards findings and Spec findings separately, with counts
 and the worst issue in each axis. The recommended next command is
 `/bench-implement-spec` when findings need fixes, or `/bench-final-check` when the
 review is clean or the reviewer accepts the residual risk.
@@ -22,7 +22,7 @@ and rule violations. It cannot tell whether you built the *right* thing the *rig
 way. `/bench-review-implementation` is the semantic pass that can — and it's advisory: it surfaces
 findings for you, it has no authority to call anything done. The gate and you do.
 
-Run it on the branch diff against its merge-base, on three axes that stay separate.
+Run it on the branch diff against its merge-base, on two axes that stay separate.
 
 ## Process
 
@@ -35,7 +35,7 @@ Run it on the branch diff against its merge-base, on three axes that stay separa
    and shared platform rules; `CLAUDE.md` is import pointers only — plus
    `projects/<name>.md` and any `CONTRIBUTING`/conventions docs in the repo.
 
-3. **Spawn the axes in parallel sub-agents** (so they don't pollute each other's
+3. **Spawn both axes in parallel sub-agents** (so they don't pollute each other's
    context), each under ~400 words:
 
    - **Standards** — every place the diff violates a documented convention. Cite
@@ -47,25 +47,14 @@ Run it on the branch diff against its merge-base, on three axes that stay separa
      also audit each coverage row: missing, partial, falsely-classified, or
      unclosed mapped behavior is a Spec finding. Quote the spec line for each
      finding.
-   - **Coverage axis** — the adversarial pass: read the diff and name concrete
-     inputs or states that would break it and that no acceptance row or existing
-     test exercises. Think hostile: error path, empty/absent input, boundary
-     values, malformed input, interrupted/partial state, re-run idempotency,
-     hostile environment — plus the profile's hostile-input checklist when one
-     exists. Each finding
-     names the input or state, the expected break, and the row or test that
-     should exist. An edge the spec explicitly marked won't handle is not a
-     finding; an edge nobody decided is.
 
-   If there's no spec, skip the Spec axis and say so; Coverage still runs — it
-   needs only the diff and the existing tests.
+   If there's no spec, skip the Spec axis and say so.
 
-4. **Aggregate, don't merge.** Report under `## Standards`, `## Spec`, and
-   `## Coverage` headings, findings kept separate. Do not rerank across axes or
-   pick a single winner — the separation is the point: code can pass one axis and
-   fail another (right thing, wrong conventions; clean conventions, wrong thing;
-   correct on the happy path, open on the edges), and merging them lets one mask
-   the other. End with a per-axis count and the worst issue within each axis.
+4. **Aggregate, don't merge.** Report under `## Standards` and `## Spec` headings,
+   findings kept separate. Do not rerank across axes or pick a single winner — the
+   separation is the point: code can pass one axis and fail the other (right thing,
+   wrong conventions, or clean conventions, wrong thing), and merging them lets one
+   mask the other. End with a per-axis count and the worst issue within each axis.
 
 ## Where it sits
 

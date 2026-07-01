@@ -38,8 +38,11 @@ internal is something the agent can game.
 ## Picking the seam for a feature
 
 - Prefer an existing seam to a new one.
-- Use the **highest** seam that still exercises the real behavior. Higher seams =
-  fewer, more stable tests = more of the implementation free to change.
+- Use the **highest** seam that still exercises the real behavior — *and at which
+  the failure modes are still observable*. If an error path can't go red from the
+  high seam, add one lower coverage row or make the failure observable there;
+  don't drop the case for the sake of seam height. Higher seams = fewer, more
+  stable tests = more of the implementation free to change.
 - The ideal number of new seams for a feature is one. Justify any beyond that.
 
 Avoid the word "boundary" (overloaded). Say **seam** or **interface**.

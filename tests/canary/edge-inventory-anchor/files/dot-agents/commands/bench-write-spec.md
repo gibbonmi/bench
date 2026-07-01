@@ -69,19 +69,7 @@ loop honest.
    the behavior is already covered or cannot start red, say so in the row instead
    of pretending it is TDD coverage.
 
-5. **Walk the edge inventory.** Stories are happy-path shaped; this step generates
-   the cases nobody declared. For each mapped behavior, walk the edge classes —
-   error path, empty/absent input, boundary values, malformed input,
-   interrupted/partial state, re-run idempotency, hostile environment — and
-   consult the project
-   profile's hostile-input checklist (`projects/<name>.md`) when one exists, so
-   domain edges recur instead of being rediscovered per defect. Every edge lands
-   in exactly one of two places: a coverage row (story column may read "edge of
-   N"), or a one-line **Won't handle** entry directly under the map. Both are
-   veto surface; a silently untested edge is the failure this step exists to
-   prevent.
-
-6. **Write `specs/<feature>.md`** using the template below.
+5. **Write `specs/<feature>.md`** using the template below.
 
 ## Template
 
@@ -115,11 +103,6 @@ schema, a type) may be inlined, trimmed to the decision-rich part.
 |---|---|---|---|---|
 | <story #> | <observable behavior> | <test seam> | <observed red command/test, or already covered / not TDD-able with reason> | <why this signal would fail if the behavior were missing> |
 
-### Edge inventory
-The edge classes walked per behavior, each resolved as a coverage row above or a
-**Won't handle** line here: `<edge> — <one-clause why it's safe to skip>`.
-Exclusions are decisions on the page, not silent omissions.
-
 ## Out of scope
 Each genuine cut as one line: **what** it is — why it's a *separate capability*
 (not just the rest of this feature) — **your** time estimate to build it later.
@@ -140,8 +123,7 @@ When the spec is written, the build has a fixed target: the user stories set the
 breadth, the seams set where tests live, and the gate sets what "done" means.
 
 Before any build starts, emit a scannable approval table — user stories / seams /
-acceptance coverage (edge rows and won't-handle lines included) / out of scope —
-and pause for my sign-off. The full spec file
+acceptance coverage / out of scope — and pause for my sign-off. The full spec file
 stays as written; the table is the at-a-glance veto surface. Only after I approve,
 lead with the recommended next action — `/bench-implement-spec` interactively, or a
 `bench shift` for locked-spec mechanical work — and a one-clause why, not a neutral

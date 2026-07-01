@@ -55,6 +55,22 @@ AGENTS.md harness — that portability is the product.
 
 No UI. There is **no design source** for this repo.
 
+## Hostile-input checklist (shell CLI)
+
+The edge classes `/bench-write-spec`'s edge inventory walks for this domain —
+the hostile inputs shell CLIs actually meet. Walk every class before locking a
+coverage map; a class skipped here returns as a regression.
+
+- paths and directory names containing spaces or glob characters
+- hand-edited files whose last line lacks a trailing newline
+- absent file vs present-but-empty file (distinct behaviors, both asserted)
+- unquoted multi-word arguments (`$*` vs `$1`)
+- required tool missing from PATH (no global `bench`, no `readlink -f`)
+- invocation through a symlink rather than the real path
+- interrupt (SIGINT) mid-loop: leftover scratch state, leases, worktrees
+- re-run idempotency: relink, reused worktree, second `init`
+- cwd deeper than the repo root when the command assumes root
+
 ## Gate (`.bench/gate.sh`)
 
 ```
@@ -75,9 +91,10 @@ The oracle for a kit, in layers (all green today):
    skills and command references; every indexed skill exists, every craft skill
    exposes a `craft-*` visible name, every command file is referenced as `/name`, every
    command has an explicit Codex `$bench-*` adapter documented in `.bench/BENCH.md`,
-   and the feature-build workflow keeps the acceptance-coverage anchors in
-   `/bench-write-spec`, `craft-tdd`, `/bench-implement-spec`, and
-   `/bench-review-implementation`. This is the check that silently rots and breaks
+   and the feature-build workflow keeps the acceptance-coverage and edge-coverage
+   anchors in `/bench-write-spec`, `craft-tdd`, `craft-seams`,
+   `/bench-implement-spec`, `/bench-review-implementation`, `/bench-setup-repo`,
+   and this profile's hostile-input checklist. This is the check that silently rots and breaks
    harnesses; it is the analog of gl-axi's `axi-conformance`.
 4. **shellcheck** — best-effort, runs only when installed (`-S warning`). Not a hard
    dependency; upgrades the shell lint automatically once present.

@@ -34,7 +34,9 @@ if you hit the cap, stop and report.
 
 - Work the user stories in vertical slices, not all-tests-first horizontal ones.
 - Use **TDD only at the pre-agreed seams** (see `craft-tdd`). Elsewhere, write
-  the code and let the gate catch regressions. TDD everything is the cost trap.
+  the code and let the gate catch regressions — the gate only catches what some
+  test observes, so behavior no seam can observe is a seam-set defect to surface,
+  not to skip. TDD everything is the cost trap.
 - If the spec has an acceptance coverage map, each vertical slice names the
   coverage row it is turning red-to-green before editing that slice. Rows marked
   `already covered` or `not TDD-able` keep their recorded reason; don't silently

@@ -354,6 +354,20 @@ require_anchor ".agents/commands/bench-review-implementation.md" "mapped behavio
 #       gate but never selects it, and the doc must not hide that seam.
 require_anchor ".agents/commands/bench-final-check.md" ".bench/gate.sh"
 require_anchor ".agents/commands/bench-final-check.md" "BENCH_GATE"
+#    l) edge-case coverage contracts. The spec phase must generate edge cases (edge
+#       inventory + won't-handle lines, fed by the profile's hostile-input checklist),
+#       craft-tdd must treat stories as the breadth floor, craft-seams must bind seam
+#       height to failure-mode observability, and review must hunt coverage gaps via
+#       the Coverage axis. Structural anchors only; semantics stay with review/dogfood.
+require_anchor ".agents/commands/bench-write-spec.md" "edge inventory"
+require_anchor ".agents/commands/bench-write-spec.md" "Won't handle"
+require_anchor ".agents/commands/bench-write-spec.md" "hostile-input checklist"
+require_anchor ".agents/skills/bench-craft-tdd/SKILL.md" "floor, not the ceiling"
+require_anchor ".agents/skills/bench-craft-seams/SKILL.md" "failure modes"
+require_anchor ".agents/commands/bench-review-implementation.md" "## Coverage"
+require_anchor ".agents/commands/bench-review-implementation.md" "Coverage axis"
+require_anchor ".agents/commands/bench-setup-repo.md" "hostile-input checklist"
+require_anchor "projects/benchkit.md" "hostile-input checklist"
 
 grep -qF 'session-start.sh' README.md || err "README layout omits .bench/hooks/session-start.sh"
 grep -qF 'bench.sh' README.md || err "README layout omits the real bin/bench.sh filename"

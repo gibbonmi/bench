@@ -6,3 +6,4 @@
 - 2026-07-01  per-path structure budgets (real version of craft-seams escape hatch)
 - 2026-07-01  worktree lease staleness + TOCTOU hardening for the pool
 - 2026-07-01  status: stop nagging about warm pooled worktrees as 'extra'
+- 2026-07-01  domain hostile-input checklist library beyond shell (web/API/UI profile templates for the edge inventory)
