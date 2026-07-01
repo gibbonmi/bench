@@ -41,10 +41,14 @@ bad_refs="$(grep -oE '\.bench/(gate|done)(\.sh)?' bin/bench.sh | grep -vE '\.sh$
 # shellcheck source=/dev/null
 . "$gate_dir/gate-runtime-contracts.sh"
 
-# 2. JSON is valid.
+# 2. JSON is valid. A missing file errs distinctly; "invalid JSON" fires only on a
+#    real parse failure of a file that exists (so the canary attributes it precisely).
 for f in package.json .claude/settings.json .codex/hooks.json; do
-  node -e 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"))' "$f" \
-    || err "invalid JSON in $f"
+  if [ ! -f "$f" ]; then
+    err "JSON file missing: $f"
+  elif ! node -e 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"))' "$f" 2>/dev/null; then
+    err "invalid JSON in $f"
+  fi
 done
 
 # 3. Every skill carries YAML frontmatter (first line is the --- fence).
@@ -300,7 +304,11 @@ NODE
 require_anchor() {
   file="$1"
   needle="$2"
-  grep -qF "$needle" "$file" || err "$file missing acceptance coverage anchor: $needle"
+  if [ ! -f "$file" ]; then
+    err "acceptance coverage anchor file missing: $file"
+  elif ! grep -qF "$needle" "$file"; then
+    err "$file missing acceptance coverage anchor: $needle"
+  fi
 }
 require_anchor ".agents/commands/bench-write-spec.md" "acceptance coverage map"
 require_anchor ".agents/commands/bench-write-spec.md" "why it catches the failure"
@@ -313,6 +321,11 @@ require_anchor ".agents/commands/bench-implement-spec.md" "already covered"
 require_anchor ".agents/commands/bench-implement-spec.md" "turning red-to-green"
 require_anchor ".agents/commands/bench-review-implementation.md" "acceptance coverage map"
 require_anchor ".agents/commands/bench-review-implementation.md" "mapped behavior"
+#    k) the final-check phase must name the actual gate resolution chain
+#       (.bench/gate.sh -> $BENCH_GATE -> auto-detect); the profile documents the
+#       gate but never selects it, and the doc must not hide that seam.
+require_anchor ".agents/commands/bench-final-check.md" ".bench/gate.sh"
+require_anchor ".agents/commands/bench-final-check.md" "BENCH_GATE"
 
 grep -qF 'session-start.sh' README.md || err "README layout omits .bench/hooks/session-start.sh"
 grep -qF 'bench.sh' README.md || err "README layout omits the real bin/bench.sh filename"
@@ -332,6 +345,19 @@ fi
 #    the targeted message is present. BENCH_CANARY_INNER marks the inner run so this
 #    check skips itself and never recurses.
 if [ "${BENCH_CANARY_INNER:-0}" != "1" ] && [ -d tests/canary ]; then
+  # Attribution baseline: an EXPECT that also matches a completely empty fixture
+  # proves nothing about its planted regression — the canary is vacuous and the
+  # check it guards can rot into an always-pass unnoticed.
+  d0="$(mktemp -d)"
+  ( cd "$d0" && git init -q && BENCH_CANARY_INNER=1 bash "$root/.bench/gate.sh" ) >"$d0/out" 2>&1 || true
+  for fx in tests/canary/*/; do
+    name="$(basename "$fx")"
+    [ -f "$fx/EXPECT" ] || continue
+    if grep -qF "$(cat "$fx/EXPECT")" "$d0/out"; then
+      err "canary '$name' EXPECT is vacuous (also matches an empty fixture)"
+    fi
+  done
+  rm -rf "$d0"
   for fx in tests/canary/*/; do
     name="$(basename "$fx")"
     [ -f "$fx/EXPECT" ] || { err "canary fixture '$name' has no EXPECT file"; continue; }

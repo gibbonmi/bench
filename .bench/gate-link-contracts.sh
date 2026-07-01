@@ -1,4 +1,6 @@
-# Link/adoption contracts for the benchkit gate.
+# Link/adoption contracts for the benchkit gate. Skipped as a distinct red when
+# the tree carries no CLI, keeping canary fixtures attributable.
+[ -f "$root/bin/bench.sh" ] || { err "bench CLI missing (link contracts skipped)"; return 0 2>/dev/null || exit 0; }
 
 tmp="$(mktemp -d)"
 ( cd "$tmp" && git init -q && bash "$root/bin/bench.sh" init >/dev/null 2>&1 )
@@ -117,6 +119,128 @@ tmp="$(mktemp -d)"
   git -c user.email=bench@local -c user.name=bench add -A
   git -c user.email=bench@local -c user.name=bench commit -q -m linked
   PATH=/usr/bin:/bin .bench/hooks/session-start.sh >/dev/null
-  BENCH_SHIFT=1 BENCH_STOP_CHECKED=0 PATH=/usr/bin:/bin .bench/hooks/stop.sh >/dev/null 2>&1
+  printf '{}\n' | BENCH_SHIFT=1 PATH=/usr/bin:/bin .bench/hooks/stop.sh >/dev/null 2>&1
 ) || err "bench linked hooks local-CLI contract failed ($(cat "$tmp/link.out" 2>/dev/null | tail -n 1))"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u
+  kitcopy="$tmp/kit[1]"
+  mkdir -p "$kitcopy/.bench"
+  cp -R "$root/bin" "$root/.agents" "$root/.claude" "$root/.codex" "$kitcopy/"
+  cp "$root/.bench/BENCH.md" "$kitcopy/.bench/BENCH.md"
+  cp -R "$root/.bench/hooks" "$kitcopy/.bench/hooks"
+  mkdir "$tmp/repo"; cd "$tmp/repo"; git init -q
+  BENCH_KIT="$kitcopy" bash "$root/bin/bench.sh" link >link.out 2>&1 \
+    || { tail -1 link.out; echo "link from a metachar kit path failed"; exit 1; }
+  [ -x .bench/bin/bench.sh ] || { echo "metachar kit path scattered installed files"; exit 1; }
+  [ -f .agents/commands/bench-implement-spec.md ] || { echo "metachar kit path lost portable commands"; exit 1; }
+) || err "bench link metachar kit-path contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q main-repo
+  cd main-repo
+  git -c user.email=bench@local -c user.name=bench commit -q --allow-empty -m init
+  git worktree add -q "$tmp/wt" -b side HEAD
+  cd "$tmp/wt"
+  bash "$root/bin/bench.sh" link >link.out 2>&1 \
+    || { tail -1 link.out; echo "link inside a linked worktree failed"; exit 1; }
+  hooks="$(git rev-parse --git-path hooks)"
+  [ -x "$hooks/pre-push" ] || { echo "worktree link did not install pre-push in the effective hooks dir"; exit 1; }
+) || err "bench link worktree contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  git config core.hooksPath .husky
+  bash "$root/bin/bench.sh" link >link.out 2>&1 \
+    || { tail -1 link.out; echo "link with core.hooksPath failed"; exit 1; }
+  [ -x .husky/pre-push ] || { echo "pre-push not installed into configured hooksPath"; exit 1; }
+  grep -q 'bench:managed-pre-push' .husky/pre-push || { echo "hooksPath pre-push is not bench-managed"; exit 1; }
+) || err "bench link hooksPath contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"
+  git init -q --bare -b master remote.git
+  git init -q -b master repo && cd repo
+  git -c user.email=bench@local -c user.name=bench commit -q --allow-empty -m init
+  git remote add origin "$tmp/remote.git"
+  git push -q origin master
+  git fetch -q origin
+  git symbolic-ref -d refs/remotes/origin/HEAD 2>/dev/null || true
+  bash "$root/bin/bench.sh" link >link.out 2>&1 \
+    || { tail -1 link.out; echo "link with unset origin/HEAD failed"; exit 1; }
+  grep -q 'refs/heads/master' "$(git rev-parse --git-path hooks)/pre-push" \
+    || { echo "pre-push guards the wrong branch when origin/HEAD is unset"; exit 1; }
+) || err "bench link default-branch resolution contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  cat > AGENTS.md <<'EOF'
+# Project rules
+
+How Bench marks its block:
+
+```
+<!-- bench:start -->
+managed content example
+<!-- bench:end -->
+```
+
+KEEP-ME project text.
+EOF
+  bash "$root/bin/bench.sh" link >link.out 2>&1 \
+    || { tail -1 link.out; echo "link failed on fenced marker docs"; exit 1; }
+  grep -qF 'KEEP-ME project text.' AGENTS.md || { echo "fenced-marker link lost project text"; exit 1; }
+  grep -qF 'managed content example' AGENTS.md || { echo "fenced example content was rewritten"; exit 1; }
+  bash "$root/bin/bench.sh" link >relink.out 2>&1 \
+    || { tail -1 relink.out; echo "relink failed on fenced marker docs"; exit 1; }
+  grep -qF 'managed content example' AGENTS.md || { echo "relink consumed the fenced example"; exit 1; }
+  [ "$(grep -cF '## Bench' AGENTS.md)" = "1" ] || { echo "fenced markers caused duplicate managed blocks"; exit 1; }
+) || err "bench link fenced-marker contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  git config core.hooksPath .husky
+  mkdir .husky
+  printf '#!/bin/sh\nexit 0\n' > .husky/pre-push
+  if bash "$root/bin/bench.sh" link >link.out 2>&1; then
+    echo "link succeeded over a non-managed pre-push in hooksPath"; exit 1
+  fi
+  grep -qi 'conflict' link.out || { echo "hooksPath conflict output did not explain the conflict"; exit 1; }
+  grep -qF 'exit 0' .husky/pre-push || { echo "hooksPath conflict overwrote the project hook"; exit 1; }
+) || err "bench link hooksPath conflict contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  cat > AGENTS.md <<'EOF'
+# Project rules
+
+Broken docs with an unclosed fence:
+
+```
+<!-- bench:start -->
+<!-- bench:end -->
+
+KEEP-ME text after the unclosed fence.
+EOF
+  if bash "$root/bin/bench.sh" link >link.out 2>&1; then
+    echo "link succeeded despite an unclosed fence around Bench markers"; exit 1
+  fi
+  grep -qi 'fence' link.out || { echo "unclosed-fence output did not explain the conflict"; exit 1; }
+  grep -qF 'KEEP-ME text after the unclosed fence.' AGENTS.md || { echo "unclosed-fence failure rewrote project text"; exit 1; }
+  [ "$(grep -cF '## Bench' AGENTS.md)" = "0" ] || { echo "unclosed-fence link still installed a managed block"; exit 1; }
+) || err "bench link unclosed-fence contract failed"
 rm -rf "$tmp"

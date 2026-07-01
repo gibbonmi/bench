@@ -1,4 +1,7 @@
-# Runtime CLI contracts for the benchkit gate.
+# Runtime CLI contracts for the benchkit gate. Without a CLI in the tree there is
+# nothing to contract-test; the skip is a distinct red so canary fixtures that
+# plant a broken CLI stay attributable to their targeted assertion.
+[ -f "$root/bin/bench.sh" ] || { err "bench CLI missing (runtime contracts skipped)"; return 0 2>/dev/null || exit 0; }
 
 tmp="$(mktemp -d)"
 (
@@ -127,8 +130,13 @@ rm -rf "$tmp"
 
 tmp="$(mktemp -d)"
 (
-  set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
-  BENCH_SHIFT=1 BENCH_STOP_CHECKED=0 bash "$root/.bench/hooks/stop.sh" >/dev/null 2>&1 || true
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench bin
+  cp "$root"/bin/bench.sh "$root"/bin/bench-link.sh "$root"/bin/bench-status.sh bin/
+  chmod +x bin/bench.sh
+  printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  gci add -A; gci commit -q -m init
+  printf '{}\n' | BENCH_SHIFT=1 bash "$root/.bench/hooks/stop.sh" >/dev/null 2>&1 || true
   cache="$(gci rev-parse --absolute-git-dir)/bench-last-gate"
   [ -f "$cache" ] || { echo "Stop hook did not write the gate cache"; exit 1; }
   grep -qE '^(green|red) [0-9a-f]+ [0-9T:Z-]+$' "$cache" || { echo "gate cache not <status> <sha> <iso8601>"; exit 1; }
@@ -389,4 +397,79 @@ EOF
   PATH="$shim:/usr/bin:/bin" "$bin_dir/bench" link >"$tmp/link.out" 2>&1
   [ -f .bench/BENCH.md ] || { echo "symlinked bench did not resolve kit dir without readlink -f"; exit 1; }
 ) || err "bench symlinked kit-dir portability contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench
+  printf '#!/usr/bin/env bash\n[ ! -f junk.txt ]\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  cat > agent <<'EOF'
+#!/usr/bin/env bash
+n=0; [ -f "$BENCH_TEST_STATE/count" ] && n="$(cat "$BENCH_TEST_STATE/count")"
+n=$((n+1)); printf '%s\n' "$n" > "$BENCH_TEST_STATE/count"
+if [ "$n" = 1 ]; then
+  printf 'tried A, broke gate\n' >> .bench-notes.md
+  printf 'junk\n' > junk.txt
+else
+  [ -f .bench-notes.md ] && grep -q 'tried A' .bench-notes.md && printf 'notes-survived\n' >> "$BENCH_TEST_STATE/report"
+  [ -f .bench-objective ] && printf 'objective-survived\n' >> "$BENCH_TEST_STATE/report"
+  printf 'ok\n' > done.txt
+fi
+EOF
+  chmod +x agent
+  gci add -A; gci commit -q -m init
+  home="$(mktemp -d)"; state="$(mktemp -d)"
+  BENCH_TEST_STATE="$state" BENCH_AGENT="$tmp/agent" BENCH_MAX_ITERS=2 BENCH_HOME="$home" \
+    bash "$root/bin/bench.sh" shift survive >/dev/null 2>&1 || true
+  grep -q 'notes-survived' "$state/report" 2>/dev/null || { echo "red rollback wiped .bench-notes.md"; exit 1; }
+  grep -q 'objective-survived' "$state/report" 2>/dev/null || { echo "red rollback wiped .bench-objective"; exit 1; }
+  rm -rf "$home" "$state"
+) || err "bench shift scratch-survival contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench; printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  cat > agent <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n@@@@\n' "$2" >> "$BENCH_TEST_PROMPTS"
+if [ ! -f made-big ]; then seq 401 | sed 's/^/x = /' > touched.py; : > made-big; fi
+EOF
+  chmod +x agent
+  gci add -A; gci commit -q -m init
+  home="$(mktemp -d)"; prompts="$tmp/prompts.txt"
+  BENCH_TEST_PROMPTS="$prompts" BENCH_AGENT="$tmp/agent" BENCH_MAX_ITERS=1 BENCH_REFACTOR_ITERS=1 BENCH_HOME="$home" \
+    bash "$root/bin/bench.sh" shift make-big >/dev/null 2>&1 || true
+  refactor="$(sed -n '/@@@@/,$p' "$prompts" 2>/dev/null)"
+  grep -qF 'touched.py' <<<"$refactor" || { echo "refactor prompt does not name the flagged touched files"; exit 1; }
+  ! grep -qF 'Run `bench structure` to see the flagged files' <<<"$refactor" || { echo "refactor prompt still points at repo-wide structure output"; exit 1; }
+  rm -rf "$home"
+) || err "bench shift refactor-prompt scope contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench bin
+  cp "$root"/bin/bench.sh "$root"/bin/bench-link.sh "$root"/bin/bench-status.sh bin/
+  chmod +x bin/bench.sh
+  printf '#!/usr/bin/env bash\nexit 1\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  gci add -A; gci commit -q -m init
+  printf '{"stop_hook_active":true}\n' | BENCH_SHIFT=1 bash "$root/.bench/hooks/stop.sh" >/dev/null 2>&1; rc=$?
+  [ "$rc" = "0" ] || { echo "stop hook ignored stop_hook_active (exit $rc)"; exit 1; }
+  printf '{}\n' | BENCH_SHIFT=1 bash "$root/.bench/hooks/stop.sh" >/dev/null 2>&1; rc=$?
+  [ "$rc" = "2" ] || { echo "armed red-gate stop not blocked without the flag (exit $rc)"; exit 1; }
+) || err "stop hook stop_hook_active contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
+  out="$(printf '{}\n' | BENCH_SHIFT=1 PATH=/usr/bin:/bin bash "$root/.bench/hooks/stop.sh" 2>&1)"; rc=$?
+  [ "$rc" = "0" ] || { echo "missing bench trapped the stop (exit $rc)"; exit 1; }
+  grep -qi 'bench' <<<"$out" || { echo "missing-bench stop gave no warning"; exit 1; }
+  [ ! -f "$(gci rev-parse --absolute-git-dir)/bench-last-gate" ] || { echo "missing bench forged a gate cache"; exit 1; }
+) || err "stop hook missing-bench fail-open contract failed"
 rm -rf "$tmp"

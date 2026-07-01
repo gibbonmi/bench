@@ -1,13 +1,30 @@
 # Link/install support for bench.sh.
 
+# Resolve the effective git hooks directory — honoring core.hooksPath and worktree
+# layouts where .git is a file — as an absolute path under $root.
+hooks_dir() {
+  local root="$1" dir
+  dir="$(git -C "$root" rev-parse --git-path hooks 2>/dev/null)" || dir=".git/hooks"
+  [[ "$dir" == /* ]] || dir="$root/$dir"
+  printf '%s\n' "$dir"
+}
+
 install_git_hook() {
-  local root="$1" def; def="$(default_branch)"
-  mkdir -p "$root/.git/hooks"
-  if [[ -e "$root/.git/hooks/pre-push" ]] && ! grep -q 'bench:managed-pre-push' "$root/.git/hooks/pre-push"; then
-    echo "conflict: .git/hooks/pre-push exists and is not Bench-managed" >&2
+  local root="$1" def hooks
+  # A remote without origin/HEAD set otherwise resolves to main and guards the wrong
+  # branch; nudge it at link time only so default_branch() stays network-free.
+  if git -C "$root" remote get-url origin >/dev/null 2>&1 \
+     && ! git -C "$root" symbolic-ref --quiet refs/remotes/origin/HEAD >/dev/null 2>&1; then
+    git -C "$root" remote set-head origin --auto >/dev/null 2>&1 || true
+  fi
+  def="$(default_branch)"
+  hooks="$(hooks_dir "$root")"
+  mkdir -p "$hooks"
+  if [[ -e "$hooks/pre-push" ]] && ! grep -q 'bench:managed-pre-push' "$hooks/pre-push"; then
+    echo "conflict: $hooks/pre-push exists and is not Bench-managed" >&2
     return 1
   fi
-  cat > "$root/.git/hooks/pre-push" <<EOF
+  cat > "$hooks/pre-push" <<EOF
 #!/usr/bin/env bash
 # bench:managed-pre-push
 # Installed by 'bench link'. The merge is the human's; agents don't push $def.
@@ -19,7 +36,7 @@ while read -r local_ref local_oid remote_ref remote_oid; do
 done
 exit 0
 EOF
-  chmod +x "$root/.git/hooks/pre-push"
+  chmod +x "$hooks/pre-push"
 }
 
 hash_file() {
@@ -80,19 +97,38 @@ Bench is installed in this repo.
 EOF
 }
 
+# Shared awk prelude for every marker path: a line starting with a ``` fence toggles
+# fence state; lines inside a fence are printed but never treated as Bench markers, so
+# AGENTS.md may document the markers in an example block without a relink eating it.
+fence_awk_prelude='{ if (substr($0, 1, 3) == "```") { in_fence = !in_fence; line_is_fence = 1 } else { line_is_fence = 0 } }'
+
 count_marker() {
   local marker="$1" file="$2"
-  awk -v marker="$marker" 'index($0, marker) { count++ } END { print count + 0 }' "$file" 2>/dev/null
+  awk -v marker="$marker" "$fence_awk_prelude"'
+    !line_is_fence && !in_fence && index($0, marker) { count++ }
+    END { print count + 0 }
+  ' "$file" 2>/dev/null
 }
 
 marker_line() {
   local marker="$1" file="$2"
-  awk -v marker="$marker" 'index($0, marker) { print NR; exit }' "$file" 2>/dev/null
+  awk -v marker="$marker" "$fence_awk_prelude"'
+    !line_is_fence && !in_fence && index($0, marker) { print NR; exit }
+  ' "$file" 2>/dev/null
+}
+
+fence_balanced() {
+  local file="$1"
+  [[ "$(awk "$fence_awk_prelude"' END { print in_fence + 0 }' "$file" 2>/dev/null)" == "0" ]]
 }
 
 validate_agents_block() {
   local root="$1" agents="$root/AGENTS.md" starts=0 ends=0 start_line end_line
   [[ -f "$agents" ]] || return 0
+  if ! fence_balanced "$agents" && grep -qF 'bench:' "$agents"; then
+    echo "conflict: AGENTS.md has an unclosed code fence around Bench markers; marker detection cannot be trusted" >&2
+    return 1
+  fi
   starts="$(count_marker '<!-- bench:start -->' "$agents")"
   ends="$(count_marker '<!-- bench:end -->' "$agents")"
   if [[ "$starts" == "0" && "$ends" == "0" ]]; then return 0; fi
@@ -121,8 +157,8 @@ write_agents_block() {
       cat "$block" >> "$tmp"
       mv "$tmp" "$agents"
     else
-      awk -v block="$block" '
-        /<!-- bench:start -->/ {
+      awk -v block="$block" "$fence_awk_prelude"'
+        !line_is_fence && !in_fence && /<!-- bench:start -->/ {
           if (!done) {
             while ((getline line < block) > 0) print line
             close(block)
@@ -131,7 +167,7 @@ write_agents_block() {
           skip = 1
           next
         }
-        /<!-- bench:end -->/ { skip = 0; next }
+        !line_is_fence && !in_fence && /<!-- bench:end -->/ { skip = 0; next }
         !skip { print }
       ' "$agents" > "$tmp"
       mv "$tmp" "$agents"
@@ -144,7 +180,7 @@ append_tree_to_plan() {
   local src_root="$1" dest_root="$2" kind="$3" plan="$4" src rel
   [[ -d "$src_root" ]] || return 0
   while IFS= read -r src; do
-    rel="${src#$src_root/}"
+    rel="${src#"$src_root"/}"
     printf '%s\t%s/%s\t%s\n' "$src" "$dest_root" "$rel" "$kind" >> "$plan"
   done < <(find "$src_root" -type f | sort)
 }
@@ -191,10 +227,11 @@ has_symlink_parent() {
 }
 
 preflight_link() {
-  local root="$1" plan="$2" conflicts=0 src rel kind dest parent old
+  local root="$1" plan="$2" conflicts=0 src rel kind dest parent old hooks
   validate_agents_block "$root" || conflicts=$((conflicts+1))
-  if [[ -e "$root/.git/hooks/pre-push" ]] && ! grep -q 'bench:managed-pre-push' "$root/.git/hooks/pre-push"; then
-    echo "conflict: .git/hooks/pre-push exists and is not Bench-managed" >&2
+  hooks="$(hooks_dir "$root")"
+  if [[ -e "$hooks/pre-push" ]] && ! grep -q 'bench:managed-pre-push' "$hooks/pre-push"; then
+    echo "conflict: $hooks/pre-push exists and is not Bench-managed" >&2
     conflicts=$((conflicts+1))
   fi
   while IFS=$'\t' read -r src rel kind; do

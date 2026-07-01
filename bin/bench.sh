@@ -160,7 +160,7 @@ shift_loop() {
       if ( cd "$root" && objective_met "$objective" ); then echo "  objective met."; break; fi
     else
       echo "  ✗ red gate — rolling back iteration $i, retrying"
-      git -C "$root" reset -q --hard; git -C "$root" clean -qfdx
+      git -C "$root" reset -q --hard; git -C "$root" clean -qfdx -e .bench-objective -e .bench-notes.md
     fi
   done
   # Implementation loop is done. Only NOW pay down structural debt, if the work
@@ -169,12 +169,14 @@ shift_loop() {
   # This is "only trigger a refactor once it's over the threshold", at the loop edge.
   if ! ( cd "$root" && structure_touched_since "$base" >/dev/null 2>&1 ); then
     echo "▶ structure over budget — refactor phase (split at green, not before)"
-    local rcap="${BENCH_REFACTOR_ITERS:-4}" r attempted=0
+    local rcap="${BENCH_REFACTOR_ITERS:-4}" r attempted=0 flagged
     for ((r=1; r<=rcap; r++)); do
       ( cd "$root" && structure_touched_since "$base" >/dev/null 2>&1 ) && break
       attempted="$r"
       echo "── refactor $r/$rcap ──"
-      ( cd "$root" && BENCH_SHIFT=1 "$AGENT" -p "$(refactor_prompt)" ) || true
+      # Scope the prompt to the files this shift flagged — never repo-wide debt.
+      flagged="$( (cd "$root" && structure_touched_since "$base") 2>&1 || true)"
+      ( cd "$root" && BENCH_SHIFT=1 "$AGENT" -p "$(refactor_prompt "$flagged")" ) || true
       if ( cd "$root" && run_gate ); then
         git -C "$root" add -A -- ':!.bench-objective' ':!.bench-notes.md'
         if git -C "$root" diff --cached --quiet; then
@@ -185,7 +187,7 @@ shift_loop() {
         echo "  ✓ tests green - refactor $r committed"
       else
         echo "  ✗ refactor broke the gate — rolling back"
-        git -C "$root" reset -q --hard; git -C "$root" clean -qfdx
+        git -C "$root" reset -q --hard; git -C "$root" clean -qfdx -e .bench-objective -e .bench-notes.md
       fi
     done
     if ( cd "$root" && structure_touched_since "$base" >/dev/null 2>&1 ); then echo "  structure back under budget."
@@ -201,15 +203,19 @@ shift_loop() {
 }
 
 refactor_prompt() {
-  cat <<'EOF'
+  cat <<EOF
 The implementation is complete and tests are green, but the structure budget is
-exceeded. Run `bench structure` to see the flagged files and directories. Fix them
-by splitting along responsibility, using the deletion test from the craft-seams skill: lift
-a cluster out only if extracting it *concentrates* complexity behind a real interface
-rather than just moving it. Never fragment a cohesive file to beat the line count — if
-a file is genuinely one deep module, leave it and say so. Group a crowded directory
-into a package with a clear entry point. Keep every test green; change structure, not
-behavior. Make one split, then stop — the loop re-checks and continues.
+exceeded. These are the flagged files and directories this shift touched — fix only
+these, nothing else:
+
+$1
+
+Fix them by splitting along responsibility, using the deletion test from the craft-seams
+skill: lift a cluster out only if extracting it *concentrates* complexity behind a real
+interface rather than just moving it. Never fragment a cohesive file to beat the line
+count — if a file is genuinely one deep module, leave it and say so. Group a crowded
+directory into a package with a clear entry point. Keep every test green; change
+structure, not behavior. Make one split, then stop — the loop re-checks and continues.
 EOF
 }
 
