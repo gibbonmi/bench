@@ -45,24 +45,43 @@ worktree_lease_file() {
 }
 
 # ---- gate: the oracle -------------------------------------------------------
+gate_record() {
+  # Record the verdict for `bench status` (same format the Stop hook writes):
+  #   <status> <HEAD sha> <iso8601>
+  # The cache lives in the git dir, so it is never tracked or committed.
+  local root="$1" rc="$2" gitdir verdict=green
+  gitdir="$(git -C "$root" rev-parse --absolute-git-dir 2>/dev/null)" || return 0
+  [[ "$rc" -eq 0 ]] || verdict=red
+  printf '%s %s %s\n' "$verdict" "$(git -C "$root" rev-parse HEAD 2>/dev/null || echo none)" \
+    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$gitdir/bench-last-gate"
+}
+
 run_gate() {
-  local root; root="$(repo_root)"
+  local root rc=0; root="$(repo_root)"
   # Run, do not exec: the shift loop calls `if run_gate` inline, so an exec here would
   # replace the bench process at the first gate check and the loop would never iterate.
-  if [[ -x "$root/.bench/gate.sh" ]]; then ( cd "$root" && "$root/.bench/gate.sh" ); return $?; fi
-  if [[ -n "${BENCH_GATE:-}" ]]; then ( cd "$root" && bash -c "$BENCH_GATE" ); return $?; fi
+  # The `|| rc=$?` form matters under set -e: a bare failing subshell would exit the
+  # script before the verdict could be recorded.
+  if [[ -x "$root/.bench/gate.sh" ]]; then
+    ( cd "$root" && "$root/.bench/gate.sh" ) || rc=$?
+  elif [[ -n "${BENCH_GATE:-}" ]]; then
+    ( cd "$root" && bash -c "$BENCH_GATE" ) || rc=$?
   # auto-detect — best-effort defaults; a project should ship .bench/gate.sh instead
-  if [[ -f "$root/pnpm-lock.yaml" ]]; then
-    ( cd "$root" && pnpm -s typecheck && pnpm -s test && pnpm -s lint ); return $?
+  elif [[ -f "$root/pnpm-lock.yaml" ]]; then
+    ( cd "$root" && pnpm -s typecheck && pnpm -s test && pnpm -s lint ) || rc=$?
   elif [[ -f "$root/package.json" ]]; then
-    ( cd "$root" && npm run -s typecheck && npm test --silent && npm run -s lint ); return $?
+    ( cd "$root" && npm run -s typecheck && npm test --silent && npm run -s lint ) || rc=$?
   elif [[ -f "$root/pyproject.toml" ]]; then
-    ( cd "$root" && mypy . && pytest -q && ruff check . ); return $?
+    ( cd "$root" && mypy . && pytest -q && ruff check . ) || rc=$?
   elif [[ -f "$root/Cargo.toml" ]]; then
-    ( cd "$root" && cargo test --quiet && cargo clippy -q -- -D warnings ); return $?
+    ( cd "$root" && cargo test --quiet && cargo clippy -q -- -D warnings ) || rc=$?
+  else
+    echo "no gate found: add an executable .bench/gate.sh or set BENCH_GATE" >&2
+    return 3
   fi
-  echo "no gate found: add an executable .bench/gate.sh or set BENCH_GATE" >&2
-  return 3
+  # A run that happened is a verdict either way; the no-gate path records nothing.
+  gate_record "$root" "$rc"
+  return "$rc"
 }
 
 # ---- worktree: warm, isolated, reusable -------------------------------------

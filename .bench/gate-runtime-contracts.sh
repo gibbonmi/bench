@@ -146,6 +146,24 @@ rm -rf "$tmp"
 tmp="$(mktemp -d)"
 (
   set -u; cd "$tmp"; git init -q
+  mkdir -p .bench
+  printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  gci add -A; gci commit -q -m init
+  cache="$(gci rev-parse --absolute-git-dir)/bench-last-gate"
+  printf 'green deadbeefdeadbeefdeadbeefdeadbeefdeadbeef 2026-06-30T00:00:00Z\n' > "$cache"
+  bash "$root/bin/bench.sh" gate >/dev/null 2>&1 || { echo "manual green gate run exited nonzero"; exit 1; }
+  grep -qF "green $(gci rev-parse HEAD)" "$cache" || { echo "manual gate run did not refresh the stale cache to green@HEAD"; exit 1; }
+  out="$(bash "$root/bin/bench.sh" status)"
+  if grep -qF 're-run the gate' <<<"$out"; then echo "status still reads stale after a manual gate run"; exit 1; fi
+  printf '#!/usr/bin/env bash\nexit 1\n' > .bench/gate.sh
+  if bash "$root/bin/bench.sh" gate >/dev/null 2>&1; then echo "red gate run exited zero"; exit 1; fi
+  grep -qF "red $(gci rev-parse HEAD)" "$cache" || { echo "manual red gate run did not record red@HEAD"; exit 1; }
+) || err "bench gate verdict-record contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
   mkdir -p .bench; printf -- '- a [open]\n' > .bench/learnings.md; gci add -A; gci commit -q -m s
   hi="$(BENCH_LEARNINGS_FLOOR=2 bash "$root/bin/bench.sh" status)"
   if grep -qF '/bench-integrate-learnings' <<<"$hi"; then echo "floor=2 still surfaced a single open learning"; exit 1; fi
