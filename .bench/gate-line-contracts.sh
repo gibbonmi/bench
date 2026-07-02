@@ -145,6 +145,12 @@ if [ -f .agents/commands/bench-implement-spec.md ]; then
   grep -qF 'craft-line' .agents/commands/bench-implement-spec.md \
     || err "bench-implement-spec.md does not reference craft-line"
 fi
+if [ -f .agents/commands/bench-write-spec.md ]; then
+  grep -qF 'craft-line' .agents/commands/bench-write-spec.md \
+    || err "bench-write-spec.md does not reference craft-line"
+  grep -qF 'model and effort' .agents/commands/bench-write-spec.md \
+    || err "bench-write-spec.md does not mandate per-story model and effort"
+fi
 if [ -f .bench/BENCH.md ]; then
   grep -qF 'BENCH_MODEL' .bench/BENCH.md \
     || err "BENCH.md adapter contract does not document BENCH_MODEL"

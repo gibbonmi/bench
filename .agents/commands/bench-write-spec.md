@@ -81,7 +81,14 @@ loop honest.
    veto surface; a silently untested edge is the failure this step exists to
    prevent.
 
-6. **Write `specs/<feature>.md`** using the template below.
+6. **Route each story.** Give every user story its line — the resolved model id
+   and effort from the `craft-line` decision table, judged per story on spec
+   precision, seam certainty, and gate coverage. Work the gate fully observes
+   routes cheap; prose and semantics the gate can't grade bump a tier. This is
+   the spec-time half of invariant #2: the build inherits routing I approved,
+   instead of picking models mid-loop.
+
+7. **Write `specs/<feature>.md`** using the template below.
 
 ## Template
 
@@ -98,6 +105,10 @@ The solution, from the user's point of view.
 A long, numbered list. "As a <actor>, I want <feature>, so that <benefit>."
 Exhaustive — this list defines the breadth the build must cover, which is the
 guard against a loop that does the minimum and stops.
+Every story displays its model and effort: end the story with
+`Line: <resolved model id> / <effort>.` followed by one whole, plain sentence
+explaining why that row was chosen. The sentence must read on its own — no
+stacked clauses or fragments the reviewer has to decode.
 
 ## Implementation decisions
 Modules touched, interfaces modified, schema/contract changes, architectural
@@ -139,8 +150,9 @@ against itself.
 When the spec is written, the build has a fixed target: the user stories set the
 breadth, the seams set where tests live, and the gate sets what "done" means.
 
-Before any build starts, emit a scannable approval table — user stories / seams /
-acceptance coverage (edge rows and won't-handle lines included) / out of scope —
+Before any build starts, emit a scannable approval table — user stories (each
+with its line) / seams / acceptance coverage (edge rows and won't-handle lines
+included) / out of scope —
 and pause for my sign-off. The full spec file
 stays as written; the table is the at-a-glance veto surface. Only after I approve,
 lead with the recommended next action — `/bench-implement-spec` interactively, or a
