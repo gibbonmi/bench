@@ -317,3 +317,18 @@ Codex adapter drift and prose-only marker mentions._
   declaration rather than deciding silently.
 - **Proposed rule change:** none — /bench-write-spec could optionally note shipping
   surfaces explicitly when a spec ships new files, but one instance is not a pattern.
+
+## 2026-07-01 — blind `git add -A` swept a reviewer-owned file into a shift commit  [open]
+- **What happened:** Committing the adapter-contract build with `git add -A`
+  staged `decisions/model-routing.md`, a decision map that appeared in the
+  working tree mid-session and was not part of the build. The commit landed
+  before the sweep was noticed; an amend was correctly blocked by the git
+  guard, and the file turned out to be actively edited outside the session, so
+  it was left alone rather than removed.
+- **Right behavior:** Stage the files the shift actually touched (or diff the
+  status against session start) before committing; anything unexplained in the
+  tree is surfaced to the reviewer, never committed or reverted on my own.
+- **Proposed rule change:** In the implement/final-check phases, replace
+  "commit on green" with "stage the declared files explicitly, then commit on
+  green"; unexplained working-tree files block the commit and go to the
+  reviewer.
