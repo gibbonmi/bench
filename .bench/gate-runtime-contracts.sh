@@ -434,7 +434,7 @@ tmp="$(mktemp -d)"
   mkdir -p .bench; printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
   cat > agent <<'EOF'
 #!/usr/bin/env bash
-printf '%s\n@@@@\n' "$2" >> "$BENCH_TEST_PROMPTS"
+printf '%s\n@@@@\n' "$1" >> "$BENCH_TEST_PROMPTS"
 if [ ! -f made-big ]; then seq 401 | sed 's/^/x = /' > touched.py; : > made-big; fi
 EOF
   chmod +x agent
@@ -448,6 +448,83 @@ EOF
   rm -rf "$home"
 ) || err "bench shift refactor-prompt scope contract failed"
 rm -rf "$tmp"
+
+# Adapter contract: bench shift drives a configured adapter executable, passing the
+# generated prompt as its single positional argument with BENCH_SHIFT=1 armed. There
+# is no default harness — misconfiguration fails fast in a preflight, before any
+# agent or gate run.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench; printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  gci add -A; gci commit -q -m init
+  home="$(mktemp -d)"
+  if out="$(env -u BENCH_AGENT BENCH_HOME="$home" bash "$root/bin/bench.sh" shift probe 2>&1)"; then
+    echo "shift with no BENCH_AGENT succeeded; should error"; exit 1
+  fi
+  grep -qF 'BENCH_AGENT' <<<"$out" || { echo "unconfigured-adapter error does not name BENCH_AGENT"; exit 1; }
+  grep -qiE 'configure.*adapter|adapter.*configure' <<<"$out" || { echo "unconfigured-adapter error is not a configure-your-adapter message"; exit 1; }
+  if grep -qF 'iteration 1/' <<<"$out"; then echo "unconfigured adapter still entered the loop"; exit 1; fi
+  if BENCH_AGENT= BENCH_HOME="$home" bash "$root/bin/bench.sh" shift probe >/dev/null 2>&1; then
+    echo "shift with empty BENCH_AGENT succeeded; should error"; exit 1
+  fi
+  if out="$(BENCH_AGENT=/no/such/adapter BENCH_HOME="$home" bash "$root/bin/bench.sh" shift probe 2>&1)"; then
+    echo "shift with a missing adapter path succeeded; should error"; exit 1
+  fi
+  grep -qiF 'not executable' <<<"$out" || { echo "missing-adapter error does not say not executable"; exit 1; }
+  if grep -qF 'iteration 1/' <<<"$out"; then echo "missing adapter still entered the loop"; exit 1; fi
+  # a shell keyword resolves via command -v but is not an executable file; the
+  # preflight must reject it rather than let every iteration exec-fail silently
+  if out="$(BENCH_AGENT=if BENCH_HOME="$home" bash "$root/bin/bench.sh" shift probe 2>&1)"; then
+    echo "shift with a shell-keyword adapter succeeded; should error"; exit 1
+  fi
+  grep -qiF 'not executable' <<<"$out" || { echo "shell-keyword adapter error does not say not executable"; exit 1; }
+  rm -rf "$home"
+) || err "bench shift adapter preflight contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench; printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  cat > adapter <<'EOF'
+#!/usr/bin/env bash
+{
+  printf 'argc=%s\n' "$#"
+  printf 'shift_env=%s\n' "${BENCH_SHIFT:-unset}"
+  printf '%s\n@@@@\n' "$1"
+} >> "$BENCH_TEST_RECORD"
+EOF
+  chmod +x adapter
+  gci add -A; gci commit -q -m init
+  home="$(mktemp -d)"; record="$tmp/record.txt"
+  BENCH_TEST_RECORD="$record" BENCH_AGENT="$tmp/adapter" BENCH_MAX_ITERS=1 BENCH_HOME="$home" \
+    bash "$root/bin/bench.sh" shift adapter-arg-probe >/dev/null 2>&1 || true
+  [ -f "$record" ] || { echo "adapter was never invoked"; exit 1; }
+  grep -qF 'argc=1' "$record" || { echo "prompt was not the adapter's single positional argument"; exit 1; }
+  grep -qF 'shift_env=1' "$record" || { echo "BENCH_SHIFT=1 not armed on the adapter call"; exit 1; }
+  if grep -qxF -- '-p' "$record"; then echo "loop still passes the Claude-specific -p flag"; exit 1; fi
+  grep -qF 'adapter-arg-probe' "$record" || { echo "objective missing from the adapter argument"; exit 1; }
+  grep -qF 'You are one iteration of a Bench shift' "$record" || { echo "prompt head missing from \$1"; exit 1; }
+  grep -qF 'decides if it counts' "$record" || { echo "multi-line prompt tail missing from \$1 (prompt split or re-tokenized?)"; exit 1; }
+  rm -rf "$home"
+) || err "bench shift adapter single-argument contract failed"
+rm -rf "$tmp"
+
+(
+  set -u
+  for a in claude codex opencode; do
+    f="$root/.bench/adapters/$a"
+    [ -f "$f" ] || { echo "reference adapter missing: .bench/adapters/$a"; exit 1; }
+    [ -x "$f" ] || { echo "reference adapter not executable: .bench/adapters/$a"; exit 1; }
+    bash -n "$f" || { echo "reference adapter has a syntax error: .bench/adapters/$a"; exit 1; }
+    grep -qE '^exec ' "$f" || { echo "reference adapter $a does not exec its harness (exit code must pass through)"; exit 1; }
+    grep -qF '"$1"' "$f" || { echo "reference adapter $a does not pass the prompt as \$1"; exit 1; }
+  done
+  grep -qF 'claude -p "$1"' "$root/.bench/adapters/claude" || { echo "claude adapter does not map the prompt to claude -p"; exit 1; }
+  grep -qF 'codex exec "$1"' "$root/.bench/adapters/codex" || { echo "codex adapter does not map the prompt to codex exec"; exit 1; }
+  grep -qF 'opencode run "$1"' "$root/.bench/adapters/opencode" || { echo "opencode adapter does not map the prompt to opencode run"; exit 1; }
+) || err "reference adapter files contract failed"
 
 tmp="$(mktemp -d)"
 (

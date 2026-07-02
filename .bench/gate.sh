@@ -24,7 +24,7 @@ done
 # 1b. Scripts the harness/CLI exec by path are executable in git. A fresh clone or
 #     npm install gets the git index mode; if it is 100644 the hooks fail at runtime
 #     with "permission denied" (exit 126) on every Stop and every Bash tool call.
-for f in bin/bench.sh .bench/hooks/*.sh; do
+for f in bin/bench.sh .bench/hooks/*.sh .bench/adapters/*; do
   mode="$(git ls-files -s "$f" | awk '{print $1}')"
   [ -z "$mode" ] && continue   # untracked — not part of what ships
   [ "$mode" = "100755" ] || err "$f is not executable in git (mode $mode); the harness runs it as a command path"

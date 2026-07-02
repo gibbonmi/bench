@@ -153,6 +153,10 @@ bench/
 │       └── bench-craft-synthesis/
 ├── .bench/
 │   ├── BENCH.md              # full Bench operating guide installed into projects
+│   ├── adapters/             # reference BENCH_AGENT adapters for bench shift
+│   │   ├── claude
+│   │   ├── codex
+│   │   └── opencode
 │   └── hooks/                # shared hook scripts used by harness adapters
 │       ├── session-start.sh
 │       ├── stop.sh
@@ -292,7 +296,8 @@ harness-independent too: the `bench shift` loop runs the gate after every iterat
 and commits only on green, and the git `pre-push` hook protects the default branch no
 matter which agent (or human) pushes.
 
-Optional knobs (env): `BENCH_AGENT` (headless agent command, default `claude`),
+Env knobs: `BENCH_AGENT` (required for `bench shift` — a harness adapter executable
+that takes the prompt as `$1`; reference adapters ship in `.bench/adapters/`),
 `BENCH_MAX_ITERS`, `BENCH_GATE` (a gate command if you'd rather not ship
 `.bench/gate.sh`).
 

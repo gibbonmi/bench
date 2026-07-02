@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Bench harness adapter: maps the shift prompt ($1) to OpenCode's noninteractive mode.
+exec opencode run "$1"

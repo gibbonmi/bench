@@ -21,7 +21,7 @@
 set -euo pipefail
 
 BENCH_HOME="${BENCH_HOME:-$HOME/.bench}"
-AGENT="${BENCH_AGENT:-claude}"          # headless agent command; override per harness
+AGENT="${BENCH_AGENT:-}"                # harness adapter executable; no default — see .bench/adapters/
 MAX_ITERS="${BENCH_MAX_ITERS:-12}"
 
 repo_root() { git rev-parse --show-toplevel 2>/dev/null || { echo "not in a git repo" >&2; exit 1; }; }
@@ -118,6 +118,24 @@ worktree() {
 }
 
 # ---- shift: the gated loop --------------------------------------------------
+# The adapter is the harness seam: shift passes the generated prompt as the
+# adapter's single positional argument, so harness-specific flags live in the
+# adapter (e.g. .bench/adapters/claude), never in the loop. Arguments belong in
+# a wrapper script — a multi-word BENCH_AGENT resolves as one executable name.
+require_adapter() {
+  if [[ -z "$AGENT" ]]; then
+    echo "no harness adapter configured: set BENCH_AGENT to an adapter executable (references in .bench/adapters/)" >&2
+    exit 1
+  fi
+  # type -P, not command -v: the adapter must resolve to an executable file, so a
+  # value colliding with a shell keyword or builtin is rejected here instead of
+  # exec-failing (or silently no-opping) inside the loop.
+  if [[ -z "$(type -P "$AGENT")" ]]; then
+    echo "adapter not executable: BENCH_AGENT='$AGENT' is neither an executable file nor a command on PATH" >&2
+    exit 1
+  fi
+}
+
 shift_cleanup() {
   local wt="${1:-}"
   [[ -n "$wt" ]] || return 0
@@ -127,6 +145,7 @@ shift_cleanup() {
 
 shift_loop() {
   local objective="$1" main_root root wt branch base i started tokens=0 committed=0
+  require_adapter
   main_root="$(repo_root)"
   [[ -z "$(git -C "$main_root" status --porcelain)" ]] || { echo "working tree not clean; commit or stash first" >&2; exit 1; }
   base="$(git -C "$main_root" rev-parse HEAD)"
@@ -147,7 +166,7 @@ shift_loop() {
     echo "── iteration $i/$MAX_ITERS ──"
     # one bounded iteration: agent makes one small change toward the objective.
     # BENCH_SHIFT=1 arms the Stop hook so the agent cannot declare done on red.
-    ( cd "$root" && BENCH_SHIFT=1 "$AGENT" -p "$(iteration_prompt "$objective")" ) || true
+    ( cd "$root" && BENCH_SHIFT=1 "$AGENT" "$(iteration_prompt "$objective")" ) || true
     if ( cd "$root" && run_gate ); then
       git -C "$root" add -A -- ':!.bench-objective' ':!.bench-notes.md'
       if git -C "$root" diff --cached --quiet; then
@@ -175,7 +194,7 @@ shift_loop() {
       echo "── refactor $r/$rcap ──"
       # Scope the prompt to the files this shift flagged — never repo-wide debt.
       flagged="$( (cd "$root" && structure_touched_since "$base") 2>&1 || true)"
-      ( cd "$root" && BENCH_SHIFT=1 "$AGENT" -p "$(refactor_prompt "$flagged")" ) || true
+      ( cd "$root" && BENCH_SHIFT=1 "$AGENT" "$(refactor_prompt "$flagged")" ) || true
       if ( cd "$root" && run_gate ); then
         git -C "$root" add -A -- ':!.bench-objective' ':!.bench-notes.md'
         if git -C "$root" diff --cached --quiet; then

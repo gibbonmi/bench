@@ -118,8 +118,9 @@ cheap = Haiku 4.5 (`claude-haiku-4-5`) · mid = Sonnet 4.6 (`claude-sonnet-4-6`)
 top = Opus 4.8 (`claude-opus-4-8`). Sonnet 5 is out of the rotation by reviewer
 directive. Caveat for Claude Code delegation: the Agent tool addresses models by
 tier alias only, and its bare `sonnet` resolves to Sonnet 5 — so in-session
-delegates run on Opus until the alias is confirmed to bind 4.6; headless
-`BENCH_AGENT` runs can target `claude-sonnet-4-6` directly. Tier moves still get
+delegates run on Opus until the alias is confirmed to bind 4.6; headless shift
+runs can pin `claude-sonnet-4-6` inside the adapter wrapper `BENCH_AGENT` points
+at (model flags live in the wrapper, not in `BENCH_AGENT`). Tier moves still get
 declared — no silent escalation.
 
 - **Skill / command / doc authoring** → **top model, high effort**. Prose that shapes

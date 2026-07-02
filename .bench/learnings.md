@@ -303,3 +303,17 @@ Codex adapter drift and prose-only marker mentions._
 - **Proposed rule change:** Add to the delegation habit: write-delegations run in
   isolated worktrees, and every delegate report is verified against the gate and
   the diff before acceptance.
+
+## 2026-07-01 — adapter-contract test assertions placed beyond the spec's declared seam  [open]
+- **What happened:** The harness-adapter-contract spec scoped testing to the
+  `bench shift` CLI contract in the runtime-contracts file. The build also added
+  assertions in the link and package contract files plus the gate's git-mode
+  check, to enforce "reference adapters ship as part of `.bench/`" end to end.
+  Semantic review judged it in scope (the out-of-scope item bans interactive
+  install, not shipping), but the spec's testing-decisions section named a single
+  seam and the build widened it without asking.
+- **Right behavior:** When "shipped" implies surfaces (npm files[], link plan)
+  beyond the spec's named test seam, flag the widening at build time as a one-line
+  declaration rather than deciding silently.
+- **Proposed rule change:** none — /bench-write-spec could optionally note shipping
+  surfaces explicitly when a spec ships new files, but one instance is not a pattern.

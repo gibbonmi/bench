@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Bench harness adapter: maps the shift prompt ($1) to Claude Code's headless mode.
+exec claude -p "$1"

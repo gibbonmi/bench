@@ -76,6 +76,8 @@ code, the journal — those stay as full as their templates need).
   SessionStart do not depend on a global `bench` on PATH.
 - `.agents/commands/` contains portable Bench command phases.
 - `.agents/skills/` contains portable Bench skills.
+- `.bench/adapters/` contains reference harness adapters for `bench shift`
+  (`claude`, `codex`, `opencode`) — point `BENCH_AGENT` at one.
 - `.bench/hooks/` contains shared hook scripts used by harness adapters.
 - `.claude/` contains Claude Code adapter config. See `.claude/README.md`: Claude
   reads `.claude/skills/` and `.claude/commands/`, and those paths point at the
@@ -137,6 +139,18 @@ Codex phase adapters installed by Bench:
 - `bench gate` runs the oracle.
 - `bench worktree` opens a reusable isolated worktree.
 - `bench shift "<objective>"` runs the gated loop.
+
+## Harness adapter for the shift loop
+
+`bench shift` drives whatever harness `BENCH_AGENT` names: each iteration it runs
+the adapter executable with the generated prompt as its **single positional
+argument** and `BENCH_SHIFT=1` armed. There is no default — an unset `BENCH_AGENT`
+fails fast before the loop with a configure-your-adapter error. Reference adapters
+ship in `.bench/adapters/` (`claude`, `codex`, `opencode`); point `BENCH_AGENT` at
+one, or at your own wrapper that maps `$1` to your harness's noninteractive
+command. Use an absolute path or an on-`PATH` name; harness flags belong inside
+the wrapper — a multi-word `BENCH_AGENT` value is treated as one executable name
+and rejected.
 
 ## Capture
 

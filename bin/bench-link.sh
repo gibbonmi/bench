@@ -194,6 +194,7 @@ build_link_plan() {
   printf '%s\t%s\t%s\n' "$kit/.claude/settings.json" ".claude/settings.json" "file" >> "$plan"
   printf '%s\t%s\t%s\n' "$kit/.codex/hooks.json" ".codex/hooks.json" "file" >> "$plan"
   append_tree_to_plan "$kit/.bench/hooks" ".bench/hooks" "file" "$plan"
+  append_tree_to_plan "$kit/.bench/adapters" ".bench/adapters" "file" "$plan"
   append_tree_to_plan "$kit/.agents/commands" ".agents/commands" "file" "$plan"
   append_tree_to_plan "$kit/.agents/skills" ".agents/skills" "file" "$plan"
   append_tree_to_plan "$kit/.agents/commands" ".claude/commands" "adapter" "$plan"
