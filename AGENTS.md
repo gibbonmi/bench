@@ -21,3 +21,9 @@ This repo is the Bench kit itself — the platform files here are the source eve
 linked repo receives, so kit edits follow the `craft-synthesis` discipline and the
 leverage override in `craft-line`. The project profile is `projects/benchkit.md`;
 read it for the gate's shape, the tier binding, and cold-session notes.
+
+**Code standard — one source per fact.** Knowledge duplication is a defect: two
+derivations of the same fact (an enforcement and its advertisement, a parser and
+its count, a fixture harness pasted N times) must collapse to one source, and
+review grades diffs against this. Honest repetition of incidental text is fine
+where an abstraction would be worse; it's duplicated *knowledge* that drifts.
