@@ -34,7 +34,16 @@ is effort a coupled output (cheap+low / top+high) or an independent knob at
 each tier?
 
 ### Answer
-— (open)
+Hybrid. Three signals — spec precision, seam uncertainty, gate coverage —
+key the table, and the table only picks the *starting* tier; the escalation
+ladder (#5) corrects after gate feedback, so the table needs to be
+right-enough, not right. Tier + effort are a joint output per row (invariant
+#2 declares them together). Weak gate coverage bumps one tier — the up-bias
+that guards against confidently-wrong work sailing through cheap. All
+signals are proxies for likelihood-wrong × cost-of-wrong; per-project
+`Lines` sections may cache common routings as precomputed rows, but the
+taxonomy stays out of the rubric. Slots into the `/bench-implement-spec`
+workflow, where the line is already declared before the build.
 
 ## #3: Where does the rubric live?
 
@@ -43,12 +52,15 @@ Type: Grill
 
 ### Question
 Kit skill (generic guidance, e.g. `craft-line`), per-project `Lines` section,
-or both? Recommendation: both, following the kit's existing split — generic
-rubric as a skill, tier bindings and per-project overrides stay in
-`projects/<name>.md`.
+or both?
 
 ### Answer
-— (open)
+Three homes, each doing what it already does. A new kit skill (working name
+`craft-line`) holds the generic decision table and escalation ladder.
+`projects/<name>.md` `Lines` keeps the tier→model bindings, cached common
+routings, and the top-tier escalation opt-out. `/bench-implement-spec`'s
+existing "declare the line" step references the skill instead of restating
+it — a one-line change to the command, not a new phase.
 
 ## #4: What can hooks actually enforce, per harness?
 
@@ -80,7 +92,18 @@ bans silent escalation — is a pre-declared ladder standing approval, or does
 each move need the reviewer?
 
 ### Answer
-— (open)
+First red retries same-tier with the gate output fed back as guidance (most
+reds are fixable feedback, not capability gaps). Second red at the same tier
+escalates one tier. A delegate self-reporting that the seam is more
+uncertain than specced escalates immediately, no retry burned. Declaring the
+ladder as part of the line makes moves non-silent, and each actual move is
+still reported in one line for later audit. **Exception: any bump to the top
+tier always requires reviewer approval** — pause-and-ask by default, with a
+standing opt-out grantable per project in the `Lines` section. The ladder is
+only trusted where the gate is: weak gate coverage routes higher at the
+start (per #2) instead of relying on correction, because the gate misses
+untested semantics, wrong-seam design, and ungated prose work —
+`/bench-review-implementation` is the semantic net behind it.
 
 ## #6: How do tiers rebind for the three-tier frontier paradigm?
 
