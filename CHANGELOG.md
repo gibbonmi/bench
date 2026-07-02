@@ -7,6 +7,15 @@ one entry per `/bench-update-kit` or `/bench-integrate-learnings` run; don't rew
 
 ## Unreleased
 
+- **Learnings run (2026-07-02, scope: learnings).** Drained one open entry.
+  Promoted: quantified oracle promises must name their granularity — when a
+  spec's behavior or red-signal promise ranges over a set ("each check"), the
+  spec enumerates the set or states per-item vs per-class explicitly
+  (`/bench-write-spec` step 4). Sourced from the state-surface build reading
+  "each check bites" as per-class and review catching ~9 missing canaries.
+  Dogfood loop waived: prose-only spec-authoring guidance; the next real spec
+  is the dogfood.
+
 - **Learnings run (2026-07-02, scope: learnings).** Drained two open entries.
   Promoted: a batch approval covers per-spec sign-offs when the reviewer is
   unreachable — build-and-flag, with specs left as post-hoc veto surface and a

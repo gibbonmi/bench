@@ -74,7 +74,11 @@ loop honest.
    `why it catches the failure`. The red signal is the command or test that has
    already been run and failed because the mapped behavior is absent or wrong. If
    the behavior is already covered or cannot start red, say so in the row instead
-   of pretending it is TDD coverage.
+   of pretending it is TDD coverage. When a behavior or red-signal promise
+   quantifies over a set ("each check", "every parser"), enumerate the set or
+   state the granularity explicitly — per item or per class. An unenumerated
+   "each" lets the build pick the cheapest reading, and review is the wrong
+   place to catch that.
 
 5. **Walk the edge inventory.** Stories are happy-path shaped; this step generates
    the cases nobody declared. For each mapped behavior, walk the edge classes —
