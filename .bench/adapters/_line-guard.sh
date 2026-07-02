@@ -29,6 +29,7 @@ _bench_tier_value() {
   line="$(grep -E "^[[:space:]]*${key}=" "$file" 2>/dev/null | tail -n1)" || true
   line="${line#*=}"
   line="${line%$'\r'}"
+  line="${line%"${line##*[![:space:]]}"}"; line="${line#"${line%%[![:space:]]*}"}"
   line="${line#\"}"; line="${line%\"}"
   line="${line#\'}"; line="${line%\'}"
   printf '%s' "$line"

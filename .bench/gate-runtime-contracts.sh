@@ -521,9 +521,9 @@ rm -rf "$tmp"
     grep -qE '^exec ' "$f" || { echo "reference adapter $a does not exec its harness (exit code must pass through)"; exit 1; }
     grep -qF '"$1"' "$f" || { echo "reference adapter $a does not pass the prompt as \$1"; exit 1; }
   done
-  grep -qF 'claude -p "$1"' "$root/.bench/adapters/claude" || { echo "claude adapter does not map the prompt to claude -p"; exit 1; }
-  grep -qF 'codex exec "$1"' "$root/.bench/adapters/codex" || { echo "codex adapter does not map the prompt to codex exec"; exit 1; }
-  grep -qF 'opencode run "$1"' "$root/.bench/adapters/opencode" || { echo "opencode adapter does not map the prompt to opencode run"; exit 1; }
+  grep -qF 'claude -p -- "$1"' "$root/.bench/adapters/claude" || { echo "claude adapter does not map the prompt to claude -p (behind the -- sentinel)"; exit 1; }
+  grep -qF 'codex exec -- "$1"' "$root/.bench/adapters/codex" || { echo "codex adapter does not map the prompt to codex exec (behind the -- sentinel)"; exit 1; }
+  grep -qF 'opencode run -- "$1"' "$root/.bench/adapters/opencode" || { echo "opencode adapter does not map the prompt to opencode run (behind the -- sentinel)"; exit 1; }
 ) || err "reference adapter files contract failed"
 
 tmp="$(mktemp -d)"

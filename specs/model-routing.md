@@ -82,8 +82,9 @@ the skill.
 - **Hook:** new `.bench/hooks/check-agent-line.sh`, wired in
   `.claude/settings.json` under PreToolUse matcher `"Agent"` (Claude Code only;
   Codex has no Agent tool — its delegation flows through adapters). Reads stdin
-  JSON, compares the resolved model field against the three bindings by exact
-  string. Deny = JSON permissionDecision deny + reason naming the bound models.
+  JSON, compares the resolved model field against the tier bindings and any
+  declared aliases by exact string. Deny = exit 2 + stderr reason naming the
+  bound models and aliases, mirroring the sibling git guard's block mechanism.
   **Fail-open** on missing file, malformed JSON, or missing model field
   (stderr warning) — availability beats strictness; the gate, not the hook, is
   the oracle.
@@ -121,7 +122,10 @@ the skill.
 | 7 | hook allows stdin with a bound model | gate check: hook + allow fixture stdin | same check, allow assertion red pre-build | an over-eager hook that denies bound models bricks routing |
 | 8 | hook allows + warns when lines.env absent | gate check: hook run in temp dir without lines.env | assertion red pre-build | fail-closed here would brick every unrouted repo |
 | 8 (edge) | hook allows on malformed stdin JSON / missing model field | gate check: hook + malformed fixtures | assertion red pre-build | malformed input must not turn into a denial |
-| 7 (edge) | hook allows a declared alias, denies an undeclared one | gate check: hook + alias fixtures | observed live: hook denied `opus` and broke in-session delegation | the Agent tool only speaks aliases; without this row routing blocks itself |
+| 7 (edge) | hook allows a declared alias, denies an undeclared one | gate check: hook + alias fixtures | gate check red pre-fix | the Agent tool only speaks aliases; without this row routing blocks itself |
+| 4 (edge) | a malformed alias value (inline comment, stray token) turns the gate red | gate check + canary `alias-line-broken` | gate red on fixture | a comment-polluted alias silently re-bricks every in-session delegation |
+| 9 (edge) | dash-leading prompt reaches the harness as a positional | gate check: stubbed run with `--`-leading prompt | assertion red pre-fix | without the `--` sentinel a prompt like `--help` is consumed as a harness flag |
+| 9 (edge) | adapter fails closed when `_line-guard.sh` is missing | gate check: adapter copied beside no guard | assertion red pre-fix | an unguarded source would silently de-enforce routed repos |
 | 4, 11 | lines.env exists, parses, three tiers with model-id-shaped values | gate check; canary `lines-env-broken` (planted bad fixture goes red) | gate red on fixture | binding drift silently disarms both surfaces |
 | 7, 11 | settings.json wires `Agent` matcher → check-agent-line.sh | gate check; canary `agent-hook-unwired` | gate red on fixture | hook file without wiring is decorative |
 | 9 | claude adapter passes `--model "$BENCH_MODEL"` to stubbed binary | gate check: run adapter with PATH stub echoing argv | assertion red pre-build | silent flag-drop = undeclared delegation resumes |
@@ -150,9 +154,9 @@ re-run, hostile env):
   `lines.env` may declare `BENCH_ALIAS_TOP/MID/CHEAP`; a declared alias allows,
   an undeclared alias (deliberately: bare `sonnet` → excluded Sonnet 5) denies
   → coverage rows below. Adapters stay id-only — headless runs can pass full
-  ids, and Claude Code aliases would mistranslate to other harnesses.
-  (Discovered live: the original "exact ids only" cut denied every legitimate
-  in-session delegation.)
+  ids, and Claude Code aliases would mistranslate to other harnesses. Binding
+  values are trimmed of trailing whitespace/CR by every reader; an inline
+  comment on a binding line is a gate error, never silently stripped.
 - **Won't handle:** OpenCode hook layer (none exists; the adapter guard is its
   enforcement).
 - **Won't handle:** effort enforcement anywhere (no surface exposes it; skill

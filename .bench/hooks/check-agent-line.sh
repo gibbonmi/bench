@@ -53,6 +53,7 @@ tier_value() {
   line="$(grep -E "^[[:space:]]*${key}=" "$lines_env" 2>/dev/null | tail -n1)" || true
   line="${line#*=}"
   line="${line%$'\r'}"
+  line="${line%"${line##*[![:space:]]}"}"; line="${line#"${line%%[![:space:]]*}"}"
   line="${line#\"}"; line="${line%\"}"
   line="${line#\'}"; line="${line%\'}"
   printf '%s' "$line"

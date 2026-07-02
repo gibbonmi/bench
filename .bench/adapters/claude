@@ -2,10 +2,11 @@
 # Bench harness adapter: maps the shift prompt ($1) to Claude Code's headless mode.
 # The line guard binds the model to the declared line — in a routed repo
 # (.bench/lines.env present) BENCH_MODEL must name a bound tier or this refuses to
-# run; see _line-guard.sh and BENCH.md "Harness adapter for the shift loop".
-. "$(dirname "$0")/_line-guard.sh"
+# run; see _line-guard.sh and BENCH.md "Harness adapter for the shift loop". A
+# missing guard fails closed, and `--` keeps a dash-leading prompt positional.
+. "$(dirname "$0")/_line-guard.sh" || { echo "bench adapter: _line-guard.sh missing beside the adapter — refusing to run unguarded" >&2; exit 1; }
 bench_resolve_model
 if [ -n "$BENCH_RESOLVED_MODEL" ]; then
-  exec claude -p --model "$BENCH_RESOLVED_MODEL" "$1"
+  exec claude -p --model "$BENCH_RESOLVED_MODEL" -- "$1"
 fi
-exec claude -p "$1"
+exec claude -p -- "$1"
