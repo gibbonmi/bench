@@ -275,6 +275,64 @@ EOF
 ) || err "bench worktree lease/reuse contract failed"
 rm -rf "$tmp"
 
+# Lease hardening: claims are atomic and owned. A dead-pid or aged-out lease is
+# reclaimed; a live foreign lease is respected and survives a foreign release;
+# a fresh empty lease (writer mid-claim) is not stolen.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
+  printf '#!/usr/bin/env bash\n: "${BENCH_WT_RECORD:?}"\npwd >> "$BENCH_WT_RECORD"\n' > rec-shell
+  chmod +x rec-shell
+  record="$tmp/paths"
+  run_wt() { BENCH_HOME="$tmp/.bh" BENCH_WT_RECORD="$record" SHELL="$tmp/rec-shell" bash "$root/bin/bench.sh" worktree >/dev/null 2>&1; }
+  run_wt
+  P="$(head -1 "$record")"
+  lease="$(git -C "$P" rev-parse --git-path bench-lease)"
+  printf '4194300 2020-01-01T00:00:00Z\n' > "$lease"
+  run_wt   # dead pid → reclaim P
+  printf '%s 2026-01-01T00:00:00Z\n' "$$" > "$lease"
+  run_wt   # live foreign pid → leave P alone
+  [ -f "$lease" ] || { echo "live foreign lease was removed by a foreign release"; exit 1; }
+  : > "$lease"; touch -t 202001010000 "$lease"
+  run_wt   # aged-out empty (legacy/crash) lease → reclaim P
+  : > "$lease"
+  run_wt   # fresh empty lease (writer mid-claim) → leave P alone
+  rm -f "$lease"
+  mapfile -t paths < "$record"
+  [ "${#paths[@]}" = "5" ] || { echo "expected five worktree runs, got ${#paths[@]}"; exit 1; }
+  [ "${paths[1]}" = "$P" ] || { echo "dead-pid lease was not reclaimed"; exit 1; }
+  [ "${paths[2]}" != "$P" ] || { echo "live foreign lease was stolen"; exit 1; }
+  [ "${paths[3]}" = "$P" ] || { echo "aged-out empty lease was not reclaimed"; exit 1; }
+  [ "${paths[4]}" != "$P" ] || { echo "fresh empty lease was stolen"; exit 1; }
+) || err "bench worktree lease hardening contract failed"
+rm -rf "$tmp"
+
+# Concurrent acquires never share a worktree. Rendezvous shell: each holds its
+# lease until both invocations have recorded, so the two acquires overlap.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
+  cat > rv-shell <<'EOF'
+#!/usr/bin/env bash
+: "${BENCH_WT_RECORD:?}"
+pwd >> "$BENCH_WT_RECORD"
+for _ in $(seq 100); do
+  [ "$(grep -c . "$BENCH_WT_RECORD" 2>/dev/null)" -ge 2 ] && exit 0
+  sleep 0.1
+done
+exit 0
+EOF
+  chmod +x rv-shell
+  record="$tmp/paths"
+  BENCH_HOME="$tmp/.bh" BENCH_WT_RECORD="$record" SHELL="$tmp/rv-shell" bash "$root/bin/bench.sh" worktree >/dev/null 2>&1 &
+  BENCH_HOME="$tmp/.bh" BENCH_WT_RECORD="$record" SHELL="$tmp/rv-shell" bash "$root/bin/bench.sh" worktree >/dev/null 2>&1 &
+  wait
+  mapfile -t paths < "$record"
+  [ "${#paths[@]}" = "2" ] || { echo "concurrent worktree runs did not both complete"; exit 1; }
+  [ "${paths[0]}" != "${paths[1]}" ] || { echo "concurrent acquires shared a worktree"; exit 1; }
+) || err "bench worktree concurrent-acquire contract failed"
+rm -rf "$tmp"
+
 # shellcheck source=/dev/null
 . "$gate_dir/gate-runtime-git-contracts.sh"
 
