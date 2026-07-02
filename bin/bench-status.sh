@@ -33,11 +33,38 @@ structure_touched_since() {
   structure_check touched "$files"
 }
 
+# Reviewer-owned per-path overrides from .bench/structure.budgets: `<path> <n>`
+# per line, trailing `/` on the path means a directory file-count budget, `#`
+# comments and blanks ignored. The value replaces the global cap for that path
+# (lower as well as higher). Paths are matched exactly — no globs, a grant is a
+# named decision — and cannot contain spaces (the format splits on whitespace).
+structure_budgets_load() {
+  local file="$1" line p b
+  [[ -f "$file" ]] || return 0
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%%#*}"
+    [[ -z "${line//[[:space:]]/}" ]] && continue
+    read -r p b _ <<<"$line"
+    if [[ ! "${b:-}" =~ ^[0-9]+$ ]]; then
+      echo "structure.budgets: ignoring malformed line: $line" >&2
+      continue
+    fi
+    printf '%s %s\n' "$p" "$b"
+  done < "$file"
+}
+
+structure_budget_for() { # budgets, path, fallback
+  local hit
+  hit="$(printf '%s' "$1" | awk -v p="$2" '$1 == p { print $2; exit }')"
+  printf '%s\n' "${hit:-$3}"
+}
+
 structure_check() {
-  local mode="$1" scoped_files="$2" root max_lines max_files exts files violations=0
+  local mode="$1" scoped_files="$2" root max_lines max_files exts files violations=0 budgets
   root="$(repo_root)"
   max_lines="${BENCH_MAX_LINES:-400}"
   max_files="${BENCH_MAX_DIR_FILES:-12}"
+  budgets="$(structure_budgets_load "$root/.bench/structure.budgets")"
   exts='py|ts|tsx|js|jsx|go|rs|java|rb|kt|scala|cs|cpp|cc|c|h|hpp|sh'
   if [[ "$mode" == all ]]; then
     files=$(git -C "$root" ls-files 2>/dev/null | grep -E "\.($exts)\$" || true)
@@ -48,16 +75,18 @@ structure_check() {
   while IFS= read -r f; do
     [[ -z "$f" ]] && continue
     [[ -f "$root/$f" ]] || continue
-    local n; n=$(wc -l < "$root/$f" 2>/dev/null || echo 0)
-    if (( n > max_lines )); then
-      echo "FILE TOO LONG   $n lines (max $max_lines)   $f"; violations=$((violations+1))
+    local n cap; n=$(wc -l < "$root/$f" 2>/dev/null || echo 0)
+    cap="$(structure_budget_for "$budgets" "$f" "$max_lines")"
+    if (( n > cap )); then
+      echo "FILE TOO LONG   $n lines (max $cap)   $f"; violations=$((violations+1))
     fi
   done <<< "$files"
-  local current_dir="" dir="" dir_count=0 saw_dir=0
+  local current_dir="" dir="" dir_count=0 saw_dir=0 dir_cap
   while IFS= read -r dir; do
     if (( saw_dir == 0 )) || [[ "$dir" != "$current_dir" ]]; then
-      if (( saw_dir == 1 && dir_count > max_files )); then
-        echo "DIR CROWDED     $dir_count source files (max $max_files), group into modules   $current_dir/"; violations=$((violations+1))
+      dir_cap="$(structure_budget_for "$budgets" "$current_dir/" "$max_files")"
+      if (( saw_dir == 1 && dir_count > dir_cap )); then
+        echo "DIR CROWDED     $dir_count source files (max $dir_cap), group into modules   $current_dir/"; violations=$((violations+1))
       fi
       current_dir="$dir"
       dir_count=1
@@ -73,8 +102,9 @@ structure_check() {
       printf '%s\n' "$dir"
     done <<< "$files" | sort
   )
-  if (( saw_dir == 1 && dir_count > max_files )); then
-    echo "DIR CROWDED     $dir_count source files (max $max_files), group into modules   $current_dir/"; violations=$((violations+1))
+  dir_cap="$(structure_budget_for "$budgets" "$current_dir/" "$max_files")"
+  if (( saw_dir == 1 && dir_count > dir_cap )); then
+    echo "DIR CROWDED     $dir_count source files (max $dir_cap), group into modules   $current_dir/"; violations=$((violations+1))
   fi
   if (( violations > 0 )); then
     echo "structural debt: $violations issue(s). Split along responsibility (see the craft-seams skill); don't fragment to beat the number." >&2

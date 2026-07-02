@@ -103,9 +103,11 @@ HTML report). It's an optional upgrade, never a dependency.
   `part_b` to dodge the limit is worse than the long file: it scatters one concept
   across files with no interface between them. If you can't name the responsibility
   the split isolates, don't split — the file may legitimately be one deep module.
-  There is no per-file budget: either raise the global cap (`BENCH_MAX_LINES`) as a
-  deliberate reviewer-approved change, or record the exception in the learnings
-  journal for the reviewer to rule on.
+  A genuinely deep module can earn a per-path grant: propose a line in
+  `.bench/structure.budgets` (`<path> <max>`, trailing `/` for a directory) for
+  the reviewer to approve — the file is reviewer-owned; never edit it yourself.
+  Raising the global cap (`BENCH_MAX_LINES`) weakens the check everywhere and is
+  the wrong tool for one file.
 - **A crowded directory is an ungrouped module.** Thirty files in one dir means
   several modules are hiding in a flat namespace. Group related files into a package
   with a clear entry point; the package *is* the seam.

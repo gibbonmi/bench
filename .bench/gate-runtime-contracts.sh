@@ -211,6 +211,28 @@ tmp="$(mktemp -d)"
 ) || err "bench structure shell-file contract failed"
 rm -rf "$tmp"
 
+# Per-path budgets: .bench/structure.budgets grants (or tightens) named paths;
+# the value replaces the global cap. Malformed lines warn and fall through to
+# the global cap; the file's last line parses without a trailing newline.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench sub
+  seq 401 | sed 's/^/x=/' > big.sh
+  seq 200 | sed 's/^/y=/' > mid.sh
+  for i in $(seq 13); do printf 'z=1\n' > "sub/f$i.sh"; done
+  printf '# reviewer grants\nbig.sh 500\nsub/ 20\nweird abc\nmid.sh 100' > .bench/structure.budgets
+  gci add -A; gci commit -q -m s
+  if out="$(bash "$root/bin/bench.sh" structure 2>&1)"; then
+    echo "override below the global cap did not fail structure"; exit 1
+  fi
+  grep -qF 'ignoring malformed line' <<<"$out" || { echo "malformed budgets line was not warned about"; exit 1; }
+  if grep -qF 'big.sh' <<<"$out"; then echo "granted file budget was not applied"; exit 1; fi
+  if grep -qF 'DIR CROWDED' <<<"$out"; then echo "granted dir budget was not applied"; exit 1; fi
+  grep -qF '200 lines (max 100)   mid.sh' <<<"$out" || { echo "tightening override (on an unterminated last line) was not applied"; exit 1; }
+) || err "bench structure budgets contract failed"
+rm -rf "$tmp"
+
 tmp="$(mktemp -d)"
 (
   set -u; cd "$tmp"; git init -q
