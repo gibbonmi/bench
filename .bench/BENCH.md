@@ -222,6 +222,10 @@ Codex phase adapters installed by Bench:
 - `bench learnings` lists open journal entries as a TOON table (date, title).
 - `bench maps` lists unresolved decision-map tickets as TOON (map, ticket, type, state).
 - `bench guards` lists every guard's deny surface as TOON (guard, boundary, denies).
+- `bench diff` prints the review base (recorded pre-shift HEAD, or merge-base with
+  the default branch) and the changed files as TOON.
+- `bench coverage <spec>` prints a spec's acceptance-coverage state and rows as
+  TOON; `--check` validates the map (the gate's mode).
 - `bench gate` runs the oracle.
 - `bench worktree` opens a reusable isolated worktree.
 - `bench shift "<objective>"` runs the gated loop.

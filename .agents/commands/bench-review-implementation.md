@@ -22,13 +22,17 @@ and rule violations. It cannot tell whether you built the *right* thing the *rig
 way. `/bench-review-implementation` is the semantic pass that can — and it's advisory: it surfaces
 findings for you, it has no authority to call anything done. The gate and you do.
 
-Run it on the branch diff against its merge-base, on three axes that stay separate.
+Run it on the branch diff against its true base, on three axes that stay separate.
 
 ## Process
 
-1. **Pin the diff.** `git diff <base>...HEAD` (three-dot, against merge-base) and
-   `git log <base>..HEAD --oneline`. Default base is the project's default branch.
-   Confirm the ref resolves and the diff is non-empty before going further.
+1. **Pin the diff.** Resolve the base and the changed-file list with `bench diff`:
+   it prefers the branch's recorded pre-shift base and falls back to merge-base
+   with the default branch, and its `method:` line says which happened — a shift
+   stacked on unmerged work reviews its own commits, not the feature's. Then read
+   the content with `git diff <base>...HEAD` (three-dot) and
+   `git log <base>..HEAD --oneline` using the base it printed. Confirm the diff
+   is non-empty before going further.
 
 2. **Find the sources.** Spec: `specs/<feature>.md` for this work (or the path I
    give you). Standards: `AGENTS.md` and `.bench/BENCH.md` — the working agreement
@@ -44,9 +48,9 @@ Run it on the branch diff against its merge-base, on three axes that stay separa
    - **Spec** — (a) requirements the spec asked for that are missing or partial;
      (b) behavior in the diff that wasn't asked for (scope creep); (c) requirements
      that look implemented but wrong. If the spec has an acceptance coverage map,
-     also audit each coverage row: missing, partial, falsely-classified, or
-     unclosed mapped behavior is a Spec finding. Quote the spec line for each
-     finding.
+     also audit each coverage row (`bench coverage <spec>` lists them): missing,
+     partial, falsely-classified, or unclosed mapped behavior is a Spec finding.
+     Quote the spec line for each finding.
    - **Coverage axis** — the adversarial pass: read the diff and name concrete
      inputs or states that would break it and that no acceptance row or existing
      test exercises. Think hostile: error path, empty/absent input, boundary

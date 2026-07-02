@@ -17,17 +17,23 @@ AGENTS.md harness — that portability is the product.
   diff.
 - **The `bench` CLI subcommands** (`gate`, `worktree`, `shift`, `init`, `link`,
   `models`, `structure`, `idea`, `roadmap`, `status`, `learnings`, `maps`,
-  `guards`). The operational shell surface.
+  `guards`, `diff`, `coverage`). The operational shell surface.
   Stable command names and exit codes are the contract; the implementation behind each is
   free to change. Keep gate resolution (`.bench/gate.sh` → `$BENCH_GATE` → auto-detect) in
   one place.
-- **The AXI query surface** (`bench learnings`, `bench maps`, `bench guards`, and
-  the shared flat-table TOON emitter behind them). The agent-facing read-only
+- **The AXI query surface** (`bench learnings`, `bench maps`, `bench guards`,
+  `bench diff`, `bench coverage`, and the shared flat-table TOON emitter behind
+  them). The agent-facing read-only
   surface, and the AXI-conformant half of the hybrid output contract: TOON stdout,
   definitive empty states, structured errors on stdout, exit 0/1/2. Gate-tested by
-  the AXI contract fragment. Guard manifests come from each guard script's own
+  the AXI contract fragments. Guard manifests come from each guard script's own
   `--describe` (generated from the rules it enforces — never a registry), and
   `bench guards --brief` is the surface the SessionStart hook injects.
+  `bench diff` is the single source of review-base truth: the shift loop records
+  the pre-shift HEAD in `branch.<name>.benchBase`, `diff` resolves that key first
+  and merge-base with the default branch as fallback. `bench coverage --check` is
+  the one parser for the acceptance-coverage-map convention; the gate's docs
+  fragment consumes it instead of carrying its own.
 - **The ambient dashboard** (`bench status`). The single deterministic renderer the
   SessionStart hook and the user both call: it ranks the signals that fire on a fixed
   severity ladder and leads with the next action. Reads gate state from the **gate cache**

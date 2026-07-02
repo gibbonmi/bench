@@ -137,6 +137,9 @@ shift_loop() {
   root="$wt"
   branch="bench/shift-$(date +%Y%m%d-%H%M%S)"
   git -C "$root" switch -q -c "$branch"
+  # The true review base for this branch. `bench diff` resolves it from here;
+  # worktrees share repo config, so the key is visible wherever review runs.
+  git -C "$root" config "branch.$branch.benchBase" "$base"
   printf '%s\n' "$objective" > "$root/.bench-objective"
   : > "$root/.bench-notes.md"   # carried between iterations so each learns from the last
   BENCH_SHIFT_ROOT="$root"
@@ -340,6 +343,8 @@ case "${1:-help}" in
   learnings) shift; learnings "$@" ;;
   maps)     shift; maps "$@" ;;
   guards)   shift; guards "$@" ;;
+  diff)     shift; bench_diff "$@" ;;
+  coverage) shift; coverage "$@" ;;
   *) cat <<EOF
 bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench link [copy|symlink]  safely wire the kit into this repo for every harness
@@ -352,6 +357,8 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench learnings            open journal entries as a TOON table (date, title)
   bench maps                 unresolved decision-map tickets as TOON (map, ticket, type, state)
   bench guards               every guard's deny surface as TOON (guard, boundary, denies)
+  bench diff                 review base (recorded or merge-base) + changed files as TOON
+  bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
   bench gate                 run the project gate (the oracle)
   bench worktree             warm, isolated worktree subshell
   bench shift "<objective>"  gated loop in a pooled worktree; commit on green

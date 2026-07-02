@@ -25,7 +25,7 @@ adapter import shim, not a source of truth.
   `craft-design-system`, `craft-skills`, `craft-grill`, `craft-synthesis`
 - CLI: `bench link`, `bench init`, `bench models`, `bench structure`, `bench idea`,
   `bench roadmap`, `bench status`, `bench learnings`, `bench maps`, `bench guards`,
-  `bench gate`, `bench worktree`, `bench shift`
+  `bench diff`, `bench coverage`, `bench gate`, `bench worktree`, `bench shift`
 - Hooks: shared `.bench/hooks/stop.sh`, `.bench/hooks/session-start.sh`, and
   `.bench/hooks/block-dangerous-git.sh`, with Claude and Codex adapters
 - Profiles: linked repos own their profile. The kit-development profiles under

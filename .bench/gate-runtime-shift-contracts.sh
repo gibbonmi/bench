@@ -50,6 +50,8 @@ EOF
   [ "$(gci rev-parse HEAD)" = "$before_head" ] || { echo "shift moved main checkout HEAD"; exit 1; }
   [ "$(gci status --porcelain)" = "$before_status" ] || { echo "shift dirtied the main checkout"; exit 1; }
   gci cat-file -e "$branch:shifted.txt" || { echo "shift branch does not contain the committed work"; exit 1; }
+  [ "$(gci config "branch.$branch.benchBase")" = "$before_head" ] \
+    || { echo "shift did not record the pre-shift HEAD in branch.<name>.benchBase"; exit 1; }
   [ "$(gci rev-list --count "$before_head..$branch")" = "1" ] || { echo "shift branch has the wrong commit count"; exit 1; }
   if gci worktree list --porcelain | grep -qF "branch refs/heads/$branch"; then echo "released worktree still holds the shift branch"; exit 1; fi
   [ -z "$(find "$home" -name bench-lease -print 2>/dev/null)" ] || { echo "shift worktree lease was not released"; exit 1; }
