@@ -29,6 +29,14 @@ UI work and neither replaces the other.
    design decision, not a build decision. It goes to the design source, not into
    the component.
 
+   ```css
+   /* good — the value has a home in the design source */
+   color: var(--color-accent);
+
+   /* bad — the hex has no home; when the palette moves, this stays behind */
+   color: #3b82f6;
+   ```
+
 2. **Compose canonical components; never regenerate or restyle them.** If a needed
    variant doesn't exist, **stop** and get the variant added to the design source
    first, then build against it.

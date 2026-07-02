@@ -24,6 +24,22 @@ such a tool toward these rules. Full spec: https://axi.md
    enough to cover the common case in one call. Long bodies go in detail views.
    Offer `--fields` for explicit extras.
 
+   The same list, both ways:
+
+   ```
+   issues[2]{id,title,status}:
+     41,Fix login redirect,open
+     42,Rate-limit webhooks,closed
+   ```
+   Good — three TOON fields; the agent skims the whole page in one glance.
+
+   ```
+   [{"id":41,"iid":41,"project_id":7,"title":"Fix login redirect","state":"open",
+     "labels":[],"author":{"name":"…"},"web_url":"…","created_at":"…"}]
+   ```
+   Bad — ten-field JSON rows; every extra field is tokens × row count the agent
+   pays before it can answer.
+
 3. **Truncate, don't omit.** In detail views, show a preview of large fields plus
    the total size and the escape hatch (`--full`). Never silently drop a field;
    never dump the whole thing by default.
@@ -36,7 +52,8 @@ such a tool toward these rules. Full spec: https://axi.md
    clear the command succeeded and the absence is the answer.
 
 6. **Structured errors and honest exit codes.** Errors go to **stdout** in the
-   same structured format, with an actionable suggestion that references your
+   same structured format (the agent reads stdout; an error routed to stderr is
+   invisible to it), with an actionable suggestion that references your
    CLI's own commands — never a leaked dependency stack trace. Mutations are
    idempotent (closing an already-closed thing is a no-op, exit 0). Reserve
    nonzero for genuinely unsatisfiable intent. No interactive prompts — every

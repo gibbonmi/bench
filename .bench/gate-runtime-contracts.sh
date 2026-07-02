@@ -108,7 +108,7 @@ rm -rf "$tmp"
 tmp="$(mktemp -d)"
 (
   set -u; cd "$tmp"; git init -q
-  mkdir -p .bench; printf -- '- a [open]\n' > .bench/learnings.md
+  mkdir -p .bench; printf -- '## 2026-01-01 — a  [open]\n' > .bench/learnings.md
   seq 401 | sed 's/^/x = /' > big.py
   mkdir decisions; printf '### Answer\n— (deferred)\n' > decisions/x.md
   gci add -A; gci commit -q -m s
@@ -193,11 +193,15 @@ rm -rf "$tmp"
 tmp="$(mktemp -d)"
 (
   set -u; cd "$tmp"; git init -q
-  mkdir -p .bench; printf -- '- a [open]\n' > .bench/learnings.md; gci add -A; gci commit -q -m s
+  mkdir -p .bench; printf -- '## 2026-01-01 — a  [open]\n' > .bench/learnings.md; gci add -A; gci commit -q -m s
   hi="$(BENCH_LEARNINGS_FLOOR=2 bash "$root/bin/bench.sh" status)"
   if grep -qF '/bench-integrate-learnings' <<<"$hi"; then echo "floor=2 still surfaced a single open learning"; exit 1; fi
   lo="$(BENCH_LEARNINGS_FLOOR=1 bash "$root/bin/bench.sh" status)"
   grep -qF '/bench-integrate-learnings' <<<"$lo" || { echo "floor=1 did not surface the open learning"; exit 1; }
+  # The scaffold's format-example heading must not count as an open entry.
+  printf -- '## <date> — <short title>  [open]\n' > .bench/learnings.md
+  tp="$(BENCH_LEARNINGS_FLOOR=1 bash "$root/bin/bench.sh" status)"
+  if grep -qF '/bench-integrate-learnings' <<<"$tp"; then echo "template [open] line counted as an open learning"; exit 1; fi
 ) || err "bench status learnings-floor contract failed"
 rm -rf "$tmp"
 

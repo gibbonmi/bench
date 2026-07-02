@@ -63,9 +63,10 @@ hit the cap, stop and report.
 - Before the final gate, emit a compact coverage table for every acceptance row:
   `green`, `already covered`, or `not TDD-able`. If any mapped behavior is missing,
   partial, or unclassified, the build is not ready for the gate.
-- Once the gate is green, run `/bench-review-implementation` — the semantic two-axis pass (Standards +
-  Spec) that catches what the gate can't: right thing built the wrong way, or wrong
-  thing built cleanly. Read its findings, fix what matters, re-run the gate.
+- Once the gate is green, run `/bench-review-implementation` — the semantic three-axis
+  pass (Standards + Spec + Coverage) that catches what the gate can't: right thing
+  built the wrong way, wrong thing built cleanly, or breaking inputs nothing
+  exercises. Read its findings, fix what matters, re-run the gate.
 - Then summarize what changed in plain language and hand back. I own the merge;
   propose it, don't perform it.
 

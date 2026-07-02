@@ -203,7 +203,7 @@ status() {
   fi
 
   local floor open=0; floor="${BENCH_LEARNINGS_FLOOR:-1}"
-  [[ -f "$root/.bench/learnings.md" ]] && open="$(grep -c '\[open\]' "$root/.bench/learnings.md" 2>/dev/null || true)"
+  [[ -f "$root/.bench/learnings.md" ]] && open="$(grep -cE '^## [0-9]{4}-[0-9]{2}-[0-9]{2}.*\[open\]' "$root/.bench/learnings.md" 2>/dev/null || true)"
   if [[ "${open:-0}" -ge "$floor" && "${open:-0}" -gt 0 ]]; then
     rows+=("3|learnings|$open open|/bench-integrate-learnings")
   fi
