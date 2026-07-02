@@ -11,3 +11,4 @@
 - 2026-07-01  2026-09-01 or next frontier shift: revisit Sonnet 5 for the mid/session tier seat (intro pricing ends; see decisions/model-routing.md #6)
 - 2026-07-01  guard self-disclosure: agents keep colliding with guards they can't see. Each guard/hook exposes a describe mode (machine-readable manifest of what it denies and why), 'bench guards' aggregates them, and SessionStart injects the summary into context — so the model learns the block surface up front instead of by collision, and the advertisement is generated from the same rules the hooks enforce (can't drift). Grill via /bench-shape-idea before building.
 - 2026-07-02  Auto-generate the BENCH.md skills index from skill frontmatter (obsoletes gate index-sync checks 5a/5b)
+- 2026-07-02  bench gate should record its verdict to bench-last-gate so a manual run clears the stale flag
