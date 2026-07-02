@@ -42,6 +42,13 @@ confidently wrong answer, buy insurance at the start instead of trusting the
 ladder to correct later. Under-escalation is the expensive error; a wrong
 downgrade is caught cheaply by a covered gate.
 
+A fourth signal, **leverage**, overrides the table: an artifact that steers
+future generation — a skill, a command phase, shared platform rules — routes
+top + high regardless of the rows above. Gate coverage on guidance prose is
+structural at best, a defect is invisible and multiplies through every session
+that loads the artifact, and the edit itself costs few tokens. This is the one
+place where routing cheap is the expensive choice.
+
 Check `Lines` for a cached routing before assessing from scratch — common
 work types in a project get precomputed rows. Cache hits still get declared.
 

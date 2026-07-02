@@ -53,6 +53,16 @@ Rank material by how immediately the agent needs it:
 Inline what every branch needs; push behind a pointer what only some branches reach.
 **Co-location**: keep a concept's definition, rules, and caveats under one heading.
 
+## Write for the weakest reader
+
+A skill is executed by every tier in the rotation, including the cheapest
+delegate on a headless run. Test each instruction against that reader: could
+the weakest model in the binding act on this sentence unambiguously, without
+the judgment you had while writing it? An instruction that needs the author's
+context to interpret is a defect that compounds — the skill fires thousands of
+times, and every ambiguous reading multiplies. (Routing for skill *edits*
+lives in `craft-line`; this rule is about the prose itself.)
+
 ## Pruning
 
 - **Single source of truth** — one authoritative place per meaning, so a change is a

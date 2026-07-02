@@ -137,9 +137,10 @@ to mid (declared); headless shift runs target `claude-sonnet-4-6` via
 pauses and asks the reviewer (the ladder is in `craft-line`). Tier moves still
 get declared — no silent escalation.
 
-- **Skill / command / doc authoring** → **top model, high effort**. Prose that shapes
-  agent behavior is the genuinely uncertain, high-leverage seam; the
-  `craft-skills` and `craft-adr` skills apply. Spend here.
+- **Skill / command / doc authoring** → **top model, high effort**. This is the
+  leverage override in `craft-line`: guidance prose compounds through every
+  session that loads it while the edit costs few tokens. The `craft-skills` and
+  `craft-adr` skills apply. Spend here.
 - **`bench` CLI shell plumbing** → cheap model, low–medium effort at the known seam.
   Mechanical once the gate-resolution and worktree-pool shapes exist.
 - **Gate / conformance logic** → mid effort. Correctness of the oracle matters more

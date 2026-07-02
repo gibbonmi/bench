@@ -17,6 +17,32 @@ An entry only becomes `[resolved]` via /bench-integrate-learnings.
 
 <!-- entries below -->
 
+## 2026-07-02 — spec lines assessed from scratch past a cached routing  [open]
+- **What happened:** The `shared-sections` spec routed its guidance-prose stories
+  mid tier from the decision table, missing that `projects/benchkit.md` Lines
+  already cached "skill / command / doc authoring → top model, high effort". The
+  reviewer's compounding-quality argument re-derived a rule the profile already
+  held. craft-line says to check the cache before assessing from scratch.
+- **Right behavior:** When routing per story, read the profile's cached routings
+  first and cite the cache hit in the story's line sentence; assess from the
+  table only for work types the cache doesn't cover.
+- **Proposed rule change:** none needed beyond what shipped with this session —
+  the leverage override now lives in `craft-line` itself, so the rule is no
+  longer only a per-project cache entry that's easy to miss.
+
+## 2026-07-02 — out-of-scope estimates priced in human time  [open]
+- **What happened:** The `shared-sections` spec estimated two cuts at ~1–1.5 h and
+  ~45 min; honest agent time was ~15 and ~10 min. The reviewer caught it. Inflated
+  estimates make deferrals look cheaper to grant than they are and dodge the
+  under-30-minute no-deferral rule.
+- **Right behavior:** Derive the estimate instead of guessing: agent time is
+  dominated by verification, so count files touched and gate iterations
+  (edits + runs × gate duration), not imagined typing time. When a small cut is
+  still legitimate, defend it by the decision it carries (a reviewer call), never
+  by its size.
+- **Proposed rule change:** `/bench-write-spec` step 3 could require estimates in
+  the form "<n> edits, <n> gate runs" so a vibes number can't pass as a price.
+
 ## 2026-07-02 — Codex phase adapters leaked into Claude's skill menu  [open]
 - **What happened:** Linking the whole `.agents/skills/` tree into `.claude/skills/`
   gave Claude Code every `$bench-*` phase adapter as a skill alongside the
