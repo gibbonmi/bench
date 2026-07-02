@@ -85,7 +85,22 @@ coverage checks, then formalize row anchors and the status vocabulary the comman
 reports. Output: a short summary asset proposing the convention.
 
 ### Answer
-— (open)
+No new convention — one already exists and is gate-enforced: the canonical
+`### Acceptance coverage map` heading, the exact five-column header (story,
+behavior, seam, red signal, why it catches the failure), non-empty cells, story
+references validated against the spec's `## User stories` numbering (integers,
+lists, ranges, `edge…` rows), and a `historical` opt-out marker. Canonical prose
+home: the write-spec phase, step 4. `bench coverage <spec>` parses that
+convention unchanged.
+
+Status vocabulary is mechanical only: per-spec state (mapped / historical /
+no-map) plus the extracted rows for attribution. The judgment statuses the
+review phase assigns (missing, partial, falsely-classified) stay with review —
+the parser grounds that audit; it does not perform it.
+
+One-parser-per-signal applies: the gate's embedded coverage check and the CLI
+must not become two derivations of the same tables. The gate re-points to the
+shared parser (the wave-1 status/structure precedent); mechanism is spec detail.
 
 ## #8: Does the build slice, and in what order?
 
