@@ -332,3 +332,20 @@ Codex adapter drift and prose-only marker mentions._
   "commit on green" with "stage the declared files explicitly, then commit on
   green"; unexplained working-tree files block the commit and go to the
   reviewer.
+
+## 2026-07-01 — agents keep colliding with guards they cannot see  [open]
+- **What happened:** Several instances across sessions of the running agent
+  attempting commands the hook layers deny — destructive git forms, pushes to
+  the default branch, guarded amends. These are not model errors: the agent has
+  no way to learn the block surface except by hitting it, because the guards
+  advertise nothing until they fire. Each collision costs a turn and reads like
+  a failure when it is actually the enforcement layer working as designed.
+- **Right behavior:** The agent should know what it can and can't do up front.
+  Deny-with-reason is the recovery channel, not the discovery channel — the
+  active guard set belongs in context at session start, stated from the same
+  rules the hooks actually enforce so the advertisement can never drift from
+  the enforcement.
+- **Proposed rule change:** Parked on the roadmap as guard self-disclosure:
+  each guard exposes a describe mode listing what it denies, a `bench guards`
+  command aggregates them, and SessionStart injects the summary. To be grilled
+  via /bench-shape-idea before any build.
