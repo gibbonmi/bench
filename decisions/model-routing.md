@@ -78,7 +78,30 @@ have an equivalent? What's the harness-independent backstop, if any? Output:
 a short asset mapping the enforcement surface.
 
 ### Answer
-— (open)
+Enforcement is feasible on both surfaces; effort is enforceable nowhere and
+stays declaration discipline.
+
+- **Claude Code (Agent tool):** a PreToolUse hook with matcher `"Agent"`
+  fires on every in-session delegation — including headless `claude -p` and
+  inside subagent sessions. Its stdin carries the prompt and
+  `resolvedModel` (the actual model that will run; effort is not exposed).
+  The hook can deny with a reason fed back to the model, ask the reviewer,
+  or allow. The robust check is deterministic: resolvedModel must match a
+  tier binding in `projects/<name>.md`. (`transcript_path` is available, so
+  grepping for a declared line is possible but brittle — not the primary
+  check.) Recommended mode: deny with reason, so the model self-corrects by
+  re-delegating on a bound tier without interrupting the reviewer.
+- **Codex:** hooks support PreToolUse but only a `Bash` matcher, and Codex
+  has no Agent-style tool — its delegation flows through shell, i.e.
+  through the kit-owned adapter scripts. Enforcement belongs in the
+  adapter, not a fragile command-regex hook.
+- **`BENCH_AGENT` adapters (harness-independent backstop):** the three
+  reference adapters are kit-owned one-liners (`claude -p`, `codex exec`,
+  `opencode run`); the contract today is prompt-as-single-arg +
+  `BENCH_SHIFT=1`, no model selection at all. Extend the contract with
+  `BENCH_MODEL`/`BENCH_EFFORT` env vars that each adapter maps to its
+  harness flag (e.g. `claude -p --model …`); the adapter refuses or
+  warns-and-logs when they're unset. Works identically on every harness.
 
 ## #5: What triggers a tier move mid-task (escalation ladder)?
 
@@ -118,7 +141,23 @@ everything down? Which Sonnet is tier-3, given the Sonnet 5 exclusion? Where
 does Haiku land — fourth tier or out?
 
 ### Answer
-— (open)
+Binding as of 2026-07-01: **top = Fable 5, mid = Opus 4.8 (session model),
+cheap = Sonnet 4.6**. Haiku 4.5 leaves the line rotation. Sonnet 5 stays
+excluded: Opus-level benchmarks with a higher token burn rate makes it a
+poor cheap tier, and its orchestration strength makes it a future *mid*
+candidate, not a workhorse. Foreseen next rotation, when the frontier
+shifts: Fable-class top, Sonnet 5-class mid/session, Haiku-class cheap —
+which is a `Lines` edit plus `bench models` refresh, not a rubric change;
+the table routes roles, not models. Three tiers, not four: Haiku 4.5 cannot
+take an `effort` value (breaks the tier+effort joint output) and a fourth
+tier adds a routing distinction the signals can't reliably make. Sonnet 5
+stays out of the mid seat for now — its nominal 40% discount vs Opus 4.8
+shrinks to ~25% after its new tokenizer (~30% more tokens for the same
+text) and shrinks further when intro pricing ends; the mid seat buys routing
+judgment, not raw throughput. **Revisit Sonnet 5 for the mid seat on
+2026-09-01 (intro-pricing end) or at the next frontier shift, whichever
+comes first.** Binding caveat: the Agent tool's bare `sonnet` alias resolves
+to Sonnet 5, so cheap-tier delegates target `claude-sonnet-4-6` explicitly.
 
 ## #7: Is a tier-2 orchestrator the right session model?
 

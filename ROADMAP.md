@@ -8,3 +8,4 @@
 - 2026-07-01  status: stop nagging about warm pooled worktrees as 'extra'
 - 2026-07-01  domain hostile-input checklist library beyond shell (web/API/UI profile templates for the edge inventory)
 - 2026-07-01  kit repo lacks its own pre-push guard (never bench-linked): install the managed hook or amend BENCH.md's enforcement claim for this repo
+- 2026-07-01  2026-09-01 or next frontier shift: revisit Sonnet 5 for the mid/session tier seat (intro pricing ends; see decisions/model-routing.md #6)
