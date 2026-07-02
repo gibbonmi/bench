@@ -1,4 +1,3 @@
-- 2026-06-30  /spec: visualize the seam — emit an ASCII data-flow diagram (inputs → renderer/seam → outputs → triggers, with the test-attach point marked) so the seam is legible before approving /build
 - 2026-06-30  bench-craft-skills: should it require good/bad output examples in new skills (Pocock-style contrastive examples for interfaces)? Content change to the skill, not gated.
 - 2026-07-01  Build a semantic parser for future specs' acceptance coverage maps, so Bench can detect missing or malformed coverage rows instead of only anchoring workflow prose.
 - 2026-07-01  Skill and command suggestions should use the active harness prefix: suggest slash-command forms only where '/' is valid, and suggest Codex '$bench-*' adapters in Codex instead of '/bench-*', so the recommendation surface matches what the reviewer can invoke.

@@ -199,6 +199,8 @@ require_anchor ".agents/commands/bench-final-check.md" "BENCH_GATE"
 #       craft-tdd must treat stories as the breadth floor, craft-seams must bind seam
 #       height to failure-mode observability, and review must hunt coverage gaps via
 #       the Coverage axis. Structural anchors only; semantics stay with review/dogfood.
+require_anchor ".agents/commands/bench-write-spec.md" "seam diagram"
+require_anchor ".agents/commands/bench-write-spec.md" "tests attach here"
 require_anchor ".agents/commands/bench-write-spec.md" "edge inventory"
 require_anchor ".agents/commands/bench-write-spec.md" "Won't handle"
 require_anchor ".agents/commands/bench-write-spec.md" "hostile-input checklist"

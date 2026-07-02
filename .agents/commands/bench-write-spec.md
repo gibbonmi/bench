@@ -12,8 +12,8 @@ decisions, pre-agreed seams, testing decisions, and the gate that defines done.
 
 ## Exit handoff
 
-Close by showing the approval table for user stories, seams, acceptance coverage,
-and out of scope. Stop for reviewer sign-off. After approval, the recommended next
+Close by showing the approval table for user stories, seams (each with its seam
+diagram), acceptance coverage, and out of scope. Stop for reviewer sign-off. After approval, the recommended next
 command is `/bench-implement-spec` for an interactive build, or `bench shift` only
 when the spec is locked and the work is mechanical enough for the autonomous loop.
 
@@ -39,7 +39,11 @@ loop honest.
    existing seam to a new one. Use the highest seam that exercises the real
    behavior — the fewer seams, the better; one is ideal. (See the `craft-seams` skill.)
    State the seams explicitly and check they match my expectation before writing
-   the spec.
+   the spec. Then make each seam legible: draw the small ASCII data-flow the
+   template's seam diagram section shows — inputs, the unit the seam fronts,
+   outputs, the trigger that invokes it, and the marked test-attach point — so I
+   can veto a wrong seam by looking at a picture instead of reconstructing the
+   flow from prose.
 
 3. **Price every cut, in your time — not a human's.** Before anything is deferred,
    estimate it in *agent* time, because that's the real cost here. The instinct to
@@ -126,6 +130,21 @@ schema, a type) may be inlined, trimmed to the decision-rich part.
 - Which seams get tested, and the prior art (similar tests already in the repo).
 - The gate command this feature must pass (defaults to the project gate).
 
+### Seam diagram
+One small ASCII data-flow per tested seam — the seam must be legible as a
+picture before the build is approved. Show what flows in, the unit the seam
+fronts, what flows out, who or what triggers it, and mark the test-attach point:
+
+    trigger: <who/what invokes this>
+        │
+        ▼
+    <input>  ──▶  [ <unit behind the seam> ]  ──▶  <output>
+    <input>  ──▶  [                        ]
+                      ◀ tests attach here: <how a test drives and observes it>
+
+Keep it to one screen per seam; a diagram that needs scrolling is usually a seam
+placed too low.
+
 ### Acceptance coverage map
 | story | behavior | seam | red signal | why it catches the failure |
 |---|---|---|---|---|
@@ -157,8 +176,8 @@ When the spec is written, the build has a fixed target: the user stories set the
 breadth, the seams set where tests live, and the gate sets what "done" means.
 
 Before any build starts, emit a scannable approval table — user stories (each
-with its line) / seams / acceptance coverage (edge rows and won't-handle lines
-included) / out of scope —
+with its line) / seams (with their seam diagrams) / acceptance coverage (edge
+rows and won't-handle lines included) / out of scope —
 and pause for my sign-off. The full spec file
 stays as written; the table is the at-a-glance veto surface. Only after I approve,
 lead with the recommended next action — `/bench-implement-spec` interactively, or a
