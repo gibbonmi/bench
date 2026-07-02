@@ -31,3 +31,21 @@ An entry leaves this file only via /bench-integrate-learnings.
 - **Proposed rule change:** Decide whether a batch approval covers per-spec
   sign-offs when the reviewer goes AFK mid-run (build-and-flag), or whether
   spec approval is always a hard stop.
+
+## 2026-07-02 — inline top-tier implementation of shift-able builds  [open]
+- **What happened:** Rolling the roadmap, the session model (top tier) both
+  wrote the four specs and implemented all four inline — a ~45-minute burn in a
+  large session context. Two of the builds (skills-index autogen, structure
+  budgets) had locked specs, cheap-rated stories, and fully gate-observable
+  coverage: they were headless-shift candidates on the cheap binding.
+- **Right behavior:** Spec inline at top tier (that is the leverage). Then
+  split by verification cost, not difficulty: route a build to `bench shift`
+  on the cheap binding when every story's line is cheap AND the coverage map
+  is fully gate-observable; stay inline when mid+ judgment is likely
+  (protocol design, grammar discovered from red output) or the task is
+  smaller than its own handoff. The expensive shape to avoid is
+  iterate-in-a-huge-context-on-the-top-model, not top-tier work per se.
+- **Proposed rule change:** Add the routing test to `craft-line`: "delegate
+  the implementation when the spec's story lines are all cheap and the gate
+  fully observes the coverage map; the handoff must be cheaper than the
+  iterations it moves."
