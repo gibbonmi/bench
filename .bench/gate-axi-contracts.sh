@@ -48,6 +48,38 @@ if [ -f "$root/.bench/hooks/session-start.sh" ]; then
     || err "session-start --describe is not classified informational (denies: nothing)"
 fi
 
+# The git guard fails closed when its sibling analyzer file (git-guard.py) is
+# absent: copied alone into a fixture, the hook's --describe still exits 0 but
+# reports the manifest unavailable, and the enforcement path refuses authority
+# (BLOCKED, exit 2) instead of silently allowing destructive git.
+if [ -f "$root/.bench/hooks/block-dangerous-git.sh" ]; then
+  contract "block-dangerous-git analyzer-missing fail-closed contract" <<'BODY'
+    cp "$root/.bench/hooks/block-dangerous-git.sh" hook.sh
+    out="$(bash hook.sh --describe </dev/null)"; rc=$?
+    [ "$rc" = "0" ] || { echo "analyzer-missing --describe did not exit 0 (exit $rc)"; exit 1; }
+    grep -qxF 'denies: manifest unavailable (analyzer missing)' <<<"$out" \
+      || { echo "analyzer-missing --describe denies line absent: $out"; exit 1; }
+    berr="$(printf '{"tool_input":{"command":"git push"}}' | bash hook.sh 2>&1 >/dev/null)" && rc=0 || rc=$?
+    [ "$rc" = "2" ] || { echo "analyzer-missing enforcement did not exit 2 (exit $rc)"; exit 1; }
+    grep -qF 'BLOCKED' <<<"$berr" || { echo "analyzer-missing enforcement did not say BLOCKED: $berr"; exit 1; }
+BODY
+
+  # A present-but-EMPTY analyzer is explicitly the same deny branch: an empty
+  # program exits 0 printing nothing, which the allow path would misread as
+  # "no verdict" and grant authority.
+  contract "block-dangerous-git empty-analyzer fail-closed contract" <<'BODY'
+    cp "$root/.bench/hooks/block-dangerous-git.sh" hook.sh
+    : > git-guard.py
+    out="$(bash hook.sh --describe </dev/null)"; rc=$?
+    [ "$rc" = "0" ] || { echo "empty-analyzer --describe did not exit 0 (exit $rc)"; exit 1; }
+    grep -qxF 'denies: manifest unavailable (analyzer missing)' <<<"$out" \
+      || { echo "empty-analyzer --describe denies line absent: $out"; exit 1; }
+    berr="$(printf '{"tool_input":{"command":"git push"}}' | bash hook.sh 2>&1 >/dev/null)" && rc=0 || rc=$?
+    [ "$rc" = "2" ] || { echo "empty-analyzer enforcement did not exit 2 (exit $rc)"; exit 1; }
+    grep -qF 'BLOCKED' <<<"$berr" || { echo "empty-analyzer enforcement did not say BLOCKED: $berr"; exit 1; }
+BODY
+fi
+
 [ -f "$root/bin/bench.sh" ] || { err "bench CLI missing (AXI contracts skipped)"; return 0 2>/dev/null || exit 0; }
 
 # A journal with two real entry headings → count-2 TOON table with a row each.
