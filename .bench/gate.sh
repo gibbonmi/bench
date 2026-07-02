@@ -36,6 +36,10 @@ done
 bad_refs="$(grep -oE '\.bench/(gate|done)(\.sh)?' bin/bench.sh | grep -vE '\.sh$' | sort -u || true)"
 [ -z "$bad_refs" ] || err "bin/bench.sh has extensionless gate/done refs ($(echo "$bad_refs" | tr '\n' ' ')); the contract is .sh"
 
+# The shared fixture harness the contract fragments call (`contract` — one
+# source for provision/report/cleanup); must precede every fragment.
+# shellcheck source=/dev/null
+. "$gate_dir/gate-contract-runner.sh"
 # shellcheck source=/dev/null
 . "$gate_dir/gate-link-contracts.sh"
 # shellcheck source=/dev/null
@@ -46,6 +50,8 @@ bad_refs="$(grep -oE '\.bench/(gate|done)(\.sh)?' bin/bench.sh | grep -vE '\.sh$
 . "$gate_dir/gate-line-contracts.sh"
 # shellcheck source=/dev/null
 . "$gate_dir/gate-axi-contracts.sh"
+# shellcheck source=/dev/null
+. "$gate_dir/gate-axi-guards-contracts.sh"
 # shellcheck source=/dev/null
 . "$gate_dir/gate-axi-wave2-contracts.sh"
 

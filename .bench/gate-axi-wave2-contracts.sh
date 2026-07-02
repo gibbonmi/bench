@@ -2,15 +2,14 @@
 # resolution + changed-file table) and `bench coverage` (acceptance-coverage-map
 # extraction + --check validation). Split from gate-axi-contracts.sh to respect
 # the structure budget; the gate sources it in its own shell (shares $root,
-# $gate_dir, err(), fail). Spec: specs/second-wave-parsers.md.
+# $gate_dir, err(), fail), and fixture provisioning is the contract runner's
+# (gate-contract-runner.sh). Spec: specs/second-wave-parsers.md.
 [ -f "$root/bin/bench.sh" ] || { err "bench CLI missing (wave-2 AXI contracts skipped)"; return 0 2>/dev/null || exit 0; }
 
 gciw() { git -c user.email=bench@local -c user.name=bench "$@"; }
 
 # ---- diff: recorded base beats merge-base on a stacked branch (story 2) ------
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q
+contract "AXI diff recorded-base contract" <<'BODY'
   printf 'r\n' > README.md; gciw add -A; gciw commit -q -m c1
   gciw branch -m main
   gciw switch -qc feature
@@ -38,14 +37,11 @@ tmp="$(mktemp -d)"
     || { echo "divergent recorded sha not reported as fallback: $out"; exit 1; }
   grep -qxF "base: $(gciw merge-base main HEAD)" <<<"$out" \
     || { echo "divergent-key fallback base is not the merge-base: $out"; exit 1; }
-) || err "AXI diff recorded-base contract failed"
-rm -rf "$tmp"
+BODY
 
 # ---- diff: merge-base fallback, unreachable-sha fallback, spaces, subdir,
 # ---- empty diff (stories 2, 3) -----------------------------------------------
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q
+contract "AXI diff fallback/shape contract" <<'BODY'
   printf 'r\n' > README.md; gciw add -A; gciw commit -q -m c1
   gciw branch -m main
   c1="$(gciw rev-parse HEAD)"
@@ -73,13 +69,10 @@ tmp="$(mktemp -d)"
   out="$(bash "$root/bin/bench.sh" diff)"; rc=$?
   [ "$rc" = "0" ] || { echo "empty diff did not exit 0 (exit $rc)"; exit 1; }
   grep -qxF 'files[0]{status,path}:' <<<"$out" || { echo "empty diff not definitive: $out"; exit 1; }
-) || err "AXI diff fallback/shape contract failed"
-rm -rf "$tmp"
+BODY
 
 # ---- diff: error posture (story 4) -------------------------------------------
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"
+contract "AXI diff error-posture contract" --no-repo <<'BODY'
   out="$(bash "$root/bin/bench.sh" diff 2>/dev/null)" && rc=0 || rc=$?
   [ "$rc" = "1" ] || { echo "diff outside a repo did not exit 1 (exit $rc)"; exit 1; }
   grep -q '^error: ' <<<"$out" || { echo "diff outside a repo not a structured error: $out"; exit 1; }
@@ -92,13 +85,10 @@ tmp="$(mktemp -d)"
   out="$(bash "$root/bin/bench.sh" diff bogusarg)" && rc=0 || rc=$?
   [ "$rc" = "2" ] || { echo "diff unknown arg exit not 2 (got $rc)"; exit 1; }
   grep -qi 'usage' <<<"$out" || { echo "diff unknown arg did not print usage: $out"; exit 1; }
-) || err "AXI diff error-posture contract failed"
-rm -rf "$tmp"
+BODY
 
 # ---- coverage: mapped extraction with hostile cells (story 5) ----------------
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q
+contract "AXI coverage extraction contract" <<'BODY'
   mkdir specs
   cat > specs/t.md <<'SPEC'
 # t
@@ -131,13 +121,10 @@ SPEC
   [ "$rc" = "0" ] || { echo "CRLF spec did not exit 0 (exit $rc): $out"; exit 1; }
   grep -qxF 'state: mapped' <<<"$out" || { echo "CRLF spec state not mapped: $out"; exit 1; }
   grep -qxF 'rows[2]{story,seam,red_signal}:' <<<"$out" || { echo "CRLF rows misparsed: $out"; exit 1; }
-) || err "AXI coverage extraction contract failed"
-rm -rf "$tmp"
+BODY
 
 # ---- coverage: historical / no-map / error posture (stories 5, 6) ------------
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q
+contract "AXI coverage state/error contract" <<'BODY'
   mkdir specs
   printf '# h\n\n<!-- coverage-map: historical -->\n\n### Acceptance coverage map\n| a |\n' > specs/h.md
   out="$(bash "$root/bin/bench.sh" coverage specs/h.md)"; rc=$?
@@ -156,13 +143,10 @@ tmp="$(mktemp -d)"
   out="$(bash "$root/bin/bench.sh" coverage specs/absent.md)" && rc=0 || rc=$?
   [ "$rc" = "1" ] || { echo "nonexistent spec exit not 1 (got $rc)"; exit 1; }
   grep -q '^error: ' <<<"$out" || { echo "nonexistent spec not a structured error: $out"; exit 1; }
-) || err "AXI coverage state/error contract failed"
-rm -rf "$tmp"
+BODY
 
 # ---- coverage --check: every validation rule survives the port (story 7) -----
-tmp="$(mktemp -d)"
-(
-  set -u; cd "$tmp"; git init -q
+contract "AXI coverage --check validation contract" <<'BODY'
   mkdir specs
   stories='## User stories
 1. As a, I want b, so c.
@@ -211,5 +195,4 @@ tmp="$(mktemp -d)"
   out="$(bash "$root/bin/bench.sh" coverage --check specs/b6.md)" && rc=0 || rc=$?
   [ "$rc" = "1" ] || { echo "unrecognized-ref --check exit not 1 (got $rc)"; exit 1; }
   grep -qF "has an unrecognized story reference 'x'" <<<"$out" || { echo "unrecognized-ref phrasing lost: $out"; exit 1; }
-) || err "AXI coverage --check validation contract failed"
-rm -rf "$tmp"
+BODY

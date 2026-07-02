@@ -1,0 +1,6 @@
+# Reviewer-owned structure-budget grants: `<path> <n>` per line; a trailing `/`
+# on the path means a directory file-count budget. Exact paths only — a grant is
+# a named decision.
+# Gate fragments + contract runner; granted 2026-07-02 (dry-structure-cleanup).
+# The next file added to .bench/ re-asks.
+.bench/ 13
