@@ -22,11 +22,44 @@
 # repo keeps bare `sonnet` (which resolves to an excluded model) out.
 #
 # Wire under hooks.PreToolUse with matcher "Agent". Exit 2 denies and returns the
-# message to the agent.
+# message to the agent. `--describe` (first arg) prints the guard manifest and
+# exits 0 without reading stdin, so `bench guards` can aggregate the deny surface;
+# the denies clause reads the live .bench/lines.env binding it enforces against
+# (or `unrouted` when no binding is present), so it cannot drift from enforcement.
 set -euo pipefail
 
 warn() { echo "WARNING: check-agent-line: $1 — allowing delegation." >&2; }
 deny() { echo "DENIED: $1" >&2; exit 2; }
+
+# Read a tier value from lines.env by grep, not by sourcing (a repo file). Take the
+# last assignment for the key, strip surrounding quotes and any trailing carriage
+# return. Defined ahead of --describe so both paths read the binding identically.
+tier_value() {
+  local key="$1" line
+  line="$(grep -E "^[[:space:]]*${key}=" "$lines_env" 2>/dev/null | tail -n1)" || true
+  line="${line#*=}"
+  line="${line%$'\r'}"
+  line="${line%"${line##*[![:space:]]}"}"; line="${line#"${line%%[![:space:]]*}"}"
+  line="${line#\"}"; line="${line%\"}"
+  line="${line#\'}"; line="${line%\'}"
+  printf '%s' "$line"
+}
+
+if [[ "${1:-}" == "--describe" ]]; then
+  root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+  lines_env="${root:+$root/}.bench/lines.env"
+  printf 'name: check-agent-line\n'
+  printf 'boundary: PreToolUse:Agent\n'
+  if [[ -f "$lines_env" ]]; then
+    top="$(tier_value BENCH_TIER_TOP)"; mid="$(tier_value BENCH_TIER_MID)"; cheap="$(tier_value BENCH_TIER_CHEAP)"
+    printf 'denies: Agent delegation off the bound line (top=%s mid=%s cheap=%s)\n' \
+      "${top:--}" "${mid:--}" "${cheap:--}"
+  else
+    printf 'denies: unrouted (no .bench/lines.env binding)\n'
+  fi
+  printf 'why: invariant #2 forbids silent escalation; a delegate runs on a bound tier or not at all\n'
+  exit 0
+fi
 
 input="$(cat 2>/dev/null || true)"
 
@@ -45,20 +78,8 @@ root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 lines_env="${root:+$root/}.bench/lines.env"
 [[ -f "$lines_env" ]] || { warn "no .bench/lines.env at repo root"; exit 0; }
 
-# Parse the tier values by grep, not by sourcing: lines.env is a repo file and a
-# blind `source` would execute anything in it. Take the last assignment for each
-# key, strip surrounding quotes and any trailing carriage return.
-tier_value() {
-  local key="$1" line
-  line="$(grep -E "^[[:space:]]*${key}=" "$lines_env" 2>/dev/null | tail -n1)" || true
-  line="${line#*=}"
-  line="${line%$'\r'}"
-  line="${line%"${line##*[![:space:]]}"}"; line="${line#"${line%%[![:space:]]*}"}"
-  line="${line#\"}"; line="${line%\"}"
-  line="${line#\'}"; line="${line%\'}"
-  printf '%s' "$line"
-}
-
+# Parse the tier values by grep, not by sourcing (tier_value is defined above the
+# --describe branch so both paths read the binding the same way).
 top="$(tier_value BENCH_TIER_TOP)"
 mid="$(tier_value BENCH_TIER_MID)"
 cheap="$(tier_value BENCH_TIER_CHEAP)"

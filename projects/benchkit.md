@@ -16,10 +16,18 @@ AGENTS.md harness — that portability is the product.
   conformant tree (green) and a broken one (red); never by trusting a reading of the
   diff.
 - **The `bench` CLI subcommands** (`gate`, `worktree`, `shift`, `init`, `link`,
-  `models`, `structure`, `idea`, `roadmap`, `status`). The operational shell surface.
+  `models`, `structure`, `idea`, `roadmap`, `status`, `learnings`, `maps`,
+  `guards`). The operational shell surface.
   Stable command names and exit codes are the contract; the implementation behind each is
   free to change. Keep gate resolution (`.bench/gate.sh` → `$BENCH_GATE` → auto-detect) in
   one place.
+- **The AXI query surface** (`bench learnings`, `bench maps`, `bench guards`, and
+  the shared flat-table TOON emitter behind them). The agent-facing read-only
+  surface, and the AXI-conformant half of the hybrid output contract: TOON stdout,
+  definitive empty states, structured errors on stdout, exit 0/1/2. Gate-tested by
+  the AXI contract fragment. Guard manifests come from each guard script's own
+  `--describe` (generated from the rules it enforces — never a registry), and
+  `bench guards --brief` is the surface the SessionStart hook injects.
 - **The ambient dashboard** (`bench status`). The single deterministic renderer the
   SessionStart hook and the user both call: it ranks the signals that fire on a fixed
   severity ladder and leads with the next action. Reads gate state from the **gate cache**
@@ -105,7 +113,11 @@ The oracle for a kit, in layers (all green today):
    prove fresh installs, existing `AGENTS.md` preservation, relink idempotence,
    same-name conflicts, modified-managed file protection, Codex/Claude hook adapters,
    shared hooks, and default copy mode.
-6. **Canary (meta)** — the gate runs itself against deliberately-broken fixtures in
+6. **AXI query-surface contracts** — the query subcommands' hybrid-contract half:
+   TOON-shaped stdout, definitive empty states, structured stdout errors, honest
+   exit codes, and each guard's `--describe` self-conformance, exercised in
+   throwaway fixture repos.
+7. **Canary (meta)** — the gate runs itself against deliberately-broken fixtures in
    `tests/canary/` and asserts each goes red with its targeted error substring. Proves
    the checks above still *bite*: a check rotted into an always-pass fails here. This
    is the gate guarding the gate. Fixtures hide dot-dirs behind a `dot-` prefix (e.g.

@@ -25,6 +25,13 @@ structure() {
   structure_check all ""
 }
 
+# The single violations parser shared by `structure` and `status`: the count of
+# FILE TOO LONG / DIR CROWDED lines from the one detector (structure_check), the one
+# source both read so their view of structural debt cannot diverge.
+structure_violation_count() {
+  structure_check all "" 2>/dev/null | grep -cE '^(FILE TOO LONG|DIR CROWDED)' || true
+}
+
 structure_touched_since() {
   local root base files
   root="$(repo_root)"
@@ -202,21 +209,21 @@ status() {
     rows+=("2|worktree|$wtc active worktree(s)|resume or clean up (bench worktree)")
   fi
 
-  local floor open=0; floor="${BENCH_LEARNINGS_FLOOR:-1}"
-  [[ -f "$root/.bench/learnings.md" ]] && open="$(grep -cE '^## [0-9]{4}-[0-9]{2}-[0-9]{2}.*\[open\]' "$root/.bench/learnings.md" 2>/dev/null || true)"
+  local floor open; floor="${BENCH_LEARNINGS_FLOOR:-1}"
+  open="$(learnings_open_count "$root/.bench/learnings.md")"
   if [[ "${open:-0}" -ge "$floor" && "${open:-0}" -gt 0 ]]; then
     rows+=("3|learnings|$open open|/bench-integrate-learnings")
   fi
 
-  local sviol; sviol="$(structure 2>/dev/null | grep -cE '^(FILE TOO LONG|DIR CROWDED)' || true)"
+  local sviol; sviol="$(structure_violation_count)"
   if [[ "${sviol:-0}" -gt 0 ]]; then
     rows+=("4|structure|$sviol issue(s)|split (craft-seams)")
   fi
 
-  local maps=0
-  if [[ -d "$root/decisions" ]]; then
-    maps="$(grep -lE '^— \((open|deferred)|GRILL DEFERRED' "$root"/decisions/*.md 2>/dev/null | wc -l | tr -d ' ' || true)"
-  fi
+  # Unresolved decision maps come from the same parser `bench maps` lists tickets
+  # through (maps_unresolved_count in bench-query.sh), so status's count and the
+  # command's rows are one derivation, not two that can drift.
+  local maps; maps="$(maps_unresolved_count "$root")"
   if [[ "${maps:-0}" -gt 0 ]]; then
     rows+=("5|decisions|$maps unresolved map(s)|craft-grill → /bench-write-spec")
   fi

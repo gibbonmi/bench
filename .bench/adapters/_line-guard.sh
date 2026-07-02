@@ -74,3 +74,31 @@ bench_resolve_model() {
   BENCH_RESOLVED_MODEL="$BENCH_MODEL"
   return 0
 }
+
+# Guard manifest for `bench guards`. This file is SOURCED by the adapters, so the
+# describe path must not run on source: it fires only when the file is executed
+# directly with --describe (BASH_SOURCE[0] == $0). Sourcing an adapter leaves both
+# functions defined and runs nothing here, preserving the sourcing contract. The
+# denies clause reads the live lines.env binding (or `unrouted`), like the Agent hook.
+bench_line_guard_describe() {
+  local root lines_env top mid cheap
+  root="$(git rev-parse --show-toplevel 2>/dev/null)" || true
+  lines_env="${root:+$root/}.bench/lines.env"
+  printf 'name: _line-guard\n'
+  printf 'boundary: ShiftAdapter\n'
+  if [ -f "$lines_env" ]; then
+    top="$(_bench_tier_value BENCH_TIER_TOP "$lines_env")"
+    mid="$(_bench_tier_value BENCH_TIER_MID "$lines_env")"
+    cheap="$(_bench_tier_value BENCH_TIER_CHEAP "$lines_env")"
+    printf 'denies: headless shift on a model off the bound line (top=%s mid=%s cheap=%s)\n' \
+      "${top:--}" "${mid:--}" "${cheap:--}"
+  else
+    printf 'denies: unrouted (no .bench/lines.env binding)\n'
+  fi
+  printf 'why: invariant #2 requires a declared line; a routed shift refuses an unbound BENCH_MODEL\n'
+}
+
+if [ "${BASH_SOURCE[0]}" = "$0" ] && [ "${1:-}" = "--describe" ]; then
+  bench_line_guard_describe
+  exit 0
+fi

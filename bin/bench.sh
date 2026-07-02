@@ -271,7 +271,9 @@ EOF
 # Learnings — usage journal
 
 Append one entry when you deviate from the workflow, make a judgment call you're
-unsure about, or catch a should-have-asked in hindsight. You capture; the reviewer
+unsure about, catch a should-have-asked in hindsight, or catch yourself assembling
+the same ad-hoc check a second time (a codification candidate — name the `bench`
+subcommand it wants to be). You capture; the reviewer
 decides. `/bench-integrate-learnings` reviews the open entries, promotes the
 generalizable ones into the kit with sign-off, and prunes them: a resolved entry
 leaves this file, and its verdict (promoted or dismissed, one line of why) is
@@ -321,6 +323,8 @@ BENCH_BIN_DIR="$(dirname "$(resolve_script_path)")"
 . "$BENCH_BIN_DIR/bench-status.sh"
 # shellcheck source=/dev/null
 . "$BENCH_BIN_DIR/bench-worktree.sh"
+# shellcheck source=/dev/null
+. "$BENCH_BIN_DIR/bench-query.sh"
 
 case "${1:-help}" in
   gate)     run_gate ;;
@@ -333,6 +337,9 @@ case "${1:-help}" in
   idea)     shift; idea "$@" ;;
   roadmap)  roadmap ;;
   status)   status ;;
+  learnings) shift; learnings "$@" ;;
+  maps)     shift; maps "$@" ;;
+  guards)   shift; guards "$@" ;;
   *) cat <<EOF
 bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench link [copy|symlink]  safely wire the kit into this repo for every harness
@@ -342,6 +349,9 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench idea "<text>"        park an out-of-scope idea in ROADMAP.md (commit to nothing)
   bench roadmap              list parked ideas
   bench status               ambient dashboard: what needs attention + the next action
+  bench learnings            open journal entries as a TOON table (date, title)
+  bench maps                 unresolved decision-map tickets as TOON (map, ticket, type, state)
+  bench guards               every guard's deny surface as TOON (guard, boundary, denies)
   bench gate                 run the project gate (the oracle)
   bench worktree             warm, isolated worktree subshell
   bench shift "<objective>"  gated loop in a pooled worktree; commit on green

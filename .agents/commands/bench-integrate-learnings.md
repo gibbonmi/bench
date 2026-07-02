@@ -25,9 +25,10 @@ which syncs against upstream. It has nothing to do with the source repos. It
 
 ## 1. Drain the journal (the input)
 
-- Read `.bench/learnings.md`. Each **open** entry is a candidate sourced from how the
+- Run `bench learnings` for the open-entry table, then read those entries in
+  `.bench/learnings.md`. Each **open** entry is a candidate sourced from how the
   kit actually behaved in real work — a deviation, a should-have-asked, a recurring
-  friction. Tag every candidate `learnings`.
+  friction, a check assembled by hand twice. Tag every candidate `learnings`.
 - Group entries that point at the same fix so one change resolves several, and note
   any that are one-off context rather than a general rule (those get dismissed, not
   promoted).

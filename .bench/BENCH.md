@@ -219,6 +219,9 @@ Codex phase adapters installed by Bench:
 - `bench idea "<text>"` parks an idea on the roadmap, committing to nothing.
 - `bench roadmap` lists the parked ideas.
 - `bench status` prints the ambient dashboard.
+- `bench learnings` lists open journal entries as a TOON table (date, title).
+- `bench maps` lists unresolved decision-map tickets as TOON (map, ticket, type, state).
+- `bench guards` lists every guard's deny surface as TOON (guard, boundary, denies).
 - `bench gate` runs the oracle.
 - `bench worktree` opens a reusable isolated worktree.
 - `bench shift "<objective>"` runs the gated loop.

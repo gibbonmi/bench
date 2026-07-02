@@ -1,6 +1,6 @@
 ---
 name: craft-cli
-description: Design standards for building CLI tools that agents drive through the shell — TOON output, minimal schemas, structured errors, ambient context. Use whenever building, modifying, or reviewing any agent-facing CLI whose project declares AXI conformance. Not for tools with their own declared output contract (bench itself: plain text, stderr errors, documented exit codes). Reach for this on any command output, flag, error message, or exit code in an AXI-conformant tool.
+description: Design standards for building CLI tools that agents drive through the shell — TOON output, minimal schemas, structured errors, ambient context. Use whenever building, modifying, or reviewing any agent-facing CLI whose project declares AXI conformance. Not for surfaces with their own declared output contract — bench's operational commands keep plain text, stderr errors, and documented exit codes, while its query subcommands (learnings, maps, guards) conform to AXI. Reach for this on any command output, flag, error message, or exit code in an AXI-conformant surface.
 index: building an agent-facing CLI
 ---
 
@@ -9,9 +9,11 @@ index: building an agent-facing CLI
 Standards for a CLI an agent uses by shell execution. The goal is higher accuracy
 at lower token cost than either a raw CLI or an MCP server. In a project that
 declares AXI conformance, treat these as the conformance target the gate checks.
-A tool with its own documented output contract (bench's plain-text
-stderr/exit-code contract, for one) is out of this skill's scope; do not "fix"
-such a tool toward these rules. Full spec: https://axi.md
+A surface with its own documented output contract is out of this skill's scope;
+do not "fix" it toward these rules. The contract attaches to the surface, not
+the binary: bench's operational commands keep their plain-text stderr/exit-code
+contract, while its query subcommands (`learnings`, `maps`, `guards`) conform
+to AXI and are gate-checked against it. Full spec: https://axi.md
 
 ## The principles
 
