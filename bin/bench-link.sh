@@ -80,6 +80,25 @@ manifest_owned_clean() {
   [[ "$old" == "$now" ]]
 }
 
+bench_claude_md() {
+  printf '# Bench\n\nCanonical agreement in AGENTS.md; platform rules in .bench/BENCH.md.\n\n@AGENTS.md\n@.bench/BENCH.md\n'
+}
+
+legacy_claude_md() {
+  printf '# Bench\n\nCanonical agreement in AGENTS.md.\n\n@AGENTS.md\n'
+}
+
+# Write CLAUDE.md when absent, and retrofit ONLY the exact file an older bench
+# link wrote (it never enters the manifest, so this equality check is the whole
+# ownership test) — any other content is project-owned and stays untouched.
+install_claude_md() {
+  local root="$1"
+  if [[ ! -e "$root/CLAUDE.md" ]] \
+     || [[ "$(cat "$root/CLAUDE.md" 2>/dev/null)" == "$(legacy_claude_md)" ]]; then
+    bench_claude_md > "$root/CLAUDE.md"
+  fi
+}
+
 bench_agents_block() {
   cat <<'EOF'
 <!-- bench:start -->
@@ -322,7 +341,7 @@ link() {
   build_link_plan "$kit" "$plan"
   preflight_link "$root" "$plan" || { rm -f "$plan"; return 1; }
   write_agents_block "$root"
-  [[ -e "$root/CLAUDE.md" ]] || printf '# Bench\n\nCanonical agreement in AGENTS.md; platform rules in .bench/BENCH.md.\n\n@AGENTS.md\n@.bench/BENCH.md\n' > "$root/CLAUDE.md"
+  install_claude_md "$root"
   install_plan "$root" "$mode" "$plan"
   rm -f "$plan"
   install_git_hook "$root" || return 1

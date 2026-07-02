@@ -51,6 +51,13 @@ tmp="$(mktemp -d)"
   [ ! -L .agents/commands/bench-implement-spec.md ] || { echo "default link mode symlinked portable commands"; exit 1; }
   bash "$root/bin/bench.sh" link >/dev/null 2>&1
   [ "$(count_literal '<!-- bench:start -->' AGENTS.md)" = "1" ] || { echo "relink duplicated managed Bench block"; exit 1; }
+  printf '# Bench\n\nCanonical agreement in AGENTS.md.\n\n@AGENTS.md\n' > CLAUDE.md
+  bash "$root/bin/bench.sh" link >/dev/null 2>&1
+  grep -qF '@.bench/BENCH.md' CLAUDE.md || { echo "relink did not retrofit the legacy bench-generated CLAUDE.md"; exit 1; }
+  printf '# Custom\n\nproject-owned claude config\n' > CLAUDE.md
+  bash "$root/bin/bench.sh" link >/dev/null 2>&1
+  grep -qF 'project-owned claude config' CLAUDE.md || { echo "relink rewrote a project-owned CLAUDE.md"; exit 1; }
+  ! grep -qF '@.bench/BENCH.md' CLAUDE.md || { echo "relink injected an import into a project-owned CLAUDE.md"; exit 1; }
 ) || err "bench link safe fresh/relink contract failed ($(cat "$tmp/link.out" 2>/dev/null | tail -n 1))"
 rm -rf "$tmp"
 

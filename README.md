@@ -244,7 +244,7 @@ there — Bench builds on the same substrate, so adopt what's there rather than
 restarting. `bench link` won't clobber an existing `CONTEXT.md`, `docs/adr/`, or
 project-owned `AGENTS.md`; it appends or replaces only the managed Bench block,
 adds Bench's portable skills and commands alongside non-conflicting project assets,
-and writes the `CLAUDE.md` import only if one doesn't exist. The pieces line up directly: a Pocock
+and writes the `CLAUDE.md` imports when absent (retrofitting only the exact file an older link wrote — an edited `CLAUDE.md` is project-owned and stays untouched). The pieces line up directly: a Pocock
 `CONTEXT.md` is read as-is (Bench's cold-session convention is the same file), and
 `docs/adr/` is exactly where Bench's `craft-adr` skill already writes, so your decision
 records carry over untouched. Where Pocock's `setup-matt-pocock-skills` recorded an
