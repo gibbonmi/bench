@@ -17,7 +17,7 @@ fail=0
 err() { echo "gate: $*" >&2; fail=1; }
 
 # 1. Shell scripts parse.
-for f in bin/*.sh .bench/gate-*.sh .bench/hooks/*.sh; do
+for f in bin/*.sh .bench/gate-*.sh .bench/skills-index.sh .bench/hooks/*.sh; do
   bash -n "$f" || err "bash syntax error in $f"
 done
 
@@ -115,18 +115,10 @@ done
 
 # 5. Kit conformance — the .bench/BENCH.md index (the shipped operating guide)
 #    stays in sync with disk, both directions.
-#    a) every skill dir is indexed in .bench/BENCH.md. Match the index-line form
-#       (skills/<name>/SKILL.md), not the bare name — BENCH.md is prose-heavy and
-#       a name surviving in a sentence must not green a deleted index line.
-for d in .agents/skills/*/; do
-  name="$(basename "$d")"
-  [ -f ".agents/commands/$name.md" ] && continue # command adapters are documented in .bench/BENCH.md
-  grep -q "skills/$name/SKILL\.md" .bench/BENCH.md || err "skill '$name' on disk but not referenced in .bench/BENCH.md"
-done
-#    b) every skill the index names exists on disk
-for name in $(grep -oE 'skills/[a-z0-9-]+/SKILL\.md' .bench/BENCH.md | sed -E 's#skills/([a-z0-9-]+)/SKILL\.md#\1#' | sort -u); do
-  [ -d ".agents/skills/$name" ] || err ".bench/BENCH.md indexes skill '$name' with no .agents/skills/$name on disk"
-done
+#    a+b) the skills index is generated from skill frontmatter; verify the
+#       committed block equals the generated one (presence, wording, and order),
+#       with drift attributed per skill. Replaces the old two-way name checks.
+bash "$gate_dir/skills-index.sh" --check || fail=1
 #    c) every command file is referenced as /name in .bench/BENCH.md
 for f in .agents/commands/*.md; do
   name="$(basename "$f" .md)"

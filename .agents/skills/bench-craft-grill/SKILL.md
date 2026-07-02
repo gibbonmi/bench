@@ -1,6 +1,7 @@
 ---
 name: craft-grill
 description: Disciplined one-question-at-a-time elicitation to surface a decision or a spec. Use during /bench-shape-idea tickets, before /bench-write-spec when requirements are fuzzy, or any time I say "grill me" or the work can't proceed until an open question is resolved. Reach for this instead of asking five questions at once.
+index: surfacing a decision one question at a time
 ---
 
 # Grill

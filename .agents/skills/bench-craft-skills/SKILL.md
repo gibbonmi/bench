@@ -1,6 +1,7 @@
 ---
 name: craft-skills
 description: Principles for writing and editing skills so they fire reliably and stay lean. Use whenever creating, editing, reviewing, or pruning any skill — the kit's own skills or your project's. Reach for this any time you're about to add or change a SKILL.md.
+index: writing or pruning a skill
 ---
 
 # Writing great skills

@@ -1,6 +1,7 @@
 ---
 name: craft-synthesis
 description: The discipline for safely folding a candidate change into the Bench kit — respect closed decisions, assess by the gap it fills, pass three quality loops (legibility, consistency, dogfood), and propose rather than merge. Use whenever evaluating a change to the kit itself, from either source. Reach for this from /bench-update-kit and /bench-integrate-learnings, or any time you're deciding whether a kit change earns its place.
+index: evaluating a change to the kit itself
 ---
 
 # Synthesis — fold a change into the kit without bloating it

@@ -35,8 +35,9 @@ AGENTS.md harness — that portability is the product.
 - **The kit content surface** (`.agents/skills/*/SKILL.md`, `.agents/commands/*.md`).
   Portable harness-facing content. The contract is structural: every skill carries YAML
   frontmatter (name + description) and follows progressive disclosure; every command
-  is a phase the index names. Bench craft skill directories stay indexed in
-  `AGENTS.md`, but their visible skill names use `craft-*` so `$bench` menus show
+  is a phase the index names. The `.bench/BENCH.md` skills index is generated
+  from each skill's `index:` frontmatter (`.bench/skills-index.sh --write`);
+  craft skills' visible names use `craft-*` so `$bench` menus show
   only human-run phase adapters. Codex command-adapter skills are derived from
   `.agents/commands/` and documented in `.bench/BENCH.md`. The gate's conformance
   layer enforces those contracts so disk, docs, and adapters do not drift.
@@ -87,8 +88,10 @@ The oracle for a kit, in layers (all green today):
 2. **Structure** — every `SKILL.md` carries frontmatter; every `package.json`
    `files[]` path resolves and the dry-run npm package includes required install
    assets while excluding local-only settings.
-3. **Kit conformance** — the AGENTS.md index stays in sync with disk for craft
-   skills and command references; every indexed skill exists, every craft skill
+3. **Kit conformance** — the `.bench/BENCH.md` skills index is generated from
+   skill frontmatter (`.bench/skills-index.sh`), and the gate verifies the
+   committed block equals the generated one (presence, wording, order), drift
+   attributed per skill. Every craft skill
    exposes a `craft-*` visible name, every command file is referenced as `/name`, every
    command has an explicit Codex `$bench-*` adapter documented in `.bench/BENCH.md`,
    and the feature-build workflow keeps the acceptance-coverage and edge-coverage

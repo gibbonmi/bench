@@ -215,3 +215,25 @@ grep -qF 'session-start.sh' README.md || err "README layout omits .bench/hooks/s
 grep -qF 'bench.sh' README.md || err "README layout omits the real bin/bench.sh filename"
 grep -qF 'benchkit.md' README.md || err "README layout omits projects/benchkit.md"
 ! grep -qF '│   └── bench                 #' README.md || err "README layout still names bin/bench instead of bin/bench.sh"
+
+#    m) the skills index is generated: --write produces a block that --check
+#       accepts, and a second --write changes nothing. Behavioral contract for
+#       .bench/skills-index.sh (the check side is canary-covered).
+si_tmp="$(mktemp -d)"
+(
+  set -u; cd "$si_tmp"
+  mkdir -p .bench .agents/skills/zeta-skill
+  printf -- '---\nname: zeta-skill\ndescription: d\nindex: doing zeta things\n---\n' > .agents/skills/zeta-skill/SKILL.md
+  printf '# Guide\n\n<!-- bench:skills-index:start -->\n<!-- bench:skills-index:end -->\n' > .bench/BENCH.md
+  if bash "$root/.bench/skills-index.sh" --check >/dev/null 2>&1; then
+    echo "check passed on an empty index block"; exit 1
+  fi
+  bash "$root/.bench/skills-index.sh" --write || { echo "--write failed"; exit 1; }
+  grep -qF -- '- doing zeta things → `.agents/skills/zeta-skill/SKILL.md`' .bench/BENCH.md \
+    || { echo "--write did not generate the entry from frontmatter"; exit 1; }
+  bash "$root/.bench/skills-index.sh" --check >/dev/null 2>&1 || { echo "check red right after --write"; exit 1; }
+  before="$(cat .bench/BENCH.md)"
+  bash "$root/.bench/skills-index.sh" --write || { echo "second --write failed"; exit 1; }
+  [ "$before" = "$(cat .bench/BENCH.md)" ] || { echo "--write is not idempotent"; exit 1; }
+) || err "skills-index generate/verify contract failed"
+rm -rf "$si_tmp"

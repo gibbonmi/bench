@@ -1,6 +1,7 @@
 ---
 name: craft-tdd
 description: How to apply test-driven development without the cost blowup or the over-fit-and-stop failure. Use whenever writing tests first, doing red-green-refactor, or building at a seam that /bench-write-spec marked for TDD. Reach for this before starting any TDD pass to bound where and how it applies.
+index: writing tests first
 ---
 
 # TDD at seams

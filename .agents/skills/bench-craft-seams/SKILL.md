@@ -1,6 +1,7 @@
 ---
 name: craft-seams
 description: Vocabulary and principles for placing test seams and designing deep modules. Use whenever deciding where a test should attach, whether to introduce an abstraction, how to make code testable, or when /bench-write-spec is picking seams. Reach for this any time the question is "where does the interface go" or "is this the right boundary to test" — even on small changes.
+index: placing a test / designing an interface
 ---
 
 # Seams

@@ -152,17 +152,21 @@ from real use without any rule ever changing itself behind my back.
 ## Skills index
 
 Claude Code loads these on its own. On other harnesses, read the file when the
-trigger applies — or paste it as context:
+trigger applies — or paste it as context. This block is generated from each
+skill's `index:` frontmatter (`.bench/skills-index.sh --write`); edit the skill,
+not the list:
 
-- declaring the line / picking a delegate's model or effort → `.agents/skills/bench-craft-line/SKILL.md`
-- placing a test / designing an interface → `.agents/skills/bench-craft-seams/SKILL.md`
-- writing tests first → `.agents/skills/bench-craft-tdd/SKILL.md`
+<!-- bench:skills-index:start -->
 - recording a decision or writing docs → `.agents/skills/bench-craft-adr/SKILL.md`
 - building an agent-facing CLI → `.agents/skills/bench-craft-cli/SKILL.md`
 - any UI work → `.agents/skills/bench-craft-design-system/SKILL.md` + your project's design source
 - surfacing a decision one question at a time → `.agents/skills/bench-craft-grill/SKILL.md`
+- declaring the line / picking a delegate's model or effort → `.agents/skills/bench-craft-line/SKILL.md`
+- placing a test / designing an interface → `.agents/skills/bench-craft-seams/SKILL.md`
 - writing or pruning a skill → `.agents/skills/bench-craft-skills/SKILL.md`
 - evaluating a change to the kit itself → `.agents/skills/bench-craft-synthesis/SKILL.md`
+- writing tests first → `.agents/skills/bench-craft-tdd/SKILL.md`
+<!-- bench:skills-index:end -->
 
 ## Harness Invocation
 

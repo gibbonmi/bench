@@ -3,5 +3,5 @@
 ## Skills index
 
 <!-- bench:skills-index:start -->
-- ghost skill → `.agents/skills/ghost/SKILL.md`
+- an old trigger phrase → `.agents/skills/ghost3/SKILL.md`
 <!-- bench:skills-index:end -->
