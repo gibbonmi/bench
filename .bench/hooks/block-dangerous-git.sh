@@ -433,7 +433,7 @@ input="$(cat)"
 cmd="$(printf '%s' "$input" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("tool_input",{}).get("command",""))' 2>/dev/null || true)"
 [[ -z "$cmd" ]] && exit 0
 
-block() { echo "BLOCKED: \`$1\` — you don't have authority over this. The merge and any history rewrite are mine; a failed shift is rolled back by bench, not by you. Stop and hand back." >&2; exit 2; }
+block() { echo "BLOCKED: \`$1\` — you don't have authority over this. The merge and any history rewrite are the user's; a failed shift is rolled back by bench, not by you. Stop and hand back." >&2; exit 2; }
 
 reason="$(python3 -c "$GUARD_PY" "$cmd")" || { echo "BLOCKED: guard analyzer error — failing closed; rephrase the command." >&2; exit 2; }
 [[ -n "$reason" ]] && block "$reason"
