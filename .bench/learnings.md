@@ -349,3 +349,16 @@ Codex adapter drift and prose-only marker mentions._
   each guard exposes a describe mode listing what it denies, a `bench guards`
   command aggregates them, and SessionStart injects the summary. To be grilled
   via /bench-shape-idea before any build.
+
+- 2026-07-01 — The check-agent-line hook loaded mid-session (PreToolUse config is
+  read live, not at session start) and immediately denied the session's own
+  review delegations: the spec had marked alias→id resolution "won't handle",
+  but the Agent tool *only* speaks aliases, so the cut made in-session routing
+  deny everything legitimate. Right behavior: a "won't handle" line that
+  amputates the primary use of a surface is a spec defect, not a scope cut —
+  edge-inventory entries should be checked against the surface's *only* calling
+  convention, not just its rare ones. Fixed via declared BENCH_ALIAS_* bindings
+  (undeclared aliases still deny, which keeps the excluded bare-`sonnet` out).
+  Proposed rule: when /bench-write-spec writes a Won't-handle line about an
+  interface, verify at least one in-scope caller can still exercise the feature
+  under that exclusion.

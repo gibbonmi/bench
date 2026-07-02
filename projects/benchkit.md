@@ -126,10 +126,12 @@ tier adds a distinction the routing signals can't reliably make). Sonnet 5
 stays excluded by reviewer directive — Opus-level benchmarks with a higher
 token burn make it a poor cheap tier and a future *mid* candidate; **revisit
 2026-09-01 (intro-pricing end) or at the next frontier shift**. Caveat for
-Claude Code delegation: the Agent tool addresses models by alias and bare
-`sonnet` resolves to Sonnet 5, so cheap-rated in-session work runs inline or
-bumps to mid (declared); headless shift runs target `claude-sonnet-4-6` via
-`BENCH_MODEL` through the adapter.
+Claude Code delegation: the Agent tool addresses models by alias only, so
+`lines.env` also declares which aliases bind (`BENCH_ALIAS_TOP=fable`,
+`BENCH_ALIAS_MID=opus`; no cheap alias on purpose — bare `sonnet` resolves to
+Sonnet 5 and stays denied). Cheap-rated in-session work runs inline or bumps
+to mid (declared); headless shift runs target `claude-sonnet-4-6` via
+`BENCH_MODEL` through the adapter (adapters take exact ids, not aliases).
 
 **Escalation policy:** no standing top-tier opt-out — any bump to Fable 5
 pauses and asks the reviewer (the ladder is in `craft-line`). Tier moves still

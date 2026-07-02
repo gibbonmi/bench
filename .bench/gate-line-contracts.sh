@@ -38,11 +38,20 @@ if [ -f .bench/hooks/check-agent-line.sh ]; then
   _hd="$(mktemp -d)"
   ( cd "$_hd" && git init -q )
   mkdir -p "$_hd/.bench"
-  printf 'BENCH_TIER_TOP=claude-fable-5\nBENCH_TIER_MID=claude-opus-4-8\nBENCH_TIER_CHEAP=claude-sonnet-4-6\n' >"$_hd/.bench/lines.env"
+  printf 'BENCH_TIER_TOP=claude-fable-5\nBENCH_TIER_MID=claude-opus-4-8\nBENCH_TIER_CHEAP=claude-sonnet-4-6\nBENCH_ALIAS_MID=opus\n' >"$_hd/.bench/lines.env"
 
   printf '%s' '{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"claude-opus-4-8"}}' \
     | ( cd "$_hd" && bash "$_hook" ) >/dev/null 2>&1 \
     || err "check-agent-line.sh denies a bound model (allow case broken)"
+
+  printf '%s' '{"tool_name":"Agent","tool_input":{"prompt":"x","model":"opus"}}' \
+    | ( cd "$_hd" && bash "$_hook" ) >/dev/null 2>&1 \
+    || err "check-agent-line.sh denies a declared alias (Agent tool speaks aliases)"
+
+  if printf '%s' '{"tool_name":"Agent","tool_input":{"prompt":"x","model":"sonnet"}}' \
+    | ( cd "$_hd" && bash "$_hook" ) >/dev/null 2>&1; then
+    err "check-agent-line.sh does not deny an undeclared alias"
+  fi
 
   if printf '%s' '{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"claude-nonexistent-9"}}' \
     | ( cd "$_hd" && bash "$_hook" ) >/dev/null 2>&1; then

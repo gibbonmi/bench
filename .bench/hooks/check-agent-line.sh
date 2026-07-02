@@ -15,6 +15,12 @@
 # the call with a one-line stderr warning. Only a present model that matches none
 # of the three bound tiers (exact string compare) is denied.
 #
+# Harness aliases: the Claude Code Agent tool addresses models by alias (opus,
+# fable, ...), not full id, so lines.env may declare which aliases bind via
+# optional BENCH_ALIAS_TOP/MID/CHEAP. An undeclared alias is denied like any
+# unbound model — deliberately: leaving BENCH_ALIAS_CHEAP undeclared is how this
+# repo keeps bare `sonnet` (which resolves to an excluded model) out.
+#
 # Wire under hooks.PreToolUse with matcher "Agent". Exit 2 denies and returns the
 # message to the agent.
 set -euo pipefail
@@ -63,9 +69,15 @@ if [[ -z "$top" || -z "$mid" || -z "$cheap" ]]; then
   exit 0
 fi
 
-# The model is present and the binding is complete: it must be exactly one tier.
-if [[ "$model" == "$top" || "$model" == "$mid" || "$model" == "$cheap" ]]; then
-  exit 0
-fi
+# Optional alias declarations (may be absent — absence means no alias binds).
+alias_top="$(tier_value BENCH_ALIAS_TOP)"
+alias_mid="$(tier_value BENCH_ALIAS_MID)"
+alias_cheap="$(tier_value BENCH_ALIAS_CHEAP)"
 
-deny "delegation model '$model' is not a bound tier; bound: top=$top mid=$mid cheap=$cheap (see .bench/lines.env and the craft-line skill). Re-delegate on a bound tier or update the binding."
+# The model is present and the binding is complete: it must be exactly one bound
+# tier id or one declared alias.
+for bound in "$top" "$mid" "$cheap" "$alias_top" "$alias_mid" "$alias_cheap"; do
+  [[ -n "$bound" && "$model" == "$bound" ]] && exit 0
+done
+
+deny "delegation model '$model' is not a bound tier; bound: top=$top mid=$mid cheap=$cheap aliases: top=${alias_top:--} mid=${alias_mid:--} cheap=${alias_cheap:--} (see .bench/lines.env and the craft-line skill). Re-delegate on a bound tier or update the binding."

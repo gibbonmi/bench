@@ -121,6 +121,7 @@ the skill.
 | 7 | hook allows stdin with a bound model | gate check: hook + allow fixture stdin | same check, allow assertion red pre-build | an over-eager hook that denies bound models bricks routing |
 | 8 | hook allows + warns when lines.env absent | gate check: hook run in temp dir without lines.env | assertion red pre-build | fail-closed here would brick every unrouted repo |
 | 8 (edge) | hook allows on malformed stdin JSON / missing model field | gate check: hook + malformed fixtures | assertion red pre-build | malformed input must not turn into a denial |
+| 7 (edge) | hook allows a declared alias, denies an undeclared one | gate check: hook + alias fixtures | observed live: hook denied `opus` and broke in-session delegation | the Agent tool only speaks aliases; without this row routing blocks itself |
 | 4, 11 | lines.env exists, parses, three tiers with model-id-shaped values | gate check; canary `lines-env-broken` (planted bad fixture goes red) | gate red on fixture | binding drift silently disarms both surfaces |
 | 7, 11 | settings.json wires `Agent` matcher → check-agent-line.sh | gate check; canary `agent-hook-unwired` | gate red on fixture | hook file without wiring is decorative |
 | 9 | claude adapter passes `--model "$BENCH_MODEL"` to stubbed binary | gate check: run adapter with PATH stub echoing argv | assertion red pre-build | silent flag-drop = undeclared delegation resumes |
@@ -145,9 +146,13 @@ re-run, hostile env):
 - Adapter: model id needing quoting → quoted expansion asserted by the argv
   stub row.
 - Re-run idempotency: hooks/adapters are stateless per call — nothing to walk.
-- **Won't handle:** alias→id resolution (bindings store exact ids; exact match
-  only — a mismatch reads as unbound and the deny reason shows both strings,
-  which is the correct surfacing).
+- Hook: the Agent tool addresses models by alias only (`opus`, `fable`), so
+  `lines.env` may declare `BENCH_ALIAS_TOP/MID/CHEAP`; a declared alias allows,
+  an undeclared alias (deliberately: bare `sonnet` → excluded Sonnet 5) denies
+  → coverage rows below. Adapters stay id-only — headless runs can pass full
+  ids, and Claude Code aliases would mistranslate to other harnesses.
+  (Discovered live: the original "exact ids only" cut denied every legitimate
+  in-session delegation.)
 - **Won't handle:** OpenCode hook layer (none exists; the adapter guard is its
   enforcement).
 - **Won't handle:** effort enforcement anywhere (no surface exposes it; skill
