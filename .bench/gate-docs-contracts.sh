@@ -132,6 +132,13 @@ for (const file of ["HANDOFF.md", ".bench/BENCH.md"]) {
 process.exit(bad);
 NODE
 
+#    h2) the project profile's AXI seam list must name the wave-2 parsers — the
+#        seam list is where a cold session learns the query surface exists.
+grep -qF 'bench diff' projects/benchkit.md 2>/dev/null \
+  || err "projects/benchkit.md does not name bench diff on the AXI seam"
+grep -qF 'bench coverage' projects/benchkit.md 2>/dev/null \
+  || err "projects/benchkit.md does not name bench coverage on the AXI seam"
+
 #    i) command-first usability anchors. The reviewer-facing README must start from
 #       the command path, and every command phase must orient the reviewer at entry
 #       and hand them off at exit. Keep this structural; prose quality is review.

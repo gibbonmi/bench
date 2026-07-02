@@ -328,6 +328,10 @@ BENCH_BIN_DIR="$(dirname "$(resolve_script_path)")"
 . "$BENCH_BIN_DIR/bench-worktree.sh"
 # shellcheck source=/dev/null
 . "$BENCH_BIN_DIR/bench-query.sh"
+# shellcheck source=/dev/null
+. "$BENCH_BIN_DIR/bench-diff.sh"
+# shellcheck source=/dev/null
+. "$BENCH_BIN_DIR/bench-coverage.sh"
 
 case "${1:-help}" in
   gate)     run_gate ;;

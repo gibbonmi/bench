@@ -163,7 +163,9 @@ derivation. `/bench-review-implementation` re-points to both. Decisions:
 | 2 | on a branch stacked on unmerged work, `bench diff` base equals the recorded sha, not merge-base with default | CLI in fixture repo | `bench diff` today prints the general usage banner and exits 0 (no subcommand) | this is the review-base bug; the row is red until the ladder prefers the key |
 | 2 | with the key absent, base falls back to merge-base with the default branch; method says `merge-base` | CLI in fixture repo | same red as above | fails if fallback breaks plain (non-shift) branches |
 | 2 (edge) | key present but sha unreachable → merge-base fallback, method names the fallback | CLI in fixture repo | same red as above | a pruned or fixture-copied key must degrade loudly, not error or lie |
-| 3 | changed files emit as `files[N]{status,path}`; N matches; a path with spaces round-trips quoted | CLI in fixture repo | same red as above | fails if rows drop, misalign, or the emitter stops escaping |
+| 2 (edge) | key reachable but not an ancestor of HEAD → merge-base fallback, method names it | CLI in fixture repo | reproduced in review: three-dot silently diffed from the merge-base while the preamble claimed the recorded sha | a divergent key must not make the preamble lie about what was diffed |
+| 3 | changed files emit as `files[N]{status,path}`; N matches; a path with spaces round-trips verbatim | CLI in fixture repo | same red as above | fails if rows drop, misalign, or the emitter stops escaping |
+| 3 (edge) | non-ASCII and quote-bearing paths arrive raw (`-z`) and are TOON-escaped exactly once | CLI in fixture repo | reproduced in review: `café.txt` emitted as `"""caf\303\251.txt"""` (git C-quoting quoted again) | a review agent must be able to recover the real filename |
 | 3 (edge) | no changes since base → definitive `files[0]{status,path}:` and exit 0 | CLI in fixture repo | same red as above | an empty diff must be a definitive answer, not an error or silence |
 | 4 | outside a git repo: structured error on stdout, exit 1; unknown argument: usage, exit 2 | CLI outside repo | same red as above | fails if error posture drifts from the AXI contract |
 | 4 (edge) | unborn default branch / no merge-base and no key → structured error naming the cause, exit 1 | CLI in fixture repo | same red as above | an unresolvable base must be a parseable failure, not raw git noise |
@@ -191,6 +193,9 @@ Walked per the profile's hostile-input checklist (shell CLI):
   orphaned keys are decided-harmless in the map.
 - hostile environment (no global `bench`, symlink invocation) → **Won't
   handle:** unchanged from wave 1; the commands add no new tool dependency.
+- a changed path containing a real newline → **Won't handle:** the one shape
+  the line-per-record emitter misreads, same as the shift loop's documented
+  posture for its dirty-path listing.
 - cwd deeper than repo root → both resolve root via `git rev-parse` like wave
   1; exercised implicitly by the AXI fragment's fixture layout (subdir run
   included in story 3's assertions).

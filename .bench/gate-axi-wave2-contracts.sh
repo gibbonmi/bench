@@ -25,6 +25,19 @@ tmp="$(mktemp -d)"
   grep -qxF 'method: recorded' <<<"$out" || { echo "diff method did not say recorded: $out"; exit 1; }
   grep -qxF 'files[1]{status,path}:' <<<"$out" || { echo "diff files table not count-1 TOON: $out"; exit 1; }
   grep -qxF '  A,work.txt' <<<"$out" || { echo "diff changed-file row missing: $out"; exit 1; }
+  # A recorded key that is reachable but NOT an ancestor of HEAD must fall back
+  # loudly — three-dot against a divergent base would silently diff from the
+  # merge-base while the preamble claims the recorded sha.
+  gciw switch -q main; gciw switch -qc other
+  printf 'o\n' > o.txt; gciw add -A; gciw commit -q -m o1
+  o1="$(gciw rev-parse HEAD)"
+  gciw switch -q bench/shift-stacked
+  gciw config branch.bench/shift-stacked.benchBase "$o1"
+  out="$(bash "$root/bin/bench.sh" diff)"
+  grep -qxF 'method: merge-base (recorded sha not an ancestor)' <<<"$out" \
+    || { echo "divergent recorded sha not reported as fallback: $out"; exit 1; }
+  grep -qxF "base: $(gciw merge-base main HEAD)" <<<"$out" \
+    || { echo "divergent-key fallback base is not the merge-base: $out"; exit 1; }
 ) || err "AXI diff recorded-base contract failed"
 rm -rf "$tmp"
 
@@ -38,12 +51,17 @@ tmp="$(mktemp -d)"
   c1="$(gciw rev-parse HEAD)"
   gciw switch -qc feature
   mkdir -p sub/deeper
-  printf 'f\n' > 'a b.txt'; gciw add -A; gciw commit -q -m c2
+  printf 'f\n' > 'a b.txt'; printf 'u\n' > 'café.txt'; printf 'q\n' > 'a"q.txt'
+  gciw add -A; gciw commit -q -m c2
   # No recorded key → merge-base with the default branch.
   out="$(cd sub/deeper && bash "$root/bin/bench.sh" diff)"
   grep -qxF "base: $c1" <<<"$out" || { echo "diff fallback base is not the merge-base with main: $out"; exit 1; }
   grep -qxF 'method: merge-base' <<<"$out" || { echo "diff fallback method not named: $out"; exit 1; }
   grep -qF '  A,a b.txt' <<<"$out" || { echo "path with a space did not round-trip: $out"; exit 1; }
+  # Paths git would C-quote (non-ASCII, embedded quote) must arrive raw and be
+  # TOON-escaped exactly once — never git-quoted and then quoted again.
+  grep -qxF '  A,café.txt' <<<"$out" || { echo "non-ASCII path was git-quoted or mangled: $out"; exit 1; }
+  grep -qxF '  A,"a""q.txt"' <<<"$out" || { echo "quote-bearing path not single-layer TOON-escaped: $out"; exit 1; }
   # Recorded key pointing at an unreachable sha → loud fallback.
   gciw config branch.feature.benchBase 0123456789abcdef0123456789abcdef01234567
   out="$(bash "$root/bin/bench.sh" diff)"
