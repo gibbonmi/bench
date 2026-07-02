@@ -113,4 +113,7 @@ call, made against the finished shapes — sequencing matters because `diff`
 carries the review-base bug fix.
 
 ### Answer
-— (open)
+One spec. Both parsers share the review-implementation consumer, and the
+re-pointing edits (the phase's pin-the-diff step, the gate's coverage check)
+land coherently in one pass. Decided by the reviewer moving directly to
+`/bench-write-spec` on that recommendation.
