@@ -17,6 +17,18 @@ An entry only becomes `[resolved]` via /bench-integrate-learnings.
 
 <!-- entries below -->
 
+## 2026-07-02 — delegated on an unbound model at the reviewer's word  [open]
+- **What happened:** The reviewer asked to "finish up with sonnet" while the mid
+  tier was down. I launched the delegate with the harness's `sonnet` alias, which
+  resolves to a model outside the tier binding; the line hook denied it. The work
+  proceeded on the bound mid tier once it recovered.
+- **Right behavior:** A reviewer naming a model is a request to resolve against
+  the binding, not to bypass it — check `.bench/lines.env` first and answer with
+  the nearest bound tier (or surface the binding conflict) instead of attempting
+  the launch and letting the hook catch it.
+- **Proposed rule change:** none — craft-line already says to resolve tiers
+  against the binding; this is a should-have-applied, not a gap.
+
 ## 2026-07-02 — spec lines assessed from scratch past a cached routing  [resolved: dismissed]
 _Resolved 2026-07-02 via /bench-integrate-learnings: dismissed — the fix already
 shipped with the session that logged it; the leverage override and the
