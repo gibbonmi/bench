@@ -271,7 +271,9 @@ EOF
 # Learnings — usage journal
 
 Append one entry when you deviate from the workflow, make a judgment call you're
-unsure about, or catch a should-have-asked in hindsight. You capture; the reviewer
+unsure about, catch a should-have-asked in hindsight, or catch yourself assembling
+the same ad-hoc check a second time (a codification candidate — name the `bench`
+subcommand it wants to be). You capture; the reviewer
 decides. `/bench-integrate-learnings` reviews the open entries, promotes the
 generalizable ones into the kit with sign-off, and prunes them: a resolved entry
 leaves this file, and its verdict (promoted or dismissed, one line of why) is

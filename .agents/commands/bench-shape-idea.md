@@ -81,10 +81,10 @@ other tickets, update or delete them.
 
 The map is deliberately incomplete beyond the frontier. You are done when the
 path to the finish line is clear — no unresolved tickets blocking the build. Before
-declaring the map closed, scan it for unwritten answers — any ticket still holding a
+declaring the map closed, run `bench maps` — it lists every ticket still holding a
 `— (open` / `— (deferred` placeholder or a `GRILL DEFERRED` banner — and refuse to
-close while any remain; a decision made in conversation but not written into the map
-is not recorded. Then close the map and lead with the recommended next action
+close while this map still shows a row; a decision made in conversation but not
+written into the map is not recorded. Then close the map and lead with the recommended next action
 (usually `/bench-write-spec`) and a one-clause why.
 
 A natural seam in the work is recorded as a decision in the map for *me* to make —

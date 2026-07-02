@@ -47,8 +47,8 @@ in the map (current state only). Before `/bench-write-spec`, a grill closes the 
 spec can be synthesized without an interview. When you've grilled enough that the
 build path is clear, say so and hand to `/bench-write-spec`.
 
-Before you call a map resolved, scan it for unwritten answers — any ticket whose
+Before you call a map resolved, run `bench maps` — it lists any ticket whose
 Answer is still a `— (open` / `— (deferred` placeholder or whose section carries a
-`GRILL DEFERRED` banner — and refuse to close while any remain. A decision made in
+`GRILL DEFERRED` banner — and refuse to close while the map still shows a row. A decision made in
 conversation but not written into the map is not recorded; the artifact is the source
 of truth, not the chat.
