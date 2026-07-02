@@ -130,7 +130,7 @@ If a skill and the gate disagree, the gate wins. That ordering is the whole poin
 ```
 bench/
 ├── AGENTS.md                 # canonical working agreement — every harness reads this
-├── CLAUDE.md                 # one-line import of AGENTS.md (for Claude Code)
+├── CLAUDE.md                 # imports AGENTS.md + .bench/BENCH.md (for Claude Code)
 ├── .agents/
 │   ├── commands/             # portable workflow phases + maintenance commands
 │   │   ├── bench-setup-repo.md
@@ -279,7 +279,7 @@ It proposes; you own the merge.
 Switching harnesses is a no-op, by design. After `bench link`, the same repo is
 wired for all of them at once:
 
-- **Claude Code** reads `CLAUDE.md` (which imports `AGENTS.md`), auto-loads skills
+- **Claude Code** reads `CLAUDE.md` (which imports `AGENTS.md` and `.bench/BENCH.md`), auto-loads skills
   through `.claude/skills/`, runs `/bench-shape-idea`, `/bench-write-spec`, … as slash commands,
   and fires the Stop and PreToolUse hooks through `.claude/settings.json`.
 - **Codex** reads `AGENTS.md`, finds skills in `.agents/skills/`, and uses the

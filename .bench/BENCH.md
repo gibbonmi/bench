@@ -4,6 +4,38 @@ Bench is installed in this repo as a local agent-development workflow. The short
 project instruction block in `AGENTS.md` points here instead of inlining the full
 operating guide.
 
+## Roles
+
+You are the worker; I am the reviewer, and I own the merge. Build well on my
+behalf, but never decide for me where the decision is mine to make — when
+something is genuinely my call (what ships, what the spec should be, an
+irreversible or hard-to-reverse choice), surface it and stop rather than
+guessing.
+
+## How the pieces fit
+
+- **Skills** shape *how* you generate — probabilistic guidance, not rules. Reach
+  for them when the task matches. They live in `.agents/skills/` (and, for
+  Claude Code, `.claude/skills/`). The skills index below maps triggers to
+  skills.
+- **Commands** are the canonical phases of the workflow (see Workflow below).
+  Run `/bench-setup-repo` once when a repo is first linked — it interviews the
+  reviewer to fill in the gate and the profile. Run `/bench-update-kit`
+  periodically to pull upstream improvements into the kit, and
+  `/bench-integrate-learnings` to fold the learnings journal back in.
+- **The gate and the hooks** are enforcement, with authority you do not have.
+  The enforcement that matters is harness-independent: the `bench shift` loop
+  runs the gate after every iteration and commits only on green, and a git
+  `pre-push` hook protects the default branch no matter who pushes. Interactive
+  harness hooks add an extra layer where the harness supports them (see Hook
+  Layers below).
+- **`bench`** (the CLI) runs the operational layer — worktrees and the gated
+  loop — and is plain shell, identical on every harness. You drive it.
+
+When you start in a repo, read `CONTEXT.md` (if present) for the current mental
+model and ubiquitous language, and `projects/<name>.md` for the seams, the gate
+command, and the line assignments.
+
 ## The four invariants (these override convenience, always)
 
 1. **The gate is the oracle — you never grade your own work.**
@@ -97,11 +129,37 @@ Use the canonical phases when the work needs them:
 4. `/bench-review-implementation` for semantic review against standards and spec.
 5. `/bench-final-check` to report the gate result.
 
-Small mechanical changes can use the lighter path, but skipping the canonical
-workflow is a reviewer decision. A reviewer-requested fix for concrete review
-findings may use a direct fix-and-gate path; run focused regression checks for
-behavior defects, then the gate. Other deviations still need explicit approval
-unless a standing rule covers them.
+**Right-size the process; ask before deviating.** A few-line change doesn't need
+the full pipeline, and you may propose a lighter path — but you must get an
+explicit OK *before* skipping canonical steps. Don't skip silently: deviating
+from the workflow is my call, not yours. A reviewer-requested fix for concrete
+review findings may use a direct fix-and-gate path; run focused regression
+checks for behavior defects, then the gate. If I give you a standing rule for
+changes of a given size, follow it and stop asking.
+
+**Capture what you learn; never silently rewrite your own rules.** When you
+deviate from the workflow, make a process or judgment call you're unsure about,
+or catch a should-have-asked in hindsight, append one entry to
+`.bench/learnings.md`: what happened, what the right behavior was, and a
+proposed rule change if any. That's the whole of your authority here — you
+capture, I decide. `/bench-integrate-learnings` reviews the journal and promotes
+the generalizable lessons into the kit with my sign-off, so the kit improves
+from real use without any rule ever changing itself behind my back.
+
+## Skills index
+
+Claude Code loads these on its own. On other harnesses, read the file when the
+trigger applies — or paste it as context:
+
+- declaring the line / picking a delegate's model or effort → `.agents/skills/bench-craft-line/SKILL.md`
+- placing a test / designing an interface → `.agents/skills/bench-craft-seams/SKILL.md`
+- writing tests first → `.agents/skills/bench-craft-tdd/SKILL.md`
+- recording a decision or writing docs → `.agents/skills/bench-craft-adr/SKILL.md`
+- building an agent-facing CLI → `.agents/skills/bench-craft-cli/SKILL.md`
+- any UI work → `.agents/skills/bench-craft-design-system/SKILL.md` + your project's design source
+- surfacing a decision one question at a time → `.agents/skills/bench-craft-grill/SKILL.md`
+- writing or pruning a skill → `.agents/skills/bench-craft-skills/SKILL.md`
+- evaluating a change to the kit itself → `.agents/skills/bench-craft-synthesis/SKILL.md`
 
 ## Harness Invocation
 

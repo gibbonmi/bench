@@ -1,16 +1,16 @@
 ---
 name: craft-cli
-description: Design standards for building CLI tools that agents drive through the shell — TOON output, minimal schemas, structured errors, ambient context. Use whenever building, modifying, or reviewing gl-axi or any agent-facing CLI whose project declares AXI conformance. Not for tools with their own declared output contract (bench itself: plain text, stderr errors, documented exit codes). Reach for this on any command output, flag, error message, or exit code in an AXI-conformant tool.
+description: Design standards for building CLI tools that agents drive through the shell — TOON output, minimal schemas, structured errors, ambient context. Use whenever building, modifying, or reviewing any agent-facing CLI whose project declares AXI conformance. Not for tools with their own declared output contract (bench itself: plain text, stderr errors, documented exit codes). Reach for this on any command output, flag, error message, or exit code in an AXI-conformant tool.
 ---
 
 # AXI — Agent eXperience Interface
 
 Standards for a CLI an agent uses by shell execution. The goal is higher accuracy
-at lower token cost than either a raw CLI or an MCP server. For gl-axi, treat
-these as the conformance target the gate checks. They apply where the project
-declares AXI conformance — a tool with its own documented output contract (bench's
-plain-text stderr/exit-code contract, for one) is out of this skill's scope; do
-not "fix" such a tool toward these rules. Full spec: https://axi.md
+at lower token cost than either a raw CLI or an MCP server. In a project that
+declares AXI conformance, treat these as the conformance target the gate checks.
+A tool with its own documented output contract (bench's plain-text
+stderr/exit-code contract, for one) is out of this skill's scope; do not "fix"
+such a tool toward these rules. Full spec: https://axi.md
 
 ## The principles
 
@@ -48,8 +48,9 @@ not "fix" such a tool toward these rules. Full spec: https://axi.md
 
 ## Conformance is a gate check
 
-For gl-axi these aren't style preferences — they're testable. The project gate
-asserts TOON-shaped stdout, minimal default schemas, structured stdout errors,
-and correct exit codes, and runs the paired-delta harness against raw `glab`. A
-change that regresses ergonomics fails the gate the same as a broken test. That's
-the external oracle pointed at the thing being built.
+In an AXI-conformant project these aren't style preferences — they're testable.
+The project gate asserts TOON-shaped stdout, minimal default schemas, structured
+stdout errors, and correct exit codes, and can run a paired-delta harness against
+the raw tool the CLI wraps. A change that regresses ergonomics fails the gate the
+same as a broken test. That's the external oracle pointed at the thing being
+built.

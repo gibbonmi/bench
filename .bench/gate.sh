@@ -111,21 +111,24 @@ done
 # shellcheck source=/dev/null
 . "$gate_dir/gate-package-contracts.sh"
 
-# 5. Kit conformance — AGENTS.md index stays in sync with disk, both directions.
-#    a) every skill dir is referenced in AGENTS.md
+# 5. Kit conformance — the .bench/BENCH.md index (the shipped operating guide)
+#    stays in sync with disk, both directions.
+#    a) every skill dir is indexed in .bench/BENCH.md. Match the index-line form
+#       (skills/<name>/SKILL.md), not the bare name — BENCH.md is prose-heavy and
+#       a name surviving in a sentence must not green a deleted index line.
 for d in .agents/skills/*/; do
   name="$(basename "$d")"
   [ -f ".agents/commands/$name.md" ] && continue # command adapters are documented in .bench/BENCH.md
-  grep -q "$name" AGENTS.md || err "skill '$name' on disk but not referenced in AGENTS.md"
+  grep -q "skills/$name/SKILL\.md" .bench/BENCH.md || err "skill '$name' on disk but not referenced in .bench/BENCH.md"
 done
 #    b) every skill the index names exists on disk
-for name in $(grep -oE 'skills/[a-z0-9-]+/SKILL\.md' AGENTS.md | sed -E 's#skills/([a-z0-9-]+)/SKILL\.md#\1#' | sort -u); do
-  [ -d ".agents/skills/$name" ] || err "AGENTS.md indexes skill '$name' with no .agents/skills/$name on disk"
+for name in $(grep -oE 'skills/[a-z0-9-]+/SKILL\.md' .bench/BENCH.md | sed -E 's#skills/([a-z0-9-]+)/SKILL\.md#\1#' | sort -u); do
+  [ -d ".agents/skills/$name" ] || err ".bench/BENCH.md indexes skill '$name' with no .agents/skills/$name on disk"
 done
-#    c) every command file is referenced as /name in AGENTS.md
+#    c) every command file is referenced as /name in .bench/BENCH.md
 for f in .agents/commands/*.md; do
   name="$(basename "$f" .md)"
-  grep -q "/$name" AGENTS.md || err "command '/$name' on disk but not referenced in AGENTS.md"
+  grep -q "/$name" .bench/BENCH.md || err "command '/$name' on disk but not referenced in .bench/BENCH.md"
 done
 #    d) every command has an explicit Codex skill adapter. Codex does not scan
 #       .agents/commands as an invocation surface, so each command phase needs a
@@ -158,6 +161,9 @@ ss_markers=(
   "Document for the teammate who just walked in"
   "One small change at a time, repo stays green"
   "Clear beats dense"
+  "You are the worker; I am the reviewer"
+  "Right-size the process"
+  "never silently rewrite your own rules"
 )
 for m in "${ss_markers[@]}"; do
   grep -qF "$m" .bench/BENCH.md || err "shared rule missing from canonical .bench/BENCH.md: \"$m\""

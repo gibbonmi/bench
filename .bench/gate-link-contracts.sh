@@ -47,6 +47,7 @@ tmp="$(mktemp -d)"
   [ -f .bench/hooks/session-start.sh ] || { echo "fresh link did not install the SessionStart hook"; exit 1; }
   grep -q 'SessionStart' .claude/settings.json || { echo "fresh link .claude/settings.json has no SessionStart wiring"; exit 1; }
   [ -x .git/hooks/pre-push ] || { echo "fresh link did not install git pre-push hook"; exit 1; }
+  grep -qF '@.bench/BENCH.md' CLAUDE.md || { echo "fresh link CLAUDE.md does not import .bench/BENCH.md"; exit 1; }
   [ ! -L .agents/commands/bench-implement-spec.md ] || { echo "default link mode symlinked portable commands"; exit 1; }
   bash "$root/bin/bench.sh" link >/dev/null 2>&1
   [ "$(count_literal '<!-- bench:start -->' AGENTS.md)" = "1" ] || { echo "relink duplicated managed Bench block"; exit 1; }

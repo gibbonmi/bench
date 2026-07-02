@@ -1,4 +1,4 @@
-# Working agreement
+# Bench Operating Guide
 
 Skills index:
 

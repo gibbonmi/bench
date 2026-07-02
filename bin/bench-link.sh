@@ -322,7 +322,7 @@ link() {
   build_link_plan "$kit" "$plan"
   preflight_link "$root" "$plan" || { rm -f "$plan"; return 1; }
   write_agents_block "$root"
-  [[ -e "$root/CLAUDE.md" ]] || printf '# Bench\n\nCanonical agreement in AGENTS.md.\n\n@AGENTS.md\n' > "$root/CLAUDE.md"
+  [[ -e "$root/CLAUDE.md" ]] || printf '# Bench\n\nCanonical agreement in AGENTS.md; platform rules in .bench/BENCH.md.\n\n@AGENTS.md\n@.bench/BENCH.md\n' > "$root/CLAUDE.md"
   install_plan "$root" "$mode" "$plan"
   rm -f "$plan"
   install_git_hook "$root" || return 1
