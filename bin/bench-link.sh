@@ -28,6 +28,13 @@ install_git_hook() {
 #!/usr/bin/env bash
 # bench:managed-pre-push
 # Installed by 'bench link'. The merge is the human's; agents don't push $def.
+if [[ "\${1:-}" == "--describe" ]]; then
+  printf 'name: pre-push\n'
+  printf 'boundary: pre-push\n'
+  printf 'denies: direct push to $def\n'
+  printf 'why: the merge belongs to the reviewer; agents open a PR instead of pushing $def\n'
+  exit 0
+fi
 while read -r local_ref local_oid remote_ref remote_oid; do
   if [[ "\$remote_ref" == "refs/heads/$def" ]]; then
     echo "blocked: direct push to $def. Open a PR or merge it yourself." >&2

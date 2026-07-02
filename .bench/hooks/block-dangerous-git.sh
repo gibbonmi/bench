@@ -18,16 +18,16 @@
 # the agent itself cannot reach for those commands. That asymmetry is the point.
 #
 # Wire under hooks.PreToolUse with matcher "Bash". Exit 2 blocks and returns the
-# message to the agent.
+# message to the agent. `--describe` (first arg) prints the guard manifest and
+# exits 0 without reading stdin, so `bench guards` can aggregate the deny surface
+# without a collision; the denies clause is generated from the same DENY_LABELS
+# table the analyzer denies from, so the advertisement cannot drift.
 set -euo pipefail
 
-input="$(cat)"
-cmd="$(printf '%s' "$input" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("tool_input",{}).get("command",""))' 2>/dev/null || true)"
-[[ -z "$cmd" ]] && exit 0
-
-block() { echo "BLOCKED: \`$1\` — you don't have authority over this. The merge and any history rewrite are mine; a failed shift is rolled back by bench, not by you. Stop and hand back." >&2; exit 2; }
-
-reason="$(python3 - "$cmd" <<'PY'
+# The analyzer program: a single source used both to classify a command (deny)
+# and to enumerate the deny classes (--describe). Assigned to a variable so the
+# describe path and the enforcement path invoke the identical program.
+GUARD_PY=$(cat <<'PY'
 import os
 import posixpath
 import re
@@ -46,6 +46,27 @@ GLOBAL_OPTS_WITH_ARG = {
     "--git-dir",
     "--namespace",
     "--work-tree",
+}
+
+# The deny table: every destructive class the analyzer blocks, keyed to the verb
+# label shown to the agent. classify() returns from here and --describe prints
+# these values, so the enforcement and the advertisement share one source.
+DENY_LABELS = {
+    "push": "git push",
+    "reset": "git reset --hard",
+    "clean": "git clean -f",
+    "branch-force": "git branch -f",
+    "branch-delete": "git branch -D",
+    "checkout": "git checkout path",
+    "switch": "git switch --force",
+    "restore": "git restore path",
+    "rebase": "history rewrite",
+    "stash": "git stash drop",
+    "amend": "git commit --amend",
+    "update-ref": "git update-ref -d",
+    "tag": "git tag -d",
+    "reflog": "git reflog expire",
+    "worktree": "git worktree remove --force",
 }
 
 
@@ -266,39 +287,39 @@ def find_subcommand(tokens, start, end):
 
 def classify(subcommand, args, via_xargs):
     if subcommand == "push":
-        return "git push"
+        return DENY_LABELS["push"]
     if subcommand == "reset" and "--hard" in args:
-        return "git reset --hard"
+        return DENY_LABELS["reset"]
     if subcommand == "clean" and (
         "--force" in args or any(arg.startswith("-") and "f" in arg[1:] for arg in args)
     ):
-        return "git clean -f"
+        return DENY_LABELS["clean"]
     if subcommand == "branch" and branch_verdict(args):
         if any(arg in {"-f", "--force"} for arg in args) and not any(
             arg in {"-D", "-d", "--delete"} for arg in args
         ):
-            return "git branch -f"
-        return "git branch -D"
+            return DENY_LABELS["branch-force"]
+        return DENY_LABELS["branch-delete"]
     if subcommand == "checkout" and checkout_verdict(args, via_xargs):
-        return "git checkout path"
+        return DENY_LABELS["checkout"]
     if subcommand == "switch" and switch_verdict(args):
-        return "git switch --force"
+        return DENY_LABELS["switch"]
     if subcommand == "restore" and restore_verdict(args, via_xargs):
-        return "git restore path"
+        return DENY_LABELS["restore"]
     if subcommand == "rebase":
-        return "history rewrite"
+        return DENY_LABELS["rebase"]
     if subcommand == "stash" and stash_verdict(args):
-        return "git stash drop"
+        return DENY_LABELS["stash"]
     if subcommand == "commit" and "--amend" in args:
-        return "git commit --amend"
+        return DENY_LABELS["amend"]
     if subcommand == "update-ref" and "-d" in args:
-        return "git update-ref -d"
+        return DENY_LABELS["update-ref"]
     if subcommand == "tag" and ("-d" in args or "--delete" in args):
-        return "git tag -d"
+        return DENY_LABELS["tag"]
     if subcommand == "reflog" and reflog_verdict(args):
-        return "git reflog expire"
+        return DENY_LABELS["reflog"]
     if subcommand == "worktree" and worktree_verdict(args):
-        return "git worktree remove --force"
+        return DENY_LABELS["worktree"]
     return None
 
 
@@ -381,13 +402,39 @@ def scan(tokens, allow_wrapper):
     return None
 
 
-try:
-    tokens = tokenize(sys.argv[1])
-except ValueError:
-    tokens = sys.argv[1].split()
-
-print(scan(tokens, allow_wrapper=True) or "")
+if len(sys.argv) > 1 and sys.argv[1] == "--describe-classes":
+    seen = []
+    for label in DENY_LABELS.values():
+        if label not in seen:
+            seen.append(label)
+    print(", ".join(seen))
+else:
+    try:
+        tokens = tokenize(sys.argv[1])
+    except ValueError:
+        tokens = sys.argv[1].split()
+    print(scan(tokens, allow_wrapper=True) or "")
 PY
-)" || { echo "BLOCKED: guard analyzer error — failing closed; rephrase the command." >&2; exit 2; }
+)
+
+if [[ "${1:-}" == "--describe" ]]; then
+  printf 'name: block-dangerous-git\n'
+  printf 'boundary: PreToolUse:Bash\n'
+  if command -v python3 >/dev/null 2>&1; then
+    printf 'denies: destructive git — %s\n' "$(python3 -c "$GUARD_PY" --describe-classes)"
+  else
+    printf 'denies: manifest unavailable (python3 missing)\n'
+  fi
+  printf 'why: agents lack destructive-git authority; merge and history rewrites belong to the reviewer\n'
+  exit 0
+fi
+
+input="$(cat)"
+cmd="$(printf '%s' "$input" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("tool_input",{}).get("command",""))' 2>/dev/null || true)"
+[[ -z "$cmd" ]] && exit 0
+
+block() { echo "BLOCKED: \`$1\` — you don't have authority over this. The merge and any history rewrite are mine; a failed shift is rolled back by bench, not by you. Stop and hand back." >&2; exit 2; }
+
+reason="$(python3 -c "$GUARD_PY" "$cmd")" || { echo "BLOCKED: guard analyzer error — failing closed; rephrase the command." >&2; exit 2; }
 [[ -n "$reason" ]] && block "$reason"
 exit 0

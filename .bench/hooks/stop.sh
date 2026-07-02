@@ -5,8 +5,19 @@
 # aspirational — the agent cannot declare done by fiat.
 #
 # Wire it in .claude/settings.json under hooks.Stop. Claude Code feeds the hook
-# JSON on stdin; exit 2 blocks the stop and returns stderr to the agent.
+# JSON on stdin; exit 2 blocks the stop and returns stderr to the agent. `--describe`
+# (first arg) prints the guard manifest and exits 0 without reading stdin, so
+# `bench guards` can aggregate the deny surface.
 set -euo pipefail
+
+# `--describe` short-circuits before any stdin read or shift-arming check.
+if [[ "${1:-}" == "--describe" ]]; then
+  printf 'name: stop\n'
+  printf 'boundary: Stop\n'
+  printf 'denies: stopping an armed shift (BENCH_SHIFT=1) while the gate is red\n'
+  printf 'why: the gate is the completion oracle; the agent cannot declare done on red\n'
+  exit 0
+fi
 
 # Only enforce inside an armed shift — never block ordinary conversational stops.
 [[ "${BENCH_SHIFT:-0}" == "1" ]] || exit 0

@@ -337,6 +337,7 @@ case "${1:-help}" in
   status)   status ;;
   learnings) shift; learnings "$@" ;;
   maps)     shift; maps "$@" ;;
+  guards)   shift; guards "$@" ;;
   *) cat <<EOF
 bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench link [copy|symlink]  safely wire the kit into this repo for every harness
@@ -348,6 +349,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench status               ambient dashboard: what needs attention + the next action
   bench learnings            open journal entries as a TOON table (date, title)
   bench maps                 unresolved decision-map tickets as TOON (map, ticket, type, state)
+  bench guards               every guard's deny surface as TOON (guard, boundary, denies)
   bench gate                 run the project gate (the oracle)
   bench worktree             warm, isolated worktree subshell
   bench shift "<objective>"  gated loop in a pooled worktree; commit on green
