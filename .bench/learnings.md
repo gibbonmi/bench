@@ -17,6 +17,19 @@ An entry only becomes `[resolved]` via /bench-integrate-learnings.
 
 <!-- entries below -->
 
+## 2026-07-02 — Codex phase adapters leaked into Claude's skill menu  [open]
+- **What happened:** Linking the whole `.agents/skills/` tree into `.claude/skills/`
+  gave Claude Code every `$bench-*` phase adapter as a skill alongside the
+  same-named `.claude/commands/` command, so each phase showed two slash-menu
+  entries. A Claude Code autocomplete bug with symlinked skill directories
+  (anthropics/claude-code #27069, #23819) then multiplied the duplicates per
+  keystroke. Fixed by filtering command-shadowing skills out of the `.claude/skills`
+  link plan and asserting that in the link contract.
+- **Right behavior:** A harness adapter surface should carry only the pieces that
+  harness actually needs; a skill that exists to adapt a command for one harness
+  must not be linked into another harness that already has the command.
+- **Proposed rule change:** none — the link plan and gate contract now encode it.
+
 ## 2026-07-01 — rank valuable out-of-scope cuts before handoff  [resolved: promoted]
 _Resolved 2026-07-01 via /bench-integrate-learnings: promoted to
 `/bench-write-spec` Out of scope guidance — rank high-value cuts and park concrete

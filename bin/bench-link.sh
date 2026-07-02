@@ -185,6 +185,19 @@ append_tree_to_plan() {
   done < <(find "$src_root" -type f | sort)
 }
 
+# Claude gets each phase as .claude/commands/<name>.md; a skill dir that shadows a
+# command is the Codex-only $bench-* phase adapter, and linking it into
+# .claude/skills too gives Claude Code two /<name> menu entries per phase.
+append_claude_skills_to_plan() {
+  local kit="$1" plan="$2" src_root="$kit/.agents/skills" src rel
+  [[ -d "$src_root" ]] || return 0
+  while IFS= read -r src; do
+    rel="${src#"$src_root"/}"
+    [[ -f "$kit/.agents/commands/${rel%%/*}.md" ]] && continue
+    printf '%s\t.claude/skills/%s\t%s\n' "$src" "$rel" "adapter" >> "$plan"
+  done < <(find "$src_root" -type f | sort)
+}
+
 build_link_plan() {
   local kit="$1" plan="$2"
   : > "$plan"
@@ -198,7 +211,7 @@ build_link_plan() {
   append_tree_to_plan "$kit/.agents/commands" ".agents/commands" "file" "$plan"
   append_tree_to_plan "$kit/.agents/skills" ".agents/skills" "file" "$plan"
   append_tree_to_plan "$kit/.agents/commands" ".claude/commands" "adapter" "$plan"
-  append_tree_to_plan "$kit/.agents/skills" ".claude/skills" "adapter" "$plan"
+  append_claude_skills_to_plan "$kit" "$plan"
 }
 
 adapter_target() {

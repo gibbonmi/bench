@@ -81,7 +81,10 @@ code, the journal — those stay as full as their templates need).
 - `.bench/hooks/` contains shared hook scripts used by harness adapters.
 - `.claude/` contains Claude Code adapter config. See `.claude/README.md`: Claude
   reads `.claude/skills/` and `.claude/commands/`, and those paths point at the
-  portable `.agents/` files.
+  portable `.agents/` files. `.claude/skills/` carries only the `bench-craft-*`
+  skills — the `$bench-*` phase adapter skills are Codex-only, because Claude
+  already has each phase as a command and a same-named skill duplicates the
+  slash-menu entry.
 - `.codex/` contains Codex adapter config.
 
 ## Workflow

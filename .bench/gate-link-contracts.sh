@@ -40,6 +40,7 @@ tmp="$(mktemp -d)"
   grep -qF '.bench/hooks/' .claude/README.md || { echo "Claude adapter README does not explain shared hooks"; exit 1; }
   [ -e .claude/commands/bench-implement-spec.md ] || { echo "fresh link did not install Claude command adapter"; exit 1; }
   [ -e .claude/skills/bench-craft-seams/SKILL.md ] || { echo "fresh link did not install Claude skill adapter"; exit 1; }
+  [ ! -e .claude/skills/bench-implement-spec ] || { echo "fresh link installed a Codex-only phase adapter into .claude/skills (duplicates the /bench-implement-spec menu entry)"; exit 1; }
   [ -f .codex/hooks.json ] || { echo "fresh link did not install Codex hook adapter"; exit 1; }
   [ -f .bench/hooks/block-dangerous-git.sh ] || { echo "fresh link did not install shared hook scripts"; exit 1; }
   [ -x .bench/adapters/claude ] || { echo "fresh link did not install executable reference adapters"; exit 1; }
