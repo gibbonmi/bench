@@ -58,15 +58,12 @@ point, and reflog recovery dies with expiry or a fresh clone. Recording is
 required; the open question is where.
 
 ### Answer
-— (deferred)
-
-**GRILL DEFERRED** — pending Q3a: where does the shift loop record the
-pre-shift HEAD? Recommendation on the table: branch-scoped git config
-(`branch.<name>.benchBase`) written at branch creation; `bench diff` resolves
-recorded base first, merge-base with the default branch as fallback.
-Alternatives surfaced: a `refs/bench/` namespace (listable but needs its own
-cleanup), encoding the sha in the branch name (survives clone, ugly coupling),
-derive-only (rejected — silently wrong for stacked shifts, the exact bug).
+Branch-scoped git config: the shift loop writes `branch.<name>.benchBase` at
+branch creation. `bench diff` resolves the base as recorded key first,
+merge-base with the default branch when the key is absent (non-shift branches,
+clones). The key is local-only — review happens where the shift ran — and an
+orphaned key after branch deletion is harmless residue the fallback ignores.
+Row schema and per-file fields are spec detail.
 
 ## #4: What does `refs` sweep, and does the gate consume it?
 
