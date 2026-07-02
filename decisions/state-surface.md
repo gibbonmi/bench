@@ -79,16 +79,21 @@ commas, quotes, empty values).
 Blocked by: —
 Type: Grill
 
-### Question
-Inventory: git pre-push, the `.bench/hooks/` scripts (Stop, SessionStart,
-Agent-tool line guard), the shift adapters' lines.env refusal — which are
-"guards" that self-describe? And is the manifest a `--describe` mode on each
-guard script (generated from the same rules it enforces — the can't-drift
-requirement) or a central registry file? Leaning per-script `--describe`;
-a registry can drift from the enforcement it describes.
-
 ### Answer
-— (open)
+A guard is a boundary that can deny. Five qualify: `block-dangerous-git.sh`
+(PreToolUse:Bash), `check-agent-line.sh` (PreToolUse:Agent), `stop.sh` (Stop,
+armed shifts only), the adapters' `_line-guard.sh`, and the bench-managed git
+pre-push hook. `session-start.sh` is informational, not a guard.
+
+Manifests are per-script `--describe` modes — each script answers from the
+same tables it enforces (the git guard prints its verb classes from the python
+structures that deny; the line guard prints the live `lines.env` binding), so
+the advertisement cannot drift from the enforcement. The generated pre-push
+heredoc carries the same mode. `bench guards` discovers by convention — every
+`.bench/hooks/` script plus the two non-hook guards — and reports a
+deny-capable script lacking `--describe` as "no manifest," never skipping it
+silently. Manifest fields follow `craft-cli` minimal-schema discipline
+(name, boundary, denies, why); exact schema is spec detail.
 
 ## #7: What does SessionStart inject, within what budget?
 
