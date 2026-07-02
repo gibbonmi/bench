@@ -7,6 +7,18 @@ one entry per `/bench-update-kit` or `/bench-integrate-learnings` run; don't rew
 
 ## Unreleased
 
+- **Learnings run (2026-07-02, scope: learnings).** Drained eight open entries from
+  `.bench/learnings.md` (seven tagged, one untagged straggler). Promoted: derived
+  out-of-scope estimates (`<n> edits, <n> gate runs`) in `/bench-write-spec` step 3
+  and its template; a Won't-handle line must leave at least one in-scope caller able
+  to exercise the interface (`/bench-write-spec` step 5); delegate done-claims are
+  verified against the gate and `git status`, with write-delegations in isolated
+  worktrees (`.bench/BENCH.md` invariant 1); explicit staging instead of blind
+  `git add -A`, with unexplained working-tree files blocking the commit
+  (`/bench-implement-spec`). Dismissed: cached-routing miss and Codex skill-menu leak
+  (fixes already shipped), seam-widening (one instance, not a pattern), invisible
+  guards (already parked on the roadmap). Parked: the shift loop's own `add -A`
+  staging as a roadmap idea.
 - **Learnings run (2026-07-01, scope: learnings).** Drained seven open entries from
   `.bench/learnings.md`. Promoted: value-ranked out-of-scope capture in
   `/bench-write-spec`; a standing direct fix-and-gate shortcut for concrete review

@@ -43,8 +43,10 @@ loop honest.
 
 3. **Price every cut, in your time — not a human's.** Before anything is deferred,
    estimate it in *agent* time, because that's the real cost here. The instinct to
-   defer is calibrated to humans who can't spare the afternoon; you can. Two rules
-   follow, and they are the point of this step:
+   defer is calibrated to humans who can't spare the afternoon; you can. Derive the
+   estimate instead of guessing: agent time is dominated by verification, so state
+   it as `<n> edits, <n> gate runs` — a vibes number can't pass as a price. Two
+   rules follow, and they are the point of this step:
    - **No deferral under the threshold — this binds you, not me.** Anything under
      ~30 minutes of your work that introduces no new architectural decision is
      something you do *not* get to propose deferring — it's just part of this build,
@@ -79,7 +81,10 @@ loop honest.
    in exactly one of two places: a coverage row (story column may read "edge of
    N"), or a one-line **Won't handle** entry directly under the map. Both are
    veto surface; a silently untested edge is the failure this step exists to
-   prevent.
+   prevent. Before writing a **Won't handle** line about an interface, verify at
+   least one in-scope caller can still exercise the feature under that exclusion —
+   a cut that amputates the surface's primary calling convention is a spec defect,
+   not a scope cut.
 
 6. **Route each story.** Give every user story its line — the resolved model id
    and effort from the `craft-line` decision table, judged per story on spec
@@ -133,7 +138,8 @@ Exclusions are decisions on the page, not silent omissions.
 
 ## Out of scope
 Each genuine cut as one line: **what** it is — why it's a *separate capability*
-(not just the rest of this feature) — **your** time estimate to build it later.
+(not just the rest of this feature) — **your** derived estimate to build it later
+(`<n> edits, <n> gate runs`).
 Anything you can't defend as a separate capability, or that falls under the
 threshold, does not belong here — it goes into the user stories above. An empty
 section is a fine and common answer; a long one is a signal you're shrinking the

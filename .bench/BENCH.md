@@ -44,7 +44,10 @@ command, and the line assignments.
    things with the authority to call a shift complete. If the gate is red, the
    work is not done, regardless of how the diff looks to you. Never edit, skip,
    weaken, or delete a test or a gate check to make it pass. If a check is wrong,
-   stop and say so; do not route around it.
+   stop and say so; do not route around it. The same rule covers delegates: a
+   subagent's done-claim is a claim, not a result — verify it against the gate
+   and `git status` before accepting it, and run write-delegations in isolated
+   worktrees so stray edits can't land in reviewer-owned files.
 
 2. **Declare the line before a long run.**
    Before any multi-cycle stage (a build, a shift, a TDD pass), state in one line:

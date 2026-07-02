@@ -17,7 +17,11 @@ An entry only becomes `[resolved]` via /bench-integrate-learnings.
 
 <!-- entries below -->
 
-## 2026-07-02 — spec lines assessed from scratch past a cached routing  [open]
+## 2026-07-02 — spec lines assessed from scratch past a cached routing  [resolved: dismissed]
+_Resolved 2026-07-02 via /bench-integrate-learnings: dismissed — the fix already
+shipped with the session that logged it; the leverage override and the
+cache-first check now live in `craft-line` itself._
+
 - **What happened:** The `shared-sections` spec routed its guidance-prose stories
   mid tier from the decision table, missing that `projects/benchkit.md` Lines
   already cached "skill / command / doc authoring → top model, high effort". The
@@ -30,7 +34,11 @@ An entry only becomes `[resolved]` via /bench-integrate-learnings.
   the leverage override now lives in `craft-line` itself, so the rule is no
   longer only a per-project cache entry that's easy to miss.
 
-## 2026-07-02 — out-of-scope estimates priced in human time  [open]
+## 2026-07-02 — out-of-scope estimates priced in human time  [resolved: promoted]
+_Resolved 2026-07-02 via /bench-integrate-learnings: promoted to `/bench-write-spec`
+step 3 and the Out of scope template — estimates are derived and stated as
+`<n> edits, <n> gate runs`; a vibes number can't pass as a price._
+
 - **What happened:** The `shared-sections` spec estimated two cuts at ~1–1.5 h and
   ~45 min; honest agent time was ~15 and ~10 min. The reviewer caught it. Inflated
   estimates make deferrals look cheaper to grant than they are and dodge the
@@ -43,7 +51,10 @@ An entry only becomes `[resolved]` via /bench-integrate-learnings.
 - **Proposed rule change:** `/bench-write-spec` step 3 could require estimates in
   the form "<n> edits, <n> gate runs" so a vibes number can't pass as a price.
 
-## 2026-07-02 — Codex phase adapters leaked into Claude's skill menu  [open]
+## 2026-07-02 — Codex phase adapters leaked into Claude's skill menu  [resolved: dismissed]
+_Resolved 2026-07-02 via /bench-integrate-learnings: dismissed — already encoded in
+the `.claude/skills` link plan filter and the link contract's gate assertion._
+
 - **What happened:** Linking the whole `.agents/skills/` tree into `.claude/skills/`
   gave Claude Code every `$bench-*` phase adapter as a skill alongside the
   same-named `.claude/commands/` command, so each phase showed two slash-menu
@@ -328,7 +339,11 @@ Codex adapter drift and prose-only marker mentions._
   Rename-hygiene: a rename ships only when a whole-repo grep of the old stems in all sigils
   is clean and the guarding check demonstrably covers where they hid.
 
-## 2026-07-01 — subagent false done-claim and unauthorized decision-map edit  [open]
+## 2026-07-01 — subagent false done-claim and unauthorized decision-map edit  [resolved: promoted]
+_Resolved 2026-07-02 via /bench-integrate-learnings: promoted to `.bench/BENCH.md`
+invariant 1 — a delegate's done-claim is verified against the gate and `git status`
+before acceptance, and write-delegations run in isolated worktrees._
+
 - **What happened:** During the git-guard-rework build, a delegated implementation
   agent reported the acceptance matrix green with a fabricated summary; the target
   file was never modified. Separately, a read-only review agent edited
@@ -343,7 +358,10 @@ Codex adapter drift and prose-only marker mentions._
   isolated worktrees, and every delegate report is verified against the gate and
   the diff before acceptance.
 
-## 2026-07-01 — adapter-contract test assertions placed beyond the spec's declared seam  [open]
+## 2026-07-01 — adapter-contract test assertions placed beyond the spec's declared seam  [resolved: dismissed]
+_Resolved 2026-07-02 via /bench-integrate-learnings: dismissed — one instance, not a
+pattern, per the entry's own assessment._
+
 - **What happened:** The harness-adapter-contract spec scoped testing to the
   `bench shift` CLI contract in the runtime-contracts file. The build also added
   assertions in the link and package contract files plus the gate's git-mode
@@ -357,7 +375,12 @@ Codex adapter drift and prose-only marker mentions._
 - **Proposed rule change:** none — /bench-write-spec could optionally note shipping
   surfaces explicitly when a spec ships new files, but one instance is not a pattern.
 
-## 2026-07-01 — blind `git add -A` swept a reviewer-owned file into a shift commit  [open]
+## 2026-07-01 — blind `git add -A` swept a reviewer-owned file into a shift commit  [resolved: promoted]
+_Resolved 2026-07-02 via /bench-integrate-learnings: promoted to
+`/bench-implement-spec` Close on green — stage the files the build actually touched,
+explicitly; an unexplained working-tree file blocks the commit and goes to the
+reviewer. The shift loop's own `add -A` is parked on the roadmap as a separate idea._
+
 - **What happened:** Committing the adapter-contract build with `git add -A`
   staged `decisions/model-routing.md`, a decision map that appeared in the
   working tree mid-session and was not part of the build. The commit landed
@@ -372,7 +395,11 @@ Codex adapter drift and prose-only marker mentions._
   green"; unexplained working-tree files block the commit and go to the
   reviewer.
 
-## 2026-07-01 — agents keep colliding with guards they cannot see  [open]
+## 2026-07-01 — agents keep colliding with guards they cannot see  [resolved: dismissed]
+_Resolved 2026-07-02 via /bench-integrate-learnings: dismissed here — already parked
+on the roadmap as guard self-disclosure; it graduates via /bench-shape-idea, not
+through a learnings promotion._
+
 - **What happened:** Several instances across sessions of the running agent
   attempting commands the hook layers deny — destructive git forms, pushes to
   the default branch, guarded amends. These are not model errors: the agent has
@@ -389,15 +416,21 @@ Codex adapter drift and prose-only marker mentions._
   command aggregates them, and SessionStart injects the summary. To be grilled
   via /bench-shape-idea before any build.
 
-- 2026-07-01 — The check-agent-line hook loaded mid-session (PreToolUse config is
-  read live, not at session start) and immediately denied the session's own
-  review delegations: the spec had marked alias→id resolution "won't handle",
+## 2026-07-01 — won't-handle line amputated the interface's only calling convention  [resolved: promoted]
+_Resolved 2026-07-02 via /bench-integrate-learnings: promoted to `/bench-write-spec`
+step 5 — a Won't-handle line about an interface must leave at least one in-scope
+caller able to exercise the feature. Entry reformatted from a bare bullet to the
+standard shape during resolution._
+
+- **What happened:** The check-agent-line hook loaded mid-session (PreToolUse
+  config is read live, not at session start) and immediately denied the session's
+  own review delegations: the spec had marked alias→id resolution "won't handle",
   but the Agent tool *only* speaks aliases, so the cut made in-session routing
-  deny everything legitimate. Right behavior: a "won't handle" line that
-  amputates the primary use of a surface is a spec defect, not a scope cut —
-  edge-inventory entries should be checked against the surface's *only* calling
-  convention, not just its rare ones. Fixed via declared BENCH_ALIAS_* bindings
+  deny everything legitimate. Fixed via declared BENCH_ALIAS_* bindings
   (undeclared aliases still deny, which keeps the excluded bare-`sonnet` out).
-  Proposed rule: when /bench-write-spec writes a Won't-handle line about an
-  interface, verify at least one in-scope caller can still exercise the feature
+- **Right behavior:** A "won't handle" line that amputates the primary use of a
+  surface is a spec defect, not a scope cut — edge-inventory entries should be
+  checked against the surface's *only* calling convention, not just its rare ones.
+- **Proposed rule change:** When /bench-write-spec writes a Won't-handle line about
+  an interface, verify at least one in-scope caller can still exercise the feature
   under that exclusion.

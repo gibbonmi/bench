@@ -57,6 +57,9 @@ hit the cap, stop and report.
   diff looks right. If the gate is red, the build continues or stops with an
   explanation; it never declares done on red.
 - Do not weaken a test or a check to reach green. If a check is wrong, surface it.
+- When a commit happens in this phase, stage the files the build actually touched,
+  explicitly — never a blind `git add -A`. An unexplained working-tree file blocks
+  the commit: surface it to the reviewer; don't commit or revert it on your own.
 - Before the final gate, emit a compact coverage table for every acceptance row:
   `green`, `already covered`, or `not TDD-able`. If any mapped behavior is missing,
   partial, or unclassified, the build is not ready for the gate.
