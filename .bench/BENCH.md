@@ -152,6 +152,14 @@ command. Use an absolute path or an on-`PATH` name; harness flags belong inside
 the wrapper — a multi-word `BENCH_AGENT` value is treated as one executable name
 and rejected.
 
+The adapters also carry the line (see the `craft-line` skill): `BENCH_MODEL`,
+when set, is passed to the harness's model flag. A repo with `.bench/lines.env`
+(the tier→model binding) is **routed**: there the reference adapters refuse to
+run when `BENCH_MODEL` is unset or names a model outside the binding, so a
+headless shift always carries an explicit, bound line. Without `lines.env` the
+adapters behave as plain pass-throughs. Effort has no harness flag and stays in
+the declared line.
+
 ## Capture
 
 Parking an idea is conversational — never a CLI chore for the reviewer. When the

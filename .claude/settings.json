@@ -1,5 +1,5 @@
 {
-  "$comment": "Drop this in ~/.claude/ (global) or a repo's .claude/ (per-project). SessionStart hook = the ambient dashboard (bench status). Stop hook = the completion oracle (blocks finishing on a red gate during a shift). PreToolUse hook = the destructive-git guard (the agent has no merge/history authority). Skills and commands here are discovered automatically.",
+  "$comment": "Drop this in ~/.claude/ (global) or a repo's .claude/ (per-project). SessionStart hook = the ambient dashboard (bench status). Stop hook = the completion oracle (blocks finishing on a red gate during a shift). PreToolUse hooks = the destructive-git guard on Bash (the agent has no merge/history authority) and the model-tier guard on Agent (delegations must run on a bound tier). Skills and commands here are discovered automatically.",
   "hooks": {
     "SessionStart": [
       {
@@ -22,6 +22,12 @@
         "matcher": "Bash",
         "hooks": [
           { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.bench/hooks/block-dangerous-git.sh" }
+        ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.bench/hooks/check-agent-line.sh" }
         ]
       }
     ]

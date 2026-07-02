@@ -113,15 +113,27 @@ The gate file lives outside `package.json` `files[]`, so it never ships to consu
 
 ## Lines (model + effort routing)
 
+The routing rubric — the three-signal decision table and the escalation ladder —
+is the `craft-line` skill. This section holds what is project-specific: the
+binding, the cached routings, and the escalation policy.
+
 **Tier → model** (this harness; refresh with `bench models`; set 2026-07-01):
-cheap = Haiku 4.5 (`claude-haiku-4-5`) · mid = Sonnet 4.6 (`claude-sonnet-4-6`) ·
-top = Opus 4.8 (`claude-opus-4-8`). Sonnet 5 is out of the rotation by reviewer
-directive. Caveat for Claude Code delegation: the Agent tool addresses models by
-tier alias only, and its bare `sonnet` resolves to Sonnet 5 — so in-session
-delegates run on Opus until the alias is confirmed to bind 4.6; headless shift
-runs can pin `claude-sonnet-4-6` inside the adapter wrapper `BENCH_AGENT` points
-at (model flags live in the wrapper, not in `BENCH_AGENT`). Tier moves still get
-declared — no silent escalation.
+top = Fable 5 (`claude-fable-5`) · mid = Opus 4.8 (`claude-opus-4-8`) · cheap =
+Sonnet 4.6 (`claude-sonnet-4-6`). Machine-readable source: `.bench/lines.env`,
+read by the Agent-tool hook and the shift adapters — keep it in sync with this
+paragraph. Haiku 4.5 leaves the rotation (no `effort` support, and a fourth
+tier adds a distinction the routing signals can't reliably make). Sonnet 5
+stays excluded by reviewer directive — Opus-level benchmarks with a higher
+token burn make it a poor cheap tier and a future *mid* candidate; **revisit
+2026-09-01 (intro-pricing end) or at the next frontier shift**. Caveat for
+Claude Code delegation: the Agent tool addresses models by alias and bare
+`sonnet` resolves to Sonnet 5, so cheap-rated in-session work runs inline or
+bumps to mid (declared); headless shift runs target `claude-sonnet-4-6` via
+`BENCH_MODEL` through the adapter.
+
+**Escalation policy:** no standing top-tier opt-out — any bump to Fable 5
+pauses and asks the reviewer (the ladder is in `craft-line`). Tier moves still
+get declared — no silent escalation.
 
 - **Skill / command / doc authoring** → **top model, high effort**. Prose that shapes
   agent behavior is the genuinely uncertain, high-leverage seam; the

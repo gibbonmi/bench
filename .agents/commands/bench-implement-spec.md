@@ -26,9 +26,10 @@ State it in one line before touching code:
 
 > Line: <model> / <effort> / ~<token cap>. <one clause why.>
 
-Match the line to the work. Plumbing at a known seam → cheap model, low effort.
-The genuinely uncertain seam → top model, high effort. Don't escalate silently;
-if you hit the cap, stop and report.
+Pick the row with the `craft-line` skill — its decision table (spec precision ×
+seam uncertainty × gate coverage) sets the starting tier and effort, and its
+ladder governs every move after gate feedback. Don't escalate silently; if you
+hit the cap, stop and report.
 
 ## Then build
 

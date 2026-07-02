@@ -1,3 +1,11 @@
 #!/usr/bin/env bash
 # Bench harness adapter: maps the shift prompt ($1) to OpenCode's noninteractive mode.
+# The line guard binds the model to the declared line — in a routed repo
+# (.bench/lines.env present) BENCH_MODEL must name a bound tier or this refuses to
+# run; see _line-guard.sh and BENCH.md "Harness adapter for the shift loop".
+. "$(dirname "$0")/_line-guard.sh"
+bench_resolve_model
+if [ -n "$BENCH_RESOLVED_MODEL" ]; then
+  exec opencode run --model "$BENCH_RESOLVED_MODEL" "$1"
+fi
 exec opencode run "$1"

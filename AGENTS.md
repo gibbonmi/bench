@@ -64,6 +64,7 @@ command, and the line assignments.
 Claude Code loads these on its own. On Codex/GPT/other harnesses, read the file
 when the trigger applies — or paste it as context:
 
+- declaring the line / picking a delegate's model or effort → `.agents/skills/bench-craft-line/SKILL.md`
 - placing a test / designing an interface → `.agents/skills/bench-craft-seams/SKILL.md`
 - writing tests first → `.agents/skills/bench-craft-tdd/SKILL.md`
 - recording a decision or writing docs → `.agents/skills/bench-craft-adr/SKILL.md`

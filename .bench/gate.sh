@@ -40,6 +40,8 @@ bad_refs="$(grep -oE '\.bench/(gate|done)(\.sh)?' bin/bench.sh | grep -vE '\.sh$
 . "$gate_dir/gate-link-contracts.sh"
 # shellcheck source=/dev/null
 . "$gate_dir/gate-runtime-contracts.sh"
+# shellcheck source=/dev/null
+. "$gate_dir/gate-line-contracts.sh"
 
 # 2. JSON is valid. A missing file errs distinctly; "invalid JSON" fires only on a
 #    real parse failure of a file that exists (so the canary attributes it precisely).
