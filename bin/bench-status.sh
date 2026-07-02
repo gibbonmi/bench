@@ -108,18 +108,38 @@ roadmap() {
   cat "$file"
 }
 
+gate_tree_hash() {
+  # Hash of the content actually on disk (tracked + untracked-unignored), computed
+  # through a throwaway index so the real index is never touched. This is the gate
+  # cache key: the verdict is content-addressed, so a commit that doesn't change
+  # the tree keeps the verdict fresh, and a verdict from a dirty tree never gets
+  # attributed to a commit whose content was not tested. Mirrored in
+  # .bench/hooks/stop.sh, which cannot source this file.
+  local root="$1" idx hash
+  idx="${TMPDIR:-/tmp}/bench-tree-idx.$$"
+  hash="$(
+    cd "$root" || exit 1
+    export GIT_INDEX_FILE="$idx"
+    git read-tree HEAD 2>/dev/null || git read-tree --empty
+    git add -A 2>/dev/null
+    git write-tree
+  )" || hash=""
+  rm -f "$idx"
+  printf '%s\n' "${hash:-none}"
+}
+
 status() {
-  local root head cache; root="$(repo_root)"
-  head="$(git -C "$root" rev-parse HEAD 2>/dev/null || echo none)"
+  local root cache; root="$(repo_root)"
   local -a rows=()
   local footer=""
 
   cache="$(git -C "$root" rev-parse --absolute-git-dir 2>/dev/null)/bench-last-gate"
   if [[ -f "$cache" ]]; then
-    local cstatus csha _crest
-    read -r cstatus csha _crest < "$cache" || true
-    if [[ "$csha" != "$head" ]]; then
-      rows+=("6|gate|stale (cache ${csha:0:7}, HEAD ${head:0:7})|re-run the gate")
+    local cstatus ctree _crest tree
+    read -r cstatus ctree _crest < "$cache" || true
+    tree="$(gate_tree_hash "$root")"
+    if [[ "$ctree" != "$tree" ]]; then
+      rows+=("6|gate|stale (gated tree ${ctree:0:7}, work tree ${tree:0:7})|re-run the gate")
     elif [[ "$cstatus" == "red" ]]; then
       rows+=("0|gate|red|fix before commit")
     fi

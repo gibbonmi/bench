@@ -90,7 +90,7 @@ rm -rf "$tmp"
 tmp="$(mktemp -d)"
 (
   set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
-  printf 'green %s 2026-06-30T00:00:00Z\n' "$(gci rev-parse HEAD)" > "$(gci rev-parse --absolute-git-dir)/bench-last-gate"
+  printf 'green %s 2026-06-30T00:00:00Z\n' "$(gci rev-parse 'HEAD^{tree}')" > "$(gci rev-parse --absolute-git-dir)/bench-last-gate"
   out="$(bash "$root/bin/bench.sh" status)"
   grep -qiF 'clean — nothing pending' <<<"$out" || { echo "fresh-green gate was not silent"; exit 1; }
 ) || err "bench status fresh-green contract failed"
@@ -112,9 +112,13 @@ tmp="$(mktemp -d)"
   seq 401 | sed 's/^/x = /' > big.py
   mkdir decisions; printf '### Answer\n— (deferred)\n' > decisions/x.md
   gci add -A; gci commit -q -m s
-  printf 'red %s 2026-06-30T00:00:00Z\n' "$(gci rev-parse HEAD)" > "$(gci rev-parse --absolute-git-dir)/bench-last-gate"
   echo dirty > dirty.txt
   gci worktree add -q --detach "$tmp/wt2" HEAD 2>/dev/null
+  # The red verdict must be keyed to the tree as status will see it (dirty file and
+  # nested worktree included), or the stale row would outrank the red lead.
+  # The throwaway index must live outside the repo, or it would join the tree it hashes.
+  tree="$(export GIT_INDEX_FILE="${TMPDIR:-/tmp}/bench-budget-idx.$$"; git read-tree HEAD; git add -A 2>/dev/null; git write-tree; rm -f "$GIT_INDEX_FILE")"
+  printf 'red %s 2026-06-30T00:00:00Z\n' "$tree" > "$(gci rev-parse --absolute-git-dir)/bench-last-gate"
   out="$(bash "$root/bin/bench.sh" status)"
   head -1 <<<"$out" | grep -qF 'fix before commit' || { echo "red gate did not lead the budget case"; exit 1; }
   grep -qF '+1 more' <<<"$out" || { echo "six signals did not trigger the +k more tail"; exit 1; }
@@ -139,7 +143,7 @@ tmp="$(mktemp -d)"
   printf '{}\n' | BENCH_SHIFT=1 bash "$root/.bench/hooks/stop.sh" >/dev/null 2>&1 || true
   cache="$(gci rev-parse --absolute-git-dir)/bench-last-gate"
   [ -f "$cache" ] || { echo "Stop hook did not write the gate cache"; exit 1; }
-  grep -qE '^(green|red) [0-9a-f]+ [0-9T:Z-]+$' "$cache" || { echo "gate cache not <status> <sha> <iso8601>"; exit 1; }
+  grep -qE '^(green|red) [0-9a-f]+ [0-9T:Z-]+$' "$cache" || { echo "gate cache not <status> <tree> <iso8601>"; exit 1; }
 ) || err "bench status gate-cache write contract failed"
 rm -rf "$tmp"
 
@@ -152,12 +156,19 @@ tmp="$(mktemp -d)"
   cache="$(gci rev-parse --absolute-git-dir)/bench-last-gate"
   printf 'green deadbeefdeadbeefdeadbeefdeadbeefdeadbeef 2026-06-30T00:00:00Z\n' > "$cache"
   bash "$root/bin/bench.sh" gate >/dev/null 2>&1 || { echo "manual green gate run exited nonzero"; exit 1; }
-  grep -qF "green $(gci rev-parse HEAD)" "$cache" || { echo "manual gate run did not refresh the stale cache to green@HEAD"; exit 1; }
+  grep -qF "green $(gci rev-parse 'HEAD^{tree}')" "$cache" || { echo "manual gate run did not record green keyed to the tested tree"; exit 1; }
   out="$(bash "$root/bin/bench.sh" status)"
   if grep -qF 're-run the gate' <<<"$out"; then echo "status still reads stale after a manual gate run"; exit 1; fi
+  # Commit-on-green survival: a commit that does not change the tree must not
+  # stale the verdict that authorized it.
+  gci commit -q --allow-empty -m same-tree
+  out="$(bash "$root/bin/bench.sh" status)"
+  if grep -qF 're-run the gate' <<<"$out"; then echo "same-tree commit staled a fresh green verdict"; exit 1; fi
   printf '#!/usr/bin/env bash\nexit 1\n' > .bench/gate.sh
   if bash "$root/bin/bench.sh" gate >/dev/null 2>&1; then echo "red gate run exited zero"; exit 1; fi
-  grep -qF "red $(gci rev-parse HEAD)" "$cache" || { echo "manual red gate run did not record red@HEAD"; exit 1; }
+  # The throwaway index must live outside the repo, or it would join the tree it hashes.
+  tree="$(export GIT_INDEX_FILE="${TMPDIR:-/tmp}/bench-vr-idx.$$"; git read-tree HEAD; git add -A 2>/dev/null; git write-tree; rm -f "$GIT_INDEX_FILE")"
+  grep -qF "red $tree" "$cache" || { echo "manual red gate run did not record red keyed to the dirty tree"; exit 1; }
 ) || err "bench gate verdict-record contract failed"
 rm -rf "$tmp"
 

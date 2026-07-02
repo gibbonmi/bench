@@ -20,11 +20,22 @@ stop_active="$(printf '%s' "$input" | python3 -c 'import sys,json; print(json.lo
 
 # Record the gate verdict for `bench status` to read (the ambient surface never runs
 # the gate cold). The cache lives in the git dir, so it is never tracked or committed:
-#   <status> <HEAD sha> <iso8601>
+#   <status> <tree hash> <iso8601>
+# The key is the tree actually tested — mirrors gate_tree_hash in bin/bench-status.sh,
+# which this standalone hook cannot source. A stale mirror here would overwrite the
+# CLI's fresh record with a key status can never match, so keep them identical.
 record_gate() {
-  local gitdir
+  local gitdir idx tree
   gitdir="$(git rev-parse --absolute-git-dir 2>/dev/null)" || return 0
-  printf '%s %s %s\n' "$1" "$(git rev-parse HEAD 2>/dev/null || echo none)" \
+  idx="${TMPDIR:-/tmp}/bench-tree-idx.$$"
+  tree="$(
+    export GIT_INDEX_FILE="$idx"
+    git read-tree HEAD 2>/dev/null || git read-tree --empty
+    git add -A 2>/dev/null
+    git write-tree
+  )" || tree=""
+  rm -f "$idx"
+  printf '%s %s %s\n' "$1" "${tree:-none}" \
     "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$gitdir/bench-last-gate"
 }
 

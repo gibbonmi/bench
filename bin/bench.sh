@@ -47,12 +47,14 @@ worktree_lease_file() {
 # ---- gate: the oracle -------------------------------------------------------
 gate_record() {
   # Record the verdict for `bench status` (same format the Stop hook writes):
-  #   <status> <HEAD sha> <iso8601>
-  # The cache lives in the git dir, so it is never tracked or committed.
+  #   <status> <tree hash> <iso8601>
+  # Keyed by gate_tree_hash (bench-status.sh) — the content tested, not the commit
+  # sha — so commit-on-green does not stale the verdict that authorized it. The
+  # cache lives in the git dir, so it is never tracked or committed.
   local root="$1" rc="$2" gitdir verdict=green
   gitdir="$(git -C "$root" rev-parse --absolute-git-dir 2>/dev/null)" || return 0
   [[ "$rc" -eq 0 ]] || verdict=red
-  printf '%s %s %s\n' "$verdict" "$(git -C "$root" rev-parse HEAD 2>/dev/null || echo none)" \
+  printf '%s %s %s\n' "$verdict" "$(gate_tree_hash "$root")" \
     "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$gitdir/bench-last-gate"
 }
 
