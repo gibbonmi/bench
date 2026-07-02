@@ -51,8 +51,22 @@ pre-shift HEAD somewhere `diff` can read (a ref, a file under `.bench/`, worktre
 metadata) — and rollback/cleanup semantics must not orphan it. Also the row
 schema: merge-base plus changed-file rows, with what per-file fields.
 
+Codebase facts: `shift_loop` already computes the pre-shift HEAD at branch
+creation and discards it when the loop exits. It is not derivable afterward — a
+shift stacked on unmerged work makes merge-base land on the feature's fork
+point, and reflog recovery dies with expiry or a fresh clone. Recording is
+required; the open question is where.
+
 ### Answer
-— (open)
+— (deferred)
+
+**GRILL DEFERRED** — pending Q3a: where does the shift loop record the
+pre-shift HEAD? Recommendation on the table: branch-scoped git config
+(`branch.<name>.benchBase`) written at branch creation; `bench diff` resolves
+recorded base first, merge-base with the default branch as fallback.
+Alternatives surfaced: a `refs/bench/` namespace (listable but needs its own
+cleanup), encoding the sha in the branch name (survives clone, ugly coupling),
+derive-only (rejected — silently wrong for stacked shifts, the exact bug).
 
 ## #4: What does `refs` sweep, and does the gate consume it?
 
