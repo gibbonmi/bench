@@ -1,10 +1,25 @@
-# AXI-conformance contracts for the benchkit gate: the agent-facing query
-# subcommands (`bench learnings`, `bench maps`) must emit flat-table TOON on
-# stdout, give definitive empty states, escape hostile field values, and use
-# honest exit codes (0 ok, 2 usage). Sourced by gate.sh so it shares $root,
-# $gate_dir, err(), and $fail with the other fragments. Fixtures are throwaway
-# repos; the commands read files on disk, so no commits are needed. Run the
-# real CLI in a fixture and assert stdout shape + exit code — never internals.
+# AXI-conformance contracts for the benchkit gate. The agent-facing query
+# subcommands (`bench learnings`, `bench maps`, `bench guards`, plus `guards
+# --brief`) must emit flat-table TOON on stdout, give definitive empty states,
+# escape hostile field values, and use honest exit codes (0 ok, 2 usage). Beyond
+# that baseline this file pins the shared parsers against the edges the
+# two-derivations bug class breeds:
+#   - guard --describe manifests (all hook guards + the generated pre-push) carry
+#     the four-key manifest; session-start classifies informational;
+#   - `bench guards` bounds each guard's --describe so a hanging hook cannot stall
+#     aggregation (reports `no manifest (timed out)`), never executes an unmanaged
+#     (marker-less) pre-push (`unmanaged (no manifest)`), and block-dangerous-git
+#     degrades to `manifest unavailable (python3 missing)` when python3 is absent;
+#   - the maps parser anchors placeholders / the GRILL DEFERRED banner to line
+#     start, skips fenced examples, strips CRLF, and reports a Type-less ticket as
+#     `unknown`; maps_unresolved_count gives status the distinct-file figure;
+#   - the learnings parser strips the date + separator run (ASCII hyphen or em-dash)
+#     and any trailing CR; toon_escape quotes leading/trailing whitespace.
+# Sourced by gate.sh so it shares $root, $gate_dir, err(), and $fail with the other
+# fragments. Fixtures are throwaway repos; the commands read files on disk, so no
+# commits are needed. Run the real CLI in a fixture and assert stdout shape + exit
+# code — never internals (the few parser-level checks source bench-query.sh directly,
+# which is the seam for a pure helper like toon_escape/maps_unresolved_count).
 
 # ---- guard --describe manifest conformance (stories 5, 6) -------------------
 # Every guard must answer --describe with the four-key manifest (name, boundary,
@@ -180,6 +195,144 @@ MAP
 ) || err "AXI path-with-spaces contract failed"
 rm -rf "$parent"
 
+# ---- shared-parser hardening (maps/learnings/TOON edges) --------------------
+# These pin the shared parsers against the over-match, CRLF, separator, escaping,
+# and missing-field defects that the two-derivations bug class breeds.
+
+# Fix 3 — placeholder detection is anchored and fence-aware: a resolved ticket whose
+# Answer prose only mentions GRILL DEFERRED mid-line is not listed, a fenced
+# `— (open)` example is not listed, and genuine line-start placeholders still are.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir decisions
+  cat > decisions/o.md <<'MAP'
+# Over-match map
+
+## #1: genuine?
+
+Type: Grill
+
+### Answer
+— (open)
+
+## #2: prose mentions?
+
+Type: Grill
+
+### Answer
+Decided: a mid-line GRILL DEFERRED mention is not an unresolved banner.
+
+## #3: fenced example?
+
+Type: Grill
+
+### Answer
+Decided: the placeholder looks like this:
+
+```
+— (open)
+```
+
+so authors recognize it.
+MAP
+  out="$(bash "$root/bin/bench.sh" maps)"
+  head -1 <<<"$out" | grep -qxF 'maps[1]{map,ticket,type,state}:' || { echo "over-match: expected exactly one unresolved ticket: $(head -1 <<<"$out")"; exit 1; }
+  grep -qxF '  o,1,Grill,open' <<<"$out" || { echo "over-match: genuine line-start placeholder dropped: $out"; exit 1; }
+  if grep -qE '^  o,2,' <<<"$out"; then echo "over-match: mid-line GRILL DEFERRED prose leaked"; exit 1; fi
+  if grep -qE '^  o,3,' <<<"$out"; then echo "over-match: fenced placeholder example leaked"; exit 1; fi
+) || err "AXI maps over-match anchoring/fence contract failed"
+rm -rf "$tmp"
+
+# Fix 4 — a CRLF map file emits no carriage returns in the TOON rows.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir decisions
+  printf '## #1: q?\r\nType: Grill\r\n### Answer\r\n— (open)\r\n' > decisions/c.md
+  out="$(bash "$root/bin/bench.sh" maps)"
+  grep -qxF '  c,1,Grill,open' <<<"$out" || { echo "CRLF map row missing/misformatted: $out"; exit 1; }
+  [ "$(printf '%s' "$out" | grep -c $'\r')" = "0" ] || { echo "CRLF leaked carriage returns into maps output"; exit 1; }
+) || err "AXI maps CRLF-stripping contract failed"
+rm -rf "$tmp"
+
+# Fix 8 — a ticket with no Type: line reports `unknown`, never an empty type field.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir decisions
+  cat > decisions/n.md <<'MAP'
+## #1: typeless?
+
+### Answer
+— (open)
+MAP
+  out="$(bash "$root/bin/bench.sh" maps)"
+  grep -qxF '  n,1,unknown,open' <<<"$out" || { echo "no-Type ticket did not report unknown: $out"; exit 1; }
+) || err "AXI maps no-Type-ticket contract failed"
+rm -rf "$tmp"
+
+# Fix 5 — an ASCII-hyphen (or separator-less) heading yields a clean title with no
+# `##`/date prefix, not a title left whole because the split token was the em-dash.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench
+  printf '## 2026-01-01 - ascii title  [open]\n' > .bench/learnings.md
+  out="$(bash "$root/bin/bench.sh" learnings)"
+  grep -qxF '  2026-01-01,ascii title' <<<"$out" || { echo "ascii-hyphen heading title not clean: $out"; exit 1; }
+) || err "AXI learnings ascii-separator title contract failed"
+rm -rf "$tmp"
+
+# Fix 6 — toon_escape quotes a field with leading or trailing whitespace so padding
+# survives the flat table (a bare padded field is ambiguous to a TOON parser).
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"
+  # shellcheck source=/dev/null
+  . "$root/bin/bench-query.sh"
+  [ "$(toon_escape ' padded ')" = '" padded "' ] || { echo "leading/trailing-space field not quoted: [$(toon_escape ' padded ')]"; exit 1; }
+  [ "$(toon_escape 'plain')" = 'plain' ] || { echo "plain field wrongly quoted"; exit 1; }
+) || err "AXI TOON leading/trailing-space escaping contract failed"
+rm -rf "$tmp"
+
+# Fix 2 — status derives its unresolved-maps figure from the shared parser:
+# maps_unresolved_count returns DISTINCT MAP FILES (what status counts), not the
+# ticket count maps_rows lists. Two unresolved tickets in one file → count 1.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  # shellcheck source=/dev/null
+  . "$root/bin/bench-query.sh"
+  mkdir decisions
+  cat > decisions/multi.md <<'MAP'
+## #1: a?
+
+Type: Grill
+
+### Answer
+— (open)
+
+## #2: b?
+
+Type: Grill
+
+### Answer
+— (deferred)
+MAP
+  cat > decisions/solo.md <<'MAP'
+## #1: c?
+
+Type: Grill
+
+### Answer
+— (open)
+MAP
+  [ "$(maps_rows "$PWD" | grep -c .)" = "3" ] || { echo "expected 3 unresolved tickets, got $(maps_rows "$PWD" | grep -c .)"; exit 1; }
+  [ "$(maps_unresolved_count "$PWD")" = "2" ] || { echo "distinct-file count not 2 (got $(maps_unresolved_count "$PWD"))"; exit 1; }
+) || err "AXI maps_unresolved_count distinct-file contract failed"
+rm -rf "$tmp"
+
 # ---- bench guards aggregation (story 3) -------------------------------------
 # A linked fixture carries all five deny-capable guards; `bench guards` emits one
 # TOON row each, excludes the informational session-start hook, reports a stub that
@@ -254,6 +407,57 @@ mkdir -p "$tmp"
   head -1 <<<"$out" | grep -qF 'guards[' || { echo "space-path guards failed: $out"; exit 1; }
 ) || err "AXI guards path-with-spaces contract failed"
 rm -rf "$parent"
+
+# Fix 1 — a guard whose --describe blocks (here, sleeps well past the bound) must not
+# hang aggregation: `bench guards` bounds each --describe and reports the offender as
+# `no manifest (timed out)`, returning promptly.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench/hooks
+  printf '#!/usr/bin/env bash\nif [ "${1:-}" = "--describe" ]; then sleep 30; fi\nexit 0\n' > .bench/hooks/slow.sh
+  chmod +x .bench/hooks/slow.sh
+  start=$(date +%s)
+  out="$(bash "$root/bin/bench.sh" guards)"
+  elapsed=$(( $(date +%s) - start ))
+  [ "$elapsed" -lt 10 ] || { echo "guards did not bound a slow --describe (took ${elapsed}s)"; exit 1; }
+  grep -qxF '  slow,,no manifest (timed out)' <<<"$out" || { echo "slow guard not reported as timed out: $out"; exit 1; }
+) || err "AXI guards --describe timeout-bound contract failed"
+rm -rf "$tmp"
+
+# Fix 7 — an unmanaged (foreign) pre-push must NOT be executed by `bench guards`:
+# a marker-less pre-push is reported `unmanaged (no manifest)` and never run (proven
+# by a sentinel it would touch on any invocation). Absent pre-push stays not installed.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  sentinel="$tmp/ran-foreign-prepush"
+  hooks="$(git rev-parse --git-path hooks)"
+  mkdir -p "$hooks"
+  printf '#!/usr/bin/env bash\ntouch %q\nexit 1\n' "$sentinel" > "$hooks/pre-push"
+  chmod +x "$hooks/pre-push"
+  out="$(bash "$root/bin/bench.sh" guards)"
+  grep -qxF '  pre-push,,unmanaged (no manifest)' <<<"$out" || { echo "foreign pre-push not reported unmanaged: $out"; exit 1; }
+  [ ! -e "$sentinel" ] || { echo "bench guards executed a foreign pre-push"; exit 1; }
+) || err "AXI guards unmanaged-pre-push safety contract failed"
+rm -rf "$tmp"
+
+# Fix 9 — block-dangerous-git.sh --describe degrades honestly when python3 is
+# unreachable: with PATH stripped to a scratch bin holding only bash + coreutils,
+# it prints the `manifest unavailable (python3 missing)` denies line and exits 0.
+if [ -f "$root/.bench/hooks/block-dangerous-git.sh" ]; then
+  tmp="$(mktemp -d)"
+  (
+    set -u; cd "$tmp"; mkdir sbin
+    for t in bash cat printf env sed grep head; do
+      p="$(command -v "$t" 2>/dev/null || true)"; [ -n "$p" ] && ln -sf "$p" "sbin/$t"
+    done
+    out="$(PATH="$tmp/sbin" bash "$root/.bench/hooks/block-dangerous-git.sh" --describe </dev/null 2>/dev/null)"; rc=$?
+    [ "$rc" = "0" ] || { echo "python3-missing --describe did not exit 0 (exit $rc)"; exit 1; }
+    grep -qF 'manifest unavailable (python3 missing)' <<<"$out" || { echo "python3-missing denies line absent: $out"; exit 1; }
+  ) || err "AXI block-dangerous-git python3-missing manifest contract failed"
+  rm -rf "$tmp"
+fi
 
 # ---- session-start injects the guard brief (story 7) ------------------------
 # In a linked repo session-start runs `bench guards --brief` after the dashboard and

@@ -177,11 +177,18 @@ Seam 3 — gate conformance + canary (story 9):
 | 5 | deny behavior unchanged: replay one blocked `git push origin main` case | 2 | already covered — existing guard behavior; re-run after edit | regression in the enforcement path surfaces |
 | 6 | linked fixture's generated pre-push answers `--describe` | 2 | link fixture + `--describe` invocation | heredoc missed → fails |
 | 7 | session-start output contains the brief block (one line per guard + footer) | 1 | run `session-start.sh` in linked fixture; no brief block today | hook not wired → block absent |
-| 7 | outside a repo: prints nothing, exit 0 | 1 | already covered — existing never-blocks contract | guard addition must not break it |
+| 7 | outside a repo: prints nothing, exit 0 | 1 | new contract — the pre-existing link contract runs inside a repo; the outside-repo case is asserted in the AXI fragment | guard addition must not break it |
 | 8 | `status` structure row agrees with `structure` via shared function | 1 | already covered — existing status budget contract exercises the row | refactor regression surfaces in existing tests |
 | 9 | each conformance check goes red on its broken canary fixture | 3 | canary fixture + expected substring, red by construction | a rotted always-pass check fails the canary |
 | 10 | charter + scaffold name the new entry class | — | not TDD-able — semantic prose; reviewed, and drift is docs-gate territory | — |
 | 11 | kit prose names only real commands post-edit | — | already covered — `gate-docs-contracts.sh` command-currency checks | dead references caught by existing gate |
+| edge of 3 | `--describe` that hangs → `no manifest (timed out)` within a bound | 1 | new contract (sleeping stub) | an unbounded describe freezes `bench guards` and SessionStart |
+| edge of 2 | prose mention or fenced placeholder → not listed | 1 | new contract | over-match resurrects the two-derivations bug class |
+| edge of 1, 2 | CRLF content → no CR in emitted fields | 1 | new contract | a raw CR corrupts the TOON row |
+| edge of 1 | ASCII-hyphen heading → clean title, no date prefix | 1 | new contract | a leaked `## date` prefix misleads the reader |
+| edge of 4 | leading/trailing-space field → quoted | 1 | new contract | unquoted padding is ambiguous TOON |
+| edge of 3 | unmanaged pre-push → `unmanaged (no manifest)`, never executed | 1 | new contract (sentinel file) | executing a foreign hook from a read-only query is unsafe |
+| edge of 2 | ticket without `Type:` → `unknown` | 1 | new contract | an empty field reads as an emitter bug |
 
 ### Edge inventory
 
@@ -205,6 +212,9 @@ Walked per the profile's hostile-input checklist:
   idempotent; asserting it adds no information.
 - **Won't handle:** invocation through a symlink — resolved once in the
   dispatcher (`bench.sh`), which all subcommands inherit; already exercised.
+- **Won't handle:** exit 141 when a consumer closes the pipe early (`| head`,
+  `| grep -q`) — normal SIGPIPE semantics, not unsatisfiable intent; contracted
+  consumers capture output first, then filter.
 
 ## Out of scope
 

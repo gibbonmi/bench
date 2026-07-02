@@ -10,12 +10,13 @@
 # usage on stdout + exit 2 for unknown arguments. All three are read-only.
 
 # ---- shared TOON emitter (flat tables only) ---------------------------------
-# A field value containing a comma, double-quote, or newline is double-quoted
-# with inner quotes doubled; anything else is emitted verbatim.
+# A field value containing a comma, double-quote, or newline — or one carrying
+# leading or trailing whitespace, which a bare field would lose on parse — is
+# double-quoted with inner quotes doubled; anything else is emitted verbatim.
 toon_escape() {
   local v="$1"
   case "$v" in
-    *,* | *'"'* | *$'\n'*)
+    *,* | *'"'* | *$'\n'* | [[:space:]]* | *[[:space:]])
       v="${v//\"/\"\"}"
       printf '"%s"' "$v"
       ;;
@@ -75,7 +76,8 @@ learnings_open_headings() {
   grep -E "$LEARNINGS_OPEN_RE" "$file" 2>/dev/null || true
 }
 
-# Count of open learnings — the value status() surfaces (was an inline grep).
+# Count of open learnings — the value status() surfaces, read through the shared
+# LEARNINGS_OPEN_RE above so status and `bench learnings` count by one rule.
 learnings_open_count() {
   local file="$1"
   [[ -f "$file" ]] || { echo 0; return 0; }
@@ -83,14 +85,29 @@ learnings_open_count() {
 }
 
 # Parse open headings (`## <date> — <title>  [open]`) into `date<TAB>title` rows.
+# The title is the heading minus its `## <date>` prefix and the separator run that
+# follows — spaces, an ASCII hyphen, or an em-dash — so an ASCII-hyphen or
+# separator-less heading yields a clean title instead of leaking the date prefix.
+# A trailing CR from a CRLF journal is stripped first (the ${x%$'\r'} posture the
+# guards use), so no carriage return rides into a field.
 learnings_rows() {
-  local hd date rest title
+  local hd date title
   while IFS= read -r hd; do
+    hd="${hd%$'\r'}"
     [[ -n "$hd" ]] || continue
     date="${hd#\#\# }"
-    date="${date%% *}"
-    rest="${hd#* — }"
-    title="${rest%\[open\]*}"
+    date="${date%%[[:space:]]*}"
+    title="${hd#\#\# }"
+    title="${title#"$date"}"
+    while true; do
+      case "$title" in
+        ' '*) title="${title# }" ;;
+        '-'*) title="${title#-}" ;;
+        '—'*) title="${title#—}" ;;
+        *) break ;;
+      esac
+    done
+    title="${title%\[open\]*}"
     while [[ "$title" == *[[:space:]] ]]; do title="${title%[[:space:]]}"; done
     printf '%s\t%s\n' "$date" "$title"
   done
@@ -112,22 +129,41 @@ learnings() {
 }
 
 # ---- unresolved decision-map tickets ----------------------------------------
-# A ticket is unresolved when its body still carries an `— (open` / `— (deferred`
-# placeholder or a `GRILL DEFERRED` banner — the same markers status() detects.
-# Emits `map<TAB>ticket<TAB>type<TAB>state` per unresolved ticket. The `state`
-# field (open|deferred|grill-deferred) is kept because the placeholder kind is
-# the actionable distinction for an agent scanning the frontier; `type` carries
-# the ticket's `Type:` value (Grill|Research|Prototype).
+# A map is unresolved when its body still carries an `— (open` / `— (deferred`
+# placeholder or a `GRILL DEFERRED` banner. The detection rules — strip a trailing
+# CR, skip ``` fenced blocks (so a fenced placeholder example is not a real marker),
+# and match a placeholder/banner only at line start — live once, in this awk prelude,
+# so `bench maps` (which lists tickets) and status (which counts files) can never
+# drift on what "unresolved" means. This is the two-derivations bug class the state
+# surface exists to end. marker() returns the unresolved kind, or "" for a normal line.
+maps_awk_prelude='
+  function marker() {
+    if ($0 ~ /^— \(open/)       return "open"
+    if ($0 ~ /^— \(deferred/)   return "deferred"
+    if ($0 ~ /^GRILL DEFERRED/) return "grill-deferred"
+    return ""
+  }
+  { sub(/\r$/, "") }
+  substr($0, 1, 3) == "```" { in_fence = !in_fence; next }
+  in_fence { next }
+'
+
+# Emits `map<TAB>ticket<TAB>type<TAB>state` per unresolved ticket. The `state` field
+# (open|deferred|grill-deferred) is kept because the placeholder kind is the actionable
+# distinction for an agent scanning the frontier; `type` carries the ticket's `Type:`
+# value (Grill|Research|Prototype), or `unknown` when the ticket has no Type line.
 maps_rows() {
   local root="$1" f base
   [[ -d "$root/decisions" ]] || return 0
   for f in "$root"/decisions/*.md; do
     [[ -f "$f" ]] || continue
     base="$(basename "$f" .md)"
-    awk -v map="$base" '
-      function flush() {
-        if (num != "" && state != "")
-          printf "%s\t%s\t%s\t%s\n", map, num, type, state
+    awk -v map="$base" "$maps_awk_prelude"'
+      function flush(   t) {
+        if (num != "" && state != "") {
+          t = (type == "" ? "unknown" : type)
+          printf "%s\t%s\t%s\t%s\n", map, num, t, state
+        }
       }
       /^## #[0-9]+:/ {
         flush()
@@ -136,12 +172,29 @@ maps_rows() {
         next
       }
       /^Type:/ { type = $0; sub(/^Type:[ \t]*/, "", type); next }
-      num != "" && state == "" && /^— \(open/     { state = "open"; next }
-      num != "" && state == "" && /^— \(deferred/ { state = "deferred"; next }
-      num != "" && state == "" && /GRILL DEFERRED/ { state = "grill-deferred"; next }
+      num != "" && state == "" { m = marker(); if (m != "") { state = m; next } }
       END { flush() }
     ' "$f"
   done
+}
+
+# Count of DISTINCT map FILES that carry at least one unresolved marker — the figure
+# `status` surfaces. Shares maps_awk_prelude with maps_rows (one detection core), but
+# scans at file scope: a file counts as an unresolved map even if its placeholder is
+# not under a `## #` ticket heading, which the per-ticket listing would not emit.
+maps_unresolved_count() {
+  local root="$1" f n=0
+  [[ -d "$root/decisions" ]] || { echo 0; return 0; }
+  for f in "$root"/decisions/*.md; do
+    [[ -f "$f" ]] || continue
+    if awk "$maps_awk_prelude"'
+        marker() != "" { found = 1; exit }
+        END { exit(found ? 0 : 1) }
+      ' "$f"; then
+      n=$((n + 1))
+    fi
+  done
+  echo "$n"
 }
 
 maps() {
@@ -180,14 +233,44 @@ guard_manifest_field() {
   printf '%s\n' "$1" | grep -E "^$2: " | head -n1 | sed -E "s/^$2: //" || true
 }
 
+# Run a guard's --describe under a time bound so a hook that ignores --describe and
+# blocks on stdin (or loops) cannot hang aggregation. Uses coreutils `timeout` when
+# present — the same best-effort-optional-tool posture as gate.sh's shellcheck — and a
+# background watchdog when it is not. Stdin is /dev/null (a describe reader must not
+# swallow ours); returns the guard's exit code, or 124 on timeout.
+guard_describe() {
+  local path="$1"
+  if command -v timeout >/dev/null 2>&1; then
+    timeout 5 bash "$path" --describe </dev/null 2>/dev/null
+    return $?
+  fi
+  local tmp rc=0 pid watchdog
+  tmp="$(mktemp)"
+  bash "$path" --describe </dev/null >"$tmp" 2>/dev/null &
+  pid=$!
+  ( sleep 5; kill "$pid" 2>/dev/null ) >/dev/null 2>&1 &
+  watchdog=$!
+  wait "$pid" 2>/dev/null || rc=$?
+  # Watchdog already gone ⇒ it fired the kill ⇒ the guard overran ⇒ report a timeout.
+  if kill -0 "$watchdog" 2>/dev/null; then
+    kill "$watchdog" 2>/dev/null; wait "$watchdog" 2>/dev/null
+  else
+    rc=124
+  fi
+  cat "$tmp"; rm -f "$tmp"
+  return "$rc"
+}
+
 # Emit a `guard<TAB>boundary<TAB>denies` row for one discovered guard, or nothing
 # when the guard is informational. $1 = path to run with --describe; $2 = fallback
 # display name used when no manifest name is parseable.
 guard_row() {
   local path="$1" fallback="$2" out rc name boundary denies
-  # Redirect stdin from /dev/null: a script that ignores --describe and reads stdin
-  # (a stub, or a hook that never short-circuits) must not hang or swallow ours.
-  out="$(bash "$path" --describe </dev/null 2>/dev/null)" && rc=0 || rc=$?
+  out="$(guard_describe "$path")" && rc=0 || rc=$?
+  if [[ "$rc" -eq 124 ]]; then
+    printf '%s\t\tno manifest (timed out)\n' "$fallback"
+    return
+  fi
   if [[ "$rc" -ne 0 ]]; then
     printf '%s\t\tno manifest\n' "$fallback"
     return
@@ -218,7 +301,13 @@ guards_rows() {
   if [[ -n "$hooks_git" && "$hooks_git" != /* ]]; then hooks_git="$root/$hooks_git"; fi
   prepush="$hooks_git/pre-push"
   if [[ -n "$hooks_git" && -f "$prepush" ]]; then
-    guard_row "$prepush" "pre-push"
+    if grep -q 'bench:managed-pre-push' "$prepush" 2>/dev/null; then
+      guard_row "$prepush" "pre-push"
+    else
+      # A foreign pre-push is never executed for its manifest: running an unknown
+      # hook's body just to read --describe is the collision this surface avoids.
+      printf 'pre-push\t\tunmanaged (no manifest)\n'
+    fi
   else
     printf 'pre-push\t\tnot installed\n'
   fi

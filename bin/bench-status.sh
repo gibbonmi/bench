@@ -26,8 +26,8 @@ structure() {
 }
 
 # The single violations parser shared by `structure` and `status`: the count of
-# FILE TOO LONG / DIR CROWDED lines from the one detector (structure_check), so
-# status no longer re-greps `structure`'s human text with its own inline regex.
+# FILE TOO LONG / DIR CROWDED lines from the one detector (structure_check), the one
+# source both read so their view of structural debt cannot diverge.
 structure_violation_count() {
   structure_check all "" 2>/dev/null | grep -cE '^(FILE TOO LONG|DIR CROWDED)' || true
 }
@@ -220,10 +220,10 @@ status() {
     rows+=("4|structure|$sviol issue(s)|split (craft-seams)")
   fi
 
-  local maps=0
-  if [[ -d "$root/decisions" ]]; then
-    maps="$(grep -lE '^— \((open|deferred)|GRILL DEFERRED' "$root"/decisions/*.md 2>/dev/null | wc -l | tr -d ' ' || true)"
-  fi
+  # Unresolved decision maps come from the same parser `bench maps` lists tickets
+  # through (maps_unresolved_count in bench-query.sh), so status's count and the
+  # command's rows are one derivation, not two that can drift.
+  local maps; maps="$(maps_unresolved_count "$root")"
   if [[ "${maps:-0}" -gt 0 ]]; then
     rows+=("5|decisions|$maps unresolved map(s)|craft-grill → /bench-write-spec")
   fi
