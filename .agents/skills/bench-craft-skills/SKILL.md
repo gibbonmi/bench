@@ -53,6 +53,16 @@ Rank material by how immediately the agent needs it:
 Inline what every branch needs; push behind a pointer what only some branches reach.
 **Co-location**: keep a concept's definition, rules, and caveats under one heading.
 
+## Contrastive examples
+
+When a skill governs an output surface — an interface, a format, a prose
+register — it must carry one contrastive pair: a good example beside a bad one,
+each captioned with the one clause that separates them. A rule states the
+boundary; the pair *locates* it, and the weakest reader imitates an example
+more reliably than it interprets a rule. One pair per surface is the budget — a
+gallery is sediment. Process skills (ordered steps, no output shape) get none;
+show the shape only where the shape is the point.
+
 ## Write for the weakest reader
 
 A skill is executed by every tier in the rotation, including the cheapest
