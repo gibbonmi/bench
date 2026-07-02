@@ -1,5 +1,5 @@
 ---
-description: Learnings integration — drain .bench/learnings.md, the journal the agent appended to during real use, and propose promotions. Runs each candidate through the craft-synthesis discipline; lands promotions in the rule/skill/command they fix, adds a CHANGELOG line, and marks the source entries resolved. Proposes, never auto-merges. Maintenance, not a workflow phase.
+description: Learnings integration — drain .bench/learnings.md, the journal the agent appended to during real use, and propose promotions. Runs each candidate through the craft-synthesis discipline; lands promotions in the rule/skill/command they fix, adds a CHANGELOG line, and prunes the source entries from the journal. Proposes, never auto-merges. Maintenance, not a workflow phase.
 disable-model-invocation: true
 ---
 
@@ -14,7 +14,7 @@ and runs them through the synthesis discipline before proposing any promotion.
 ## Exit handoff
 
 Close by reporting which learnings were promoted, dismissed, or left open, which
-kit artifacts changed, and whether the source entries were marked resolved. The
+kit artifacts changed, and whether the resolved entries were pruned. The
 recommended next command is `/bench-final-check` after accepted promotions are
 applied; otherwise no build-phase command follows a rejected proposal.
 
@@ -41,8 +41,10 @@ Don't restate it here.
 ## 3. Record (the output)
 
 Only after the loops pass and I've signed off, apply and record: land each promotion in
-the rule, skill, or command it fixes, add a `CHANGELOG.md` line, and mark the source
-entries in `.bench/learnings.md` resolved (promoted or dismissed, one line of why) so
-they're never re-reviewed.
+the rule, skill, or command it fixes, add a `CHANGELOG.md` line, and prune the source
+entries from `.bench/learnings.md`. The verdict (promoted or dismissed, one line of
+why) goes in the CHANGELOG line and the integration commit, not the journal — the
+journal holds open entries only, so checking it never loads resolved history into
+context.
 
 The merge is mine; never auto-apply.

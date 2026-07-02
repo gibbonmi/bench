@@ -7,6 +7,14 @@ one entry per `/bench-update-kit` or `/bench-integrate-learnings` run; don't rew
 
 ## Unreleased
 
+- **Learnings run (2026-07-02, scope: learnings).** Dismissed: unbound-model
+  delegation at the reviewer's word — should-have-applied, `craft-line`'s
+  resolve-first rule and the line hook already cover it; no kit change. Per
+  reviewer direction, the journal convention changed from mark-resolved to
+  prune-on-resolve: `.bench/learnings.md` now holds open entries only, verdicts
+  live in the CHANGELOG and integration commits (updated the journal header, the
+  `bench init` scaffold, `/bench-integrate-learnings`, and `craft-synthesis`).
+
 - **Learnings run (2026-07-02, scope: learnings).** Drained eight open entries from
   `.bench/learnings.md` (seven tagged, one untagged straggler). Promoted: derived
   out-of-scope estimates (`<n> edits, <n> gate runs`) in `/bench-write-spec` step 3
