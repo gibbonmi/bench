@@ -41,6 +41,8 @@ bad_refs="$(grep -oE '\.bench/(gate|done)(\.sh)?' bin/bench.sh | grep -vE '\.sh$
 # shellcheck source=/dev/null
 . "$gate_dir/gate-runtime-contracts.sh"
 # shellcheck source=/dev/null
+. "$gate_dir/gate-runtime-shift-contracts.sh"
+# shellcheck source=/dev/null
 . "$gate_dir/gate-line-contracts.sh"
 
 # 2. JSON is valid. A missing file errs distinctly; "invalid JSON" fires only on a
