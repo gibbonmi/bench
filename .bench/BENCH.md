@@ -179,6 +179,15 @@ phases differently:
 - **Other AGENTS.md harnesses:** read the phase file in `.agents/commands/` and
   follow it when no native command or skill surface exists.
 
+**Match every recommendation to the active harness.** Kit prose (including
+`bench status` output and the phases' exit handoffs) names phases in the
+canonical `/bench-*` form. When you suggest a phase or skill as the next
+action — an exit handoff, a status row you relay, a workflow pointer —
+translate it at the point of recommendation into the form the reviewer can
+invoke *here*: the slash command in Claude Code, the `$bench-*` skill in Codex,
+the `.agents/commands/<name>.md` file elsewhere. Recommending a surface this
+harness doesn't have sends the reviewer to a dead key.
+
 Codex phase adapters installed by Bench:
 
 - `$bench-setup-repo` → `.agents/commands/bench-setup-repo.md`
