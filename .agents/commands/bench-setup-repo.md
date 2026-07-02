@@ -108,10 +108,12 @@ Ask for, with defaults proposed from exploration:
 
 - the 3–5 major seams — infer candidates from the codebase's module structure and
   propose them; the seams are wherever a stable interface already separates concerns
-- the domain hostile-input checklist — propose 5–8 edge classes from the stack
-  (a web API: auth expiry, malformed payloads, timeouts; a CLI: paths with spaces,
-  missing tools, interrupts). It lives in the profile, and `/bench-write-spec`'s
-  edge inventory reads it when mapping acceptance coverage
+- the domain hostile-input checklist — propose 5–8 edge classes from the stack,
+  seeded from the matching sections of the kit's hostile-input library
+  (`.agents/skills/bench-craft-seams/references/hostile-input-library.md`:
+  shell CLI, HTTP API, web UI, background jobs), tuned to this project. It lives
+  in the profile, and `/bench-write-spec`'s edge inventory reads it when mapping
+  acceptance coverage
 - the design-source location if there's UI (submodule / package / path)
 - the line defaults, written as **tier → model bindings**. First discover what's
   actually available — don't hardcode model names. Run `bench models` (it queries

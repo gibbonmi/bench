@@ -47,6 +47,11 @@ internal is something the agent can game.
 
 Avoid the word "boundary" (overloaded). Say **seam** or **interface**.
 
+The edge classes a domain's inputs actually present — per surface: shell CLI,
+HTTP API, web UI, background jobs — are templated in
+`references/hostile-input-library.md`. Quarry it when an edge inventory or a new
+project profile needs a hostile-input checklist.
+
 ## Design it twice (for the genuinely uncertain seam)
 
 Your first interface idea is rarely the best. When a seam is the uncertain one —

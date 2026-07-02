@@ -81,7 +81,10 @@ loop honest.
    interrupted/partial state, re-run idempotency, hostile environment — and
    consult the project
    profile's hostile-input checklist (`projects/<name>.md`) when one exists, so
-   domain edges recur instead of being rediscovered per defect. Every edge lands
+   domain edges recur instead of being rediscovered per defect. When the profile
+   has no checklist for the surface being touched, quarry the kit's hostile-input
+   library (`.agents/skills/bench-craft-seams/references/hostile-input-library.md`)
+   and propose adding the tuned section to the profile. Every edge lands
    in exactly one of two places: a coverage row (story column may read "edge of
    N"), or a one-line **Won't handle** entry directly under the map. Both are
    veto surface; a silently untested edge is the failure this step exists to
