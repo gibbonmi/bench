@@ -17,11 +17,14 @@ The roadmap parked five candidates (`diff`, `refs`, `coverage`, `doctor`,
 `detect`). Do all five ship, or must each earn its place?
 
 ### Answer
-Consumer-anchored: a parser earns a ticket only by naming the existing phase step
-it replaces. `diff` (review-implementation's pin-the-diff step), `refs`
-(update-kit's stale-reference sweeps), `coverage` (review-implementation's
-coverage axis), and `detect` (setup-repo's stack interview) qualify. `doctor` has
-no named consumer yet — #5 decides whether it gets one or stays parked.
+Evidence-anchored: a parser earns a ticket by naming the phase step it replaces
+**and** showing evidence — an observed wrong answer, or recurrence through the
+learnings funnel (`decisions/state-surface.md` #2). Consumer-naming alone is not
+enough; it admits pattern-completion. Under this bar the wave is two parsers:
+`diff` (live review-base bug in review-implementation) and `coverage` (reviewer-
+admitted as part of the same review story — the coverage axis needs attribution).
+`refs`, `doctor`, and `detect` returned to the roadmap until the funnel names
+them; `refs` additionally duplicates a signal the gate already enforces.
 
 ## #2: Does `bench diff` own review-base semantics?
 
@@ -65,46 +68,10 @@ clones). The key is local-only — review happens where the shift ran — and an
 orphaned key after branch deletion is harmless residue the fallback ignores.
 Row schema and per-file fields are spec detail.
 
-## #4: What does `refs` sweep, and does the gate consume it?
+## #4–#6: retired
 
-Blocked by: —
-Type: Grill
-
-### Question
-Which corpora (kit files, whole repo, docs only) and which reference forms
-(`/name`, `$name`, basename) does `bench refs <stem>` cover? And do the gate's
-existing stale-reference checks re-point to it — one parser per signal — or stay
-independent so the oracle doesn't depend on the surface under review?
-
-### Answer
-— (open)
-
-## #5: Who consumes `bench doctor`?
-
-Blocked by: —
-Type: Grill
-
-### Question
-"Link/wiring drift" names a signal but no phase step that reads it. Under the #1
-admission rule it needs a named consumer (update-kit's post-link verification?
-session-start?) or it stays parked. Overlap with what the gate already asserts
-must also be resolved — doctor must not become a second oracle.
-
-### Answer
-— (open)
-
-## #6: What does `detect` discover, into what schema?
-
-Blocked by: —
-Type: Grill
-
-### Question
-Read-only stack discovery feeding the setup-repo interview: which facts
-(language, test runner, linter, CI, package manager), how deep the probing goes,
-and how the interview consumes the rows (pre-fill vs. suggestion).
-
-### Answer
-— (open)
+`refs`, `doctor`, and `detect` failed the #1 evidence bar and returned to the
+roadmap. Their tickets are removed; numbering stays stable.
 
 ## #7: What is the coverage-row convention `coverage` parses?
 
@@ -122,13 +89,13 @@ reports. Output: a short summary asset proposing the convention.
 
 ## #8: Does the build slice, and in what order?
 
-Blocked by: #3, #4, #5, #6, #7
+Blocked by: #7
 Type: Grill
 
 ### Question
-One spec for all admitted parsers (the wave-1 precedent) or staged per parser?
-Reviewer's call, made against the finished shapes — sequencing matters because
-`diff` also carries the review-base bug fix.
+One spec for both admitted parsers (`diff`, `coverage`) or staged? Reviewer's
+call, made against the finished shapes — sequencing matters because `diff`
+carries the review-base bug fix.
 
 ### Answer
 — (open)
