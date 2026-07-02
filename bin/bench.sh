@@ -321,6 +321,8 @@ BENCH_BIN_DIR="$(dirname "$(resolve_script_path)")"
 . "$BENCH_BIN_DIR/bench-status.sh"
 # shellcheck source=/dev/null
 . "$BENCH_BIN_DIR/bench-worktree.sh"
+# shellcheck source=/dev/null
+. "$BENCH_BIN_DIR/bench-query.sh"
 
 case "${1:-help}" in
   gate)     run_gate ;;
@@ -333,6 +335,8 @@ case "${1:-help}" in
   idea)     shift; idea "$@" ;;
   roadmap)  roadmap ;;
   status)   status ;;
+  learnings) shift; learnings "$@" ;;
+  maps)     shift; maps "$@" ;;
   *) cat <<EOF
 bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench link [copy|symlink]  safely wire the kit into this repo for every harness
@@ -342,6 +346,8 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench idea "<text>"        park an out-of-scope idea in ROADMAP.md (commit to nothing)
   bench roadmap              list parked ideas
   bench status               ambient dashboard: what needs attention + the next action
+  bench learnings            open journal entries as a TOON table (date, title)
+  bench maps                 unresolved decision-map tickets as TOON (map, ticket, type, state)
   bench gate                 run the project gate (the oracle)
   bench worktree             warm, isolated worktree subshell
   bench shift "<objective>"  gated loop in a pooled worktree; commit on green

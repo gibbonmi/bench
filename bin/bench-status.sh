@@ -25,6 +25,13 @@ structure() {
   structure_check all ""
 }
 
+# The single violations parser shared by `structure` and `status`: the count of
+# FILE TOO LONG / DIR CROWDED lines from the one detector (structure_check), so
+# status no longer re-greps `structure`'s human text with its own inline regex.
+structure_violation_count() {
+  structure_check all "" 2>/dev/null | grep -cE '^(FILE TOO LONG|DIR CROWDED)' || true
+}
+
 structure_touched_since() {
   local root base files
   root="$(repo_root)"
@@ -202,13 +209,13 @@ status() {
     rows+=("2|worktree|$wtc active worktree(s)|resume or clean up (bench worktree)")
   fi
 
-  local floor open=0; floor="${BENCH_LEARNINGS_FLOOR:-1}"
-  [[ -f "$root/.bench/learnings.md" ]] && open="$(grep -cE '^## [0-9]{4}-[0-9]{2}-[0-9]{2}.*\[open\]' "$root/.bench/learnings.md" 2>/dev/null || true)"
+  local floor open; floor="${BENCH_LEARNINGS_FLOOR:-1}"
+  open="$(learnings_open_count "$root/.bench/learnings.md")"
   if [[ "${open:-0}" -ge "$floor" && "${open:-0}" -gt 0 ]]; then
     rows+=("3|learnings|$open open|/bench-integrate-learnings")
   fi
 
-  local sviol; sviol="$(structure 2>/dev/null | grep -cE '^(FILE TOO LONG|DIR CROWDED)' || true)"
+  local sviol; sviol="$(structure_violation_count)"
   if [[ "${sviol:-0}" -gt 0 ]]; then
     rows+=("4|structure|$sviol issue(s)|split (craft-seams)")
   fi
