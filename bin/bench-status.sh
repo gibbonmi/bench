@@ -157,9 +157,19 @@ status() {
     rows+=("1|git|$d|commit on green / push")
   fi
 
-  local wtc; wtc="$(git -C "$root" worktree list 2>/dev/null | wc -l | tr -d ' ' || true)"
-  if [[ "${wtc:-1}" -gt 1 ]]; then
-    rows+=("2|worktree|$((wtc-1)) extra worktree(s)|resume or clean up (bench worktree)")
+  # Warm pooled worktrees (released, no lease) are the pool doing its job, not a
+  # signal. Count only leased pool entries and worktrees outside the pool.
+  local wtc=0 pool wpath
+  pool="$(worktree_pool "$root")"
+  while IFS= read -r wpath; do
+    [[ "$wpath" == worktree\ * ]] || continue
+    wpath="${wpath#worktree }"
+    [[ "$wpath" == "$root" ]] && continue
+    [[ "$wpath" == "$pool"/* && ! -f "$(worktree_lease_file "$wpath")" ]] && continue
+    wtc=$((wtc+1))
+  done < <(git -C "$root" worktree list --porcelain 2>/dev/null || true)
+  if (( wtc > 0 )); then
+    rows+=("2|worktree|$wtc active worktree(s)|resume or clean up (bench worktree)")
   fi
 
   local floor open=0; floor="${BENCH_LEARNINGS_FLOOR:-1}"

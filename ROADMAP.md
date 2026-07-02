@@ -5,7 +5,6 @@
 - 2026-07-01  Build a viewable Bench dashboard for humans to see project moving pieces at a glance, inspired by the saved ui_examples image styling and animated characters that move based on what they are doing. Low priority; shape in a future session.
 - 2026-07-01  per-path structure budgets (real version of craft-seams escape hatch)
 - 2026-07-01  worktree lease staleness + TOCTOU hardening for the pool
-- 2026-07-01  status: stop nagging about warm pooled worktrees as 'extra'
 - 2026-07-01  domain hostile-input checklist library beyond shell (web/API/UI profile templates for the edge inventory)
 - 2026-07-01  kit repo lacks its own pre-push guard (never bench-linked): install the managed hook or amend BENCH.md's enforcement claim for this repo
 - 2026-07-01  2026-09-01 or next frontier shift: revisit Sonnet 5 for the mid/session tier seat (intro pricing ends; see decisions/model-routing.md #6)

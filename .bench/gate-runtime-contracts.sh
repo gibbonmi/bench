@@ -134,6 +134,24 @@ rm -rf "$tmp"
 
 tmp="$(mktemp -d)"
 (
+  set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
+  # Warm pooled worktrees (released, no lease) are expected state, never a signal;
+  # a leased pool entry is in-flight work and must fire.
+  export BENCH_HOME="$tmp/.bh"
+  rr="$(git rev-parse --show-toplevel)"
+  pool="$BENCH_HOME/worktrees/$(basename "$rr")-$(echo "$rr" | cksum | cut -d' ' -f1)"
+  mkdir -p "$pool"
+  gci worktree add -q --detach "$pool/warm" HEAD 2>/dev/null
+  out="$(bash "$root/bin/bench.sh" status)"
+  if grep -qF 'resume or clean up' <<<"$out"; then echo "warm pooled worktree surfaced as a signal"; exit 1; fi
+  : > "$(git -C "$pool/warm" rev-parse --git-path bench-lease)"
+  out="$(bash "$root/bin/bench.sh" status)"
+  grep -qF '1 active worktree' <<<"$out" || { echo "leased pooled worktree did not surface"; exit 1; }
+) || err "bench status warm-pool contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
   set -u; cd "$tmp"; git init -q
   mkdir -p .bench bin
   cp "$root"/bin/bench.sh "$root"/bin/bench-link.sh "$root"/bin/bench-status.sh bin/
