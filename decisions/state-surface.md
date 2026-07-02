@@ -100,27 +100,24 @@ silently. Manifest fields follow `craft-cli` minimal-schema discipline
 Blocked by: #6
 Type: Grill
 
-### Question
-The roadmap entry wants the block surface known up front instead of learned by
-collision. Full `bench guards` output, a one-line-per-guard summary, or only
-guards likely to fire given current state? What line budget, and does it join
-the existing dashboard hook output or stand alone?
-
 ### Answer
-— (open)
+`session-start.sh` additionally runs `bench guards --brief`: one line per
+guard (name + what-it-denies clause) plus one footer line pointing at
+`bench guards` for full manifests. Unconditional — all guards, no
+state-filtering; the premise is learn-up-front, and the git guard always
+applies. The budget is structural: one line per guard, hard, no wrapping
+(~6 lines today). The hook stays a thin never-blocking wrapper; the `--brief`
+rendering contract lives in the CLI where the gate tests it.
 
 ## #8: Does the build slice at the guards boundary?
 
 Blocked by: #6
 Type: Grill
 
-### Question
-`learnings` + `maps` + the emitter + the gate conformance layer depend on
-nothing open; `guards` waits on #6–#7. Ship as one spec, or slice? Reviewer's
-scoping call, recorded here so the map doesn't close around it silently.
-
 ### Answer
-— (open)
+One spec. All wave-1 surfaces — `learnings`, `maps`, `guards`, the shared TOON
+emitter, the guard `--describe` modes, the SessionStart `--brief` injection,
+the gate conformance layer, and the kit-prose edits — ship together.
 
 ## #9: What does the gate assert about the new surfaces?
 
