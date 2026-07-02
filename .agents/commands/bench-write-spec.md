@@ -15,7 +15,8 @@ decisions, pre-agreed seams, testing decisions, and the gate that defines done.
 Close by showing the approval table for user stories, seams (each with its seam
 diagram), acceptance coverage, and out of scope. Stop for reviewer sign-off. After approval, the recommended next
 command is `/bench-implement-spec` for an interactive build, or `bench shift` only
-when the spec is locked and the work is mechanical enough for the autonomous loop.
+when the spec is locked and it passes `craft-line`'s venue-routing test: every
+story's line is cheap and the coverage map is fully gate-observable.
 
 Synthesize the current conversation and codebase understanding into a spec the
 build loop can run against. Do **not** interview me — use what you already know.
@@ -184,5 +185,5 @@ rows and won't-handle lines included) / out of scope —
 and pause for my sign-off. The full spec file
 stays as written; the table is the at-a-glance veto surface. Only after I approve,
 lead with the recommended next action — `/bench-implement-spec` interactively, or a
-`bench shift` for locked-spec mechanical work — and a one-clause why, not a neutral
-either/or.
+`bench shift` when the spec passes `craft-line`'s venue-routing test — and a
+one-clause why, not a neutral either/or.

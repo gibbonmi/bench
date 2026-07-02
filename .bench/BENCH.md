@@ -140,6 +140,12 @@ review findings may use a direct fix-and-gate path; run focused regression
 checks for behavior defects, then the gate. If I give you a standing rule for
 changes of a given size, follow it and stop asking.
 
+**A batch approval covers per-spec sign-offs when I'm unreachable.** If I've
+approved a batch plan ("roll the roadmap") and go AFK mid-run, build on rather
+than stall: leave each spec in `specs/` as post-hoc veto surface and flag
+contestable calls for veto. Absent a batch approval, spec sign-off is a hard
+stop.
+
 **Capture what you learn; never silently rewrite your own rules.** When you
 deviate from the workflow, make a process or judgment call you're unsure about,
 or catch a should-have-asked in hindsight, append one entry to

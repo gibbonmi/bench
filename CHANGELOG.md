@@ -7,6 +7,16 @@ one entry per `/bench-update-kit` or `/bench-integrate-learnings` run; don't rew
 
 ## Unreleased
 
+- **Learnings run (2026-07-02, scope: learnings).** Drained two open entries.
+  Promoted: a batch approval covers per-spec sign-offs when the reviewer is
+  unreachable — build-and-flag, with specs left as post-hoc veto surface and a
+  hard stop absent a batch approval (`.bench/BENCH.md` Workflow); venue routing
+  in `craft-line` — delegate a spec'd build to `bench shift` on the cheap
+  binding when every story's line is cheap and the gate fully observes the
+  coverage map, with `/bench-write-spec`'s handoff clauses now pointing at that
+  test instead of "mechanical enough". Dogfood loop waived: prose-only guidance
+  a shift can't observe; verified via consistency audit and a green gate.
+
 - **Learnings run (2026-07-02, scope: learnings).** Dismissed: unbound-model
   delegation at the reviewer's word — should-have-applied, `craft-line`'s
   resolve-first rule and the line hook already cover it; no kit change. Per

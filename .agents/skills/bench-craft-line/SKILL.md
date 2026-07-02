@@ -53,6 +53,17 @@ place where routing cheap is the expensive choice.
 Check `Lines` for a cached routing before assessing from scratch — common
 work types in a project get precomputed rows. Cache hits still get declared.
 
+## Route the venue, not just the tier
+
+The same signals pick *where* a spec'd build runs. Delegate it to `bench shift`
+on the cheap binding when every story's line is cheap **and** the gate fully
+observes the coverage map. Stay inline when mid+ judgment is likely (protocol
+design, a grammar discovered from red output) or the task is smaller than its
+own handoff — the handoff must be cheaper than the iterations it moves. The
+expensive shape to avoid is iterating in a huge context on the top model, not
+top-tier work per se: spec at the top tier, then move gate-observable
+iteration to the cheap binding.
+
 ## The ladder corrects the start
 
 The table only has to be right-enough; gate feedback does the rest:
