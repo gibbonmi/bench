@@ -154,7 +154,7 @@ tmp="$(mktemp -d)"
 (
   set -u; cd "$tmp"; git init -q
   mkdir -p .bench bin
-  cp "$root"/bin/bench.sh "$root"/bin/bench-link.sh "$root"/bin/bench-status.sh bin/
+  cp "$root"/bin/bench.sh "$root"/bin/bench-link.sh "$root"/bin/bench-status.sh "$root"/bin/bench-worktree.sh bin/
   chmod +x bin/bench.sh
   printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
   gci add -A; gci commit -q -m init
@@ -359,7 +359,7 @@ tmp="$(mktemp -d)"
 (
   set -u; cd "$tmp"; git init -q
   mkdir -p .bench bin
-  cp "$root"/bin/bench.sh "$root"/bin/bench-link.sh "$root"/bin/bench-status.sh bin/
+  cp "$root"/bin/bench.sh "$root"/bin/bench-link.sh "$root"/bin/bench-status.sh "$root"/bin/bench-worktree.sh bin/
   chmod +x bin/bench.sh
   printf '#!/usr/bin/env bash\nexit 1\n' > .bench/gate.sh; chmod +x .bench/gate.sh
   gci add -A; gci commit -q -m init
