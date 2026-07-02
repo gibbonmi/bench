@@ -238,3 +238,57 @@ si_tmp="$(mktemp -d)"
   [ "$before" = "$(cat .bench/BENCH.md)" ] || { echo "--write is not idempotent"; exit 1; }
 ) || err "skills-index generate/verify contract failed"
 rm -rf "$si_tmp"
+
+#    n) acceptance coverage maps parse. Any specs/*.md carrying the map heading
+#       must have the canonical header, five non-empty cells per row, and story
+#       references that resolve (an integer within the spec's numbered stories,
+#       or an edge… reference). Pre-convention specs opt out with
+#       <!-- coverage-map: historical -->. Cell semantics stay with review.
+node <<'NODE' || fail=1
+const fs = require("fs");
+let bad = 0;
+const err = m => { console.error("gate: " + m); bad = 1; };
+const HEADING = "### Acceptance coverage map";
+const HEADER = ["story", "behavior", "seam", "red signal", "why it catches the failure"];
+if (fs.existsSync("specs")) {
+  for (const f of fs.readdirSync("specs").filter(f => f.endsWith(".md")).sort()) {
+    const file = "specs/" + f;
+    const text = fs.readFileSync(file, "utf8");
+    // Anchored to a heading line — the phrase in running prose is not a map.
+    const parts = text.split(new RegExp(`^${HEADING}$`, "m"));
+    if (parts.length < 2) continue;
+    if (/^<!-- coverage-map: historical -->$/m.test(text)) continue;
+    const stories = (text.split(/^## User stories$/m)[1] || "").split(/^## /m)[0];
+    const maxStory = [...stories.matchAll(/^(\d+)\. /gm)]
+      .reduce((n, m) => Math.max(n, Number(m[1])), 0);
+    const section = parts[1].split(/^#{2,3} /m)[0];
+    const rows = section.split("\n")
+      .filter(l => l.trim().startsWith("|"))
+      .map(l => l.trim().replace(/^\|/, "").replace(/\|$/, "")
+        .replace(/\\\|/g, "\u0000")   // \| is an escaped pipe inside a cell
+        .split("|").map(c => c.replace(/\u0000/g, "\\|").trim()));
+    if (!rows.length || rows[0].map(c => c.toLowerCase()).join("|") !== HEADER.join("|")) {
+      err(`${file} coverage map missing the canonical header`); continue;
+    }
+    const data = rows.slice(1).filter(r => !r.every(c => /^-*$/.test(c)));
+    if (!data.length) { err(`${file} coverage map has no data rows`); continue; }
+    data.forEach((r, i) => {
+      const row = i + 1;
+      if (r.length !== 5) { err(`${file} coverage map row ${row} has ${r.length} cells (want 5)`); return; }
+      r.forEach((c, j) => { if (!c) err(`${file} coverage map row ${row} has an empty '${HEADER[j]}' cell`); });
+      const story = r[0].replace(/\s*\(.*\)$/, ""); // "8 (edge)" → "8"
+      if (!story) return; // empty already reported above
+      if (/^edge/i.test(story)) return;
+      // integer, comma list, and N–M / N-M ranges all resolve against the count
+      if (/^\d+(\s*[–-]\s*\d+)?(\s*,\s*\d+(\s*[–-]\s*\d+)?)*$/.test(story)) {
+        for (const m of story.matchAll(/\d+/g)) {
+          if (Number(m[0]) > maxStory) err(`${file} coverage map row ${row} references story ${m[0]} but the spec numbers only ${maxStory}`);
+        }
+      } else {
+        err(`${file} coverage map row ${row} has an unrecognized story reference '${story}'`);
+      }
+    });
+  }
+}
+process.exit(bad);
+NODE
