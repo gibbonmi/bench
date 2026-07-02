@@ -57,6 +57,34 @@ EOF
 ) || err "bench shift worktree-isolation contract failed"
 rm -rf "$tmp"
 
+# Staging contract: an iteration commit carries exactly what the agent touched.
+# The gate here drops an unignored byproduct — it must stay out of the commit in
+# the same iteration (snapshot precedes the gate run) and in the next one
+# (pre-agent dirt is subtracted). Touched paths keep spaces and glob characters.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench
+  printf '#!/usr/bin/env bash\nprintf cache > gate-artifact.txt\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  cat > agent <<'EOF'
+#!/usr/bin/env bash
+n=0; [ -f count ] && n="$(cat count)"
+n=$((n+1)); printf '%s\n' "$n" > count
+printf 'work\n' > "step $n [a].txt"
+EOF
+  chmod +x agent
+  gci add -A; gci commit -q -m init
+  home="$(mktemp -d)"
+  out="$(BENCH_AGENT="$tmp/agent" BENCH_MAX_ITERS=2 BENCH_HOME="$home" bash "$root/bin/bench.sh" shift stage-touched 2>&1)" || true
+  grep -qF '2 committed iteration(s)' <<<"$out" || { echo "stage-touched shift did not commit both iterations"; exit 1; }
+  branch="$(sed -n 's/^■ shift done: \([^,]*\),.*/\1/p' <<<"$out")"
+  gci cat-file -e "$branch:step 1 [a].txt" || { echo "touched path with space+glob chars was not staged"; exit 1; }
+  gci cat-file -e "$branch:step 2 [a].txt" || { echo "second iteration's touched path was not staged"; exit 1; }
+  if gci cat-file -e "$branch:gate-artifact.txt" 2>/dev/null; then echo "gate byproduct rode into an iteration commit"; exit 1; fi
+  rm -rf "$home"
+) || err "bench shift stage-touched contract failed"
+rm -rf "$tmp"
+
 tmp="$(mktemp -d)"
 (
   set -u; cd "$tmp"; git init -q

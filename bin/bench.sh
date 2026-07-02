@@ -29,6 +29,18 @@ default_branch() { git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/
 shift_scratch_status() {
   git -C "$1" status --porcelain | grep -vE '^[ MADRCU?!]{2} \.bench-(objective|notes\.md)$' || true
 }
+shift_dirty_paths() {
+  # Sorted newline list of dirty paths, scratch excluded — comm(1) input for the
+  # touched-path diff in shift_loop. -z, because plain porcelain C-quotes paths
+  # with spaces or specials and the quoted form never matches a pathspec; a path
+  # containing a real newline is the one shape this still misreads.
+  local entry p
+  git -C "$1" status --porcelain -z --no-renames 2>/dev/null | while IFS= read -r -d '' entry; do
+    p="${entry:3}"
+    case "$p" in .bench-objective|.bench-notes.md) continue ;; esac
+    printf '%s\n' "$p"
+  done | sort
+}
 cleanup_shift_scratch() {
   rm -f "$1/.bench-objective" "$1/.bench-notes.md"
 }
@@ -164,8 +176,22 @@ shift_cleanup() {
   worktree_release "$wt"
 }
 
+shift_stage_touched() {
+  # Stage exactly what the agent touched: dirty after it ran ($3) minus dirty
+  # before it ran ($2). Snapshotted before the gate runs, so gate byproducts
+  # (unignored build artifacts, caches) never ride into an iteration commit —
+  # the same sweep class as a blanket `git add -A`, previously contained only
+  # by worktree isolation. :(literal) keeps glob characters in a path from
+  # being read as a pathspec pattern.
+  local root="$1" pre="$2" post="$3" p
+  comm -13 <(printf '%s\n' "$pre") <(printf '%s\n' "$post") | while IFS= read -r p; do
+    [[ -n "$p" ]] || continue
+    git -C "$root" add -A -- ":(literal)$p" || true
+  done
+}
+
 shift_loop() {
-  local objective="$1" main_root root wt branch base i started tokens=0 committed=0
+  local objective="$1" main_root root wt branch base i started tokens=0 committed=0 pre post
   require_adapter
   main_root="$(repo_root)"
   [[ -z "$(git -C "$main_root" status --porcelain)" ]] || { echo "working tree not clean; commit or stash first" >&2; exit 1; }
@@ -187,9 +213,11 @@ shift_loop() {
     echo "── iteration $i/$MAX_ITERS ──"
     # one bounded iteration: agent makes one small change toward the objective.
     # BENCH_SHIFT=1 arms the Stop hook so the agent cannot declare done on red.
+    pre="$(shift_dirty_paths "$root")"
     ( cd "$root" && BENCH_SHIFT=1 "$AGENT" "$(iteration_prompt "$objective")" ) || true
+    post="$(shift_dirty_paths "$root")"
     if ( cd "$root" && run_gate ); then
-      git -C "$root" add -A -- ':!.bench-objective' ':!.bench-notes.md'
+      shift_stage_touched "$root" "$pre" "$post"
       if git -C "$root" diff --cached --quiet; then
         echo "  gate green, no change this iteration — objective likely met."; break
       fi
@@ -215,9 +243,11 @@ shift_loop() {
       echo "── refactor $r/$rcap ──"
       # Scope the prompt to the files this shift flagged — never repo-wide debt.
       flagged="$( (cd "$root" && structure_touched_since "$base") 2>&1 || true)"
+      pre="$(shift_dirty_paths "$root")"
       ( cd "$root" && BENCH_SHIFT=1 "$AGENT" "$(refactor_prompt "$flagged")" ) || true
+      post="$(shift_dirty_paths "$root")"
       if ( cd "$root" && run_gate ); then
-        git -C "$root" add -A -- ':!.bench-objective' ':!.bench-notes.md'
+        shift_stage_touched "$root" "$pre" "$post"
         if git -C "$root" diff --cached --quiet; then
           echo "  gate green, refactor $r made no staged change - stopping refactor phase"
           break
