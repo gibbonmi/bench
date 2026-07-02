@@ -167,6 +167,9 @@ get declared — no silent escalation.
 - **Gate / conformance logic** → mid effort. Correctness of the oracle matters more
   than speed — a wrong gate is the worst class of bug in a kit whose whole premise is
   "the gate is the oracle."
+- **Review-axis delegate** (`/bench-review-implementation`, one per axis) → mid
+  model, medium effort, **~60k tokens each** (three axes ≈ 180k total). Read-heavy:
+  each takes the full diff plus standards docs and runs verification commands.
 
 ## Notes for cold sessions
 

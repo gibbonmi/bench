@@ -21,8 +21,3 @@ Format per entry:
 An entry leaves this file only via /bench-integrate-learnings.
 
 <!-- entries below -->
-
-## 2026-07-02 — review-axis delegate token caps underestimated ~2x  [open]
-- What happened: declared the review line as three opus/medium delegates at ~30k tokens each; actuals ran 50–62k each (~166k total vs ~90k declared). No stop-and-report fired because each delegate is a single uncapped run, not an iterating stage.
-- Right behavior: estimate ~55–65k per read-heavy review-axis delegate (they read the full diff + standards docs + run verification commands), and say so in the declared line.
-- Proposed rule change: none to the kit; a cached routing note in projects/benchkit.md Lines (review-axis delegate ≈ 60k on mid) would make the next declaration honest.

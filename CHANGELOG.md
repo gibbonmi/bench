@@ -8,6 +8,13 @@ one entry per `/bench-update-kit` or `/bench-integrate-learnings` run; don't rew
 ## Unreleased
 
 - **Learnings run (2026-07-02, scope: learnings).** Drained one open entry.
+  Promoted: cached routing for review-axis delegates in `projects/benchkit.md`
+  Lines — ~60k tokens each on mid (three axes ≈ 180k), sourced from actuals
+  running 2x a ~30k declaration. Project-specific calibration, not a kit rule.
+  Dogfood loop waived: prose-only routing note; verified via consistency grep
+  and a green gate.
+
+- **Learnings run (2026-07-02, scope: learnings).** Drained one open entry.
   Promoted: quantified oracle promises must name their granularity — when a
   spec's behavior or red-signal promise ranges over a set ("each check"), the
   spec enumerates the set or states per-item vs per-class explicitly
