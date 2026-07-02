@@ -29,6 +29,7 @@ block() { echo "BLOCKED: \`$1\` — you don't have authority over this. The merg
 
 reason="$(python3 - "$cmd" <<'PY'
 import os
+import posixpath
 import re
 import shlex
 import subprocess
@@ -204,8 +205,23 @@ def stash_verdict(args):
     return sub in {"drop", "clear"}
 
 
+def is_delegate_worktree_path(arg):
+    norm = posixpath.normpath(arg)
+    return norm.startswith(".claude/worktrees/") or "/.claude/worktrees/" in norm
+
+
 def branch_verdict(args):
-    return any(arg in {"-D", "-d", "--delete", "-f", "--force"} for arg in args)
+    if not any(arg in {"-D", "-d", "--delete", "-f", "--force"} for arg in args):
+        return False
+    # Carve-out: deleting harness-delegate branches (worktree-*) is cleanup of
+    # agent-created scratch, not reviewer history. Force-move (-f without a
+    # delete flag) and any non-delegate name still block.
+    if any(arg in {"-f", "--force"} for arg in args) and not any(
+        arg in {"-D", "-d", "--delete"} for arg in args
+    ):
+        return True
+    names = [arg for arg in args if not arg.startswith("-")]
+    return not names or not all(name.startswith("worktree-") for name in names)
 
 
 def reflog_verdict(args):
@@ -217,7 +233,13 @@ def worktree_verdict(args):
     sub = next((arg for arg in args if not arg.startswith("-")), None)
     if sub != "remove":
         return False
-    return any(arg in {"-f", "--force"} for arg in args)
+    if not any(arg in {"-f", "--force"} for arg in args):
+        return False
+    # Carve-out: force-removing harness-delegate worktrees under
+    # .claude/worktrees/ is cleanup of agent-created scratch. Paths are
+    # normalized so traversal out of that directory still blocks.
+    paths = [arg for arg in args if not arg.startswith("-")][1:]
+    return not paths or not all(is_delegate_worktree_path(p) for p in paths)
 
 
 def find_subcommand(tokens, start, end):

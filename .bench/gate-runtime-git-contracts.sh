@@ -67,6 +67,21 @@ tmp="$(mktemp -d)"
   expect_block 'git checkout -B main'
   expect_block 'git switch -C main'
 
+  # -- delegate-scratch carve-out: harness worktrees under .claude/worktrees/ and
+  #    their worktree-* branches are agent-created scratch, cleanable by the agent.
+  #    Everything adjacent — traversal out of the directory, mixed targets, bare
+  #    force-remove, branch force-move — still blocks.
+  expect_allow 'git worktree remove --force .claude/worktrees/agent-abc123'
+  expect_allow 'git worktree remove --force /home/u/repo/.claude/worktrees/agent-abc123'
+  expect_allow 'git branch -D worktree-agent-abc123'
+  expect_allow 'git branch -d worktree-agent-abc123 worktree-agent-def456'
+  expect_block 'git worktree remove --force .claude/worktrees/../../src'
+  expect_block 'git worktree remove --force .claude/worktrees/agent-a wt2'
+  expect_block 'git worktree remove --force'
+  expect_block 'git branch -D worktree-agent-a main'
+  expect_block 'git branch -D'
+  expect_block 'git branch -f worktree-agent-a HEAD~1'
+
   # -- wrapper strings and prefixed invocations are classified like bare ones (stories 10, 11, 12)
   expect_block "bash -c 'git push'"
   expect_block "bash -lc 'git push'"
