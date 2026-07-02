@@ -43,7 +43,7 @@ import os, py_compile, sys, tempfile
 try:
     with tempfile.TemporaryDirectory() as d:
         py_compile.compile(sys.argv[1], cfile=os.path.join(d, "c.pyc"), doraise=True)
-except py_compile.PyCompileError as e:
+except (py_compile.PyCompileError, OSError) as e:
     print(e, file=sys.stderr)
     sys.exit(1)
 PYCHECK

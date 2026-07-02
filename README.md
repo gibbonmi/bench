@@ -160,7 +160,8 @@ bench/
 │   └── hooks/                # shared hook scripts used by harness adapters
 │       ├── session-start.sh
 │       ├── stop.sh
-│       └── block-dangerous-git.sh
+│       ├── block-dangerous-git.sh
+│       └── git-guard.py      # the git guard's analyzer (invoked by the hook, not a hook)
 ├── .claude/
 │   ├── README.md             # explains Claude adapter paths -> .agents and .bench/hooks
 │   ├── settings.json         # Claude Code adapter pointing at .bench/hooks
