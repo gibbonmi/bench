@@ -12,8 +12,8 @@ declares AXI conformance, treat these as the conformance target the gate checks.
 A surface with its own documented output contract is out of this skill's scope;
 do not "fix" it toward these rules. The contract attaches to the surface, not
 the binary: bench's operational commands keep their plain-text stderr/exit-code
-contract, while its query subcommands (`learnings`, `maps`, `guards`) conform
-to AXI and are gate-checked against it. Full spec: https://axi.md
+contract, while its query subcommands (`learnings`, `maps`, `guards`, `diff`,
+`coverage`) conform to AXI and are gate-checked against it. Full spec: https://axi.md
 
 ## The principles
 

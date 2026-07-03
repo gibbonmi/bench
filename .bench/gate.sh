@@ -139,6 +139,29 @@ for f in .agents/skills/*/SKILL.md; do
   esac
 done
 
+# 3c. Claude's skill surface mirrors the craft skills exactly. .claude/skills/ is an
+#     adapter layer of links into .agents/skills/ carrying ONLY the bench-craft-*
+#     skills (phase adapters are Codex-only: a stray one duplicates the slash menu,
+#     a missing craft skill silently thins Claude's guidance, a dangling link fails
+#     silently). Advertised in .bench/BENCH-reference.md; enforced here. Guarded on
+#     either side existing so minimal fixtures skip it.
+if [ -d .claude/skills ] || [ -d .agents/skills ]; then
+  for d in .agents/skills/bench-craft-*/; do
+    [ -d "$d" ] || continue
+    base="$(basename "$d")"
+    [ -e ".claude/skills/$base" ] || err "craft skill '$base' missing from .claude/skills (Claude loses the guidance surface)"
+  done
+  for d in .claude/skills/*/; do
+    [ -e "$d" ] || continue
+    base="$(basename "$d")"
+    case "$base" in
+      bench-craft-*) ;;
+      *) err ".claude/skills/$base is not a craft skill (phase adapters are Codex-only; it duplicates the slash menu)"; continue ;;
+    esac
+    [ -f ".claude/skills/$base/SKILL.md" ] || err ".claude/skills/$base does not resolve to a SKILL.md (broken adapter link)"
+  done
+fi
+
 # 4. Package and installable-surface contracts.
 # shellcheck source=/dev/null
 . "$gate_dir/gate-package-contracts.sh"

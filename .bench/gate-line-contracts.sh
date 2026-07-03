@@ -65,6 +65,25 @@ else
     printf '%s' "$_val" | grep -qE '^[a-z0-9-]+$' \
       || err "lines.env alias malformed: $_la='$_val' is not a bare alias"
   done
+  # The profile's Lines prose restates this binding for cold sessions and asks to
+  # be kept in sync; this is the check behind that promise — a stale prose copy
+  # makes a session declare the line from one binding while the hooks enforce
+  # another. Guarded on the profile existing so minimal fixtures skip it.
+  if [ -f projects/benchkit.md ]; then
+    for _lv in BENCH_TIER_TOP BENCH_TIER_MID BENCH_TIER_CHEAP; do
+      _val="$(bench_tier_value "$_lv" .bench/lines.env)"
+      [ -n "$_val" ] || continue   # unset/malformed already reported above
+      grep -qF "$_val" projects/benchkit.md \
+        || err "profile Lines prose stale: projects/benchkit.md does not name bound model id '$_val' ($_lv in lines.env)"
+    done
+    for _la in BENCH_ALIAS_TOP BENCH_ALIAS_MID BENCH_ALIAS_CHEAP; do
+      grep -qE "^[[:space:]]*${_la}=" .bench/lines.env || continue
+      _val="$(bench_tier_value "$_la" .bench/lines.env)"
+      [ -n "$_val" ] || continue
+      grep -qF "${_la}=${_val}" projects/benchkit.md \
+        || err "profile Lines prose stale: projects/benchkit.md does not carry alias declaration ${_la}=${_val}"
+    done
+  fi
 fi
 
 # b) Hook wiring. A hook script without its settings.json matcher is decorative.

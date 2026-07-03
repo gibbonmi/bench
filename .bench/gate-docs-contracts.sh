@@ -125,11 +125,19 @@ let bad = 0;
 const err = msg => { console.error("gate: " + msg); bad = 1; };
 const bench = fs.readFileSync("bin/bench.sh", "utf8");
 const commands = [...bench.matchAll(/^  ([a-z][a-z-]*)\)\s/gm)].map(m => m[1]).sort();
+const known = new Set(commands);
+const docRef = /`bench ([a-z][a-z-]*)\b/g;
 for (const file of ["HANDOFF.md", ".bench/BENCH-reference.md"]) {
   if (!fs.existsSync(file)) continue;
   const text = fs.readFileSync(file, "utf8");
   for (const cmd of commands) {
     if (!text.includes(`bench ${cmd}`)) err(`${file} does not list CLI command 'bench ${cmd}'`);
+  }
+  // reverse direction: a backticked `bench <sub>` these docs still carry after the
+  // subcommand is removed or renamed outlives reality — the loop above can't see it.
+  let m;
+  while ((m = docRef.exec(text)) !== null) {
+    if (!known.has(m[1])) err(`${file} documents unknown CLI command 'bench ${m[1]}' (removed or renamed in bin/bench.sh?)`);
   }
 }
 process.exit(bad);

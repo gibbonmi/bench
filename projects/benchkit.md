@@ -94,7 +94,8 @@ coverage map; a class skipped here returns as a regression.
 
 The oracle for a kit, in layers (all green today):
 
-1. **Parse + validity** — `bash -n` on `bin/bench.sh` and the shared hooks; JSON
+1. **Parse + validity** — `bash -n` on every kit shell script (`bin/`, the gate
+   fragments, the shared hooks and lib) and `py_compile` on the hook analyzer; JSON
    parse on `package.json`, `.claude/settings.json`, and `.codex/hooks.json`. Plus
    two CLI invariants: the scripts the harness execs by path are executable in git,
    and the CLI names the `.sh` gate/done files that exist (an extensionless ref routes
