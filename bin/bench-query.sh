@@ -152,9 +152,16 @@ maps_awk_prelude='
     if ($0 ~ /^GRILL DEFERRED/) return "grill-deferred"
     return ""
   }
+  # The one close-readiness predicate both consumers call — shared by construction,
+  # not just pinned by a contract. A file only owes a `## Handoff` if it is a MAP (has
+  # a `## #<n>:` ticket heading), so a folder index or a non-map file in decisions/ is
+  # never nagged; a map is handoff-incomplete when the heading is absent or its section
+  # still holds a placeholder.
+  function handoff_incomplete() { return (is_map && (!seen_handoff || handoff_state != "")) }
   { sub(/\r$/, "") }
   substr($0, 1, 3) == "```" { in_fence = !in_fence; next }
   in_fence { next }
+  /^## #[0-9]+:/ { is_map = 1 }
   /^## Handoff([ \t]|$)/ { seen_handoff = 1; in_handoff = 1; next }
   /^## / { in_handoff = 0 }
   marker() != "" {
@@ -190,12 +197,13 @@ maps_rows() {
       num != "" && state == "" && !in_handoff { m = marker(); if (m != "") { state = m; next } }
       END {
         flush()
-        # Close-readiness row: only for a zero-open map (no marker outside Handoff).
-        # Missing heading → "missing"; a placeholder under the heading → its state;
-        # a filled Handoff with no placeholder → silent.
-        if (!pre_handoff_marker) {
-          if (!seen_handoff)              printf "%s\thandoff\thandoff\tmissing\n", map
-          else if (handoff_state != "")   printf "%s\thandoff\thandoff\t%s\n", map, handoff_state
+        # Close-readiness row: only for a MAP that is a zero-open candidate (no marker
+        # outside Handoff). Missing heading → "missing"; a placeholder under the
+        # heading → its state (handoff_incomplete() with seen_handoff implies a
+        # non-empty handoff_state); a filled Handoff → silent.
+        if (!pre_handoff_marker && handoff_incomplete()) {
+          if (!seen_handoff)  printf "%s\thandoff\thandoff\tmissing\n", map
+          else                printf "%s\thandoff\thandoff\t%s\n", map, handoff_state
         }
       }
     ' "$f"
@@ -203,18 +211,20 @@ maps_rows() {
 }
 
 # Count of DISTINCT map FILES that are not close-ready — the figure `status` surfaces.
-# Shares maps_awk_prelude with maps_rows (one detection core), so the count and the
-# listing cannot drift on what "ready to close" means: a file is not close-ready when
-# it carries an unresolved marker outside the Handoff section (open work), OR has no
-# `## Handoff` heading, OR its Handoff still holds a placeholder. This scans at file
-# scope, so a placeholder not under a `## #` ticket heading still counts.
+# Shares maps_awk_prelude with maps_rows, and evaluates the SAME handoff_incomplete()
+# predicate the listing does, so the count and the listing cannot drift on what "ready
+# to close" means: a file is not close-ready when it carries an unresolved marker
+# outside the Handoff section (open work), or — being a map — has no `## Handoff`
+# heading or a placeholdered one. A non-map decisions file (no ticket heading) with no
+# open marker is never counted. Scans at file scope, so a placeholder not under a
+# `## #` ticket heading still counts as open work.
 maps_unresolved_count() {
   local root="$1" f n=0
   [[ -d "$root/decisions" ]] || { echo 0; return 0; }
   for f in "$root"/decisions/*.md; do
     [[ -f "$f" ]] || continue
     if awk "$maps_awk_prelude"'
-        END { exit((pre_handoff_marker || !seen_handoff || handoff_state != "") ? 0 : 1) }
+        END { exit((pre_handoff_marker || handoff_incomplete()) ? 0 : 1) }
       ' "$f"; then
       n=$((n + 1))
     fi

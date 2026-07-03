@@ -401,6 +401,12 @@ Decided: yes.
 1. Module boundaries.
 — (open)
 MAP
+  # a non-map decisions file (no `## #` ticket heading) is not a close candidate:
+  # no handoff row and never counted, so a folder index never nags.
+  cat > decisions/README.md <<'MAP'
+# Decisions index
+Notes about this folder — not a map.
+MAP
   out="$(bash "$root/bin/bench.sh" maps)"
   grep -qxF '  hm,handoff,handoff,missing' <<<"$out" || { echo "missing-Handoff map did not emit the handoff row: $out"; exit 1; }
   grep -qxF '  hx,handoff,handoff,missing' <<<"$out" || { echo "fenced-only Handoff not treated as missing: $out"; exit 1; }
@@ -410,7 +416,9 @@ MAP
   grep -qxF '  ho,1,Grill,open' <<<"$out" || { echo "open-ticket map lost its ticket row: $out"; exit 1; }
   # a placeholder inside Handoff must not be mis-attributed to the last ticket
   if grep -qE '^  hp,1,' <<<"$out"; then echo "Handoff placeholder leaked onto ticket #1: $out"; exit 1; fi
-  # count side: hm, hx, hp, ho all not-close-ready; hf is → 4
+  # a non-map file is never treated as an unclosed map
+  if grep -qE '^  README,' <<<"$out"; then echo "non-map README nagged as a close candidate: $out"; exit 1; fi
+  # count side: hm, hx, hp, ho all not-close-ready; hf close-ready, README not a map → 4
   # shellcheck source=/dev/null
   . "$root/bin/bench-query.sh"
   [ "$(maps_unresolved_count "$PWD")" = "4" ] || { echo "close-readiness count not 4 (got $(maps_unresolved_count "$PWD"))"; exit 1; }
