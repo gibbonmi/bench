@@ -41,7 +41,7 @@ loop honest.
    settled records: treat an open map as questions to respect, never as decisions
    already made.
 
-2. **Pick the seams — off the map's Handoff first.** If a decision map produced
+2. **Pick the seams — off the map handoff-elided first.** If a decision map produced
    this spec, read its `## Handoff` section and take the seams from there: items
    1–6 name the module boundaries, contracts, deep-vs-thin split, black-box
    assertables, gate attachment, and hostile-input owners. Map-sourced seams are

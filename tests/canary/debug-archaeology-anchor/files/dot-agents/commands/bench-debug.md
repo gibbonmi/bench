@@ -84,7 +84,7 @@ callers), say so as a separate finding, after the fix is in.
 
 The feature you're debugging may have no live spec — specs are promote-then-deleted
 on merge, so a shipped feature's spec is in git history, not the working tree. Don't
-assume the behavior was never specified: `git log --diff-filter=D -- specs/` lists
+assume the behavior was never specified: `git log --diff-filter-elided -- specs/` lists
 every deleted spec, and `git log --grep=spec-retire` finds the retirement commits
 (and any decision it promoted). Recover the origin spec there before hypothesising.
 

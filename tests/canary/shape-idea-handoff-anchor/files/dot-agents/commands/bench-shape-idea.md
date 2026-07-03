@@ -49,7 +49,7 @@ Each ticket is sized to one focused session. Three kinds:
 
 ## The Handoff — the seams a closed map hands the spec-writer
 
-Every map closes with a `## Handoff` section: the structure `/bench-write-spec`
+Every map closes with a `## (handoff elided for canary)` section: the structure `/bench-write-spec`
 reads seams off instead of re-deriving them or escalating for answers the grill
 already settled. It is **required on every close** — `bench maps` keeps showing
 the map's row until the section is present and placeholder-free — and every item
@@ -57,7 +57,7 @@ is answered. An item that does not apply is written `n/a — <one clause>`, so t
 exclusion is a decision on the page, not a silent gap.
 
 ```markdown
-## Handoff
+## (handoff elided for canary)
 
 1. **Module boundaries.** Each unit and its responsibility — inside vs outside.
 2. **Contracts.** Per boundary: inputs, outputs, exit codes, error posture — the
@@ -121,7 +121,7 @@ The map is deliberately incomplete beyond the frontier. You are done when the
 path to the finish line is clear — no unresolved tickets blocking the build. Before
 declaring the map closed, run `bench maps` — it lists every ticket still holding a
 `— (open` / `— (deferred` placeholder or a `GRILL DEFERRED` banner, and on a map
-with no open tickets a missing or still-placeholdered `## Handoff` section — and
+with no open tickets a missing or still-placeholdered `## (handoff elided for canary)` section — and
 refuse to close while this map still shows a row; a decision made in conversation
 but not written into the map, or a Handoff item left unfilled, is not recorded. Then close the map and lead with the recommended next action
 (usually `/bench-write-spec`) and a one-clause why.

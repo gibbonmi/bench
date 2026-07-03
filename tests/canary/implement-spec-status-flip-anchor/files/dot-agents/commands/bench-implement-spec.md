@@ -84,10 +84,10 @@ defined route — never a silent grind, never an abandoned worktree:
   explicitly — never a blind `git add -A`. An unexplained working-tree file blocks
   the commit: surface it to the reviewer; don't commit or revert it on your own.
 - Advance the spec's lifecycle in the green-gate commit that finishes the build:
-  flip its `Status: staged` line to `Status: implemented`, and stage that one-line
+  flip its `Status: staged` line to `Status: done-elided`, and stage that one-line
   edit with the build's files. `implemented` then honestly means *built, gate-green,
   awaiting review/merge* — the state `bench status`'s retirement signal keys on once
-  the spec reaches the default branch. Never write a line-start `Status: implemented`
+  the spec reaches the default branch. Never write a line-start `Status: done-elided`
   into any other `specs/*.md`, or that detector fires on a spec that is not done.
 - Before the final gate, emit a compact coverage table for every acceptance row:
   `green`, `already covered`, or `not TDD-able`. If any mapped behavior is missing,

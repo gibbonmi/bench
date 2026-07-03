@@ -274,6 +274,22 @@ require_anchor ".agents/skills/bench-craft-delegate/SKILL.md" "a claim, not a re
 require_anchor ".agents/commands/bench-implement-spec.md" "When the build stops short"
 require_anchor ".agents/commands/bench-write-spec.md" "Superseded by"
 require_anchor ".agents/commands/bench-debug.md" "before launching the shift"
+#    l6) spec-lifecycle & handoff anchors (spec spec-handoff-lifecycle). Four prose
+#        promises the gate can only presence-check — the map-close Handoff template
+#        (its nine items, the n/a rule, the dependency-order line), its consumption in
+#        write-spec plus the spec-retire lifecycle and Status line, the status flip in
+#        implement-spec, and the git-archaeology pointer in debug. Semantic quality
+#        stays with review; each anchor has a red canary under tests/canary/.
+require_anchor ".agents/commands/bench-shape-idea.md" "## Handoff"
+require_anchor ".agents/commands/bench-shape-idea.md" "Hostile-input owner"
+require_anchor ".agents/commands/bench-shape-idea.md" "Dependency order"
+require_anchor ".agents/commands/bench-shape-idea.md" "n/a —"
+require_anchor ".agents/commands/bench-write-spec.md" "map's Handoff"
+require_anchor ".agents/commands/bench-write-spec.md" "spec-retire:"
+require_anchor ".agents/commands/bench-write-spec.md" "Status: staged"
+require_anchor ".agents/commands/bench-write-spec.md" "new session on the mid tier"
+require_anchor ".agents/commands/bench-implement-spec.md" "Status: implemented"
+require_anchor ".agents/commands/bench-debug.md" "diff-filter=D"
 
 grep -qF 'session-start.sh' README.md || err "README layout omits .bench/hooks/session-start.sh"
 grep -qF 'bench.sh' README.md || err "README layout omits the real bin/bench.sh filename"
