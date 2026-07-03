@@ -149,10 +149,13 @@ done
 #       committed block equals the generated one (presence, wording, and order),
 #       with drift attributed per skill. Replaces the old two-way name checks.
 bash "$gate_dir/skills-index.sh" --check || fail=1
-#    c) every command file is referenced as /name in .bench/BENCH.md
+#    c) every command file is referenced as /name in the shipped operating guide
+#       (.bench/BENCH.md or its on-demand .bench/BENCH-reference.md — the harness
+#       invocation table moved to the reference file in the token diet).
+guide_docs=(.bench/BENCH.md .bench/BENCH-reference.md)
 for f in .agents/commands/*.md; do
   name="$(basename "$f" .md)"
-  grep -q "/$name" .bench/BENCH.md || err "command '/$name' on disk but not referenced in .bench/BENCH.md"
+  grep -qh "/$name" "${guide_docs[@]}" || err "command '/$name' on disk but not referenced in the operating guide (.bench/BENCH.md or .bench/BENCH-reference.md)"
 done
 #    d) every command has an explicit Codex skill adapter. Codex does not scan
 #       .agents/commands as an invocation surface, so each command phase needs a
@@ -166,7 +169,7 @@ for f in .agents/commands/*.md; do
   grep -qF ".agents/commands/$name.md" "$adapter" || err "Codex adapter '$name' does not reference .agents/commands/$name.md"
   [ -f "$metadata" ] || { err "Codex adapter '$name' missing agents/openai.yaml explicit-invocation metadata"; continue; }
   grep -qF "allow_implicit_invocation: false" "$metadata" || err "Codex adapter '$name' does not disable implicit invocation"
-  grep -qF "\$$name" .bench/BENCH.md || err "Codex adapter '$name' is not documented in .bench/BENCH.md"
+  grep -qhF "\$$name" "${guide_docs[@]}" || err "Codex adapter '$name' is not documented in the operating guide (.bench/BENCH.md or .bench/BENCH-reference.md)"
 done
 #    e) the roadmap promotion seam — /bench-shape-idea must name ROADMAP.md and the
 #       auto-remove-on-map-creation behavior, or the only path that drains a parked idea

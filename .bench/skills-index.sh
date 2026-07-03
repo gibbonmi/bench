@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# .bench/skills-index.sh — the skills index in .bench/BENCH.md is generated, not
-# hand-maintained. Source of truth is each skill's frontmatter (`index:` trigger
-# phrase, optional `index-note:` suffix); the generated block lives between the
-# bench:skills-index markers, alphabetical by skill directory.
+# .bench/skills-index.sh — the skills index in .bench/BENCH-reference.md is
+# generated, not hand-maintained. Source of truth is each skill's frontmatter
+# (`index:` trigger phrase, optional `index-note:` suffix); the generated block
+# lives between the bench:skills-index markers, alphabetical by skill directory.
 #
 #   --check   (default) verify the committed block equals the generated one;
 #             attributed errors on stderr, nonzero exit on drift. Run by the gate.
@@ -13,7 +13,7 @@
 set -uo pipefail
 
 mode="${1:---check}"
-bench_md=".bench/BENCH.md"
+bench_md=".bench/BENCH-reference.md"
 start_marker='<!-- bench:skills-index:start -->'
 end_marker='<!-- bench:skills-index:end -->'
 regen_hint="(regenerate: .bench/skills-index.sh --write)"

@@ -241,7 +241,9 @@ if [ -f .agents/commands/bench-write-spec.md ]; then
   grep -qF 'model and effort' .agents/commands/bench-write-spec.md \
     || err "bench-write-spec.md does not mandate per-story model and effort"
 fi
-if [ -f .bench/BENCH.md ]; then
-  grep -qF 'BENCH_MODEL' .bench/BENCH.md \
-    || err "BENCH.md adapter contract does not document BENCH_MODEL"
+# The shift adapter contract (with BENCH_MODEL) moved to the on-demand
+# .bench/BENCH-reference.md in the token diet; that is where it must be documented.
+if [ -f .bench/BENCH-reference.md ]; then
+  grep -qF 'BENCH_MODEL' .bench/BENCH-reference.md \
+    || err "BENCH-reference.md adapter contract does not document BENCH_MODEL"
 fi

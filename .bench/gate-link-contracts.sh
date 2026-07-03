@@ -27,6 +27,8 @@ tmp="$(mktemp -d)"
   [ "$(count_literal '<!-- bench:start -->' AGENTS.md)" = "1" ] || { echo "fresh link did not create exactly one managed start marker"; exit 1; }
   [ "$(count_literal '<!-- bench:end -->' AGENTS.md)" = "1" ] || { echo "fresh link did not create exactly one managed end marker"; exit 1; }
   [ -f .bench/BENCH.md ] || { echo "fresh link did not install .bench/BENCH.md"; exit 1; }
+  [ -f .bench/BENCH-reference.md ] || { echo "fresh link did not install .bench/BENCH-reference.md (the operating guide points to it)"; exit 1; }
+  ! grep -qF '@.bench/BENCH-reference.md' CLAUDE.md || { echo "fresh link @-imported the reference file; it must stay on-demand"; exit 1; }
   [ -x .bench/bin/bench.sh ] || { echo "fresh link did not install local hook CLI .bench/bin/bench.sh"; exit 1; }
   [ -f .bench/bin/bench-link.sh ] || { echo "fresh link did not install local hook CLI link helper"; exit 1; }
   [ -f .bench/bin/bench-status.sh ] || { echo "fresh link did not install local hook CLI status helper"; exit 1; }
@@ -141,6 +143,7 @@ tmp="$(mktemp -d)"
   mkdir -p "$kitcopy/.bench"
   cp -R "$root/bin" "$root/.agents" "$root/.claude" "$root/.codex" "$kitcopy/"
   cp "$root/.bench/BENCH.md" "$kitcopy/.bench/BENCH.md"
+  cp "$root/.bench/BENCH-reference.md" "$kitcopy/.bench/BENCH-reference.md"
   cp -R "$root/.bench/hooks" "$kitcopy/.bench/hooks"
   mkdir "$tmp/repo"; cd "$tmp/repo"; git init -q
   BENCH_KIT="$kitcopy" bash "$root/bin/bench.sh" link >link.out 2>&1 \

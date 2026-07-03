@@ -25,6 +25,7 @@ printf '%s' "$pack_json" | node -e '
     ".agents/skills/bench-implement-spec/SKILL.md",
     ".agents/skills/bench-implement-spec/agents/openai.yaml",
     ".bench/BENCH.md",
+    ".bench/BENCH-reference.md",
     ".bench/adapters/claude",
     ".bench/adapters/codex",
     ".bench/adapters/opencode",

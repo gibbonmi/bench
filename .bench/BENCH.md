@@ -16,8 +16,8 @@ guessing.
 
 - **Skills** shape *how* you generate — probabilistic guidance, not rules. Reach
   for them when the task matches. They live in `.agents/skills/` (and, for
-  Claude Code, `.claude/skills/`). The skills index below maps triggers to
-  skills.
+  Claude Code, `.claude/skills/`). The skills index in `.bench/BENCH-reference.md`
+  maps triggers to skills.
 - **Commands** are the canonical phases of the workflow (see Workflow below).
   Run `/bench-setup-repo` once when a repo is first linked — it interviews the
   reviewer to fill in the gate and the profile. Run `/bench-update-kit`
@@ -28,13 +28,20 @@ guessing.
   runs the gate after every iteration and commits only on green, and a git
   `pre-push` hook protects the default branch no matter who pushes. Interactive
   harness hooks add an extra layer where the harness supports them (see Hook
-  Layers below).
+  Layers in `.bench/BENCH-reference.md`).
 - **`bench`** (the CLI) runs the operational layer — worktrees and the gated
   loop — and is plain shell, identical on every harness. You drive it.
 
 When you start in a repo, read `CONTEXT.md` (if present) for the current mental
 model and ubiquitous language, and `projects/<name>.md` for the seams, the gate
 command, and the line assignments.
+
+**Reference lookup lives on demand, not always-loaded.** The file map, the skills
+index, harness-invocation details, the CLI command list, the shift adapter
+contract, and the hook layers live in `.bench/BENCH-reference.md` — referenced by
+path, never imported, so they cost no tokens until you open the file. Read it when
+you need a command name or adapter wiring; this guide keeps only what steers how
+you generate every turn.
 
 ## The four invariants (these override convenience, always)
 
@@ -91,6 +98,12 @@ code, the journal — those stay as full as their templates need).
 - Recommend, don't offer a blind menu. Every question and every hand-off leads with
   the option or next action you'd pick and a one-clause why. (The grill skill already
   works this way.)
+- Recommend in the form *this* harness can invoke. Kit prose names phases in the
+  canonical `/bench-*` form; when you hand one off — an exit handoff, a status row
+  you relay, a workflow pointer — translate it at the point of recommendation into
+  what the reviewer can invoke *here*: the slash command in Claude Code, the
+  `$bench-*` skill in Codex, the `.agents/commands/<name>.md` file elsewhere.
+  Pointing at a surface this harness lacks sends them to a dead key.
 - Format for scan: tables and lists make things easy to parse — use them. Short
   lines, bold sparingly. Routine declarations (the line, the seams, a deferred cut)
   are one line each.
@@ -100,29 +113,6 @@ code, the journal — those stay as full as their templates need).
   I'd rather read it once than decode it.
 - Read like a terse senior colleague on a code review, not like this kit. When in
   doubt, cut it in half. Closed decisions stay closed unless I reopen them.
-
-## Files
-
-- `AGENTS.md` contains the project-owned working agreement plus a small
-  Bench-managed block.
-- `.bench/gate.sh` is the project gate.
-- `.bench/learnings.md` is the usage journal for process learnings.
-- `.bench/bin/` is the local CLI copy `bench link` installs for hooks, so Stop and
-  SessionStart do not depend on a global `bench` on PATH.
-- `.agents/commands/` contains portable Bench command phases.
-- `.agents/skills/` contains portable Bench skills.
-- `.bench/adapters/` contains reference harness adapters for `bench shift`
-  (`claude`, `codex`, `opencode`) — point `BENCH_AGENT` at one.
-- `.bench/hooks/` contains shared hook scripts used by harness adapters.
-- `.bench/lib/` contains shared shell functions the hooks and adapters source
-  (the `lines.env` tier parser lives here, once).
-- `.claude/` contains Claude Code adapter config. See `.claude/README.md`: Claude
-  reads `.claude/skills/` and `.claude/commands/`, and those paths point at the
-  portable `.agents/` files. `.claude/skills/` carries only the `bench-craft-*`
-  skills — the `$bench-*` phase adapter skills are Codex-only, because Claude
-  already has each phase as a command and a same-named skill duplicates the
-  slash-menu entry.
-- `.codex/` contains Codex adapter config.
 
 ## Workflow
 
@@ -157,104 +147,6 @@ capture, I decide. `/bench-integrate-learnings` reviews the journal and promotes
 the generalizable lessons into the kit with my sign-off, so the kit improves
 from real use without any rule ever changing itself behind my back.
 
-## Skills index
-
-Claude Code loads these on its own. On other harnesses, read the file when the
-trigger applies — or paste it as context. This block is generated from each
-skill's `index:` frontmatter (`.bench/skills-index.sh --write`); edit the skill,
-not the list:
-
-<!-- bench:skills-index:start -->
-- recording a decision or writing docs → `.agents/skills/bench-craft-adr/SKILL.md`
-- building an agent-facing CLI → `.agents/skills/bench-craft-cli/SKILL.md`
-- spawning a delegate / verifying a delegate's done-claim → `.agents/skills/bench-craft-delegate/SKILL.md`
-- any UI work → `.agents/skills/bench-craft-design-system/SKILL.md` + your project's design source
-- adding, weakening, or removing a gate check / authoring the oracle → `.agents/skills/bench-craft-gate/SKILL.md`
-- surfacing a decision one question at a time → `.agents/skills/bench-craft-grill/SKILL.md`
-- declaring the line / picking a delegate's model or effort → `.agents/skills/bench-craft-line/SKILL.md`
-- reviewing a diff / what a finding must cite → `.agents/skills/bench-craft-review/SKILL.md`
-- placing a test / designing an interface → `.agents/skills/bench-craft-seams/SKILL.md`
-- writing or pruning a skill → `.agents/skills/bench-craft-skills/SKILL.md`
-- evaluating a change to the kit itself → `.agents/skills/bench-craft-synthesis/SKILL.md`
-- writing tests first → `.agents/skills/bench-craft-tdd/SKILL.md`
-<!-- bench:skills-index:end -->
-
-## Harness Invocation
-
-The canonical phase bodies live in `.agents/commands/`. Harnesses may expose those
-phases differently:
-
-- **Claude Code:** invoke the phase directly as a slash command, e.g. `/bench-write-spec`.
-- **Codex:** invoke the matching explicit skill, e.g. `$bench-write-spec`; each `$bench-*`
-  adapter reads the canonical command file and follows it. These adapters are
-  explicit-only (`allow_implicit_invocation: false`) because workflow phases are
-  reviewer-chosen entry points, not background generation guidance.
-  Model-invoked Bench guidance uses visible `craft-*` skill names, leaving `$bench`
-  for phases a reviewer deliberately runs.
-- **Other AGENTS.md harnesses:** read the phase file in `.agents/commands/` and
-  follow it when no native command or skill surface exists.
-
-**Match every recommendation to the active harness.** Kit prose (including
-`bench status` output and the phases' exit handoffs) names phases in the
-canonical `/bench-*` form. When you suggest a phase or skill as the next
-action — an exit handoff, a status row you relay, a workflow pointer —
-translate it at the point of recommendation into the form the reviewer can
-invoke *here*: the slash command in Claude Code, the `$bench-*` skill in Codex,
-the `.agents/commands/<name>.md` file elsewhere. Recommending a surface this
-harness doesn't have sends the reviewer to a dead key.
-
-Codex phase adapters installed by Bench:
-
-- `$bench-setup-repo` → `.agents/commands/bench-setup-repo.md`
-- `$bench-shape-idea` → `.agents/commands/bench-shape-idea.md`
-- `$bench-write-spec` → `.agents/commands/bench-write-spec.md`
-- `$bench-debug` → `.agents/commands/bench-debug.md`
-- `$bench-implement-spec` → `.agents/commands/bench-implement-spec.md`
-- `$bench-review-implementation` → `.agents/commands/bench-review-implementation.md`
-- `$bench-final-check` → `.agents/commands/bench-final-check.md`
-- `$bench-update-kit` → `.agents/commands/bench-update-kit.md`
-- `$bench-integrate-learnings` → `.agents/commands/bench-integrate-learnings.md`
-
-## Commands
-
-- `bench link` safely incorporates Bench into a repo.
-- `bench init` scaffolds `.bench/gate.sh` and `.bench/learnings.md`.
-- `bench models` discovers available models for binding the line.
-- `bench structure` flags oversized files and crowded source directories.
-- `bench idea "<text>"` parks an idea on the roadmap, committing to nothing.
-- `bench roadmap` lists the parked ideas.
-- `bench status` prints the ambient dashboard.
-- `bench learnings` lists open journal entries as a TOON table (date, title).
-- `bench maps` lists unresolved decision-map tickets as TOON (map, ticket, type, state).
-- `bench guards` lists every guard's deny surface as TOON (guard, boundary, denies).
-- `bench diff` prints the review base (recorded pre-shift HEAD, or merge-base with
-  the default branch) and the changed files as TOON.
-- `bench coverage <spec>` prints a spec's acceptance-coverage state and rows as
-  TOON; `--check` validates the map (the gate's mode).
-- `bench gate` runs the oracle.
-- `bench worktree` opens a reusable isolated worktree.
-- `bench shift "<objective>"` runs the gated loop.
-
-## Harness adapter for the shift loop
-
-`bench shift` drives whatever harness `BENCH_AGENT` names: each iteration it runs
-the adapter executable with the generated prompt as its **single positional
-argument** and `BENCH_SHIFT=1` armed. There is no default — an unset `BENCH_AGENT`
-fails fast before the loop with a configure-your-adapter error. Reference adapters
-ship in `.bench/adapters/` (`claude`, `codex`, `opencode`); point `BENCH_AGENT` at
-one, or at your own wrapper that maps `$1` to your harness's noninteractive
-command. Use an absolute path or an on-`PATH` name; harness flags belong inside
-the wrapper — a multi-word `BENCH_AGENT` value is treated as one executable name
-and rejected.
-
-The adapters also carry the line (see the `craft-line` skill): `BENCH_MODEL`,
-when set, is passed to the harness's model flag. A repo with `.bench/lines.env`
-(the tier→model binding) is **routed**: there the reference adapters refuse to
-run when `BENCH_MODEL` is unset or names a model outside the binding, so a
-headless shift always carries an explicit, bound line. Without `lines.env` the
-adapters behave as plain pass-throughs. Effort has no harness flag and stays in
-the declared line.
-
 ## Capture
 
 Parking an idea is conversational — never a CLI chore for the reviewer. When the
@@ -263,19 +155,3 @@ run `bench idea "<text>"`; they never type it. Offer once when a clear tangent
 appears, then let it go — don't nag. Parked ideas land in `ROADMAP.md` and graduate
 into committed work only through `/bench-shape-idea`. If `bench` isn't on PATH, append the
 dated line (`- YYYY-MM-DD  <text>`) to `ROADMAP.md` yourself.
-
-## Hook Layers
-
-Git safety is layered:
-
-- The git `pre-push` hook blocks direct pushes to the default branch.
-- Claude Code and Codex hook adapters call the shared scripts in `.bench/hooks/`.
-  Codex loads `.codex/hooks.json` only after you trust it once via `/hooks`
-  (its project-hook trust step), and only on a Codex build new enough to support
-  hooks; an older Codex ignores the file and keeps just the backstops below.
-- Linked repos carry a local `.bench/bin/` CLI set for those hooks; a globally
-  installed `bench` is convenient for humans, not required for hook execution.
-- The `bench shift` loop commits only after the gate is green.
-
-Harness hooks improve ergonomics, but the git hook and gate remain the
-harness-independent backstops.

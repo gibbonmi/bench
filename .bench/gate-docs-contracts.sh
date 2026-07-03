@@ -52,6 +52,7 @@ for (const f of [
   "README.md",
   "AGENTS.md",
   ".bench/BENCH.md",
+  ".bench/BENCH-reference.md",
   ".bench/learnings.md",
   "CONTEXT.md",
   "HANDOFF.md",
@@ -113,8 +114,10 @@ process.exit(bad);
 NODE
 
 #    h) shipped cold-pickup docs that list CLI commands must list the real subcommands
-#       from bin/bench.sh. HANDOFF.md ships in the npm package, and .bench/BENCH.md is
-#       the operating guide installed into consumer repos.
+#       from bin/bench.sh. HANDOFF.md ships in the npm package, and the CLI command
+#       list moved from .bench/BENCH.md to its on-demand .bench/BENCH-reference.md in
+#       the token diet — that reference file is the operating-guide surface that must
+#       carry the full command list.
 node <<'NODE' || fail=1
 const fs = require("fs");
 
@@ -122,7 +125,7 @@ let bad = 0;
 const err = msg => { console.error("gate: " + msg); bad = 1; };
 const bench = fs.readFileSync("bin/bench.sh", "utf8");
 const commands = [...bench.matchAll(/^  ([a-z][a-z-]*)\)\s/gm)].map(m => m[1]).sort();
-for (const file of ["HANDOFF.md", ".bench/BENCH.md"]) {
+for (const file of ["HANDOFF.md", ".bench/BENCH-reference.md"]) {
   if (!fs.existsSync(file)) continue;
   const text = fs.readFileSync(file, "utf8");
   for (const cmd of commands) {
@@ -138,6 +141,29 @@ grep -qF 'bench diff' projects/benchkit.md 2>/dev/null \
   || err "projects/benchkit.md does not name bench diff on the AXI seam"
 grep -qF 'bench coverage' projects/benchkit.md 2>/dev/null \
   || err "projects/benchkit.md does not name bench coverage on the AXI seam"
+
+#    o) BENCH.md token-diet placement contract. The lookup sections moved to the
+#       on-demand .bench/BENCH-reference.md; it must exist, stay pointed-to from the
+#       operating guide, stay OFF the always-loaded path (never @-imported by
+#       CLAUDE.md, or it costs tokens every session), and never duplicate a section
+#       heading with .bench/BENCH.md (two copies of one section is the drift the diet
+#       exists to avoid). Guarded on .bench/BENCH.md existing so an empty repo — and
+#       the canary's vacuous baseline — skips it. Shipping is enforced separately by
+#       the package required-set.
+if [ -f .bench/BENCH.md ]; then
+  ref=".bench/BENCH-reference.md"
+  if [ ! -f "$ref" ]; then
+    err "$ref missing: the token-diet reference file the operating guide points to"
+  else
+    grep -qF 'BENCH-reference.md' .bench/BENCH.md \
+      || err ".bench/BENCH.md does not point to $ref (agents can't find the moved lookup sections)"
+    if [ -f CLAUDE.md ] && grep -qE '^@\.bench/BENCH-reference\.md[[:space:]]*$' CLAUDE.md; then
+      err "$ref is @-imported by CLAUDE.md; it must stay on-demand (referenced by path, never imported, or the token diet regresses)"
+    fi
+    dup="$(comm -12 <(grep -oE '^## .+$' .bench/BENCH.md | sort -u) <(grep -oE '^## .+$' "$ref" | sort -u))"
+    [ -z "$dup" ] || err "section heading present in both .bench/BENCH.md and $ref (single-source violation): $(printf '%s' "$dup" | tr '\n' '|')"
+  fi
+fi
 
 #    i) command-first usability anchors. The reviewer-facing README must start from
 #       the command path, and every command phase must orient the reviewer at entry
@@ -254,17 +280,17 @@ si_tmp="$(mktemp -d)"
   set -u; cd "$si_tmp"
   mkdir -p .bench .agents/skills/zeta-skill
   printf -- '---\nname: zeta-skill\ndescription: d\nindex: doing zeta things\n---\n' > .agents/skills/zeta-skill/SKILL.md
-  printf '# Guide\n\n<!-- bench:skills-index:start -->\n<!-- bench:skills-index:end -->\n' > .bench/BENCH.md
+  printf '# Reference\n\n<!-- bench:skills-index:start -->\n<!-- bench:skills-index:end -->\n' > .bench/BENCH-reference.md
   if bash "$root/.bench/skills-index.sh" --check >/dev/null 2>&1; then
     echo "check passed on an empty index block"; exit 1
   fi
   bash "$root/.bench/skills-index.sh" --write || { echo "--write failed"; exit 1; }
-  grep -qF -- '- doing zeta things → `.agents/skills/zeta-skill/SKILL.md`' .bench/BENCH.md \
+  grep -qF -- '- doing zeta things → `.agents/skills/zeta-skill/SKILL.md`' .bench/BENCH-reference.md \
     || { echo "--write did not generate the entry from frontmatter"; exit 1; }
   bash "$root/.bench/skills-index.sh" --check >/dev/null 2>&1 || { echo "check red right after --write"; exit 1; }
-  before="$(cat .bench/BENCH.md)"
+  before="$(cat .bench/BENCH-reference.md)"
   bash "$root/.bench/skills-index.sh" --write || { echo "second --write failed"; exit 1; }
-  [ "$before" = "$(cat .bench/BENCH.md)" ] || { echo "--write is not idempotent"; exit 1; }
+  [ "$before" = "$(cat .bench/BENCH-reference.md)" ] || { echo "--write is not idempotent"; exit 1; }
 ) || err "skills-index generate/verify contract failed"
 rm -rf "$si_tmp"
 

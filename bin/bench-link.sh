@@ -229,6 +229,7 @@ build_link_plan() {
   : > "$plan"
   append_tree_to_plan "$kit/bin" ".bench/bin" "file" "$plan"
   printf '%s\t%s\t%s\n' "$kit/.bench/BENCH.md" ".bench/BENCH.md" "file" >> "$plan"
+  printf '%s\t%s\t%s\n' "$kit/.bench/BENCH-reference.md" ".bench/BENCH-reference.md" "file" >> "$plan"
   printf '%s\t%s\t%s\n' "$kit/.claude/README.md" ".claude/README.md" "file" >> "$plan"
   printf '%s\t%s\t%s\n' "$kit/.claude/settings.json" ".claude/settings.json" "file" >> "$plan"
   printf '%s\t%s\t%s\n' "$kit/.codex/hooks.json" ".codex/hooks.json" "file" >> "$plan"
