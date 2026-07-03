@@ -44,6 +44,7 @@ tmp="$(mktemp -d)"
   [ -f .codex/hooks.json ] || { echo "fresh link did not install Codex hook adapter"; exit 1; }
   [ -f .bench/hooks/block-dangerous-git.sh ] || { echo "fresh link did not install shared hook scripts"; exit 1; }
   [ -x .bench/adapters/claude ] || { echo "fresh link did not install executable reference adapters"; exit 1; }
+  [ -f .bench/lib/lines-env.sh ] || { echo "fresh link did not install the shared tier parser lib"; exit 1; }
   [ -f .bench/hooks/session-start.sh ] || { echo "fresh link did not install the SessionStart hook"; exit 1; }
   grep -q 'SessionStart' .claude/settings.json || { echo "fresh link .claude/settings.json has no SessionStart wiring"; exit 1; }
   [ -x .git/hooks/pre-push ] || { echo "fresh link did not install git pre-push hook"; exit 1; }

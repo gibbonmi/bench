@@ -17,7 +17,7 @@ fail=0
 err() { echo "gate: $*" >&2; fail=1; }
 
 # 1. Shell scripts parse.
-for f in bin/*.sh .bench/gate-*.sh .bench/skills-index.sh .bench/hooks/*.sh; do
+for f in bin/*.sh .bench/gate-*.sh .bench/skills-index.sh .bench/hooks/*.sh .bench/lib/*.sh; do
   bash -n "$f" || err "bash syntax error in $f"
 done
 
@@ -200,7 +200,7 @@ grep -qF 'canonical in `.bench/BENCH.md`' AGENTS.md || err "AGENTS.md lost its p
 
 # 6. shellcheck — stronger shell lint, best-effort (runs only when installed).
 if command -v shellcheck >/dev/null 2>&1; then
-  shellcheck -S warning bin/bench.sh .bench/hooks/*.sh || err "shellcheck reported issues"
+  shellcheck -S warning bin/bench.sh .bench/hooks/*.sh .bench/lib/*.sh || err "shellcheck reported issues"
 fi
 
 # 7. Canary — prove the gate's own checks still bite. For each known-broken fixture in

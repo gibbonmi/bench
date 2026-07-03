@@ -11,9 +11,10 @@
 # lives in projects/<name>.md "Lines" and the craft-line skill.
 #
 # Fail-open is deliberate: a broken hook must never brick delegation. Missing
-# lines.env, an unset/empty tier, unparseable stdin, or no model field all allow
-# the call with a one-line stderr warning. Only a present model that matches none
-# of the three bound tiers (exact string compare) is denied.
+# lines.env, an unset/empty tier, unparseable stdin, no model field, or a missing
+# shared parser lib all allow the call with a one-line stderr warning. Only a
+# present model that matches none of the three bound tiers (exact string compare)
+# is denied.
 #
 # Harness aliases: the Claude Code Agent tool addresses models by alias (opus,
 # fable, ...), not full id, so lines.env may declare which aliases bind via
@@ -31,19 +32,15 @@ set -euo pipefail
 warn() { echo "WARNING: check-agent-line: $1 — allowing delegation." >&2; }
 deny() { echo "DENIED: $1" >&2; exit 2; }
 
-# Read a tier value from lines.env by grep, not by sourcing (a repo file). Take the
-# last assignment for the key, strip surrounding quotes and any trailing carriage
-# return. Defined ahead of --describe so both paths read the binding identically.
-tier_value() {
-  local key="$1" line
-  line="$(grep -E "^[[:space:]]*${key}=" "$lines_env" 2>/dev/null | tail -n1)" || true
-  line="${line#*=}"
-  line="${line%$'\r'}"
-  line="${line%"${line##*[![:space:]]}"}"; line="${line#"${line%%[![:space:]]*}"}"
-  line="${line#\"}"; line="${line%\"}"
-  line="${line#\'}"; line="${line%\'}"
-  printf '%s' "$line"
-}
+# The tier parser is shared with the adapter guard — one source per fact — and is
+# resolved relative to this script (pwd -P survives the .claude/hooks symlink), not
+# the cwd repo. Sourced ahead of --describe so both paths read the binding
+# identically; a hook copied without the lib fails open like every other broken-hook
+# case (which also leaves --describe silent for that broken copy).
+lib="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/../lib/lines-env.sh"
+[[ -f "$lib" ]] || { warn "shared tier parser missing at $lib"; exit 0; }
+# shellcheck source=../lib/lines-env.sh
+source "$lib"
 
 if [[ "${1:-}" == "--describe" ]]; then
   root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
@@ -51,7 +48,7 @@ if [[ "${1:-}" == "--describe" ]]; then
   printf 'name: check-agent-line\n'
   printf 'boundary: PreToolUse:Agent\n'
   if [[ -f "$lines_env" ]]; then
-    top="$(tier_value BENCH_TIER_TOP)"; mid="$(tier_value BENCH_TIER_MID)"; cheap="$(tier_value BENCH_TIER_CHEAP)"
+    top="$(bench_tier_value BENCH_TIER_TOP "$lines_env")"; mid="$(bench_tier_value BENCH_TIER_MID "$lines_env")"; cheap="$(bench_tier_value BENCH_TIER_CHEAP "$lines_env")"
     printf 'denies: Agent delegation off the bound line (top=%s mid=%s cheap=%s)\n' \
       "${top:--}" "${mid:--}" "${cheap:--}"
   else
@@ -78,11 +75,9 @@ root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 lines_env="${root:+$root/}.bench/lines.env"
 [[ -f "$lines_env" ]] || { warn "no .bench/lines.env at repo root"; exit 0; }
 
-# Parse the tier values by grep, not by sourcing (tier_value is defined above the
-# --describe branch so both paths read the binding the same way).
-top="$(tier_value BENCH_TIER_TOP)"
-mid="$(tier_value BENCH_TIER_MID)"
-cheap="$(tier_value BENCH_TIER_CHEAP)"
+top="$(bench_tier_value BENCH_TIER_TOP "$lines_env")"
+mid="$(bench_tier_value BENCH_TIER_MID "$lines_env")"
+cheap="$(bench_tier_value BENCH_TIER_CHEAP "$lines_env")"
 
 # Any unset/empty tier means the binding is incomplete — fail open rather than
 # deny against a partial oracle.
@@ -92,9 +87,9 @@ if [[ -z "$top" || -z "$mid" || -z "$cheap" ]]; then
 fi
 
 # Optional alias declarations (may be absent — absence means no alias binds).
-alias_top="$(tier_value BENCH_ALIAS_TOP)"
-alias_mid="$(tier_value BENCH_ALIAS_MID)"
-alias_cheap="$(tier_value BENCH_ALIAS_CHEAP)"
+alias_top="$(bench_tier_value BENCH_ALIAS_TOP "$lines_env")"
+alias_mid="$(bench_tier_value BENCH_ALIAS_MID "$lines_env")"
+alias_cheap="$(bench_tier_value BENCH_ALIAS_CHEAP "$lines_env")"
 
 # The model is present and the binding is complete: it must be exactly one bound
 # tier id or one declared alias.

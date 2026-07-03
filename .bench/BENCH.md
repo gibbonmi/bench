@@ -114,6 +114,8 @@ code, the journal — those stay as full as their templates need).
 - `.bench/adapters/` contains reference harness adapters for `bench shift`
   (`claude`, `codex`, `opencode`) — point `BENCH_AGENT` at one.
 - `.bench/hooks/` contains shared hook scripts used by harness adapters.
+- `.bench/lib/` contains shared shell functions the hooks and adapters source
+  (the `lines.env` tier parser lives here, once).
 - `.claude/` contains Claude Code adapter config. See `.claude/README.md`: Claude
   reads `.claude/skills/` and `.claude/commands/`, and those paths point at the
   portable `.agents/` files. `.claude/skills/` carries only the `bench-craft-*`

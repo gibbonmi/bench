@@ -82,7 +82,18 @@ if [ -f .bench/hooks/check-agent-line.sh ]; then
     || err "check-agent-line.sh does not fail open without lines.env"
   printf '%s' "$_werr" | grep -qF 'no .bench/lines.env' \
     || err "check-agent-line.sh does not warn on stderr when lines.env is absent"
-  rm -rf "$_hd" "$_hd2"
+
+  # A hook copied without the shared parser lib (.bench/lib/lines-env.sh) must
+  # fail open like every other broken-hook case — a broken hook never bricks
+  # delegation — and say why on stderr.
+  _hd3="$(mktemp -d)"
+  cp "$_hook" "$_hd3/check-agent-line.sh"
+  _werr="$( printf '%s' '{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"claude-nonexistent-9"}}' \
+    | ( cd "$_hd" && bash "$_hd3/check-agent-line.sh" ) 2>&1 >/dev/null )" \
+    || err "check-agent-line.sh does not fail open when the shared parser lib is missing"
+  printf '%s' "$_werr" | grep -qF 'shared tier parser missing' \
+    || err "check-agent-line.sh does not warn on stderr when the shared parser lib is missing"
+  rm -rf "$_hd" "$_hd2" "$_hd3"
 fi
 
 # d) Adapter guards, exercised against a stub harness on PATH — a routed repo
@@ -133,6 +144,17 @@ if [ -d .bench/adapters ]; then
     cp .bench/adapters/claude "$_tmpad/claude-adapter"
     if ( cd "$_routed" && BENCH_MODEL=claude-opus-4-8 PATH="$_sd:$PATH" bash "$_tmpad/claude-adapter" "line probe prompt" ) >/dev/null 2>&1; then
       err "adapter claude does not fail closed when _line-guard.sh is missing"
+    fi
+    rm -rf "$_tmpad"
+  fi
+
+  # Same posture one layer down: an adapter copied WITH the guard but WITHOUT the
+  # shared parser lib (.bench/lib/lines-env.sh) must also refuse to run.
+  if [ -f .bench/adapters/claude ] && [ -f .bench/adapters/_line-guard.sh ]; then
+    _tmpad="$(mktemp -d)"
+    cp .bench/adapters/claude .bench/adapters/_line-guard.sh "$_tmpad/"
+    if ( cd "$_routed" && BENCH_MODEL=claude-opus-4-8 PATH="$_sd:$PATH" bash "$_tmpad/claude" "line probe prompt" ) >/dev/null 2>&1; then
+      err "adapter claude does not fail closed when the shared parser lib is missing"
     fi
     rm -rf "$_tmpad"
   fi

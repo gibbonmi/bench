@@ -21,19 +21,18 @@
 #   - lines.env present and complete: BENCH_MODEL must name exactly one bound tier.
 #     Unset or unbound => stderr error naming the three models, exit 1, harness never runs.
 
-# Read a tier value from lines.env by grep, not by sourcing: lines.env is a repo
-# file and a blind `source` would execute anything in it. Take the last assignment
-# for the key, strip surrounding quotes and any trailing carriage return.
-_bench_tier_value() {
-  local key="$1" file="$2" line
-  line="$(grep -E "^[[:space:]]*${key}=" "$file" 2>/dev/null | tail -n1)" || true
-  line="${line#*=}"
-  line="${line%$'\r'}"
-  line="${line%"${line##*[![:space:]]}"}"; line="${line#"${line%%[![:space:]]*}"}"
-  line="${line#\"}"; line="${line%\"}"
-  line="${line#\'}"; line="${line%\'}"
-  printf '%s' "$line"
-}
+# The tier parser is shared with the Agent hook — one source per fact — and is
+# resolved relative to this file, not the cwd repo. A guard whose parser is missing
+# must fail closed: an unguarded passthrough in a routed repo is silent
+# de-enforcement, so abort the sourcing adapter (or exit, on the --describe
+# execution path) rather than run without it.
+_bench_lib="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/../lib/lines-env.sh"
+if [ ! -f "$_bench_lib" ]; then
+  printf '%s\n' "bench adapter: shared tier parser missing at $_bench_lib — refusing to run unguarded" >&2
+  return 1 2>/dev/null || exit 1
+fi
+# shellcheck source=../lib/lines-env.sh
+. "$_bench_lib"
 
 bench_resolve_model() {
   BENCH_RESOLVED_MODEL=""
@@ -49,9 +48,9 @@ bench_resolve_model() {
   fi
 
   local top mid cheap
-  top="$(_bench_tier_value BENCH_TIER_TOP "$lines_env")"
-  mid="$(_bench_tier_value BENCH_TIER_MID "$lines_env")"
-  cheap="$(_bench_tier_value BENCH_TIER_CHEAP "$lines_env")"
+  top="$(bench_tier_value BENCH_TIER_TOP "$lines_env")"
+  mid="$(bench_tier_value BENCH_TIER_MID "$lines_env")"
+  cheap="$(bench_tier_value BENCH_TIER_CHEAP "$lines_env")"
 
   # Incomplete binding: treat as absent, warn, fall back to passthrough.
   if [ -z "$top" ] || [ -z "$mid" ] || [ -z "$cheap" ]; then
@@ -87,9 +86,9 @@ bench_line_guard_describe() {
   printf 'name: _line-guard\n'
   printf 'boundary: ShiftAdapter\n'
   if [ -f "$lines_env" ]; then
-    top="$(_bench_tier_value BENCH_TIER_TOP "$lines_env")"
-    mid="$(_bench_tier_value BENCH_TIER_MID "$lines_env")"
-    cheap="$(_bench_tier_value BENCH_TIER_CHEAP "$lines_env")"
+    top="$(bench_tier_value BENCH_TIER_TOP "$lines_env")"
+    mid="$(bench_tier_value BENCH_TIER_MID "$lines_env")"
+    cheap="$(bench_tier_value BENCH_TIER_CHEAP "$lines_env")"
     printf 'denies: headless shift on a model off the bound line (top=%s mid=%s cheap=%s)\n' \
       "${top:--}" "${mid:--}" "${cheap:--}"
   else

@@ -29,6 +29,7 @@ printf '%s' "$pack_json" | node -e '
     ".bench/adapters/codex",
     ".bench/adapters/opencode",
     ".bench/hooks/stop.sh",
+    ".bench/lib/lines-env.sh",
     ".claude/README.md",
     ".codex/hooks.json",
   ]) {
