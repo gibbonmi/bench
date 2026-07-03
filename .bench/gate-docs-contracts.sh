@@ -224,6 +224,11 @@ require_anchor "projects/benchkit.md" "hostile-input checklist"
 #        stopping on a check that itself looks wrong.
 require_anchor ".agents/commands/bench-setup-repo.md" "craft-gate"
 require_anchor ".agents/commands/bench-final-check.md" "craft-gate"
+#    l3) review-judgment anchors. The review phase routes its axis charges to
+#        craft-review (one source for the judgment), and the skill must keep the
+#        adversarial coverage rule that makes the Coverage axis bite.
+require_anchor ".agents/commands/bench-review-implementation.md" "craft-review"
+require_anchor ".agents/skills/bench-craft-review/SKILL.md" "an edge nobody decided"
 
 grep -qF 'session-start.sh' README.md || err "README layout omits .bench/hooks/session-start.sh"
 grep -qF 'bench.sh' README.md || err "README layout omits the real bin/bench.sh filename"

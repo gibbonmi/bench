@@ -40,29 +40,20 @@ Run it on the branch diff against its true base, on three axes that stay separat
    `projects/<name>.md` and any `CONTRIBUTING`/conventions docs in the repo.
 
 3. **Spawn the axes in parallel sub-agents** (so they don't pollute each other's
-   context), each under ~400 words:
+   context), one per axis — Standards, Spec, and the Coverage axis — each under
+   ~400 words. Each delegate takes the diff, the sources for its axis, and its
+   charge from the `craft-review` skill
+   (`.agents/skills/bench-craft-review/SKILL.md`) — the one source for what each
+   axis hunts and what a finding must cite; don't restate the charges here.
+   Procedural inputs per delegate: give Standards the docs from step 2; give
+   Spec the spec file plus, when it carries an acceptance coverage map, the rows
+   from `bench coverage <spec>` — auditing them (missing, partial,
+   falsely-classified, or unclosed mapped behavior) is part of its charge; give
+   Coverage the existing tests and the profile's hostile-input checklist when
+   one exists.
 
-   - **Standards** — every place the diff violates a documented convention. Cite
-     the rule. Separate hard violations from judgment calls. Skip anything the gate
-     already enforces — no point double-reporting what tooling caught.
-   - **Spec** — (a) requirements the spec asked for that are missing or partial;
-     (b) behavior in the diff that wasn't asked for (scope creep); (c) requirements
-     that look implemented but wrong. If the spec has an acceptance coverage map,
-     also audit each coverage row (`bench coverage <spec>` lists them): missing,
-     partial, falsely-classified, or unclosed mapped behavior is a Spec finding.
-     Quote the spec line for each finding.
-   - **Coverage axis** — the adversarial pass: read the diff and name concrete
-     inputs or states that would break it and that no acceptance row or existing
-     test exercises. Think hostile: walk the edge classes — the canonical list lives in
-     `/bench-write-spec`'s edge-inventory step — plus the profile's
-     hostile-input checklist when one
-     exists. Each finding
-     names the input or state, the expected break, and the row or test that
-     should exist. An edge the spec explicitly marked won't handle is not a
-     finding; an edge nobody decided is.
-
-   If there's no spec, skip the Spec axis and say so; Coverage still runs — it
-   needs only the diff and the existing tests.
+   If there's no spec, skip the Spec axis and say so; the Coverage axis still
+   runs — it needs only the diff and the existing tests.
 
 4. **Aggregate, don't merge.** Report under `## Standards`, `## Spec`, and
    `## Coverage` headings, findings kept separate. Do not rerank across axes or

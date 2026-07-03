@@ -171,6 +171,7 @@ not the list:
 - adding, weakening, or removing a gate check / authoring the oracle → `.agents/skills/bench-craft-gate/SKILL.md`
 - surfacing a decision one question at a time → `.agents/skills/bench-craft-grill/SKILL.md`
 - declaring the line / picking a delegate's model or effort → `.agents/skills/bench-craft-line/SKILL.md`
+- reviewing a diff / what a finding must cite → `.agents/skills/bench-craft-review/SKILL.md`
 - placing a test / designing an interface → `.agents/skills/bench-craft-seams/SKILL.md`
 - writing or pruning a skill → `.agents/skills/bench-craft-skills/SKILL.md`
 - evaluating a change to the kit itself → `.agents/skills/bench-craft-synthesis/SKILL.md`
