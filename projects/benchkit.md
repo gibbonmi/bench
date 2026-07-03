@@ -142,18 +142,15 @@ binding, the cached routings, and the escalation policy.
 
 **Tier → model** (this harness; refresh with `bench models`; set 2026-07-01):
 top = Fable 5 (`claude-fable-5`) · mid = Opus 4.8 (`claude-opus-4-8`) · cheap =
-Sonnet 4.6 (`claude-sonnet-4-6`). Machine-readable source: `.bench/lines.env`,
+Sonnet 5 (`claude-sonnet-5`). Machine-readable source: `.bench/lines.env`,
 read by the Agent-tool hook and the shift adapters — keep it in sync with this
 paragraph. Haiku 4.5 leaves the rotation (no `effort` support, and a fourth
-tier adds a distinction the routing signals can't reliably make). Sonnet 5
-stays excluded by reviewer directive — Opus-level benchmarks with a higher
-token burn make it a poor cheap tier and a future *mid* candidate; **revisit
-2026-09-01 (intro-pricing end) or at the next frontier shift**. Caveat for
+tier adds a distinction the routing signals can't reliably make). Caveat for
 Claude Code delegation: the Agent tool addresses models by alias only, so
 `lines.env` also declares which aliases bind (`BENCH_ALIAS_TOP=fable`,
-`BENCH_ALIAS_MID=opus`; no cheap alias on purpose — bare `sonnet` resolves to
-Sonnet 5 and stays denied). Cheap-rated in-session work runs inline or bumps
-to mid (declared); headless shift runs target `claude-sonnet-4-6` via
+`BENCH_ALIAS_MID=opus`, `BENCH_ALIAS_CHEAP=sonnet` — bare `sonnet` resolves to
+Sonnet 5, the cheap tier). Cheap-rated in-session work runs inline or bumps
+to mid (declared); headless shift runs target `claude-sonnet-5` via
 `BENCH_MODEL` through the adapter (adapters take exact ids, not aliases).
 
 **Escalation policy:** no standing top-tier opt-out — any bump to Fable 5

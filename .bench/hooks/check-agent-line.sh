@@ -19,8 +19,8 @@
 # Harness aliases: the Claude Code Agent tool addresses models by alias (opus,
 # fable, ...), not full id, so lines.env may declare which aliases bind via
 # optional BENCH_ALIAS_TOP/MID/CHEAP. An undeclared alias is denied like any
-# unbound model — deliberately: leaving BENCH_ALIAS_CHEAP undeclared is how this
-# repo keeps bare `sonnet` (which resolves to an excluded model) out.
+# unbound model; a declared one (e.g. BENCH_ALIAS_CHEAP=sonnet, binding bare
+# `sonnet` to the cheap tier) passes as an exact match.
 #
 # Wire under hooks.PreToolUse with matcher "Agent". Exit 2 denies and returns the
 # message to the agent. `--describe` (first arg) prints the guard manifest and
