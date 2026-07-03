@@ -118,7 +118,22 @@ the black-box gate as the only regression net is the migration risk to
 price in.
 
 ### Answer
-— (open — blocked)
+**Go — strangler-only; big-bang is off the table.** The rewrite is
+committed because the kit's recurring defect classes (mirrored facts across
+script boundaries, pipefail-dependent fallbacks, the Python outgrowth) are
+language-caused, the canary layer is a standing tax on shell's
+untestability, and the kit's growth trend (parser candidates) is shell's
+worst fit — while the migration risk is bounded by the black-box gate: the
+AXI contracts and gate checks assert stdout and exit codes, so they keep
+biting across a port. Typed, tested Go is also more delegable to the cheap
+tier than bash. Accepted costs, eyes open: ~10–15 spec-sized sessions of
+port work, and the permanent 5-package release matrix from #4. Constraint
+binding on #6: every port lands seam-by-seam behind the existing CLI
+dispatch with the old gate green throughout — no flag-day cutover.
+Rejected: no-go with a shell unit harness (half the testability win,
+nothing for footguns/duplication/speed); pilot-then-re-decide (pays the
+release-matrix cost for a fraction of the value while deferring the
+decision this map exists to make).
 
 ## #6: Rewrite scope, migration order, and testing shape
 
