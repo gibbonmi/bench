@@ -128,7 +128,7 @@ shift_stage_touched() {
 }
 
 shift_loop() {
-  local objective="$1" main_root root wt branch base i started tokens=0 committed=0 pre post
+  local objective="$1" main_root root wt branch base i started committed=0 pre post
   require_adapter
   main_root="$(repo_root)"
   [[ -z "$(git -C "$main_root" status --porcelain)" ]] || { echo "working tree not clean; commit or stash first" >&2; exit 1; }
@@ -249,25 +249,66 @@ objective_met() {
 }
 
 init() {
-  local root; root="$(repo_root)"; mkdir -p "$root/.bench"
+  local root kit; root="$(repo_root)"; mkdir -p "$root/.bench"
+  kit="$(kit_dir)"
+  # The canary runner is shared, not scaffolded inline (one source for benchkit's gate
+  # and every consumer's). Install it so the scaffolded gate below can source it even
+  # when `bench init` is run without a prior `bench link`.
+  if [[ ! -e "$root/.bench/lib/canary-run.sh" ]]; then
+    mkdir -p "$root/.bench/lib"
+    cp "$kit/.bench/lib/canary-run.sh" "$root/.bench/lib/canary-run.sh"
+  fi
   if [[ ! -e "$root/.bench/gate.sh" ]]; then
     cat > "$root/.bench/gate.sh" <<'EOF'
 #!/usr/bin/env bash
 # The external oracle for this repo — correctness only. Exit 0 = done is allowed.
-set -euo pipefail
-# Stack checks — uncomment what fits:
-#   mypy . && pytest -q && ruff check .
-#   pnpm -s typecheck && pnpm -s test && pnpm -s lint
-#
-# Structural debt is NOT checked here. `bench shift` runs `bench structure` once the
-# implementation loop finishes and triggers a refactor pass only if a file or dir is
-# over budget — so splits happen at green, not mid-iteration. Uncomment the next line
-# only if you also want structure hard-blocked at the PR boundary (every commit):
-#   bench structure
-echo "edit .bench/gate.sh to run this project's checks" >&2; exit 3
+# No `set -e`: the canary runner reads $? after a subshell that is meant to fail.
+set -uo pipefail
+root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "gate: not in a git repo" >&2; exit 3; }
+cd "$root"
+gate_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fail=0
+err() { echo "gate: $*" >&2; fail=1; }
+
+# Stack checks — replace the sentinel below with what fits your project, e.g.:
+#   mypy . && pytest -q && ruff check .        || err "python checks failed"
+#   pnpm -s typecheck && pnpm -s test && pnpm -s lint  || err "js checks failed"
+
+# Sentinel — keeps a fresh gate RED until you configure it, so you cannot commit real
+# work against an empty gate. Delete this one line once a real check exists above.
+err "configure .bench/gate.sh — replace this sentinel with real checks"  # BENCH_SENTINEL
+
+# Example check + its seed canary (tests/canary/example) are the pattern to copy: run a
+# check, err on failure, and add a canary that proves it bites. This one fails if a
+# forbidden marker file is present; the seed fixture plants that file so the canary can
+# prove the check still bites. Replace it with your real checks — and keep a canary for
+# each, because the runner turns the gate red if tests/canary/ ever goes empty.
+[ -e DO-NOT-SHIP ] && err "example check: DO-NOT-SHIP marker file present"
+
+# Structural debt is NOT checked here. `bench shift` runs `bench structure` after the
+# loop and refactors only when a file or dir is over budget. Uncomment to hard-block
+# structure at every commit:
+#   bench structure || err "structure over budget"
+
+# Canary — prove the checks above still bite, and that the harness itself is present.
+# shellcheck source=/dev/null
+. "$gate_dir/lib/canary-run.sh"
+
+if [ "$fail" -eq 0 ]; then echo "gate: green"; else echo "gate: red" >&2; fi
+exit "$fail"
 EOF
     chmod +x "$root/.bench/gate.sh"
-    echo "scaffolded .bench/gate.sh — edit it to run your real checks"
+    echo "scaffolded .bench/gate.sh — red until you replace the sentinel with real checks"
+  fi
+  # Seed canary — a worked example proving the harness bites. Keep at least one fixture:
+  # the runner turns the gate red when tests/canary/ is absent or empty.
+  if [[ ! -e "$root/tests/canary/example" ]]; then
+    mkdir -p "$root/tests/canary/example/files"
+    printf 'Presence of this file at the repo root makes the seed example check fail.\n' \
+      > "$root/tests/canary/example/files/DO-NOT-SHIP"
+    printf 'example check: DO-NOT-SHIP marker file present\n' \
+      > "$root/tests/canary/example/EXPECT"
+    echo "scaffolded tests/canary/example — the seed canary; copy it for each real check"
   fi
   if [[ ! -e "$root/.bench/learnings.md" ]]; then
     cat > "$root/.bench/learnings.md" <<'EOF'

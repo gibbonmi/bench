@@ -206,45 +206,11 @@ if command -v shellcheck >/dev/null 2>&1; then
   shellcheck -S warning bin/bench.sh .bench/hooks/*.sh .bench/lib/*.sh || err "shellcheck reported issues"
 fi
 
-# 7. Canary — prove the gate's own checks still bite. For each known-broken fixture in
-#    tests/canary/, run THIS gate against it in a throwaway repo and assert it goes red
-#    WITH the fixture's targeted error substring. A fixture that stops biting means a
-#    check rotted into an always-pass. Attribution is by substring, not isolation: a
-#    minimal fixture over-fails on unrelated checks, and that is fine — we only assert
-#    the targeted message is present. BENCH_CANARY_INNER marks the inner run so this
-#    check skips itself and never recurses.
-if [ "${BENCH_CANARY_INNER:-0}" != "1" ] && [ -d tests/canary ]; then
-  # Attribution baseline: an EXPECT that also matches a completely empty fixture
-  # proves nothing about its planted regression — the canary is vacuous and the
-  # check it guards can rot into an always-pass unnoticed.
-  d0="$(mktemp -d)"
-  ( cd "$d0" && git init -q && BENCH_CANARY_INNER=1 bash "$root/.bench/gate.sh" ) >"$d0/out" 2>&1 || true
-  for fx in tests/canary/*/; do
-    name="$(basename "$fx")"
-    [ -f "$fx/EXPECT" ] || continue
-    if grep -qF "$(cat "$fx/EXPECT")" "$d0/out"; then
-      err "canary '$name' EXPECT is vacuous (also matches an empty fixture)"
-    fi
-  done
-  rm -rf "$d0"
-  for fx in tests/canary/*/; do
-    name="$(basename "$fx")"
-    [ -f "$fx/EXPECT" ] || { err "canary fixture '$name' has no EXPECT file"; continue; }
-    [ -d "$fx/files" ]  || { err "canary fixture '$name' has no files/ tree"; continue; }
-    exp="$(cat "$fx/EXPECT")"
-    d="$(mktemp -d)"
-    cp -r "$fx/files/." "$d/"
-    # Fixtures store dot-dirs as dot-<name> so the harness doesn't load a fixture's
-    # .claude/skills as real skills; restore them to .<name> for the inner gate.
-    for dd in "$d"/dot-*; do [ -e "$dd" ] && mv "$dd" "$d/.${dd##*/dot-}"; done
-    ( cd "$d" && git init -q && BENCH_CANARY_INNER=1 bash "$root/.bench/gate.sh" ) >"$d/out" 2>&1
-    rc=$?
-    if [ "$rc" -eq 0 ] || ! grep -qF "$exp" "$d/out"; then
-      err "canary '$name' did not bite (want red + \"$exp\"; got exit $rc)"
-    fi
-    rm -rf "$d"
-  done
-fi
+# 7. Canary — prove the gate's own checks still bite, and that the harness itself is
+#    present. The runner lives in a shipped lib so benchkit's gate and every
+#    consumer's scaffolded gate share one source (see .bench/lib/canary-run.sh).
+# shellcheck source=.bench/lib/canary-run.sh
+. "$gate_dir/lib/canary-run.sh"
 
 if [ "$fail" -eq 0 ]; then echo "gate: green"; else echo "gate: red" >&2; fi
 exit "$fail"

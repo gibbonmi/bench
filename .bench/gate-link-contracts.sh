@@ -5,7 +5,60 @@
 tmp="$(mktemp -d)"
 ( cd "$tmp" && git init -q && bash "$root/bin/bench.sh" init >/dev/null 2>&1 )
 [ -f "$tmp/.bench/learnings.md" ] || err "bench init does not scaffold .bench/learnings.md (self-learning journal)"
+
+# bench init scaffolds a working, self-defending gate — the tripwire (shared canary
+# runner + seed fixture + a red-until-configured sentinel) that gives a fresh consumer
+# repo an automated defense against a self-weakened gate. These run only in the outer
+# gate: they exercise scaffolded gates (each spawns its own inner canary run), too
+# heavy to repeat during benchkit's own inner fixture runs, and they are behavioral
+# contracts, not canary-attributed checks.
+if [ "${BENCH_CANARY_INNER:-0}" != "1" ]; then
+  # Story 5 — the live harness ships: shared runner + seed fixture.
+  [ -f "$tmp/.bench/lib/canary-run.sh" ]    || err "bench init does not install the canary runner (.bench/lib/canary-run.sh)"
+  [ -f "$tmp/tests/canary/example/EXPECT" ] || err "bench init does not scaffold the seed canary fixture (tests/canary/example/EXPECT)"
+  [ -d "$tmp/tests/canary/example/files" ]  || err "bench init does not scaffold the seed canary fixture files/ tree"
+
+  # Story 4 — a fresh scaffolded gate is red until configured (the sentinel).
+  ( cd "$tmp" && bash .bench/gate.sh ) >"$tmp/g.sentinel" 2>&1; rc=$?
+  { [ "$rc" -ne 0 ] && grep -qF 'configure .bench/gate.sh' "$tmp/g.sentinel"; } \
+    || err "bench init scaffolds a gate that is not red-until-configured (want red + sentinel)"
+
+  # Story 6 — sentinel removed → green: the example check passes clean, the seed canary
+  # bites its fixture, and its EXPECT is not vacuous. A single exit-0 proves all three.
+  ( cd "$tmp" && grep -v BENCH_SENTINEL .bench/gate.sh > .bench/gate.next \
+      && mv .bench/gate.next .bench/gate.sh && chmod +x .bench/gate.sh \
+      && bash .bench/gate.sh ) >"$tmp/g.green" 2>&1; rc=$?
+  [ "$rc" -eq 0 ] || err "scaffolded harness not green after sentinel removed (seed canary vacuous or not biting)"
+
+  # Story 2 — deleting tests/canary/ turns the configured gate red: the lazy escape is loud.
+  ( cd "$tmp" && rm -rf tests/canary && bash .bench/gate.sh ) >"$tmp/g.absent" 2>&1; rc=$?
+  { [ "$rc" -ne 0 ] && grep -qF 'canary harness absent' "$tmp/g.absent"; } \
+    || err "err-if-absent: deleting tests/canary/ did not turn the gate red"
+
+  # Story 3 — an emptied harness is caught the same as a deleted one.
+  ( cd "$tmp" && mkdir -p tests/canary && bash .bench/gate.sh ) >"$tmp/g.empty" 2>&1; rc=$?
+  { [ "$rc" -ne 0 ] && grep -qF 'canary harness absent' "$tmp/g.empty"; } \
+    || err "err-if-absent: an empty tests/canary/ did not turn the gate red"
+
+  # Story 8 — the inner-run guard holds: BENCH_CANARY_INNER=1 skips the whole block, so
+  # err-if-absent never fires recursively (which would break every inner fixture run).
+  ( cd "$tmp" && BENCH_CANARY_INNER=1 bash .bench/gate.sh ) >"$tmp/g.inner" 2>&1
+  grep -qF 'canary harness absent' "$tmp/g.inner" \
+    && err "err-if-absent fired during an inner run (BENCH_CANARY_INNER guard leaks)"
+fi
 rm -rf "$tmp"
+
+# Story 7 — a second `bench init` never clobbers a configured gate. Fresh tmp so the
+# check is independent of the mutations above; guarded for the same inner-run reason.
+if [ "${BENCH_CANARY_INNER:-0}" != "1" ]; then
+  tmp="$(mktemp -d)"
+  ( cd "$tmp" && git init -q && bash "$root/bin/bench.sh" init >/dev/null 2>&1 \
+      && printf '# configured by hand\n' >> .bench/gate.sh \
+      && bash "$root/bin/bench.sh" init >/dev/null 2>&1 )
+  grep -qF '# configured by hand' "$tmp/.bench/gate.sh" \
+    || err "a second bench init clobbered an existing .bench/gate.sh"
+  rm -rf "$tmp"
+fi
 
 check_link_contract() {
   local repo="$1"
