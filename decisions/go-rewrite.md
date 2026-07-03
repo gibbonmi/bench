@@ -148,4 +148,91 @@ the old gate's watch); what the unit layer covers vs what stays black-box
 gate contract; what the canary layer becomes.
 
 ### Answer
-— (open — blocked)
+**Strangler in eight slices, value-first and risk-ascending; the gate ports
+too, last.** Order: (1) walking skeleton — Go module, CI cross-compile
+matrix, launcher, `bench version` ported to prove #4's pipeline before real
+logic moves; (2) AXI query surface + TOON emitter; (3) `bench status`
+renderer; (4) `git-guard.py` absorbed as a Go package (`--describe` is the
+contract); (5) hook logic → binary subcommands behind `.sh` shims; (6)
+`doctor` + `link` — the highest-stakes mutators, ported once Go idioms are
+settled; (7) worktree + shift loop; (8) gate fragments → `go test`, with
+`.bench/gate.sh` remaining the stable entry point and exit-code contract.
+Risk posture for slice 8 (reviewer's call, cost flagged): the unchanged
+shell gate is the regression net for slices 1–7 only; the gate port's own
+net is the canary layer — red-by-construction fixtures are
+language-agnostic, and every ported check must still fail its fixture with
+its targeted error before the shell check retires. Per-slice rule: a seam
+ports only when black-box contracts cover it first — the shift/worktree
+loop needs contract backfill before slice 7. Done per slice = gate green +
+`go build`/`vet`/`test` green. Permanently shell (from #4): postinstall,
+generated pre-push, hook entry shims, the doctor PATH shim, the launcher,
+and the planted `.bench/bin` shims.
+
+## Handoff
+
+1. **Module boundaries.** One Go module, one binary: `cmd/bench` +
+   `internal/<seam>` packages mirroring the slice list in #6 (query/TOON,
+   status, guard-analyzer, hooks, doctor, link, worktree/shift, gate
+   checks). Outside the module, permanently shell: the npm launcher,
+   postinstall, generated pre-push, hook entry shims, doctor PATH shim,
+   planted `.bench/bin` shims, and `.bench/gate.sh` as the gate's stable
+   entry. Distribution: `benchkit` wrapper + four `@benchkit/<os>-<arch>`
+   platform packages (#4).
+2. **Contracts.** All existing observable contracts carry over unchanged —
+   that is the strangler's premise: CLI subcommand names and exit codes;
+   the AXI hybrid contract (TOON stdout, definitive empty states,
+   structured errors on stdout, exit 0/1/2); each guard's `--describe`
+   self-manifest; link-manifest semantics and safe-link refusal behaviors;
+   the generated pre-push text; gate exit 0/non-zero at `.bench/gate.sh`.
+   New: the launcher execs the platform binary or fails loudly naming the
+   missing package; kit-version stamp in the link manifest checked by
+   session-start/doctor.
+3. **Deep vs thin.** The binary is the deep unit — all logic, parsing, and
+   platform variance live behind its subcommands. Launcher, shims,
+   postinstall, and the gate entry are thin pass-throughs with no seam of
+   their own; they must stay small enough to read in one glance.
+4. **Black-box assertables.** Per slice: identical stdout/exit assertions
+   before and after the port — the existing gate fragments (AXI, link,
+   runtime, status contracts) run unchanged against the ported binary.
+   New unit layer: `go test` table tests on parsers/emitters/pure logic.
+   Slice 8: every ported gate check still turns its canary fixture red
+   with the targeted error substring.
+5. **Gate attachment.** The unchanged shell gate is the oracle for slices
+   1–7; it gains `go build`/`vet`/`test` in its parse layer once the module
+   exists. Slice 8's net is the canary layer. Gate-blind spots: a real
+   multi-package `npm i -g` (manual smoke per release), and the
+   shift/worktree loop until its contract backfill lands (must precede
+   slice 7).
+6. **Hostile-input owners.** Most checklist classes dissolve in Go; what
+   remains maps to the shell rim and the port seams — paths with
+   spaces/globs → shim quoting and Go exec argv (never a shell string);
+   absent vs empty file → parser package table tests; required tool
+   missing → the launcher's missing-platform-package error; symlink
+   invocation → launcher target resolution; SIGINT mid-loop → slice 7
+   (worktree/shift) scratch-state cleanup; re-run idempotency → slice 6
+   (relink) and slice 1 (repeat install); cwd deeper than root → root
+   resolution in the binary, asserted per subcommand; no-trailing-newline
+   hand-edited files → the maps/learnings/roadmap parsers.
+7. **Uncertainty flags.** Shift/worktree contract coverage is thin —
+   spec-writer scopes the backfill before slice 7, escalating per
+   `craft-line` if the loop's observable surface is unclear. npm
+   optional-deps lockfile edge (asset, #4) — verify launcher repair
+   behavior against current npm during slice 1. Go toolchain version
+   pinning policy (go.mod directive vs CI matrix) — settle in slice 1.
+8. **Rejected alternatives.** grep→rg swap (#1); no-go with a shell unit
+   harness and pilot-then-re-decide (#5); big-bang cutover (#5); keeping
+   the gate shell permanently (#6 — reviewer chose to port it,
+   canary-netted); postinstall-download as primary, `go install`, and
+   committed binaries (#4/asset).
+9. **Domain watch-outs.** During the strangler window shell and Go coexist
+   — the CLI dispatch routes per-subcommand and a half-ported seam must
+   never have two live implementations. npm installs only the matching
+   platform package; a lockfile written on one OS can omit another's
+   optional dep (repair fallback exists; `--ignore-scripts` consumers lose
+   it). An orphaned or stale binary after version moves is detected by the
+   manifest version stamp, not by the binary itself. Go builds are
+   reproducible only with `-trimpath` and pinned toolchains.
+
+Dependency order: slices 1→8 as numbered in #6; contract backfill for the
+shift/worktree loop lands before slice 7; slices 2–3 are independent of
+each other after slice 1 and may swap if a spec needs to.
