@@ -97,3 +97,11 @@ An entry leaves this file only via /bench-integrate-learnings.
   declaring the line, sequencing slices, and verifying delegate claims. (Reviewer's
   call — this generalizes the existing "run write-delegations in isolated worktrees"
   invariant into a "always delegate, never self-build" rule.)
+
+## 2026-07-03 — top tier authored a spec on reviewer direction  [open]
+
+What happened: the reviewer directed Fable 5 (top) to author the go-walking-skeleton spec in the shaping session, overriding the profile line (spec authoring → mid, fresh session) and /bench-write-spec's "the mid tier authors every spec" rule. Agent agreed rather than pushing back, because the map's Handoff carries two uncertainty flags that land in this slice and the slice locks the distribution shape all later slices inherit — the craft-line escalation case, not transcription.
+
+Right behavior: honor the reviewer override, keep the fresh-session discipline synthetically (write from map + profile + repo only; treat any reach into grill memory as a Handoff gap to fix in the map), and drop back to mid for later transcription-only slices.
+
+Proposed rule change: in /bench-write-spec, allow a declared top-tier exception when the source Handoff carries uncertainty flags (item 7) and the reviewer approves — currently the phase text says "never", which conflicts with the craft-line ladder it also invokes.
