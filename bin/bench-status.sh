@@ -228,6 +228,18 @@ status() {
     rows+=("5|decisions|$maps unresolved map(s)|craft-grill → /bench-write-spec")
   fi
 
+  # Merged specs awaiting retirement — full code, no LLM judgment. On the default
+  # branch only, a spec still carrying a line-start `Status: implemented`
+  # (specs_awaiting_retirement_count, shared with any future consumer) is merged but
+  # not yet promote-then-deleted. Severity 7 sits below every existing signal: it
+  # never leads, and it drops first under the five-row budget.
+  if [[ "$(git -C "$root" rev-parse --abbrev-ref HEAD 2>/dev/null)" == "$(default_branch)" ]]; then
+    local retire; retire="$(specs_awaiting_retirement_count "$root")"
+    if [[ "${retire:-0}" -gt 0 ]]; then
+      rows+=("7|specs|$retire merged spec(s) awaiting retirement|promote-then-delete (spec-retire)")
+    fi
+  fi
+
   if [[ -s "$root/ROADMAP.md" ]]; then
     local n; n="$(grep -c '^- ' "$root/ROADMAP.md" 2>/dev/null || true)"
     [[ "${n:-0}" -gt 0 ]] && footer="$n idea(s) parked — bench roadmap"

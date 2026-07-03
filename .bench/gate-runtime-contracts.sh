@@ -165,6 +165,43 @@ tmp="$(mktemp -d)"
 ) || err "bench status gate-cache write contract failed"
 rm -rf "$tmp"
 
+# Merged-spec retirement signal: on the default branch a spec still carrying a
+# line-start `Status: implemented` is merged-but-not-retired. Full code, positive-
+# marker only and fence-aware; silent off the default branch, silent with no marker
+# or a fenced one, self-clears on deletion, and never leads over a higher signal.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  git symbolic-ref HEAD refs/heads/main
+  git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main
+  mkdir specs
+  printf '# Done\n\nStatus: implemented\n' > specs/done.md
+  printf '# Staged\n\nStatus: staged\n' > specs/staged.md
+  printf '# Plain\n\nno status line here\n' > specs/plain.md
+  printf '# Fenced\n\nexample:\n\n```\nStatus: implemented\n```\n' > specs/fenced.md
+  gci add -A; gci commit -q -m init
+  # exactly one spec (done.md) carries an unfenced line-start Status: implemented
+  out="$(bash "$root/bin/bench.sh" status)"
+  grep -qF '1 merged spec(s) awaiting retirement' <<<"$out" || { echo "retirement row missing/miscounted on default branch: $out"; exit 1; }
+  grep -qF 'promote-then-delete (spec-retire)' <<<"$out" || { echo "retirement action string missing: $out"; exit 1; }
+  # never leads: an uncommitted change (severity 1) must outrank it (severity 7)
+  echo scratch > scratch.txt
+  out="$(bash "$root/bin/bench.sh" status)"
+  grep -qF 'awaiting retirement' <<<"$out" || { echo "retirement row dropped alongside a git signal: $out"; exit 1; }
+  if head -1 <<<"$out" | grep -qF 'spec-retire'; then echo "retirement signal wrongly led over the git signal"; exit 1; fi
+  rm -f scratch.txt
+  # off the default branch → silent
+  gci checkout -q -b feature
+  out="$(bash "$root/bin/bench.sh" status)"
+  if grep -qF 'awaiting retirement' <<<"$out"; then echo "retirement signal fired off the default branch: $out"; exit 1; fi
+  # self-clears when the implemented spec is deleted (back on default)
+  gci checkout -q main
+  gci rm -q specs/done.md; gci commit -q -m retire
+  out="$(bash "$root/bin/bench.sh" status)"
+  if grep -qF 'awaiting retirement' <<<"$out"; then echo "retirement signal did not self-clear after deletion: $out"; exit 1; fi
+) || err "bench status retirement-signal contract failed"
+rm -rf "$tmp"
+
 tmp="$(mktemp -d)"
 (
   set -u; cd "$tmp"; git init -q
