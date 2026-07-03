@@ -22,7 +22,8 @@ adapter import shim, not a source of truth.
   `/bench-debug`, `/bench-implement-spec`, `/bench-review-implementation`,
   `/bench-final-check`, `/bench-update-kit`, `/bench-integrate-learnings`
 - Skills: `craft-seams`, `craft-tdd`, `craft-adr`, `craft-cli`,
-  `craft-design-system`, `craft-skills`, `craft-grill`, `craft-synthesis`
+  `craft-design-system`, `craft-skills`, `craft-grill`, `craft-synthesis`,
+  `craft-line`, `craft-review`, `craft-delegate`, `craft-gate`
 - CLI: `bench link`, `bench init`, `bench models`, `bench structure`, `bench idea`,
   `bench roadmap`, `bench status`, `bench learnings`, `bench maps`, `bench guards`,
   `bench diff`, `bench coverage`, `bench gate`, `bench worktree`, `bench shift`
