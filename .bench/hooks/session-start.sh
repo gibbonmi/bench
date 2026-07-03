@@ -35,7 +35,7 @@ cmd="$(bench_cmd)" || exit 0
 if command -v bench >/dev/null 2>&1; then
   printf 'bench CLI: %s (invoke as: bench)\n' "$cmd"
 else
-  printf 'bench CLI: %s (bench not on PATH; invoke by path)\n' "$cmd"
+  printf 'bench CLI: %s (bench not on PATH; invoke by path — run `bench doctor --fix` to install a stable-PATH shim)\n' "$cmd"
 fi
 "$cmd" status 2>/dev/null || true
 # The guard brief: one line per deny-capable guard plus a pointer. Never blocks —

@@ -131,7 +131,7 @@ contract "session-start guard-brief injection contract" <<'BODY'
   out="$(PATH=/usr/bin:/bin bash .bench/hooks/session-start.sh 2>&1)"; rc=$?
   [ "$rc" = "0" ] || { echo "session-start blocked in a linked repo (exit $rc)"; exit 1; }
   grep -qF 'full manifests: bench guards' <<<"$out" || { echo "session-start did not inject the guard brief"; exit 1; }
-  grep -qE '^bench CLI: .*\.bench/bin/bench\.sh \(bench not on PATH; invoke by path\)$' <<<"$out" \
+  grep -qE '^bench CLI: .*\.bench/bin/bench\.sh \(bench not on PATH; invoke by path' <<<"$out" \
     || { echo "session-start did not advertise the resolved CLI location: $out"; exit 1; }
 BODY
 

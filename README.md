@@ -214,6 +214,17 @@ bench link symlink     # optional dogfood mode: point installed assets at this k
 bench init
 ```
 
+A global install under a node version manager (nvm, asdf, fnm, volta) also drops a
+plain-shell `bench` shim on a stable PATH dir so login shells and `bash -c` resolve
+`bench` the same as an interactive shell; `bench doctor` reports its health and
+`bench doctor --fix` repairs it. To uninstall, remove the package and the shim:
+
+```sh
+npm uninstall -g benchkit && rm -f "$(command -v bench)"
+# after npm's own symlink is gone, command -v bench resolves to the shim;
+# `bench doctor` prints the machine-exact removal pair while bench still resolves.
+```
+
 The reviewer action is the setup phase, not those CLI calls:
 
 ```

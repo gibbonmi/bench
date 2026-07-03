@@ -67,6 +67,8 @@ bad_refs="$(grep -oE '\.bench/[A-Za-z0-9_.-]+' bin/bench.sh | grep -xE '\.bench/
 # shellcheck source=/dev/null
 . "$gate_dir/gate-runtime-shift-contracts.sh"
 # shellcheck source=/dev/null
+. "$gate_dir/gate-doctor-contracts.sh"
+# shellcheck source=/dev/null
 . "$gate_dir/gate-line-contracts.sh"
 # shellcheck source=/dev/null
 . "$gate_dir/gate-axi-contracts.sh"

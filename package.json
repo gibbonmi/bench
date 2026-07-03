@@ -6,6 +6,9 @@
     "bench": "bin/bench.sh",
     "benchkit": "bin/bench.sh"
   },
+  "scripts": {
+    "postinstall": "bash bin/bench-postinstall.sh"
+  },
   "files": [
     "bin/",
     "AGENTS.md",

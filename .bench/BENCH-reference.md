@@ -99,6 +99,8 @@ Codex phase adapters installed by Bench:
   the default branch) and the changed files as TOON.
 - `bench coverage <spec>` prints a spec's acceptance-coverage state and rows as
   TOON; `--check` validates the map (the gate's mode).
+- `bench doctor [--fix]` reports (and repairs) the plain-shell PATH shim a global
+  install needs under a node version manager.
 - `bench gate` runs the oracle.
 - `bench worktree` opens a reusable isolated worktree.
 - `bench shift "<objective>"` runs the gated loop.

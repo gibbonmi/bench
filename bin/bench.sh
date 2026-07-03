@@ -285,9 +285,12 @@ BENCH_BIN_DIR="$(dirname "$(resolve_script_path)")"
 . "$BENCH_BIN_DIR/bench-coverage.sh"
 # shellcheck source=/dev/null
 . "$BENCH_BIN_DIR/bench-init.sh"
+# shellcheck source=/dev/null
+. "$BENCH_BIN_DIR/bench-doctor.sh"
 
 case "${1:-help}" in
   gate)     run_gate ;;
+  doctor)   shift; doctor "$@" ;;
   worktree) worktree ;;
   shift)    shift; shift_loop "${*:-improve the codebase}" ;;
   link)     shift; link "${1:-copy}" ;;
@@ -316,6 +319,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench guards               every guard's deny surface as TOON (guard, boundary, denies)
   bench diff                 review base (recorded or merge-base) + changed files as TOON
   bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
+  bench doctor [--fix]       report (and repair) the PATH shim under a node version manager
   bench gate                 run the project gate (the oracle)
   bench worktree             warm, isolated worktree subshell
   bench shift "<objective>"  gated loop in a pooled worktree; commit on green
