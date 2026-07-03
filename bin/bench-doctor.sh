@@ -59,6 +59,7 @@ doctor_select_dir() {
   local IFS=:
   for dir in $PATH; do
     [ -n "$dir" ] || continue
+    case "$dir" in /*) ;; *) continue ;; esac   # a relative PATH entry yields a cwd-dependent shim
     [ -d "$dir" ] || continue
     [ -w "$dir" ] || continue
     doctor_manager_owned "$dir" && continue
@@ -84,11 +85,16 @@ doctor_has_marker() {
 # loud rather than silently running a stale copy. %q keeps a spaced or glob target
 # intact; "$@" preserves multi-word and glob args verbatim.
 doctor_shim_content() {
-  local target q
+  local q
   q="$(printf '%q' "$1")"
+  # The target appears twice, both from $1: a literal `# bench-target:` comment the
+  # reader parses without eval (report must never execute a shim's contents), and the
+  # %q-quoted assignment the runtime execs (robust for a spaced or glob target). One
+  # source ($1), generated together — never hand-maintained, so they cannot drift.
   printf '%s\n' \
     '#!/usr/bin/env bash' \
     "$BENCH_SHIM_MARKER" \
+    "# bench-target: $1" \
     "target=$q" \
     'if [ ! -x "$target" ]; then' \
     "  printf 'bench moved — run '\''bench doctor --fix'\'' or reinstall\\n' >&2" \
@@ -97,10 +103,12 @@ doctor_shim_content() {
     'exec "$target" "$@"'
 }
 
-# Read the target= line back out of an existing shim, reversing the %q quoting in a
-# subshell so the caller's variables are untouched.
+# Read the target back out of an existing shim from its literal `# bench-target:`
+# comment — never eval a file we did not just write, so a hostile marker-bearing file
+# on PATH cannot run code during a read-only report. A path with a literal newline is
+# out of band (documented in bin/bench.sh), consistent with the rest of the CLI.
 doctor_shim_target() {
-  ( eval "$(grep -m1 '^target=' "$1" 2>/dev/null)"; printf '%s' "${target:-}" )
+  sed -n 's/^# bench-target: //p' "$1" 2>/dev/null | head -1
 }
 
 # Print the exact one-line PATH addition for the user's shell when the chosen dir is

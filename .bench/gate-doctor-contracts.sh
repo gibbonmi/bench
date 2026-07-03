@@ -44,6 +44,10 @@ printf '#!/usr/bin/env bash\n# bench-shim v1 marker\ntarget=/no/such/bench\nexec
 out="$(PATH="$DSB_PATH" bash "$root/bin/bench.sh" doctor)"; rc=$?
 [ "$rc" = "1" ] || { echo "report on a stale shim did not exit 1 (got $rc)"; exit 1; }
 grep -qF "stale" <<<"$out" || { echo "report did not classify the stale shim"; exit 1; }
+# a read-only report must never execute a marker-bearing file's contents
+printf '#!/usr/bin/env bash\n# bench-shim v1 marker\ntarget=$(touch "%s/pwned")\nexec "$target"\n' "$tmp" > "$target_path"
+PATH="$DSB_PATH" bash "$root/bin/bench.sh" doctor >/dev/null 2>&1 || true
+[ ! -e "$tmp/pwned" ] || { echo "report executed a hostile shim's target line"; exit 1; }
 BODY
 
 # --- doctor --fix: picks the first non-manager writable PATH dir, marker+target, announced (stories 3, 6)
@@ -56,6 +60,21 @@ out="$(PATH="$DSB_PATH" bash "$root/bin/bench.sh" doctor --fix)"; rc=$?
 grep -qF "bench-shim v1" "$DSB_PLAIN/bench" || { echo "shim carries no bench marker"; exit 1; }
 grep -qF "$root/bin/bench.sh" "$DSB_PLAIN/bench" || { echo "shim does not target the resolved CLI"; exit 1; }
 grep -qF "$DSB_PLAIN/bench" <<<"$out" || { echo "--fix did not announce the written path"; exit 1; }
+BODY
+
+# --- doctor --fix under a spaced/glob target path: %q quoting re-execs intact (stories 3, 9 edge)
+# The spec's edge inventory claims the spaced-path case is covered; this is that coverage.
+# The invoked CLI lives under a parent containing a space, so the resolved target the shim
+# embeds is spaced — exercising doctor_shim_content's %q quoting end to end.
+contract "bench doctor --fix spaced-target contract" --space-path <<'BODY'
+doctor_sandbox
+kit="$tmp/kit/bin"; mkdir -p "$kit"; cp "$root"/bin/*.sh "$kit/"
+out="$(PATH="$DSB_PATH" bash "$kit/bench.sh" doctor --fix)"; rc=$?
+[ "$rc" = "0" ] || { echo "spaced-path --fix did not exit 0 (got $rc)"; exit 1; }
+[ -f "$DSB_PLAIN/bench" ] || { echo "spaced-path --fix wrote no shim"; exit 1; }
+grep -qF "$kit/bench.sh" "$DSB_PLAIN/bench" || { echo "shim lost the spaced target path"; exit 1; }
+got="$("$DSB_PLAIN/bench" doctor 2>/dev/null | head -1)"
+grep -qF "shim health" <<<"$got" || { echo "spaced-target shim failed to re-exec the CLI"; exit 1; }
 BODY
 
 # --- doctor --fix idempotency: second run is an announced no-op, bytes unchanged (story 4)

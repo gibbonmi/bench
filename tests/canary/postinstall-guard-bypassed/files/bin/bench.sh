@@ -1,24 +1,23 @@
 #!/usr/bin/env bash
-# Canary fixture support: a correct mini-doctor so the postinstall contract's global /
-# non-npm stories pass; the planted regression is the dropped .git guard in
-# bench-postinstall.sh.
+# Canary support only: a minimal doctor that writes a placeholder shim to the first
+# writable non-manager PATH dir (or ~/.local/bin, failing loudly) so the postinstall
+# contract's global/non-npm stories can pass and reach the .git-guard story. The
+# regression under test is in bench-postinstall.sh, not here; no assertion reads the
+# shim body. Intentionally identical to the twin in postinstall-nonzero-exit —
+# incidental plumbing, not shared knowledge (both are throwaway, neither re-derives
+# the real doctor's selection or shim-template logic).
 set -uo pipefail
-resolve_script_path() {
-  local s="${BASH_SOURCE[0]:-$0}" d t
-  while [ -L "$s" ]; do d="$(cd -P "$(dirname "$s")" && pwd)"; t="$(readlink "$s")"; case "$t" in /*) s="$t" ;; *) s="$d/$t" ;; esac; done
-  d="$(cd -P "$(dirname "$s")" && pwd)"; printf '%s/%s\n' "$d" "$(basename "$s")"
-}
-doctor_fix() {
-  local d dir="" IFS=:
-  for d in $PATH; do
-    [ -d "$d" ] && [ -w "$d" ] || continue
-    case "$d" in *"/nvm/"*|*/.nvm/*|/usr|/usr/*|/bin|/sbin|/opt|/opt/*) continue ;; esac
-    dir="$d"; break
-  done
-  [ -n "$dir" ] || { mkdir -p "$HOME/.local/bin" || return 1; dir="$HOME/.local/bin"; }
-  printf '#!/usr/bin/env bash\n# bench-shim v1\ntarget=%s\nexec "$target" "$@"\n' "$(resolve_script_path)" > "$dir/bench" || return 1
-  chmod +x "$dir/bench"; echo "  wrote shim $dir/bench"
-}
 case "${1:-}" in
-  doctor) [ "${2:-}" = "--fix" ] && { doctor_fix; exit $?; }; exit 1 ;;
+  doctor)
+    [ "${2:-}" = "--fix" ] || exit 1
+    d=""; IFS=:
+    for cand in $PATH; do
+      [ -d "$cand" ] && [ -w "$cand" ] || continue
+      case "$cand" in *"/nvm/"*|/usr|/usr/*|/bin|/sbin|/opt|/opt/*) continue ;; esac
+      d="$cand"; break
+    done
+    [ -n "$d" ] || { mkdir -p "$HOME/.local/bin" || exit 1; d="$HOME/.local/bin"; }
+    printf '#!/usr/bin/env bash\nexec true\n' > "$d/bench" || exit 1
+    chmod +x "$d/bench"; echo "  wrote shim $d/bench"
+    ;;
 esac
