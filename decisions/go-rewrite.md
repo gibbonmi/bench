@@ -61,7 +61,14 @@ means for every future session. Is that identity change acceptable in
 principle? If no, the map closes as rejected and #4–#6 die.
 
 ### Answer
-— (open — grill pending; reviewer's call, hard stop)
+**Accepted in principle, conditional on #4.** The identity change is
+acceptable because the legibility loss is smaller than the slogan implies:
+Go source is at least as agent-legible as bash, and `go run` keeps
+edit→effect near-live in the kit repo. The condition is consumer-side and
+hard: #4 must find a distribution shape with **no toolchain requirement on
+consumer machines** and **an auditable surface** (e.g. thin shell shims
+exec'ing a versioned binary — consumers can still read what their hooks
+invoke). If #4 cannot deliver both, this map closes as rejected.
 
 ## #4: How would consumers get the binary, and what does the toolchain cost?
 
@@ -74,8 +81,11 @@ core: prebuilt per-platform binaries vs `go install` vs source build;
 whether the Go toolchain becomes a consumer or CI dependency; what the
 pre-push hook execs on a machine with no toolchain; what `bench link` copies
 and how binary/asset version skew is detected; what the gate's parse layer
-becomes (go build/vet/test in place of `bash -n`). Output: a short summary
-asset with a recommended distribution shape and its hard dependencies.
+becomes (go build/vet/test in place of `bash -n`). Acceptance bar (set by
+#3): no toolchain requirement on consumer machines, and an auditable
+consumer surface. A shape that misses either bar closes the map as
+rejected. Output: a short summary asset with a recommended distribution
+shape and its hard dependencies.
 
 ### Answer
 — (open — research session)
