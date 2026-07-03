@@ -23,12 +23,8 @@ session runs
 spec is locked and it passes `craft-line`'s venue-routing test: every story's line
 is cheap and the coverage map is fully gate-observable.
 
-**This phase refuses to run without a complete map.** Every spec is compiled from
-a named `decisions/<topic>.md` whose `## Handoff` is placeholder-free — run
-`bench maps` and confirm it shows no row for the map. On a missing map, or one
-whose Handoff is still open, name the map to close and stop; never draft a spec
-from conversation alone. Bugs are the exception: they route to `/bench-debug`,
-which needs no spec.
+This phase compiles a spec from a named `decisions/<topic>.md`. Where no map
+produced this spec, sketch the seams from scratch.
 
 **Who runs this phase.** The mid tier authors every spec — the top model never
 does. The default venue is a fresh mid-tier session that starts cold on the map

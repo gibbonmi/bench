@@ -1,6 +1,6 @@
 # Spec sourcing — every spec compiled from a closed map's Handoff
 
-Status: staged
+Status: implemented
 
 Source map: `decisions/spec-sourcing.md` (all four tickets resolved in the
 discovery grill; Handoff item 7 flags no uncertainty). This spec is the map's
@@ -82,9 +82,11 @@ canary, so the bypass cannot silently drift back.
 6. As the gate, I want two thin kit-conformance anchors — `/bench-shape-idea`
    must not contain the skip-to-spec bypass fragment (negative), and
    `/bench-write-spec` must contain the map-required refuse contract (positive),
-   each needle sitting on one physical line so a line-oriented grep cannot miss a
-   hard-wrapped match — plus a red canary fixture per anchor proving it bites, so
-   the Handoff-sourcing prose cannot silently drop out of either command.
+   each anchor matching against whitespace-normalized text so a hard wrap that
+   splits the fragment across a newline cannot defeat the grep — plus a red canary
+   fixture per anchor proving it bites (and a third, wrapped, fixture proving the
+   negative anchor's wrap-tolerance bites), so the Handoff-sourcing prose cannot
+   silently drop out of either command.
    Line: claude-opus-4-8 / medium. Anchor checks and canary fixtures are oracle
    content where a wrong anchor is an always-pass, and the profile routes gate
    correctness to mid effort.
@@ -115,10 +117,16 @@ canary, so the bypass cannot silently drift back.
   overloading the `require_anchor` helper whose message reads "acceptance coverage
   anchor."
 
-- **Needles sit on one physical line (the discovery repro's lesson).** A
-  line-oriented fixed-string grep silently misses a needle that spans a hard wrap;
-  the discovery repro hit exactly this. Both needles are short mid-line fragments,
-  so the wrap of the surrounding prose cannot break the match.
+- **Anchors match against whitespace-normalized text (the discovery repro's
+  lesson).** A line-oriented fixed-string grep silently misses a needle that spans
+  a hard wrap; the discovery repro hit exactly this. Keeping our own needle on one
+  line covers the positive anchor (we control write-spec's wrapping) but not the
+  negative one — a future editor reintroducing the bypass controls its own
+  wrapping. So both anchors pipe the file through `tr -s '[:space:]' ' '` (collapse
+  every whitespace run, newlines included, to one space) before the fixed-string
+  grep, so a wrap that splits the fragment across a newline cannot defeat the
+  match. A third canary (`shape-idea-bypass-wrapped`) plants the wrapped
+  reintroduction and proves the wrap-tolerance bites.
 
 - **Kit prose routes mid + high, a declared step down from the leverage
   override.** `craft-line`'s leverage override would route command-phase edits
@@ -156,8 +164,9 @@ canary, so the bypass cannot silently drift back.
       bench-write-spec.md     ──▶  [    ABSENT (negative grep)       ]
                                    [  write-spec: refuse contract     ]
                                    [    PRESENT (positive grep)       ]
-                                        ◀ tests attach here: two canary fixtures —
-                                          one reintroduces the bypass, one drops the
+                                        ◀ tests attach here: three canary fixtures —
+                                          one reintroduces the bypass, one the same
+                                          bypass hard-wrapped, one drops the
                                           contract; the gate must go red with each
                                           targeted substring (and stay green on disk)
 
@@ -167,6 +176,7 @@ canary, so the bypass cannot silently drift back.
 |---|---|---|---|---|
 | 1 | `/bench-shape-idea` on disk contains no ``straight to `/bench-write-spec` `` bypass fragment | conformance anchor (layer 3) | `rg 'straight to \`/bench-write-spec\`' .agents/commands/bench-shape-idea.md` exits 0 today (two hits, observed red 2026-07-03) — the discovery repro | the negative anchor greps the fragment and reds the gate whenever it is present; removal makes it green |
 | 6 (guards 1) | gate errs when the bypass fragment is reintroduced into shape-idea | canary (layer 7) | new `shape-idea-bypass` fixture run with the anchor not yet added — the gate does not err, so the canary's "did not bite" assertion is red | proves the negative anchor bites; an always-pass anchor fails its canary |
+| 6 (guards 1b) | gate errs when the bypass fragment is reintroduced **hard-wrapped** across a newline | canary (layer 7) | `shape-idea-bypass-wrapped` fixture: a line-oriented grep MISSES it (`grep -F` exits 1), so a non-normalized anchor does not err and the canary is red | proves the whitespace-normalized negative anchor catches a wrapped reintroduction the future editor controls; the discovery repro's own failure class |
 | 2 | `/bench-write-spec` on disk contains the `refuses to run without` map-required contract | conformance anchor (layer 3) | new positive anchor run before the contract sentence is added — gate red with "dropped the map-required entry contract" | the positive anchor greps the contract phrase and reds the gate when it is absent |
 | 6 (guards 2) | gate errs when the refuse contract is dropped from write-spec | canary (layer 7) | new `write-spec-map-required` fixture (contract sentence removed) run with the anchor not yet added — gate does not err, canary "did not bite" red | proves the positive anchor bites; a rotted anchor fails its canary |
 | 3 | write-spec states the venue rule; shape-idea exit recommends the fresh mid-tier session | review axis | not TDD-able — gate-blind prose (Handoff item 5); verified by the review axis and reviewer veto | no anchor greps semantics; a wrong or missing venue rule is a review finding, not a gate red |
@@ -179,8 +189,11 @@ Walked against the profile's shell-CLI hostile-input checklist, per mapped
 behavior (the two anchors):
 
 - **Hard-wrapped bypass prose** — covered (story 6): the Handoff's named domain
-  edge; both needles are single mid-line fragments, so surrounding wrap cannot
-  break the match. This is the class the discovery repro caught.
+  edge, and the class the discovery repro caught. Both anchors match against
+  whitespace-normalized text (`tr -s '[:space:]' ' '`) so a wrap that splits the
+  fragment across a newline cannot defeat the match — load-bearing for the
+  *negative* anchor, whose reintroduction a future editor wraps as it pleases. The
+  `shape-idea-bypass-wrapped` canary plants the wrapped form and proves it bites.
 - **Command file absent vs present-but-empty** — covered: each anchor is guarded
   on `[ -f "$file" ]`, so an absent file skips the check (and the canary's
   empty-fixture vacuous baseline stays clean); a present file with the fragment

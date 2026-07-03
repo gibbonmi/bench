@@ -59,3 +59,20 @@ An entry leaves this file only via /bench-integrate-learnings.
   dogfood shift must be a *fresh* session, because the edit does not take effect in
   the session that made it. (Reviewer's call — this is the deferred/contestable
   promotion flagged from story 11.)
+
+## 2026-07-03 — review-implementation: verify a returned finding in the live session, not a worktree  [open]
+- **What happened:** During `/bench-review-implementation` on spec-sourcing, the
+  Coverage axis returned a real finding (the negative anchor's line-oriented grep
+  misses a hard-wrapped bypass reintroduction). I reproduced and fixed it directly
+  in the live session's working tree — one repro, one fix, one gate run — rather than
+  spinning up a separate worktree for the fix.
+- **Right behavior:** When a review delegate returns with an issue, the invoking
+  session tests and fixes the failure in the live session, not in a separate
+  worktree. The worktree-isolation rule is for *write-delegations* (a subagent that
+  edits files, run isolated so stray edits can't land in reviewer-owned files); the
+  review axes themselves are read-only, so their findings come back to the one live
+  session that owns the diff, which verifies and fixes them in place against the gate.
+- **Proposed rule change:** Consider a one-line note in `/bench-review-implementation`
+  (or `craft-delegate`): review delegates are read-only and return findings; the
+  live session verifies and fixes a returned finding in place — worktree isolation
+  is for write-delegations, not for reproducing a review finding.

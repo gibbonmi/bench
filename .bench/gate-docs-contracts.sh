@@ -290,6 +290,28 @@ require_anchor ".agents/commands/bench-write-spec.md" "Status: staged"
 require_anchor ".agents/commands/bench-write-spec.md" "new session on the mid tier"
 require_anchor ".agents/commands/bench-implement-spec.md" "Status: implemented"
 require_anchor ".agents/commands/bench-debug.md" "diff-filter=D"
+#    l7) spec-sourcing anchors (spec spec-sourcing). Two thin greps that pin the
+#        Handoff-sourcing prose so the skip-to-spec bypass cannot silently drift
+#        back. Opposite polarity: shape-idea must NOT carry the bypass fragment
+#        (negative), write-spec MUST carry the map-required refuse contract
+#        (positive). Each is guarded on the file existing (an absent file — the
+#        canary's vacuous baseline — skips it). The needle is matched against the
+#        file with all whitespace collapsed to single spaces (`tr -s`), so a hard
+#        wrap that splits the fragment across a newline cannot defeat the match —
+#        the negative anchor's reintroduction is authored by a future editor whose
+#        wrapping we do not control, exactly the line-oriented-grep miss the
+#        discovery repro caught. Not the require_anchor helper: its message reads
+#        "acceptance coverage anchor", which would misattribute a bypass
+#        regression. Each has a red canary under tests/canary/ proving it bites
+#        (the negative one has a wrapped fixture proving the wrap-tolerance bites).
+if [ -f .agents/commands/bench-shape-idea.md ] \
+   && tr -s '[:space:]' ' ' < .agents/commands/bench-shape-idea.md | grep -qF 'straight to `/bench-write-spec`'; then
+  err ".agents/commands/bench-shape-idea.md reintroduces the skip-to-spec bypass fragment; every idea must yield a map with a Handoff before a spec"
+fi
+if [ -f .agents/commands/bench-write-spec.md ] \
+   && ! tr -s '[:space:]' ' ' < .agents/commands/bench-write-spec.md | grep -qF 'refuses to run without'; then
+  err ".agents/commands/bench-write-spec.md dropped the map-required entry contract (refuses to run without a complete map)"
+fi
 
 grep -qF 'session-start.sh' README.md || err "README layout omits .bench/hooks/session-start.sh"
 grep -qF 'bench.sh' README.md || err "README layout omits the real bin/bench.sh filename"

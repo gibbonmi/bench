@@ -20,10 +20,8 @@ blocks the build; otherwise it is another focused `/bench-shape-idea` resume on 
 next open ticket.
 
 Use this when an idea is too unresolved to spec yet — when there are open
-questions whose answers change what gets built. Even an idea that already reads
-clear yields a map before it can be specced: a short grill and a
-zero-open-ticket `decisions/<topic>.md` with a `## Handoff`, written in one
-sitting. No idea reaches a spec without a map behind it.
+questions whose answers change what gets built. If the idea is already clear,
+skip straight to `/bench-write-spec`.
 
 The output is a single compact markdown file, `decisions/<topic>.md`, git-tracked.
 It is loaded whole into every planning session, so keep it tight. Link to assets;

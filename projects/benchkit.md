@@ -164,6 +164,10 @@ get declared — no silent escalation.
   leverage override in `craft-line`: guidance prose compounds through every
   session that loads it while the edit costs few tokens. The `craft-skills` and
   `craft-adr` skills apply. Spend here.
+- **Spec authoring** → **mid model, fresh session**. Every spec is compiled from a
+  closed map's Handoff; `/bench-write-spec` owns the venue mechanic. Distinct from
+  the doc-authoring leverage override above: that spends the top tier on the kit's
+  guidance prose; a spec is decided content transcribed off a Handoff.
 - **`bench` CLI shell plumbing** → cheap model, low–medium effort at the known seam.
   Mechanical once the gate-resolution and worktree-pool shapes exist.
 - **Gate / conformance logic** → mid effort. Correctness of the oracle matters more
