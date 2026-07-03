@@ -78,6 +78,23 @@ BODY
     [ "$rc" = "2" ] || { echo "empty-analyzer enforcement did not exit 2 (exit $rc)"; exit 1; }
     grep -qF 'BLOCKED' <<<"$berr" || { echo "empty-analyzer enforcement did not say BLOCKED: $berr"; exit 1; }
 BODY
+
+  # With python3 gone the hook can't parse the envelope or run the analyzer, so it
+  # can't classify — it fails closed on anything git-shaped (the destructive
+  # surface) and leaves the rest of the shell usable (kit-audit A2). Simulated by
+  # a PATH holding only `cat`, no python3.
+  contract "block-dangerous-git python3-missing fail-closed (git-shaped)" <<'BODY'
+    cp "$root/.bench/hooks/block-dangerous-git.sh" hook.sh
+    cp "$root/.bench/hooks/git-guard.py" git-guard.py
+    mkdir fixbin
+    ln -s "$(command -v cat)" fixbin/cat
+    bash_bin="$(command -v bash)"
+    berr="$(printf '{"tool_input":{"command":"git push"}}' | PATH="$PWD/fixbin" "$bash_bin" hook.sh 2>&1 >/dev/null)" && rc=0 || rc=$?
+    [ "$rc" = "2" ] || { echo "python3-missing git-shaped did not fail closed (exit $rc)"; exit 1; }
+    grep -qF 'BLOCKED' <<<"$berr" || { echo "python3-missing git-shaped not BLOCKED: $berr"; exit 1; }
+    PATH="$PWD/fixbin" "$bash_bin" hook.sh <<<'{"tool_input":{"command":"ls -la"}}' >/dev/null 2>&1 && rc=0 || rc=$?
+    [ "$rc" = "0" ] || { echo "python3-missing non-git did not stay allowed (exit $rc)"; exit 1; }
+BODY
 fi
 
 [ -f "$root/bin/bench.sh" ] || { err "bench CLI missing (AXI contracts skipped)"; return 0 2>/dev/null || exit 0; }

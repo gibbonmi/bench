@@ -11,6 +11,10 @@ import subprocess
 import sys
 
 CONTROL_OPS = {";", "&&", "||", "|", "&", "(", ")"}
+# shlex punctuation set = its default (`();<>|&`) plus newline, so a bare newline
+# lexes as its own operator token instead of being folded into whitespace.
+PUNCT_CHARS = "();<>|&\n"
+_OP_CHARS = set(PUNCT_CHARS)
 KEYWORDS = {"if", "then", "elif", "else", "do", "while", "until", "!", "{"}
 WRAPPERS = {"sh", "bash", "zsh"}
 
@@ -63,12 +67,35 @@ def strip_redirections(tokens):
 
 
 def tokenize(s):
+    # A bare newline is a command separator in shell, but shlex folds it into
+    # whitespace — so a multi-line block (the common way an agent batches git)
+    # would scan as one command and only its first verb would be classified.
+    # Lex newline as punctuation and drop it from whitespace so it emits as its
+    # own operator token; a newline *inside* quotes stays in the word (letters
+    # keep it out of the operator-only class below), so a wrapper's inner string
+    # survives intact for the recursive scan.
     try:
-        lexer = shlex.shlex(s, posix=True, punctuation_chars=True)
+        lexer = shlex.shlex(s, posix=True, punctuation_chars=PUNCT_CHARS)
         lexer.whitespace_split = True
-        return strip_redirections(list(lexer))
+        lexer.whitespace = lexer.whitespace.replace("\n", "")
+        raw = list(lexer)
     except ValueError:
-        return strip_redirections(s.split())
+        # Malformed quoting: fall back to a plain split, still honoring newlines
+        # as boundaries so a multi-line block can't slip through unclassified.
+        raw = []
+        for idx, line in enumerate(s.split("\n")):
+            if idx:
+                raw.append(";")
+            raw.extend(line.split())
+    # Collapse any operator-only token that carries a newline (`\n`, `;\n`, `&&\n`,
+    # `\n\n&&\n`) to a plain control op so scan() sees the boundary; an all-newline
+    # run becomes `;`.
+    out = []
+    for tok in raw:
+        if "\n" in tok and all(c in _OP_CHARS for c in tok):
+            tok = tok.replace("\n", "") or ";"
+        out.append(tok)
+    return strip_redirections(out)
 
 
 def has_explicit_pathspec(args):

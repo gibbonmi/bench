@@ -50,6 +50,20 @@ if [[ "${1:-}" == "--describe" ]]; then
 fi
 
 input="$(cat)"
+
+# Without python3 the hook can neither parse the command envelope nor run the
+# analyzer, so it cannot classify at all. Fail closed on anything git-shaped —
+# the destructive surface — while leaving non-git commands runnable so the shell
+# stays usable. The raw envelope carries the command text, so a substring test
+# catches the honest mistake without parsing. This mirrors the analyzer-missing
+# branch below: same "cannot classify" condition, same deny verdict.
+if ! command -v python3 >/dev/null 2>&1; then
+  case "$input" in
+    *git*) echo "BLOCKED: guard degraded (python3 missing) — can't classify commands, refusing anything git-shaped. Install python3 or hand back." >&2; exit 2 ;;
+    *) exit 0 ;;
+  esac
+fi
+
 cmd="$(printf '%s' "$input" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("tool_input",{}).get("command",""))' 2>/dev/null || true)"
 [[ -z "$cmd" ]] && exit 0
 

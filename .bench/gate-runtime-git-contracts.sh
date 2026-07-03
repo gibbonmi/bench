@@ -82,6 +82,21 @@ tmp="$(mktemp -d)"
   expect_block 'git branch -D'
   expect_block 'git branch -f worktree-agent-a HEAD~1'
 
+  # -- newline-separated blocks are the common batch form; a destructive verb on
+  #    any line blocks, exactly as it would after ; or && (kit-audit A1). The
+  #    wrapper's inner string leaks the same way and is fixed by the same tokenizer
+  #    change. \n here is a literal backslash-n → valid JSON \n → a real newline
+  #    reaches the analyzer.
+  expect_block 'git add -A\ngit commit -m wip\ngit push origin main'
+  expect_block 'git status\ngit reset --hard HEAD~1'
+  expect_block "bash -c 'cd repo\ngit push'"
+  expect_allow 'git add -A\ngit status --short\ngit commit -m wip'
+
+  # -- explicit ; and && separators block on a later destructive verb (the forms
+  #    the newline case must join)
+  expect_block 'git status && git push'
+  expect_block 'git add -A; git push origin main'
+
   # -- wrapper strings and prefixed invocations are classified like bare ones (stories 10, 11, 12)
   expect_block "bash -c 'git push'"
   expect_block "bash -lc 'git push'"
