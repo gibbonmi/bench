@@ -136,6 +136,15 @@ learnings() {
 # so `bench maps` (which lists tickets) and status (which counts files) can never
 # drift on what "unresolved" means. This is the two-derivations bug class the state
 # surface exists to end. marker() returns the unresolved kind, or "" for a normal line.
+#
+# The prelude also tracks map close-readiness in three globals both consumers read
+# in END: pre_handoff_marker (any unresolved marker outside the Handoff section →
+# the map still has open work), seen_handoff (a line-start `## Handoff` heading was
+# seen outside a fence), and handoff_state (the first placeholder kind found INSIDE
+# the Handoff section). A zero-open map is close-ready only with a Handoff heading
+# and no placeholder under it; anything less keeps a row. Tracking lives here, once,
+# so maps_rows (which emits the handoff row) and maps_unresolved_count (which counts
+# not-close-ready files) share one definition of "ready to close".
 maps_awk_prelude='
   function marker() {
     if ($0 ~ /^— \(open/)       return "open"
@@ -146,6 +155,12 @@ maps_awk_prelude='
   { sub(/\r$/, "") }
   substr($0, 1, 3) == "```" { in_fence = !in_fence; next }
   in_fence { next }
+  /^## Handoff([ \t]|$)/ { seen_handoff = 1; in_handoff = 1; next }
+  /^## / { in_handoff = 0 }
+  marker() != "" {
+    if (in_handoff) { if (handoff_state == "") handoff_state = marker() }
+    else           { pre_handoff_marker = 1 }
+  }
 '
 
 # Emits `map<TAB>ticket<TAB>type<TAB>state` per unresolved ticket. The `state` field
@@ -172,24 +187,34 @@ maps_rows() {
         next
       }
       /^Type:/ { type = $0; sub(/^Type:[ \t]*/, "", type); next }
-      num != "" && state == "" { m = marker(); if (m != "") { state = m; next } }
-      END { flush() }
+      num != "" && state == "" && !in_handoff { m = marker(); if (m != "") { state = m; next } }
+      END {
+        flush()
+        # Close-readiness row: only for a zero-open map (no marker outside Handoff).
+        # Missing heading → "missing"; a placeholder under the heading → its state;
+        # a filled Handoff with no placeholder → silent.
+        if (!pre_handoff_marker) {
+          if (!seen_handoff)              printf "%s\thandoff\thandoff\tmissing\n", map
+          else if (handoff_state != "")   printf "%s\thandoff\thandoff\t%s\n", map, handoff_state
+        }
+      }
     ' "$f"
   done
 }
 
-# Count of DISTINCT map FILES that carry at least one unresolved marker — the figure
-# `status` surfaces. Shares maps_awk_prelude with maps_rows (one detection core), but
-# scans at file scope: a file counts as an unresolved map even if its placeholder is
-# not under a `## #` ticket heading, which the per-ticket listing would not emit.
+# Count of DISTINCT map FILES that are not close-ready — the figure `status` surfaces.
+# Shares maps_awk_prelude with maps_rows (one detection core), so the count and the
+# listing cannot drift on what "ready to close" means: a file is not close-ready when
+# it carries an unresolved marker outside the Handoff section (open work), OR has no
+# `## Handoff` heading, OR its Handoff still holds a placeholder. This scans at file
+# scope, so a placeholder not under a `## #` ticket heading still counts.
 maps_unresolved_count() {
   local root="$1" f n=0
   [[ -d "$root/decisions" ]] || { echo 0; return 0; }
   for f in "$root"/decisions/*.md; do
     [[ -f "$f" ]] || continue
     if awk "$maps_awk_prelude"'
-        marker() != "" { found = 1; exit }
-        END { exit(found ? 0 : 1) }
+        END { exit((pre_handoff_marker || !seen_handoff || handoff_state != "") ? 0 : 1) }
       ' "$f"; then
       n=$((n + 1))
     fi

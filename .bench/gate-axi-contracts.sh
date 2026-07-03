@@ -337,3 +337,81 @@ MAP
   [ "$(maps_rows "$PWD" | grep -c .)" = "3" ] || { echo "expected 3 unresolved tickets, got $(maps_rows "$PWD" | grep -c .)"; exit 1; }
   [ "$(maps_unresolved_count "$PWD")" = "2" ] || { echo "distinct-file count not 2 (got $(maps_unresolved_count "$PWD"))"; exit 1; }
 BODY
+
+# ---- close-readiness: the ## Handoff row on zero-open maps -------------------
+# A map with zero open tickets is a close candidate; the exit's refuse-to-close
+# loop reads `bench maps` and must still see a row until the map carries a filled
+# `## Handoff` section. maps_rows emits `<map>,handoff,handoff,<state>` (missing,
+# or the placeholder's own state) for such a map; an open-ticket map is not a
+# close candidate and emits no handoff row; a fenced `## Handoff` example does not
+# count as the section. maps_unresolved_count grows the same rule so status's
+# figure and the listing cannot drift (asserted below).
+contract "AXI maps handoff close-readiness contract" <<'BODY'
+  mkdir decisions
+  # zero-open, NO Handoff → missing row
+  cat > decisions/hm.md <<'MAP'
+# HM
+## #1: q?
+Type: Grill
+### Answer
+Decided: yes.
+MAP
+  # zero-open, filled Handoff → silent
+  cat > decisions/hf.md <<'MAP'
+# HF
+## #1: q?
+Type: Grill
+### Answer
+Decided: yes.
+
+## Handoff
+1. Module boundaries. n/a — single unit.
+2. Contracts. n/a — no CLI surface.
+MAP
+  # open ticket → ticket row, no handoff row (not a close candidate)
+  cat > decisions/ho.md <<'MAP'
+# HO
+## #1: q?
+Type: Grill
+### Answer
+— (open)
+MAP
+  # zero-open, only a FENCED ## Handoff example → still missing (fence skipped)
+  cat > decisions/hx.md <<'MAP'
+# HX
+## #1: q?
+Type: Grill
+### Answer
+Decided: yes. A handoff section looks like:
+
+```
+## Handoff
+1. Module boundaries.
+```
+MAP
+  # zero-open, Handoff present but carries a placeholder → row with that state
+  cat > decisions/hp.md <<'MAP'
+# HP
+## #1: q?
+Type: Grill
+### Answer
+Decided: yes.
+
+## Handoff
+1. Module boundaries.
+— (open)
+MAP
+  out="$(bash "$root/bin/bench.sh" maps)"
+  grep -qxF '  hm,handoff,handoff,missing' <<<"$out" || { echo "missing-Handoff map did not emit the handoff row: $out"; exit 1; }
+  grep -qxF '  hx,handoff,handoff,missing' <<<"$out" || { echo "fenced-only Handoff not treated as missing: $out"; exit 1; }
+  grep -qxF '  hp,handoff,handoff,open' <<<"$out" || { echo "placeholder-in-Handoff did not emit its state: $out"; exit 1; }
+  if grep -qE '^  hf,handoff' <<<"$out"; then echo "filled Handoff wrongly emitted a handoff row: $out"; exit 1; fi
+  if grep -qE '^  ho,handoff' <<<"$out"; then echo "open-ticket map wrongly emitted a handoff row: $out"; exit 1; fi
+  grep -qxF '  ho,1,Grill,open' <<<"$out" || { echo "open-ticket map lost its ticket row: $out"; exit 1; }
+  # a placeholder inside Handoff must not be mis-attributed to the last ticket
+  if grep -qE '^  hp,1,' <<<"$out"; then echo "Handoff placeholder leaked onto ticket #1: $out"; exit 1; fi
+  # count side: hm, hx, hp, ho all not-close-ready; hf is → 4
+  # shellcheck source=/dev/null
+  . "$root/bin/bench-query.sh"
+  [ "$(maps_unresolved_count "$PWD")" = "4" ] || { echo "close-readiness count not 4 (got $(maps_unresolved_count "$PWD"))"; exit 1; }
+BODY
