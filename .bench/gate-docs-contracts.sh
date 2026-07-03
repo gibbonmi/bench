@@ -219,6 +219,11 @@ require_anchor ".agents/commands/bench-review-implementation.md" "## Coverage"
 require_anchor ".agents/commands/bench-review-implementation.md" "Coverage axis"
 require_anchor ".agents/commands/bench-setup-repo.md" "hostile-input checklist"
 require_anchor "projects/benchkit.md" "hostile-input checklist"
+#    l2) oracle-authoring anchors. The two phases where gate authoring actually
+#        happens must route through craft-gate — scaffolding a first gate, and
+#        stopping on a check that itself looks wrong.
+require_anchor ".agents/commands/bench-setup-repo.md" "craft-gate"
+require_anchor ".agents/commands/bench-final-check.md" "craft-gate"
 
 grep -qF 'session-start.sh' README.md || err "README layout omits .bench/hooks/session-start.sh"
 grep -qF 'bench.sh' README.md || err "README layout omits the real bin/bench.sh filename"

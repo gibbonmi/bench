@@ -96,6 +96,9 @@ built yet (the conformance ones often are), write it into the gate **commented
 out** with a `TODO`, so the gate stays green until I implement it — don't ship a
 gate that's red by construction.
 
+Write every check the `craft-gate` skill's way — prove it bites, attribute its
+failure, run the real path, choose its fail posture out loud.
+
 ### Section B — the profile (seams + lines + design source)
 
 > The profile at `projects/<name>.md` is what a cold session reads to learn this

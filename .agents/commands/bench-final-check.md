@@ -42,7 +42,8 @@ gate; to change what runs, change `.bench/gate.sh`.
   real when the gate is green again.
 
 If a check itself looks wrong (a flaky test, an over-tight lint rule), say so
-explicitly and stop. Changing a gate check is my call, not a step inside `/bench-final-check`.
+explicitly and stop. Changing a gate check is my call, not a step inside `/bench-final-check`;
+when I approve one, the `craft-gate` skill governs how it's made.
 
 ## Findings that the gate can't see
 
