@@ -76,3 +76,24 @@ An entry leaves this file only via /bench-integrate-learnings.
   (or `craft-delegate`): review delegates are read-only and return findings; the
   live session verifies and fixes a returned finding in place — worktree isolation
   is for write-delegations, not for reproducing a review finding.
+
+## 2026-07-03 — implement-spec: the facilitating session must delegate every story, never build inline  [open]
+- **What happened:** During `/bench-implement-spec` on shim-autoinstall, the live
+  (facilitating) session implemented the stories itself inline — doctor, wrapper,
+  postinstall, session-start, README, and the gate fragment — rather than delegating
+  each story's build to a sub-agent. It declared the line honestly (mid/medium, one
+  notch above the spec's cheap estimate) but did the work in the session's own context.
+- **Right behavior:** The session that facilitates a build should never be the one
+  that works a story. It must always delegate the story's build to a sub-agent —
+  even when the sub-agent runs the exact same model and effort — then continue
+  facilitating. The point is role separation and keeping the facilitator's context
+  clean for orchestration and verification, not a model/effort saving; the tier
+  match is irrelevant to the rule. The facilitator declares the line, spawns the
+  delegate (in an isolated worktree for write-work per craft-delegate), verifies the
+  returned claim against the gate and git status, then moves to the next story.
+- **Proposed rule change:** Consider making delegation mandatory in
+  `/bench-implement-spec` and `craft-delegate`: the facilitating session delegates
+  every story build to a sub-agent regardless of tier match, and reserves itself for
+  declaring the line, sequencing slices, and verifying delegate claims. (Reviewer's
+  call — this generalizes the existing "run write-delegations in isolated worktrees"
+  invariant into a "always delegate, never self-build" rule.)
