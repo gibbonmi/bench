@@ -10,6 +10,38 @@
 # shellcheck source=lib/lines-env.sh
 . "$gate_dir/lib/lines-env.sh"
 
+# a0) The shared parser's behavior, pinned directly. Enforcement and the gate all
+#     read through bench_tier_value, so its semantics (quote strip, CRLF, trim,
+#     indented key, last-assignment-wins, missing trailing newline, empty vs
+#     absent) get their own hostile-input contract — the independent check on the
+#     one parse is a behavior pin, not a second parser.
+_pf="$(mktemp)"
+{
+  printf 'BENCH_TIER_TOP="claude-quoted-1"\n'
+  printf "BENCH_TIER_MID='claude-squoted-2'\n"
+  printf 'BENCH_TIER_CHEAP=claude-crlf-3\r\n'
+  printf 'BENCH_ALIAS_TOP=claude-trail-4   \n'
+  printf '   BENCH_ALIAS_MID=claude-indent-5\n'
+  printf 'BENCH_ALIAS_CHEAP=claude-first-6\nBENCH_ALIAS_CHEAP=claude-last-7\n'
+  printf 'BENCH_EMPTY=\n'
+  printf 'BENCH_NONEWLINE=claude-nonl-8'
+} >"$_pf"
+while IFS='|' read -r _k _want; do
+  _got="$(bench_tier_value "$_k" "$_pf")"
+  [ "$_got" = "$_want" ] || err "shared tier parser: $_k read as '$_got', want '$_want'"
+done <<'PARSER_CASES'
+BENCH_TIER_TOP|claude-quoted-1
+BENCH_TIER_MID|claude-squoted-2
+BENCH_TIER_CHEAP|claude-crlf-3
+BENCH_ALIAS_TOP|claude-trail-4
+BENCH_ALIAS_MID|claude-indent-5
+BENCH_ALIAS_CHEAP|claude-last-7
+BENCH_NONEWLINE|claude-nonl-8
+BENCH_EMPTY|
+BENCH_ABSENT|
+PARSER_CASES
+rm -f "$_pf"
+
 # a) The binding. benchkit is a routed repo: .bench/lines.env must exist, and a
 #    file that exists must carry three model-id-shaped tier values — a binding
 #    that drifts to empty silently disarms both enforcement surfaces.
