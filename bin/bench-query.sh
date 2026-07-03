@@ -246,34 +246,6 @@ maps() {
   maps_rows "$root" | toon_table maps map,ticket,type,state
 }
 
-# ---- specs awaiting retirement ----------------------------------------------
-# Count of specs/*.md that carry a line-start `Status: implemented` outside a ```
-# fence. On the default branch, `implemented` means merged-but-not-retired (a spec
-# is `staged` while building, `implemented` at the green gate awaiting review/merge,
-# then promote-then-deleted) — so this is the figure `status` surfaces for the
-# retirement nag. Full code, no LLM judgment, POSITIVE-marker only: a spec with no
-# `Status:` line, or the marker only inside a fence, is silent, so pre-convention
-# specs and consumer repos never false-positive. Fence-skip and CR-strip mirror the
-# maps prelude's posture (incidental awk mechanism, not a shared fact). Branch
-# gating is the caller's — this only counts the marker.
-specs_awaiting_retirement_count() {
-  local root="$1" f n=0
-  [[ -d "$root/specs" ]] || { echo 0; return 0; }
-  for f in "$root"/specs/*.md; do
-    [[ -f "$f" ]] || continue
-    if awk '
-        { sub(/\r$/, "") }
-        substr($0, 1, 3) == "```" { in_fence = !in_fence; next }
-        in_fence { next }
-        /^Status:[ \t]+implemented[ \t]*$/ { found = 1; exit }
-        END { exit(found ? 0 : 1) }
-      ' "$f"; then
-      n=$((n + 1))
-    fi
-  done
-  echo "$n"
-}
-
 # ---- guard aggregation ------------------------------------------------------
 # A guard is a boundary that can deny. `bench guards` discovers every guard by
 # convention — each `.bench/hooks/*.sh`, the adapters' sourced `_line-guard.sh`,
