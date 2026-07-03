@@ -1,6 +1,6 @@
 ---
 name: craft-tdd
-description: How to apply test-driven development without the cost blowup or the over-fit-and-stop failure. Use whenever writing tests first, doing red-green-refactor, or building at a seam that /bench-write-spec marked for TDD. Reach for this before starting any TDD pass to bound where and how it applies.
+description: How to apply test-driven development without the cost blowup or the over-fit-and-stop failure. Use whenever writing tests first, someone says "red-green-refactor" or "write the test first", or building at a seam that /bench-write-spec marked for TDD. Reach for this before starting any TDD pass to bound where and how it applies.
 index: writing tests first
 ---
 
@@ -23,12 +23,16 @@ minimum to pass its own tests, then stop. So:
   carries behavior no seam can observe, that is a seam-set defect: surface it,
   don't skip it.
 - The spec's user stories are the breadth **floor, not the ceiling**. At a marked
-  seam, enumerate the failure modes of the behavior — error path, empty/absent
-  input, boundary values, malformed input, interrupted/partial state, re-run
-  idempotency, hostile environment — and propose them as coverage rows for the
+  seam, enumerate the behavior's failure modes by walking the edge classes —
+  the canonical list lives in `/bench-write-spec`'s edge-inventory step — and
+  propose them as coverage rows for the
   reviewer to veto; never silently skip an edge the spec forgot. The over-fit guard constrains what *correct* means (the reviewer chose
   the seam and the semantics), never which inputs get exercised. If a story isn't
   covered, that's a gap to fix, not a stop.
+
+**Catch yourself inventing a test target mid-loop? Stop — that is the exact
+failure this skill exists to prevent.** The seam and the semantics come from
+the spec, never from the loop.
 
 ## The cycle
 
@@ -72,6 +76,18 @@ without the behavior, assert call count or call order, peek around the interface
 or describe implementation shape instead of observable behavior. Mocks are fine at
 real system boundaries — time, randomness, network, filesystem, external APIs —
 when the seam requires them.
+
+```
+repo = IssueRepo(fake_http); repo.close(41); assert repo.get(41).status == "closed"
+```
+Good — the fake stands at a real system boundary (the injected network client)
+and the assertion reads observable state back through the interface.
+
+```
+repo.close(41); mock_cache.invalidate.assert_called_once()
+```
+Bad — the mock pins an internal collaborator and asserts call count, so a
+refactor that keeps behavior kills the test.
 
 ## The oracle is the gate, not you
 

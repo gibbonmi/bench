@@ -37,6 +37,12 @@ Three signals, assessed for the stage in front of you:
 | any | genuinely uncertain | any | top + high |
 | any | any | weak / uncovered | bump one tier |
 
+Rows read top-down and the first match wins: a stage that is both genuinely
+uncertain and weakly gated takes the top row — genuine uncertainty is never
+demoted to a bump. "Bump one tier" means one tier above whatever the other
+two signals would have selected: a weakly gated stage that would have run
+cheap runs mid.
+
 Tier and effort are one joint output — declared together, moved together. The
 last row is the up-bias and it is load-bearing: where the gate can't catch a
 confidently wrong answer, buy insurance at the start instead of trusting the
@@ -94,6 +100,14 @@ declaration is not optional.
 
 > Line: <resolved model id> / <effort> / ~<token cap>. <one clause: the
 > signals that chose this row.>
+
+Derive the cap; don't feel it out: expected iterations × tokens per iteration
+(the read set, the diff, one gate run's output), plus a margin for one red.
+Worked example: a review-axis delegate reads the full diff plus the standards
+docs and runs verification commands — one pass, no iteration — so it prices at
+~60k. The project's cached routings hold figures like that one — a stage with
+no basis for an iteration count is a stage you don't understand yet, which is
+itself a routing signal.
 
 If the stage blows past its cap, stop and report — never grind, never
 escalate silently.

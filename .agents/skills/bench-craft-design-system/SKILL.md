@@ -50,30 +50,29 @@ UI work and neither replaces the other.
    project-specific rules) runs against the design source and is part of the gate.
    UI that passes tests but violates tokens is not done.
 
-## Authoring a change — seamless across harnesses
+## Authoring a change — same on every harness
 
-This is the part that has to survive a harness switch. When a token or component
-variant is missing, you author it in the **design source**, and the authoring
-surface is interchangeable — it is never a dependency of the workflow:
+When a token or component variant is missing, author it in the **design
+source**; the authoring surface is interchangeable, never a workflow
+dependency:
 
-- **In a Claude session:** Claude Design is a fast canvas for iterating the token or
-  variant visually before you commit it to the design source.
-- **In Codex, another model, or any other harness:** edit the design source
-  directly — it's tokens and components in files. No Claude Design, no Claude
-  required.
+- **A visual design canvas, when the harness offers one** (Claude Design in a
+  Claude session) — a fast surface for iterating the token or variant before
+  committing it.
+- **Any other harness** — edit the design source directly; it's tokens and
+  components in files.
 
-Either way the output is identical: a committed change in the design source, which
-the project re-pins. Consumption always reads the committed artifacts, so **moving
-from Claude + Claude Design to another harness changes only how you draw a new
-token — not how the build consumes it, not the composition rules, not the
-conformance check.** That is what makes the transition seamless: the design tool is
-an authoring convenience layered on top, and the project never reaches into it live.
+Either way the output is a committed change in the design source, which the
+project re-pins. Consumption always reads the committed artifacts, never a
+tool's live state — that is the whole of the harness independence.
 
 ## Working method for a UI shift
 
 1. Read the design source's tokens and component inventory before generating.
-2. If a token or variant is missing, stop — add it in the design source (via Claude
-   Design or directly), commit, re-pin, then resume.
+2. If a token or variant is missing, stop — add it in the design source (via a
+   design canvas or directly), commit, re-pin, then resume. On a headless run
+   there is no one to resume for: fail the iteration with the missing token or
+   variant named, so the shift ends red instead of a value getting invented.
 3. Compose canonical components; reference tokens for every value.
 4. Run the design-conformance gate (and the project's screenshot/interaction loop if
    it has one). Done is green on both, not either.

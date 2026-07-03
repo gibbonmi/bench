@@ -150,6 +150,7 @@ bench/
 │       ├── bench-craft-design-system/
 │       ├── bench-craft-skills/
 │       ├── bench-craft-grill/
+│       ├── bench-craft-line/
 │       └── bench-craft-synthesis/
 ├── .bench/
 │   ├── BENCH.md              # full Bench operating guide installed into projects
@@ -161,6 +162,7 @@ bench/
 │       ├── session-start.sh
 │       ├── stop.sh
 │       ├── block-dangerous-git.sh
+│       ├── check-agent-line.sh   # denies Agent delegations off the bound line
 │       └── git-guard.py      # the git guard's analyzer (invoked by the hook, not a hook)
 ├── .claude/
 │   ├── README.md             # explains Claude adapter paths -> .agents and .bench/hooks
@@ -173,7 +175,11 @@ bench/
 ├── bin/
 │   ├── bench.sh              # worktrees (treehouse-lite) + gated loop (gnhf-lite)
 │   ├── bench-link.sh         # safe link/install helpers
-│   └── bench-status.sh       # status, roadmap, models, structure helpers
+│   ├── bench-status.sh       # status, roadmap, models, structure helpers
+│   ├── bench-worktree.sh     # reusable-worktree pool helpers
+│   ├── bench-query.sh        # AXI query surface (learnings, maps, guards)
+│   ├── bench-diff.sh         # review base + changed-file list
+│   └── bench-coverage.sh     # acceptance-coverage-map parser (gate's --check)
 └── projects/
     ├── benchkit.md           # seams, gate, lines for this kit
     ├── regroup.md            # seams, gate, lines for Regroup

@@ -1,6 +1,6 @@
 ---
 name: craft-cli
-description: Design standards for building CLI tools that agents drive through the shell — TOON output, minimal schemas, structured errors, ambient context. Use whenever building, modifying, or reviewing any agent-facing CLI whose project declares AXI conformance. Not for surfaces with their own declared output contract — bench's operational commands keep plain text, stderr errors, and documented exit codes, while its query subcommands (learnings, maps, guards) conform to AXI. Reach for this on any command output, flag, error message, or exit code in an AXI-conformant surface.
+description: Design standards for building CLI tools that agents drive through the shell — TOON output, minimal schemas, structured errors, ambient context. Use whenever building, modifying, or reviewing any agent-facing CLI whose project declares AXI conformance.
 index: building an agent-facing CLI
 ---
 

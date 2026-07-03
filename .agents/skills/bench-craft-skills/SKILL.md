@@ -14,10 +14,10 @@ output. Every rule below serves that.
 
 - **Model-invoked** — keeps a `description`, so the agent can fire it on its own and
   other skills can reach it. Costs context load (the description sits in the window
-  every turn). Use when the agent must reach the skill autonomously. In this kit:
-  `craft-seams`, `craft-tdd`, `craft-adr`, `craft-cli`, `craft-design-system`, `craft-grill`, `craft-line`, `craft-synthesis`, and
-  `craft-skills` itself (`craft-synthesis` runs it against every kit change) — the
-  agent reaches for them mid-work.
+  every turn). Use when the agent must reach the skill autonomously. In this kit
+  the rule is: every `craft-*` skill is model-invoked — they are the mid-work
+  guidance surface (`craft-synthesis` runs `craft-skills` against every kit
+  change) — and the phase adapters are not.
 - **User-invoked** — `disable-model-invocation: true`; only you, by name, can fire
   it. It is not a candidate for implicit matching, but *you* are the index that must
   remember it exists. Use for canonical phases or workflows the reviewer drives
@@ -90,6 +90,10 @@ lives in `craft-line`; this rule is about the prose itself.)
   irreducibly fuzzy *and* you see the rush, split to hide the later steps.
 - **Duplication** — the same meaning in two places; costs maintenance and inflates a
   meaning's apparent rank.
+- **Sprawl** — one skill accreting unrelated jobs until no description can say
+  when to fire it; split by trigger, not by topic.
+- **No-op** — a sentence no reader can act on; the pruning hunt above exists to
+  catch these — delete on sight.
 - **Sediment** — stale layers that accrete because adding feels safe and removing
   feels risky. The default fate of any skill without a pruning discipline. Run this
   skill against the others periodically.

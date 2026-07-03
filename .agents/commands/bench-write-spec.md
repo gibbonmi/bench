@@ -83,7 +83,9 @@ loop honest.
 5. **Walk the edge inventory.** Stories are happy-path shaped; this step generates
    the cases nobody declared. For each mapped behavior, walk the edge classes —
    error path, empty/absent input, boundary values, malformed input,
-   interrupted/partial state, re-run idempotency, hostile environment — and
+   interrupted/partial state, re-run idempotency, hostile environment (this is
+   the canonical edge-class list; `craft-tdd` and `/bench-review-implementation`
+   point here) — and
    consult the project
    profile's hostile-input checklist (`projects/<name>.md`) when one exists, so
    domain edges recur instead of being rediscovered per defect. When the profile

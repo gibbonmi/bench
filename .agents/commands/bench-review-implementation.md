@@ -53,9 +53,9 @@ Run it on the branch diff against its true base, on three axes that stay separat
      Quote the spec line for each finding.
    - **Coverage axis** — the adversarial pass: read the diff and name concrete
      inputs or states that would break it and that no acceptance row or existing
-     test exercises. Think hostile: error path, empty/absent input, boundary
-     values, malformed input, interrupted/partial state, re-run idempotency,
-     hostile environment — plus the profile's hostile-input checklist when one
+     test exercises. Think hostile: walk the edge classes — the canonical list lives in
+     `/bench-write-spec`'s edge-inventory step — plus the profile's
+     hostile-input checklist when one
      exists. Each finding
      names the input or state, the expected break, and the row or test that
      should exist. An edge the spec explicitly marked won't handle is not a

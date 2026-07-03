@@ -53,7 +53,7 @@ fi
 # 1d. The CLI must name the gate/done files that actually exist (.bench/gate.sh,
 #     .bench/done.sh). An extensionless reference routes `bench gate` to auto-detect
 #     instead of the repo's oracle, so it is a hard error.
-bad_refs="$(grep -oE '\.bench/(gate|done)(\.sh)?' bin/bench.sh | grep -vE '\.sh$' | sort -u || true)"
+bad_refs="$(grep -oE '\.bench/[A-Za-z0-9_.-]+' bin/bench.sh | grep -xE '\.bench/(gate|done)' | sort -u || true)"
 [ -z "$bad_refs" ] || err "bin/bench.sh has extensionless gate/done refs ($(echo "$bad_refs" | tr '\n' ' ')); the contract is .sh"
 
 # The shared fixture harness the contract fragments call (`contract` — one
