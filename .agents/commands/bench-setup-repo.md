@@ -124,8 +124,13 @@ Ask for, with defaults proposed from exploration:
   and there's no key, read the harness's own list (`claude --help` / the `/model`
   picker, `codex --help`). Bind **cheap / mid / top** to the cheapest, a middle, and
   the most capable available model, confirm with me, and record the binding with the
-  date and harness. Then the routing by tier: cheap + low effort for plumbing at a
-  known seam; top + high effort only for the genuinely uncertain seam.
+  date and harness — in the profile's `Lines` prose **and** machine-readably in
+  `.bench/lines.env` (`BENCH_TIER_TOP` / `BENCH_TIER_MID` / `BENCH_TIER_CHEAP`,
+  plus `BENCH_ALIAS_*` keys when the harness addresses models by alias). The
+  hooks and shift adapters enforce the line only through `lines.env`; a repo
+  without it stays unrouted. Then the routing by tier: cheap + low effort for
+  plumbing at a known seam; top + high effort only for the genuinely uncertain
+  seam.
 
 Write `projects/<name>.md` from the example profiles in the kit as a template.
 
@@ -151,5 +156,7 @@ checks, fix the wiring before declaring done.
 
 Tell me what's now configured and that the working commands (`/bench-shape-idea`, `/bench-write-spec`,
 `/bench-debug`, `/bench-implement-spec`, `/bench-review-implementation`, `/bench-final-check`) and `bench shift` will read from these
-files. Note that I can edit `.bench/gate.sh` and the profile directly later — re-running
+files. If headless runs are planned, note that `bench shift` needs `BENCH_AGENT`
+pointed at an adapter in `.bench/adapters/` — an env var setup does not write.
+Note that I can edit `.bench/gate.sh` and the profile directly later — re-running
 `/bench-setup-repo` is only for starting over.

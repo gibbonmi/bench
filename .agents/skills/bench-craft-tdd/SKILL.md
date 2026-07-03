@@ -40,7 +40,11 @@ the spec, never from the loop.
    through the interface. One logical assertion; test what the caller cares about,
    not how it's done. Never mock an internal collaborator — if a refactor that
    keeps behavior breaks the test, the test was bound to an internal, so move it
-   out to a real seam. Run it; confirm it fails for the right reason.
+   out to a real seam. Run it; confirm it fails for the right reason. The
+   expected value comes from the spec or an independent computation — never from
+   running the implementation and pasting back what it returned. Vacuity check:
+   an assertion that would also pass against a no-op implementation asserts
+   nothing.
 2. **Green** — the smallest change that passes it. "Minimal to pass" is a local
    rule for this step, not a license to stop short of the spec's breadth.
 3. **Refactor** — clean up with the test green. A good test survives this; if your
@@ -73,9 +77,14 @@ acceptance row as the unit of TDD coverage. A valid row has `story`, `behavior`,
 Reject rows and tests that attach below the chosen seam, test private behavior,
 mock an internal collaborator, use an internal test double to satisfy the test
 without the behavior, assert call count or call order, peek around the interface,
-or describe implementation shape instead of observable behavior. Mocks are fine at
+or describe implementation shape instead of observable behavior. Reject
+nondeterminism too: a test whose verdict depends on wall-clock time, iteration
+order, or a live network is a broken oracle. Mocks are fine at
 real system boundaries — time, randomness, network, filesystem, external APIs —
-when the seam requires them.
+when the seam requires them. But a boundary stub scripted to return exactly the
+success shape hollows the test out — the test passes while the real integration
+is never exercised. Keep stubs honest: realistic shapes, and failure behaviors
+drawn from the edge inventory, not only the happy reply.
 
 ```
 repo = IssueRepo(fake_http); repo.close(41); assert repo.get(41).status == "closed"

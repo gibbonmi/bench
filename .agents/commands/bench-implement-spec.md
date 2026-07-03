@@ -75,6 +75,10 @@ defined route — never a silent grind, never an abandoned worktree:
 - The build is done when `bench gate` is green — not before, and not because the
   diff looks right. If the gate is red, the build continues or stops with an
   explanation; it never declares done on red.
+- A green gate proves what the tests observe. Before handing back, drive the
+  changed path once end-to-end — invoke the real command, endpoint, or call the
+  diff changes and read its output. A mismatch here is a defect to fix or
+  surface, never a footnote.
 - Do not weaken a test or a check to reach green. If a check is wrong, surface it.
 - When a commit happens in this phase, stage the files the build actually touched,
   explicitly — never a blind `git add -A`. An unexplained working-tree file blocks

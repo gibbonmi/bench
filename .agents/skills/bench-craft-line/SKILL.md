@@ -28,7 +28,9 @@ Three signals, assessed for the stage in front of you:
   contract), or only a goal?
 - **Seam uncertainty** — is the shape of the answer known, or genuinely open?
 - **Gate coverage** — would a wrong answer turn the gate red cheaply, or could
-  it sail through (prose, design, untested semantics)?
+  it sail through (prose, design, untested semantics)? A scaffold-stub or
+  auto-detected gate is weak by definition: a repo where `/bench-setup-repo`
+  has not authored the gate never counts as covered.
 
 | Spec precision | Seam uncertainty | Gate coverage | → Line |
 |---|---|---|---|

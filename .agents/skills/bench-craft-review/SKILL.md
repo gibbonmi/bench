@@ -26,7 +26,10 @@ its count and its worst issue.
   Separate hard violations from judgment calls. Skip anything the gate already
   enforces; double-reporting what tooling caught is noise.
 - **Spec** — three hunts: requirements missing or partial; behavior nobody asked
-  for (scope creep); requirements implemented but wrong. When the spec carries
+  for (scope creep); requirements implemented but wrong. "Implemented but wrong"
+  includes calls the diff introduces into APIs, flags, or config keys that don't
+  exist — a symbol the dependency doesn't export is a finding one grep or
+  `--help` run confirms. When the spec carries
   an acceptance coverage map, audit every row — a missing, partial,
   falsely-classified, or unclosed mapped behavior is a Spec finding.
 - **Coverage** — the adversarial pass: name concrete inputs or states that would
@@ -40,7 +43,10 @@ its count and its worst issue.
 A finding without a citation is an opinion.
 
 - Standards: the rule, named or quoted precisely.
-- Spec: the spec line, quoted.
+- Spec: the spec line, quoted. For implemented-but-wrong behavior a traced
+  execution is also a valid citation — the concrete input, the value the diff
+  produces, and the expectation it violates — so a happy-path logic bug is
+  reportable even when no spec line enumerates it.
 - Coverage: the input or state, the expected break, and the row or test that
   should exist.
 
