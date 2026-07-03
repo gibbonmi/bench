@@ -1,6 +1,6 @@
 # Grill-to-spec handoff and spec lifecycle
 
-Status: staged
+Status: implemented
 
 Source map: `decisions/spec-handoff-lifecycle.md` (all nine tickets resolved;
 the map deletes in story 11 once this spec is approved — this spec is its only
