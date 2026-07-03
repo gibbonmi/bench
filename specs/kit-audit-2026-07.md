@@ -1,11 +1,20 @@
 # Kit audit — skills, docs, shell (2026-07-02)
 
+<!-- command-currency: historical -->
+
+**RESOLVED — retired 2026-07-02.** Both work packages are done: Package A (the
+git-guard newline bypass and the python3-missing fail-open) landed as the
+git-guard hardening commit, and Package B (the skills/docs polish batch) landed
+as the skill-polish-batch spec's implementation. This doc is kept as the
+findings record and the evidence `specs/skill-polish-batch.md` cites, not as
+live work. The only open items are the three in "Stays parked" below, which
+live on the roadmap.
+
 Findings from a four-axis audit of the kit: skills prose/consistency, stale
 references, shell-script bugs, and comparison against the reference skill corpus
 (`reference-skill-repos/`, `gl-axi/skills/`, `regroup-app/.agents/skills/`).
 Every finding below was verified against the files on disk; the guard bypass was
-reproduced live. This doc is the pickup surface for a fresh session — it holds
-the findings and the agreed packaging, not the fixes.
+reproduced live. It holds the findings and the agreed packaging, not the fixes.
 
 ## State at audit time
 
