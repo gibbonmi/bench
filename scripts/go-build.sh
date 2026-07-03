@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# The one source of Go build flags. Both callers use it: the gate (host dist/ build)
+# and the release workflow (per-target cross-compile). Kept as one file so the
+# reproducibility flags cannot drift between "what the gate proved" and "what ships".
+#
+# -trimpath + the pinned toolchain (go.mod) = reproducible builds, per the map's
+# watch-out that Go builds are reproducible only under both. The version stamp comes
+# from package.json — the one canonical version — so an unstamped build (prints "dev")
+# never masquerades as a release.
+#
+#   Usage: go-build.sh <module-root> <output-path>
+#   Cross-compile: set GOOS / GOARCH in the environment.
+#
+# This file is repo-only: not in package.json files[], so it never ships. Consumers
+# get prebuilt binaries via the @benchkit/<os>-<arch> platform packages.
+set -euo pipefail
+
+modroot="${1:?usage: go-build.sh <module-root> <output-path>}"
+out="${2:?usage: go-build.sh <module-root> <output-path>}"
+
+# Version is package.json's; absent or unreadable → "dev" (the canary fixtures carry
+# a go.mod but no package.json, and an unstamped dev build is a legitimate outcome).
+version="$(node -e '
+  const fs = require("fs");
+  try { process.stdout.write(String(JSON.parse(fs.readFileSync(process.argv[1], "utf8")).version || "dev")); }
+  catch { process.stdout.write("dev"); }
+' "$modroot/package.json")"
+
+cd "$modroot"
+go build -trimpath -ldflags "-X main.version=$version" -o "$out" ./cmd/bench

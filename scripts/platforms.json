@@ -1,0 +1,6 @@
+[
+  { "os": "darwin", "arch": "arm64", "goos": "darwin", "goarch": "arm64" },
+  { "os": "darwin", "arch": "x64", "goos": "darwin", "goarch": "amd64" },
+  { "os": "linux", "arch": "x64", "goos": "linux", "goarch": "amd64" },
+  { "os": "linux", "arch": "arm64", "goos": "linux", "goarch": "arm64" }
+]

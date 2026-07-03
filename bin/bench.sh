@@ -270,6 +270,47 @@ kit_dir() {
   cd "$(dirname "$script")/.." && pwd
 }
 
+# ---- strangler router: send a ported subcommand to the Go binary ------------
+# The one seam that grows across the port: later slices add subcommand names to the
+# dispatch, never a second resolver. platform_pkg maps this host to its
+# @benchkit/<os>-<arch> package (npm os/cpu spelling); an off-matrix host returns
+# non-zero so the caller can emit the "unsupported platform" error instead of naming
+# a package that does not exist.
+platform_pkg() {
+  local os arch
+  case "$(uname -s)" in
+    Darwin) os=darwin ;;
+    Linux)  os=linux ;;
+    *) return 1 ;;
+  esac
+  case "$(uname -m)" in
+    arm64|aarch64) arch=arm64 ;;
+    x86_64|amd64)  arch=x64 ;;
+    *) return 1 ;;
+  esac
+  printf '@benchkit/%s-%s' "$os" "$arch"
+}
+
+# route_binary <subcommand> [args...] — resolve and exec the Go binary, passing the
+# whole argv through. Resolution order: (1) repo-local dev build (kit checkout),
+# (2) the platform package bundled under the wrapper's node_modules, (3) the hoisted
+# sibling npm produces for global installs. First executable, non-empty match wins;
+# a present-but-empty or non-executable file is treated as missing (never exec'd), so
+# a torn build falls through to the named-package error rather than exec-failing.
+route_binary() {
+  local kit pkg c
+  kit="$(kit_dir)"
+  if ! pkg="$(platform_pkg)"; then
+    echo "bench: unsupported platform: $(uname -s | tr '[:upper:]' '[:lower:]')/$(uname -m)" >&2
+    exit 2
+  fi
+  for c in "$kit/dist/bench" "$kit/node_modules/$pkg/bin/bench" "$kit/../$pkg/bin/bench"; do
+    [[ -x "$c" && -s "$c" ]] && exec "$c" "$@"
+  done
+  echo "bench: no binary for this platform — install $pkg (npm install $pkg)" >&2
+  exit 127
+}
+
 BENCH_BIN_DIR="$(dirname "$(resolve_script_path)")"
 # shellcheck source=/dev/null
 . "$BENCH_BIN_DIR/bench-link.sh"
@@ -289,6 +330,7 @@ BENCH_BIN_DIR="$(dirname "$(resolve_script_path)")"
 . "$BENCH_BIN_DIR/bench-doctor.sh"
 
 case "${1:-help}" in
+  version)  route_binary "$@" ;;
   gate)     run_gate ;;
   doctor)   shift; doctor "$@" ;;
   worktree) worktree ;;
@@ -323,6 +365,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench gate                 run the project gate (the oracle)
   bench worktree             warm, isolated worktree subshell
   bench shift "<objective>"  gated loop in a pooled worktree; commit on green
+  bench version              print the installed benchkit version (os/arch)
 EOF
   ;;
 esac

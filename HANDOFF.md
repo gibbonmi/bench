@@ -27,7 +27,7 @@ adapter import shim, not a source of truth.
 - CLI: `bench link`, `bench init`, `bench models`, `bench structure`, `bench idea`,
   `bench roadmap`, `bench status`, `bench learnings`, `bench maps`, `bench guards`,
   `bench diff`, `bench coverage`, `bench doctor`, `bench gate`, `bench worktree`,
-  `bench shift`
+  `bench shift`, `bench version`
 - Hooks: shared `.bench/hooks/stop.sh`, `.bench/hooks/session-start.sh`, and
   `.bench/hooks/block-dangerous-git.sh`, with Claude and Codex adapters
 - Profiles: linked repos own their profile. The kit-development profiles under

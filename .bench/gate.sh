@@ -17,7 +17,8 @@ fail=0
 err() { echo "gate: $*" >&2; fail=1; }
 
 # 1. Shell scripts parse.
-for f in bin/*.sh .bench/gate-*.sh .bench/skills-index.sh .bench/hooks/*.sh .bench/lib/*.sh; do
+for f in bin/*.sh .bench/gate-*.sh .bench/skills-index.sh .bench/hooks/*.sh .bench/lib/*.sh scripts/*.sh; do
+  [ -e "$f" ] || continue   # scripts/*.sh is repo-only Go tooling; absent in minimal fixtures
   bash -n "$f" || err "bash syntax error in $f"
 done
 
@@ -64,6 +65,8 @@ bad_refs="$(grep -oE '\.bench/[A-Za-z0-9_.-]+' bin/bench.sh | grep -xE '\.bench/
 . "$gate_dir/gate-link-contracts.sh"
 # shellcheck source=/dev/null
 . "$gate_dir/gate-runtime-contracts.sh"
+# shellcheck source=/dev/null
+. "$gate_dir/gate-go-contracts.sh"
 # shellcheck source=/dev/null
 . "$gate_dir/gate-runtime-shift-contracts.sh"
 # shellcheck source=/dev/null

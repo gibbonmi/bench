@@ -2,6 +2,11 @@
 node_modules/
 npm-debug.log*
 *.tgz
+
+# Go dev build — the repo-local dist/ the gate rebuilds (stamped, -trimpath) every
+# run and the strangler router prefers. Never committed; the release workflow
+# produces the shipped binaries into the platform packages instead.
+dist/
 projects/regroup.md
 projects/gl-axi.md
 # OS cruft

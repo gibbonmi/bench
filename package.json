@@ -43,5 +43,11 @@
     "darwin",
     "linux"
   ],
+  "optionalDependencies": {
+    "@benchkit/darwin-arm64": "0.2.0",
+    "@benchkit/darwin-x64": "0.2.0",
+    "@benchkit/linux-x64": "0.2.0",
+    "@benchkit/linux-arm64": "0.2.0"
+  },
   "license": "MIT"
 }

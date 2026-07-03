@@ -1,6 +1,6 @@
 # go-walking-skeleton — slice 1 of the Go rewrite
 
-Status: staged
+Status: implemented
 
 Map: `decisions/go-rewrite.md` (closed). This spec builds slice 1 of the
 8-slice strangler: the Go module, the version subcommand, the strangler

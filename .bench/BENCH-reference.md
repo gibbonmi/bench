@@ -104,6 +104,7 @@ Codex phase adapters installed by Bench:
 - `bench gate` runs the oracle.
 - `bench worktree` opens a reusable isolated worktree.
 - `bench shift "<objective>"` runs the gated loop.
+- `bench version` prints the installed benchkit version and platform (via the Go core).
 
 ## Harness adapter for the shift loop
 

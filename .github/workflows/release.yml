@@ -1,0 +1,55 @@
+name: release
+
+# One release = one `git tag vX.Y.Z && git push --tags`. The tag drives everything;
+# package.json's version is the single source the binaries are stamped with (keep the
+# tag and package.json version in step before tagging).
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  id-token: write # OIDC — required for npm publish --provenance
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Inherit the toolchain pin from go.mod rather than duplicating the version here.
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Build binaries and generate platform packages
+        run: |
+          set -euo pipefail
+          out=dist/packages
+          # Generate the four package skeletons from the single matrix source, then
+          # cross-compile each target's binary into its package. Both the target list
+          # and the metadata derive from scripts/platforms.json — no second source.
+          bash scripts/gen-platform-packages.sh "$out"
+          while read -r os arch goos goarch; do
+            GOOS="$goos" GOARCH="$goarch" bash scripts/go-build.sh "$PWD" "$out/@benchkit/$os-$arch/bin/bench"
+          done < <(node -e 'for (const p of require("./scripts/platforms.json")) console.log(p.os, p.arch, p.goos, p.goarch)')
+
+      - name: Publish platform packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          for d in dist/packages/@benchkit/*/; do
+            npm publish "$d" --access public --provenance
+          done
+
+      - name: Publish wrapper
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --provenance
