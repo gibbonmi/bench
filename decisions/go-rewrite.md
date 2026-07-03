@@ -88,7 +88,22 @@ rejected. Output: a short summary asset with a recommended distribution
 shape and its hard dependencies.
 
 ### Answer
-— (open — research session)
+**Bar met — recommended shape: npm platform packages (esbuild pattern).**
+Prebuilt Go binaries as os/cpu-filtered `optionalDependencies`
+(`@benchkit/<os>-<arch>`, four targets), `bin/bench` a thin launcher that
+execs the matching one. No consumer toolchain — node ≥ 22 is already
+required today. Auditable surface holds: the pre-push hook is already
+self-contained inline shell (no binary dependency, survives unchanged);
+`bench link` plants thin exec shims in `.bench/bin/` instead of full CLI
+source; harness hook entries stay `.sh` shims calling binary subcommands —
+every line executing as text in a consumer repo stays readable. Version
+skew: kit-version stamp in the link manifest, checked against
+`bench --version` by session-start/doctor. Kit repo: Go toolchain is
+dev/CI-only; the gate's parse layer gains `go build`/`vet`/`test` beside
+`bash -n` for the remaining shell. Rejected shapes (postinstall download,
+`go install`, committed binaries) and residual risks for #5 (npm
+optional-deps lockfile edge, `--ignore-scripts`, 4-target release matrix):
+`decisions/assets/go-distribution.md`.
 
 ## #5: Go or no-go?
 
