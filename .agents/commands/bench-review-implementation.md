@@ -41,8 +41,9 @@ Run it on the branch diff against its true base, on three axes that stay separat
 
 3. **Spawn the axes in parallel sub-agents** (so they don't pollute each other's
    context), one per axis — Standards, Spec, and the Coverage axis — each under
-   ~400 words. Each delegate takes the diff, the sources for its axis, and its
-   charge from the `craft-review` skill
+   ~400 words, charged and verified per the `craft-delegate` skill (these are
+   read-only delegations). Each delegate takes the diff, the sources for its
+   axis, and its charge from the `craft-review` skill
    (`.agents/skills/bench-craft-review/SKILL.md`) — the one source for what each
    axis hunts and what a finding must cite; don't restate the charges here.
    Procedural inputs per delegate: give Standards the docs from step 2; give

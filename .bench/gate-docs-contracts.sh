@@ -229,6 +229,11 @@ require_anchor ".agents/commands/bench-final-check.md" "craft-gate"
 #        adversarial coverage rule that makes the Coverage axis bite.
 require_anchor ".agents/commands/bench-review-implementation.md" "craft-review"
 require_anchor ".agents/skills/bench-craft-review/SKILL.md" "an edge nobody decided"
+#    l4) delegation anchors. The one phase that orchestrates delegates must route
+#        spawning through craft-delegate, and the skill must keep the done-claim
+#        rule that makes delegation safe.
+require_anchor ".agents/commands/bench-review-implementation.md" "craft-delegate"
+require_anchor ".agents/skills/bench-craft-delegate/SKILL.md" "a claim, not a result"
 
 grep -qF 'session-start.sh' README.md || err "README layout omits .bench/hooks/session-start.sh"
 grep -qF 'bench.sh' README.md || err "README layout omits the real bin/bench.sh filename"

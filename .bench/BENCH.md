@@ -167,6 +167,7 @@ not the list:
 <!-- bench:skills-index:start -->
 - recording a decision or writing docs → `.agents/skills/bench-craft-adr/SKILL.md`
 - building an agent-facing CLI → `.agents/skills/bench-craft-cli/SKILL.md`
+- spawning a delegate / verifying a delegate's done-claim → `.agents/skills/bench-craft-delegate/SKILL.md`
 - any UI work → `.agents/skills/bench-craft-design-system/SKILL.md` + your project's design source
 - adding, weakening, or removing a gate check / authoring the oracle → `.agents/skills/bench-craft-gate/SKILL.md`
 - surfacing a decision one question at a time → `.agents/skills/bench-craft-grill/SKILL.md`
