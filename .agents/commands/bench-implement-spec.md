@@ -15,7 +15,8 @@ and uses the acceptance coverage map to keep the build target fixed.
 Close by reporting the implemented stories, the acceptance coverage status for
 each row, the gate result, and any semantic review findings already fixed. The
 recommended next command is `/bench-review-implementation` when semantic review has
-not run yet; otherwise it is `/bench-final-check`.
+not run yet; otherwise it is `/bench-final-check`. A build that stops short exits
+through "When the build stops short" below instead, and recommends its route.
 
 Implement the spec at the seams it names. If there's no spec, the change must be
 small enough that the seam is obvious; if it isn't, stop and run `/bench-write-spec` first.
@@ -50,6 +51,24 @@ hit the cap, stop and report.
   then verify old stems in every form: `/name`, `$name`, bare basenames in
   inventories, and `dir/name` path forms. Separator slashes inside prose are not
   command invocations.
+
+## When the build stops short
+
+A build that hits its token cap or ends with stories unmet exits through a
+defined route — never a silent grind, never an abandoned worktree:
+
+1. **Report state:** stories done vs. remaining, the coverage table as it
+   stands, the gate verdict, and what consumed the cap.
+2. **Keep what's real:** committed green work stays committed; uncommitted work
+   is described and left in the worktree. Nothing gets squash-finished to fake
+   completion.
+3. **Route by cause, and recommend one:**
+   - wrong tier (the model ground, the gate disagreed) → re-declare one tier up
+     per the `craft-line` ladder and resume this phase;
+   - wrong spec (a story is unbuildable as written) → back to `/bench-write-spec`
+     with the finding quoted;
+   - wrong scope (the spec is bigger than one build) → propose the split; the
+     reviewer decides.
 
 ## Close on green
 

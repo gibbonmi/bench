@@ -109,6 +109,16 @@ loop honest.
 
 7. **Write `specs/<feature>.md`** using the template below.
 
+8. **Retire what this spec supersedes.** If the new spec replaces an existing
+   `specs/*.md` (same feature, new direction), retire the old one in the same
+   change: a **RESOLVED/retired** or **Superseded by `specs/<new>.md`** line at
+   the top, plus the historical opt-out markers
+   (`<!-- command-currency: historical -->`, and
+   `<!-- coverage-map: historical -->` when it carries a coverage map) so the
+   gate's currency and coverage checks skip it. A superseded spec left live
+   reads as a second source of truth — retiring it is part of writing the new
+   one, not a cleanup for later.
+
 ## Template
 
 ```markdown

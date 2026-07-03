@@ -83,7 +83,12 @@ callers), say so as a separate finding, after the fix is in.
 ## How it meets the rest of Bench
 
 The Phase 1 loop joins the project gate for the fix shift: add the repro as a test
-the gate runs alongside its existing checks. Replacing the gate with the repro
+the gate runs alongside its existing checks, and **commit that test
+before launching the shift** — a shift iteration that ends red rolls the worktree back to
+the last commit, so an uncommitted repro test is destroyed by the first failed
+iteration of the very shift it was built to gate. This is the one commit that
+deliberately precedes green: it strengthens the oracle rather than shipping work;
+the shift's own commits stay on-green as always. Replacing the gate with the repro
 weakens the oracle — that is my call, never a debug step. Then run
 `bench shift "fix <bug>"` so the loop physically gates "done" on the bug going
 green. The seam decision in Phase 5 is the `craft-seams` skill. Declare the line first — a

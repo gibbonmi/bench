@@ -234,6 +234,12 @@ require_anchor ".agents/skills/bench-craft-review/SKILL.md" "an edge nobody deci
 #        rule that makes delegation safe.
 require_anchor ".agents/commands/bench-review-implementation.md" "craft-delegate"
 require_anchor ".agents/skills/bench-craft-delegate/SKILL.md" "a claim, not a result"
+#    l5) workflow-exit anchors. The paths that used to dead-end must keep their
+#        routes: a capped/unmet build, a superseded spec, and the debug phase's
+#        repro-commit-before-shift ordering.
+require_anchor ".agents/commands/bench-implement-spec.md" "When the build stops short"
+require_anchor ".agents/commands/bench-write-spec.md" "Superseded by"
+require_anchor ".agents/commands/bench-debug.md" "before launching the shift"
 
 grep -qF 'session-start.sh' README.md || err "README layout omits .bench/hooks/session-start.sh"
 grep -qF 'bench.sh' README.md || err "README layout omits the real bin/bench.sh filename"
