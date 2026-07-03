@@ -40,3 +40,22 @@ An entry leaves this file only via /bench-integrate-learnings.
   benign reminder; otherwise flag it as real. (Distinct from, and a lighter-weight
   alternative to, the parked idea of carving capture-scratch out of `gate_tree_hash`
   entirely — that changes the oracle's key and is sensitive on the tripwire branch.)
+
+## 2026-07-03 — dogfooding gotcha preserved from a retired map: mid-session edits hit the next session  [open]
+- **What happened:** Story 11 of spec-handoff-lifecycle retired `decisions/dogfooding.md`.
+  Its self-host+canary-guard decision was already realized (the canary gate layer
+  shipped; craft-synthesis carries the dogfood loop), so the promotion read ended in
+  deletion. But one operating gotcha in that map was not recorded anywhere: the kit
+  loads skills/commands at session start, so a mid-session edit to a skill or command
+  lands in the *next* session, not the current one. The egg bites in three places —
+  the gate (break it, lose the oracle), skills/commands (break a trigger, next session
+  misfires), and the CLI (break `bench shift`, lose the loop).
+- **Right behavior:** Per the map-Handoff rule (item 9), operating lessons go through
+  `.bench/learnings.md` and `/bench-integrate-learnings`, not per-spec notes or a
+  unilateral skill edit — so this gotcha is captured here rather than promoted into a
+  skill on the worker's own authority.
+- **Proposed rule change:** Consider a one-line note in `bench-craft-synthesis`'s
+  dogfood loop: when a candidate change touches a skill or command trigger, the
+  dogfood shift must be a *fresh* session, because the edit does not take effect in
+  the session that made it. (Reviewer's call — this is the deferred/contestable
+  promotion flagged from story 11.)
