@@ -92,6 +92,20 @@ gate run against known-broken fixtures, asserting each targeted message still
 fires — the gate guarding the gate). A new check joins its layer, and a check
 another check depends on runs first.
 
+## Keep the tripwire alive
+
+The gate runs from the working tree, so the agent it grades can edit it. The
+canary harness is what makes that safe — not decoration: weaken a check and its
+known-broken fixture stops failing, and the harness turns that silence into a
+red gate and a reviewable diff. The defense only works while it exists, so the
+gate goes red when the canary fixture set is emptied or missing — and a
+scaffolded gate ships already defended: a sentinel keeps it red until
+configured, and one canaried example check seeds the fixtures. Deleting or
+weakening the tripwire is loud by construction; it follows the same rule as any
+weakening (below), never a quiet step inside making a change pass. The threat
+this covers is the lazy shortcut, not a determined adversary — the contract is
+loudness, not prevention.
+
 ## Weakening is a reviewer decision
 
 When a check blocks a change you believe is legitimate, the check does not get
