@@ -3,6 +3,13 @@
 # are guarded on the presence of the surface they test, keeping canary fixtures
 # attributable; messages are distinct per failure mode for the same reason.
 
+# Values are read through the shared parser the enforcement surfaces source —
+# one source per fact for what a lines.env value IS. The gate keeps its own
+# shape judgment (the regexes below); only the read is shared. gate_dir points
+# at the kit's own .bench even on canary inner runs.
+# shellcheck source=lib/lines-env.sh
+. "$gate_dir/lib/lines-env.sh"
+
 # a) The binding. benchkit is a routed repo: .bench/lines.env must exist, and a
 #    file that exists must carry three model-id-shaped tier values — a binding
 #    that drifts to empty silently disarms both enforcement surfaces.
@@ -10,7 +17,7 @@ if [ ! -f .bench/lines.env ]; then
   err "lines.env missing: .bench/lines.env is the tier binding enforcement reads"
 else
   for _lv in BENCH_TIER_TOP BENCH_TIER_MID BENCH_TIER_CHEAP; do
-    _val="$(grep -E "^${_lv}=" .bench/lines.env | tail -1 | cut -d= -f2- | tr -d '\r' | sed -E 's/[[:space:]]+$//')"
+    _val="$(bench_tier_value "$_lv" .bench/lines.env)"
     if [ -z "$_val" ]; then
       err "lines.env tier unset: $_lv has no value in .bench/lines.env"
     elif ! printf '%s' "$_val" | grep -qE '^claude-[a-z0-9][a-z0-9.-]*$'; then
@@ -21,8 +28,8 @@ else
   # trailing inline comment or stray token silently re-bricks in-session
   # delegation (the hook would compare against 'opus  # mid' and deny 'opus').
   for _la in BENCH_ALIAS_TOP BENCH_ALIAS_MID BENCH_ALIAS_CHEAP; do
-    grep -qE "^${_la}=" .bench/lines.env || continue
-    _val="$(grep -E "^${_la}=" .bench/lines.env | tail -1 | cut -d= -f2- | tr -d '\r' | sed -E 's/[[:space:]]+$//')"
+    grep -qE "^[[:space:]]*${_la}=" .bench/lines.env || continue
+    _val="$(bench_tier_value "$_la" .bench/lines.env)"
     printf '%s' "$_val" | grep -qE '^[a-z0-9-]+$' \
       || err "lines.env alias malformed: $_la='$_val' is not a bare alias"
   done
@@ -93,7 +100,20 @@ if [ -f .bench/hooks/check-agent-line.sh ]; then
     || err "check-agent-line.sh does not fail open when the shared parser lib is missing"
   printf '%s' "$_werr" | grep -qF 'shared tier parser missing' \
     || err "check-agent-line.sh does not warn on stderr when the shared parser lib is missing"
-  rm -rf "$_hd" "$_hd2" "$_hd3"
+
+  # An incomplete binding (a tier key present but empty) is a partial oracle:
+  # the hook must fail open with the incomplete-binding warning, never deny
+  # against half a binding.
+  _hd4="$(mktemp -d)"
+  ( cd "$_hd4" && git init -q )
+  mkdir -p "$_hd4/.bench"
+  printf 'BENCH_TIER_TOP=claude-fable-5\nBENCH_TIER_MID=\nBENCH_TIER_CHEAP=claude-sonnet-4-6\n' >"$_hd4/.bench/lines.env"
+  _werr="$( printf '%s' '{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"claude-nonexistent-9"}}' \
+    | ( cd "$_hd4" && bash "$_hook" ) 2>&1 >/dev/null )" \
+    || err "check-agent-line.sh does not fail open on an incomplete binding"
+  printf '%s' "$_werr" | grep -qF 'unset or empty' \
+    || err "check-agent-line.sh does not warn on stderr about an incomplete binding"
+  rm -rf "$_hd" "$_hd2" "$_hd3" "$_hd4"
 fi
 
 # d) Adapter guards, exercised against a stub harness on PATH — a routed repo
@@ -157,6 +177,22 @@ if [ -d .bench/adapters ]; then
       err "adapter claude does not fail closed when the shared parser lib is missing"
     fi
     rm -rf "$_tmpad"
+  fi
+
+  # An incomplete binding (a tier key present but empty) is a partial oracle:
+  # the shared guard must warn and fall back to the unrouted passthrough — it
+  # neither refuses nor enforces half a binding.
+  if [ -f .bench/adapters/claude ]; then
+    _partial="$(mktemp -d)"; ( cd "$_partial" && git init -q )
+    mkdir -p "$_partial/.bench"
+    printf 'BENCH_TIER_TOP=claude-fable-5\nBENCH_TIER_MID=\nBENCH_TIER_CHEAP=claude-sonnet-4-6\n' >"$_partial/.bench/lines.env"
+    _out="$( cd "$_partial" && BENCH_MODEL=claude-anything-7 PATH="$_sd:$PATH" bash "$root/.bench/adapters/claude" "line probe prompt" 2>/dev/null )"
+    { printf '%s' "$_out" | grep -qF 'claude-anything-7' && printf '%s' "$_out" | grep -qF 'line probe prompt'; } \
+      || err "adapter claude does not fall back to passthrough on an incomplete binding"
+    _werr="$( cd "$_partial" && BENCH_MODEL=claude-anything-7 PATH="$_sd:$PATH" bash "$root/.bench/adapters/claude" "line probe prompt" 2>&1 >/dev/null )"
+    printf '%s' "$_werr" | grep -qF 'unset or empty' \
+      || err "adapter claude does not warn about an incomplete binding"
+    rm -rf "$_partial"
   fi
   rm -rf "$_sd" "$_routed" "$_unrouted"
 fi

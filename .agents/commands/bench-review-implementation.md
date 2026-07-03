@@ -48,10 +48,9 @@ Run it on the branch diff against its true base, on three axes that stay separat
    axis hunts and what a finding must cite; don't restate the charges here.
    Procedural inputs per delegate: give Standards the docs from step 2; give
    Spec the spec file plus, when it carries an acceptance coverage map, the rows
-   from `bench coverage <spec>` — auditing them (missing, partial,
-   falsely-classified, or unclosed mapped behavior) is part of its charge; give
-   Coverage the existing tests and the profile's hostile-input checklist when
-   one exists.
+   from `bench coverage <spec>` — auditing every mapped behavior there is part
+   of its charge; give Coverage the existing tests and the profile's
+   hostile-input checklist when one exists.
 
    If there's no spec, skip the Spec axis and say so; the Coverage axis still
    runs — it needs only the diff and the existing tests.
