@@ -30,6 +30,15 @@ if [ "${BENCH_CANARY_INNER:-0}" != "1" ]; then
       && bash .bench/gate.sh ) >"$tmp/g.green" 2>&1; rc=$?
   [ "$rc" -eq 0 ] || err "scaffolded harness not green after sentinel removed (seed canary vacuous or not biting)"
 
+  # Story 2 (runner) — deleting the runner lib itself is the same lazy escape as deleting
+  # the fixtures, and must be as red: the runner cannot fire its own absent-check when it
+  # is the deleted file, so the scaffolded gate guards the source. Restore it afterward so
+  # the fixture-absent rows below still have a runner to reach.
+  ( cd "$tmp" && rm -f .bench/lib/canary-run.sh && bash .bench/gate.sh ) >"$tmp/g.norunner" 2>&1; rc=$?
+  { [ "$rc" -ne 0 ] && grep -qF 'canary runner missing' "$tmp/g.norunner"; } \
+    || err "deleting .bench/lib/canary-run.sh did not turn the gate red"
+  cp "$root/.bench/lib/canary-run.sh" "$tmp/.bench/lib/canary-run.sh"
+
   # Story 2 — deleting tests/canary/ turns the configured gate red: the lazy escape is loud.
   ( cd "$tmp" && rm -rf tests/canary && bash .bench/gate.sh ) >"$tmp/g.absent" 2>&1; rc=$?
   { [ "$rc" -ne 0 ] && grep -qF 'canary harness absent' "$tmp/g.absent"; } \

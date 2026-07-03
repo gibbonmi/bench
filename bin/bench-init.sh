@@ -47,8 +47,15 @@ err "configure .bench/gate.sh — replace this sentinel with real checks"  # BEN
 #   bench structure || err "structure over budget"
 
 # Canary — prove the checks above still bite, and that the harness itself is present.
-# shellcheck source=/dev/null
-. "$gate_dir/lib/canary-run.sh"
+# Guard the source: a missing runner cannot fire its own absent-check, so deleting it
+# would otherwise pass silently green — deleting the runner is as red as deleting the
+# fixtures. Keep .bench/lib/canary-run.sh installed (bench link and bench init both do).
+if [ -f "$gate_dir/lib/canary-run.sh" ]; then
+  # shellcheck source=/dev/null
+  . "$gate_dir/lib/canary-run.sh"
+else
+  err "canary runner missing (.bench/lib/canary-run.sh) — run 'bench link' or 'bench init' to reinstall it"
+fi
 
 if [ "$fail" -eq 0 ]; then echo "gate: green"; else echo "gate: red" >&2; fi
 exit "$fail"
