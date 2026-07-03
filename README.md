@@ -173,13 +173,19 @@ bench/
 ├── .codex/
 │   └── hooks.json            # Codex adapter pointing at .bench/hooks
 ├── bin/
-│   ├── bench.sh              # worktrees (treehouse-lite) + gated loop (gnhf-lite)
+│   ├── bench.sh              # worktrees + gated loop + strangler router to the Go core
 │   ├── bench-link.sh         # safe link/install helpers
-│   ├── bench-status.sh       # status, roadmap, models, structure helpers
-│   ├── bench-worktree.sh     # reusable-worktree pool helpers
-│   ├── bench-query.sh        # AXI query surface (learnings, maps, guards)
-│   ├── bench-diff.sh         # review base + changed-file list
-│   └── bench-coverage.sh     # acceptance-coverage-map parser (gate's --check)
+│   ├── bench-status.sh       # status, roadmap, models, structure + Go-binary count adapters
+│   └── bench-worktree.sh     # reusable-worktree pool helpers
+├── cmd/bench/                # the compiled core's main: dispatch + version
+├── internal/                 # the AXI query surface, ported from shell to Go
+│   ├── toon/                 # the shared flat-table TOON emitter (one escaping rule)
+│   ├── learnings/            # bench learnings parser
+│   ├── maps/                 # bench maps engine (tickets + close-readiness + count)
+│   ├── guards/               # bench guards aggregation
+│   ├── diff/                 # bench diff review-base resolution
+│   ├── coverage/             # bench coverage extraction + --check validation
+│   └── git/                  # shared git subprocess helpers
 └── projects/
     ├── benchkit.md           # seams, gate, lines for this kit
     ├── regroup.md            # seams, gate, lines for Regroup

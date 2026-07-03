@@ -192,6 +192,42 @@ gate_tree_hash() {
   printf '%s\n' "${hash:-none}"
 }
 
+# ---- status count adapters (source the Go binary — one derivation) ----------
+# learnings_open_count and maps_unresolved_count moved here from the deleted
+# bench-query.sh. Both figures are sourced from the Go binary against the resolved
+# root, so the parsing knowledge lives once — in Go — and the dashboard's numbers
+# cannot drift from what `bench learnings` and `bench maps` report. The binary path
+# resolves through bench.sh's bench_binary_path (the router's own resolver); a missing
+# binary yields 0 rather than erroring the dashboard. The file/root argument is kept
+# for call-site compatibility — the binary resolves the same paths from the root.
+
+# Count of open learnings — the `learnings[N]` header value from `bench learnings`.
+learnings_open_count() {
+  local root bin out
+  root="$(repo_root)" || { echo 0; return 0; }
+  bin="$(bench_binary_path)" || { echo 0; return 0; }
+  out="$( (cd "$root" && "$bin" learnings) 2>/dev/null | head -1)"
+  if [[ "$out" =~ ^learnings\[([0-9]+)\] ]]; then
+    echo "${BASH_REMATCH[1]}"
+  else
+    echo 0
+  fi
+}
+
+# Count of DISTINCT not-close-ready map files — read from the Go engine's own figure
+# via `bench maps --count`. The count is NOT the number of listed rows: a file carrying
+# a file-scope marker but no `## #` ticket heading is not-close-ready yet emits no row,
+# so the adapter reads the engine's count through the same close-readiness rule rather
+# than re-deriving it from the listing (which would undercount, and re-introduce the
+# two-derivations bug this slice removes).
+maps_unresolved_count() {
+  local root bin out
+  root="${1:-$(repo_root)}"
+  bin="$(bench_binary_path)" || { echo 0; return 0; }
+  out="$( (cd "$root" && "$bin" maps --count) 2>/dev/null)"
+  [[ "$out" =~ ^[0-9]+$ ]] && echo "$out" || echo 0
+}
+
 status() {
   local root cache; root="$(repo_root)"
   local -a rows=()
@@ -247,8 +283,8 @@ status() {
     rows+=("4|structure|$sviol issue(s)|split (craft-seams)")
   fi
 
-  # Unresolved decision maps come from the same parser `bench maps` lists tickets
-  # through (maps_unresolved_count in bench-query.sh), so status's count and the
+  # Unresolved decision maps come from the same Go engine `bench maps` lists tickets
+  # through (maps_unresolved_count, the adapter above), so status's count and the
   # command's rows are one derivation, not two that can drift.
   local maps; maps="$(maps_unresolved_count "$root")"
   if [[ "${maps:-0}" -gt 0 ]]; then

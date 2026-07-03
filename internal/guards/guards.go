@@ -1,0 +1,175 @@
+// Package guards ports `bench guards` (and `--brief`): every deny-capable guard's
+// manifest aggregated into a `guards[N]{guard,boundary,denies}:` TOON table, so the
+// block surface is learnable without a collision. Guards are discovered by convention
+// (each .bench/hooks/*.sh, the adapters' _line-guard.sh, the installed git pre-push
+// hook); each guard's --describe is read under a hard time bound so a hook that
+// ignores --describe cannot stall aggregation, and an unmanaged pre-push is never
+// executed — running an unknown hook's body just to read a manifest is the collision
+// this surface avoids.
+package guards
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/toon"
+)
+
+// describeTimeout bounds each guard's --describe. Replaces the shell's coreutils
+// `timeout 5` / watchdog with exec.CommandContext; waitGrace forces Wait to return
+// even when a killed guard's grandchild (a `sleep`) still holds the stdout pipe.
+const (
+	describeTimeout = 5 * time.Second
+	waitGrace       = 3 * time.Second
+)
+
+// guardDescribe runs `bash <path> --describe` with stdin on the null device under the
+// time bound, returning its stdout and exit code — or 124 when the bound trips.
+func guardDescribe(path string) (string, int) {
+	ctx, cancel := context.WithTimeout(context.Background(), describeTimeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "bash", path, "--describe")
+	cmd.WaitDelay = waitGrace
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if ctx.Err() == context.DeadlineExceeded {
+		return "", 124
+	}
+	if err == nil {
+		return out.String(), 0
+	}
+	var ee *exec.ExitError
+	if errors.As(err, &ee) {
+		return out.String(), ee.ExitCode()
+	}
+	return out.String(), 1
+}
+
+// manifestField pulls one `key: value` field from a manifest blob; "" if absent.
+func manifestField(out, key string) string {
+	prefix := key + ": "
+	for _, line := range strings.Split(out, "\n") {
+		if strings.HasPrefix(line, prefix) {
+			return strings.TrimPrefix(line, prefix)
+		}
+	}
+	return ""
+}
+
+// guardRow builds the row for one discovered guard, or (nil,false) when the guard is
+// informational (`denies: nothing`) and excluded. A guard that does not answer
+// --describe (nonzero, timeout, or a manifest missing any of the three fields) gets a
+// definitive `no manifest` row under its fallback name rather than a silent omission.
+func guardRow(path, fallback string) ([]string, bool) {
+	out, rc := guardDescribe(path)
+	switch {
+	case rc == 124:
+		return []string{fallback, "", "no manifest (timed out)"}, true
+	case rc != 0:
+		return []string{fallback, "", "no manifest"}, true
+	}
+	name := manifestField(out, "name")
+	boundary := manifestField(out, "boundary")
+	denies := manifestField(out, "denies")
+	if name == "" || boundary == "" || denies == "" {
+		return []string{fallback, "", "no manifest"}, true
+	}
+	if denies == "nothing (informational)" {
+		return nil, false
+	}
+	return []string{name, boundary, denies}, true
+}
+
+// Rows discovers every guard and returns its row: the hook scripts, the line guard,
+// and the git pre-push hook, in that order.
+func Rows(root string) [][]string {
+	var rows [][]string
+	add := func(path, fallback string) {
+		if r, emit := guardRow(path, fallback); emit {
+			rows = append(rows, r)
+		}
+	}
+	hooksDir := filepath.Join(root, ".bench", "hooks")
+	if entries, err := os.ReadDir(hooksDir); err == nil {
+		for _, e := range entries {
+			if e.IsDir() || !strings.HasSuffix(e.Name(), ".sh") {
+				continue
+			}
+			add(filepath.Join(hooksDir, e.Name()), strings.TrimSuffix(e.Name(), ".sh"))
+		}
+	}
+	lg := filepath.Join(root, ".bench", "adapters", "_line-guard.sh")
+	if fileExists(lg) {
+		add(lg, "_line-guard")
+	}
+	return append(rows, prePushRow(root)...)
+}
+
+// prePushRow resolves the installed git pre-push hook. A managed hook (carrying the
+// bench marker) is read for its manifest; a marker-less foreign hook is reported
+// `unmanaged` and never executed; an absent hook is a definitive `not installed`.
+func prePushRow(root string) [][]string {
+	notInstalled := [][]string{{"pre-push", "", "not installed"}}
+	hooksGit, err := git.Output("-C", root, "rev-parse", "--git-path", "hooks")
+	if err != nil || hooksGit == "" {
+		return notInstalled
+	}
+	if !filepath.IsAbs(hooksGit) {
+		hooksGit = filepath.Join(root, hooksGit)
+	}
+	prepush := filepath.Join(hooksGit, "pre-push")
+	if !fileExists(prepush) {
+		return notInstalled
+	}
+	content, _ := os.ReadFile(prepush)
+	if !bytes.Contains(content, []byte("bench:managed-pre-push")) {
+		return [][]string{{"pre-push", "", "unmanaged (no manifest)"}}
+	}
+	if r, emit := guardRow(prepush, "pre-push"); emit {
+		return [][]string{r}
+	}
+	return nil
+}
+
+func fileExists(p string) bool {
+	info, err := os.Stat(p)
+	return err == nil && !info.IsDir()
+}
+
+// Command implements `bench guards [--brief]`. --brief emits one plain line per
+// deny-capable guard plus exactly one footer — the surface session-start injects.
+func Command(args []string) (string, int) {
+	brief := false
+	switch {
+	case len(args) == 0:
+	case args[0] == "--brief":
+		brief = true
+	case args[0] == "-h" || args[0] == "--help":
+		return "usage: bench guards [--brief]\n", 0
+	default:
+		return toon.Usage("bench guards", args[0]) + "\n", 2
+	}
+	root, err := git.Root()
+	if err != nil {
+		return toon.NotInRepo() + "\n", 1
+	}
+	rows := Rows(root)
+	if brief {
+		var b strings.Builder
+		for _, r := range rows {
+			fmt.Fprintf(&b, "%s: %s\n", r[0], r[2])
+		}
+		b.WriteString("full manifests: bench guards\n")
+		return b.String(), 0
+	}
+	return toon.Table("guards", []string{"guard", "boundary", "denies"}, rows), 0
+}

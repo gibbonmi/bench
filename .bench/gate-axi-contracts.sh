@@ -6,17 +6,16 @@
 # shared parsers against the edges the two-derivations bug class breeds:
 #   - the maps parser anchors placeholders / the GRILL DEFERRED banner to line
 #     start, skips fenced examples, strips CRLF, and reports a Type-less ticket
-#     as `unknown`; maps_unresolved_count gives status the distinct-file figure;
+#     as `unknown`;
 #   - the learnings parser strips the date + separator run (ASCII hyphen or
-#     em-dash) and any trailing CR; toon_escape quotes leading/trailing
-#     whitespace.
+#     em-dash) and any trailing CR.
 # The `bench guards` aggregation and session-start contracts live in
 # gate-axi-guards-contracts.sh. Sourced by gate.sh so it shares $root, err(),
 # and $fail with the other fragments; fixture provisioning and cleanup are the
 # contract runner's (gate-contract-runner.sh). Run the real CLI in a fixture and
-# assert stdout shape + exit code — never internals (the few parser-level checks
-# source bin/bench-query.sh directly, which is the seam for a pure helper like
-# toon_escape/maps_unresolved_count).
+# assert stdout shape + exit code — never internals. The parser now compiles to the
+# Go binary, so pure-helper coverage (toon_escape quoting, the distinct-file count)
+# lives in internal/toon and internal/maps table tests, not in a shell-source check.
 
 # ---- guard --describe manifest conformance ----------------------------------
 # Every guard must answer --describe with the four-key manifest (name, boundary,
@@ -295,48 +294,10 @@ contract "AXI learnings ascii-separator title contract" <<'BODY'
   grep -qxF '  2026-01-01,ascii title' <<<"$out" || { echo "ascii-hyphen heading title not clean: $out"; exit 1; }
 BODY
 
-# toon_escape quotes a field with leading or trailing whitespace so padding
-# survives the flat table (a bare padded field is ambiguous to a TOON parser).
-contract "AXI TOON leading/trailing-space escaping contract" <<'BODY'
-  # shellcheck source=/dev/null
-  . "$root/bin/bench-query.sh"
-  [ "$(toon_escape ' padded ')" = '" padded "' ] || { echo "leading/trailing-space field not quoted: [$(toon_escape ' padded ')]"; exit 1; }
-  [ "$(toon_escape 'plain')" = 'plain' ] || { echo "plain field wrongly quoted"; exit 1; }
-BODY
-
-# status derives its unresolved-maps figure from the shared parser:
-# maps_unresolved_count returns DISTINCT MAP FILES (what status counts), not the
-# ticket count maps_rows lists. Two unresolved tickets in one file → count 1.
-contract "AXI maps_unresolved_count distinct-file contract" <<'BODY'
-  # shellcheck source=/dev/null
-  . "$root/bin/bench-query.sh"
-  mkdir decisions
-  cat > decisions/multi.md <<'MAP'
-## #1: a?
-
-Type: Grill
-
-### Answer
-— (open)
-
-## #2: b?
-
-Type: Grill
-
-### Answer
-— (deferred)
-MAP
-  cat > decisions/solo.md <<'MAP'
-## #1: c?
-
-Type: Grill
-
-### Answer
-— (open)
-MAP
-  [ "$(maps_rows "$PWD" | grep -c .)" = "3" ] || { echo "expected 3 unresolved tickets, got $(maps_rows "$PWD" | grep -c .)"; exit 1; }
-  [ "$(maps_unresolved_count "$PWD")" = "2" ] || { echo "distinct-file count not 2 (got $(maps_unresolved_count "$PWD"))"; exit 1; }
-BODY
+# toon_escape's leading/trailing-whitespace quoting and maps_unresolved_count's
+# distinct-file figure are pure helpers with no CLI surface; their coverage moved to
+# internal/toon and internal/maps table tests when bin/bench-query.sh was deleted (see
+# TestEscape, TestUnresolvedCount). Nothing here sources a shell parser file.
 
 # ---- close-readiness: the ## Handoff row on zero-open maps -------------------
 # A map with zero open tickets is a close candidate; the exit's refuse-to-close
@@ -344,8 +305,8 @@ BODY
 # `## Handoff` section. maps_rows emits `<map>,handoff,handoff,<state>` (missing,
 # or the placeholder's own state) for such a map; an open-ticket map is not a
 # close candidate and emits no handoff row; a fenced `## Handoff` example does not
-# count as the section. maps_unresolved_count grows the same rule so status's
-# figure and the listing cannot drift (asserted below).
+# count as the section. The distinct-file count sharing this same rule is pinned at
+# the internal/maps table-test seam (TestUnresolvedCountCloseReadiness), not here.
 contract "AXI maps handoff close-readiness contract" <<'BODY'
   mkdir decisions
   # zero-open, NO Handoff → missing row
@@ -418,8 +379,25 @@ MAP
   if grep -qE '^  hp,1,' <<<"$out"; then echo "Handoff placeholder leaked onto ticket #1: $out"; exit 1; fi
   # a non-map file is never treated as an unclosed map
   if grep -qE '^  README,' <<<"$out"; then echo "non-map README nagged as a close candidate: $out"; exit 1; fi
-  # count side: hm, hx, hp, ho all not-close-ready; hf close-ready, README not a map → 4
-  # shellcheck source=/dev/null
-  . "$root/bin/bench-query.sh"
-  [ "$(maps_unresolved_count "$PWD")" = "4" ] || { echo "close-readiness count not 4 (got $(maps_unresolved_count "$PWD"))"; exit 1; }
+BODY
+
+# `bench maps --count` is the status adapter's hook: a bare integer of DISTINCT
+# not-close-ready files. It is NOT the listed-row count — a file-scope marker with no
+# `## #` ticket heading is not-close-ready yet emits no row — and it skips a dotfile the
+# shell glob `decisions/*.md` never expanded. Pins both the surface and those two edges.
+contract "AXI maps --count adapter contract" <<'BODY'
+  mkdir decisions
+  # an open-ticket map (emits a row, counts)
+  printf '## #1: a?\nType: Grill\n### Answer\n— (open)\n' > decisions/m.md
+  # a file-scope marker with no ticket heading (emits NO row, but counts)
+  printf '### Answer\n— (deferred)\n' > decisions/scope.md
+  # a dotfile the shell glob never saw (must be invisible to rows and the count)
+  printf '## #1: h?\nType: Grill\n### Answer\n— (open)\n' > decisions/.hidden.md
+  out="$(bash "$root/bin/bench.sh" maps --count)"; rc=$?
+  [ "$rc" = "0" ] || { echo "maps --count did not exit 0 (exit $rc)"; exit 1; }
+  [ "$out" = "2" ] || { echo "maps --count not the distinct not-close-ready file figure (want 2, got: $out)"; exit 1; }
+  rows="$(bash "$root/bin/bench.sh" maps)"
+  grep -qxF '  m,1,Grill,open' <<<"$rows" || { echo "visible open-ticket map lost its row: $rows"; exit 1; }
+  if grep -qE '^  scope,' <<<"$rows"; then echo "file-scope marker wrongly emitted a row: $rows"; exit 1; fi
+  if grep -qE '^  \.?hidden,' <<<"$rows"; then echo "dotfile decision leaked into the listing: $rows"; exit 1; fi
 BODY

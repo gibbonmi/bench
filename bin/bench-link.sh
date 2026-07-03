@@ -225,9 +225,19 @@ append_claude_skills_to_plan() {
 }
 
 build_link_plan() {
-  local kit="$1" plan="$2"
+  local kit="$1" plan="$2" gobin
   : > "$plan"
   append_tree_to_plan "$kit/bin" ".bench/bin" "file" "$plan"
+  # The compiled core, bundled so the linked by-path CLI (.bench/bin/bench.sh, whose
+  # kit_dir is .bench) can route learnings|maps|guards|diff|coverage and the status
+  # count adapters to a binary it can actually reach — its route_binary looks first at
+  # .bench/dist/bench. Resolved through bench.sh's bench_binary_path so this works from a
+  # local kit checkout (dist/bench) and from an npm install (the hoisted platform
+  # package) alike; skipped when no binary is resolvable (a source-only wrapper), so
+  # link still succeeds and the global `bench` resolves the binary the usual way.
+  if gobin="$(bench_binary_path "$kit" 2>/dev/null)"; then
+    printf '%s\t%s\t%s\n' "$gobin" ".bench/dist/bench" "file" >> "$plan"
+  fi
   printf '%s\t%s\t%s\n' "$kit/.bench/BENCH.md" ".bench/BENCH.md" "file" >> "$plan"
   printf '%s\t%s\t%s\n' "$kit/.bench/BENCH-reference.md" ".bench/BENCH-reference.md" "file" >> "$plan"
   printf '%s\t%s\t%s\n' "$kit/.claude/README.md" ".claude/README.md" "file" >> "$plan"

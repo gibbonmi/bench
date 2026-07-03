@@ -105,6 +105,22 @@ tmp="$(mktemp -d)"
 ) || err "bench status decisions contract failed"
 rm -rf "$tmp"
 
+# The unresolved-maps COUNT status renders is sourced from the Go binary via the
+# maps_unresolved_count adapter (`bench maps --count`). It is the DISTINCT not-close-
+# ready file figure, not the ticket count: two files carrying three unresolved tickets
+# → `2 unresolved map(s)`. Closes the pre-existing gap where the maps count had no
+# end-to-end assertion; catches an adapter that miscounts or drops the row.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir decisions
+  printf '## #1: a?\nType: Grill\n### Answer\n— (open)\n\n## #2: b?\nType: Grill\n### Answer\n— (deferred)\n' > decisions/one.md
+  printf '## #1: c?\nType: Grill\n### Answer\n— (open)\n' > decisions/two.md
+  out="$(bash "$root/bin/bench.sh" status)"
+  grep -qF '2 unresolved map(s)' <<<"$out" || { echo "status maps count not sourced from the Go adapter (want 2 distinct files): $out"; exit 1; }
+) || err "bench status unresolved-maps count contract failed"
+rm -rf "$tmp"
+
 tmp="$(mktemp -d)"
 (
   set -u; cd "$tmp"; git init -q

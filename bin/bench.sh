@@ -291,24 +291,42 @@ platform_pkg() {
   printf '@benchkit/%s-%s' "$os" "$arch"
 }
 
-# route_binary <subcommand> [args...] — resolve and exec the Go binary, passing the
-# whole argv through. Resolution order: (1) repo-local dev build (kit checkout),
-# (2) the platform package bundled under the wrapper's node_modules, (3) the hoisted
-# sibling npm produces for global installs. First executable, non-empty match wins;
-# a present-but-empty or non-executable file is treated as missing (never exec'd), so
-# a torn build falls through to the named-package error rather than exec-failing.
-route_binary() {
-  local kit pkg c
-  kit="$(kit_dir)"
-  if ! pkg="$(platform_pkg)"; then
-    echo "bench: unsupported platform: $(uname -s | tr '[:upper:]' '[:lower:]')/$(uname -m)" >&2
-    exit 2
-  fi
+# bench_binary_path — echo the resolved Go binary path, or fail with a distinct exit
+# code the caller maps to a message. Resolution order: (1) repo-local dev build (kit
+# checkout), (2) the platform package bundled under the wrapper's node_modules, (3) the
+# hoisted sibling npm produces for global installs. First executable, non-empty match
+# wins; a present-but-empty or non-executable file is treated as missing (never named),
+# so a torn build falls through rather than resolving to a non-runnable path. Exit 2 =
+# off-matrix platform (no package to name); 127 = no binary present for this platform.
+# One source of both the platform→package mapping and the resolution order, shared by
+# route_binary (which execs the path) and the status adapters (which capture its output).
+bench_binary_path() {
+  local kit="${1:-$(kit_dir)}" pkg c
+  platform_pkg >/dev/null || return 2
+  pkg="$(platform_pkg)"
   for c in "$kit/dist/bench" "$kit/node_modules/$pkg/bin/bench" "$kit/../$pkg/bin/bench"; do
-    [[ -x "$c" && -s "$c" ]] && exec "$c" "$@"
+    [[ -x "$c" && -s "$c" ]] && { printf '%s\n' "$c"; return 0; }
   done
-  echo "bench: no binary for this platform — install $pkg (npm install $pkg)" >&2
-  exit 127
+  return 127
+}
+
+# route_binary <subcommand> [args...] — resolve and exec the Go binary, passing the
+# whole argv through. The one seam the strangler grows: later slices add subcommand
+# names to the dispatch below, never a second resolver.
+route_binary() {
+  local bin rc
+  bin="$(bench_binary_path)" && rc=0 || rc=$?
+  case "$rc" in
+    0) exec "$bin" "$@" ;;
+    2)
+      echo "bench: unsupported platform: $(uname -s | tr '[:upper:]' '[:lower:]')/$(uname -m)" >&2
+      exit 2
+      ;;
+    *)
+      echo "bench: no binary for this platform — install $(platform_pkg) (npm install $(platform_pkg))" >&2
+      exit 127
+      ;;
+  esac
 }
 
 BENCH_BIN_DIR="$(dirname "$(resolve_script_path)")"
@@ -318,12 +336,6 @@ BENCH_BIN_DIR="$(dirname "$(resolve_script_path)")"
 . "$BENCH_BIN_DIR/bench-status.sh"
 # shellcheck source=/dev/null
 . "$BENCH_BIN_DIR/bench-worktree.sh"
-# shellcheck source=/dev/null
-. "$BENCH_BIN_DIR/bench-query.sh"
-# shellcheck source=/dev/null
-. "$BENCH_BIN_DIR/bench-diff.sh"
-# shellcheck source=/dev/null
-. "$BENCH_BIN_DIR/bench-coverage.sh"
 # shellcheck source=/dev/null
 . "$BENCH_BIN_DIR/bench-init.sh"
 # shellcheck source=/dev/null
@@ -342,11 +354,11 @@ case "${1:-help}" in
   idea)     shift; idea "$@" ;;
   roadmap)  roadmap ;;
   status)   status ;;
-  learnings) shift; learnings "$@" ;;
-  maps)     shift; maps "$@" ;;
-  guards)   shift; guards "$@" ;;
-  diff)     shift; bench_diff "$@" ;;
-  coverage) shift; coverage "$@" ;;
+  learnings) route_binary "$@" ;;
+  maps)     route_binary "$@" ;;
+  guards)   route_binary "$@" ;;
+  diff)     route_binary "$@" ;;
+  coverage) route_binary "$@" ;;
   *) cat <<EOF
 bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench link [copy|symlink]  safely wire the kit into this repo for every harness
