@@ -14,6 +14,6 @@ __pycache__/
 # normal exit/interrupt; ignored so an unclean kill can't leave them to be committed.
 .bench-objective
 .bench-notes.md
-
+research/
 # Repo-local profiles are tracked (see projects/benchkit.md) but excluded from the
 # published package via package.json "files" — not ignored here.
