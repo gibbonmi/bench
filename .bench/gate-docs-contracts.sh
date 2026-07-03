@@ -308,7 +308,7 @@ rm -rf "$si_tmp"
 #       or an edge… reference). Pre-convention specs opt out with
 #       <!-- coverage-map: historical -->. Cell semantics stay with review.
 #       The validation lives in `bench coverage --check` — one parser for the
-#       convention (spec second-wave-parsers story 7). The CLI is resolved from
+#       convention (the second-wave parser surface). The CLI is resolved from
 #       the gate script's own tree, never the working tree's copy: canary inner
 #       runs execute the real gate against minimal fixture trees with no CLI.
 if [ -d specs ]; then

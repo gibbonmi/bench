@@ -3,7 +3,7 @@
 # extraction + --check validation). Split from gate-axi-contracts.sh to respect
 # the structure budget; the gate sources it in its own shell (shares $root,
 # $gate_dir, err(), fail), and fixture provisioning is the contract runner's
-# (gate-contract-runner.sh). Spec: specs/second-wave-parsers.md.
+# (gate-contract-runner.sh). Origin spec retired — git log --grep=spec-retire.
 [ -f "$root/bin/bench.sh" ] || { err "bench CLI missing (wave-2 AXI contracts skipped)"; return 0 2>/dev/null || exit 0; }
 
 gciw() { git -c user.email=bench@local -c user.name=bench "$@"; }

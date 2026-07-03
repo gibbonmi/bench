@@ -1,5 +1,5 @@
 # Runtime contracts for the destructive-git guard hook: the full allow/block
-# matrix from specs/git-guard-rework.md. Every verdict is asserted both ways —
+# matrix for the destructive-git guard. Every verdict is asserted both ways —
 # blocked commands exit 2 with a BLOCKED: message, allowed commands exit 0.
 
 tmp="$(mktemp -d)"
