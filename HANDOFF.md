@@ -11,16 +11,17 @@ Active phase: `$bench-integrate-learnings`. The review/spec-guidance learnings
 slice and the merged-spec retirement slice are complete and committed locally.
 The working tree is clean, and `bench gate` was green before each commit.
 
-The branch is ahead of `origin/main` by four commits:
+The branch has local commits not yet pushed. Recent local work includes:
 
-- `c76459a spec-retire: implemented specs`
-- `cdd8826 learnings: promote review spec guidance`
-- `84ddf05 Promote line governance learnings`
-- `ecae6c0 Clean up assessment findings`
+- `spec-retire: implemented specs`
+- `learnings: promote review spec guidance`
+- `Promote line governance learnings`
+- `Clean up assessment findings`
+- handoff refresh commits
 
-`git push` was attempted after `c76459a` and blocked by the repo's PreToolUse
-hook: pushing is reviewer-owned authority. Do not bypass that hook; the reviewer
-or an approved push path must publish the local commits.
+`git push` was attempted after the spec-retirement commit and blocked by the
+repo's PreToolUse hook: pushing is reviewer-owned authority. Do not bypass that
+hook; the reviewer or an approved push path must publish the local commits.
 
 ## Committed work
 
