@@ -132,3 +132,24 @@ Proposed rule change: in /bench-write-spec's edge inventory, add a check — "fo
   fix path follows — the same "document for the teammate who just walked in" invariant
   the specs and ADRs already obey, applied to the one workflow output that currently
   evaporates. (Reviewer's call on the location and whether it auto-retires with the spec.)
+
+## 2026-07-03 — hand-rolled a "TOON" emitter instead of surfacing the official library as an option  [open]
+- **What happened:** The go-axi-query-surface slice ported the shell's TOON emitter
+  as `internal/toon`, faithfully preserving the shell's byte format. The reviewer
+  asked why the official Go library (github.com/toon-format/toon-go) wasn't used
+  instead. Checking the TOON spec revealed the shell-inherited format was never
+  spec-conformant TOON: it doubles quotes CSV-style where the spec uses JSON
+  backslash escapes, and it skips the spec's mandatory quoting cases (empty string,
+  true/false/null, numeric-looking strings, colons, leading hyphen). The port
+  carried a private dialect forward under the TOON name without flagging it.
+- **Right behavior:** When a build touches an implementation of a named external
+  format, check whether an official library exists and whether the current
+  implementation conforms to the published spec — and surface "adopt the library
+  vs. keep the dialect" as a reviewer decision, since it trades a dependency
+  against byte-stability of contract-pinned output. Byte-identity with the shell
+  was the right port constraint, but the nonconformance was discoverable and
+  should have been reported then.
+- **Proposed rule change:** In /bench-write-spec, when a spec names an external
+  format or protocol, add an edge-inventory check: does an official implementation
+  exist, and does ours conform? Divergence is a decision to surface, not silently
+  preserve.

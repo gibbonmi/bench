@@ -25,13 +25,19 @@ A delegate has no conversation memory: everything it needs must be in the
 prompt. A complete charge names the objective, the inputs by path, the seam it
 works at, the return shape (raw data or a structured report — its final message
 is the deliverable), and its budget. Route its model and effort with
-`craft-line` — the line is declared by you, not chosen by the delegate.
+`craft-line` — the line is declared by you, not chosen by the delegate — and
+carry both explicitly: the model goes on the call itself as the bound alias
+(never omitted — an Agent call without a model inherits *your* model, which is
+silent escalation when you run top-tier), and the effort and cap go in the
+charge text, because the Agent tool has no effort parameter — effort rides in
+the charge or it rides nowhere.
 
 ```
 Review this diff on the Standards axis only. Base: run `bench diff` for the
 changed files; read AGENTS.md and .bench/BENCH.md for the conventions. Charge:
-.agents/skills/bench-craft-review/SKILL.md. Return findings under ## Standards,
-each citing the rule, under 400 words. Do not edit any file.
+.agents/skills/bench-craft-review/SKILL.md. Effort: medium, ~60k tokens — one
+pass, no iteration. Return findings under ## Standards, each citing the rule,
+under 400 words. Do not edit any file.
 ```
 Good — self-contained: inputs by path, the charge by path, the return shape and
 a write prohibition stated.
@@ -52,8 +58,12 @@ them, and you can't verify what you can't attribute.
 
 A write-delegation runs in an isolated worktree (`bench worktree`), so stray
 edits can't land in reviewer-owned files — the delegate gets a checkout, not
-your checkout. Read-only delegations need no worktree; say "do not edit any
-file" in the charge and mean it.
+your checkout. Concurrent delegates get *separate* worktrees, one each: two
+writers in one checkout collide, and a mixed `git status` makes both
+done-claims unverifiable. Share a worktree — or run sequentially — only when
+one delegate's work genuinely depends on another's output. Read-only
+delegations need no worktree; say "do not edit any file" in the charge and
+mean it.
 
 ## Verifying the done-claim
 

@@ -17,7 +17,10 @@ Tiers are abstract roles: **cheap / mid / top**. They bind to model ids in
 the machine-readable source enforcement also reads. The narrative binding,
 cached routings, and any escalation opt-out live in `projects/<name>.md`
 `Lines`. Refresh candidates with `bench models`. Declare the line with the
-resolved model id, never the bare tier. No `lines.env` means the repo is
+resolved model id, never the bare tier — but *invoke* with what the surface
+accepts: a harness whose Agent tool only speaks aliases (Claude Code) takes the
+tier's `BENCH_ALIAS_*` from `lines.env`, and passing the full id there is a
+schema error, not a stricter declaration. No `lines.env` means the repo is
 unrouted: declare the line from the `Lines` prose and flag the missing binding.
 
 ## The decision table picks the starting tier

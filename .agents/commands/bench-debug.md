@@ -100,4 +100,7 @@ the shift's own commits stay on-green as always. Replacing the gate with the rep
 weakens the oracle — that is my call, never a debug step. Then run
 `bench shift "fix <bug>"` so the loop physically gates "done" on the bug going
 green. The seam decision in Phase 5 is the `craft-seams` skill. Declare the line first — a
-hard bug is a high-effort shift.
+hard bug is a high-effort shift. Any delegation along the way (a fan-out search, a
+scoped fix) carries its own line: an explicit bound model alias on the Agent call —
+never the inherited default — with effort and cap stated in the charge, per
+`craft-line` and `craft-delegate`.
