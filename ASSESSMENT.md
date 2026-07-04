@@ -37,34 +37,26 @@ artifact" finding.
 the generated skills index instead of carrying hand-maintained copies. The
 conformance layer now guards README against reintroducing the shared-rule sections.
 
-**F2 (HIGH) — run `/bench-integrate-learnings`.** 13 open entries is the real fix
-backlog; the journal is the bottleneck, not any single entry. The pass should take
-them in four clusters:
+**F2 (HIGH) — continue `/bench-integrate-learnings`.** The line-governance cluster
+and token-cap-to-iteration-cap decision are promoted. The remaining journal backlog
+falls into three clusters:
 
-1. **Line-governance cluster (the decision that matters):** four entries in
-   mutual tension — "facilitator must delegate every story" vs "inline when
-   delegate overhead exceeds the work" vs "inline when stories are one atomic
-   diff" vs "top-tier spec authoring on reviewer override". One reviewer decision
-   resolves all four; folding in the roadmap's token-cap→iteration-cap item (F3)
-   at the same time closes the whole line-discipline question.
-2. **Review-findings persistence (MED-HIGH):** three-axis findings still live
+1. **Review-findings persistence (MED-HIGH):** three-axis findings still live
    only in chat (no `reviews/` surface, no spec heading exists) — a mid-fix
    disconnect loses verified findings.
-3. **Status stale split (MED):** verified still unimplemented — the status
+2. **Status stale split (MED):** verified still unimplemented — the status
    signal reports raw `stale` with no benign-drift (capture-scratch) vs
    real-drift (committed code moved) classification.
-4. **One-liner batch (LOW, cheap):** delegate charges prefer the Handoff digest
-   over whole-file read lists; skill/command edits take effect next session, so
-   dogfood shifts on trigger changes need a fresh session; review findings are
-   verified in the live session, not a worktree; Codex-style no-subagent
-   harnesses run the three review axes inline and flag it; byte/wire-compat
-   claims about external libraries require a runnable probe plus an
-   official-implementation conformance check in the spec edge inventory.
+3. **One-liner batch (LOW, cheap):** skill/command edits take effect next
+   session, so dogfood shifts on trigger changes need a fresh session; review
+   findings are verified in the live session, not a worktree; Codex-style
+   no-subagent harnesses run the three review axes inline and flag it;
+   byte/wire-compat claims about external libraries require a runnable probe plus
+   an official-implementation conformance check in the spec edge inventory.
 
-**F3 (MED-HIGH) — token cap → iteration cap** in the line declaration. Was a
-parked idea; the line-governance learnings above are now its evidence (delegates
-can't meter their own tokens; the cap keeps getting negotiated away). Needs the
-grill it asks for — do it inside the F2 cluster-1 decision.
+**F3 (closed) — iteration-cap line declaration.** The line now
+uses iteration caps as the stop condition; token estimates are optional sizing
+notes only.
 
 **F4 (MED-LOW) — tests/ bloat review.** Audit growth and pasted fixture
 harnesses; the canary tree grew fast (56 fixtures) since this was parked, which
@@ -111,9 +103,9 @@ demonstrably burn turns on symbol search.
 
 ## Recommended sequence
 
-1. F2 + F3 together (`/bench-integrate-learnings` with the line-governance grill) —
-   drains the journal, settles the line discipline.
+1. Finish the remaining `/bench-integrate-learnings` clusters, starting with
+   review-findings persistence.
 2. FT1 (binary auto-repair) — today's outage is the justification.
 3. FT2 (adversarial gate pinning) — only after the current gate diagnosis is settled.
-4. FT3/FT4 by appetite once the line-governance and findings-persistence decisions
+4. FT3/FT4 by appetite once the findings-persistence and harness-fallback decisions
    are closed.

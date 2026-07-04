@@ -28,15 +28,19 @@ is the deliverable), and its budget. Route its model and effort with
 `craft-line` — the line is declared by you, not chosen by the delegate — and
 carry both explicitly: the model goes on the call itself as the bound alias
 (never omitted — an Agent call without a model inherits *your* model, which is
-silent escalation when you run top-tier), and the effort and cap go in the
+silent escalation when you run top-tier), and the effort and iteration cap go in the
 charge text, because the Agent tool has no effort parameter — effort rides in
 the charge or it rides nowhere.
+
+Prefer compressed inputs over inherited context: when a decision map has a
+Handoff, give the delegate that digest plus line-ranged excerpts it must quote,
+not the orchestrator's whole read list.
 
 ```
 Review this diff on the Standards axis only. Base: run `bench diff` for the
 changed files; read AGENTS.md and .bench/BENCH.md for the conventions. Charge:
-.agents/skills/bench-craft-review/SKILL.md. Effort: medium, ~60k tokens — one
-pass, no iteration. Return findings under ## Standards, each citing the rule,
+.agents/skills/bench-craft-review/SKILL.md. Effort: medium, ~1 iteration — one
+pass, no fix iteration. Return findings under ## Standards, each citing the rule,
 under 400 words. Do not edit any file.
 ```
 Good — self-contained: inputs by path, the charge by path, the return shape and

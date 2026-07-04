@@ -6,7 +6,7 @@ index: declaring the line / picking a delegate's model or effort
 
 # The line: route by signals, correct by ladder
 
-The line (model / effort / ~token cap) is declared before every multi-cycle
+The line (model / effort / ~iteration cap) is declared before every multi-cycle
 stage. This skill is how the line gets *picked* — the same three signals every
 time, not ad hoc judgment — and how it moves once the gate starts talking.
 
@@ -70,10 +70,13 @@ The same signals pick *where* a spec'd build runs. Delegate it to `bench shift`
 on the cheap binding when every story's line is cheap **and** the gate fully
 observes the coverage map. Stay inline when mid+ judgment is likely (protocol
 design, a grammar discovered from red output) or the task is smaller than its
-own handoff — the handoff must be cheaper than the iterations it moves. The
-expensive shape to avoid is iterating in a huge context on the top model, not
-top-tier work per se: spec at the top tier, then move gate-observable
-iteration to the cheap binding.
+own handoff — the handoff must be cheaper than the iterations it moves.
+Per-story tiers presume separable slices; when the spec's stories land as one
+atomic diff, run the build at the highest tier any story needs and flag each
+collapsed line in the exit report. The expensive shape to avoid is iterating in
+a huge context on the top model, not top-tier work per se: use top only for the
+uncertain decision, then move gate-observable iteration to the cheapest venue
+that preserves isolation and verification.
 
 ## The ladder corrects the start
 
@@ -103,16 +106,16 @@ declaration is not optional.
 
 ## The declaration
 
-> Line: <resolved model id> / <effort> / ~<token cap>. <one clause: the
+> Line: <resolved model id> / <effort> / ~<iteration cap>. <one clause: the
 > signals that chose this row.>
 
-Derive the cap; don't feel it out: expected iterations × tokens per iteration
-(the read set, the diff, one gate run's output), plus a margin for one red.
-Worked example: a review-axis delegate reads the full diff plus the standards
-docs and runs verification commands — one pass, no iteration — so it prices at
-~60k. The project's cached routings hold figures like that one — a stage with
-no basis for an iteration count is a stage you don't understand yet, which is
-itself a routing signal.
+Derive the cap; don't feel it out: expected red/green cycles, plus a margin for
+one red. A review-axis delegate is one pass with no fix iteration, so it prices
+at ~1 iteration; a shift with a likely red and fix prices higher. Add a token
+estimate only as a sizing note for a charge, not as the stop condition. The
+project's cached routings hold figures like this — a stage with no basis for an
+iteration count is a stage you don't understand yet, which is itself a routing
+signal.
 
-If the stage blows past its cap, stop and report — never grind, never
+If the stage exhausts its cap, stop and report — never grind, never
 escalate silently.

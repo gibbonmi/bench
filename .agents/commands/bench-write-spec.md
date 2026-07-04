@@ -16,7 +16,7 @@ Close by showing the approval table for user stories, seams (each with its seam
 diagram), acceptance coverage, and out of scope. The spec carries a
 `Status: staged` line (staged → implemented at the green gate → promote-then-delete
 on merge). Stop for reviewer sign-off. After approval, recommend a
-**new session on the mid tier** to orchestrate the build — a fresh session keeps the
+**new session on the mid tier by default** to orchestrate the build — a fresh session keeps the
 build off the top model's big-context iteration, escalating per stage instead. That
 session runs
 `/bench-implement-spec` for an interactive build, or `bench shift` only when the
@@ -30,12 +30,13 @@ whose Handoff is still open, name the map to close and stop; never draft a spec
 from conversation alone. Bugs are the exception: they route to `/bench-debug`,
 which needs no spec.
 
-**Who runs this phase.** The mid tier authors every spec — the top model never
-does. The default venue is a fresh mid-tier session that starts cold on the map
-plus the repo, so the expensive big-context grill session ends at the closed map
-instead of lingering as an idle orchestrator. A same-session mid **delegate** is
-the exception, taken only on my explicit ask: it is read-only (or
-worktree-isolated) and returns the spec text for the invoking session to write.
+**Who runs this phase.** The mid tier authors ordinary specs. The top tier is an
+explicit exception only when the Handoff carries uncertainty flags and I approve
+the escalation. Either way, keep the fresh-session discipline: write from the
+map plus the repo, and treat any reach into grill memory as a missing Handoff
+fact. A same-session mid **delegate** is allowed only on my explicit ask: it is
+read-only (or worktree-isolated) and returns the spec text for the invoking
+session to write.
 
 Synthesize the current conversation and codebase understanding into a spec the
 build loop can run against. Do **not** interview me — use what you already know.

@@ -7,6 +7,19 @@ one entry per `/bench-update-kit` or `/bench-integrate-learnings` run; don't rew
 
 ## Unreleased
 
+- **Learnings run (2026-07-04, scope: line governance).** Drained six open
+  entries and one roadmap item. Promoted: the line declaration now uses an
+  iteration cap as the stop condition; `craft-line` keeps venue routing
+  right-sized instead of requiring every story to delegate, with inline work
+  allowed for tiny slices and atomic diffs when deviations are reported; ordinary
+  spec authoring stays mid-tier, with a top-tier exception only for Handoff
+  uncertainty plus reviewer approval; delegate charges should use the Handoff
+  digest and line-ranged excerpts over whole-file read lists; and `/bench-debug`
+  allows direct fix-and-gate for small single-seam fixes. Dismissed: mandatory
+  facilitator delegation as too rigid for delegation overhead and atomic diffs.
+  Dogfood loop pending the current gate diagnosis; verified with consistency
+  greps and targeted tests in this run.
+
 - **Learnings run (2026-07-04, scope: learnings).** Drained two open entries
   (seam-level test batching; skipped conformance test counted as a pass).
   Promoted into `craft-tdd`: the red step now says to stub minimal declarations

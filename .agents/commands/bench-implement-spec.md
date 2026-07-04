@@ -39,6 +39,10 @@ table that picks the row, and the escalation ladder are all `craft-line`'s.
 - One small change at a time, repo stays green — invariant 4 in `.bench/BENCH.md`.
 - Every delegation during the build carries its own line — the rules are
   `craft-delegate`'s (model half: `craft-line`).
+- Use the venue `craft-line` selects: delegate only when the slice is separable
+  and the handoff is cheaper than the work it moves. Inline small mechanical
+  slices or one atomic diff at the highest needed tier, and flag any collapsed
+  per-story lines in the exit report.
 - For broad renames or reference refactors, dry-run the file scope before editing,
   then verify old stems in every form: `/name`, `$name`, bare basenames in
   inventories, and `dir/name` path forms. Separator slashes inside prose are not
@@ -46,7 +50,7 @@ table that picks the row, and the escalation ladder are all `craft-line`'s.
 
 ## When the build stops short
 
-A build that hits its token cap or ends with stories unmet exits through a
+A build that exhausts its iteration cap or ends with stories unmet exits through a
 defined route — never a silent grind, never an abandoned worktree:
 
 1. **Report state:** stories done vs. remaining, the coverage table as it

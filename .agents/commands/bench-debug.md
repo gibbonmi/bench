@@ -90,17 +90,18 @@ every deleted spec, and `git log --grep=spec-retire` finds the retirement commit
 
 ## How it meets the rest of Bench
 
-The Phase 1 loop joins the project gate for the fix shift: add the repro as a test
-the gate runs alongside its existing checks, and **commit that test
-before launching the shift** — a shift iteration that ends red rolls the worktree back to
-the last commit, so an uncommitted repro test is destroyed by the first failed
-iteration of the very shift it was built to gate. This is the one commit that
-deliberately precedes green: it strengthens the oracle rather than shipping work;
-the shift's own commits stay on-green as always. Replacing the gate with the repro
-weakens the oracle — that is my call, never a debug step. Then run
-`bench shift "fix <bug>"` so the loop physically gates "done" on the bug going
-green. The seam decision in Phase 5 is the `craft-seams` skill. Declare the line first — a
-hard bug is a high-effort shift. Any delegation along the way (a fan-out search, a
-scoped fix) carries its own line: an explicit bound model alias on the Agent call —
-never the inherited default — with effort and cap stated in the charge, per
-`craft-line` and `craft-delegate`.
+The Phase 1 loop joins the project gate for the fix. If the fix launches a shift,
+add the repro as a test the gate runs alongside its existing checks and **commit
+that test before launching the shift** — a shift iteration that ends red rolls the
+worktree back to the last commit, so an uncommitted repro test is destroyed by the
+first failed iteration of the very shift it was built to gate. This is the one
+commit that deliberately precedes green: it strengthens the oracle rather than
+shipping work; the shift's own commits stay on-green as always. For a small
+single-seam fix, skip the shift and use direct fix-and-gate instead: repro red,
+regression test red, fix, repro green, project gate green, one green commit.
+Replacing the gate with the repro weakens the oracle — that is my call, never a
+debug step. The seam decision in Phase 5 is the `craft-seams` skill. Declare the
+line first — a hard bug is a high-effort shift. Any delegation along the way (a
+fan-out search, a scoped fix) carries its own line: an explicit bound model alias
+on the Agent call — never the inherited default — with effort and iteration cap
+stated in the charge, per `craft-line` and `craft-delegate`.

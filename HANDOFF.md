@@ -1,57 +1,84 @@
 # Bench handoff
 
-Pick-up doc for a fresh session or harness. Package consumers should read
-`README.md`, `AGENTS.md`, `.bench/BENCH.md`, and this file first. Kit development in
-this repository also uses `CONTEXT.md` and `projects/benchkit.md`; those are
-repo-only development context, not npm package contents.
+This is a pickup note for the next kit-development session. Durable product facts
+live in `README.md`, `AGENTS.md`, `.bench/BENCH.md`, `.bench/BENCH-reference.md`,
+`CONTEXT.md`, and `projects/benchkit.md`; do not treat this file as a second
+inventory of commands, skills, hooks, or CLI surfaces.
 
-## Current shape
+## Current state
 
-Bench is the npm package `benchkit`: a harness-agnostic kit made of shell,
-markdown, JSON, portable commands, portable skills, shared hooks, and adapter files.
-The product is portability: Claude Code, Codex, and AGENTS.md harnesses should land on
-the same working agreement and the same operational substrate.
+Active phase: `$bench-integrate-learnings`. The work is paused after the reviewer
+approved and the session applied the line-governance promotion set. The working
+tree is intentionally dirty and uncommitted.
 
-The shared invariants and communication rules are canonical in `.bench/BENCH.md`.
-`AGENTS.md` is the project-owned working agreement and points there. `CLAUDE.md` is an
-adapter import shim, not a source of truth.
+The gate dogfood loop is still pending because a separate session was diagnosing a
+known gate problem when this pass started. Do not claim synthesis complete until the
+gate question is settled and the appropriate final check runs.
 
-## Shipped surfaces
+## Current diff
 
-- Commands: `/bench-setup-repo`, `/bench-shape-idea`, `/bench-write-spec`,
-  `/bench-debug`, `/bench-implement-spec`, `/bench-review-implementation`,
-  `/bench-final-check`, `/bench-update-kit`, `/bench-integrate-learnings`
-- Skills: `craft-seams`, `craft-tdd`, `craft-adr`, `craft-cli`,
-  `craft-design-system`, `craft-skills`, `craft-grill`, `craft-synthesis`,
-  `craft-line`, `craft-review`, `craft-delegate`, `craft-gate`
-- CLI: `bench link`, `bench init`, `bench models`, `bench structure`, `bench idea`,
-  `bench roadmap`, `bench status`, `bench learnings`, `bench maps`, `bench guards`,
-  `bench diff`, `bench coverage`, `bench doctor`, `bench gate`, `bench canary`,
-  `bench worktree`, `bench shift`, `bench version`; plumbing the hooks and shell adapters call:
-  `bench tree-hash`, `bench gate-run`, `bench worktree-pool`,
-  `bench worktree-lease-file`, `bench guard-git`, `bench check-agent-line`,
-  `bench resolve-model`, `bench stop-verdict`
-- Hooks: shared `.bench/hooks/stop.sh`, `.bench/hooks/session-start.sh`, and
-  `.bench/hooks/block-dangerous-git.sh`, with Claude and Codex adapters
-- Profiles: linked repos own their profile. The kit-development profiles under
-  `projects/` are repo-only development context, not npm package contents.
+Promoted in the dirty tree:
 
-## How to continue
+- The line declaration now uses model + effort + iteration cap. Token estimates are
+  only optional sizing notes, not the stop condition.
+- `craft-line` keeps venue routing right-sized: delegate when
+  isolation/parallelism earns its cost, stay inline for tiny slices or atomic
+  diffs, and flag collapsed per-story lines in the exit report.
+- `/bench-write-spec` keeps mid-tier spec authoring as the default, with a top-tier
+  exception only when the Handoff carries uncertainty flags and the reviewer
+  approves.
+- `craft-delegate` prefers a map Handoff plus line-ranged excerpts over whole-file
+  read lists when charging a delegate.
+- `/bench-debug` allows direct fix-and-gate for small single-seam fixes instead of
+  forcing `bench shift`.
 
-Use `bench gate` as the oracle. For repo setup, run `bench link`, `bench init`, then
-`/bench-setup-repo`. For ordinary kit work, use the canonical workflow in
-`.bench/BENCH.md` unless the reviewer explicitly approves a lighter path. For parked
-ideas, use `bench idea "<text>"` and promote only through `/bench-shape-idea`.
+Recorded/pruned in the dirty tree:
 
-The gate is the load-bearing safety net. It checks shell/JSON validity, package
-contents, link behavior, roadmap/status contracts, shift/worktree contracts, command
-and skill conformance, command-name currency in living docs, and canary fixtures that
-prove the checks still bite.
+- `CHANGELOG.md` has the 2026-07-04 line-governance learnings entry.
+- `.bench/learnings.md` was pruned from 14 open entries to 8.
+- `ROADMAP.md` no longer carries the iteration-cap item.
+- `ASSESSMENT.md` marks line governance and F3 closed, and recommends continuing
+  with the remaining learnings clusters.
 
-## Maintenance
+Touched files at pause:
 
-`/bench-update-kit` compares the kit against upstream sources and records adopted
-changes in `CHANGELOG.md`. `/bench-integrate-learnings` drains `.bench/learnings.md`
-with reviewer sign-off. Both use `craft-synthesis`: respect closed decisions, assess
-each candidate, run legibility/consistency/dogfood loops, and propose rather than
-merge.
+```
+.agents/commands/bench-debug.md
+.agents/commands/bench-implement-spec.md
+.agents/commands/bench-write-spec.md
+.agents/skills/bench-craft-delegate/SKILL.md
+.agents/skills/bench-craft-line/SKILL.md
+.bench/BENCH.md
+.bench/learnings.md
+ASSESSMENT.md
+CHANGELOG.md
+HANDOFF.md
+ROADMAP.md
+projects/benchkit.md
+```
+
+## Verification already run
+
+- `git diff --check`
+- `BENCH_CONFORMANCE_ROOT=/home/devuser/workspace/bench go test -count=1 ./internal/conformance -run '^TestRootConformance$'`
+- `go test -count=1 ./...`
+- Stale-wording grep over edited guidance surfaces found no live `token cap`,
+  mandatory-delegation, or old top-tier-ban wording outside historical changelog.
+
+Not run: `bench gate`, for the gate-diagnosis reason above.
+
+## Remaining learnings
+
+`bench learnings` currently reports 8 open entries:
+
+- Session-start stale gate: split benign drift from real drift.
+- Skill/command dogfood gotcha: trigger edits take effect in the next session.
+- Review implementation: live-session verification of returned findings.
+- Linked-repo by-path CLI edge inventory.
+- Review findings persistence.
+- External-format/library decision: official library vs private dialect.
+- Runnable probes for byte/wire compatibility claims.
+- Codex/no-subagent review-axis fallback.
+
+Recommended next decision: review-findings persistence, because it affects whether
+the rest of `/bench-integrate-learnings` has a durable pickup surface.

@@ -59,10 +59,10 @@ you generate every turn.
 
 2. **Declare the line before a long run.**
    Before any multi-cycle stage (a build, a shift, a TDD pass), state in one line:
-   the model, the effort level, and a rough token cap, with one clause of
+   the model, the effort level, and a rough iteration cap, with one clause of
    justification. Cheap model + low effort for plumbing at a known seam; top model
    + high effort only for the seam where the answer is genuinely uncertain. No
-   silent escalation. If a stage blows past its cap, stop and report rather than
+   silent escalation. If a stage exhausts its cap, stop and report rather than
    grinding. The tiers (cheap / mid / top) are abstract; resolve them to models
    actually available in *this* harness — `projects/<name>.md` holds the binding,
    and `bench models` (or the harness's own model list) refreshes it. If a named

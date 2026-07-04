@@ -155,18 +155,21 @@ get declared — no silent escalation.
   leverage override in `craft-line`: guidance prose compounds through every
   session that loads it while the edit costs few tokens. The `craft-skills` and
   `craft-adr` skills apply. Spend here.
-- **Spec authoring** → **mid model, fresh session**. Every spec is compiled from a
-  closed map's Handoff; `/bench-write-spec` owns the venue mechanic. Distinct from
-  the doc-authoring leverage override above: that spends the top tier on the kit's
-  guidance prose; a spec is decided content transcribed off a Handoff.
+- **Spec authoring** → **mid model, fresh session by default**. Every spec is
+  compiled from a closed map's Handoff; `/bench-write-spec` owns the venue
+  mechanic. Top + high is allowed only when the Handoff carries uncertainty flags
+  and the reviewer approves the escalation. Distinct from the doc-authoring
+  leverage override above: that spends the top tier on the kit's guidance prose; a
+  normal spec is decided content transcribed off a Handoff.
 - **`bench` CLI shell plumbing** → cheap model, low–medium effort at the known seam.
   Mechanical once the gate-resolution and worktree-pool shapes exist.
 - **Gate / conformance logic** → mid effort. Correctness of the oracle matters more
   than speed — a wrong gate is the worst class of bug in a kit whose whole premise is
   "the gate is the oracle."
 - **Review-axis delegate** (`/bench-review-implementation`, one per axis) → mid
-  model, medium effort, **~60k tokens each** (three axes ≈ 180k total). Read-heavy:
-  each takes the full diff plus standards docs and runs verification commands.
+  model, medium effort, **~1 iteration each** (three axes can run in parallel).
+  Read-heavy: each takes the full diff plus standards docs and runs verification
+  commands.
 
 ## Notes for cold sessions
 

@@ -77,35 +77,6 @@ An entry leaves this file only via /bench-integrate-learnings.
   live session verifies and fixes a returned finding in place — worktree isolation
   is for write-delegations, not for reproducing a review finding.
 
-## 2026-07-03 — implement-spec: the facilitating session must delegate every story, never build inline  [open]
-- **What happened:** During `/bench-implement-spec` on shim-autoinstall, the live
-  (facilitating) session implemented the stories itself inline — doctor, wrapper,
-  postinstall, session-start, README, and the gate fragment — rather than delegating
-  each story's build to a sub-agent. It declared the line honestly (mid/medium, one
-  notch above the spec's cheap estimate) but did the work in the session's own context.
-- **Right behavior:** The session that facilitates a build should never be the one
-  that works a story. It must always delegate the story's build to a sub-agent —
-  even when the sub-agent runs the exact same model and effort — then continue
-  facilitating. The point is role separation and keeping the facilitator's context
-  clean for orchestration and verification, not a model/effort saving; the tier
-  match is irrelevant to the rule. The facilitator declares the line, spawns the
-  delegate (in an isolated worktree for write-work per craft-delegate), verifies the
-  returned claim against the gate and git status, then moves to the next story.
-- **Proposed rule change:** Consider making delegation mandatory in
-  `/bench-implement-spec` and `craft-delegate`: the facilitating session delegates
-  every story build to a sub-agent regardless of tier match, and reserves itself for
-  declaring the line, sequencing slices, and verifying delegate claims. (Reviewer's
-  call — this generalizes the existing "run write-delegations in isolated worktrees"
-  invariant into a "always delegate, never self-build" rule.)
-
-## 2026-07-03 — top tier authored a spec on reviewer direction  [open]
-
-What happened: the reviewer directed Fable 5 (top) to author the go-walking-skeleton spec in the shaping session, overriding the profile line (spec authoring → mid, fresh session) and /bench-write-spec's "the mid tier authors every spec" rule. Agent agreed rather than pushing back, because the map's Handoff carries two uncertainty flags that land in this slice and the slice locks the distribution shape all later slices inherit — the craft-line escalation case, not transcription.
-
-Right behavior: honor the reviewer override, keep the fresh-session discipline synthetically (write from map + profile + repo only; treat any reach into grill memory as a Handoff gap to fix in the map), and drop back to mid for later transcription-only slices.
-
-Proposed rule change: in /bench-write-spec, allow a declared top-tier exception when the source Handoff carries uncertainty flags (item 7) and the reviewer approves — currently the phase text says "never", which conflicts with the craft-line ladder it also invokes.
-
 ## 2026-07-03 — routing a hook-invoked command to Go broke the linked-repo by-path CLI  [open]
 
 What happened: go-axi-query-surface (slice 2) flipped the router so learnings|maps|guards|diff|coverage exec the Go binary via route_binary. The Go surface is a verified byte-identical drop-in and all AXI/status contracts pass when driven through the REAL kit CLI ($root/bin/bench.sh, kit_dir=$root, dist/bench present). But the linked-repo by-path CLI (.bench/bin/bench.sh, kit_dir=.bench) has NO route_binary candidate that reaches the binary in any deployment — not the gate's copy-mode fixture, not an npm consumer (its <repo>/node_modules/@benchkit/<pkg> path is not among the candidates .bench/dist/bench, .bench/node_modules/<pkg>, .bench/../<pkg>). So session-start's `guards --brief` (the failing contract) and status's learnings/maps adapters silently break for every linked/consumer repo the moment those commands route to Go. Slice 1 never exposed this because only `version` routed and nothing invoked it by-path.
@@ -173,36 +144,6 @@ Proposed rule change: in /bench-write-spec's edge inventory, add a check — "fo
   evidence for a "compatible/unchanged" claim — an API table alone does not settle
   byte compatibility.
 
-## 2026-07-04 — delegate charges over-provision the read-set  [open]
-
-- **What happened:** The spec-authoring delegate for implement-spec-lean was
-  charged to read three craft skills, BENCH.md, and the write-spec phase
-  completely when it only needed the closed map's Handoff (which exists as the
-  compressed digest), the template, and the few lines it had to quote. Cost was
-  small this time (~15s of reads; the run was dominated by mid-tier deliberation
-  and long-form output, which was the declared line working), but the habit
-  scales badly across fan-outs.
-- **Right behavior:** Author charges with the Handoff as the digest plus
-  line-ranged excerpts of only what the delegate must quote; don't forward the
-  orchestrator's whole read list.
-- **Proposed rule change:** One line in craft-delegate's "The charge": prefer
-  the map/Handoff digest and line-ranged inputs over whole-file read lists when
-  a compressed source exists.
-
-## 2026-07-04 — a spec-declared delegate line was executed inline when the delegate charge would cost more than the work  [open]
-- **What happened:** Spec implement-spec-lean declared story 3 (one
-  `require_anchor` line plus the bite ritual) as `claude-sonnet-5 / low / ~15k`
-  via delegate. The orchestrator (top tier) executed it inline instead: writing
-  and verifying a delegate charge would have spent more tokens than the ~2k the
-  edit cost, and the bite ritual mutates a file the build was already editing.
-- **Right behavior:** Unclear — honoring the declared tier strictly means
-  delegating even negative-savings work; the cheaper call is inline execution
-  with the deviation flagged, which is what happened.
-- **Proposed rule change:** In craft-line, note a floor: when a story's
-  estimated cost is below the overhead of charging and verifying a delegate,
-  the orchestrator may run it inline at its own tier, flagging the deviation
-  in the exit report.
-
 ## 2026-07-04 — Codex subagent policy conflicts with review-axis delegation  [open]
 - **What happened:** `/bench-implement-spec` reached the required
   `/bench-review-implementation` step, whose phase text says to spawn three
@@ -216,35 +157,3 @@ Proposed rule change: in /bench-write-spec's edge inventory, add a check — "fo
   when the harness forbids unsolicited subagents, run the three axes inline,
   state the deviation in the exit report, and keep the same per-axis charges and
   citation standard.
-
-## 2026-07-04 — per-story spec lines were collapsed to one inline tier because the stories were one atomic diff  [open]
-- **What happened:** Spec go-shift-worktree-port assigned per-story lines
-  (stories 1–2 cheap/sonnet, 3–6 mid/opus, 5–6 high effort). The six stories
-  share three packages (worktree/gate/shift) and must land in one diff (the shell
-  deletion + dispatch flip are inseparable), so I built the whole slice inline at
-  mid (Opus 4.8), bumping effort for the two flagged-uncertain seams (5 signals,
-  6 flip). The declared cheap→mid bump on stories 1–2 was flagged, not silent.
-- **Right behavior:** For a spec whose stories are tightly coupled into a single
-  atomic diff, per-story worktree delegation fights the coupling; one inline tier
-  covering the diff, with the per-story deviations flagged, is the honest call.
-  Distinct from the delegate-overhead floor above — here the driver is diff
-  atomicity, not charge cost.
-- **Proposed rule change:** In craft-line or the spec's per-story line guidance,
-  note that per-story tiers presume separable slices; when the spec itself says
-  the stories land as one atomic diff, the build may run inline at the highest
-  tier any story needs, flagging each collapsed line in the exit report.
-
-## 2026-07-04 — debug fix landed via direct fix-and-gate instead of `bench shift`  [open]
-- **What happened:** /bench-debug on the flaky "npm pack JSON unreadable" gate
-  red. The skill prescribes committing the repro test red, then
-  `bench shift "fix <bug>"`. The fix was ~20 lines in one file at a known seam,
-  so I ran the direct path: regression test red → fix → test green → full gate
-  green → one commit with test + fix. This kept every main commit green but
-  skipped the prescribed shift and the deliberate red-test-first commit.
-- **Right behavior:** For a small single-seam fix, red-test-first committing
-  exists to survive shift rollbacks; with no shift launched there is nothing to
-  roll back, and one green commit is the smaller, safer diff.
-- **Proposed rule change:** In /bench-debug's "How it meets the rest of Bench",
-  scope the commit-red-test-then-shift sequence to fixes that actually launch a
-  shift; allow direct fix-and-gate with a single green commit when the fix is
-  small enough to land inline.
