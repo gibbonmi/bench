@@ -67,7 +67,9 @@ writers in one checkout collide, and a mixed `git status` makes both
 done-claims unverifiable. Share a worktree — or run sequentially — only when
 one delegate's work genuinely depends on another's output. Read-only
 delegations need no worktree; say "do not edit any file" in the charge and
-mean it.
+mean it. Review delegates return findings only. The invoking session verifies and
+fixes any accepted finding in the checkout that owns the diff; isolated worktrees
+are for write-delegations, not for reproducing a read-only review result.
 
 ## Verifying the done-claim
 

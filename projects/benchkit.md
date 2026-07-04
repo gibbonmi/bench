@@ -82,6 +82,8 @@ coverage map; a class skipped here returns as a regression.
 - unquoted multi-word arguments (`$*` vs `$1`)
 - required tool missing from PATH (no global `bench`, no `readlink -f`)
 - invocation through a symlink rather than the real path
+- invocation through every shipped surface: real kit CLI, linked-repo by-path
+  CLI, hooks, and adapters must all reach the same routed implementation
 - interrupt (SIGINT) mid-loop: leftover scratch state, leases, worktrees
 - re-run idempotency: relink, reused worktree, second `init`
 - cwd deeper than the repo root when the command assumes root

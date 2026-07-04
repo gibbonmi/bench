@@ -128,7 +128,11 @@ loop honest.
    prevent. Before writing a **Won't handle** line about an interface, verify at
    least one in-scope caller can still exercise the feature under that exclusion —
    a cut that amputates the surface's primary calling convention is a spec defect,
-   not a scope cut.
+   not a scope cut. If the spec names an external format or protocol, check
+   whether an official implementation exists and whether the current output
+   conforms; divergence is a reviewer decision, not a silent compatibility
+   promise. If a map or research asset claims byte or wire compatibility, require
+   a runnable probe against the caller's own edge outputs as the evidence.
 
 6. **Route each story.** Give every user story its line — the resolved model id
    and effort from the `craft-line` decision table, judged per story on spec

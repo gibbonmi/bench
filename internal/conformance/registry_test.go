@@ -39,6 +39,7 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"stale-command-reference":       conformanceFixture("docs-currency-token-diet", ".bench/gate-docs-contracts.sh"),
 	"stale-codex-adapter-reference": conformanceFixture("docs-currency-token-diet", ".bench/gate-docs-contracts.sh"),
 	"stale-cli-doc-reference":       conformanceFixture("docs-currency-token-diet", ".bench/gate-docs-contracts.sh"),
+	"missing-cli-inventory":         conformanceFixture("docs-currency-token-diet", ".bench/gate-docs-contracts.sh"),
 	"historical-marker-prose":       conformanceFixture("docs-currency-token-diet", ".bench/gate-docs-contracts.sh"),
 	"benchref-missing":              conformanceFixture("docs-currency-token-diet", ".bench/gate-docs-contracts.sh"),
 	"benchref-pointer-dropped":      conformanceFixture("docs-currency-token-diet", ".bench/gate-docs-contracts.sh"),

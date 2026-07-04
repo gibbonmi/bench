@@ -430,7 +430,7 @@ func checkColdPickupCLILists(root string) []string {
 	}
 	docRef := regexp.MustCompile("`bench ([a-z][a-z-]*)\\b")
 	var diags []string
-	for _, rel := range []string{"HANDOFF.md", ".bench/BENCH-reference.md"} {
+	for _, rel := range []string{".bench/BENCH.md"} {
 		path := filepath.Join(root, filepath.FromSlash(rel))
 		text := readIfExists(path)
 		if text == "" {
@@ -440,6 +440,13 @@ func checkColdPickupCLILists(root string) []string {
 			if !strings.Contains(text, "bench "+command) {
 				diags = append(diags, fmt.Sprintf("%s does not list CLI command 'bench %s'", rel, command))
 			}
+		}
+	}
+	for _, rel := range []string{"HANDOFF.md", ".bench/BENCH.md", ".bench/BENCH-reference.md"} {
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		text := readIfExists(path)
+		if text == "" {
+			continue
 		}
 		for _, match := range docRef.FindAllStringSubmatch(text, -1) {
 			if !known[match[1]] {

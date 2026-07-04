@@ -53,6 +53,8 @@ Run in order; a change that fails a loop is pruned or sent back, not shipped.
    fire, `bench gate` ends green. A change that reads well but breaks a real run is
    rejected. If you can't run a dogfood shift, the synthesis is **not complete** — say
    so rather than adopting on paper. The kit does not grade its own update; a run does.
+   A candidate that changes a skill or command trigger needs the dogfood run in a
+   fresh session, because this session loaded those surfaces before the edit.
    Proportionality: a prose-only change — no hook, gate, CLI, or adapter touched —
    may substitute a green `bench gate` plus a read of every surface the prose
    steers for the full shift; say which verification ran. Anything that touches

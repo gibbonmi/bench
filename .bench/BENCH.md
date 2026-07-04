@@ -38,11 +38,25 @@ model and ubiquitous language, and `projects/<name>.md` for the seams, the gate
 command, and the line assignments.
 
 **Reference lookup lives on demand, not always-loaded.** The file map, the skills
-index, harness-invocation details, the CLI command list, the shift adapter
-contract, and the hook layers live in `.bench/BENCH-reference.md` — referenced by
-path, never imported, so they cost no tokens until you open the file. Read it when
-you need a command name or adapter wiring; this guide keeps only what steers how
-you generate every turn.
+index, harness-invocation details, the shift adapter contract, and the hook layers
+live in `.bench/BENCH-reference.md` — referenced by path, never imported, so they
+cost no tokens until you open the file. The CLI inventory below is canonical here
+because cold pickup must not depend on `HANDOFF.md`; read the reference file when
+you need adapter wiring or other lookup detail.
+
+## CLI Inventory
+
+Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
+
+- Adoption and setup: `bench link`, `bench init`, `bench doctor`.
+- Ambient context and capture: `bench status`, `bench idea`, `bench roadmap`,
+  `bench learnings`, `bench maps`.
+- Oracle and diagnostics: `bench gate`, `bench canary`, `bench structure`,
+  `bench guards`, `bench diff`, `bench coverage`, `bench models`, `bench version`.
+- Work execution: `bench worktree`, `bench shift`.
+- Hook and adapter plumbing: `bench tree-hash`, `bench gate-run`,
+  `bench guard-git`, `bench resolve-model`, `bench check-agent-line`,
+  `bench stop-verdict`, `bench worktree-pool`, `bench worktree-lease-file`.
 
 ## The four invariants (these override convenience, always)
 

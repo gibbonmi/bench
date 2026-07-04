@@ -7,78 +7,71 @@ inventory of commands, skills, hooks, or CLI surfaces.
 
 ## Current state
 
-Active phase: `$bench-integrate-learnings`. The work is paused after the reviewer
-approved and the session applied the line-governance promotion set. The working
-tree is intentionally dirty and uncommitted.
+Active phase: `$bench-integrate-learnings`. The current green slice is ready to
+commit: six review/spec-guidance learnings were promoted and pruned, and the gate
+policy mismatch around CLI inventory was fixed.
 
-The gate dogfood loop is still pending because a separate session was diagnosing a
-known gate problem when this pass started. Do not claim synthesis complete until the
-gate question is settled and the appropriate final check runs.
+`bench gate` is green on the dirty tree. The branch is still ahead of
+`origin/main` by the two prior local commits until this slice is committed and
+pushed.
 
 ## Current diff
 
 Promoted in the dirty tree:
 
-- The line declaration now uses model + effort + iteration cap. Token estimates are
-  only optional sizing notes, not the stop condition.
-- `craft-line` keeps venue routing right-sized: delegate when
-  isolation/parallelism earns its cost, stay inline for tiny slices or atomic
-  diffs, and flag collapsed per-story lines in the exit report.
-- `/bench-write-spec` keeps mid-tier spec authoring as the default, with a top-tier
-  exception only when the Handoff carries uncertainty flags and the reviewer
-  approves.
-- `craft-delegate` prefers a map Handoff plus line-ranged excerpts over whole-file
-  read lists when charging a delegate.
-- `/bench-debug` allows direct fix-and-gate for small single-seam fixes instead of
-  forcing `bench shift`.
+- `craft-synthesis` now requires a fresh-session dogfood run when a candidate
+  changes skill or command triggers.
+- `craft-delegate` now says read-only review findings are verified and fixed by
+  the invoking session in the checkout that owns the diff.
+- `/bench-review-implementation` now falls back to inline axes when a harness
+  forbids unsolicited sub-agents.
+- `/bench-write-spec` now checks external format/library divergence and runnable
+  byte/wire compatibility probes.
+- `/bench-shape-idea` now requires Research assets that claim byte or wire
+  compatibility to include a runnable probe.
+- `projects/benchkit.md` now treats real CLI, linked by-path CLI, hooks, and
+  adapters as explicit hostile-input invocation surfaces.
+
+Gate/conformance fix in the dirty tree:
+
+- `.bench/BENCH.md` is now the canonical CLI inventory source.
+- `.bench/BENCH-reference.md` points back to that inventory instead of carrying a
+  second command list.
+- `HANDOFF.md` is no longer checked for inventory completeness, but command names
+  it mentions are still checked for unknown/stale CLI references.
+- The stale CLI canary now plants its stale reference in `.bench/BENCH.md`, and a
+  new missing-inventory canary proves the BENCH.md inventory check still bites.
 
 Recorded/pruned in the dirty tree:
 
-- `CHANGELOG.md` has the 2026-07-04 line-governance learnings entry.
-- `.bench/learnings.md` was pruned from 14 open entries to 8.
-- `ROADMAP.md` no longer carries the iteration-cap item.
-- `ASSESSMENT.md` marks line governance and F3 closed, and recommends continuing
-  with the remaining learnings clusters.
-
-Touched files at pause:
-
-```
-.agents/commands/bench-debug.md
-.agents/commands/bench-implement-spec.md
-.agents/commands/bench-write-spec.md
-.agents/skills/bench-craft-delegate/SKILL.md
-.agents/skills/bench-craft-line/SKILL.md
-.bench/BENCH.md
-.bench/learnings.md
-ASSESSMENT.md
-CHANGELOG.md
-HANDOFF.md
-ROADMAP.md
-projects/benchkit.md
-```
+- `CHANGELOG.md` has the 2026-07-04 review/spec guidance learnings entry.
+- `.bench/learnings.md` now has 2 open entries.
 
 ## Verification already run
 
 - `git diff --check`
+- `go test -count=1 ./internal/conformance -run '^TestDocsCurrencyTokenDietAndWorkflowFixturesBite$'`
+- `go test -count=1 ./internal/conformance -run 'Fixture|Registry'`
 - `BENCH_CONFORMANCE_ROOT=/home/devuser/workspace/bench go test -count=1 ./internal/conformance -run '^TestRootConformance$'`
 - `go test -count=1 ./...`
-- Stale-wording grep over edited guidance surfaces found no live `token cap`,
-  mandatory-delegation, or old top-tier-ban wording outside historical changelog.
+- `bench gate`
 
-Not run: `bench gate`, for the gate-diagnosis reason above.
+## Remaining work
 
-## Remaining learnings
+`bench learnings` reports 2 open entries, both needing product decisions before
+implementation:
 
-`bench learnings` currently reports 8 open entries:
+- Session-start stale gate: decide how `bench status` classifies benign drift vs
+  real untrusted code drift.
+- Review findings persistence: decide the artifact location and lifecycle before
+  changing `/bench-review-implementation`.
 
-- Session-start stale gate: split benign drift from real drift.
-- Skill/command dogfood gotcha: trigger edits take effect in the next session.
-- Review implementation: live-session verification of returned findings.
-- Linked-repo by-path CLI edge inventory.
-- Review findings persistence.
-- External-format/library decision: official library vs private dialect.
-- Runnable probes for byte/wire compatibility claims.
-- Codex/no-subagent review-axis fallback.
+Other `bench status` items:
 
-Recommended next decision: review-findings persistence, because it affects whether
-the rest of `/bench-integrate-learnings` has a durable pickup surface.
+- `structure` reports 7 oversized Go test files. This needs a `craft-seams` split
+  plan, not a blind line-count cleanup.
+- `specs` reports 16 merged specs awaiting promote-then-delete retirement.
+- 14 roadmap ideas are parked; they are capture-only until shaped.
+
+Recommended next action after committing this green slice: retire the merged specs
+mechanically, then rerun `bench gate` before pushing all local commits.

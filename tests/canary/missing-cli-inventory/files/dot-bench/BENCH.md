@@ -1,0 +1,3 @@
+# Bench
+
+CLI inventory: none.

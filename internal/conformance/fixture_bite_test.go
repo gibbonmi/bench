@@ -62,6 +62,7 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 		"stale-command-reference",
 		"stale-codex-adapter-reference",
 		"stale-cli-doc-reference",
+		"missing-cli-inventory",
 		"historical-marker-prose",
 		"benchref-missing",
 		"benchref-pointer-dropped",

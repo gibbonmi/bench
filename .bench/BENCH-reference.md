@@ -2,10 +2,10 @@
 
 Lookup material split out of `.bench/BENCH.md` to keep the always-loaded operating
 guide lean — the file map, the skills index, harness-invocation details, the CLI
-command list, the shift adapter contract, and the hook layers. This file is
+command notes, the shift adapter contract, and the hook layers. This file is
 **referenced by path, not imported**: it costs no tokens until you open it. Read
-it when you need a command name, a file's role, how a harness invokes a phase, or
-how git safety is layered. The generation-steering rules stay in `.bench/BENCH.md`;
+it when you need a file's role, how a harness invokes a phase, or how git safety
+is layered. The generation-steering rules stay in `.bench/BENCH.md`;
 what lives here is reference you consult on demand.
 
 ## Files
@@ -85,47 +85,11 @@ Codex phase adapters installed by Bench:
 - `$bench-update-kit` → `.agents/commands/bench-update-kit.md`
 - `$bench-integrate-learnings` → `.agents/commands/bench-integrate-learnings.md`
 
-## Commands
+## Command Notes
 
-- `bench link` safely incorporates Bench into a repo.
-- `bench init` scaffolds `.bench/gate.sh` and `.bench/learnings.md`.
-- `bench models` discovers available models for binding the line.
-- `bench structure` flags oversized files and crowded source directories.
-- `bench idea "<text>"` parks an idea on the roadmap, committing to nothing.
-- `bench roadmap` lists the parked ideas.
-- `bench status` prints the ambient dashboard.
-- `bench learnings` lists open journal entries as a TOON table (date, title).
-- `bench maps` lists unresolved decision-map tickets as TOON (map, ticket, type, state).
-- `bench guards` lists every guard's deny surface as TOON (guard, boundary, denies).
-- `bench diff` prints the review base (recorded pre-shift HEAD, or merge-base with
-  the default branch) and the changed files as TOON.
-- `bench coverage <spec>` prints a spec's acceptance-coverage state and rows as
-  TOON; `--check` validates the map (the gate's mode).
-- `bench doctor [--fix]` reports (and repairs) the plain-shell PATH shim a global
-  install needs under a node version manager.
-- `bench gate` runs the oracle.
-- `bench canary [root]` runs the oracle against known-broken fixtures and verifies
-  each one reds with its targeted diagnostic.
-- `bench worktree` opens a reusable isolated worktree.
-- `bench shift "<objective>"` runs the gated loop.
-- `bench version` prints the installed benchkit version and platform (via the Go core).
-- Plumbing the hooks and shell adapters call (not for direct use): `bench tree-hash [root]`
-  prints the gate verdict-cache key (the throwaway-index content hash, or `none`);
-  `bench gate-run [root]` resolves and runs the gate from the repo root and records the
-  verdict — the standalone `bench gate` is a one-glance shell adapter that forwards here;
-  `bench worktree-pool <root>` and `bench worktree-lease-file <path>` print the worktree
-  pool directory and lease-file paths the Go core's worktree package resolves;
-  `bench guard-git` reads a PreToolUse envelope on stdin and yields the destructive-git
-  verdict (exit 2 + `BLOCKED:` to block), and `bench guard-git --describe-classes` prints
-  the deny surface for the block-dangerous-git shim's `--describe` manifest;
-  `bench check-agent-line` reads an Agent PreToolUse envelope on stdin and yields the
-  delegation-line verdict (exit 2 + `DENIED:` for an unbound model), with
-  `bench check-agent-line --describe-binding` emitting the live binding for the shim's
-  `--describe`; `bench resolve-model` prints the shift adapter's bound model (empty for
-  an unrouted passthrough, exit 1 to refuse an unbound line in a routed repo); and
-  `bench stop-verdict <wrapper>` reads a Stop envelope on stdin and, for an armed shift,
-  runs the gate through `<wrapper>` and writes the verdict cache (exit 2 + `BLOCKED:` on
-  red).
+The canonical CLI inventory lives in `.bench/BENCH.md`, not in `HANDOFF.md`.
+Detailed output contracts for the AXI query surfaces live in `projects/benchkit.md`;
+hook and adapter plumbing is described in the sections below.
 
 ## Harness adapter for the shift loop
 

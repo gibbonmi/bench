@@ -46,7 +46,9 @@ Type: Research | Prototype | Grill
 
 Each ticket is sized to one focused session. Three kinds:
 
-- **Research** — read docs/APIs/local code, produce a short summary asset.
+- **Research** — read docs/APIs/local code, produce a short summary asset. If the
+  asset claims byte or wire compatibility, include a runnable probe against the
+  caller's own edge outputs.
 - **Prototype** — write throwaway code to answer "how should it look/behave."
 - **Grill** — converse to surface the decision. Use `craft-grill`. The default.
 

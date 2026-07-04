@@ -55,6 +55,10 @@ Run it on the branch diff against its true base, on three axes that stay separat
    If there's no spec, skip the Spec axis and say so; the Coverage axis still
    runs — it needs only the diff and the existing tests.
 
+   If this harness forbids unsolicited sub-agents, run the same axes inline,
+   state that fallback in the exit handoff, and keep the same charges and
+   citation standard.
+
 4. **Aggregate, don't merge.** Report under `## Standards`, `## Spec`, and
    `## Coverage` headings, findings kept separate. Do not rerank across axes or
    pick a single winner — the separation is the point: code can pass one axis and

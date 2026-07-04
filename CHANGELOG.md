@@ -7,6 +7,20 @@ one entry per `/bench-update-kit` or `/bench-integrate-learnings` run; don't rew
 
 ## Unreleased
 
+- **Learnings run (2026-07-04, scope: review/spec guidance).** Drained six open
+  entries. Promoted: `craft-synthesis` requires a fresh-session dogfood run when
+  skill or command triggers changed; `craft-delegate` records that read-only
+  review findings are verified and fixed by the invoking session, not a separate
+  worktree; `/bench-review-implementation` has an inline-axis fallback when a
+  harness forbids unsolicited sub-agents; `/bench-write-spec` now checks external
+  format/library divergence and runnable byte/wire compatibility probes; Research
+  assets that claim byte or wire compatibility carry their own probe; and the
+  Bench profile's hostile-input checklist now includes real CLI, linked by-path
+  CLI, hook, and adapter invocation surfaces. Left open: stale-gate
+  classification and durable review-findings storage, both still need product
+  decisions. Dogfood loop pending the current gate diagnosis; verified with
+  consistency greps and targeted tests in this run.
+
 - **Learnings run (2026-07-04, scope: line governance).** Drained six open
   entries and one roadmap item. Promoted: the line declaration now uses an
   iteration cap as the stop condition; `craft-line` keeps venue routing
