@@ -7,9 +7,10 @@ subshell; pool-path and lease-path addressing already Go via `internal/worktree`
 and the shift half of `bin/bench.sh` (~180 lines — gated loop, touched-path
 staging, refactor phase, `run_gate` resolution + verdict recording; helpers
 `structure --since`, `tree-hash` already Go). The regression net is black-box and
-strong across three fragments: `gate-runtime-shift-contracts.sh` (green commit +
-`benchBase`, staging byproduct/pre-dirt/spaces-globs, red rollback, early-done,
-refactor trigger/no-trigger/no-op, SIGINT cleanup, adapter contract),
+strong across the Go shift contract tests plus shell runtime fragments:
+`internal/contract`'s `TestRuntimeShiftContracts` (green commit + `benchBase`,
+staging byproduct/pre-dirt/spaces-globs, red rollback, early-done, refactor
+trigger/no-trigger/no-op, SIGINT cleanup, adapter contract),
 `gate-runtime-contracts.sh` (lease hardening, reuse/release cleaning, interactive
 subshell via fake `$SHELL`, `BENCH_GATE` cwd), plus the gate-cache assertions.
 

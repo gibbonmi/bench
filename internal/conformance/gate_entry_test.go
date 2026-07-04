@@ -5,16 +5,16 @@ import (
 	"testing"
 )
 
-func TestGateEntryRunsGoConformanceAndLeavesBehaviorFragments(t *testing.T) {
+func TestGateEntryRunsGoConformanceAndLeavesRemainingBehaviorFragments(t *testing.T) {
 	h := NewHarness(t)
 	gate := h.ReadRootFile(".bench", "gate.sh")
 
 	for _, needle := range []string{
 		`BENCH_CONFORMANCE_ROOT="$root" go test -count=1 ./internal/conformance -run '^TestRootConformance$'`,
+		`go test -count=1 ./internal/contract -run '^TestRuntimeShiftContracts$'`,
 		`gate-go-contracts.sh`,
 		`gate-link-contracts.sh`,
 		`gate-runtime-contracts.sh`,
-		`gate-runtime-shift-contracts.sh`,
 		`gate-doctor-contracts.sh`,
 		`gate-axi-contracts.sh`,
 		`gate-axi-guards-contracts.sh`,
@@ -30,6 +30,7 @@ func TestGateEntryRunsGoConformanceAndLeavesBehaviorFragments(t *testing.T) {
 		"gate-docs-contracts.sh",
 		"gate-line-contracts.sh",
 		"gate-package-contracts.sh",
+		"gate-runtime-shift-contracts.sh",
 	} {
 		if strings.Contains(gate, retired) {
 			t.Fatalf(".bench/gate.sh still references retired conformance fragment %s", retired)

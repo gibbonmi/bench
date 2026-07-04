@@ -26,6 +26,9 @@ realkit="$(cd "$gate_dir/.." && pwd)"
 if ! (cd "$realkit" && BENCH_CONFORMANCE_ROOT="$root" go test -count=1 ./internal/conformance -run '^TestRootConformance$'); then
   fail=1
 fi
+if [ "${BENCH_CANARY_INNER:-0}" != "1" ] && ! (cd "$realkit" && go test -count=1 ./internal/contract -run '^TestRuntimeShiftContracts$'); then
+  fail=1
+fi
 
 # shellcheck source=/dev/null
 . "$gate_dir/gate-go-contracts.sh"
@@ -33,8 +36,6 @@ fi
 . "$gate_dir/gate-link-contracts.sh"
 # shellcheck source=/dev/null
 . "$gate_dir/gate-runtime-contracts.sh"
-# shellcheck source=/dev/null
-. "$gate_dir/gate-runtime-shift-contracts.sh"
 # shellcheck source=/dev/null
 . "$gate_dir/gate-doctor-contracts.sh"
 # shellcheck source=/dev/null

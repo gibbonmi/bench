@@ -16,15 +16,16 @@ down cleanly. Both are sourced into the dispatcher and dispatched as shell
 functions.
 
 The strangler has reached slice 7 of `decisions/go-rewrite.md`. The regression net
-is strong and fully black-box — two fragments drive `bench shift`/`worktree`/
-`gate` as a subprocess: `gate-runtime-shift-contracts.sh` (green commit + benchBase,
-touched-path staging incl. byproduct/pre-dirt/spaces-globs, red rollback, done.sh
-early-completion, refactor trigger/no-trigger/no-op, refactor-prompt scope, SIGINT
-cleanup, the adapter preflight + single-argument contracts) and
-`gate-runtime-contracts.sh` (lease hardening, reuse/release cleaning, concurrent
-acquire, the interactive subshell via a fake `$SHELL`, `BENCH_GATE` cwd, gate
-repo-root cwd, verdict-record incl. the gate-cache assertions, and both
-missing-core fail-safes). But the logic
+is strong and fully black-box — `internal/contract`'s
+`TestRuntimeShiftContracts` drives `bench shift` as a subprocess (green commit +
+benchBase, touched-path staging incl. byproduct/pre-dirt/spaces-globs, red
+rollback, done.sh early-completion, refactor trigger/no-trigger/no-op,
+refactor-prompt scope, SIGINT cleanup, the adapter preflight + single-argument
+contracts), while `gate-runtime-contracts.sh` still drives `worktree`/`gate` as a
+subprocess (lease hardening, reuse/release cleaning, concurrent acquire, the
+interactive subshell via a fake `$SHELL`, `BENCH_GATE` cwd, gate repo-root cwd,
+verdict-record incl. the gate-cache assertions, and both missing-core fail-safes).
+But the logic
 those contracts guard is shell, so the reclaim decision, the porcelain touched-path
 parse, and the resolution precedence are shell-untestable except through a full CLI
 round-trip — and the shell `shift_dirty_paths` carries a documented misread of a
@@ -232,10 +233,11 @@ name, the touched-path diff, and the resolution precedence as a pure function.
   touched-path parse, and the resolution precedence finally retires.
 
 - **Seams.** Two, the fewest that exercise the real behavior:
-  - The **shift/gate contract seam** — the two fragments driving the CLI subprocess
-    (`gate-runtime-shift-contracts.sh` and `gate-runtime-contracts.sh`, both the
-    parity net), plus the new resolution-order contract. Prior art: the fragments
-    themselves, unchanged in shape.
+  - The **shift/gate contract seam** — the Go shift contract tests and remaining
+    runtime fragment driving the CLI subprocess (`internal/contract`'s
+    `TestRuntimeShiftContracts` and `gate-runtime-contracts.sh`, both the parity
+    net), plus the new resolution-order contract. Prior art: the retired fragment's
+    labels, preserved as Go subtests.
   - The **`go test` unit seam** — table tests beside `internal/worktree`,
     `internal/gate`, and `internal/shift` at the injected boundary. Prior art:
     `internal/gitguard` (Checker-injected tables), `internal/adopt`, `internal/maps`.
@@ -256,7 +258,7 @@ name, the touched-path diff, and the resolution precedence as a pure function.
                                [   refactor phase at green over touched budget ▸ cleanup ▸ release ] ─▶ stdout literals + isolated shift branch, lease freed
     fake $SHELL ─────────────▶ [ bench worktree → internal/worktree: acquire → subshell (inherit stdio) → release on any exit ] ─▶ reused clean path, lease freed
     gate.sh|BENCH_GATE|pkg ──▶ [ bench gate → run_gate adapter → bench gate-run → internal/gate: resolve chain ▸ run from root ▸ record ] ─▶ exit 0/≠0 + `<verdict> <tree> <iso>` cache
-        ◀ tests attach here: gate-runtime-shift-contracts.sh + gate-runtime-contracts.sh drive the CLI as a subprocess and assert
+        ◀ tests attach here: TestRuntimeShiftContracts + gate-runtime-contracts.sh drive the CLI as a subprocess and assert
           stdout/exit/filesystem/git before and after the flip unchanged; the NEW resolution-order contract asserts the precedence.
 
 ### Seam diagram — `go test` unit seam (reclaim, diff, resolution)
@@ -282,14 +284,14 @@ case, each resolution branch, each preflight rejection).
 | 1 | lease claim/reclaim/reuse — atomic claim; reclaim on dead-pid and aged-out-empty; respect a live-foreign and a fresh-empty lease; concurrent acquires never share; release cleans dirty + ignored and removes the lease; interactive subshell reuses a clean released path | shift/gate contract | already covered — port-parity via the "lease hardening", "lease/reuse", "concurrent-acquire", and interactive-subshell contracts in `gate-runtime-contracts.sh`, which stay green across the flip | any drift in the reclaim decision, the atomic claim, or the owner check trips one of the unchanged lease contracts (`live foreign lease was stolen`, `fresh empty lease was stolen`, `concurrent acquires shared a worktree`) |
 | 1 | reclaim decision as a pure function — live pid → respect; dead pid → reclaim; non-numeric legacy aged by mtime → reclaim; fresh-empty mid-claim → respect (each of 4) | go test unit | `internal/worktree` reclaim table before the fn exists → does not compile | pins the four-way decision the black-box contract exercises but can't enumerate cheaply; a mis-ported mtime threshold steals a mid-claim lease |
 | 1 | pool candidate naming stays inside the pool dir | go test unit | `internal/worktree` pool-candidate table before the fn exists → does not compile | a wrong candidate name mints outside the pool and breaks warm reuse silently |
-| 2 | an iteration commit carries exactly the touched paths — gate byproduct excluded, pre-agent dirt subtracted, space + glob chars preserved | shift/gate contract | already covered — port-parity via the stage-touched contract in `gate-runtime-shift-contracts.sh`, which stays green | a staging regression rides a byproduct into a commit or drops a spaced path → `gate byproduct rode into an iteration commit` / `touched path with space+glob chars was not staged` |
+| 2 | an iteration commit carries exactly the touched paths — gate byproduct excluded, pre-agent dirt subtracted, space + glob chars preserved | shift/gate contract | already covered — port-parity via the stage-touched subtest in `internal/contract`'s `TestRuntimeShiftContracts`, which stays green | a staging regression rides a byproduct into a commit or drops a spaced path → `gate byproduct rode into an iteration commit` / `touched path with space+glob chars was not staged` |
 | 2 | touched-path diff pure function — spaces, globs, scratch exclusion, and a path containing a literal newline (retires the shell misread) | go test unit | `internal/shift` touched-path table incl. the newline path before the fn exists → does not compile | the porcelain `-z` native parse must keep NUL-delimited paths; the literal-newline case is the one the shell misread, unreachable by the space+glob contract |
 | 3 | gate runs from the repo root; verdict recorded as `<verdict> <tree-hash> <iso8601>` keyed to the tested tree; missing binary/hash → nothing written (no forged verdict); commit-on-green does not stale a fresh verdict | shift/gate contract | already covered — port-parity via the "gate repo-root cwd", "BENCH_GATE cwd", "verdict-record", and both "missing-core fail-safe" contracts in `gate-runtime-contracts.sh` | a resolution/record regression trips an unchanged gate contract (`gate_record forged a verdict with no core binary`, `manual gate run did not record ... the tested tree`) |
 | 3 | resolution precedence — `.bench/gate.sh` beats `$BENCH_GATE` beats one detection case; no gate → exit 3, nothing recorded (each branch) | shift/gate contract + go test unit | NEW resolution-order contract: a repo with an exit-0 `.bench/gate.sh` **and** an exit-1 `BENCH_GATE` must exit 0 (gate.sh wins); an exit-0 `BENCH_GATE` in a repo whose auto-detect path would fail must exit 0 (BENCH_GATE wins); `package.json`-only picks the npm path; no gate/no BENCH_GATE/no lockfile → exit 3. Cannot start red black-box — today's shell already resolves in this order, so the contract is written green pre-flip as a parity pin that bites post-flip. The genuinely red signal is the Go `Resolve` precedence table: does not compile before the package exists | no assertion pins the precedence today; a reordered chain would silently run the wrong oracle — the contract catches it at the flip, the Go table at the function |
-| 4 | green iteration commits + records `branch.<name>.benchBase` + names the branch + leaves the main checkout untouched; red iteration rolls back with no commit and scratch surviving; `.bench/done.sh` ends the loop early; objective assembled from all positional args | shift/gate contract | already covered — port-parity via the green-commit/benchBase, red-rollback, scratch-survival, and done.sh early-completion contracts in `gate-runtime-shift-contracts.sh` | any loop regression (commit on red, lost benchBase, dirtied main checkout) trips an unchanged shift contract (`shift did not record the pre-shift HEAD in branch.<name>.benchBase`, `red shift preserved rolled-back work`) |
+| 4 | green iteration commits + records `branch.<name>.benchBase` + names the branch + leaves the main checkout untouched; red iteration rolls back with no commit and scratch surviving; `.bench/done.sh` ends the loop early; objective assembled from all positional args | shift/gate contract | already covered — port-parity via the green-commit/benchBase, red-rollback, scratch-survival, and done.sh early-completion subtests in `internal/contract`'s `TestRuntimeShiftContracts` | any loop regression (commit on red, lost benchBase, dirtied main checkout) trips the shift contract (`shift did not record the pre-shift HEAD in branch.<name>.benchBase`, `red shift preserved rolled-back work`) |
 | 4 | refactor phase triggers only on debt this shift touched (never pre-existing), exits early on a no-op pass with no phantom commit, and scopes its prompt to the flagged touched files | shift/gate contract | already covered — port-parity via the touched-scope-structure, refactor no-op, and refactor-prompt scope contracts | a refactor-trigger regression refactors repo-wide debt or loops on a no-op → `pre-existing structural debt triggered refactor phase` / `no-op refactor pass reported a phantom commit` |
-| 4 | adapter preflight rejects unset / empty / missing-path / shell-keyword `BENCH_AGENT` before any iteration; adapter invoked with the prompt as its single positional arg under `BENCH_SHIFT=1` (each rejection) | shift/gate contract | already covered — port-parity via the adapter preflight and single-argument contracts in `gate-runtime-shift-contracts.sh` | a preflight regression enters the loop with a broken adapter, or splits the multi-line prompt → `missing adapter still entered the loop` / `prompt was not the adapter's single positional argument` |
-| 5 | SIGINT mid-loop → exit non-zero, `.bench-objective` + `.bench-notes.md` gone, lease released, a follow-up shift completes (pool reusable), cleanup runs exactly once | shift/gate contract | already covered — port-parity via the interrupt-cleanup contract in `gate-runtime-shift-contracts.sh` (approximates real Ctrl-C with `kill -INT $PPID`), which stays green | a Go signal / process-group or double-cleanup regression leaves a leased worktree or crashes on second cleanup → `interrupted shift left a leased worktree` / `follow-up shift after interrupt did not complete` |
+| 4 | adapter preflight rejects unset / empty / missing-path / shell-keyword `BENCH_AGENT` before any iteration; adapter invoked with the prompt as its single positional arg under `BENCH_SHIFT=1` (each rejection) | shift/gate contract | already covered — port-parity via the adapter preflight and single-argument subtests in `internal/contract`'s `TestRuntimeShiftContracts` | a preflight regression enters the loop with a broken adapter, or splits the multi-line prompt → `missing adapter still entered the loop` / `prompt was not the adapter's single positional argument` |
+| 5 | SIGINT mid-loop → exit non-zero, `.bench-objective` + `.bench-notes.md` gone, lease released, a follow-up shift completes (pool reusable), cleanup runs exactly once | shift/gate contract | already covered — port-parity via the interrupt-cleanup subtest in `internal/contract`'s `TestRuntimeShiftContracts` (approximates real Ctrl-C with `kill -INT $PPID`) | a Go signal / process-group or double-cleanup regression leaves a leased worktree or crashes on second cleanup → `interrupted shift left a leased worktree` / `follow-up shift after interrupt did not complete` |
 | 5 | real-terminal Ctrl-C delivers SIGINT to the process group including the adapter child | manual smoke (gate-blind) | not gate-gradable — one manual interrupt smoke when the spec lands (map #5) | a real TTY process-group delivery the `kill -INT $PPID` approximation can't reproduce; escalate per `craft-line` only if Go's signal semantics diverge |
 | 6 | `bench-worktree.sh` deleted; shift/gate/worktree bodies dropped from `bin/bench.sh`; `run_gate` is the one-glance adapter; `cmd/bench` gains shift/worktree/gate-run; no dangling reference in contracts, dispatcher, README, or link/package | gate load + docs stale-reference sweep | the sweep against a tree still naming a deleted file/function → red; a dispatcher still sourcing `bench-worktree.sh` → gate load (`bash -n` / source) red; the two unchanged fragments run against the flipped binary and must stay green | the conformance layer fails when a deleted file or function is still referenced or sourced, and a seam left half-shell would fail its port-parity contract (watch-out #9: two live implementations double-resolve) |
 

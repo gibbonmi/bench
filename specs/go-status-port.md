@@ -56,9 +56,10 @@ standard grades that against the diff.
 
 The existing black-box contracts — ~13 status/structure/gate-cache contracts in
 `gate-runtime-contracts.sh` and the shift touched-scope/lease contracts in
-`gate-runtime-shift-contracts.sh` — drive `bench.sh <cmd>` and assert stdout and
-exit codes. They run unchanged against the ported binary and are the regression
-net. The parsers and renderer gain `go test` table tests, the new unit layer.
+`internal/contract`'s `TestRuntimeShiftContracts` — drive `bench.sh <cmd>` and
+assert stdout and exit codes. They run against the ported binary and are the
+regression net. The parsers and renderer gain `go test` table tests, the new unit
+layer.
 
 ## User stories
 
@@ -261,9 +262,9 @@ net. The parsers and renderer gain `go test` table tests, the new unit layer.
   the cache write through `bench tree-hash` — prior art: the gate-cache-write
   contract at `gate-runtime-contracts.sh:169`); and the **worktree adapter seam**
   (the shift lease contracts and the warm-pool status contract exercising the
-  pool/lease facts — prior art: the red-rollback lease-release assertion at
-  `gate-runtime-shift-contracts.sh:113` and the warm-pool contract at
-  `gate-runtime-contracts.sh:150`).
+  pool/lease facts — prior art: the red-rollback lease-release assertion in
+  `internal/contract`'s `TestRuntimeShiftContracts` and the warm-pool contract in
+  `gate-runtime-contracts.sh`).
 - **Gate command:** `.bench/gate.sh` (the project gate), whose Go layer already
   runs `gofmt -l`, `go vet ./...`, `go test ./...`, `go build`, and the four
   cross-compile targets — so new `internal/` packages and their tests are graded
