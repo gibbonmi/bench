@@ -175,17 +175,21 @@ bench/
 ├── bin/
 │   ├── bench.sh              # worktrees + gated loop + strangler router to the Go core
 │   ├── bench-link.sh         # safe link/install helpers
-│   ├── bench-status.sh       # status, roadmap, models, structure + Go-binary count adapters
-│   └── bench-worktree.sh     # reusable-worktree pool helpers
+│   └── bench-worktree.sh     # reusable-worktree pool helpers (adapters over the Go core)
 ├── cmd/bench/                # the compiled core's main: dispatch + version
-├── internal/                 # the AXI query surface, ported from shell to Go
+├── internal/                 # the Go core: AXI query surface, status, structure + plumbing
 │   ├── toon/                 # the shared flat-table TOON emitter (one escaping rule)
 │   ├── learnings/            # bench learnings parser
 │   ├── maps/                 # bench maps engine (tickets + close-readiness + count)
 │   ├── guards/               # bench guards aggregation
 │   ├── diff/                 # bench diff review-base resolution
 │   ├── coverage/             # bench coverage extraction + --check validation
-│   └── git/                  # shared git subprocess helpers
+│   ├── status/               # bench status renderer + merged-spec retirement counter
+│   ├── structure/            # structure checker + budgets parser (whole-tree + touched)
+│   ├── worktree/             # worktree pool-path + lease-file conventions
+│   ├── models/               # bench models API query + no-key guidance
+│   ├── roadmap/              # ROADMAP.md owner: idea, roadmap, parked count
+│   └── git/                  # shared git subprocess helpers + gate tree-hash
 └── projects/
     ├── benchkit.md           # seams, gate, lines for this kit
     ├── regroup.md            # seams, gate, lines for Regroup

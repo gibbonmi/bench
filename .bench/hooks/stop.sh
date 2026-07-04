@@ -32,21 +32,21 @@ stop_active="$(printf '%s' "$input" | python3 -c 'import sys,json; print(json.lo
 # Record the gate verdict for `bench status` to read (the ambient surface never runs
 # the gate cold). The cache lives in the git dir, so it is never tracked or committed:
 #   <status> <tree hash> <iso8601>
-# The key is the tree actually tested — mirrors gate_tree_hash in bin/bench-status.sh,
-# which this standalone hook cannot source. A stale mirror here would overwrite the
-# CLI's fresh record with a key status can never match, so keep them identical.
+# The key is the tree actually tested, computed by the Go core's `tree-hash`
+# (git.TreeHash) through the same bench.sh wrapper this hook already resolves ($cmd) —
+# so the hash has ONE source, shared with gate_record in bin/bench.sh (the mirror this
+# hook used to carry is gone). If the core binary is missing the tree-hash is
+# unavailable: skip the write loudly and never record a verdict keyed to a guessed tree,
+# so a missing platform binary degrades to "no verdict", never a false green.
 record_gate() {
-  local gitdir idx tree
+  local gitdir tree
   gitdir="$(git rev-parse --absolute-git-dir 2>/dev/null)" || return 0
-  idx="${TMPDIR:-/tmp}/bench-tree-idx.$$"
-  tree="$(
-    export GIT_INDEX_FILE="$idx"
-    git read-tree HEAD 2>/dev/null || git read-tree --empty
-    git add -A 2>/dev/null
-    git write-tree
-  )" || tree=""
-  rm -f "$idx"
-  printf '%s %s %s\n' "$1" "${tree:-none}" \
+  tree="$("$cmd" tree-hash 2>/dev/null)" || tree=""
+  if [[ ! "$tree" =~ ^[0-9a-f]+$ ]]; then
+    echo "WARNING: bench tree-hash unavailable — not recording a gate verdict (no forged tree)." >&2
+    return 0
+  fi
+  printf '%s %s %s\n' "$1" "$tree" \
     "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$gitdir/bench-last-gate"
 }
 

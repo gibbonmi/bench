@@ -169,8 +169,12 @@ rm -rf "$tmp"
 tmp="$(mktemp -d)"
 (
   set -u; cd "$tmp"; git init -q
-  mkdir -p .bench bin
-  cp "$root"/bin/bench.sh "$root"/bin/bench-link.sh "$root"/bin/bench-status.sh "$root"/bin/bench-worktree.sh bin/
+  mkdir -p .bench bin dist
+  # The ported gate-cache write computes the tree hash through the Go core, so the
+  # fixture provisions it: every bin/*.sh (bench-status.sh is gone, folded into the
+  # core) plus the freshly-built dist/bench the copied wrapper's router resolves.
+  cp "$root"/bin/*.sh bin/
+  cp "$root/dist/bench" dist/bench; chmod +x dist/bench
   chmod +x bin/bench.sh
   printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
   gci add -A; gci commit -q -m init
@@ -179,6 +183,41 @@ tmp="$(mktemp -d)"
   [ -f "$cache" ] || { echo "Stop hook did not write the gate cache"; exit 1; }
   grep -qE '^(green|red) [0-9a-f]+ [0-9T:Z-]+$' "$cache" || { echo "gate cache not <status> <tree> <iso8601>"; exit 1; }
 ) || err "bench status gate-cache write contract failed"
+rm -rf "$tmp"
+
+# Fail-safe: a Stop hook with a findable bench.sh but NO core binary must degrade to
+# "no verdict". record_gate computes the tree through `bench tree-hash`; a missing binary
+# makes that unavailable, so the hook writes NOTHING rather than forge a green keyed to a
+# guessed tree. Closes the map's gate-blind spot (story 3); distinct from the missing-CLI
+# fail-open below (there no bench.sh resolves at all — here the CLI is present, the core is not).
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench bin
+  cp "$root"/bin/*.sh bin/          # bench.sh is findable; dist/bench is deliberately absent
+  chmod +x bin/bench.sh
+  printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  gci add -A; gci commit -q -m init
+  printf '{}\n' | BENCH_SHIFT=1 bash "$root/.bench/hooks/stop.sh" >/dev/null 2>&1 || true
+  [ ! -f "$(gci rev-parse --absolute-git-dir)/bench-last-gate" ] || { echo "missing core binary forged a gate verdict"; exit 1; }
+) || err "stop hook missing-core-binary fail-safe contract failed"
+rm -rf "$tmp"
+
+# Fail-safe, the other writer: `bench gate` itself (gate_record in bin/bench.sh) must also
+# skip the cache write when the core binary is missing — never forge a green keyed to a
+# guessed tree. The verdict-record contract below exercises gate_record's present-binary
+# path; this pins its missing-binary path, the twin of the stop.sh case above.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench bin
+  cp "$root"/bin/*.sh bin/          # bench.sh is present; dist/bench is deliberately absent
+  chmod +x bin/bench.sh
+  printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  gci add -A; gci commit -q -m init
+  bash bin/bench.sh gate >/dev/null 2>&1 || true
+  [ ! -f "$(gci rev-parse --absolute-git-dir)/bench-last-gate" ] || { echo "gate_record forged a verdict with no core binary"; exit 1; }
+) || err "bench gate missing-core-binary fail-safe contract failed"
 rm -rf "$tmp"
 
 # Merged-spec retirement signal: on the default branch a spec still carrying a
@@ -415,8 +454,12 @@ rm -rf "$tmp"
 tmp="$(mktemp -d)"
 (
   set -u; cd "$tmp"; git init -q
-  mkdir -p .bench bin
-  cp "$root"/bin/bench.sh "$root"/bin/bench-link.sh "$root"/bin/bench-status.sh "$root"/bin/bench-worktree.sh bin/
+  mkdir -p .bench bin dist
+  # The ported gate-cache write computes the tree hash through the Go core, so the
+  # fixture provisions it: every bin/*.sh (bench-status.sh is gone, folded into the
+  # core) plus the freshly-built dist/bench the copied wrapper's router resolves.
+  cp "$root"/bin/*.sh bin/
+  cp "$root/dist/bench" dist/bench; chmod +x dist/bench
   chmod +x bin/bench.sh
   printf '#!/usr/bin/env bash\nexit 1\n' > .bench/gate.sh; chmod +x .bench/gate.sh
   gci add -A; gci commit -q -m init

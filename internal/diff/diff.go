@@ -15,16 +15,6 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// defaultBranch mirrors bench.sh's: origin/HEAD's short name with the `origin/`
-// prefix removed, else `main`.
-func defaultBranch() string {
-	out, err := git.Output("symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD")
-	if err == nil && out != "" {
-		return strings.TrimPrefix(out, "origin/")
-	}
-	return "main"
-}
-
 // parseNameStatusZ turns `git diff --name-status --no-renames -z` output into
 // status/path rows. The NUL framing carries each path raw (never git C-quoted), so a
 // path with a space, a non-ASCII byte, or a quote arrives intact and is TOON-escaped a
@@ -59,13 +49,14 @@ func Command(args []string) (string, int) {
 	default:
 		return toon.Usage("bench diff", args[0]) + "\n", 2
 	}
-	if _, err := git.Root(); err != nil {
+	root, err := git.Root()
+	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
 
 	base, method := resolveBase()
 	if base == "" {
-		def := defaultBranch()
+		def := git.DefaultBranch(root)
 		mb, err := git.Output("merge-base", def, "HEAD")
 		if err != nil {
 			return toon.Errorf("cannot resolve a review base",

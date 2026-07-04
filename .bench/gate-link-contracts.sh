@@ -93,7 +93,7 @@ tmp="$(mktemp -d)"
   ! grep -qF '@.bench/BENCH-reference.md' CLAUDE.md || { echo "fresh link @-imported the reference file; it must stay on-demand"; exit 1; }
   [ -x .bench/bin/bench.sh ] || { echo "fresh link did not install local hook CLI .bench/bin/bench.sh"; exit 1; }
   [ -f .bench/bin/bench-link.sh ] || { echo "fresh link did not install local hook CLI link helper"; exit 1; }
-  [ -f .bench/bin/bench-status.sh ] || { echo "fresh link did not install local hook CLI status helper"; exit 1; }
+  [ -f .bench/bin/bench-worktree.sh ] || { echo "fresh link did not install local hook CLI worktree helper"; exit 1; }
   [ -f .bench/link-manifest.tsv ] || { echo "fresh link did not write link manifest"; exit 1; }
   [ -f .agents/commands/bench-implement-spec.md ] || { echo "fresh link did not install portable commands"; exit 1; }
   [ -f .agents/skills/bench-craft-seams/SKILL.md ] || { echo "fresh link did not install portable skills"; exit 1; }

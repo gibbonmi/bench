@@ -2,15 +2,15 @@
 # $BENCH_HOME, guarded by atomic owned leases. Sourced by bin/bench.sh; uses its
 # repo_root/default_branch helpers and $BENCH_HOME.
 
+# One-glance adapters over the Go core (internal/worktree), which owns the pool-path
+# (cksum key) and lease-file (git-path) conventions. No logic here — the facts live in
+# one place across the slice-3→7 window; slice 7 folds these call sites into Go.
 worktree_pool() {
-  local root key
-  root="$1"
-  key="$(basename "$root")-$(echo "$root" | cksum | cut -d' ' -f1)"
-  printf '%s\n' "$BENCH_HOME/worktrees/$key"
+  "$(bench_binary_path)" worktree-pool "$1"
 }
 
 worktree_lease_file() {
-  git -C "$1" rev-parse --git-path bench-lease
+  "$(bench_binary_path)" worktree-lease-file "$1"
 }
 
 # Atomically claim a worktree's lease. The claim is an O_EXCL (noclobber)

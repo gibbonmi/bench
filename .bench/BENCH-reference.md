@@ -105,6 +105,10 @@ Codex phase adapters installed by Bench:
 - `bench worktree` opens a reusable isolated worktree.
 - `bench shift "<objective>"` runs the gated loop.
 - `bench version` prints the installed benchkit version and platform (via the Go core).
+- Plumbing the hooks and shell adapters call (not for direct use): `bench tree-hash [root]`
+  prints the gate verdict-cache key (the throwaway-index content hash, or `none`);
+  `bench worktree-pool <root>` and `bench worktree-lease-file <path>` print the worktree
+  pool directory and lease-file paths the worktree helpers resolve from the Go core.
 
 ## Harness adapter for the shift loop
 

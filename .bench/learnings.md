@@ -113,3 +113,22 @@ What happened: go-axi-query-surface (slice 2) flipped the router so learnings|ma
 Right behavior: the spec (and the map's Handoff) should have flagged that porting any command session-start/status invoke through the by-path CLI requires the linked-repo binary-distribution to be solved first — a slice-6 (link/doctor) dependency that the dependency order put last. The router flip's consumer-correctness depends on it.
 
 Proposed rule change: in /bench-write-spec's edge inventory, add a check — "for every ported command, which surfaces invoke it, and through which CLI (real kit vs linked by-path)?" A by-path invocation of a routed command is a distribution dependency to resolve or explicitly defer, not assume-works. The "missing-binary path already proven by slice 1" reasoning hid this because slice 1's proof used a fabricated layout with the binary present.
+
+## 2026-07-03 — review findings live only in chat; a mid-implement disconnect loses them  [open]
+- **What happened:** `/bench-review-implementation` on go-status-port returned two
+  verified Coverage findings. The reviewer asked where findings are stored and the
+  answer was nowhere — they exist only in the conversational output. Specs and
+  decisions are persisted to disk, and `.bench/learnings.md` holds process captures,
+  but the three-axis findings themselves have no durable artifact. If the session
+  drops between review and the fix landing, the findings (and the refutation trail
+  behind them) are lost and must be regenerated from scratch.
+- **Right behavior:** When a review surfaces findings the reviewer intends to act on,
+  persist them before starting the fix — so a disconnection mid-`/bench-implement-spec`
+  leaves a pick-up surface, not a blank slate. A short findings file (axis, citation,
+  confirmed/refuted, worst-issue) is enough; it is throwaway once the fixes land green.
+- **Proposed rule change:** Consider having `/bench-review-implementation` write its
+  aggregated findings to a durable location (e.g. `reviews/<spec>.md` or appended to
+  the spec under a `## Review findings` heading) whenever any axis is non-empty and a
+  fix path follows — the same "document for the teammate who just walked in" invariant
+  the specs and ADRs already obey, applied to the one workflow output that currently
+  evaporates. (Reviewer's call on the location and whether it auto-retires with the spec.)

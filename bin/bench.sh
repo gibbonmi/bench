@@ -20,7 +20,9 @@
 #   3. auto-detect             (pnpm / npm / pyproject / cargo)
 set -euo pipefail
 
-BENCH_HOME="${BENCH_HOME:-$HOME/.bench}"
+# Exported so the Go core's worktree-pool/lease commands resolve the same pool home
+# the shell did (they read BENCH_HOME from the environment).
+export BENCH_HOME="${BENCH_HOME:-$HOME/.bench}"
 AGENT="${BENCH_AGENT:-}"                # harness adapter executable; no default — see .bench/adapters/
 MAX_ITERS="${BENCH_MAX_ITERS:-12}"
 
@@ -49,14 +51,29 @@ cleanup_shift_scratch() {
 gate_record() {
   # Record the verdict for `bench status` (same format the Stop hook writes):
   #   <status> <tree hash> <iso8601>
-  # Keyed by gate_tree_hash (bench-status.sh) — the content tested, not the commit
-  # sha — so commit-on-green does not stale the verdict that authorized it. The
-  # cache lives in the git dir, so it is never tracked or committed.
-  local root="$1" rc="$2" gitdir verdict=green
+  # Keyed by the Go core's `tree-hash` (git.TreeHash) — the content tested, not the
+  # commit sha — so commit-on-green does not stale the verdict that authorized it, and
+  # the hash has one source shared with the Stop hook's record_gate. The cache lives in
+  # the git dir, so it is never tracked or committed. If the core binary is missing or
+  # the hash is unavailable, skip the write loudly rather than forge a verdict keyed to
+  # a guessed tree — a missing binary degrades to "no verdict", never a false green.
+  local root="$1" rc="$2" gitdir verdict=green bin tree
   gitdir="$(git -C "$root" rev-parse --absolute-git-dir 2>/dev/null)" || return 0
   [[ "$rc" -eq 0 ]] || verdict=red
-  printf '%s %s %s\n' "$verdict" "$(gate_tree_hash "$root")" \
+  bin="$(bench_binary_path)" || { echo "bench: no core binary — skipping gate cache write (no forged verdict)" >&2; return 0; }
+  tree="$("$bin" tree-hash "$root" 2>/dev/null)" || tree=""
+  [[ "$tree" =~ ^[0-9a-f]+$ ]] || { echo "bench: tree-hash unavailable — skipping gate cache write (no forged verdict)" >&2; return 0; }
+  printf '%s %s %s\n' "$verdict" "$tree" \
     "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$gitdir/bench-last-gate"
+}
+
+# structure_touched_since <base> — the shift loop's touched-scope refactor gate, now a
+# thin adapter over the Go core's `structure --since`. The binary runs the
+# `git diff --diff-filter=ACMR base..HEAD` internally and checks only the touched files;
+# exit 1 signals over-budget touched debt. Captured (not exec'd) by the loop so it
+# continues. Owned by the Go core (internal/structure) — one detector, three surfaces.
+structure_touched_since() {
+  "$(bench_binary_path)" structure --since "$1"
 }
 
 run_gate() {
@@ -333,8 +350,6 @@ BENCH_BIN_DIR="$(dirname "$(resolve_script_path)")"
 # shellcheck source=/dev/null
 . "$BENCH_BIN_DIR/bench-link.sh"
 # shellcheck source=/dev/null
-. "$BENCH_BIN_DIR/bench-status.sh"
-# shellcheck source=/dev/null
 . "$BENCH_BIN_DIR/bench-worktree.sh"
 # shellcheck source=/dev/null
 . "$BENCH_BIN_DIR/bench-init.sh"
@@ -348,17 +363,20 @@ case "${1:-help}" in
   worktree) worktree ;;
   shift)    shift; shift_loop "${*:-improve the codebase}" ;;
   link)     shift; link "${1:-copy}" ;;
-  models)   models ;;
-  structure) structure ;;
   init)     init ;;
-  idea)     shift; idea "$@" ;;
-  roadmap)  roadmap ;;
-  status)   status ;;
+  models)   route_binary "$@" ;;
+  structure) route_binary "$@" ;;
+  idea)     route_binary "$@" ;;
+  roadmap)  route_binary "$@" ;;
+  status)   route_binary "$@" ;;
   learnings) route_binary "$@" ;;
   maps)     route_binary "$@" ;;
   guards)   route_binary "$@" ;;
   diff)     route_binary "$@" ;;
   coverage) route_binary "$@" ;;
+  tree-hash) route_binary "$@" ;;
+  worktree-pool) route_binary "$@" ;;
+  worktree-lease-file) route_binary "$@" ;;
   *) cat <<EOF
 bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench link [copy|symlink]  safely wire the kit into this repo for every harness

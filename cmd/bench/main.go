@@ -13,9 +13,15 @@ import (
 
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/guards"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/maps"
+	"github.com/gibbonmi/bench/internal/models"
+	"github.com/gibbonmi/bench/internal/roadmap"
+	"github.com/gibbonmi/bench/internal/status"
+	"github.com/gibbonmi/bench/internal/structure"
+	"github.com/gibbonmi/bench/internal/worktree"
 )
 
 // version is stamped at build time via -ldflags "-X main.version=<pkg.json version>"
@@ -33,11 +39,38 @@ func main() {
 // writes and exits. This map is the one seam that grows per slice; version stays a
 // direct case because it needs the build-time GOOS/GOARCH, not repo state.
 var commands = map[string]func([]string) (string, int){
-	"learnings": learnings.Command,
-	"maps":      maps.Command,
-	"guards":    guards.Command,
-	"diff":      diff.Command,
-	"coverage":  coverage.Command,
+	"learnings":           learnings.Command,
+	"maps":                maps.Command,
+	"guards":              guards.Command,
+	"diff":                diff.Command,
+	"coverage":            coverage.Command,
+	"status":              status.Command,
+	"structure":           structure.Command,
+	"models":              models.Command,
+	"idea":                roadmap.IdeaCommand,
+	"roadmap":             roadmap.RoadmapCommand,
+	"tree-hash":           treeHash,
+	"worktree-pool":       worktree.PoolCommand,
+	"worktree-lease-file": worktree.LeaseFileCommand,
+}
+
+// treeHash exposes git.TreeHash as the `bench tree-hash [root]` plumbing subcommand:
+// the gate verdict-cache key, called by gate_record (bin/bench.sh) and record_gate
+// (.bench/hooks/stop.sh) so the hash has one source. Root is args[0] when given
+// (gate_record passes the resolved repo root), else the cwd's repo. It prints the
+// content hash or `none`; a non-hash tells the caller to fail safe rather than forge.
+func treeHash(args []string) (string, int) {
+	var root string
+	if len(args) > 0 && args[0] != "" {
+		root = args[0]
+	} else {
+		r, err := git.Root()
+		if err != nil {
+			return "none\n", 0
+		}
+		root = r
+	}
+	return git.TreeHash(root) + "\n", 0
 }
 
 func run(args []string, stdout, stderr *os.File) int {
