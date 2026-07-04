@@ -4,8 +4,8 @@ Source: the two open entries in `.bench/learnings.md` after the 2026-07-04
 learnings integration pass. Both entries are generalizable but still need product
 decisions before `/bench-write-spec` can compile them into implementation work.
 
-Current frontier: resolve #2 and #3 as separate spec tracks. #1 is closed: the
-two learnings touch different seams, so this map yields two specs.
+Current frontier: resolve #3. #1 split the learnings into two specs; #2 settled
+the review-findings artifact lifecycle.
 
 ## #1: Are the two remaining learnings one spec or two?
 
@@ -36,7 +36,12 @@ surface and a lifecycle: where the artifact lives, when it is written, who edits
 it, and when it is deleted or folded away.
 
 ### Answer
-— (open: choose artifact location, write trigger, ownership, and retirement rule)
+Persist actionable review findings in `reviews/<spec-slug>.md`. The review
+phase writes the file only when findings need a later fix; clean reviews and
+accepted residual risks do not create an artifact. The file records findings by
+axis with citations and the worst issue so a later session can resume without
+chat history. The fix session deletes the file in the green fix commit after the
+findings are resolved.
 
 ## #3: How should `bench status` classify stale gate drift?
 
