@@ -15,35 +15,15 @@ gate_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fail=0
 err() { echo "gate: $*" >&2; fail=1; }
 
-# The shared fixture harness the contract fragments call (`contract` — one
-# source for provision/report/cleanup); must precede every fragment.
-# shellcheck source=/dev/null
-. "$gate_dir/gate-contract-runner.sh"
-
 # Root-grading conformance lives in Go tests. The real kit checkout owns the test
 # code; BENCH_CONFORMANCE_ROOT names the tree under grade, including canary fixtures.
 realkit="$(cd "$gate_dir/.." && pwd)"
 if ! (cd "$realkit" && BENCH_CONFORMANCE_ROOT="$root" go test -count=1 ./internal/conformance -run '^TestRootConformance$'); then
   fail=1
 fi
-if [ "${BENCH_CANARY_INNER:-0}" != "1" ] && ! (cd "$realkit" && go test -count=1 ./internal/contract -run '^TestRuntimeShiftContracts$'); then
+if ! (cd "$realkit" && BENCH_CONTRACT_ROOT="$root" go test -count=1 ./internal/contract); then
   fail=1
 fi
-
-# shellcheck source=/dev/null
-. "$gate_dir/gate-go-contracts.sh"
-# shellcheck source=/dev/null
-. "$gate_dir/gate-link-contracts.sh"
-# shellcheck source=/dev/null
-. "$gate_dir/gate-runtime-contracts.sh"
-# shellcheck source=/dev/null
-. "$gate_dir/gate-doctor-contracts.sh"
-# shellcheck source=/dev/null
-. "$gate_dir/gate-axi-contracts.sh"
-# shellcheck source=/dev/null
-. "$gate_dir/gate-axi-guards-contracts.sh"
-# shellcheck source=/dev/null
-. "$gate_dir/gate-axi-wave2-contracts.sh"
 
 # 6. shellcheck — stronger shell lint, best-effort (runs only when installed).
 if command -v shellcheck >/dev/null 2>&1; then

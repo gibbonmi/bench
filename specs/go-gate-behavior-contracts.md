@@ -1,6 +1,6 @@
 # go-gate-behavior-contracts
 
-Status: staged
+Status: implemented
 
 ## Problem
 

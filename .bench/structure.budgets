@@ -4,10 +4,3 @@
 # Gate fragments + contract runner; granted 2026-07-02 (dry-structure-cleanup).
 # The next file added to .bench/ re-asks.
 .bench/ 13
-# Comprehensive AXI/runtime contract suites; granted 2026-07-03 (spec-handoff-
-# lifecycle added the maps-handoff and status-retirement contracts). Splitting is
-# blocked — .bench/ is at its 13-file dir budget — and fragmenting cohesive contract
-# groups fights craft-seams; a coverage suite grows with the surface it pins. Re-asks
-# past this cap.
-.bench/gate-axi-contracts.sh 440
-.bench/gate-runtime-contracts.sh 440

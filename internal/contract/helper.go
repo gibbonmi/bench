@@ -50,6 +50,18 @@ func KitRoot(t testing.TB) string {
 	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
 }
 
+func SubjectRoot(t testing.TB) string {
+	t.Helper()
+	if root := os.Getenv("BENCH_CONTRACT_ROOT"); root != "" {
+		abs, err := filepath.Abs(root)
+		if err != nil {
+			t.Fatalf("resolve BENCH_CONTRACT_ROOT: %v", err)
+		}
+		return abs
+	}
+	return KitRoot(t)
+}
+
 func NewFixture(t testing.TB, opts ...FixtureOption) Fixture {
 	t.Helper()
 	cfg := fixtureConfig{repo: true}
@@ -161,20 +173,44 @@ func (f Fixture) ReadFile(path string) string {
 
 func (f Fixture) Bench(args ...string) Probe {
 	f.t.Helper()
-	bench := filepath.Join(KitRoot(f.t), "bin", "bench.sh")
+	bench := filepath.Join(SubjectRoot(f.t), "bin", "bench.sh")
 	return f.Run("bash", append([]string{bench}, args...)...)
 }
 
 func (f Fixture) BenchEnv(env map[string]string, args ...string) Probe {
 	f.t.Helper()
-	bench := filepath.Join(KitRoot(f.t), "bin", "bench.sh")
+	bench := filepath.Join(SubjectRoot(f.t), "bin", "bench.sh")
 	return f.RunEnv(env, "bash", append([]string{bench}, args...)...)
 }
 
 func (f Fixture) BenchEnvSpec(env Env, args ...string) Probe {
 	f.t.Helper()
-	bench := filepath.Join(KitRoot(f.t), "bin", "bench.sh")
+	bench := filepath.Join(SubjectRoot(f.t), "bin", "bench.sh")
 	return f.RunEnvSpec(env, "bash", append([]string{bench}, args...)...)
+}
+
+func noteContractFailure(t testing.TB, msg string) {
+	t.Helper()
+	t.Cleanup(func() {
+		if t.Failed() {
+			t.Log(msg)
+		}
+	})
+}
+
+func skipIfSubjectBenchMissing(t testing.TB) {
+	t.Helper()
+	skipIfSubjectFileMissing(t, "bin/bench.sh")
+}
+
+func skipIfSubjectFileMissing(t testing.TB, rel string) {
+	t.Helper()
+	if _, err := os.Stat(filepath.Join(SubjectRoot(t), filepath.FromSlash(rel))); err != nil {
+		if os.IsNotExist(err) {
+			t.Skipf("subject root has no %s", rel)
+		}
+		t.Fatalf("stat subject %s: %v", rel, err)
+	}
 }
 
 func (p Probe) RequireExit(want int) {
