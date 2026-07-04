@@ -158,6 +158,44 @@ func TestCommand(t *testing.T) {
 		}
 	})
 
+	t.Run("present-but-unreadable file surfaces the read error, not not-found", func(t *testing.T) {
+		if os.Geteuid() == 0 {
+			t.Skip("root reads 0000-mode files; permission case unobservable")
+		}
+		t.Chdir(t.TempDir())
+		mustWrite(t, "sub/locked.md", mapped("| 1 | b | s | r | w |\n"))
+		if err := os.Chmod("sub/locked.md", 0o000); err != nil {
+			t.Fatalf("Chmod: %v", err)
+		}
+
+		out, code := Command([]string{"sub/locked.md"})
+		if code != 1 || !strings.Contains(out, "spec not readable:") || strings.Contains(out, "spec not found") {
+			t.Errorf("Command = (%q, %d), want exit 1 with a 'spec not readable:' error, never 'spec not found'", out, code)
+		}
+	})
+
+	t.Run("slug matching a directory falls back to specs/<slug>.md", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+		body := mapped("| 1 | b | s | r | w |\n")
+		mustWrite(t, "dist/keep", "x") // a directory named like the slug
+		mustWrite(t, "specs/dist.md", body)
+
+		out, code := Command([]string{"dist"})
+		if want := wantTable(t, "specs/dist.md", body); out != want || code != 0 {
+			t.Errorf("Command = (%q, %d), want (%q, 0) — a directory is not a spec candidate", out, code, want)
+		}
+	})
+
+	t.Run("--check resolves a slug and reports violations under the resolved label", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+		mustWrite(t, "specs/chk.md", mapped("| 1 | | s | r | w |\n")) // empty behavior cell
+
+		out, code := Command([]string{"--check", "chk"})
+		if code != 1 || !strings.Contains(out, "error: specs/chk.md coverage map row 1 has an empty 'behavior' cell") {
+			t.Errorf("Command = (%q, %d), want exit 1 with the violation under the resolved specs/chk.md label", out, code)
+		}
+	})
+
 	t.Run("flag-shaped argument stays a usage error, exit 2", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 
