@@ -1,6 +1,7 @@
 package conformance
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -1446,13 +1447,14 @@ func collapseSpace(text string) string {
 	return strings.Join(strings.Fields(text), " ")
 }
 
-func runAt(dir string, args ...string) *Probe {
-	if len(args) == 0 {
-		return nil
-	}
-	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Dir = dir
-	out, err := cmd.CombinedOutput()
+// runProbe captures stdout and stderr separately: probes like the npm pack
+// JSON parse read stdout alone, and subprocess stderr chatter (npm's update
+// notifier, warnings) must not corrupt it.
+func runProbe(cmd *exec.Cmd, args []string) *Probe {
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
 	exitCode := 0
 	if err != nil {
 		exitCode = 1
@@ -1460,7 +1462,16 @@ func runAt(dir string, args ...string) *Probe {
 			exitCode = cmd.ProcessState.ExitCode()
 		}
 	}
-	return &Probe{Args: append([]string(nil), args...), ExitCode: exitCode, Stdout: string(out), Stderr: string(out), Err: err}
+	return &Probe{Args: append([]string(nil), args...), ExitCode: exitCode, Stdout: stdout.String(), Stderr: stderr.String(), Err: err}
+}
+
+func runAt(dir string, args ...string) *Probe {
+	if len(args) == 0 {
+		return nil
+	}
+	cmd := exec.Command(args[0], args[1:]...)
+	cmd.Dir = dir
+	return runProbe(cmd, args)
 }
 
 func runAtCleanEnv(dir string, args ...string) *Probe {
@@ -1474,15 +1485,7 @@ func runAtEnv(dir string, env []string, args ...string) *Probe {
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Dir = dir
 	cmd.Env = env
-	out, err := cmd.CombinedOutput()
-	exitCode := 0
-	if err != nil {
-		exitCode = 1
-		if cmd.ProcessState != nil {
-			exitCode = cmd.ProcessState.ExitCode()
-		}
-	}
-	return &Probe{Args: append([]string(nil), args...), ExitCode: exitCode, Stdout: string(out), Stderr: string(out), Err: err}
+	return runProbe(cmd, args)
 }
 
 func runWithInput(dir, input string, args ...string) *Probe {
@@ -1492,15 +1495,7 @@ func runWithInput(dir, input string, args ...string) *Probe {
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Dir = dir
 	cmd.Stdin = strings.NewReader(input)
-	out, err := cmd.CombinedOutput()
-	exitCode := 0
-	if err != nil {
-		exitCode = 1
-		if cmd.ProcessState != nil {
-			exitCode = cmd.ProcessState.ExitCode()
-		}
-	}
-	return &Probe{Args: append([]string(nil), args...), ExitCode: exitCode, Stdout: string(out), Stderr: string(out), Err: err}
+	return runProbe(cmd, args)
 }
 
 func runWithInputEnv(dir string, env []string, input string, args ...string) *Probe {
@@ -1511,15 +1506,7 @@ func runWithInputEnv(dir string, env []string, input string, args ...string) *Pr
 	cmd.Dir = dir
 	cmd.Env = env
 	cmd.Stdin = strings.NewReader(input)
-	out, err := cmd.CombinedOutput()
-	exitCode := 0
-	if err != nil {
-		exitCode = 1
-		if cmd.ProcessState != nil {
-			exitCode = cmd.ProcessState.ExitCode()
-		}
-	}
-	return &Probe{Args: append([]string(nil), args...), ExitCode: exitCode, Stdout: string(out), Stderr: string(out), Err: err}
+	return runProbe(cmd, args)
 }
 
 func conformanceSubprocessEnv() []string {

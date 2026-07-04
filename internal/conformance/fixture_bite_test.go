@@ -224,6 +224,37 @@ func TestConformanceSubprocessEnvStripsRootOverride(t *testing.T) {
 	}
 }
 
+func TestCheckPackageFilesToleratesNpmStderrNotice(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, "bin"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "bin", "bench.sh"), []byte("#!/usr/bin/env bash\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "package.json"), []byte(`{"files":["bin/bench.sh"]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// npm's update notifier intermittently writes "npm notice ..." to stderr;
+	// the pack JSON on stdout must survive that chatter, so the stub replays
+	// both streams.
+	stub := t.TempDir()
+	script := "#!/usr/bin/env bash\n" +
+		"printf '[{\"files\":[{\"path\":\"bin/bench.sh\"}]}]\\n'\n" +
+		"echo 'npm notice New major version of npm available!' >&2\n"
+	if err := os.WriteFile(filepath.Join(stub, "npm"), []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", stub+string(os.PathListSeparator)+os.Getenv("PATH"))
+
+	for _, diag := range checkPackageFiles(root) {
+		if strings.Contains(diag, "JSON unreadable") {
+			t.Fatalf("npm stderr notice corrupted the pack JSON parse: %s", diag)
+		}
+	}
+}
+
 func materializeConformanceFixture(t *testing.T, fixture string) string {
 	t.Helper()
 	h := NewHarness(t)
