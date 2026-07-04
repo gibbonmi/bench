@@ -153,3 +153,22 @@ Proposed rule change: in /bench-write-spec's edge inventory, add a check — "fo
   format or protocol, add an edge-inventory check: does an official implementation
   exist, and does ours conform? Divergence is a decision to surface, not silently
   preserve.
+
+## 2026-07-03 — a byte-compat research asset needs a runnable probe, not an API table  [open]
+- **What happened:** `decisions/assets/go-toon-library.md` (research #5) resolved
+  the TOON-library adoption with an API/compatibility table and #6 promised the
+  block shape `name[N]{fields}:` was "unchanged". Writing the spec, a live probe of
+  `toon-go` surfaced two behaviors the table missed: the library drops `{fields}`
+  for an empty array (`name[0]:`) and omits the trailing newline. Both would have
+  broken existing empty-table and runtime contracts if the adapter delegated
+  naively; the spec added an empty-shim and a newline-append to hold #6's promise
+  true. (I also caught that `IsSpace` is not fully superseded — it has a live
+  non-emitter consumer.)
+- **Right behavior:** The research phase should have run the library against the
+  kit's own edge outputs (empty table, trailing newline, numeric cell), not just
+  read its API and README. The gaps were cheap to find with one probe program.
+- **Proposed rule change:** In the Research ticket type (and /bench-write-spec when
+  consuming a research asset that claims byte- or wire-compat with an external
+  library), require a runnable probe exercising the caller's own edge cases as the
+  evidence for a "compatible/unchanged" claim — an API table alone does not settle
+  byte compatibility.

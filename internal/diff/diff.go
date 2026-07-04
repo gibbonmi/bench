@@ -77,7 +77,11 @@ func Command(args []string) (string, int) {
 	fmt.Fprintf(&b, "branch: %s\n", branchLabel)
 	fmt.Fprintf(&b, "base: %s\n", base)
 	fmt.Fprintf(&b, "method: %s\n", method)
-	b.WriteString(toon.Table("files", []string{"status", "path"}, changedFiles(base)))
+	tbl, err := toon.Table("files", []string{"status", "path"}, changedFiles(base))
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	b.WriteString(tbl)
 	return b.String(), 0
 }
 

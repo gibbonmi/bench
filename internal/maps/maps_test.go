@@ -35,19 +35,19 @@ func TestParseFileHandoff(t *testing.T) {
 	cases := []struct {
 		name         string
 		in           string
-		wantRows     [][]string
+		wantRows     [][]any
 		wantNotReady bool
 	}{
 		{"missing handoff", "## #1: q?\nType: Grill\n### Answer\nDecided: yes.\n",
-			[][]string{{"m", "handoff", "handoff", "missing"}}, true},
+			[][]any{{"m", "handoff", "handoff", "missing"}}, true},
 		{"filled handoff silent", "## #1: q?\nType: Grill\n### Answer\nDecided: yes.\n\n## Handoff\n1. a. n/a\n2. b. n/a\n",
 			nil, false},
 		{"placeholder in handoff", "## #1: q?\nType: Grill\n### Answer\nDecided: yes.\n\n## Handoff\n1. a.\n— (open)\n",
-			[][]string{{"m", "handoff", "handoff", "open"}}, true},
+			[][]any{{"m", "handoff", "handoff", "open"}}, true},
 		{"fenced handoff is missing", "## #1: q?\nType: Grill\n### Answer\nDecided: yes.\n\n```\n## Handoff\n1. a.\n```\n",
-			[][]string{{"m", "handoff", "handoff", "missing"}}, true},
+			[][]any{{"m", "handoff", "handoff", "missing"}}, true},
 		{"open ticket no handoff row", "## #1: q?\nType: Grill\n### Answer\n— (open)\n",
-			[][]string{{"m", "1", "Grill", "open"}}, true},
+			[][]any{{"m", 1, "Grill", "open"}}, true},
 		{"non-map never nagged", "# Index\nprose, not a map.\n", nil, false},
 	}
 	for _, c := range cases {

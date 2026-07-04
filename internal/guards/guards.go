@@ -171,5 +171,9 @@ func Command(args []string) (string, int) {
 		b.WriteString("full manifests: bench guards\n")
 		return b.String(), 0
 	}
-	return toon.Table("guards", []string{"guard", "boundary", "denies"}, rows), 0
+	out, err := toon.Table("guards", []string{"guard", "boundary", "denies"}, rows)
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	return out, 0
 }

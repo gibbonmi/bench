@@ -42,12 +42,12 @@ contract "AXI guards aggregation contract" <<'BODY'
   # match and fail under pipefail even though the row is present.
   printf '#!/usr/bin/env bash\ncat >/dev/null\nexit 0\n' > .bench/hooks/extra.sh; chmod +x .bench/hooks/extra.sh
   out="$(bash "$root/bin/bench.sh" guards)"
-  grep -qxF '  extra,,no manifest' <<<"$out" || { echo "stub hook not reported as no manifest"; exit 1; }
+  grep -qxF '  extra,"",no manifest' <<<"$out" || { echo "stub hook not reported as no manifest"; exit 1; }
   rm -f .bench/hooks/extra.sh
   # Absent pre-push is a definitive not-installed row, not an omission.
   rm -f "$(git rev-parse --git-path hooks)/pre-push"
   out="$(bash "$root/bin/bench.sh" guards)"
-  grep -qxF '  pre-push,,not installed' <<<"$out" || { echo "absent pre-push not reported as not installed"; exit 1; }
+  grep -qxF '  pre-push,"",not installed' <<<"$out" || { echo "absent pre-push not reported as not installed"; exit 1; }
 BODY
 
 # guards --brief: one plain line per deny-capable guard plus exactly one footer
@@ -90,7 +90,7 @@ contract "AXI guards --describe timeout-bound contract" <<'BODY'
   out="$(bash "$root/bin/bench.sh" guards)"
   elapsed=$(( $(date +%s) - start ))
   [ "$elapsed" -lt 10 ] || { echo "guards did not bound a slow --describe (took ${elapsed}s)"; exit 1; }
-  grep -qxF '  slow,,no manifest (timed out)' <<<"$out" || { echo "slow guard not reported as timed out: $out"; exit 1; }
+  grep -qxF '  slow,"",no manifest (timed out)' <<<"$out" || { echo "slow guard not reported as timed out: $out"; exit 1; }
 BODY
 
 # An unmanaged (foreign) pre-push must NOT be executed by `bench guards`:
@@ -103,7 +103,7 @@ contract "AXI guards unmanaged-pre-push safety contract" <<'BODY'
   printf '#!/usr/bin/env bash\ntouch %q\nexit 1\n' "$sentinel" > "$hooks/pre-push"
   chmod +x "$hooks/pre-push"
   out="$(bash "$root/bin/bench.sh" guards)"
-  grep -qxF '  pre-push,,unmanaged (no manifest)' <<<"$out" || { echo "foreign pre-push not reported unmanaged: $out"; exit 1; }
+  grep -qxF '  pre-push,"",unmanaged (no manifest)' <<<"$out" || { echo "foreign pre-push not reported unmanaged: $out"; exit 1; }
   [ ! -e "$sentinel" ] || { echo "bench guards executed a foreign pre-push"; exit 1; }
 BODY
 

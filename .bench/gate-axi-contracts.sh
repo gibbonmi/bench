@@ -166,19 +166,22 @@ Decided: yes, do the thing.
 MAP
   out="$(bash "$root/bin/bench.sh" maps)"
   head -1 <<<"$out" | grep -qxF 'maps[3]{map,ticket,type,state}:' || { echo "maps header not count-3 TOON: $(head -1 <<<"$out")"; exit 1; }
+  # The bare ticket numbers below only stay unquoted because the cell is a typed Go int;
+  # a numeric string would spec-TOON-quote to "1". These rows are the integration proof
+  # of the typed-cell path.
   grep -qxF '  m,1,Grill,open' <<<"$out" || { echo "open ticket row missing"; exit 1; }
   grep -qxF '  m,2,Research,deferred' <<<"$out" || { echo "deferred ticket row missing"; exit 1; }
   grep -qxF '  m,3,Grill,grill-deferred' <<<"$out" || { echo "grill-deferred ticket row missing"; exit 1; }
   if grep -qE '^  m,4,' <<<"$out"; then echo "resolved ticket #4 leaked into unresolved list"; exit 1; fi
 BODY
 
-# A title carrying a comma and a double-quote is escaped per TOON
-# (double-quoted, inner quotes doubled).
+# A title carrying a comma and a double-quote is escaped per spec-TOON
+# (double-quoted, inner quotes backslash-escaped).
 contract "AXI TOON field-escaping contract" <<'BODY'
   mkdir -p .bench
   printf '## 2026-03-03 — a, "b"  [open]\n' > .bench/learnings.md
   out="$(bash "$root/bin/bench.sh" learnings)"
-  grep -qxF '  2026-03-03,"a, ""b"""' <<<"$out" || { echo "comma/quote title not escaped per TOON: $out"; exit 1; }
+  grep -qxF '  2026-03-03,"a, \"b\""' <<<"$out" || { echo "comma/quote title not spec-TOON escaped: $out"; exit 1; }
 BODY
 
 # An unknown argument prints usage on stdout and exits 2 (usage, not error).
@@ -298,7 +301,7 @@ BODY
 # toon_escape's leading/trailing-whitespace quoting and maps_unresolved_count's
 # distinct-file figure are pure helpers with no CLI surface; their coverage moved to
 # internal/toon and internal/maps table tests when bin/bench-query.sh was deleted (see
-# TestEscape, TestUnresolvedCount). Nothing here sources a shell parser file.
+# TestTableCellEscaping, TestUnresolvedCount). Nothing here sources a shell parser file.
 
 # ---- close-readiness: the ## Handoff row on zero-open maps -------------------
 # A map with zero open tickets is a close candidate; the exit's refuse-to-close

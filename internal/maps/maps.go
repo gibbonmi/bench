@@ -129,17 +129,20 @@ func parseFile(content []byte) fileResult {
 }
 
 // fileRows renders one file's rows: its unresolved ticket rows, then a close-readiness
-// handoff row when the file is a zero-open map with no filled Handoff.
-func fileRows(name string, r fileResult) [][]string {
-	var rows [][]string
+// handoff row when the file is a zero-open map with no filled Handoff. The `ticket`
+// cell is a genuine int for a real (all-digit) ticket so it emits bare, and the literal
+// string `handoff` for a close-readiness row — the column is genuinely mixed.
+func fileRows(name string, r fileResult) [][]any {
+	var rows [][]any
 	for _, t := range r.tickets {
-		rows = append(rows, []string{name, t.num, t.typ, t.state})
+		num, _ := strconv.Atoi(t.num) // t.num is all-digit by ticketRe
+		rows = append(rows, []any{name, num, t.typ, t.state})
 	}
 	if !r.preHandoffMarker && r.handoffIncomplete() {
 		if !r.seenHandoff {
-			rows = append(rows, []string{name, "handoff", "handoff", "missing"})
+			rows = append(rows, []any{name, "handoff", "handoff", "missing"})
 		} else {
-			rows = append(rows, []string{name, "handoff", "handoff", r.handoffState})
+			rows = append(rows, []any{name, "handoff", "handoff", r.handoffState})
 		}
 	}
 	return rows
@@ -175,9 +178,9 @@ func scan(root string) ([]string, map[string]fileResult) {
 
 // Rows lists every unresolved ticket and close-readiness handoff row under
 // root/decisions, in sorted file order.
-func Rows(root string) [][]string {
+func Rows(root string) [][]any {
 	names, results := scan(root)
-	var rows [][]string
+	var rows [][]any
 	for _, name := range names {
 		rows = append(rows, fileRows(name, results[name])...)
 	}
@@ -221,5 +224,9 @@ func Command(args []string) (string, int) {
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	return toon.Table("maps", []string{"map", "ticket", "type", "state"}, Rows(root)), 0
+	out, err := toon.TableTyped("maps", []string{"map", "ticket", "type", "state"}, Rows(root))
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	return out, 0
 }

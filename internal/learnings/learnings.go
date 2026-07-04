@@ -85,5 +85,9 @@ func Command(args []string) (string, int) {
 		return toon.NotInRepo() + "\n", 1
 	}
 	content, _ := os.ReadFile(filepath.Join(root, ".bench", "learnings.md"))
-	return toon.Table("learnings", []string{"date", "title"}, Rows(content)), 0
+	out, err := toon.Table("learnings", []string{"date", "title"}, Rows(content))
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	return out, 0
 }

@@ -237,6 +237,10 @@ func Command(args []string) (string, int) {
 	var b strings.Builder
 	fmt.Fprintf(&b, "spec: %s\n", spec)
 	fmt.Fprintf(&b, "state: %s\n", State(p))
-	b.WriteString(toon.Table("rows", []string{"story", "seam", "red_signal"}, Rows(p)))
+	tbl, err := toon.Table("rows", []string{"story", "seam", "red_signal"}, Rows(p))
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	b.WriteString(tbl)
 	return b.String(), 0
 }

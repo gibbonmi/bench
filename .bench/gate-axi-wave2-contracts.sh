@@ -57,7 +57,7 @@ contract "AXI diff fallback/shape contract" <<'BODY'
   # Paths git would C-quote (non-ASCII, embedded quote) must arrive raw and be
   # TOON-escaped exactly once — never git-quoted and then quoted again.
   grep -qxF '  A,café.txt' <<<"$out" || { echo "non-ASCII path was git-quoted or mangled: $out"; exit 1; }
-  grep -qxF '  A,"a""q.txt"' <<<"$out" || { echo "quote-bearing path not single-layer TOON-escaped: $out"; exit 1; }
+  grep -qxF '  A,"a\"q.txt"' <<<"$out" || { echo "quote-bearing path not spec-TOON backslash-escaped: $out"; exit 1; }
   # Recorded key pointing at an unreachable sha → loud fallback.
   gciw config branch.feature.benchBase 0123456789abcdef0123456789abcdef01234567
   out="$(bash "$root/bin/bench.sh" diff)"
