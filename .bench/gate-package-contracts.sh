@@ -19,7 +19,6 @@ printf '%s' "$pack_json" | node -e '
   let bad = 0;
   for (const required of [
     "bin/bench.sh",
-    "bin/bench-worktree.sh",
     "bin/bench-postinstall.sh",
     ".agents/commands/bench-implement-spec.md",
     ".agents/skills/bench-craft-seams/SKILL.md",

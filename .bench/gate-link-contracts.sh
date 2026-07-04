@@ -95,7 +95,7 @@ tmp="$(mktemp -d)"
   [ ! -e .bench/bin/bench-link.sh ] || { echo "fresh link still installed deleted local hook CLI link helper"; exit 1; }
   [ ! -e .bench/bin/bench-init.sh ] || { echo "fresh link still installed deleted local hook CLI init helper"; exit 1; }
   [ ! -e .bench/bin/bench-doctor.sh ] || { echo "fresh link still installed deleted local hook CLI doctor helper"; exit 1; }
-  [ -f .bench/bin/bench-worktree.sh ] || { echo "fresh link did not install local hook CLI worktree helper"; exit 1; }
+  [ ! -e .bench/bin/bench-worktree.sh ] || { echo "fresh link still installed deleted local hook CLI worktree helper"; exit 1; }
   [ -f .bench/link-manifest.tsv ] || { echo "fresh link did not write link manifest"; exit 1; }
   grep -qF $'#kit\t' .bench/link-manifest.tsv || { echo "fresh link did not stamp the kit version in the manifest"; exit 1; }
   grep -qF $'.bench/BENCH.md\t' .bench/link-manifest.tsv || { echo "fresh link manifest lost managed file rows after adding the stamp"; exit 1; }

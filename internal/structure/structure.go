@@ -217,12 +217,21 @@ func Command(args []string) (string, int) {
 		return toon.NotInRepo() + "\n", 1
 	}
 	if touched {
-		out, _ := git.Output("-C", root, "diff", "--name-only", "--diff-filter=ACMR", args[1]+"..HEAD")
-		report, violations := Check(root, "touched", strings.Split(out, "\n"))
+		report, violations := Touched(root, args[1])
 		return report, exitOf(violations)
 	}
 	report, violations := Check(root, "all", nil)
 	return report, exitOf(violations)
+}
+
+// Touched runs the length/crowding rules over only the files changed between base and
+// HEAD (`git diff --diff-filter=ACMR base..HEAD`), returning the human report and the
+// violation count. It is the one source of the touched-scope check the `--since`
+// subcommand and the shift loop's refactor gate both read, so the scope query lives in
+// exactly one place.
+func Touched(root, base string) (report string, violations int) {
+	out, _ := git.Output("-C", root, "diff", "--name-only", "--diff-filter=ACMR", base+"..HEAD")
+	return Check(root, "touched", strings.Split(out, "\n"))
 }
 
 func exitOf(violations int) int {

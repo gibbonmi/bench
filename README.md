@@ -172,9 +172,8 @@ bench/
 ├── .codex/
 │   └── hooks.json            # Codex adapter pointing at .bench/hooks
 ├── bin/
-│   ├── bench.sh              # worktrees + gated loop + strangler router to the Go core
-│   ├── bench-postinstall.sh  # best-effort global shim installer
-│   └── bench-worktree.sh     # reusable-worktree pool helpers (adapters over the Go core)
+│   ├── bench.sh              # strangler router to the Go core + one-glance run_gate adapter
+│   └── bench-postinstall.sh  # best-effort global shim installer
 ├── cmd/bench/                # the compiled core's main: dispatch + version
 ├── internal/                 # the Go core: AXI query surface, status, structure + plumbing
 │   ├── adopt/                # link/init/doctor adoption mutators

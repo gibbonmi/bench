@@ -216,3 +216,20 @@ Proposed rule change: in /bench-write-spec's edge inventory, add a check — "fo
   when the harness forbids unsolicited subagents, run the three axes inline,
   state the deviation in the exit report, and keep the same per-axis charges and
   citation standard.
+
+## 2026-07-04 — per-story spec lines were collapsed to one inline tier because the stories were one atomic diff  [open]
+- **What happened:** Spec go-shift-worktree-port assigned per-story lines
+  (stories 1–2 cheap/sonnet, 3–6 mid/opus, 5–6 high effort). The six stories
+  share three packages (worktree/gate/shift) and must land in one diff (the shell
+  deletion + dispatch flip are inseparable), so I built the whole slice inline at
+  mid (Opus 4.8), bumping effort for the two flagged-uncertain seams (5 signals,
+  6 flip). The declared cheap→mid bump on stories 1–2 was flagged, not silent.
+- **Right behavior:** For a spec whose stories are tightly coupled into a single
+  atomic diff, per-story worktree delegation fights the coupling; one inline tier
+  covering the diff, with the per-story deviations flagged, is the honest call.
+  Distinct from the delegate-overhead floor above — here the driver is diff
+  atomicity, not charge cost.
+- **Proposed rule change:** In craft-line or the spec's per-story line guidance,
+  note that per-story tiers presume separable slices; when the spec itself says
+  the stories land as one atomic diff, the build may run inline at the highest
+  tier any story needs, flagging each collapsed line in the exit report.

@@ -109,8 +109,10 @@ Codex phase adapters installed by Bench:
 - `bench version` prints the installed benchkit version and platform (via the Go core).
 - Plumbing the hooks and shell adapters call (not for direct use): `bench tree-hash [root]`
   prints the gate verdict-cache key (the throwaway-index content hash, or `none`);
+  `bench gate-run [root]` resolves and runs the gate from the repo root and records the
+  verdict — the standalone `bench gate` is a one-glance shell adapter that forwards here;
   `bench worktree-pool <root>` and `bench worktree-lease-file <path>` print the worktree
-  pool directory and lease-file paths the worktree helpers resolve from the Go core;
+  pool directory and lease-file paths the Go core's worktree package resolves;
   `bench guard-git` reads a PreToolUse envelope on stdin and yields the destructive-git
   verdict (exit 2 + `BLOCKED:` to block), and `bench guard-git --describe-classes` prints
   the deny surface for the block-dangerous-git shim's `--describe` manifest;

@@ -58,6 +58,39 @@ tmp="$(mktemp -d)"
 ) || err "bench gate BENCH_GATE cwd contract failed"
 rm -rf "$tmp"
 
+# Resolution-order contract (NEW this slice): the chain is `.bench/gate.sh` beats
+# `$BENCH_GATE` beats auto-detect beats no-gate, and a reordered chain silently runs the
+# wrong oracle. This pins the precedence end-to-end — no assertion covered it before.
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  # gate.sh (exit 0) wins over a failing BENCH_GATE (exit 1).
+  mkdir -p .bench
+  printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  BENCH_GATE='exit 1' bash "$root/bin/bench.sh" gate >/dev/null 2>&1 || { echo "gate.sh did not win over BENCH_GATE"; exit 1; }
+  # With no gate.sh, a passing BENCH_GATE (exit 0) wins over auto-detect, which would
+  # otherwise run the npm path against a bare package.json and fail.
+  rm -f .bench/gate.sh
+  printf '{"private":true}\n' > package.json
+  BENCH_GATE='exit 0' bash "$root/bin/bench.sh" gate >/dev/null 2>&1 || { echo "BENCH_GATE did not win over auto-detect"; exit 1; }
+  # package.json-only selects the npm auto-detect path (not the no-gate exit 3): the
+  # tell is that the no-gate message is absent, whether or not npm is installed.
+  out="$(bash "$root/bin/bench.sh" gate 2>&1)"; rc=$?
+  if grep -qF 'no gate found' <<<"$out"; then echo "package.json did not select the npm auto-detect path"; exit 1; fi
+  [ "$rc" != 3 ] || { echo "package.json resolved to the no-gate exit 3"; exit 1; }
+  # No gate.sh, no BENCH_GATE, no lockfile → exit 3, and nothing recorded. Clear any
+  # verdict a prior resolved-gate step in this repo left, so the assertion pins that
+  # THIS no-gate run writes none.
+  rm -f package.json
+  gci commit -q --allow-empty -m init
+  rm -f "$(gci rev-parse --absolute-git-dir)/bench-last-gate"
+  out="$(bash "$root/bin/bench.sh" gate 2>&1)"; rc=$?
+  [ "$rc" = 3 ] || { echo "no-gate case did not exit 3 (got $rc)"; exit 1; }
+  grep -qF 'no gate found' <<<"$out" || { echo "no-gate case did not print the no-gate message"; exit 1; }
+  [ ! -f "$(gci rev-parse --absolute-git-dir)/bench-last-gate" ] || { echo "no-gate case recorded a verdict"; exit 1; }
+) || err "bench gate resolution-order contract failed"
+rm -rf "$tmp"
+
 tmp="$(mktemp -d)"
 (
   set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
@@ -183,6 +216,21 @@ tmp="$(mktemp -d)"
   [ -f "$cache" ] || { echo "Stop hook did not write the gate cache"; exit 1; }
   grep -qE '^(green|red) [0-9a-f]+ [0-9T:Z-]+$' "$cache" || { echo "gate cache not <status> <tree> <iso8601>"; exit 1; }
 ) || err "bench status gate-cache write contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench bin dist
+  cp "$root"/bin/*.sh bin/
+  cp "$root/dist/bench" dist/bench; chmod +x dist/bench
+  chmod +x bin/bench.sh
+  gci commit -q --allow-empty -m init
+  out="$(printf '{}\n' | BENCH_SHIFT=1 bash "$root/.bench/hooks/stop.sh" 2>&1)"; rc=$?
+  [ "$rc" = "2" ] || { echo "armed no-gate stop did not block as red (exit $rc): $out"; exit 1; }
+  grep -qF 'no gate found' <<<"$out" || { echo "armed no-gate stop did not surface the no-gate message"; exit 1; }
+  [ ! -f "$(gci rev-parse --absolute-git-dir)/bench-last-gate" ] || { echo "armed no-gate stop recorded a gate cache"; exit 1; }
+) || err "stop hook no-gate no-cache contract failed"
 rm -rf "$tmp"
 
 # Fail-safe: a Stop hook with a findable bench.sh but NO core binary must degrade to

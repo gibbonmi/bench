@@ -16,6 +16,7 @@ import (
 	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gitguard"
 	"github.com/gibbonmi/bench/internal/guards"
@@ -24,6 +25,7 @@ import (
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/models"
 	"github.com/gibbonmi/bench/internal/roadmap"
+	"github.com/gibbonmi/bench/internal/shift"
 	"github.com/gibbonmi/bench/internal/status"
 	"github.com/gibbonmi/bench/internal/stophook"
 	"github.com/gibbonmi/bench/internal/structure"
@@ -151,10 +153,11 @@ func stopVerdict(args []string, stdin io.Reader, stderr io.Writer) (code int) {
 }
 
 // treeHash exposes git.TreeHash as the `bench tree-hash [root]` plumbing subcommand:
-// the gate verdict-cache key, called by gate_record (bin/bench.sh) and record_gate
-// (.bench/hooks/stop.sh) so the hash has one source. Root is args[0] when given
-// (gate_record passes the resolved repo root), else the cwd's repo. It prints the
-// content hash or `none`; a non-hash tells the caller to fail safe rather than forge.
+// the gate verdict-cache key, kept as a standalone subcommand for external callers. The
+// in-process verdict recorders (internal/gate.Record and the Stop hook) call git.TreeHash
+// directly, so the hash still has one source. Root is args[0] when given, else the cwd's
+// repo. It prints the content hash or `none`; a non-hash tells the caller to fail safe
+// rather than forge.
 func treeHash(args []string) (string, int) {
 	var root string
 	if len(args) > 0 && args[0] != "" {
@@ -218,6 +221,12 @@ func run(args []string, stdout, stderr *os.File) int {
 	case "version":
 		fmt.Fprintln(stdout, versionLine(version, runtime.GOOS, runtime.GOARCH))
 		return 0
+	case "worktree":
+		return worktree.Subshell(os.Stdin, stdout, stderr)
+	case "shift":
+		return shift.Command(args[1:], os.Stdin, stdout, stderr)
+	case "gate-run":
+		return gate.RunCommand(args[1:], stdout, stderr)
 	case "guard-git":
 		return guardGit(args[1:], os.Stdin, stdout, stderr)
 	case "check-agent-line":

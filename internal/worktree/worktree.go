@@ -1,6 +1,6 @@
-// Package worktree ports the worktree-pool addressing from `bench-worktree.sh`:
-// `worktree_pool` (the deterministic warm-pool directory for a repo root) and
-// `worktree_lease_file` (the git-resolved lease path for a pooled worktree).
+// Package worktree owns the warm-pool worktree lifecycle: the pool-directory and
+// lease-path addressing (Pool, LeaseFile), the atomic-lease state machine (Claim,
+// reclaim), pool acquire/release (Acquire, Release), and the interactive subshell.
 //
 // The pool key is `<basename>-<cksum>`, where cksum is the POSIX `cksum` of the
 // bytes `root + "\n"`. Go's standard library has no `cksum` variant, so the exact

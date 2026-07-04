@@ -29,8 +29,9 @@ guessing.
   `pre-push` hook protects the default branch no matter who pushes. Interactive
   harness hooks add an extra layer where the harness supports them (see Hook
   Layers in `.bench/BENCH-reference.md`).
-- **`bench`** (the CLI) runs the operational layer — worktrees and the gated
-  loop — and is plain shell, identical on every harness. You drive it.
+- **`bench`** (the CLI) runs the operational layer — a shell wrapper over the Go
+  core for worktrees and the gated loop — with harness-independent behavior. You
+  drive it.
 
 When you start in a repo, read `CONTEXT.md` (if present) for the current mental
 model and ubiquitous language, and `projects/<name>.md` for the seams, the gate

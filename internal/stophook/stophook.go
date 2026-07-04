@@ -17,20 +17,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"os/exec"
-	"path/filepath"
-	"regexp"
 	"strings"
-	"time"
 
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 )
-
-// treeHashRE is the shape a real git tree hash must match before it is written to
-// the verdict cache. Anything else (notably the literal "none" that internal/git
-// returns on failure) is refused, so recordGate never forges a tree.
-var treeHashRE = regexp.MustCompile(`^[0-9a-f]+$`)
 
 // blockHeader is the three-line preamble of the BLOCKED message, ending in a
 // newline so the gate-output tail follows on its own lines. One source for the
@@ -88,8 +80,9 @@ func BlockMessage(gateOutput string) string {
 
 // Run is the Stop-hook orchestration. When the shift is not armed, or the envelope
 // says the hook is already active, it allows the stop (exit 0) without touching the
-// cache. Otherwise it runs `<wrapper> gate`, records the verdict, and returns 0 on
-// green or 2 (after writing the BLOCKED message to stderr) on red.
+// cache. Otherwise it runs `<wrapper> gate`, records resolved gate verdicts, and
+// returns 0 on green or 2 (after writing the BLOCKED message to stderr) on red. The
+// wrapper gate's no-gate exit 3 is not a verdict and must not seed a red cache.
 func Run(stdin []byte, wrapper string, armed bool, stderr io.Writer) int {
 	if !armed {
 		return 0
@@ -115,38 +108,18 @@ func Run(stdin []byte, wrapper string, armed bool, stderr io.Writer) int {
 		}
 	}
 
-	status := "green"
-	if rc != 0 {
-		status = "red"
+	// The verdict cache is written by exactly one source (internal/gate.Record),
+	// reached here through the same repo git dir the `<wrapper> gate` run keyed to —
+	// no second cache-write implementation to drift from the standalone gate path.
+	if rc != 3 {
+		if root, err := git.Root(); err == nil {
+			gate.Record(root, rc, stderr)
+		}
 	}
-	recordGate(status, stderr)
 
 	if rc == 0 {
 		return 0
 	}
 	fmt.Fprint(stderr, BlockMessage(output)+"\n")
 	return 2
-}
-
-// recordGate writes "<status> <tree hash> <iso8601>\n" to <git-dir>/bench-last-gate.
-// It resolves the repo root and git dir through internal/git and computes the tree
-// hash the same way the gate cache key does. If the tree hash is not a real hash it
-// writes nothing and warns — the no-forged-verdict guarantee. Cache resolution or a
-// failed write is best-effort: it degrades to no cache rather than blocking the stop.
-func recordGate(status string, stderr io.Writer) {
-	root, err := git.Root()
-	if err != nil {
-		return
-	}
-	gitdir, err := git.Output("-C", root, "rev-parse", "--absolute-git-dir")
-	if err != nil {
-		return
-	}
-	tree := git.TreeHash(root)
-	if !treeHashRE.MatchString(tree) {
-		fmt.Fprintln(stderr, "WARNING: bench tree-hash unavailable — not recording a gate verdict (no forged tree).")
-		return
-	}
-	line := status + " " + tree + " " + time.Now().UTC().Format("2006-01-02T15:04:05Z") + "\n"
-	_ = os.WriteFile(filepath.Join(gitdir, "bench-last-gate"), []byte(line), 0644)
 }

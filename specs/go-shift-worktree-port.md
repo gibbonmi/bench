@@ -1,6 +1,6 @@
 # go-shift-worktree-port
 
-Status: staged
+Status: implemented
 
 ## Problem
 

@@ -119,6 +119,27 @@ tmp="$(mktemp -d)"
 (
   set -u; cd "$tmp"; git init -q
   mkdir -p .bench; printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
+  cat > agent <<'EOF'
+#!/usr/bin/env bash
+printf 'work\n' > work.txt
+EOF
+  chmod +x agent
+  gci add -A; gci commit -q -m init
+  home="$(mktemp -d)"; clean_home="$(mktemp -d)"; clean_xdg="$(mktemp -d)"
+  if out="$(HOME="$clean_home" XDG_CONFIG_HOME="$clean_xdg" GIT_CONFIG_NOSYSTEM=1 BENCH_AGENT="$tmp/agent" BENCH_MAX_ITERS=1 BENCH_HOME="$home" bash "$root/bin/bench.sh" shift no-author 2>&1)"; then
+    echo "shift with no git author config succeeded"; exit 1
+  fi
+  grep -qF 'could not commit iteration 1' <<<"$out" || { echo "commit failure was not reported truthfully"; exit 1; }
+  if grep -qF '1 committed iteration(s)' <<<"$out"; then echo "failed commit incremented the committed count"; exit 1; fi
+  [ -z "$(find "$home" -name bench-lease -print 2>/dev/null)" ] || { echo "commit-failure shift worktree lease was not released"; exit 1; }
+  rm -rf "$home" "$clean_home" "$clean_xdg"
+) || err "bench shift commit-failure contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench; printf '#!/usr/bin/env bash\nexit 0\n' > .bench/gate.sh; chmod +x .bench/gate.sh
   seq 401 | sed 's/^/x = /' > preexisting.py
   gci add -A; gci commit -q -m init
   home="$(mktemp -d)"
@@ -180,6 +201,42 @@ EOF
   grep -qF 'shift done' <<<"$out" || { echo "follow-up shift after interrupt did not complete"; exit 1; }
   rm -rf "$home"
 ) || err "bench shift interrupt cleanup contract failed"
+rm -rf "$tmp"
+
+tmp="$(mktemp -d)"
+(
+  set -u; cd "$tmp"; git init -q
+  mkdir -p .bench
+  cat > .bench/gate.sh <<'EOF'
+#!/usr/bin/env bash
+trap 'exit 130' INT
+if [ ! -f "$BENCH_TEST_STATE/gate-interrupted-once" ]; then
+  : > "$BENCH_TEST_STATE/gate-interrupted-once"
+  kill -INT "$PPID"
+  sleep 2
+  printf 'late\n' > late-gate-write.txt
+fi
+exit 0
+EOF
+  chmod +x .bench/gate.sh
+  gci add -A; gci commit -q -m init
+  home="$(mktemp -d)"; state="$(mktemp -d)"
+  interrupt_log="$(mktemp)"
+  if BENCH_TEST_STATE="$state" BENCH_AGENT=true BENCH_MAX_ITERS=2 BENCH_HOME="$home" bash "$root/bin/bench.sh" shift gate-interrupt >"$interrupt_log" 2>&1; then
+    echo "gate-interrupted shift exited successfully"; exit 1
+  fi
+  wt="$(sed -n 's/^  worktree: //p' "$interrupt_log")"
+  [ -n "$wt" ] || { echo "gate-interrupted shift did not report its worktree"; exit 1; }
+  [ -z "$(find "$home" -name bench-lease -print 2>/dev/null)" ] || { echo "gate-interrupted shift left a leased worktree"; exit 1; }
+  sleep 3
+  [ ! -e "$wt/late-gate-write.txt" ] || { echo "gate child kept running after lease release and dirtied the pooled worktree"; exit 1; }
+  [ -z "$(git -C "$wt" status --porcelain)" ] || { echo "gate-interrupted pooled worktree is dirty"; exit 1; }
+  out="$(BENCH_TEST_STATE="$state" BENCH_AGENT=true BENCH_MAX_ITERS=1 BENCH_HOME="$home" bash "$root/bin/bench.sh" shift after-gate-interrupt 2>&1)" || { printf '%s\n' "$out"; exit 1; }
+  grep -qF 'shift done' <<<"$out" || { echo "follow-up shift after gate interrupt did not complete"; exit 1; }
+  grep -qF "worktree: $wt" <<<"$out" || { echo "follow-up shift did not reuse the clean pooled worktree"; exit 1; }
+  rm -f "$interrupt_log"
+  rm -rf "$home" "$state"
+) || err "bench shift gate-interrupt cleanup contract failed"
 rm -rf "$tmp"
 
 tmp="$(mktemp -d)"
