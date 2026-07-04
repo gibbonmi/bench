@@ -4,8 +4,8 @@ Source: the two open entries in `.bench/learnings.md` after the 2026-07-04
 learnings integration pass. Both entries are generalizable but still need product
 decisions before `/bench-write-spec` can compile them into implementation work.
 
-Current frontier: resolve #3. #1 split the learnings into two specs; #2 settled
-the review-findings artifact lifecycle.
+Current frontier: resolve #4. #1 split the learnings into two specs; #2 settled
+the review-findings artifact lifecycle; #3 settled stale-gate classification.
 
 ## #1: Are the two remaining learnings one spec or two?
 
@@ -56,4 +56,21 @@ which paths count as benign, how mixed drift is worded, and what action should
 lead.
 
 ### Answer
-— (open: choose the benign/real drift rule and dashboard wording)
+Classify stale gate drift by a fixed capture-only allowlist: `ROADMAP.md` and
+`.bench-notes.md`. If every changed path since the gated tree is in that
+allowlist, `bench status` treats the stale verdict as benign capture drift. Any
+code, docs, config, or mixed drift stays the current stronger stale-gate signal
+and leads with `re-run the gate`.
+
+## #4: What exact dashboard row should benign stale-gate drift render?
+
+Blocked by: #3
+Type: Grill
+
+### Question
+The stale-gate spec needs exact observable text for the benign case. What should
+the signal detail and action say when all drift is limited to the capture-only
+allowlist?
+
+### Answer
+— (open: choose exact benign stale-gate detail and action wording)
