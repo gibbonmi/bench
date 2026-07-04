@@ -12,3 +12,4 @@
 - 2026-07-04  bench commit <files...> — explicit-stage commit wrapper reusing shift's commit-on-green logic; could fold in the spec status flip
 - 2026-07-04  Unify subprocess-capture seams: conformance runProbe, Harness.Run, canary defaultRunner each hand-roll capture; one probe seam (canary's merged-stream EXPECT matching stays a deliberate mode)
 - 2026-07-04  Rework tests/canary/: 56 flat fixtures is out of control — group by check family or generate from the check registry, and enforce the one-canary-per-check meta-check instead of hand-tending the tree
+- 2026-07-04  gate.sh phase-level concurrency (run conformance/contract/canary phases in parallel) — remeasure after test-layout-gate-speed lands (~10 edits, ~6 gate runs)

@@ -59,3 +59,9 @@ An entry leaves this file only via /bench-integrate-learnings.
   fix path follows — the same "document for the teammate who just walked in" invariant
   the specs and ADRs already obey, applied to the one workflow output that currently
   evaporates. (Reviewer's call on the location and whether it auto-retires with the spec.)
+
+## 2026-07-04 — spec written without a decision map (reviewer-approved deviation)
+
+- **What happened:** Test-cleanup/gate-speed work was planned in-conversation; /bench-write-spec's entry contract requires a closed decisions/<topic>.md, none existed. Asked the reviewer; they chose to skip the map and spec directly from the conversation.
+- **Right behavior:** Stop on the missing map and ask — done here. Deviation was explicit, not silent.
+- **Proposed rule change:** None; the entry contract held and the ask-first rule worked.
