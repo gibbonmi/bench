@@ -11,13 +11,13 @@ Active phase: `$bench-integrate-learnings`. The current green slice is ready to
 commit: six review/spec-guidance learnings were promoted and pruned, and the gate
 policy mismatch around CLI inventory was fixed.
 
-`bench gate` is green on the dirty tree. The branch is still ahead of
-`origin/main` by the two prior local commits until this slice is committed and
-pushed.
+The review/spec-guidance slice is committed as `cdd8826`. The merged-spec
+retirement slice is now staged in the dirty tree and still needs verification,
+commit, and push.
 
-## Current diff
+## Committed work
 
-Promoted in the dirty tree:
+Promoted in `cdd8826`:
 
 - `craft-synthesis` now requires a fresh-session dogfood run when a candidate
   changes skill or command triggers.
@@ -32,7 +32,7 @@ Promoted in the dirty tree:
 - `projects/benchkit.md` now treats real CLI, linked by-path CLI, hooks, and
   adapters as explicit hostile-input invocation surfaces.
 
-Gate/conformance fix in the dirty tree:
+Gate/conformance fix in `cdd8826`:
 
 - `.bench/BENCH.md` is now the canonical CLI inventory source.
 - `.bench/BENCH-reference.md` points back to that inventory instead of carrying a
@@ -42,10 +42,18 @@ Gate/conformance fix in the dirty tree:
 - The stale CLI canary now plants its stale reference in `.bench/BENCH.md`, and a
   new missing-inventory canary proves the BENCH.md inventory check still bites.
 
-Recorded/pruned in the dirty tree:
+Recorded/pruned in `cdd8826`:
 
 - `CHANGELOG.md` has the 2026-07-04 review/spec guidance learnings entry.
 - `.bench/learnings.md` now has 2 open entries.
+
+## Current diff
+
+- The 16 implemented specs in `specs/` are staged for promote-then-delete
+  retirement.
+- `ROADMAP.md` no longer points at the retired spec files as live paths.
+- This handoff reflects that the review/spec-guidance slice is committed and the
+  spec-retirement slice is in progress.
 
 ## Verification already run
 
@@ -70,8 +78,10 @@ Other `bench status` items:
 
 - `structure` reports 7 oversized Go test files. This needs a `craft-seams` split
   plan, not a blind line-count cleanup.
-- `specs` reports 16 merged specs awaiting promote-then-delete retirement.
+- `specs` should clear after the staged retirement commit.
 - 14 roadmap ideas are parked; they are capture-only until shaped.
 
-Recommended next action after committing this green slice: retire the merged specs
-mechanically, then rerun `bench gate` before pushing all local commits.
+Recommended next action: verify the staged spec-retirement slice with `bench gate`,
+commit it as `spec-retire: implemented specs`, then push all local commits. After
+that, the only remaining status items should be the two open learnings that need
+product decisions and the structure split plan.
