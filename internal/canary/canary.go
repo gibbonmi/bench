@@ -144,6 +144,12 @@ func trimExpectation(data []byte) string {
 	return strings.TrimRight(string(data), "\n")
 }
 
+// MaterializeFixture copies a canary files/ tree into dst and restores dot- path
+// segments to dot directories, matching the real canary sweep.
+func MaterializeFixture(src, dst string) error {
+	return materialize(src, dst)
+}
+
 func materialize(src, dst string) error {
 	if err := copyTree(src, dst); err != nil {
 		return err

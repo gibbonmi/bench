@@ -1,6 +1,6 @@
 # go-gate-conformance-checks
 
-Status: staged
+Status: implemented
 
 ## Problem
 

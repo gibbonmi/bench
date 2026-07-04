@@ -94,37 +94,31 @@ coverage map; a class skipped here returns as a regression.
 
 The oracle for a kit, in layers (all green today):
 
-1. **Parse + validity** — `bash -n` on every kit shell script (`bin/`, the gate
-   fragments, the shared hooks and lib) and `py_compile` on the hook analyzer; JSON
-   parse on `package.json`, `.claude/settings.json`, and `.codex/hooks.json`. Plus
-   two CLI invariants: the scripts the harness execs by path are executable in git,
-   and the CLI names the `.sh` gate/done files that exist (an extensionless ref routes
-   to auto-detect, not the oracle).
-2. **Structure** — every `SKILL.md` carries frontmatter; every `package.json`
-   `files[]` path resolves and the dry-run npm package includes required install
-   assets while excluding local-only settings.
-3. **Kit conformance** — the `.bench/BENCH.md` skills index is generated from
-   skill frontmatter (`.bench/skills-index.sh`), and the gate verifies the
-   committed block equals the generated one (presence, wording, order), drift
-   attributed per skill. Every craft skill
-   exposes a `craft-*` visible name, every command file is referenced as `/name`, every
-   command has an explicit Codex `$bench-*` adapter documented in `.bench/BENCH.md`,
-   and the feature-build workflow keeps the acceptance-coverage and edge-coverage
-   anchors in `/bench-write-spec`, `craft-tdd`, `craft-seams`,
-   `/bench-implement-spec`, `/bench-review-implementation`, `/bench-setup-repo`,
-   and this profile's hostile-input checklist. This is the check that silently rots and breaks
-   harnesses; it is the analog of gl-axi's `axi-conformance`.
-4. **shellcheck** — best-effort, runs only when installed (`-S warning`). Not a hard
+1. **Go root conformance** — `.bench/gate.sh` runs
+   `go test -count=1 ./internal/conformance -run '^TestRootConformance$'` with
+   `BENCH_CONFORMANCE_ROOT` set to the tree under grade. That suite owns parse and
+   validity checks, JSON validity, executable git modes, package-file resolution,
+   npm dry-run package shape, generated skills-index equality, Codex adapter
+   metadata, Claude skill mirroring, shared-rule single-sourcing, stale command
+   references, token-diet placement, workflow anchors, line-routing enforcement,
+   compiled-core build/vet/test/cross-compile checks, release-workflow structure,
+   guard `--describe` manifests, the profile's hostile-input checklist anchor, and
+   acceptance-coverage map validation.
+2. **shellcheck** — best-effort, runs only when installed (`-S warning`). Not a hard
    dependency; upgrades the shell lint automatically once present.
-5. **Safe-link behavior** — the gate runs `bench link` against throwaway repos to
+3. **Safe-link behavior** — the gate runs `bench link` against throwaway repos to
    prove fresh installs, existing `AGENTS.md` preservation, relink idempotence,
    same-name conflicts, modified-managed file protection, Codex/Claude hook adapters,
    shared hooks, and default copy mode.
-6. **AXI query-surface contracts** — the query subcommands' hybrid-contract half:
+4. **Runtime and behavior contracts** — the remaining shell fragments exercise
+   version routing, platform-package generation, runtime hooks, shift/worktree
+   behavior, doctor/postinstall/status/roadmap behavior, and AXI query-surface
+   behavior through throwaway fixture repos.
+5. **AXI query-surface contracts** — the query subcommands' hybrid-contract half:
    TOON-shaped stdout, definitive empty states, structured stdout errors, honest
-   exit codes, and each guard's `--describe` self-conformance, exercised in
-   throwaway fixture repos.
-7. **Canary (meta)** — the gate runs itself against deliberately-broken fixtures in
+   exit codes, and each guard's aggregation behavior, exercised in throwaway
+   fixture repos.
+6. **Canary (meta)** — the gate runs itself against deliberately-broken fixtures in
    `tests/canary/` and asserts each goes red with its targeted error substring. Proves
    the checks above still *bite*: a check rotted into an always-pass fails here. This
    is the gate guarding the gate. Fixtures hide dot-dirs behind a `dot-` prefix (e.g.

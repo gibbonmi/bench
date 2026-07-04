@@ -1,9 +1,8 @@
-# AXI-conformance contracts for the benchkit gate: guard --describe manifest
-# conformance plus the query subcommands `bench learnings` and `bench maps` and
-# the shared parsers behind them. The commands must emit flat-table TOON on
-# stdout, give definitive empty states, escape hostile field values, and use
-# honest exit codes (0 ok, 2 usage). Beyond that baseline this file pins the
-# shared parsers against the edges the two-derivations bug class breeds:
+# AXI behavior contracts for the benchkit gate: query subcommands `bench learnings`
+# and `bench maps` plus the shared parsers behind them. The commands must emit
+# flat-table TOON on stdout, give definitive empty states, escape hostile field
+# values, and use honest exit codes (0 ok, 2 usage). Beyond that baseline this
+# file pins the shared parsers against the edges the two-derivations bug class breeds:
 #   - the maps parser anchors placeholders / the GRILL DEFERRED banner to line
 #     start, skips fenced examples, strips CRLF, and reports a Type-less ticket
 #     as `unknown`;
@@ -14,36 +13,8 @@
 # and $fail with the other fragments; fixture provisioning and cleanup are the
 # contract runner's (gate-contract-runner.sh). Run the real CLI in a fixture and
 # assert stdout shape + exit code — never internals. The parser now compiles to the
-# Go binary, so pure-helper coverage (toon_escape quoting, the distinct-file count)
-# lives in internal/toon and internal/maps table tests, not in a shell-source check.
-
-# ---- guard --describe manifest conformance ----------------------------------
-# Every guard must answer --describe with the four-key manifest (name, boundary,
-# denies, why) and exit 0, so the advertised deny surface cannot drift from the
-# enforcement and `bench guards` can aggregate it. This runs BEFORE the CLI early
-# return below on purpose: a minimal canary fixture (a single broken guard, no CLI)
-# must still trip it. session-start answers too, but must classify as informational
-# (`denies: nothing`) — the clause the aggregator uses to exclude it from guard rows.
-_axi_guard_manifest() {
-  local gp="$1" gname="$2" out rc k
-  out="$(bash "$gp" --describe </dev/null 2>/dev/null)" && rc=0 || rc=$?
-  if [ "$rc" -ne 0 ]; then
-    err "guard $gname --describe did not exit 0 (exit $rc)"
-    return
-  fi
-  for k in name boundary denies why; do
-    printf '%s\n' "$out" | grep -qE "^$k: " \
-      || err "guard $gname --describe manifest missing $k key"
-  done
-}
-for _g in block-dangerous-git check-agent-line stop session-start; do
-  [ -f "$root/.bench/hooks/$_g.sh" ] && _axi_guard_manifest "$root/.bench/hooks/$_g.sh" "$_g"
-done
-if [ -f "$root/.bench/hooks/session-start.sh" ]; then
-  bash "$root/.bench/hooks/session-start.sh" --describe </dev/null 2>/dev/null \
-    | grep -qxF 'denies: nothing (informational)' \
-    || err "session-start --describe is not classified informational (denies: nothing)"
-fi
+# Go binary, so pure-helper coverage lives in internal/toon and internal/maps table
+# tests, and root-grading guard manifests live in internal/conformance.
 
 # The git guard fails closed when the bench CORE is unreachable — no wrapper
 # resolves on disk (no bin/bench.sh under the cwd's git tree) and no `bench` is on

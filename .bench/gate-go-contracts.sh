@@ -1,6 +1,6 @@
-# Go layer for the benchkit gate: the compiled core's build/vet/test/cross-compile
-# authority, the version-routing runtime contracts, the platform-package generator
-# contract, and the release-workflow structure asserts. Sourced by .bench/gate.sh.
+# Go behavior contracts for the benchkit gate: version-routing runtime contracts
+# and the platform-package generator contract. Root-grading compiled-core and
+# release-structure checks live in the Go conformance suite.
 #
 # $root is the repo under grade — the real kit normally, a canary fixture during the
 # canary sweep. $gate_dir is the real kit's .bench/ (fragments are sourced from there
@@ -8,48 +8,6 @@
 # shared build helper the fixtures deliberately do not carry.
 realkit="$(cd "$gate_dir/.." && pwd)"
 gobuild="$realkit/scripts/go-build.sh"
-
-# ---- compiled core: gofmt / build / vet / test / cross-compile --------------
-# Graded only where a module exists. A minimal fixture with no go.mod has no core to
-# grade and skips the whole layer; the two Go canary fixtures carry a go.mod and so
-# trip these checks, proving they bite.
-if [ -f "$root/go.mod" ]; then
-  if ! command -v go >/dev/null 2>&1; then
-    # Hard dependency, unlike shellcheck's best-effort posture: once go.mod exists the
-    # core is load-bearing, and a gate that silently skips it is an always-pass.
-    # (Consumers never run this gate — a missing toolchain only blocks kit dev.)
-    err "go.mod present but no Go toolchain on PATH — the compiled core is load-bearing; install Go"
-  else
-    # gofmt drift. The build canary is a type error (valid syntax), so it stays
-    # gofmt-clean and this check attributes to the build, not to formatting.
-    unformatted="$(cd "$root" && gofmt -l . 2>/dev/null)"
-    [ -z "$unformatted" ] || err "gofmt: unformatted Go files: $(echo "$unformatted" | tr '\n' ' ')"
-
-    # Rebuild the stamped dev binary into dist/ BEFORE the routing contracts exec it —
-    # this is what stops a torn or stale dist/ from ever surviving into an assertion.
-    if [ -f "$gobuild" ]; then
-      ( bash "$gobuild" "$root" "$root/dist/bench" ) >/dev/null 2>&1 || err "go build failed"
-    else
-      err "go build helper missing ($gobuild)"
-    fi
-
-    ( cd "$root" && go vet ./... ) >/dev/null 2>&1 || err "go vet failed"
-    ( cd "$root" && go test ./... ) >/dev/null 2>&1 || err "go test failed"
-
-    # Cross-compile every matrix target so a broken GOOS/GOARCH is caught here, not at
-    # tag time. Matrix is the single source (scripts/platforms.json); a fixture without
-    # it skips cross-compile (it targets build/test, not portability).
-    if [ -f "$root/scripts/platforms.json" ]; then
-      xtmp="$(mktemp -d)"
-      while read -r goos goarch; do
-        [ -n "$goos" ] || continue
-        ( GOOS="$goos" GOARCH="$goarch" bash "$gobuild" "$root" "$xtmp/bench-$goos-$goarch" ) >/dev/null 2>&1 \
-          || err "cross-compile failed: $goos/$goarch"
-      done < <(node -e 'const fs=require("fs");for(const p of JSON.parse(fs.readFileSync(process.argv[1],"utf8")))console.log(p.goos,p.goarch);' "$root/scripts/platforms.json")
-      rm -rf "$xtmp"
-    fi
-  fi
-fi
 
 # ---- version-routing seam: fabricated-layout sandbox ------------------------
 # Runs only against a full kit checkout with a freshly built dev binary (the normal
@@ -180,20 +138,4 @@ for (const k of Object.keys(want))
 process.exit(bad);
 NODE
   rm -rf "$gtmp"
-fi
-
-# ---- release workflow: structure asserts (the gate cannot execute Actions) --
-# Gated on the matrix source so the Go canary fixtures (go.mod, no matrix) skip it and
-# stay attributable to their build/test failure.
-if [ -f "$root/scripts/platforms.json" ]; then
-  wf="$root/.github/workflows/release.yml"
-  if [ ! -f "$wf" ]; then
-    err "release workflow missing (.github/workflows/release.yml)"
-  else
-    grep -qE '^\s*tags:' "$wf" || err "release workflow does not trigger on tags"
-    grep -qF 'scripts/platforms.json' "$wf" || err "release workflow does not derive targets from the matrix (scripts/platforms.json)"
-    grep -qF 'scripts/gen-platform-packages.sh' "$wf" || err "release workflow does not run the platform-package generator"
-    grep -qF 'npm publish' "$wf" || err "release workflow does not publish to npm"
-    grep -qF 'provenance' "$wf" || err "release workflow does not publish with provenance"
-  fi
 fi
