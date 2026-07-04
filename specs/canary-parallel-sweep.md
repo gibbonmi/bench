@@ -1,15 +1,15 @@
 # Parallelize the canary sweep
 
-Status: staged
+Status: implemented
 
 Source map: `decisions/canary-parallel-sweep.md` (closed; Handoff complete).
 
 ## Problem
 
-The canary sweep runs its 56 fixtures plus the vacuity baseline sequentially —
-57 inner gate runs, ~35s wall on a 16-core machine. The fixtures are independent,
-the sweep dominates gate wall-clock, and the gate runs after every shift
-iteration, so the waste compounds across every build loop.
+The canary sweep runs every fixture plus the vacuity baseline sequentially,
+taking ~35s wall on a 16-core machine. The fixtures are independent, the sweep
+dominates gate wall-clock, and the gate runs after every shift iteration, so the
+waste compounds across every build loop.
 
 ## Solution
 

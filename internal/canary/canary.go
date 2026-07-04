@@ -9,8 +9,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/gibbonmi/bench/internal/git"
 )
@@ -70,7 +72,6 @@ func Sweep(root string, runner Runner) error {
 	gate := filepath.Join(root, ".bench", "gate.sh")
 	env := innerEnv()
 
-	var errs []string
 	baselineDir, err := os.MkdirTemp("", "bench-canary-empty-*")
 	if err != nil {
 		return err
@@ -79,47 +80,80 @@ func Sweep(root string, runner Runner) error {
 	_ = gitInit(baselineDir)
 	baseline := runner(RunCall{Cwd: baselineDir, Gate: gate, Env: env})
 
-	for _, fx := range fixtures {
-		name := filepath.Base(fx)
-		expectPath := filepath.Join(fx, "EXPECT")
-		filesDir := filepath.Join(fx, "files")
-
-		expBytes, err := os.ReadFile(expectPath)
-		if err != nil {
-			errs = append(errs, fmt.Sprintf("canary fixture '%s' has no EXPECT file", name))
-			continue
-		}
-		if info, err := os.Stat(filesDir); err != nil || !info.IsDir() {
-			errs = append(errs, fmt.Sprintf("canary fixture '%s' has no files/ tree", name))
-			continue
-		}
-		expect := trimExpectation(expBytes)
-		if strings.Contains(baseline.Output, expect) {
-			errs = append(errs, fmt.Sprintf("canary '%s' EXPECT is vacuous (also matches an empty fixture)", name))
-			continue
-		}
-
-		work, err := os.MkdirTemp("", "bench-canary-"+name+"-*")
-		if err != nil {
-			errs = append(errs, fmt.Sprintf("canary '%s' setup failed: %v", name, err))
-			continue
-		}
-		if err := materialize(filesDir, work); err != nil {
-			errs = append(errs, fmt.Sprintf("canary '%s' setup failed: %v", name, err))
-			os.RemoveAll(work)
-			continue
-		}
-		_ = gitInit(work)
-		result := runner(RunCall{Cwd: work, Gate: gate, FixtureDir: fx, Env: env})
-		if result.ExitCode == 0 || !strings.Contains(result.Output, expect) {
-			errs = append(errs, fmt.Sprintf("canary '%s' did not bite (want red + %q; got exit %d)", name, expect, result.ExitCode))
-		}
-		os.RemoveAll(work)
-	}
+	errs := runFixtures(fixtures, baseline.Output, gate, env, runner)
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, "\n"))
 	}
 	return nil
+}
+
+func runFixtures(fixtures []string, baselineOutput, gate string, env []string, runner Runner) []string {
+	errs := make([]string, len(fixtures))
+	jobs := make(chan int)
+	workers := runtime.NumCPU()
+	if workers < 1 {
+		workers = 1
+	}
+	if workers > len(fixtures) {
+		workers = len(fixtures)
+	}
+
+	var wg sync.WaitGroup
+	for range workers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for idx := range jobs {
+				errs[idx] = runFixture(fixtures[idx], baselineOutput, gate, env, runner)
+			}
+		}()
+	}
+	for idx := range fixtures {
+		jobs <- idx
+	}
+	close(jobs)
+	wg.Wait()
+
+	out := errs[:0]
+	for _, err := range errs {
+		if err != "" {
+			out = append(out, err)
+		}
+	}
+	return out
+}
+
+func runFixture(fx, baselineOutput, gate string, env []string, runner Runner) string {
+	name := filepath.Base(fx)
+	expectPath := filepath.Join(fx, "EXPECT")
+	filesDir := filepath.Join(fx, "files")
+
+	expBytes, err := os.ReadFile(expectPath)
+	if err != nil {
+		return fmt.Sprintf("canary fixture '%s' has no EXPECT file", name)
+	}
+	if info, err := os.Stat(filesDir); err != nil || !info.IsDir() {
+		return fmt.Sprintf("canary fixture '%s' has no files/ tree", name)
+	}
+	expect := trimExpectation(expBytes)
+	if strings.Contains(baselineOutput, expect) {
+		return fmt.Sprintf("canary '%s' EXPECT is vacuous (also matches an empty fixture)", name)
+	}
+
+	work, err := os.MkdirTemp("", "bench-canary-"+name+"-*")
+	if err != nil {
+		return fmt.Sprintf("canary '%s' setup failed: %v", name, err)
+	}
+	defer os.RemoveAll(work)
+	if err := materialize(filesDir, work); err != nil {
+		return fmt.Sprintf("canary '%s' setup failed: %v", name, err)
+	}
+	_ = gitInit(work)
+	result := runner(RunCall{Cwd: work, Gate: gate, FixtureDir: fx, Env: env})
+	if result.ExitCode == 0 || !strings.Contains(result.Output, expect) {
+		return fmt.Sprintf("canary '%s' did not bite (want red + %q; got exit %d)", name, expect, result.ExitCode)
+	}
+	return ""
 }
 
 func fixtures(dir string) ([]string, error) {
