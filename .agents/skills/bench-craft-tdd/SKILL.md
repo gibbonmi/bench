@@ -37,10 +37,15 @@ the spec, never from the loop.
 ## The cycle
 
 1. **Red** — write one failing test at the seam, asserting observable behavior
-   through the interface. One logical assertion; test what the caller cares about,
+   through the interface. One test, not a test file: batch-writing every case
+   upfront and implementing against the pile skips the loop that makes TDD work.
+   One logical assertion; test what the caller cares about,
    not how it's done. Never mock an internal collaborator — if a refactor that
    keeps behavior breaks the test, the test was bound to an internal, so move it
-   out to a real seam. Run it; confirm it fails for the right reason. The
+   out to a real seam. Run it; confirm it fails for the right reason — an
+   assertion failure, not a compile error. A compile-error red only proves the
+   symbol is missing; it says nothing about whether the assertion can catch a
+   wrong implementation. The
    expected value comes from the spec or an independent computation — never from
    running the implementation and pasting back what it returned. Vacuity check:
    an assertion that would also pass against a no-op implementation asserts
@@ -67,10 +72,12 @@ acceptance row as the unit of TDD coverage. A valid row has `story`, `behavior`,
 - `behavior` is caller-visible. It is not a data shape, private method, or
   implementation step.
 - `seam` is where callers cross the interface and where the test attaches.
-- `red signal` is a command or test already run before implementation that failed
-  because the mapped behavior is absent or wrong. If it already passes, classify
-  the row as `already covered`; if it cannot run before implementation, classify it
-  as `not TDD-able` with the reason.
+- `red signal` is a command or test run immediately before implementing that
+  row's slice, failing because the mapped behavior is absent or wrong. Rows go
+  red one at a time as each slice starts — never batched into an upfront all-red
+  test file. If the signal already passes, classify the row as `already covered`;
+  if it cannot run before implementation, classify it as `not TDD-able` with the
+  reason.
 - `why it catches the failure` explains why this signal would fail when the mapped
   user-visible behavior is broken.
 
