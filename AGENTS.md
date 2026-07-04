@@ -27,3 +27,12 @@ derivations of the same fact (an enforcement and its advertisement, a parser and
 its count, a fixture harness pasted N times) must collapse to one source, and
 review grades diffs against this. Honest repetition of incidental text is fine
 where an abstraction would be worse; it's duplicated *knowledge* that drifts.
+
+**Shell conventions for agents in this repo.**
+
+- Use `rg` (ripgrep, installed here) instead of `grep` in interactive Bash calls —
+  plain `grep` only inside kit scripts, where the kit's own portability rules require
+  POSIX grep. Prefer dedicated read tools over `cat`/`head`/`tail`/`sed`.
+- Don't prefix Bash commands with `cd` into the working directory — the Bash tool's
+  CWD already persists there, so the `cd` is a no-op and can trigger a needless
+  permission prompt. Only `cd` when genuinely moving to a *different* directory.

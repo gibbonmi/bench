@@ -31,26 +31,6 @@ for f in bin/bench.sh .bench/hooks/*.sh .bench/adapters/*; do
   [ "$mode" = "100755" ] || err "$f is not executable in git (mode $mode); the harness runs it as a command path"
 done
 
-# 1c. Python programs in the hooks tree parse (the git-guard analyzer). Same
-#     best-effort posture as shellcheck: runs only when python3 is present, so a
-#     syntax error is caught at gate time, not on the next Bash tool call.
-#     Bytecode goes to a scratch cfile — the gate never writes __pycache__ into
-#     the tree.
-if command -v python3 >/dev/null 2>&1; then
-  for f in .bench/hooks/*.py; do
-    [ -e "$f" ] || continue
-    python3 - "$f" <<'PYCHECK' || err "py_compile failed for $f"
-import os, py_compile, sys, tempfile
-try:
-    with tempfile.TemporaryDirectory() as d:
-        py_compile.compile(sys.argv[1], cfile=os.path.join(d, "c.pyc"), doraise=True)
-except (py_compile.PyCompileError, OSError) as e:
-    print(e, file=sys.stderr)
-    sys.exit(1)
-PYCHECK
-  done
-fi
-
 # 1d. The CLI must name the gate/done files that actually exist (.bench/gate.sh,
 #     .bench/done.sh). An extensionless reference routes `bench gate` to auto-detect
 #     instead of the repo's oracle, so it is a hard error.

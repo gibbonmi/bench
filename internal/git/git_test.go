@@ -93,6 +93,35 @@ func TestTreeHashLeavesNoStrayIndex(t *testing.T) {
 	}
 }
 
+// TestRefResolvesAndBranchExists exercises the two guard probes and their fail-safe
+// posture. They run in the process cwd (the agent's working dir), so the test chdirs
+// into a fixture repo and restores.
+func TestRefResolvesAndBranchExists(t *testing.T) {
+	root := newRepo(t)
+	runGit(t, root, "branch", "known-branch")
+	old, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chdir(old)
+
+	if !RefResolves("HEAD") {
+		t.Error("RefResolves(HEAD) = false, want true")
+	}
+	if RefResolves("definitely-not-a-ref-xyz") {
+		t.Error("RefResolves(bogus) = true, want false")
+	}
+	if !BranchExists("known-branch") {
+		t.Error("BranchExists(known-branch) = false, want true")
+	}
+	if BranchExists("no-such-branch-xyz") {
+		t.Error("BranchExists(absent) = true, want false")
+	}
+}
+
 func listDir(t *testing.T, dir string) []string {
 	t.Helper()
 	entries, err := os.ReadDir(dir)

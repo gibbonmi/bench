@@ -162,8 +162,7 @@ bench/
 │       ├── session-start.sh
 │       ├── stop.sh
 │       ├── block-dangerous-git.sh
-│       ├── check-agent-line.sh   # denies Agent delegations off the bound line
-│       └── git-guard.py      # the git guard's analyzer (invoked by the hook, not a hook)
+│       └── check-agent-line.sh   # denies Agent delegations off the bound line
 ├── .claude/
 │   ├── README.md             # explains Claude adapter paths -> .agents and .bench/hooks
 │   ├── settings.json         # Claude Code adapter pointing at .bench/hooks

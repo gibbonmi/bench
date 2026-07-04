@@ -7,8 +7,8 @@
 #     informational session-start hook, bounds each guard's --describe so a
 #     hanging hook cannot stall aggregation (`no manifest (timed out)`), never
 #     executes an unmanaged (marker-less) pre-push (`unmanaged (no manifest)`),
-#     and block-dangerous-git degrades to `manifest unavailable (python3
-#     missing)` when python3 is absent;
+#     and block-dangerous-git degrades to `manifest unavailable (analyzer
+#     missing)` when the bench core is unreachable;
 #   - session-start injects the guard brief in a linked repo and never blocks
 #     (prints nothing, exit 0) outside one.
 # Sourced by gate.sh so it shares $root, err(), and $fail with the other
@@ -107,18 +107,16 @@ contract "AXI guards unmanaged-pre-push safety contract" <<'BODY'
   [ ! -e "$sentinel" ] || { echo "bench guards executed a foreign pre-push"; exit 1; }
 BODY
 
-# block-dangerous-git.sh --describe degrades honestly when python3 is
-# unreachable: with PATH stripped to a scratch bin holding only bash + coreutils,
-# it prints the `manifest unavailable (python3 missing)` denies line and exits 0.
+# block-dangerous-git.sh --describe degrades honestly when the bench core is
+# unreachable: run with a PATH holding no global bench and from a fixture whose git
+# tree carries no bin/bench.sh, resolve_wrapper fails, so it prints the `manifest
+# unavailable (analyzer missing)` denies line and exits 0.
 if [ -f "$root/.bench/hooks/block-dangerous-git.sh" ]; then
-  contract "AXI block-dangerous-git python3-missing manifest contract" <<'BODY'
-    mkdir sbin
-    for t in bash cat printf env sed grep head; do
-      p="$(command -v "$t" 2>/dev/null || true)"; [ -n "$p" ] && ln -sf "$p" "sbin/$t"
-    done
-    out="$(PATH="$tmp/sbin" bash "$root/.bench/hooks/block-dangerous-git.sh" --describe </dev/null 2>/dev/null)"; rc=$?
-    [ "$rc" = "0" ] || { echo "python3-missing --describe did not exit 0 (exit $rc)"; exit 1; }
-    grep -qF 'manifest unavailable (python3 missing)' <<<"$out" || { echo "python3-missing denies line absent: $out"; exit 1; }
+  contract "AXI block-dangerous-git core-unreachable manifest contract" <<'BODY'
+    bash_bin="$(command -v bash)"
+    out="$(PATH=/usr/bin:/bin "$bash_bin" "$root/.bench/hooks/block-dangerous-git.sh" --describe </dev/null 2>/dev/null)"; rc=$?
+    [ "$rc" = "0" ] || { echo "core-unreachable --describe did not exit 0 (exit $rc)"; exit 1; }
+    grep -qF 'manifest unavailable (analyzer missing)' <<<"$out" || { echo "core-unreachable denies line absent: $out"; exit 1; }
 BODY
 fi
 

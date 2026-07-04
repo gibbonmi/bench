@@ -375,6 +375,7 @@ case "${1:-help}" in
   diff)     route_binary "$@" ;;
   coverage) route_binary "$@" ;;
   tree-hash) route_binary "$@" ;;
+  guard-git) route_binary "$@" ;;
   worktree-pool) route_binary "$@" ;;
   worktree-lease-file) route_binary "$@" ;;
   *) cat <<EOF

@@ -6,11 +6,67 @@ package git
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
+
+// refCheckTimeout bounds the ref/branch existence probes the destructive-git guard
+// runs per classification (internal/gitguard's checkout and forced-creation verdicts):
+// a hung git must never stall a PreToolUse Bash hook, so each probe is bounded at two
+// seconds and then resolves to its caller's fail-safe default.
+const refCheckTimeout = 2 * time.Second
+
+// RefResolves reports whether arg names a commit-ish that resolves in the process
+// working directory — the agent's cwd, where the guarded Bash command would run, not a
+// fixed root (`git rev-parse --verify --quiet <arg>^{commit}`). On a timeout or a
+// failure to run git at all it returns false: an undeterminable target is treated as
+// unresolvable, so a checkout of it fails closed (blocks) — the fail-toward-blocking
+// default is deliberate, not incidental.
+func RefResolves(arg string) bool {
+	exitZero, ran := refCheck(arg + "^{commit}")
+	if !ran {
+		return false
+	}
+	return exitZero
+}
+
+// BranchExists reports whether refs/heads/<name> exists in the cwd repo. On a timeout
+// or a failure to run git it returns TRUE — the opposite default from RefResolves —
+// because its only caller (forced branch/switch creation) must block when it cannot
+// rule out that the force would clobber an existing branch.
+func BranchExists(name string) bool {
+	exitZero, ran := refCheck("refs/heads/" + name)
+	if !ran {
+		return true
+	}
+	return exitZero
+}
+
+// refCheck runs `git rev-parse --verify --quiet <ref>` under the time bound and reports
+// (git exited zero, git ran to a verdict). ran is false when the probe timed out or
+// git could not be executed — the undeterminable branch each caller resolves to its own
+// fail-safe default.
+func refCheck(ref string) (exitZero, ran bool) {
+	ctx, cancel := context.WithTimeout(context.Background(), refCheckTimeout)
+	defer cancel()
+	err := exec.CommandContext(ctx, "git", "rev-parse", "--verify", "--quiet", ref).Run()
+	if ctx.Err() == context.DeadlineExceeded {
+		return false, false
+	}
+	if err == nil {
+		return true, true
+	}
+	var ee *exec.ExitError
+	if errors.As(err, &ee) {
+		return false, true
+	}
+	return false, false
+}
 
 // Root returns the working tree's top-level directory, or an error when the cwd is
 // not inside a git repository (the `not in a git repository` posture of every command).

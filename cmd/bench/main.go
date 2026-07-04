@@ -8,12 +8,14 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"runtime"
 
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/gitguard"
 	"github.com/gibbonmi/bench/internal/guards"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/maps"
@@ -73,6 +75,39 @@ func treeHash(args []string) (string, int) {
 	return git.TreeHash(root) + "\n", 0
 }
 
+// guardGit is the destructive-git guard subcommand: it reads the PreToolUse envelope on
+// stdin, classifies through internal/gitguard, and yields the verdict as an exit code —
+// 0 allow, 2 block (with the `BLOCKED:` message on stderr), 3 a genuine failure to run.
+// The deferred recover maps any panic to 3, not Go's default exit-2, so exit 2 means
+// only an intentional block and the shim can trust it. `--describe-classes` prints the
+// deny surface to stdout without reading stdin, feeding the shim's `--describe`.
+func guardGit(args []string, stdin io.Reader, stdout, stderr io.Writer) (code int) {
+	defer func() {
+		if r := recover(); r != nil {
+			code = 3
+		}
+	}()
+	if len(args) > 0 && args[0] == "--describe-classes" {
+		fmt.Fprintln(stdout, gitguard.DescribeClasses())
+		return 0
+	}
+	data, err := io.ReadAll(stdin)
+	if err != nil {
+		return 3
+	}
+	command := gitguard.CommandFromEnvelope(data)
+	if command == "" {
+		return 0
+	}
+	chk := gitguard.Checker{RefResolves: git.RefResolves, BranchExists: git.BranchExists}
+	label := gitguard.Classify(command, chk)
+	if label == "" {
+		return 0
+	}
+	fmt.Fprintln(stderr, gitguard.BlockMessage(label))
+	return 2
+}
+
 func run(args []string, stdout, stderr *os.File) int {
 	if len(args) == 0 {
 		fmt.Fprintln(stderr, "bench: no subcommand")
@@ -87,6 +122,8 @@ func run(args []string, stdout, stderr *os.File) int {
 	case "version":
 		fmt.Fprintln(stdout, versionLine(version, runtime.GOOS, runtime.GOARCH))
 		return 0
+	case "guard-git":
+		return guardGit(args[1:], os.Stdin, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "bench: unknown subcommand: %q\n", args[0])
 		return 2

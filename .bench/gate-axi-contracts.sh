@@ -47,52 +47,53 @@ if [ -f "$root/.bench/hooks/session-start.sh" ]; then
     || err "session-start --describe is not classified informational (denies: nothing)"
 fi
 
-# The git guard fails closed when its sibling analyzer file (git-guard.py) is
-# absent: copied alone into a fixture, the hook's --describe still exits 0 but
-# reports the manifest unavailable, and the enforcement path refuses authority
-# (BLOCKED, exit 2) instead of silently allowing destructive git.
+# The git guard fails closed when the bench CORE is unreachable — no wrapper
+# resolves on disk (no bin/bench.sh under the cwd's git tree) and no `bench` is on
+# PATH. Copied alone into a fixture and run with a PATH holding no global bench,
+# the hook's --describe still exits 0 but reports the manifest unavailable, and the
+# enforcement path refuses authority (BLOCKED, exit 2) instead of silently allowing
+# destructive git. Restricting PATH to /usr/bin:/bin (where no bench lives)
+# guarantees resolve_wrapper fails; the fixture's own git tree carries no bench.sh.
 if [ -f "$root/.bench/hooks/block-dangerous-git.sh" ]; then
   contract "block-dangerous-git analyzer-missing fail-closed contract" <<'BODY'
     cp "$root/.bench/hooks/block-dangerous-git.sh" hook.sh
-    out="$(bash hook.sh --describe </dev/null)"; rc=$?
+    bash_bin="$(command -v bash)"
+    out="$(PATH=/usr/bin:/bin "$bash_bin" hook.sh --describe </dev/null)"; rc=$?
     [ "$rc" = "0" ] || { echo "analyzer-missing --describe did not exit 0 (exit $rc)"; exit 1; }
     grep -qxF 'denies: manifest unavailable (analyzer missing)' <<<"$out" \
       || { echo "analyzer-missing --describe denies line absent: $out"; exit 1; }
-    berr="$(printf '{"tool_input":{"command":"git push"}}' | bash hook.sh 2>&1 >/dev/null)" && rc=0 || rc=$?
+    berr="$(printf '{"tool_input":{"command":"git push"}}' | PATH=/usr/bin:/bin "$bash_bin" hook.sh 2>&1 >/dev/null)" && rc=0 || rc=$?
     [ "$rc" = "2" ] || { echo "analyzer-missing enforcement did not exit 2 (exit $rc)"; exit 1; }
     grep -qF 'BLOCKED' <<<"$berr" || { echo "analyzer-missing enforcement did not say BLOCKED: $berr"; exit 1; }
 BODY
 
-  # A present-but-EMPTY analyzer is explicitly the same deny branch: an empty
-  # program exits 0 printing nothing, which the allow path would misread as
-  # "no verdict" and grant authority.
-  contract "block-dangerous-git empty-analyzer fail-closed contract" <<'BODY'
+  # A wrapper resolves but the platform binary is absent, so `bench guard-git`
+  # exits 127 — the shim can't classify, so it fails closed on anything git-shaped
+  # (the destructive surface) and leaves the rest of the shell usable (kit-audit
+  # A2). Simulated by a stub `bench` on PATH that exits 127 for any args.
+  contract "block-dangerous-git binary-missing fail-closed (git-shaped)" <<'BODY'
     cp "$root/.bench/hooks/block-dangerous-git.sh" hook.sh
-    : > git-guard.py
-    out="$(bash hook.sh --describe </dev/null)"; rc=$?
-    [ "$rc" = "0" ] || { echo "empty-analyzer --describe did not exit 0 (exit $rc)"; exit 1; }
-    grep -qxF 'denies: manifest unavailable (analyzer missing)' <<<"$out" \
-      || { echo "empty-analyzer --describe denies line absent: $out"; exit 1; }
-    berr="$(printf '{"tool_input":{"command":"git push"}}' | bash hook.sh 2>&1 >/dev/null)" && rc=0 || rc=$?
-    [ "$rc" = "2" ] || { echo "empty-analyzer enforcement did not exit 2 (exit $rc)"; exit 1; }
-    grep -qF 'BLOCKED' <<<"$berr" || { echo "empty-analyzer enforcement did not say BLOCKED: $berr"; exit 1; }
+    mkdir stubbin
+    printf '#!/usr/bin/env bash\nexit 127\n' > stubbin/bench; chmod +x stubbin/bench
+    bash_bin="$(command -v bash)"
+    berr="$(printf '{"tool_input":{"command":"git push"}}' | PATH="$PWD/stubbin:/usr/bin:/bin" "$bash_bin" hook.sh 2>&1 >/dev/null)" && rc=0 || rc=$?
+    [ "$rc" = "2" ] || { echo "binary-missing git-shaped did not fail closed (exit $rc)"; exit 1; }
+    grep -qF 'BLOCKED' <<<"$berr" || { echo "binary-missing git-shaped not BLOCKED: $berr"; exit 1; }
+    PATH="$PWD/stubbin:/usr/bin:/bin" "$bash_bin" hook.sh <<<'{"tool_input":{"command":"ls -la"}}' >/dev/null 2>&1 && rc=0 || rc=$?
+    [ "$rc" = "0" ] || { echo "binary-missing non-git did not stay allowed (exit $rc)"; exit 1; }
 BODY
 
-  # With python3 gone the hook can't parse the envelope or run the analyzer, so it
-  # can't classify — it fails closed on anything git-shaped (the destructive
-  # surface) and leaves the rest of the shell usable (kit-audit A2). Simulated by
-  # a PATH holding only `cat`, no python3.
-  contract "block-dangerous-git python3-missing fail-closed (git-shaped)" <<'BODY'
+  # The core resolved and ran but errored — guard-git exits something other than
+  # 0/2/127. The shim's second rim fails closed and refuses the command (BLOCKED,
+  # exit 2). Simulated by a stub `bench` on PATH that exits 3 for any args.
+  contract "block-dangerous-git core-errored fail-closed contract" <<'BODY'
     cp "$root/.bench/hooks/block-dangerous-git.sh" hook.sh
-    cp "$root/.bench/hooks/git-guard.py" git-guard.py
-    mkdir fixbin
-    ln -s "$(command -v cat)" fixbin/cat
+    mkdir stubbin
+    printf '#!/usr/bin/env bash\nexit 3\n' > stubbin/bench; chmod +x stubbin/bench
     bash_bin="$(command -v bash)"
-    berr="$(printf '{"tool_input":{"command":"git push"}}' | PATH="$PWD/fixbin" "$bash_bin" hook.sh 2>&1 >/dev/null)" && rc=0 || rc=$?
-    [ "$rc" = "2" ] || { echo "python3-missing git-shaped did not fail closed (exit $rc)"; exit 1; }
-    grep -qF 'BLOCKED' <<<"$berr" || { echo "python3-missing git-shaped not BLOCKED: $berr"; exit 1; }
-    PATH="$PWD/fixbin" "$bash_bin" hook.sh <<<'{"tool_input":{"command":"ls -la"}}' >/dev/null 2>&1 && rc=0 || rc=$?
-    [ "$rc" = "0" ] || { echo "python3-missing non-git did not stay allowed (exit $rc)"; exit 1; }
+    berr="$(printf '{"tool_input":{"command":"git push"}}' | PATH="$PWD/stubbin:/usr/bin:/bin" "$bash_bin" hook.sh 2>&1 >/dev/null)" && rc=0 || rc=$?
+    [ "$rc" = "2" ] || { echo "core-errored did not fail closed (exit $rc)"; exit 1; }
+    grep -qF 'BLOCKED' <<<"$berr" || { echo "core-errored not BLOCKED: $berr"; exit 1; }
 BODY
 fi
 

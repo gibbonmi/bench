@@ -7,43 +7,53 @@
 # Threat model: this is an honest-mistake layer, not an evasion-resistant
 # boundary. It stops a well-meaning agent from reflexively running destructive
 # git; it does not try to survive deliberate evasion. Wrapper scanning goes
-# exactly one level deep (a `sh -c`/`bash -c`/`zsh -c` string) by design — a
-# wrapper found inside that string is not re-expanded. The backstops for a
+# exactly one level deep by design (see internal/gitguard). The backstops for a
 # misaligned agent are the git pre-push hook and bench's pooled-worktree
 # isolation, not this script.
 #
 # Note the boundary: this intercepts the AGENT's Bash tool calls. Bench's own
 # controlled rollback inside `bench shift` runs in-process (not through the
 # agent's shell), so the harness can still reset/clean a failed iteration while
-# the agent itself cannot reach for those commands. That asymmetry is the point.
+# the agent itself cannot. That asymmetry is the point.
 #
-# Wire under hooks.PreToolUse with matcher "Bash". Exit 2 blocks and returns the
-# message to the agent. `--describe` (first arg) prints the guard manifest and
-# exits 0 without reading stdin, so `bench guards` can aggregate the deny surface
-# without a collision; the denies clause is generated from the same DENY_LABELS
-# table the analyzer denies from, so the advertisement cannot drift.
-set -euo pipefail
+# This is a thin shim over the Go core: it resolves the bench wrapper, pipes the
+# PreToolUse envelope to `bench guard-git`, and passes the verdict through. All
+# classification (tokenize, scan, verdict, the BLOCKED message) lives in
+# internal/gitguard. The shim owns exactly two fail-closed rims — core
+# unresolvable/missing, and core errored — plus `--describe`. Wire under
+# hooks.PreToolUse with matcher "Bash". Exit 2 blocks and returns the message to
+# the agent.
+set -uo pipefail
 
-# The analyzer program: the sibling git-guard.py, a single source used both to
-# classify a command (deny) and to enumerate the deny classes (--describe).
-# Resolved relative to this script so the pair travels together through the
-# whole-directory hook installs — by parameter expansion only, because the
-# python3-missing degradation path must still resolve it with no external
-# tools on PATH. Absent or EMPTY, it must fail closed — an empty program exits
-# 0 printing nothing, which the allow path below would misread as "no verdict".
-hook_dir="${BASH_SOURCE[0]%/*}"
-[[ "$hook_dir" == "${BASH_SOURCE[0]}" ]] && hook_dir=.
-GUARD_PY="$hook_dir/git-guard.py"
+# resolve_wrapper echoes the bench.sh wrapper path (repo-local first, then a
+# global `bench`), or fails when none is reachable. The ~8-line search is inlined
+# rather than shared with .bench/hooks/stop.sh: sourcing a shared lib would give
+# this hook a new fail-OPEN mode (missing lib → the shim errors before its rims
+# run, and a non-2 PreToolUse exit is a non-blocking error that silently grants).
+# It collapses to one source in the slice that ports stop.sh into its own shim.
+resolve_wrapper() {
+  local root candidate
+  root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+  if [[ -n "$root" ]]; then
+    for candidate in "$root/.bench/bin/bench.sh" "$root/bin/bench.sh"; do
+      [[ -x "$candidate" ]] && { printf '%s\n' "$candidate"; return 0; }
+    done
+  fi
+  command -v bench 2>/dev/null || return 1
+}
 
+# `--describe` prints the guard manifest and exits 0 without reading stdin, so
+# `bench guards` can aggregate the deny surface without a collision. The denies
+# clause is generated from the core's `guard-git --describe-classes` — the same
+# deny table classification uses, so the advertisement cannot drift. Core
+# unreachable → the manifest degrades honestly rather than lying.
 if [[ "${1:-}" == "--describe" ]]; then
   printf 'name: block-dangerous-git\n'
   printf 'boundary: PreToolUse:Bash\n'
-  if [[ ! -s "$GUARD_PY" ]]; then
-    printf 'denies: manifest unavailable (analyzer missing)\n'
-  elif command -v python3 >/dev/null 2>&1; then
-    printf 'denies: destructive git — %s\n' "$(python3 "$GUARD_PY" --describe-classes)"
+  if cmd="$(resolve_wrapper)" && classes="$("$cmd" guard-git --describe-classes 2>/dev/null)" && [[ -n "$classes" ]]; then
+    printf 'denies: destructive git — %s\n' "$classes"
   else
-    printf 'denies: manifest unavailable (python3 missing)\n'
+    printf 'denies: manifest unavailable (analyzer missing)\n'
   fi
   printf 'why: agents lack destructive-git authority; merge and history rewrites belong to the reviewer\n'
   exit 0
@@ -51,26 +61,28 @@ fi
 
 input="$(cat)"
 
-# Without python3 the hook can neither parse the command envelope nor run the
-# analyzer, so it cannot classify at all. Fail closed on anything git-shaped —
-# the destructive surface — while leaving non-git commands runnable so the shell
-# stays usable. The raw envelope carries the command text, so a substring test
-# catches the honest mistake without parsing. This mirrors the analyzer-missing
-# branch below: same "cannot classify" condition, same deny verdict.
-if ! command -v python3 >/dev/null 2>&1; then
+# fail_closed_git_shaped is the "cannot classify" rim: with no reachable core the
+# shim can't classify at all, so it refuses anything git-shaped (the destructive
+# surface) while leaving non-git commands runnable so the shell stays usable. The
+# raw envelope carries the command text, so a substring test catches the honest
+# mistake without parsing.
+fail_closed_git_shaped() {
   case "$input" in
-    *git*) echo "BLOCKED: guard degraded (python3 missing) — can't classify commands, refusing anything git-shaped. Install python3 or hand back." >&2; exit 2 ;;
+    *git*) echo "BLOCKED: guard degraded (bench core missing) — can't classify commands, refusing anything git-shaped. Restore the bench core (bench link) or hand back." >&2; exit 2 ;;
     *) exit 0 ;;
   esac
-fi
+}
 
-cmd="$(printf '%s' "$input" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("tool_input",{}).get("command",""))' 2>/dev/null || true)"
-[[ -z "$cmd" ]] && exit 0
+# Rim 1: core unresolvable. No wrapper on disk or PATH → cannot classify.
+cmd="$(resolve_wrapper)" || fail_closed_git_shaped
 
-block() { echo "BLOCKED: \`$1\` — you don't have authority over this. The merge and any history rewrite are the user's; a failed shift is rolled back by bench, not by you. Stop and hand back." >&2; exit 2; }
-
-[[ -s "$GUARD_PY" ]] || { echo "BLOCKED: guard analyzer missing — failing closed; restore .bench/hooks/git-guard.py (bench link) before retrying." >&2; exit 2; }
-
-reason="$(python3 "$GUARD_PY" "$cmd")" || { echo "BLOCKED: guard analyzer error — failing closed; rephrase the command." >&2; exit 2; }
-[[ -n "$reason" ]] && block "$reason"
-exit 0
+# Hand the envelope to the core. The core writes its own BLOCKED message to stderr
+# and exits 2 on a block, 0 on allow; the wrapper exits 127 when no binary is
+# installed for this platform.
+rc=0
+printf '%s' "$input" | "$cmd" guard-git || rc=$?
+case "$rc" in
+  0 | 2) exit "$rc" ;;                 # allow / block — the core owns the verdict + message
+  127) fail_closed_git_shaped ;;       # rim 1: binary missing for this platform
+  *) echo "BLOCKED: guard analyzer error — failing closed; rephrase the command." >&2; exit 2 ;;  # rim 2: core errored
+esac

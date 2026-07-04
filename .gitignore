@@ -12,8 +12,6 @@ projects/gl-axi.md
 # OS cruft
 .DS_Store
 
-# Python bytecode from the hook analyzer (git-guard.py)
-__pycache__/
 
 # Bench shift scratch — created in the repo root during `bench shift`, cleaned on
 # normal exit/interrupt; ignored so an unclean kill can't leave them to be committed.
