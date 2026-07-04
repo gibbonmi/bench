@@ -233,3 +233,18 @@ Proposed rule change: in /bench-write-spec's edge inventory, add a check — "fo
   note that per-story tiers presume separable slices; when the spec itself says
   the stories land as one atomic diff, the build may run inline at the highest
   tier any story needs, flagging each collapsed line in the exit report.
+
+## 2026-07-04 — debug fix landed via direct fix-and-gate instead of `bench shift`  [open]
+- **What happened:** /bench-debug on the flaky "npm pack JSON unreadable" gate
+  red. The skill prescribes committing the repro test red, then
+  `bench shift "fix <bug>"`. The fix was ~20 lines in one file at a known seam,
+  so I ran the direct path: regression test red → fix → test green → full gate
+  green → one commit with test + fix. This kept every main commit green but
+  skipped the prescribed shift and the deliberate red-test-first commit.
+- **Right behavior:** For a small single-seam fix, red-test-first committing
+  exists to survive shift rollbacks; with no shift launched there is nothing to
+  roll back, and one green commit is the smaller, safer diff.
+- **Proposed rule change:** In /bench-debug's "How it meets the rest of Bench",
+  scope the commit-red-test-then-shift sequence to fixes that actually launch a
+  shift; allow direct fix-and-gate with a single green commit when the fix is
+  small enough to land inline.
