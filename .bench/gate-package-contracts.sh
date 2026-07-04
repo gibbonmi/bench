@@ -18,7 +18,9 @@ printf '%s' "$pack_json" | node -e '
   const files = new Set((packs[0]?.files ?? []).map(f => f.path));
   let bad = 0;
   for (const required of [
-    "bin/bench-link.sh",
+    "bin/bench.sh",
+    "bin/bench-worktree.sh",
+    "bin/bench-postinstall.sh",
     ".agents/commands/bench-implement-spec.md",
     ".agents/skills/bench-craft-seams/SKILL.md",
     ".agents/skills/bench-implement-spec/SKILL.md",

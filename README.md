@@ -173,10 +173,11 @@ bench/
 │   └── hooks.json            # Codex adapter pointing at .bench/hooks
 ├── bin/
 │   ├── bench.sh              # worktrees + gated loop + strangler router to the Go core
-│   ├── bench-link.sh         # safe link/install helpers
+│   ├── bench-postinstall.sh  # best-effort global shim installer
 │   └── bench-worktree.sh     # reusable-worktree pool helpers (adapters over the Go core)
 ├── cmd/bench/                # the compiled core's main: dispatch + version
 ├── internal/                 # the Go core: AXI query surface, status, structure + plumbing
+│   ├── adopt/                # link/init/doctor adoption mutators
 │   ├── toon/                 # the shared flat-table TOON emitter (one escaping rule)
 │   ├── learnings/            # bench learnings parser
 │   ├── maps/                 # bench maps engine (tickets + close-readiness + count)

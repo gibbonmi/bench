@@ -21,6 +21,14 @@ doctor_sandbox() {   # sets HOME/SHELL/NVM_DIR and: DSB_NVMBIN DSB_PLAIN DSB_PAT
   DSB_PATH="$DSB_NVMBIN:$DSB_PLAIN:/usr/bin:/bin"
 }
 
+doctor_copy_kit() {
+  local kit="$1"
+  mkdir -p "$kit/bin" "$kit/dist" "$kit/.agents/commands"
+  cp "$root"/bin/*.sh "$kit/bin/"
+  cp "$root/dist/bench" "$kit/dist/bench"
+  cp "$root/AGENTS.md" "$kit/AGENTS.md"
+}
+
 # --- doctor report: health classification + machine-exact removal pair (stories 2, 15)
 contract "bench doctor report contract" <<'BODY'
 doctor_sandbox
@@ -50,6 +58,21 @@ PATH="$DSB_PATH" bash "$root/bin/bench.sh" doctor >/dev/null 2>&1 || true
 [ ! -e "$tmp/pwned" ] || { echo "report executed a hostile shim's target line"; exit 1; }
 BODY
 
+# --- doctor manifest skew: stamp mismatch warns; pre-stamp manifest warns without changing exit
+contract "bench doctor manifest skew contract" <<'BODY'
+doctor_sandbox
+mkdir -p .bench
+printf '.bench/BENCH.md\tabc\n' > .bench/link-manifest.tsv
+out="$(PATH="$DSB_PATH" bash "$root/bin/bench.sh" doctor)"; rc=$?
+[ "$rc" = "1" ] || { echo "pre-stamp manifest changed doctor exit (got $rc)"; exit 1; }
+grep -qF "version unknown" <<<"$out" || { echo "pre-stamp manifest did not warn skew-unknown"; exit 1; }
+printf '#kit\t0.0.0\n.bench/BENCH.md\tabc\n' > .bench/link-manifest.tsv
+out="$(PATH="$DSB_PATH" bash "$root/bin/bench.sh" doctor)"; rc=$?
+[ "$rc" = "1" ] || { echo "skewed manifest changed doctor exit (got $rc)"; exit 1; }
+grep -qF "version skew" <<<"$out" || { echo "skewed manifest did not report version skew"; exit 1; }
+grep -qF "0.0.0" <<<"$out" || { echo "skewed manifest output did not name the stamped version"; exit 1; }
+BODY
+
 # --- doctor --fix: picks the first non-manager writable PATH dir, marker+target, announced (stories 3, 6)
 contract "bench doctor --fix write contract" <<'BODY'
 doctor_sandbox
@@ -68,11 +91,11 @@ BODY
 # embeds is spaced — exercising doctor_shim_content's %q quoting end to end.
 contract "bench doctor --fix spaced-target contract" --space-path <<'BODY'
 doctor_sandbox
-kit="$tmp/kit/bin"; mkdir -p "$kit"; cp "$root"/bin/*.sh "$kit/"
-out="$(PATH="$DSB_PATH" bash "$kit/bench.sh" doctor --fix)"; rc=$?
+kit="$tmp/kit"; doctor_copy_kit "$kit"
+out="$(PATH="$DSB_PATH" bash "$kit/bin/bench.sh" doctor --fix)"; rc=$?
 [ "$rc" = "0" ] || { echo "spaced-path --fix did not exit 0 (got $rc)"; exit 1; }
 [ -f "$DSB_PLAIN/bench" ] || { echo "spaced-path --fix wrote no shim"; exit 1; }
-grep -qF "$kit/bench.sh" "$DSB_PLAIN/bench" || { echo "shim lost the spaced target path"; exit 1; }
+grep -qF "$kit/bin/bench.sh" "$DSB_PLAIN/bench" || { echo "shim lost the spaced target path"; exit 1; }
 got="$("$DSB_PLAIN/bench" doctor 2>/dev/null | head -1)"
 grep -qF "shim health" <<<"$got" || { echo "spaced-target shim failed to re-exec the CLI"; exit 1; }
 BODY
@@ -153,7 +176,7 @@ BODY
 # --- postinstall: guard conjunction + never-fail-the-install invariant (stories 10, 11, 12, 13)
 contract "bench doctor postinstall contract" <<'BODY'
 doctor_sandbox
-pkg="$tmp/pkg"; mkdir -p "$pkg/bin"; cp "$root"/bin/*.sh "$pkg/bin/"
+pkg="$tmp/pkg"; doctor_copy_kit "$pkg"
 pin="$pkg/bin/bench-postinstall.sh"
 # global + no .git → writes shim (story 10)
 out="$(npm_config_global=true PATH="$DSB_PATH" bash "$pin")"; rc=$?

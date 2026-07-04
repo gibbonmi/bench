@@ -202,3 +202,17 @@ Proposed rule change: in /bench-write-spec's edge inventory, add a check — "fo
   estimated cost is below the overhead of charging and verifying a delegate,
   the orchestrator may run it inline at its own tier, flagging the deviation
   in the exit report.
+
+## 2026-07-04 — Codex subagent policy conflicts with review-axis delegation  [open]
+- **What happened:** `/bench-implement-spec` reached the required
+  `/bench-review-implementation` step, whose phase text says to spawn three
+  read-only axis delegates. The available Codex subagent tool's contract says
+  not to spawn subagents unless the user explicitly asks for subagents,
+  delegation, or parallel agent work, so the review was run inline instead.
+- **Right behavior:** Harness-specific tool policy wins at runtime, but the
+  Bench phase should not silently assume a delegation surface that a harness may
+  forbid.
+- **Proposed rule change:** In `/bench-review-implementation`, add a fallback:
+  when the harness forbids unsolicited subagents, run the three axes inline,
+  state the deviation in the exit report, and keep the same per-axis charges and
+  citation standard.

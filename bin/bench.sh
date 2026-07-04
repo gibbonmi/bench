@@ -331,10 +331,12 @@ bench_binary_path() {
 # whole argv through. The one seam the strangler grows: later slices add subcommand
 # names to the dispatch below, never a second resolver.
 route_binary() {
-  local bin rc
-  bin="$(bench_binary_path)" && rc=0 || rc=$?
+  local bin rc kit wrapper
+  kit="${BENCH_KIT:-$(kit_dir)}"
+  wrapper="$(resolve_script_path)"
+  bin="$(bench_binary_path "$kit")" && rc=0 || rc=$?
   case "$rc" in
-    0) exec "$bin" "$@" ;;
+    0) BENCH_KIT="${BENCH_KIT:-$kit}" BENCH_WRAPPER="${BENCH_WRAPPER:-$wrapper}" exec "$bin" "$@" ;;
     2)
       echo "bench: unsupported platform: $(uname -s | tr '[:upper:]' '[:lower:]')/$(uname -m)" >&2
       exit 2
@@ -346,24 +348,29 @@ route_binary() {
   esac
 }
 
+adoption_route() {
+  local kit
+  kit="${BENCH_KIT:-$(kit_dir)}"
+  if [[ ! -d "$kit/.agents/commands" || ! -f "$kit/AGENTS.md" ]]; then
+    echo "bench: link/init/doctor must run from the real Bench kit; no source asset tree at $kit" >&2
+    echo "bench: use the installed 'bench' command or the source kit's bin/bench.sh" >&2
+    exit 1
+  fi
+  route_binary "$@"
+}
+
 BENCH_BIN_DIR="$(dirname "$(resolve_script_path)")"
 # shellcheck source=/dev/null
-. "$BENCH_BIN_DIR/bench-link.sh"
-# shellcheck source=/dev/null
 . "$BENCH_BIN_DIR/bench-worktree.sh"
-# shellcheck source=/dev/null
-. "$BENCH_BIN_DIR/bench-init.sh"
-# shellcheck source=/dev/null
-. "$BENCH_BIN_DIR/bench-doctor.sh"
 
 case "${1:-help}" in
   version)  route_binary "$@" ;;
   gate)     run_gate ;;
-  doctor)   shift; doctor "$@" ;;
+  doctor)   adoption_route "$@" ;;
   worktree) worktree ;;
   shift)    shift; shift_loop "${*:-improve the codebase}" ;;
-  link)     shift; link "${1:-copy}" ;;
-  init)     init ;;
+  link)     adoption_route "$@" ;;
+  init)     adoption_route "$@" ;;
   models)   route_binary "$@" ;;
   structure) route_binary "$@" ;;
   idea)     route_binary "$@" ;;

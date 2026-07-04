@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/git"
@@ -212,6 +213,8 @@ func run(args []string, stdout, stderr *os.File) int {
 		return code
 	}
 	switch args[0] {
+	case "link", "init", "doctor":
+		return adopt.Run(args, stdout, stderr, version)
 	case "version":
 		fmt.Fprintln(stdout, versionLine(version, runtime.GOOS, runtime.GOARCH))
 		return 0

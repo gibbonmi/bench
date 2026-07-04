@@ -3,7 +3,7 @@
 # npm postinstall — install the PATH shim on a global install, but NEVER fail the
 # install. The shim is a convenience; a wrong read must be non-destructive either
 # way, so every path exits 0. Thin pass-through: the real work is `bench doctor
-# --fix` (bin/bench-doctor.sh), invoked package-relative because `bench` may not be
+# --fix` in the compiled core, invoked package-relative because `bench` may not be
 # on PATH yet.
 #
 # Guards (both required to mutate):

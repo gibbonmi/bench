@@ -42,11 +42,11 @@ bad_refs="$(grep -oE '\.bench/[A-Za-z0-9_.-]+' bin/bench.sh | grep -xE '\.bench/
 # shellcheck source=/dev/null
 . "$gate_dir/gate-contract-runner.sh"
 # shellcheck source=/dev/null
+. "$gate_dir/gate-go-contracts.sh"
+# shellcheck source=/dev/null
 . "$gate_dir/gate-link-contracts.sh"
 # shellcheck source=/dev/null
 . "$gate_dir/gate-runtime-contracts.sh"
-# shellcheck source=/dev/null
-. "$gate_dir/gate-go-contracts.sh"
 # shellcheck source=/dev/null
 . "$gate_dir/gate-runtime-shift-contracts.sh"
 # shellcheck source=/dev/null

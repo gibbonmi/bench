@@ -92,9 +92,13 @@ tmp="$(mktemp -d)"
   [ -f .bench/BENCH-reference.md ] || { echo "fresh link did not install .bench/BENCH-reference.md (the operating guide points to it)"; exit 1; }
   ! grep -qF '@.bench/BENCH-reference.md' CLAUDE.md || { echo "fresh link @-imported the reference file; it must stay on-demand"; exit 1; }
   [ -x .bench/bin/bench.sh ] || { echo "fresh link did not install local hook CLI .bench/bin/bench.sh"; exit 1; }
-  [ -f .bench/bin/bench-link.sh ] || { echo "fresh link did not install local hook CLI link helper"; exit 1; }
+  [ ! -e .bench/bin/bench-link.sh ] || { echo "fresh link still installed deleted local hook CLI link helper"; exit 1; }
+  [ ! -e .bench/bin/bench-init.sh ] || { echo "fresh link still installed deleted local hook CLI init helper"; exit 1; }
+  [ ! -e .bench/bin/bench-doctor.sh ] || { echo "fresh link still installed deleted local hook CLI doctor helper"; exit 1; }
   [ -f .bench/bin/bench-worktree.sh ] || { echo "fresh link did not install local hook CLI worktree helper"; exit 1; }
   [ -f .bench/link-manifest.tsv ] || { echo "fresh link did not write link manifest"; exit 1; }
+  grep -qF $'#kit\t' .bench/link-manifest.tsv || { echo "fresh link did not stamp the kit version in the manifest"; exit 1; }
+  grep -qF $'.bench/BENCH.md\t' .bench/link-manifest.tsv || { echo "fresh link manifest lost managed file rows after adding the stamp"; exit 1; }
   [ -f .agents/commands/bench-implement-spec.md ] || { echo "fresh link did not install portable commands"; exit 1; }
   [ -f .agents/skills/bench-craft-seams/SKILL.md ] || { echo "fresh link did not install portable skills"; exit 1; }
   [ -f .agents/skills/bench-implement-spec/SKILL.md ] || { echo "fresh link did not install Codex command adapter skills"; exit 1; }
@@ -114,6 +118,15 @@ tmp="$(mktemp -d)"
   [ -x .git/hooks/pre-push ] || { echo "fresh link did not install git pre-push hook"; exit 1; }
   grep -qF '@.bench/BENCH.md' CLAUDE.md || { echo "fresh link CLAUDE.md does not import .bench/BENCH.md"; exit 1; }
   [ ! -L .agents/commands/bench-implement-spec.md ] || { echo "default link mode symlinked portable commands"; exit 1; }
+  before_manifest="$(cksum < .bench/link-manifest.tsv)"
+  for sub in link init doctor; do
+    if .bench/bin/bench.sh "$sub" >"planted-$sub.out" 2>&1; then
+      echo "planted .bench/bin/bench.sh $sub succeeded instead of refusing"; exit 1
+    fi
+    grep -qF "real Bench kit" "planted-$sub.out" || { echo "planted $sub refusal did not point at the real kit"; exit 1; }
+  done
+  [ "$(cksum < .bench/link-manifest.tsv)" = "$before_manifest" ] || { echo "planted adoption command mutated the link manifest"; exit 1; }
+  [ ! -e .bench/gate.sh ] || { echo "planted init scaffolded a gate despite refusing"; exit 1; }
   bash "$root/bin/bench.sh" link >/dev/null 2>&1
   [ "$(count_literal '<!-- bench:start -->' AGENTS.md)" = "1" ] || { echo "relink duplicated managed Bench block"; exit 1; }
   printf '# Bench\n\nCanonical agreement in AGENTS.md.\n\n@AGENTS.md\n' > CLAUDE.md
@@ -202,11 +215,15 @@ tmp="$(mktemp -d)"
 (
   set -u
   kitcopy="$tmp/kit[1]"
-  mkdir -p "$kitcopy/.bench"
+  mkdir -p "$kitcopy/.bench" "$kitcopy/dist"
   cp -R "$root/bin" "$root/.agents" "$root/.claude" "$root/.codex" "$kitcopy/"
+  cp "$root/dist/bench" "$kitcopy/dist/bench"
+  cp "$root/AGENTS.md" "$kitcopy/AGENTS.md"
   cp "$root/.bench/BENCH.md" "$kitcopy/.bench/BENCH.md"
   cp "$root/.bench/BENCH-reference.md" "$kitcopy/.bench/BENCH-reference.md"
   cp -R "$root/.bench/hooks" "$kitcopy/.bench/hooks"
+  cp -R "$root/.bench/adapters" "$kitcopy/.bench/adapters"
+  cp -R "$root/.bench/lib" "$kitcopy/.bench/lib"
   mkdir "$tmp/repo"; cd "$tmp/repo"; git init -q
   BENCH_KIT="$kitcopy" bash "$root/bin/bench.sh" link >link.out 2>&1 \
     || { tail -1 link.out; echo "link from a metachar kit path failed"; exit 1; }
