@@ -188,3 +188,17 @@ Proposed rule change: in /bench-write-spec's edge inventory, add a check — "fo
 - **Proposed rule change:** One line in craft-delegate's "The charge": prefer
   the map/Handoff digest and line-ranged inputs over whole-file read lists when
   a compressed source exists.
+
+## 2026-07-04 — a spec-declared delegate line was executed inline when the delegate charge would cost more than the work  [open]
+- **What happened:** Spec implement-spec-lean declared story 3 (one
+  `require_anchor` line plus the bite ritual) as `claude-sonnet-5 / low / ~15k`
+  via delegate. The orchestrator (top tier) executed it inline instead: writing
+  and verifying a delegate charge would have spent more tokens than the ~2k the
+  edit cost, and the bite ritual mutates a file the build was already editing.
+- **Right behavior:** Unclear — honoring the declared tier strictly means
+  delegating even negative-savings work; the cheaper call is inline execution
+  with the deviation flagged, which is what happened.
+- **Proposed rule change:** In craft-line, note a floor: when a story's
+  estimated cost is below the overhead of charging and verifying a delegate,
+  the orchestrator may run it inline at its own tier, flagging the deviation
+  in the exit report.

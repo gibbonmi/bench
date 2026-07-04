@@ -1,6 +1,6 @@
 # implement-spec-lean
 
-Status: staged
+Status: implemented
 
 ## Problem
 

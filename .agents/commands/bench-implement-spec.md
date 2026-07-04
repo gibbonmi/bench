@@ -23,35 +23,22 @@ small enough that the seam is obvious; if it isn't, stop and run `/bench-write-s
 
 ## Open with the line
 
-State it in one line before touching code:
-
-> Line: <model> / <effort> / ~<token cap>. <one clause why.>
-
-Pick the row with the `craft-line` skill — its decision table (spec precision ×
-seam uncertainty × gate coverage) sets the starting tier and effort, and its
-ladder governs every move after gate feedback. Don't escalate silently; if you
-hit the cap, stop and report.
+Declare the line before touching code — the declaration template, the decision
+table that picks the row, and the escalation ladder are all `craft-line`'s.
 
 ## Then build
 
 - Work the user stories in vertical slices, not all-tests-first horizontal ones.
-- Use **TDD only at the pre-agreed seams** (see `craft-tdd`). Elsewhere, write
-  the code and let the gate catch regressions — the gate only catches what some
-  test observes, so behavior no seam can observe is a seam-set defect to surface,
-  not to skip. TDD everything is the cost trap.
+- Use TDD only at the pre-agreed seams; its bounds are `craft-tdd`'s.
 - If the spec has an acceptance coverage map, each vertical slice names the
   coverage row it is turning red-to-green before editing that slice. Rows marked
   `already covered` or `not TDD-able` keep their recorded reason; don't silently
   upgrade them into TDD coverage.
 - Run typecheck and the relevant single test file frequently as you go. Run the
   full gate once at the end.
-- Smallest diffs that advance a story. Read before you write. Compose existing
-  seams before inventing new ones.
-- Every delegation during the build carries its own line: pass an explicit
-  bound model alias on the Agent call — never the inherited default — and state
-  effort and token cap in the charge, per `craft-line` and `craft-delegate`.
-  Concurrent write-delegates get separate worktrees unless one depends on
-  another's output.
+- One small change at a time, repo stays green — invariant 4 in `.bench/BENCH.md`.
+- Every delegation during the build carries its own line — the rules are
+  `craft-delegate`'s (model half: `craft-line`).
 - For broad renames or reference refactors, dry-run the file scope before editing,
   then verify old stems in every form: `/name`, `$name`, bare basenames in
   inventories, and `dir/name` path forms. Separator slashes inside prose are not
@@ -77,14 +64,12 @@ defined route — never a silent grind, never an abandoned worktree:
 
 ## Close on green
 
-- The build is done when `bench gate` is green — not before, and not because the
-  diff looks right. If the gate is red, the build continues or stops with an
-  explanation; it never declares done on red.
+- The build is done when `bench gate` is green, and only then — invariant 1 in
+  `.bench/BENCH.md` (the gate is the oracle).
 - A green gate proves what the tests observe. Before handing back, drive the
   changed path once end-to-end — invoke the real command, endpoint, or call the
   diff changes and read its output. A mismatch here is a defect to fix or
   surface, never a footnote.
-- Do not weaken a test or a check to reach green. If a check is wrong, surface it.
 - When a commit happens in this phase, stage the files the build actually touched,
   explicitly — never a blind `git add -A`. An unexplained working-tree file blocks
   the commit: surface it to the reviewer; don't commit or revert it on your own.
@@ -94,9 +79,11 @@ defined route — never a silent grind, never an abandoned worktree:
   awaiting review/merge* — the state `bench status`'s retirement signal keys on once
   the spec reaches the default branch. Never write a line-start `Status: implemented`
   into any other `specs/*.md`, or that detector fires on a spec that is not done.
-- Before the final gate, emit a compact coverage table for every acceptance row:
-  `green`, `already covered`, or `not TDD-able`. If any mapped behavior is missing,
-  partial, or unclassified, the build is not ready for the gate.
+- Before the final gate, emit the coverage table for every acceptance row —
+  `bench coverage <spec>` produces it and `bench coverage --check <spec>` validates
+  the map; don't hand-assemble it. Classify each row `green`, `already covered`,
+  or `not TDD-able`. If any mapped behavior is missing, partial, or unclassified,
+  the build is not ready for the gate.
 - Once the gate is green, run `/bench-review-implementation` — the semantic three-axis
   pass (Standards + Spec + Coverage) that catches what the gate can't: right thing
   built the wrong way, wrong thing built cleanly, or breaking inputs nothing

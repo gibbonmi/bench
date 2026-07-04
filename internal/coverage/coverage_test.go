@@ -1,9 +1,13 @@
 package coverage
 
 import (
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 const stories = "## User stories\n1. As a, I want b, so c.\n2. As d, I want e, so f.\n3. As g, I want h, so i.\n"
@@ -55,4 +59,111 @@ func TestCheck(t *testing.T) {
 			t.Errorf("Check violations %v do not contain %q", v, c.want)
 		}
 	}
+}
+
+// mustWrite creates path (and any parent dirs) with content under the current CWD.
+func mustWrite(t *testing.T, path, content string) {
+	t.Helper()
+	if dir := filepath.Dir(path); dir != "." {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatalf("MkdirAll(%q): %v", dir, err)
+		}
+	}
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatalf("WriteFile(%q): %v", path, err)
+	}
+}
+
+// wantTable renders the exact TOON output Command produces for a resolved spec label and
+// body, via the same State/Rows/toon.Table calls Command itself makes — so the test pins
+// the round-trip without re-deriving the TOON format.
+func wantTable(t *testing.T, label, body string) string {
+	t.Helper()
+	p := spec(body)
+	tbl, err := toon.Table("rows", []string{"story", "seam", "red_signal"}, Rows(p))
+	if err != nil {
+		t.Fatalf("toon.Table: %v", err)
+	}
+	return "spec: " + label + "\n" + "state: " + State(p) + "\n" + tbl
+}
+
+// TestCommand drives Command through its public (args) -> (output, exit code) interface
+// only, per the spec's testing decision — never parse/Check directly.
+func TestCommand(t *testing.T) {
+	mapped := func(row string) string {
+		return "# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdr + row
+	}
+
+	t.Run("readable path argument resolves and round-trips", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+		body := mapped("| 1 | b | s | r | w |\n")
+		mustWrite(t, "spec.md", body)
+
+		out, code := Command([]string{"spec.md"})
+		if want := wantTable(t, "spec.md", body); out != want || code != 0 {
+			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
+		}
+	})
+
+	t.Run("separator-free slug resolves specs/<slug>.md", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+		body := mapped("| 2 | b2 | s2 | r2 | w2 |\n")
+		mustWrite(t, "specs/foo.md", body)
+
+		out, code := Command([]string{"foo"})
+		if want := wantTable(t, "specs/foo.md", body); out != want || code != 0 {
+			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
+		}
+	})
+
+	t.Run("slug already ending .md is not double-appended", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+		body := mapped("| 3 | b3 | s3 | r3 | w3 |\n")
+		mustWrite(t, "specs/bar.md", body)
+
+		out, code := Command([]string{"bar.md"})
+		if want := wantTable(t, "specs/bar.md", body); out != want || code != 0 {
+			t.Errorf("Command = (%q, %d), want (%q, 0) — a double-append would look up specs/bar.md.md and miss", out, code, want)
+		}
+	})
+
+	t.Run("slug matching no file names both forms tried, exit 1", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+
+		out, code := Command([]string{"missing"})
+		if code != 1 || !strings.Contains(out, "spec not found: missing, specs/missing.md") {
+			t.Errorf("Command = (%q, %d), want exit 1 naming both 'missing' and 'specs/missing.md' in the not-found message", out, code)
+		}
+	})
+
+	t.Run("separator-bearing argument gets no fallback", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+
+		out, code := Command([]string{"sub/missing.md"})
+		if code != 1 || !strings.Contains(out, "sub/missing.md") || strings.Contains(out, "specs/") {
+			t.Errorf("Command = (%q, %d), want exit 1 naming only sub/missing.md with no specs/ form", out, code)
+		}
+	})
+
+	t.Run("slug shadowed by a same-named CWD file resolves path-first", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+		cwdBody := mapped("| 4 | cwd | cwd-seam | cwd-red | cwd-why |\n")
+		specsBody := mapped("| 5 | specs | specs-seam | specs-red | specs-why |\n")
+		mustWrite(t, "foo", cwdBody)
+		mustWrite(t, "specs/foo.md", specsBody)
+
+		out, code := Command([]string{"foo"})
+		if want := wantTable(t, "foo", cwdBody); out != want || code != 0 {
+			t.Errorf("Command = (%q, %d), want (%q, 0) — the CWD file should shadow the specs/ fallback", out, code, want)
+		}
+	})
+
+	t.Run("flag-shaped argument stays a usage error, exit 2", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+
+		out, code := Command([]string{"--bogus"})
+		if want := toon.Usage("bench coverage", "--bogus") + "\n"; out != want || code != 2 {
+			t.Errorf("Command = (%q, %d), want (%q, 2)", out, code, want)
+		}
+	})
 }

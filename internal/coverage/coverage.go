@@ -196,7 +196,31 @@ func isDashes(s string) bool {
 	return true
 }
 
-// Command implements `bench coverage [--check] <spec.md>`.
+// resolveSpec finds the readable file backing a spec argument: the argument as given
+// (path-first, so a same-named readable file in the CWD shadows the specs/ fallback),
+// then — for a separator-free argument only — specs/<slug>.md, appending .md only when
+// the argument doesn't already end in it. ok is false when neither reads; tried holds
+// every form actually attempted, for the not-found error.
+func resolveSpec(spec string) (content []byte, resolved string, tried []string, ok bool) {
+	tried = []string{spec}
+	if b, err := os.ReadFile(spec); err == nil {
+		return b, spec, tried, true
+	}
+	if !strings.ContainsRune(spec, '/') {
+		fallback := spec
+		if !strings.HasSuffix(fallback, ".md") {
+			fallback += ".md"
+		}
+		fallback = "specs/" + fallback
+		tried = append(tried, fallback)
+		if b, err := os.ReadFile(fallback); err == nil {
+			return b, fallback, tried, true
+		}
+	}
+	return nil, "", tried, false
+}
+
+// Command implements `bench coverage [--check] <spec.md | slug>`.
 func Command(args []string) (string, int) {
 	check := false
 	spec := ""
@@ -205,7 +229,7 @@ func Command(args []string) (string, int) {
 		case a == "--check":
 			check = true
 		case a == "-h" || a == "--help":
-			return "usage: bench coverage [--check] <spec.md>\n", 0
+			return "usage: bench coverage [--check] <spec.md | slug>\n", 0
 		case strings.HasPrefix(a, "-"):
 			return toon.Usage("bench coverage", a) + "\n", 2
 		default:
@@ -218,10 +242,11 @@ func Command(args []string) (string, int) {
 	if spec == "" {
 		return toon.Usage("bench coverage", "<spec.md> is required") + "\n", 2
 	}
-	content, err := os.ReadFile(spec)
-	if err != nil {
-		return toon.Errorf("spec not found: "+spec, "pass a path to a spec markdown file") + "\n", 1
+	content, resolved, tried, ok := resolveSpec(spec)
+	if !ok {
+		return toon.Errorf("spec not found: "+strings.Join(tried, ", "), "pass a path to a spec markdown file") + "\n", 1
 	}
+	spec = resolved
 	p := parse(content)
 	if check {
 		violations := Check(p)
