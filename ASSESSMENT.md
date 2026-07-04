@@ -1,121 +1,119 @@
-# Tooling assessment — 2026-07-02
+# Prioritization assessment — 2026-07-04
 
-Full assessment of the Bench kit, run at the reviewer's request. Three audit passes
-(ad-hoc validation calls, craft skills, workflow phases), compared against roadmap
-items 3 (guard self-disclosure) and 4 (learnings counter bug), then prioritized.
-Findings below are the complete record; the roadmap holds the deprioritized work.
+All 13 open learnings entries and all 22 roadmap items, each verified against the
+current tree (Go port state, canary fixture tree, doctor/link/postinstall, toon-go
+adoption) and prioritized: fixes first, then features. The no-grill cleanup prunes
+or rewrites the stale roadmap lines; this file keeps the rationale and the current
+split between light cleanup and deeper grills. This file replaces the 2026-07-02
+assessment, which resolves that assessment's own "ASSESSMENT.md is a stale history
+artifact" finding.
 
-## Part 1 — ad-hoc check/validate calls → CLI candidates
+## Outdated — prune or rewrite
 
-### The core observation
-
-`bench status` already computes seven signals as structured `severity|signal|detail|action`
-tuples — gate verdict + staleness, git dirty/ahead, active worktrees, open learnings,
-structure violations, unresolved decision maps, roadmap count — then flattens them into
-a 5-row text budget and discards the detail. Three phases (`/bench-integrate-learnings`,
-`/bench-shape-idea`, `/bench-implement-spec`) re-derive that same detail with
-hand-assembled greps. The data exists; the query surface doesn't. First-wave work is
-exposure, not new checkers.
-
-### Ad-hoc patterns found (where agents assemble shell checks by hand)
-
-| # | Pattern | Instructed in | Status |
-|---|---|---|---|
-| A1 | Branch-diff pinning: resolve base, `git diff <base>...HEAD`, confirm non-empty | review-implementation | no helper; base resolution wrong for shift branches |
-| A3 | Partial gate: typecheck + single test file "frequently as you go" | implement-spec | agent reconstructs the stack; can drift from the gate |
-| A4 | Stale-reference sweep after rename: `/name`, `$name`, basename, `dir/name` forms | implement-spec | assembled multi-pattern grep |
-| A5 | Acceptance-coverage table: hand-parse spec rows, re-emit per-row status | write-spec, implement-spec, review-implementation | pure prose discipline, no deterministic backstop |
-| A6 | Working-tree state before commit (no blind `git add -A`) | implement-spec, BENCH.md | logic already exists internally (`shift_dirty_paths`) |
-| A7 | Link/init wiring preflight | setup-repo | no read-only "am I linked / drifted" query |
-| A8 | Stack/remote/profile discovery | setup-repo | duplicates `run_gate`'s auto-detect logic |
-| A9 | Model discovery fallback (harness-scraping when no API key) | setup-repo, craft-line | fragile; no contract when nothing resolves |
-| A10 | Roadmap promotion drain (hand-edit `ROADMAP.md` line removal) | shape-idea | gate-enforced but hand-performed |
-| A11 | Decision-map placeholder scan (`— (open` / `GRILL DEFERRED`) | shape-idea, craft-grill | `status` runs the same grep, discards per-map detail |
-| A12 | Learnings-journal entry counting/grouping | integrate-learnings | `status` counts; entry list is a manual read |
-| A13 | Structure violations | craft-seams | `status` re-greps `structure`'s own text output |
-| A14 | Kit staleness audit (drift, cross-refs, stale paths) | craft-synthesis | much already in gate-docs-contracts; skill says "grep" |
-
-### Candidate subcommands
-
-**First wave (prioritized — exposure of existing tuples):** `bench status --json` /
-per-signal query; `bench learnings` (structured open-entry list); `bench maps`
-(per-map unresolved tickets). Shared parsers, one code path, deletes ad-hoc greps
-from four agent-facing files.
-
-**Second wave (parked):** `bench diff` (A1), `bench refs <stem>` (A4),
-`bench coverage <spec>` (A5), `bench doctor` (A7/A14), `bench detect` (A8);
-extend `bench structure` with a structured mode, `bench roadmap remove`,
-scoped `bench gate`, structured `bench models`.
-
-### The decision this reopens
-
-The kit currently exempts `bench` itself from AXI ("plain text, stderr errors,
-documented exit codes" — closed in `craft-cli`'s scope clause and the benchkit
-profile). Making the new query surfaces AXI/TOON reopens that. Recommended
-resolution: hybrid — existing text surfaces keep their contract; new query
-surfaces are AXI-conformant. Reviewer's call; belongs in the shaping session.
-
-## Part 2 — craft-skill findings
-
-| Skill | Finding | Severity |
+| Item (date) | Why it no longer holds | Disposition |
 |---|---|---|
-| craft-skills | Model-invoked census omitted `craft-line` (meta-standard mis-counting itself) | High — **fixed 2026-07-02** |
-| craft-cli | No contrastive pair despite governing an output surface (the meta-standard's own rule) | High — **fixed 2026-07-02** |
-| craft-cli | Errors-on-stdout stated without the why; agents may "fix" it back to Unix convention | Med — **fixed 2026-07-02** |
-| craft-design-system | No contrastive pair for the token rule | Med — **fixed 2026-07-02** |
-| craft-design-system | Names Claude Design in a harness-agnostic skill; "stop" on missing token has no headless unblock route | Med — parked (polish batch) |
-| craft-tdd / write-spec / review-implementation | 7-edge-class list triplicated verbatim; a change is a three-place edit | Med — parked (polish batch) |
-| craft-seams | Fuses two jobs: seam placement plus structure-gate splitting; splitting guidance can't fire on a `bench structure` failure (triggers don't match) | Med — parked (polish batch) |
-| craft-line | Token cap has no sizing method (vibes number; the skill warns against those elsewhere) | Med — parked (polish batch) |
-| craft-synthesis | Dogfood loop has no proportionality carve-out — read literally, a typo fix demands a full gated shift | Med — parked (polish batch) |
-| craft-grill | Good-only example (no bad pair); trigger collision with ecosystem grill skills | Low — parked |
-| craft-adr | Cleanest of the nine; no material findings | — |
+| Roadmap: shell one-source-per-fact dups (07-02) | The Go port deleted every cited site — the query script, the tree-hash mirror in the stop hook, the shell link script are gone | Remove |
+| Roadmap: canary coverage gaps (07-02) | The canary machinery landed: 56 fixtures under `tests/canary/` cover the named gaps (codex-hooks, roadmap seam, JSON, frontmatter, shared-rule); the cited gate.sh line refs are dead since checks moved to Go | Remove; keep only the residual "one canary per check" meta-check idea if still wanted |
+| Roadmap: BENCH.md token diet (07-02) | Shipped — reference sections live on demand in `.bench/BENCH-reference.md` | Remove; residual: craft-skill frontmatter trim, only if still felt |
+| Roadmap: ASSESSMENT.md stale artifact (07-02) | Resolved by this replacement | Remove |
+| Roadmap: hermetic doctor canary (07-03) | Doctor contract suite already asserts the property family (manager-dir/nvm avoidance, stale-target, foreign-shim); the narrow absolute-path string assertion is mostly subsumed | Remove, or keep as LOW polish |
+| Roadmap: parser candidates trio (07-02) | `bench doctor` shipped (doctor --fix + contract tests) — strike it from the parked list; refs/detect remain parked | Rewrite line |
+| Roadmap: bench refs (07-04) | Duplicate of the refs candidate already parked in the 07-02 trio | Merge the two lines |
+| Learning: by-path routing broke linked-repo CLI (07-03) | Defect fixed — `bench link` now distributes the binary to the linked kit dir (first resolution candidate) | Retire the defect half; keep the rule proposal (edge-inventory: which surfaces invoke a ported command, through which CLI) |
+| Learning: hand-rolled TOON dialect (07-03) | Concrete issue resolved — toon-go is now the dependency | Retire the defect half; fold the rule proposal into the runnable-probe rule below |
 
-### Missing skills (ranked)
+## Triage split
 
-1. **craft-gate** — authoring a strong oracle. Invariant 1 rests entirely on the
-   gate, yet gate-authoring guidance lives only in run-once setup-repo. Nothing
-   fires when a check is added, tightened, or weakened. Should cover: oracle vs
-   theater, red-by-construction avoidance, paired-delta harnesses, the canary
-   pattern.
-2. **craft-review** — the three-axis judgment review-implementation demands
-   (hard-violation vs judgment-call sorting, adversarial coverage, aggregate
-   don't merge) has no model-reachable home.
-3. **craft-delegate** — delegate prompts, scope bounding, worktree isolation,
-   done-claim verification; currently smeared across four artifacts.
-4. **craft-structure** (or re-triggered craft-seams) — splitting under the
-   structure gate.
-5. **craft-learnings** — promotable-entry quality; could fold into craft-synthesis.
-
-## Part 3 — workflow phase findings
-
-| # | Finding | Severity |
+| Bucket | Items | Why |
 |---|---|---|
-| P1 | **Per-story lines assigned in write-spec are dropped by implement-spec** — it declares one blanket line, never reads the spec's per-story routing; `bench shift` carries a single `BENCH_MODEL` so mixed-line specs can't shift as one unit and nothing says to partition. Direct invariant-2 contradiction. | High — prioritized (spec path) |
-| P2 | implement-spec called the review "two-axis"; it is three (Coverage silently dropped at the handoff) | High — **fixed 2026-07-02** |
-| P3 | No phase routes a capped/unmet shift; review-implementation's base (default branch) is wrong for shift branches (pre-shift HEAD); no exit for retiring a superseded spec | High — parked (workflow-exits entry) |
-| P4 | Coverage-row status is entirely self-assessed; the gate's coverage check is structural (anchor text), not semantic (rows → passing tests) | Med — feeds `bench coverage` candidate |
-| P5 | setup-repo model discovery is harness-scraping with no failure contract | Med — parked |
-| P6 | Batch approval (multi-spec roadmap run) lives only in BENCH.md prose; no phase surface | Low — parked |
-| P7 | bench-debug: repro test must be committed into the gate *before* `bench shift`, else the first red-iteration rollback destroys it — implied, not stated | Low — parked (workflow-exits entry) |
-| P8 | Headless shift iteration prompt drops the coverage-row discipline implement-spec mandates — interactive and headless discipline diverge for the same spec | Low — parked |
-| — | Adapter skills (`$bench-*`) carry no drift; the Claude/Codex invocation split is internally consistent | clean |
+| No grill; light cleanup | stale roadmap pruning/rewrite, duplicate `bench refs` merge, `bench symbols` drop, README one-source pass, generated-index pointer, README drift guard | The assessment already states the current fact and the one-source-per-fact rule decides the edit. No product semantics change. |
+| No grill; leave parked | dashboard, Sonnet 5 revisit, `bench refs`/`bench detect`/`bench doc`/`bench specs --retired` pending evidence | Already declared low, scheduled, or evidence-gated. No immediate edit improves them. |
+| Needs deeper grill/spec | line-governance cluster + token-cap-to-iteration-cap, review-findings persistence, stale-gate status split, tests/canary bloat discipline, auto-repair download fallback, adversarial gate pinning, `bench spec implemented` + `bench commit`, harness task list, `bench outline` | These pick new semantics, new command surfaces, or new enforcement posture. They need reviewer choices before implementation. |
 
-## Roadmap comparison and priority order
+## Fixes, in priority order
 
-- **Roadmap 3 (guard self-disclosure)** is the same family as Part 1: a
-  machine-readable state surface injected at SessionStart. Shape together as one
-  structured-query surface (`status --json`, `learnings`, `maps`, `guards`).
-- **Roadmap 4 (learnings counter)** — **fixed 2026-07-02** (entry-heading match +
-  fixture alignment + template-line regression check); the same parser seeds
-  `bench learnings`.
+**F1 (closed by no-grill cleanup) — README drift.** README now points to
+`.bench/BENCH.md` for shared operating rules and to `.bench/BENCH-reference.md` for
+the generated skills index instead of carrying hand-maintained copies. The
+conformance layer now guards README against reintroducing the shared-rule sections.
 
-Priorities:
+**F2 (HIGH) — run `/bench-integrate-learnings`.** 13 open entries is the real fix
+backlog; the journal is the bottleneck, not any single entry. The pass should take
+them in four clusters:
 
-1. ~~Trivial-fix batch~~ — done (P2, craft-skills census, roadmap 4, contrastive pairs).
-2. **Shape the structured state surface** (`/bench-shape-idea`) — merges Part 1
-   first wave with roadmap 3; closes the AXI-exemption question.
-3. **Per-story line inheritance** (P1) — spec path; has design weight (partitioning
-   mixed-line specs for shift).
-4. Everything else parked on the roadmap: second-wave parsers, missing-skills trio
-   (craft-gate first), skill-polish batch, workflow exits.
+1. **Line-governance cluster (the decision that matters):** four entries in
+   mutual tension — "facilitator must delegate every story" vs "inline when
+   delegate overhead exceeds the work" vs "inline when stories are one atomic
+   diff" vs "top-tier spec authoring on reviewer override". One reviewer decision
+   resolves all four; folding in the roadmap's token-cap→iteration-cap item (F3)
+   at the same time closes the whole line-discipline question.
+2. **Review-findings persistence (MED-HIGH):** three-axis findings still live
+   only in chat (no `reviews/` surface, no spec heading exists) — a mid-fix
+   disconnect loses verified findings.
+3. **Status stale split (MED):** verified still unimplemented — the status
+   signal reports raw `stale` with no benign-drift (capture-scratch) vs
+   real-drift (committed code moved) classification.
+4. **One-liner batch (LOW, cheap):** delegate charges prefer the Handoff digest
+   over whole-file read lists; skill/command edits take effect next session, so
+   dogfood shifts on trigger changes need a fresh session; review findings are
+   verified in the live session, not a worktree; Codex-style no-subagent
+   harnesses run the three review axes inline and flag it; byte/wire-compat
+   claims about external libraries require a runnable probe plus an
+   official-implementation conformance check in the spec edge inventory.
+
+**F3 (MED-HIGH) — token cap → iteration cap** in the line declaration. Was a
+parked idea; the line-governance learnings above are now its evidence (delegates
+can't meter their own tokens; the cap keeps getting negotiated away). Needs the
+grill it asks for — do it inside the F2 cluster-1 decision.
+
+**F4 (MED-LOW) — tests/ bloat review.** Audit growth and pasted fixture
+harnesses; the canary tree grew fast (56 fixtures) since this was parked, which
+strengthens the case for a lean-suite discipline.
+
+*Live repo signals, outside the two lists but worth noting: `bench status`
+reports 7 structure issues and 16 merged specs awaiting retirement
+(promote-then-delete). The retirement pass is real pending work and may generate
+the evidence the parked `bench specs --retired` idea is waiting for.*
+
+## Features, in priority order
+
+**FT1 (HIGH) — auto-repair download fallback for the missing platform binary.**
+Fresh evidence from today's session: a missing core binary degraded the git guard
+hook and hard-blocked every git command until a manual source build. For npm
+consumers there is no source tree to build — the registry-fetch + hash-verify
+fallback in the launcher is the fix-shaped feature. Well-scoped (~15 edits).
+
+**FT2 (MED) — adversarial gate pinning.** Hash-verify the gate outside the
+writable tree in pre-push. Distinct threat model from the lazy-agent tripwire;
+small (~6 edits) and closes the "determined agent weakens the gate" hole.
+
+**FT3 (MED-LOW) — `bench spec implemented` + `bench commit`.** Pair them: the
+roadmap already notes commit could fold in the spec status flip. Replaces footgun
+prose in the implement phase with two small wrappers over existing logic.
+
+**FT4 (MED-LOW) — harness task list in `/bench-implement-spec`.** Per-harness
+adapter (Claude hook + phase line; Codex native). Promote via the F2 pass since
+it's already learnings-funnel material.
+
+**FT5 (LOW) — `bench outline`.** Marginal for this repo, real as a kit
+affordance for large/polyglot linked repos. Needs its grill (languages, on-demand
+vs committed, prose anchors).
+
+**FT6 (LOW, parked pending evidence — leave parked):** `bench refs`, `bench
+detect`, `bench doc`, `bench specs --retired` (watch the 16-spec retirement pass
+for its evidence). `bench symbols` is not carried; restore only if agents
+demonstrably burn turns on symbol search.
+
+**FT7 (LOW) — dashboard.** Low priority by declaration; unchanged.
+
+**FT8 (scheduled, not actionable) — Sonnet 5 mid-tier revisit.** Time-boxed to
+2026-09-01 or the next frontier shift; keep as is.
+
+## Recommended sequence
+
+1. F2 + F3 together (`/bench-integrate-learnings` with the line-governance grill) —
+   drains the journal, settles the line discipline.
+2. FT1 (binary auto-repair) — today's outage is the justification.
+3. FT2 (adversarial gate pinning) — only after the current gate diagnosis is settled.
+4. FT3/FT4 by appetite once the line-governance and findings-persistence decisions
+   are closed.

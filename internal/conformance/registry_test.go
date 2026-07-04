@@ -29,6 +29,7 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"claude-skills-unmirrored": conformanceFixture("load-validity-metadata", ".bench/gate.sh"),
 	"extensionless-gate-ref":   conformanceFixture("load-validity-metadata", ".bench/gate.sh"),
 	"shared-rule-drift":        conformanceFixture("load-validity-metadata", ".bench/gate.sh"),
+	"readme-shared-rule-drift": conformanceFixture("load-validity-metadata", ".bench/gate.sh"),
 
 	"dangling-index":      conformanceFixture("skills-index-command-adapters", ".bench/gate.sh", ".bench/skills-index.sh"),
 	"missing-index-field": conformanceFixture("skills-index-command-adapters", ".bench/gate.sh", ".bench/skills-index.sh"),

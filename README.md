@@ -80,48 +80,15 @@ unit of agent work in a clean worktree), and a shift only counts if it
 
 ---
 
-## The four invariants
+## Operating guide
 
-Everything here exists to enforce these. They're canonical in `.bench/BENCH.md` (the
-guide `bench link` ships, so they reach every project) and the load-bearing ones are
-also wired into hooks so they're not just vibes.
+The shared working agreement is canonical in `.bench/BENCH.md`: roles, invariant
+authority, workflow proportionality, communication rules, and how the gate, hooks,
+skills, commands, and CLI fit together. README is only the onboarding surface.
 
-1. **The gate is the oracle — the agent never grades its own work.** "Done" means
-   the gate exits zero (tests, types, lint, project conformance), not that the
-   diff looks right. A Stop hook physically refuses to let a shift end on a red
-   gate. This is the lesson from every benchmark in the field: the agent's own
-   green tests are not a valid completion signal; an external, deterministic check
-   is.
-
-2. **Declare the line before a long run.** Before any multi-cycle stage, the agent
-   states model + effort + token cap with one clause of justification. Cheap model
-   for plumbing at a known seam; top model only where the answer is genuinely
-   uncertain. No silent escalation.
-
-3. **Document for the teammate who just walked in.** ADRs and docs record the
-   current decided state, not the history of how it changed. Every cold agent
-   session is that teammate; history lives in git.
-
-4. **One small change at a time, repo stays green.** Smallest diff that advances
-   the objective; commit on green, never on red; compose an existing seam before
-   inventing one. This is what the shift loop mechanizes — and the agent has no
-   authority over the merge or history: a `pre-push` git hook and a PreToolUse
-   guard make that enforceable, not aspirational.
-
----
-
-## The three layers
-
-The kit keeps Pocock's "rules vs commands vs enforcement" separation explicit,
-because conflating them is how agent workflows rot:
-
-| Layer | What it is | Authority | Lives in |
-| --- | --- | --- | --- |
-| **Enforcement** | The gate + hooks | Hard. The agent can't override it. | `.bench/gate.sh`, `.bench/hooks/`, `.claude/`, `.codex/`, `bench` |
-| **Generation-shaping** | Skills | Probabilistic. Nudges *how* the agent writes. | `.agents/skills/` |
-| **Workflow discipline** | Commands | Canonical phases you invoke by name. | `.agents/commands/` |
-
-If a skill and the gate disagree, the gate wins. That ordering is the whole point.
+Lookup material lives on demand in `.bench/BENCH-reference.md`: the file map, the
+generated skills index, harness invocation forms, CLI command list, shift adapter
+contract, and hook layers.
 
 ---
 
@@ -142,16 +109,7 @@ bench/
 │   │   ├── bench-implement-spec.md
 │   │   ├── bench-review-implementation.md
 │   │   └── bench-final-check.md
-│   └── skills/               # portable generation-shaping skills
-│       ├── bench-craft-seams/
-│       ├── bench-craft-tdd/
-│       ├── bench-craft-adr/
-│       ├── bench-craft-cli/
-│       ├── bench-craft-design-system/
-│       ├── bench-craft-skills/
-│       ├── bench-craft-grill/
-│       ├── bench-craft-line/
-│       └── bench-craft-synthesis/
+│   └── skills/               # portable generation-shaping skills; generated index in .bench/BENCH-reference.md
 ├── .bench/
 │   ├── BENCH.md              # full Bench operating guide installed into projects
 │   ├── adapters/             # reference BENCH_AGENT adapters for bench shift
@@ -330,47 +288,11 @@ that takes the prompt as `$1`; reference adapters ship in `.bench/adapters/`),
 
 ---
 
-## The workflow
+## Workflow
 
-Two motions. The **planning motion** is conversational and human-paced; the
-**shift motion** is the autonomous loop.
-
-### Planning motion (you + the agent, interactive)
-
-```
-loose idea ──/bench-shape-idea──▶ decision map ──/bench-write-spec──▶ spec (seams chosen) ──▶ ready to build
-   (skip /bench-shape-idea if there's no real fog — go straight to /bench-write-spec)
-```
-
-- `/bench-shape-idea` only when the idea needs more than one session of decisions. It uses
-  `craft-grill` to surface them and writes `decisions/<topic>.md`. If there's no fog,
-  it tells you to skip ahead.
-- `/bench-write-spec` synthesizes the conversation into `specs/<feature>.md`: user stories
-  (the breadth), the **seams chosen before any code exists** (where tests attach),
-  and the gate that defines done. This step is what keeps the later loop honest —
-  the target is set by you, not invented mid-loop.
-
-There are two ways into the shift motion: the **feature path** above
-(`/bench-shape-idea` → `/bench-write-spec`) and the **bug path** (`/bench-debug`). A bug doesn't get a spec —
-it already has one, the thing should work and doesn't. `/bench-debug` builds a tight,
-red-capable repro loop *first*; that loop becomes the gate the fix shift runs
-against, so the fix is done when the loop goes green, not when the agent says so.
-
-### Shift motion (the agent, gated and autonomous)
-
-```
-bench shift "<objective>"
-   │
-   ├─ pooled worktree, fresh branch; main checkout untouched
-   ├─ iterate: one small change ▶ run gate   (notes.md carried between iterations)
-   │     gate green ▶ commit the iteration
-   │     gate red   ▶ roll back, retry  (Stop hook blocks "done" on red)
-   └─ stop at: objective met │ iteration cap │ you pull the line (Ctrl-C)
-        ▶ you review the branch from the main checkout and own the merge
-```
-
-`/bench-implement-spec` and `/bench-final-check` are the manual equivalents when you want to drive a single
-build by hand instead of running the loop. Same gate, same rules.
+The workflow contract is canonical in `.bench/BENCH.md`. Use the quick-start path
+above as the reviewer surface, then read the guide for when to shape, spec,
+implement, review, final-check, debug, or run an autonomous shift.
 
 ---
 
@@ -447,9 +369,7 @@ building.
 | Bench piece | Pocock | Kun Chen | Your discovery |
 | --- | --- | --- | --- |
 | `/bench-shape-idea`, `/bench-write-spec`, `/bench-implement-spec`, `/bench-review-implementation`, `/bench-final-check` | decision-mapping, to-prd, implement, review | — | — |
-| `craft-seams`, `craft-tdd`, `craft-grill`, `craft-adr`, `craft-skills` | codebase-design, tdd, grilling, writing-great-skills | — | stateless-reader docs; effort declaration |
-| `craft-cli` skill | — | AXI spec | TOON-first pipeline; conformance-as-gate |
-| `craft-design-system` skill + design gate | regroup-ui (canonical components) | — | design system as visual oracle (separate design repo) |
+| Bench craft skills | codebase-design, tdd, grilling, writing-great-skills | AXI spec | generated skills index in `.bench/BENCH-reference.md`; stateless-reader docs; effort, review, delegate, gate, and design guidance |
 | `bench worktree` | — | treehouse | — |
 | `bench shift` (gated loop) | — | gnhf + no-mistakes | gate-on-green, not self-graded |
 | `/bench-setup-repo` (configure a repo) | setup-matt-pocock-skills | — | gate + profile + lines, interviewed |

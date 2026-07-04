@@ -18,6 +18,7 @@ func TestLoadValidityMetadataFixturesBite(t *testing.T) {
 		"claude-skills-unmirrored",
 		"extensionless-gate-ref",
 		"shared-rule-drift",
+		"readme-shared-rule-drift",
 	}
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {

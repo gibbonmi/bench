@@ -267,7 +267,8 @@ func checkClaudeSkillMirror(root string) []string {
 func checkSharedRuleSingleSource(root string) []string {
 	bench := readIfExists(filepath.Join(root, ".bench", "BENCH.md"))
 	agents := readIfExists(filepath.Join(root, "AGENTS.md"))
-	if bench == "" && agents == "" {
+	readme := readIfExists(filepath.Join(root, "README.md"))
+	if bench == "" && agents == "" && readme == "" {
 		return nil
 	}
 	var diags []string
@@ -287,9 +288,17 @@ func checkSharedRuleSingleSource(root string) []string {
 		if strings.Contains(agents, marker) {
 			diags = append(diags, fmt.Sprintf("shared rule duplicated in AGENTS.md (it must live only in .bench/BENCH.md): %q", marker))
 		}
+		if strings.Contains(readme, marker) {
+			diags = append(diags, fmt.Sprintf("shared rule duplicated in README.md (README must point to .bench/BENCH.md instead of restating shared rules): %q", marker))
+		}
 	}
 	if !strings.Contains(agents, "canonical in `.bench/BENCH.md`") {
 		diags = append(diags, "AGENTS.md lost its pointer to the canonical .bench/BENCH.md shared rules")
+	}
+	for _, heading := range []string{"## The four invariants", "## The three layers"} {
+		if strings.Contains(readme, heading) {
+			diags = append(diags, "README.md duplicates shared operating-guide section "+heading+"; point to .bench/BENCH.md instead")
+		}
 	}
 	return diags
 }
