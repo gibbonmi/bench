@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"io"
+	"os"
 	"strings"
 	"testing"
 )
@@ -34,6 +35,17 @@ func TestRunVersionExits0(t *testing.T) {
 func TestRunUnknownExits2(t *testing.T) {
 	if rc := run([]string{"nope"}, nil, nil); rc != 2 {
 		t.Errorf("run nope exit = %d, want 2", rc)
+	}
+}
+
+func TestRunCanaryDispatchesToCommand(t *testing.T) {
+	stderr := tempFile(t)
+	if rc := run([]string{"canary", "one", "two"}, nil, stderr); rc != 2 {
+		t.Fatalf("run canary usage exit = %d, want 2", rc)
+	}
+	got := readFile(t, stderr)
+	if !strings.Contains(got, "usage: bench canary [root]") {
+		t.Fatalf("canary did not dispatch to command usage, stderr:\n%s", got)
 	}
 }
 
@@ -73,4 +85,25 @@ func TestGuardGitRecoversToExit3(t *testing.T) {
 	if code := guardGit(nil, panicReader{}, io.Discard, io.Discard); code != 3 {
 		t.Errorf("panic mapped to exit %d, want 3", code)
 	}
+}
+
+func tempFile(t *testing.T) *os.File {
+	t.Helper()
+	f, err := os.CreateTemp(t.TempDir(), "out-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return f
+}
+
+func readFile(t *testing.T, f *os.File) string {
+	t.Helper()
+	if _, err := f.Seek(0, 0); err != nil {
+		t.Fatal(err)
+	}
+	data, err := io.ReadAll(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(data)
 }

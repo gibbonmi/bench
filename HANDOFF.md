@@ -26,8 +26,8 @@ adapter import shim, not a source of truth.
   `craft-line`, `craft-review`, `craft-delegate`, `craft-gate`
 - CLI: `bench link`, `bench init`, `bench models`, `bench structure`, `bench idea`,
   `bench roadmap`, `bench status`, `bench learnings`, `bench maps`, `bench guards`,
-  `bench diff`, `bench coverage`, `bench doctor`, `bench gate`, `bench worktree`,
-  `bench shift`, `bench version`; plumbing the hooks and shell adapters call:
+  `bench diff`, `bench coverage`, `bench doctor`, `bench gate`, `bench canary`,
+  `bench worktree`, `bench shift`, `bench version`; plumbing the hooks and shell adapters call:
   `bench tree-hash`, `bench gate-run`, `bench worktree-pool`,
   `bench worktree-lease-file`, `bench guard-git`, `bench check-agent-line`,
   `bench resolve-model`, `bench stop-verdict`

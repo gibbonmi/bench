@@ -104,6 +104,8 @@ Codex phase adapters installed by Bench:
 - `bench doctor [--fix]` reports (and repairs) the plain-shell PATH shim a global
   install needs under a node version manager.
 - `bench gate` runs the oracle.
+- `bench canary [root]` runs the oracle against known-broken fixtures and verifies
+  each one reds with its targeted diagnostic.
 - `bench worktree` opens a reusable isolated worktree.
 - `bench shift "<objective>"` runs the gated loop.
 - `bench version` prints the installed benchkit version and platform (via the Go core).

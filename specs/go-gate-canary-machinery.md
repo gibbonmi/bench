@@ -1,6 +1,6 @@
 # go-gate-canary-machinery
 
-Status: staged
+Status: implemented
 
 ## Problem
 

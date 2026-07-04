@@ -75,11 +75,10 @@ func Init(args []string, stdout, stderr io.Writer) int {
 func scaffoldGate() string {
 	return `#!/usr/bin/env bash
 # The external oracle for this repo - correctness only. Exit 0 = done is allowed.
-# No ` + "`set -e`" + `: the canary runner reads $? after a subshell that is meant to fail.
+# No ` + "`set -e`" + `: the canary command is allowed to fail while the gate keeps collecting errors.
 set -uo pipefail
 root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "gate: not in a git repo" >&2; exit 3; }
 cd "$root"
-gate_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fail=0
 err() { echo "gate: $*" >&2; fail=1; }
 
@@ -95,7 +94,7 @@ err "configure .bench/gate.sh - replace this sentinel with real checks"  # BENCH
 # check, err on failure, and add a canary that proves it bites. This one fails if a
 # forbidden marker file is present; the seed fixture plants that file so the canary can
 # prove the check still bites. Replace it with your real checks - and keep a canary for
-# each, because the runner turns the gate red if tests/canary/ ever goes empty.
+# each, because the canary subcommand turns the gate red if tests/canary/ ever goes empty.
 [ -e DO-NOT-SHIP ] && err "example check: DO-NOT-SHIP marker file present"
 
 # Structural debt is NOT checked here. ` + "`bench shift`" + ` runs ` + "`bench structure`" + ` after the
@@ -104,14 +103,8 @@ err "configure .bench/gate.sh - replace this sentinel with real checks"  # BENCH
 #   bench structure || err "structure over budget"
 
 # Canary - prove the checks above still bite, and that the harness itself is present.
-# Guard the source: a missing runner cannot fire its own absent-check, so deleting it
-# would otherwise pass silently green - deleting the runner is as red as deleting the
-# fixtures. Keep .bench/lib/canary-run.sh installed (bench link and bench init both do).
-if [ -f "$gate_dir/lib/canary-run.sh" ]; then
-  # shellcheck source=/dev/null
-  . "$gate_dir/lib/canary-run.sh"
-else
-  err "canary runner missing (.bench/lib/canary-run.sh) - run 'bench link' or 'bench init' to reinstall it"
+if [ "${BENCH_CANARY_INNER:-0}" != "1" ]; then
+  bench canary "$root" || err "canary sweep failed"
 fi
 
 if [ "$fail" -eq 0 ]; then echo "gate: green"; else echo "gate: red" >&2; fi

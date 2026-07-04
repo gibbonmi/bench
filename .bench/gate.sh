@@ -215,16 +215,11 @@ if command -v shellcheck >/dev/null 2>&1; then
 fi
 
 # 7. Canary — prove the gate's own checks still bite, and that the harness itself is
-#    present. The runner lives in a shipped lib so benchkit's gate and every
-#    consumer's scaffolded gate share one source (see .bench/lib/canary-run.sh).
-#    Guard the source: a missing runner cannot fire its own absent-check, so deleting
-#    it would otherwise pass silently green — the same lazy escape as deleting the
-#    fixtures, and equally red here.
-if [ -f "$gate_dir/lib/canary-run.sh" ]; then
-  # shellcheck source=.bench/lib/canary-run.sh
-  . "$gate_dir/lib/canary-run.sh"
-else
-  err "canary runner missing ($gate_dir/lib/canary-run.sh) — the gate cannot prove its checks bite"
+#    present. Outer mode runs the Go canary runner; inner mode skips only the sweep so
+#    fixture gates still exercise the remaining shell conformance and behavior
+#    fragments without recursing.
+if [ "${BENCH_CANARY_INNER:-0}" != "1" ]; then
+  bash "$root/bin/bench.sh" canary "$root" || err "canary sweep failed"
 fi
 
 if [ "$fail" -eq 0 ]; then echo "gate: green"; else echo "gate: red" >&2; fi

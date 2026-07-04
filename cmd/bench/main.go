@@ -14,6 +14,7 @@ import (
 	"runtime"
 
 	"github.com/gibbonmi/bench/internal/adopt"
+	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/gate"
@@ -227,6 +228,8 @@ func run(args []string, stdout, stderr *os.File) int {
 		return shift.Command(args[1:], os.Stdin, stdout, stderr)
 	case "gate-run":
 		return gate.RunCommand(args[1:], stdout, stderr)
+	case "canary":
+		return canary.Run(args[1:], stdout, stderr)
 	case "guard-git":
 		return guardGit(args[1:], os.Stdin, stdout, stderr)
 	case "check-agent-line":

@@ -6,17 +6,23 @@ tmp="$(mktemp -d)"
 ( cd "$tmp" && git init -q && bash "$root/bin/bench.sh" init >/dev/null 2>&1 )
 [ -f "$tmp/.bench/learnings.md" ] || err "bench init does not scaffold .bench/learnings.md (self-learning journal)"
 
-# bench init scaffolds a working, self-defending gate — the tripwire (shared canary
-# runner + seed fixture + a red-until-configured sentinel) that gives a fresh consumer
+# bench init scaffolds a working, self-defending gate — the tripwire (direct canary
+# subcommand + seed fixture + a red-until-configured sentinel) that gives a fresh consumer
 # repo an automated defense against a self-weakened gate. These run only in the outer
-# gate: they exercise scaffolded gates (each spawns its own inner canary run), too
+# gate: they exercise scaffolded gates (each invokes the canary machinery), too
 # heavy to repeat during benchkit's own inner fixture runs, and they are behavioral
 # contracts, not canary-attributed checks.
 if [ "${BENCH_CANARY_INNER:-0}" != "1" ]; then
-  # Story 5 — the live harness ships: shared runner + seed fixture.
-  [ -f "$tmp/.bench/lib/canary-run.sh" ]    || err "bench init does not install the canary runner (.bench/lib/canary-run.sh)"
+  # Story 5 — the live harness ships: compatibility shim + seed fixture.
+  [ -f "$tmp/.bench/lib/canary-run.sh" ]    || err "bench init does not install the canary compatibility shim (.bench/lib/canary-run.sh)"
   [ -f "$tmp/tests/canary/example/EXPECT" ] || err "bench init does not scaffold the seed canary fixture (tests/canary/example/EXPECT)"
   [ -d "$tmp/tests/canary/example/files" ]  || err "bench init does not scaffold the seed canary fixture files/ tree"
+  grep -qF 'bench canary "$root"' "$tmp/.bench/gate.sh" \
+    || err "bench init scaffold does not call bench canary directly"
+  grep -qF 'BENCH_CANARY_INNER' "$tmp/.bench/gate.sh" \
+    || err "bench init scaffold does not guard bench canary during inner runs"
+  ! grep -qF 'canary-run.sh' "$tmp/.bench/gate.sh" \
+    || err "bench init scaffold still sources .bench/lib/canary-run.sh"
 
   # Story 4 — a fresh scaffolded gate is red until configured (the sentinel).
   ( cd "$tmp" && bash .bench/gate.sh ) >"$tmp/g.sentinel" 2>&1; rc=$?
@@ -30,14 +36,33 @@ if [ "${BENCH_CANARY_INNER:-0}" != "1" ]; then
       && bash .bench/gate.sh ) >"$tmp/g.green" 2>&1; rc=$?
   [ "$rc" -eq 0 ] || err "scaffolded harness not green after sentinel removed (seed canary vacuous or not biting)"
 
-  # Story 2 (runner) — deleting the runner lib itself is the same lazy escape as deleting
-  # the fixtures, and must be as red: the runner cannot fire its own absent-check when it
-  # is the deleted file, so the scaffolded gate guards the source. Restore it afterward so
-  # the fixture-absent rows below still have a runner to reach.
+  cp "$tmp/.bench/gate.sh" "$tmp/gate.configured-direct"
+
+  # Story 2 (compatibility) — already-linked gates that still source the lib keep
+  # their source guard. The shim cannot fire its own absent-check after deletion, so
+  # an existing-style gate must still make that lazy escape red.
+  cat > "$tmp/.bench/gate.sh" <<'EOF'
+#!/usr/bin/env bash
+set -uo pipefail
+root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "gate: not in a git repo" >&2; exit 3; }
+cd "$root"
+gate_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fail=0
+err() { echo "gate: $*" >&2; fail=1; }
+if [ -f "$gate_dir/lib/canary-run.sh" ]; then
+  # shellcheck source=/dev/null
+  . "$gate_dir/lib/canary-run.sh"
+else
+  err "canary runner missing (.bench/lib/canary-run.sh) - run 'bench link' or 'bench init' to reinstall it"
+fi
+exit "$fail"
+EOF
+  chmod +x "$tmp/.bench/gate.sh"
   ( cd "$tmp" && rm -f .bench/lib/canary-run.sh && bash .bench/gate.sh ) >"$tmp/g.norunner" 2>&1; rc=$?
   { [ "$rc" -ne 0 ] && grep -qF 'canary runner missing' "$tmp/g.norunner"; } \
     || err "deleting .bench/lib/canary-run.sh did not turn the gate red"
   cp "$root/.bench/lib/canary-run.sh" "$tmp/.bench/lib/canary-run.sh"
+  cp "$tmp/gate.configured-direct" "$tmp/.bench/gate.sh"
 
   # Story 2 — deleting tests/canary/ turns the configured gate red: the lazy escape is loud.
   ( cd "$tmp" && rm -rf tests/canary && bash .bench/gate.sh ) >"$tmp/g.absent" 2>&1; rc=$?

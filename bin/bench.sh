@@ -11,6 +11,7 @@
 #   bench roadmap              list parked ideas
 #   bench status               print the ambient dashboard
 #   bench gate                 run the project gate; exit code is the verdict
+#   bench canary [root]        run the gate against known-broken fixtures
 #   bench worktree             drop into a warm, isolated worktree subshell
 #   bench shift "<objective>"  run the gated loop in a pooled worktree
 #
@@ -161,6 +162,7 @@ case "${1:-help}" in
   idea)     route_binary "$@" ;;
   roadmap)  route_binary "$@" ;;
   status)   route_binary "$@" ;;
+  canary)   route_binary "$@" ;;
   learnings) route_binary "$@" ;;
   maps)     route_binary "$@" ;;
   guards)   route_binary "$@" ;;
@@ -183,6 +185,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench idea "<text>"        park an out-of-scope idea in ROADMAP.md (commit to nothing)
   bench roadmap              list parked ideas
   bench status               ambient dashboard: what needs attention + the next action
+  bench canary [root]        run the gate against known-broken fixtures
   bench learnings            open journal entries as a TOON table (date, title)
   bench maps                 unresolved decision-map tickets as TOON (map, ticket, type, state)
   bench guards               every guard's deny surface as TOON (guard, boundary, denies)

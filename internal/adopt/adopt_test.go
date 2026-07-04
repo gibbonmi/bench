@@ -199,3 +199,23 @@ func TestDoctorDirSelectionAndShimRoundTrip(t *testing.T) {
 		t.Fatalf("fallback = %q create=%v, want ~/.local/bin create", fallback, create)
 	}
 }
+
+func TestScaffoldGateUsesCanarySubcommand(t *testing.T) {
+	gate := scaffoldGate()
+	mustContain := []string{
+		"BENCH_SENTINEL",
+		"[ -e DO-NOT-SHIP ] && err \"example check: DO-NOT-SHIP marker file present\"",
+		"bench canary \"$root\" || err \"canary sweep failed\"",
+		"BENCH_CANARY_INNER",
+	}
+	for _, want := range mustContain {
+		if !strings.Contains(gate, want) {
+			t.Fatalf("scaffold gate missing %q:\n%s", want, gate)
+		}
+	}
+	for _, forbidden := range []string{". \"$gate_dir/lib/canary-run.sh\"", "canary runner missing"} {
+		if strings.Contains(gate, forbidden) {
+			t.Fatalf("scaffold gate still contains retired sourcing API %q:\n%s", forbidden, gate)
+		}
+	}
+}

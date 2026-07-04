@@ -233,3 +233,17 @@ Proposed rule change: in /bench-write-spec's edge inventory, add a check — "fo
   note that per-story tiers presume separable slices; when the spec itself says
   the stories land as one atomic diff, the build may run inline at the highest
   tier any story needs, flagging each collapsed line in the exit report.
+
+## 2026-07-04 — seam-level test batching violated the implement-spec TDD row cadence  [open]
+
+- **What happened:** During `go-gate-canary-machinery`, I wrote several
+  `internal/canary` tests for one seam before implementing the first one. The
+  tests mapped to acceptance rows, but the phase and `craft-tdd` require each
+  row to name and run its red signal before that slice is implemented.
+- **Right behavior:** Even when several rows share one seam, work them
+  one-at-a-time: add one row's red signal, confirm the intended red, implement
+  the smallest green, then move to the next row. If a row is already covered,
+  classify it instead of adding another test.
+- **Proposed rule change:** Add a short warning to `/bench-implement-spec` or
+  `craft-tdd`: "same seam" is not permission to batch acceptance-row tests; the
+  row is the unit of the red-green loop.
