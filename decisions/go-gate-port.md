@@ -6,8 +6,9 @@ last slice — after it the strangler window closes. Bootstrap evidence: the gat
 + `.bench/lib/canary-run.sh` (63 lines, **shipped** — `bench init`/`link` install
 it and consumer-scaffolded gates source it) + ~60 fixtures in `tests/canary/`. The
 check population splits two ways: **behavior contracts** (runtime, shift, link,
-doctor, axi×3, go routing, package — self-provision temp repos, exec the CLI, and
-guard themselves out of canary fixtures) and **root-grading conformance checks**
+doctor, axi×3, go routing, package — self-provision temp repos and exec the CLI;
+fifteen fixtures bite only through these fragments: seven doctor/postinstall, two
+runtime, two axi, one guards, two wave-2, one link) and **root-grading conformance checks**
 (the inline gate.sh checks plus the docs/line/coverage/anchor fragments — greps
 over the repo at `$root`; these are what the fixtures target). Parent constraints
 carried: `.bench/gate.sh` stays the stable entry and exit-code contract; the
@@ -89,8 +90,10 @@ diff of the migration in one review).
    repo) and its `gate: green`/`gate: red` lines carry. Fixture format carries
    unchanged: `files/` tree, `EXPECT` substring file, `dot-` prefix restore,
    absent-or-empty harness is red, vacuous-EXPECT baseline. `BENCH_CANARY_INNER`
-   carries: the sweep never recurses, and the inner gate runs only the
-   root-grading subset. New: `bench canary` exits non-zero when any fixture fails
+   carries: the sweep never recurses; the inner gate keeps running the
+   not-yet-ported behavior fragments (fifteen fixtures bite through them) and
+   sheds each one as spec (c) flips its family with fixture bite preserved. New:
+   `bench canary` exits non-zero when any fixture fails
    to bite, attributing per fixture by name; conformance tests accept a graded
    root via env; the gate runs `go test -count=1`.
 3. **Deep vs thin.** The binary + the kit's test code are the deep units (sweep
@@ -104,8 +107,11 @@ diff of the migration in one review).
    asserts standalone: a repo with a biting fixture set exits 0, a rotted or
    absent one exits non-zero naming the fixture.
 5. **Gate attachment.** For specs (a) and (b) the not-yet-ported shell gate
-   remains the oracle while its twins port. Gate-blind: spec (c)'s behavior
-   contracts have no canary fixtures — the flip is same-diff and review-graded
+   remains the oracle while its twins port. Spec (c) splits: fifteen fixtures
+   bite through behavior fragments (doctor/postinstall, runtime status/roadmap,
+   axi, guards, wave-2, link scaffold), so those families flip with fixture bite
+   preserved — root-parameterized Go tests run by the inner gate. Every other
+   behavior row is gate-blind: the flip is same-diff and review-graded
    (assertion-for-assertion parity against the deleted fragment), flagged for
    the review phase rather than the gate.
 6. **Hostile-input owners.** Paths with spaces → the test helper carries
