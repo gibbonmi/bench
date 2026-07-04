@@ -122,6 +122,30 @@ if [ -f "$root/bin/bench.sh" ] && [ -x "$root/dist/bench" ]; then
     if printf '%s' "$out" | grep -qF '@benchkit/'; then echo "unsupported platform named a package"; exit 1; fi
   ) || err "version-routing seam contract failed"
   rm -rf "$vt"
+
+  # Linked-worktree resolution: dist/ and node_modules/ are untracked, so a git
+  # worktree (the .claude/worktrees delegate case) carries the tracked wrapper but
+  # no binary. The resolver re-anchors the kit dir under the main tree and retries
+  # there; a worktree-local dev build still takes precedence. Without this, every
+  # hook in a harness worktree hit the 127 rim and delegates lost read-only git.
+  wt="$(mktemp -d)"
+  (
+    set -u
+    gci() { git -c user.email=bench@local -c user.name=bench "$@"; }
+    stub() { mkdir -p "$(dirname "$1")"; printf '#!/bin/sh\necho %s\n' "$2" > "$1"; chmod +x "$1"; }
+    main="$wt/main"; mkdir -p "$main"; cd "$main"
+    git init -q
+    cp -r "$root/bin" bin
+    gci add -A; gci commit -q -m init
+    stub "$main/dist/bench" mainbuild
+    gci worktree add -q --detach "$wt/linked" HEAD
+    [ "$(bash "$wt/linked/bin/bench.sh" version)" = mainbuild ] \
+      || { echo "worktree wrapper did not resolve the main tree's binary"; exit 1; }
+    stub "$wt/linked/dist/bench" localbuild
+    [ "$(bash "$wt/linked/bin/bench.sh" version)" = localbuild ] \
+      || { echo "worktree-local build not preferred over the main tree's"; exit 1; }
+  ) || err "linked-worktree binary-resolution contract failed"
+  rm -rf "$wt"
 fi
 
 # ---- packaging generator seam: dry-run into a temp dir ----------------------

@@ -308,21 +308,45 @@ platform_pkg() {
   printf '@benchkit/%s-%s' "$os" "$arch"
 }
 
+# main_tree_kit <kit> — when <kit> sits inside a linked git worktree, echo the same
+# kit path re-anchored under the main worktree's root; echo nothing when <kit> is the
+# main tree itself, outside any repo, or the mapping is degenerate. Linked worktrees
+# carry the tracked tree but not untracked artifacts (dist/, node_modules/), so the
+# binary that serves a worktree lives in the main tree. Always returns 0: a failed
+# resolution degrades to "no extra candidates", never to a caller-visible error.
+main_tree_kit() {
+  local kit="$1" common wt_root main
+  common="$(git -C "$kit" rev-parse --git-common-dir 2>/dev/null)" || return 0
+  [[ -n "$common" ]] || return 0
+  [[ "$common" == /* ]] || common="$kit/$common"
+  wt_root="$(git -C "$kit" rev-parse --show-toplevel 2>/dev/null)" || return 0
+  [[ -n "$wt_root" ]] || return 0
+  main="$(dirname "$common")${kit#"$wt_root"}"
+  [[ "$main" != "$kit" ]] && printf '%s\n' "$main"
+  return 0
+}
+
 # bench_binary_path — echo the resolved Go binary path, or fail with a distinct exit
 # code the caller maps to a message. Resolution order: (1) repo-local dev build (kit
 # checkout), (2) the platform package bundled under the wrapper's node_modules, (3) the
-# hoisted sibling npm produces for global installs. First executable, non-empty match
-# wins; a present-but-empty or non-executable file is treated as missing (never named),
-# so a torn build falls through rather than resolving to a non-runnable path. Exit 2 =
-# off-matrix platform (no package to name); 127 = no binary present for this platform.
-# One source of both the platform→package mapping and the resolution order, shared by
-# route_binary (which execs the path) and the status adapters (which capture its output).
+# hoisted sibling npm produces for global installs — tried first against the kit dir
+# itself, then re-anchored at the main tree when the kit dir is a linked git worktree
+# (worktrees carry the tracked wrapper but not the untracked binary). First executable,
+# non-empty match wins; a present-but-empty or non-executable file is treated as missing
+# (never named), so a torn build falls through rather than resolving to a non-runnable
+# path. Exit 2 = off-matrix platform (no package to name); 127 = no binary present for
+# this platform. One source of both the platform→package mapping and the resolution
+# order, shared by route_binary (which execs the path) and the status adapters (which
+# capture its output).
 bench_binary_path() {
-  local kit="${1:-$(kit_dir)}" pkg c
+  local kit="${1:-$(kit_dir)}" pkg c k main
   platform_pkg >/dev/null || return 2
   pkg="$(platform_pkg)"
-  for c in "$kit/dist/bench" "$kit/node_modules/$pkg/bin/bench" "$kit/../$pkg/bin/bench"; do
-    [[ -x "$c" && -s "$c" ]] && { printf '%s\n' "$c"; return 0; }
+  main="$(main_tree_kit "$kit")"
+  for k in "$kit" ${main:+"$main"}; do
+    for c in "$k/dist/bench" "$k/node_modules/$pkg/bin/bench" "$k/../$pkg/bin/bench"; do
+      [[ -x "$c" && -s "$c" ]] && { printf '%s\n' "$c"; return 0; }
+    done
   done
   return 127
 }

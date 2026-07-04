@@ -120,6 +120,27 @@ if [ -f "$root/.bench/hooks/block-dangerous-git.sh" ]; then
     [ "$rc" = "0" ] || { echo "core-unreachable --describe did not exit 0 (exit $rc)"; exit 1; }
     grep -qF 'manifest unavailable (analyzer missing)' <<<"$out" || { echo "core-unreachable denies line absent: $out"; exit 1; }
 BODY
+
+  # From inside a linked worktree (the harness-delegate case: tracked tree present,
+  # untracked dist/ absent) the guard must still classify through the main tree's
+  # binary — read-only git allowed, destructive git blocked. Regression for the
+  # fail-closed defect where the 127 rim refused everything git-shaped and
+  # delegates lost even `git status`.
+  contract "AXI block-dangerous-git linked-worktree classification contract" <<'BODY'
+    gci() { git -c user.email=bench@local -c user.name=bench "$@"; }
+    cp -r "$root/bin" bin
+    gci add -A; gci commit -q -m init
+    # placed after the commit so it stays untracked — the worktree must not carry it
+    mkdir -p dist && cp "$root/dist/bench" dist/bench && chmod +x dist/bench
+    gci worktree add -q --detach "$tmp/linked" HEAD
+    cd "$tmp/linked"
+    rc=0; printf '{"tool_input":{"command":"git status"}}' \
+      | PATH=/usr/bin:/bin bash "$root/.bench/hooks/block-dangerous-git.sh" >/dev/null 2>&1 || rc=$?
+    [ "$rc" = "0" ] || { echo "read-only git blocked from a linked worktree (exit $rc)"; exit 1; }
+    rc=0; printf '{"tool_input":{"command":"git reset --hard"}}' \
+      | PATH=/usr/bin:/bin bash "$root/.bench/hooks/block-dangerous-git.sh" >/dev/null 2>&1 || rc=$?
+    [ "$rc" = "2" ] || { echo "destructive git not blocked from a linked worktree (exit $rc)"; exit 1; }
+BODY
 fi
 
 # In a linked repo session-start runs `bench guards --brief` after the dashboard

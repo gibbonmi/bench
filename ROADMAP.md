@@ -20,4 +20,3 @@
 - 2026-07-04  bench commit <files...> — explicit-stage commit wrapper reusing shift's commit-on-green logic; could fold in the spec status flip
 - 2026-07-04  bench refs <stem> — reference sweep across /name, $name, basename, dir/name forms for renames/refactors
 - 2026-07-04  symbol index (bench symbols) — parked as likely not worth it: portability cost vs rg; revisit only if agents demonstrably burn turns on symbol search
-- 2026-07-04  block-dangerous-git fails closed on ALL git commands inside harness worktrees (.claude/worktrees/*) because bench_binary_path finds no dist/bench there — delegates can't run even read-only git; guard should resolve the binary from the main tree or degrade to allow-read-only
