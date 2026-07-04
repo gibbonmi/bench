@@ -376,6 +376,9 @@ case "${1:-help}" in
   coverage) route_binary "$@" ;;
   tree-hash) route_binary "$@" ;;
   guard-git) route_binary "$@" ;;
+  resolve-model) route_binary "$@" ;;
+  check-agent-line) route_binary "$@" ;;
+  stop-verdict) route_binary "$@" ;;
   worktree-pool) route_binary "$@" ;;
   worktree-lease-file) route_binary "$@" ;;
   *) cat <<EOF

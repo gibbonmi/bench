@@ -18,14 +18,16 @@
 
 [ -f "$root/bin/bench.sh" ] || { err "bench CLI missing (AXI guards contracts skipped)"; return 0 2>/dev/null || exit 0; }
 
-# A linked fixture carries all five deny-capable guards; `bench guards` emits one
+# A linked fixture carries all four deny-capable guards; `bench guards` emits one
 # TOON row each, excludes the informational session-start hook, reports a stub that
-# ignores --describe as `no manifest`, and an absent pre-push as `not installed`.
+# ignores --describe as `no manifest`, and an absent pre-push as `not installed`. The
+# shift-adapter line enforcement moved into `bench resolve-model` (internal/lines) and
+# has no `.sh` manifest, so it is no longer a guards row (count-5 -> count-4).
 contract "AXI guards aggregation contract" <<'BODY'
   bash "$root/bin/bench.sh" link >/dev/null 2>&1 || { echo "link failed setting up guards fixture"; exit 1; }
   out="$(bash "$root/bin/bench.sh" guards)"
-  head -1 <<<"$out" | grep -qxF 'guards[5]{guard,boundary,denies}:' || { echo "guards header not count-5 TOON: $(head -1 <<<"$out")"; exit 1; }
-  for g in block-dangerous-git check-agent-line stop _line-guard pre-push; do
+  head -1 <<<"$out" | grep -qxF 'guards[4]{guard,boundary,denies}:' || { echo "guards header not count-4 TOON: $(head -1 <<<"$out")"; exit 1; }
+  for g in block-dangerous-git check-agent-line stop pre-push; do
     grep -qE "^  $g," <<<"$out" || { echo "guards missing deny-capable row: $g"; exit 1; }
   done
   if grep -qE '^  session-start,' <<<"$out"; then echo "informational session-start leaked into guard rows"; exit 1; fi
@@ -56,7 +58,7 @@ contract "AXI guards --brief contract" <<'BODY'
   bash "$root/bin/bench.sh" link >/dev/null 2>&1
   out="$(bash "$root/bin/bench.sh" guards --brief)"
   [ "$(grep -cF 'full manifests: bench guards' <<<"$out")" = "1" ] || { echo "brief footer not exactly one line"; exit 1; }
-  [ "$(grep -c . <<<"$out")" = "6" ] || { echo "brief not five guard lines plus one footer (got $(grep -c . <<<"$out"))"; exit 1; }
+  [ "$(grep -c . <<<"$out")" = "5" ] || { echo "brief not four guard lines plus one footer (got $(grep -c . <<<"$out"))"; exit 1; }
   grep -qF 'block-dangerous-git: destructive git' <<<"$out" || { echo "brief lost the git guard deny clause"; exit 1; }
 BODY
 

@@ -2,56 +2,43 @@
 # hook, and the adapter guards that enforce invariant #2's declared line. Checks
 # are guarded on the presence of the surface they test, keeping canary fixtures
 # attributable; messages are distinct per failure mode for the same reason.
+#
+# The tier-binding parse now lives in the Go core (internal/lines), reached through
+# `bench check-agent-line`/`bench resolve-model`; the shell parser (lib/lines-env.sh)
+# and its hostile-input pin (`a0`) retired into internal/lines table tests. The gate
+# keeps its own shape judgment (the regexes below); it reads the three tier values
+# through the binary's `--describe-binding` (the enforcement's own view, so a Go
+# parser drift surfaces here) and reads the optional aliases directly from the
+# known-good lines.env.
 
-# Values are read through the shared parser the enforcement surfaces source —
-# one source per fact for what a lines.env value IS. The gate keeps its own
-# shape judgment (the regexes below); only the read is shared. gate_dir points
-# at the kit's own .bench even on canary inner runs.
-# shellcheck source=lib/lines-env.sh
-. "$gate_dir/lib/lines-env.sh"
-
-# a0) The shared parser's behavior, pinned directly. Enforcement and the gate all
-#     read through bench_tier_value, so its semantics (quote strip, CRLF, trim,
-#     indented key, last-assignment-wins, missing trailing newline, empty vs
-#     absent) get their own hostile-input contract — the independent check on the
-#     one parse is a behavior pin, not a second parser.
-_pf="$(mktemp)"
-{
-  printf 'BENCH_TIER_TOP="claude-quoted-1"\n'
-  printf "BENCH_TIER_MID='claude-squoted-2'\n"
-  printf 'BENCH_TIER_CHEAP=claude-crlf-3\r\n'
-  printf 'BENCH_ALIAS_TOP=claude-trail-4   \n'
-  printf '   BENCH_ALIAS_MID=claude-indent-5\n'
-  printf 'BENCH_ALIAS_CHEAP=claude-first-6\nBENCH_ALIAS_CHEAP=claude-last-7\n'
-  printf 'BENCH_EMPTY=\n'
-  printf 'BENCH_NONEWLINE=claude-nonl-8'
-} >"$_pf"
-while IFS='|' read -r _k _want; do
-  _got="$(bench_tier_value "$_k" "$_pf")"
-  [ "$_got" = "$_want" ] || err "shared tier parser: $_k read as '$_got', want '$_want'"
-done <<'PARSER_CASES'
-BENCH_TIER_TOP|claude-quoted-1
-BENCH_TIER_MID|claude-squoted-2
-BENCH_TIER_CHEAP|claude-crlf-3
-BENCH_ALIAS_TOP|claude-trail-4
-BENCH_ALIAS_MID|claude-indent-5
-BENCH_ALIAS_CHEAP|claude-last-7
-BENCH_NONEWLINE|claude-nonl-8
-BENCH_EMPTY|
-BENCH_ABSENT|
-PARSER_CASES
-rm -f "$_pf"
+# The tier binding is read through the REAL kit's freshly-built core (the Go layer
+# rebuilds dist/bench before these fragments run), not $root's — so a canary fixture
+# that plants a binding/hook regression without shipping a CLI is still graded through
+# the enforcement's own view. The binary reads the CWD repo's lines.env, which is the
+# fixture under grade during the canary sweep and benchkit itself in the normal run.
+_realbench="$(cd "$gate_dir/.." 2>/dev/null && pwd)/bin/bench.sh"
 
 # a) The binding. benchkit is a routed repo: .bench/lines.env must exist, and a
 #    file that exists must carry three model-id-shaped tier values — a binding
-#    that drifts to empty silently disarms both enforcement surfaces.
+#    that drifts to empty silently disarms both enforcement surfaces. The tier
+#    values are read through `bench check-agent-line --describe-binding`; the shape
+#    checks and prose-sync stay the gate's own judgment.
 if [ ! -f .bench/lines.env ]; then
   err "lines.env missing: .bench/lines.env is the tier binding enforcement reads"
+elif [ ! -f "$_realbench" ]; then
+  : # no core to read the binding through (minimal fixture) — skip shape checks
 else
-  for _lv in BENCH_TIER_TOP BENCH_TIER_MID BENCH_TIER_CHEAP; do
-    _val="$(bench_tier_value "$_lv" .bench/lines.env)"
-    if [ -z "$_val" ]; then
-      err "lines.env tier unset: $_lv has no value in .bench/lines.env"
+  _db="$(bash "$_realbench" check-agent-line --describe-binding 2>/dev/null)"
+  # describe-binding (routed) is: "Agent delegation off the bound line (top=X mid=Y cheap=Z)"
+  # with `-` for an empty tier; extract each value from the enforcement's own view.
+  _lv_db() { printf '%s' "$_db" | sed -n "s/.*$1=\\([^ )]*\\).*/\\1/p"; }
+  # Aliases are optional and not part of the denies clause; read them straight from
+  # the known-good binding file (a bare `grep|sed`, not the retired hostile-input parser).
+  _lv_file() { grep -E "^[[:space:]]*$1=" .bench/lines.env 2>/dev/null | tail -n1 | sed 's/^[[:space:]]*[^=]*=//'; }
+  for _lv in top mid cheap; do
+    _val="$(_lv_db "$_lv")"
+    if [ -z "$_val" ] || [ "$_val" = "-" ]; then
+      err "lines.env tier unset: BENCH_TIER_$(printf '%s' "$_lv" | tr '[:lower:]' '[:upper:]') has no value in .bench/lines.env"
     elif ! printf '%s' "$_val" | grep -qE '^claude-[a-z0-9][a-z0-9.-]*$'; then
       err "lines.env tier malformed: $_lv='$_val' is not a model id"
     fi
@@ -61,7 +48,7 @@ else
   # delegation (the hook would compare against 'opus  # mid' and deny 'opus').
   for _la in BENCH_ALIAS_TOP BENCH_ALIAS_MID BENCH_ALIAS_CHEAP; do
     grep -qE "^[[:space:]]*${_la}=" .bench/lines.env || continue
-    _val="$(bench_tier_value "$_la" .bench/lines.env)"
+    _val="$(_lv_file "$_la")"
     printf '%s' "$_val" | grep -qE '^[a-z0-9-]+$' \
       || err "lines.env alias malformed: $_la='$_val' is not a bare alias"
   done
@@ -70,15 +57,15 @@ else
   # makes a session declare the line from one binding while the hooks enforce
   # another. Guarded on the profile existing so minimal fixtures skip it.
   if [ -f projects/benchkit.md ]; then
-    for _lv in BENCH_TIER_TOP BENCH_TIER_MID BENCH_TIER_CHEAP; do
-      _val="$(bench_tier_value "$_lv" .bench/lines.env)"
-      [ -n "$_val" ] || continue   # unset/malformed already reported above
+    for _lv in top mid cheap; do
+      _val="$(_lv_db "$_lv")"
+      { [ -z "$_val" ] || [ "$_val" = "-" ]; } && continue   # unset/malformed already reported above
       grep -qF "$_val" projects/benchkit.md \
-        || err "profile Lines prose stale: projects/benchkit.md does not name bound model id '$_val' ($_lv in lines.env)"
+        || err "profile Lines prose stale: projects/benchkit.md does not name bound model id '$_val' (BENCH_TIER_$(printf '%s' "$_lv" | tr '[:lower:]' '[:upper:]') in lines.env)"
     done
     for _la in BENCH_ALIAS_TOP BENCH_ALIAS_MID BENCH_ALIAS_CHEAP; do
       grep -qE "^[[:space:]]*${_la}=" .bench/lines.env || continue
-      _val="$(bench_tier_value "$_la" .bench/lines.env)"
+      _val="$(_lv_file "$_la")"
       [ -n "$_val" ] || continue
       grep -qF "${_la}=${_val}" projects/benchkit.md \
         || err "profile Lines prose stale: projects/benchkit.md does not carry alias declaration ${_la}=${_val}"
@@ -98,59 +85,69 @@ if (!entry || !(entry.hooks || []).some(h => (h.command || "").includes("check-a
 ' || err "claude settings.json PreToolUse Agent matcher missing or does not run .bench/hooks/check-agent-line.sh"
 fi
 
-# c) Hook behavior, exercised with fixture stdin against a controlled temp repo
-#    so the check is deterministic regardless of this repo's own binding.
-if [ -f .bench/hooks/check-agent-line.sh ]; then
+# c) Hook behavior, exercised with fixture stdin against a controlled temp repo so
+#    the check is deterministic regardless of this repo's own binding. The shim
+#    resolves the wrapper and pipes the envelope to `bench check-agent-line`, which
+#    owns the verdict; a `bench` on PATH (pointing at the real wrapper) makes the
+#    core reachable from the fixture repos, whose git root the binary reads for the
+#    binding. Assertions are the same allow/deny/degraded ones as before the port.
+if [ -f .bench/hooks/check-agent-line.sh ] && [ -f "$_realbench" ]; then
   _hook="$root/.bench/hooks/check-agent-line.sh"
+  _bindir="$(mktemp -d)"
+  printf '#!/bin/sh\nexec %s "$@"\n' "$_realbench" >"$_bindir/bench"
+  chmod +x "$_bindir/bench"
+  _run_hook() { PATH="$_bindir:$PATH" bash "$_hook"; }   # cwd is set by each caller subshell
+
   _hd="$(mktemp -d)"
   ( cd "$_hd" && git init -q )
   mkdir -p "$_hd/.bench"
   printf 'BENCH_TIER_TOP=claude-fable-5\nBENCH_TIER_MID=claude-opus-4-8\nBENCH_TIER_CHEAP=claude-sonnet-4-6\nBENCH_ALIAS_MID=opus\n' >"$_hd/.bench/lines.env"
 
   printf '%s' '{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"claude-opus-4-8"}}' \
-    | ( cd "$_hd" && bash "$_hook" ) >/dev/null 2>&1 \
+    | ( cd "$_hd" && _run_hook ) >/dev/null 2>&1 \
     || err "check-agent-line.sh denies a bound model (allow case broken)"
 
   printf '%s' '{"tool_name":"Agent","tool_input":{"prompt":"x","model":"opus"}}' \
-    | ( cd "$_hd" && bash "$_hook" ) >/dev/null 2>&1 \
+    | ( cd "$_hd" && _run_hook ) >/dev/null 2>&1 \
     || err "check-agent-line.sh denies a declared alias (Agent tool speaks aliases)"
 
   if printf '%s' '{"tool_name":"Agent","tool_input":{"prompt":"x","model":"sonnet"}}' \
-    | ( cd "$_hd" && bash "$_hook" ) >/dev/null 2>&1; then
+    | ( cd "$_hd" && _run_hook ) >/dev/null 2>&1; then
     err "check-agent-line.sh does not deny an undeclared alias"
   fi
 
   if printf '%s' '{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"claude-nonexistent-9"}}' \
-    | ( cd "$_hd" && bash "$_hook" ) >/dev/null 2>&1; then
+    | ( cd "$_hd" && _run_hook ) >/dev/null 2>&1; then
     err "check-agent-line.sh does not deny an unbound model"
   fi
 
   printf '%s' 'not json at all' \
-    | ( cd "$_hd" && bash "$_hook" ) >/dev/null 2>&1 \
+    | ( cd "$_hd" && _run_hook ) >/dev/null 2>&1 \
     || err "check-agent-line.sh does not fail open on malformed stdin"
 
   printf '%s' '{"tool_name":"Agent","tool_input":{"prompt":"x"}}' \
-    | ( cd "$_hd" && bash "$_hook" ) >/dev/null 2>&1 \
+    | ( cd "$_hd" && _run_hook ) >/dev/null 2>&1 \
     || err "check-agent-line.sh does not fail open on a missing model field"
 
   _hd2="$(mktemp -d)"
   ( cd "$_hd2" && git init -q )
   _werr="$( printf '%s' '{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"claude-nonexistent-9"}}' \
-    | ( cd "$_hd2" && bash "$_hook" ) 2>&1 >/dev/null )" \
+    | ( cd "$_hd2" && _run_hook ) 2>&1 >/dev/null )" \
     || err "check-agent-line.sh does not fail open without lines.env"
   printf '%s' "$_werr" | grep -qF 'no .bench/lines.env' \
     || err "check-agent-line.sh does not warn on stderr when lines.env is absent"
 
-  # A hook copied without the shared parser lib (.bench/lib/lines-env.sh) must
-  # fail open like every other broken-hook case — a broken hook never bricks
-  # delegation — and say why on stderr.
+  # A hook copied without the shared wrapper resolver (.bench/lib/resolve-bench.sh)
+  # must fail open like every other broken-hook case — a broken hook never bricks
+  # delegation — and say why on stderr. (The re-pointed slice-4 failure mode: a
+  # missing lib must not let the shim error before its fail-open rim.)
   _hd3="$(mktemp -d)"
   cp "$_hook" "$_hd3/check-agent-line.sh"
   _werr="$( printf '%s' '{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"claude-nonexistent-9"}}' \
-    | ( cd "$_hd" && bash "$_hd3/check-agent-line.sh" ) 2>&1 >/dev/null )" \
-    || err "check-agent-line.sh does not fail open when the shared parser lib is missing"
-  printf '%s' "$_werr" | grep -qF 'shared tier parser missing' \
-    || err "check-agent-line.sh does not warn on stderr when the shared parser lib is missing"
+    | ( cd "$_hd" && PATH="$_bindir:$PATH" bash "$_hd3/check-agent-line.sh" ) 2>&1 >/dev/null )" \
+    || err "check-agent-line.sh does not fail open when the wrapper resolver lib is missing"
+  printf '%s' "$_werr" | grep -qF 'wrapper resolver missing' \
+    || err "check-agent-line.sh does not warn on stderr when the wrapper resolver lib is missing"
 
   # An incomplete binding (a tier key present but empty) is a partial oracle:
   # the hook must fail open with the incomplete-binding warning, never deny
@@ -160,22 +157,31 @@ if [ -f .bench/hooks/check-agent-line.sh ]; then
   mkdir -p "$_hd4/.bench"
   printf 'BENCH_TIER_TOP=claude-fable-5\nBENCH_TIER_MID=\nBENCH_TIER_CHEAP=claude-sonnet-4-6\n' >"$_hd4/.bench/lines.env"
   _werr="$( printf '%s' '{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"claude-nonexistent-9"}}' \
-    | ( cd "$_hd4" && bash "$_hook" ) 2>&1 >/dev/null )" \
+    | ( cd "$_hd4" && _run_hook ) 2>&1 >/dev/null )" \
     || err "check-agent-line.sh does not fail open on an incomplete binding"
   printf '%s' "$_werr" | grep -qF 'unset or empty' \
     || err "check-agent-line.sh does not warn on stderr about an incomplete binding"
-  rm -rf "$_hd" "$_hd2" "$_hd3" "$_hd4"
+  rm -rf "$_hd" "$_hd2" "$_hd3" "$_hd4" "$_bindir"
 fi
 
-# d) Adapter guards, exercised against a stub harness on PATH — a routed repo
-#    must refuse an undeclared or unbound BENCH_MODEL before the harness runs;
-#    an unrouted repo must stay a plain pass-through.
+# d) Adapter guards, exercised against a stub harness on PATH — a routed repo must
+#    refuse an undeclared or unbound BENCH_MODEL before the harness runs; an
+#    unrouted repo must stay a plain pass-through. The adapters exec `bench
+#    resolve-model` (the Go verdict), so a `bench` on PATH (real wrapper) makes the
+#    core reachable; the resolution reads the cwd repo's binding.
 if [ -d .bench/adapters ]; then
   _sd="$(mktemp -d)"
   for _stub in claude codex opencode; do
     printf '#!/bin/sh\nprintf '"'"'%%s\\n'"'"' "$@"\n' >"$_sd/$_stub"
     chmod +x "$_sd/$_stub"
   done
+  # A `bench` on PATH that routes to the real kit's core, so the adapter's `bench
+  # resolve-model` reaches the Go verdict. A broken fixture adapter that ignores the
+  # binding never calls it.
+  if [ -f "$_realbench" ]; then
+    printf '#!/bin/sh\nexec %s "$@"\n' "$_realbench" >"$_sd/bench"
+    chmod +x "$_sd/bench"
+  fi
   _routed="$(mktemp -d)"; ( cd "$_routed" && git init -q )
   mkdir -p "$_routed/.bench"
   printf 'BENCH_TIER_TOP=claude-fable-5\nBENCH_TIER_MID=claude-opus-4-8\nBENCH_TIER_CHEAP=claude-sonnet-4-6\n' >"$_routed/.bench/lines.env"
@@ -208,32 +214,37 @@ if [ -d .bench/adapters ]; then
       || err "adapter $_a does not pass an explicit BENCH_MODEL through in an unrouted repo"
   done
 
-  # A present guard-source that resolves to a missing file must fail closed —
-  # an unguarded passthrough in a routed repo is silent de-enforcement.
+  # An adapter copied WITHOUT the shared wrapper resolver (../lib/resolve-bench.sh)
+  # must fail closed — an unguarded passthrough in a routed repo is silent
+  # de-enforcement.
   if [ -f .bench/adapters/claude ]; then
     _tmpad="$(mktemp -d)"
     cp .bench/adapters/claude "$_tmpad/claude-adapter"
     if ( cd "$_routed" && BENCH_MODEL=claude-opus-4-8 PATH="$_sd:$PATH" bash "$_tmpad/claude-adapter" "line probe prompt" ) >/dev/null 2>&1; then
-      err "adapter claude does not fail closed when _line-guard.sh is missing"
+      err "adapter claude does not fail closed when resolve-bench.sh is missing"
     fi
     rm -rf "$_tmpad"
   fi
 
-  # Same posture one layer down: an adapter copied WITH the guard but WITHOUT the
-  # shared parser lib (.bench/lib/lines-env.sh) must also refuse to run.
-  if [ -f .bench/adapters/claude ] && [ -f .bench/adapters/_line-guard.sh ]; then
+  # An adapter WITH its resolver lib but no reachable bench core must also refuse in
+  # a routed repo — it must never launch when it cannot resolve the binding. Copied
+  # into a ../lib layout and run with a PATH holding no bench, resolve-bench.sh finds
+  # no wrapper, so the adapter fails closed.
+  if [ -f .bench/adapters/claude ] && [ -f .bench/lib/resolve-bench.sh ]; then
     _tmpad="$(mktemp -d)"
-    cp .bench/adapters/claude .bench/adapters/_line-guard.sh "$_tmpad/"
-    if ( cd "$_routed" && BENCH_MODEL=claude-opus-4-8 PATH="$_sd:$PATH" bash "$_tmpad/claude" "line probe prompt" ) >/dev/null 2>&1; then
-      err "adapter claude does not fail closed when the shared parser lib is missing"
+    mkdir -p "$_tmpad/adapters" "$_tmpad/lib"
+    cp .bench/adapters/claude "$_tmpad/adapters/claude"
+    cp .bench/lib/resolve-bench.sh "$_tmpad/lib/resolve-bench.sh"
+    if ( cd "$_routed" && BENCH_MODEL=claude-opus-4-8 PATH=/usr/bin:/bin bash "$_tmpad/adapters/claude" "line probe prompt" ) >/dev/null 2>&1; then
+      err "adapter claude does not fail closed when the bench core is unreachable"
     fi
     rm -rf "$_tmpad"
   fi
 
   # An incomplete binding (a tier key present but empty) is a partial oracle:
-  # the shared guard must warn and fall back to the unrouted passthrough — it
+  # resolve-model must warn and fall back to the unrouted passthrough — it
   # neither refuses nor enforces half a binding.
-  if [ -f .bench/adapters/claude ]; then
+  if [ -f .bench/adapters/claude ] && [ -f "$_realbench" ]; then
     _partial="$(mktemp -d)"; ( cd "$_partial" && git init -q )
     mkdir -p "$_partial/.bench"
     printf 'BENCH_TIER_TOP=claude-fable-5\nBENCH_TIER_MID=\nBENCH_TIER_CHEAP=claude-sonnet-4-6\n' >"$_partial/.bench/lines.env"

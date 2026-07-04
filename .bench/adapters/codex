@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
 # Bench harness adapter: maps the shift prompt ($1) to Codex's noninteractive mode.
-# The line guard binds the model to the declared line — in a routed repo
-# (.bench/lines.env present) BENCH_MODEL must name a bound tier or this refuses to
-# run; see _line-guard.sh and BENCH.md "Harness adapter for the shift loop". A
-# missing guard fails closed, and `--` keeps a dash-leading prompt positional.
-. "$(dirname "$0")/_line-guard.sh" || { echo "bench adapter: _line-guard.sh missing beside the adapter — refusing to run unguarded" >&2; exit 1; }
-bench_resolve_model
-if [ -n "$BENCH_RESOLVED_MODEL" ]; then
-  exec codex exec -m "$BENCH_RESOLVED_MODEL" -- "$1"
+# The line binds the model to the declared line — in a routed repo (.bench/lines.env
+# present) BENCH_MODEL must name a bound tier or `bench resolve-model` refuses (exit
+# 1) and this adapter refuses to launch; see .bench/lib/resolve-bench.sh and
+# BENCH-reference.md "Harness adapter for the shift loop". The adapter fails CLOSED
+# when the wrapper resolver or the core is unreachable — an unguarded passthrough in
+# a routed repo is silent de-enforcement. `--` keeps a dash-leading prompt positional.
+_lib="$(dirname "$0")/../lib/resolve-bench.sh"
+[ -f "$_lib" ] || { echo "bench adapter: wrapper resolver missing at $_lib — refusing to run unguarded" >&2; exit 1; }
+# shellcheck source=../lib/resolve-bench.sh
+. "$_lib"
+_cmd="$(bench_resolve_wrapper)" || { echo "bench adapter: bench core not found — refusing to run unguarded" >&2; exit 1; }
+model="$("$_cmd" resolve-model)" || exit 1
+if [ -n "$model" ]; then
+  exec codex exec -m "$model" -- "$1"
 fi
 exec codex exec -- "$1"

@@ -22,7 +22,9 @@ what lives here is reference you consult on demand.
   (`claude`, `codex`, `opencode`) — point `BENCH_AGENT` at one.
 - `.bench/hooks/` contains shared hook scripts used by harness adapters.
 - `.bench/lib/` contains shared shell functions the hooks and adapters source
-  (the `lines.env` tier parser lives here, once).
+  (`resolve-bench.sh`, the one source of the bench-wrapper search order, lives
+  here; the tier-binding parse itself lives in the Go core, `bench resolve-model`
+  / `bench check-agent-line`).
 - `.claude/` contains Claude Code adapter config. See `.claude/README.md`: Claude
   reads `.claude/skills/` and `.claude/commands/`, and those paths point at the
   portable `.agents/` files. `.claude/skills/` carries only the `bench-craft-*`
@@ -111,7 +113,15 @@ Codex phase adapters installed by Bench:
   pool directory and lease-file paths the worktree helpers resolve from the Go core;
   `bench guard-git` reads a PreToolUse envelope on stdin and yields the destructive-git
   verdict (exit 2 + `BLOCKED:` to block), and `bench guard-git --describe-classes` prints
-  the deny surface for the block-dangerous-git shim's `--describe` manifest.
+  the deny surface for the block-dangerous-git shim's `--describe` manifest;
+  `bench check-agent-line` reads an Agent PreToolUse envelope on stdin and yields the
+  delegation-line verdict (exit 2 + `DENIED:` for an unbound model), with
+  `bench check-agent-line --describe-binding` emitting the live binding for the shim's
+  `--describe`; `bench resolve-model` prints the shift adapter's bound model (empty for
+  an unrouted passthrough, exit 1 to refuse an unbound line in a routed repo); and
+  `bench stop-verdict <wrapper>` reads a Stop envelope on stdin and, for an armed shift,
+  runs the gate through `<wrapper>` and writes the verdict cache (exit 2 + `BLOCKED:` on
+  red).
 
 ## Harness adapter for the shift loop
 

@@ -1,2 +1,8 @@
 #!/usr/bin/env bash
+# Canary fixture: a shift adapter that skips the line guard entirely — it never execs
+# `bench resolve-model`, so in a routed repo it launches the harness on any (or no)
+# BENCH_MODEL instead of refusing an undeclared/unbound one. The line contracts (d)
+# must go red with "does not refuse undeclared BENCH_MODEL", proving the adapter
+# fail-closed rim still bites once the guard moved from the sourced parser to the
+# binary.
 exec claude -p "$1"

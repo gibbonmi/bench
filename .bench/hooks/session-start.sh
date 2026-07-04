@@ -18,18 +18,15 @@ if [[ "${1:-}" == "--describe" ]]; then
   exit 0
 fi
 
-bench_cmd() {
-  local root candidate
-  root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
-  if [[ -n "$root" ]]; then
-    for candidate in "$root/.bench/bin/bench.sh" "$root/bin/bench.sh"; do
-      [[ -x "$candidate" ]] && { printf '%s\n' "$candidate"; return 0; }
-    done
-  fi
-  command -v bench 2>/dev/null || return 1
-}
+# Resolve the wrapper via the shared resolver (one source for the search order),
+# relative to this script (pwd -P survives the .claude/hooks symlink). A missing lib
+# is failure like any other: print nothing, exit 0 — never block a session.
+lib="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/../lib/resolve-bench.sh"
+[[ -f "$lib" ]] || exit 0
+# shellcheck source=../lib/resolve-bench.sh
+. "$lib"
 
-cmd="$(bench_cmd)" || exit 0
+cmd="$(bench_resolve_wrapper)" || exit 0
 # Advertise the CLI location from the same resolution that runs below, so a cold
 # session is told how to invoke bench here and the advice cannot drift from reality.
 if command -v bench >/dev/null 2>&1; then

@@ -29,7 +29,8 @@ adapter import shim, not a source of truth.
   `bench diff`, `bench coverage`, `bench doctor`, `bench gate`, `bench worktree`,
   `bench shift`, `bench version`; plumbing the hooks and shell adapters call:
   `bench tree-hash`, `bench worktree-pool`, `bench worktree-lease-file`,
-  `bench guard-git`
+  `bench guard-git`, `bench check-agent-line`, `bench resolve-model`,
+  `bench stop-verdict`
 - Hooks: shared `.bench/hooks/stop.sh`, `.bench/hooks/session-start.sh`, and
   `.bench/hooks/block-dangerous-git.sh`, with Claude and Codex adapters
 - Profiles: linked repos own their profile. The kit-development profiles under

@@ -39,8 +39,6 @@ _axi_guard_manifest() {
 for _g in block-dangerous-git check-agent-line stop session-start; do
   [ -f "$root/.bench/hooks/$_g.sh" ] && _axi_guard_manifest "$root/.bench/hooks/$_g.sh" "$_g"
 done
-[ -f "$root/.bench/adapters/_line-guard.sh" ] \
-  && _axi_guard_manifest "$root/.bench/adapters/_line-guard.sh" "_line-guard"
 if [ -f "$root/.bench/hooks/session-start.sh" ]; then
   bash "$root/.bench/hooks/session-start.sh" --describe </dev/null 2>/dev/null \
     | grep -qxF 'denies: nothing (informational)' \

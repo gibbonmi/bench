@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/gibbonmi/bench/internal/coverage"
@@ -18,10 +19,12 @@ import (
 	"github.com/gibbonmi/bench/internal/gitguard"
 	"github.com/gibbonmi/bench/internal/guards"
 	"github.com/gibbonmi/bench/internal/learnings"
+	"github.com/gibbonmi/bench/internal/lines"
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/models"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/status"
+	"github.com/gibbonmi/bench/internal/stophook"
 	"github.com/gibbonmi/bench/internal/structure"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -52,8 +55,98 @@ var commands = map[string]func([]string) (string, int){
 	"idea":                roadmap.IdeaCommand,
 	"roadmap":             roadmap.RoadmapCommand,
 	"tree-hash":           treeHash,
+	"resolve-model":       resolveModel,
 	"worktree-pool":       worktree.PoolCommand,
 	"worktree-lease-file": worktree.LeaseFileCommand,
+}
+
+// linesEnv resolves the repo's .bench/lines.env — its path, whether it exists, and its
+// content — for the two binding consumers (resolve-model and check-agent-line). A cwd
+// outside a repo, or an unreadable file, reads as no binding (exists=false): the
+// verdicts then take their unrouted / fail-open branch, never denying against an
+// absent oracle.
+func linesEnv() (path string, exists bool, content []byte) {
+	root, err := git.Root()
+	if err != nil {
+		return "", false, nil
+	}
+	path = filepath.Join(root, ".bench", "lines.env")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return path, false, nil
+	}
+	return path, true, data
+}
+
+// resolveModel is the `bench resolve-model` plumbing subcommand for the shift adapters:
+// it prints the model to pass via the harness --model flag (empty for passthrough) to
+// stdout and returns an exit code. Any warning/error goes to os.Stderr directly — the
+// map signature carries only stdout, and the adapter captures stdout AS the model, so a
+// warning must never ride there. In a routed repo an unset or unbound BENCH_MODEL exits
+// 1 and the adapter refuses to launch. Aliases do not bind here (only tier ids do); the
+// verdict itself lives in internal/lines so it is unit-tested without a repo.
+func resolveModel(args []string) (string, int) {
+	benchModel, set := os.LookupEnv("BENCH_MODEL")
+	path, exists, content := linesEnv()
+	model, code, stderr := lines.ResolveModelVerdict(benchModel, set, exists, path, content)
+	if stderr != "" {
+		fmt.Fprintln(os.Stderr, stderr)
+	}
+	if model == "" {
+		return "", code
+	}
+	return model + "\n", code
+}
+
+// checkAgentLine is the delegation guard subcommand: it reads the Agent PreToolUse
+// envelope on stdin, reads the binding through internal/lines, and yields the verdict as
+// an exit code — 0 allow (or any degraded warn-and-allow, with its WARNING on stderr), 2
+// deny (with the DENIED message on stderr). The deferred recover maps any panic to 3, so
+// exit 2 means only an intentional deny and the shim's fail-open rim catches a crash.
+// `--describe-binding` emits the live denies clause to stdout without reading stdin,
+// feeding the shim's `--describe`.
+func checkAgentLine(args []string, stdin io.Reader, stdout, stderr io.Writer) (code int) {
+	defer func() {
+		if r := recover(); r != nil {
+			code = 3
+		}
+	}()
+	if len(args) > 0 && args[0] == "--describe-binding" {
+		_, exists, content := linesEnv()
+		fmt.Fprintln(stdout, lines.DescribeBinding(exists, content))
+		return 0
+	}
+	data, err := io.ReadAll(stdin)
+	if err != nil {
+		data = nil // unreadable stdin reads as unparseable → fail open
+	}
+	_, exists, content := linesEnv()
+	exit, msg := lines.AgentLineVerdict(data, exists, content)
+	if msg != "" {
+		fmt.Fprintln(stderr, msg)
+	}
+	return exit
+}
+
+// stopVerdict is the completion-oracle subcommand: it reads the Stop envelope on stdin,
+// takes the resolved wrapper as args[0] (the shim passes it so gate resolution stays in
+// bin/bench.sh), and orchestrates the verdict through internal/stophook — honoring
+// stop_hook_active, enforcing only when BENCH_SHIFT=1, running `<wrapper> gate`, writing
+// the verdict cache, and returning 0 allow / 2 block. A panic maps to 3, which the shim
+// treats as a core error and fails open (no forged verdict), exactly like a missing core.
+func stopVerdict(args []string, stdin io.Reader, stderr io.Writer) (code int) {
+	defer func() {
+		if r := recover(); r != nil {
+			code = 3
+		}
+	}()
+	if len(args) == 0 || args[0] == "" {
+		fmt.Fprintln(stderr, "bench stop-verdict: missing wrapper argument")
+		return 3
+	}
+	data, _ := io.ReadAll(stdin)
+	armed := os.Getenv("BENCH_SHIFT") == "1"
+	return stophook.Run(data, args[0], armed, stderr)
 }
 
 // treeHash exposes git.TreeHash as the `bench tree-hash [root]` plumbing subcommand:
@@ -124,6 +217,10 @@ func run(args []string, stdout, stderr *os.File) int {
 		return 0
 	case "guard-git":
 		return guardGit(args[1:], os.Stdin, stdout, stderr)
+	case "check-agent-line":
+		return checkAgentLine(args[1:], os.Stdin, stdout, stderr)
+	case "stop-verdict":
+		return stopVerdict(args[1:], os.Stdin, stderr)
 	default:
 		fmt.Fprintf(stderr, "bench: unknown subcommand: %q\n", args[0])
 		return 2

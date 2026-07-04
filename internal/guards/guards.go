@@ -1,8 +1,8 @@
 // Package guards ports `bench guards` (and `--brief`): every deny-capable guard's
 // manifest aggregated into a `guards[N]{guard,boundary,denies}:` TOON table, so the
 // block surface is learnable without a collision. Guards are discovered by convention
-// (each .bench/hooks/*.sh, the adapters' _line-guard.sh, the installed git pre-push
-// hook); each guard's --describe is read under a hard time bound so a hook that
+// (each .bench/hooks/*.sh and the installed git pre-push hook); each guard's --describe
+// is read under a hard time bound so a hook that
 // ignores --describe cannot stall aggregation, and an unmanaged pre-push is never
 // executed — running an unknown hook's body just to read a manifest is the collision
 // this surface avoids.
@@ -89,8 +89,10 @@ func guardRow(path, fallback string) ([]string, bool) {
 	return []string{name, boundary, denies}, true
 }
 
-// Rows discovers every guard and returns its row: the hook scripts, the line guard,
-// and the git pre-push hook, in that order.
+// Rows discovers every guard and returns its row: the hook scripts and the git
+// pre-push hook, in that order. The shift-adapter line enforcement lives in `bench
+// resolve-model` (internal/lines), not a `.sh` manifest — `bench guards` aggregates
+// hook scripts only and grows no second answerer, so that enforcement has no row here.
 func Rows(root string) [][]string {
 	var rows [][]string
 	add := func(path, fallback string) {
@@ -106,10 +108,6 @@ func Rows(root string) [][]string {
 			}
 			add(filepath.Join(hooksDir, e.Name()), strings.TrimSuffix(e.Name(), ".sh"))
 		}
-	}
-	lg := filepath.Join(root, ".bench", "adapters", "_line-guard.sh")
-	if fileExists(lg) {
-		add(lg, "_line-guard")
 	}
 	return append(rows, prePushRow(root)...)
 }
