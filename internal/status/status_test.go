@@ -171,6 +171,24 @@ func TestRenderDirtyLeadsGitAndFooterTrails(t *testing.T) {
 	}
 }
 
+func TestRenderSurfacesOrphanedWorktreeBranch(t *testing.T) {
+	root := initRepo(t)
+	if err := os.WriteFile(filepath.Join(root, "f.txt"), []byte("x\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "commit", "-m", "base")
+	gitRun(t, root, "branch", "worktree-agent-orphan")
+
+	out := render(root)
+	if !strings.Contains(out, "orphaned worktree branch") {
+		t.Fatalf("status did not surface orphaned worktree branch:\n%s", out)
+	}
+	if !strings.Contains(out, "delete scratch branch") {
+		t.Fatalf("status did not recommend scratch branch cleanup:\n%s", out)
+	}
+}
+
 // Command rejects an unknown argument with a usage line and exit 2, and prints usage on -h.
 func TestCommandArgs(t *testing.T) {
 	if r, c := Command([]string{"--bogus"}); c != 2 || !strings.Contains(r, "usage:") {

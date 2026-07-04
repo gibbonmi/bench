@@ -185,7 +185,8 @@ tmp="$(mktemp -d)"
 (
   set -u; cd "$tmp"; git init -q; gci commit -q --allow-empty -m init
   # Warm pooled worktrees (released, no lease) are expected state, never a signal;
-  # a leased pool entry is in-flight work and must fire.
+  # a leased pool entry is in-flight work and must fire. A scratch worktree branch
+  # with no registered worktree is also cleanup debt and must fire.
   export BENCH_HOME="$tmp/.bh"
   rr="$(git rev-parse --show-toplevel)"
   pool="$BENCH_HOME/worktrees/$(basename "$rr")-$(echo "$rr" | cksum | cut -d' ' -f1)"
@@ -196,6 +197,10 @@ tmp="$(mktemp -d)"
   : > "$(git -C "$pool/warm" rev-parse --git-path bench-lease)"
   out="$(bash "$root/bin/bench.sh" status)"
   grep -qF '1 active worktree' <<<"$out" || { echo "leased pooled worktree did not surface"; exit 1; }
+  rm -f "$(git -C "$pool/warm" rev-parse --git-path bench-lease)"
+  gci branch worktree-agent-orphan
+  out="$(bash "$root/bin/bench.sh" status)"
+  grep -qF 'orphaned worktree branch' <<<"$out" || { echo "orphaned worktree branch did not surface"; exit 1; }
 ) || err "bench status warm-pool contract failed"
 rm -rf "$tmp"
 

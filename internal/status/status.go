@@ -160,9 +160,10 @@ func appendGit(rows []row, root string) []row {
 	return append(rows, row{1, "git", detail, "commit on green / push"})
 }
 
-// appendWorktree counts active worktrees (sev 2): out-of-pool worktrees and leased pool
-// entries. The repo root itself and a warm pooled entry (under the pool, no lease file
-// on disk) are expected state, not a signal, and are skipped.
+// appendWorktree counts worktree cleanup signals (sev 2): out-of-pool worktrees, leased
+// pool entries, and orphaned harness scratch branches (`worktree-*` refs no registered
+// worktree still holds). The repo root itself and a warm pooled entry (under the pool,
+// no lease file on disk) are expected state, not a signal, and are skipped.
 func appendWorktree(rows []row, root string) []row {
 	pool := worktree.Pool(root)
 	out, _ := git.Output("-C", root, "worktree", "list", "--porcelain")
@@ -183,10 +184,25 @@ func appendWorktree(rows []row, root string) []row {
 		}
 		wtc++
 	}
+	orphans := worktree.OrphanedDelegateBranches(root)
 	if wtc == 0 {
-		return rows
+		if len(orphans) == 0 {
+			return rows
+		}
+		return append(rows, row{2, "worktree", plural(len(orphans), "orphaned worktree branch", "orphaned worktree branches"), "delete scratch branch"})
 	}
-	return append(rows, row{2, "worktree", fmt.Sprintf("%d active worktree(s)", wtc), "resume or clean up (bench worktree)"})
+	detail := fmt.Sprintf("%d active worktree(s)", wtc)
+	if len(orphans) > 0 {
+		detail += ", " + plural(len(orphans), "orphaned branch", "orphaned branches")
+	}
+	return append(rows, row{2, "worktree", detail, "resume or clean up (bench worktree)"})
+}
+
+func plural(n int, one, many string) string {
+	if n == 1 {
+		return fmt.Sprintf("1 %s", one)
+	}
+	return fmt.Sprintf("%d %s", n, many)
 }
 
 // appendLearnings adds the open-journal-headings signal (sev 3). The open count is the

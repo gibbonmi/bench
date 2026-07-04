@@ -20,3 +20,4 @@
 - 2026-07-04  bench commit <files...> — explicit-stage commit wrapper reusing shift's commit-on-green logic; could fold in the spec status flip
 - 2026-07-04  bench refs <stem> — reference sweep across /name, $name, basename, dir/name forms for renames/refactors
 - 2026-07-04  symbol index (bench symbols) — parked as likely not worth it: portability cost vs rg; revisit only if agents demonstrably burn turns on symbol search
+- 2026-07-04  parallelize the canary sweep — fixtures are independent; a bounded goroutine pool in internal/canary cuts wall-clock to ~total/cores; depends on go-gate-canary-machinery merging
