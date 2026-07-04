@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestManifestField(t *testing.T) {
@@ -43,5 +44,27 @@ func TestGuardRow(t *testing.T) {
 	stubbed := stub("stub.sh", `cat >/dev/null; exit 0`)
 	if r, _ := guardRow(stubbed, "stub"); !reflect.DeepEqual(r, []string{"stub", "", "no manifest"}) {
 		t.Errorf("stub row = %v, want no manifest", r)
+	}
+}
+
+// A timed-out describe must return promptly at the deadline even when the hook's
+// grandchild (a sleep) outlives the direct kill and holds the stdout pipe — the
+// process group dies with the hook. Without the group kill, Wait blocks for the
+// full WaitDelay grace and the aggregate bound in the gate contract loses its margin.
+func TestGuardDescribeTimeoutKillsProcessGroup(t *testing.T) {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "slow.sh")
+	script := "#!/usr/bin/env bash\nif [ \"${1:-}\" = --describe ]; then sleep 30; fi\nexit 0\n"
+	if err := os.WriteFile(p, []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	start := time.Now()
+	_, rc := guardDescribe(p)
+	elapsed := time.Since(start)
+	if rc != 124 {
+		t.Fatalf("rc = %d, want 124 (timed out)", rc)
+	}
+	if elapsed > describeTimeout+time.Second {
+		t.Fatalf("describe returned after %v — grandchild survived the kill and held the pipe past the %v deadline", elapsed, describeTimeout)
 	}
 }

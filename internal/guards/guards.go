@@ -17,6 +17,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/git"
@@ -24,8 +25,10 @@ import (
 )
 
 // describeTimeout bounds each guard's --describe. Replaces the shell's coreutils
-// `timeout 5` / watchdog with exec.CommandContext; waitGrace forces Wait to return
-// even when a killed guard's grandchild (a `sleep`) still holds the stdout pipe.
+// `timeout 5` / watchdog with exec.CommandContext. The deadline kills the hook's
+// whole process group (its own group via Setpgid), so a grandchild (a `sleep`)
+// dies with it instead of holding the stdout pipe; waitGrace is the backstop that
+// forces Wait to return even if something in the group survives the kill.
 const (
 	describeTimeout = 5 * time.Second
 	waitGrace       = 3 * time.Second
@@ -37,6 +40,13 @@ func guardDescribe(path string) (string, int) {
 	ctx, cancel := context.WithTimeout(context.Background(), describeTimeout)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "bash", path, "--describe")
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.Cancel = func() error {
+		if cmd.Process == nil {
+			return nil
+		}
+		return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+	}
 	cmd.WaitDelay = waitGrace
 	var out bytes.Buffer
 	cmd.Stdout = &out
