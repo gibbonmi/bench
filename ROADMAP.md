@@ -16,3 +16,7 @@
 - 2026-07-03  Hermetic canary: assert bench-doctor.sh writes a shim that execs an absolute repo path (no nvm/node_modules path) — locks the node-version-independence property doctor exists to guarantee. String-assertion only, never a live nvm use.
 - 2026-07-03  auto-repair download fallback for missing @benchkit platform packages (esbuild install.js style: registry fetch + hash verify in the launcher) — separate resilience capability cut from specs/go-walking-skeleton.md; ~15 edits, ~6 gate runs
 - 2026-07-03  Replace the ~token cap in the line declaration (invariant #2, craft-line) with an ~iteration cap — a delegate can't meter its own tokens, so the cap is aspirational; iterations are countable and keep the stop-and-report tripwire. Needs a grill: invariant wording, cached routings in projects/*.md, and whether any surface still wants a token figure.
+- 2026-07-04  bench spec implemented <spec> — subcommand to flip Status: staged→implemented safely (replaces footgun prose in implement-spec phase)
+- 2026-07-04  bench commit <files...> — explicit-stage commit wrapper reusing shift's commit-on-green logic; could fold in the spec status flip
+- 2026-07-04  bench refs <stem> — reference sweep across /name, $name, basename, dir/name forms for renames/refactors
+- 2026-07-04  symbol index (bench symbols) — parked as likely not worth it: portability cost vs rg; revisit only if agents demonstrably burn turns on symbol search

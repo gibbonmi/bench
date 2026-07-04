@@ -172,3 +172,19 @@ Proposed rule change: in /bench-write-spec's edge inventory, add a check — "fo
   library), require a runnable probe exercising the caller's own edge cases as the
   evidence for a "compatible/unchanged" claim — an API table alone does not settle
   byte compatibility.
+
+## 2026-07-04 — delegate charges over-provision the read-set  [open]
+
+- **What happened:** The spec-authoring delegate for implement-spec-lean was
+  charged to read three craft skills, BENCH.md, and the write-spec phase
+  completely when it only needed the closed map's Handoff (which exists as the
+  compressed digest), the template, and the few lines it had to quote. Cost was
+  small this time (~15s of reads; the run was dominated by mid-tier deliberation
+  and long-form output, which was the declared line working), but the habit
+  scales badly across fan-outs.
+- **Right behavior:** Author charges with the Handoff as the digest plus
+  line-ranged excerpts of only what the delegate must quote; don't forward the
+  orchestrator's whole read list.
+- **Proposed rule change:** One line in craft-delegate's "The charge": prefer
+  the map/Handoff digest and line-ranged inputs over whole-file read lists when
+  a compressed source exists.
