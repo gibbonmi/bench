@@ -45,7 +45,9 @@ the spec, never from the loop.
    out to a real seam. Run it; confirm it fails for the right reason — an
    assertion failure, not a compile error. A compile-error red only proves the
    symbol is missing; it says nothing about whether the assertion can catch a
-   wrong implementation. The
+   wrong implementation. In a compiled language, stub the minimal declarations
+   with no behavior so the one test compiles, then confirm the behavioral red —
+   missing symbols are pressure to scaffold, never license to batch the file. The
    expected value comes from the spec or an independent computation — never from
    running the implementation and pasting back what it returned. Vacuity check:
    an assertion that would also pass against a no-op implementation asserts
@@ -107,7 +109,9 @@ refactor that keeps behavior kills the test.
 
 ## The oracle is the gate, not you
 
-A green test you wrote is not proof of done. Done is `bench gate` green across the
+A green test you wrote is not proof of done — and neither is a runner's summary
+line: a run whose only matched test skipped still prints `ok` (Go does), so read
+the test output, not the summary. Done is `bench gate` green across the
 whole spec. Never edit, relax, or delete a test to reach green — if a test is
 wrong, stop and say so. The agent's own assertions are never the completion
 signal; the gate is.

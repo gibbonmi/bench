@@ -7,6 +7,16 @@ one entry per `/bench-update-kit` or `/bench-integrate-learnings` run; don't rew
 
 ## Unreleased
 
+- **Learnings run (2026-07-04, scope: learnings).** Drained two open entries
+  (seam-level test batching; skipped conformance test counted as a pass).
+  Promoted into `craft-tdd`: the red step now says to stub minimal declarations
+  in compiled languages so the one test compiles before confirming a behavioral
+  red — batching the file is never the fix — and the oracle section warns that
+  a skip-only run still prints `ok`, so read test output, not the summary line.
+  Pruned the batching entry's own proposed "same seam" clause as a duplicate of
+  prose already in the skill. Dogfood loop per proportionality: prose-only —
+  consistency grep of conformance pins plus a green `bench gate`.
+
 - **Learnings run (2026-07-02, scope: learnings).** Drained one open entry.
   Promoted: cached routing for review-axis delegates in `projects/benchkit.md`
   Lines — ~60k tokens each on mid (three axes ≈ 180k), sourced from actuals
