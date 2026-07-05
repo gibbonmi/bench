@@ -1,6 +1,6 @@
 # Benign Stale Gate Status
 
-Status: staged
+Status: implemented
 
 ## Problem
 

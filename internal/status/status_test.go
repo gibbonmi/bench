@@ -104,6 +104,16 @@ func TestShort(t *testing.T) {
 	}
 }
 
+func TestStaleGateDetailActionCurrentTreeNoneFailsClosed(t *testing.T) {
+	detail, action := staleGateDetailAction(t.TempDir(), "0123456789abcdef", "none")
+	if detail != "stale (gated tree 0123456, work tree none)" {
+		t.Fatalf("detail = %q, want strong stale detail", detail)
+	}
+	if action != "re-run the gate" {
+		t.Fatalf("action = %q, want re-run the gate", action)
+	}
+}
+
 func initRepo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()

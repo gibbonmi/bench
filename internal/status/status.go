@@ -34,6 +34,11 @@ import (
 // regex `^Status:[ \t]+implemented[ \t]*$`. We scan line by line, so `$` is the line end.
 var retireRe = regexp.MustCompile(`^Status:[ \t]+implemented[ \t]*$`)
 
+var captureOnlyStalePaths = map[string]bool{
+	".bench-notes.md": true,
+	"ROADMAP.md":      true,
+}
+
 // row is one dashboard signal: a severity (the sort/lead key), and the signal/detail/
 // action triple the shell packed into a `sev|signal|detail|action` line.
 type row struct {
@@ -122,22 +127,56 @@ func appendGate(rows []row, root string) []row {
 		first = first[:i]
 	}
 	fields := strings.Fields(first)
-	var cstatus, ctree string
-	if len(fields) > 0 {
-		cstatus = fields[0]
-	}
-	if len(fields) > 1 {
-		ctree = fields[1]
-	}
 	tree := git.TreeHash(root)
+	if !trustedGateCache(fields, tree) {
+		ctree := ""
+		if len(fields) > 1 {
+			ctree = fields[1]
+		}
+		detail, action := staleGateDetailAction(root, ctree, tree)
+		return append(rows, row{6, "gate", detail, action})
+	}
+	cstatus, ctree := fields[0], fields[1]
 	if ctree != tree {
-		detail := fmt.Sprintf("stale (gated tree %s, work tree %s)", short(ctree), short(tree))
-		return append(rows, row{6, "gate", detail, "re-run the gate"})
+		detail, action := staleGateDetailAction(root, ctree, tree)
+		return append(rows, row{6, "gate", detail, action})
 	}
 	if cstatus == "red" {
 		return append(rows, row{0, "gate", "red", "fix before commit"})
 	}
 	return rows
+}
+
+func trustedGateCache(fields []string, currentTree string) bool {
+	if len(fields) < 3 {
+		return false
+	}
+	if fields[0] != "green" && fields[0] != "red" {
+		return false
+	}
+	return fields[1] != "" && fields[1] != "none" && currentTree != "" && currentTree != "none"
+}
+
+func staleGateDetailAction(root, cachedTree, currentTree string) (detail, action string) {
+	detail = fmt.Sprintf("stale (gated tree %s, work tree %s)", short(cachedTree), short(currentTree))
+	action = "re-run the gate"
+	paths, ok := git.ChangedPathsBetweenTrees(root, cachedTree, currentTree)
+	if !ok || !captureOnlyDrift(paths) {
+		return detail, action
+	}
+	return "stale (capture-only drift)", "re-run when convenient"
+}
+
+func captureOnlyDrift(paths []string) bool {
+	if len(paths) == 0 {
+		return false
+	}
+	for _, path := range paths {
+		if !captureOnlyStalePaths[path] {
+			return false
+		}
+	}
+	return true
 }
 
 // appendGit adds the uncommitted/unpushed signal (sev 1). dirty is the porcelain status;

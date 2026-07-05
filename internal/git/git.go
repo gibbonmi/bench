@@ -143,6 +143,24 @@ func TreeHash(root string) string {
 	return hash
 }
 
+// ChangedPathsBetweenTrees reports the root-relative paths whose content differs between
+// two tree objects. It shells out to `git diff --name-only <from> <to>` so the compared
+// trees stay the same source of truth `bench status` already uses. Any invalid tree,
+// missing object, or diff failure returns ok=false so callers can fail closed.
+func ChangedPathsBetweenTrees(root, fromTree, toTree string) ([]string, bool) {
+	if fromTree == "" || toTree == "" || fromTree == "none" || toTree == "none" {
+		return nil, false
+	}
+	out, err := Output("-C", root, "diff", "--name-only", fromTree, toTree)
+	if err != nil {
+		return nil, false
+	}
+	if out == "" {
+		return []string{}, true
+	}
+	return strings.Split(out, "\n"), true
+}
+
 // idxCommand builds a `git -C root <args>` command whose index is the throwaway idx
 // file rather than the repository's own — the shared invocation form for TreeHash.
 func idxCommand(root, idx string, args ...string) *exec.Cmd {
