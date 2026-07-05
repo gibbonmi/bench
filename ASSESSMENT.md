@@ -16,9 +16,10 @@ drift (`ROADMAP.md`, `.bench-notes.md` only) vs real drift, fail closed on any
 untrusted comparison. The last open item from the 07-04 learnings integration.
 Next action: `/bench-implement-spec`.
 
-**R2 (MED) — gate phase-level concurrency.** Run the gate's
-conformance/contract/canary phases in parallel; remeasure now that the test-layout
-splits landed. Being shaped via `/bench-shape-idea` (this session).
+**R2 (MED) — gate phase-level concurrency.** Measured 47.1s → 35.3s (25%) with
+phases concurrent; map closed at `decisions/gate-phase-concurrency.md` (phases
+move into a Go plumbing subcommand, thin `gate.sh`, three-layer pin).
+Next action: `/bench-write-spec` on a fresh mid-tier session.
 
 ## Features, in priority order (numbering continues the 07-04 list)
 
