@@ -42,6 +42,7 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"benchref-pointer-dropped":      conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"benchref-imported":             conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"benchref-section-duplicated":   conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"dogfood-referent-shipped":      conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"readme-command-first":          conformanceFixture(".bench/gate-docs-contracts.sh"),
 
 	"acceptance-coverage-anchor":        conformanceFixture(".bench/gate-docs-contracts.sh"),

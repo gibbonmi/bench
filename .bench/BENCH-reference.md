@@ -88,7 +88,8 @@ Codex phase adapters installed by Bench:
 ## Command Notes
 
 The canonical CLI inventory lives in `.bench/BENCH.md`, not in `HANDOFF.md`.
-Detailed output contracts for the AXI query surfaces live in `projects/benchkit.md`;
+Detailed output contracts for the AXI query surfaces live in the project
+profile (`projects/<name>.md`);
 hook and adapter plumbing is described in the sections below.
 
 ## Harness adapter for the shift loop

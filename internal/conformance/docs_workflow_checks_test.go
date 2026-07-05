@@ -15,6 +15,7 @@ func checkDocsCurrencyAndWorkflow(root, kitRoot string) []string {
 	diags = append(diags, checkColdPickupCLILists(root)...)
 	diags = append(diags, checkAXIProfileAnchors(root)...)
 	diags = append(diags, checkBenchReferenceTokenDiet(root)...)
+	diags = append(diags, checkShippedDogfoodReferents(root)...)
 	diags = append(diags, checkCommandFirstAnchors(root)...)
 	diags = append(diags, checkWorkflowAnchors(root)...)
 	diags = append(diags, checkSkillsIndexGenerateVerify(root, kitRoot)...)
@@ -203,6 +204,35 @@ func checkBenchReferenceTokenDiet(root string) []string {
 	sort.Strings(dup)
 	if len(dup) > 0 {
 		diags = append(diags, "section heading present in both .bench/BENCH.md and .bench/BENCH-reference.md (single-source violation): "+strings.Join(dup, "|")+"|")
+	}
+	return diags
+}
+
+func checkShippedDogfoodReferents(root string) []string {
+	// Platform files installed verbatim into consumer repos must stay
+	// consumer-generic: a dogfood-only referent shipped here lands in every
+	// linked repo. AGENTS.md is exempt — consumers keep their own.
+	needles := []string{"projects/benchkit"}
+	var files []string
+	for _, rel := range []string{".bench/BENCH.md", ".bench/BENCH-reference.md"} {
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if exists(path) {
+			files = append(files, path)
+		}
+	}
+	files = append(files, walkConformanceDocs(filepath.Join(root, ".agents"))...)
+	files = uniqueSorted(files)
+
+	var diags []string
+	for _, file := range files {
+		rel := slashRel(root, file)
+		for i, line := range strings.Split(readIfExists(file), "\n") {
+			for _, needle := range needles {
+				if strings.Contains(line, needle) {
+					diags = append(diags, fmt.Sprintf("shipped platform file %s:%d carries dogfood referent %q — use projects/<name>.md or move the fact into the profile", rel, i+1, needle))
+				}
+			}
+		}
 	}
 	return diags
 }
