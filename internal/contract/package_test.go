@@ -9,12 +9,13 @@ import (
 )
 
 func TestPackageContracts(t *testing.T) {
+	t.Parallel()
 	skipIfSubjectFileMissing(t, "scripts/gen-platform-packages.sh")
-	t.Run("platform-package generator failed", testPackageGeneratorFirstRun)
-	t.Run("platform-package generator (2nd run) failed", testPackageGeneratorSecondRun)
-	t.Run("platform-package generator is not idempotent", testPackageGeneratorIdempotent)
-	t.Run("platform-package generator output contract failed", testPackageGeneratorOutput)
-	t.Run("npm pack installable-surface contract", testPackageNpmPackInstallableSurface)
+	runParallel(t, "platform-package generator failed", testPackageGeneratorFirstRun)
+	runParallel(t, "platform-package generator (2nd run) failed", testPackageGeneratorSecondRun)
+	runParallel(t, "platform-package generator is not idempotent", testPackageGeneratorIdempotent)
+	runParallel(t, "platform-package generator output contract failed", testPackageGeneratorOutput)
+	runParallel(t, "npm pack installable-surface contract", testPackageNpmPackInstallableSurface)
 }
 
 func testPackageGeneratorFirstRun(t *testing.T) {

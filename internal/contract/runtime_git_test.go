@@ -1,25 +1,26 @@
 package contract
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 )
 
 func TestRuntimeGitContracts(t *testing.T) {
+	t.Parallel()
 	skipIfSubjectBenchMissing(t)
-	t.Run("block-dangerous-git allow/block matrix contract failed", testBlockDangerousGitMatrix)
+	runParallel(t, "block-dangerous-git allow/block matrix contract failed", testBlockDangerousGitMatrix)
 }
 
 func testBlockDangerousGitMatrix(t *testing.T) {
 	f := runtimeGitFixture(t)
 
 	for _, c := range runtimeGitMatrix() {
+		c := c
 		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
 			probe := runGitGuard(t, f, c)
 			if c.block {
 				probe.RequireExit(2)
@@ -172,21 +173,5 @@ func runGitGuard(t *testing.T, f Fixture, c runtimeGitCase) Probe {
 	if c.outsideRepo {
 		dir = t.TempDir()
 	}
-	cmd := exec.Command("bash", filepath.Join(SubjectRoot(t), ".bench", "hooks", "block-dangerous-git.sh"))
-	cmd.Dir = dir
-	cmd.Env = mergeEnv(f.Env, nil)
-	cmd.Stdin = bytes.NewReader(append(envelope, '\n'))
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	err = cmd.Run()
-	exitCode := 0
-	if err != nil {
-		exitCode = 1
-		var exitErr *exec.ExitError
-		if errors.As(err, &exitErr) {
-			exitCode = exitErr.ExitCode()
-		}
-	}
-	return Probe{t: t, ExitCode: exitCode, Stdout: stdout.String(), Stderr: stderr.String()}
+	return runFixtureCommand(t, f, dir, nil, string(append(envelope, '\n')), "bash", filepath.Join(SubjectRoot(t), ".bench", "hooks", "block-dangerous-git.sh"))
 }

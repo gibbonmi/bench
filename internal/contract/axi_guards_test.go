@@ -11,17 +11,18 @@ import (
 )
 
 func TestAXIGuardsContracts(t *testing.T) {
+	t.Parallel()
 	skipIfSubjectBenchMissing(t)
-	t.Run("AXI guards aggregation contract", testAXIGuardsAggregation)
-	t.Run("AXI guards --brief contract", testAXIGuardsBrief)
-	t.Run("AXI guards usage/subdirectory contract", testAXIGuardsUsageSubdirectory)
-	t.Run("AXI guards path-with-spaces contract", testAXIGuardsPathWithSpaces)
-	t.Run("AXI guards --describe timeout-bound contract", testAXIGuardsDescribeTimeoutBound)
-	t.Run("AXI guards unmanaged-pre-push safety contract", testAXIGuardsUnmanagedPrePushSafety)
-	t.Run("AXI block-dangerous-git core-unreachable manifest contract", testAXIBlockDangerousGitCoreUnreachableManifest)
-	t.Run("AXI block-dangerous-git linked-worktree classification contract", testAXIBlockDangerousGitLinkedWorktreeClassification)
-	t.Run("session-start guard-brief injection contract", testSessionStartGuardBriefInjection)
-	t.Run("session-start never-blocks-outside-repo contract", testSessionStartNeverBlocksOutsideRepo)
+	runParallel(t, "AXI guards aggregation contract", testAXIGuardsAggregation)
+	runParallel(t, "AXI guards --brief contract", testAXIGuardsBrief)
+	runParallel(t, "AXI guards usage/subdirectory contract", testAXIGuardsUsageSubdirectory)
+	runParallel(t, "AXI guards path-with-spaces contract", testAXIGuardsPathWithSpaces)
+	runParallel(t, "AXI guards --describe timeout-bound contract", testAXIGuardsDescribeTimeoutBound)
+	runParallel(t, "AXI guards unmanaged-pre-push safety contract", testAXIGuardsUnmanagedPrePushSafety)
+	runParallel(t, "AXI block-dangerous-git core-unreachable manifest contract", testAXIBlockDangerousGitCoreUnreachableManifest)
+	runParallel(t, "AXI block-dangerous-git linked-worktree classification contract", testAXIBlockDangerousGitLinkedWorktreeClassification)
+	runParallel(t, "session-start guard-brief injection contract", testSessionStartGuardBriefInjection)
+	runParallel(t, "session-start never-blocks-outside-repo contract", testSessionStartNeverBlocksOutsideRepo)
 }
 
 func testAXIGuardsAggregation(t *testing.T) {

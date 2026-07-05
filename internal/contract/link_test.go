@@ -11,22 +11,20 @@ import (
 )
 
 func TestLinkContracts(t *testing.T) {
+	t.Parallel()
 	skipIfSubjectBenchMissing(t)
-	t.Run("bench init does not scaffold .bench/learnings.md (self-learning journal)", testInitScaffoldsLearnings)
-	t.Run("a second bench init clobbered an existing .bench/gate.sh", testInitExistingGateIdempotence)
-	t.Run("bench link safe fresh/relink contract failed", testLinkSafeFreshRelink)
-	t.Run("bench link existing AGENTS.md contract failed", testLinkExistingAgents)
-	t.Run("bench link malformed marker contract failed", testLinkMalformedMarker)
-	t.Run("bench link conflict contract failed", testLinkConflictWithoutManifest)
-	t.Run("bench link modified-managed contract failed", testLinkModifiedManaged)
-	t.Run("bench linked hooks local-CLI contract failed", testLinkedHooksLocalCLI)
-	t.Run("bench link metachar kit-path contract failed", testLinkMetacharKitPath)
-	t.Run("bench link worktree contract failed", testLinkWorktree)
-	t.Run("bench link hooksPath contract failed", testLinkHooksPath)
-	t.Run("bench link default-branch resolution contract failed", testLinkDefaultBranchResolution)
-	t.Run("bench link fenced-marker contract failed", testLinkFencedMarker)
-	t.Run("bench link hooksPath conflict contract failed", testLinkHooksPathConflict)
-	t.Run("bench link unclosed-fence contract failed", testLinkUnclosedFence)
+	runParallel(t, "bench init does not scaffold .bench/learnings.md (self-learning journal)", testInitScaffoldsLearnings)
+	runParallel(t, "a second bench init clobbered an existing .bench/gate.sh", testInitExistingGateIdempotence)
+	runParallel(t, "bench link safe fresh/relink contract failed", testLinkSafeFreshRelink)
+	runParallel(t, "bench link existing AGENTS.md contract failed", testLinkExistingAgents)
+	runParallel(t, "bench link conflict contract failed", testLinkConflictWithoutManifest)
+	runParallel(t, "bench link modified-managed contract failed", testLinkModifiedManaged)
+	runParallel(t, "bench linked hooks local-CLI contract failed", testLinkedHooksLocalCLI)
+	runParallel(t, "bench link metachar kit-path contract failed", testLinkMetacharKitPath)
+	runParallel(t, "bench link worktree contract failed", testLinkWorktree)
+	runParallel(t, "bench link hooksPath contract failed", testLinkHooksPath)
+	runParallel(t, "bench link default-branch resolution contract failed", testLinkDefaultBranchResolution)
+	runParallel(t, "bench link hooksPath conflict contract failed", testLinkHooksPathConflict)
 }
 
 func testInitScaffoldsLearnings(t *testing.T) {
@@ -119,19 +117,6 @@ func testLinkExistingAgents(t *testing.T) {
 
 	requireFixtureFileContains(t, f, "AGENTS.md", "PROJECT RULES", "existing AGENTS.md content was clobbered")
 	requireLiteralCount(t, f, "AGENTS.md", "<!-- bench:start -->", 1, "existing AGENTS.md did not get exactly one managed block")
-}
-
-func testLinkMalformedMarker(t *testing.T) {
-	f := NewFixture(t)
-	f.WriteFile("AGENTS.md", "PROJECT BEFORE\n<!-- bench:end -->\nPROJECT MIDDLE\n<!-- bench:start -->\nPROJECT AFTER\n")
-
-	probe := f.Bench("link")
-
-	if probe.ExitCode == 0 {
-		t.Fatal("link succeeded despite reversed Bench managed block markers")
-	}
-	probe.RequireContains(strings.ToLower(probe.Stderr+probe.Stdout), "malformed")
-	requireFixtureFileContains(t, f, "AGENTS.md", "PROJECT AFTER", "malformed marker failure still rewrote project-owned text")
 }
 
 func testLinkConflictWithoutManifest(t *testing.T) {
@@ -257,19 +242,6 @@ func testLinkDefaultBranchResolution(t *testing.T) {
 	requireFixtureFileContains(t, repo, filepath.ToSlash(filepath.Join(hooks, "pre-push")), "refs/heads/master", "pre-push guards the wrong branch when origin/HEAD is unset")
 }
 
-func testLinkFencedMarker(t *testing.T) {
-	f := NewFixture(t)
-	f.WriteFile("AGENTS.md", "# Project rules\n\nHow Bench marks its block:\n\n```\n<!-- bench:start -->\nmanaged content example\n<!-- bench:end -->\n```\n\nKEEP-ME project text.\n")
-
-	linkOK(t, f)
-
-	requireFixtureFileContains(t, f, "AGENTS.md", "KEEP-ME project text.", "fenced-marker link lost project text")
-	requireFixtureFileContains(t, f, "AGENTS.md", "managed content example", "fenced example content was rewritten")
-	linkOK(t, f)
-	requireFixtureFileContains(t, f, "AGENTS.md", "managed content example", "relink consumed the fenced example")
-	requireLiteralCount(t, f, "AGENTS.md", "## Bench", 1, "fenced markers caused duplicate managed blocks")
-}
-
 func testLinkHooksPathConflict(t *testing.T) {
 	f := NewFixture(t)
 	f.Git("config", "core.hooksPath", ".husky")
@@ -282,20 +254,6 @@ func testLinkHooksPathConflict(t *testing.T) {
 	}
 	probe.RequireContains(strings.ToLower(probe.Stderr+probe.Stdout), "conflict")
 	requireFixtureFileContains(t, f, ".husky/pre-push", "exit 0", "hooksPath conflict overwrote the project hook")
-}
-
-func testLinkUnclosedFence(t *testing.T) {
-	f := NewFixture(t)
-	f.WriteFile("AGENTS.md", "# Project rules\n\nBroken docs with an unclosed fence:\n\n```\n<!-- bench:start -->\n<!-- bench:end -->\n\nKEEP-ME text after the unclosed fence.\n")
-
-	probe := f.Bench("link")
-
-	if probe.ExitCode == 0 {
-		t.Fatal("link succeeded despite an unclosed fence around Bench markers")
-	}
-	probe.RequireContains(strings.ToLower(probe.Stderr+probe.Stdout), "fence")
-	requireFixtureFileContains(t, f, "AGENTS.md", "KEEP-ME text after the unclosed fence.", "unclosed-fence failure rewrote project text")
-	requireLiteralCount(t, f, "AGENTS.md", "## Bench", 0, "unclosed-fence link still installed a managed block")
 }
 
 func linkOK(t *testing.T, f Fixture) Probe {

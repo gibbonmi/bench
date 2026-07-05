@@ -1,80 +1,28 @@
 package contract
 
 import (
-	"bytes"
-	"errors"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 )
 
-func TestAXIContracts(t *testing.T) {
+func TestAXIQuerySurfaceContracts(t *testing.T) {
+	t.Parallel()
 	skipIfSubjectBenchMissing(t)
-	t.Run("block-dangerous-git analyzer-missing fail-closed contract", testAXIBlockDangerousGitAnalyzerMissing)
-	t.Run("block-dangerous-git binary-missing fail-closed (git-shaped)", testAXIBlockDangerousGitBinaryMissing)
-	t.Run("block-dangerous-git core-errored fail-closed contract", testAXIBlockDangerousGitCoreErrored)
-	t.Run("AXI learnings two-entry contract", testAXILearningsTwoEntry)
-	t.Run("AXI learnings empty/template contract", testAXILearningsEmptyTemplate)
-	t.Run("AXI maps unresolved-ticket contract", testAXIMapsUnresolvedTicket)
-	t.Run("AXI TOON field-escaping contract", testAXITOONFieldEscaping)
-	t.Run("AXI usage/exit-2 contract", testAXIUsageExit2)
-	t.Run("AXI subdirectory root-resolution contract", testAXISubdirectoryRootResolution)
-	t.Run("AXI path-with-spaces contract", testAXIPathWithSpaces)
-	t.Run("AXI maps over-match anchoring/fence contract", testAXIMapsOverMatchAnchoringFence)
-	t.Run("AXI maps CRLF-stripping contract", testAXIMapsCRLFStripping)
-	t.Run("AXI maps no-Type-ticket contract", testAXIMapsNoTypeTicket)
-	t.Run("AXI learnings ascii-separator title contract", testAXILearningsASCIISeparatorTitle)
-	t.Run("AXI maps handoff close-readiness contract", testAXIMapsHandoffCloseReadiness)
-	t.Run("AXI maps --count adapter contract", testAXIMapsCountAdapter)
-}
-
-func testAXIBlockDangerousGitAnalyzerMissing(t *testing.T) {
-	f := NewFixture(t)
-	hook := filepath.Join(SubjectRoot(t), ".bench", "hooks", "block-dangerous-git.sh")
-	pathEnv := map[string]string{"PATH": "/usr/bin:/bin"}
-
-	describe := runFixtureCommand(t, f, f.Root, pathEnv, "", bashPath(t), hook, "--describe")
-	describe.RequireExit(0)
-	requireAXILine(t, describe.Stdout, "denies: manifest unavailable (analyzer missing)")
-
-	enforce := runFixtureCommand(t, f, f.Root, pathEnv, `{"tool_input":{"command":"git push"}}`, bashPath(t), hook)
-	enforce.RequireExit(2)
-	enforce.RequireContains(enforce.Stderr, "BLOCKED")
-}
-
-func testAXIBlockDangerousGitBinaryMissing(t *testing.T) {
-	f := NewFixture(t)
-	hook := filepath.Join(SubjectRoot(t), ".bench", "hooks", "block-dangerous-git.sh")
-	stubBin := filepath.Join(f.Root, "stubbin")
-	if err := os.MkdirAll(stubBin, 0o755); err != nil {
-		t.Fatalf("create stubbin: %v", err)
-	}
-	writeExecutableAt(t, stubBin, "bench", "#!/usr/bin/env bash\nexit 127\n")
-	pathEnv := map[string]string{"PATH": stubBin + ":/usr/bin:/bin"}
-
-	gitShaped := runFixtureCommand(t, f, f.Root, pathEnv, `{"tool_input":{"command":"git push"}}`, bashPath(t), hook)
-	gitShaped.RequireExit(2)
-	gitShaped.RequireContains(gitShaped.Stderr, "BLOCKED")
-
-	nonGit := runFixtureCommand(t, f, f.Root, pathEnv, `{"tool_input":{"command":"ls -la"}}`, bashPath(t), hook)
-	nonGit.RequireExit(0)
-}
-
-func testAXIBlockDangerousGitCoreErrored(t *testing.T) {
-	f := NewFixture(t)
-	hook := filepath.Join(SubjectRoot(t), ".bench", "hooks", "block-dangerous-git.sh")
-	stubBin := filepath.Join(f.Root, "stubbin")
-	if err := os.MkdirAll(stubBin, 0o755); err != nil {
-		t.Fatalf("create stubbin: %v", err)
-	}
-	writeExecutableAt(t, stubBin, "bench", "#!/usr/bin/env bash\nexit 3\n")
-
-	enforce := runFixtureCommand(t, f, f.Root, map[string]string{"PATH": stubBin + ":/usr/bin:/bin"}, `{"tool_input":{"command":"git push"}}`, bashPath(t), hook)
-	enforce.RequireExit(2)
-	enforce.RequireContains(enforce.Stderr, "BLOCKED")
+	runParallel(t, "AXI learnings two-entry contract", testAXILearningsTwoEntry)
+	runParallel(t, "AXI learnings empty/template contract", testAXILearningsEmptyTemplate)
+	runParallel(t, "AXI maps unresolved-ticket contract", testAXIMapsUnresolvedTicket)
+	runParallel(t, "AXI TOON field-escaping contract", testAXITOONFieldEscaping)
+	runParallel(t, "AXI usage/exit-2 contract", testAXIUsageExit2)
+	runParallel(t, "AXI subdirectory root-resolution contract", testAXISubdirectoryRootResolution)
+	runParallel(t, "AXI path-with-spaces contract", testAXIPathWithSpaces)
+	runParallel(t, "AXI maps over-match anchoring/fence contract", testAXIMapsOverMatchAnchoringFence)
+	runParallel(t, "AXI maps CRLF-stripping contract", testAXIMapsCRLFStripping)
+	runParallel(t, "AXI maps no-Type-ticket contract", testAXIMapsNoTypeTicket)
+	runParallel(t, "AXI learnings ascii-separator title contract", testAXILearningsASCIISeparatorTitle)
+	runParallel(t, "AXI maps handoff close-readiness contract", testAXIMapsHandoffCloseReadiness)
+	runParallel(t, "AXI maps --count adapter contract", testAXIMapsCountAdapter)
 }
 
 func testAXILearningsTwoEntry(t *testing.T) {
@@ -364,108 +312,4 @@ func testAXIMapsCountAdapter(t *testing.T) {
 	requireAXILine(t, rows.Stdout, "  m,1,Grill,open")
 	requireNoAXILineMatching(t, rows.Stdout, `^  scope,`)
 	requireNoAXILineMatching(t, rows.Stdout, `^  \.?hidden,`)
-}
-
-func runBenchInDir(t testing.TB, f Fixture, dir string, args ...string) Probe {
-	t.Helper()
-	bench := filepath.Join(SubjectRoot(t), "bin", "bench.sh")
-	return runFixtureCommand(t, f, dir, nil, "", "bash", append([]string{bench}, args...)...)
-}
-
-func runFixtureCommand(t testing.TB, f Fixture, dir string, env map[string]string, stdin, name string, args ...string) Probe {
-	t.Helper()
-	typed := make(Env, len(env))
-	for k, v := range env {
-		value := v
-		typed[k] = &value
-	}
-	cmd := exec.Command(name, args...)
-	cmd.Dir = dir
-	cmd.Env = mergeEnv(f.Env, typed)
-	if stdin != "" {
-		cmd.Stdin = strings.NewReader(stdin)
-	}
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	exitCode := 0
-	if err != nil {
-		exitCode = 1
-		var exitErr *exec.ExitError
-		if errors.As(err, &exitErr) {
-			exitCode = exitErr.ExitCode()
-		}
-	}
-	return Probe{t: t, ExitCode: exitCode, Stdout: stdout.String(), Stderr: stderr.String()}
-}
-
-func bashPath(t testing.TB) string {
-	t.Helper()
-	bin, err := exec.LookPath("bash")
-	if err != nil {
-		t.Fatalf("find bash: %v", err)
-	}
-	return bin
-}
-
-func writeExecutableAt(t testing.TB, dir, name, contents string) {
-	t.Helper()
-	if err := os.WriteFile(filepath.Join(dir, name), []byte(contents), 0o755); err != nil {
-		t.Fatalf("write executable %s: %v", name, err)
-	}
-}
-
-func requireAXIFirstLine(t testing.TB, out, want string) {
-	t.Helper()
-	if got := axiFirstLine(out); got != want {
-		t.Fatalf("first line = %q, want %q\noutput:\n%s", got, want, out)
-	}
-}
-
-func axiFirstLine(s string) string {
-	if i := strings.IndexByte(s, '\n'); i >= 0 {
-		return s[:i]
-	}
-	return s
-}
-
-func requireAXILine(t testing.TB, out, want string) {
-	t.Helper()
-	for _, line := range strings.Split(strings.TrimSuffix(out, "\n"), "\n") {
-		if line == want {
-			return
-		}
-	}
-	t.Fatalf("missing line %q\noutput:\n%s", want, out)
-}
-
-func requireIndentedRowCount(t testing.TB, out string, want int) {
-	t.Helper()
-	got := 0
-	for _, line := range strings.Split(strings.TrimSuffix(out, "\n"), "\n") {
-		if strings.HasPrefix(line, "  ") {
-			got++
-		}
-	}
-	if got != want {
-		t.Fatalf("indented row count = %d, want %d\noutput:\n%s", got, want, out)
-	}
-}
-
-func requireNoAXILineMatching(t testing.TB, out, expr string) {
-	t.Helper()
-	re := regexp.MustCompile(expr)
-	for _, line := range strings.Split(strings.TrimSuffix(out, "\n"), "\n") {
-		if re.MatchString(line) {
-			t.Fatalf("unexpected line matching %q: %q\noutput:\n%s", expr, line, out)
-		}
-	}
-}
-
-func requireContainsFold(t testing.TB, haystack, needle string) {
-	t.Helper()
-	if !strings.Contains(strings.ToLower(haystack), strings.ToLower(needle)) {
-		t.Fatalf("missing %q\noutput:\n%s", needle, haystack)
-	}
 }

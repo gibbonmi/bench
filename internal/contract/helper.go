@@ -89,19 +89,36 @@ func (f Fixture) Run(name string, args ...string) Probe {
 
 func (f Fixture) RunEnv(env map[string]string, name string, args ...string) Probe {
 	f.t.Helper()
-	typed := make(Env, len(env))
-	for k, v := range env {
-		value := v
-		typed[k] = &value
-	}
-	return f.RunEnvSpec(typed, name, args...)
+	return f.RunEnvSpec(envToSpec(env), name, args...)
 }
 
 func (f Fixture) RunEnvSpec(env Env, name string, args ...string) Probe {
 	f.t.Helper()
+	return runFixtureCommandSpec(f.t, f, f.Root, env, "", name, args...)
+}
+
+func envToSpec(env map[string]string) Env {
+	out := make(Env, len(env))
+	for k, v := range env {
+		value := v
+		out[k] = &value
+	}
+	return out
+}
+
+func runFixtureCommand(t testing.TB, f Fixture, dir string, env map[string]string, stdin, name string, args ...string) Probe {
+	t.Helper()
+	return runFixtureCommandSpec(t, f, dir, envToSpec(env), stdin, name, args...)
+}
+
+func runFixtureCommandSpec(t testing.TB, f Fixture, dir string, env Env, stdin, name string, args ...string) Probe {
+	t.Helper()
 	cmd := exec.Command(name, args...)
-	cmd.Dir = f.Root
+	cmd.Dir = dir
 	cmd.Env = mergeEnv(f.Env, env)
+	if stdin != "" {
+		cmd.Stdin = strings.NewReader(stdin)
+	}
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -114,7 +131,7 @@ func (f Fixture) RunEnvSpec(env Env, name string, args ...string) Probe {
 			exitCode = exitErr.ExitCode()
 		}
 	}
-	return Probe{t: f.t, ExitCode: exitCode, Stdout: stdout.String(), Stderr: stderr.String()}
+	return Probe{t: t, ExitCode: exitCode, Stdout: stdout.String(), Stderr: stderr.String()}
 }
 
 func (f Fixture) Git(args ...string) Probe {

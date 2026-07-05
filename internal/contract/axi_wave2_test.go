@@ -6,13 +6,14 @@ import (
 )
 
 func TestAXIWave2Contracts(t *testing.T) {
+	t.Parallel()
 	skipIfSubjectBenchMissing(t)
-	t.Run("AXI diff recorded-base contract", testAXIDiffRecordedBase)
-	t.Run("AXI diff fallback/shape contract", testAXIDiffFallbackShape)
-	t.Run("AXI diff error-posture contract", testAXIDiffErrorPosture)
-	t.Run("AXI coverage extraction contract", testAXICoverageExtraction)
-	t.Run("AXI coverage state/error contract", testAXICoverageStateError)
-	t.Run("AXI coverage --check validation contract", testAXICoverageCheckValidation)
+	runParallel(t, "AXI diff recorded-base contract", testAXIDiffRecordedBase)
+	runParallel(t, "AXI diff fallback/shape contract", testAXIDiffFallbackShape)
+	runParallel(t, "AXI diff error-posture contract", testAXIDiffErrorPosture)
+	runParallel(t, "AXI coverage extraction contract", testAXICoverageExtraction)
+	runParallel(t, "AXI coverage state/error contract", testAXICoverageStateError)
+	runParallel(t, "AXI coverage --check validation contract", testAXICoverageCheckValidation)
 }
 
 func testAXIDiffRecordedBase(t *testing.T) {
@@ -250,7 +251,10 @@ func testAXICoverageCheckValidation(t *testing.T) {
 		},
 	}
 	for _, c := range cases {
+		c := c
 		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			f := NewFixture(t)
 			f.WriteFile(c.path, c.body)
 
 			out := f.Bench("coverage", "--check", c.path)

@@ -1,6 +1,6 @@
 # test-layout-gate-speed
 
-Status: staged
+Status: implemented
 
 ## Problem
 

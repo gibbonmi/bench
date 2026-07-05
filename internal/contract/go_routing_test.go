@@ -11,11 +11,12 @@ import (
 )
 
 func TestGoRoutingContracts(t *testing.T) {
+	t.Parallel()
 	skipIfSubjectBenchMissing(t)
-	t.Run("bench version output contract", testGoRoutingVersionOutput)
-	t.Run("bench version failed outside a git repo", testGoRoutingVersionOutsideRepo)
-	t.Run("version-routing seam contract failed", testGoRoutingFabricatedVersionRouting)
-	t.Run("linked-worktree binary-resolution contract failed", testGoRoutingLinkedWorktreeBinaryResolution)
+	runParallel(t, "bench version output contract", testGoRoutingVersionOutput)
+	runParallel(t, "bench version failed outside a git repo", testGoRoutingVersionOutsideRepo)
+	runParallel(t, "version-routing seam contract failed", testGoRoutingFabricatedVersionRouting)
+	runParallel(t, "linked-worktree binary-resolution contract failed", testGoRoutingLinkedWorktreeBinaryResolution)
 }
 
 func testGoRoutingVersionOutput(t *testing.T) {

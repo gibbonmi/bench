@@ -7,6 +7,7 @@ import (
 )
 
 func TestFixtureInitializesGitRepoByDefault(t *testing.T) {
+	t.Parallel()
 	f := NewFixture(t)
 
 	probe := f.Run("git", "rev-parse", "--show-toplevel")
@@ -18,6 +19,7 @@ func TestFixtureInitializesGitRepoByDefault(t *testing.T) {
 }
 
 func TestFixtureOptions(t *testing.T) {
+	t.Parallel()
 	noRepo := NewFixture(t, WithNoRepo())
 	noRepo.GitAllow("rev-parse", "--show-toplevel").RequireExit(128)
 
@@ -46,6 +48,7 @@ exit 7
 }
 
 func TestBenchRunsKitWrapperFromFixture(t *testing.T) {
+	t.Parallel()
 	f := NewFixture(t)
 	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\nprintf 'fixture gate cwd=%s\\n' \"$PWD\"\nexit 0\n")
 	f.CommitAll("init")
@@ -54,4 +57,12 @@ func TestBenchRunsKitWrapperFromFixture(t *testing.T) {
 
 	probe.RequireExit(0)
 	probe.RequireContains(probe.Stdout, "fixture gate cwd="+f.Root)
+}
+
+func runParallel(t *testing.T, name string, fn func(*testing.T)) {
+	t.Helper()
+	t.Run(name, func(t *testing.T) {
+		t.Parallel()
+		fn(t)
+	})
 }
