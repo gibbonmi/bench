@@ -32,19 +32,38 @@ func testRuntimeIdeaRoadmap(t *testing.T) {
 	if roadmap := f.Bench("roadmap"); !strings.Contains(strings.ToLower(roadmap.Stdout+roadmap.Stderr), "empty") {
 		t.Fatalf("roadmap on absent file did not report empty\nstdout:\n%s\nstderr:\n%s", roadmap.Stdout, roadmap.Stderr)
 	}
-	f.Bench("idea", "ship dark mode").RequireExit(0)
-	contract.RequireFileMatches(t, f, "ROADMAP.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  ship dark mode$`, "idea entry not dated")
-	before := contract.LineCount(f.ReadFile("ROADMAP.md"))
-	if p := f.Bench("idea"); p.ExitCode == 0 {
-		t.Fatalf("no-arg idea succeeded; should error\nstdout:\n%s\nstderr:\n%s", p.Stdout, p.Stderr)
+	for _, args := range [][]string{nil, {""}, {"   ", "\t"}} {
+		blank := contract.NewFixture(t)
+		p := blank.Bench(append([]string{"idea"}, args...)...)
+		p.RequireExit(2)
+		contract.RequireContains(t, p.Stdout, "usage: bench idea \"<text>\"")
+		if blank.Exists("IDEAS.md") {
+			t.Fatalf("args %q: empty idea created IDEAS.md", args)
+		}
 	}
-	contract.RequireIntEqual(t, contract.LineCount(f.ReadFile("ROADMAP.md")), before, "no-arg idea appended a blank entry")
-	f.Bench("roadmap").RequireContains(f.Bench("roadmap").Stdout, "ship dark mode")
+	f.Bench("idea", "ship dark mode").RequireExit(0)
+	contract.RequireFileMatches(t, f, "IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  ship dark mode$`, "idea entry not dated")
+	if f.Exists("ROADMAP.md") {
+		t.Fatal("idea created ROADMAP.md; capture should write only IDEAS.md")
+	}
+	contract.Mkdir(t, filepath.Join(f.Root, "sub"))
+	contract.RunAt(t, f, filepath.Join(f.Root, "sub"), nil, "bash", benchPath(t), "idea", "from sub").RequireExit(0)
+	contract.RequireFileMatches(t, f, "IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  from sub$`, "idea from nested cwd did not append to root IDEAS.md")
+	if f.Exists("sub/IDEAS.md") {
+		t.Fatal("idea from nested cwd created sub/IDEAS.md")
+	}
+	before := contract.LineCount(f.ReadFile("IDEAS.md"))
+	for _, args := range [][]string{nil, {""}, {"   ", "\t"}} {
+		p := f.Bench(append([]string{"idea"}, args...)...)
+		p.RequireExit(2)
+		contract.RequireContains(t, p.Stdout, "usage: bench idea \"<text>\"")
+	}
+	contract.RequireIntEqual(t, contract.LineCount(f.ReadFile("IDEAS.md")), before, "empty idea appended a blank entry")
 	f.Bench("idea", "capture", "all", "the", "words").RequireExit(0)
-	contract.RequireFileMatches(t, f, "ROADMAP.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  capture all the words$`, "idea did not join unquoted multi-word args")
-	f.WriteFile("ROADMAP.md", "- 2026-06-01  hand added")
+	contract.RequireFileMatches(t, f, "IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  capture all the words$`, "idea did not join unquoted multi-word args")
+	f.WriteFile("IDEAS.md", "- 2026-06-01  hand added")
 	f.Bench("idea", "after handedit").RequireExit(0)
-	contract.RequireIntEqual(t, strings.Count(f.ReadFile("ROADMAP.md"), "- "), 2, "idea merged onto a newline-less last line")
+	contract.RequireIntEqual(t, strings.Count(f.ReadFile("IDEAS.md"), "- "), 2, "idea merged onto a newline-less last line")
 	f.WriteFile("ROADMAP.md", "")
 	f.Bench("roadmap").RequireContains(f.Bench("roadmap").Stdout, "empty")
 }

@@ -1,8 +1,4 @@
-// Package roadmap owns the ROADMAP.md capture sink: `bench idea` (park a dated line),
-// `bench roadmap` (print the file), and the parked-line count the
-// `bench status` footer shows. The `^- ` count is the single source both `bench idea`
-// appends to and `bench status` reads, so the roadmap surface and the status figure
-// count by one rule.
+// Package roadmap owns idea capture, roadmap display, and parked-line counting.
 package roadmap
 
 import (
@@ -15,7 +11,9 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// IdeaCommand implements `bench idea <text...>`: it appends a dated line to ROADMAP.md.
+const ideasFile = "IDEAS.md"
+
+// IdeaCommand implements `bench idea <text...>`: it appends a dated line to IDEAS.md.
 // The args are joined with single spaces; an empty or all-whitespace text yields the
 // usage string on exit 2 without touching the file. Otherwise it resolves the repo
 // root, normalizes a missing trailing newline (so a hand-edited last line without one
@@ -30,24 +28,28 @@ func IdeaCommand(args []string) (string, int) {
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	file := filepath.Join(root, "ROADMAP.md")
+	file := filepath.Join(root, ideasFile)
 
 	f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
-		return toon.Errorf("cannot write ROADMAP.md", err.Error()) + "\n", 1
+		return cannotWriteIdeas(err), 1
 	}
 	defer f.Close()
 
 	if needsNewline(file) {
 		if _, err := f.WriteString("\n"); err != nil {
-			return toon.Errorf("cannot write ROADMAP.md", err.Error()) + "\n", 1
+			return cannotWriteIdeas(err), 1
 		}
 	}
 	line := "- " + time.Now().Format("2006-01-02") + "  " + text + "\n"
 	if _, err := f.WriteString(line); err != nil {
-		return toon.Errorf("cannot write ROADMAP.md", err.Error()) + "\n", 1
+		return cannotWriteIdeas(err), 1
 	}
 	return "parked: " + text + "\n", 0
+}
+
+func cannotWriteIdeas(err error) string {
+	return toon.Errorf("cannot write "+ideasFile, err.Error()) + "\n"
 }
 
 // needsNewline reports whether the file is non-empty and its last byte is not a

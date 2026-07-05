@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -31,6 +32,11 @@ func roadmapPath(t *testing.T, root string) string {
 	return filepath.Join(root, "ROADMAP.md")
 }
 
+func ideasPath(t *testing.T, root string) string {
+	t.Helper()
+	return filepath.Join(root, ideasFile)
+}
+
 var datedLine = regexp.MustCompile(`(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  ship dark mode$`)
 
 // TestIdeaCreatesDatedLine covers idea creating the file with the dated two-space format.
@@ -43,12 +49,15 @@ func TestIdeaCreatesDatedLine(t *testing.T) {
 	if out != "parked: ship dark mode\n" {
 		t.Fatalf("stdout: got %q", out)
 	}
-	data, err := os.ReadFile(roadmapPath(t, root))
+	data, err := os.ReadFile(ideasPath(t, root))
 	if err != nil {
-		t.Fatalf("ROADMAP.md not created: %v", err)
+		t.Fatalf("IDEAS.md not created: %v", err)
 	}
 	if !datedLine.Match(data) {
 		t.Fatalf("line does not match dated two-space shape: %q", data)
+	}
+	if _, err := os.Stat(roadmapPath(t, root)); err == nil {
+		t.Fatal("ROADMAP.md should not have been created")
 	}
 }
 
@@ -63,8 +72,8 @@ func TestIdeaEmptyExitsTwo(t *testing.T) {
 		if out != "usage: bench idea \"<text>\"\n" {
 			t.Fatalf("args %q: stdout got %q", args, out)
 		}
-		if _, err := os.Stat(roadmapPath(t, root)); err == nil {
-			t.Fatalf("args %q: ROADMAP.md should not have been created", args)
+		if _, err := os.Stat(ideasPath(t, root)); err == nil {
+			t.Fatalf("args %q: IDEAS.md should not have been created", args)
 		}
 	}
 }
@@ -76,25 +85,25 @@ func TestIdeaMultiWordJoin(t *testing.T) {
 	if out != "parked: capture all the words\n" {
 		t.Fatalf("stdout: got %q", out)
 	}
-	data, _ := os.ReadFile(roadmapPath(t, root))
+	data, _ := os.ReadFile(ideasPath(t, root))
 	if !regexp.MustCompile(`(?m)^- [0-9-]{10}  capture all the words$`).Match(data) {
 		t.Fatalf("joined line missing: %q", data)
 	}
 }
 
 // TestIdeaNewlineNormalization covers appending to a hand-written last line that lacks
-// a trailing newline: the new entry must not merge, so ParkedCount ends at 2.
+// a trailing newline: the new entry must not merge, so the inbox has two entries.
 func TestIdeaNewlineNormalization(t *testing.T) {
 	root := newRepo(t)
-	if err := os.WriteFile(roadmapPath(t, root), []byte("- 2026-06-01  hand added"), 0o644); err != nil {
+	if err := os.WriteFile(ideasPath(t, root), []byte("- 2026-06-01  hand added"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if _, code := IdeaCommand([]string{"after handedit"}); code != 0 {
 		t.Fatalf("exit: got %d, want 0", code)
 	}
-	if n := ParkedCount(root); n != 2 {
-		data, _ := os.ReadFile(roadmapPath(t, root))
-		t.Fatalf("ParkedCount got %d, want 2; file: %q", n, data)
+	data, _ := os.ReadFile(ideasPath(t, root))
+	if got := string(data); !strings.HasPrefix(got, "- 2026-06-01  hand added\n- ") {
+		t.Fatalf("appended line did not start on a new physical line: %q", got)
 	}
 }
 
