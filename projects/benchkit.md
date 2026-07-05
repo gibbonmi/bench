@@ -99,9 +99,14 @@ coverage map; a class skipped here returns as a regression.
 .bench/gate.sh
 ```
 
-The oracle for a kit, in layers (all green today):
+The oracle for a kit, in layers (all green today). `.bench/gate.sh` is a thin
+exec into the `gate-phases` plumbing subcommand, which runs the layers below as
+four concurrent phases in outer mode (`[phase]`-prefixed output, per-phase
+verdicts, run-all-and-aggregate) and sequentially, unprefixed, sweep-skipped in
+inner mode (`BENCH_CANARY_INNER=1`) — canary EXPECT matching is substring-based
+against inner-gate output, so the inner byte-shape is load-bearing:
 
-1. **Go root conformance** — `.bench/gate.sh` runs
+1. **Go root conformance** — the conformance phase runs
    `go test -count=1 ./internal/conformance -run '^TestRootConformance$'` with
    `BENCH_CONFORMANCE_ROOT` set to the tree under grade. That suite owns parse and
    validity checks, JSON validity, executable git modes, package-file resolution,
