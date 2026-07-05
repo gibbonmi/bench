@@ -2,12 +2,14 @@
 package roadmap
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -67,7 +69,8 @@ func needsNewline(file string) bool {
 }
 
 // RoadmapCommand implements `bench roadmap`: it prints ROADMAP.md verbatim, or the
-// literal `roadmap empty` when the file is absent or zero bytes.
+// literal `roadmap empty` when the file is absent or zero bytes. When capture
+// sources need draining, it appends their counts and the maintenance phase.
 func RoadmapCommand(args []string) (string, int) {
 	root, err := git.Root()
 	if err != nil {
@@ -77,14 +80,40 @@ func RoadmapCommand(args []string) (string, int) {
 	if err != nil || len(data) == 0 {
 		return "roadmap empty\n", 0
 	}
-	return string(data), 0
+	return string(data) + drainStatus(root), 0
+}
+
+// DrainCounts returns the maintenance inbox counts `bench roadmap` reports before a
+// reviewer trusts the roadmap sequence. Missing or unreadable files count as zero.
+func DrainCounts(root string) (ideas, openLearnings int) {
+	return lineCount(filepath.Join(root, ideasFile)), learningCount(root)
+}
+
+func drainStatus(root string) string {
+	ideas, openLearnings := DrainCounts(root)
+	if ideas == 0 && openLearnings == 0 {
+		return ""
+	}
+	return fmt.Sprintf("\n\n## Drain status\n\n- ideas: %d parked in %s\n- learnings: %d open in .bench/learnings.md\n\nRun /bench-what-next before trusting the sequence.\n", ideas, ideasFile, openLearnings)
 }
 
 // ParkedCount returns the number of `^- ` lines (a hyphen then a space at line start)
 // in <root>/ROADMAP.md — the parked-idea figure the `bench status` footer shows. A
 // missing or unreadable file counts as zero.
 func ParkedCount(root string) int {
-	data, err := os.ReadFile(filepath.Join(root, "ROADMAP.md"))
+	return lineCount(filepath.Join(root, "ROADMAP.md"))
+}
+
+func learningCount(root string) int {
+	data, err := os.ReadFile(filepath.Join(root, ".bench", "learnings.md"))
+	if err != nil {
+		return 0
+	}
+	return len(learnings.Rows(data))
+}
+
+func lineCount(file string) int {
+	data, err := os.ReadFile(file)
 	if err != nil {
 		return 0
 	}

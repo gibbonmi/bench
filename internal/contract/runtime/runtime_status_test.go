@@ -66,6 +66,17 @@ func testRuntimeIdeaRoadmap(t *testing.T) {
 	contract.RequireIntEqual(t, strings.Count(f.ReadFile("IDEAS.md"), "- "), 2, "idea merged onto a newline-less last line")
 	f.WriteFile("ROADMAP.md", "")
 	f.Bench("roadmap").RequireContains(f.Bench("roadmap").Stdout, "empty")
+
+	drain := contract.NewFixture(t)
+	drain.WriteFile("ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. Shape next item - /bench-shape-idea\n")
+	drain.WriteFile("IDEAS.md", "- 2026-07-05  parked idea\n")
+	drain.WriteFile(".bench/learnings.md", "## 2026-07-05 — open learning  [open]\n")
+	roadmap := drain.Bench("roadmap")
+	roadmap.RequireExit(0)
+	contract.RequireContains(t, roadmap.Stdout, "# Roadmap")
+	contract.RequireContains(t, roadmap.Stdout, "ideas: 1 parked in IDEAS.md")
+	contract.RequireContains(t, roadmap.Stdout, "learnings: 1 open in .bench/learnings.md")
+	contract.RequireContains(t, roadmap.Stdout, "/bench-what-next")
 }
 
 func testRuntimeStatusClean(t *testing.T) {

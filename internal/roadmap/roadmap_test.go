@@ -134,6 +134,70 @@ func TestRoadmapVerbatim(t *testing.T) {
 	}
 }
 
+// TestRoadmapDrainStatus covers the maintenance prompt when either drain source has rows.
+func TestRoadmapDrainStatus(t *testing.T) {
+	cases := []struct {
+		name      string
+		ideas     string
+		learnings string
+		want      []string
+		notWanted []string
+	}{
+		{
+			name:  "ideas only",
+			ideas: "- 2026-07-05  parked\n",
+			want:  []string{"ideas: 1 parked in IDEAS.md", "learnings: 0 open in .bench/learnings.md", "/bench-what-next"},
+		},
+		{
+			name:      "learnings only",
+			learnings: "## 2026-07-05 — open learning  [open]\n",
+			want:      []string{"ideas: 0 parked in IDEAS.md", "learnings: 1 open in .bench/learnings.md", "/bench-what-next"},
+		},
+		{
+			name:      "empty sources",
+			ideas:     "",
+			learnings: "## <date> — template  [open]\n",
+			notWanted: []string{"## Drain status", "/bench-what-next"},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			root := newRepo(t)
+			if err := os.WriteFile(roadmapPath(t, root), []byte("# Roadmap\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if tc.ideas != "" {
+				if err := os.WriteFile(ideasPath(t, root), []byte(tc.ideas), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if tc.learnings != "" {
+				path := filepath.Join(root, ".bench", "learnings.md")
+				if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(path, []byte(tc.learnings), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}
+			out, code := RoadmapCommand(nil)
+			if code != 0 {
+				t.Fatalf("exit: got %d, want 0", code)
+			}
+			for _, want := range tc.want {
+				if !strings.Contains(out, want) {
+					t.Fatalf("missing %q in:\n%s", want, out)
+				}
+			}
+			for _, notWanted := range tc.notWanted {
+				if strings.Contains(out, notWanted) {
+					t.Fatalf("unexpected %q in:\n%s", notWanted, out)
+				}
+			}
+		})
+	}
+}
+
 // TestParkedCountMixedLines covers counting only `^- ` lines among mixed content.
 func TestParkedCountMixedLines(t *testing.T) {
 	root := newRepo(t)
