@@ -1,31 +1,28 @@
-# Prioritization assessment — 2026-07-05
+# Prioritization assessment — 2026-07-05 (rev 2)
 
-Current open work, verified against the tree. This file replaces the 2026-07-04
-assessment; everything that assessment carried and has since shipped — the no-grill
-roadmap cleanup, the learnings-journal integration (review-findings persistence,
-iteration-cap line declaration, the one-liner batch), the tests/ restructure
-(test-suite-structure map + spec), and the binary auto-repair fallback — is removed
-here, not restated. Rationale for removed items lives in git
-(`git log --grep=spec-retire`, the 07-04 assessment's own history).
+Current open work, verified against the tree. This file replaces the same-day
+2026-07-05 assessment; R1 (benign stale gate status) and R2 (gate phase-level
+concurrency) both shipped after that assessment was written — implemented,
+spec-retired, and confirmed green — so they're removed here, not restated.
+Rationale lives in git (`git log --grep=spec-retire`, decisions/gate-phase-concurrency.md).
 
 ## Ready to build
 
-**R1 (MED) — benign stale gate status.** Spec staged at
-`specs/benign-stale-gate-status.md`: classify a stale gate verdict as capture-only
-drift (`ROADMAP.md`, `.bench-notes.md` only) vs real drift, fail closed on any
-untrusted comparison. The last open item from the 07-04 learnings integration.
-Next action: `/bench-implement-spec`.
-
-**R2 (MED) — gate phase-level concurrency.** Measured 47.1s → 35.3s (25%) with
-phases concurrent; map closed at `decisions/gate-phase-concurrency.md` (phases
-move into a Go plumbing subcommand, thin `gate.sh`, three-layer pin).
-Next action: `/bench-write-spec` on a fresh mid-tier session.
-
-## Features, in priority order (numbering continues the 07-04 list)
+**S1 (LOW) — split `internal/gate/phases_test.go`.** 457 lines, over the
+400-line structural cap (`bench structure` flags it now). Grew past the limit
+during the just-shipped gate-phase-concurrency work. 14 test functions, cleanly
+separable by responsibility (runner concurrency/output/cancel vs phase-table/
+shellcheck/signal-handling) — split along those lines per the craft-seams
+skill, don't fragment just to beat the line count.
+Next action: direct fix-and-gate (small, mechanical, no spec needed).
 
 **FT2 (MED) — adversarial gate pinning.** Hash-verify the gate outside the
 writable tree in pre-push. Distinct threat model from the lazy-agent tripwire;
-small (~6 edits) and closes the "determined agent weakens the gate" hole.
+small (~6 edits) and closes the "determined agent weakens the gate" hole. Now
+first in line since R1/R2 are done.
+Next action: `/bench-write-spec`.
+
+## Features, in priority order
 
 **FT3 (MED-LOW) — `bench spec implemented` + `bench commit`.** Pair them: the
 roadmap already notes commit could fold in the spec status flip. Replaces footgun
@@ -48,12 +45,21 @@ carried; restore only if agents demonstrably burn turns on symbol search.
 **FT8 (scheduled, not actionable) — Sonnet 5 mid-tier revisit.** Time-boxed to
 2026-09-01 or the next frontier shift; keep as is.
 
-*Live repo signals: one open learnings entry (shared-tree contention → worktree
-discipline rule proposal) awaits `/bench-integrate-learnings`; unpushed commits
-on main await a push.*
+## Live repo signals
+
+- Gate: confirmed green on a direct run this session. One contract test
+  (`bench worktree concurrent-acquire`) failed once under full-gate load, then
+  passed 3/3 in isolation and on a full-gate rerun — looks like a timing flake
+  surfaced by phase concurrency (R2), not a real regression. Worth a learnings
+  entry if it recurs; not actionable yet on a single occurrence.
+- One open learnings entry (shared-tree contention → worktree discipline rule
+  proposal) awaits `/bench-integrate-learnings`.
+- Local `main` is 9 commits ahead of `origin/main`, unpushed.
+- The persistent worktree under `~/.bench/worktrees/` is the warm pool by
+  design (`internal/worktree/worktree.go`) — not a leak, no action needed.
 
 ## Recommended sequence
 
-1. R1 — implement the staged benign-stale-gate-status spec.
-2. R2 — gate phase concurrency, once shaped.
-3. FT2 (adversarial gate pinning), then FT3/FT4 by appetite.
+1. S1 — split `phases_test.go` (small, mechanical, clears the structure flag).
+2. FT2 — adversarial gate pinning, shape then build.
+3. FT3/FT4 by appetite.
