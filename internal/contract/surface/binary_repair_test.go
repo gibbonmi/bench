@@ -1,4 +1,4 @@
-package contract
+package surface
 
 import (
 	"archive/tar"
@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/gibbonmi/bench/internal/contract"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -20,21 +21,21 @@ import (
 
 func TestBinaryRepairContracts(t *testing.T) {
 	t.Parallel()
-	skipIfSubjectBenchMissing(t)
-	runParallel(t, "binary repair download-and-run contract failed", testRepairDownloadsAndRuns)
-	runParallel(t, "binary repair bad-integrity contract failed", testRepairRefusesBadHash)
-	runParallel(t, "binary repair malformed-tar contract failed", testRepairRefusesMalformedTar)
-	runParallel(t, "binary repair offline fallback contract failed", testRepairOffline)
-	runParallel(t, "binary repair plumbing exclusion contract failed", testRepairSkipsPlumbing)
-	runParallel(t, "binary repair announcement contract failed", testRepairAnnounces)
-	runParallel(t, "binary repair idempotency contract failed", testRepairIdempotent)
-	runParallel(t, "binary repair version-keyed cache contract failed", testRepairVersionKeyed)
-	runParallel(t, "binary repair no-node contract failed", testRepairNoNode)
-	runParallel(t, "binary repair torn-cache contract failed", testRepairReplacesTornCache)
+	contract.SkipIfSubjectBenchMissing(t)
+	contract.RunParallel(t, "binary repair download-and-run contract failed", testRepairDownloadsAndRuns)
+	contract.RunParallel(t, "binary repair bad-integrity contract failed", testRepairRefusesBadHash)
+	contract.RunParallel(t, "binary repair malformed-tar contract failed", testRepairRefusesMalformedTar)
+	contract.RunParallel(t, "binary repair offline fallback contract failed", testRepairOffline)
+	contract.RunParallel(t, "binary repair plumbing exclusion contract failed", testRepairSkipsPlumbing)
+	contract.RunParallel(t, "binary repair announcement contract failed", testRepairAnnounces)
+	contract.RunParallel(t, "binary repair idempotency contract failed", testRepairIdempotent)
+	contract.RunParallel(t, "binary repair version-keyed cache contract failed", testRepairVersionKeyed)
+	contract.RunParallel(t, "binary repair no-node contract failed", testRepairNoNode)
+	contract.RunParallel(t, "binary repair torn-cache contract failed", testRepairReplacesTornCache)
 }
 
 func testRepairDownloadsAndRuns(t *testing.T) {
-	f, kit := binaryRepairFixtureKit(t, WithSpacePath())
+	f, kit := binaryRepairFixtureKit(t, contract.WithSpacePath())
 	version := "9.8.7"
 	binary := "#!/bin/sh\necho repaired:$1\n"
 	registry := newBinaryRepairRegistry(t, version, binary)
@@ -155,7 +156,7 @@ func testRepairVersionKeyed(t *testing.T) {
 	f.BenchEnv(envA, "version").RequireExit(0)
 	oldCache := binaryRepairCachePath(t, f, "9.8.7")
 	requireFileExecutable(t, oldCache, "first repair did not populate old version cache")
-	writeFileAbs(t, filepath.Join(kit, "package.json"), `{"name":"benchkit","version":"9.8.8"}`+"\n")
+	contract.WriteFileAbs(t, filepath.Join(kit, "package.json"), `{"name":"benchkit","version":"9.8.8"}`+"\n")
 	registryB := newBinaryRepairRegistry(t, "9.8.8", "#!/bin/sh\necho v988\n")
 	envB := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registryB.URL}
 
@@ -200,7 +201,7 @@ func testRepairReplacesTornCache(t *testing.T) {
 	f, kit := binaryRepairFixtureKit(t)
 	version := "9.8.7"
 	cachePath := binaryRepairCachePath(t, f, version)
-	writeFileAbs(t, cachePath, "")
+	contract.WriteFileAbs(t, cachePath, "")
 	registry := newBinaryRepairRegistry(t, version, "#!/bin/sh\necho healed\n")
 	env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL}
 
@@ -283,17 +284,17 @@ func (r *binaryRepairRegistry) ResetHits() {
 	r.hits.Store(0)
 }
 
-func binaryRepairFixtureKit(t testing.TB, opts ...FixtureOption) (Fixture, string) {
+func binaryRepairFixtureKit(t testing.TB, opts ...contract.FixtureOption) (contract.Fixture, string) {
 	t.Helper()
 	return binaryRepairFixtureKitVersion(t, "9.8.7", opts...)
 }
 
-func binaryRepairFixtureKitVersion(t testing.TB, version string, opts ...FixtureOption) (Fixture, string) {
+func binaryRepairFixtureKitVersion(t testing.TB, version string, opts ...contract.FixtureOption) (contract.Fixture, string) {
 	t.Helper()
-	f := NewFixture(t, opts...)
+	f := contract.NewFixture(t, opts...)
 	kit := filepath.Join(f.Root, "kit")
-	goRoutingCopyTree(t, filepath.Join(SubjectRoot(t), "bin"), filepath.Join(kit, "bin"))
-	writeFileAbs(t, filepath.Join(kit, "package.json"), `{"name":"benchkit","version":"`+version+`"}`+"\n")
+	goRoutingCopyTree(t, filepath.Join(contract.SubjectRoot(t), "bin"), filepath.Join(kit, "bin"))
+	contract.WriteFileAbs(t, filepath.Join(kit, "package.json"), `{"name":"benchkit","version":"`+version+`"}`+"\n")
 	return f, kit
 }
 
@@ -344,7 +345,7 @@ func binaryRepairMalformedTarball(t testing.TB) []byte {
 	return gzBuf.Bytes()
 }
 
-func binaryRepairCachePath(t testing.TB, f Fixture, version string) string {
+func binaryRepairCachePath(t testing.TB, f contract.Fixture, version string) string {
 	t.Helper()
 	return filepath.Join(f.Env["BENCH_HOME"], "cache", "bin", version, binaryRepairPlatformSuffix(t), "bench")
 }
@@ -353,7 +354,7 @@ func binaryRepairPlatformSuffix(t testing.TB) string {
 	t.Helper()
 	script := fmt.Sprintf(
 		"source <(sed '/^case \"${1:-help}\" in/,$d' %q); platform_pkg",
-		filepath.Join(KitRoot(t), "bin", "bench.sh"),
+		filepath.Join(contract.KitRoot(t), "bin", "bench.sh"),
 	)
 	out, err := exec.Command("bash", "-c", script).CombinedOutput()
 	if err != nil {

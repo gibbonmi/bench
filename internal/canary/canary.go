@@ -157,14 +157,44 @@ func runFixture(fx, baselineOutput, gate string, env []string, runner Runner) st
 }
 
 func fixtures(dir string) ([]string, error) {
-	entries, err := os.ReadDir(dir)
+	families, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, errors.New(absentHarnessMessage)
 	}
 	var out []string
-	for _, ent := range entries {
-		if ent.IsDir() {
-			out = append(out, filepath.Join(dir, ent.Name()))
+	seen := map[string]string{}
+	addFixture := func(name, fixtureDir string) error {
+		if first := seen[name]; first != "" {
+			return fmt.Errorf("canary fixture name %q appears in multiple families; base names must be globally unique", name)
+		}
+		seen[name] = fixtureDir
+		out = append(out, fixtureDir)
+		return nil
+	}
+	for _, family := range families {
+		if !family.IsDir() {
+			continue
+		}
+		familyDir := filepath.Join(dir, family.Name())
+		if _, err := os.Stat(filepath.Join(familyDir, "EXPECT")); err == nil {
+			if err := addFixture(family.Name(), familyDir); err != nil {
+				return nil, err
+			}
+			continue
+		}
+		entries, err := os.ReadDir(familyDir)
+		if err != nil {
+			return nil, err
+		}
+		for _, ent := range entries {
+			if !ent.IsDir() {
+				continue
+			}
+			name := ent.Name()
+			fixtureDir := filepath.Join(familyDir, name)
+			if err := addFixture(name, fixtureDir); err != nil {
+				return nil, err
+			}
 		}
 	}
 	if len(out) == 0 {

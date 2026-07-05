@@ -24,7 +24,7 @@ func TestLoadValidityMetadataFixturesBite(t *testing.T) {
 		t.Run(fixture, func(t *testing.T) {
 			root := materializeConformanceFixture(t, fixture)
 			h := NewHarness(t)
-			expect := readExpectation(t, h.KitPath("tests", "canary", fixture, "EXPECT"))
+			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
 
 			diags := RunConformance(root, h.KitRoot)
 
@@ -46,7 +46,7 @@ func TestSkillsIndexAndCommandAdapterFixturesBite(t *testing.T) {
 		t.Run(fixture, func(t *testing.T) {
 			root := materializeConformanceFixture(t, fixture)
 			h := NewHarness(t)
-			expect := readExpectation(t, h.KitPath("tests", "canary", fixture, "EXPECT"))
+			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
 
 			diags := RunConformance(root, h.KitRoot)
 
@@ -88,7 +88,7 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 		t.Run(fixture, func(t *testing.T) {
 			root := materializeConformanceFixture(t, fixture)
 			h := NewHarness(t)
-			expect := readExpectation(t, h.KitPath("tests", "canary", fixture, "EXPECT"))
+			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
 
 			diags := RunConformance(root, h.KitRoot)
 
@@ -103,7 +103,7 @@ func TestCoverageMapValidationFixtureBite(t *testing.T) {
 	fixture := "broken-coverage-map"
 	root := materializeConformanceFixture(t, fixture)
 	h := NewHarness(t)
-	expect := readExpectation(t, h.KitPath("tests", "canary", fixture, "EXPECT"))
+	expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
 
 	diags := RunConformance(root, h.KitRoot)
 
@@ -123,7 +123,7 @@ func TestLineRoutingFixturesBite(t *testing.T) {
 		t.Run(fixture, func(t *testing.T) {
 			root := materializeConformanceFixture(t, fixture)
 			h := NewHarness(t)
-			expect := readExpectation(t, h.KitPath("tests", "canary", fixture, "EXPECT"))
+			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
 
 			diags := RunConformance(root, h.KitRoot)
 
@@ -145,7 +145,7 @@ func TestPackageCoreAndGuardFixturesBite(t *testing.T) {
 		t.Run(fixture, func(t *testing.T) {
 			root := materializeConformanceFixture(t, fixture)
 			h := NewHarness(t)
-			expect := readExpectation(t, h.KitPath("tests", "canary", fixture, "EXPECT"))
+			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
 
 			diags := RunConformance(root, h.KitRoot)
 
@@ -156,6 +156,56 @@ func TestPackageCoreAndGuardFixturesBite(t *testing.T) {
 	}
 }
 
+func TestRunConformanceReportsAbsentCanaryFamily(t *testing.T) {
+	root := t.TempDir()
+	runGit(t, root, "init")
+	kitRoot := t.TempDir()
+	for _, family := range conformanceFamilies {
+		if family == "coverage-map-validation" {
+			continue
+		}
+		familyDir := filepath.Join(kitRoot, "tests", "canary", family)
+		if err := os.MkdirAll(familyDir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.MkdirAll(filepath.Join(familyDir, "sentinel"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	diags := RunConformance(root, kitRoot)
+
+	want := `canary conformance family "coverage-map-validation" has no fixture directories under tests/canary/coverage-map-validation`
+	if !containsDiagnostic(diags, want) {
+		t.Fatalf("absent canary family did not produce diagnostic %q:\n%s", want, strings.Join(diags, "\n"))
+	}
+}
+
+func TestRunConformanceReportsEmptyCanaryFamily(t *testing.T) {
+	root := t.TempDir()
+	runGit(t, root, "init")
+	kitRoot := t.TempDir()
+	for _, family := range conformanceFamilies {
+		familyDir := filepath.Join(kitRoot, "tests", "canary", family)
+		if err := os.MkdirAll(familyDir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if family == "coverage-map-validation" {
+			continue
+		}
+		if err := os.MkdirAll(filepath.Join(familyDir, "sentinel"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	diags := RunConformance(root, kitRoot)
+
+	want := `canary conformance family "coverage-map-validation" has no fixture directories under tests/canary/coverage-map-validation`
+	if !containsDiagnostic(diags, want) {
+		t.Fatalf("empty canary family did not produce diagnostic %q:\n%s", want, strings.Join(diags, "\n"))
+	}
+}
+
 func TestRunConformanceAcceptsHostileRootPath(t *testing.T) {
 	parent := t.TempDir()
 	root := filepath.Join(parent, "root with spaces [glob]")
@@ -163,7 +213,7 @@ func TestRunConformanceAcceptsHostileRootPath(t *testing.T) {
 		t.Fatal(err)
 	}
 	h := NewHarness(t)
-	if err := canary.MaterializeFixture(h.KitPath("tests", "canary", "invalid-json", "files"), root); err != nil {
+	if err := canary.MaterializeFixture(filepath.Join(canaryFixturePath(t, h.KitRoot, "invalid-json"), "files"), root); err != nil {
 		t.Fatal(err)
 	}
 	runGit(t, root, "init")
@@ -262,7 +312,7 @@ func materializeConformanceFixture(t *testing.T, fixture string) string {
 	t.Helper()
 	h := NewHarness(t)
 	root := t.TempDir()
-	src := h.KitPath("tests", "canary", fixture, "files")
+	src := filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "files")
 	if err := canary.MaterializeFixture(src, root); err != nil {
 		t.Fatalf("materialize %s: %v", fixture, err)
 	}
@@ -272,6 +322,15 @@ func materializeConformanceFixture(t *testing.T, fixture string) string {
 		t.Fatalf("git init fixture %s: %v\n%s", fixture, err, out)
 	}
 	return root
+}
+
+func canaryFixturePath(t *testing.T, kitRoot, fixture string) string {
+	t.Helper()
+	path, ok := canaryFixturePaths(t, filepath.Join(kitRoot, "tests", "canary"))[fixture]
+	if !ok {
+		t.Fatalf("canary fixture %q not found", fixture)
+	}
+	return path
 }
 
 func readExpectation(t *testing.T, path string) string {

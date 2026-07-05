@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"testing"
 
 	"github.com/gibbonmi/bench/internal/packagesurface"
 )
@@ -169,12 +170,45 @@ func goCoreTestPackages(root string) ([]string, bool) {
 	var packages []string
 	for _, pkg := range strings.Fields(probe.Stdout) {
 		// The gate runs internal/contract separately with BENCH_CONTRACT_ROOT set.
-		if pkg == "internal/contract" || strings.HasSuffix(pkg, "/internal/contract") {
+		if isContractPackage(pkg) {
 			continue
 		}
 		packages = append(packages, pkg)
 	}
 	return packages, true
+}
+
+func isContractPackage(pkg string) bool {
+	return pkg == "internal/contract" ||
+		strings.HasPrefix(pkg, "internal/contract/") ||
+		strings.HasSuffix(pkg, "/internal/contract") ||
+		strings.Contains(pkg, "/internal/contract/")
+}
+
+func TestGoCoreTestPackagesExcludesContractSubtreeOnly(t *testing.T) {
+	h := NewHarness(t)
+	packages, ok := goCoreTestPackages(h.KitRoot)
+	if !ok {
+		t.Fatal("goCoreTestPackages failed")
+	}
+	if containsPackageSuffix(packages, "/internal/contract") {
+		t.Fatalf("goCoreTestPackages included internal/contract:\n%s", strings.Join(packages, "\n"))
+	}
+	if containsPackageSuffix(packages, "/internal/contract/axi") {
+		t.Fatalf("goCoreTestPackages included internal/contract/axi:\n%s", strings.Join(packages, "\n"))
+	}
+	if !containsPackageSuffix(packages, "/internal/conformance") {
+		t.Fatalf("goCoreTestPackages excluded internal/conformance:\n%s", strings.Join(packages, "\n"))
+	}
+}
+
+func containsPackageSuffix(packages []string, suffix string) bool {
+	for _, pkg := range packages {
+		if strings.HasSuffix(pkg, suffix) {
+			return true
+		}
+	}
+	return false
 }
 
 func checkReleaseWorkflow(root string) []string {

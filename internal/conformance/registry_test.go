@@ -3,7 +3,6 @@ package conformance
 import (
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"testing"
 )
@@ -17,61 +16,59 @@ const (
 
 type fixtureRegistration struct {
 	Owner        fixtureOwner
-	Family       string
 	ShellSources []string
-	ShellLabels  []string
 }
 
 var canaryFixtureRegistry = map[string]fixtureRegistration{
-	"invalid-json":             conformanceFixture("load-validity-metadata", ".bench/gate.sh"),
-	"codex-hooks-broken":       conformanceFixture("load-validity-metadata", ".bench/gate.sh"),
-	"bad-frontmatter":          conformanceFixture("load-validity-metadata", ".bench/gate.sh"),
-	"claude-skills-unmirrored": conformanceFixture("load-validity-metadata", ".bench/gate.sh"),
-	"extensionless-gate-ref":   conformanceFixture("load-validity-metadata", ".bench/gate.sh"),
-	"shared-rule-drift":        conformanceFixture("load-validity-metadata", ".bench/gate.sh"),
-	"readme-shared-rule-drift": conformanceFixture("load-validity-metadata", ".bench/gate.sh"),
+	"invalid-json":             conformanceFixture(".bench/gate.sh"),
+	"codex-hooks-broken":       conformanceFixture(".bench/gate.sh"),
+	"bad-frontmatter":          conformanceFixture(".bench/gate.sh"),
+	"claude-skills-unmirrored": conformanceFixture(".bench/gate.sh"),
+	"extensionless-gate-ref":   conformanceFixture(".bench/gate.sh"),
+	"shared-rule-drift":        conformanceFixture(".bench/gate.sh"),
+	"readme-shared-rule-drift": conformanceFixture(".bench/gate.sh"),
 
-	"dangling-index":      conformanceFixture("skills-index-command-adapters", ".bench/gate.sh", ".bench/skills-index.sh"),
-	"missing-index-field": conformanceFixture("skills-index-command-adapters", ".bench/gate.sh", ".bench/skills-index.sh"),
-	"stale-index-wording": conformanceFixture("skills-index-command-adapters", ".bench/gate.sh", ".bench/skills-index.sh"),
-	"unindexed-skill":     conformanceFixture("skills-index-command-adapters", ".bench/gate.sh", ".bench/skills-index.sh"),
+	"dangling-index":      conformanceFixture(".bench/gate.sh", ".bench/skills-index.sh"),
+	"missing-index-field": conformanceFixture(".bench/gate.sh", ".bench/skills-index.sh"),
+	"stale-index-wording": conformanceFixture(".bench/gate.sh", ".bench/skills-index.sh"),
+	"unindexed-skill":     conformanceFixture(".bench/gate.sh", ".bench/skills-index.sh"),
 
-	"stale-command-reference":       conformanceFixture("docs-currency-token-diet", ".bench/gate-docs-contracts.sh"),
-	"stale-codex-adapter-reference": conformanceFixture("docs-currency-token-diet", ".bench/gate-docs-contracts.sh"),
-	"stale-cli-doc-reference":       conformanceFixture("docs-currency-token-diet", ".bench/gate-docs-contracts.sh"),
-	"missing-cli-inventory":         conformanceFixture("docs-currency-token-diet", ".bench/gate-docs-contracts.sh"),
-	"historical-marker-prose":       conformanceFixture("docs-currency-token-diet", ".bench/gate-docs-contracts.sh"),
-	"benchref-missing":              conformanceFixture("docs-currency-token-diet", ".bench/gate-docs-contracts.sh"),
-	"benchref-pointer-dropped":      conformanceFixture("docs-currency-token-diet", ".bench/gate-docs-contracts.sh"),
-	"benchref-imported":             conformanceFixture("docs-currency-token-diet", ".bench/gate-docs-contracts.sh"),
-	"benchref-section-duplicated":   conformanceFixture("docs-currency-token-diet", ".bench/gate-docs-contracts.sh"),
-	"readme-command-first":          conformanceFixture("docs-currency-token-diet", ".bench/gate-docs-contracts.sh"),
+	"stale-command-reference":       conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"stale-codex-adapter-reference": conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"stale-cli-doc-reference":       conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"missing-cli-inventory":         conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"historical-marker-prose":       conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"benchref-missing":              conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"benchref-pointer-dropped":      conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"benchref-imported":             conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"benchref-section-duplicated":   conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"readme-command-first":          conformanceFixture(".bench/gate-docs-contracts.sh"),
 
-	"acceptance-coverage-anchor":        conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh"),
-	"coverage-axis-anchor":              conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh"),
-	"command-handoff-anchor":            conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh"),
-	"debug-archaeology-anchor":          conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh"),
-	"edge-inventory-anchor":             conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh"),
-	"implement-spec-status-flip-anchor": conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh"),
-	"shape-idea-bypass":                 conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh"),
-	"shape-idea-bypass-wrapped":         conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh"),
-	"review-persistence-anchor":         conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh"),
-	"shape-idea-handoff-anchor":         conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh"),
-	"story-line-anchor-missing":         conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh", ".bench/gate-line-contracts.sh"),
-	"write-spec-handoff-anchor":         conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh"),
-	"write-spec-map-required":           conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh"),
-	"line-anchor-missing":               conformanceFixture("workflow-guidance-anchors", ".bench/gate-line-contracts.sh"),
-	"broken-coverage-map":               conformanceFixture("coverage-map-validation", ".bench/gate-docs-contracts.sh"),
+	"acceptance-coverage-anchor":        conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"coverage-axis-anchor":              conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"command-handoff-anchor":            conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"debug-archaeology-anchor":          conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"edge-inventory-anchor":             conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"implement-spec-status-flip-anchor": conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"shape-idea-bypass":                 conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"shape-idea-bypass-wrapped":         conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"review-persistence-anchor":         conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"shape-idea-handoff-anchor":         conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"story-line-anchor-missing":         conformanceFixture(".bench/gate-docs-contracts.sh", ".bench/gate-line-contracts.sh"),
+	"write-spec-handoff-anchor":         conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"write-spec-map-required":           conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"line-anchor-missing":               conformanceFixture(".bench/gate-line-contracts.sh"),
+	"broken-coverage-map":               conformanceFixture(".bench/gate-docs-contracts.sh"),
 
-	"line-binding-prose-drift": conformanceFixture("line-routing", ".bench/gate-line-contracts.sh"),
-	"agent-hook-unwired":       conformanceFixture("line-routing", ".bench/gate-line-contracts.sh"),
-	"agent-hook-broken":        conformanceFixture("line-routing", ".bench/gate-line-contracts.sh"),
-	"adapter-line-broken":      conformanceFixture("line-routing", ".bench/gate-line-contracts.sh"),
+	"line-binding-prose-drift": conformanceFixture(".bench/gate-line-contracts.sh"),
+	"agent-hook-unwired":       conformanceFixture(".bench/gate-line-contracts.sh"),
+	"agent-hook-broken":        conformanceFixture(".bench/gate-line-contracts.sh"),
+	"adapter-line-broken":      conformanceFixture(".bench/gate-line-contracts.sh"),
 
-	"missing-files-entry":             conformanceFixture("package-core-guard", ".bench/gate-package-contracts.sh"),
-	"go-build-broken":                 conformanceFixture("package-core-guard", ".bench/gate-go-contracts.sh"),
-	"go-test-failing":                 conformanceFixture("package-core-guard", ".bench/gate-go-contracts.sh"),
-	"guard-describe-boundary-dropped": conformanceFixture("package-core-guard", ".bench/gate-axi-contracts.sh"),
+	"missing-files-entry":             conformanceFixture(".bench/gate-package-contracts.sh"),
+	"go-build-broken":                 conformanceFixture(".bench/gate-go-contracts.sh"),
+	"go-test-failing":                 conformanceFixture(".bench/gate-go-contracts.sh"),
+	"guard-describe-boundary-dropped": conformanceFixture(".bench/gate-axi-contracts.sh"),
 
 	"doctor-foreign-clobbered":     behaviorFixture(),
 	"doctor-manager-dir-chosen":    behaviorFixture(),
@@ -90,31 +87,28 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"diff-recorded-base-dropped":   behaviorFixture(),
 }
 
-func conformanceFixture(family string, shellSources ...string) fixtureRegistration {
-	return fixtureRegistration{Owner: ownerConformance, Family: family, ShellSources: shellSources, ShellLabels: []string{family}}
+func conformanceFixture(shellSources ...string) fixtureRegistration {
+	return fixtureRegistration{Owner: ownerConformance, ShellSources: shellSources}
 }
 
 func behaviorFixture() fixtureRegistration {
-	return fixtureRegistration{Owner: ownerBehavior, Family: "behavior-owned"}
+	return fixtureRegistration{Owner: ownerBehavior}
 }
 
 func TestCanaryFixtureRegistryClassifiesEveryFixture(t *testing.T) {
 	h := NewHarness(t)
 	fixturesDir := h.KitPath("tests", "canary")
-	entries, err := os.ReadDir(fixturesDir)
-	if err != nil {
-		t.Fatalf("read canary fixtures: %v", err)
-	}
+	fixturePaths := canaryFixturePaths(t, fixturesDir)
 
-	var names []string
-	for _, ent := range entries {
-		if ent.IsDir() {
-			names = append(names, ent.Name())
+	for name, path := range fixturePaths {
+		family := filepath.Base(filepath.Dir(path))
+		wantOwner := ownerConformance
+		if family == "behavior-owned" {
+			wantOwner = ownerBehavior
+		} else if !isConformanceFamily(family) {
+			t.Errorf("canary fixture %q has unknown conformance family %q", name, family)
+			continue
 		}
-	}
-	sort.Strings(names)
-
-	for _, name := range names {
 		reg, ok := canaryFixtureRegistry[name]
 		if !ok {
 			t.Errorf("canary fixture %q is unclassified", name)
@@ -123,29 +117,27 @@ func TestCanaryFixtureRegistryClassifiesEveryFixture(t *testing.T) {
 		if reg.Owner != ownerConformance && reg.Owner != ownerBehavior {
 			t.Errorf("canary fixture %q has invalid owner %q", name, reg.Owner)
 		}
-		if reg.Owner == ownerConformance && reg.Family == "" {
-			t.Errorf("canary fixture %q has no conformance family", name)
-		}
 		if reg.Owner == ownerConformance && len(reg.ShellSources) == 0 {
 			t.Errorf("canary fixture %q has no retired shell source", name)
 		}
-		if reg.Owner == ownerBehavior && reg.Family != "behavior-owned" {
-			t.Errorf("behavior fixture %q has family %q, want behavior-owned", name, reg.Family)
+		if reg.Owner != wantOwner {
+			t.Errorf("canary fixture %q under %q has owner %q, want %q", name, family, reg.Owner, wantOwner)
 		}
-		if _, err := os.Stat(filepath.Join(fixturesDir, name, "EXPECT")); err != nil {
+		if _, err := os.Stat(filepath.Join(path, "EXPECT")); err != nil {
 			t.Errorf("canary fixture %q has no EXPECT: %v", name, err)
 		}
 	}
 
 	for name := range canaryFixtureRegistry {
-		if _, err := os.Stat(filepath.Join(fixturesDir, name)); err != nil {
-			t.Errorf("registry names nonexistent canary fixture %q: %v", name, err)
+		if _, ok := fixturePaths[name]; !ok {
+			t.Errorf("registry names nonexistent canary fixture %q", name)
 		}
 	}
 }
 
 func TestRetiredConformanceFixturesDoNotLeaveShellTwinMessages(t *testing.T) {
 	h := NewHarness(t)
+	fixturePaths := canaryFixturePaths(t, h.KitPath("tests", "canary"))
 	shellText := map[string]string{}
 	for fixture, reg := range canaryFixtureRegistry {
 		if reg.Owner != ownerConformance {
@@ -165,17 +157,49 @@ func TestRetiredConformanceFixturesDoNotLeaveShellTwinMessages(t *testing.T) {
 			}
 			shellText[source] = string(data)
 		}
-		expect := readExpectation(t, h.KitPath("tests", "canary", fixture, "EXPECT"))
+		fixturePath, ok := fixturePaths[fixture]
+		if !ok {
+			t.Fatalf("registry names nonexistent conformance fixture %q", fixture)
+		}
+		expect := readExpectation(t, filepath.Join(fixturePath, "EXPECT"))
 		for _, source := range reg.ShellSources {
 			text := shellText[source]
 			if strings.Contains(text, expect) {
 				t.Errorf("retired conformance fixture %q EXPECT substring still appears in %s", fixture, source)
 			}
-			for _, label := range reg.ShellLabels {
-				if strings.Contains(text, label) {
-					t.Errorf("retired conformance fixture %q shell label %q still appears in %s", fixture, label, source)
-				}
-			}
 		}
 	}
+}
+
+func canaryFixturePaths(t *testing.T, fixturesDir string) map[string]string {
+	t.Helper()
+	families, err := os.ReadDir(fixturesDir)
+	if err != nil {
+		t.Fatalf("read canary fixtures: %v", err)
+	}
+	paths := map[string]string{}
+	for _, family := range families {
+		if !family.IsDir() {
+			continue
+		}
+		if family.Name() != "behavior-owned" && !isConformanceFamily(family.Name()) {
+			t.Errorf("canary family %q is not canonical", family.Name())
+		}
+		familyDir := filepath.Join(fixturesDir, family.Name())
+		entries, err := os.ReadDir(familyDir)
+		if err != nil {
+			t.Fatalf("read canary family %q: %v", family.Name(), err)
+		}
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				continue
+			}
+			if first := paths[entry.Name()]; first != "" {
+				t.Errorf("canary fixture %q appears at both %s and %s", entry.Name(), first, filepath.Join(familyDir, entry.Name()))
+				continue
+			}
+			paths[entry.Name()] = filepath.Join(familyDir, entry.Name())
+		}
+	}
+	return paths
 }

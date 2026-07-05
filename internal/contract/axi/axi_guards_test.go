@@ -1,7 +1,8 @@
-package contract
+package axi
 
 import (
 	"fmt"
+	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -12,21 +13,21 @@ import (
 
 func TestAXIGuardsContracts(t *testing.T) {
 	t.Parallel()
-	skipIfSubjectBenchMissing(t)
-	runParallel(t, "AXI guards aggregation contract", testAXIGuardsAggregation)
-	runParallel(t, "AXI guards --brief contract", testAXIGuardsBrief)
-	runParallel(t, "AXI guards usage/subdirectory contract", testAXIGuardsUsageSubdirectory)
-	runParallel(t, "AXI guards path-with-spaces contract", testAXIGuardsPathWithSpaces)
-	runParallel(t, "AXI guards --describe timeout-bound contract", testAXIGuardsDescribeTimeoutBound)
-	runParallel(t, "AXI guards unmanaged-pre-push safety contract", testAXIGuardsUnmanagedPrePushSafety)
-	runParallel(t, "AXI block-dangerous-git core-unreachable manifest contract", testAXIBlockDangerousGitCoreUnreachableManifest)
-	runParallel(t, "AXI block-dangerous-git linked-worktree classification contract", testAXIBlockDangerousGitLinkedWorktreeClassification)
-	runParallel(t, "session-start guard-brief injection contract", testSessionStartGuardBriefInjection)
-	runParallel(t, "session-start never-blocks-outside-repo contract", testSessionStartNeverBlocksOutsideRepo)
+	contract.SkipIfSubjectBenchMissing(t)
+	contract.RunParallel(t, "AXI guards aggregation contract", testAXIGuardsAggregation)
+	contract.RunParallel(t, "AXI guards --brief contract", testAXIGuardsBrief)
+	contract.RunParallel(t, "AXI guards usage/subdirectory contract", testAXIGuardsUsageSubdirectory)
+	contract.RunParallel(t, "AXI guards path-with-spaces contract", testAXIGuardsPathWithSpaces)
+	contract.RunParallel(t, "AXI guards --describe timeout-bound contract", testAXIGuardsDescribeTimeoutBound)
+	contract.RunParallel(t, "AXI guards unmanaged-pre-push safety contract", testAXIGuardsUnmanagedPrePushSafety)
+	contract.RunParallel(t, "AXI block-dangerous-git core-unreachable manifest contract", testAXIBlockDangerousGitCoreUnreachableManifest)
+	contract.RunParallel(t, "AXI block-dangerous-git linked-worktree classification contract", testAXIBlockDangerousGitLinkedWorktreeClassification)
+	contract.RunParallel(t, "session-start guard-brief injection contract", testSessionStartGuardBriefInjection)
+	contract.RunParallel(t, "session-start never-blocks-outside-repo contract", testSessionStartNeverBlocksOutsideRepo)
 }
 
 func testAXIGuardsAggregation(t *testing.T) {
-	noteContractFailure(t, "AXI guards aggregation contract failed")
+	contract.NoteContractFailure(t, "AXI guards aggregation contract failed")
 	f := linkedGuardsFixture(t)
 
 	out := f.Bench("guards")
@@ -79,7 +80,7 @@ func testAXIGuardsUsageSubdirectory(t *testing.T) {
 	if err := os.MkdirAll(subdir, 0o755); err != nil {
 		t.Fatalf("create subdir: %v", err)
 	}
-	subFixture := Fixture{t: t, Root: subdir, Env: f.Env}
+	subFixture := contract.NewFixtureAt(t, subdir, f.Env)
 	fromSubdir := subFixture.Bench("guards")
 	fromSubdir.RequireExit(0)
 	if !strings.HasPrefix(firstGuardsLine(fromSubdir.Stdout), "guards[") {
@@ -88,7 +89,7 @@ func testAXIGuardsUsageSubdirectory(t *testing.T) {
 }
 
 func testAXIGuardsPathWithSpaces(t *testing.T) {
-	f := linkedGuardsFixture(t, WithSpacePath())
+	f := linkedGuardsFixture(t, contract.WithSpacePath())
 
 	out := f.Bench("guards")
 
@@ -99,7 +100,7 @@ func testAXIGuardsPathWithSpaces(t *testing.T) {
 }
 
 func testAXIGuardsDescribeTimeoutBound(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.WriteExecutable(".bench/hooks/slow.sh", "#!/usr/bin/env bash\nif [ \"${1:-}\" = \"--describe\" ]; then sleep 30; fi\nexit 0\n")
 
 	start := time.Now()
@@ -114,7 +115,7 @@ func testAXIGuardsDescribeTimeoutBound(t *testing.T) {
 }
 
 func testAXIGuardsUnmanagedPrePushSafety(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	sentinel := filepath.Join(t.TempDir(), "ran-foreign-prepush")
 	hooks := gitHooksPath(t, f)
 	if err := os.MkdirAll(hooks, 0o755); err != nil {
@@ -136,11 +137,11 @@ func testAXIGuardsUnmanagedPrePushSafety(t *testing.T) {
 }
 
 func testAXIBlockDangerousGitCoreUnreachableManifest(t *testing.T) {
-	hook := filepath.Join(SubjectRoot(t), ".bench", "hooks", "block-dangerous-git.sh")
+	hook := filepath.Join(contract.SubjectRoot(t), ".bench", "hooks", "block-dangerous-git.sh")
 	if _, err := os.Stat(hook); err != nil {
 		t.Skipf("block-dangerous-git hook unavailable: %v", err)
 	}
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 
 	out := f.RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, "bash", hook, "--describe")
 
@@ -149,21 +150,21 @@ func testAXIBlockDangerousGitCoreUnreachableManifest(t *testing.T) {
 }
 
 func testAXIBlockDangerousGitLinkedWorktreeClassification(t *testing.T) {
-	hook := filepath.Join(SubjectRoot(t), ".bench", "hooks", "block-dangerous-git.sh")
+	hook := filepath.Join(contract.SubjectRoot(t), ".bench", "hooks", "block-dangerous-git.sh")
 	if _, err := os.Stat(hook); err != nil {
 		t.Skipf("block-dangerous-git hook unavailable: %v", err)
 	}
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.Env["GIT_AUTHOR_NAME"] = "Bench"
 	f.Env["GIT_AUTHOR_EMAIL"] = "bench@local"
 	f.Env["GIT_COMMITTER_NAME"] = "Bench"
 	f.Env["GIT_COMMITTER_EMAIL"] = "bench@local"
-	copyGuardsExecutable(t, filepath.Join(SubjectRoot(t), "bin", "bench.sh"), filepath.Join(f.Root, "bin", "bench.sh"))
+	copyGuardsExecutable(t, filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), filepath.Join(f.Root, "bin", "bench.sh"))
 	f.CommitAll("init")
-	copyGuardsExecutable(t, filepath.Join(SubjectRoot(t), "dist", "bench"), filepath.Join(f.Root, "dist", "bench"))
+	copyGuardsExecutable(t, filepath.Join(contract.SubjectRoot(t), "dist", "bench"), filepath.Join(f.Root, "dist", "bench"))
 	linked := filepath.Join(t.TempDir(), "linked")
 	f.Git("worktree", "add", "-q", "--detach", linked, "HEAD")
-	wt := Fixture{t: t, Root: linked, Env: f.Env}
+	wt := contract.NewFixtureAt(t, linked, f.Env)
 
 	readonly := wt.RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, "bash", "-c", `printf '{"tool_input":{"command":"git status"}}' | bash "$1"`, "sh", hook)
 	readonly.RequireExit(0)
@@ -185,8 +186,8 @@ func testSessionStartGuardBriefInjection(t *testing.T) {
 }
 
 func testSessionStartNeverBlocksOutsideRepo(t *testing.T) {
-	f := NewFixture(t, WithNoRepo())
-	hook := filepath.Join(SubjectRoot(t), ".bench", "hooks", "session-start.sh")
+	f := contract.NewFixture(t, contract.WithNoRepo())
+	hook := filepath.Join(contract.SubjectRoot(t), ".bench", "hooks", "session-start.sh")
 
 	out := f.RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, "bash", hook)
 
@@ -196,14 +197,14 @@ func testSessionStartNeverBlocksOutsideRepo(t *testing.T) {
 	}
 }
 
-func linkedGuardsFixture(t *testing.T, opts ...FixtureOption) Fixture {
+func linkedGuardsFixture(t *testing.T, opts ...contract.FixtureOption) contract.Fixture {
 	t.Helper()
-	f := NewFixture(t, opts...)
+	f := contract.NewFixture(t, opts...)
 	f.Bench("link").RequireExit(0)
 	return f
 }
 
-func gitHooksPath(t *testing.T, f Fixture) string {
+func gitHooksPath(t *testing.T, f contract.Fixture) string {
 	t.Helper()
 	hooks := strings.TrimSpace(f.Git("rev-parse", "--git-path", "hooks").Stdout)
 	if filepath.IsAbs(hooks) {
@@ -212,7 +213,7 @@ func gitHooksPath(t *testing.T, f Fixture) string {
 	return filepath.Join(f.Root, hooks)
 }
 
-func gitPrePushPath(t *testing.T, f Fixture) string {
+func gitPrePushPath(t *testing.T, f contract.Fixture) string {
 	t.Helper()
 	return filepath.Join(gitHooksPath(t, f), "pre-push")
 }

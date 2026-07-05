@@ -21,7 +21,7 @@ realkit="$(cd "$gate_dir/.." && pwd)"
 if ! (cd "$realkit" && BENCH_CONFORMANCE_ROOT="$root" go test -count=1 ./internal/conformance -run '^TestRootConformance$'); then
   fail=1
 fi
-if ! (cd "$realkit" && BENCH_CONTRACT_ROOT="$root" go test -count=1 ./internal/contract); then
+if ! (cd "$realkit" && BENCH_CONTRACT_ROOT="$root" go test -count=1 ./internal/contract/...); then
   fail=1
 fi
 

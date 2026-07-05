@@ -1,6 +1,7 @@
-package contract
+package surface
 
 import (
+	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,15 +10,15 @@ import (
 
 func TestDoctorReportFixContracts(t *testing.T) {
 	t.Parallel()
-	skipIfSubjectBenchMissing(t)
-	runParallel(t, "bench doctor report contract", testDoctorReport)
-	runParallel(t, "bench doctor manifest skew contract", testDoctorManifestSkew)
-	runParallel(t, "bench doctor --fix write contract", testDoctorFixWrite)
-	runParallel(t, "bench doctor --fix spaced-target contract", testDoctorFixSpacedTarget)
-	runParallel(t, "bench doctor --fix idempotency contract", testDoctorFixIdempotency)
-	runParallel(t, "bench doctor --fix foreign-refuse contract", testDoctorFixForeignRefuse)
-	runParallel(t, "bench doctor --fix fallback contract", testDoctorFixFallback)
-	runParallel(t, "bench doctor --fix path-notice contract", testDoctorFixPathNotice)
+	contract.SkipIfSubjectBenchMissing(t)
+	contract.RunParallel(t, "bench doctor report contract", testDoctorReport)
+	contract.RunParallel(t, "bench doctor manifest skew contract", testDoctorManifestSkew)
+	contract.RunParallel(t, "bench doctor --fix write contract", testDoctorFixWrite)
+	contract.RunParallel(t, "bench doctor --fix spaced-target contract", testDoctorFixSpacedTarget)
+	contract.RunParallel(t, "bench doctor --fix idempotency contract", testDoctorFixIdempotency)
+	contract.RunParallel(t, "bench doctor --fix foreign-refuse contract", testDoctorFixForeignRefuse)
+	contract.RunParallel(t, "bench doctor --fix fallback contract", testDoctorFixFallback)
+	contract.RunParallel(t, "bench doctor --fix path-notice contract", testDoctorFixPathNotice)
 }
 
 type doctorSandbox struct {
@@ -29,7 +30,7 @@ type doctorSandbox struct {
 }
 
 func testDoctorReport(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	targetPath := filepath.Join(sb.plain, "bench")
 
@@ -56,7 +57,7 @@ func testDoctorReport(t *testing.T) {
 }
 
 func testDoctorManifestSkew(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 
 	f.WriteFile(".bench/link-manifest.tsv", ".bench/BENCH.md\tabc\n")
@@ -72,7 +73,7 @@ func testDoctorManifestSkew(t *testing.T) {
 }
 
 func testDoctorFixWrite(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	targetPath := filepath.Join(sb.plain, "bench")
 
@@ -82,12 +83,12 @@ func testDoctorFixWrite(t *testing.T) {
 	requirePathExists(t, targetPath, "--fix wrote no shim in the plain PATH dir")
 	requirePathAbsent(t, filepath.Join(sb.nvmBin, "bench"), "--fix wrote into the manager-owned nvm dir")
 	doctorRequireFileContains(t, targetPath, "bench-shim v1", "shim carries no bench marker")
-	doctorRequireFileContains(t, targetPath, filepath.Join(SubjectRoot(t), "bin", "bench.sh"), "shim does not target the resolved CLI")
+	doctorRequireFileContains(t, targetPath, filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "shim does not target the resolved CLI")
 	probe.RequireContains(probe.Stdout, targetPath)
 }
 
 func testDoctorFixSpacedTarget(t *testing.T) {
-	f := NewFixture(t, WithSpacePath())
+	f := contract.NewFixture(t, contract.WithSpacePath())
 	sb := newDoctorSandbox(t, f)
 	kit := filepath.Join(f.Root, "kit")
 	copyDoctorKit(t, kit)
@@ -103,7 +104,7 @@ func testDoctorFixSpacedTarget(t *testing.T) {
 }
 
 func testDoctorFixIdempotency(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	targetPath := filepath.Join(sb.plain, "bench")
 
@@ -119,8 +120,8 @@ func testDoctorFixIdempotency(t *testing.T) {
 }
 
 func testDoctorFixForeignRefuse(t *testing.T) {
-	noteContractFailure(t, "over a foreign file did not exit 1")
-	f := NewFixture(t)
+	contract.NoteContractFailure(t, "over a foreign file did not exit 1")
+	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	foreign := filepath.Join(sb.plain, "bench")
 
@@ -143,12 +144,12 @@ func testDoctorFixForeignRefuse(t *testing.T) {
 		t.Fatal("--fix wrote over the present-but-empty file")
 	}
 
-	mustWriteFile(t, foreign, "#!/usr/bin/env bash\n# bench-shim v1 marker\ntarget="+filepath.Join(SubjectRoot(t), "bin", "bench.sh")+"\nexec \"$target\" \"$@\"", 0o755)
+	mustWriteFile(t, foreign, "#!/usr/bin/env bash\n# bench-shim v1 marker\ntarget="+filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh")+"\nexec \"$target\" \"$@\"", 0o755)
 	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
 }
 
 func testDoctorFixFallback(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	env := sb.managerOnlyEnv()
 
@@ -160,7 +161,7 @@ func testDoctorFixFallback(t *testing.T) {
 }
 
 func testDoctorFixPathNotice(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	env := sb.managerOnlyEnv()
 
@@ -172,7 +173,7 @@ func testDoctorFixPathNotice(t *testing.T) {
 	requirePathAbsent(t, filepath.Join(sb.home, ".bashrc"), "--fix edited an rc file")
 }
 
-func newDoctorSandbox(t *testing.T, f Fixture) doctorSandbox {
+func newDoctorSandbox(t *testing.T, f contract.Fixture) doctorSandbox {
 	t.Helper()
 	home := filepath.Join(f.Root, "home")
 	nvm := filepath.Join(f.Root, "nvm")
@@ -224,13 +225,13 @@ func copyDoctorKit(t *testing.T, dst string) {
 		t.Fatalf("create kit commands dir: %v", err)
 	}
 	copyBenchScripts(t, filepath.Join(dst, "bin"))
-	doctorCopyFileIfExists(t, filepath.Join(SubjectRoot(t), "dist", "bench"), filepath.Join(dst, "dist", "bench"), 0o755)
-	doctorCopyFileIfExists(t, filepath.Join(SubjectRoot(t), "AGENTS.md"), filepath.Join(dst, "AGENTS.md"), 0o644)
+	doctorCopyFileIfExists(t, filepath.Join(contract.SubjectRoot(t), "dist", "bench"), filepath.Join(dst, "dist", "bench"), 0o755)
+	doctorCopyFileIfExists(t, filepath.Join(contract.SubjectRoot(t), "AGENTS.md"), filepath.Join(dst, "AGENTS.md"), 0o644)
 }
 
 func copyBenchScripts(t *testing.T, dst string) {
 	t.Helper()
-	entries, err := os.ReadDir(filepath.Join(SubjectRoot(t), "bin"))
+	entries, err := os.ReadDir(filepath.Join(contract.SubjectRoot(t), "bin"))
 	if err != nil {
 		t.Fatalf("read kit bin: %v", err)
 	}
@@ -238,7 +239,7 @@ func copyBenchScripts(t *testing.T, dst string) {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".sh") {
 			continue
 		}
-		doctorCopyFile(t, filepath.Join(SubjectRoot(t), "bin", entry.Name()), filepath.Join(dst, entry.Name()), 0o755)
+		doctorCopyFile(t, filepath.Join(contract.SubjectRoot(t), "bin", entry.Name()), filepath.Join(dst, entry.Name()), 0o755)
 	}
 }
 

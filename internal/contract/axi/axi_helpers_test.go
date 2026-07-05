@@ -1,6 +1,7 @@
-package contract
+package axi
 
 import (
+	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,10 +10,10 @@ import (
 	"testing"
 )
 
-func runBenchInDir(t testing.TB, f Fixture, dir string, args ...string) Probe {
+func runBenchInDir(t testing.TB, f contract.Fixture, dir string, args ...string) contract.Probe {
 	t.Helper()
-	bench := filepath.Join(SubjectRoot(t), "bin", "bench.sh")
-	return runFixtureCommand(t, f, dir, nil, "", "bash", append([]string{bench}, args...)...)
+	bench := filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh")
+	return contract.RunAtWithInput(t, f, dir, nil, "", "bash", append([]string{bench}, args...)...)
 }
 
 func bashPath(t testing.TB) string {

@@ -1,6 +1,7 @@
-package contract
+package runtime
 
 import (
+	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -10,16 +11,16 @@ import (
 
 func TestRuntimeShiftAdapterContracts(t *testing.T) {
 	t.Parallel()
-	runParallel(t, "bench shift adapter preflight contract", testShiftAdapterPreflight)
-	runParallel(t, "bench shift adapter single-argument contract", testShiftAdapterSingleArgument)
-	runParallel(t, "reference adapter files contract", testReferenceAdapterFiles)
+	contract.RunParallel(t, "bench shift adapter preflight contract", testShiftAdapterPreflight)
+	contract.RunParallel(t, "bench shift adapter single-argument contract", testShiftAdapterSingleArgument)
+	contract.RunParallel(t, "reference adapter files contract", testReferenceAdapterFiles)
 }
 
 func testShiftAdapterPreflight(t *testing.T) {
 	f := shiftFixture(t, "#!/usr/bin/env bash\nexit 0\n")
 	home := t.TempDir()
 
-	unset := f.BenchEnvSpec(Env{"BENCH_AGENT": nil, "BENCH_HOME": strPtr(home)}, "shift", "probe")
+	unset := f.BenchEnvSpec(contract.Env{"BENCH_AGENT": nil, "BENCH_HOME": strPtr(home)}, "shift", "probe")
 	if unset.ExitCode == 0 {
 		t.Fatal("shift with no BENCH_AGENT succeeded; should error")
 	}
@@ -90,7 +91,7 @@ func testShiftAdapterSingleArgument(t *testing.T) {
 }
 
 func testReferenceAdapterFiles(t *testing.T) {
-	root := KitRoot(t)
+	root := contract.KitRoot(t)
 	for _, adapter := range []string{"claude", "codex", "opencode"} {
 		path := filepath.Join(root, ".bench", "adapters", adapter)
 		info, err := os.Stat(path)
@@ -100,7 +101,7 @@ func testReferenceAdapterFiles(t *testing.T) {
 		if info.Mode()&0o111 == 0 {
 			t.Fatalf("reference adapter not executable: .bench/adapters/%s", adapter)
 		}
-		probe := NewFixture(t, WithNoRepo()).Run("bash", "-n", path)
+		probe := contract.NewFixture(t, contract.WithNoRepo()).Run("bash", "-n", path)
 		probe.RequireExit(0)
 		text, err := os.ReadFile(path)
 		if err != nil {

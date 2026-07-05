@@ -10,14 +10,56 @@ import (
 	"strings"
 )
 
+var conformanceFamilies = []string{
+	"load-validity-metadata",
+	"skills-index-command-adapters",
+	"docs-currency-token-diet",
+	"workflow-guidance-anchors",
+	"coverage-map-validation",
+	"line-routing",
+	"package-core-guard",
+}
+
 func RunConformance(root, kitRoot string) []string {
 	var diags []string
+	diags = append(diags, checkConformanceCanaryFamilies(kitRoot)...)
 	diags = append(diags, checkLoadValidityMetadata(root)...)
 	diags = append(diags, checkSkillsIndexAndCommandAdapters(root)...)
 	diags = append(diags, checkDocsCurrencyAndWorkflow(root, kitRoot)...)
 	diags = append(diags, checkLineRouting(root)...)
 	diags = append(diags, checkPackageCoreAndGuards(root)...)
 	return diags
+}
+
+func checkConformanceCanaryFamilies(kitRoot string) []string {
+	var diags []string
+	for _, family := range conformanceFamilies {
+		familyDir := filepath.Join(kitRoot, "tests", "canary", family)
+		entries, err := os.ReadDir(familyDir)
+		if err != nil {
+			diags = append(diags, fmt.Sprintf("canary conformance family %q has no fixture directories under %s", family, filepath.ToSlash(filepath.Join("tests", "canary", family))))
+			continue
+		}
+		count := 0
+		for _, entry := range entries {
+			if entry.IsDir() {
+				count++
+			}
+		}
+		if count == 0 {
+			diags = append(diags, fmt.Sprintf("canary conformance family %q has no fixture directories under %s", family, filepath.ToSlash(filepath.Join("tests", "canary", family))))
+		}
+	}
+	return diags
+}
+
+func isConformanceFamily(family string) bool {
+	for _, candidate := range conformanceFamilies {
+		if family == candidate {
+			return true
+		}
+	}
+	return false
 }
 
 func containsDiagnostic(diags []string, want string) bool {

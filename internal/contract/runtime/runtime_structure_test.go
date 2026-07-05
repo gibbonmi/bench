@@ -1,20 +1,21 @@
-package contract
+package runtime
 
 import (
 	"fmt"
+	"github.com/gibbonmi/bench/internal/contract"
 	"testing"
 )
 
 func TestRuntimeStructureContracts(t *testing.T) {
-	skipIfSubjectBenchMissing(t)
+	contract.SkipIfSubjectBenchMissing(t)
 	t.Parallel()
-	runParallel(t, "bench structure shell-file contract", testRuntimeStructureShellFile)
-	runParallel(t, "bench structure budgets contract", testRuntimeStructureBudgets)
-	runParallel(t, "bench structure path-with-spaces contract", testRuntimeStructurePathWithSpaces)
+	contract.RunParallel(t, "bench structure shell-file contract", testRuntimeStructureShellFile)
+	contract.RunParallel(t, "bench structure budgets contract", testRuntimeStructureBudgets)
+	contract.RunParallel(t, "bench structure path-with-spaces contract", testRuntimeStructurePathWithSpaces)
 }
 
 func testRuntimeStructureShellFile(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.WriteFile("big.sh", repeatLines(401, "x=\n"))
 	f.Git("add", "big.sh")
 	probe := f.Bench("structure")
@@ -25,7 +26,7 @@ func testRuntimeStructureShellFile(t *testing.T) {
 }
 
 func testRuntimeStructureBudgets(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.WriteFile("big.sh", repeatLines(401, "x=\n"))
 	f.WriteFile("mid.sh", repeatLines(200, "y=\n"))
 	for i := 1; i <= 13; i++ {
@@ -38,14 +39,14 @@ func testRuntimeStructureBudgets(t *testing.T) {
 		t.Fatal("override below the global cap did not fail structure")
 	}
 	out := probe.Stdout + probe.Stderr
-	requireContains(t, out, "ignoring malformed line")
-	requireNotContains(t, out, "big.sh")
-	requireNotContains(t, out, "DIR CROWDED")
-	requireContains(t, out, "200 lines (max 100)   mid.sh")
+	contract.RequireContains(t, out, "ignoring malformed line")
+	contract.RequireNotContains(t, out, "big.sh")
+	contract.RequireNotContains(t, out, "DIR CROWDED")
+	contract.RequireContains(t, out, "200 lines (max 100)   mid.sh")
 }
 
 func testRuntimeStructurePathWithSpaces(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	for i := 1; i <= 13; i++ {
 		f.WriteFile(fmt.Sprintf("space dir/file%d.sh", i), fmt.Sprintf("x=%d\n", i))
 	}
@@ -55,7 +56,7 @@ func testRuntimeStructurePathWithSpaces(t *testing.T) {
 		t.Fatalf("crowded path-with-spaces directory did not fail structure\nstdout:\n%s\nstderr:\n%s", probe.Stdout, probe.Stderr)
 	}
 	out := probe.Stdout + probe.Stderr
-	requireContains(t, out, "space dir/")
-	requireNotContains(t, out, "   ./")
-	requireNotContains(t, out, "   dir/")
+	contract.RequireContains(t, out, "space dir/")
+	contract.RequireNotContains(t, out, "   ./")
+	contract.RequireNotContains(t, out, "   dir/")
 }

@@ -9,6 +9,8 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 )
 
+const seedCanaryPath = "tests/canary/example/example"
+
 func Init(args []string, stdout, stderr io.Writer) int {
 	if len(args) > 0 {
 		fmt.Fprintln(stderr, "usage: bench init")
@@ -44,7 +46,7 @@ func Init(args []string, stdout, stderr io.Writer) int {
 		}
 		fmt.Fprintln(stdout, "scaffolded .bench/gate.sh - red until you replace the sentinel with real checks")
 	}
-	canaryDir := filepath.Join(root, "tests", "canary", "example")
+	canaryDir := filepath.Join(root, filepath.FromSlash(seedCanaryPath))
 	if _, err := os.Lstat(canaryDir); os.IsNotExist(err) {
 		if err := os.MkdirAll(filepath.Join(canaryDir, "files"), 0o755); err != nil {
 			fmt.Fprintln(stderr, err)
@@ -58,7 +60,7 @@ func Init(args []string, stdout, stderr io.Writer) int {
 			fmt.Fprintln(stderr, err)
 			return 1
 		}
-		fmt.Fprintln(stdout, "scaffolded tests/canary/example - the seed canary; copy it for each real check")
+		fmt.Fprintf(stdout, "scaffolded %s - the seed canary; copy it for each real check\n", seedCanaryPath)
 	}
 	learnings := filepath.Join(root, ".bench", "learnings.md")
 	if _, err := os.Lstat(learnings); os.IsNotExist(err) {
@@ -90,7 +92,7 @@ err() { echo "gate: $*" >&2; fail=1; }
 # work against an empty gate. Delete this one line once a real check exists above.
 err "configure .bench/gate.sh - replace this sentinel with real checks"  # BENCH_SENTINEL
 
-# Example check + its seed canary (tests/canary/example) are the pattern to copy: run a
+# Example check + its seed canary (` + seedCanaryPath + `) are the pattern to copy: run a
 # check, err on failure, and add a canary that proves it bites. This one fails if a
 # forbidden marker file is present; the seed fixture plants that file so the canary can
 # prove the check still bites. Replace it with your real checks - and keep a canary for

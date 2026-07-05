@@ -1,24 +1,25 @@
-package contract
+package axi
 
 import (
+	"github.com/gibbonmi/bench/internal/contract"
 	"strings"
 	"testing"
 )
 
 func TestAXIWave2Contracts(t *testing.T) {
 	t.Parallel()
-	skipIfSubjectBenchMissing(t)
-	runParallel(t, "AXI diff recorded-base contract", testAXIDiffRecordedBase)
-	runParallel(t, "AXI diff fallback/shape contract", testAXIDiffFallbackShape)
-	runParallel(t, "AXI diff error-posture contract", testAXIDiffErrorPosture)
-	runParallel(t, "AXI coverage extraction contract", testAXICoverageExtraction)
-	runParallel(t, "AXI coverage state/error contract", testAXICoverageStateError)
-	runParallel(t, "AXI coverage --check validation contract", testAXICoverageCheckValidation)
+	contract.SkipIfSubjectBenchMissing(t)
+	contract.RunParallel(t, "AXI diff recorded-base contract", testAXIDiffRecordedBase)
+	contract.RunParallel(t, "AXI diff fallback/shape contract", testAXIDiffFallbackShape)
+	contract.RunParallel(t, "AXI diff error-posture contract", testAXIDiffErrorPosture)
+	contract.RunParallel(t, "AXI coverage extraction contract", testAXICoverageExtraction)
+	contract.RunParallel(t, "AXI coverage state/error contract", testAXICoverageStateError)
+	contract.RunParallel(t, "AXI coverage --check validation contract", testAXICoverageCheckValidation)
 }
 
 func testAXIDiffRecordedBase(t *testing.T) {
-	noteContractFailure(t, "AXI diff recorded-base contract failed")
-	f := NewFixture(t)
+	contract.NoteContractFailure(t, "AXI diff recorded-base contract failed")
+	f := contract.NewFixture(t)
 	f.WriteFile("README.md", "r\n")
 	f.CommitAll("c1")
 	f.Git("branch", "-m", "main")
@@ -56,7 +57,7 @@ func testAXIDiffRecordedBase(t *testing.T) {
 }
 
 func testAXIDiffFallbackShape(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.WriteFile("README.md", "r\n")
 	f.CommitAll("c1")
 	f.Git("branch", "-m", "main")
@@ -68,7 +69,7 @@ func testAXIDiffFallbackShape(t *testing.T) {
 	f.WriteFile("a\"q.txt", "q\n")
 	f.CommitAll("c2")
 
-	out := f.Run("bash", "-c", "cd sub/deeper && "+shellQuote(SubjectRoot(t)+"/bin/bench.sh")+" diff")
+	out := f.Run("bash", "-c", "cd sub/deeper && "+shellQuote(contract.SubjectRoot(t)+"/bin/bench.sh")+" diff")
 
 	out.RequireExit(0)
 	requireOutputLine(t, out, "base: "+c1)
@@ -93,7 +94,7 @@ func testAXIDiffFallbackShape(t *testing.T) {
 }
 
 func testAXIDiffErrorPosture(t *testing.T) {
-	f := NewFixture(t, WithNoRepo())
+	f := contract.NewFixture(t, contract.WithNoRepo())
 
 	out := f.Bench("diff")
 
@@ -117,8 +118,8 @@ func testAXIDiffErrorPosture(t *testing.T) {
 }
 
 func testAXICoverageExtraction(t *testing.T) {
-	noteContractFailure(t, "AXI coverage extraction contract failed")
-	f := NewFixture(t)
+	contract.NoteContractFailure(t, "AXI coverage extraction contract failed")
+	f := contract.NewFixture(t)
 	spec := `# t
 
 ## User stories
@@ -156,7 +157,7 @@ func testAXICoverageExtraction(t *testing.T) {
 }
 
 func testAXICoverageStateError(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.WriteFile("specs/h.md", "# h\n\n<!-- coverage-map: historical -->\n\n### Acceptance coverage map\n| a |\n")
 
 	out := f.Bench("coverage", "specs/h.md")
@@ -187,7 +188,7 @@ func testAXICoverageStateError(t *testing.T) {
 }
 
 func testAXICoverageCheckValidation(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	stories := "## User stories\n1. As a, I want b, so c.\n2. As d, I want e, so f.\n3. As g, I want h, so i.\n"
 	header := "| story | behavior | seam | red signal | why it catches the failure |\n|---|---|---|---|---|"
 	f.WriteFile("specs/v.md", "# v\n\n"+stories+"\n### Acceptance coverage map\n"+header+"\n| 1, 2–3 | b | s | r | w |\n")
@@ -254,7 +255,7 @@ func testAXICoverageCheckValidation(t *testing.T) {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
-			f := NewFixture(t)
+			f := contract.NewFixture(t)
 			f.WriteFile(c.path, c.body)
 
 			out := f.Bench("coverage", "--check", c.path)
@@ -265,7 +266,7 @@ func testAXICoverageCheckValidation(t *testing.T) {
 	}
 }
 
-func requireOutputLine(t *testing.T, probe Probe, line string) {
+func requireOutputLine(t *testing.T, probe contract.Probe, line string) {
 	t.Helper()
 	for _, got := range strings.Split(strings.TrimSuffix(probe.Stdout, "\n"), "\n") {
 		if got == line {
@@ -275,7 +276,7 @@ func requireOutputLine(t *testing.T, probe Probe, line string) {
 	t.Fatalf("missing output line %q\nstdout:\n%s\nstderr:\n%s", line, probe.Stdout, probe.Stderr)
 }
 
-func requireOutputPrefix(t *testing.T, probe Probe, prefix string) {
+func requireOutputPrefix(t *testing.T, probe contract.Probe, prefix string) {
 	t.Helper()
 	for _, got := range strings.Split(strings.TrimSuffix(probe.Stdout, "\n"), "\n") {
 		if strings.HasPrefix(got, prefix) {
@@ -285,7 +286,7 @@ func requireOutputPrefix(t *testing.T, probe Probe, prefix string) {
 	t.Fatalf("missing output line with prefix %q\nstdout:\n%s\nstderr:\n%s", prefix, probe.Stdout, probe.Stderr)
 }
 
-func requireNoOutput(t *testing.T, probe Probe) {
+func requireNoOutput(t *testing.T, probe contract.Probe) {
 	t.Helper()
 	if probe.Stdout != "" || probe.Stderr != "" {
 		t.Fatalf("expected no output\nstdout:\n%s\nstderr:\n%s", probe.Stdout, probe.Stderr)

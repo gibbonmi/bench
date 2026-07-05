@@ -83,6 +83,11 @@ func NewFixture(t testing.TB, opts ...FixtureOption) Fixture {
 	return f
 }
 
+func NewFixtureAt(t testing.TB, root string, env map[string]string) Fixture {
+	t.Helper()
+	return Fixture{t: t, Root: root, Env: env}
+}
+
 func (f Fixture) Run(name string, args ...string) Probe {
 	return f.RunEnv(nil, name, args...)
 }
@@ -104,6 +109,59 @@ func envToSpec(env map[string]string) Env {
 		out[k] = &value
 	}
 	return out
+}
+
+func RunAt(t testing.TB, f Fixture, dir string, env map[string]string, name string, args ...string) Probe {
+	t.Helper()
+	return runFixtureCommand(t, f, dir, env, "", name, args...)
+}
+
+func RunAtWithInput(t testing.TB, f Fixture, dir string, env map[string]string, stdin, name string, args ...string) Probe {
+	t.Helper()
+	return runFixtureCommand(t, f, dir, env, stdin, name, args...)
+}
+
+func WriteExecutableAbs(t testing.TB, path, contents string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatalf("mkdir %s: %v", filepath.Dir(path), err)
+	}
+	if err := os.WriteFile(path, []byte(contents), 0o755); err != nil {
+		t.Fatalf("write executable %s: %v", path, err)
+	}
+}
+
+func WriteFileAbs(t testing.TB, path, contents string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatalf("mkdir %s: %v", filepath.Dir(path), err)
+	}
+	if err := os.WriteFile(path, []byte(contents), 0o644); err != nil {
+		t.Fatalf("write %s: %v", path, err)
+	}
+}
+
+func ReadFileAbs(t testing.TB, path string) string {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	return string(data)
+}
+
+func Mkdir(t testing.TB, path string) {
+	t.Helper()
+	if err := os.MkdirAll(path, 0o755); err != nil {
+		t.Fatalf("mkdir %s: %v", path, err)
+	}
+}
+
+func Remove(t testing.TB, path string) {
+	t.Helper()
+	if err := os.RemoveAll(path); err != nil {
+		t.Fatalf("remove %s: %v", path, err)
+	}
 }
 
 func runFixtureCommand(t testing.TB, f Fixture, dir string, env map[string]string, stdin, name string, args ...string) Probe {
@@ -215,9 +273,27 @@ func noteContractFailure(t testing.TB, msg string) {
 	})
 }
 
+func NoteContractFailure(t testing.TB, msg string) {
+	t.Helper()
+	noteContractFailure(t, msg)
+}
+
+func RunParallel(t *testing.T, name string, fn func(*testing.T)) {
+	t.Helper()
+	t.Run(name, func(t *testing.T) {
+		t.Parallel()
+		fn(t)
+	})
+}
+
 func skipIfSubjectBenchMissing(t testing.TB) {
 	t.Helper()
 	skipIfSubjectFileMissing(t, "bin/bench.sh")
+}
+
+func SkipIfSubjectBenchMissing(t testing.TB) {
+	t.Helper()
+	skipIfSubjectBenchMissing(t)
 }
 
 func skipIfSubjectFileMissing(t testing.TB, rel string) {
@@ -230,25 +306,9 @@ func skipIfSubjectFileMissing(t testing.TB, rel string) {
 	}
 }
 
-func (p Probe) RequireExit(want int) {
-	if p.ExitCode != want {
-		p.t.Helper()
-		p.t.Fatalf("exit code = %d, want %d\nstdout:\n%s\nstderr:\n%s", p.ExitCode, want, p.Stdout, p.Stderr)
-	}
-}
-
-func (p Probe) RequireContains(haystack, needle string) {
-	p.t.Helper()
-	if !strings.Contains(haystack, needle) {
-		p.t.Fatalf("missing %q\nstdout:\n%s\nstderr:\n%s", needle, p.Stdout, p.Stderr)
-	}
-}
-
-func (p Probe) RequireNotContains(haystack, needle string) {
-	p.t.Helper()
-	if strings.Contains(haystack, needle) {
-		p.t.Fatalf("unexpected %q\nstdout:\n%s\nstderr:\n%s", needle, p.Stdout, p.Stderr)
-	}
+func SkipIfSubjectFileMissing(t testing.TB, rel string) {
+	t.Helper()
+	skipIfSubjectFileMissing(t, rel)
 }
 
 func mergeEnv(base map[string]string, overrides Env) []string {
@@ -322,4 +382,9 @@ func isolatedEnv(t testing.TB, root string) map[string]string {
 		"GIT_CONFIG_NOSYSTEM": "1",
 		"BENCH_HOME":          benchHome,
 	}
+}
+
+func IsolatedEnv(t testing.TB, root string) map[string]string {
+	t.Helper()
+	return isolatedEnv(t, root)
 }

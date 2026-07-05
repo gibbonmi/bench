@@ -1,10 +1,14 @@
 package adopt
 
 import (
+	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/canary"
 )
 
 func TestRewriteAgentsBlockEdges(t *testing.T) {
@@ -204,6 +208,7 @@ func TestScaffoldGateUsesCanarySubcommand(t *testing.T) {
 	gate := scaffoldGate()
 	mustContain := []string{
 		"BENCH_SENTINEL",
+		seedCanaryPath,
 		"[ -e DO-NOT-SHIP ] && err \"example check: DO-NOT-SHIP marker file present\"",
 		"bench canary \"$root\" || err \"canary sweep failed\"",
 		"BENCH_CANARY_INNER",
@@ -218,4 +223,61 @@ func TestScaffoldGateUsesCanarySubcommand(t *testing.T) {
 			t.Fatalf("scaffold gate still contains retired sourcing API %q:\n%s", forbidden, gate)
 		}
 	}
+}
+
+func TestInitScaffoldsTwoLevelSeedCanary(t *testing.T) {
+	root := t.TempDir()
+	cmd := exec.Command("git", "-C", root, "init", "-q")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v\n%s", err, out)
+	}
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("BENCH_KIT", filepath.Clean(filepath.Join(wd, "..", "..")))
+	t.Chdir(root)
+
+	var stdout, stderr bytes.Buffer
+	if code := Init(nil, &stdout, &stderr); code != 0 {
+		t.Fatalf("Init exit = %d, stderr:\n%s", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "scaffolded "+seedCanaryPath) {
+		t.Fatalf("Init stdout missing seed canary path %q:\n%s", seedCanaryPath, stdout.String())
+	}
+
+	seedDir := filepath.Join(root, filepath.FromSlash(seedCanaryPath))
+	if got := readFile(t, filepath.Join(seedDir, "EXPECT")); got != "example check: DO-NOT-SHIP marker file present\n" {
+		t.Fatalf("seed EXPECT = %q", got)
+	}
+	if got := readFile(t, filepath.Join(seedDir, "files", "DO-NOT-SHIP")); !strings.Contains(got, "seed example check") {
+		t.Fatalf("seed marker file text = %q", got)
+	}
+	if _, err := os.Stat(filepath.Join(root, "tests", "canary", "example", "EXPECT")); !os.IsNotExist(err) {
+		t.Fatalf("legacy flat seed EXPECT exists or stat failed unexpectedly: %v", err)
+	}
+
+	var fixtureCalls []string
+	err = canary.Sweep(root, func(call canary.RunCall) canary.RunResult {
+		if call.FixtureDir == "" {
+			return canary.RunResult{ExitCode: 0, Output: "baseline without seed expectation"}
+		}
+		fixtureCalls = append(fixtureCalls, call.FixtureDir)
+		return canary.RunResult{ExitCode: 1, Output: "example check: DO-NOT-SHIP marker file present"}
+	})
+	if err != nil {
+		t.Fatalf("canary sweep over initialized seed failed: %v", err)
+	}
+	if len(fixtureCalls) != 1 || fixtureCalls[0] != seedDir {
+		t.Fatalf("fixture calls = %#v, want only %q", fixtureCalls, seedDir)
+	}
+}
+
+func readFile(t *testing.T, path string) string {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(%s): %v", path, err)
+	}
+	return string(data)
 }

@@ -1,6 +1,7 @@
-package contract
+package runtime
 
 import (
+	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -9,9 +10,9 @@ import (
 	"time"
 )
 
-func shiftFixture(t *testing.T, gate string) Fixture {
+func shiftFixture(t *testing.T, gate string) contract.Fixture {
 	t.Helper()
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.Env["GIT_AUTHOR_NAME"] = "Bench"
 	f.Env["GIT_AUTHOR_EMAIL"] = "bench@local"
 	f.Env["GIT_COMMITTER_NAME"] = "Bench"
@@ -41,7 +42,7 @@ func shiftWorktree(t *testing.T, output string) string {
 	return m[1]
 }
 
-func requireNoWorktreeBranch(t *testing.T, f Fixture, branch string) {
+func requireNoWorktreeBranch(t *testing.T, f contract.Fixture, branch string) {
 	t.Helper()
 	out := f.Git("worktree", "list", "--porcelain").Stdout
 	if strings.Contains(out, "branch refs/heads/"+branch) {
@@ -78,7 +79,7 @@ func requireEqual(t *testing.T, got, want, msg string) {
 
 func runGitAt(t *testing.T, root string, args ...string) string {
 	t.Helper()
-	f := Fixture{t: t, Root: root, Env: isolatedEnv(t, root)}
+	f := contract.NewFixtureAt(t, root, contract.IsolatedEnv(t, root))
 	return f.Git(args...).Stdout
 }
 

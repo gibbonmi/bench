@@ -1,20 +1,21 @@
-package contract
+package surface
 
 import (
+	"github.com/gibbonmi/bench/internal/contract"
 	"strings"
 	"testing"
 )
 
 func TestLinkMarkerFenceContracts(t *testing.T) {
 	t.Parallel()
-	skipIfSubjectBenchMissing(t)
-	runParallel(t, "bench link malformed marker contract failed", testLinkMalformedMarker)
-	runParallel(t, "bench link fenced-marker contract failed", testLinkFencedMarker)
-	runParallel(t, "bench link unclosed-fence contract failed", testLinkUnclosedFence)
+	contract.SkipIfSubjectBenchMissing(t)
+	contract.RunParallel(t, "bench link malformed marker contract failed", testLinkMalformedMarker)
+	contract.RunParallel(t, "bench link fenced-marker contract failed", testLinkFencedMarker)
+	contract.RunParallel(t, "bench link unclosed-fence contract failed", testLinkUnclosedFence)
 }
 
 func testLinkMalformedMarker(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.WriteFile("AGENTS.md", "PROJECT BEFORE\n<!-- bench:end -->\nPROJECT MIDDLE\n<!-- bench:start -->\nPROJECT AFTER\n")
 
 	probe := f.Bench("link")
@@ -27,7 +28,7 @@ func testLinkMalformedMarker(t *testing.T) {
 }
 
 func testLinkFencedMarker(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.WriteFile("AGENTS.md", "# Project rules\n\nHow Bench marks its block:\n\n```\n<!-- bench:start -->\nmanaged content example\n<!-- bench:end -->\n```\n\nKEEP-ME project text.\n")
 
 	linkOK(t, f)
@@ -40,7 +41,7 @@ func testLinkFencedMarker(t *testing.T) {
 }
 
 func testLinkUnclosedFence(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.WriteFile("AGENTS.md", "# Project rules\n\nBroken docs with an unclosed fence:\n\n```\n<!-- bench:start -->\n<!-- bench:end -->\n\nKEEP-ME text after the unclosed fence.\n")
 
 	probe := f.Bench("link")

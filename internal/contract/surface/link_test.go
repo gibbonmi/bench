@@ -1,8 +1,9 @@
-package contract
+package surface
 
 import (
 	"crypto/sha256"
 	"fmt"
+	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,23 +13,23 @@ import (
 
 func TestLinkContracts(t *testing.T) {
 	t.Parallel()
-	skipIfSubjectBenchMissing(t)
-	runParallel(t, "bench init does not scaffold .bench/learnings.md (self-learning journal)", testInitScaffoldsLearnings)
-	runParallel(t, "a second bench init clobbered an existing .bench/gate.sh", testInitExistingGateIdempotence)
-	runParallel(t, "bench link safe fresh/relink contract failed", testLinkSafeFreshRelink)
-	runParallel(t, "bench link existing AGENTS.md contract failed", testLinkExistingAgents)
-	runParallel(t, "bench link conflict contract failed", testLinkConflictWithoutManifest)
-	runParallel(t, "bench link modified-managed contract failed", testLinkModifiedManaged)
-	runParallel(t, "bench linked hooks local-CLI contract failed", testLinkedHooksLocalCLI)
-	runParallel(t, "bench link metachar kit-path contract failed", testLinkMetacharKitPath)
-	runParallel(t, "bench link worktree contract failed", testLinkWorktree)
-	runParallel(t, "bench link hooksPath contract failed", testLinkHooksPath)
-	runParallel(t, "bench link default-branch resolution contract failed", testLinkDefaultBranchResolution)
-	runParallel(t, "bench link hooksPath conflict contract failed", testLinkHooksPathConflict)
+	contract.SkipIfSubjectBenchMissing(t)
+	contract.RunParallel(t, "bench init does not scaffold .bench/learnings.md (self-learning journal)", testInitScaffoldsLearnings)
+	contract.RunParallel(t, "a second bench init clobbered an existing .bench/gate.sh", testInitExistingGateIdempotence)
+	contract.RunParallel(t, "bench link safe fresh/relink contract failed", testLinkSafeFreshRelink)
+	contract.RunParallel(t, "bench link existing AGENTS.md contract failed", testLinkExistingAgents)
+	contract.RunParallel(t, "bench link conflict contract failed", testLinkConflictWithoutManifest)
+	contract.RunParallel(t, "bench link modified-managed contract failed", testLinkModifiedManaged)
+	contract.RunParallel(t, "bench linked hooks local-CLI contract failed", testLinkedHooksLocalCLI)
+	contract.RunParallel(t, "bench link metachar kit-path contract failed", testLinkMetacharKitPath)
+	contract.RunParallel(t, "bench link worktree contract failed", testLinkWorktree)
+	contract.RunParallel(t, "bench link hooksPath contract failed", testLinkHooksPath)
+	contract.RunParallel(t, "bench link default-branch resolution contract failed", testLinkDefaultBranchResolution)
+	contract.RunParallel(t, "bench link hooksPath conflict contract failed", testLinkHooksPathConflict)
 }
 
 func testInitScaffoldsLearnings(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 
 	f.Bench("init").RequireExit(0)
 
@@ -38,7 +39,7 @@ func testInitScaffoldsLearnings(t *testing.T) {
 }
 
 func testInitExistingGateIdempotence(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 
 	f.Bench("init").RequireExit(0)
 	appendFile(t, filepath.Join(f.Root, ".bench", "gate.sh"), "# configured by hand\n")
@@ -48,7 +49,7 @@ func testInitExistingGateIdempotence(t *testing.T) {
 }
 
 func testLinkSafeFreshRelink(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 
 	linkOK(t, f)
 
@@ -110,7 +111,7 @@ func testLinkSafeFreshRelink(t *testing.T) {
 }
 
 func testLinkExistingAgents(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.WriteFile("AGENTS.md", "PROJECT RULES\n")
 
 	linkOK(t, f)
@@ -120,7 +121,7 @@ func testLinkExistingAgents(t *testing.T) {
 }
 
 func testLinkConflictWithoutManifest(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.WriteFile(".agents/commands/bench-implement-spec.md", "project command\n")
 
 	probe := f.Bench("link")
@@ -134,7 +135,7 @@ func testLinkConflictWithoutManifest(t *testing.T) {
 }
 
 func testLinkModifiedManaged(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	linkOK(t, f)
 	appendFile(t, filepath.Join(f.Root, ".agents", "commands", "bench-implement-spec.md"), "\nlocal edit\n")
 
@@ -147,7 +148,7 @@ func testLinkModifiedManaged(t *testing.T) {
 }
 
 func testLinkedHooksLocalCLI(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	linkOK(t, f)
 	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\nexit 0\n")
 	f.CommitAll("linked")
@@ -157,7 +158,7 @@ func testLinkedHooksLocalCLI(t *testing.T) {
 }
 
 func testLinkMetacharKitPath(t *testing.T) {
-	f := NewFixture(t, WithNoRepo())
+	f := contract.NewFixture(t, contract.WithNoRepo())
 	kitcopy := filepath.Join(f.Root, "kit[1]")
 	for _, dir := range []string{
 		filepath.Join(kitcopy, ".bench"),
@@ -167,7 +168,7 @@ func testLinkMetacharKitPath(t *testing.T) {
 			t.Fatalf("mkdir %s: %v", dir, err)
 		}
 	}
-	root := KitRoot(t)
+	root := contract.KitRoot(t)
 	copyPaths(t, kitcopy,
 		filepath.Join(root, "bin"),
 		filepath.Join(root, ".agents"),
@@ -198,7 +199,7 @@ func testLinkMetacharKitPath(t *testing.T) {
 }
 
 func testLinkWorktree(t *testing.T) {
-	f := NewFixture(t, WithNoRepo())
+	f := contract.NewFixture(t, contract.WithNoRepo())
 	mainRepo := filepath.Join(f.Root, "main-repo")
 	f.Run("git", "init", "-q", mainRepo).RequireExit(0)
 	main := linkFixtureAt(t, mainRepo, f.Env)
@@ -216,7 +217,7 @@ func testLinkWorktree(t *testing.T) {
 }
 
 func testLinkHooksPath(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.Git("config", "core.hooksPath", ".husky")
 
 	linkOK(t, f)
@@ -226,7 +227,7 @@ func testLinkHooksPath(t *testing.T) {
 }
 
 func testLinkDefaultBranchResolution(t *testing.T) {
-	f := NewFixture(t, WithNoRepo())
+	f := contract.NewFixture(t, contract.WithNoRepo())
 	f.Run("git", "init", "-q", "--bare", "-b", "master", "remote.git").RequireExit(0)
 	f.Run("git", "init", "-q", "-b", "master", "repo").RequireExit(0)
 	repo := linkFixtureAt(t, filepath.Join(f.Root, "repo"), f.Env)
@@ -243,7 +244,7 @@ func testLinkDefaultBranchResolution(t *testing.T) {
 }
 
 func testLinkHooksPathConflict(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.Git("config", "core.hooksPath", ".husky")
 	f.WriteExecutable(".husky/pre-push", "#!/bin/sh\nexit 0\n")
 
@@ -256,26 +257,26 @@ func testLinkHooksPathConflict(t *testing.T) {
 	requireFixtureFileContains(t, f, ".husky/pre-push", "exit 0", "hooksPath conflict overwrote the project hook")
 }
 
-func linkOK(t *testing.T, f Fixture) Probe {
+func linkOK(t *testing.T, f contract.Fixture) contract.Probe {
 	t.Helper()
 	probe := f.Bench("link")
 	probe.RequireExit(0)
 	return probe
 }
 
-func linkFixtureAt(t testing.TB, root string, env map[string]string) Fixture {
+func linkFixtureAt(t testing.TB, root string, env map[string]string) contract.Fixture {
 	t.Helper()
-	return Fixture{t: t, Root: root, Env: env}
+	return contract.NewFixtureAt(t, root, env)
 }
 
-func requireLinkFile(t *testing.T, f Fixture, rel string) {
+func requireLinkFile(t *testing.T, f contract.Fixture, rel string) {
 	t.Helper()
 	if !f.Exists(rel) {
 		t.Fatalf("missing %s", rel)
 	}
 }
 
-func requireLinkNotExists(t *testing.T, f Fixture, rel, msg string) {
+func requireLinkNotExists(t *testing.T, f contract.Fixture, rel, msg string) {
 	t.Helper()
 	if _, err := os.Lstat(filepath.Join(f.Root, filepath.FromSlash(rel))); err == nil {
 		t.Fatal(msg)
@@ -304,7 +305,7 @@ func requireNotSymlink(t *testing.T, path, msg string) {
 	}
 }
 
-func requireFixtureFileContains(t *testing.T, f Fixture, rel, needle, msg string) {
+func requireFixtureFileContains(t *testing.T, f contract.Fixture, rel, needle, msg string) {
 	t.Helper()
 	data := f.ReadFile(rel)
 	if !strings.Contains(data, needle) {
@@ -312,7 +313,7 @@ func requireFixtureFileContains(t *testing.T, f Fixture, rel, needle, msg string
 	}
 }
 
-func requireFixtureFileNotContains(t *testing.T, f Fixture, rel, needle, msg string) {
+func requireFixtureFileNotContains(t *testing.T, f contract.Fixture, rel, needle, msg string) {
 	t.Helper()
 	data := f.ReadFile(rel)
 	if strings.Contains(data, needle) {
@@ -320,7 +321,7 @@ func requireFixtureFileNotContains(t *testing.T, f Fixture, rel, needle, msg str
 	}
 }
 
-func requireLiteralCount(t *testing.T, f Fixture, rel, needle string, want int, msg string) {
+func requireLiteralCount(t *testing.T, f contract.Fixture, rel, needle string, want int, msg string) {
 	t.Helper()
 	got := strings.Count(f.ReadFile(rel), needle)
 	if got != want {

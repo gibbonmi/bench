@@ -1,6 +1,7 @@
-package contract
+package runtime
 
 import (
+	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,18 +10,18 @@ import (
 
 func TestRuntimeShiftLoopContracts(t *testing.T) {
 	t.Parallel()
-	runParallel(t, "bench shift gated-loop contract", testShiftGatedLoop)
-	runParallel(t, "bench shift worktree-isolation contract", testShiftWorktreeIsolation)
-	runParallel(t, "bench shift stage-touched contract", testShiftStageTouched)
-	runParallel(t, "bench shift red-rollback isolation contract", testShiftRedRollback)
-	runParallel(t, "bench shift commit-failure contract", testShiftCommitFailure)
-	runParallel(t, "bench shift touched-scope structure contract", testShiftTouchedScopeStructure)
-	runParallel(t, "bench shift refactor no-op contract", testShiftRefactorNoop)
-	runParallel(t, "bench shift interrupt cleanup contract", testShiftInterruptCleanup)
-	runParallel(t, "bench shift gate-interrupt cleanup contract", testShiftGateInterruptCleanup)
-	runParallel(t, "bench shift done.sh early-completion contract", testShiftDoneEarlyCompletion)
-	runParallel(t, "bench shift scratch-survival contract", testShiftScratchSurvival)
-	runParallel(t, "bench shift refactor-prompt scope contract", testShiftRefactorPromptScope)
+	contract.RunParallel(t, "bench shift gated-loop contract", testShiftGatedLoop)
+	contract.RunParallel(t, "bench shift worktree-isolation contract", testShiftWorktreeIsolation)
+	contract.RunParallel(t, "bench shift stage-touched contract", testShiftStageTouched)
+	contract.RunParallel(t, "bench shift red-rollback isolation contract", testShiftRedRollback)
+	contract.RunParallel(t, "bench shift commit-failure contract", testShiftCommitFailure)
+	contract.RunParallel(t, "bench shift touched-scope structure contract", testShiftTouchedScopeStructure)
+	contract.RunParallel(t, "bench shift refactor no-op contract", testShiftRefactorNoop)
+	contract.RunParallel(t, "bench shift interrupt cleanup contract", testShiftInterruptCleanup)
+	contract.RunParallel(t, "bench shift gate-interrupt cleanup contract", testShiftGateInterruptCleanup)
+	contract.RunParallel(t, "bench shift done.sh early-completion contract", testShiftDoneEarlyCompletion)
+	contract.RunParallel(t, "bench shift scratch-survival contract", testShiftScratchSurvival)
+	contract.RunParallel(t, "bench shift refactor-prompt scope contract", testShiftRefactorPromptScope)
 }
 
 func testShiftGatedLoop(t *testing.T) {

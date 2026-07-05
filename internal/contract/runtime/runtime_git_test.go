@@ -1,8 +1,9 @@
-package contract
+package runtime
 
 import (
 	"encoding/json"
 	"errors"
+	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,8 +11,8 @@ import (
 
 func TestRuntimeGitContracts(t *testing.T) {
 	t.Parallel()
-	skipIfSubjectBenchMissing(t)
-	runParallel(t, "block-dangerous-git allow/block matrix contract failed", testBlockDangerousGitMatrix)
+	contract.SkipIfSubjectBenchMissing(t)
+	contract.RunParallel(t, "block-dangerous-git allow/block matrix contract failed", testBlockDangerousGitMatrix)
 }
 
 func testBlockDangerousGitMatrix(t *testing.T) {
@@ -121,9 +122,9 @@ func runtimeGitMatrix() []runtimeGitCase {
 	}
 }
 
-func runtimeGitFixture(t *testing.T) Fixture {
+func runtimeGitFixture(t *testing.T) contract.Fixture {
 	t.Helper()
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	installFixtureBenchWrapper(t, f)
 	f.Git("-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "--allow-empty", "-m", "init")
 	f.GitAllow("branch", "-q", "main")
@@ -131,13 +132,13 @@ func runtimeGitFixture(t *testing.T) Fixture {
 	return f
 }
 
-func installFixtureBenchWrapper(t *testing.T, f Fixture) {
+func installFixtureBenchWrapper(t *testing.T, f contract.Fixture) {
 	t.Helper()
 	wrapper := filepath.Join(f.Root, ".bench", "bin", "bench.sh")
 	if err := os.MkdirAll(filepath.Dir(wrapper), 0o755); err != nil {
 		t.Fatalf("create fixture bench wrapper dir: %v", err)
 	}
-	target := filepath.Join(SubjectRoot(t), "bin", "bench.sh")
+	target := filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh")
 	if err := os.Symlink(target, wrapper); err != nil {
 		if !errors.Is(err, os.ErrExist) {
 			t.Fatalf("symlink fixture bench wrapper: %v", err)
@@ -156,7 +157,7 @@ func installFixtureBenchWrapper(t *testing.T, f Fixture) {
 	f.Env["PATH"] = bin + string(os.PathListSeparator) + os.Getenv("PATH")
 }
 
-func runGitGuard(t *testing.T, f Fixture, c runtimeGitCase) Probe {
+func runGitGuard(t *testing.T, f contract.Fixture, c runtimeGitCase) contract.Probe {
 	t.Helper()
 	envelope, err := json.Marshal(struct {
 		ToolInput struct {
@@ -173,5 +174,5 @@ func runGitGuard(t *testing.T, f Fixture, c runtimeGitCase) Probe {
 	if c.outsideRepo {
 		dir = t.TempDir()
 	}
-	return runFixtureCommand(t, f, dir, nil, string(append(envelope, '\n')), "bash", filepath.Join(SubjectRoot(t), ".bench", "hooks", "block-dangerous-git.sh"))
+	return contract.RunAtWithInput(t, f, dir, nil, string(append(envelope, '\n')), "bash", filepath.Join(contract.SubjectRoot(t), ".bench", "hooks", "block-dangerous-git.sh"))
 }

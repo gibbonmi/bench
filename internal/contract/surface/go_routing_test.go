@@ -1,7 +1,8 @@
-package contract
+package surface
 
 import (
 	"encoding/json"
+	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,15 +13,15 @@ import (
 
 func TestGoRoutingContracts(t *testing.T) {
 	t.Parallel()
-	skipIfSubjectBenchMissing(t)
-	runParallel(t, "bench version output contract", testGoRoutingVersionOutput)
-	runParallel(t, "bench version failed outside a git repo", testGoRoutingVersionOutsideRepo)
-	runParallel(t, "version-routing seam contract failed", testGoRoutingFabricatedVersionRouting)
-	runParallel(t, "linked-worktree binary-resolution contract failed", testGoRoutingLinkedWorktreeBinaryResolution)
+	contract.SkipIfSubjectBenchMissing(t)
+	contract.RunParallel(t, "bench version output contract", testGoRoutingVersionOutput)
+	contract.RunParallel(t, "bench version failed outside a git repo", testGoRoutingVersionOutsideRepo)
+	contract.RunParallel(t, "version-routing seam contract failed", testGoRoutingFabricatedVersionRouting)
+	contract.RunParallel(t, "linked-worktree binary-resolution contract failed", testGoRoutingLinkedWorktreeBinaryResolution)
 }
 
 func testGoRoutingVersionOutput(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	version := goRoutingPackageVersion(t)
 	want := "benchkit " + version + " (" + runtime.GOOS + "/" + runtime.GOARCH + ")"
 
@@ -37,7 +38,7 @@ func testGoRoutingVersionOutput(t *testing.T) {
 }
 
 func testGoRoutingVersionOutsideRepo(t *testing.T) {
-	f := NewFixture(t, WithNoRepo())
+	f := contract.NewFixture(t, contract.WithNoRepo())
 
 	out := f.Bench("version")
 
@@ -45,11 +46,11 @@ func testGoRoutingVersionOutsideRepo(t *testing.T) {
 }
 
 func testGoRoutingFabricatedVersionRouting(t *testing.T) {
-	f := NewFixture(t, WithNoRepo())
+	f := contract.NewFixture(t, contract.WithNoRepo())
 	kit := filepath.Join(f.Root, "a b", "kit")
-	goRoutingCopyTree(t, filepath.Join(SubjectRoot(t), "bin"), filepath.Join(kit, "bin"))
+	goRoutingCopyTree(t, filepath.Join(contract.SubjectRoot(t), "bin"), filepath.Join(kit, "bin"))
 	hostPackage := strings.TrimSpace(goRoutingNode(t, "process.stdout.write('@benchkit/'+process.platform+'-'+process.arch)"))
-	run := func(env map[string]string) Probe {
+	run := func(env map[string]string) contract.Probe {
 		return f.RunEnv(env, "bash", filepath.Join(kit, "bin", "bench.sh"), "version")
 	}
 
@@ -111,7 +112,7 @@ func testGoRoutingFabricatedVersionRouting(t *testing.T) {
 }
 
 func testGoRoutingLinkedWorktreeBinaryResolution(t *testing.T) {
-	f := NewFixture(t, WithNoRepo())
+	f := contract.NewFixture(t, contract.WithNoRepo())
 	main := filepath.Join(f.Root, "main")
 	linked := filepath.Join(f.Root, "linked")
 	if err := os.MkdirAll(main, 0o755); err != nil {
@@ -119,7 +120,7 @@ func testGoRoutingLinkedWorktreeBinaryResolution(t *testing.T) {
 	}
 	repo := linkFixtureAt(t, main, f.Env)
 	repo.Git("init", "-q")
-	goRoutingCopyTree(t, filepath.Join(SubjectRoot(t), "bin"), filepath.Join(main, "bin"))
+	goRoutingCopyTree(t, filepath.Join(contract.SubjectRoot(t), "bin"), filepath.Join(main, "bin"))
 	repo.Git("add", "-A")
 	repo.Git("-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "-m", "init")
 	goRoutingWriteStub(t, filepath.Join(main, "dist", "bench"), "mainbuild")
@@ -141,7 +142,7 @@ func testGoRoutingLinkedWorktreeBinaryResolution(t *testing.T) {
 
 func goRoutingPackageVersion(t testing.TB) string {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join(SubjectRoot(t), "package.json"))
+	data, err := os.ReadFile(filepath.Join(contract.SubjectRoot(t), "package.json"))
 	if err != nil {
 		t.Fatalf("read package.json: %v", err)
 	}

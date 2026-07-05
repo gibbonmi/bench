@@ -58,11 +58,3 @@ func TestBenchRunsKitWrapperFromFixture(t *testing.T) {
 	probe.RequireExit(0)
 	probe.RequireContains(probe.Stdout, "fixture gate cwd="+f.Root)
 }
-
-func runParallel(t *testing.T, name string, fn func(*testing.T)) {
-	t.Helper()
-	t.Run(name, func(t *testing.T) {
-		t.Parallel()
-		fn(t)
-	})
-}

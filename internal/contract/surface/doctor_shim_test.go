@@ -1,6 +1,7 @@
-package contract
+package surface
 
 import (
+	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,16 +10,16 @@ import (
 
 func TestDoctorShimContracts(t *testing.T) {
 	t.Parallel()
-	skipIfSubjectBenchMissing(t)
-	runParallel(t, "bench doctor shim stale-target contract", testDoctorShimStaleTarget)
-	runParallel(t, "bench doctor shim arg-passthrough contract", testDoctorShimArgPassthrough)
-	runParallel(t, "bench doctor postinstall contract", testDoctorPostinstall)
-	runParallel(t, "bench doctor session-start advisory contract", testDoctorSessionStartAdvisory)
+	contract.SkipIfSubjectBenchMissing(t)
+	contract.RunParallel(t, "bench doctor shim stale-target contract", testDoctorShimStaleTarget)
+	contract.RunParallel(t, "bench doctor shim arg-passthrough contract", testDoctorShimArgPassthrough)
+	contract.RunParallel(t, "bench doctor postinstall contract", testDoctorPostinstall)
+	contract.RunParallel(t, "bench doctor session-start advisory contract", testDoctorSessionStartAdvisory)
 }
 
 func testDoctorShimStaleTarget(t *testing.T) {
-	noteContractFailure(t, "stale-target shim printed no remedy")
-	f := NewFixture(t)
+	contract.NoteContractFailure(t, "stale-target shim printed no remedy")
+	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
 	shim := filepath.Join(f.Root, "shim")
@@ -32,8 +33,8 @@ func testDoctorShimStaleTarget(t *testing.T) {
 }
 
 func testDoctorShimArgPassthrough(t *testing.T) {
-	noteContractFailure(t, "shim mangled the args")
-	f := NewFixture(t)
+	contract.NoteContractFailure(t, "shim mangled the args")
+	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
 	stub := filepath.Join(f.Root, "stub")
@@ -49,8 +50,8 @@ func testDoctorShimArgPassthrough(t *testing.T) {
 }
 
 func testDoctorPostinstall(t *testing.T) {
-	noteContractFailure(t, "postinstall exited nonzero on a write failure")
-	f := NewFixture(t)
+	contract.NoteContractFailure(t, "postinstall exited nonzero on a write failure")
+	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	pkg := filepath.Join(f.Root, "pkg")
 	copyDoctorKit(t, pkg)
@@ -94,16 +95,16 @@ func testDoctorPostinstall(t *testing.T) {
 }
 
 func testDoctorSessionStartAdvisory(t *testing.T) {
-	noteContractFailure(t, "by-path session-start advisory omits the doctor pointer")
-	f := NewFixture(t, WithNoRepo())
+	contract.NoteContractFailure(t, "by-path session-start advisory omits the doctor pointer")
+	f := contract.NewFixture(t, contract.WithNoRepo())
 	repo := filepath.Join(f.Root, "repo")
 	if err := os.MkdirAll(filepath.Join(repo, "bin"), 0o755); err != nil {
 		t.Fatalf("create repo bin: %v", err)
 	}
 	copyBenchScripts(t, filepath.Join(repo, "bin"))
-	repoFixture := Fixture{t: t, Root: repo, Env: isolatedEnv(t, repo)}
+	repoFixture := contract.NewFixtureAt(t, repo, contract.IsolatedEnv(t, repo))
 	repoFixture.Run("git", "init", "-q").RequireExit(0)
-	hook := filepath.Join(SubjectRoot(t), ".bench", "hooks", "session-start.sh")
+	hook := filepath.Join(contract.SubjectRoot(t), ".bench", "hooks", "session-start.sh")
 
 	probe := repoFixture.RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, "bash", hook)
 

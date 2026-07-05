@@ -1,7 +1,8 @@
-package contract
+package surface
 
 import (
 	"encoding/json"
+	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -12,12 +13,12 @@ import (
 
 func TestPackageContracts(t *testing.T) {
 	t.Parallel()
-	skipIfSubjectFileMissing(t, "scripts/gen-platform-packages.sh")
-	runParallel(t, "platform-package generator failed", testPackageGeneratorFirstRun)
-	runParallel(t, "platform-package generator (2nd run) failed", testPackageGeneratorSecondRun)
-	runParallel(t, "platform-package generator is not idempotent", testPackageGeneratorIdempotent)
-	runParallel(t, "platform-package generator output contract failed", testPackageGeneratorOutput)
-	runParallel(t, "npm pack installable-surface contract", testPackageNpmPackInstallableSurface)
+	contract.SkipIfSubjectFileMissing(t, "scripts/gen-platform-packages.sh")
+	contract.RunParallel(t, "platform-package generator failed", testPackageGeneratorFirstRun)
+	contract.RunParallel(t, "platform-package generator (2nd run) failed", testPackageGeneratorSecondRun)
+	contract.RunParallel(t, "platform-package generator is not idempotent", testPackageGeneratorIdempotent)
+	contract.RunParallel(t, "platform-package generator output contract failed", testPackageGeneratorOutput)
+	contract.RunParallel(t, "npm pack installable-surface contract", testPackageNpmPackInstallableSurface)
 }
 
 func testPackageGeneratorFirstRun(t *testing.T) {
@@ -87,7 +88,7 @@ func testPackageGeneratorOutput(t *testing.T) {
 }
 
 func testPackageNpmPackInstallableSurface(t *testing.T) {
-	f := execFixtureAt(t, SubjectRoot(t))
+	f := execFixtureAt(t, contract.SubjectRoot(t))
 
 	out := f.Run("npm", "pack", "--dry-run", "--json")
 
@@ -134,22 +135,22 @@ type packageWrapper struct {
 	OptionalDependencies map[string]string `json:"optionalDependencies"`
 }
 
-func packageRunGenerator(t testing.TB, out string) Probe {
+func packageRunGenerator(t testing.TB, out string) contract.Probe {
 	t.Helper()
-	return execFixtureAt(t, SubjectRoot(t)).Run("bash", filepath.Join(SubjectRoot(t), "scripts", "gen-platform-packages.sh"), out)
+	return execFixtureAt(t, contract.SubjectRoot(t)).Run("bash", filepath.Join(contract.SubjectRoot(t), "scripts", "gen-platform-packages.sh"), out)
 }
 
 func packageReadPlatforms(t testing.TB) []packagePlatform {
 	t.Helper()
 	var platforms []packagePlatform
-	packageReadJSON(t, filepath.Join(SubjectRoot(t), "scripts", "platforms.json"), &platforms)
+	packageReadJSON(t, filepath.Join(contract.SubjectRoot(t), "scripts", "platforms.json"), &platforms)
 	return platforms
 }
 
 func packageReadWrapper(t testing.TB) packageWrapper {
 	t.Helper()
 	var wrapper packageWrapper
-	packageReadJSON(t, filepath.Join(SubjectRoot(t), "package.json"), &wrapper)
+	packageReadJSON(t, filepath.Join(contract.SubjectRoot(t), "package.json"), &wrapper)
 	if wrapper.OptionalDependencies == nil {
 		wrapper.OptionalDependencies = map[string]string{}
 	}
@@ -167,9 +168,9 @@ func packageReadJSON(t testing.TB, path string, dst any) {
 	}
 }
 
-func execFixtureAt(t testing.TB, root string) Fixture {
+func execFixtureAt(t testing.TB, root string) contract.Fixture {
 	t.Helper()
-	f := Fixture{t: t, Root: root, Env: isolatedEnv(t, t.TempDir())}
+	f := contract.NewFixtureAt(t, root, contract.IsolatedEnv(t, t.TempDir()))
 	f.Env["PATH"] = os.Getenv("PATH")
 	return f
 }

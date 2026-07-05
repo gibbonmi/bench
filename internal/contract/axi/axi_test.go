@@ -1,6 +1,7 @@
-package contract
+package axi
 
 import (
+	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,25 +10,25 @@ import (
 
 func TestAXIQuerySurfaceContracts(t *testing.T) {
 	t.Parallel()
-	skipIfSubjectBenchMissing(t)
-	runParallel(t, "AXI learnings two-entry contract", testAXILearningsTwoEntry)
-	runParallel(t, "AXI learnings empty/template contract", testAXILearningsEmptyTemplate)
-	runParallel(t, "AXI maps unresolved-ticket contract", testAXIMapsUnresolvedTicket)
-	runParallel(t, "AXI TOON field-escaping contract", testAXITOONFieldEscaping)
-	runParallel(t, "AXI usage/exit-2 contract", testAXIUsageExit2)
-	runParallel(t, "AXI subdirectory root-resolution contract", testAXISubdirectoryRootResolution)
-	runParallel(t, "AXI path-with-spaces contract", testAXIPathWithSpaces)
-	runParallel(t, "AXI maps over-match anchoring/fence contract", testAXIMapsOverMatchAnchoringFence)
-	runParallel(t, "AXI maps CRLF-stripping contract", testAXIMapsCRLFStripping)
-	runParallel(t, "AXI maps no-Type-ticket contract", testAXIMapsNoTypeTicket)
-	runParallel(t, "AXI learnings ascii-separator title contract", testAXILearningsASCIISeparatorTitle)
-	runParallel(t, "AXI maps handoff close-readiness contract", testAXIMapsHandoffCloseReadiness)
-	runParallel(t, "AXI maps --count adapter contract", testAXIMapsCountAdapter)
+	contract.SkipIfSubjectBenchMissing(t)
+	contract.RunParallel(t, "AXI learnings two-entry contract", testAXILearningsTwoEntry)
+	contract.RunParallel(t, "AXI learnings empty/template contract", testAXILearningsEmptyTemplate)
+	contract.RunParallel(t, "AXI maps unresolved-ticket contract", testAXIMapsUnresolvedTicket)
+	contract.RunParallel(t, "AXI TOON field-escaping contract", testAXITOONFieldEscaping)
+	contract.RunParallel(t, "AXI usage/exit-2 contract", testAXIUsageExit2)
+	contract.RunParallel(t, "AXI subdirectory root-resolution contract", testAXISubdirectoryRootResolution)
+	contract.RunParallel(t, "AXI path-with-spaces contract", testAXIPathWithSpaces)
+	contract.RunParallel(t, "AXI maps over-match anchoring/fence contract", testAXIMapsOverMatchAnchoringFence)
+	contract.RunParallel(t, "AXI maps CRLF-stripping contract", testAXIMapsCRLFStripping)
+	contract.RunParallel(t, "AXI maps no-Type-ticket contract", testAXIMapsNoTypeTicket)
+	contract.RunParallel(t, "AXI learnings ascii-separator title contract", testAXILearningsASCIISeparatorTitle)
+	contract.RunParallel(t, "AXI maps handoff close-readiness contract", testAXIMapsHandoffCloseReadiness)
+	contract.RunParallel(t, "AXI maps --count adapter contract", testAXIMapsCountAdapter)
 }
 
 func testAXILearningsTwoEntry(t *testing.T) {
-	noteContractFailure(t, "AXI learnings two-entry contract failed")
-	f := NewFixture(t)
+	contract.NoteContractFailure(t, "AXI learnings two-entry contract failed")
+	f := contract.NewFixture(t)
 	f.WriteFile(".bench/learnings.md", "## 2026-01-01 — first learning  [open]\n- body\n## 2026-02-02 — second learning  [open]\n- body\n")
 
 	out := f.Bench("learnings")
@@ -40,7 +41,7 @@ func testAXILearningsTwoEntry(t *testing.T) {
 }
 
 func testAXILearningsEmptyTemplate(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 
 	absent := f.Bench("learnings")
 	absent.RequireExit(0)
@@ -53,7 +54,7 @@ func testAXILearningsEmptyTemplate(t *testing.T) {
 }
 
 func testAXIMapsUnresolvedTicket(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 
 	absent := f.Bench("maps")
 	absent.RequireExit(0)
@@ -100,8 +101,8 @@ Decided: yes, do the thing.
 }
 
 func testAXITOONFieldEscaping(t *testing.T) {
-	noteContractFailure(t, "AXI TOON field-escaping contract failed")
-	f := NewFixture(t)
+	contract.NoteContractFailure(t, "AXI TOON field-escaping contract failed")
+	f := contract.NewFixture(t)
 	f.WriteFile(".bench/learnings.md", "## 2026-03-03 — a, \"b\"  [open]\n")
 
 	out := f.Bench("learnings")
@@ -111,7 +112,7 @@ func testAXITOONFieldEscaping(t *testing.T) {
 }
 
 func testAXIUsageExit2(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 
 	learnings := f.Bench("learnings", "bogusarg")
 	learnings.RequireExit(2)
@@ -123,7 +124,7 @@ func testAXIUsageExit2(t *testing.T) {
 }
 
 func testAXISubdirectoryRootResolution(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.WriteFile(".bench/learnings.md", "## 2026-04-04 — sub check  [open]\n")
 	subdir := filepath.Join(f.Root, "sub", "deeper")
 	if err := os.MkdirAll(subdir, 0o755); err != nil {
@@ -138,7 +139,7 @@ func testAXISubdirectoryRootResolution(t *testing.T) {
 }
 
 func testAXIPathWithSpaces(t *testing.T) {
-	f := NewFixture(t, WithSpacePath())
+	f := contract.NewFixture(t, contract.WithSpacePath())
 	f.WriteFile(".bench/learnings.md", "## 2026-05-05 — spaced  [open]\n")
 	f.WriteFile("decisions/s.md", `## #1: q?
 
@@ -158,7 +159,7 @@ Type: Grill
 }
 
 func testAXIMapsOverMatchAnchoringFence(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.WriteFile("decisions/o.md", `# Over-match map
 
 ## #1: genuine?
@@ -199,7 +200,7 @@ so authors recognize it.
 }
 
 func testAXIMapsCRLFStripping(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.WriteFile("decisions/c.md", "## #1: q?\r\nType: Grill\r\n### Answer\r\n— (open)\r\n")
 
 	out := f.Bench("maps")
@@ -212,7 +213,7 @@ func testAXIMapsCRLFStripping(t *testing.T) {
 }
 
 func testAXIMapsNoTypeTicket(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.WriteFile("decisions/n.md", `## #1: typeless?
 
 ### Answer
@@ -226,7 +227,7 @@ func testAXIMapsNoTypeTicket(t *testing.T) {
 }
 
 func testAXILearningsASCIISeparatorTitle(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.WriteFile(".bench/learnings.md", "## 2026-01-01 - ascii title  [open]\n")
 
 	out := f.Bench("learnings")
@@ -236,7 +237,7 @@ func testAXILearningsASCIISeparatorTitle(t *testing.T) {
 }
 
 func testAXIMapsHandoffCloseReadiness(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.WriteFile("decisions/hm.md", `# HM
 ## #1: q?
 Type: Grill
@@ -296,7 +297,7 @@ Decided: yes.
 }
 
 func testAXIMapsCountAdapter(t *testing.T) {
-	f := NewFixture(t)
+	f := contract.NewFixture(t)
 	f.WriteFile("decisions/m.md", "## #1: a?\nType: Grill\n### Answer\n— (open)\n")
 	f.WriteFile("decisions/scope.md", "### Answer\n— (deferred)\n")
 	f.WriteFile("decisions/.hidden.md", "## #1: h?\nType: Grill\n### Answer\n— (open)\n")

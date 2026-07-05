@@ -17,7 +17,7 @@ func TestSweepRunsFixturesConcurrently(t *testing.T) {
 	}
 	root := t.TempDir()
 	for _, name := range []string{"a", "b"} {
-		fixture := filepath.Join(root, "tests", "canary", name)
+		fixture := canaryFixture(root, "test-family", name)
 		mkdir(t, filepath.Join(fixture, "files"))
 		write(t, filepath.Join(fixture, "EXPECT"), "target-"+name+"\n")
 	}
@@ -61,7 +61,7 @@ func TestSweepBoundsFixtureConcurrencyAtNumCPU(t *testing.T) {
 	fixtureCount := runtime.NumCPU() + 3
 	for i := 0; i < fixtureCount; i++ {
 		name := fmt.Sprintf("fx-%02d", i)
-		fixture := filepath.Join(root, "tests", "canary", name)
+		fixture := canaryFixture(root, "test-family", name)
 		mkdir(t, filepath.Join(fixture, "files"))
 		write(t, filepath.Join(fixture, "EXPECT"), "target-"+name+"\n")
 	}
@@ -102,7 +102,7 @@ func TestSweepBoundsFixtureConcurrencyAtNumCPU(t *testing.T) {
 func TestSweepCompletesBaselineBeforeStartingFixtures(t *testing.T) {
 	root := t.TempDir()
 	for _, name := range []string{"a", "b"} {
-		fixture := filepath.Join(root, "tests", "canary", name)
+		fixture := canaryFixture(root, "test-family", name)
 		mkdir(t, filepath.Join(fixture, "files"))
 		write(t, filepath.Join(fixture, "EXPECT"), "target-"+name+"\n")
 	}
@@ -133,7 +133,7 @@ func TestSweepReportsErrorsInSortedFixtureOrder(t *testing.T) {
 	}
 	root := t.TempDir()
 	for _, name := range []string{"alpha", "bravo"} {
-		fixture := filepath.Join(root, "tests", "canary", name)
+		fixture := canaryFixture(root, "test-family", name)
 		mkdir(t, filepath.Join(fixture, "files"))
 		write(t, filepath.Join(fixture, "EXPECT"), "target-"+name+"\n")
 	}
@@ -177,7 +177,7 @@ func TestSweepRemovesTempWorkDirsOnGreenPath(t *testing.T) {
 	tmpRoot := t.TempDir()
 	t.Setenv("TMPDIR", tmpRoot)
 	root := t.TempDir()
-	fixture := filepath.Join(root, "tests", "canary", "valid")
+	fixture := canaryFixture(root, "test-family", "valid")
 	mkdir(t, filepath.Join(fixture, "files"))
 	write(t, filepath.Join(fixture, "EXPECT"), "target-valid\n")
 
@@ -197,13 +197,13 @@ func TestSweepRemovesTempWorkDirsOnRedPaths(t *testing.T) {
 	tmpRoot := t.TempDir()
 	t.Setenv("TMPDIR", tmpRoot)
 	root := t.TempDir()
-	valid := filepath.Join(root, "tests", "canary", "valid")
+	valid := canaryFixture(root, "test-family", "valid")
 	mkdir(t, filepath.Join(valid, "files"))
 	write(t, filepath.Join(valid, "EXPECT"), "target-valid\n")
-	vacuous := filepath.Join(root, "tests", "canary", "vacuous")
+	vacuous := canaryFixture(root, "test-family", "vacuous")
 	mkdir(t, filepath.Join(vacuous, "files"))
 	write(t, filepath.Join(vacuous, "EXPECT"), "vacuous\n")
-	brokenLink := filepath.Join(root, "tests", "canary", "broken-link")
+	brokenLink := canaryFixture(root, "test-family", "broken-link")
 	mkdir(t, filepath.Join(brokenLink, "files"))
 	write(t, filepath.Join(brokenLink, "EXPECT"), "target-broken-link\n")
 	if err := os.Symlink("missing-target", filepath.Join(brokenLink, "files", "broken")); err != nil {

@@ -28,9 +28,11 @@ func TestSweepRejectsMissingAndEmptyHarness(t *testing.T) {
 
 func TestSweepRejectsMalformedFixtures(t *testing.T) {
 	root := t.TempDir()
-	mkdir(t, filepath.Join(root, "tests", "canary", "missing-expect", "files"))
-	mkdir(t, filepath.Join(root, "tests", "canary", "missing-files"))
-	write(t, filepath.Join(root, "tests", "canary", "missing-files", "EXPECT"), "target\n")
+	missingExpect := canaryFixture(root, "test-family", "missing-expect")
+	missingFiles := canaryFixture(root, "test-family", "missing-files")
+	mkdir(t, filepath.Join(missingExpect, "files"))
+	mkdir(t, missingFiles)
+	write(t, filepath.Join(missingFiles, "EXPECT"), "target\n")
 
 	err := Sweep(root, (&recordingRunner{}).Run)
 	if err == nil {
@@ -47,7 +49,7 @@ func TestSweepRejectsMalformedFixtures(t *testing.T) {
 
 func TestSweepRejectsVacuousExpect(t *testing.T) {
 	root := t.TempDir()
-	fixture := filepath.Join(root, "tests", "canary", "generic")
+	fixture := canaryFixture(root, "test-family", "generic")
 	mkdir(t, filepath.Join(fixture, "files"))
 	write(t, filepath.Join(fixture, "EXPECT"), "generic failure\n")
 
@@ -63,7 +65,7 @@ func TestSweepRejectsVacuousExpect(t *testing.T) {
 
 func TestSweepMaterializesFixtureAndRequiresTargetedBite(t *testing.T) {
 	root := t.TempDir()
-	fixture := filepath.Join(root, "tests", "canary", "dot-restore")
+	fixture := canaryFixture(root, "test-family", "dot-restore")
 	mkdir(t, filepath.Join(fixture, "files", "dot-bench", "hooks"))
 	mkdir(t, filepath.Join(fixture, "files", "nested", "dot-codex"))
 	write(t, filepath.Join(fixture, "EXPECT"), "targeted regression\n")
@@ -99,7 +101,7 @@ func TestSweepMaterializesFixtureAndRequiresTargetedBite(t *testing.T) {
 
 func TestSweepReportsDidNotBite(t *testing.T) {
 	root := t.TempDir()
-	fixture := filepath.Join(root, "tests", "canary", "weak")
+	fixture := canaryFixture(root, "test-family", "weak")
 	mkdir(t, filepath.Join(fixture, "files"))
 	write(t, filepath.Join(fixture, "EXPECT"), "target\n")
 
@@ -109,6 +111,65 @@ func TestSweepReportsDidNotBite(t *testing.T) {
 	}}
 	err := Sweep(root, runner.Run)
 	want := `canary 'weak' did not bite (want red + "target"; got exit 0)`
+	if err == nil || err.Error() != want {
+		t.Fatalf("Sweep err = %v, want %s", err, want)
+	}
+}
+
+func TestSweepAcceptsLegacyFlatSeedCanary(t *testing.T) {
+	root := t.TempDir()
+	fixture := filepath.Join(root, "tests", "canary", "example")
+	mkdir(t, filepath.Join(fixture, "files"))
+	write(t, filepath.Join(fixture, "EXPECT"), "example check\n")
+
+	var fixtureCalls []string
+	err := Sweep(root, func(call RunCall) RunResult {
+		if call.FixtureDir == "" {
+			return RunResult{ExitCode: 0, Output: "baseline\n"}
+		}
+		fixtureCalls = append(fixtureCalls, call.FixtureDir)
+		return RunResult{ExitCode: 1, Output: "example check\n"}
+	})
+	if err != nil {
+		t.Fatalf("Sweep err = %v", err)
+	}
+	if len(fixtureCalls) != 1 || fixtureCalls[0] != fixture {
+		t.Fatalf("fixture calls = %#v, want only legacy fixture %q", fixtureCalls, fixture)
+	}
+}
+
+func TestSweepUsesLiteralFixturePathWithSpacesAndGlobCharacters(t *testing.T) {
+	root := t.TempDir()
+	fixture := canaryFixture(root, "family with spaces [abc]", "fixture * with spaces")
+	mkdir(t, filepath.Join(fixture, "files"))
+	write(t, filepath.Join(fixture, "EXPECT"), "literal path check\n")
+
+	var fixtureCalls []string
+	err := Sweep(root, func(call RunCall) RunResult {
+		if call.FixtureDir == "" {
+			return RunResult{ExitCode: 0, Output: "baseline\n"}
+		}
+		fixtureCalls = append(fixtureCalls, call.FixtureDir)
+		return RunResult{ExitCode: 1, Output: "literal path check\n"}
+	})
+	if err != nil {
+		t.Fatalf("Sweep err = %v", err)
+	}
+	if len(fixtureCalls) != 1 || fixtureCalls[0] != fixture {
+		t.Fatalf("fixture calls = %#v, want exact fixture path %q", fixtureCalls, fixture)
+	}
+}
+
+func TestSweepRejectsDuplicateFixtureBaseNames(t *testing.T) {
+	root := t.TempDir()
+	for _, family := range []string{"alpha-family", "bravo-family"} {
+		fixture := canaryFixture(root, family, "duplicate")
+		mkdir(t, filepath.Join(fixture, "files"))
+		write(t, filepath.Join(fixture, "EXPECT"), "target\n")
+	}
+
+	err := Sweep(root, (&recordingRunner{}).Run)
+	want := `canary fixture name "duplicate" appears in multiple families; base names must be globally unique`
 	if err == nil || err.Error() != want {
 		t.Fatalf("Sweep err = %v, want %s", err, want)
 	}
@@ -141,6 +202,10 @@ func (r *recordingRunner) Run(call RunCall) RunResult {
 		return out
 	}
 	return RunResult{ExitCode: 1, Output: "other failure\n"}
+}
+
+func canaryFixture(root, family, name string) string {
+	return filepath.Join(root, "tests", "canary", family, name)
 }
 
 func mkdir(t *testing.T, path string) {
