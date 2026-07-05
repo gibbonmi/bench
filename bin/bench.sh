@@ -32,7 +32,7 @@ export BENCH_HOME="${BENCH_HOME:-$HOME/.bench}"
 # `<wrapper> gate` path share exactly one resolver — never a second live implementation.
 # exec, not run: the gate case is terminal and the binary owns the exit code and the
 # record; a missing binary exits 127 via route_binary, which writes no forged verdict.
-run_gate() { route_binary gate-run; }
+run_gate() { route_porcelain gate-run; }
 
 # Resolve where the canonical kit lives (parent of this script's bin/), following
 # symlinks without relying on GNU-only `readlink -f`.
@@ -74,6 +74,25 @@ platform_pkg() {
   printf '@benchkit/%s-%s' "$os" "$arch"
 }
 
+platform_suffix() {
+  local pkg
+  pkg="$(platform_pkg)" || return 1
+  printf '%s\n' "${pkg#@benchkit/}"
+}
+
+package_version() {
+  local kit="${1:-$(kit_dir)}" pkg_json line
+  pkg_json="$kit/package.json"
+  [[ -f "$pkg_json" ]] || return 1
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" =~ \"version\"[[:space:]]*:[[:space:]]*\"([^\"]+)\" ]]; then
+      printf '%s\n' "${BASH_REMATCH[1]}"
+      return 0
+    fi
+  done < "$pkg_json"
+  return 1
+}
+
 # main_tree_kit <kit> — when <kit> sits inside a linked git worktree, echo the same
 # kit path re-anchored under the main worktree's root; echo nothing when <kit> is the
 # main tree itself, outside any repo, or the mapping is degenerate. Linked worktrees
@@ -105,23 +124,47 @@ main_tree_kit() {
 # order, shared by route_binary (which execs the path) and the status adapters (which
 # capture its output).
 bench_binary_path() {
-  local kit="${1:-$(kit_dir)}" pkg c k main
+  local kit="${1:-$(kit_dir)}" pkg suffix version cache c k main
   platform_pkg >/dev/null || return 2
   pkg="$(platform_pkg)"
+  suffix="$(platform_suffix)"
   main="$(main_tree_kit "$kit")"
   for k in "$kit" ${main:+"$main"}; do
     for c in "$k/dist/bench" "$k/node_modules/$pkg/bin/bench" "$k/../$pkg/bin/bench"; do
       [[ -x "$c" && -s "$c" ]] && { printf '%s\n' "$c"; return 0; }
     done
   done
+  version="$(package_version "$kit" 2>/dev/null || true)"
+  if [[ -n "$version" ]]; then
+    cache="$BENCH_HOME/cache/bin/$version/$suffix/bench"
+    [[ -x "$cache" && -s "$cache" ]] && { printf '%s\n' "$cache"; return 0; }
+  fi
   return 127
+}
+
+repair_binary() {
+  local kit="$1" wrapper="$2" script version suffix
+  script="$(dirname "$wrapper")/bench-repair-binary.mjs"
+  if ! command -v node >/dev/null 2>&1; then
+    echo "bench: repair skipped because node is not on PATH" >&2
+    return 1
+  fi
+  [[ -f "$script" ]] || return 1
+  version="$(package_version "$kit" 2>/dev/null || true)"
+  suffix="$(platform_suffix 2>/dev/null || true)"
+  [[ -n "$version" && -n "$suffix" ]] || return 1
+  node "$script" "$kit" "$(platform_pkg)" "$version" "$suffix"
 }
 
 # route_binary <subcommand> [args...] — resolve and exec the Go binary, passing the
 # whole argv through. The one seam the strangler grows: later slices add subcommand
 # names to the dispatch below, never a second resolver.
 route_binary() {
-  local bin rc kit wrapper
+  local allow_repair=0 bin rc kit wrapper
+  if [[ "${1:-}" == "--repair" ]]; then
+    allow_repair=1
+    shift
+  fi
   kit="${BENCH_KIT:-$(kit_dir)}"
   wrapper="$(resolve_script_path)"
   bin="$(bench_binary_path "$kit")" && rc=0 || rc=$?
@@ -132,10 +175,18 @@ route_binary() {
       exit 2
       ;;
     *)
+      if [[ "$allow_repair" == 1 ]]; then
+        repair_binary "$kit" "$wrapper" || true
+        bin="$(bench_binary_path "$kit")" && BENCH_KIT="${BENCH_KIT:-$kit}" BENCH_WRAPPER="${BENCH_WRAPPER:-$wrapper}" exec "$bin" "$@"
+      fi
       echo "bench: no binary for this platform — install $(platform_pkg) (npm install $(platform_pkg))" >&2
       exit 127
       ;;
   esac
+}
+
+route_porcelain() {
+  route_binary --repair "$@"
 }
 
 adoption_route() {
@@ -146,28 +197,28 @@ adoption_route() {
     echo "bench: use the installed 'bench' command or the source kit's bin/bench.sh" >&2
     exit 1
   fi
-  route_binary "$@"
+  route_porcelain "$@"
 }
 
 case "${1:-help}" in
-  version)  route_binary "$@" ;;
+  version)  route_porcelain "$@" ;;
   gate)     run_gate ;;
   doctor)   adoption_route "$@" ;;
-  worktree) route_binary "$@" ;;
-  shift)    route_binary "$@" ;;
+  worktree) route_porcelain "$@" ;;
+  shift)    route_porcelain "$@" ;;
   link)     adoption_route "$@" ;;
   init)     adoption_route "$@" ;;
-  models)   route_binary "$@" ;;
-  structure) route_binary "$@" ;;
-  idea)     route_binary "$@" ;;
-  roadmap)  route_binary "$@" ;;
-  status)   route_binary "$@" ;;
-  canary)   route_binary "$@" ;;
-  learnings) route_binary "$@" ;;
-  maps)     route_binary "$@" ;;
-  guards)   route_binary "$@" ;;
-  diff)     route_binary "$@" ;;
-  coverage) route_binary "$@" ;;
+  models)   route_porcelain "$@" ;;
+  structure) route_porcelain "$@" ;;
+  idea)     route_porcelain "$@" ;;
+  roadmap)  route_porcelain "$@" ;;
+  status)   route_porcelain "$@" ;;
+  canary)   route_porcelain "$@" ;;
+  learnings) route_porcelain "$@" ;;
+  maps)     route_porcelain "$@" ;;
+  guards)   route_porcelain "$@" ;;
+  diff)     route_porcelain "$@" ;;
+  coverage) route_porcelain "$@" ;;
   tree-hash) route_binary "$@" ;;
   gate-run) route_binary "$@" ;;
   guard-git) route_binary "$@" ;;

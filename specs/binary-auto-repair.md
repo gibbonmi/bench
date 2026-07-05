@@ -1,6 +1,6 @@
 # binary-auto-repair
 
-Status: staged
+Status: implemented
 
 ## Problem
 
