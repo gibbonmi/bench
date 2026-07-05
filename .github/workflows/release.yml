@@ -3,6 +3,11 @@ name: release
 # One release = one `git tag vX.Y.Z && git push --tags`. The tag drives everything;
 # package.json's version is the single source the binaries are stamped with (keep the
 # tag and package.json version in step before tagging).
+#
+# Pre-tag manual smokes for the gate-blind spots the contract fixtures fake:
+# one real `npm i -g` lifecycle run (shim postinstall), and one launcher
+# self-repair against the live registry (the fixture registry mirrors the
+# documented metadata shape; live shape drift would pass it).
 on:
   push:
     tags:

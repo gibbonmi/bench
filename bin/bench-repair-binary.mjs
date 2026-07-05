@@ -92,6 +92,9 @@ async function fetchBytes(url) {
   return Buffer.from(await res.arrayBuffer());
 }
 
+// The integrity hash comes from the same registry as the tarball, so this
+// defends against corruption and transport tampering, not registry compromise —
+// that threat is owned by npm provenance/2FA upstream, not this launcher.
 function verifyIntegrity(bytes, integrity) {
   const match = /^sha512-([A-Za-z0-9+/=]+)$/.exec(integrity);
   if (!match) {
