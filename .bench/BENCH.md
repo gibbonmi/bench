@@ -137,7 +137,8 @@ Use the canonical phases when the work needs them:
 2. `/bench-write-spec` to lock stories, seams, and gate expectations.
 3. `/bench-implement-spec` to implement at the chosen seams.
 4. `/bench-review-implementation` for semantic review against standards and spec.
-5. `/bench-final-check` to report the gate result.
+5. `/bench-final-check` to report the gate result and, on green, commit to the
+   active working branch.
 
 **Right-size the process; ask before deviating.** A few-line change doesn't need
 the full pipeline, and you may propose a lighter path — but you must get an

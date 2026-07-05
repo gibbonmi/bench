@@ -1,5 +1,5 @@
 ---
-description: Run the external gate (types, tests, lint, project conformance) and report findings. Use to check whether work is actually done, or to diagnose a red gate. Never use the model's own judgment as a substitute.
+description: Run the external gate (types, tests, lint, project conformance), report findings, and commit the verified work to the active branch on green. Use to check whether work is actually done, or to diagnose a red gate. Never use the model's own judgment as a substitute.
 ---
 
 # /bench-final-check — the gate is the oracle
@@ -12,8 +12,14 @@ project conformance.
 
 ## Exit handoff
 
-Close by reporting the gate result plainly. On green, no further Bench command is
-required; hand back for the reviewer to merge or decide what ships. On red, report
+Close by reporting the gate result plainly. On green, commit the verified work to
+the **active branch** (the staging discipline is `/bench-implement-spec`'s
+close-on-green rules: explicit files, no blind add, an unexplained working-tree
+file blocks the commit), then hand back for the reviewer to merge or decide what
+ships. The commit is branch-guarded: it lands on the project's working branch
+(named in `projects/<name>.md`), never the default branch — on the default
+branch, switch to the working branch before committing, or stop and surface it
+when the profile names none. On red, report
 the first failing check and the smallest reproduction, then recommend the command
 that fits the failure: usually `/bench-implement-spec` for a feature regression or
 `/bench-debug` for a bug.
@@ -34,8 +40,8 @@ gate; to change what runs, change `.bench/gate.sh`.
 
 ## Report
 
-- **Green:** state it plainly. The work is eligible to be done. Hand back for me
-  to merge.
+- **Green:** state it plainly, commit the verified work to the active branch per
+  the exit handoff, and hand back for me to merge.
 - **Red:** report each failing check in the order it fails, with the smallest
   reproduction. Do not propose weakening the check. Diagnose the cause, propose a
   fix at the seam, and — if I approve — fix it and re-run the gate. A fix is only

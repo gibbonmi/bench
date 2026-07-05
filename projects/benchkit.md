@@ -8,6 +8,11 @@ adapters that call shared `.bench/hooks/` scripts. Because the artifacts are pla
 files, the kit must work identically under Claude Code, Codex, and any other
 AGENTS.md harness — that portability is the product.
 
+## Working branch
+
+`develop` — the branch `/bench-final-check` commits to on a green gate. `main`
+is merge-only: the reviewer owns the merge, and the pre-push hook protects it.
+
 ## Seams (test here; everything else is free to change)
 
 - **The gate contract** (`.bench/gate.sh` / `bench gate`). The oracle surface. Everything
