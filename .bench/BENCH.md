@@ -54,7 +54,7 @@ Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
 - Oracle and diagnostics: `bench gate`, `bench canary`, `bench structure`,
   `bench guards`, `bench diff`, `bench coverage`, `bench models`, `bench version`.
 - Work execution: `bench worktree`, `bench shift`.
-- Hook and adapter plumbing: `bench tree-hash`, `bench gate-run`,
+- Hook and adapter plumbing: `bench tree-hash`, `bench gate-run`, `bench gate-phases`,
   `bench guard-git`, `bench resolve-model`, `bench check-agent-line`,
   `bench stop-verdict`, `bench worktree-pool`, `bench worktree-lease-file`.
 

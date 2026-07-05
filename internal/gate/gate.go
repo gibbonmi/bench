@@ -16,7 +16,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/git"
@@ -177,33 +176,11 @@ func RunContext(ctx context.Context, root string, res Resolution, stdout, stderr
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	cmd.Env = gateEnv()
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	if err := cmd.Start(); err != nil {
+	result := runProcessGroupCommand(ctx, cmd)
+	if result.StartErr != nil {
 		return 1
 	}
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
-	select {
-	case err := <-done:
-		if err == nil {
-			return 0
-		}
-		if cmd.ProcessState != nil {
-			if code := cmd.ProcessState.ExitCode(); code > 0 {
-				return code
-			}
-		}
-		return 1 // failed to start, or a signal death: treat as red
-	case <-ctx.Done():
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
-		select {
-		case <-done:
-		case <-time.After(2 * time.Second):
-			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-			<-done
-		}
-		return 130
-	}
+	return result.Code
 }
 
 // Record writes the verdict cache "<status> <tree hash> <iso8601>" to

@@ -21,17 +21,15 @@ func TestGateEntryRunsGoConformanceAndBehaviorContracts(t *testing.T) {
 	h := NewHarness(t)
 	gate := h.ReadRootFile(".bench", "gate.sh")
 
-	for _, needle := range []string{
-		`BENCH_CONFORMANCE_ROOT="$root" go test -count=1 ./internal/conformance -run '^TestRootConformance$'`,
-		`BENCH_CONTRACT_ROOT="$root" go test -count=1 ./internal/contract/...`,
-		`bin/bench.sh" canary "$root"`,
-	} {
-		if !strings.Contains(gate, needle) {
-			t.Fatalf(".bench/gate.sh missing %q", needle)
-		}
+	needle := `exec "$kit/bin/bench.sh" gate-phases "$root"`
+	if !strings.Contains(gate, needle) {
+		t.Fatalf(".bench/gate.sh missing %q", needle)
 	}
 
 	for _, retired := range []string{
+		`BENCH_CONFORMANCE_ROOT="$root" go test -count=1 ./internal/conformance -run '^TestRootConformance$'`,
+		`BENCH_CONTRACT_ROOT="$root" go test -count=1 ./internal/contract/...`,
+		`bin/bench.sh" canary "$root"`,
 		"gate-docs-contracts.sh",
 		"gate-line-contracts.sh",
 		"gate-package-contracts.sh",

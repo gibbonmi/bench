@@ -1,6 +1,6 @@
 # Gate phase-level concurrency
 
-Status: staged
+Status: implemented
 
 ## Problem
 

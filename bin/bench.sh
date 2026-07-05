@@ -221,6 +221,7 @@ case "${1:-help}" in
   coverage) route_porcelain "$@" ;;
   tree-hash) route_binary "$@" ;;
   gate-run) route_binary "$@" ;;
+  gate-phases) route_binary "$@" ;;
   guard-git) route_binary "$@" ;;
   resolve-model) route_binary "$@" ;;
   check-agent-line) route_binary "$@" ;;

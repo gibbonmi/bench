@@ -9,34 +9,6 @@
 set -uo pipefail
 
 root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "gate: not in a git repo" >&2; exit 3; }
-cd "$root"
 gate_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-fail=0
-err() { echo "gate: $*" >&2; fail=1; }
-
-# Root-grading conformance lives in Go tests. The real kit checkout owns the test
-# code; BENCH_CONFORMANCE_ROOT names the tree under grade, including canary fixtures.
-realkit="$(cd "$gate_dir/.." && pwd)"
-if ! (cd "$realkit" && BENCH_CONFORMANCE_ROOT="$root" go test -count=1 ./internal/conformance -run '^TestRootConformance$'); then
-  fail=1
-fi
-if ! (cd "$realkit" && BENCH_CONTRACT_ROOT="$root" go test -count=1 ./internal/contract/...); then
-  fail=1
-fi
-
-# 6. shellcheck — stronger shell lint, best-effort (runs only when installed).
-if command -v shellcheck >/dev/null 2>&1; then
-  shellcheck -S warning bin/bench.sh .bench/hooks/*.sh .bench/lib/*.sh || err "shellcheck reported issues"
-fi
-
-# 7. Canary — prove the gate's own checks still bite, and that the harness itself is
-#    present. Outer mode runs the Go canary runner; inner mode skips only the sweep so
-#    fixture gates still exercise the remaining shell conformance and behavior
-#    fragments without recursing.
-if [ "${BENCH_CANARY_INNER:-0}" != "1" ]; then
-  bash "$root/bin/bench.sh" canary "$root" || err "canary sweep failed"
-fi
-
-if [ "$fail" -eq 0 ]; then echo "gate: green"; else echo "gate: red" >&2; fi
-exit "$fail"
+kit="$(cd "$gate_dir/.." && pwd)"
+exec "$kit/bin/bench.sh" gate-phases "$root"

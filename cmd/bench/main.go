@@ -64,6 +64,8 @@ var commands = map[string]func([]string) (string, int){
 	"worktree-lease-file": worktree.LeaseFileCommand,
 }
 
+var gatePhasesCommand = gate.PhasesCommand
+
 // linesEnv resolves the repo's .bench/lines.env — its path, whether it exists, and its
 // content — for the two binding consumers (resolve-model and check-agent-line). A cwd
 // outside a repo, or an unreadable file, reads as no binding (exists=false): the
@@ -228,6 +230,8 @@ func run(args []string, stdout, stderr *os.File) int {
 		return shift.Command(args[1:], os.Stdin, stdout, stderr)
 	case "gate-run":
 		return gate.RunCommand(args[1:], stdout, stderr)
+	case "gate-phases":
+		return gatePhasesCommand(args[1:], stdout, stderr)
 	case "canary":
 		return canary.Run(args[1:], stdout, stderr)
 	case "guard-git":

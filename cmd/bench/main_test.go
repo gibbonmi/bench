@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -46,6 +49,49 @@ func TestRunCanaryDispatchesToCommand(t *testing.T) {
 	got := readFile(t, stderr)
 	if !strings.Contains(got, "usage: bench canary [root]") {
 		t.Fatalf("canary did not dispatch to command usage, stderr:\n%s", got)
+	}
+}
+
+func TestRunGatePhasesDispatchesToCommand(t *testing.T) {
+	old := gatePhasesCommand
+	t.Cleanup(func() { gatePhasesCommand = old })
+	var gotArgs []string
+	gatePhasesCommand = func(args []string, stdout, stderr io.Writer) int {
+		gotArgs = append([]string(nil), args...)
+		return 37
+	}
+
+	stdout := tempFile(t)
+	stderr := tempFile(t)
+	rc := run([]string{"gate-phases", "/tmp/root"}, stdout, stderr)
+
+	if rc != 37 {
+		t.Fatalf("run gate-phases exit = %d, want injected exit 37", rc)
+	}
+	if want := []string{"/tmp/root"}; !reflect.DeepEqual(gotArgs, want) {
+		t.Fatalf("gate-phases args = %#v, want %#v", gotArgs, want)
+	}
+}
+
+func TestShellWrapperRoutesGatePhasesToBinary(t *testing.T) {
+	root := t.TempDir()
+	kit := filepath.Join(root, "kit")
+	copyExecutable(t, filepath.Join("..", "..", "bin", "bench.sh"), filepath.Join(kit, "bin", "bench.sh"))
+	argvFile := filepath.Join(root, "argv")
+	writeExecutable(t, filepath.Join(kit, "dist", "bench"), `#!/usr/bin/env bash
+printf '%s\n' "$@" > "$BENCH_TEST_ARGV"
+`)
+
+	cmd := exec.Command("bash", filepath.Join(kit, "bin", "bench.sh"), "gate-phases", "/tmp/repo root")
+	cmd.Env = append(os.Environ(), "BENCH_TEST_ARGV="+argvFile, "BENCH_HOME="+filepath.Join(root, "home"))
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("bench.sh gate-phases failed: %v\n%s", err, out)
+	}
+	got := strings.Split(strings.TrimSpace(readPath(t, argvFile)), "\n")
+	want := []string{"gate-phases", "/tmp/repo root"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("wrapper routed argv = %#v, want %#v\noutput:\n%s", got, want, out)
 	}
 }
 
@@ -106,4 +152,32 @@ func readFile(t *testing.T, f *os.File) string {
 		t.Fatal(err)
 	}
 	return string(data)
+}
+
+func readPath(t *testing.T, path string) string {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	return string(data)
+}
+
+func copyExecutable(t *testing.T, src, dst string) {
+	t.Helper()
+	data, err := os.ReadFile(src)
+	if err != nil {
+		t.Fatalf("read %s: %v", src, err)
+	}
+	writeExecutable(t, dst, string(data))
+}
+
+func writeExecutable(t *testing.T, path, content string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatalf("mkdir %s: %v", filepath.Dir(path), err)
+	}
+	if err := os.WriteFile(path, []byte(content), 0o755); err != nil {
+		t.Fatalf("write %s: %v", path, err)
+	}
 }

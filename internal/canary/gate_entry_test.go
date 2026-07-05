@@ -10,7 +10,26 @@ func TestBenchkitGateCallsCanarySubcommandOnlyInOuterMode(t *testing.T) {
 	if strings.Contains(gate, "lib/canary-run.sh") {
 		t.Fatalf("benchkit gate still sources canary-run.sh")
 	}
-	if !strings.Contains(gate, `BENCH_CANARY_INNER`) || !strings.Contains(gate, `bin/bench.sh" canary "$root"`) {
-		t.Fatalf("benchkit gate does not guard an outer-mode bench canary call:\n%s", gate)
+	if !strings.Contains(gate, `exec "$kit/bin/bench.sh" gate-phases "$root"`) {
+		t.Fatalf("benchkit gate does not exec gate-phases:\n%s", gate)
+	}
+	for _, retired := range []string{
+		`bin/bench.sh" canary "$root"`,
+	} {
+		if strings.Contains(gate, retired) {
+			t.Fatalf("benchkit gate still carries retired inline canary orchestration %q:\n%s", retired, gate)
+		}
+	}
+	if strings.Contains(gate, `BENCH_CANARY_INNER`) {
+		t.Fatalf("benchkit gate still owns the inner-mode env boundary:\n%s", gate)
+	}
+
+	canaryRunner := read(t, kitPath(t, "internal", "canary", "canary.go"))
+	if !strings.Contains(canaryRunner, `"BENCH_CANARY_INNER=1"`) {
+		t.Fatalf("canary runner no longer marks inner gate runs with BENCH_CANARY_INNER")
+	}
+	phaseRunner := read(t, kitPath(t, "internal", "gate", "phases.go"))
+	if !strings.Contains(phaseRunner, `os.Getenv("BENCH_CANARY_INNER") == "1"`) {
+		t.Fatalf("phase runner no longer owns the BENCH_CANARY_INNER mode branch")
 	}
 }
