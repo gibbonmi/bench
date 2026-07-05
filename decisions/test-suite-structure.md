@@ -95,7 +95,20 @@ but leaves the same squeeze to recur. Same-direction split as #1, or the one
 place a lighter fix is honest?
 
 ### Answer
-— (open)
+Lighter fix, resolved 2026-07-05: merge `harness_helpers_test.go` (145 lines)
+into `harness_test.go` (88) and fold `root_conformance_test.go` (17) into
+`gate_entry_test.go` — 13 files → 11, every merged file under the 400-line cap.
+Conformance is one deep module by design (single check registry, single pinned
+gate entry `-run '^TestRootConformance$'`), so subpackaging would fragment a
+registry whose point is to be one list and rewire the gate for zero coverage
+gain. Not a reopen of #1's consolidation-first rejection: these are
+helper-beside-single-consumer merges (cohesion), not responsibility
+consolidation. `docs_workflow_helpers_test.go` stays separate — two consumers,
+and merging it into its checks file would break the line cap. If a genuine new
+check family pushes the dir over the cap again, the #1/#2 subpackage direction
+applies then; don't pre-build. Rejected: subpackaging now (fragments the
+registry, changes the gate entry contract); raising the cap (oracle-weakening,
+per #1).
 
 ## #5: What structure replaces 56 flat canary fixtures?
 
@@ -110,7 +123,19 @@ Registry-generation risks a second source for what a check needs to bite;
 grouping alone may just move the sprawl.
 
 ### Answer
-— (open)
+Group by family with path-as-classification, plus a meta-check; resolved
+2026-07-05 on the #6 audit evidence (`decisions/assets/tests-bloat-audit.md`).
+Layout becomes `tests/canary/<family>/<fixture>/`; the family column of
+`canaryFixtureRegistry` is deleted and derived from the directory, collapsing a
+59-entry hand-tended map into the tree (the registry keeps only the
+retired-shell-source column). `Sweep` walks two levels. Fixture content stays
+hand-tended. One-canary-per-check becomes a meta-check: every check family in
+`RunConformance` must own ≥1 fixture directory; the rename-coupling is intended
+(a family rename must move its fixtures). Rejected: generating fixtures from
+the check registry (`files/` is the sole expression of each biting input —
+generation manufactures a second source); flat layout + registry map as-is
+(keeps 59 hand-maintained classification entries); grouping without deriving
+family from path (moves sprawl, dedups nothing).
 
 ## #6: What does the tests/ bloat audit actually show?
 
@@ -124,4 +149,79 @@ subprocess capture) and propose a leanness discipline. Produces a short asset in
 fixture scheme in #5.
 
 ### Answer
-— (open)
+Audited 2026-07-05; asset at `decisions/assets/tests-bloat-audit.md`. Headlines:
+canary fixtures are already lean (~1.6 KB each, near-zero identical scaffolding
+— honest repetition, not bloat); generating fixtures from the check registry
+would create a second source, since `files/` is the sole expression of each
+biting input; one-canary-per-check is manual, not enforced. Real duplicated
+knowledge found: the exit-code extraction idiom re-derived 3× across the
+subprocess seams, 3-4 independent temp-git-repo scaffolds, and the retired
+gate-fragment list derived in two files. Growth is front-loaded (test estate is
+the repo's fastest-growing part). The asset ends with four candidate leanness
+disciplines for the reviewer; adopting any is decided in #5 (fixtures) or a
+future map, not here.
+
+## Handoff
+
+1. **Module boundaries.** Three independent slices. (a) Contract: root
+   `internal/contract` becomes the exported fixture-harness lib (helper +
+   generic asserts promoted from `runtime_helpers_test.go`); consumer
+   subpackages `runtime/`, `axi/`, `surface/` per the #2 file assignment;
+   family-specific helpers stay unexported in their family. (b) Conformance:
+   stays one package; two merges (#4) take it 13 → 11 files. (c) Canary:
+   `tests/canary/<family>/<fixture>/`, family derived from path; `Sweep` walks
+   two levels; `canaryFixtureRegistry` keeps only the retired-shell-source
+   column; new meta-check requires ≥1 fixture dir per `RunConformance` family.
+2. **Contracts.** Gate contract phase becomes
+   `go test -count=1 ./internal/contract/...` — still one phase, one run.
+   `goCoreTestPackages` excludes the whole `internal/contract/` subtree.
+   Root contract lib's exported API is the harness + asserts consumed by the
+   three subpackages; relocation is behavior-preserving (same tests, same
+   subtest counts). `bench canary` CLI behavior (exit codes, diagnostics,
+   vacuous-EXPECT rejection, bite semantics) is unchanged; only fixture
+   addressing gains a family level. Meta-check emits a conformance diagnostic
+   for a family with zero fixtures.
+3. **Deep vs thin.** Deep: the contract root lib (hides fixture/env-isolation
+   complexity; seam at its exported API) and canary `Sweep` (hides
+   walk/materialize/parallelism; seam at `bench canary`). Thin: the family
+   subpackages and the conformance merges — pure consumers/relocations, no
+   seam of their own.
+4. **Black-box assertables.** `bench gate` exit 0 on the restructured tree
+   (the whole program is behavior-preserving). Unit test on
+   `goCoreTestPackages`: contract-subtree package excluded, an
+   `internal/conformance` sibling survives (#3's bite proof). Meta-check bite:
+   a family with zero fixture dirs turns conformance red. `bench structure`
+   reports zero dir-cap issues after. Subtest-count equality before/after the
+   contract relocation.
+5. **Gate attachment.** The gate line edit is pinned by the `gate_entry`
+   conformance anchor and updates in the same change (#3). The meta-check
+   lands inside `RunConformance`, observed via `TestRootConformance`. Not
+   gate-visible: the "same subtest counts" relocation claim — capture the
+   `go test -v` name inventory before/after during the build (one-time
+   verify), it has no permanent seam.
+6. **Hostile-input owners.** Mostly n/a — internal Go restructure, no new
+   shell surface. Live classes: absent vs empty (family dir with zero
+   fixtures → meta-check; fixture missing EXPECT/`files/` → existing
+   `runFixture` diagnostics, unchanged); paths with spaces/globs in fixture
+   names → `Sweep`'s two-level walk (kit-authored names, but the walk must not
+   glob). Remaining checklist classes: n/a — no CLI/link/init surface touched.
+7. **Uncertainty flags.** None — no seam needs escalation; spec on the mid
+   tier per profile.
+8. **Rejected alternatives.** Raising/test-exempting the dir cap;
+   consolidation-first (#1). One-dir-per-family contract split; moving only
+   `runtime/` (#2). New canary fixture for the exclusion proof; trusting the
+   existing canary alone (#3). Subpackaging conformance now (#4). Generating
+   fixtures from the check registry; flat layout + hand-tended map; grouping
+   without path-derived family (#5). Subprocess-capture-seam unification stays
+   a separate parked change (#2/#6 — bigger blast radius).
+9. **Domain watch-outs.** Merged Go test files share package scope — helper
+   symbol collisions must be resolved at merge time. `runFixture` names a
+   fixture by `filepath.Base`, so the family level removes filesystem-enforced
+   global uniqueness of fixture names — diagnostics and the registry key may
+   need family-qualified names. The contract relocation must land as move-only
+   commits, no behavior edits mixed in, so review can grade it as relocation.
+   `BENCH_CONTRACT_ROOT` must reach subpackage tests unchanged.
+
+Dependency order: #4 conformance merges first (touches `gate_entry_test.go`
+before #3 re-pins the anchor there), then #2+#3 contract split + gate rewire
+(one change per #3), then #5 canary regroup (independent; parallel-safe).
