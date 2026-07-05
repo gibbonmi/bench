@@ -37,8 +37,13 @@ table that picks the row, and the escalation ladder are all `craft-line`'s.
 - Run typecheck and the relevant single test file frequently as you go. Run the
   full gate once at the end.
 - One small change at a time, repo stays green — invariant 4 in `.bench/BENCH.md`.
-- Every delegation during the build carries its own line — the rules are
-  `craft-delegate`'s (model half: `craft-line`).
+- Every delegation during the build carries its own line and, when the spec has
+  a coverage map, its stories' coverage rows in the charge — every time; the
+  rules are `craft-delegate`'s (model half: `craft-line`).
+- Verify each returned done-claim against its charged rows and report the round
+  in one line: accepted, or the missed case and where the fix went — inline via
+  the direct fix-and-gate path when the miss is smaller than a re-delegation,
+  re-charged otherwise.
 - Use the venue `craft-line` selects: delegate only when the slice is separable
   and the handoff is cheaper than the work it moves. Inline small mechanical
   slices or one atomic diff at the highest needed tier, and flag any collapsed

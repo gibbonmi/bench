@@ -36,6 +36,12 @@ Prefer compressed inputs over inherited context: when a decision map has a
 Handoff, give the delegate that digest plus line-ranged excerpts it must quote,
 not the orchestrator's whole read list.
 
+A write-delegation from a spec carries its stories' coverage rows — behavior,
+seam, red signal — in the charge, every time, and requires the delegate to show
+each row red before the edit and green after. That is what makes the done-claim
+verifiable by running the gate instead of re-reading the work; a charge without
+its rows buys a diff you must read line-by-line to trust.
+
 ```
 Review this diff on the Standards axis only. Base: run `bench diff` for the
 changed files; read AGENTS.md and .bench/BENCH.md for the conventions. Charge:
@@ -76,6 +82,8 @@ are for write-delegations, not for reproducing a read-only review result.
 A delegate's done-claim is a claim, not a result. Before accepting one:
 
 - run the gate against the delegate's work — its green report is not your green;
+- check every coverage row in the charge went red-then-green — a missed row is
+  a missed case, found now instead of at review;
 - run `git status` in the worktree it used — files touched outside the charge
   are a finding, not a footnote;
 - spot-check the citations in any summary before folding it into your own
@@ -84,3 +92,11 @@ A delegate's done-claim is a claim, not a result. Before accepting one:
 
 Accepting a done-claim unverified is grading your own work at one remove —
 invariant #1 with extra steps.
+
+Report every verification round in one line, like a ladder move: accepted, or
+what was missed and where the fix went. A miss the verification already
+diagnosed — small, concrete, fully understood — is fixed inline through the
+direct fix-and-gate path rather than re-delegated: an edit smaller than its
+handoff pays handoff, re-discovery, and re-verification for nothing. Recurring
+misses across delegates are a charge defect, not a delegate defect — tighten
+the rows in the charge before re-sending it.
