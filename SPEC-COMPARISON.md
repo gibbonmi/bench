@@ -4,7 +4,9 @@ Two candidate specs for the same feature, both compiled from the closed map
 `decisions/gate-phase-concurrency.md`:
 
 - **Spec A** — `specs/gate-phase-concurrency.md` (9 stories, mid-tier routing)
-- **Spec B** — `specs/gate-phase-concurrency-sonnet.md` (7 stories, all-cheap routing)
+- **Spec B** — `gate-phase-concurrency-sonnet.md` (7 stories, all-cheap routing;
+  deleted after this comparison — retrieve it from git history via
+  `git log --grep=spec-retire`)
 
 ## Verdict
 
@@ -99,9 +101,9 @@ exists to prevent.
    (canary EXPECT substring matching does *not* catch a prefix — that is why
    the direct byte-shape test is the primary pin), and the per-phase timing
    breakdown plus scaling caveat in Problem.
-3. `specs/gate-phase-concurrency-sonnet.md` is kept in-repo as the comparison
-   record (reviewer decision); it is not a spec of record and is not staged for
-   build.
+3. The sonnet candidate is deleted (reviewer decision, after its one durable
+   insight was ported into Spec A); this file and git history are the record —
+   `git log --grep=spec-retire` recovers the full text.
 
 ## Scorecard
 
