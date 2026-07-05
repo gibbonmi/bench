@@ -7,6 +7,16 @@ one entry per `/bench-update-kit` or `/bench-integrate-learnings` run; don't rew
 
 ## Unreleased
 
+- **Learnings run (2026-07-04, scope: journal close-out).** Drained three
+  entries. Promoted (already shipped): review-findings persistence — the
+  `/bench-review-implementation` pickup artifact at `reviews/<spec-slug>.md`
+  landed with conformance anchors and a canary bite proof, resolving the
+  chat-only-findings entry. Recommended-and-parked: stale-gate benign/real
+  status split — a `bench status` semantics change routed to the roadmap, to
+  be shaped in one session with the parked `gate_tree_hash` capture-scratch
+  carve-out. Dismissed: spec-without-decision-map deviation — one-off context;
+  the entry contract and ask-first rule held, no rule change.
+
 - **Learnings run (2026-07-04, scope: review/spec guidance).** Drained six open
   entries. Promoted: `craft-synthesis` requires a fresh-session dogfood run when
   skill or command triggers changed; `craft-delegate` records that read-only

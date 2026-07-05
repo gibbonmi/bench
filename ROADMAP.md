@@ -14,3 +14,4 @@
 - 2026-07-04  Rework tests/canary/: 56 flat fixtures is out of control — group by check family or generate from the check registry, and enforce the one-canary-per-check meta-check instead of hand-tending the tree
 - 2026-07-04  gate.sh phase-level concurrency (run conformance/contract/canary phases in parallel) — remeasure after test-layout-gate-speed lands (~10 edits, ~6 gate runs)
 - 2026-07-04  per-anchor bite proof: canary fixtures prove one needle per family; a meta-test could prove every checkWorkflowAnchors require line bites
+- 2026-07-04  stale-gate status split: bench status classifies a stale verdict — capture-scratch-only drift (ROADMAP.md, .bench-notes.md) worded as a benign re-run reminder vs committed-code drift flagged as real; weigh in one /bench-shape-idea session against the parked gate_tree_hash capture-scratch carve-out (this is the lighter alternative)
