@@ -1,6 +1,6 @@
 # Review Findings Persistence
 
-Status: staged
+Status: implemented
 
 ## Problem
 

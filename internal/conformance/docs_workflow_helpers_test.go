@@ -69,6 +69,10 @@ func checkWorkflowAnchors(root string) []string {
 	require(".agents/commands/bench-write-spec.md", "new session on the mid tier")
 	require(".agents/commands/bench-implement-spec.md", "Status: implemented")
 	require(".agents/commands/bench-debug.md", "diff-filter=D")
+	require(".agents/commands/bench-review-implementation.md", "reviews/<spec-slug>.md")
+	require(".agents/commands/bench-review-implementation.md", "actionable findings")
+	require(".agents/commands/bench-review-implementation.md", "writes no artifact")
+	require(".agents/commands/bench-review-implementation.md", "same green fix commit")
 
 	shapeIdeaPath := filepath.Join(root, ".agents", "commands", "bench-shape-idea.md")
 	if exists(shapeIdeaPath) && strings.Contains(collapseSpace(readIfExists(shapeIdeaPath)), "straight to `/bench-write-spec`") {

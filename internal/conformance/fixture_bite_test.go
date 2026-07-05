@@ -75,6 +75,7 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 		"debug-archaeology-anchor",
 		"edge-inventory-anchor",
 		"implement-spec-status-flip-anchor",
+		"review-persistence-anchor",
 		"shape-idea-bypass",
 		"shape-idea-bypass-wrapped",
 		"shape-idea-handoff-anchor",

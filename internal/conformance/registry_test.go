@@ -55,6 +55,7 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"implement-spec-status-flip-anchor": conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh"),
 	"shape-idea-bypass":                 conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh"),
 	"shape-idea-bypass-wrapped":         conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh"),
+	"review-persistence-anchor":         conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh"),
 	"shape-idea-handoff-anchor":         conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh"),
 	"story-line-anchor-missing":         conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh", ".bench/gate-line-contracts.sh"),
 	"write-spec-handoff-anchor":         conformanceFixture("workflow-guidance-anchors", ".bench/gate-docs-contracts.sh"),
