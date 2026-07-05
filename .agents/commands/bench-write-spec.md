@@ -104,11 +104,16 @@ loop honest.
    `why it catches the failure`. The red signal is the command or test that has
    already been run and failed because the mapped behavior is absent or wrong. If
    the behavior is already covered or cannot start red, say so in the row instead
-   of pretending it is TDD coverage. When a behavior or red-signal promise
+   of pretending it is TDD coverage. Before locking the map, name the cheapest
+   wrong implementation of each story — the sequential port, the always-green
+   stub — and confirm a row goes red on it; a map the degenerate implementation
+   passes has not pinned the behavior. When a behavior or red-signal promise
    quantifies over a set ("each check", "every parser"), enumerate the set or
    state the granularity explicitly — per item or per class. An unenumerated
    "each" lets the build pick the cheapest reading, and review is the wrong
-   place to catch that.
+   place to catch that. When the map's Handoff names black-box assertables
+   (item 4), each one lands as a coverage row or a stated exception; an
+   assertable with no row is a missing behavior, not an editorial choice.
 
 5. **Walk the edge inventory.** Stories are happy-path shaped; this step generates
    the cases nobody declared. For each mapped behavior, walk the edge classes —
@@ -136,12 +141,16 @@ loop honest.
 
 6. **Route each story.** Give every user story its line — the resolved model id
    and effort from the `craft-line` decision table, judged per story on spec
-   precision, seam certainty, and gate coverage. Work the gate fully observes
+   precision, seam certainty, and gate coverage. Check the profile's `Lines`
+   cached routings first: when a cached row matches the work, the story's line
+   matches it, or the story names the deviation and why. Work the gate fully observes
    routes cheap; prose and semantics the gate can't grade bump a tier. This is
    the spec-time half of invariant #2: the build inherits routing I approved,
    instead of picking models mid-loop.
 
-7. **Write `specs/<feature>.md`** using the template below.
+7. **Write `specs/<feature>.md`** using the template below, then run
+   `bench coverage --check` on the draft, so map-format defects surface at
+   author time instead of at the gate.
 
 8. **Retire what this spec supersedes — promote, then delete.** If the new spec
    replaces an existing `specs/*.md` (same feature, new direction), it does **not**
@@ -157,8 +166,11 @@ loop honest.
 9. **Conditional top-tier review before sign-off.** Spawn a top-tier reviewer
    sub-agent **only** when the Handoff carries uncertainty flags (item 7) or the
    draft deviates from the map. Give it a fresh small context — the Handoff plus
-   the draft, nothing else — and have it return findings and an advisory
-   recommend/block verdict. There is no standing top-tier pass, and the verdict is
+   the draft, nothing else — and charge it with falsification questions (would
+   the cheapest wrong implementation pass this map? does every Handoff
+   assertable have a row? does each line match the cached routings?), never an
+   open "review this"; it returns findings and an advisory recommend/block
+   verdict. There is no standing top-tier pass, and the verdict is
    advisory: sign-off stays mine. A complete Handoff with no uncertainty makes the
    mechanical case, and conformance is work the gate already covers.
 
