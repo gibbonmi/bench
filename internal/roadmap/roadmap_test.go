@@ -198,6 +198,27 @@ func TestRoadmapDrainStatus(t *testing.T) {
 	}
 }
 
+// TestRoadmapRecommendedSequenceCallout covers the no-drain extraction branch.
+func TestRoadmapRecommendedSequenceCallout(t *testing.T) {
+	root := newRepo(t)
+	content := "# Roadmap\n\n## Context\n\nKeep current.\n\n## Recommended sequence\n\n1. Shape next item - /bench-shape-idea\n2. Implement next item - /bench-implement-spec\n\n## Later\n\nDo not include.\n"
+	if err := os.WriteFile(roadmapPath(t, root), []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, code := RoadmapCommand(nil)
+	if code != 0 {
+		t.Fatalf("exit: got %d, want 0", code)
+	}
+	want := "## Next action\n\n## Recommended sequence\n\n1. Shape next item - /bench-shape-idea\n2. Implement next item - /bench-implement-spec\n"
+	if !strings.Contains(out, want) {
+		t.Fatalf("missing recommended sequence callout %q in:\n%s", want, out)
+	}
+	callout := out[strings.LastIndex(out, "## Next action"):]
+	if strings.Contains(callout, "Do not include.") {
+		t.Fatalf("callout included the following section:\n%s", callout)
+	}
+}
+
 // TestParkedCountMixedLines covers counting only `^- ` lines among mixed content.
 func TestParkedCountMixedLines(t *testing.T) {
 	root := newRepo(t)

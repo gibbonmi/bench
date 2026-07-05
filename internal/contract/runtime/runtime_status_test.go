@@ -77,6 +77,13 @@ func testRuntimeIdeaRoadmap(t *testing.T) {
 	contract.RequireContains(t, roadmap.Stdout, "ideas: 1 parked in IDEAS.md")
 	contract.RequireContains(t, roadmap.Stdout, "learnings: 1 open in .bench/learnings.md")
 	contract.RequireContains(t, roadmap.Stdout, "/bench-what-next")
+
+	next := contract.NewFixture(t)
+	next.WriteFile("ROADMAP.md", "# Roadmap\n\n## Context\n\nKeep current.\n\n## Recommended sequence\n\n1. Shape next item - /bench-shape-idea\n2. Implement next item - /bench-implement-spec\n")
+	out := next.Bench("roadmap")
+	out.RequireExit(0)
+	contract.RequireContains(t, out.Stdout, "## Next action\n\n## Recommended sequence\n\n1. Shape next item - /bench-shape-idea\n2. Implement next item - /bench-implement-spec\n")
+	contract.RequireNotContains(t, out.Stdout, "## Drain status")
 }
 
 func testRuntimeStatusClean(t *testing.T) {

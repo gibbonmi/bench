@@ -80,7 +80,11 @@ func RoadmapCommand(args []string) (string, int) {
 	if err != nil || len(data) == 0 {
 		return "roadmap empty\n", 0
 	}
-	return string(data) + drainStatus(root), 0
+	text := string(data)
+	if status := drainStatus(root); status != "" {
+		return text + status, 0
+	}
+	return text + nextAction(text), 0
 }
 
 // DrainCounts returns the maintenance inbox counts `bench roadmap` reports before a
@@ -95,6 +99,41 @@ func drainStatus(root string) string {
 		return ""
 	}
 	return fmt.Sprintf("\n\n## Drain status\n\n- ideas: %d parked in %s\n- learnings: %d open in .bench/learnings.md\n\nRun /bench-what-next before trusting the sequence.\n", ideas, ideasFile, openLearnings)
+}
+
+func nextAction(roadmap string) string {
+	section := recommendedSequence(roadmap)
+	if section == "" {
+		return ""
+	}
+	return "\n\n## Next action\n\n" + section
+}
+
+func recommendedSequence(roadmap string) string {
+	lines := strings.SplitAfter(roadmap, "\n")
+	start := -1
+	for i, line := range lines {
+		if strings.TrimRight(line, "\r\n") == "## Recommended sequence" {
+			start = i
+			break
+		}
+	}
+	if start < 0 {
+		return ""
+	}
+	end := len(lines)
+	for i := start + 1; i < len(lines); i++ {
+		line := strings.TrimRight(lines[i], "\r\n")
+		if strings.HasPrefix(line, "## ") {
+			end = i
+			break
+		}
+	}
+	section := strings.Join(lines[start:end], "")
+	if !strings.HasSuffix(section, "\n") {
+		section += "\n"
+	}
+	return section
 }
 
 // ParkedCount returns the number of `^- ` lines (a hyphen then a space at line start)
