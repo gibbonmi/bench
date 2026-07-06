@@ -21,21 +21,3 @@ Format per entry:
 An entry leaves this file only via /bench-what-next.
 
 <!-- entries below -->
-
-## 2026-07-06 — `bench commit` cannot stage a file deletion  [open]
-- **What happened:** Retiring the `commit-wrappers` spec (a promote-then-delete
-  pass) required committing a deleted `specs/*.md` alongside a modified profile.
-  `bench commit -m … projects/benchkit.md specs/commit-wrappers.md` ran the gate
-  green, then failed at staging: `git add :(literal)specs/commit-wrappers.md`
-  exits 128 on a path whose file no longer exists. The commit never landed; I
-  completed it with plain `git commit` on the already-green, already-staged tree.
-- **Right behavior:** `bench commit` should stage a deletion in the named set,
-  since spec-retire — a core workflow — always deletes a file. `git add` of a
-  removed path fails; the fix is to stage named paths with a mode that records
-  deletions (e.g. `git add -A -- :(literal)<path>` or `git rm --cached` on absent
-  paths), so the sanctioned commit path can complete the very workflow it exists
-  to serve. Falling back to raw `git commit` defeats the block-check + gate-order
-  guarantees `bench commit` is meant to enforce.
-- **Proposed rule change:** none to the working agreement; this is a `bench
-  commit` defect. Roadmap item: teach `bench commit` staging to record deletions
-  for named paths, with a gate row driving a deleted path through the command.
