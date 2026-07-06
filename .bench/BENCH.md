@@ -53,7 +53,7 @@ Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
 - Adoption and setup: `bench link`, `bench init`, `bench doctor`.
 - Ambient context and capture: `bench status`, `bench idea`, `bench roadmap`,
   `bench learnings`, `bench maps`.
-- Oracle and diagnostics: `bench gate`, `bench canary`, `bench structure`,
+- Oracle and diagnostics: `bench gate`, `bench gate pin`, `bench canary`, `bench structure`,
   `bench guards`, `bench diff`, `bench coverage`, `bench models`, `bench version`.
 - Work execution: `bench worktree`, `bench shift`.
 - Hook and adapter plumbing: `bench tree-hash`, `bench gate-run`, `bench gate-phases`,

@@ -230,6 +230,8 @@ func run(args []string, stdout, stderr *os.File) int {
 		return shift.Command(args[1:], os.Stdin, stdout, stderr)
 	case "gate-run":
 		return gate.RunCommand(args[1:], stdout, stderr)
+	case "gate-pin":
+		return gate.PinCommand(args[1:], os.Stdin, stdout, stderr)
 	case "gate-phases":
 		return gatePhasesCommand(args[1:], stdout, stderr)
 	case "canary":

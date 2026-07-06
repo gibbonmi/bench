@@ -1,6 +1,6 @@
 # adversarial gate pinning (FT2)
 
-Status: staged
+Status: implemented
 
 ## Problem
 

@@ -8,4 +8,4 @@ A freshly scaffolded consumer gate is born defended and red: an un-canaried sent
 
 ## Considered options
 
-Pinning the gate outside the writable tree and hash-verifying it before push would cover the adversarial case — an agent that deletes the tripwire in the same edit that weakens the gate, which nothing inside a writable tree can stop. Pinning is deliberately out of scope: a separate future capability, not an extension of the tripwire.
+Pinning the gate outside the writable tree now covers the adversarial case — an agent that deletes the tripwire in the same edit that weakens the gate, which nothing inside a writable tree can stop. The managed pre-push hook verifies the committed `.bench` tree against a human-recorded local pin and blocks drift with re-pin instructions. This preserves the same posture as the tripwire: loud, not impossible. A determined actor with shell access can still edit local git hooks, and defending that remains out of scope.

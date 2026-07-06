@@ -20,6 +20,7 @@ func TestRuntimeGateContracts(t *testing.T) {
 	contract.RunParallel(t, "stop hook missing-core-binary fail-safe contract", testRuntimeStopHookMissingCoreBinary)
 	contract.RunParallel(t, "bench gate missing-core-binary fail-safe contract", testRuntimeGateMissingCoreBinary)
 	contract.RunParallel(t, "bench gate verdict-record contract", testRuntimeGateVerdictRecord)
+	contract.RunParallel(t, "bench gate pin non-TTY refusal contract", testRuntimeGatePinNonTTYRefusal)
 	contract.RunParallel(t, "bench symlinked kit-dir portability contract", testRuntimeSymlinkedKitDir)
 	contract.RunParallel(t, "stop hook stop_hook_active contract", testRuntimeStopHookActive)
 	contract.RunParallel(t, "stop hook missing-bench fail-open contract", testRuntimeStopHookMissingBenchFailOpen)
@@ -132,6 +133,22 @@ func testRuntimeGateVerdictRecord(t *testing.T) {
 		t.Fatal("red gate run exited zero")
 	}
 	contract.RequireContains(t, contract.ReadFileAbs(t, cache), "red "+strings.TrimSpace(f.Bench("tree-hash").Stdout))
+}
+
+func testRuntimeGatePinNonTTYRefusal(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\nexit 0\n")
+	f.CommitAll("init")
+	pin := filepath.Join(gitDir(t, f), "bench-gate-pin")
+
+	probe := contract.RunAtWithInput(t, f, f.Root, nil, "pin .bench\n", "bash", benchPath(t), "gate", "pin")
+	if probe.ExitCode == 0 {
+		t.Fatal("bench gate pin accepted non-TTY stdin")
+	}
+	probe.RequireContains(probe.Stderr, "interactive TTY")
+	if _, err := os.Stat(pin); err == nil {
+		t.Fatal("bench gate pin wrote a pin file after non-TTY refusal")
+	}
 }
 
 func testRuntimeSymlinkedKitDir(t *testing.T) {

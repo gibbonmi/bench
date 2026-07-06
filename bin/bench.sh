@@ -34,6 +34,14 @@ export BENCH_HOME="${BENCH_HOME:-$HOME/.bench}"
 # record; a missing binary exits 127 via route_binary, which writes no forged verdict.
 run_gate() { route_porcelain gate-run; }
 
+gate_command() {
+  case "${2:-}" in
+    "") run_gate ;;
+    pin) route_porcelain gate-pin "${@:3}" ;;
+    *) run_gate ;;
+  esac
+}
+
 # Resolve where the canonical kit lives (parent of this script's bin/), following
 # symlinks without relying on GNU-only `readlink -f`.
 resolve_script_path() {
@@ -202,7 +210,7 @@ adoption_route() {
 
 case "${1:-help}" in
   version)  route_porcelain "$@" ;;
-  gate)     run_gate ;;
+  gate)     gate_command "$@" ;;
   doctor)   adoption_route "$@" ;;
   worktree) route_porcelain "$@" ;;
   shift)    route_porcelain "$@" ;;
@@ -245,6 +253,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
   bench doctor [--fix]       report (and repair) the PATH shim under a node version manager
   bench gate                 run the project gate (the oracle)
+  bench gate pin             pin HEAD's .bench tree for pre-push verification
   bench worktree             warm, isolated worktree subshell
   bench shift "<objective>"  gated loop in a pooled worktree; commit on green
   bench version              print the installed benchkit version (os/arch)

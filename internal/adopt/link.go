@@ -378,11 +378,35 @@ func installGitHook(root string, stderr io.Writer) error {
 if [[ "${1:-}" == "--describe" ]]; then
   printf 'name: pre-push\n'
   printf 'boundary: pre-push\n'
-  printf 'denies: direct push to %[1]s\n'
+  printf 'denies: direct push to %[1]s, .bench drift from bench gate pin\n'
   printf 'why: the merge belongs to the reviewer; agents open a PR instead of pushing %[1]s\n'
   exit 0
 fi
-while read -r local_ref local_oid remote_ref remote_oid; do
+pin_path="$(git rev-parse --git-path bench-gate-pin 2>/dev/null || true)"
+pin_tree=""
+if [[ -n "$pin_path" && -f "$pin_path" ]]; then
+  IFS= read -r pin_tree < "$pin_path" || true
+fi
+if [[ -z "$pin_tree" ]]; then
+  echo "bench: gate unpinned - run 'bench gate pin' to enable .bench drift checks." >&2
+fi
+ref_lines=()
+while IFS= read -r line; do
+  ref_lines+=("$line")
+  read -r local_ref local_oid remote_ref remote_oid <<< "$line"
+  if [[ -n "$pin_tree" && ! "$local_oid" =~ ^0+$ ]]; then
+    if ! bench_tree="$(git rev-parse "$local_oid:.bench" 2>/dev/null)"; then
+      echo "blocked: pushed commit has no .bench tree. Review the gate change, then run 'bench gate pin'." >&2
+      exit 1
+    fi
+    if [[ "$bench_tree" != "$pin_tree" ]]; then
+      echo "blocked: pushed .bench tree does not match bench gate pin. Review the gate change, then run 'bench gate pin'." >&2
+      exit 1
+    fi
+  fi
+done
+for line in "${ref_lines[@]}"; do
+  read -r local_ref local_oid remote_ref remote_oid <<< "$line"
   if [[ "$remote_ref" == "refs/heads/%[1]s" ]]; then
     echo "blocked: direct push to %[1]s. Open a PR or merge it yourself." >&2
     exit 1
