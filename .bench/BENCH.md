@@ -168,6 +168,6 @@ from real use without any rule ever changing itself behind my back.
 Parking an idea is conversational — never a CLI chore for the reviewer. When the
 reviewer wants to set an idea aside, or you spot a tangent worth not losing, **you**
 run `bench idea "<text>"`; they never type it. Offer once when a clear tangent
-appears, then let it go — don't nag. Parked ideas land in `ROADMAP.md` and graduate
+appears, then let it go — don't nag. Parked ideas land in `IDEAS.md` and graduate
 into committed work only through `/bench-shape-idea`. If `bench` isn't on PATH, append the
-dated line (`- YYYY-MM-DD  <text>`) to `ROADMAP.md` yourself.
+dated line (`- YYYY-MM-DD  <text>`) to `IDEAS.md` yourself.

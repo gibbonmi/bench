@@ -1,4 +1,5 @@
-// Package roadmap owns idea capture, roadmap display, and parked-line counting.
+// Package roadmap owns idea capture, roadmap display, and the drain counts the
+// status board and roadmap command share.
 package roadmap
 
 import (

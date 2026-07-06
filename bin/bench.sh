@@ -7,8 +7,8 @@
 #   bench init                 scaffold .bench/gate.sh and .bench/learnings.md
 #   bench models               discover model ids for line binding
 #   bench structure            flag oversized files and crowded directories
-#   bench idea "<text>"        park an out-of-scope idea
-#   bench roadmap              list parked ideas
+#   bench idea "<text>"        park an out-of-scope idea in IDEAS.md
+#   bench roadmap              print the roadmap + drain status
 #   bench status               print the ambient dashboard
 #   bench gate                 run the project gate; exit code is the verdict
 #   bench canary [root]        run the gate against known-broken fixtures
@@ -234,8 +234,8 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench init                 scaffold .bench/gate.sh in the current repo
   bench models               discover models available in this harness (for the lines)
   bench structure            flag oversized files + crowded dirs (wire into the gate)
-  bench idea "<text>"        park an out-of-scope idea in ROADMAP.md (commit to nothing)
-  bench roadmap              list parked ideas
+  bench idea "<text>"        park an out-of-scope idea in IDEAS.md (commit to nothing)
+  bench roadmap              print the roadmap + drain status (IDEAS.md, learnings)
   bench status               ambient dashboard: what needs attention + the next action
   bench canary [root]        run the gate against known-broken fixtures
   bench learnings            open journal entries as a TOON table (date, title)

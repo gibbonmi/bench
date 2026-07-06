@@ -44,13 +44,16 @@ canonical in `/bench-final-check`; this line is only the binding.)
   severity ladder and leads with the next action. Reads gate state from the **gate cache**
   (`<git-dir>/bench-last-gate`, written by the Stop hook) — never a cold gate run. The
   contract (gate-tested): show-only-on-signal, a five-row budget, a stale-green that is
-  not a clean bill, and a zero-severity roadmap footer that never leads.
-- **The roadmap capture sink** (`bench idea` / `bench roadmap` → `ROADMAP.md`). The
-  capture-and-forget surface: park an out-of-scope idea, commit to nothing, promote it
-  later only via `/bench-shape-idea`. The contract (gate-tested in a throwaway repo):
-  `idea` appends one dated line and creates the file; a no-arg `idea` errors without
-  appending; `roadmap` reports empty when there's nothing parked. `ROADMAP.md` is
-  per-consumer content — never in the kit's `package.json` `files[]`.
+  not a clean bill, and one combined capture-drain row (parked ideas + open learnings)
+  pointing at `/bench-what-next`.
+- **The capture inbox and working roadmap** (`bench idea` → `IDEAS.md`;
+  `bench roadmap` → `ROADMAP.md`). Capture-and-forget: park an out-of-scope idea,
+  commit to nothing; ideas graduate only through a `/bench-what-next` drain into the
+  working roadmap. The contract (gate-tested in a throwaway repo): `idea` appends one
+  dated line and creates the inbox; a no-arg `idea` errors without appending;
+  `roadmap` prints the working document plus drain status, or its
+  `## Recommended sequence` when nothing needs draining. `IDEAS.md` and `ROADMAP.md`
+  are per-consumer content — never in the kit's `package.json` `files[]`.
 - **The kit content surface** (`.agents/skills/*/SKILL.md`, `.agents/commands/*.md`).
   Portable harness-facing content. The contract is structural: every skill carries YAML
   frontmatter (name + description) and follows progressive disclosure; every command

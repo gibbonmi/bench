@@ -34,6 +34,7 @@ var retireRe = regexp.MustCompile(`^Status:[ \t]+implemented[ \t]*$`)
 
 var captureOnlyStalePaths = map[string]bool{
 	".bench-notes.md": true,
+	"IDEAS.md":        true,
 	"ROADMAP.md":      true,
 }
 

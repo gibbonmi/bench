@@ -145,7 +145,7 @@ bench/
 │   ├── structure/            # structure checker + budgets parser (whole-tree + touched)
 │   ├── worktree/             # worktree pool-path + lease-file conventions
 │   ├── models/               # bench models API query + no-key guidance
-│   ├── roadmap/              # ROADMAP.md owner: idea, roadmap, parked count
+│   ├── roadmap/              # IDEAS.md + ROADMAP.md owner: idea, roadmap, drain counts
 │   └── git/                  # shared git subprocess helpers + gate tree-hash
 └── projects/
     ├── benchkit.md           # seams, gate, lines for this kit

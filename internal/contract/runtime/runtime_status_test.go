@@ -97,15 +97,20 @@ func testRuntimeStatusDrainRow(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. Shape next item - /bench-shape-idea\n")
 	f.WriteFile("IDEAS.md", "- 2026-07-05  parked idea\n")
-	f.WriteFile(".bench/learnings.md", "## 2026-07-05 — open learning  [open]\n")
+	// Template heading + one real open heading: the shared parser counts only the real one.
+	f.WriteFile(".bench/learnings.md", "## <date> — <short title>  [open]\n## 2026-07-05 — open learning  [open]\n")
 	f.CommitAll("s")
 	out := f.Bench("status").Stdout
 	contract.RequireContains(t, out, "1 idea(s), 1 open learning(s)")
 	contract.RequireContains(t, out, "/bench-what-next")
 	contract.RequireNotContains(t, out, "/bench-integrate-learnings")
 	contract.RequireNotContains(t, out, "parked — bench roadmap")
+	contract.RequireNotContains(t, out, "clean — nothing pending")
 	if n := strings.Count(out, "→ /bench-what-next"); n != 1 {
 		t.Fatalf("want one combined maintenance row, got %d in:\n%s", n, out)
+	}
+	if !strings.HasPrefix(out, "▶ /bench-what-next  (drain)") {
+		t.Fatalf("drain row as the only signal must lead, got:\n%s", out)
 	}
 
 	// A working roadmap alone is not pending capture: no drain row, board stays clean.
@@ -141,6 +146,9 @@ func testRuntimeStatusStaleGateDriftClassification(t *testing.T) {
 		{name: "added ROADMAP.md is capture-only", mutate: writeRuntimeFile("ROADMAP.md", "- 2026-07-05  parked idea\n"), want: benign},
 		{name: "modified ROADMAP.md is capture-only", seed: writeRuntimeFile("ROADMAP.md", "- 2026-07-04  old idea\n"), mutate: writeRuntimeFile("ROADMAP.md", "- 2026-07-05  parked idea\n"), want: benign},
 		{name: "deleted ROADMAP.md is capture-only", seed: writeRuntimeFile("ROADMAP.md", "- 2026-07-04  old idea\n"), mutate: removeRuntimePath("ROADMAP.md"), want: benign},
+		{name: "added IDEAS.md is capture-only", mutate: writeRuntimeFile("IDEAS.md", "- 2026-07-05  parked idea\n"), want: benign},
+		{name: "modified IDEAS.md is capture-only", seed: writeRuntimeFile("IDEAS.md", "- 2026-07-04  old idea\n"), mutate: writeRuntimeFile("IDEAS.md", "- 2026-07-05  parked idea\n"), want: benign},
+		{name: "nested IDEAS lookalike is strong stale", mutate: writeRuntimeFile("notes/IDEAS.md", "doc drift\n"), want: strong},
 		{name: "added .bench-notes.md is capture-only", mutate: writeRuntimeFile(".bench-notes.md", "scratch\n"), want: benign},
 		{name: "modified .bench-notes.md is capture-only", seed: writeRuntimeFile(".bench-notes.md", "old\n"), mutate: writeRuntimeFile(".bench-notes.md", "new\n"), want: benign},
 		{name: "deleted .bench-notes.md is capture-only", seed: writeRuntimeFile(".bench-notes.md", "old\n"), mutate: removeRuntimePath(".bench-notes.md"), want: benign},
@@ -274,9 +282,13 @@ func testRuntimeStatusLearningsFloor(t *testing.T) {
 	contract.RequireContains(t, f.BenchEnv(map[string]string{"BENCH_LEARNINGS_FLOOR": "1"}, "status").Stdout, "/bench-what-next")
 	f.WriteFile(".bench/learnings.md", "## <date> — <short title>  [open]\n")
 	contract.RequireNotContains(t, f.BenchEnv(map[string]string{"BENCH_LEARNINGS_FLOOR": "1"}, "status").Stdout, "/bench-what-next")
-	// The floor gates only the learnings component; parked ideas always count.
+	// The floor gates only the learnings component; parked ideas always count, and a
+	// real open heading below the floor renders as zero rather than leaking through.
+	f.WriteFile(".bench/learnings.md", "## 2026-01-01 — a  [open]\n")
 	f.Bench("idea", "parked past the floor").RequireExit(0)
-	contract.RequireContains(t, f.BenchEnv(map[string]string{"BENCH_LEARNINGS_FLOOR": "2"}, "status").Stdout, "/bench-what-next")
+	out := f.BenchEnv(map[string]string{"BENCH_LEARNINGS_FLOOR": "2"}, "status").Stdout
+	contract.RequireContains(t, out, "1 idea(s), 0 open learning(s)")
+	contract.RequireContains(t, out, "/bench-what-next")
 }
 
 type staleGateStatusCase struct {

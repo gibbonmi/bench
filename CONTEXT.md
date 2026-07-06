@@ -33,11 +33,15 @@ cold session reads this first to avoid drifting the vocabulary.
 - **command** — a canonical phase of the workflow (`/bench-shape-idea`, `/bench-write-spec`, `/bench-debug`,
   `/bench-implement-spec`, `/bench-review-implementation`, `/bench-final-check`, plus `/bench-setup-repo`, `/bench-update-kit`, `/bench-integrate-learnings`). Not "slash command
   template" in prose — command.
-- **roadmap** — the capture-and-forget sink at `ROADMAP.md` (repo root): out-of-scope
-  ideas parked with `bench idea`, committing to nothing, listed with `bench roadmap`.
-  Append-only, no status or lifecycle. Not "icebox", not "backlog" (a backlog implies
-  work you've queued to do) — roadmap.
-- **park** — to capture an idea on the **roadmap** without committing to it
+- **roadmap** — the working prioritization document at `ROADMAP.md` (repo root):
+  assessed open work in priority order, ending in a `## Recommended sequence`
+  that names the next actions. Printed with `bench roadmap`. A row leaves when
+  the work ships or a reconcile removes it. Not "icebox", not "backlog" — roadmap.
+- **ideas inbox** — the capture-and-forget sink at `IDEAS.md` (repo root):
+  out-of-scope ideas parked with `bench idea`, committing to nothing.
+  Append-only, no status or lifecycle; drained to zero into the **roadmap** by
+  the maintenance phase.
+- **park** — to capture an idea in the **ideas inbox** without committing to it
   (`bench idea "<text>"`). A *parked idea* graduates into committed work only when
   `/bench-shape-idea` pulls it into a decision map. Not "stash", not "file" — park.
 - **ambient dashboard** — what `bench status` prints: the cold-session + on-demand view
