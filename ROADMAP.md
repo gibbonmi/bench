@@ -13,13 +13,6 @@ collapse to one probe seam (canary's merged-stream EXPECT matching stays a
 deliberate mode). Knowledge duplication, no behavior change.
 Next action: direct fix-and-gate with the craft-seams skill.
 
-**L1 (MED-LOW) — promote the shared-tree worktree rule.** From the learnings
-journal (2026-07-05 shared-tree contention): when `git status` shows another
-writer's in-flight edits, side-work goes to a bench worktree — or waits — so
-every gate verdict is attributable to one diff. Kit edit under the
-craft-synthesis discipline, gated as usual.
-Next action: direct fix-and-gate (one rule sentence plus its anchor).
-
 ## Features, in priority order
 
 **FT3 (MED-LOW) — `bench spec implemented` + `bench commit`.** Pair them:
@@ -70,6 +63,5 @@ Next action: direct fix-and-gate with the craft-seams skill.
 
 ## Recommended sequence
 
-1. L1 promote the shared-tree worktree rule — direct fix-and-gate
-2. S2 unify subprocess-capture seams — direct fix-and-gate
-3. S3 split three over-length files — direct fix-and-gate
+1. S2 unify subprocess-capture seams — direct fix-and-gate
+2. S3 split three over-length files — direct fix-and-gate

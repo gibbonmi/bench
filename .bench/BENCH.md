@@ -71,7 +71,10 @@ Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
    stop and say so; do not route around it. The same rule covers delegates: a
    subagent's done-claim is a claim, not a result — verify it against the gate
    and `git status` before accepting it, and run write-delegations in isolated
-   worktrees so stray edits can't land in reviewer-owned files.
+   worktrees so stray edits can't land in reviewer-owned files. The same
+   attribution holds for your own work: when `git status` shows another writer's
+   in-flight edits, take side-work to a `bench worktree` — or wait — so every
+   gate verdict answers for exactly one diff.
 
 2. **Declare the line before a long run.**
    Before any multi-cycle stage (a build, a shift, a TDD pass), state in one line:

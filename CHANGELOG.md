@@ -8,6 +8,14 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings promotion (2026-07-06, L1: shared-tree worktree rule).** From the
+  2026-07-05 shared-tree-contention entry (drained to the roadmap in a prior
+  reconcile). Folded into invariant 1 in `.bench/BENCH.md` — one sentence
+  generalizing the existing delegate worktree-isolation clause to your own
+  side-work: when `git status` shows another writer's in-flight edits, take
+  side-work to a `bench worktree` or wait, so every gate verdict answers for
+  exactly one diff. Fold, not a new piece; prose-only, gate green.
+
 - **Learnings run (2026-07-04, scope: journal close-out).** Drained three
   entries. Promoted (already shipped): review-findings persistence — the
   `/bench-review-implementation` pickup artifact at `reviews/<spec-slug>.md`
