@@ -21,5 +21,3 @@ Format per entry:
 An entry leaves this file only via /bench-integrate-learnings.
 
 <!-- entries below -->
-
-- 2026-07-05  Shared-tree contention: while another process implemented binary-auto-repair in the main working tree, I ran retire/map doc work in the same tree. First gate run was green (committed the retire on it); by the map commit the gate was red from the other process's in-flight bin/bench.sh edit (shellcheck + 7 canaries not biting), so the doc commit is held even though the red is not attributable to the doc diff. Right behavior was probably to do side-work in a bench worktree whenever another writer owns the main tree, making every gate verdict attributable to one diff. Proposed rule: when `git status` shows another writer's in-flight edits, side-work goes to a worktree — or waits.

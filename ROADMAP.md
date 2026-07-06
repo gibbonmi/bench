@@ -7,10 +7,9 @@ goes to `IDEAS.md` and enters only through a reviewed drain.
 
 ## Ready to build
 
-**WN (HIGH) — finish the what-next build.** `specs/what-next.md` stories 7–11:
-the `/bench-what-next` phase, retirement of the old learnings-integration
-phase, `/bench-shape-idea` retarget, gate/canary anchors, spec-retire wiring.
-Stories 1–6 are shipped.
+**WN (HIGH) — finish the what-next build.** `specs/what-next.md` stories 8–11:
+retirement of the old learnings-integration phase, `/bench-shape-idea`
+retarget, gate/canary anchors, spec-retire wiring. Stories 1–7 are shipped.
 Next action: `/bench-implement-spec`.
 
 **S1 (LOW) — split `internal/gate/phases_test.go`.** 457 lines, over the
@@ -19,6 +18,19 @@ cleanly separable by responsibility (runner concurrency/output/cancel vs
 phase-table/shellcheck/signal-handling) — split along those lines per the
 craft-seams skill, don't fragment just to beat the line count.
 Next action: direct fix-and-gate (small, mechanical, no spec needed).
+
+**S2 (LOW) — unify subprocess-capture seams.** Conformance `runProbe`,
+`Harness.Run`, and canary `defaultRunner` each hand-roll subprocess capture;
+collapse to one probe seam (canary's merged-stream EXPECT matching stays a
+deliberate mode). Knowledge duplication, no behavior change.
+Next action: direct fix-and-gate with the craft-seams skill.
+
+**L1 (MED-LOW) — promote the shared-tree worktree rule.** From the learnings
+journal (2026-07-05 shared-tree contention): when `git status` shows another
+writer's in-flight edits, side-work goes to a bench worktree — or waits — so
+every gate verdict is attributable to one diff. Kit edit under the
+craft-synthesis discipline, gated as usual.
+Next action: direct fix-and-gate (one rule sentence plus its anchor).
 
 **FT2 (MED) — adversarial gate pinning.** Hash-verify the gate outside the
 writable tree in pre-push. Distinct threat model from the lazy-agent tripwire;
@@ -34,14 +46,26 @@ implement phase with two small wrappers over existing logic.
 **FT4 (MED-LOW) — harness task list in `/bench-implement-spec`.** Per-harness
 adapter (Claude hook + phase line; Codex native).
 
+**FT9 (MED-LOW) — compiled git-context command.** One call bundling
+status+diff+log+staged for agents, partitioned self vs other-writer changes.
+Open fork: attribution via session-start baseline snapshot vs agent-passed
+file list; tension with the shared-tree rule (L1 is the stronger fix), but
+call-count value stands single-writer too. Needs its grill.
+
+**FT10 (LOW) — doctor installs the kit repo's pre-push guard.** `bench guards`
+already reports the missing guard; `bench doctor` should detect it on the kit
+repo itself and offer the install (consumer repos get it via `bench link`).
+
 **FT5 (LOW) — `bench outline`.** Marginal for this repo, real as a kit
 affordance for large/polyglot linked repos. Needs its grill (languages,
 on-demand vs committed, prose anchors).
 
 **FT6 (LOW, parked pending evidence — leave parked):** `bench refs`, `bench
 detect`, `bench doc`, `bench specs --retired`, doctor binary-presence row,
-`conformanceFamilies`-vs-dispatch reconcile meta-check. `bench symbols` is not
-carried; restore only if agents demonstrably burn turns on symbol search.
+`conformanceFamilies`-vs-dispatch reconcile meta-check, and a per-anchor
+bite-proof meta-test (canaries prove one needle per family today; graduate on
+observed anchor rot). `bench symbols` is not carried; restore only if agents
+demonstrably burn turns on symbol search.
 
 **FT7 (LOW) — dashboard.** Low priority by declaration.
 
@@ -56,6 +80,6 @@ carried; restore only if agents demonstrably burn turns on symbol search.
 
 ## Recommended sequence
 
-1. WN what-next stories 7–11 — `/bench-implement-spec`
+1. WN what-next stories 8–11 — `/bench-implement-spec`
 2. S1 split `internal/gate/phases_test.go` — `/bench-implement-spec`
 3. FT2 adversarial gate pinning — `/bench-write-spec`
