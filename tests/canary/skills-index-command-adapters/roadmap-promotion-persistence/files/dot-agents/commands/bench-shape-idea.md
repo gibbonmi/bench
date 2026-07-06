@@ -22,7 +22,7 @@ next open ticket.
 Use this when an idea is too unresolved to spec yet — when there are open
 questions whose answers change what gets built. Even an idea that already reads
 clear yields a map before it can be specced: a short grill and a
-zero-open-ticket `decisions/<topic>.md` with a `## (handoff elided for canary)`, written in one
+zero-open-ticket `decisions/<topic>.md` with a `## Handoff`, written in one
 sitting. No idea reaches a spec without a map behind it.
 
 The output is a single compact markdown file, `decisions/<topic>.md`, git-tracked.
@@ -54,7 +54,7 @@ Each ticket is sized to one focused session. Three kinds:
 
 ## The Handoff — the seams a closed map hands the spec-writer
 
-Every map closes with a `## (handoff elided for canary)` section: the structure `/bench-write-spec`
+Every map closes with a `## Handoff` section: the structure `/bench-write-spec`
 reads seams off instead of re-deriving them or escalating for answers the grill
 already settled. It is **required on every close** — `bench maps` keeps showing
 the map's row until the section is present and placeholder-free — and every item
@@ -62,7 +62,7 @@ is answered. An item that does not apply is written `n/a — <one clause>`, so t
 exclusion is a decision on the page, not a silent gap.
 
 ```markdown
-## (handoff elided for canary)
+## Handoff
 
 1. **Module boundaries.** Each unit and its responsibility — inside vs outside.
 2. **Contracts.** Per boundary: inputs, outputs, exit codes, error posture — the
@@ -105,10 +105,10 @@ carrying a fresh idea from the conversation, proceed with it and do **not** inte
 with the roadmap prompt; if the roadmap is empty or absent, say so, note that
 `/bench-what-next` rebuilds it, and continue.
 
-Pulling an item **leaves its roadmap row in place**: row presence is the item's
-status as current open work, and the row stays through mapping, spec, and build
-until shipped retirement removes it (the spec-retire pass, or a `/bench-what-next`
-reconcile as the backstop). This command never edits `ROADMAP.md`.
+When a pulled idea actually becomes a map — i.e. you write `decisions/<topic>.md` from
+it — **remove that entry's line from `ROADMAP.md`** in the same step: promotion means it
+is no longer merely parked. A pull the user abandons before any map is written leaves
+the line untouched.
 
 ## Two modes
 
@@ -128,7 +128,7 @@ The map is deliberately incomplete beyond the frontier. You are done when the
 path to the finish line is clear — no unresolved tickets blocking the build. Before
 declaring the map closed, run `bench maps` — it lists every ticket still holding a
 `— (open` / `— (deferred` placeholder or a `GRILL DEFERRED` banner, and on a map
-with no open tickets a missing or still-placeholdered `## (handoff elided for canary)` section — and
+with no open tickets a missing or still-placeholdered `## Handoff` section — and
 refuse to close while this map still shows a row; a decision made in conversation
 but not written into the map, or a Handoff item left unfilled, is not recorded. Then close the map and lead with the recommended next action
 (usually `/bench-write-spec`) and a one-clause why.
@@ -139,5 +139,5 @@ your own. Surfacing "this could be two slices" is useful; deciding to slice and
 deferring the rest is mine.
 
 If the first grill surfaces no real fog — no multi-session decisions — say so,
-close the short map with its `## (handoff elided for canary)`, and recommend `/bench-write-spec` on a
+close the short map with its `## Handoff`, and recommend `/bench-write-spec` on a
 fresh mid-tier session. Don't manufacture tickets.

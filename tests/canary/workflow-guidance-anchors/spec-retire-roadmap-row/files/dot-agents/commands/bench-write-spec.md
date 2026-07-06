@@ -159,9 +159,7 @@ loop honest.
    durable (a decision → an ADR, a hostile edge → the profile checklist, a seam →
    the profile seam list), then **delete** the old file under a `spec-retire: <name>`
    commit, fixing every dangling reference in that same commit so the stale-reference
-   sweep stays green. The same promote-then-delete commit removes the spec's
-   `ROADMAP.md` row — row presence is status, so a retired spec that leaves its row
-   behind keeps shipped work listed as current. git is the archive
+   sweep stays green. git is the archive
    (`git log --grep=spec-retire`), so no marker and no archive folder is kept.
    Retiring the old spec is part of writing the new one, not a cleanup for later.
    The same pass applies when retiring a merged, implemented spec flagged by

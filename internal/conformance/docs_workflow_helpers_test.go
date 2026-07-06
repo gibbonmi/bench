@@ -83,6 +83,23 @@ func checkWorkflowAnchors(root string) []string {
 	require(".agents/commands/bench-what-next.md", "commit on green")
 	require(".agents/commands/bench-what-next.md", "## Recommended sequence")
 
+	requireCollapsed := func(rel, needle, diag string) {
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if !exists(path) {
+			diags = append(diags, "acceptance coverage anchor file missing: "+rel)
+			return
+		}
+		if !strings.Contains(collapseSpace(readIfExists(path)), needle) {
+			diags = append(diags, diag)
+		}
+	}
+	requireCollapsed(".bench/BENCH.md", "Parked ideas land in `IDEAS.md`",
+		".bench/BENCH.md Capture section does not name IDEAS.md as the capture sink")
+	requireCollapsed(".bench/BENCH.md", "append the dated line (`- YYYY-MM-DD <text>`) to `IDEAS.md`",
+		".bench/BENCH.md Capture section lost the no-PATH fallback append to IDEAS.md")
+	requireCollapsed(".agents/commands/bench-write-spec.md", "promote-then-delete commit removes the spec's `ROADMAP.md` row",
+		".agents/commands/bench-write-spec.md does not remove the spec's ROADMAP.md row in the promote-then-delete commit (row presence is status)")
+
 	shapeIdeaPath := filepath.Join(root, ".agents", "commands", "bench-shape-idea.md")
 	if exists(shapeIdeaPath) && strings.Contains(collapseSpace(readIfExists(shapeIdeaPath)), "straight to `/bench-write-spec`") {
 		diags = append(diags, ".agents/commands/bench-shape-idea.md reintroduces the skip-to-spec bypass fragment; every idea must yield a map with a Handoff before a spec")

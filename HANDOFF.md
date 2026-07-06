@@ -7,8 +7,8 @@ inventory of commands, skills, hooks, or CLI surfaces.
 
 ## Current state
 
-Active phase: `$bench-integrate-learnings`. The review/spec-guidance learnings
-slice and the merged-spec retirement slice are complete and committed locally.
+Active phase: `/bench-implement-spec` on the what-next spec. The review/spec-guidance
+learnings slice and the merged-spec retirement slice are complete and committed locally.
 The working tree is clean, and `bench gate` was green before each commit.
 
 The branch has local commits not yet pushed. Recent local work includes:

@@ -31,7 +31,7 @@ cold session reads this first to avoid drifting the vocabulary.
 - **skill** — probabilistic guidance that shapes *how* the model generates
   (`.claude/skills/*/SKILL.md`). Reached for when the task matches; not a rule.
 - **command** — a canonical phase of the workflow (`/bench-shape-idea`, `/bench-write-spec`, `/bench-debug`,
-  `/bench-implement-spec`, `/bench-review-implementation`, `/bench-final-check`, plus `/bench-setup-repo`, `/bench-update-kit`, `/bench-integrate-learnings`). Not "slash command
+  `/bench-implement-spec`, `/bench-review-implementation`, `/bench-final-check`, plus `/bench-setup-repo`, `/bench-update-kit`, `/bench-what-next`). Not "slash command
   template" in prose — command.
 - **roadmap** — the working prioritization document at `ROADMAP.md` (repo root):
   assessed open work in priority order, ending in a `## Recommended sequence`

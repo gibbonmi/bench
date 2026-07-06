@@ -2,7 +2,7 @@
 
 <!-- command-currency: historical -->
 
-Status: staged
+Status: implemented
 
 ## Problem
 

@@ -36,6 +36,8 @@ func testInitScaffoldsLearnings(t *testing.T) {
 	if !f.Exists(".bench/learnings.md") {
 		t.Fatal("bench init does not scaffold .bench/learnings.md")
 	}
+	requireFixtureFileContains(t, f, ".bench/learnings.md", "/bench-what-next", "scaffolded journal header does not name /bench-what-next as the journal exit")
+	requireFixtureFileNotContains(t, f, ".bench/learnings.md", "/bench-integrate-learnings", "scaffolded journal header still names the retired learnings-integration phase")
 }
 
 func testInitExistingGateIdempotence(t *testing.T) {

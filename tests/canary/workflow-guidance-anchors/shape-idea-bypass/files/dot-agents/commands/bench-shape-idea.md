@@ -44,7 +44,9 @@ Type: Research | Prototype | Grill
 
 Each ticket is sized to one focused session. Three kinds:
 
-- **Research** — read docs/APIs/local code, produce a short summary asset.
+- **Research** — read docs/APIs/local code, produce a short summary asset. If the
+  asset claims byte or wire compatibility, include a runnable probe against the
+  caller's own edge outputs.
 - **Prototype** — write throwaway code to answer "how should it look/behave."
 - **Grill** — converse to surface the decision. Use `craft-grill`. The default.
 
@@ -76,7 +78,7 @@ exclusion is a decision on the page, not a silent gap.
 8. **Rejected alternatives.** So the spec-writer does not reopen a closed decision.
 9. **Domain watch-outs.** Hazards stated as domain facts for any reader, never
    model-addressed coaching — operating lessons go through `.bench/learnings.md`
-   and `/bench-integrate-learnings`, never per-spec notes.
+   and `/bench-what-next`, never per-spec notes.
 
 Dependency order: <recommended build order when the map yields multiple slices;
 `n/a — single spec` otherwise>
@@ -88,21 +90,23 @@ sequence — a recommendation for me, not a decision you make. Slicing stays my 
 
 ## Starting from the roadmap
 
-`ROADMAP.md` (repo root) is the capture-and-forget sink: ideas parked with `bench idea`
-that the user committed to nothing. This command is where a parked idea graduates into
+`ROADMAP.md` (repo root) is the working prioritization document `/bench-what-next`
+maintains: assessed open work in priority order, ending in a `## Recommended
+sequence`. (Raw capture lives in `IDEAS.md` and reaches the roadmap only through a
+`/bench-what-next` drain.) This command is where a roadmap item graduates into
 committed work.
 
 When invoked **cold** — no specific idea already in hand from the conversation — read
-`ROADMAP.md` and offer the parked items, asking which (if any) to pull up. The chosen
-entry seeds the bootstrap below. When you are already carrying a fresh idea from the
-conversation, proceed with it and do **not** interrupt with the roadmap prompt; if the
-roadmap is empty or absent, say so and continue.
+`ROADMAP.md` and offer its top items, recommended sequence first, asking which (if
+any) to pull up. The chosen entry seeds the bootstrap below. When you are already
+carrying a fresh idea from the conversation, proceed with it and do **not** interrupt
+with the roadmap prompt; if the roadmap is empty or absent, say so, note that
+`/bench-what-next` rebuilds it, and continue.
 
-When a pulled idea actually becomes a map — i.e. you write `decisions/<topic>.md` from
-it — **remove that entry's line from `ROADMAP.md`** in the same step: promotion means it
-is no longer merely parked. A pull the user abandons before any map is written leaves
-the line untouched. The roadmap carries no status of its own; the line's presence *is*
-its status.
+Pulling an item **leaves its roadmap row in place**: row presence is the item's
+status as current open work, and the row stays through mapping, spec, and build
+until shipped retirement removes it (the spec-retire pass, or a `/bench-what-next`
+reconcile as the backstop). This command never edits `ROADMAP.md`.
 
 ## Two modes
 

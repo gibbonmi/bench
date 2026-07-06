@@ -41,6 +41,7 @@ func TestSkillsIndexAndCommandAdapterFixturesBite(t *testing.T) {
 		"missing-index-field",
 		"stale-index-wording",
 		"unindexed-skill",
+		"roadmap-promotion-persistence",
 	}
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {
@@ -61,6 +62,7 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 	fixtures := []string{
 		"stale-command-reference",
 		"stale-codex-adapter-reference",
+		"retired-command-reference",
 		"stale-cli-doc-reference",
 		"missing-cli-inventory",
 		"historical-marker-prose",
@@ -80,6 +82,9 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 		"shape-idea-bypass",
 		"shape-idea-bypass-wrapped",
 		"shape-idea-handoff-anchor",
+		"what-next-anchor",
+		"spec-retire-roadmap-row",
+		"capture-sink-anchor",
 		"story-line-anchor-missing",
 		"write-spec-handoff-anchor",
 		"write-spec-map-required",

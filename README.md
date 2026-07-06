@@ -33,8 +33,8 @@ $bench-final-check
 ```
 
 Maintenance commands follow the same pattern: `/bench-update-kit` and
-`/bench-integrate-learnings` in Claude Code, or `$bench-update-kit` and
-`$bench-integrate-learnings` in Codex.
+`/bench-what-next` in Claude Code, or `$bench-update-kit` and
+`$bench-what-next` in Codex.
 
 Other AGENTS.md harnesses read the matching file under `.agents/commands/` when
 they do not expose a native command or skill surface.
@@ -102,7 +102,7 @@ bench/
 │   ├── commands/             # portable workflow phases + maintenance commands
 │   │   ├── bench-setup-repo.md
 │   │   ├── bench-update-kit.md
-│   │   ├── bench-integrate-learnings.md
+│   │   ├── bench-what-next.md
 │   │   ├── bench-shape-idea.md
 │   │   ├── bench-write-spec.md
 │   │   ├── bench-debug.md
@@ -374,7 +374,7 @@ building.
 | `bench shift` (gated loop) | — | gnhf + no-mistakes | gate-on-green, not self-graded |
 | `/bench-setup-repo` (configure a repo) | setup-matt-pocock-skills | — | gate + profile + lines, interviewed |
 | `/bench-update-kit` (sync upstream) | — | — | re-run the synthesis vs upstream, 3 loops |
-| `/bench-integrate-learnings` (drain learnings) | — | — | the kit learns from its own use, 3 loops |
+| `/bench-what-next` (reconcile roadmap, drain capture) | — | — | the kit learns from its own use, one reviewed batch diff |
 | `/bench-debug` (bug path) | diagnosing-bugs | — | repro loop as the bug's gate |
 | design-it-twice in `craft-seams` | codebase-design | — | high-effort line at the uncertain seam |
 | `bench shift` notes.md | — | gnhf (iteration context) | — |

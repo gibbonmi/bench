@@ -1,15 +1,15 @@
 ---
 name: craft-synthesis
-description: The discipline for safely folding a candidate change into the Bench kit — respect closed decisions, assess by the gap it fills, pass three quality loops (legibility, consistency, dogfood), and propose rather than merge. Use whenever evaluating a change to the kit itself, from either source. Reach for this from /bench-update-kit and /bench-integrate-learnings, or any time you're deciding whether a kit change earns its place.
+description: The discipline for safely folding a candidate change into the Bench kit — respect closed decisions, assess by the gap it fills, pass three quality loops (legibility, consistency, dogfood), and propose rather than merge. Use whenever evaluating a change to the kit itself, from either source. Reach for this from /bench-update-kit, from any learnings-sourced roadmap item queued by /bench-what-next, or any time you're deciding whether a kit change earns its place.
 index: evaluating a change to the kit itself
 ---
 
 # Synthesis — fold a change into the kit without bloating it
 
-This is the shared middle of `/bench-update-kit` (upstream changes) and `/bench-integrate-learnings`
-(learnings changes). Those commands gather candidates and record results; this skill
-is what happens in between — the same discipline regardless of where a candidate came
-from. The root virtue is **anti-sediment**: the kit growing is a *cost*, and a change
+This is the shared middle of `/bench-update-kit` (upstream changes) and the
+learnings-sourced roadmap items `/bench-what-next` queues (learnings changes).
+Those paths gather candidates and record results; this skill is what happens in
+between — the same discipline regardless of where a candidate came from. The root virtue is **anti-sediment**: the kit growing is a *cost*, and a change
 earns its place only by filling a real gap, never because it reads well in isolation.
 
 The candidates arrive already tagged by origin (`upstream` or `learnings`). Keep the
@@ -63,6 +63,6 @@ Run in order; a change that fails a loop is pruned or sent back, not shipped.
 ## Propose; the reviewer merges
 
 Never auto-apply. After the loops pass and the reviewer has signed off, hand back to
-the calling command to record the result — `/bench-update-kit` to the provenance table and
-CHANGELOG, `/bench-integrate-learnings` into the fixed artifact, the CHANGELOG verdict
-line, and the pruned journal. The merge is the reviewer's.
+the calling path to record the result — `/bench-update-kit` to the provenance table and
+CHANGELOG; a learnings-sourced build into the fixed artifact, the CHANGELOG verdict
+line, and the retired roadmap row. The merge is the reviewer's.
