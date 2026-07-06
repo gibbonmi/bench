@@ -37,13 +37,6 @@ demonstrably burn turns on symbol search.
 
 **FT7 (LOW) — dashboard.** Low priority by declaration.
 
-**S3 (LOW) — split three over-length files.** `bench structure` flags
-`internal/adopt/link.go` (422), `internal/contract/runtime/runtime_status_test.go`
-(410), and `internal/contract/surface/link_test.go` (515) over the 400-line
-limit; split along responsibility, don't fragment to beat the number. Surfaced
-every session via the status hook.
-Next action: direct fix-and-gate with the craft-seams skill.
-
 **FT8 (scheduled, not actionable) — Sonnet 5 mid-tier revisit.** Time-boxed to
 2026-09-01 or the next frontier shift.
 
@@ -55,4 +48,5 @@ Next action: direct fix-and-gate with the craft-seams skill.
 
 ## Recommended sequence
 
-1. S3 split three over-length files — direct fix-and-gate
+1. FT3 pair `bench spec implemented` + `bench commit` — /bench-write-spec
+2. FT4 harness task list in `/bench-implement-spec` — /bench-write-spec
