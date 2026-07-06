@@ -22,7 +22,10 @@ guessing.
   Run `/bench-setup-repo` once when a repo is first linked — it interviews the
   reviewer to fill in the gate and the profile. Run `/bench-update-kit`
   periodically to pull upstream improvements into the kit, and
-  `/bench-integrate-learnings` to fold the learnings journal back in.
+  `/bench-integrate-learnings` to fold the learnings journal back in. Run
+  `/bench-what-next` when `bench status` or `bench roadmap` shows a drain
+  pending — it reconciles `ROADMAP.md` against the tree, drains `IDEAS.md` and
+  open learnings into it, and proposes the pass as one batch diff.
 - **The gate and the hooks** are enforcement, with authority you do not have.
   The enforcement that matters is harness-independent: the `bench shift` loop
   runs the gate after every iteration and commits only on green, and a git
@@ -169,5 +172,5 @@ Parking an idea is conversational — never a CLI chore for the reviewer. When t
 reviewer wants to set an idea aside, or you spot a tangent worth not losing, **you**
 run `bench idea "<text>"`; they never type it. Offer once when a clear tangent
 appears, then let it go — don't nag. Parked ideas land in `IDEAS.md` and graduate
-into committed work only through `/bench-shape-idea`. If `bench` isn't on PATH, append the
-dated line (`- YYYY-MM-DD  <text>`) to `IDEAS.md` yourself.
+into `ROADMAP.md` only through a reviewed `/bench-what-next` drain. If `bench` isn't
+on PATH, append the dated line (`- YYYY-MM-DD  <text>`) to `IDEAS.md` yourself.
