@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -39,13 +40,13 @@ func IdeaCommand(args []string) (string, int) {
 	}
 	defer f.Close()
 
+	entry := "- " + time.Now().Format("2006-01-02") + "  " + text + "\n"
 	if needsNewline(file) {
-		if _, err := f.WriteString("\n"); err != nil {
-			return cannotWriteIdeas(err), 1
-		}
+		// One write, not two: an interrupt between a separate newline write and the
+		// entry write would leave a bare blank line with no entry behind it.
+		entry = "\n" + entry
 	}
-	line := "- " + time.Now().Format("2006-01-02") + "  " + text + "\n"
-	if _, err := f.WriteString(line); err != nil {
+	if _, err := f.WriteString(entry); err != nil {
 		return cannotWriteIdeas(err), 1
 	}
 	return "parked: " + text + "\n", 0
@@ -69,17 +70,23 @@ func needsNewline(file string) bool {
 	return data[len(data)-1] != '\n'
 }
 
-// RoadmapCommand implements `bench roadmap`: it prints ROADMAP.md verbatim, or the
-// literal `roadmap empty` when the file is absent or zero bytes. When capture
-// sources need draining, it appends their counts and the maintenance phase.
+// missingRoadmap is the absent-or-zero-byte posture: no working document is a
+// maintenance prompt, never a crash or silent empty output.
+const missingRoadmap = "no ROADMAP.md — run /bench-what-next to create the working roadmap\n"
+
+// RoadmapCommand implements `bench roadmap`: it prints ROADMAP.md verbatim followed
+// by the drain-status block when capture sources need draining, or by the
+// `## Recommended sequence` callout when nothing does. An absent or zero-byte
+// roadmap, a missing sequence section, or a section without two-or-three numbered
+// items each get an explicit message pointing at /bench-what-next, exit 0.
 func RoadmapCommand(args []string) (string, int) {
 	root, err := git.Root()
 	if err != nil {
-		return "roadmap empty\n", 0
+		return missingRoadmap, 0
 	}
 	data, err := os.ReadFile(filepath.Join(root, "ROADMAP.md"))
 	if err != nil || len(data) == 0 {
-		return "roadmap empty\n", 0
+		return missingRoadmap, 0
 	}
 	text := string(data)
 	if status := drainStatus(root); status != "" {
@@ -102,33 +109,52 @@ func drainStatus(root string) string {
 	return fmt.Sprintf("\n\n## Drain status\n\n- ideas: %d parked in %s\n- learnings: %d open in .bench/learnings.md\n\nRun /bench-what-next before trusting the sequence.\n", ideas, ideasFile, openLearnings)
 }
 
+// numberedItem matches one sequence entry; the format contract wants two or three.
+var numberedItem = regexp.MustCompile(`(?m)^[0-9]+\. `)
+
+// nextAction renders the no-drain call to action: the sequence section verbatim, or
+// an explicit gap message so a broken format contract never yields silent output.
 func nextAction(roadmap string) string {
 	section := recommendedSequence(roadmap)
 	if section == "" {
-		return ""
+		return "\n\nROADMAP.md has no ## Recommended sequence section — run /bench-what-next to restore it.\n"
+	}
+	if n := len(numberedItem.FindAllString(section, -1)); n < 2 || n > 3 {
+		return fmt.Sprintf("\n\nmalformed ## Recommended sequence: %d numbered item(s), expected two or three — run /bench-what-next to repair it.\n", n)
 	}
 	return "\n\n## Next action\n\n" + section
 }
 
+// recommendedSequence extracts the `## Recommended sequence` section, from its
+// heading (trailing whitespace tolerated) to the next `## ` heading or EOF. Fence
+// state is tracked throughout: a heading inside a fenced code block neither starts
+// the section nor terminates it.
 func recommendedSequence(roadmap string) string {
 	lines := strings.SplitAfter(roadmap, "\n")
-	start := -1
+	start, end := -1, len(lines)
+	inFence := false
 	for i, line := range lines {
-		if strings.TrimRight(line, "\r\n") == "## Recommended sequence" {
-			start = i
+		trimmed := strings.TrimRight(line, " \t\r\n")
+		if strings.HasPrefix(trimmed, "```") {
+			inFence = !inFence
+			continue
+		}
+		if inFence {
+			continue
+		}
+		if start < 0 {
+			if trimmed == "## Recommended sequence" {
+				start = i
+			}
+			continue
+		}
+		if strings.HasPrefix(trimmed, "## ") {
+			end = i
 			break
 		}
 	}
 	if start < 0 {
 		return ""
-	}
-	end := len(lines)
-	for i := start + 1; i < len(lines); i++ {
-		line := strings.TrimRight(lines[i], "\r\n")
-		if strings.HasPrefix(line, "## ") {
-			end = i
-			break
-		}
 	}
 	section := strings.Join(lines[start:end], "")
 	if !strings.HasSuffix(section, "\n") {

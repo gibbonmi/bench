@@ -107,30 +107,130 @@ func TestIdeaNewlineNormalization(t *testing.T) {
 	}
 }
 
-// TestRoadmapEmpty covers the empty posture for both an absent and a zero-byte file.
-func TestRoadmapEmpty(t *testing.T) {
+// TestRoadmapMissing covers the missing-roadmap posture for both an absent and a
+// zero-byte file: exit 0 with a pointer to /bench-what-next, never a crash or a
+// bare empty verdict.
+func TestRoadmapMissing(t *testing.T) {
 	root := newRepo(t)
-	if out, code := RoadmapCommand(nil); out != "roadmap empty\n" || code != 0 {
+	if out, code := RoadmapCommand(nil); out != missingRoadmap || code != 0 {
 		t.Fatalf("absent: got %q/%d", out, code)
 	}
 	if err := os.WriteFile(roadmapPath(t, root), nil, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if out, code := RoadmapCommand(nil); out != "roadmap empty\n" || code != 0 {
+	if out, code := RoadmapCommand(nil); out != missingRoadmap || code != 0 {
 		t.Fatalf("zero-byte: got %q/%d", out, code)
+	}
+	if !strings.Contains(missingRoadmap, "/bench-what-next") {
+		t.Fatalf("missing-roadmap pointer does not name /bench-what-next: %q", missingRoadmap)
 	}
 }
 
-// TestRoadmapVerbatim covers a populated file returned byte-for-byte.
+// TestRoadmapVerbatim covers a populated file returned byte-for-byte before the callout.
 func TestRoadmapVerbatim(t *testing.T) {
 	root := newRepo(t)
-	content := "# Roadmap\n\n- 2026-01-01  first\n- 2026-01-02  second\n"
+	content := "# Roadmap\n\n- 2026-01-01  first\n- 2026-01-02  second\n\n## Recommended sequence\n\n1. First item - /bench-shape-idea\n2. Second item - /bench-implement-spec\n"
 	if err := os.WriteFile(roadmapPath(t, root), []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	out, code := RoadmapCommand(nil)
-	if code != 0 || out != content {
+	if code != 0 || !strings.HasPrefix(out, content) {
 		t.Fatalf("verbatim: got %q/%d", out, code)
+	}
+}
+
+// TestRoadmapMissingSection covers a roadmap body without `## Recommended sequence`:
+// exit 0, body still printed, explicit missing-section message instead of silence.
+func TestRoadmapMissingSection(t *testing.T) {
+	root := newRepo(t)
+	content := "# Roadmap\n\n## Context\n\nNo sequence here.\n"
+	if err := os.WriteFile(roadmapPath(t, root), []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, code := RoadmapCommand(nil)
+	if code != 0 {
+		t.Fatalf("exit: got %d, want 0", code)
+	}
+	if !strings.HasPrefix(out, content) {
+		t.Fatalf("body not printed verbatim: %q", out)
+	}
+	if !strings.Contains(out, "no ## Recommended sequence section") || !strings.Contains(out, "/bench-what-next") {
+		t.Fatalf("missing-section message absent: %q", out)
+	}
+}
+
+// TestRoadmapMalformedSequence covers a present section whose numbered-item count
+// breaks the two-or-three contract: an explicit malformed message, not a verbatim callout.
+func TestRoadmapMalformedSequence(t *testing.T) {
+	cases := []struct {
+		name  string
+		items string
+		count string
+	}{
+		{"no items", "", "0"},
+		{"one item", "1. Only item - /bench-shape-idea\n", "1"},
+		{"four items", "1. a - /x\n2. b - /x\n3. c - /x\n4. d - /x\n", "4"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			root := newRepo(t)
+			content := "# Roadmap\n\n## Recommended sequence\n\n" + tc.items
+			if err := os.WriteFile(roadmapPath(t, root), []byte(content), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			out, code := RoadmapCommand(nil)
+			if code != 0 {
+				t.Fatalf("exit: got %d, want 0", code)
+			}
+			if !strings.Contains(out, "malformed ## Recommended sequence: "+tc.count+" numbered item(s)") || !strings.Contains(out, "/bench-what-next") {
+				t.Fatalf("malformed-section message absent: %q", out)
+			}
+			if strings.Contains(out, "## Next action") {
+				t.Fatalf("malformed section still rendered as next action: %q", out)
+			}
+		})
+	}
+}
+
+// TestRoadmapSequenceFenceBlindness covers headings inside fenced code blocks: a
+// fenced `## Recommended sequence` must not start the section, and a fenced `## `
+// heading inside the section must not truncate it.
+func TestRoadmapSequenceFenceBlindness(t *testing.T) {
+	root := newRepo(t)
+	content := "# Roadmap\n\n```\n## Recommended sequence\n\n1. fake - /x\n```\n\n## Recommended sequence\n\n1. Real item - /bench-shape-idea\n\n```\n## Later\n```\n\n2. Second item - /bench-implement-spec\n\n## Later\n\nDo not include.\n"
+	if err := os.WriteFile(roadmapPath(t, root), []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, code := RoadmapCommand(nil)
+	if code != 0 {
+		t.Fatalf("exit: got %d, want 0", code)
+	}
+	callout := out[strings.LastIndex(out, "## Next action"):]
+	if strings.Contains(callout, "fake - /x") {
+		t.Fatalf("fenced heading hijacked the section start:\n%s", callout)
+	}
+	if !strings.Contains(callout, "2. Second item - /bench-implement-spec") {
+		t.Fatalf("fenced heading truncated the section:\n%s", callout)
+	}
+	if strings.Contains(callout, "Do not include.") {
+		t.Fatalf("callout included the following section:\n%s", callout)
+	}
+}
+
+// TestRoadmapHeadingTrailingWhitespace covers a hand-edited heading with trailing
+// spaces or tabs: it still matches instead of silently yielding no callout.
+func TestRoadmapHeadingTrailingWhitespace(t *testing.T) {
+	root := newRepo(t)
+	content := "# Roadmap\n\n## Recommended sequence \t\n\n1. First item - /bench-shape-idea\n2. Second item - /bench-implement-spec\n"
+	if err := os.WriteFile(roadmapPath(t, root), []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, code := RoadmapCommand(nil)
+	if code != 0 {
+		t.Fatalf("exit: got %d, want 0", code)
+	}
+	if !strings.Contains(out, "## Next action") || !strings.Contains(out, "1. First item - /bench-shape-idea") {
+		t.Fatalf("padded heading did not match: %q", out)
 	}
 }
 
@@ -163,7 +263,7 @@ func TestRoadmapDrainStatus(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			root := newRepo(t)
-			if err := os.WriteFile(roadmapPath(t, root), []byte("# Roadmap\n"), 0o644); err != nil {
+			if err := os.WriteFile(roadmapPath(t, root), []byte("# Roadmap\n\n## Recommended sequence\n\n1. First item - /bench-shape-idea\n2. Second item - /bench-implement-spec\n"), 0o644); err != nil {
 				t.Fatal(err)
 			}
 			if tc.ideas != "" {

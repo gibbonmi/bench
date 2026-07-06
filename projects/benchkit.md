@@ -10,7 +10,7 @@ AGENTS.md harness — that portability is the product.
 
 ## Working branch
 
-`develop`. (The commit-on-green policy and the default-branch guard are
+`main`. (The commit-on-green policy and the default-branch guard are
 canonical in `/bench-final-check`; this line is only the binding.)
 
 ## Seams (test here; everything else is free to change)

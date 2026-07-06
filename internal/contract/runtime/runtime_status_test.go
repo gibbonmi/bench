@@ -28,9 +28,10 @@ func TestRuntimeStatusContracts(t *testing.T) {
 func testRuntimeIdeaRoadmap(t *testing.T) {
 	f := contract.NewFixture(t)
 
-	if roadmap := f.Bench("roadmap"); !strings.Contains(strings.ToLower(roadmap.Stdout+roadmap.Stderr), "empty") {
-		t.Fatalf("roadmap on absent file did not report empty\nstdout:\n%s\nstderr:\n%s", roadmap.Stdout, roadmap.Stderr)
-	}
+	absent := f.Bench("roadmap")
+	absent.RequireExit(0)
+	contract.RequireContains(t, absent.Stdout, "no ROADMAP.md")
+	contract.RequireContains(t, absent.Stdout, "/bench-what-next")
 	for _, args := range [][]string{nil, {""}, {"   ", "\t"}} {
 		blank := contract.NewFixture(t)
 		p := blank.Bench(append([]string{"idea"}, args...)...)
@@ -64,7 +65,10 @@ func testRuntimeIdeaRoadmap(t *testing.T) {
 	f.Bench("idea", "after handedit").RequireExit(0)
 	contract.RequireIntEqual(t, strings.Count(f.ReadFile("IDEAS.md"), "- "), 2, "idea merged onto a newline-less last line")
 	f.WriteFile("ROADMAP.md", "")
-	f.Bench("roadmap").RequireContains(f.Bench("roadmap").Stdout, "empty")
+	zero := f.Bench("roadmap")
+	zero.RequireExit(0)
+	contract.RequireContains(t, zero.Stdout, "no ROADMAP.md")
+	contract.RequireContains(t, zero.Stdout, "/bench-what-next")
 
 	drain := contract.NewFixture(t)
 	drain.WriteFile("ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. Shape next item - /bench-shape-idea\n")
@@ -83,6 +87,20 @@ func testRuntimeIdeaRoadmap(t *testing.T) {
 	out.RequireExit(0)
 	contract.RequireContains(t, out.Stdout, "## Next action\n\n## Recommended sequence\n\n1. Shape next item - /bench-shape-idea\n2. Implement next item - /bench-implement-spec\n")
 	contract.RequireNotContains(t, out.Stdout, "## Drain status")
+
+	headless := contract.NewFixture(t)
+	headless.WriteFile("ROADMAP.md", "# Roadmap\n\n## Context\n\nNo sequence here.\n")
+	noSection := headless.Bench("roadmap")
+	noSection.RequireExit(0)
+	contract.RequireContains(t, noSection.Stdout, "no ## Recommended sequence section")
+	contract.RequireContains(t, noSection.Stdout, "/bench-what-next")
+
+	malformed := contract.NewFixture(t)
+	malformed.WriteFile("ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. Only item - /bench-shape-idea\n")
+	short := malformed.Bench("roadmap")
+	short.RequireExit(0)
+	contract.RequireContains(t, short.Stdout, "malformed ## Recommended sequence: 1 numbered item(s)")
+	contract.RequireContains(t, short.Stdout, "/bench-what-next")
 }
 
 func testRuntimeStatusClean(t *testing.T) {
