@@ -27,13 +27,13 @@ Run it on the branch diff against its true base, on three axes that stay separat
 
 ## Process
 
-1. **Pin the diff.** Resolve the base and the changed-file list with `bench diff`:
-   it prefers the branch's recorded pre-shift base and falls back to merge-base
-   with the default branch, and its `method:` line says which happened — a shift
-   stacked on unmerged work reviews its own commits, not the feature's. Then read
-   the content with `git diff <base>...HEAD` (three-dot) and
-   `git log <base>..HEAD --oneline` using the base it printed. Confirm the diff
-   is non-empty before going further.
+1. **Pin the diff.** Pull the whole base-relative review context with
+   `bench diff --full`: it prefers the branch's recorded pre-shift base and falls
+   back to merge-base with the default branch, and its `method:` line says which
+   happened — a shift stacked on unmerged work reviews its own commits, not the
+   feature's. The changed-file list, the `log[N]{sha,subject}` commit table, and
+   the raw diff body arrive in one output. Confirm the diff is non-empty before
+   going further.
 
 2. **Find the sources.** Spec: `specs/<feature>.md` for this work (or the path I
    give you). Standards: `AGENTS.md` and `.bench/BENCH.md` — the working agreement

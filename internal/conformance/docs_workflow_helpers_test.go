@@ -35,7 +35,7 @@ func checkWorkflowAnchors(root string) []string {
 	require(".agents/commands/bench-implement-spec.md", "bench coverage <spec>")
 	require(".agents/commands/bench-review-implementation.md", "acceptance coverage map")
 	require(".agents/commands/bench-review-implementation.md", "mapped behavior")
-	require(".agents/commands/bench-review-implementation.md", "bench diff")
+	require(".agents/commands/bench-review-implementation.md", "bench diff --full")
 	require(".agents/commands/bench-final-check.md", ".bench/gate.sh")
 	require(".agents/commands/bench-final-check.md", "BENCH_GATE")
 	require(".agents/commands/bench-write-spec.md", "seam diagram")

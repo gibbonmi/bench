@@ -12,6 +12,7 @@ func TestAXIWave2Contracts(t *testing.T) {
 	contract.RunParallel(t, "AXI diff recorded-base contract", testAXIDiffRecordedBase)
 	contract.RunParallel(t, "AXI diff fallback/shape contract", testAXIDiffFallbackShape)
 	contract.RunParallel(t, "AXI diff error-posture contract", testAXIDiffErrorPosture)
+	contract.RunParallel(t, "AXI diff --full contract", testAXIDiffFullContract)
 	contract.RunParallel(t, "AXI coverage extraction contract", testAXICoverageExtraction)
 	contract.RunParallel(t, "AXI coverage state/error contract", testAXICoverageStateError)
 	contract.RunParallel(t, "AXI coverage --check validation contract", testAXICoverageCheckValidation)
@@ -115,6 +116,94 @@ func testAXIDiffErrorPosture(t *testing.T) {
 
 	out.RequireExit(2)
 	out.RequireContains(strings.ToLower(out.Stdout), "usage")
+
+	// row 4b: --full does not change the error postures — base-unresolvable stays
+	// exit 1, and an unrecognized arg (with or without --full) stays exit 2.
+	out = f.Bench("diff", "--full")
+
+	out.RequireExit(1)
+	out.RequireContains(out.Stdout, "error: cannot resolve a review base")
+
+	out = f.Bench("diff", "--full", "bogusarg")
+
+	out.RequireExit(2)
+	out.RequireContains(strings.ToLower(out.Stdout), "usage")
+}
+
+// testAXIDiffFullContract drives `bench diff --full` end to end: an empty-since-base
+// fixture (row 4a), a commit since base rendering the log table and raw diff body
+// (rows 1/3a), a comma-and-quote commit subject escaped exactly once in the log table
+// (row 3b), and a bare-`diff` regression guard that the new sections never leak into
+// the unflagged path (row 2 — already covered, not TDD-able, guard only).
+func testAXIDiffFullContract(t *testing.T) {
+	contract.NoteContractFailure(t, "AXI diff --full contract failed")
+	f := contract.NewFixture(t)
+	f.WriteFile("README.md", "r\n")
+	f.CommitAll("c1")
+	f.Git("branch", "-m", "main")
+	c1 := strings.TrimSpace(f.Git("rev-parse", "HEAD").Stdout)
+	f.Git("switch", "-qc", "feature")
+
+	// row 2: bare `bench diff` never carries the --full sections. Not TDD-able
+	// (bare diff never emitted these), so this is a regression guard, not a
+	// red-first assertion.
+	bare := f.Bench("diff")
+	bare.RequireExit(0)
+	bare.RequireNotContains(bare.Stdout, "log[")
+	bare.RequireNotContains(bare.Stdout, "@@ ")
+
+	// row 4a: base == HEAD (feature just branched off c1, no commits since).
+	empty := f.Bench("diff", "--full")
+	empty.RequireExit(0)
+	requireOutputLine(t, empty, "base: "+c1)
+	requireOutputLine(t, empty, "log[0]{sha,subject}:")
+	requireOutputLine(t, empty, "diff_body:")
+	empty.RequireNotContains(empty.Stdout, "@@ ")
+
+	// rows 1/3a: a commit since base emits the log table and the raw diff body,
+	// appended last, with an unmangled line-start `@@ ` hunk marker.
+	f.WriteFile("f.txt", "line one\nline two\n")
+	f.CommitAll("c2")
+	c2 := strings.TrimSpace(f.Git("rev-parse", "HEAD").Stdout)
+	shortC2 := strings.TrimSpace(f.Git("rev-parse", "--short", c2).Stdout)
+
+	out := f.Bench("diff", "--full")
+	out.RequireExit(0)
+	requireOutputLine(t, out, "log[1]{sha,subject}:")
+	requireLogRow(t, out, shortC2, "c2")
+	requireOutputLine(t, out, "diff_body:")
+	requireOutputPrefix(t, out, "@@ ")
+
+	// row 3b: a commit subject with a comma and a quote is TOON-escaped exactly
+	// once in the log table (mirrors testAXITOONFieldEscaping). The sha itself is
+	// asserted via requireLogRow, which tolerates the TOON encoder quoting a
+	// leading-digit sha (e.g. "05af9b0" reads as numeric-ish) — that quoting is
+	// unrelated to what this row tests.
+	f.WriteFile("g.txt", "g\n")
+	f.CommitAll(`a, "b"`)
+	c3 := strings.TrimSpace(f.Git("rev-parse", "HEAD").Stdout)
+	shortC3 := strings.TrimSpace(f.Git("rev-parse", "--short", c3).Stdout)
+
+	out = f.Bench("diff", "--full")
+	out.RequireExit(0)
+	requireOutputLine(t, out, "log[2]{sha,subject}:")
+	requireLogRow(t, out, shortC3, `"a, \"b\""`)
+}
+
+// requireLogRow asserts a `log` table row for sha/renderedSubject, tolerating the
+// TOON encoder's own choice to quote the sha cell (a short sha can start with a
+// digit and read as numeric-ish, e.g. "05af9b0") — that quoting is independent of
+// anything this seam controls, so the row match accepts either form.
+func requireLogRow(t *testing.T, probe contract.Probe, sha, renderedSubject string) {
+	t.Helper()
+	plain := "  " + sha + "," + renderedSubject
+	quoted := "  \"" + sha + "\"," + renderedSubject
+	for _, got := range strings.Split(strings.TrimSuffix(probe.Stdout, "\n"), "\n") {
+		if got == plain || got == quoted {
+			return
+		}
+	}
+	t.Fatalf("missing log row for sha %q\nstdout:\n%s\nstderr:\n%s", sha, probe.Stdout, probe.Stderr)
 }
 
 func testAXICoverageExtraction(t *testing.T) {

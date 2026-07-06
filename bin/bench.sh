@@ -252,7 +252,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench learnings            open journal entries as a TOON table (date, title)
   bench maps                 unresolved decision-map tickets as TOON (map, ticket, type, state)
   bench guards               every guard's deny surface as TOON (guard, boundary, denies)
-  bench diff                 review base (recorded or merge-base) + changed files as TOON
+  bench diff                 review base + changed files as TOON (--full appends log + diff body)
   bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
   bench doctor [--fix]       report (and repair) the PATH shim under a node version manager
   bench gate                 run the project gate (the oracle)

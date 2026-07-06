@@ -5,6 +5,14 @@
 // recorded sha that is unreachable or not an ancestor falls back loudly rather than
 // silently diffing from the wrong base. Changed files follow as a
 // `files[N]{status,path}:` table with paths escaped exactly once.
+//
+// The `--full` flag appends the rest of the base-relative picture a review agent
+// otherwise hand-runs as two extra git calls: a `log[N]{sha,subject}:` TOON table
+// from `git log <base>..HEAD` (two-dot: commits on HEAD since base), and — last,
+// behind a fixed `diff_body:` marker line — the raw output of `git diff
+// <base>...HEAD` (three-dot: changes on the HEAD side since merge-base) passed
+// through verbatim, undecorated by TOON so a hunk header or `+`/`-` line survives
+// unmangled. Bare `bench diff` is byte-for-byte unaffected by the flag's existence.
 package diff
 
 import (
@@ -40,12 +48,52 @@ func changedFiles(base string) [][]string {
 	return parseNameStatusZ(raw)
 }
 
+// parseLogFormat turns `git log --format=%h%x00%s` output into sha/subject rows. Each
+// commit is one line (a subject is, by definition, the first line of the commit
+// message and carries no embedded newline); the NUL between sha and subject is a
+// delimiter git itself never puts in either field, so a comma or quote in the
+// subject arrives raw for the caller to TOON-escape a single layer downstream — the
+// same NUL-framing discipline parseNameStatusZ uses for paths.
+func parseLogFormat(raw []byte) [][]string {
+	s := strings.TrimRight(string(raw), "\n")
+	if s == "" {
+		return nil
+	}
+	lines := strings.Split(s, "\n")
+	rows := make([][]string, 0, len(lines))
+	for _, line := range lines {
+		sha, subject, ok := strings.Cut(line, "\x00")
+		if !ok {
+			continue
+		}
+		rows = append(rows, []string{sha, subject})
+	}
+	return rows
+}
+
+func commitLog(base string) [][]string {
+	raw, err := git.Raw("log", "--format=%h%x00%s", base+"..HEAD")
+	if err != nil {
+		return nil
+	}
+	return parseLogFormat(raw)
+}
+
+const fullHelp = `usage: bench diff [--full]
+  --full appends, after the files table, a log[N]{sha,subject} TOON table (git
+  log <base>..HEAD) and, last, a verbatim diff_body: block (git diff
+  <base>...HEAD) — the raw diff is passed through unescaped, not TOON-encoded.
+`
+
 // Command implements `bench diff`.
 func Command(args []string) (string, int) {
+	full := false
 	switch {
 	case len(args) == 0:
 	case args[0] == "-h" || args[0] == "--help":
-		return "usage: bench diff\n", 0
+		return fullHelp, 0
+	case len(args) == 1 && args[0] == "--full":
+		full = true
 	default:
 		return toon.Usage("bench diff", args[0]) + "\n", 2
 	}
@@ -82,6 +130,16 @@ func Command(args []string) (string, int) {
 		return toon.RenderError(err) + "\n", 1
 	}
 	b.WriteString(tbl)
+	if full {
+		logTbl, err := toon.Table("log", []string{"sha", "subject"}, commitLog(base))
+		if err != nil {
+			return toon.RenderError(err) + "\n", 1
+		}
+		b.WriteString(logTbl)
+		b.WriteString("diff_body:\n")
+		body, _ := git.Raw("diff", base+"...HEAD")
+		b.Write(body)
+	}
 	return b.String(), 0
 }
 
