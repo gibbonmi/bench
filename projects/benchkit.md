@@ -45,7 +45,11 @@ canonical in `/bench-final-check`; this line is only the binding.)
   (`<git-dir>/bench-last-gate`, written by the Stop hook) — never a cold gate run. The
   contract (gate-tested): show-only-on-signal, a five-row budget, a stale-green that is
   not a clean bill, and one combined capture-drain row (parked ideas + open learnings)
-  pointing at `/bench-what-next`.
+  pointing at `/bench-what-next`. A stale gate softens to `capture-only drift` /
+  `re-run when convenient` only when every changed path is in the fixed, exact
+  allowlist (`ROADMAP.md`, `IDEAS.md`, `.bench-notes.md` — no directory, suffix, or
+  markdown-class matching; expanding it is a new decision); any mixed or untrusted
+  diff fails closed to the strong stale row.
 - **The capture inbox and working roadmap** (`bench idea` → `IDEAS.md`;
   `bench roadmap` → `ROADMAP.md`). Capture-and-forget: park an out-of-scope idea,
   commit to nothing; ideas graduate only through a `/bench-what-next` drain into the

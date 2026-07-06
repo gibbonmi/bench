@@ -7,11 +7,6 @@ goes to `IDEAS.md` and enters only through a reviewed drain.
 
 ## Ready to build
 
-**WN (HIGH) — finish the what-next build.** `specs/what-next.md` stories 8–11:
-retirement of the old learnings-integration phase, `/bench-shape-idea`
-retarget, gate/canary anchors, spec-retire wiring. Stories 1–7 are shipped.
-Next action: `/bench-implement-spec`.
-
 **S1 (LOW) — split `internal/gate/phases_test.go`.** 457 lines, over the
 400-line structural cap (`bench structure` flags it now). 14 test functions,
 cleanly separable by responsibility (runner concurrency/output/cancel vs
@@ -80,6 +75,5 @@ demonstrably burn turns on symbol search.
 
 ## Recommended sequence
 
-1. WN what-next stories 8–11 — `/bench-implement-spec`
-2. S1 split `internal/gate/phases_test.go` — `/bench-implement-spec`
-3. FT2 adversarial gate pinning — `/bench-write-spec`
+1. S1 split `internal/gate/phases_test.go` — `/bench-implement-spec`
+2. FT2 adversarial gate pinning — `/bench-write-spec`
