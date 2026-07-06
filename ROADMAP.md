@@ -23,7 +23,8 @@ Next action: direct fix-and-gate (one rule sentence plus its anchor).
 **FT2 (MED) — adversarial gate pinning.** Hash-verify the gate outside the
 writable tree in pre-push. Distinct threat model from the lazy-agent tripwire;
 small (~6 edits) and closes the "determined agent weakens the gate" hole.
-Next action: `/bench-write-spec`.
+Spec staged (`specs/adversarial-gate-pinning.md`).
+Next action: `/bench-implement-spec` on a fresh mid-tier session.
 
 **FT11 (MED-LOW) — `bench worktree clean` + honest status actions.** Status
 flags out-of-pool worktrees with action "resume or clean up (bench worktree)",
