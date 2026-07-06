@@ -136,13 +136,6 @@ func recommendedSequence(roadmap string) string {
 	return section
 }
 
-// ParkedCount returns the number of `^- ` lines (a hyphen then a space at line start)
-// in <root>/ROADMAP.md — the parked-idea figure the `bench status` footer shows. A
-// missing or unreadable file counts as zero.
-func ParkedCount(root string) int {
-	return lineCount(filepath.Join(root, "ROADMAP.md"))
-}
-
 func learningCount(root string) int {
 	data, err := os.ReadFile(filepath.Join(root, ".bench", "learnings.md"))
 	if err != nil {

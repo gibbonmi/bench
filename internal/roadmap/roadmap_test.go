@@ -219,21 +219,21 @@ func TestRoadmapRecommendedSequenceCallout(t *testing.T) {
 	}
 }
 
-// TestParkedCountMixedLines covers counting only `^- ` lines among mixed content.
-func TestParkedCountMixedLines(t *testing.T) {
+// TestDrainCountsMixedLines covers counting only `^- ` lines among mixed inbox content.
+func TestDrainCountsMixedLines(t *testing.T) {
 	root := newRepo(t)
-	content := "# Roadmap\n\n- 2026-01-01  first\nnot a bullet\n-nohyphenspace\n- 2026-01-02  second\n  - indented\n"
-	if err := os.WriteFile(roadmapPath(t, root), []byte(content), 0o644); err != nil {
+	content := "# Inbox\n\n- 2026-01-01  first\nnot a bullet\n-nohyphenspace\n- 2026-01-02  second\n  - indented\n"
+	if err := os.WriteFile(ideasPath(t, root), []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if n := ParkedCount(root); n != 2 {
-		t.Fatalf("ParkedCount got %d, want 2", n)
+	if ideas, _ := DrainCounts(root); ideas != 2 {
+		t.Fatalf("DrainCounts ideas got %d, want 2", ideas)
 	}
 }
 
-// TestParkedCountAbsent covers the zero posture for a missing file.
-func TestParkedCountAbsent(t *testing.T) {
-	if n := ParkedCount(t.TempDir()); n != 0 {
-		t.Fatalf("absent file: got %d, want 0", n)
+// TestDrainCountsAbsent covers the zero posture when both sources are missing.
+func TestDrainCountsAbsent(t *testing.T) {
+	if ideas, open := DrainCounts(t.TempDir()); ideas != 0 || open != 0 {
+		t.Fatalf("absent sources: got %d/%d, want 0/0", ideas, open)
 	}
 }

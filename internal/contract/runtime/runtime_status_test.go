@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gibbonmi/bench/internal/contract"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 )
@@ -14,7 +13,7 @@ func TestRuntimeStatusContracts(t *testing.T) {
 	t.Parallel()
 	contract.RunParallel(t, "bench idea/roadmap contract", testRuntimeIdeaRoadmap)
 	contract.RunParallel(t, "bench status clean contract", testRuntimeStatusClean)
-	contract.RunParallel(t, "bench status footer contract", testRuntimeStatusFooter)
+	contract.RunParallel(t, "bench status drain-row contract", testRuntimeStatusDrainRow)
 	contract.RunParallel(t, "bench status stale-gate contract", testRuntimeStatusStaleGate)
 	contract.RunParallel(t, "bench status stale-gate drift classification contract", testRuntimeStatusStaleGateDriftClassification)
 	contract.RunParallel(t, "bench status fresh-green contract", testRuntimeStatusFreshGreen)
@@ -94,16 +93,28 @@ func testRuntimeStatusClean(t *testing.T) {
 	}
 }
 
-func testRuntimeStatusFooter(t *testing.T) {
+func testRuntimeStatusDrainRow(t *testing.T) {
 	f := contract.NewFixture(t)
-	f.WriteFile("ROADMAP.md", "- 2026-06-30  an idea\n")
+	f.WriteFile("ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. Shape next item - /bench-shape-idea\n")
+	f.WriteFile("IDEAS.md", "- 2026-07-05  parked idea\n")
+	f.WriteFile(".bench/learnings.md", "## 2026-07-05 — open learning  [open]\n")
 	f.CommitAll("s")
 	out := f.Bench("status").Stdout
-	contract.RequireContains(t, out, "clean — nothing pending")
-	contract.RequireContains(t, out, "parked — bench roadmap")
-	if regexp.MustCompile(`(?m)^▶.*bench roadmap`).MatchString(out) {
-		t.Fatal("roadmap footer became the lead")
+	contract.RequireContains(t, out, "1 idea(s), 1 open learning(s)")
+	contract.RequireContains(t, out, "/bench-what-next")
+	contract.RequireNotContains(t, out, "/bench-integrate-learnings")
+	contract.RequireNotContains(t, out, "parked — bench roadmap")
+	if n := strings.Count(out, "→ /bench-what-next"); n != 1 {
+		t.Fatalf("want one combined maintenance row, got %d in:\n%s", n, out)
 	}
+
+	// A working roadmap alone is not pending capture: no drain row, board stays clean.
+	clean := contract.NewFixture(t)
+	clean.WriteFile("ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. Shape next item - /bench-shape-idea\n")
+	clean.CommitAll("s")
+	out = clean.Bench("status").Stdout
+	contract.RequireContains(t, out, "clean — nothing pending")
+	contract.RequireNotContains(t, out, "/bench-what-next")
 }
 
 func testRuntimeStatusStaleGate(t *testing.T) {
@@ -197,7 +208,7 @@ func testRuntimeStatusBudget(t *testing.T) {
 	first := strings.SplitN(out, "\n", 2)[0]
 	contract.RequireContains(t, first, "fix before commit")
 	contract.RequireContains(t, out, "+1 more")
-	contract.RequireContains(t, out, "/bench-integrate-learnings")
+	contract.RequireContains(t, out, "/bench-what-next")
 	contract.RequireContains(t, out, "split (craft-seams)")
 	contract.RequireContains(t, out, "commit on green / push")
 	contract.RequireContains(t, out, "resume or clean up")
@@ -259,10 +270,13 @@ func testRuntimeStatusLearningsFloor(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile(".bench/learnings.md", "## 2026-01-01 — a  [open]\n")
 	f.CommitAll("s")
-	contract.RequireNotContains(t, f.BenchEnv(map[string]string{"BENCH_LEARNINGS_FLOOR": "2"}, "status").Stdout, "/bench-integrate-learnings")
-	contract.RequireContains(t, f.BenchEnv(map[string]string{"BENCH_LEARNINGS_FLOOR": "1"}, "status").Stdout, "/bench-integrate-learnings")
+	contract.RequireNotContains(t, f.BenchEnv(map[string]string{"BENCH_LEARNINGS_FLOOR": "2"}, "status").Stdout, "/bench-what-next")
+	contract.RequireContains(t, f.BenchEnv(map[string]string{"BENCH_LEARNINGS_FLOOR": "1"}, "status").Stdout, "/bench-what-next")
 	f.WriteFile(".bench/learnings.md", "## <date> — <short title>  [open]\n")
-	contract.RequireNotContains(t, f.BenchEnv(map[string]string{"BENCH_LEARNINGS_FLOOR": "1"}, "status").Stdout, "/bench-integrate-learnings")
+	contract.RequireNotContains(t, f.BenchEnv(map[string]string{"BENCH_LEARNINGS_FLOOR": "1"}, "status").Stdout, "/bench-what-next")
+	// The floor gates only the learnings component; parked ideas always count.
+	f.Bench("idea", "parked past the floor").RequireExit(0)
+	contract.RequireContains(t, f.BenchEnv(map[string]string{"BENCH_LEARNINGS_FLOOR": "2"}, "status").Stdout, "/bench-what-next")
 }
 
 type staleGateStatusCase struct {

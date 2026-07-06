@@ -1,10 +1,9 @@
 // Package status ports `bench status`: the ambient dashboard a session-start hook
 // consumes verbatim. It is the composition crux of the slice — every sibling query
-// package (maps, learnings, structure, worktree, roadmap) contributes one signal, and
-// this package renders them into the single severity-sorted board the shell renderer
-// produced. The output is BYTE-IDENTICAL to the shell status() renderer it replaces,
-// because a hook parses it: the lead line, the fixed-width rows, the `+N more` overflow, and the
-// parked-idea footer all match the shell to the byte.
+// package (maps, structure, worktree, roadmap) contributes one signal, and this
+// package renders them into the single severity-sorted board the shell renderer
+// produced. The output format is stable because a hook parses it: the lead line,
+// the fixed-width rows, and the `+N more` overflow.
 //
 // One rule per signal lives in its own package; status only orders the signals by
 // severity and formats them. The merged-spec retirement counter (retirementCount) is
@@ -21,7 +20,6 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/structure"
@@ -73,7 +71,7 @@ func render(root string) string {
 	rows = appendGate(rows, root)
 	rows = appendGit(rows, root)
 	rows = appendWorktree(rows, root)
-	rows = appendLearnings(rows, root)
+	rows = appendDrain(rows, root)
 	rows = appendStructure(rows, root)
 	rows = appendMaps(rows, root)
 	rows = appendRetirement(rows, root)
@@ -82,14 +80,9 @@ func render(root string) string {
 	// fully determined and the min-severity row leads.
 	sort.SliceStable(rows, func(i, j int) bool { return rows[i].sev < rows[j].sev })
 
-	footer := footerLine(root)
-
 	var b strings.Builder
 	if len(rows) == 0 {
 		b.WriteString("bench: clean — nothing pending\n")
-		if footer != "" {
-			b.WriteString(footer + "\n")
-		}
 		return b.String()
 	}
 
@@ -102,9 +95,6 @@ func render(root string) string {
 	}
 	if len(rows) > 5 {
 		fmt.Fprintf(&b, "  +%d more\n", len(rows)-5)
-	}
-	if footer != "" {
-		b.WriteString(footer + "\n")
 	}
 	return b.String()
 }
@@ -244,17 +234,20 @@ func plural(n int, one, many string) string {
 	return fmt.Sprintf("%d %s", n, many)
 }
 
-// appendLearnings adds the open-journal-headings signal (sev 3). The open count is the
-// number of open headings in .bench/learnings.md; it shows only at or above the floor
-// (env BENCH_LEARNINGS_FLOOR, default 1) and only when positive.
-func appendLearnings(rows []row, root string) []row {
-	content, _ := os.ReadFile(filepath.Join(root, ".bench", "learnings.md"))
-	open := len(learnings.Rows(content))
-	floor := learningsFloor()
-	if open >= floor && open > 0 {
-		return append(rows, row{3, "learnings", fmt.Sprintf("%d open", open), "/bench-integrate-learnings"})
+// appendDrain adds the capture-drain signal (sev 3): parked ideas in IDEAS.md plus open
+// journal headings, one combined row pointing at the single maintenance phase. The
+// counts are roadmap.DrainCounts — the same counters `bench roadmap` reports. The
+// learnings component shows only at or above the floor (env BENCH_LEARNINGS_FLOOR,
+// default 1); parked ideas always count.
+func appendDrain(rows []row, root string) []row {
+	ideas, open := roadmap.DrainCounts(root)
+	if open < learningsFloor() {
+		open = 0
 	}
-	return rows
+	if ideas == 0 && open == 0 {
+		return rows
+	}
+	return append(rows, row{3, "drain", fmt.Sprintf("%d idea(s), %d open learning(s)", ideas, open), "/bench-what-next"})
 }
 
 // appendStructure adds the structural-debt signal (sev 4) when the violation count is positive.
@@ -337,18 +330,6 @@ func fileAwaitsRetirement(content []byte) bool {
 	return false
 }
 
-// footerLine returns the parked-idea footer when ROADMAP.md is non-empty and its parked
-// count is positive; otherwise the empty string. The footer is never a row and never leads.
-func footerLine(root string) string {
-	if !fileNonEmpty(filepath.Join(root, "ROADMAP.md")) {
-		return ""
-	}
-	if n := roadmap.ParkedCount(root); n > 0 {
-		return fmt.Sprintf("%d idea(s) parked — bench roadmap", n)
-	}
-	return ""
-}
-
 // learningsFloor reads BENCH_LEARNINGS_FLOOR, defaulting to 1 when unset, empty, or not
 // an integer — the shell `${BENCH_LEARNINGS_FLOOR:-1}` default.
 func learningsFloor() int {
@@ -373,10 +354,4 @@ func short(s string) string {
 func isRegularFile(path string) bool {
 	info, err := os.Stat(path)
 	return err == nil && info.Mode().IsRegular()
-}
-
-// fileNonEmpty reports whether path exists and has a non-zero size (the shell `-s` test).
-func fileNonEmpty(path string) bool {
-	info, err := os.Stat(path)
-	return err == nil && info.Size() > 0
 }

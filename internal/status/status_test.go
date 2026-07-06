@@ -147,8 +147,8 @@ func TestRenderClean(t *testing.T) {
 	}
 }
 
-// A dirty tree leads with the git action; the parked-idea footer is present but never leads.
-func TestRenderDirtyLeadsGitAndFooterTrails(t *testing.T) {
+// A dirty tree leads with the git action; the capture-drain row is present but outranked.
+func TestRenderDirtyLeadsGitOverDrainRow(t *testing.T) {
 	root := initRepo(t)
 	if err := os.WriteFile(filepath.Join(root, "f.txt"), []byte("x\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -159,25 +159,33 @@ func TestRenderDirtyLeadsGitAndFooterTrails(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "f.txt"), []byte("y\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	// Park an idea so the footer is non-empty.
-	if err := os.WriteFile(filepath.Join(root, "ROADMAP.md"), []byte("- 2026-07-03  an idea\n"), 0o644); err != nil {
+	// Park an idea so the drain signal fires.
+	if err := os.WriteFile(filepath.Join(root, "IDEAS.md"), []byte("- 2026-07-03  an idea\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
 	out := render(root)
 	lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
-	if len(lines) < 2 {
-		t.Fatalf("expected at least a lead + footer, got:\n%s", out)
-	}
 	if !strings.HasPrefix(lines[0], "▶ commit on green / push  (git)") {
 		t.Errorf("lead line = %q, want git action lead", lines[0])
 	}
-	last := lines[len(lines)-1]
-	if !strings.HasSuffix(last, "idea(s) parked — bench roadmap") {
-		t.Errorf("footer line = %q, want parked-idea footer last", last)
+	if !strings.Contains(out, "1 idea(s), 0 open learning(s)") || !strings.Contains(out, "/bench-what-next") {
+		t.Errorf("drain row missing from:\n%s", out)
 	}
-	if strings.HasPrefix(last, "▶") {
-		t.Errorf("footer must never lead: %q", last)
+}
+
+// A working roadmap alone is not pending capture: no drain row, the board stays clean.
+func TestRenderWorkingRoadmapAloneIsClean(t *testing.T) {
+	root := initRepo(t)
+	content := "# Roadmap\n\n## Recommended sequence\n\n1. Shape next item - /bench-shape-idea\n"
+	if err := os.WriteFile(filepath.Join(root, "ROADMAP.md"), []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "commit", "-m", "base")
+
+	if out := render(root); out != "bench: clean — nothing pending\n" {
+		t.Errorf("roadmap-only render = %q, want clean board", out)
 	}
 }
 
