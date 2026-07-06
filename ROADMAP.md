@@ -32,6 +32,14 @@ writable tree in pre-push. Distinct threat model from the lazy-agent tripwire;
 small (~6 edits) and closes the "determined agent weakens the gate" hole.
 Next action: `/bench-write-spec`.
 
+**FT11 (MED-LOW) — `bench worktree clean` + honest status actions.** Status
+flags out-of-pool worktrees with action "resume or clean up (bench worktree)",
+but the `worktree` case discards all args and opens a pool subshell —
+`bench worktree clean` exits 0 and silently does the wrong thing. Add a
+clean/prune verb (remove clean out-of-pool worktrees + `git worktree prune`),
+reject unknown args instead of swallowing them, and make the status action
+per-class honest. Next action: `/bench-write-spec`.
+
 ## Features, in priority order
 
 **FT3 (MED-LOW) — `bench spec implemented` + `bench commit`.** Pair them:
@@ -77,3 +85,4 @@ demonstrably burn turns on symbol search.
 
 1. S1 split `internal/gate/phases_test.go` — `/bench-implement-spec`
 2. FT2 adversarial gate pinning — `/bench-write-spec`
+3. FT11 `bench worktree clean` — `/bench-write-spec`
