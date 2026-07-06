@@ -55,9 +55,11 @@ signal so each class names an action that can actually affect it.
   returns usage exit 2.
 - The cleanup command owns the full flow: resolve the repo root, enumerate
   registered worktrees, classify them, filter clean out-of-pool candidates,
-  print the candidate list, require a typed confirmation token on a TTY, remove
+  print the candidate list, require the typed token `clean worktrees` on a TTY
+  (the deliberate-friction confirm shape `bench gate pin` uses), remove
   candidates with non-force `git worktree remove`, run `git worktree prune`, and
-  report removed and refused paths.
+  report removed and refused paths. Any other input at the prompt declines,
+  removes nothing, and exits non-zero.
 - Removal never passes `--force`. Dirty candidates, candidates dirtied between
   listing and removal, and the current worktree are refused by git and reported,
   not destroyed.
@@ -70,7 +72,10 @@ signal so each class names an action that can actually affect it.
 - `bench status` emits per-class worktree rows instead of one combined active
   worktree count. Out-of-pool rows name `bench worktree clean`; leased pool rows
   do not name `clean`; orphaned scratch branch rows keep the existing delete
-  branch action.
+  branch action. The existing `1 active worktree` combined-count assertion in the
+  status runtime contract is **rewritten** to the per-class wording — the rendered
+  behavior genuinely changed, so this is an update to a moved contract, not a
+  weakened test.
 - The literal interactive prompt is not covered by a PTY helper. As with
   `bench gate pin`, tests cover non-TTY refusal and forced-terminal confirm paths.
 
@@ -128,7 +133,7 @@ Shared classification seam:
 | edge of 1 | Registered worktree directory already missing is handled by prune without failing cleanup. | Runtime worktree cleanup seam | Add `testRuntimeWorktreeCleanPrunesMissingRegistration`. | The registry no longer lists the missing worktree after prune, proving clean handles stale git metadata. |
 | edge of 1 | Second `bench worktree clean` after successful cleanup finds nothing and exits 0. | Runtime worktree cleanup seam | Extend confirmed removal test to rerun clean. | Cleanup is idempotent, so repeated status advice cannot create a false failure. |
 | edge of 1 | Running from a nested cwd resolves the repo root and the same pool. | Runtime worktree cleanup seam | Add nested-cwd execution to one cleanup contract. | A cwd-sensitive implementation misses candidates or classifies the current directory incorrectly. |
-| edge of 1 | Candidate that becomes dirty after listing is not forced and is reported as refused. | Runtime worktree cleanup seam | Use an injected remover or package-level cleanup seam test to dirty the candidate before remove. | The non-force safety floor is preserved even across a race between listing and removal. |
+| edge of 1 | A candidate dirtied between listing and removal is refused, not forced. | Runtime worktree cleanup seam | Covered by the dirty-out-of-pool row (story 3): non-force `git worktree remove` refuses a dirty worktree regardless of when it turned dirty, so the race needs no injected-remover seam of its own. | A `--force` remover fails story 3's state assertion; timing is irrelevant to the non-force guarantee. |
 | edge of 2 | Interrupt before confirmation removes nothing. | Runtime worktree cleanup seam | Covered by non-TTY refusal and decline/no-confirmation path; no PTY signal helper is built for this spec. | The command does no removal before confirmation, so the tested pre-confirm exits pin the safety invariant. |
 | edge of 4 | Unquoted multi-word worktree arguments are rejected as unknown args, not collapsed or split by the command. | Runtime worktree cleanup seam | Add `bench worktree clean extra` and `bench worktree bad verb` usage cases. | The dispatcher consumes the args slice directly and never silently falls through. |
 
