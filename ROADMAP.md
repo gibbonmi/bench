@@ -52,6 +52,13 @@ demonstrably burn turns on symbol search.
 
 **FT7 (LOW) — dashboard.** Low priority by declaration.
 
+**S3 (LOW) — split three over-length files.** `bench structure` flags
+`internal/adopt/link.go` (422), `internal/contract/runtime/runtime_status_test.go`
+(410), and `internal/contract/surface/link_test.go` (515) over the 400-line
+limit; split along responsibility, don't fragment to beat the number. Surfaced
+every session via the status hook.
+Next action: direct fix-and-gate with the craft-seams skill.
+
 **FT8 (scheduled, not actionable) — Sonnet 5 mid-tier revisit.** Time-boxed to
 2026-09-01 or the next frontier shift.
 
@@ -63,6 +70,6 @@ demonstrably burn turns on symbol search.
 
 ## Recommended sequence
 
-1. Retire the implemented worktree-clean spec — spec-retire
-2. L1 promote the shared-tree worktree rule — direct fix-and-gate
-3. S2 unify subprocess-capture seams — direct fix-and-gate
+1. L1 promote the shared-tree worktree rule — direct fix-and-gate
+2. S2 unify subprocess-capture seams — direct fix-and-gate
+3. S3 split three over-length files — direct fix-and-gate
