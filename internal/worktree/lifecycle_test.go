@@ -1,6 +1,9 @@
 package worktree
 
 import (
+	"fmt"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -36,6 +39,96 @@ func TestReclaimable(t *testing.T) {
 				t.Errorf("reclaimable(%q, age %s) = %v, want %v", tc.content, tc.age, got, tc.want)
 			}
 		})
+	}
+}
+
+// leasedRepo builds a one-commit repo whose lease file carries the given content,
+// returning the repo dir and the lease path. It is the fixture both Release contracts
+// share: a tracked file to dirty, an untracked file to strand, and a lease to honor.
+func leasedRepo(t *testing.T, leaseContent string) (dir, lease string) {
+	t.Helper()
+	dir = t.TempDir()
+	for _, args := range [][]string{
+		{"init", "-q"},
+		{"config", "user.email", "t@t"},
+		{"config", "user.name", "t"},
+	} {
+		if out, err := exec.Command("git", append([]string{"-C", dir}, args...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v: %s", args, err, out)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(dir, "tracked.txt"), []byte("clean\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, args := range [][]string{{"add", "."}, {"commit", "-qm", "init"}} {
+		if out, err := exec.Command("git", append([]string{"-C", dir}, args...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v: %s", args, err, out)
+		}
+	}
+	lease, err := LeaseFile(dir)
+	if err != nil {
+		t.Fatalf("LeaseFile: %v", err)
+	}
+	if err := os.WriteFile(lease, []byte(leaseContent), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return dir, lease
+}
+
+// dirty modifies the tracked file and adds an untracked one, so a release contract can
+// assert both the reset and the clean happened.
+func dirty(t *testing.T, dir string) {
+	t.Helper()
+	if err := os.WriteFile(filepath.Join(dir, "tracked.txt"), []byte("dirty\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "untracked.txt"), []byte("stray\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// TestReleaseOwnerRestoresCleanAndUnleases pins the owner path: after Release, the
+// worktree is back to a reusable clean state and the lease is gone — the pool-entry
+// invariant that an unleased entry is always claimably clean.
+func TestReleaseOwnerRestoresCleanAndUnleases(t *testing.T) {
+	dir, lease := leasedRepo(t, fmt.Sprintf("%d 2026-07-05T00:00:00Z\n", os.Getpid()))
+	dirty(t, dir)
+
+	Release(dir)
+
+	if _, err := os.Stat(lease); !os.IsNotExist(err) {
+		t.Errorf("lease still present after owner release: %v", err)
+	}
+	if !isClean(dir) {
+		out, _ := exec.Command("git", "-C", dir, "status", "--porcelain").CombinedOutput()
+		t.Errorf("worktree dirty after release:\n%s", out)
+	}
+	if got, err := os.ReadFile(filepath.Join(dir, "tracked.txt")); err != nil || string(got) != "clean\n" {
+		t.Errorf("tracked.txt = %q, %v; want restored %q", got, err, "clean\n")
+	}
+}
+
+// TestReleaseRespectsLiveForeignLease pins the non-owner path: a lease held by a
+// different live process means the entry was stale-reclaimed and belongs to that
+// owner, so Release must leave both the lease and the working state untouched.
+// Pid 1 is live for any test runner (kill -0 yields nil or EPERM, both alive).
+func TestReleaseRespectsLiveForeignLease(t *testing.T) {
+	if os.Getpid() == 1 {
+		t.Skip("running as pid 1")
+	}
+	dir, lease := leasedRepo(t, "1 2026-07-05T00:00:00Z\n")
+	dirty(t, dir)
+
+	Release(dir)
+
+	if _, err := os.Stat(lease); err != nil {
+		t.Errorf("foreign live lease removed: %v", err)
+	}
+	if got, err := os.ReadFile(filepath.Join(dir, "untracked.txt")); err != nil || string(got) != "stray\n" {
+		t.Errorf("new owner's untracked file lost: %q, %v", got, err)
+	}
+	if got, err := os.ReadFile(filepath.Join(dir, "tracked.txt")); err != nil || string(got) != "dirty\n" {
+		t.Errorf("new owner's edit reverted: %q, %v", got, err)
 	}
 }
 

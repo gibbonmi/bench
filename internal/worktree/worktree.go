@@ -72,9 +72,19 @@ func Pool(root string) string {
 }
 
 // LeaseFile returns the git-resolved lease path for a worktree at path:
-// `git -C path rev-parse --git-path bench-lease`.
+// `git -C path rev-parse --git-path bench-lease`. Git prints that path relative
+// to the worktree itself when the git dir sits inside it (a main checkout), so a
+// relative answer is re-anchored at path — callers resolve the result against
+// their own CWD, not the worktree's.
 func LeaseFile(path string) (string, error) {
-	return git.Output("-C", path, "rev-parse", "--git-path", "bench-lease")
+	lease, err := git.Output("-C", path, "rev-parse", "--git-path", "bench-lease")
+	if err != nil {
+		return "", err
+	}
+	if !filepath.IsAbs(lease) {
+		lease = filepath.Join(path, lease)
+	}
+	return lease, nil
 }
 
 // PoolCommand implements `bench worktree-pool <root>`. Root defaults to the current

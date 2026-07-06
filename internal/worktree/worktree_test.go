@@ -112,6 +112,9 @@ func TestLeaseFile(t *testing.T) {
 	if !strings.HasSuffix(lease, "bench-lease") {
 		t.Errorf("LeaseFile = %q, want suffix bench-lease", lease)
 	}
+	if !filepath.IsAbs(lease) {
+		t.Errorf("LeaseFile = %q, want absolute — a relative path resolves against the caller's CWD, not the worktree", lease)
+	}
 }
 
 func TestLeaseFileCommandMissingArg(t *testing.T) {

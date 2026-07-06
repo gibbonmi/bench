@@ -194,8 +194,9 @@ func worktreeAdd(root, cand, ref string) bool {
 // Release cleans and unleases a worktree, but only for its recorded owner: a lease
 // held by a different, still-live process means the worktree was stale-reclaimed and
 // now belongs to that owner, so a non-owner's deferred cleanup leaves it alone. The
-// owner removes the lease, detaches, hard-resets, and cleans ignored+untracked files
-// so the pooled worktree returns to a reusable clean state.
+// owner detaches, hard-resets, and cleans ignored+untracked files *before* removing
+// the lease: the entry never sits claimable while dirty, and once the lease is gone
+// it is no longer ours to touch — a concurrent Acquire may claim it immediately.
 func Release(wt string) {
 	if wt == "" {
 		return
@@ -210,7 +211,6 @@ func Release(wt string) {
 			return
 		}
 	}
-	os.Remove(lease)
 	_ = exec.Command("git", "-C", wt, "switch", "-q", "--detach").Run()
 	_ = exec.Command("git", "-C", wt, "reset", "-q", "--hard").Run()
 	_ = exec.Command("git", "-C", wt, "clean", "-qfdx").Run()
