@@ -15,10 +15,11 @@ implement phase with two small wrappers over existing logic.
 adapter (Claude hook + phase line; Codex native).
 
 **FT9 (MED-LOW) — compiled git-context command.** One call bundling
-status+diff+log+staged for agents, partitioned self vs other-writer changes.
-Open fork: attribution via session-start baseline snapshot vs agent-passed
-file list; tension with the shared-tree rule (L1 is the stronger fix), but
-call-count value stands single-writer too. Needs its grill.
+status+diff+log+staged for agents. The self-vs-other-writer partitioning fork
+is now largely moot: invariant 1 enforces one-writer-per-tree, so the
+attribution problem it addressed mostly can't arise. Remaining value is the
+call-count reduction, which stands single-writer. Needs its grill to confirm
+that value survives without the partitioning story.
 
 **FT10 (LOW) — doctor installs the kit repo's pre-push guard.** `bench guards`
 already reports the missing guard; `bench doctor` should detect it on the kit
