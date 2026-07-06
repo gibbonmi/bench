@@ -132,6 +132,35 @@ func TestReleaseRespectsLiveForeignLease(t *testing.T) {
 	}
 }
 
+// TestReleaseNeverClaimableMidCleanup pins the release ordering: at the moment the
+// cleanup step runs, the owner's lease must still be held, so a concurrent Claim
+// fails. This is the whole race contract — if the entry is never claimable before
+// the single final lease removal, no claimant can win mid-cleanup (the dirty window)
+// and no lease exists afterwards for a trailing remove to delete. The restoreClean
+// seam is the interleave point; the pre-fix ordering (unlease, clean, unlease again)
+// goes red here because the simulated claimant's create succeeds mid-cleanup.
+func TestReleaseNeverClaimableMidCleanup(t *testing.T) {
+	dir, lease := leasedRepo(t, fmt.Sprintf("%d 2026-07-05T00:00:00Z\n", os.Getpid()))
+	dirty(t, dir)
+
+	real := restoreClean
+	t.Cleanup(func() { restoreClean = real })
+	claimedMidCleanup := false
+	restoreClean = func(wt string) {
+		claimedMidCleanup = Claim(lease)
+		real(wt)
+	}
+
+	Release(dir)
+
+	if claimedMidCleanup {
+		t.Error("entry was claimable mid-cleanup: a concurrent claimant can win while the worktree is dirty and lose its lease to the trailing remove")
+	}
+	if _, err := os.Stat(lease); !os.IsNotExist(err) {
+		t.Errorf("lease still present after owner release: %v", err)
+	}
+}
+
 // TestCandidateNameStaysInPool pins that a minted candidate never escapes the pool
 // directory — a wrong name would mint outside the pool and silently break warm reuse.
 func TestCandidateNameStaysInPool(t *testing.T) {

@@ -211,8 +211,16 @@ func Release(wt string) {
 			return
 		}
 	}
+	restoreClean(wt)
+	os.Remove(lease)
+}
+
+// restoreClean returns a worktree to a claimably clean state: detached, hard-reset,
+// ignored and untracked files removed. A package variable so the release-ordering
+// contract can observe the lease at the instant between cleanup and unlease — the
+// only interleave point where a concurrent claimant could otherwise be harmed.
+var restoreClean = func(wt string) {
 	_ = exec.Command("git", "-C", wt, "switch", "-q", "--detach").Run()
 	_ = exec.Command("git", "-C", wt, "reset", "-q", "--hard").Run()
 	_ = exec.Command("git", "-C", wt, "clean", "-qfdx").Run()
-	os.Remove(lease)
 }
