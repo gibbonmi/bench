@@ -20,14 +20,6 @@ every gate verdict is attributable to one diff. Kit edit under the
 craft-synthesis discipline, gated as usual.
 Next action: direct fix-and-gate (one rule sentence plus its anchor).
 
-**FT11 (MED-LOW) — `bench worktree clean` + honest status actions.** Status
-flags out-of-pool worktrees with action "resume or clean up (bench worktree)",
-but the `worktree` case discards all args and opens a pool subshell —
-`bench worktree clean` exits 0 and silently does the wrong thing. Add a
-clean/prune verb (remove clean out-of-pool worktrees + `git worktree prune`),
-reject unknown args instead of swallowing them, and make the status action
-per-class honest. Next action: `/bench-write-spec`.
-
 ## Features, in priority order
 
 **FT3 (MED-LOW) — `bench spec implemented` + `bench commit`.** Pair them:
@@ -71,5 +63,6 @@ demonstrably burn turns on symbol search.
 
 ## Recommended sequence
 
-1. Retire the implemented adversarial-gate-pinning spec — spec-retire
-2. FT11 `bench worktree clean` — `/bench-write-spec`
+1. Retire the implemented worktree-clean spec — spec-retire
+2. L1 promote the shared-tree worktree rule — direct fix-and-gate
+3. S2 unify subprocess-capture seams — direct fix-and-gate
