@@ -9,7 +9,6 @@
 package shift
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -30,22 +29,17 @@ var scratchFiles = map[string]bool{
 }
 
 // parseDirtyPaths turns `git status --porcelain -z --no-renames` output into the sorted
-// set of dirty paths, scratch excluded. The `-z` framing is NUL-delimited and never
-// C-quotes, so a path with spaces, glob characters, or a literal newline survives whole
-// — the newline case is the one the shell's `printf | sort` pipeline misread by
-// splitting it across two lines. Each record is `XY <path>` (two status chars + a
-// space), so the path begins at byte 3.
+// set of dirty paths, scratch excluded. The NUL framing (a path with spaces, glob
+// characters, or a literal newline survives whole — the case the shell's `printf | sort`
+// pipeline misread) is git.ParsePorcelainZ's; this layers the shift's scratch policy and
+// stable ordering on top.
 func parseDirtyPaths(raw []byte) []string {
 	var paths []string
-	for _, entry := range bytes.Split(raw, []byte{0}) {
-		if len(entry) <= 3 {
-			continue // trailing empty after the final NUL, or a malformed short record
-		}
-		p := string(entry[3:])
-		if p == "" || scratchFiles[p] {
+	for _, entry := range git.ParsePorcelainZ(raw) {
+		if entry.Path == "" || scratchFiles[entry.Path] {
 			continue
 		}
-		paths = append(paths, p)
+		paths = append(paths, entry.Path)
 	}
 	sort.Strings(paths)
 	return paths

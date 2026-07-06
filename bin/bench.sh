@@ -215,6 +215,8 @@ case "${1:-help}" in
   doctor)   adoption_route "$@" ;;
   worktree) route_porcelain "$@" ;;
   shift)    route_porcelain "$@" ;;
+  commit)   route_porcelain "$@" ;;
+  spec)     route_porcelain "$@" ;;
   link)     adoption_route "$@" ;;
   init)     adoption_route "$@" ;;
   models)   route_porcelain "$@" ;;
@@ -258,6 +260,8 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench worktree             warm, isolated worktree subshell
   bench worktree clean       remove clean out-of-pool worktrees after confirmation
   bench shift "<objective>"  gated loop in a pooled worktree; commit on green
+  bench commit -m <msg> <path>...  gate, then commit named paths on green (--spec flips its status)
+  bench spec implemented <slug>    flip a spec's Status: staged line to implemented
   bench version              print the installed benchkit version (os/arch)
 EOF
   ;;

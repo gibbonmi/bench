@@ -15,6 +15,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/canary"
+	"github.com/gibbonmi/bench/internal/commit"
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/gate"
@@ -27,6 +28,7 @@ import (
 	"github.com/gibbonmi/bench/internal/models"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/shift"
+	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/status"
 	"github.com/gibbonmi/bench/internal/stophook"
 	"github.com/gibbonmi/bench/internal/structure"
@@ -235,6 +237,12 @@ func run(args []string, stdout, stderr *os.File) int {
 		return 2
 	case "shift":
 		return shift.Command(args[1:], os.Stdin, stdout, stderr)
+	case "commit":
+		return commit.Command(args[1:], stdout, stderr)
+	case "spec":
+		out, code := spec.Command(args[1:])
+		fmt.Fprint(stdout, out)
+		return code
 	case "gate-run":
 		return gate.RunCommand(args[1:], stdout, stderr)
 	case "gate-pin":

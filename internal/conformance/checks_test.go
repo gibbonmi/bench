@@ -5,8 +5,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
+	"testing"
 
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
@@ -29,7 +31,56 @@ func RunConformance(root, kitRoot string) []string {
 	diags = append(diags, checkDocsCurrencyAndWorkflow(root, kitRoot)...)
 	diags = append(diags, checkLineRouting(root)...)
 	diags = append(diags, checkPackageCoreAndGuards(root)...)
+	diags = append(diags, checkBenchShRoutes(root)...)
 	return diags
+}
+
+// benchShRoutes are the top-level bin/bench.sh case labels that must reach the Go core so
+// every shipped surface (kit CLI, linked by-path CLI, hooks) hits one implementation. The
+// route-anchor: dropping a route sends a shipped command to a dead key, and this fires.
+var benchShRoutes = []string{"commit", "spec"}
+
+// checkBenchShRoutes asserts bin/bench.sh carries a case route for each command in
+// benchShRoutes. It bites when a route is removed (the `<name>)` label disappears).
+func checkBenchShRoutes(root string) []string {
+	bench := readIfExists(filepath.Join(root, "bin", "bench.sh"))
+	if bench == "" {
+		return nil
+	}
+	var diags []string
+	for _, route := range benchShRoutes {
+		if !regexp.MustCompile(`(?m)^  ` + regexp.QuoteMeta(route) + `\)\s`).MatchString(bench) {
+			diags = append(diags, fmt.Sprintf("bin/bench.sh has no route for '%s' (a shipped command with no case label reaches a dead key)", route))
+		}
+	}
+	return diags
+}
+
+// TestBenchShRouteAnchorBites is the recorded bite proof for checkBenchShRoutes (per
+// craft-gate): a bin/bench.sh with a route present passes; removing that route's case
+// label makes the anchor fire. It runs against a synthetic script, not the repo tree.
+func TestBenchShRouteAnchorBites(t *testing.T) {
+	root := t.TempDir()
+	binDir := filepath.Join(root, "bin")
+	if err := os.MkdirAll(binDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	write := func(body string) {
+		if err := os.WriteFile(filepath.Join(binDir, "bench.sh"), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	write("case \"${1:-help}\" in\n  commit)   route_porcelain \"$@\" ;;\n  spec)     route_porcelain \"$@\" ;;\nesac\n")
+	if diags := checkBenchShRoutes(root); len(diags) != 0 {
+		t.Fatalf("both routes present: want no diagnostics, got %v", diags)
+	}
+
+	write("case \"${1:-help}\" in\n  spec)     route_porcelain \"$@\" ;;\nesac\n")
+	diags := checkBenchShRoutes(root)
+	if len(diags) != 1 || !strings.Contains(diags[0], "no route for 'commit'") {
+		t.Fatalf("dropped commit route: want a single commit diagnostic, got %v", diags)
+	}
 }
 
 func checkConformanceCanaryFamilies(kitRoot string) []string {

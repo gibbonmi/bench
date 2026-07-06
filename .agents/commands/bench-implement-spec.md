@@ -79,15 +79,17 @@ defined route — never a silent grind, never an abandoned worktree:
   changed path once end-to-end — invoke the real command, endpoint, or call the
   diff changes and read its output. A mismatch here is a defect to fix or
   surface, never a footnote.
-- When a commit happens in this phase, stage the files the build actually touched,
-  explicitly — never a blind `git add -A`. An unexplained working-tree file blocks
-  the commit: surface it to the reviewer; don't commit or revert it on your own.
-- Advance the spec's lifecycle in the green-gate commit that finishes the build:
-  flip its `Status: staged` line to `Status: implemented`, and stage that one-line
-  edit with the build's files. `implemented` then honestly means *built, gate-green,
-  awaiting review/merge* — the state `bench status`'s retirement signal keys on once
-  the spec reaches the default branch. Never write a line-start `Status: implemented`
-  into any other `specs/*.md`, or that detector fires on a spec that is not done.
+- Land the finishing commit with `bench commit --spec <slug>`, naming the files the
+  build actually touched — it gates, flips the spec's status line, and commits the
+  named paths atomically, and it enforces the commit discipline so you don't have
+  to restate it. When it refuses over an unexplained working-tree file, surface the
+  file to the reviewer; don't commit or revert it on your own.
+- `implemented` honestly means *built, gate-green, awaiting review/merge* — the
+  state `bench status`'s retirement signal keys on once the spec reaches the
+  default branch. When a flip is needed outside a commit, `bench spec implemented <slug>`
+  is the single source of that edit; never hand-write a line-start
+  `Status: implemented` into any `specs/*.md`, or that detector fires on a spec
+  that is not done.
 - Before the final gate, emit the coverage table for every acceptance row —
   `bench coverage <spec>` produces it and `bench coverage --check <spec>` validates
   the map; don't hand-assemble it. Classify each row `green`, `already covered`,

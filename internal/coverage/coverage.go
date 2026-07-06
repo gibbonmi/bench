@@ -7,14 +7,12 @@
 package coverage
 
 import (
-	"errors"
 	"fmt"
-	"io/fs"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
 
+	specref "github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -198,48 +196,6 @@ func isDashes(s string) bool {
 	return true
 }
 
-// readCandidate reads path as a candidate spec. An absent path or a directory is not
-// a candidate here (nil, nil — try the next form); any other read failure is a real
-// error to surface, never masked as not-found.
-func readCandidate(path string) ([]byte, error) {
-	b, err := os.ReadFile(path)
-	if err == nil {
-		return b, nil
-	}
-	if errors.Is(err, fs.ErrNotExist) {
-		return nil, nil
-	}
-	if fi, statErr := os.Stat(path); statErr == nil && fi.IsDir() {
-		return nil, nil
-	}
-	return nil, err
-}
-
-// resolveSpec finds the readable file backing a spec argument: the argument as given
-// (path-first, so a same-named readable file in the CWD shadows the specs/ fallback),
-// then — for a separator-free argument only — specs/<slug>.md, appending .md only when
-// the argument doesn't already end in it. ok is false when no form resolves; tried
-// holds every form actually attempted, for the not-found error. A non-nil err is a
-// read failure on an existing file (e.g. permissions), reported instead of not-found.
-func resolveSpec(spec string) (content []byte, resolved string, tried []string, ok bool, err error) {
-	tried = []string{spec}
-	if b, err := readCandidate(spec); err != nil || b != nil {
-		return b, spec, tried, err == nil, err
-	}
-	if !strings.ContainsRune(spec, '/') {
-		fallback := spec
-		if !strings.HasSuffix(fallback, ".md") {
-			fallback += ".md"
-		}
-		fallback = "specs/" + fallback
-		tried = append(tried, fallback)
-		if b, err := readCandidate(fallback); err != nil || b != nil {
-			return b, fallback, tried, err == nil, err
-		}
-	}
-	return nil, "", tried, false, nil
-}
-
 // Command implements `bench coverage [--check] <spec.md | slug>`.
 func Command(args []string) (string, int) {
 	check := false
@@ -262,7 +218,7 @@ func Command(args []string) (string, int) {
 	if spec == "" {
 		return toon.Usage("bench coverage", "<spec.md> is required") + "\n", 2
 	}
-	content, resolved, tried, ok, err := resolveSpec(spec)
+	content, resolved, tried, ok, err := specref.Resolve("", spec)
 	if err != nil {
 		return toon.Errorf("spec not readable: "+err.Error(), "fix the file's permissions or pass another spec") + "\n", 1
 	}

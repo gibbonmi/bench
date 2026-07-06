@@ -140,7 +140,16 @@ func checkColdPickupCLILists(root string) []string {
 			}
 		}
 	}
-	for _, rel := range []string{"HANDOFF.md", ".bench/BENCH.md", ".bench/BENCH-reference.md"} {
+	// Reverse check: a `bench <cmd>` reference that names no route is a dead pointer.
+	// The command phase files are in scope so the collapsed commit-discipline prose
+	// (pointing at `bench commit` / `bench spec implemented`) is held to a routing token.
+	refFiles := []string{"HANDOFF.md", ".bench/BENCH.md", ".bench/BENCH-reference.md"}
+	cmdFiles, _ := filepath.Glob(filepath.Join(root, ".agents", "commands", "*.md"))
+	sort.Strings(cmdFiles)
+	for _, abs := range cmdFiles {
+		refFiles = append(refFiles, slashRel(root, abs))
+	}
+	for _, rel := range refFiles {
 		path := filepath.Join(root, filepath.FromSlash(rel))
 		text := readIfExists(path)
 		if text == "" {

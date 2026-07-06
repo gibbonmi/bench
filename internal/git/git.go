@@ -74,6 +74,29 @@ func Root() (string, error) {
 	return Output("rev-parse", "--show-toplevel")
 }
 
+// PorcelainEntry is one record of `git status --porcelain -z --no-renames`: the two
+// status characters (XY) and the path. With --no-renames a record is always
+// `XY <path>`, so the path begins at byte 3.
+type PorcelainEntry struct {
+	Status string // the two XY status characters
+	Path   string // the record's path, verbatim
+}
+
+// ParsePorcelainZ splits `git status --porcelain -z --no-renames` output into entries.
+// The -z framing is NUL-delimited and never C-quotes, so a path with spaces, glob
+// characters, or a literal newline survives whole — the one source of that framing
+// knowledge for every caller (the shift staging diff and the commit block-check).
+func ParsePorcelainZ(raw []byte) []PorcelainEntry {
+	var entries []PorcelainEntry
+	for record := range bytes.SplitSeq(raw, []byte{0}) {
+		if len(record) <= 3 {
+			continue // trailing empty after the final NUL, or a malformed short record
+		}
+		entries = append(entries, PorcelainEntry{Status: string(record[:2]), Path: string(record[3:])})
+	}
+	return entries
+}
+
 // DefaultBranch is the repository's default branch: origin/HEAD's short name with the
 // `origin/` prefix stripped, falling back to "main" when the ref is unset (no remote
 // HEAD) or empty. The one source both `diff` and `status` read — and the Go mirror of
