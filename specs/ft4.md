@@ -44,7 +44,8 @@ change.
    Claude-only tool name into the harness-neutral command file.
    Line: claude-fable-5 / high. Same leverage class — adapter documentation the
    agent reads when orienting to the Claude tree — and it must name the source token
-   (`bench coverage`) the stale-reference sweep recognizes.
+   (`bench coverage`) for reviewer cold-read; `.claude/` is not gate-swept, so the
+   token is reviewer-checked, not gate-verified.
 
 ## Implementation decisions
 
@@ -84,35 +85,39 @@ change.
   the agent actually seeding its task list from the coverage rows — is agent
   behavior at runtime, not a command output, so it is **not gate-observable**. This
   spec is a prose leverage change; the gate guards *regressions* (existing docs
-  anchors stay green, the stale-reference sweep resolves the new `bench coverage`
-  tokens), and **the reviewer enforces the change itself** at review and cold-read.
+  anchors stay green, and a mistyped `bench <cmd>` in the command file fails the
+  gate's CLI-reference check — the `.claude/README.md` token is reviewer/cold-read,
+  `.claude/` being unswept), and **the reviewer enforces the change itself** at
+  review and cold-read.
   This is the same posture the `implement-spec-lean` spec recorded for its
   deduped-prose legibility.
 - **Cheapest wrong implementation:** a vague sentence that omits `bench coverage` and
-  the coverage rows. No gate row goes red on it — the stale-reference sweep sees no
-  broken token and the anchors are untouched. That is the honest disclosure: the
+  the coverage rows. No gate row goes red on it — the command name stays valid so
+  the CLI-reference check passes and the anchors are untouched. That is the honest disclosure: the
   behavior cannot be gate-pinned, which is exactly why the venue is
   `/bench-implement-spec` interactive and **not** `bench shift` (the coverage map is
   not fully gate-observable, failing `craft-line`'s venue-routing test).
 - **Seams tested:** the only gate-observable surface is the existing gate over the
-  two edited files — `gate-docs-contracts` anchors on the command file and the
-  stale-reference sweep across the tree. No new seam, no new test file.
+  command file — `gate-docs-contracts` anchors and the CLI-reference check over
+  `.agents/commands/*.md`. The `.claude/README.md` edit has no gate-observable
+  surface (`.claude/` is unswept). No new seam, no new test file.
 - **Gate command:** the project gate, `bench gate`.
 
 ### Seam diagram
 
 The single gate-observable seam is the existing docs/reference gate over the edited
-files. There is no new unit and no new test-attach point — the seam already exists;
-the build must keep it green.
+command file. There is no new unit and no new test-attach point — the seam already
+exists; the build must keep it green.
 
-    trigger: `bench gate`  (docs-contracts phase + stale-reference sweep)
+    trigger: `bench gate`  (docs-contracts phase + CLI-reference check)
         │
         ▼
     edited bench-implement-spec.md  ──▶  [ gate-docs-contracts ]  ──▶  anchor "turning
-    edited .claude/README.md        ──▶  [ + stale-ref sweep    ]      red-to-green" present?
-    new `bench coverage` tokens     ──▶  [                      ]  ──▶  every ref resolves?
-                      ◀ tests attach here: run `bench gate`; docs anchors and the
-                        stale-reference sweep stay green after the two prose edits.
+    (`.claude/README.md` has no      ──▶  [ + CLI-reference chk ]      red-to-green" present?
+     gate surface: `.claude/` is     ──▶  [ over .agents/cmds   ]  ──▶  `bench <cmd>` tokens
+     unswept, reviewer-checked)      ──▶  [                     ]      name a real command?
+                      ◀ tests attach here: run `bench gate`; the docs anchor and the
+                        CLI-reference check stay green after the command-file edit.
                         (The task-list *behavior* itself has no attach point — it is
                          reviewer/cold-read enforced, recorded not-TDD-able below.)
 
@@ -121,11 +126,11 @@ the build must keep it green.
 | story | behavior | seam | red signal | why it catches the failure |
 |---|---|---|---|---|
 | 1 | Agent seeds its harness task list, one task per coverage row, from `bench coverage <spec>` | agent runtime behavior (no command output) | not TDD-able — runtime agent behavior, not gate-observable; enforced at `/bench-review-implementation` and cold-read | no gate signal exists; the review axis and reviewer own it (stated openly, not disguised as TDD) |
-| 1 | The `bench coverage` token added to the command file resolves | stale-reference sweep over the tree | already covered — the sweep already runs in `bench gate`; a broken token would fail it | a mistyped/dangling reference in the new clause fails the existing sweep |
+| 1 | The `bench coverage` token added to the command file resolves | reverse CLI-reference check in `bench gate` (scans `.agents/commands/*.md` for unknown `bench <cmd>` tokens) | already covered — the check already runs in `bench gate`; a mistyped command name would fail it | a mistyped `bench <cmd>` in the new clause is flagged as an unknown command by the existing CLI-reference check |
 | 1 | The docs anchor "turning red-to-green" survives the bullet edit | `gate-docs-contracts` anchor on the command file | already covered — the anchor is checked today; run `bench gate` after the edit | if the edit drops the anchor phrase, the docs-contract check goes red |
 | 1 | Clause stays under the "if the spec has an acceptance coverage map" guard (no-map change unaffected) | reviewer/cold-read of the edited bullet | not TDD-able — structural placement, reviewer-checked | a clause hoisted out of the guard would instruct a task list on maps that don't exist; caught at review |
 | 1 | Wording degrades for a harness with no native task list | reviewer/cold-read | not TDD-able — prose quality, reviewer-checked | wording that assumes TodoWrite/plan exists would misdirect a plain AGENTS.md harness; caught at review |
-| 2 | `.claude/README.md` gains the TodoWrite note and its `bench coverage` token resolves | stale-reference sweep over the tree | already covered — the sweep already runs; a broken token fails it | a dangling `bench coverage` reference in the README fails the existing sweep |
+| 2 | `.claude/README.md` gains the TodoWrite note and its `bench coverage` token resolves | reviewer/cold-read of the README | not TDD-able — `.claude/` is walked by neither the stale-reference sweep nor the CLI-reference check, so the token is reviewer/cold-read enforced, not gate-observable | a dangling reference in the README is caught at review and cold-read, not by the gate |
 | 2 | The Claude-only tool name `TodoWrite` does not leak into the neutral command file | reviewer/cold-read of the command file | not TDD-able — no gate check distinguishes tool names in prose | a harness-specific name in the canonical file breaks neutrality for Codex/other harnesses; caught at review |
 
 ### Edge inventory
