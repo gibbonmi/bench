@@ -4,7 +4,8 @@
 // stage → commit: it refuses before gating if any working-tree file outside the named set
 // (plus the --spec file) is dirty, runs the project gate through internal/gate and commits
 // only on green, flips the spec through internal/spec when --spec is set, and stages
-// exactly the named paths via `:(literal)` pathspecs — never `git add -A` over the tree.
+// exactly the named paths via a `:(literal)` pathspec (a named deletion included) —
+// never a bare `git add -A` over the whole tree.
 // It forms no opinion of the gate's verdict and carries no branch guard: the pre-push hook
 // owns default-branch protection, so commit is branch-agnostic.
 package commit

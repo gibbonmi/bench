@@ -18,12 +18,13 @@ status+diff+log+staged framing is dropped — no repeated call site. One
 uncertainty flag for the spec-writer: how the TOON-stdout conformance assertion
 exempts the raw diff-body block (needs `craft-gate`). Ready to spec.
 
-**FT11 (MED-LOW, defect) — `bench commit` cannot stage a file deletion.**
-`git add :(literal)<path>` exits 128 on a removed path, so the sanctioned commit
-path can't complete a spec-retire (which always deletes a spec); the workaround
-today is raw `git commit`, which forfeits the block-check + gate-order
-guarantees. Teach `bench commit` staging to record deletions for named paths,
-with a gate row driving a deleted path through the command.
+**FT12 (LOW, kit discipline) — repro a defect claim through the accused command
+before draining it.** FT11 was minted from a learning that quoted a raw `git add`
+run by hand; the real `bench commit` path already staged deletions, so the row
+described a defect that did not exist. Tighten `/bench-what-next` step 3 (and
+`bench-debug`'s repro discipline) so a defect-shaped learning becomes a roadmap
+row only after its red signal reproduces through the sanctioned command, not a
+lookalike. Built later under the `craft-synthesis` discipline.
 
 **FT10 (LOW) — doctor installs the kit repo's pre-push guard.** `bench guards`
 already reports the missing guard; `bench doctor` should detect it on the kit
@@ -53,6 +54,6 @@ demonstrably burn turns on symbol search.
 
 ## Recommended sequence
 
-1. FT4 harness task list in `/bench-implement-spec` — /bench-write-spec
+1. Retire FT4 — promote durable content, delete `specs/ft4.md`, remove the FT4
+   row (promote-then-delete pass, flagged by `bench status`)
 2. FT9 `bench diff --full` context bundle (mapped, ready) — /bench-write-spec
-3. FT11 `bench commit` deletion-staging fix — /bench-write-spec

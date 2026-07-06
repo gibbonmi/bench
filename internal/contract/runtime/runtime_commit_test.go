@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -37,6 +38,7 @@ func TestRuntimeCommitContracts(t *testing.T) {
 	contract.RunParallel(t, "red gate refuses commit", testCommitRedRefuses)
 	contract.RunParallel(t, "unexplained file blocks before gate", testCommitUnexplainedBlocks)
 	contract.RunParallel(t, "glob/space path survives whole", testCommitWeirdPath)
+	contract.RunParallel(t, "deleted path stages the removal", testCommitStagesDeletion)
 	contract.RunParallel(t, "spec flip lands in one commit", testCommitSpecFlip)
 	contract.RunParallel(t, "bad --spec fails before the gate", testCommitSpecFailsFast)
 	contract.RunParallel(t, "empty commit refused", testCommitEmptyRefused)
@@ -55,8 +57,26 @@ func testCommitGreenCommits(t *testing.T) {
 	}
 	names := committedNames(f)
 	contract.RequireContains(t, names, "work.txt")
-	// The no-`git add -A` guarantee: the unchanged seed never rides into the commit.
+	// The no-bare-`git add -A` guarantee: the unchanged seed never rides into the commit.
 	contract.RequireNotContains(t, names, "seed.txt")
+}
+
+func testCommitStagesDeletion(t *testing.T) {
+	// spec-retire always deletes a spec, so the sanctioned commit path must stage a removed
+	// file. A staging step that skips named paths no longer on disk records no deletion, so
+	// the commit finds nothing staged and exits 1 — this test goes red on that.
+	f := commitFixture(t)
+	contract.Remove(t, filepath.Join(f.Root, "seed.txt"))
+	before := headSha(f)
+
+	f.Bench("commit", "-m", "remove seed", "seed.txt").RequireExit(0)
+
+	if headSha(f) == before {
+		t.Fatal("HEAD did not advance on a green gate")
+	}
+	// The deletion is what landed: the commit records seed.txt and the tree no longer tracks it.
+	contract.RequireContains(t, committedNames(f), "seed.txt")
+	contract.RequireNotContains(t, f.Git("ls-files").Stdout, "seed.txt")
 }
 
 func testCommitRedRefuses(t *testing.T) {
