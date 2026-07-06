@@ -20,12 +20,6 @@ every gate verdict is attributable to one diff. Kit edit under the
 craft-synthesis discipline, gated as usual.
 Next action: direct fix-and-gate (one rule sentence plus its anchor).
 
-**FT2 (MED) — adversarial gate pinning.** Hash-verify the gate outside the
-writable tree in pre-push. Distinct threat model from the lazy-agent tripwire;
-small (~6 edits) and closes the "determined agent weakens the gate" hole.
-Spec staged (`specs/adversarial-gate-pinning.md`).
-Next action: `/bench-implement-spec` on a fresh mid-tier session.
-
 **FT11 (MED-LOW) — `bench worktree clean` + honest status actions.** Status
 flags out-of-pool worktrees with action "resume or clean up (bench worktree)",
 but the `worktree` case discards all args and opens a pool subshell —
@@ -77,5 +71,5 @@ demonstrably burn turns on symbol search.
 
 ## Recommended sequence
 
-1. FT2 adversarial gate pinning — `/bench-write-spec`
+1. Retire the implemented adversarial-gate-pinning spec — spec-retire
 2. FT11 `bench worktree clean` — `/bench-write-spec`
