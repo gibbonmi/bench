@@ -7,13 +7,6 @@ goes to `IDEAS.md` and enters only through a reviewed drain.
 
 ## Ready to build
 
-**S1 (LOW) — split `internal/gate/phases_test.go`.** 457 lines, over the
-400-line structural cap (`bench structure` flags it now). 14 test functions,
-cleanly separable by responsibility (runner concurrency/output/cancel vs
-phase-table/shellcheck/signal-handling) — split along those lines per the
-craft-seams skill, don't fragment just to beat the line count.
-Next action: direct fix-and-gate (small, mechanical, no spec needed).
-
 **S2 (LOW) — unify subprocess-capture seams.** Conformance `runProbe`,
 `Harness.Run`, and canary `defaultRunner` each hand-roll subprocess capture;
 collapse to one probe seam (canary's merged-stream EXPECT matching stays a
@@ -83,6 +76,5 @@ demonstrably burn turns on symbol search.
 
 ## Recommended sequence
 
-1. S1 split `internal/gate/phases_test.go` — `/bench-implement-spec`
-2. FT2 adversarial gate pinning — `/bench-write-spec`
-3. FT11 `bench worktree clean` — `/bench-write-spec`
+1. FT2 adversarial gate pinning — `/bench-write-spec`
+2. FT11 `bench worktree clean` — `/bench-write-spec`
