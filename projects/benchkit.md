@@ -10,8 +10,9 @@ AGENTS.md harness — that portability is the product.
 
 ## Working branch
 
-`main`. (The commit-on-green policy and the default-branch guard are
-canonical in `/bench-final-check`; this line is only the binding.)
+`main`. (The commit-on-green policy is canonical in `/bench-final-check`; the
+default-branch guard is the pre-push hook, not commit-time — `bench commit` is
+branch-agnostic. This line is only the binding.)
 
 ## Seams (test here; everything else is free to change)
 
@@ -22,7 +23,8 @@ canonical in `/bench-final-check`; this line is only the binding.)
   diff.
 - **The `bench` CLI subcommands** (`gate`, `worktree`, `shift`, `init`, `link`,
   `models`, `structure`, `idea`, `roadmap`, `status`, `learnings`, `maps`,
-  `guards`, `diff`, `coverage`). The operational shell surface.
+  `guards`, `diff`, `coverage`, `commit`, `spec implemented`). The operational
+  shell surface.
   Stable command names and exit codes are the contract; the implementation behind each is
   free to change. Keep gate resolution (`.bench/gate.sh` → `$BENCH_GATE` → auto-detect) in
   one place.
