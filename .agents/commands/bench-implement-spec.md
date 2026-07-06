@@ -30,10 +30,13 @@ table that picks the row, and the escalation ladder are all `craft-line`'s.
 
 - Work the user stories in vertical slices, not all-tests-first horizontal ones.
 - Use TDD only at the pre-agreed seams; its bounds are `craft-tdd`'s.
-- If the spec has an acceptance coverage map, each vertical slice names the
-  coverage row it is turning red-to-green before editing that slice. Rows marked
-  `already covered` or `not TDD-able` keep their recorded reason; don't silently
-  upgrade them into TDD coverage.
+- If the spec has an acceptance coverage map, seed your harness's native task
+  list (Codex plan, Claude todos), if it has one, from `bench coverage <spec>` —
+  one task per coverage row — so the reviewer can watch build progress. Each
+  vertical slice names the coverage row it is turning red-to-green before
+  editing that slice, and marks that row's task in-progress as it does. Rows
+  marked `already covered` or `not TDD-able` keep their recorded reason; don't
+  silently upgrade them into TDD coverage.
 - Run typecheck and the relevant single test file frequently as you go. Run the
   full gate once at the end.
 - One small change at a time, repo stays green — invariant 4 in `.bench/BENCH.md`.
