@@ -1,7 +1,6 @@
 package conformance
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -10,6 +9,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
 // Harness is the shared test-only conformance fixture: Root is the tree being
@@ -77,26 +78,19 @@ func (h Harness) Run(args ...string) Probe {
 	}
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Dir = h.Root
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	exitCode := 0
-	if err != nil {
-		exitCode = 1
-		var exitErr *exec.ExitError
-		if errors.As(err, &exitErr) {
-			exitCode = exitErr.ExitCode()
-		} else if stderr.Len() == 0 {
-			stderr.WriteString(err.Error())
-		}
+	r := subprocess.Capture(cmd)
+	stderr := r.Stderr
+	// Surface a spawn failure (e.g. command not found) that wrote nothing itself.
+	var exitErr *exec.ExitError
+	if r.Err != nil && !errors.As(r.Err, &exitErr) && stderr == "" {
+		stderr = r.Err.Error()
 	}
 	return Probe{
 		Args:     append([]string(nil), args...),
-		ExitCode: exitCode,
-		Stdout:   stdout.String(),
-		Stderr:   stderr.String(),
-		Err:      err,
+		ExitCode: r.ExitCode,
+		Stdout:   r.Stdout,
+		Stderr:   stderr,
+		Err:      r.Err,
 	}
 }
 

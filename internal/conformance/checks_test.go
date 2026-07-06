@@ -1,13 +1,14 @@
 package conformance
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
 var conformanceFamilies = []string{
@@ -154,18 +155,8 @@ func uniqueSorted(values []string) []string {
 // JSON parse read stdout alone, and subprocess stderr chatter (npm's update
 // notifier, warnings) must not corrupt it.
 func runProbe(cmd *exec.Cmd, args []string) *Probe {
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	exitCode := 0
-	if err != nil {
-		exitCode = 1
-		if cmd.ProcessState != nil {
-			exitCode = cmd.ProcessState.ExitCode()
-		}
-	}
-	return &Probe{Args: append([]string(nil), args...), ExitCode: exitCode, Stdout: stdout.String(), Stderr: stderr.String(), Err: err}
+	r := subprocess.Capture(cmd)
+	return &Probe{Args: append([]string(nil), args...), ExitCode: r.ExitCode, Stdout: r.Stdout, Stderr: r.Stderr, Err: r.Err}
 }
 
 func runAt(dir string, args ...string) *Probe {

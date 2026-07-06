@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
 const absentHarnessMessage = "canary harness absent — tests/canary/ has no fixtures; the gate cannot prove its own checks bite"
@@ -287,14 +288,13 @@ func defaultRunner(call RunCall) RunResult {
 	cmd := exec.Command("bash", call.Gate)
 	cmd.Dir = call.Cwd
 	cmd.Env = call.Env
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		if cmd.ProcessState != nil {
-			return RunResult{ExitCode: cmd.ProcessState.ExitCode(), Output: string(out)}
-		}
-		return RunResult{ExitCode: 1, Output: string(out) + err.Error()}
+	r := subprocess.CaptureMerged(cmd)
+	output := r.Stdout
+	// A spawn failure (ProcessState nil) writes nothing, so append the error.
+	if r.Err != nil && cmd.ProcessState == nil {
+		output += r.Err.Error()
 	}
-	return RunResult{ExitCode: 0, Output: string(out)}
+	return RunResult{ExitCode: r.ExitCode, Output: output}
 }
 
 func gitInit(dir string) error {

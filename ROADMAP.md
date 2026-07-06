@@ -5,14 +5,6 @@ the tree; a row leaves when the work ships (spec-retire) or a
 `/bench-what-next` reconcile removes it. Raw capture never lands here — it
 goes to `IDEAS.md` and enters only through a reviewed drain.
 
-## Ready to build
-
-**S2 (LOW) — unify subprocess-capture seams.** Conformance `runProbe`,
-`Harness.Run`, and canary `defaultRunner` each hand-roll subprocess capture;
-collapse to one probe seam (canary's merged-stream EXPECT matching stays a
-deliberate mode). Knowledge duplication, no behavior change.
-Next action: direct fix-and-gate with the craft-seams skill.
-
 ## Features, in priority order
 
 **FT3 (MED-LOW) — `bench spec implemented` + `bench commit`.** Pair them:
@@ -63,5 +55,4 @@ Next action: direct fix-and-gate with the craft-seams skill.
 
 ## Recommended sequence
 
-1. S2 unify subprocess-capture seams — direct fix-and-gate
-2. S3 split three over-length files — direct fix-and-gate
+1. S3 split three over-length files — direct fix-and-gate
