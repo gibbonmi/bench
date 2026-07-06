@@ -37,6 +37,24 @@ func cksum(t testing.TB, value string) string {
 	return strings.Fields(string(out))[0]
 }
 
+type runtimePoolWorktrees struct {
+	Pool, Warm, Leased, LeaseFile string
+}
+
+func addRuntimePoolWorktrees(t testing.TB, f contract.Fixture, benchHome string) runtimePoolWorktrees {
+	t.Helper()
+	repoRoot := strings.TrimSpace(f.Git("rev-parse", "--show-toplevel").Stdout)
+	pool := filepath.Join(benchHome, "worktrees", filepath.Base(repoRoot)+"-"+cksum(t, repoRoot))
+	warm := filepath.Join(pool, "warm")
+	leased := filepath.Join(pool, "leased")
+	contract.Mkdir(t, pool)
+	f.Git("worktree", "add", "-q", "--detach", warm, "HEAD")
+	f.Git("worktree", "add", "-q", "--detach", leased, "HEAD")
+	lease := strings.TrimSpace(contract.RunAt(t, f, leased, nil, "git", "rev-parse", "--git-path", "bench-lease").Stdout)
+	contract.WriteFileAbs(t, lease, "")
+	return runtimePoolWorktrees{Pool: pool, Warm: warm, Leased: leased, LeaseFile: lease}
+}
+
 func repeatLines(n int, line string) string {
 	var b strings.Builder
 	for i := 0; i < n; i++ {

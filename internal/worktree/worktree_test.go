@@ -1,6 +1,9 @@
 package worktree
 
 import (
+	"bytes"
+	"io"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -100,6 +103,98 @@ func TestPoolDefaultBenchHome(t *testing.T) {
 	}
 }
 
+func TestClassifyRegisteredWorktrees(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("BENCH_HOME", home)
+	root := newWorktreeRepo(t)
+
+	pool := Pool(root)
+	warm := filepath.Join(pool, "warm")
+	leased := filepath.Join(pool, "leased")
+	outOfPool := filepath.Join(filepath.Dir(root), "outside pool")
+	if err := os.MkdirAll(pool, 0o755); err != nil {
+		t.Fatalf("mkdir pool: %v", err)
+	}
+	gitRun(t, root, "worktree", "add", "-q", "--detach", warm, "HEAD")
+	gitRun(t, root, "worktree", "add", "-q", "--detach", leased, "HEAD")
+	gitRun(t, root, "worktree", "add", "-q", "--detach", outOfPool, "HEAD")
+	lease, err := LeaseFile(leased)
+	if err != nil {
+		t.Fatalf("LeaseFile: %v", err)
+	}
+	if err := os.WriteFile(lease, []byte("123 2026-07-06T00:00:00Z\n"), 0o644); err != nil {
+		t.Fatalf("write lease: %v", err)
+	}
+
+	entries := RegisteredWorktrees(root)
+	got := map[string]Class{}
+	for _, entry := range entries {
+		got[entry.Path] = entry.Class
+	}
+	want := map[string]Class{
+		root:      ClassRoot,
+		warm:      ClassPoolWarm,
+		leased:    ClassPoolLease,
+		outOfPool: ClassOutOfPool,
+	}
+	for path, class := range want {
+		if got[path] != class {
+			t.Errorf("class %q = %q, want %q", path, got[path], class)
+		}
+	}
+	linkedEntries, err := ClassifyRegisteredWorktrees(leased)
+	if err != nil {
+		t.Fatalf("ClassifyRegisteredWorktrees from linked worktree: %v", err)
+	}
+	got = map[string]Class{}
+	for _, entry := range linkedEntries {
+		got[entry.Path] = entry.Class
+	}
+	for path, class := range want {
+		if got[path] != class {
+			t.Errorf("class from linked cwd %q = %q, want %q", path, got[path], class)
+		}
+	}
+}
+
+func TestCleanCommandRemovesConfirmedOutOfPool(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("BENCH_HOME", home)
+	root := newWorktreeRepo(t)
+	candidate := filepath.Join(filepath.Dir(root), "outside wt [one]")
+	gitRun(t, root, "worktree", "add", "-q", "--detach", candidate, "HEAD")
+	nested := filepath.Join(root, "sub", "dir")
+	if err := os.MkdirAll(nested, 0o755); err != nil {
+		t.Fatalf("mkdir nested cwd: %v", err)
+	}
+	chdir(t, nested)
+
+	var stdout, stderr bytes.Buffer
+	code := cleanCommand(nil, strings.NewReader("clean worktrees\n"), &stdout, &stderr, func(io.Reader) bool { return true })
+	if code != 0 {
+		t.Fatalf("cleanCommand exit = %d\nstdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
+	}
+	if !strings.Contains(stdout.String(), candidate) || !strings.Contains(stdout.String(), "removed") {
+		t.Fatalf("confirmed cleanup did not report removed candidate:\n%s", stdout.String())
+	}
+	if strings.Contains(stdout.String()+stderr.String(), "--force") {
+		t.Fatalf("cleanup mentioned forced removal:\nstdout:\n%s\nstderr:\n%s", stdout.String(), stderr.String())
+	}
+	if out := gitOutput(t, root, "worktree", "list", "--porcelain"); strings.Contains(out, candidate) {
+		t.Fatalf("confirmed cleanup left worktree registered:\n%s", out)
+	}
+
+	stdout.Reset()
+	stderr.Reset()
+	code = cleanCommand(nil, strings.NewReader("clean worktrees\n"), &stdout, &stderr, func(io.Reader) bool { return false })
+	if code != 0 {
+		t.Fatalf("second cleanCommand exit = %d\nstdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "nothing to clean") {
+		t.Fatalf("second cleanup did not report idempotent empty state:\n%s", stdout.String())
+	}
+}
+
 func TestLeaseFile(t *testing.T) {
 	dir := t.TempDir()
 	if out, err := exec.Command("git", "-C", dir, "init").CombinedOutput(); err != nil {
@@ -137,5 +232,49 @@ func TestPoolCommandExplicitRoot(t *testing.T) {
 	want := filepath.Join(home, "worktrees", "bench-2826441890") + "\n"
 	if out != want {
 		t.Errorf("out = %q, want %q", out, want)
+	}
+}
+
+func newWorktreeRepo(t testing.TB) string {
+	t.Helper()
+	root := t.TempDir()
+	gitRun(t, root, "init")
+	gitRun(t, root, "config", "user.email", "bench@local")
+	gitRun(t, root, "config", "user.name", "bench")
+	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("base\n"), 0o644); err != nil {
+		t.Fatalf("write tracked.txt: %v", err)
+	}
+	gitRun(t, root, "add", "tracked.txt")
+	gitRun(t, root, "commit", "-q", "-m", "base")
+	return root
+}
+
+func chdir(t testing.TB, dir string) {
+	t.Helper()
+	prev, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("chdir %s: %v", dir, err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(prev) })
+}
+
+func gitOutput(t testing.TB, dir string, args ...string) string {
+	t.Helper()
+	cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)
+	out, err := cmd.Output()
+	if err != nil {
+		t.Fatalf("git %s: %v", strings.Join(args, " "), err)
+	}
+	return strings.TrimSpace(string(out))
+}
+
+func gitRun(t testing.TB, dir string, args ...string) {
+	t.Helper()
+	cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("git %s: %v\n%s", strings.Join(args, " "), err, out)
 	}
 }

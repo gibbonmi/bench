@@ -1,6 +1,6 @@
 # `bench worktree clean` + honest status actions
 
-Status: staged
+Status: implemented
 
 ## Problem
 `bench status` tells a reviewer with out-of-pool worktrees to "resume or clean

@@ -13,6 +13,7 @@
 #   bench gate                 run the project gate; exit code is the verdict
 #   bench canary [root]        run the gate against known-broken fixtures
 #   bench worktree             drop into a warm, isolated worktree subshell
+#   bench worktree clean       remove clean out-of-pool worktrees after confirmation
 #   bench shift "<objective>"  run the gated loop in a pooled worktree
 #
 # The worktree lifecycle, the gated loop, and the gate resolution/record all live in
@@ -255,6 +256,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench gate                 run the project gate (the oracle)
   bench gate pin             pin HEAD's .bench tree for pre-push verification
   bench worktree             warm, isolated worktree subshell
+  bench worktree clean       remove clean out-of-pool worktrees after confirmation
   bench shift "<objective>"  gated loop in a pooled worktree; commit on green
   bench version              print the installed benchkit version (os/arch)
 EOF

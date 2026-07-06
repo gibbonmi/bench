@@ -237,7 +237,7 @@ func testRuntimeStatusBudget(t *testing.T) {
 	contract.RequireContains(t, out, "/bench-what-next")
 	contract.RequireContains(t, out, "split (craft-seams)")
 	contract.RequireContains(t, out, "commit on green / push")
-	contract.RequireContains(t, out, "resume or clean up")
+	contract.RequireContains(t, out, "bench worktree clean")
 	contract.RequireNotContains(t, out, "craft-grill → /bench-write-spec")
 	if rows := countStatusRows(out); rows > 5 {
 		t.Fatalf("budget exceeded five rows (%d):\n%s", rows, out)
@@ -248,21 +248,30 @@ func testRuntimeStatusWarmPool(t *testing.T) {
 	f := contract.NewFixture(t)
 	commitAllowEmpty(t, f, "init")
 	benchHome := filepath.Join(f.Root, ".bh")
-	repoRoot := strings.TrimSpace(f.Git("rev-parse", "--show-toplevel").Stdout)
-	pool := filepath.Join(benchHome, "worktrees", filepath.Base(repoRoot)+"-"+cksum(t, repoRoot))
-	warm := filepath.Join(pool, "warm")
-	contract.Mkdir(t, pool)
-	f.Git("worktree", "add", "-q", "--detach", warm, "HEAD")
+	pool := addRuntimePoolWorktrees(t, f, benchHome)
+	outOfPool := filepath.Join(f.Root, "outside pool")
+	f.Git("worktree", "add", "-q", "--detach", outOfPool, "HEAD")
 	out := f.BenchEnv(map[string]string{"BENCH_HOME": benchHome}, "status").Stdout
-	contract.RequireNotContains(t, out, "resume or clean up")
-	lease := strings.TrimSpace(contract.RunAt(t, f, warm, nil, "git", "rev-parse", "--git-path", "bench-lease").Stdout)
-	contract.WriteFileAbs(t, lease, "")
+	contract.RequireContains(t, out, "1 out-of-pool worktree")
+	contract.RequireContains(t, out, "bench worktree clean")
+	contract.RequireContains(t, out, "1 leased pool worktree")
+	requireStatusLineNotContains(t, out, "1 leased pool worktree", "bench worktree clean")
+	leasedOut := contract.RunAt(t, f, pool.Leased, map[string]string{"BENCH_HOME": benchHome}, "bash", benchPath(t), "status").Stdout
+	contract.RequireContains(t, leasedOut, "1 out-of-pool worktree")
+	contract.RequireContains(t, leasedOut, "1 leased pool worktree")
+	requireStatusLineNotContains(t, leasedOut, "1 leased pool worktree", "bench worktree clean")
 	out = f.BenchEnv(map[string]string{"BENCH_HOME": benchHome}, "status").Stdout
-	contract.RequireContains(t, out, "1 active worktree")
-	contract.Remove(t, lease)
+	contract.RequireContains(t, out, "1 out-of-pool worktree")
+	contract.RequireContains(t, out, "1 leased pool worktree")
+	contract.RequireContains(t, out, "resume leased worktree")
+	requireStatusLineNotContains(t, out, "1 leased pool worktree", "bench worktree clean")
+	contract.Remove(t, pool.LeaseFile)
 	f.Git("branch", "worktree-agent-orphan")
 	out = f.BenchEnv(map[string]string{"BENCH_HOME": benchHome}, "status").Stdout
+	contract.RequireContains(t, out, "1 out-of-pool worktree")
 	contract.RequireContains(t, out, "orphaned worktree branch")
+	contract.RequireContains(t, out, "delete scratch branch")
+	requireStatusLineNotContains(t, out, "orphaned worktree branch", "bench worktree clean")
 }
 
 func testRuntimeStatusRetirementSignal(t *testing.T) {
@@ -356,6 +365,17 @@ func requireStatusRow(t testing.TB, out string, want statusRowExpectation) {
 	for _, needle := range want.notContains {
 		contract.RequireNotContains(t, out, needle)
 	}
+}
+
+func requireStatusLineNotContains(t testing.TB, out, needle, forbidden string) {
+	t.Helper()
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, needle) {
+			contract.RequireNotContains(t, line, forbidden)
+			return
+		}
+	}
+	t.Fatalf("status line containing %q not found in:\n%s", needle, out)
 }
 
 func writeRuntimeFile(path, contents string) runtimeFixtureEdit {

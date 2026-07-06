@@ -225,7 +225,14 @@ func run(args []string, stdout, stderr *os.File) int {
 		fmt.Fprintln(stdout, versionLine(version, runtime.GOOS, runtime.GOARCH))
 		return 0
 	case "worktree":
-		return worktree.Subshell(os.Stdin, stdout, stderr)
+		if len(args) == 1 {
+			return worktree.Subshell(os.Stdin, stdout, stderr)
+		}
+		if args[1] == "clean" {
+			return worktree.CleanCommand(args[2:], os.Stdin, stdout, stderr)
+		}
+		fmt.Fprint(stderr, worktree.WorktreeUsage())
+		return 2
 	case "shift":
 		return shift.Command(args[1:], os.Stdin, stdout, stderr)
 	case "gate-run":

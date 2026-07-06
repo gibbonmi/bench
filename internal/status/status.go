@@ -190,42 +190,32 @@ func appendGit(rows []row, root string) []row {
 	return append(rows, row{1, "git", detail, "commit on green / push"})
 }
 
-// appendWorktree counts worktree cleanup signals (sev 2): out-of-pool worktrees, leased
-// pool entries, and orphaned harness scratch branches (`worktree-*` refs no registered
-// worktree still holds). The repo root itself and a warm pooled entry (under the pool,
-// no lease file on disk) are expected state, not a signal, and are skipped.
+// appendWorktree adds separate worktree signals (sev 2) for out-of-pool worktrees,
+// leased pool entries, and orphaned harness scratch branches (`worktree-*` refs no
+// registered worktree still holds). The repo root and warm pooled entries are expected
+// state, not signals.
 func appendWorktree(rows []row, root string) []row {
-	pool := worktree.Pool(root)
-	out, _ := git.Output("-C", root, "worktree", "list", "--porcelain")
-	wtc := 0
-	for _, line := range strings.Split(out, "\n") {
-		if !strings.HasPrefix(line, "worktree ") {
-			continue
+	registered := worktree.RegisteredWorktrees(root)
+	outOfPool, leased := 0, 0
+	for _, wt := range registered {
+		switch wt.Class {
+		case worktree.ClassOutOfPool:
+			outOfPool++
+		case worktree.ClassPoolLease:
+			leased++
 		}
-		wpath := line[len("worktree "):]
-		if wpath == root {
-			continue
-		}
-		if strings.HasPrefix(wpath, pool+"/") {
-			lease, _ := worktree.LeaseFile(wpath)
-			if !isRegularFile(lease) {
-				continue
-			}
-		}
-		wtc++
+	}
+	if outOfPool > 0 {
+		rows = append(rows, row{2, "worktree", plural(outOfPool, "out-of-pool worktree", "out-of-pool worktrees"), "clean up (bench worktree clean)"})
+	}
+	if leased > 0 {
+		rows = append(rows, row{2, "worktree", plural(leased, "leased pool worktree", "leased pool worktrees"), "resume leased worktree"})
 	}
 	orphans := worktree.OrphanedDelegateBranches(root)
-	if wtc == 0 {
-		if len(orphans) == 0 {
-			return rows
-		}
+	if len(orphans) > 0 {
 		return append(rows, row{2, "worktree", plural(len(orphans), "orphaned worktree branch", "orphaned worktree branches"), "delete scratch branch"})
 	}
-	detail := fmt.Sprintf("%d active worktree(s)", wtc)
-	if len(orphans) > 0 {
-		detail += ", " + plural(len(orphans), "orphaned branch", "orphaned branches")
-	}
-	return append(rows, row{2, "worktree", detail, "resume or clean up (bench worktree)"})
+	return rows
 }
 
 func plural(n int, one, many string) string {
@@ -349,10 +339,4 @@ func learningsFloor() int {
 // guarding a short or "none" hash so the slice never panics.
 func short(s string) string {
 	return s[:min(7, len(s))]
-}
-
-// isRegularFile reports whether path exists and is a regular file (the shell `-f` test).
-func isRegularFile(path string) bool {
-	info, err := os.Stat(path)
-	return err == nil && info.Mode().IsRegular()
 }

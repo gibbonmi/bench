@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/terminal"
 )
 
 const pinFileName = "bench-gate-pin"
@@ -19,7 +20,7 @@ const pinFileName = "bench-gate-pin"
 // stdin before doing any write, then records HEAD's committed .bench tree beside the
 // gate cache for the managed pre-push hook to verify.
 func PinCommand(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
-	return pinCommand(args, stdin, stdout, stderr, stdinIsTerminal)
+	return pinCommand(args, stdin, stdout, stderr, terminal.IsTerminal)
 }
 
 func pinCommand(args []string, stdin io.Reader, stdout, stderr io.Writer, isTerminal func(io.Reader) bool) int {
@@ -56,15 +57,6 @@ func pinCommand(args []string, stdin io.Reader, stdout, stderr io.Writer, isTerm
 	}
 	fmt.Fprintln(stdout, "bench gate pin updated")
 	return 0
-}
-
-func stdinIsTerminal(stdin io.Reader) bool {
-	file, ok := stdin.(*os.File)
-	if !ok {
-		return false
-	}
-	info, err := file.Stat()
-	return err == nil && info.Mode()&os.ModeCharDevice != 0
 }
 
 func showPinReview(root string, stdout, stderr io.Writer) bool {
