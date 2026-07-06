@@ -7,10 +7,6 @@ goes to `IDEAS.md` and enters only through a reviewed drain.
 
 ## Features, in priority order
 
-**FT3 (MED-LOW) — `bench spec implemented` + `bench commit`.** Pair them:
-commit could fold in the spec status flip. Replaces footgun prose in the
-implement phase with two small wrappers over existing logic.
-
 **FT4 (MED-LOW) — harness task list in `/bench-implement-spec`.** Per-harness
 adapter (Claude hook + phase line; Codex native).
 
@@ -49,5 +45,5 @@ demonstrably burn turns on symbol search.
 
 ## Recommended sequence
 
-1. FT3 pair `bench spec implemented` + `bench commit` — /bench-write-spec
-2. FT4 harness task list in `/bench-implement-spec` — /bench-write-spec
+1. FT4 harness task list in `/bench-implement-spec` — /bench-write-spec
+2. FT9 compiled git-context command — /bench-shape-idea (grill first)
