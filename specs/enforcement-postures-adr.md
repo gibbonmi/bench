@@ -1,6 +1,6 @@
 # enforcement-postures-adr — the accepted enforcement postures are recorded as decided state
 
-Status: staged
+Status: implemented
 
 Source: closed decision map `decisions/enforcement-postures-adr.md` (FT31); its
 Handoff is the pre-agreed seam set, taken as-is. Depends on FT27
