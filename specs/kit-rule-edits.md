@@ -1,6 +1,6 @@
 # Kit rule edits
 
-Status: staged
+Status: implemented
 
 ## Problem
 

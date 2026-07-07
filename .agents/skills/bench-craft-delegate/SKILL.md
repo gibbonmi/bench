@@ -42,6 +42,24 @@ each row red before the edit and green after. That is what makes the done-claim
 verifiable by running the gate instead of re-reading the work; a charge without
 its rows buys a diff you must read line-by-line to trust.
 
+A worktree-isolated delegate's charge opens with the stale-base check: run
+`git merge --ff-only main`, verify HEAD equals main, stop and report if the
+merge is denied or diverges. Worktrees get cut behind a moving main, and a
+delegate that builds on a stale base re-fights landed work. The orchestrator
+holds the other end of the contract: a blocked worktree is fast-forwarded by
+the orchestrating session, which then resumes the same delegate. Read-only
+delegates are unaffected.
+
+```
+Implement story 3 of specs/retry-backoff.md in this worktree. Open with the
+stale-base check: run `git merge --ff-only main`, verify HEAD equals main,
+stop and report if denied. Coverage rows: [the story's rows]. Effort: medium,
+~3 iterations. Commit on green with `bench commit`; return the red→green log
+per row.
+```
+Good — a write-delegation whose opener rides in the charge and whose rows make
+the done-claim verifiable.
+
 ```
 Review this diff on the Standards axis only. Base: run `bench diff` for the
 changed files; read AGENTS.md and .bench/BENCH.md for the conventions. Charge:

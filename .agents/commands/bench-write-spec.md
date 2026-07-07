@@ -27,7 +27,11 @@ is cheap and the coverage map is fully gate-observable.
 a named `decisions/<topic>.md` whose `## Handoff` is placeholder-free — run
 `bench maps` and confirm it shows no row for the map. On a missing map, or one
 whose Handoff is still open, name the map to close and stop; never draft a spec
-from conversation alone. Bugs are the exception: they route to `/bench-debug`,
+from conversation alone. One override exists: an explicit reviewer-directed
+batch drain (an assessment or reviewed findings doc pushed into specs on the
+reviewer's instruction) may substitute for per-spec maps, with every defaulted
+decision flagged in-spec for post-hoc veto — absent that explicit instruction,
+the map gate stands. Bugs are the exception: they route to `/bench-debug`,
 which needs no spec.
 
 **Who runs this phase.** The mid tier authors ordinary specs. The top tier is an
