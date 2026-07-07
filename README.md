@@ -184,13 +184,34 @@ bench init
 A global install under a node version manager (nvm, asdf, fnm, volta) also drops a
 plain-shell `bench` shim on a stable PATH dir so login shells and `bash -c` resolve
 `bench` the same as an interactive shell; `bench doctor` reports its health and
-`bench doctor --fix` repairs it. To uninstall, remove the package and the shim:
+`bench doctor --fix` repairs it.
+
+To uninstall, start with the per-repo footprint: `bench unlink` consumes the link
+manifest and reverses the install — it removes the managed files whose fingerprints
+still match, prunes emptied managed directories, strips the managed AGENTS.md block
+while keeping your prose, and removes the bench-managed pre-push hook. A file you
+edited since linking, and your own artifacts (ROADMAP.md, IDEAS.md, CONTEXT.md,
+`specs/`, `decisions/`, `.bench/learnings.md`, `.bench/gate.sh`), are left in place.
+Rehearse it first with `bench unlink --dry-run`, which prints the exact plan and
+changes nothing:
+
+```sh
+cd ~/src/your-project
+bench unlink --dry-run   # rehearse: print the removal plan, touch nothing
+bench unlink             # remove the per-repo Bench footprint
+```
+
+Then remove the global tool — the package and the shim:
 
 ```sh
 npm uninstall -g benchkit && rm -f "$(command -v bench)"
 # after npm's own symlink is gone, command -v bench resolves to the shim;
 # `bench doctor` prints the machine-exact removal pair while bench still resolves.
 ```
+
+A repo linked before the manifest existed has nothing for `bench unlink` to consume,
+so it exits 1; remove that footprint by hand (the managed `AGENTS.md` block, the
+`.bench/`, `.agents/`, `.claude/`, and `.codex/` assets, and the pre-push hook).
 
 The reviewer action is the setup phase, not those CLI calls:
 

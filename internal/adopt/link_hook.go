@@ -24,9 +24,9 @@ var prePushTemplate string
 const prePushBranchToken = "__BENCH_DEFAULT_BRANCH__"
 
 // prePushMarker is the fingerprint of a bench-managed pre-push hook: the marker line the
-// template carries. It is the one source both installGitHook (conflict check) and
-// ClassifyPrePush (doctor/status backstop verification) match by substring — not
-// byte-identity, which would false-red across default-branch token substitution and
+// template carries. It is the one source installGitHook (conflict check), ClassifyPrePush
+// (doctor/status backstop verification), and unlink's removal gate match by substring —
+// not byte-identity, which would false-red across default-branch token substitution and
 // benign template evolution.
 const prePushMarker = "bench:managed-pre-push"
 

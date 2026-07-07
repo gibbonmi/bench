@@ -206,6 +206,7 @@ case "${1:-help}" in
   spec)     route_porcelain "$@" ;;
   link)     adoption_route "$@" ;;
   init)     adoption_route "$@" ;;
+  unlink)   route_porcelain "$@" ;;
   models)   route_porcelain "$@" ;;
   structure) route_porcelain "$@" ;;
   idea)     route_porcelain "$@" ;;
@@ -230,6 +231,7 @@ case "${1:-help}" in
 bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench link [copy|symlink]  safely wire the kit into this repo for every harness
   bench init                 scaffold .bench/gate.sh in the current repo
+  bench unlink [--dry-run]   remove the per-repo Bench footprint the manifest records
   bench models               list advisory model-id candidates for the line binding
   bench structure            flag oversized files + crowded dirs (wire into the gate)
   bench idea "<text>"        park an out-of-scope idea in IDEAS.md (commit to nothing)
