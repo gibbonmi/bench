@@ -204,9 +204,38 @@ func doctorReport(stdout io.Writer, version string) int {
 		fmt.Fprintln(stdout, "  missing: no bench shim on a stable PATH dir")
 	}
 	printSkewWarning(stdout, version)
+	if reportPrePush(stdout) {
+		rc = 1
+	}
 	fmt.Fprintln(stdout, "  fix:    bench doctor --fix")
 	fmt.Fprintf(stdout, "  remove: npm uninstall -g benchkit && rm -f %q\n", shimPath)
 	return rc
+}
+
+// reportPrePush renders the read-only pre-push backstop row when doctor runs inside a git
+// worktree, and returns whether the row is red. git does not clone hooks, so a fresh clone
+// silently drops the default-branch backstop; this catches that the next time doctor runs.
+// The row is read-only by construction: doctor never installs or relabels the hook (self-heal
+// is rejected for least surprise), so the remedy is bench link. A red row makes doctor exit 1
+// even when the shim is healthy.
+func reportPrePush(stdout io.Writer) bool {
+	root, err := git.Root()
+	if err != nil {
+		return false // not in a git worktree — no backstop to verify
+	}
+	st := ClassifyPrePush(root)
+	switch st.State {
+	case PrePushManaged:
+		fmt.Fprintf(stdout, "  ok: bench-managed pre-push at %s\n", st.Path)
+		return false
+	case PrePushForeign:
+		fmt.Fprintf(stdout, "  pre-push: %s is present but not bench-managed (no marker) - run bench link\n", st.Path)
+	case PrePushDiverted:
+		fmt.Fprintf(stdout, "  pre-push: diverted by core.hooksPath to %s with no bench-managed hook - run bench link\n", st.Path)
+	default: // PrePushAbsent
+		fmt.Fprintf(stdout, "  pre-push: absent at %s - a fresh clone drops it (git does not clone hooks); run bench link\n", st.Path)
+	}
+	return true
 }
 
 func printSkewWarning(stdout io.Writer, version string) {

@@ -19,7 +19,13 @@ func TestDoctorReportFixContracts(t *testing.T) {
 	contract.RunParallel(t, "bench doctor --fix foreign-refuse contract", testDoctorFixForeignRefuse)
 	contract.RunParallel(t, "bench doctor --fix fallback contract", testDoctorFixFallback)
 	contract.RunParallel(t, "bench doctor --fix path-notice contract", testDoctorFixPathNotice)
+	contract.RunParallel(t, "bench doctor pre-push row contract", testDoctorPrePushRow)
+	contract.RunParallel(t, "bench doctor pre-push kit-repo contract", testDoctorPrePushKitRepo)
 }
+
+// managedPrePushBody is a minimal hook carrying the marker ClassifyPrePush fingerprints —
+// the one source the doctor pre-push fixtures write for a bench-managed hook.
+const managedPrePushBody = "#!/usr/bin/env bash\n# bench:managed-pre-push\nexit 0\n"
 
 type doctorSandbox struct {
 	home   string
@@ -33,6 +39,9 @@ func testDoctorReport(t *testing.T) {
 	f := contract.NewFixture(t)
 	sb := newDoctorSandbox(t, f)
 	targetPath := filepath.Join(sb.plain, "bench")
+	// A bench-managed pre-push keeps the backstop row green, so this test's exit codes
+	// answer only for shim health — the pre-push row has its own contract below.
+	mustWriteFile(t, filepath.Join(f.Root, ".git", "hooks", "pre-push"), managedPrePushBody, 0o755)
 
 	probe := f.BenchEnv(sb.env, "doctor")
 	probe.RequireExit(1)
@@ -171,6 +180,69 @@ func testDoctorFixPathNotice(t *testing.T) {
 	probe.RequireContains(probe.Stdout, "export PATH")
 	probe.RequireContains(probe.Stdout, ".local/bin")
 	requirePathAbsent(t, filepath.Join(sb.home, ".bashrc"), "--fix edited an rc file")
+}
+
+// testDoctorPrePushRow walks the pre-push backstop states: a fresh clone's absent hook, a
+// user-authored foreign hook (reported, never overwritten), a core.hooksPath divert with no
+// managed hook, and the managed/boundary greens. The shim is installed first so the report's
+// exit answers only for the pre-push row.
+func testDoctorPrePushRow(t *testing.T) {
+	f := contract.NewFixture(t)
+	sb := newDoctorSandbox(t, f)
+	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	prepush := filepath.Join(f.Root, ".git", "hooks", "pre-push")
+
+	// Absent — git does not clone hooks, so a fresh clone drops the backstop: red row that
+	// names "pre-push" and the resolved install path, doctor exit 1.
+	requirePathAbsent(t, prepush, "fresh fixture unexpectedly carries a pre-push")
+	probe := f.BenchEnv(sb.env, "doctor")
+	probe.RequireExit(1)
+	probe.RequireContains(probe.Stdout, "pre-push")
+	probe.RequireContains(probe.Stdout, prepush)
+
+	// Foreign — a present hook with no managed marker is reported "not bench-managed" and
+	// left byte-identical (doctor is read-only; only bench link installs).
+	foreign := "#!/usr/bin/env bash\n# a hook the user wrote\nexit 0\n"
+	mustWriteFile(t, prepush, foreign, 0o755)
+	probe = f.BenchEnv(sb.env, "doctor")
+	probe.RequireExit(1)
+	probe.RequireContains(probe.Stdout, "not bench-managed")
+	doctorRequireEqual(t, mustReadFile(t, prepush), foreign, "doctor rewrote a foreign pre-push")
+
+	// Managed — the marker fingerprints a bench-managed hook: green row, doctor exit 0.
+	mustWriteFile(t, prepush, managedPrePushBody, 0o755)
+	f.BenchEnv(sb.env, "doctor").RequireExit(0)
+
+	// Diverted — core.hooksPath pointing at a dir with no managed hook (a spaced path, per
+	// the hostile-input checklist) is red "diverted", even though .git/hooks stays managed.
+	divert := filepath.Join(f.Root, "diverted hooks")
+	contract.Mkdir(t, divert)
+	f.Git("config", "core.hooksPath", divert)
+	probe = f.BenchEnv(sb.env, "doctor")
+	probe.RequireExit(1)
+	probe.RequireContains(probe.Stdout, "diverted")
+
+	// Boundary — a divert dir that DOES carry a managed hook is green, not diverted.
+	mustWriteFile(t, filepath.Join(divert, "pre-push"), managedPrePushBody, 0o755)
+	f.BenchEnv(sb.env, "doctor").RequireExit(0)
+}
+
+// testDoctorPrePushKitRepo pins FT10: the same row fires on the kit repo itself. A
+// kit-shaped repo carries no link manifest, so a row gated behind a manifest would skip it;
+// the row must still fire and name the resolved install path.
+func testDoctorPrePushKitRepo(t *testing.T) {
+	f := contract.NewFixture(t)
+	sb := newDoctorSandbox(t, f)
+	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	f.WriteFile("AGENTS.md", "# Working agreement\n")
+	f.WriteFile(".bench/BENCH.md", "# Bench\n")
+	prepush := filepath.Join(f.Root, ".git", "hooks", "pre-push")
+	requirePathAbsent(t, prepush, "kit-shaped fixture unexpectedly carries a pre-push")
+
+	probe := f.BenchEnv(sb.env, "doctor")
+	probe.RequireExit(1)
+	probe.RequireContains(probe.Stdout, "pre-push")
+	probe.RequireContains(probe.Stdout, prepush)
 }
 
 func newDoctorSandbox(t *testing.T, f contract.Fixture) doctorSandbox {

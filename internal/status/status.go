@@ -22,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/roadmap"
@@ -71,6 +72,7 @@ func render(root string) string {
 	rows = appendGate(rows, root)
 	rows = appendGit(rows, root)
 	rows = appendWorktree(rows, root)
+	rows = appendGuards(rows, root)
 	rows = appendDrain(rows, root)
 	rows = appendStructure(rows, root)
 	rows = appendMaps(rows, root)
@@ -103,7 +105,7 @@ func render(root string) string {
 
 // appendGate reads the gate verdict cache `<git-dir>/bench-last-gate` (line 0:
 // `<status> <tree> …`). If the cached tree differs from the working tree, the verdict is
-// stale (sev 6); else a `red` verdict is a fail-before-commit signal (sev 0). No cache
+// stale (sev 7); else a `red` verdict is a fail-before-commit signal (sev 0). No cache
 // file → no gate row.
 func appendGate(rows []row, root string) []row {
 	gitDir, err := git.Output("-C", root, "rev-parse", "--absolute-git-dir")
@@ -126,12 +128,12 @@ func appendGate(rows []row, root string) []row {
 			ctree = fields[1]
 		}
 		detail, action := staleGateDetailAction(root, ctree, tree)
-		return append(rows, row{6, "gate", detail, action})
+		return append(rows, row{7, "gate", detail, action})
 	}
 	cstatus, ctree := fields[0], fields[1]
 	if ctree != tree {
 		detail, action := staleGateDetailAction(root, ctree, tree)
-		return append(rows, row{6, "gate", detail, action})
+		return append(rows, row{7, "gate", detail, action})
 	}
 	if cstatus == "red" {
 		return append(rows, row{0, "gate", "red", "fix before commit"})
@@ -230,7 +232,54 @@ func plural(n int, one, many string) string {
 	return fmt.Sprintf("%d %s", n, many)
 }
 
-// appendDrain adds the capture-drain signal (sev 3): parked ideas in IDEAS.md plus open
+// appendGuards adds the pre-push backstop signal (sev 3), ranked just below the worktree
+// signals and above the drain row. git does not clone hooks, so a fresh clone silently loses
+// the harness-independent default-branch backstop; this surfaces the gap ambiently rather
+// than only under `bench doctor`. It fires only on the primary checkout of a routed repo
+// (`.bench/lines.env` present) — pool and linked worktrees share the main `.git` and must not
+// double-report the same hook — and stays quiet when the hook is bench-managed. Remedy: bench link.
+func appendGuards(rows []row, root string) []row {
+	if !isPrimaryCheckout(root) {
+		return rows
+	}
+	if _, err := os.Stat(filepath.Join(root, ".bench", "lines.env")); err != nil {
+		return rows
+	}
+	st := adopt.ClassifyPrePush(root)
+	if st.State == adopt.PrePushManaged {
+		return rows
+	}
+	return append(rows, row{3, "guards", prePushDetail(st.State), "bench link"})
+}
+
+// prePushDetail names the pre-push gap the guards row reports, mirroring the adopt classifier's
+// states so the ambient signal and the doctor row describe the same condition.
+func prePushDetail(state adopt.PrePushState) string {
+	switch state {
+	case adopt.PrePushForeign:
+		return "pre-push not bench-managed"
+	case adopt.PrePushDiverted:
+		return "pre-push diverted (core.hooksPath)"
+	default: // PrePushAbsent
+		return "pre-push missing"
+	}
+}
+
+// isPrimaryCheckout reports whether root is the repository's primary checkout — the git dir
+// equals the git-common-dir. A linked or pool worktree's git dir is `.git/worktrees/<name>`
+// while its common dir is the main `.git`, so the two differ there. The same test the
+// worktree classifier's canonicalRoot uses. An undeterminable repo returns false, so the
+// low-noise signal stays quiet rather than double-reporting.
+func isPrimaryCheckout(root string) bool {
+	gitDir, err1 := git.Output("-C", root, "rev-parse", "--path-format=absolute", "--git-dir")
+	common, err2 := git.Output("-C", root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	if err1 != nil || err2 != nil {
+		return false
+	}
+	return filepath.Clean(gitDir) == filepath.Clean(common)
+}
+
+// appendDrain adds the capture-drain signal (sev 4): parked ideas in IDEAS.md plus open
 // journal headings, one combined row pointing at the single maintenance phase. The
 // counts are roadmap.DrainCounts — the same counters `bench roadmap` reports. The
 // learnings component shows only at or above the floor (env BENCH_LEARNINGS_FLOOR,
@@ -243,26 +292,26 @@ func appendDrain(rows []row, root string) []row {
 	if ideas == 0 && open == 0 {
 		return rows
 	}
-	return append(rows, row{3, "drain", fmt.Sprintf("%d idea(s), %d open learning(s)", ideas, open), "/bench-what-next"})
+	return append(rows, row{4, "drain", fmt.Sprintf("%d idea(s), %d open learning(s)", ideas, open), "/bench-what-next"})
 }
 
-// appendStructure adds the structural-debt signal (sev 4) when the violation count is positive.
+// appendStructure adds the structural-debt signal (sev 5) when the violation count is positive.
 func appendStructure(rows []row, root string) []row {
 	if n := structure.ViolationCount(root); n > 0 {
-		return append(rows, row{4, "structure", fmt.Sprintf("%d issue(s)", n), "split (craft-seams)"})
+		return append(rows, row{5, "structure", fmt.Sprintf("%d issue(s)", n), "split (craft-seams)"})
 	}
 	return rows
 }
 
-// appendMaps adds the unresolved-decision-map signal (sev 5) when the count is positive.
+// appendMaps adds the unresolved-decision-map signal (sev 6) when the count is positive.
 func appendMaps(rows []row, root string) []row {
 	if n := maps.UnresolvedCount(root); n > 0 {
-		return append(rows, row{5, "decisions", fmt.Sprintf("%d unresolved map(s)", n), "craft-grill → /bench-write-spec"})
+		return append(rows, row{6, "decisions", fmt.Sprintf("%d unresolved map(s)", n), "craft-grill → /bench-write-spec"})
 	}
 	return rows
 }
 
-// appendRetirement adds the merged-spec-awaiting-retirement signal (sev 7), but only on
+// appendRetirement adds the merged-spec-awaiting-retirement signal (sev 8), but only on
 // the default branch — a topic branch's spec is still in flight, not awaiting retirement.
 func appendRetirement(rows []row, root string) []row {
 	// Audit #5 — tolerate: a failure reads as "not the default branch", skipping this
@@ -272,18 +321,18 @@ func appendRetirement(rows []row, root string) []row {
 		return rows
 	}
 	if n := retirementCount(root); n > 0 {
-		return append(rows, row{7, "specs", fmt.Sprintf("%d merged spec(s) awaiting retirement", n), "promote-then-delete (spec-retire)"})
+		return append(rows, row{8, "specs", fmt.Sprintf("%d merged spec(s) awaiting retirement", n), "promote-then-delete (spec-retire)"})
 	}
 	return rows
 }
 
-// appendOrphanedPickup adds the orphaned-review-pickup signal (sev 8): a reviews/<slug>.md
+// appendOrphanedPickup adds the orphaned-review-pickup signal (sev 9): a reviews/<slug>.md
 // with no matching specs/<slug>.md is a pickup file that escaped its lifecycle. It ranks
 // with the housekeeping rows, just below the retirement signal, so it never displaces the
 // gate/git rows in the budget. A paired pickup (its spec still present) is expected state.
 func appendOrphanedPickup(rows []row, root string) []row {
 	if n := orphanedPickupCount(root); n > 0 {
-		return append(rows, row{8, "reviews", plural(n, "orphaned review pickup", "orphaned review pickups"), "promote or delete by hand"})
+		return append(rows, row{9, "reviews", plural(n, "orphaned review pickup", "orphaned review pickups"), "promote or delete by hand"})
 	}
 	return rows
 }
@@ -293,7 +342,7 @@ func appendOrphanedPickup(rows []row, root string) []row {
 // (spec.AwaitsRetirement) or was retired out of the tree entirely — has outlived the drain that
 // should have removed it. Like appendRetirement, it fires only on the default branch: a topic
 // branch's roadmap is mid-build, so a row there names in-flight work, not a shipped-work leak.
-// Severity 9 ranks it below the housekeeping rows (retirement 7, orphaned-pickup 8) and far
+// Severity 10 ranks it below the housekeeping rows (retirement 8, orphaned-pickup 9) and far
 // below gate/git, so it never displaces a red-gate or dirty-tree row in the budget.
 func appendRoadmapReconcile(rows []row, root string) []row {
 	// Audit #6 — tolerate: as in appendRetirement, an unreadable branch reads as "not the
@@ -313,7 +362,7 @@ func appendRoadmapReconcile(rows []row, root string) []row {
 	if dangling > 0 {
 		details = append(details, plural(dangling, "row names a retired spec", "rows name a retired spec"))
 	}
-	return append(rows, row{9, "roadmap", strings.Join(details, ", "), "/bench-what-next"})
+	return append(rows, row{10, "roadmap", strings.Join(details, ", "), "/bench-what-next"})
 }
 
 // retirementCount counts specs/*.md files that spec.AwaitsRetirement marks — a merged spec

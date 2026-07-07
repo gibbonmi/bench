@@ -25,6 +25,61 @@ func TestRuntimeStatusContracts(t *testing.T) {
 	contract.RunParallel(t, "bench status orphaned-pickup contract", testRuntimeStatusOrphanedPickup)
 	contract.RunParallel(t, "bench status roadmap-reconcile contract", testRuntimeStatusRoadmapReconcile)
 	contract.RunParallel(t, "bench status learnings-floor contract", testRuntimeStatusLearningsFloor)
+	contract.RunParallel(t, "bench status guards-signal contract", testRuntimeStatusGuardsSignal)
+	contract.RunParallel(t, "bench status guards primary-checkout contract", testRuntimeStatusGuardsPrimaryOnly)
+}
+
+// testRuntimeStatusGuardsSignal pins story 7: in a routed repo whose pre-push is missing, a
+// low-noise guards row fires with the bench link remedy, ranked worktree < guards < drain so
+// it never crowds the gate/git rows.
+func testRuntimeStatusGuardsSignal(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteFile(".bench/lines.env", "BENCH_TIER_TOP=t\nBENCH_TIER_MID=m\nBENCH_TIER_CHEAP=c\n")
+	f.WriteFile("IDEAS.md", "- 2026-07-05  parked idea\n")
+	f.CommitAll("routed base") // commit so the git signal is quiet and only the ladder rows remain
+	// An out-of-pool worktree adds the worktree signal (sev just above guards).
+	f.Git("worktree", "add", "-q", "--detach", filepath.Join(f.Root, "outside pool"), "HEAD")
+
+	out := f.Bench("status").Stdout
+	requireStatusLineContains(t, out, "guards", "bench link")
+	contract.RequireContains(t, out, "pre-push")
+
+	worktree := strings.Index(out, "out-of-pool")
+	guards := strings.Index(out, "guards")
+	drain := strings.Index(out, "→ /bench-what-next")
+	if worktree < 0 || guards < 0 || drain < 0 {
+		t.Fatalf("ladder fixture missing a row (worktree=%d guards=%d drain=%d):\n%s", worktree, guards, drain, out)
+	}
+	if !(worktree < guards && guards < drain) {
+		t.Fatalf("severity ladder broken (worktree=%d guards=%d drain=%d):\n%s", worktree, guards, drain, out)
+	}
+
+	// A managed pre-push clears the gap: no guards row.
+	contract.WriteFileAbs(t, filepath.Join(gitDir(t, f), "hooks", "pre-push"), "#!/usr/bin/env bash\n# bench:managed-pre-push\nexit 0\n")
+	managed := f.Bench("status").Stdout
+	contract.RequireNotContains(t, managed, "guards")
+
+	// An unrouted repo (no .bench/lines.env) never fires the signal, even with no pre-push.
+	unrouted := contract.NewFixture(t)
+	contract.RequireNotContains(t, unrouted.Bench("status").Stdout, "guards")
+}
+
+// testRuntimeStatusGuardsPrimaryOnly pins story 8: the signal fires only on the primary
+// checkout. A pool/linked worktree shares the main .git, so running status from it must not
+// double-report the same hook.
+func testRuntimeStatusGuardsPrimaryOnly(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteFile(".bench/lines.env", "BENCH_TIER_TOP=t\nBENCH_TIER_MID=m\nBENCH_TIER_CHEAP=c\n")
+	f.CommitAll("routed base")
+	linked := filepath.Join(f.Root, "linked wt")
+	f.Git("worktree", "add", "-q", "--detach", linked, "HEAD")
+
+	primary := f.Bench("status").Stdout
+	if n := strings.Count(primary, "guards"); n != 1 {
+		t.Fatalf("want exactly one guards row from the primary checkout, got %d:\n%s", n, primary)
+	}
+	fromLinked := contract.RunAt(t, f, linked, nil, "bash", benchPath(t), "status").Stdout
+	contract.RequireNotContains(t, fromLinked, "guards")
 }
 
 func testRuntimeIdeaRoadmap(t *testing.T) {
