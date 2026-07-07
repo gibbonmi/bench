@@ -1,6 +1,6 @@
 # Status valve (FT30)
 
-Status: staged
+Status: implemented
 
 ## Problem
 Six signals fire on this repo today, but `bench status` renders only five: the sixth is silently truncated to a bare `+1 more` line, and there is no flag to expand the board. The one row most often hidden is a real pending signal (the roadmap-reconcile row). A reader who sees `+1 more` has no way, from that line, to learn how to see the rest.

@@ -226,7 +226,9 @@ func testRuntimeStatusDecisions(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("decisions/x.md", "### Answer\n— (deferred)\n")
 	f.CommitAll("s")
-	f.Bench("status").RequireContains(f.Bench("status").Stdout, "craft-grill → /bench-write-spec")
+	out := f.Bench("status").Stdout
+	contract.RequireContains(t, out, "/bench-shape-idea")
+	contract.RequireNotContains(t, out, "craft-grill")
 }
 
 func testRuntimeStatusUnresolvedMapsCount(t *testing.T) {
@@ -250,14 +252,24 @@ func testRuntimeStatusBudget(t *testing.T) {
 	out := f.Bench("status").Stdout
 	first := strings.SplitN(out, "\n", 2)[0]
 	contract.RequireContains(t, first, "fix before commit")
-	contract.RequireContains(t, out, "+1 more")
+	contract.RequireContains(t, out, "+1 more (bench status --all)")
 	contract.RequireContains(t, out, "/bench-what-next")
 	contract.RequireContains(t, out, "split (craft-seams)")
 	contract.RequireContains(t, out, "commit on green / push")
 	contract.RequireContains(t, out, "bench worktree clean")
-	contract.RequireNotContains(t, out, "craft-grill → /bench-write-spec")
+	// The 6th signal (decisions, sev 6) is truncated off the default budget board.
+	contract.RequireNotContains(t, out, "/bench-shape-idea")
 	if rows := countStatusRows(out); rows > 5 {
 		t.Fatalf("budget exceeded five rows (%d):\n%s", rows, out)
+	}
+
+	// --all lifts the budget: the 6th signal's action prints and no overflow line remains.
+	all := f.Bench("status", "--all").Stdout
+	contract.RequireContains(t, all, "/bench-shape-idea")
+	contract.RequireNotContains(t, all, "+1 more")
+	contract.RequireNotContains(t, all, "(bench status --all)")
+	if rows := countStatusRows(all); rows != 6 {
+		t.Fatalf("--all should print all six rows, got %d:\n%s", rows, all)
 	}
 }
 
@@ -301,11 +313,12 @@ func testRuntimeStatusRetirementSignal(t *testing.T) {
 	f.CommitAll("init")
 	out := f.Bench("status").Stdout
 	contract.RequireContains(t, out, "1 merged spec(s) awaiting retirement")
-	contract.RequireContains(t, out, "promote-then-delete (spec-retire)")
+	contract.RequireContains(t, out, "bench spec retire <slug>")
+	contract.RequireNotContains(t, out, "promote-then-delete")
 	f.WriteFile("scratch.txt", "scratch\n")
 	out = f.Bench("status").Stdout
 	contract.RequireContains(t, out, "awaiting retirement")
-	if strings.Contains(strings.SplitN(out, "\n", 2)[0], "spec-retire") {
+	if strings.Contains(strings.SplitN(out, "\n", 2)[0], "bench spec retire") {
 		t.Fatal("retirement signal wrongly led over the git signal")
 	}
 	contract.Remove(t, filepath.Join(f.Root, "scratch.txt"))
