@@ -256,11 +256,18 @@ func runWithInputEnv(dir string, env []string, input string, args ...string) *Pr
 
 func conformanceSubprocessEnv() []string {
 	env := make([]string, 0, len(os.Environ()))
+	hasNpmCache := false
 	for _, kv := range os.Environ() {
 		if strings.HasPrefix(kv, "BENCH_CONFORMANCE_ROOT=") {
 			continue
 		}
+		if strings.HasPrefix(kv, "NPM_CONFIG_CACHE=") && strings.TrimPrefix(kv, "NPM_CONFIG_CACHE=") != "" {
+			hasNpmCache = true
+		}
 		env = append(env, kv)
+	}
+	if !hasNpmCache {
+		env = append(env, "NPM_CONFIG_CACHE="+filepath.Join(os.TempDir(), "bench-npm-cache"))
 	}
 	return env
 }
