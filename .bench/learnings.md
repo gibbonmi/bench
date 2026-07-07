@@ -27,6 +27,10 @@ An entry leaves this file only via /bench-what-next.
   red on `bench_worktree_concurrent-acquire_contract` ("second acquire did not
   record within a minute") while a write-delegate was compiling and testing in a
   sibling worktree. The same test passed in 0.15s in isolation immediately after.
+  It later went red twice more with **no** delegate running (~3 reds in ~8 full
+  runs), so the contention is at least partly the gate's own four concurrent
+  phases, not only external load — the 60s wall-clock window is the weak point
+  either way.
 - **Right behavior:** Treat a single-writer gate run as the verdict for one diff
   *and* one machine-load context: when parallel delegates share the box, either
   serialize full-gate runs or re-run a red timing-shaped contract in isolation
