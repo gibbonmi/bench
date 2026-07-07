@@ -32,11 +32,19 @@ func testAXIGuardsAggregation(t *testing.T) {
 
 	out := f.Bench("guards")
 	out.RequireExit(0)
-	requireGuardsFirstLine(t, out.Stdout, "guards[4]{guard,boundary,denies}:")
+	requireGuardsFirstLine(t, out.Stdout, "guards[4]{guard,boundary,denies,wired}:")
 	for _, guard := range []string{"block-dangerous-git", "check-agent-line", "stop", "pre-push"} {
 		requireGuardsLineMatching(t, out.Stdout, "^  "+regexp.QuoteMeta(guard)+",")
 	}
 	requireNoGuardsLineMatching(t, out.Stdout, `^  session-start,`)
+
+	// The wired cell names exactly the harness configs that reference each script.
+	// The kit's own wiring is asymmetric: check-agent-line is wired only in
+	// .claude/settings.json (its Agent matcher), so its cell is the bare "claude";
+	// block-dangerous-git is wired in both configs, so its cell is the comma-joined,
+	// TOON-quoted "claude,codex".
+	requireGuardsLineMatching(t, out.Stdout, `^  check-agent-line,.*,claude$`)
+	requireGuardsLineMatching(t, out.Stdout, `^  block-dangerous-git,.*,"claude,codex"$`)
 
 	prepush := gitPrePushPath(t, f)
 	manifest := f.Run("bash", prepush, "--describe")
@@ -45,17 +53,19 @@ func testAXIGuardsAggregation(t *testing.T) {
 		requireGuardsLineMatching(t, manifest.Stdout, "^"+key+": ")
 	}
 
+	// An orphan hook script referenced by neither config renders the definitive
+	// `none`, never a blank cell.
 	f.WriteExecutable(".bench/hooks/extra.sh", "#!/usr/bin/env bash\ncat >/dev/null\nexit 0\n")
 	withExtra := f.Bench("guards")
 	withExtra.RequireExit(0)
-	requireGuardsLine(t, withExtra.Stdout, `  extra,"",no manifest`)
+	requireGuardsLine(t, withExtra.Stdout, `  extra,"",no manifest,none`)
 
 	if err := os.Remove(prepush); err != nil {
 		t.Fatalf("remove generated pre-push: %v", err)
 	}
 	withoutPrePush := f.Bench("guards")
 	withoutPrePush.RequireExit(0)
-	requireGuardsLine(t, withoutPrePush.Stdout, `  pre-push,"",not installed`)
+	requireGuardsLine(t, withoutPrePush.Stdout, `  pre-push,"",not installed,git`)
 }
 
 func testAXIGuardsBrief(t *testing.T) {
@@ -67,6 +77,10 @@ func testAXIGuardsBrief(t *testing.T) {
 	requireGuardsStringEqual(t, fmt.Sprint(strings.Count(out.Stdout, "full manifests: bench guards")), "1", "brief footer count")
 	requireGuardsStringEqual(t, fmt.Sprint(nonEmptyGuardsLineCount(out.Stdout)), "5", "brief line count")
 	out.RequireContains(out.Stdout, "block-dangerous-git: destructive git")
+	// --brief carries the wired harnesses per guard so the SessionStart injection
+	// stays honest about which configs can actually fire each hook.
+	requireGuardsLineMatching(t, out.Stdout, `^check-agent-line: .*\[wired: claude\]$`)
+	requireGuardsLineMatching(t, out.Stdout, `^block-dangerous-git: .*\[wired: claude,codex\]$`)
 }
 
 func testAXIGuardsUsageSubdirectory(t *testing.T) {
@@ -111,7 +125,7 @@ func testAXIGuardsDescribeTimeoutBound(t *testing.T) {
 	if elapsed >= 10*time.Second {
 		t.Fatalf("guards did not bound a slow --describe (took %v)", elapsed)
 	}
-	requireGuardsLine(t, out.Stdout, `  slow,"",no manifest (timed out)`)
+	requireGuardsLine(t, out.Stdout, `  slow,"",no manifest (timed out),none`)
 }
 
 func testAXIGuardsUnmanagedPrePushSafety(t *testing.T) {
@@ -130,7 +144,7 @@ func testAXIGuardsUnmanagedPrePushSafety(t *testing.T) {
 	out := f.Bench("guards")
 
 	out.RequireExit(0)
-	requireGuardsLine(t, out.Stdout, `  pre-push,"",unmanaged (no manifest)`)
+	requireGuardsLine(t, out.Stdout, `  pre-push,"",unmanaged (no manifest),git`)
 	if _, err := os.Stat(sentinel); err == nil {
 		t.Fatal("bench guards executed a foreign pre-push")
 	}

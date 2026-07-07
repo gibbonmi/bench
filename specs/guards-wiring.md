@@ -1,6 +1,6 @@
 # guards-wiring — advertise enforcement by wiring, not file presence
 
-Status: staged
+Status: implemented
 
 Source: `ASSESSMENT.md` backlog 5 (findings §2 med ×2).
 Drafted without a decision map under the reviewer's 2026-07-06 batch approval;

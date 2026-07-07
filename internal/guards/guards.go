@@ -1,16 +1,25 @@
 // Package guards ports `bench guards` (and `--brief`): every deny-capable guard's
-// manifest aggregated into a `guards[N]{guard,boundary,denies}:` TOON table, so the
+// manifest aggregated into a `guards[N]{guard,boundary,denies,wired}:` TOON table, so the
 // block surface is learnable without a collision. Guards are discovered by convention
 // (each .bench/hooks/*.sh and the installed git pre-push hook); each guard's --describe
 // is read under a hard time bound so a hook that
 // ignores --describe cannot stall aggregation, and an unmanaged pre-push is never
 // executed — running an unknown hook's body just to read a manifest is the collision
 // this surface avoids.
+//
+// The `wired` cell names which harness configs actually reference a hook script, so the
+// deny surface the reader sees matches the hooks that can fire here: it is derived (never
+// declared) by scanning .claude/settings.json and .codex/hooks.json for the script's
+// relative path token, the same substring convention conformance uses. The pre-push hook
+// is wired through git rather than a harness config, so its wired cell is the constant
+// `git` and its install posture (managed/unmanaged/not installed) stays in the denies
+// column.
 package guards
 
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -105,9 +114,9 @@ func guardRow(path, fallback string) ([]string, bool) {
 // hook scripts only and grows no second answerer, so that enforcement has no row here.
 func Rows(root string) [][]string {
 	var rows [][]string
-	add := func(path, fallback string) {
+	add := func(path, fallback, wired string) {
 		if r, emit := guardRow(path, fallback); emit {
-			rows = append(rows, r)
+			rows = append(rows, append(r, wired))
 		}
 	}
 	hooksDir := filepath.Join(root, ".bench", "hooks")
@@ -116,10 +125,50 @@ func Rows(root string) [][]string {
 			if e.IsDir() || !strings.HasSuffix(e.Name(), ".sh") {
 				continue
 			}
-			add(filepath.Join(hooksDir, e.Name()), strings.TrimSuffix(e.Name(), ".sh"))
+			scriptRel := ".bench/hooks/" + e.Name()
+			add(filepath.Join(hooksDir, e.Name()), strings.TrimSuffix(e.Name(), ".sh"), wiredHarnesses(root, scriptRel))
 		}
 	}
-	return append(rows, prePushRow(root)...)
+	// The pre-push guard is wired through git, not a harness config, so its wired
+	// cell is the constant `git`; its install posture stays in the denies column.
+	return append(rows, withWired(prePushRow(root), "git")...)
+}
+
+// wiredHarnesses names the harness configs that reference scriptRel — its relative
+// path token — scanning .claude/settings.json and .codex/hooks.json with the same
+// substring convention conformance uses. An absent config contributes nothing (a repo
+// without .codex/ cannot wire Codex); an unparseable config scans as not-wired, because
+// guards is a read-only wiring reporter and the JSON-validity conformance family owns
+// malformedness. Returns "claude", "codex", the comma-joined "claude,codex", or the
+// definitive "none" — never a blank cell.
+func wiredHarnesses(root, scriptRel string) string {
+	token := []byte(scriptRel)
+	var wired []string
+	for _, cfg := range []struct{ name, rel string }{
+		{"claude", filepath.Join(".claude", "settings.json")},
+		{"codex", filepath.Join(".codex", "hooks.json")},
+	} {
+		content, err := os.ReadFile(filepath.Join(root, cfg.rel))
+		if err != nil || !json.Valid(content) {
+			continue
+		}
+		if bytes.Contains(content, token) {
+			wired = append(wired, cfg.name)
+		}
+	}
+	if len(wired) == 0 {
+		return "none"
+	}
+	return strings.Join(wired, ",")
+}
+
+// withWired appends the wired cell to every row, keeping the pre-push wiring channel
+// (git) out of the config-scan path that the hook-script rows take.
+func withWired(rows [][]string, wired string) [][]string {
+	for i := range rows {
+		rows[i] = append(rows[i], wired)
+	}
+	return rows
 }
 
 // prePushRow resolves the installed git pre-push hook. A managed hook (carrying the
@@ -174,12 +223,12 @@ func Command(args []string) (string, int) {
 	if brief {
 		var b strings.Builder
 		for _, r := range rows {
-			fmt.Fprintf(&b, "%s: %s\n", r[0], r[2])
+			fmt.Fprintf(&b, "%s: %s [wired: %s]\n", r[0], r[2], r[3])
 		}
 		b.WriteString("full manifests: bench guards\n")
 		return b.String(), 0
 	}
-	out, err := toon.Table("guards", []string{"guard", "boundary", "denies"}, rows)
+	out, err := toon.Table("guards", []string{"guard", "boundary", "denies", "wired"}, rows)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}

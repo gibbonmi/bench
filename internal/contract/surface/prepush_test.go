@@ -74,6 +74,14 @@ func testManagedPrePushUnpinnedNotice(t *testing.T) {
 	unpinned.RequireExit(0)
 	unpinned.RequireContains(unpinned.Stderr, "bench gate pin")
 
+	// With no pin file, --describe collapses advertisement to enforcement: the
+	// drift clause is dropped from denies and the why notes the disarm, so the
+	// manifest states only the rules actually in force (push-to-main deny).
+	describe := runPrePushDescribe(t, f)
+	describe.RequireExit(0)
+	describe.RequireNotContains(describe.Stdout, ".bench drift from bench gate pin")
+	describe.RequireContains(describe.Stdout, "drift check disarmed")
+
 	contract.WriteFileAbs(t, filepath.Join(gitDirPath(t, f), "bench-gate-pin"), "\n")
 	malformed := runPrePush(t, f, refLine("refs/heads/topic", head, "refs/heads/topic"))
 	malformed.RequireExit(0)

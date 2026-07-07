@@ -41,17 +41,24 @@ func installGitHook(root string, stderr io.Writer) error {
 	text := fmt.Sprintf(`#!/usr/bin/env bash
 # bench:managed-pre-push
 # Installed by 'bench link'. The merge is the human's; agents don't push %[1]s.
-if [[ "${1:-}" == "--describe" ]]; then
-  printf 'name: pre-push\n'
-  printf 'boundary: pre-push\n'
-  printf 'denies: direct push to %[1]s, .bench drift from bench gate pin\n'
-  printf 'why: the merge belongs to the reviewer; agents open a PR instead of pushing %[1]s\n'
-  exit 0
-fi
+# Read the pin state once, at the top, so --describe advertises exactly the rules the
+# enforcement below applies: the drift clause is armed only when a non-empty pin exists.
 pin_path="$(git rev-parse --git-path bench-gate-pin 2>/dev/null || true)"
 pin_tree=""
 if [[ -n "$pin_path" && -f "$pin_path" ]]; then
   IFS= read -r pin_tree < "$pin_path" || true
+fi
+if [[ "${1:-}" == "--describe" ]]; then
+  printf 'name: pre-push\n'
+  printf 'boundary: pre-push\n'
+  if [[ -n "$pin_tree" ]]; then
+    printf 'denies: direct push to %[1]s, .bench drift from bench gate pin\n'
+    printf 'why: the merge belongs to the reviewer; agents open a PR instead of pushing %[1]s\n'
+  else
+    printf 'denies: direct push to %[1]s\n'
+    printf "why: the merge belongs to the reviewer; agents open a PR instead of pushing %[1]s; drift check disarmed - run 'bench gate pin'\n"
+  fi
+  exit 0
 fi
 if [[ -z "$pin_tree" ]]; then
   echo "bench: gate unpinned - run 'bench gate pin' to enable .bench drift checks." >&2
