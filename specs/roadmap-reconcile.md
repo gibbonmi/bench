@@ -1,6 +1,6 @@
 # roadmap-reconcile — surface roadmap rows whose work already shipped
 
-Status: staged
+Status: implemented
 
 Source: `ASSESSMENT.md` backlog 4 (finding §3 high — the stale FT9 row, fixed
 by hand in the 2026-07-06 spec-retire pass; this spec builds the mechanism so

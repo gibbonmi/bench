@@ -7,8 +7,9 @@
 //
 // One rule per signal lives in its own package; status only orders the signals by
 // severity and formats them. The specs housekeeping signals are counted here —
-// retirementCount over specs/ (applying the shared spec.AwaitsRetirement predicate) and
-// orphanedPickupCount pairing reviews/ against specs/ — but the merged-implemented
+// retirementCount over specs/ (applying the shared spec.AwaitsRetirement predicate),
+// orphanedPickupCount pairing reviews/ against specs/, and roadmapReconcileCounts
+// classifying ROADMAP.md's spec-path tokens against the tree — but the merged-implemented
 // predicate itself is spec.AwaitsRetirement, one source shared with `bench spec retire`.
 package status
 
@@ -16,6 +17,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -74,6 +76,7 @@ func render(root string) string {
 	rows = appendMaps(rows, root)
 	rows = appendRetirement(rows, root)
 	rows = appendOrphanedPickup(rows, root)
+	rows = appendRoadmapReconcile(rows, root)
 
 	// Ascending numeric sort by severity; each severity is unique, so ordering is
 	// fully determined and the min-severity row leads.
@@ -279,6 +282,32 @@ func appendOrphanedPickup(rows []row, root string) []row {
 	return rows
 }
 
+// appendRoadmapReconcile adds the roadmap-reconcile signal (sev 9): a ROADMAP.md row naming a
+// specs/<slug>.md whose work has already shipped — the spec file is merged-implemented
+// (spec.AwaitsRetirement) or was retired out of the tree entirely — has outlived the drain that
+// should have removed it. Like appendRetirement, it fires only on the default branch: a topic
+// branch's roadmap is mid-build, so a row there names in-flight work, not a shipped-work leak.
+// Severity 9 ranks it below the housekeeping rows (retirement 7, orphaned-pickup 8) and far
+// below gate/git, so it never displaces a red-gate or dirty-tree row in the budget.
+func appendRoadmapReconcile(rows []row, root string) []row {
+	cur, _ := git.Output("-C", root, "rev-parse", "--abbrev-ref", "HEAD")
+	if cur != git.DefaultBranch(root) {
+		return rows
+	}
+	merged, dangling := roadmapReconcileCounts(root)
+	if merged == 0 && dangling == 0 {
+		return rows
+	}
+	var details []string
+	if merged > 0 {
+		details = append(details, plural(merged, "row for merged work", "rows for merged work"))
+	}
+	if dangling > 0 {
+		details = append(details, plural(dangling, "row names a retired spec", "rows name a retired spec"))
+	}
+	return append(rows, row{9, "roadmap", strings.Join(details, ", "), "/bench-what-next"})
+}
+
 // retirementCount counts specs/*.md files that spec.AwaitsRetirement marks — a merged spec
 // awaiting retirement. Absent `specs/` → 0. The unfenced-marker predicate is
 // spec.AwaitsRetirement's one source.
@@ -328,6 +357,41 @@ func orphanedPickupCount(root string) int {
 		n++
 	}
 	return n
+}
+
+// roadmapReconcileRe matches a spec-path token in a ROADMAP.md row: `specs/<slug>.md` with a
+// kebab/alnum slug. It matches the bare path inside backticks/bold since the markdown decoration
+// isn't part of the token, and the char class excludes `<>` so a literal `specs/<slug>.md`
+// placeholder in the header prose can't false-fire.
+var roadmapReconcileRe = regexp.MustCompile(`specs/[A-Za-z0-9_-]+\.md`)
+
+// roadmapReconcileCounts scans ROADMAP.md for specs/<slug>.md path tokens and classifies each
+// distinct path against the tree: a missing file is a dangling row (the spec retired but its
+// roadmap row survived); a present file that spec.AwaitsRetirement marks is a merged row (the
+// work shipped but the drain missed it). A present, still-staged spec is the normal open-work
+// state and counts nothing. Absent ROADMAP.md → 0, 0. The merged predicate is
+// spec.AwaitsRetirement, the same one source the retirement counter applies.
+func roadmapReconcileCounts(root string) (merged, dangling int) {
+	data, err := os.ReadFile(filepath.Join(root, "ROADMAP.md"))
+	if err != nil {
+		return 0, 0
+	}
+	seen := map[string]bool{}
+	for _, path := range roadmapReconcileRe.FindAllString(string(data), -1) {
+		if seen[path] {
+			continue
+		}
+		seen[path] = true
+		content, err := os.ReadFile(filepath.Join(root, path))
+		if err != nil {
+			dangling++
+			continue
+		}
+		if spec.AwaitsRetirement(content) {
+			merged++
+		}
+	}
+	return merged, dangling
 }
 
 // learningsFloor reads BENCH_LEARNINGS_FLOOR, defaulting to 1 when unset, empty, or not

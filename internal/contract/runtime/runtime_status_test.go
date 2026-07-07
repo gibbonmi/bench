@@ -23,6 +23,7 @@ func TestRuntimeStatusContracts(t *testing.T) {
 	contract.RunParallel(t, "bench status warm-pool contract", testRuntimeStatusWarmPool)
 	contract.RunParallel(t, "bench status retirement-signal contract", testRuntimeStatusRetirementSignal)
 	contract.RunParallel(t, "bench status orphaned-pickup contract", testRuntimeStatusOrphanedPickup)
+	contract.RunParallel(t, "bench status roadmap-reconcile contract", testRuntimeStatusRoadmapReconcile)
 	contract.RunParallel(t, "bench status learnings-floor contract", testRuntimeStatusLearningsFloor)
 }
 
@@ -279,6 +280,83 @@ func testRuntimeStatusOrphanedPickup(t *testing.T) {
 	contract.RequireNotContains(t, paired.Bench("status").Stdout, "orphaned review pickup")
 }
 
+func testRuntimeStatusRoadmapReconcile(t *testing.T) {
+	// The roadmap-reconcile signal is branch-gated to the default branch, mirroring the
+	// retirement signal, so every fixture pins HEAD and origin/HEAD to main.
+	onMain := func(f contract.Fixture) {
+		f.Git("symbolic-ref", "HEAD", "refs/heads/main")
+		f.Git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
+	}
+
+	// Story 1: a row naming a merged-implemented spec — wrapped in the bold/backtick
+	// decoration the real roadmap uses — fires the shipped-row signal with its action.
+	merged := contract.NewFixture(t)
+	onMain(merged)
+	merged.WriteFile("specs/shipped.md", "# Shipped\n\nStatus: implemented\n")
+	merged.WriteFile("ROADMAP.md", "# Roadmap\n\n**FT1 — shipped feature.** Staged: `specs/shipped.md` — done.\n")
+	merged.CommitAll("merged row")
+	out := merged.Bench("status").Stdout
+	requireStatusLineContains(t, out, "1 row for merged work", "roadmap", "→ /bench-what-next")
+	contract.RequireNotContains(t, out, "retired spec")
+
+	// Story 2: a row naming a spec file that no longer exists fires the dangling detail.
+	dangling := contract.NewFixture(t)
+	onMain(dangling)
+	dangling.WriteFile("ROADMAP.md", "# Roadmap\n\n**FT2 — gone.** Staged: `specs/gone.md` — retired but row survived.\n")
+	dangling.CommitAll("dangling row")
+	out = dangling.Bench("status").Stdout
+	requireStatusLineContains(t, out, "1 row names a retired spec", "roadmap", "→ /bench-what-next")
+	contract.RequireNotContains(t, out, "for merged work")
+
+	// Guard: a row naming a still-staged spec is normal open work — nothing fires. A naive
+	// "names any spec" implementation would flag it, so this pins the classification.
+	staged := contract.NewFixture(t)
+	onMain(staged)
+	staged.WriteFile("specs/open.md", "# Open\n\nStatus: staged\n")
+	staged.WriteFile("ROADMAP.md", "# Roadmap\n\n**FT3 — open.** Staged: `specs/open.md` — in flight.\n")
+	staged.CommitAll("staged row")
+	out = staged.Bench("status").Stdout
+	contract.RequireNotContains(t, out, "for merged work")
+	contract.RequireNotContains(t, out, "retired spec")
+	if strings.Contains(out, "roadmap") {
+		t.Fatalf("staged-spec row wrongly fired the roadmap signal:\n%s", out)
+	}
+
+	// Ladder: red gate + dirty tree + shipped row — gate (0) < git (1) < roadmap (9). The
+	// new severity must never displace the gate or git rows.
+	ladder := contract.NewFixture(t)
+	onMain(ladder)
+	ladder.WriteFile("specs/shipped.md", "# Shipped\n\nStatus: implemented\n")
+	ladder.WriteFile("ROADMAP.md", "# Roadmap\n\n**FT1 — shipped.** `specs/shipped.md`\n")
+	ladder.CommitAll("ladder base")
+	ladder.WriteFile("dirty.txt", "dirty\n")
+	tree := strings.TrimSpace(ladder.Bench("tree-hash").Stdout)
+	contract.WriteFileAbs(t, filepath.Join(gitDir(t, ladder), "bench-last-gate"), fmt.Sprintf("red %s 2026-06-30T00:00:00Z\n", tree))
+	out = ladder.Bench("status").Stdout
+	gate := strings.Index(out, "fix before commit")
+	gitRow := strings.Index(out, "commit on green / push")
+	road := strings.Index(out, "row for merged work")
+	if gate < 0 || gitRow < 0 || road < 0 {
+		t.Fatalf("ladder fixture missing a row (gate=%d git=%d roadmap=%d):\n%s", gate, gitRow, road, out)
+	}
+	if !(gate < gitRow && gitRow < road) {
+		t.Fatalf("severity ladder broken (gate=%d git=%d roadmap=%d):\n%s", gate, gitRow, road, out)
+	}
+
+	// Boundary: two shipped rows collapse into one signal row carrying the count of 2.
+	two := contract.NewFixture(t)
+	onMain(two)
+	two.WriteFile("specs/one.md", "# One\n\nStatus: implemented\n")
+	two.WriteFile("specs/two.md", "# Two\n\nStatus: implemented\n")
+	two.WriteFile("ROADMAP.md", "# Roadmap\n\n**A** `specs/one.md`\n\n**B** `specs/two.md`\n")
+	two.CommitAll("two rows")
+	out = two.Bench("status").Stdout
+	contract.RequireContains(t, out, "2 rows for merged work")
+	if n := strings.Count(out, "roadmap"); n != 1 {
+		t.Fatalf("want exactly one roadmap signal row, got %d:\n%s", n, out)
+	}
+}
+
 func testRuntimeStatusLearningsFloor(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile(".bench/learnings.md", "## 2026-01-01 — a  [open]\n")
@@ -301,6 +379,22 @@ func requireStatusLineNotContains(t testing.TB, out, needle, forbidden string) {
 	for _, line := range strings.Split(out, "\n") {
 		if strings.Contains(line, needle) {
 			contract.RequireNotContains(t, line, forbidden)
+			return
+		}
+	}
+	t.Fatalf("status line containing %q not found in:\n%s", needle, out)
+}
+
+// requireStatusLineContains asserts the single status row carrying needle also carries every
+// want — the positive twin of requireStatusLineNotContains, so a row's signal, detail, and
+// action are checked as one line rather than merely co-present in the board.
+func requireStatusLineContains(t testing.TB, out, needle string, wants ...string) {
+	t.Helper()
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, needle) {
+			for _, w := range wants {
+				contract.RequireContains(t, line, w)
+			}
 			return
 		}
 	}
