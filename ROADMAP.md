@@ -10,14 +10,6 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-**FT37 (MED) — deflake the gate under concurrent load.** Transient contract or
-conformance reds recurred repeatedly when multiple full gates ran concurrently
-(delegate worktrees plus the main checkout), every one green on immediate
-re-run with an identical tree; the earlier Watch note saw the same under a
-single gate's phase concurrency. Make the worktree concurrent-acquire contract
-(and any load-sensitive sibling) deterministic under parallel gate runs, or
-serialize its acquire window.
-
 **FT12 (LOW, kit discipline) — repro a defect claim through the accused command
 before draining it.** FT11 was minted from a learning that quoted a raw `git add`
 run by hand; the real `bench commit` path already staged deletions, so the row
@@ -49,7 +41,3 @@ Agent matcher. Parked from the claude-hook-conformance build.
 
 **FT8 (scheduled, not actionable) — Sonnet 5 mid-tier revisit.** Time-boxed to
 2026-09-01 or the next frontier shift.
-
-## Recommended sequence
-
-1. FT37 gate deflake — `/bench-debug`

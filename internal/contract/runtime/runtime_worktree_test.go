@@ -301,23 +301,43 @@ func testRuntimeWorktreeLeaseHardening(t *testing.T) {
 }
 
 func testRuntimeWorktreeConcurrentAcquire(t *testing.T) {
+	// Overlap is guaranteed by a test-owned barrier, not a timed poll: each shell records
+	// its worktree and then holds until the test drops the go-file, which the test creates
+	// only after seeing both records. A capped self-poll here is a schedule race — under
+	// full-gate load the second spawn can outlive the first run's window, the pool hands
+	// the released worktree back, and by-design reuse reads as a shared acquire (the FT37
+	// flake). The shell's own loop is only a leak backstop, and it exits loud.
 	f := contract.NewFixture(t)
 	commitAllowEmpty(t, f, "init")
 	f.WriteExecutable("rv-shell", `#!/usr/bin/env bash
-: "${BENCH_WT_RECORD:?}"
+: "${BENCH_WT_RECORD:?}" "${BENCH_WT_GO:?}"
 pwd >> "$BENCH_WT_RECORD"
-for _ in $(seq 100); do
-  [ "$(grep -c . "$BENCH_WT_RECORD" 2>/dev/null)" -ge 2 ] && exit 0
+for _ in $(seq 600); do
+  [ -e "$BENCH_WT_GO" ] && exit 0
   sleep 0.1
 done
-exit 0
+exit 1
 `)
 	record := filepath.Join(f.Root, "paths")
-	env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bh"), "BENCH_WT_RECORD": record, "SHELL": filepath.Join(f.Root, "rv-shell")}
+	goFile := filepath.Join(f.Root, "go-file")
+	env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bh"), "BENCH_WT_RECORD": record, "BENCH_WT_GO": goFile, "SHELL": filepath.Join(f.Root, "rv-shell")}
 	done := make(chan contract.Probe, 2)
 	for i := 0; i < 2; i++ {
 		go func() { done <- f.BenchEnv(env, "worktree") }()
 	}
+	deadline := time.Now().Add(time.Minute)
+	for {
+		raw, _ := os.ReadFile(record)
+		if len(contract.NonEmptyLines(string(raw))) >= 2 {
+			break
+		}
+		if time.Now().After(deadline) {
+			contract.WriteFileAbs(t, goFile, "") // release the straggler before failing
+			t.Fatal("second acquire did not record within a minute — the runs never overlapped")
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	contract.WriteFileAbs(t, goFile, "")
 	for i := 0; i < 2; i++ {
 		(<-done).RequireExit(0)
 	}
