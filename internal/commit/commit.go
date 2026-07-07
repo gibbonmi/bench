@@ -20,6 +20,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/spec"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 // Command runs the gated commit. Usage errors (no paths, no -m, unknown flag) exit 2;
@@ -35,7 +36,7 @@ func Command(args []string, stdout, stderr io.Writer) int {
 
 	root, err := git.Root()
 	if err != nil {
-		fmt.Fprintln(stderr, "error: not in a git repository — run inside a Bench-linked repo")
+		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
 

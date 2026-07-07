@@ -21,13 +21,11 @@ branch-agnostic. This line is only the binding.)
   highest seam — if the gate is weak, the whole system is weak. Test by feeding it a
   conformant tree (green) and a broken one (red); never by trusting a reading of the
   diff.
-- **The `bench` CLI subcommands** (`gate`, `worktree`, `shift`, `init`, `link`,
-  `models`, `structure`, `idea`, `roadmap`, `status`, `learnings`, `maps`,
-  `guards`, `diff`, `coverage`, `commit`, `spec implemented`). The operational
-  shell surface.
-  Stable command names and exit codes are the contract; the implementation behind each is
-  free to change. Keep gate resolution (`.bench/gate.sh` → `$BENCH_GATE` → auto-detect) in
-  one place.
+- **The `bench` CLI subcommands.** The operational shell surface; the canonical
+  inventory is `.bench/BENCH.md`'s CLI Inventory — this profile doesn't
+  re-enumerate it. Stable command names and exit codes are the contract; the
+  implementation behind each is free to change. Keep gate resolution
+  (`.bench/gate.sh` → `$BENCH_GATE` → auto-detect) in one place.
 - **The AXI query surface** (`bench learnings`, `bench maps`, `bench guards`,
   `bench diff`, `bench coverage`, and the shared flat-table TOON emitter behind
   them). The agent-facing read-only
@@ -160,8 +158,9 @@ binding, the cached routings, and the escalation policy.
 **Tier → model** (this harness; refresh with `bench models`; set 2026-07-01):
 top = Fable 5 (`claude-fable-5`) · mid = Opus 4.8 (`claude-opus-4-8`) · cheap =
 Sonnet 5 (`claude-sonnet-5`). Machine-readable source: `.bench/lines.env`,
-read by the Agent-tool hook and the shift adapters — keep it in sync with this
-paragraph. Haiku 4.5 leaves the rotation (no `effort` support, and a fourth
+read by the Agent-tool hook and the shift adapters; the `checkLineBinding`
+conformance check cross-checks this paragraph against it, so drift between the
+two turns the gate red. Haiku 4.5 leaves the rotation (no `effort` support, and a fourth
 tier adds a distinction the routing signals can't reliably make). Caveat for
 Claude Code delegation: the Agent tool addresses models by alias only, so
 `lines.env` also declares which aliases bind (`BENCH_ALIAS_TOP=fable`,

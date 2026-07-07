@@ -12,6 +12,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/terminal"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 const pinFileName = "bench-gate-pin"
@@ -34,7 +35,7 @@ func pinCommand(args []string, stdin io.Reader, stdout, stderr io.Writer, isTerm
 	}
 	root, err := git.Root()
 	if err != nil {
-		fmt.Fprintln(stderr, "not in a git repo")
+		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
 	if !showPinReview(root, stdout, stderr) {

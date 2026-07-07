@@ -15,6 +15,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 func TestRunnerRunsPhasesConcurrently(t *testing.T) {
@@ -114,7 +116,7 @@ func TestRunnerFinalLineAndExitCodes(t *testing.T) {
 		if rc != 3 {
 			t.Fatalf("PhasesCommand rc = %d, want 3; stderr:\n%s", rc, stderr.String())
 		}
-		if strings.TrimSpace(stderr.String()) != "gate: not in a git repo" {
+		if strings.TrimSpace(stderr.String()) != toon.NotInRepo() {
 			t.Fatalf("stderr = %q, want gate not-in-repo line", stderr.String())
 		}
 	})

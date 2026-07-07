@@ -29,6 +29,7 @@ func checkWorkflowAnchors(root string) []string {
 	require(".agents/skills/bench-craft-tdd/SKILL.md", "acceptance row")
 	require(".agents/skills/bench-craft-tdd/SKILL.md", "not TDD-able")
 	require(".agents/skills/bench-craft-tdd/SKILL.md", "call count")
+	require(".agents/skills/bench-craft-tdd/SKILL.md", "row schema and the red-signal definition are")
 	require(".agents/commands/bench-implement-spec.md", "coverage table")
 	require(".agents/commands/bench-implement-spec.md", "already covered")
 	require(".agents/commands/bench-implement-spec.md", "turning red-to-green")

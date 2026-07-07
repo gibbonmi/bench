@@ -1,6 +1,6 @@
 # one-source-collapses — the kit passes its own duplication audit
 
-Status: staged
+Status: implemented
 
 Source: `ASSESSMENT.md` backlog 6 (findings §4 med, §5 med, §6 med/low).
 Drafted without a decision map under the reviewer's 2026-07-06 batch approval;

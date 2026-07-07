@@ -3,19 +3,6 @@
 # Fuses a warm worktree pool (treehouse-lite) with a gated loop (gnhf-lite),
 # where the gate is the external oracle: a shift only commits on green.
 #
-#   bench link                 safely wire the kit into this repo
-#   bench init                 scaffold .bench/gate.sh and .bench/learnings.md
-#   bench models               discover model ids for line binding
-#   bench structure            flag oversized files and crowded directories
-#   bench idea "<text>"        park an out-of-scope idea in IDEAS.md
-#   bench roadmap              print the roadmap + drain status
-#   bench status               print the ambient dashboard
-#   bench gate                 run the project gate; exit code is the verdict
-#   bench canary [root]        run the gate against known-broken fixtures
-#   bench worktree             drop into a warm, isolated worktree subshell
-#   bench worktree clean       remove clean out-of-pool worktrees after confirmation
-#   bench shift "<objective>"  run the gated loop in a pooled worktree
-#
 # The worktree lifecycle, the gated loop, and the gate resolution/record all live in
 # the Go core now (internal/worktree, internal/shift, internal/gate); this wrapper is
 # routing plus a one-glance run_gate adapter. Gate config resolution, owned by

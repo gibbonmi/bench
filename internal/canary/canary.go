@@ -16,6 +16,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/subprocess"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 const absentHarnessMessage = "canary harness absent — tests/canary/ has no fixtures; the gate cannot prove its own checks bite"
@@ -52,7 +53,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		var err error
 		root, err = git.Root()
 		if err != nil {
-			fmt.Fprintln(stderr, "not in a git repo")
+			fmt.Fprintln(stderr, toon.NotInRepo())
 			return 1
 		}
 	}

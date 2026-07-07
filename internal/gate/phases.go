@@ -16,6 +16,7 @@ import (
 	"syscall"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 type phaseMode int
@@ -79,7 +80,7 @@ func PhasesCommand(args []string, stdout, stderr io.Writer) int {
 	} else {
 		r, err := git.Root()
 		if err != nil {
-			fmt.Fprintln(stderr, "gate: not in a git repo")
+			fmt.Fprintln(stderr, toon.NotInRepo())
 			return 3
 		}
 		root = r

@@ -8,7 +8,28 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/toon"
 )
+
+// TestPinCommandNotInRepo pins the one-phrase not-in-repo contract for `bench gate
+// pin` at the Go seam rather than through the built binary: the command refuses
+// non-TTY stdin before it ever checks git.Root(), so an outside-a-repo cwd is
+// unreachable through a non-interactive contract probe. Injecting isTerminal=true
+// bypasses that unrelated precondition and exercises the same not-in-repo branch
+// every other operational command shares.
+func TestPinCommandNotInRepo(t *testing.T) {
+	chdir(t, t.TempDir())
+
+	var stdout, stderr bytes.Buffer
+	code := pinCommand(nil, strings.NewReader(""), &stdout, &stderr, func(io.Reader) bool { return true })
+	if code != 1 {
+		t.Fatalf("pinCommand rc = %d, want 1; stderr:\n%s", code, stderr.String())
+	}
+	if strings.TrimSpace(stderr.String()) != toon.NotInRepo() {
+		t.Fatalf("stderr = %q, want %q", stderr.String(), toon.NotInRepo())
+	}
+}
 
 func TestPinCommandWritesCommittedBenchTree(t *testing.T) {
 	root := newPinRepo(t)

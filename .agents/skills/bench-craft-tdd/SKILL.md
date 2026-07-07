@@ -68,20 +68,18 @@ failing when the iteration ends is destroyed, not carried to the next one.
 ## Acceptance rows
 
 When `/bench-write-spec` includes an acceptance coverage map, treat each
-acceptance row as the unit of TDD coverage. A valid row has `story`, `behavior`,
-`seam`, `red signal`, and `why it catches the failure`.
+acceptance row as the unit of TDD coverage. The row schema and the red-signal definition are
+`/bench-write-spec`'s — its acceptance-coverage-map step is the one source of
+the five fields and of what a red signal must be; don't restate them here. This
+skill owns only the TDD-side discipline for working the rows:
 
-- `behavior` is caller-visible. It is not a data shape, private method, or
-  implementation step.
-- `seam` is where callers cross the interface and where the test attaches.
-- `red signal` is a command or test run immediately before implementing that
-  row's slice, failing because the mapped behavior is absent or wrong. Rows go
-  red one at a time as each slice starts — never batched into an upfront all-red
-  test file. If the signal already passes, classify the row as `already covered`;
-  if it cannot run before implementation, classify it as `not TDD-able` with the
+- Rows go red one at a time as each slice starts — never batched into an
+  upfront all-red test file. The row's red signal runs immediately before
+  implementing that slice and fails because the mapped behavior is absent or
+  wrong.
+- If the signal already passes, classify the row as `already covered`; if it
+  cannot run before implementation, classify it as `not TDD-able` with the
   reason.
-- `why it catches the failure` explains why this signal would fail when the mapped
-  user-visible behavior is broken.
 
 Reject rows and tests that attach below the chosen seam, test private behavior,
 mock an internal collaborator, use an internal test double to satisfy the test

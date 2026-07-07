@@ -7,6 +7,7 @@ import (
 	"os/exec"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 // Subshell implements `bench worktree`: it acquires a warm, isolated pool worktree,
@@ -17,7 +18,7 @@ import (
 func Subshell(stdin io.Reader, stdout, stderr io.Writer) int {
 	root, err := git.Root()
 	if err != nil {
-		fmt.Fprintln(stderr, "not in a git repo")
+		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
 	wt, err := Acquire(root, "origin/"+git.DefaultBranch(root), "soft")

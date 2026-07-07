@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/terminal"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 const cleanConfirm = "clean worktrees"
@@ -25,7 +26,7 @@ func cleanCommand(args []string, stdin io.Reader, stdout, stderr io.Writer, isTe
 	}
 	root, err := git.Root()
 	if err != nil {
-		fmt.Fprintln(stderr, "not in a git repo")
+		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
 	var candidates, refused []string

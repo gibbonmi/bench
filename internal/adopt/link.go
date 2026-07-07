@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 type planEntry struct {
@@ -26,7 +27,7 @@ func Link(args []string, stdout, stderr io.Writer, version string) int {
 	}
 	root, err := git.Root()
 	if err != nil {
-		fmt.Fprintln(stderr, "not in a git repo")
+		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
 	kit := kitDir()

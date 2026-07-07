@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 // Kind names the resolved gate. The zero value None is the no-gate case (exit 3,
@@ -250,7 +251,7 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 	} else {
 		r, err := git.Root()
 		if err != nil {
-			fmt.Fprintln(stderr, "not in a git repo")
+			fmt.Fprintln(stderr, toon.NotInRepo())
 			return 1
 		}
 		root = r

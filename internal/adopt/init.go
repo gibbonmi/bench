@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 const seedCanaryPath = "tests/canary/example/example"
@@ -18,7 +19,7 @@ func Init(args []string, stdout, stderr io.Writer) int {
 	}
 	root, err := git.Root()
 	if err != nil {
-		fmt.Fprintln(stderr, "not in a git repo")
+		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
 	kit := kitDir()
@@ -79,7 +80,7 @@ func scaffoldGate() string {
 # The external oracle for this repo - correctness only. Exit 0 = done is allowed.
 # No ` + "`set -e`" + `: the canary command is allowed to fail while the gate keeps collecting errors.
 set -uo pipefail
-root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "gate: not in a git repo" >&2; exit 3; }
+root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "error: not in a git repository — run inside a Bench-linked repo" >&2; exit 3; }
 cd "$root"
 fail=0
 err() { echo "gate: $*" >&2; fail=1; }

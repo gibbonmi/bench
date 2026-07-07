@@ -15,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/structure"
+	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
 
@@ -79,7 +80,7 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 	mainRoot, err := git.Root()
 	if err != nil {
-		fmt.Fprintln(stderr, "not in a git repo")
+		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
 	if dirty, _ := git.Output("-C", mainRoot, "status", "--porcelain"); dirty != "" {
