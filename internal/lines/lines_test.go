@@ -81,6 +81,10 @@ func TestModelFromEnvelope(t *testing.T) {
 		{"empty-resolved-falls-to-model", `{"tool_input":{"resolvedModel":"","model":"m"}}`, "m", false},
 		{"both-absent", `{"tool_input":{}}`, "", false},
 		{"no-tool-input", `{}`, "", false},
+		// A whitespace-only field is blank for the non-empty test: a whitespace
+		// resolvedModel falls back to model, and an all-whitespace envelope yields "".
+		{"whitespace-resolved-falls-to-model", `{"tool_input":{"resolvedModel":"   ","model":"m"}}`, "m", false},
+		{"all-whitespace-yields-blank", `{"tool_input":{"resolvedModel":"  ","model":"\t"}}`, "", false},
 		{"not-json", `not json`, "", true},
 		{"empty-input", ``, "", true},
 	}
@@ -140,7 +144,13 @@ func TestAgentLineVerdict(t *testing.T) {
 		{"undeclared-alias-denies", envelope("cheap"), true, fullBinding, 2, "is not a bound tier"},
 		{"unbound-model-denies", envelope("gpt-9"), true, fullBinding, 2, "is not a bound tier"},
 		{"malformed-stdin", []byte(`not json`), true, fullBinding, 0, "not parseable as JSON"},
-		{"missing-model-field", []byte(`{"tool_input":{}}`), true, fullBinding, 0, "no resolvedModel/model field"},
+		// Routed + complete binding: an omitted or whitespace-only model is the attack
+		// path the guard exists for (a silent inherit of the session's model) and denies.
+		{"missing-model-routed-complete-denies", []byte(`{"tool_input":{}}`), true, fullBinding, 2, "missing or empty model field"},
+		{"whitespace-model-routed-complete-denies", envelope("   "), true, fullBinding, 2, "missing or empty model field"},
+		// Regression rims: a missing model with no binding to enforce stays fail-open.
+		{"missing-model-unrouted-fails-open", []byte(`{"tool_input":{}}`), false, "", 0, "no resolvedModel/model field"},
+		{"missing-model-incomplete-fails-open", []byte(`{"tool_input":{}}`), true, "BENCH_TIER_TOP=t\nBENCH_TIER_CHEAP=c\n", 0, "no resolvedModel/model field"},
 		{"absent-lines-env", envelope("opus-4-8"), false, "", 0, "no .bench/lines.env"},
 		{"incomplete-binding", envelope("opus-4-8"), true, "BENCH_TIER_TOP=t\nBENCH_TIER_CHEAP=c\n", 0, "unset or empty"},
 	}
@@ -171,6 +181,28 @@ func TestAgentLineVerdictDenyMessage(t *testing.T) {
 		"(see .bench/lines.env and the craft-line skill). Re-delegate on a bound tier or update the binding."
 	if stderr != want {
 		t.Errorf("stderr =\n%q\nwant\n%q", stderr, want)
+	}
+}
+
+func TestAgentLineVerdictMissingModelDenyMessage(t *testing.T) {
+	// The routed missing-model deny is distinct from the unbound deny: it names the
+	// missing/empty field, instructs re-delegating on a bound alias, and lists the tiers.
+	exit, stderr := AgentLineVerdict([]byte(`{"tool_input":{}}`), true, []byte(fullBinding))
+	if exit != 2 {
+		t.Fatalf("exit = %d, want 2 (stderr=%q)", exit, stderr)
+	}
+	for _, want := range []string{
+		"missing or empty model field",
+		"bound alias",
+		"top=fable-5 mid=opus-4-8 cheap=sonnet-5",
+	} {
+		if !contains(stderr, want) {
+			t.Errorf("stderr = %q, want to contain %q", stderr, want)
+		}
+	}
+	// It must not reuse the unbound wording, which offers no alias-fix guidance.
+	if contains(stderr, "is not a bound tier") {
+		t.Errorf("missing-model deny reused the unbound wording: %q", stderr)
 	}
 }
 

@@ -1,6 +1,6 @@
 # Enforcement verification
 
-Status: staged
+Status: implemented
 
 ## Problem
 

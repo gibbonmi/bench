@@ -74,10 +74,17 @@ func ModelFromEnvelope(data []byte) (model string, err error) {
 	if err := json.Unmarshal(data, &e); err != nil {
 		return "", err
 	}
-	if e.ToolInput.ResolvedModel != "" {
+	// An all-whitespace field is blank for the non-empty test: a whitespace resolvedModel
+	// falls back to model, and an all-blank envelope yields "". This closes the whitespace
+	// model value at the parse boundary and folds the omitted/empty/whitespace cases into
+	// one branch of AgentLineVerdict.
+	if strings.TrimSpace(e.ToolInput.ResolvedModel) != "" {
 		return e.ToolInput.ResolvedModel, nil
 	}
-	return e.ToolInput.Model, nil
+	if strings.TrimSpace(e.ToolInput.Model) != "" {
+		return e.ToolInput.Model, nil
+	}
+	return "", nil
 }
 
 // Binding is the resolved tier binding from .bench/lines.env: the three model tiers and
@@ -121,6 +128,20 @@ func AgentLineVerdict(stdin []byte, linesEnvExists bool, linesEnvContent []byte)
 		return 0, warn("stdin is not parseable as JSON")
 	}
 	if model == "" {
+		// A routed repo with a complete binding is the one degraded branch that is also
+		// the attack path the guard exists for: an omitted or empty model inherits the
+		// invoking session's model, the silent escalation invariant #2 forbids. Deny it.
+		// Every other missing-model branch (unrouted, incomplete binding) keeps the
+		// fail-open rim — there is no binding to enforce, and a broken guard must never
+		// brick delegation.
+		if linesEnvExists {
+			if b := ParseBinding(linesEnvContent); b.Top != "" && b.Mid != "" && b.Cheap != "" {
+				return 2, "DENIED: the delegation envelope has a missing or empty model field — an " +
+					"omitted model silently inherits this session's model, which invariant #2 forbids. " +
+					"Pass a bound alias from .bench/lines.env; " + describeBoundTiers(b) +
+					" (see .bench/lines.env and the craft-line skill). Re-delegate on a bound alias."
+			}
+		}
 		return 0, warn("no resolvedModel/model field in tool_input")
 	}
 	if !linesEnvExists {
@@ -135,10 +156,16 @@ func AgentLineVerdict(stdin []byte, linesEnvExists bool, linesEnvContent []byte)
 			return 0, ""
 		}
 	}
-	return 2, "DENIED: delegation model '" + model + "' is not a bound tier; bound: top=" +
-		b.Top + " mid=" + b.Mid + " cheap=" + b.Cheap + " aliases: top=" + dash(b.AliasTop) +
-		" mid=" + dash(b.AliasMid) + " cheap=" + dash(b.AliasCheap) +
+	return 2, "DENIED: delegation model '" + model + "' is not a bound tier; " + describeBoundTiers(b) +
 		" (see .bench/lines.env and the craft-line skill). Re-delegate on a bound tier or update the binding."
+}
+
+// describeBoundTiers formats the tier-and-alias listing both deny messages carry, so the
+// bound-tiers fact has one source: `bound: top=… mid=… cheap=… aliases: top=… mid=… cheap=…`,
+// with a dash for each unset alias.
+func describeBoundTiers(b Binding) string {
+	return "bound: top=" + b.Top + " mid=" + b.Mid + " cheap=" + b.Cheap +
+		" aliases: top=" + dash(b.AliasTop) + " mid=" + dash(b.AliasMid) + " cheap=" + dash(b.AliasCheap)
 }
 
 // ResolveModelVerdict is the headless-shift adapter's model resolution. Unlike the

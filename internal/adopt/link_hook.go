@@ -23,6 +23,58 @@ var prePushTemplate string
 // default branch, substituted at install time.
 const prePushBranchToken = "__BENCH_DEFAULT_BRANCH__"
 
+// prePushMarker is the fingerprint of a bench-managed pre-push hook: the marker line the
+// template carries. It is the one source both installGitHook (conflict check) and
+// ClassifyPrePush (doctor/status backstop verification) match by substring — not
+// byte-identity, which would false-red across default-branch token substitution and
+// benign template evolution.
+const prePushMarker = "bench:managed-pre-push"
+
+// PrePushState classifies a repo's pre-push hook against the bench-managed template.
+type PrePushState int
+
+const (
+	PrePushManaged  PrePushState = iota // present and carries the managed marker
+	PrePushAbsent                       // no hook at the default hooks dir (a fresh clone drops it)
+	PrePushForeign                      // present in the default hooks dir but not bench-managed
+	PrePushDiverted                     // core.hooksPath points elsewhere, with no managed hook there
+)
+
+// PrePushStatus is the classifier result: the state and the resolved pre-push path git
+// would use for the repo, honoring core.hooksPath — so a red row can name where the hook belongs.
+type PrePushStatus struct {
+	State PrePushState
+	Path  string
+}
+
+// ClassifyPrePush resolves the hooks directory git will use for root — honoring
+// core.hooksPath — and classifies the pre-push there against the managed marker. It never
+// writes: a fresh clone legitimately has no hook (git does not clone hooks), which is the
+// absent state doctor and status surface rather than repair, and a foreign hook is reported,
+// never overwritten.
+func ClassifyPrePush(root string) PrePushStatus {
+	path := filepath.Join(hooksDir(root), "pre-push")
+	content, err := os.ReadFile(path)
+	if err == nil && strings.Contains(string(content), prePushMarker) {
+		return PrePushStatus{State: PrePushManaged, Path: path}
+	}
+	if hooksPathConfigured(root) {
+		return PrePushStatus{State: PrePushDiverted, Path: path}
+	}
+	if err != nil {
+		return PrePushStatus{State: PrePushAbsent, Path: path}
+	}
+	return PrePushStatus{State: PrePushForeign, Path: path}
+}
+
+// hooksPathConfigured reports whether the repo sets a non-empty core.hooksPath, diverting
+// hooks away from the default .git/hooks — the signal that distinguishes a diverted hooks
+// directory from a plain foreign or absent hook in the default location.
+func hooksPathConfigured(root string) bool {
+	v, err := git.Output("-C", root, "config", "--get", "core.hooksPath")
+	return err == nil && strings.TrimSpace(v) != ""
+}
+
 func hooksDir(root string) string {
 	out, err := git.Output("-C", root, "rev-parse", "--git-path", "hooks")
 	if err != nil || out == "" {
@@ -46,7 +98,7 @@ func installGitHook(root string, stderr io.Writer) error {
 		return err
 	}
 	prepush := filepath.Join(hooks, "pre-push")
-	if content, err := os.ReadFile(prepush); err == nil && !strings.Contains(string(content), "bench:managed-pre-push") {
+	if content, err := os.ReadFile(prepush); err == nil && !strings.Contains(string(content), prePushMarker) {
 		fmt.Fprintf(stderr, "conflict: %s exists and is not Bench-managed\n", prepush)
 		return fmt.Errorf("foreign pre-push")
 	}

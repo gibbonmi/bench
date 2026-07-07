@@ -319,7 +319,10 @@ func checkAgentHookBehavior(root string) []string {
 	hookCase("denies an undeclared alias", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"sonnet"}}`, "", 2)
 	hookCase("denies an unbound model", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"gpt-9"}}`, "", 2)
 	hookCase("does not fail open on malformed stdin", routed, `not json at all`, "not parseable as JSON", 0)
-	hookCase("does not fail open on a missing model field", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x"}}`, "no resolvedModel/model field", 0)
+	// Ratified posture flip (enforcement-verification): in a routed, completely-bound repo a
+	// missing model DENIES (exit 2) rather than warning — an omitted model inherits the
+	// session's model, the silent-escalation path invariant #2 exists to stop.
+	hookCase("denies a missing model field in a routed repo", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x"}}`, "bound alias", 2)
 
 	unrouted, cleanupUnrouted, err := tempGitRepoWithLines("")
 	if err != nil {
@@ -328,6 +331,9 @@ func checkAgentHookBehavior(root string) []string {
 	defer cleanupUnrouted()
 	os.Remove(filepath.Join(unrouted, ".bench", "lines.env"))
 	hookCase("does not fail open without lines.env", unrouted, `{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"gpt-9"}}`, "no .bench/lines.env", 0)
+	// The missing-model deny is gated on routing: with no binding to enforce, a missing
+	// model keeps the fail-open rim (the residual the decision deliberately preserves).
+	hookCase("does not fail open on a missing model without lines.env", unrouted, `{"tool_name":"Agent","tool_input":{"prompt":"x"}}`, "no resolvedModel/model field", 0)
 
 	partial, cleanupPartial, err := tempGitRepoWithLines("BENCH_TIER_TOP=gpt-5.4\nBENCH_TIER_MID=\nBENCH_TIER_CHEAP=openai/gpt-5\n")
 	if err != nil {
