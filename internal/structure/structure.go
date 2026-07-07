@@ -30,22 +30,18 @@ import (
 // so a longer extension (tsx, cpp) still anchors to `$` where a prefix would not.
 var sourceRe = regexp.MustCompile(`\.(py|ts|tsx|js|jsx|go|rs|java|rb|kt|scala|cs|cpp|cc|c|h|hpp|sh)$`)
 
-// Check runs the structural-debt check under root. mode "all" scans the whole tree
-// via `git ls-files`; any other mode uses the passed scopedFiles list (the touched
-// scope). It returns the full human report the CLI prints and the violation count;
-// exit-code mapping is the caller's (Command's) job.
-func Check(root, mode string, scopedFiles []string) (report string, violations int) {
+// Check runs the structural-debt length/crowding rules over the given file list (the raw
+// split of a git query, filtered to source extensions here). Querying git and propagating
+// its error is the caller's job — checkAll for the whole tracked tree, Touched for the
+// touched scope — so the rules have one home and each git query owns its own error. It
+// returns the full human report the CLI prints and the violation count; exit-code mapping
+// is the caller's (Command's) job.
+func Check(root string, rawFiles []string) (report string, violations int) {
 	maxLines := envInt("BENCH_MAX_LINES", 400)
 	maxFiles := envInt("BENCH_MAX_DIR_FILES", 12)
 	budgets, warnings := loadBudgets(filepath.Join(root, ".bench", "structure.budgets"))
 
-	var files []string
-	if mode == "all" {
-		out, _ := git.Output("-C", root, "ls-files")
-		files = filterSources(strings.Split(out, "\n"))
-	} else {
-		files = filterSources(scopedFiles)
-	}
+	files := filterSources(rawFiles)
 
 	lines := append([]string(nil), warnings...)
 	if len(files) == 0 {
@@ -105,10 +101,30 @@ func Check(root, mode string, scopedFiles []string) (report string, violations i
 	return strings.Join(lines, "\n") + "\n", 0
 }
 
-// ViolationCount is the count `bench status` reads: the second return of an "all"
-// Check, computed through the same engine so the figure cannot drift from the report.
+// checkAll queries the whole tracked source tree (`git ls-files`) and runs the check over
+// it. It is the one ls-files call site and the all-files sibling of Touched, returning the
+// report, the violation count, and the git-query error: Command propagates that error
+// (loud stderr + exit 1), ViolationCount tolerates it.
+func checkAll(root string) (report string, violations int, err error) {
+	out, err := git.Output("-C", root, "ls-files")
+	if err != nil {
+		return "", 0, err
+	}
+	report, violations = Check(root, strings.Split(out, "\n"))
+	return report, violations, nil
+}
+
+// ViolationCount is the count `bench status` reads: the violation count of an all-files
+// check through the same engine so the figure cannot drift from the report.
 func ViolationCount(root string) int {
-	_, violations := Check(root, "all", nil)
+	_, violations, err := checkAll(root)
+	if err != nil {
+		// EXPLICIT tolerate (audit #1, read side): `bench status` is an ambient advisory
+		// board the SessionStart hook consumes, so a git-query failure degrades this count
+		// to zero rather than crashing the hook. `bench structure` is the loud-error path
+		// for the same query.
+		return 0
+	}
 	return violations
 }
 
@@ -217,21 +233,42 @@ func Command(args []string) (string, int) {
 		return toon.NotInRepo() + "\n", 1
 	}
 	if touched {
-		report, violations := Touched(root, args[1])
+		report, violations, terr := Touched(root, args[1])
+		if terr != nil {
+			fmt.Fprintln(os.Stderr, gitOpError("diff", terr))
+			return "", 1
+		}
 		return report, exitOf(violations)
 	}
-	report, violations := Check(root, "all", nil)
+	report, violations, cerr := checkAll(root)
+	if cerr != nil {
+		fmt.Fprintln(os.Stderr, gitOpError("ls-files", cerr))
+		return "", 1
+	}
 	return report, exitOf(violations)
 }
 
-// Touched runs the length/crowding rules over only the files changed between base and
-// HEAD (`git diff --diff-filter=ACMR base..HEAD`), returning the human report and the
-// violation count. It is the one source of the touched-scope check the `--since`
-// subcommand and the shift loop's refactor gate both read, so the scope query lives in
-// exactly one place.
-func Touched(root, base string) (report string, violations int) {
-	out, _ := git.Output("-C", root, "diff", "--name-only", "--diff-filter=ACMR", base+"..HEAD")
-	return Check(root, "touched", strings.Split(out, "\n"))
+// gitOpError builds the stderr line for a failed git query: `git <op> failed: <err>`. A
+// pure helper so a package unit test pins the exact message shape while the os.Stderr
+// write in Command stays the thin process-boundary rim — map-dispatched commands return
+// only stdout, so a command reaching stderr writes it directly (the resolveModel pattern).
+func gitOpError(op string, err error) string {
+	return fmt.Sprintf("git %s failed: %v", op, err)
+}
+
+// Touched runs the length/crowding rules over only the files changed between base and HEAD
+// (`git diff --diff-filter=ACMR base..HEAD`), returning the report, the violation count,
+// and the git error if the diff query itself failed. It is the one diff call site and the
+// one source of the touched-scope query the `--since` subcommand and the shift loop's
+// refactor gate both read: Command propagates the error (loud stderr + exit 1), the shift
+// gate tolerates it because its own gate run is that worktree's loud oracle.
+func Touched(root, base string) (report string, violations int, err error) {
+	out, err := git.Output("-C", root, "diff", "--name-only", "--diff-filter=ACMR", base+"..HEAD")
+	if err != nil {
+		return "", 0, err
+	}
+	report, violations = Check(root, strings.Split(out, "\n"))
+	return report, violations, nil
 }
 
 func exitOf(violations int) int {

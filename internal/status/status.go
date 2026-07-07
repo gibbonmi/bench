@@ -174,6 +174,10 @@ func captureOnlyDrift(paths []string) bool {
 // appendGit adds the uncommitted/unpushed signal (sev 1). dirty is the porcelain status;
 // ahead is the upstream-relative commit list, read only when an upstream is configured.
 func appendGit(rows []row, root string) []row {
+	// Audit #3/#4 — tolerate: this is an ambient advisory board the SessionStart hook
+	// consumes, so a git failure must degrade the git row, not crash the hook. dirty drops
+	// its porcelain error; ahead is read only after an OK-checked upstream and degrades to
+	// no ahead-count.
 	dirty, _ := git.Output("-C", root, "status", "--porcelain")
 	ahead := ""
 	if git.OK("-C", root, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}") {
@@ -261,6 +265,8 @@ func appendMaps(rows []row, root string) []row {
 // appendRetirement adds the merged-spec-awaiting-retirement signal (sev 7), but only on
 // the default branch — a topic branch's spec is still in flight, not awaiting retirement.
 func appendRetirement(rows []row, root string) []row {
+	// Audit #5 — tolerate: a failure reads as "not the default branch", skipping this
+	// advisory housekeeping signal; non-fatal on the ambient board.
 	cur, _ := git.Output("-C", root, "rev-parse", "--abbrev-ref", "HEAD")
 	if cur != git.DefaultBranch(root) {
 		return rows
@@ -290,6 +296,8 @@ func appendOrphanedPickup(rows []row, root string) []row {
 // Severity 9 ranks it below the housekeeping rows (retirement 7, orphaned-pickup 8) and far
 // below gate/git, so it never displaces a red-gate or dirty-tree row in the budget.
 func appendRoadmapReconcile(rows []row, root string) []row {
+	// Audit #6 — tolerate: as in appendRetirement, an unreadable branch reads as "not the
+	// default branch" and skips this advisory reconcile signal.
 	cur, _ := git.Output("-C", root, "rev-parse", "--abbrev-ref", "HEAD")
 	if cur != git.DefaultBranch(root) {
 		return rows

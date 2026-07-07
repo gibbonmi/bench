@@ -83,6 +83,8 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
+	// Audit #10 — tolerate: an empty parse reads as a clean tree, but the very next
+	// `rev-parse HEAD` fails the loop loudly on a broken repo, so no broken repo slips past.
 	if dirty, _ := git.Output("-C", mainRoot, "status", "--porcelain"); dirty != "" {
 		fmt.Fprintln(stderr, "working tree not clean; commit or stash first")
 		return 1
@@ -189,12 +191,23 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 	return 0
 }
 
+// touchedViolations reads this shift's touched-scope structure result — the flagged-files
+// string and the violation count — tolerating a git-query failure as an empty scope (zero
+// violations). The tolerance is deliberate and single-sourced here for all three refactor-
+// gate reads: the shift loop's own `bench gate` run is this worktree's loud oracle, so a
+// broken diff degrades the refactor gate rather than crashing the loop; `bench structure`
+// is the loud-error path for the same query.
+func (s *session) touchedViolations(base string) (flagged string, violations int) {
+	flagged, violations, _ = structure.Touched(s.root, base)
+	return flagged, violations
+}
+
 // refactorPhase pays down structural debt this shift touched, but only once the touched
 // scope is over budget — never pre-existing debt, and never mid-implementation. It
 // runs within the BENCH_REFACTOR_ITERS budget, scopes each prompt to the flagged files,
 // and stops on a no-op pass.
 func (s *session) refactorPhase(base string) int {
-	if _, violations := structure.Touched(s.root, base); violations == 0 {
+	if _, violations := s.touchedViolations(base); violations == 0 {
 		return 0
 	}
 	fmt.Fprintln(s.stdout, "▶ structure over budget — refactor phase (split at green, not before)")
@@ -202,7 +215,7 @@ func (s *session) refactorPhase(base string) int {
 	attempted := 0
 	for r := 1; r <= rcap; r++ {
 		s.checkpoint()
-		flagged, violations := structure.Touched(s.root, base)
+		flagged, violations := s.touchedViolations(base)
 		if violations == 0 {
 			break
 		}
@@ -230,7 +243,7 @@ func (s *session) refactorPhase(base string) int {
 			rollback(s.root)
 		}
 	}
-	if _, violations := structure.Touched(s.root, base); violations == 0 {
+	if _, violations := s.touchedViolations(base); violations == 0 {
 		fmt.Fprintln(s.stdout, "  structure back under budget.")
 	} else {
 		n := attempted

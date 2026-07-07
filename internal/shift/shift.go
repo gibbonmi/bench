@@ -47,6 +47,8 @@ func parseDirtyPaths(raw []byte) []string {
 
 // dirtyPaths reads the current dirty set of the worktree at root.
 func dirtyPaths(root string) []string {
+	// Audit #11 — tolerate: runs inside a shift-created, validated worktree; an empty parse
+	// stages nothing, and the loop's own commit/gate is the loud oracle for that worktree.
 	raw, _ := git.Raw("-C", root, "status", "--porcelain", "-z", "--no-renames")
 	return parseDirtyPaths(raw)
 }

@@ -163,6 +163,10 @@ func unexplained(root string, allowed []string) []string {
 	for _, p := range allowed {
 		allow[p] = true
 	}
+	// Audit #12 — tolerate (flagged for reviewer veto): an empty parse relaxes this
+	// attribution guard, but the subsequent real `git commit`/`git add` fails loudly on a
+	// broken repo, so no false-clean output escapes; hardening it into a loud error is
+	// deferred (see the spec's Out of scope).
 	// --untracked-files=all lists untracked files individually rather than collapsing a
 	// new directory to `dir/`, so a named path inside a fresh directory matches instead
 	// of reading as an unexplained offender.

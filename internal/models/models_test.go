@@ -180,6 +180,21 @@ func TestCommandSuppressesUnsafeProviderIDs(t *testing.T) {
 	}
 }
 
+// An unknown argument is rejected with a usage line at exit 2 — the sibling porcelain
+// norm — driven directly since the usage rides stdout. Keys are pinned empty so the
+// pre-guard path (which reaches inventory) never touches the network.
+func TestCommandRejectsUnknownArg(t *testing.T) {
+	t.Setenv("OPENAI_API_KEY", "")
+	t.Setenv("ANTHROPIC_API_KEY", "")
+	out, code := Command([]string{"bogus"})
+	if code != 2 {
+		t.Fatalf("code = %d, want 2; out=%s", code, out)
+	}
+	if !strings.Contains(out, "usage") {
+		t.Fatalf("missing usage line: %q", out)
+	}
+}
+
 func TestParseDataIDs(t *testing.T) {
 	got, err := parseDataIDs([]byte(`{"data":[{"id":"gpt-5.4"},{"id":"openai/gpt-5"}]}`))
 	if err != nil {
