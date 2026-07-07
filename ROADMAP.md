@@ -10,11 +10,6 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-**FT22 (implemented, awaiting post-hoc review) — `bench spec history <slug>`**
-(`specs/spec-history.md`). Retirement archaeology folded into the CLI (FT9
-pattern). Remaining work: `/bench-review-implementation`, then spec-retire on
-approval.
-
 **FT6 (LOW, parked pending evidence — leave parked):** `bench refs`, `bench
 detect`, `bench doc`, `bench specs --retired`, doctor binary-presence row,
 `conformanceFamilies`-vs-dispatch reconcile meta-check, and a per-anchor
@@ -34,7 +29,4 @@ changelog adds a spawn tool name or a deny-capable SubagentStart.
 
 ## Recommended sequence
 
-1. `/bench-review-implementation` — post-hoc three-axis review of the three
-   implemented specs (`outline`, `dashboard`, `spec-history`).
-2. `bench spec retire <slug>` per spec the review clears (reviewer call).
-3. `/bench-what-next` — drain the three open journal entries from the batch.
+1. `/bench-what-next` — drain the three open journal entries from the batch.
