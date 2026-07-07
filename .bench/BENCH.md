@@ -54,7 +54,7 @@ Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
 - Ambient context and capture: `bench status`, `bench idea`, `bench roadmap`,
   `bench learnings`, `bench maps`.
 - Oracle and diagnostics: `bench gate`, `bench gate pin`, `bench canary`, `bench structure`,
-  `bench guards`, `bench diff`, `bench coverage`, `bench models`, `bench version`.
+  `bench guards`, `bench diff`, `bench coverage`, `bench outline`, `bench models`, `bench version`.
 - Work execution: `bench worktree`, `bench shift`, `bench commit`,
   `bench spec implemented`, `bench spec retire`, `bench spec history`.
 - Hook and adapter plumbing subcommands — driven by hooks and adapters, never

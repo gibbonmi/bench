@@ -208,6 +208,7 @@ case "${1:-help}" in
   init)     adoption_route "$@" ;;
   unlink)   route_porcelain "$@" ;;
   models)   route_porcelain "$@" ;;
+  outline)  route_porcelain "$@" ;;
   structure) route_porcelain "$@" ;;
   idea)     route_porcelain "$@" ;;
   roadmap)  route_porcelain "$@" ;;
@@ -243,6 +244,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench guards               every guard's deny surface as TOON (guard, boundary, denies)
   bench diff                 review base + changed files as TOON (--full appends log + diff body)
   bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
+  bench outline [path]       locate candidate seams (file:line) as TOON; does not mark the project's blessed seams
   bench doctor [--fix]       report (and repair) the PATH shim under a node version manager
   bench gate                 run the project gate (the oracle)
   bench gate pin             pin HEAD's .bench tree for pre-push verification

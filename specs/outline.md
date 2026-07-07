@@ -1,6 +1,6 @@
 # bench outline
 
-Status: staged
+Status: implemented
 
 ## Problem
 

@@ -26,6 +26,7 @@ import (
 	"github.com/gibbonmi/bench/internal/lines"
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/models"
+	"github.com/gibbonmi/bench/internal/outline"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/shift"
 	"github.com/gibbonmi/bench/internal/spec"
@@ -58,6 +59,7 @@ var commands = map[string]func([]string) (string, int){
 	"status":              status.Command,
 	"structure":           structure.Command,
 	"models":              models.Command,
+	"outline":             outline.Command,
 	"idea":                roadmap.IdeaCommand,
 	"roadmap":             roadmap.RoadmapCommand,
 	"tree-hash":           treeHash,
