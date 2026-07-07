@@ -39,6 +39,9 @@ func TestRuntimeCommitContracts(t *testing.T) {
 	contract.RunParallel(t, "unexplained file blocks before gate", testCommitUnexplainedBlocks)
 	contract.RunParallel(t, "glob/space path survives whole", testCommitWeirdPath)
 	contract.RunParallel(t, "deleted path stages the removal", testCommitStagesDeletion)
+	contract.RunParallel(t, "staged deletion commits", testCommitStagesStagedDeletion)
+	contract.RunParallel(t, "staged rename commits whole", testCommitStagesStagedRename)
+	contract.RunParallel(t, "unknown path fails before the gate", testCommitUnknownPathFailsFast)
 	contract.RunParallel(t, "spec flip lands in one commit", testCommitSpecFlip)
 	contract.RunParallel(t, "bad --spec fails before the gate", testCommitSpecFailsFast)
 	contract.RunParallel(t, "empty commit refused", testCommitEmptyRefused)
@@ -77,6 +80,65 @@ func testCommitStagesDeletion(t *testing.T) {
 	// The deletion is what landed: the commit records seed.txt and the tree no longer tracks it.
 	contract.RequireContains(t, committedNames(f), "seed.txt")
 	contract.RequireNotContains(t, f.Git("ls-files").Stdout, "seed.txt")
+}
+
+func testCommitStagesStagedDeletion(t *testing.T) {
+	// A removal already staged (`git rm`, or a delegate's index) leaves the path absent
+	// from both worktree and index, where a per-path `git add` pathspec matches nothing
+	// and dies with git's exit 128. The staging step must recognize the change as already
+	// in the index and commit it.
+	f := commitFixture(t)
+	f.Git("rm", "-q", "seed.txt")
+	before := headSha(f)
+
+	f.Bench("commit", "-m", "remove seed", "seed.txt").RequireExit(0)
+
+	if headSha(f) == before {
+		t.Fatal("HEAD did not advance on a green gate")
+	}
+	contract.RequireContains(t, committedNames(f), "seed.txt")
+	contract.RequireNotContains(t, f.Git("ls-files").Stdout, "seed.txt")
+}
+
+func testCommitStagesStagedRename(t *testing.T) {
+	// The recorded FT38 shape: `git mv` stages the rename, so the old path is absent from
+	// worktree and index while the new path is index-only. Naming both halves must commit
+	// the whole rename.
+	f := commitFixture(t)
+	f.Git("mv", "seed.txt", "renamed.txt")
+	before := headSha(f)
+
+	f.Bench("commit", "-m", "rename seed", "seed.txt", "renamed.txt").RequireExit(0)
+
+	if headSha(f) == before {
+		t.Fatal("HEAD did not advance on a green gate")
+	}
+	// Rename detection collapses the pair to its destination in `--name-only`; list with
+	// --no-renames so the assertion sees both halves of what landed.
+	names := f.Git("show", "--name-only", "--no-renames", "--pretty=format:", "HEAD").Stdout
+	contract.RequireContains(t, names, "seed.txt")
+	contract.RequireContains(t, names, "renamed.txt")
+	tracked := f.Git("ls-files").Stdout
+	contract.RequireContains(t, tracked, "renamed.txt")
+	contract.RequireNotContains(t, tracked, "seed.txt")
+}
+
+func testCommitUnknownPathFailsFast(t *testing.T) {
+	// A named path absent from worktree, index, and HEAD is a naming error, not a staging
+	// step to attempt: it must be reported before the gate runs (pair with a red gate — a
+	// post-gate check would report "gate is red" instead) with a real message, not git's
+	// raw exit 128.
+	f := commitFixture(t)
+	f.WriteFile("work.txt", "changed\n")
+	before := headSha(f)
+
+	p := f.BenchEnv(map[string]string{"GATE_RC": "1"}, "commit", "-m", "ghost", "ghost.txt", "work.txt")
+	p.RequireExit(1)
+	p.RequireContains(p.Stderr, "not found in worktree, index, or HEAD")
+	contract.RequireNotContains(t, p.Stderr, "gate is red")
+	if headSha(f) != before {
+		t.Fatal("HEAD advanced despite an unknown named path")
+	}
 }
 
 func testCommitRedRefuses(t *testing.T) {

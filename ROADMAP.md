@@ -10,14 +10,6 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-**FT38 (MED) — `bench commit` stages named deletions and renames reliably.**
-Kit defect reproduced through the sanctioned command (git 2.43): the per-path
-literal-pathspec staging fails for some paths absent from the worktree — hit on
-a delete-plus-rename diff, while plain named deletions commit fine — forcing a
-raw-git fallback the command exists to prevent. Fix the staging path (an absent
-tracked path stages its removal) and pin both the deletion and rename cases;
-the command's own doc comment already claims deletion support.
-
 **FT37 (MED) — deflake the gate under concurrent load.** Transient contract or
 conformance reds recurred repeatedly when multiple full gates ran concurrently
 (delegate worktrees plus the main checkout), every one green on immediate
@@ -60,6 +52,4 @@ Agent matcher. Parked from the claude-hook-conformance build.
 
 ## Recommended sequence
 
-1. FT38 `bench commit` deletion/rename staging — `/bench-debug` (defect with a
-   recorded repro)
-2. FT37 gate deflake — `/bench-debug`
+1. FT37 gate deflake — `/bench-debug`

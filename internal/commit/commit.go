@@ -5,7 +5,9 @@
 // (plus the --spec file) is dirty, runs the project gate through internal/gate and commits
 // only on green, flips the spec through internal/spec when --spec is set, and stages
 // exactly the named paths via a `:(literal)` pathspec (a named deletion included) —
-// never a bare `git add -A` over the whole tree.
+// never a bare `git add -A` over the whole tree. A named path whose removal is already
+// staged (`git rm`, a rename's old half) matches no add-pathspec and is recognized as
+// already in the index rather than failed.
 // It forms no opinion of the gate's verdict and carries no branch guard: the pre-push hook
 // owns default-branch protection, so commit is branch-agnostic.
 package commit
@@ -13,6 +15,7 @@ package commit
 import (
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -88,6 +91,15 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 
+	// Classify the named paths before the gate runs, so a naming error never burns a
+	// green run. Nothing between here and staging creates or deletes paths (the --spec
+	// flip only edits file content), so the plan stays valid.
+	toStage, planErr := stagePlan(root, named)
+	if planErr != nil {
+		fmt.Fprintf(stderr, "error: %v\n", planErr)
+		return 1
+	}
+
 	if rc := gate.RunAndRecord(root, stdout, stderr); rc != 0 {
 		fmt.Fprintln(stderr, "error: gate is red — commit refused (see the failing phase above)")
 		return 1
@@ -100,7 +112,7 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		}
 	}
 
-	for _, p := range named {
+	for _, p := range toStage {
 		if stageErr := exec.Command("git", "-C", root, "add", "-A", "--", ":(literal)"+p).Run(); stageErr != nil {
 			fmt.Fprintf(stderr, "error: staging %q failed: %v\n", p, stageErr)
 			return 1
@@ -154,6 +166,40 @@ func parseArgs(args []string) (msg string, specSlug string, paths []string, usag
 		return "", "", nil, "at least one <path> is required"
 	}
 	return msg, specSlug, paths, ""
+}
+
+// stagePlan classifies each named path into what the staging loop can act on. `git add -A
+// -- :(literal)p` is fatal (exit 128) when p matches nothing in the worktree or the index —
+// exactly the state a staged removal leaves behind (`git rm`, or a `git mv` rename's old
+// half). Such a path needs no staging: absent from worktree and index but present in HEAD
+// means its deletion is already in the index. A path absent from all three is a naming
+// error reported with a real message instead of git's raw exit status.
+func stagePlan(root string, named []string) ([]string, error) {
+	var stage []string
+	for _, p := range named {
+		if inWorktree(root, p) || inIndex(root, p) {
+			stage = append(stage, p)
+			continue
+		}
+		if !inHead(root, p) {
+			return nil, fmt.Errorf("named path %q not found in worktree, index, or HEAD", p)
+		}
+	}
+	return stage, nil
+}
+
+func inWorktree(root, p string) bool {
+	_, err := os.Lstat(filepath.Join(root, filepath.FromSlash(p)))
+	return err == nil
+}
+
+func inIndex(root, p string) bool {
+	out, err := git.Raw("-C", root, "ls-files", "-z", "--", ":(literal)"+p)
+	return err == nil && len(out) > 0
+}
+
+func inHead(root, p string) bool {
+	return exec.Command("git", "-C", root, "cat-file", "-e", "HEAD:"+p).Run() == nil
 }
 
 // unexplained lists the working-tree paths (tracked-modified or untracked) that are not in
