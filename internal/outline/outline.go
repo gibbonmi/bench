@@ -25,8 +25,8 @@ import (
 
 // promise is the one-line expectation-setting clause the surface repeats: outline
 // LOCATES seams, it does not IDENTIFY the project's blessed seams. It lands verbatim
-// in the help text below and, as prose a shell/markdown surface cannot import,
-// mirrored into bin/bench.sh's help block and the .bench/BENCH.md CLI inventory row.
+// in the help text below and, as prose a shell surface cannot import, is restated
+// with the same verbs in bin/bench.sh's help block.
 const promise = "outline locates candidate seams (file:line); it does not identify which are the project's blessed seams — projects/<name>.md owns that."
 
 const usageLine = "usage: bench outline [path]"
@@ -117,20 +117,6 @@ func Symbols(path string, content []byte) []Symbol {
 	return out
 }
 
-// representable reports whether every rune in s is one spec-TOON can carry: it rejects
-// exactly the runes the toon-format encoder refuses — a control character below U+0020
-// other than the escapable tab, newline, and return. Matching the library's own rule
-// means a row this predicate keeps can never make emission fail, so the row filter is
-// the single gate on control bytes.
-func representable(s string) bool {
-	for _, r := range s {
-		if r < 0x20 && r != '\n' && r != '\r' && r != '\t' {
-			return false
-		}
-	}
-	return true
-}
-
 // listFiles returns the tracked files git reports, root-relative, in git's ls-files
 // order. With no path argument it is the whole repo; with one, the argument is
 // resolved from the process cwd to a root-relative `:(literal,top)` pathspec so a glob
@@ -205,7 +191,13 @@ func Command(args []string) (string, int) {
 
 	var rows [][]string
 	for _, rel := range files {
-		content, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(rel)))
+		abs := filepath.Join(root, filepath.FromSlash(rel))
+		if info, err := os.Lstat(abs); err != nil || !info.Mode().IsRegular() {
+			continue // a symlink's tracked content is its target string, not the
+			// target's declarations — indexing through it would emit file:line
+			// anchors that don't hold; non-regular entries contribute no rows
+		}
+		content, err := os.ReadFile(abs)
 		if err != nil {
 			continue // an absent/unreadable tracked path contributes no rows
 		}
@@ -213,7 +205,7 @@ func Command(args []string) (string, int) {
 			continue // a NUL byte means binary → skip
 		}
 		for _, s := range Symbols(rel, content) {
-			if !representable(rel) || !representable(s.Name) {
+			if !toon.Representable(rel) || !toon.Representable(s.Name) {
 				continue // one poisoned path or name drops only its own row
 			}
 			rows = append(rows, []string{rel, strconv.Itoa(s.Line), s.Kind, s.Name})

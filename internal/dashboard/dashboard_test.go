@@ -38,6 +38,34 @@ func TestRenderGateStaleShowsShaAndStale(t *testing.T) {
 	}
 }
 
+// Row 3 age: a past timestamp renders a humanized age against the injected clock; a
+// future or unparseable one omits the age instead of rendering a negative or nonsense
+// duration. Pins gateAge's guard branches so dropping one turns red here.
+func TestRenderGateAge(t *testing.T) {
+	cases := []struct {
+		name, timestamp, want string
+		absent                bool
+	}{
+		{name: "past renders ago", timestamp: "2026-07-07T10:30:00Z", want: "3h ago"},
+		{name: "future omits age", timestamp: "2099-01-01T00:00:00Z", absent: true},
+		{name: "unparseable omits age", timestamp: "not-a-timestamp", absent: true},
+	}
+	for _, c := range cases {
+		s := baseSnapshot()
+		s.Gate = status.GateInfo{Present: true, Status: "green", CachedTree: "cafef00d", WorkTree: "cafef00d", Timestamp: c.timestamp}
+		out := Render(s)
+		if c.absent {
+			if strings.Contains(out, "ago") || strings.Contains(out, "just now") {
+				t.Errorf("%s: age rendered for timestamp %q:\n%s", c.name, c.timestamp, section(out, "Gate"))
+			}
+			continue
+		}
+		if !strings.Contains(out, c.want) {
+			t.Errorf("%s: gate section missing %q:\n%s", c.name, c.want, section(out, "Gate"))
+		}
+	}
+}
+
 // Row 3 empty edge: an absent gate cache renders a definitive empty state, not a crash.
 func TestRenderGateAbsent(t *testing.T) {
 	out := Render(baseSnapshot())

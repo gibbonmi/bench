@@ -1,4 +1,4 @@
-// history.go implements `bench spec history <slug>`: the FT9-pattern port of the
+// history.go implements `bench spec history <slug>`: the compiled port of the
 // hand-run recovery incantation `/bench-debug` and `/bench-write-spec` both name —
 // `git log --grep=spec-retire: <slug>` plus `git log --diff-filter=D -- specs/<slug>.md`
 // — into one compiled, merged, deduped, AXI-conformant query. It never writes; it is a

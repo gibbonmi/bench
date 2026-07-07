@@ -10,17 +10,21 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-**FT12 (LOW, kit discipline) — repro a defect claim through the accused command
-before draining it.** FT11 was minted from a learning that quoted a raw `git add`
-run by hand; the real `bench commit` path already staged deletions, so the row
-described a defect that did not exist. Tighten `/bench-what-next` step 3 (and
-`bench-debug`'s repro discipline) so a defect-shaped learning becomes a roadmap
-row only after its red signal reproduces through the sanctioned command, not a
-lookalike. Built later under the `craft-synthesis` discipline.
+**FT5 (implemented, awaiting post-hoc review) — `bench outline`**
+(`specs/outline.md`). Built under the 2026-07-07 batch approval with
+orchestrator-resolved grill decisions; the spec is the veto surface. Remaining
+work: `/bench-review-implementation`, then spec-retire on approval.
 
-**FT5 (LOW) — `bench outline`.** Marginal for this repo, real as a kit
-affordance for large/polyglot linked repos. Needs its grill (languages,
-on-demand vs committed, prose anchors).
+**FT7 (implemented, awaiting post-hoc review) — `bench dashboard`**
+(`specs/dashboard.md`). v1 is the data-faithful minimal HTML snapshot; the
+rich visual treatment (ui_examples look, animated characters) is deferred as a
+reviewer-taste follow-up in the spec's out-of-scope list. Remaining work:
+`/bench-review-implementation`, then spec-retire on approval.
+
+**FT22 (implemented, awaiting post-hoc review) — `bench spec history <slug>`**
+(`specs/spec-history.md`). Retirement archaeology folded into the CLI (FT9
+pattern). Remaining work: `/bench-review-implementation`, then spec-retire on
+approval.
 
 **FT6 (LOW, parked pending evidence — leave parked):** `bench refs`, `bench
 detect`, `bench doc`, `bench specs --retired`, doctor binary-presence row,
@@ -29,15 +33,19 @@ bite-proof meta-test (canaries prove one needle per family today; graduate on
 observed anchor rot). `bench symbols` is not carried; restore only if agents
 demonstrably burn turns on symbol search.
 
-**FT7 (LOW) — dashboard.** Low priority by declaration.
-
-**FT22 (LOW, parked) — `bench spec history <slug>`.** Fold the duplicated
-`git log --grep=spec-retire` recovery incantation into the CLI (FT9 pattern).
-Parked from the artifact-lifecycle build's out-of-scope list.
-
-**FT24 (LOW, parked) — Codex agent-line guard parity.** `check-agent-line` on
-the secondary harness, pending research on whether Codex hooks support an
-Agent matcher. Parked from the claude-hook-conformance build.
+**FT24 (parked pending upstream) — Codex agent-line guard parity.** Researched
+2026-07-07: not implementable on current Codex — delegation never surfaces as a
+matchable `tool_name` on a deny-capable hook event, and `SubagentStart` neither
+carries the delegate's resolved model nor honors a deny (verdict recorded in
+`.bench/BENCH-reference.md` Hook Layers). Graduate only when the Codex
+changelog adds a spawn tool name or a deny-capable SubagentStart.
 
 **FT8 (scheduled, not actionable) — Sonnet 5 mid-tier revisit.** Time-boxed to
 2026-09-01 or the next frontier shift.
+
+## Recommended sequence
+
+1. `/bench-review-implementation` — post-hoc three-axis review of the three
+   implemented specs (`outline`, `dashboard`, `spec-history`).
+2. `bench spec retire <slug>` per spec the review clears (reviewer call).
+3. `/bench-what-next` — drain the three open journal entries from the batch.

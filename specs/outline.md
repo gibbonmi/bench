@@ -179,6 +179,7 @@ Seam B — the command / AXI contract (built binary, black box):
 | edge (of 3) | a present-but-empty tracked file yields zero rows (distinct from an absent path) | B: fixture with an empty tracked `.go` file | assertion of zero rows for that file, exit 0, fails if the empty read errors | covers the absent-vs-empty hostile class |
 | edge (of 1) | git unavailable / `ls-files` failure prints a loud structured error, exit 1 | B: fixture with a broken index (corrupt `.git/index`) | assertion on the git-failure error line and exit 1 fails against a silent empty table | covers the required-tool-missing / git-failure hostile class |
 | edge (of 1) | re-running on an unchanged tree yields byte-identical output | B: two `f.Bench("outline")` runs, compared | byte-equality assertion fails against a non-deterministic emit | covers the re-run idempotency class |
+| edge (of 3) | a tracked symlink is skipped; its target is indexed once under its own path | B: fixture with `link.go → real.go` | assertion that no `link.go` row appears fails against a walk that follows symlinks | a follow-symlink walk indexes the target's declarations under the symlink's path — a `file:line` anchor that does not hold, since the symlink's git content is just the target string |
 
 ### Edge inventory
 
@@ -198,6 +199,9 @@ row above or a **Won't handle** line here:
 - invocation through a symlink rather than the real path — **Won't handle**: outline
   resolves the root via `git rev-parse` and reads no `argv[0]`; the shared binary-routing
   contract already covers symlinked invocation, so re-testing it here duplicates coverage.
+- a tracked symlink among the walked files — **row** (edge of 3): skipped via Lstat;
+  its git content is the target string, so indexing through it would emit anchors that
+  don't hold, and the target is indexed once under its own path.
 - invocation through every shipped surface (real CLI, by-path CLI, hooks, adapters)
   — **Won't handle**: outline is a plain query command; the multi-surface routing
   contract that guarantees each surface reaches the same routed implementation is a

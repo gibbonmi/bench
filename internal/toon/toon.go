@@ -78,6 +78,21 @@ func TableTyped(name string, fields []string, rows [][]any) (string, error) {
 	return table(name, fields, rows)
 }
 
+// Representable reports whether s is a cell value spec-TOON can carry: it rejects
+// exactly what the encoder refuses — a control character below U+0020 other than the
+// escapable tab, newline, and return (DEL and higher controls the library accepts).
+// This is the one predicate for callers that pre-filter rows instead of failing a
+// whole table on one cell; the package test pins it to the encoder's observed refusal
+// behavior, so a library change turns the gate red here rather than drifting silently.
+func Representable(s string) bool {
+	for _, r := range s {
+		if r < 0x20 && r != '\n' && r != '\r' && r != '\t' {
+			return false
+		}
+	}
+	return true
+}
+
 // IsSpace matches POSIX [[:space:]] in the C locale — the one source of the AXI
 // whitespace class, shared by every parser's field trimming. A UTF-8 continuation or
 // lead byte is >= 0x80 and never matches, so a multibyte rune is never mistaken for

@@ -63,6 +63,25 @@ func TestTableUnrepresentableCellErrors(t *testing.T) {
 	}
 }
 
+// Representable is the one predicate row-filtering callers consult instead of failing
+// a whole table on one cell, so it must agree with the encoder's actual refusal
+// behavior byte-for-byte. This pin sweeps every C0 control, DEL, and a spread of
+// ordinary cells, asserting predicate-true == Table-renders: if the library's refusal
+// rule ever moves (say, it starts refusing DEL), this goes red instead of the two
+// rules drifting apart silently.
+func TestRepresentableMatchesEncoder(t *testing.T) {
+	probes := []string{"plain", "em—dash", "🚀 emoji", `quo"te`, "has,comma", "del\x7fbyte"}
+	for b := byte(0); b < 0x20; b++ {
+		probes = append(probes, "ctl"+string([]byte{b})+"byte")
+	}
+	for _, in := range probes {
+		_, err := Table("t", []string{"v"}, [][]string{{in}})
+		if got, want := Representable(in), err == nil; got != want {
+			t.Errorf("Representable(%q) = %v but Table error = %v — predicate and encoder disagree", in, got, err)
+		}
+	}
+}
+
 func TestTable(t *testing.T) {
 	// Empty input is the definitive empty table with its schema, not a blank line.
 	if got, _ := Table("learnings", []string{"date", "title"}, nil); got != "learnings[0]{date,title}:\n" {

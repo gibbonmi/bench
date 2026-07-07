@@ -1,6 +1,7 @@
 package axi
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -23,6 +24,7 @@ func TestAXIOutlineContracts(t *testing.T) {
 	contract.RunParallel(t, "AXI outline directory-path scoping", testAXIOutlineDirScope)
 	contract.RunParallel(t, "AXI outline subdir root-relative", testAXIOutlineSubdir)
 	contract.RunParallel(t, "AXI outline untracked and binary skipped", testAXIOutlineUntrackedBinary)
+	contract.RunParallel(t, "AXI outline tracked symlink skipped", testAXIOutlineSymlinkSkipped)
 	contract.RunParallel(t, "AXI outline control-byte drops one row", testAXIOutlineControlByte)
 	contract.RunParallel(t, "AXI outline file-then-line ordering", testAXIOutlineOrdering)
 	contract.RunParallel(t, "AXI outline help promise", testAXIOutlineHelpPromise)
@@ -127,6 +129,27 @@ func testAXIOutlineUntrackedBinary(t *testing.T) {
 	requireAXILine(t, out.Stdout, "  clean.go,\"2\",func,Clean")
 	requireNoAXILineMatching(t, out.Stdout, `Binny`)
 	requireNoAXILineMatching(t, out.Stdout, `Loose`)
+}
+
+// A tracked symlink's git content is its target string, not the target's
+// declarations — following it would index the target's symbols under the symlink's
+// path, emitting file:line anchors that don't hold. The walk must skip non-regular
+// entries so the target is indexed once, under its own path.
+func testAXIOutlineSymlinkSkipped(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteFile("real.go", "package pkg\n\ntype Bar struct{}\n")
+	if err := os.Symlink("real.go", filepath.Join(f.Root, "link.go")); err != nil {
+		t.Skipf("symlinks unavailable on this filesystem: %v", err)
+	}
+	stageAll(f)
+
+	out := f.Bench("outline")
+	out.RequireExit(0)
+	requireAXIFirstLine(t, out.Stdout, "outline[1]{file,line,kind,name}:")
+	requireAXILine(t, out.Stdout, "  real.go,\"3\",type,Bar")
+	if strings.Contains(out.Stdout, "link.go") {
+		t.Fatalf("tracked symlink was indexed as its target:\n%s", out.Stdout)
+	}
 }
 
 func testAXIOutlineControlByte(t *testing.T) {
