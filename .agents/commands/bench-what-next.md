@@ -45,6 +45,13 @@ next action is the kit edit (built later under the `craft-synthesis` discipline,
 gated as usual); the rest are dismissed with one line of why. Nothing leaves the
 journal without the reviewer's approval of that diff.
 
+A defect-shaped entry — one claiming a sanctioned command misbehaved — becomes
+a roadmap row only after its red signal reproduces through the accused command
+itself, invoked as the entry quotes it. A repro through a lookalike surface (a
+raw `git add` standing in for `bench commit`) proves nothing about the accused
+path: without the real repro, dismiss the entry as unreproduced, or re-park it
+with the missing repro named as its graduation trigger.
+
 ## 4. Refresh the sequence
 
 Rewrite the `## Recommended sequence` section: two or three numbered lines, each

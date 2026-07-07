@@ -30,7 +30,9 @@ Before reading code to form a theory, build **one command** — a test, a curl, 
 invocation, a replay of a captured trace, a throwaway harness — that you have
 **already run once** (paste the invocation and its output) and that is:
 
-- **red-capable** — drives the real bug path and asserts the user's *exact* symptom,
+- **red-capable** — drives the real bug path through the accused command — the
+  surface the claim names, invoked as reported, never a lookalike (a raw
+  `git add` is not `bench commit`) — and asserts the user's *exact* symptom,
   so it goes red now and green when fixed. Not "runs without erroring."
 - **deterministic** — same verdict every run. Flaky bug? Raise the reproduction rate
   (loop the trigger, parallelize, inject stress) until it's debuggable; 50% is

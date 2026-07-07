@@ -91,6 +91,8 @@ func checkWorkflowAnchors(root string) []string {
 	require(".agents/commands/bench-review-implementation.md", "finding count, its worst issue")
 	require(".agents/commands/bench-review-implementation.md", "doc citation its axis supplied")
 	require(".agents/commands/bench-what-next.md", "Reconcile first")
+	require(".agents/commands/bench-what-next.md", "through the accused command")
+	require(".agents/commands/bench-debug.md", "through the accused command")
 	require(".agents/commands/bench-what-next.md", "empties to zero")
 	require(".agents/commands/bench-what-next.md", "verdict in the batch diff")
 	require(".agents/commands/bench-what-next.md", "one uncommitted batch diff")
