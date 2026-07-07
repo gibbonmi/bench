@@ -287,8 +287,7 @@ func testRuntimeStatusWarmPool(t *testing.T) {
 	out = f.BenchEnv(map[string]string{"BENCH_HOME": benchHome}, "status").Stdout
 	contract.RequireContains(t, out, "1 out-of-pool worktree")
 	contract.RequireContains(t, out, "orphaned worktree branch")
-	contract.RequireContains(t, out, "delete scratch branch")
-	requireStatusLineNotContains(t, out, "orphaned worktree branch", "bench worktree clean")
+	requireStatusLineContains(t, out, "orphaned worktree branch", "bench worktree clean")
 }
 
 func testRuntimeStatusRetirementSignal(t *testing.T) {

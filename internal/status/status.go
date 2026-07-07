@@ -220,7 +220,7 @@ func appendWorktree(rows []row, root string) []row {
 	}
 	orphans := worktree.OrphanedDelegateBranches(root)
 	if len(orphans) > 0 {
-		return append(rows, row{2, "worktree", plural(len(orphans), "orphaned worktree branch", "orphaned worktree branches"), "delete scratch branch"})
+		return append(rows, row{2, "worktree", plural(len(orphans), "orphaned worktree branch", "orphaned worktree branches"), "bench worktree clean"})
 	}
 	return rows
 }

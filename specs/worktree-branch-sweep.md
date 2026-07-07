@@ -1,6 +1,6 @@
 # Worktree branch sweep
 
-Status: staged
+Status: implemented
 
 ## Problem
 

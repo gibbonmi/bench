@@ -202,8 +202,8 @@ func TestRenderSurfacesOrphanedWorktreeBranch(t *testing.T) {
 	if !strings.Contains(out, "orphaned worktree branch") {
 		t.Fatalf("status did not surface orphaned worktree branch:\n%s", out)
 	}
-	if !strings.Contains(out, "delete scratch branch") {
-		t.Fatalf("status did not recommend scratch branch cleanup:\n%s", out)
+	if !strings.Contains(out, "bench worktree clean") {
+		t.Fatalf("status did not recommend bench worktree clean:\n%s", out)
 	}
 }
 
