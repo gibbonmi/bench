@@ -1,6 +1,6 @@
 # after-merge-owner
 
-Status: staged
+Status: implemented
 
 ## Problem
 Post-merge duties — spec retirement, orphaned-review-pickup disposal, worktree/branch cleanup, the decision-map sweep, and the HANDOFF.md lifecycle — are scattered onto phases reached only for other reasons. `bench status` already computes and ranks these housekeeping rows, but no command consumes them, so the tail gets done only when a session happens to notice. Two of the duties are structural gaps: `decisions/` accumulates closed maps for long-shipped work with no lifecycle end (asymmetric with specs' promote-then-delete), and HANDOFF.md is an unowned, hand-written cold-session note that rots by design while `.bench/BENCH.md` already says cold pickup must not depend on it.

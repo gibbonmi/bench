@@ -28,6 +28,11 @@ its count, a fixture harness pasted N times) must collapse to one source, and
 review grades diffs against this. Honest repetition of incidental text is fine
 where an abstraction would be worse; it's duplicated *knowledge* that drifts.
 
+**Dependency standard.** A third-party Go dependency follows the precedent set
+by the first one: official-org source, MIT-compatible license, build-time-only
+footprint (linked into the binary, no runtime service or install-time fetch).
+Anything outside that shape is a reviewer decision, not a default.
+
 **Shell conventions for agents in this repo.**
 
 - Use `rg` (ripgrep, installed here) instead of `grep` in interactive Bash calls —
