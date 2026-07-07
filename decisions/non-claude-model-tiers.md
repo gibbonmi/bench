@@ -49,7 +49,28 @@ multi-provider discovery surface, a harness-local advisory surface, or remains
 Anthropic-only with corrected copy.
 
 ### Answer
-— (open)
+`bench models` becomes a multi-source advisory inventory of candidate model ids,
+not a validator for `.bench/lines.env`. It should list every source it can reach
+and print a clear unavailable row for each source it cannot reach, while exiting
+0 so discovery never blocks tier ownership.
+
+Sources for the spec:
+
+- Codex local catalog when `codex` is on `PATH`: run `codex debug models`,
+  parse JSON `models[].slug`, and list visible slugs. Use `--bundled` as the
+  no-network fallback when refresh fails.
+- OpenAI API when `OPENAI_API_KEY` is set: call `GET /v1/models` and list
+  `data[].id`; OpenAI documents those ids as model identifiers usable in API
+  endpoints.
+- Anthropic API when `ANTHROPIC_API_KEY` is set: keep the existing
+  `/v1/models` behavior and list `data[].id`.
+- Manual fallback when no source is reachable: print exact commands/env vars
+  the reviewer can run or set, including `codex debug models --bundled`,
+  `OPENAI_API_KEY`, and `ANTHROPIC_API_KEY`.
+
+The output groups rows by source and labels freshness (`live`, `bundled`, or
+`unavailable`). It does not infer cheap/mid/top, does not reject safe ids absent
+from discovery, and does not require every provider to be installed.
 
 ## #4: Which docs and gate checks must stop saying Claude is the tier namespace?
 
