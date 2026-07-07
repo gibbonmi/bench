@@ -104,6 +104,11 @@ A delegate's done-claim is a claim, not a result. Before accepting one:
   a missed case, found now instead of at review;
 - run `git status` in the worktree it used — files touched outside the charge
   are a finding, not a footnote;
+- probe at least one accepted behavior independently of the delegate's own
+  tests — through the built binary or a fixture the delegate did not author.
+  Delegates write the tests that pin their work, so gate-green alone cannot
+  tell a correct build from a self-consistent wrong one; keep the probe
+  constant across a batch, not front-loaded;
 - spot-check the citations in any summary before folding it into your own
   report — a delegate's confident paraphrase inherits none of the source's
   authority.
