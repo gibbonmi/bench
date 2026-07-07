@@ -1,6 +1,7 @@
 package structure
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,6 +10,15 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 )
+
+// gitOpError pins the exact stderr message shape Command writes on a git-query failure:
+// the git-op name plus the underlying error, `git <op> failed: <err>`.
+func TestGitOpErrorShape(t *testing.T) {
+	got := gitOpError("ls-files", errors.New("index file corrupt"))
+	if want := "git ls-files failed: index file corrupt"; got != want {
+		t.Errorf("gitOpError = %q, want %q", got, want)
+	}
+}
 
 // git is subprocess-based, so the seam is a real tree: init a repo, write files,
 // `git add`, and exercise Check/ViolationCount/Command against it. Identity is set so
@@ -55,7 +65,7 @@ func TestFileTooLongAndBudget(t *testing.T) {
 	write(t, root, "ok.go", lines(10))
 	add(t, root)
 
-	report, v := Check(root, "all", nil)
+	report, v, _ := checkAll(root)
 	if !strings.Contains(report, "FILE TOO LONG   401 lines (max 400)   long.go") {
 		t.Errorf("missing FILE TOO LONG line:\n%s", report)
 	}
@@ -65,7 +75,7 @@ func TestFileTooLongAndBudget(t *testing.T) {
 
 	// A higher budget for the exact path suppresses the violation.
 	write(t, root, ".bench/structure.budgets", "long.go 500\n")
-	report, v = Check(root, "all", nil)
+	report, v, _ = checkAll(root)
 	if strings.Contains(report, "FILE TOO LONG") {
 		t.Errorf("granted budget did not suppress:\n%s", report)
 	}
@@ -83,7 +93,7 @@ func TestTighteningBudgetUnterminatedLastLine(t *testing.T) {
 	// No trailing newline on the final line; a leading comment line precedes it.
 	write(t, root, ".bench/structure.budgets", "# caps\nmid.sh 100")
 
-	report, v := Check(root, "all", nil)
+	report, v, _ := checkAll(root)
 	if !strings.Contains(report, "200 lines (max 100)   mid.sh") {
 		t.Errorf("tightened cap not applied:\n%s", report)
 	}
@@ -99,7 +109,7 @@ func TestMalformedBudgetWarns(t *testing.T) {
 	add(t, root)
 	write(t, root, ".bench/structure.budgets", "big.go notanumber\n")
 
-	report, v := Check(root, "all", nil)
+	report, v, _ := checkAll(root)
 	if !strings.Contains(report, "structure.budgets: ignoring malformed line: big.go notanumber") {
 		t.Errorf("missing malformed warning:\n%s", report)
 	}
@@ -121,7 +131,7 @@ func TestDuplicateBudgetKeyFirstWins(t *testing.T) {
 	// NOT win, or the violation would be suppressed.
 	write(t, root, ".bench/structure.budgets", "dup.go 100\ndup.go 500\n")
 
-	report, v := Check(root, "all", nil)
+	report, v, _ := checkAll(root)
 	if !strings.Contains(report, "401 lines (max 100)   dup.go") {
 		t.Errorf("first budget (100) did not win over the later duplicate:\n%s", report)
 	}
@@ -138,7 +148,7 @@ func TestNonNumericEnvCapFallsBack(t *testing.T) {
 	write(t, root, "under.go", lines(399)) // under the 400 default, over a garbage cap-0
 	add(t, root)
 
-	report, v := Check(root, "all", nil)
+	report, v, _ := checkAll(root)
 	if v != 0 || !strings.Contains(report, "structure ok") {
 		t.Errorf("non-numeric BENCH_MAX_LINES should fall back to 400, got v=%d:\n%s", v, report)
 	}
@@ -152,13 +162,13 @@ func TestDirCrowded(t *testing.T) {
 		write(t, root, fmt.Sprintf("pkg/f%02d.go", i), "x\n")
 	}
 	add(t, root)
-	if _, v := Check(root, "all", nil); v != 0 {
+	if _, v, _ := checkAll(root); v != 0 {
 		t.Errorf("12 files should be ok, got %d violations", v)
 	}
 
 	write(t, root, "pkg/f12.go", "x\n")
 	add(t, root)
-	report, v := Check(root, "all", nil)
+	report, v, _ := checkAll(root)
 	if !strings.Contains(report, "DIR CROWDED     13 source files (max 12), group into modules   pkg/") {
 		t.Errorf("missing DIR CROWDED line:\n%s", report)
 	}
@@ -167,7 +177,7 @@ func TestDirCrowded(t *testing.T) {
 	}
 
 	write(t, root, ".bench/structure.budgets", "pkg/ 20\n")
-	report, v = Check(root, "all", nil)
+	report, v, _ = checkAll(root)
 	if strings.Contains(report, "DIR CROWDED") {
 		t.Errorf("granted dir budget did not suppress:\n%s", report)
 	}
@@ -184,7 +194,7 @@ func TestSpaceDirPreserved(t *testing.T) {
 	write(t, root, "space dir/file2.sh", "x\n")
 	add(t, root)
 
-	report, v := Check(root, "all", nil)
+	report, v, _ := checkAll(root)
 	if !strings.Contains(report, "group into modules   space dir/") {
 		t.Errorf("space dir not preserved whole:\n%s", report)
 	}
@@ -213,7 +223,7 @@ func TestNoSourceFiles(t *testing.T) {
 	root := initRepo(t)
 	write(t, root, "README.md", "prose\n")
 	add(t, root)
-	report, v := Check(root, "all", nil)
+	report, v, _ := checkAll(root)
 	if !strings.Contains(report, "structure: no tracked source files to check") || v != 0 {
 		t.Errorf("want no-source message, got v=%d:\n%s", v, report)
 	}

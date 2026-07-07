@@ -1,6 +1,6 @@
 # Git-error honesty (FT29)
 
-Status: staged
+Status: implemented
 
 ## Problem
 

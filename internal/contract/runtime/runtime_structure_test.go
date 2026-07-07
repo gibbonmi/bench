@@ -2,8 +2,10 @@ package runtime
 
 import (
 	"fmt"
-	"github.com/gibbonmi/bench/internal/contract"
+	"path/filepath"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/contract"
 )
 
 func TestRuntimeStructureContracts(t *testing.T) {
@@ -12,6 +14,46 @@ func TestRuntimeStructureContracts(t *testing.T) {
 	contract.RunParallel(t, "bench structure shell-file contract", testRuntimeStructureShellFile)
 	contract.RunParallel(t, "bench structure budgets contract", testRuntimeStructureBudgets)
 	contract.RunParallel(t, "bench structure path-with-spaces contract", testRuntimeStructurePathWithSpaces)
+	contract.RunParallel(t, "bench structure ls-files-failure contract", testRuntimeStructureLsFilesFailure)
+	contract.RunParallel(t, "bench structure since-failure contract", testRuntimeStructureSinceFailure)
+	contract.RunParallel(t, "bench structure true-empty contract", testRuntimeStructureTrueEmpty)
+}
+
+// A corrupt index breaks `git ls-files` while the worktree root still resolves: the
+// command must report the failed git op on stderr at exit 1, never the "no tracked
+// source files" clean line that a discarded error would produce (false-clean, FT29).
+func testRuntimeStructureLsFilesFailure(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteFile("a.go", "package a\n")
+	f.Git("add", "a.go")
+	contract.WriteFileAbs(t, filepath.Join(gitDir(t, f), "index"), "GARBAGE-NOT-AN-INDEX")
+	probe := f.Bench("structure")
+	probe.RequireExit(1)
+	probe.RequireContains(probe.Stderr, "git ls-files failed")
+	probe.RequireNotContains(probe.Stdout, "no tracked source files to check")
+}
+
+// A nonexistent `--since` ref breaks the touched-scope diff: the same loud posture — the
+// failed git op on stderr at exit 1, never a clean empty-scope answer at exit 0.
+func testRuntimeStructureSinceFailure(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteFile("a.go", "package a\n")
+	f.CommitAll("base")
+	probe := f.Bench("structure", "--since", "deadbeef")
+	probe.RequireExit(1)
+	probe.RequireContains(probe.Stderr, "git diff failed")
+	probe.RequireNotContains(probe.Stdout, "no tracked source files to check")
+}
+
+// The boundary the loud fix must not over-correct: git succeeds and there are genuinely
+// zero tracked source files → the clean "no tracked source files" line at exit 0.
+func testRuntimeStructureTrueEmpty(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteFile("README.md", "prose\n")
+	f.Git("add", "README.md")
+	probe := f.Bench("structure")
+	probe.RequireExit(0)
+	probe.RequireContains(probe.Stdout, "no tracked source files to check")
 }
 
 func testRuntimeStructureShellFile(t *testing.T) {
