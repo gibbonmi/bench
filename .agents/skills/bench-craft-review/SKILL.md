@@ -34,8 +34,9 @@ its count and its worst issue.
   falsely-classified, or unclosed mapped behavior is a Spec finding.
 - **Coverage** — the adversarial pass: name concrete inputs or states that would
   break the diff and that no acceptance row or existing test exercises. Walk the
-  edge classes (canonical list in `/bench-write-spec`'s edge-inventory step)
-  plus the profile's hostile-input checklist when one exists. An edge the spec
+  edge classes (the generic classes live in `/bench-write-spec`'s
+  edge-inventory step) plus the profile's hostile-input checklist when one
+  exists — the two together are the full inventory. An edge the spec
   explicitly marked won't-handle is not a finding; an edge nobody decided is.
 
 ## What a finding must cite

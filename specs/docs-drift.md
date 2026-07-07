@@ -1,6 +1,6 @@
 # docs-drift — the platform docs describe the current decided state
 
-Status: staged
+Status: implemented
 
 Source: `ASSESSMENT.md` backlog 10 + 12 (findings §6 med/low, §5 low-med/low).
 Drafted without a decision map under the reviewer's 2026-07-06 batch approval;

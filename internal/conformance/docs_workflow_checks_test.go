@@ -128,15 +128,16 @@ func checkColdPickupCLILists(root string) []string {
 	}
 	docRef := regexp.MustCompile("`bench ([a-z][a-z-]*)\\b")
 	var diags []string
-	for _, rel := range []string{".bench/BENCH.md"} {
-		path := filepath.Join(root, filepath.FromSlash(rel))
-		text := readIfExists(path)
-		if text == "" {
-			continue
-		}
+	// The documented surface is the always-loaded inventory plus the reference file's
+	// plumbing enumeration: sessions read BENCH.md, hooks-and-adapters plumbing is
+	// deliberately demoted to BENCH-reference.md, and a route documented in neither
+	// is still a cold-pickup hole.
+	guide := readIfExists(filepath.Join(root, ".bench", "BENCH.md"))
+	if guide != "" {
+		guide += "\n" + readIfExists(filepath.Join(root, ".bench", "BENCH-reference.md"))
 		for _, command := range commands {
-			if !strings.Contains(text, "bench "+command) {
-				diags = append(diags, fmt.Sprintf("%s does not list CLI command 'bench %s'", rel, command))
+			if !strings.Contains(guide, "bench "+command) {
+				diags = append(diags, fmt.Sprintf(".bench/BENCH.md or .bench/BENCH-reference.md does not list CLI command 'bench %s'", command))
 			}
 		}
 	}

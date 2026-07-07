@@ -24,7 +24,8 @@ minimum to pass its own tests, then stop. So:
   don't skip it.
 - The spec's user stories are the breadth **floor, not the ceiling**. At a marked
   seam, enumerate the behavior's failure modes by walking the edge classes —
-  the canonical list lives in `/bench-write-spec`'s edge-inventory step — and
+  the generic classes live in `/bench-write-spec`'s edge-inventory step, and
+  the domain half is the project profile's hostile-input checklist — and
   propose them as coverage rows for the
   reviewer to veto; never silently skip an edge the spec forgot. The over-fit guard constrains what *correct* means (the reviewer chose
   the seam and the semantics), never which inputs get exercised. If a story isn't

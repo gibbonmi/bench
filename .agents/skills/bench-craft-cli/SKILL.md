@@ -1,6 +1,6 @@
 ---
 name: craft-cli
-description: Design standards for building CLI tools that agents drive through the shell — TOON output, minimal schemas, structured errors, ambient context. Use whenever building, modifying, or reviewing any agent-facing CLI whose project declares AXI conformance.
+description: Design standards for building CLI tools that agents drive through the shell — TOON output, minimal schemas, structured errors, ambient context. Use whenever building, modifying, or reviewing any agent-facing CLI whose project declares AXI conformance, or when deciding whether a new agent-facing CLI should conform.
 index: building an agent-facing CLI
 ---
 

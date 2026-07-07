@@ -29,7 +29,8 @@ cold session reads this first to avoid drifting the vocabulary.
 - **profile** — the per-repo file at `projects/<name>.md` a cold session reads to
   learn the seams, lines, gate command, and (for UI repos) the design source.
 - **skill** — probabilistic guidance that shapes *how* the model generates
-  (`.claude/skills/*/SKILL.md`). Reached for when the task matches; not a rule.
+  (`.agents/skills/*/SKILL.md`; `.claude/skills/` mirrors them for Claude Code).
+  Reached for when the task matches; not a rule.
 - **command** — a canonical phase of the workflow (`/bench-shape-idea`, `/bench-write-spec`, `/bench-debug`,
   `/bench-implement-spec`, `/bench-review-implementation`, `/bench-final-check`, plus `/bench-setup-repo`, `/bench-update-kit`, `/bench-what-next`). Not "slash command
   template" in prose — command.
