@@ -26,14 +26,6 @@ single gate's phase concurrency. Make the worktree concurrent-acquire contract
 (and any load-sensitive sibling) deterministic under parallel gate runs, or
 serialize its acquire window.
 
-**FT39 (LOW) — residual structure debt from the 2026-07-07 batch's growth.**
-Two items arrived from the batch's own merges and are neither split nor
-accepted: the runtime contract directory is over its file budget (regroup by
-command family, as the AXI split did) and one surface contract file is barely
-over the line budget (split or accept). Reviewer decides split-vs-accept per
-the structure-splits philosophy; acceptance is a two-line
-`.bench/structure-accept` addition.
-
 **FT12 (LOW, kit discipline) — repro a defect claim through the accused command
 before draining it.** FT11 was minted from a learning that quoted a raw `git add`
 run by hand; the real `bench commit` path already staged deletions, so the row
@@ -71,5 +63,3 @@ Agent matcher. Parked from the claude-hook-conformance build.
 1. FT38 `bench commit` deletion/rename staging — `/bench-debug` (defect with a
    recorded repro)
 2. FT37 gate deflake — `/bench-debug`
-3. FT39 structure residual — reviewer split-vs-accept call, then
-   `/bench-shape-idea` for any split
