@@ -1,6 +1,6 @@
 # claude-hook-conformance — gate the primary harness's hook wiring
 
-Status: staged
+Status: implemented
 
 Source: `ASSESSMENT.md` backlog 2 (findings §2 high ×2).
 Drafted without a decision map under the reviewer's 2026-07-06 batch approval;

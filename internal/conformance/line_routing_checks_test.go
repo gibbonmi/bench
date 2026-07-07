@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"testing"
 
 	"github.com/gibbonmi/bench/internal/lines"
 )
@@ -14,7 +15,7 @@ import (
 func checkLineRouting(root string) []string {
 	var diags []string
 	diags = append(diags, checkLineBinding(root)...)
-	diags = append(diags, checkClaudeAgentHookWiring(root)...)
+	diags = append(diags, checkClaudeHookWiring(root)...)
 	diags = append(diags, checkAgentHookBehavior(root)...)
 	diags = append(diags, checkAdapterLineGuards(root)...)
 	return diags
@@ -86,7 +87,16 @@ func checkLineBinding(root string) []string {
 	return diags
 }
 
-func checkClaudeAgentHookWiring(root string) []string {
+// checkClaudeHookWiring holds .claude/settings.json to at least the Codex hook
+// standard: one parse feeds every wiring assertion. Absent file skips (parity
+// with checkCodexHooks — the kit always ships the file and canary fixtures hide
+// dot-dirs, so fail-closed-on-absent would misfire); malformed JSON is the
+// JSON-validity check's fact, so unmarshal failure returns nothing. Matching is
+// by the .bench/hooks/<name>.sh command substring, the stable token under
+// Claude's $CLAUDE_PROJECT_DIR prefix. Stop and SessionStart are event-wide (an
+// empty matcher filter accepts any group); PreToolUse Bash and Agent filter by
+// matcher.
+func checkClaudeHookWiring(root string) []string {
 	path := filepath.Join(root, ".claude", "settings.json")
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -103,17 +113,115 @@ func checkClaudeAgentHookWiring(root string) []string {
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return nil
 	}
-	for _, group := range cfg.Hooks["PreToolUse"] {
-		if group.Matcher != "Agent" {
-			continue
-		}
-		for _, hook := range group.Hooks {
-			if strings.Contains(hook.Command, ".bench/hooks/check-agent-line.sh") {
-				return nil
+	var diags []string
+	for _, w := range []struct {
+		event, matcher, needle, diag string
+	}{
+		{"Stop", "", ".bench/hooks/stop.sh", "claude settings.json Stop event does not run .bench/hooks/stop.sh"},
+		{"SessionStart", "", ".bench/hooks/session-start.sh", "claude settings.json SessionStart event does not run .bench/hooks/session-start.sh"},
+		{"PreToolUse", "Bash", ".bench/hooks/block-dangerous-git.sh", "claude settings.json PreToolUse Bash matcher missing or does not run .bench/hooks/block-dangerous-git.sh"},
+		{"PreToolUse", "Agent", ".bench/hooks/check-agent-line.sh", "claude settings.json PreToolUse Agent matcher missing or does not run .bench/hooks/check-agent-line.sh"},
+	} {
+		wired := false
+		for _, group := range cfg.Hooks[w.event] {
+			if w.matcher != "" && group.Matcher != w.matcher {
+				continue
+			}
+			for _, hook := range group.Hooks {
+				if strings.Contains(hook.Command, w.needle) {
+					wired = true
+				}
 			}
 		}
+		if !wired {
+			diags = append(diags, w.diag)
+		}
 	}
-	return []string{"claude settings.json PreToolUse Agent matcher missing or does not run .bench/hooks/check-agent-line.sh"}
+	return diags
+}
+
+// TestClaudeHookWiringBites is the recorded bite proof for checkClaudeHookWiring
+// (per craft-gate): the intact kit-shaped settings.json — two PreToolUse groups
+// (Bash, Agent) plus Stop and SessionStart, each carrying the real
+// $CLAUDE_PROJECT_DIR command prefix — passes clean; dropping any one wiring fires
+// exactly its diagnostic and no sibling. The absent-file case pins the skip-on-
+// absent posture (parity with checkCodexHooks) as a regression guard: it passes on
+// day one and must keep yielding nothing so a later fail-closed change is a
+// deliberate edit, not drift.
+func TestClaudeHookWiringBites(t *testing.T) {
+	type hook struct {
+		Type    string `json:"type"`
+		Command string `json:"command"`
+	}
+	type group struct {
+		Matcher string `json:"matcher"`
+		Hooks   []hook `json:"hooks"`
+	}
+	command := func(name string) []hook {
+		return []hook{{Type: "command", Command: "$CLAUDE_PROJECT_DIR/.bench/hooks/" + name}}
+	}
+	// intact returns a fresh healthy wiring shape each call so a case can mutate
+	// its own copy without disturbing the others.
+	intact := func() map[string][]group {
+		return map[string][]group{
+			"SessionStart": {{Matcher: "", Hooks: command("session-start.sh")}},
+			"Stop":         {{Matcher: "*", Hooks: command("stop.sh")}},
+			"PreToolUse": {
+				{Matcher: "Bash", Hooks: command("block-dangerous-git.sh")},
+				{Matcher: "Agent", Hooks: command("check-agent-line.sh")},
+			},
+		}
+	}
+	write := func(t *testing.T, hooks map[string][]group) string {
+		t.Helper()
+		root := t.TempDir()
+		dir := filepath.Join(root, ".claude")
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		data, err := json.Marshal(map[string]any{"hooks": hooks})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "settings.json"), data, 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return root
+	}
+
+	if diags := checkClaudeHookWiring(write(t, intact())); len(diags) != 0 {
+		t.Fatalf("intact kit-shaped settings.json: want no diagnostics, got %v", diags)
+	}
+
+	cases := []struct {
+		name   string
+		remove func(map[string][]group)
+		want   string
+	}{
+		{"stop dropped", func(h map[string][]group) { delete(h, "Stop") }, "claude settings.json Stop event does not run .bench/hooks/stop.sh"},
+		{"session-start dropped", func(h map[string][]group) { delete(h, "SessionStart") }, "claude settings.json SessionStart event does not run .bench/hooks/session-start.sh"},
+		{"bash group dropped", func(h map[string][]group) { h["PreToolUse"] = h["PreToolUse"][1:] }, "claude settings.json PreToolUse Bash matcher missing or does not run .bench/hooks/block-dangerous-git.sh"},
+		{"agent group dropped", func(h map[string][]group) { h["PreToolUse"] = h["PreToolUse"][:1] }, "claude settings.json PreToolUse Agent matcher missing or does not run .bench/hooks/check-agent-line.sh"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			hooks := intact()
+			tc.remove(hooks)
+			diags := checkClaudeHookWiring(write(t, hooks))
+			if !containsDiagnostic(diags, tc.want) {
+				t.Fatalf("want %q in diagnostics, got %v", tc.want, diags)
+			}
+			for _, other := range cases {
+				if other.want != tc.want && containsDiagnostic(diags, other.want) {
+					t.Fatalf("%s also fired sibling diagnostic %q: %v", tc.name, other.want, diags)
+				}
+			}
+		})
+	}
+
+	if diags := checkClaudeHookWiring(t.TempDir()); len(diags) != 0 {
+		t.Fatalf("absent settings.json: want no diagnostics (skip posture), got %v", diags)
+	}
 }
 
 func checkAgentHookBehavior(root string) []string {

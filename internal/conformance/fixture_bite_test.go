@@ -123,6 +123,7 @@ func TestLineRoutingFixturesBite(t *testing.T) {
 		"line-binding-prose-drift",
 		"agent-hook-unwired",
 		"agent-hook-broken",
+		"stop-hook-unwired",
 		"adapter-line-broken",
 	}
 	for _, fixture := range fixtures {

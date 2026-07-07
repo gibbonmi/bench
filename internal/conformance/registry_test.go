@@ -69,6 +69,7 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"line-binding-prose-drift": conformanceFixture(".bench/gate-line-contracts.sh"),
 	"agent-hook-unwired":       conformanceFixture(".bench/gate-line-contracts.sh"),
 	"agent-hook-broken":        conformanceFixture(".bench/gate-line-contracts.sh"),
+	"stop-hook-unwired":        conformanceFixture(".bench/gate-line-contracts.sh"),
 	"adapter-line-broken":      conformanceFixture(".bench/gate-line-contracts.sh"),
 
 	"missing-files-entry":             conformanceFixture(".bench/gate-package-contracts.sh"),
