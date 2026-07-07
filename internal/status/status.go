@@ -47,13 +47,18 @@ type row struct {
 }
 
 // Command implements `bench status`. It composes every sibling signal into the ambient
-// board and returns it with exit 0. `-h/--help` prints usage (exit 0); an unknown
-// argument is a usage error (exit 2); outside a repo is the structured error (exit 1).
+// board and returns it with exit 0. `--all` lifts the five-row budget and prints every
+// signal; `-h/--help` prints usage (exit 0); an unknown argument — including `--all`
+// with any trailing token — is a usage error (exit 2); outside a repo is the structured
+// error (exit 1).
 func Command(args []string) (string, int) {
+	all := false
 	switch {
 	case len(args) == 0:
 	case args[0] == "-h" || args[0] == "--help":
-		return "usage: bench status\n", 0
+		return "usage: bench status [--all]\n", 0
+	case args[0] == "--all" && len(args) == 1:
+		all = true
 	default:
 		return toon.Usage("bench status", args[0]) + "\n", 2
 	}
@@ -61,12 +66,15 @@ func Command(args []string) (string, int) {
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	return render(root), 0
+	return render(root, all), 0
 }
 
 // render gathers every signal under root, sorts ascending by severity, and formats the
-// board. This is the byte-for-byte counterpart of the shell `status()` renderer.
-func render(root string) string {
+// board. This is the byte-for-byte counterpart of the shell `status()` renderer. When all
+// is false it applies the five-row budget and appends the overflow line; when all is true
+// (`bench status --all`) it prints every row and emits no overflow line. The SessionStart
+// hook calls with all=false so the ambient surface stays bounded.
+func render(root string, all bool) string {
 	var rows []row
 
 	rows = appendGate(rows, root)
@@ -93,12 +101,12 @@ func render(root string) string {
 	lead := rows[0]
 	fmt.Fprintf(&b, "▶ %s  (%s)\n", lead.action, lead.signal)
 	for i, r := range rows {
-		if i < 5 {
+		if all || i < 5 {
 			fmt.Fprintf(&b, "  %-10s %-30s → %s\n", r.signal, r.detail, r.action)
 		}
 	}
-	if len(rows) > 5 {
-		fmt.Fprintf(&b, "  +%d more\n", len(rows)-5)
+	if !all && len(rows) > 5 {
+		fmt.Fprintf(&b, "  +%d more (bench status --all)\n", len(rows)-5)
 	}
 	return b.String()
 }
@@ -306,7 +314,7 @@ func appendStructure(rows []row, root string) []row {
 // appendMaps adds the unresolved-decision-map signal (sev 6) when the count is positive.
 func appendMaps(rows []row, root string) []row {
 	if n := maps.UnresolvedCount(root); n > 0 {
-		return append(rows, row{6, "decisions", fmt.Sprintf("%d unresolved map(s)", n), "craft-grill → /bench-write-spec"})
+		return append(rows, row{6, "decisions", fmt.Sprintf("%d unresolved map(s)", n), "/bench-shape-idea"})
 	}
 	return rows
 }
@@ -321,7 +329,7 @@ func appendRetirement(rows []row, root string) []row {
 		return rows
 	}
 	if n := retirementCount(root); n > 0 {
-		return append(rows, row{8, "specs", fmt.Sprintf("%d merged spec(s) awaiting retirement", n), "promote-then-delete (spec-retire)"})
+		return append(rows, row{8, "specs", fmt.Sprintf("%d merged spec(s) awaiting retirement", n), "bench spec retire <slug>"})
 	}
 	return rows
 }

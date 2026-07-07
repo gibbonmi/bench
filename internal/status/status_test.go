@@ -141,7 +141,7 @@ func TestRenderClean(t *testing.T) {
 	gitRun(t, root, "add", "-A")
 	gitRun(t, root, "commit", "-m", "base")
 
-	out := render(root)
+	out := render(root, false)
 	if out != "bench: clean — nothing pending\n" {
 		t.Errorf("clean render = %q", out)
 	}
@@ -164,7 +164,7 @@ func TestRenderDirtyLeadsGitOverDrainRow(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	out := render(root)
+	out := render(root, false)
 	lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
 	if !strings.HasPrefix(lines[0], "▶ commit on green / push  (git)") {
 		t.Errorf("lead line = %q, want git action lead", lines[0])
@@ -184,7 +184,7 @@ func TestRenderWorkingRoadmapAloneIsClean(t *testing.T) {
 	gitRun(t, root, "add", "-A")
 	gitRun(t, root, "commit", "-m", "base")
 
-	if out := render(root); out != "bench: clean — nothing pending\n" {
+	if out := render(root, false); out != "bench: clean — nothing pending\n" {
 		t.Errorf("roadmap-only render = %q, want clean board", out)
 	}
 }
@@ -198,7 +198,7 @@ func TestRenderSurfacesOrphanedWorktreeBranch(t *testing.T) {
 	gitRun(t, root, "commit", "-m", "base")
 	gitRun(t, root, "branch", "worktree-agent-orphan")
 
-	out := render(root)
+	out := render(root, false)
 	if !strings.Contains(out, "orphaned worktree branch") {
 		t.Fatalf("status did not surface orphaned worktree branch:\n%s", out)
 	}
@@ -207,12 +207,25 @@ func TestRenderSurfacesOrphanedWorktreeBranch(t *testing.T) {
 	}
 }
 
-// Command rejects an unknown argument with a usage line and exit 2, and prints usage on -h.
+// Command rejects an unknown argument with a usage line and exit 2, prints usage on -h,
+// and accepts --all as the one added token — while --all plus junk and near-misses stay
+// usage errors so a typo never silently prints the default board.
 func TestCommandArgs(t *testing.T) {
 	if r, c := Command([]string{"--bogus"}); c != 2 || !strings.Contains(r, "usage:") {
 		t.Errorf("unknown arg: report %q exit %d", r, c)
 	}
 	if r, c := Command([]string{"-h"}); c != 0 || !strings.Contains(r, "usage: bench status") {
 		t.Errorf("help: report %q exit %d", r, c)
+	}
+	if r, c := Command([]string{"-h"}); !strings.Contains(r, "[--all]") {
+		t.Errorf("help usage should advertise [--all], got %q exit %d", r, c)
+	}
+	if r, c := Command([]string{"--all"}); c != 0 {
+		t.Errorf("--all should be accepted with exit 0, got report %q exit %d", r, c)
+	}
+	for _, bad := range [][]string{{"--all", "extra"}, {"--allx"}, {"-a"}} {
+		if r, c := Command(bad); c != 2 || !strings.Contains(r, "usage:") {
+			t.Errorf("args %q: report %q exit %d, want usage exit 2", bad, r, c)
+		}
 	}
 }
