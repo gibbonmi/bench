@@ -1,6 +1,7 @@
 package adopt
 
 import (
+	_ "embed"
 	"fmt"
 	"io"
 	"os"
@@ -10,6 +11,17 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 )
+
+// prePushTemplate is the one source for the managed pre-push hook body. It ships as
+// lintable shell (the shellcheck gate phase lints prepush.sh at its kit-tree path);
+// installGitHook substitutes the default-branch token to install a byte-identical hook.
+//
+//go:embed prepush.sh
+var prePushTemplate string
+
+// prePushBranchToken is the placeholder the asset carries in place of the repo's
+// default branch, substituted at install time.
+const prePushBranchToken = "__BENCH_DEFAULT_BRANCH__"
 
 func hooksDir(root string) string {
 	out, err := git.Output("-C", root, "rev-parse", "--git-path", "hooks")
@@ -38,55 +50,7 @@ func installGitHook(root string, stderr io.Writer) error {
 		fmt.Fprintf(stderr, "conflict: %s exists and is not Bench-managed\n", prepush)
 		return fmt.Errorf("foreign pre-push")
 	}
-	text := fmt.Sprintf(`#!/usr/bin/env bash
-# bench:managed-pre-push
-# Installed by 'bench link'. The merge is the human's; agents don't push %[1]s.
-# Read the pin state once, at the top, so --describe advertises exactly the rules the
-# enforcement below applies: the drift clause is armed only when a non-empty pin exists.
-pin_path="$(git rev-parse --git-path bench-gate-pin 2>/dev/null || true)"
-pin_tree=""
-if [[ -n "$pin_path" && -f "$pin_path" ]]; then
-  IFS= read -r pin_tree < "$pin_path" || true
-fi
-if [[ "${1:-}" == "--describe" ]]; then
-  printf 'name: pre-push\n'
-  printf 'boundary: pre-push\n'
-  if [[ -n "$pin_tree" ]]; then
-    printf 'denies: direct push to %[1]s, .bench drift from bench gate pin\n'
-    printf 'why: the merge belongs to the reviewer; agents open a PR instead of pushing %[1]s\n'
-  else
-    printf 'denies: direct push to %[1]s\n'
-    printf "why: the merge belongs to the reviewer; agents open a PR instead of pushing %[1]s; drift check disarmed - run 'bench gate pin'\n"
-  fi
-  exit 0
-fi
-if [[ -z "$pin_tree" ]]; then
-  echo "bench: gate unpinned - run 'bench gate pin' to enable .bench drift checks." >&2
-fi
-ref_lines=()
-while IFS= read -r line; do
-  ref_lines+=("$line")
-  read -r local_ref local_oid remote_ref remote_oid <<< "$line"
-  if [[ -n "$pin_tree" && ! "$local_oid" =~ ^0+$ ]]; then
-    if ! bench_tree="$(git rev-parse "$local_oid:.bench" 2>/dev/null)"; then
-      echo "blocked: pushed commit has no .bench tree. Review the gate change, then run 'bench gate pin'." >&2
-      exit 1
-    fi
-    if [[ "$bench_tree" != "$pin_tree" ]]; then
-      echo "blocked: pushed .bench tree does not match bench gate pin. Review the gate change, then run 'bench gate pin'." >&2
-      exit 1
-    fi
-  fi
-done
-for line in "${ref_lines[@]}"; do
-  read -r local_ref local_oid remote_ref remote_oid <<< "$line"
-  if [[ "$remote_ref" == "refs/heads/%[1]s" ]]; then
-    echo "blocked: direct push to %[1]s. Open a PR or merge it yourself." >&2
-    exit 1
-  fi
-done
-exit 0
-`, def)
+	text := strings.ReplaceAll(prePushTemplate, prePushBranchToken, def)
 	return os.WriteFile(prepush, []byte(text), 0o755)
 }
 

@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# bench:managed-pre-push
+# Installed by 'bench link'. The merge is the human's; agents don't push __BENCH_DEFAULT_BRANCH__.
+# Read the pin state once, at the top, so --describe advertises exactly the rules the
+# enforcement below applies: the drift clause is armed only when a non-empty pin exists.
+pin_path="$(git rev-parse --git-path bench-gate-pin 2>/dev/null || true)"
+pin_tree=""
+if [[ -n "$pin_path" && -f "$pin_path" ]]; then
+  IFS= read -r pin_tree < "$pin_path" || true
+fi
+if [[ "${1:-}" == "--describe" ]]; then
+  printf 'name: pre-push\n'
+  printf 'boundary: pre-push\n'
+  if [[ -n "$pin_tree" ]]; then
+    printf 'denies: direct push to __BENCH_DEFAULT_BRANCH__, .bench drift from bench gate pin\n'
+    printf 'why: the merge belongs to the reviewer; agents open a PR instead of pushing __BENCH_DEFAULT_BRANCH__\n'
+  else
+    printf 'denies: direct push to __BENCH_DEFAULT_BRANCH__\n'
+    printf "why: the merge belongs to the reviewer; agents open a PR instead of pushing __BENCH_DEFAULT_BRANCH__; drift check disarmed - run 'bench gate pin'\n"
+  fi
+  exit 0
+fi
+if [[ -z "$pin_tree" ]]; then
+  echo "bench: gate unpinned - run 'bench gate pin' to enable .bench drift checks." >&2
+fi
+ref_lines=()
+while IFS= read -r line; do
+  ref_lines+=("$line")
+  read -r _ local_oid _ _ <<< "$line"
+  if [[ -n "$pin_tree" && ! "$local_oid" =~ ^0+$ ]]; then
+    if ! bench_tree="$(git rev-parse "$local_oid:.bench" 2>/dev/null)"; then
+      echo "blocked: pushed commit has no .bench tree. Review the gate change, then run 'bench gate pin'." >&2
+      exit 1
+    fi
+    if [[ "$bench_tree" != "$pin_tree" ]]; then
+      echo "blocked: pushed .bench tree does not match bench gate pin. Review the gate change, then run 'bench gate pin'." >&2
+      exit 1
+    fi
+  fi
+done
+for line in "${ref_lines[@]}"; do
+  read -r _ _ remote_ref _ <<< "$line"
+  if [[ "$remote_ref" == "refs/heads/__BENCH_DEFAULT_BRANCH__" ]]; then
+    echo "blocked: direct push to __BENCH_DEFAULT_BRANCH__. Open a PR or merge it yourself." >&2
+    exit 1
+  fi
+done
+exit 0

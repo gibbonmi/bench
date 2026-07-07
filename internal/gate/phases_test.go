@@ -265,6 +265,47 @@ func TestRunnerOptionalBrokenSymlinkSkips(t *testing.T) {
 	}
 }
 
+func TestRunnerShellcheckAbsentSkipVerdictNamesNotInstalled(t *testing.T) {
+	root := t.TempDir()
+	phase := Phase{Name: "shellcheck", Argv: []string{"definitely-absent-shellcheck-binary-for-bench-test"}, Optional: true}
+
+	var stdout, stderr bytes.Buffer
+	rc := runPhases(context.Background(), root, []Phase{phase}, outerMode, &stdout, &stderr)
+	if rc != 0 {
+		t.Fatalf("absent optional binary went red rc=%d; stdout=%q stderr=%q", rc, stdout.String(), stderr.String())
+	}
+	if out := stdout.String() + stderr.String(); !strings.Contains(out, "phase shellcheck: skipped (not installed)") {
+		t.Fatalf("absent shellcheck skip verdict is silent about why (want 'skipped (not installed)'):\n%s", out)
+	}
+}
+
+func TestRunnerOptionalUnexecutableStubGoesRed(t *testing.T) {
+	root := t.TempDir()
+	bin := filepath.Join(root, "bin")
+	if err := os.Mkdir(bin, 0o755); err != nil {
+		t.Fatalf("mkdir bin: %v", err)
+	}
+	stub := filepath.Join(bin, "shellcheck")
+	if err := os.WriteFile(stub, []byte("#!/usr/bin/env bash\nexit 0\n"), 0o000); err != nil {
+		t.Fatalf("write unexecutable stub: %v", err)
+	}
+	t.Setenv("PATH", bin)
+	phase := Phase{Name: "shellcheck", Argv: []string{"shellcheck"}, Optional: true}
+
+	var stdout, stderr bytes.Buffer
+	rc := runPhases(context.Background(), root, []Phase{phase}, outerMode, &stdout, &stderr)
+	if rc != 1 {
+		t.Fatalf("present-but-unexecutable shellcheck did not go red rc=%d; stdout=%q stderr=%q", rc, stdout.String(), stderr.String())
+	}
+	out := stdout.String() + stderr.String()
+	if strings.Contains(out, "skipped") {
+		t.Fatalf("present-but-unexecutable shellcheck was masked as a skip:\n%s", out)
+	}
+	if !strings.Contains(out, "phase shellcheck: red") || !strings.Contains(out, "permission denied") {
+		t.Fatalf("red verdict does not name the exec failure:\n%s", out)
+	}
+}
+
 func TestRunnerRequiredStartFailureRed(t *testing.T) {
 	root := t.TempDir()
 	phase := Phase{Name: "required", Argv: []string{filepath.Join(root, "missing-required")}}

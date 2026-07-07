@@ -6,6 +6,7 @@ package gate
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -124,6 +125,47 @@ func TestShellcheckPhaseExpandsHookAndLibShellFiles(t *testing.T) {
 	}
 	if !reflect.DeepEqual(shellcheck.Argv, want) {
 		t.Fatalf("shellcheck argv = %#v, want %#v", shellcheck.Argv, want)
+	}
+}
+
+// TestShellcheckPhaseLintsNamedEnforcementShell is the bite-proof for the extended
+// lint set: a lint error planted in a shift adapter, in .bench/gate.sh, and in the
+// embedded pre-push asset must each turn the shellcheck phase red and be cited by
+// path. Green today (adapters/gate.sh/asset were not in the argv, and the hook body
+// hid in a Go string no linter read); red once each path joins the linted set. An
+// argv typo that drops any of them silently un-lints it and fails here, not in review.
+func TestShellcheckPhaseLintsNamedEnforcementShell(t *testing.T) {
+	if _, err := exec.LookPath("shellcheck"); err != nil {
+		t.Skip("shellcheck not installed")
+	}
+	kit := t.TempDir()
+	const clean = "#!/usr/bin/env bash\ntrue\n"
+	const badLint = "#!/usr/bin/env bash\ncd /tmp\n" // SC2164 (warning): cd without || exit
+	writeFile(t, filepath.Join(kit, "bin", "bench.sh"), clean)
+	writeFile(t, filepath.Join(kit, ".bench", "adapters", "claude"), badLint)
+	writeFile(t, filepath.Join(kit, ".bench", "adapters", "codex"), clean)
+	writeFile(t, filepath.Join(kit, ".bench", "adapters", "opencode"), clean)
+	writeFile(t, filepath.Join(kit, ".bench", "gate.sh"), badLint)
+	writeFile(t, filepath.Join(kit, "internal", "adopt", "prepush.sh"), badLint)
+
+	var shellcheck Phase
+	for _, p := range BenchkitPhases("/tmp/graded-root", kit) {
+		if p.Name == "shellcheck" {
+			shellcheck = p
+			break
+		}
+	}
+
+	var stdout, stderr bytes.Buffer
+	rc := runPhases(context.Background(), kit, []Phase{shellcheck}, outerMode, &stdout, &stderr)
+	out := stdout.String() + stderr.String()
+	if rc == 0 {
+		t.Fatalf("shellcheck phase stayed green with lint errors planted in the extended set:\n%s", out)
+	}
+	for _, cited := range []string{".bench/adapters/claude", ".bench/gate.sh", "internal/adopt/prepush.sh"} {
+		if !strings.Contains(out, cited) {
+			t.Fatalf("shellcheck phase did not lint %q (dropped from the argv set?):\n%s", cited, out)
+		}
 	}
 }
 

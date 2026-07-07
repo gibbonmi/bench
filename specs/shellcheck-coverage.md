@@ -1,6 +1,6 @@
 # shellcheck-coverage — lint the enforcement shell, and skip loudly
 
-Status: staged
+Status: implemented
 
 Source: `ASSESSMENT.md` backlog 9 (findings §2 med improvement, §2 low).
 Drafted without a decision map under the reviewer's 2026-07-06 batch approval;

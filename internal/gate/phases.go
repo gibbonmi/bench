@@ -103,7 +103,28 @@ func shellcheckArgv(root string) []string {
 	for _, dir := range []string{".bench/hooks", ".bench/lib"} {
 		argv = append(argv, shellFilesIn(root, dir)...)
 	}
+	// Load-bearing enforcement shell that suffix-scanning misses by extension or
+	// location: the extensionless shift adapters (named explicitly, not discovered
+	// by suffix — they carry no .sh by contract), the gate entry script, and the
+	// embedded pre-push hook asset. A missing file here is a conformance concern,
+	// not a shellcheck one, so only present files are linted.
+	for _, named := range []string{
+		".bench/adapters/claude",
+		".bench/adapters/codex",
+		".bench/adapters/opencode",
+		".bench/gate.sh",
+		"internal/adopt/prepush.sh",
+	} {
+		if isRegularFile(filepath.Join(root, filepath.FromSlash(named))) {
+			argv = append(argv, named)
+		}
+	}
 	return argv
+}
+
+func isRegularFile(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.Mode().IsRegular()
 }
 
 func shellFilesIn(root, relDir string) []string {
@@ -207,7 +228,7 @@ func runPhasesConcurrent(ctx context.Context, root string, phases []Phase, stdou
 
 func phaseSummary(result phaseResult) string {
 	if result.Skipped {
-		return "phase " + result.Name + ": skipped"
+		return "phase " + result.Name + ": skipped (not installed)"
 	}
 	if result.Code == 0 {
 		return "phase " + result.Name + ": green"
@@ -225,12 +246,24 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 		result.StartErr = fmt.Errorf("empty argv")
 		return result
 	}
-	if phase.Optional && !commandAvailable(phase.Argv[0]) {
-		result.Skipped = true
-		return result
+	argv := phase.Argv
+	if phase.Optional {
+		resolved, present := resolveOnPath(argv[0])
+		if !present {
+			// Truly absent from PATH: skip. The summary states "not installed" so the
+			// defense's absence is a fact on the record, not silence.
+			result.Skipped = true
+			return result
+		}
+		// Exec the resolved path directly so a present-but-unexecutable binary
+		// surfaces its real exec error (EACCES) instead of being masked as
+		// not-found by exec.LookPath's exec-bit filter. Only an exec-not-found
+		// (a missing interpreter, say) still counts as absent below; every other
+		// exec failure is red.
+		argv = append([]string{resolved}, argv[1:]...)
 	}
 
-	cmd := exec.Command(phase.Argv[0], phase.Argv[1:]...)
+	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Dir = root
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
@@ -241,7 +274,7 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 			result.Code = 130
 			return result
 		}
-		if phase.Optional && optionalStartSkip(run.StartErr) {
+		if phase.Optional && errors.Is(run.StartErr, os.ErrNotExist) {
 			result.Skipped = true
 			return result
 		}
@@ -253,20 +286,28 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 	return result
 }
 
-func commandAvailable(name string) bool {
+// resolveOnPath reports whether a file with the given command name exists on PATH,
+// ignoring the executable bit, and returns its resolved path. A bare name is searched
+// across PATH entries; a name with a separator is checked directly. Ignoring the exec
+// bit is deliberate: a present-but-unexecutable binary must reach exec so its real
+// failure surfaces, rather than being silently classified as absent.
+func resolveOnPath(name string) (string, bool) {
 	if strings.ContainsRune(name, os.PathSeparator) {
-		info, err := os.Stat(name)
-		return err == nil && !info.IsDir() && info.Mode()&0o111 != 0
+		if info, err := os.Stat(name); err == nil && !info.IsDir() {
+			return name, true
+		}
+		return "", false
 	}
-	_, err := exec.LookPath(name)
-	return err == nil
-}
-
-func optionalStartSkip(err error) bool {
-	return errors.Is(err, os.ErrNotExist) ||
-		errors.Is(err, os.ErrPermission) ||
-		errors.Is(err, syscall.ENOENT) ||
-		errors.Is(err, syscall.EACCES)
+	for _, dir := range filepath.SplitList(os.Getenv("PATH")) {
+		if dir == "" {
+			dir = "."
+		}
+		candidate := filepath.Join(dir, name)
+		if info, err := os.Stat(candidate); err == nil && !info.IsDir() {
+			return candidate, true
+		}
+	}
+	return "", false
 }
 
 type prefixWriter struct {
