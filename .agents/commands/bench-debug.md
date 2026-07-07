@@ -87,6 +87,9 @@ on merge, so a shipped feature's spec is in git history, not the working tree. D
 assume the behavior was never specified: `git log --diff-filter=D -- specs/` lists
 every deleted spec, and `git log --grep=spec-retire` finds the retirement commits
 (and any decision it promoted). Recover the origin spec there before hypothesising.
+For a single known slug, `bench spec history <slug>` runs both queries, merges and
+dedupes them, and renders one newest-first table — the sanctioned shortcut instead
+of hand-running the two commands above.
 
 ## How it meets the rest of Bench
 

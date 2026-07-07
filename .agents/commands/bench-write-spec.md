@@ -129,8 +129,10 @@ loop honest.
    sweep stays green. The same promote-then-delete commit removes the spec's
    `ROADMAP.md` row — row presence is status, so a retired spec that leaves its row
    behind keeps shipped work listed as current. git is the archive
-   (`git log --grep=spec-retire`), so no marker and no archive folder is kept.
-   Retiring the old spec is part of writing the new one, not a cleanup for later.
+   (`git log --grep=spec-retire`), so no marker and no archive folder is kept —
+   recover a retired spec's origin with `bench spec history <slug>` rather than
+   hand-running that query. Retiring the old spec is part of writing the new one,
+   not a cleanup for later.
    The same pass applies when retiring a merged, implemented spec flagged by
    `bench status`.
 

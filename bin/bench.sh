@@ -252,6 +252,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench commit -m <msg> <path>...  gate, then commit named paths on green (--spec flips its status)
   bench spec implemented <slug>    flip a spec's Status: staged line to implemented
   bench spec retire <slug>         delete a merged spec + its review pickup (validated)
+  bench spec history <slug>        retire/delete commits for a spec, newest first (TOON)
   bench version              print the installed benchkit version (os/arch)
 EOF
   ;;
