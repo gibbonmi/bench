@@ -77,7 +77,9 @@ Run it on the branch diff against its true base, on three axes that stay separat
    doc citation its axis supplied. Keep all three axis headings even when only
    one axis has findings (`0 findings` is a fine section body), so the reader
    sees the full disposition. If a stale artifact already exists for the slug,
-   replace it with the current findings — never append a second log.
+   replace it with the current findings — never append a second log. Commit the
+   artifact in the same session that writes it — the pickup is tracked state at
+   birth, never untracked drift that flips the gate verdict stale.
 
    A clean review, or one where the reviewer accepts every residual risk,
    writes no artifact: the `reviews/` directory means "there is fix work to

@@ -28,6 +28,10 @@ table that picks the row, and the escalation ladder are all `craft-line`'s.
 
 ## Then build
 
+- Before the first slice, check for `reviews/<spec-slug>.md`. When it exists, its
+  findings are part of this build's target: resolve them alongside the stories,
+  and the green fix commit that closes them names and deletes the file, so
+  resolved findings never resurface as pickup work.
 - Work the user stories in vertical slices, not all-tests-first horizontal ones.
 - Use TDD only at the pre-agreed seams; its bounds are `craft-tdd`'s.
 - If the spec has an acceptance coverage map, seed your harness's native task

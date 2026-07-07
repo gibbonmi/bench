@@ -1,9 +1,13 @@
-// Package spec owns spec-file addressing and the `bench spec implemented <slug>` flip.
-// Resolve is the one source of the spec-argument convention (path-first, then a
-// specs/<slug>.md fallback) that both `bench coverage` and `bench commit --spec` take
-// their argument through. Flip is the single source of the status-line flip: it turns
-// exactly one line-start `Status: staged` into the retirement-detector form
+// Package spec owns spec-file addressing and the two spec-lifecycle operations: the
+// `bench spec implemented <slug>` status flip (Flip) and the `bench spec retire <slug>`
+// deletion. Resolve is the one source of the spec-argument convention (path-first, then a
+// specs/<slug>.md fallback) that `bench coverage`, `bench commit --spec`, and both
+// operations take their argument through. Flip is the single source of the status-line
+// flip: it turns exactly one line-start `Status: staged` into the retirement-detector form
 // `Status: implemented`, preserving every other byte, and is composed by `bench commit`.
+// AwaitsRetirement is the single source of the merged-implemented predicate — the
+// `implemented` twin of the staged form — shared by retire's validation and the
+// `bench status` specs-awaiting-retirement counter.
 package spec
 
 import (
@@ -25,6 +29,36 @@ import (
 // detector's `^Status:[ \t]+implemented[ \t]*$`. Swapping `staged` for `implemented` in
 // place therefore yields exactly the detector's accepted form by construction.
 var stagedRe = regexp.MustCompile(`^Status:[ \t]+staged[ \t]*$`)
+
+// retireRe matches the retirement marker: a `Status:` line whose sole value is
+// `implemented`, tab/space separated, only whitespace trailing — the `implemented` twin of
+// stagedRe and the exact awk regex `^Status:[ \t]+implemented[ \t]*$`. Scanned line by
+// line, so `$` is the line end.
+var retireRe = regexp.MustCompile(`^Status:[ \t]+implemented[ \t]*$`)
+
+// AwaitsRetirement reports whether spec content carries an unfenced retirement marker: the
+// one definition of "a merged spec awaiting retirement", shared by the `bench status`
+// specs row (which counts it across specs/) and `bench spec retire` (which validates it
+// before deleting). Each line is CRLF-stripped; a line whose first three bytes are a code
+// fence toggles fence state and is skipped; lines inside a fence are skipped; the first
+// line matching the retirement regex marks the content.
+func AwaitsRetirement(content []byte) bool {
+	inFence := false
+	for _, line := range strings.Split(string(content), "\n") {
+		line = strings.TrimSuffix(line, "\r")
+		if len(line) >= 3 && line[:3] == "```" {
+			inFence = !inFence
+			continue
+		}
+		if inFence {
+			continue
+		}
+		if retireRe.MatchString(line) {
+			return true
+		}
+	}
+	return false
+}
 
 // Resolve finds the readable file backing a spec argument: the argument as given
 // (path-first, so a same-named readable file shadows the fallback), then — for a
@@ -135,42 +169,178 @@ func Flip(base, arg string) (resolved string, err error) {
 	return resolved, nil
 }
 
-// Command implements `bench spec implemented <slug>`. The slug's specs/<slug>.md fallback
-// is anchored at the repo root, so it resolves from any cwd inside the repo; a path
-// argument stays cwd-relative. Usage errors (missing subcommand, unknown subcommand, no
-// argument) exit 2; a resolve/validate/write failure exits 1 naming the file and reason.
+// Command implements `bench spec <subcommand> <slug>`: `implemented` flips the status line
+// (Flip), `retire` deletes a merged spec and its review pickup. The slug's specs/<slug>.md
+// fallback is anchored at the repo root, so it resolves from any cwd inside the repo; a
+// path argument stays cwd-relative. Usage errors (missing/unknown subcommand, missing or
+// extra argument, unknown flag) exit 2; a resolve/validate/delete failure exits 1 naming
+// the file and reason.
 func Command(args []string) (string, int) {
 	if len(args) == 0 {
-		return toon.Usage("bench spec", "expected a subcommand: implemented") + "\n", 2
+		return toon.Usage("bench spec", "expected a subcommand: implemented, retire") + "\n", 2
 	}
-	if args[0] != "implemented" {
+	switch args[0] {
+	case "implemented":
+		return implementedCommand(args[1:])
+	case "retire":
+		return retireCommand(args[1:])
+	default:
 		return toon.Usage("bench spec", args[0]) + "\n", 2
 	}
-	rest := args[1:]
-	arg := ""
+}
+
+// specArg extracts the single spec argument shared by every `bench spec` subcommand:
+// exactly one positional (a path or slug). `-h/--help` prints help at exit 0; an unknown
+// flag, a second positional, or a missing argument is a usage error at exit 2. ok is false
+// on any terminal outcome, with out/code carrying it; otherwise arg holds the one
+// positional. cmd names the subcommand for the usage line, help is its `-h` text.
+func specArg(cmd, help string, rest []string) (arg, out string, code int, ok bool) {
 	for _, a := range rest {
 		switch {
 		case a == "-h" || a == "--help":
-			return "usage: bench spec implemented <spec.md | slug>\n", 0
+			return "", help, 0, false
 		case strings.HasPrefix(a, "-"):
-			return toon.Usage("bench spec implemented", a) + "\n", 2
+			return "", toon.Usage(cmd, a) + "\n", 2, false
 		default:
 			if arg != "" {
-				return toon.Usage("bench spec implemented", a) + "\n", 2
+				return "", toon.Usage(cmd, a) + "\n", 2, false
 			}
 			arg = a
 		}
 	}
 	if arg == "" {
-		return toon.Usage("bench spec implemented", "<spec.md | slug> is required") + "\n", 2
+		return "", toon.Usage(cmd, "<spec.md | slug> is required") + "\n", 2, false
 	}
-	base := ""
+	return arg, "", 0, true
+}
+
+// repoBase returns the repo root that anchors the specs/<slug>.md fallback, or "" when the
+// cwd is outside a repo (then the fallback resolves relative to the process cwd).
+func repoBase() string {
 	if root, err := git.Root(); err == nil {
-		base = root
+		return root
 	}
-	resolved, err := Flip(base, arg)
+	return ""
+}
+
+// implementedCommand runs `bench spec implemented <slug>`: it flips the one `Status: staged`
+// line to `Status: implemented`. A resolve/validate/write failure exits 1 naming the file.
+func implementedCommand(rest []string) (string, int) {
+	arg, out, code, ok := specArg("bench spec implemented", "usage: bench spec implemented <spec.md | slug>\n", rest)
+	if !ok {
+		return out, code
+	}
+	resolved, err := Flip(repoBase(), arg)
 	if err != nil {
 		return toon.Errorf(err.Error(), "pass a spec with a single `Status: staged` line") + "\n", 1
 	}
 	return fmt.Sprintf("spec implemented: %s\n", resolved), 0
+}
+
+// retireCommand runs `bench spec retire <slug>`: on a merged-implemented spec it deletes
+// the review pickup (when present) then the spec, and prints what it removed plus the
+// judgment duties that remain. It never commits and never runs the gate — `bench commit`
+// owns commit discipline. Every unsafe input refuses at exit 1 without deleting anything: a
+// spec that is not merged-implemented (staged, or implemented only in the working tree and
+// not yet at HEAD), an unknown slug, or an orphaned review pickup with no spec.
+func retireCommand(rest []string) (string, int) {
+	arg, out, code, ok := specArg("bench spec retire", "usage: bench spec retire <spec.md | slug>\n", rest)
+	if !ok {
+		return out, code
+	}
+	base := repoBase()
+	content, resolved, tried, found, err := Resolve(base, arg)
+	if err != nil {
+		return toon.Errorf(fmt.Sprintf("spec not readable: %s: %v", resolved, err), "check file permissions") + "\n", 1
+	}
+	if !found {
+		// A review pickup with no spec is a reviewer judgment, never an auto-clean.
+		if orphan, ok := orphanPickup(base, arg); ok {
+			return toon.Errorf("orphaned review pickup: "+orphan+" has no spec",
+				"delete "+orphan+" by hand if its residual risk is accepted; retire never auto-cleans a pickup") + "\n", 1
+		}
+		return toon.Errorf("spec not found: "+strings.Join(tried, ", "), "pass a merged spec path or slug") + "\n", 1
+	}
+	// Merged-implemented reuses AwaitsRetirement (the status detector), and additionally
+	// requires the marker at HEAD: an implemented-but-uncommitted spec means the finishing
+	// commit has not landed, so retiring it would delete work git cannot recover.
+	if !AwaitsRetirement(content) {
+		return toon.Errorf("spec not merged-implemented: "+relTo(base, resolved),
+			"retire only a spec whose Status line reads implemented") + "\n", 1
+	}
+	if !implementedAtHEAD(base, resolved) {
+		return toon.Errorf("spec implemented in the working tree but not at HEAD: "+relTo(base, resolved),
+			"commit the finishing flip before retiring") + "\n", 1
+	}
+	// Deletion order: review pickup first, then the spec, so an interrupt between the two
+	// leaves a valid spec that a re-run retires cleanly — never an orphaned review file.
+	var b strings.Builder
+	slug := slugOf(resolved)
+	if pickup := filepath.Join(base, "reviews", slug+".md"); fileExists(pickup) {
+		if err := os.Remove(pickup); err != nil {
+			return toon.Errorf(fmt.Sprintf("remove %s: %v", relTo(base, pickup), err), "check file permissions") + "\n", 1
+		}
+		fmt.Fprintf(&b, "retired: %s\n", relTo(base, pickup))
+	}
+	if err := os.Remove(resolved); err != nil {
+		return b.String() + toon.Errorf(fmt.Sprintf("remove %s: %v", relTo(base, resolved), err), "check file permissions") + "\n", 1
+	}
+	fmt.Fprintf(&b, "retired: %s\n", relTo(base, resolved))
+	fmt.Fprintf(&b, "next: promote durable content, remove the ROADMAP row, commit as `spec-retire: %s`\n", slug)
+	return b.String(), 0
+}
+
+// implementedAtHEAD reports whether the spec's content at HEAD carries the retirement
+// marker — the "finishing commit has landed" guard. It reads the blob through git (stderr
+// is discarded), so a spec absent from HEAD or still staged there reads as false.
+func implementedAtHEAD(base, resolved string) bool {
+	rel := filepath.ToSlash(relTo(base, resolved))
+	args := []string{"show", "HEAD:" + rel}
+	if base != "" {
+		args = append([]string{"-C", base}, args...)
+	}
+	content, err := git.Raw(args...)
+	if err != nil {
+		return false
+	}
+	return AwaitsRetirement(content)
+}
+
+// orphanPickup reports the repo-relative reviews/<slug>.md when a review pickup exists for a
+// slug whose spec did not resolve — the orphaned-pickup refusal names it.
+func orphanPickup(base, arg string) (string, bool) {
+	pickup := filepath.Join(base, "reviews", slugOf(arg)+".md")
+	if fileExists(pickup) {
+		return relTo(base, pickup), true
+	}
+	return "", false
+}
+
+// slugOf is the spec slug of a path or bare argument: its basename without the .md suffix.
+func slugOf(arg string) string {
+	return strings.TrimSuffix(filepath.Base(arg), ".md")
+}
+
+// fileExists reports whether path is an existing regular file (not a directory).
+func fileExists(path string) bool {
+	fi, err := os.Stat(path)
+	return err == nil && !fi.IsDir()
+}
+
+// relTo renders path repo-relative to base for a stable `retired: specs/<slug>.md` line,
+// falling back to the path verbatim when base is empty or path lies outside base.
+func relTo(base, path string) string {
+	if base == "" {
+		return path
+	}
+	abs := path
+	if !filepath.IsAbs(abs) {
+		if a, err := filepath.Abs(path); err == nil {
+			abs = a
+		}
+	}
+	if rel, err := filepath.Rel(base, abs); err == nil && !strings.HasPrefix(rel, "..") {
+		return rel
+	}
+	return path
 }

@@ -1,6 +1,6 @@
 # artifact-lifecycle — own the backward path (spec retirement + review pickup)
 
-Status: staged
+Status: implemented
 
 Source: `ASSESSMENT.md` backlog 1 + 11 (findings §1 high/med, §3 med/low).
 Drafted without a decision map under the reviewer's 2026-07-06 batch approval;

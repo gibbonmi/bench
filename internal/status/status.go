@@ -6,15 +6,16 @@
 // the fixed-width rows, and the `+N more` overflow.
 //
 // One rule per signal lives in its own package; status only orders the signals by
-// severity and formats them. The merged-spec retirement counter (retirementCount) is
-// the sole parser owned here, because no sibling surfaces it.
+// severity and formats them. The specs housekeeping signals are counted here —
+// retirementCount over specs/ (applying the shared spec.AwaitsRetirement predicate) and
+// orphanedPickupCount pairing reviews/ against specs/ — but the merged-implemented
+// predicate itself is spec.AwaitsRetirement, one source shared with `bench spec retire`.
 package status
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -22,15 +23,11 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/roadmap"
+	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/structure"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
-
-// retireRe matches the unfenced retirement marker: a `Status:` line whose sole value is
-// `implemented`, tab/space separated, with only whitespace trailing — the exact awk
-// regex `^Status:[ \t]+implemented[ \t]*$`. We scan line by line, so `$` is the line end.
-var retireRe = regexp.MustCompile(`^Status:[ \t]+implemented[ \t]*$`)
 
 var captureOnlyStalePaths = map[string]bool{
 	".bench-notes.md": true,
@@ -76,6 +73,7 @@ func render(root string) string {
 	rows = appendStructure(rows, root)
 	rows = appendMaps(rows, root)
 	rows = appendRetirement(rows, root)
+	rows = appendOrphanedPickup(rows, root)
 
 	// Ascending numeric sort by severity; each severity is unique, so ordering is
 	// fully determined and the min-severity row leads.
@@ -270,11 +268,20 @@ func appendRetirement(rows []row, root string) []row {
 	return rows
 }
 
-// retirementCount counts specs/*.md files carrying an unfenced `Status: implemented`
-// marker — a merged spec awaiting retirement. Absent `specs/` → 0. Per the awk logic each
-// line is CRLF-stripped; a line whose first three bytes are a code fence toggles fence
-// state and is skipped; lines inside a fence are skipped; the first line matching the
-// retirement regex marks the file (counted once, scan stops).
+// appendOrphanedPickup adds the orphaned-review-pickup signal (sev 8): a reviews/<slug>.md
+// with no matching specs/<slug>.md is a pickup file that escaped its lifecycle. It ranks
+// with the housekeeping rows, just below the retirement signal, so it never displaces the
+// gate/git rows in the budget. A paired pickup (its spec still present) is expected state.
+func appendOrphanedPickup(rows []row, root string) []row {
+	if n := orphanedPickupCount(root); n > 0 {
+		return append(rows, row{8, "reviews", plural(n, "orphaned review pickup", "orphaned review pickups"), "promote or delete by hand"})
+	}
+	return rows
+}
+
+// retirementCount counts specs/*.md files that spec.AwaitsRetirement marks — a merged spec
+// awaiting retirement. Absent `specs/` → 0. The unfenced-marker predicate is
+// spec.AwaitsRetirement's one source.
 func retirementCount(root string) int {
 	dir := filepath.Join(root, "specs")
 	info, err := os.Stat(dir)
@@ -295,30 +302,32 @@ func retirementCount(root string) int {
 		if err != nil {
 			continue
 		}
-		if fileAwaitsRetirement(content) {
+		if spec.AwaitsRetirement(content) {
 			n++
 		}
 	}
 	return n
 }
 
-// fileAwaitsRetirement is the per-file awk predicate: an unfenced retirement marker.
-func fileAwaitsRetirement(content []byte) bool {
-	inFence := false
-	for _, line := range strings.Split(string(content), "\n") {
-		line = strings.TrimSuffix(line, "\r")
-		if len(line) >= 3 && line[:3] == "```" {
-			inFence = !inFence
-			continue
-		}
-		if inFence {
-			continue
-		}
-		if retireRe.MatchString(line) {
-			return true
-		}
+// orphanedPickupCount counts reviews/*.md files with no matching specs/<slug>.md — a review
+// pickup whose spec retired first or was never present. Absent `reviews/` → 0. Hidden and
+// non-.md entries are skipped, mirroring the retirementCount dir-walk.
+func orphanedPickupCount(root string) int {
+	entries, err := os.ReadDir(filepath.Join(root, "reviews"))
+	if err != nil {
+		return 0
 	}
-	return false
+	n := 0
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".md") || strings.HasPrefix(e.Name(), ".") {
+			continue
+		}
+		if info, err := os.Stat(filepath.Join(root, "specs", e.Name())); err == nil && !info.IsDir() {
+			continue // paired: its spec is still present
+		}
+		n++
+	}
+	return n
 }
 
 // learningsFloor reads BENCH_LEARNINGS_FLOOR, defaulting to 1 when unset, empty, or not

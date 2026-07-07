@@ -16,7 +16,10 @@ Close by reporting the gate result plainly. On green, land the verified work wit
 `bench commit`, naming the files the work touched — it gates and commits them
 atomically, and it enforces the commit discipline so this phase doesn't restate
 it. Use `bench commit --spec <slug>` when the commit finishes a spec, so the
-status flip rides in the same commit. If it refuses over an unexplained
+status flip rides in the same commit. When the reviewer accepts residual review
+risk and skips the fix pass, delete `reviews/<spec-slug>.md` and name it in the
+landing commit — the pickup must not outlive the decision it captured. If it
+refuses over an unexplained
 working-tree file, handle the refusal as `/bench-implement-spec`'s close-on-green
 describes. Then hand back for the reviewer to merge or decide what ships. On red, report
 the first failing check and the smallest reproduction, then recommend the command

@@ -77,10 +77,126 @@ func testSpecUsageExitTwo(t *testing.T) {
 	f := contract.NewFixture(t)
 	for _, args := range [][]string{
 		{"spec"},                       // no subcommand
-		{"spec", "retire"},             // unknown subcommand
+		{"spec", "retire"},             // no argument
+		{"spec", "unknowncmd"},         // unknown subcommand
 		{"spec", "implemented"},        // no argument
 		{"spec", "implemented", "--x"}, // unknown flag
 	} {
 		f.Bench(args...).RequireExit(2)
+	}
+}
+
+func TestRuntimeSpecRetireContracts(t *testing.T) {
+	contract.SkipIfSubjectBenchMissing(t)
+	t.Parallel()
+	contract.RunParallel(t, "retire deletes pickup then spec and prints duties", testSpecRetireMergedDeletesBoth)
+	contract.RunParallel(t, "retire with no pickup retires the spec alone", testSpecRetireNoPickup)
+	contract.RunParallel(t, "retire refuses a staged spec without deleting", testSpecRetireStagedRefuses)
+	contract.RunParallel(t, "retire refuses an implemented spec not yet at HEAD", testSpecRetireNotAtHEAD)
+	contract.RunParallel(t, "retire on unknown slug and bad args", testSpecRetireBadArgs)
+	contract.RunParallel(t, "retire refuses an orphaned pickup", testSpecRetireOrphanedPickup)
+}
+
+func testSpecRetireMergedDeletesBoth(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteFile("specs/x.md", "# x\n\nStatus: implemented\n")
+	f.WriteFile("reviews/x.md", "# review of x\n")
+	f.CommitAll("merge x")
+
+	p := f.Bench("spec", "retire", "x")
+	p.RequireExit(0)
+	p.RequireContains(p.Stdout, "retired: reviews/x.md")
+	p.RequireContains(p.Stdout, "retired: specs/x.md")
+	p.RequireContains(p.Stdout, "spec-retire: x")
+	if f.Exists("specs/x.md") {
+		t.Fatalf("spec not deleted:\n%s", p.Stdout)
+	}
+	if f.Exists("reviews/x.md") {
+		t.Fatalf("review pickup not deleted:\n%s", p.Stdout)
+	}
+
+	// Re-run idempotency: the spec is gone, so a second retire hits the unknown-slug path.
+	p2 := f.Bench("spec", "retire", "x")
+	p2.RequireExit(1)
+	p2.RequireContains(p2.Stdout+p2.Stderr, "not found")
+
+	// Path-argument resolution (asserted once): a path arg resolves the same spec.
+	g := contract.NewFixture(t)
+	g.WriteFile("specs/y.md", "# y\n\nStatus: implemented\n")
+	g.CommitAll("merge y")
+	pp := g.Bench("spec", "retire", "specs/y.md")
+	pp.RequireExit(0)
+	pp.RequireContains(pp.Stdout, "retired: specs/y.md")
+	if g.Exists("specs/y.md") {
+		t.Fatal("path-arg retire did not delete the spec")
+	}
+}
+
+func testSpecRetireNoPickup(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteFile("specs/x.md", "# x\n\nStatus: implemented\n")
+	f.CommitAll("merge x")
+
+	p := f.Bench("spec", "retire", "x")
+	p.RequireExit(0)
+	p.RequireContains(p.Stdout, "retired: specs/x.md")
+	p.RequireNotContains(p.Stdout, "reviews/") // no phantom pickup line when none exists
+	if f.Exists("specs/x.md") {
+		t.Fatal("spec not deleted")
+	}
+}
+
+func testSpecRetireStagedRefuses(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteFile("specs/x.md", "# x\n\nStatus: staged\n")
+	f.CommitAll("stage x")
+
+	p := f.Bench("spec", "retire", "x")
+	p.RequireExit(1)
+	p.RequireContains(p.Stdout+p.Stderr, "not merged-implemented")
+	if !f.Exists("specs/x.md") {
+		t.Fatal("staged spec was deleted — retire must refuse without deleting")
+	}
+}
+
+func testSpecRetireNotAtHEAD(t *testing.T) {
+	f := contract.NewFixture(t)
+	// Committed as staged, then flipped to implemented only in the working tree.
+	f.WriteFile("specs/x.md", "# x\n\nStatus: staged\n")
+	f.CommitAll("stage x")
+	f.WriteFile("specs/x.md", "# x\n\nStatus: implemented\n")
+
+	p := f.Bench("spec", "retire", "x")
+	p.RequireExit(1)
+	p.RequireContains(p.Stdout+p.Stderr, "not at HEAD")
+	if !f.Exists("specs/x.md") {
+		t.Fatal("uncommitted implemented spec was deleted — retire must refuse")
+	}
+}
+
+func testSpecRetireBadArgs(t *testing.T) {
+	f := contract.NewFixture(t)
+	// Unknown slug: exit 1 naming the tried paths.
+	p := f.Bench("spec", "retire", "nope")
+	p.RequireExit(1)
+	p.RequireContains(p.Stdout+p.Stderr, "not found")
+	p.RequireContains(p.Stdout+p.Stderr, "specs/nope.md")
+	// Extra positional, unknown flag, and missing slug: usage errors exit 2.
+	f.Bench("spec", "retire", "x", "y").RequireExit(2)
+	f.Bench("spec", "retire", "--x").RequireExit(2)
+	f.Bench("spec", "retire").RequireExit(2)
+}
+
+func testSpecRetireOrphanedPickup(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteFile("reviews/x.md", "# orphan review\n")
+	f.CommitAll("orphan pickup")
+
+	p := f.Bench("spec", "retire", "x")
+	p.RequireExit(1)
+	p.RequireContains(p.Stdout+p.Stderr, "orphaned review pickup")
+	p.RequireContains(p.Stdout+p.Stderr, "reviews/x.md")
+	if !f.Exists("reviews/x.md") {
+		t.Fatal("orphaned pickup was auto-cleaned — retire must refuse")
 	}
 }

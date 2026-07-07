@@ -22,6 +22,7 @@ func TestRuntimeStatusContracts(t *testing.T) {
 	contract.RunParallel(t, "bench status budget contract", testRuntimeStatusBudget)
 	contract.RunParallel(t, "bench status warm-pool contract", testRuntimeStatusWarmPool)
 	contract.RunParallel(t, "bench status retirement-signal contract", testRuntimeStatusRetirementSignal)
+	contract.RunParallel(t, "bench status orphaned-pickup contract", testRuntimeStatusOrphanedPickup)
 	contract.RunParallel(t, "bench status learnings-floor contract", testRuntimeStatusLearningsFloor)
 }
 
@@ -252,6 +253,23 @@ func testRuntimeStatusRetirementSignal(t *testing.T) {
 	f.Git("rm", "-q", "specs/done.md")
 	f.CommitAll("retire")
 	contract.RequireNotContains(t, f.Bench("status").Stdout, "awaiting retirement")
+}
+
+func testRuntimeStatusOrphanedPickup(t *testing.T) {
+	// A review pickup with no matching spec is flagged with a clean-up action.
+	f := contract.NewFixture(t)
+	f.WriteFile("reviews/x.md", "# review of x\n")
+	f.CommitAll("orphan pickup")
+	out := f.Bench("status").Stdout
+	contract.RequireContains(t, out, "orphaned review pickup")
+	contract.RequireContains(t, out, "promote or delete by hand")
+
+	// A paired pickup (its spec still present) is expected state — no row fires.
+	paired := contract.NewFixture(t)
+	paired.WriteFile("reviews/x.md", "# review of x\n")
+	paired.WriteFile("specs/x.md", "# x\n\nStatus: staged\n")
+	paired.CommitAll("paired")
+	contract.RequireNotContains(t, paired.Bench("status").Stdout, "orphaned review pickup")
 }
 
 func testRuntimeStatusLearningsFloor(t *testing.T) {
