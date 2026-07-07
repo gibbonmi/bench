@@ -21,3 +21,23 @@ Format per entry:
 An entry leaves this file only via /bench-what-next.
 
 <!-- entries below -->
+
+## 2026-07-07 — merge-time done-claim verification thinned as the batch wore on  [open]
+- **What happened:** During the twelve-spec batch, every delegate merge got
+  `git status` on the worktree, a commit-stat scope check, and the full gate on
+  the merged tree — but independent spot-checks of the claimed behaviors
+  (re-running a red signal, probing the built binary) were done for the early
+  merges and skipped for the later ones. Since delegates author the very tests
+  that pin their behaviors, gate-green alone can't distinguish a correct build
+  from a self-consistent spec-divergent one. The reviewer's question flushed
+  the gap; post-hoc probes of every thinly-verified surface (line-guard deny,
+  structure loud error, models argv, split-survival of concurrent hunks,
+  unlink end-to-end) all passed, so no defect shipped — this time.
+- **Right behavior:** Merge-time verification of a write-delegation includes at
+  least one independent behavioral probe per spec — exercising a claimed
+  behavior through the built binary or a throwaway fixture the delegate did not
+  author — alongside the gate, `git status`, and the scope check. Constant
+  across a batch, not front-loaded.
+- **Proposed rule change:** Add one sentence to `craft-delegate`'s
+  "Verifying the done-claim" list: at least one accepted behavior is probed
+  independently of the delegate's own tests before the merge is accepted.
