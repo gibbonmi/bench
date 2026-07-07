@@ -21,3 +21,17 @@ Format per entry:
 An entry leaves this file only via /bench-what-next.
 
 <!-- entries below -->
+
+## 2026-07-07 — transient gate red recurred under back-to-back full-gate load  [open]
+- **What happened:** During the ten-commit spec-retire pass, one `bench commit`
+  gate run went red on a docs-only deletion; the byte-identical tree gated
+  green on the next run. This matches the ROADMAP Watch note (worktree
+  concurrent-acquire failed once under full-gate load on 2026-07-06), but the
+  failing check is unattributed because the batch loop piped gate output
+  through `tail -2`, discarding the failing phase.
+- **Right behavior:** Batch loops over `bench commit` capture full output (no
+  pipe-masking of exit codes or failing checks), and a recurred flake gets a
+  deflake row: make the concurrent-acquire contract test deterministic under
+  gate phase concurrency or serialize its acquire window.
+- **Proposed rule change:** none — work-shaped; drain to a roadmap row for the
+  deflake.
