@@ -112,15 +112,20 @@ bench/
 │   └── skills/               # portable generation-shaping skills; generated index in .bench/BENCH-reference.md
 ├── .bench/
 │   ├── BENCH.md              # full Bench operating guide installed into projects
+│   ├── BENCH-reference.md    # on-demand lookup: file map, skills index, adapter + hook detail
+│   ├── gate.sh               # the project gate (oracle); kept out of the shipped npm package
+│   ├── lines.env             # machine-readable tier->model binding read by hooks + adapters
 │   ├── adapters/             # reference BENCH_AGENT adapters for bench shift
 │   │   ├── claude
 │   │   ├── codex
 │   │   └── opencode
-│   └── hooks/                # shared hook scripts used by harness adapters
-│       ├── session-start.sh
-│       ├── stop.sh
-│       ├── block-dangerous-git.sh
-│       └── check-agent-line.sh   # denies Agent delegations off the bound line
+│   ├── hooks/                # shared hook scripts used by harness adapters
+│   │   ├── session-start.sh
+│   │   ├── stop.sh
+│   │   ├── block-dangerous-git.sh
+│   │   └── check-agent-line.sh   # denies Agent delegations off the bound line
+│   ├── lib/                  # shared shell helpers the hooks and gate source
+│   └── bin/                  # link-installed local CLI set (consumer repos; not in the kit)
 ├── .claude/
 │   ├── README.md             # explains Claude adapter paths -> .agents and .bench/hooks
 │   ├── settings.json         # Claude Code adapter pointing at .bench/hooks
@@ -133,6 +138,7 @@ bench/
 │   ├── bench.sh              # strangler router to the Go core + one-glance run_gate adapter
 │   └── bench-postinstall.sh  # best-effort global shim installer
 ├── cmd/bench/                # the compiled core's main: dispatch + version
+├── dist/                     # gitignored dev build; the gate rebuilds bench here (never committed)
 ├── internal/                 # the Go core: AXI query surface, status, structure + plumbing
 │   ├── adopt/                # link/init/doctor adoption mutators
 │   ├── toon/                 # the shared flat-table TOON emitter (one escaping rule)
@@ -159,6 +165,13 @@ bench/
 
 The reviewer-facing setup path is the setup command above. The worker-facing
 mechanics underneath are the `bench` CLI commands here.
+
+**Prerequisites.** Bench runs on macOS or Linux; Windows is unsupported, so use
+WSL2. You need one runtime: **Node** to run via `npx` or a global `npm i -g
+benchkit` (both fetch a prebuilt binary), or **Go** to build the compiled core
+yourself when you install from a clone. If you install globally under a node
+version manager, mind the PATH-shim caveat noted with the global-install steps
+below.
 
 Bench ships as an npm package, so the fastest way for the worker to wire a repo is
 `npx` — nothing to clone, no global install:
