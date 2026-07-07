@@ -29,7 +29,12 @@ surface, so the spec needs a portable model-id grammar and malformed-value
 posture.
 
 ### Answer
-— (open)
+Tier values are opaque reviewer-owned model-id tokens, not provider-prefixed
+Claude ids. The gate validates only that each `BENCH_TIER_*` value is a safe
+non-empty printable token for a harness to receive, rejecting whitespace,
+control bytes, and shell-dangerous characters with the key and value named.
+Provider existence is not enforced by the gate: discovery is advisory, so an
+unknown-to-discovery but syntactically safe model id remains a valid binding.
 
 ## #3: What should `bench models` discover?
 
