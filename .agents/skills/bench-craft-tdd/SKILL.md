@@ -24,7 +24,7 @@ minimum to pass its own tests, then stop. So:
   don't skip it.
 - The spec's user stories are the breadth **floor, not the ceiling**. At a marked
   seam, enumerate the behavior's failure modes by walking the edge classes —
-  the generic classes live in `/bench-write-spec`'s edge-inventory step, and
+  the generic classes live in `bench-craft-spec`'s edge inventory, and
   the domain half is the project profile's hostile-input checklist — and
   propose them as coverage rows for the
   reviewer to veto; never silently skip an edge the spec forgot. The over-fit guard constrains what *correct* means (the reviewer chose
@@ -70,7 +70,7 @@ failing when the iteration ends is destroyed, not carried to the next one.
 
 When `/bench-write-spec` includes an acceptance coverage map, treat each
 acceptance row as the unit of TDD coverage. The row schema and the red-signal definition are
-`/bench-write-spec`'s — its acceptance-coverage-map step is the one source of
+`bench-craft-spec`'s — its coverage-map section is the one source of
 the five fields and of what a red signal must be; don't restate them here. This
 skill owns only the TDD-side discipline for working the rows:
 

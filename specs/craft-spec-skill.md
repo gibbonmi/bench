@@ -1,6 +1,6 @@
 # Craft-spec skill — own the coverage-map schema, edge classes, and story sizing
 
-Status: staged
+Status: implemented
 
 ## Problem
 

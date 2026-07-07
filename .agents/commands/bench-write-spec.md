@@ -80,68 +80,31 @@ loop honest.
    can veto a wrong seam by looking at a picture instead of reconstructing the
    flow from prose.
 
-3. **Price every cut, in your time — not a human's.** Before anything is deferred,
-   estimate it in *agent* time, because that's the real cost here. The instinct to
-   defer is calibrated to humans who can't spare the afternoon; you can. Derive the
-   estimate instead of guessing: agent time is dominated by verification, so state
-   it as `<n> edits, <n> gate runs` — a vibes number can't pass as a price. Two
-   rules follow, and they are the point of this step:
-   - **No deferral under the threshold — this binds you, not me.** Anything under
-     ~30 minutes of your work that introduces no new architectural decision is
-     something you do *not* get to propose deferring — it's just part of this build,
-     so do it now and state the estimate out loud. But scope is mine: if *I* choose
-     to defer something small for my own reasons, record it in Out of scope with its
-     estimate and no argument. The rule stops you pitching the dodge; it never
-     overrides my call.
-   - **A cut must be a separate capability, not the rest of this one.** Something is
-     only legitimately out of scope if it has its own future spec — a distinct
-     feature. If it's "the rest of *this* feature" (the error cases, the other half
-     of the CRUD, the edge handling), it is not out of scope; it's an acceptance
-     criterion. Move it into the user stories and testing decisions so the **gate**
-     enforces it, rather than leaving it in a prose aside that disappears. You can't
-     ticket your way out of the spec's own breadth.
+3. **Price every cut, in your time — not a human's.** The sizing discipline —
+   the breadth floor, the derived `<n> edits, <n> gate runs` pricing, the
+   under-threshold no-deferral rule, and the separate-capability cut test — is
+   `bench-craft-spec`'s; apply it to every proposed cut. Scope stays mine: if
+   *I* choose to defer something small for my own reasons, record it in Out of
+   scope with its estimate and no argument — the rules stop you pitching the
+   dodge; they never override my call.
 
 4. **Map acceptance coverage.** For non-trivial feature work, add an
    **acceptance coverage map** to Testing decisions before implementation begins.
-   Each row ties a user story to one observable behavior at a chosen seam, with
-   these fields: `story`, `behavior`, `seam`, `red signal`, and
-   `why it catches the failure`. The red signal is the command or test that has
-   already been run and failed because the mapped behavior is absent or wrong. If
-   the behavior is already covered or cannot start red, say so in the row instead
-   of pretending it is TDD coverage. Before locking the map, name the cheapest
-   wrong implementation of each story — the sequential port, the always-green
-   stub — and confirm a row goes red on it; a map the degenerate implementation
-   passes has not pinned the behavior. When a behavior or red-signal promise
-   quantifies over a set ("each check", "every parser"), enumerate the set or
-   state the granularity explicitly — per item or per class. An unenumerated
-   "each" lets the build pick the cheapest reading, and review is the wrong
-   place to catch that. When the map's Handoff names black-box assertables
-   (item 4), each one lands as a coverage row or a stated exception; an
-   assertable with no row is a missing behavior, not an editorial choice.
+   The row schema and the red-signal definition are `bench-craft-spec`'s — that
+   skill is the one source of the five fields (including the `red signal` and
+   `why it catches the failure` columns), the honest-classification rule, the
+   degenerate-implementation check, the quantifier-enumeration rule, and the
+   Handoff-assertables-to-rows rule; compose it and apply them here.
 
-5. **Walk the edge inventory.** Stories are happy-path shaped; this step generates
-   the cases nobody declared. For each mapped behavior, walk the edge classes —
-   error path, empty/absent input, boundary values, malformed input,
-   interrupted/partial state, re-run idempotency, hostile environment (this is
-   the canonical edge-class list; `craft-tdd` and `/bench-review-implementation`
-   point here) — and
-   consult the project
-   profile's hostile-input checklist (`projects/<name>.md`) when one exists, so
-   domain edges recur instead of being rediscovered per defect. When the profile
-   has no checklist for the surface being touched, quarry the kit's hostile-input
-   library (`.agents/skills/bench-craft-seams/references/hostile-input-library.md`)
-   and propose adding the tuned section to the profile. Every edge lands
-   in exactly one of two places: a coverage row (story column may read "edge of
-   N"), or a one-line **Won't handle** entry directly under the map. Both are
-   veto surface; a silently untested edge is the failure this step exists to
-   prevent. Before writing a **Won't handle** line about an interface, verify at
-   least one in-scope caller can still exercise the feature under that exclusion —
-   a cut that amputates the surface's primary calling convention is a spec defect,
-   not a scope cut. If the spec names an external format or protocol, check
-   whether an official implementation exists and whether the current output
-   conforms; divergence is a reviewer decision, not a silent compatibility
-   promise. If a map or research asset claims byte or wire compatibility, require
-   a runnable probe against the caller's own edge outputs as the evidence.
+5. **Walk the edge inventory.** The canonical edge classes, the
+   row-or-**Won't handle** landing rule, the amputated-caller guard, and the
+   compatibility-probe rule are `bench-craft-spec`'s — walk them for each
+   mapped behavior. Consult the project profile's hostile-input checklist
+   (`projects/<name>.md`) when one exists, so domain edges recur instead of
+   being rediscovered per defect; when the profile has no checklist for the
+   surface being touched, quarry the kit's hostile-input library
+   (`.agents/skills/bench-craft-seams/references/hostile-input-library.md`) and
+   propose adding the tuned section to the profile.
 
 6. **Route each story.** Give every user story its line — the resolved model id
    and effort from the `craft-line` decision table, judged per story on spec
