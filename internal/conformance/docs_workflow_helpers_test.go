@@ -74,6 +74,8 @@ func checkWorkflowAnchors(root string) []string {
 	require(".agents/commands/bench-implement-spec.md", "reviews/<spec-slug>.md")
 	require(".agents/commands/bench-implement-spec.md", "names and deletes the file")
 	require(".agents/commands/bench-final-check.md", "not outlive the decision it captured")
+	require(".agents/commands/bench-implement-spec.md", "bench commit -m")
+	require(".agents/commands/bench-final-check.md", "bench commit -m")
 	require(".agents/commands/bench-review-implementation.md", "actionable findings")
 	require(".agents/commands/bench-review-implementation.md", "writes no artifact")
 	require(".agents/commands/bench-review-implementation.md", "same green fix commit")

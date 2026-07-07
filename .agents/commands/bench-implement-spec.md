@@ -86,8 +86,8 @@ defined route — never a silent grind, never an abandoned worktree:
   changed path once end-to-end — invoke the real command, endpoint, or call the
   diff changes and read its output. A mismatch here is a defect to fix or
   surface, never a footnote.
-- Land the finishing commit with `bench commit --spec <slug>`, naming the files the
-  build actually touched — it gates, flips the spec's status line, and commits the
+- Land the finishing commit with `bench commit -m "<msg>" --spec <slug>`, naming the
+  files the build actually touched — it gates, flips the spec's status line, and commits the
   named paths atomically, and it enforces the commit discipline so you don't have
   to restate it. When it refuses over an unexplained working-tree file, surface the
   file to the reviewer; don't commit or revert it on your own.

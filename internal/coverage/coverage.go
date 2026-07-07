@@ -230,11 +230,18 @@ func Command(args []string) (string, int) {
 	if check {
 		violations := Check(p)
 		if len(violations) == 0 {
+			// A mapped spec with zero violations gets a definitive pass line — silent
+			// success is indistinguishable from a check that produced no output by
+			// accident. A historical or no-map spec has nothing to validate, so it
+			// keeps the AXI empty-state posture (silent, exit 0).
+			if State(p) == "mapped" {
+				return fmt.Sprintf("ok: coverage map valid — %d row(s)\n", len(p.dataRows)), 0
+			}
 			return "", 0
 		}
 		var b strings.Builder
 		for _, viol := range violations {
-			fmt.Fprintf(&b, "error: %s %s — fix the map or mark it <!-- coverage-map: historical -->\n", spec, viol)
+			fmt.Fprintln(&b, toon.Errorf(spec+" "+viol, "fix the map or mark it <!-- coverage-map: historical -->"))
 		}
 		return b.String(), 1
 	}

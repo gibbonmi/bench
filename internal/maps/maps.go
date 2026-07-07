@@ -216,7 +216,7 @@ func Command(args []string) (string, int) {
 		}
 		return strconv.Itoa(UnresolvedCount(root)) + "\n", 0
 	case args[0] == "-h" || args[0] == "--help":
-		return "usage: bench maps\n", 0
+		return "usage: bench maps [--count]\n", 0
 	default:
 		return toon.Usage("bench maps", args[0]) + "\n", 2
 	}

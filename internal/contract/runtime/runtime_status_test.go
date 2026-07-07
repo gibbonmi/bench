@@ -33,6 +33,13 @@ func testRuntimeIdeaRoadmap(t *testing.T) {
 	absent.RequireExit(0)
 	contract.RequireContains(t, absent.Stdout, "no ROADMAP.md")
 	contract.RequireContains(t, absent.Stdout, "/bench-what-next")
+
+	// Outside a git repo, `roadmap` takes the same structured not-in-repo posture
+	// as its sibling `idea` — exit 1, not the in-repo maintenance prompt above.
+	noRepo := contract.NewFixture(t, contract.WithNoRepo())
+	outsideRepo := noRepo.Bench("roadmap")
+	outsideRepo.RequireExit(1)
+	contract.RequireContains(t, outsideRepo.Stdout, "error: not in a git repository")
 	for _, args := range [][]string{nil, {""}, {"   ", "\t"}} {
 		blank := contract.NewFixture(t)
 		p := blank.Bench(append([]string{"idea"}, args...)...)

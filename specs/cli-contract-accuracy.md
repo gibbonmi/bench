@@ -1,6 +1,6 @@
 # cli-contract-accuracy — the CLI says what it does and does what it says
 
-Status: staged
+Status: implemented
 
 Source: `ASSESSMENT.md` backlog 7 + 8 (findings §1 med, §4 med/low-med/low)
 plus the two open code findings from the ft9 review (committed at

@@ -1,4 +1,4 @@
-// Package commit owns `bench commit [-m <msg>] [--spec <slug>] <path>...`: the thin
+// Package commit owns `bench commit -m <msg> [--spec <slug>] <path>...`: the thin
 // orchestrator that mechanizes "commit on green, never on red" so the invariant lives in
 // code, not in prose the agent must remember. It sequences block-check → gate → flip →
 // stage → commit: it refuses before gating if any working-tree file outside the named set

@@ -2,6 +2,8 @@ package axi
 
 import (
 	"github.com/gibbonmi/bench/internal/contract"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -13,9 +15,12 @@ func TestAXIWave2Contracts(t *testing.T) {
 	contract.RunParallel(t, "AXI diff fallback/shape contract", testAXIDiffFallbackShape)
 	contract.RunParallel(t, "AXI diff error-posture contract", testAXIDiffErrorPosture)
 	contract.RunParallel(t, "AXI diff --full contract", testAXIDiffFullContract)
+	contract.RunParallel(t, "AXI diff git-failure propagation contract", testAXIDiffGitFailurePropagation)
+	contract.RunParallel(t, "AXI diff control-byte posture contract", testAXIDiffControlBytePosture)
 	contract.RunParallel(t, "AXI coverage extraction contract", testAXICoverageExtraction)
 	contract.RunParallel(t, "AXI coverage state/error contract", testAXICoverageStateError)
 	contract.RunParallel(t, "AXI coverage --check validation contract", testAXICoverageCheckValidation)
+	contract.RunParallel(t, "AXI maps/guards help contract", testAXIMapsGuardsHelp)
 }
 
 func testAXIDiffRecordedBase(t *testing.T) {
@@ -128,6 +133,9 @@ func testAXIDiffErrorPosture(t *testing.T) {
 
 	out.RequireExit(2)
 	out.RequireContains(strings.ToLower(out.Stdout), "usage")
+	// row 5: attribution names the actual offender ("bogusarg"), not the
+	// recognized leading flag ("--full") that parsed fine.
+	out.RequireContains(out.Stdout, "unknown argument: bogusarg")
 }
 
 // testAXIDiffFullContract drives `bench diff --full` end to end: an empty-since-base
@@ -188,6 +196,87 @@ func testAXIDiffFullContract(t *testing.T) {
 	out.RequireExit(0)
 	requireOutputLine(t, out, "log[2]{sha,subject}:")
 	requireLogRow(t, out, shortC3, `"a, \"b\""`)
+}
+
+// testAXIDiffGitFailurePropagation drives `bench diff --full` with a PATH-shimmed
+// git that fails one post-resolution call at a time (row 6): the changed-files
+// listing, the commit log, and the raw diff body. Base resolution runs against the
+// same shim and must still succeed — only the named call fails — so an empty
+// section at exit 0 (the pre-fix behavior) never masks a broken subprocess.
+func testAXIDiffGitFailurePropagation(t *testing.T) {
+	contract.NoteContractFailure(t, "AXI diff git-failure propagation contract failed")
+	cases := []struct {
+		name string
+		call string
+	}{
+		{"changed-files listing", "files"},
+		{"commit log", "log"},
+		{"diff body", "body"},
+	}
+	for _, c := range cases {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			f := contract.NewFixture(t)
+			f.WriteFile("README.md", "r\n")
+			f.CommitAll("c1")
+			f.Git("branch", "-m", "main")
+
+			stubBin := filepath.Join(f.Root, "stubbin")
+			if err := os.MkdirAll(stubBin, 0o755); err != nil {
+				t.Fatalf("create stubbin: %v", err)
+			}
+			writeGitFailureShim(t, stubBin)
+
+			env := map[string]string{
+				"PATH":          stubBin + string(os.PathListSeparator) + os.Getenv("PATH"),
+				"FAIL_GIT_CALL": c.call,
+			}
+			out := f.BenchEnv(env, "diff", "--full")
+			out.RequireExit(1)
+			requireOutputPrefix(t, out, "error: ")
+		})
+	}
+}
+
+// testAXIDiffControlBytePosture pins row 7: a commit subject carrying a control
+// byte (ESC) makes `--full` exit 1 with the unrepresentable-TOON-cell error instead
+// of a mangled log row — the refusal already exists (toon.Table's own guard), so
+// this probe passes on day one and is the regression guard from here on. The help
+// assertion is the TDD-able half: it was red before the diff --full help sentence
+// named the refusal.
+func testAXIDiffControlBytePosture(t *testing.T) {
+	contract.NoteContractFailure(t, "AXI diff control-byte posture contract failed")
+	f := contract.NewFixture(t)
+	f.WriteFile("README.md", "r\n")
+	f.CommitAll("c1")
+	f.Git("branch", "-m", "main")
+	f.Git("switch", "-qc", "feature")
+	f.WriteFile("f.txt", "f\n")
+	f.CommitAll("subject with \x1b esc")
+
+	out := f.Bench("diff", "--full")
+	out.RequireExit(1)
+	requireOutputPrefix(t, out, "error: unrepresentable TOON cell")
+
+	help := f.Bench("diff", "-h")
+	help.RequireExit(0)
+	requireContainsFold(t, help.Stdout, "control byte")
+}
+
+// testAXIMapsGuardsHelp pins row 8: the real, agent-invocable flags are documented
+// in their own command's help, not findable only in Go source.
+func testAXIMapsGuardsHelp(t *testing.T) {
+	contract.NoteContractFailure(t, "AXI maps/guards help contract failed")
+	f := contract.NewFixture(t)
+
+	maps := f.Bench("maps", "-h")
+	maps.RequireExit(0)
+	requireContainsFold(t, maps.Stdout, "--count")
+
+	guards := f.Bench("guards", "-h")
+	guards.RequireExit(0)
+	requireContainsFold(t, guards.Stdout, "--brief")
 }
 
 // requireLogRow asserts a `log` table row for sha/renderedSubject, tolerating the
@@ -284,8 +373,11 @@ func testAXICoverageCheckValidation(t *testing.T) {
 
 	out := f.Bench("coverage", "--check", "specs/v.md")
 
+	// row 2: a valid map's --check gets a definitive pass line, not silence —
+	// stdout was empty before this story, indistinguishable from a check that
+	// silently produced nothing.
 	out.RequireExit(0)
-	requireNoOutput(t, out)
+	requireOutputLine(t, out, "ok: coverage map valid — 1 row(s)")
 
 	f.WriteFile("specs/h.md", "# h\n<!-- coverage-map: historical -->\n### Acceptance coverage map\n|bad|\n")
 	out = f.Bench("coverage", "--check", "specs/h.md")
@@ -353,6 +445,14 @@ func testAXICoverageCheckValidation(t *testing.T) {
 			out.RequireContains(out.Stdout, c.want)
 		})
 	}
+
+	// row 3: a violation line renders through the one canonical `toon.Errorf`
+	// shape (`error: <kind> — <hint>`), not a hand-rolled line of its own —
+	// pinned byte-for-byte rather than by substring.
+	f.WriteFile("specs/b1.md", "# b\n\n"+stories+"\n### Acceptance coverage map\n| a | b |\n|---|---|\n| 1 | x |\n")
+	out = f.Bench("coverage", "--check", "specs/b1.md")
+	out.RequireExit(1)
+	requireOutputLine(t, out, "error: specs/b1.md coverage map missing the canonical header — fix the map or mark it <!-- coverage-map: historical -->")
 }
 
 func requireOutputLine(t *testing.T, probe contract.Probe, line string) {

@@ -13,10 +13,10 @@ project conformance.
 ## Exit handoff
 
 Close by reporting the gate result plainly. On green, land the verified work with
-`bench commit`, naming the files the work touched — it gates and commits them
-atomically, and it enforces the commit discipline so this phase doesn't restate
-it. Use `bench commit --spec <slug>` when the commit finishes a spec, so the
-status flip rides in the same commit. When the reviewer accepts residual review
+`bench commit -m "<msg>"`, naming the files the work touched — it gates and commits
+them atomically, and it enforces the commit discipline so this phase doesn't
+restate it. Use `bench commit -m "<msg>" --spec <slug>` when the commit finishes a
+spec, so the status flip rides in the same commit. When the reviewer accepts residual review
 risk and skips the fix pass, delete `reviews/<spec-slug>.md` and name it in the
 landing commit — the pickup must not outlive the decision it captured. If it
 refuses over an unexplained
@@ -42,8 +42,8 @@ gate; to change what runs, change `.bench/gate.sh`.
 
 ## Report
 
-- **Green:** state it plainly, land the verified work with `bench commit` per the
-  exit handoff, and hand back for me to merge.
+- **Green:** state it plainly, land the verified work with `bench commit -m "<msg>"`
+  per the exit handoff, and hand back for me to merge.
 - **Red:** report each failing check in the order it fails, with the smallest
   reproduction. Do not propose weakening the check. Diagnose the cause, propose a
   fix at the seam, and — if I approve — fix it and re-run the gate. A fix is only

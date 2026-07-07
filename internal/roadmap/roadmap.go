@@ -82,7 +82,7 @@ const missingRoadmap = "no ROADMAP.md — run /bench-what-next to create the wor
 func RoadmapCommand(args []string) (string, int) {
 	root, err := git.Root()
 	if err != nil {
-		return missingRoadmap, 0
+		return toon.NotInRepo() + "\n", 1
 	}
 	data, err := os.ReadFile(filepath.Join(root, "ROADMAP.md"))
 	if err != nil || len(data) == 0 {

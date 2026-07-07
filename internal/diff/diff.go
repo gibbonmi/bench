@@ -40,12 +40,12 @@ func parseNameStatusZ(raw []byte) [][]string {
 	return rows
 }
 
-func changedFiles(base string) [][]string {
+func changedFiles(base string) ([][]string, error) {
 	raw, err := git.Raw("diff", "--name-status", "--no-renames", "-z", base+"...HEAD")
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return parseNameStatusZ(raw)
+	return parseNameStatusZ(raw), nil
 }
 
 // parseLogFormat turns `git log --format=%h%x00%s` output into sha/subject rows. Each
@@ -71,18 +71,21 @@ func parseLogFormat(raw []byte) [][]string {
 	return rows
 }
 
-func commitLog(base string) [][]string {
+func commitLog(base string) ([][]string, error) {
 	raw, err := git.Raw("log", "--format=%h%x00%s", base+"..HEAD")
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return parseLogFormat(raw)
+	return parseLogFormat(raw), nil
 }
 
 const fullHelp = `usage: bench diff [--full]
   --full appends, after the files table, a log[N]{sha,subject} TOON table (git
   log <base>..HEAD) and, last, a verbatim diff_body: block (git diff
   <base>...HEAD) — the raw diff is passed through unescaped, not TOON-encoded.
+  A commit subject carrying a control byte makes --full refuse: it exits 1
+  with the unrepresentable-TOON-cell error instead of rendering a mangled log
+  row.
 `
 
 // Command implements `bench diff`.
@@ -94,6 +97,10 @@ func Command(args []string) (string, int) {
 		return fullHelp, 0
 	case len(args) == 1 && args[0] == "--full":
 		full = true
+	case len(args) == 2 && args[0] == "--full":
+		// A recognized leading flag followed by a second argument: name the second
+		// argument as the offender, not the flag that parsed fine.
+		return toon.Usage("bench diff", args[1]) + "\n", 2
 	default:
 		return toon.Usage("bench diff", args[0]) + "\n", 2
 	}
@@ -125,19 +132,30 @@ func Command(args []string) (string, int) {
 	fmt.Fprintf(&b, "branch: %s\n", branchLabel)
 	fmt.Fprintf(&b, "base: %s\n", base)
 	fmt.Fprintf(&b, "method: %s\n", method)
-	tbl, err := toon.Table("files", []string{"status", "path"}, changedFiles(base))
+	files, err := changedFiles(base)
+	if err != nil {
+		return toon.Errorf("git diff --name-status failed", err.Error()) + "\n", 1
+	}
+	tbl, err := toon.Table("files", []string{"status", "path"}, files)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
 	b.WriteString(tbl)
 	if full {
-		logTbl, err := toon.Table("log", []string{"sha", "subject"}, commitLog(base))
+		logRows, err := commitLog(base)
+		if err != nil {
+			return toon.Errorf("git log failed", err.Error()) + "\n", 1
+		}
+		logTbl, err := toon.Table("log", []string{"sha", "subject"}, logRows)
 		if err != nil {
 			return toon.RenderError(err) + "\n", 1
 		}
 		b.WriteString(logTbl)
 		b.WriteString("diff_body:\n")
-		body, _ := git.Raw("diff", base+"...HEAD")
+		body, err := git.Raw("diff", base+"...HEAD")
+		if err != nil {
+			return toon.Errorf("git diff failed", err.Error()) + "\n", 1
+		}
 		b.Write(body)
 	}
 	return b.String(), 0

@@ -32,6 +32,29 @@ func writeExecutableAt(t testing.TB, dir, name, contents string) {
 	}
 }
 
+// writeGitFailureShim writes a "git" executable to dir that fails one chosen
+// post-resolution `bench diff` call while delegating every other git invocation to
+// the real binary — the PATH-stub pattern from testAXIBlockDangerousGitCoreErrored,
+// generalized here so base resolution (symbolic-ref, config, cat-file, merge-base)
+// still succeeds and only the named call breaks. Which call fails is selected at run
+// time via the FAIL_GIT_CALL env var ("files", "log", or "body"), read by the shim
+// itself so one script serves all three probes.
+func writeGitFailureShim(t testing.TB, dir string) {
+	t.Helper()
+	realGit, err := exec.LookPath("git")
+	if err != nil {
+		t.Fatalf("find real git: %v", err)
+	}
+	script := "#!/usr/bin/env bash\n" +
+		"case \"$FAIL_GIT_CALL\" in\n" +
+		"  files) [ \"$1\" = diff ] && [ \"$2\" = --name-status ] && exit 17 ;;\n" +
+		"  log) [ \"$1\" = log ] && exit 17 ;;\n" +
+		"  body) [ \"$1\" = diff ] && [ \"$2\" != --name-status ] && exit 17 ;;\n" +
+		"esac\n" +
+		"exec \"" + realGit + "\" \"$@\"\n"
+	writeExecutableAt(t, dir, "git", script)
+}
+
 func requireAXIFirstLine(t testing.TB, out, want string) {
 	t.Helper()
 	if got := axiFirstLine(out); got != want {
