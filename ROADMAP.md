@@ -10,12 +10,6 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-**FT7 (implemented, awaiting post-hoc review) — `bench dashboard`**
-(`specs/dashboard.md`). v1 is the data-faithful minimal HTML snapshot; the
-rich visual treatment (ui_examples look, animated characters) is deferred as a
-reviewer-taste follow-up in the spec's out-of-scope list. Remaining work:
-`/bench-review-implementation`, then spec-retire on approval.
-
 **FT22 (implemented, awaiting post-hoc review) — `bench spec history <slug>`**
 (`specs/spec-history.md`). Retirement archaeology folded into the CLI (FT9
 pattern). Remaining work: `/bench-review-implementation`, then spec-retire on
