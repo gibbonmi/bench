@@ -24,6 +24,7 @@ func TestAXIGuardsContracts(t *testing.T) {
 	contract.RunParallel(t, "AXI block-dangerous-git linked-worktree classification contract", testAXIBlockDangerousGitLinkedWorktreeClassification)
 	contract.RunParallel(t, "session-start guard-brief injection contract", testSessionStartGuardBriefInjection)
 	contract.RunParallel(t, "session-start never-blocks-outside-repo contract", testSessionStartNeverBlocksOutsideRepo)
+	contract.RunParallel(t, "AXI maps/guards help contract", testAXIMapsGuardsHelp)
 }
 
 func testAXIGuardsAggregation(t *testing.T) {
@@ -304,4 +305,19 @@ func requireGuardsStringEqual(t *testing.T, got, want, msg string) {
 	if got != want {
 		t.Fatalf("%s: got %q, want %q", msg, got, want)
 	}
+}
+
+// testAXIMapsGuardsHelp pins row 8: the real, agent-invocable flags are documented
+// in their own command's help, not findable only in Go source.
+func testAXIMapsGuardsHelp(t *testing.T) {
+	contract.NoteContractFailure(t, "AXI maps/guards help contract failed")
+	f := contract.NewFixture(t)
+
+	maps := f.Bench("maps", "-h")
+	maps.RequireExit(0)
+	requireContainsFold(t, maps.Stdout, "--count")
+
+	guards := f.Bench("guards", "-h")
+	guards.RequireExit(0)
+	requireContainsFold(t, guards.Stdout, "--brief")
 }

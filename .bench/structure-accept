@@ -1,0 +1,8 @@
+# Reviewer-owned over-budget grants: `<path> <one-clause reason>` per line. An
+# accepted file drops out of the `bench structure` count and prints in the
+# `accepted:` section with its reason. `#` starts a comment; a row with no reason
+# is ignored as malformed; a path that is no longer a scanned source file is
+# reported stale. Exact paths only — a grant is a named, reversible decision, not
+# a threshold bump.
+internal/status/status.go cohesive severity-ladder renderer; barely over budget and splitting would fragment one signal
+internal/contract/runtime/runtime_status_test.go cohesive status-contract family; barely over budget and shares one fixture harness
