@@ -1,6 +1,6 @@
 # Hardening batch
 
-Status: staged
+Status: implemented
 
 ## Problem
 
