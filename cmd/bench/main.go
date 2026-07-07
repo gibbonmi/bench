@@ -231,7 +231,7 @@ func run(args []string, stdout, stderr *os.File) int {
 			return worktree.Subshell(os.Stdin, stdout, stderr)
 		}
 		if args[1] == "clean" {
-			return worktree.CleanCommand(args[2:], os.Stdin, stdout, stderr)
+			return worktree.CleanCommand(args[2:], stdout, stderr)
 		}
 		fmt.Fprint(stderr, worktree.WorktreeUsage())
 		return 2

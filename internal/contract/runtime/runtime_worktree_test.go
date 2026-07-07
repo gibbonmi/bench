@@ -3,7 +3,6 @@ package runtime
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -16,9 +15,9 @@ import (
 func TestRuntimeWorktreeContracts(t *testing.T) {
 	contract.SkipIfSubjectBenchMissing(t)
 	t.Parallel()
-	contract.RunParallel(t, "bench worktree clean confirmed cleanup contract", testRuntimeWorktreeCleanRemovesConfirmedOutOfPool)
-	contract.RunParallel(t, "bench worktree clean non-tty refusal contract", testRuntimeWorktreeCleanRejectsNonTTY)
-	contract.RunParallel(t, "bench worktree clean dirty refusal contract", testRuntimeWorktreeCleanLeavesDirtyOutOfPool)
+	contract.RunParallel(t, "bench worktree clean removes out-of-pool contract", testRuntimeWorktreeCleanRemovesOutOfPool)
+	contract.RunParallel(t, "bench worktree clean salvages dirty onto branch contract", testRuntimeWorktreeCleanSalvagesDirtyOntoBranch)
+	contract.RunParallel(t, "bench worktree clean refuses dirty detached contract", testRuntimeWorktreeCleanRefusesDirtyDetached)
 	contract.RunParallel(t, "bench worktree clean stale registration prune contract", testRuntimeWorktreeCleanPrunesMissingRegistration)
 	contract.RunParallel(t, "bench worktree clean pool cwd classification contract", testRuntimeWorktreeCleanFromPoolCwd)
 	contract.RunParallel(t, "bench worktree usage contract", testRuntimeWorktreeRejectsUnknownArgs)
@@ -132,10 +131,7 @@ func testRuntimeWorktreeSweepRefusesUnresolvableDefault(t *testing.T) {
 	}
 }
 
-func testRuntimeWorktreeCleanRemovesConfirmedOutOfPool(t *testing.T) {
-	if _, err := exec.LookPath("script"); err != nil {
-		t.Skip("script command unavailable for PTY-backed confirmation")
-	}
+func testRuntimeWorktreeCleanRemovesOutOfPool(t *testing.T) {
 	f := contract.NewFixture(t)
 	commitAllowEmpty(t, f, "init")
 	candidate := filepath.Join(f.Root, "..", "outside wt [one]")
@@ -143,8 +139,7 @@ func testRuntimeWorktreeCleanRemovesConfirmedOutOfPool(t *testing.T) {
 	nested := filepath.Join(f.Root, "sub", "dir")
 	contract.Mkdir(t, nested)
 
-	command := "bash " + shellQuote(benchPath(t)) + " worktree clean"
-	out := contract.RunAtWithInput(t, f, nested, nil, "clean worktrees\n", "script", "-q", "-e", "-c", command, "/dev/null")
+	out := contract.RunAt(t, f, nested, nil, "bash", benchPath(t), "worktree", "clean")
 	out.RequireExit(0)
 	contract.RequireContains(t, out.Stdout, candidate)
 	contract.RequireContains(t, out.Stdout, "removed")
@@ -152,38 +147,41 @@ func testRuntimeWorktreeCleanRemovesConfirmedOutOfPool(t *testing.T) {
 		t.Fatalf("cleanup mentioned forced removal:\nstdout:\n%s\nstderr:\n%s", out.Stdout, out.Stderr)
 	}
 	if strings.Contains(f.Git("worktree", "list", "--porcelain").Stdout, candidate) {
-		t.Fatalf("confirmed cleanup left worktree registered:\n%s", f.Git("worktree", "list", "--porcelain").Stdout)
+		t.Fatalf("cleanup left worktree registered:\n%s", f.Git("worktree", "list", "--porcelain").Stdout)
 	}
 
-	rerun := contract.RunAtWithInput(t, f, nested, nil, "clean worktrees\n", "script", "-q", "-e", "-c", command, "/dev/null")
+	rerun := contract.RunAt(t, f, nested, nil, "bash", benchPath(t), "worktree", "clean")
 	rerun.RequireExit(0)
 	contract.RequireContains(t, rerun.Stdout, "nothing to clean")
 }
 
-func testRuntimeWorktreeCleanRejectsNonTTY(t *testing.T) {
+func testRuntimeWorktreeCleanSalvagesDirtyOntoBranch(t *testing.T) {
 	f := contract.NewFixture(t)
 	commitAllowEmpty(t, f, "init")
-	candidate := filepath.Join(f.Root, "..", "outside")
-	f.Git("worktree", "add", "-q", "--detach", candidate, "HEAD")
+	dirty := filepath.Join(f.Root, "..", "dirty on branch")
+	f.Git("worktree", "add", "-q", "-b", "salvaged-wip", dirty, "HEAD")
+	contract.WriteFileAbs(t, filepath.Join(dirty, "dirty.txt"), "dirty\n")
 
-	out := contract.RunAtWithInput(t, f, f.Root, nil, "clean worktrees\n", "bash", benchPath(t), "worktree", "clean")
-	out.RequireExit(1)
-	contract.RequireContains(t, out.Stderr, "requires an interactive TTY")
-	contract.RequireContains(t, f.Git("worktree", "list", "--porcelain").Stdout, candidate)
+	out := contract.RunAt(t, f, f.Root, nil, "bash", benchPath(t), "worktree", "clean")
+	out.RequireExit(0)
+	contract.RequireContains(t, out.Stdout, "salvaged")
+	contract.RequireContains(t, out.Stdout, "salvaged-wip")
+	contract.RequireContains(t, out.Stdout, "removed")
+	if strings.Contains(f.Git("worktree", "list", "--porcelain").Stdout, dirty) {
+		t.Fatalf("salvage left worktree registered:\n%s", f.Git("worktree", "list", "--porcelain").Stdout)
+	}
+	show := f.Git("show", "salvaged-wip:dirty.txt")
+	contract.RequireContains(t, show.Stdout, "dirty")
 }
 
-func shellQuote(s string) string {
-	return "'" + strings.ReplaceAll(s, "'", "'\\''") + "'"
-}
-
-func testRuntimeWorktreeCleanLeavesDirtyOutOfPool(t *testing.T) {
+func testRuntimeWorktreeCleanRefusesDirtyDetached(t *testing.T) {
 	f := contract.NewFixture(t)
 	commitAllowEmpty(t, f, "init")
 	dirty := filepath.Join(f.Root, "..", "dirty outside")
 	f.Git("worktree", "add", "-q", "--detach", dirty, "HEAD")
 	contract.WriteFileAbs(t, filepath.Join(dirty, "dirty.txt"), "dirty\n")
 
-	out := contract.RunAtWithInput(t, f, f.Root, nil, "clean worktrees\n", "bash", benchPath(t), "worktree", "clean")
+	out := contract.RunAt(t, f, f.Root, nil, "bash", benchPath(t), "worktree", "clean")
 	out.RequireExit(1)
 	contract.RequireContains(t, out.Stdout, "refused")
 	contract.RequireContains(t, out.Stdout, dirty)

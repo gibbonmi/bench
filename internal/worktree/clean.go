@@ -1,7 +1,6 @@
 package worktree
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -9,17 +8,14 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/terminal"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-const cleanConfirm = "clean worktrees"
-
-func CleanCommand(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
-	return cleanCommand(args, stdin, stdout, stderr, terminal.IsTerminal)
+func CleanCommand(args []string, stdout, stderr io.Writer) int {
+	return cleanCommand(args, stdout, stderr)
 }
 
-func cleanCommand(args []string, stdin io.Reader, stdout, stderr io.Writer, isTerminal func(io.Reader) bool) int {
+func cleanCommand(args []string, stdout, stderr io.Writer) int {
 	if len(args) != 0 {
 		fmt.Fprint(stderr, WorktreeUsage())
 		return 2
@@ -29,11 +25,11 @@ func cleanCommand(args []string, stdin io.Reader, stdout, stderr io.Writer, isTe
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
-	// Two independent phases run after the in-repo guard: the branch sweep (no TTY, no
-	// confirmation) and the out-of-pool worktree removal. The command's exit is the higher
-	// severity of the two, so a swept branch never masks a refused worktree and vice versa.
+	// Two independent phases run after the in-repo guard: the branch sweep and the
+	// out-of-pool worktree removal. The command's exit is the higher severity of the
+	// two, so a swept branch never masks a refused worktree and vice versa.
 	sweepExit := sweepDelegateBranches(root, stdout, stderr)
-	worktreeExit := cleanOutOfPoolWorktrees(root, stdin, stdout, stderr, isTerminal)
+	worktreeExit := cleanOutOfPoolWorktrees(root, stdout, stderr)
 	if sweepExit > worktreeExit {
 		return sweepExit
 	}
@@ -78,8 +74,15 @@ func sweepDelegateBranches(root string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-func cleanOutOfPoolWorktrees(root string, stdin io.Reader, stdout, stderr io.Writer, isTerminal func(io.Reader) bool) int {
-	var candidates, refused []string
+// cleanOutOfPoolWorktrees removes every out-of-pool worktree without asking: committed work
+// lives on the worktree's branch, so removing the checkout destroys nothing git cannot
+// recover or revert. A dirty worktree is salvaged first — its uncommitted changes are
+// committed onto its own branch — and then removed; the branch survives under the sweep's
+// merged/unmerged rule. Only a dirty *detached* worktree is refused: there is no branch to
+// hold the salvage, so deleting it would genuinely lose the changes.
+func cleanOutOfPoolWorktrees(root string, stdout, stderr io.Writer) int {
+	var refused []string
+	removed := 0
 	for _, wt := range RegisteredWorktrees(root) {
 		if wt.Class != ClassOutOfPool {
 			continue
@@ -88,63 +91,42 @@ func cleanOutOfPoolWorktrees(root string, stdin io.Reader, stdout, stderr io.Wri
 			continue
 		}
 		if !isClean(wt.Path) {
+			branch, err := git.Output("-C", wt.Path, "symbolic-ref", "--quiet", "--short", "HEAD")
+			if err != nil || strings.TrimSpace(branch) == "" {
+				refused = append(refused, wt.Path)
+				continue
+			}
+			if out, err := exec.Command("git", "-C", wt.Path, "add", "-A").CombinedOutput(); err != nil {
+				fmt.Fprintf(stderr, "error: could not salvage %s: %s\n", wt.Path, strings.TrimSpace(string(out)))
+				refused = append(refused, wt.Path)
+				continue
+			}
+			// A fixed committer identity: the salvage is machine-made and must not fail in a
+			// worktree whose repo never configured user.name/user.email.
+			if out, err := exec.Command("git", "-C", wt.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-q", "-m", "wip: salvaged by bench worktree clean").CombinedOutput(); err != nil {
+				fmt.Fprintf(stderr, "error: could not salvage %s: %s\n", wt.Path, strings.TrimSpace(string(out)))
+				refused = append(refused, wt.Path)
+				continue
+			}
+			fmt.Fprintf(stdout, "salvaged uncommitted changes in %s onto %s\n", wt.Path, strings.TrimSpace(branch))
+		}
+		if out, err := exec.Command("git", "-C", root, "worktree", "remove", wt.Path).CombinedOutput(); err != nil {
 			refused = append(refused, wt.Path)
-			continue
-		}
-		candidates = append(candidates, wt.Path)
-	}
-	if len(candidates) == 0 {
-		_ = exec.Command("git", "-C", root, "worktree", "prune").Run()
-		if len(refused) == 0 {
-			fmt.Fprintln(stdout, "bench worktree clean: nothing to clean")
-			return 0
-		}
-		printRefused(stdout, refused)
-		return 1
-	}
-	if !isTerminal(stdin) {
-		fmt.Fprintln(stderr, "error: bench worktree clean requires an interactive TTY")
-		return 1
-	}
-	fmt.Fprintln(stdout, "bench worktree clean will remove:")
-	for _, path := range candidates {
-		fmt.Fprintf(stdout, "  %s\n", path)
-	}
-	if len(refused) > 0 {
-		printRefused(stdout, refused)
-	}
-	fmt.Fprintf(stdout, "Type '%s' to remove clean out-of-pool worktrees: ", cleanConfirm)
-	line, err := bufio.NewReader(stdin).ReadString('\n')
-	if err != nil && err != io.EOF {
-		fmt.Fprintln(stderr, "error: could not read confirmation")
-		return 1
-	}
-	if strings.TrimSpace(line) != cleanConfirm {
-		fmt.Fprintln(stderr, "bench worktree clean declined; no worktrees removed")
-		return 1
-	}
-	removed := 0
-	for _, path := range candidates {
-		cmd := exec.Command("git", "-C", root, "worktree", "remove", path)
-		if out, err := cmd.CombinedOutput(); err != nil {
-			refused = append(refused, path)
 			if len(out) > 0 {
 				fmt.Fprint(stderr, string(out))
 			}
 			continue
 		}
 		removed++
-		fmt.Fprintf(stdout, "removed %s\n", path)
+		fmt.Fprintf(stdout, "removed %s\n", wt.Path)
 	}
 	_ = exec.Command("git", "-C", root, "worktree", "prune").Run()
 	if len(refused) > 0 {
 		printRefused(stdout, refused)
-	}
-	if removed == 0 && len(refused) == 0 {
-		fmt.Fprintln(stdout, "bench worktree clean: nothing to clean")
-	}
-	if len(refused) > 0 {
 		return 1
+	}
+	if removed == 0 {
+		fmt.Fprintln(stdout, "bench worktree clean: nothing to clean")
 	}
 	return 0
 }

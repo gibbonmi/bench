@@ -2,7 +2,6 @@ package worktree
 
 import (
 	"bytes"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -157,7 +156,7 @@ func TestClassifyRegisteredWorktrees(t *testing.T) {
 	}
 }
 
-func TestCleanCommandRemovesConfirmedOutOfPool(t *testing.T) {
+func TestCleanCommandRemovesOutOfPool(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("BENCH_HOME", home)
 	root := newWorktreeRepo(t)
@@ -170,23 +169,23 @@ func TestCleanCommandRemovesConfirmedOutOfPool(t *testing.T) {
 	chdir(t, nested)
 
 	var stdout, stderr bytes.Buffer
-	code := cleanCommand(nil, strings.NewReader("clean worktrees\n"), &stdout, &stderr, func(io.Reader) bool { return true })
+	code := cleanCommand(nil, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("cleanCommand exit = %d\nstdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
 	}
 	if !strings.Contains(stdout.String(), candidate) || !strings.Contains(stdout.String(), "removed") {
-		t.Fatalf("confirmed cleanup did not report removed candidate:\n%s", stdout.String())
+		t.Fatalf("cleanup did not report removed candidate:\n%s", stdout.String())
 	}
 	if strings.Contains(stdout.String()+stderr.String(), "--force") {
 		t.Fatalf("cleanup mentioned forced removal:\nstdout:\n%s\nstderr:\n%s", stdout.String(), stderr.String())
 	}
 	if out := gitOutput(t, root, "worktree", "list", "--porcelain"); strings.Contains(out, candidate) {
-		t.Fatalf("confirmed cleanup left worktree registered:\n%s", out)
+		t.Fatalf("cleanup left worktree registered:\n%s", out)
 	}
 
 	stdout.Reset()
 	stderr.Reset()
-	code = cleanCommand(nil, strings.NewReader("clean worktrees\n"), &stdout, &stderr, func(io.Reader) bool { return false })
+	code = cleanCommand(nil, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("second cleanCommand exit = %d\nstdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
 	}
