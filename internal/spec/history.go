@@ -79,9 +79,21 @@ func mergeHistory(lists ...[]historyEntry) []historyEntry {
 
 // historyRetireLog runs the retire-message query: every commit whose message
 // literally contains `spec-retire: <slug>` (--fixed-strings, so a slug carrying regex
-// metacharacters like `.` or `*` matches as literal text, not a pattern).
+// metacharacters like `.` or `*` matches as literal text, not a pattern). --grep is a
+// contains match, so this is a coarse candidate filter only — a slug that is a prefix
+// of another slug (`dash` vs `dashboard`) matches both messages; retireTokenMatches
+// applies the exact cut on the parsed subject.
 func historyRetireLog(slug string) ([]byte, error) {
 	return git.Raw("log", "--fixed-strings", "--grep=spec-retire: "+slug, historyLogFormat)
+}
+
+// retireTokenMatches reports whether a commit subject carries the retire token for
+// exactly this slug: `spec-retire: <slug>` extending to the end of the subject.
+// Slugs may contain spaces, so no word boundary can terminate one — end-of-subject
+// is the only sound terminator, which is also the commit-subject shape
+// `bench spec retire` instructs.
+func retireTokenMatches(subject, slug string) bool {
+	return strings.HasSuffix(subject, "spec-retire: "+slug)
 }
 
 // historyDeleteLog runs the file-deletion query: every commit that deleted
@@ -118,7 +130,12 @@ func historyCommand(rest []string) (string, int) {
 		return toon.Errorf("git log --diff-filter=D failed", err.Error()) + "\n", 1
 	}
 
-	retireEntries := parseHistoryLog(retireRaw, "retire")
+	var retireEntries []historyEntry
+	for _, e := range parseHistoryLog(retireRaw, "retire") {
+		if retireTokenMatches(e.subject, slug) {
+			retireEntries = append(retireEntries, e)
+		}
+	}
 	deleteEntries := parseHistoryLog(deleteRaw, "delete")
 	merged := mergeHistory(retireEntries, deleteEntries)
 

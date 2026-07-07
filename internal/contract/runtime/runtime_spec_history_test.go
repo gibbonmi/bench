@@ -17,6 +17,7 @@ func TestRuntimeSpecHistoryContracts(t *testing.T) {
 	contract.RunParallel(t, "history usage errors exit 2", testSpecHistoryUsageErrors)
 	contract.RunParallel(t, "history refuses a control-byte subject at exit 1", testSpecHistoryControlBytePosture)
 	contract.RunParallel(t, "history slugs with spaces or glob characters find only their own commit", testSpecHistoryGlobSlug)
+	contract.RunParallel(t, "history slug that is a prefix of another slug finds only its own commit", testSpecHistoryPrefixSlug)
 	contract.RunParallel(t, "history invoked from a subdirectory sees the full-repo history", testSpecHistorySubdirInvocation)
 	contract.RunParallel(t, "history outside a git repo exits 1 with the not-in-repo error", testSpecHistoryNotInRepo)
 }
@@ -150,6 +151,39 @@ func testSpecHistoryGlobSlug(t *testing.T) {
 	starOut.RequireExit(0)
 	requireOutputLine(t, starOut, "history[1]{hash,date,kind,subject}:")
 	starOut.RequireContains(starOut.Stdout, "weird*name")
+}
+
+// testSpecHistoryPrefixSlug pins the exact retire-token cut: `--grep` is a contains
+// match, so a slug that is a string prefix of another (`dash` vs `dashboard`) matches
+// both retirement messages at the git layer — the Go-side retireTokenMatches filter
+// must keep each slug's history to exactly its own commit.
+func testSpecHistoryPrefixSlug(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteFile("README.md", "r\n")
+	f.CommitAll("c1")
+
+	f.WriteFile("specs/dash.md", "# dash\n")
+	f.CommitAll("add dash")
+	f.Git("rm", "-q", "specs/dash.md")
+	f.CommitAll("spec-retire: dash")
+	dashSha := strings.TrimSpace(f.Git("rev-parse", "--short", "HEAD").Stdout)
+
+	f.WriteFile("specs/dashboard.md", "# dashboard\n")
+	f.CommitAll("add dashboard")
+	f.Git("rm", "-q", "specs/dashboard.md")
+	f.CommitAll("spec-retire: dashboard")
+	boardSha := strings.TrimSpace(f.Git("rev-parse", "--short", "HEAD").Stdout)
+
+	dashOut := f.Bench("spec", "history", "dash")
+	dashOut.RequireExit(0)
+	requireOutputLine(t, dashOut, "history[1]{hash,date,kind,subject}:")
+	requireHistoryRow(t, dashOut, dashSha, "retire", "spec-retire: dash")
+	dashOut.RequireNotContains(dashOut.Stdout, "dashboard")
+
+	boardOut := f.Bench("spec", "history", "dashboard")
+	boardOut.RequireExit(0)
+	requireOutputLine(t, boardOut, "history[1]{hash,date,kind,subject}:")
+	requireHistoryRow(t, boardOut, boardSha, "retire", "spec-retire: dashboard")
 }
 
 // testSpecHistorySubdirInvocation pins story 5's cwd-deeper-than-root row: the

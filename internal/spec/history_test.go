@@ -76,6 +76,30 @@ func TestMergeHistorySortsNewestFirst(t *testing.T) {
 	}
 }
 
+// TestRetireTokenMatches pins the exact retire-token cut layered over the coarse
+// --grep contains filter: the token must extend to the end of the subject, so a slug
+// that is a string prefix of another slug (`dash` vs `dashboard`) never claims the
+// longer slug's retirement commit, and a spaced slug still terminates soundly.
+func TestRetireTokenMatches(t *testing.T) {
+	cases := []struct {
+		subject, slug string
+		want          bool
+	}{
+		{"spec-retire: dash", "dash", true},
+		{"spec-retire: dashboard", "dash", false},
+		{"spec-retire: dashboard", "dashboard", true},
+		{"spec-retire: weird name", "weird name", true},
+		{"spec-retire: weird name", "weird", false},
+		{"spec-retire: dash plus trailing words", "dash", false},
+		{"unrelated subject", "dash", false},
+	}
+	for _, c := range cases {
+		if got := retireTokenMatches(c.subject, c.slug); got != c.want {
+			t.Errorf("retireTokenMatches(%q, %q) = %v, want %v", c.subject, c.slug, got, c.want)
+		}
+	}
+}
+
 func TestMergeHistoryEmpty(t *testing.T) {
 	if got := mergeHistory(nil, nil); len(got) != 0 {
 		t.Errorf("got %v, want empty", got)
