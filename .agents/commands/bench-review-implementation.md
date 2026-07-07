@@ -33,7 +33,10 @@ Run it on the branch diff against its true base, on three axes that stay separat
    happened — a shift stacked on unmerged work reviews its own commits, not the
    feature's. The changed-file list, the `log[N]{sha,subject}` commit table, and
    the raw diff body arrive in one output. Confirm the diff is non-empty before
-   going further.
+   going further. When it is empty because the work already landed on the
+   default branch (the documented happy path commits before review), review the
+   landing commit instead: `bench diff --full --commit <sha>` bounds the same
+   bundle to exactly what that commit landed.
 
 2. **Find the sources.** Spec: `specs/<feature>.md` for this work (or the path I
    give you). Standards: `AGENTS.md` and `.bench/BENCH.md` — the working agreement

@@ -13,6 +13,15 @@
 // <base>...HEAD` (three-dot: changes on the HEAD side since merge-base) passed
 // through verbatim, undecorated by TOON so a hunk header or `+`/`-` line survives
 // unmangled. Bare `bench diff` is byte-for-byte unaffected by the flag's existence.
+//
+// `--commit <sha>` bounds the same three sections to one already-landed commit
+// instead of the current branch: base becomes the commit's own first parent
+// (`git rev-parse --verify <sha>^`), so the range is an exact two-commit diff, not
+// a merge-base-relative one — for a merge commit this is everything the merge
+// brought in. benchBase/merge-base resolution is skipped entirely; `method: commit
+// <sha>` is how a reader sees that the override applies. The sha is verified before
+// any section renders: an unresolvable sha or a root commit's missing parent is
+// its own structured error, never a leaked git failure.
 package diff
 
 import (
@@ -40,8 +49,15 @@ func parseNameStatusZ(raw []byte) [][]string {
 	return rows
 }
 
-func changedFiles(base string) ([][]string, error) {
-	raw, err := git.Raw("diff", "--name-status", "--no-renames", "-z", base+"...HEAD")
+// changedFiles renders the files table for a `git diff` range. rangeArgs is passed
+// straight through to `git diff --name-status --no-renames -z`: a single
+// "base...HEAD"/"base...head" three-dot expression for the branch-relative path, or
+// two bare refs ("base", "head") for the commit-relative path — `git diff` treats
+// two positional refs the same as an explicit two-dot range, which is the exact
+// two-commit diff `--commit` needs.
+func changedFiles(rangeArgs ...string) ([][]string, error) {
+	args := append([]string{"diff", "--name-status", "--no-renames", "-z"}, rangeArgs...)
+	raw, err := git.Raw(args...)
 	if err != nil {
 		return nil, err
 	}
@@ -71,56 +87,153 @@ func parseLogFormat(raw []byte) [][]string {
 	return rows
 }
 
-func commitLog(base string) ([][]string, error) {
-	raw, err := git.Raw("log", "--format=%h%x00%s", base+"..HEAD")
+// commitLog renders the log table for a `git log` range expression — always a
+// literal two-dot range string ("base..HEAD" or "base..head"), since `git log`'s
+// two-dot form (unlike `git diff`'s) has a distinct meaning from two bare refs.
+func commitLog(rangeExpr string) ([][]string, error) {
+	raw, err := git.Raw("log", "--format=%h%x00%s", rangeExpr)
 	if err != nil {
 		return nil, err
 	}
 	return parseLogFormat(raw), nil
 }
 
-const fullHelp = `usage: bench diff [--full]
+// diffBody renders the raw `git diff` body. Same rangeArgs contract as changedFiles:
+// a single three-dot expression for the branch-relative path, or two bare refs for
+// the commit-relative path.
+func diffBody(rangeArgs ...string) ([]byte, error) {
+	args := append([]string{"diff"}, rangeArgs...)
+	return git.Raw(args...)
+}
+
+const fullHelp = `usage: bench diff [--full] [--commit <sha>]
   --full appends, after the files table, a log[N]{sha,subject} TOON table (git
   log <base>..HEAD) and, last, a verbatim diff_body: block (git diff
   <base>...HEAD) — the raw diff is passed through unescaped, not TOON-encoded.
   A commit subject carrying a control byte makes --full refuse: it exits 1
   with the unrepresentable-TOON-cell error instead of rendering a mangled log
   row.
+  --commit <sha> bounds every section to one already-landed commit instead of
+  the current branch: base becomes <sha>'s first parent, skipping
+  benchBase/merge-base resolution entirely — the fallback for reviewing work
+  after it has already merged, when the branch-relative diff is empty. A root
+  commit (no parent) or an unresolvable <sha> exits 1 with a structured
+  error; a bare --commit (no value) or a repeated --commit exits 2.
 `
+
+// diffRange is the resolved review range every rendering section shares: the base
+// and method preamble lines, and the argument shapes changedFiles/commitLog/diffBody
+// need for either the branch-relative (three-dot, merge-base-aware) range or the
+// commit-relative (exact first-parent) range.
+type diffRange struct {
+	base      string
+	method    string
+	filesArgs []string
+	logRange  string
+	bodyArgs  []string
+}
+
+// resolveCommitRange builds the diffRange for `--commit <sha>`: base is <sha>'s
+// resolved first parent. The sha is verified before anything renders — an
+// unresolvable sha and a root commit's missing parent are each their own
+// structured error (kind, hint), never a leaked git failure.
+func resolveCommitRange(commitArg string) (dr diffRange, errKind, errHint string) {
+	headSha, err := git.Output("rev-parse", "--verify", commitArg+"^{commit}")
+	if err != nil {
+		return diffRange{}, "cannot resolve --commit",
+			"'" + commitArg + "' does not name a commit reachable in this repository"
+	}
+	baseSha, err := git.Output("rev-parse", "--verify", commitArg+"^")
+	if err != nil {
+		return diffRange{}, "--commit has no parent",
+			"'" + commitArg + "' is a root commit — there is no first parent to diff against"
+	}
+	return diffRange{
+		base:      baseSha,
+		method:    "commit " + headSha,
+		filesArgs: []string{baseSha, headSha},
+		logRange:  baseSha + ".." + headSha,
+		bodyArgs:  []string{baseSha, headSha},
+	}, "", ""
+}
+
+// resolveBranchRange builds the diffRange for bare `bench diff`/`--full`: the
+// recorded-key base when it names a reachable ancestor, else merge-base with the
+// default branch — byte-identical to the pre-`--commit` behavior.
+func resolveBranchRange(root string) (dr diffRange, errKind, errHint string) {
+	base, method := resolveBase()
+	if base == "" {
+		def := git.DefaultBranch(root)
+		mb, err := git.Output("merge-base", def, "HEAD")
+		if err != nil {
+			return diffRange{}, "cannot resolve a review base",
+				"no merge-base with '" + def + "'; record one with: git config branch.<name>.benchBase <sha>"
+		}
+		base = mb
+		if method == "" {
+			method = "merge-base"
+		}
+	}
+	return diffRange{
+		base:      base,
+		method:    method,
+		filesArgs: []string{base + "...HEAD"},
+		logRange:  base + "..HEAD",
+		bodyArgs:  []string{base + "...HEAD"},
+	}, "", ""
+}
+
+// parseArgs parses `bench diff`'s arguments: [--full] and [--commit <sha>] compose
+// in either order, or a lone -h/--help (recognized at any position) requests help.
+// Any other misuse — an unrecognized token, a "--commit" with no following value, or
+// a second "--commit" — reports ok=false with offender naming the exact argument at
+// fault: never a flag that parsed cleanly, so an unrecognized token past a good flag
+// still gets attributed correctly.
+func parseArgs(args []string) (full bool, commitArg string, hasCommit, help, ok bool, offender string) {
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		switch {
+		case a == "-h" || a == "--help":
+			return false, "", false, true, true, ""
+		case a == "--full":
+			full = true
+		case a == "--commit":
+			if i+1 >= len(args) || hasCommit {
+				return false, "", false, false, false, a
+			}
+			i++
+			commitArg = args[i]
+			hasCommit = true
+		default:
+			return false, "", false, false, false, a
+		}
+	}
+	return full, commitArg, hasCommit, false, true, ""
+}
 
 // Command implements `bench diff`.
 func Command(args []string) (string, int) {
-	full := false
-	switch {
-	case len(args) == 0:
-	case args[0] == "-h" || args[0] == "--help":
+	full, commitArg, hasCommit, help, ok, offender := parseArgs(args)
+	if help {
 		return fullHelp, 0
-	case len(args) == 1 && args[0] == "--full":
-		full = true
-	case len(args) == 2 && args[0] == "--full":
-		// A recognized leading flag followed by a second argument: name the second
-		// argument as the offender, not the flag that parsed fine.
-		return toon.Usage("bench diff", args[1]) + "\n", 2
-	default:
-		return toon.Usage("bench diff", args[0]) + "\n", 2
+	}
+	if !ok {
+		return toon.Usage("bench diff", offender) + "\n", 2
 	}
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
 
-	base, method := resolveBase()
-	if base == "" {
-		def := git.DefaultBranch(root)
-		mb, err := git.Output("merge-base", def, "HEAD")
-		if err != nil {
-			return toon.Errorf("cannot resolve a review base",
-				"no merge-base with '"+def+"'; record one with: git config branch.<name>.benchBase <sha>") + "\n", 1
-		}
-		base = mb
-		if method == "" {
-			method = "merge-base"
-		}
+	var dr diffRange
+	var errKind, errHint string
+	if hasCommit {
+		dr, errKind, errHint = resolveCommitRange(commitArg)
+	} else {
+		dr, errKind, errHint = resolveBranchRange(root)
+	}
+	if errKind != "" {
+		return toon.Errorf(errKind, errHint) + "\n", 1
 	}
 
 	branch, _ := git.Output("symbolic-ref", "--quiet", "--short", "HEAD")
@@ -130,9 +243,9 @@ func Command(args []string) (string, int) {
 	}
 	var b strings.Builder
 	fmt.Fprintf(&b, "branch: %s\n", branchLabel)
-	fmt.Fprintf(&b, "base: %s\n", base)
-	fmt.Fprintf(&b, "method: %s\n", method)
-	files, err := changedFiles(base)
+	fmt.Fprintf(&b, "base: %s\n", dr.base)
+	fmt.Fprintf(&b, "method: %s\n", dr.method)
+	files, err := changedFiles(dr.filesArgs...)
 	if err != nil {
 		return toon.Errorf("git diff --name-status failed", err.Error()) + "\n", 1
 	}
@@ -142,7 +255,7 @@ func Command(args []string) (string, int) {
 	}
 	b.WriteString(tbl)
 	if full {
-		logRows, err := commitLog(base)
+		logRows, err := commitLog(dr.logRange)
 		if err != nil {
 			return toon.Errorf("git log failed", err.Error()) + "\n", 1
 		}
@@ -152,7 +265,7 @@ func Command(args []string) (string, int) {
 		}
 		b.WriteString(logTbl)
 		b.WriteString("diff_body:\n")
-		body, err := git.Raw("diff", base+"...HEAD")
+		body, err := diffBody(dr.bodyArgs...)
 		if err != nil {
 			return toon.Errorf("git diff failed", err.Error()) + "\n", 1
 		}

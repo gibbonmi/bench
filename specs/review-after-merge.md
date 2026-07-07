@@ -1,6 +1,6 @@
 # review-after-merge — a diff surface for work that already landed
 
-Status: staged
+Status: implemented
 
 Source: `ASSESSMENT.md` backlog 3 (findings §1 high, §3 med-high; both hit live
 on 2026-07-06 reviewing the ft9 landing commit).
