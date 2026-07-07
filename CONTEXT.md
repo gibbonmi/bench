@@ -45,6 +45,12 @@ cold session reads this first to avoid drifting the vocabulary.
 - **park** — to capture an idea in the **ideas inbox** without committing to it
   (`bench idea "<text>"`). A *parked idea* graduates into committed work only when
   `/bench-shape-idea` pulls it into a decision map. Not "stash", not "file" — park.
+- **decision map** — the working map of the open decisions behind one idea, at
+  `decisions/<topic>.md`: grill tickets with answers, closed by a `## Handoff`
+  that hands the spec-writer its seams. Like a spec, it is promoted-then-deleted
+  once the work ships — durable decisions move to an ADR, this file, or the
+  profile, and the map leaves the tree (history lives in git). Not "PRD", not
+  "design doc" — decision map.
 - **ambient dashboard** — what `bench status` prints: the cold-session + on-demand view
   of what needs attention. The feature that renders it is the *ambient-feedback surface*;
   the printed thing is the ambient dashboard. Not "status report", not "summary".

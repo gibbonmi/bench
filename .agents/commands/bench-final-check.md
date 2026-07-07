@@ -26,6 +26,20 @@ the first failing check and the smallest reproduction, then recommend the comman
 that fits the failure: usually `/bench-implement-spec` for a feature regression or
 `/bench-debug` for a bug.
 
+**The post-merge tail (exit duty).** After landing on green on the default
+branch, read `bench status` and run the housekeeping rows it flags before
+closing: a merged spec awaiting retirement gets `bench spec retire <slug>` and
+its `spec-retire: <slug>` commit — promoting durable content first (a decision
+to an ADR, a hostile edge to the profile) and deleting the shipped decision map
+behind the spec in the same pass; an orphaned review pickup is promoted or
+deleted by hand; leftover worktrees and scratch branches go through
+`bench worktree clean`. Leave the roadmap and capture rows to
+`/bench-what-next` — that phase owns the reconcile and the drain, and this duty
+never restates it. On a topic branch these duties defer by design: the rows
+fire only on the default branch, and the next default-branch session's
+SessionStart status re-surfaces them — state the deferral in the close instead
+of silently skipping it.
+
 Run the gate and report. The gate is the oracle; this command does not form an
 opinion about whether the work is good, it reports what the gate says.
 
