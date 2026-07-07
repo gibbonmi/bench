@@ -210,7 +210,8 @@ func TestScaffoldGateUsesCanarySubcommand(t *testing.T) {
 		"BENCH_SENTINEL",
 		seedCanaryPath,
 		"[ -e DO-NOT-SHIP ] && err \"example check: DO-NOT-SHIP marker file present\"",
-		"bench canary \"$root\" || err \"canary sweep failed\"",
+		"bench=\"$(dirname \"$0\")/bin/bench.sh\"; [ -x \"$bench\" ] || bench=bench",
+		"\"$bench\" canary \"$root\" || err \"canary sweep failed\"",
 		"BENCH_CANARY_INNER",
 	}
 	for _, want := range mustContain {

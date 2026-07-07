@@ -17,6 +17,7 @@ func TestLinkContracts(t *testing.T) {
 	contract.RunParallel(t, "bench init does not scaffold .bench/learnings.md (self-learning journal)", testInitScaffoldsLearnings)
 	contract.RunParallel(t, "a second bench init clobbered an existing .bench/gate.sh", testInitExistingGateIdempotence)
 	contract.RunParallel(t, "bench link safe fresh/relink contract failed", testLinkSafeFreshRelink)
+	contract.RunParallel(t, "bench link dist/.gitignore contract failed", testLinkWritesDistGitignore)
 	contract.RunParallel(t, "bench link existing AGENTS.md contract failed", testLinkExistingAgents)
 	contract.RunParallel(t, "bench link conflict contract failed", testLinkConflictWithoutManifest)
 	contract.RunParallel(t, "bench link modified-managed contract failed", testLinkModifiedManaged)
@@ -111,6 +112,41 @@ func testLinkSafeFreshRelink(t *testing.T) {
 	linkOK(t, f)
 	requireFixtureFileContains(t, f, "CLAUDE.md", "project-owned claude config", "relink rewrote a project-owned CLAUDE.md")
 	requireFixtureFileNotContains(t, f, "CLAUDE.md", "@.bench/BENCH.md", "relink injected an import into a project-owned CLAUDE.md")
+}
+
+func testLinkWritesDistGitignore(t *testing.T) {
+	f := contract.NewFixture(t)
+
+	linkOK(t, f)
+
+	requireLinkFile(t, f, ".bench/dist/.gitignore")
+	requireFixtureFileContains(t, f, ".bench/dist/.gitignore", "bench", "dist gitignore does not ignore the copied binary")
+	requireFixtureFileNotContains(t, f, ".bench/dist/.gitignore", ".gitignore", "dist gitignore ignores itself; it must travel with the repo")
+	requireFixtureFileContains(t, f, ".bench/link-manifest.tsv", ".bench/dist/.gitignore\t", "dist gitignore has no manifest row")
+
+	before := f.ReadFile(".bench/dist/.gitignore")
+	beforeRows := manifestRowCount(t, f, ".bench/dist/.gitignore")
+
+	linkOK(t, f)
+
+	if got := f.ReadFile(".bench/dist/.gitignore"); got != before {
+		t.Fatalf("relink rewrote .bench/dist/.gitignore non-identically:\nbefore:\n%q\nafter:\n%q", before, got)
+	}
+	afterRows := manifestRowCount(t, f, ".bench/dist/.gitignore")
+	if beforeRows != 1 || afterRows != 1 {
+		t.Fatalf("dist gitignore manifest rows: first link %d, relink %d, want 1 and 1", beforeRows, afterRows)
+	}
+}
+
+func manifestRowCount(t *testing.T, f contract.Fixture, rel string) int {
+	t.Helper()
+	n := 0
+	for _, line := range strings.Split(f.ReadFile(".bench/link-manifest.tsv"), "\n") {
+		if strings.HasPrefix(line, rel+"\t") {
+			n++
+		}
+	}
+	return n
 }
 
 func testLinkExistingAgents(t *testing.T) {
