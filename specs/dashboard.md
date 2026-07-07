@@ -1,6 +1,6 @@
 # Dashboard (FT7)
 
-Status: staged
+Status: implemented
 
 ## Problem
 Every moving piece of a Bench project is legible to an agent through the CLI —

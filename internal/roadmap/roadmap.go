@@ -101,6 +101,24 @@ func DrainCounts(root string) (ideas, openLearnings int) {
 	return lineCount(filepath.Join(root, ideasFile)), learningCount(root)
 }
 
+// RoadmapText returns ROADMAP.md's raw contents and whether it is present and non-empty —
+// the same absent-or-zero-byte boundary RoadmapCommand keys its empty-state posture on.
+// The dashboard renders this text; a false present flag drives its definitive empty state.
+func RoadmapText(root string) (text string, present bool) {
+	data, err := os.ReadFile(filepath.Join(root, "ROADMAP.md"))
+	if err != nil || len(data) == 0 {
+		return "", false
+	}
+	return string(data), true
+}
+
+// ParkedIdeas returns the parked idea lines from IDEAS.md — every line beginning `- `, the
+// same lines DrainCounts tallies (both go through ideaLines, one source). A missing or
+// unreadable file yields nil, which the dashboard renders as its empty state.
+func ParkedIdeas(root string) []string {
+	return ideaLines(filepath.Join(root, ideasFile))
+}
+
 func drainStatus(root string) string {
 	ideas, openLearnings := DrainCounts(root)
 	if ideas == 0 && openLearnings == 0 {
@@ -115,7 +133,7 @@ var numberedItem = regexp.MustCompile(`(?m)^[0-9]+\. `)
 // nextAction renders the no-drain call to action: the sequence section verbatim, or
 // an explicit gap message so a broken format contract never yields silent output.
 func nextAction(roadmap string) string {
-	section := recommendedSequence(roadmap)
+	section := RecommendedSequence(roadmap)
 	if section == "" {
 		return "\n\nROADMAP.md has no ## Recommended sequence section — run /bench-what-next to restore it.\n"
 	}
@@ -125,11 +143,12 @@ func nextAction(roadmap string) string {
 	return "\n\n## Next action\n\n" + section
 }
 
-// recommendedSequence extracts the `## Recommended sequence` section, from its
+// RecommendedSequence extracts the `## Recommended sequence` section, from its
 // heading (trailing whitespace tolerated) to the next `## ` heading or EOF. Fence
 // state is tracked throughout: a heading inside a fenced code block neither starts
-// the section nor terminates it.
-func recommendedSequence(roadmap string) string {
+// the section nor terminates it. Both `bench roadmap`'s next-action callout and the
+// dashboard's sequence block read it, so the two share one parser.
+func RecommendedSequence(roadmap string) string {
 	lines := strings.SplitAfter(roadmap, "\n")
 	start, end := -1, len(lines)
 	inFence := false
@@ -172,15 +191,23 @@ func learningCount(root string) int {
 }
 
 func lineCount(file string) int {
+	return len(ideaLines(file))
+}
+
+// ideaLines is the one reader of IDEAS.md-style parked lines: every line beginning `- `.
+// lineCount tallies them for the drain counts and ParkedIdeas returns them for the
+// dashboard, so the count and the rendered list can never disagree. Missing or unreadable
+// file → nil.
+func ideaLines(file string) []string {
 	data, err := os.ReadFile(file)
 	if err != nil {
-		return 0
+		return nil
 	}
-	count := 0
+	var out []string
 	for _, line := range strings.Split(string(data), "\n") {
 		if strings.HasPrefix(line, "- ") {
-			count++
+			out = append(out, line)
 		}
 	}
-	return count
+	return out
 }

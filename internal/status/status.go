@@ -46,6 +46,59 @@ type row struct {
 	action         string
 }
 
+// Signal is one ambient-board row exposed as structured data — the severity sort key
+// plus the signal/detail/action triple. It is the shared accessor the text board and the
+// human dashboard both consume, so the two views cannot rank or drop signals differently.
+type Signal struct {
+	Severity int
+	Name     string
+	Detail   string
+	Action   string
+}
+
+// GateInfo is the structured gate-verdict cache read, shared by the status board and the
+// dashboard so neither re-parses `<git-dir>/bench-last-gate`. Present is false when no
+// cache file exists; Stale marks a verdict whose cached tree no longer matches the work
+// tree (or whose line is untrusted). Status/CachedTree/WorkTree/Timestamp carry the raw
+// fields for a human view; the board reduces them to its severity rows.
+type GateInfo struct {
+	Present    bool
+	Status     string
+	CachedTree string
+	WorkTree   string
+	Stale      bool
+	Timestamp  string
+}
+
+// Signals gathers every ambient signal under root and returns them severity-sorted
+// ascending — the one severity ladder `bench status` renders. render (the text board) and
+// the dashboard gatherer both call this, so a signal added or reordered here reaches both
+// surfaces from one source.
+func Signals(root string) []Signal {
+	var rows []row
+
+	rows = appendGate(rows, root)
+	rows = appendGit(rows, root)
+	rows = appendWorktree(rows, root)
+	rows = appendGuards(rows, root)
+	rows = appendDrain(rows, root)
+	rows = appendStructure(rows, root)
+	rows = appendMaps(rows, root)
+	rows = appendRetirement(rows, root)
+	rows = appendOrphanedPickup(rows, root)
+	rows = appendRoadmapReconcile(rows, root)
+
+	// Ascending numeric sort by severity; each severity is unique, so ordering is
+	// fully determined and the min-severity row leads.
+	sort.SliceStable(rows, func(i, j int) bool { return rows[i].sev < rows[j].sev })
+
+	out := make([]Signal, len(rows))
+	for i, r := range rows {
+		out[i] = Signal{Severity: r.sev, Name: r.signal, Detail: r.detail, Action: r.action}
+	}
+	return out
+}
+
 // Command implements `bench status`. It composes every sibling signal into the ambient
 // board and returns it with exit 0. `--all` lifts the five-row budget and prints every
 // signal; `-h/--help` prints usage (exit 0); an unknown argument — including `--all`
@@ -75,38 +128,23 @@ func Command(args []string) (string, int) {
 // (`bench status --all`) it prints every row and emits no overflow line. The SessionStart
 // hook calls with all=false so the ambient surface stays bounded.
 func render(root string, all bool) string {
-	var rows []row
-
-	rows = appendGate(rows, root)
-	rows = appendGit(rows, root)
-	rows = appendWorktree(rows, root)
-	rows = appendGuards(rows, root)
-	rows = appendDrain(rows, root)
-	rows = appendStructure(rows, root)
-	rows = appendMaps(rows, root)
-	rows = appendRetirement(rows, root)
-	rows = appendOrphanedPickup(rows, root)
-	rows = appendRoadmapReconcile(rows, root)
-
-	// Ascending numeric sort by severity; each severity is unique, so ordering is
-	// fully determined and the min-severity row leads.
-	sort.SliceStable(rows, func(i, j int) bool { return rows[i].sev < rows[j].sev })
+	signals := Signals(root)
 
 	var b strings.Builder
-	if len(rows) == 0 {
+	if len(signals) == 0 {
 		b.WriteString("bench: clean — nothing pending\n")
 		return b.String()
 	}
 
-	lead := rows[0]
-	fmt.Fprintf(&b, "▶ %s  (%s)\n", lead.action, lead.signal)
-	for i, r := range rows {
+	lead := signals[0]
+	fmt.Fprintf(&b, "▶ %s  (%s)\n", lead.Action, lead.Name)
+	for i, r := range signals {
 		if all || i < 5 {
-			fmt.Fprintf(&b, "  %-10s %-30s → %s\n", r.signal, r.detail, r.action)
+			fmt.Fprintf(&b, "  %-10s %-30s → %s\n", r.Name, r.Detail, r.Action)
 		}
 	}
-	if !all && len(rows) > 5 {
-		fmt.Fprintf(&b, "  +%d more (bench status --all)\n", len(rows)-5)
+	if !all && len(signals) > 5 {
+		fmt.Fprintf(&b, "  +%d more (bench status --all)\n", len(signals)-5)
 	}
 	return b.String()
 }
@@ -116,13 +154,34 @@ func render(root string, all bool) string {
 // stale (sev 7); else a `red` verdict is a fail-before-commit signal (sev 0). No cache
 // file → no gate row.
 func appendGate(rows []row, root string) []row {
+	gv := GateVerdict(root)
+	if !gv.Present {
+		return rows
+	}
+	if gv.Stale {
+		detail, action := staleGateDetailAction(root, gv.CachedTree, gv.WorkTree)
+		return append(rows, row{7, "gate", detail, action})
+	}
+	if gv.Status == "red" {
+		return append(rows, row{0, "gate", "red", "fix before commit"})
+	}
+	return rows
+}
+
+// GateVerdict reads the gate cache `<git-dir>/bench-last-gate` (line 0:
+// `<status> <tree> <timestamp>`) into structured data. It is the one gate-cache reader —
+// appendGate reduces it to a severity row, the dashboard renders its raw fields — so the
+// stale/red honesty is computed once. A missing cache file or unresolvable git dir yields
+// Present=false; an untrusted line, or a cached tree that differs from the work tree,
+// yields Stale=true. WorkTree is always the current tree hash when a cache file exists.
+func GateVerdict(root string) GateInfo {
 	gitDir, err := git.Output("-C", root, "rev-parse", "--absolute-git-dir")
 	if err != nil {
-		return rows
+		return GateInfo{}
 	}
 	data, err := os.ReadFile(filepath.Join(gitDir, "bench-last-gate"))
 	if err != nil {
-		return rows
+		return GateInfo{}
 	}
 	first := string(data)
 	if i := strings.IndexByte(first, '\n'); i >= 0 {
@@ -130,23 +189,20 @@ func appendGate(rows []row, root string) []row {
 	}
 	fields := strings.Fields(first)
 	tree := git.TreeHash(root)
-	if !trustedGateCache(fields, tree) {
-		ctree := ""
-		if len(fields) > 1 {
-			ctree = fields[1]
-		}
-		detail, action := staleGateDetailAction(root, ctree, tree)
-		return append(rows, row{7, "gate", detail, action})
+	gi := GateInfo{Present: true, WorkTree: tree}
+	if len(fields) > 0 {
+		gi.Status = fields[0]
 	}
-	cstatus, ctree := fields[0], fields[1]
-	if ctree != tree {
-		detail, action := staleGateDetailAction(root, ctree, tree)
-		return append(rows, row{7, "gate", detail, action})
+	if len(fields) > 1 {
+		gi.CachedTree = fields[1]
 	}
-	if cstatus == "red" {
-		return append(rows, row{0, "gate", "red", "fix before commit"})
+	if len(fields) > 2 {
+		gi.Timestamp = fields[2]
 	}
-	return rows
+	if !trustedGateCache(fields, tree) || gi.CachedTree != tree {
+		gi.Stale = true
+	}
+	return gi
 }
 
 func trustedGateCache(fields []string, currentTree string) bool {

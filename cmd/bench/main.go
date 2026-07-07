@@ -17,6 +17,7 @@ import (
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/commit"
 	"github.com/gibbonmi/bench/internal/coverage"
+	"github.com/gibbonmi/bench/internal/dashboard"
 	"github.com/gibbonmi/bench/internal/diff"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
@@ -57,6 +58,7 @@ var commands = map[string]func([]string) (string, int){
 	"diff":                diff.Command,
 	"coverage":            coverage.Command,
 	"status":              status.Command,
+	"dashboard":           dashboard.Command,
 	"structure":           structure.Command,
 	"models":              models.Command,
 	"outline":             outline.Command,
