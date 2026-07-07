@@ -1,15 +1,15 @@
-# Bench platform assessment — 2026-07-06
+# Bench platform assessment — 2026-07-07
 
-> **Drained 2026-07-06** into nine staged specs (ROADMAP rows FT13–FT21) plus
-> three parked rows and two same-day fixes — see `## Drain disposition` at the
-> end of this file for the finding-level map.
+Deep assessment of the workflow commands, skills, enforcement, CLI/Go core,
+installation/adoption surface, and live operational state. Produced by six
+read-only area sweeps (mid tier) synthesized and spot-verified on the top tier;
+claims marked ✓ were independently re-verified against source by the
+synthesizer. A live full gate run during the assessment was **green in 29.6s
+wall** (3m44s user — the phases parallelize well).
 
-Deep assessment of the skills, commands, enforcement, docs, CLI/Go core, and
-artifact lifecycle, hunting inconsistencies and improvement leverage. Produced by
-six read-only area sweeps (mid tier) synthesized and spot-verified on the top
-tier; claims marked ✓ were independently re-verified against source by the
-synthesizer. Findings from the FT9 code review live in `reviews/ft9.md` and are
-referenced, not duplicated, here.
+The 2026-07-06 assessment and its drain disposition live in git history
+(`72e6a7f`, drain `b2b7dc6`); §1 verifies that drain landed rather than
+re-listing it. This file replaces it as the current assessment.
 
 Severity: **high** = an invariant or advertised guarantee is not actually held;
 **med** = a real defect or reachable unowned state; **low** = friction, drift
@@ -19,266 +19,271 @@ risk, or hygiene.
 
 ## Executive summary
 
-The platform is in good shape where it is densely gated: docs anchors, mirror
-parity, the AXI contract suite, and the shift/push enforcement path all held up
-under adversarial reading. The problems cluster in four themes:
+Yesterday's drain held: 9 of 10 specs verified HELD with gate enforcement, 1
+PARTIAL only by its own disclosed posture (§1). The enforcement core survived
+adversarial reading, and the oracle is fast. Today's problems cluster in four
+themes:
 
-1. **Lifecycle states with no owner.** Artifacts can reach states no phase or
-   command handles: a merged spec awaiting retirement, a `reviews/<slug>.md`
-   whose fix pass never runs, a roadmap row for work that already shipped, a
-   review requested after the work merged. Each was found live in the tree
-   today, not hypothetically.
-2. **Advertisement stronger than enforcement.** The kit's own defect class —
-   "an enforcement and its advertisement must collapse to one source" — appears
-   in its enforcement layer: `bench guards` advertises hooks by file presence
-   not wiring, pre-push advertises pin-drift denial it skips when unpinned, and
-   the primary harness (Claude) has *less* conformance-gated hook wiring than
-   the secondary (Codex).
-3. **One-source-per-fact violations in the kit that preaches it.** Five live
-   instances: the not-in-repo message (3 phrasings), the coverage-map schema
-   (command + skill), the tier binding (env + prose), the `bin/bench.sh`
-   header comment roster (stale third copy), and the new `--full` contract
-   facts (help const + package doc).
-4. **Agents still hand-run what the CLI should own.** The FT9 pattern
-   (fold a repeated hand-run git call into the CLI) has more instances waiting:
-   retired-spec recovery, spec status listing, and the `bench commit` docs
-   that omit its mandatory `-m`.
+1. **The workflow ends at merge; the tree keeps going.** Every phase hand-off
+   up to `/bench-final-check` is owned; nothing after it is. Live evidence: 10
+   merged specs unretired, 9 stale roadmap rows, 19 decision maps never swept,
+   a stale `HANDOFF.md` giving cold sessions day-old instructions, and 8
+   orphaned scratch branches whose recommended remedy the kit's own git guard
+   denies to the agent.
+2. **Adoption breaks where the home repo never walks.** The kit dogfoods
+   itself in a repo where everything is already installed. A fresh
+   `npm install` is missing the profile templates `bench init` points at, a
+   committed `.bench/dist` binary can silently disable the Stop-hook oracle
+   for a different-arch teammate, the scaffolded gate assumes a global `bench`
+   on PATH, and there is no repo-level uninstall.
+3. **Remaining enforcement gaps are edges — several deliberate but
+   unrecorded.** The agent-line guard fails open when a delegation omits the
+   model field (the exact silent-escalation path invariant 2 targets);
+   pre-push installation is never re-verified after link (fresh clones lose
+   the backstop silently); the accepted honor-system residuals live in a
+   drained assessment table, not a decision record.
+4. **The false-empty defect class outlived its fix.** FT19 fixed
+   false-empty-on-git-failure where it was found (`bench diff`); the same
+   pattern sits in `bench structure` today. The class was fixed as instances,
+   not hunted as a class.
 
 ---
 
 ## Findings by area
 
-### 1. Workflow commands (`.agents/commands/`)
+### 1. The 2026-07-06 drain: verified
+
+All ten specs (`Status: implemented`, merged fe5863f..f89aee0) checked
+story-by-story against the tree.
+
+| Spec | Verdict | Note |
+|---|---|---|
+| artifact-lifecycle | HELD | `bench spec retire` + orphan-pickup signal + phase-doc duties, all gate-anchored |
+| claude-hook-conformance | HELD | Stop/SessionStart/Bash checks at Codex parity; canary needle bites |
+| cli-contract-accuracy | HELD | all 8 stories AXI/anchor-pinned |
+| docs-drift | PARTIAL | delivered; stories 1–3, 6 enforced only by reviewer cold-read — the spec's own disclosed posture |
+| guards-wiring | HELD | `wired` column derived from harness configs; both pre-push postures pinned |
+| non-claude-model-tiers | HELD | safe-token grammar, owner-id binding, multi-source discovery — gate-enforced |
+| one-source-collapses | HELD | `toon.NotInRepo` collapse enforced; stories 3–5 review-only |
+| review-after-merge | HELD | `bench diff --commit` + step-1 fallback, AXI-pinned |
+| roadmap-reconcile | HELD | status signal enforced (and firing today — see §7) |
+| shellcheck-coverage | HELD | delivered; bite-proof lives in a Go unit test, not the `tests/canary/` family the acceptance row named — enforcement intact, seam substituted |
+
+Spot-checks: `reviews/ft9.md` deleted as promised (`reviews/` empty ✓); stale
+FT4/FT9 roadmap rows gone ✓. Residual: the batch itself now sits in the §2
+post-merge gap — specs unretired, rows stale.
+
+### 2. Post-merge lifecycle and workflow commands
 
 | Sev | Kind | Finding | Citation |
 |---|---|---|---|
-| high | gap | `reviews/<slug>.md` lifecycle is one-sided: review-implementation promises "the `/bench-implement-spec` session that resolves the findings deletes `reviews/<spec-slug>.md`", but `bench-implement-spec.md` never mentions reading, resolving, or deleting it. ✓ (`rg reviews/` hits only the review command) | `bench-review-implementation.md:89-92` vs `bench-implement-spec.md` |
-| high | gap | Empty-diff state unhandled: step 1 says "Confirm the diff is non-empty" with no remedy, and the documented happy path (implement-spec commits → recommends review) reaches it every time work lands on the default branch (merge-base == HEAD). ✓ hit live this session reviewing FT9 | `bench-review-implementation.md:30-36`; `internal/diff/diff.go:105-117` |
-| med | gap | `reviews/<slug>.md` orphans when the reviewer accepts residual risk and routes to final-check: no phase or reconcile deletes it, so it lingers as exactly the false pickup work the command warns against. | `bench-review-implementation.md:17-19,88`; `bench-final-check.md` (no mention) |
-| med | gap | Shipped-spec retirement has no standalone owner: promote-then-delete lives only inside the *next* `/bench-write-spec`; what-next reconcile removes ROADMAP rows, not `specs/` files; there is no `bench spec retire`. | `bench-write-spec.md:167-168`; `bench-what-next.md:26-27` |
-| med | inconsistency | Both `bench commit` call sites omit the mandatory `-m <msg>`; an agent following either doc verbatim exits 2. ✓ Bonus: `commit.go:1`'s own synopsis writes `[-m <msg>]` as optional while `:25/:32` require it. | `bench-implement-spec.md:85`, `bench-final-check.md:16-18` vs `internal/commit/commit.go:32` |
-| low | improvement | Retired-spec recovery git incantation duplicated across two commands — an FT9-pattern CLI-folding candidate (`bench spec history`). | `bench-debug.md:87-88`; `bench-write-spec.md:165` |
+| high | gap | Spec retirement has no reachable post-merge owner. The kit advertises promote-then-delete ("a row leaves when the work ships"), and 10 merged specs sit unretired today ✓. The only prose instructing it is `/bench-write-spec` step 8 — a phase gated on a *new* feature's decision map — plus the `/bench-what-next` backstop; `/bench-final-check`, the last phase a build actually reaches, never mentions it ✓. Retirement happens only if the reviewer notices the status row and hand-runs `bench spec retire` per spec. | `bench-write-spec.md:160-165`; `bench-final-check.md` (no mention ✓); `bench-what-next.md:27` |
+| med | gap | **No after-merge phase — the root cause.** Post-merge duties (spec retire, roadmap-row removal, decision-map sweep, handoff refresh) are scattered onto phases reached only for other reasons. `bench status` already computes the duty list; no command consumes its rows as a queue. One status-driven after-merge duty pass closes this finding, the high above, and the two below. | `bench-final-check.md:15-27`; `bench-what-next.md:24-29` |
+| med | trap | `HANDOFF.md` is a stale cold-session trap ✓: dated 2026-07-06 pre-drain, it instructs "publish the four local commits" (long since on main ✓), names 2 open learnings that were since resolved (today's 2 are different ✓), and counts 7 structure issues vs today's 4 ✓. No command reads, refreshes, or expires it; it is also shipped to consumers in the npm package (§3). | `HANDOFF.md:14-31,75-94`; `package.json:17` ✓ |
+| med | gap | `decisions/` has no lifecycle end ✓: 19 maps accumulate, most for long-shipped work (the go-port series, ft4, ft9, the just-closed non-claude-model-tiers). The status decisions signal counts only *unresolved* maps, so a shipped map is invisible but permanent — asymmetric with specs' promote-then-delete. Whether to sweep or keep closed maps is decided nowhere; "decision map" is absent from CONTEXT.md's core terms ✓. | `decisions/` (19 files ✓); `internal/status/status.go` decisions row; `CONTEXT.md` |
+| med | gap | Roadmap rot has no independent trigger: FT13–FT21 rows still read "Staged" for merged work ✓. `/bench-what-next` fires only when ideas/learnings are non-empty; the FT16 signal does fire — but it is sev 9, and today it is exactly the row the five-row budget hides behind `+1 more` ✓ (§7). Downstream of the high finding: retirement removes the rows. | `ROADMAP.md:13-19`; `internal/status/status.go:285-292` ✓ |
+| low | drift | `/bench-write-spec`'s entry contract ("refuse without a closed map") is contradicted by the live tree it produced (10 map-less specs under an explicit reviewer batch override). The reconciliation is captured as an open learning with a proposed contract clause — pending drain, not yet a rule. | `bench-write-spec.md:26-30`; `.bench/learnings.md:39-55` ✓ |
+| low | friction | Status action strings recommend non-invocable surfaces: specs row → `promote-then-delete (spec-retire)`, decisions row → a skill name — against the platform's own "recommend in the form this harness can invoke" rule. | `internal/status/status.go:217,280` |
+| low | drift | The lighter-path threshold for small changes is worded three divergent ways across command docs. | `bench-implement-spec.md:22`; `bench-write-spec.md:2`; `AGENTS.md` |
 
-Clean: `.claude/commands` byte-identical (symlink); all referenced subcommands
-and flags exist; phase skills are thin adapters with no drift surface.
+Clean: the build chain (shape → spec → implement → review → final; debug →
+final) is internally coherent — every exit handoff names the next phase and the
+red/stop-short routes. The `reviews/` pickup lifecycle is fully owned post-FT13
+(create, consume, delete, retire-sweep). `bench-debug`'s retired-spec recovery
+correctly owns the consequence of promote-then-delete.
 
-### 2. Enforcement layer (`.bench/`, hooks, conformance)
-
-| Sev | Kind | Finding | Citation |
-|---|---|---|---|
-| high | gap | Claude `settings.json` wiring for Stop, PreToolUse:Bash, and SessionStart is not conformance-gated (only the Agent matcher is checked); deleting the Stop or git-guard wiring on the primary harness leaves the gate green. ✓ | `internal/conformance/line_routing_checks_test.go:89-117`; no Claude Stop/Bash check exists |
-| high | inconsistency | The Codex equivalents *are* gated (`Stop→stop.sh`, `Bash→block-dangerous-git.sh`), so the secondary harness is better-protected than the primary. ✓ | `internal/conformance/validity_checks_test.go:130-151` |
-| med | inconsistency | `bench guards` discovers hooks by file presence, not wiring — on Codex it advertises `check-agent-line` and `session-start` that aren't wired there, overstating the deny surface. Pre-push, by contrast, gets a real install+marker check. | `internal/guards/guards.go:106-123` vs `.codex/hooks.json`; `guards.go:128-149` |
-| med | gap | Pre-push advertises "`.bench` drift from bench gate pin" unconditionally but skips drift enforcement (warn-only) when no pin file exists. | `.git/hooks/pre-push` (`if [[ -n "$pin_tree" … ]]`) |
-| med | gap | Invariant 2's interactive line guard (`check-agent-line`) is Claude-only; interactive delegation onto an unbound model on Codex/opencode is unguarded outside the shift loop. | `.codex/hooks.json` (no Agent matcher); `.bench/BENCH.md` "extra layer where supported" |
-| med | improvement | shellcheck phase omits the adapters (`.bench/adapters/*` — load-bearing enforcement), the gate fragment scripts, and pre-push. | `internal/gate/phases.go:100-122` |
-| low | improvement | shellcheck is Optional → the whole shell-lint defense silently "skips" where the binary is absent; EACCES is also treated as skip, masking a present-but-unexecutable binary. | `internal/gate/phases.go:61-64,227-230,264-269` |
-| low | gap | Invariant 4's "commit on green, never on red" is enforced only inside `bench shift`; an interactive `git commit` on a red gate is not blocked (guard blocks `--amend`, not plain commit). | `internal/shift/verdict.go:50-52` |
-
-Invariant → mechanism map (from the sweep): 1 solid for shift/push, honor-system
-interactively; 2 solid for shift, weak for interactive delegation off-Claude;
-3 solid (densely gated); 4 solid for shift/push, weak for interactive
-commit-on-red.
-
-### 3. Artifact lifecycle and workflow state
+### 3. Installation, packaging, invocation
 
 | Sev | Kind | Finding | Citation |
 |---|---|---|---|
-| high | accuracy | `ROADMAP.md` FT9 row is stale: still "Grilled and mapped… ready" with recommended-sequence step 2 saying run `/bench-write-spec`, though FT9 is implemented and merged (`51f5075`, `specs/ft9.md:3`). Violates the roadmap header's own "a row leaves when the work ships." ✓ | `ROADMAP.md:13,59` |
-| med-high | gap | Review-after-merge has no lifecycle representation: `bench diff --full` from the default branch is empty, yet the review phase both sources its diff there and demands non-empty. No documented fallback (e.g. first-parent diff of the merge/landing commit). ✓ hit live | `bench-review-implementation.md:35`; confirmed empty output this session |
-| med | gap | `reviews/<slug>.md` orphans if its spec retires first — spec-retire prose never mentions `reviews/`, and the file escapes git-based rot sweeps because it is untracked. | `bench-write-spec.md:155-168`; `git ls-files reviews/` empty |
-| med | gap | The review artifact is born untracked and no phase commits it — invisible to git-based checks until a fix session happens to notice; the command assumes a fix commit deletes it but nothing owns getting it into git first. | `bench-review-implementation.md:89-92` |
-| med | ergonomics | The transient review artifact flips the gate stale: `bench tree-hash` includes untracked files, so an advisory review dirties the gate verdict. Caveat worth a look: status's "gated tree a6c2c9f" could not be reconciled with the pin file content at `.git/bench-last-gate`. | `internal/status/status.go:121` |
-| low | gap | spec-retire is prose-only — status flags the pending count but a human must remember the manual promote-then-delete. | `rg spec-retire` hits prose only |
-| low | ergonomics | Out-of-pool/agent worktrees linger until someone runs `bench worktree clean` (status does surface it). | `internal/status/status.go:209` |
+| med | gap | `projects/` is not in `package.json` `files[]` ✓, yet `bench init` prints "see projects/<name>.md in the Bench kit for the profile template" and `/bench-setup-repo` builds from "the example profiles in the kit." On every npm/npx install — the advertised primary path — the templates don't exist; the agent improvises the profile. | `package.json:12-28` ✓; `internal/adopt/init.go:74`; `bench-setup-repo.md:136` |
+| med | gap | `bench link` copies the running arch-specific binary to `.bench/dist/bench` with no `.gitignore` entry or guidance. A consumer who commits it hands a different-arch teammate a broken local CLI, and the Stop-hook oracle then fails open — enforcement silently off. | `internal/adopt/link.go:76-78`; `.bench/hooks/stop.sh:58-61` |
+| med | gap | The scaffolded `.bench/gate.sh` calls bare `bench canary`, but the gate subprocess env adds nothing to PATH — a machine relying only on the `.bench/bin` local CLI (the documented "global bench optional" story) gets a gate that cannot go green. | `internal/adopt/init.go:101,108-112`; `internal/gate/gate.go:130-139` |
+| med | gap | No repo-level uninstall: the link manifest enumerates every installed path, but nothing consumes it to remove the footprint (`.bench/`, `.agents/`, harness adapters, pre-push hook, AGENTS.md block). Only global CLI/shim removal is documented. | `internal/adopt/adopt.go:15-25`; `README.md:187-193` |
+| low | waste/trap | npm ships the kit's own `HANDOFF.md` (stale, §2), `CLAUDE.md`, and `AGENTS.md`, all unused by adoption — `link` generates its own from constants. Dead weight, and the stale handoff is exported to every consumer. | `package.json:15-17` ✓; `internal/adopt/marker.go:135-137` |
+| low | docs | Undocumented prerequisites: the from-a-clone path needs Go or node to obtain a binary (README doesn't say); Windows is unsupported and unmentioned (no WSL note, `os: [darwin,linux]` errors EBADPLATFORM); nvm/asdf global installs break on `nvm use` beyond what the shim fixes. | `README.md:177,184-187`; `package.json:42-45` |
+| low | drift | README's `.bench/` layout omits shipped/managed pieces (`lib/`, `bin/`, `dist/`, `BENCH-reference.md`, `gate.sh`, `lines.env`). | `README.md:113-123` |
 
-Clean: `IDEAS.md` empty, `.bench/learnings.md` has zero open entries — the
-capture drains are current.
+Clean: link idempotency and conflict handling are solid (sha256 manifest,
+atomic writes, modified-managed refusal, fence-aware AGENTS.md block); npx
+ephemeral-cache detection forces copy mode; release mechanics single-source
+os/cpu/version from `platforms.json`; postinstall never fails an install;
+harness degradation for non-hook harnesses is documented in BENCH-reference.
 
-### 4. CLI and Go core (`bin/bench.sh`, `internal/`)
-
-| Sev | Kind | Finding | Citation |
-|---|---|---|---|
-| med | inconsistency | Not-in-repo message derived in 3+ forms: `toon.NotInRepo()` declares itself "one source", `commit.go:38` hand-duplicates its rendered literal, ~8 operational commands emit a bare `not in a git repo`, `gate/phases.go:82` a third form; `git.go:72` claims a uniform posture that doesn't exist. ✓ | `internal/toon/toon.go:111-115`; `internal/commit/commit.go:38`; `internal/gate/gate.go:253` et al. |
-| med | inconsistency | `bench roadmap` outside any repo exits 0 with "no ROADMAP.md" (conflating not-in-repo with no-roadmap) while sibling `bench idea` in the same package returns NotInRepo exit 1. ✓ | `internal/roadmap/roadmap.go:83-89` vs `:31-33` |
-| low-med | quality | `bench diff` turns git failures into false-empty success in three places (`changedFiles`, `commitLog`, the `--full` body). Overlaps the low finding in `reviews/ft9.md`; blast radius narrow since base resolution is guarded loudly. | `internal/diff/diff.go:45-48,74-79,140` |
-| low | inconsistency | `bench coverage --check` success returns `("", 0)` — violates the AXI "definitive empty states" rule; agent can't distinguish pass from no-output. | `internal/coverage/coverage.go:232-234` vs `bench-craft-cli/SKILL.md:53-54` |
-| low | inconsistency | coverage `--check` violation lines use a shape divergent from the canonical `error: <kind> — <hint>` that `toon.Errorf` is meant to solely own. | `internal/coverage/coverage.go:237` |
-| low | inconsistency | `bin/bench.sh` header comment lists a stale subcommand subset — a third roster of a fact already owned by the usage heredoc and BENCH.md. | `bin/bench.sh:10-17` vs `:242-266` |
-| low | quality | `bench maps --count` and `bench guards --brief` are real flags documented only in code (internal adapter hooks; acceptable but undiscoverable). | `internal/maps/maps.go:212`; `internal/guards/guards.go:162` |
-| low | quality | `toon.Usage` misattributes the offending argument when a valid flag precedes an unknown one: `bench diff --full bogus` reports `unknown argument: --full`. ✓ (synthesizer finding, from the FT9 diff) | `internal/diff/diff.go` arg switch default (`args[0]`) |
-
-Shell/Go boundary judged clean — `bin/bench.sh` is binary-resolution and routing
-that must run before the binary exists. Not inspected in depth by the sweep:
-`adopt`, `canary`, `conformance` (partial), `contract` (partial), `gate`
-(partial), `gitguard`, `lines`, `models`, `packagesurface`, `stophook`,
-`structure`, `subprocess`, `terminal`.
-
-### 5. Skills (`.agents/skills/`)
+### 4. Enforcement residuals
 
 | Sev | Kind | Finding | Citation |
 |---|---|---|---|
-| med | inconsistency | Acceptance-coverage-map schema derived twice — the 5 fields and the red-signal gloss appear in both the write-spec command and `craft-tdd`. The kit's cardinal rule, broken in its two most-used build/review surfaces. | `bench-write-spec.md:102-104` vs `bench-craft-tdd/SKILL.md:71-84` |
-| low-med | improvement | `craft-cli`'s trigger fires only for a CLI "whose project declares AXI conformance" — but deciding *whether* a new CLI conforms is exactly when it's needed; the skill governing the decision won't load at the decision point. | `bench-craft-cli/SKILL.md:3` |
-| low | inconsistency | `craft-review` and `craft-tdd` call the edge-inventory *step* "the canonical list" of edge classes; the real source is the profile checklist / `hostile-input-library.md`. Points the weakest reader at a procedure, not the source. | `bench-craft-review/SKILL.md:38`; `bench-craft-tdd/SKILL.md:28` |
-| low | improvement | No model-invocable skill owns spec-authoring/coverage-map discipline (it lives only in the user-invoked command) — the structural root of the med finding above. | `bench-write-spec.md:229-232` |
-| low | inconsistency | `craft-seams` restates the over-fit rationale `craft-tdd` owns — borderline, cross-referenced, mild one-source smell. | `bench-craft-seams/SKILL.md:46-49` vs `bench-craft-tdd/SKILL.md:8-9` |
+| med | gap | The agent-line guard fails **open** when the delegation envelope carries no model field ✓ — documented as the intended rim ("every degraded branch is fail-OPEN"), but an omitted model inherits the invoking session's model, which is precisely the silent-escalation path invariant 2 exists to stop. The counter-rule (always pass the bound alias) lives only in `craft-delegate` prose. Deny-on-missing, or record the fail-open as a decision. | `internal/lines/lines.go:113-127` ✓ |
+| med | gap | Pre-push has no install verification or self-heal: `bench doctor` checks the PATH shim but never that `.git/hooks/pre-push` exists, is bench-managed, or matches the embedded template ✓ (zero hook mentions in doctor.go). A fresh clone (git doesn't clone hooks), an un-relinked repo, or a global `core.hooksPath` silently loses the harness-independent backstop, and no surface flags it. | `internal/adopt/link_hook.go:26-55`; `internal/adopt/doctor.go` ✓ |
+| med | gap | The interactive line guard remains Claude-only (`.codex/hooks.json` wires Stop + git guard but no Agent matcher; OpenCode/plain terminals have no hooks). Known and parked (FT24, pending Codex hook-capability research) — re-confirmed still open, recorded here for completeness. | `.codex/hooks.json`; `ROADMAP.md` FT24 |
+| low | gap | Canary coverage is family-level, not per-check: `checkBenchShRoutes` is wired into conformance with no canary fixture — unwiring it escapes the canary layer (the direct-call Go bite test stays green regardless of wiring). Decide whether per-check needles are the standard for wiring-sensitive checks. | `internal/conformance/checks_test.go:34,62,86-106` |
+| low | posture | Accepted honor-system residuals (interactive commit-on-red, non-shift done-claims, "declare the line" having no enforcement surface anywhere) are recorded only in the prior assessment's disposition table — now history, not a decision record. One short ADR would make the accepted risk citable. | `docs/adr/` (absent); prior disposition |
+| low | perf/posture | The gate verdict cache is write-only ✓ — `gate.Record` writes `<git-dir>/bench-last-gate` but nothing reads it to short-circuit a byte-identical tree, so every Stop re-pays ~30s. Deliberate recompute-always may be the right oracle posture — but it's a decision worth recording, not an accident. (The cache is also forgeable, but only the advisory dashboard trusts it — Stop and shift always re-run — so it cannot force a false done.) | `internal/gate/gate.go:193-209` ✓; `internal/status/status.go:108-150` |
 
-Clean: phase skills are thin adapters; `.claude/skills` is 12 symlinks; skills
-index auto-generated from frontmatter; all referenced subcommands/flags/paths
-exist; the `craft-delegate`↔`craft-line` split is a model one-source example.
+Held under adversarial reading: no-forged-verdict rims (non-hash tree refused,
+fail-open paths write no cache); stale cache can't lie green; the Bash git
+guard denies all `git push` including `--no-verify`; adapters fail closed in
+routed repos; the shift adapter refuses an undeclared or unbound `BENCH_MODEL`;
+owner-defined tier ids bind exactly with no provider lookup.
 
-### 6. Platform documents
+### 5. CLI and Go core
 
 | Sev | Kind | Finding | Citation |
 |---|---|---|---|
-| med | drift | BENCH-reference's Hook Layers omits the shipped pre-push gate-pin verification — lists only "blocks direct pushes to the default branch." | `.bench/BENCH-reference.md:119` vs `internal/gate/pin.go`, `bin/bench.sh:259` |
-| med | drift | ADR 0001's title frames tripwire "**rather than** write protection," but push-time pin protection has since shipped — current decided state is tripwire *and* pin. Violates invariant 3 (ADR = current state). | `docs/adr/0001-working-tree-gate-tripwire.md:1` |
-| med | duplication | Tier→model binding derived twice — `.bench/lines.env` (machine) and benchkit.md "Lines" prose — coupled only by a manual keep-in-sync note; no gate check couples them. | `projects/benchkit.md:158-169` vs `.bench/lines.env:5-7` |
-| low | duplication | benchkit.md seam list re-enumerates the subcommand set, partially (omits `doctor`, `canary`, `version`, `gate pin`) — a second copy that can drift. | `projects/benchkit.md:24-31` |
-| low | improvement | ADR 0001 embeds a file-path token, which invariant 3 forbids in ADRs. | `docs/adr/0001…:3,:11` |
-| low | improvement | The 9 hook/adapter plumbing subcommands sit in always-loaded BENCH.md (imported every session) though sessions almost never invoke them — pure token cost; BENCH-reference already owns plumbing detail. | `.bench/BENCH.md` CLI Inventory |
-| low | improvement | CONTEXT.md defines "skill" by its `.claude/` mirror path rather than the canonical `.agents/skills/` source. | `CONTEXT.md:32` |
+| med | defect | `bench structure` converts git failure into false-clean ✓: `git.Output` errors are discarded in both the all-files and `--since` paths, so a bad ref or failed `ls-files` prints "no tracked source files to check" at exit 0. Same class FT19 fixed in `bench diff`; hunt it as a class (audit every `out, _ := git.Output` in porcelain). | `internal/structure/structure.go:44,233` ✓ |
+| low | drift | `bench models` ignores its argv — no `-h/--help`, and unknown args emit the full inventory at exit 0. Every sibling porcelain rejects unknown args at exit 2; lone outlier against the AXI usage norm. | `internal/models/models.go:40` |
+| low | hygiene | The safe-token corpus omits the newline class — the one input where a `$`-anchored regex would leak under other regex engines. Go RE2's `$` is end-of-text so the grammar is safe today, but the corpus doesn't prove the property it most needs. One corpus row. | `internal/modelid/modelidtest/corpus.go:19-32` |
+| low | seam | `stophook.Run`'s I/O path (gate exec, rc→verdict map, the rc==3 no-gate branch that blocks the stop) has no Go-level test — only pure helpers are unit-tested; the armed-shift branch is exercised nowhere cheap. | `internal/stophook/stophook.go:86-125` |
+| low | verdicts | Structure-budget verdicts on the 4 flagged files: `axi_wave2_test.go` (639) — genuine split along the command boundary; `line_routing_checks_test.go` (423) — real static-parse vs subprocess-exec seam, minor; `runtime_status_test.go` (402) and `status.go` (415) — budget noise, don't fragment. | `bench structure` output |
 
-Clean: BENCH.md CLI Inventory matches `bin/bench.sh` dispatch exactly (all 30
-subcommands); skills-index and Codex adapter lists match the tree 1:1; AGENTS.md
-does not restate the invariants and the conformance test enforces that.
+Clean: gitguard tokenizer (table-tested against control ops, wrapper recursion,
+malformed quotes), lines/modelid (exhaustive edge tables, one shared corpus
+across both consuming seams), models (definitive empty states, advisory exit-0
+posture), canary (vacuity baseline, unique-fixture check), adopt internals
+(atomic writes, fingerprint semantics), subprocess/terminal/packagesurface.
+All packages vet-clean and green.
+
+### 6. Skills and always-loaded guidance
+
+| Sev | Kind | Finding | Citation |
+|---|---|---|---|
+| med | reachability | The acceptance-coverage-map schema and edge-inventory classes are owned by the `/bench-write-spec` command file, which model-invoked skills cannot auto-load: `craft-tdd` and `craft-review` point at it but an ad-hoc TDD pass or self-review fires without reach to the row schema. Known — parked as FT23 (`craft-spec` skill); this assessment re-confirms it's the structural gap, worth unparking. | `craft-tdd:73-76`; `craft-review:33-40`; `ROADMAP.md` FT23 |
+| low | cost | Standing context cost ≈4,300 tokens/turn: always-loaded prose ≈3,300 plus 12 craft-skill descriptions ≈1,020. Shave candidates: the three longest descriptions (synthesis, adr, seams) each carry a redundant third trigger clause; the CLI Inventory in BENCH.md is the largest always-loaded lookup block — its demotion to BENCH-reference is a deliberate-tradeoff reviewer call (cold pickup must not depend on non-loaded files). | `craft-synthesis:3`; `craft-adr:3`; `.bench/BENCH.md` CLI Inventory |
+| low | reachability | The gate command and seam list live only in `projects/benchkit.md`, reached only if the session follows BENCH.md's "read the profile" pointer. Mitigated (guards --brief injects the tier binding; the CLI inventory names `bench gate`) but it is the biggest know-to-look dependency for a cold session. | `.bench/BENCH.md:38-40`; `.bench/hooks/session-start.sh:37-40` |
+| low | pending | `craft-delegate`'s charge template lacks the stale-base opener ("run `git merge --ff-only main`, verify HEAD, stop if denied") that a real batch build needed and adopted mid-run — captured as an open learning, awaiting drain. | `.bench/learnings.md:25-37` ✓ |
+| low | coverage | The platform-assessment judgment itself (this task, second run at this cadence) has no owner — `craft-synthesis` folds one change, no skill or command owns "audit the whole surface, verify the last drain, rank the backlog." If the cadence repeats, a `craft-assess` skill or `/bench-assess` phase earns its place. | (no owner) |
+
+Clean: all 12 `.claude/skills` entries are symlinks to `.agents/skills` ✓;
+skills index in sync (`--check` exits 0); no dead references; progressive
+disclosure holds (heavy detail behind `references/`); no two skills own the
+same fact (line/delegate, seams/tdd/review splits are clean); phase adapters
+still thin; trigger phrasing names concrete situations and quoted phrases.
+
+### 7. Live operational state (as of this assessment)
+
+Not defects — the queue the platform itself is flagging, plus what the flags miss:
+
+- **10 merged specs awaiting `bench spec retire`; 9 stale roadmap rows.** The
+  reconcile mechanism works; the pass hasn't been run. One maintenance session
+  clears both plus the two open learnings.
+- **2 open learnings** (stale-base delegate charges; the write-spec batch-drain
+  override) — both carry concrete proposed rule changes; drain-ready.
+- **8 orphaned `worktree-agent-*` branches, and the remedy is a dead end for
+  the agent ✓:** the status row says "delete scratch branch," but no bench
+  subcommand deletes them (`bench worktree clean` handles worktrees only;
+  `OrphanedDelegateBranches` is detection-only ✓) and the kit's own
+  block-dangerous-git hook denies `git branch -D` to the agent ✓. The reviewer
+  must hand-delete eight branches; `bench worktree clean` should own the sweep.
+- **The dashboard hides its sixth signal ✓:** six signals fire, the five-row
+  budget truncates to `+1 more`, and `bench status` has no flag to expand —
+  today the hidden row is exactly the FT16 roadmap-reconcile signal built
+  yesterday (sev 9 "never displaces" by design). A budget needs an overflow
+  valve.
+- **1 out-of-pool worktree + 1 stale `.claude/worktrees` agent worktree** (at
+  dde7def, 5 commits behind) — `bench worktree clean` covers these; same
+  maintenance pass.
+- **Gate green, 29.6s wall ✓** — the oracle is not a friction point.
 
 ---
 
 ## Cross-cutting themes
 
-1. **Close the artifact loop.** The pipeline's forward path (idea → map → spec →
-   build → review → gate → commit) is well-owned; the *backward/cleanup* path is
-   not. Spec retirement, review-artifact resolution, and roadmap reconciliation
-   after a merge all depend on someone remembering. Every high/med lifecycle
-   finding above is an instance of this one gap.
-2. **Enforcement should be measured by wiring, not files.** `bench guards`,
-   the pre-push advertisement, and the Claude-vs-Codex conformance asymmetry all
-   stem from checking that enforcement *exists* rather than that it is *wired*.
-   The pre-push install check already shows the right pattern.
-3. **The kit should pass its own one-source audit.** Five concrete duplications
-   found; most are cheap collapses. A conformance-style check for the known
-   rosters (subcommand lists, tier binding) would keep them from regrowing.
-4. **Keep folding hand-run git into the CLI** (the FT9 pattern earned its keep —
-   the review phase now needs one command where it needed three; extend to spec
-   history/status surfaces).
+1. **Close the loop *after* merge.** The 2026-07-06 assessment closed the
+   forward artifact loop (reviews/, retirement tooling, reconcile signals);
+   what's missing now is the *actor*: no phase reached after a merge consumes
+   the duty list the platform already computes. The pattern "signal exists,
+   nobody's charged with acting on it" repeats across specs, roadmap,
+   decisions/, HANDOFF.md, and scratch branches.
+2. **Dogfooding masks adoption defects.** Every §3 med is invisible in the kit
+   repo because the kit repo never runs `bench init` cold, never installs from
+   npm, and always has a global `bench`. A fresh-install smoke path (a gate
+   fragment that links+inits a throwaway repo *from the packed tarball, PATH
+   stripped*) would have caught all three.
+3. **Fix defect classes, not instances.** False-empty-on-git-failure was fixed
+   in `diff` and re-found in `structure`; arg-parsing rigor was standardized
+   except `models`. When a drain fixes a pattern, the spec should include the
+   repo-wide audit for the pattern's other instances.
+4. **Deliberate postures deserve records.** Fail-open rims, recompute-always
+   gating, family-level canary granularity, honor-system interactive
+   invariants — each is defensible, none is citable. The disposition table of
+   a drained (now-replaced) assessment is not where accepted risk should live.
 
 ## Ranked improvement backlog
 
 Ordered by platform leverage; sizes are rough.
 
-1. **Own the artifact lifecycle end-to-end** — make spec-retire a real operation
-   (`bench spec retire <slug>` or an explicit what-next duty) that also sweeps
-   `reviews/<slug>.md`; teach `bench-implement-spec.md` to read/delete the
-   review pickup file; add an orphan check to `bench status`. Closes 5 findings
-   across two areas. (M)
-2. **Conformance-gate the Claude hook wiring** (Stop, Bash, SessionStart),
-   mirroring the existing Codex validity checks — the largest silent
-   de-enforcement hole, on the primary harness. (S)
-3. **Give review a review-after-merge mode** — documented fallback in
-   review-implementation step 1 (first-parent diff of the landing commit) when
-   `bench diff --full` is empty; consider `bench diff --commit <sha>`. Hit live
-   this session. (S–M)
-4. **Reconcile the roadmap when work ships** — a status row ("roadmap row for
-   merged work") or a what-next duty triggered by spec `Status: implemented`,
-   so the drain cadence can't lag reality. Fix the stale FT9 row now. (S)
-5. **Report actual wiring in `bench guards`** and make the pre-push
-   advertisement conditional on a pin existing — collapse advertisement to
-   enforcement. (M)
-6. **Collapse the five duplicated-knowledge instances** — not-in-repo message
-   (route everything through `toon.NotInRepo` or a documented two-form split),
-   coverage-map schema (one owner, likely a `craft-spec` skill or the command),
-   tier binding (derive prose from `lines.env` or gate the pair),
-   `bin/bench.sh` header roster (delete it), `--full` help/doc pair (reviewer
-   call, see `reviews/ft9.md`). (M, mostly mechanical)
-7. **Fix `bench commit` doc/arg mismatch** — show `-m` in both phase docs and
-   fix `commit.go:1`'s synopsis. (XS)
-8. **Definitive success outputs** — `bench coverage --check` emits a pass line;
-   `bench roadmap` distinguishes not-in-repo (exit 1) from no-roadmap (exit 0);
-   coverage violations use the canonical error shape. (S)
-9. **Extend shellcheck to adapters, gate fragments, and pre-push**, and decide
-   whether Optional is acceptable for enforcement code (at minimum, distinguish
-   EACCES from absent). (S)
-10. **Docs drift pass** — rewrite ADR 0001 to the current tripwire+pin state,
-    add the pin layer to Hook Layers, fix CONTEXT.md's skill definition, demote
-    plumbing subcommands to BENCH-reference. (S)
-11. **Decide the `reviews/` tree-hash question** — either exclude transient
-    pickup state from `bench tree-hash` or require the review phase to commit
-    the artifact; today an advisory review flips the gate stale. Also
-    investigate the unreconciled "gated tree a6c2c9f" vs pin-file caveat. (S,
-    but a reviewer decision first)
-12. **Tighten `craft-cli`'s trigger** to fire when *deciding* whether a new
-    agent-facing CLI conforms, and repoint the "canonical list" edge-inventory
-    pointers at the true source. (XS)
+1. **Run the pending maintenance pass** — `/bench-what-next` to drain the two
+   learnings (each with its proposed rule change) and reconcile the roadmap,
+   then `bench spec retire` for the ten merged specs, then `bench worktree
+   clean`. Zero build cost; clears four status rows and makes the tree honest
+   before any new work. (XS, operational)
+2. **Charge an owner with the post-merge tail** — extend `/bench-final-check`
+   with an exit duty ("on the default branch, check `bench status` and run the
+   retirement/reconcile rows it flags") or add a thin after-merge phase that
+   consumes status rows as a queue. Include: decision-map sweep policy (decide
+   keep-vs-retire for closed maps), and the HANDOFF.md lifecycle (decide:
+   generate at session end, or delete the file and let status+roadmap be the
+   pickup). Closes the §2 high and three meds. (M)
+3. **First-install fixes** — ship `projects/` templates in `files[]` (or embed
+   them in `bench init`); stop shipping `HANDOFF.md`; write a `.bench/dist`
+   gitignore entry (or arch-check with a loud re-link error) at link time; make
+   the scaffolded gate resolve the `.bench/bin` local CLI before assuming a
+   global `bench`. Add the fresh-install smoke fragment (theme 2). (S–M)
+4. **Close or record the line-guard fail-open** — deny (or warn-to-user
+   loudly) when a delegation envelope has no model field, or record fail-open
+   as a decision; and add pre-push presence/managed-bytes verification to
+   `bench doctor` and a status signal for a missing hook. (S)
+5. **`bench worktree clean` sweeps orphaned scratch branches** — the agent
+   cannot perform the currently-recommended remedy at all (guard-blocked), so
+   the CLI must own it. (S)
+6. **Kill the false-empty class repo-wide** — `bench structure` errors loudly
+   on git failure; audit every discarded `git.Output` error in porcelain;
+   `bench models` rejects unknown args at exit 2. (S)
+7. **Status overflow valve + invocable actions** — a flag (or `+N more`
+   expansion) to show rows past the five-row budget, and action strings phrased
+   as invocable commands/phases. (S)
+8. **Record accepted enforcement postures as one decision record** —
+   interactive commit-on-red, non-shift done-claims, declare-line
+   unenforceability, fail-open rims, recompute-always gating, family-level
+   canary granularity. One ADR; makes every future "is this a hole?" question
+   answerable by citation. (S)
+9. **Unpark FT23 (`craft-spec` skill)** — this assessment independently
+   re-confirmed the coverage-map schema is unreachable from the two
+   model-invoked skills that need it; second consecutive assessment to flag it.
+   (S–M)
+10. **Structure splits where genuine** — `axi_wave2_test.go` by command;
+    `line_routing_checks_test.go` static-vs-exec; accept the two noise files
+    (or set per-file budget notes) so the structure signal stays credible. (S)
+11. **Uninstall story** — `bench unlink` consuming the manifest, or a
+    documented manual path. Reviewer call on priority; absence is currently
+    undocumented. (M)
+12. **Cheap hardening batch** — SafeToken newline corpus row; a `stophook.Run`
+    seam test; README prerequisites (Go-or-node, Windows/WSL note, nvm
+    caveat); README `.bench/` layout refresh; trim the redundant third trigger
+    clause on the three longest skill descriptions. (S, mostly mechanical)
+
+Parked/known, re-confirmed still open: FT22 (`bench spec history`), FT24
+(Codex line guard), CLI-inventory demotion (reviewer tradeoff), `craft-assess`
+owner if the assessment cadence repeats.
 
 ## Verification notes
 
-- Synthesizer-verified (✓ above): reviews/-lifecycle one-sidedness, `bench
-  commit -m` requirement, not-in-repo triplication, roadmap not-in-repo
-  posture, Claude/Codex conformance asymmetry, stale ROADMAP FT9 row, empty
-  `bench diff --full` on merged work (hit live), `toon.Usage` misattribution,
-  `toon.Table` control-byte refusal (in `reviews/ft9.md`).
+- Synthesizer-verified (✓ above): all ten drain verdict spot-checks sampled
+  (reviews/ empty, retire tooling, roadmap signal); HANDOFF.md staleness
+  against git history and live tree; retirement prose absence in
+  final-check; `files[]` contents; doctor's zero hook coverage;
+  `AgentLineVerdict` fail-open rim; `structure.go` discarded errors; gate
+  cache write-only; orphaned-branch remedy dead end; the hidden sixth status
+  row; live gate green at 29.6s.
 - Remaining findings are delegate-cited with file:line and sampled, not
   exhaustively re-checked.
-- Known coverage limits: the CLI sweep's not-inspected package list (§4); the
-  enforcement sweep read hooks statically and did not execute them; no
-  assessment of `projects/gl-axi.md` / `projects/regroup.md` beyond shape.
-
----
-
-## Drain disposition (2026-07-06)
-
-Every finding above, mapped to where it landed. Specs are staged in `specs/`;
-"fixed" means landed in this drain's commits; defaults taken under the
-reviewer's batch approval are flagged inside each spec.
-
-| Area | Finding | Disposition |
-|---|---|---|
-| §1 | reviews/ lifecycle one-sided (high) | `specs/artifact-lifecycle.md` stories 3–4 |
-| §1 | empty-diff state unhandled (high) | `specs/review-after-merge.md` |
-| §1 | reviews/ orphan on residual-risk route (med) | `specs/artifact-lifecycle.md` story 4 |
-| §1 | spec retirement has no owner (med) | `specs/artifact-lifecycle.md` stories 1–2 |
-| §1 | `bench commit` call sites omit `-m` (med) | `specs/cli-contract-accuracy.md` story 1 |
-| §1 | retired-spec recovery incantation duplicated (low) | parked — ROADMAP FT22 (`bench spec history`) |
-| §2 | Claude hook wiring not conformance-gated (high) | `specs/claude-hook-conformance.md` |
-| §2 | Codex-better-gated asymmetry (high) | same spec (parity is the acceptance) |
-| §2 | `bench guards` advertises by file presence (med) | `specs/guards-wiring.md` story 1 |
-| §2 | pre-push advertises drift denial when unpinned (med) | `specs/guards-wiring.md` story 3 |
-| §2 | `check-agent-line` Claude-only (med) | parked — ROADMAP FT24, pending Codex hook-capability research |
-| §2 | shellcheck omits adapters/gate.sh/pre-push (med) | `specs/shellcheck-coverage.md` stories 1–2 |
-| §2 | shellcheck Optional silent-skip + EACCES-as-skip (low) | `specs/shellcheck-coverage.md` stories 3–4 |
-| §2 | interactive commit-on-red unenforced (low) | no action — by design: `bench commit` is the sanctioned path; shift loop + pre-push are the harness-independent backstops. Raise via `/bench-shape-idea` if enforcement is wanted. |
-| §3 | stale ROADMAP FT9 row (high) | fixed — `spec-retire: ft4 + ft9` commit; recurrence mechanism in `specs/roadmap-reconcile.md` |
-| §3 | review-after-merge unrepresented (med-high) | `specs/review-after-merge.md` |
-| §3 | reviews/ orphans when spec retires first (med) | `specs/artifact-lifecycle.md` (retire sweeps the pickup) |
-| §3 | review artifact born untracked (med) | `specs/artifact-lifecycle.md` story 4; enacted now — `reviews/ft9.md` committed this drain |
-| §3 | tree-hash flips stale on review artifact + gated-tree caveat (med) | decided: commit the artifact (see artifact-lifecycle decisions). Caveat investigated — no defect: `.git/bench-last-gate` contains `a6c2c9f` exactly as status reported; the sweep misread the cache file. |
-| §3 | spec-retire prose-only (low) | `specs/artifact-lifecycle.md` story 1 |
-| §3 | out-of-pool worktrees linger (low) | no action — status already surfaces it with its action; working as designed |
-| §4 | not-in-repo message in 3+ forms (med) | `specs/one-source-collapses.md` story 1 |
-| §4 | `bench roadmap` not-in-repo exit 0 (med) | `specs/cli-contract-accuracy.md` story 4 |
-| §4 | `bench diff` false-empty on git failure (low-med) | `specs/cli-contract-accuracy.md` story 6 |
-| §4 | `coverage --check` silent success (low) | `specs/cli-contract-accuracy.md` story 2 |
-| §4 | coverage violation shape off-canon (low) | `specs/cli-contract-accuracy.md` story 3 |
-| §4 | `bin/bench.sh` header roster stale (low) | `specs/one-source-collapses.md` story 3 |
-| §4 | `maps --count` / `guards --brief` undocumented (low) | `specs/cli-contract-accuracy.md` story 8 |
-| §4 | `toon.Usage` misattribution (low) | `specs/cli-contract-accuracy.md` story 5 |
-| §5 | coverage-map schema derived twice (med) | `specs/one-source-collapses.md` story 2 |
-| §5 | `craft-cli` trigger fires too late (low-med) | `specs/docs-drift.md` story 5 |
-| §5 | "canonical list" pointers misdirect (low) | `specs/docs-drift.md` story 6 |
-| §5 | no model-invocable spec-authoring skill (low) | parked — ROADMAP FT23 (`craft-spec` skill) |
-| §5 | craft-seams restates over-fit rationale (low) | no action — accepted as cross-referenced honest repetition, per the assessment's own borderline judgment |
-| §6 | Hook Layers omits pin verification (med) | `specs/docs-drift.md` story 2 |
-| §6 | ADR 0001 frames pin as unchosen (med) | `specs/docs-drift.md` story 1 |
-| §6 | tier binding duplicated, "no gate check couples them" (med) | finding partially wrong — `checkLineBinding` already gate-couples profile prose to `lines.env` (model ids + aliases). Advertisement fix only: `specs/one-source-collapses.md` story 5. |
-| §6 | benchkit seam list re-enumerates subcommands (low) | `specs/one-source-collapses.md` story 4 |
-| §6 | ADR 0001 embeds path tokens (low) | `specs/docs-drift.md` story 1 |
-| §6 | plumbing subcommands always-loaded (low) | `specs/docs-drift.md` story 4 |
-| §6 | CONTEXT.md defines skill by mirror path (low) | `specs/docs-drift.md` story 3 |
-| ft9 review | `--full` help/doc duplication (low) | decided in `specs/one-source-collapses.md`: accepted as honest repetition, no edit |
-| ft9 review | control-byte subject hard-fails `--full` (med) | `specs/cli-contract-accuracy.md` story 7 — refusal posture pinned; edge promoted to the profile checklist at retire |
-| ft9 review | post-resolution false-empty (low) | `specs/cli-contract-accuracy.md` story 6 |
-
-`reviews/ft9.md` stays as pickup state until the FT19 build lands stories 6–7
-and deletes it in its green fix commit.
+- Known coverage limits (unknowns): `internal/gate` beyond phases/pin and
+  `internal/contract` bodies read as outlines only; `git.DefaultBranch`
+  behavior in a clone with no `origin/HEAD` (a wrong guess would point
+  pre-push at the wrong branch — worth a test); native-Windows and
+  offline-registry install behavior not executed; pre-push firing from inside
+  a linked worktree reasoned, not exercised; gitguard evasion surface beyond
+  push-denial not probed (out of its stated honest-mistake threat model);
+  hook runtime behavior read statically, not executed; the two shipped
+  example profiles (gl-axi, regroup) assessed for shape only.
