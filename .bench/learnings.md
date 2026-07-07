@@ -22,6 +22,20 @@ An entry leaves this file only via /bench-what-next.
 
 <!-- entries below -->
 
+## 2026-07-06 — delegate worktrees cut from a stale ref  [open]
+- **What happened:** During the FT13–FT21 batch build, Agent-tool worktrees were
+  repeatedly created several commits behind main: one delegate stopped and
+  reported instead of building, a second was denied its own `git merge
+  --ff-only` by the permission layer, and a third built against the stale base
+  (its diff still applied, but it couldn't reuse already-landed sources and
+  re-flagged fixed behavior).
+- **Right behavior:** Every worktree-isolated delegate charge opens with "run
+  `git merge --ff-only main`, verify HEAD equals main, stop and report if
+  denied" — adopted mid-run and it held; a blocked worktree is fast-forwarded
+  by the orchestrating session, which then resumes the same delegate.
+- **Proposed rule change:** Add that opening action to `craft-delegate`'s
+  charge template so worktree delegates never build on a stale base.
+
 ## 2026-07-06 — assessment drained to specs without decision maps  [open]
 - **What happened:** The reviewer invoked /bench-write-spec on ASSESSMENT.md
   with an explicit batch approval ("write all of them and commit until the
