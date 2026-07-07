@@ -1,6 +1,6 @@
 # First-install fixes
 
-Status: staged
+Status: implemented
 
 ## Problem
 

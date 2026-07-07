@@ -11,10 +11,8 @@
   },
   "files": [
     "bin/",
-    "AGENTS.md",
-    "CLAUDE.md",
+    "projects/",
     "README.md",
-    "HANDOFF.md",
     ".agents/",
     ".bench/BENCH.md",
     ".bench/BENCH-reference.md",

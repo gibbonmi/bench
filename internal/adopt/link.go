@@ -13,8 +13,15 @@ import (
 )
 
 type planEntry struct {
-	src, rel, kind string
+	src, rel, kind, content string
 }
+
+// distGitignore is written into a linked repo's .bench/dist/.gitignore. It ignores the
+// arch-specific binary link copies next to it (.bench/dist/bench) so a consumer who
+// commits .bench/dist/ can't hand a different-arch teammate a broken CLI and a silently
+// fail-open Stop hook. A single unanchored line — not "/bench" — and it must not ignore
+// itself: the ignore file is meant to be committed and travel with the repo.
+const distGitignore = "bench\n"
 
 func Link(args []string, stdout, stderr io.Writer, version string) int {
 	mode := "copy"
@@ -74,14 +81,15 @@ func buildLinkPlan(kit string) []planEntry {
 	var plan []planEntry
 	appendTreeToPlan(&plan, filepath.Join(kit, "bin"), ".bench/bin", "file")
 	if bin := currentExecutablePath(); bin != "" {
-		plan = append(plan, planEntry{bin, ".bench/dist/bench", "file"})
+		plan = append(plan, planEntry{src: bin, rel: ".bench/dist/bench", kind: "file"})
 	}
+	plan = append(plan, planEntry{rel: ".bench/dist/.gitignore", kind: "inline", content: distGitignore})
 	for _, e := range []planEntry{
-		{filepath.Join(kit, ".bench", "BENCH.md"), ".bench/BENCH.md", "file"},
-		{filepath.Join(kit, ".bench", "BENCH-reference.md"), ".bench/BENCH-reference.md", "file"},
-		{filepath.Join(kit, ".claude", "README.md"), ".claude/README.md", "file"},
-		{filepath.Join(kit, ".claude", "settings.json"), ".claude/settings.json", "file"},
-		{filepath.Join(kit, ".codex", "hooks.json"), ".codex/hooks.json", "file"},
+		{src: filepath.Join(kit, ".bench", "BENCH.md"), rel: ".bench/BENCH.md", kind: "file"},
+		{src: filepath.Join(kit, ".bench", "BENCH-reference.md"), rel: ".bench/BENCH-reference.md", kind: "file"},
+		{src: filepath.Join(kit, ".claude", "README.md"), rel: ".claude/README.md", kind: "file"},
+		{src: filepath.Join(kit, ".claude", "settings.json"), rel: ".claude/settings.json", kind: "file"},
+		{src: filepath.Join(kit, ".codex", "hooks.json"), rel: ".codex/hooks.json", kind: "file"},
 	} {
 		plan = append(plan, e)
 	}
@@ -113,7 +121,7 @@ func appendTreeToPlan(plan *[]planEntry, srcRoot, destRoot, kind string) {
 		if err != nil {
 			return nil
 		}
-		entries = append(entries, planEntry{path, filepath.ToSlash(filepath.Join(destRoot, rel)), kind})
+		entries = append(entries, planEntry{src: path, rel: filepath.ToSlash(filepath.Join(destRoot, rel)), kind: kind})
 		return nil
 	})
 	sort.Slice(entries, func(i, j int) bool { return entries[i].rel < entries[j].rel })
@@ -143,7 +151,7 @@ func appendClaudeSkillsToPlan(plan *[]planEntry, kit string) {
 		if _, err := os.Stat(filepath.Join(kit, ".agents", "commands", top+".md")); err == nil {
 			return nil
 		}
-		entries = append(entries, planEntry{path, filepath.ToSlash(filepath.Join(".claude/skills", rel)), "adapter"})
+		entries = append(entries, planEntry{src: path, rel: filepath.ToSlash(filepath.Join(".claude/skills", rel)), kind: "adapter"})
 		return nil
 	})
 	sort.Slice(entries, func(i, j int) bool { return entries[i].rel < entries[j].rel })
@@ -178,10 +186,12 @@ func preflightLink(root string, plan []planEntry, stderr io.Writer) bool {
 		if e.rel == "" {
 			continue
 		}
-		if info, err := os.Stat(e.src); err != nil || !info.Mode().IsRegular() {
-			fmt.Fprintf(stderr, "conflict: kit asset missing: %s\n", e.src)
-			conflicts++
-			continue
+		if e.kind != "inline" {
+			if info, err := os.Stat(e.src); err != nil || !info.Mode().IsRegular() {
+				fmt.Fprintf(stderr, "conflict: kit asset missing: %s\n", e.src)
+				conflicts++
+				continue
+			}
 		}
 		if hasSymlinkParent(root, e.rel) {
 			fmt.Fprintf(stderr, "conflict: %s has a symlink parent directory\n", e.rel)
@@ -304,6 +314,8 @@ func installPlannedFile(root, mode string, e planEntry) error {
 	}
 	_ = os.Remove(dest)
 	switch {
+	case e.kind == "inline":
+		return os.WriteFile(dest, []byte(e.content), 0o644)
 	case e.kind == "adapter":
 		target, ok := AdapterTarget(e.rel)
 		if !ok {

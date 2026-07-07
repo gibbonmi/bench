@@ -74,7 +74,7 @@ func checkNpmPackAssets(packJSON string) []string {
 			diags = append(diags, "npm package missing "+required)
 		}
 	}
-	for _, forbidden := range []string{".claude/settings.local.json"} {
+	for _, forbidden := range packagesurface.ForbiddenPackAssets {
 		if files[forbidden] {
 			diags = append(diags, "npm package includes local-only file "+forbidden)
 		}
@@ -99,7 +99,7 @@ func checkRepoOnlyPackageClaims(root string) []string {
 			if !(inClaimSection || claimRe.MatchString(line)) || repoOnlyRe.MatchString(line) {
 				continue
 			}
-			for _, repoOnlyPath := range []string{"projects/", "specs/", "decisions/", "tests/"} {
+			for _, repoOnlyPath := range []string{"specs/", "decisions/", "tests/"} {
 				if strings.Contains(line, repoOnlyPath) {
 					diags = append(diags, fmt.Sprintf("%s:%d claims repo-only path '%s' is shipped/package content; label it repo-only development context", slashRel(root, file), i+1, repoOnlyPath))
 				}

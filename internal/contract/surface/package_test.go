@@ -112,13 +112,7 @@ func testPackageNpmPackInstallableSurface(t *testing.T) {
 			t.Fatalf("npm package missing %s", required)
 		}
 	}
-	for _, forbidden := range []string{
-		".bench/gate.sh",
-		"scripts/go-build.sh",
-		"scripts/gen-platform-packages.sh",
-		"dist/bench",
-		".claude/settings.local.json",
-	} {
+	for _, forbidden := range packagesurface.ForbiddenPackAssets {
 		if files[forbidden] {
 			t.Fatalf("npm package includes local-only file %s", forbidden)
 		}
