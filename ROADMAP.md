@@ -10,48 +10,67 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-Rows FT13–FT21 are the 2026-07-06 assessment drain (`ASSESSMENT.md` carries the
-finding-level disposition). Each is staged and spec'd; build order within the
-batch follows row order, with one coupling: FT19 and FT15 touch the same diff
-parser — build FT19 first or land them together.
+Rows FT25–FT36 are the 2026-07-07 assessment drain (`ASSESSMENT.md` carries
+the finding-level detail). Each gets a decision map and a spec before build;
+rows gain their spec paths as the specs are staged.
 
-**FT13 (HIGH) — own the artifact-lifecycle backward path.** Staged:
-`specs/artifact-lifecycle.md` — `bench spec retire`, review-pickup ownership in
-implement/review/final-check phases, status orphan signal.
+**FT25 (HIGH) — charge an owner with the post-merge tail.** A
+`/bench-final-check` exit duty (or thin after-merge pass) that consumes the
+`bench status` duty rows: spec retirement, roadmap row removal, a decision-map
+sweep policy, and the HANDOFF.md lifecycle decision.
 
-**FT14 (HIGH) — conformance-gate Claude hook wiring.** Staged:
-`specs/claude-hook-conformance.md` — Stop/Bash/SessionStart checks mirroring
-the Codex standard, plus a canary needle.
+**FT26 (MED) — first-install fixes.** Ship the `projects/` profile templates
+in the npm package; stop shipping the kit's own HANDOFF.md; ignore-or-arch-check
+`.bench/dist` at link time; make the scaffolded gate resolve the `.bench/bin`
+local CLI before assuming a global `bench`; add fresh-install smoke coverage.
 
-**FT15 (MED-HIGH) — review-after-merge diff surface.** Staged:
-`specs/review-after-merge.md` — `bench diff --commit <sha>` + the step-1
-fallback in the review phase.
+**FT27 (MED) — enforcement verification.** Agent-line guard stops failing open
+when the delegation envelope omits the model field (deny, or record the
+posture); `bench doctor` verifies the pre-push hook is present and
+bench-managed, with a status signal when it is missing.
 
-**FT16 (MED) — roadmap row for shipped work signal.** Staged:
-`specs/roadmap-reconcile.md` — `bench status` cross-checks rows naming spec
-paths against the tree.
+**FT28 (MED) — `bench worktree clean` sweeps orphaned scratch branches.** The
+currently-recommended remedy is guard-blocked for the agent, so the CLI must
+own deletion of fully-merged `worktree-agent-*` branches.
 
-**FT17 (MED) — guards report wiring, not file presence.** Staged:
-`specs/guards-wiring.md` — `wired` field from harness configs; state-aware
-pre-push `--describe`.
+**FT29 (MED) — kill the false-empty class.** `bench structure` errors loudly
+on git failure; audit every discarded `git.Output` error in porcelain;
+`bench models` rejects unknown args at exit 2.
 
-**FT18 (MED) — one-source collapses.** Staged:
-`specs/one-source-collapses.md` — not-in-repo phrase, coverage-map schema
-owner, bench.sh header roster, profile seam-list pointer.
+**FT30 (MED-LOW) — status overflow valve + invocable actions.** A way to see
+rows past the five-row budget, and action strings phrased as commands or
+phases the reading harness can invoke.
 
-**FT19 (MED) — CLI contract accuracy.** Staged:
-`specs/cli-contract-accuracy.md` — `bench commit -m` docs, coverage `--check`
-pass line + canonical errors, roadmap not-in-repo posture, diff arg
-attribution + false-empty + control-byte posture, hidden-flag help. Its build
-deletes `reviews/ft9.md` (findings drained there).
+**FT33 (MED-LOW) — `bench unlink`.** Consume the link manifest to remove the
+repo footprint; document the uninstall story.
 
-**FT20 (MED-LOW) — shellcheck covers enforcement shell.** Staged:
-`specs/shellcheck-coverage.md` — adapters + gate.sh + embedded pre-push asset;
-loud skip; EACCES is red.
+**FT23 (LOW, unparked) — model-invocable spec-authoring skill.** A
+`craft-spec` skill owning the coverage-map schema; `/bench-write-spec`
+composes it. Second consecutive assessment flagged the reachability gap.
 
-**FT21 (LOW) — docs drift pass.** Staged: `specs/docs-drift.md` — ADR 0001
-rewrite, Hook Layers pin entry, CONTEXT.md skill definition, plumbing
-demotion, craft-cli trigger, edge-inventory pointers.
+**FT31 (LOW) — enforcement-postures ADR.** One decision record for the
+accepted honor-system residuals: interactive commit-on-red, non-shift
+done-claims, declare-line unenforceability, fail-open rims, recompute-always
+gating, family-level canary granularity.
+
+**FT32 (LOW) — structure splits where genuine.** `axi_wave2_test.go` by
+command; `line_routing_checks_test.go` static-vs-exec; record the two noise
+files as accepted so the structure signal stays credible.
+
+**FT34 (LOW) — cheap hardening batch.** SafeToken newline corpus row;
+`stophook.Run` seam test; README prerequisites (Go-or-node, Windows/WSL,
+nvm caveat) and `.bench/` layout refresh; trim the redundant third trigger
+clause on the three longest skill descriptions.
+
+**FT35 (LOW, rule) — craft-delegate stale-base opener.** From the 2026-07-06
+learning: every worktree-isolated delegate charge opens with `git merge
+--ff-only main`, verifies HEAD, and stops if denied. Kit edit under
+`craft-synthesis`.
+
+**FT36 (LOW, rule) — write-spec batch-drain override clause.** From the
+2026-07-06 learning: an explicit reviewer-directed batch drain may substitute
+for per-spec maps, with every defaulted decision flagged for veto; absent that
+instruction the map gate stands. Kit edit under `craft-synthesis`.
 
 **FT12 (LOW, kit discipline) — repro a defect claim through the accused command
 before draining it.** FT11 was minted from a learning that quoted a raw `git add`
@@ -64,6 +83,7 @@ lookalike. Built later under the `craft-synthesis` discipline.
 **FT10 (LOW) — doctor installs the kit repo's pre-push guard.** `bench guards`
 already reports the missing guard; `bench doctor` should detect it on the kit
 repo itself and offer the install (consumer repos get it via `bench link`).
+Overlaps FT27's doctor verification — build together.
 
 **FT5 (LOW) — `bench outline`.** Marginal for this repo, real as a kit
 affordance for large/polyglot linked repos. Needs its grill (languages,
@@ -80,16 +100,11 @@ demonstrably burn turns on symbol search.
 
 **FT22 (LOW, parked) — `bench spec history <slug>`.** Fold the duplicated
 `git log --grep=spec-retire` recovery incantation into the CLI (FT9 pattern).
-Parked from `specs/artifact-lifecycle.md` out-of-scope.
-
-**FT23 (LOW, parked) — model-invocable spec-authoring skill.** A `craft-spec`
-skill owning coverage-map discipline; structural root of the schema
-duplication. Parked from `specs/one-source-collapses.md`; build under
-`craft-synthesis` after FT18 lands.
+Parked from the artifact-lifecycle build's out-of-scope list.
 
 **FT24 (LOW, parked) — Codex agent-line guard parity.** `check-agent-line` on
 the secondary harness, pending research on whether Codex hooks support an
-Agent matcher. Parked from `specs/claude-hook-conformance.md`.
+Agent matcher. Parked from the claude-hook-conformance build.
 
 **FT8 (scheduled, not actionable) — Sonnet 5 mid-tier revisit.** Time-boxed to
 2026-09-01 or the next frontier shift.
@@ -102,9 +117,6 @@ Agent matcher. Parked from `specs/claude-hook-conformance.md`.
 
 ## Recommended sequence
 
-1. FT13 artifact lifecycle (`specs/artifact-lifecycle.md`) — fresh mid-tier
-   session, `/bench-implement-spec`
-2. FT14 Claude hook-wiring conformance (`specs/claude-hook-conformance.md`) —
-   `/bench-implement-spec`
-3. FT19 CLI contract accuracy (`specs/cli-contract-accuracy.md`) —
-   `/bench-implement-spec` (before FT15; shared diff parser)
+1. FT25 after-merge owner — `/bench-shape-idea` then `/bench-write-spec`
+2. FT26 first-install fixes — `/bench-shape-idea` then `/bench-write-spec`
+3. FT27 enforcement verification — `/bench-shape-idea` then `/bench-write-spec`
