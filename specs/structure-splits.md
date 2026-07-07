@@ -1,6 +1,6 @@
 # Structure splits and the accept mechanism
 
-Status: staged
+Status: implemented
 
 ## Problem
 

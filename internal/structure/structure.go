@@ -36,21 +36,46 @@ var sourceRe = regexp.MustCompile(`\.(py|ts|tsx|js|jsx|go|rs|java|rb|kt|scala|cs
 // touched scope — so the rules have one home and each git query owns its own error. It
 // returns the full human report the CLI prints and the violation count; exit-code mapping
 // is the caller's (Command's) job.
-func Check(root string, rawFiles []string) (report string, violations int) {
+//
+// allMode is set for the whole-tree scan and cleared for the touched (--since) scope. Both
+// honor the .bench/structure-accept exclusion (an accepted over-budget file drops out of the
+// count), but only the whole-tree scan can judge the accept list's completeness, so the
+// accepted: section, the malformed-row warnings, and the stale-row warnings are all-mode only.
+func Check(root string, rawFiles []string, allMode bool) (report string, violations int) {
 	maxLines := envInt("BENCH_MAX_LINES", 400)
 	maxFiles := envInt("BENCH_MAX_DIR_FILES", 12)
-	budgets, warnings := loadBudgets(filepath.Join(root, ".bench", "structure.budgets"))
+	budgets, budgetWarnings := loadBudgets(filepath.Join(root, ".bench", "structure.budgets"))
+	accepts, acceptWarnings, acceptErr := loadAccepts(filepath.Join(root, ".bench", "structure-accept"))
+
+	lines := append([]string(nil), budgetWarnings...)
+
+	// Fail-closed read error (FT29): a present-but-unreadable accept file is loud — a named
+	// line and a forced non-zero count returned through the same path both the report and
+	// ViolationCount read, so no surface can silently observe an empty accept list. This is
+	// the one intentional exception to "non-zero only on real violations"; the ordinary
+	// accept states (absent, malformed, stale) never change the exit code.
+	if acceptErr != nil {
+		lines = append(lines, "structure-accept: present but unreadable: "+acceptErr.Error())
+		return strings.Join(lines, "\n") + "\n", 1
+	}
 
 	files := filterSources(rawFiles)
 
-	lines := append([]string(nil), warnings...)
 	if len(files) == 0 {
 		lines = append(lines, "structure: no tracked source files to check")
 		return strings.Join(lines, "\n") + "\n", 0
 	}
 
+	if allMode {
+		lines = append(lines, acceptWarnings...)
+		lines = append(lines, staleAcceptWarnings(accepts, files)...)
+	}
+
+	var acceptedLines []string
+
 	// FILE TOO LONG: a file whose newline count exceeds its cap (its exact-path budget
-	// override, else the global BENCH_MAX_LINES). Missing/non-regular paths are skipped.
+	// override, else the global BENCH_MAX_LINES). Missing/non-regular paths are skipped. An
+	// accepted subject is excluded from the count and recorded for the accepted: section.
 	for _, f := range files {
 		info, err := os.Stat(filepath.Join(root, f))
 		if err != nil || !info.Mode().IsRegular() {
@@ -62,6 +87,10 @@ func Check(root string, rawFiles []string) (report string, violations int) {
 		}
 		limit := budgetFor(budgets, f, maxLines)
 		if n > limit {
+			if reason, ok := accepts[f]; ok {
+				acceptedLines = append(acceptedLines, fmt.Sprintf("accepted: %s — %s", f, reason))
+				continue
+			}
 			lines = append(lines, fmt.Sprintf("FILE TOO LONG   %d lines (max %d)   %s", n, limit, f))
 			violations++
 		}
@@ -70,6 +99,7 @@ func Check(root string, rawFiles []string) (report string, violations int) {
 	// DIR CROWDED: a directory whose source-file count exceeds its cap (its `<dir>/`
 	// budget override, else the global BENCH_MAX_DIR_FILES). Directories are the path up
 	// to the last '/', or '.' when none, counted over the same source list in sorted order.
+	// An accepted `<dir>/` key is likewise excluded and recorded, reusing budgetFor's keying.
 	dirs := make([]string, 0, len(files))
 	for _, f := range files {
 		dir := "."
@@ -85,20 +115,33 @@ func Check(root string, rawFiles []string) (report string, violations int) {
 			j++
 		}
 		count := j - i
-		limit := budgetFor(budgets, dirs[i]+"/", maxFiles)
+		key := dirs[i] + "/"
+		limit := budgetFor(budgets, key, maxFiles)
 		if count > limit {
-			lines = append(lines, fmt.Sprintf("DIR CROWDED     %d source files (max %d), group into modules   %s/", count, limit, dirs[i]))
-			violations++
+			if reason, ok := accepts[key]; ok {
+				acceptedLines = append(acceptedLines, fmt.Sprintf("accepted: %s — %s", key, reason))
+			} else {
+				lines = append(lines, fmt.Sprintf("DIR CROWDED     %d source files (max %d), group into modules   %s", count, limit, key))
+				violations++
+			}
 		}
 		i = j
 	}
 
 	if violations > 0 {
 		lines = append(lines, fmt.Sprintf("structural debt: %d issue(s). Split along responsibility (see the craft-seams skill); don't fragment to beat the number.", violations))
-		return strings.Join(lines, "\n") + "\n", violations
+	} else {
+		lines = append(lines, fmt.Sprintf("structure ok (≤%d lines/file, ≤%d source files/dir)", maxLines, maxFiles))
 	}
-	lines = append(lines, fmt.Sprintf("structure ok (≤%d lines/file, ≤%d source files/dir)", maxLines, maxFiles))
-	return strings.Join(lines, "\n") + "\n", 0
+
+	// The accepted: section (all-mode only) prints one reasoned line per suppressed
+	// violation plus a count, in a section separate from the live violations above.
+	if allMode && len(acceptedLines) > 0 {
+		lines = append(lines, acceptedLines...)
+		lines = append(lines, fmt.Sprintf("accepted: %d file(s) over budget by reviewer grant (see .bench/structure-accept)", len(acceptedLines)))
+	}
+
+	return strings.Join(lines, "\n") + "\n", violations
 }
 
 // checkAll queries the whole tracked source tree (`git ls-files`) and runs the check over
@@ -110,7 +153,7 @@ func checkAll(root string) (report string, violations int, err error) {
 	if err != nil {
 		return "", 0, err
 	}
-	report, violations = Check(root, strings.Split(out, "\n"))
+	report, violations = Check(root, strings.Split(out, "\n"), true)
 	return report, violations, nil
 }
 
@@ -173,6 +216,77 @@ func loadBudgets(path string) (map[string]int, []string) {
 		budgets[fields[0]] = n
 	}
 	return budgets, warnings
+}
+
+// loadAccepts reads <root>/.bench/structure-accept into a path→reason map plus warnings for
+// malformed rows. It mirrors loadBudgets' comment/whitespace discipline (strip from the first
+// '#'; a blank remainder is skipped; the last line may lack a trailing newline; a path listed
+// twice keeps its first reason) with three deliberate differences:
+//   - The reason is the whole remainder after the first whitespace-delimited path token, not a
+//     Fields split, so a one-clause reason keeps its internal spaces.
+//   - A row with a path but no reason is malformed: warned and not honored — a reason is the
+//     price of acceptance.
+//   - The read-error posture is fail-closed: a missing file is an empty list with no error, but
+//     any other read error (present but unreadable) is returned so Check is loud (FT29), never a
+//     silent empty list at exit 0.
+func loadAccepts(path string) (map[string]string, []string, error) {
+	accepts := map[string]string{}
+	var warnings []string
+	content, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return accepts, nil, nil
+		}
+		return nil, nil, err
+	}
+	for _, line := range strings.Split(string(content), "\n") {
+		stripped := line
+		if i := strings.IndexByte(line, '#'); i >= 0 {
+			stripped = line[:i]
+		}
+		trimmed := strings.TrimLeft(stripped, " \t")
+		if trimmed == "" {
+			continue
+		}
+		subj, reason := trimmed, ""
+		if i := strings.IndexAny(trimmed, " \t"); i >= 0 {
+			subj, reason = trimmed[:i], strings.TrimSpace(trimmed[i+1:])
+		}
+		if reason == "" {
+			warnings = append(warnings, "structure-accept: ignoring malformed line (no reason): "+stripped)
+			continue
+		}
+		if _, seen := accepts[subj]; seen {
+			continue
+		}
+		accepts[subj] = reason
+	}
+	return accepts, warnings, nil
+}
+
+// staleAcceptWarnings reports each accept row whose subject is not a known scanned subject —
+// neither a scanned source file nor a scanned `<dir>/` key — so the accept list cannot quietly
+// accumulate dead entries. A subject present but under budget suppresses nothing yet is not
+// stale; warning on that inert case is a separate honesty check left out of scope. Sorted for
+// a deterministic report over the map's random iteration order.
+func staleAcceptWarnings(accepts map[string]string, files []string) []string {
+	known := make(map[string]bool, len(files)*2)
+	for _, f := range files {
+		known[f] = true
+		dir := "."
+		if i := strings.LastIndex(f, "/"); i >= 0 {
+			dir = f[:i]
+		}
+		known[dir+"/"] = true
+	}
+	var warnings []string
+	for subj := range accepts {
+		if !known[subj] {
+			warnings = append(warnings, "structure-accept: stale accept row (not a scanned source file): "+subj)
+		}
+	}
+	sort.Strings(warnings)
+	return warnings
 }
 
 // budgetFor returns the exact-key override or the fallback cap.
@@ -267,7 +381,7 @@ func Touched(root, base string) (report string, violations int, err error) {
 	if err != nil {
 		return "", 0, err
 	}
-	report, violations = Check(root, strings.Split(out, "\n"))
+	report, violations = Check(root, strings.Split(out, "\n"), false)
 	return report, violations, nil
 }
 

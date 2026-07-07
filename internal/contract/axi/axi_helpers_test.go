@@ -108,3 +108,50 @@ func requireContainsFold(t testing.TB, haystack, needle string) {
 		t.Fatalf("missing %q\noutput:\n%s", needle, haystack)
 	}
 }
+
+// requireLogRow asserts a `log` table row for sha/renderedSubject, tolerating the
+// TOON encoder's own choice to quote the sha cell (a short sha can start with a
+// digit and read as numeric-ish, e.g. "05af9b0") — that quoting is independent of
+// anything this seam controls, so the row match accepts either form.
+func requireLogRow(t *testing.T, probe contract.Probe, sha, renderedSubject string) {
+	t.Helper()
+	plain := "  " + sha + "," + renderedSubject
+	quoted := "  \"" + sha + "\"," + renderedSubject
+	for _, got := range strings.Split(strings.TrimSuffix(probe.Stdout, "\n"), "\n") {
+		if got == plain || got == quoted {
+			return
+		}
+	}
+	t.Fatalf("missing log row for sha %q\nstdout:\n%s\nstderr:\n%s", sha, probe.Stdout, probe.Stderr)
+}
+
+func requireOutputLine(t *testing.T, probe contract.Probe, line string) {
+	t.Helper()
+	for _, got := range strings.Split(strings.TrimSuffix(probe.Stdout, "\n"), "\n") {
+		if got == line {
+			return
+		}
+	}
+	t.Fatalf("missing output line %q\nstdout:\n%s\nstderr:\n%s", line, probe.Stdout, probe.Stderr)
+}
+
+func requireOutputPrefix(t *testing.T, probe contract.Probe, prefix string) {
+	t.Helper()
+	for _, got := range strings.Split(strings.TrimSuffix(probe.Stdout, "\n"), "\n") {
+		if strings.HasPrefix(got, prefix) {
+			return
+		}
+	}
+	t.Fatalf("missing output line with prefix %q\nstdout:\n%s\nstderr:\n%s", prefix, probe.Stdout, probe.Stderr)
+}
+
+func requireNoOutput(t *testing.T, probe contract.Probe) {
+	t.Helper()
+	if probe.Stdout != "" || probe.Stderr != "" {
+		t.Fatalf("expected no output\nstdout:\n%s\nstderr:\n%s", probe.Stdout, probe.Stderr)
+	}
+}
+
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", "'\\''") + "'"
+}

@@ -272,3 +272,129 @@ func TestCommandSince(t *testing.T) {
 		t.Errorf("untouched file leaked into --since scope:\n%s", r)
 	}
 }
+
+// A valid accept row excludes its over-budget file from the violation count and
+// records it in the separate accepted: section with its reason and a count, so the
+// suppression is per-file, reasoned on the page, and reversible — not a silent bump.
+func TestAcceptExcludesAndPrints(t *testing.T) {
+	root := initRepo(t)
+	write(t, root, "long.go", lines(401))
+	write(t, root, "ok.go", lines(10))
+	write(t, root, ".bench/structure-accept", "long.go cohesive and barely over budget\n")
+	add(t, root)
+
+	report, v, _ := checkAll(root)
+	if v != 0 {
+		t.Errorf("accepted file left in the count: v=%d\n%s", v, report)
+	}
+	if strings.Contains(report, "FILE TOO LONG") {
+		t.Errorf("accepted file still printed as a live violation:\n%s", report)
+	}
+	if !strings.Contains(report, "accepted: long.go — cohesive and barely over budget") {
+		t.Errorf("missing per-file accepted line:\n%s", report)
+	}
+	if !strings.Contains(report, "1 file(s)") {
+		t.Errorf("missing accepted count:\n%s", report)
+	}
+	if !strings.Contains(report, "structure ok") {
+		t.Errorf("want the ok summary once the only violation is suppressed:\n%s", report)
+	}
+}
+
+// Absence of the accept file is an empty list at exit 0 — never an error — the
+// distinct-from-unreadable half of the FT29 posture. A clean tree stays clean and
+// no accept line leaks: an impl that errored on a missing file would fail here.
+func TestAcceptAbsentIsEmpty(t *testing.T) {
+	root := initRepo(t)
+	write(t, root, "ok.go", lines(10))
+	add(t, root)
+
+	report, v, _ := checkAll(root)
+	if v != 0 || !strings.Contains(report, "structure ok") {
+		t.Errorf("absent accept file should be a clean empty list, got v=%d:\n%s", v, report)
+	}
+	if strings.Contains(report, "structure-accept") || strings.Contains(report, "accepted:") {
+		t.Errorf("absent accept file leaked an accept line:\n%s", report)
+	}
+}
+
+// A row with a path but no reason is malformed: reported and NOT honored, so the
+// file it names stays counted — a reason is the price of acceptance.
+func TestAcceptMalformedRowNotHonored(t *testing.T) {
+	root := initRepo(t)
+	write(t, root, "long.go", lines(401))
+	write(t, root, ".bench/structure-accept", "long.go\n")
+	add(t, root)
+
+	report, v, _ := checkAll(root)
+	if !strings.Contains(report, "structure-accept: ignoring malformed line (no reason): long.go") {
+		t.Errorf("missing malformed warning:\n%s", report)
+	}
+	if v != 1 || !strings.Contains(report, "FILE TOO LONG   401 lines (max 400)   long.go") {
+		t.Errorf("reasonless row was honored (v=%d) — acceptance without a reason:\n%s", v, report)
+	}
+}
+
+// A valid accept row whose path is not a scanned source file is reported stale, so
+// the list cannot quietly accumulate dead entries. It never touches the live count.
+func TestAcceptStaleRowWarns(t *testing.T) {
+	root := initRepo(t)
+	write(t, root, "long.go", lines(401))
+	write(t, root, ".bench/structure-accept", "gone.go it moved away\n")
+	add(t, root)
+
+	report, v, _ := checkAll(root)
+	if !strings.Contains(report, "structure-accept: stale accept row (not a scanned source file): gone.go") {
+		t.Errorf("missing stale warning:\n%s", report)
+	}
+	if v != 1 {
+		t.Errorf("stale row should not change the live count: v=%d\n%s", v, report)
+	}
+}
+
+// An accept row whose path contains a space is owned deterministically: the first
+// whitespace-delimited token is the path, the remainder the reason. A spaced path is
+// not a scanned source file, so it is reported stale — never misattributed or panicked.
+func TestAcceptWhitespacePathIsStale(t *testing.T) {
+	root := initRepo(t)
+	write(t, root, "long.go", lines(401))
+	write(t, root, ".bench/structure-accept", "space file.go a reason with several words\n")
+	add(t, root)
+
+	report, v, _ := checkAll(root)
+	if !strings.Contains(report, "structure-accept: stale accept row (not a scanned source file): space") {
+		t.Errorf("spaced path not owned deterministically as first-token:\n%s", report)
+	}
+	if v != 1 {
+		t.Errorf("spaced-path row wrongly suppressed a live violation: v=%d\n%s", v, report)
+	}
+}
+
+// A present-but-unreadable accept file is LOUD — a non-zero result with a named line
+// — never a silently empty list at exit 0 (the FT29 false-empty defect). The forced
+// non-zero flows through the same count both the report and ViolationCount read.
+func TestAcceptUnreadableIsLoud(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("root bypasses file permissions; cannot simulate an unreadable file")
+	}
+	root := initRepo(t)
+	write(t, root, "ok.go", lines(10)) // clean tree: no live violation to mask the loud one
+	add(t, root)
+	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".bench", "structure-accept"), []byte("ok.go fine\n"), 0o000); err != nil {
+		t.Fatal(err)
+	}
+
+	report, v, _ := checkAll(root)
+	if v == 0 {
+		t.Errorf("unreadable accept file was swallowed to exit 0 (false-empty):\n%s", report)
+	}
+	if !strings.Contains(report, "structure-accept: present but unreadable") {
+		t.Errorf("missing loud named line:\n%s", report)
+	}
+	if ViolationCount(root) == 0 {
+		t.Errorf("ViolationCount silently observed an empty accept list")
+	}
+}
