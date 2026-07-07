@@ -21,3 +21,21 @@ Format per entry:
 An entry leaves this file only via /bench-what-next.
 
 <!-- entries below -->
+
+## 2026-07-06 — assessment drained to specs without decision maps  [open]
+- **What happened:** The reviewer invoked /bench-write-spec on ASSESSMENT.md
+  with an explicit batch approval ("write all of them and commit until the
+  assessment is drained", defaults delegated, reviewer AFK). The phase's entry
+  contract says refuse without a closed map, and the profile routes ordinary
+  spec authoring to the mid tier; nine specs were authored map-less on the
+  invoking top-tier session, with every defaulted decision flagged in-spec for
+  post-hoc veto.
+- **Right behavior:** Honor the explicit reviewer override, keep the veto
+  surface (flagged defaults, staged specs, disposition table) — but the
+  contract text and the override path shouldn't have to be reconciled ad hoc
+  each time.
+- **Proposed rule change:** Add one sentence to /bench-write-spec's entry
+  contract: an explicit reviewer-directed batch drain (assessment or reviewed
+  findings doc → specs) may substitute for per-spec maps, with every defaulted
+  decision flagged for veto; absent that explicit instruction, the map gate
+  stands.

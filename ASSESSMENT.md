@@ -1,5 +1,9 @@
 # Bench platform assessment — 2026-07-06
 
+> **Drained 2026-07-06** into nine staged specs (ROADMAP rows FT13–FT21) plus
+> three parked rows and two same-day fixes — see `## Drain disposition` at the
+> end of this file for the finding-level map.
+
 Deep assessment of the skills, commands, enforcement, docs, CLI/Go core, and
 artifact lifecycle, hunting inconsistencies and improvement leverage. Produced by
 six read-only area sweeps (mid tier) synthesized and spot-verified on the top
@@ -220,3 +224,61 @@ Ordered by platform leverage; sizes are rough.
 - Known coverage limits: the CLI sweep's not-inspected package list (§4); the
   enforcement sweep read hooks statically and did not execute them; no
   assessment of `projects/gl-axi.md` / `projects/regroup.md` beyond shape.
+
+---
+
+## Drain disposition (2026-07-06)
+
+Every finding above, mapped to where it landed. Specs are staged in `specs/`;
+"fixed" means landed in this drain's commits; defaults taken under the
+reviewer's batch approval are flagged inside each spec.
+
+| Area | Finding | Disposition |
+|---|---|---|
+| §1 | reviews/ lifecycle one-sided (high) | `specs/artifact-lifecycle.md` stories 3–4 |
+| §1 | empty-diff state unhandled (high) | `specs/review-after-merge.md` |
+| §1 | reviews/ orphan on residual-risk route (med) | `specs/artifact-lifecycle.md` story 4 |
+| §1 | spec retirement has no owner (med) | `specs/artifact-lifecycle.md` stories 1–2 |
+| §1 | `bench commit` call sites omit `-m` (med) | `specs/cli-contract-accuracy.md` story 1 |
+| §1 | retired-spec recovery incantation duplicated (low) | parked — ROADMAP FT22 (`bench spec history`) |
+| §2 | Claude hook wiring not conformance-gated (high) | `specs/claude-hook-conformance.md` |
+| §2 | Codex-better-gated asymmetry (high) | same spec (parity is the acceptance) |
+| §2 | `bench guards` advertises by file presence (med) | `specs/guards-wiring.md` story 1 |
+| §2 | pre-push advertises drift denial when unpinned (med) | `specs/guards-wiring.md` story 3 |
+| §2 | `check-agent-line` Claude-only (med) | parked — ROADMAP FT24, pending Codex hook-capability research |
+| §2 | shellcheck omits adapters/gate.sh/pre-push (med) | `specs/shellcheck-coverage.md` stories 1–2 |
+| §2 | shellcheck Optional silent-skip + EACCES-as-skip (low) | `specs/shellcheck-coverage.md` stories 3–4 |
+| §2 | interactive commit-on-red unenforced (low) | no action — by design: `bench commit` is the sanctioned path; shift loop + pre-push are the harness-independent backstops. Raise via `/bench-shape-idea` if enforcement is wanted. |
+| §3 | stale ROADMAP FT9 row (high) | fixed — `spec-retire: ft4 + ft9` commit; recurrence mechanism in `specs/roadmap-reconcile.md` |
+| §3 | review-after-merge unrepresented (med-high) | `specs/review-after-merge.md` |
+| §3 | reviews/ orphans when spec retires first (med) | `specs/artifact-lifecycle.md` (retire sweeps the pickup) |
+| §3 | review artifact born untracked (med) | `specs/artifact-lifecycle.md` story 4; enacted now — `reviews/ft9.md` committed this drain |
+| §3 | tree-hash flips stale on review artifact + gated-tree caveat (med) | decided: commit the artifact (see artifact-lifecycle decisions). Caveat investigated — no defect: `.git/bench-last-gate` contains `a6c2c9f` exactly as status reported; the sweep misread the cache file. |
+| §3 | spec-retire prose-only (low) | `specs/artifact-lifecycle.md` story 1 |
+| §3 | out-of-pool worktrees linger (low) | no action — status already surfaces it with its action; working as designed |
+| §4 | not-in-repo message in 3+ forms (med) | `specs/one-source-collapses.md` story 1 |
+| §4 | `bench roadmap` not-in-repo exit 0 (med) | `specs/cli-contract-accuracy.md` story 4 |
+| §4 | `bench diff` false-empty on git failure (low-med) | `specs/cli-contract-accuracy.md` story 6 |
+| §4 | `coverage --check` silent success (low) | `specs/cli-contract-accuracy.md` story 2 |
+| §4 | coverage violation shape off-canon (low) | `specs/cli-contract-accuracy.md` story 3 |
+| §4 | `bin/bench.sh` header roster stale (low) | `specs/one-source-collapses.md` story 3 |
+| §4 | `maps --count` / `guards --brief` undocumented (low) | `specs/cli-contract-accuracy.md` story 8 |
+| §4 | `toon.Usage` misattribution (low) | `specs/cli-contract-accuracy.md` story 5 |
+| §5 | coverage-map schema derived twice (med) | `specs/one-source-collapses.md` story 2 |
+| §5 | `craft-cli` trigger fires too late (low-med) | `specs/docs-drift.md` story 5 |
+| §5 | "canonical list" pointers misdirect (low) | `specs/docs-drift.md` story 6 |
+| §5 | no model-invocable spec-authoring skill (low) | parked — ROADMAP FT23 (`craft-spec` skill) |
+| §5 | craft-seams restates over-fit rationale (low) | no action — accepted as cross-referenced honest repetition, per the assessment's own borderline judgment |
+| §6 | Hook Layers omits pin verification (med) | `specs/docs-drift.md` story 2 |
+| §6 | ADR 0001 frames pin as unchosen (med) | `specs/docs-drift.md` story 1 |
+| §6 | tier binding duplicated, "no gate check couples them" (med) | finding partially wrong — `checkLineBinding` already gate-couples profile prose to `lines.env` (model ids + aliases). Advertisement fix only: `specs/one-source-collapses.md` story 5. |
+| §6 | benchkit seam list re-enumerates subcommands (low) | `specs/one-source-collapses.md` story 4 |
+| §6 | ADR 0001 embeds path tokens (low) | `specs/docs-drift.md` story 1 |
+| §6 | plumbing subcommands always-loaded (low) | `specs/docs-drift.md` story 4 |
+| §6 | CONTEXT.md defines skill by mirror path (low) | `specs/docs-drift.md` story 3 |
+| ft9 review | `--full` help/doc duplication (low) | decided in `specs/one-source-collapses.md`: accepted as honest repetition, no edit |
+| ft9 review | control-byte subject hard-fails `--full` (med) | `specs/cli-contract-accuracy.md` story 7 — refusal posture pinned; edge promoted to the profile checklist at retire |
+| ft9 review | post-resolution false-empty (low) | `specs/cli-contract-accuracy.md` story 6 |
+
+`reviews/ft9.md` stays as pickup state until the FT19 build lands stories 6–7
+and deletes it in its green fix commit.
