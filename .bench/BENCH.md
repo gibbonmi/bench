@@ -83,11 +83,12 @@ Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
    justification. Cheap model + low effort for plumbing at a known seam; top model
    + high effort only for the seam where the answer is genuinely uncertain. No
    silent escalation. If a stage exhausts its cap, stop and report rather than
-   grinding. The tiers (cheap / mid / top) are abstract; resolve them to models
-   actually available in *this* harness — `projects/<name>.md` holds the binding,
-   and `bench models` (or the harness's own model list) refreshes it. If a named
-   model isn't available here, re-check and pick the nearest tier rather than
-   guessing or failing.
+   grinding. The tiers (cheap / mid / top) are abstract; the reviewer binds them
+   to opaque safe model-id tokens in `projects/<name>.md` and `.bench/lines.env`.
+   Use `bench models` and the harness's own model list as advisory discovery, not
+   as the tier oracle. If the invocation surface reports a named model is
+   unavailable, re-check the owner binding instead of letting the harness choose
+   a replacement tier.
 
 3. **Document for the teammate who just walked in.**
    Project docs and ADRs describe the current decided state, addressed to someone

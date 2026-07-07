@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/lines"
+	"github.com/gibbonmi/bench/internal/modelid"
+	"github.com/gibbonmi/bench/internal/modelid/modelidtest"
 )
 
 func checkLineRouting(root string) []string {
@@ -30,20 +32,18 @@ func checkLineBinding(root string) []string {
 	binding := lines.ParseBinding(content)
 	var diags []string
 	tiers := []struct {
-		label string
 		key   string
 		value string
 	}{
-		{"top", "BENCH_TIER_TOP", binding.Top},
-		{"mid", "BENCH_TIER_MID", binding.Mid},
-		{"cheap", "BENCH_TIER_CHEAP", binding.Cheap},
+		{"BENCH_TIER_TOP", binding.Top},
+		{"BENCH_TIER_MID", binding.Mid},
+		{"BENCH_TIER_CHEAP", binding.Cheap},
 	}
-	modelID := regexp.MustCompile(`^claude-[a-z0-9][a-z0-9.-]*$`)
 	for _, tier := range tiers {
 		if tier.value == "" {
-			diags = append(diags, fmt.Sprintf("lines.env tier unset: %s has no value in .bench/lines.env", tier.key))
-		} else if !modelID.MatchString(tier.value) {
-			diags = append(diags, fmt.Sprintf("lines.env tier malformed: %s='%s' is not a model id", tier.label, tier.value))
+			diags = append(diags, fmt.Sprintf("lines.env tier unset: %s has no value in .bench/lines.env (%s='')", tier.key, tier.key))
+		} else if !modelid.SafeToken(tier.value) {
+			diags = append(diags, fmt.Sprintf("lines.env tier malformed: %s='%s' is not a safe model token", tier.key, tier.value))
 		}
 	}
 	aliases := []struct {
@@ -85,6 +85,54 @@ func checkLineBinding(root string) []string {
 		}
 	}
 	return diags
+}
+
+func TestLineBindingAcceptsOpaqueSafeModelTokens(t *testing.T) {
+	for _, value := range modelidtest.AcceptedTokens {
+		t.Run(value, func(t *testing.T) {
+			root := t.TempDir()
+			if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			content := "BENCH_TIER_TOP=gpt-5.4\n" +
+				"BENCH_TIER_MID=" + value + "\n" +
+				"BENCH_TIER_CHEAP=openai/gpt-5\n"
+			if err := os.WriteFile(filepath.Join(root, ".bench", "lines.env"), []byte(content), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if diags := checkLineBinding(root); len(diags) != 0 {
+				t.Fatalf("safe non-Claude tier token got diagnostics:\n%s", strings.Join(diags, "\n"))
+			}
+		})
+	}
+}
+
+func TestLineBindingRejectsUnsafeModelTokens(t *testing.T) {
+	for _, token := range modelidtest.RejectedTokens {
+		t.Run(token.Name, func(t *testing.T) {
+			root := t.TempDir()
+			if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			content := "BENCH_TIER_TOP=gpt-5.4\n" +
+				"BENCH_TIER_MID=" + token.Value + "\n" +
+				"BENCH_TIER_CHEAP=openai/gpt-5\n"
+			if err := os.WriteFile(filepath.Join(root, ".bench", "lines.env"), []byte(content), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			diags := checkLineBinding(root)
+			want := "BENCH_TIER_MID='" + token.Value + "'"
+			if token.Value == "" {
+				want = "BENCH_TIER_MID=''"
+			}
+			if !containsDiagnostic(diags, want) {
+				t.Fatalf("want diagnostic containing %q, got:\n%s", want, strings.Join(diags, "\n"))
+			}
+			if token.Value != "" && !containsDiagnostic(diags, "is not a safe model token") {
+				t.Fatalf("want safe-token diagnostic, got:\n%s", strings.Join(diags, "\n"))
+			}
+		})
+	}
 }
 
 // checkClaudeHookWiring holds .claude/settings.json to at least the Codex hook
@@ -246,7 +294,7 @@ func checkAgentHookBehavior(root string) []string {
 	env := append(conformanceSubprocessEnv(), "PATH="+bindir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	var diags []string
 
-	routed, cleanupRouted, err := tempGitRepoWithLines("BENCH_TIER_TOP=claude-fable-5\nBENCH_TIER_MID=claude-opus-4-8\nBENCH_TIER_CHEAP=claude-sonnet-4-6\nBENCH_ALIAS_MID=opus\n")
+	routed, cleanupRouted, err := tempGitRepoWithLines("BENCH_TIER_TOP=gpt-5.4\nBENCH_TIER_MID=gpt-5.3-codex-spark\nBENCH_TIER_CHEAP=openai/gpt-5\nBENCH_ALIAS_MID=opus\n")
 	if err != nil {
 		return []string{"check-agent-line.sh setup failed: " + err.Error()}
 	}
@@ -266,10 +314,10 @@ func checkAgentHookBehavior(root string) []string {
 			diags = append(diags, fmt.Sprintf("check-agent-line.sh %s did not warn with %q", label, wantErr))
 		}
 	}
-	hookCase("denies a bound model", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"claude-opus-4-8"}}`, "", 0)
-	hookCase("denies a declared alias", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"opus"}}`, "", 0)
-	hookCase("does not deny an undeclared alias", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"sonnet"}}`, "", 2)
-	hookCase("does not deny an unbound model", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"claude-nonexistent-9"}}`, "", 2)
+	hookCase("allows a bound model", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"gpt-5.3-codex-spark"}}`, "", 0)
+	hookCase("allows a declared alias", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"opus"}}`, "", 0)
+	hookCase("denies an undeclared alias", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"sonnet"}}`, "", 2)
+	hookCase("denies an unbound model", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"gpt-9"}}`, "", 2)
 	hookCase("does not fail open on malformed stdin", routed, `not json at all`, "not parseable as JSON", 0)
 	hookCase("does not fail open on a missing model field", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x"}}`, "no resolvedModel/model field", 0)
 
@@ -279,14 +327,14 @@ func checkAgentHookBehavior(root string) []string {
 	}
 	defer cleanupUnrouted()
 	os.Remove(filepath.Join(unrouted, ".bench", "lines.env"))
-	hookCase("does not fail open without lines.env", unrouted, `{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"claude-nonexistent-9"}}`, "no .bench/lines.env", 0)
+	hookCase("does not fail open without lines.env", unrouted, `{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"gpt-9"}}`, "no .bench/lines.env", 0)
 
-	partial, cleanupPartial, err := tempGitRepoWithLines("BENCH_TIER_TOP=claude-fable-5\nBENCH_TIER_MID=\nBENCH_TIER_CHEAP=claude-sonnet-4-6\n")
+	partial, cleanupPartial, err := tempGitRepoWithLines("BENCH_TIER_TOP=gpt-5.4\nBENCH_TIER_MID=\nBENCH_TIER_CHEAP=openai/gpt-5\n")
 	if err != nil {
 		return []string{"check-agent-line.sh setup failed: " + err.Error()}
 	}
 	defer cleanupPartial()
-	hookCase("does not fail open on an incomplete binding", partial, `{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"claude-nonexistent-9"}}`, "unset or empty", 0)
+	hookCase("does not fail open on an incomplete binding", partial, `{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"gpt-9"}}`, "unset or empty", 0)
 	return diags
 }
 
@@ -323,7 +371,7 @@ func checkAdapterLineGuards(root string) []string {
 		return diags
 	}
 
-	routed, cleanupRouted, err := tempGitRepoWithLines("BENCH_TIER_TOP=claude-fable-5\nBENCH_TIER_MID=claude-opus-4-8\nBENCH_TIER_CHEAP=claude-sonnet-4-6\n")
+	routed, cleanupRouted, err := tempGitRepoWithLines("BENCH_TIER_TOP=gpt-5.4\nBENCH_TIER_MID=gpt-5.3-codex-spark\nBENCH_TIER_CHEAP=openai/gpt-5\n")
 	if err != nil {
 		return append(diags, "adapter line guard setup failed: "+err.Error())
 	}
@@ -334,7 +382,7 @@ func checkAdapterLineGuards(root string) []string {
 	}
 	defer cleanupUnrouted()
 	os.Remove(filepath.Join(unrouted, ".bench", "lines.env"))
-	partial, cleanupPartial, err := tempGitRepoWithLines("BENCH_TIER_TOP=claude-fable-5\nBENCH_TIER_MID=\nBENCH_TIER_CHEAP=claude-sonnet-4-6\n")
+	partial, cleanupPartial, err := tempGitRepoWithLines("BENCH_TIER_TOP=gpt-5.4\nBENCH_TIER_MID=\nBENCH_TIER_CHEAP=openai/gpt-5\n")
 	if err != nil {
 		return append(diags, "adapter line guard setup failed: "+err.Error())
 	}
@@ -346,15 +394,15 @@ func checkAdapterLineGuards(root string) []string {
 			continue
 		}
 		envBase := append(conformanceSubprocessEnv(), "PATH="+bindir+string(os.PathListSeparator)+os.Getenv("PATH"))
-		bound := runAtEnv(routed, append(envBase, "BENCH_MODEL=claude-opus-4-8"), "bash", path, "--line probe prompt")
-		if bound == nil || bound.ExitCode != 0 || !strings.Contains(bound.Stdout, "claude-opus-4-8") || !strings.Contains(bound.Stdout, "--line probe prompt") {
+		bound := runAtEnv(routed, append(envBase, "BENCH_MODEL=gpt-5.3-codex-spark"), "bash", path, "--line probe prompt")
+		if bound == nil || bound.ExitCode != 0 || !strings.Contains(bound.Stdout, "gpt-5.3-codex-spark") || !strings.Contains(bound.Stdout, "--line probe prompt") {
 			diags = append(diags, fmt.Sprintf("adapter %s does not pass BENCH_MODEL and a dash-leading prompt to the harness in a routed repo", name))
 		}
 		unset := runAtEnv(routed, envBase, "bash", path, "line probe prompt")
 		if unset != nil && unset.ExitCode == 0 {
 			diags = append(diags, fmt.Sprintf("adapter %s does not refuse undeclared BENCH_MODEL in a routed repo", name))
 		}
-		unbound := runAtEnv(routed, append(envBase, "BENCH_MODEL=claude-nonexistent-9"), "bash", path, "line probe prompt")
+		unbound := runAtEnv(routed, append(envBase, "BENCH_MODEL=gpt-9"), "bash", path, "line probe prompt")
 		if unbound != nil && unbound.ExitCode == 0 {
 			diags = append(diags, fmt.Sprintf("adapter %s does not refuse an unbound BENCH_MODEL in a routed repo", name))
 		}
@@ -362,12 +410,12 @@ func checkAdapterLineGuards(root string) []string {
 		if pass == nil || pass.ExitCode != 0 || !strings.Contains(pass.Stdout, "line probe prompt") {
 			diags = append(diags, fmt.Sprintf("adapter %s does not pass through in an unrouted repo", name))
 		}
-		explicit := runAtEnv(unrouted, append(envBase, "BENCH_MODEL=claude-anything-7"), "bash", path, "line probe prompt")
-		if explicit == nil || explicit.ExitCode != 0 || !strings.Contains(explicit.Stdout, "claude-anything-7") || !strings.Contains(explicit.Stdout, "line probe prompt") {
+		explicit := runAtEnv(unrouted, append(envBase, "BENCH_MODEL=gpt-anything-7"), "bash", path, "line probe prompt")
+		if explicit == nil || explicit.ExitCode != 0 || !strings.Contains(explicit.Stdout, "gpt-anything-7") || !strings.Contains(explicit.Stdout, "line probe prompt") {
 			diags = append(diags, fmt.Sprintf("adapter %s does not pass an explicit BENCH_MODEL through in an unrouted repo", name))
 		}
-		partialProbe := runAtEnv(partial, append(envBase, "BENCH_MODEL=claude-anything-7"), "bash", path, "line probe prompt")
-		if partialProbe == nil || partialProbe.ExitCode != 0 || !strings.Contains(partialProbe.Stdout, "claude-anything-7") || !strings.Contains(partialProbe.Stdout, "line probe prompt") {
+		partialProbe := runAtEnv(partial, append(envBase, "BENCH_MODEL=gpt-anything-7"), "bash", path, "line probe prompt")
+		if partialProbe == nil || partialProbe.ExitCode != 0 || !strings.Contains(partialProbe.Stdout, "gpt-anything-7") || !strings.Contains(partialProbe.Stdout, "line probe prompt") {
 			diags = append(diags, fmt.Sprintf("adapter %s does not fall back to passthrough on an incomplete binding", name))
 		}
 	}

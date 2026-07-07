@@ -144,7 +144,7 @@ bench/
 │   ├── status/               # bench status renderer + merged-spec retirement counter
 │   ├── structure/            # structure checker + budgets parser (whole-tree + touched)
 │   ├── worktree/             # worktree pool-path + lease-file conventions
-│   ├── models/               # bench models API query + no-key guidance
+│   ├── models/               # bench models advisory discovery inventory
 │   ├── roadmap/              # IDEAS.md + ROADMAP.md owner: idea, roadmap, drain counts
 │   └── git/                  # shared git subprocess helpers + gate tree-hash
 └── projects/

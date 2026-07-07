@@ -1,7 +1,5 @@
-// Package models ports `bench models`: it lists the Anthropic Models API ids when
-// ANTHROPIC_API_KEY is set, else prints the
-// no-key guidance. The port drops the curl+python3 dependency for Go net/http; the
-// live HTTP call is the untested boundary, so parseIDs and noKeyText hold the logic.
+// Package models ports `bench models`: an advisory inventory of model ids the
+// reviewer can use when binding the line in .bench/lines.env.
 package models
 
 import (
@@ -10,42 +8,137 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strings"
+	"os/exec"
+
+	"github.com/gibbonmi/bench/internal/modelid"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
-const modelsURL = "https://api.anthropic.com/v1/models"
+const (
+	openAIModelsURL    = "https://api.openai.com/v1/models"
+	anthropicModelsURL = "https://api.anthropic.com/v1/models"
+)
 
-// Command implements `bench models`. With ANTHROPIC_API_KEY set it queries the
-// Anthropic Models API and lists the ids, falling back to a failure line on any
-// error; without a key it returns the no-key guidance. Exit 0 in all cases.
-func Command(args []string) (string, int) {
-	key := os.Getenv("ANTHROPIC_API_KEY")
-	if key == "" {
-		return noKeyText(), 0
+var (
+	runCommand = func(name string, args ...string) ([]byte, error) {
+		return exec.Command(name, args...).Output()
 	}
-	const header = "Available models (Anthropic Models API):\n"
-	ids, err := fetchIDs(key)
-	if err != nil {
-		return header + "  (query failed — check the key, or read your harness model list)\n", 0
-	}
-	var b strings.Builder
-	b.WriteString(header)
-	for _, id := range ids {
-		b.WriteString("  " + id + "\n")
-	}
-	return b.String(), 0
+	doHTTP = http.DefaultClient.Do
+)
+
+type sourceRow struct {
+	source, freshness, status, hint string
 }
 
-// fetchIDs performs the live query — the untested boundary — and delegates parsing
-// to parseIDs so the JSON shape stays unit-tested.
-func fetchIDs(key string) ([]string, error) {
-	req, err := http.NewRequest(http.MethodGet, modelsURL, nil)
+type modelRow struct {
+	source, freshness, id string
+}
+
+// Command implements `bench models`. Discovery is advisory: every per-source
+// failure becomes an unavailable row, and the command exits 0 unless rendering
+// its own structured output fails.
+func Command(args []string) (string, int) {
+	sources, models := inventory()
+	out, err := render(sources, models)
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	return out, 0
+}
+
+func inventory() ([]sourceRow, []modelRow) {
+	var sources []sourceRow
+	var models []modelRow
+
+	codexSource, codexModels := codexInventory()
+	sources = append(sources, codexSource)
+	models = append(models, codexModels...)
+
+	openAISource, openAIModels := apiInventory("openai", openAIModelsURL, os.Getenv("OPENAI_API_KEY"), openAIHeaders, "set OPENAI_API_KEY")
+	sources = append(sources, openAISource)
+	models = append(models, openAIModels...)
+
+	anthropicSource, anthropicModels := apiInventory("anthropic", anthropicModelsURL, os.Getenv("ANTHROPIC_API_KEY"), anthropicHeaders, "set ANTHROPIC_API_KEY")
+	sources = append(sources, anthropicSource)
+	models = append(models, anthropicModels...)
+
+	return sources, models
+}
+
+func codexInventory() (sourceRow, []modelRow) {
+	body, err := runCommand("codex", "debug", "models")
+	freshness := "live"
+	if err != nil {
+		body, err = runCommand("codex", "debug", "models", "--bundled")
+		freshness = "bundled"
+	}
+	if err != nil {
+		return unavailable("codex", "codex debug models unavailable"), nil
+	}
+	ids, err := parseCodexSlugs(body)
+	if err != nil {
+		return unavailable("codex", "invalid codex model catalog"), nil
+	}
+	return available("codex", freshness), modelRows("codex", freshness, ids)
+}
+
+func apiInventory(source, url, key string, headers func(*http.Request, string), missingHint string) (sourceRow, []modelRow) {
+	if key == "" {
+		return unavailable(source, missingHint), nil
+	}
+	ids, err := fetchDataIDs(url, key, headers)
+	if err != nil {
+		return unavailable(source, "query failed"), nil
+	}
+	return available(source, "live"), modelRows(source, "live", ids)
+}
+
+func available(source, freshness string) sourceRow {
+	return sourceRow{source: source, freshness: freshness, status: "available", hint: "none"}
+}
+
+func unavailable(source, hint string) sourceRow {
+	return sourceRow{source: source, freshness: "unavailable", status: "unavailable", hint: hint}
+}
+
+func modelRows(source, freshness string, ids []string) []modelRow {
+	rows := make([]modelRow, 0, len(ids))
+	for _, id := range ids {
+		if !modelid.SafeToken(id) {
+			continue
+		}
+		rows = append(rows, modelRow{source: source, freshness: freshness, id: id})
+	}
+	return rows
+}
+
+func render(sources []sourceRow, models []modelRow) (string, error) {
+	sourceRows := make([][]string, 0, len(sources))
+	for _, row := range sources {
+		sourceRows = append(sourceRows, []string{row.source, row.freshness, row.status, row.hint})
+	}
+	modelRows := make([][]string, 0, len(models))
+	for _, row := range models {
+		modelRows = append(modelRows, []string{row.source, row.freshness, row.id})
+	}
+	sourceTable, err := toon.Table("model_sources", []string{"source", "freshness", "status", "hint"}, sourceRows)
+	if err != nil {
+		return "", err
+	}
+	modelTable, err := toon.Table("models", []string{"source", "freshness", "id"}, modelRows)
+	if err != nil {
+		return "", err
+	}
+	return sourceTable + modelTable, nil
+}
+
+func fetchDataIDs(url, key string, headers func(*http.Request, string)) ([]string, error) {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("x-api-key", key)
-	req.Header.Set("anthropic-version", "2023-06-01")
-	resp, err := http.DefaultClient.Do(req)
+	headers(req, key)
+	resp, err := doHTTP(req)
 	if err != nil {
 		return nil, err
 	}
@@ -57,11 +150,38 @@ func fetchIDs(key string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return parseIDs(body)
+	return parseDataIDs(body)
 }
 
-// parseIDs extracts data[].id from the Models API JSON body.
-func parseIDs(body []byte) ([]string, error) {
+func openAIHeaders(req *http.Request, key string) {
+	req.Header.Set("Authorization", "Bearer "+key)
+}
+
+func anthropicHeaders(req *http.Request, key string) {
+	req.Header.Set("x-api-key", key)
+	req.Header.Set("anthropic-version", "2023-06-01")
+}
+
+func parseCodexSlugs(body []byte) ([]string, error) {
+	var payload struct {
+		Models []struct {
+			Slug       string `json:"slug"`
+			Visibility string `json:"visibility"`
+		} `json:"models"`
+	}
+	if err := json.Unmarshal(body, &payload); err != nil {
+		return nil, err
+	}
+	ids := make([]string, 0, len(payload.Models))
+	for _, m := range payload.Models {
+		if m.Visibility == "list" {
+			ids = append(ids, m.Slug)
+		}
+	}
+	return ids, nil
+}
+
+func parseDataIDs(body []byte) ([]string, error) {
 	var payload struct {
 		Data []struct {
 			ID string `json:"id"`
@@ -75,14 +195,4 @@ func parseIDs(body []byte) ([]string, error) {
 		ids = append(ids, m.ID)
 	}
 	return ids, nil
-}
-
-// noKeyText returns the guidance shown when ANTHROPIC_API_KEY is unset, matching the
-// shell heredoc byte-for-byte including its trailing newline.
-func noKeyText() string {
-	return "No ANTHROPIC_API_KEY set, so I can't query the model list directly. Discover from\n" +
-		"your harness instead, then bind the tiers (cheap / mid / top) in projects/<name>.md:\n" +
-		"  - Claude Code: `claude --help`, or the in-app /model picker\n" +
-		"  - Codex:       `codex --help`, or its model config\n" +
-		"  - or export ANTHROPIC_API_KEY and re-run `bench models`\n"
 }

@@ -118,19 +118,20 @@ Ask for, with defaults proposed from exploration:
   in the profile, and `/bench-write-spec`'s edge inventory reads it when mapping
   acceptance coverage
 - the design-source location if there's UI (submodule / package / path)
-- the line defaults, written as **tier → model bindings**. First discover what's
-  actually available — don't hardcode model names. Run `bench models` (it queries
-  the Anthropic model list when a key is set); if the harness uses subscription auth
-  and there's no key, read the harness's own list (`claude --help` / the `/model`
-  picker, `codex --help`). Bind **cheap / mid / top** to the cheapest, a middle, and
-  the most capable available model, confirm with me, and record the binding with the
-  date and harness — in the profile's `Lines` prose **and** machine-readably in
-  `.bench/lines.env` (`BENCH_TIER_TOP` / `BENCH_TIER_MID` / `BENCH_TIER_CHEAP`,
-  plus `BENCH_ALIAS_*` keys when the harness addresses models by alias). The
-  hooks and shift adapters enforce the line only through `lines.env`; a repo
-  without it stays unrouted. Then the routing by tier: cheap + low effort for
-  plumbing at a known seam; top + high effort only for the genuinely uncertain
-  seam.
+- the line defaults, written as **tier → model bindings**. First discover
+  candidate ids, but do not let a harness assign the tiers. Run `bench models`
+  for multi-source advisory discovery (Codex catalog, OpenAI API, Anthropic API,
+  and unavailable/manual hints), and read the harness's own model list when
+  useful (`claude --help` / the `/model` picker, `codex debug models --bundled`).
+  Ask me which opaque safe model-id tokens bind **cheap / mid / top**, confirm
+  the binding, and record it with the date and harness — in the profile's
+  `Lines` prose **and** machine-readably in `.bench/lines.env`
+  (`BENCH_TIER_TOP` / `BENCH_TIER_MID` / `BENCH_TIER_CHEAP`, plus
+  `BENCH_ALIAS_*` keys when the harness addresses models by alias). The hooks
+  and shift adapters enforce the line only through `lines.env`; discovery is not
+  validation, and a repo without `lines.env` stays unrouted. Then the routing by
+  tier: cheap + low effort for plumbing at a known seam; top + high effort only
+  for the genuinely uncertain seam.
 
 Write `projects/<name>.md` from the example profiles in the kit as a template.
 

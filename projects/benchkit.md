@@ -155,19 +155,22 @@ The routing rubric — the three-signal decision table and the escalation ladder
 is the `craft-line` skill. This section holds what is project-specific: the
 binding, the cached routings, and the escalation policy.
 
-**Tier → model** (this harness; refresh with `bench models`; set 2026-07-01):
-top = Fable 5 (`claude-fable-5`) · mid = Opus 4.8 (`claude-opus-4-8`) · cheap =
-Sonnet 5 (`claude-sonnet-5`). Machine-readable source: `.bench/lines.env`,
-read by the Agent-tool hook and the shift adapters; the `checkLineBinding`
-conformance check cross-checks this paragraph against it, so drift between the
-two turns the gate red. Haiku 4.5 leaves the rotation (no `effort` support, and a fourth
-tier adds a distinction the routing signals can't reliably make). Caveat for
-Claude Code delegation: the Agent tool addresses models by alias only, so
-`lines.env` also declares which aliases bind (`BENCH_ALIAS_TOP=fable`,
-`BENCH_ALIAS_MID=opus`, `BENCH_ALIAS_CHEAP=sonnet` — bare `sonnet` resolves to
-Sonnet 5, the cheap tier). Cheap-rated in-session work runs inline or bumps
-to mid (declared); headless shift runs target `claude-sonnet-5` via
-`BENCH_MODEL` through the adapter (adapters take exact ids, not aliases).
+**Tier → model** (this harness; advisory candidates from `bench models`; set
+2026-07-01): the reviewer-owned binding is top = Fable 5
+(`claude-fable-5`) · mid = Opus 4.8 (`claude-opus-4-8`) · cheap = Sonnet 5
+(`claude-sonnet-5`). These Claude-shaped ids are this repo's current choice, not
+a namespace rule; the provider-neutral token grammar and discovery posture live in
+`craft-line`. Machine-readable source: `.bench/lines.env`, read by the
+Agent-tool hook and the shift adapters; the `checkLineBinding` conformance check
+cross-checks this paragraph against it, so drift between the two turns the gate
+red. Haiku 4.5 leaves the rotation (no `effort` support, and a fourth tier adds a
+distinction the routing signals can't reliably make). Caveat for Claude Code
+delegation: the Agent tool addresses models by alias only, so `lines.env` also
+declares which aliases bind (`BENCH_ALIAS_TOP=fable`, `BENCH_ALIAS_MID=opus`,
+`BENCH_ALIAS_CHEAP=sonnet` — bare `sonnet` resolves to Sonnet 5, the cheap tier).
+Cheap-rated in-session work runs inline or bumps to mid (declared); headless
+shift runs target `claude-sonnet-5` via `BENCH_MODEL` through the adapter
+(adapters take exact ids, not aliases).
 
 **Escalation policy:** no standing top-tier opt-out — any bump to Fable 5
 pauses and asks the reviewer (the ladder is in `craft-line`). Tier moves still
