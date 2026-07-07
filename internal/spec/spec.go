@@ -170,20 +170,23 @@ func Flip(base, arg string) (resolved string, err error) {
 }
 
 // Command implements `bench spec <subcommand> <slug>`: `implemented` flips the status line
-// (Flip), `retire` deletes a merged spec and its review pickup. The slug's specs/<slug>.md
-// fallback is anchored at the repo root, so it resolves from any cwd inside the repo; a
-// path argument stays cwd-relative. Usage errors (missing/unknown subcommand, missing or
-// extra argument, unknown flag) exit 2; a resolve/validate/delete failure exits 1 naming
-// the file and reason.
+// (Flip), `retire` deletes a merged spec and its review pickup, `history` reports the
+// commits that retired or deleted it (a read-only AXI query — see history.go). The
+// slug's specs/<slug>.md fallback is anchored at the repo root, so it resolves from any
+// cwd inside the repo; a path argument stays cwd-relative. Usage errors (missing/unknown
+// subcommand, missing or extra argument, unknown flag) exit 2; a resolve/validate/delete
+// failure exits 1 naming the file and reason.
 func Command(args []string) (string, int) {
 	if len(args) == 0 {
-		return toon.Usage("bench spec", "expected a subcommand: implemented, retire") + "\n", 2
+		return toon.Usage("bench spec", "expected a subcommand: implemented, retire, history") + "\n", 2
 	}
 	switch args[0] {
 	case "implemented":
 		return implementedCommand(args[1:])
 	case "retire":
 		return retireCommand(args[1:])
+	case "history":
+		return historyCommand(args[1:])
 	default:
 		return toon.Usage("bench spec", args[0]) + "\n", 2
 	}

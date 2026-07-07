@@ -56,7 +56,7 @@ Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
 - Oracle and diagnostics: `bench gate`, `bench gate pin`, `bench canary`, `bench structure`,
   `bench guards`, `bench diff`, `bench coverage`, `bench models`, `bench version`.
 - Work execution: `bench worktree`, `bench shift`, `bench commit`,
-  `bench spec implemented`, `bench spec retire`.
+  `bench spec implemented`, `bench spec retire`, `bench spec history`.
 - Hook and adapter plumbing subcommands — driven by hooks and adapters, never
   typed by sessions — are enumerated in `.bench/BENCH-reference.md` (Plumbing
   subcommands), so the always-loaded inventory carries only what sessions run.
