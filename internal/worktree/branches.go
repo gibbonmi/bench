@@ -12,8 +12,12 @@ const delegateBranchPrefix = "worktree-"
 // OrphanedDelegateBranches returns local harness scratch branches (`worktree-*`) that
 // are not attached to any registered git worktree. Bench shift review branches use a
 // different namespace (`bench/shift-*`) and are deliberately preserved.
+//
+// It lists every local head and applies the scratch-prefix filter in Go rather than as a
+// git-side `worktree-*` glob: git's for-each-ref wildcard stops at a `/`, so a slashed scratch
+// name (`worktree-agent-<hash>/x`) would escape the glob and never be swept.
 func OrphanedDelegateBranches(root string) []string {
-	branchesOut, err := git.Output("-C", root, "for-each-ref", "--format=%(refname:short)", "refs/heads/"+delegateBranchPrefix+"*")
+	branchesOut, err := git.Output("-C", root, "for-each-ref", "--format=%(refname:short)", "refs/heads/")
 	if err != nil || branchesOut == "" {
 		return nil
 	}

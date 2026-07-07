@@ -25,6 +25,111 @@ func TestRuntimeWorktreeContracts(t *testing.T) {
 	contract.RunParallel(t, "bench worktree lease/reuse contract", testRuntimeWorktreeLeaseReuse)
 	contract.RunParallel(t, "bench worktree lease hardening contract", testRuntimeWorktreeLeaseHardening)
 	contract.RunParallel(t, "bench worktree concurrent-acquire contract", testRuntimeWorktreeConcurrentAcquire)
+	contract.RunParallel(t, "bench worktree clean sweeps merged orphan (non-tty) contract", testRuntimeWorktreeSweepDeletesMerged)
+	contract.RunParallel(t, "bench worktree clean keeps unmerged orphan contract", testRuntimeWorktreeSweepKeepsUnmerged)
+	contract.RunParallel(t, "bench worktree clean spares active and non-scratch contract", testRuntimeWorktreeSweepSparesProtected)
+	contract.RunParallel(t, "bench worktree clean deletes slashed unicode orphan contract", testRuntimeWorktreeSweepDeletesSlashUnicode)
+	contract.RunParallel(t, "bench worktree clean refuses unresolvable default contract", testRuntimeWorktreeSweepRefusesUnresolvableDefault)
+}
+
+// onMainFixture returns a fixture whose default branch resolves to a real `main` commit — the
+// sweep's happy-path precondition. git.DefaultBranch falls back to "main", but a bare `git init`
+// fixture is born on "master", so an explicit HEAD symref lands the first commit on main and makes
+// the default branch resolve.
+func onMainFixture(t *testing.T) contract.Fixture {
+	t.Helper()
+	f := contract.NewFixture(t)
+	f.Git("symbolic-ref", "HEAD", "refs/heads/main")
+	commitAllowEmpty(t, f, "init")
+	return f
+}
+
+// headExists reports whether refs/heads/<name> resolves — an exit-code probe so a slashed or
+// unicode branch name is checked verbatim, never through a substring or glob match.
+func headExists(f contract.Fixture, name string) bool {
+	return f.GitAllow("show-ref", "--verify", "--quiet", "refs/heads/"+name).ExitCode == 0
+}
+
+// Story 1 + 5: a merged worktree-* orphan is deleted with its line on stdout, run non-interactively
+// (no PTY) with no out-of-pool worktrees — proving the sweep is not coupled to the TTY confirmation.
+func testRuntimeWorktreeSweepDeletesMerged(t *testing.T) {
+	f := onMainFixture(t)
+	f.Git("branch", "worktree-agent-merged")
+
+	out := f.Bench("worktree", "clean")
+	out.RequireExit(0)
+	contract.RequireContains(t, out.Stdout, "deleted branch worktree-agent-merged")
+	if headExists(f, "worktree-agent-merged") {
+		t.Fatalf("merged scratch orphan survived the sweep:\n%s", f.Git("for-each-ref", "--format=%(refname:short)", "refs/heads/").Stdout)
+	}
+}
+
+// Story 2 + 4: an unmerged worktree-* orphan survives with the verbatim kept line, and keeping it
+// exits 0 — a branch carrying unique commits is never destroyed and keeping is not a failure.
+func testRuntimeWorktreeSweepKeepsUnmerged(t *testing.T) {
+	f := onMainFixture(t)
+	f.Git("checkout", "-q", "-b", "worktree-agent-unmerged")
+	commitAllowEmpty(t, f, "unique work")
+	f.Git("checkout", "-q", "main")
+
+	out := f.Bench("worktree", "clean")
+	out.RequireExit(0)
+	contract.RequireContains(t, out.Stdout, "kept branch worktree-agent-unmerged (unique commits — inspect or delete by hand)")
+	if !headExists(f, "worktree-agent-unmerged") {
+		t.Fatal("unmerged scratch orphan was destroyed by the conservative default")
+	}
+}
+
+// Story 3: a scratch branch checked out in a live worktree, a bench/shift-* review branch, a plain
+// branch, and main all survive the sweep — the active-worktree and non-scratch filters hold. The
+// live out-of-pool worktree makes the worktree-removal phase refuse under no TTY (exit 1), which is
+// orthogonal to the sweep; this row asserts only branch survival.
+func testRuntimeWorktreeSweepSparesProtected(t *testing.T) {
+	f := onMainFixture(t)
+	active := filepath.Join(f.Root, "..", "active-wt")
+	f.Git("worktree", "add", "-q", "-b", "worktree-agent-active", active, "HEAD")
+	f.Git("branch", "bench/shift-review")
+	f.Git("branch", "plain-branch")
+
+	f.Bench("worktree", "clean")
+	for _, name := range []string{"worktree-agent-active", "bench/shift-review", "plain-branch", "main"} {
+		if !headExists(f, name) {
+			t.Fatalf("sweep deleted protected branch %s:\n%s", name, f.Git("for-each-ref", "--format=%(refname:short)", "refs/heads/").Stdout)
+		}
+	}
+}
+
+// Story 1 edge: a merged scratch name carrying a slash and a non-ASCII character inside the
+// worktree- prefix is detected and deleted — the ref name is neither mangled nor lost to a glob that
+// stops at a slash.
+func testRuntimeWorktreeSweepDeletesSlashUnicode(t *testing.T) {
+	f := onMainFixture(t)
+	const name = "worktree-agent-café/x"
+	f.Git("branch", name)
+
+	out := f.Bench("worktree", "clean")
+	out.RequireExit(0)
+	contract.RequireContains(t, out.Stdout, "deleted branch "+name)
+	if headExists(f, name) {
+		t.Fatalf("merged slashed/unicode scratch orphan survived the sweep:\n%s", f.Git("for-each-ref", "--format=%(refname:short)", "refs/heads/").Stdout)
+	}
+}
+
+// Story 7: when the resolved default branch does not resolve to a commit, the sweep refuses loudly on
+// stderr, deletes nothing, and exits 1 — the false-empty guard. The fixture is born on "master" with
+// no origin/HEAD, so git.DefaultBranch's "main" fallback names a ref that never resolves.
+func testRuntimeWorktreeSweepRefusesUnresolvableDefault(t *testing.T) {
+	f := contract.NewFixture(t)
+	commitAllowEmpty(t, f, "init")
+	f.Git("branch", "worktree-agent-x")
+
+	out := f.Bench("worktree", "clean")
+	out.RequireExit(1)
+	contract.RequireContains(t, out.Stderr, "cannot resolve the default branch")
+	contract.RequireNotContains(t, out.Stdout, "deleted branch")
+	if !headExists(f, "worktree-agent-x") {
+		t.Fatal("sweep deleted a branch despite an unresolvable default branch")
+	}
 }
 
 func testRuntimeWorktreeCleanRemovesConfirmedOutOfPool(t *testing.T) {
