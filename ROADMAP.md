@@ -10,11 +10,6 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-**FT5 (implemented, awaiting post-hoc review) — `bench outline`**
-(`specs/outline.md`). Built under the 2026-07-07 batch approval with
-orchestrator-resolved grill decisions; the spec is the veto surface. Remaining
-work: `/bench-review-implementation`, then spec-retire on approval.
-
 **FT7 (implemented, awaiting post-hoc review) — `bench dashboard`**
 (`specs/dashboard.md`). v1 is the data-faithful minimal HTML snapshot; the
 rich visual treatment (ui_examples look, animated characters) is deferred as a
