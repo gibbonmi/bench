@@ -133,6 +133,13 @@ Git safety is layered:
   Codex loads `.codex/hooks.json` only after you trust it once via `/hooks`
   (its project-hook trust step), and only on a Codex build new enough to support
   hooks; an older Codex ignores the file and keeps just the backstops below.
+- The agent-line guard (`check-agent-line`) wires on Claude Code only. Codex
+  cannot host it: a delegation (`spawn_agent`) never surfaces as a matchable
+  `tool_name` on a deny-capable event, and `SubagentStart` neither carries the
+  delegate's resolved model nor honors a deny (Codex hooks/subagents docs,
+  checked 2026-07). The line's harness-independent backstop is the shift
+  adapters' refusal to run with an unset or unbound `BENCH_MODEL`. Re-check if
+  the Codex changelog adds a spawn tool name or a deny-capable SubagentStart.
 - Linked repos carry a local `.bench/bin/` CLI set for those hooks; a globally
   installed `bench` is convenient for humans, not required for hook execution.
 - The `bench shift` loop commits only after the gate is green.
