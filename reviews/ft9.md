@@ -1,7 +1,8 @@
 # Review findings — ft9 (bench diff --full)
 
-Reviewed commit: 51f5075 against `specs/ft9.md`. Advisory; the gate and the
-reviewer own done-ness.
+Reviewed commit: 51f5075 against the ft9 spec (retired; recover with
+`git log --grep='spec-retire: ft9'`). Advisory; the gate and the reviewer own
+done-ness.
 
 ## Standards
 
@@ -34,7 +35,7 @@ decisions honored; no scope creep. Mirror parity holds structurally —
   refuses (`internal/toon/toon.go:26-29`), so `bench diff --full` returns the
   AXI error at exit 1 — files table, log, and diff body all swallowed even with
   a resolvable base. No test exercises this class (the contract test covers only
-  ASCII comma/quote), and the `specs/ft9.md` edge-inventory line "log subjects
+  ASCII comma/quote), and the retired ft9 spec's edge-inventory line "log subjects
   escape once" is factually wrong for control bytes. Note: exit-1-on-refusal is
   the same posture a control-char *path* already produces in bare `bench diff`,
   so one fix shape is a test pinning that posture plus a corrected spec line;

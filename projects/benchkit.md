@@ -91,6 +91,8 @@ the hostile inputs shell CLIs actually meet. Walk every class before locking a
 coverage map; a class skipped here returns as a regression.
 
 - paths and directory names containing spaces or glob characters
+- control bytes (ESC, BEL) in git-sourced text — commit subjects, branch names,
+  paths — which `toon.Table` refuses rather than renders
 - hand-edited files whose last line lacks a trailing newline
 - absent file vs present-but-empty file (distinct behaviors, both asserted)
 - unquoted multi-word arguments (`$*` vs `$1`)

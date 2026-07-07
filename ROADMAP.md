@@ -7,17 +7,6 @@ goes to `IDEAS.md` and enters only through a reviewed drain.
 
 ## Features, in priority order
 
-**FT4 (MED-LOW) — harness task list in `/bench-implement-spec`.** Per-harness
-adapter (Claude hook + phase line; Codex native).
-
-**FT9 (MED-LOW) — `bench diff --full` base-relative context bundle.** Grilled
-and mapped (`decisions/ft9.md`): grow `bench diff` with a `--full` flag that
-appends the base-relative diff body plus a `log[N]{sha,subject}` table, and
-repoint `/bench-review-implementation`'s two-call git prose at it. The generic
-status+diff+log+staged framing is dropped — no repeated call site. One
-uncertainty flag for the spec-writer: how the TOON-stdout conformance assertion
-exempts the raw diff-body block (needs `craft-gate`). Ready to spec.
-
 **FT12 (LOW, kit discipline) — repro a defect claim through the accused command
 before draining it.** FT11 was minted from a learning that quoted a raw `git add`
 run by hand; the real `bench commit` path already staged deletions, so the row
@@ -54,6 +43,6 @@ demonstrably burn turns on symbol search.
 
 ## Recommended sequence
 
-1. Retire FT4 — promote durable content, delete `specs/ft4.md`, remove the FT4
-   row (promote-then-delete pass, flagged by `bench status`)
-2. FT9 `bench diff --full` context bundle (mapped, ready) — /bench-write-spec
+1. FT12 repro-before-drain discipline — `/bench-shape-idea` (kit-discipline edit,
+   built under `craft-synthesis`)
+2. FT10 doctor installs the kit repo's pre-push guard — `/bench-implement-spec`
