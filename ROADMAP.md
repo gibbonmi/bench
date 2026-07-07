@@ -10,67 +10,29 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-Rows FT25–FT36 are the 2026-07-07 assessment drain (`ASSESSMENT.md` carries
-the finding-level detail). Each gets a decision map and a spec before build;
-rows gain their spec paths as the specs are staged.
+**FT38 (MED) — `bench commit` stages named deletions and renames reliably.**
+Kit defect reproduced through the sanctioned command (git 2.43): the per-path
+literal-pathspec staging fails for some paths absent from the worktree — hit on
+a delete-plus-rename diff, while plain named deletions commit fine — forcing a
+raw-git fallback the command exists to prevent. Fix the staging path (an absent
+tracked path stages its removal) and pin both the deletion and rename cases;
+the command's own doc comment already claims deletion support.
 
-**FT25 (HIGH) — charge an owner with the post-merge tail.** A
-`/bench-final-check` exit duty (or thin after-merge pass) that consumes the
-`bench status` duty rows: spec retirement, roadmap row removal, a decision-map
-sweep policy, and the HANDOFF.md lifecycle decision.
+**FT37 (MED) — deflake the gate under concurrent load.** Transient contract or
+conformance reds recurred repeatedly when multiple full gates ran concurrently
+(delegate worktrees plus the main checkout), every one green on immediate
+re-run with an identical tree; the earlier Watch note saw the same under a
+single gate's phase concurrency. Make the worktree concurrent-acquire contract
+(and any load-sensitive sibling) deterministic under parallel gate runs, or
+serialize its acquire window.
 
-**FT26 (MED) — first-install fixes.** Ship the `projects/` profile templates
-in the npm package; stop shipping the kit's own HANDOFF.md; ignore-or-arch-check
-`.bench/dist` at link time; make the scaffolded gate resolve the `.bench/bin`
-local CLI before assuming a global `bench`; add fresh-install smoke coverage.
-
-**FT27 (MED) — enforcement verification.** Agent-line guard stops failing open
-when the delegation envelope omits the model field (deny, or record the
-posture); `bench doctor` verifies the pre-push hook is present and
-bench-managed, with a status signal when it is missing.
-
-**FT28 (MED) — `bench worktree clean` sweeps orphaned scratch branches.** The
-currently-recommended remedy is guard-blocked for the agent, so the CLI must
-own deletion of fully-merged `worktree-agent-*` branches.
-
-**FT29 (MED) — kill the false-empty class.** `bench structure` errors loudly
-on git failure; audit every discarded `git.Output` error in porcelain;
-`bench models` rejects unknown args at exit 2.
-
-**FT30 (MED-LOW) — status overflow valve + invocable actions.** A way to see
-rows past the five-row budget, and action strings phrased as commands or
-phases the reading harness can invoke.
-
-**FT33 (MED-LOW) — `bench unlink`.** Consume the link manifest to remove the
-repo footprint; document the uninstall story.
-
-**FT23 (LOW, unparked) — model-invocable spec-authoring skill.** A
-`craft-spec` skill owning the coverage-map schema; `/bench-write-spec`
-composes it. Second consecutive assessment flagged the reachability gap.
-
-**FT31 (LOW) — enforcement-postures ADR.** One decision record for the
-accepted honor-system residuals: interactive commit-on-red, non-shift
-done-claims, declare-line unenforceability, fail-open rims, recompute-always
-gating, family-level canary granularity.
-
-**FT32 (LOW) — structure splits where genuine.** `axi_wave2_test.go` by
-command; `line_routing_checks_test.go` static-vs-exec; record the two noise
-files as accepted so the structure signal stays credible.
-
-**FT34 (LOW) — cheap hardening batch.** SafeToken newline corpus row;
-`stophook.Run` seam test; README prerequisites (Go-or-node, Windows/WSL,
-nvm caveat) and `.bench/` layout refresh; trim the redundant third trigger
-clause on the three longest skill descriptions.
-
-**FT35 (LOW, rule) — craft-delegate stale-base opener.** From the 2026-07-06
-learning: every worktree-isolated delegate charge opens with `git merge
---ff-only main`, verifies HEAD, and stops if denied. Kit edit under
-`craft-synthesis`.
-
-**FT36 (LOW, rule) — write-spec batch-drain override clause.** From the
-2026-07-06 learning: an explicit reviewer-directed batch drain may substitute
-for per-spec maps, with every defaulted decision flagged for veto; absent that
-instruction the map gate stands. Kit edit under `craft-synthesis`.
+**FT39 (LOW) — residual structure debt from the 2026-07-07 batch's growth.**
+Two items arrived from the batch's own merges and are neither split nor
+accepted: the runtime contract directory is over its file budget (regroup by
+command family, as the AXI split did) and one surface contract file is barely
+over the line budget (split or accept). Reviewer decides split-vs-accept per
+the structure-splits philosophy; acceptance is a two-line
+`.bench/structure-accept` addition.
 
 **FT12 (LOW, kit discipline) — repro a defect claim through the accused command
 before draining it.** FT11 was minted from a learning that quoted a raw `git add`
@@ -79,11 +41,6 @@ described a defect that did not exist. Tighten `/bench-what-next` step 3 (and
 `bench-debug`'s repro discipline) so a defect-shaped learning becomes a roadmap
 row only after its red signal reproduces through the sanctioned command, not a
 lookalike. Built later under the `craft-synthesis` discipline.
-
-**FT10 (LOW) — doctor installs the kit repo's pre-push guard.** `bench guards`
-already reports the missing guard; `bench doctor` should detect it on the kit
-repo itself and offer the install (consumer repos get it via `bench link`).
-Overlaps FT27's doctor verification — build together.
 
 **FT5 (LOW) — `bench outline`.** Marginal for this repo, real as a kit
 affordance for large/polyglot linked repos. Needs its grill (languages,
@@ -109,14 +66,10 @@ Agent matcher. Parked from the claude-hook-conformance build.
 **FT8 (scheduled, not actionable) — Sonnet 5 mid-tier revisit.** Time-boxed to
 2026-09-01 or the next frontier shift.
 
-## Watch
-
-- `bench worktree concurrent-acquire` contract test failed once under
-  full-gate load, then passed 3/3 in isolation and on rerun — likely a timing
-  flake surfaced by gate phase concurrency. Journal it if it recurs.
-
 ## Recommended sequence
 
-1. FT25 after-merge owner — `/bench-shape-idea` then `/bench-write-spec`
-2. FT26 first-install fixes — `/bench-shape-idea` then `/bench-write-spec`
-3. FT27 enforcement verification — `/bench-shape-idea` then `/bench-write-spec`
+1. FT38 `bench commit` deletion/rename staging — `/bench-debug` (defect with a
+   recorded repro)
+2. FT37 gate deflake — `/bench-debug`
+3. FT39 structure residual — reviewer split-vs-accept call, then
+   `/bench-shape-idea` for any split
