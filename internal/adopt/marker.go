@@ -124,6 +124,47 @@ func RewriteAgentsBlock(content string) (string, error) {
 	return result, nil
 }
 
+// StripAgentsBlock removes the unfenced Bench managed block from AGENTS.md while leaving
+// fenced marker examples and project-owned prose intact — the reverse of RewriteAgentsBlock,
+// sharing its fence-aware scan so the two agree on what "the managed block" is. Content with
+// no managed block returns unchanged; unlink reads a resulting whitespace-only file as the
+// signal to remove an AGENTS.md that link created with no user content.
+func StripAgentsBlock(content string) (string, error) {
+	if err := validateAgentsContent(content); err != nil {
+		return "", err
+	}
+	scan := scanMarkers(content)
+	if len(scan.starts) == 0 {
+		return content, nil
+	}
+	lines := splitLines(content)
+	var out []string
+	inFence := false
+	skip := false
+	for _, line := range lines {
+		lineIsFence := strings.HasPrefix(line, "```")
+		if lineIsFence {
+			inFence = !inFence
+		}
+		if !lineIsFence && !inFence && strings.Contains(line, benchStartMarker) {
+			skip = true
+			continue
+		}
+		if !lineIsFence && !inFence && strings.Contains(line, benchEndMarker) {
+			skip = false
+			continue
+		}
+		if !skip {
+			out = append(out, line)
+		}
+	}
+	result := strings.Join(out, "\n")
+	if result != "" && !strings.HasSuffix(result, "\n") {
+		result += "\n"
+	}
+	return result, nil
+}
+
 func splitLines(content string) []string {
 	if content == "" {
 		return nil

@@ -1,6 +1,6 @@
 # bench unlink
 
-Status: staged
+Status: implemented
 
 ## Problem
 A maintainer who linked Bench into a repo has no supported way to remove it. `bench link` records every installed path and its fingerprint in `.bench/link-manifest.tsv`, but nothing consumes that manifest to reverse the install. The only documented uninstall is `npm uninstall -g benchkit` plus removing the shim, which strips the global tool while leaving the per-repo footprint — the managed files, the pre-push hook, and the AGENTS.md block — behind. Removing that footprint by hand is error-prone: it is easy to delete a file the user has since edited, or to miss the hook and the fenced block, which are not manifest rows.

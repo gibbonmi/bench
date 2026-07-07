@@ -23,6 +23,11 @@ var prePushTemplate string
 // default branch, substituted at install time.
 const prePushBranchToken = "__BENCH_DEFAULT_BRANCH__"
 
+// prePushMarker is the one source for the substring that identifies a bench-managed pre-push
+// hook. link's conflict checks and unlink's removal gate both match on it — never on
+// byte-identity, which would false-negative across the default-branch token substitution.
+const prePushMarker = "bench:managed-pre-push"
+
 func hooksDir(root string) string {
 	out, err := git.Output("-C", root, "rev-parse", "--git-path", "hooks")
 	if err != nil || out == "" {
@@ -46,7 +51,7 @@ func installGitHook(root string, stderr io.Writer) error {
 		return err
 	}
 	prepush := filepath.Join(hooks, "pre-push")
-	if content, err := os.ReadFile(prepush); err == nil && !strings.Contains(string(content), "bench:managed-pre-push") {
+	if content, err := os.ReadFile(prepush); err == nil && !strings.Contains(string(content), prePushMarker) {
 		fmt.Fprintf(stderr, "conflict: %s exists and is not Bench-managed\n", prepush)
 		return fmt.Errorf("foreign pre-push")
 	}

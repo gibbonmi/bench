@@ -221,7 +221,7 @@ func run(args []string, stdout, stderr *os.File) int {
 		return code
 	}
 	switch args[0] {
-	case "link", "init", "doctor":
+	case "link", "init", "doctor", "unlink":
 		return adopt.Run(args, stdout, stderr, version)
 	case "version":
 		fmt.Fprintln(stdout, versionLine(version, runtime.GOOS, runtime.GOARCH))
