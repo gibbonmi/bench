@@ -26,12 +26,15 @@ fail-open — under exactly one harness, against the identical-behavior promise.
 Raise or drop the timeout (kit copy and linked template); consider a
 gate-wall margin rule. XS. Next: `/bench-write-spec`.
 
-**FT44 — salvage-orphan status loop.** `bench status` perpetually recommends
-`bench worktree clean` for unmerged `worktree-*` salvage branches that the
-sweep deliberately keeps ("inspect or delete by hand"), so the recommended
-action provably no-ops — two live branches sit in that loop today. Either the
-sweep gains an explicit salvage disposition or the row distinguishes salvage
-and recommends the inspect-then-delete path. Next: `/bench-write-spec`.
+**FT44 — salvage branches sweep automatically once their content lands.**
+`bench status` perpetually recommends `bench worktree clean` for unmerged
+`worktree-*` salvage branches the sweep deliberately keeps, so the
+recommended action provably no-ops. Reviewer direction (2026-07-08): the user
+must never have to investigate — the sweep's proof of "landed" widens beyond
+ancestry so a salvage branch whose changes are already contained in the
+default branch (the common case: a delegate draft superseded by the merged
+version) is deleted automatically; only genuinely un-landed content is kept,
+and that keep gets an honest status action. Next: `/bench-write-spec`.
 
 **FT45 — worktree lease reclaim race.** Two crash-recovery reclaimers of one
 dead-pid lease can both win the same worktree: `Claim`'s takeover rename is
