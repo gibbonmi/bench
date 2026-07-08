@@ -21,14 +21,3 @@ Format per entry:
 An entry leaves this file only via /bench-what-next.
 
 <!-- entries below -->
-
-## 2026-07-07 — FT41 dogfood shortfall: no decision map to resume  [open]
-- **What happened:** The shape-idea-grill-continuation spec's testing decisions
-  call for dogfooding via a real `/bench-shape-idea` resume; the repo has no
-  `decisions/` map to resume and the only pending grill (FT38) needs the
-  reviewer present, so the build shipped on the bite test plus a green gate
-  with a read-through in place of the live resume.
-- **Right behavior:** Uncertain — either the synthesis dogfood clause scales to
-  "first real use" when no substrate exists, or the build waits for the next
-  real grill.
-- **Proposed rule change:** none (judgment call flagged for the reviewer).
