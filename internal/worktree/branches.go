@@ -33,6 +33,37 @@ func OrphanedDelegateBranches(root string) []string {
 	return orphans
 }
 
+// ResolvedDefault returns the repo's default branch and whether it resolves to a
+// commit. The sweep and the status board both refuse to classify orphans against a
+// default that does not resolve — mergedness against a missing ref would read every
+// branch as un-landed, or worse, let a silent all-clean sweep stand.
+func ResolvedDefault(root string) (string, bool) {
+	def := git.DefaultBranch(root)
+	return def, git.OK("-C", root, "rev-parse", "--verify", "--quiet", def+"^{commit}")
+}
+
+// LandedInDefault reports whether branch's work is already present in def: by
+// ancestry (merge-base) or by patch containment — `git cherry` reporting every
+// commit on the branch as already applied (all `-`). byContent distinguishes the
+// cherry proof so the sweep can report which proof landed the branch. Any git
+// failure classifies as not landed: keeping a branch is recoverable, deleting
+// it is not.
+func LandedInDefault(root, branch, def string) (landed, byContent bool) {
+	if git.OK("-C", root, "merge-base", "--is-ancestor", branch, def) {
+		return true, false
+	}
+	out, err := git.Output("-C", root, "cherry", def, branch)
+	if err != nil {
+		return false, false
+	}
+	for _, line := range strings.Split(out, "\n") {
+		if line != "" && !strings.HasPrefix(line, "-") {
+			return false, false
+		}
+	}
+	return true, true
+}
+
 func activeWorktreeBranches(root string) map[string]bool {
 	out, err := git.Output("-C", root, "worktree", "list", "--porcelain")
 	if err != nil || out == "" {

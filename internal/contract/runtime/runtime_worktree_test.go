@@ -25,7 +25,9 @@ func TestRuntimeWorktreeContracts(t *testing.T) {
 	contract.RunParallel(t, "bench worktree lease hardening contract", testRuntimeWorktreeLeaseHardening)
 	contract.RunParallel(t, "bench worktree concurrent-acquire contract", testRuntimeWorktreeConcurrentAcquire)
 	contract.RunParallel(t, "bench worktree clean sweeps merged orphan (non-tty) contract", testRuntimeWorktreeSweepDeletesMerged)
+	contract.RunParallel(t, "bench worktree clean sweeps content-landed orphan contract", testRuntimeWorktreeSweepDeletesContentLanded)
 	contract.RunParallel(t, "bench worktree clean keeps unmerged orphan contract", testRuntimeWorktreeSweepKeepsUnmerged)
+	contract.RunParallel(t, "bench worktree clean keeps unique-patch orphan contract", testRuntimeWorktreeSweepKeepsUniquePatch)
 	contract.RunParallel(t, "bench worktree clean spares active and non-scratch contract", testRuntimeWorktreeSweepSparesProtected)
 	contract.RunParallel(t, "bench worktree clean deletes slashed unicode orphan contract", testRuntimeWorktreeSweepDeletesSlashUnicode)
 	contract.RunParallel(t, "bench worktree clean refuses unresolvable default contract", testRuntimeWorktreeSweepRefusesUnresolvableDefault)
@@ -63,6 +65,28 @@ func testRuntimeWorktreeSweepDeletesMerged(t *testing.T) {
 	}
 }
 
+// FT44 story 3: a worktree-* orphan whose commit was cherry-picked into the default branch is a
+// non-ancestor whose every patch already landed — `git cherry` all `-`. The sweep deletes it and
+// says which proof landed it, so a hand-inspection of a provably-empty branch never recurs.
+func testRuntimeWorktreeSweepDeletesContentLanded(t *testing.T) {
+	f := onMainFixture(t)
+	f.Git("checkout", "-q", "-b", "worktree-agent-landed")
+	f.WriteFile("work.txt", "landed work\n")
+	f.CommitAll("real work")
+	f.Git("checkout", "-q", "main")
+	// A divergent commit before the cherry-pick guarantees the branch tip is not an
+	// ancestor of main, so only the patch-containment proof can land it.
+	commitAllowEmpty(t, f, "diverge")
+	f.Git("-c", "user.email=bench@local", "-c", "user.name=bench", "cherry-pick", "worktree-agent-landed")
+
+	out := f.Bench("worktree", "clean")
+	out.RequireExit(0)
+	contract.RequireContains(t, out.Stdout, "deleted branch worktree-agent-landed (landed by content)")
+	if headExists(f, "worktree-agent-landed") {
+		t.Fatalf("content-landed scratch orphan survived the sweep:\n%s", f.Git("for-each-ref", "--format=%(refname:short)", "refs/heads/").Stdout)
+	}
+}
+
 // Story 2 + 4: an unmerged worktree-* orphan survives with the verbatim kept line, and keeping it
 // exits 0 — a branch carrying unique commits is never destroyed and keeping is not a failure.
 func testRuntimeWorktreeSweepKeepsUnmerged(t *testing.T) {
@@ -76,6 +100,23 @@ func testRuntimeWorktreeSweepKeepsUnmerged(t *testing.T) {
 	contract.RequireContains(t, out.Stdout, "kept branch worktree-agent-unmerged (unique commits — inspect or delete by hand)")
 	if !headExists(f, "worktree-agent-unmerged") {
 		t.Fatal("unmerged scratch orphan was destroyed by the conservative default")
+	}
+}
+
+// FT44 story 3, destructive direction: a worktree-* orphan carrying a real unique patch (not just
+// an empty commit) reports `+` under `git cherry` and must survive the content-landed proof.
+func testRuntimeWorktreeSweepKeepsUniquePatch(t *testing.T) {
+	f := onMainFixture(t)
+	f.Git("checkout", "-q", "-b", "worktree-agent-unique")
+	f.WriteFile("unique.txt", "unique work\n")
+	f.CommitAll("unique work")
+	f.Git("checkout", "-q", "main")
+
+	out := f.Bench("worktree", "clean")
+	out.RequireExit(0)
+	contract.RequireContains(t, out.Stdout, "kept branch worktree-agent-unique (unique commits — inspect or delete by hand)")
+	if !headExists(f, "worktree-agent-unique") {
+		t.Fatal("unique-patch scratch orphan was destroyed by the content-landed proof")
 	}
 }
 

@@ -36,12 +36,13 @@ func cleanCommand(args []string, stdout, stderr io.Writer) int {
 	return worktreeExit
 }
 
-// sweepDelegateBranches deletes every fully-merged worktree-* scratch orphan that no live worktree
+// sweepDelegateBranches deletes every landed worktree-* scratch orphan that no live worktree
 // holds and reports each on stdout; an orphan carrying unique commits is left in place with a
-// hand-inspect note, since a scratch name alone is not proof its work landed. Mergedness is a
-// merge-base ancestry test against the default branch, never a name compare, and the delete is
-// forced so it does not depend on the repo root's HEAD — git's own merged-check for a plain delete
-// is HEAD-relative and would refuse a branch merged into the default branch but not into HEAD.
+// hand-inspect note, since a scratch name alone is not proof its work landed. Landedness is
+// LandedInDefault's proof against the default branch (ancestry or patch containment), never a
+// name compare, and the delete is forced so it does not depend on the repo root's HEAD — git's
+// own merged-check for a plain delete is HEAD-relative and would refuse a branch merged into
+// the default branch but not into HEAD.
 //
 // Before any orphan is classified the resolved default branch must resolve to a commit; when it does
 // not, the sweep refuses loudly on stderr, deletes nothing, and returns 1 — the false-empty guard,
@@ -55,18 +56,23 @@ func sweepDelegateBranches(root string, stdout, stderr io.Writer) int {
 	if len(orphans) == 0 {
 		return 0
 	}
-	def := git.DefaultBranch(root)
-	if !git.OK("-C", root, "rev-parse", "--verify", "--quiet", def+"^{commit}") {
+	def, ok := ResolvedDefault(root)
+	if !ok {
 		fmt.Fprintf(stderr, "error: bench worktree clean cannot resolve the default branch (%s) to a commit; deleting no branches\n", def)
 		return 1
 	}
 	for _, branch := range orphans {
-		if !git.OK("-C", root, "merge-base", "--is-ancestor", branch, def) {
+		landed, byContent := LandedInDefault(root, branch, def)
+		if !landed {
 			fmt.Fprintf(stdout, "kept branch %s (unique commits — inspect or delete by hand)\n", branch)
 			continue
 		}
 		if out, err := exec.Command("git", "-C", root, "branch", "-D", branch).CombinedOutput(); err != nil {
 			fmt.Fprintf(stderr, "error: could not delete branch %s: %s\n", branch, strings.TrimSpace(string(out)))
+			continue
+		}
+		if byContent {
+			fmt.Fprintf(stdout, "deleted branch %s (landed by content)\n", branch)
 			continue
 		}
 		fmt.Fprintf(stdout, "deleted branch %s\n", branch)

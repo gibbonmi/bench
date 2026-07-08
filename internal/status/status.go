@@ -283,8 +283,31 @@ func appendWorktree(rows []row, root string) []row {
 		rows = append(rows, row{2, "worktree", plural(leased, "leased pool worktree", "leased pool worktrees"), "resume leased worktree"})
 	}
 	orphans := worktree.OrphanedDelegateBranches(root)
-	if len(orphans) > 0 {
+	if len(orphans) == 0 {
+		return rows
+	}
+	// The action splits by the sweep's own landed proof, so following it always changes
+	// something: landed branches disappear under `bench worktree clean`, while a kept
+	// branch would survive it — the honest action there is a hand inspection. With an
+	// unresolvable default no orphan is classifiable; the combined row stands and the
+	// recommended sweep refuses loudly with the reason.
+	def, ok := worktree.ResolvedDefault(root)
+	if !ok {
 		return append(rows, row{2, "worktree", plural(len(orphans), "orphaned worktree branch", "orphaned worktree branches"), "bench worktree clean"})
+	}
+	landed, kept := 0, 0
+	for _, branch := range orphans {
+		if isLanded, _ := worktree.LandedInDefault(root, branch, def); isLanded {
+			landed++
+		} else {
+			kept++
+		}
+	}
+	if landed > 0 {
+		rows = append(rows, row{2, "worktree", plural(landed, "orphaned worktree branch", "orphaned worktree branches"), "bench worktree clean"})
+	}
+	if kept > 0 {
+		rows = append(rows, row{2, "worktree", plural(kept, "un-landed salvage branch", "un-landed salvage branches"), "inspect salvage branch(es) — bench worktree clean keeps them"})
 	}
 	return rows
 }

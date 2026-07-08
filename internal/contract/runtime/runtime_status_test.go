@@ -21,6 +21,7 @@ func TestRuntimeStatusContracts(t *testing.T) {
 	contract.RunParallel(t, "bench status unresolved-maps count contract", testRuntimeStatusUnresolvedMapsCount)
 	contract.RunParallel(t, "bench status budget contract", testRuntimeStatusBudget)
 	contract.RunParallel(t, "bench status warm-pool contract", testRuntimeStatusWarmPool)
+	contract.RunParallel(t, "bench status salvage-branch actions contract", testRuntimeStatusSalvageBranchActions)
 	contract.RunParallel(t, "bench status retirement-signal contract", testRuntimeStatusRetirementSignal)
 	contract.RunParallel(t, "bench status orphaned-pickup contract", testRuntimeStatusOrphanedPickup)
 	contract.RunParallel(t, "bench status roadmap-reconcile contract", testRuntimeStatusRoadmapReconcile)
@@ -300,6 +301,30 @@ func testRuntimeStatusWarmPool(t *testing.T) {
 	contract.RequireContains(t, out, "1 out-of-pool worktree")
 	contract.RequireContains(t, out, "orphaned worktree branch")
 	requireStatusLineContains(t, out, "orphaned worktree branch", "bench worktree clean")
+}
+
+// FT44 story 4: the orphan-branch status action splits by the sweep's own landed proof. A
+// content-landed branch keeps the `bench worktree clean` action (the sweep will delete it); a
+// genuinely un-landed branch gets the honest inspect action instead of a recommendation the
+// sweep would no-op on.
+func testRuntimeStatusSalvageBranchActions(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.Git("symbolic-ref", "HEAD", "refs/heads/main")
+	commitAllowEmpty(t, f, "init")
+	f.Git("checkout", "-q", "-b", "worktree-agent-kept")
+	f.WriteFile("unique.txt", "unique\n")
+	f.CommitAll("unique work")
+	f.Git("checkout", "-q", "-b", "worktree-agent-landed", "main")
+	f.WriteFile("landed.txt", "landed\n")
+	f.CommitAll("landed work")
+	f.Git("checkout", "-q", "main")
+	commitAllowEmpty(t, f, "diverge")
+	f.Git("-c", "user.email=bench@local", "-c", "user.name=bench", "cherry-pick", "worktree-agent-landed")
+
+	out := f.Bench("status").Stdout
+	requireStatusLineContains(t, out, "un-landed salvage branch", "inspect salvage branch(es) — bench worktree clean keeps them")
+	requireStatusLineContains(t, out, "orphaned worktree branch", "bench worktree clean")
+	requireStatusLineNotContains(t, out, "orphaned worktree branch", "inspect")
 }
 
 func testRuntimeStatusRetirementSignal(t *testing.T) {
