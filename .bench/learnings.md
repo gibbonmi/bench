@@ -21,8 +21,3 @@ Format per entry:
 An entry leaves this file only via /bench-what-next.
 
 <!-- entries below -->
-
-## 2026-07-08 — splitting a long file can trip the dir file-count budget  [open]
-- **What happened:** To clear a `FILE TOO LONG` structure flag on `internal/conformance/package_core_checks_test.go` (430 > 400 lines, from the new identity sweep), I split the sweep into its own file. The dir was already at 12/12 source files, so the split immediately tripped `DIR CROWDED` (13 > 12) — one violation traded for another.
-- **Right behavior:** Before splitting a file to fix a length flag, check the dir's file-count budget (`bench structure`). If the dir is at its file limit, a split can't help; propose a reviewer grant for the modest overage or a module-grouping refactor instead.
-- **Proposed rule change:** Add a line to craft-seams / the implement-spec structure-housekeeping note: "a file-length split is only free when the dir has file-count headroom; check both budgets before choosing split-vs-grant."

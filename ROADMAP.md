@@ -10,15 +10,6 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-**FT42 — npm identity and install path.** The npm name `benchkit` is held by
-an unrelated third-party package and every `@benchkit/*` platform package is
-unpublished, so the README's advertised primary install path installs the
-wrong software; the clone fallback documents no build command
-(`scripts/go-build.sh`), and the missing-binary error points at the 404
-package. Decision first — publish under an owned scope, rename, or
-de-advertise npm and lead with the clone path — then the README/error-message
-follow-through. Next: `/bench-shape-idea`.
-
 **FT43 — Codex Stop-hook timeout kills the armed oracle.** `.codex/hooks.json`
 sets `timeout: 30` on the Stop hook while the full gate runs ~31s on the
 reference box, so an armed shift's completion oracle is killed mid-run —
@@ -106,6 +97,13 @@ no owner: each run re-derives the method (verify last drain, area sweeps,
 adversarial synthesis, ranked backlog) from the prior file. A `craft-assess`
 skill or `/bench-assess` phase codifies the drill. Next: `/bench-write-spec`.
 
+**FT55 — split-vs-grant rule for structure budgets.** A file-length split is
+only free when the dir has file-count headroom; the conformance split traded
+`FILE TOO LONG` for `DIR CROWDED` (resolved by a reviewer grant). Add one line
+to `craft-seams` and the implement-spec structure-housekeeping note: check both
+budgets before choosing split-vs-grant. XS kit edit under `craft-synthesis`.
+Next: direct kit edit, gated as usual.
+
 **FT6 (LOW, parked pending evidence — leave parked):** `bench refs`, `bench
 detect`, `bench doc`, `bench specs --retired`, doctor binary-presence row,
 `conformanceFamilies`-vs-dispatch reconcile meta-check, and a per-anchor
@@ -125,10 +123,9 @@ changelog adds a spawn tool name or a deny-capable SubagentStart.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT42 npm identity: scope-vs-rename-vs-de-advertise is
-   a reviewer decision that blocks all external adoption; grill before any
-   build.
-2. `/bench-write-spec` — FT43–FT49 as a staged defect batch (FT43 first: XS
+1. `/bench-write-spec` — FT43–FT49 as a staged defect batch (FT43 first: XS
    and an enforcement fail-open).
-3. `/bench-shape-idea` — FT38 dashboard visual identity: pure reviewer taste,
+2. `/bench-shape-idea` — FT38 dashboard visual identity: pure reviewer taste,
    grill before build.
+3. `/bench-write-spec` — FT50 one-source collapse batch: mechanical,
+   well-scoped, no open decisions.
