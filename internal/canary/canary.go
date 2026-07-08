@@ -67,6 +67,10 @@ func Run(args []string, stdout, stderr io.Writer) int {
 // Sweep runs the canary harness for root. It returns all attributable harness
 // failures it observes instead of stopping at the first one.
 func Sweep(root string, runner Runner) error {
+	root, err := filepath.Abs(root)
+	if err != nil {
+		return err
+	}
 	fixtures, err := fixtures(filepath.Join(root, "tests", "canary"))
 	if err != nil {
 		return err
