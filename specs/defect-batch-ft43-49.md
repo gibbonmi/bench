@@ -228,8 +228,9 @@ as a row above or a **Won't handle** here.
   **already covered** by the existing git-sourced-text refusal contract; the
   new action text adds no new git-sourced field.
 - SIGINT mid-`Claim` leaving a `.stale.<pid>` file — **Won't handle**: the
-  existing reclaim path already treats an orphaned stale file as an ordinary
-  dead lease on the next scan; no new state is introduced.
+  orphan sits beside the lease inside the worktree's git dir, where the pool
+  scan never reads it — harmless litter, never reclaimed and never blocking a
+  future claim; no new state is introduced.
 - Re-run idempotency: relink must not duplicate the CLAUDE.md manifest row —
   row folded into the FT47 fixtures (relink asserted single-row).
 - Absent vs present-but-empty CLAUDE.md at link time — empty file is not

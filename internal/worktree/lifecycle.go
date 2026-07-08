@@ -81,13 +81,10 @@ func tryCreate(leasePath string) bool {
 }
 
 // Claim atomically claims a worktree's lease. A first-writer create wins outright; an
-// existing lease is taken over only when reclaimable reports its owner provably gone,
-// and then via an atomic rename whose renamed bytes are checked against the bytes judged
-// reclaimable. Only the reclaimer whose rename moved the very lease it judged re-creates
-// it; a competing reclaimer that completed its own takeover in the interval leaves a
-// fresh lease whose bytes differ, so the losing rename is detected, undone (renamed back,
-// best-effort), and conceded — two concurrent reclaimers cannot both win. Returns whether
-// this process now owns the lease.
+// existing lease is taken over only when reclaimable reports its owner provably gone.
+// The takeover verifies it moved the very lease it judged reclaimable, so two
+// concurrent reclaimers cannot both win. Returns whether this process now owns the
+// lease.
 func Claim(leasePath string) bool {
 	if tryCreate(leasePath) {
 		return true
@@ -105,14 +102,18 @@ func Claim(leasePath string) bool {
 	if os.Rename(leasePath, stale) != nil {
 		return false // another reclaimer moved it first
 	}
+	claimStealGap(leasePath)
 	// The rename may have moved a *different* lease than the one judged reclaimable: a
 	// competing reclaimer could have completed its own takeover in the gap, leaving a
-	// fresh live lease at leasePath. Compare the renamed bytes to the judged content; a
-	// mismatch (or any read failure) means we may have stolen that fresh lease — put it
-	// back, best-effort, and concede. Classifying toward "not ours" is the safe direction.
+	// fresh live lease at leasePath. Compare the renamed bytes to the judged content
+	// (any read failure counts as a mismatch) and concede on mismatch, restoring the
+	// stolen bytes only if the vacated slot is still empty — a first-writer that
+	// already claimed it keeps its lease. Discarding the stolen bytes is the safe
+	// direction: keeping is recoverable, clobbering someone else's live claim is not.
 	moved, err := os.ReadFile(stale)
 	if err != nil || !bytes.Equal(moved, content) {
-		_ = os.Rename(stale, leasePath)
+		_ = os.Link(stale, leasePath) // best-effort; EEXIST means a first-writer won the slot
+		os.Remove(stale)
 		return false
 	}
 	os.Remove(stale)
@@ -124,6 +125,12 @@ func Claim(leasePath string) bool {
 // package variable so the two-reclaimer contract can drive a competing reclaimer to a
 // full takeover here and prove both cannot win — the same test-seam idiom as restoreClean.
 var claimTakeoverGap = func(leasePath string) {}
+
+// claimStealGap is a no-op hook at the takeover's second interleave point: the
+// instant after the takeover rename vacates leasePath and before the identity check
+// runs its restore. A package variable so the three-party contract can land a fresh
+// first-writer in the vacated slot — the same test-seam idiom as restoreClean.
+var claimStealGap = func(leasePath string) {}
 
 // isWorktree reports whether dir is a git worktree checkout — it holds a `.git` file
 // (linked worktree) or directory. Mirrors the shell's `[ -d .git || -f .git ]` scan gate.

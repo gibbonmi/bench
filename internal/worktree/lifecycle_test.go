@@ -233,6 +233,77 @@ func TestClaimSecondReclaimerConcedes(t *testing.T) {
 	}
 }
 
+// TestClaimStealDuringTakeoverKeepsFirstWriter pins the three-party takeover race: a
+// concurrent reclaimer B wins the whole reclaim before the outer caller's rename runs,
+// and a fresh first-writer C then claims the slot the outer's rename vacates. The
+// invariant is that C's lease survives: a first-writer that claims a vacated slot
+// during a conceded takeover keeps its lease. Pre-fix, the identity check's blind
+// rename-back clobbers C's lease with the stolen bytes it meant to restore; the fix
+// restores only into a still-empty slot (no-clobber link), leaving C's lease alone.
+func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
+	if os.Getpid() == 1 {
+		t.Skip("running as pid 1")
+	}
+	lease := filepath.Join(t.TempDir(), "bench-lease")
+	if err := os.WriteFile(lease, []byte(deadPidLine(t)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	realTakeover := claimTakeoverGap
+	t.Cleanup(func() { claimTakeoverGap = realTakeover })
+	var nestedWon bool
+	inNestedTakeover := false
+	claimTakeoverGap = func(lp string) {
+		if inNestedTakeover {
+			return // B's own pass through this gap must not recurse again
+		}
+		inNestedTakeover = true
+		nestedWon = Claim(lp)
+		inNestedTakeover = false
+	}
+
+	realSteal := claimStealGap
+	t.Cleanup(func() { claimStealGap = realSteal })
+	const sentinel = "999999 sentinel-first-writer\n"
+	wrote := false
+	claimStealGap = func(lp string) {
+		// Skip B's own pass (still inside the nested takeover) so the write lands only
+		// in the slot the outer's rename vacates, not the one B's rename vacates.
+		if inNestedTakeover || wrote {
+			return
+		}
+		wrote = true
+		if err := os.WriteFile(lp, []byte(sentinel), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	outerWon := Claim(lease)
+
+	if outerWon {
+		t.Error("outer Claim = true, want false (it must concede to the first-writer)")
+	}
+	if !nestedWon {
+		t.Error("nested reclaimer B did not win its takeover")
+	}
+	got, err := os.ReadFile(lease)
+	if err != nil {
+		t.Fatalf("lease missing after conceded takeover: %v", err)
+	}
+	if string(got) != sentinel {
+		t.Errorf("lease = %q, want first-writer sentinel %q — the restore clobbered it", got, sentinel)
+	}
+	entries, err := os.ReadDir(filepath.Dir(lease))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		if strings.Contains(e.Name(), ".stale.") {
+			t.Errorf("stale leftover remains beside lease: %s", e.Name())
+		}
+	}
+}
+
 // TestCandidateNameStaysInPool pins that a minted candidate never escapes the pool
 // directory — a wrong name would mint outside the pool and silently break warm reuse.
 func TestCandidateNameStaysInPool(t *testing.T) {

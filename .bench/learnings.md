@@ -21,3 +21,18 @@ Format per entry:
 An entry leaves this file only via /bench-what-next.
 
 <!-- entries below -->
+
+## 2026-07-08 — isolation worktree gave a write-delegate a stale base  [open]
+- **What happened:** An FT45 fix delegate ran in a harness-created isolated
+  worktree cut at a commit five behind main (before the very code it was
+  charged to fix had landed). It faithfully rebuilt the missing mechanism from
+  the charge's prose; the diff could not apply onto main and was ported by the
+  orchestrator inline.
+- **Right behavior:** On receiving a write-delegate's worktree, the
+  orchestrator checks the worktree's merge-base against the expected tip
+  before reading the diff; the charge should also name a sentinel the
+  delegate must confirm exists (a function or test added by the commit under
+  fix) so a stale snapshot fails fast instead of producing a divergent
+  rebuild.
+- **Proposed rule change:** add the sentinel-precondition line to the
+  craft-delegate charge template for fix-pass delegations.
