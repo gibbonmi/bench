@@ -10,14 +10,6 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-**FT43 — Codex Stop-hook timeout kills the armed oracle.** `.codex/hooks.json`
-sets `timeout: 30` on the Stop hook while the full gate runs ~31s on the
-reference box, so an armed shift's completion oracle is killed mid-run —
-fail-open — under exactly one harness, against the identical-behavior promise.
-Raise or drop the timeout (kit copy and linked template); consider a
-gate-wall margin rule. XS. Spec: `specs/defect-batch-ft43-49.md`.
-Next: `/bench-implement-spec`.
-
 **FT44 — salvage branches sweep automatically once their content lands.**
 `bench status` perpetually recommends `bench worktree clean` for unmerged
 `worktree-*` salvage branches the sweep deliberately keeps, so the
@@ -108,6 +100,28 @@ to `craft-seams` and the implement-spec structure-housekeeping note: check both
 budgets before choosing split-vs-grant. XS kit edit under `craft-synthesis`.
 Next: direct kit edit, gated as usual.
 
+**FT56 — sanctioned-command contracts visible at the point of use.** Three
+contract-guesses in one day: a pathless `bench commit -m` (exit 2), `--spec`
+misread as mere association when it flips the spec to `Status: implemented`,
+and `bench spec history` not recalled during a shipped-row check. Amend the
+BENCH.md CLI-inventory work-execution line with the one-clause commit contract
+(`bench commit -m <msg> <path>...`, path-scoped, stages its own paths; `--spec
+<slug>` marks the spec implemented — implementation green commit only), extend
+the `--spec` usage string to state the flip, and name `bench spec history` as
+the tool in the what-next reconcile step. XS kit edit under `craft-synthesis`.
+Next: direct kit edit, gated as usual.
+
+**FT57 — shared-worktree path pinning in craft-delegate.** During the FT43
+stacked fix both sides missed that `cd` governs Bash CWD only: the delegate's
+file tools used repo-root absolute paths and wrote into the main tree, and the
+orchestrator's stale worktree CWD made a correct `bench commit` "nothing to
+commit" get misfiled as a tool bug. Add two clauses to `craft-delegate`'s
+Isolation section: a charge that shares an existing worktree pins all
+file-tool paths to the worktree root, and a "nothing to commit" against a
+visibly-modified file reads as a CWD/tree mismatch before it reads as a
+defect. XS kit edit under `craft-synthesis`. Next: direct kit edit, gated as
+usual.
+
 **FT6 (LOW, parked pending evidence — leave parked):** `bench refs`, `bench
 detect`, `bench doc`, `bench specs --retired`, doctor binary-presence row,
 `conformanceFamilies`-vs-dispatch reconcile meta-check, and a per-anchor
@@ -127,9 +141,9 @@ changelog adds a spawn tool name or a deny-capable SubagentStart.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT43–FT49 defect batch
-   (`specs/defect-batch-ft43-49.md`, staged; FT43 first: XS and an
-   enforcement fail-open). Fresh mid-tier session.
+1. `/bench-implement-spec` — FT44–FT49 defect batch
+   (`specs/defect-batch-ft43-49.md`, staged; FT43 shipped, FT44 next).
+   Fresh mid-tier session.
 2. `/bench-shape-idea` — FT38 dashboard visual identity: pure reviewer taste,
    grill before build.
 3. `/bench-write-spec` — FT50 one-source collapse batch: mechanical,
