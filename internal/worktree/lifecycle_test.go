@@ -161,6 +161,78 @@ func TestReleaseNeverClaimableMidCleanup(t *testing.T) {
 	}
 }
 
+// deadPidLine returns a lease line whose recorded pid is provably dead: a child
+// process is spawned and reaped, so its pid is gone (kill -0 → ESRCH) yet was a real
+// pid, exactly the crashed-owner case reclaimable takes over.
+func deadPidLine(t *testing.T) string {
+	t.Helper()
+	cmd := exec.Command("true")
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("spawn reap victim: %v", err)
+	}
+	pid := cmd.Process.Pid
+	if pidAlive(pid) {
+		t.Skip("reaped pid reused before use")
+	}
+	return fmt.Sprintf("%d 2026-07-05T00:00:00Z\n", pid)
+}
+
+// TestClaimSecondReclaimerConcedes pins the takeover identity check: two reclaimers of
+// the same dead-pid lease must not both win one worktree. The claimTakeoverGap seam
+// drives the second (outer) reclaimer to pause after judging the lease reclaimable, and
+// runs a first (nested) reclaimer to a full takeover — installing a fresh live lease —
+// before the outer's rename runs. The pre-fix takeover renames (and so steals) that
+// fresh lease and re-creates it, returning true: both reclaimers win, falsifying the
+// "cannot both win" guarantee. The fix sees the renamed bytes differ from the bytes it
+// judged reclaimable, restores the fresh lease, and concedes.
+func TestClaimSecondReclaimerConcedes(t *testing.T) {
+	if os.Getpid() == 1 {
+		t.Skip("running as pid 1")
+	}
+	lease := filepath.Join(t.TempDir(), "bench-lease")
+	if err := os.WriteFile(lease, []byte(deadPidLine(t)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	real := claimTakeoverGap
+	t.Cleanup(func() { claimTakeoverGap = real })
+	var nestedWon, reentered bool
+	claimTakeoverGap = func(leasePath string) {
+		if reentered {
+			return // the nested reclaimer's own gap is a no-op
+		}
+		reentered = true
+		nestedWon = Claim(leasePath)
+	}
+
+	outerWon := Claim(lease)
+
+	if !nestedWon {
+		t.Error("first (nested) reclaimer did not win the dead-pid lease")
+	}
+	if outerWon {
+		t.Error("second reclaimer also won: two reclaimers both took over one worktree")
+	}
+	// The surviving lease is the nested winner's fresh lease: present and owned by us.
+	got, err := os.ReadFile(lease)
+	if err != nil {
+		t.Fatalf("lease missing after takeover: %v", err)
+	}
+	if want := fmt.Sprintf("%d ", os.Getpid()); !strings.HasPrefix(string(got), want) {
+		t.Errorf("lease = %q, want fresh winner prefix %q", got, want)
+	}
+	// No .stale.* leftover beside the lease.
+	entries, err := os.ReadDir(filepath.Dir(lease))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		if strings.Contains(e.Name(), ".stale.") {
+			t.Errorf("stale leftover remains beside lease: %s", e.Name())
+		}
+	}
+}
+
 // TestCandidateNameStaysInPool pins that a minted candidate never escapes the pool
 // directory — a wrong name would mint outside the pool and silently break warm reuse.
 func TestCandidateNameStaysInPool(t *testing.T) {

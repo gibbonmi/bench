@@ -8,6 +8,7 @@
 package worktree
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -81,9 +82,12 @@ func tryCreate(leasePath string) bool {
 
 // Claim atomically claims a worktree's lease. A first-writer create wins outright; an
 // existing lease is taken over only when reclaimable reports its owner provably gone,
-// and then via an atomic rename so two concurrent reclaimers cannot both win — only
-// the process whose rename succeeds re-creates the lease. Returns whether this process
-// now owns the lease.
+// and then via an atomic rename whose renamed bytes are checked against the bytes judged
+// reclaimable. Only the reclaimer whose rename moved the very lease it judged re-creates
+// it; a competing reclaimer that completed its own takeover in the interval leaves a
+// fresh lease whose bytes differ, so the losing rename is detected, undone (renamed back,
+// best-effort), and conceded — two concurrent reclaimers cannot both win. Returns whether
+// this process now owns the lease.
 func Claim(leasePath string) bool {
 	if tryCreate(leasePath) {
 		return true
@@ -96,13 +100,30 @@ func Claim(leasePath string) bool {
 	if !reclaimable(content, info.ModTime(), time.Now(), pidAlive) {
 		return false
 	}
+	claimTakeoverGap(leasePath)
 	stale := leasePath + ".stale." + strconv.Itoa(os.Getpid())
 	if os.Rename(leasePath, stale) != nil {
 		return false // another reclaimer moved it first
 	}
+	// The rename may have moved a *different* lease than the one judged reclaimable: a
+	// competing reclaimer could have completed its own takeover in the gap, leaving a
+	// fresh live lease at leasePath. Compare the renamed bytes to the judged content; a
+	// mismatch (or any read failure) means we may have stolen that fresh lease — put it
+	// back, best-effort, and concede. Classifying toward "not ours" is the safe direction.
+	moved, err := os.ReadFile(stale)
+	if err != nil || !bytes.Equal(moved, content) {
+		_ = os.Rename(stale, leasePath)
+		return false
+	}
 	os.Remove(stale)
 	return tryCreate(leasePath)
 }
+
+// claimTakeoverGap is a no-op hook at the one takeover interleave point that matters:
+// the instant after a lease is judged reclaimable and before the takeover rename. A
+// package variable so the two-reclaimer contract can drive a competing reclaimer to a
+// full takeover here and prove both cannot win — the same test-seam idiom as restoreClean.
+var claimTakeoverGap = func(leasePath string) {}
 
 // isWorktree reports whether dir is a git worktree checkout — it holds a `.git` file
 // (linked worktree) or directory. Mirrors the shell's `[ -d .git || -f .git ]` scan gate.
