@@ -49,7 +49,7 @@ func testGoRoutingFabricatedVersionRouting(t *testing.T) {
 	f := contract.NewFixture(t, contract.WithNoRepo())
 	kit := filepath.Join(f.Root, "a b", "kit")
 	goRoutingCopyTree(t, filepath.Join(contract.SubjectRoot(t), "bin"), filepath.Join(kit, "bin"))
-	hostPackage := strings.TrimSpace(goRoutingNode(t, "process.stdout.write('@benchkit/'+process.platform+'-'+process.arch)"))
+	hostPackage := strings.TrimSpace(goRoutingNode(t, "process.stdout.write('@redbench/'+process.platform+'-'+process.arch)"))
 	run := func(env map[string]string) contract.Probe {
 		return f.RunEnv(env, "bash", filepath.Join(kit, "bin", "bench.sh"), "version")
 	}
@@ -72,8 +72,7 @@ func testGoRoutingFabricatedVersionRouting(t *testing.T) {
 
 	out := run(nil)
 	out.RequireExit(127)
-	out.RequireContains(out.Stderr+out.Stdout, hostPackage)
-	out.RequireContains(out.Stderr+out.Stdout, "npm install")
+	requireInterim127Remedy(t, out.Stderr+out.Stdout)
 
 	if err := os.WriteFile(filepath.Join(kit, "dist", "bench"), nil, 0o755); err != nil {
 		t.Fatalf("write empty dist/bench: %v", err)

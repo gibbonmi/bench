@@ -12,7 +12,7 @@
 #   Cross-compile: set GOOS / GOARCH in the environment.
 #
 # This file is repo-only: not in package.json files[], so it never ships. Consumers
-# get prebuilt binaries via the @benchkit/<os>-<arch> platform packages.
+# get prebuilt binaries via the @redbench/<os>-<arch> platform packages.
 set -euo pipefail
 
 modroot="${1:?usage: go-build.sh <module-root> <output-path>}"

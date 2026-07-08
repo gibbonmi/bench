@@ -70,7 +70,7 @@ func testRepairRefusesBadHash(t *testing.T) {
 
 	out.RequireExit(127)
 	out.RequireContains(out.Stderr, "integrity mismatch")
-	out.RequireContains(out.Stderr, "npm install @benchkit/")
+	requireInterim127Remedy(t, out.Stderr)
 	requirePathAbsent(t, binaryRepairCachePath(t, f, version), "bad hash installed a binary")
 }
 
@@ -84,12 +84,15 @@ func testRepairRefusesMalformedTar(t *testing.T) {
 
 	out.RequireExit(127)
 	out.RequireContains(out.Stderr, "truncated tar entry")
-	out.RequireContains(out.Stderr, "npm install @benchkit/")
+	requireInterim127Remedy(t, out.Stderr)
 	requirePathAbsent(t, binaryRepairCachePath(t, f, version), "malformed tar installed a binary")
 }
 
 func testRepairOffline(t *testing.T) {
-	f, kit := binaryRepairFixtureKit(t)
+	// WithSpacePath: the printed build remedy must stay quote-safe when the kit path
+	// contains spaces (spec row 6 edge inventory); this is the 127-exit test that backs
+	// that claim.
+	f, kit := binaryRepairFixtureKit(t, contract.WithSpacePath())
 	version := "9.8.7"
 	env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": "http://127.0.0.1:1"}
 
@@ -97,7 +100,7 @@ func testRepairOffline(t *testing.T) {
 
 	out.RequireExit(127)
 	out.RequireContains(out.Stderr, "repair failed")
-	out.RequireContains(out.Stderr, "npm install @benchkit/")
+	requireInterim127Remedy(t, out.Stderr)
 	requirePathAbsent(t, binaryRepairCachePath(t, f, version), "offline repair left a cache binary")
 }
 
@@ -194,7 +197,7 @@ func testRepairNoNode(t *testing.T) {
 
 	out.RequireExit(127)
 	out.RequireContains(out.Stderr, "repair skipped because node is not on PATH")
-	out.RequireContains(out.Stderr, "npm install @benchkit/")
+	requireInterim127Remedy(t, out.Stderr)
 }
 
 func testRepairReplacesTornCache(t *testing.T) {
@@ -251,7 +254,7 @@ func newBinaryRepairRegistry(t testing.TB, version, binary string, opts ...binar
 	}
 	reg := &binaryRepairRegistry{}
 	mux := http.NewServeMux()
-	mux.HandleFunc("/@benchkit%2f"+binaryRepairPlatformSuffix(t), func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/@redbench%2f"+binaryRepairPlatformSuffix(t), func(w http.ResponseWriter, r *http.Request) {
 		reg.hits.Add(1)
 		meta := map[string]any{
 			"versions": map[string]any{
@@ -360,7 +363,20 @@ func binaryRepairPlatformSuffix(t testing.TB) string {
 	if err != nil {
 		t.Skipf("launcher platform_pkg unavailable: %v\n%s", err, out)
 	}
-	return strings.TrimPrefix(strings.TrimSpace(string(out)), "@benchkit/")
+	return strings.TrimPrefix(strings.TrimSpace(string(out)), "@redbench/")
+}
+
+// requireInterim127Remedy is the single source for the pre-publish 127 contract:
+// the missing-binary error prints the clone/git build remedy and no npm line (the
+// npm remedy would name unpublished @redbench/* packages; it rejoins publish-day).
+func requireInterim127Remedy(t *testing.T, stderr string) {
+	t.Helper()
+	if !strings.Contains(stderr, "scripts/go-build.sh") {
+		t.Fatalf("127 error did not name the build remedy scripts/go-build.sh\nstderr:\n%s", stderr)
+	}
+	if strings.Contains(stderr, "npm install") {
+		t.Fatalf("127 error named an npm install remedy before publish\nstderr:\n%s", stderr)
+	}
 }
 
 func requireFileExecutable(t testing.TB, path, msg string) {

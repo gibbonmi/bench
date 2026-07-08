@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Generate the four @benchkit/<os>-<arch> platform packages from the single matrix
+# Generate the four @redbench/<os>-<arch> platform packages from the single matrix
 # source (scripts/platforms.json) plus the wrapper version (package.json). Package
 # names, os/cpu fields, and version all derive here — there is no hand-maintained
 # per-package metadata to drift. The release workflow runs it for real; the gate runs
@@ -21,11 +21,11 @@ const matrix = JSON.parse(fs.readFileSync(path.join(here, "scripts/platforms.jso
 const wrapper = JSON.parse(fs.readFileSync(path.join(here, "package.json"), "utf8"));
 
 for (const p of matrix) {
-  const dir = path.join(out, "@benchkit", `${p.os}-${p.arch}`);
+  const dir = path.join(out, "@redbench", `${p.os}-${p.arch}`);
   fs.mkdirSync(path.join(dir, "bin"), { recursive: true });
   // Fixed key order + fixed matrix order → byte-identical output on re-run.
   const pkg = {
-    name: `@benchkit/${p.os}-${p.arch}`,
+    name: `@redbench/${p.os}-${p.arch}`,
     version: wrapper.version,
     description: `benchkit prebuilt binary for ${p.os}-${p.arch}`,
     // A string `bin` is linked by npm under the unscoped package name (linux-x64),

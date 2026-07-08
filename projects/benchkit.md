@@ -1,7 +1,7 @@
 # Project: benchkit
 
 The Bench kit itself — a harness-agnostic agent-development workflow shipped as the
-npm package `benchkit`. It is not an application: it is shell + markdown + JSON that
+npm package `redbench`. It is not an application: it is shell + markdown + JSON that
 other repos consume. The deliverable is the `bench` CLI (`bin/bench.sh`), the working
 agreement (`AGENTS.md`), the portable `.agents/` skills and commands, and harness
 adapters that call shared `.bench/hooks/` scripts. Because the artifacts are plain

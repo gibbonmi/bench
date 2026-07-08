@@ -42,7 +42,7 @@ jobs:
           # and the metadata derive from scripts/platforms.json — no second source.
           bash scripts/gen-platform-packages.sh "$out"
           while read -r os arch goos goarch; do
-            GOOS="$goos" GOARCH="$goarch" bash scripts/go-build.sh "$PWD" "$out/@benchkit/$os-$arch/bin/bench"
+            GOOS="$goos" GOARCH="$goarch" bash scripts/go-build.sh "$PWD" "$out/@redbench/$os-$arch/bin/bench"
           done < <(node -e 'for (const p of require("./scripts/platforms.json")) console.log(p.os, p.arch, p.goos, p.goarch)')
 
       - name: Publish platform packages
@@ -50,7 +50,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           set -euo pipefail
-          for d in dist/packages/@benchkit/*/; do
+          for d in dist/packages/@redbench/*/; do
             npm publish "$d" --access public --provenance
           done
 

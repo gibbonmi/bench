@@ -28,10 +28,10 @@ and report only what matters:
 
 - If `.bench/BENCH.md`, `.agents/commands/`, or the managed Bench block in
   `AGENTS.md` is missing, run `bench link` if the CLI is available. If it is not
-  available, run `npx benchkit link` from the repo. If neither can run, stop with
+  available, run `npx github:gibbonmi/bench#main link` from the repo. If neither can run, stop with
   the exact command the reviewer or maintainer needs to make available.
 - If `.bench/gate.sh` is missing, run `bench init` if the CLI is available. If it
-  is not available, run `npx benchkit init`. If `.bench/gate.sh` exists, do not
+  is not available, run `npx github:gibbonmi/bench#main init`. If `.bench/gate.sh` exists, do not
   overwrite it.
 - If `bench link` or `bench init` reports a project-owned conflict, stop and
   surface the conflict. Resolving ownership is the reviewer's call.

@@ -1,16 +1,18 @@
 {
-  "name": "benchkit",
+  "name": "redbench",
   "version": "0.2.0",
   "description": "A harness-agnostic agent-development workflow: a planning pipeline plus a gated autonomous loop, where an external gate \u2014 never the model \u2014 decides when work is done. Works with Claude Code, Codex, and other AGENTS.md harnesses.",
   "bin": {
     "bench": "bin/bench.sh",
-    "benchkit": "bin/bench.sh"
+    "redbench": "bin/bench.sh"
   },
   "scripts": {
+    "prepare": "bash scripts/go-build.sh \"$PWD\" dist/bench",
     "postinstall": "bash bin/bench-postinstall.sh"
   },
   "files": [
     "bin/",
+    "dist/",
     "projects/",
     "README.md",
     ".agents/",
@@ -42,10 +44,10 @@
     "linux"
   ],
   "optionalDependencies": {
-    "@benchkit/darwin-arm64": "0.2.0",
-    "@benchkit/darwin-x64": "0.2.0",
-    "@benchkit/linux-x64": "0.2.0",
-    "@benchkit/linux-arm64": "0.2.0"
+    "@redbench/darwin-arm64": "0.2.0",
+    "@redbench/darwin-x64": "0.2.0",
+    "@redbench/linux-x64": "0.2.0",
+    "@redbench/linux-arm64": "0.2.0"
   },
   "license": "MIT"
 }

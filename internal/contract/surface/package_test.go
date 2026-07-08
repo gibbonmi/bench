@@ -55,9 +55,9 @@ func testPackageGeneratorOutput(t *testing.T) {
 	wantOptional := map[string]string{}
 
 	for _, p := range matrix {
-		name := "@benchkit/" + p.OS + "-" + p.Arch
+		name := "@redbench/" + p.OS + "-" + p.Arch
 		wantOptional[name] = wrapper.Version
-		path := filepath.Join(gen, "@benchkit", p.OS+"-"+p.Arch, "package.json")
+		path := filepath.Join(gen, "@redbench", p.OS+"-"+p.Arch, "package.json")
 		var got struct {
 			Name    string   `json:"name"`
 			Version string   `json:"version"`
@@ -90,7 +90,10 @@ func testPackageGeneratorOutput(t *testing.T) {
 func testPackageNpmPackInstallableSurface(t *testing.T) {
 	f := execFixtureAt(t, contract.SubjectRoot(t))
 
-	out := f.Run("npm", "pack", "--dry-run", "--json")
+	// --ignore-scripts: inspect files[] membership only, not the prepare build (which the
+	// git-install probe exercises); running prepare here would rebuild dist/bench and
+	// defeat the built/unbuilt determinism this shape check holds.
+	out := f.Run("npm", "pack", "--dry-run", "--json", "--ignore-scripts")
 
 	out.RequireExit(0)
 	var packs []struct {

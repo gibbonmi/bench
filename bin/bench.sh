@@ -52,7 +52,7 @@ kit_dir() {
 # ---- strangler router: send a ported subcommand to the Go binary ------------
 # The one seam that grows across the port: later slices add subcommand names to the
 # dispatch, never a second resolver. platform_pkg maps this host to its
-# @benchkit/<os>-<arch> package (npm os/cpu spelling); an off-matrix host returns
+# @redbench/<os>-<arch> package (npm os/cpu spelling); an off-matrix host returns
 # non-zero so the caller can emit the "unsupported platform" error instead of naming
 # a package that does not exist.
 platform_pkg() {
@@ -67,13 +67,13 @@ platform_pkg() {
     x86_64|amd64)  arch=x64 ;;
     *) return 1 ;;
   esac
-  printf '@benchkit/%s-%s' "$os" "$arch"
+  printf '@redbench/%s-%s' "$os" "$arch"
 }
 
 platform_suffix() {
   local pkg
   pkg="$(platform_pkg)" || return 1
-  printf '%s\n' "${pkg#@benchkit/}"
+  printf '%s\n' "${pkg#@redbench/}"
 }
 
 package_version() {
@@ -175,7 +175,7 @@ route_binary() {
         repair_binary "$kit" "$wrapper" || true
         bin="$(bench_binary_path "$kit")" && BENCH_KIT="${BENCH_KIT:-$kit}" BENCH_WRAPPER="${BENCH_WRAPPER:-$wrapper}" exec "$bin" "$@"
       fi
-      echo "bench: no binary for this platform — install $(platform_pkg) (npm install $(platform_pkg))" >&2
+      echo 'bench: no binary for this platform — build it from a clone: bash scripts/go-build.sh "$PWD" dist/bench' >&2
       exit 127
       ;;
   esac

@@ -167,27 +167,30 @@ The reviewer-facing setup path is the setup command above. The worker-facing
 mechanics underneath are the `bench` CLI commands here.
 
 **Prerequisites.** Bench runs on macOS or Linux; Windows is unsupported, so use
-WSL2. You need one runtime: **Node** to run via `npx` or a global `npm i -g
-benchkit` (both fetch a prebuilt binary), or **Go** to build the compiled core
-yourself when you install from a clone. If you install globally under a node
-version manager, mind the PATH-shim caveat noted with the global-install steps
-below.
+WSL2. Until the packages are published, the install path runs straight from the git
+repo, so you need **all three**: access to the `gibbonmi/bench` repo, **Node** (to
+run `npx`), and **Go** (npx builds the compiled core on your machine at install
+time). If you install under a node version manager, mind the PATH-shim caveat noted
+with the durable-install steps below.
 
-Bench ships as an npm package, so the fastest way for the worker to wire a repo is
-`npx` — nothing to clone, no global install:
+The fastest way for the worker to wire a repo is `npx` straight from git — nothing
+to clone, no global install. Pin the ref so npx's git cache serves the build you
+expect:
 
 ```sh
 cd ~/src/your-project
-npx benchkit link      # wire the kit into this repo for every harness
-npx benchkit init      # scaffold .bench/gate.sh
+npx github:gibbonmi/bench#main link   # wire the kit into this repo for every harness
+npx github:gibbonmi/bench#main init   # scaffold .bench/gate.sh
 ```
 
 Run from `npx`, `link` copies the kit in (the npx cache is ephemeral, so it won't
 leave dangling symlinks). Prefer to install once and get a durable `bench` command?
+Clone the repo, build the core, and symlink the launcher:
 
 ```sh
-npm i -g benchkit
-# or, from a clone:  ln -s ~/src/bench/bin/bench.sh ~/.local/bin/bench
+git clone https://github.com/gibbonmi/bench ~/src/bench
+bash ~/src/bench/scripts/go-build.sh ~/src/bench ~/src/bench/dist/bench
+ln -s ~/src/bench/bin/bench.sh ~/.local/bin/bench
 cd ~/src/your-project
 bench link             # copies Bench-owned assets in safely
 bench link symlink     # optional dogfood mode: point installed assets at this kit
@@ -217,7 +220,7 @@ bench unlink             # remove the per-repo Bench footprint
 Then remove the global tool — the package and the shim:
 
 ```sh
-npm uninstall -g benchkit && rm -f "$(command -v bench)"
+npm uninstall -g redbench && rm -f "$(command -v bench)"
 # after npm's own symlink is gone, command -v bench resolves to the shim;
 # `bench doctor` prints the machine-exact removal pair while bench still resolves.
 ```
