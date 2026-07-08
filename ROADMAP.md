@@ -10,51 +10,6 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-**FT44 — salvage branches sweep automatically once their content lands.**
-`bench status` perpetually recommends `bench worktree clean` for unmerged
-`worktree-*` salvage branches the sweep deliberately keeps, so the
-recommended action provably no-ops. Reviewer direction (2026-07-08): the user
-must never have to investigate — the sweep's proof of "landed" widens beyond
-ancestry so a salvage branch whose changes are already contained in the
-default branch (the common case: a delegate draft superseded by the merged
-version) is deleted automatically; only genuinely un-landed content is kept,
-and that keep gets an honest status action.
-Spec: `specs/defect-batch-ft43-49.md`. Next: `/bench-implement-spec`.
-
-**FT45 — worktree lease reclaim race.** Two crash-recovery reclaimers of one
-dead-pid lease can both win the same worktree: `Claim`'s takeover rename is
-blind to lease identity, falsifying the code's own "cannot both win" comment;
-the concurrent-acquire contract covers fresh-mint only. Identity-verified
-takeover plus a two-reclaimer stress case.
-Spec: `specs/defect-batch-ft43-49.md`. Next: `/bench-implement-spec`.
-
-**FT46 — ADR 0002 posture 5 amendment.** The record asserts nothing
-short-circuits a gate run on a cache hit; `bench commit`'s verdict reuse now
-does exactly that (soundly — exact tree-hash key, fresh-only). Amend the
-posture to record the decision, and pin the capture-only-allowlist reuse
-regression while there. Spec: `specs/defect-batch-ft43-49.md`.
-Next: `/bench-implement-spec`.
-
-**FT47 — unlink leaves a dangling CLAUDE.md.** Link-created CLAUDE.md is
-written outside the install plan, so it is never manifest-recorded and
-`bench unlink` leaves it importing just-deleted files. Record it in the
-manifest when link created it; add it to the README leave-behind list.
-Spec: `specs/defect-batch-ft43-49.md`. Next: `/bench-implement-spec`.
-
-**FT48 — CHANGELOG append duty has no owner.** Both 2026-07-07
-learnings-sourced promotions are missing their mandated entries, and no gate
-check or phase step owns the duty — the `/bench-update-kit` baseline drifts
-silently. Backfill the two entries and anchor the duty (a `/bench-what-next`
-drain-checklist step, or a conformance check if drift recurs).
-Spec: `specs/defect-batch-ft43-49.md`. Next: `/bench-implement-spec`.
-
-**FT49 — pre-push guards a fabricated default branch.** `git.DefaultBranch`
-falls back to `main` when `origin/HEAD` is unresolvable and link bakes that
-answer into the hook, so a `master`/`trunk` repo linked before its remote
-exists gets a backstop that never fires. Resolve at push time, or warn at
-link and add a doctor row comparing baked vs live default.
-Spec: `specs/defect-batch-ft43-49.md`. Next: `/bench-implement-spec`.
-
 **FT38 — dashboard visual identity pass.** `bench dashboard` v1 shipped
 data-faithful and visually neutral; the original idea wanted an
 ui_examples-inspired rich treatment with animated characters. Taste is a
@@ -141,10 +96,7 @@ changelog adds a spawn tool name or a deny-capable SubagentStart.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT44–FT49 defect batch
-   (`specs/defect-batch-ft43-49.md`, staged; FT43 shipped, FT44 next).
-   Fresh mid-tier session.
-2. `/bench-shape-idea` — FT38 dashboard visual identity: pure reviewer taste,
+1. `/bench-shape-idea` — FT38 dashboard visual identity: pure reviewer taste,
    grill before build.
-3. `/bench-write-spec` — FT50 one-source collapse batch: mechanical,
+2. `/bench-write-spec` — FT50 one-source collapse batch: mechanical,
    well-scoped, no open decisions.
