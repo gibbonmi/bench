@@ -48,8 +48,8 @@ it does not have is worse than silence.
    set. Anything less — stale, red, untrusted, or absent — pays a real gate
    run. Accepted because re-judging a byte-identical tree buys no correctness
    for the gate's full cost, and the exact-tree key, fresh-only rule, and
-   single writer together close the lie-a-tree-green risk that made the
-   earlier always-recompute posture the safe default. The commit contract
+   single writer together close the lie-a-tree-green risk a trusted cache
+   would otherwise carry. The commit contract
    suite regression-tests both directions: a fresh green verdict commits
    without re-running the gate, and a verdict recorded for any other tree
    forces a re-run. Reopens on evidence that a reused verdict authorized a

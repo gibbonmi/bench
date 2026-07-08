@@ -228,19 +228,30 @@ func testUnlinkByPathRoute(t *testing.T) {
 	probe.RequireContains(probe.Stdout, "would remove")
 }
 
-// Story 12: a CLAUDE.md that link itself created (no prior file) is removed by unlink.
+// Story 11: a CLAUDE.md link owns — created fresh, or retrofitted from the retired
+// legacy bench shape — is removed by unlink.
 func testUnlinkRemovesLinkCreatedClaudeMD(t *testing.T) {
-	f := contract.NewFixture(t)
-	linkOK(t, f)
-	requireLinkFile(t, f, "CLAUDE.md")
-	requireFixtureFileContains(t, f, ".bench/link-manifest.tsv", "CLAUDE.md\t", "link did not record the CLAUDE.md it created in the manifest")
+	for name, seed := range map[string]func(f contract.Fixture){
+		"no prior file": func(contract.Fixture) {},
+		"legacy bench shape": func(f contract.Fixture) {
+			f.WriteFile("CLAUDE.md", "# Bench\n\nCanonical agreement in AGENTS.md.\n\n@AGENTS.md\n")
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			f := contract.NewFixture(t)
+			seed(f)
+			linkOK(t, f)
+			requireLinkFile(t, f, "CLAUDE.md")
+			requireFixtureFileContains(t, f, ".bench/link-manifest.tsv", "CLAUDE.md\t", "link did not record the CLAUDE.md it owns in the manifest")
 
-	unlinkOK(t, f)
+			unlinkOK(t, f)
 
-	requireLinkNotExists(t, f, "CLAUDE.md", "unlink left a link-created CLAUDE.md on disk")
+			requireLinkNotExists(t, f, "CLAUDE.md", "unlink left a link-owned CLAUDE.md on disk")
+		})
+	}
 }
 
-// Story 13: a CLAUDE.md that predates link — including one present but empty — is never
+// Story 11: a CLAUDE.md that predates link — including one present but empty — is never
 // recorded in the link manifest and survives unlink with identical bytes.
 func testUnlinkSparesExistingClaudeMD(t *testing.T) {
 	for name, body := range map[string]string{

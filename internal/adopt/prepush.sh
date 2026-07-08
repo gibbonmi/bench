@@ -8,15 +8,24 @@ pin_tree=""
 if [[ -n "$pin_path" && -f "$pin_path" ]]; then
   IFS= read -r pin_tree < "$pin_path" || true
 fi
+# Resolve the protected branch live, before --describe, so the advertisement names the
+# same branch the enforcement blocks: a repo linked before its remote existed baked a
+# fabricated default, so query origin/HEAD and fall back to the baked token only when it
+# is unresolvable (no remote, or origin/HEAD unset).
+protected="__BENCH_DEFAULT_BRANCH__"
+live_head="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+if [[ -n "$live_head" ]]; then
+  protected="${live_head#origin/}"
+fi
 if [[ "${1:-}" == "--describe" ]]; then
   printf 'name: pre-push\n'
   printf 'boundary: pre-push\n'
   if [[ -n "$pin_tree" ]]; then
-    printf 'denies: direct push to __BENCH_DEFAULT_BRANCH__, .bench drift from bench gate pin\n'
-    printf 'why: the merge belongs to the reviewer; agents open a PR instead of pushing __BENCH_DEFAULT_BRANCH__\n'
+    printf 'denies: direct push to %s, .bench drift from bench gate pin\n' "$protected"
+    printf 'why: the merge belongs to the reviewer; agents open a PR instead of pushing %s\n' "$protected"
   else
-    printf 'denies: direct push to __BENCH_DEFAULT_BRANCH__\n'
-    printf "why: the merge belongs to the reviewer; agents open a PR instead of pushing __BENCH_DEFAULT_BRANCH__; drift check disarmed - run 'bench gate pin'\n"
+    printf 'denies: direct push to %s\n' "$protected"
+    printf "why: the merge belongs to the reviewer; agents open a PR instead of pushing %s; drift check disarmed - run 'bench gate pin'\n" "$protected"
   fi
   exit 0
 fi
@@ -38,14 +47,6 @@ while IFS= read -r line; do
     fi
   fi
 done
-# Resolve the protected branch live: a repo linked before its remote existed baked a
-# fabricated default, so query origin/HEAD at push time and fall back to the baked token
-# only when it is unresolvable (no remote, or origin/HEAD unset).
-protected="__BENCH_DEFAULT_BRANCH__"
-live_head="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || true)"
-if [[ -n "$live_head" ]]; then
-  protected="${live_head#origin/}"
-fi
 for line in "${ref_lines[@]}"; do
   read -r _ _ remote_ref _ <<< "$line"
   if [[ "$remote_ref" == "refs/heads/$protected" ]]; then
