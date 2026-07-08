@@ -20,14 +20,15 @@ type fixtureRegistration struct {
 }
 
 var canaryFixtureRegistry = map[string]fixtureRegistration{
-	"invalid-json":             conformanceFixture(".bench/gate.sh"),
-	"codex-hooks-broken":       conformanceFixture(".bench/gate.sh"),
-	"codex-hooks-timeout":      conformanceFixture(".bench/gate.sh"),
-	"bad-frontmatter":          conformanceFixture(".bench/gate.sh"),
-	"claude-skills-unmirrored": conformanceFixture(".bench/gate.sh"),
-	"extensionless-gate-ref":   conformanceFixture(".bench/gate.sh"),
-	"shared-rule-drift":        conformanceFixture(".bench/gate.sh"),
-	"readme-shared-rule-drift": conformanceFixture(".bench/gate.sh"),
+	"invalid-json":              conformanceFixture(".bench/gate.sh"),
+	"codex-hooks-broken":        conformanceFixture(".bench/gate.sh"),
+	"codex-hooks-timeout":       conformanceFixture(".bench/gate.sh"),
+	"codex-hooks-timeout-typed": conformanceFixture(".bench/gate.sh"),
+	"bad-frontmatter":           conformanceFixture(".bench/gate.sh"),
+	"claude-skills-unmirrored":  conformanceFixture(".bench/gate.sh"),
+	"extensionless-gate-ref":    conformanceFixture(".bench/gate.sh"),
+	"shared-rule-drift":         conformanceFixture(".bench/gate.sh"),
+	"readme-shared-rule-drift":  conformanceFixture(".bench/gate.sh"),
 
 	"dangling-index":                conformanceFixture(".bench/gate.sh", ".bench/skills-index.sh"),
 	"roadmap-promotion-persistence": conformanceFixture(".bench/gate.sh"),

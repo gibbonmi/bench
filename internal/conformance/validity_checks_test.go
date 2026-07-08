@@ -118,8 +118,8 @@ func checkCodexHooks(root string) []string {
 		Hooks map[string][]struct {
 			Matcher string `json:"matcher"`
 			Hooks   []struct {
-				Command string `json:"command"`
-				Timeout *int   `json:"timeout"`
+				Command string          `json:"command"`
+				Timeout json.RawMessage `json:"timeout"`
 			} `json:"hooks"`
 		} `json:"hooks"`
 	}
@@ -135,7 +135,7 @@ func checkCodexHooks(root string) []string {
 	for _, event := range events {
 		for _, group := range cfg.Hooks[event] {
 			for _, hook := range group.Hooks {
-				if hook.Timeout != nil {
+				if len(hook.Timeout) > 0 {
 					diags = append(diags, fmt.Sprintf("codex hooks.json %s hook sets a timeout key", event))
 				}
 			}

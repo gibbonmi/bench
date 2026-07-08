@@ -15,6 +15,7 @@ func TestLoadValidityMetadataFixturesBite(t *testing.T) {
 		"invalid-json",
 		"codex-hooks-broken",
 		"codex-hooks-timeout",
+		"codex-hooks-timeout-typed",
 		"bad-frontmatter",
 		"claude-skills-unmirrored",
 		"extensionless-gate-ref",
