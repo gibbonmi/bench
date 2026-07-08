@@ -1,6 +1,6 @@
 # concurrent-acquire deadline
 
-Status: staged
+Status: implemented
 
 Compiled from the FT39 roadmap graduation (captured red: a real `bench gate` run
 went red with exactly "second acquire did not record within a minute — the runs

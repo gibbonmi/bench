@@ -325,12 +325,20 @@ exit 1
 	for i := 0; i < 2; i++ {
 		go func() { done <- f.BenchEnv(env, "worktree") }()
 	}
-	deadline := time.Now().Add(time.Minute)
+	backstop := time.Now().Add(2 * time.Minute)
+	var overlapDeadline time.Time
 	finished := make([]contract.Probe, 0, 2)
 	for {
 		raw, _ := os.ReadFile(record)
-		if len(contract.NonEmptyLines(string(raw))) >= 2 {
+		lines := contract.NonEmptyLines(string(raw))
+		if len(lines) >= 2 {
 			break
+		}
+		if overlapDeadline.IsZero() && len(lines) >= 1 {
+			// First record confirms one run has acquired and is holding — arm the overlap
+			// window from this event rather than from spawn, so spawn latency under load
+			// never counts against the assertion this window actually carries.
+			overlapDeadline = time.Now().Add(time.Minute)
 		}
 	drainDone:
 		for len(finished) < 2 {
@@ -350,9 +358,14 @@ exit 1
 			}
 			break
 		}
-		if time.Now().After(deadline) {
+		if overlapDeadline.IsZero() {
+			if time.Now().After(backstop) {
+				contract.WriteFileAbs(t, goFile, "") // release the straggler before failing
+				t.Fatal("no bench worktree run recorded within 2m — acquire appears wedged")
+			}
+		} else if time.Now().After(overlapDeadline) {
 			contract.WriteFileAbs(t, goFile, "") // release the straggler before failing
-			t.Fatal("second acquire did not record within a minute — the runs never overlapped")
+			t.Fatal("second acquire did not record within 60s of the first — the runs never overlapped")
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
