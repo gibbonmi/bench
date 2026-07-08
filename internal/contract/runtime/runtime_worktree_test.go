@@ -326,9 +326,28 @@ exit 1
 		go func() { done <- f.BenchEnv(env, "worktree") }()
 	}
 	deadline := time.Now().Add(time.Minute)
+	finished := make([]contract.Probe, 0, 2)
 	for {
 		raw, _ := os.ReadFile(record)
 		if len(contract.NonEmptyLines(string(raw))) >= 2 {
+			break
+		}
+	drainDone:
+		for len(finished) < 2 {
+			select {
+			case p := <-done:
+				finished = append(finished, p)
+			default:
+				break drainDone
+			}
+		}
+		if len(finished) == 2 {
+			// An exited run can never record (the shell records before it holds), but the
+			// second record may land between the read above and the exits — re-read once.
+			raw, _ := os.ReadFile(record)
+			if len(contract.NonEmptyLines(string(raw))) < 2 {
+				t.Fatal("both worktree runs exited with fewer than two acquires recorded — the runs never overlapped")
+			}
 			break
 		}
 		if time.Now().After(deadline) {
@@ -338,8 +357,11 @@ exit 1
 		time.Sleep(50 * time.Millisecond)
 	}
 	contract.WriteFileAbs(t, goFile, "")
-	for i := 0; i < 2; i++ {
-		(<-done).RequireExit(0)
+	for len(finished) < 2 {
+		finished = append(finished, <-done)
+	}
+	for _, p := range finished {
+		p.RequireExit(0)
 	}
 	paths := contract.NonEmptyLines(contract.ReadFileAbs(t, record))
 	sort.Strings(paths)
