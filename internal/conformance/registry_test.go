@@ -60,6 +60,7 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"capture-sink-anchor":               conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"review-persistence-anchor":         conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"shape-idea-handoff-anchor":         conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"shape-idea-grill-continuation":     conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"story-line-anchor-missing":         conformanceFixture(".bench/gate-docs-contracts.sh", ".bench/gate-line-contracts.sh"),
 	"write-spec-handoff-anchor":         conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"write-spec-map-required":           conformanceFixture(".bench/gate-docs-contracts.sh"),

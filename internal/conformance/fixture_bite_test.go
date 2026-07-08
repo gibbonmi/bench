@@ -82,6 +82,7 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 		"shape-idea-bypass",
 		"shape-idea-bypass-wrapped",
 		"shape-idea-handoff-anchor",
+		"shape-idea-grill-continuation",
 		"what-next-anchor",
 		"spec-retire-roadmap-row",
 		"capture-sink-anchor",

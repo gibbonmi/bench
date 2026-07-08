@@ -1,6 +1,6 @@
 # Grill continuation across tickets in shape-idea resume mode
 
-Status: draft
+Status: implemented
 
 ## Problem
 

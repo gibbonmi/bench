@@ -118,16 +118,9 @@ resolved inline, then stop. Building the map is one session's work — do not al
 resolve tickets.
 
 **Resume** (map + ticket number in): load the whole map, resolve that one ticket,
-record the answer in its body (current state only), and add any newly-discovered
-tickets with correct `Blocked by` edges. If a resolution invalidates other
-tickets, update or delete them. Then keep going while the reviewer is present
-and answering: carry the grill straight into any ticket the resolution just
-unblocked whose question the reviewer can settle now — question after question;
-never pause for permission or a re-prompt between tickets. Stop when no
-unresolved question the present reviewer can answer remains, or when the
-reviewer stops answering. A ticket needing external evidence (Research or
-Prototype) is not force-grilled: leave it open with its `Blocked by` edges and
-move to another answerable ticket, or stop.
+record the answer in its body (current state only), add any newly-discovered
+tickets with correct `Blocked by` edges, then stop. If a resolution invalidates
+other tickets, update or delete them.
 
 ## The exit
 

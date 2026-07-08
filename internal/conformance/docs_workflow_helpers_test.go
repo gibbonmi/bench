@@ -115,6 +115,8 @@ func checkWorkflowAnchors(root string) []string {
 		".bench/BENCH.md Capture section lost the no-PATH fallback append to IDEAS.md")
 	requireCollapsed(".agents/commands/bench-write-spec.md", "promote-then-delete commit removes the spec's `ROADMAP.md` row",
 		".agents/commands/bench-write-spec.md does not remove the spec's ROADMAP.md row in the promote-then-delete commit (row presence is status)")
+	requireCollapsed(".agents/commands/bench-shape-idea.md", "never pause for permission or a re-prompt",
+		".agents/commands/bench-shape-idea.md dropped the resume-mode grill continuation rule; a running grill carries into newly-unblocked tickets without pausing for a re-prompt")
 
 	shapeIdeaPath := filepath.Join(root, ".agents", "commands", "bench-shape-idea.md")
 	if exists(shapeIdeaPath) && strings.Contains(collapseSpace(readIfExists(shapeIdeaPath)), "straight to `/bench-write-spec`") {

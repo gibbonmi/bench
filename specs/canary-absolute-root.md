@@ -1,6 +1,6 @@
 # canary-absolute-root
 
-Status: draft
+Status: staged
 
 Compiled from roadmap row FT40 (a reproduced defect, not a map — the reviewer
 directed it into `specs/` as a build target). Reproduced today: `bench canary .`
