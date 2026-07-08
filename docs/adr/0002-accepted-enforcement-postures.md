@@ -39,14 +39,21 @@ it does not have is worse than silence.
    whose closed branch is the one that mattered. Reopens on evidence that a
    residual rim is exploited as a silent-escalation path.
 
-5. **The gate always recomputes; its verdict cache is advisory.** The cached
-   verdict feeds the ambient dashboard only — nothing short-circuits a gate run
-   on a cache hit, so a stale or forged cache cannot lie a tree green where it
-   counts. Accepted because oracle correctness outranks the ~half-minute a
-   trusted cache would save, and a cache that could short-circuit the oracle
-   would be the worst class of bug in a kit whose premise is that the gate
-   decides done. Reopens if gate runtime grows enough that a verified,
-   non-short-circuiting cache is worth designing.
+5. **The gated commit reuses a fresh green verdict; every other consumer of
+   the verdict cache treats it as advisory.** The cache is keyed to the content
+   hash of the exact tree the gate judged and has a single writer — only a
+   finished gate run records, and an unverifiable tree hash records nothing —
+   so a fresh green verdict proves precisely the tree the commit is about to
+   land, which the commit's own block-check has already pinned to the named
+   set. Anything less — stale, red, untrusted, or absent — pays a real gate
+   run. Accepted because re-judging a byte-identical tree buys no correctness
+   for the gate's full cost, and the exact-tree key, fresh-only rule, and
+   single writer together close the lie-a-tree-green risk that made the
+   earlier always-recompute posture the safe default. The commit contract
+   suite regression-tests both directions: a fresh green verdict commits
+   without re-running the gate, and a verdict recorded for any other tree
+   forces a re-run. Reopens on evidence that a reused verdict authorized a
+   commit the gate would have refused.
 
 6. **Canary coverage is family-level.** The tripwire proves one planted needle
    per check family still bites; it does not plant a needle per individual
