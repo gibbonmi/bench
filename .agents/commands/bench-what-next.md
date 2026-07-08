@@ -62,7 +62,11 @@ does no judgment, so this section is where the judgment lands.
 ## 5. Batch-propose, then commit on green
 
 Draft the full pass — reconciled roadmap, emptied inbox, journal verdicts
-including dismissals — as one uncommitted batch diff. That diff is the verdict
+including dismissals — as one uncommitted batch diff. The diff includes the
+run's CHANGELOG entry: the append duty in CHANGELOG.md's header is owned here —
+one `## Unreleased` entry for this run's verdicts, and one in each later build
+commit that promotes a drained rule (check the previous run's builds appended
+theirs before closing this one). That diff is the verdict
 sheet: the reviewer approves or adjusts it once, and there are no per-item
 interactive sign-offs. On approval, commit on green. Never commit the drain
 without that approval; a standing batch approval (the AGENTS.md rule) counts,

@@ -8,6 +8,22 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-07, scope: verification probe).** Drained the open
+  verification-probe entry and built its rule in the same reviewed pass under
+  `craft-synthesis` (reviewer present and directing): `craft-delegate`'s
+  done-claim verification list gains the independent-probe bullet — at least
+  one accepted behavior probed outside the delegate's own tests, kept constant
+  across a batch, because gate-green alone cannot tell a correct build from a
+  self-consistent wrong one. Journal emptied; prose-only, gate green.
+
+- **Learnings promotion (2026-07-07, FT35 + FT36: rule edits).** Two add-only
+  rule edits from the drained 2026-07-06 learnings, built under
+  `craft-synthesis`: worktree-isolated delegate charges open with the ff-only
+  stale-base check, with the orchestrator fast-forwarding blocked worktrees
+  (`craft-delegate`); and `/bench-write-spec`'s entry contract records the
+  reviewer-directed batch-drain override without weakening the default
+  decision-map gate. Prose-only, gate green.
+
 - **Learnings promotion (2026-07-06, L1: shared-tree worktree rule).** From the
   2026-07-05 shared-tree-contention entry (drained to the roadmap in a prior
   reconcile). Folded into invariant 1 in `.bench/BENCH.md` — one sentence

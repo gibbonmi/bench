@@ -36,3 +36,20 @@ An entry leaves this file only via /bench-what-next.
   rebuild.
 - **Proposed rule change:** add the sentinel-precondition line to the
   craft-delegate charge template for fix-pass delegations.
+
+## 2026-07-08 — first gate run after merging Go work raced the conformance rebuild  [open]
+- **What happened:** 2 of 9 `bench gate` runs on an unchanged tree went red in
+  the contract phase (the other 7, and 4 direct `go test ./internal/contract/...`
+  runs, were green). Mechanism: the conformance phase rebuilds `dist/bench` in
+  the real root (package_core_checks) while the contract phase runs
+  concurrently, so contract fixtures that exec or copy the subject binary can
+  hit it stale (first run after a merge of Go work) or mid-rewrite
+  (text-file-busy / torn-copy class). This diff added binary-exec'ing fixtures,
+  raising exposure.
+- **Right behavior:** rebuild `dist/bench` (scripts/go-build.sh) right after
+  integrating Go work built elsewhere, before the first gate run; and treat a
+  contract-phase red that a direct re-run can't reproduce as this race until
+  the failing test name says otherwise.
+- **Proposed rule change:** serialize the subject-binary rebuild before the
+  contract phase (or have the contract phase own the rebuild); phase-ordering
+  is the reviewer's decision.
