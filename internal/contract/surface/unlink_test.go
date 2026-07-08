@@ -22,6 +22,8 @@ func TestUnlinkContracts(t *testing.T) {
 	contract.RunParallel(t, "bench unlink report contract failed", testUnlinkReportsBothRuns)
 	contract.RunParallel(t, "bench unlink absent-manifest contract failed", testUnlinkAbsentManifest)
 	contract.RunParallel(t, "bench unlink by-path CLI route contract failed", testUnlinkByPathRoute)
+	contract.RunParallel(t, "bench unlink link-created CLAUDE.md contract failed", testUnlinkRemovesLinkCreatedClaudeMD)
+	contract.RunParallel(t, "bench unlink pre-existing CLAUDE.md contract failed", testUnlinkSparesExistingClaudeMD)
 }
 
 const managedFileRel = ".agents/commands/bench-implement-spec.md"
@@ -224,6 +226,43 @@ func testUnlinkByPathRoute(t *testing.T) {
 	probe.RequireExit(0)
 	probe.RequireNotContains(probe.Stdout+probe.Stderr, "real Bench kit")
 	probe.RequireContains(probe.Stdout, "would remove")
+}
+
+// Story 12: a CLAUDE.md that link itself created (no prior file) is removed by unlink.
+func testUnlinkRemovesLinkCreatedClaudeMD(t *testing.T) {
+	f := contract.NewFixture(t)
+	linkOK(t, f)
+	requireLinkFile(t, f, "CLAUDE.md")
+	requireFixtureFileContains(t, f, ".bench/link-manifest.tsv", "CLAUDE.md\t", "link did not record the CLAUDE.md it created in the manifest")
+
+	unlinkOK(t, f)
+
+	requireLinkNotExists(t, f, "CLAUDE.md", "unlink left a link-created CLAUDE.md on disk")
+}
+
+// Story 13: a CLAUDE.md that predates link — including one present but empty — is never
+// recorded in the link manifest and survives unlink with identical bytes.
+func testUnlinkSparesExistingClaudeMD(t *testing.T) {
+	for name, body := range map[string]string{
+		"user content": "# Custom\n\nproject-owned claude config\n",
+		"empty file":   "",
+	} {
+		t.Run(name, func(t *testing.T) {
+			f := contract.NewFixture(t)
+			f.WriteFile("CLAUDE.md", body)
+
+			linkOK(t, f)
+			if got := f.ReadFile("CLAUDE.md"); got != body {
+				t.Fatalf("link altered a pre-existing user CLAUDE.md:\nbefore:\n%q\nafter:\n%q", body, got)
+			}
+			requireFixtureFileNotContains(t, f, ".bench/link-manifest.tsv", "CLAUDE.md\t", "link recorded a pre-existing user CLAUDE.md in the manifest")
+
+			unlinkOK(t, f)
+			if got := f.ReadFile("CLAUDE.md"); got != body {
+				t.Fatalf("unlink altered a pre-existing user CLAUDE.md:\nbefore:\n%q\nafter:\n%q", body, got)
+			}
+		})
+	}
 }
 
 func unlinkOK(t *testing.T, f contract.Fixture) contract.Probe {

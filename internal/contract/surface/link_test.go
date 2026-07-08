@@ -103,15 +103,24 @@ func testLinkSafeFreshRelink(t *testing.T) {
 
 	linkOK(t, f)
 	requireLiteralCount(t, f, "AGENTS.md", "<!-- bench:start -->", 1, "relink duplicated managed Bench block")
+	if got := manifestRowCount(t, f, "CLAUDE.md"); got != 1 {
+		t.Fatalf("relink of an already link-owned CLAUDE.md left %d manifest rows, want 1", got)
+	}
 
 	f.WriteFile("CLAUDE.md", "# Bench\n\nCanonical agreement in AGENTS.md.\n\n@AGENTS.md\n")
 	linkOK(t, f)
 	requireFixtureFileContains(t, f, "CLAUDE.md", "@.bench/BENCH.md", "relink did not retrofit the legacy bench-generated CLAUDE.md")
+	if got := manifestRowCount(t, f, "CLAUDE.md"); got != 1 {
+		t.Fatalf("relink of a legacy-shaped CLAUDE.md left %d manifest rows, want 1", got)
+	}
 
 	f.WriteFile("CLAUDE.md", "# Custom\n\nproject-owned claude config\n")
 	linkOK(t, f)
 	requireFixtureFileContains(t, f, "CLAUDE.md", "project-owned claude config", "relink rewrote a project-owned CLAUDE.md")
 	requireFixtureFileNotContains(t, f, "CLAUDE.md", "@.bench/BENCH.md", "relink injected an import into a project-owned CLAUDE.md")
+	if got := manifestRowCount(t, f, "CLAUDE.md"); got != 0 {
+		t.Fatalf("relink recorded a project-owned CLAUDE.md in the manifest (%d rows), want 0", got)
+	}
 }
 
 func testLinkWritesDistGitignore(t *testing.T) {
