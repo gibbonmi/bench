@@ -21,3 +21,8 @@ Format per entry:
 An entry leaves this file only via /bench-what-next.
 
 <!-- entries below -->
+
+## 2026-07-08 — session guessed the git idiom because bench commit's signature isn't in context  [open]
+- **What happened:** During the what-next drain commit, the session ran `git add` then a pathless `bench commit -m <msg>` (exit 2). No always-loaded file states the contract — `BENCH.md`'s CLI inventory lists the bare name `bench commit`, `BENCH-reference.md` doesn't cover it, and the drain command says only "commit on green" — so the git stage-then-commit prior filled the gap. Repro: the pathless invocation exits 2 with usage; `rg 'commit -m' .bench/BENCH.md .bench/BENCH-reference.md` finds no signature.
+- **Right behavior:** The inventory line should carry the one-clause contract (`bench commit -m <msg> <path>...`, path-scoped, stages its own paths) so a cold session doesn't reach for `git add`. Interim: check `--help` before first use of any bench subcommand with arguments.
+- **Proposed rule change:** Amend the `BENCH.md` CLI inventory's work-execution line with the commit signature clause (kit edit under `craft-synthesis`).
