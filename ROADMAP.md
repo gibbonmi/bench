@@ -16,16 +16,28 @@ ui_examples-inspired rich treatment with animated characters. Taste is a
 reviewer call, so the work starts as a grill, not a build. Decision detail is
 recoverable via `bench spec history dashboard`. Next: `/bench-shape-idea`.
 
-**FT39 (parked pending repro) — concurrent-acquire contract's 60s wall-clock
-window.** A batch session reported `bench_worktree_concurrent-acquire_contract`
-red ("second acquire did not record within a minute") ~3 times in ~8 gate runs
-under load; five fresh runs on 2026-07-07 (three idle, two gates racing) stayed
-green, then one later full-gate run went red with all four phases green in
-isolation immediately after — output not captured, so the red is observed but
-unattributed. The fixed one-minute spawn-to-record
-deadline is the suspected weak point; candidate fix is an event-keyed or raised
-deadline. Graduate only on a captured red with that exact message from a real
-`bench gate` run.
+**FT39 — concurrent-acquire contract: replace the 60s wall-clock deadline.**
+Graduated 2026-07-07: a real `bench gate` run went red with exactly "second
+acquire did not record within a minute — the runs never overlapped"
+(runtime_worktree_test.go:355, 60.06s) on a tree identical to a green-gated
+one, meeting the row's captured-red criterion. The fixed one-minute
+spawn-to-record deadline is the weak point; fix is an event-keyed or raised
+deadline. Spec: `specs/concurrent-acquire-deadline.md`. Next:
+`/bench-write-spec`.
+
+**FT40 — bench canary absolutizes its root argument.** Reproduced 2026-07-07:
+`bench canary .` joins `.bench/gate.sh` off the relative root, so every inner
+gate run in its fixture temp cwd exits 127 and reports "did not bite"; a
+fixture carrying its own `.bench/gate.sh` could instead accidentally run that
+one. Absolutize root at entry (hostile-input class: cwd/path assumptions).
+Spec: `specs/canary-absolute-root.md`. Next: `/bench-write-spec`.
+
+**FT41 — /bench-shape-idea resume mode carries the grill through unblocked
+tickets.** Rule-shaped from the learnings journal: soften "resolve that one
+ticket, then stop" so a running grill continues into newly-unblocked tickets
+in the same sitting while the reviewer is present and answering. Kit edit
+under `craft-synthesis`. Spec: `specs/shape-idea-grill-continuation.md`.
+Next: `/bench-write-spec`.
 
 **FT6 (LOW, parked pending evidence — leave parked):** `bench refs`, `bench
 detect`, `bench doc`, `bench specs --retired`, doctor binary-presence row,
@@ -46,5 +58,9 @@ changelog adds a spawn tool name or a deny-capable SubagentStart.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT38 dashboard visual identity: the open decisions
-   are pure reviewer taste, so the grill comes before any build.
+1. `/bench-write-spec` — FT40 canary absolute root: reproduced defect, smallest
+   fix, restores canary trust.
+2. `/bench-write-spec` — FT39 concurrent-acquire deadline: graduation evidence
+   captured, flake still live in the gate.
+3. `/bench-write-spec` — FT41 shape-idea grill continuation: rule-shaped kit
+   edit under the synthesis discipline.
