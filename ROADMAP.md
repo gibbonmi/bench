@@ -27,14 +27,6 @@ deadline is the suspected weak point; candidate fix is an event-keyed or raised
 deadline. Graduate only on a captured red with that exact message from a real
 `bench gate` run.
 
-**FT40 (parked — needs a design pass) — canary phase cost.** Canary is 128s of
-the gate's 130s wall (measured 2026-07-07): 66 fixtures plus a vacuity baseline,
-each materializing a temp repo and running a full inner gate (~1.6s each),
-poorly amortized. Candidate cuts, all oracle-semantics decisions: scope each
-fixture's inner gate to the phase family its EXPECT targets, skip canary when
-kit checks and fixtures are unchanged since the last green, or batch fixtures
-per inner run. Graduate via `/bench-shape-idea` when the reviewer schedules it.
-
 **FT6 (LOW, parked pending evidence — leave parked):** `bench refs`, `bench
 detect`, `bench doc`, `bench specs --retired`, doctor binary-presence row,
 `conformanceFamilies`-vs-dispatch reconcile meta-check, and a per-anchor
