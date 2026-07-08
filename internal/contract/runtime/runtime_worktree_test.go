@@ -28,6 +28,7 @@ func TestRuntimeWorktreeContracts(t *testing.T) {
 	contract.RunParallel(t, "bench worktree clean sweeps content-landed orphan contract", testRuntimeWorktreeSweepDeletesContentLanded)
 	contract.RunParallel(t, "bench worktree clean keeps unmerged orphan contract", testRuntimeWorktreeSweepKeepsUnmerged)
 	contract.RunParallel(t, "bench worktree clean keeps unique-patch orphan contract", testRuntimeWorktreeSweepKeepsUniquePatch)
+	contract.RunParallel(t, "bench worktree clean keeps evil-merge orphan contract", testRuntimeWorktreeSweepKeepsEvilMerge)
 	contract.RunParallel(t, "bench worktree clean spares active and non-scratch contract", testRuntimeWorktreeSweepSparesProtected)
 	contract.RunParallel(t, "bench worktree clean deletes slashed unicode orphan contract", testRuntimeWorktreeSweepDeletesSlashUnicode)
 	contract.RunParallel(t, "bench worktree clean refuses unresolvable default contract", testRuntimeWorktreeSweepRefusesUnresolvableDefault)
@@ -117,6 +118,35 @@ func testRuntimeWorktreeSweepKeepsUniquePatch(t *testing.T) {
 	contract.RequireContains(t, out.Stdout, "kept branch worktree-agent-unique (unique commits — inspect or delete by hand)")
 	if !headExists(f, "worktree-agent-unique") {
 		t.Fatal("unique-patch scratch orphan was destroyed by the content-landed proof")
+	}
+}
+
+// FT44 review fix (merge blindness): `git cherry` enumerates only non-merge commits, so a branch
+// whose ordinary commits all landed but whose merge commit carries unique content (a conflict
+// resolution) is invisible to the patch proof. Such a branch must survive the sweep: the ordering
+// matters — the branch merges main first, then its feature commit squash-lands, so cherry reports
+// the feature commit `-` while the merge-only file exists nowhere in main.
+func testRuntimeWorktreeSweepKeepsEvilMerge(t *testing.T) {
+	f := onMainFixture(t)
+	f.Git("checkout", "-q", "-b", "worktree-agent-evil")
+	f.WriteFile("feat.txt", "feature\n")
+	f.CommitAll("feature work")
+	f.Git("checkout", "-q", "main")
+	f.WriteFile("other.txt", "other\n")
+	f.CommitAll("mainline work")
+	f.Git("checkout", "-q", "worktree-agent-evil")
+	f.Git("-c", "user.email=bench@local", "-c", "user.name=bench", "merge", "--no-commit", "--no-ff", "main")
+	f.WriteFile("evil.txt", "merge-only resolution\n")
+	f.CommitAll("merge main (evil)")
+	f.Git("checkout", "-q", "main")
+	// Squash-land the feature commit (the merge commit's first parent) after the merge.
+	f.Git("-c", "user.email=bench@local", "-c", "user.name=bench", "cherry-pick", "worktree-agent-evil~1")
+
+	out := f.Bench("worktree", "clean")
+	out.RequireExit(0)
+	contract.RequireContains(t, out.Stdout, "kept branch worktree-agent-evil (unique commits — inspect or delete by hand)")
+	if !headExists(f, "worktree-agent-evil") {
+		t.Fatal("orphan carrying merge-only content was deleted by the content-landed proof")
 	}
 }
 

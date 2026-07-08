@@ -48,9 +48,18 @@ func ResolvedDefault(root string) (string, bool) {
 // cherry proof so the sweep can report which proof landed the branch. Any git
 // failure classifies as not landed: keeping a branch is recoverable, deleting
 // it is not.
+//
+// The cherry proof only speaks for non-merge commits: `git cherry` never lists a
+// merge, so a merge commit's own content (a conflict resolution) is invisible to
+// the patch comparison. A branch carrying any merge commit def lacks is therefore
+// unprovable by content and stays kept.
 func LandedInDefault(root, branch, def string) (landed, byContent bool) {
 	if git.OK("-C", root, "merge-base", "--is-ancestor", branch, def) {
 		return true, false
+	}
+	merges, err := git.Output("-C", root, "rev-list", "--merges", "--max-count=1", def+".."+branch)
+	if err != nil || merges != "" {
+		return false, false
 	}
 	out, err := git.Output("-C", root, "cherry", def, branch)
 	if err != nil {
