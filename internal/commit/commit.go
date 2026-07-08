@@ -3,7 +3,8 @@
 // code, not in prose the agent must remember. It sequences block-check → gate → flip →
 // stage → commit: it refuses before gating if any working-tree file outside the named set
 // (plus the --spec file) is dirty, runs the project gate through internal/gate and commits
-// only on green, flips the spec through internal/spec when --spec is set, and stages
+// only on green (reusing a fresh green verdict already recorded for the identical tree
+// hash instead of paying the gate twice), flips the spec through internal/spec when --spec is set, and stages
 // exactly the named paths via a `:(literal)` pathspec (a named deletion included) —
 // never a bare `git add -A` over the whole tree. A named path whose removal is already
 // staged (`git rm`, a rename's old half) matches no add-pathspec and is recognized as
@@ -23,6 +24,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/spec"
+	"github.com/gibbonmi/bench/internal/status"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -100,7 +102,13 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 
-	if rc := gate.RunAndRecord(root, stdout, stderr); rc != 0 {
+	// A green verdict recorded for the identical tree hash already proves exactly this
+	// diff (the cache is keyed to working-tree content, and the block-check above pinned
+	// the tree to the named set), so re-running the gate buys nothing but its full cost.
+	// Anything less — stale, red, untrusted, or absent — pays the real gate run.
+	if gv := status.GateVerdict(root); gv.Present && !gv.Stale && gv.Status == "green" {
+		fmt.Fprintln(stdout, "gate: green (fresh verdict reused for this tree)")
+	} else if rc := gate.RunAndRecord(root, stdout, stderr); rc != 0 {
 		fmt.Fprintln(stderr, "error: gate is red — commit refused (see the failing phase above)")
 		return 1
 	}

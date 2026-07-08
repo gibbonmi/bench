@@ -19,11 +19,21 @@ recoverable via `bench spec history dashboard`. Next: `/bench-shape-idea`.
 **FT39 (parked pending repro) — concurrent-acquire contract's 60s wall-clock
 window.** A batch session reported `bench_worktree_concurrent-acquire_contract`
 red ("second acquire did not record within a minute") ~3 times in ~8 gate runs
-under load; five fresh runs on 2026-07-07 (three idle, two gates racing) all
-stayed green, so the red is unreproduced. The fixed one-minute spawn-to-record
+under load; five fresh runs on 2026-07-07 (three idle, two gates racing) stayed
+green, then one later full-gate run went red with all four phases green in
+isolation immediately after — output not captured, so the red is observed but
+unattributed. The fixed one-minute spawn-to-record
 deadline is the suspected weak point; candidate fix is an event-keyed or raised
 deadline. Graduate only on a captured red with that exact message from a real
 `bench gate` run.
+
+**FT40 (parked — needs a design pass) — canary phase cost.** Canary is 128s of
+the gate's 130s wall (measured 2026-07-07): 66 fixtures plus a vacuity baseline,
+each materializing a temp repo and running a full inner gate (~1.6s each),
+poorly amortized. Candidate cuts, all oracle-semantics decisions: scope each
+fixture's inner gate to the phase family its EXPECT targets, skip canary when
+kit checks and fixtures are unchanged since the last green, or batch fixtures
+per inner run. Graduate via `/bench-shape-idea` when the reviewer schedules it.
 
 **FT6 (LOW, parked pending evidence — leave parked):** `bench refs`, `bench
 detect`, `bench doc`, `bench specs --retired`, doctor binary-presence row,

@@ -21,3 +21,12 @@ Format per entry:
 An entry leaves this file only via /bench-what-next.
 
 <!-- entries below -->
+
+## 2026-07-07 — pre-ran bench gate before bench commit, paying the 2-minute gate twice  [open]
+- **What happened:** The drain close-out ran `bench gate` to green, then `bench
+  commit` — which runs the full gate itself, unconditionally. The reviewer waited
+  ~5 minutes for a three-file docs commit.
+- **Right behavior:** Never pre-run the gate before `bench commit`; commit is the
+  gate run. (Separately diagnosed: commit ignores a fresh green verdict for the
+  identical tree — candidate fix under review.)
+- **Proposed rule change:** none (work-shaped fix pending reviewer decision).

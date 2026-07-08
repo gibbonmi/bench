@@ -10,17 +10,24 @@ import (
 
 // commitFixture builds a repo on branch main with a committed green gate (whose verdict
 // is `exit ${GATE_RC:-0}`, so a red run needs no untracked marker) and a configured git
-// identity, so `bench commit`'s own `git commit` has an author.
+// identity, so `bench commit`'s own `git commit` has an author. The gate tallies each
+// run in `.git/gate-runs` — inside the git dir so the tally never reads as an
+// unexplained working-tree file — so verdict-reuse tests can count real gate runs.
 func commitFixture(t *testing.T) contract.Fixture {
 	t.Helper()
 	f := contract.NewFixture(t)
 	f.Git("symbolic-ref", "HEAD", "refs/heads/main")
 	f.Git("config", "user.email", "bench@local")
 	f.Git("config", "user.name", "bench")
-	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\nexit ${GATE_RC:-0}\n")
+	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\necho run >> .git/gate-runs\nexit ${GATE_RC:-0}\n")
 	f.WriteFile("seed.txt", "seed\n")
 	f.CommitAll("seed")
 	return f
+}
+
+func gateRuns(t *testing.T, f contract.Fixture) int {
+	t.Helper()
+	return len(contract.NonEmptyLines(contract.ReadFileAbs(t, filepath.Join(f.Root, ".git", "gate-runs"))))
 }
 
 func headSha(f contract.Fixture) string {
@@ -35,6 +42,8 @@ func TestRuntimeCommitContracts(t *testing.T) {
 	contract.SkipIfSubjectBenchMissing(t)
 	t.Parallel()
 	contract.RunParallel(t, "green gate commits named path", testCommitGreenCommits)
+	contract.RunParallel(t, "fresh green verdict is reused, gate not re-run", testCommitFreshVerdictReused)
+	contract.RunParallel(t, "stale verdict re-runs the gate", testCommitStaleVerdictRerunsGate)
 	contract.RunParallel(t, "red gate refuses commit", testCommitRedRefuses)
 	contract.RunParallel(t, "unexplained file blocks before gate", testCommitUnexplainedBlocks)
 	contract.RunParallel(t, "glob/space path survives whole", testCommitWeirdPath)
@@ -46,6 +55,40 @@ func TestRuntimeCommitContracts(t *testing.T) {
 	contract.RunParallel(t, "bad --spec fails before the gate", testCommitSpecFailsFast)
 	contract.RunParallel(t, "empty commit refused", testCommitEmptyRefused)
 	contract.RunParallel(t, "usage errors exit 2", testCommitUsageExitTwo)
+}
+
+func testCommitFreshVerdictReused(t *testing.T) {
+	// The verdict cache is keyed to the content hash of the tested tree, so a green
+	// `bench gate` on the exact tree being committed already proves this diff. Commit
+	// reuses that verdict instead of paying the full gate a second time — the
+	// five-minute-docs-commit defect.
+	f := commitFixture(t)
+	f.WriteFile("work.txt", "changed\n")
+	f.Bench("gate").RequireExit(0)
+	before := headSha(f)
+
+	f.Bench("commit", "-m", "do work", "work.txt").RequireExit(0)
+
+	if headSha(f) == before {
+		t.Fatal("HEAD did not advance on a green gate")
+	}
+	contract.RequireIntEqual(t, gateRuns(t, f), 1, "commit re-ran the gate despite a fresh green verdict for the identical tree")
+}
+
+func testCommitStaleVerdictRerunsGate(t *testing.T) {
+	// A verdict recorded for a different tree proves nothing about this diff: any edit
+	// after the gate run must send commit back through the full gate.
+	f := commitFixture(t)
+	f.Bench("gate").RequireExit(0)
+	f.WriteFile("work.txt", "changed\n")
+	before := headSha(f)
+
+	f.Bench("commit", "-m", "do work", "work.txt").RequireExit(0)
+
+	if headSha(f) == before {
+		t.Fatal("HEAD did not advance on a green gate")
+	}
+	contract.RequireIntEqual(t, gateRuns(t, f), 2, "commit trusted a verdict recorded for a different tree")
 }
 
 func testCommitGreenCommits(t *testing.T) {
