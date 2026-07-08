@@ -10,6 +10,21 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
+**FT38 — dashboard visual identity pass.** `bench dashboard` v1 shipped
+data-faithful and visually neutral; the original idea wanted an
+ui_examples-inspired rich treatment with animated characters. Taste is a
+reviewer call, so the work starts as a grill, not a build. Decision detail is
+recoverable via `bench spec history dashboard`. Next: `/bench-shape-idea`.
+
+**FT39 (parked pending repro) — concurrent-acquire contract's 60s wall-clock
+window.** A batch session reported `bench_worktree_concurrent-acquire_contract`
+red ("second acquire did not record within a minute") ~3 times in ~8 gate runs
+under load; five fresh runs on 2026-07-07 (three idle, two gates racing) all
+stayed green, so the red is unreproduced. The fixed one-minute spawn-to-record
+deadline is the suspected weak point; candidate fix is an event-keyed or raised
+deadline. Graduate only on a captured red with that exact message from a real
+`bench gate` run.
+
 **FT6 (LOW, parked pending evidence — leave parked):** `bench refs`, `bench
 detect`, `bench doc`, `bench specs --retired`, doctor binary-presence row,
 `conformanceFamilies`-vs-dispatch reconcile meta-check, and a per-anchor
@@ -29,4 +44,5 @@ changelog adds a spawn tool name or a deny-capable SubagentStart.
 
 ## Recommended sequence
 
-1. `/bench-what-next` — drain the three open journal entries from the batch.
+1. `/bench-shape-idea` — FT38 dashboard visual identity: the open decisions
+   are pure reviewer taste, so the grill comes before any build.

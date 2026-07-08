@@ -1,1 +1,0 @@
-- 2026-07-07  dashboard rich visual treatment (ui_examples look, animated characters) — reviewer-taste follow-up deferred from FT7 v1; recover detail via bench spec history dashboard
