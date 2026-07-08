@@ -1,0 +1,2 @@
+- 2026-07-07  bench canary <relative-root> breaks: inner gate path resolves against the fixture cwd (exit 127) and fixtures carrying their own dot-bench/gate.sh can accidentally run it — root should be absolutized on entry
+- 2026-07-07  bench canary with a relative root arg (e.g. '.') joins .bench/gate.sh off the relative root, so every inner gate run in its temp cwd exits 127 and reports 'did not bite' — absolutize root at entry (hostile-input class: cwd/path assumptions)

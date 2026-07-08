@@ -30,3 +30,14 @@ An entry leaves this file only via /bench-what-next.
   gate run. (Separately diagnosed: commit ignores a fresh green verdict for the
   identical tree — candidate fix under review.)
 - **Proposed rule change:** none (work-shaped fix pending reviewer decision).
+
+## 2026-07-07 — paused a grill to ask for a re-prompt between tickets  [open]
+- **What happened:** After resolving canary-cost #6, the session stopped and told
+  the reviewer to say go (or re-invoke `/bench-shape-idea`) before grilling #2 —
+  a one-question ticket the same sitting could have carried straight through.
+- **Right behavior:** Once a grill is running, keep asking question after
+  question until no unresolved question remains; never pause to ask permission
+  to continue or require a re-prompt between tickets.
+- **Proposed rule change:** In `/bench-shape-idea` resume mode, soften "resolve
+  that one ticket, then stop" to allow continuing into newly-unblocked grill
+  tickets in the same sitting when the reviewer is present and answering.
