@@ -16,13 +16,6 @@ ui_examples-inspired rich treatment with animated characters. Taste is a
 reviewer call, so the work starts as a grill, not a build. Decision detail is
 recoverable via `bench spec history dashboard`. Next: `/bench-shape-idea`.
 
-**FT41 — /bench-shape-idea resume mode carries the grill through unblocked
-tickets.** Rule-shaped from the learnings journal: soften "resolve that one
-ticket, then stop" so a running grill continues into newly-unblocked tickets
-in the same sitting while the reviewer is present and answering. Kit edit
-under `craft-synthesis`. Spec: `specs/shape-idea-grill-continuation.md`.
-Next: `/bench-implement-spec`.
-
 **FT6 (LOW, parked pending evidence — leave parked):** `bench refs`, `bench
 detect`, `bench doc`, `bench specs --retired`, doctor binary-presence row,
 `conformanceFamilies`-vs-dispatch reconcile meta-check, and a per-anchor
@@ -42,5 +35,5 @@ changelog adds a spawn tool name or a deny-capable SubagentStart.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT41 shape-idea grill continuation: rule-shaped kit
-   edit under the synthesis discipline.
+1. `/bench-shape-idea` — FT38 dashboard visual identity: the open decisions
+   are pure reviewer taste, so the grill comes before any build.
