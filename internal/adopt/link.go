@@ -50,11 +50,12 @@ func Link(args []string, stdout, stderr io.Writer, version string) int {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	if err := installClaudeMD(root); err != nil {
+	claudeManaged, err := installClaudeMD(root)
+	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	if err := installPlan(root, mode, version, plan); err != nil {
+	if err := installPlan(root, mode, version, plan, claudeManaged); err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
@@ -283,16 +284,24 @@ func writeAgentsFile(root string) error {
 	return os.WriteFile(path, []byte(next), 0o644)
 }
 
-func installClaudeMD(root string) error {
+// installClaudeMD writes CLAUDE.md in the current bench-managed shape whenever the file is
+// absent, still the retired legacy bench shape, or already the current bench shape, and
+// reports whether it left the file in that link-owned form. A pre-existing user CLAUDE.md —
+// including a present-but-empty file, which is user content rather than "absent" — is left
+// untouched and reported unowned, so the caller never records it in the link manifest.
+func installClaudeMD(root string) (bool, error) {
 	path := filepath.Join(root, "CLAUDE.md")
 	content, err := os.ReadFile(path)
-	if os.IsNotExist(err) || string(content) == legacyClaudeMD() {
-		return os.WriteFile(path, []byte(benchClaudeMD()), 0o644)
+	if os.IsNotExist(err) || string(content) == legacyClaudeMD() || string(content) == benchClaudeMD() {
+		if err := os.WriteFile(path, []byte(benchClaudeMD()), 0o644); err != nil {
+			return false, err
+		}
+		return true, nil
 	}
-	return err
+	return false, err
 }
 
-func installPlan(root, mode, version string, plan []planEntry) error {
+func installPlan(root, mode, version string, plan []planEntry, claudeManaged bool) error {
 	var rows []manifestRow
 	for _, e := range plan {
 		if err := installPlannedFile(root, mode, e); err != nil {
@@ -303,6 +312,16 @@ func installPlan(root, mode, version string, plan []planEntry) error {
 			return err
 		}
 		rows = append(rows, manifestRow{e.rel, fp})
+	}
+	if claudeManaged {
+		// CLAUDE.md is not a planEntry: unlike the rest of the plan it is bespoke,
+		// conditionally owned content rather than an unconditional copy from the kit, so it
+		// gets its own row here instead of joining the generic install loop above.
+		fp, err := fingerprintPath(filepath.Join(root, "CLAUDE.md"))
+		if err != nil {
+			return err
+		}
+		rows = append(rows, manifestRow{"CLAUDE.md", fp})
 	}
 	return writeManifest(filepath.Join(root, ".bench", "link-manifest.tsv"), version, rows)
 }

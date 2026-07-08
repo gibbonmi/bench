@@ -204,10 +204,12 @@ plain-shell `bench` shim on a stable PATH dir so login shells and `bash -c` reso
 
 To uninstall, start with the per-repo footprint: `bench unlink` consumes the link
 manifest and reverses the install — it removes the managed files whose fingerprints
-still match, prunes emptied managed directories, strips the managed AGENTS.md block
-while keeping your prose, and removes the bench-managed pre-push hook. A file you
-edited since linking, and your own artifacts (ROADMAP.md, IDEAS.md, CONTEXT.md,
-`specs/`, `decisions/`, `.bench/learnings.md`, `.bench/gate.sh`), are left in place.
+still match (including a `CLAUDE.md` that `bench link` itself created), prunes emptied
+managed directories, strips the managed AGENTS.md block while keeping your prose, and
+removes the bench-managed pre-push hook. A file you edited since linking, a `CLAUDE.md`
+that predates link (link never records one, even a present-but-empty file), and your
+own artifacts (ROADMAP.md, IDEAS.md, CONTEXT.md, `specs/`, `decisions/`,
+`.bench/learnings.md`, `.bench/gate.sh`), are left in place.
 Rehearse it first with `bench unlink --dry-run`, which prints the exact plan and
 changes nothing:
 
