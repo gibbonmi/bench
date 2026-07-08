@@ -61,10 +61,15 @@ func packageMarkdownFiles(root string) []string {
 // diag rather than shipping. CHANGELOG.md is excluded by design — history names the old
 // identity and is not rewritten; dist/ is a compiled artifact, not authored surface.
 func checkShippedIdentityStrings(root string) []string {
+	// The spec enumerates three examples (@benchkit, npx benchkit, npm i -g benchkit);
+	// the profile's "npm package `benchkit`" claim and the README/doctor uninstall line
+	// are the same class of unowned-identity string on surfaces this rename touched, so
+	// they join the net (reviewer-approved).
 	stale := []string{
 		"@benchkit",
 		"npx benchkit",
 		"npm i -g benchkit",
+		"npm uninstall -g benchkit",
 		"npm package `benchkit`",
 	}
 	surface := append(shippedFiles(root),
@@ -121,6 +126,7 @@ func TestShippedIdentityStringSweepBites(t *testing.T) {
 	cases := []struct{ file, body, want string }{
 		{"README.md", "run npx benchkit link\n", "npx benchkit"},
 		{"README.md", "or npm i -g benchkit today\n", "npm i -g benchkit"},
+		{"README.md", "remove with npm uninstall -g benchkit\n", "npm uninstall -g benchkit"},
 		{"projects/benchkit.md", "the npm package `benchkit`.\n", "npm package `benchkit`"},
 		{"package.json", `{"files":["README.md"],"optionalDependencies":{"@benchkit/linux-x64":"1"}}` + "\n", "@benchkit"},
 		{".github/workflows/release.yml", "  for d in dist/packages/@benchkit/*/; do\n", "@benchkit"},
