@@ -94,6 +94,15 @@ lives in `craft-line`; this rule is about the prose itself.)
   when to fire it; split by trigger, not by topic.
 - **No-op** — a sentence no reader can act on; the pruning hunt above exists to
   catch these — delete on sight.
+- **Negation** — steering by prohibition drags the forbidden behavior into
+  context and makes it *more* available ("don't think of an elephant"). Prompt
+  the positive target instead; a prohibition earns its place only as a hard
+  guardrail you can't phrase positively, and even then it rides next to the
+  positive.
+- **Negative space** — every decision a skill declines to make is silently
+  delegated to the model's priors, not left neutral. Read a draft for its
+  silences and decide each omission deliberately: fill it, or leave it open
+  as a real branch.
 - **Sediment** — stale layers that accrete because adding feels safe and removing
   feels risky. The default fate of any skill without a pruning discipline. Run this
   skill against the others periodically.

@@ -32,25 +32,50 @@ don't inline them.
 ## Structure
 
 ```markdown
+## Destination
+
+<one or two lines: what this map is finding its way to. Written first, before
+any ticket — it fixes scope, and every resume session orients to it.>
+
 ## #1: <the open question, as a question>
 
 Blocked by: #<n>, #<n>
-Type: Research | Prototype | Grill
+Type: Research | Prototype | Grill | Task
 
 ### Question
 <what we don't yet know, and why it matters for the build>
 
 ### Answer
 <filled in when resolved — current state only, no deliberation log>
+
+## Not yet specified
+
+<in-scope fog not yet sharp enough to phrase as a ticket — one line each. A
+question sharp enough to phrase, even if blocked, is a ticket; anything dimmer
+stays here. Don't pre-slice fog into ticket-sized pieces.>
+
+## Out of scope
+
+<work ruled beyond the destination — one line each. Unlike fog it never
+graduates; a line here stops a later session reopening it.>
 ```
 
-Each ticket is sized to one focused session. Three kinds:
+Each ticket is sized to one focused session. Four kinds:
 
-- **Research** — read docs/APIs/local code, produce a short summary asset. If the
-  asset claims byte or wire compatibility, include a runnable probe against the
-  caller's own edge outputs.
+- **Research** — read docs/APIs/local code, produce a short summary asset.
+  Trace every claim to the primary source that owns it and cite it per claim
+  in the asset. If the asset claims byte or wire compatibility, include a
+  runnable probe against the caller's own edge outputs.
 - **Prototype** — write throwaway code to answer "how should it look/behave."
 - **Grill** — converse to surface the decision. Use `craft-grill`. The default.
+- **Task** — manual work that must happen before a decision can be made:
+  provisioning access, signing up for a service, moving data so its shape can
+  be seen. The one type that does rather than decides — it earns its place by
+  unblocking a decision, and its body names who does the work.
+
+Grill and Prototype tickets resolve only through live exchange with me — a
+session that answers its own grill questions has broken that contract.
+Research runs agent-alone.
 
 ## The Handoff — the seams a closed map hands the spec-writer
 
@@ -131,7 +156,8 @@ move to another answerable ticket, or stop.
 
 ## The exit
 
-The map is deliberately incomplete beyond the frontier. You are done when the
+The map is deliberately incomplete beyond the frontier — the dim remainder
+lives under `## Not yet specified`, not in anyone's head. You are done when the
 path to the finish line is clear — no unresolved tickets blocking the build. Before
 declaring the map closed, run `bench maps` — it lists every ticket still holding a
 `— (open` / `— (deferred` placeholder or a `GRILL DEFERRED` banner, and on a map
@@ -141,7 +167,7 @@ but not written into the map, or a Handoff item left unfilled, is not recorded. 
 (usually `/bench-write-spec`) and a one-clause why.
 
 A natural seam in the work is recorded as a decision in the map for *me* to make —
-it is never a reason to close the map early or to spin off a separate map or PRD on
+it is never a reason to close the map early or to spin off a separate map or spec on
 your own. Surfacing "this could be two slices" is useful; deciding to slice and
 deferring the rest is mine.
 

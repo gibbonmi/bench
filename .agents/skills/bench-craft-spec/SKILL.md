@@ -78,3 +78,13 @@ rather than guessed: agent time is dominated by verification, so state it as
   the CRUD, the edge handling) is an acceptance criterion: move it into the
   stories and the map so the gate enforces it. You can't ticket your way out
   of the spec's own breadth.
+
+**One class of work never slices vertically: the wide refactor.** A single
+mechanical change with a large blast radius — renaming a column, retyping a
+shared symbol — breaks every call site at once, so no vertical slice lands
+green. Sequence it by **expand–contract**: expand (the new form lands beside
+the old), migrate call sites in batches sized by blast radius — each batch
+green because the old form still works — then contract (delete the old form
+once no caller remains). When even batches cannot hold green on their own,
+say so in the spec: the sequence rides one shared branch and green is
+promised only at a final integrate-and-verify step.

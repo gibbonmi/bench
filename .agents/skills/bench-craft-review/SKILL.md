@@ -23,8 +23,9 @@ its count and its worst issue.
   working agreement, the shared platform rules, the project profile, any
   conventions docs. Knowledge duplication is a Standards finding — two
   derivations of one fact is the code-standard defect review exists to grade.
-  Separate hard violations from judgment calls. Skip anything the gate already
-  enforces; double-reporting what tooling caught is noise.
+  The smell baseline below rides this axis: classic rot counts even when no
+  doc names it. Separate hard violations from judgment calls. Skip anything
+  the gate already enforces; double-reporting what tooling caught is noise.
 - **Spec** — three hunts: requirements missing or partial; behavior nobody asked
   for (scope creep); requirements implemented but wrong. "Implemented but wrong"
   includes calls the diff introduces into APIs, flags, or config keys that don't
@@ -39,11 +40,47 @@ its count and its worst issue.
   exists — the two together are the full inventory. An edge the spec
   explicitly marked won't-handle is not a finding; an edge nobody decided is.
 
+## The smell baseline
+
+The Standards axis carries a baseline beneath the documented conventions:
+Fowler's classic smells (*Refactoring* ch. 3). Naming a smell recruits what
+the name already means — hunt each one by name:
+
+- **Mysterious Name** — the name needs the code read to be understood; rename
+  until it says what it's for.
+- **Duplicated Code** — the code-standard defect above, two sources for one
+  fact; collapse to one.
+- **Feature Envy** — a function mostly reaching into another module's data;
+  move it to where the data lives.
+- **Data Clumps** — the same few values always traveling together; make them
+  one object.
+- **Primitive Obsession** — a domain concept passed as a bare string or int;
+  introduce a value type.
+- **Repeated Switches** — the same type-dispatch repeated across sites;
+  collapse to one dispatch.
+- **Shotgun Surgery** — one logical change forcing edits in many places;
+  gather the pieces into one module.
+- **Divergent Change** — one module edited for unrelated reasons; split it by
+  reason for change.
+- **Speculative Generality** — hooks and parameters for a future nobody
+  scheduled; delete until needed.
+- **Message Chains** — `a.b().c().d()` walks through the object graph; hide
+  the delegation behind the object the caller holds.
+- **Middle Man** — a module that mostly forwards; let callers reach the real
+  object.
+- **Refused Bequest** — an inheritor ignoring most of what it inherits; swap
+  inheritance for delegation.
+
+Two rules bind the baseline: a documented repo standard overrides it wherever
+they disagree, and a smell is always a judgment call, never a hard violation —
+file baseline findings under judgment calls.
+
 ## What a finding must cite
 
 A finding without a citation is an opinion.
 
-- Standards: the rule, named or quoted precisely.
+- Standards: the rule, named or quoted precisely; a baseline finding names the
+  smell and quotes the hunk.
 - Spec: the spec line, quoted. For implemented-but-wrong behavior a traced
   execution is also a valid citation — the concrete input, the value the diff
   produces, and the expectation it violates — so a happy-path logic bug is

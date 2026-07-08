@@ -50,17 +50,18 @@ the spec, never from the loop.
    with no behavior so the one test compiles, then confirm the behavioral red —
    missing symbols are pressure to scaffold, never license to batch the file. The
    expected value comes from the spec or an independent computation — never from
-   running the implementation and pasting back what it returned. Vacuity check:
+   running the implementation and pasting back what it returned, and never
+   recomputed in the test with the implementation's own algorithm: a test that
+   mirrors the code passes by construction, so prefer a literal. Vacuity check:
    an assertion that would also pass against a no-op implementation asserts
    nothing.
 2. **Green** — the smallest change that passes it. "Minimal to pass" is a local
    rule for this step, not a license to stop short of the spec's breadth.
 3. **Refactor** — clean up with the test green. A good test survives this; if your
    refactor breaks it, the test was attached to an internal — re-place the seam.
-   Look for: duplication (extract), long methods (private helpers, tests stay on
-   the interface), shallow modules (combine or deepen — see `craft-seams`), feature envy
-   (move logic to where the data lives), primitive obsession (introduce value
-   objects), and existing code the new code just revealed as a problem.
+   Hunt `craft-review`'s smell baseline plus shallow modules (combine or
+   deepen — see `craft-seams`), and existing code the new code just revealed
+   as a problem. Tests stay on the interface while helpers move beneath it.
 
 Inside a `bench shift` iteration, complete red→green within the same iteration: a
 red gate rolls the worktree back and deletes uncommitted work, so a test left

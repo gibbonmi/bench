@@ -8,11 +8,12 @@ index: surfacing a decision one question at a time
 
 Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions. For each question, provide your recommended answer. The recommendation is the point — it forces a concrete decision instead of an open-ended prompt, and lets me correct rather than compose.
 
-If a question can be answered by exploring the codebase, explore the codebase instead.
+If a *fact* can be found by exploring the codebase, look it up rather than asking me. The *decisions*, though, are mine — put each one to me and wait for my answer. A grill that answers its own questions has stopped grilling.
 
 ## Discipline
 
-- One question per turn. Wait for the answer before the next.
+- One question per turn — a stack of questions in one turn is bewildering, and
+  the answers come back partial. Wait for the answer before the next.
 - Attach your recommended answer and a one-clause reason. I confirm, adjust, or
   reject.
 - Go in dependency order — resolve the question that unblocks the most others
@@ -22,7 +23,7 @@ If a question can be answered by exploring the codebase, explore the codebase in
   seam where the work could be split, *name it as a decision for me* — "there's a
   clean boundary between X and Y; do you want this spec to stop at X?" — and then
   keep grilling the rest. Naming a seam is surfacing. **Proposing to build one slice
-  now and defer the rest, and offering to "make a separate PRD" for it, is not** —
+  now and defer the rest, and offering to "make a separate spec" for it, is not** —
   that's you making the scoping call and ending the session early to escape the open
   work. Don't. Whether to slice is mine to decide, against a finished map; it is
   never your exit from the grill. I am fine with a small scope — I am not fine with
@@ -30,6 +31,9 @@ If a question can be answered by exploring the codebase, explore the codebase in
 - Stop when the fog is gone: when the remaining questions no longer change what
   gets built. Don't pad with questions for their own sake. A proposed slice is not
   "fog gone" — it's an unanswered scoping question, so surface it and continue.
+- **The grill ends in my confirmation, not in your build.** Do not enact the
+  plan until I confirm we have reached a shared understanding — the last answer
+  landing is not that confirmation.
 
 ## Form
 
