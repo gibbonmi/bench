@@ -106,6 +106,59 @@ func testManagedPrePushMissingBenchTree(t *testing.T) {
 	blocked.RequireContains(blocked.Stderr, "bench gate pin")
 }
 
+// TestManagedPrePushLiveDefaultBranch covers the pre-push guard's default-branch
+// resolution: a repo linked before its remote existed baked a fabricated default, so the
+// hook resolves origin/HEAD live at push time and falls back to the baked token only when
+// that is unresolvable.
+func TestManagedPrePushLiveDefaultBranch(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	contract.RunParallel(t, "pre-push did not guard the live default branch", testManagedPrePushLiveDefault)
+	contract.RunParallel(t, "pre-push offline baked-fallback guard failed", testManagedPrePushBakedFallback)
+}
+
+// testManagedPrePushLiveDefault links a repo with no remote (the hook bakes the fabricated
+// "main" default), then points a later origin/HEAD at master: the guard must block the live
+// default (master) and no longer the stale baked token (main).
+func testManagedPrePushLiveDefault(t *testing.T) {
+	f := contract.NewFixture(t)
+	linkOK(t, f)
+	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\nexit 0\n")
+	f.CommitAll("base")
+	base := strings.TrimSpace(f.Git("rev-parse", "HEAD").Stdout)
+
+	f.Git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/master")
+
+	blocked := runPrePush(t, f, refLine("refs/heads/master", base, "refs/heads/master"))
+	if blocked.ExitCode == 0 {
+		t.Fatalf("pre-push allowed a direct push to the live default branch master\nstderr:\n%s", blocked.Stderr)
+	}
+	blocked.RequireContains(blocked.Stderr, "direct push to master")
+
+	// Live resolution supersedes the baked token: main is no longer the default, so a
+	// push to it is allowed.
+	allowed := runPrePush(t, f, refLine("refs/heads/main", base, "refs/heads/main"))
+	allowed.RequireExit(0)
+	allowed.RequireNotContains(allowed.Stderr, "blocked:")
+}
+
+// testManagedPrePushBakedFallback is the offline-path regression guard: with no remote,
+// origin/HEAD is unresolvable, so the hook must fall back to the baked default and still
+// block a direct push to it. It passes before and after the live-resolution change.
+func testManagedPrePushBakedFallback(t *testing.T) {
+	f := contract.NewFixture(t)
+	linkOK(t, f)
+	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\nexit 0\n")
+	f.CommitAll("base")
+	base := strings.TrimSpace(f.Git("rev-parse", "HEAD").Stdout)
+
+	blocked := runPrePush(t, f, refLine("refs/heads/main", base, "refs/heads/main"))
+	if blocked.ExitCode == 0 {
+		t.Fatalf("pre-push allowed a direct push to the baked default with no remote\nstderr:\n%s", blocked.Stderr)
+	}
+	blocked.RequireContains(blocked.Stderr, "direct push to main")
+}
+
 func runPrePush(t *testing.T, f contract.Fixture, stdin string) contract.Probe {
 	t.Helper()
 	return contract.RunAtWithInput(t, f, f.Root, nil, stdin, "bash", prePushPath(t, f))

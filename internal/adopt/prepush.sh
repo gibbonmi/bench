@@ -38,10 +38,18 @@ while IFS= read -r line; do
     fi
   fi
 done
+# Resolve the protected branch live: a repo linked before its remote existed baked a
+# fabricated default, so query origin/HEAD at push time and fall back to the baked token
+# only when it is unresolvable (no remote, or origin/HEAD unset).
+protected="__BENCH_DEFAULT_BRANCH__"
+live_head="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+if [[ -n "$live_head" ]]; then
+  protected="${live_head#origin/}"
+fi
 for line in "${ref_lines[@]}"; do
   read -r _ _ remote_ref _ <<< "$line"
-  if [[ "$remote_ref" == "refs/heads/__BENCH_DEFAULT_BRANCH__" ]]; then
-    echo "blocked: direct push to __BENCH_DEFAULT_BRANCH__. Open a PR or merge it yourself." >&2
+  if [[ "$remote_ref" == "refs/heads/$protected" ]]; then
+    echo "blocked: direct push to $protected. Open a PR or merge it yourself." >&2
     exit 1
   fi
 done

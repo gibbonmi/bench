@@ -279,7 +279,7 @@ func testLinkDefaultBranchResolution(t *testing.T) {
 	linkOK(t, repo)
 
 	hooks := strings.TrimSpace(repo.Git("rev-parse", "--git-path", "hooks").Stdout)
-	requireFixtureFileContains(t, repo, filepath.ToSlash(filepath.Join(hooks, "pre-push")), "refs/heads/master", "pre-push guards the wrong branch when origin/HEAD is unset")
+	requireFixtureFileContains(t, repo, filepath.ToSlash(filepath.Join(hooks, "pre-push")), "protected=\"master\"", "pre-push bakes the wrong branch fallback when origin/HEAD is unset")
 }
 
 func testLinkHooksPathConflict(t *testing.T) {
