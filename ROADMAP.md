@@ -16,15 +16,6 @@ ui_examples-inspired rich treatment with animated characters. Taste is a
 reviewer call, so the work starts as a grill, not a build. Decision detail is
 recoverable via `bench spec history dashboard`. Next: `/bench-shape-idea`.
 
-**FT39 — concurrent-acquire contract: replace the 60s wall-clock deadline.**
-Graduated 2026-07-07: a real `bench gate` run went red with exactly "second
-acquire did not record within a minute — the runs never overlapped"
-(runtime_worktree_test.go:355, 60.06s) on a tree identical to a green-gated
-one, meeting the row's captured-red criterion. The fixed one-minute
-spawn-to-record deadline is the weak point; fix is an event-keyed or raised
-deadline. Spec: `specs/concurrent-acquire-deadline.md`. Next:
-`/bench-implement-spec`.
-
 **FT41 — /bench-shape-idea resume mode carries the grill through unblocked
 tickets.** Rule-shaped from the learnings journal: soften "resolve that one
 ticket, then stop" so a running grill continues into newly-unblocked tickets
@@ -51,7 +42,5 @@ changelog adds a spawn tool name or a deny-capable SubagentStart.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT39 concurrent-acquire deadline: graduation evidence
-   captured, flake still live in the gate.
-2. `/bench-implement-spec` — FT41 shape-idea grill continuation: rule-shaped kit
+1. `/bench-implement-spec` — FT41 shape-idea grill continuation: rule-shaped kit
    edit under the synthesis discipline.
