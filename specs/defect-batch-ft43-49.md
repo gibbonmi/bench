@@ -1,6 +1,6 @@
 # defect-batch-ft43-49
 
-Status: implemented
+Status: staged
 
 Source: reviewer-directed batch drain off the 2026-07-08 platform assessment
 (no per-defect decision maps — every defaulted decision below is **flagged ⚑
