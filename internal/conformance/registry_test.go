@@ -22,6 +22,7 @@ type fixtureRegistration struct {
 var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"invalid-json":             conformanceFixture(".bench/gate.sh"),
 	"codex-hooks-broken":       conformanceFixture(".bench/gate.sh"),
+	"codex-hooks-timeout":      conformanceFixture(".bench/gate.sh"),
 	"bad-frontmatter":          conformanceFixture(".bench/gate.sh"),
 	"claude-skills-unmirrored": conformanceFixture(".bench/gate.sh"),
 	"extensionless-gate-ref":   conformanceFixture(".bench/gate.sh"),

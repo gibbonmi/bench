@@ -119,6 +119,7 @@ func checkCodexHooks(root string) []string {
 			Matcher string `json:"matcher"`
 			Hooks   []struct {
 				Command string `json:"command"`
+				Timeout *int   `json:"timeout"`
 			} `json:"hooks"`
 		} `json:"hooks"`
 	}
@@ -126,6 +127,20 @@ func checkCodexHooks(root string) []string {
 		return nil
 	}
 	var diags []string
+	events := make([]string, 0, len(cfg.Hooks))
+	for event := range cfg.Hooks {
+		events = append(events, event)
+	}
+	sort.Strings(events)
+	for _, event := range events {
+		for _, group := range cfg.Hooks[event] {
+			for _, hook := range group.Hooks {
+				if hook.Timeout != nil {
+					diags = append(diags, fmt.Sprintf("codex hooks.json %s hook sets a timeout key", event))
+				}
+			}
+		}
+	}
 	var stopCommands, preCommands []string
 	for _, group := range cfg.Hooks["Stop"] {
 		for _, hook := range group.Hooks {

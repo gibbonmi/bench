@@ -14,6 +14,7 @@ func TestLoadValidityMetadataFixturesBite(t *testing.T) {
 	fixtures := []string{
 		"invalid-json",
 		"codex-hooks-broken",
+		"codex-hooks-timeout",
 		"bad-frontmatter",
 		"claude-skills-unmirrored",
 		"extensionless-gate-ref",

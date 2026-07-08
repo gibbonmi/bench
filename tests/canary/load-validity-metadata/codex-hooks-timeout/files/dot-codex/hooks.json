@@ -6,6 +6,7 @@
           {
             "type": "command",
             "command": "\"$(git rev-parse --show-toplevel)/.bench/hooks/stop.sh\"",
+            "timeout": 30,
             "statusMessage": "Checking Bench gate"
           }
         ]
