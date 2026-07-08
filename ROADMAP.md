@@ -25,13 +25,6 @@ spawn-to-record deadline is the weak point; fix is an event-keyed or raised
 deadline. Spec: `specs/concurrent-acquire-deadline.md`. Next:
 `/bench-implement-spec`.
 
-**FT40 — bench canary absolutizes its root argument.** Reproduced 2026-07-07:
-`bench canary .` joins `.bench/gate.sh` off the relative root, so every inner
-gate run in its fixture temp cwd exits 127 and reports "did not bite"; a
-fixture carrying its own `.bench/gate.sh` could instead accidentally run that
-one. Absolutize root at entry (hostile-input class: cwd/path assumptions).
-Spec: `specs/canary-absolute-root.md`. Next: `/bench-implement-spec`.
-
 **FT41 — /bench-shape-idea resume mode carries the grill through unblocked
 tickets.** Rule-shaped from the learnings journal: soften "resolve that one
 ticket, then stop" so a running grill continues into newly-unblocked tickets
@@ -58,9 +51,7 @@ changelog adds a spawn tool name or a deny-capable SubagentStart.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT40 canary absolute root: reproduced defect, smallest
-   fix, restores canary trust.
-2. `/bench-implement-spec` — FT39 concurrent-acquire deadline: graduation evidence
+1. `/bench-implement-spec` — FT39 concurrent-acquire deadline: graduation evidence
    captured, flake still live in the gate.
-3. `/bench-implement-spec` — FT41 shape-idea grill continuation: rule-shaped kit
+2. `/bench-implement-spec` — FT41 shape-idea grill continuation: rule-shaped kit
    edit under the synthesis discipline.
