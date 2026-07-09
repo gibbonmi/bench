@@ -98,6 +98,33 @@ func TestPhaseTable(t *testing.T) {
 	}
 }
 
+func TestPhaseTableBuildPhase(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "scripts", "go-build.sh"), "#!/usr/bin/env bash\n")
+	writeFile(t, filepath.Join(root, "go.mod"), "module fixture\n")
+
+	phases := BenchkitPhases(root, "/tmp/kit")
+	if len(phases) != 5 {
+		t.Fatalf("BenchkitPhases len = %d, want build + 4: %#v", len(phases), phases)
+	}
+	build := phases[0]
+	if build.Name != "build" || !build.Serial {
+		t.Fatalf("first phase = %#v, want serial build phase", build)
+	}
+	want := []string{"bash", filepath.Join(root, "scripts", "go-build.sh"), root, filepath.Join(root, "dist", "bench")}
+	if !reflect.DeepEqual(build.Argv, want) {
+		t.Fatalf("build argv = %#v, want %#v", build.Argv, want)
+	}
+	if got := phaseNames(phasesForMode(phases, innerMode)); got[0] != "build" {
+		t.Fatalf("inner phases dropped the build phase: %#v", got)
+	}
+
+	// Without the Go build surface the table keeps its four-phase shape.
+	if bare := BenchkitPhases(t.TempDir(), "/tmp/kit"); len(bare) != 4 {
+		t.Fatalf("bare root BenchkitPhases len = %d, want 4: %#v", len(bare), phaseNames(bare))
+	}
+}
+
 func TestShellcheckPhaseExpandsHookAndLibShellFiles(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, "bin", "bench.sh"), "#!/usr/bin/env bash\n")

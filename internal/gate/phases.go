@@ -28,11 +28,14 @@ const (
 
 // Phase is one independent benchkit gate check. Argv is passed directly to
 // exec.Command; callers must not smuggle shell-interpolated command strings through it.
+// A Serial phase runs to completion before any other phase starts, and its red stops
+// the run: the phases behind it would grade the artifact it failed to produce.
 type Phase struct {
 	Name     string
 	Argv     []string
 	Env      []string
 	Optional bool
+	Serial   bool
 }
 
 type phaseResult struct {
@@ -44,10 +47,25 @@ type phaseResult struct {
 
 var benchkitPhasesForCommand = BenchkitPhases
 
-// BenchkitPhases is the real four-phase table for the kit gate. root is the tree under
+// BenchkitPhases is the real phase table for the kit gate. root is the tree under
 // grade; kit is the checkout that owns the Go tests and wrapper scripts.
+//
+// The serial build phase owns the only write to root's dist/bench during a gate run.
+// The contract and canary phases exec and copy that binary, and `go build` replaces a
+// stale output non-atomically — a concurrent rebuild hands readers a stale or
+// partially-written binary. Conformance's own build check goes to a throwaway path
+// for the same reason.
 func BenchkitPhases(root, kit string) []Phase {
-	return []Phase{
+	var phases []Phase
+	buildHelper := filepath.Join(root, "scripts", "go-build.sh")
+	if isRegularFile(buildHelper) && isRegularFile(filepath.Join(root, "go.mod")) {
+		phases = append(phases, Phase{
+			Name:   "build",
+			Argv:   []string{"bash", buildHelper, root, filepath.Join(root, "dist", "bench")},
+			Serial: true,
+		})
+	}
+	return append(phases, []Phase{
 		{
 			Name: "conformance",
 			Argv: []string{"go", "test", "-count=1", "./internal/conformance", "-run", "^TestRootConformance$"},
@@ -67,7 +85,7 @@ func BenchkitPhases(root, kit string) []Phase {
 			Name: "canary",
 			Argv: []string{"bash", filepath.Join(kit, "bin", "bench.sh"), "canary", root},
 		},
-	}
+	}...)
 }
 
 // PhasesCommand is the `bench gate-phases [root]` plumbing command. It intentionally
@@ -173,6 +191,9 @@ func runPhasesSequential(ctx context.Context, root string, phases []Phase, stdou
 		}
 		if result.Code != 0 {
 			red = true
+			if phase.Serial {
+				break
+			}
 		}
 	}
 	if red {
@@ -185,9 +206,27 @@ func runPhasesSequential(ctx context.Context, root string, phases []Phase, stdou
 
 func runPhasesConcurrent(ctx context.Context, root string, phases []Phase, stdout, stderr io.Writer) int {
 	var writeMu sync.Mutex
-	results := make([]phaseResult, len(phases))
+	serial, concurrent := splitSerialPhases(phases)
+	for _, phase := range serial {
+		out := newPrefixWriter(&writeMu, stdout, phase.Name)
+		err := newPrefixWriter(&writeMu, stderr, phase.Name)
+		result := runPhase(ctx, root, phase, out, err)
+		out.Close()
+		err.Close()
+		if result.Code == 130 {
+			return 130
+		}
+		if result.Code != 0 {
+			fmt.Fprintln(stdout, phaseSummary(result))
+			fmt.Fprintln(stderr, "gate: red")
+			return 1
+		}
+		fmt.Fprintln(stdout, phaseSummary(result))
+	}
+
+	results := make([]phaseResult, len(concurrent))
 	var wg sync.WaitGroup
-	for idx, phase := range phases {
+	for idx, phase := range concurrent {
 		idx, phase := idx, phase
 		wg.Add(1)
 		go func() {
@@ -224,6 +263,17 @@ func runPhasesConcurrent(ctx context.Context, root string, phases []Phase, stdou
 	}
 	fmt.Fprintln(stdout, "gate: green")
 	return 0
+}
+
+func splitSerialPhases(phases []Phase) (serial, concurrent []Phase) {
+	for _, phase := range phases {
+		if phase.Serial {
+			serial = append(serial, phase)
+		} else {
+			concurrent = append(concurrent, phase)
+		}
+	}
+	return serial, concurrent
 }
 
 func phaseSummary(result phaseResult) string {

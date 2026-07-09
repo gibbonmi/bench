@@ -127,8 +127,17 @@ func checkGoCore(root string) []string {
 	}
 	buildHelper := filepath.Join(root, "scripts", "go-build.sh")
 	if exists(buildHelper) {
-		if probe := runAtCleanEnv(root, "bash", buildHelper, root, filepath.Join(root, "dist", "bench")); probe == nil || probe.ExitCode != 0 {
-			diags = append(diags, "go build failed")
+		// Throwaway output path, never root's dist/bench: the contract and canary
+		// phases exec that binary while this check runs, and the gate runner's
+		// serialized build phase owns the one real write.
+		tmp, err := os.MkdirTemp("", "bench-build-*")
+		if err != nil {
+			diags = append(diags, "go build setup failed: "+err.Error())
+		} else {
+			defer os.RemoveAll(tmp)
+			if probe := runAtCleanEnv(root, "bash", buildHelper, root, filepath.Join(tmp, "bench")); probe == nil || probe.ExitCode != 0 {
+				diags = append(diags, "go build failed")
+			}
 		}
 	} else if probe := runAtCleanEnv(root, "go", "build", "./..."); probe == nil || probe.ExitCode != 0 {
 		diags = append(diags, "go build failed")
@@ -188,6 +197,43 @@ func isContractPackage(pkg string) bool {
 		strings.HasPrefix(pkg, "internal/contract/") ||
 		strings.HasSuffix(pkg, "/internal/contract") ||
 		strings.Contains(pkg, "/internal/contract/")
+}
+
+func TestCheckGoCoreDoesNotWriteRootDistBench(t *testing.T) {
+	root := t.TempDir()
+	writeFixtureFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
+	writeFixtureFile(t, filepath.Join(root, "cmd", "bench", "main.go"), "package main\n\nfunc main() {}\n")
+	// Records the output path it was handed instead of building, so the assertion
+	// reads the real argv checkGoCore passes to the helper.
+	writeFixtureFile(t, filepath.Join(root, "scripts", "go-build.sh"),
+		"#!/usr/bin/env bash\nprintf '%s\\n' \"$2\" > \"$1/recorded-out\"\n")
+
+	diags := checkGoCore(root)
+	for _, diag := range diags {
+		if strings.Contains(diag, "go build failed") {
+			t.Fatalf("build helper probe went red: %#v", diags)
+		}
+	}
+	recorded := strings.TrimSpace(readIfExists(filepath.Join(root, "recorded-out")))
+	if recorded == "" {
+		t.Fatal("build helper was not invoked")
+	}
+	if strings.HasPrefix(recorded, root) {
+		t.Fatalf("build output path %q is inside the tree under grade; the gate's serialized build phase owns the real dist/bench write", recorded)
+	}
+	if exists(filepath.Join(root, "dist", "bench")) {
+		t.Fatal("checkGoCore wrote the graded root's dist/bench")
+	}
+}
+
+func writeFixtureFile(t *testing.T, path, contents string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatalf("mkdir %s: %v", filepath.Dir(path), err)
+	}
+	if err := os.WriteFile(path, []byte(contents), 0o644); err != nil {
+		t.Fatalf("write %s: %v", path, err)
+	}
 }
 
 func TestGoCoreTestPackagesExcludesContractSubtreeOnly(t *testing.T) {

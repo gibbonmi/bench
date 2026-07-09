@@ -166,6 +166,75 @@ func TestRunnerInnerModeByteShape(t *testing.T) {
 	}
 }
 
+func TestRunnerSerialPhaseCompletesBeforeConcurrentPhasesStart(t *testing.T) {
+	root := t.TempDir()
+	marker := filepath.Join(root, "built")
+	phases := []Phase{
+		{
+			Name:   "build",
+			Argv:   []string{"bash", "-c", `sleep 0.1; touch "$1"`, "bash", marker},
+			Serial: true,
+		},
+		// Each reader phase goes red unless the serial phase already finished:
+		// a runner that launches everything concurrently starts these ~100ms
+		// before the marker exists.
+		{Name: "alpha", Argv: []string{"bash", "-c", `test -f "$1"`, "bash", marker}},
+		{Name: "bravo", Argv: []string{"bash", "-c", `test -f "$1"`, "bash", marker}},
+	}
+
+	var stdout, stderr bytes.Buffer
+	rc := runPhases(context.Background(), root, phases, outerMode, &stdout, &stderr)
+	if rc != 0 {
+		t.Fatalf("runPhases rc = %d; a reader phase started before the serial phase finished\nstdout=%q\nstderr=%q", rc, stdout.String(), stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "phase build: green") {
+		t.Fatalf("serial phase missing from summaries:\n%s", stdout.String())
+	}
+}
+
+func TestRunnerSerialRedFailsFast(t *testing.T) {
+	root := t.TempDir()
+	leak := filepath.Join(root, "leak")
+	phases := []Phase{
+		{Name: "build", Argv: []string{"bash", "-c", "exit 3"}, Serial: true},
+		{Name: "alpha", Argv: []string{"bash", "-c", `touch "$1"`, "bash", leak}},
+	}
+
+	var stdout, stderr bytes.Buffer
+	rc := runPhases(context.Background(), root, phases, outerMode, &stdout, &stderr)
+	if rc != 1 {
+		t.Fatalf("runPhases rc = %d, want 1", rc)
+	}
+	out := stdout.String() + stderr.String()
+	if !strings.Contains(out, "phase build: red (exit 3)") || !strings.Contains(out, "gate: red") {
+		t.Fatalf("serial red not attributed:\n%s", out)
+	}
+	if _, err := os.Stat(leak); err == nil {
+		t.Fatalf("phase after failed serial phase still ran (it would grade a stale or absent binary)")
+	}
+}
+
+func TestRunnerSerialRedFailsFastInnerMode(t *testing.T) {
+	root := t.TempDir()
+	leak := filepath.Join(root, "leak")
+	phases := []Phase{
+		{Name: "build", Argv: []string{"bash", "-c", "exit 3"}, Serial: true},
+		{Name: "alpha", Argv: []string{"bash", "-c", `touch "$1"`, "bash", leak}},
+	}
+
+	var stdout, stderr bytes.Buffer
+	rc := runPhases(context.Background(), root, phases, innerMode, &stdout, &stderr)
+	if rc != 1 {
+		t.Fatalf("runPhases rc = %d, want 1", rc)
+	}
+	if !strings.HasSuffix(stderr.String(), "gate: red\n") {
+		t.Fatalf("stderr final line = %q, want gate: red", stderr.String())
+	}
+	if _, err := os.Stat(leak); err == nil {
+		t.Fatalf("inner-mode phase after failed serial phase still ran")
+	}
+}
+
 func TestRunnerCancelKillsGroup(t *testing.T) {
 	root := t.TempDir()
 	pidfile := filepath.Join(root, "sleep.pid")
