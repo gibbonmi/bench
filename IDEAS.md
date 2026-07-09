@@ -1,0 +1,1 @@
+- 2026-07-09  structure: internal/contract/helper.go at 441/400 after FT53's RunAtWithTimeout helper — split along responsibility or reviewer grant (check dir headroom per FT55 rule)
