@@ -99,6 +99,12 @@ func checkWorkflowAnchors(root string) []string {
 	require(".agents/commands/bench-what-next.md", "commit on green")
 	require(".agents/commands/bench-what-next.md", "## Recommended sequence")
 
+	require(".agents/commands/bench-assess.md", "verify the previous assessment's backlog landed")
+	require(".agents/commands/bench-assess.md", "read-only area sweeps on the mid tier")
+	require(".agents/commands/bench-assess.md", "synthesize adversarially on the top tier")
+	require(".agents/commands/bench-assess.md", "replaces its predecessor")
+	require(".agents/commands/bench-assess.md", "/bench-what-next")
+
 	requireCollapsed := func(rel, needle, diag string) {
 		path := filepath.Join(root, filepath.FromSlash(rel))
 		if !exists(path) {

@@ -85,6 +85,7 @@ Codex phase adapters installed by Bench:
 - `$bench-final-check` → `.agents/commands/bench-final-check.md`
 - `$bench-update-kit` → `.agents/commands/bench-update-kit.md`
 - `$bench-what-next` → `.agents/commands/bench-what-next.md`
+- `$bench-assess` → `.agents/commands/bench-assess.md`
 
 ## Command Notes
 

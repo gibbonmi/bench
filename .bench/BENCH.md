@@ -24,7 +24,9 @@ guessing.
   periodically to pull upstream improvements into the kit. Run
   `/bench-what-next` when `bench status` or `bench roadmap` shows a drain
   pending — it reconciles `ROADMAP.md` against the tree, drains `IDEAS.md` and
-  open learnings into it, and proposes the pass as one batch diff.
+  open learnings into it, and proposes the pass as one batch diff. Run
+  `/bench-assess` periodically to re-baseline the platform — it sweeps the
+  codebase and replaces `ASSESSMENT.md` with a fresh ranked backlog.
 - **The gate and the hooks** are enforcement, with authority you do not have.
   The enforcement that matters is harness-independent: the `bench shift` loop
   runs the gate after every iteration and commits only on green, and a git
