@@ -1,6 +1,6 @@
 # CLI hygiene batch (FT51)
 
-Status: staged
+Status: implemented
 
 ## Problem
 

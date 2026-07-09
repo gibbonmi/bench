@@ -120,9 +120,11 @@ code, the journal — those stay as full as their templates need).
 - Recommend, don't offer a blind menu. Every question and every hand-off leads with
   the option or next action you'd pick and a one-clause why. (The grill skill already
   works this way.)
-- Recommend in the form *this* harness can invoke. Kit prose names phases in the
-  canonical `/bench-*` form; when you hand one off — an exit handoff, a status row
-  you relay, a workflow pointer — translate it at the point of recommendation into
+- Recommend in the form *this* harness can invoke. Kit prose and CLI-emitted
+  strings (a `bench status` action, a roadmap row) name phases in the canonical
+  `/bench-*` form — the tool prints one form for every harness; when you hand one
+  off — an exit handoff, a status row you relay, a workflow pointer — translate it
+  at the point of recommendation into
   what the reviewer can invoke *here*: the slash command in Claude Code, the
   `$bench-*` skill in Codex, the `.agents/commands/<name>.md` file elsewhere.
   Pointing at a surface this harness lacks sends them to a dead key.
