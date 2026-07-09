@@ -16,6 +16,14 @@ ui_examples-inspired rich treatment with animated characters. Taste is a
 reviewer call, so the work starts as a grill, not a build. Decision detail is
 recoverable via `bench spec history dashboard`. Next: `/bench-shape-idea`.
 
+**FT60 — gate phase race: conformance rebuilds the subject binary under the
+contract phase.** Reproduced through `bench gate` itself (2 red of 9 runs on an
+unchanged tree, 2026-07-08): package_core_checks rebuilds `dist/bench` in the
+real root while contract fixtures exec/copy it — stale-after-merge or
+mid-rewrite reds. Serialize the rebuild before the contract phase or make the
+contract phase own it; gate change, `craft-gate` governs, phase-ordering is the
+reviewer's decision. Next: `/bench-implement-spec`.
+
 **FT50 — one-source collapse batch.** Export the pre-push marker const to
 `bench guards` instead of its copied literal; a shared const for the
 `bench-last-gate` cache filename (writer and reader currently copy it); a
@@ -77,12 +85,26 @@ visibly-modified file reads as a CWD/tree mismatch before it reads as a
 defect. XS kit edit under `craft-synthesis`. Next: direct kit edit, gated as
 usual.
 
+**FT59 — sentinel precondition for fix-pass delegations.** A fix-pass
+delegate building on a repo snapshot verifies a commit-specific sentinel (a
+function or test the commit under fix added) before working, so a stale
+snapshot fails fast instead of producing a divergent rebuild. One clause in
+`craft-delegate`'s charge template. XS kit edit under `craft-synthesis`. Next:
+direct kit edit, gated as usual.
+
 **FT6 (LOW, parked pending evidence — leave parked):** `bench refs`, `bench
 detect`, `bench doc`, `bench specs --retired`, doctor binary-presence row,
 `conformanceFamilies`-vs-dispatch reconcile meta-check, and a per-anchor
 bite-proof meta-test (canaries prove one needle per family today; graduate on
 observed anchor rot). `bench symbols` is not carried; restore only if agents
 demonstrably burn turns on symbol search.
+
+**FT58 (parked pending evidence) — reclaim-lock protocol for lease Claim.**
+Serialize dead-pid takeovers via a crash-safe lock file to close the residual
+B-vs-C double-use window the FT45 no-clobber restore leaves open. Graduate on
+an observed double-win (the two-reclaimer stress case red, or a real
+double-use in the pool); until then the shipped identity-verify plus restore
+is the accepted posture.
 
 **FT24 (parked pending upstream) — Codex agent-line guard parity.** Researched
 2026-07-07: not implementable on current Codex — delegation never surfaces as a
@@ -96,7 +118,10 @@ changelog adds a spawn tool name or a deny-capable SubagentStart.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT38 dashboard visual identity: pure reviewer taste,
+1. `/bench-implement-spec` — FT60 gate phase race: the oracle produced two
+   false reds in one session; smallest reliability fix first (`craft-gate`
+   governs the change).
+2. `/bench-shape-idea` — FT38 dashboard visual identity: pure reviewer taste,
    grill before build.
-2. `/bench-write-spec` — FT50 one-source collapse batch: mechanical,
+3. `/bench-write-spec` — FT50 one-source collapse batch: mechanical,
    well-scoped, no open decisions.

@@ -8,6 +8,16 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-08, scope: post-FT43-49 drain).** Drained one parked
+  idea and two open entries. Idea parked-pending-evidence: reclaim-lock
+  protocol for lease Claim (FT58) — graduates on an observed double-win.
+  Promoted to roadmap: sentinel precondition for fix-pass delegate charges
+  (FT59, `craft-delegate` XS edit); gate phase race — conformance rebuilds
+  `dist/bench` under the running contract phase, reproduced through
+  `bench gate` itself (FT60, gate change under `craft-gate`). Previous run's
+  promotion builds verified present in this record (the two 2026-07-07
+  entries, backfilled by FT48).
+
 - **Learnings run (2026-07-07, scope: verification probe).** Drained the open
   verification-probe entry and built its rule in the same reviewed pass under
   `craft-synthesis` (reviewer present and directing): `craft-delegate`'s

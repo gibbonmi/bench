@@ -1,1 +1,0 @@
-- 2026-07-08  reclaim-lock protocol for lease Claim: serialize takeovers via a crash-safe lock file to close the residual B-vs-C double-use window the FT45 no-clobber restore leaves open
