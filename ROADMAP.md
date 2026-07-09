@@ -10,21 +10,6 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-**FT61 — structure debt: three over-budget files.** `bench structure` reds:
-`internal/gate/phases.go` (430 lines) and `internal/gate/phases_test.go` (549)
-grew past the 400-line budget with the FT60 serial build phase;
-`internal/contract/runtime/runtime_worktree_test.go` (456) with the FT45 lease
-work. Split along responsibility per `craft-seams` — or reviewer grant where
-the family is cohesive; check both budgets (file length and dir count) before
-choosing (FT55's rule). Next: `/bench-implement-spec`.
-
-**FT50 — one-source collapse batch.** Export the pre-push marker const to
-`bench guards` instead of its copied literal; a shared const for the
-`bench-last-gate` cache filename (writer and reader currently copy it); a
-sync test for the git guard's deliberately-inlined wrapper search order;
-delete the stale `default_branch` shell-mirror comment. Spec:
-`specs/one-source-collapse.md`. Next: `/bench-implement-spec`.
-
 **FT51 — CLI hygiene batch.** Unknown subcommand prints help at exit 0 (typo
 indistinguishable from success — dispatcher is the outlier against the exit-2
 norm); `--version`/`--help` fall into the same case; `bench canary` passes
@@ -120,10 +105,8 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT61 structure debt: clears the ambient
-   structure red left by the FT60 build; seams are obvious, `craft-seams`
-   governs split-vs-grant.
-2. `/bench-implement-spec` — FT50 one-source collapse batch: spec staged at
-   `specs/one-source-collapse.md`; mechanical, no open decisions.
-3. `/bench-write-spec` — FT51 CLI hygiene batch: the exit-0 unknown-subcommand
+1. `/bench-write-spec` — FT51 CLI hygiene batch: the exit-0 unknown-subcommand
    defect is the sharpest item in it.
+2. `/bench-write-spec` — FT52 docs batch, then FT53 test/hardening batch, then
+   FT54 assessment owner — the remaining assessment-sourced rows, in priority
+   order.
