@@ -147,7 +147,9 @@ bench/
 │   ├── guards/               # bench guards aggregation
 │   ├── diff/                 # bench diff review-base resolution
 │   ├── coverage/             # bench coverage extraction + --check validation
+│   ├── outline/              # bench outline candidate-seam indexer (file:line as TOON)
 │   ├── status/               # bench status renderer + merged-spec retirement counter
+│   ├── dashboard/            # bench dashboard: the dashboard page (self-contained static HTML)
 │   ├── structure/            # structure checker + budgets parser (whole-tree + touched)
 │   ├── worktree/             # worktree pool-path + lease-file conventions
 │   ├── models/               # bench models advisory discovery inventory

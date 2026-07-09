@@ -1,6 +1,6 @@
 # Docs batch (FT52)
 
-Status: staged
+Status: implemented
 
 > **Source and authority.** This spec is not compiled from a `decisions/<topic>.md`
 > map. It is a reviewer-directed batch drain: the six scope items are pre-decided in

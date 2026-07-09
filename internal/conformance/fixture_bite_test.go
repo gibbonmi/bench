@@ -74,6 +74,7 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 		"benchref-section-duplicated",
 		"dogfood-referent-shipped",
 		"readme-command-first",
+		"signal-vocabulary-drift",
 		"acceptance-coverage-anchor",
 		"coverage-axis-anchor",
 		"command-handoff-anchor",

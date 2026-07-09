@@ -13,7 +13,8 @@
   "files": [
     "bin/",
     "dist/",
-    "projects/",
+    "projects/gl-axi.md",
+    "projects/regroup.md",
     "README.md",
     ".agents/",
     ".bench/BENCH.md",

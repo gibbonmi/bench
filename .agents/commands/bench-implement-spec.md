@@ -1,5 +1,5 @@
 ---
-description: Implement a spec (or a clearly-scoped change) at the pre-agreed seams. Use after /bench-write-spec, or for a change small enough that the seams are obvious. Declares its line, uses TDD at seams, ends on a green gate.
+description: Implement a spec (or a clearly-scoped change) at the pre-agreed seams. Use after /bench-write-spec, or for a change the lighter-path threshold in .bench/BENCH.md lets you build without a spec. Declares its line, uses TDD at seams, ends on a green gate.
 ---
 
 # /bench-implement-spec — do the work at the seams
@@ -18,8 +18,9 @@ recommended next command is `/bench-review-implementation` when semantic review 
 not run yet; otherwise it is `/bench-final-check`. A build that stops short exits
 through "When the build stops short" below instead, and recommends its route.
 
-Implement the spec at the seams it names. If there's no spec, the change must be
-small enough that the seam is obvious; if it isn't, stop and run `/bench-write-spec` first.
+Implement the spec at the seams it names. If there's no spec, the change must fall
+under the lighter-path threshold `.bench/BENCH.md`'s "Right-size the process"
+paragraph sets; if it doesn't, stop and run `/bench-write-spec` first.
 
 ## Open with the line
 

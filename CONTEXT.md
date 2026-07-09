@@ -54,8 +54,13 @@ cold session reads this first to avoid drifting the vocabulary.
 - **ambient dashboard** — what `bench status` prints: the cold-session + on-demand view
   of what needs attention. The feature that renders it is the *ambient-feedback surface*;
   the printed thing is the ambient dashboard. Not "status report", not "summary".
-- **signal** — one ranked line on the **ambient dashboard** (gate, uncommitted, worktree,
-  learnings, structure, decision map). Shown only when it fires. Not "check", not "alert".
+- **the dashboard page** — the standalone HTML artifact `bench dashboard` renders, distinct
+  from the **ambient dashboard** (`bench status`): the page is the shareable rendered view,
+  the ambient dashboard is the terminal print. Not "the dashboard" unqualified — that name
+  ambiguously means both.
+- **signal** — one ranked line on the **ambient dashboard** (gate, git, worktree, guards,
+  drain, structure, decisions, specs, reviews, roadmap). Shown only when it fires. Not
+  "check", not "alert".
 - **severity ladder** — the fixed rank order that decides which **signal** leads the
   dashboard and which drop under the five-row budget. Not "priority queue".
 - **gate cache** — the last gate verdict (`<status> <sha> <iso8601>`) the Stop hook writes

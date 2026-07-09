@@ -5,6 +5,7 @@ var RequiredPackAssets = []string{
 	"bin/bench-repair-binary.mjs",
 	"bin/bench-postinstall.sh",
 	"projects/gl-axi.md",
+	"projects/regroup.md",
 	".agents/commands/bench-implement-spec.md",
 	".agents/skills/bench-craft-seams/SKILL.md",
 	".agents/skills/bench-implement-spec/SKILL.md",
@@ -30,6 +31,7 @@ var RequiredPackAssets = []string{
 // prepare build packs it (present on a built tree, absent in the CI publish checkout),
 // so requiring or forbidding it would make the dry-run shape check tree-state-dependent.
 var ForbiddenPackAssets = []string{
+	"projects/benchkit.md",
 	".bench/gate.sh",
 	"scripts/go-build.sh",
 	"scripts/gen-platform-packages.sh",

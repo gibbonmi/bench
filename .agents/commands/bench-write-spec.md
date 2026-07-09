@@ -1,5 +1,5 @@
 ---
-description: Turn the current conversation into a build spec — user stories, pre-agreed test seams, and testing decisions. Use before any build that is more than a trivial change. No interview; synthesize what we've already discussed.
+description: Turn the current conversation into a build spec — user stories, pre-agreed test seams, and testing decisions. Use before any build past the lighter-path threshold in .bench/BENCH.md. No interview; synthesize what we've already discussed.
 ---
 
 # /bench-write-spec — lock the seams before the loop runs

@@ -16,6 +16,7 @@ func checkDocsCurrencyAndWorkflow(root, kitRoot string) []string {
 	diags = append(diags, checkAXIProfileAnchors(root)...)
 	diags = append(diags, checkBenchReferenceTokenDiet(root)...)
 	diags = append(diags, checkShippedDogfoodReferents(root)...)
+	diags = append(diags, checkSignalVocabulary(root)...)
 	diags = append(diags, checkCommandFirstAnchors(root)...)
 	diags = append(diags, checkWorkflowAnchors(root)...)
 	diags = append(diags, checkSkillsIndexGenerateVerify(root, kitRoot)...)
