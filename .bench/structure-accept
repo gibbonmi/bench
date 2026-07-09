@@ -9,3 +9,4 @@ internal/contract/runtime/runtime_status_test.go cohesive status-contract family
 internal/contract/runtime/ one contract package per command family sharing a single fixture harness; regrouping into subpackages would duplicate the harness
 internal/contract/surface/link_test.go cohesive link-contract family; barely over budget after the dist-gitignore case
 internal/conformance/ cohesive conformance-check family; the shipped-surface sweep earns its own file, and the dir sits one over a full budget rather than fragmenting a signal
+internal/contract/runtime/runtime_worktree_test.go cohesive worktree-clean sweep contract family; its dir has no file-count headroom under the standing dir grant, so a split trades the line budget for deeper dir debt
