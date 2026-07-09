@@ -18,11 +18,13 @@ Format per entry:
 - **Right behavior:** …
 - **Proposed rule change:** … (or "none")
 
-- 2026-07-09 — Staging a spec for a new phase command turns the gate red: the
+## 2026-07-09 — A staged spec cannot name a not-yet-existing phase command  [open]
+- **What happened:** Staging specs/assess-owner.md turned the gate red: the
   stale-command-reference sweep flags `/bench-<new>` in specs/ before the command
-  file exists (hit on specs/assess-owner.md naming the planned assessment phase).
-  What we did: held the spec out of the tree and land it in the same diff as the
-  command, so the sweep sees the file. Right behavior unclear — options are (a)
-  accept spec-lands-with-implementation for new-command specs, or (b) teach the
-  sweep that a `Status: staged` spec may name its own deliverable. Proposed rule:
-  (a), recorded in /bench-write-spec, unless the reviewer prefers (b).
+  file exists. We held the spec out of the tree and landed it in the same diff as
+  the command, so the sweep saw the file.
+- **Right behavior:** Unclear — either (a) accept spec-lands-with-implementation
+  for new-command specs, or (b) teach the sweep that a `Status: staged` spec may
+  name its own deliverable.
+- **Proposed rule change:** (a), recorded in /bench-write-spec, unless the
+  reviewer prefers (b).
