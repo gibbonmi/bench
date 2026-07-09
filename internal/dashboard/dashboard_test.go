@@ -162,6 +162,7 @@ func TestRenderEscapesAndSanitizes(t *testing.T) {
 	s := baseSnapshot()
 	s.Ideas = []string{"- danger <script>alert(1)</script>\x1b[31m\x07"}
 	s.Signals = []status.Signal{{Name: "x", Detail: "<b>bold</b>", Action: "a"}}
+	s.WorktreesErr = "\x1b[31m<script>alert(1)</script>\x07"
 	out := Render(s)
 	if !strings.Contains(out, "&lt;script&gt;") {
 		t.Errorf("markup not HTML-escaped:\n%s", out)
