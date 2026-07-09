@@ -159,6 +159,34 @@ func testManagedPrePushBakedFallback(t *testing.T) {
 	blocked.RequireContains(blocked.Stderr, "direct push to main")
 }
 
+// TestManagedPrePushNewlineLessFinalLine covers the read loop's newline-tail admission:
+// git always LF-terminates pre-push stdin, but a hand-crafted or non-LF-terminated final
+// ref line must still be checked, not silently dropped by a while-read loop that discards
+// $line at EOF.
+func TestManagedPrePushNewlineLessFinalLine(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	contract.RunParallel(t, "pre-push dropped a newline-less final ref line", testManagedPrePushNewlineLessFinalLine)
+}
+
+func testManagedPrePushNewlineLessFinalLine(t *testing.T) {
+	f := contract.NewFixture(t)
+	linkOK(t, f)
+	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\nexit 0\n")
+	f.CommitAll("base")
+	base := strings.TrimSpace(f.Git("rev-parse", "HEAD").Stdout)
+
+	// The push has a single ref line with no trailing newline: a while-read loop that
+	// discards $line when read returns non-zero at EOF drops this line entirely, so the
+	// direct-push-to-main check never runs and the offending push is wrongly allowed.
+	line := strings.TrimSuffix(refLine("refs/heads/main", base, "refs/heads/main"), "\n")
+	blocked := runPrePush(t, f, line)
+	if blocked.ExitCode == 0 {
+		t.Fatalf("pre-push allowed a direct push to main via a newline-less final ref line\nstderr:\n%s", blocked.Stderr)
+	}
+	blocked.RequireContains(blocked.Stderr, "direct push to main")
+}
+
 func runPrePush(t *testing.T, f contract.Fixture, stdin string) contract.Probe {
 	t.Helper()
 	return contract.RunAtWithInput(t, f, f.Root, nil, stdin, "bash", prePushPath(t, f))

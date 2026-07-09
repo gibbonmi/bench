@@ -125,7 +125,10 @@ func TestClassifyRegisteredWorktrees(t *testing.T) {
 		t.Fatalf("write lease: %v", err)
 	}
 
-	entries := RegisteredWorktrees(root)
+	entries, err := ClassifyRegisteredWorktrees(root)
+	if err != nil {
+		t.Fatalf("ClassifyRegisteredWorktrees: %v", err)
+	}
 	got := map[string]Class{}
 	for _, entry := range entries {
 		got[entry.Path] = entry.Class
@@ -191,6 +194,36 @@ func TestCleanCommandRemovesOutOfPool(t *testing.T) {
 	}
 	if !strings.Contains(stdout.String(), "nothing to clean") {
 		t.Fatalf("second cleanup did not report idempotent empty state:\n%s", stdout.String())
+	}
+}
+
+// TestCleanOutOfPoolWorktreesGitFailureNeverReadsAsNothingToClean is the FT29 false-empty
+// regression guard for the classifier's last swallowing caller: a `git worktree list`
+// failure (deterministically induced by making .git unreadable, the gitOpError-style
+// injection FT29 used in structure_test.go) must exit non-zero with the git error on
+// stderr, never fall through to the "nothing to clean" exit-0 report that reads
+// identically to a genuinely empty, healthy repo.
+func TestCleanOutOfPoolWorktreesGitFailureNeverReadsAsNothingToClean(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("BENCH_HOME", home)
+	root := newWorktreeRepo(t)
+
+	gitDir := filepath.Join(root, ".git")
+	if err := os.Chmod(gitDir, 0o000); err != nil {
+		t.Fatalf("chmod .git unreadable: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(gitDir, 0o755) })
+
+	var stdout, stderr bytes.Buffer
+	code := cleanOutOfPoolWorktrees(root, &stdout, &stderr)
+	if code == 0 {
+		t.Fatalf("cleanOutOfPoolWorktrees exit 0 on a git worktree-list failure\nstdout:\n%s\nstderr:\n%s", stdout.String(), stderr.String())
+	}
+	if strings.Contains(stdout.String(), "nothing to clean") {
+		t.Fatalf("git failure read as the empty-repo all-clear:\nstdout:\n%s\nstderr:\n%s", stdout.String(), stderr.String())
+	}
+	if stderr.String() == "" {
+		t.Fatal("cleanOutOfPoolWorktrees printed no error to stderr on a git failure")
 	}
 }
 

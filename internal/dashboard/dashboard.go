@@ -37,6 +37,10 @@ type Snapshot struct {
 	Ideas          []string
 	OpenLearnings  int
 	Worktrees      []worktree.Registered
+	// WorktreesErr carries the git worktree-list query's error when the classify
+	// itself failed, so Render can show the failure rather than an empty pool pane
+	// that would otherwise read as "no worktrees" — the false-empty class FT29 swept.
+	WorktreesErr string
 }
 
 // Command implements `bench dashboard [--stdout]`. With no argument it writes the rendered
@@ -79,7 +83,8 @@ func Command(args []string) (string, int) {
 func gather(root string) Snapshot {
 	text, present := roadmap.RoadmapText(root)
 	_, openLearnings := roadmap.DrainCounts(root)
-	return Snapshot{
+	registered, werr := worktree.ClassifyRegisteredWorktrees(root)
+	snap := Snapshot{
 		GeneratedAt:    time.Now(),
 		Gate:           status.GateVerdict(root),
 		Signals:        status.Signals(root),
@@ -88,8 +93,12 @@ func gather(root string) Snapshot {
 		Sequence:       roadmap.RecommendedSequence(text),
 		Ideas:          roadmap.ParkedIdeas(root),
 		OpenLearnings:  openLearnings,
-		Worktrees:      poolWorktrees(worktree.RegisteredWorktrees(root)),
+		Worktrees:      poolWorktrees(registered),
 	}
+	if werr != nil {
+		snap.WorktreesErr = werr.Error()
+	}
+	return snap
 }
 
 // poolWorktrees drops the repo root — the expected primary checkout — and keeps the pool

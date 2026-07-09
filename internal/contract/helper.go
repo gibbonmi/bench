@@ -8,7 +8,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
 )
 
 type FixtureOption func(*fixtureConfig)
@@ -31,6 +33,7 @@ type Probe struct {
 	ExitCode int
 	Stdout   string
 	Stderr   string
+	TimedOut bool
 }
 
 func WithNoRepo() FixtureOption {
@@ -119,6 +122,54 @@ func RunAt(t testing.TB, f Fixture, dir string, env map[string]string, name stri
 func RunAtWithInput(t testing.TB, f Fixture, dir string, env map[string]string, stdin, name string, args ...string) Probe {
 	t.Helper()
 	return runFixtureCommand(t, f, dir, env, stdin, name, args...)
+}
+
+// RunAtWithTimeout drives a command that might hang (an uncapped loop, a stuck lock)
+// under a wall-clock bound. On timeout it kills the whole process group — not just the
+// direct child — so no descendant it spawned survives the test, and returns a Probe
+// with TimedOut set rather than blocking the test run. A command that returns before
+// the deadline reports its real exit code exactly like Run/RunEnv.
+func RunAtWithTimeout(t testing.TB, f Fixture, dir string, env map[string]string, timeout time.Duration, name string, args ...string) Probe {
+	t.Helper()
+	return runFixtureCommandTimeout(t, f, dir, envToSpec(env), timeout, name, args...)
+}
+
+func runFixtureCommandTimeout(t testing.TB, f Fixture, dir string, env Env, timeout time.Duration, name string, args ...string) Probe {
+	t.Helper()
+	cmd := exec.Command(name, args...)
+	cmd.Dir = dir
+	cmd.Env = mergeEnv(f.Env, env)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Start(); err != nil {
+		t.Fatalf("start %s: %v", name, err)
+	}
+
+	done := make(chan error, 1)
+	go func() { done <- cmd.Wait() }()
+
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
+	select {
+	case err := <-done:
+		exitCode := 0
+		if err != nil {
+			exitCode = 1
+			var exitErr *exec.ExitError
+			if errors.As(err, &exitErr) {
+				exitCode = exitErr.ExitCode()
+			}
+		}
+		return Probe{t: t, ExitCode: exitCode, Stdout: stdout.String(), Stderr: stderr.String()}
+	case <-timer.C:
+		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		<-done
+		return Probe{t: t, ExitCode: -1, Stdout: stdout.String(), Stderr: stderr.String(), TimedOut: true}
+	}
 }
 
 func WriteExecutableAbs(t testing.TB, path, contents string) {

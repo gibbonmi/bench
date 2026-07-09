@@ -24,6 +24,7 @@ type view struct {
 	Ideas          []string
 	OpenLearnings  int
 	Worktrees      []worktreeView
+	WorktreesErr   string
 }
 
 type gateView struct {
@@ -48,6 +49,7 @@ func Render(s Snapshot) string {
 		RoadmapText:    sanitize(s.RoadmapText),
 		Sequence:       sanitize(s.Sequence),
 		OpenLearnings:  s.OpenLearnings,
+		WorktreesErr:   sanitize(s.WorktreesErr),
 	}
 	if s.Gate.Present {
 		v.Gate = gateView{
@@ -201,6 +203,7 @@ pre {
 }
 ul { margin: 0; padding-left: 1.25rem; font-size: .9rem; }
 .empty { color: var(--muted); font-style: italic; margin: 0; }
+.error { color: var(--bad); margin: 0; }
 .badge { display: inline-block; padding: .05rem .5rem; border-radius: .25rem; font-size: .8rem; font-weight: 600; }
 .badge.green { color: var(--accent); }
 .badge.red { color: var(--bad); }
@@ -275,7 +278,9 @@ ul { margin: 0; padding-left: 1.25rem; font-size: .9rem; }
 
 <section class="card">
   <h2>Worktrees</h2>
-  {{if .Worktrees}}
+  {{if .WorktreesErr}}
+  <p class="error">git worktree list failed: {{.WorktreesErr}}</p>
+  {{else if .Worktrees}}
   <table>
     <thead><tr><th>class</th><th>path</th></tr></thead>
     <tbody>

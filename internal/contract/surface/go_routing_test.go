@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestGoRoutingContracts(t *testing.T) {
@@ -21,6 +22,7 @@ func TestGoRoutingContracts(t *testing.T) {
 	contract.RunParallel(t, "unknown subcommand exits 2 on stderr", testGoRoutingUnknownSubcommandExits2OnStderr)
 	contract.RunParallel(t, "help variants stay on stdout at exit 0", testGoRoutingHelpVariantsStayOnStdoutExit0)
 	contract.RunParallel(t, "--version routes to the version subcommand", testGoRoutingVersionFlagMatchesVersionSubcommand)
+	contract.RunParallel(t, "resolve_script_path capped a symlink cycle instead of hanging", testGoRoutingResolveScriptPathHopCap)
 }
 
 // testGoRoutingUnknownSubcommandExits2OnStderr pins the typo case: an unrecognized
@@ -269,4 +271,54 @@ func goRoutingRemove(t testing.TB, path string) {
 	if err := os.Remove(path); err != nil {
 		t.Fatalf("remove %s: %v", path, err)
 	}
+}
+
+// testGoRoutingResolveScriptPathHopCap drives the wrapper's real, unmodified
+// resolve_script_path function into a genuine symlink cycle and asserts it fails
+// fast with a structured error rather than hanging.
+//
+// A cyclic path can never be the literal `bash <path>` invocation target: opening
+// the entry point to read it as a script requires the kernel to fully resolve the
+// symlink chain, and a real cycle ELOOPs there before resolve_script_path's own
+// loop ever runs — that would just be exercising the OS's own bound, not the
+// wrapper's. The actual gap is different: resolve_script_path's loop walks
+// $source with `readlink`/`[[ -L ]]` only, which (unlike open()) never needs to
+// fully dereference a symlink's target, so it never ELOOPs on a cycle by itself.
+// To reach that loop with $source pointed at a genuine cycle, this test exploits
+// how bash reports a function's origin: BASH_SOURCE[0] inside any function is
+// always non-empty — either the file that defined it, or, when the function was
+// eval'd from a string instead of sourced from a file, the literal placeholder
+// "environment". resolve_script_path's own fallback, `${BASH_SOURCE[0]:-$0}`,
+// then resolves to that placeholder, which the loop treats as a plain filename
+// relative to the working directory. So eval-ing the wrapper's real source (not a
+// reimplementation) and naming a self-referential symlink "environment" in the
+// working directory drives the production loop into exactly the cycle the hop cap
+// defends against.
+func testGoRoutingResolveScriptPathHopCap(t *testing.T) {
+	f := contract.NewFixture(t, contract.WithNoRepo())
+
+	if err := os.Symlink("environment", filepath.Join(f.Root, "environment")); err != nil {
+		t.Fatalf("create self-referential symlink: %v", err)
+	}
+
+	wrapper := filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh")
+	src, err := os.ReadFile(wrapper)
+	if err != nil {
+		t.Fatalf("read bin/bench.sh: %v", err)
+	}
+
+	// Clear the driver's own positional params before eval-ing the wrapper's full
+	// text, so its bottom `case "${1-help}"` dispatch defaults to the harmless
+	// help branch instead of routing on whatever happens to occupy $1.
+	driver := `src="$1"; set --; eval "$src" >/dev/null 2>&1; resolve_script_path`
+
+	out := contract.RunAtWithTimeout(t, f, f.Root, nil, 10*time.Second, "bash", "-c", driver, "probe", string(src))
+
+	if out.TimedOut {
+		t.Fatal("resolve_script_path hung chasing a self-referential symlink cycle; want a bounded hop cap")
+	}
+	if out.ExitCode == 0 {
+		t.Fatalf("resolve_script_path resolved a symlink cycle instead of erroring\nstdout:\n%s", out.Stdout)
+	}
+	out.RequireContains(out.Stderr, "symlink cycle")
 }

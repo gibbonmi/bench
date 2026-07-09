@@ -1,6 +1,6 @@
 # test/hardening batch (FT53)
 
-Status: staged
+Status: implemented
 
 ## Problem
 

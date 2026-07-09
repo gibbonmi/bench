@@ -31,10 +31,19 @@ gate_command() {
 }
 
 # Resolve where the canonical kit lives (parent of this script's bin/), following
-# symlinks without relying on GNU-only `readlink -f`.
+# symlinks without relying on GNU-only `readlink -f`. Capped at ~40 hops (the
+# readlink -f / SYMLOOP_MAX convention) so a symlink cycle to the wrapper fails fast
+# with a structured error instead of chasing readlink targets forever: readlink
+# never ELOOPs on a cyclic target the way opening the file would, so an uncapped
+# loop here can spin even where the OS itself would have refused to open the path.
 resolve_script_path() {
-  local source="${BASH_SOURCE[0]:-$0}" dir target
+  local source="${BASH_SOURCE[0]:-$0}" dir target hops=0
   while [[ -L "$source" ]]; do
+    hops=$((hops + 1))
+    if (( hops > 40 )); then
+      printf 'bench: symlink cycle or too many levels resolving %s (stopped after %d hops)\n' "$source" "$hops" >&2
+      exit 1
+    fi
     dir="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
     target="$(readlink "$source")"
     [[ "$target" == /* ]] && source="$target" || source="$dir/$target"

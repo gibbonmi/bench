@@ -22,11 +22,11 @@ type Registered struct {
 	Class Class
 }
 
-func RegisteredWorktrees(root string) []Registered {
-	registered, _ := ClassifyRegisteredWorktrees(root)
-	return registered
-}
-
+// ClassifyRegisteredWorktrees returns every worktree `git worktree list` knows about,
+// classified by pool membership. It returns the git query's error rather than
+// swallowing it into an empty slice: every caller must distinguish "no worktrees" from
+// "the classify query itself failed" so a git failure can never read as a silent
+// all-clear.
 func ClassifyRegisteredWorktrees(root string) ([]Registered, error) {
 	out, err := git.Output("-C", root, "worktree", "list", "--porcelain")
 	if err != nil {

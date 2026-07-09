@@ -207,6 +207,33 @@ func TestRenderSurfacesOrphanedWorktreeBranch(t *testing.T) {
 	}
 }
 
+// appendWorktree must surface a `git worktree list` failure as a visible row, never as
+// silence that a reader mistakes for "no worktree signals" — the false-empty class FT29
+// swept. The failure is induced deterministically (the FT29 gitOpError style: break the
+// git query itself, here by revoking read access to .git) rather than a PATH-shimmed git.
+func TestAppendWorktreeSurfacesClassifyFailure(t *testing.T) {
+	root := initRepo(t)
+	if err := os.WriteFile(filepath.Join(root, "f.txt"), []byte("x\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, root, "add", "-A")
+	gitRun(t, root, "commit", "-m", "base")
+
+	gitDir := filepath.Join(root, ".git")
+	if err := os.Chmod(gitDir, 0o000); err != nil {
+		t.Fatalf("chmod .git unreadable: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(gitDir, 0o755) })
+
+	rows := appendWorktree(nil, root)
+	if len(rows) == 0 {
+		t.Fatal("appendWorktree dropped the classify failure instead of surfacing a row")
+	}
+	if !strings.Contains(rows[0].detail, "worktree list failed") {
+		t.Errorf("row detail = %q, want it to name the git worktree-list failure", rows[0].detail)
+	}
+}
+
 // Command rejects an unknown argument with a usage line and exit 2, prints usage on -h,
 // and accepts --all as the one added token — while --all plus junk and near-misses stay
 // usage errors so a typo never silently prints the default board.

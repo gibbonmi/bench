@@ -217,6 +217,26 @@ func TestRenderPathWithSpaceAndGlob(t *testing.T) {
 	}
 }
 
+// A worktree-classify failure must render as a visible error, not as the empty-pool
+// message a reader would otherwise mistake for "no worktrees" — the false-empty class
+// FT29 swept. It takes precedence even when Worktrees is non-empty (stale/partial data
+// alongside the error is still not the truth to show).
+func TestRenderWorktreeClassifyFailureIsVisible(t *testing.T) {
+	s := baseSnapshot()
+	s.WorktreesErr = "exit status 128: fatal: not a git repository"
+	s.Worktrees = []worktree.Registered{{Path: "/repo/stale", Class: worktree.ClassOutOfPool}}
+	out := Render(s)
+	if !strings.Contains(out, "fatal: not a git repository") {
+		t.Errorf("worktree classify failure not surfaced:\n%s", section(out, "Worktrees"))
+	}
+	if strings.Contains(out, "No out-of-pool, leased, or warm worktrees.") {
+		t.Errorf("classify failure rendered as the empty-pool state:\n%s", section(out, "Worktrees"))
+	}
+	if strings.Contains(section(out, "Worktrees"), "/repo/stale") {
+		t.Errorf("classify failure still rendered the (unreliable) worktree table:\n%s", section(out, "Worktrees"))
+	}
+}
+
 // Row 13 (unit) + Row 2 (unit): --stdout is the only accepted flag. An unknown argument or
 // a trailing token is a usage error (exit 2); --stdout renders an HTML document (exit 0).
 func TestCommandArgs(t *testing.T) {

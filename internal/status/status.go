@@ -266,7 +266,13 @@ func appendGit(rows []row, root string) []row {
 // registered worktree still holds). The repo root and warm pooled entries are expected
 // state, not signals.
 func appendWorktree(rows []row, root string) []row {
-	registered := worktree.RegisteredWorktrees(root)
+	registered, err := worktree.ClassifyRegisteredWorktrees(root)
+	if err != nil {
+		// A classify failure means the pool/leased/out-of-pool counts below are
+		// unknowable, not zero: surface the git failure itself as the row rather than
+		// falling through to an empty-looking board (the false-empty class FT29 swept).
+		return append(rows, row{2, "worktree", fmt.Sprintf("git worktree list failed: %v", err), "investigate the git failure, then re-run bench status"})
+	}
 	outOfPool, leased := 0, 0
 	for _, wt := range registered {
 		switch wt.Class {

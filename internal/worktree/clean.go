@@ -87,9 +87,14 @@ func sweepDelegateBranches(root string, stdout, stderr io.Writer) int {
 // merged/unmerged rule. Only a dirty *detached* worktree is refused: there is no branch to
 // hold the salvage, so deleting it would genuinely lose the changes.
 func cleanOutOfPoolWorktrees(root string, stdout, stderr io.Writer) int {
+	registered, err := ClassifyRegisteredWorktrees(root)
+	if err != nil {
+		fmt.Fprintf(stderr, "error: git worktree list failed: %v\n", err)
+		return 1
+	}
 	var refused []string
 	removed := 0
-	for _, wt := range RegisteredWorktrees(root) {
+	for _, wt := range registered {
 		if wt.Class != ClassOutOfPool {
 			continue
 		}

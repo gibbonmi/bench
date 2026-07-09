@@ -372,12 +372,16 @@ func testRuntimeWorktreeLeaseHardening(t *testing.T) {
 }
 
 func testRuntimeWorktreeConcurrentAcquire(t *testing.T) {
-	// Overlap is guaranteed by a test-owned barrier, not a timed poll: each shell records
-	// its worktree and then holds until the test drops the go-file, which the test creates
-	// only after seeing both records. A capped self-poll here is a schedule race — under
-	// full-gate load the second spawn can outlive the first run's window, the pool hands
-	// the released worktree back, and by-design reuse reads as a shared acquire (the FT37
-	// flake). The shell's own loop is only a leak backstop, and it exits loud.
+	// Release is barriered, not detection: each shell records its worktree and then holds
+	// until the test drops the go-file, which the test creates only after seeing both
+	// records — so once both are recorded, neither run can exit before the other has
+	// genuinely acquired. Overlap *detection* itself is not barriered; it is the
+	// event-keyed 60s deadline below (overlapDeadline), armed only once the first record
+	// lands so spawn latency under load never counts against it. That window is coupled to
+	// the shell's own ~60s self-timeout (the `seq 600` / 0.1s poll loop, a leak backstop
+	// that exits loud) — the two must not converge, or a slow second spawn could hit the
+	// shell's timeout before the deadline gives it credit for overlapping, misreading a
+	// schedule race as the by-design reuse the FT37 flake exercises.
 	f := contract.NewFixture(t)
 	commitAllowEmpty(t, f, "init")
 	f.WriteExecutable("rv-shell", `#!/usr/bin/env bash

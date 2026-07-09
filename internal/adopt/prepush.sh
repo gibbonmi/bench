@@ -33,7 +33,7 @@ if [[ -z "$pin_tree" ]]; then
   echo "bench: gate unpinned - run 'bench gate pin' to enable .bench drift checks." >&2
 fi
 ref_lines=()
-while IFS= read -r line; do
+while IFS= read -r line || [ -n "$line" ]; do
   ref_lines+=("$line")
   read -r _ local_oid _ _ <<< "$line"
   if [[ -n "$pin_tree" && ! "$local_oid" =~ ^0+$ ]]; then
