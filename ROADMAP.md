@@ -10,19 +10,13 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-**FT38 — dashboard visual identity pass.** `bench dashboard` v1 shipped
-data-faithful and visually neutral; the original idea wanted an
-ui_examples-inspired rich treatment with animated characters. Taste is a
-reviewer call, so the work starts as a grill, not a build. Decision detail is
-recoverable via `bench spec history dashboard`. Next: `/bench-shape-idea`.
-
-**FT60 — gate phase race: conformance rebuilds the subject binary under the
-contract phase.** Reproduced through `bench gate` itself (2 red of 9 runs on an
-unchanged tree, 2026-07-08): package_core_checks rebuilds `dist/bench` in the
-real root while contract fixtures exec/copy it — stale-after-merge or
-mid-rewrite reds. Serialize the rebuild before the contract phase or make the
-contract phase own it; gate change, `craft-gate` governs, phase-ordering is the
-reviewer's decision. Next: `/bench-implement-spec`.
+**FT61 — structure debt: three over-budget files.** `bench structure` reds:
+`internal/gate/phases.go` (430 lines) and `internal/gate/phases_test.go` (549)
+grew past the 400-line budget with the FT60 serial build phase;
+`internal/contract/runtime/runtime_worktree_test.go` (456) with the FT45 lease
+work. Split along responsibility per `craft-seams` — or reviewer grant where
+the family is cohesive; check both budgets (file length and dir count) before
+choosing (FT55's rule). Next: `/bench-implement-spec`.
 
 **FT50 — one-source collapse batch.** Export the pre-push marker const to
 `bench guards` instead of its copied literal; a shared const for the
@@ -116,12 +110,20 @@ changelog adds a spawn tool name or a deny-capable SubagentStart.
 **FT8 (scheduled, not actionable) — Sonnet 5 mid-tier revisit.** Time-boxed to
 2026-09-01 or the next frontier shift.
 
+**FT38 (tabled, revisit on or after 2026-08-09) — dashboard visual identity
+pass.** `bench dashboard` v1 shipped data-faithful and visually neutral; the
+original idea wanted a rich treatment with animated characters, reference
+saved at `ui_example/` (Gather-style pixel office with activity feed).
+Reviewer tabled it 2026-07-09 for at least a month. When it revives, the work
+starts as a grill (`/bench-shape-idea`); decision detail recoverable via
+`bench spec history dashboard`.
+
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT60 gate phase race: the oracle produced two
-   false reds in one session; smallest reliability fix first (`craft-gate`
-   governs the change).
-2. `/bench-shape-idea` — FT38 dashboard visual identity: pure reviewer taste,
-   grill before build.
-3. `/bench-write-spec` — FT50 one-source collapse batch: mechanical,
+1. `/bench-implement-spec` — FT61 structure debt: clears the ambient
+   structure red left by the FT60 build; seams are obvious, `craft-seams`
+   governs split-vs-grant.
+2. `/bench-write-spec` — FT50 one-source collapse batch: mechanical,
    well-scoped, no open decisions.
+3. `/bench-write-spec` — FT51 CLI hygiene batch: the exit-0 unknown-subcommand
+   defect is the sharpest item in it.

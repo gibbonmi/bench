@@ -8,6 +8,23 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-09, scope: post-FT60 reconcile).** Reconcile-only
+  pass: IDEAS.md empty, no open journal entries. FT60 removed as shipped (the
+  serialized gate build phase plus two review pickups). FT61 added from the
+  tree: three files over the structure budget, two grown by the FT60 build.
+  Previous run's promotion builds checked: FT60's build entry was missing and
+  is backfilled below; FT59 is not yet built, no entry due. Same-day
+  amendment: FT38 tabled by reviewer direction, revisit on or after
+  2026-08-09.
+
+- **FT60 promotion build (2026-07-08, backfilled 2026-07-09).** Gate change
+  under `craft-gate` from the 2026-07-08 drain: a serialized build phase now
+  owns the `dist/bench` write and runs before the parallel phases, so contract
+  fixtures never exec a mid-rewrite binary; the sequential runner derives its
+  serial-first ordering from `splitSerialPhases` (one source). Review pickups
+  added three Coverage tests (SIGINT during the serial build, serial-phase
+  reorder, half-present build-surface table).
+
 - **Learnings run (2026-07-08, scope: post-FT43-49 drain).** Drained one parked
   idea and two open entries. Idea parked-pending-evidence: reclaim-lock
   protocol for lease Claim (FT58) — graduates on an observed double-win.
