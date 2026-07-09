@@ -156,6 +156,28 @@ func TestAdapterTarget(t *testing.T) {
 	}
 }
 
+// TestLinkOutsideGitRepoNamesGitRepository pins link's own remedy: link's job is to
+// create the linkage, so pointing the user at "run inside a Bench-linked repo" (the
+// shared AXI query-command message) is nonsensical here — the message must instead
+// name a git repository / git init, and the shared toon.NotInRepo() phrasing must
+// not appear.
+func TestLinkOutsideGitRepoNamesGitRepository(t *testing.T) {
+	t.Chdir(t.TempDir())
+
+	var stdout, stderr bytes.Buffer
+	code := Link(nil, &stdout, &stderr, "1.0.0")
+	if code != 1 {
+		t.Fatalf("Link exit = %d, want 1", code)
+	}
+	got := stderr.String()
+	if !strings.Contains(got, "git init") && !strings.Contains(strings.ToLower(got), "git repository") {
+		t.Fatalf("stderr = %q, want it to name a git repository / git init", got)
+	}
+	if strings.Contains(got, "Bench-linked repo") {
+		t.Fatalf("stderr = %q, must not use the shared AXI NotInRepo() phrasing", got)
+	}
+}
+
 func TestDoctorDirSelectionAndShimRoundTrip(t *testing.T) {
 	home := t.TempDir()
 	nvm := filepath.Join(home, ".nvm")

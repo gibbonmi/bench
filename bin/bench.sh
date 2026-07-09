@@ -198,6 +198,7 @@ adoption_route() {
 
 case "${1:-help}" in
   version)  route_porcelain "$@" ;;
+  --version|-v) shift; route_porcelain version "$@" ;;
   gate)     gate_command "$@" ;;
   doctor)   adoption_route "$@" ;;
   worktree) route_porcelain "$@" ;;
@@ -229,7 +230,7 @@ case "${1:-help}" in
   stop-verdict) route_binary "$@" ;;
   worktree-pool) route_binary "$@" ;;
   worktree-lease-file) route_binary "$@" ;;
-  *) cat <<EOF
+  help|--help|-h) cat <<EOF
 bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench link [copy|symlink]  safely wire the kit into this repo for every harness
   bench init                 scaffold .bench/gate.sh in the current repo
@@ -260,4 +261,9 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench version              print the installed benchkit version (os/arch)
 EOF
   ;;
+  # An unrecognized token (a typo, not a help request) is not this shell's job to
+  # explain: route it to the Go binary so its own default-case "unknown subcommand"
+  # handler (cmd/bench/main.go's run()) renders the message and exit 2 — one source
+  # of that message, not a second copy here.
+  *) route_binary "$@" ;;
 esac

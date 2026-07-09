@@ -18,6 +18,59 @@ func TestGoRoutingContracts(t *testing.T) {
 	contract.RunParallel(t, "bench version failed outside a git repo", testGoRoutingVersionOutsideRepo)
 	contract.RunParallel(t, "version-routing seam contract failed", testGoRoutingFabricatedVersionRouting)
 	contract.RunParallel(t, "linked-worktree binary-resolution contract failed", testGoRoutingLinkedWorktreeBinaryResolution)
+	contract.RunParallel(t, "unknown subcommand exits 2 on stderr", testGoRoutingUnknownSubcommandExits2OnStderr)
+	contract.RunParallel(t, "help variants stay on stdout at exit 0", testGoRoutingHelpVariantsStayOnStdoutExit0)
+	contract.RunParallel(t, "--version routes to the version subcommand", testGoRoutingVersionFlagMatchesVersionSubcommand)
+}
+
+// testGoRoutingUnknownSubcommandExits2OnStderr pins the typo case: an unrecognized
+// token must be distinguishable from success (exit 2, message on stderr), not the
+// former exit-0/stdout help fallthrough that made a typo indistinguishable from a
+// legitimate no-op to a wrapping script.
+func testGoRoutingUnknownSubcommandExits2OnStderr(t *testing.T) {
+	f := contract.NewFixture(t)
+
+	out := f.Bench("frobnicate")
+
+	out.RequireExit(2)
+	if strings.TrimSpace(out.Stdout) != "" {
+		t.Fatalf("bench frobnicate wrote to stdout, want it silent there:\nstdout:\n%s", out.Stdout)
+	}
+	if strings.TrimSpace(out.Stderr) == "" {
+		t.Fatalf("bench frobnicate wrote nothing to stderr, want a message there")
+	}
+}
+
+// testGoRoutingHelpVariantsStayOnStdoutExit0 pins that splitting the typo case out of
+// the catch-all does not cannibalize the legitimate help request: bare invocation,
+// `help`, `--help`, and `-h` all still print help to stdout at exit 0.
+func testGoRoutingHelpVariantsStayOnStdoutExit0(t *testing.T) {
+	f := contract.NewFixture(t)
+
+	for _, args := range [][]string{{}, {"help"}, {"--help"}, {"-h"}} {
+		out := f.Bench(args...)
+		out.RequireExit(0)
+		out.RequireContains(out.Stdout, "bench link")
+		if strings.TrimSpace(out.Stderr) != "" {
+			t.Fatalf("bench %v wrote to stderr, want help silent there:\nstderr:\n%s", args, out.Stderr)
+		}
+	}
+}
+
+// testGoRoutingVersionFlagMatchesVersionSubcommand pins that `--version` reaches the
+// same implementation `bench version` does, rather than falling into the help
+// catch-all it shared with a typo before this split.
+func testGoRoutingVersionFlagMatchesVersionSubcommand(t *testing.T) {
+	f := contract.NewFixture(t)
+
+	want := f.Bench("version")
+	want.RequireExit(0)
+
+	got := f.Bench("--version")
+	got.RequireExit(0)
+	if got.Stdout != want.Stdout {
+		t.Fatalf("bench --version stdout = %q, want %q (same as bench version)", got.Stdout, want.Stdout)
+	}
 }
 
 func testGoRoutingVersionOutput(t *testing.T) {

@@ -1,12 +1,35 @@
 package canary
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
 )
+
+// TestRunPrintsCanaryOkOnCleanSweep pins the `bench canary` success feedback,
+// mirroring `structure ok`: a clean sweep must say so on stdout instead of
+// exiting 0 silently.
+func TestRunPrintsCanaryOkOnCleanSweep(t *testing.T) {
+	root := t.TempDir()
+	fixture := canaryFixture(root, "test-family", "mybreak")
+	mkdir(t, filepath.Join(fixture, "files"))
+	write(t, filepath.Join(fixture, "EXPECT"), "boom detected\n")
+	write(t, filepath.Join(fixture, "files", "marker.txt"), "x\n")
+	write(t, filepath.Join(root, ".bench", "gate.sh"),
+		"#!/bin/sh\nif [ -f marker.txt ]; then echo \"boom detected\"; exit 1; else exit 0; fi\n")
+
+	var stdout, stderr bytes.Buffer
+	code := Run([]string{root}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("Run = %d, want 0; stderr:\n%s", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "canary ok") {
+		t.Fatalf("stdout = %q, want it to contain %q", stdout.String(), "canary ok")
+	}
+}
 
 func TestSweepRejectsMissingAndEmptyHarness(t *testing.T) {
 	root := t.TempDir()

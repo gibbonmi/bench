@@ -204,4 +204,19 @@ func TestCommand(t *testing.T) {
 			t.Errorf("Command = (%q, %d), want (%q, 2)", out, code, want)
 		}
 	})
+
+	t.Run("no argument reports missing/required, not unknown argument, exit 2", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+
+		out, code := Command(nil)
+		if code != 2 {
+			t.Errorf("Command = (%q, %d), want exit 2", out, code)
+		}
+		if !strings.Contains(out, "required") && !strings.Contains(out, "missing") {
+			t.Errorf("Command = %q, want it to say the argument is missing/required", out)
+		}
+		if strings.Contains(out, "unknown argument") {
+			t.Errorf("Command = %q, must not use the unknown-argument template for a missing argument", out)
+		}
+	})
 }

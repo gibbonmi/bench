@@ -61,6 +61,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
+	fmt.Fprintln(stdout, "canary ok (every fixture bit)")
 	return 0
 }
 

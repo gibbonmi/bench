@@ -216,7 +216,7 @@ func Command(args []string) (string, int) {
 		}
 	}
 	if spec == "" {
-		return toon.Usage("bench coverage", "<spec.md> is required") + "\n", 2
+		return "usage: bench coverage (missing argument: <spec.md> is required)\n", 2
 	}
 	content, resolved, tried, ok, err := specref.Resolve("", spec)
 	if err != nil {

@@ -34,7 +34,11 @@ func Link(args []string, stdout, stderr io.Writer, version string) int {
 	}
 	root, err := git.Root()
 	if err != nil {
-		fmt.Fprintln(stderr, toon.NotInRepo())
+		// link's whole job is to create the Bench linkage, so the shared AXI
+		// toon.NotInRepo() ("run inside a Bench-linked repo") is nonsensical here —
+		// point at the actual remedy instead. Every genuine AXI query command keeps
+		// the shared phrasing; this is link's own message, not a second source of it.
+		fmt.Fprintln(stderr, toon.Errorf("not a git repository", "run inside a git repository (e.g. run 'git init' first)"))
 		return 1
 	}
 	kit := kitDir()
