@@ -30,6 +30,11 @@ var signalRowRe = regexp.MustCompile(`row\{\s*\d+\s*,\s*"([a-z][a-z-]*)"`)
 //     with no parenthesized enumeration) returns nothing, mirroring checkLineBinding
 //     skipping an empty profile — the compiled-core build/test check already fails a
 //     tree missing status.go.
+//   - Zero-extraction floor: a present status.go whose row shape has drifted from
+//     signalRowRe (a named-const severity, a helper constructor, …) yields zero
+//     matches. That must not silently pass as "nothing to check" — it reds with one
+//     diagnostic naming the extraction as stale, so the drift is caught instead of
+//     going quiet.
 func checkSignalVocabulary(root string) []string {
 	status := readIfExists(filepath.Join(root, "internal", "status", "status.go"))
 	context := readIfExists(filepath.Join(root, "CONTEXT.md"))
@@ -40,9 +45,13 @@ func checkSignalVocabulary(root string) []string {
 	if enum == "" {
 		return nil
 	}
+	matches := signalRowRe.FindAllStringSubmatch(status, -1)
+	if len(matches) == 0 {
+		return []string{"internal/status/status.go yielded no signal names — signalRowRe no longer matches the row shape; update the extraction"}
+	}
 	var diags []string
 	seen := map[string]bool{}
-	for _, match := range signalRowRe.FindAllStringSubmatch(status, -1) {
+	for _, match := range matches {
 		name := match[1]
 		if seen[name] {
 			continue
@@ -68,11 +77,11 @@ func signalEnumeration(context string) string {
 	if open < 0 {
 		return ""
 	}
-	close := strings.Index(rest[open:], ")")
-	if close < 0 {
+	end := strings.Index(rest[open:], ")")
+	if end < 0 {
 		return ""
 	}
-	return rest[open+1 : open+close]
+	return rest[open+1 : open+end]
 }
 
 // tokenInEnumeration reports whether name appears in enum delimited by non-letters,
@@ -157,5 +166,18 @@ func TestSignalVocabularyBites(t *testing.T) {
 
 	if diags := checkSignalVocabulary(write(t, "", enum("gate"))); len(diags) != 0 {
 		t.Fatalf("absent status.go: want no diagnostics (skip posture), got %v", diags)
+	}
+
+	// Zero-extraction floor: a present status.go whose row shape has drifted from
+	// signalRowRe (here a named-const severity, `row{sevGate, ...}`, instead of the
+	// integer literal the regex requires) must not silently pass with zero
+	// diagnostics — it must red with a diagnostic naming the extraction as stale.
+	const driftedStatusSrc = "package status\n" +
+		"func rows() {\n" +
+		"\t_ = row{sevGate, \"gate\", d, a}\n" +
+		"}\n"
+	const wantFloorDiag = "internal/status/status.go yielded no signal names — signalRowRe no longer matches the row shape; update the extraction"
+	if diags := checkSignalVocabulary(write(t, driftedStatusSrc, enum("gate"))); !containsDiagnostic(diags, wantFloorDiag) {
+		t.Fatalf("drifted row shape (zero extraction): want %q in diagnostics, got %v", wantFloorDiag, diags)
 	}
 }
