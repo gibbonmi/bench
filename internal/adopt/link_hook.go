@@ -23,12 +23,13 @@ var prePushTemplate string
 // default branch, substituted at install time.
 const prePushBranchToken = "__BENCH_DEFAULT_BRANCH__"
 
-// prePushMarker is the fingerprint of a bench-managed pre-push hook: the marker line the
+// PrePushMarker is the fingerprint of a bench-managed pre-push hook: the marker line the
 // template carries. It is the one source installGitHook (conflict check), ClassifyPrePush
 // (doctor/status backstop verification), and unlink's removal gate match by substring —
 // not byte-identity, which would false-red across default-branch token substitution and
-// benign template evolution.
-const prePushMarker = "bench:managed-pre-push"
+// benign template evolution. internal/guards also reads it, to detect a bench-managed
+// pre-push hook without duplicating the marker literal.
+const PrePushMarker = "bench:managed-pre-push"
 
 // PrePushState classifies a repo's pre-push hook against the bench-managed template.
 type PrePushState int
@@ -55,7 +56,7 @@ type PrePushStatus struct {
 func ClassifyPrePush(root string) PrePushStatus {
 	path := filepath.Join(hooksDir(root), "pre-push")
 	content, err := os.ReadFile(path)
-	if err == nil && strings.Contains(string(content), prePushMarker) {
+	if err == nil && strings.Contains(string(content), PrePushMarker) {
 		return PrePushStatus{State: PrePushManaged, Path: path}
 	}
 	if hooksPathConfigured(root) {
@@ -98,7 +99,7 @@ func installGitHook(root string, stderr io.Writer) error {
 		return err
 	}
 	prepush := filepath.Join(hooks, "pre-push")
-	if content, err := os.ReadFile(prepush); err == nil && !strings.Contains(string(content), prePushMarker) {
+	if content, err := os.ReadFile(prepush); err == nil && !strings.Contains(string(content), PrePushMarker) {
 		fmt.Fprintf(stderr, "conflict: %s exists and is not Bench-managed\n", prepush)
 		return fmt.Errorf("foreign pre-push")
 	}

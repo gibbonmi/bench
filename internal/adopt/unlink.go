@@ -260,7 +260,7 @@ func stripAgentsForUnlink(root string, dryRun bool, p *unlinkPlan) string {
 func removeManagedHook(root string, dryRun bool) string {
 	path := filepath.Join(hooksDir(root), "pre-push")
 	content, err := os.ReadFile(path)
-	if err != nil || !strings.Contains(string(content), prePushMarker) {
+	if err != nil || !strings.Contains(string(content), PrePushMarker) {
 		return ""
 	}
 	if !dryRun {

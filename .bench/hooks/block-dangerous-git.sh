@@ -30,7 +30,8 @@ set -uo pipefail
 # rather than shared with .bench/hooks/stop.sh: sourcing a shared lib would give
 # this hook a new fail-OPEN mode (missing lib → the shim errors before its rims
 # run, and a non-2 PreToolUse exit is a non-blocking error that silently grants).
-# It collapses to one source in the slice that ports stop.sh into its own shim.
+# The conformance check in internal/conformance (checkGuardResolverOrderDrift)
+# reds if this inline's search order ever drifts from .bench/lib/resolve-bench.sh.
 resolve_wrapper() {
   local root candidate
   root="$(git rev-parse --show-toplevel 2>/dev/null || true)"

@@ -22,8 +22,8 @@ choosing (FT55's rule). Next: `/bench-implement-spec`.
 `bench guards` instead of its copied literal; a shared const for the
 `bench-last-gate` cache filename (writer and reader currently copy it); a
 sync test for the git guard's deliberately-inlined wrapper search order;
-delete the stale `default_branch` shell-mirror comment. Next:
-`/bench-write-spec`.
+delete the stale `default_branch` shell-mirror comment. Spec:
+`specs/one-source-collapse.md`. Next: `/bench-implement-spec`.
 
 **FT51 — CLI hygiene batch.** Unknown subcommand prints help at exit 0 (typo
 indistinguishable from success — dispatcher is the outlier against the exit-2
@@ -123,7 +123,7 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 1. `/bench-implement-spec` — FT61 structure debt: clears the ambient
    structure red left by the FT60 build; seams are obvious, `craft-seams`
    governs split-vs-grant.
-2. `/bench-write-spec` — FT50 one-source collapse batch: mechanical,
-   well-scoped, no open decisions.
+2. `/bench-implement-spec` — FT50 one-source collapse batch: spec staged at
+   `specs/one-source-collapse.md`; mechanical, no open decisions.
 3. `/bench-write-spec` — FT51 CLI hygiene batch: the exit-0 unknown-subcommand
    defect is the sharpest item in it.

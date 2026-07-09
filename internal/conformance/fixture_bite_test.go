@@ -150,6 +150,7 @@ func TestPackageCoreAndGuardFixturesBite(t *testing.T) {
 		"go-build-broken",
 		"go-test-failing",
 		"guard-describe-boundary-dropped",
+		"guard-resolver-order-drift",
 	}
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {

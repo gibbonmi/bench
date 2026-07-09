@@ -205,7 +205,7 @@ func Record(root string, rc int, stderr io.Writer) {
 		return
 	}
 	line := status + " " + tree + " " + time.Now().UTC().Format("2006-01-02T15:04:05Z") + "\n"
-	_ = os.WriteFile(filepath.Join(gitdir, "bench-last-gate"), []byte(line), 0o644)
+	_ = os.WriteFile(filepath.Join(gitdir, git.GateCacheFile), []byte(line), 0o644)
 }
 
 // RunAndRecord resolves, runs, and records the gate for root, returning its exit code.

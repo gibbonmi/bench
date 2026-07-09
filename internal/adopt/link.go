@@ -179,7 +179,7 @@ func preflightLink(root string, plan []planEntry, stderr io.Writer) bool {
 	}
 	hooks := hooksDir(root)
 	prepush := filepath.Join(hooks, "pre-push")
-	if content, err := os.ReadFile(prepush); err == nil && !strings.Contains(string(content), prePushMarker) {
+	if content, err := os.ReadFile(prepush); err == nil && !strings.Contains(string(content), PrePushMarker) {
 		fmt.Fprintf(stderr, "conflict: %s exists and is not Bench-managed\n", prepush)
 		conflicts++
 	}

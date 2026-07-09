@@ -29,6 +29,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -188,7 +189,7 @@ func prePushRow(root string) [][]string {
 		return notInstalled
 	}
 	content, _ := os.ReadFile(prepush)
-	if !bytes.Contains(content, []byte("bench:managed-pre-push")) {
+	if !bytes.Contains(content, []byte(adopt.PrePushMarker)) {
 		return [][]string{{"pre-push", "", "unmanaged (no manifest)"}}
 	}
 	if r, emit := guardRow(prepush, "pre-push"); emit {

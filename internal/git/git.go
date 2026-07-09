@@ -97,10 +97,16 @@ func ParsePorcelainZ(raw []byte) []PorcelainEntry {
 	return entries
 }
 
+// GateCacheFile is the filename of the cached gate verdict, written under the git
+// directory (never the worktree, so it is never a diff or commit candidate). It is the
+// one source gate.Record (the writer) and status.GateVerdict (the reader) both compose
+// with their own git-dir resolution.
+const GateCacheFile = "bench-last-gate"
+
 // DefaultBranch is the repository's default branch: origin/HEAD's short name with the
 // `origin/` prefix stripped, falling back to "main" when the ref is unset (no remote
-// HEAD) or empty. The one source both `diff` and `status` read — and the Go mirror of
-// bench.sh's default_branch — so the three surfaces agree on what "default branch" is.
+// HEAD) or empty. The one source both `diff` and `status` read, so the two surfaces
+// agree on what "default branch" is.
 func DefaultBranch(root string) string {
 	out, err := Output("-C", root, "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD")
 	if err != nil || out == "" {

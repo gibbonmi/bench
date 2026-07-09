@@ -20,6 +20,7 @@ func checkPackageCoreAndGuards(root string) []string {
 	diags = append(diags, checkReleaseWorkflow(root)...)
 	diags = append(diags, checkShippedIdentityStrings(root)...)
 	diags = append(diags, checkGuardDescribeManifests(root)...)
+	diags = append(diags, checkGuardResolverOrderDrift(root)...)
 	return diags
 }
 

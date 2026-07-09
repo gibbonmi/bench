@@ -179,7 +179,7 @@ func GateVerdict(root string) GateInfo {
 	if err != nil {
 		return GateInfo{}
 	}
-	data, err := os.ReadFile(filepath.Join(gitDir, "bench-last-gate"))
+	data, err := os.ReadFile(filepath.Join(gitDir, git.GateCacheFile))
 	if err != nil {
 		return GateInfo{}
 	}
