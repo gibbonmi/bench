@@ -196,7 +196,7 @@ adoption_route() {
   route_porcelain "$@"
 }
 
-case "${1:-help}" in
+case "${1-help}" in
   version)  route_porcelain "$@" ;;
   --version|-v) shift; route_porcelain version "$@" ;;
   gate)     gate_command "$@" ;;

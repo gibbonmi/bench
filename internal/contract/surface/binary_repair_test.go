@@ -356,7 +356,7 @@ func binaryRepairCachePath(t testing.TB, f contract.Fixture, version string) str
 func binaryRepairPlatformSuffix(t testing.TB) string {
 	t.Helper()
 	script := fmt.Sprintf(
-		"source <(sed '/^case \"${1:-help}\" in/,$d' %q); platform_pkg",
+		"source <(sed '/^case \"${1-help}\" in/,$d' %q); platform_pkg",
 		filepath.Join(contract.KitRoot(t), "bin", "bench.sh"),
 	)
 	out, err := exec.Command("bash", "-c", script).CombinedOutput()

@@ -123,6 +123,15 @@ func Usage(cmd, arg string) string {
 	return fmt.Sprintf("usage: %s (unknown argument: %s)", cmd, arg)
 }
 
+// MissingArg renders an AXI usage line for a missing required argument: `usage:
+// <cmd> (missing argument: <what>)`. Same shape as Usage, distinct label — the one
+// source every command shares for "you forgot the required positional" instead of
+// the wrong "unknown argument" template. Per the hybrid contract this prints to
+// stdout with exit 2.
+func MissingArg(cmd, what string) string {
+	return fmt.Sprintf("usage: %s (missing argument: %s)", cmd, what)
+}
+
 // NotInRepo is the structured error every AXI command prints (with exit 1) when the
 // cwd is outside a git repository — one source for the shared phrasing.
 func NotInRepo() string {

@@ -29,6 +29,9 @@ func TestRunPrintsCanaryOkOnCleanSweep(t *testing.T) {
 	if !strings.Contains(stdout.String(), "canary ok") {
 		t.Fatalf("stdout = %q, want it to contain %q", stdout.String(), "canary ok")
 	}
+	if stderr.String() != "" {
+		t.Fatalf("stderr = %q, want empty on a clean sweep", stderr.String())
+	}
 }
 
 func TestSweepRejectsMissingAndEmptyHarness(t *testing.T) {

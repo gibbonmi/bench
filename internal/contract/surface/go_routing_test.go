@@ -26,18 +26,25 @@ func TestGoRoutingContracts(t *testing.T) {
 // testGoRoutingUnknownSubcommandExits2OnStderr pins the typo case: an unrecognized
 // token must be distinguishable from success (exit 2, message on stderr), not the
 // former exit-0/stdout help fallthrough that made a typo indistinguishable from a
-// legitimate no-op to a wrapping script.
+// legitimate no-op to a wrapping script. It also pins flag-shaped tokens, the empty
+// string (the shell wrapper used to swallow "" into help via `${1:-help}`'s
+// unset-or-empty default), and a multi-word token — the unknown-subcommand contract
+// covers more than the plain typo shape.
 func testGoRoutingUnknownSubcommandExits2OnStderr(t *testing.T) {
-	f := contract.NewFixture(t)
+	for _, tok := range []string{"frobnicate", "--frobnicate", "-x", "", "foo bar"} {
+		t.Run(tok, func(t *testing.T) {
+			f := contract.NewFixture(t)
 
-	out := f.Bench("frobnicate")
+			out := f.Bench(tok)
 
-	out.RequireExit(2)
-	if strings.TrimSpace(out.Stdout) != "" {
-		t.Fatalf("bench frobnicate wrote to stdout, want it silent there:\nstdout:\n%s", out.Stdout)
-	}
-	if strings.TrimSpace(out.Stderr) == "" {
-		t.Fatalf("bench frobnicate wrote nothing to stderr, want a message there")
+			out.RequireExit(2)
+			if strings.TrimSpace(out.Stdout) != "" {
+				t.Fatalf("bench %q wrote to stdout, want it silent there:\nstdout:\n%s", tok, out.Stdout)
+			}
+			if strings.TrimSpace(out.Stderr) == "" {
+				t.Fatalf("bench %q wrote nothing to stderr, want a message there", tok)
+			}
+		})
 	}
 }
 

@@ -212,7 +212,7 @@ func specArg(cmd, help string, rest []string) (arg, out string, code int, ok boo
 		}
 	}
 	if arg == "" {
-		return "", toon.Usage(cmd, "<spec.md | slug> is required") + "\n", 2, false
+		return "", toon.MissingArg(cmd, "<spec.md | slug> is required") + "\n", 2, false
 	}
 	return arg, "", 0, true
 }
