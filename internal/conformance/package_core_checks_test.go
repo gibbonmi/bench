@@ -127,9 +127,8 @@ func checkGoCore(root string) []string {
 	}
 	buildHelper := filepath.Join(root, "scripts", "go-build.sh")
 	if exists(buildHelper) {
-		// Throwaway output path, never root's dist/bench: the contract and canary
-		// phases exec that binary while this check runs, and the gate runner's
-		// serialized build phase owns the one real write.
+		// Throwaway output path, never root's dist/bench — the gate's serial
+		// build phase owns the one real write (rationale: gate.BenchkitPhases).
 		tmp, err := os.MkdirTemp("", "bench-build-*")
 		if err != nil {
 			diags = append(diags, "go build setup failed: "+err.Error())

@@ -183,16 +183,29 @@ func runPhases(ctx context.Context, root string, phases []Phase, mode phaseMode,
 }
 
 func runPhasesSequential(ctx context.Context, root string, phases []Phase, stdout, stderr io.Writer) int {
+	// splitSerialPhases is the one source of the serial-first ordering for both
+	// runners; without it a serial phase in a non-first table position would
+	// fail-fast in outer mode but not here.
+	serial, concurrent := splitSerialPhases(phases)
 	red := false
-	for _, phase := range phases {
+	for _, phase := range serial {
 		result := runPhase(ctx, root, phase, stdout, stderr)
 		if result.Code == 130 {
 			return 130
 		}
 		if result.Code != 0 {
 			red = true
-			if phase.Serial {
-				break
+			break
+		}
+	}
+	if !red {
+		for _, phase := range concurrent {
+			result := runPhase(ctx, root, phase, stdout, stderr)
+			if result.Code == 130 {
+				return 130
+			}
+			if result.Code != 0 {
+				red = true
 			}
 		}
 	}

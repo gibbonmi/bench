@@ -302,6 +302,47 @@ func TestRunnerSerialPhaseNotFirstStillRunsFirst(t *testing.T) {
 	}
 }
 
+func TestRunnerSerialPhaseNotFirstInnerMode(t *testing.T) {
+	t.Run("runs first", func(t *testing.T) {
+		root := t.TempDir()
+		marker := filepath.Join(root, "built")
+		phases := []Phase{
+			// A reader listed ahead of the serial phase: sequential execution in
+			// table order would run it before the marker exists.
+			{Name: "alpha", Argv: []string{"bash", "-c", `test -f "$1"`, "bash", marker}},
+			{
+				Name:   "build",
+				Argv:   []string{"bash", "-c", `touch "$1"`, "bash", marker},
+				Serial: true,
+			},
+		}
+
+		var stdout, stderr bytes.Buffer
+		rc := runPhases(context.Background(), root, phases, innerMode, &stdout, &stderr)
+		if rc != 0 {
+			t.Fatalf("runPhases rc = %d; the reader ran before the non-first serial phase\nstdout=%q\nstderr=%q", rc, stdout.String(), stderr.String())
+		}
+	})
+
+	t.Run("red fails fast", func(t *testing.T) {
+		root := t.TempDir()
+		leak := filepath.Join(root, "leak")
+		phases := []Phase{
+			{Name: "alpha", Argv: []string{"bash", "-c", `touch "$1"`, "bash", leak}},
+			{Name: "build", Argv: []string{"bash", "-c", "exit 3"}, Serial: true},
+		}
+
+		var stdout, stderr bytes.Buffer
+		rc := runPhases(context.Background(), root, phases, innerMode, &stdout, &stderr)
+		if rc != 1 {
+			t.Fatalf("runPhases rc = %d, want 1", rc)
+		}
+		if _, err := os.Stat(leak); err == nil {
+			t.Fatalf("phase listed ahead of the failed serial phase still ran")
+		}
+	})
+}
+
 func TestRunnerCancelKillsGroup(t *testing.T) {
 	root := t.TempDir()
 	pidfile := filepath.Join(root, "sleep.pid")
