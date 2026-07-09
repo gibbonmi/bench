@@ -17,3 +17,12 @@ Format per entry:
 - **What happened:** …
 - **Right behavior:** …
 - **Proposed rule change:** … (or "none")
+
+- 2026-07-09 — Staging a spec for a new phase command turns the gate red: the
+  stale-command-reference sweep flags `/bench-<new>` in specs/ before the command
+  file exists (hit on specs/assess-owner.md naming the planned assessment phase).
+  What we did: held the spec out of the tree and land it in the same diff as the
+  command, so the sweep sees the file. Right behavior unclear — options are (a)
+  accept spec-lands-with-implementation for new-command specs, or (b) teach the
+  sweep that a `Status: staged` spec may name its own deliverable. Proposed rule:
+  (a), recorded in /bench-write-spec, unless the reviewer prefers (b).
