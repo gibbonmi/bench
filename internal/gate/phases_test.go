@@ -235,6 +235,73 @@ func TestRunnerSerialRedFailsFastInnerMode(t *testing.T) {
 	}
 }
 
+func TestRunnerCancelDuringSerialPhaseReturns130(t *testing.T) {
+	root := t.TempDir()
+	pidfile := filepath.Join(root, "sleep.pid")
+	leak := filepath.Join(root, "leak")
+	phases := []Phase{
+		{
+			Name:   "build",
+			Argv:   []string{"bash", "-c", `sleep 30 & echo $! > "$1"; wait`, "bash", pidfile},
+			Serial: true,
+		},
+		{Name: "alpha", Argv: []string{"bash", "-c", `touch "$1"`, "bash", leak}},
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	var stdout, stderr bytes.Buffer
+	done := make(chan int, 1)
+	go func() {
+		done <- runPhases(ctx, root, phases, outerMode, &stdout, &stderr)
+	}()
+
+	pid := waitForPIDFile(t, pidfile)
+	t.Cleanup(func() { _ = syscall.Kill(pid, syscall.SIGKILL) })
+	cancel()
+
+	select {
+	case rc := <-done:
+		if rc != 130 {
+			t.Fatalf("runPhases rc = %d, want 130; stdout=%q stderr=%q", rc, stdout.String(), stderr.String())
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("runPhases did not return after cancellation during the serial phase")
+	}
+	waitForProcessExit(t, pid)
+	// An interrupt is not a verdict: no phase behind the interrupted build may run,
+	// and the run must not present itself as a graded red.
+	if _, err := os.Stat(leak); err == nil {
+		t.Fatalf("concurrent phase ran after the serial phase was interrupted")
+	}
+	if strings.Contains(stdout.String()+stderr.String(), "gate: red") {
+		t.Fatalf("interrupted serial phase was graded as red:\nstdout=%q\nstderr=%q", stdout.String(), stderr.String())
+	}
+}
+
+func TestRunnerSerialPhaseNotFirstStillRunsFirst(t *testing.T) {
+	root := t.TempDir()
+	marker := filepath.Join(root, "built")
+	phases := []Phase{
+		// Readers listed ahead of the serial phase: only the runner's own
+		// reordering keeps them from starting before the marker exists.
+		{Name: "alpha", Argv: []string{"bash", "-c", `test -f "$1"`, "bash", marker}},
+		{Name: "bravo", Argv: []string{"bash", "-c", `test -f "$1"`, "bash", marker}},
+		{
+			Name:   "build",
+			Argv:   []string{"bash", "-c", `sleep 0.1; touch "$1"`, "bash", marker},
+			Serial: true,
+		},
+	}
+
+	var stdout, stderr bytes.Buffer
+	rc := runPhases(context.Background(), root, phases, outerMode, &stdout, &stderr)
+	if rc != 0 {
+		t.Fatalf("runPhases rc = %d; a reader phase ran before the non-first serial phase\nstdout=%q\nstderr=%q", rc, stdout.String(), stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "phase build: green") {
+		t.Fatalf("serial phase missing from summaries:\n%s", stdout.String())
+	}
+}
+
 func TestRunnerCancelKillsGroup(t *testing.T) {
 	root := t.TempDir()
 	pidfile := filepath.Join(root, "sleep.pid")

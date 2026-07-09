@@ -119,9 +119,20 @@ func TestPhaseTableBuildPhase(t *testing.T) {
 		t.Fatalf("inner phases dropped the build phase: %#v", got)
 	}
 
-	// Without the Go build surface the table keeps its four-phase shape.
+	// Without the Go build surface the table keeps its four-phase shape — and a
+	// half-present surface (either file alone) counts as absent, not buildable.
 	if bare := BenchkitPhases(t.TempDir(), "/tmp/kit"); len(bare) != 4 {
 		t.Fatalf("bare root BenchkitPhases len = %d, want 4: %#v", len(bare), phaseNames(bare))
+	}
+	modOnly := t.TempDir()
+	writeFile(t, filepath.Join(modOnly, "go.mod"), "module fixture\n")
+	if got := BenchkitPhases(modOnly, "/tmp/kit"); len(got) != 4 {
+		t.Fatalf("go.mod-only root BenchkitPhases len = %d, want 4: %#v", len(got), phaseNames(got))
+	}
+	helperOnly := t.TempDir()
+	writeFile(t, filepath.Join(helperOnly, "scripts", "go-build.sh"), "#!/usr/bin/env bash\n")
+	if got := BenchkitPhases(helperOnly, "/tmp/kit"); len(got) != 4 {
+		t.Fatalf("helper-only root BenchkitPhases len = %d, want 4: %#v", len(got), phaseNames(got))
 	}
 }
 
