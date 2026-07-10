@@ -15,6 +15,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -158,9 +159,16 @@ func phasesForMode(phases []Phase, mode phaseMode) []Phase {
 	if mode != innerMode {
 		return phases
 	}
+	owner := os.Getenv(canary.PhaseEnv)
+	if owner != "conformance" && owner != "contract" {
+		owner = ""
+	}
 	filtered := make([]Phase, 0, len(phases))
 	for _, phase := range phases {
 		if phase.Name == "canary" {
+			continue
+		}
+		if owner != "" && phase.Name != owner {
 			continue
 		}
 		filtered = append(filtered, phase)

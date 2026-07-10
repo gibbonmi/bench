@@ -93,8 +93,42 @@ func TestPhaseTable(t *testing.T) {
 	if contractCount != 1 {
 		t.Fatalf("contract subtree argv count = %d, want exactly 1", contractCount)
 	}
-	if got := phaseNames(phasesForMode(phases, innerMode)); strings.Contains(strings.Join(got, ","), "canary") {
-		t.Fatalf("inner phases include canary: %#v", got)
+	if got, want := phaseNames(phasesForMode(phases, innerMode)), []string{"conformance", "contract", "shellcheck"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("inner phases = %#v, want %#v", got, want)
+	}
+}
+
+func TestPhasesCommandRoutesCanaryToOwningPhase(t *testing.T) {
+	original := benchkitPhasesForCommand
+	t.Cleanup(func() { benchkitPhasesForCommand = original })
+	benchkitPhasesForCommand = func(root, kit string) []Phase {
+		return []Phase{
+			{Name: "conformance", Argv: []string{"bash", "-c", "printf 'conformance\\n'"}},
+			{Name: "contract", Argv: []string{"bash", "-c", "printf 'contract\\n'"}},
+			{Name: "shellcheck", Argv: []string{"bash", "-c", "printf 'shellcheck\\n'"}},
+			{Name: "canary", Argv: []string{"bash", "-c", "printf 'canary\\n'"}},
+		}
+	}
+	for _, tc := range []struct {
+		name  string
+		phase string
+	}{
+		{name: "behavior-owned", phase: "contract"},
+		{name: "load-validity-metadata", phase: "conformance"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("BENCH_CANARY_INNER", "1")
+			t.Setenv("BENCH_CANARY_PHASE", tc.phase)
+
+			var stdout, stderr bytes.Buffer
+			if code := PhasesCommand([]string{t.TempDir()}, &stdout, &stderr); code != 0 {
+				t.Fatalf("PhasesCommand = %d, want 0; stderr=%q", code, stderr.String())
+			}
+			want := tc.phase + "\ngate: green\n"
+			if got := stdout.String(); got != want {
+				t.Fatalf("stdout = %q, want %q", got, want)
+			}
+		})
 	}
 }
 

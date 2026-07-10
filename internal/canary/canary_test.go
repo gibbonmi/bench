@@ -120,6 +120,9 @@ func TestSweepMaterializesFixtureAndRequiresTargetedBite(t *testing.T) {
 	if !envHas(fixtureCall.Env, "BENCH_CANARY_INNER=1") {
 		t.Fatalf("inner env missing BENCH_CANARY_INNER=1: %#v", fixtureCall.Env)
 	}
+	if !envHas(fixtureCall.Env, "BENCH_CANARY_PHASE=conformance") {
+		t.Fatalf("inner env missing fixture phase: %#v", fixtureCall.Env)
+	}
 	if envHasPrefix(fixtureCall.Env, "BENCH_KIT=") || envHasPrefix(fixtureCall.Env, "BENCH_WRAPPER=") {
 		t.Fatalf("inner env leaked wrapper routing: %#v", fixtureCall.Env)
 	}
@@ -147,20 +150,24 @@ func TestSweepAcceptsLegacyFlatSeedCanary(t *testing.T) {
 	fixture := filepath.Join(root, "tests", "canary", "example")
 	mkdir(t, filepath.Join(fixture, "files"))
 	write(t, filepath.Join(fixture, "EXPECT"), "example check\n")
+	t.Setenv(PhaseEnv, "contract")
 
-	var fixtureCalls []string
+	var fixtureCalls []RunCall
 	err := Sweep(root, func(call RunCall) RunResult {
 		if call.FixtureDir == "" {
 			return RunResult{ExitCode: 0, Output: "baseline\n"}
 		}
-		fixtureCalls = append(fixtureCalls, call.FixtureDir)
+		fixtureCalls = append(fixtureCalls, call)
 		return RunResult{ExitCode: 1, Output: "example check\n"}
 	})
 	if err != nil {
 		t.Fatalf("Sweep err = %v", err)
 	}
-	if len(fixtureCalls) != 1 || fixtureCalls[0] != fixture {
+	if len(fixtureCalls) != 1 || fixtureCalls[0].FixtureDir != fixture {
 		t.Fatalf("fixture calls = %#v, want only legacy fixture %q", fixtureCalls, fixture)
+	}
+	if envHasPrefix(fixtureCalls[0].Env, PhaseEnv+"=") {
+		t.Fatalf("legacy flat fixture inherited targeted phase: %#v", fixtureCalls[0].Env)
 	}
 }
 

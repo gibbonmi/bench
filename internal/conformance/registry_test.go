@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/canary"
 )
 
 type fixtureOwner string
@@ -121,9 +123,15 @@ func TestCanaryFixtureRegistryClassifiesEveryFixture(t *testing.T) {
 	for name, path := range fixturePaths {
 		family := filepath.Base(filepath.Dir(path))
 		wantOwner := ownerConformance
-		if family == "behavior-owned" {
+		switch canary.FixturePhase(family) {
+		case "contract":
 			wantOwner = ownerBehavior
-		} else if !isConformanceFamily(family) {
+		case "conformance":
+			if !isConformanceFamily(family) {
+				t.Errorf("canary fixture %q has unknown conformance family %q", name, family)
+				continue
+			}
+		default:
 			t.Errorf("canary fixture %q has unknown conformance family %q", name, family)
 			continue
 		}

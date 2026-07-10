@@ -21,6 +21,23 @@ import (
 
 const absentHarnessMessage = "canary harness absent — tests/canary/ has no fixtures; the gate cannot prove its own checks bite"
 
+// PhaseEnv carries the one owning benchkit gate phase for a nested fixture.
+// An absent value means the fixture must exercise the full inner gate.
+const PhaseEnv = "BENCH_CANARY_PHASE"
+
+// FixturePhase maps the canary directory convention to the phase that owns it.
+// Legacy flat fixtures have tests/canary as their parent and keep the full gate.
+func FixturePhase(family string) string {
+	switch family {
+	case "", "canary":
+		return ""
+	case "behavior-owned":
+		return "contract"
+	default:
+		return "conformance"
+	}
+}
+
 // RunCall is one inner gate invocation: Cwd is the materialized repo under grade,
 // Gate is the real gate script from the root being checked, and FixtureDir names
 // the source fixture or is empty for the vacuity baseline.
@@ -156,7 +173,11 @@ func runFixture(fx, baselineOutput, gate string, env []string, runner Runner) st
 		return fmt.Sprintf("canary '%s' setup failed: %v", name, err)
 	}
 	_ = gitInit(work)
-	result := runner(RunCall{Cwd: work, Gate: gate, FixtureDir: fx, Env: env})
+	fixtureEnv := append([]string(nil), env...)
+	if phase := FixturePhase(filepath.Base(filepath.Dir(fx))); phase != "" {
+		fixtureEnv = append(fixtureEnv, PhaseEnv+"="+phase)
+	}
+	result := runner(RunCall{Cwd: work, Gate: gate, FixtureDir: fx, Env: fixtureEnv})
 	if result.ExitCode == 0 || !strings.Contains(result.Output, expect) {
 		return fmt.Sprintf("canary '%s' did not bite (want red + %q; got exit %d)", name, expect, result.ExitCode)
 	}
@@ -282,7 +303,7 @@ func restoreDotSegments(root string) error {
 func innerEnv() []string {
 	env := make([]string, 0, len(os.Environ())+1)
 	for _, kv := range os.Environ() {
-		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, "BENCH_CANARY_INNER=") {
+		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, "BENCH_CANARY_INNER=") || strings.HasPrefix(kv, PhaseEnv+"=") {
 			continue
 		}
 		env = append(env, kv)

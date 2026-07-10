@@ -112,8 +112,11 @@ The oracle for a kit, in layers (all green today). `.bench/gate.sh` is a thin
 exec into the `gate-phases` plumbing subcommand, which runs the layers below as
 four concurrent phases in outer mode (`[phase]`-prefixed output, per-phase
 verdicts, run-all-and-aggregate) and sequentially, unprefixed, sweep-skipped in
-inner mode (`BENCH_CANARY_INNER=1`) — canary EXPECT matching is substring-based
-against inner-gate output, so the inner byte-shape is load-bearing:
+inner mode (`BENCH_CANARY_INNER=1`). An empty or legacy-flat canary run exercises
+every non-canary phase; a nested fixture exercises only its owning phase
+(conformance for conformance families, contract for `behavior-owned`). Canary
+EXPECT matching is substring-based against inner-gate output, so the inner
+byte-shape is load-bearing:
 
 1. **Go root conformance** — the conformance phase runs
    `go test -count=1 ./internal/conformance -run '^TestRootConformance$'` with
@@ -142,9 +145,12 @@ against inner-gate output, so the inner byte-shape is load-bearing:
 6. **Canary (meta)** — the gate runs itself against deliberately-broken fixtures in
    `tests/canary/` and asserts each goes red with its targeted error substring. Proves
    the checks above still *bite*: a check rotted into an always-pass fails here. This
-   is the gate guarding the gate. Fixtures hide dot-dirs behind a `dot-` prefix (e.g.
-   `dot-claude`) so the harness doesn't load fixture skills as real ones; the canary
-   restores them at run time. The tripwire decision is recorded in
+   is the gate guarding the gate. Each nested fixture keeps the real gate entry path
+   but runs only the phase that owns its failure, avoiding unrelated whole-gate work;
+   the empty baseline still exercises every inner phase to reject vacuous EXPECTs.
+   Fixtures hide dot-dirs behind a `dot-` prefix (e.g. `dot-claude`) so the harness
+   doesn't load fixture skills as real ones; the canary restores them at run time.
+   The tripwire decision is recorded in
    `docs/adr/0001-working-tree-gate-tripwire.md`.
 
 The gate file lives outside `package.json` `files[]`, so it never ships to consumers.
