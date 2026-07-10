@@ -10,12 +10,34 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
+**FT65 — `bench diff --full` omits dirty default-branch work.** Reproduced
+2026-07-10 through the exact accused command: it returned `files[0]` while
+`git diff --no-ext-diff HEAD` showed the uncommitted roadmap batch. Specify the
+branch-relative AXI contract to include tracked index and working-tree changes
+in its files and body sections while the log remains commit-only and
+`--commit` remains exact. Prefer fixing the CLI over adding a review-guidance
+fallback because `bench diff` is the single source of review-base truth. Next:
+`/bench-write-spec`.
+
+**FT66 — bound the terminal repair pass in review guidance.** Recursive
+review/fix rounds made the workflow unbounded. Add one clause to
+`/bench-review-implementation`: integrate accepted findings, run focused
+checks, run one final gate, then stop; open another review round only when that
+gate fails or the reviewer requests one. Rule-shaped kit edit under
+`craft-synthesis`. Next: `/bench-implement-spec` (lighter path).
+
 **FT62 — structure debt: `internal/contract/helper.go` at 441/400.** Grown by
-FT53's RunAtWithTimeout helper; the one open `bench structure` issue. Split
+FT53's RunAtWithTimeout helper; one of two open `bench structure` issues. Split
 along responsibility or propose a reviewer grant — check the dir's file-count
 headroom before choosing (`internal/contract/runtime/` already holds a dir
 grant, so a split into that dir deepens dir debt). Next:
 `/bench-implement-spec` (lighter path).
+
+**FT64 — structure debt: `internal/canary/canary_test.go` at 407/400.** The
+targeted canary-phase work grew this past the file budget after FT62 was
+recorded. Split along responsibility or propose a reviewer grant, checking
+both file and directory budgets before choosing. Next: `/bench-implement-spec`
+(lighter path).
 
 **FT6 (LOW, parked pending evidence — leave parked):** `bench refs`, `bench
 detect`, `bench doc`, `bench specs --retired`, doctor binary-presence row,
@@ -51,7 +73,9 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT62 helper.go split-or-grant, checking both
+1. `/bench-write-spec` — FT65 make the canonical branch-relative review diff
+   include tracked index and working-tree changes.
+2. `/bench-implement-spec` — FT66 add the terminal repair-pass bound under
+   `craft-synthesis` (lighter path).
+3. `/bench-implement-spec` — FT62 helper.go split-or-grant, checking both
    structure budgets before choosing.
-2. `/bench-shape-idea` — FT38 dashboard visual identity, on or after
-   2026-08-09.

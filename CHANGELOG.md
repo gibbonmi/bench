@@ -8,6 +8,19 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-10, scope: post-XS-promotion reconcile).** Reworded
+  FT62 after the tree grew from one to two structure issues and added FT64 for
+  `internal/canary/canary_test.go`; FT62 remains open. IDEAS.md was already
+  empty, so zero ideas drained. Dismissed the emitted-CLI-output entry because
+  `craft-synthesis` already classifies every CLI touch as behavior and requires
+  dogfood. Reproduced the dirty-default-branch diff defect through exact
+  `bin/bench.sh diff --full` (`files[0]` beside a non-empty pinned Git diff) and
+  promoted it to FT65; fixing the canonical CLI instead of adding a guidance
+  fallback is the veto surface. Promoted the terminal repair-pass bound to FT66
+  as a rule-shaped review-guidance edit. Previous run's promotion builds
+  checked: the XS synthesis entry below records FT55/56/57/59/63; no build entry
+  is missing.
+
 - **XS synthesis promotion (2026-07-10, FT55/56/57/59/63).** Five rule edits
   establish that structure split-vs-grant checks both file and directory
   budgets; sanctioned `bench commit`, `--spec`, and `bench spec history`
