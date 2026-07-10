@@ -264,6 +264,79 @@ func TestResolveModelVerdictIncompleteUsesPath(t *testing.T) {
 	}
 }
 
+func TestResolveModelAliasVerdict(t *testing.T) {
+	complete := "BENCH_TIER_TOP=gpt-5.6-sol\n" +
+		"BENCH_TIER_MID=gpt-5.6-terra\n" +
+		"BENCH_TIER_CHEAP=gpt-5.6-luna\n" +
+		"BENCH_ALIAS_TOP=fable\n" +
+		"BENCH_ALIAS_MID=opus\n" +
+		"BENCH_ALIAS_CHEAP=sonnet\n"
+	missingMidAlias := "BENCH_TIER_TOP=gpt-5.6-sol\n" +
+		"BENCH_TIER_MID=gpt-5.6-terra\n" +
+		"BENCH_TIER_CHEAP=gpt-5.6-luna\n" +
+		"BENCH_ALIAS_TOP=fable\n" +
+		"BENCH_ALIAS_CHEAP=sonnet\n"
+	for _, tt := range []struct {
+		name, content, wantModel, wantStderr string
+		wantExit                             int
+	}{
+		{"projects exact tier to alias", complete, "opus", "", 0},
+		{"missing corresponding alias fails closed", missingMidAlias, "", "no bound alias", 1},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			model, exit, stderr := ResolveModelAliasVerdict("gpt-5.6-terra", true, true, ".bench/lines.env", []byte(tt.content))
+			stderrOK := stderr == ""
+			if tt.wantStderr != "" {
+				stderrOK = contains(stderr, tt.wantStderr)
+			}
+			if model != tt.wantModel || exit != tt.wantExit || !stderrOK {
+				t.Fatalf("ResolveModelAliasVerdict = (%q, %d, %q), want model=%q exit=%d stderr containing %q", model, exit, stderr, tt.wantModel, tt.wantExit, tt.wantStderr)
+			}
+		})
+	}
+}
+
+func TestResolveProviderModelVerdictRejectsBareBoundModel(t *testing.T) {
+	binding := "BENCH_TIER_TOP=gpt-5.6-sol\n" +
+		"BENCH_TIER_MID=gpt-5.6-terra\n" +
+		"BENCH_TIER_CHEAP=gpt-5.6-luna\n"
+	model, exit, stderr := ResolveProviderModelVerdict("gpt-5.6-luna", true, true, ".bench/lines.env", []byte(binding))
+	if model != "" || exit != 1 || !contains(stderr, "provider/model") {
+		t.Fatalf("ResolveProviderModelVerdict = (%q, %d, %q), want empty model, exit 1, provider/model error", model, exit, stderr)
+	}
+}
+
+func TestResolveProviderModelVerdictCompatibility(t *testing.T) {
+	providerBinding := "BENCH_TIER_TOP=openai/gpt-5.6-sol\n" +
+		"BENCH_TIER_MID=openrouter/google/gemini-2.5-flash\n" +
+		"BENCH_TIER_CHEAP=openai/gpt-5.6-luna\n"
+	for _, tt := range []struct {
+		name, benchModel, content, wantModel, wantStderr string
+		benchSet, exists                                 bool
+		wantExit                                         int
+	}{
+		{"routed provider model", "openai/gpt-5.6-luna", providerBinding, "openai/gpt-5.6-luna", "", true, true, 0},
+		{"routed nested model id", "openrouter/google/gemini-2.5-flash", providerBinding, "openrouter/google/gemini-2.5-flash", "", true, true, 0},
+		{"unrouted default", "", "", "", "", false, false, 0},
+		{"unrouted explicit provider model", "openai/gpt-5", "", "openai/gpt-5", "", true, false, 0},
+		{"unrouted explicit bare model", "gpt-5", "", "", "provider/model", true, false, 1},
+		{"unrouted empty model segment", "openai//gpt-5", "", "", "provider/model", true, false, 1},
+		{"unrouted trailing separator", "openai/gpt-5/", "", "", "provider/model", true, false, 1},
+		{"incomplete binding keeps warning", "openai/gpt-5", "BENCH_TIER_TOP=t\n", "openai/gpt-5", "unset or empty", true, true, 0},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			model, exit, stderr := ResolveProviderModelVerdict(tt.benchModel, tt.benchSet, tt.exists, ".bench/lines.env", []byte(tt.content))
+			stderrOK := stderr == ""
+			if tt.wantStderr != "" {
+				stderrOK = contains(stderr, tt.wantStderr)
+			}
+			if model != tt.wantModel || exit != tt.wantExit || !stderrOK {
+				t.Fatalf("ResolveProviderModelVerdict = (%q, %d, %q), want model=%q exit=%d stderr containing %q", model, exit, stderr, tt.wantModel, tt.wantExit, tt.wantStderr)
+			}
+		})
+	}
+}
+
 func TestDescribeBinding(t *testing.T) {
 	tests := []struct {
 		name    string

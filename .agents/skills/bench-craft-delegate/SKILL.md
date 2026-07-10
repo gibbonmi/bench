@@ -48,7 +48,10 @@ merge is denied or diverges. Worktrees get cut behind a moving main, and a
 delegate that builds on a stale base re-fights landed work. The orchestrator
 holds the other end of the contract: a blocked worktree is fast-forwarded by
 the orchestrating session, which then resumes the same delegate. Read-only
-delegates are unaffected.
+delegates are unaffected. A fix-pass charge against a repository snapshot
+names a commit-specific sentinel — a function or test introduced by the
+commit under fix — and requires the delegate to verify it before editing,
+then stop and report if it is absent.
 
 ```
 Implement story 3 of specs/retry-backoff.md in this worktree. Open with the
@@ -89,11 +92,15 @@ edits can't land in reviewer-owned files — the delegate gets a checkout, not
 your checkout. Concurrent delegates get *separate* worktrees, one each: two
 writers in one checkout collide, and a mixed `git status` makes both
 done-claims unverifiable. Share a worktree — or run sequentially — only when
-one delegate's work genuinely depends on another's output. Read-only
-delegations need no worktree; say "do not edit any file" in the charge and
-mean it. Review delegates return findings only. The invoking session verifies and
-fixes any accepted finding in the checkout that owns the diff; isolated worktrees
-are for write-delegations, not for reproducing a read-only review result.
+one delegate's work genuinely depends on another's output. A charge that
+shares an existing worktree names its root and pins every file-tool path to
+that root; shell CWD does not retarget file tools. When `bench commit` reports
+nothing to commit beside a visibly modified file, diagnose a CWD/tree mismatch
+before treating the command as defective. Read-only delegations need no
+worktree; say "do not edit any file" in the charge and mean it. Review delegates
+return findings only. The invoking session verifies and fixes any accepted
+finding in the checkout that owns the diff; isolated worktrees are for
+write-delegations, not for reproducing a read-only review result.
 
 ## Verifying the done-claim
 

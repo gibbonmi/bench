@@ -41,6 +41,34 @@ func TestRunUnknownExits2(t *testing.T) {
 	}
 }
 
+func TestResolveModelProviderModelMode(t *testing.T) {
+	root := t.TempDir()
+	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v: %s", err, out)
+	}
+	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	binding := "BENCH_TIER_TOP=gpt-5.6-sol\nBENCH_TIER_MID=gpt-5.6-terra\nBENCH_TIER_CHEAP=gpt-5.6-luna\n"
+	if err := os.WriteFile(filepath.Join(root, ".bench", "lines.env"), []byte(binding), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+	t.Setenv("BENCH_MODEL", "gpt-5.6-luna")
+
+	out, code := resolveModel([]string{"--provider-model"})
+	if out != "" || code != 1 {
+		t.Fatalf("resolveModel --provider-model = (%q, %d), want empty output and exit 1", out, code)
+	}
+}
+
 func TestRunCanaryDispatchesToCommand(t *testing.T) {
 	stderr := tempFile(t)
 	if rc := run([]string{"canary", "one", "two"}, nil, stderr); rc != 2 {

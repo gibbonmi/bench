@@ -115,6 +115,18 @@ func checkWorkflowAnchors(root string) []string {
 			diags = append(diags, diag)
 		}
 	}
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "apply `craft-seams`' split-or-grant rule",
+		".agents/commands/bench-implement-spec.md dropped the craft-seams split-or-grant pointer")
+	requireCollapsed(".agents/skills/bench-craft-seams/SKILL.md", "check both the file-length budget and the directory's file-count headroom",
+		".agents/skills/bench-craft-seams/SKILL.md dropped the structure split-vs-grant headroom rule")
+	requireCollapsed(".agents/skills/bench-craft-delegate/SKILL.md", "pins every file-tool path to that root",
+		".agents/skills/bench-craft-delegate/SKILL.md dropped the shared-worktree file-tool path pin")
+	requireCollapsed(".agents/skills/bench-craft-delegate/SKILL.md", "names a commit-specific sentinel",
+		".agents/skills/bench-craft-delegate/SKILL.md dropped the fix-pass snapshot sentinel precondition")
+	requireCollapsed(".agents/commands/bench-write-spec.md", "stale-command-reference sweep remains fail-closed across staged specs",
+		".agents/commands/bench-write-spec.md dropped the staged-spec fail-closed command sweep posture")
+	requireCollapsed(".agents/commands/bench-what-next.md", "use `bench spec history <slug>` for the shipped-row check",
+		".agents/commands/bench-what-next.md dropped the bench spec history shipped-row check")
 	requireCollapsed(".bench/BENCH.md", "Parked ideas land in `IDEAS.md`",
 		".bench/BENCH.md Capture section does not name IDEAS.md as the capture sink")
 	requireCollapsed(".bench/BENCH.md", "append the dated line (`- YYYY-MM-DD <text>`) to `IDEAS.md`",

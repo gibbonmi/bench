@@ -290,5 +290,6 @@ func testCommitUsageExitTwo(t *testing.T) {
 	} {
 		p := f.Bench(args...)
 		p.RequireExit(2)
+		p.RequireContains(p.Stderr, "--spec marks the spec implemented")
 	}
 }

@@ -95,12 +95,30 @@ func linesEnv() (path string, exists bool, content []byte) {
 // stdout and returns an exit code. Any warning/error goes to os.Stderr directly — the
 // map signature carries only stdout, and the adapter captures stdout AS the model, so a
 // warning must never ride there. In a routed repo an unset or unbound BENCH_MODEL exits
-// 1 and the adapter refuses to launch. Aliases do not bind here (only tier ids do); the
-// verdict itself lives in internal/lines so it is unit-tested without a repo.
+// 1 and the adapter refuses to launch. The optional modes validate the exact tier id,
+// then either return its corresponding BENCH_ALIAS_* value or require provider/model
+// compatibility; the verdicts live in internal/lines so they are unit-tested without a
+// repo.
 func resolveModel(args []string) (string, int) {
+	resolve := lines.ResolveModelVerdict
+	if len(args) > 1 {
+		fmt.Fprintln(os.Stderr, "usage: bench resolve-model [--alias | --provider-model]")
+		return "", 2
+	}
+	if len(args) == 1 {
+		switch args[0] {
+		case "--alias":
+			resolve = lines.ResolveModelAliasVerdict
+		case "--provider-model":
+			resolve = lines.ResolveProviderModelVerdict
+		default:
+			fmt.Fprintln(os.Stderr, "usage: bench resolve-model [--alias | --provider-model]")
+			return "", 2
+		}
+	}
 	benchModel, set := os.LookupEnv("BENCH_MODEL")
 	path, exists, content := linesEnv()
-	model, code, stderr := lines.ResolveModelVerdict(benchModel, set, exists, path, content)
+	model, code, stderr := resolve(benchModel, set, exists, path, content)
 	if stderr != "" {
 		fmt.Fprintln(os.Stderr, stderr)
 	}

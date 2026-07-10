@@ -8,6 +8,21 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **XS synthesis promotion (2026-07-10, FT55/56/57/59/63).** Five rule edits
+  establish that structure split-vs-grant checks both file and directory
+  budgets; sanctioned `bench commit`, `--spec`, and `bench spec history`
+  contracts sit at their points of use; shared-worktree delegates pin file
+  tools and diagnose path/CWD mismatches; fix-pass delegates verify a
+  commit-specific sentinel; and specs delivering new phase commands land with
+  the command while the stale-command sweep stays fail-closed. The Codex
+  top/mid/cheap binding is Sol (`gpt-5.6-sol`), Terra (`gpt-5.6-terra`), and Luna
+  (`gpt-5.6-luna`); Claude projects those tiers through the `fable`, `opus`, and
+  `sonnet` aliases from the same binding. Codex shifts select `workspace-write`,
+  a dogfood-discovered gap now fixed. Focused binding and adapter contracts went
+  red→green, then a fresh linked consumer Luna shift took its gate red→green and
+  committed exactly one file only after green. A push-triggered hook audit was
+  blocked by the outer guard.
+
 - **Learnings run (2026-07-10, scope: post-FT51-54 reconcile).** FT51-54
   removed as shipped and their four specs retired (cli-hygiene, docs-batch,
   test-hardening, assess-owner). Drained one parked idea to FT62

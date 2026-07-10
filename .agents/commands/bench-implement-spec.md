@@ -44,6 +44,7 @@ table that picks the row, and the escalation ladder are all `craft-line`'s.
   silently upgrade them into TDD coverage.
 - Run typecheck and the relevant single test file frequently as you go. Run the
   full gate once at the end.
+- During structure housekeeping, apply `craft-seams`' split-or-grant rule.
 - One small change at a time, repo stays green — invariant 4 in `.bench/BENCH.md`.
 - Every delegation during the build carries its own line and, when the spec has
   a coverage map, its stories' coverage rows in the charge — every time; the
@@ -88,10 +89,11 @@ defined route — never a silent grind, never an abandoned worktree:
   diff changes and read its output. A mismatch here is a defect to fix or
   surface, never a footnote.
 - Land the finishing commit with `bench commit -m "<msg>" --spec <slug>`, naming the
-  files the build actually touched — it gates, flips the spec's status line, and commits the
-  named paths atomically, and it enforces the commit discipline so you don't have
-  to restate it. When it refuses over an unexplained working-tree file, surface the
-  file to the reviewer; don't commit or revert it on your own.
+  files the build actually touched; `bench commit --help` is authoritative for
+  `--spec` semantics. It gates and commits the named paths atomically, and it
+  enforces the commit discipline so you don't have to restate it. When it refuses
+  over an unexplained working-tree file, surface the file to the reviewer; don't
+  commit or revert it on your own.
 - `implemented` honestly means *built, gate-green, awaiting review/merge* — the
   state `bench status`'s retirement signal keys on once the spec reaches the
   default branch. When a flip is needed outside a commit, `bench spec implemented <slug>`

@@ -15,6 +15,8 @@ package lines
 import (
 	"encoding/json"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/modelid"
 )
 
 // TierValue is the pure port of bench_tier_value, operating on file content rather than a
@@ -94,6 +96,19 @@ type Binding struct {
 	AliasTop, AliasMid, AliasCheap string
 }
 
+type tierBinding struct {
+	model string
+	alias string
+}
+
+func (b Binding) tiers() [3]tierBinding {
+	return [3]tierBinding{
+		{model: b.Top, alias: b.AliasTop},
+		{model: b.Mid, alias: b.AliasMid},
+		{model: b.Cheap, alias: b.AliasCheap},
+	}
+}
+
 // ParseBinding fills each field of a Binding via TierValue with the corresponding
 // BENCH_TIER_* / BENCH_ALIAS_* key.
 func ParseBinding(content []byte) Binding {
@@ -151,8 +166,8 @@ func AgentLineVerdict(stdin []byte, linesEnvExists bool, linesEnvContent []byte)
 	if b.Top == "" || b.Mid == "" || b.Cheap == "" {
 		return 0, warn("a BENCH_TIER_* value is unset or empty in .bench/lines.env")
 	}
-	for _, bound := range []string{b.Top, b.Mid, b.Cheap, b.AliasTop, b.AliasMid, b.AliasCheap} {
-		if bound != "" && model == bound {
+	for _, tier := range b.tiers() {
+		if model == tier.model || (tier.alias != "" && model == tier.alias) {
 			return 0, ""
 		}
 	}
@@ -172,6 +187,42 @@ func describeBoundTiers(b Binding) string {
 // agent-line verdict, aliases do NOT apply here — only the three tier ids are bound
 // targets. The returned stderr carries no trailing newline.
 func ResolveModelVerdict(benchModel string, benchModelSet bool, linesEnvExists bool, linesEnvPath string, content []byte) (model string, exitCode int, stderr string) {
+	return resolveModelVerdict(benchModel, benchModelSet, linesEnvExists, linesEnvPath, content, false)
+}
+
+// ResolveModelAliasVerdict applies the same tier-id validation as
+// ResolveModelVerdict, then projects the matched tier to its corresponding alias.
+func ResolveModelAliasVerdict(benchModel string, benchModelSet bool, linesEnvExists bool, linesEnvPath string, content []byte) (model string, exitCode int, stderr string) {
+	return resolveModelVerdict(benchModel, benchModelSet, linesEnvExists, linesEnvPath, content, true)
+}
+
+// ResolveProviderModelVerdict applies the exact tier-id validation, then requires the
+// provider/model shape used by harnesses whose model namespace is provider-qualified.
+func ResolveProviderModelVerdict(benchModel string, benchModelSet bool, linesEnvExists bool, linesEnvPath string, content []byte) (model string, exitCode int, stderr string) {
+	model, exitCode, stderr = ResolveModelVerdict(benchModel, benchModelSet, linesEnvExists, linesEnvPath, content)
+	if exitCode != 0 || model == "" {
+		return model, exitCode, stderr
+	}
+	if !isProviderModel(model) {
+		return "", 1, "bench shift: BENCH_MODEL='" + model + "' is incompatible with a provider/model harness; use a value listed by 'opencode models' in BENCH_MODEL (and in the matching BENCH_TIER_* binding when routed)"
+	}
+	return model, 0, stderr
+}
+
+func isProviderModel(model string) bool {
+	parts := strings.Split(model, "/")
+	if len(parts) < 2 || !modelid.SafeToken(model) {
+		return false
+	}
+	for _, part := range parts {
+		if part == "" {
+			return false
+		}
+	}
+	return true
+}
+
+func resolveModelVerdict(benchModel string, benchModelSet bool, linesEnvExists bool, linesEnvPath string, content []byte, alias bool) (model string, exitCode int, stderr string) {
 	if !linesEnvExists {
 		// Unrouted: explicit BENCH_MODEL wins; absent -> "".
 		return benchModel, 0, ""
@@ -185,11 +236,20 @@ func ResolveModelVerdict(benchModel string, benchModelSet bool, linesEnvExists b
 		return "", 1, "bench shift in a routed repo requires a declared line: set BENCH_MODEL to one of top=" +
 			b.Top + " mid=" + b.Mid + " cheap=" + b.Cheap
 	}
-	if benchModel != b.Top && benchModel != b.Mid && benchModel != b.Cheap {
-		return "", 1, "bench shift: BENCH_MODEL='" + benchModel + "' is not a bound model; set it to one of top=" +
-			b.Top + " mid=" + b.Mid + " cheap=" + b.Cheap
+	for _, tier := range b.tiers() {
+		if benchModel != tier.model {
+			continue
+		}
+		if !alias {
+			return tier.model, 0, ""
+		}
+		if tier.alias == "" {
+			return "", 1, "bench shift: BENCH_MODEL='" + benchModel + "' has no bound alias; set the corresponding BENCH_ALIAS_* value in " + linesEnvPath
+		}
+		return tier.alias, 0, ""
 	}
-	return benchModel, 0, ""
+	return "", 1, "bench shift: BENCH_MODEL='" + benchModel + "' is not a bound model; set it to one of top=" +
+		b.Top + " mid=" + b.Mid + " cheap=" + b.Cheap
 }
 
 // DescribeBinding returns the denies-clause body the shim prints after "denies: ".

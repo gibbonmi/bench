@@ -35,7 +35,7 @@ import (
 func Command(args []string, stdout, stderr io.Writer) int {
 	msg, specSlug, paths, usageErr := parseArgs(args)
 	if usageErr != "" {
-		fmt.Fprintln(stderr, "usage: bench commit -m <msg> [--spec <slug>] <path>... ("+usageErr+")")
+		fmt.Fprintln(stderr, "usage: bench commit -m <msg> [--spec <slug>] <path>... (--spec marks the spec implemented; "+usageErr+")")
 		return 2
 	}
 

@@ -79,8 +79,9 @@ considered before one is chosen. At a known seam, skip it — one design is fine
 
 `bench structure` flags structural debt when a file outgrows its line budget or a
 directory collects too many source files. Split along responsibility, never
-line count, and never fragment to dodge the limit. A genuinely deep module can
-instead
+line count, and never fragment to dodge the limit. Before choosing split or grant,
+check both the file-length budget and the directory's file-count headroom: a split
+is free only when the directory has room. A genuinely deep module can instead
 earn a per-path grant: propose a line in `.bench/structure.budgets`
 (`<path> <max>`, trailing `/` for a directory) for the reviewer to approve —
 the file is reviewer-owned; never edit it yourself. The full splitting method —

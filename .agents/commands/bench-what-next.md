@@ -22,11 +22,12 @@ command is the top line of the refreshed `## Recommended sequence`.
 
 ## 1. Reconcile first
 
-Before draining anything, verify every `ROADMAP.md` row against the tree —
-shipped work is removed, stale wording is corrected. Row presence is status, so
-this pass is the backstop for anything spec-retire missed; the empty-state
-recommendation is only trustworthy if the roadmap is current. No completion
-markers — history lives in git.
+Before draining anything, verify every `ROADMAP.md` row against the tree. When a
+row's spec may have shipped, use `bench spec history <slug>` for the shipped-row
+check. Shipped work is removed and stale wording is corrected. Row presence is
+status, so this pass is the backstop for anything spec-retire missed; the
+empty-state recommendation is only trustworthy if the roadmap is current. No
+completion markers — history lives in git.
 
 ## 2. Drain the inbox
 

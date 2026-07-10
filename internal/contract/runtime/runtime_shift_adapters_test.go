@@ -115,6 +115,9 @@ func testReferenceAdapterFiles(t *testing.T) {
 		}
 	}
 	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "claude"), `claude -p -- "$1"`, "claude adapter does not map the prompt to claude -p")
-	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "codex"), `codex exec -- "$1"`, "codex adapter does not map the prompt to codex exec")
+	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "codex"), `codex exec --sandbox workspace-write -m "$model" -- "$1"`, "routed codex adapter does not select workspace-write while preserving model and prompt")
+	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "codex"), `codex exec --sandbox workspace-write -- "$1"`, "unrouted codex adapter does not select workspace-write while preserving the prompt")
+	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "opencode"), `model="$("$_cmd" resolve-model --provider-model)"`, "opencode adapter does not request provider/model compatibility from the resolver")
+	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "opencode"), `opencode run --model "$model" -- "$1"`, "routed opencode adapter does not preserve model and prompt")
 	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "opencode"), `opencode run -- "$1"`, "opencode adapter does not map the prompt to opencode run")
 }

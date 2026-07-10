@@ -57,8 +57,10 @@ Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
   `bench roadmap`, `bench learnings`, `bench maps`.
 - Oracle and diagnostics: `bench gate`, `bench gate pin`, `bench canary`, `bench structure`,
   `bench guards`, `bench diff`, `bench coverage`, `bench outline`, `bench models`, `bench version`.
-- Work execution: `bench worktree`, `bench shift`, `bench commit`,
-  `bench spec implemented`, `bench spec retire`, `bench spec history`.
+- Work execution: `bench worktree`, `bench shift`, and path-scoped `bench commit
+  -m <msg> <path>...` (stages its named paths; use `--spec <slug>` only on an
+  implementation's green commit, with semantics owned by `bench commit --help`),
+  plus `bench spec implemented`, `bench spec retire`, `bench spec history`.
 - Hook and adapter plumbing subcommands — driven by hooks and adapters, never
   typed by sessions — are enumerated in `.bench/BENCH-reference.md` (Plumbing
   subcommands), so the always-loaded inventory carries only what sessions run.

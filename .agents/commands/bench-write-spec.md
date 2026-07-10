@@ -117,7 +117,10 @@ loop honest.
 
 7. **Write `specs/<feature>.md`** using the template below, then run
    `bench coverage --check` on the draft, so map-format defects surface at
-   author time instead of at the gate.
+   author time instead of at the gate. A spec whose deliverable is a new
+   `/bench-*` phase command lands in the same diff as the command, because the
+   stale-command-reference sweep remains fail-closed across staged specs rather
+   than exempting them.
 
 8. **Retire what this spec supersedes — promote, then delete.** If the new spec
    replaces an existing `specs/*.md` (same feature, new direction), it does **not**
