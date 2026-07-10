@@ -10,31 +10,6 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-**FT51 — CLI hygiene batch.** Unknown subcommand prints help at exit 0 (typo
-indistinguishable from success — dispatcher is the outlier against the exit-2
-norm); `--version`/`--help` fall into the same case; `bench canary` passes
-silently; `coverage`/`link` error-message nits; decide and record the
-harness-form posture for CLI strings that print `/bench-*` phases. Next:
-`/bench-write-spec`.
-
-**FT52 — docs batch.** CONTEXT.md names 6 of the 10 live status signals and
-has no canonical term for the `bench dashboard` artifact (feeds the FT38
-grill); README's `internal/` layout omits `dashboard/` and `outline/`; the
-lighter-path threshold is worded three ways across BENCH.md and two commands;
-decide whether `projects/benchkit.md` (the internal dogfood profile) keeps
-shipping; disposition `research/unit_testing.pdf`. Next: `/bench-write-spec`.
-
-**FT53 — test/hardening batch.** Pre-push read-loop newline-tail guard;
-symlink-loop cap in the wrapper's path resolver; propagate the
-`RegisteredWorktrees` classify error (last false-empty instance); fix the
-concurrent-acquire overlap comment overstating its barrier; a status signal
-for a missing pre-push hook. Next: `/bench-write-spec`.
-
-**FT54 — assessment owner.** Third consecutive platform assessment run with
-no owner: each run re-derives the method (verify last drain, area sweeps,
-adversarial synthesis, ranked backlog) from the prior file. A `craft-assess`
-skill or `/bench-assess` phase codifies the drill. Next: `/bench-write-spec`.
-
 **FT55 — split-vs-grant rule for structure budgets.** A file-length split is
 only free when the dir has file-count headroom; the conformance split traded
 `FILE TOO LONG` for `DIR CROWDED` (resolved by a reviewer grant). Add one line
@@ -71,6 +46,23 @@ snapshot fails fast instead of producing a divergent rebuild. One clause in
 `craft-delegate`'s charge template. XS kit edit under `craft-synthesis`. Next:
 direct kit edit, gated as usual.
 
+**FT62 — structure debt: `internal/contract/helper.go` at 441/400.** Grown by
+FT53's RunAtWithTimeout helper; the one open `bench structure` issue. Split
+along responsibility or propose a reviewer grant — check the dir's file-count
+headroom before choosing (the FT55 rule; `internal/contract/runtime/` already
+holds a dir grant, so a split into that dir deepens dir debt). Next:
+`/bench-implement-spec` (lighter path).
+
+**FT63 — staged-spec posture for new phase commands.** The stale-command-
+reference sweep reds a `Status: staged` spec that names its own not-yet-built
+`/bench-<new>` command (hit during FT54; worked around by landing spec and
+command in one diff). Record the posture in `/bench-write-spec`: a spec whose
+deliverable is a new phase command lands in the same diff as the command —
+recommended over teaching the sweep a staged-spec exemption, which would weaken
+the gate for every other stale ref. XS kit edit under `craft-synthesis`;
+alternative (sweep exemption) is the veto surface. Next: direct kit edit,
+gated as usual.
+
 **FT6 (LOW, parked pending evidence — leave parked):** `bench refs`, `bench
 detect`, `bench doc`, `bench specs --retired`, doctor binary-presence row,
 `conformanceFamilies`-vs-dispatch reconcile meta-check, and a per-anchor
@@ -105,8 +97,7 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT51 CLI hygiene batch: the exit-0 unknown-subcommand
-   defect is the sharpest item in it.
-2. `/bench-write-spec` — FT52 docs batch, then FT53 test/hardening batch, then
-   FT54 assessment owner — the remaining assessment-sourced rows, in priority
-   order.
+1. `/bench-implement-spec` — the XS kit-edit batch (FT55, FT56, FT57, FT59,
+   FT63): five prose-only rule edits under `craft-synthesis`, one gated pass.
+2. `/bench-implement-spec` — FT62 helper.go split-or-grant, applying the FT55
+   rule the batch just landed.

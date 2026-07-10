@@ -8,6 +8,19 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-10, scope: post-FT51-54 reconcile).** FT51-54
+  removed as shipped and their four specs retired (cli-hygiene, docs-batch,
+  test-hardening, assess-owner). Drained one parked idea to FT62
+  (helper.go structure debt, split-or-grant under the FT55 rule). One journal
+  entry promoted to FT63: staged-spec posture for new phase commands —
+  recommended as a `/bench-write-spec` rule (spec lands with its command)
+  rather than a sweep exemption; the alternative stays flagged for veto.
+  A second entry (interactive inspection piped rg through `head` against the
+  AGENTS.md read-tool rule) dismissed: the existing rule is explicit, no kit
+  change — the correction is behavioral. Previous run's promotion builds
+  checked: FT60 backfilled last run; FT55/56/57/59 remain unbuilt, no entries
+  due.
+
 - **Learnings run (2026-07-09, scope: post-FT60 reconcile).** Reconcile-only
   pass: IDEAS.md empty, no open journal entries. FT60 removed as shipped (the
   serialized gate build phase plus two review pickups). FT61 added from the
