@@ -22,6 +22,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 )
 
 // blockHeader is the three-line preamble of the BLOCKED message, ending in a
@@ -84,6 +85,11 @@ func BlockMessage(gateOutput string) string {
 // returns 0 on green or 2 (after writing the BLOCKED message to stderr) on red. The
 // wrapper gate's no-gate exit 3 is not a verdict and must not seed a red cache.
 func Run(stdin []byte, wrapper string, armed bool, stderr io.Writer) int {
+	if root, err := git.Root(); err == nil {
+		if err := intent.Compact(root); err != nil {
+			fmt.Fprintf(stderr, "WARNING: bench Stop intent refresh failed: %v\n", err)
+		}
+	}
 	if !armed {
 		return 0
 	}

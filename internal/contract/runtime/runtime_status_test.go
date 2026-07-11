@@ -1,8 +1,10 @@
 package runtime
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/gibbonmi/bench/internal/contract"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -28,6 +30,63 @@ func TestRuntimeStatusContracts(t *testing.T) {
 	contract.RunParallel(t, "bench status learnings-floor contract", testRuntimeStatusLearningsFloor)
 	contract.RunParallel(t, "bench status guards-signal contract", testRuntimeStatusGuardsSignal)
 	contract.RunParallel(t, "bench status guards primary-checkout contract", testRuntimeStatusGuardsPrimaryOnly)
+	contract.RunParallel(t, "bench status landed-state contract", testRuntimeStatusLandedState)
+	contract.RunParallel(t, "bench status intent common-dir contract", testRuntimeStatusIntentCommonDir)
+}
+
+func testRuntimeStatusIntentCommonDir(t *testing.T) {
+	contract.NoteContractFailure(t, "intent common-dir contract failed")
+	f := contract.NewFixture(t)
+	f.WriteFile("tracked.txt", "base\n")
+	f.CommitAll("base")
+	f.Git("branch", "worktree-agent-live")
+	linked := filepath.Join(t.TempDir(), "linked intent reader")
+	f.Git("worktree", "add", "-q", "--detach", linked, "HEAD")
+	ledger := `{"schema":1,"entries":[{"key":"shared","kind":"claude-agent","objective":"shared objective","created_at":"2026-07-11T00:00:00Z"}]}` + "\n"
+	contract.WriteFileAbs(t, filepath.Join(gitDir(t, f), "bench-intent.json"), ledger)
+	out := contract.RunAt(t, f, linked, nil, "bash", benchPath(t), "status", "--all")
+	out.RequireExit(0)
+	out.RequireContains(out.Stdout, "shared objective")
+}
+
+func testRuntimeStatusLandedState(t *testing.T) {
+	contract.NoteContractFailure(t, "status landed-state contract failed")
+	f := contract.NewFixture(t)
+	f.WriteFile("tracked.txt", "base\n")
+	f.CommitAll("base")
+	f.Git("branch", "worktree-agent-live")
+	f.WriteFile("tracked.txt", "dirty\n")
+	ledger := `{"schema":1,"entries":[` +
+		`{"key":"a","kind":"claude-agent","objective":"old` + "\\n\\u001b" + `","created_at":"2026-07-11T00:00:00Z"},` +
+		`{"key":"b","kind":"claude-agent","objective":"two","created_at":"2026-07-11T00:00:01Z"},` +
+		`{"key":"c","kind":"claude-agent","objective":"three","created_at":"2026-07-11T00:00:02Z"},` +
+		`{"key":"d","kind":"claude-agent","objective":"four","created_at":"2026-07-11T00:00:03Z"},` +
+		`{"key":"e","kind":"claude-agent","objective":"five","created_at":"2026-07-11T00:00:04Z"},` +
+		`{"key":"f","kind":"claude-agent","objective":"six","created_at":"2026-07-11T00:00:05Z"}]}` + "\n"
+	path := filepath.Join(gitDir(t, f), "bench-intent.json")
+	contract.WriteFileAbs(t, path, ledger)
+	before, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	compact := f.Bench("status").Stdout
+	if strings.Count(compact, "  intent") != 1 || !strings.Contains(compact, "6 uncorrelated") || strings.ContainsRune(compact, '\x1b') {
+		t.Fatalf("compact intent rendering unsafe or unbounded:\n%s", compact)
+	}
+	if countStatusRows(compact) > 5 {
+		t.Fatalf("default status exceeded five rows:\n%s", compact)
+	}
+	all := f.Bench("status", "--all").Stdout
+	if strings.Count(all, "  intent") != 6 || strings.ContainsRune(all, '\x1b') {
+		t.Fatalf("expanded intent rendering =\n%s", all)
+	}
+	if again := f.Bench("status").Stdout; again != compact {
+		t.Fatalf("status bytes changed\nfirst=%s\nsecond=%s", compact, again)
+	}
+	after, err := os.ReadFile(path)
+	if err != nil || !bytes.Equal(before, after) {
+		t.Fatalf("status mutated ledger: %v", err)
+	}
 }
 
 // testRuntimeStatusGuardsSignal pins story 7: in a routed repo whose pre-push is missing, a
@@ -256,7 +315,7 @@ func testRuntimeStatusBudget(t *testing.T) {
 	contract.RequireContains(t, out, "+1 more (bench status --all)")
 	contract.RequireContains(t, out, "/bench-what-next")
 	contract.RequireContains(t, out, "split (craft-seams)")
-	contract.RequireContains(t, out, "commit on green / push")
+	contract.RequireContains(t, out, "commit on green")
 	contract.RequireContains(t, out, "bench worktree clean")
 	// The 6th signal (decisions, sev 6) is truncated off the default budget board.
 	contract.RequireNotContains(t, out, "/bench-shape-idea")
@@ -426,7 +485,7 @@ func testRuntimeStatusRoadmapReconcile(t *testing.T) {
 	contract.WriteFileAbs(t, filepath.Join(gitDir(t, ladder), "bench-last-gate"), fmt.Sprintf("red %s 2026-06-30T00:00:00Z\n", tree))
 	out = ladder.Bench("status").Stdout
 	gate := strings.Index(out, "fix before commit")
-	gitRow := strings.Index(out, "commit on green / push")
+	gitRow := strings.Index(out, "commit on green")
 	road := strings.Index(out, "row for merged work")
 	if gate < 0 || gitRow < 0 || road < 0 {
 		t.Fatalf("ladder fixture missing a row (gate=%d git=%d roadmap=%d):\n%s", gate, gitRow, road, out)

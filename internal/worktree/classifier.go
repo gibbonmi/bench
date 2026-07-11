@@ -18,8 +18,11 @@ const (
 )
 
 type Registered struct {
-	Path  string
-	Class Class
+	Path     string
+	Class    Class
+	Branch   string
+	Detached bool
+	Locked   bool
 }
 
 // ClassifyRegisteredWorktrees returns every worktree `git worktree list` knows about,
@@ -46,12 +49,19 @@ func canonicalRoot(root string) string {
 
 func classifyRegistered(mainRoot, porcelain string) []Registered {
 	var out []Registered
+	var current *Registered
 	for _, line := range strings.Split(porcelain, "\n") {
-		if !strings.HasPrefix(line, "worktree ") {
-			continue
+		switch {
+		case strings.HasPrefix(line, "worktree "):
+			out = append(out, Registered{Path: strings.TrimPrefix(line, "worktree ")})
+			current = &out[len(out)-1]
+		case current != nil && strings.HasPrefix(line, "branch refs/heads/"):
+			current.Branch = strings.TrimPrefix(line, "branch refs/heads/")
+		case current != nil && line == "detached":
+			current.Detached = true
+		case current != nil && (line == "locked" || strings.HasPrefix(line, "locked ")):
+			current.Locked = true
 		}
-		path := line[len("worktree "):]
-		out = append(out, Registered{Path: path})
 	}
 	pool := Pool(mainRoot)
 	for i := range out {

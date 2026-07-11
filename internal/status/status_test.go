@@ -166,7 +166,7 @@ func TestRenderDirtyLeadsGitOverDrainRow(t *testing.T) {
 
 	out := render(root, false)
 	lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
-	if !strings.HasPrefix(lines[0], "▶ commit on green / push  (git)") {
+	if !strings.HasPrefix(lines[0], "▶ commit on green  (git)") {
 		t.Errorf("lead line = %q, want git action lead", lines[0])
 	}
 	if !strings.Contains(out, "1 idea(s), 0 open learning(s)") || !strings.Contains(out, "/bench-what-next") {

@@ -215,6 +215,7 @@ case "${1-help}" in
   gate)     gate_command "$@" ;;
   doctor)   adoption_route "$@" ;;
   worktree) route_porcelain "$@" ;;
+  resume-clean) route_porcelain "$@" ;;
   shift)    route_porcelain "$@" ;;
   commit)   route_porcelain "$@" ;;
   spec)     route_porcelain "$@" ;;
@@ -266,6 +267,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench gate pin             pin HEAD's .bench tree for pre-push verification
   bench worktree             warm, isolated worktree subshell
   bench worktree clean       remove clean out-of-pool worktrees after confirmation
+  bench resume-clean         conservatively clean proven-safe resume state
   bench shift "<objective>"  gated loop in a pooled worktree; commit on green
   bench commit -m <msg> <path>...  gate, then commit named paths on green (--spec flips its status)
   bench spec implemented <slug>    flip a spec's Status: staged line to implemented

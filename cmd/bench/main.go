@@ -7,6 +7,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -23,6 +24,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gitguard"
 	"github.com/gibbonmi/bench/internal/guards"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/lines"
 	"github.com/gibbonmi/bench/internal/maps"
@@ -165,7 +167,46 @@ func checkAgentLine(args []string, stdin io.Reader, stdout, stderr io.Writer) (c
 	if msg != "" {
 		fmt.Fprintln(stderr, msg)
 	}
+	if exit == 0 {
+		captureClaudeAgentIntent(data, stderr)
+	}
 	return exit
+}
+
+func captureClaudeAgentIntent(data []byte, stderr io.Writer) {
+	var envelope struct {
+		ToolName  string `json:"tool_name"`
+		ToolUseID string `json:"tool_use_id"`
+		ToolInput struct {
+			Description string `json:"description"`
+			Prompt      string `json:"prompt"`
+		} `json:"tool_input"`
+	}
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		fmt.Fprintf(stderr, "WARNING: check-agent-line: intent capture skipped: malformed envelope: %v\n", err)
+		return
+	}
+	if envelope.ToolName != "" && envelope.ToolName != "Agent" {
+		return
+	}
+	objective := envelope.ToolInput.Description
+	if objective == "" {
+		objective = intent.Preview(envelope.ToolInput.Prompt)
+	}
+	if envelope.ToolUseID == "" || objective == "" {
+		fmt.Fprintln(stderr, "WARNING: check-agent-line: intent capture skipped: missing tool_use_id or objective")
+		return
+	}
+	root, err := git.Root()
+	if err != nil {
+		fmt.Fprintln(stderr, "WARNING: check-agent-line: intent capture skipped outside a repository")
+		return
+	}
+	entry := intent.NewEntry(intent.KindClaudeAgent, objective)
+	entry.Key = envelope.ToolUseID
+	if err := intent.Upsert(root, entry); err != nil {
+		fmt.Fprintf(stderr, "WARNING: check-agent-line: intent capture failed: %v\n", err)
+	}
 }
 
 // stopVerdict is the completion-oracle subcommand: it reads the Stop envelope on stdin,
@@ -259,14 +300,12 @@ func run(args []string, stdout, stderr *os.File) int {
 		fmt.Fprintln(stdout, versionLine(version, runtime.GOOS, runtime.GOARCH))
 		return 0
 	case "worktree":
-		if len(args) == 1 {
-			return worktree.Subshell(os.Stdin, stdout, stderr)
-		}
-		if args[1] == "clean" {
+		if len(args) > 1 && args[1] == "clean" {
 			return worktree.CleanCommand(args[2:], stdout, stderr)
 		}
-		fmt.Fprint(stderr, worktree.WorktreeUsage())
-		return 2
+		return worktree.Subshell(args[1:], os.Stdin, stdout, stderr)
+	case "resume-clean":
+		return worktree.ResumeCleanCommand(args[1:], stdout, stderr)
 	case "shift":
 		return shift.Command(args[1:], os.Stdin, stdout, stderr)
 	case "commit":

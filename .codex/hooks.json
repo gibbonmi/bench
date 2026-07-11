@@ -1,5 +1,16 @@
 {
   "hooks": {
+	"SessionStart": [
+	  {
+		"hooks": [
+		  {
+			"type": "command",
+			"command": "\"$(git rev-parse --show-toplevel)/.bench/hooks/session-start.sh\"",
+			"statusMessage": "Resuming Bench context"
+		  }
+		]
+	  }
+	],
     "Stop": [
       {
         "hooks": [

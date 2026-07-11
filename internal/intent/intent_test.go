@@ -1,0 +1,211 @@
+package intent
+
+import (
+	"bytes"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+)
+
+func TestLedgerCommonDirectoryAndSchemaUpsert(t *testing.T) {
+	root := newRepo(t)
+	linked := filepath.Join(t.TempDir(), "linked checkout")
+	runGit(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
+	created := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
+	entries := []Entry{
+		{Key: "shift-1", Kind: KindShift, Objective: "ship the thing", CreatedAt: created, Worktree: linked, Branch: "bench/shift-1"},
+		{Key: "worktree-1", Kind: KindWorktree, Objective: "inspect", CreatedAt: created},
+		{Key: "agent-1", Kind: KindClaudeAgent, Objective: "delegate", CreatedAt: created},
+	}
+	for i, e := range entries {
+		writerRoot := root
+		if i == 1 {
+			writerRoot = linked
+		}
+		if err := Upsert(writerRoot, e); err != nil {
+			t.Fatalf("Upsert(%s): %v", e.Kind, err)
+		}
+	}
+	path, err := Address(linked)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantPath := filepath.Join(root, ".git", Filename)
+	if path != wantPath {
+		t.Fatalf("Address = %q, want common-dir %q", path, wantPath)
+	}
+	first, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ledger, err := Read(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ledger.Schema != Schema || len(ledger.Entries) != 3 {
+		t.Fatalf("ledger = %#v", ledger)
+	}
+	if err := Upsert(root, entries[0]); err != nil {
+		t.Fatal(err)
+	}
+	second, _ := os.ReadFile(path)
+	if !bytes.Equal(first, second) {
+		t.Fatalf("identical upsert changed bytes\nfirst=%s\nsecond=%s", first, second)
+	}
+}
+
+func TestReadEvidenceStates(t *testing.T) {
+	root := newRepo(t)
+	path, _ := Address(root)
+	if got, err := Read(root); err != nil || len(got.Entries) != 0 {
+		t.Fatalf("absent Read = %#v, %v", got, err)
+	}
+	cases := []struct{ name, body string }{
+		{"empty", ""},
+		{"malformed", "{"},
+		{"unknown schema", `{"schema":2,"entries":[]}`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if err := os.WriteFile(path, []byte(tc.body), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := Read(root); err == nil {
+				t.Fatalf("Read accepted %s ledger", tc.name)
+			}
+		})
+	}
+	if err := os.WriteFile(path, []byte(`{"schema":1,"entries":[]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Read(root); err != nil {
+		t.Fatalf("valid no-final-newline: %v", err)
+	}
+	if err := os.Chmod(path, 0o000); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chmod(path, 0o600)
+	if _, err := Read(root); err == nil {
+		t.Fatal("Read accepted unreadable ledger")
+	}
+}
+
+func TestPreviewBoundariesAndControls(t *testing.T) {
+	cases := []struct{ in, want string }{
+		{"", ""},
+		{"a", "a"},
+		{"line\n\x1b\a", `line\n\u001b\u0007`},
+		{strings.Repeat("é", 120), strings.Repeat("é", 120)},
+		{strings.Repeat("é", 121), strings.Repeat("é", 120) + "… (242 bytes)"},
+	}
+	for _, tc := range cases {
+		if got := Preview(tc.in); got != tc.want {
+			t.Errorf("Preview(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
+func TestConcurrentWritersKeepEveryEntryAndStaleLockReclaims(t *testing.T) {
+	root := newRepo(t)
+	const n = 12
+	var wg sync.WaitGroup
+	errCh := make(chan error, n)
+	for i := 0; i < n; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			errCh <- Upsert(root, Entry{Key: string(rune('a' + i)), Kind: KindShift, Objective: "x", CreatedAt: time.Unix(int64(i+1), 0).UTC()})
+		}(i)
+	}
+	wg.Wait()
+	close(errCh)
+	for err := range errCh {
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	got, err := Read(root)
+	if err != nil || len(got.Entries) != n {
+		t.Fatalf("concurrent Read = %d entries, %v", len(got.Entries), err)
+	}
+	path, _ := Address(root)
+	if err := os.WriteFile(path+".lock", []byte("999999 1\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := Upsert(root, Entry{Key: "reclaimed", Kind: KindWorktree, Objective: "x", CreatedAt: time.Now().UTC()}); err != nil {
+		t.Fatalf("stale lock not reclaimed: %v", err)
+	}
+}
+
+func TestSnapshotProofLifecycle(t *testing.T) {
+	root := newRepo(t)
+	created := time.Unix(1, 0).UTC()
+	missing := filepath.Join(root, "gone")
+	for _, e := range []Entry{
+		{Key: "no-proof", Kind: KindShift, Objective: "keep", CreatedAt: created},
+		{Key: "missing", Kind: KindWorktree, Objective: "done", CreatedAt: created, Worktree: missing},
+		{Key: "landed", Kind: KindShift, Objective: "done", CreatedAt: created, Branch: "landed"},
+	} {
+		if err := Upsert(root, e); err != nil {
+			t.Fatal(err)
+		}
+	}
+	runGit(t, root, "branch", "landed")
+	live, err := Snapshot(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(live) != 1 || live[0].Key != "no-proof" {
+		t.Fatalf("live = %#v", live)
+	}
+	if err := Compact(root); err != nil {
+		t.Fatal(err)
+	}
+	ledger, _ := Read(root)
+	if len(ledger.Entries) != 1 {
+		t.Fatalf("compacted = %#v", ledger.Entries)
+	}
+}
+
+func TestUncorrelatedEntriesUseCandidateSet(t *testing.T) {
+	root := newRepo(t)
+	for _, key := range []string{"agent-a", "agent-b"} {
+		if err := Upsert(root, Entry{Key: key, Kind: KindClaudeAgent, Objective: key, CreatedAt: time.Unix(1, 0).UTC()}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if got, _ := Snapshot(root); len(got) != 0 {
+		t.Fatalf("zero candidates kept %#v", got)
+	}
+	if err := Upsert(root, Entry{Key: "agent-c", Kind: KindClaudeAgent, Objective: "c", CreatedAt: time.Unix(1, 0).UTC()}); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, root, "branch", "worktree-agent-candidate")
+	if got, _ := Snapshot(root); len(got) != 3 {
+		t.Fatalf("one candidate live = %#v", got)
+	}
+}
+
+func newRepo(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	runGit(t, root, "init", "-q", "-b", "main")
+	if err := os.WriteFile(filepath.Join(root, "README.md"), []byte("x\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, root, "add", ".")
+	runGit(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "init")
+	return root
+}
+
+func runGit(t *testing.T, root string, args ...string) {
+	t.Helper()
+	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("git %v: %v\n%s", args, err, out)
+	}
+}

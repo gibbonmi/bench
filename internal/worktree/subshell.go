@@ -5,8 +5,10 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -15,15 +17,30 @@ import (
 // releases the worktree on any exit status. The reset is "soft" so a stale resetRef
 // (origin/<branch> that no longer resolves) still yields a usable worktree rather than
 // failing the drop-in.
-func Subshell(stdin io.Reader, stdout, stderr io.Writer) int {
+func Subshell(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	root, err := git.Root()
 	if err != nil {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
+	objective := strings.Join(args, " ")
+	if objective == "" {
+		objective = "interactive worktree"
+	}
+	intentEntry := intent.NewEntry(intent.KindWorktree, objective)
+	if err := intent.Upsert(root, intentEntry); err != nil {
+		fmt.Fprintf(stderr, "could not persist worktree intent: %v\n", err)
+		return 1
+	}
 	wt, err := Acquire(root, "origin/"+git.DefaultBranch(root), "soft")
 	if err != nil {
 		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	intentEntry.Worktree = wt
+	if err := intent.Upsert(root, intentEntry); err != nil {
+		fmt.Fprintf(stderr, "could not enrich worktree intent: %v\n", err)
+		Release(wt)
 		return 1
 	}
 	fmt.Fprintf(stderr, "🪵 worktree: %s  (exit to release)\n", wt)

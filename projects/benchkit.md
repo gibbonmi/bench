@@ -50,6 +50,9 @@ branch-agnostic. This line is only the binding.)
   allowlist (`ROADMAP.md`, `IDEAS.md`, `.bench-notes.md` — no directory, suffix, or
   markdown-class matching; expanding it is a new decision); any mixed or untrusted
   diff fails closed to the strong stale row.
+  Its severity-1 git signal aggregates dirty paths, unpushed commits, and unique local
+  branches across the repository; severity-2 intent joins the shared common-directory
+  ledger, compact by default and expanded by `--all`.
 - **The capture inbox and working roadmap** (`bench idea` → `IDEAS.md`;
   `bench roadmap` → `ROADMAP.md`). Capture-and-forget: park an out-of-scope idea,
   commit to nothing; ideas graduate only through a `/bench-what-next` drain into the

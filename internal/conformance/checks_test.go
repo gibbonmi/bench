@@ -43,7 +43,7 @@ func RunConformance(root, kitRoot string) []string {
 // benchShRoutes are the top-level bin/bench.sh case labels that must reach the Go core so
 // every shipped surface (kit CLI, linked by-path CLI, hooks) hits one implementation. The
 // route-anchor: dropping a route sends a shipped command to a dead key, and this fires.
-var benchShRoutes = []string{"commit", "spec"}
+var benchShRoutes = []string{"commit", "spec", "resume-clean"}
 
 // checkBenchShRoutes asserts bin/bench.sh carries a case route for each command in
 // benchShRoutes. It bites when a route is removed (the `<name>)` label disappears).
@@ -76,12 +76,12 @@ func TestBenchShRouteAnchorBites(t *testing.T) {
 		}
 	}
 
-	write("case \"${1:-help}\" in\n  commit)   route_porcelain \"$@\" ;;\n  spec)     route_porcelain \"$@\" ;;\nesac\n")
+	write("case \"${1:-help}\" in\n  commit)   route_porcelain \"$@\" ;;\n  spec)     route_porcelain \"$@\" ;;\n  resume-clean) route_porcelain \"$@\" ;;\nesac\n")
 	if diags := checkBenchShRoutes(root); len(diags) != 0 {
 		t.Fatalf("both routes present: want no diagnostics, got %v", diags)
 	}
 
-	write("case \"${1:-help}\" in\n  spec)     route_porcelain \"$@\" ;;\nesac\n")
+	write("case \"${1:-help}\" in\n  spec)     route_porcelain \"$@\" ;;\n  resume-clean) route_porcelain \"$@\" ;;\nesac\n")
 	diags := checkBenchShRoutes(root)
 	if len(diags) != 1 || !strings.Contains(diags[0], "no route for 'commit'") {
 		t.Fatalf("dropped commit route: want a single commit diagnostic, got %v", diags)

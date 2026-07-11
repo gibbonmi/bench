@@ -14,6 +14,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/structure"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
@@ -94,6 +95,11 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "could not resolve HEAD")
 		return 1
 	}
+	intentEntry := intent.NewEntry(intent.KindShift, objective)
+	if err := intent.Upsert(mainRoot, intentEntry); err != nil {
+		fmt.Fprintf(stderr, "could not persist shift intent: %v\n", err)
+		return 1
+	}
 	wt, err := worktree.Acquire(mainRoot, base, "hard")
 	if err != nil {
 		fmt.Fprintln(stderr, err)
@@ -104,6 +110,13 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 	branch := "bench/shift-" + timeNow().Format("20060102-150405")
 	if err := exec.Command("git", "-C", wt, "switch", "-q", "-c", branch).Run(); err != nil {
 		fmt.Fprintf(stderr, "could not create shift branch %s: %v\n", branch, err)
+		s.teardown()
+		return 1
+	}
+	intentEntry.Worktree = wt
+	intentEntry.Branch = branch
+	if err := intent.Upsert(mainRoot, intentEntry); err != nil {
+		fmt.Fprintf(stderr, "could not enrich shift intent: %v\n", err)
 		s.teardown()
 		return 1
 	}

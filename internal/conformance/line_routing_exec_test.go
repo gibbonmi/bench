@@ -51,9 +51,19 @@ func checkAgentHookBehavior(root string) []string {
 		}
 	}
 	hookCase("allows a bound model", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"gpt-5.3-codex-spark"}}`, "", 0)
+	hookCase("captures allowed intent", routed, `{"tool_name":"Agent","tool_use_id":"allowed-1","tool_input":{"description":"ship safely","prompt":"fallback","resolvedModel":"gpt-5.3-codex-spark"}}`, "", 0)
+	ledgerPath := filepath.Join(routed, ".git", "bench-intent.json")
+	ledger, err := os.ReadFile(ledgerPath)
+	if err != nil || !strings.Contains(string(ledger), `"key":"allowed-1"`) || !strings.Contains(string(ledger), `"objective":"ship safely"`) {
+		diags = append(diags, fmt.Sprintf("check-agent-line intent capture contract failed: allowed ledger=%q err=%v", ledger, err))
+	}
 	hookCase("allows a declared alias", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"opus"}}`, "", 0)
 	hookCase("denies an undeclared alias", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"sonnet"}}`, "", 2)
 	hookCase("denies an unbound model", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","resolvedModel":"gpt-9"}}`, "", 2)
+	hookCase("denied intent is not captured", routed, `{"tool_name":"Agent","tool_use_id":"denied-1","tool_input":{"description":"must not persist","resolvedModel":"gpt-9"}}`, "", 2)
+	if ledger, err := os.ReadFile(ledgerPath); err != nil || strings.Contains(string(ledger), "denied-1") {
+		diags = append(diags, fmt.Sprintf("check-agent-line intent capture contract failed: denied call changed ledger=%q err=%v", ledger, err))
+	}
 	hookCase("does not fail open on malformed stdin", routed, `not json at all`, "not parseable as JSON", 0)
 	// Ratified posture flip (enforcement-verification): in a routed, completely-bound repo a
 	// missing model DENIES (exit 2) rather than warning — an omitted model inherits the

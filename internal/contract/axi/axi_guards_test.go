@@ -188,15 +188,28 @@ func testAXIBlockDangerousGitLinkedWorktreeClassification(t *testing.T) {
 }
 
 func testSessionStartGuardBriefInjection(t *testing.T) {
+	contract.NoteContractFailure(t, "session-start conservative cleanup contract failed")
 	f := linkedGuardsFixture(t)
 	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\nexit 0\n")
+	f.CommitAll("session start fixture")
 	hook := filepath.Join(f.Root, ".bench", "hooks", "session-start.sh")
+	stale := filepath.Join(t.TempDir(), "stale clean worktree")
+	f.Git("worktree", "add", "-q", "--detach", stale, "HEAD")
 
 	out := f.RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, "bash", hook)
 
 	out.RequireExit(0)
 	combined := out.Stdout + out.Stderr
 	out.RequireContains(combined, "full manifests: bench guards")
+	resumeAt := strings.Index(combined, "bench resume:")
+	statusAt := strings.Index(combined, "bench:")
+	guardsAt := strings.Index(combined, "full manifests: bench guards")
+	if resumeAt < 0 || statusAt < 0 || guardsAt < 0 || !(resumeAt < statusAt && statusAt < guardsAt) {
+		t.Fatalf("session-start output order resume=%d status=%d guards=%d:\n%s", resumeAt, statusAt, guardsAt, combined)
+	}
+	if _, err := os.Stat(stale); !os.IsNotExist(err) {
+		t.Fatalf("session-start kept clean stale worktree: %v", err)
+	}
 	requireGuardsLineMatching(t, combined, `^bench CLI: .*\.bench/bin/bench\.sh \(bench not on PATH; invoke by path`)
 }
 

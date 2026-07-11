@@ -38,8 +38,7 @@ func OrphanedDelegateBranches(root string) []string {
 // default that does not resolve — mergedness against a missing ref would read every
 // branch as un-landed, or worse, let a silent all-clean sweep stand.
 func ResolvedDefault(root string) (string, bool) {
-	def := git.DefaultBranch(root)
-	return def, git.OK("-C", root, "rev-parse", "--verify", "--quiet", def+"^{commit}")
+	return git.ResolvedDefault(root)
 }
 
 // LandedInDefault reports whether branch's work is already present in def: by
@@ -54,23 +53,7 @@ func ResolvedDefault(root string) (string, bool) {
 // the patch comparison. A branch carrying any merge commit def lacks is therefore
 // unprovable by content and stays kept.
 func LandedInDefault(root, branch, def string) (landed, byContent bool) {
-	if git.OK("-C", root, "merge-base", "--is-ancestor", branch, def) {
-		return true, false
-	}
-	merges, err := git.Output("-C", root, "rev-list", "--merges", "--max-count=1", def+".."+branch)
-	if err != nil || merges != "" {
-		return false, false
-	}
-	out, err := git.Output("-C", root, "cherry", def, branch)
-	if err != nil {
-		return false, false
-	}
-	for _, line := range strings.Split(out, "\n") {
-		if line != "" && !strings.HasPrefix(line, "-") {
-			return false, false
-		}
-	}
-	return true, true
+	return git.LandedInDefault(root, branch, def)
 }
 
 func activeWorktreeBranches(root string) map[string]bool {

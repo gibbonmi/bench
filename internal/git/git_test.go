@@ -93,6 +93,44 @@ func TestTreeHashLeavesNoStrayIndex(t *testing.T) {
 	}
 }
 
+func TestLandedStateAggregatesAndDeduplicates(t *testing.T) {
+	root := newRepo(t)
+	runGit(t, root, "branch", "-M", "main")
+	runGit(t, root, "remote", "add", "origin", root)
+	runGit(t, root, "update-ref", "refs/remotes/origin/main", "HEAD")
+	linked := filepath.Join(t.TempDir(), "feature worktree")
+	runGit(t, root, "worktree", "add", "-q", "-b", "feature", linked, "HEAD")
+	if err := os.WriteFile(filepath.Join(linked, "a.txt"), []byte("dirty\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, root, "checkout", "-q", "-b", "ahead")
+	if err := os.WriteFile(filepath.Join(root, "b.txt"), []byte("ahead\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, root, "add", "b.txt")
+	runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "ahead")
+	runGit(t, root, "branch", "ahead-copy")
+	for _, branch := range []string{"ahead", "ahead-copy"} {
+		runGit(t, root, "config", "branch."+branch+".remote", "origin")
+		runGit(t, root, "config", "branch."+branch+".merge", "refs/heads/main")
+	}
+	state, err := LandedState(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if state.DirtyPaths != 1 || state.UnpushedCommits != 1 || state.UniqueBranches != 2 {
+		t.Fatalf("LandedState = %#v, want dirty=1 ahead=1 unique=2", state)
+	}
+}
+
+func TestLandedStateGitFailureIsUnknown(t *testing.T) {
+	root := newRepo(t)
+	t.Setenv("PATH", "")
+	if _, err := LandedState(root); err == nil {
+		t.Fatal("LandedState swallowed missing git")
+	}
+}
+
 // TestRefResolvesAndBranchExists exercises the two guard probes and their fail-safe
 // posture. They run in the process cwd (the agent's working dir), so the test chdirs
 // into a fixture repo and restores.

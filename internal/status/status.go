@@ -23,6 +23,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/spec"
@@ -79,6 +80,7 @@ func Signals(root string) []Signal {
 	rows = appendGate(rows, root)
 	rows = appendGit(rows, root)
 	rows = appendWorktree(rows, root)
+	rows = appendIntent(rows, root)
 	rows = appendGuards(rows, root)
 	rows = appendDrain(rows, root)
 	rows = appendStructure(rows, root)
@@ -128,6 +130,9 @@ func Command(args []string) (string, int) {
 // hook calls with all=false so the ambient surface stays bounded.
 func render(root string, all bool) string {
 	signals := Signals(root)
+	if all {
+		signals = expandIntentSignals(root, signals)
+	}
 
 	var b strings.Builder
 	if len(signals) == 0 {
@@ -239,25 +244,73 @@ func captureOnlyDrift(paths []string) bool {
 // appendGit adds the uncommitted/unpushed signal (sev 1). dirty is the porcelain status;
 // ahead is the upstream-relative commit list, read only when an upstream is configured.
 func appendGit(rows []row, root string) []row {
-	// Audit #3/#4 — tolerate: this is an ambient advisory board the SessionStart hook
-	// consumes, so a git failure must degrade the git row, not crash the hook. dirty drops
-	// its porcelain error; ahead is read only after an OK-checked upstream and degrades to
-	// no ahead-count.
-	dirty, _ := git.Output("-C", root, "status", "--porcelain")
-	ahead := ""
-	if git.OK("-C", root, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}") {
-		ahead, _ = git.Output("-C", root, "log", "--oneline", "@{u}..HEAD")
+	fact, err := git.LandedState(root)
+	if err != nil {
+		return append(rows, row{1, "git", "git state unavailable", "investigate local git state"})
 	}
-	if dirty == "" && ahead == "" {
+	var details, actions []string
+	if fact.DirtyPaths > 0 {
+		details = append(details, plural(fact.DirtyPaths, "dirty path", "dirty paths"))
+		actions = append(actions, "commit on green")
+	}
+	if fact.UnpushedCommits > 0 {
+		details = append(details, plural(fact.UnpushedCommits, "unpushed commit", "unpushed commits"))
+		actions = append(actions, "/bench-final-check")
+	}
+	if fact.UniqueBranches > 0 {
+		details = append(details, plural(fact.UniqueBranches, "unique branch", "unique branches"))
+		actions = append(actions, "push")
+	}
+	if len(details) == 0 {
 		return rows
 	}
-	detail := "uncommitted + unpushed"
-	if dirty != "" && ahead == "" {
-		detail = "uncommitted changes"
-	} else if dirty == "" && ahead != "" {
-		detail = "unpushed commits"
+	return append(rows, row{1, "git", strings.Join(details, ", "), strings.Join(actions, " / ")})
+}
+
+func appendIntent(rows []row, root string) []row {
+	live, err := intent.Snapshot(root)
+	if err != nil {
+		return append(rows, row{2, "intent", "intent ledger unavailable", "inspect shared git intent ledger"})
 	}
-	return append(rows, row{1, "git", detail, "commit on green / push"})
+	if len(live) == 0 {
+		return rows
+	}
+	correlated, uncorrelated := 0, 0
+	for _, entry := range live {
+		if entry.Worktree == "" && entry.Branch == "" && entry.Kind == intent.KindClaudeAgent {
+			uncorrelated++
+		} else {
+			correlated++
+		}
+	}
+	detail := fmt.Sprintf("%d correlated, %d uncorrelated; oldest: %s", correlated, uncorrelated, intent.Preview(live[0].Objective))
+	return append(rows, row{2, "intent", detail, "resume interrupted work"})
+}
+
+func expandIntentSignals(root string, signals []Signal) []Signal {
+	live, err := intent.Snapshot(root)
+	if err != nil || len(live) == 0 {
+		return signals
+	}
+	out := make([]Signal, 0, len(signals)+len(live))
+	for _, signal := range signals {
+		if signal.Name != "intent" {
+			out = append(out, signal)
+		}
+	}
+	for _, entry := range live {
+		parts := []string{string(entry.Kind)}
+		if entry.Worktree != "" {
+			parts = append(parts, "path="+intent.Preview(entry.Worktree))
+		}
+		if entry.Branch != "" {
+			parts = append(parts, "branch="+intent.Preview(entry.Branch))
+		}
+		parts = append(parts, "objective="+intent.Preview(entry.Objective))
+		out = append(out, Signal{Severity: 2, Name: "intent", Detail: strings.Join(parts, " "), Action: "resume interrupted work"})
+	}
+	sort.SliceStable(out, func(i, j int) bool { return out[i].Severity < out[j].Severity })
+	return out
 }
 
 // appendWorktree adds separate worktree signals (sev 2) for out-of-pool worktrees,

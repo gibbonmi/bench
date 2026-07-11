@@ -8,6 +8,10 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 )
 
 // cksumGolden pins the Go cksum against values produced by the coreutils `cksum`
@@ -165,6 +169,13 @@ func TestCleanCommandRemovesOutOfPool(t *testing.T) {
 	root := newWorktreeRepo(t)
 	candidate := filepath.Join(filepath.Dir(root), "outside wt [one]")
 	gitRun(t, root, "worktree", "add", "-q", "--detach", candidate, "HEAD")
+	created := time.Unix(1, 0).UTC()
+	if err := intent.Upsert(root, intent.Entry{Key: "cleaned", Kind: intent.KindWorktree, Objective: "clean me", CreatedAt: created, Worktree: candidate}); err != nil {
+		t.Fatal(err)
+	}
+	if err := intent.Upsert(root, intent.Entry{Key: "unrelated", Kind: intent.KindShift, Objective: "keep me", CreatedAt: created}); err != nil {
+		t.Fatal(err)
+	}
 	nested := filepath.Join(root, "sub", "dir")
 	if err := os.MkdirAll(nested, 0o755); err != nil {
 		t.Fatalf("mkdir nested cwd: %v", err)
@@ -185,6 +196,9 @@ func TestCleanCommandRemovesOutOfPool(t *testing.T) {
 	if out := gitOutput(t, root, "worktree", "list", "--porcelain"); strings.Contains(out, candidate) {
 		t.Fatalf("cleanup left worktree registered:\n%s", out)
 	}
+	if live, err := intent.Read(root); err != nil || len(live.Entries) != 1 || live.Entries[0].Key != "unrelated" {
+		t.Fatalf("manual clean compact = %#v, %v", live.Entries, err)
+	}
 
 	stdout.Reset()
 	stderr.Reset()
@@ -194,6 +208,91 @@ func TestCleanCommandRemovesOutOfPool(t *testing.T) {
 	}
 	if !strings.Contains(stdout.String(), "nothing to clean") {
 		t.Fatalf("second cleanup did not report idempotent empty state:\n%s", stdout.String())
+	}
+}
+
+func TestResumeCleanRemovesOnlyCleanUnlockedOutOfPool(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("BENCH_HOME", home)
+	root := newWorktreeRepo(t)
+	gitRun(t, root, "branch", "-M", "main")
+	clean := filepath.Join(filepath.Dir(root), "auto clean")
+	dirty := filepath.Join(filepath.Dir(root), "auto dirty")
+	locked := filepath.Join(filepath.Dir(root), "auto locked")
+	pool := filepath.Join(Pool(root), "leased")
+	if err := os.MkdirAll(filepath.Dir(pool), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{clean, dirty, locked, pool} {
+		gitRun(t, root, "worktree", "add", "-q", "--detach", path, "HEAD")
+	}
+	if err := os.WriteFile(filepath.Join(dirty, "dirty.txt"), []byte("recover me\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, root, "worktree", "lock", locked)
+	lease, err := LeaseFile(pool)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(lease, []byte("123 2026-07-11T00:00:00Z\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, root, "branch", "worktree-agent-landed")
+	unique := gitOutput(t, root, "commit-tree", "HEAD^{tree}", "-p", "HEAD", "-m", "unique scratch")
+	gitRun(t, root, "update-ref", "refs/heads/worktree-agent-unique", unique)
+	created := time.Unix(1, 0).UTC()
+	if err := intent.Upsert(root, intent.Entry{Key: "auto-cleaned", Kind: intent.KindWorktree, Objective: "clean me", CreatedAt: created, Worktree: clean}); err != nil {
+		t.Fatal(err)
+	}
+	if err := intent.Upsert(root, intent.Entry{Key: "unrelated", Kind: intent.KindShift, Objective: "keep me", CreatedAt: created}); err != nil {
+		t.Fatal(err)
+	}
+	chdir(t, root)
+	before, _ := os.ReadFile(filepath.Join(dirty, "dirty.txt"))
+	var stdout, stderr bytes.Buffer
+	if code := ResumeCleanCommand(nil, &stdout, &stderr); code != 0 {
+		t.Fatalf("ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", code, stdout.String(), stderr.String())
+	}
+	if got := stdout.String(); got != "bench resume: cleaned 1 worktree(s), 1 landed branch(es); kept 1 dirty, 1 locked, 1 leased; 1 open intent(s)\n" {
+		t.Fatalf("resume report = %q", got)
+	}
+	if _, err := os.Stat(clean); !os.IsNotExist(err) {
+		t.Fatalf("clean worktree remains: %v", err)
+	}
+	for _, path := range []string{dirty, locked, pool} {
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("kept worktree %q: %v", path, err)
+		}
+	}
+	after, _ := os.ReadFile(filepath.Join(dirty, "dirty.txt"))
+	if !bytes.Equal(before, after) {
+		t.Fatal("resume cleanup changed dirty bytes")
+	}
+	if git.OK("-C", root, "show-ref", "--verify", "--quiet", "refs/heads/worktree-agent-landed") {
+		t.Fatal("resume cleanup kept ancestry-landed orphan")
+	}
+	if !git.OK("-C", root, "show-ref", "--verify", "--quiet", "refs/heads/worktree-agent-unique") {
+		t.Fatal("resume cleanup deleted unique orphan")
+	}
+}
+
+func TestSubshellPersistsAndEnrichesMultiwordIntent(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("BENCH_HOME", home)
+	t.Setenv("SHELL", "/bin/true")
+	root := newWorktreeRepo(t)
+	chdir(t, root)
+	var stdout, stderr bytes.Buffer
+	if code := Subshell([]string{"multi", "word", "objective"}, bytes.NewReader(nil), &stdout, &stderr); code != 0 {
+		t.Fatalf("Subshell exit=%d stderr=%s", code, stderr.String())
+	}
+	ledger, err := intent.Read(root)
+	if err != nil || len(ledger.Entries) != 1 {
+		t.Fatalf("ledger=%#v err=%v", ledger.Entries, err)
+	}
+	entry := ledger.Entries[0]
+	if entry.Objective != "multi word objective" || entry.Worktree == "" {
+		t.Fatalf("enriched entry=%#v", entry)
 	}
 }
 

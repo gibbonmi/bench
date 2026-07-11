@@ -288,11 +288,7 @@ func testRuntimeWorktreeCleanFromPoolCwd(t *testing.T) {
 
 func testRuntimeWorktreeRejectsUnknownArgs(t *testing.T) {
 	f := contract.NewFixture(t)
-	for _, args := range [][]string{
-		{"worktree", "badverb"},
-		{"worktree", "clean", "extra"},
-		{"worktree", "bad", "verb"},
-	} {
+	for _, args := range [][]string{{"worktree", "clean", "extra"}} {
 		out := f.Bench(args...)
 		out.RequireExit(2)
 		contract.RequireContains(t, out.Stderr, "usage: bench worktree")

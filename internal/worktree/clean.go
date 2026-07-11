@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -30,10 +31,17 @@ func cleanCommand(args []string, stdout, stderr io.Writer) int {
 	// two, so a swept branch never masks a refused worktree and vice versa.
 	sweepExit := sweepDelegateBranches(root, stdout, stderr)
 	worktreeExit := cleanOutOfPoolWorktrees(root, stdout, stderr)
-	if sweepExit > worktreeExit {
-		return sweepExit
+	exit := worktreeExit
+	if sweepExit > exit {
+		exit = sweepExit
 	}
-	return worktreeExit
+	if err := intent.Compact(root); err != nil {
+		fmt.Fprintf(stderr, "error: bench worktree clean intent refresh failed: %v\n", err)
+		if exit < 1 {
+			exit = 1
+		}
+	}
+	return exit
 }
 
 // sweepDelegateBranches deletes every landed worktree-* scratch orphan that no live worktree

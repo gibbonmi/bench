@@ -34,6 +34,7 @@ if command -v bench >/dev/null 2>&1; then
 else
   printf 'bench CLI: %s (bench not on PATH; invoke by path — run `bench doctor --fix` to install a stable-PATH shim)\n' "$cmd"
 fi
+"$cmd" resume-clean 2>/dev/null || true
 "$cmd" status 2>/dev/null || true
 # The guard brief: one line per deny-capable guard plus a pointer. Never blocks —
 # any failure is swallowed so the session opens regardless.

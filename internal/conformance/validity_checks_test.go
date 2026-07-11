@@ -141,7 +141,7 @@ func checkCodexHooks(root string) []string {
 			}
 		}
 	}
-	var stopCommands, preCommands []string
+	var stopCommands, sessionCommands, preCommands []string
 	for _, group := range cfg.Hooks["Stop"] {
 		for _, hook := range group.Hooks {
 			stopCommands = append(stopCommands, hook.Command)
@@ -150,10 +150,22 @@ func checkCodexHooks(root string) []string {
 	if !anyContains(stopCommands, ".bench/hooks/stop.sh") {
 		diags = append(diags, "codex hooks.json Stop event does not run .bench/hooks/stop.sh")
 	}
+	for _, group := range cfg.Hooks["SessionStart"] {
+		for _, hook := range group.Hooks {
+			sessionCommands = append(sessionCommands, hook.Command)
+		}
+	}
+	if !anyContains(sessionCommands, ".bench/hooks/session-start.sh") {
+		diags = append(diags, "codex hooks.json SessionStart event does not run .bench/hooks/session-start.sh")
+	}
 	hasBashMatcher := false
+	hasAgentMatcher := false
 	for _, group := range cfg.Hooks["PreToolUse"] {
 		if group.Matcher == "Bash" {
 			hasBashMatcher = true
+		}
+		if group.Matcher == "Agent" {
+			hasAgentMatcher = true
 		}
 		for _, hook := range group.Hooks {
 			preCommands = append(preCommands, hook.Command)
@@ -164,6 +176,9 @@ func checkCodexHooks(root string) []string {
 	}
 	if !anyContains(preCommands, ".bench/hooks/block-dangerous-git.sh") {
 		diags = append(diags, "codex hooks.json PreToolUse does not run .bench/hooks/block-dangerous-git.sh")
+	}
+	if hasAgentMatcher || anyContains(preCommands, ".bench/hooks/check-agent-line.sh") {
+		diags = append(diags, "codex hooks.json must not claim an Agent intent writer")
 	}
 	return diags
 }

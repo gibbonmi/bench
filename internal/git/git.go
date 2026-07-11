@@ -91,6 +91,70 @@ type RepoFacts struct {
 	Changes               []PorcelainEntry
 }
 
+// LandedStateFact is the repository-wide, offline git verdict used by status.
+// Counts are de-duplicated sets, not sums of per-worktree/per-branch counters.
+type LandedStateFact struct {
+	DirtyPaths      int
+	UnpushedCommits int
+	UniqueBranches  int
+}
+
+func LandedState(root string) (LandedStateFact, error) {
+	worktrees, err := Output("-C", root, "worktree", "list", "--porcelain")
+	if err != nil {
+		return LandedStateFact{}, fmt.Errorf("git worktree list: %w", err)
+	}
+	dirty := map[string]bool{}
+	for _, line := range strings.Split(worktrees, "\n") {
+		if !strings.HasPrefix(line, "worktree ") {
+			continue
+		}
+		path := strings.TrimPrefix(line, "worktree ")
+		raw, err := Raw("-C", path, "status", "--porcelain=v1", "-z", "--no-renames")
+		if err != nil {
+			return LandedStateFact{}, fmt.Errorf("git status %s: %w", path, err)
+		}
+		for _, entry := range ParsePorcelainZ(raw) {
+			dirty[entry.Path] = true
+		}
+	}
+	def, ok := ResolvedDefault(root)
+	if !ok {
+		return LandedStateFact{}, fmt.Errorf("git default branch %q does not resolve", DefaultBranch(root))
+	}
+	branchesOut, err := Output("-C", root, "for-each-ref", "--format=%(refname:short)", "refs/heads/")
+	if err != nil {
+		return LandedStateFact{}, fmt.Errorf("git local branches: %w", err)
+	}
+	commits := map[string]bool{}
+	unique := map[string]bool{}
+	for _, branch := range strings.Split(branchesOut, "\n") {
+		if branch == "" || branch == def {
+			continue
+		}
+		if landed, _ := LandedInDefault(root, branch, def); !landed {
+			unique[branch] = true
+		}
+		upstream, err := Output("-C", root, "for-each-ref", "--format=%(upstream:short)", "refs/heads/"+branch)
+		if err != nil {
+			return LandedStateFact{}, fmt.Errorf("git upstream %s: %w", branch, err)
+		}
+		if upstream == "" {
+			continue
+		}
+		ahead, err := Output("-C", root, "rev-list", upstream+".."+branch)
+		if err != nil {
+			return LandedStateFact{}, fmt.Errorf("git ahead %s: %w", branch, err)
+		}
+		for _, commit := range strings.Split(ahead, "\n") {
+			if commit != "" {
+				commits[commit] = true
+			}
+		}
+	}
+	return LandedStateFact{DirtyPaths: len(dirty), UnpushedCommits: len(commits), UniqueBranches: len(unique)}, nil
+}
+
 // Facts derives repository state without mutating the worktree or index.
 func Facts(root string) (RepoFacts, error) {
 	branch, err := Output("-C", root, "rev-parse", "--abbrev-ref", "HEAD")
@@ -144,6 +208,44 @@ func DefaultBranch(root string) string {
 		return "main"
 	}
 	return strings.TrimPrefix(out, "origin/")
+}
+
+// ResolvedDefault returns the local default branch only when it resolves to a commit.
+func ResolvedDefault(root string) (string, bool) {
+	def := DefaultBranch(root)
+	if OK("-C", root, "rev-parse", "--verify", "--quiet", def+"^{commit}") {
+		return def, true
+	}
+	branches, err := Output("-C", root, "for-each-ref", "--format=%(refname:short)", "refs/heads/")
+	if err == nil {
+		fields := strings.Fields(branches)
+		if len(fields) == 1 && OK("-C", root, "rev-parse", "--verify", "--quiet", fields[0]+"^{commit}") {
+			return fields[0], true
+		}
+	}
+	return def, false
+}
+
+// LandedInDefault proves a local branch landed by ancestry or patch containment.
+// Merge-only content cannot be proven by git cherry and is deliberately kept.
+func LandedInDefault(root, branch, def string) (landed, byContent bool) {
+	if OK("-C", root, "merge-base", "--is-ancestor", branch, def) {
+		return true, false
+	}
+	merges, err := Output("-C", root, "rev-list", "--merges", "--max-count=1", def+".."+branch)
+	if err != nil || merges != "" {
+		return false, false
+	}
+	out, err := Output("-C", root, "cherry", def, branch)
+	if err != nil {
+		return false, false
+	}
+	for _, line := range strings.Split(out, "\n") {
+		if line != "" && !strings.HasPrefix(line, "-") {
+			return false, false
+		}
+	}
+	return true, true
 }
 
 // Output runs `git <args>` and returns stdout with a single trailing newline trimmed;

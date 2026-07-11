@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/intent"
 )
 
 // rec builds one NUL-terminated porcelain -z record: two status chars, a space, the
@@ -127,6 +129,39 @@ func TestLoopReportsBranchCreationFailure(t *testing.T) {
 	}
 	if contains(stdout.String(), "shift done") {
 		t.Fatalf("shift reported completion after branch creation failure:\n%s", stdout.String())
+	}
+}
+
+func TestLoopPersistsIntentBeforeAcquireFailure(t *testing.T) {
+	root := t.TempDir()
+	gitCmd := func(args ...string) {
+		cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
+	gitCmd("init", "-q", "-b", "main")
+	if err := os.WriteFile(filepath.Join(root, "tracked"), []byte("x\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gitCmd("add", ".")
+	gitCmd("-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "init")
+	old, _ := os.Getwd()
+	_ = os.Chdir(root)
+	t.Cleanup(func() { _ = os.Chdir(old) })
+	t.Setenv("BENCH_AGENT", "/bin/true")
+	blockedHome := filepath.Join(t.TempDir(), "not-a-directory")
+	if err := os.WriteFile(blockedHome, []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("BENCH_HOME", blockedHome)
+	var stdout, stderr bytes.Buffer
+	if code := Loop("multi word objective", bytes.NewReader(nil), &stdout, &stderr); code == 0 {
+		t.Fatal("Loop unexpectedly acquired worktree")
+	}
+	ledger, err := intent.Read(root)
+	if err != nil || len(ledger.Entries) != 1 || ledger.Entries[0].Objective != "multi word objective" || ledger.Entries[0].Worktree != "" {
+		t.Fatalf("pre-acquire intent = %#v, %v", ledger.Entries, err)
 	}
 }
 
