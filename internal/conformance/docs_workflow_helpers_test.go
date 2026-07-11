@@ -123,6 +123,22 @@ func checkWorkflowAnchors(root string) []string {
 		".agents/skills/bench-craft-delegate/SKILL.md dropped the shared-worktree file-tool path pin")
 	requireCollapsed(".agents/skills/bench-craft-delegate/SKILL.md", "names a commit-specific sentinel",
 		".agents/skills/bench-craft-delegate/SKILL.md dropped the fix-pass snapshot sentinel precondition")
+	delegationPolicyAnchors := []struct {
+		caseName string
+		anchor   string
+	}{
+		{"insertion", "one source-line insertion"},
+		{"deletion", "one source-line deletion"},
+		{"replacement", "one source-line replacement"},
+		{"replacement accounting", "A replacement counts as one correction"},
+		{"request scope", "does not reset when work is split into tasks, slices, delegates, or verification rounds"},
+		{"review repair", "Repairs beyond the allowance under Delegate or inline are re-charged to a write-delegate"},
+		{"owning checkout", "coordinator verifies the repair in the checkout that owns the diff"},
+	}
+	for _, policyCase := range delegationPolicyAnchors {
+		requireCollapsed(".agents/skills/bench-craft-delegate/SKILL.md", policyCase.anchor,
+			fmt.Sprintf(".agents/skills/bench-craft-delegate/SKILL.md dropped the %s delegation-policy case", policyCase.caseName))
+	}
 	requireCollapsed(".agents/commands/bench-write-spec.md", "stale-command-reference sweep remains fail-closed across staged specs",
 		".agents/commands/bench-write-spec.md dropped the staged-spec fail-closed command sweep posture")
 	requireCollapsed(".agents/commands/bench-what-next.md", "use `bench spec history <slug>` for the shipped-row check",

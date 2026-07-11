@@ -13,12 +13,17 @@ happens where you can't see it. This skill keeps the cost bounded.
 ## Delegate or inline
 
 The coordinator scopes, routes, and verifies work; a write-delegate authors code.
-The coordinator may author at most one changed code line per task. Any code diff
-over one added-plus-deleted line runs as a write-delegation in an isolated
-worktree, including mechanical work, atomic diffs, and fixes the coordinator has
-already diagnosed. Read-only coordination stays inline. Never delegate a decision
-the reviewer owns (what ships, spec content, an irreversible choice); a delegate
-inherits your authority ceiling, not the reviewer's.
+The inline allowance is exactly one source-line insertion, one source-line
+deletion, or one source-line replacement in code or tests. A replacement counts
+as one correction even though a unified diff renders it as one deleted line plus
+one added line. This allowance spans the current reviewer request — the current
+user objective — and does not reset when work is split into tasks, slices,
+delegates, or verification rounds. All other code authorship runs as a
+write-delegation in an isolated worktree, including mechanical work, atomic
+diffs, and fixes the coordinator has already diagnosed. Read-only coordination
+stays inline. Never delegate a decision the reviewer owns (what ships, spec
+content, an irreversible choice); a delegate inherits your authority ceiling,
+not the reviewer's.
 
 ## The charge
 
@@ -99,9 +104,10 @@ that root; shell CWD does not retarget file tools. When `bench commit` reports
 nothing to commit beside a visibly modified file, diagnose a CWD/tree mismatch
 before treating the command as defective. Read-only delegations need no
 worktree; say "do not edit any file" in the charge and mean it. Review delegates
-return findings only. The invoking session verifies and fixes any accepted
-finding in the checkout that owns the diff; isolated worktrees are for
-write-delegations, not for reproducing a read-only review result.
+return findings only. The coordinator verifies the repair in the checkout that
+owns the diff. Repairs beyond the allowance under Delegate or inline are
+re-charged to a write-delegate in an isolated worktree; that delegate receives
+the finding and a commit-specific sentinel for the diff under repair.
 
 ## Verifying the done-claim
 
@@ -126,7 +132,6 @@ invariant #1 with extra steps.
 
 Report every verification round in one line, like a ladder move: accepted, or
 what was missed and where the fix went. Reject a miss and re-charge its concrete
-repair to a write-delegate; the coordinator may make only the one-line code
-correction allowed by the threshold above. Recurring misses across delegates are
-a charge defect, not a delegate defect — tighten the rows in the charge before
-re-sending it.
+repair to a write-delegate when it exceeds the canonical allowance under
+Delegate or inline. Recurring misses across delegates are a charge defect, not a
+delegate defect — tighten the rows in the charge before re-sending it.
