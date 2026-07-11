@@ -125,13 +125,33 @@ envelopes against the live harness.
 
 — (open)
 
+## #7: When does a ledger row leave?
+
+Blocked by: #2
+Type: Grill
+
+### Question
+
+What removes a row from the ledger, and what happens to one that can never be
+proven done?
+
+### Answer
+
+Proof-of-done only. A row leaves when its work is proven landed (the existing
+ancestry/patch-containment rule) or its worktree is removed — by the auto-clean
+or the manual command. A row that cannot be proven done never expires silently:
+it surfaces in the status verdict as stale intent with a next action, however
+old. Time-based expiry was rejected — silently dropping old rows would re-create
+the lost-intent problem inside the tool built to prevent it.
+
 ## Not yet specified
 
-- Ledger row lifecycle: when a row expires (on clean, on landed, after N days) —
-  sharpens after #6 fixes the ledger's shape.
 - Report wording and TOON shape of the injected clean report and verdict row.
-- OpenCode / headless-shift parity for the ledger refresh (session-start.sh is
-  already shared; the Stop side may differ per harness).
+- Delegation-intent capture exists only where the check-agent-line hook is wired
+  (Claude Code, Codex today); elsewhere the ledger degrades to the bench-owned
+  writers — acceptable per the closed decision that harness hooks are extra
+  layers, never the only mechanism. Evidence half (what OpenCode/headless Stop
+  surfaces exist) belongs to #6.
 
 ## Out of scope
 
