@@ -164,6 +164,28 @@ func testAXIDiffFullContract(t *testing.T) {
 	requireOutputLine(t, empty, "diff_body:")
 	empty.RequireNotContains(empty.Stdout, "@@ ")
 
+	// A tracked worktree edit belongs to the branch-relative review picture even
+	// when HEAD has no commits since base. The log remains commit-only.
+	f.WriteFile("README.md", "dirty\n")
+	dirty := f.Bench("diff", "--full")
+	dirty.RequireExit(0)
+	requireOutputLine(t, dirty, "files[1]{status,path}:")
+	requireOutputLine(t, dirty, "  M,README.md")
+	requireOutputLine(t, dirty, "log[0]{sha,subject}:")
+	dirty.RequireContains(dirty.Stdout, "+dirty")
+	f.WriteFile("README.md", "r\n")
+
+	// A staged addition is part of the same branch-relative files/body picture.
+	f.WriteFile("staged.txt", "staged\n")
+	f.Git("add", "staged.txt")
+	staged := f.Bench("diff", "--full")
+	staged.RequireExit(0)
+	requireOutputLine(t, staged, "files[1]{status,path}:")
+	requireOutputLine(t, staged, "  A,staged.txt")
+	requireOutputLine(t, staged, "log[0]{sha,subject}:")
+	staged.RequireContains(staged.Stdout, "+staged")
+	f.Git("reset", "--hard", "-q", "HEAD")
+
 	// rows 1/3a: a commit since base emits the log table and the raw diff body,
 	// appended last, with an unmangled line-start `@@ ` hunk marker.
 	f.WriteFile("f.txt", "line one\nline two\n")

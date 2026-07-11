@@ -9,8 +9,8 @@
 // The `--full` flag appends the rest of the base-relative picture a review agent
 // otherwise hand-runs as two extra git calls: a `log[N]{sha,subject}:` TOON table
 // from `git log <base>..HEAD` (two-dot: commits on HEAD since base), and — last,
-// behind a fixed `diff_body:` marker line — the raw output of `git diff
-// <base>...HEAD` (three-dot: changes on the HEAD side since merge-base) passed
+// behind a fixed `diff_body:` marker line — the raw output of `git diff <base>`
+// (committed, index, and tracked worktree changes since the resolved base) passed
 // through verbatim, undecorated by TOON so a hunk header or `+`/`-` line survives
 // unmangled. Bare `bench diff` is byte-for-byte unaffected by the flag's existence.
 //
@@ -50,9 +50,9 @@ func parseNameStatusZ(raw []byte) [][]string {
 }
 
 // changedFiles renders the files table for a `git diff` range. rangeArgs is passed
-// straight through to `git diff --name-status --no-renames -z`: a single
-// "base...HEAD"/"base...head" three-dot expression for the branch-relative path, or
-// two bare refs ("base", "head") for the commit-relative path — `git diff` treats
+// straight through to `git diff --name-status --no-renames -z`: the resolved base
+// alone for the branch-relative path, so Git includes index and tracked worktree
+// changes, or two bare refs ("base", "head") for the commit-relative path — `git diff` treats
 // two positional refs the same as an explicit two-dot range, which is the exact
 // two-commit diff `--commit` needs.
 func changedFiles(rangeArgs ...string) ([][]string, error) {
@@ -99,7 +99,7 @@ func commitLog(rangeExpr string) ([][]string, error) {
 }
 
 // diffBody renders the raw `git diff` body. Same rangeArgs contract as changedFiles:
-// a single three-dot expression for the branch-relative path, or two bare refs for
+// the resolved base for the branch-relative path, or two bare refs for
 // the commit-relative path.
 func diffBody(rangeArgs ...string) ([]byte, error) {
 	args := append([]string{"diff"}, rangeArgs...)
@@ -109,7 +109,8 @@ func diffBody(rangeArgs ...string) ([]byte, error) {
 const fullHelp = `usage: bench diff [--full] [--commit <sha>]
   --full appends, after the files table, a log[N]{sha,subject} TOON table (git
   log <base>..HEAD) and, last, a verbatim diff_body: block (git diff
-  <base>...HEAD) — the raw diff is passed through unescaped, not TOON-encoded.
+  <base>, including tracked index and worktree changes) — the raw diff is passed
+  through unescaped, not TOON-encoded. The log remains commit-only.
   A commit subject carrying a control byte makes --full refuse: it exits 1
   with the unrepresentable-TOON-cell error instead of rendering a mangled log
   row.
@@ -123,7 +124,7 @@ const fullHelp = `usage: bench diff [--full] [--commit <sha>]
 
 // diffRange is the resolved review range every rendering section shares: the base
 // and method preamble lines, and the argument shapes changedFiles/commitLog/diffBody
-// need for either the branch-relative (three-dot, merge-base-aware) range or the
+// need for either the branch-relative (resolved base through worktree) range or the
 // commit-relative (exact first-parent) range.
 type diffRange struct {
 	base      string
@@ -177,9 +178,9 @@ func resolveBranchRange(root string) (dr diffRange, errKind, errHint string) {
 	return diffRange{
 		base:      base,
 		method:    method,
-		filesArgs: []string{base + "...HEAD"},
+		filesArgs: []string{base},
 		logRange:  base + "..HEAD",
-		bodyArgs:  []string{base + "...HEAD"},
+		bodyArgs:  []string{base},
 	}, "", ""
 }
 

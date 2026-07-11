@@ -43,7 +43,9 @@ func testAXIDiffCommitRange(t *testing.T) {
 	requireOutputLine(t, out, "  A,f.txt")
 
 	// row 2: --full --commit <sha> appends the one brought-in commit's log row
-	// and the raw diff body with an unmangled @@ hunk marker.
+	// and the raw diff body with an unmangled @@ hunk marker. Unrelated worktree
+	// state stays outside this exact landed-commit view.
+	f.WriteFile("README.md", "dirty\n")
 	shortC2 := strings.TrimSpace(f.Git("rev-parse", "--short", c2).Stdout)
 	full := f.Bench("diff", "--full", "--commit", c2)
 	full.RequireExit(0)
@@ -51,6 +53,8 @@ func testAXIDiffCommitRange(t *testing.T) {
 	requireLogRow(t, full, shortC2, "c2")
 	requireOutputLine(t, full, "diff_body:")
 	full.RequireContains(full.Stdout, "@@ ")
+	full.RequireNotContains(full.Stdout, "+dirty")
+	f.WriteFile("README.md", "r\n")
 
 	// the two flags compose in the other order too.
 	full2 := f.Bench("diff", "--commit", c2, "--full")
