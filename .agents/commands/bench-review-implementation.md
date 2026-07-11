@@ -96,6 +96,11 @@ Run it on the branch diff against its true base, on three axes that stay separat
    `reviews/<spec-slug>.md` in the same green fix commit that closes them, so
    resolved findings can never resurface as false pickup work.
 
+6. **Bound the terminal repair pass.** Integrate the findings accepted for this
+   round, run focused checks for the changed behavior, then run one final gate and
+   stop. Open another semantic review round only when that gate fails or the
+   reviewer requests one.
+
 ## Where it sits
 
 `/bench-review-implementation` is generation-shaping, not enforcement: run it, read the findings, decide

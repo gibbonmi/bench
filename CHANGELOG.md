@@ -8,6 +8,12 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **FT66 promotion build (2026-07-10).** Learnings-origin review guidance folded
+  into the existing semantic-review process: each round now ends by integrating
+  accepted findings, running focused checks, and running one final gate; another
+  semantic review round opens only on a red gate or reviewer request. Focused
+  root conformance and the full gate closed the promotion.
+
 - **Learnings run (2026-07-10, scope: post-FT65 reconcile).** Removed FT65 as
   shipped; the remaining eight roadmap rows still match the tree, including the
   two exactly reproduced structure issues, and the current Codex hook surface

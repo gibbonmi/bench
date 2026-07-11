@@ -10,13 +10,6 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-**FT66 — bound the terminal repair pass in review guidance.** Recursive
-review/fix rounds made the workflow unbounded. Add one clause to
-`/bench-review-implementation`: integrate accepted findings, run focused
-checks, run one final gate, then stop; open another review round only when that
-gate fails or the reviewer requests one. Rule-shaped kit edit under
-`craft-synthesis`. Next: `/bench-implement-spec` (lighter path).
-
 **FT62 — structure debt: `internal/contract/helper.go` at 441/400.** Grown by
 FT53's RunAtWithTimeout helper; one of two open `bench structure` issues. Split
 along responsibility or propose a reviewer grant — check the dir's file-count
@@ -64,9 +57,7 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT66 add the terminal repair-pass bound under
-   `craft-synthesis` (lighter path).
-2. `/bench-implement-spec` — FT62 helper.go split-or-grant, checking both
+1. `/bench-implement-spec` — FT62 helper.go split-or-grant, checking both
    structure budgets before choosing.
-3. `/bench-implement-spec` — FT64 canary_test.go split-or-grant, checking both
+2. `/bench-implement-spec` — FT64 canary_test.go split-or-grant, checking both
    structure budgets before choosing.
