@@ -8,6 +8,22 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-10, scope: post-FT65 reconcile).** Removed FT65 as
+  shipped; the remaining eight roadmap rows still match the tree, including the
+  two exactly reproduced structure issues, and the current Codex hook surface
+  does not graduate FT24. IDEAS.md was already empty, so zero ideas drained;
+  the learnings journal had zero open entries. The recommended sequence is now
+  FT66, FT62, then FT64. Previous run's promotion builds checked: the FT65 entry
+  below records its build; FT66 remains unbuilt, so no other entry is due.
+
+- **FT65 promotion build (2026-07-10).** Learnings-origin defect folded into
+  the existing AXI diff seam: branch-relative files and body now include
+  committed, index, and tracked worktree changes from the resolved base while
+  the log remains commit-only and `--commit` remains exact. The accused
+  `bin/bench.sh diff --full` repro and end-to-end worktree contract went
+  red→green; staged-state and exact-commit guards passed, followed by the full
+  gate.
+
 - **Learnings run (2026-07-10, scope: immediate no-op reconcile).** Verified all
   nine roadmap rows against the unchanged post-reconcile tree; none shipped or
   needed rewording, and the FT62/FT64 structure debt still reproduces exactly.

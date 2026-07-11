@@ -10,15 +10,6 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-**FT65 — `bench diff --full` omits dirty default-branch work.** Reproduced
-2026-07-10 through the exact accused command: it returned `files[0]` while
-`git diff --no-ext-diff HEAD` showed the uncommitted roadmap batch. Specify the
-branch-relative AXI contract to include tracked index and working-tree changes
-in its files and body sections while the log remains commit-only and
-`--commit` remains exact. Prefer fixing the CLI over adding a review-guidance
-fallback because `bench diff` is the single source of review-base truth. Next:
-`/bench-write-spec`.
-
 **FT66 — bound the terminal repair pass in review guidance.** Recursive
 review/fix rounds made the workflow unbounded. Add one clause to
 `/bench-review-implementation`: integrate accepted findings, run focused
@@ -73,9 +64,9 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT65 make the canonical branch-relative review diff
-   include tracked index and working-tree changes.
-2. `/bench-implement-spec` — FT66 add the terminal repair-pass bound under
+1. `/bench-implement-spec` — FT66 add the terminal repair-pass bound under
    `craft-synthesis` (lighter path).
-3. `/bench-implement-spec` — FT62 helper.go split-or-grant, checking both
+2. `/bench-implement-spec` — FT62 helper.go split-or-grant, checking both
+   structure budgets before choosing.
+3. `/bench-implement-spec` — FT64 canary_test.go split-or-grant, checking both
    structure budgets before choosing.
