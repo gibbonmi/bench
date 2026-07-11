@@ -50,13 +50,10 @@ table that picks the row, and the escalation ladder are all `craft-line`'s.
   a coverage map, its stories' coverage rows in the charge — every time; the
   rules are `craft-delegate`'s (model half: `craft-line`).
 - Verify each returned done-claim against its charged rows and report the round
-  in one line: accepted, or the missed case and where the fix went — inline via
-  the direct fix-and-gate path when the miss is smaller than a re-delegation,
-  re-charged otherwise.
-- Use the venue `craft-line` selects: delegate only when the slice is separable
-  and the handoff is cheaper than the work it moves. Inline small mechanical
-  slices or one atomic diff at the highest needed tier, and flag any collapsed
-  per-story lines in the exit report.
+  in one line: accepted, or the missed case and the re-charged repair.
+- Route code authorship through `craft-delegate`; it owns the inline threshold,
+  worktree isolation, and verification discipline. Use `craft-line` to choose
+  each delegate's model and effort.
 - For broad renames or reference refactors, dry-run the file scope before editing,
   then verify old stems in every form: `/name`, `$name`, bare basenames in
   inventories, and `dir/name` path forms. Separator slashes inside prose are not

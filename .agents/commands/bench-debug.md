@@ -101,9 +101,9 @@ that test before launching the shift** — a shift iteration that ends red rolls
 worktree back to the last commit, so an uncommitted repro test is destroyed by the
 first failed iteration of the very shift it was built to gate. This is the one
 commit that deliberately precedes green: it strengthens the oracle rather than
-shipping work; the shift's own commits stay on-green as always. For a small
-single-seam fix, skip the shift and use direct fix-and-gate instead: repro red,
-regression test red, fix, repro green, project gate green, one green commit.
+shipping work; the shift's own commits stay on-green as always. Route code
+authorship through `craft-delegate`, including a diagnosed single-seam fix; it
+owns the inline threshold, worktree isolation, and verification discipline.
 Replacing the gate with the repro weakens the oracle — that is my call, never a
 debug step. The seam decision in Phase 5 is the `craft-seams` skill. Declare the
 line first — a hard bug is a high-effort shift. Any delegation along the way (a

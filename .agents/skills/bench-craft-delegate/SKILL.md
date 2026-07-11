@@ -12,11 +12,12 @@ happens where you can't see it. This skill keeps the cost bounded.
 
 ## Delegate or inline
 
-Delegate when the work is parallel (independent axes, fan-out search), or when
-its read-set would pollute the coordinating context (a full diff plus standards
-docs). Stay inline for small mechanical work at a known seam — a delegate's
-setup and verification overhead exceeds the work. Never delegate a decision the
-reviewer owns (what ships, spec content, an irreversible choice); a delegate
+The coordinator scopes, routes, and verifies work; a write-delegate authors code.
+The coordinator may author at most one changed code line per task. Any code diff
+over one added-plus-deleted line runs as a write-delegation in an isolated
+worktree, including mechanical work, atomic diffs, and fixes the coordinator has
+already diagnosed. Read-only coordination stays inline. Never delegate a decision
+the reviewer owns (what ships, spec content, an irreversible choice); a delegate
 inherits your authority ceiling, not the reviewer's.
 
 ## The charge
@@ -124,9 +125,8 @@ Accepting a done-claim unverified is grading your own work at one remove —
 invariant #1 with extra steps.
 
 Report every verification round in one line, like a ladder move: accepted, or
-what was missed and where the fix went. A miss the verification already
-diagnosed — small, concrete, fully understood — is fixed inline through the
-direct fix-and-gate path rather than re-delegated: an edit smaller than its
-handoff pays handoff, re-discovery, and re-verification for nothing. Recurring
-misses across delegates are a charge defect, not a delegate defect — tighten
-the rows in the charge before re-sending it.
+what was missed and where the fix went. Reject a miss and re-charge its concrete
+repair to a write-delegate; the coordinator may make only the one-line code
+correction allowed by the threshold above. Recurring misses across delegates are
+a charge defect, not a delegate defect — tighten the rows in the charge before
+re-sending it.
