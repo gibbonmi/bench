@@ -1,6 +1,6 @@
 # Mandatory implementation delegation
 
-Status: staged
+Status: implemented
 
 ## Problem
 

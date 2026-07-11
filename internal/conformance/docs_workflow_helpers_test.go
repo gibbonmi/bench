@@ -117,6 +117,18 @@ func checkWorkflowAnchors(root string) []string {
 	}
 	requireCollapsed(".agents/commands/bench-implement-spec.md", "apply `craft-seams`' split-or-grant rule",
 		".agents/commands/bench-implement-spec.md dropped the craft-seams split-or-grant pointer")
+	requireCollapsed(".agents/commands/bench-implement-spec.md",
+		"Every spec-backed run assigns genuine write work to at least one write subagent before the first implementation edit",
+		".agents/commands/bench-implement-spec.md dropped the mandatory spec-backed write-delegation-before-first-edit contract")
+	requireCollapsed(".agents/commands/bench-implement-spec.md",
+		"independent vertical slices fan out to separate parallel subagents within the harness's concurrency limit; dependent slices run sequentially; a spec that lands as one atomic diff is delegated whole to one worktree-isolated write subagent",
+		".agents/commands/bench-implement-spec.md dropped a delegation routing shape (independent-parallel, dependent-sequential, or atomic-whole)")
+	requireCollapsed(".agents/commands/bench-implement-spec.md",
+		"A read-only helper (research, review, planning, search) does not satisfy the write requirement. A no-spec change admitted by the lighter-path threshold above may remain inline — the sole inline exception.",
+		".agents/commands/bench-implement-spec.md dropped the read-only exclusion or the lighter-path sole inline exception")
+	requireCollapsed(".agents/commands/bench-implement-spec.md",
+		"stop before editing and emit one explicit resume handoff to a subagent-capable harness — the repository path, the working branch or worktree, the spec name, the destination harness, and that harness's exact invocation",
+		".agents/commands/bench-implement-spec.md dropped the pre-edit stop and harness-native resume handoff for a harness without write subagents")
 	requireCollapsed(".agents/skills/bench-craft-seams/SKILL.md", "check both the file-length budget and the directory's file-count headroom",
 		".agents/skills/bench-craft-seams/SKILL.md dropped the structure split-vs-grant headroom rule")
 	requireCollapsed(".agents/skills/bench-craft-delegate/SKILL.md", "pins every file-tool path to that root",

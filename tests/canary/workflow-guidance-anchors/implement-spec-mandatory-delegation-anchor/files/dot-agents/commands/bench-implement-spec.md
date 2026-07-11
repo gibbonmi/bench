@@ -32,10 +32,6 @@ table that picks the row, and the escalation ladder are all `craft-line`'s.
 Pick the venue before the first implementation edit; it is part of the phase
 contract, not a preference:
 
-- Every spec-backed run assigns genuine write work to at least one write subagent
-  before the first implementation edit — the reviewer never has to ask. How each
-  delegate is charged, isolated, and verified is `craft-delegate`'s; its model and
-  effort are `craft-line`'s.
 - Route by slice shape: independent vertical slices fan out to separate parallel
   subagents within the harness's concurrency limit; dependent slices run
   sequentially; a spec that lands as one atomic diff is delegated whole to one
