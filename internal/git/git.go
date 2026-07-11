@@ -99,20 +99,68 @@ type LandedStateFact struct {
 	UniqueBranches  int
 }
 
+// Worktree is one registered checkout reported by git. Worktrees is the sole
+// parser for worktree-list porcelain so every consumer agrees on path framing,
+// branch identity, detached state, and locks.
+type Worktree struct {
+	Path     string
+	Branch   string
+	Detached bool
+	Locked   bool
+}
+
+// Worktrees returns every registered checkout using NUL-framed porcelain. The
+// framing is required because a valid worktree path may contain a newline.
+func Worktrees(root string) ([]Worktree, error) {
+	raw, err := Raw("-C", root, "worktree", "list", "--porcelain", "-z")
+	if err != nil {
+		return nil, err
+	}
+	var worktrees []Worktree
+	var current *Worktree
+	for field := range bytes.SplitSeq(raw, []byte{0}) {
+		if len(field) == 0 {
+			current = nil
+			continue
+		}
+		line := string(field)
+		switch {
+		case strings.HasPrefix(line, "worktree "):
+			worktrees = append(worktrees, Worktree{Path: strings.TrimPrefix(line, "worktree ")})
+			current = &worktrees[len(worktrees)-1]
+		case current != nil && strings.HasPrefix(line, "branch refs/heads/"):
+			current.Branch = strings.TrimPrefix(line, "branch refs/heads/")
+		case current != nil && line == "detached":
+			current.Detached = true
+		case current != nil && (line == "locked" || strings.HasPrefix(line, "locked ")):
+			current.Locked = true
+		}
+	}
+	return worktrees, nil
+}
+
+// LocalBranches is the sole local-head enumeration and parsing owner.
+func LocalBranches(root string) ([]string, error) {
+	out, err := Output("-C", root, "for-each-ref", "--format=%(refname:short)", "refs/heads/")
+	if err != nil {
+		return nil, err
+	}
+	if out == "" {
+		return []string{}, nil
+	}
+	return strings.Split(out, "\n"), nil
+}
+
 func LandedState(root string) (LandedStateFact, error) {
-	worktrees, err := Output("-C", root, "worktree", "list", "--porcelain")
+	worktrees, err := Worktrees(root)
 	if err != nil {
 		return LandedStateFact{}, fmt.Errorf("git worktree list: %w", err)
 	}
 	dirty := map[string]bool{}
-	for _, line := range strings.Split(worktrees, "\n") {
-		if !strings.HasPrefix(line, "worktree ") {
-			continue
-		}
-		path := strings.TrimPrefix(line, "worktree ")
-		raw, err := Raw("-C", path, "status", "--porcelain=v1", "-z", "--no-renames")
+	for _, worktree := range worktrees {
+		raw, err := Raw("-C", worktree.Path, "status", "--porcelain=v1", "-z", "--no-renames")
 		if err != nil {
-			return LandedStateFact{}, fmt.Errorf("git status %s: %w", path, err)
+			return LandedStateFact{}, fmt.Errorf("git status %s: %w", worktree.Path, err)
 		}
 		for _, entry := range ParsePorcelainZ(raw) {
 			dirty[entry.Path] = true
@@ -122,18 +170,21 @@ func LandedState(root string) (LandedStateFact, error) {
 	if !ok {
 		return LandedStateFact{}, fmt.Errorf("git default branch %q does not resolve", DefaultBranch(root))
 	}
-	branchesOut, err := Output("-C", root, "for-each-ref", "--format=%(refname:short)", "refs/heads/")
+	branches, err := LocalBranches(root)
 	if err != nil {
 		return LandedStateFact{}, fmt.Errorf("git local branches: %w", err)
 	}
 	commits := map[string]bool{}
 	unique := map[string]bool{}
-	for _, branch := range strings.Split(branchesOut, "\n") {
-		if branch == "" || branch == def {
-			continue
-		}
-		if landed, _ := LandedInDefault(root, branch, def); !landed {
-			unique[branch] = true
+	for _, branch := range branches {
+		if branch != def {
+			landed, _, err := LandedInDefault(root, branch, def)
+			if err != nil {
+				return LandedStateFact{}, fmt.Errorf("git landedness %s: %w", branch, err)
+			}
+			if !landed {
+				unique[branch] = true
+			}
 		}
 		upstream, err := Output("-C", root, "for-each-ref", "--format=%(upstream:short)", "refs/heads/"+branch)
 		if err != nil {
@@ -216,11 +267,10 @@ func ResolvedDefault(root string) (string, bool) {
 	if OK("-C", root, "rev-parse", "--verify", "--quiet", def+"^{commit}") {
 		return def, true
 	}
-	branches, err := Output("-C", root, "for-each-ref", "--format=%(refname:short)", "refs/heads/")
+	branches, err := LocalBranches(root)
 	if err == nil {
-		fields := strings.Fields(branches)
-		if len(fields) == 1 && OK("-C", root, "rev-parse", "--verify", "--quiet", fields[0]+"^{commit}") {
-			return fields[0], true
+		if len(branches) == 1 && OK("-C", root, "rev-parse", "--verify", "--quiet", branches[0]+"^{commit}") {
+			return branches[0], true
 		}
 	}
 	return def, false
@@ -228,24 +278,30 @@ func ResolvedDefault(root string) (string, bool) {
 
 // LandedInDefault proves a local branch landed by ancestry or patch containment.
 // Merge-only content cannot be proven by git cherry and is deliberately kept.
-func LandedInDefault(root, branch, def string) (landed, byContent bool) {
-	if OK("-C", root, "merge-base", "--is-ancestor", branch, def) {
-		return true, false
+func LandedInDefault(root, branch, def string) (landed, byContent bool, err error) {
+	ancestor := exec.Command("git", "-C", root, "merge-base", "--is-ancestor", branch, def)
+	if err := ancestor.Run(); err == nil {
+		return true, false, nil
+	} else if exit, ok := err.(*exec.ExitError); !ok || exit.ExitCode() != 1 {
+		return false, false, fmt.Errorf("merge-base %s against %s: %w", branch, def, err)
 	}
 	merges, err := Output("-C", root, "rev-list", "--merges", "--max-count=1", def+".."+branch)
-	if err != nil || merges != "" {
-		return false, false
+	if err != nil {
+		return false, false, fmt.Errorf("list merges on %s: %w", branch, err)
+	}
+	if merges != "" {
+		return false, false, nil
 	}
 	out, err := Output("-C", root, "cherry", def, branch)
 	if err != nil {
-		return false, false
+		return false, false, fmt.Errorf("compare patches on %s: %w", branch, err)
 	}
 	for _, line := range strings.Split(out, "\n") {
 		if line != "" && !strings.HasPrefix(line, "-") {
-			return false, false
+			return false, false, nil
 		}
 	}
-	return true, true
+	return true, true, nil
 }
 
 // Output runs `git <args>` and returns stdout with a single trailing newline trimmed;

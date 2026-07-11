@@ -158,9 +158,7 @@ func Upsert(root string, entry Entry) error {
 		if ledger.Entries[i].Key != entry.Key {
 			continue
 		}
-		if entry.CreatedAt.IsZero() {
-			entry.CreatedAt = ledger.Entries[i].CreatedAt
-		}
+		entry.CreatedAt = ledger.Entries[i].CreatedAt
 		if ledger.Entries[i] == entry {
 			return nil
 		}
@@ -304,7 +302,7 @@ func filterLive(root string, entries []Entry) ([]Entry, error) {
 			}
 		}
 		if entry.Branch != "" && defOK {
-			if landed, _ := git.LandedInDefault(root, entry.Branch, def); landed {
+			if landed, _, err := git.LandedInDefault(root, entry.Branch, def); err == nil && landed {
 				continue
 			}
 		}
@@ -320,20 +318,20 @@ func filterLive(root string, entries []Entry) ([]Entry, error) {
 }
 
 func claudeCandidates(root string) (bool, error) {
-	worktrees, err := git.Output("-C", root, "worktree", "list", "--porcelain")
+	worktrees, err := git.Worktrees(root)
 	if err != nil {
 		return false, fmt.Errorf("classify intent worktrees: %w", err)
 	}
-	for _, line := range strings.Split(worktrees, "\n") {
-		if strings.HasPrefix(line, "worktree ") && strings.HasPrefix(filepath.Base(strings.TrimPrefix(line, "worktree ")), "worktree-agent-") {
+	for _, worktree := range worktrees {
+		if strings.HasPrefix(filepath.Base(worktree.Path), "worktree-agent-") {
 			return true, nil
 		}
 	}
-	branches, err := git.Output("-C", root, "for-each-ref", "--format=%(refname:short)", "refs/heads/")
+	branches, err := git.LocalBranches(root)
 	if err != nil {
 		return false, fmt.Errorf("classify intent branches: %w", err)
 	}
-	for _, branch := range strings.Split(branches, "\n") {
+	for _, branch := range branches {
 		if strings.HasPrefix(branch, "worktree-agent-") {
 			return true, nil
 		}

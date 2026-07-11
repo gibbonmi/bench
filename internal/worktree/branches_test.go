@@ -23,7 +23,11 @@ func TestOrphanedDelegateBranches(t *testing.T) {
 	gitRunBranchTest(t, root, "worktree", "add", "-q", "-b", "worktree-agent-active", filepath.Join(root, "..", "active-wt"), "HEAD")
 
 	want := []string{"worktree-agent-orphan"}
-	if got := OrphanedDelegateBranches(root); !reflect.DeepEqual(got, want) {
+	got, err := OrphanedDelegateBranches(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got, want) {
 		t.Errorf("OrphanedDelegateBranches = %#v, want %#v", got, want)
 	}
 }

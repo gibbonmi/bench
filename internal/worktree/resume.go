@@ -44,11 +44,11 @@ func ConservativeCleanup(root string) (ResumeResult, error) {
 			if _, err := os.Stat(wt.Path); os.IsNotExist(err) {
 				continue
 			}
-			status, err := git.Output("-C", wt.Path, "status", "--porcelain")
+			status, err := git.Raw("-C", wt.Path, "status", "--porcelain=v1", "-z", "--no-renames", "--ignored=matching")
 			if err != nil {
 				return ResumeResult{}, fmt.Errorf("classify worktree %s: %w", wt.Path, err)
 			}
-			clean := status == ""
+			clean := len(status) == 0
 			if !clean {
 				result.Dirty++
 			}
@@ -66,14 +66,20 @@ func ConservativeCleanup(root string) (ResumeResult, error) {
 	}
 	_ = exec.Command("git", "-C", root, "worktree", "prune").Run()
 
-	orchards := OrphanedDelegateBranches(root)
+	orchards, err := OrphanedDelegateBranches(root)
+	if err != nil {
+		return result, fmt.Errorf("classify orphan branches: %w", err)
+	}
 	if len(orchards) > 0 {
-		def, ok := ResolvedDefault(root)
+		def, ok := git.ResolvedDefault(root)
 		if !ok {
 			return result, fmt.Errorf("cannot resolve default branch; deleting no unproven branches")
 		}
 		for _, branch := range orchards {
-			landed, _ := LandedInDefault(root, branch, def)
+			landed, _, err := git.LandedInDefault(root, branch, def)
+			if err != nil {
+				return result, fmt.Errorf("classify landed branch %s: %w", branch, err)
+			}
 			if !landed {
 				continue
 			}

@@ -123,6 +123,46 @@ func TestLandedStateAggregatesAndDeduplicates(t *testing.T) {
 	}
 }
 
+func TestLandedStateCountsDefaultBranchUpstreamAhead(t *testing.T) {
+	root := newRepo(t)
+	runGit(t, root, "branch", "-M", "main")
+	runGit(t, root, "remote", "add", "origin", root)
+	runGit(t, root, "update-ref", "refs/remotes/origin/main", "HEAD")
+	runGit(t, root, "config", "branch.main.remote", "origin")
+	runGit(t, root, "config", "branch.main.merge", "refs/heads/main")
+	if err := os.WriteFile(filepath.Join(root, "ahead.txt"), []byte("ahead\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, root, "add", "ahead.txt")
+	runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "ahead")
+
+	state, err := LandedState(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if state.UnpushedCommits != 1 {
+		t.Fatalf("default branch ahead count = %d, want 1", state.UnpushedCommits)
+	}
+}
+
+func TestLandedStatePreservesNewlineWorktreePath(t *testing.T) {
+	root := newRepo(t)
+	runGit(t, root, "branch", "-M", "main")
+	linked := filepath.Join(t.TempDir(), "linked\nworktree")
+	runGit(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
+	if err := os.WriteFile(filepath.Join(linked, "a.txt"), []byte("dirty\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	state, err := LandedState(root)
+	if err != nil {
+		t.Fatalf("LandedState with newline path: %v", err)
+	}
+	if state.DirtyPaths != 1 {
+		t.Fatalf("newline worktree dirty count = %d, want 1", state.DirtyPaths)
+	}
+}
+
 func TestLandedStateGitFailureIsUnknown(t *testing.T) {
 	root := newRepo(t)
 	t.Setenv("PATH", "")

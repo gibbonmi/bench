@@ -31,12 +31,12 @@ type Registered struct {
 // "the classify query itself failed" so a git failure can never read as a silent
 // all-clear.
 func ClassifyRegisteredWorktrees(root string) ([]Registered, error) {
-	out, err := git.Output("-C", root, "worktree", "list", "--porcelain")
+	facts, err := git.Worktrees(root)
 	if err != nil {
 		return nil, err
 	}
 	mainRoot := canonicalRoot(root)
-	return classifyRegistered(mainRoot, out), nil
+	return classifyRegistered(mainRoot, facts), nil
 }
 
 func canonicalRoot(root string) string {
@@ -47,21 +47,10 @@ func canonicalRoot(root string) string {
 	return filepath.Dir(common)
 }
 
-func classifyRegistered(mainRoot, porcelain string) []Registered {
-	var out []Registered
-	var current *Registered
-	for _, line := range strings.Split(porcelain, "\n") {
-		switch {
-		case strings.HasPrefix(line, "worktree "):
-			out = append(out, Registered{Path: strings.TrimPrefix(line, "worktree ")})
-			current = &out[len(out)-1]
-		case current != nil && strings.HasPrefix(line, "branch refs/heads/"):
-			current.Branch = strings.TrimPrefix(line, "branch refs/heads/")
-		case current != nil && line == "detached":
-			current.Detached = true
-		case current != nil && (line == "locked" || strings.HasPrefix(line, "locked ")):
-			current.Locked = true
-		}
+func classifyRegistered(mainRoot string, facts []git.Worktree) []Registered {
+	out := make([]Registered, 0, len(facts))
+	for _, fact := range facts {
+		out = append(out, Registered{Path: fact.Path, Branch: fact.Branch, Detached: fact.Detached, Locked: fact.Locked})
 	}
 	pool := Pool(mainRoot)
 	for i := range out {

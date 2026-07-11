@@ -276,6 +276,84 @@ func TestResumeCleanRemovesOnlyCleanUnlockedOutOfPool(t *testing.T) {
 	}
 }
 
+func TestResumeCleanKeepsIgnoredOnlyOutOfPoolWorktree(t *testing.T) {
+	t.Setenv("BENCH_HOME", t.TempDir())
+	root := newWorktreeRepo(t)
+	gitRun(t, root, "branch", "-M", "main")
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, root, "add", ".gitignore")
+	gitRun(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "ignore")
+	candidate := filepath.Join(filepath.Dir(root), "ignored-only")
+	gitRun(t, root, "worktree", "add", "-q", "--detach", candidate, "HEAD")
+	ignored := filepath.Join(candidate, "ignored.txt")
+	if err := os.WriteFile(ignored, []byte("retain me\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	chdir(t, root)
+
+	var stdout, stderr bytes.Buffer
+	if code := ResumeCleanCommand(nil, &stdout, &stderr); code != 0 {
+		t.Fatalf("ResumeCleanCommand exit=%d stdout=%s stderr=%s", code, stdout.String(), stderr.String())
+	}
+	if _, err := os.Stat(ignored); err != nil {
+		t.Fatalf("ignored-only WIP was not retained: %v", err)
+	}
+	if !strings.Contains(stdout.String(), "kept 1 dirty") {
+		t.Fatalf("ignored-only WIP not classified as retained dirty state: %q", stdout.String())
+	}
+}
+
+func TestResumeCleanRemovesNewlinePathWorktree(t *testing.T) {
+	t.Setenv("BENCH_HOME", t.TempDir())
+	root := newWorktreeRepo(t)
+	gitRun(t, root, "branch", "-M", "main")
+	candidate := filepath.Join(filepath.Dir(root), "newline\nworktree")
+	gitRun(t, root, "worktree", "add", "-q", "--detach", candidate, "HEAD")
+	chdir(t, root)
+
+	var stdout, stderr bytes.Buffer
+	if code := ResumeCleanCommand(nil, &stdout, &stderr); code != 0 {
+		t.Fatalf("ResumeCleanCommand exit=%d stdout=%s stderr=%s", code, stdout.String(), stderr.String())
+	}
+	if _, err := os.Stat(candidate); !os.IsNotExist(err) {
+		t.Fatalf("newline-bearing clean worktree remains: %v", err)
+	}
+	if !strings.Contains(stdout.String(), "cleaned 1 worktree") {
+		t.Fatalf("newline-bearing cleanup report = %q", stdout.String())
+	}
+}
+
+func TestResumeCleanFailsWhenLandednessQueryFails(t *testing.T) {
+	t.Setenv("BENCH_HOME", t.TempDir())
+	root := newWorktreeRepo(t)
+	gitRun(t, root, "branch", "-M", "main")
+	gitRun(t, root, "checkout", "-q", "-b", "worktree-agent-query-failure")
+	gitRun(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "--allow-empty", "-qm", "unique")
+	gitRun(t, root, "checkout", "-q", "main")
+	realGit, err := exec.LookPath("git")
+	if err != nil {
+		t.Fatal(err)
+	}
+	bin := t.TempDir()
+	wrapper := filepath.Join(bin, "git")
+	script := "#!/bin/sh\nfor arg in \"$@\"; do\n  [ \"$arg\" = rev-list ] && exit 17\ndone\nexec \"" + realGit + "\" \"$@\"\n"
+	if err := os.WriteFile(wrapper, []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	chdir(t, root)
+
+	var stdout, stderr bytes.Buffer
+	if code := ResumeCleanCommand(nil, &stdout, &stderr); code != 1 {
+		t.Fatalf("ResumeCleanCommand exit=%d, want 1\nstdout=%s\nstderr=%s", code, stdout.String(), stderr.String())
+	}
+	if !git.OK("-C", root, "show-ref", "--verify", "--quiet", "refs/heads/worktree-agent-query-failure") {
+		t.Fatal("resume cleanup deleted branch after landedness query failure")
+	}
+}
+
 func TestSubshellPersistsAndEnrichesMultiwordIntent(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("BENCH_HOME", home)

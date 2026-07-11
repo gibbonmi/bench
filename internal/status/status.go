@@ -340,7 +340,10 @@ func appendWorktree(rows []row, root string) []row {
 	if leased > 0 {
 		rows = append(rows, row{2, "worktree", plural(leased, "leased pool worktree", "leased pool worktrees"), "resume leased worktree"})
 	}
-	orphans := worktree.OrphanedDelegateBranches(root)
+	orphans, err := worktree.OrphanedDelegateBranches(root)
+	if err != nil {
+		return append(rows, row{2, "worktree", fmt.Sprintf("git branch state unavailable: %v", err), "investigate the git failure, then re-run bench status"})
+	}
 	if len(orphans) == 0 {
 		return rows
 	}
@@ -349,13 +352,18 @@ func appendWorktree(rows []row, root string) []row {
 	// branch would survive it — the honest action there is a hand inspection. With an
 	// unresolvable default no orphan is classifiable; the combined row stands and the
 	// recommended sweep refuses loudly with the reason.
-	def, ok := worktree.ResolvedDefault(root)
+	def, ok := git.ResolvedDefault(root)
 	if !ok {
 		return append(rows, row{2, "worktree", plural(len(orphans), "orphaned worktree branch", "orphaned worktree branches"), "bench worktree clean"})
 	}
 	landed, kept := 0, 0
 	for _, branch := range orphans {
-		if isLanded, _ := worktree.LandedInDefault(root, branch, def); isLanded {
+		isLanded, _, err := git.LandedInDefault(root, branch, def)
+		if err != nil {
+			kept++
+			continue
+		}
+		if isLanded {
 			landed++
 		} else {
 			kept++

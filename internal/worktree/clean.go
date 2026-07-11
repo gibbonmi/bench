@@ -60,17 +60,25 @@ func cleanCommand(args []string, stdout, stderr io.Writer) int {
 // whose default branch happens not to resolve. Returns 0 otherwise, whether it deleted, kept, or
 // found no orphans.
 func sweepDelegateBranches(root string, stdout, stderr io.Writer) int {
-	orphans := OrphanedDelegateBranches(root)
+	orphans, err := OrphanedDelegateBranches(root)
+	if err != nil {
+		fmt.Fprintf(stderr, "error: bench worktree clean cannot classify orphan branches: %v\n", err)
+		return 1
+	}
 	if len(orphans) == 0 {
 		return 0
 	}
-	def, ok := ResolvedDefault(root)
+	def, ok := git.ResolvedDefault(root)
 	if !ok {
 		fmt.Fprintf(stderr, "error: bench worktree clean cannot resolve the default branch (%s) to a commit; deleting no branches\n", def)
 		return 1
 	}
 	for _, branch := range orphans {
-		landed, byContent := LandedInDefault(root, branch, def)
+		landed, byContent, err := git.LandedInDefault(root, branch, def)
+		if err != nil {
+			fmt.Fprintf(stderr, "error: could not classify branch %s: %v\n", branch, err)
+			continue
+		}
 		if !landed {
 			fmt.Fprintf(stdout, "kept branch %s (unique commits — inspect or delete by hand)\n", branch)
 			continue

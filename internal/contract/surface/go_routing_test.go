@@ -123,6 +123,9 @@ func testGoRoutingHelpVariantsStayOnStdoutExit0(t *testing.T) {
 		out := f.Bench(args...)
 		out.RequireExit(0)
 		out.RequireContains(out.Stdout, "bench link")
+		if strings.Contains(out.Stdout, "bench resume-clean") {
+			t.Fatalf("bench %v advertised session plumbing in general help:\n%s", args, out.Stdout)
+		}
 		if strings.TrimSpace(out.Stderr) != "" {
 			t.Fatalf("bench %v wrote to stderr, want help silent there:\nstderr:\n%s", args, out.Stderr)
 		}

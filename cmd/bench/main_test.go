@@ -149,6 +149,30 @@ func TestGuardGitBlockAllow(t *testing.T) {
 	}
 }
 
+func TestCaptureClaudeAgentIntentReplayIsByteIdempotent(t *testing.T) {
+	root := t.TempDir()
+	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v: %s", err, out)
+	}
+	oldWD, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(oldWD) })
+	envelope := []byte(`{"tool_name":"Agent","tool_use_id":"same-id","tool_input":{"description":"same objective"}}`)
+	captureClaudeAgentIntent(envelope, io.Discard)
+	path := filepath.Join(root, ".git", "bench-intent.json")
+	before := readPath(t, path)
+	captureClaudeAgentIntent(envelope, io.Discard)
+	after := readPath(t, path)
+	if after != before {
+		t.Fatalf("replayed Claude capture changed ledger bytes:\nbefore=%s\nafter=%s", before, after)
+	}
+}
+
 // panicReader forces guardGit's stdin read to panic, exercising the recover→exit-3
 // rim so a crash can never masquerade as an exit-2 block.
 type panicReader struct{}

@@ -1,6 +1,7 @@
 package conformance
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -56,6 +57,11 @@ func checkAgentHookBehavior(root string) []string {
 	ledger, err := os.ReadFile(ledgerPath)
 	if err != nil || !strings.Contains(string(ledger), `"key":"allowed-1"`) || !strings.Contains(string(ledger), `"objective":"ship safely"`) {
 		diags = append(diags, fmt.Sprintf("check-agent-line intent capture contract failed: allowed ledger=%q err=%v", ledger, err))
+	}
+	hookCase("replays allowed intent idempotently", routed, `{"tool_name":"Agent","tool_use_id":"allowed-1","tool_input":{"description":"ship safely","prompt":"fallback","resolvedModel":"gpt-5.3-codex-spark"}}`, "", 0)
+	replayed, replayErr := os.ReadFile(ledgerPath)
+	if replayErr != nil || !bytes.Equal(ledger, replayed) {
+		diags = append(diags, fmt.Sprintf("check-agent-line intent capture contract failed: replay changed ledger bytes: before=%q after=%q err=%v", ledger, replayed, replayErr))
 	}
 	hookCase("allows a declared alias", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"opus"}}`, "", 0)
 	hookCase("denies an undeclared alias", routed, `{"tool_name":"Agent","tool_input":{"prompt":"x","model":"sonnet"}}`, "", 2)
