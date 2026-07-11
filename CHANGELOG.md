@@ -8,6 +8,14 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-10, scope: immediate no-op reconcile).** Verified all
+  nine roadmap rows against the unchanged post-reconcile tree; none shipped or
+  needed rewording, and the FT62/FT64 structure debt still reproduces exactly.
+  IDEAS.md was already empty, so zero ideas drained; the learnings journal had
+  zero open entries. The recommended sequence remains FT65, FT66, then FT62.
+  Previous run's promotion builds checked: FT65 and FT66 remain unbuilt, so no
+  build entry is due; the preceding XS promotion build entry is present.
+
 - **Learnings run (2026-07-10, scope: post-XS-promotion reconcile).** Reworded
   FT62 after the tree grew from one to two structure issues and added FT64 for
   `internal/canary/canary_test.go`; FT62 remains open. IDEAS.md was already
