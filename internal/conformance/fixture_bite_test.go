@@ -75,6 +75,7 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 		"dogfood-referent-shipped",
 		"readme-command-first",
 		"signal-vocabulary-drift",
+		"structured-phase-progress-anchor",
 		"acceptance-coverage-anchor",
 		"coverage-axis-anchor",
 		"command-handoff-anchor",
@@ -260,30 +261,6 @@ func TestRunConformanceChecksExecutableGitMode(t *testing.T) {
 
 	if !containsDiagnostic(diags, "bin/bench.sh is not executable in git") {
 		t.Fatalf("non-executable tracked command path was not diagnosed:\n%s", strings.Join(diags, "\n"))
-	}
-}
-
-func TestRunConformanceDistinguishesAbsentAndEmptyInputs(t *testing.T) {
-	root := t.TempDir()
-	runGit(t, root, "init")
-
-	absent := RunConformance(root, NewHarness(t).KitRoot)
-	if !containsDiagnostic(absent, "JSON file missing: package.json") {
-		t.Fatalf("absent package.json diagnostic missing:\n%s", strings.Join(absent, "\n"))
-	}
-	if !containsDiagnostic(absent, "lines.env missing: .bench/lines.env") {
-		t.Fatalf("absent lines.env diagnostic missing:\n%s", strings.Join(absent, "\n"))
-	}
-
-	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(root, ".bench", "lines.env"), nil, 0o644); err != nil {
-		t.Fatal(err)
-	}
-	empty := RunConformance(root, NewHarness(t).KitRoot)
-	if !containsDiagnostic(empty, "lines.env tier unset: BENCH_TIER_TOP has no value") {
-		t.Fatalf("empty lines.env diagnostic missing:\n%s", strings.Join(empty, "\n"))
 	}
 }
 

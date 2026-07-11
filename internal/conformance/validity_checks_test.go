@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"testing"
 )
 
 func checkLoadValidityMetadata(root string) []string {
@@ -308,4 +309,44 @@ func checkSharedRuleSingleSource(root string) []string {
 		}
 	}
 	return diags
+}
+
+func TestRunConformanceDistinguishesAbsentAndEmptyInputs(t *testing.T) {
+	root := t.TempDir()
+	runGit(t, root, "init")
+	if got := len(structuredPhaseRuleChecks); got != 4 {
+		t.Fatalf("structured phase rule checks = %d, want four attributable clause classes", got)
+	}
+	assertStructuredPhaseDiags := func(label string, diags []string) {
+		t.Helper()
+		for _, check := range structuredPhaseRuleChecks {
+			if !containsDiagnostic(diags, check.unavailableDiagnostic) {
+				t.Errorf("%s shared rules did not fail closed with %q:\n%s", label, check.unavailableDiagnostic, strings.Join(diags, "\n"))
+			}
+		}
+	}
+
+	absent := RunConformance(root, NewHarness(t).KitRoot)
+	assertStructuredPhaseDiags("absent", absent)
+	if !containsDiagnostic(absent, "JSON file missing: package.json") {
+		t.Fatalf("absent package.json diagnostic missing:\n%s", strings.Join(absent, "\n"))
+	}
+	if !containsDiagnostic(absent, "lines.env missing: .bench/lines.env") {
+		t.Fatalf("absent lines.env diagnostic missing:\n%s", strings.Join(absent, "\n"))
+	}
+
+	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".bench", "lines.env"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".bench", "BENCH.md"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	empty := RunConformance(root, NewHarness(t).KitRoot)
+	assertStructuredPhaseDiags("empty", empty)
+	if !containsDiagnostic(empty, "lines.env tier unset: BENCH_TIER_TOP has no value") {
+		t.Fatalf("empty lines.env diagnostic missing:\n%s", strings.Join(empty, "\n"))
+	}
 }

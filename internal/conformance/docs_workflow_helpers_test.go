@@ -10,6 +10,33 @@ import (
 	"github.com/gibbonmi/bench/internal/coverage"
 )
 
+var structuredPhaseRuleChecks = []struct {
+	needle                string
+	droppedDiagnostic     string
+	unavailableDiagnostic string
+}{
+	{
+		"A substantial in-progress Bench phase update uses compact bold **Status:** and **Next:** labels for meaningful intermediate state and continued work.",
+		".bench/BENCH.md dropped the structured Bench phase progress labels (**Status:** and **Next:**)",
+		".bench/BENCH.md cannot verify structured Bench phase progress labels because shared rules are missing or empty",
+	},
+	{
+		"A phase exit leads with `## Result`, uses `## Details` only when material support helps, and uses `## Next` for the exact remaining harness-native action.",
+		".bench/BENCH.md dropped the structured Bench phase exit pattern (`## Result`, optional `## Details`, and `## Next`)",
+		".bench/BENCH.md cannot verify structured Bench phase exit pattern because shared rules are missing or empty",
+	},
+	{
+		"Omit empty progress groups and exit sections instead of printing placeholders.",
+		".bench/BENCH.md dropped the structured Bench phase empty-section omission rule",
+		".bench/BENCH.md cannot verify structured Bench phase empty-section omission rule because shared rules are missing or empty",
+	},
+	{
+		"Keep related sentences together; use bullets or tables only for genuinely parallel facts.",
+		".bench/BENCH.md dropped the structured Bench phase cohesion and list-restraint rule",
+		".bench/BENCH.md cannot verify structured Bench phase cohesion and list-restraint rule because shared rules are missing or empty",
+	},
+}
+
 func checkWorkflowAnchors(root string) []string {
 	var diags []string
 	require := func(rel, needle string) {
@@ -115,6 +142,17 @@ func checkWorkflowAnchors(root string) []string {
 			diags = append(diags, diag)
 		}
 	}
+	sharedRules := collapseSpace(readIfExists(filepath.Join(root, ".bench", "BENCH.md")))
+	for _, check := range structuredPhaseRuleChecks {
+		if sharedRules == "" {
+			diags = append(diags, check.unavailableDiagnostic)
+			continue
+		}
+		if !strings.Contains(sharedRules, check.needle) {
+			diags = append(diags, check.droppedDiagnostic)
+		}
+	}
+
 	requireCollapsed(".agents/commands/bench-implement-spec.md", "apply `craft-seams`' split-or-grant rule",
 		".agents/commands/bench-implement-spec.md dropped the craft-seams split-or-grant pointer")
 	requireCollapsed(".agents/commands/bench-implement-spec.md",

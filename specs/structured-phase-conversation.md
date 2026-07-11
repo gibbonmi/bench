@@ -1,6 +1,6 @@
 # Structured Bench phase conversation
 
-Status: staged
+Status: implemented
 
 ## Problem
 

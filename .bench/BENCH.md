@@ -135,6 +135,15 @@ code, the journal — those stay as full as their templates need).
 - Format for scan: tables and lists make things easy to parse — use them. Short
   lines, bold sparingly. Routine declarations (the line, the seams, a deferred cut)
   are one line each.
+- Structure conversational output from explicit Bench phases proportionally. A
+  substantial in-progress Bench phase update uses compact bold **Status:** and
+  **Next:** labels for meaningful intermediate state and continued work. A phase
+  exit leads with `## Result`, uses `## Details` only when material support helps,
+  and uses `## Next` for the exact remaining harness-native action. Omit empty
+  progress groups and exit sections instead of printing placeholders. Keep related
+  sentences together; use bullets or tables only for genuinely parallel facts.
+  Routine one-sentence acknowledgements need no template. These patterns do not
+  govern CLI or TOON output, repository artifacts, or ordinary conversation.
 - Clear beats dense. Terse but packed is still hard to read. One main point per
   message; plain sentences first. Don't cram — a short follow-up beats one wall; go
   easy on stacked clauses and em-dash/parenthetical pile-ups. Slow down to speed up:
