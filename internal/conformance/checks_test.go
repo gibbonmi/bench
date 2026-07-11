@@ -21,11 +21,16 @@ var conformanceFamilies = []string{
 	"coverage-map-validation",
 	"line-routing",
 	"package-core-guard",
+	"compliance-hardening",
 }
 
 func RunConformance(root, kitRoot string) []string {
 	var diags []string
 	diags = append(diags, checkConformanceCanaryFamilies(kitRoot)...)
+	diags = append(diags, checkKitCompliance(kitRoot)...)
+	if os.Getenv("BENCH_CANARY_INNER") == "1" && exists(filepath.Join(root, ".bench-compliance-canary")) {
+		diags = append(diags, checkKitCompliance(root)...)
+	}
 	diags = append(diags, checkLoadValidityMetadata(root)...)
 	diags = append(diags, checkSkillsIndexAndCommandAdapters(root)...)
 	diags = append(diags, checkDocsCurrencyAndWorkflow(root, kitRoot)...)

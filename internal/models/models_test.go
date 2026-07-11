@@ -4,9 +4,30 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
+
+func TestAPIInventoryTimesOutAsUnavailable(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+	}))
+	t.Cleanup(server.Close)
+
+	started := time.Now()
+	row, models := apiInventory("openai", server.URL, "key", openAIHeaders, "set key")
+	if elapsed := time.Since(started); elapsed > 12*time.Second {
+		t.Fatalf("hung provider returned after %s, want at most 12s", elapsed)
+	}
+	if row.status != "unavailable" || row.hint != "query failed" {
+		t.Fatalf("timeout row = %+v, want unavailable query failed", row)
+	}
+	if len(models) != 0 {
+		t.Fatalf("timeout models = %+v, want none", models)
+	}
+}
 
 func TestCommandEmitsCodexOpenAIAndAnthropicRows(t *testing.T) {
 	t.Setenv("OPENAI_API_KEY", "openai-key")

@@ -31,6 +31,7 @@ func TestBinaryRepairContracts(t *testing.T) {
 	contract.RunParallel(t, "binary repair idempotency contract failed", testRepairIdempotent)
 	contract.RunParallel(t, "binary repair version-keyed cache contract failed", testRepairVersionKeyed)
 	contract.RunParallel(t, "binary repair no-node contract failed", testRepairNoNode)
+	contract.RunParallel(t, "binary repair disabled contract failed", testRepairDisabled)
 	contract.RunParallel(t, "binary repair torn-cache contract failed", testRepairReplacesTornCache)
 }
 
@@ -127,6 +128,11 @@ func testRepairAnnounces(t *testing.T) {
 
 	out.RequireExit(0)
 	cachePath := binaryRepairCachePath(t, f, version)
+	announcement := "bench: installing @redbench/" + binaryRepairPlatformSuffix(t) + "@" + version + " sha512:"
+	out.RequireContains(out.Stderr, announcement)
+	if strings.Index(out.Stderr, announcement) > strings.Index(out.Stderr, "bench: created ") {
+		t.Fatalf("repair announcement came after installation began\nstderr:\n%s", out.Stderr)
+	}
 	out.RequireContains(out.Stderr, "bench: created "+filepath.Dir(cachePath))
 	out.RequireContains(out.Stderr, "bench: wrote "+filepath.Dir(cachePath)+string(os.PathSeparator)+".bench-")
 	out.RequireContains(out.Stderr, "bench: wrote "+cachePath)
@@ -198,6 +204,25 @@ func testRepairNoNode(t *testing.T) {
 	out.RequireExit(127)
 	out.RequireContains(out.Stderr, "repair skipped because node is not on PATH")
 	requireInterim127Remedy(t, out.Stderr)
+}
+
+func testRepairDisabled(t *testing.T) {
+	f, kit := binaryRepairFixtureKit(t)
+	registry := newBinaryRepairRegistry(t, "9.8.7", "#!/bin/sh\necho should-not-run\n")
+	env := map[string]string{
+		"BENCH_KIT":          kit,
+		"BENCH_NPM_REGISTRY": registry.URL,
+		"BENCH_NO_REPAIR":    "1",
+	}
+
+	out := f.BenchEnv(env, "version")
+
+	out.RequireExit(127)
+	out.RequireContains(out.Stderr, "bench: repair disabled by BENCH_NO_REPAIR")
+	requireInterim127Remedy(t, out.Stderr)
+	if got := registry.Hits(); got != 0 {
+		t.Fatalf("disabled repair hit registry %d time(s), want 0", got)
+	}
 }
 
 func testRepairReplacesTornCache(t *testing.T) {

@@ -1,6 +1,6 @@
 # Compliance hardening
 
-Status: staged
+Status: implemented
 
 ## Problem
 

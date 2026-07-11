@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/modelid"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -17,13 +18,17 @@ import (
 const (
 	openAIModelsURL    = "https://api.openai.com/v1/models"
 	anthropicModelsURL = "https://api.anthropic.com/v1/models"
+	// modelsQueryTimeout bounds provider discovery without treating ordinarily slow
+	// model-list responses as unavailable.
+	modelsQueryTimeout = 10 * time.Second
 )
 
 var (
 	runCommand = func(name string, args ...string) ([]byte, error) {
 		return exec.Command(name, args...).Output()
 	}
-	doHTTP = http.DefaultClient.Do
+	modelsHTTPClient = &http.Client{Timeout: modelsQueryTimeout}
+	doHTTP           = modelsHTTPClient.Do
 )
 
 type sourceRow struct {

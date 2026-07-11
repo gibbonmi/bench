@@ -91,6 +91,8 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"go-test-failing":                 conformanceFixture(".bench/gate-go-contracts.sh"),
 	"guard-describe-boundary-dropped": conformanceFixture(".bench/gate-axi-contracts.sh"),
 	"guard-resolver-order-drift":      conformanceFixture(".bench/gate.sh"),
+	"missing-license":                 conformanceFixture(".bench/gate.sh"),
+	"mutable-workflow-action":         conformanceFixture(".bench/gate.sh"),
 
 	"doctor-foreign-clobbered":      behaviorFixture(),
 	"doctor-manager-dir-chosen":     behaviorFixture(),

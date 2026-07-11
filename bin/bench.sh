@@ -149,6 +149,10 @@ bench_binary_path() {
 
 repair_binary() {
   local kit="$1" wrapper="$2" script version suffix
+  if [[ -n "${BENCH_NO_REPAIR:-}" ]]; then
+    echo "bench: repair disabled by BENCH_NO_REPAIR" >&2
+    return 1
+  fi
   script="$(dirname "$wrapper")/bench-repair-binary.mjs"
   if ! command -v node >/dev/null 2>&1; then
     echo "bench: repair skipped because node is not on PATH" >&2

@@ -37,6 +37,10 @@ try {
   if (!dist?.tarball || !dist?.integrity) {
     throw new Error(`registry metadata did not include ${pkgName}@${version}`);
   }
+  const digest = dist.integrity.startsWith("sha512-")
+    ? dist.integrity.slice("sha512-".length, "sha512-".length + 12)
+    : dist.integrity.slice(0, 12);
+  console.error(`bench: installing ${pkgName}@${version} sha512:${digest}`);
   const tgz = await fetchBytes(dist.tarball);
   verifyIntegrity(tgz, dist.integrity);
   const binary = await extractBenchBinary(tgz);

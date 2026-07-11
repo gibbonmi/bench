@@ -29,6 +29,8 @@ import (
 // lease, so it is a named constant with one source. Mirrors the shell `find -mmin +1`.
 const staleAfter = time.Minute
 
+var chmodPool = os.Chmod
+
 // pidAlive reports whether a process with the given pid exists, matching `kill -0`:
 // signal 0 succeeds (nil) for a live process the caller may signal, and returns EPERM
 // for a live process owned by another user — both mean alive. Only ESRCH (no such
@@ -71,7 +73,7 @@ func leaseLine() []byte {
 // returns true only when this process created the file; an existing lease (another
 // claimant) fails without clobbering it.
 func tryCreate(leasePath string) bool {
-	f, err := os.OpenFile(leasePath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
+	f, err := os.OpenFile(leasePath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 	if err != nil {
 		return false
 	}
@@ -153,9 +155,10 @@ func isClean(dir string) bool {
 // resetRef that no longer resolves.
 func Acquire(root, resetRef, resetMode string) (string, error) {
 	pool := Pool(root)
-	if err := os.MkdirAll(pool, 0o777); err != nil {
+	if err := os.MkdirAll(pool, 0o700); err != nil {
 		return "", err
 	}
+	_ = chmodPool(pool, 0o700)
 	// Best-effort refresh so a freshly-minted worktree can detach onto origin/<branch>;
 	// a repo with no origin (the contract fixtures) just skips it.
 	_ = exec.Command("git", "-C", root, "fetch", "-q", "origin").Run()
