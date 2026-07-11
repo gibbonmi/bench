@@ -17,3 +17,8 @@ Format per entry:
 - **What happened:** …
 - **Right behavior:** …
 - **Proposed rule change:** … (or "none")
+
+## 2026-07-10 — Reviewer-pre-authorized grill answers  [open]
+- **What happened:** /bench-shape-idea for COMPLIACE_ASSESSMENT.md ran with the reviewer's explicit instruction to adopt all my grill recommendations and write the map as if the full grill had run; grill tickets were self-answered, breaking the live-exchange contract by direction.
+- **Right behavior:** Honor the instruction, mark provenance in the map header so it reads as pre-authorized recommendations (veto surface), and flag the most contestable answers at close.
+- **Proposed rule change:** none — reviewer instruction governs; consider codifying "pre-authorized grill" as a named mode if it recurs.

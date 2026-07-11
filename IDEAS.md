@@ -1,0 +1,1 @@
+- 2026-07-10  kit-sized shift-session log (agent identity, gate verdicts, commits) as durable local evidence — cousin of COMPLIACE_ASSESSMENT H-03 audit-trail finding, which stays out of kit scope
