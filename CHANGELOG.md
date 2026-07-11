@@ -8,6 +8,24 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-11, scope: staged-spec + structure reconcile).**
+  Reconcile found three staged specs with no roadmap rows: roadmap-context
+  shipped in the big CLI update without a `--spec` mark, so this pass retires
+  it as the backstop; the two unbuilt specs became FT67 (mandatory
+  implementation delegation) and FT68 (structured phase conversation), ranked
+  above structure debt because FT67 changes how every later build runs. Two
+  new structure violations became FT69 (`binary_repair_test.go` 416/400) and
+  FT70 (`lifecycle_test.go` 405/400); FT62's "one of two issues" wording was
+  corrected. Drained one idea to FT71, parked pending evidence: kit-sized
+  shift-session log, graduating on an observed need for durable run evidence.
+  Dismissed the pre-authorized-grill learning — reviewer instruction governs
+  and the entry proposes no rule change; codify a named mode only if it
+  recurs. The learnings malformed-source flag in `bench roadmap --context` is
+  designed behavior (the template placeholder is preserved as evidence), not a
+  defect. Previous run's promotion builds checked: FT65 and FT66 build entries
+  are present, so none is missing. The recommended sequence is now FT67, FT68,
+  then the four structure rows.
+
 - **Learnings run (2026-07-10, scope: post-FT66 reconcile).** Verified all seven
   remaining roadmap rows against the tree; none shipped or needed rewording, and
   FT62/FT64 still reproduce exactly at 441/400 and 407/400. The parked and

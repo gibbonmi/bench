@@ -10,18 +10,46 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
+**FT67 — mandatory implementation delegation.** Build the staged spec
+`specs/mandatory-implementation-delegation.md`: meaningful write delegation
+becomes mandatory for every spec-backed build, with an honest stop-and-hand-off
+posture on harnesses that cannot spawn write subagents. Ranked first because it
+changes how every subsequent `/bench-implement-spec` session runs. Next:
+`/bench-implement-spec`.
+
+**FT68 — structured Bench phase conversation.** Build the staged spec
+`specs/structured-phase-conversation.md`: the two proportional conversation
+patterns (**Status:**/**Next:** for in-progress, `## Result`/`## Details`/`##
+Next` for completed phases) land once in the shared communication rules, with
+conformance and canary coverage. Next: `/bench-implement-spec`.
+
 **FT62 — structure debt: `internal/contract/helper.go` at 441/400.** Grown by
-FT53's RunAtWithTimeout helper; one of two open `bench structure` issues. Split
-along responsibility or propose a reviewer grant — check the dir's file-count
-headroom before choosing (`internal/contract/runtime/` already holds a dir
-grant, so a split into that dir deepens dir debt). Next:
-`/bench-implement-spec` (lighter path).
+FT53's RunAtWithTimeout helper. Split along responsibility or propose a
+reviewer grant — check the dir's file-count headroom before choosing
+(`internal/contract/runtime/` already holds a dir grant, so a split into that
+dir deepens dir debt). Next: `/bench-implement-spec` (lighter path).
 
 **FT64 — structure debt: `internal/canary/canary_test.go` at 407/400.** The
 targeted canary-phase work grew this past the file budget after FT62 was
 recorded. Split along responsibility or propose a reviewer grant, checking
 both file and directory budgets before choosing. Next: `/bench-implement-spec`
 (lighter path).
+
+**FT69 — structure debt: `internal/contract/surface/binary_repair_test.go` at
+416/400.** Split along responsibility or propose a reviewer grant, checking
+both file and directory budgets before choosing. Next: `/bench-implement-spec`
+(lighter path).
+
+**FT70 — structure debt: `internal/worktree/lifecycle_test.go` at 405/400.**
+Split along responsibility or propose a reviewer grant, checking both file and
+directory budgets before choosing. Next: `/bench-implement-spec` (lighter
+path).
+
+**FT71 (parked pending evidence) — kit-sized shift-session log.** Durable
+local evidence per shift run: agent identity, gate verdicts, commits. Cousin
+of the compliance-assessment H-03 audit-trail finding, which stays out of kit
+scope. Graduate on an observed need for durable run evidence — a disputed gate
+verdict or an audit ask against a real shift.
 
 **FT6 (LOW, parked pending evidence — leave parked):** `bench refs`, `bench
 detect`, `bench doc`, `bench specs --retired`, doctor binary-presence row,
@@ -57,7 +85,9 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT62 helper.go split-or-grant, checking both
-   structure budgets before choosing.
-2. `/bench-implement-spec` — FT64 canary_test.go split-or-grant, checking both
-   structure budgets before choosing.
+1. `/bench-implement-spec` — FT67 mandatory implementation delegation
+   (`specs/mandatory-implementation-delegation.md`).
+2. `/bench-implement-spec` — FT68 structured phase conversation
+   (`specs/structured-phase-conversation.md`).
+3. `/bench-implement-spec` — FT62/FT64/FT69/FT70 structure split-or-grant
+   passes (lighter path, one file per pass).
