@@ -69,6 +69,7 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"capture-sink-anchor":               conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"craft-seams-structure-headroom":    conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"review-persistence-anchor":         conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"terminal-repair-bound-anchor":      conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"shared-worktree-path-pin":          conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"shape-idea-handoff-anchor":         conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"shape-idea-grill-continuation":     conformanceFixture(".bench/gate-docs-contracts.sh"),
