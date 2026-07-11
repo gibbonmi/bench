@@ -172,9 +172,9 @@ drift between the two turns the gate red. Claude Code delegation addresses
 models by alias only, so `lines.env` separately declares the corresponding tier
 aliases (`BENCH_ALIAS_TOP=fable`, `BENCH_ALIAS_MID=opus`,
 `BENCH_ALIAS_CHEAP=sonnet`); those aliases do not resolve to the Codex model ids.
-Cheap-rated in-session work runs inline or bumps to mid (declared); headless
-shift runs target `gpt-5.6-luna` via `BENCH_MODEL` through the adapter (adapters
-take exact ids, not aliases).
+Code-author venue follows `craft-delegate`; line choice does not override its
+threshold. Headless shift runs target `gpt-5.6-luna` via `BENCH_MODEL` through
+the adapter (adapters take exact ids, not aliases).
 
 **Escalation policy:** no standing top-tier opt-out — any bump to the top binding
 (`gpt-5.6-sol`; `fable` in Claude Code) pauses and asks the reviewer (the ladder

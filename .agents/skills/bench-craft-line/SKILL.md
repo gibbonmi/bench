@@ -68,17 +68,13 @@ work types in a project get precomputed rows. Cache hits still get declared.
 
 ## Route the venue, not just the tier
 
-The same signals pick *where* a spec'd build runs. Delegate it to `bench shift`
-on the cheap binding when every story's line is cheap **and** the gate fully
-observes the coverage map. Stay inline when mid+ judgment is likely (protocol
-design, a grammar discovered from red output) or the task is smaller than its
-own handoff — the handoff must be cheaper than the iterations it moves.
-Per-story tiers presume separable slices; when the spec's stories land as one
-atomic diff, run the build at the highest tier any story needs and flag each
-collapsed line in the exit report. The expensive shape to avoid is iterating in
-a huge context on the top model, not top-tier work per se: use top only for the
-uncertain decision, then move gate-observable iteration to the cheapest venue
-that preserves isolation and verification.
+The same signals pick the model and effort for a spec'd build. `craft-delegate`
+owns whether code authorship runs inline or in an isolated worktree; this skill
+routes the chosen author without redefining that threshold. Per-story tiers
+presume separable slices; when stories land as one atomic diff, run the author at
+the highest tier any story needs and flag each collapsed line in the exit report.
+Use top only for the uncertain decision, then move gate-observable iteration to
+the cheapest line that preserves isolation and verification.
 
 ## The ladder corrects the start
 
