@@ -28,6 +28,39 @@ type historyEntry struct {
 	full, short, iso, kind, subject string
 }
 
+// HistoryFact is one typed retirement/deletion record.
+type HistoryFact struct {
+	Slug, Hash, Date, Kind, Subject string
+}
+
+// History returns the merged history facts for slug, newest first.
+func History(slug string) ([]HistoryFact, error) {
+	retireRaw, err := historyRetireLog(slug)
+	if err != nil {
+		return nil, err
+	}
+	deleteRaw, err := historyDeleteLog(slug)
+	if err != nil {
+		return nil, err
+	}
+	var retires []historyEntry
+	for _, e := range parseHistoryLog(retireRaw, "retire") {
+		if retireTokenMatches(e.subject, slug) {
+			retires = append(retires, e)
+		}
+	}
+	merged := mergeHistory(retires, parseHistoryLog(deleteRaw, "delete"))
+	out := make([]HistoryFact, len(merged))
+	for i, e := range merged {
+		date := e.iso
+		if len(date) > 10 {
+			date = date[:10]
+		}
+		out[i] = HistoryFact{Slug: slug, Hash: e.short, Date: date, Kind: e.kind, Subject: e.subject}
+	}
+	return out, nil
+}
+
 // parseHistoryLog turns one `git log <historyLogFormat>` invocation's raw output into
 // rows tagged with kind — the one parser for both queries below, so the NUL-framing
 // and 4-field shape has a single source.
@@ -121,31 +154,13 @@ func historyCommand(rest []string) (string, int) {
 	}
 	slug := slugOf(arg)
 
-	retireRaw, err := historyRetireLog(slug)
+	facts, err := History(slug)
 	if err != nil {
-		return toon.Errorf("git log --grep failed", err.Error()) + "\n", 1
+		return toon.Errorf("git history derivation failed", err.Error()) + "\n", 1
 	}
-	deleteRaw, err := historyDeleteLog(slug)
-	if err != nil {
-		return toon.Errorf("git log --diff-filter=D failed", err.Error()) + "\n", 1
-	}
-
-	var retireEntries []historyEntry
-	for _, e := range parseHistoryLog(retireRaw, "retire") {
-		if retireTokenMatches(e.subject, slug) {
-			retireEntries = append(retireEntries, e)
-		}
-	}
-	deleteEntries := parseHistoryLog(deleteRaw, "delete")
-	merged := mergeHistory(retireEntries, deleteEntries)
-
-	rows := make([][]string, len(merged))
-	for i, e := range merged {
-		date := e.iso
-		if len(date) > 10 {
-			date = date[:10]
-		}
-		rows[i] = []string{e.short, date, e.kind, e.subject}
+	rows := make([][]string, len(facts))
+	for i, e := range facts {
+		rows[i] = []string{e.Hash, e.Date, e.Kind, e.Subject}
 	}
 	tbl, err := toon.Table("history", []string{"hash", "date", "kind", "subject"}, rows)
 	if err != nil {

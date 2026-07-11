@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -80,6 +81,36 @@ func Root() (string, error) {
 type PorcelainEntry struct {
 	Status string // the two XY status characters
 	Path   string // the record's path, verbatim
+}
+
+// RepoFacts is the typed local repository state used by read-only query owners.
+type RepoFacts struct {
+	Branch, DefaultBranch string
+	Dirty                 bool
+	Ahead, Behind         int
+	Changes               []PorcelainEntry
+}
+
+// Facts derives repository state without mutating the worktree or index.
+func Facts(root string) (RepoFacts, error) {
+	branch, err := Output("-C", root, "rev-parse", "--abbrev-ref", "HEAD")
+	if err != nil {
+		return RepoFacts{}, err
+	}
+	raw, err := Raw("-C", root, "status", "--porcelain=v1", "-z", "--no-renames")
+	if err != nil {
+		return RepoFacts{}, err
+	}
+	f := RepoFacts{Branch: branch, DefaultBranch: DefaultBranch(root), Changes: ParsePorcelainZ(raw)}
+	f.Dirty = len(f.Changes) > 0
+	counts, err := Output("-C", root, "rev-list", "--left-right", "--count", f.DefaultBranch+"...HEAD")
+	if err != nil {
+		return RepoFacts{}, fmt.Errorf("git rev-list: %w", err)
+	}
+	if _, err := fmt.Sscanf(counts, "%d\t%d", &f.Behind, &f.Ahead); err != nil {
+		return RepoFacts{}, fmt.Errorf("parse git divergence: %w", err)
+	}
+	return f, nil
 }
 
 // ParsePorcelainZ splits `git status --porcelain -z --no-renames` output into entries.

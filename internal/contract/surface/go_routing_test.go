@@ -2,6 +2,7 @@ package surface
 
 import (
 	"encoding/json"
+	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"os/exec"
@@ -19,10 +20,72 @@ func TestGoRoutingContracts(t *testing.T) {
 	contract.RunParallel(t, "bench version failed outside a git repo", testGoRoutingVersionOutsideRepo)
 	contract.RunParallel(t, "version-routing seam contract failed", testGoRoutingFabricatedVersionRouting)
 	contract.RunParallel(t, "linked-worktree binary-resolution contract failed", testGoRoutingLinkedWorktreeBinaryResolution)
+	contract.RunParallel(t, "repo-local wrapper forwarding contract failed", testGoRoutingRepoLocalWrapperForwarding)
+	contract.RunParallel(t, "repo-local linked-worktree forwarding contract failed", testGoRoutingShimLinkedWorktree)
 	contract.RunParallel(t, "unknown subcommand exits 2 on stderr", testGoRoutingUnknownSubcommandExits2OnStderr)
 	contract.RunParallel(t, "help variants stay on stdout at exit 0", testGoRoutingHelpVariantsStayOnStdoutExit0)
 	contract.RunParallel(t, "--version routes to the version subcommand", testGoRoutingVersionFlagMatchesVersionSubcommand)
 	contract.RunParallel(t, "resolve_script_path capped a symlink cycle instead of hanging", testGoRoutingResolveScriptPathHopCap)
+}
+
+func testGoRoutingShimLinkedWorktree(t *testing.T) {
+	f := contract.NewFixture(t, contract.WithNoRepo())
+	main := filepath.Join(f.Root, "main")
+	linked := filepath.Join(f.Root, "linked")
+	if err := os.MkdirAll(main, 0755); err != nil {
+		t.Fatal(err)
+	}
+	repo := contract.NewFixtureAt(t, main, f.Env)
+	repo.Git("init", "-q")
+	repo.WriteFile("seed", "x")
+	repo.Git("add", "seed")
+	repo.Git("-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "seed")
+	repo.Git("worktree", "add", "-q", "--detach", linked, "HEAD")
+	local := filepath.Join(main, ".bench", "bin", "bench.sh")
+	target := filepath.Join(f.Root, "global")
+	shim := filepath.Join(f.Root, "bench")
+	contract.WriteExecutableAbs(t, local, "#!/bin/sh\nprintf 'main-local:%s|%s\\n' \"$1\" \"$2\"\n")
+	contract.WriteExecutableAbs(t, target, "#!/bin/sh\necho global\nexit 7\n")
+	contract.WriteExecutableAbs(t, shim, adopt.ShimContent(target)+"\n")
+	p := contract.RunAt(t, f, linked, nil, shim, "--context", "--full")
+	p.RequireExit(0)
+	if p.Stdout != "main-local:--context|--full\n" {
+		t.Fatalf("linked-worktree routing = %q", p.Stdout)
+	}
+}
+
+func testGoRoutingRepoLocalWrapperForwarding(t *testing.T) {
+	f := contract.NewFixture(t)
+	target := filepath.Join(f.Root, "global target")
+	local := filepath.Join(f.Root, ".bench", "bin", "bench.sh")
+	shim := filepath.Join(f.Root, "top bench")
+	contract.WriteExecutableAbs(t, target, "#!/bin/sh\nprintf 'global:%s\\n' \"$*\"\nexit 7\n")
+	contract.WriteExecutableAbs(t, local, "#!/bin/sh\nprintf 'local:%s|%s\\n' \"$1\" \"$2\"\nexit 2\n")
+	contract.WriteExecutableAbs(t, shim, adopt.ShimContent(target)+"\n")
+
+	out := f.Run(shim, "--context", "--full")
+	out.RequireExit(2)
+	if out.Stdout != "local:--context|--full\n" || out.Stderr != "" {
+		t.Fatalf("repo-local forwarding changed argv/bytes\nstdout:%q\nstderr:%q", out.Stdout, out.Stderr)
+	}
+
+	if err := os.Remove(local); err != nil {
+		t.Fatal(err)
+	}
+	out = f.Run(shim, "--context", "--full")
+	out.RequireExit(7)
+	if out.Stdout != "global:--context --full\n" {
+		t.Fatalf("missing-local fallback = %q", out.Stdout)
+	}
+
+	if err := os.Symlink(target, local); err != nil {
+		t.Fatal(err)
+	}
+	out = f.Run(shim, "same")
+	out.RequireExit(7)
+	if out.Stdout != "global:same\n" {
+		t.Fatalf("self-resolution did not fall back: %q", out.Stdout)
+	}
 }
 
 // testGoRoutingUnknownSubcommandExits2OnStderr pins the typo case: an unrecognized

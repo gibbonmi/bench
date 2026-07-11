@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
@@ -30,11 +31,52 @@ import (
 // place therefore yields exactly the detector's accepted form by construction.
 var stagedRe = regexp.MustCompile(`^Status:[ \t]+staged[ \t]*$`)
 
-// retireRe matches the retirement marker: a `Status:` line whose sole value is
-// `implemented`, tab/space separated, only whitespace trailing — the `implemented` twin of
-// stagedRe and the exact awk regex `^Status:[ \t]+implemented[ \t]*$`. Scanned line by
-// line, so `$` is the line end.
-var retireRe = regexp.MustCompile(`^Status:[ \t]+implemented[ \t]*$`)
+// Fact is one typed live spec record.
+type Fact struct {
+	Slug, Status, RoadmapID string
+}
+
+func metadata(content []byte) (status, roadmapID string) {
+	inFence := false
+	for _, raw := range strings.Split(string(content), "\n") {
+		line := strings.TrimSuffix(raw, "\r")
+		if strings.HasPrefix(line, "```") {
+			inFence = !inFence
+			continue
+		}
+		if inFence {
+			continue
+		}
+		switch {
+		case strings.HasPrefix(line, "Status:"):
+			status = strings.TrimSpace(strings.TrimPrefix(line, "Status:"))
+		case strings.HasPrefix(line, "Roadmap:"):
+			roadmapID = strings.TrimSpace(strings.TrimPrefix(line, "Roadmap:"))
+		}
+	}
+	return status, roadmapID
+}
+
+// Facts reads specs/*.md in path order. Malformed files are retained with an
+// empty status so callers can report the evidence rather than silently omit it.
+func Facts(root string) ([]Fact, error) {
+	paths, err := filepath.Glob(filepath.Join(root, "specs", "*.md"))
+	if err != nil {
+		return nil, err
+	}
+	sort.Strings(paths)
+	out := make([]Fact, 0, len(paths))
+	for _, path := range paths {
+		b, err := os.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		f := Fact{Slug: strings.TrimSuffix(filepath.Base(path), ".md")}
+		f.Status, f.RoadmapID = metadata(b)
+		out = append(out, f)
+	}
+	return out, nil
+}
 
 // AwaitsRetirement reports whether spec content carries an unfenced retirement marker: the
 // one definition of "a merged spec awaiting retirement", shared by the `bench status`
@@ -43,21 +85,8 @@ var retireRe = regexp.MustCompile(`^Status:[ \t]+implemented[ \t]*$`)
 // fence toggles fence state and is skipped; lines inside a fence are skipped; the first
 // line matching the retirement regex marks the content.
 func AwaitsRetirement(content []byte) bool {
-	inFence := false
-	for _, line := range strings.Split(string(content), "\n") {
-		line = strings.TrimSuffix(line, "\r")
-		if len(line) >= 3 && line[:3] == "```" {
-			inFence = !inFence
-			continue
-		}
-		if inFence {
-			continue
-		}
-		if retireRe.MatchString(line) {
-			return true
-		}
-	}
-	return false
+	status, _ := metadata(content)
+	return status == "implemented"
 }
 
 // Resolve finds the readable file backing a spec argument: the argument as given

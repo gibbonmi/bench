@@ -13,6 +13,11 @@ entries. One run reconciles the roadmap against the tree, drains both capture
 sources, refreshes the recommended sequence, and hands the reviewer one diff to
 approve.
 
+At entry, invoke `bench roadmap --context` exactly once. Its successful schema-1
+snapshot is the complete local evidence for every step below. If the query fails,
+stop the phase and report its error; manual evidence reconstruction would create a
+different, partial input and is not a fallback.
+
 ## Exit handoff
 
 Close by reporting the reconcile verdicts (rows removed or reworded), the drained

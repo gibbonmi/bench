@@ -8,6 +8,15 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-10, scope: post-FT66 reconcile).** Verified all seven
+  remaining roadmap rows against the tree; none shipped or needed rewording, and
+  FT62/FT64 still reproduce exactly at 441/400 and 407/400. The parked and
+  scheduled rows have not met their graduation triggers. IDEAS.md was already
+  empty and the learnings journal had zero open entries, so nothing drained or
+  required a verdict. The recommended sequence remains FT62, then FT64. The
+  preceding FT66 promotion-build entry records the previous run's build, so no
+  promotion record is missing.
+
 - **FT66 promotion build (2026-07-10).** Learnings-origin review guidance folded
   into the existing semantic-review process: each round now ends by integrating
   accepted findings, running focused checks, and running one final gate; another

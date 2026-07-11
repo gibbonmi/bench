@@ -80,6 +80,9 @@ const missingRoadmap = "no ROADMAP.md — run /bench-what-next to create the wor
 // roadmap, a missing sequence section, or a section without two-or-three numbered
 // items each get an explicit message pointing at /bench-what-next, exit 0.
 func RoadmapCommand(args []string) (string, int) {
+	if len(args) > 0 {
+		return toon.Usage("bench roadmap", args[0]) + "\n", 2
+	}
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
@@ -88,7 +91,8 @@ func RoadmapCommand(args []string) (string, int) {
 	if err != nil || len(data) == 0 {
 		return missingRoadmap, 0
 	}
-	text := string(data)
+	doc, _ := ParseDocument(data, nil, true)
+	text := doc.Text
 	if status := drainStatus(root); status != "" {
 		return text + status, 0
 	}
@@ -109,7 +113,8 @@ func RoadmapText(root string) (text string, present bool) {
 	if err != nil || len(data) == 0 {
 		return "", false
 	}
-	return string(data), true
+	doc, _ := ParseDocument(data, nil, true)
+	return doc.Text, true
 }
 
 // ParkedIdeas returns the parked idea lines from IDEAS.md — every line beginning `- `, the
@@ -149,37 +154,8 @@ func nextAction(roadmap string) string {
 // the section nor terminates it. Both `bench roadmap`'s next-action callout and the
 // dashboard's sequence block read it, so the two share one parser.
 func RecommendedSequence(roadmap string) string {
-	lines := strings.SplitAfter(roadmap, "\n")
-	start, end := -1, len(lines)
-	inFence := false
-	for i, line := range lines {
-		trimmed := strings.TrimRight(line, " \t\r\n")
-		if strings.HasPrefix(trimmed, "```") {
-			inFence = !inFence
-			continue
-		}
-		if inFence {
-			continue
-		}
-		if start < 0 {
-			if trimmed == "## Recommended sequence" {
-				start = i
-			}
-			continue
-		}
-		if strings.HasPrefix(trimmed, "## ") {
-			end = i
-			break
-		}
-	}
-	if start < 0 {
-		return ""
-	}
-	section := strings.Join(lines[start:end], "")
-	if !strings.HasSuffix(section, "\n") {
-		section += "\n"
-	}
-	return section
+	doc, _ := ParseDocument([]byte(roadmap), nil, true)
+	return doc.SequenceText
 }
 
 func learningCount(root string) int {
@@ -203,11 +179,6 @@ func ideaLines(file string) []string {
 	if err != nil {
 		return nil
 	}
-	var out []string
-	for _, line := range strings.Split(string(data), "\n") {
-		if strings.HasPrefix(line, "- ") {
-			out = append(out, line)
-		}
-	}
+	_, _, out := parseIdeas(data, true)
 	return out
 }

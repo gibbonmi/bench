@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -513,8 +512,6 @@ func orphanedPickupCount(root string) int {
 // kebab/alnum slug. It matches the bare path inside backticks/bold since the markdown decoration
 // isn't part of the token, and the char class excludes `<>` so a literal `specs/<slug>.md`
 // placeholder in the header prose can't false-fire.
-var roadmapReconcileRe = regexp.MustCompile(`specs/[A-Za-z0-9_-]+\.md`)
-
 // roadmapReconcileCounts scans ROADMAP.md for specs/<slug>.md path tokens and classifies each
 // distinct path against the tree: a missing file is a dangling row (the spec retired but its
 // roadmap row survived); a present file that spec.AwaitsRetirement marks is a merged row (the
@@ -527,7 +524,8 @@ func roadmapReconcileCounts(root string) (merged, dangling int) {
 		return 0, 0
 	}
 	seen := map[string]bool{}
-	for _, path := range roadmapReconcileRe.FindAllString(string(data), -1) {
+	for _, slug := range roadmap.SpecSlugs(data) {
+		path := "specs/" + slug + ".md"
 		if seen[path] {
 			continue
 		}

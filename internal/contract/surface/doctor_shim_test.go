@@ -13,8 +13,35 @@ func TestDoctorShimContracts(t *testing.T) {
 	contract.SkipIfSubjectBenchMissing(t)
 	contract.RunParallel(t, "bench doctor shim stale-target contract", testDoctorShimStaleTarget)
 	contract.RunParallel(t, "bench doctor shim arg-passthrough contract", testDoctorShimArgPassthrough)
+	contract.RunParallel(t, "repo-local wrapper forwarding contract failed", testDoctorShimRepoLocalForwarding)
 	contract.RunParallel(t, "bench doctor postinstall contract", testDoctorPostinstall)
 	contract.RunParallel(t, "bench doctor session-start advisory contract", testDoctorSessionStartAdvisory)
+}
+
+func testDoctorShimRepoLocalForwarding(t *testing.T) {
+	contract.NoteContractFailure(t, "repo-local wrapper forwarding contract failed")
+	f := contract.NewFixture(t)
+	sb := newDoctorSandbox(t, f)
+	f.BenchEnv(sb.env, "doctor", "--fix").RequireExit(0)
+	global := filepath.Join(f.Root, "global")
+	mustWriteFile(t, global, "#!/bin/sh\nprintf 'global:%s\\n' \"$*\"\nexit 7\n", 0o755)
+	local := filepath.Join(f.Root, ".bench", "bin", "bench.sh")
+	mustWriteFile(t, local, "#!/bin/sh\nprintf 'local:%s|%s\\n' \"$1\" \"$2\"\nexit 2\n", 0o755)
+	shim := filepath.Join(f.Root, "shim")
+	content := rewriteShimTarget(t, filepath.Join(sb.plain, "bench"), global)
+	mustWriteFile(t, shim, content, 0o755)
+
+	probe := f.RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, shim, "--context", "--full")
+	probe.RequireExit(2)
+	doctorRequireEqual(t, probe.Stdout, "local:--context|--full\n", "repo-local wrapper forwarding contract failed")
+	if probe.Stderr != "" {
+		t.Fatalf("repo-local wrapper wrote stderr: %s", probe.Stderr)
+	}
+
+	requireRemove(t, local)
+	probe = f.RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, shim, "--context", "--full")
+	probe.RequireExit(7)
+	doctorRequireEqual(t, probe.Stdout, "global:--context --full\n", "missing local wrapper did not fall back")
 }
 
 func testDoctorShimStaleTarget(t *testing.T) {

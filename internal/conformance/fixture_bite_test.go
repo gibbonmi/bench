@@ -91,6 +91,7 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 		"shape-idea-grill-continuation",
 		"what-next-anchor",
 		"what-next-spec-history-anchor",
+		"what-next-roadmap-context-anchor",
 		"spec-retire-roadmap-row",
 		"staged-command-sweep-anchor",
 		"capture-sink-anchor",

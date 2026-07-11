@@ -7,16 +7,57 @@ package learnings
 import (
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// openRe selects an open heading: `## <ISO date> … [open]`. The same shape the shell
-// LEARNINGS_OPEN_RE matched; a template example without a real date never matches.
-var openRe = regexp.MustCompile(`^## [0-9]{4}-[0-9]{2}-[0-9]{2}.*\[open\]`)
+// Entry is one typed journal item. Body preserves the source text below the
+// heading so roadmap context and the human projections share this parser.
+type Entry struct {
+	Date, Title, State, Body string
+}
+
+type Malformed struct{ Reason, Raw string }
+
+// Entries parses every well-formed dated journal heading in document order.
+// Rows is deliberately a projection of this typed representation.
+func Entries(content []byte) []Entry {
+	entries, _ := Parse(content)
+	return entries
+}
+
+// Parse returns typed entries plus every malformed heading fragment.
+func Parse(content []byte) ([]Entry, []Malformed) {
+	lines := strings.Split(string(content), "\n")
+	var out []Entry
+	var malformed []Malformed
+	for i := 0; i < len(lines); {
+		line := strings.TrimSuffix(lines[i], "\r")
+		if !strings.HasPrefix(line, "## ") || len(line) < 13 || line[7] != '-' || line[10] != '-' {
+			if strings.HasPrefix(line, "## ") {
+				malformed = append(malformed, Malformed{"malformed learning heading", line})
+			}
+			i++
+			continue
+		}
+		date, title := parseHeading(line)
+		state := ""
+		if j := strings.LastIndex(line, "["); j >= 0 && strings.HasSuffix(line, "]") {
+			state = line[j+1 : len(line)-1]
+		}
+		start := i + 1
+		i = start
+		for i < len(lines) && !strings.HasPrefix(strings.TrimSuffix(lines[i], "\r"), "## ") {
+			i++
+		}
+		body := strings.Join(lines[start:i], "\n")
+		body = strings.Trim(body, "\n")
+		out = append(out, Entry{Date: date, Title: title, State: state, Body: body})
+	}
+	return out, malformed
+}
 
 // Rows parses the open headings of a learnings journal into date/title rows. A
 // trailing CR (CRLF journal) is stripped first; the title is the heading minus its
@@ -24,13 +65,11 @@ var openRe = regexp.MustCompile(`^## [0-9]{4}-[0-9]{2}-[0-9]{2}.*\[open\]`)
 // em-dash), and the trailing `[open]…`, with surrounding whitespace removed.
 func Rows(content []byte) [][]string {
 	var rows [][]string
-	for _, line := range strings.Split(string(content), "\n") {
-		line = strings.TrimSuffix(line, "\r")
-		if !openRe.MatchString(line) {
+	for _, e := range Entries(content) {
+		if e.State != "open" {
 			continue
 		}
-		date, title := parseHeading(line)
-		rows = append(rows, []string{date, title})
+		rows = append(rows, []string{e.Date, e.Title})
 	}
 	return rows
 }

@@ -127,6 +127,12 @@ func checkWorkflowAnchors(root string) []string {
 		".agents/commands/bench-write-spec.md dropped the staged-spec fail-closed command sweep posture")
 	requireCollapsed(".agents/commands/bench-what-next.md", "use `bench spec history <slug>` for the shipped-row check",
 		".agents/commands/bench-what-next.md dropped the bench spec history shipped-row check")
+	whatNext := readIfExists(filepath.Join(root, ".agents", "commands", "bench-what-next.md"))
+	if whatNext != "" && (strings.Count(whatNext, "bench roadmap --context") != 1 ||
+		!strings.Contains(collapseSpace(whatNext), "If the query fails, stop the phase") ||
+		!strings.Contains(collapseSpace(whatNext), "manual evidence reconstruction")) {
+		diags = append(diags, "bench-what-next dropped the roadmap context query")
+	}
 	requireCollapsed(".bench/BENCH.md", "Parked ideas land in `IDEAS.md`",
 		".bench/BENCH.md Capture section does not name IDEAS.md as the capture sink")
 	requireCollapsed(".bench/BENCH.md", "append the dated line (`- YYYY-MM-DD <text>`) to `IDEAS.md`",

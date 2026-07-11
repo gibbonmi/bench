@@ -42,6 +42,11 @@ var sourceRe = regexp.MustCompile(`\.(py|ts|tsx|js|jsx|go|rs|java|rb|kt|scala|cs
 // count), but only the whole-tree scan can judge the accept list's completeness, so the
 // accepted: section, the malformed-row warnings, and the stale-row warnings are all-mode only.
 func Check(root string, rawFiles []string, allMode bool) (report string, violations int) {
+	report, violations, _ = evaluate(root, rawFiles, allMode)
+	return report, violations
+}
+
+func evaluate(root string, rawFiles []string, allMode bool) (report string, violations int, facts []Fact) {
 	maxLines := envInt("BENCH_MAX_LINES", 400)
 	maxFiles := envInt("BENCH_MAX_DIR_FILES", 12)
 	budgets, budgetWarnings := loadBudgets(filepath.Join(root, ".bench", "structure.budgets"))
@@ -56,14 +61,14 @@ func Check(root string, rawFiles []string, allMode bool) (report string, violati
 	// accept states (absent, malformed, stale) never change the exit code.
 	if acceptErr != nil {
 		lines = append(lines, "structure-accept: present but unreadable: "+acceptErr.Error())
-		return strings.Join(lines, "\n") + "\n", 1
+		return strings.Join(lines, "\n") + "\n", 1, nil
 	}
 
 	files := filterSources(rawFiles)
 
 	if len(files) == 0 {
 		lines = append(lines, "structure: no tracked source files to check")
-		return strings.Join(lines, "\n") + "\n", 0
+		return strings.Join(lines, "\n") + "\n", 0, nil
 	}
 
 	if allMode {
@@ -87,11 +92,16 @@ func Check(root string, rawFiles []string, allMode bool) (report string, violati
 		}
 		limit := budgetFor(budgets, f, maxLines)
 		if n > limit {
+			fact := Fact{Kind: "file", Path: f, Actual: n, Limit: limit, State: "violation"}
 			if reason, ok := accepts[f]; ok {
 				acceptedLines = append(acceptedLines, fmt.Sprintf("accepted: %s — %s", f, reason))
+				fact.State, fact.Detail = "accepted", reason
+				facts = append(facts, fact)
 				continue
 			}
-			lines = append(lines, fmt.Sprintf("FILE TOO LONG   %d lines (max %d)   %s", n, limit, f))
+			fact.Detail = fmt.Sprintf("FILE TOO LONG   %d lines (max %d)   %s", n, limit, f)
+			facts = append(facts, fact)
+			lines = append(lines, fact.Detail)
 			violations++
 		}
 	}
@@ -118,10 +128,15 @@ func Check(root string, rawFiles []string, allMode bool) (report string, violati
 		key := dirs[i] + "/"
 		limit := budgetFor(budgets, key, maxFiles)
 		if count > limit {
+			fact := Fact{Kind: "directory", Path: key, Actual: count, Limit: limit, State: "violation"}
 			if reason, ok := accepts[key]; ok {
 				acceptedLines = append(acceptedLines, fmt.Sprintf("accepted: %s — %s", key, reason))
+				fact.State, fact.Detail = "accepted", reason
+				facts = append(facts, fact)
 			} else {
-				lines = append(lines, fmt.Sprintf("DIR CROWDED     %d source files (max %d), group into modules   %s", count, limit, key))
+				fact.Detail = fmt.Sprintf("DIR CROWDED     %d source files (max %d), group into modules   %s", count, limit, key)
+				facts = append(facts, fact)
+				lines = append(lines, fact.Detail)
 				violations++
 			}
 		}
@@ -141,20 +156,8 @@ func Check(root string, rawFiles []string, allMode bool) (report string, violati
 		lines = append(lines, fmt.Sprintf("accepted: %d file(s) over budget by reviewer grant (see .bench/structure-accept)", len(acceptedLines)))
 	}
 
-	return strings.Join(lines, "\n") + "\n", violations
-}
-
-// checkAll queries the whole tracked source tree (`git ls-files`) and runs the check over
-// it. It is the one ls-files call site and the all-files sibling of Touched, returning the
-// report, the violation count, and the git-query error: Command propagates that error
-// (loud stderr + exit 1), ViolationCount tolerates it.
-func checkAll(root string) (report string, violations int, err error) {
-	out, err := git.Output("-C", root, "ls-files")
-	if err != nil {
-		return "", 0, err
-	}
-	report, violations = Check(root, strings.Split(out, "\n"), true)
-	return report, violations, nil
+	sort.Slice(facts, func(i, j int) bool { return facts[i].Path < facts[j].Path })
+	return strings.Join(lines, "\n") + "\n", violations, facts
 }
 
 // ViolationCount is the count `bench status` reads: the violation count of an all-files

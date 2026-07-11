@@ -63,7 +63,7 @@ var commands = map[string]func([]string) (string, int){
 	"models":              models.Command,
 	"outline":             outline.Command,
 	"idea":                roadmap.IdeaCommand,
-	"roadmap":             roadmap.RoadmapCommand,
+	"roadmap":             roadmapCommand,
 	"tree-hash":           treeHash,
 	"resolve-model":       resolveModel,
 	"worktree-pool":       worktree.PoolCommand,
@@ -71,6 +71,16 @@ var commands = map[string]func([]string) (string, int){
 }
 
 var gatePhasesCommand = gate.PhasesCommand
+
+func roadmapCommand(args []string) (string, int) {
+	if len(args) == 0 {
+		return roadmap.RoadmapCommand(nil)
+	}
+	return roadmap.ContextCommand(args, func(root string) roadmap.GateCacheFact {
+		g := status.GateVerdict(root)
+		return roadmap.GateCacheFact{Present: g.Present, Status: g.Status, CachedTree: g.CachedTree, WorkTree: g.WorkTree, Timestamp: g.Timestamp, Stale: g.Stale}
+	})
+}
 
 // linesEnv resolves the repo's .bench/lines.env — its path, whether it exists, and its
 // content — for the two binding consumers (resolve-model and check-agent-line). A cwd
