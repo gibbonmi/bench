@@ -10,13 +10,6 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-**FT67 — mandatory implementation delegation.** Build the staged spec
-`specs/mandatory-implementation-delegation.md`: meaningful write delegation
-becomes mandatory for every spec-backed build, with an honest stop-and-hand-off
-posture on harnesses that cannot spawn write subagents. Ranked first because it
-changes how every subsequent `/bench-implement-spec` session runs. Next:
-`/bench-implement-spec`.
-
 **FT68 — structured Bench phase conversation.** Build the staged spec
 `specs/structured-phase-conversation.md`: the two proportional conversation
 patterns (**Status:**/**Next:** for in-progress, `## Result`/`## Details`/`##
@@ -45,6 +38,19 @@ Split along responsibility or propose a reviewer grant, checking both file and
 directory budgets before choosing. Next: `/bench-implement-spec` (lighter
 path).
 
+**FT72 — structure debt: `internal/git/git.go` at 403/400.** Split along
+responsibility or propose a reviewer grant, checking both file and directory
+budgets before choosing. Next: `/bench-implement-spec` (lighter path).
+
+**FT73 — structure debt: `internal/worktree/worktree_test.go` at 489/400.**
+Split along responsibility or propose a reviewer grant, checking both file and
+directory budgets before choosing. Next: `/bench-implement-spec` (lighter
+path).
+
+**FT74 — structure debt: `internal/intent/intent.go` at 406/400.** Split along
+responsibility or propose a reviewer grant, checking both file and directory
+budgets before choosing. Next: `/bench-implement-spec` (lighter path).
+
 **FT71 (parked pending evidence) — kit-sized shift-session log.** Durable
 local evidence per shift run: agent identity, gate verdicts, commits. Cousin
 of the compliance-assessment H-03 audit-trail finding, which stays out of kit
@@ -66,11 +72,11 @@ double-use in the pool); until then the shipped identity-verify plus restore
 is the accepted posture.
 
 **FT24 (parked pending upstream) — Codex agent-line guard parity.** Researched
-2026-07-07: not implementable on current Codex — delegation never surfaces as a
-matchable `tool_name` on a deny-capable hook event, and `SubagentStart` neither
-carries the delegate's resolved model nor honors a deny (verdict recorded in
-`.bench/BENCH-reference.md` Hook Layers). Graduate only when the Codex
-changelog adds a spawn tool name or a deny-capable SubagentStart.
+2026-07-11: still not implementable on current Codex — delegation has no
+matchable `tool_name` on a deny-capable hook event, and `SubagentStart` cannot
+stop the subagent. The current surface verdict is canonical in
+`.bench/BENCH-reference.md` Hook Layers. Graduate only when the Codex changelog
+adds a spawn tool name or a deny-capable SubagentStart.
 
 **FT8 (scheduled, not actionable) — Sonnet 5 mid-tier revisit.** Time-boxed to
 2026-09-01 or the next frontier shift.
@@ -85,9 +91,7 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT67 mandatory implementation delegation
-   (`specs/mandatory-implementation-delegation.md`).
-2. `/bench-implement-spec` — FT68 structured phase conversation
+1. `/bench-implement-spec` — FT68 structured phase conversation
    (`specs/structured-phase-conversation.md`).
-3. `/bench-implement-spec` — FT62/FT64/FT69/FT70 structure split-or-grant
-   passes (lighter path, one file per pass).
+2. `/bench-implement-spec` — FT62/FT64/FT69/FT70/FT72/FT73/FT74 structure
+   split-or-grant passes (lighter path, one file per pass).

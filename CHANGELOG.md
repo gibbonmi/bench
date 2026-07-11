@@ -8,6 +8,23 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-11, scope: post-retirement + structure reconcile).**
+  Removed FT67 after `bench spec history mandatory-implementation-delegation`
+  confirmed its retirement at `3da2e7d`; FT68 remains staged. Added FT72
+  (`internal/git/git.go` 403/400), FT73
+  (`internal/worktree/worktree_test.go` 489/400), and FT74
+  (`internal/intent/intent.go` 406/400); FT62/FT64/FT69/FT70 still reproduce at
+  their recorded limits. Rechecked FT24 against the current Codex hooks surface:
+  delegation still has no deny-capable tool hook and `SubagentStart` cannot stop
+  the spawn, while its common model field replaces the stale no-model wording.
+  The other parked and scheduled rows have not met their triggers. IDEAS.md was
+  already empty, so zero ideas drained. Dismissed the grill-fog learning because
+  `craft-grill` already owns the behavior and the entry identifies an application
+  miss, not a kit gap. Rendered the journal's sample heading inline so it no
+  longer parses as a malformed entry. Previous promotion-build records remain
+  complete: FT65 and FT66 are present. The recommended sequence is now FT68,
+  then the seven structure passes.
+
 - **Learnings run (2026-07-11, scope: staged-spec + structure reconcile).**
   Reconcile found three staged specs with no roadmap rows: roadmap-context
   shipped in the big CLI update without a `--spec` mark, so this pass retires
