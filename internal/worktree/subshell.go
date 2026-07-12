@@ -330,7 +330,7 @@ func predictedForeignRef(root, target, admin string) (string, error) {
 	}
 	ownerSum := sha256.Sum256([]byte(common + "\x00" + admin + "\x00" + target))
 	assignmentSum := sha256.Sum256([]byte("assignment\x00" + common + "\x00" + admin + "\x00" + target))
-	prefix := "refs/bench/recovery/" + hex.EncodeToString(ownerSum[:16]) + "/" + hex.EncodeToString(assignmentSum[:16]) + "/"
+	prefix := intent.RecoveryRefPrefix(hex.EncodeToString(ownerSum[:16]), hex.EncodeToString(assignmentSum[:16]))
 	out, err := git.Output("-C", root, "for-each-ref", "--format=%(refname)", prefix)
 	if err != nil {
 		return "", err

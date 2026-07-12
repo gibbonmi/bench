@@ -299,7 +299,7 @@ func gitInput(root string, extraEnv []string, input []byte, args ...string) (str
 	return strings.TrimRight(stdout.String(), "\n"), nil
 }
 func nextRecoveryRef(root string, assignment intent.Assignment) (string, error) {
-	prefix := "refs/bench/recovery/" + assignment.OwnerID + "/" + assignment.ID + "/"
+	prefix := intent.RecoveryRefPrefix(assignment.OwnerID, assignment.ID)
 	out, err := git.Output("-C", root, "for-each-ref", "--format=%(refname)", prefix)
 	if err != nil {
 		return "", err
@@ -366,7 +366,7 @@ func discardIgnored(plan CleanupPlan) error {
 	return nil
 }
 func recoveryInvocationError(stdout io.Writer) int {
-	_ = renderRecovery(stdout, RecoveryPlan{Ref: "unknown", Root: "unknown", Payloads: "none", Landed: "unknown", Action: RecoveryError, Fingerprint: "none", Detail: "invalid invocation; run bench worktree recovery <ref> [--apply <fingerprint>]"})
+	_ = renderRecovery(stdout, RecoveryPlan{Ref: "unknown", Root: "unknown", Payloads: "none", Landed: "unknown", Action: RecoveryError, Fingerprint: "none", Detail: "invalid invocation; run " + worktreeRecoveryUsage})
 	return 2
 }
 func RecoveryCommand(args []string, stdout, stderr io.Writer) int {

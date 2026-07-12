@@ -123,7 +123,7 @@ func TestWorktreeCleanUsagePrecedesRepoLookup(t *testing.T) {
 	out := f.Bench("worktree", "clean")
 
 	out.RequireExit(2)
-	want := "worktree_cleanup[1]{target,action,tracked,ignored,recovery,fingerprint,detail}:\n  unknown,error,unknown,unknown,none,none,\"invalid invocation; run bench worktree clean <path> [--apply <fingerprint>]\"\n"
+	want := "worktree_cleanup[1]{target,action,tracked,ignored,recovery,fingerprint,detail}:\n  unknown,error,unknown,unknown,none,none,\"invalid invocation; run bench worktree clean [--discard-ignored] [--full] <path> [--apply <fingerprint>]\"\n"
 	if out.Stdout != want || out.Stderr != "" {
 		t.Fatalf("usage streams = stdout %q stderr %q", out.Stdout, out.Stderr)
 	}

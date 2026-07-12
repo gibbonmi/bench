@@ -38,6 +38,7 @@ import (
 	"github.com/gibbonmi/bench/internal/stophook"
 	"github.com/gibbonmi/bench/internal/structure"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
 
@@ -302,6 +303,10 @@ func run(args []string, stdout, stderr *os.File) int {
 		fmt.Fprintln(stdout, versionLine(version, runtime.GOOS, runtime.GOARCH))
 		return 0
 	case "worktree":
+		if len(args) == 2 && (args[1] == "help" || args[1] == "--help" || args[1] == "-h") {
+			fmt.Fprint(stdout, usage.WorktreeUsage())
+			return 0
+		}
 		if len(args) > 1 && args[1] == "create" {
 			root, err := git.Root()
 			if err != nil {

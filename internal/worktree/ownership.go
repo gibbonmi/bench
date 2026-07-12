@@ -34,6 +34,10 @@ type Creation struct {
 	Path       string
 	Assignment intent.Assignment
 }
+
+func requestDigest(request string) string { return textDigest(request) }
+func labelDigest(label string) string     { return textDigest(label) }
+
 type LifecycleStep string
 
 const (
@@ -163,7 +167,7 @@ func Create(root, request, label string, fault Fault) (Creation, error) {
 	if err != nil {
 		return Creation{}, err
 	}
-	branch := "refs/heads/bench/assign/" + ownerID + "/" + assignmentID
+	branch := intent.AssignmentBranchRef(ownerID, assignmentID)
 	shortBranch := strings.TrimPrefix(branch, "refs/heads/")
 	assignment := intent.Assignment{
 		Schema: intent.AssignmentRecordSchema, ID: assignmentID, OwnerID: ownerID,

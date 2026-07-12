@@ -123,7 +123,7 @@ type RecoveryPlan struct {
 func (inventory IgnoredInventory) Summary() string {
 	count := fmt.Sprintf("%d", inventory.Count)
 	if inventory.AtLeast {
-		count = "at-least=1001"
+		count = fmt.Sprintf("at-least=%d", ignoredEntryLimit+1)
 	}
 	return fmt.Sprintf("count=%s bytes=%d shown=%d truncated=%t", count, inventory.Bytes, inventory.Shown, inventory.Truncated)
 }
@@ -194,7 +194,7 @@ func retainedPlan(target string, reason CleanupReason, detail string) CleanupPla
 	return CleanupPlan{Target: target, Action: ActionRetain, ReasonCode: reason, Reason: detail}
 }
 func recoveryMetadataMatches(root string, assignment intent.Assignment) bool {
-	prefix := "refs/bench/recovery/" + assignment.OwnerID + "/" + assignment.ID + "/"
+	prefix := intent.RecoveryRefPrefix(assignment.OwnerID, assignment.ID)
 	out, err := git.Output("-C", root, "for-each-ref", "--format=%(refname)", prefix)
 	if err != nil {
 		return false

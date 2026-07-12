@@ -13,6 +13,23 @@ import (
 
 const AssignmentRecordSchema = "bench-assignment/v1"
 
+const (
+	assignmentBranchNamespace = "refs/heads/bench/assign/"
+	recoveryRefNamespace      = "refs/bench/recovery/"
+)
+
+func AssignmentBranchRef(ownerID, assignmentID string) string {
+	return assignmentBranchNamespace + ownerID + "/" + assignmentID
+}
+
+func RecoveryRefPrefix(ownerID, assignmentID string) string {
+	return recoveryRefNamespace + ownerID + "/" + assignmentID + "/"
+}
+
+func validAssignmentBranchRef(ref string) bool {
+	return strings.HasPrefix(ref, assignmentBranchNamespace)
+}
+
 type AssignmentState string
 
 const (
@@ -96,10 +113,10 @@ func validateCleanupReceipts(receipts []CleanupReceipt) error {
 		if receipt.Checkpoint != "" && !digestPattern.MatchString(receipt.Checkpoint) {
 			return errors.New("cleanup receipt has invalid checkpoint")
 		}
-		if (receipt.Branch == "") != (receipt.BranchOID == "") || receipt.Branch != "" && (!receipt.Owned || !strings.HasPrefix(receipt.Branch, "refs/heads/bench/assign/") || !oidPattern.MatchString(receipt.BranchOID)) {
+		if (receipt.Branch == "") != (receipt.BranchOID == "") || receipt.Branch != "" && (!receipt.Owned || !validAssignmentBranchRef(receipt.Branch) || !oidPattern.MatchString(receipt.BranchOID)) {
 			return errors.New("cleanup receipt has invalid branch CAS")
 		}
-		if (receipt.Owner == "") != (receipt.Assignment == "") || (receipt.Assignment == "") != (receipt.Request == "") || receipt.Assignment != "" && (!receipt.Owned || !ValidIdentity(receipt.Owner) || !ValidIdentity(receipt.Assignment) || !digestPattern.MatchString(receipt.Request) || receipt.Branch != "" && receipt.Branch != "refs/heads/bench/assign/"+receipt.Owner+"/"+receipt.Assignment) {
+		if (receipt.Owner == "") != (receipt.Assignment == "") || (receipt.Assignment == "") != (receipt.Request == "") || receipt.Assignment != "" && (!receipt.Owned || !ValidIdentity(receipt.Owner) || !ValidIdentity(receipt.Assignment) || !digestPattern.MatchString(receipt.Request) || receipt.Branch != "" && receipt.Branch != AssignmentBranchRef(receipt.Owner, receipt.Assignment)) {
 			return errors.New("cleanup receipt has invalid owned assignment")
 		}
 		if receipt.State == ReceiptComplete && receipt.Phase != ReceiptPhaseTerminal {
@@ -253,7 +270,7 @@ func ValidateAssignment(a Assignment) error {
 	if !digestPattern.MatchString(a.Request) || a.Label == "" || !oidPattern.MatchString(a.Start) {
 		return fmt.Errorf("assignment %q has invalid request, label, or start", a.ID)
 	}
-	wantBranch := "refs/heads/bench/assign/" + a.OwnerID + "/" + a.ID
+	wantBranch := AssignmentBranchRef(a.OwnerID, a.ID)
 	if a.Branch != wantBranch {
 		return fmt.Errorf("assignment %q has non-canonical branch", a.ID)
 	}
@@ -276,7 +293,7 @@ func ValidateAssignment(a Assignment) error {
 		return fmt.Errorf("assignment %q is complete with recovery metadata", a.ID)
 	}
 	for _, recovery := range a.Recovery {
-		prefix := "refs/bench/recovery/" + a.OwnerID + "/" + a.ID + "/"
+		prefix := RecoveryRefPrefix(a.OwnerID, a.ID)
 		if !strings.HasPrefix(recovery.Ref, prefix) || !oidPattern.MatchString(recovery.Root) || len(recovery.Payloads) == 0 {
 			return fmt.Errorf("assignment %q has invalid recovery metadata", a.ID)
 		}

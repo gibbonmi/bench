@@ -9,6 +9,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 	"io"
 	"os"
 	"os/exec"
@@ -21,8 +22,6 @@ func textDigest(value string) string {
 	sum := sha256.Sum256([]byte(value))
 	return hex.EncodeToString(sum[:])
 }
-func requestDigest(request string) string { return textDigest(request) }
-func labelDigest(label string) string     { return textDigest(label) }
 func cksum(data []byte) uint32 {
 	var crc uint32
 	step := func(value byte) {
@@ -215,7 +214,7 @@ func classifyNestedState(root string) (state nestedState, err error) {
 	return state, nil
 }
 func cleanInvocationError(stdout io.Writer) int {
-	_ = renderCleanup(stdout, CleanupPlan{Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: "none", Reason: "invalid invocation; run bench worktree clean <path> [--apply <fingerprint>]"})
+	_ = renderCleanup(stdout, CleanupPlan{Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: "none", Reason: "invalid invocation; run " + usage.WorktreeClean})
 	return 2
 }
 func CleanCommand(args []string, stdout, stderr io.Writer) int {
@@ -303,7 +302,7 @@ func finishReleaseReceipt(root string, stdout io.Writer, receipt intent.CleanupR
 }
 func ReleaseCommand(root string, args []string, stdout, stderr io.Writer) int {
 	if len(args) != 3 || args[0] != "--request" || args[1] == "" {
-		fmt.Fprintln(stderr, "usage: bench worktree release --request <opaque-id> <path>")
+		fmt.Fprintln(stderr, "usage: "+usage.WorktreeRelease)
 		return 2
 	}
 	receipt, err := releaseAssignment(root, args[1], args[2])
@@ -313,9 +312,9 @@ func ReleaseCommand(root string, args []string, stdout, stderr io.Writer) int {
 	fmt.Fprintf(stderr, "bench worktree release: %v\n", err)
 	return 1
 }
-func WorktreeUsage() string {
-	return "usage: bench worktree\n       bench worktree create --request <opaque-id> --label <work-item>\n       bench worktree clean [--discard-ignored] [--full] <path> [--apply <fingerprint>]\n       bench worktree recovery <ref> [--apply <fingerprint>]\n"
-}
+
+const worktreeRecoveryUsage = usage.WorktreeRecovery
+
 func renderResumeSummary(result ResumeResult) string {
 	var summary strings.Builder
 	fmt.Fprintf(&summary, "bench resume: removed %d, recovered %d", result.Removed, result.Recovered)
@@ -338,7 +337,7 @@ func CreateCommand(root string, args []string, stdout, stderr io.Writer) int {
 	var request, label string
 	for len(args) > 0 {
 		if len(args) < 2 || (args[0] != "--request" && args[0] != "--label") {
-			fmt.Fprintln(stderr, "usage: bench worktree create --request <opaque-id> --label <work-item>")
+			fmt.Fprintln(stderr, "usage: "+usage.WorktreeCreate)
 			return 2
 		}
 		if args[0] == "--request" {
