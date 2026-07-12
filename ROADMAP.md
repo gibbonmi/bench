@@ -10,24 +10,6 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-**FT72 — structure debt: `internal/git/git.go` at 403/400.** Split along
-responsibility or propose a reviewer grant, checking both file and directory
-budgets before choosing. Next: `/bench-implement-spec` (lighter path).
-
-**FT73 — structure debt: `internal/worktree/worktree_test.go` at 489/400.**
-Split along responsibility or propose a reviewer grant, checking both file and
-directory budgets before choosing. Next: `/bench-implement-spec` (lighter
-path).
-
-**FT74 — structure debt: `internal/intent/intent.go` at 406/400.** Split along
-responsibility or propose a reviewer grant, checking both file and directory
-budgets before choosing. Next: `/bench-implement-spec` (lighter path).
-
-**FT75 — structure debt: `internal/conformance/docs_workflow_helpers_test.go` at
-449/400.** Split along responsibility or propose a reviewer grant, checking
-both file and directory budgets before choosing. Next: `/bench-implement-spec`
-(lighter path).
-
 **FT71 (parked pending evidence) — kit-sized shift-session log.** Durable
 local evidence per shift run: agent identity, gate verdicts, commits. Cousin
 of the compliance-assessment H-03 audit-trail finding, which stays out of kit
@@ -68,8 +50,6 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT72/FT73/FT74/FT75 structure
-   split-or-grant passes (lighter path, one file per pass).
-2. `/bench-shape-idea` — revisit FT38 on or after 2026-08-09.
-3. `/bench-shape-idea` — revisit FT8 on or after 2026-09-01 or the next
+1. `/bench-shape-idea` — revisit FT38 on or after 2026-08-09.
+2. `/bench-shape-idea` — revisit FT8 on or after 2026-09-01 or the next
    frontier shift.

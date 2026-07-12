@@ -8,6 +8,15 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-11, scope: post-FT72–FT75 reconcile).** Removed
+  FT72, FT73, FT74, and FT75 after their responsibility splits shipped; the
+  authoritative structure snapshot no longer reports any of their recorded
+  file violations, and the cached gate is current and green. No parked,
+  scheduled, tabled, or upstream trigger has fired. IDEAS.md was already empty,
+  so zero ideas drained, and the journal had zero open entries, so there were
+  no verdicts. Previous promotion-build records remain complete: FT65 and FT66
+  are present. The recommended sequence is now the dated FT38 and FT8 revisits.
+
 - **Learnings run (2026-07-11, scope: post-structure-wave reconcile).** Removed
   FT62, FT64, FT69, and FT70 after their responsibility splits shipped at
   `3e92085`; the authoritative structure snapshot now reports only
