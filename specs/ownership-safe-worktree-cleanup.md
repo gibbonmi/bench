@@ -367,6 +367,19 @@ append another accepted exception.
   not a substitute for runtime contracts.
 - Gate command: `.bench/gate.sh`.
 
+### Live Claude Code dogfood verdict
+
+Live compatibility passed on 2026-07-12 with Claude Code v2.1.207 in fresh
+`--worktree` sessions. The success lifecycle created a mode-0600 ownership marker,
+matching active assignment, dedicated assignment branch, and exact Bench lock; normal
+exit removed the checkout and branch, compacted the assignment, and retained complete
+cleanup receipts. In the failure lifecycle, blocked recovery-ref creation moved the
+assignment to `cleanup-pending` while preserving the dirty checkout and exact lock;
+Claude retained the linked worktree and ordinary `git worktree remove` exited 128.
+The same preservation trace is gate-owned through clean-drift and post-removal retry
+cases, which re-anchor the recorded recovery root before removal and finalize one
+`recovered` assignment with one terminal receipt.
+
 ### Seam diagrams
 
 Core lifecycle seam:
