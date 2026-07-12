@@ -14,27 +14,13 @@ Deployment remains **NO-GO** for other projects, public npm release, and bank
 use.
 The 2026-07-11 release-readiness and repository-controlled compliance
 assessments are evidence snapshots; this roadmap is the execution source for
-their active findings. Each of the 53 release-readiness findings and 17
-compliance findings appears exactly once on a `Sources` line below. `RR:` means
-the release-readiness assessment and `RC:` means the repository-controlled
-compliance assessment.
+their active findings. Each finding still open appears exactly once on a
+`Sources` line below. `RR:` means the release-readiness assessment and `RC:`
+means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT77 (CRITICAL, next) — review ownership-safe worktree cleanup.** Finish the
-implemented spec after semantic review. Bench-created worktrees now carry a
-verifiable ownership identity; automatic cleanup is limited to matching
-non-live assignments with verified Bench locks; detached work receives durable
-recovery refs; and explicit cleanup is path-scoped, dry-run first, and
-affirmatively acknowledged. Black-box preservation contracts and a bypass
-canary cover the ownership rule, but no retirement record exists.
-
-Sources: `RR:R-01`; `RC:C-01`.
-Decision map: `decisions/ownership-safe-worktree-cleanup.md`. Spec:
-`specs/ownership-safe-worktree-cleanup.md`. Next:
-`/bench-review-implementation`.
-
-**FT78 (CRITICAL) — oracle-bound, fail-closed gate verdicts.** Version the gate
+**FT78 (CRITICAL, next) — oracle-bound, fail-closed gate verdicts.** Version the gate
 cache and bind green reuse to the working-tree hash, fully resolved gate kind
 and command, executable/script content, relevant configuration, schema, and
 freshness. Verdict replacement is same-directory, synced, and atomic. A red
@@ -295,7 +281,7 @@ Sources: `RR:S-06`, `RR:S-07`, `RR:S-08`, `RR:S-10`, `RR:S-11`, `RR:S-12`,
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
 to one immutable version and its generated manifest after:
 
-1. FT77 through FT82 have executable regression contracts and are closed.
+1. FT78 through FT82 have executable regression contracts and are closed.
 2. The same commit passes the full gate, race tests, vet, canary, vulnerability
    scan, package inspection, reproducibility comparison, and clean-room
    installed smokes.
@@ -351,7 +337,6 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-review-implementation` — review FT77 ownership-safe worktree cleanup
-   against `specs/ownership-safe-worktree-cleanup.md`.
-2. `/bench-shape-idea` — specify FT78, oracle-bound gate verdicts.
-3. `/bench-shape-idea` — specify FT79, lossless shift recovery.
+1. `/bench-shape-idea` — specify FT78, oracle-bound gate verdicts.
+2. `/bench-shape-idea` — specify FT79, lossless shift recovery.
+3. `/bench-shape-idea` — specify FT80, static bounded guard discovery.

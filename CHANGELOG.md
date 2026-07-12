@@ -8,6 +8,16 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-12, scope: post-FT77 retirement reconcile).**
+  Removed FT77 after `bench spec history ownership-safe-worktree-cleanup`
+  returned its retirement record at `2f38f1c`; reworded the release-readiness
+  lead and reassessment gate to describe only findings that remain open. The
+  other 19 rows remain current, and the FT6, FT24, FT8, and FT38 triggers remain
+  unmet. IDEAS.md was already empty, so zero ideas drained, and the journal had
+  zero open entries, so there were no verdicts. The previous run promoted no
+  rows, and the existing FT65 and FT66 promotion-build records remain present.
+  The refreshed sequence is FT78, FT79, then FT80 through `/bench-shape-idea`.
+
 - **Learnings run (2026-07-12, scope: post-FT77 implementation reconcile).**
   No roadmap row shipped: `bench spec history
   ownership-safe-worktree-cleanup` returned no retirement record. Reworded
