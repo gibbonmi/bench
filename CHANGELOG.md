@@ -8,6 +8,16 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-11, scope: post-FT68 retirement reconcile).** Removed
+  FT68 after `bench spec history structured-phase-conversation` confirmed its
+  retirement at `8071257`. All eight structure rows still reproduce at their
+  recorded limits, and no parked, scheduled, or upstream trigger has fired.
+  IDEAS.md was already empty, so zero ideas drained, and the journal had zero
+  open entries, so there were no verdicts. Previous promotion-build records
+  remain complete: FT65 and FT66 are present. The recommended sequence now runs
+  the structure passes in two priority-preserving waves: FT62/FT64/FT69/FT70,
+  then FT72/FT73/FT74/FT75.
+
 - **Learnings run (2026-07-11, scope: post-FT68 implementation + structure
   reconcile).** No roadmap row shipped: `bench spec history
   structured-phase-conversation` returned no retirement record. Reworded FT68

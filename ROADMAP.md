@@ -10,13 +10,6 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-**FT68 — structured Bench phase conversation.** Finish the implemented and
-reviewed spec `specs/structured-phase-conversation.md`. Its two proportional
-conversation patterns (**Status:**/**Next:** for in-progress, `## Result`/`##
-Details`/`## Next` for completed phases) land once in the shared communication
-rules, with conformance and canary coverage. Its review is resolved, but no
-retirement record exists. Next: `/bench-final-check`.
-
 **FT62 — structure debt: `internal/contract/helper.go` at 441/400.** Grown by
 FT53's RunAtWithTimeout helper. Split along responsibility or propose a
 reviewer grant — check the dir's file-count headroom before choosing
@@ -97,7 +90,7 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-final-check` — FT68 structured phase conversation
-   (`specs/structured-phase-conversation.md`).
-2. `/bench-implement-spec` — FT62/FT64/FT69/FT70/FT72/FT73/FT74/FT75 structure
+1. `/bench-implement-spec` — FT62/FT64/FT69/FT70 structure split-or-grant passes
+   (lighter path, one file per pass).
+2. `/bench-implement-spec` — FT72/FT73/FT74/FT75 structure
    split-or-grant passes (lighter path, one file per pass).
