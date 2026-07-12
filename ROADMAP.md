@@ -23,10 +23,11 @@ compliance assessment.
 
 **FT77 (CRITICAL, next) — ownership-safe worktree cleanup.** Bench-created
 worktrees get one verifiable ownership identity. SessionStart and
-`resume-clean` may remove only an unlocked worktree whose identity matches;
-foreign worktrees are informational. Detached work must have a durable
-Bench-owned recovery ref before any removal. Explicit cleanup is path-scoped,
-dry-run first, and requires affirmative destructive acknowledgement.
+`resume-clean` may act only on a matching non-live assignment with its verified
+Bench lock; Bench unlocks only inside the proven cleanup transaction. Foreign
+worktrees are informational. Detached work must have a durable Bench-owned
+recovery ref before any removal. Explicit cleanup is path-scoped, dry-run first,
+and requires affirmative destructive acknowledgement.
 
 Closure requires black-box branch and detached-unique preservation contracts
 through SessionStart, `resume-clean`, and explicit cleanup, plus a canary that
@@ -34,6 +35,8 @@ goes red when the ownership check is bypassed. Until then, automatic broad
 cleanup remains unsafe.
 
 Sources: `RR:R-01`; `RC:C-01`.
+Decision map: `decisions/ownership-safe-worktree-cleanup.md`. Spec:
+`specs/ownership-safe-worktree-cleanup.md`. Next: `/bench-implement-spec`.
 
 **FT78 (CRITICAL) — oracle-bound, fail-closed gate verdicts.** Version the gate
 cache and bind green reuse to the working-tree hash, fully resolved gate kind
@@ -352,6 +355,8 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — specify FT77, ownership-safe worktree cleanup.
+1. `/bench-implement-spec` — build FT77 from
+   `specs/ownership-safe-worktree-cleanup.md` in a fresh mid-tier session; the
+   three dependent stories keep their approved per-story lines.
 2. `/bench-shape-idea` — specify FT78, oracle-bound gate verdicts.
 3. `/bench-shape-idea` — specify FT79, lossless shift recovery.
