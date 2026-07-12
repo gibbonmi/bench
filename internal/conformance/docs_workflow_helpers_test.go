@@ -2,12 +2,8 @@ package conformance
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
-	"sort"
 	"strings"
-
-	"github.com/gibbonmi/bench/internal/coverage"
 )
 
 const (
@@ -219,79 +215,6 @@ func checkWorkflowAnchors(root string) []string {
 		diags = append(diags, "BENCH-reference.md adapter contract does not document BENCH_MODEL")
 	}
 	return diags
-}
-
-func checkSkillsIndexGenerateVerify(root, kitRoot string) []string {
-	if !exists(filepath.Join(kitRoot, ".bench", "skills-index.sh")) {
-		return nil
-	}
-	tmp, err := os.MkdirTemp("", "bench-skills-index-*")
-	if err != nil {
-		return []string{"skills-index generate/verify contract setup failed: " + err.Error()}
-	}
-	defer os.RemoveAll(tmp)
-	if err := os.MkdirAll(filepath.Join(tmp, ".bench"), 0o755); err != nil {
-		return []string{"skills-index generate/verify contract setup failed: " + err.Error()}
-	}
-	if err := os.MkdirAll(filepath.Join(tmp, ".agents", "skills", "zeta-skill"), 0o755); err != nil {
-		return []string{"skills-index generate/verify contract setup failed: " + err.Error()}
-	}
-	if err := os.WriteFile(filepath.Join(tmp, ".agents", "skills", "zeta-skill", "SKILL.md"), []byte("---\nname: zeta-skill\ndescription: d\nindex: doing zeta things\n---\n"), 0o644); err != nil {
-		return []string{"skills-index generate/verify contract setup failed: " + err.Error()}
-	}
-	if err := os.WriteFile(filepath.Join(tmp, ".bench", "BENCH-reference.md"), []byte("# Reference\n\n<!-- bench:skills-index:start -->\n<!-- bench:skills-index:end -->\n"), 0o644); err != nil {
-		return []string{"skills-index generate/verify contract setup failed: " + err.Error()}
-	}
-	script := filepath.Join(kitRoot, ".bench", "skills-index.sh")
-	if probe := runAt(tmp, "bash", script, "--check"); probe == nil || probe.ExitCode == 0 {
-		return []string{"skills-index generate/verify contract failed: check passed on an empty index block"}
-	}
-	if probe := runAt(tmp, "bash", script, "--write"); probe == nil || probe.ExitCode != 0 {
-		return []string{"skills-index generate/verify contract failed: --write failed"}
-	}
-	generated := readIfExists(filepath.Join(tmp, ".bench", "BENCH-reference.md"))
-	if !strings.Contains(generated, "- doing zeta things \u2192 `.agents/skills/zeta-skill/SKILL.md`") {
-		return []string{"skills-index generate/verify contract failed: --write did not generate the entry from frontmatter"}
-	}
-	if probe := runAt(tmp, "bash", script, "--check"); probe == nil || probe.ExitCode != 0 {
-		return []string{"skills-index generate/verify contract failed: check red right after --write"}
-	}
-	before := readIfExists(filepath.Join(tmp, ".bench", "BENCH-reference.md"))
-	if probe := runAt(tmp, "bash", script, "--write"); probe == nil || probe.ExitCode != 0 {
-		return []string{"skills-index generate/verify contract failed: second --write failed"}
-	}
-	if before != readIfExists(filepath.Join(tmp, ".bench", "BENCH-reference.md")) {
-		return []string{"skills-index generate/verify contract failed: --write is not idempotent"}
-	}
-	return nil
-}
-
-func checkCoverageMaps(root string) []string {
-	specsDir := filepath.Join(root, "specs")
-	if !exists(specsDir) {
-		return nil
-	}
-	matches, _ := filepath.Glob(filepath.Join(specsDir, "*.md"))
-	sort.Strings(matches)
-	var diags []string
-	for _, path := range matches {
-		out, code := coverage.Command([]string{"--check", path})
-		if code == 0 {
-			continue
-		}
-		if strings.TrimSpace(out) == "" {
-			diags = append(diags, fmt.Sprintf("%s coverage --check failed (exit %d) with no message", slashRel(root, path), code))
-			continue
-		}
-		for _, line := range strings.Split(strings.TrimRight(out, "\n"), "\n") {
-			diags = append(diags, strings.TrimPrefix(line, "error: "))
-		}
-	}
-	return diags
-}
-
-func collapseSpace(text string) string {
-	return strings.Join(strings.Fields(text), " ")
 }
 
 func checkStructuredPhaseContract(sharedRules string) []string {
