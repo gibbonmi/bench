@@ -8,6 +8,15 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-11, scope: clean-state reconcile).** Verified all six
+  roadmap rows against the authoritative snapshot; none shipped or needed
+  rewording. FT71, FT6, and FT58 still lack their evidence triggers, FT24
+  remains upstream-blocked, and the dated FT38 and FT8 revisits are not yet
+  actionable. IDEAS.md was already empty, so zero ideas drained, and the
+  journal had zero open entries, so there were no verdicts. Previous
+  promotion-build records remain complete: FT65 and FT66 are present. The
+  refreshed recommended sequence remains the dated FT38 and FT8 revisits.
+
 - **Learnings run (2026-07-11, scope: post-FT72–FT75 reconcile).** Removed
   FT72, FT73, FT74, and FT75 after their responsibility splits shipped; the
   authoritative structure snapshot no longer reports any of their recorded
