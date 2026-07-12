@@ -101,6 +101,9 @@ coverage map; a class skipped here returns as a regression.
 - invocation through a symlink rather than the real path
 - invocation through every shipped surface: real kit CLI, linked-repo by-path
   CLI, hooks, and adapters must all reach the same routed implementation
+- destructive worktree state: foreign or identity-mismatched registrations, reused
+  paths, the primary checkout, ignored residuals, dirty nested repositories, and
+  plan/apply drift all fail closed without losing recovery state
 - interrupt (SIGINT) mid-loop: leftover scratch state, leases, worktrees
 - re-run idempotency: relink, reused worktree, second `init`
 - cwd deeper than the repo root when the command assumes root

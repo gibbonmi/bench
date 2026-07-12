@@ -1,0 +1,3 @@
+# Worktree cleanup requires verifiable ownership and preservation
+
+Bench owns worktree lifecycle through an immutable Git-private ownership marker, a separate assignment record, a dedicated branch, and a protective Git lock; every harness routes creation and release through the same deterministic core. Automatic cleanup acts only on a matching, non-live, landed assignment, anchors Git-visible changes under durable recovery refs before unlock, and retains foreign, ambiguous, ignored-residual, or unrepresentable state. Explicit cleanup uses an exact-path plan/apply fingerprint, with ignored deletion separately bound, because branch and path conventions and non-blocking harness callbacks cannot prove ownership or preservation.
