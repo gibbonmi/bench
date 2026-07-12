@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
@@ -76,7 +77,16 @@ func claudeRemove(stdin io.Reader, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "bench worktree-hook remove: event requires session_id and worktree_path")
 		return 1
 	}
-	registrations, err := git.Worktrees(event.WorktreePath)
+	repositoryHint := os.Getenv("CLAUDE_PROJECT_DIR")
+	if repositoryHint == "" {
+		repositoryHint = event.WorktreePath
+	}
+	root, err := git.RootAt(repositoryHint)
+	if err != nil {
+		fmt.Fprintf(stderr, "bench worktree-hook remove: repository unavailable: %v\n", err)
+		return 1
+	}
+	registrations, err := git.Worktrees(root)
 	if err != nil || len(registrations) == 0 {
 		fmt.Fprintf(stderr, "bench worktree-hook remove: worktree registration unavailable: %v\n", err)
 		return 1
@@ -85,9 +95,13 @@ func claudeRemove(stdin io.Reader, stderr io.Writer) int {
 }
 
 func decodeEvent(stdin io.Reader, dst any) error {
-	data, err := io.ReadAll(io.LimitReader(stdin, 1<<20))
+	const maxEventBytes = 1 << 20
+	data, err := io.ReadAll(io.LimitReader(stdin, maxEventBytes+1))
 	if err != nil {
 		return err
+	}
+	if len(data) > maxEventBytes {
+		return fmt.Errorf("event exceeds %d-byte limit", maxEventBytes)
 	}
 	if len(strings.TrimSpace(string(data))) == 0 {
 		return fmt.Errorf("empty input")
