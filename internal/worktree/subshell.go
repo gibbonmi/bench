@@ -208,7 +208,7 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 		}
 	}
 	plan.landed = landed
-	if plan.Action != ActionRetain && (plan.Tracked != "clean" || registration.Detached) {
+	if plan.Action != ActionRetain && (plan.Tracked != "clean" || registration.Detached || plan.assignment != nil && len(plan.assignment.Recovery) > 0) {
 		plan.Action = ActionRecoverRemove
 		if plan.owned && plan.assignment != nil {
 			if len(plan.assignment.Recovery) > 0 {
