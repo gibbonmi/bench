@@ -7,8 +7,6 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-
-	"github.com/gibbonmi/bench/internal/coverage"
 )
 
 func checkSkillsIndexAndCommandAdapters(root string) []string {
@@ -206,34 +204,6 @@ func checkSkillsIndexGenerateVerify(root, kitRoot string) []string {
 		return []string{"skills-index generate/verify contract failed: --write is not idempotent"}
 	}
 	return nil
-}
-
-func checkCoverageMaps(root string) []string {
-	specsDir := filepath.Join(root, "specs")
-	if !exists(specsDir) {
-		return nil
-	}
-	matches, _ := filepath.Glob(filepath.Join(specsDir, "*.md"))
-	sort.Strings(matches)
-	var diags []string
-	for _, path := range matches {
-		out, code := coverage.Command([]string{"--check", path})
-		if code == 0 {
-			continue
-		}
-		if strings.TrimSpace(out) == "" {
-			diags = append(diags, fmt.Sprintf("%s coverage --check failed (exit %d) with no message", slashRel(root, path), code))
-			continue
-		}
-		for _, line := range strings.Split(strings.TrimRight(out, "\n"), "\n") {
-			diags = append(diags, strings.TrimPrefix(line, "error: "))
-		}
-	}
-	return diags
-}
-
-func collapseSpace(text string) string {
-	return strings.Join(strings.Fields(text), " ")
 }
 
 func markerBlock(text, start, end string) ([]string, bool) {

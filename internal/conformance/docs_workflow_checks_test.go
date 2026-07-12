@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/coverage"
 )
 
 func checkDocsCurrencyAndWorkflow(root, kitRoot string) []string {
@@ -21,6 +23,30 @@ func checkDocsCurrencyAndWorkflow(root, kitRoot string) []string {
 	diags = append(diags, checkWorkflowAnchors(root)...)
 	diags = append(diags, checkSkillsIndexGenerateVerify(root, kitRoot)...)
 	diags = append(diags, checkCoverageMaps(root)...)
+	return diags
+}
+
+func checkCoverageMaps(root string) []string {
+	specsDir := filepath.Join(root, "specs")
+	if !exists(specsDir) {
+		return nil
+	}
+	matches, _ := filepath.Glob(filepath.Join(specsDir, "*.md"))
+	sort.Strings(matches)
+	var diags []string
+	for _, path := range matches {
+		out, code := coverage.Command([]string{"--check", path})
+		if code == 0 {
+			continue
+		}
+		if strings.TrimSpace(out) == "" {
+			diags = append(diags, fmt.Sprintf("%s coverage --check failed (exit %d) with no message", slashRel(root, path), code))
+			continue
+		}
+		for _, line := range strings.Split(strings.TrimRight(out, "\n"), "\n") {
+			diags = append(diags, strings.TrimPrefix(line, "error: "))
+		}
+	}
 	return diags
 }
 

@@ -370,3 +370,7 @@ func structuredPhaseClauseIsNegated(body string) bool {
 	}
 	return false
 }
+
+func collapseSpace(text string) string {
+	return strings.Join(strings.Fields(text), " ")
+}
