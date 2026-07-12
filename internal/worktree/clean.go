@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/toon"
 	"io"
 	"os"
 	"os/exec"
@@ -368,7 +369,7 @@ func recoveryInvocationError(stdout io.Writer) int {
 	_ = renderRecovery(stdout, RecoveryPlan{Ref: "unknown", Root: "unknown", Payloads: "none", Landed: "unknown", Action: RecoveryError, Fingerprint: "none", Detail: "invalid invocation; run bench worktree recovery <ref> [--apply <fingerprint>]"})
 	return 2
 }
-func RecoveryCommand(root string, args []string, stdout, stderr io.Writer) int {
+func RecoveryCommand(args []string, stdout, stderr io.Writer) int {
 	if len(args) != 1 && !(len(args) == 3 && args[1] == "--apply") {
 		return recoveryInvocationError(stdout)
 	}
@@ -379,6 +380,11 @@ func RecoveryCommand(root string, args []string, stdout, stderr io.Writer) int {
 		if err != nil || len(decoded) != sha256.Size || fingerprint != strings.ToLower(fingerprint) {
 			return recoveryInvocationError(stdout)
 		}
+	}
+	root, err := git.Root()
+	if err != nil {
+		fmt.Fprintln(stderr, toon.NotInRepo())
+		return 1
 	}
 	plan, err := PlanRecovery(root, ref)
 	if err == nil && fingerprint != "" {

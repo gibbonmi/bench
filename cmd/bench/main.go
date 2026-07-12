@@ -322,12 +322,7 @@ func run(args []string, stdout, stderr *os.File) int {
 			return worktree.CleanCommand(args[2:], stdout, stderr)
 		}
 		if len(args) > 1 && args[1] == "recovery" {
-			root, err := git.Root()
-			if err != nil {
-				fmt.Fprintln(stderr, toon.NotInRepo())
-				return 1
-			}
-			return worktree.RecoveryCommand(root, args[2:], stdout, stderr)
+			return worktree.RecoveryCommand(args[2:], stdout, stderr)
 		}
 		return worktree.Subshell(args[1:], os.Stdin, stdout, stderr)
 	case "resume-clean":

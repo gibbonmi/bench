@@ -154,6 +154,13 @@ func checkGoCore(root string) []string {
 			diags = append(diags, "go test failed")
 		}
 	}
+	const cleanupRaceTest = "TestConcurrentCleanupRecordsOneTransaction"
+	race := runAtCleanEnv(root, "go", "test", "-race", "-count=1", "-v", "./internal/worktree", "-run", "^"+cleanupRaceTest+"$")
+	if race == nil || race.ExitCode != 0 {
+		diags = append(diags, "worktree cleanup race test failed")
+	} else if !strings.Contains(race.Stdout, "=== RUN   "+cleanupRaceTest) {
+		diags = append(diags, "worktree cleanup race test did not run")
+	}
 	if exists(filepath.Join(root, "scripts", "platforms.json")) && exists(buildHelper) {
 		matrix, err := platformMatrix(filepath.Join(root, "scripts", "platforms.json"))
 		if err != nil {

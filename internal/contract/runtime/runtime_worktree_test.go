@@ -684,6 +684,14 @@ func testRuntimeWorktreeCleanFromPoolCwd(t *testing.T) {
 }
 
 func testRuntimeWorktreeRejectsUnknownArgs(t *testing.T) {
+	wantRecovery := "recovery_cleanup[1]{ref,root,payloads,landed,action,fingerprint,detail}:\n  unknown,unknown,none,unknown,error,none,\"invalid invocation; run bench worktree recovery <ref> [--apply <fingerprint>]\"\n"
+	noRepo := contract.NewFixture(t, contract.WithNoRepo())
+	outside := noRepo.Bench("worktree", "recovery")
+	outside.RequireExit(2)
+	if outside.Stdout != wantRecovery || outside.Stderr != "" {
+		t.Fatalf("outside-repository recovery usage streams = stdout %q stderr %q", outside.Stdout, outside.Stderr)
+	}
+
 	f := onMainFixture(t)
 	branch := "worktree-same-prefix-sibling"
 	registeredBranch := "worktree-registered-sibling"
@@ -700,7 +708,6 @@ func testRuntimeWorktreeRejectsUnknownArgs(t *testing.T) {
 			t.Fatalf("usage streams = stdout %q stderr %q", out.Stdout, out.Stderr)
 		}
 	}
-	wantRecovery := "recovery_cleanup[1]{ref,root,payloads,landed,action,fingerprint,detail}:\n  unknown,unknown,none,unknown,error,none,\"invalid invocation; run bench worktree recovery <ref> [--apply <fingerprint>]\"\n"
 	for _, args := range [][]string{{"worktree", "recovery"}, {"worktree", "recovery", "one", "two"}, {"worktree", "recovery", "ref", "--apply"}, {"worktree", "recovery", "ref", "--apply", "bad"}} {
 		out := f.Bench(args...)
 		out.RequireExit(2)
