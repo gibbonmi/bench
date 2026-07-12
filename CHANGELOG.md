@@ -8,6 +8,19 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-12, scope: post-FT77 implementation reconcile).**
+  No roadmap row shipped: `bench spec history
+  ownership-safe-worktree-cleanup` returned no retirement record. Reworded
+  FT77 from implementation to semantic review because its spec is implemented
+  on the default branch; whether a clean semantic review already happened is
+  the batch's veto surface because a finding-free review leaves no artifact.
+  The other 19 rows remain current, and the FT6, FT24, FT8, and FT38 triggers
+  remain unmet. IDEAS.md was already empty, so zero ideas drained, and the
+  journal had zero open entries, so there were no verdicts. The previous run
+  promoted no rows, and the existing FT65 and FT66 promotion-build records
+  remain present. The refreshed sequence is FT77 semantic review, then FT78
+  and FT79 through `/bench-shape-idea`.
+
 - **Learnings run (2026-07-12, scope: release-readiness roadmap reconcile).**
   Reworded the release-status lead so its NO-GO decision no longer masquerades
   as a feature row, restoring schema parsing without changing the decision.
