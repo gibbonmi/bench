@@ -8,6 +8,19 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-11, scope: post-FT68 implementation + structure
+  reconcile).** No roadmap row shipped: `bench spec history
+  structured-phase-conversation` returned no retirement record. Reworded FT68
+  from implementation to final check because its implementation and semantic
+  review are complete, and added FT75 for the untracked
+  `internal/conformance/docs_workflow_helpers_test.go` structure violation at
+  449/400. The seven existing structure rows still reproduce at their recorded
+  limits; no parked, scheduled, or upstream trigger has fired. IDEAS.md was
+  already empty, so zero ideas drained, and the journal had zero open entries,
+  so there were no verdicts. Previous promotion-build records remain complete:
+  FT65 and FT66 are present. The recommended sequence is now FT68 final check,
+  then the eight structure passes.
+
 - **Learnings run (2026-07-11, scope: post-retirement + structure reconcile).**
   Removed FT67 after `bench spec history mandatory-implementation-delegation`
   confirmed its retirement at `3da2e7d`; FT68 remains staged. Added FT72
