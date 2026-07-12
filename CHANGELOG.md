@@ -8,6 +8,17 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-12, scope: release-readiness roadmap reconcile).**
+  Reworded the release-status lead so its NO-GO decision no longer masquerades
+  as a feature row, restoring schema parsing without changing the decision.
+  Verified all 20 roadmap rows against the authoritative snapshot; none has a
+  shipped spec or history record, and the FT6, FT24, FT8, and FT38 triggers
+  remain unmet. IDEAS.md was already empty, so zero ideas drained, and the
+  journal had zero open entries, so there were no verdicts. The previous run
+  promoted no rows, and the existing FT65 and FT66 promotion-build records
+  remain present. The refreshed sequence remains FT77, FT78, then FT79 through
+  `/bench-shape-idea`.
+
 - **Learnings run (2026-07-11, scope: clean-state reconcile).** Verified all six
   roadmap rows against the authoritative snapshot; none shipped or needed
   rewording. FT71, FT6, and FT58 still lack their evidence triggers, FT24

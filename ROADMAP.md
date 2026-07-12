@@ -10,7 +10,8 @@ stay outside the ambient check.
 
 ## Release-readiness status
 
-**NO-GO** for deployment into other projects, public npm release, or bank use.
+Deployment remains **NO-GO** for other projects, public npm release, and bank
+use.
 The 2026-07-11 release-readiness and repository-controlled compliance
 assessments are evidence snapshots; this roadmap is the execution source for
 their active findings. Each of the 53 release-readiness findings and 17
@@ -353,5 +354,4 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 1. `/bench-shape-idea` — specify FT77, ownership-safe worktree cleanup.
 2. `/bench-shape-idea` — specify FT78, oracle-bound gate verdicts.
-3. `/bench-shape-idea` — specify FT79, lossless shift recovery and truthful
-   result states.
+3. `/bench-shape-idea` — specify FT79, lossless shift recovery.
