@@ -10,32 +10,10 @@ import (
 	"github.com/gibbonmi/bench/internal/coverage"
 )
 
-var structuredPhaseRuleChecks = []struct {
-	needle                string
-	droppedDiagnostic     string
-	unavailableDiagnostic string
-}{
-	{
-		"A substantial in-progress Bench phase update uses compact bold **Status:** and **Next:** labels for meaningful intermediate state and continued work.",
-		".bench/BENCH.md dropped the structured Bench phase progress labels (**Status:** and **Next:**)",
-		".bench/BENCH.md cannot verify structured Bench phase progress labels because shared rules are missing or empty",
-	},
-	{
-		"A phase exit leads with `## Result`, uses `## Details` only when material support helps, and uses `## Next` for the exact remaining harness-native action.",
-		".bench/BENCH.md dropped the structured Bench phase exit pattern (`## Result`, optional `## Details`, and `## Next`)",
-		".bench/BENCH.md cannot verify structured Bench phase exit pattern because shared rules are missing or empty",
-	},
-	{
-		"Omit empty progress groups and exit sections instead of printing placeholders.",
-		".bench/BENCH.md dropped the structured Bench phase empty-section omission rule",
-		".bench/BENCH.md cannot verify structured Bench phase empty-section omission rule because shared rules are missing or empty",
-	},
-	{
-		"Keep related sentences together; use bullets or tables only for genuinely parallel facts.",
-		".bench/BENCH.md dropped the structured Bench phase cohesion and list-restraint rule",
-		".bench/BENCH.md cannot verify structured Bench phase cohesion and list-restraint rule because shared rules are missing or empty",
-	},
-}
+const (
+	structuredPhaseDeclaration = "- **Structured Bench phase conversation:**"
+	structuredPhaseUnavailable = ".bench/BENCH.md cannot verify the structured Bench phase contract because shared rules are missing or empty"
+)
 
 func checkWorkflowAnchors(root string) []string {
 	var diags []string
@@ -142,16 +120,7 @@ func checkWorkflowAnchors(root string) []string {
 			diags = append(diags, diag)
 		}
 	}
-	sharedRules := collapseSpace(readIfExists(filepath.Join(root, ".bench", "BENCH.md")))
-	for _, check := range structuredPhaseRuleChecks {
-		if sharedRules == "" {
-			diags = append(diags, check.unavailableDiagnostic)
-			continue
-		}
-		if !strings.Contains(sharedRules, check.needle) {
-			diags = append(diags, check.droppedDiagnostic)
-		}
-	}
+	diags = append(diags, checkStructuredPhaseContract(readIfExists(filepath.Join(root, ".bench", "BENCH.md")))...)
 
 	requireCollapsed(".agents/commands/bench-implement-spec.md", "apply `craft-seams`' split-or-grant rule",
 		".agents/commands/bench-implement-spec.md dropped the craft-seams split-or-grant pointer")
@@ -323,4 +292,158 @@ func checkCoverageMaps(root string) []string {
 
 func collapseSpace(text string) string {
 	return strings.Join(strings.Fields(text), " ")
+}
+
+func checkStructuredPhaseContract(sharedRules string) []string {
+	if strings.TrimSpace(sharedRules) == "" {
+		return []string{structuredPhaseUnavailable}
+	}
+	section := markdownH2Section(stripHTMLComments(sharedRules), "How to talk to me")
+	if section == "" {
+		return []string{".bench/BENCH.md dropped the structured Bench phase contract from the active How to talk to me section"}
+	}
+
+	lines := strings.Split(section, "\n")
+	start := -1
+	for i, line := range lines {
+		if strings.HasPrefix(line, structuredPhaseDeclaration) {
+			start = i
+			break
+		}
+	}
+	if start < 0 {
+		return []string{".bench/BENCH.md dropped the structured Bench phase contract declaration from the active How to talk to me section"}
+	}
+	declarationBody := strings.TrimSpace(strings.TrimPrefix(lines[start], structuredPhaseDeclaration))
+	if declarationBody == "" || structuredPhaseClauseIsNegated(declarationBody) {
+		return []string{".bench/BENCH.md negated or emptied the structured Bench phase contract declaration in the active How to talk to me section"}
+	}
+
+	end := len(lines)
+	for i := start + 1; i < len(lines); i++ {
+		if strings.HasPrefix(lines[i], "- ") {
+			end = i
+			break
+		}
+	}
+	block := lines[start:end]
+	declared := structuredPhaseClauseNames(block)
+	if len(declared) == 0 {
+		return []string{".bench/BENCH.md structured Bench phase contract declares no named clauses"}
+	}
+	bodies, bodyDiags := structuredPhaseClauseBodies(block)
+	diags := append([]string(nil), bodyDiags...)
+	seen := map[string]bool{}
+	for _, name := range declared {
+		if seen[name] {
+			diags = append(diags, fmt.Sprintf(".bench/BENCH.md structured Bench phase contract declares clause %q more than once", name))
+			continue
+		}
+		seen[name] = true
+		body := strings.TrimSpace(bodies[name])
+		if body == "" || structuredPhaseClauseIsNegated(body) {
+			diags = append(diags, fmt.Sprintf(".bench/BENCH.md dropped the structured Bench phase %s clause", name))
+		}
+	}
+	for name := range bodies {
+		if !seen[name] {
+			diags = append(diags, fmt.Sprintf(".bench/BENCH.md structured Bench phase clause %q is not named by its contract declaration", name))
+		}
+	}
+	return diags
+}
+
+func markdownH2Section(text, title string) string {
+	lines := strings.Split(text, "\n")
+	heading := "## " + title
+	start := -1
+	for i, line := range lines {
+		if strings.TrimSpace(line) == heading {
+			start = i + 1
+			continue
+		}
+		if start >= 0 && strings.HasPrefix(line, "## ") {
+			return strings.Join(lines[start:i], "\n")
+		}
+	}
+	if start < 0 {
+		return ""
+	}
+	return strings.Join(lines[start:], "\n")
+}
+
+func stripHTMLComments(text string) string {
+	for {
+		start := strings.Index(text, "<!--")
+		if start < 0 {
+			return text
+		}
+		end := strings.Index(text[start+4:], "-->")
+		if end < 0 {
+			return text[:start]
+		}
+		text = text[:start] + text[start+4+end+3:]
+	}
+}
+
+func structuredPhaseClauseNames(block []string) []string {
+	var names []string
+	for _, line := range block[1:] {
+		if strings.HasPrefix(line, "  - **") {
+			break
+		}
+		for {
+			start := strings.Index(line, "`")
+			if start < 0 {
+				break
+			}
+			line = line[start+1:]
+			end := strings.Index(line, "`")
+			if end < 0 {
+				break
+			}
+			name := strings.ToLower(strings.TrimSpace(line[:end]))
+			if name != "" {
+				names = append(names, name)
+			}
+			line = line[end+1:]
+		}
+	}
+	return names
+}
+
+func structuredPhaseClauseBodies(block []string) (map[string]string, []string) {
+	bodies := map[string]string{}
+	var diags []string
+	current := ""
+	for _, line := range block[1:] {
+		if strings.HasPrefix(line, "  - **") {
+			rest := strings.TrimPrefix(line, "  - **")
+			labelEnd := strings.Index(rest, ":**")
+			if labelEnd < 0 {
+				current = ""
+				continue
+			}
+			current = strings.ToLower(strings.TrimSpace(rest[:labelEnd]))
+			if _, exists := bodies[current]; exists {
+				diags = append(diags, fmt.Sprintf(".bench/BENCH.md structured Bench phase clause %q appears more than once", current))
+			}
+			bodies[current] = strings.TrimSpace(rest[labelEnd+3:])
+			continue
+		}
+		if current != "" && strings.HasPrefix(line, "    ") {
+			bodies[current] = strings.TrimSpace(bodies[current] + " " + strings.TrimSpace(line))
+		}
+	}
+	return bodies, diags
+}
+
+func structuredPhaseClauseIsNegated(body string) bool {
+	lower := strings.ToLower(strings.TrimSpace(body))
+	for _, prefix := range []string{"do not ", "don't ", "never ", "not ", "no "} {
+		if strings.HasPrefix(lower, prefix) {
+			return true
+		}
+	}
+	return false
 }

@@ -91,8 +91,9 @@ n/a — the grill left no unresolved build-shaping fog.
    continue to own how delegates are charged, isolated, verified, and routed. Slice
    two is owned once by the shared conversational-output rules; individual phase
    commands continue to own handoff content, not formatting. Harness adapters remain
-   thin consumers of the canonical command and shared rules. Root conformance and
-   canary fixtures own regression detection for both guidance contracts.
+   thin consumers when their session bootstrap loads the canonical command and shared
+   rules. Root conformance and canary fixtures own regression detection for both
+   guidance contracts.
 2. **Contracts.** For a spec-backed implementation, delegation occurs before the
    first edit: one write subagent per independent slice in parallel, dependent slices
    sequentially, or the whole atomic build to one isolated write subagent. A
@@ -101,7 +102,9 @@ n/a — the grill left no unresolved build-shaping fog.
    and exactly how to invoke the same phase next. Substantial phase progress renders
    non-empty **Status** and **Next** groups; exit handoffs render non-empty `Result`,
    `Details`, and `Next` sections, with cohesive prose and exact harness-native phase
-   invocations.
+   invocations. The conversation contract applies to sessions that load Bench's
+   shared rules; safe-link continues to preserve a project-owned bootstrap that does
+   not import them.
 3. **Deep vs thin.** The implementation phase hides the mandatory venue decision
    behind one phase contract; delegation and line skills remain the deep how-to
    modules. The shared communication section is the single deep source for rendering;
@@ -110,9 +113,10 @@ n/a — the grill left no unresolved build-shaping fog.
 4. **Black-box assertables.** Root conformance can assert that the canonical
    implementation phase requires a genuine write subagent for spec-backed work,
    preserves the lighter-path exception, and contains the stop-with-explicit-resume
-   route. It can assert that the shared communication source carries both rendering
-   patterns and the omit-empty/cohesive-prose constraints. Targeted canaries prove
-   each check bites when its anchor disappears. Fresh-session dogfood can observe a
+   route. It can assert that the active shared communication source declares a
+   non-empty clause for each rendering and cohesion concern without copying those
+   clauses into enforcement. Targeted canaries prove a declared clause bites when it
+   disappears. Fresh-session dogfood can observe a
    spec-backed implementation spawning the required write subagent and can inspect
    phase progress and exit handoffs; the gate cannot honestly prove a historical
    spawn event.
@@ -126,8 +130,10 @@ n/a — the grill left no unresolved build-shaping fog.
    handling are n/a because neither slice introduces a shell input surface. Missing
    or empty canonical guidance is owned by root conformance and the canary fixtures.
    A missing subagent facility is owned by the implementation phase's pre-edit stop
-   route. Every shipped harness surface is owned through its thin adapter reading the
-   same canonical command and shared rules. Re-entry after a stop is state-free;
+   route. Every shipped harness session that loads Bench's shared rules is owned
+   through its thin adapter reading the same canonical command and shared rules. A
+   preserved project-owned bootstrap that does not load those rules is outside the
+   conversational guidance claim. Re-entry after a stop is state-free;
    worktree reuse and interrupted delegate cleanup remain with existing delegation
    and worktree contracts.
 7. **Uncertainty flags.** None. The reviewer accepted portable, gate-pinned generation

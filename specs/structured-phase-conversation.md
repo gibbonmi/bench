@@ -36,8 +36,9 @@ conversation.
 1. As a reviewer following a substantial Bench phase run, I want progress grouped
    under compact **Status:** and **Next:** labels, so that I can see what is true now
    and what the agent will do without reading an unstructured update. Line:
-   `gpt-5.6-sol` / high. Shared platform guidance steers every future phase session,
-   so the leverage override routes this prose to the top tier.
+   `gpt-5.6-sol` / high. Shared platform guidance steers every phase session that
+   loads Bench's shared rules, so the leverage override routes this prose to the top
+   tier.
 
 2. As a reviewer receiving a Bench phase handoff, I want it led by `## Result` and
    organized with non-empty `## Details` and `## Next` sections as applicable, so
@@ -59,15 +60,19 @@ conversation.
 
 ## Implementation decisions
 
-The shared communication section owns rendering once for every Bench phase. Phase
-commands remain responsible only for content such as verdict counts, coverage state,
-or recommended commands. Harness adapters add no output policy, and no phase command
-receives a copied template.
+The shared communication section owns rendering once for every Bench phase session
+that loads Bench's shared rules. Phase commands remain responsible only for content
+such as verdict counts, coverage state, or recommended commands. Harness adapters add
+no output policy, and no phase command receives a copied template. The safe-link
+contract still preserves project-owned bootstrap files; a session whose preserved
+bootstrap does not import Bench's shared rules is outside this guidance contract.
 
 A **substantial progress update** is one that reports a meaningful intermediate
 result and continued work. It renders compact bold **Status:** and **Next:** labels,
 each followed by cohesive prose. Routine one-sentence acknowledgements do not need a
-template, and a phase that is finished uses the exit form instead.
+template. A short update that carries meaningful state and continued work is still
+substantial regardless of sentence count, and a phase that is finished uses the exit
+form instead.
 
 A phase exit renders:
 
@@ -89,20 +94,23 @@ as specs, decision maps, ADRs, reviews, or changelog entries. Ordinary conversat
 outside a Bench phase continues to use the general communication rules without a
 mandatory template.
 
-Root conformance extends the existing workflow-guidance anchor checker with four
-distinct diagnostics: missing progress labels; missing exit headings; missing
-omit-empty behavior; and missing cohesive-prose/list restraint. The checker reads the
-shared rules directly, preserving one source per fact. A targeted workflow-guidance
-canary supplies a shared-rules fixture with the rendering contract removed and
-expects the progress-contract diagnostic; the existing fixture registry and bite
-inventory own its discovery.
+Root conformance extends the existing workflow-guidance anchor checker with a named
+clause declaration for progress labels, exit headings, empty-section omission, and
+cohesive-prose/list restraint. The checker derives both the clause inventory and its
+cardinality from the active communication guidance, preserving one source per fact,
+and emits an attributable diagnostic when a declared clause is absent or empty. A
+targeted workflow-guidance canary supplies a shared-rules fixture with the declared
+progress clause removed; the existing fixture registry and bite inventory own its
+discovery.
 
-After a green gate, run fresh-session dogfood in two enumerated classes: one
-tool-using phase that emits at least one substantial progress update, and one compact
-phase that reaches an exit with little supporting detail. Confirm that the first uses
-the labeled progress form, the second omits an unnecessary `Details` section, both
-lead with their result, and any next command is harness-native. Readability is a
-reviewer judgment; the gate only proves the shared instruction remains present.
+After a green gate, run fresh-session dogfood in three enumerated classes: one
+tool-using phase that emits at least one substantial progress update, one compact
+phase that reaches an exit with little supporting detail, and one short update that
+contains both meaningful intermediate state and continued work. Confirm that the
+first and third use the labeled progress form, the second omits an unnecessary
+`Details` section, completed phases lead with their result, and any next command is
+harness-native. Readability is a reviewer judgment; the gate only proves the active
+shared instruction remains structurally present.
 
 ## Testing decisions
 
@@ -111,8 +119,8 @@ reviewer judgment; the gate only proves the shared instruction remains present.
 - The existing workflow-guidance anchor checker is the sole automated seam. It must
   not parse every phase command or create an adapter registry for output formatting.
 - Real conversational quality is verified through fresh-session dogfood across the
-  two representative phase classes. It is explicitly not a machine-parsed transcript
-  contract.
+  three representative phase classes. It is explicitly not a machine-parsed
+  transcript contract.
 - Gate command: `.bench/gate.sh`.
 
 ### Seam diagram
@@ -135,25 +143,26 @@ Fresh-session conversation seam:
     phase state + handoff content  ──▶  [ shared communication contract ]  ──▶  progress / exit
     current harness invocation    ──▶  [                               ]  ──▶  exact next action
                                         ◀ tests attach here: fresh-session dogfood reads
-                                          one progress-heavy and one compact phase response
+                                          progress-heavy, compact-exit, and short
+                                          substantial-update responses
 
 ### Acceptance coverage map
 
 | story | behavior | seam | red signal | why it catches the failure |
 |---|---|---|---|---|
-| 1 | A substantial in-progress Bench phase update groups its meaningful current state and continued action under compact bold **Status:** and **Next:** labels. | workflow-guidance anchor checker | Observed red: `rg -q '\*\*Status:\*\*'` against the current shared rules exits 1; during TDD the new progress anchor must fail with its distinct diagnostic before the rule edit. | Unstructured prose and invented label names both lack the canonical pair, so the checker rejects the cheapest inconsistent rendering. |
-| 2 | A phase exit leads with `## Result`, uses `## Details` only for material support, and uses `## Next` for the exact remaining harness-native action. | workflow-guidance anchor checker | Observed red: `rg -q '## Result'` against the current shared rules exits 1; the new exit-pattern anchor must fail before the headings land. | A generic summary, wrong heading vocabulary, or content-first handoff cannot satisfy the result-led canonical pattern. |
-| 2 | Empty progress groups and exit sections are omitted rather than rendered as placeholders. | workflow-guidance anchor checker | Observed red: `rg -qi 'omit.*empty'` against the current shared rules exits 1; the omit-empty anchor must fail before that behavior is added. | A rigid always-three-sections template is the degenerate structured output; requiring omission distinguishes proportional structure from placeholder noise. |
-| 3 | Related sentences stay together, and bullets or tables are reserved for genuinely parallel facts rather than one item per sentence. | workflow-guidance anchor checker | Observed red: `rg -qi 'related sentences.*together'` against the current shared rules exits 1; the cohesion anchor must fail before the shared rule carries both constraints. | Keyword-only headings can still produce choppy prose; the explicit cohesion and list-restraint clause rejects that cheapest wrong interpretation. |
-| 4 | Four clause classes have distinct root-conformance diagnostics: progress labels, exit headings, empty-section omission, and cohesive prose/list restraint. Missing or empty shared rules fail closed. | root conformance on the real tree and planted fixture | Red-first implementation: add the four anchor checks before editing the shared rules and run `go test -count=1 ./internal/conformance -run '^TestRootConformance$'`; it must fail with the targeted diagnostics. | Distinct diagnostics keep a red attributable and prevent one surviving keyword from masking loss of another contract class. |
+| 1 | A substantial in-progress Bench phase update groups its meaningful current state and continued action under compact bold **Status:** and **Next:** labels. | active shared guidance plus fresh-session conversation | Observed red: `rg -q '\*\*Status:\*\*'` against the pre-change shared rules exits 1; conversational adherence is not TDD-able, so fresh-session dogfood supplies the behavioral verdict. | The red proves the positive instruction was absent; the active named clause prevents a comment or historical quotation from standing in for guidance, and dogfood catches an invented rendering. |
+| 2 | A phase exit leads with `## Result`, uses `## Details` only for material support, and uses `## Next` for the exact remaining harness-native action. | active shared guidance plus fresh-session conversation | Observed red: `rg -q '## Result'` against the pre-change shared rules exits 1; conversational adherence is not TDD-able, so fresh-session dogfood supplies the behavioral verdict. | The active exit clause states the result-led pattern once; the compact-exit dogfood catches content-first or rigid three-section handoffs that structural conformance cannot grade. |
+| 2 | Empty progress groups and exit sections are omitted rather than rendered as placeholders. | active shared guidance plus fresh-session conversation | Observed red: `rg -qi 'omit.*empty'` against the pre-change shared rules exits 1; proportional omission is not TDD-able, so fresh-session dogfood supplies the behavioral verdict. | A rigid always-three-sections template is the degenerate structured output; the compact-exit class distinguishes proportional structure from placeholder noise. |
+| 3 | Related sentences stay together, and bullets or tables are reserved for genuinely parallel facts rather than one item per sentence. | active shared guidance plus fresh-session conversation | Observed red: `rg -qi 'related sentences.*together'` against the pre-change shared rules exits 1; readability is not TDD-able, so fresh-session dogfood supplies the behavioral verdict. | A named cohesion clause keeps the rule active and attributable; the readability pass catches choppy prose that any structural checker would miss. |
+| 4 | The active communication guidance declares the progress, exit, omission, and cohesion clauses once; root conformance derives the inventory and cardinality from that declaration, diagnoses an absent or empty declared clause by name, and fails closed when the shared rules are missing or empty. | root conformance on the real tree and planted fixture | Red-first implementation: add the named-clause check before editing the shared rules and run `go test -count=1 ./internal/conformance -run '^TestRootConformance$'`; it must fail with an attributable diagnostic. | A source-derived inventory removes duplicated guidance and count knowledge while still making a missing declared clause attributable. Scoping the parser to active guidance rejects copies in comments, quotations, negating bullets, or other sections. |
 | 4 | A workflow-guidance canary permanently proves the shared-output check bites. | canary fixture registry and fixture-bite inventory | Red-first implementation: register a planted shared-rules fixture without the progress contract and run `go test -count=1 ./internal/conformance -run '^TestRootConformance$'`; missing EXPECT/bite wiring must fail the fixture contract. | If the anchor is deleted or weakened until the planted rules pass, the known-broken fixture stops biting and turns the canary red. |
-| edge of 1 | Fresh-session dogfood covers exactly two representative classes: a tool-using phase with a substantial progress update and a compact phase exit with no material details. | real phase conversation in a fresh session | Not TDD-able: conversational cohesion is not a portable machine schema; record both rendered responses and the reviewer readability verdict in the synthesis handoff. | The two classes catch both over-structuring and under-structuring: missing labels in ongoing work, and an unnecessary empty or trivial Details section at exit. |
+| edge of 1 | Fresh-session dogfood covers exactly three representative classes: a tool-using phase with a substantial progress update, a compact phase exit with no material details, and a short update containing both meaningful intermediate state and continued work. | real phase conversation in a fresh session | Not TDD-able: conversational cohesion is not a portable machine schema; record all three rendered responses and the reviewer readability verdict in the synthesis handoff. | The three classes catch under-structuring, over-structuring, and the boundary error that treats sentence count rather than informational weight as the exemption. |
 
 **Degenerate-implementation check.** The cheapest wrong edit adds the three exit
 headings everywhere, prints empty placeholders, and turns each sentence into a bullet.
-Rows 2–4 reject that rendering. The cheapest wrong gate checks one keyword without a
-canary; rows 5–6 reject it. The dogfood row catches prose that satisfies every anchor
-but still reads mechanically.
+Rows 2–4 plus the dogfood row reject that rendering. The cheapest wrong gate checks
+one keyword anywhere in the file or hardcodes a second copy of the guidance; rows 5–6
+reject it with an active source-derived declaration and canary.
 
 ### Edge inventory
 
@@ -163,8 +172,9 @@ but still reads mechanically.
 - **Empty/absent details:** covered by story 2's omit-empty row; a compact exit may use
   only `Result` and `Next`, or only `Result` when no action remains.
 - **Boundary values — one-sentence update vs substantial update:** covered by the
-  implementation decision. A routine one-sentence acknowledgement stays untemplated;
-  meaningful intermediate state plus continued work uses **Status:** and **Next:**.
+  third dogfood class. A routine one-sentence acknowledgement stays untemplated; a
+  short update with meaningful intermediate state plus continued work uses
+  **Status:** and **Next:** regardless of sentence count.
 - **Malformed structure — headings present but prose fragmented:** covered by story
   3's cohesion row and the fresh-session readability pass.
 - **Interrupted or partial phase:** covered by the phase's existing stopped-work
@@ -176,9 +186,11 @@ but still reads mechanically.
 - **Hostile environment — harness command vocabulary differs:** covered by the
   existing harness-native recommendation rule, consumed by `Next`; this spec does not
   duplicate its mapping.
-- **Every shipped harness surface:** covered through the single shared communication
-  source loaded by the harness working agreement. Thin command and skill adapters do
-  not restyle output.
+- **Every shipped harness surface that loads Bench's shared rules:** covered through
+  the single shared communication source. Thin command and skill adapters do not
+  restyle output. A project-owned bootstrap that safe-link preserves without a shared
+  rules import is explicitly outside the claim; changing that preservation contract
+  would be a separate adoption decision.
 - **Missing or empty shared rules:** covered by root conformance's required-file
   posture and the four new anchors.
 - **Paths with spaces/globs, control bytes, missing trailing newline, unquoted

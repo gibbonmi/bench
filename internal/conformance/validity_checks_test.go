@@ -314,15 +314,10 @@ func checkSharedRuleSingleSource(root string) []string {
 func TestRunConformanceDistinguishesAbsentAndEmptyInputs(t *testing.T) {
 	root := t.TempDir()
 	runGit(t, root, "init")
-	if got := len(structuredPhaseRuleChecks); got != 4 {
-		t.Fatalf("structured phase rule checks = %d, want four attributable clause classes", got)
-	}
 	assertStructuredPhaseDiags := func(label string, diags []string) {
 		t.Helper()
-		for _, check := range structuredPhaseRuleChecks {
-			if !containsDiagnostic(diags, check.unavailableDiagnostic) {
-				t.Errorf("%s shared rules did not fail closed with %q:\n%s", label, check.unavailableDiagnostic, strings.Join(diags, "\n"))
-			}
+		if !containsDiagnostic(diags, structuredPhaseUnavailable) {
+			t.Errorf("%s shared rules did not fail closed with %q:\n%s", label, structuredPhaseUnavailable, strings.Join(diags, "\n"))
 		}
 	}
 
@@ -348,5 +343,51 @@ func TestRunConformanceDistinguishesAbsentAndEmptyInputs(t *testing.T) {
 	assertStructuredPhaseDiags("empty", empty)
 	if !containsDiagnostic(empty, "lines.env tier unset: BENCH_TIER_TOP has no value") {
 		t.Fatalf("empty lines.env diagnostic missing:\n%s", strings.Join(empty, "\n"))
+	}
+}
+
+func TestStructuredPhaseContractIgnoresInactiveGuidance(t *testing.T) {
+	const activeWithoutProgress = `# Bench Operating Guide
+
+## How to talk to me
+
+- **Structured Bench phase conversation:** Apply the named clauses
+  ` + "`progress`, `exit`, `omission`, and `cohesion`" + ` proportionally.
+  - **Exit:** Lead with the result.
+  - **Omission:** Omit empty sections.
+  - **Cohesion:** Keep related prose together.
+`
+	const progress = "A substantial update uses **Status:** and **Next:** labels."
+	cases := map[string]string{
+		"HTML comment":    "\n<!--   - **Progress:** " + progress + " -->\n\n## Workflow\n",
+		"quotation":       "\n>   - **Progress:** " + progress + "\n\n## Workflow\n",
+		"negated clause":  "\n  - **Progress:** Do not use **Status:** or **Next:** labels.\n\n## Workflow\n",
+		"negating bullet": "\n- Do not follow this obsolete **Progress:** clause: " + progress + "\n\n## Workflow\n",
+		"other section":   "\n## Workflow\n\n  - **Progress:** " + progress + "\n",
+	}
+	for name, decoy := range cases {
+		t.Run(name, func(t *testing.T) {
+			diags := checkStructuredPhaseContract(activeWithoutProgress + decoy)
+			want := ".bench/BENCH.md dropped the structured Bench phase progress clause"
+			if !containsDiagnostic(diags, want) {
+				t.Fatalf("inactive guidance satisfied the progress clause; want %q in diagnostics:\n%s", want, strings.Join(diags, "\n"))
+			}
+		})
+	}
+}
+
+func TestStructuredPhaseContractRejectsNegatedDeclaration(t *testing.T) {
+	guide := `# Bench Operating Guide
+
+## How to talk to me
+
+- **Structured Bench phase conversation:** Do not apply the named clauses
+  ` + "`progress`" + ` proportionally.
+  - **Progress:** Use labels for substantial updates.
+`
+	diags := checkStructuredPhaseContract(guide)
+	want := ".bench/BENCH.md negated or emptied the structured Bench phase contract declaration"
+	if !containsDiagnostic(diags, want) {
+		t.Fatalf("negated declaration stayed active; want %q in diagnostics:\n%s", want, strings.Join(diags, "\n"))
 	}
 }
