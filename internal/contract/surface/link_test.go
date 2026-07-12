@@ -2,6 +2,7 @@ package surface
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"github.com/gibbonmi/bench/internal/contract"
 	"os"
@@ -86,6 +87,9 @@ func testLinkSafeFreshRelink(t *testing.T) {
 	requireLinkFile(t, f, ".bench/lib/resolve-bench.sh")
 	requireLinkFile(t, f, ".bench/hooks/session-start.sh")
 	requireFixtureFileContains(t, f, ".claude/settings.json", "SessionStart", "fresh link .claude/settings.json has no SessionStart wiring")
+	requireExecutable(t, filepath.Join(f.Root, ".bench", "hooks", "worktree-lifecycle.sh"), "fresh link did not install executable worktree lifecycle adapter")
+	requireLinkedClaudeWorktreeExec(t, f, "WorktreeCreate", "create")
+	requireLinkedClaudeWorktreeExec(t, f, "WorktreeRemove", "remove")
 	requireExecutable(t, filepath.Join(f.Root, ".git", "hooks", "pre-push"), "fresh link did not install git pre-push hook")
 	requireFixtureFileContains(t, f, "CLAUDE.md", "@.bench/BENCH.md", "fresh link CLAUDE.md does not import .bench/BENCH.md")
 	requireNotSymlink(t, filepath.Join(f.Root, ".agents", "commands", "bench-implement-spec.md"), "default link mode symlinked portable commands")
@@ -358,6 +362,34 @@ func requireFixtureFileContains(t *testing.T, f contract.Fixture, rel, needle, m
 	data := f.ReadFile(rel)
 	if !strings.Contains(data, needle) {
 		t.Fatalf("%s: missing %q in %s\n%s", msg, needle, rel, data)
+	}
+}
+
+func requireLinkedClaudeWorktreeExec(t *testing.T, f contract.Fixture, event, action string) {
+	t.Helper()
+	var cfg struct {
+		Hooks map[string][]map[string]json.RawMessage `json:"hooks"`
+	}
+	if err := json.Unmarshal([]byte(f.ReadFile(".claude/settings.json")), &cfg); err != nil {
+		t.Fatal(err)
+	}
+	groups := cfg.Hooks[event]
+	if len(groups) != 1 {
+		t.Fatalf("fresh link %s groups = %d, want 1", event, len(groups))
+	}
+	if _, present := groups[0]["matcher"]; present {
+		t.Fatalf("fresh link %s group carries ignored matcher", event)
+	}
+	var hooks []struct {
+		Type, Command string
+		Args          []string
+	}
+	if err := json.Unmarshal(groups[0]["hooks"], &hooks); err != nil {
+		t.Fatal(err)
+	}
+	wantCommand := "${CLAUDE_PROJECT_DIR}/.bench/hooks/worktree-lifecycle.sh"
+	if len(hooks) != 1 || hooks[0].Type != "command" || hooks[0].Command != wantCommand || len(hooks[0].Args) != 1 || hooks[0].Args[0] != action {
+		t.Fatalf("fresh link %s handler = %#v, want exec form %q [%q]", event, hooks, wantCommand, action)
 	}
 }
 

@@ -100,7 +100,7 @@ Driven by hooks and adapters, never typed by sessions — the one enumeration
 (the always-loaded inventory in `.bench/BENCH.md` points here): `bench tree-hash`,
 `bench gate-run`, `bench gate-phases`, `bench guard-git`, `bench resolve-model`,
 `bench check-agent-line`, `bench stop-verdict`, `bench worktree-pool`,
-`bench worktree-lease-file`, `bench resume-clean`.
+`bench worktree-lease-file`, `bench worktree-hook`, `bench resume-clean`.
 
 ## Harness adapter for the shift loop
 

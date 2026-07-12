@@ -23,6 +23,7 @@ func TestAXIGuardsContracts(t *testing.T) {
 	contract.RunParallel(t, "AXI block-dangerous-git core-unreachable manifest contract", testAXIBlockDangerousGitCoreUnreachableManifest)
 	contract.RunParallel(t, "AXI block-dangerous-git linked-worktree classification contract", testAXIBlockDangerousGitLinkedWorktreeClassification)
 	contract.RunParallel(t, "session-start guard-brief injection contract", testSessionStartGuardBriefInjection)
+	contract.RunParallel(t, "session-start resume failure warning contract", testSessionStartSurfacesResumeFailure)
 	contract.RunParallel(t, "session-start never-blocks-outside-repo contract", testSessionStartNeverBlocksOutsideRepo)
 	contract.RunParallel(t, "AXI maps/guards help contract", testAXIMapsGuardsHelp)
 }
@@ -193,22 +194,30 @@ func testSessionStartGuardBriefInjection(t *testing.T) {
 	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\nexit 0\n")
 	f.CommitAll("session start fixture")
 	hook := filepath.Join(f.Root, ".bench", "hooks", "session-start.sh")
-	stale := filepath.Join(t.TempDir(), "stale clean worktree")
-	f.Git("worktree", "add", "-q", "--detach", stale, "HEAD")
+	ordinary := filepath.Join(t.TempDir(), "ordinary foreign worktree")
+	detached := filepath.Join(t.TempDir(), "detached foreign worktree")
+	f.Git("worktree", "add", "-q", "-b", "foreign-session", ordinary, "HEAD")
+	f.Git("worktree", "add", "-q", "--detach", detached, "HEAD")
+	contract.WriteFileAbs(t, filepath.Join(detached, "unique.txt"), "unique\n")
+	contract.RunAt(t, f, detached, nil, "git", "add", "unique.txt").RequireExit(0)
+	contract.RunAt(t, f, detached, nil, "git", "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "unique detached").RequireExit(0)
 
 	out := f.RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, "bash", hook)
 
 	out.RequireExit(0)
 	combined := out.Stdout + out.Stderr
 	out.RequireContains(combined, "full manifests: bench guards")
+	out.RequireContains(combined, "retained foreign=2")
 	resumeAt := strings.Index(combined, "bench resume:")
-	statusAt := strings.Index(combined, "bench:")
+	statusAt := strings.Index(combined, "out-of-pool worktree")
 	guardsAt := strings.Index(combined, "full manifests: bench guards")
 	if resumeAt < 0 || statusAt < 0 || guardsAt < 0 || !(resumeAt < statusAt && statusAt < guardsAt) {
 		t.Fatalf("session-start output order resume=%d status=%d guards=%d:\n%s", resumeAt, statusAt, guardsAt, combined)
 	}
-	if _, err := os.Stat(stale); !os.IsNotExist(err) {
-		t.Fatalf("session-start kept clean stale worktree: %v", err)
+	for _, path := range []string{ordinary, detached} {
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("session-start removed foreign worktree %q: %v", path, err)
+		}
 	}
 	requireGuardsLineMatching(t, combined, `^bench CLI: .*\.bench/bin/bench\.sh \(bench not on PATH; invoke by path`)
 }
@@ -222,6 +231,37 @@ func testSessionStartNeverBlocksOutsideRepo(t *testing.T) {
 	out.RequireExit(0)
 	if out.Stdout != "" || out.Stderr != "" {
 		t.Fatalf("session-start printed outside a repo\nstdout:\n%s\nstderr:\n%s", out.Stdout, out.Stderr)
+	}
+}
+
+func testSessionStartSurfacesResumeFailure(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteExecutable(".bench/bin/bench.sh", `#!/usr/bin/env bash
+case "${1:-}" in
+  resume-clean)
+    printf 'injected resume failure\n' >&2
+    exit 1
+    ;;
+  status)
+    printf 'bench: clean — nothing pending\n'
+    ;;
+  guards)
+    printf 'full manifests: bench guards\n'
+    ;;
+esac
+`)
+	hook := filepath.Join(contract.SubjectRoot(t), ".bench", "hooks", "session-start.sh")
+
+	out := f.RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, "bash", hook)
+
+	out.RequireExit(0)
+	out.RequireContains(out.Stderr, "injected resume failure")
+	out.RequireContains(out.Stderr, "warning: bench session-start: resume-clean failed; inspect retained worktree state")
+	combined := out.Stdout + out.Stderr
+	statusAt := strings.Index(combined, "bench: clean")
+	guardsAt := strings.Index(combined, "full manifests: bench guards")
+	if statusAt < 0 || guardsAt < 0 || statusAt >= guardsAt {
+		t.Fatalf("session-start failure output order status=%d guards=%d:\n%s", statusAt, guardsAt, combined)
 	}
 }
 

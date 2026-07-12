@@ -244,6 +244,7 @@ case "${1-help}" in
   stop-verdict) route_binary "$@" ;;
   worktree-pool) route_binary "$@" ;;
   worktree-lease-file) route_binary "$@" ;;
+  worktree-hook) route_porcelain "$@" ;;
   help|--help|-h) cat <<EOF
 bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench link [copy|symlink]  safely wire the kit into this repo for every harness
@@ -265,8 +266,11 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench doctor [--fix]       report (and repair) the PATH shim under a node version manager
   bench gate                 run the project gate (the oracle)
   bench gate pin             pin HEAD's .bench tree for pre-push verification
-  bench worktree             warm, isolated worktree subshell
-  bench worktree clean       remove clean out-of-pool worktrees after confirmation
+  bench worktree [objective] create an owned worktree subshell and release it on exit
+  bench worktree create --request <id> --label <work>  harness-neutral owned creation
+  bench worktree release --request <id> <path>         harness-neutral safe release
+  bench worktree clean <path> [--apply <fingerprint>]  exact non-interactive cleanup
+  bench worktree recovery <ref> [--apply <fingerprint>] exact recovery-ref retirement
   bench shift "<objective>"  gated loop in a pooled worktree; commit on green
   bench commit -m <msg> <path>...  gate, then commit named paths on green (--spec flips its status)
   bench spec implemented <slug>    flip a spec's Status: staged line to implemented

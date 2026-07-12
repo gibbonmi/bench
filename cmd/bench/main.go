@@ -24,6 +24,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gitguard"
 	"github.com/gibbonmi/bench/internal/guards"
+	"github.com/gibbonmi/bench/internal/harness"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/lines"
@@ -36,6 +37,7 @@ import (
 	"github.com/gibbonmi/bench/internal/status"
 	"github.com/gibbonmi/bench/internal/stophook"
 	"github.com/gibbonmi/bench/internal/structure"
+	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
 
@@ -300,12 +302,38 @@ func run(args []string, stdout, stderr *os.File) int {
 		fmt.Fprintln(stdout, versionLine(version, runtime.GOOS, runtime.GOARCH))
 		return 0
 	case "worktree":
+		if len(args) > 1 && args[1] == "create" {
+			root, err := git.Root()
+			if err != nil {
+				fmt.Fprintln(stderr, toon.NotInRepo())
+				return 1
+			}
+			return worktree.CreateCommand(root, args[2:], stdout, stderr)
+		}
+		if len(args) > 1 && args[1] == "release" {
+			root, err := git.Root()
+			if err != nil {
+				fmt.Fprintln(stderr, toon.NotInRepo())
+				return 1
+			}
+			return worktree.ReleaseCommand(root, args[2:], stdout, stderr)
+		}
 		if len(args) > 1 && args[1] == "clean" {
 			return worktree.CleanCommand(args[2:], stdout, stderr)
+		}
+		if len(args) > 1 && args[1] == "recovery" {
+			root, err := git.Root()
+			if err != nil {
+				fmt.Fprintln(stderr, toon.NotInRepo())
+				return 1
+			}
+			return worktree.RecoveryCommand(root, args[2:], stdout, stderr)
 		}
 		return worktree.Subshell(args[1:], os.Stdin, stdout, stderr)
 	case "resume-clean":
 		return worktree.ResumeCleanCommand(args[1:], stdout, stderr)
+	case "worktree-hook":
+		return harness.WorktreeCommand(args[1:], os.Stdin, stdout, stderr)
 	case "shift":
 		return shift.Command(args[1:], os.Stdin, stdout, stderr)
 	case "commit":

@@ -1,6 +1,6 @@
 # Ownership-safe worktree cleanup
 
-Status: staged
+Status: implemented
 
 ## Problem
 

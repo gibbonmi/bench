@@ -1,170 +1,400 @@
 package worktree
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"sort"
+	"strconv"
 	"strings"
-
-	"github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/intent"
-	"github.com/gibbonmi/bench/internal/toon"
 )
 
-func CleanCommand(args []string, stdout, stderr io.Writer) int {
-	return cleanCommand(args, stdout, stderr)
+const recoverySchema = "bench-recovery/v1"
+
+type recoveryManifest struct {
+	Schema string            `json:"schema"`
+	Base   string            `json:"base"`
+	Layers map[string]string `json:"layers"`
+}
+type indexEntry struct {
+	mode, oid, path string
+	stage           int
 }
 
-func cleanCommand(args []string, stdout, stderr io.Writer) int {
-	if len(args) != 0 {
-		fmt.Fprint(stderr, WorktreeUsage())
-		return 2
-	}
-	root, err := git.Root()
+func RetireRecovery(root, ref string) error {
+	plan, err := PlanRecovery(root, ref)
 	if err != nil {
-		fmt.Fprintln(stderr, toon.NotInRepo())
-		return 1
+		return err
 	}
-	// Two independent phases run after the in-repo guard: the branch sweep and the
-	// out-of-pool worktree removal. The command's exit is the higher severity of the
-	// two, so a swept branch never masks a refused worktree and vice versa.
-	sweepExit := sweepDelegateBranches(root, stdout, stderr)
-	worktreeExit := cleanOutOfPoolWorktrees(root, stdout, stderr)
-	exit := worktreeExit
-	if sweepExit > exit {
-		exit = sweepExit
+	if plan.Action != RecoveryRetire {
+		return errors.New(plan.Detail)
 	}
-	if err := intent.Compact(root); err != nil {
-		fmt.Fprintf(stderr, "error: bench worktree clean intent refresh failed: %v\n", err)
-		if exit < 1 {
-			exit = 1
+	_, err = ApplyRecovery(root, ref, plan.Fingerprint)
+	return err
+}
+
+// recoverAssignment writes every Git-visible layer through temporary indexes. It
+// never points HEAD elsewhere and never opens the real index for writing.
+func recoverAssignmentWithFault(root string, assignment intent.Assignment, fault Fault) (intent.Assignment, error) {
+	if len(assignment.Recovery) > 0 {
+		if len(assignment.Recovery) != 1 {
+			return assignment, errors.New("existing recovery metadata is ambiguous")
 		}
+		if err := ensureRecoveryRef(root, assignment, assignment.Recovery[0]); err != nil {
+			return assignment, err
+		}
+		return assignment, nil
 	}
-	return exit
-}
-
-// sweepDelegateBranches deletes every landed worktree-* scratch orphan that no live worktree
-// holds and reports each on stdout; an orphan carrying unique commits is left in place with a
-// hand-inspect note, since a scratch name alone is not proof its work landed. Landedness is
-// LandedInDefault's proof against the default branch (ancestry or patch containment), never a
-// name compare, and the delete is forced so it does not depend on the repo root's HEAD — git's
-// own merged-check for a plain delete is HEAD-relative and would refuse a branch merged into
-// the default branch but not into HEAD.
-//
-// Before any orphan is classified the resolved default branch must resolve to a commit; when it does
-// not, the sweep refuses loudly on stderr, deletes nothing, and returns 1 — the false-empty guard,
-// so an unresolvable default never yields a silent all-clean sweep. The guard is reached only once at
-// least one orphan exists: with no orphan there is no mergedness to compute and so no clean report to
-// falsify, and gating it there keeps `bench worktree clean` usable for worktree removal in a repo
-// whose default branch happens not to resolve. Returns 0 otherwise, whether it deleted, kept, or
-// found no orphans.
-func sweepDelegateBranches(root string, stdout, stderr io.Writer) int {
-	orphans, err := OrphanedDelegateBranches(root)
+	head, err := git.Output("-C", assignment.Worktree, "rev-parse", "HEAD")
 	if err != nil {
-		fmt.Fprintf(stderr, "error: bench worktree clean cannot classify orphan branches: %v\n", err)
-		return 1
+		return assignment, fmt.Errorf("read recovery HEAD: %w", err)
 	}
-	if len(orphans) == 0 {
-		return 0
+	headTree, err := git.Output("-C", assignment.Worktree, "rev-parse", "HEAD^{tree}")
+	if err != nil {
+		return assignment, fmt.Errorf("read recovery base tree: %w", err)
 	}
-	def, ok := git.ResolvedDefault(root)
-	if !ok {
-		fmt.Fprintf(stderr, "error: bench worktree clean cannot resolve the default branch (%s) to a commit; deleting no branches\n", def)
-		return 1
+	admin, err := git.Output("-C", assignment.Worktree, "rev-parse", "--path-format=absolute", "--git-dir")
+	if err != nil {
+		return assignment, err
 	}
-	for _, branch := range orphans {
-		landed, byContent, err := git.LandedInDefault(root, branch, def)
+	layerTrees := map[string]string{}
+	workingTree, err := worktreeTree(assignment.Worktree, admin)
+	if err != nil {
+		return assignment, fmt.Errorf("capture working layer: %w", err)
+	}
+	if workingTree != headTree {
+		layerTrees["working"] = workingTree
+	}
+	entries, conflicted, err := readIndexEntries(assignment.Worktree)
+	if err != nil {
+		return assignment, err
+	}
+	if conflicted {
+		for stage, name := range map[int]string{1: "base", 2: "ours", 3: "theirs"} {
+			tree, err := conflictTree(assignment.Worktree, admin, entries, stage)
+			if err != nil {
+				return assignment, fmt.Errorf("capture conflict %s layer: %w", name, err)
+			}
+			layerTrees[name] = tree
+		}
+	} else {
+		stagedTree, err := realIndexTree(assignment.Worktree, admin)
 		if err != nil {
-			fmt.Fprintf(stderr, "error: could not classify branch %s: %v\n", branch, err)
-			continue
+			return assignment, fmt.Errorf("capture staged layer: %w", err)
 		}
-		if !landed {
-			fmt.Fprintf(stdout, "kept branch %s (unique commits — inspect or delete by hand)\n", branch)
-			continue
+		if stagedTree != headTree {
+			layerTrees["staged"] = stagedTree
 		}
-		if out, err := exec.Command("git", "-C", root, "branch", "-D", branch).CombinedOutput(); err != nil {
-			fmt.Fprintf(stderr, "error: could not delete branch %s: %s\n", branch, strings.TrimSpace(string(out)))
-			continue
-		}
-		if byContent {
-			fmt.Fprintf(stdout, "deleted branch %s (landed by content)\n", branch)
-			continue
-		}
-		fmt.Fprintf(stdout, "deleted branch %s\n", branch)
 	}
-	return 0
-}
-
-// cleanOutOfPoolWorktrees removes every out-of-pool worktree without asking: committed work
-// lives on the worktree's branch, so removing the checkout destroys nothing git cannot
-// recover or revert. A dirty worktree is salvaged first — its uncommitted changes are
-// committed onto its own branch — and then removed; the branch survives under the sweep's
-// merged/unmerged rule. Only a dirty *detached* worktree is refused: there is no branch to
-// hold the salvage, so deleting it would genuinely lose the changes.
-func cleanOutOfPoolWorktrees(root string, stdout, stderr io.Writer) int {
-	registered, err := ClassifyRegisteredWorktrees(root)
+	if len(layerTrees) == 0 {
+		return assignment, errors.New("recovery requested for a clean assignment")
+	}
+	treePayload := map[string]string{}
+	layers := map[string]string{}
+	names := make([]string, 0, len(layerTrees))
+	for name := range layerTrees {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		tree := layerTrees[name]
+		payload := treePayload[tree]
+		if payload == "" {
+			payload, err = commitTree(root, tree, []string{head}, "bench recovery payload: "+name+"\n")
+			if err != nil {
+				return assignment, err
+			}
+			treePayload[tree] = payload
+		}
+		layers[name] = payload
+	}
+	payloads := make([]string, 0, len(treePayload))
+	for _, payload := range treePayload {
+		payloads = append(payloads, payload)
+	}
+	sort.Strings(payloads)
+	manifest := recoveryManifest{Schema: recoverySchema, Base: head, Layers: layers}
+	manifestBytes, err := json.Marshal(manifest)
 	if err != nil {
-		fmt.Fprintf(stderr, "error: git worktree list failed: %v\n", err)
+		return assignment, err
+	}
+	manifestBytes = append(manifestBytes, '\n')
+	blob, err := gitInput(root, nil, manifestBytes, "hash-object", "-w", "--stdin")
+	if err != nil {
+		return assignment, err
+	}
+	rootTree, err := gitInput(root, nil, []byte("100644 blob "+blob+"\tmanifest.json\n"), "mktree")
+	if err != nil {
+		return assignment, err
+	}
+	rootOID, err := commitTree(root, rootTree, payloads, "bench recovery root\n")
+	if err != nil {
+		return assignment, err
+	}
+	ref, err := nextRecoveryRef(root, assignment)
+	if err != nil {
+		return assignment, err
+	}
+	recovery := intent.Recovery{Ref: ref, Root: rootOID, Payloads: payloads}
+	assignment.Recovery = append(assignment.Recovery, recovery)
+	if err := intent.PutAssignment(root, assignment); err != nil {
+		return assignment, fmt.Errorf("persist recovery metadata: %w", err)
+	}
+	if err := hit(fault, StepRecoveryMetadata); err != nil {
+		return assignment, err
+	}
+	if err := ensureRecoveryRef(root, assignment, recovery); err != nil {
+		return assignment, err
+	}
+	return assignment, nil
+}
+func recoveryEnvelopeValid(root string, recovery intent.Recovery) bool {
+	body, err := git.Output("-C", root, "show", recovery.Root+":manifest.json")
+	if err != nil {
+		return false
+	}
+	var manifest recoveryManifest
+	if json.Unmarshal([]byte(body), &manifest) != nil || manifest.Schema != recoverySchema || manifest.Base == "" || len(manifest.Layers) == 0 {
+		return false
+	}
+	payloads := map[string]bool{}
+	for _, payload := range recovery.Payloads {
+		payloads[payload] = true
+	}
+	seen := map[string]bool{}
+	for _, payload := range manifest.Layers {
+		if !payloads[payload] {
+			return false
+		}
+		seen[payload] = true
+	}
+	return len(seen) == len(payloads) && git.OK("-C", root, "cat-file", "-e", manifest.Base+"^{commit}")
+}
+func temporaryIndex(admin string) (string, func(), error) {
+	file, err := os.CreateTemp(admin, "bench-recovery-index-")
+	if err != nil {
+		return "", nil, err
+	}
+	name := file.Name()
+	if err := file.Close(); err != nil {
+		return "", nil, err
+	}
+	if err := os.Remove(name); err != nil {
+		return "", nil, err
+	}
+	return name, func() { _ = os.Remove(name) }, nil
+}
+func worktreeTree(path, admin string) (string, error) {
+	index, cleanup, err := temporaryIndex(admin)
+	if err != nil {
+		return "", err
+	}
+	defer cleanup()
+	if _, err := gitInput(path, []string{"GIT_INDEX_FILE=" + index}, nil, "read-tree", "HEAD"); err != nil {
+		return "", err
+	}
+	if _, err := gitInput(path, []string{"GIT_INDEX_FILE=" + index}, nil, "add", "-A"); err != nil {
+		return "", err
+	}
+	return gitInput(path, []string{"GIT_INDEX_FILE=" + index}, nil, "write-tree")
+}
+func realIndexTree(path, admin string) (string, error) {
+	realIndex, err := git.Output("-C", path, "rev-parse", "--path-format=absolute", "--git-path", "index")
+	if err != nil {
+		return "", err
+	}
+	data, err := os.ReadFile(realIndex)
+	if err != nil {
+		return "", err
+	}
+	index, cleanup, err := temporaryIndex(admin)
+	if err != nil {
+		return "", err
+	}
+	defer cleanup()
+	if err := os.WriteFile(index, data, 0o600); err != nil {
+		return "", err
+	}
+	return gitInput(path, []string{"GIT_INDEX_FILE=" + index}, nil, "write-tree")
+}
+func readIndexEntries(path string) ([]indexEntry, bool, error) {
+	raw, err := git.Raw("-C", path, "ls-files", "--stage", "-z")
+	if err != nil {
+		return nil, false, err
+	}
+	var entries []indexEntry
+	conflicted := false
+	for record := range bytes.SplitSeq(raw, []byte{0}) {
+		if len(record) == 0 {
+			continue
+		}
+		tab := bytes.IndexByte(record, '\t')
+		if tab < 0 {
+			return nil, false, errors.New("malformed staged index entry")
+		}
+		fields := strings.Fields(string(record[:tab]))
+		if len(fields) != 3 {
+			return nil, false, errors.New("malformed staged index metadata")
+		}
+		stage, err := strconv.Atoi(fields[2])
+		if err != nil {
+			return nil, false, err
+		}
+		conflicted = conflicted || stage != 0
+		entries = append(entries, indexEntry{mode: fields[0], oid: fields[1], stage: stage, path: string(record[tab+1:])})
+	}
+	return entries, conflicted, nil
+}
+func conflictTree(path, admin string, entries []indexEntry, wanted int) (string, error) {
+	index, cleanup, err := temporaryIndex(admin)
+	if err != nil {
+		return "", err
+	}
+	defer cleanup()
+	if _, err := gitInput(path, []string{"GIT_INDEX_FILE=" + index}, nil, "read-tree", "--empty"); err != nil {
+		return "", err
+	}
+	var input bytes.Buffer
+	for _, entry := range entries {
+		if entry.stage != 0 && entry.stage != wanted {
+			continue
+		}
+		fmt.Fprintf(&input, "%s %s\t%s%c", entry.mode, entry.oid, entry.path, byte(0))
+	}
+	if _, err := gitInput(path, []string{"GIT_INDEX_FILE=" + index}, input.Bytes(), "update-index", "-z", "--index-info"); err != nil {
+		return "", err
+	}
+	return gitInput(path, []string{"GIT_INDEX_FILE=" + index}, nil, "write-tree")
+}
+func commitTree(root, tree string, parents []string, message string) (string, error) {
+	args := []string{"commit-tree", tree}
+	for _, parent := range parents {
+		args = append(args, "-p", parent)
+	}
+	env := []string{
+		"GIT_AUTHOR_NAME=bench", "GIT_AUTHOR_EMAIL=bench@local",
+		"GIT_COMMITTER_NAME=bench", "GIT_COMMITTER_EMAIL=bench@local",
+	}
+	return gitInput(root, env, []byte(message), args...)
+}
+func gitInput(root string, extraEnv []string, input []byte, args ...string) (string, error) {
+	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
+	cmd.Env = append(os.Environ(), extraEnv...)
+	cmd.Stdin = bytes.NewReader(input)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("git %s: %s", args[0], strings.TrimSpace(stderr.String()))
+	}
+	return strings.TrimRight(stdout.String(), "\n"), nil
+}
+func nextRecoveryRef(root string, assignment intent.Assignment) (string, error) {
+	prefix := "refs/bench/recovery/" + assignment.OwnerID + "/" + assignment.ID + "/"
+	out, err := git.Output("-C", root, "for-each-ref", "--format=%(refname)", prefix)
+	if err != nil {
+		return "", err
+	}
+	used := map[int]bool{}
+	for _, ref := range strings.Split(out, "\n") {
+		ordinal, _ := strconv.Atoi(strings.TrimPrefix(ref, prefix))
+		used[ordinal] = true
+	}
+	for ordinal := 1; ; ordinal++ {
+		if !used[ordinal] {
+			return prefix + strconv.Itoa(ordinal), nil
+		}
+	}
+}
+func verifyRecovery(root string, assignment intent.Assignment, recovery intent.Recovery) error {
+	resolved, err := git.Output("-C", root, "rev-parse", "--verify", recovery.Ref+"^{commit}")
+	if err != nil || resolved != recovery.Root {
+		return errors.New("recovery ref does not resolve to the recorded root")
+	}
+	for _, payload := range recovery.Payloads {
+		if !git.OK("-C", root, "cat-file", "-e", payload+"^{commit}") || !git.OK("-C", root, "merge-base", "--is-ancestor", payload, recovery.Root) {
+			return errors.New("recovery payload is missing or unreachable")
+		}
+	}
+	for _, recorded := range assignment.Recovery {
+		if recorded.Ref == recovery.Ref && recorded.Root == recovery.Root && strings.Join(recorded.Payloads, "\x00") == strings.Join(recovery.Payloads, "\x00") {
+			return nil
+		}
+	}
+	return errors.New("assignment does not name the verified recovery envelope")
+}
+func anchorDetached(root string, plan CleanupPlan) error {
+	head, err := git.Output("-C", plan.Target, "rev-parse", "HEAD")
+	if err != nil {
+		return err
+	}
+	zero := strings.Repeat("0", len(head))
+	if out, err := exec.Command("git", "-C", root, "update-ref", plan.Recovery, head, zero).CombinedOutput(); err != nil {
+		if existing, readErr := git.Output("-C", root, "rev-parse", "--verify", plan.Recovery+"^{commit}"); readErr != nil || existing != head {
+			return fmt.Errorf("anchor detached HEAD: %s", strings.TrimSpace(string(out)))
+		}
+	}
+	resolved, err := git.Output("-C", root, "rev-parse", "--verify", plan.Recovery+"^{commit}")
+	if err != nil || resolved != head {
+		return errors.New("detached recovery ref failed verification")
+	}
+	return nil
+}
+func discardIgnored(plan CleanupPlan) error {
+	current, _, err := inventoryIgnored(plan.Target, false)
+	if err != nil || current.Digest != plan.Ignored.Digest || current.Count != plan.Ignored.Count || current.Bytes != plan.Ignored.Bytes {
+		return errStaleFingerprint
+	}
+	for _, name := range current.Paths {
+		full := filepath.Join(plan.Target, filepath.Clean(filepath.FromSlash(name)))
+		if _, err := ignoredLstat(full); err != nil {
+			return errStaleFingerprint
+		}
+		if err := os.Remove(full); err != nil {
+			return fmt.Errorf("discard ignored path: %w", err)
+		}
+	}
+	return nil
+}
+func recoveryInvocationError(stdout io.Writer) int {
+	_ = renderRecovery(stdout, RecoveryPlan{Ref: "unknown", Root: "unknown", Payloads: "none", Landed: "unknown", Action: RecoveryError, Fingerprint: "none", Detail: "invalid invocation; run bench worktree recovery <ref> [--apply <fingerprint>]"})
+	return 2
+}
+func RecoveryCommand(root string, args []string, stdout, stderr io.Writer) int {
+	if len(args) != 1 && !(len(args) == 3 && args[1] == "--apply") {
+		return recoveryInvocationError(stdout)
+	}
+	ref, fingerprint := args[0], ""
+	if len(args) == 3 {
+		fingerprint = args[2]
+		decoded, err := hex.DecodeString(fingerprint)
+		if err != nil || len(decoded) != sha256.Size || fingerprint != strings.ToLower(fingerprint) {
+			return recoveryInvocationError(stdout)
+		}
+	}
+	plan, err := PlanRecovery(root, ref)
+	if err == nil && fingerprint != "" {
+		plan, err = ApplyRecovery(root, ref, fingerprint)
+	}
+	if errors.Is(err, errStaleFingerprint) {
+		_ = renderRecovery(stdout, plan)
 		return 1
 	}
-	var refused []string
-	removed := 0
-	for _, wt := range registered {
-		if wt.Class != ClassOutOfPool {
-			continue
-		}
-		if _, err := os.Stat(wt.Path); os.IsNotExist(err) {
-			continue
-		}
-		if !isClean(wt.Path) {
-			branch, err := git.Output("-C", wt.Path, "symbolic-ref", "--quiet", "--short", "HEAD")
-			if err != nil || strings.TrimSpace(branch) == "" {
-				refused = append(refused, wt.Path)
-				continue
-			}
-			if out, err := exec.Command("git", "-C", wt.Path, "add", "-A").CombinedOutput(); err != nil {
-				fmt.Fprintf(stderr, "error: could not salvage %s: %s\n", wt.Path, strings.TrimSpace(string(out)))
-				refused = append(refused, wt.Path)
-				continue
-			}
-			// A fixed committer identity: the salvage is machine-made and must not fail in a
-			// worktree whose repo never configured user.name/user.email.
-			if out, err := exec.Command("git", "-C", wt.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-q", "-m", "wip: salvaged by bench worktree clean").CombinedOutput(); err != nil {
-				fmt.Fprintf(stderr, "error: could not salvage %s: %s\n", wt.Path, strings.TrimSpace(string(out)))
-				refused = append(refused, wt.Path)
-				continue
-			}
-			fmt.Fprintf(stdout, "salvaged uncommitted changes in %s onto %s\n", wt.Path, strings.TrimSpace(branch))
-		}
-		if out, err := exec.Command("git", "-C", root, "worktree", "remove", wt.Path).CombinedOutput(); err != nil {
-			refused = append(refused, wt.Path)
-			if len(out) > 0 {
-				fmt.Fprint(stderr, string(out))
-			}
-			continue
-		}
-		removed++
-		fmt.Fprintf(stdout, "removed %s\n", wt.Path)
-	}
-	_ = exec.Command("git", "-C", root, "worktree", "prune").Run()
-	if len(refused) > 0 {
-		printRefused(stdout, refused)
+	if err != nil {
+		fmt.Fprintf(stderr, "bench worktree recovery: %v\n", err)
 		return 1
 	}
-	if removed == 0 {
-		fmt.Fprintln(stdout, "bench worktree clean: nothing to clean")
+	if err := renderRecovery(stdout, plan); err != nil {
+		fmt.Fprintf(stderr, "bench worktree recovery: %v\n", err)
+		return 1
 	}
 	return 0
-}
-
-func printRefused(stdout io.Writer, paths []string) {
-	fmt.Fprintln(stdout, "refused:")
-	for _, path := range paths {
-		fmt.Fprintf(stdout, "  %s\n", path)
-	}
-}
-
-func WorktreeUsage() string {
-	return "usage: bench worktree\n       bench worktree clean\n"
 }

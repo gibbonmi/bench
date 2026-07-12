@@ -1,27 +1,18 @@
 package worktree
 
 import (
-	"bytes"
+	"errors"
+	"github.com/gibbonmi/bench/internal/intent"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
-	"time"
-
-	"github.com/gibbonmi/bench/internal/intent"
 )
 
-// cksumGolden pins the Go cksum against values produced by the coreutils `cksum`
-// tool. Each was derived once with, e.g.:
-//
-//	printf '%s\n' "/home/mgibs/workspace/bench" | cksum   -> 2826441890 28
-//	printf '%s\n' "/tmp/a b/c"                  | cksum   -> 889650394  11
-//
-// The `\n` is intentional: Pool checksums `root + "\n"` because the shell used
-// `echo "$root" | cksum`. The second vector carries a space to exercise a path the
-// shell would otherwise word-split.
+// cksumGolden pins POSIX cksum(root+newline), including a spaced path.
 var cksumGolden = []struct {
 	root string
 	sum  uint32
@@ -42,6 +33,7 @@ func TestCksumMatchesGolden(t *testing.T) {
 // TestCksumMatchesSystemTool cross-checks against the live `cksum` when it is on
 // PATH, so the pinned goldens can never silently drift from the real tool. It is
 // skipped where `cksum` is unavailable, keeping the suite hermetic there.
+
 func TestCksumMatchesSystemTool(t *testing.T) {
 	if _, err := exec.LookPath("cksum"); err != nil {
 		t.Skip("cksum not available")
@@ -109,7 +101,6 @@ func TestClassifyRegisteredWorktrees(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("BENCH_HOME", home)
 	root := newWorktreeRepo(t)
-
 	pool := Pool(root)
 	warm := filepath.Join(pool, "warm")
 	leased := filepath.Join(pool, "leased")
@@ -127,7 +118,6 @@ func TestClassifyRegisteredWorktrees(t *testing.T) {
 	if err := os.WriteFile(lease, []byte("123 2026-07-06T00:00:00Z\n"), 0o644); err != nil {
 		t.Fatalf("write lease: %v", err)
 	}
-
 	entries, err := ClassifyRegisteredWorktrees(root)
 	if err != nil {
 		t.Fatalf("ClassifyRegisteredWorktrees: %v", err)
@@ -162,101 +152,163 @@ func TestClassifyRegisteredWorktrees(t *testing.T) {
 	}
 }
 
-func TestCleanCommandRemovesOutOfPool(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("BENCH_HOME", home)
+func TestCleanupDeletesOnlyExactBranchAndRetiresLastRecoveryRef(t *testing.T) {
+	t.Run("clean assignment compacts and spares sibling", func(t *testing.T) {
+		root, target := newOwnedAssignment(t, "terminal-clean")
+		sibling, err := Create(root, "terminal-clean-sibling", "sibling", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		siblingRef := "refs/bench/recovery/" + sibling.Assignment.OwnerID + "/" + sibling.Assignment.ID + "/1"
+		gitRun(t, root, "update-ref", siblingRef, target.Assignment.Start)
+		markPending(t, root, target.Assignment)
+		if _, err := ApplyAutomatic(root, target.Path, nil); err != nil {
+			t.Fatal(err)
+		}
+		if exec.Command("git", "-C", root, "show-ref", "--verify", "--quiet", target.Assignment.Branch).Run() == nil {
+			t.Fatal("exact cleanup left target branch")
+		}
+		gitRun(t, root, "show-ref", "--verify", "--quiet", sibling.Assignment.Branch)
+		gitRun(t, root, "show-ref", "--verify", "--quiet", siblingRef)
+		assignments, err := intent.Assignments(root)
+		if err != nil || len(assignments) != 1 || assignments[0].ID != sibling.Assignment.ID {
+			t.Fatalf("clean compaction assignments = %#v, %v", assignments, err)
+		}
+	})
+	t.Run("recovered context leaves after last exact ref", func(t *testing.T) {
+		root, target := newOwnedAssignment(t, "terminal-recovered")
+		sibling, err := Create(root, "terminal-recovered-sibling", "sibling", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		siblingRef := "refs/bench/recovery/" + sibling.Assignment.OwnerID + "/" + sibling.Assignment.ID + "/1"
+		gitRun(t, root, "update-ref", siblingRef, target.Assignment.Start)
+		mustWrite(t, filepath.Join(target.Path, "recovered.txt"), []byte("recovered\n"), 0o644)
+		markPending(t, root, target.Assignment)
+		if _, err := ApplyAutomatic(root, target.Path, nil); err != nil {
+			t.Fatal(err)
+		}
+		recovered, err := assignmentByID(root, target.Assignment.ID)
+		if err != nil || recovered.State != intent.StateRecovered || len(recovered.Recovery) != 1 {
+			t.Fatalf("recovered assignment = %#v, %v", recovered, err)
+		}
+		first := recovered.Recovery[0]
+		second := first
+		second.Ref = strings.TrimSuffix(first.Ref, "/1") + "/2"
+		gitRun(t, root, "update-ref", second.Ref, second.Root)
+		recovered.Recovery = append(recovered.Recovery, second)
+		if err := intent.PutAssignment(root, recovered); err != nil {
+			t.Fatal(err)
+		}
+		for _, payload := range first.Payloads {
+			gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "cherry-pick", payload)
+		}
+		if err := RetireRecovery(root, first.Ref); err != nil {
+			t.Fatal(err)
+		}
+		if exec.Command("git", "-C", root, "show-ref", "--verify", "--quiet", first.Ref).Run() == nil {
+			t.Fatal("first exact recovery ref survived retirement")
+		}
+		gitRun(t, root, "show-ref", "--verify", "--quiet", second.Ref)
+		if current, err := assignmentByID(root, target.Assignment.ID); err != nil || current.State != intent.StateRecovered || len(current.Recovery) != 1 {
+			t.Fatalf("intermediate recovered state = %#v, %v", current, err)
+		}
+		if err := RetireRecovery(root, second.Ref); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := assignmentByID(root, target.Assignment.ID); err == nil {
+			t.Fatal("last-ref retirement did not compact recovered assignment")
+		}
+		gitRun(t, root, "show-ref", "--verify", "--quiet", sibling.Assignment.Branch)
+		gitRun(t, root, "show-ref", "--verify", "--quiet", siblingRef)
+	})
+}
+
+func TestReleaseReconcilesInFlightAutomaticCleanup(t *testing.T) {
+	root, creation := newPendingAssignment(t, "release-in-flight")
+	stop := errors.New("crash after removal")
+	_, err := ApplyAutomatic(root, creation.Path, func(step LifecycleStep) error {
+		if step == StepRemoval {
+			return stop
+		}
+		return nil
+	})
+	requireTest(t, errors.Is(err, stop), "automatic interruption = %v", err)
+	args := []string{"--request", "landed-release-in-flight", creation.Path}
+	var first, firstErr strings.Builder
+	code := ReleaseCommand(root, args, &first, &firstErr)
+	requireTest(t, code == 0 && firstErr.String() == "", "in-flight release code=%d stderr=%q", code, firstErr.String())
+	var replay strings.Builder
+	code = ReleaseCommand(root, args, &replay, io.Discard)
+	requireTest(t, code == 0 && replay.String() == first.String(), "in-flight replay code=%d stdout=%q", code, replay.String())
+	requireTest(t, ReleaseCommand(root, []string{"--request", "changed", creation.Path}, io.Discard, io.Discard) != 0, "changed request authorized")
+	requireTest(t, ReleaseCommand(root, []string{"--request", args[1], root}, io.Discard, io.Discard) != 0, "changed path authorized")
+}
+func TestExplicitApplyRejectsContentDriftWithoutMutation(t *testing.T) {
 	root := newWorktreeRepo(t)
-	candidate := filepath.Join(filepath.Dir(root), "outside wt [one]")
-	gitRun(t, root, "worktree", "add", "-q", "--detach", candidate, "HEAD")
-	created := time.Unix(1, 0).UTC()
-	if err := intent.Upsert(root, intent.Entry{Key: "cleaned", Kind: intent.KindWorktree, Objective: "clean me", CreatedAt: created, Worktree: candidate}); err != nil {
+	gitRun(t, root, "branch", "-M", "main")
+	target := filepath.Join(filepath.Dir(root), "content drift target")
+	gitRun(t, root, "worktree", "add", "-q", "--detach", target, "HEAD")
+	file := filepath.Join(target, "untracked.txt")
+	if err := os.WriteFile(file, []byte("planned bytes\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := intent.Upsert(root, intent.Entry{Key: "unrelated", Kind: intent.KindShift, Objective: "keep me", CreatedAt: created}); err != nil {
+	plan, err := PlanExplicit(root, target)
+	if err != nil {
 		t.Fatal(err)
 	}
-	nested := filepath.Join(root, "sub", "dir")
-	if err := os.MkdirAll(nested, 0o755); err != nil {
-		t.Fatalf("mkdir nested cwd: %v", err)
+	if plan.Fingerprint == "" {
+		t.Fatal("explicit detached plan has no fingerprint")
 	}
-	chdir(t, nested)
-
-	var stdout, stderr bytes.Buffer
-	code := cleanCommand(nil, &stdout, &stderr)
-	if code != 0 {
-		t.Fatalf("cleanCommand exit = %d\nstdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
+	if err := os.WriteFile(file, []byte("drifted bytes\n"), 0o644); err != nil {
+		t.Fatal(err)
 	}
-	if !strings.Contains(stdout.String(), candidate) || !strings.Contains(stdout.String(), "removed") {
-		t.Fatalf("cleanup did not report removed candidate:\n%s", stdout.String())
+	beforeWorktrees := gitOutput(t, root, "worktree", "list", "--porcelain")
+	beforeRefs := gitOutput(t, root, "for-each-ref", "--format=%(refname) %(objectname)", "refs/bench/recovery/")
+	current, err := ApplyExplicit(root, target, plan.Fingerprint)
+	if !errors.Is(err, errStaleFingerprint) {
+		t.Fatalf("ApplyExplicit content drift error = %v, want stale fingerprint (current=%#v)", err, current)
 	}
-	if strings.Contains(stdout.String()+stderr.String(), "--force") {
-		t.Fatalf("cleanup mentioned forced removal:\nstdout:\n%s\nstderr:\n%s", stdout.String(), stderr.String())
+	if current.Fingerprint == plan.Fingerprint {
+		t.Fatal("content drift did not change the current plan fingerprint")
 	}
-	if out := gitOutput(t, root, "worktree", "list", "--porcelain"); strings.Contains(out, candidate) {
-		t.Fatalf("cleanup left worktree registered:\n%s", out)
+	if got := gitOutput(t, root, "worktree", "list", "--porcelain"); got != beforeWorktrees {
+		t.Fatalf("stale apply mutated registration\nbefore=%s\nafter=%s", beforeWorktrees, got)
 	}
-	if live, err := intent.Read(root); err != nil || len(live.Entries) != 1 || live.Entries[0].Key != "unrelated" {
-		t.Fatalf("manual clean compact = %#v, %v", live.Entries, err)
+	if got := gitOutput(t, root, "for-each-ref", "--format=%(refname) %(objectname)", "refs/bench/recovery/"); got != beforeRefs {
+		t.Fatalf("stale apply created recovery ref\nbefore=%s\nafter=%s", beforeRefs, got)
 	}
-
-	stdout.Reset()
-	stderr.Reset()
-	code = cleanCommand(nil, &stdout, &stderr)
-	if code != 0 {
-		t.Fatalf("second cleanCommand exit = %d\nstdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
-	}
-	if !strings.Contains(stdout.String(), "nothing to clean") {
-		t.Fatalf("second cleanup did not report idempotent empty state:\n%s", stdout.String())
+	if body, err := os.ReadFile(file); err != nil || string(body) != "drifted bytes\n" {
+		t.Fatalf("stale apply changed target content: %q, %v", body, err)
 	}
 }
 
-func TestSubshellPersistsAndEnrichesMultiwordIntent(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("BENCH_HOME", home)
-	t.Setenv("SHELL", "/bin/true")
+func TestIgnoredInventoryStatRaceRetains(t *testing.T) {
 	root := newWorktreeRepo(t)
-	chdir(t, root)
-	var stdout, stderr bytes.Buffer
-	if code := Subshell([]string{"multi", "word", "objective"}, bytes.NewReader(nil), &stdout, &stderr); code != 0 {
-		t.Fatalf("Subshell exit=%d stderr=%s", code, stderr.String())
+	gitRun(t, root, "branch", "-M", "main")
+	if err := os.WriteFile(filepath.Join(root, ".git", "info", "exclude"), []byte("ignored.txt\n"), 0o644); err != nil {
+		t.Fatal(err)
 	}
-	ledger, err := intent.Read(root)
-	if err != nil || len(ledger.Entries) != 1 {
-		t.Fatalf("ledger=%#v err=%v", ledger.Entries, err)
+	target := filepath.Join(filepath.Dir(root), "ignored stat race")
+	gitRun(t, root, "worktree", "add", "-q", "-b", "ignored-stat-race", target, "HEAD")
+	ignored := filepath.Join(target, "ignored.txt")
+	if err := os.WriteFile(ignored, []byte("secret\n"), 0o000); err != nil {
+		t.Fatal(err)
 	}
-	entry := ledger.Entries[0]
-	if entry.Objective != "multi word objective" || entry.Worktree == "" {
-		t.Fatalf("enriched entry=%#v", entry)
+	original := ignoredLstat
+	ignoredLstat = func(path string) (os.FileInfo, error) {
+		if path == ignored {
+			return nil, os.ErrNotExist
+		}
+		return os.Lstat(path)
 	}
-}
-
-// TestCleanOutOfPoolWorktreesGitFailureNeverReadsAsNothingToClean is the FT29 false-empty
-// regression guard for the classifier's last swallowing caller: a `git worktree list`
-// failure (deterministically induced by making .git unreadable, the gitOpError-style
-// injection FT29 used in structure_test.go) must exit non-zero with the git error on
-// stderr, never fall through to the "nothing to clean" exit-0 report that reads
-// identically to a genuinely empty, healthy repo.
-func TestCleanOutOfPoolWorktreesGitFailureNeverReadsAsNothingToClean(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("BENCH_HOME", home)
-	root := newWorktreeRepo(t)
-
-	gitDir := filepath.Join(root, ".git")
-	if err := os.Chmod(gitDir, 0o000); err != nil {
-		t.Fatalf("chmod .git unreadable: %v", err)
+	t.Cleanup(func() { ignoredLstat = original })
+	plan, err := PlanExplicitWithOptions(root, target, CleanupOptions{DiscardIgnored: true})
+	if err != nil || plan.Action != ActionRetain || plan.ReasonCode != ReasonUncertain {
+		t.Fatalf("stat-race plan = %#v, %v", plan, err)
 	}
-	t.Cleanup(func() { _ = os.Chmod(gitDir, 0o755) })
-
-	var stdout, stderr bytes.Buffer
-	code := cleanOutOfPoolWorktrees(root, &stdout, &stderr)
-	if code == 0 {
-		t.Fatalf("cleanOutOfPoolWorktrees exit 0 on a git worktree-list failure\nstdout:\n%s\nstderr:\n%s", stdout.String(), stderr.String())
-	}
-	if strings.Contains(stdout.String(), "nothing to clean") {
-		t.Fatalf("git failure read as the empty-repo all-clear:\nstdout:\n%s\nstderr:\n%s", stdout.String(), stderr.String())
-	}
-	if stderr.String() == "" {
-		t.Fatal("cleanOutOfPoolWorktrees printed no error to stderr on a git failure")
+	if _, err := os.Lstat(ignored); err != nil {
+		t.Fatalf("stat-race plan mutated ignored file: %v", err)
 	}
 }
 
@@ -299,21 +351,22 @@ func TestPoolCommandExplicitRoot(t *testing.T) {
 		t.Errorf("out = %q, want %q", out, want)
 	}
 }
-
 func newWorktreeRepo(t testing.TB) string {
 	t.Helper()
 	root := t.TempDir()
-	gitRun(t, root, "init")
+	gitRun(t, root, "init", "-q", "-b", "main")
 	gitRun(t, root, "config", "user.email", "bench@local")
 	gitRun(t, root, "config", "user.name", "bench")
 	if err := os.WriteFile(filepath.Join(root, "tracked.txt"), []byte("base\n"), 0o644); err != nil {
 		t.Fatalf("write tracked.txt: %v", err)
 	}
-	gitRun(t, root, "add", "tracked.txt")
+	if err := os.WriteFile(filepath.Join(root, "README.md"), []byte("initial\n"), 0o644); err != nil {
+		t.Fatalf("write README.md: %v", err)
+	}
+	gitRun(t, root, "add", "tracked.txt", "README.md")
 	gitRun(t, root, "commit", "-q", "-m", "base")
 	return root
 }
-
 func chdir(t testing.TB, dir string) {
 	t.Helper()
 	prev, err := os.Getwd()
@@ -325,7 +378,6 @@ func chdir(t testing.TB, dir string) {
 	}
 	t.Cleanup(func() { _ = os.Chdir(prev) })
 }
-
 func gitOutput(t testing.TB, dir string, args ...string) string {
 	t.Helper()
 	cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)
@@ -335,7 +387,6 @@ func gitOutput(t testing.TB, dir string, args ...string) string {
 	}
 	return strings.TrimSpace(string(out))
 }
-
 func gitRun(t testing.TB, dir string, args ...string) {
 	t.Helper()
 	cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)

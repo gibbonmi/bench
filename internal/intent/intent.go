@@ -4,11 +4,9 @@
 package intent
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -17,11 +15,13 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/jsonfile"
 )
 
 const (
-	Schema   = 1
-	Filename = "bench-intent.json"
+	LegacySchema = 1
+	Schema       = 2
+	Filename     = "bench-intent.json"
 )
 
 type Kind string
@@ -42,8 +42,10 @@ type Entry struct {
 }
 
 type Ledger struct {
-	Schema  int     `json:"schema"`
-	Entries []Entry `json:"entries"`
+	Schema          int              `json:"schema"`
+	Entries         []Entry          `json:"entries"`
+	Assignments     []Assignment     `json:"assignments,omitempty"`
+	CleanupReceipts []CleanupReceipt `json:"cleanup_receipts,omitempty"`
 }
 
 // Address resolves the ledger through git's absolute common-directory query, so
@@ -83,14 +85,10 @@ func readPath(path string) (Ledger, error) {
 		return Ledger{}, errors.New("read intent ledger: present file is empty")
 	}
 	var ledger Ledger
-	dec := json.NewDecoder(bytes.NewReader(data))
-	if err := dec.Decode(&ledger); err != nil {
+	if err := jsonfile.Decode(data, &ledger); err != nil {
 		return Ledger{}, fmt.Errorf("read intent ledger: malformed JSON: %w", err)
 	}
-	if err := dec.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
-		return Ledger{}, errors.New("read intent ledger: trailing JSON value")
-	}
-	if ledger.Schema != Schema {
+	if ledger.Schema != LegacySchema && ledger.Schema != Schema {
 		return Ledger{}, fmt.Errorf("read intent ledger: unsupported schema %d", ledger.Schema)
 	}
 	if ledger.Entries == nil {
@@ -106,19 +104,28 @@ func readPath(path string) (Ledger, error) {
 		}
 		seen[entry.Key] = true
 	}
+	if ledger.Assignments == nil {
+		ledger.Assignments = []Assignment{}
+	}
+	if ledger.Schema == LegacySchema && (len(ledger.Assignments) != 0 || len(ledger.CleanupReceipts) != 0) {
+		return Ledger{}, errors.New("read intent ledger: legacy schema cannot authorize lifecycle records")
+	}
+	assignmentIDs := map[string]bool{}
+	requests := map[string]bool{}
+	for _, assignment := range ledger.Assignments {
+		if err := ValidateAssignment(assignment); err != nil {
+			return Ledger{}, fmt.Errorf("read intent ledger: %w", err)
+		}
+		if assignmentIDs[assignment.ID] || requests[assignment.Request] {
+			return Ledger{}, errors.New("read intent ledger: duplicate assignment identity")
+		}
+		assignmentIDs[assignment.ID] = true
+		requests[assignment.Request] = true
+	}
+	if err := validateCleanupReceipts(ledger.CleanupReceipts); err != nil {
+		return Ledger{}, fmt.Errorf("read intent ledger: %w", err)
+	}
 	return ledger, nil
-}
-
-func validEntry(entry Entry) error {
-	if entry.Key == "" || entry.Objective == "" || entry.CreatedAt.IsZero() {
-		return errors.New("entry requires key, objective, and creation time")
-	}
-	switch entry.Kind {
-	case KindShift, KindWorktree, KindClaudeAgent:
-		return nil
-	default:
-		return fmt.Errorf("entry %q has unknown writer kind %q", entry.Key, entry.Kind)
-	}
 }
 
 // NewEntry creates the stable process/time key bench-owned writers persist before
@@ -179,7 +186,14 @@ func writePath(path string, ledger Ledger) error {
 	if ledger.Entries == nil {
 		ledger.Entries = []Entry{}
 	}
+	if ledger.Assignments == nil {
+		ledger.Assignments = []Assignment{}
+	}
+	if ledger.CleanupReceipts == nil {
+		ledger.CleanupReceipts = []CleanupReceipt{}
+	}
 	sort.Slice(ledger.Entries, func(i, j int) bool { return ledger.Entries[i].Key < ledger.Entries[j].Key })
+	sort.Slice(ledger.Assignments, func(i, j int) bool { return ledger.Assignments[i].ID < ledger.Assignments[j].ID })
 	data, err := json.Marshal(ledger)
 	if err != nil {
 		return fmt.Errorf("encode intent ledger: %w", err)

@@ -1,8 +1,10 @@
 package runtime
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -10,37 +12,37 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/contract"
+	"github.com/gibbonmi/bench/internal/intent"
 )
 
 func TestRuntimeWorktreeContracts(t *testing.T) {
 	contract.SkipIfSubjectBenchMissing(t)
 	t.Parallel()
-	contract.RunParallel(t, "bench worktree clean removes out-of-pool contract", testRuntimeWorktreeCleanRemovesOutOfPool)
-	contract.RunParallel(t, "bench worktree clean salvages dirty onto branch contract", testRuntimeWorktreeCleanSalvagesDirtyOntoBranch)
-	contract.RunParallel(t, "bench worktree clean refuses dirty detached contract", testRuntimeWorktreeCleanRefusesDirtyDetached)
-	contract.RunParallel(t, "bench worktree clean stale registration prune contract", testRuntimeWorktreeCleanPrunesMissingRegistration)
+	contract.RunParallel(t, "bench worktree create binds ownership contract", testRuntimeWorktreeCreateBindsOwnership)
+	contract.RunParallel(t, "bench worktree release verifies and recovers contract", testRuntimeWorktreeReleaseVerifiesAndRecovers)
+	contract.RunParallel(t, "bench worktree exact foreign cleanup matrix contract", testRuntimeWorktreeExactForeignCleanup)
+	contract.RunParallel(t, "bench worktree recovery exact plan/apply contract", testRuntimeWorktreeRecoveryPlanApply)
 	contract.RunParallel(t, "bench worktree clean pool cwd classification contract", testRuntimeWorktreeCleanFromPoolCwd)
 	contract.RunParallel(t, "bench worktree usage contract", testRuntimeWorktreeRejectsUnknownArgs)
-	contract.RunParallel(t, "bench worktree lease/reuse contract", testRuntimeWorktreeLeaseReuse)
+	contract.RunParallel(t, "bench worktree interactive release contract", testRuntimeWorktreeInteractiveRelease)
 	contract.RunParallel(t, "bench worktree lease hardening contract", testRuntimeWorktreeLeaseHardening)
 	contract.RunParallel(t, "bench worktree concurrent-acquire contract", testRuntimeWorktreeConcurrentAcquire)
-	contract.RunParallel(t, "bench worktree clean sweeps merged orphan (non-tty) contract", testRuntimeWorktreeSweepDeletesMerged)
-	contract.RunParallel(t, "bench worktree clean sweeps content-landed orphan contract", testRuntimeWorktreeSweepDeletesContentLanded)
-	contract.RunParallel(t, "bench worktree clean keeps unmerged orphan contract", testRuntimeWorktreeSweepKeepsUnmerged)
-	contract.RunParallel(t, "bench worktree clean keeps unique-patch orphan contract", testRuntimeWorktreeSweepKeepsUniquePatch)
-	contract.RunParallel(t, "bench worktree clean keeps evil-merge orphan contract", testRuntimeWorktreeSweepKeepsEvilMerge)
-	contract.RunParallel(t, "bench worktree clean spares active and non-scratch contract", testRuntimeWorktreeSweepSparesProtected)
-	contract.RunParallel(t, "bench worktree clean deletes slashed unicode orphan contract", testRuntimeWorktreeSweepDeletesSlashUnicode)
-	contract.RunParallel(t, "bench worktree clean refuses unresolvable default contract", testRuntimeWorktreeSweepRefusesUnresolvableDefault)
+	contract.RunParallel(t, "bench resume-clean and SessionStart preserve foreign worktrees contract", testRuntimeWorktreeForeignPreservation)
+	contract.RunParallel(t, "bench resume-clean failure summary contract", testRuntimeResumeFailureSummary)
+	contract.RunParallel(t, "bench automatic cleanup eligibility matrix contract", testRuntimeWorktreeAutomaticEligibilityMatrix)
+	contract.RunParallel(t, "bench embedded repository preservation contract", testRuntimeWorktreeEmbeddedRepositoryPreservation)
+	contract.RunParallel(t, "bench worktree exact dry-run purity contract", testRuntimeWorktreeExactDryRunPurity)
+	contract.RunParallel(t, "bench worktree ignored discard contract", testRuntimeWorktreeIgnoredDiscard)
+	contract.RunParallel(t, "bench worktree hostile surfaces contract", testRuntimeWorktreeHostileSurfaces)
 }
 
 // onMainFixture returns a fixture whose default branch resolves to a real `main` commit — the
 // sweep's happy-path precondition. git.DefaultBranch falls back to "main", but a bare `git init`
 // fixture is born on "master", so an explicit HEAD symref lands the first commit on main and makes
 // the default branch resolve.
-func onMainFixture(t *testing.T) contract.Fixture {
+func onMainFixture(t *testing.T, opts ...contract.FixtureOption) contract.Fixture {
 	t.Helper()
-	f := contract.NewFixture(t)
+	f := contract.NewFixture(t, opts...)
 	f.Git("symbolic-ref", "HEAD", "refs/heads/main")
 	commitAllowEmpty(t, f, "init")
 	return f
@@ -52,318 +54,784 @@ func headExists(f contract.Fixture, name string) bool {
 	return f.GitAllow("show-ref", "--verify", "--quiet", "refs/heads/"+name).ExitCode == 0
 }
 
-// Story 1 + 5: a merged worktree-* orphan is deleted with its line on stdout, run non-interactively
-// (no PTY) with no out-of-pool worktrees — proving the sweep is not coupled to the TTY confirmation.
-func testRuntimeWorktreeSweepDeletesMerged(t *testing.T) {
+// FT77 story 2: the two accused unattended surfaces must classify ordinary and
+// detached-unique registrations as foreign, report that reason, and leave every
+// filesystem/Git-visible layer intact.
+func testRuntimeWorktreeForeignPreservation(t *testing.T) {
 	f := onMainFixture(t)
-	f.Git("branch", "worktree-agent-merged")
+	f.Bench("link").RequireExit(0)
+	f.CommitAll("link fixture")
+	ordinary := filepath.Join(t.TempDir(), "ordinary foreign")
+	detached := filepath.Join(t.TempDir(), "detached foreign")
+	f.Git("worktree", "add", "-q", "-b", "foreign-ordinary", ordinary, "HEAD")
+	f.Git("worktree", "add", "-q", "--detach", detached, "HEAD")
+	contract.WriteFileAbs(t, filepath.Join(detached, "unique.txt"), "unique\n")
+	contract.RunAt(t, f, detached, nil, "git", "add", "unique.txt").RequireExit(0)
+	contract.RunAt(t, f, detached, nil, "git", "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "unique detached").RequireExit(0)
+	unique := strings.TrimSpace(contract.RunAt(t, f, detached, nil, "git", "rev-parse", "HEAD").Stdout)
 
-	out := f.Bench("worktree", "clean")
+	out := f.Bench("resume-clean")
 	out.RequireExit(0)
-	contract.RequireContains(t, out.Stdout, "deleted branch worktree-agent-merged")
-	if headExists(f, "worktree-agent-merged") {
-		t.Fatalf("merged scratch orphan survived the sweep:\n%s", f.Git("for-each-ref", "--format=%(refname:short)", "refs/heads/").Stdout)
+	contract.RequireContains(t, out.Stdout, "retained foreign=2")
+	for _, path := range []string{ordinary, detached} {
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("resume-clean removed foreign worktree %q: %v", path, err)
+		}
 	}
-}
-
-// FT44 story 3: a worktree-* orphan whose commit was cherry-picked into the default branch is a
-// non-ancestor whose every patch already landed — `git cherry` all `-`. The sweep deletes it and
-// says which proof landed it, so a hand-inspection of a provably-empty branch never recurs.
-func testRuntimeWorktreeSweepDeletesContentLanded(t *testing.T) {
-	f := onMainFixture(t)
-	f.Git("checkout", "-q", "-b", "worktree-agent-landed")
-	f.WriteFile("work.txt", "landed work\n")
-	f.CommitAll("real work")
-	f.Git("checkout", "-q", "main")
-	// A divergent commit before the cherry-pick guarantees the branch tip is not an
-	// ancestor of main, so only the patch-containment proof can land it.
-	commitAllowEmpty(t, f, "diverge")
-	f.Git("-c", "user.email=bench@local", "-c", "user.name=bench", "cherry-pick", "worktree-agent-landed")
-
-	out := f.Bench("worktree", "clean")
-	out.RequireExit(0)
-	contract.RequireContains(t, out.Stdout, "deleted branch worktree-agent-landed (landed by content)")
-	if headExists(f, "worktree-agent-landed") {
-		t.Fatalf("content-landed scratch orphan survived the sweep:\n%s", f.Git("for-each-ref", "--format=%(refname:short)", "refs/heads/").Stdout)
+	if !headExists(f, "foreign-ordinary") {
+		t.Fatal("resume-clean deleted foreign branch")
 	}
-}
-
-// Story 2 + 4: an unmerged worktree-* orphan survives with the verbatim kept line, and keeping it
-// exits 0 — a branch carrying unique commits is never destroyed and keeping is not a failure.
-func testRuntimeWorktreeSweepKeepsUnmerged(t *testing.T) {
-	f := onMainFixture(t)
-	f.Git("checkout", "-q", "-b", "worktree-agent-unmerged")
-	commitAllowEmpty(t, f, "unique work")
-	f.Git("checkout", "-q", "main")
-
-	out := f.Bench("worktree", "clean")
-	out.RequireExit(0)
-	contract.RequireContains(t, out.Stdout, "kept branch worktree-agent-unmerged (unique commits — inspect or delete by hand)")
-	if !headExists(f, "worktree-agent-unmerged") {
-		t.Fatal("unmerged scratch orphan was destroyed by the conservative default")
+	if got := strings.TrimSpace(contract.RunAt(t, f, detached, nil, "git", "rev-parse", "HEAD").Stdout); got != unique {
+		t.Fatalf("resume-clean changed detached unique HEAD: got %s want %s", got, unique)
 	}
-}
 
-// FT44 story 3, destructive direction: a worktree-* orphan carrying a real unique patch (not just
-// an empty commit) reports `+` under `git cherry` and must survive the content-landed proof.
-func testRuntimeWorktreeSweepKeepsUniquePatch(t *testing.T) {
-	f := onMainFixture(t)
-	f.Git("checkout", "-q", "-b", "worktree-agent-unique")
-	f.WriteFile("unique.txt", "unique work\n")
-	f.CommitAll("unique work")
-	f.Git("checkout", "-q", "main")
-
-	out := f.Bench("worktree", "clean")
-	out.RequireExit(0)
-	contract.RequireContains(t, out.Stdout, "kept branch worktree-agent-unique (unique commits — inspect or delete by hand)")
-	if !headExists(f, "worktree-agent-unique") {
-		t.Fatal("unique-patch scratch orphan was destroyed by the content-landed proof")
-	}
-}
-
-// FT44 review fix (merge blindness): `git cherry` enumerates only non-merge commits, so a branch
-// whose ordinary commits all landed but whose merge commit carries unique content (a conflict
-// resolution) is invisible to the patch proof. Such a branch must survive the sweep: the ordering
-// matters — the branch merges main first, then its feature commit squash-lands, so cherry reports
-// the feature commit `-` while the merge-only file exists nowhere in main.
-func testRuntimeWorktreeSweepKeepsEvilMerge(t *testing.T) {
-	f := onMainFixture(t)
-	f.Git("checkout", "-q", "-b", "worktree-agent-evil")
-	f.WriteFile("feat.txt", "feature\n")
-	f.CommitAll("feature work")
-	f.Git("checkout", "-q", "main")
-	f.WriteFile("other.txt", "other\n")
-	f.CommitAll("mainline work")
-	f.Git("checkout", "-q", "worktree-agent-evil")
-	f.Git("-c", "user.email=bench@local", "-c", "user.name=bench", "merge", "--no-commit", "--no-ff", "main")
-	f.WriteFile("evil.txt", "merge-only resolution\n")
-	f.CommitAll("merge main (evil)")
-	f.Git("checkout", "-q", "main")
-	// Squash-land the feature commit (the merge commit's first parent) after the merge.
-	f.Git("-c", "user.email=bench@local", "-c", "user.name=bench", "cherry-pick", "worktree-agent-evil~1")
-
-	out := f.Bench("worktree", "clean")
-	out.RequireExit(0)
-	contract.RequireContains(t, out.Stdout, "kept branch worktree-agent-evil (unique commits — inspect or delete by hand)")
-	if !headExists(f, "worktree-agent-evil") {
-		t.Fatal("orphan carrying merge-only content was deleted by the content-landed proof")
-	}
-}
-
-// Story 3: a scratch branch checked out in a live worktree, a bench/shift-* review branch, a plain
-// branch, and main all survive the sweep — the active-worktree and non-scratch filters hold. The
-// live out-of-pool worktree makes the worktree-removal phase refuse under no TTY (exit 1), which is
-// orthogonal to the sweep; this row asserts only branch survival.
-func testRuntimeWorktreeSweepSparesProtected(t *testing.T) {
-	f := onMainFixture(t)
-	active := filepath.Join(f.Root, "..", "active-wt")
-	f.Git("worktree", "add", "-q", "-b", "worktree-agent-active", active, "HEAD")
-	f.Git("branch", "bench/shift-review")
-	f.Git("branch", "plain-branch")
-
-	f.Bench("worktree", "clean")
-	for _, name := range []string{"worktree-agent-active", "bench/shift-review", "plain-branch", "main"} {
-		if !headExists(f, name) {
-			t.Fatalf("sweep deleted protected branch %s:\n%s", name, f.Git("for-each-ref", "--format=%(refname:short)", "refs/heads/").Stdout)
+	hook := filepath.Join(f.Root, ".bench", "hooks", "session-start.sh")
+	session := f.RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, "bash", hook)
+	session.RequireExit(0)
+	contract.RequireContains(t, session.Stdout+session.Stderr, "retained foreign=2")
+	for _, path := range []string{ordinary, detached} {
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("SessionStart removed foreign worktree %q: %v", path, err)
 		}
 	}
 }
 
-// Story 1 edge: a merged scratch name carrying a slash and a non-ASCII character inside the
-// worktree- prefix is detected and deleted — the ref name is neither mangled nor lost to a glob that
-// stops at a slash.
-func testRuntimeWorktreeSweepDeletesSlashUnicode(t *testing.T) {
+func testRuntimeResumeFailureSummary(t *testing.T) {
 	f := onMainFixture(t)
-	const name = "worktree-agent-café/x"
-	f.Git("branch", name)
+	f.Bench("link").RequireExit(0)
+	f.CommitAll("link fixture")
+	env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bench-home")}
+	assignment := createRuntimeAssignment(t, f, env, "resume-failure")
+	assignment.State = intent.StateCleanupPending
+	if err := intent.PutAssignment(f.Root, assignment); err != nil {
+		t.Fatal(err)
+	}
+	contract.WriteFileAbs(t, filepath.Join(assignment.Worktree, "dirty.txt"), "preserve after failure\n")
+	refs := filepath.Join(gitDir(t, f), "refs")
+	if err := os.Chmod(refs, 0o500); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(refs, 0o700) })
 
-	out := f.Bench("worktree", "clean")
+	want := "bench resume: removed 0, recovered 0; failed 1; open assignments 1\n"
+	resume := f.BenchEnv(env, "resume-clean")
+	resume.RequireExit(1)
+	if resume.Stdout != want || !strings.Contains(resume.Stderr, "bench resume-clean:") {
+		t.Fatalf("failed resume streams = stdout %q stderr %q", resume.Stdout, resume.Stderr)
+	}
+	if _, err := os.Stat(assignment.Worktree); err != nil {
+		t.Fatalf("failed resume removed assignment: %v", err)
+	}
+	contract.RequireContains(t, f.Git("worktree", "list", "--porcelain").Stdout, "locked bench owner=")
+
+	hook := filepath.Join(f.Root, ".bench", "hooks", "session-start.sh")
+	session := f.RunEnv(map[string]string{"PATH": "/usr/bin:/bin", "BENCH_HOME": env["BENCH_HOME"]}, "bash", hook)
+	session.RequireExit(0)
+	contract.RequireContains(t, session.Stdout, want)
+	contract.RequireContains(t, session.Stderr, "warning: bench session-start: resume-clean failed; inspect retained worktree state")
+}
+
+// FT77 story 2: one real CLI run proves the two eligible cases are not hidden by a
+// safe no-op while each fail-closed class survives with its own stable reason.
+func testRuntimeWorktreeAutomaticEligibilityMatrix(t *testing.T) {
+	f := onMainFixture(t)
+	f.Bench("link").RequireExit(0)
+	f.WriteFile(".gitignore", "ignored.txt\n")
+	f.CommitAll("matrix fixture")
+	env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bench-home")}
+
+	clean := createRuntimeAssignment(t, f, env, "matrix-clean")
+	dirty := createRuntimeAssignment(t, f, env, "matrix-dirty")
+	active := createRuntimeAssignment(t, f, env, "matrix-active")
+	live := createRuntimeAssignment(t, f, env, "matrix-live")
+	unmerged := createRuntimeAssignment(t, f, env, "matrix-unmerged")
+	ignored := createRuntimeAssignment(t, f, env, "matrix-ignored")
+	malformed := createRuntimeAssignment(t, f, env, "matrix-malformed")
+	uncertain := createRuntimeAssignment(t, f, env, "matrix-uncertain")
+	locked := createRuntimeAssignment(t, f, env, "matrix-locked")
+	for _, assignment := range []intent.Assignment{clean, dirty, live, unmerged, ignored, malformed, uncertain, locked} {
+		assignment.State = intent.StateCleanupPending
+		if err := intent.PutAssignment(f.Root, assignment); err != nil {
+			t.Fatal(err)
+		}
+	}
+	contract.WriteFileAbs(t, filepath.Join(dirty.Worktree, "dirty.txt"), "recover me\n")
+	lease := strings.TrimSpace(contract.RunAt(t, f, live.Worktree, nil, "git", "rev-parse", "--path-format=absolute", "--git-path", "bench-lease").Stdout)
+	contract.WriteFileAbs(t, lease, fmt.Sprintf("%d live\n", os.Getpid()))
+	contract.WriteFileAbs(t, filepath.Join(unmerged.Worktree, "unique.txt"), "unique\n")
+	contract.RunAt(t, f, unmerged.Worktree, nil, "git", "add", "unique.txt").RequireExit(0)
+	contract.RunAt(t, f, unmerged.Worktree, nil, "git", "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "unique").RequireExit(0)
+	contract.WriteFileAbs(t, filepath.Join(ignored.Worktree, "ignored.txt"), "secret\n")
+	malformedAdmin := strings.TrimSpace(contract.RunAt(t, f, malformed.Worktree, nil, "git", "rev-parse", "--path-format=absolute", "--git-dir").Stdout)
+	contract.WriteFileAbs(t, filepath.Join(malformedAdmin, "bench-owner"), "not json\n")
+	contract.RunAt(t, f, uncertain.Worktree, nil, "git", "switch", "-q", "--detach").RequireExit(0)
+	f.Git("worktree", "unlock", locked.Worktree)
+	f.Git("worktree", "lock", "--reason", "foreign lock", locked.Worktree)
+
+	out := f.BenchEnv(env, "resume-clean")
 	out.RequireExit(0)
-	contract.RequireContains(t, out.Stdout, "deleted branch "+name)
-	if headExists(f, name) {
-		t.Fatalf("merged slashed/unicode scratch orphan survived the sweep:\n%s", f.Git("for-each-ref", "--format=%(refname:short)", "refs/heads/").Stdout)
+	want := "bench resume: removed 1, recovered 1; retained active=1 live-lease=1 unmerged=1 ignored=1 malformed=1 uncertain=1 unexpected-lock=1; failed 0; open assignments 8\n"
+	if out.Stdout != want {
+		t.Fatalf("automatic matrix summary = %q, want %q", out.Stdout, want)
+	}
+	for _, path := range []string{active.Worktree, live.Worktree, unmerged.Worktree, ignored.Worktree, malformed.Worktree, uncertain.Worktree, locked.Worktree} {
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("automatic cleanup removed retained matrix target %q: %v", path, err)
+		}
+	}
+	for _, path := range []string{clean.Worktree, dirty.Worktree} {
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			t.Fatalf("automatic cleanup kept eligible target %q: %v", path, err)
+		}
+	}
+	contract.RequireContains(t, f.Git("for-each-ref", "--format=%(refname)", "refs/bench/recovery/").Stdout, "refs/bench/recovery/")
+
+	hook := filepath.Join(f.Root, ".bench", "hooks", "session-start.sh")
+	session := f.RunEnv(map[string]string{"PATH": "/usr/bin:/bin", "BENCH_HOME": env["BENCH_HOME"]}, "bash", hook)
+	session.RequireExit(0)
+	for _, reason := range []string{"active=1", "live-lease=1", "unmerged=1", "ignored=1", "malformed=1", "uncertain=1", "unexpected-lock=1"} {
+		contract.RequireContains(t, session.Stdout+session.Stderr, reason)
 	}
 }
 
-// Story 7: when the resolved default branch does not resolve to a commit, the sweep refuses loudly on
-// stderr, deletes nothing, and exits 1 — the false-empty guard. The fixture is born on "master" with
-// no origin/HEAD, so git.DefaultBranch's "main" fallback names a ref that never resolves.
-func testRuntimeWorktreeSweepRefusesUnresolvableDefault(t *testing.T) {
-	f := contract.NewFixture(t)
-	commitAllowEmpty(t, f, "init")
-	f.Git("branch", "worktree-agent-x")
+func createRuntimeAssignment(t *testing.T, f contract.Fixture, env map[string]string, request string) intent.Assignment {
+	t.Helper()
+	f.BenchEnv(env, "worktree", "create", "--request", request, "--label", request).RequireExit(0)
+	assignments, err := intent.Assignments(f.Root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, assignment := range assignments {
+		if assignment.Label == request {
+			return assignment
+		}
+	}
+	t.Fatalf("created assignment %q not found", request)
+	return intent.Assignment{}
+}
 
-	out := f.Bench("worktree", "clean")
-	out.RequireExit(1)
-	contract.RequireContains(t, out.Stderr, "cannot resolve the default branch")
-	contract.RequireNotContains(t, out.Stdout, "deleted branch")
-	if !headExists(f, "worktree-agent-x") {
-		t.Fatal("sweep deleted a branch despite an unresolvable default branch")
+func testRuntimeWorktreeEmbeddedRepositoryPreservation(t *testing.T) {
+	for _, gitFile := range []bool{false, true} {
+		t.Run(fmt.Sprintf("git-file=%t", gitFile), func(t *testing.T) {
+			f := onMainFixture(t)
+			env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bench-home")}
+			assignment := createRuntimeAssignment(t, f, env, fmt.Sprintf("embedded-%t", gitFile))
+			nested := filepath.Join(assignment.Worktree, "embedded")
+			contract.Mkdir(t, nested)
+			initArgs := []string{"init", "-q", "-b", "main"}
+			if gitFile {
+				initArgs = append(initArgs, "--separate-git-dir", filepath.Join(t.TempDir(), "embedded.git"))
+			}
+			contract.RunAt(t, f, nested, nil, "git", initArgs...).RequireExit(0)
+			contract.WriteFileAbs(t, filepath.Join(nested, "unique.txt"), "unique nested checkout\n")
+			contract.RunAt(t, f, nested, nil, "git", "add", "unique.txt").RequireExit(0)
+			contract.RunAt(t, f, nested, nil, "git", "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "unique nested").RequireExit(0)
+			unique := strings.TrimSpace(contract.RunAt(t, f, nested, nil, "git", "rev-parse", "HEAD").Stdout)
+
+			plan := f.Bench("worktree", "clean", assignment.Worktree)
+			plan.RequireExit(0)
+			contract.RequireContains(t, plan.Stdout, ",retain,")
+			f.Bench("worktree", "clean", assignment.Worktree, "--apply", cleanupFingerprint(t, plan.Stdout)).RequireExit(0)
+			assignment.State = intent.StateCleanupPending
+			if err := intent.PutAssignment(f.Root, assignment); err != nil {
+				t.Fatal(err)
+			}
+			resume := f.BenchEnv(env, "resume-clean")
+			resume.RequireExit(0)
+			contract.RequireContains(t, resume.Stdout, "retained uncertain=1")
+			if got := strings.TrimSpace(contract.RunAt(t, f, nested, nil, "git", "rev-parse", "HEAD").Stdout); got != unique {
+				t.Fatalf("embedded checkout changed: got %s want %s", got, unique)
+			}
+		})
 	}
 }
 
-func testRuntimeWorktreeCleanRemovesOutOfPool(t *testing.T) {
-	f := contract.NewFixture(t)
-	commitAllowEmpty(t, f, "init")
-	candidate := filepath.Join(f.Root, "..", "outside wt [one]")
-	f.Git("worktree", "add", "-q", "--detach", candidate, "HEAD")
-	nested := filepath.Join(f.Root, "sub", "dir")
-	contract.Mkdir(t, nested)
+func testRuntimeWorktreeExactDryRunPurity(t *testing.T) {
+	f := onMainFixture(t)
+	target := filepath.Join(t.TempDir(), "pure exact target")
+	f.Git("worktree", "add", "-q", "-b", "pure-exact", target, "HEAD")
+	before := snapshotRuntimePaths(t, gitDir(t, f), target)
 
-	out := contract.RunAt(t, f, nested, nil, "bash", benchPath(t), "worktree", "clean")
+	first := f.Bench("worktree", "clean", target)
+	first.RequireExit(0)
+	if first.Stderr != "" {
+		t.Fatalf("dry-run wrote stderr: %q", first.Stderr)
+	}
+	if !strings.HasSuffix(first.Stdout, "\n") {
+		t.Fatalf("dry-run lacks trailing newline: %q", first.Stdout)
+	}
+	lines := contract.NonEmptyLines(first.Stdout)
+	if len(lines) != 2 || lines[0] != "worktree_cleanup[1]{target,action,tracked,ignored,recovery,fingerprint,detail}:" {
+		t.Fatalf("dry-run literal schema = %q", first.Stdout)
+	}
+	fields := strings.Split(strings.TrimSpace(lines[1]), ",")
+	if len(fields) != 7 {
+		t.Fatalf("dry-run row fields = %#v", fields)
+	}
+	if got := strings.Trim(fields[3], `"`); got != "count=0 bytes=0 shown=0 truncated=false" {
+		t.Fatalf("ignored summary = %q", got)
+	}
+	fingerprint := strings.Trim(fields[5], `"`)
+	if len(fingerprint) != 64 || strings.ToLower(fingerprint) != fingerprint {
+		t.Fatalf("fingerprint = %q, want lowercase SHA-256", fingerprint)
+	}
+	if got := strings.Trim(fields[6], `"`); got != "apply with exact fingerprint" {
+		t.Fatalf("detail = %q", got)
+	}
+
+	second := f.Bench("worktree", "clean", target)
+	second.RequireExit(0)
+	if second.Stdout != first.Stdout || second.Stderr != "" {
+		t.Fatalf("dry-run is nondeterministic\nfirst=%q\nsecond=%q", first.Stdout, second.Stdout)
+	}
+	if after := snapshotRuntimePaths(t, gitDir(t, f), target); after != before {
+		t.Fatalf("dry-run mutated Git/private/filesystem state\nbefore:\n%s\nafter:\n%s", before, after)
+	}
+
+	contract.WriteFileAbs(t, filepath.Join(target, "README.md"), "drifted after plan\n")
+	beforeStale := snapshotRuntimePaths(t, gitDir(t, f), target)
+	stale := f.Bench("worktree", "clean", target, "--apply", fingerprint)
+	stale.RequireExit(1)
+	contract.RequireContains(t, stale.Stdout, "worktree_cleanup[1]{target,action,tracked,ignored,recovery,fingerprint,detail}:")
+	contract.RequireNotContains(t, stale.Stdout, fingerprint)
+	if stale.Stderr != "" {
+		t.Fatalf("stale apply wrote an unrelated stderr shape: %q", stale.Stderr)
+	}
+	if after := snapshotRuntimePaths(t, gitDir(t, f), target); after != beforeStale {
+		t.Fatalf("stale built apply mutated target\nbefore:\n%s\nafter:\n%s", beforeStale, after)
+	}
+}
+
+func snapshotRuntimePaths(t *testing.T, roots ...string) string {
+	t.Helper()
+	var snapshot strings.Builder
+	for _, root := range roots {
+		err := filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
+			if walkErr != nil {
+				return walkErr
+			}
+			info, err := entry.Info()
+			if err != nil {
+				return err
+			}
+			rel, err := filepath.Rel(root, path)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(&snapshot, "%s %s %o %d %d", root, rel, info.Mode(), info.Size(), info.ModTime().UnixNano())
+			if info.Mode().IsRegular() {
+				body, err := os.ReadFile(path)
+				if err != nil {
+					return err
+				}
+				digest := sha256.Sum256(body)
+				fmt.Fprintf(&snapshot, " %x", digest)
+			}
+			snapshot.WriteByte('\n')
+			return nil
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	return snapshot.String()
+}
+
+func testRuntimeWorktreeIgnoredDiscard(t *testing.T) {
+	f := onMainFixture(t)
+	contract.WriteFileAbs(t, filepath.Join(gitDir(t, f), "info", "exclude"), "ignored-*\n")
+	target := filepath.Join(t.TempDir(), "ignored exact")
+	f.Git("worktree", "add", "-q", "-b", "ignored-exact", target, "HEAD")
+	for i := 0; i < 21; i++ {
+		contract.WriteFileAbs(t, filepath.Join(target, fmt.Sprintf("ignored-%02d", i)), "secret\n")
+	}
+	external := filepath.Join(t.TempDir(), "external-secret")
+	contract.WriteFileAbs(t, external, "outside\n")
+	if err := os.Symlink(external, filepath.Join(target, "ignored-link")); err != nil {
+		t.Fatal(err)
+	}
+
+	plan := f.Bench("worktree", "clean", "--discard-ignored", target)
+	plan.RequireExit(0)
+	contract.RequireContains(t, plan.Stdout, "discard-remove")
+	contract.RequireContains(t, plan.Stdout, "ignored_paths[20]{path}:")
+	fingerprint := cleanupFingerprint(t, plan.Stdout)
+	full := f.Bench("worktree", "clean", "--discard-ignored", "--full", target)
+	full.RequireExit(0)
+	contract.RequireContains(t, full.Stdout, "ignored_paths[22]{path}:")
+	if cleanupFingerprint(t, full.Stdout) != fingerprint {
+		t.Fatal("--full changed cleanup fingerprint")
+	}
+
+	contract.WriteFileAbs(t, filepath.Join(target, "ignored-new"), "new\n")
+	stale := f.Bench("worktree", "clean", "--discard-ignored", target, "--apply", fingerprint)
+	stale.RequireExit(1)
+	if _, err := os.Stat(target); err != nil {
+		t.Fatalf("inventory drift removed target: %v", err)
+	}
+	fresh := f.Bench("worktree", "clean", "--discard-ignored", target)
+	fresh.RequireExit(0)
+	apply := f.Bench("worktree", "clean", "--discard-ignored", target, "--apply", cleanupFingerprint(t, fresh.Stdout))
+	apply.RequireExit(0)
+	if body := contract.ReadFileAbs(t, external); body != "outside\n" {
+		t.Fatalf("discard followed symlink: %q", body)
+	}
+}
+
+func cleanupFingerprint(t *testing.T, output string) string {
+	t.Helper()
+	lines := contract.NonEmptyLines(output)
+	if len(lines) < 2 || !strings.HasPrefix(lines[0], "worktree_cleanup[") {
+		t.Fatalf("cleanup output = %q", output)
+	}
+	fields := strings.Split(strings.TrimSpace(lines[1]), ",")
+	if len(fields) != 7 {
+		t.Fatalf("cleanup fields = %#v", fields)
+	}
+	return strings.Trim(fields[5], `"`)
+}
+
+func testRuntimeWorktreeCreateBindsOwnership(t *testing.T) {
+	f := onMainFixture(t)
+	benchHome := filepath.Join(f.Root, ".bench-home")
+	env := map[string]string{"BENCH_HOME": benchHome}
+
+	out := f.BenchEnv(env, "worktree", "create", "--request", "FT77-probe", "--label", "FT77 probe")
 	out.RequireExit(0)
-	contract.RequireContains(t, out.Stdout, candidate)
-	contract.RequireContains(t, out.Stdout, "removed")
-	if strings.Contains(out.Stdout+out.Stderr, "--force") {
-		t.Fatalf("cleanup mentioned forced removal:\nstdout:\n%s\nstderr:\n%s", out.Stdout, out.Stderr)
+	path := worktreeCreatePath(t, out.Stdout)
+	if !filepath.IsAbs(path) {
+		t.Fatalf("worktree path = %q, want absolute", path)
 	}
-	if strings.Contains(f.Git("worktree", "list", "--porcelain").Stdout, candidate) {
-		t.Fatalf("cleanup left worktree registered:\n%s", f.Git("worktree", "list", "--porcelain").Stdout)
+	branch := strings.TrimSpace(contract.RunAt(t, f, path, nil, "git", "symbolic-ref", "--quiet", "--short", "HEAD").Stdout)
+	if !strings.HasPrefix(branch, "bench/assign/") {
+		t.Fatalf("branch = %q, want dedicated bench/assign branch", branch)
 	}
+	admin := strings.TrimSpace(contract.RunAt(t, f, path, nil, "git", "rev-parse", "--path-format=absolute", "--git-dir").Stdout)
+	marker := filepath.Join(admin, "bench-owner")
+	info, err := os.Lstat(marker)
+	if err != nil {
+		t.Fatalf("ownership marker missing: %v", err)
+	}
+	if info.Mode().Perm() != 0o600 || !info.Mode().IsRegular() {
+		t.Fatalf("ownership marker mode/type = %v, want regular 0600", info.Mode())
+	}
+	markerBody := contract.ReadFileAbs(t, marker)
+	contract.RequireContains(t, markerBody, `"schema":"bench-owner/v1"`)
+	contract.RequireContains(t, markerBody, `"path":"`)
+	ledger := contract.ReadFileAbs(t, filepath.Join(f.Root, ".git", "bench-intent.json"))
+	contract.RequireContains(t, ledger, path)
+	contract.RequireContains(t, ledger, "refs/heads/"+branch)
+	registration := f.Git("worktree", "list", "--porcelain").Stdout
+	contract.RequireContains(t, registration, "locked bench owner=")
+	contract.RequireContains(t, registration, " assignment=")
 
-	rerun := contract.RunAt(t, f, nested, nil, "bash", benchPath(t), "worktree", "clean")
-	rerun.RequireExit(0)
-	contract.RequireContains(t, rerun.Stdout, "nothing to clean")
+	retry := f.BenchEnv(env, "worktree", "create", "--request", "FT77-probe", "--label", "FT77 probe")
+	retry.RequireExit(0)
+	if got := worktreeCreatePath(t, retry.Stdout); got != path {
+		t.Fatalf("idempotent retry path = %q, want %q", got, path)
+	}
 }
 
-func testRuntimeWorktreeCleanSalvagesDirtyOntoBranch(t *testing.T) {
-	f := contract.NewFixture(t)
-	commitAllowEmpty(t, f, "init")
-	dirty := filepath.Join(f.Root, "..", "dirty on branch")
-	f.Git("worktree", "add", "-q", "-b", "salvaged-wip", dirty, "HEAD")
-	contract.WriteFileAbs(t, filepath.Join(dirty, "dirty.txt"), "dirty\n")
-
-	out := contract.RunAt(t, f, f.Root, nil, "bash", benchPath(t), "worktree", "clean")
-	out.RequireExit(0)
-	contract.RequireContains(t, out.Stdout, "salvaged")
-	contract.RequireContains(t, out.Stdout, "salvaged-wip")
-	contract.RequireContains(t, out.Stdout, "removed")
-	if strings.Contains(f.Git("worktree", "list", "--porcelain").Stdout, dirty) {
-		t.Fatalf("salvage left worktree registered:\n%s", f.Git("worktree", "list", "--porcelain").Stdout)
+func testRuntimeWorktreeReleaseVerifiesAndRecovers(t *testing.T) {
+	f := onMainFixture(t)
+	env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bench-home")}
+	created := f.BenchEnv(env, "worktree", "create", "--request", "release-1", "--label", "release probe")
+	created.RequireExit(0)
+	lines := contract.NonEmptyLines(created.Stdout)
+	if len(lines) != 2 {
+		t.Fatalf("create output = %q", created.Stdout)
 	}
-	show := f.Git("show", "salvaged-wip:dirty.txt")
-	contract.RequireContains(t, show.Stdout, "dirty")
+	path := strings.Trim(strings.TrimSpace(strings.Split(lines[1], ",")[0]), `"`)
+	ledgerPath := filepath.Join(f.Root, ".git", "bench-intent.json")
+	before := contract.ReadFileAbs(t, ledgerPath)
+	mismatch := f.BenchEnv(env, "worktree", "release", "--request", "wrong", path)
+	mismatch.RequireExit(1)
+	if after := contract.ReadFileAbs(t, ledgerPath); after != before {
+		t.Fatal("release mismatch mutated assignment ledger")
+	}
+	contract.RequireContains(t, f.Git("worktree", "list", "--porcelain").Stdout, "locked bench owner=")
+	contract.WriteFileAbs(t, filepath.Join(path, "dirty.txt"), "dirty\n")
+	released := f.BenchEnv(env, "worktree", "release", "--request", "release-1", path)
+	released.RequireExit(0)
+	contract.RequireContains(t, released.Stdout, "recovered")
+	contract.RequireNotContains(t, f.Git("worktree", "list", "--porcelain").Stdout, path)
+	contract.RequireContains(t, f.Git("for-each-ref", "--format=%(refname)", "refs/bench/recovery/").Stdout, "refs/bench/recovery/")
 }
 
-func testRuntimeWorktreeCleanRefusesDirtyDetached(t *testing.T) {
-	f := contract.NewFixture(t)
-	commitAllowEmpty(t, f, "init")
-	dirty := filepath.Join(f.Root, "..", "dirty outside")
-	f.Git("worktree", "add", "-q", "--detach", dirty, "HEAD")
-	contract.WriteFileAbs(t, filepath.Join(dirty, "dirty.txt"), "dirty\n")
+func testRuntimeWorktreeExactForeignCleanup(t *testing.T) {
+	t.Run("one sibling only and branch survives", func(t *testing.T) {
+		f := onMainFixture(t)
+		one := filepath.Join(t.TempDir(), "foreign one")
+		two := filepath.Join(t.TempDir(), "foreign two")
+		f.Git("worktree", "add", "-q", "-b", "foreign-one", one, "HEAD")
+		f.Git("worktree", "add", "-q", "-b", "foreign-two", two, "HEAD")
+		plan := f.Bench("worktree", "clean", one)
+		plan.RequireExit(0)
+		fingerprint := cleanupFingerprint(t, plan.Stdout)
+		apply := f.Bench("worktree", "clean", one, "--apply", fingerprint)
+		apply.RequireExit(0)
+		replay := f.Bench("worktree", "clean", one, "--apply", fingerprint)
+		replay.RequireExit(0)
+		if replay.Stdout != apply.Stdout || replay.Stderr != "" {
+			t.Fatalf("idempotent replay changed result\napply=%q\nreplay=%q\nstderr=%q", apply.Stdout, replay.Stdout, replay.Stderr)
+		}
+		if _, err := os.Stat(one); !os.IsNotExist(err) {
+			t.Fatalf("exact target remains: %v", err)
+		}
+		if _, err := os.Stat(two); err != nil {
+			t.Fatalf("sibling was removed: %v", err)
+		}
+		for _, branch := range []string{"foreign-one", "foreign-two"} {
+			if !headExists(f, branch) {
+				t.Fatalf("exact foreign cleanup deleted branch %q", branch)
+			}
+		}
+	})
 
-	out := contract.RunAt(t, f, f.Root, nil, "bash", benchPath(t), "worktree", "clean")
-	out.RequireExit(1)
-	contract.RequireContains(t, out.Stdout, "refused")
-	contract.RequireContains(t, out.Stdout, dirty)
-	contract.RequireContains(t, f.Git("worktree", "list", "--porcelain").Stdout, dirty)
+	t.Run("dirty attached recovers before removal", func(t *testing.T) {
+		f := onMainFixture(t)
+		target := filepath.Join(t.TempDir(), "dirty attached")
+		f.Git("worktree", "add", "-q", "-b", "foreign-dirty", target, "HEAD")
+		contract.WriteFileAbs(t, filepath.Join(target, "dirty.txt"), "recover me\n")
+		apply := applyCleanupPlan(t, f, target)
+		apply.RequireExit(0)
+		contract.RequireContains(t, apply.Stdout, "removed")
+		if _, err := os.Stat(target); !os.IsNotExist(err) {
+			t.Fatalf("dirty exact target remains: %v", err)
+		}
+		if !headExists(f, "foreign-dirty") {
+			t.Fatal("dirty foreign branch was deleted")
+		}
+		refs := f.Git("for-each-ref", "--format=%(refname)", "refs/bench/recovery/").Stdout
+		contract.RequireContains(t, refs, "refs/bench/recovery/")
+	})
+
+	t.Run("detached unique anchored", func(t *testing.T) {
+		f := onMainFixture(t)
+		target := filepath.Join(t.TempDir(), "detached exact")
+		f.Git("worktree", "add", "-q", "--detach", target, "HEAD")
+		contract.WriteFileAbs(t, filepath.Join(target, "unique.txt"), "unique\n")
+		contract.RunAt(t, f, target, nil, "git", "add", "unique.txt").RequireExit(0)
+		contract.RunAt(t, f, target, nil, "git", "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "detached unique").RequireExit(0)
+		unique := strings.TrimSpace(contract.RunAt(t, f, target, nil, "git", "rev-parse", "HEAD").Stdout)
+		applyCleanupPlan(t, f, target).RequireExit(0)
+		refs := strings.Fields(f.Git("for-each-ref", "--format=%(objectname)", "refs/bench/recovery/").Stdout)
+		if len(refs) != 1 || refs[0] != unique {
+			t.Fatalf("detached recovery refs = %#v, want %s", refs, unique)
+		}
+	})
+
+	t.Run("refusals", func(t *testing.T) {
+		f := onMainFixture(t)
+		registered := filepath.Join(t.TempDir(), "registered parent")
+		f.Git("worktree", "add", "-q", "-b", "foreign-parent", registered, "HEAD")
+		inside := filepath.Join(registered, "child")
+		contract.Mkdir(t, inside)
+		unregistered := t.TempDir()
+		other := onMainFixture(t)
+		crossRepo := filepath.Join(t.TempDir(), "cross repo")
+		other.Git("worktree", "add", "-q", "-b", "cross-repo", crossRepo, "HEAD")
+		for name, target := range map[string]string{"primary": f.Root, "inside": inside, "unregistered": unregistered, "cross-repository": crossRepo} {
+			plan := f.Bench("worktree", "clean", target)
+			plan.RequireExit(0)
+			contract.RequireContains(t, plan.Stdout, "retain")
+			applied := f.Bench("worktree", "clean", target, "--apply", cleanupFingerprint(t, plan.Stdout))
+			applied.RequireExit(0)
+			contract.RequireContains(t, applied.Stdout, "retain")
+			if _, err := os.Stat(target); err != nil {
+				t.Fatalf("%s refusal lost target: %v", name, err)
+			}
+		}
+	})
+
+	t.Run("classification failure stays structured", func(t *testing.T) {
+		f := onMainFixture(t)
+		target := filepath.Join(t.TempDir(), "failed classification")
+		f.Git("worktree", "add", "-q", "-b", "failed-classification", target, "HEAD")
+		contract.WriteFileAbs(t, filepath.Join(f.Root, ".git", "bench-intent.json"), "{broken\n")
+		out := f.Bench("worktree", "clean", target)
+		out.RequireExit(1)
+		if out.Stderr != "" || !strings.HasSuffix(out.Stdout, "\n") {
+			t.Fatalf("failed intent streams = stdout %q stderr %q", out.Stdout, out.Stderr)
+		}
+		contract.RequireContains(t, out.Stdout, "worktree_cleanup[1]{target,action,tracked,ignored,recovery,fingerprint,detail}:\n")
+		contract.RequireContains(t, out.Stdout, ",error,unknown,")
+	})
 }
 
-func testRuntimeWorktreeCleanPrunesMissingRegistration(t *testing.T) {
-	f := contract.NewFixture(t)
-	commitAllowEmpty(t, f, "init")
-	missing := filepath.Join(f.Root, "..", "missing outside")
-	f.Git("worktree", "add", "-q", "--detach", missing, "HEAD")
-	contract.Remove(t, missing)
+func applyCleanupPlan(t *testing.T, f contract.Fixture, target string) contract.Probe {
+	t.Helper()
+	plan := f.Bench("worktree", "clean", target)
+	plan.RequireExit(0)
+	lines := contract.NonEmptyLines(plan.Stdout)
+	if len(lines) != 2 {
+		t.Fatalf("cleanup plan = %q", plan.Stdout)
+	}
+	fields := strings.Split(strings.TrimSpace(lines[1]), ",")
+	if len(fields) != 7 {
+		t.Fatalf("cleanup fields = %#v", fields)
+	}
+	return f.Bench("worktree", "clean", target, "--apply", strings.Trim(fields[5], `"`))
+}
 
-	out := f.Bench("worktree", "clean")
-	out.RequireExit(0)
-	contract.RequireContains(t, out.Stdout, "nothing to clean")
-	contract.RequireNotContains(t, f.Git("worktree", "list", "--porcelain").Stdout, missing)
+func testRuntimeWorktreeRecoveryPlanApply(t *testing.T) {
+	f := onMainFixture(t)
+	target := filepath.Join(t.TempDir(), "recovery retirement")
+	f.Git("worktree", "add", "-q", "-b", "recovery-retirement", target, "HEAD")
+	contract.WriteFileAbs(t, filepath.Join(target, "recovered.txt"), "land me\n")
+	applyCleanupPlan(t, f, target).RequireExit(0)
+	assignments, err := intent.Assignments(f.Root)
+	if err != nil || len(assignments) != 1 || len(assignments[0].Recovery) != 1 {
+		t.Fatalf("foreign recovery assignment = %#v, %v", assignments, err)
+	}
+	assignment := assignments[0]
+	first := assignment.Recovery[0]
+	base := strings.TrimSpace(f.Git("rev-parse", "HEAD").Stdout)
+	for _, payload := range first.Payloads {
+		f.Git("-c", "user.name=bench", "-c", "user.email=bench@local", "cherry-pick", payload)
+	}
+	first.Payloads = append(first.Payloads, base)
+	assignment.Recovery[0] = first
+
+	f.Git("checkout", "-q", "-b", "recovery-unique")
+	f.WriteFile("unique-recovery.txt", "unique\n")
+	f.CommitAll("unique recovery")
+	unique := strings.TrimSpace(f.Git("rev-parse", "HEAD").Stdout)
+	uniqueTree := strings.TrimSpace(f.Git("rev-parse", "HEAD^{tree}").Stdout)
+	f.Git("checkout", "-q", "main")
+	uniqueRoot := strings.TrimSpace(f.Git("-c", "user.name=bench", "-c", "user.email=bench@local", "commit-tree", uniqueTree, "-p", unique, "-m", "unique root").Stdout)
+	second := first
+	second.Ref = strings.TrimSuffix(first.Ref, "/1") + "/2"
+	second.Root, second.Payloads = uniqueRoot, []string{unique}
+	f.Git("update-ref", second.Ref, uniqueRoot)
+	assignment.Recovery = append(assignment.Recovery, second)
+	if err := intent.PutAssignment(f.Root, assignment); err != nil {
+		t.Fatal(err)
+	}
+	uniquePlan := f.Bench("worktree", "recovery", second.Ref)
+	uniquePlan.RequireExit(0)
+	contract.RequireContains(t, uniquePlan.Stdout, "unlanded")
+
+	mergePayload := strings.TrimSpace(f.Git("-c", "user.name=bench", "-c", "user.email=bench@local", "commit-tree", uniqueTree, "-p", unique, "-p", base, "-m", "ambiguous merge payload").Stdout)
+	mergeRoot := strings.TrimSpace(f.Git("-c", "user.name=bench", "-c", "user.email=bench@local", "commit-tree", uniqueTree, "-p", mergePayload, "-m", "merge root").Stdout)
+	second.Root, second.Payloads = mergeRoot, []string{mergePayload}
+	f.Git("update-ref", second.Ref, mergeRoot)
+	assignment.Recovery[1] = second
+	if err := intent.PutAssignment(f.Root, assignment); err != nil {
+		t.Fatal(err)
+	}
+	mergePlan := f.Bench("worktree", "recovery", second.Ref)
+	mergePlan.RequireExit(0)
+	contract.RequireContains(t, mergePlan.Stdout, "unlanded")
+
+	second.Payloads = append(second.Payloads, strings.Repeat("f", 40))
+	assignment.Recovery[1] = second
+	if err := intent.PutAssignment(f.Root, assignment); err != nil {
+		t.Fatal(err)
+	}
+	queryPlan := f.Bench("worktree", "recovery", second.Ref)
+	queryPlan.RequireExit(0)
+	contract.RequireContains(t, queryPlan.Stdout, "retain")
+
+	plan := f.BenchEnv(map[string]string{"SHELL": "/bin/true"}, "worktree", "recovery", first.Ref)
+	plan.RequireExit(0)
+	contract.RequireContains(t, plan.Stdout, "recovery_cleanup[1]{ref,root,payloads,landed,action,fingerprint,detail}:")
+	contract.RequireContains(t, plan.Stdout, first.Root)
+	for _, payload := range first.Payloads {
+		contract.RequireContains(t, plan.Stdout, payload)
+	}
+	fields := strings.Split(strings.TrimSpace(contract.NonEmptyLines(plan.Stdout)[1]), ",")
+	if len(fields) != 7 {
+		t.Fatalf("recovery plan fields = %#v", fields)
+	}
+	fingerprint := strings.Trim(fields[5], `"`)
+	f.Git("update-ref", second.Ref, base)
+	stale := f.Bench("worktree", "recovery", first.Ref, "--apply", fingerprint)
+	stale.RequireExit(1)
+	contract.RequireContains(t, stale.Stdout, "recovery_cleanup[1]{ref,root,payloads,landed,action,fingerprint,detail}:")
+	if f.GitAllow("show-ref", "--verify", "--quiet", first.Ref).ExitCode != 0 {
+		t.Fatal("stale recovery apply deleted named ref")
+	}
+	f.Git("update-ref", second.Ref, second.Root)
+	plan = f.Bench("worktree", "recovery", first.Ref)
+	plan.RequireExit(0)
+	apply := f.Bench("worktree", "recovery", first.Ref, "--apply", strings.Trim(strings.Split(strings.TrimSpace(contract.NonEmptyLines(plan.Stdout)[1]), ",")[5], `"`))
+	apply.RequireExit(0)
+	contract.RequireContains(t, apply.Stdout, "retired")
+	if f.GitAllow("show-ref", "--verify", "--quiet", first.Ref).ExitCode == 0 {
+		t.Fatal("exact retired ref survived")
+	}
+	if f.GitAllow("show-ref", "--verify", "--quiet", second.Ref).ExitCode != 0 {
+		t.Fatal("sibling recovery ref was deleted")
+	}
+	current, err := intent.Assignments(f.Root)
+	if err != nil || len(current) != 1 || len(current[0].Recovery) != 1 || current[0].Recovery[0].Ref != second.Ref {
+		t.Fatalf("sibling recovery context = %#v, %v", current, err)
+	}
 }
 
 func testRuntimeWorktreeCleanFromPoolCwd(t *testing.T) {
-	f := contract.NewFixture(t)
-	commitAllowEmpty(t, f, "init")
+	f := onMainFixture(t)
 	benchHome := filepath.Join(f.Root, ".bh")
 	pool := addRuntimePoolWorktrees(t, f, benchHome)
 
-	out := contract.RunAt(t, f, pool.Leased, map[string]string{"BENCH_HOME": benchHome}, "bash", benchPath(t), "worktree", "clean")
+	out := contract.RunAt(t, f, pool.Leased, map[string]string{"BENCH_HOME": benchHome}, "bash", benchPath(t), "resume-clean")
 	out.RequireExit(0)
-	contract.RequireContains(t, out.Stdout, "nothing to clean")
+	contract.RequireContains(t, out.Stdout, "retained foreign=1 live-lease=1")
 	contract.RequireNotContains(t, out.Stdout, f.Root)
 	contract.RequireNotContains(t, out.Stdout, pool.Warm)
 	contract.RequireNotContains(t, out.Stdout, pool.Leased)
 }
 
 func testRuntimeWorktreeRejectsUnknownArgs(t *testing.T) {
-	f := contract.NewFixture(t)
-	for _, args := range [][]string{{"worktree", "clean", "extra"}} {
+	f := onMainFixture(t)
+	branch := "worktree-same-prefix-sibling"
+	registeredBranch := "worktree-registered-sibling"
+	target := filepath.Join(t.TempDir(), "same prefix target")
+	f.Git("branch", branch)
+	f.Git("worktree", "add", "-q", "-b", registeredBranch, target, "HEAD")
+	contract.WriteFileAbs(t, filepath.Join(target, "dirty.txt"), "must survive\n")
+	registrations := f.Git("worktree", "list", "--porcelain").Stdout
+	wantClean := "worktree_cleanup[1]{target,action,tracked,ignored,recovery,fingerprint,detail}:\n  unknown,error,unknown,unknown,none,none,\"invalid invocation; run bench worktree clean <path> [--apply <fingerprint>]\"\n"
+	for _, args := range [][]string{{"worktree", "clean"}, {"worktree", "clean", "one", "two"}, {"worktree", "clean", "one", "--apply"}, {"worktree", "clean", "one", "--apply", "bad"}} {
 		out := f.Bench(args...)
 		out.RequireExit(2)
-		contract.RequireContains(t, out.Stderr, "usage: bench worktree")
-		contract.RequireContains(t, out.Stderr, "bench worktree clean")
+		if out.Stdout != wantClean || out.Stderr != "" {
+			t.Fatalf("usage streams = stdout %q stderr %q", out.Stdout, out.Stderr)
+		}
+	}
+	wantRecovery := "recovery_cleanup[1]{ref,root,payloads,landed,action,fingerprint,detail}:\n  unknown,unknown,none,unknown,error,none,\"invalid invocation; run bench worktree recovery <ref> [--apply <fingerprint>]\"\n"
+	for _, args := range [][]string{{"worktree", "recovery"}, {"worktree", "recovery", "one", "two"}, {"worktree", "recovery", "ref", "--apply"}, {"worktree", "recovery", "ref", "--apply", "bad"}} {
+		out := f.Bench(args...)
+		out.RequireExit(2)
+		if out.Stdout != wantRecovery || out.Stderr != "" {
+			t.Fatalf("recovery usage streams = stdout %q stderr %q", out.Stdout, out.Stderr)
+		}
+	}
+	if got := f.Git("worktree", "list", "--porcelain").Stdout; got != registrations {
+		t.Fatalf("usage error discovered or mutated worktrees:\nbefore:\n%s\nafter:\n%s", registrations, got)
+	}
+	for _, name := range []string{branch, registeredBranch} {
+		if !headExists(f, name) {
+			t.Fatalf("usage error swept same-prefix branch %q", name)
+		}
+	}
+	if got := contract.ReadFileAbs(t, filepath.Join(target, "dirty.txt")); got != "must survive\n" {
+		t.Fatalf("usage error changed sibling bytes: %q", got)
 	}
 }
 
-func testRuntimeWorktreeLeaseReuse(t *testing.T) {
-	f := contract.NewFixture(t)
-	commitAllowEmpty(t, f, "init")
-	f.WriteFile(".gitignore", "ignored/\n")
-	f.CommitAll("ignore")
+func testRuntimeWorktreeHostileSurfaces(t *testing.T) {
+	f := onMainFixture(t)
+	f.Bench("link").RequireExit(0)
+	shim := t.TempDir()
+	for _, tool := range []string{"bash", "basename", "dirname", "git", "readlink", "tr", "uname"} {
+		source, err := exec.LookPath(tool)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Symlink(source, filepath.Join(shim, tool)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	env := map[string]string{"PATH": shim, "BENCH_HOME": filepath.Join(f.Root, ".bench-home")}
+	realCLI := filepath.Join(contract.SubjectRoot(t), "dist", "bench")
+	byPath := filepath.Join(f.Root, ".bench", "bin", "bench.sh")
+	launcher := filepath.Join(t.TempDir(), "bench linked launcher")
+	if err := os.Symlink(byPath, launcher); err != nil {
+		t.Fatal(err)
+	}
+	deep := filepath.Join(f.Root, "deep", "cwd")
+	contract.Mkdir(t, deep)
+
+	hostile := filepath.Join(t.TempDir(), "space [glob]* $(pwn) Ünicode\nline")
+	f.Git("worktree", "add", "-q", "-b", "hostile-combined", hostile, "HEAD")
+	relative, err := filepath.Rel(deep, hostile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan := contract.RunAt(t, f, deep, env, realCLI, "worktree", "clean", relative)
+	plan.RequireExit(0)
+	contract.RequireContains(t, plan.Stdout, strings.ReplaceAll(hostile, "\n", `\n`))
+	apply := contract.RunAt(t, f, deep, env, realCLI, "worktree", "clean", relative, "--apply", cleanupFingerprint(t, plan.Stdout))
+	apply.RequireExit(0)
+	if _, err := os.Stat(hostile); !os.IsNotExist(err) {
+		t.Fatalf("hostile exact target remains: %v", err)
+	}
+
+	leading := filepath.Join(f.Root, "-leading")
+	f.Git("worktree", "add", "-q", "-b", "hostile-leading", leading, "HEAD")
+	leadingPlan := contract.RunAt(t, f, f.Root, env, launcher, "worktree", "clean", "--", "-leading")
+	leadingPlan.RequireExit(0)
+	contract.RunAt(t, f, f.Root, env, launcher, "worktree", "clean", "--", "-leading", "--apply", cleanupFingerprint(t, leadingPlan.Stdout)).RequireExit(0)
+
+	created := contract.RunAt(t, f, deep, env, byPath, "worktree", "create", "--request", "hostile-label", "--label", "quoted multiword label")
+	created.RequireExit(0)
+	contract.RequireContains(t, contract.ReadFileAbs(t, filepath.Join(f.Root, ".git", "bench-intent.json")), `"label":"quoted multiword label"`)
+
+	unsafeTarget := filepath.Join(t.TempDir(), "unsafe\x1bpath")
+	f.Git("worktree", "add", "-q", "-b", "hostile-control", unsafeTarget, "HEAD")
+	unsafePlan := contract.RunAt(t, f, deep, env, realCLI, "worktree", "clean", unsafeTarget)
+	unsafePlan.RequireExit(0)
+	digest := sha256.Sum256([]byte(unsafeTarget))
+	contract.RequireContains(t, unsafePlan.Stdout, fmt.Sprintf("sha256:%x", digest))
+	contract.RequireContains(t, unsafePlan.Stdout, "retain")
+	if strings.Contains(unsafePlan.Stdout+unsafePlan.Stderr, "\x1b") {
+		t.Fatal("unsafe control byte reached cleanup output")
+	}
+	hook := filepath.Join(f.Root, ".bench", "hooks", "session-start.sh")
+	session := contract.RunAt(t, f, deep, env, "/bin/bash", hook)
+	session.RequireExit(0)
+	if strings.Contains(session.Stdout+session.Stderr, "\x1b") {
+		t.Fatal("unsafe control byte reached SessionStart output")
+	}
+	contract.RequireContains(t, session.Stdout, "bench not on PATH; invoke by path")
+	if _, err := os.Stat(unsafeTarget); err != nil {
+		t.Fatalf("SessionStart removed unsafe target: %v", err)
+	}
+}
+
+func testRuntimeWorktreeInteractiveRelease(t *testing.T) {
+	f := onMainFixture(t)
 	f.WriteExecutable("wt-shell", `#!/usr/bin/env bash
 : "${BENCH_WT_RECORD:?}"
 pwd >> "$BENCH_WT_RECORD"
-lease="$(git rev-parse --git-path bench-lease)"
-[ -f "$lease" ] || { echo "lease missing"; exit 7; }
-[ ! -e dirty.txt ] || { echo "dirty file carried into reused worktree"; exit 8; }
-[ ! -e ignored/leak.txt ] || { echo "ignored artifact carried into reused worktree"; exit 9; }
-echo dirty > dirty.txt
-mkdir -p ignored; echo leak > ignored/leak.txt
 `)
 	record := filepath.Join(f.Root, "paths")
 	env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bh"), "BENCH_WT_RECORD": record, "SHELL": filepath.Join(f.Root, "wt-shell")}
-	f.BenchEnv(env, "worktree").RequireExit(0)
-	f.BenchEnv(env, "worktree").RequireExit(0)
+	f.BenchEnv(env, "worktree", "same objective").RequireExit(0)
+	f.BenchEnv(env, "worktree", "same objective").RequireExit(0)
 	paths := contract.NonEmptyLines(contract.ReadFileAbs(t, record))
 	contract.RequireIntEqual(t, len(paths), 2, "worktree shell did not run twice")
-	requireEqual(t, paths[0], paths[1], "worktree pool did not reuse a clean released path")
-	if _, err := os.Stat(strings.TrimSpace(contract.RunAt(t, f, paths[1], nil, "git", "rev-parse", "--git-path", "bench-lease").Stdout)); err == nil {
-		t.Fatal("worktree lease was not removed on release")
+	for _, path := range paths {
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			t.Fatalf("interactive exit did not release %q: %v", path, err)
+		}
 	}
-	if _, err := os.Stat(filepath.Join(paths[1], "dirty.txt")); err == nil {
-		t.Fatal("worktree release did not clean dirty files")
-	}
-	if _, err := os.Stat(filepath.Join(paths[1], "ignored", "leak.txt")); err == nil {
-		t.Fatal("worktree release did not clean ignored artifacts")
+	assignments, err := intent.Assignments(f.Root)
+	if err != nil || len(assignments) != 0 {
+		t.Fatalf("interactive releases left assignments = %#v, %v", assignments, err)
 	}
 }
 
 func testRuntimeWorktreeLeaseHardening(t *testing.T) {
-	f := contract.NewFixture(t)
-	commitAllowEmpty(t, f, "init")
+	f := onMainFixture(t)
 	f.WriteExecutable("rec-shell", "#!/usr/bin/env bash\n: \"${BENCH_WT_RECORD:?}\"\npwd >> \"$BENCH_WT_RECORD\"\n")
 	record := filepath.Join(f.Root, "paths")
 	env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bh"), "BENCH_WT_RECORD": record, "SHELL": filepath.Join(f.Root, "rec-shell")}
-	runWT := func() { f.BenchEnv(env, "worktree").RequireExit(0) }
-	runWT()
-	p := strings.TrimSpace(contract.ReadFileAbs(t, record))
+	created := f.BenchEnv(env, "worktree", "create", "--request", "lease-first", "--label", "first assignment")
+	created.RequireExit(0)
+	p := worktreeCreatePath(t, created.Stdout)
 	lease := strings.TrimSpace(contract.RunAt(t, f, p, nil, "git", "rev-parse", "--git-path", "bench-lease").Stdout)
-	contract.WriteFileAbs(t, lease, "4194300 2020-01-01T00:00:00Z\n")
-	runWT()
 	contract.WriteFileAbs(t, lease, fmt.Sprintf("%d 2026-01-01T00:00:00Z\n", os.Getpid()))
-	runWT()
-	if _, err := os.Stat(lease); err != nil {
-		t.Fatal("live foreign lease was removed by a foreign release")
-	}
-	contract.WriteFileAbs(t, lease, "")
-	old := time.Date(2020, 1, 1, 0, 0, 0, 0, time.Local)
-	if err := os.Chtimes(lease, old, old); err != nil {
-		t.Fatalf("age empty lease: %v", err)
-	}
-	runWT()
-	contract.WriteFileAbs(t, lease, "")
-	runWT()
-	contract.Remove(t, lease)
+	f.BenchEnv(env, "worktree", "second assignment").RequireExit(0)
 	paths := contract.NonEmptyLines(contract.ReadFileAbs(t, record))
-	contract.RequireIntEqual(t, len(paths), 5, "expected five worktree runs")
-	requireEqual(t, paths[1], p, "dead-pid lease was not reclaimed")
-	if paths[2] == p {
-		t.Fatal("live foreign lease was stolen")
+	contract.RequireIntEqual(t, len(paths), 1, "expected one interactive worktree run")
+	if p == paths[0] {
+		t.Fatal("different requests shared an assignment registration")
 	}
-	requireEqual(t, paths[3], p, "aged-out empty lease was not reclaimed")
-	if paths[4] == p {
-		t.Fatal("fresh empty lease was stolen")
+	if _, err := os.Stat(lease); err != nil {
+		t.Fatal("foreign legacy lease was mutated by ownership creation")
 	}
 }
 
@@ -378,13 +846,12 @@ func testRuntimeWorktreeConcurrentAcquire(t *testing.T) {
 	// that exits loud) — the two must not converge, or a slow second spawn could hit the
 	// shell's timeout before the deadline gives it credit for overlapping, misreading a
 	// schedule race as the by-design reuse the FT37 flake exercises.
-	f := contract.NewFixture(t)
-	commitAllowEmpty(t, f, "init")
+	f := onMainFixture(t)
 	f.WriteExecutable("rv-shell", `#!/usr/bin/env bash
 : "${BENCH_WT_RECORD:?}" "${BENCH_WT_GO:?}"
 pwd >> "$BENCH_WT_RECORD"
 for _ in $(seq 600); do
-  [ -e "$BENCH_WT_GO" ] && exit 0
+  { [ -e "$BENCH_WT_GO.$(basename "$PWD")" ] || [ -e "$BENCH_WT_GO" ]; } && exit 0
   sleep 0.1
 done
 exit 1
@@ -394,7 +861,7 @@ exit 1
 	env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bh"), "BENCH_WT_RECORD": record, "BENCH_WT_GO": goFile, "SHELL": filepath.Join(f.Root, "rv-shell")}
 	done := make(chan contract.Probe, 2)
 	for i := 0; i < 2; i++ {
-		go func() { done <- f.BenchEnv(env, "worktree") }()
+		go func() { done <- f.BenchEnv(env, "worktree", "same concurrent objective") }()
 	}
 	backstop := time.Now().Add(2 * time.Minute)
 	var overlapDeadline time.Time
@@ -440,17 +907,42 @@ exit 1
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
-	contract.WriteFileAbs(t, goFile, "")
-	for len(finished) < 2 {
-		finished = append(finished, <-done)
-	}
-	for _, p := range finished {
-		p.RequireExit(0)
-	}
 	paths := contract.NonEmptyLines(contract.ReadFileAbs(t, record))
 	sort.Strings(paths)
-	contract.RequireIntEqual(t, len(paths), 2, "concurrent worktree runs did not both complete")
+	contract.RequireIntEqual(t, len(paths), 2, "concurrent worktree runs did not both acquire")
 	if paths[0] == paths[1] {
+		contract.WriteFileAbs(t, goFile, "")
+		<-done
+		<-done
 		t.Fatal("concurrent acquires shared a worktree")
+	}
+	if len(finished) != 0 {
+		contract.WriteFileAbs(t, goFile, "")
+		t.Fatal("a worktree run exited before both acquires overlapped")
+	}
+	contract.WriteFileAbs(t, goFile+"."+filepath.Base(paths[0]), "")
+	first := <-done
+	if first.ExitCode != 0 {
+		ledger, readErr := intent.Read(f.Root)
+		t.Fatalf("first exact release failed: stdout=%q stderr=%q ledger=%#v read=%v", first.Stdout, first.Stderr, ledger, readErr)
+	}
+	if _, err := os.Stat(paths[0]); !os.IsNotExist(err) {
+		t.Fatalf("first exact release left %q: %v", paths[0], err)
+	}
+	if _, err := os.Stat(paths[1]); err != nil {
+		t.Fatalf("first exact release disturbed live sibling %q: %v", paths[1], err)
+	}
+	assignments, err := intent.Assignments(f.Root)
+	if err != nil || len(assignments) != 1 {
+		t.Fatalf("first exact release assignments = %#v, %v", assignments, err)
+	}
+	contract.WriteFileAbs(t, goFile+"."+filepath.Base(paths[1]), "")
+	(<-done).RequireExit(0)
+	if _, err := os.Stat(paths[1]); !os.IsNotExist(err) {
+		t.Fatalf("second exact release left %q: %v", paths[1], err)
+	}
+	assignments, err = intent.Assignments(f.Root)
+	if err != nil || len(assignments) != 0 {
+		t.Fatalf("interactive releases left assignments = %#v, %v", assignments, err)
 	}
 }

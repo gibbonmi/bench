@@ -1,59 +1,44 @@
-// Package worktree owns the warm-pool worktree lifecycle: the pool-directory and
-// lease-path addressing (Pool, LeaseFile), the atomic-lease state machine (Claim,
-// reclaim), pool acquire/release (Acquire, Release), and the interactive subshell.
-//
-// The pool key is `<basename>-<cksum>`, where cksum is the POSIX `cksum` of the
-// bytes `root + "\n"`. Go's standard library has no `cksum` variant, so the exact
-// algorithm lives here once — a wrong figure silently addresses the wrong pool
-// directory and breaks warm-pool reuse with no error, so this is the single source
-// of that checksum and is pinned in the test against the system tool.
+// Package worktree owns pool leases, cleanup, and the subshell.
 package worktree
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/toon"
+	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
-
-	"github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/toon"
+	"strings"
 )
 
-// cksumTable is the POSIX cksum CRC-32 table (polynomial 0x04C11DB7, MSB-first),
-// built once at init so the checksum is a pure table lookup per byte.
-var cksumTable = buildCksumTable()
-
-func buildCksumTable() [256]uint32 {
-	var t [256]uint32
-	for i := 0; i < 256; i++ {
-		c := uint32(i) << 24
-		for k := 0; k < 8; k++ {
-			if c&0x80000000 != 0 {
-				c = (c << 1) ^ 0x04C11DB7
-			} else {
-				c <<= 1
-			}
-		}
-		t[i] = c
-	}
-	return t
+func textDigest(value string) string {
+	sum := sha256.Sum256([]byte(value))
+	return hex.EncodeToString(sum[:])
 }
-
-// cksum computes the POSIX `cksum` checksum of data: the CRC over the bytes, then
-// over the length fed least-significant byte first, then complemented. The result
-// matches the first field printed by the coreutils `cksum` tool.
+func requestDigest(request string) string { return textDigest(request) }
+func labelDigest(label string) string     { return textDigest(label) }
 func cksum(data []byte) uint32 {
 	var crc uint32
-	for _, x := range data {
-		crc = (crc << 8) ^ cksumTable[byte(crc>>24)^x]
+	step := func(value byte) {
+		crc ^= uint32(value) << 24
+		for range 8 {
+			crc = crc<<1 ^ 0x04C11DB7*(crc>>31)
+		}
+	}
+	for _, value := range data {
+		step(value)
 	}
 	for n := len(data); n > 0; n >>= 8 {
-		crc = (crc << 8) ^ cksumTable[byte(crc>>24)^byte(n&0xff)]
+		step(byte(n))
 	}
 	return ^crc
 }
-
-// benchHome resolves BENCH_HOME the way `bench.sh` does: the env var, or
-// `<user home>/.bench` as the default.
 func benchHome() string {
 	if h := os.Getenv("BENCH_HOME"); h != "" {
 		return h
@@ -61,21 +46,11 @@ func benchHome() string {
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, ".bench")
 }
-
-// Pool returns the warm-pool directory for a repo root:
-// `<BENCH_HOME>/worktrees/<basename>-<cksum>`. The cksum is taken over `root + "\n"`
-// because the shell computed it via `echo "$root" | cksum`, and echo appends a newline.
 func Pool(root string) string {
 	sum := cksum([]byte(root + "\n"))
 	key := filepath.Base(root) + "-" + strconv.FormatUint(uint64(sum), 10)
 	return filepath.Join(benchHome(), "worktrees", key)
 }
-
-// LeaseFile returns the git-resolved lease path for a worktree at path:
-// `git -C path rev-parse --git-path bench-lease`. Git prints that path relative
-// to the worktree itself when the git dir sits inside it (a main checkout), so a
-// relative answer is re-anchored at path — callers resolve the result against
-// their own CWD, not the worktree's.
 func LeaseFile(path string) (string, error) {
 	lease, err := git.Output("-C", path, "rev-parse", "--git-path", "bench-lease")
 	if err != nil {
@@ -86,9 +61,6 @@ func LeaseFile(path string) (string, error) {
 	}
 	return lease, nil
 }
-
-// PoolCommand implements `bench worktree-pool <root>`. Root defaults to the current
-// repo's top level when no argument is given; it prints the pool directory.
 func PoolCommand(args []string) (string, int) {
 	var root string
 	if len(args) > 0 {
@@ -102,9 +74,6 @@ func PoolCommand(args []string) (string, int) {
 	}
 	return Pool(root) + "\n", 0
 }
-
-// LeaseFileCommand implements `bench worktree-lease-file <path>`. It prints the
-// lease path git resolves for the given worktree; a missing argument is a usage error.
 func LeaseFileCommand(args []string) (string, int) {
 	if len(args) == 0 {
 		return "usage: bench worktree-lease-file <path>\n", 2
@@ -114,4 +83,318 @@ func LeaseFileCommand(args []string) (string, int) {
 		return toon.NotInRepo() + "\n", 1
 	}
 	return lease + "\n", 0
+}
+
+type Class string
+
+const (
+	ClassRoot      Class = "root"
+	ClassPoolWarm  Class = "pool-warm"
+	ClassPoolLease Class = "pool-leased"
+	ClassOutOfPool Class = "out-of-pool"
+)
+
+type Registered struct {
+	Path     string
+	Class    Class
+	Branch   string
+	Detached bool
+	Locked   bool
+}
+
+func ClassifyRegisteredWorktrees(root string) ([]Registered, error) {
+	facts, err := git.Worktrees(root)
+	if err != nil {
+		return nil, err
+	}
+	mainRoot := canonicalRoot(root)
+	out := make([]Registered, 0, len(facts))
+	for _, fact := range facts {
+		out = append(out, Registered{Path: fact.Path, Branch: fact.Branch, Detached: fact.Detached, Locked: fact.Locked})
+	}
+	pool := Pool(mainRoot)
+	for i := range out {
+		out[i].Class = classifyPath(mainRoot, pool, out[i].Path)
+	}
+	return out, nil
+}
+func canonicalRoot(root string) string {
+	common, err := git.Output("-C", root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	if err != nil || filepath.Base(common) != ".git" {
+		return root
+	}
+	return filepath.Dir(common)
+}
+func classifyPath(root, pool, path string) Class {
+	if samePath(path, root) {
+		return ClassRoot
+	}
+	if insidePool(pool, path) {
+		lease, _ := LeaseFile(path)
+		if isRegularFile(lease) {
+			return ClassPoolLease
+		}
+		return ClassPoolWarm
+	}
+	return ClassOutOfPool
+}
+func insidePool(pool, path string) bool {
+	rel, err := filepath.Rel(pool, path)
+	return err == nil && rel != "." && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+func samePath(a, b string) bool {
+	ar, aerr := filepath.EvalSymlinks(a)
+	br, berr := filepath.EvalSymlinks(b)
+	if aerr == nil {
+		a = ar
+	}
+	if berr == nil {
+		b = br
+	}
+	return filepath.Clean(a) == filepath.Clean(b)
+}
+func isRegularFile(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.Mode().IsRegular()
+}
+
+type nestedState string
+
+const nestedClean, nestedDirty, nestedEmbeddedClean, nestedEmbeddedDirty, nestedUnknown nestedState = "clean", "dirty", "embedded-clean", "embedded-dirty", "unknown"
+
+func classifyNestedState(root string) (state nestedState, err error) {
+	state = nestedClean
+	err = filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if path == root {
+			return nil
+		}
+		if entry.Name() == ".git" {
+			if entry.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !entry.IsDir() {
+			return nil
+		}
+		if _, err := os.Lstat(filepath.Join(path, ".git")); err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				return nil
+			}
+			return err
+		}
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		tracked, err := git.Output("-C", root, "ls-files", "--stage", "--", rel)
+		if err != nil {
+			return err
+		}
+		embedded := !strings.HasPrefix(tracked, "160000 ")
+		out, err := exec.Command("git", "--no-optional-locks", "-C", path, "status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignore-submodules=none").Output()
+		if err != nil {
+			return err
+		}
+		if embedded {
+			state = nestedEmbeddedClean
+		}
+		if len(out) != 0 && embedded {
+			state = nestedEmbeddedDirty
+		} else if len(out) != 0 {
+			state = nestedDirty
+		}
+		return filepath.SkipDir
+	})
+	if err != nil {
+		return nestedUnknown, err
+	}
+	return state, nil
+}
+func cleanInvocationError(stdout io.Writer) int {
+	_ = renderCleanup(stdout, CleanupPlan{Target: "unknown", Action: ActionError, Tracked: "unknown", ignoredSummary: "unknown", Recovery: "none", Fingerprint: "none", Reason: "invalid invocation; run bench worktree clean <path> [--apply <fingerprint>]"})
+	return 2
+}
+func CleanCommand(args []string, stdout, stderr io.Writer) int {
+	options := CleanupOptions{}
+	target, fingerprint := "", ""
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--discard-ignored":
+			options.DiscardIgnored = true
+		case "--full":
+			options.Full = true
+		case "--apply":
+			if i+1 >= len(args) || fingerprint != "" {
+				return cleanInvocationError(stdout)
+			}
+			i++
+			fingerprint = args[i]
+		case "--":
+			if i+1 >= len(args) || target != "" {
+				return cleanInvocationError(stdout)
+			}
+			i++
+			target = args[i]
+		default:
+			if target != "" || strings.HasPrefix(args[i], "-") {
+				return cleanInvocationError(stdout)
+			}
+			target = args[i]
+		}
+	}
+	if target == "" {
+		return cleanInvocationError(stdout)
+	}
+	if fingerprint != "" {
+		decoded, err := hex.DecodeString(fingerprint)
+		if err != nil || len(decoded) != sha256.Size || fingerprint != strings.ToLower(fingerprint) {
+			return cleanInvocationError(stdout)
+		}
+	}
+	root, err := git.Root()
+	if err != nil {
+		fmt.Fprintln(stderr, toon.NotInRepo())
+		return 1
+	}
+	plan, err := PlanExplicitWithOptions(root, target, options)
+	if err == nil && fingerprint != "" {
+		plan, err = ApplyExplicitWithOptions(root, target, fingerprint, options)
+	}
+	if errors.Is(err, errStaleFingerprint) {
+		_ = renderCleanup(stdout, plan)
+		return 1
+	}
+	if err != nil {
+		if plan.Target == "" {
+			plan.Target, _ = canonicalPath(target)
+		}
+		plan.Action, plan.Reason = ActionError, err.Error()
+		if plan.Fingerprint == "" {
+			plan.Fingerprint = fingerprint
+		}
+		_ = renderCleanup(stdout, plan)
+		return 1
+	}
+	if err := renderCleanup(stdout, plan); err != nil {
+		fmt.Fprintf(stderr, "bench worktree clean: %v\n", err)
+		return 1
+	}
+	return 0
+}
+func renderRecovery(stdout io.Writer, plan RecoveryPlan) error {
+	out, err := toon.Table("recovery_cleanup", []string{"ref", "root", "payloads", "landed", "action", "fingerprint", "detail"}, [][]string{{plan.Ref, plan.Root, plan.Payloads, plan.Landed, string(plan.Action), plan.Fingerprint, plan.Detail}})
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprint(stdout, out)
+	return err
+}
+func finishReleaseReceipt(root string, stdout io.Writer, receipt intent.CleanupReceipt) int {
+	if assignment, err := assignmentByID(root, receipt.Tracked); err == nil && assignment.State == intent.StateComplete {
+		if err := intent.DeleteAssignment(root, assignment.ID); err != nil {
+			return 1
+		}
+	}
+	return renderReleaseReceipt(stdout, receipt)
+}
+func ReleaseCommand(root string, args []string, stdout, stderr io.Writer) int {
+	if len(args) != 3 || args[0] != "--request" || args[1] == "" {
+		fmt.Fprintln(stderr, "usage: bench worktree release --request <opaque-id> <path>")
+		return 2
+	}
+	receipt, err := releaseAssignment(root, args[1], args[2])
+	if err == nil {
+		return finishReleaseReceipt(root, stdout, receipt)
+	}
+	fmt.Fprintf(stderr, "bench worktree release: %v\n", err)
+	return 1
+}
+func WorktreeUsage() string {
+	return "usage: bench worktree\n       bench worktree create --request <opaque-id> --label <work-item>\n       bench worktree clean [--discard-ignored] [--full] <path> [--apply <fingerprint>]\n       bench worktree recovery <ref> [--apply <fingerprint>]\n"
+}
+func renderResumeSummary(result ResumeResult) string {
+	var summary strings.Builder
+	fmt.Fprintf(&summary, "bench resume: removed %d, recovered %d", result.Removed, result.Recovered)
+	retained := 0
+	for _, count := range result.Retained {
+		retained += count
+	}
+	if retained > 0 {
+		summary.WriteString("; retained")
+		for _, reason := range []CleanupReason{ReasonForeign, ReasonActive, ReasonLiveLease, ReasonUnmerged, ReasonIgnored, ReasonMalformed, ReasonUncertain, ReasonUnexpectedLock} {
+			if count := result.Retained[reason]; count > 0 {
+				fmt.Fprintf(&summary, " %s=%d", reason, count)
+			}
+		}
+	}
+	fmt.Fprintf(&summary, "; failed %d; open assignments %d\n", result.Failed, result.Open)
+	return summary.String()
+}
+func CreateCommand(root string, args []string, stdout, stderr io.Writer) int {
+	var request, label string
+	for len(args) > 0 {
+		if len(args) < 2 || (args[0] != "--request" && args[0] != "--label") {
+			fmt.Fprintln(stderr, "usage: bench worktree create --request <opaque-id> --label <work-item>")
+			return 2
+		}
+		if args[0] == "--request" {
+			request = args[1]
+		} else {
+			label = args[1]
+		}
+		args = args[2:]
+	}
+	creation, err := Create(root, request, label, nil)
+	if err != nil {
+		fmt.Fprintf(stderr, "bench worktree create: %v\n", err)
+		return 1
+	}
+	out, err := toon.Table("worktree_create", []string{"path", "assignment", "state"}, [][]string{{creation.Path, creation.Assignment.ID, string(creation.Assignment.State)}})
+	if err != nil {
+		fmt.Fprintf(stderr, "bench worktree create: %v\n", err)
+		return 1
+	}
+	fmt.Fprint(stdout, out)
+	return 0
+}
+func Subshell(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	root, err := git.Root()
+	if err != nil {
+		fmt.Fprintln(stderr, toon.NotInRepo())
+		return 1
+	}
+	objective := strings.Join(args, " ")
+	if objective == "" {
+		objective = "interactive worktree"
+	}
+	request, err := randomID()
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	creation, err := Create(root, request, objective, nil)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	fmt.Fprintf(stderr, "🪵 worktree: %s  (exit to release)\n", creation.Path)
+	shell := os.Getenv("SHELL")
+	if shell == "" {
+		shell = "bash"
+	}
+	cmd := exec.Command(shell)
+	cmd.Dir, cmd.Stdin, cmd.Stdout, cmd.Stderr = creation.Path, stdin, stdout, stderr
+	_ = cmd.Run()
+	return ReleaseCommand(root, []string{"--request", request, creation.Path}, io.Discard, stderr)
+}
+func cleanupOutputSafe(value string) bool { return toon.Representable(value) }
+func cleanupOutputValue(value string) string {
+	if cleanupOutputSafe(value) {
+		return value
+	}
+	return "sha256:" + textDigest(value)
 }

@@ -189,7 +189,7 @@ func TestRenderWorkingRoadmapAloneIsClean(t *testing.T) {
 	}
 }
 
-func TestRenderSurfacesOrphanedWorktreeBranch(t *testing.T) {
+func TestAppendWorktreeIgnoresUnownedBranchPrefix(t *testing.T) {
 	root := initRepo(t)
 	if err := os.WriteFile(filepath.Join(root, "f.txt"), []byte("x\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -198,12 +198,8 @@ func TestRenderSurfacesOrphanedWorktreeBranch(t *testing.T) {
 	gitRun(t, root, "commit", "-m", "base")
 	gitRun(t, root, "branch", "worktree-agent-orphan")
 
-	out := render(root, false)
-	if !strings.Contains(out, "orphaned worktree branch") {
-		t.Fatalf("status did not surface orphaned worktree branch:\n%s", out)
-	}
-	if !strings.Contains(out, "bench worktree clean") {
-		t.Fatalf("status did not recommend bench worktree clean:\n%s", out)
+	if rows := appendWorktree(nil, root); len(rows) != 0 {
+		t.Fatalf("branch prefix created worktree status without ownership evidence: %#v", rows)
 	}
 }
 

@@ -82,10 +82,10 @@ func TestOperationalNotInRepoOnePhrase(t *testing.T) {
 			},
 		},
 		{
-			name:     "bench worktree clean",
+			name:     "bench worktree clean <target>",
 			wantExit: 1,
 			run: func(t *testing.T, f contract.Fixture) contract.Probe {
-				return f.Bench("worktree", "clean")
+				return f.Bench("worktree", "clean", filepath.Join(f.Root, "target"))
 			},
 		},
 		{
@@ -110,4 +110,22 @@ func TestOperationalNotInRepoOnePhrase(t *testing.T) {
 			}
 		})
 	}
+}
+
+// The exact-target grammar is validated before repository discovery. This keeps a
+// missing target a usage error even when the caller also happens to be outside a
+// repository; supplying a target reaches the operational guard pinned above.
+func TestWorktreeCleanUsagePrecedesRepoLookup(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	f := contract.NewFixture(t, contract.WithNoRepo())
+
+	out := f.Bench("worktree", "clean")
+
+	out.RequireExit(2)
+	want := "worktree_cleanup[1]{target,action,tracked,ignored,recovery,fingerprint,detail}:\n  unknown,error,unknown,unknown,none,none,\"invalid invocation; run bench worktree clean <path> [--apply <fingerprint>]\"\n"
+	if out.Stdout != want || out.Stderr != "" {
+		t.Fatalf("usage streams = stdout %q stderr %q", out.Stdout, out.Stderr)
+	}
+	out.RequireNotContains(out.Stdout+out.Stderr, notInRepoPhrase)
 }

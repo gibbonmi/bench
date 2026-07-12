@@ -313,10 +313,9 @@ func expandIntentSignals(root string, signals []Signal) []Signal {
 	return out
 }
 
-// appendWorktree adds separate worktree signals (sev 2) for out-of-pool worktrees,
-// leased pool entries, and orphaned harness scratch branches (`worktree-*` refs no
-// registered worktree still holds). The repo root and warm pooled entries are expected
-// state, not signals.
+// appendWorktree adds separate worktree signals (sev 2) for out-of-pool worktrees
+// and leased pool entries. The repo root and warm pooled entries are expected state,
+// not signals. Branch names are not ownership evidence and do not produce signals.
 func appendWorktree(rows []row, root string) []row {
 	registered, err := worktree.ClassifyRegisteredWorktrees(root)
 	if err != nil {
@@ -335,45 +334,10 @@ func appendWorktree(rows []row, root string) []row {
 		}
 	}
 	if outOfPool > 0 {
-		rows = append(rows, row{2, "worktree", plural(outOfPool, "out-of-pool worktree", "out-of-pool worktrees"), "clean up (bench worktree clean)"})
+		rows = append(rows, row{2, "worktree", plural(outOfPool, "out-of-pool worktree", "out-of-pool worktrees"), "inspect exact worktree (bench worktree clean <path>)"})
 	}
 	if leased > 0 {
 		rows = append(rows, row{2, "worktree", plural(leased, "leased pool worktree", "leased pool worktrees"), "resume leased worktree"})
-	}
-	orphans, err := worktree.OrphanedDelegateBranches(root)
-	if err != nil {
-		return append(rows, row{2, "worktree", fmt.Sprintf("git branch state unavailable: %v", err), "investigate the git failure, then re-run bench status"})
-	}
-	if len(orphans) == 0 {
-		return rows
-	}
-	// The action splits by the sweep's own landed proof, so following it always changes
-	// something: landed branches disappear under `bench worktree clean`, while a kept
-	// branch would survive it — the honest action there is a hand inspection. With an
-	// unresolvable default no orphan is classifiable; the combined row stands and the
-	// recommended sweep refuses loudly with the reason.
-	def, ok := git.ResolvedDefault(root)
-	if !ok {
-		return append(rows, row{2, "worktree", plural(len(orphans), "orphaned worktree branch", "orphaned worktree branches"), "bench worktree clean"})
-	}
-	landed, kept := 0, 0
-	for _, branch := range orphans {
-		isLanded, _, err := git.LandedInDefault(root, branch, def)
-		if err != nil {
-			kept++
-			continue
-		}
-		if isLanded {
-			landed++
-		} else {
-			kept++
-		}
-	}
-	if landed > 0 {
-		rows = append(rows, row{2, "worktree", plural(landed, "orphaned worktree branch", "orphaned worktree branches"), "bench worktree clean"})
-	}
-	if kept > 0 {
-		rows = append(rows, row{2, "worktree", plural(kept, "un-landed salvage branch", "un-landed salvage branches"), "inspect salvage branch(es) — bench worktree clean keeps them"})
 	}
 	return rows
 }

@@ -1,52 +1,42 @@
-// Lifecycle owns the lease state machine and pool acquire/release, beside the pool-path
-// and lease-path addressing they operate over. The lease is an atomically-created file
-// recording "<pid> <utc-time>";
-// a lease is reclaimable only when its owner is provably gone (a recorded pid no
-// longer running, or unreadable/legacy content aged out by mtime — never a
-// fresh-empty writer mid-claim). Release cleans and unleases only for the recorded
-// owner, so a stale-reclaimed worktree's new owner is left alone.
 package worktree
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
+	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
 	"time"
-
-	"github.com/gibbonmi/bench/internal/git"
 )
 
-// staleAfter is how long an unreadable/legacy (non-numeric-pid) lease must have gone
-// untouched before it is treated as a crashed writer's leftover and reclaimed. A
-// fresh-empty lease younger than this is a writer mid-claim and is respected — the
-// threshold is the whole difference between reclaiming a zombie and stealing a live
-// lease, so it is a named constant with one source. Mirrors the shell `find -mmin +1`.
+type ResumeResult struct {
+	Removed, Recovered int
+	Retained           map[CleanupReason]int
+	Failed, Open       int
+}
+
+var ErrCleanupInterrupted = errors.New("cleanup interrupted")
+
+// staleAfter separates a crashed legacy lease from a fresh writer mid-claim.
 const staleAfter = time.Minute
 
 var chmodPool = os.Chmod
 
-// pidAlive reports whether a process with the given pid exists, matching `kill -0`:
-// signal 0 succeeds (nil) for a live process the caller may signal, and returns EPERM
-// for a live process owned by another user — both mean alive. Only ESRCH (no such
-// process) means gone.
+// pidAlive treats kill-0 success and EPERM as alive; only ESRCH means gone.
 func pidAlive(pid int) bool {
 	err := syscall.Kill(pid, 0)
 	return err == nil || errors.Is(err, syscall.EPERM)
 }
 
-// reclaimable decides whether an existing lease may be taken over, given its raw
-// content, its mtime, the current time, and a liveness probe. A recorded numeric pid
-// gates on liveness: a dead pid reclaims, a live one is respected. Non-numeric or
-// empty content (unreadable, legacy, or a fresh-empty writer) reclaims only once it
-// has aged past staleAfter — so a writer mid-claim, whose lease is empty but fresh, is
-// never stolen. This is the four-way decision the black-box lease contracts exercise
-// but cannot cheaply enumerate.
+// reclaimable requires a dead recorded pid or an aged unreadable/legacy lease.
 func reclaimable(content []byte, mtime, now time.Time, alive func(int) bool) bool {
 	field := strings.Fields(string(content))
 	if len(field) > 0 {
@@ -57,9 +47,7 @@ func reclaimable(content []byte, mtime, now time.Time, alive func(int) bool) boo
 	return now.Sub(mtime) > staleAfter
 }
 
-// candidateName is the pooled-worktree path a mint attempt uses: a name unique per
-// (second, pid, try) kept inside the pool directory, so a wrong name can never mint
-// outside the pool and silently break warm reuse.
+// candidateName keeps each unique mint attempt inside the pool.
 func candidateName(pool string, unixSecs int64, pid, try int) string {
 	return filepath.Join(pool, fmt.Sprintf("%d-%d-%d", unixSecs, pid, try))
 }
@@ -69,9 +57,7 @@ func leaseLine() []byte {
 	return []byte(fmt.Sprintf("%d %s\n", os.Getpid(), time.Now().UTC().Format("2006-01-02T15:04:05Z")))
 }
 
-// tryCreate attempts the atomic O_EXCL lease create — the claim's race-winner. It
-// returns true only when this process created the file; an existing lease (another
-// claimant) fails without clobbering it.
+// tryCreate wins a lease only through an atomic O_EXCL create.
 func tryCreate(leasePath string) bool {
 	f, err := os.OpenFile(leasePath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 	if err != nil {
@@ -82,11 +68,7 @@ func tryCreate(leasePath string) bool {
 	return werr == nil && cerr == nil
 }
 
-// Claim atomically claims a worktree's lease. A first-writer create wins outright; an
-// existing lease is taken over only when reclaimable reports its owner provably gone.
-// The takeover verifies it moved the very lease it judged reclaimable, so two
-// concurrent reclaimers cannot both win. Returns whether this process now owns the
-// lease.
+// Claim atomically creates a lease or identity-checks a provably stale takeover.
 func Claim(leasePath string) bool {
 	if tryCreate(leasePath) {
 		return true
@@ -105,13 +87,8 @@ func Claim(leasePath string) bool {
 		return false // another reclaimer moved it first
 	}
 	claimStealGap(leasePath)
-	// The rename may have moved a *different* lease than the one judged reclaimable: a
-	// competing reclaimer could have completed its own takeover in the gap, leaving a
-	// fresh live lease at leasePath. Compare the renamed bytes to the judged content
-	// (any read failure counts as a mismatch) and concede on mismatch, restoring the
-	// stolen bytes only if the vacated slot is still empty — a first-writer that
-	// already claimed it keeps its lease. Discarding the stolen bytes is the safe
-	// direction: keeping is recoverable, clobbering someone else's live claim is not.
+	// A competing reclaimer may have replaced the judged lease. Concede unless the
+	// renamed bytes still match, and never clobber a first-writer in the vacated slot.
 	moved, err := os.ReadFile(stale)
 	if err != nil || !bytes.Equal(moved, content) {
 		_ = os.Link(stale, leasePath) // best-effort; EEXIST means a first-writer won the slot
@@ -122,20 +99,13 @@ func Claim(leasePath string) bool {
 	return tryCreate(leasePath)
 }
 
-// claimTakeoverGap is a no-op hook at the one takeover interleave point that matters:
-// the instant after a lease is judged reclaimable and before the takeover rename. A
-// package variable so the two-reclaimer contract can drive a competing reclaimer to a
-// full takeover here and prove both cannot win — the same test-seam idiom as restoreClean.
+// claimTakeoverGap drives the post-judgment, pre-rename reclaimer interleave.
 var claimTakeoverGap = func(leasePath string) {}
 
-// claimStealGap is a no-op hook at the takeover's second interleave point: the
-// instant after the takeover rename vacates leasePath and before the identity check
-// runs its restore. A package variable so the three-party contract can land a fresh
-// first-writer in the vacated slot — the same test-seam idiom as restoreClean.
+// claimStealGap drives the post-rename, pre-identity-check first-writer interleave.
 var claimStealGap = func(leasePath string) {}
 
-// isWorktree reports whether dir is a git worktree checkout — it holds a `.git` file
-// (linked worktree) or directory. Mirrors the shell's `[ -d .git || -f .git ]` scan gate.
+// isWorktree accepts primary (.git dir) and linked (.git file) checkouts.
 func isWorktree(dir string) bool {
 	_, err := os.Stat(filepath.Join(dir, ".git"))
 	return err == nil
@@ -147,12 +117,8 @@ func isClean(dir string) bool {
 	return err == nil && out == ""
 }
 
-// Acquire returns a leased, clean pool worktree for root: it scans the pool for a
-// clean, released entry to claim, and mints fresh detached worktrees (bounded to three
-// tries) when none is reusable. The returned worktree is detached, reset to resetRef
-// (or HEAD when empty), and cleaned. A reset failure aborts unless resetMode is "soft",
-// which falls back to a plain hard reset — the interactive subshell's tolerance for a
-// resetRef that no longer resolves.
+// Acquire claims a clean pool entry or mints one in three bounded attempts. It
+// resets to resetRef (HEAD when empty); soft mode tolerates an unresolved ref.
 func Acquire(root, resetRef, resetMode string) (string, error) {
 	pool := Pool(root)
 	if err := os.MkdirAll(pool, 0o700); err != nil {
@@ -162,7 +128,6 @@ func Acquire(root, resetRef, resetMode string) (string, error) {
 	// Best-effort refresh so a freshly-minted worktree can detach onto origin/<branch>;
 	// a repo with no origin (the contract fixtures) just skips it.
 	_ = exec.Command("git", "-C", root, "fetch", "-q", "origin").Run()
-
 	var wt string
 	entries, _ := os.ReadDir(pool) // sorted by name, matching the shell glob order
 	for _, e := range entries {
@@ -177,7 +142,6 @@ func Acquire(root, resetRef, resetMode string) (string, error) {
 		wt = d
 		break
 	}
-
 	for try := 1; wt == "" && try <= 3; try++ {
 		cand := candidateName(pool, time.Now().Unix(), os.Getpid(), try)
 		if !worktreeAdd(root, cand, "origin/"+git.DefaultBranch(root)) && !worktreeAdd(root, cand, "") {
@@ -194,7 +158,6 @@ func Acquire(root, resetRef, resetMode string) (string, error) {
 	if wt == "" {
 		return "", errors.New("could not lease a pool worktree")
 	}
-
 	_ = exec.Command("git", "-C", wt, "switch", "-q", "--detach").Run()
 	if resetRef != "" {
 		if exec.Command("git", "-C", wt, "reset", "-q", "--hard", resetRef).Run() != nil {
@@ -222,12 +185,8 @@ func worktreeAdd(root, cand, ref string) bool {
 	return exec.Command("git", args...).Run() == nil
 }
 
-// Release cleans and unleases a worktree, but only for its recorded owner: a lease
-// held by a different, still-live process means the worktree was stale-reclaimed and
-// now belongs to that owner, so a non-owner's deferred cleanup leaves it alone. The
-// owner detaches, hard-resets, and cleans ignored+untracked files *before* removing
-// the lease: the entry never sits claimable while dirty, and once the lease is gone
-// it is no longer ours to touch — a concurrent Acquire may claim it immediately.
+// Release restores cleanliness before unleasing, and leaves a lease owned by another
+// live process untouched; once unleased, a concurrent Acquire owns the checkout.
 func Release(wt string) {
 	if wt == "" {
 		return
@@ -246,12 +205,196 @@ func Release(wt string) {
 	os.Remove(lease)
 }
 
-// restoreClean returns a worktree to a claimably clean state: detached, hard-reset,
-// ignored and untracked files removed. A package variable so the release-ordering
-// contract can observe the lease at the instant between cleanup and unlease — the
-// only interleave point where a concurrent claimant could otherwise be harmed.
+// restoreClean is the release-ordering test seam between cleanup and unlease.
 var restoreClean = func(wt string) {
 	_ = exec.Command("git", "-C", wt, "switch", "-q", "--detach").Run()
 	_ = exec.Command("git", "-C", wt, "reset", "-q", "--hard").Run()
 	_ = exec.Command("git", "-C", wt, "clean", "-qfdx").Run()
+}
+
+// cleanupTransactionBoundary is the deterministic transaction fault seam.
+var cleanupTransactionBoundary Fault
+var cleanupLockAttempt = func(string) {}
+
+func receiptFromRelease(repo, request string, assignment intent.Assignment, action string) intent.CleanupReceipt {
+	return intent.CleanupReceipt{Schema: intent.CleanupReceiptSchema, Repo: repo, Operation: releaseOperation, Target: assignment.Worktree, Fingerprint: request, State: intent.ReceiptComplete, Phase: intent.ReceiptPhaseTerminal, Action: action, Tracked: assignment.ID, Recovery: "none", Detail: string(assignment.State), Owned: true}
+}
+func ensureRecoveryRef(root string, assignment intent.Assignment, recovery intent.Recovery) error {
+	if current, err := git.Output("-C", root, "show-ref", "--verify", "--hash", recovery.Ref); err == nil {
+		if current != recovery.Root {
+			return errors.New("existing recovery ref conflicts with recorded metadata")
+		}
+		return verifyRecovery(root, assignment, recovery)
+	}
+	if !recoveryEnvelopeValid(root, recovery) {
+		return errors.New("recorded recovery envelope is invalid")
+	}
+	zero := strings.Repeat("0", len(recovery.Root))
+	if out, err := exec.Command("git", "-C", root, "update-ref", recovery.Ref, recovery.Root, zero).CombinedOutput(); err != nil {
+		return fmt.Errorf("create exact recovery ref: %s", strings.TrimSpace(string(out)))
+	}
+	return verifyRecovery(root, assignment, recovery)
+}
+func cleanupLockPath(repo, target string) string {
+	return filepath.Join(repo, "bench-cleanup-"+fingerprintParts([]byte(target))+".lock")
+}
+func lockCleanupFile(file *os.File, target string) (func(), error) {
+	cleanupLockAttempt(target)
+	if err := syscall.Flock(int(file.Fd()), syscall.LOCK_EX); err != nil {
+		file.Close()
+		return nil, fmt.Errorf("lock cleanup registration: %w", err)
+	}
+	return func() { _ = syscall.Flock(int(file.Fd()), syscall.LOCK_UN); _ = file.Close() }, nil
+}
+func lockCleanupRegistration(repo, target string) (func(), error) {
+	admin, err := git.Output("-C", target, "rev-parse", "--path-format=absolute", "--git-dir")
+	var file *os.File
+	if err == nil {
+		file, err = os.Open(admin)
+	} else {
+		file, err = os.OpenFile(cleanupLockPath(repo, target), os.O_RDWR, 0o600)
+		if errors.Is(err, os.ErrNotExist) {
+			file, err = os.Open(repo)
+		}
+	}
+	if err != nil {
+		return nil, fmt.Errorf("open cleanup transaction lock: %w", err)
+	}
+	return lockCleanupFile(file, target)
+}
+func lockCleanupPersistence(repo, target string) (func(), error) {
+	file, err := os.OpenFile(cleanupLockPath(repo, target), os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		return nil, err
+	}
+	return lockCleanupFile(file, target)
+}
+func executeCleanup(root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
+	var recovered *intent.Assignment
+	if plan.Action == ActionRecoverRemove || (plan.Action == ActionDiscardRemove && plan.Tracked != "clean") || plan.registration.Detached {
+		assignment, err := recoveryAssignmentForPlan(root, plan)
+		if err != nil {
+			return plan, err
+		}
+		if plan.owned && assignment.State == intent.StateActive {
+			assignment.State = intent.StateCleanupPending
+			if err := intent.PutAssignment(root, assignment); err != nil {
+				return plan, err
+			}
+			if err := checkpoint(intent.ReceiptPhasePlanned); err != nil {
+				return plan, err
+			}
+		}
+		if plan.Tracked == "clean" && plan.registration.Detached {
+			if err := anchorDetached(root, plan); err != nil {
+				return plan, err
+			}
+			head, err := git.Output("-C", plan.Target, "rev-parse", "HEAD")
+			if err != nil {
+				return plan, err
+			}
+			assignment.Recovery = []intent.Recovery{{Ref: plan.Recovery, Root: head, Payloads: []string{head}}}
+			if err := intent.PutAssignment(root, assignment); err != nil {
+				return plan, err
+			}
+		} else if assignment, err = recoverAssignmentWithFault(root, assignment, fault); err != nil {
+			return plan, err
+		}
+		recovered = &assignment
+		if err := checkpoint(intent.ReceiptPhasePreserved); err != nil {
+			return plan, err
+		}
+		if err := hit(fault, StepRecoveryRef); err != nil {
+			return plan, err
+		}
+	}
+	if plan.Action == ActionDiscardRemove {
+		if err := discardIgnored(plan); err != nil {
+			return plan, err
+		}
+		if err := checkpoint(intent.ReceiptPhasePreserved); err != nil {
+			return plan, err
+		}
+	}
+	if err := checkpoint(intent.ReceiptPhaseRemoving); err != nil {
+		return plan, err
+	}
+	interruptContext, stopInterrupts := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stopInterrupts()
+	if plan.owned {
+		if out, err := exec.Command("git", "-C", root, "worktree", "unlock", plan.Target).CombinedOutput(); err != nil {
+			return plan, fmt.Errorf("unlock exact assignment: %s", strings.TrimSpace(string(out)))
+		}
+		if err := hit(fault, StepUnlock); err != nil {
+			return plan, errors.Join(err, relock(root, *plan.assignment, fault))
+		}
+	}
+	force := plan.Tracked != "clean" || plan.Action == ActionDiscardRemove || plan.registration.Detached
+	removeArgs := []string{"-C", root, "worktree", "remove"}
+	if force {
+		removeArgs = append(removeArgs, "--force")
+	}
+	removeArgs = append(removeArgs, plan.Target)
+	if err := hit(fault, StepRemovalAttempt); err != nil {
+		if plan.owned {
+			err = errors.Join(err, relock(root, *plan.assignment, fault))
+		}
+		return plan, err
+	}
+	if interruptContext.Err() != nil {
+		interrupted := error(ErrCleanupInterrupted)
+		if plan.owned {
+			interrupted = errors.Join(interrupted, relock(root, *plan.assignment, fault))
+		}
+		return plan, interrupted
+	}
+	if out, err := exec.CommandContext(interruptContext, "git", removeArgs...).CombinedOutput(); err != nil {
+		if interruptContext.Err() != nil {
+			interrupted := error(ErrCleanupInterrupted)
+			if plan.owned {
+				interrupted = errors.Join(interrupted, relock(root, *plan.assignment, fault))
+			}
+			return plan, interrupted
+		}
+		removeErr := fmt.Errorf("remove exact worktree: %s", strings.TrimSpace(string(out)))
+		if plan.owned {
+			removeErr = errors.Join(removeErr, relock(root, *plan.assignment, fault))
+		}
+		return plan, removeErr
+	}
+	stopInterrupts()
+	if err := checkpoint(intent.ReceiptPhaseRemoved); err != nil {
+		return plan, err
+	}
+	if err := hit(fault, StepRemoval); err != nil {
+		return plan, err
+	}
+	if plan.owned && plan.assignment != nil && plan.deleteBranch {
+		if out, err := exec.Command("git", "-C", root, "update-ref", "-d", plan.assignment.Branch, plan.branchOID).CombinedOutput(); err != nil {
+			return plan, fmt.Errorf("delete exact assignment branch: %s", strings.TrimSpace(string(out)))
+		}
+		if err := checkpoint(intent.ReceiptPhaseBranch); err != nil {
+			return plan, err
+		}
+		if err := hit(fault, StepBranch); err != nil {
+			return plan, err
+		}
+	}
+	if recovered != nil {
+		recovered.State = intent.StateRecovered
+		if err := intent.PutAssignment(root, *recovered); err != nil {
+			return plan, err
+		}
+	} else if plan.owned && plan.assignment != nil {
+		complete := *plan.assignment
+		complete.State = intent.StateComplete
+		if err := intent.PutAssignment(root, complete); err != nil {
+			return plan, err
+		}
+	}
+	if err := checkpoint(intent.ReceiptPhaseTerminal); err != nil {
+		return plan, err
+	}
+	plan.Action, plan.Reason, plan.ReasonCode = ActionRemoved, "", ""
+	return plan, nil
 }

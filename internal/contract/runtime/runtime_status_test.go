@@ -23,7 +23,7 @@ func TestRuntimeStatusContracts(t *testing.T) {
 	contract.RunParallel(t, "bench status unresolved-maps count contract", testRuntimeStatusUnresolvedMapsCount)
 	contract.RunParallel(t, "bench status budget contract", testRuntimeStatusBudget)
 	contract.RunParallel(t, "bench status warm-pool contract", testRuntimeStatusWarmPool)
-	contract.RunParallel(t, "bench status salvage-branch actions contract", testRuntimeStatusSalvageBranchActions)
+	contract.RunParallel(t, "bench status branch-prefix neutrality contract", testRuntimeStatusBranchPrefixNeutrality)
 	contract.RunParallel(t, "bench status retirement-signal contract", testRuntimeStatusRetirementSignal)
 	contract.RunParallel(t, "bench status orphaned-pickup contract", testRuntimeStatusOrphanedPickup)
 	contract.RunParallel(t, "bench status roadmap-reconcile contract", testRuntimeStatusRoadmapReconcile)
@@ -316,7 +316,7 @@ func testRuntimeStatusBudget(t *testing.T) {
 	contract.RequireContains(t, out, "/bench-what-next")
 	contract.RequireContains(t, out, "split (craft-seams)")
 	contract.RequireContains(t, out, "commit on green")
-	contract.RequireContains(t, out, "bench worktree clean")
+	contract.RequireContains(t, out, "bench worktree clean <path>")
 	// The 6th signal (decisions, sev 6) is truncated off the default budget board.
 	contract.RequireNotContains(t, out, "/bench-shape-idea")
 	if rows := countStatusRows(out); rows > 5 {
@@ -342,48 +342,39 @@ func testRuntimeStatusWarmPool(t *testing.T) {
 	f.Git("worktree", "add", "-q", "--detach", outOfPool, "HEAD")
 	out := f.BenchEnv(map[string]string{"BENCH_HOME": benchHome}, "status").Stdout
 	contract.RequireContains(t, out, "1 out-of-pool worktree")
-	contract.RequireContains(t, out, "bench worktree clean")
+	contract.RequireContains(t, out, "bench worktree clean <path>")
 	contract.RequireContains(t, out, "1 leased pool worktree")
-	requireStatusLineNotContains(t, out, "1 leased pool worktree", "bench worktree clean")
+	requireStatusLineNotContains(t, out, "1 leased pool worktree", "bench worktree clean <path>")
 	leasedOut := contract.RunAt(t, f, pool.Leased, map[string]string{"BENCH_HOME": benchHome}, "bash", benchPath(t), "status").Stdout
 	contract.RequireContains(t, leasedOut, "1 out-of-pool worktree")
 	contract.RequireContains(t, leasedOut, "1 leased pool worktree")
-	requireStatusLineNotContains(t, leasedOut, "1 leased pool worktree", "bench worktree clean")
+	requireStatusLineNotContains(t, leasedOut, "1 leased pool worktree", "bench worktree clean <path>")
 	out = f.BenchEnv(map[string]string{"BENCH_HOME": benchHome}, "status").Stdout
 	contract.RequireContains(t, out, "1 out-of-pool worktree")
 	contract.RequireContains(t, out, "1 leased pool worktree")
 	contract.RequireContains(t, out, "resume leased worktree")
-	requireStatusLineNotContains(t, out, "1 leased pool worktree", "bench worktree clean")
+	requireStatusLineNotContains(t, out, "1 leased pool worktree", "bench worktree clean <path>")
 	contract.Remove(t, pool.LeaseFile)
 	f.Git("branch", "worktree-agent-orphan")
 	out = f.BenchEnv(map[string]string{"BENCH_HOME": benchHome}, "status").Stdout
 	contract.RequireContains(t, out, "1 out-of-pool worktree")
-	contract.RequireContains(t, out, "orphaned worktree branch")
-	requireStatusLineContains(t, out, "orphaned worktree branch", "bench worktree clean")
+	contract.RequireContains(t, out, "bench worktree clean <path>")
+	contract.RequireNotContains(t, out, "orphaned worktree branch")
 }
 
-// FT44 story 4: the orphan-branch status action splits by the sweep's own landed proof. A
-// content-landed branch keeps the `bench worktree clean` action (the sweep will delete it); a
-// genuinely un-landed branch gets the honest inspect action instead of a recommendation the
-// sweep would no-op on.
-func testRuntimeStatusSalvageBranchActions(t *testing.T) {
+// A scratch-looking branch name is not ownership evidence and cannot create a status
+// cleanup decision. Exact registered worktrees remain the only lifecycle signal.
+func testRuntimeStatusBranchPrefixNeutrality(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.Git("symbolic-ref", "HEAD", "refs/heads/main")
 	commitAllowEmpty(t, f, "init")
-	f.Git("checkout", "-q", "-b", "worktree-agent-kept")
-	f.WriteFile("unique.txt", "unique\n")
-	f.CommitAll("unique work")
-	f.Git("checkout", "-q", "-b", "worktree-agent-landed", "main")
-	f.WriteFile("landed.txt", "landed\n")
-	f.CommitAll("landed work")
-	f.Git("checkout", "-q", "main")
-	commitAllowEmpty(t, f, "diverge")
-	f.Git("-c", "user.email=bench@local", "-c", "user.name=bench", "cherry-pick", "worktree-agent-landed")
+	f.Git("branch", "worktree-agent-kept")
+	f.Git("branch", "worktree-agent-landed")
 
 	out := f.Bench("status").Stdout
-	requireStatusLineContains(t, out, "un-landed salvage branch", "inspect salvage branch(es) — bench worktree clean keeps them")
-	requireStatusLineContains(t, out, "orphaned worktree branch", "bench worktree clean")
-	requireStatusLineNotContains(t, out, "orphaned worktree branch", "inspect")
+	contract.RequireNotContains(t, out, "orphaned worktree branch")
+	contract.RequireNotContains(t, out, "un-landed salvage branch")
+	contract.RequireNotContains(t, out, "bench worktree clean")
 }
 
 func testRuntimeStatusRetirementSignal(t *testing.T) {

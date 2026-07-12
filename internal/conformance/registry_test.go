@@ -116,6 +116,7 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"session-start-resume-cleanup-dropped": behaviorFixture(),
 	"intent-common-dir-address-regressed":  behaviorFixture(),
 	"status-landed-aggregation-regressed":  behaviorFixture(),
+	"worktree-lifecycle-safety-bypassed":   behaviorFixture(),
 }
 
 func conformanceFixture(shellSources ...string) fixtureRegistration {

@@ -2,6 +2,7 @@ package intent
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -66,8 +67,16 @@ func TestReadEvidenceStates(t *testing.T) {
 	}
 	cases := []struct{ name, body string }{
 		{"empty", ""},
-		{"malformed", "{"},
-		{"unknown schema", `{"schema":2,"entries":[]}`},
+		{"malformed", "{\n"},
+		{"missing final newline", `{"schema":1,"entries":[]}`},
+		{"duplicate field", "{\"schema\":1,\"schema\":1,\"entries\":[]}\n"},
+		{"nested duplicate field", "{\"schema\":1,\"entries\":[{\"key\":\"legacy\",\"key\":\"legacy\",\"kind\":\"shift\",\"objective\":\"x\",\"created_at\":\"2026-07-11T00:00:00Z\"}]}\n"},
+		{"unknown field", "{\"schema\":1,\"entries\":[],\"unknown\":true}\n"},
+		{"nested unknown field", "{\"schema\":1,\"entries\":[{\"key\":\"legacy\",\"kind\":\"shift\",\"objective\":\"x\",\"created_at\":\"2026-07-11T00:00:00Z\",\"unknown\":true}]}\n"},
+		{"trailing value", "{\"schema\":1,\"entries\":[]} {}\n"},
+		{"trailing bytes", "{\"schema\":1,\"entries\":[]} nope\n"},
+		{"wrong field type", "{\"schema\":\"1\",\"entries\":[]}\n"},
+		{"unknown schema", "{\"schema\":99,\"entries\":[]}\n"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -79,11 +88,13 @@ func TestReadEvidenceStates(t *testing.T) {
 			}
 		})
 	}
-	if err := os.WriteFile(path, []byte(`{"schema":1,"entries":[]}`), 0o600); err != nil {
+	legacy := " \n { \"schema\" : 1, \"entries\" : [ { \"key\" : \"legacy-1\", \"kind\" : \"shift\", \"objective\" : \"legacy objective\", \"created_at\" : \"2026-07-11T00:00:00Z\" } ] } \t\n"
+	if err := os.WriteFile(path, []byte(legacy), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Read(root); err != nil {
-		t.Fatalf("valid no-final-newline: %v", err)
+	ledger, err := Read(root)
+	if err != nil || ledger.Schema != LegacySchema || len(ledger.Entries) != 1 || ledger.Entries[0].Key != "legacy-1" {
+		t.Fatalf("canonical legacy ledger = %#v, %v", ledger, err)
 	}
 	if err := os.Chmod(path, 0o000); err != nil {
 		t.Fatal(err)
@@ -187,6 +198,40 @@ func TestUncorrelatedEntriesUseCandidateSet(t *testing.T) {
 	runGit(t, root, "branch", "worktree-agent-candidate")
 	if got, _ := Snapshot(root); len(got) != 3 {
 		t.Fatalf("one candidate live = %#v", got)
+	}
+}
+
+func TestCleanupReceiptWindowKeepsExactlyLast256Completions(t *testing.T) {
+	root := newRepo(t)
+	repo := filepath.Join(root, ".git")
+	before, err := LifecycleEvidence(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < MaxCleanupReceipts+2; i++ {
+		receipt := CleanupReceipt{
+			Schema: CleanupReceiptSchema, Repo: repo, Operation: "worktree-clean",
+			Target: filepath.Join(root, fmt.Sprintf("target-%03d", i)), Fingerprint: fmt.Sprintf("%064x", i+1),
+			State: ReceiptComplete, Phase: ReceiptPhaseTerminal, Action: "removed",
+			Tracked: "clean", Ignored: "count=0 bytes=0 shown=0 truncated=false", Recovery: "none",
+		}
+		if err := PutCleanupReceipt(root, receipt); err != nil {
+			t.Fatal(err)
+		}
+	}
+	ledger, err := Read(root)
+	if err != nil || len(ledger.CleanupReceipts) != MaxCleanupReceipts {
+		t.Fatalf("completion window = %d, %v", len(ledger.CleanupReceipts), err)
+	}
+	if got := filepath.Base(ledger.CleanupReceipts[0].Target); got != "target-002" {
+		t.Fatalf("first retained completion = %q", got)
+	}
+	if got := filepath.Base(ledger.CleanupReceipts[MaxCleanupReceipts-1].Target); got != "target-257" {
+		t.Fatalf("last retained completion = %q", got)
+	}
+	after, err := LifecycleEvidence(root)
+	if err != nil || !bytes.Equal(before, after) {
+		t.Fatalf("receipts changed assignment evidence: %q -> %q, %v", before, after, err)
 	}
 }
 

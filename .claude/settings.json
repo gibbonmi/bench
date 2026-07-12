@@ -1,6 +1,20 @@
 {
-  "$comment": "Drop this in ~/.claude/ (global) or a repo's .claude/ (per-project). SessionStart hook = the ambient dashboard (bench status). Stop hook = the completion oracle (blocks finishing on a red gate during a shift). PreToolUse hooks = the destructive-git guard on Bash (the agent has no merge/history authority) and the model-tier guard on Agent (delegations must run on a bound tier). Skills and commands here are discovered automatically.",
+  "$comment": "Project settings for Bench. WorktreeCreate/WorktreeRemove route Claude's native lifecycle through the shared Bench core. SessionStart prints the ambient dashboard; Stop enforces the completion oracle during a shift; PreToolUse guards destructive Git and delegated model tiers.",
   "hooks": {
+    "WorktreeCreate": [
+      {
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.bench/hooks/worktree-lifecycle.sh", "args": ["create"] }
+        ]
+      }
+    ],
+    "WorktreeRemove": [
+      {
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.bench/hooks/worktree-lifecycle.sh", "args": ["remove"] }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "matcher": "",

@@ -2,6 +2,7 @@ package worktree
 
 import (
 	"fmt"
+	"github.com/gibbonmi/bench/internal/intent"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,11 +15,11 @@ import (
 // contract exercises but cannot cheaply enumerate: a recorded numeric pid gates on
 // liveness, and unreadable/empty content reclaims only once aged past the threshold —
 // so a fresh-empty writer mid-claim is never stolen while a legacy/crashed lease is.
+
 func TestReclaimable(t *testing.T) {
 	now := time.Date(2026, 7, 4, 12, 0, 0, 0, time.UTC)
 	dead := func(int) bool { return false }
 	live := func(int) bool { return true }
-
 	cases := []struct {
 		name    string
 		content string
@@ -90,12 +91,11 @@ func dirty(t *testing.T, dir string) {
 // TestReleaseOwnerRestoresCleanAndUnleases pins the owner path: after Release, the
 // worktree is back to a reusable clean state and the lease is gone — the pool-entry
 // invariant that an unleased entry is always claimably clean.
+
 func TestReleaseOwnerRestoresCleanAndUnleases(t *testing.T) {
 	dir, lease := leasedRepo(t, fmt.Sprintf("%d 2026-07-05T00:00:00Z\n", os.Getpid()))
 	dirty(t, dir)
-
 	Release(dir)
-
 	if _, err := os.Stat(lease); !os.IsNotExist(err) {
 		t.Errorf("lease still present after owner release: %v", err)
 	}
@@ -112,15 +112,14 @@ func TestReleaseOwnerRestoresCleanAndUnleases(t *testing.T) {
 // different live process means the entry was stale-reclaimed and belongs to that
 // owner, so Release must leave both the lease and the working state untouched.
 // Pid 1 is live for any test runner (kill -0 yields nil or EPERM, both alive).
+
 func TestReleaseRespectsLiveForeignLease(t *testing.T) {
 	if os.Getpid() == 1 {
 		t.Skip("running as pid 1")
 	}
 	dir, lease := leasedRepo(t, "1 2026-07-05T00:00:00Z\n")
 	dirty(t, dir)
-
 	Release(dir)
-
 	if _, err := os.Stat(lease); err != nil {
 		t.Errorf("foreign live lease removed: %v", err)
 	}
@@ -139,10 +138,10 @@ func TestReleaseRespectsLiveForeignLease(t *testing.T) {
 // and no lease exists afterwards for a trailing remove to delete. The restoreClean
 // seam is the interleave point; the pre-fix ordering (unlease, clean, unlease again)
 // goes red here because the simulated claimant's create succeeds mid-cleanup.
+
 func TestReleaseNeverClaimableMidCleanup(t *testing.T) {
 	dir, lease := leasedRepo(t, fmt.Sprintf("%d 2026-07-05T00:00:00Z\n", os.Getpid()))
 	dirty(t, dir)
-
 	real := restoreClean
 	t.Cleanup(func() { restoreClean = real })
 	claimedMidCleanup := false
@@ -150,9 +149,7 @@ func TestReleaseNeverClaimableMidCleanup(t *testing.T) {
 		claimedMidCleanup = Claim(lease)
 		real(wt)
 	}
-
 	Release(dir)
-
 	if claimedMidCleanup {
 		t.Error("entry was claimable mid-cleanup: a concurrent claimant can win while the worktree is dirty and lose its lease to the trailing remove")
 	}
@@ -185,6 +182,7 @@ func deadPidLine(t *testing.T) string {
 // fresh lease and re-creates it, returning true: both reclaimers win, falsifying the
 // "cannot both win" guarantee. The fix sees the renamed bytes differ from the bytes it
 // judged reclaimable, restores the fresh lease, and concedes.
+
 func TestClaimSecondReclaimerConcedes(t *testing.T) {
 	if os.Getpid() == 1 {
 		t.Skip("running as pid 1")
@@ -193,7 +191,6 @@ func TestClaimSecondReclaimerConcedes(t *testing.T) {
 	if err := os.WriteFile(lease, []byte(deadPidLine(t)), 0o644); err != nil {
 		t.Fatal(err)
 	}
-
 	real := claimTakeoverGap
 	t.Cleanup(func() { claimTakeoverGap = real })
 	var nestedWon, reentered bool
@@ -204,9 +201,7 @@ func TestClaimSecondReclaimerConcedes(t *testing.T) {
 		reentered = true
 		nestedWon = Claim(leasePath)
 	}
-
 	outerWon := Claim(lease)
-
 	if !nestedWon {
 		t.Error("first (nested) reclaimer did not win the dead-pid lease")
 	}
@@ -240,6 +235,7 @@ func TestClaimSecondReclaimerConcedes(t *testing.T) {
 // during a conceded takeover keeps its lease. Pre-fix, the identity check's blind
 // rename-back clobbers C's lease with the stolen bytes it meant to restore; the fix
 // restores only into a still-empty slot (no-clobber link), leaving C's lease alone.
+
 func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
 	if os.Getpid() == 1 {
 		t.Skip("running as pid 1")
@@ -248,7 +244,6 @@ func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
 	if err := os.WriteFile(lease, []byte(deadPidLine(t)), 0o644); err != nil {
 		t.Fatal(err)
 	}
-
 	realTakeover := claimTakeoverGap
 	t.Cleanup(func() { claimTakeoverGap = realTakeover })
 	var nestedWon bool
@@ -261,7 +256,6 @@ func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
 		nestedWon = Claim(lp)
 		inNestedTakeover = false
 	}
-
 	realSteal := claimStealGap
 	t.Cleanup(func() { claimStealGap = realSteal })
 	const sentinel = "999999 sentinel-first-writer\n"
@@ -277,9 +271,7 @@ func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-
 	outerWon := Claim(lease)
-
 	if outerWon {
 		t.Error("outer Claim = true, want false (it must concede to the first-writer)")
 	}
@@ -306,6 +298,7 @@ func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
 
 // TestCandidateNameStaysInPool pins that a minted candidate never escapes the pool
 // directory — a wrong name would mint outside the pool and silently break warm reuse.
+
 func TestCandidateNameStaysInPool(t *testing.T) {
 	pool := "/home/x/.bench/worktrees/bench-123"
 	got := candidateName(pool, 1751630400, 4242, 2)
@@ -317,5 +310,91 @@ func TestCandidateNameStaysInPool(t *testing.T) {
 	}
 	if strings.ContainsAny(filepath.Base(got), "/") {
 		t.Errorf("candidate base %q escaped the pool", filepath.Base(got))
+	}
+}
+
+func TestIgnoredInventoryEntryAndByteBoundaries(t *testing.T) {
+	for _, count := range []int{0, 1, 20, 21, 1000, 1001} {
+		t.Run(fmt.Sprintf("entries-%d", count), func(t *testing.T) {
+			root := newWorktreeRepo(t)
+			gitRun(t, root, "branch", "-M", "main")
+			mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("ignored-*\n"), 0o644)
+			target := filepath.Join(filepath.Dir(root), fmt.Sprintf("ignored-%d", count))
+			gitRun(t, root, "worktree", "add", "-q", "-b", fmt.Sprintf("ignored-%d", count), target, "HEAD")
+			for i := 0; i < count; i++ {
+				mustWrite(t, filepath.Join(target, fmt.Sprintf("ignored-%04d", i)), []byte("x"), 0o600)
+			}
+			plan, err := PlanExplicitWithOptions(root, target, CleanupOptions{DiscardIgnored: true})
+			if err != nil {
+				t.Fatal(err)
+			}
+			wantAction := ActionDiscardRemove
+			if count == 0 {
+				wantAction = ActionRemove
+			} else if count > ignoredEntryLimit {
+				wantAction = ActionRetain
+			}
+			if plan.Action != wantAction || plan.Ignored.Count != count {
+				t.Fatalf("plan = %#v, want action %s count %d", plan, wantAction, count)
+			}
+			wantShown := count
+			if wantShown > 20 {
+				wantShown = 20
+			}
+			if plan.Ignored.Shown != wantShown || plan.Ignored.Truncated != (count > 20) {
+				t.Fatalf("preview = %#v", plan.Ignored)
+			}
+			full, err := PlanExplicitWithOptions(root, target, CleanupOptions{DiscardIgnored: true, Full: true})
+			if err != nil || full.Fingerprint != plan.Fingerprint {
+				t.Fatalf("--full changed plan identity: %#v, %v", full, err)
+			}
+		})
+	}
+	for _, size := range []int64{ignoredByteLimit - 1, ignoredByteLimit + 1} {
+		t.Run(fmt.Sprintf("bytes-%d", size), func(t *testing.T) {
+			root := newWorktreeRepo(t)
+			mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("large.bin\n"), 0o644)
+			target := filepath.Join(filepath.Dir(root), fmt.Sprintf("bytes-%d", size))
+			gitRun(t, root, "worktree", "add", "-q", "-b", fmt.Sprintf("bytes-%d", size), target, "HEAD")
+			large := filepath.Join(target, "large.bin")
+			mustWrite(t, large, nil, 0o600)
+			if err := os.Truncate(large, size); err != nil {
+				t.Fatal(err)
+			}
+			plan, err := PlanExplicitWithOptions(root, target, CleanupOptions{DiscardIgnored: true})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if (size < ignoredByteLimit) != (plan.Action == ActionDiscardRemove) {
+				t.Fatalf("byte-boundary plan = %#v", plan)
+			}
+		})
+	}
+}
+func TestReleaseReconcilesCompletedAutomaticCleanup(t *testing.T) {
+	root, creation := newPendingAssignment(t, "release-crash-window")
+	plan, err := ApplyAutomatic(root, creation.Path, nil)
+	requireTest(t, err == nil && plan.Action == ActionRemoved, "automatic cleanup = %#v, %v", plan, err)
+	args := []string{"--request", "landed-release-crash-window", creation.Path}
+	var first, firstErr strings.Builder
+	code := ReleaseCommand(root, args, &first, &firstErr)
+	requireTest(t, code == 0 && firstErr.String() == "", "release reconciliation code=%d stderr=%q", code, firstErr.String())
+	var replay, replayErr strings.Builder
+	code = ReleaseCommand(root, args, &replay, &replayErr)
+	requireTest(t, code == 0 && replay.String() == first.String() && replayErr.String() == "", "release replay code=%d stdout=%q stderr=%q", code, replay.String(), replayErr.String())
+	repo, _, _ := cleanupIdentity(root, creation.Path)
+	_, found, err := intent.CleanupReceiptFor(root, repo, releaseOperation, creation.Path, requestDigest("landed-release-crash-window"))
+	requireTest(t, err == nil && found, "release receipt missing: %v", err)
+}
+func mustRemove(t *testing.T, path string) {
+	t.Helper()
+	if err := os.RemoveAll(path); err != nil {
+		t.Fatal(err)
+	}
+}
+func mustChmod(t *testing.T, path string, mode os.FileMode) {
+	t.Helper()
+	if err := os.Chmod(path, mode); err != nil {
+		t.Fatal(err)
 	}
 }

@@ -18,8 +18,9 @@ cold session reads this first to avoid drifting the vocabulary.
 - **line** — the declared model + effort + rough token cap for a stage, with one
   clause of justification. "Declare the line" = state this before a long run. Not
   "budget" alone — the line is the whole routing decision.
-- **worktree** — a warm, isolated, reusable git worktree from the pool
-  (`bench worktree`). Where a shift runs without touching the main checkout.
+- **worktree** — an isolated Git checkout. `bench shift` leases warm, reusable
+  pooled worktrees. Interactive and harness lifecycle commands create exact owned,
+  locked assignment worktrees and release them safely.
 - **invariant** — one of the four non-negotiable rules (canonical in `.bench/BENCH.md`)
   that override convenience. Not "guideline", not "best practice" — invariant.
 - **harness** — the agent runtime that reads `AGENTS.md` (Claude Code, Codex,

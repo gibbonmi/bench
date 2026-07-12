@@ -73,6 +73,13 @@ func Root() (string, error) {
 	return Output("rev-parse", "--show-toplevel")
 }
 
+// RootAt returns the top-level directory for the repository containing dir. Harness
+// events carry an explicit cwd, so their routing must not depend on the hook process's
+// ambient working directory.
+func RootAt(dir string) (string, error) {
+	return Output("-C", dir, "rev-parse", "--show-toplevel")
+}
+
 // PorcelainEntry is one record of `git status --porcelain -z --no-renames`: the two
 // status characters (XY) and the path. With --no-renames a record is always
 // `XY <path>`, so the path begins at byte 3.
@@ -101,10 +108,12 @@ type LandedStateFact struct {
 // parser for worktree-list porcelain so every consumer agrees on path framing,
 // branch identity, detached state, and locks.
 type Worktree struct {
-	Path     string
-	Branch   string
-	Detached bool
-	Locked   bool
+	Path       string
+	Branch     string
+	BranchRef  string
+	Detached   bool
+	Locked     bool
+	LockReason string
 }
 
 // Worktrees returns every registered checkout using NUL-framed porcelain. The
@@ -127,11 +136,13 @@ func Worktrees(root string) ([]Worktree, error) {
 			worktrees = append(worktrees, Worktree{Path: strings.TrimPrefix(line, "worktree ")})
 			current = &worktrees[len(worktrees)-1]
 		case current != nil && strings.HasPrefix(line, "branch refs/heads/"):
-			current.Branch = strings.TrimPrefix(line, "branch refs/heads/")
+			current.BranchRef = strings.TrimPrefix(line, "branch ")
+			current.Branch = strings.TrimPrefix(current.BranchRef, "refs/heads/")
 		case current != nil && line == "detached":
 			current.Detached = true
 		case current != nil && (line == "locked" || strings.HasPrefix(line, "locked ")):
 			current.Locked = true
+			current.LockReason = strings.TrimPrefix(line, "locked ")
 		}
 	}
 	return worktrees, nil
