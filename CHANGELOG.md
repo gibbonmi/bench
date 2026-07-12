@@ -8,6 +8,16 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-11, scope: post-structure-wave reconcile).** Removed
+  FT62, FT64, FT69, and FT70 after their responsibility splits shipped at
+  `3e92085`; the authoritative structure snapshot now reports only
+  FT72/FT73/FT74/FT75, each still reproducing at its recorded limit. No parked,
+  scheduled, tabled, or upstream trigger has fired. IDEAS.md was already empty,
+  so zero ideas drained, and the journal had zero open entries, so there were
+  no verdicts. Previous promotion-build records remain complete: FT65 and FT66
+  are present. The recommended sequence is the remaining structure wave,
+  followed by the dated FT38 and FT8 revisits.
+
 - **Learnings run (2026-07-11, scope: post-FT68 retirement reconcile).** Removed
   FT68 after `bench spec history structured-phase-conversation` confirmed its
   retirement at `8071257`. All eight structure rows still reproduce at their

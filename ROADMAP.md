@@ -10,28 +10,6 @@ stay outside the ambient check.
 
 ## Features, in priority order
 
-**FT62 — structure debt: `internal/contract/helper.go` at 441/400.** Grown by
-FT53's RunAtWithTimeout helper. Split along responsibility or propose a
-reviewer grant — check the dir's file-count headroom before choosing
-(`internal/contract/runtime/` already holds a dir grant, so a split into that
-dir deepens dir debt). Next: `/bench-implement-spec` (lighter path).
-
-**FT64 — structure debt: `internal/canary/canary_test.go` at 407/400.** The
-targeted canary-phase work grew this past the file budget after FT62 was
-recorded. Split along responsibility or propose a reviewer grant, checking
-both file and directory budgets before choosing. Next: `/bench-implement-spec`
-(lighter path).
-
-**FT69 — structure debt: `internal/contract/surface/binary_repair_test.go` at
-416/400.** Split along responsibility or propose a reviewer grant, checking
-both file and directory budgets before choosing. Next: `/bench-implement-spec`
-(lighter path).
-
-**FT70 — structure debt: `internal/worktree/lifecycle_test.go` at 405/400.**
-Split along responsibility or propose a reviewer grant, checking both file and
-directory budgets before choosing. Next: `/bench-implement-spec` (lighter
-path).
-
 **FT72 — structure debt: `internal/git/git.go` at 403/400.** Split along
 responsibility or propose a reviewer grant, checking both file and directory
 budgets before choosing. Next: `/bench-implement-spec` (lighter path).
@@ -90,7 +68,8 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT62/FT64/FT69/FT70 structure split-or-grant passes
-   (lighter path, one file per pass).
-2. `/bench-implement-spec` — FT72/FT73/FT74/FT75 structure
+1. `/bench-implement-spec` — FT72/FT73/FT74/FT75 structure
    split-or-grant passes (lighter path, one file per pass).
+2. `/bench-shape-idea` — revisit FT38 on or after 2026-08-09.
+3. `/bench-shape-idea` — revisit FT8 on or after 2026-09-01 or the next
+   frontier shift.
