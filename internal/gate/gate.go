@@ -9,7 +9,6 @@ package gate
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -230,51 +229,6 @@ type Result struct {
 	Inspection Inspection
 }
 
-type gateFile interface {
-	Name() string
-	Chmod(os.FileMode) error
-	Write([]byte) (int, error)
-	Sync() error
-	Close() error
-	Fd() uintptr
-}
-
-type gateEngine interface {
-	Now() time.Time
-	BuildSubject(string) (subject, error)
-	PostRunSubject(string) (subject, error)
-	GitDir(string) (string, error)
-	OpenLock(string) (gateFile, error)
-	Acquire(gateFile) error
-	Unlock(gateFile) error
-	CreateTemp(string, string) (gateFile, error)
-	Rename(string, string) error
-	OpenDir(string) (gateFile, error)
-}
-
-type productionGateEngine struct{}
-
-func (productionGateEngine) Now() time.Time                              { return time.Now().UTC() }
-func (productionGateEngine) BuildSubject(root string) (subject, error)   { return buildSubject(root) }
-func (productionGateEngine) PostRunSubject(root string) (subject, error) { return buildSubject(root) }
-func (productionGateEngine) GitDir(root string) (string, error) {
-	return git.Output("-C", root, "rev-parse", "--absolute-git-dir")
-}
-func (productionGateEngine) OpenLock(path string) (gateFile, error) {
-	return os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o600)
-}
-func (productionGateEngine) Acquire(f gateFile) error {
-	return syscall.Flock(int(f.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
-}
-func (productionGateEngine) Unlock(f gateFile) error {
-	return syscall.Flock(int(f.Fd()), syscall.LOCK_UN)
-}
-func (productionGateEngine) CreateTemp(dir, pattern string) (gateFile, error) {
-	return os.CreateTemp(dir, pattern)
-}
-func (productionGateEngine) Rename(oldpath, newpath string) error  { return os.Rename(oldpath, newpath) }
-func (productionGateEngine) OpenDir(path string) (gateFile, error) { return os.Open(path) }
-
 func Execute(ctx context.Context, root string, stdout, stderr io.Writer) Result {
 	return executeWithEngine(ctx, root, stdout, stderr, productionGateEngine{})
 }
@@ -354,57 +308,6 @@ func runCaptured(ctx context.Context, root string, s subject, stdout, stderr io.
 	cmd.Dir, cmd.Stdout, cmd.Stderr = root, stdout, stderr
 	cmd.Env = append([]string(nil), s.Env...)
 	return runProcessGroupCommand(ctx, cmd).Code
-}
-
-func durableReplace(gitdir string, rec verdictRecord) error {
-	return durableReplaceWithEngine(productionGateEngine{}, gitdir, rec)
-}
-
-func durableReplaceWithEngine(engine gateEngine, gitdir string, rec verdictRecord) error {
-	data, err := json.Marshal(rec)
-	if err != nil {
-		return err
-	}
-	data = append(data, '\n')
-	tmp, err := engine.CreateTemp(gitdir, ".bench-last-gate-")
-	if err != nil {
-		return err
-	}
-	name, installed := tmp.Name(), false
-	defer func() {
-		_ = tmp.Close()
-		if !installed {
-			_ = os.Remove(name)
-		}
-	}()
-	if err := tmp.Chmod(0o600); err != nil {
-		return err
-	}
-	if _, err := tmp.Write(data); err != nil {
-		return err
-	}
-	if err := tmp.Sync(); err != nil {
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	if err := engine.Rename(name, filepath.Join(gitdir, git.GateCacheFile)); err != nil {
-		return err
-	}
-	dir, err := engine.OpenDir(gitdir)
-	if err != nil {
-		return err
-	}
-	syncErr, closeErr := dir.Sync(), dir.Close()
-	if syncErr != nil {
-		return syncErr
-	}
-	if closeErr != nil {
-		return closeErr
-	}
-	installed = true
-	return nil
 }
 
 const processGroupCancelGrace = 2 * time.Second
