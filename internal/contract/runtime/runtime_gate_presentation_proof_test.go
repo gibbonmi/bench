@@ -1,9 +1,13 @@
 package runtime
 
 import (
+	"encoding/xml"
+	"io"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/status"
 )
@@ -53,6 +57,7 @@ func proveSignalSeverity(t *testing.T, state string) {
 func proveSelfContainedDashboard(t *testing.T) {
 	p := newProjectionFixture(t, "reusable-green")
 	page := runProjectionSurface(t, p, "dashboard")
+	parseDashboardDocument(t, page)
 	for _, literal := range []string{"<!DOCTYPE html>", "<html", "<head>", "<style>", "</style>", "<body>", "</body>", "</html>"} {
 		if !strings.Contains(page, literal) {
 			t.Fatalf("dashboard HTML missing %q", literal)
@@ -65,6 +70,165 @@ func proveSelfContainedDashboard(t *testing.T) {
 		if strings.Contains(page, external) {
 			t.Fatalf("dashboard is not self-contained: contains %q", external)
 		}
+	}
+}
+
+type dashboardNode struct {
+	name     string
+	attrs    map[string]string
+	text     strings.Builder
+	children []*dashboardNode
+}
+
+func parseDashboardDocument(t *testing.T, page string) *dashboardNode {
+	t.Helper()
+	xmlPage := strings.TrimPrefix(page, "<!DOCTYPE html>\n")
+	for start := 0; ; {
+		i := strings.Index(xmlPage[start:], "<meta ")
+		if i < 0 {
+			break
+		}
+		i += start
+		j := strings.IndexByte(xmlPage[i:], '>')
+		if j < 0 {
+			t.Fatal("dashboard meta element is unterminated")
+		}
+		j += i
+		if xmlPage[j-1] != '/' {
+			xmlPage = xmlPage[:j] + "/" + xmlPage[j:]
+			j++
+		}
+		start = j + 1
+	}
+	root := &dashboardNode{name: "#document"}
+	stack := []*dashboardNode{root}
+	dec := xml.NewDecoder(strings.NewReader(xmlPage))
+	dec.Strict = true
+	for {
+		tok, err := dec.Token()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatalf("dashboard HTML is structurally invalid: %v", err)
+		}
+		switch x := tok.(type) {
+		case xml.StartElement:
+			n := &dashboardNode{name: x.Name.Local, attrs: map[string]string{}}
+			for _, attr := range x.Attr {
+				n.attrs[attr.Name.Local] = attr.Value
+			}
+			parent := stack[len(stack)-1]
+			parent.children = append(parent.children, n)
+			stack = append(stack, n)
+		case xml.EndElement:
+			stack = stack[:len(stack)-1]
+		case xml.CharData:
+			stack[len(stack)-1].text.Write([]byte(x))
+		}
+	}
+	if len(stack) != 1 || len(root.children) != 1 || root.children[0].name != "html" {
+		t.Fatalf("dashboard HTML root = %#v", root.children)
+	}
+	return root.children[0]
+}
+
+func (n *dashboardNode) normalizedText() string {
+	parts := []string{n.text.String()}
+	for _, child := range n.children {
+		parts = append(parts, child.normalizedText())
+	}
+	return strings.Join(strings.Fields(strings.Join(parts, " ")), " ")
+}
+
+func dashboardElements(n *dashboardNode, name string) []*dashboardNode {
+	var got []*dashboardNode
+	if n.name == name {
+		got = append(got, n)
+	}
+	for _, child := range n.children {
+		got = append(got, dashboardElements(child, name)...)
+	}
+	return got
+}
+
+type dashboardBadge struct{ class, text string }
+type dashboardDetail struct{ label, value string }
+type dashboardGateProjection struct {
+	present bool
+	empty   string
+	badges  []dashboardBadge
+	details []dashboardDetail
+}
+
+func requireExactDashboardGateProjection(t *testing.T, page string, p projectionFixture) {
+	t.Helper()
+	doc := parseDashboardDocument(t, page)
+	var gateSections []*dashboardNode
+	for _, section := range dashboardElements(doc, "section") {
+		for _, child := range section.children {
+			if child.name == "h2" && child.normalizedText() == "Gate" {
+				gateSections = append(gateSections, section)
+			}
+		}
+	}
+	if len(gateSections) != 1 {
+		t.Fatalf("dashboard Gate sections = %d, want 1", len(gateSections))
+	}
+	section := gateSections[0]
+	got := dashboardGateProjection{}
+	for _, child := range section.children {
+		switch child.name {
+		case "h2":
+		case "p":
+			if child.attrs["class"] == "empty" {
+				got.empty = child.normalizedText()
+				continue
+			}
+			got.present = true
+			for _, span := range dashboardElements(child, "span") {
+				got.badges = append(got.badges, dashboardBadge{span.attrs["class"], span.normalizedText()})
+			}
+		case "dl":
+			for i := 0; i < len(child.children); i += 2 {
+				if i+1 >= len(child.children) || child.children[i].name != "dt" || child.children[i+1].name != "dd" {
+					t.Fatal("dashboard Gate details are not exact dt/dd pairs")
+				}
+				got.details = append(got.details, dashboardDetail{child.children[i].normalizedText(), child.children[i+1].normalizedText()})
+			}
+		default:
+			t.Fatalf("dashboard Gate section has unexpected %s element", child.name)
+		}
+	}
+	want := dashboardGateProjection{empty: "No gate cache yet — run bench gate."}
+	if p.state != "absent" {
+		want = dashboardGateProjection{present: true, details: []dashboardDetail{{"cached tree", p.cachedTree}, {"work tree", p.workTree}}}
+		badge := map[string]dashboardBadge{
+			"reusable-green": {"badge green", "green"}, "red": {"badge red", "red"},
+			"locked-pending": {"badge ", "locked-pending"}, "interrupted-pending": {"badge ", "interrupted-pending"},
+			"invalid": {"badge ", "invalid"}, "unavailable": {"badge ", "unavailable"},
+		}[p.state]
+		want.badges = []dashboardBadge{badge}
+		if p.state == "stale" {
+			want.badges = []dashboardBadge{{"badge stale", "green"}, {"badge stale", "stale"}}
+		}
+		if p.state == "invalid" || p.state == "unavailable" {
+			want.details[0].value = ""
+		}
+		needsTimestamp := p.state == "reusable-green" || p.state == "red" || p.state == "stale"
+		if needsTimestamp && len(got.details) != 3 {
+			t.Fatalf("%s dashboard Gate timestamp details = %#v, want one gated-at field", p.state, got.details)
+		}
+		if needsTimestamp {
+			stamp := strings.SplitN(got.details[2].value, " (", 2)[0]
+			if _, err := time.Parse(time.RFC3339, stamp); err != nil {
+				t.Fatalf("dashboard gated-at timestamp = %q: %v", got.details[2].value, err)
+			}
+			want.details = append(want.details, got.details[2])
+		}
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("%s dashboard Gate projection\nwant: %#v\ngot:  %#v", p.state, want, got)
 	}
 }
 

@@ -61,7 +61,12 @@ func newShiftProofRun(t *testing.T, variant string) shiftProofRun {
 	t.Helper()
 	gate := "#!/usr/bin/env bash\nexit 23\n"
 	if variant == "drift" {
-		gate = "#!/usr/bin/env bash\nprintf drift >> tracked.txt\nexit 0\n"
+		gate = `#!/usr/bin/env bash
+printf drift >> tracked.txt
+git status --porcelain=v1 --untracked-files=all > "$BENCH_TEST_STATE/status"
+git diff --binary HEAD -- > "$BENCH_TEST_STATE/diff"
+exit 0
+`
 	}
 	if variant == "cancellation" {
 		gate = `#!/usr/bin/env bash
@@ -71,7 +76,16 @@ while :; do sleep .05; done
 `
 	}
 	f := shiftFixture(t, gate)
-	f.WriteExecutable("agent", "#!/usr/bin/env bash\nprintf 'charged\\n' > charged.txt\n")
+	f.WriteExecutable("agent", `#!/usr/bin/env bash
+mkdir -p "$BENCH_TEST_STATE"
+printf 'charged\n' > charged.txt
+cp charged.txt "$BENCH_TEST_STATE/charged"
+cp .bench-objective "$BENCH_TEST_STATE/objective"
+cp .bench-notes.md "$BENCH_TEST_STATE/notes"
+cp "$(git rev-parse --path-format=absolute --git-common-dir)/bench-intent.json" "$BENCH_TEST_STATE/intent"
+git status --porcelain=v1 --untracked-files=all > "$BENCH_TEST_STATE/status"
+git diff --binary HEAD -- > "$BENCH_TEST_STATE/diff"
+`)
 	if variant == "drift" {
 		f.WriteFile("tracked.txt", "base\n")
 		f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":["BENCH_TEST_PROMPTS","BENCH_TEST_STATE"],"paths":["tracked.txt"],"tools":[]}`+"\n")
@@ -83,12 +97,10 @@ while :; do sleep .05; done
 
 func (r shiftProofRun) env() map[string]string {
 	env := map[string]string{
-		"BENCH_AGENT":     filepath.Join(r.f.Root, "agent"),
-		"BENCH_HOME":      r.home,
-		"BENCH_MAX_ITERS": "1",
-	}
-	if r.variant == "cancellation" {
-		env["BENCH_TEST_STATE"] = filepath.Join(r.home, "cancel-state")
+		"BENCH_AGENT":      filepath.Join(r.f.Root, "agent"),
+		"BENCH_HOME":       r.home,
+		"BENCH_MAX_ITERS":  "1",
+		"BENCH_TEST_STATE": filepath.Join(r.home, "preservation-state"),
 	}
 	return env
 }
@@ -184,9 +196,28 @@ func requirePreservedShift(t *testing.T, run shiftProofRun, output string) {
 	if got := strings.TrimSpace(runGitAt(t, worktree, "rev-parse", "HEAD")); got != run.base {
 		t.Fatalf("failed shift moved HEAD to %s, want %s", got, run.base)
 	}
-	status := runGitAt(t, worktree, "status", "--porcelain=v1")
-	if !strings.Contains(status, "charged.txt") || !strings.Contains(status, ".bench-objective") || !strings.Contains(status, ".bench-notes.md") {
-		t.Fatalf("failed shift destructively cleaned agent/scratch changes:\n%s", status)
+	state := run.env()["BENCH_TEST_STATE"]
+	status := runGitAt(t, worktree, "status", "--porcelain=v1", "--untracked-files=all")
+	if want := string(mustReadRuntime(t, filepath.Join(state, "status"))); status != want {
+		t.Fatalf("failed shift changed complete status\nwant:\n%s\ngot:\n%s", want, status)
+	}
+	diff := runGitAt(t, worktree, "diff", "--binary", "HEAD", "--")
+	if want := string(mustReadRuntime(t, filepath.Join(state, "diff"))); diff != want {
+		t.Fatalf("failed shift changed complete diff\nwant:\n%s\ngot:\n%s", want, diff)
+	}
+	for path, snapshot := range map[string]string{
+		"charged.txt": "charged", ".bench-objective": "objective", ".bench-notes.md": "notes",
+	} {
+		if got, want := string(mustReadRuntime(t, filepath.Join(worktree, path))), string(mustReadRuntime(t, filepath.Join(state, snapshot))); got != want {
+			t.Fatalf("failed shift changed %s bytes: got %q want %q", path, got, want)
+		}
+	}
+	intentPath, err := intent.Address(run.f.Root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := string(mustReadRuntime(t, intentPath)), string(mustReadRuntime(t, filepath.Join(state, "intent"))); got != want {
+		t.Fatalf("failed shift changed intent bytes\nwant: %q\ngot: %q", want, got)
 	}
 	if got := strings.TrimSpace(runGitAt(t, worktree, "branch", "--show-current")); got != branch {
 		t.Fatalf("failed shift branch = %q, want %q", got, branch)

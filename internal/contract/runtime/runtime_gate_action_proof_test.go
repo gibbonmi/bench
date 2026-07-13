@@ -15,21 +15,47 @@ import (
 	gatepkg "github.com/gibbonmi/bench/internal/gate"
 )
 
-type actionSnapshot struct{ head, index, status, spec string }
+type actionPathSnapshot struct {
+	exists bool
+	mode   os.FileMode
+	bytes  string
+}
+
+type actionSnapshot struct {
+	head, index, status string
+	work, spec          actionPathSnapshot
+}
+
+func snapshotActionPath(t *testing.T, path string) actionPathSnapshot {
+	t.Helper()
+	info, err := os.Lstat(path)
+	if os.IsNotExist(err) {
+		return actionPathSnapshot{}
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return actionPathSnapshot{exists: true, mode: info.Mode(), bytes: string(data)}
+}
 
 func snapshotAction(t *testing.T, f contract.Fixture) actionSnapshot {
 	t.Helper()
-	s := actionSnapshot{head: headSha(f), index: strings.TrimSpace(f.Git("write-tree").Stdout), status: f.Git("status", "--porcelain=v1").Stdout}
-	if f.Exists("specs/proof.md") {
-		s.spec = f.ReadFile("specs/proof.md")
+	return actionSnapshot{
+		head: headSha(f), index: strings.TrimSpace(f.Git("write-tree").Stdout),
+		status: f.Git("status", "--porcelain=v1", "--untracked-files=all", "--", "work.txt", "specs/proof.md").Stdout,
+		work:   snapshotActionPath(t, filepath.Join(f.Root, "work.txt")),
+		spec:   snapshotActionPath(t, filepath.Join(f.Root, "specs", "proof.md")),
 	}
-	return s
 }
 
 func requireActionUnchanged(t *testing.T, f contract.Fixture, before actionSnapshot) {
 	t.Helper()
 	after := snapshotAction(t, f)
-	if after.head != before.head || after.index != before.index || after.spec != before.spec || !strings.HasPrefix(f.ReadFile("work.txt"), "charged") {
+	if after != before {
 		t.Fatalf("failed action changed HEAD/index/status/spec/path\nbefore=%+v\nafter=%+v", before, after)
 	}
 }

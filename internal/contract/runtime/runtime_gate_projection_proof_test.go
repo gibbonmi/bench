@@ -1,9 +1,12 @@
 package runtime
 
 import (
+	"encoding/csv"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"syscall"
 	"testing"
@@ -13,11 +16,12 @@ import (
 )
 
 type projectionFixture struct {
-	f      contract.Fixture
-	gitdir string
-	cache  string
-	state  string
-	lock   *os.File
+	f                    contract.Fixture
+	gitdir               string
+	cache                string
+	state                string
+	cachedTree, workTree string
+	lock                 *os.File
 }
 
 func newProjectionFixture(t *testing.T, state string) projectionFixture {
@@ -32,9 +36,9 @@ func newProjectionFixture(t *testing.T, state string) projectionFixture {
 	f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`+"\n")
 	f.WriteFile("tracked", "base\n")
 	f.CommitAll("base")
-	p := projectionFixture{f: f, gitdir: gitDir(t, f), state: state}
-	p.cache = filepath.Join(p.gitdir, "bench-last-gate")
 	tree := strings.TrimSpace(f.Bench("tree-hash").Stdout)
+	p := projectionFixture{f: f, gitdir: gitDir(t, f), state: state, cachedTree: tree}
+	p.cache = filepath.Join(p.gitdir, "bench-last-gate")
 	now := time.Now().UTC().Truncate(time.Second).Format(time.RFC3339)
 	oracle := strings.Repeat("0", 64)
 	write := func(data string, mode os.FileMode) {
@@ -73,6 +77,9 @@ func newProjectionFixture(t *testing.T, state string) projectionFixture {
 		t.Cleanup(func() { _ = os.Chmod(filepath.Join(f.Root, "unreadable"), 0o600) })
 	default:
 		t.Fatalf("unknown projection state %q", state)
+	}
+	if state != "unavailable" {
+		p.workTree = strings.TrimSpace(f.Bench("tree-hash").Stdout)
 	}
 	return p
 }
@@ -113,22 +120,90 @@ func runProjectionSurface(t *testing.T, p projectionFixture, surface string) str
 func proveTypedProjection(t *testing.T, state, surface string) {
 	p := newProjectionFixture(t, state)
 	out := runProjectionSurface(t, p, surface)
-	want := map[string]map[string]string{
-		"status": {
-			"absent": "bench: clean — nothing pending", "reusable-green": "bench: clean — nothing pending", "red": "gate       red", "stale": "gate       stale", "locked-pending": "gate       locked-pending", "interrupted-pending": "gate       interrupted-pending", "invalid": "gate       invalid verdict", "unavailable": "gate       verdict unavailable",
-		},
-		"dashboard": {
-			"absent": "No gate cache yet", "reusable-green": `class="badge green">green`, "red": `class="badge red">red`, "stale": `class="badge stale">stale`, "locked-pending": ">locked-pending</span>", "interrupted-pending": ">interrupted-pending</span>", "invalid": `class="badge ">invalid`, "unavailable": `class="badge ">unavailable`,
-		},
-		"roadmap": {
-			"absent": `false,"","","","","","",false`, "reusable-green": `true,ready,"",green`, "red": `true,ready,"",red`, "stale": `true,ready,"",green`, "locked-pending": "true,pending,locked-pending", "interrupted-pending": "true,pending,interrupted-pending", "invalid": `true,invalid,""`, "unavailable": `true,unavailable,""`,
-		},
-	}[surface][state]
-	if !strings.Contains(out, want) {
-		t.Fatalf("%s/%s missing literal %q:\n%s", state, surface, want, out)
+	switch surface {
+	case "status":
+		want := exactStatusProjection(p)
+		if out != want {
+			t.Fatalf("%s/status projection\nwant: %q\ngot:  %q", state, want, out)
+		}
+	case "dashboard":
+		requireExactDashboardGateProjection(t, out, p)
+	case "roadmap":
+		requireExactRoadmapGateProjection(t, out, p)
 	}
-	if surface == "roadmap" && !strings.Contains(out, "gate_cache[1]{present,state,pending_status,status,cached_tree,work_tree,timestamp,stale}:") {
-		t.Fatal("roadmap projection lost the typed gate-cache schema")
+}
+
+func exactStatusProjection(p projectionFixture) string {
+	switch p.state {
+	case "absent", "reusable-green":
+		return "bench: clean — nothing pending\n"
+	case "red":
+		return "▶ fix before commit  (gate)\n  gate       red                            → fix before commit\n"
+	case "stale":
+		return fmt.Sprintf("▶ commit on green  (git)\n  git        1 dirty path                   → commit on green\n  gate       stale (gated tree %.7s, work tree %.7s) → re-run the gate\n", p.cachedTree, p.workTree)
+	case "locked-pending":
+		return "▶ wait for live gate owner  (gate)\n  gate       locked-pending                 → wait for live gate owner\n"
+	case "interrupted-pending":
+		return "▶ re-run the gate  (gate)\n  gate       interrupted-pending            → re-run the gate\n"
+	case "invalid":
+		return "▶ re-run the gate  (gate)\n  gate       invalid verdict                → re-run the gate\n"
+	default:
+		return "▶ commit on green  (git)\n  git        1 dirty path                   → commit on green\n  gate       verdict unavailable            → inspect gate state\n"
+	}
+}
+
+func expectedGateFields(p projectionFixture) []string {
+	switch p.state {
+	case "absent":
+		return []string{"false", "", "", "", "", "", "", "false"}
+	case "reusable-green":
+		return []string{"true", "ready", "", "green", p.cachedTree, p.workTree, "<timestamp>", "false"}
+	case "red":
+		return []string{"true", "ready", "", "red", p.cachedTree, p.workTree, "<timestamp>", "false"}
+	case "stale":
+		return []string{"true", "ready", "", "green", p.cachedTree, p.workTree, "<timestamp>", "true"}
+	case "locked-pending":
+		return []string{"true", "pending", "locked-pending", "", p.cachedTree, p.workTree, "", "false"}
+	case "interrupted-pending":
+		return []string{"true", "pending", "interrupted-pending", "", p.cachedTree, p.workTree, "", "false"}
+	case "invalid":
+		return []string{"true", "invalid", "", "", "", p.workTree, "", "false"}
+	default:
+		return []string{"true", "unavailable", "", "", "", "", "", "false"}
+	}
+}
+
+func requireExactRoadmapGateProjection(t *testing.T, out string, p projectionFixture) {
+	t.Helper()
+	const schema = "gate_cache[1]{present,state,pending_status,status,cached_tree,work_tree,timestamp,stale}:"
+	lines := strings.Split(out, "\n")
+	var rows [][]string
+	for i, line := range lines {
+		if strings.TrimSpace(line) != schema || i+1 >= len(lines) {
+			continue
+		}
+		r := csv.NewReader(strings.NewReader(strings.TrimSpace(lines[i+1])))
+		row, err := r.Read()
+		if err != nil {
+			t.Fatalf("parse gate-cache row: %v", err)
+		}
+		if _, err := r.Read(); err != io.EOF {
+			t.Fatalf("gate-cache row has trailing CSV: %v", err)
+		}
+		rows = append(rows, row)
+	}
+	if len(rows) != 1 || len(rows[0]) != 8 {
+		t.Fatalf("gate-cache projection rows = %#v, want one complete eight-field row", rows)
+	}
+	want, got := expectedGateFields(p), rows[0]
+	if want[6] == "<timestamp>" {
+		if _, err := time.Parse(time.RFC3339, got[6]); err != nil {
+			t.Fatalf("gate-cache timestamp = %q: %v", got[6], err)
+		}
+		want[6] = got[6]
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("%s roadmap gate-cache row\nwant: %#v\ngot:  %#v", p.state, want, got)
 	}
 }
 
