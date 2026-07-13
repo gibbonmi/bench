@@ -134,11 +134,9 @@ func (productionGateEngine) Unlock(f gateFile) error {
 	executionLockOwners.Lock()
 	defer executionLockOwners.Unlock()
 	lock := recordLock(syscall.F_UNLCK)
-	if err := syscall.FcntlFlock(f.Fd(), syscall.F_SETLK, &lock); err != nil {
-		return err
-	}
+	err := syscall.FcntlFlock(f.Fd(), syscall.F_SETLK, &lock)
 	delete(executionLockOwners.paths, f.Name())
-	return nil
+	return err
 }
 func (productionGateEngine) CreateTemp(dir, pattern string) (gateFile, error) {
 	return os.CreateTemp(dir, pattern)

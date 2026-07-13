@@ -233,6 +233,38 @@ func TestExecutionLockAndDriftFailClosed(t *testing.T) {
 	}
 }
 
+func TestUnlockErrorClearsSameProcessOwnership(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "bench-gate.lock")
+	engine := productionGateEngine{}
+	first, err := engine.OpenLock(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := engine.Acquire(first); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		executionLockOwners.Lock()
+		delete(executionLockOwners.paths, path)
+		executionLockOwners.Unlock()
+	})
+	if err := first.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := engine.Unlock(first); err == nil {
+		t.Fatal("unlock on a closed descriptor succeeded, want EBADF")
+	}
+	second, err := engine.OpenLock(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer second.Close()
+	if err := engine.Acquire(second); err != nil {
+		t.Fatalf("same-process reacquire after unlock error: %v", err)
+	}
+	defer engine.Unlock(second)
+}
+
 func TestNoGateReturnsThreeWithoutRecord(t *testing.T) {
 	root := gateTestRepo(t, "#!/usr/bin/env bash\nexit 0\n", "")
 	if err := os.Remove(filepath.Join(root, ".bench", "gate.sh")); err != nil {
