@@ -8,6 +8,17 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-13, scope: FT78 proof-closure reconcile).** Reworded
+  FT78 from implementation to proof closure against its revised staged spec; no
+  roadmap row shipped, and the other 18 rows remain current. The FT6, FT24, FT8,
+  and FT38 triggers remain unmet. IDEAS.md was already empty, so zero ideas
+  drained. Dismissed the wrong-harness-handoff learning because the canonical
+  communication rule already requires translating Bench phase recommendations
+  to this harness's `$bench-*` adapter; this was an application miss, not a kit
+  gap. The previous run promoted no rows, and the existing FT65 and FT66
+  promotion-build records remain present. The refreshed sequence is FT78 through
+  `/bench-implement-spec`, then FT79 and FT80 through `/bench-shape-idea`.
+
 - **Learnings run (2026-07-13, scope: post-FT78 staging reconcile).** Reworded
   FT78 from shaping to implementation and linked its staged
   `oracle-bound-gate-verdicts` spec; no roadmap row shipped, and the other 18

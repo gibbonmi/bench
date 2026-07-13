@@ -20,12 +20,12 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT78 (CRITICAL, next) — implement oracle-bound, fail-closed gate verdicts.**
-Implement the staged spec: version the gate cache and bind green reuse to the
-working-tree hash, fully resolved gate kind and command, executable/script
-content, relevant configuration, schema, and freshness. Verdict replacement is
-same-directory, synced, and atomic. A red verdict that cannot be recorded
-invalidates prior reusable state and fails the requested action.
+**FT78 (CRITICAL, next) — close oracle-bound gate-verdict proof.** Preserve the
+green implementation at `8f9d2e4`, then complete the staged follow-on proof
+slice: exercise every unproven R1–R20 variant and add the missing R21 private
+deterministic-fault engine. The prior implemented status was premature; FT78 is
+implemented only when the complete R1–R21 matrix and full gate are green on one
+descendant of the anchor.
 
 Closure covers gate-command, script-content, and auto-detected-oracle changes,
 plus malformed cache and write failure. Oracle A green must never authorize a
@@ -339,7 +339,7 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — implement FT78 against
+1. `/bench-implement-spec` — close FT78 proof against
    `specs/oracle-bound-gate-verdicts.md`.
 2. `/bench-shape-idea` — specify FT79, lossless shift recovery.
 3. `/bench-shape-idea` — specify FT80, static bounded guard discovery.
