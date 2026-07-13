@@ -359,6 +359,10 @@ func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd) processGroupResu
 		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
 		select {
 		case <-done:
+			// The command leader may exit on INT while a descendant in the same
+			// process group ignores it. A final group kill is still required: Wait
+			// only proves the leader and its output pipes are done.
+			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 		case <-time.After(processGroupCancelGrace):
 			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 			<-done

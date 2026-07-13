@@ -174,7 +174,7 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 		s.runAdapter(fmt.Sprintf(iterationPrompt, objective))
 		s.checkpoint()
 		post := dirtyPaths(wt)
-		if s.runGate() == 0 {
+		if s.runPreservingGate() == 0 {
 			s.checkpoint()
 			stageTouched(wt, pre, post)
 			if nothingStaged(wt) {
@@ -193,7 +193,6 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 			}
 		} else {
 			s.checkpoint()
-			s.preserve.Store(true)
 			fmt.Fprintf(stdout, "  ✗ gate failed — preserving iteration %d in %s\n", i, wt)
 			return 1
 		}
@@ -320,6 +319,17 @@ func (s *session) runGate() int {
 	s.cancelGate = nil
 	s.mu.Unlock()
 	cancel()
+	return rc
+}
+
+// runPreservingGate records a failed iteration's ownership before returning control
+// to the caller, so an interrupt at the next checkpoint cannot release its worktree.
+// Refactor probes use runGate directly because their red result is rolled back.
+func (s *session) runPreservingGate() int {
+	rc := s.runGate()
+	if rc != 0 {
+		s.preserve.Store(true)
+	}
 	return rc
 }
 

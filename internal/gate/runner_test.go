@@ -269,6 +269,35 @@ func waitForProcessExit(t *testing.T, pid int) {
 	t.Fatalf("process %d still exists after cancellation", pid)
 }
 
+func TestExecuteCancellationKillsDescendantAfterLeaderExits(t *testing.T) {
+	root := gateTestRepo(t, `#!/usr/bin/env bash
+(
+  trap '' INT TERM
+  exec >/dev/null 2>&1
+  while :; do sleep 1; done
+) &
+child=$!
+echo "$child" > .git/stubborn-child
+trap 'exit 130' INT
+wait
+`, `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan Result, 1)
+	go func() { done <- Execute(ctx, root, io.Discard, io.Discard) }()
+	child := waitForPIDFile(t, filepath.Join(root, ".git", "stubborn-child"))
+	t.Cleanup(func() { _ = syscall.Kill(child, syscall.SIGKILL) })
+	cancel()
+	select {
+	case got := <-done:
+		if got.ActionExit != 130 {
+			t.Fatalf("cancelled execution = %+v, want action exit 130", got)
+		}
+	case <-time.After(4 * time.Second):
+		t.Fatal("cancelled execution did not return")
+	}
+	waitForProcessExit(t, child)
+}
+
 func TestR17PrivateFaultBridge(t *testing.T) {
 	op := os.Getenv("FT78_R17_FAULT")
 	valid := map[string]bool{
