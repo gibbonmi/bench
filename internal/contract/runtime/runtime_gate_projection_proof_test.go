@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"syscall"
 	"testing"
@@ -22,6 +23,41 @@ type projectionFixture struct {
 	state                string
 	cachedTree, workTree string
 	lock                 *os.File
+}
+
+func normalizeDashboardCSS(css string) string {
+	var b strings.Builder
+	for i := 0; i < len(css); {
+		if strings.HasPrefix(css[i:], "/*") {
+			end := strings.Index(css[i+2:], "*/")
+			if end < 0 {
+				return strings.ToLower(b.String())
+			}
+			i += end + 4
+			continue
+		}
+		if css[i] != '\\' {
+			b.WriteByte(css[i])
+			i++
+			continue
+		}
+		i++
+		start := i
+		for i < len(css) && i-start < 6 && strings.ContainsRune("0123456789abcdefABCDEF", rune(css[i])) {
+			i++
+		}
+		if i > start {
+			value, _ := strconv.ParseInt(css[start:i], 16, 32)
+			b.WriteRune(rune(value))
+			if i < len(css) && strings.ContainsRune(" \t\r\n\f", rune(css[i])) {
+				i++
+			}
+		} else if i < len(css) {
+			b.WriteByte(css[i])
+			i++
+		}
+	}
+	return strings.ToLower(b.String())
 }
 
 func newProjectionFixture(t *testing.T, state string) projectionFixture {

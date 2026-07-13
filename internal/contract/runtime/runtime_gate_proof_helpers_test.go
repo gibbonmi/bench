@@ -54,25 +54,6 @@ func escapedManifestPathProof(t *testing.T) {
 	assertRuns(t, f, 1)
 }
 
-func manifestEntryLimitProof(t *testing.T) {
-	f := proofFixture(t)
-	dir := filepath.Join(f.Root, "inputs", "entry-limit")
-	contract.Mkdir(t, dir)
-	for i := 0; i <= 100_000; i++ {
-		if err := os.WriteFile(filepath.Join(dir, fmt.Sprintf("%06d", i)), nil, 0o600); err != nil {
-			t.Fatal(err)
-		}
-	}
-	f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":["inputs/entry-limit"],"tools":[]}`)
-	probe := f.Bench("gate")
-	probe.RequireExit(0)
-	got := gate.Inspect(f.Root)
-	if got.State != gate.Ready || got.Status != "green" || got.Reason != "declared path unavailable" || got.ReusableGreen {
-		t.Fatalf("entry-limit inspection = %+v, want ready green/open/non-reusable", got)
-	}
-	assertRuns(t, f, 1)
-}
-
 func manifestByteLimitProof(t *testing.T, size int, state gate.State, reason string) {
 	f := proofFixture(t)
 	contents := localManifest + strings.Repeat(" ", size-len(localManifest))

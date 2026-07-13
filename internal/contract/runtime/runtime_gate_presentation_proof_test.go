@@ -74,12 +74,17 @@ func proveSelfContainedDashboard(t *testing.T) {
 		t.Fatal("dashboard is not one complete HTML document")
 	}
 	for name, mutation := range map[string]string{
-		"head content":  strings.Replace(page, "<head>", "<head><div>bad</div>", 1),
-		"relative href": strings.Replace(page, `<html `, `<html href="/x" `, 1),
-		"protocol src":  strings.Replace(page, `<html `, `<html src="//cdn/x" `, 1),
-		"data resource": strings.Replace(page, `<html `, `<html data="data:text/plain,x" `, 1),
-		"css url":       strings.Replace(page, "</style>", ".x{background:url(/x)}</style>", 1),
-		"css import":    strings.Replace(page, "</style>", "@import '/x';</style>", 1),
+		"head content":          strings.Replace(page, "<head>", "<head><div>bad</div>", 1),
+		"relative href":         strings.Replace(page, `<html `, `<html href="/x" `, 1),
+		"protocol src":          strings.Replace(page, `<html `, `<html src="//cdn/x" `, 1),
+		"data resource":         strings.Replace(page, `<html `, `<html data="data:text/plain,x" `, 1),
+		"css url":               strings.Replace(page, "</style>", ".x{background:url(/x)}</style>", 1),
+		"css import":            strings.Replace(page, "</style>", "@import '/x';</style>", 1),
+		"css escaped url":       strings.Replace(page, "</style>", `.x{background:u\72l(/x)}</style>`, 1),
+		"css escaped import":    strings.Replace(page, "</style>", `@\69mport '/x';</style>`, 1),
+		"css comment splice":    strings.Replace(page, "</style>", `.x{background:u/**/rl(/x)}</style>`, 1),
+		"event handler":         strings.Replace(page, `<html `, `<html onload="alert(1)" `, 1),
+		"reversed table groups": strings.Replace(page, "<body>", "<body><div><section><table><tbody></tbody><thead></thead></table></section></div>", 1),
 	} {
 		doc := parseDashboardDocument(t, mutation)
 		if err := dashboardHTMLViolation(doc); err == nil {
@@ -212,18 +217,24 @@ func dashboardHTMLViolation(doc *dashboardNode) error {
 	var walk func(*dashboardNode) error
 	walk = func(n *dashboardNode) error {
 		for name, value := range n.attrs {
+			if strings.HasPrefix(strings.ToLower(name), "on") {
+				return fmt.Errorf("dashboard %s has event-handler attribute %s", n.name, name)
+			}
 			if resourceAttrs[strings.ToLower(name)] && strings.TrimSpace(value) != "" {
 				return fmt.Errorf("dashboard %s has resource-bearing %s=%q", n.name, name, value)
 			}
-			if strings.EqualFold(name, "style") && cssResourcePattern.MatchString(value) {
+			if strings.EqualFold(name, "style") && cssResourcePattern.MatchString(normalizeDashboardCSS(value)) {
 				return fmt.Errorf("dashboard inline style can load a resource: %q", value)
 			}
 		}
-		if n.name == "style" && cssResourcePattern.MatchString(n.normalizedText()) {
+		if n.name == "style" && cssResourcePattern.MatchString(normalizeDashboardCSS(n.normalizedText())) {
 			return fmt.Errorf("dashboard stylesheet can load an external resource")
 		}
 		if n.name == "meta" && strings.EqualFold(n.attrs["http-equiv"], "refresh") {
 			return fmt.Errorf("dashboard meta refresh can navigate externally")
+		}
+		if n.name == "table" && (len(n.children) != 2 || n.children[0].name != "thead" || n.children[1].name != "tbody") {
+			return fmt.Errorf("dashboard table must contain one ordered thead/tbody pair")
 		}
 		for _, child := range n.children {
 			if !allowed[n.name][child.name] {
