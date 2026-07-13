@@ -20,6 +20,9 @@ func commitProof(id, variant string) actionProof {
 func shiftProof(id, variant string) actionProof {
 	return proof(id, func(t *testing.T) { proveShiftResult(t, variant) })
 }
+func stopProof(id, variant string) actionProof {
+	return proof(id, func(t *testing.T) { proveStopResult(t, variant) })
+}
 
 var ft78Story5Proofs = []actionProof{
 	commitProof("R14/exact-green-reuse", "reuse"), commitProof("R14/stale-tree-rerun", "stale"),
@@ -36,11 +39,19 @@ var ft78Story5Proofs = []actionProof{
 	shiftProof("R15/ordinary-red", "red"), shiftProof("R15/lock", "lock"),
 	shiftProof("R15/persistence", "persistence"), shiftProof("R15/drift", "drift"),
 	shiftProof("R15/cancellation", "cancellation"),
+	stopProof("R16/green", "green"), stopProof("R16/red", "red"),
+	stopProof("R16/unarmed", "unarmed"), stopProof("R16/active", "active"),
+	stopProof("R16/lock-open", "lock-open"), stopProof("R16/lock-acquire", "lock-acquire"),
+	stopProof("R16/pending-persistence", "pending-persistence"), stopProof("R16/final-persistence", "final-persistence"),
+	stopProof("R16/subject-build", "subject-build"), stopProof("R16/subject-recheck-drift", "drift"),
+	stopProof("R16/cancellation", "cancellation"), stopProof("R16/start-failure", "start-failure"),
+	stopProof("R16/no-gate", "no-gate"),
 }
 
 var ft78Story5ExpectedIDs = []string{
 	"R14/exact-green-reuse", "R14/stale-tree-rerun", "R14/ordinary-red", "R14/oracle-mismatch", "R14/absent-inspection", "R14/ready-red-inspection", "R14/stale-green-inspection", "R14/open-subject-green-inspection", "R14/locked-pending-inspection", "R14/interrupted-pending-inspection", "R14/invalid-inspection", "R14/unavailable-inspection", "R14/lock-open-result", "R14/lock-acquire-result", "R14/pending-persistence-result", "R14/final-persistence-result", "R14/subject-build-result", "R14/subject-recheck-drift-result", "R14/cancellation-result", "R14/start-failure-result", "R14/no-gate-result",
 	"R15/ordinary-red", "R15/lock", "R15/persistence", "R15/drift", "R15/cancellation",
+	"R16/green", "R16/red", "R16/unarmed", "R16/active", "R16/lock-open", "R16/lock-acquire", "R16/pending-persistence", "R16/final-persistence", "R16/subject-build", "R16/subject-recheck-drift", "R16/cancellation", "R16/start-failure", "R16/no-gate",
 }
 
 func TestFT78Story5ProofLedgerCompleteness(t *testing.T) {
