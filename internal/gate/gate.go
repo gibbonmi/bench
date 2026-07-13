@@ -230,63 +230,116 @@ type Result struct {
 	Inspection Inspection
 }
 
+type gateFile interface {
+	Name() string
+	Chmod(os.FileMode) error
+	Write([]byte) (int, error)
+	Sync() error
+	Close() error
+	Fd() uintptr
+}
+
+type gateEngine interface {
+	Now() time.Time
+	BuildSubject(string) (subject, error)
+	PostRunSubject(string) (subject, error)
+	GitDir(string) (string, error)
+	OpenLock(string) (gateFile, error)
+	Acquire(gateFile) error
+	Unlock(gateFile) error
+	CreateTemp(string, string) (gateFile, error)
+	Rename(string, string) error
+	OpenDir(string) (gateFile, error)
+}
+
+type productionGateEngine struct{}
+
+func (productionGateEngine) Now() time.Time                              { return time.Now().UTC() }
+func (productionGateEngine) BuildSubject(root string) (subject, error)   { return buildSubject(root) }
+func (productionGateEngine) PostRunSubject(root string) (subject, error) { return buildSubject(root) }
+func (productionGateEngine) GitDir(root string) (string, error) {
+	return git.Output("-C", root, "rev-parse", "--absolute-git-dir")
+}
+func (productionGateEngine) OpenLock(path string) (gateFile, error) {
+	return os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o600)
+}
+func (productionGateEngine) Acquire(f gateFile) error {
+	return syscall.Flock(int(f.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
+}
+func (productionGateEngine) Unlock(f gateFile) error {
+	return syscall.Flock(int(f.Fd()), syscall.LOCK_UN)
+}
+func (productionGateEngine) CreateTemp(dir, pattern string) (gateFile, error) {
+	return os.CreateTemp(dir, pattern)
+}
+func (productionGateEngine) Rename(oldpath, newpath string) error  { return os.Rename(oldpath, newpath) }
+func (productionGateEngine) OpenDir(path string) (gateFile, error) { return os.Open(path) }
+
 func Execute(ctx context.Context, root string, stdout, stderr io.Writer) Result {
-	plan, err := buildSubject(root)
+	return executeWithEngine(ctx, root, stdout, stderr, productionGateEngine{})
+}
+
+func executeWithEngine(ctx context.Context, root string, stdout, stderr io.Writer, engine gateEngine) Result {
+	plan, err := engine.BuildSubject(root)
 	if err != nil {
-		return operational(root, 0, stderr, "gate subject unavailable")
+		return operationalWithEngine(engine, root, 0, stderr, "gate subject unavailable")
 	}
 	if plan.Resolution.Kind == None {
 		fmt.Fprintln(stderr, "no gate found: add an executable .bench/gate.sh or set BENCH_GATE")
-		return Result{GateExit: 3, ActionExit: 3, Inspection: Inspect(root)}
+		return Result{GateExit: 3, ActionExit: 3, Inspection: inspectAt(root, engine.Now())}
 	}
-	gitdir, err := git.Output("-C", root, "rev-parse", "--absolute-git-dir")
+	gitdir, err := engine.GitDir(root)
 	if err != nil {
-		return operational(root, 0, stderr, "git directory unavailable")
+		return operationalWithEngine(engine, root, 0, stderr, "git directory unavailable")
 	}
-	lock, err := os.OpenFile(filepath.Join(gitdir, "bench-gate.lock"), os.O_CREATE|os.O_RDWR, 0o600)
+	lock, err := engine.OpenLock(filepath.Join(gitdir, "bench-gate.lock"))
 	if err != nil {
-		return operational(root, 0, stderr, "gate lock unavailable")
+		return operationalWithEngine(engine, root, 0, stderr, "gate lock unavailable")
 	}
 	defer lock.Close()
-	if err := syscall.Flock(int(lock.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
+	if err := engine.Acquire(lock); err != nil {
 		fmt.Fprintln(stderr, "gate execution already in progress")
-		return Result{ActionExit: 1, Inspection: Inspect(root)}
+		return Result{ActionExit: 1, Inspection: inspectAt(root, engine.Now())}
 	}
-	defer syscall.Flock(int(lock.Fd()), syscall.LOCK_UN)
-	underLock, err := buildSubject(root)
+	defer engine.Unlock(lock)
+	underLock, err := engine.BuildSubject(root)
 	if err != nil || !sameSubject(plan, underLock) {
-		return operational(root, 0, stderr, "gate subject changed before execution")
+		return operationalWithEngine(engine, root, 0, stderr, "gate subject changed before execution")
 	}
-	now := time.Now().UTC().Truncate(time.Second)
+	now := engine.Now().UTC().Truncate(time.Second)
 	pending := verdictRecord{Schema: 1, State: Pending, Tree: plan.Tree, Oracle: plan.Oracle, StartedAt: now.Format(time.RFC3339), OwnerPID: os.Getpid()}
-	if err := durableReplace(gitdir, pending); err != nil {
-		return operational(root, 0, stderr, "gate pending persistence failed")
+	if err := durableReplaceWithEngine(engine, gitdir, pending); err != nil {
+		return operationalWithEngine(engine, root, 0, stderr, "gate pending persistence failed")
 	}
 	rc := runCaptured(ctx, root, plan, stdout, stderr)
 	if ctx.Err() != nil {
-		return Result{GateExit: rc, ActionExit: rc, Inspection: Inspect(root)}
+		return Result{GateExit: rc, ActionExit: rc, Inspection: inspectAt(root, engine.Now())}
 	}
-	after, err := buildSubject(root)
+	after, err := engine.PostRunSubject(root)
 	if err != nil || !sameSubject(plan, after) {
 		fmt.Fprintln(stderr, "gate subject changed during execution")
-		return Result{GateExit: rc, ActionExit: 1, Inspection: Inspect(root)}
+		return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(root, engine.Now())}
 	}
 	status := "red"
 	if rc == 0 {
 		status = "green"
 	}
-	ready := verdictRecord{Schema: 1, State: Ready, Status: status, Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: time.Now().UTC().Truncate(time.Second).Format(time.RFC3339)}
-	if err := durableReplace(gitdir, ready); err != nil {
-		_ = durableReplace(gitdir, pending)
+	ready := verdictRecord{Schema: 1, State: Ready, Status: status, Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: engine.Now().UTC().Truncate(time.Second).Format(time.RFC3339)}
+	if err := durableReplaceWithEngine(engine, gitdir, ready); err != nil {
+		_ = durableReplaceWithEngine(engine, gitdir, pending)
 		fmt.Fprintln(stderr, "gate final persistence failed")
-		return Result{GateExit: rc, ActionExit: 1, Inspection: Inspect(root)}
+		return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(root, engine.Now())}
 	}
-	return Result{GateExit: rc, ActionExit: rc, Inspection: Inspect(root)}
+	return Result{GateExit: rc, ActionExit: rc, Inspection: inspectAt(root, engine.Now())}
 }
 
 func operational(root string, gateExit int, stderr io.Writer, msg string) Result {
+	return operationalWithEngine(productionGateEngine{}, root, gateExit, stderr, msg)
+}
+
+func operationalWithEngine(engine gateEngine, root string, gateExit int, stderr io.Writer, msg string) Result {
 	fmt.Fprintln(stderr, msg)
-	return Result{GateExit: gateExit, ActionExit: 1, Inspection: Inspect(root)}
+	return Result{GateExit: gateExit, ActionExit: 1, Inspection: inspectAt(root, engine.Now())}
 }
 
 func sameSubject(a, b subject) bool {
@@ -304,12 +357,16 @@ func runCaptured(ctx context.Context, root string, s subject, stdout, stderr io.
 }
 
 func durableReplace(gitdir string, rec verdictRecord) error {
+	return durableReplaceWithEngine(productionGateEngine{}, gitdir, rec)
+}
+
+func durableReplaceWithEngine(engine gateEngine, gitdir string, rec verdictRecord) error {
 	data, err := json.Marshal(rec)
 	if err != nil {
 		return err
 	}
 	data = append(data, '\n')
-	tmp, err := os.CreateTemp(gitdir, ".bench-last-gate-")
+	tmp, err := engine.CreateTemp(gitdir, ".bench-last-gate-")
 	if err != nil {
 		return err
 	}
@@ -332,10 +389,10 @@ func durableReplace(gitdir string, rec verdictRecord) error {
 	if err := tmp.Close(); err != nil {
 		return err
 	}
-	if err := os.Rename(name, filepath.Join(gitdir, git.GateCacheFile)); err != nil {
+	if err := engine.Rename(name, filepath.Join(gitdir, git.GateCacheFile)); err != nil {
 		return err
 	}
-	dir, err := os.Open(gitdir)
+	dir, err := engine.OpenDir(gitdir)
 	if err != nil {
 		return err
 	}
