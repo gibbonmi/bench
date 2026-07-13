@@ -5,10 +5,8 @@
 // unit-tested place rather than scattered through .bench/hooks/stop.sh.
 //
 // The pure seams (Active, Tail, BlockMessage) are table-tested; Run does the I/O
-// (exec the gate, resolve the git dir, write the verdict cache) and is exercised
-// end-to-end by the shell gate contracts. The verdict cache is only ever written
-// with a real tree hash — a "none" hash is refused loudly rather than forged, so
-// the cache can never claim a verdict it cannot key to a tree.
+// (exec the standalone wrapper once) and is exercised end-to-end by the shell gate
+// contracts. Verdict ownership remains entirely behind that wrapper.
 package stophook
 
 import (
@@ -20,7 +18,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 )
@@ -81,7 +78,7 @@ func BlockMessage(gateOutput string) string {
 
 // Run is the Stop-hook orchestration. When the shift is not armed, or the envelope
 // says the hook is already active, it allows the stop (exit 0) without touching the
-// cache. Otherwise it runs `<wrapper> gate`, records resolved gate verdicts, and
+// cache. Otherwise it runs `<wrapper> gate` exactly once and
 // returns 0 on green or 2 (after writing the BLOCKED message to stderr) on red. The
 // wrapper gate's no-gate exit 3 is not a verdict and must not seed a red cache.
 func Run(stdin []byte, wrapper string, armed bool, stderr io.Writer) int {
@@ -111,15 +108,6 @@ func Run(stdin []byte, wrapper string, armed bool, stderr io.Writer) int {
 			rc = ee.ExitCode()
 		} else {
 			rc = 1 // failed to run, or a zero-coded error: treat as red
-		}
-	}
-
-	// The verdict cache is written by exactly one source (internal/gate.Record),
-	// reached here through the same repo git dir the `<wrapper> gate` run keyed to —
-	// no second cache-write implementation to drift from the standalone gate path.
-	if rc != 3 {
-		if root, err := git.Root(); err == nil {
-			gate.Record(root, rc, stderr)
 		}
 	}
 

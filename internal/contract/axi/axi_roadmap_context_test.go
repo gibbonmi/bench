@@ -53,7 +53,7 @@ func testRoadmapContextComplete(t *testing.T) {
 		"learnings[1]{date,title,state,body,body_bytes,truncated}:", "structure[0]{kind,path,actual,limit,state,detail}:",
 		"specs[1]{slug,status,roadmap_id}:", "spec_history[0]{slug,hash,date,kind,subject}:",
 		"git[1]{branch,default_branch,dirty,ahead,behind}:", "git_changes[0]{status,path}:",
-		"gate_cache[1]{present,status,cached_tree,work_tree,timestamp,stale}:",
+		"gate_cache[1]{present,state,pending_status,status,cached_tree,work_tree,timestamp,stale}:",
 		"promotion_records[1]{kind,date,scope,roadmap_ids,body,body_bytes,truncated}:",
 		"parse_failures[0]{source,reason,raw,raw_bytes,truncated}:",
 	}

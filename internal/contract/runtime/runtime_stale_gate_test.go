@@ -3,9 +3,11 @@ package runtime
 import (
 	"fmt"
 	"github.com/gibbonmi/bench/internal/contract"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func testRuntimeStatusStaleGateDriftClassification(t *testing.T) {
@@ -16,6 +18,10 @@ func testRuntimeStatusStaleGateDriftClassification(t *testing.T) {
 	strong := statusRowExpectation{
 		contains:    []string{"stale (gated tree", "re-run the gate"},
 		notContains: []string{"capture-only drift"},
+	}
+	invalid := statusRowExpectation{
+		contains:    []string{"invalid verdict", "re-run the gate"},
+		notContains: []string{"capture-only drift", "stale (gated tree"},
 	}
 	cases := []staleGateStatusCase{
 		{name: "added ROADMAP.md is capture-only", mutate: writeRuntimeFile("ROADMAP.md", "- 2026-07-05  parked idea\n"), want: benign},
@@ -35,16 +41,16 @@ func testRuntimeStatusStaleGateDriftClassification(t *testing.T) {
 			f.WriteFile("ROADMAP.md", "- 2026-07-05  parked idea\n")
 			f.WriteFile("docs/x.md", "doc drift\n")
 		}, want: strong},
-		{name: "cache missing tree is strong stale", cache: literalGateCache("green\n"), want: strong},
-		{name: "cache tree none is strong stale", cache: literalGateCache("green none 2026-06-30T00:00:00Z\n"), want: strong},
+		{name: "cache missing tree is invalid", cache: literalGateCache("green\n"), want: invalid},
+		{name: "cache tree none is invalid", cache: literalGateCache("green none 2026-06-30T00:00:00Z\n"), want: invalid},
 		{name: "cache missing timestamp is strong stale", cache: func(t testing.TB, f contract.Fixture) string {
 			t.Helper()
 			return fmt.Sprintf("green %s\n", strings.TrimSpace(f.Bench("tree-hash").Stdout))
-		}, want: strong},
-		{name: "untrusted cache status is strong stale", cache: func(t testing.TB, f contract.Fixture) string {
+		}, want: invalid},
+		{name: "untrusted cache status is invalid", cache: func(t testing.TB, f contract.Fixture) string {
 			t.Helper()
 			return gateCacheLine(t, f, "yellow")
-		}, want: strong},
+		}, want: invalid},
 		{name: "deep cwd ROADMAP drift is capture-only", seed: writeRuntimeFile("sub/.keep", ""), mutate: writeRuntimeFile("ROADMAP.md", "- 2026-07-05  parked idea\n"), runDir: "sub", want: benign},
 	}
 
@@ -126,11 +132,15 @@ func literalGateCache(line string) func(testing.TB, contract.Fixture) string {
 
 func writeGateCache(t testing.TB, f contract.Fixture, line string) {
 	t.Helper()
-	contract.WriteFileAbs(t, filepath.Join(gitDir(t, f), "bench-last-gate"), line)
+	path := filepath.Join(gitDir(t, f), "bench-last-gate")
+	contract.WriteFileAbs(t, path, line)
+	if err := os.Chmod(path, 0o600); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func gateCacheLine(t testing.TB, f contract.Fixture, status string) string {
 	t.Helper()
 	tree := strings.TrimSpace(f.Bench("tree-hash").Stdout)
-	return fmt.Sprintf("%s %s 2026-06-30T00:00:00Z\n", status, tree)
+	return fmt.Sprintf(`{"schema":1,"state":"ready","status":%q,"tree":%q,"oracle":"%s","recorded_at":%q}`+"\n", status, tree, strings.Repeat("0", 64), time.Now().UTC().Truncate(time.Second).Format(time.RFC3339))
 }

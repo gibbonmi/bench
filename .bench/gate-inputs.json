@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "closure": "local",
+  "environment": [],
+  "paths": ["bin/bench.sh", "dist/bench", "package.json"],
+  "tools": ["bash", "basename", "dirname", "git", "readlink", "uname"]
+}

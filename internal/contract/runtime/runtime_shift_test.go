@@ -78,14 +78,15 @@ printf 'work\n' > "step $n [a].txt"
 
 	probe := f.BenchEnv(map[string]string{"BENCH_AGENT": filepath.Join(f.Root, "agent"), "BENCH_MAX_ITERS": "2", "BENCH_HOME": home}, "shift", "stage-touched")
 
-	probe.RequireExit(0)
-	probe.RequireContains(probe.Stdout, "2 committed iteration(s)")
-	branch := shiftBranch(t, probe.Stdout)
-	f.Git("cat-file", "-e", branch+":step 1 [a].txt")
-	f.Git("cat-file", "-e", branch+":step 2 [a].txt")
-	if f.GitAllow("cat-file", "-e", branch+":gate-artifact.txt").ExitCode == 0 {
-		t.Fatal("gate byproduct rode into an iteration commit")
+	probe.RequireExit(1)
+	probe.RequireContains(probe.Stdout, "preserving iteration 1")
+	wt := shiftWorktree(t, probe.Stdout)
+	for _, path := range []string{"step 1 [a].txt", "gate-artifact.txt"} {
+		if _, err := os.Stat(filepath.Join(wt, path)); err != nil {
+			t.Fatalf("failed gate did not preserve %s: %v", path, err)
+		}
 	}
+	requireRegisteredWorktree(t, f, wt)
 }
 
 func testShiftRedRollback(t *testing.T) {
@@ -99,17 +100,16 @@ func testShiftRedRollback(t *testing.T) {
 
 	probe := f.BenchEnv(map[string]string{"BENCH_AGENT": filepath.Join(f.Root, "agent"), "BENCH_MAX_ITERS": "1", "BENCH_HOME": home}, "shift", "red-rollback")
 
-	probe.RequireExit(0)
-	probe.RequireContains(probe.Stdout, "red gate")
-	branch := shiftBranch(t, probe.Stdout)
+	probe.RequireExit(1)
+	probe.RequireContains(probe.Stdout, "gate failed")
+	wt := shiftWorktree(t, probe.Stdout)
 	requireEqual(t, strings.TrimSpace(f.Git("branch", "--show-current").Stdout), beforeBranch, "red shift changed the main checkout branch")
 	requireEqual(t, strings.TrimSpace(f.Git("rev-parse", "HEAD").Stdout), beforeHead, "red shift moved main checkout HEAD")
 	requireEqual(t, f.Git("status", "--porcelain").Stdout, beforeStatus, "red shift dirtied the main checkout")
-	if f.GitAllow("cat-file", "-e", branch+":red.txt").ExitCode == 0 {
-		t.Fatal("red shift preserved rolled-back work")
+	if _, err := os.Stat(filepath.Join(wt, "red.txt")); err != nil {
+		t.Fatalf("red shift did not preserve work: %v", err)
 	}
-	requireEqual(t, strings.TrimSpace(f.Git("rev-list", "--count", beforeHead+".."+branch).Stdout), "0", "red shift branch gained a commit")
-	requireNoLease(t, home)
+	requireRegisteredWorktree(t, f, wt)
 }
 
 func testShiftCommitFailure(t *testing.T) {
@@ -268,17 +268,14 @@ fi
 
 	probe := f.BenchEnv(map[string]string{"BENCH_TEST_STATE": state, "BENCH_AGENT": filepath.Join(f.Root, "agent"), "BENCH_MAX_ITERS": "2", "BENCH_HOME": home}, "shift", "survive")
 
-	probe.RequireExit(0)
-	report, err := os.ReadFile(filepath.Join(state, "report"))
-	if err != nil {
-		t.Fatalf("read scratch-survival report: %v", err)
+	probe.RequireExit(1)
+	wt := shiftWorktree(t, probe.Stdout)
+	for _, path := range []string{".bench-notes.md", ".bench-objective", "junk.txt"} {
+		if _, err := os.Stat(filepath.Join(wt, path)); err != nil {
+			t.Fatalf("red gate did not preserve %s: %v", path, err)
+		}
 	}
-	if !strings.Contains(string(report), "notes-survived") {
-		t.Fatal("red rollback wiped .bench-notes.md")
-	}
-	if !strings.Contains(string(report), "objective-survived") {
-		t.Fatal("red rollback wiped .bench-objective")
-	}
+	requireRegisteredWorktree(t, f, wt)
 }
 
 func testShiftRefactorPromptScope(t *testing.T) {

@@ -20,6 +20,10 @@ func commitFixture(t *testing.T) contract.Fixture {
 	f.Git("config", "user.email", "bench@local")
 	f.Git("config", "user.name", "bench")
 	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\necho run >> .git/gate-runs\nexit ${GATE_RC:-0}\n")
+	f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":["GATE_RC"],"paths":[],"tools":[]}`+"\n")
+	// The passlist requires every declared value to exist. Green controls declare
+	// the value explicitly instead of relying on the script's shell default.
+	f.Env["GATE_RC"] = "0"
 	f.WriteFile("seed.txt", "seed\n")
 	f.CommitAll("seed")
 	return f
@@ -189,7 +193,7 @@ func testCommitRedRefuses(t *testing.T) {
 	f.WriteFile("work.txt", "changed\n")
 	before := headSha(f)
 
-	p := f.BenchEnv(map[string]string{"GATE_RC": "1"}, "commit", "-m", "do work", "work.txt")
+	p := f.BenchEnv(map[string]string{"GATE_RC": "23"}, "commit", "-m", "do work", "work.txt")
 	p.RequireExit(1)
 	p.RequireContains(p.Stderr, "gate is red")
 	if headSha(f) != before {

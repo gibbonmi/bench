@@ -254,8 +254,7 @@ func ParsePorcelainZ(raw []byte) []PorcelainEntry {
 
 // GateCacheFile is the filename of the cached gate verdict, written under the git
 // directory (never the worktree, so it is never a diff or commit candidate). It is the
-// one source gate.Record (the writer) and status.GateVerdict (the reader) both compose
-// with their own git-dir resolution.
+// one gate owner resolves and composes with its absolute Git-directory path.
 const GateCacheFile = "bench-last-gate"
 
 // DefaultBranch is the repository's default branch: origin/HEAD's short name with the

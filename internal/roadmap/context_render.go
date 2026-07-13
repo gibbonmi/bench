@@ -77,7 +77,7 @@ func renderContext(s ContextSnapshot) (string, error) {
 	bs = append(bs, block{"spec_history", []string{"slug", "hash", "date", "kind", "subject"}, rows})
 	bs = append(bs, block{"git", []string{"branch", "default_branch", "dirty", "ahead", "behind"}, s.Git})
 	bs = append(bs, block{"git_changes", []string{"status", "path"}, stringRows(s.GitChanges)})
-	bs = append(bs, block{"gate_cache", []string{"present", "status", "cached_tree", "work_tree", "timestamp", "stale"}, s.GateCache})
+	bs = append(bs, block{"gate_cache", []string{"present", "state", "pending_status", "status", "cached_tree", "work_tree", "timestamp", "stale"}, s.GateCache})
 	rows = nil
 	for _, r := range s.Promotions {
 		rows = append(rows, []any{r.Kind, r.Date, r.Scope, r.RoadmapIDs, r.Body, r.BodyBytes, r.Truncated})

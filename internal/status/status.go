@@ -20,8 +20,10 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/adopt"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/maps"
@@ -62,12 +64,16 @@ type Signal struct {
 // tree (or whose line is untrusted). Status/CachedTree/WorkTree/Timestamp carry the raw
 // fields for a human view; the board reduces them to its severity rows.
 type GateInfo struct {
-	Present    bool
-	Status     string
-	CachedTree string
-	WorkTree   string
-	Stale      bool
-	Timestamp  string
+	Present       bool
+	State         string
+	PendingStatus string
+	Status        string
+	CachedTree    string
+	WorkTree      string
+	Stale         bool
+	Timestamp     string
+	Reason        string
+	CacheBytes    int
 }
 
 // Signals gathers every ambient signal under root and returns them severity-sorted
@@ -153,70 +159,48 @@ func render(root string, all bool) string {
 	return b.String()
 }
 
-// appendGate reads the gate verdict cache `<git-dir>/bench-last-gate` (line 0:
-// `<status> <tree> …`). If the cached tree differs from the working tree, the verdict is
-// stale (sev 7); else a `red` verdict is a fail-before-commit signal (sev 0). No cache
-// file → no gate row.
+// appendGate projects the gate owner's typed inspection onto the existing severity
+// ladder. It does not parse, repair, or execute the oracle.
 func appendGate(rows []row, root string) []row {
 	gv := GateVerdict(root)
 	if !gv.Present {
 		return rows
 	}
-	if gv.Stale {
-		detail, action := staleGateDetailAction(root, gv.CachedTree, gv.WorkTree)
-		return append(rows, row{7, "gate", detail, action})
+	if gv.State == string(gate.Pending) {
+		if gv.PendingStatus == "locked-pending" {
+			return append(rows, row{1, "gate", "locked-pending", "wait for live gate owner"})
+		}
+		return append(rows, row{2, "gate", "interrupted-pending", "re-run the gate"})
+	}
+	if gv.State == string(gate.Invalid) {
+		return append(rows, row{3, "gate", "invalid verdict", "re-run the gate"})
+	}
+	if gv.State == string(gate.Unavailable) {
+		return append(rows, row{3, "gate", "verdict unavailable", "inspect gate state"})
 	}
 	if gv.Status == "red" {
 		return append(rows, row{0, "gate", "red", "fix before commit"})
 	}
+	if gv.Stale {
+		detail, action := staleGateDetailAction(root, gv.CachedTree, gv.WorkTree)
+		return append(rows, row{7, "gate", detail, action})
+	}
 	return rows
 }
 
-// GateVerdict reads the gate cache `<git-dir>/bench-last-gate` (line 0:
-// `<status> <tree> <timestamp>`) into structured data. It is the one gate-cache reader —
-// appendGate reduces it to a severity row, the dashboard renders its raw fields — so the
-// stale/red honesty is computed once. A missing cache file or unresolvable git dir yields
-// Present=false; an untrusted line, or a cached tree that differs from the work tree,
-// yields Stale=true. WorkTree is always the current tree hash when a cache file exists.
+// GateVerdict adapts gate.Inspect for status, dashboard, and roadmap consumers. The
+// reusable-green predicate and every cache classification remain owned by gate.
 func GateVerdict(root string) GateInfo {
-	gitDir, err := git.Output("-C", root, "rev-parse", "--absolute-git-dir")
-	if err != nil {
+	in := gate.Inspect(root)
+	if in.State == gate.Absent {
 		return GateInfo{}
 	}
-	data, err := os.ReadFile(filepath.Join(gitDir, git.GateCacheFile))
-	if err != nil {
-		return GateInfo{}
+	gi := GateInfo{Present: true, State: string(in.State), PendingStatus: in.PendingStatus, Status: in.Status, CachedTree: in.CachedTree, WorkTree: in.CurrentTree, Reason: in.Reason, CacheBytes: in.CacheBytes}
+	if !in.RecordedAt.IsZero() {
+		gi.Timestamp = in.RecordedAt.Format(time.RFC3339)
 	}
-	first := string(data)
-	if i := strings.IndexByte(first, '\n'); i >= 0 {
-		first = first[:i]
-	}
-	fields := strings.Fields(first)
-	tree := git.TreeHash(root)
-	gi := GateInfo{Present: true, WorkTree: tree}
-	if len(fields) > 0 {
-		gi.Status = fields[0]
-	}
-	if len(fields) > 1 {
-		gi.CachedTree = fields[1]
-	}
-	if len(fields) > 2 {
-		gi.Timestamp = fields[2]
-	}
-	if !trustedGateCache(fields, tree) || gi.CachedTree != tree {
-		gi.Stale = true
-	}
+	gi.Stale = in.State == gate.Ready && in.Status == "green" && !in.ReusableGreen
 	return gi
-}
-
-func trustedGateCache(fields []string, currentTree string) bool {
-	if len(fields) < 3 {
-		return false
-	}
-	if fields[0] != "green" && fields[0] != "red" {
-		return false
-	}
-	return fields[1] != "" && fields[1] != "none" && currentTree != "" && currentTree != "none"
 }
 
 func staleGateDetailAction(root, cachedTree, currentTree string) (detail, action string) {

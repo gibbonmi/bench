@@ -66,10 +66,11 @@ type session struct {
 	cancelGate  context.CancelFunc
 	interrupted atomic.Bool // set by the signal handler; parks the loop at its checkpoints
 	teardownOne sync.Once
+	preserve    bool // a failed oracle transaction retains the charged worktree verbatim
 }
 
 // Loop runs the gated shift: preflight the adapter, acquire a pooled worktree, branch,
-// iterate (commit on green, roll back on red) to the objective or the iteration cap,
+// iterate (commit on green, preserve on any oracle failure) to the objective or the iteration cap,
 // pay down touched-scope structural debt at green, then release. Acquire → loop →
 // release run in one process because lease ownership is this process's pid. Returns 0
 // on a completed shift, 1 on a preflight/setup failure; a SIGINT/SIGTERM cancels the
@@ -153,7 +154,11 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 		}
 		s.cancelRunningGate()
 	}()
-	defer s.teardown()
+	defer func() {
+		if !s.preserve {
+			s.teardown()
+		}
+	}()
 
 	maxIters := envInt("BENCH_MAX_ITERS", 12)
 	fmt.Fprintf(stdout, "▶ shift on %s — objective: %s\n", branch, objective)
@@ -188,8 +193,9 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 			}
 		} else {
 			s.checkpoint()
-			fmt.Fprintf(stdout, "  ✗ red gate — rolling back iteration %d, retrying\n", i)
-			rollback(wt)
+			s.preserve = true
+			fmt.Fprintf(stdout, "  ✗ gate failed — preserving iteration %d in %s\n", i, wt)
+			return 1
 		}
 	}
 

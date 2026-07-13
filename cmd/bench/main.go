@@ -83,7 +83,7 @@ func roadmapCommand(args []string) (string, int) {
 	}
 	return roadmap.ContextCommand(args, func(root string) roadmap.GateCacheFact {
 		g := status.GateVerdict(root)
-		return roadmap.GateCacheFact{Present: g.Present, Status: g.Status, CachedTree: g.CachedTree, WorkTree: g.WorkTree, Timestamp: g.Timestamp, Stale: g.Stale}
+		return roadmap.GateCacheFact{Present: g.Present, State: g.State, PendingStatus: g.PendingStatus, Status: g.Status, CachedTree: g.CachedTree, WorkTree: g.WorkTree, Timestamp: g.Timestamp, Stale: g.Stale, Reason: g.Reason, CacheBytes: g.CacheBytes}
 	})
 }
 
@@ -234,9 +234,9 @@ func stopVerdict(args []string, stdin io.Reader, stderr io.Writer) (code int) {
 }
 
 // treeHash exposes git.TreeHash as the `bench tree-hash [root]` plumbing subcommand:
-// the gate verdict-cache key, kept as a standalone subcommand for external callers. The
-// in-process verdict recorders (internal/gate.Record and the Stop hook) call git.TreeHash
-// directly, so the hash still has one source. Root is args[0] when given, else the cwd's
+// gate subject's tree identity, kept as a standalone subcommand for external callers.
+// The gate owner calls git.TreeHash directly, so the hash still has one source. Root is
+// args[0] when given, else the cwd's
 // repo. It prints the content hash or `none`; a non-hash tells the caller to fail safe
 // rather than forge.
 func treeHash(args []string) (string, int) {
