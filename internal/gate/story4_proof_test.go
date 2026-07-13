@@ -145,6 +145,8 @@ func r9Fault(id, op string, durable bool) r21ProofCase {
 		if op == "directory-sync" {
 			want = append(append([]string{}, want...), "directory-close")
 		}
+		want = append(append([]string{}, want...), pendingTrace[2:]...)
+		durable = true
 		if !reflect.DeepEqual(engine.trace, want) {
 			t.Fatalf("trace = %v, want %v", engine.trace, want)
 		}

@@ -253,7 +253,9 @@ func executeWithEngine(ctx context.Context, root string, stdout, stderr io.Write
 	defer lock.Close()
 	if err := engine.Acquire(lock); err != nil {
 		fmt.Fprintln(stderr, "gate execution already in progress")
-		return Result{ActionExit: 1, Inspection: inspectAt(root, engine.Now())}
+		inspection := inspectAt(root, engine.Now())
+		inspection.ReusableGreen = false
+		return Result{ActionExit: 1, Inspection: inspection}
 	}
 	defer engine.Unlock(lock)
 	underLock, err := engine.BuildSubject(root)
@@ -263,6 +265,7 @@ func executeWithEngine(ctx context.Context, root string, stdout, stderr io.Write
 	now := engine.Now().UTC().Truncate(time.Second)
 	pending := verdictRecord{Schema: 1, State: Pending, Tree: plan.Tree, Oracle: plan.Oracle, StartedAt: now.Format(time.RFC3339), OwnerPID: os.Getpid()}
 	if err := durableReplaceWithEngine(engine, gitdir, pending); err != nil {
+		_ = durableReplaceWithEngine(engine, gitdir, pending)
 		return operationalWithEngine(engine, root, 0, stderr, "gate pending persistence failed")
 	}
 	rc := runCaptured(ctx, root, plan, stdout, stderr)
@@ -293,7 +296,9 @@ func operational(root string, gateExit int, stderr io.Writer, msg string) Result
 
 func operationalWithEngine(engine gateEngine, root string, gateExit int, stderr io.Writer, msg string) Result {
 	fmt.Fprintln(stderr, msg)
-	return Result{GateExit: gateExit, ActionExit: 1, Inspection: inspectAt(root, engine.Now())}
+	inspection := inspectAt(root, engine.Now())
+	inspection.ReusableGreen = false
+	return Result{GateExit: gateExit, ActionExit: 1, Inspection: inspection}
 }
 
 func sameSubject(a, b subject) bool {

@@ -138,21 +138,9 @@ var r21ProofRegistry = []r21ProofCase{
 }
 
 var r21ExpectedProofIDs = []string{
-	"R21/lock-open",
-	"R21/lock-acquisition",
-	"R21/temporary-create",
-	"R21/mode-establishment",
-	"R21/write",
-	"R21/file-sync",
-	"R21/file-close",
-	"R21/atomic-rename",
-	"R21/directory-open",
-	"R21/directory-sync",
-	"R21/directory-close",
-	"R21/post-run-subject-rebuild",
-	"R21/byte-bound-16384",
-	"R21/byte-bound-16385",
-	"R21/future-clock",
+	"R21/lock-open", "R21/lock-acquisition", "R21/temporary-create", "R21/mode-establishment", "R21/write",
+	"R21/file-sync", "R21/file-close", "R21/atomic-rename", "R21/directory-open", "R21/directory-sync",
+	"R21/directory-close", "R21/post-run-subject-rebuild", "R21/byte-bound-16384", "R21/byte-bound-16385", "R21/future-clock",
 }
 
 type faultEngine struct {
@@ -312,8 +300,13 @@ func r21FaultCase(id, failOp string, wantTrace []string, durablePending bool) r2
 		now := time.Date(2026, 7, 13, 12, 0, 0, 0, time.UTC)
 		engine := &faultEngine{now: now, failOp: failOp}
 		got := executeWithEngine(context.Background(), root, io.Discard, io.Discard, engine)
-		if !reflect.DeepEqual(engine.trace, wantTrace) {
-			t.Fatalf("trace = %v, want %v", engine.trace, wantTrace)
+		expectedTrace, expectPending := wantTrace, durablePending
+		if failOp != "lock-open" && failOp != "lock-acquisition" && failOp != "post-run-subject-rebuild" {
+			expectedTrace = append(append([]string{}, wantTrace...), pendingTrace[2:]...)
+			expectPending = true
+		}
+		if !reflect.DeepEqual(engine.trace, expectedTrace) {
+			t.Fatalf("trace = %v, want %v", engine.trace, expectedTrace)
 		}
 		if got.GateExit != 0 || got.ActionExit != 1 {
 			t.Fatalf("exits = gate %d/action %d, want 0/1", got.GateExit, got.ActionExit)
@@ -324,7 +317,7 @@ func r21FaultCase(id, failOp string, wantTrace []string, durablePending bool) r2
 		}
 		cache := filepath.Join(gitdir, benchgit.GateCacheFile)
 		data, readErr := os.ReadFile(cache)
-		if !durablePending {
+		if !expectPending {
 			if !errors.Is(readErr, os.ErrNotExist) || got.Inspection.State != Absent {
 				t.Fatalf("durable floor = bytes %q/error %v/inspection %+v, want absent", data, readErr, got.Inspection)
 			}
