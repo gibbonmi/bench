@@ -27,6 +27,12 @@ derivations of the same fact (an enforcement and its advertisement, a parser and
 its count, a fixture harness pasted N times) must collapse to one source, and
 review grades diffs against this. Honest repetition of incidental text is fine
 where an abstraction would be worse; it's duplicated *knowledge* that drifts.
+An independently authored test expectation is not duplicated implementation
+knowledge only when its independence is necessary for a named omission or mutation
+to make the gate red and that red is recorded and demonstrated. This exception
+applies only to the expectation-versus-implementation pair; production policy,
+parsers, fixture harnesses, executable registries, and derived counts remain
+single-sourced.
 
 **Dependency standard.** A third-party Go dependency follows the precedent set
 by the first one: official-org source, MIT-compatible license, build-time-only

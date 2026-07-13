@@ -1,6 +1,6 @@
 # Oracle-bound gate verdict proof closure
 
-Status: staged
+Status: implemented
 
 ## Problem
 
