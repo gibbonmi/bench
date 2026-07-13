@@ -20,11 +20,11 @@ import (
 
 var ft78Story4Proofs = []r21ProofCase{
 	{id: "R9/pending-mode-and-order", driver: r9Order},
-	r9Fault("R9/temporary-create-failure", "temporary-create", false), r9Fault("R9/mode-establishment-failure", "mode-establishment", false),
-	r9Fault("R9/write-failure", "write", false), r9Fault("R9/file-sync-failure", "file-sync", false),
-	r9Fault("R9/file-close-failure", "file-close", false), r9Fault("R9/atomic-rename-failure", "atomic-rename", false),
-	r9Fault("R9/directory-open-failure", "directory-open", true), r9Fault("R9/directory-sync-failure", "directory-sync", true),
-	r9Fault("R9/directory-close-failure", "directory-close", true),
+	r9Fault("R9/temporary-create-failure", "temporary-create"), r9Fault("R9/mode-establishment-failure", "mode-establishment"),
+	r9Fault("R9/write-failure", "write"), r9Fault("R9/file-sync-failure", "file-sync"),
+	r9Fault("R9/file-close-failure", "file-close"), r9Fault("R9/atomic-rename-failure", "atomic-rename"),
+	r9Fault("R9/directory-open-failure", "directory-open"), r9Fault("R9/directory-sync-failure", "directory-sync"),
+	r9Fault("R9/directory-close-failure", "directory-close"),
 	r10Control("R10/durable-green", 0), r10Control("R10/durable-red-exit-23", 23),
 	r10Fault("R10/green-write-failure", 0, "write"), r10Fault("R10/red-write-failure", 23, "write"),
 	r10Fault("R10/green-file-sync-failure", 0, "file-sync"), r10Fault("R10/red-file-sync-failure", 23, "file-sync"),
@@ -130,28 +130,14 @@ func r9Order(t *testing.T) {
 	requirePending(t, root, got, 0, true, now, plan)
 }
 
-func r9Fault(id, op string, durable bool) r21ProofCase {
+func r9Fault(id, op string) r21ProofCase {
 	return r21ProofCase{id: id, driver: func(t *testing.T) {
 		root := story4Repo(t, 0)
 		now := time.Now().UTC()
 		engine := &faultEngine{now: now, failOp: op}
 		got := executeWithEngine(context.Background(), root, io.Discard, io.Discard, engine)
-		idx := 0
-		for i, name := range pendingTrace {
-			if name == op {
-				idx = i
-				break
-			}
-		}
-		want := pendingTrace[:idx+1]
-		if op == "mode-establishment" || op == "write" || op == "file-sync" {
-			want = append(append([]string{}, want...), "file-close")
-		}
-		if op == "directory-sync" {
-			want = append(append([]string{}, want...), "directory-close")
-		}
-		want = append(append([]string{}, want...), pendingTrace[2:]...)
-		durable = true
+		want := append(append([]string{}, pendingTrace[:2]...), failedPersistenceTrace(op)...)
+		want = append(want, pendingTrace[2:]...)
 		if !reflect.DeepEqual(engine.trace, want) {
 			t.Fatalf("trace = %v, want %v", engine.trace, want)
 		}
@@ -162,14 +148,29 @@ func r9Fault(id, op string, durable bool) r21ProofCase {
 			t.Fatalf("pre-run fault ran gate: %v", err)
 		}
 		data, err := os.ReadFile(cachePath(t, root))
-		if durable {
-			if err != nil || got.Inspection.State != Pending || !bytes.Contains(data, []byte(`"state":"pending"`)) {
-				t.Fatalf("durable floor = %q/%v/%+v, want pending", data, err, got.Inspection)
-			}
-		} else if !os.IsNotExist(err) || got.Inspection.State != Absent {
-			t.Fatalf("durable floor = %q/%v/%+v, want absent", data, err, got.Inspection)
+		if err != nil || got.Inspection.State != Pending || !bytes.Contains(data, []byte(`"state":"pending"`)) {
+			t.Fatalf("durable floor = %q/%v/%+v, want pending", data, err, got.Inspection)
 		}
 	}}
+}
+
+func failedPersistenceTrace(op string) []string {
+	persistence := pendingTrace[2:]
+	idx := 0
+	for i, name := range persistence {
+		if name == op {
+			idx = i
+			break
+		}
+	}
+	want := append([]string{}, persistence[:idx+1]...)
+	if op == "mode-establishment" || op == "write" || op == "file-sync" {
+		want = append(want, "file-close")
+	}
+	if op == "directory-sync" {
+		want = append(want, "directory-close")
+	}
+	return want
 }
 
 func r10Control(id string, exit int) r21ProofCase {
@@ -197,8 +198,11 @@ func r10Fault(id string, exit int, op string) r21ProofCase {
 		plan := mustSubject(t, root)
 		engine := &faultEngine{now: now, failOp: op, failAt: 2}
 		got := executeWithEngine(context.Background(), root, io.Discard, io.Discard, engine)
-		if len(engine.trace) <= len(pendingTrace) || !reflect.DeepEqual(engine.trace[:len(pendingTrace)], pendingTrace) {
-			t.Fatalf("trace = %v, missing literal pending prefix %v", engine.trace, pendingTrace)
+		want := append(append([]string{}, pendingTrace...), "post-run-subject-rebuild")
+		want = append(want, failedPersistenceTrace(op)...)
+		want = append(want, pendingTrace[2:]...)
+		if !reflect.DeepEqual(engine.trace, want) {
+			t.Fatalf("trace = %v, want %v", engine.trace, want)
 		}
 		requirePending(t, root, got, exit, true, now, plan)
 	}}
@@ -231,27 +235,16 @@ func r10Recheck(id string, exit int) r21ProofCase {
 	}}
 }
 
-type driftEngine struct {
-	productionGateEngine
-	mutate func()
-	now    time.Time
-}
-
-func (e *driftEngine) Now() time.Time { return e.now }
-func (e *driftEngine) PostRunSubject(root string) (subject, error) {
-	e.mutate()
-	return buildSubject(root)
-}
-
 func r11Drift(id, kind string) r21ProofCase {
 	return r21ProofCase{id: id, driver: func(t *testing.T) {
 		root := story4Repo(t, 0)
 		manifest := filepath.Join(root, ".bench", "gate-inputs.json")
+		const blockingGate = "#!/usr/bin/env bash\ngitdir=\"$(git rev-parse --absolute-git-dir)\"\ntouch \"$gitdir/gate-marker\"\nwhile [ ! -f \"$gitdir/release-gate\" ]; do sleep .01; done\nexit 0\n"
 		var mutate func()
 		switch kind {
 		case "command":
 			mutate = func() {
-				_ = os.WriteFile(filepath.Join(root, ".bench", "gate.sh"), []byte("#!/bin/sh\nexit 0\n# drift\n"), 0o755)
+				_ = os.WriteFile(filepath.Join(root, ".bench", "gate.sh"), []byte(blockingGate+"# drift\n"), 0o755)
 			}
 		case "manifest":
 			mutate = func() {
@@ -278,15 +271,38 @@ func r11Drift(id, kind string) r21ProofCase {
 			_ = os.Remove(filepath.Join(root, ".bench", "gate.sh"))
 			_ = os.Remove(manifest)
 			_ = os.WriteFile(filepath.Join(root, "package.json"), []byte("{}\n"), 0o644)
-			_ = os.WriteFile(filepath.Join(root, "npm"), []byte("#!/bin/sh\ntouch .git/gate-marker\nexit 0\n"), 0o755)
+			_ = os.WriteFile(filepath.Join(root, "npm"), []byte(blockingGate), 0o755)
 			t.Setenv("PATH", root+string(os.PathListSeparator)+os.Getenv("PATH"))
 			mutate = func() { _ = os.WriteFile(filepath.Join(root, "pnpm-lock.yaml"), []byte("lock\n"), 0o644) }
 		}
-		now := time.Now().UTC()
+		if kind != "auto-kind" {
+			_ = os.WriteFile(filepath.Join(root, ".bench", "gate.sh"), []byte(blockingGate), 0o755)
+		}
 		plan := mustSubject(t, root)
-		engine := &driftEngine{mutate: mutate, now: now}
-		got := executeWithEngine(context.Background(), root, io.Discard, io.Discard, engine)
-		requirePending(t, root, got, 0, true, now, plan)
+		gitdir := filepath.Dir(cachePath(t, root))
+		done := make(chan Result, 1)
+		go func() { done <- Execute(context.Background(), root, io.Discard, io.Discard) }()
+		defer func() { _ = os.WriteFile(filepath.Join(gitdir, "release-gate"), nil, 0o600) }()
+		waitFile(t, filepath.Join(gitdir, "gate-marker"))
+		pendingBytes := mustRead(t, cachePath(t, root))
+		var pending verdictRecord
+		if err := strictJSON(pendingBytes, &pending); err != nil {
+			t.Fatal(err)
+		}
+		started, err := time.Parse(time.RFC3339, pending.StartedAt)
+		if err != nil {
+			t.Fatal(err)
+		}
+		mutate()
+		if err := os.WriteFile(filepath.Join(gitdir, "release-gate"), nil, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		select {
+		case got := <-done:
+			requirePending(t, root, got, 0, true, started, plan)
+		case <-time.After(5 * time.Second):
+			t.Fatal("drifted gate did not return")
+		}
 	}}
 }
 

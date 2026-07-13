@@ -48,6 +48,9 @@ func r12Contention(id, action string) r21ProofCase {
 		if action == "commit" {
 			_ = os.WriteFile(filepath.Join(root, "work"), []byte("x"), 0o644)
 		}
+		if action == "gate" || action == "stop" {
+			_ = os.WriteFile(filepath.Join(root, "probe-work"), []byte("dirty"), 0o644)
+		}
 		if action == "shift" {
 			_ = os.WriteFile(adapter, []byte("#!/bin/sh\nprintf dirty > shift-work\n"), 0o755)
 			_, _ = benchgit.Output("-C", root, "add", "adapter")
@@ -86,6 +89,7 @@ func r12Contention(id, action string) r21ProofCase {
 		infoBefore, _ := os.Stat(cachePath(t, ownerRoot))
 		headBefore, _ := benchgit.Output("-C", root, "rev-parse", "HEAD")
 		indexBefore, _ := benchgit.Output("-C", root, "write-tree")
+		statusBefore, _ := benchgit.Output("-C", root, "status", "--porcelain")
 		branchesBefore, _ := benchgit.Output("-C", root, "for-each-ref", "--format=%(refname)", "refs/heads")
 		var probe contract.Probe
 		switch action {
@@ -110,8 +114,12 @@ func r12Contention(id, action string) r21ProofCase {
 		}
 		headAfter, _ := benchgit.Output("-C", root, "rev-parse", "HEAD")
 		indexAfter, _ := benchgit.Output("-C", root, "write-tree")
-		if action == "commit" && (headAfter != headBefore || indexAfter != indexBefore || string(mustRead(t, filepath.Join(root, "work"))) != "x") {
-			t.Fatalf("blocked commit changed HEAD/index/work")
+		statusAfterRoot, _ := benchgit.Output("-C", root, "status", "--porcelain")
+		if headAfter != headBefore || indexAfter != indexBefore || statusAfterRoot != statusBefore {
+			t.Fatalf("blocked %s changed HEAD/index/worktree", action)
+		}
+		if action == "commit" && string(mustRead(t, filepath.Join(root, "work"))) != "x" {
+			t.Fatalf("blocked commit changed named work bytes")
 		}
 		if action == "shift" {
 			worktreesAfter, _ := benchgit.Output("-C", root, "worktree", "list", "--porcelain")
