@@ -1,31 +1,39 @@
 # Oracle-bound gate verdict proof closure
 
-Status: implemented
+Status: staged
 
 ## Problem
 
-The green production implementation at `8f9d2e4` has representative happy-path
-coverage, both behavior-owned canaries, and narrow samples from requirements R1–R20.
-It does not execute every quantified variant in those requirements. It also lacks the
-private deterministic-fault engine required by R21, so file-sync, rename,
-directory-sync, clock, byte-bound, and lock-acquisition outcomes cannot be forced
-independently or checked for ordering.
+FT78 has executable evidence for every R1–R21 requirement, both behavior-owned
+canaries, and a green full gate. Its completeness tests deliberately compare each
+executable proof registry with an independently literal expected-ID set, so removing
+one registration makes the omission oracle red.
 
-FT78 needs executable evidence for every R1–R21 requirement without redesigning the
-green production behavior. The proof groups are independently verifiable but too
-broad for one atomic authoring pass, so each needs a separately green checkpoint
-without allowing a partial checkpoint to claim the feature is implemented.
+That independence conflicts with the project's one-source-per-fact standard when the
+standard is read to forbid every repeated expectation. Deriving the expected IDs from
+the executable registry makes the completeness test pass after the same omission it
+exists to catch; removing the independent expectation therefore weakens the oracle.
+FT78 cannot finish while the approved proof requirement and the project standard give
+opposite instructions for the same test evidence.
 
 ## Solution
 
-Keep the production semantics and public interfaces from `8f9d2e4`. Build the proof
-as six ordered, separately green slices on one shared descendant: R21; R1–R4; R5–R8;
-R9–R13; R14–R17; then R18–R20 plus integration. Extend the existing real-wrapper
-runtime contracts until every R1–R20 variant has a literal assertion. Add one private
-gate-engine seam for R21: a fixed clock and scripted filesystem/lock operation set
-that records an ordered trace and can fail at one named operation at a time. Use that
-seam only for failures that cannot be induced deterministically and portably through
-the shipped CLI.
+Keep the production semantics, public interfaces, executable registries, independent
+expected-ID sets, and demonstrated completeness reds. Clarify the project standard
+with one narrow exception: an independently authored test expectation is not
+duplicated implementation knowledge when its independence is required for a named
+omission or mutation to make the oracle red. The exception applies only to the
+expectation-versus-implementation pair with recorded red evidence; it does not permit
+duplicate production policy, parsers, fixture harnesses, registries, or derived
+counts. Record the same current-state decision in one concise ADR so future reviewers
+do not have to reconstruct why the exception exists.
+
+The proof remains six ordered, separately green slices on one shared descendant: R21;
+R1–R4; R5–R8; R9–R13; R14–R17; then R18–R20 plus integration. The existing
+real-wrapper runtime contracts give every R1–R20 variant a literal assertion. One
+private gate-engine seam supplies the fixed clock and scripted filesystem/lock
+operations R21 needs. That seam remains limited to failures the shipped CLI cannot
+induce deterministically and portably.
 
 Treat the anchor's existing representative tests as positive controls, not as proof
 of their whole quantified rows. For each new proof group, demonstrate that its
@@ -66,12 +74,17 @@ becomes implemented only after every R1–R21 row and the full gate pass togethe
    that copied parsers, reader repair, or format drift cannot survive the final gate.
    Line: `gpt-5.6-sol` / high. Cross-surface agreement can be self-consistently wrong,
    so the reviewer explicitly routes the mutation proof to Sol.
+7. As a kit maintainer, I want independent test expectations distinguished from
+   duplicated implementation knowledge when their independence makes a demonstrated
+   omission oracle bite, so that one-source discipline cannot accidentally weaken the
+   gate it protects, with the settled exception recorded for cold-session reviewers.
+   Line: `gpt-5.6-sol` / high. This changes project guidance that steers every future
+   review, so the leverage override requires Sol and high effort.
 
-The stories run sequentially in one isolated worktree rooted at `8f9d2e4`, because
-later proof groups may reuse the private engine and every checkpoint must retain the
-same production anchor. A separate write delegate owns each story and commits only
-its charged green paths. No story may replace the anchor with the alternate FT78
-implementation on another branch or broaden proof closure into a production redesign.
+Stories 1–6 are green checkpoints on one descendant rooted at `8f9d2e4`; story 7 is
+the terminal standards clarification that lets the completed proof be judged without
+weakening its independent oracle. No story may replace the anchor with another FT78
+worktree or broaden proof closure into a production redesign.
 
 ## Implementation decisions
 
@@ -178,6 +191,14 @@ This bookkeeping signal supplements rather than replaces each requirement's name
 behavior sabotage: a registered no-op still has to go red when its production fault
 is planted.
 
+The expected-ID set is an independent test oracle, not a second implementation
+inventory. The project standard explicitly permits this expectation-versus-registry
+repetition because removing the repetition makes the recorded missing-registration
+red impossible. The exception is valid only where that mutation red is demonstrated
+and named. Failure messages, registry runners, fixture construction, parsing,
+production policy, and derived counts remain single-sourced; ordinary duplicated test
+harnesses or parallel executable registries remain defects.
+
 ## Testing decisions
 
 - R1–R4, R7–R20 attach to the existing real shipped-wrapper seam in throwaway Git
@@ -195,6 +216,11 @@ is planted.
   does not count as proof.
 - Focused mutation-red/green commands precede `.bench/gate.sh`. The full gate is the
   final oracle and FT78 remains staged until it exits zero on the complete descendant.
+- The one-source standard names the narrow independent-test-expectation exception in
+  project guidance and its settled decision record. A semantic pickup that treats
+  these demonstrated completeness expectations as ordinary duplicated implementation
+  knowledge is not considered resolved until those documents and the proof discipline
+  agree.
 
 ### Seam diagram
 
@@ -226,6 +252,7 @@ Private deterministic-fault seam:
 | 5 | R14–R17: commit, shift, Stop, and repeated partial-state cases enumerate every listed state/result and preserve the exact action-owned state. | real CLI/action seam plus private deterministic-fault seam | Not TDD-able at the anchor; require second-predicate, cleanup-on-failure, second-writer, and old-green-resurrection sabotage reds plus a missing-registration completeness red. | Behavior mutation rejects consumer reinterpretation or cleanup; the exact registry rejects an omitted state/result pair. |
 | 6 | R18–R20: all eight typed states are literal across status, the dashboard page, and roadmap context; every reader stays observational and each public format keeps its established contract. | real CLI/action/projection seam | Not TDD-able at the anchor; require split-parser, reader-repair, and format-bypass sabotage reds plus a missing-registration completeness red. | Behavior mutation rejects divergent parsers, writes, and formats; the exact registry rejects an omitted state/surface pair. |
 | 6 | Integration: both existing behavior-owned canaries, their unique registry ownership, the empty-baseline vacuity check, the gate, commit, shift, Stop, status, dashboard-page, and roadmap-context focused families, all six completeness tests, and the full gate remain green together. | real CLI seam through runtime contracts and canary registry | Already covered at the anchor for the two canary needles; stories 1–6 must additionally retain their named mutation and missing-registration reds plus focused greens. | This preserves the biting independent invariants while preventing separately green checkpoints from passing through wrong routing or ambient expectation text. |
+| 7 | Project guidance and its settled decision record distinguish a demonstrated independent test expectation from duplicated implementation knowledge without creating a general duplication escape hatch. | working agreement and decision record plus existing completeness mutation seam | Observed semantic red: the FT78 review pickup remains actionable while the working agreement forbids the independently literal expected-ID sets that the approved proof discipline requires. | The pickup cannot close if the guidance still classifies the required omission oracle as a defect; the existing missing-registration mutation reds ensure the exception preserves rather than weakens enforcement. |
 
 **Degenerate-implementation check.** The cheapest wrong proof adds test names without
 variant assertions, loops over cases without observing per-case reason/state, uses one
@@ -250,6 +277,9 @@ and R21's production-backed ordered trace make each of those implementations red
   cleanup, and non-resurrection.
 - **Hostile environment:** R2, R3, R7, and R8 cover PATH, inherited variables,
   secrets, modes, symlinks, missing tools, deep cwd, spaces, and globs.
+- **Over-broad standards exception:** story 7 permits only independently authored
+  expectations with a named mutation red; duplicated executable registries, fixture
+  harnesses, parsers, policies, or derived counts remain defects.
 - **Remote equivalence — Won't handle:** remote state remains non-reusable because
   proving service equivalence is a separate trust protocol and the in-scope caller
   still executes it every time.
@@ -265,9 +295,10 @@ and R21's production-backed ordered trace make each of those implementations red
 - **Changing FT78 production semantics or public interfaces without a failing R1–R21
   proof** — a separate redesign decision, not proof closure. Estimated later cost:
   `12 edits, 6 gate runs`.
-- **Replacing the alternate FT78 implementation branch or reconciling it with
-  `8f9d2e4`** — a separate integration choice; this slice is explicitly anchored to
-  `8f9d2e4`. Estimated later cost: `10 edits, 5 gate runs`.
+- **Recovering or integrating the retained FT78 experiment** — its committed base is
+  byte-identical to the selected anchor, while its uncommitted private-engine and spec
+  rewrite is a separate candidate this closure does not absorb. Estimated later cost:
+  `10 edits, 5 gate runs`.
 - **Remote reusable attestations** — a separate trust/protocol capability; remote
   gates continue to run every time. Estimated later cost: `10 edits, 6 gate runs`.
 - **FT82 release-preflight evidence and FT88 platform-wide environment minimization**
