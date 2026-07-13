@@ -157,17 +157,27 @@ var r21ExpectedProofIDs = []string{
 
 type faultEngine struct {
 	productionGateEngine
-	now    time.Time
-	failOp string
-	failed bool
-	trace  []string
+	now      time.Time
+	failOp   string
+	failAt   int
+	opCounts map[string]int
+	failed   bool
+	trace    []string
 }
 
 func (e *faultEngine) Now() time.Time { return e.now }
 
 func (e *faultEngine) operation(name string) error {
 	e.trace = append(e.trace, name)
-	if name == e.failOp && !e.failed {
+	if e.opCounts == nil {
+		e.opCounts = map[string]int{}
+	}
+	e.opCounts[name]++
+	failAt := e.failAt
+	if failAt == 0 {
+		failAt = 1
+	}
+	if name == e.failOp && e.opCounts[name] == failAt && !e.failed {
 		e.failed = true
 		return errors.New("scripted " + name + " failure")
 	}
