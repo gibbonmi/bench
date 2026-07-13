@@ -305,9 +305,26 @@ func runCaptured(ctx context.Context, root string, s subject, stdout, stderr io.
 	if cmd == nil {
 		return 3
 	}
-	cmd.Dir, cmd.Stdout, cmd.Stderr = root, stdout, stderr
+	cmd.Dir, cmd.Stdout, cmd.Stderr = root, controlSafeWriter{stdout}, controlSafeWriter{stderr}
 	cmd.Env = append([]string(nil), s.Env...)
 	return runProcessGroupCommand(ctx, cmd).Code
+}
+
+// controlSafeWriter preserves gate output while removing C0 bytes that can execute
+// terminal controls. Newline, carriage return, and tab remain ordinary formatting.
+type controlSafeWriter struct{ io.Writer }
+
+func (w controlSafeWriter) Write(p []byte) (int, error) {
+	safe := make([]byte, 0, len(p))
+	for _, b := range p {
+		if (b >= 0x20 && b != 0x7f) || b == '\n' || b == '\r' || b == '\t' {
+			safe = append(safe, b)
+		}
+	}
+	if _, err := w.Writer.Write(safe); err != nil {
+		return 0, err
+	}
+	return len(p), nil
 }
 
 const processGroupCancelGrace = 2 * time.Second
