@@ -33,8 +33,7 @@ func buildSubject(root string) (subject, error) {
 	if err != nil {
 		return subject{}, err
 	}
-	root, err = filepath.Abs(root)
-	if err != nil {
+	if root, err = filepath.Abs(root); err != nil {
 		return subject{}, err
 	}
 	tree := benchgit.TreeHash(root)
@@ -218,10 +217,13 @@ func (c *identityCollector) hashRepoPath(root, rel string) error {
 	if err := confinedPath(root, path); err != nil {
 		return err
 	}
-	return c.hashTree(path, root)
+	return c.hashTree(path, root, 0)
 }
 
-func (c *identityCollector) hashTree(path, root string) error {
+func (c *identityCollector) hashTree(path, root string, depth int) error {
+	if depth > 64 {
+		return errors.New("declared path symlink depth limit")
+	}
 	return filepath.WalkDir(path, func(current string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
@@ -240,12 +242,17 @@ func (c *identityCollector) hashTree(path, root string) error {
 		case info.Mode().IsRegular():
 			return c.copyFile(current)
 		case info.Mode()&os.ModeSymlink != 0:
-			target, err := os.Readlink(current)
+			if err := confinedPath(root, current); err != nil {
+				return err
+			}
+			if err := c.hashLinkChain(current, 0); err != nil {
+				return err
+			}
+			resolved, err := filepath.EvalSymlinks(current)
 			if err != nil {
 				return err
 			}
-			frame(c.w, target)
-			return confinedPath(root, current)
+			return c.hashTree(resolved, root, depth+1)
 		case info.IsDir():
 			return nil
 		default:

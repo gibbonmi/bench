@@ -345,13 +345,7 @@ func runHostileProof(t *testing.T, kind hostileKind) {
 		manifest = fmt.Sprintf(`{"schema":1,"closure":"local","environment":[],"paths":[%q],"tools":[]}`, name)
 	case hostileManifestNoNewline:
 	case hostileSymlinkChain:
-		f.WriteFile("inputs/target", "literal\n")
-		if err := os.Symlink("target", filepath.Join(f.Root, "inputs", "link-b")); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.Symlink("link-b", filepath.Join(f.Root, "inputs", "link-a")); err != nil {
-			t.Fatal(err)
-		}
+		prepareSymlinkMutationProof(t, f)
 		manifest = `{"schema":1,"closure":"local","environment":[],"paths":["inputs/link-a"],"tools":[]}`
 	case hostileExternalTarget:
 		external := filepath.Join(t.TempDir(), "external")
@@ -371,6 +365,10 @@ func runHostileProof(t *testing.T, kind hostileKind) {
 	f.WriteFile(".bench/gate-inputs.json", manifest)
 	first := f.BenchEnv(env, "gate")
 	first.RequireExit(0)
+	if kind == hostileSymlinkChain {
+		finishSymlinkMutationProof(t, f)
+		return
+	}
 	if kind == hostileExternalTarget {
 		assertInspection(t, Inspect(f.Root), Ready, "declared path unavailable", false)
 		return

@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -331,7 +332,7 @@ func TestR17PrivateFaultBridge(t *testing.T) {
 	}
 	if got := Inspect(root); got.State == Pending && !got.ReusableGreen {
 		durable = "interrupted-pending"
-	} else if got.State != Ready || got.Status != "green" || !got.ReusableGreen || (op != "lock-open" && op != "lock-acquisition") {
+	} else {
 		t.Fatalf("durable tuple = %+v for %s", got, op)
 	}
 	temps, err := filepath.Glob(filepath.Join(filepath.Dir(cachePath(t, root)), ".bench-last-gate-*"))
@@ -339,4 +340,41 @@ func TestR17PrivateFaultBridge(t *testing.T) {
 		t.Fatalf("temporary evidence = %v/%v, want none", temps, err)
 	}
 	fmt.Printf("R17-TUPLE op=%s calls=2 gate=0 action=1 returned_reusable=false durable=%s attempts=%d,%d temps=0\n", op, durable, wantAttempts, wantAttempts)
+}
+
+func prepareSymlinkMutationProof(t *testing.T, f contract.Fixture) {
+	t.Helper()
+	f.WriteFile("inputs/target", "green\n")
+	if err := os.Symlink("target", filepath.Join(f.Root, "inputs", "link-b")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("link-b", filepath.Join(f.Root, "inputs", "link-a")); err != nil {
+		t.Fatal(err)
+	}
+	f.WriteExecutable(".bench/gate.sh", "#!/bin/sh\necho run >> .git/ft78-runs\ntest \"$(cat inputs/link-a)\" = green\n")
+	f.WriteFile("work.txt", "changed\n")
+	f.Git("config", "user.email", "bench@local")
+	f.Git("config", "user.name", "bench")
+}
+
+func finishSymlinkMutationProof(t *testing.T, f contract.Fixture) {
+	t.Helper()
+	before := story3ReadVerdict(t, f)
+	head := strings.TrimSpace(f.Git("rev-parse", "HEAD").Stdout)
+	f.WriteFile("inputs/target", "red\n")
+	f.Bench("commit", "-m", "must not commit stale symlink evidence", "work.txt").RequireExit(1)
+	after := story3ReadVerdict(t, f)
+	if before.Oracle == after.Oracle {
+		t.Fatal("resolved symlink target mutation did not change oracle identity")
+	}
+	if got := strings.TrimSpace(f.Git("rev-parse", "HEAD").Stdout); got != head {
+		t.Fatalf("HEAD = %s, want unchanged %s after red gate", got, head)
+	}
+	lines := contract.NonEmptyLines(contract.ReadFileAbs(t, filepath.Join(story3GitDir(f), "ft78-runs")))
+	if len(lines) != 2 {
+		t.Fatalf("gate runs = %d, want 2 after symlink target mutation", len(lines))
+	}
+	if got := Inspect(f.Root); got.State != Ready || got.Status != "red" || got.ReusableGreen {
+		t.Fatalf("mutated symlink target inspection = %+v, want non-reusable ready red", got)
+	}
 }

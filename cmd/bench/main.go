@@ -83,7 +83,7 @@ func roadmapCommand(args []string) (string, int) {
 	}
 	return roadmap.ContextCommand(args, func(root string) roadmap.GateCacheFact {
 		g := status.GateVerdict(root)
-		return roadmap.GateCacheFact{Present: g.Present, State: g.State, PendingStatus: g.PendingStatus, Status: g.Status, CachedTree: g.CachedTree, WorkTree: g.WorkTree, Timestamp: g.Timestamp, Stale: g.Stale, Reason: g.Reason, CacheBytes: g.CacheBytes}
+		return roadmap.GateCacheFact{Present: g.Present, State: g.State, PendingStatus: g.PendingStatus, Status: g.Status, CachedTree: g.CachedTree, WorkTree: g.WorkTree, Timestamp: g.Timestamp, Stale: g.Stale, CacheBytes: g.CacheBytes}
 	})
 }
 

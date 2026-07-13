@@ -53,7 +53,6 @@ func proveR17Fault(t *testing.T, op string) {
 	}
 	durable, attempts := "interrupted-pending", 2
 	if op == "lock-open" || op == "lock-acquisition" {
-		durable = "ready-green"
 		attempts = 1
 	} else if op == "post-run-subject-rebuild" {
 		attempts = 1

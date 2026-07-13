@@ -46,10 +46,10 @@ type ParseFailure struct {
 }
 
 type GateCacheFact struct {
-	Present                                                               bool
-	State, PendingStatus, Status, CachedTree, WorkTree, Timestamp, Reason string
-	Stale                                                                 bool
-	CacheBytes                                                            int
+	Present                                                       bool
+	State, PendingStatus, Status, CachedTree, WorkTree, Timestamp string
+	Stale                                                         bool
+	CacheBytes                                                    int
 }
 
 // Document is the typed roadmap projection shared by the human renderer and context.

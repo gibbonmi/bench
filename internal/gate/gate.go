@@ -149,23 +149,7 @@ func gateEnv() []string {
 // this call site, keeps that safe). None must not reach here — the caller handles the
 // no-gate exit-3-nothing-recorded case.
 func Run(root string, res Resolution, stdout, stderr io.Writer) int {
-	cmd := res.command(root)
-	if cmd == nil {
-		return 3
-	}
-	cmd.Dir = root
-	cmd.Stdout = stdout
-	cmd.Stderr = stderr
-	cmd.Env = gateEnv()
-	if err := cmd.Run(); err != nil {
-		if cmd.ProcessState != nil {
-			if code := cmd.ProcessState.ExitCode(); code > 0 {
-				return code
-			}
-		}
-		return 1 // failed to start, or a signal death: treat as red
-	}
-	return 0
+	return runResolved(context.Background(), root, res, gateEnv(), stdout, stderr, false).Code
 }
 
 // RunContext executes the resolved gate like Run, but puts the gate in its own process
@@ -174,15 +158,7 @@ func Run(root string, res Resolution, stdout, stderr io.Writer) int {
 // running and writing into it. Standalone `bench gate` uses Run, preserving normal
 // foreground-process signal delivery.
 func RunContext(ctx context.Context, root string, res Resolution, stdout, stderr io.Writer) int {
-	cmd := res.command(root)
-	if cmd == nil {
-		return 3
-	}
-	cmd.Dir = root
-	cmd.Stdout = stdout
-	cmd.Stderr = stderr
-	cmd.Env = gateEnv()
-	result := runProcessGroupCommand(ctx, cmd)
+	result := runResolved(ctx, root, res, gateEnv(), stdout, stderr, true)
 	if result.StartErr != nil {
 		return 1
 	}
@@ -248,10 +224,12 @@ func executeWithEngine(ctx context.Context, root string, stdout, stderr io.Write
 	}
 	lock, err := engine.OpenLock(filepath.Join(gitdir, "bench-gate.lock"))
 	if err != nil {
+		persistInterruptedIfGreen(engine, root, gitdir, plan)
 		return operationalWithEngine(engine, root, 0, stderr, "gate lock unavailable")
 	}
 	defer lock.Close()
 	if err := engine.Acquire(lock); err != nil {
+		persistInterruptedIfGreen(engine, root, gitdir, plan)
 		fmt.Fprintln(stderr, "gate execution already in progress")
 		inspection := inspectAt(root, engine.Now())
 		inspection.ReusableGreen = false
@@ -262,8 +240,7 @@ func executeWithEngine(ctx context.Context, root string, stdout, stderr io.Write
 	if err != nil || !sameSubject(plan, underLock) {
 		return operationalWithEngine(engine, root, 0, stderr, "gate subject changed before execution")
 	}
-	now := engine.Now().UTC().Truncate(time.Second)
-	pending := verdictRecord{Schema: 1, State: Pending, Tree: plan.Tree, Oracle: plan.Oracle, StartedAt: now.Format(time.RFC3339), OwnerPID: os.Getpid()}
+	pending := interruptedRecord(plan, engine.Now())
 	if err := durableReplaceWithEngine(engine, gitdir, pending); err != nil {
 		_ = durableReplaceWithEngine(engine, gitdir, pending)
 		return operationalWithEngine(engine, root, 0, stderr, "gate pending persistence failed")
@@ -290,6 +267,20 @@ func executeWithEngine(ctx context.Context, root string, stdout, stderr io.Write
 	return Result{GateExit: rc, ActionExit: rc, Inspection: inspectAt(root, engine.Now())}
 }
 
+func interruptedRecord(plan subject, now time.Time) verdictRecord {
+	return verdictRecord{Schema: 1, State: Pending, Tree: plan.Tree, Oracle: plan.Oracle, StartedAt: now.UTC().Truncate(time.Second).Format(time.RFC3339), OwnerPID: os.Getpid()}
+}
+
+func persistInterruptedIfGreen(engine gateEngine, root, gitdir string, plan subject) {
+	if !inspectAt(root, engine.Now()).ReusableGreen {
+		return
+	}
+	pending := interruptedRecord(plan, engine.Now())
+	if err := durableReplaceWithEngine(engine, gitdir, pending); err != nil {
+		_ = durableReplaceWithEngine(engine, gitdir, pending)
+	}
+}
+
 func operational(root string, gateExit int, stderr io.Writer, msg string) Result {
 	return operationalWithEngine(productionGateEngine{}, root, gateExit, stderr, msg)
 }
@@ -306,13 +297,28 @@ func sameSubject(a, b subject) bool {
 }
 
 func runCaptured(ctx context.Context, root string, s subject, stdout, stderr io.Writer) int {
-	cmd := s.Resolution.command(root)
+	return runResolved(ctx, root, s.Resolution, s.Env, controlSafeWriter{stdout}, controlSafeWriter{stderr}, true).Code
+}
+
+func runResolved(ctx context.Context, root string, res Resolution, env []string, stdout, stderr io.Writer, processGroup bool) processGroupResult {
+	cmd := res.command(root)
 	if cmd == nil {
-		return 3
+		return processGroupResult{Code: 3}
 	}
-	cmd.Dir, cmd.Stdout, cmd.Stderr = root, controlSafeWriter{stdout}, controlSafeWriter{stderr}
-	cmd.Env = append([]string(nil), s.Env...)
-	return runProcessGroupCommand(ctx, cmd).Code
+	cmd.Dir, cmd.Stdout, cmd.Stderr = root, stdout, stderr
+	cmd.Env = append([]string(nil), env...)
+	if processGroup {
+		return runProcessGroupCommand(ctx, cmd)
+	}
+	if err := cmd.Run(); err != nil {
+		if cmd.ProcessState != nil {
+			if code := cmd.ProcessState.ExitCode(); code > 0 {
+				return processGroupResult{Code: code}
+			}
+		}
+		return processGroupResult{Code: 1, StartErr: err}
+	}
+	return processGroupResult{}
 }
 
 // controlSafeWriter preserves gate output while removing C0 bytes that can execute
