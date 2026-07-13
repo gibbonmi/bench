@@ -74,7 +74,11 @@ type subject struct {
 	Env          []string
 }
 
-func Inspect(root string) Inspection { return inspectAt(root, time.Now().UTC()) }
+func Inspect(root string) Inspection { return inspectWithEngine(root, productionGateEngine{}) }
+
+func inspectWithEngine(root string, engine gateEngine) Inspection {
+	return inspectAt(root, engine.Now())
+}
 
 func inspectAt(root string, now time.Time) Inspection {
 	s, err := buildSubject(root)

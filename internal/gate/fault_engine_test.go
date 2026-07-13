@@ -255,7 +255,7 @@ func r21ByteBoundDriver(size int, wantReason string) func(*testing.T) {
 		if err := os.WriteFile(filepath.Join(gitdir, benchgit.GateCacheFile), data, 0o600); err != nil {
 			t.Fatal(err)
 		}
-		got := inspectAt(root, time.Date(2026, 7, 13, 12, 0, 0, 0, time.UTC))
+		got := inspectWithEngine(root, &faultEngine{now: time.Date(2026, 7, 13, 12, 0, 0, 0, time.UTC)})
 		if got.State != Invalid || got.Reason != wantReason || got.CacheBytes != size {
 			t.Fatalf("inspection = %+v, want invalid/%q/%d bytes", got, wantReason, size)
 		}
@@ -281,7 +281,7 @@ func r21FutureClockDriver(t *testing.T) {
 	if err := durableReplace(gitdir, rec); err != nil {
 		t.Fatal(err)
 	}
-	got := inspectAt(root, now)
+	got := inspectWithEngine(root, &faultEngine{now: now})
 	if got.State != Invalid || got.Reason != "invalid cache record" || got.ReusableGreen {
 		t.Fatalf("future-clock inspection = %+v, want invalid non-reusable record", got)
 	}
