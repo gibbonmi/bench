@@ -29,6 +29,15 @@ func story3Fixture(t *testing.T) contract.Fixture {
 	return f
 }
 
+func mustSubject(t *testing.T, root string) subject {
+	t.Helper()
+	s, err := buildSubject(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return s
+}
+
 type story3Verdict struct {
 	Oracle string `json:"oracle"`
 }

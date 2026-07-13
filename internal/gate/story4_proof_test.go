@@ -97,39 +97,44 @@ func cachePath(t *testing.T, root string) string {
 	return filepath.Join(dir, benchgit.GateCacheFile)
 }
 
-func requirePending(t *testing.T, root string, got Result, gateExit int, marker bool) {
+func requirePending(t *testing.T, root string, got Result, gateExit int, marker bool, started time.Time, plan subject) {
 	t.Helper()
-	if got.GateExit != gateExit || got.ActionExit != 1 || got.Inspection.State != Pending {
-		t.Fatalf("result = %+v, want gate %d/action 1/pending", got, gateExit)
-	}
 	_, markerErr := os.Stat(filepath.Join(root, ".git", "gate-marker"))
 	if (markerErr == nil) != marker {
 		t.Fatalf("gate marker present = %v, want %v", markerErr == nil, marker)
 	}
-	data, err := os.ReadFile(cachePath(t, root))
-	if err != nil || !bytes.Contains(data, []byte(`"state":"pending"`)) {
-		t.Fatalf("durable state = %q/%v, want pending", data, err)
+	wantBytes := []byte(fmt.Sprintf(`{"schema":1,"state":"pending","tree":%q,"oracle":%q,"started_at":%q,"owner_pid":%d}`+"\n", plan.Tree, plan.Oracle, started.UTC().Truncate(time.Second).Format(time.RFC3339), os.Getpid()))
+	path := cachePath(t, root)
+	data, readErr := os.ReadFile(path)
+	info, statErr := os.Lstat(path)
+	if readErr != nil || statErr != nil || !bytes.Equal(data, wantBytes) || !info.Mode().IsRegular() || info.Mode().Perm() != 0o600 || info.Size() != int64(len(wantBytes)) {
+		t.Fatalf("durable pending = %q/read=%v/info=%v/stat=%v, want exact %q regular 0600", data, readErr, info, statErr, wantBytes)
+	}
+	current := mustSubject(t, root)
+	wantInspection := Inspection{State: Pending, PendingStatus: "locked-pending", CachedTree: plan.Tree, CurrentTree: current.Tree, Reason: current.Reason, CacheBytes: len(wantBytes)}
+	if got.GateExit != gateExit || got.ActionExit != 1 || !reflect.DeepEqual(got.Inspection, wantInspection) {
+		t.Fatalf("result = %+v, want gate %d/action 1/inspection %+v", got, gateExit, wantInspection)
 	}
 }
 
 func r9Order(t *testing.T) {
 	root := story4Repo(t, 0)
-	engine := &faultEngine{now: time.Date(2026, 7, 13, 12, 0, 0, 0, time.UTC), failOp: "post-run-subject-rebuild"}
+	now := time.Date(2026, 7, 13, 12, 0, 0, 0, time.UTC)
+	plan := mustSubject(t, root)
+	engine := &faultEngine{now: now, failOp: "post-run-subject-rebuild"}
 	got := executeWithEngine(context.Background(), root, io.Discard, io.Discard, engine)
 	want := append(append([]string{}, pendingTrace...), "post-run-subject-rebuild")
 	if !reflect.DeepEqual(engine.trace, want) {
 		t.Fatalf("trace = %v, want %v", engine.trace, want)
 	}
-	requirePending(t, root, got, 0, true)
-	if info, err := os.Stat(cachePath(t, root)); err != nil || info.Mode().Perm() != 0o600 {
-		t.Fatalf("pending mode = %v/%v, want 0600", info, err)
-	}
+	requirePending(t, root, got, 0, true, now, plan)
 }
 
 func r9Fault(id, op string, durable bool) r21ProofCase {
 	return r21ProofCase{id: id, driver: func(t *testing.T) {
 		root := story4Repo(t, 0)
-		engine := &faultEngine{now: time.Now().UTC(), failOp: op}
+		now := time.Now().UTC()
+		engine := &faultEngine{now: now, failOp: op}
 		got := executeWithEngine(context.Background(), root, io.Discard, io.Discard, engine)
 		idx := 0
 		for i, name := range pendingTrace {
@@ -188,12 +193,14 @@ func r10Control(id string, exit int) r21ProofCase {
 func r10Fault(id string, exit int, op string) r21ProofCase {
 	return r21ProofCase{id: id, driver: func(t *testing.T) {
 		root := story4Repo(t, exit)
-		engine := &faultEngine{now: time.Now().UTC(), failOp: op, failAt: 2}
+		now := time.Date(2026, 7, 13, 12, 0, 0, 0, time.UTC)
+		plan := mustSubject(t, root)
+		engine := &faultEngine{now: now, failOp: op, failAt: 2}
 		got := executeWithEngine(context.Background(), root, io.Discard, io.Discard, engine)
 		if len(engine.trace) <= len(pendingTrace) || !reflect.DeepEqual(engine.trace[:len(pendingTrace)], pendingTrace) {
 			t.Fatalf("trace = %v, missing literal pending prefix %v", engine.trace, pendingTrace)
 		}
-		requirePending(t, root, got, exit, true)
+		requirePending(t, root, got, exit, true, now, plan)
 	}}
 }
 
@@ -212,13 +219,15 @@ func (e *recheckFaultEngine) PostRunSubject(root string) (subject, error) {
 func r10Recheck(id string, exit int) r21ProofCase {
 	return r21ProofCase{id: id, driver: func(t *testing.T) {
 		root := story4Repo(t, exit)
-		engine := &recheckFaultEngine{faultEngine: faultEngine{now: time.Now().UTC()}, failRecheck: true}
+		now := time.Date(2026, 7, 13, 12, 0, 0, 0, time.UTC)
+		plan := mustSubject(t, root)
+		engine := &recheckFaultEngine{faultEngine: faultEngine{now: now}, failRecheck: true}
 		got := executeWithEngine(context.Background(), root, io.Discard, io.Discard, engine)
 		want := append(append([]string{}, pendingTrace...), "post-run-subject-rebuild")
 		if !reflect.DeepEqual(engine.trace, want) {
 			t.Fatalf("trace = %v, want %v", engine.trace, want)
 		}
-		requirePending(t, root, got, exit, true)
+		requirePending(t, root, got, exit, true, now, plan)
 	}}
 }
 
@@ -273,9 +282,11 @@ func r11Drift(id, kind string) r21ProofCase {
 			t.Setenv("PATH", root+string(os.PathListSeparator)+os.Getenv("PATH"))
 			mutate = func() { _ = os.WriteFile(filepath.Join(root, "pnpm-lock.yaml"), []byte("lock\n"), 0o644) }
 		}
-		engine := &driftEngine{mutate: mutate, now: time.Now().UTC()}
+		now := time.Now().UTC()
+		plan := mustSubject(t, root)
+		engine := &driftEngine{mutate: mutate, now: now}
 		got := executeWithEngine(context.Background(), root, io.Discard, io.Discard, engine)
-		requirePending(t, root, got, 0, true)
+		requirePending(t, root, got, 0, true, now, plan)
 	}}
 }
 
