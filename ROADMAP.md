@@ -20,18 +20,20 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT78 (CRITICAL, next) — oracle-bound, fail-closed gate verdicts.** Version the gate
-cache and bind green reuse to the working-tree hash, fully resolved gate kind
-and command, executable/script content, relevant configuration, schema, and
-freshness. Verdict replacement is same-directory, synced, and atomic. A red
-verdict that cannot be recorded invalidates prior reusable state and fails the
-requested action.
+**FT78 (CRITICAL, next) — implement oracle-bound, fail-closed gate verdicts.**
+Implement the staged spec: version the gate cache and bind green reuse to the
+working-tree hash, fully resolved gate kind and command, executable/script
+content, relevant configuration, schema, and freshness. Verdict replacement is
+same-directory, synced, and atomic. A red verdict that cannot be recorded
+invalidates prior reusable state and fails the requested action.
 
 Closure covers gate-command, script-content, and auto-detected-oracle changes,
 plus malformed cache and write failure. Oracle A green must never authorize a
 commit under oracle B.
 
 Sources: `RR:R-02`; `RC:C-02`.
+Decision map: `decisions/oracle-bound-gate-verdicts.md`. Spec:
+`specs/oracle-bound-gate-verdicts.md`. Next: `/bench-implement-spec`.
 
 **FT79 (CRITICAL) — lossless shift recovery and truthful result states.** Every
 failure after agent mutation preserves either a locked recovery worktree or a
@@ -337,6 +339,7 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — specify FT78, oracle-bound gate verdicts.
+1. `/bench-implement-spec` — implement FT78 against
+   `specs/oracle-bound-gate-verdicts.md`.
 2. `/bench-shape-idea` — specify FT79, lossless shift recovery.
 3. `/bench-shape-idea` — specify FT80, static bounded guard discovery.
