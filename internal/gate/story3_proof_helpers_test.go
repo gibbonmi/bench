@@ -388,7 +388,10 @@ func runHostileProof(t *testing.T, kind hostileKind) {
 	if strings.ContainsAny(first.Stdout+first.Stderr+contract.ReadFileAbs(t, filepath.Join(story3GitDir(f), "bench-last-gate")), "\x1b\a") {
 		t.Fatal("hostile control byte reached public output or cache")
 	}
-	if got := Inspect(f.Root); got.State != Ready || got.Status != "green" {
-		t.Fatalf("hostile invocation inspection = %+v", got)
+	if kind == hostileMissingGlobalBench {
+		t.Setenv("PATH", env["PATH"])
+	}
+	if got := Inspect(f.Root); got.State != Ready || got.Status != "green" || got.Reason != "" || !got.ReusableGreen {
+		t.Fatalf("hostile invocation inspection = %+v, want reusable ready green without a reason", got)
 	}
 }
