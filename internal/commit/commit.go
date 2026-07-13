@@ -14,6 +14,7 @@
 package commit
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -24,7 +25,6 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/spec"
-	"github.com/gibbonmi/bench/internal/status"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -106,9 +106,9 @@ func Command(args []string, stdout, stderr io.Writer) int {
 	// diff (the cache is keyed to working-tree content, and the block-check above pinned
 	// the tree to the named set), so re-running the gate buys nothing but its full cost.
 	// Anything less — stale, red, untrusted, or absent — pays the real gate run.
-	if gv := status.GateVerdict(root); gv.Present && !gv.Stale && gv.Status == "green" {
+	if gv := gate.Inspect(root); gv.ReusableGreen {
 		fmt.Fprintln(stdout, "gate: green (fresh verdict reused for this tree)")
-	} else if rc := gate.RunAndRecord(root, stdout, stderr); rc != 0 {
+	} else if result := gate.Execute(context.Background(), root, stdout, stderr); result.ActionExit != 0 {
 		fmt.Fprintln(stderr, "error: gate is red — commit refused (see the failing phase above)")
 		return 1
 	}

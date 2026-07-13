@@ -107,8 +107,8 @@ func TestBlockMessage(t *testing.T) {
 	}
 }
 
-// newGitRepo makes a fresh git-init temp repo and chdirs into it, so Run's internal
-// git.Root() resolves there and gate.Record can write <git-dir>/bench-last-gate. It
+// newGitRepo makes a fresh git-init temp repo and chdirs into it, so Run's intent
+// refresh resolves the same repository the wrapper under test owns. It
 // returns the repo dir. No seed commit is needed: git.TreeHash falls back to the
 // empty tree in a commit-less repo.
 func newGitRepo(t *testing.T) string {
@@ -141,6 +141,11 @@ func exitGate(t *testing.T, dir string, code int) string {
 	return writeScript(t, dir, "gate", fmt.Sprintf("#!/usr/bin/env bash\nexit %d\n", code), 0o755)
 }
 
+func recordingGate(t *testing.T, dir string, code int) string {
+	t.Helper()
+	return writeScript(t, dir, "gate", fmt.Sprintf("#!/usr/bin/env bash\nprintf 'wrapper-owned\\n' > .git/bench-last-gate\nexit %d\n", code), 0o755)
+}
+
 // sentinelGate is a runnable stub that creates sentinel when invoked, then exits 0.
 // A test asserts the sentinel is absent to prove Run never reached the gate.
 func sentinelGate(t *testing.T, dir, sentinel string) string {
@@ -149,8 +154,7 @@ func sentinelGate(t *testing.T, dir, sentinel string) string {
 	return writeScript(t, dir, "gate", body, 0o755)
 }
 
-// readCache reads the verdict cache the same way gate.Record wrote it: at
-// <absolute-git-dir>/bench-last-gate. It returns (line, present).
+// readCache observes whether Stop preserved the wrapper-owned verdict bytes.
 func readCache(t *testing.T, dir string) (string, bool) {
 	t.Helper()
 	cmd := exec.Command("git", "-C", dir, "rev-parse", "--absolute-git-dir")
@@ -177,7 +181,7 @@ func readCache(t *testing.T, dir string) (string, bool) {
 func TestRun(t *testing.T) {
 	t.Run("green gate allows and caches green", func(t *testing.T) {
 		dir := newGitRepo(t)
-		wrapper := exitGate(t, dir, 0)
+		wrapper := recordingGate(t, dir, 0)
 		var stderr bytes.Buffer
 		if rc := Run(nil, wrapper, true, &stderr); rc != 0 {
 			t.Fatalf("Run(green) = %d, want 0", rc)
@@ -189,14 +193,14 @@ func TestRun(t *testing.T) {
 		if !ok {
 			t.Fatal("green run recorded no verdict cache, want one")
 		}
-		if !strings.HasPrefix(line, "green ") {
-			t.Errorf("cache line = %q, want a green-prefixed verdict", line)
+		if line != "wrapper-owned\n" {
+			t.Errorf("Stop rewrote wrapper-owned verdict = %q", line)
 		}
 	})
 
 	t.Run("red gate blocks and caches red", func(t *testing.T) {
 		dir := newGitRepo(t)
-		wrapper := exitGate(t, dir, 2)
+		wrapper := recordingGate(t, dir, 2)
 		var stderr bytes.Buffer
 		if rc := Run(nil, wrapper, true, &stderr); rc != 2 {
 			t.Fatalf("Run(red) = %d, want 2", rc)
@@ -208,8 +212,8 @@ func TestRun(t *testing.T) {
 		if !ok {
 			t.Fatal("red run recorded no verdict cache, want one")
 		}
-		if !strings.HasPrefix(line, "red ") {
-			t.Errorf("cache line = %q, want a red-prefixed verdict", line)
+		if line != "wrapper-owned\n" {
+			t.Errorf("Stop rewrote wrapper-owned verdict = %q", line)
 		}
 	})
 
@@ -240,12 +244,8 @@ func TestRun(t *testing.T) {
 		if !strings.Contains(stderr.String(), "BLOCKED: the gate is red") {
 			t.Errorf("non-executable run missing BLOCKED header on stderr:\n%s", stderr.String())
 		}
-		line, ok := readCache(t, dir)
-		if !ok {
-			t.Fatal("non-executable run recorded no verdict cache, want a red one")
-		}
-		if !strings.HasPrefix(line, "red ") {
-			t.Errorf("cache line = %q, want a red-prefixed verdict", line)
+		if line, ok := readCache(t, dir); ok {
+			t.Errorf("Stop forged verdict after wrapper start failure = %q", line)
 		}
 	})
 

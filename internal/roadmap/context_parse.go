@@ -2,7 +2,6 @@ package roadmap
 
 import (
 	"fmt"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -235,15 +234,11 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 		data[label] = b
 		s.Sources = append(s.Sources, SourceFact{label, state, len(b)})
 	}
-	gitDir, err := benchgit.Output("-C", root, "rev-parse", "--absolute-git-dir")
-	if err != nil {
-		return s, err
+	cacheState := "absent"
+	if gate.Present {
+		cacheState = "present"
 	}
-	cache, cacheState, err := readSource(filepath.Join(gitDir, benchgit.GateCacheFile))
-	if err != nil {
-		return s, fmt.Errorf("read gate cache: %w", err)
-	}
-	s.Sources = append(s.Sources, SourceFact{".git/bench-last-gate", cacheState, len(cache)})
+	s.Sources = append(s.Sources, SourceFact{".git/bench-last-gate", cacheState, gate.CacheBytes})
 
 	specFacts, err := spec.Facts(root)
 	if err != nil {
@@ -291,7 +286,7 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 	for _, c := range gf.Changes {
 		s.GitChanges = append(s.GitChanges, []string{c.Status, c.Path})
 	}
-	s.GateCache = [][]any{{gate.Present, gate.Status, gate.CachedTree, gate.WorkTree, gate.Timestamp, gate.Stale}}
+	s.GateCache = [][]any{{gate.Present, gate.State, gate.PendingStatus, gate.Status, gate.CachedTree, gate.WorkTree, gate.Timestamp, gate.Stale}}
 	s.Promotions = parsePromotions(data["CHANGELOG.md"], full)
 	for i := range s.Sources {
 		for _, f := range s.Failures {

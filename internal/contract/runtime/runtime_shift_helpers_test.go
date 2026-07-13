@@ -18,6 +18,7 @@ func shiftFixture(t *testing.T, gate string) contract.Fixture {
 	f.Env["GIT_COMMITTER_NAME"] = "Bench"
 	f.Env["GIT_COMMITTER_EMAIL"] = "bench@local"
 	f.WriteExecutable(".bench/gate.sh", gate)
+	f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":["BENCH_TEST_PROMPTS","BENCH_TEST_STATE"],"paths":[],"tools":[]}`+"\n")
 	f.CommitAll("init")
 	return f
 }
@@ -67,6 +68,13 @@ func requireNoLease(t *testing.T, home string) {
 	}
 	if len(found) > 0 {
 		t.Fatalf("shift worktree lease was not released: %s", strings.Join(found, ", "))
+	}
+}
+
+func requireRegisteredWorktree(t *testing.T, f contract.Fixture, worktree string) {
+	t.Helper()
+	if !strings.Contains(f.Git("worktree", "list", "--porcelain").Stdout, "worktree "+worktree) {
+		t.Fatalf("failed shift did not retain registered worktree %s", worktree)
 	}
 }
 

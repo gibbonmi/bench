@@ -1,10 +1,13 @@
 package runtime
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/contract"
 )
@@ -17,6 +20,60 @@ func TestRuntimeDashboardContracts(t *testing.T) {
 	contract.RunParallel(t, "bench dashboard atomic-write contract", testRuntimeDashboardAtomicWrite)
 	contract.RunParallel(t, "bench dashboard idempotence contract", testRuntimeDashboardIdempotent)
 	contract.RunParallel(t, "bench dashboard error-posture contract", testRuntimeDashboardErrors)
+	contract.RunParallel(t, "typed gate inspection projection contract", testRuntimeTypedGateProjection)
+}
+
+func testRuntimeTypedGateProjection(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.Git("symbolic-ref", "HEAD", "refs/heads/main")
+	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\nprintf ran > .git/gate-reader-ran\n")
+	f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`+"\n")
+	f.CommitAll("base")
+	gitdir := gitDir(t, f)
+	cache := filepath.Join(gitdir, "bench-last-gate")
+	tree := strings.TrimSpace(f.Bench("tree-hash").Stdout)
+	record := fmt.Sprintf(`{"schema":1,"state":"pending","tree":%q,"oracle":"%s","started_at":%q,"owner_pid":123}`+"\n", tree, strings.Repeat("0", 64), time.Now().UTC().Truncate(time.Second).Format(time.RFC3339))
+	contract.WriteFileAbs(t, cache, record)
+	if err := os.Chmod(cache, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	assertProjection := func(want string) {
+		t.Helper()
+		before, err := os.Stat(cache)
+		if err != nil {
+			t.Fatal(err)
+		}
+		status := f.Bench("status")
+		status.RequireContains(status.Stdout, want)
+		page := f.Bench("dashboard", "--stdout")
+		page.RequireContains(page.Stdout, want)
+		context := f.Bench("roadmap", "--context")
+		context.RequireContains(context.Stdout, "pending")
+		context.RequireContains(context.Stdout, want)
+		after, err := os.Stat(cache)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := contract.ReadFileAbs(t, cache); got != record || before.Mode() != after.Mode() || !before.ModTime().Equal(after.ModTime()) {
+			t.Fatal("read-only gate projections changed verdict bytes or metadata")
+		}
+		if _, err := os.Stat(filepath.Join(gitdir, "gate-reader-ran")); !os.IsNotExist(err) {
+			t.Fatal("read-only gate projection executed the oracle")
+		}
+	}
+
+	assertProjection("interrupted-pending")
+	lock, err := os.OpenFile(filepath.Join(gitdir, "bench-gate.lock"), os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lock.Close()
+	if err := syscall.Flock(int(lock.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
+		t.Fatal(err)
+	}
+	defer syscall.Flock(int(lock.Fd()), syscall.LOCK_UN)
+	assertProjection("locked-pending")
 }
 
 // testRuntimeDashboardWrite pins story 1: the command writes a self-contained HTML page to

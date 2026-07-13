@@ -1,10 +1,10 @@
 package runtime
 
 import (
+	"encoding/json"
 	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 )
@@ -20,11 +20,56 @@ func TestRuntimeGateContracts(t *testing.T) {
 	contract.RunParallel(t, "stop hook missing-core-binary fail-safe contract", testRuntimeStopHookMissingCoreBinary)
 	contract.RunParallel(t, "bench gate missing-core-binary fail-safe contract", testRuntimeGateMissingCoreBinary)
 	contract.RunParallel(t, "bench gate verdict-record contract", testRuntimeGateVerdictRecord)
+	contract.RunParallel(t, "oracle-bound gate verdict contract", testRuntimeOracleBoundVerdict)
+	contract.RunParallel(t, "fail-closed gate verdict persistence contract", testRuntimePendingBeforeGate)
 	contract.RunParallel(t, "bench gate pin non-TTY refusal contract", testRuntimeGatePinNonTTYRefusal)
 	contract.RunParallel(t, "bench symlinked kit-dir portability contract", testRuntimeSymlinkedKitDir)
 	contract.RunParallel(t, "stop hook stop_hook_active contract", testRuntimeStopHookActive)
 	contract.RunParallel(t, "stop hook missing-bench fail-open contract", testRuntimeStopHookMissingBenchFailOpen)
 	contract.RunParallel(t, "stop hook intent refresh contract", testRuntimeStopHookIntentRefresh)
+}
+
+func testRuntimeOracleBoundVerdict(t *testing.T) {
+	contract.NoteContractFailure(t, "oracle-bound gate verdict contract failed")
+	f := contract.NewFixture(t)
+	f.Git("config", "user.email", "bench@local")
+	f.Git("config", "user.name", "bench")
+	f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`+"\n")
+	f.WriteFile("work.txt", "work\n")
+	f.CommitAll("base")
+	f.WriteFile("work.txt", "changed\n")
+	f.BenchEnv(map[string]string{"BENCH_GATE": "echo run >> .git/gate-runs; exit 0"}, "gate").RequireExit(0)
+	before := strings.TrimSpace(f.Git("rev-parse", "HEAD").Stdout)
+	probe := f.BenchEnv(map[string]string{"BENCH_GATE": "echo run >> .git/gate-runs; exit 23"}, "commit", "-m", "must refuse", "work.txt")
+	if probe.ExitCode == 0 {
+		t.Fatal("commit trusted green from a different exact gate command")
+	}
+	if got := strings.TrimSpace(f.Git("rev-parse", "HEAD").Stdout); got != before {
+		t.Fatal("oracle-mismatched commit moved HEAD")
+	}
+	if runs := len(contract.NonEmptyLines(contract.ReadFileAbs(t, filepath.Join(gitDir(t, f), "gate-runs")))); runs != 2 {
+		t.Fatalf("oracle mutation gate runs = %d, want 2", runs)
+	}
+}
+
+func testRuntimePendingBeforeGate(t *testing.T) {
+	contract.NoteContractFailure(t, "fail-closed gate verdict persistence contract failed")
+	f := contract.NewFixture(t)
+	f.WriteExecutable(".bench/gate.sh", `#!/usr/bin/env bash
+record=""
+[ ! -f .git/bench-last-gate ] || record="$(<.git/bench-last-gate)"
+case "$record" in
+  *'"state":"pending"'*) printf 'pending\n' > .git/saw-pending ;;
+  *) printf 'old-or-absent\n' > .git/saw-pending ;;
+esac
+exit 0
+`)
+	f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`+"\n")
+	f.CommitAll("base")
+	f.Bench("gate").RequireExit(0)
+	if got := contract.ReadFileAbs(t, filepath.Join(gitDir(t, f), "saw-pending")); got != "pending\n" {
+		t.Fatalf("gate started before durable pending replacement: %q", got)
+	}
 }
 
 func testRuntimeStopHookIntentRefresh(t *testing.T) {
@@ -99,8 +144,12 @@ func testRuntimeStopHookGateCacheWrite(t *testing.T) {
 	runStopHook(t, f, map[string]string{"BENCH_SHIFT": "1"}, "{}\n")
 	cache := filepath.Join(gitDir(t, f), "bench-last-gate")
 	data := contract.ReadFileAbs(t, cache)
-	if !regexp.MustCompile(`^(green|red) [0-9a-f]+ [0-9T:Z-]+$`).MatchString(strings.TrimSpace(data)) {
-		t.Fatalf("gate cache not <status> <tree> <iso8601>: %q", data)
+	var record map[string]any
+	if err := json.Unmarshal([]byte(data), &record); err != nil || record["schema"] != float64(1) || record["state"] != "ready" || record["status"] != "green" {
+		t.Fatalf("gate cache is not a schema-1 ready green: %q (%v)", data, err)
+	}
+	if info, err := os.Stat(cache); err != nil || info.Mode().Perm() != 0o600 {
+		t.Fatalf("gate cache mode = %v, %v; want 0600", info, err)
 	}
 }
 
@@ -141,11 +190,18 @@ func testRuntimeGateMissingCoreBinary(t *testing.T) {
 func testRuntimeGateVerdictRecord(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\nexit 0\n")
+	f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`+"\n")
 	f.CommitAll("init")
 	cache := filepath.Join(gitDir(t, f), "bench-last-gate")
 	contract.WriteFileAbs(t, cache, "green deadbeefdeadbeefdeadbeefdeadbeefdeadbeef 2026-06-30T00:00:00Z\n")
 	f.Bench("gate").RequireExit(0)
-	contract.RequireContains(t, contract.ReadFileAbs(t, cache), "green "+strings.TrimSpace(f.Git("rev-parse", "HEAD^{tree}").Stdout))
+	var record map[string]any
+	if err := json.Unmarshal([]byte(contract.ReadFileAbs(t, cache)), &record); err != nil {
+		t.Fatalf("decode ready verdict: %v", err)
+	}
+	if record["state"] != "ready" || record["status"] != "green" || record["tree"] != strings.TrimSpace(f.Git("rev-parse", "HEAD^{tree}").Stdout) {
+		t.Fatalf("unexpected green verdict: %#v", record)
+	}
 	contract.RequireNotContains(t, f.Bench("status").Stdout, "re-run the gate")
 	commitAllowEmpty(t, f, "same-tree")
 	contract.RequireNotContains(t, f.Bench("status").Stdout, "re-run the gate")
@@ -153,7 +209,12 @@ func testRuntimeGateVerdictRecord(t *testing.T) {
 	if p := f.Bench("gate"); p.ExitCode == 0 {
 		t.Fatal("red gate run exited zero")
 	}
-	contract.RequireContains(t, contract.ReadFileAbs(t, cache), "red "+strings.TrimSpace(f.Bench("tree-hash").Stdout))
+	if err := json.Unmarshal([]byte(contract.ReadFileAbs(t, cache)), &record); err != nil {
+		t.Fatalf("decode red verdict: %v", err)
+	}
+	if record["status"] != "red" || record["tree"] != strings.TrimSpace(f.Bench("tree-hash").Stdout) {
+		t.Fatalf("unexpected red verdict: %#v", record)
+	}
 }
 
 func testRuntimeGatePinNonTTYRefusal(t *testing.T) {

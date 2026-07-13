@@ -66,10 +66,11 @@ type session struct {
 	cancelGate  context.CancelFunc
 	interrupted atomic.Bool // set by the signal handler; parks the loop at its checkpoints
 	teardownOne sync.Once
+	preserve    atomic.Bool // a failed oracle transaction retains the charged worktree verbatim
 }
 
 // Loop runs the gated shift: preflight the adapter, acquire a pooled worktree, branch,
-// iterate (commit on green, roll back on red) to the objective or the iteration cap,
+// iterate (commit on green, preserve on any oracle failure) to the objective or the iteration cap,
 // pay down touched-scope structural debt at green, then release. Acquire → loop →
 // release run in one process because lease ownership is this process's pid. Returns 0
 // on a completed shift, 1 on a preflight/setup failure; a SIGINT/SIGTERM cancels the
@@ -153,7 +154,11 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 		}
 		s.cancelRunningGate()
 	}()
-	defer s.teardown()
+	defer func() {
+		if !s.preserve.Load() {
+			s.teardown()
+		}
+	}()
 
 	maxIters := envInt("BENCH_MAX_ITERS", 12)
 	fmt.Fprintf(stdout, "▶ shift on %s — objective: %s\n", branch, objective)
@@ -169,7 +174,7 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 		s.runAdapter(fmt.Sprintf(iterationPrompt, objective))
 		s.checkpoint()
 		post := dirtyPaths(wt)
-		if s.runGate() == 0 {
+		if s.runPreservingGate() == 0 {
 			s.checkpoint()
 			stageTouched(wt, pre, post)
 			if nothingStaged(wt) {
@@ -188,8 +193,8 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 			}
 		} else {
 			s.checkpoint()
-			fmt.Fprintf(stdout, "  ✗ red gate — rolling back iteration %d, retrying\n", i)
-			rollback(wt)
+			fmt.Fprintf(stdout, "  ✗ gate failed — preserving iteration %d in %s\n", i, wt)
+			return 1
 		}
 	}
 
@@ -307,10 +312,24 @@ func (s *session) runGate() int {
 	s.cancelGate = cancel
 	s.mu.Unlock()
 	rc := gate.RunAndRecordContext(ctx, s.root, s.stdout, s.stderr)
+	if ctx.Err() != nil {
+		s.preserve.Store(true)
+	}
 	s.mu.Lock()
 	s.cancelGate = nil
 	s.mu.Unlock()
 	cancel()
+	return rc
+}
+
+// runPreservingGate records a failed iteration's ownership before returning control
+// to the caller, so an interrupt at the next checkpoint cannot release its worktree.
+// Refactor probes use runGate directly because their red result is rolled back.
+func (s *session) runPreservingGate() int {
+	rc := s.runGate()
+	if rc != 0 {
+		s.preserve.Store(true)
+	}
 	return rc
 }
 
@@ -319,6 +338,7 @@ func (s *session) cancelRunningGate() {
 	cancel := s.cancelGate
 	s.mu.Unlock()
 	if cancel != nil {
+		s.preserve.Store(true)
 		cancel()
 	}
 }
@@ -328,7 +348,9 @@ func (s *session) cancelRunningGate() {
 // trap-between-commands) at which an interrupt takes effect.
 func (s *session) checkpoint() {
 	if s.interrupted.Load() {
-		s.teardown()
+		if !s.preserve.Load() {
+			s.teardown()
+		}
 		os.Exit(130)
 	}
 }

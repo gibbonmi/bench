@@ -2,6 +2,7 @@ package shift
 
 import (
 	"bytes"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -162,6 +163,36 @@ func TestLoopPersistsIntentBeforeAcquireFailure(t *testing.T) {
 	ledger, err := intent.Read(root)
 	if err != nil || len(ledger.Entries) != 1 || ledger.Entries[0].Objective != "multi word objective" || ledger.Entries[0].Worktree != "" {
 		t.Fatalf("pre-acquire intent = %#v, %v", ledger.Entries, err)
+	}
+}
+
+func TestRunPreservingGateMarksRedSessionBeforeReturning(t *testing.T) {
+	root := t.TempDir()
+	gitCmd := func(args ...string) {
+		t.Helper()
+		cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
+	gitCmd("init", "-q")
+	if err := os.Mkdir(filepath.Join(root, ".bench"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".bench", "gate.sh"), []byte("#!/usr/bin/env bash\nexit 23\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".bench", "gate-inputs.json"), []byte(`{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gitCmd("add", "-A")
+	gitCmd("-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "init")
+	s := &session{root: root, stdout: io.Discard, stderr: io.Discard}
+	if rc := s.runPreservingGate(); rc == 0 {
+		t.Fatal("red gate returned zero")
+	}
+	if !s.preserve.Load() {
+		t.Fatal("runPreservingGate returned a red result before marking the session for preservation")
 	}
 }
 

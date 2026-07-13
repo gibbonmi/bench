@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestRuntimeStatusContracts(t *testing.T) {
@@ -267,7 +268,7 @@ func testRuntimeStatusDrainRow(t *testing.T) {
 func testRuntimeStatusStaleGate(t *testing.T) {
 	f := contract.NewFixture(t)
 	commitAllowEmpty(t, f, "init")
-	contract.WriteFileAbs(t, filepath.Join(gitDir(t, f), "bench-last-gate"), "green deadbeefdeadbeefdeadbeefdeadbeefdeadbeef 2026-06-30T00:00:00Z\n")
+	writeGateCache(t, f, fmt.Sprintf(`{"schema":1,"state":"ready","status":"green","tree":"%s","oracle":"%s","recorded_at":%q}`+"\n", strings.Repeat("d", 40), strings.Repeat("0", 64), time.Now().UTC().Truncate(time.Second).Format(time.RFC3339)))
 	out := f.Bench("status").Stdout
 	contract.RequireContains(t, out, "re-run the gate")
 	contract.RequireContains(t, out, "stale (gated tree")
@@ -277,8 +278,10 @@ func testRuntimeStatusStaleGate(t *testing.T) {
 
 func testRuntimeStatusFreshGreen(t *testing.T) {
 	f := contract.NewFixture(t)
-	commitAllowEmpty(t, f, "init")
-	contract.WriteFileAbs(t, filepath.Join(gitDir(t, f), "bench-last-gate"), fmt.Sprintf("green %s 2026-06-30T00:00:00Z\n", strings.TrimSpace(f.Git("rev-parse", "HEAD^{tree}").Stdout)))
+	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\nexit 0\n")
+	f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`+"\n")
+	f.CommitAll("init")
+	f.Bench("gate").RequireExit(0)
 	f.Bench("status").RequireContains(f.Bench("status").Stdout, "clean — nothing pending")
 }
 
@@ -307,7 +310,7 @@ func testRuntimeStatusBudget(t *testing.T) {
 	f.WriteFile("dirty.txt", "dirty\n")
 	f.Git("worktree", "add", "-q", "--detach", filepath.Join(f.Root, "wt2"), "HEAD")
 	tree := strings.TrimSpace(f.Bench("tree-hash").Stdout)
-	contract.WriteFileAbs(t, filepath.Join(gitDir(t, f), "bench-last-gate"), fmt.Sprintf("red %s 2026-06-30T00:00:00Z\n", tree))
+	writeGateCache(t, f, fmt.Sprintf(`{"schema":1,"state":"ready","status":"red","tree":%q,"oracle":"%s","recorded_at":%q}`+"\n", tree, strings.Repeat("0", 64), time.Now().UTC().Truncate(time.Second).Format(time.RFC3339)))
 
 	out := f.Bench("status").Stdout
 	first := strings.SplitN(out, "\n", 2)[0]
@@ -473,7 +476,7 @@ func testRuntimeStatusRoadmapReconcile(t *testing.T) {
 	ladder.CommitAll("ladder base")
 	ladder.WriteFile("dirty.txt", "dirty\n")
 	tree := strings.TrimSpace(ladder.Bench("tree-hash").Stdout)
-	contract.WriteFileAbs(t, filepath.Join(gitDir(t, ladder), "bench-last-gate"), fmt.Sprintf("red %s 2026-06-30T00:00:00Z\n", tree))
+	writeGateCache(t, ladder, fmt.Sprintf(`{"schema":1,"state":"ready","status":"red","tree":%q,"oracle":"%s","recorded_at":%q}`+"\n", tree, strings.Repeat("0", 64), time.Now().UTC().Truncate(time.Second).Format(time.RFC3339)))
 	out = ladder.Bench("status").Stdout
 	gate := strings.Index(out, "fix before commit")
 	gitRow := strings.Index(out, "commit on green")

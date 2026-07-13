@@ -117,6 +117,8 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"intent-common-dir-address-regressed":  behaviorFixture(),
 	"status-landed-aggregation-regressed":  behaviorFixture(),
 	"worktree-lifecycle-safety-bypassed":   behaviorFixture(),
+	"gate-verdict-oracle-binding-bypassed": behaviorFixture(),
+	"gate-verdict-invalidation-bypassed":   behaviorFixture(),
 }
 
 func conformanceFixture(shellSources ...string) fixtureRegistration {

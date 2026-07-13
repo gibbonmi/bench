@@ -28,8 +28,8 @@ type view struct {
 }
 
 type gateView struct {
-	Status, CachedTree, WorkTree, Timestamp, Age string
-	Stale                                        bool
+	State, PendingStatus, Status, CachedTree, WorkTree, Timestamp, Age string
+	Stale                                                              bool
 }
 
 type signalView struct{ Name, Detail, Action string }
@@ -53,12 +53,14 @@ func Render(s Snapshot) string {
 	}
 	if s.Gate.Present {
 		v.Gate = gateView{
-			Status:     sanitize(s.Gate.Status),
-			CachedTree: sanitize(s.Gate.CachedTree),
-			WorkTree:   sanitize(s.Gate.WorkTree),
-			Timestamp:  sanitize(s.Gate.Timestamp),
-			Age:        gateAge(s.GeneratedAt, s.Gate.Timestamp),
-			Stale:      s.Gate.Stale,
+			State:         sanitize(s.Gate.State),
+			PendingStatus: sanitize(s.Gate.PendingStatus),
+			Status:        sanitize(s.Gate.Status),
+			CachedTree:    sanitize(s.Gate.CachedTree),
+			WorkTree:      sanitize(s.Gate.WorkTree),
+			Timestamp:     sanitize(s.Gate.Timestamp),
+			Age:           gateAge(s.GeneratedAt, s.Gate.Timestamp),
+			Stale:         s.Gate.Stale,
 		}
 	}
 	for _, sig := range s.Signals {
@@ -222,7 +224,7 @@ ul { margin: 0; padding-left: 1.25rem; font-size: .9rem; }
   <h2>Gate</h2>
   {{if .HasGate}}
   <p>
-    <span class="badge {{if .Gate.Stale}}stale{{else}}{{.Gate.Status}}{{end}}">{{.Gate.Status}}</span>
+    <span class="badge {{if .Gate.Stale}}stale{{else}}{{.Gate.Status}}{{end}}">{{if .Gate.PendingStatus}}{{.Gate.PendingStatus}}{{else if .Gate.Status}}{{.Gate.Status}}{{else}}{{.Gate.State}}{{end}}</span>
     {{if .Gate.Stale}}<span class="badge stale">stale</span>{{end}}
   </p>
   <dl>

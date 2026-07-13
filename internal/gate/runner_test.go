@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -266,4 +267,76 @@ func waitForProcessExit(t *testing.T, pid int) {
 		time.Sleep(10 * time.Millisecond)
 	}
 	t.Fatalf("process %d still exists after cancellation", pid)
+}
+
+func TestExecuteCancellationKillsDescendantAfterLeaderExits(t *testing.T) {
+	root := gateTestRepo(t, `#!/usr/bin/env bash
+(
+  trap '' INT TERM
+  exec >/dev/null 2>&1
+  while :; do sleep 1; done
+) &
+child=$!
+echo "$child" > .git/stubborn-child
+trap 'exit 130' INT
+wait
+`, `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan Result, 1)
+	go func() { done <- Execute(ctx, root, io.Discard, io.Discard) }()
+	child := waitForPIDFile(t, filepath.Join(root, ".git", "stubborn-child"))
+	t.Cleanup(func() { _ = syscall.Kill(child, syscall.SIGKILL) })
+	cancel()
+	select {
+	case got := <-done:
+		if got.ActionExit != 130 {
+			t.Fatalf("cancelled execution = %+v, want action exit 130", got)
+		}
+	case <-time.After(4 * time.Second):
+		t.Fatal("cancelled execution did not return")
+	}
+	waitForProcessExit(t, child)
+}
+
+func TestR17PrivateFaultBridge(t *testing.T) {
+	op := os.Getenv("FT78_R17_FAULT")
+	valid := map[string]bool{
+		"lock-open": true, "lock-acquisition": true, "temporary-create": true,
+		"mode-establishment": true, "write": true, "file-sync": true,
+		"file-close": true, "atomic-rename": true, "directory-open": true,
+		"directory-sync": true, "directory-close": true, "post-run-subject-rebuild": true,
+	}
+	if op == "" {
+		t.Skip("private FT78 bridge")
+	}
+	if !valid[op] {
+		t.Fatalf("unknown R17 fault %q", op)
+	}
+	root := gateTestRepo(t, "#!/usr/bin/env bash\nexit 0\n", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
+	seed := Execute(context.Background(), root, io.Discard, io.Discard)
+	if seed.ActionExit != 0 || !seed.Inspection.ReusableGreen {
+		t.Fatalf("seed = %+v, want reusable green", seed)
+	}
+	durable := "ready-green"
+	wantAttempts := 2
+	if op == "lock-open" || op == "lock-acquisition" || op == "post-run-subject-rebuild" {
+		wantAttempts = 1
+	}
+	for call := 1; call <= 2; call++ {
+		engine := &faultEngine{now: time.Now().UTC().Truncate(time.Second), failOp: op}
+		got := executeWithEngine(context.Background(), root, io.Discard, io.Discard, engine)
+		if got.GateExit != 0 || got.ActionExit != 1 || got.Inspection.ReusableGreen || !engine.failed || engine.opCounts[op] != wantAttempts {
+			t.Fatalf("call %d tuple = gate:%d action:%d reusable:%v failed:%v hits:%d trace:%v", call, got.GateExit, got.ActionExit, got.Inspection.ReusableGreen, engine.failed, engine.opCounts[op], engine.trace)
+		}
+	}
+	if got := Inspect(root); got.State == Pending && !got.ReusableGreen {
+		durable = "interrupted-pending"
+	} else if got.State != Ready || got.Status != "green" || !got.ReusableGreen || (op != "lock-open" && op != "lock-acquisition") {
+		t.Fatalf("durable tuple = %+v for %s", got, op)
+	}
+	temps, err := filepath.Glob(filepath.Join(filepath.Dir(cachePath(t, root)), ".bench-last-gate-*"))
+	if err != nil || len(temps) != 0 {
+		t.Fatalf("temporary evidence = %v/%v, want none", temps, err)
+	}
+	fmt.Printf("R17-TUPLE op=%s calls=2 gate=0 action=1 returned_reusable=false durable=%s attempts=%d,%d temps=0\n", op, durable, wantAttempts, wantAttempts)
 }
