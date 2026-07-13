@@ -82,6 +82,7 @@ printf 'charged\n' > charged.txt
 cp charged.txt "$BENCH_TEST_STATE/charged"
 cp .bench-objective "$BENCH_TEST_STATE/objective"
 cp .bench-notes.md "$BENCH_TEST_STATE/notes"
+cp "$(git rev-parse --git-path bench-lease)" "$BENCH_TEST_STATE/lease"
 cp "$(git rev-parse --path-format=absolute --git-common-dir)/bench-intent.json" "$BENCH_TEST_STATE/intent"
 git status --porcelain=v1 --untracked-files=all > "$BENCH_TEST_STATE/status"
 git diff --binary HEAD -- > "$BENCH_TEST_STATE/diff"
@@ -190,13 +191,11 @@ func requirePreservedShift(t *testing.T, run shiftProofRun, output string) {
 	branch := shiftBranchFromStart(t, output)
 	requireRegisteredWorktree(t, run.f, worktree)
 	lease := strings.TrimSpace(contract.RunAt(t, run.f, worktree, nil, "git", "rev-parse", "--git-path", "bench-lease").Stdout)
-	if data, err := os.ReadFile(lease); err != nil || strings.TrimSpace(string(data)) == "" {
-		t.Fatalf("failed shift lease not preserved: bytes=%q err=%v", data, err)
-	}
+	state := run.env()["BENCH_TEST_STATE"]
+	requirePreservedFile(t, lease, filepath.Join(state, "lease"))
 	if got := strings.TrimSpace(runGitAt(t, worktree, "rev-parse", "HEAD")); got != run.base {
 		t.Fatalf("failed shift moved HEAD to %s, want %s", got, run.base)
 	}
-	state := run.env()["BENCH_TEST_STATE"]
 	status := runGitAt(t, worktree, "status", "--porcelain=v1", "--untracked-files=all")
 	if want := string(mustReadRuntime(t, filepath.Join(state, "status"))); status != want {
 		t.Fatalf("failed shift changed complete status\nwant:\n%s\ngot:\n%s", want, status)
@@ -208,17 +207,13 @@ func requirePreservedShift(t *testing.T, run shiftProofRun, output string) {
 	for path, snapshot := range map[string]string{
 		"charged.txt": "charged", ".bench-objective": "objective", ".bench-notes.md": "notes",
 	} {
-		if got, want := string(mustReadRuntime(t, filepath.Join(worktree, path))), string(mustReadRuntime(t, filepath.Join(state, snapshot))); got != want {
-			t.Fatalf("failed shift changed %s bytes: got %q want %q", path, got, want)
-		}
+		requirePreservedFile(t, filepath.Join(worktree, path), filepath.Join(state, snapshot))
 	}
 	intentPath, err := intent.Address(run.f.Root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, want := string(mustReadRuntime(t, intentPath)), string(mustReadRuntime(t, filepath.Join(state, "intent"))); got != want {
-		t.Fatalf("failed shift changed intent bytes\nwant: %q\ngot: %q", want, got)
-	}
+	requirePreservedFile(t, intentPath, filepath.Join(state, "intent"))
 	if got := strings.TrimSpace(runGitAt(t, worktree, "branch", "--show-current")); got != branch {
 		t.Fatalf("failed shift branch = %q, want %q", got, branch)
 	}
@@ -232,6 +227,23 @@ func requirePreservedShift(t *testing.T, run shiftProofRun, output string) {
 		}
 	}
 	t.Fatalf("failed shift lost correlated intent for branch=%s worktree=%s: %#v", branch, worktree, entries)
+}
+
+func requirePreservedFile(t *testing.T, gotPath, snapshotPath string) {
+	t.Helper()
+	gotInfo, gotErr := os.Lstat(gotPath)
+	wantInfo, wantErr := os.Lstat(snapshotPath)
+	if gotErr != nil || wantErr != nil {
+		t.Fatalf("preserved file existence %s: got=%v snapshot=%v", gotPath, gotErr, wantErr)
+	}
+	if !gotInfo.Mode().IsRegular() || !wantInfo.Mode().IsRegular() || gotInfo.Mode() != wantInfo.Mode() {
+		t.Fatalf("preserved file mode %s: got=%v snapshot=%v, want matching regular files", gotPath, gotInfo.Mode(), wantInfo.Mode())
+	}
+	got, gotErr := os.ReadFile(gotPath)
+	want, wantErr := os.ReadFile(snapshotPath)
+	if gotErr != nil || wantErr != nil || !bytes.Equal(got, want) {
+		t.Fatalf("preserved file bytes %s: got=%q/%v snapshot=%q/%v", gotPath, got, gotErr, want, wantErr)
+	}
 }
 
 func shiftBranchFromStart(t *testing.T, output string) string {

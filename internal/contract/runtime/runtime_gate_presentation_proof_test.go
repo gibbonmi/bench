@@ -2,9 +2,13 @@ package runtime
 
 import (
 	"encoding/xml"
+	"fmt"
 	"io"
 	"os"
 	"reflect"
+	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -57,7 +61,10 @@ func proveSignalSeverity(t *testing.T, state string) {
 func proveSelfContainedDashboard(t *testing.T) {
 	p := newProjectionFixture(t, "reusable-green")
 	page := runProjectionSurface(t, p, "dashboard")
-	parseDashboardDocument(t, page)
+	doc := parseDashboardDocument(t, page)
+	if err := dashboardHTMLViolation(doc); err != nil {
+		t.Fatal(err)
+	}
 	for _, literal := range []string{"<!DOCTYPE html>", "<html", "<head>", "<style>", "</style>", "<body>", "</body>", "</html>"} {
 		if !strings.Contains(page, literal) {
 			t.Fatalf("dashboard HTML missing %q", literal)
@@ -66,9 +73,17 @@ func proveSelfContainedDashboard(t *testing.T) {
 	if !strings.HasPrefix(page, "<!DOCTYPE html>") || !strings.HasSuffix(strings.TrimSpace(page), "</html>") {
 		t.Fatal("dashboard is not one complete HTML document")
 	}
-	for _, external := range []string{"<link ", "<script src=", "http://", "https://"} {
-		if strings.Contains(page, external) {
-			t.Fatalf("dashboard is not self-contained: contains %q", external)
+	for name, mutation := range map[string]string{
+		"head content":  strings.Replace(page, "<head>", "<head><div>bad</div>", 1),
+		"relative href": strings.Replace(page, `<html `, `<html href="/x" `, 1),
+		"protocol src":  strings.Replace(page, `<html `, `<html src="//cdn/x" `, 1),
+		"data resource": strings.Replace(page, `<html `, `<html data="data:text/plain,x" `, 1),
+		"css url":       strings.Replace(page, "</style>", ".x{background:url(/x)}</style>", 1),
+		"css import":    strings.Replace(page, "</style>", "@import '/x';</style>", 1),
+	} {
+		doc := parseDashboardDocument(t, mutation)
+		if err := dashboardHTMLViolation(doc); err == nil {
+			t.Fatalf("dashboard HTML validator accepted %s", name)
 		}
 	}
 }
@@ -76,8 +91,13 @@ func proveSelfContainedDashboard(t *testing.T) {
 type dashboardNode struct {
 	name     string
 	attrs    map[string]string
-	text     strings.Builder
+	content  []dashboardContent
 	children []*dashboardNode
+}
+
+type dashboardContent struct {
+	text  string
+	child *dashboardNode
 }
 
 func parseDashboardDocument(t *testing.T, page string) *dashboardNode {
@@ -120,11 +140,12 @@ func parseDashboardDocument(t *testing.T, page string) *dashboardNode {
 			}
 			parent := stack[len(stack)-1]
 			parent.children = append(parent.children, n)
+			parent.content = append(parent.content, dashboardContent{child: n})
 			stack = append(stack, n)
 		case xml.EndElement:
 			stack = stack[:len(stack)-1]
 		case xml.CharData:
-			stack[len(stack)-1].text.Write([]byte(x))
+			stack[len(stack)-1].content = append(stack[len(stack)-1].content, dashboardContent{text: string(x)})
 		}
 	}
 	if len(stack) != 1 || len(root.children) != 1 || root.children[0].name != "html" {
@@ -134,11 +155,87 @@ func parseDashboardDocument(t *testing.T, page string) *dashboardNode {
 }
 
 func (n *dashboardNode) normalizedText() string {
-	parts := []string{n.text.String()}
-	for _, child := range n.children {
-		parts = append(parts, child.normalizedText())
+	var parts []string
+	for _, part := range n.content {
+		if part.child != nil {
+			parts = append(parts, part.child.normalizedText())
+		} else {
+			parts = append(parts, part.text)
+		}
 	}
 	return strings.Join(strings.Fields(strings.Join(parts, " ")), " ")
+}
+
+func dashboardNodeShape(n *dashboardNode) string {
+	var b strings.Builder
+	b.WriteByte('<')
+	b.WriteString(n.name)
+	keys := make([]string, 0, len(n.attrs))
+	for key := range n.attrs {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		b.WriteByte(' ')
+		b.WriteString(key + "=" + strconv.Quote(n.attrs[key]))
+	}
+	b.WriteByte('>')
+	for _, part := range n.content {
+		if part.child != nil {
+			b.WriteString(dashboardNodeShape(part.child))
+		} else if text := strings.Join(strings.Fields(part.text), " "); text != "" {
+			b.WriteString(strconv.Quote(text))
+		}
+	}
+	b.WriteString("</" + n.name + ">")
+	return b.String()
+}
+
+var cssResourcePattern = regexp.MustCompile(`(?i)(url\s*\(|@import\b)`)
+
+func dashboardHTMLViolation(doc *dashboardNode) error {
+	if len(doc.children) != 2 || doc.children[0].name != "head" || doc.children[1].name != "body" {
+		return fmt.Errorf("dashboard html children must be one ordered head/body pair: %#v", doc.children)
+	}
+	head := doc.children[0]
+	if len(head.children) != 4 || head.children[0].name != "meta" || head.children[1].name != "meta" || head.children[2].name != "title" || head.children[3].name != "style" {
+		return fmt.Errorf("dashboard head must contain meta/meta/title/style in order")
+	}
+	allowed := map[string]map[string]bool{
+		"html": {"head": true, "body": true}, "head": {"meta": true, "title": true, "style": true},
+		"body": {"div": true}, "div": {"header": true, "section": true}, "header": {"h1": true, "p": true},
+		"section": {"h2": true, "h3": true, "p": true, "dl": true, "table": true, "pre": true, "ul": true},
+		"p":       {"span": true}, "dl": {"dt": true, "dd": true}, "table": {"thead": true, "tbody": true},
+		"thead": {"tr": true}, "tbody": {"tr": true}, "tr": {"th": true, "td": true}, "ul": {"li": true},
+	}
+	resourceAttrs := map[string]bool{"src": true, "href": true, "srcset": true, "action": true, "formaction": true, "poster": true, "data": true, "cite": true, "background": true, "ping": true, "manifest": true}
+	var walk func(*dashboardNode) error
+	walk = func(n *dashboardNode) error {
+		for name, value := range n.attrs {
+			if resourceAttrs[strings.ToLower(name)] && strings.TrimSpace(value) != "" {
+				return fmt.Errorf("dashboard %s has resource-bearing %s=%q", n.name, name, value)
+			}
+			if strings.EqualFold(name, "style") && cssResourcePattern.MatchString(value) {
+				return fmt.Errorf("dashboard inline style can load a resource: %q", value)
+			}
+		}
+		if n.name == "style" && cssResourcePattern.MatchString(n.normalizedText()) {
+			return fmt.Errorf("dashboard stylesheet can load an external resource")
+		}
+		if n.name == "meta" && strings.EqualFold(n.attrs["http-equiv"], "refresh") {
+			return fmt.Errorf("dashboard meta refresh can navigate externally")
+		}
+		for _, child := range n.children {
+			if !allowed[n.name][child.name] {
+				return fmt.Errorf("dashboard %s contains invalid %s element", n.name, child.name)
+			}
+			if err := walk(child); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	return walk(doc)
 }
 
 func dashboardElements(n *dashboardNode, name string) []*dashboardNode {
@@ -152,13 +249,13 @@ func dashboardElements(n *dashboardNode, name string) []*dashboardNode {
 	return got
 }
 
-type dashboardBadge struct{ class, text string }
 type dashboardDetail struct{ label, value string }
 type dashboardGateProjection struct {
-	present bool
-	empty   string
-	badges  []dashboardBadge
-	details []dashboardDetail
+	present        bool
+	empty          string
+	paragraphs     int
+	badgeParagraph string
+	details        []dashboardDetail
 }
 
 func requireExactDashboardGateProjection(t *testing.T, page string, p projectionFixture) {
@@ -181,14 +278,16 @@ func requireExactDashboardGateProjection(t *testing.T, page string, p projection
 		switch child.name {
 		case "h2":
 		case "p":
+			got.paragraphs++
 			if child.attrs["class"] == "empty" {
+				if len(child.attrs) != 1 || len(child.children) != 0 {
+					t.Fatal("dashboard Gate empty paragraph has extra attributes or descendants")
+				}
 				got.empty = child.normalizedText()
 				continue
 			}
 			got.present = true
-			for _, span := range dashboardElements(child, "span") {
-				got.badges = append(got.badges, dashboardBadge{span.attrs["class"], span.normalizedText()})
-			}
+			got.badgeParagraph = dashboardNodeShape(child)
 		case "dl":
 			for i := 0; i < len(child.children); i += 2 {
 				if i+1 >= len(child.children) || child.children[i].name != "dt" || child.children[i+1].name != "dd" {
@@ -200,17 +299,17 @@ func requireExactDashboardGateProjection(t *testing.T, page string, p projection
 			t.Fatalf("dashboard Gate section has unexpected %s element", child.name)
 		}
 	}
-	want := dashboardGateProjection{empty: "No gate cache yet — run bench gate."}
+	want := dashboardGateProjection{empty: "No gate cache yet — run bench gate.", paragraphs: 1}
 	if p.state != "absent" {
-		want = dashboardGateProjection{present: true, details: []dashboardDetail{{"cached tree", p.cachedTree}, {"work tree", p.workTree}}}
-		badge := map[string]dashboardBadge{
+		want = dashboardGateProjection{present: true, paragraphs: 1, details: []dashboardDetail{{"cached tree", p.cachedTree}, {"work tree", p.workTree}}}
+		badge := map[string][2]string{
 			"reusable-green": {"badge green", "green"}, "red": {"badge red", "red"},
 			"locked-pending": {"badge ", "locked-pending"}, "interrupted-pending": {"badge ", "interrupted-pending"},
 			"invalid": {"badge ", "invalid"}, "unavailable": {"badge ", "unavailable"},
 		}[p.state]
-		want.badges = []dashboardBadge{badge}
+		want.badgeParagraph = expectedBadgeParagraph(badge)
 		if p.state == "stale" {
-			want.badges = []dashboardBadge{{"badge stale", "green"}, {"badge stale", "stale"}}
+			want.badgeParagraph = expectedBadgeParagraph([2]string{"badge stale", "green"}, [2]string{"badge stale", "stale"})
 		}
 		if p.state == "invalid" || p.state == "unavailable" {
 			want.details[0].value = ""
@@ -230,6 +329,16 @@ func requireExactDashboardGateProjection(t *testing.T, page string, p projection
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("%s dashboard Gate projection\nwant: %#v\ngot:  %#v", p.state, want, got)
 	}
+}
+
+func expectedBadgeParagraph(badges ...[2]string) string {
+	p := &dashboardNode{name: "p", attrs: map[string]string{}}
+	for _, badge := range badges {
+		span := &dashboardNode{name: "span", attrs: map[string]string{"class": badge[0]}, content: []dashboardContent{{text: badge[1]}}}
+		p.children = append(p.children, span)
+		p.content = append(p.content, dashboardContent{child: span})
+	}
+	return dashboardNodeShape(p)
 }
 
 func proveAXIGateCache(t *testing.T) {
