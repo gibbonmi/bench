@@ -66,7 +66,7 @@ type session struct {
 	cancelGate  context.CancelFunc
 	interrupted atomic.Bool // set by the signal handler; parks the loop at its checkpoints
 	teardownOne sync.Once
-	preserve    bool // a failed oracle transaction retains the charged worktree verbatim
+	preserve    atomic.Bool // a failed oracle transaction retains the charged worktree verbatim
 }
 
 // Loop runs the gated shift: preflight the adapter, acquire a pooled worktree, branch,
@@ -155,7 +155,7 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 		s.cancelRunningGate()
 	}()
 	defer func() {
-		if !s.preserve {
+		if !s.preserve.Load() {
 			s.teardown()
 		}
 	}()
@@ -193,7 +193,7 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 			}
 		} else {
 			s.checkpoint()
-			s.preserve = true
+			s.preserve.Store(true)
 			fmt.Fprintf(stdout, "  ✗ gate failed — preserving iteration %d in %s\n", i, wt)
 			return 1
 		}
@@ -313,6 +313,9 @@ func (s *session) runGate() int {
 	s.cancelGate = cancel
 	s.mu.Unlock()
 	rc := gate.RunAndRecordContext(ctx, s.root, s.stdout, s.stderr)
+	if ctx.Err() != nil {
+		s.preserve.Store(true)
+	}
 	s.mu.Lock()
 	s.cancelGate = nil
 	s.mu.Unlock()
@@ -325,6 +328,7 @@ func (s *session) cancelRunningGate() {
 	cancel := s.cancelGate
 	s.mu.Unlock()
 	if cancel != nil {
+		s.preserve.Store(true)
 		cancel()
 	}
 }
@@ -334,7 +338,9 @@ func (s *session) cancelRunningGate() {
 // trap-between-commands) at which an interrupt takes effect.
 func (s *session) checkpoint() {
 	if s.interrupted.Load() {
-		s.teardown()
+		if !s.preserve.Load() {
+			s.teardown()
+		}
 		os.Exit(130)
 	}
 }

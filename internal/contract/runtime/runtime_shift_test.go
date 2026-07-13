@@ -212,18 +212,14 @@ exit 0
 		t.Fatalf("gate-interrupted shift exited successfully\nstdout:\n%s\nstderr:\n%s", probe.Stdout, probe.Stderr)
 	}
 	wt := shiftWorktree(t, probe.Stdout)
-	requireNoLease(t, home)
 	waitSeconds(t, 3)
 	if _, err := os.Stat(filepath.Join(wt, "late-gate-write.txt")); err == nil {
-		t.Fatal("gate child kept running after lease release and dirtied the pooled worktree")
+		t.Fatal("gate child kept running after cancellation and dirtied the pooled worktree")
 	}
-	if dirty := runGitAt(t, wt, "status", "--porcelain"); dirty != "" {
-		t.Fatalf("gate-interrupted pooled worktree is dirty:\n%s", dirty)
+	if dirty := runGitAt(t, wt, "status", "--porcelain"); !strings.Contains(dirty, ".bench-objective") || !strings.Contains(dirty, ".bench-notes.md") {
+		t.Fatalf("gate-interrupted pooled worktree did not preserve shift scratch:\n%s", dirty)
 	}
-	follow := f.BenchEnv(map[string]string{"BENCH_TEST_STATE": state, "BENCH_AGENT": "true", "BENCH_MAX_ITERS": "1", "BENCH_HOME": home}, "shift", "after-gate-interrupt")
-	follow.RequireExit(0)
-	follow.RequireContains(follow.Stdout, "shift done")
-	follow.RequireContains(follow.Stdout, "worktree: "+wt)
+	requireRegisteredWorktree(t, f, wt)
 }
 
 func testShiftDoneEarlyCompletion(t *testing.T) {
