@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -22,7 +23,8 @@ type projectionFixture struct {
 	cache                string
 	state                string
 	cachedTree, workTree string
-	lock                 *os.File
+	lockProcess          *exec.Cmd
+	lockInput            io.WriteCloser
 }
 
 func normalizeDashboardCSS(css string) string {
@@ -122,15 +124,54 @@ func newProjectionFixture(t *testing.T, state string) projectionFixture {
 
 func (p *projectionFixture) holdLock(t *testing.T) {
 	t.Helper()
-	var err error
-	p.lock, err = os.OpenFile(filepath.Join(p.gitdir, "bench-gate.lock"), os.O_CREATE|os.O_RDWR, 0o600)
+	cmd := exec.Command(os.Args[0], "-test.run=^TestFT78GateLockHelper$")
+	cmd.Env = append(os.Environ(), "FT78_GATE_LOCK_HELPER="+filepath.Join(p.gitdir, "bench-gate.lock"))
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := syscall.Flock(int(p.lock.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
+	input, err := cmd.StdinPipe()
+	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { syscall.Flock(int(p.lock.Fd()), syscall.LOCK_UN); p.lock.Close() })
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	ready := make([]byte, len("ready\n"))
+	if _, err := io.ReadFull(stdout, ready); err != nil || string(ready) != "ready\n" {
+		t.Fatalf("lock helper readiness = %q/%v", ready, err)
+	}
+	p.lockProcess, p.lockInput = cmd, input
+	t.Cleanup(func() { input.Close(); _ = cmd.Wait() })
+}
+
+func TestFT78GateLockHelper(t *testing.T) {
+	path := os.Getenv("FT78_GATE_LOCK_HELPER")
+	if path == "" {
+		return
+	}
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	acquireTestGateLock(t, f)
+	defer releaseTestGateLock(f)
+	_, _ = os.Stdout.WriteString("ready\n")
+	_, _ = io.Copy(io.Discard, os.Stdin)
+}
+
+func acquireTestGateLock(t testing.TB, f *os.File) {
+	t.Helper()
+	lock := syscall.Flock_t{Type: syscall.F_WRLCK, Whence: int16(io.SeekStart)}
+	if err := syscall.FcntlFlock(f.Fd(), syscall.F_SETLK, &lock); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func releaseTestGateLock(f *os.File) {
+	lock := syscall.Flock_t{Type: syscall.F_UNLCK, Whence: int16(io.SeekStart)}
+	_ = syscall.FcntlFlock(f.Fd(), syscall.F_SETLK, &lock)
 }
 
 func runProjectionSurface(t *testing.T, p projectionFixture, surface string) string {
@@ -245,15 +286,38 @@ func requireExactRoadmapGateProjection(t *testing.T, out string, p projectionFix
 
 func proveProjectionPurity(t *testing.T, state, surface string) {
 	p := newProjectionFixture(t, state)
-	if p.lock == nil {
-		p.holdLock(t)
+	lockPath := filepath.Join(p.gitdir, "bench-gate.lock")
+	if state == "interrupted-pending" {
+		decoy, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0o600)
+		if err != nil {
+			t.Fatal(err)
+		}
+		readLock := syscall.Flock_t{Type: syscall.F_RDLCK, Whence: int16(io.SeekStart)}
+		if err := syscall.FcntlFlock(decoy.Fd(), syscall.F_SETLK, &readLock); err != nil {
+			decoy.Close()
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { releaseTestGateLock(decoy); decoy.Close() })
 	}
+	lockBefore, lockBeforeErr := os.Lstat(lockPath)
 	beforeData := contract.ReadFileAbs(t, p.cache)
 	before, err := os.Lstat(p.cache)
 	if err != nil {
 		t.Fatal(err)
 	}
-	runProjectionSurface(t, p, surface)
+	out := runProjectionSurface(t, p, surface)
+	if state == "interrupted-pending" {
+		switch surface {
+		case "status":
+			if out != exactStatusProjection(p) {
+				t.Fatalf("%s changed the interrupted-pending projection: %q", surface, out)
+			}
+		case "dashboard":
+			requireExactDashboardGateProjection(t, out, p)
+		case "roadmap":
+			requireExactRoadmapGateProjection(t, out, p)
+		}
+	}
 	after, err := os.Lstat(p.cache)
 	if err != nil {
 		t.Fatal(err)
@@ -266,5 +330,9 @@ func proveProjectionPurity(t *testing.T, state, surface string) {
 	}
 	if _, err := os.Stat(filepath.Join(p.gitdir, "gate-reader-ran")); !os.IsNotExist(err) {
 		t.Fatalf("%s executed the oracle", surface)
+	}
+	lockAfter, lockAfterErr := os.Lstat(lockPath)
+	if (os.IsNotExist(lockBeforeErr) && !os.IsNotExist(lockAfterErr)) || (lockBeforeErr == nil && (lockAfterErr != nil || lockBefore.Mode() != lockAfter.Mode() || !lockBefore.ModTime().Equal(lockAfter.ModTime()))) {
+		t.Fatalf("%s created or mutated the execution lock", surface)
 	}
 }

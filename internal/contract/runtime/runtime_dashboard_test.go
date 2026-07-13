@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"testing"
 	"time"
 
@@ -69,10 +68,8 @@ func testRuntimeTypedGateProjection(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer lock.Close()
-	if err := syscall.Flock(int(lock.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
-		t.Fatal(err)
-	}
-	defer syscall.Flock(int(lock.Fd()), syscall.LOCK_UN)
+	acquireTestGateLock(t, lock)
+	defer releaseTestGateLock(lock)
 	assertProjection("locked-pending")
 }
 

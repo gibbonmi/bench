@@ -118,10 +118,7 @@ func holdShiftGateLock(t *testing.T, run shiftProofRun) *os.File {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := syscall.Flock(int(held.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
-		held.Close()
-		t.Fatal(err)
-	}
+	acquireTestGateLock(t, held)
 	return held
 }
 

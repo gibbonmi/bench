@@ -27,7 +27,7 @@ var ft78Story6Proofs = []actionProof{
 	projectionProof("R18/interrupted-pending-status", "interrupted-pending", "status"), projectionProof("R18/interrupted-pending-dashboard", "interrupted-pending", "dashboard"), projectionProof("R18/interrupted-pending-roadmap-context", "interrupted-pending", "roadmap"),
 	projectionProof("R18/invalid-status", "invalid", "status"), projectionProof("R18/invalid-dashboard", "invalid", "dashboard"), projectionProof("R18/invalid-roadmap-context", "invalid", "roadmap"),
 	projectionProof("R18/unavailable-status", "unavailable", "status"), projectionProof("R18/unavailable-dashboard", "unavailable", "dashboard"), projectionProof("R18/unavailable-roadmap-context", "unavailable", "roadmap"),
-	purityProof("R19/pending-status", "locked-pending", "status"), purityProof("R19/pending-dashboard", "locked-pending", "dashboard"), purityProof("R19/pending-roadmap-context", "locked-pending", "roadmap"),
+	purityProof("R19/pending-status", "interrupted-pending", "status"), purityProof("R19/pending-dashboard", "interrupted-pending", "dashboard"), purityProof("R19/pending-roadmap-context", "interrupted-pending", "roadmap"),
 	purityProof("R19/invalid-status", "invalid", "status"), purityProof("R19/invalid-dashboard", "invalid", "dashboard"), purityProof("R19/invalid-roadmap-context", "invalid", "roadmap"),
 	purityProof("R19/legacy-status", "legacy", "status"), purityProof("R19/legacy-dashboard", "legacy", "dashboard"), purityProof("R19/legacy-roadmap-context", "legacy", "roadmap"),
 	presentationProof("R20/absent-signal-severity", "absent"), presentationProof("R20/reusable-green-signal-severity", "reusable-green"),

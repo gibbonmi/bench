@@ -11,6 +11,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -98,6 +99,15 @@ type gateEngine interface {
 
 type productionGateEngine struct{}
 
+var executionLockOwners = struct {
+	sync.Mutex
+	paths map[string]bool
+}{paths: map[string]bool{}}
+
+func recordLock(typ int16) syscall.Flock_t {
+	return syscall.Flock_t{Type: typ, Whence: int16(io.SeekStart), Start: 0, Len: 0}
+}
+
 func (productionGateEngine) Now() time.Time                              { return time.Now().UTC() }
 func (productionGateEngine) BuildSubject(root string) (subject, error)   { return buildSubject(root) }
 func (productionGateEngine) PostRunSubject(root string) (subject, error) { return buildSubject(root) }
@@ -108,10 +118,27 @@ func (productionGateEngine) OpenLock(path string) (gateFile, error) {
 	return os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o600)
 }
 func (productionGateEngine) Acquire(f gateFile) error {
-	return syscall.Flock(int(f.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
+	executionLockOwners.Lock()
+	defer executionLockOwners.Unlock()
+	if executionLockOwners.paths[f.Name()] {
+		return syscall.EAGAIN
+	}
+	lock := recordLock(syscall.F_WRLCK)
+	if err := syscall.FcntlFlock(f.Fd(), syscall.F_SETLK, &lock); err != nil {
+		return err
+	}
+	executionLockOwners.paths[f.Name()] = true
+	return nil
 }
 func (productionGateEngine) Unlock(f gateFile) error {
-	return syscall.Flock(int(f.Fd()), syscall.LOCK_UN)
+	executionLockOwners.Lock()
+	defer executionLockOwners.Unlock()
+	lock := recordLock(syscall.F_UNLCK)
+	if err := syscall.FcntlFlock(f.Fd(), syscall.F_SETLK, &lock); err != nil {
+		return err
+	}
+	delete(executionLockOwners.paths, f.Name())
+	return nil
 }
 func (productionGateEngine) CreateTemp(dir, pattern string) (gateFile, error) {
 	return os.CreateTemp(dir, pattern)
@@ -236,7 +263,13 @@ func inspectAt(root string, now time.Time) Inspection {
 	}
 	gi.State, gi.Status, gi.CachedTree = rec.State, rec.Status, rec.Tree
 	if rec.State == Pending {
-		if lockHeld(gitdir) {
+		held, err := lockHeld(gitdir)
+		if err != nil {
+			gi.State = Unavailable
+			gi.Reason = "gate lock unavailable"
+			return gi
+		}
+		if held {
 			gi.PendingStatus = "locked-pending"
 		} else {
 			gi.PendingStatus = "interrupted-pending"
@@ -377,15 +410,24 @@ func requireObjectFields(data []byte, want []string) error {
 	return nil
 }
 
-func lockHeld(gitdir string) bool {
-	f, err := os.OpenFile(filepath.Join(gitdir, "bench-gate.lock"), os.O_RDWR, 0)
+func lockHeld(gitdir string) (bool, error) {
+	path := filepath.Join(gitdir, "bench-gate.lock")
+	executionLockOwners.Lock()
+	defer executionLockOwners.Unlock()
+	if executionLockOwners.paths[path] {
+		return true, nil
+	}
+	f, err := os.Open(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
 	if err != nil {
-		return false
+		return false, err
 	}
 	defer f.Close()
-	if syscall.Flock(int(f.Fd()), syscall.LOCK_EX|syscall.LOCK_NB) != nil {
-		return true
+	lock := recordLock(syscall.F_RDLCK)
+	if err := syscall.FcntlFlock(f.Fd(), syscall.F_GETLK, &lock); err != nil {
+		return false, err
 	}
-	_ = syscall.Flock(int(f.Fd()), syscall.LOCK_UN)
-	return false
+	return lock.Type != syscall.F_UNLCK, nil
 }

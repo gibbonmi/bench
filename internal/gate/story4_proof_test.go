@@ -332,7 +332,8 @@ func r12SeparateGitDir(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer lock.Close()
-	if err := syscall.Flock(int(lock.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
+	held := recordLock(syscall.F_WRLCK)
+	if err := syscall.FcntlFlock(lock.Fd(), syscall.F_SETLK, &held); err != nil {
 		t.Fatal(err)
 	}
 	got := Execute(context.Background(), root2, io.Discard, io.Discard)

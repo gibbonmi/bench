@@ -140,9 +140,7 @@ func proveCommitResult(t *testing.T, variant string) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err = syscall.Flock(int(held.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
-			t.Fatal(err)
-		}
+		acquireTestGateLock(t, held)
 		defer held.Close()
 	case "pending-persistence":
 		if err := os.Mkdir(cache, 0o700); err != nil {
