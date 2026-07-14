@@ -370,7 +370,51 @@ func ConservativeCleanup(root string) (ResumeResult, error) {
 			result.Removed++
 		}
 	}
+	if err := sweepOrphanAssignments(root, registered, &result); err != nil {
+		return result, err
+	}
 	return result, nil
+}
+
+// sweepOrphanAssignments reconciles assignment records the registered-worktree pass
+// never visits: those whose tree is gone and which are no longer registered worktrees.
+// Residue records are compacted and counted; records that still hold preserved work are
+// reported for a deliberate recover-or-retire and left intact. Active records are never
+// swept — a live session owns them. See specs/worktree-orphan-reconcile.md (c).
+func sweepOrphanAssignments(root string, registered []Registered, result *ResumeResult) error {
+	assignments, err := intent.Assignments(root)
+	if err != nil {
+		return err
+	}
+	for _, a := range assignments {
+		if a.State == intent.StateActive {
+			continue
+		}
+		if _, statErr := os.Stat(a.Worktree); statErr == nil {
+			continue // the tree still exists
+		}
+		if isRegisteredWorktree(registered, a.Worktree) {
+			continue // registered (prunable) — the git-worktree path owns it
+		}
+		if residualAssignment(a) {
+			if err := intent.DeleteAssignment(root, a.ID); err != nil {
+				return err
+			}
+			result.Reconciled++
+			continue
+		}
+		result.Preserved = append(result.Preserved, PreservedOrphan{ID: a.ID, Ref: a.Recovery[0].Ref})
+	}
+	return nil
+}
+
+func isRegisteredWorktree(registered []Registered, path string) bool {
+	for _, wt := range registered {
+		if samePath(wt.Path, path) {
+			return true
+		}
+	}
+	return false
 }
 func ResumeCleanCommand(args []string, stdout, stderr io.Writer) int {
 	if len(args) != 0 {

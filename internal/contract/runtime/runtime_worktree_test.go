@@ -113,7 +113,7 @@ func testRuntimeResumeFailureSummary(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chmod(refs, 0o700) })
 
-	want := "bench resume: removed 0, recovered 0; failed 1; open assignments 1\n"
+	want := "bench resume: removed 0, recovered 0; reconciled 0; failed 1; open assignments 1\n"
 	resume := f.BenchEnv(env, "resume-clean")
 	resume.RequireExit(1)
 	if resume.Stdout != want || !strings.Contains(resume.Stderr, "bench resume-clean:") {
@@ -170,7 +170,7 @@ func testRuntimeWorktreeAutomaticEligibilityMatrix(t *testing.T) {
 
 	out := f.BenchEnv(env, "resume-clean")
 	out.RequireExit(0)
-	want := "bench resume: removed 1, recovered 1; retained active=1 live-lease=1 unmerged=1 ignored=1 malformed=1 uncertain=1 unexpected-lock=1; failed 0; open assignments 8\n"
+	want := "bench resume: removed 1, recovered 1; retained active=1 live-lease=1 unmerged=1 ignored=1 malformed=1 uncertain=1 unexpected-lock=1; reconciled 0; failed 0; open assignments 8\n"
 	if out.Stdout != want {
 		t.Fatalf("automatic matrix summary = %q, want %q", out.Stdout, want)
 	}

@@ -254,6 +254,113 @@ func TestReleaseSurfacesRetainedVerdict(t *testing.T) {
 	requireTest(t, code == 0, "recovery release exit = %d, want 0; out=%q", code, out2.String())
 }
 
+// removeOutOfBand simulates a request-less `bench worktree clean --discard-ignored
+// --apply` that removed an owned tree: it drops the git registration and directory and
+// writes the completed explicit-clean cleanup receipt (owned, request-bound, no
+// automatic-registration fingerprint), leaving the assignment record stranded.
+func removeOutOfBand(t *testing.T, root string, a intent.Assignment, action CleanupAction) {
+	t.Helper()
+	gitRun(t, root, "worktree", "remove", "-f", "-f", a.Worktree)
+	repo, target, err := cleanupIdentity(root, a.Worktree)
+	mustNoError(t, err)
+	mustNoError(t, intent.PutCleanupReceipt(root, intent.CleanupReceipt{
+		Schema: intent.CleanupReceiptSchema, Repo: repo, Operation: cleanupOperation,
+		Target: target, Fingerprint: strings.Repeat("c", 64), State: intent.ReceiptComplete,
+		Phase: intent.ReceiptPhaseTerminal, Action: string(action), Tracked: a.ID,
+		Ignored: "count=0 bytes=0 shown=0 truncated=false", Recovery: "none",
+		Owned: true, Owner: a.OwnerID, Assignment: a.ID, Request: a.Request,
+	}))
+}
+
+// TestReleaseReconcilesOutOfBandResidue pins FT93(b), residue path: a release whose
+// tree was removed out of band, holding no preserved work, reconciles and compacts the
+// record instead of dead-ending on "cleanup receipt does not authorize release
+// reconciliation". Replay is idempotent.
+func TestReleaseReconcilesOutOfBandResidue(t *testing.T) {
+	root, creation := newOwnedAssignment(t, "oob-residue")
+	a, err := assignmentByID(root, creation.Assignment.ID)
+	mustNoError(t, err)
+	requireTest(t, len(a.Recovery) == 0, "fixture already holds recovery metadata")
+	removeOutOfBand(t, root, a, ActionRemoved)
+
+	args := []string{"--request", "landed-oob-residue", creation.Path}
+	var out, errb strings.Builder
+	code := ReleaseCommand(root, args, &out, &errb)
+	requireTest(t, code == 0, "residue release exit=%d stderr=%q", code, errb.String())
+	if _, err := assignmentByID(root, a.ID); err == nil {
+		t.Fatal("residue record survived reconcile")
+	}
+	var replay strings.Builder
+	code = ReleaseCommand(root, args, &replay, io.Discard)
+	requireTest(t, code == 0 && replay.String() == out.String(), "replay exit=%d out=%q", code, replay.String())
+}
+
+// TestReleaseNamesRecoveryForPreservedOrphan pins FT93(b), preserved path: a release
+// whose tree was removed out of band but still holds preserved work returns a verdict
+// naming `bench worktree recovery <ref>` and leaves the record and its recovery pointer
+// intact — release never silently discards preserved work.
+func TestReleaseNamesRecoveryForPreservedOrphan(t *testing.T) {
+	root, creation := newOwnedAssignment(t, "oob-preserved")
+	a, err := assignmentByID(root, creation.Assignment.ID)
+	mustNoError(t, err)
+	ref := intent.RecoveryRefPrefix(a.OwnerID, a.ID) + "1"
+	a.State, a.Recovery = intent.StateRecovered, []intent.Recovery{{Ref: ref, Root: strings.Repeat("a", 40), Payloads: []string{strings.Repeat("b", 40)}}}
+	mustNoError(t, intent.PutAssignment(root, a))
+	removeOutOfBand(t, root, a, ActionRemoved)
+
+	var out, errb strings.Builder
+	code := ReleaseCommand(root, []string{"--request", "landed-oob-preserved", creation.Path}, &out, &errb)
+	requireTest(t, code != 0, "preserved release exit=%d, want non-zero", code)
+	requireTest(t, strings.Contains(errb.String(), "bench worktree recovery "+ref),
+		"preserved verdict missing recovery command: %q", errb.String())
+	got, err := assignmentByID(root, a.ID)
+	requireTest(t, err == nil && len(got.Recovery) == 1, "preserved record was mutated or deleted: %v", err)
+}
+
+// TestResumeSweepsResidueAndReportsPreserved pins FT93(c): ConservativeCleanup sweeps
+// tree-gone, unregistered residue records (compacts, counts them), reports preserved-
+// work records with their recovery command without deleting them, and never touches an
+// active record or one whose tree still exists.
+func TestResumeSweepsResidueAndReportsPreserved(t *testing.T) {
+	root := newWorktreeRepo(t)
+	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	residue := mustCreate(t, root, "landed-sweep-residue", "residue")
+	preserved := mustCreate(t, root, "landed-sweep-preserved", "preserved")
+	activeGone := mustCreate(t, root, "landed-sweep-active", "active gone")
+	live := mustCreate(t, root, "landed-sweep-live", "live present")
+
+	ra, err := assignmentByID(root, residue.Assignment.ID)
+	mustNoError(t, err)
+	gitRun(t, root, "worktree", "remove", "-f", "-f", ra.Worktree)
+	ra.State = intent.StateCleanupPending
+	mustNoError(t, intent.PutAssignment(root, ra))
+
+	pa, err := assignmentByID(root, preserved.Assignment.ID)
+	mustNoError(t, err)
+	gitRun(t, root, "worktree", "remove", "-f", "-f", pa.Worktree)
+	ref := intent.RecoveryRefPrefix(pa.OwnerID, pa.ID) + "1"
+	pa.State, pa.Recovery = intent.StateRecovered, []intent.Recovery{{Ref: ref, Root: strings.Repeat("a", 40), Payloads: []string{strings.Repeat("b", 40)}}}
+	mustNoError(t, intent.PutAssignment(root, pa))
+
+	ag, err := assignmentByID(root, activeGone.Assignment.ID)
+	mustNoError(t, err)
+	gitRun(t, root, "worktree", "remove", "-f", "-f", ag.Worktree) // active, tree gone, unregistered
+
+	result, err := ConservativeCleanup(root)
+	mustNoError(t, err)
+	requireTest(t, result.Reconciled == 1, "Reconciled=%d, want 1", result.Reconciled)
+	if _, err := assignmentByID(root, ra.ID); err == nil {
+		t.Fatal("residue record survived the sweep")
+	}
+	for _, keep := range []string{pa.ID, ag.ID, live.Assignment.ID} {
+		if _, err := assignmentByID(root, keep); err != nil {
+			t.Fatalf("record %s was swept but must survive: %v", keep, err)
+		}
+	}
+	requireTest(t, len(result.Preserved) == 1 && result.Preserved[0].ID == pa.ID && result.Preserved[0].Ref == ref,
+		"Preserved=%+v, want one entry for %s at %s", result.Preserved, pa.ID, ref)
+}
+
 func TestReleaseReconcilesInFlightAutomaticCleanup(t *testing.T) {
 	root, creation := newPendingAssignment(t, "release-in-flight")
 	stop := errors.New("crash after removal")

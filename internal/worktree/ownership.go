@@ -331,7 +331,7 @@ func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceip
 			}
 			assignment, resumeFingerprint = &current, cleanup.Fingerprint
 		} else if found {
-			return intent.CleanupReceipt{}, errors.New("cleanup receipt does not authorize release reconciliation")
+			return reconcileOutOfBand(root, repo, request, target, cleanup)
 		}
 	} else if statErr != nil {
 		return intent.CleanupReceipt{}, statErr
@@ -406,6 +406,54 @@ func retainedReleaseError(plan CleanupPlan, request, target string) error {
 	}
 	return fmt.Errorf("worktree retained (%s): %s; resolve the retained state in %s, then re-run: bench worktree release --request %s %s",
 		plan.ReasonCode, reason, target, request, target)
+}
+
+// residualAssignment reports whether a record preserves no work and is therefore safe
+// to compact. Its recovery set is the single source of that judgment — an empty set
+// means residue; a non-empty set means preserved work that must never be silently
+// discarded. Both the release reconcile and the resume sweep consult this one predicate.
+func residualAssignment(a intent.Assignment) bool { return len(a.Recovery) == 0 }
+
+// reconcileOutOfBand resolves a release whose tree was removed out of band — a completed,
+// owned cleanup receipt that does not match the automatic-registration reconcile shape
+// (e.g. a request-less `bench worktree clean --discard-ignored --apply`). A residue
+// record is compacted to a terminal release receipt; a record still holding preserved
+// work is left intact and its recovery command named. See specs/worktree-orphan-reconcile.md.
+func reconcileOutOfBand(root, repo, request, target string, cleanup intent.CleanupReceipt) (intent.CleanupReceipt, error) {
+	unauthorized := errors.New("cleanup receipt does not authorize release reconciliation")
+	if cleanup.State != intent.ReceiptComplete || !cleanup.Owned || cleanup.Assignment == "" {
+		return intent.CleanupReceipt{}, unauthorized
+	}
+	assignment, err := assignmentByID(root, cleanup.Assignment)
+	if err != nil {
+		// The record was already compacted out of band; synthesize the terminal receipt
+		// so a replay of this release is idempotent.
+		completed := intent.Assignment{ID: cleanup.Assignment, Worktree: target, State: intent.StateComplete}
+		receipt := receiptFromRelease(repo, request, completed, string(ActionRemoved))
+		return receipt, intent.PutCleanupReceipt(root, receipt)
+	}
+	if assignment.Request != request || assignment.Worktree != target {
+		return intent.CleanupReceipt{}, unauthorized
+	}
+	if !residualAssignment(assignment) {
+		return intent.CleanupReceipt{}, recoveryPendingError(assignment)
+	}
+	assignment.State = intent.StateComplete
+	if err := intent.PutAssignment(root, assignment); err != nil {
+		return intent.CleanupReceipt{}, err
+	}
+	receipt := receiptFromRelease(repo, request, assignment, string(ActionRemoved))
+	return receipt, intent.PutCleanupReceipt(root, receipt)
+}
+
+// recoveryPendingError names the deliberate recover-or-retire path for a release that
+// cannot compact because its tree was removed out of band while preserved work remains.
+func recoveryPendingError(a intent.Assignment) error {
+	ref := "(none)"
+	if len(a.Recovery) > 0 {
+		ref = a.Recovery[0].Ref
+	}
+	return fmt.Errorf("worktree removed out of band; its work is preserved — recover or retire it: bench worktree recovery %s", ref)
 }
 func renderRelease(stdout io.Writer, assignment intent.Assignment, action string) int {
 	out, err := toon.Table("worktree_release", []string{"path", "assignment", "state", "action"}, [][]string{{assignment.Worktree, assignment.ID, string(assignment.State), action}})

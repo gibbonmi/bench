@@ -330,7 +330,10 @@ func renderResumeSummary(result ResumeResult) string {
 			}
 		}
 	}
-	fmt.Fprintf(&summary, "; failed %d; open assignments %d\n", result.Failed, result.Open)
+	fmt.Fprintf(&summary, "; reconciled %d; failed %d; open assignments %d\n", result.Reconciled, result.Failed, result.Open)
+	for _, orphan := range result.Preserved {
+		fmt.Fprintf(&summary, "preserved %s: bench worktree recovery %s\n", orphan.ID, orphan.Ref)
+	}
 	return summary.String()
 }
 func CreateCommand(root string, args []string, stdout, stderr io.Writer) int {

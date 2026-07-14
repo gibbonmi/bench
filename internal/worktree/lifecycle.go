@@ -21,7 +21,13 @@ type ResumeResult struct {
 	Removed, Recovered int
 	Retained           map[CleanupReason]int
 	Failed, Open       int
+	Reconciled         int
+	Preserved          []PreservedOrphan
 }
+
+// PreservedOrphan names a tree-gone assignment record the sweep left intact because it
+// still holds preserved work; Ref is the recovery pointer to recover or retire.
+type PreservedOrphan struct{ ID, Ref string }
 
 var ErrCleanupInterrupted = errors.New("cleanup interrupted")
 
