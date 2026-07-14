@@ -166,7 +166,12 @@ func TestLoopPersistsIntentBeforeAcquireFailure(t *testing.T) {
 	}
 }
 
-func TestRunPreservingGateMarksRedSessionBeforeReturning(t *testing.T) {
+// TestRunPreservingGateReportsRed pins runPreservingGate's contract after FT79: it
+// reports a red gate's exit code straight through and does nothing to the session
+// itself. Preservation (snapshot-and-release, or retain-and-lock on a snapshot
+// failure) is the caller's job, done once explicitly via preserveAndRecover at the
+// return site — never implied by a flag runPreservingGate sets on its way out.
+func TestRunPreservingGateReportsRed(t *testing.T) {
 	root := t.TempDir()
 	gitCmd := func(args ...string) {
 		t.Helper()
@@ -191,8 +196,8 @@ func TestRunPreservingGateMarksRedSessionBeforeReturning(t *testing.T) {
 	if rc := s.runPreservingGate(); rc == 0 {
 		t.Fatal("red gate returned zero")
 	}
-	if !s.preserve.Load() {
-		t.Fatal("runPreservingGate returned a red result before marking the session for preservation")
+	if s.preserve.Load() {
+		t.Fatal("runPreservingGate must not itself mark the session preserved — that is preserveAndRecover's job")
 	}
 }
 

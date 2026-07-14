@@ -74,12 +74,14 @@ func r12Contention(id, action string) r21ProofCase {
 			_ = os.WriteFile(filepath.Join(ownerGitDir, "release-owner"), nil, 0o644)
 			select {
 			case got := <-done:
-				want := 0
-				if action == "shift" {
-					want = 1
-				}
-				if got.ActionExit != want {
-					t.Errorf("owner result = %+v, want action %d", got, want)
+				// FT79: a blocked shift used to leave its adapter's dirty write behind
+				// on the shared pool worktree (the old red-gate "retain verbatim"
+				// special case), which the owner's later commit phase then picked up
+				// unexpectedly — the only reason this wanted action exit 1 for "shift".
+				// The uniform snapshot-and-release rule now leaves the worktree clean
+				// before the owner's action phase runs, so every action's owner exits 0.
+				if got.ActionExit != 0 {
+					t.Errorf("owner result = %+v, want action 0", got)
 				}
 			case <-time.After(5 * time.Second):
 				t.Errorf("timed out releasing owner")
@@ -124,13 +126,25 @@ func r12Contention(id, action string) r21ProofCase {
 		if action == "shift" {
 			worktreesAfter, _ := benchgit.Output("-C", root, "worktree", "list", "--porcelain")
 			branchesAfter, _ := benchgit.Output("-C", root, "for-each-ref", "--format=%(refname)", "refs/heads")
-			statusAfter, _ := benchgit.Output("-C", ownerRoot, "status", "--porcelain")
-			lease, _ := benchgit.Output("-C", ownerRoot, "rev-parse", "--git-path", "bench-lease")
-			if !strings.Contains(worktreesAfter, ownerRoot) || branchesAfter == branchesBefore || !strings.Contains(statusAfter, "shift-work") {
-				t.Fatalf("blocked shift discarded branch/registration/work")
+			if !strings.Contains(worktreesAfter, ownerRoot) || branchesAfter == branchesBefore {
+				t.Fatalf("blocked shift discarded branch/registration")
 			}
-			if _, err := os.Stat(lease); err != nil {
-				t.Fatalf("blocked shift discarded lease: %v", err)
+			// FT79: gate contention is a red-gate-style post-mutation failure — the
+			// uniform rule snapshots the dirty tree to refs/bench/recovery/<branch> and
+			// releases the pool worktree, rather than retaining it (and its lease)
+			// verbatim as before.
+			recoveryRefs, _ := benchgit.Output("-C", root, "for-each-ref", "--format=%(refname)", "refs/bench/recovery/")
+			if !strings.Contains(recoveryRefs, "refs/bench/recovery/") {
+				t.Fatalf("blocked shift did not snapshot its work to a recovery ref")
+			}
+			ref := strings.TrimSpace(strings.SplitN(recoveryRefs, "\n", 2)[0])
+			tree, _ := benchgit.Output("-C", root, "ls-tree", "-r", "--name-only", ref)
+			if !strings.Contains(tree, "shift-work") {
+				t.Fatalf("blocked shift's recovery snapshot did not preserve shift-work:\n%s", tree)
+			}
+			lease, _ := benchgit.Output("-C", ownerRoot, "rev-parse", "--git-path", "bench-lease")
+			if _, err := os.Stat(lease); err == nil {
+				t.Fatalf("blocked shift did not release its pool lease")
 			}
 		}
 	}}

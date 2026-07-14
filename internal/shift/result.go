@@ -37,9 +37,21 @@ var exitCodes = map[Outcome]int{
 // resultFields is the shift_result block's field order, pinned by the spec.
 var resultFields = []string{"outcome", "exit", "branch", "committed", "iterations_used", "recovery", "detail"}
 
+// RecoveryNone is the one recovery-pointer sentinel meaning "nothing to preserve" — used
+// by the shift_result block, the intent-ledger record, and bench status's rendering, so
+// the three surfaces never drift on what "no recovery" looks like.
+const RecoveryNone = "none"
+
+// recoveryRef and recoveryWorktree are the recovery pointer's only two non-"none"
+// constructors. Every preserving failure builds its pointer through exactly one of
+// these, so the ref-vs-worktree encoding lives in one place.
+func recoveryRef(branch string) string    { return "ref:refs/bench/recovery/" + branch }
+func recoveryWorktree(path string) string { return "worktree:" + path }
+
 // Result is the one value computed at every shift exit path: outcome, branch, committed
-// count, iterations used, recovery pointer, and a short human-readable detail. This
-// slice carries no recovery/snapshot machinery, so Recovery is always "none".
+// count, iterations used, recovery pointer, and a short human-readable detail. Recovery
+// is "none" whenever nothing beyond scratch was dirty, and otherwise one of
+// recoveryRef/recoveryWorktree's pointer strings.
 type Result struct {
 	Outcome        Outcome
 	Branch         string
@@ -65,7 +77,7 @@ func (r Result) Emit(stdout io.Writer) {
 	}
 	recovery := r.Recovery
 	if recovery == "" {
-		recovery = "none"
+		recovery = RecoveryNone
 	}
 	row := []string{
 		string(r.Outcome),

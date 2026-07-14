@@ -1,11 +1,13 @@
 package runtime
 
 import (
+	"encoding/json"
 	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestRuntimeShiftLoopContracts(t *testing.T) {
@@ -31,6 +33,11 @@ func TestRuntimeShiftLoopContracts(t *testing.T) {
 	contract.RunParallel(t, "bench shift adapter-failure after-commit contract", testShiftAdapterFailureAfterCommit)
 	contract.RunParallel(t, "bench shift cap-exhaustion contract", testShiftCapExhaustion)
 	contract.RunParallel(t, "bench shift no-op done contract", testShiftNoOpDone)
+	contract.RunParallel(t, "bench shift distinct recovery per re-run contract", testShiftDistinctRecoveryPerRun)
+	contract.RunParallel(t, "bench shift locked fallback worktree survives resume contract", testShiftLockedFallbackWorktreeSurvivesResume)
+	contract.RunParallel(t, "bench shift wall deadline contract", testShiftWallDeadlineKillsAdapter)
+	contract.RunParallel(t, "bench shift intent and status recovery surfacing contract", testShiftIntentAndStatusSurfaceRecovery)
+	contract.RunParallel(t, "bench shift interrupt-with-mutation recovery contract", testShiftInterruptWithMutationRecovers)
 }
 
 func testShiftGatedLoop(t *testing.T) {
@@ -94,13 +101,18 @@ printf 'work\n' > "step $n [a].txt"
 
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "preserving iteration 1")
-	wt := shiftWorktree(t, probe.Stdout)
+	branch := shiftBranchFromStart(t, probe.Stdout)
+	ref := "refs/bench/recovery/" + branch
+	f.Git("show-ref", "--verify", ref)
+	tree := f.Git("ls-tree", "-r", "--name-only", ref).Stdout
 	for _, path := range []string{"step 1 [a].txt", "gate-artifact.txt"} {
-		if _, err := os.Stat(filepath.Join(wt, path)); err != nil {
-			t.Fatalf("failed gate did not preserve %s: %v", path, err)
+		if !strings.Contains(tree, path) {
+			t.Fatalf("recovery snapshot did not preserve %s:\n%s", path, tree)
 		}
 	}
-	requireRegisteredWorktree(t, f, wt)
+	requireShiftResult(t, probe.Stdout, "failed,\"1\","+branch+",\"0\",\"1\",\"ref:"+ref+"\",")
+	probe.RequireContains(probe.Stdout, "recovery: ref:"+ref)
+	requireNoLease(t, home)
 }
 
 func testShiftRedRollback(t *testing.T) {
@@ -116,20 +128,33 @@ func testShiftRedRollback(t *testing.T) {
 
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stdout, "gate failed")
-	wt := shiftWorktree(t, probe.Stdout)
 	requireEqual(t, strings.TrimSpace(f.Git("branch", "--show-current").Stdout), beforeBranch, "red shift changed the main checkout branch")
 	requireEqual(t, strings.TrimSpace(f.Git("rev-parse", "HEAD").Stdout), beforeHead, "red shift moved main checkout HEAD")
 	requireEqual(t, f.Git("status", "--porcelain").Stdout, beforeStatus, "red shift dirtied the main checkout")
-	if _, err := os.Stat(filepath.Join(wt, "red.txt")); err != nil {
-		t.Fatalf("red shift did not preserve work: %v", err)
+	// Row 1: a red-gate iteration snapshots the dirty tree to refs/bench/recovery/<branch>
+	// and releases the pool worktree — replacing the old preserve-worktree special case.
+	branch := shiftBranchFromStart(t, probe.Stdout)
+	ref := "refs/bench/recovery/" + branch
+	f.Git("show-ref", "--verify", ref)
+	tree := f.Git("ls-tree", "-r", "--name-only", ref).Stdout
+	if !strings.Contains(tree, "red.txt") {
+		t.Fatalf("recovery snapshot did not preserve red.txt:\n%s", tree)
 	}
-	requireRegisteredWorktree(t, f, wt)
+	// Row 1,5: the shift_result recovery cell and the printed location both name the ref.
+	requireShiftResult(t, probe.Stdout, "failed,\"1\","+branch+",\"0\",\"1\",\"ref:"+ref+"\",")
+	probe.RequireContains(probe.Stdout, "recovery: ref:"+ref)
+	requireNoLease(t, home)
 }
 
 func testShiftCommitFailure(t *testing.T) {
 	f := shiftFixture(t, "#!/usr/bin/env bash\nexit 0\n")
 	f.WriteExecutable("agent", "#!/usr/bin/env bash\nprintf 'work\\n' > work.txt\n")
 	f.CommitAll("agent")
+	// Row 2: the snapshot is built with an explicit synthetic identity under plumbing, so
+	// it survives exactly where an ordinary commit blocks — both a missing Git identity
+	// and a failing commit hook. Written after the fixture's own setup commit, so it
+	// blocks only the shift's iteration commit, not fixture setup.
+	f.WriteExecutable(".git/hooks/pre-commit", "#!/usr/bin/env bash\nexit 1\n")
 	home := t.TempDir()
 	cleanHome := t.TempDir()
 	cleanXDG := t.TempDir()
@@ -144,6 +169,13 @@ func testShiftCommitFailure(t *testing.T) {
 	probe.RequireExit(1)
 	probe.RequireContains(probe.Stderr, "could not commit iteration 1")
 	probe.RequireNotContains(probe.Stdout, "1 committed iteration(s)")
+	branch := shiftBranchFromStart(t, probe.Stdout)
+	ref := "refs/bench/recovery/" + branch
+	f.Git("show-ref", "--verify", ref)
+	tree := f.Git("ls-tree", "-r", "--name-only", ref).Stdout
+	if !strings.Contains(tree, "work.txt") {
+		t.Fatalf("recovery snapshot did not survive the identity/hook failure that blocked the commit:\n%s", tree)
+	}
 	requireNoLease(t, home)
 }
 
@@ -233,10 +265,11 @@ exit 0
 	if _, err := os.Stat(filepath.Join(wt, "late-gate-write.txt")); err == nil {
 		t.Fatal("gate child kept running after cancellation and dirtied the pooled worktree")
 	}
-	if dirty := runGitAt(t, wt, "status", "--porcelain"); !strings.Contains(dirty, ".bench-objective") || !strings.Contains(dirty, ".bench-notes.md") {
-		t.Fatalf("gate-interrupted pooled worktree did not preserve shift scratch:\n%s", dirty)
-	}
-	requireRegisteredWorktree(t, f, wt)
+	// Nothing beyond scratch is dirty here (BENCH_AGENT=true never mutates), so the
+	// uniform rule releases the worktree normally instead of retaining it — replacing the
+	// old assertion that the scratch survived in a permanently-preserved worktree.
+	requireShiftResult(t, probe.Stdout, "interrupted,\"130\","+shiftBranchFromStart(t, probe.Stdout)+",\"0\",\"1\",none,")
+	requireNoLease(t, home)
 }
 
 func testShiftDoneEarlyCompletion(t *testing.T) {
@@ -282,13 +315,25 @@ fi
 	probe := f.BenchEnv(map[string]string{"BENCH_TEST_STATE": state, "BENCH_AGENT": filepath.Join(f.Root, "agent"), "BENCH_MAX_ITERS": "2", "BENCH_HOME": home}, "shift", "survive")
 
 	probe.RequireExit(1)
-	wt := shiftWorktree(t, probe.Stdout)
-	for _, path := range []string{".bench-notes.md", ".bench-objective", "junk.txt"} {
-		if _, err := os.Stat(filepath.Join(wt, path)); err != nil {
-			t.Fatalf("red gate did not preserve %s: %v", path, err)
+	// The scratch-survives-a-red-iteration mechanic (a later iteration inside one run
+	// still reads what a prior one learned) is rollback's and is unchanged by FT79 — it
+	// never fires in this single-red-iteration fixture, since a red main-loop gate exits
+	// the shift rather than retrying. What changes here is where the final red exit's
+	// evidence lands: a recovery snapshot of the agent's mutation, scratch excluded by
+	// design, not the physical (now-released) worktree.
+	branch := shiftBranchFromStart(t, probe.Stdout)
+	ref := "refs/bench/recovery/" + branch
+	f.Git("show-ref", "--verify", ref)
+	tree := f.Git("ls-tree", "-r", "--name-only", ref).Stdout
+	if !strings.Contains(tree, "junk.txt") {
+		t.Fatalf("recovery snapshot did not preserve junk.txt:\n%s", tree)
+	}
+	for _, path := range []string{".bench-notes.md", ".bench-objective"} {
+		if strings.Contains(tree, path) {
+			t.Fatalf("recovery snapshot rode scratch %s into the tree:\n%s", path, tree)
 		}
 	}
-	requireRegisteredWorktree(t, f, wt)
+	requireNoLease(t, home)
 }
 
 func testShiftRefactorPromptScope(t *testing.T) {
@@ -321,6 +366,164 @@ if [ ! -f made-big ]; then seq 401 | sed 's/^/x = /' > touched.py; : > made-big;
 	if strings.Contains(refactor, "Run `bench structure` to see the flagged files") {
 		t.Fatal("refactor prompt still points at repo-wide structure output")
 	}
+}
+
+// testShiftDistinctRecoveryPerRun covers row 3,18: two preserving shifts in one fixture
+// get distinct branches and distinct recovery refs, and the first ref still resolves to
+// its original commit after the second shift runs. Branch names are per-second, so the
+// two runs wait apart.
+func testShiftDistinctRecoveryPerRun(t *testing.T) {
+	f := shiftFixture(t, "#!/usr/bin/env bash\nexit 1\n")
+	f.WriteExecutable("agent", "#!/usr/bin/env bash\nprintf 'red\\n' > red.txt\n")
+	f.CommitAll("agent")
+	home := t.TempDir()
+	env := map[string]string{"BENCH_AGENT": filepath.Join(f.Root, "agent"), "BENCH_MAX_ITERS": "1", "BENCH_HOME": home}
+
+	first := f.BenchEnv(env, "shift", "first red")
+	first.RequireExit(1)
+	firstBranch := shiftBranchFromStart(t, first.Stdout)
+	firstRef := "refs/bench/recovery/" + firstBranch
+	firstOID := strings.TrimSpace(f.Git("rev-parse", "--verify", firstRef).Stdout)
+
+	waitSeconds(t, 1)
+
+	second := f.BenchEnv(env, "shift", "second red")
+	second.RequireExit(1)
+	secondBranch := shiftBranchFromStart(t, second.Stdout)
+	secondRef := "refs/bench/recovery/" + secondBranch
+
+	if firstBranch == secondBranch {
+		t.Fatalf("two shifts in one fixture reused the same branch: %s", firstBranch)
+	}
+	if firstRef == secondRef {
+		t.Fatalf("two shifts in one fixture reused the same recovery ref: %s", firstRef)
+	}
+	f.Git("show-ref", "--verify", secondRef)
+	if got := strings.TrimSpace(f.Git("rev-parse", "--verify", firstRef).Stdout); got != firstOID {
+		t.Fatalf("the second shift disturbed the first shift's recovery ref: got %s want %s", got, firstOID)
+	}
+}
+
+// testShiftLockedFallbackWorktreeSurvivesResume covers row 4,18's resume half: a locked
+// worktree with no owner marker — exactly what the retain-and-lock fallback leaves
+// behind when a snapshot itself fails — classifies as ReasonUnexpectedLock and is
+// retained, never removed, by bench resume-clean.
+func testShiftLockedFallbackWorktreeSurvivesResume(t *testing.T) {
+	f := onMainFixture(t)
+	wt := filepath.Join(t.TempDir(), "fallback-worktree")
+	f.Git("worktree", "add", "-q", "--detach", wt)
+	f.Git("worktree", "lock", "--reason", "bench shift recovery: snapshot failed", wt)
+
+	out := f.Bench("resume-clean")
+	out.RequireExit(0)
+
+	porcelain := f.Git("worktree", "list", "--porcelain").Stdout
+	if !strings.Contains(porcelain, "worktree "+wt) {
+		t.Fatalf("resume-clean removed the locked fallback worktree:\n%s", porcelain)
+	}
+	if !strings.Contains(porcelain, "locked") {
+		t.Fatalf("resume-clean unlocked the fallback worktree:\n%s", porcelain)
+	}
+}
+
+// testShiftWallDeadlineKillsAdapter covers row 8: a sleeping adapter under a tiny
+// BENCH_MAX_WALL is killed, its prior mutation is snapshotted, the shift exits
+// incomplete/3 with a deadline detail, and the adapter does not keep running past exit.
+func testShiftWallDeadlineKillsAdapter(t *testing.T) {
+	f := shiftFixture(t, "#!/usr/bin/env bash\nexit 0\n")
+	f.WriteExecutable("agent", "#!/usr/bin/env bash\nprintf 'partial\\n' > partial.txt\nsleep 3\nprintf 'late\\n' > late.txt\n")
+	f.CommitAll("agent")
+	home := t.TempDir()
+
+	start := time.Now()
+	probe := f.BenchEnv(map[string]string{"BENCH_AGENT": filepath.Join(f.Root, "agent"), "BENCH_MAX_ITERS": "2", "BENCH_MAX_WALL": "1s", "BENCH_HOME": home}, "shift", "wall deadline")
+	elapsed := time.Since(start)
+
+	probe.RequireExit(3)
+	if elapsed > 15*time.Second {
+		t.Fatalf("shift did not honor the wall deadline promptly: %s elapsed", elapsed)
+	}
+	probe.RequireContains(probe.Stdout, "deadline")
+	wt := shiftWorktree(t, probe.Stdout)
+	branch := shiftBranchFromStart(t, probe.Stdout)
+	waitSeconds(t, 4)
+	if _, err := os.Stat(filepath.Join(wt, "late.txt")); err == nil {
+		t.Fatal("adapter kept running after the wall deadline and dirtied the pooled worktree")
+	}
+	ref := "refs/bench/recovery/" + branch
+	f.Git("show-ref", "--verify", ref)
+	requireNoLease(t, home)
+}
+
+// testShiftIntentAndStatusSurfaceRecovery covers row 17: a preserving shift's outcome
+// and recovery pointer land on its intent-ledger entry, and bench status renders the
+// pointer, so a preserved shift is discoverable after the terminal is gone.
+func testShiftIntentAndStatusSurfaceRecovery(t *testing.T) {
+	f := shiftFixture(t, "#!/usr/bin/env bash\nexit 1\n")
+	f.WriteExecutable("agent", "#!/usr/bin/env bash\nprintf 'work\\n' > work.txt\n")
+	f.CommitAll("agent")
+	home := t.TempDir()
+
+	probe := f.BenchEnv(map[string]string{"BENCH_AGENT": filepath.Join(f.Root, "agent"), "BENCH_MAX_ITERS": "1", "BENCH_HOME": home}, "shift", "surface recovery")
+	probe.RequireExit(1)
+	branch := shiftBranchFromStart(t, probe.Stdout)
+	pointer := "ref:refs/bench/recovery/" + branch
+
+	ledgerPath := filepath.Join(gitDir(t, f), "bench-intent.json")
+	data, err := os.ReadFile(ledgerPath)
+	if err != nil {
+		t.Fatalf("read intent ledger: %v", err)
+	}
+	var ledger struct {
+		Entries []struct{ Objective, Outcome, Recovery string }
+	}
+	if err := json.Unmarshal(data, &ledger); err != nil {
+		t.Fatalf("decode intent ledger: %v", err)
+	}
+	found := false
+	for _, e := range ledger.Entries {
+		if e.Objective != "surface recovery" {
+			continue
+		}
+		found = true
+		if e.Outcome != "failed" || e.Recovery != pointer {
+			t.Fatalf("intent entry = %+v, want outcome=failed recovery=%s", e, pointer)
+		}
+	}
+	if !found {
+		t.Fatal("intent ledger is missing the shift entry")
+	}
+
+	status := f.BenchEnv(map[string]string{"BENCH_HOME": home}, "status")
+	status.RequireExit(0)
+	status.RequireContains(status.Stdout, pointer)
+}
+
+// testShiftInterruptWithMutationRecovers extends the interrupt contracts: an interrupt
+// that lands after the adapter has already mutated the tree still snapshots the
+// mutation (scratch excluded) before releasing the pool worktree.
+func testShiftInterruptWithMutationRecovers(t *testing.T) {
+	f := shiftFixture(t, "#!/usr/bin/env bash\nexit 0\n")
+	f.WriteExecutable("interrupt-agent", "#!/usr/bin/env bash\nprintf 'work\\n' > work.txt\nkill -INT \"$PPID\"\nexit 130\n")
+	f.CommitAll("agent")
+	home := t.TempDir()
+
+	probe := f.BenchEnv(map[string]string{"BENCH_AGENT": filepath.Join(f.Root, "interrupt-agent"), "BENCH_MAX_ITERS": "1", "BENCH_HOME": home}, "shift", "interrupt with mutation")
+
+	probe.RequireExit(130)
+	branch := shiftBranchFromStart(t, probe.Stdout)
+	ref := "refs/bench/recovery/" + branch
+	f.Git("show-ref", "--verify", ref)
+	tree := f.Git("ls-tree", "-r", "--name-only", ref).Stdout
+	if !strings.Contains(tree, "work.txt") {
+		t.Fatalf("interrupted shift did not snapshot the adapter's mutation:\n%s", tree)
+	}
+	for _, path := range []string{".bench-notes.md", ".bench-objective"} {
+		if strings.Contains(tree, path) {
+			t.Fatalf("interrupted shift's snapshot rode scratch %s into the tree:\n%s", path, tree)
+		}
+	}
+	requireNoLease(t, home)
 }
 
 // requireNoShiftBranch asserts no branch matching bench/shift-* exists — the signal

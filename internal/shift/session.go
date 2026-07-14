@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/gate"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/structure"
 	"github.com/gibbonmi/bench/internal/worktree"
@@ -69,8 +70,14 @@ type session struct {
 	adapter     *exec.Cmd // the in-flight adapter child, or nil between runs
 	cancelGate  context.CancelFunc
 	interrupted atomic.Bool // set by the signal handler; parks the loop at its checkpoints
+	deadline    atomic.Bool // set by the wall timer; parks the loop like interrupted, but reads as incomplete
 	teardownOne sync.Once
-	preserve    atomic.Bool // a failed oracle transaction retains the charged worktree verbatim
+	// preserve marks that this session's charged worktree has already been finalized —
+	// snapshotted and released, or retained and locked — by preserveAndRecover. Every
+	// post-mutation exit path calls preserveAndRecover explicitly and sets this itself;
+	// the deferred cleanup in Loop only runs teardown when this is still false, so a
+	// retained worktree is never re-cleaned and a released one is never released twice.
+	preserve atomic.Bool
 
 	committed      int // main-loop commits this shift; the "committed" evidence for the taxonomy
 	iterationsUsed int // the highest iteration number this shift entered
@@ -112,7 +119,10 @@ func (s *session) refactorPhase(base string, rcap int) error {
 		post := dirtyPaths(s.root)
 		if s.runGate() == 0 {
 			s.checkpoint()
-			stageTouched(s.root, pre, post)
+			if err := stageTouched(s.root, pre, post); err != nil {
+				fmt.Fprintf(s.stderr, "could not stage refactor %d: %v\n", r, err)
+				return fmt.Errorf("could not stage refactor pass %d", r)
+			}
 			if nothingStaged(s.root) {
 				fmt.Fprintf(s.stdout, "  gate green, refactor %d made no staged change - stopping refactor phase\n", r)
 				break
@@ -185,9 +195,6 @@ func (s *session) runGate() int {
 	s.cancelGate = cancel
 	s.mu.Unlock()
 	rc := gate.RunAndRecordContext(ctx, s.root, s.stdout, s.stderr)
-	if ctx.Err() != nil {
-		s.preserve.Store(true)
-	}
 	s.mu.Lock()
 	s.cancelGate = nil
 	s.mu.Unlock()
@@ -195,15 +202,12 @@ func (s *session) runGate() int {
 	return rc
 }
 
-// runPreservingGate records a failed iteration's ownership before returning control
-// to the caller, so an interrupt at the next checkpoint cannot release its worktree.
-// Refactor probes use runGate directly because their red result is rolled back.
+// runPreservingGate names the call sites whose red result must propagate through the
+// evidence-split preservation path (evidenceResult), as opposed to the refactor probe's
+// runGate, whose red result is rolled back by design. Both share one implementation
+// today; preservation itself happens once, explicitly, at each caller's return site.
 func (s *session) runPreservingGate() int {
-	rc := s.runGate()
-	if rc != 0 {
-		s.preserve.Store(true)
-	}
-	return rc
+	return s.runGate()
 }
 
 func (s *session) cancelRunningGate() {
@@ -211,45 +215,103 @@ func (s *session) cancelRunningGate() {
 	cancel := s.cancelGate
 	s.mu.Unlock()
 	if cancel != nil {
-		s.preserve.Store(true)
 		cancel()
 	}
 }
 
-// checkpoint exits when a signal has been caught, after the running adapter or gate
-// has been signaled. This is the well-defined point (mirroring bash's
-// trap-between-commands) at which an interrupt takes effect. os.Exit skips deferred
-// cleanup, so the shift_result block and the intent outcome are emitted and recorded
-// explicitly here, never left to a defer.
+// checkpoint exits when a signal or the wall deadline has fired, after the running
+// adapter or gate has already been signaled/cancelled. This is the well-defined point
+// (mirroring bash's trap-between-commands) at which an interrupt or deadline takes
+// effect. os.Exit skips deferred cleanup, so preservation, the shift_result block, and
+// the intent outcome are all run and recorded explicitly here, never left to a defer.
 func (s *session) checkpoint() {
-	if s.interrupted.Load() {
-		if !s.preserve.Load() {
-			s.teardown()
-		}
-		res := Result{
-			Outcome:        OutcomeInterrupted,
-			Branch:         s.branch,
-			Committed:      s.committed,
-			IterationsUsed: s.iterationsUsed,
-			Recovery:       "none",
-			Detail:         "interrupted by signal",
-		}
-		res.Emit(s.stdout)
-		if s.entry != nil {
-			s.entry.Outcome = string(res.Outcome)
-			_ = intent.Upsert(s.mainRoot, *s.entry)
-		}
-		os.Exit(130)
+	switch {
+	case s.deadline.Load():
+		s.exitPreserving(OutcomeIncomplete, "wall deadline exceeded")
+	case s.interrupted.Load():
+		s.exitPreserving(OutcomeInterrupted, "interrupted by signal")
 	}
 }
 
+// exitPreserving is checkpoint's shared exit path for both a signal and a wall-deadline
+// trip: it preserves any dirty work, resolves the outcome (a teardown failure here still
+// resolves to failed/1, same as every other exit path), emits and records the result,
+// and exits with the outcome's pinned code.
+func (s *session) exitPreserving(outcome Outcome, detail string) {
+	recovery, teardownErr := s.preserveAndRecover(detail)
+	res := Result{Outcome: outcome, Branch: s.branch, Committed: s.committed, IterationsUsed: s.iterationsUsed, Recovery: recovery, Detail: detail}
+	if teardownErr != nil {
+		res = teardownFailureResult(s, recovery, teardownErr)
+	}
+	res.Emit(s.stdout)
+	if s.entry != nil {
+		s.entry.Outcome = string(res.Outcome)
+		s.entry.Recovery = res.Recovery
+		_ = intent.Upsert(s.mainRoot, *s.entry)
+	}
+	os.Exit(res.ExitCode())
+}
+
 // teardown removes the shift scratch and releases the pool lease, exactly once whether
-// reached by the normal path, the deferred cleanup, or the signal handler.
-func (s *session) teardown() {
+// reached by the normal path, the deferred cleanup, or preserveAndRecover. It returns
+// the first error hit — today only the injectable teardown fault, since worktree.Release
+// does not itself report git failures — so a real teardown problem is reported rather
+// than silently swallowed. A second call (the deferred safety net, once preserve is
+// already set) is a no-op via sync.Once and returns nil.
+func (s *session) teardown() error {
+	var err error
 	s.teardownOne.Do(func() {
 		cleanupScratch(s.root)
+		if ferr := hitShift(shiftFault, stepTeardown); ferr != nil {
+			err = ferr
+			return
+		}
 		worktree.Release(s.root)
 	})
+	return err
+}
+
+// preserveAndRecover is the one place a post-mutation failure preserves work before this
+// session's charged worktree leaves the process's hands. When nothing beyond scratch is
+// dirty, it releases through teardown and reports RecoveryNone. Otherwise it snapshots
+// the dirty tree (scratch excluded) to refs/bench/recovery/<branch>, parented on the
+// branch tip, and — only on success — releases through teardown the same way. Only when
+// the snapshot itself fails does it retain and lock the worktree instead: the only legal
+// response to a snapshot failure, and it never runs teardown/Release in that case. It
+// always prints the resulting location and marks the session so the deferred cleanup
+// never re-finalizes this worktree.
+func (s *session) preserveAndRecover(reason string) (recovery string, teardownErr error) {
+	defer s.preserve.Store(true)
+	if len(dirtyPaths(s.root)) == 0 {
+		return RecoveryNone, s.teardown()
+	}
+	ref := "refs/bench/recovery/" + s.branch
+	parent, err := git.Output("-C", s.root, "rev-parse", "HEAD")
+	if err == nil {
+		if _, snapErr := worktree.SnapshotDirty(s.root, parent, ref, scratchExcludeList()); snapErr == nil {
+			fmt.Fprintf(s.stdout, "  recovery: %s\n", recoveryRef(s.branch))
+			return recoveryRef(s.branch), s.teardown()
+		} else {
+			err = snapErr
+		}
+	}
+	if lockErr := worktree.RetainAndLock(s.root, "bench shift recovery: "+reason); lockErr != nil {
+		fmt.Fprintf(s.stderr, "could not retain worktree %s after snapshot failure: %v (snapshot error: %v)\n", s.root, lockErr, err)
+	}
+	fmt.Fprintf(s.stdout, "  recovery: %s\n", recoveryWorktree(s.root))
+	return recoveryWorktree(s.root), nil
+}
+
+// teardownFailureResult is the one Result a teardown error resolves to, regardless of
+// what post-mutation path reached it: outcome failed/1, with a detail naming what is
+// already safe — the branch, and the recovery pointer when one exists — since the
+// teardown failure is real even when the work is not lost.
+func teardownFailureResult(s *session, recovery string, err error) Result {
+	detail := fmt.Sprintf("teardown failed: %v; branch %s is safe", err, s.branch)
+	if recovery != "" && recovery != RecoveryNone {
+		detail += "; recovery " + recovery
+	}
+	return Result{Outcome: OutcomeFailed, Branch: s.branch, Committed: s.committed, IterationsUsed: s.iterationsUsed, Recovery: recovery, Detail: detail}
 }
 
 // nothingStaged reports whether the index has no staged changes — the "gate green, no

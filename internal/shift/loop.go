@@ -23,6 +23,7 @@ func finish(stdout io.Writer, mainRoot string, entry *intent.Entry, res Result) 
 	res.Emit(stdout)
 	if entry != nil {
 		entry.Outcome = string(res.Outcome)
+		entry.Recovery = res.Recovery
 		_ = intent.Upsert(mainRoot, *entry)
 	}
 	return res.ExitCode()
@@ -34,15 +35,22 @@ func usage(stdout io.Writer, detail string) int {
 	return finish(stdout, "", nil, Result{Outcome: OutcomeUsage, Detail: detail})
 }
 
-// evidenceResult builds the Result for a post-mutation failure, split by the session's
-// committed count per the evidence rule.
+// evidenceResult is the one place a post-mutation failure both preserves the dirty tree
+// (snapshot-and-release, or retain-and-lock on a snapshot failure — preserveAndRecover's
+// uniform rule) and builds the Result, split by the session's committed count per the
+// evidence rule. A teardown failure on the release side still resolves to failed/1,
+// regardless of the evidence split, per teardownFailureResult.
 func evidenceResult(s *session, detail string) Result {
+	recovery, teardownErr := s.preserveAndRecover(detail)
+	if teardownErr != nil {
+		return teardownFailureResult(s, recovery, teardownErr)
+	}
 	return Result{
 		Outcome:        evidenceOutcome(s.committed),
 		Branch:         s.branch,
 		Committed:      s.committed,
 		IterationsUsed: s.iterationsUsed,
-		Recovery:       "none",
+		Recovery:       recovery,
 		Detail:         detail,
 	}
 }
@@ -68,7 +76,8 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return usage(stdout, err.Error())
 	}
-	if _, err := parseWallDuration("BENCH_MAX_WALL", maxWallDefault, maxWallCap); err != nil {
+	wallDur, err := parseWallDuration("BENCH_MAX_WALL", maxWallDefault, maxWallCap)
+	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return usage(stdout, err.Error())
 	}
@@ -153,9 +162,19 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 	}()
 	defer func() {
 		if !s.preserve.Load() {
-			s.teardown()
+			_ = s.teardown()
 		}
 	}()
+
+	// The wall deadline: on expiry it acts like a pulled line — kill the adapter process
+	// group and cancel a running gate — but sets deadline rather than interrupted, so the
+	// next checkpoint resolves incomplete/3 with a deadline detail, not interrupted/130.
+	wallTimer := time.AfterFunc(wallDur, func() {
+		s.deadline.Store(true)
+		s.killAdapter(syscall.SIGTERM)
+		s.cancelRunningGate()
+	})
+	defer wallTimer.Stop()
 
 	fmt.Fprintf(stdout, "▶ shift on %s — objective: %s\n", branch, objective)
 	fmt.Fprintf(stdout, "  worktree: %s\n", wt)
@@ -176,7 +195,10 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 		post := dirtyPaths(wt)
 		if s.runPreservingGate() == 0 {
 			s.checkpoint()
-			stageTouched(wt, pre, post)
+			if err := stageTouched(wt, pre, post); err != nil {
+				fmt.Fprintf(stderr, "could not stage iteration %d: %v\n", i, err)
+				return finish(stdout, mainRoot, &intentEntry, evidenceResult(s, fmt.Sprintf("could not stage iteration %d", i)))
+			}
 			if nothingStaged(wt) {
 				if adapterErr == nil {
 					if objectiveMet(wt, objective) {
@@ -219,7 +241,6 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 
 	if stopReason == "adapter-failed" {
-		s.teardown()
 		return finish(stdout, mainRoot, &intentEntry, evidenceResult(s, stopDetail))
 	}
 
@@ -227,7 +248,10 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 		return finish(stdout, mainRoot, &intentEntry, evidenceResult(s, err.Error()))
 	}
 
-	s.teardown()
+	recovery, teardownErr := s.preserveAndRecover("shift teardown")
+	if teardownErr != nil {
+		return finish(stdout, mainRoot, &intentEntry, teardownFailureResult(s, recovery, teardownErr))
+	}
 	fmt.Fprintf(stdout, "■ shift done: %s, %d committed iteration(s), %dm elapsed\n", branch, s.committed, int(time.Since(started).Minutes()))
 	fmt.Fprintf(stdout, "  review: git -C %s log --oneline %s..%s\n", mainRoot, base, branch)
 	fmt.Fprintln(stdout, "  the merge is yours.")
@@ -242,6 +266,6 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 		outcome = OutcomeNoOp
 	}
 	return finish(stdout, mainRoot, &intentEntry, Result{
-		Outcome: outcome, Branch: branch, Committed: s.committed, IterationsUsed: s.iterationsUsed, Recovery: "none", Detail: detail,
+		Outcome: outcome, Branch: branch, Committed: s.committed, IterationsUsed: s.iterationsUsed, Recovery: recovery, Detail: detail,
 	})
 }
