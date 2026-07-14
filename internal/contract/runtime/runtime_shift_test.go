@@ -29,6 +29,7 @@ func TestRuntimeShiftLoopContracts(t *testing.T) {
 	contract.RunParallel(t, "bench shift control-byte objective usage contract", testShiftControlByteObjective)
 	contract.RunParallel(t, "bench shift invalid env usage contract", testShiftInvalidEnvUsage)
 	contract.RunParallel(t, "bench shift empty env default contract", testShiftEmptyEnvDefault)
+	contract.RunParallel(t, "bench shift max-wall inclusive bound contract", testShiftMaxWallInclusiveBound)
 	contract.RunParallel(t, "bench shift complete result contract", testShiftCompleteResult)
 	contract.RunParallel(t, "bench shift adapter-failure zero-commit contract", testShiftAdapterFailureZeroCommit)
 	contract.RunParallel(t, "bench shift adapter spawn-failure contract", testShiftAdapterSpawnFailure)
@@ -651,6 +652,11 @@ func testShiftInvalidEnvUsage(t *testing.T) {
 	}{
 		{"zero iters", map[string]string{"BENCH_MAX_ITERS": "0"}, "BENCH_MAX_ITERS"},
 		{"non-integer iters", map[string]string{"BENCH_MAX_ITERS": "abc"}, "BENCH_MAX_ITERS"},
+		{"iters over max", map[string]string{"BENCH_MAX_ITERS": "101"}, "BENCH_MAX_ITERS"},
+		{"zero refactor iters", map[string]string{"BENCH_REFACTOR_ITERS": "0"}, "BENCH_REFACTOR_ITERS"},
+		{"wall unparseable", map[string]string{"BENCH_MAX_WALL": "abc"}, "BENCH_MAX_WALL"},
+		{"wall zero", map[string]string{"BENCH_MAX_WALL": "0s"}, "BENCH_MAX_WALL"},
+		{"wall negative", map[string]string{"BENCH_MAX_WALL": "-5m"}, "BENCH_MAX_WALL"},
 		{"wall over bound", map[string]string{"BENCH_MAX_WALL": "48h"}, "BENCH_MAX_WALL"},
 	}
 	for _, tc := range cases {
@@ -683,6 +689,20 @@ func testShiftEmptyEnvDefault(t *testing.T) {
 	// the point of this row is that "" behaves as unset (no exit 2), not that the
 	// default numeric cap is visible in the output.
 	probe := f.BenchEnv(map[string]string{"BENCH_AGENT": "true", "BENCH_MAX_ITERS": "", "BENCH_HOME": home}, "shift", "objective")
+
+	probe.RequireExit(4)
+}
+
+// testShiftMaxWallInclusiveBound covers row 11's accept case: BENCH_MAX_WALL=24h sits
+// exactly on the accepted upper bound, so it must run normally rather than exit 2 — an
+// off-by-one on the inclusive bound would reject this legal value.
+func testShiftMaxWallInclusiveBound(t *testing.T) {
+	f := shiftFixture(t, "#!/usr/bin/env bash\nexit 0\n")
+	home := t.TempDir()
+
+	// No adapter mutation ever lands, so the honest end state is no-op/4 — the point of
+	// this row is that 24h is accepted (no exit 2), not the numeric cap itself.
+	probe := f.BenchEnv(map[string]string{"BENCH_AGENT": "true", "BENCH_MAX_WALL": "24h", "BENCH_HOME": home}, "shift", "objective")
 
 	probe.RequireExit(4)
 }
