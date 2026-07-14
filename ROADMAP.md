@@ -327,6 +327,7 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — specify FT79, lossless shift recovery.
+1. `/bench-write-spec` — FT79, lossless shift recovery; its decision map is
+   complete.
 2. `/bench-shape-idea` — specify FT80, static bounded guard discovery.
 3. `/bench-shape-idea` — specify FT81, the platform-correct distributable runtime.

@@ -8,6 +8,16 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-14, scope: FT79 decision-map reconcile).** No roadmap
+  row shipped; the only tree change since the prior reconcile is FT79's
+  completed decision map, so all 18 rows remain current and the FT6, FT24, FT8,
+  and FT38 triggers remain unmet. IDEAS.md was already empty, so zero ideas
+  drained, and the journal had zero open entries, so there were no verdicts. The
+  previous run promoted no rows, and the existing FT65 and FT66 promotion-build
+  records remain present. The refreshed sequence is FT79 through
+  `/bench-write-spec` (its decision map is complete), then FT80 and FT81 through
+  `/bench-shape-idea`.
+
 - **Roadmap reconcile (2026-07-13, scope: post-FT78 retirement and cold-session
   continuity).** Removed FT78 after `bench spec history
   oracle-bound-gate-verdicts` returned its retirement record at `3fa8dec`; the
