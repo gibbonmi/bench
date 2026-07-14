@@ -235,8 +235,13 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 			}
 		} else {
 			s.checkpoint()
-			fmt.Fprintf(stdout, "  ✗ gate failed — preserving iteration %d in %s\n", i, wt)
-			return finish(stdout, mainRoot, &intentEntry, evidenceResult(s, fmt.Sprintf("gate failed on iteration %d; preserved in %s", i, wt)))
+			// Neither the human line nor the detail may name the pool worktree as the
+			// preservation site: on the snapshot path it is released and cleaned right
+			// after. The location is the "recovery:" line preserveAndRecover prints
+			// (the ref, or the retained worktree path on the fallback) plus the
+			// shift_result recovery cell — never this message.
+			fmt.Fprintf(stdout, "  ✗ gate failed — snapshotting iteration %d\n", i)
+			return finish(stdout, mainRoot, &intentEntry, evidenceResult(s, fmt.Sprintf("gate failed on iteration %d", i)))
 		}
 	}
 

@@ -100,7 +100,9 @@ printf 'work\n' > "step $n [a].txt"
 	probe := f.BenchEnv(map[string]string{"BENCH_AGENT": filepath.Join(f.Root, "agent"), "BENCH_MAX_ITERS": "2", "BENCH_HOME": home}, "shift", "stage-touched")
 
 	probe.RequireExit(1)
-	probe.RequireContains(probe.Stdout, "preserving iteration 1")
+	probe.RequireContains(probe.Stdout, "snapshotting iteration 1")
+	// The released pool worktree must never be advertised as the preservation site.
+	probe.RequireNotContains(probe.Stdout, "preserved in")
 	branch := shiftBranchFromStart(t, probe.Stdout)
 	ref := "refs/bench/recovery/" + branch
 	f.Git("show-ref", "--verify", ref)

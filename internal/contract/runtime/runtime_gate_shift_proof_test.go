@@ -47,7 +47,7 @@ func proveShiftResult(t *testing.T, variant string) {
 		t.Fatalf("%s shift exit = %d, want 1\n%s%s", variant, probe.ExitCode, probe.Stdout, probe.Stderr)
 	}
 	want := map[string]string{
-		"red":         "gate failed — preserving iteration 1",
+		"red":         "gate failed — snapshotting iteration 1",
 		"lock":        "gate execution already in progress",
 		"persistence": "gate pending persistence failed",
 		"drift":       "gate subject changed during execution",
