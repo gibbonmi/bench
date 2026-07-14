@@ -1,1 +1,2 @@
 - 2026-07-14  gate wall-clock (~4 min full suite) is too long for small diffs — conformance ~100s and runtime contracts ~123s dominate; investigate phase parallelism/caching or scoped verdicts without weakening the oracle
+- 2026-07-14  gate subject drift is unattributed ('changed during execution' names no component) and the gitignored-declared-input conformance check is benchkit-only — consider naming what drifted (tree vs declared path) in the message and shipping the check as consumer gate scaffolding
