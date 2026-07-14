@@ -15,7 +15,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
@@ -119,23 +118,10 @@ func cleanupScratch(root string) {
 	}
 }
 
-// envInt reads an integer environment variable, falling back to def when unset or
-// unparseable — the loop's BENCH_MAX_ITERS / BENCH_REFACTOR_ITERS budgets.
-func envInt(name string, def int) int {
-	if v := os.Getenv(name); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			return n
-		}
-	}
-	return def
-}
-
 // Command is the `bench shift [objective...]` entry: the objective is every positional
-// argument joined (mirroring the shell's `$*`), defaulting to "improve the codebase".
+// argument joined (mirroring the shell's `$*`). An empty objective is not defaulted —
+// Loop's validation rejects it with exit 2.
 func Command(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	objective := strings.Join(args, " ")
-	if objective == "" {
-		objective = "improve the codebase"
-	}
 	return Loop(objective, stdin, stdout, stderr)
 }

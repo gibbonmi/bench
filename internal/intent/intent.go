@@ -39,6 +39,13 @@ type Entry struct {
 	CreatedAt time.Time `json:"created_at"`
 	Worktree  string    `json:"worktree,omitempty"`
 	Branch    string    `json:"branch,omitempty"`
+	// Outcome and Recovery record a shift's final result state — one of the FT79
+	// taxonomy's outcome names, and a recovery pointer ("ref:<name>" |
+	// "worktree:<path>" | "none") once a later slice adds snapshot machinery. Both are
+	// optional so every non-shift writer, and every entry created before its writer
+	// resolves an outcome, stays valid.
+	Outcome  string `json:"outcome,omitempty"`
+	Recovery string `json:"recovery,omitempty"`
 }
 
 type Ledger struct {

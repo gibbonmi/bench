@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -210,7 +211,15 @@ func requirePreservedShift(t *testing.T, run shiftProofRun, output string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	requirePreservedFile(t, intentPath, filepath.Join(state, "intent"))
+	// FT79 now upserts the shift's final outcome onto its intent entry at every exit
+	// path (including this preserving one), so the ledger is no longer byte-identical
+	// to the pre-outcome snapshot the agent captured mid-run — only its Outcome field
+	// legitimately drifts, to the outcome this preserving failure resolves to.
+	wantOutcome := "failed"
+	if run.variant == "cancellation" {
+		wantOutcome = "interrupted"
+	}
+	requirePreservedIntentLedger(t, intentPath, filepath.Join(state, "intent"), wantOutcome)
 	if got := strings.TrimSpace(runGitAt(t, worktree, "branch", "--show-current")); got != branch {
 		t.Fatalf("failed shift branch = %q, want %q", got, branch)
 	}
@@ -240,6 +249,52 @@ func requirePreservedFile(t *testing.T, gotPath, snapshotPath string) {
 	want, wantErr := os.ReadFile(snapshotPath)
 	if gotErr != nil || wantErr != nil || !bytes.Equal(got, want) {
 		t.Fatalf("preserved file bytes %s: got=%q/%v snapshot=%q/%v", gotPath, got, gotErr, want, wantErr)
+	}
+}
+
+// requirePreservedIntentLedger compares the current intent ledger to the pre-outcome
+// snapshot the agent captured mid-run, tolerating exactly one legitimate drift: each
+// entry's Outcome field, which FT79's finish() now upserts at every shift exit path —
+// including this preserving one. Every other field, and the entry count and order,
+// must match byte-for-byte-equivalent (via a decoded structural compare, since the
+// Outcome field shifts the encoded byte length).
+func requirePreservedIntentLedger(t *testing.T, gotPath, snapshotPath, wantOutcome string) {
+	t.Helper()
+	gotInfo, gotErr := os.Lstat(gotPath)
+	wantInfo, wantErr := os.Lstat(snapshotPath)
+	if gotErr != nil || wantErr != nil {
+		t.Fatalf("preserved intent ledger existence %s: got=%v snapshot=%v", gotPath, gotErr, wantErr)
+	}
+	if !gotInfo.Mode().IsRegular() || !wantInfo.Mode().IsRegular() {
+		t.Fatalf("preserved intent ledger mode %s: got=%v snapshot=%v, want matching regular files", gotPath, gotInfo.Mode(), wantInfo.Mode())
+	}
+	gotBytes, err := os.ReadFile(gotPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantBytes, err := os.ReadFile(snapshotPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got, want intent.Ledger
+	if err := json.Unmarshal(gotBytes, &got); err != nil {
+		t.Fatalf("decode intent ledger %s: %v", gotPath, err)
+	}
+	if err := json.Unmarshal(wantBytes, &want); err != nil {
+		t.Fatalf("decode intent ledger snapshot %s: %v", snapshotPath, err)
+	}
+	if len(got.Entries) != len(want.Entries) {
+		t.Fatalf("preserved intent ledger entry count = %d, want %d", len(got.Entries), len(want.Entries))
+	}
+	for i := range got.Entries {
+		g, w := got.Entries[i], want.Entries[i]
+		if g.Outcome != wantOutcome {
+			t.Fatalf("preserved intent entry[%d] outcome = %q, want %q", i, g.Outcome, wantOutcome)
+		}
+		g.Outcome = ""
+		if g != w {
+			t.Fatalf("preserved intent entry[%d] drifted beyond outcome:\ngot=%#v\nwant=%#v", i, g, w)
+		}
 	}
 }
 

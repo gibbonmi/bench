@@ -196,6 +196,123 @@ func TestRunPreservingGateMarksRedSessionBeforeReturning(t *testing.T) {
 	}
 }
 
+func TestValidateObjective(t *testing.T) {
+	cases := []struct {
+		name      string
+		objective string
+		wantErr   bool
+	}{
+		{"empty", "", true},
+		{"plain", "improve the parser", false},
+		{"esc byte", "bad\x1bobjective", true},
+		{"tab byte", "bad\tobjective", true},
+		{"del byte", "bad\x7fobjective", true},
+		{"newline byte", "bad\nobjective", true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateObjective(tc.objective)
+			if tc.wantErr && err == nil {
+				t.Errorf("validateObjective(%q) = nil, want error", tc.objective)
+			}
+			if !tc.wantErr && err != nil {
+				t.Errorf("validateObjective(%q) = %v, want nil", tc.objective, err)
+			}
+		})
+	}
+}
+
+func TestParseBoundedInt(t *testing.T) {
+	const name = "BENCH_TEST_ITERS"
+	cases := []struct {
+		name    string
+		env     string // "" means unset
+		unset   bool
+		want    int
+		wantErr bool
+	}{
+		{"unset", "", true, 12, false},
+		{"empty string", "", false, 12, false},
+		{"valid", "5", false, 5, false},
+		{"min boundary", "1", false, 1, false},
+		{"max boundary", "100", false, 100, false},
+		{"zero", "0", false, 0, true},
+		{"negative", "-1", false, 0, true},
+		{"over max", "101", false, 0, true},
+		{"non-integer", "abc", false, 0, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.unset {
+				os.Unsetenv(name)
+			} else {
+				t.Setenv(name, tc.env)
+			}
+			got, err := parseBoundedInt(name, 12, 1, 100)
+			if tc.wantErr {
+				if err == nil {
+					t.Fatalf("parseBoundedInt(%q) = %d, nil, want error", tc.env, got)
+				}
+				if !contains(err.Error(), name) || !contains(err.Error(), "[1,100]") {
+					t.Errorf("error %q does not name the variable and range", err.Error())
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("parseBoundedInt(%q) = %v, want nil", tc.env, err)
+			}
+			if got != tc.want {
+				t.Errorf("parseBoundedInt(%q) = %d, want %d", tc.env, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestParseWallDuration(t *testing.T) {
+	const name = "BENCH_TEST_WALL"
+	cases := []struct {
+		name    string
+		env     string
+		unset   bool
+		want    time.Duration
+		wantErr bool
+	}{
+		{"unset", "", true, 2 * time.Hour, false},
+		{"empty string", "", false, 2 * time.Hour, false},
+		{"valid", "30m", false, 30 * time.Minute, false},
+		{"max boundary", "24h", false, 24 * time.Hour, false},
+		{"zero", "0s", false, 0, true},
+		{"negative", "-1h", false, 0, true},
+		{"over max", "48h", false, 0, true},
+		{"unparseable", "soon", false, 0, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.unset {
+				os.Unsetenv(name)
+			} else {
+				t.Setenv(name, tc.env)
+			}
+			got, err := parseWallDuration(name, 2*time.Hour, 24*time.Hour)
+			if tc.wantErr {
+				if err == nil {
+					t.Fatalf("parseWallDuration(%q) = %v, nil, want error", tc.env, got)
+				}
+				if !contains(err.Error(), name) {
+					t.Errorf("error %q does not name the variable", err.Error())
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("parseWallDuration(%q) = %v, want nil", tc.env, err)
+			}
+			if got != tc.want {
+				t.Errorf("parseWallDuration(%q) = %v, want %v", tc.env, got, tc.want)
+			}
+		})
+	}
+}
+
 func contains(s, sub string) bool {
 	for i := 0; i+len(sub) <= len(s); i++ {
 		if s[i:i+len(sub)] == sub {
