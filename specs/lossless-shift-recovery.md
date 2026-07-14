@@ -28,7 +28,7 @@ can surface the recovery pointer after the terminal is gone.
 
 The build routes to the cheap tier at elevated effort (the reviewer's standing call
 for this spec): the seams and the gate signal are pinned here, so `gpt-5.6-luna`
-(Claude Code alias `sonnet` / Sonnet 5 for in-session delegates) executes precisely
+(Claude Code alias `sonnet`) executes precisely
 while the runtime gate observes every outcome. This is a deliberate deviation from
 the profile's cached "gate/conformance → mid" routing; it is paired with high effort
 and interactive TDD because a wrong oracle is the worst bug class in a kit.
@@ -72,9 +72,9 @@ and interactive TDD because a wrong oracle is the worst bug class in a kit.
    running gate, snapshots mutations, and exits `3`, so a hung adapter cannot run
    forever. Line: gpt-5.6-luna / high. The timer wires into the existing
    signal/checkpoint machinery and must not rely on deferred cleanup.
-9. As an operator, I want a shift with an empty objective to exit `2` before acquiring
-   a worktree, so the loop never silently invents "improve the codebase". Line:
-   gpt-5.6-luna / medium. A single entry guard, fully observable.
+9. As an operator, I want a shift with an empty or whitespace-only objective to exit
+   `2` before acquiring a worktree, so the loop never silently invents "improve the
+   codebase". Line: gpt-5.6-luna / medium. A single entry guard, fully observable.
 10. As an operator, I want an objective carrying control bytes to exit `2` at entry,
     so hostile text is rejected before it can reach the ledger or the TOON emitter.
     Line: gpt-5.6-luna / medium. Entry validation with the TOON refusal as backstop.
@@ -110,7 +110,9 @@ and interactive TDD because a wrong oracle is the worst bug class in a kit.
     field addition plus a status render line.
 18. As an operator, I want `bench resume` and the worktree classifier to retain — never
     delete — recovery refs and locked fallback worktrees, and a re-run shift to get a
-    fresh branch/ref pair, so recovery evidence survives housekeeping and repeat runs.
+    fresh branch/ref pair — retrying the branch name with a disambiguating suffix
+    (`-2`, `-3`, …) on a same-second collision, since the recovery ref follows the
+    branch name — so recovery evidence survives housekeeping and repeat runs.
     Line: gpt-5.6-luna / high. Retention across the resume path is a safety property and
     the re-run path must not collide with prior evidence.
 
@@ -153,11 +155,19 @@ and interactive TDD because a wrong oracle is the worst bug class in a kit.
   change is needed — a no-owner-marker locked worktree already retains as
   `ReasonUnexpectedLock` (`subshell.go`), and `Acquire` already skips it because it is
   not clean.
+- **Branch-create collision resolves with a disambiguating suffix.** When
+  `git switch -c <shift-branch>` collides with an existing branch (same-second
+  timestamp derivation), the shift retries the branch name with `-2`, `-3`, … until
+  creation succeeds; the recovery ref name follows the resolved branch name, so every
+  shift gets a fresh branch/ref pair. Fail-closed `update-ref` remains the backstop
+  against any residual ref collision.
 - **Release ordering is load-bearing.** The snapshot must be created and verified
   before any release path runs. On snapshot success the pool worktree releases
   normally; on snapshot failure only the retain-and-lock path is legal. This ordering
   replaces the current red-gate "preserve the worktree verbatim" special case with one
-  uniform rule for every post-mutation failure.
+  uniform rule for every post-mutation failure — except the refactor phase's red-gate
+  *rollback*, which stays discard-by-design: a red refactor probe is not successful
+  work, so it is never snapshotted.
 - **Adapter exit becomes evidence for progress.** `runAdapter` captures the child's
   exit status. A spawn failure or nonzero exit stops the loop after processing that
   iteration's mutations (gate → commit on green → otherwise snapshot). The
@@ -238,15 +248,19 @@ and interactive TDD because a wrong oracle is the worst bug class in a kit.
 | 2 | snapshot commit is built with synthetic identity under a failing-hook/identity-stripped env | Seam A: identity-stripped env + failing `pre-commit` fixture | recovery ref exists and resolves though the iteration commit would fail; `shift_result` shows `failed`/`incomplete` not exit 0 | if the snapshot used an ordinary commit it would block exactly where the iteration commit blocks, losing the work |
 | 3 | recovery ref creation fails closed against a pre-existing ref | Seam B: pre-create the ref, call `SnapshotDirty` | primitive returns an error and does not move the existing ref | a plain `update-ref` (no zero old-oid) would overwrite another shift's evidence |
 | 3,18 | a re-run shift gets a fresh branch/ref pair | Seam A: two shifts | second shift's branch and recovery ref differ from the first; neither is clobbered | a fixed or colliding ref name would overwrite the first shift's preserved work |
+| 18 | two shifts forced to the same timestamp second get distinct branch/ref pairs via a disambiguating suffix | Seam A or B: force two shift branch names to collide (same-second timestamp, or a pre-created colliding branch) | the second shift's branch carries the suffix (`-2`, …); both branch/ref pairs are distinct; neither is clobbered; the second shift succeeds | second-resolution branch names otherwise collide and the fail-closed ref would sacrifice the second shift's work |
 | 4 | when the snapshot fails, the worktree is retained, `git worktree lock`-ed, and its path printed | Seam B: `SnapshotDirty` fault + `RetainAndLock`; Seam A asserts the message | `git worktree list --porcelain` shows the path `locked`; `shift_result`/stdout names `worktree:<path>`; lease dropped | if it released, `worktree list` loses the path and the dirty work is gone |
 | 4,18 | a locked fallback worktree is retained by resume, never deleted | Seam A: lock a pool worktree, run `bench resume-clean` | the worktree remains registered and locked after resume | the classifier already retains it as `ReasonUnexpectedLock`; a regression that deleted it would drop the registration |
 | 6,16 | a complete shift reports outcome `complete`, exit 0, and a full `shift_result` block | Seam A: green gate, committing adapter | exit 0 and `shift_result` carries outcome/exit/branch/committed/iterations_used/recovery/detail | a missing or malformed block, or a wrong outcome, fails the field assertions |
+| 1,6 | SIGTERM mid-adapter after the adapter has already written a file preserves the mutation and reports interrupted | Seam A: writing adapter, SIGTERM sent mid-iteration | exit 130, `shift_result` outcome `interrupted`, recovery ref resolves and its tree contains the mutated file | the existing interrupt contract's agent writes nothing and asserts cleanup only, so a build that skips snapshot-on-interrupt passes it |
 | 6,7 | `/bin/false` adapter with zero commits stops the loop as `failed`, exit 1 | Seam A: `BENCH_AGENT=/bin/false`, green gate | exit 1 and `shift_result` outcome `failed`, committed 0 | today this exits 0 "objective likely met"; the assertion on exit 1 + `failed` catches the false success |
 | 7 | adapter nonzero exit *after* a prior green commit stops the loop as `incomplete`, exit 3 | Seam A: adapter commits once then exits nonzero | exit 3, outcome `incomplete`, committed ≥ 1, prior commit on branch | folding this into `failed`/1 would understate the committed work |
+| 7 | adapter spawn failure (not just a nonzero exit) stops the loop as `failed`, exit 1 | Seam A: `BENCH_AGENT` passes preflight but fails to exec at iteration time (deleted or replaced after preflight, or made non-executable) | exit 1, outcome `failed` — not `no-op`/4 | `runAdapter` today swallows the start error so spawn failure reads as a clean no-op, and `/bin/false` only exercises the nonzero-exit member |
 | 8 | a sleeping adapter under a tiny `BENCH_MAX_WALL` is killed, mutations snapshotted, exit 3 | Seam A: sleeper adapter, `BENCH_MAX_WALL=1s` | exit 3, outcome `incomplete` with a deadline detail; no orphaned adapter; recovery ref if mutated | no wall means the shift hangs forever; a checkpoint-only wall never fires against a hung adapter |
-| 9 | an empty objective exits 2 before acquiring a worktree | Seam A: `bench shift` with no objective | exit 2, no lease created, no branch | today it silently runs "improve the codebase"; the exit-2 + no-lease assertion catches the default |
+| 8 | a wall deadline firing while the gate is running cancels the gate instead of hanging | Seam A: fast/committing adapter, a slow gate fixture, tiny `BENCH_MAX_WALL` | exit 3, deadline detail, gate process cancelled (no hang), mutations snapshotted | row 8 sleeps only the adapter, so a wall that never wires cancel-gate passes it yet hangs on a slow gate |
+| 9 | an empty or whitespace-only objective exits 2 before acquiring a worktree | Seam A: `bench shift` with no objective, and `bench shift "   "` | exit 2, no lease created, no branch, for both cases | today it silently runs "improve the codebase"; a bare `== ""` guard would pass the whitespace-only case, so the exit-2 + no-lease assertion on both catches it |
 | 10 | a control-byte objective exits 2 at entry | Seam A: objective containing `ESC` | exit 2 before acquire | an unvalidated objective would reach the ledger/TOON and either corrupt output or be refused late |
-| 11 | set-but-invalid `BENCH_MAX_ITERS`/`_REFACTOR_ITERS`/`_WALL` exit 2 naming the variable and range, before acquire | Seam A: `BENCH_MAX_ITERS=0`, `=abc`, `BENCH_MAX_WALL=48h` | exit 2, stderr names the variable and accepted range, no lease | `envInt`'s silent fallback runs a shift the operator never authorized |
+| 11 | set-but-invalid `BENCH_MAX_ITERS`/`_REFACTOR_ITERS`/`_WALL` exit 2 naming the variable and range, before acquire | Seam A: `BENCH_MAX_ITERS=0`, `=101`; `BENCH_REFACTOR_ITERS=0`; `BENCH_MAX_WALL=abc` (parse fail), `=0s`, `=-5m` (Go parses negatives), `=48h` (over bound) | each exits 2, stderr names the variable and accepted range, no lease; `BENCH_MAX_WALL=24h` is accepted (inclusive upper bound, no exit 2) | `envInt`'s silent fallback runs a shift the operator never authorized; an inclusive-bound off-by-one would reject a legal `24h` or accept an illegal `48h` |
 | 11 | unset or empty-string cap env keeps the default | Seam A: unset vs `BENCH_MAX_ITERS=""` | both run to the default cap (no exit 2) | conflating empty with invalid would reject a legitimately-unset knob |
 | 12 | cap exhaustion leaves work on the branch and exits 3 | Seam A: always-dirty adapter, `BENCH_MAX_ITERS` small | exit 3, outcome `incomplete`, committed count equals the cap | today cap exhaustion exits 0, reading as done |
 | 13 | zero commits with a clean adapter and a passing `done.sh` exits 4, detail notes the predicate | Seam A: no-op adapter + `.bench/done.sh` that passes | exit 4, outcome `no-op`, detail mentions the predicate | complete-on-predicate would exit 0 and hide that nothing was done |
@@ -271,11 +285,13 @@ Walked against the profile's shell-CLI hostile-input checklist:
 - **destructive worktree state; recovery refs + locked fallback retained** → covered
   (row 4,18): resume/classifier retain the locked worktree and never delete recovery
   refs.
-- **interrupt (SIGINT/SIGTERM) mid-loop** → covered: SIGTERM mid-adapter kills the
-  process group, snapshots mutations, and exits 130; the existing interrupt-cleanup
-  contracts extend to assert the recovery ref and the 130 outcome.
+- **interrupt (SIGINT/SIGTERM) mid-loop** → covered (row 1,6): SIGTERM mid-adapter
+  after a write kills the process group, snapshots the mutation, and exits 130.
 - **re-run idempotency** → covered (row 3,18): fresh branch/ref pair per run; ref
   creation fails closed on conflict.
+- **dirty nested repository/submodule** — **Won't handle**: the snapshot captures a
+  nested repository as its gitlink only; uncommitted work inside a nested repo is that
+  repo's own concern, and recursing into foreign repos is out of proportion for FT79.
 - **hand-edited file with no trailing newline** — **Won't handle**: the snapshot
   captures raw bytes verbatim through `write-tree`; a missing final newline changes no
   behavior and needs no dedicated row.
