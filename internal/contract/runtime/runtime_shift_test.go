@@ -31,6 +31,7 @@ func TestRuntimeShiftLoopContracts(t *testing.T) {
 	contract.RunParallel(t, "bench shift empty env default contract", testShiftEmptyEnvDefault)
 	contract.RunParallel(t, "bench shift complete result contract", testShiftCompleteResult)
 	contract.RunParallel(t, "bench shift adapter-failure zero-commit contract", testShiftAdapterFailureZeroCommit)
+	contract.RunParallel(t, "bench shift adapter spawn-failure contract", testShiftAdapterSpawnFailure)
 	contract.RunParallel(t, "bench shift adapter-failure after-commit contract", testShiftAdapterFailureAfterCommit)
 	contract.RunParallel(t, "bench shift cap-exhaustion contract", testShiftCapExhaustion)
 	contract.RunParallel(t, "bench shift no-op done contract", testShiftNoOpDone)
@@ -716,6 +717,26 @@ func testShiftAdapterFailureZeroCommit(t *testing.T) {
 	probe.RequireExit(1)
 	branch := shiftBranchFromStart(t, probe.Stdout)
 	requireShiftResult(t, probe.Stdout, "failed,\"1\","+branch+",\"0\",")
+}
+
+// testShiftAdapterSpawnFailure covers row 7's other half: an adapter that passes the
+// preflight (it is a regular executable file) but fails to exec at iteration time — here
+// because its shebang names an interpreter that does not exist — stops the loop as
+// failed/1, not no-op/4. runAdapter used to swallow cmd.Start's error, so a spawn
+// failure read as a clean "nothing happened" no-op; this proves it now propagates as
+// real evidence of a broken adapter.
+func testShiftAdapterSpawnFailure(t *testing.T) {
+	f := shiftFixture(t, "#!/usr/bin/env bash\nexit 0\n")
+	f.WriteExecutable("agent", "#!/no/such/interpreter\necho hi\n")
+	f.CommitAll("agent")
+	home := t.TempDir()
+
+	probe := f.BenchEnv(map[string]string{"BENCH_AGENT": filepath.Join(f.Root, "agent"), "BENCH_MAX_ITERS": "1", "BENCH_HOME": home}, "shift", "objective")
+
+	probe.RequireExit(1)
+	branch := shiftBranchFromStart(t, probe.Stdout)
+	requireShiftResult(t, probe.Stdout, "failed,\"1\","+branch+",\"0\",")
+	requireNoLease(t, home)
 }
 
 // testShiftAdapterFailureAfterCommit covers row 7: an adapter that writes a file then
