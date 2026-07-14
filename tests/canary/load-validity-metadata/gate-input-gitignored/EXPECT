@@ -1,0 +1,1 @@
+gate input path dist/bench is gitignored; a declared gate input must be tree-pinned

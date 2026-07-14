@@ -29,6 +29,7 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"bad-frontmatter":           conformanceFixture(".bench/gate.sh"),
 	"claude-skills-unmirrored":  conformanceFixture(".bench/gate.sh"),
 	"extensionless-gate-ref":    conformanceFixture(".bench/gate.sh"),
+	"gate-input-gitignored":     conformanceFixture(".bench/gate.sh"),
 	"shared-rule-drift":         conformanceFixture(".bench/gate.sh"),
 	"readme-shared-rule-drift":  conformanceFixture(".bench/gate.sh"),
 

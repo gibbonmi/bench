@@ -19,6 +19,7 @@ func TestLoadValidityMetadataFixturesBite(t *testing.T) {
 		"bad-frontmatter",
 		"claude-skills-unmirrored",
 		"extensionless-gate-ref",
+		"gate-input-gitignored",
 		"shared-rule-drift",
 		"readme-shared-rule-drift",
 	}

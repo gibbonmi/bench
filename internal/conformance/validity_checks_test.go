@@ -18,6 +18,7 @@ func checkLoadValidityMetadata(root string) []string {
 	diags = append(diags, checkExecutableGitModes(root)...)
 	diags = append(diags, checkExtensionlessGateRefs(root)...)
 	diags = append(diags, checkJSONValidity(root)...)
+	diags = append(diags, checkGateInputPathsNotIgnored(root)...)
 	diags = append(diags, checkCodexHooks(root)...)
 	diags = append(diags, checkSkillFrontmatter(root)...)
 	diags = append(diags, checkCraftSkillNames(root)...)
@@ -104,6 +105,31 @@ func checkJSONValidity(root string) []string {
 		var v any
 		if err := json.Unmarshal(data, &v); err != nil {
 			diags = append(diags, "invalid JSON in "+rel)
+		}
+	}
+	return diags
+}
+
+// checkGateInputPathsNotIgnored asserts no path declared in .bench/gate-inputs.json
+// paths is gitignored: a gitignored declared input is either a gate-built output or
+// unreproducible state; declared inputs must be tree-pinned.
+func checkGateInputPathsNotIgnored(root string) []string {
+	data, err := os.ReadFile(filepath.Join(root, ".bench", "gate-inputs.json"))
+	if err != nil {
+		return nil
+	}
+	var m struct {
+		Paths []string `json:"paths"`
+	}
+	if json.Unmarshal(data, &m) != nil {
+		return nil
+	}
+	var diags []string
+	for _, path := range m.Paths {
+		cmd := exec.Command("git", "check-ignore", "-q", "--", path)
+		cmd.Dir = root
+		if cmd.Run() == nil {
+			diags = append(diags, fmt.Sprintf("gate input path %s is gitignored; a declared gate input must be tree-pinned, not a gate-built output", path))
 		}
 	}
 	return diags

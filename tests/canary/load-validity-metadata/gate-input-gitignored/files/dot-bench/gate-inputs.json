@@ -2,6 +2,6 @@
   "schema": 1,
   "closure": "local",
   "environment": ["BENCH_HOME", "HOME"],
-  "paths": ["bin/bench.sh", "package.json"],
+  "paths": ["bin/bench.sh", "dist/bench", "package.json"],
   "tools": ["bash", "basename", "dirname", "git", "readlink", "uname"]
 }
