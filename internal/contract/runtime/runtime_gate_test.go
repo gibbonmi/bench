@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gibbonmi/bench/internal/contract"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -20,6 +21,7 @@ func TestRuntimeGateContracts(t *testing.T) {
 	contract.RunParallel(t, "stop hook missing-core-binary fail-safe contract", testRuntimeStopHookMissingCoreBinary)
 	contract.RunParallel(t, "bench gate missing-core-binary fail-safe contract", testRuntimeGateMissingCoreBinary)
 	contract.RunParallel(t, "bench gate verdict-record contract", testRuntimeGateVerdictRecord)
+	contract.RunParallel(t, "bench gate rebuilt self-host contract", testRuntimeGateRebuiltSelfHost)
 	contract.RunParallel(t, "oracle-bound gate verdict contract", testRuntimeOracleBoundVerdict)
 	contract.RunParallel(t, "fail-closed gate verdict persistence contract", testRuntimePendingBeforeGate)
 	contract.RunParallel(t, "bench gate pin non-TTY refusal contract", testRuntimeGatePinNonTTYRefusal)
@@ -27,6 +29,31 @@ func TestRuntimeGateContracts(t *testing.T) {
 	contract.RunParallel(t, "stop hook stop_hook_active contract", testRuntimeStopHookActive)
 	contract.RunParallel(t, "stop hook missing-bench fail-open contract", testRuntimeStopHookMissingBenchFailOpen)
 	contract.RunParallel(t, "stop hook intent refresh contract", testRuntimeStopHookIntentRefresh)
+}
+
+func testRuntimeGateRebuiltSelfHost(t *testing.T) {
+	contract.NoteContractFailure(t, "bench gate rebuilt self-host contract failed")
+	root := contract.SubjectRoot(t)
+	f := contract.NewFixture(t)
+	copyRuntimeFile(t, filepath.Join(root, "bin", "bench.sh"), filepath.Join(f.Root, "bin", "bench.sh"), 0o755)
+	copyRuntimeFile(t, filepath.Join(root, ".bench", "gate-inputs.json"), filepath.Join(f.Root, ".bench", "gate-inputs.json"), 0o644)
+	copyRuntimeFile(t, filepath.Join(root, "package.json"), filepath.Join(f.Root, "package.json"), 0o644)
+	f.WriteFile(".gitignore", ".bench-contract-env/\n")
+	f.WriteExecutable(".bench/gate.sh", `#!/usr/bin/env bash
+set -euo pipefail
+root="$(git rev-parse --show-toplevel)"
+test -n "$(go env GOPATH)"
+exec "$root/bin/bench.sh" version
+`)
+	contract.Mkdir(t, filepath.Join(f.Root, "dist"))
+	build := exec.Command("go", "build", "-o", filepath.Join(f.Root, "dist", "bench"), "./cmd/bench")
+	build.Dir = root
+	if output, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("build current bench binary: %v\n%s", err, output)
+	}
+	f.CommitAll("self-host fixture")
+
+	f.Run("bash", filepath.Join(f.Root, "bin", "bench.sh"), "gate").RequireExit(0)
 }
 
 func testRuntimeOracleBoundVerdict(t *testing.T) {

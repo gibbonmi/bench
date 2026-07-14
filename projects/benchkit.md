@@ -20,7 +20,8 @@ branch-agnostic. This line is only the binding.)
   in Bench routes through its exit code: 0 = shippable, non-zero = not done. The
   highest seam — if the gate is weak, the whole system is weak. Test by feeding it a
   conformant tree (green) and a broken one (red); never by trusting a reading of the
-  diff.
+  diff. The gate package is the single deep owner of reusable-verdict authorization
+  and durable execution; the accepted trust posture is recorded in ADR 0002.
 - **The `bench` CLI subcommands.** The operational shell surface; the canonical
   inventory is `.bench/BENCH.md`'s CLI Inventory — this profile doesn't
   re-enumerate it. Stable command names and exit codes are the contract; the
@@ -42,7 +43,7 @@ branch-agnostic. This line is only the binding.)
 - **The ambient dashboard** (`bench status`). The single deterministic renderer the
   SessionStart hook and the user both call: it ranks the signals that fire on a fixed
   severity ladder and leads with the next action. Reads gate state from the **gate cache**
-  (`<git-dir>/bench-last-gate`, written by the Stop hook) — never a cold gate run. The
+  (`<git-dir>/bench-last-gate`, written durably by gate execution) — never a cold gate run. The
   contract (gate-tested): show-only-on-signal, a five-row budget, a stale-green that is
   not a clean bill, and one combined capture-drain row (parked ideas + open learnings)
   pointing at `/bench-what-next`. A stale gate softens to `capture-only drift` /

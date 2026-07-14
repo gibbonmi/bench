@@ -64,8 +64,9 @@ cold session reads this first to avoid drifting the vocabulary.
   "check", not "alert".
 - **severity ladder** — the fixed rank order that decides which **signal** leads the
   dashboard and which drop under the five-row budget. Not "priority queue".
-- **gate cache** — the last gate verdict (`<status> <sha> <iso8601>`) the Stop hook writes
-  to the git dir, so the dashboard reads gate state without a cold run. Not "gate log".
+- **gate cache** — the durable ready or pending verdict that gate execution binds to
+  the closed oracle subject in the Git dir, so read-only consumers can project gate
+  state without a cold run. Not "gate log".
 
 ## Avoid
 

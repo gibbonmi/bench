@@ -3,8 +3,8 @@
 // code, not in prose the agent must remember. It sequences block-check → gate → flip →
 // stage → commit: it refuses before gating if any working-tree file outside the named set
 // (plus the --spec file) is dirty, runs the project gate through internal/gate and commits
-// only on green (reusing a fresh green verdict already recorded for the identical tree
-// hash instead of paying the gate twice), flips the spec through internal/spec when --spec is set, and stages
+// only on green (reusing a fresh green verdict already recorded for the identical closed
+// oracle subject instead of paying the gate twice), flips the spec through internal/spec when --spec is set, and stages
 // exactly the named paths via a `:(literal)` pathspec (a named deletion included) —
 // never a bare `git add -A` over the whole tree. A named path whose removal is already
 // staged (`git rm`, a rename's old half) matches no add-pathspec and is recognized as
@@ -102,8 +102,8 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 
-	// A green verdict recorded for the identical tree hash already proves exactly this
-	// diff (the cache is keyed to working-tree content, and the block-check above pinned
+	// A green verdict recorded for the identical closed oracle subject already proves
+	// this diff and the inputs that can affect its oracle (the block-check above pinned
 	// the tree to the named set), so re-running the gate buys nothing but its full cost.
 	// Anything less — stale, red, untrusted, or absent — pays the real gate run.
 	if gv := gate.Inspect(root); gv.ReusableGreen {
