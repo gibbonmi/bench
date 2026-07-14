@@ -251,6 +251,8 @@ func TestValidateObjective(t *testing.T) {
 		wantErr   bool
 	}{
 		{"empty", "", true},
+		{"whitespace only spaces", "   ", true},
+		{"whitespace only tab", "\t\t", true},
 		{"plain", "improve the parser", false},
 		{"esc byte", "bad\x1bobjective", true},
 		{"tab byte", "bad\tobjective", true},

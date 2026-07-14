@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -35,12 +36,12 @@ func hasControlByte(s string) bool {
 	return false
 }
 
-// validateObjective rejects an empty objective — the "improve the codebase" default is
-// gone, an operator must state one — or one carrying a control byte, so hostile or
-// accidental text is refused at entry, before it can reach the intent ledger or the
-// TOON emitter.
+// validateObjective rejects an empty or whitespace-only objective — the "improve the
+// codebase" default is gone, an operator must state one — or one carrying a control
+// byte, so hostile or accidental text is refused at entry, before it can reach the
+// intent ledger or the TOON emitter.
 func validateObjective(objective string) error {
-	if objective == "" {
+	if strings.TrimSpace(objective) == "" {
 		return errors.New("objective required: bench shift <objective...>")
 	}
 	if hasControlByte(objective) {

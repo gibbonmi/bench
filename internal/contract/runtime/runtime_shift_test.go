@@ -25,6 +25,7 @@ func TestRuntimeShiftLoopContracts(t *testing.T) {
 	contract.RunParallel(t, "bench shift scratch-survival contract", testShiftScratchSurvival)
 	contract.RunParallel(t, "bench shift refactor-prompt scope contract", testShiftRefactorPromptScope)
 	contract.RunParallel(t, "bench shift no-objective usage contract", testShiftNoObjective)
+	contract.RunParallel(t, "bench shift whitespace-only objective usage contract", testShiftWhitespaceObjective)
 	contract.RunParallel(t, "bench shift control-byte objective usage contract", testShiftControlByteObjective)
 	contract.RunParallel(t, "bench shift invalid env usage contract", testShiftInvalidEnvUsage)
 	contract.RunParallel(t, "bench shift empty env default contract", testShiftEmptyEnvDefault)
@@ -557,6 +558,21 @@ func testShiftNoObjective(t *testing.T) {
 	home := t.TempDir()
 
 	probe := f.BenchEnv(map[string]string{"BENCH_AGENT": "true", "BENCH_HOME": home}, "shift")
+
+	probe.RequireExit(2)
+	probe.RequireContains(probe.Stdout, "usage,\"2\",none,\"0\",\"0\",none,")
+	requireNoLease(t, home)
+	requireNoShiftBranch(t, f)
+}
+
+// testShiftWhitespaceObjective covers row 9's other half: a whitespace-only objective
+// exits 2 before acquiring anything, same as an empty one — a bare `== ""` guard would
+// let this slip through as a legitimate objective.
+func testShiftWhitespaceObjective(t *testing.T) {
+	f := shiftFixture(t, "#!/usr/bin/env bash\nexit 0\n")
+	home := t.TempDir()
+
+	probe := f.BenchEnv(map[string]string{"BENCH_AGENT": "true", "BENCH_HOME": home}, "shift", "   ")
 
 	probe.RequireExit(2)
 	probe.RequireContains(probe.Stdout, "usage,\"2\",none,\"0\",\"0\",none,")
