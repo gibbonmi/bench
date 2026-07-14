@@ -20,21 +20,6 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT79 (CRITICAL) — lossless shift recovery and truthful result states.** Every
-failure after agent mutation preserves either a locked recovery worktree or a
-durable recovery ref and prints its exact location. Staging, adapter, commit,
-signal, and teardown errors propagate. Shift requires an objective, validates
-a positive bounded iteration cap, has a wall deadline, and distinguishes
-complete, incomplete, failed, interrupted, and no-op outcomes with honest exit
-codes and structured results.
-
-Closure is a recovery matrix for missing Git identity, failing commit hooks,
-staging failure, adapter start/exit failure, signal interruption, cap
-exhaustion, no-op iteration, and teardown error. Successful agent work must
-remain recoverable in every case.
-
-Sources: `RR:R-03`, `RR:R-08`; `RC:H-05`.
-
 **FT80 (HIGH) — static, bounded guard discovery.** Guard descriptions come
 from static managed metadata, not executing every shell file in the hooks
 directory. Only an exact managed allowlist may execute where execution is
@@ -271,7 +256,8 @@ Sources: `RR:S-06`, `RR:S-07`, `RR:S-08`, `RR:S-10`, `RR:S-11`, `RR:S-12`,
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
 to one immutable version and its generated manifest after:
 
-1. FT79 through FT82 have executable regression contracts and are closed.
+1. FT80 through FT82 have executable regression contracts and are closed
+   (FT79 shipped 2026-07-14 with its regression contracts).
 2. The same commit passes the full gate, race tests, vet, canary, vulnerability
    scan, package inspection, reproducibility comparison, and clean-room
    installed smokes.
@@ -327,7 +313,5 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT79, lossless shift recovery; its decision map is
-   complete.
-2. `/bench-shape-idea` — specify FT80, static bounded guard discovery.
-3. `/bench-shape-idea` — specify FT81, the platform-correct distributable runtime.
+1. `/bench-shape-idea` — specify FT80, static bounded guard discovery.
+2. `/bench-shape-idea` — specify FT81, the platform-correct distributable runtime.

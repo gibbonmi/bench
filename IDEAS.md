@@ -1,0 +1,1 @@
+- 2026-07-14  gate subject fingerprint counts gitignored dist/bench, so the gate's own build phase invalidates its first verdict after any source change ('gate subject changed during execution'); exclude ignored paths from the subject
