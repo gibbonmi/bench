@@ -1,4 +1,4 @@
-# Lossless shift recovery and truthful result states (FT79)
+# Lossless shift recovery and truthful result states
 
 ## Destination
 
@@ -105,9 +105,9 @@ A missing objective silently becomes "improve the codebase"; `envInt` accepts
 invalid, zero, negative, and unbounded caps. Posture?
 
 ### Answer
-**Require the objective; error on explicitly-set invalid values.** Empty
-objective → exit 2 (the default dies); an objective carrying control bytes →
-exit 2 at entry (TOON refuses them later anyway). Env knobs: unset or
+**Require the objective; error on explicitly-set invalid values.** Empty or
+whitespace-only objective → exit 2 (the default dies); an objective carrying
+control bytes → exit 2 at entry (TOON refuses them later anyway). Env knobs: unset or
 empty-string keeps defaults (`BENCH_MAX_ITERS` 12, `BENCH_REFACTOR_ITERS` 4,
 `BENCH_MAX_WALL` 2h); set-but-invalid (non-integer, < 1, over bound) exits 2
 naming the variable and accepted range, before any worktree acquire. Bounds: 100
@@ -138,13 +138,17 @@ Where do recovery refs live, who consumes them, and does the existing
 red-gate preserve-worktree path survive?
 
 ### Answer
-One rule, no special case: **every post-mutation failure — including a red-gate
-iteration — snapshots and releases.** The red-gate path's retain-worktree
-behavior is replaced; inspection uses the printed hint (`git worktree add`
+One rule, no special case for the main/refactor commit path — **every
+post-mutation failure snapshots and releases**, except the refactor phase's
+red-gate *rollback*, which stays discard-by-design (a red refactor probe is not
+successful work). The red-gate path's retain-worktree behavior is replaced;
+inspection uses the printed hint (`git worktree add`
 or `git diff <branch>..<ref>` against the recovery ref). Refs live at
-`refs/bench/recovery/<shift-branch>`, one per shift; creation fails closed on
-conflict (the existing envelope conflict check — a timestamp-collision branch
-name must not overwrite another shift's evidence). Consumption is manual via
+`refs/bench/recovery/<shift-branch>`, one per shift; on a same-second
+branch-name collision, branch-create retries with a disambiguating suffix
+(`-2`, `-3`, …) so the ref, which follows the branch name, gets a fresh pair
+too; fail-closed `update-ref` stays the backstop against any residual
+conflict. Consumption is manual via
 the printed hint; `bench status` surfaces the pointer from the intent ledger;
 `bench resume` and the worktree classifier must *retain, never delete* recovery
 refs and locked fallback worktrees. Garbage collection of consumed refs is out
@@ -263,6 +267,9 @@ discard-by-design: a red refactor probe is not successful work.
    - re-run idempotency → ref-creation conflict fails closed; a re-run shift
      gets a fresh branch/ref pair.
    - cwd deeper than root / symlink invocation → existing `git.Root` routing.
+   - dirty nested repository/submodule → Won't-handle: the snapshot captures
+     the gitlink only; recursing into a foreign repo's own uncommitted state
+     is out of proportion for FT79.
 
 7. **Uncertainty flags.**
    - Snapshot mechanics: temp-index (`GIT_INDEX_FILE`) `add -A` → `write-tree` →
@@ -296,8 +303,10 @@ discard-by-design: a red refactor probe is not successful work.
    - Worktrees share the repo's ref namespace — a recovery ref is visible
      repo-wide the moment it exists, and survives worktree pruning.
    - Timestamp-derived shift-branch names can collide within one second across
-     concurrent shifts; ref creation failing closed is what protects the first
-     shift's evidence.
+     concurrent shifts; branch-create retries with a disambiguating suffix
+     (`-2`, `-3`, …) so the recovery ref, which follows the branch name, gets a
+     fresh pair too — fail-closed ref creation is the backstop, not the only
+     protection.
 
 Dependency order: recommended as one spec; if sliced — (A) validation + outcome
 taxonomy + exit codes + `shift_result` emission (no recovery machinery); (B) the
