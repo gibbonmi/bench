@@ -8,6 +8,26 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-14, scope: post-FT90-fix reconcile).** Removed FT90
+  after its fix landed at `19fa3bc` — `dist/bench` is out of the declared gate
+  inputs and the gitignored-declared-input conformance check plus bite fixture
+  are in the tree; the other 17 rows verify current and the FT6, FT24, FT8, and
+  FT38 triggers remain unmet. Drained two ideas: FT91 (gate wall-clock
+  proportional to the diff; shape-first because the speed-versus-oracle cut is
+  a reviewer decision) and FT92 (attributed subject-drift message plus shipping
+  the gitignored-input check as consumer scaffolding). Verdicted the one open
+  journal entry by reproducing its red through the accused command pair itself:
+  one gitignored file makes the automatic plan retain, the retain path
+  completes without a terminal release receipt, and `bench worktree release
+  --request` masks the retained verdict as "terminal receipt missing" —
+  promoted to FT93 (with the request-less-clean orphaned-assignment follow-on).
+  The entry's alternative hypothesis — that the `--request` pair is misplaced
+  plumbing — is dismissed: the pair is the documented `bench worktree --help`
+  usage and absent from the plumbing enumeration, so no inventory change. The
+  previous run promoted no rows, and the FT65 and FT66 promotion-build records
+  remain present. The refreshed sequence leads with FT93 through `/bench-debug`
+  (repro in hand), then FT80 and FT81 through `/bench-shape-idea`.
+
 - **Roadmap reconcile (2026-07-14, scope: post-FT79-ship drain).** FT79's row
   left with its spec retirement (`eafb3fb`); the remaining 17 rows verify
   current and the FT6, FT24, FT8, and FT38 triggers remain unmet. Drained one

@@ -215,18 +215,23 @@ actionable.
 
 Sources: `RR:C-04`; `RC:M-01`.
 
-**FT90 (MEDIUM, evidence supplied) — gate subject must not fingerprint the
-gate's own build output.** `.bench/gate-inputs.json` declares `dist/bench` as a
-subject input while the gate's serialized build phase rewrites that binary, so
-the first gate after any source change reports "gate subject changed during
-execution" and discards its verdict. The fix decides where the boundary sits —
-drop the gate-built binary from the declared inputs, or capture the subject
-after the serial build phase — without weakening drift detection for genuinely
-external mid-run changes.
+**FT93 (MEDIUM, evidence supplied) — worktree release surfaces the retained
+verdict; cleaned assignments reconcile.** When the automatic cleanup plan
+retains (reproduced 2026-07-14: one gitignored file in the tree), `bench
+worktree release --request <id> <path>` records the retain receipt but never
+writes its terminal release receipt, so it exits "terminal receipt missing" —
+an internal-bookkeeping message that masks the real verdict. A session that
+then removes the tree with a request-less `bench worktree clean
+--discard-ignored --apply` is stuck permanently: release answers "cleanup
+receipt does not authorize release reconciliation" and the assignment is
+orphaned (session start reports 10 open assignments). Release on a retain plan
+must report what blocked and the exact next command; a cleaned-but-unreleased
+assignment needs a reconciliation or explicit recovery path.
 
-Closure requires the red repro (source edit → one gate run → invalidated
-verdict) turned green, plus a canary proving an external mid-run edit still
-invalidates the verdict.
+Closure: the reproduced red (ignored file → release → "terminal receipt
+missing") becomes an actionable retained verdict; a request-less-cleaned
+assignment either reconciles or names its recovery command; the existing
+orphaned assignment records get a sweep.
 
 **FT71 (HIGH on the bank track, evidence supplied) — versioned local shift
 evidence.** Emit a redacted, append-only local event schema for shift/session
@@ -243,6 +248,15 @@ recovery, normal subshell completion, stale intent, and redaction fixtures. The
 repository-controlled bank evidence requirement makes this row active.
 
 Sources: `RR:C-05`; `RC:H-03`.
+
+**FT91 (MEDIUM) — gate wall-clock proportional to the diff.** The full suite
+runs ~4 minutes for any diff; conformance (~100s) and runtime contracts
+(~123s) dominate, so a one-line change pays the whole-oracle price on every
+shift iteration. Investigate phase parallelism, caching keyed on the pinned
+gate subject, or scoped verdicts — without weakening the oracle: green must
+keep meaning the same thing, and any scoped verdict must be explicit evidence,
+never a silent skip. Starts as a grill (`/bench-shape-idea`) because the cut
+line between speed and oracle authority is a reviewer decision.
 
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.** Make
 roadmap maintenance consume one full schema snapshot; make every documented
@@ -263,6 +277,13 @@ contracts, including the actual canary phase selection and npm prepare shape.
 
 Sources: `RR:S-06`, `RR:S-07`, `RR:S-08`, `RR:S-10`, `RR:S-11`, `RR:S-12`,
 `RR:S-13`, `RR:S-14`, `RR:S-15`, `RR:S-16`, `RR:S-17`, `RR:S-18`; `RC:M-05`.
+
+**FT92 (LOW) — attributed subject drift and consumer-shipped input hygiene.**
+"gate subject changed during execution" names no component; the drift message
+should say what moved (the tree hash versus which declared manifest path) so
+the next FT90-shaped defect self-diagnoses. The gitignored-declared-input
+conformance check is benchkit-only; ship it as consumer gate scaffolding so
+linked repos get the same protection.
 
 ## Release and bank reassessment gate
 
@@ -326,6 +347,6 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-debug` — fix FT90, the gate-subject self-invalidation; small defect fix that removes per-change gate friction before the long HIGH rows start.
+1. `/bench-debug` — fix FT93, the worktree-release retained-verdict defect; small evidenced fix (repro in hand) that stops sessions orphaning assignments.
 2. `/bench-shape-idea` — specify FT80, static bounded guard discovery.
 3. `/bench-shape-idea` — specify FT81, the platform-correct distributable runtime.
