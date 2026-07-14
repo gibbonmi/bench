@@ -20,21 +20,6 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT78 (CRITICAL, next) — close oracle-bound gate-verdict proof.** Preserve the
-green implementation at `8f9d2e4`, then complete the staged follow-on proof
-slice: exercise every unproven R1–R20 variant and add the missing R21 private
-deterministic-fault engine. The prior implemented status was premature; FT78 is
-implemented only when the complete R1–R21 matrix and full gate are green on one
-descendant of the anchor.
-
-Closure covers gate-command, script-content, and auto-detected-oracle changes,
-plus malformed cache and write failure. Oracle A green must never authorize a
-commit under oracle B.
-
-Sources: `RR:R-02`; `RC:C-02`.
-Decision map: `decisions/oracle-bound-gate-verdicts.md`. Spec:
-`specs/oracle-bound-gate-verdicts.md`. Next: `/bench-implement-spec`.
-
 **FT79 (CRITICAL) — lossless shift recovery and truthful result states.** Every
 failure after agent mutation preserves either a locked recovery worktree or a
 durable recovery ref and prints its exact location. Staging, adapter, commit,
@@ -268,6 +253,9 @@ skills index and inventories from one implementation; embed design-it-twice
 briefs in complete delegation charges; and admit reviewer-approved assessment
 findings as a legal synthesis origin. Use the canonical iteration-cap line
 definition and only recommend shifts that meet the routing contract.
+Every phase exit emits one copy-paste cold-session continuation prompt with the
+exact harness-native command and pinned repository, branch, commit, spec/status,
+and unresolved next action, so resumption never depends on conversation history.
 
 Clarify shape termination and the no-design-source branch, remove stale paths
 and inventory omissions, retire closed decision maps and obsolete historical
@@ -283,7 +271,7 @@ Sources: `RR:S-06`, `RR:S-07`, `RR:S-08`, `RR:S-10`, `RR:S-11`, `RR:S-12`,
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
 to one immutable version and its generated manifest after:
 
-1. FT78 through FT82 have executable regression contracts and are closed.
+1. FT79 through FT82 have executable regression contracts and are closed.
 2. The same commit passes the full gate, race tests, vet, canary, vulnerability
    scan, package inspection, reproducibility comparison, and clean-room
    installed smokes.
@@ -339,7 +327,6 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — close FT78 proof against
-   `specs/oracle-bound-gate-verdicts.md`.
-2. `/bench-shape-idea` — specify FT79, lossless shift recovery.
-3. `/bench-shape-idea` — specify FT80, static bounded guard discovery.
+1. `/bench-shape-idea` — specify FT79, lossless shift recovery.
+2. `/bench-shape-idea` — specify FT80, static bounded guard discovery.
+3. `/bench-shape-idea` — specify FT81, the platform-correct distributable runtime.

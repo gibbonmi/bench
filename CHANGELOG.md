@@ -8,6 +8,16 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Roadmap reconcile (2026-07-13, scope: post-FT78 retirement and cold-session
+  continuity).** Removed FT78 after `bench spec history
+  oracle-bound-gate-verdicts` returned its retirement record at `3fa8dec`; the
+  other 18 rows remain current. Drained one idea by folding a copy-paste,
+  harness-native cold-session continuation prompt contract into FT89 rather
+  than adding a duplicate guidance row. The journal had zero open entries, and
+  the FT6, FT24, FT8, and FT38 triggers remain unmet. Previous promotion builds
+  remain recorded. The refreshed sequence is FT79, FT80, then FT81 through
+  `/bench-shape-idea`.
+
 - **Learnings run (2026-07-13, scope: FT78 proof-closure reconcile).** Reworded
   FT78 from implementation to proof closure against its revised staged spec; no
   roadmap row shipped, and the other 18 rows remain current. The FT6, FT24, FT8,
