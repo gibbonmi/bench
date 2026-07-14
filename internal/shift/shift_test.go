@@ -209,12 +209,12 @@ func TestLoopPersistsIntentBeforeAcquireFailure(t *testing.T) {
 	}
 }
 
-// TestRunPreservingGateReportsRed pins runPreservingGate's contract after FT79: it
-// reports a red gate's exit code straight through and does nothing to the session
-// itself. Preservation (snapshot-and-release, or retain-and-lock on a snapshot
+// TestRunGateReportsRed pins runGate's contract after FT79 folded runPreservingGate
+// into it: it reports a red gate's exit code straight through and does nothing to the
+// session itself. Preservation (snapshot-and-release, or retain-and-lock on a snapshot
 // failure) is the caller's job, done once explicitly via preserveAndRecover at the
-// return site — never implied by a flag runPreservingGate sets on its way out.
-func TestRunPreservingGateReportsRed(t *testing.T) {
+// return site — never implied by a flag runGate sets on its way out.
+func TestRunGateReportsRed(t *testing.T) {
 	root := t.TempDir()
 	gitCmd := func(args ...string) {
 		t.Helper()
@@ -236,11 +236,34 @@ func TestRunPreservingGateReportsRed(t *testing.T) {
 	gitCmd("add", "-A")
 	gitCmd("-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "init")
 	s := &session{root: root, stdout: io.Discard, stderr: io.Discard}
-	if rc := s.runPreservingGate(); rc == 0 {
+	if rc := s.runGate(); rc == 0 {
 		t.Fatal("red gate returned zero")
 	}
 	if s.preserve.Load() {
-		t.Fatal("runPreservingGate must not itself mark the session preserved — that is preserveAndRecover's job")
+		t.Fatal("runGate must not itself mark the session preserved — that is preserveAndRecover's job")
+	}
+}
+
+// TestCheckpointOutcomeDeadlineWinsOverInterrupt pins the decided precedence when a
+// wall deadline and a pulled line race and both flags land before the next checkpoint:
+// the deadline outcome (incomplete/3) wins over interrupted/130. checkpoint's decision
+// is exercised through checkpointOutcome directly, since checkpoint itself exits the
+// process on a hit.
+func TestCheckpointOutcomeDeadlineWinsOverInterrupt(t *testing.T) {
+	s := &session{}
+	s.deadline.Store(true)
+	s.interrupted.Store(true)
+
+	outcome, detail, ok := s.checkpointOutcome()
+
+	if !ok {
+		t.Fatal("checkpointOutcome reported no hit with both flags set")
+	}
+	if outcome != OutcomeIncomplete {
+		t.Fatalf("outcome = %q, want %q (deadline must win over interrupted)", outcome, OutcomeIncomplete)
+	}
+	if detail != "wall deadline exceeded" {
+		t.Fatalf("detail = %q, want the deadline detail", detail)
 	}
 }
 

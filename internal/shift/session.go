@@ -189,6 +189,12 @@ func (s *session) killAdapter(sig syscall.Signal) {
 	}
 }
 
+// runGate runs the gate against the session's worktree and reports its exit code
+// straight through, doing nothing to the session itself. Both call sites share this one
+// implementation: the main loop's call propagates a red result through the evidence-
+// split preservation path (evidenceResult), while the refactor probe's call rolls a red
+// result back by design — preservation itself happens once, explicitly, at each
+// caller's own return site, never implied by a flag this method sets on its way out.
 func (s *session) runGate() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	s.mu.Lock()
@@ -202,14 +208,6 @@ func (s *session) runGate() int {
 	return rc
 }
 
-// runPreservingGate names the call sites whose red result must propagate through the
-// evidence-split preservation path (evidenceResult), as opposed to the refactor probe's
-// runGate, whose red result is rolled back by design. Both share one implementation
-// today; preservation itself happens once, explicitly, at each caller's return site.
-func (s *session) runPreservingGate() int {
-	return s.runGate()
-}
-
 func (s *session) cancelRunningGate() {
 	s.mu.Lock()
 	cancel := s.cancelGate
@@ -219,37 +217,48 @@ func (s *session) cancelRunningGate() {
 	}
 }
 
+// checkpointOutcome resolves which exit (if either) a checkpoint takes, tested directly
+// since checkpoint itself exits the process. Decided precedence: the wall deadline wins
+// over an interrupt when both flags are set — a deadline that fires while a pulled line
+// is already in flight still resolves incomplete/3, not interrupted/130, because the
+// deadline is this shift's own bound, not an external signal, and the taxonomy should
+// not depend on which of two concurrent cancellations happened to set its flag first.
+func (s *session) checkpointOutcome() (outcome Outcome, detail string, ok bool) {
+	switch {
+	case s.deadline.Load():
+		return OutcomeIncomplete, "wall deadline exceeded", true
+	case s.interrupted.Load():
+		return OutcomeInterrupted, "interrupted by signal", true
+	}
+	return "", "", false
+}
+
 // checkpoint exits when a signal or the wall deadline has fired, after the running
 // adapter or gate has already been signaled/cancelled. This is the well-defined point
 // (mirroring bash's trap-between-commands) at which an interrupt or deadline takes
 // effect. os.Exit skips deferred cleanup, so preservation, the shift_result block, and
 // the intent outcome are all run and recorded explicitly here, never left to a defer.
 func (s *session) checkpoint() {
-	switch {
-	case s.deadline.Load():
-		s.exitPreserving(OutcomeIncomplete, "wall deadline exceeded")
-	case s.interrupted.Load():
-		s.exitPreserving(OutcomeInterrupted, "interrupted by signal")
+	if outcome, detail, ok := s.checkpointOutcome(); ok {
+		s.exitPreserving(outcome, detail)
 	}
 }
 
 // exitPreserving is checkpoint's shared exit path for both a signal and a wall-deadline
 // trip: it preserves any dirty work, resolves the outcome (a teardown failure here still
-// resolves to failed/1, same as every other exit path), emits and records the result,
-// and exits with the outcome's pinned code.
+// resolves to failed/1, same as every other exit path), then hands off to finish for the
+// emit → record → exit-code sequence — the same single-sourced path every ordinary Loop
+// return uses — before exiting with its resolved code. os.Exit here (rather than a
+// return) is deliberate: this path is reached from inside the loop's own call stack via
+// checkpoint, and skips the deferred cleanup that a normal return would trigger, per the
+// session doc comment.
 func (s *session) exitPreserving(outcome Outcome, detail string) {
 	recovery, teardownErr := s.preserveAndRecover(detail)
 	res := Result{Outcome: outcome, Branch: s.branch, Committed: s.committed, IterationsUsed: s.iterationsUsed, Recovery: recovery, Detail: detail}
 	if teardownErr != nil {
 		res = teardownFailureResult(s, recovery, teardownErr)
 	}
-	res.Emit(s.stdout)
-	if s.entry != nil {
-		s.entry.Outcome = string(res.Outcome)
-		s.entry.Recovery = res.Recovery
-		_ = intent.Upsert(s.mainRoot, *s.entry)
-	}
-	os.Exit(res.ExitCode())
+	os.Exit(finish(s.stdout, s.stderr, s.mainRoot, s.entry, res))
 }
 
 // teardown removes the shift scratch and releases the pool lease, exactly once whether
@@ -285,7 +294,7 @@ func (s *session) preserveAndRecover(reason string) (recovery string, teardownEr
 	if len(dirtyPaths(s.root)) == 0 {
 		return RecoveryNone, s.teardown()
 	}
-	ref := "refs/bench/recovery/" + s.branch
+	ref := recoveryRefNamespace + s.branch
 	parent, err := git.Output("-C", s.root, "rev-parse", "HEAD")
 	if err == nil {
 		if _, snapErr := worktree.SnapshotDirty(s.root, parent, ref, scratchExcludeList()); snapErr == nil {

@@ -645,19 +645,22 @@ func testShiftControlByteObjective(t *testing.T) {
 // values outside the accepted range each exit 2, naming the variable and range, before
 // any lease is acquired.
 func testShiftInvalidEnvUsage(t *testing.T) {
+	const itersRange = "[1,100]"
+	const wallRange = "greater than 0 and at most 24h0m0s"
 	cases := []struct {
-		name string
-		env  map[string]string
-		want string // substring stderr must contain: the variable and its range
+		name      string
+		env       map[string]string
+		want      string // substring stderr must contain: the variable name
+		wantRange string // substring stderr must also contain: the accepted range
 	}{
-		{"zero iters", map[string]string{"BENCH_MAX_ITERS": "0"}, "BENCH_MAX_ITERS"},
-		{"non-integer iters", map[string]string{"BENCH_MAX_ITERS": "abc"}, "BENCH_MAX_ITERS"},
-		{"iters over max", map[string]string{"BENCH_MAX_ITERS": "101"}, "BENCH_MAX_ITERS"},
-		{"zero refactor iters", map[string]string{"BENCH_REFACTOR_ITERS": "0"}, "BENCH_REFACTOR_ITERS"},
-		{"wall unparseable", map[string]string{"BENCH_MAX_WALL": "abc"}, "BENCH_MAX_WALL"},
-		{"wall zero", map[string]string{"BENCH_MAX_WALL": "0s"}, "BENCH_MAX_WALL"},
-		{"wall negative", map[string]string{"BENCH_MAX_WALL": "-5m"}, "BENCH_MAX_WALL"},
-		{"wall over bound", map[string]string{"BENCH_MAX_WALL": "48h"}, "BENCH_MAX_WALL"},
+		{"zero iters", map[string]string{"BENCH_MAX_ITERS": "0"}, "BENCH_MAX_ITERS", itersRange},
+		{"non-integer iters", map[string]string{"BENCH_MAX_ITERS": "abc"}, "BENCH_MAX_ITERS", itersRange},
+		{"iters over max", map[string]string{"BENCH_MAX_ITERS": "101"}, "BENCH_MAX_ITERS", itersRange},
+		{"zero refactor iters", map[string]string{"BENCH_REFACTOR_ITERS": "0"}, "BENCH_REFACTOR_ITERS", itersRange},
+		{"wall unparseable", map[string]string{"BENCH_MAX_WALL": "abc"}, "BENCH_MAX_WALL", wallRange},
+		{"wall zero", map[string]string{"BENCH_MAX_WALL": "0s"}, "BENCH_MAX_WALL", wallRange},
+		{"wall negative", map[string]string{"BENCH_MAX_WALL": "-5m"}, "BENCH_MAX_WALL", wallRange},
+		{"wall over bound", map[string]string{"BENCH_MAX_WALL": "48h"}, "BENCH_MAX_WALL", wallRange},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -672,6 +675,7 @@ func testShiftInvalidEnvUsage(t *testing.T) {
 
 			probe.RequireExit(2)
 			probe.RequireContains(probe.Stderr, tc.want)
+			probe.RequireContains(probe.Stderr, tc.wantRange)
 			requireNoLease(t, home)
 			requireNoShiftBranch(t, f)
 		})

@@ -42,10 +42,16 @@ var resultFields = []string{"outcome", "exit", "branch", "committed", "iteration
 // the three surfaces never drift on what "no recovery" looks like.
 const RecoveryNone = "none"
 
+// recoveryRefNamespace is the one ref namespace a shift's dirty-tree snapshot lives
+// under, mirroring internal/intent/assignment.go's named-constant idiom for ref
+// namespaces — every site that builds or reads this prefix uses this constant rather
+// than repeating the literal.
+const recoveryRefNamespace = "refs/bench/recovery/"
+
 // recoveryRef and recoveryWorktree are the recovery pointer's only two non-"none"
 // constructors. Every preserving failure builds its pointer through exactly one of
 // these, so the ref-vs-worktree encoding lives in one place.
-func recoveryRef(branch string) string    { return "ref:refs/bench/recovery/" + branch }
+func recoveryRef(branch string) string    { return "ref:" + recoveryRefNamespace + branch }
 func recoveryWorktree(path string) string { return "worktree:" + path }
 
 // Result is the one value computed at every shift exit path: outcome, branch, committed

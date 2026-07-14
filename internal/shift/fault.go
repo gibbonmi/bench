@@ -6,8 +6,9 @@ package shift
 type shiftStep string
 
 const (
-	stepStage    shiftStep = "stage"
-	stepTeardown shiftStep = "teardown"
+	stepStage        shiftStep = "stage"
+	stepTeardown     shiftStep = "teardown"
+	stepIntentUpsert shiftStep = "intent-upsert"
 )
 
 // fault is a step-keyed injection hook: nil in every production path, set only by tests

@@ -2,6 +2,7 @@ package shift
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -62,10 +63,12 @@ func requireRecoveryRefResolves(t *testing.T, root, branch string) {
 	}
 }
 
-// faultFixture builds a throwaway repo with a gate, an agent that writes work.txt, and
-// chdirs the test into it — the shared setup every in-process Seam B fault test in this
-// file drives Loop against.
-func faultFixture(t *testing.T, gateScript string) (root string) {
+// faultFixtureCore builds a throwaway repo with a gate and chdirs the test into it — the
+// shared repo-setup every in-process Seam B fault test in this file drives Loop against.
+// extra runs after the gate is written but before the init commit, so a caller can add
+// its own tracked files (an agent script) to that same commit; nil skips it. Every
+// caller still owns its own BENCH_AGENT: this only sets the env both fixtures share.
+func faultFixtureCore(t *testing.T, gateScript string, extra func(root string)) (root string) {
 	t.Helper()
 	root = t.TempDir()
 	runGit := func(args ...string) {
@@ -85,9 +88,8 @@ func faultFixture(t *testing.T, gateScript string) (root string) {
 	if err := os.WriteFile(filepath.Join(root, ".bench", "gate-inputs.json"), []byte(`{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	agentPath := filepath.Join(root, "agent")
-	if err := os.WriteFile(agentPath, []byte("#!/usr/bin/env bash\nprintf 'work\\n' > work.txt\n"), 0o755); err != nil {
-		t.Fatal(err)
+	if extra != nil {
+		extra(root)
 	}
 	runGit("-c", "user.email=bench@local", "-c", "user.name=bench", "add", "-A")
 	runGit("-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "-m", "init")
@@ -100,9 +102,24 @@ func faultFixture(t *testing.T, gateScript string) (root string) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = os.Chdir(oldWD) })
-	t.Setenv("BENCH_AGENT", agentPath)
 	t.Setenv("BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
 	t.Setenv("BENCH_MAX_ITERS", "1")
+	return root
+}
+
+// faultFixture is faultFixtureCore plus an agent that writes work.txt, with BENCH_AGENT
+// set to it — the shared setup every in-process Seam B fault test in this file that
+// wants a mutating adapter drives Loop against.
+func faultFixture(t *testing.T, gateScript string) (root string) {
+	t.Helper()
+	var agentPath string
+	root = faultFixtureCore(t, gateScript, func(root string) {
+		agentPath = filepath.Join(root, "agent")
+		if err := os.WriteFile(agentPath, []byte("#!/usr/bin/env bash\nprintf 'work\\n' > work.txt\n"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	})
+	t.Setenv("BENCH_AGENT", agentPath)
 	return root
 }
 
@@ -168,41 +185,36 @@ func TestLoopTeardownFaultReportsFailed(t *testing.T) {
 	}
 }
 
-// faultFixtureNoAgentOverride is faultFixture without re-setting BENCH_AGENT, for a test
-// that wants its own no-op adapter.
+// faultFixtureNoAgentOverride is faultFixtureCore without an agent file, for a test that
+// wants its own no-op adapter (BENCH_AGENT set by the caller).
 func faultFixtureNoAgentOverride(t *testing.T, gateScript string) (root string) {
 	t.Helper()
-	root = t.TempDir()
-	runGit := func(args ...string) {
-		t.Helper()
-		cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("git %v failed: %v\n%s", args, err, out)
+	return faultFixtureCore(t, gateScript, nil)
+}
+
+// TestFinishReportsUpsertFailure covers C2: a finish-time intent.Upsert failure (forced
+// here via the stepIntentUpsert fault, since a real ledger write only fails on a broken
+// BENCH_HOME, a much harder repro) must not be swallowed with `_ =`. The outcome and
+// exit code still resolve from the gate's real verdict — the ledger record is
+// enrichment, not the oracle — but a warning naming the failure lands on stderr.
+func TestFinishReportsUpsertFailure(t *testing.T) {
+	faultFixture(t, "#!/usr/bin/env bash\nexit 0\n")
+	armFault(t, func(step shiftStep) error {
+		if step == stepIntentUpsert {
+			return fmt.Errorf("injected upsert failure")
 		}
+		return nil
+	})
+
+	var stdout, stderr bytes.Buffer
+	code := Loop("upsert fault", bytes.NewReader(nil), &stdout, &stderr)
+
+	if code != 3 {
+		t.Fatalf("Loop returned %d, want 3 (incomplete — the fault must not change the outcome): stdout=%s stderr=%s", code, stdout.String(), stderr.String())
 	}
-	runGit("init", "-q", "-b", "main")
-	if err := os.Mkdir(filepath.Join(root, ".bench"), 0o755); err != nil {
-		t.Fatal(err)
+	if !contains(stderr.String(), "could not record shift outcome") || !contains(stderr.String(), "injected upsert failure") {
+		t.Fatalf("stderr did not warn about the discarded Upsert failure:\n%s", stderr.String())
 	}
-	if err := os.WriteFile(filepath.Join(root, ".bench", "gate.sh"), []byte(gateScript), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(root, ".bench", "gate-inputs.json"), []byte(`{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	runGit("-c", "user.email=bench@local", "-c", "user.name=bench", "add", "-A")
-	runGit("-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "-m", "init")
-	oldWD, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chdir(root); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.Chdir(oldWD) })
-	t.Setenv("BENCH_HOME", filepath.Join(t.TempDir(), "bench-home"))
-	t.Setenv("BENCH_MAX_ITERS", "1")
-	return root
 }
 
 // TestLoopRetainsAndLocksOnSnapshotFailure covers row 4's Seam B half: when the

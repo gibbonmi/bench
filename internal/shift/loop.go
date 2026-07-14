@@ -18,21 +18,32 @@ import (
 // finish emits the shift_result block, records the outcome on the intent entry when one
 // exists (a validation failure exits before an entry is created, and that is correct —
 // there is nothing yet to enrich), and resolves res to its process exit code. Every
-// Loop return funnels through this one path.
-func finish(stdout io.Writer, mainRoot string, entry *intent.Entry, res Result) int {
+// Loop return, and checkpoint's os.Exit path (via exitPreserving), funnels through this
+// one path — the single source for the emit → record → exit-code sequence. A failed
+// Upsert does not change the outcome or the exit code (the gate's verdict already
+// happened; the ledger record is enrichment, not the oracle) but is not silently
+// swallowed either: it is reported to stderr so an operator can see the ledger fell out
+// of sync.
+func finish(stdout, stderr io.Writer, mainRoot string, entry *intent.Entry, res Result) int {
 	res.Emit(stdout)
 	if entry != nil {
 		entry.Outcome = string(res.Outcome)
 		entry.Recovery = res.Recovery
-		_ = intent.Upsert(mainRoot, *entry)
+		err := intent.Upsert(mainRoot, *entry)
+		if err == nil {
+			err = hitShift(shiftFault, stepIntentUpsert)
+		}
+		if err != nil {
+			fmt.Fprintf(stderr, "warning: could not record shift outcome: %v\n", err)
+		}
 	}
 	return res.ExitCode()
 }
 
 // usage is the exit-2 shorthand for every setup failure before the first adapter run —
 // there is no intent entry yet, so nothing is enriched.
-func usage(stdout io.Writer, detail string) int {
-	return finish(stdout, "", nil, Result{Outcome: OutcomeUsage, Detail: detail})
+func usage(stdout, stderr io.Writer, detail string) int {
+	return finish(stdout, stderr, "", nil, Result{Outcome: OutcomeUsage, Detail: detail})
 }
 
 // evidenceResult is the one place a post-mutation failure both preserves the dirty tree
@@ -94,52 +105,52 @@ func createShiftBranch(wt, timestamp string) (string, error) {
 func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if err := validateObjective(objective); err != nil {
 		fmt.Fprintln(stderr, err)
-		return usage(stdout, err.Error())
+		return usage(stdout, stderr, err.Error())
 	}
 	maxIters, err := parseBoundedInt("BENCH_MAX_ITERS", maxItersDefault, itersMin, itersMax)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
-		return usage(stdout, err.Error())
+		return usage(stdout, stderr, err.Error())
 	}
 	refactorIters, err := parseBoundedInt("BENCH_REFACTOR_ITERS", refactorItersDefault, itersMin, itersMax)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
-		return usage(stdout, err.Error())
+		return usage(stdout, stderr, err.Error())
 	}
 	wallDur, err := parseWallDuration("BENCH_MAX_WALL", maxWallDefault, maxWallCap)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
-		return usage(stdout, err.Error())
+		return usage(stdout, stderr, err.Error())
 	}
 	if err := requireAdapter(os.Getenv("BENCH_AGENT")); err != nil {
 		fmt.Fprintln(stderr, err)
-		return usage(stdout, err.Error())
+		return usage(stdout, stderr, err.Error())
 	}
 	mainRoot, err := git.Root()
 	if err != nil {
 		fmt.Fprintln(stderr, toon.NotInRepo())
-		return usage(stdout, "not in a git repository")
+		return usage(stdout, stderr, "not in a git repository")
 	}
 	// Audit #10 — tolerate: an empty parse reads as a clean tree, but the very next
 	// `rev-parse HEAD` fails the loop loudly on a broken repo, so no broken repo slips past.
 	if dirty, _ := git.Output("-C", mainRoot, "status", "--porcelain"); dirty != "" {
 		fmt.Fprintln(stderr, "working tree not clean; commit or stash first")
-		return usage(stdout, "working tree not clean")
+		return usage(stdout, stderr, "working tree not clean")
 	}
 	base, err := git.Output("-C", mainRoot, "rev-parse", "HEAD")
 	if err != nil {
 		fmt.Fprintln(stderr, "could not resolve HEAD")
-		return usage(stdout, "could not resolve HEAD")
+		return usage(stdout, stderr, "could not resolve HEAD")
 	}
 	intentEntry := intent.NewEntry(intent.KindShift, objective)
 	if err := intent.Upsert(mainRoot, intentEntry); err != nil {
 		fmt.Fprintf(stderr, "could not persist shift intent: %v\n", err)
-		return usage(stdout, "could not persist shift intent")
+		return usage(stdout, stderr, "could not persist shift intent")
 	}
 	wt, err := worktree.Acquire(mainRoot, base, "hard")
 	if err != nil {
 		fmt.Fprintln(stderr, err)
-		return finish(stdout, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Detail: "could not acquire a worktree"})
+		return finish(stdout, stderr, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Detail: "could not acquire a worktree"})
 	}
 
 	s := &session{agent: os.Getenv("BENCH_AGENT"), root: wt, stdin: stdin, stdout: stdout, stderr: stderr, mainRoot: mainRoot, entry: &intentEntry}
@@ -147,7 +158,7 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if err != nil {
 		fmt.Fprintf(stderr, "%v\n", err)
 		s.teardown()
-		return finish(stdout, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Detail: err.Error()})
+		return finish(stdout, stderr, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Detail: err.Error()})
 	}
 	s.branch = branch
 	intentEntry.Worktree = wt
@@ -155,24 +166,24 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if err := intent.Upsert(mainRoot, intentEntry); err != nil {
 		fmt.Fprintf(stderr, "could not enrich shift intent: %v\n", err)
 		s.teardown()
-		return finish(stdout, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not enrich shift intent"})
+		return finish(stdout, stderr, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not enrich shift intent"})
 	}
 	// The true review base for this branch: `bench diff` resolves it from here, and
 	// worktrees share repo config so the key is visible wherever review runs.
 	if err := exec.Command("git", "-C", wt, "config", "branch."+branch+".benchBase", base).Run(); err != nil {
 		fmt.Fprintf(stderr, "could not configure shift branch %s: %v\n", branch, err)
 		s.teardown()
-		return finish(stdout, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not configure shift branch " + branch})
+		return finish(stdout, stderr, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not configure shift branch " + branch})
 	}
 	if err := os.WriteFile(wt+"/.bench-objective", []byte(objective+"\n"), 0o644); err != nil {
 		fmt.Fprintf(stderr, "could not write shift objective: %v\n", err)
 		s.teardown()
-		return finish(stdout, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not write shift objective"})
+		return finish(stdout, stderr, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not write shift objective"})
 	}
 	if err := os.WriteFile(wt+"/.bench-notes.md", nil, 0o644); err != nil {
 		fmt.Fprintf(stderr, "could not write shift notes: %v\n", err)
 		s.teardown()
-		return finish(stdout, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not write shift notes"})
+		return finish(stdout, stderr, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not write shift notes"})
 	}
 
 	// Signal handling: a pulled line cancels the running child. The loop exits at its
@@ -223,11 +234,11 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 		adapterErr := s.runAdapter(fmt.Sprintf(iterationPrompt, objective))
 		s.checkpoint()
 		post := dirtyPaths(wt)
-		if s.runPreservingGate() == 0 {
+		if s.runGate() == 0 {
 			s.checkpoint()
 			if err := stageTouched(wt, pre, post); err != nil {
 				fmt.Fprintf(stderr, "could not stage iteration %d: %v\n", i, err)
-				return finish(stdout, mainRoot, &intentEntry, evidenceResult(s, fmt.Sprintf("could not stage iteration %d", i)))
+				return finish(stdout, stderr, mainRoot, &intentEntry, evidenceResult(s, fmt.Sprintf("could not stage iteration %d", i)))
 			}
 			if nothingStaged(wt) {
 				if adapterErr == nil {
@@ -247,7 +258,7 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 			}
 			if err := exec.Command("git", "-C", wt, "commit", "-q", "-m", fmt.Sprintf("shift: iteration %d — %s", i, objective)).Run(); err != nil {
 				fmt.Fprintf(stderr, "could not commit iteration %d: %v\n", i, err)
-				return finish(stdout, mainRoot, &intentEntry, evidenceResult(s, fmt.Sprintf("could not commit iteration %d", i)))
+				return finish(stdout, stderr, mainRoot, &intentEntry, evidenceResult(s, fmt.Sprintf("could not commit iteration %d", i)))
 			}
 			s.committed++
 			fmt.Fprintf(stdout, "  ✓ green — committed iteration %d\n", i)
@@ -271,21 +282,21 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 			// (the ref, or the retained worktree path on the fallback) plus the
 			// shift_result recovery cell — never this message.
 			fmt.Fprintf(stdout, "  ✗ gate failed — snapshotting iteration %d\n", i)
-			return finish(stdout, mainRoot, &intentEntry, evidenceResult(s, fmt.Sprintf("gate failed on iteration %d", i)))
+			return finish(stdout, stderr, mainRoot, &intentEntry, evidenceResult(s, fmt.Sprintf("gate failed on iteration %d", i)))
 		}
 	}
 
 	if stopReason == "adapter-failed" {
-		return finish(stdout, mainRoot, &intentEntry, evidenceResult(s, stopDetail))
+		return finish(stdout, stderr, mainRoot, &intentEntry, evidenceResult(s, stopDetail))
 	}
 
 	if err := s.refactorPhase(base, refactorIters); err != nil {
-		return finish(stdout, mainRoot, &intentEntry, evidenceResult(s, err.Error()))
+		return finish(stdout, stderr, mainRoot, &intentEntry, evidenceResult(s, err.Error()))
 	}
 
 	recovery, teardownErr := s.preserveAndRecover("shift teardown")
 	if teardownErr != nil {
-		return finish(stdout, mainRoot, &intentEntry, teardownFailureResult(s, recovery, teardownErr))
+		return finish(stdout, stderr, mainRoot, &intentEntry, teardownFailureResult(s, recovery, teardownErr))
 	}
 	fmt.Fprintf(stdout, "■ shift done: %s, %d committed iteration(s), %dm elapsed\n", branch, s.committed, int(time.Since(started).Minutes()))
 	fmt.Fprintf(stdout, "  review: git -C %s log --oneline %s..%s\n", mainRoot, base, branch)
@@ -300,7 +311,7 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 	case s.committed == 0:
 		outcome = OutcomeNoOp
 	}
-	return finish(stdout, mainRoot, &intentEntry, Result{
+	return finish(stdout, stderr, mainRoot, &intentEntry, Result{
 		Outcome: outcome, Branch: branch, Committed: s.committed, IterationsUsed: s.iterationsUsed, Recovery: recovery, Detail: detail,
 	})
 }
