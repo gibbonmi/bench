@@ -8,6 +8,21 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Roadmap reconcile (2026-07-14, scope: post-FT79-ship drain).** FT79's row
+  left with its spec retirement (`eafb3fb`); the remaining 17 rows verify
+  current and the FT6, FT24, FT8, and FT38 triggers remain unmet. Drained one
+  idea into new row FT90: the gate subject fingerprints `dist/bench` while the
+  gate's own serialized build phase rewrites that binary, so the first gate
+  after any source change discards its verdict as subject drift. Code-confirmed
+  in `internal/gate/subject.go` plus `.bench/gate-inputs.json`; the row's
+  wording corrects the parked line's gitignore framing, since the exposure is
+  the declared manifest path, not ignore handling (`TreeHash` already respects
+  `.gitignore`). The journal had zero open entries, so there were no verdicts.
+  The previous run promoted no rows, and the FT65 and FT66 promotion-build
+  records remain present. The refreshed sequence leads with FT90 through
+  `/bench-debug` (small fix, removes per-change gate friction), then FT80 and
+  FT81 through `/bench-shape-idea`.
+
 - **Learnings run (2026-07-14, scope: FT79 decision-map reconcile).** No roadmap
   row shipped; the only tree change since the prior reconcile is FT79's
   completed decision map, so all 18 rows remain current and the FT6, FT24, FT8,

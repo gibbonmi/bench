@@ -1,1 +1,1 @@
-- 2026-07-14  gate subject fingerprint counts gitignored dist/bench, so the gate's own build phase invalidates its first verdict after any source change ('gate subject changed during execution'); exclude ignored paths from the subject
+- 2026-07-14  gate wall-clock (~4 min full suite) is too long for small diffs — conformance ~100s and runtime contracts ~123s dominate; investigate phase parallelism/caching or scoped verdicts without weakening the oracle

@@ -215,6 +215,19 @@ actionable.
 
 Sources: `RR:C-04`; `RC:M-01`.
 
+**FT90 (MEDIUM, evidence supplied) — gate subject must not fingerprint the
+gate's own build output.** `.bench/gate-inputs.json` declares `dist/bench` as a
+subject input while the gate's serialized build phase rewrites that binary, so
+the first gate after any source change reports "gate subject changed during
+execution" and discards its verdict. The fix decides where the boundary sits —
+drop the gate-built binary from the declared inputs, or capture the subject
+after the serial build phase — without weakening drift detection for genuinely
+external mid-run changes.
+
+Closure requires the red repro (source edit → one gate run → invalidated
+verdict) turned green, plus a canary proving an external mid-run edit still
+invalidates the verdict.
+
 **FT71 (HIGH on the bank track, evidence supplied) — versioned local shift
 evidence.** Emit a redacted, append-only local event schema for shift/session
 start and end, resolved agent and line, gate fingerprint and verdict, adapter
@@ -313,5 +326,6 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — specify FT80, static bounded guard discovery.
-2. `/bench-shape-idea` — specify FT81, the platform-correct distributable runtime.
+1. `/bench-debug` — fix FT90, the gate-subject self-invalidation; small defect fix that removes per-change gate friction before the long HIGH rows start.
+2. `/bench-shape-idea` — specify FT80, static bounded guard discovery.
+3. `/bench-shape-idea` — specify FT81, the platform-correct distributable runtime.
