@@ -35,7 +35,8 @@ func testRuntimeGateRebuiltSelfHost(t *testing.T) {
 	contract.NoteContractFailure(t, "bench gate rebuilt self-host contract failed")
 	root := contract.SubjectRoot(t)
 	f := contract.NewFixture(t)
-	copyRuntimeFile(t, filepath.Join(root, "bin", "bench.sh"), filepath.Join(f.Root, "bin", "bench.sh"), 0o755)
+	wrapper := filepath.Join(f.Root, "bin", "bench.sh")
+	copyRuntimeFile(t, filepath.Join(root, "bin", "bench.sh"), wrapper, 0o755)
 	copyRuntimeFile(t, filepath.Join(root, ".bench", "gate-inputs.json"), filepath.Join(f.Root, ".bench", "gate-inputs.json"), 0o644)
 	copyRuntimeFile(t, filepath.Join(root, "package.json"), filepath.Join(f.Root, "package.json"), 0o644)
 	f.WriteFile(".gitignore", ".bench-contract-env/\n")
@@ -45,15 +46,27 @@ root="$(git rev-parse --show-toplevel)"
 test -n "$(go env GOPATH)"
 exec "$root/bin/bench.sh" version
 `)
-	contract.Mkdir(t, filepath.Join(f.Root, "dist"))
-	build := exec.Command("go", "build", "-o", filepath.Join(f.Root, "dist", "bench"), "./cmd/bench")
+	driver := `wrapper="$1"; kit="$2"; set --; source "$wrapper" >/dev/null; printf '%s\n%s\n' "$(package_version "$kit")" "$(platform_suffix)"`
+	query := contract.RunAt(t, f, f.Root, nil, "bash", "-c", driver, "bench-wrapper-query", wrapper, f.Root)
+	query.RequireExit(0)
+	parts := contract.NonEmptyLines(query.Stdout)
+	if len(parts) != 2 {
+		t.Fatalf("wrapper cache query returned %d lines, want version and platform suffix:\n%s", len(parts), query.Stdout)
+	}
+	benchHome, home := f.Env["BENCH_HOME"], f.Env["HOME"]
+	cacheBinary := filepath.Join(benchHome, "cache", "bin", parts[0], parts[1], "bench")
+	contract.Mkdir(t, filepath.Dir(cacheBinary))
+	build := exec.Command("bash", filepath.Join(root, "scripts", "go-build.sh"), root, cacheBinary)
 	build.Dir = root
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build current bench binary: %v\n%s", err, output)
 	}
 	f.CommitAll("self-host fixture")
 
-	f.Run("bash", filepath.Join(f.Root, "bin", "bench.sh"), "gate").RequireExit(0)
+	f.RunEnv(map[string]string{"BENCH_HOME": benchHome, "HOME": home}, "bash", wrapper, "gate").RequireExit(0)
+	if _, err := os.Stat(filepath.Join(home, ".bench")); !os.IsNotExist(err) {
+		t.Fatalf("default HOME cache exists after cache-only gate run: %v", err)
+	}
 }
 
 func testRuntimeOracleBoundVerdict(t *testing.T) {
