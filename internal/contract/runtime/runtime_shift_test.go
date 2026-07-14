@@ -37,6 +37,7 @@ func TestRuntimeShiftLoopContracts(t *testing.T) {
 	contract.RunParallel(t, "bench shift distinct recovery per re-run contract", testShiftDistinctRecoveryPerRun)
 	contract.RunParallel(t, "bench shift locked fallback worktree survives resume contract", testShiftLockedFallbackWorktreeSurvivesResume)
 	contract.RunParallel(t, "bench shift wall deadline contract", testShiftWallDeadlineKillsAdapter)
+	contract.RunParallel(t, "bench shift wall deadline mid-gate contract", testShiftWallDeadlineCancelsRunningGate)
 	contract.RunParallel(t, "bench shift intent and status recovery surfacing contract", testShiftIntentAndStatusSurfaceRecovery)
 	contract.RunParallel(t, "bench shift interrupt-with-mutation recovery contract", testShiftInterruptWithMutationRecovers)
 }
@@ -455,6 +456,50 @@ func testShiftWallDeadlineKillsAdapter(t *testing.T) {
 	}
 	ref := "refs/bench/recovery/" + branch
 	f.Git("show-ref", "--verify", ref)
+	requireNoLease(t, home)
+}
+
+// testShiftWallDeadlineCancelsRunningGate covers row 8's other half: a wall deadline
+// that fires while the gate itself is running cancels the gate instead of waiting it
+// out — row 8's sleeping-adapter case only exercises the wall against a hung adapter,
+// so a wall that never wires cancel-gate would pass that row yet hang here.
+func testShiftWallDeadlineCancelsRunningGate(t *testing.T) {
+	f := shiftFixture(t, `#!/usr/bin/env bash
+if [ ! -f "$BENCH_TEST_STATE/gate-ran-once" ]; then
+  : > "$BENCH_TEST_STATE/gate-ran-once"
+  sleep 5
+  printf 'late\n' > "$BENCH_TEST_STATE/late-gate-finished"
+fi
+exit 0
+`)
+	f.WriteExecutable("agent", "#!/usr/bin/env bash\nprintf 'work\\n' > work.txt\n")
+	f.CommitAll("agent")
+	home := t.TempDir()
+	state := t.TempDir()
+
+	start := time.Now()
+	probe := f.BenchEnv(map[string]string{
+		"BENCH_TEST_STATE": state, "BENCH_AGENT": filepath.Join(f.Root, "agent"),
+		"BENCH_MAX_ITERS": "2", "BENCH_MAX_WALL": "1s", "BENCH_HOME": home,
+	}, "shift", "wall mid gate")
+	elapsed := time.Since(start)
+
+	probe.RequireExit(3)
+	if elapsed > 15*time.Second {
+		t.Fatalf("shift did not honor the wall deadline while the gate was running: %s elapsed", elapsed)
+	}
+	probe.RequireContains(probe.Stdout, "deadline")
+	branch := shiftBranchFromStart(t, probe.Stdout)
+	waitSeconds(t, 5)
+	if _, err := os.Stat(filepath.Join(state, "late-gate-finished")); err == nil {
+		t.Fatal("gate kept running past the wall deadline instead of being cancelled")
+	}
+	ref := "refs/bench/recovery/" + branch
+	f.Git("show-ref", "--verify", ref)
+	tree := f.Git("ls-tree", "-r", "--name-only", ref).Stdout
+	if !strings.Contains(tree, "work.txt") {
+		t.Fatalf("recovery snapshot did not preserve the adapter's mutation before the gate-cancelling deadline:\n%s", tree)
+	}
 	requireNoLease(t, home)
 }
 
