@@ -1,6 +1,6 @@
 # Lossless shift recovery and truthful result states
 
-Status: staged
+Status: implemented
 
 ## Problem
 
