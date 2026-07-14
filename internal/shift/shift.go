@@ -15,7 +15,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/git"
@@ -53,12 +52,26 @@ func dirtyPaths(root string) []string {
 	return parseDirtyPaths(raw)
 }
 
+// scratchExcludeList returns the scratch file names as the exclude set the snapshot
+// primitive takes. internal/worktree owns no scratch policy of its own — internal/shift
+// is the one source of the scratch names, passed in explicitly.
+func scratchExcludeList() []string {
+	names := make([]string, 0, len(scratchFiles))
+	for name := range scratchFiles {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
+
 // stageTouched stages exactly what the agent touched: the paths dirty after it ran
 // (post) minus those dirty before (pre). Snapshotting pre before the gate runs keeps a
 // gate byproduct (an unignored build artifact) and any pre-existing dirt out of the
 // commit; the `:(literal)` pathspec keeps a glob character in a path from being read as
-// a pattern.
-func stageTouched(root string, pre, post []string) {
+// a pattern. A staging failure — a real `git add` error, or the injected test fault —
+// returns an error rather than being swallowed, so the caller can snapshot and split by
+// evidence instead of committing a partial tree.
+func stageTouched(root string, pre, post []string) error {
 	before := make(map[string]bool, len(pre))
 	for _, p := range pre {
 		before[p] = true
@@ -67,8 +80,11 @@ func stageTouched(root string, pre, post []string) {
 		if p == "" || before[p] {
 			continue
 		}
-		_ = exec.Command("git", "-C", root, "add", "-A", "--", ":(literal)"+p).Run()
+		if err := exec.Command("git", "-C", root, "add", "-A", "--", ":(literal)"+p).Run(); err != nil {
+			return fmt.Errorf("stage %s: %w", p, err)
+		}
 	}
+	return hitShift(shiftFault, stepStage)
 }
 
 // resolveExecutable mirrors bash `type -P`: it returns the path when name resolves to
@@ -119,23 +135,10 @@ func cleanupScratch(root string) {
 	}
 }
 
-// envInt reads an integer environment variable, falling back to def when unset or
-// unparseable — the loop's BENCH_MAX_ITERS / BENCH_REFACTOR_ITERS budgets.
-func envInt(name string, def int) int {
-	if v := os.Getenv(name); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			return n
-		}
-	}
-	return def
-}
-
 // Command is the `bench shift [objective...]` entry: the objective is every positional
-// argument joined (mirroring the shell's `$*`), defaulting to "improve the codebase".
+// argument joined (mirroring the shell's `$*`). An empty objective is not defaulted —
+// Loop's validation rejects it with exit 2.
 func Command(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	objective := strings.Join(args, " ")
-	if objective == "" {
-		objective = "improve the codebase"
-	}
 	return Loop(objective, stdin, stdout, stderr)
 }

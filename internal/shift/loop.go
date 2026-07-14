@@ -1,142 +1,189 @@
 package shift
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"os/signal"
-	"sync"
-	"sync/atomic"
 	"syscall"
 	"time"
 
-	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
-	"github.com/gibbonmi/bench/internal/structure"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
 
-// iterationPrompt is the text a shift iteration hands its adapter as the single
-// positional argument. It has always lived inside the executable (a heredoc in the
-// shell); it is reviewer-facing content only through the running loop, never a tunable
-// file. %s is the objective.
-const iterationPrompt = `You are one iteration of a Bench shift. Objective: %s
-First read .bench-notes.md for what prior iterations learned, did, and left
-unfinished. Then make ONE small, self-contained change toward the objective, at
-the pre-agreed seams. Read the spec under specs/ and projects/ if present. Do not
-try to finish everything; advance it by one honest step. Do not weaken or skip any
-gate check. Before you stop, append 2–4 lines to .bench-notes.md: what you changed,
-what you learned, and the next step you'd take. Then stop — the gate, not you,
-decides if it counts.
-`
-
-// refactorPrompt scopes the refactor phase to the files this shift flagged. %s is the
-// structure report naming those files — never repo-wide debt.
-const refactorPrompt = `The implementation is complete and tests are green, but the structure budget is
-exceeded. These are the flagged files and directories this shift touched — fix only
-these, nothing else:
-
-%s
-
-Fix them by splitting along responsibility, using the deletion test from the craft-seams
-skill: lift a cluster out only if extracting it *concentrates* complexity behind a real
-interface rather than just moving it. Never fragment a cohesive file to beat the line
-count — if a file is genuinely one deep module, leave it and say so. Group a crowded
-directory into a package with a clear entry point. Keep every test green; change
-structure, not behavior. Make one split, then stop — the loop re-checks and continues.
-`
-
-var timeNow = time.Now
-
-// session carries a running shift's state so the signal handler and the loop share one
-// view of the worktree root, the adapter child, and the once-only teardown.
-type session struct {
-	agent  string
-	root   string
-	stdin  io.Reader
-	stdout io.Writer
-	stderr io.Writer
-
-	mu          sync.Mutex
-	adapter     *exec.Cmd // the in-flight adapter child, or nil between runs
-	cancelGate  context.CancelFunc
-	interrupted atomic.Bool // set by the signal handler; parks the loop at its checkpoints
-	teardownOne sync.Once
-	preserve    atomic.Bool // a failed oracle transaction retains the charged worktree verbatim
+// finish emits the shift_result block, records the outcome on the intent entry when one
+// exists (a validation failure exits before an entry is created, and that is correct —
+// there is nothing yet to enrich), and resolves res to its process exit code. Every
+// Loop return, and checkpoint's os.Exit path (via exitPreserving), funnels through this
+// one path — the single source for the emit → record → exit-code sequence. A failed
+// Upsert does not change the outcome or the exit code (the gate's verdict already
+// happened; the ledger record is enrichment, not the oracle) but is not silently
+// swallowed either: it is reported to stderr so an operator can see the ledger fell out
+// of sync.
+func finish(stdout, stderr io.Writer, mainRoot string, entry *intent.Entry, res Result) int {
+	res.Emit(stdout)
+	if entry != nil {
+		entry.Outcome = string(res.Outcome)
+		entry.Recovery = res.Recovery
+		err := intent.Upsert(mainRoot, *entry)
+		if err == nil {
+			err = hitShift(shiftFault, stepIntentUpsert)
+		}
+		if err != nil {
+			fmt.Fprintf(stderr, "warning: could not record shift outcome: %v\n", err)
+		}
+	}
+	return res.ExitCode()
 }
 
-// Loop runs the gated shift: preflight the adapter, acquire a pooled worktree, branch,
-// iterate (commit on green, preserve on any oracle failure) to the objective or the iteration cap,
-// pay down touched-scope structural debt at green, then release. Acquire → loop →
-// release run in one process because lease ownership is this process's pid. Returns 0
-// on a completed shift, 1 on a preflight/setup failure; a SIGINT/SIGTERM cancels the
-// running child, tears the run down, and exits 130.
+// usage is the exit-2 shorthand for every setup failure before the first adapter run —
+// there is no intent entry yet, so nothing is enriched.
+func usage(stdout, stderr io.Writer, detail string) int {
+	return finish(stdout, stderr, "", nil, Result{Outcome: OutcomeUsage, Detail: detail})
+}
+
+// evidenceResult is the one place a post-mutation failure both preserves the dirty tree
+// (snapshot-and-release, or retain-and-lock on a snapshot failure — preserveAndRecover's
+// uniform rule) and builds the Result, split by the session's committed count per the
+// evidence rule. A teardown failure on the release side still resolves to failed/1,
+// regardless of the evidence split, per teardownFailureResult.
+func evidenceResult(s *session, detail string) Result {
+	recovery, teardownErr := s.preserveAndRecover(detail)
+	if teardownErr != nil {
+		return teardownFailureResult(s, recovery, teardownErr)
+	}
+	return Result{
+		Outcome:        evidenceOutcome(s.committed),
+		Branch:         s.branch,
+		Committed:      s.committed,
+		IterationsUsed: s.iterationsUsed,
+		Recovery:       recovery,
+		Detail:         detail,
+	}
+}
+
+// branchCollisionRetries bounds how many disambiguating suffixes createShiftBranch will
+// try before giving up and reporting the creation failure — ten total attempts (the
+// bare per-second name, then -2 through -10) is generous headroom for concurrent
+// same-second shifts while still failing fast on a genuinely broken repo.
+const branchCollisionRetries = 10
+
+// createShiftBranch derives the bench/shift-<timestamp> branch name and switches wt
+// onto a freshly created branch of that name. A same-second collision (two shifts
+// deriving the same timestamp) is not fatal: it retries with a disambiguating "-2",
+// "-3", … suffix — appended to the per-second name, so the recovery ref path, which is
+// built from the resolved branch name, gets a fresh, non-colliding pair too — until
+// creation succeeds or branchCollisionRetries is exhausted, at which point it reports
+// the same creation failure this always reported for an unresolvable collision.
+func createShiftBranch(wt, timestamp string) (string, error) {
+	base := "bench/shift-" + timestamp
+	var lastErr error
+	for attempt := 1; attempt <= branchCollisionRetries; attempt++ {
+		candidate := base
+		if attempt > 1 {
+			candidate = fmt.Sprintf("%s-%d", base, attempt)
+		}
+		if err := exec.Command("git", "-C", wt, "switch", "-q", "-c", candidate).Run(); err != nil {
+			lastErr = fmt.Errorf("could not create shift branch %s: %w", candidate, err)
+			continue
+		}
+		return candidate, nil
+	}
+	return "", lastErr
+}
+
+// Loop runs the gated shift: validate the objective and env, preflight the adapter,
+// acquire a pooled worktree, branch, iterate (commit on green, preserve on a red gate)
+// to the objective or the iteration cap, pay down touched-scope structural debt at
+// green, then release. Acquire → loop → release run in one process because lease
+// ownership is this process's pid. Every exit path resolves through finish, which emits
+// the shift_result TOON block and records the outcome on the intent entry.
 func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
+	if err := validateObjective(objective); err != nil {
+		fmt.Fprintln(stderr, err)
+		return usage(stdout, stderr, err.Error())
+	}
+	maxIters, err := parseBoundedInt("BENCH_MAX_ITERS", maxItersDefault, itersMin, itersMax)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return usage(stdout, stderr, err.Error())
+	}
+	refactorIters, err := parseBoundedInt("BENCH_REFACTOR_ITERS", refactorItersDefault, itersMin, itersMax)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return usage(stdout, stderr, err.Error())
+	}
+	wallDur, err := parseWallDuration("BENCH_MAX_WALL", maxWallDefault, maxWallCap)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return usage(stdout, stderr, err.Error())
+	}
 	if err := requireAdapter(os.Getenv("BENCH_AGENT")); err != nil {
 		fmt.Fprintln(stderr, err)
-		return 1
+		return usage(stdout, stderr, err.Error())
 	}
 	mainRoot, err := git.Root()
 	if err != nil {
 		fmt.Fprintln(stderr, toon.NotInRepo())
-		return 1
+		return usage(stdout, stderr, "not in a git repository")
 	}
 	// Audit #10 — tolerate: an empty parse reads as a clean tree, but the very next
 	// `rev-parse HEAD` fails the loop loudly on a broken repo, so no broken repo slips past.
 	if dirty, _ := git.Output("-C", mainRoot, "status", "--porcelain"); dirty != "" {
 		fmt.Fprintln(stderr, "working tree not clean; commit or stash first")
-		return 1
+		return usage(stdout, stderr, "working tree not clean")
 	}
 	base, err := git.Output("-C", mainRoot, "rev-parse", "HEAD")
 	if err != nil {
 		fmt.Fprintln(stderr, "could not resolve HEAD")
-		return 1
+		return usage(stdout, stderr, "could not resolve HEAD")
 	}
 	intentEntry := intent.NewEntry(intent.KindShift, objective)
 	if err := intent.Upsert(mainRoot, intentEntry); err != nil {
 		fmt.Fprintf(stderr, "could not persist shift intent: %v\n", err)
-		return 1
+		return usage(stdout, stderr, "could not persist shift intent")
 	}
 	wt, err := worktree.Acquire(mainRoot, base, "hard")
 	if err != nil {
 		fmt.Fprintln(stderr, err)
-		return 1
+		return finish(stdout, stderr, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Detail: "could not acquire a worktree"})
 	}
 
-	s := &session{agent: os.Getenv("BENCH_AGENT"), root: wt, stdin: stdin, stdout: stdout, stderr: stderr}
-	branch := "bench/shift-" + timeNow().Format("20060102-150405")
-	if err := exec.Command("git", "-C", wt, "switch", "-q", "-c", branch).Run(); err != nil {
-		fmt.Fprintf(stderr, "could not create shift branch %s: %v\n", branch, err)
+	s := &session{agent: os.Getenv("BENCH_AGENT"), root: wt, stdin: stdin, stdout: stdout, stderr: stderr, mainRoot: mainRoot, entry: &intentEntry}
+	branch, err := createShiftBranch(wt, timeNow().Format("20060102-150405"))
+	if err != nil {
+		fmt.Fprintf(stderr, "%v\n", err)
 		s.teardown()
-		return 1
+		return finish(stdout, stderr, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Detail: err.Error()})
 	}
+	s.branch = branch
 	intentEntry.Worktree = wt
 	intentEntry.Branch = branch
 	if err := intent.Upsert(mainRoot, intentEntry); err != nil {
 		fmt.Fprintf(stderr, "could not enrich shift intent: %v\n", err)
 		s.teardown()
-		return 1
+		return finish(stdout, stderr, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not enrich shift intent"})
 	}
 	// The true review base for this branch: `bench diff` resolves it from here, and
 	// worktrees share repo config so the key is visible wherever review runs.
 	if err := exec.Command("git", "-C", wt, "config", "branch."+branch+".benchBase", base).Run(); err != nil {
 		fmt.Fprintf(stderr, "could not configure shift branch %s: %v\n", branch, err)
 		s.teardown()
-		return 1
+		return finish(stdout, stderr, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not configure shift branch " + branch})
 	}
 	if err := os.WriteFile(wt+"/.bench-objective", []byte(objective+"\n"), 0o644); err != nil {
 		fmt.Fprintf(stderr, "could not write shift objective: %v\n", err)
 		s.teardown()
-		return 1
+		return finish(stdout, stderr, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not write shift objective"})
 	}
 	if err := os.WriteFile(wt+"/.bench-notes.md", nil, 0o644); err != nil {
 		fmt.Fprintf(stderr, "could not write shift notes: %v\n", err)
 		s.teardown()
-		return 1
+		return finish(stdout, stderr, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not write shift notes"})
 	}
 
 	// Signal handling: a pulled line cancels the running child. The loop exits at its
@@ -156,223 +203,115 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 	}()
 	defer func() {
 		if !s.preserve.Load() {
-			s.teardown()
+			_ = s.teardown()
 		}
 	}()
 
-	maxIters := envInt("BENCH_MAX_ITERS", 12)
+	// The wall deadline: on expiry it acts like a pulled line — kill the adapter process
+	// group and cancel a running gate — but sets deadline rather than interrupted, so the
+	// next checkpoint resolves incomplete/3 with a deadline detail, not interrupted/130.
+	wallTimer := time.AfterFunc(wallDur, func() {
+		s.deadline.Store(true)
+		s.killAdapter(syscall.SIGTERM)
+		s.cancelRunningGate()
+	})
+	defer wallTimer.Stop()
+
 	fmt.Fprintf(stdout, "▶ shift on %s — objective: %s\n", branch, objective)
 	fmt.Fprintf(stdout, "  worktree: %s\n", wt)
 	fmt.Fprintf(stdout, "  cap: %d iterations. Ctrl-C to pull the line.\n", maxIters)
 	started := time.Now()
 
-	committed := 0
+	// stopReason distinguishes how the loop left its for-range: "" means it ran to the
+	// iteration cap (incomplete), "stopped" means it broke clean (complete, or no-op if
+	// nothing landed), "adapter-failed" means an adapter spawn/exit failure ended it.
+	var stopReason, stopDetail string
 	for i := 1; i <= maxIters; i++ {
 		s.checkpoint()
+		s.iterationsUsed = i
 		fmt.Fprintf(stdout, "── iteration %d/%d ──\n", i, maxIters)
 		pre := dirtyPaths(wt)
-		s.runAdapter(fmt.Sprintf(iterationPrompt, objective))
+		adapterErr := s.runAdapter(fmt.Sprintf(iterationPrompt, objective))
 		s.checkpoint()
 		post := dirtyPaths(wt)
-		if s.runPreservingGate() == 0 {
+		if s.runGate() == 0 {
 			s.checkpoint()
-			stageTouched(wt, pre, post)
+			if err := stageTouched(wt, pre, post); err != nil {
+				fmt.Fprintf(stderr, "could not stage iteration %d: %v\n", i, err)
+				return finish(stdout, stderr, mainRoot, &intentEntry, evidenceResult(s, fmt.Sprintf("could not stage iteration %d", i)))
+			}
 			if nothingStaged(wt) {
-				fmt.Fprintln(stdout, "  gate green, no change this iteration — objective likely met.")
+				if adapterErr == nil {
+					if objectiveMet(wt, objective) {
+						stopDetail = "completion predicate already satisfied"
+					} else {
+						stopDetail = "gate green, no further change"
+					}
+					fmt.Fprintln(stdout, "  gate green, no change this iteration — objective likely met.")
+					stopReason = "stopped"
+				} else {
+					stopDetail = fmt.Sprintf("adapter exited nonzero on iteration %d with no change", i)
+					fmt.Fprintf(stdout, "  gate green, no change this iteration, but adapter exited nonzero — stopping.\n")
+					stopReason = "adapter-failed"
+				}
 				break
 			}
 			if err := exec.Command("git", "-C", wt, "commit", "-q", "-m", fmt.Sprintf("shift: iteration %d — %s", i, objective)).Run(); err != nil {
 				fmt.Fprintf(stderr, "could not commit iteration %d: %v\n", i, err)
-				return 1
+				return finish(stdout, stderr, mainRoot, &intentEntry, evidenceResult(s, fmt.Sprintf("could not commit iteration %d", i)))
 			}
-			committed++
+			s.committed++
 			fmt.Fprintf(stdout, "  ✓ green — committed iteration %d\n", i)
 			if objectiveMet(wt, objective) {
 				fmt.Fprintln(stdout, "  objective met.")
+				stopDetail = "objective met"
+				stopReason = "stopped"
+				break
+			}
+			if adapterErr != nil {
+				fmt.Fprintf(stdout, "  adapter exited nonzero after committing iteration %d — stopping.\n", i)
+				stopDetail = fmt.Sprintf("adapter exited nonzero after committing iteration %d", i)
+				stopReason = "adapter-failed"
 				break
 			}
 		} else {
 			s.checkpoint()
-			fmt.Fprintf(stdout, "  ✗ gate failed — preserving iteration %d in %s\n", i, wt)
-			return 1
+			// Neither the human line nor the detail may name the pool worktree as the
+			// preservation site: on the snapshot path it is released and cleaned right
+			// after. The location is the "recovery:" line preserveAndRecover prints
+			// (the ref, or the retained worktree path on the fallback) plus the
+			// shift_result recovery cell — never this message.
+			fmt.Fprintf(stdout, "  ✗ gate failed — snapshotting iteration %d\n", i)
+			return finish(stdout, stderr, mainRoot, &intentEntry, evidenceResult(s, fmt.Sprintf("gate failed on iteration %d", i)))
 		}
 	}
 
-	if rc := s.refactorPhase(base); rc != 0 {
-		return rc
+	if stopReason == "adapter-failed" {
+		return finish(stdout, stderr, mainRoot, &intentEntry, evidenceResult(s, stopDetail))
 	}
 
-	s.teardown()
-	fmt.Fprintf(stdout, "■ shift done: %s, %d committed iteration(s), %dm elapsed\n", branch, committed, int(time.Since(started).Minutes()))
+	if err := s.refactorPhase(base, refactorIters); err != nil {
+		return finish(stdout, stderr, mainRoot, &intentEntry, evidenceResult(s, err.Error()))
+	}
+
+	recovery, teardownErr := s.preserveAndRecover("shift teardown")
+	if teardownErr != nil {
+		return finish(stdout, stderr, mainRoot, &intentEntry, teardownFailureResult(s, recovery, teardownErr))
+	}
+	fmt.Fprintf(stdout, "■ shift done: %s, %d committed iteration(s), %dm elapsed\n", branch, s.committed, int(time.Since(started).Minutes()))
 	fmt.Fprintf(stdout, "  review: git -C %s log --oneline %s..%s\n", mainRoot, base, branch)
 	fmt.Fprintln(stdout, "  the merge is yours.")
-	return 0
-}
 
-// touchedViolations reads this shift's touched-scope structure result — the flagged-files
-// string and the violation count — tolerating a git-query failure as an empty scope (zero
-// violations). The tolerance is deliberate and single-sourced here for all three refactor-
-// gate reads: the shift loop's own `bench gate` run is this worktree's loud oracle, so a
-// broken diff degrades the refactor gate rather than crashing the loop; `bench structure`
-// is the loud-error path for the same query.
-func (s *session) touchedViolations(base string) (flagged string, violations int) {
-	flagged, violations, _ = structure.Touched(s.root, base)
-	return flagged, violations
-}
-
-// refactorPhase pays down structural debt this shift touched, but only once the touched
-// scope is over budget — never pre-existing debt, and never mid-implementation. It
-// runs within the BENCH_REFACTOR_ITERS budget, scopes each prompt to the flagged files,
-// and stops on a no-op pass.
-func (s *session) refactorPhase(base string) int {
-	if _, violations := s.touchedViolations(base); violations == 0 {
-		return 0
+	outcome := OutcomeComplete
+	detail := stopDetail
+	switch {
+	case stopReason == "":
+		outcome = OutcomeIncomplete
+		detail = "iteration cap exhausted"
+	case s.committed == 0:
+		outcome = OutcomeNoOp
 	}
-	fmt.Fprintln(s.stdout, "▶ structure over budget — refactor phase (split at green, not before)")
-	rcap := envInt("BENCH_REFACTOR_ITERS", 4)
-	attempted := 0
-	for r := 1; r <= rcap; r++ {
-		s.checkpoint()
-		flagged, violations := s.touchedViolations(base)
-		if violations == 0 {
-			break
-		}
-		attempted = r
-		fmt.Fprintf(s.stdout, "── refactor %d/%d ──\n", r, rcap)
-		pre := dirtyPaths(s.root)
-		s.runAdapter(fmt.Sprintf(refactorPrompt, flagged))
-		s.checkpoint()
-		post := dirtyPaths(s.root)
-		if s.runGate() == 0 {
-			s.checkpoint()
-			stageTouched(s.root, pre, post)
-			if nothingStaged(s.root) {
-				fmt.Fprintf(s.stdout, "  gate green, refactor %d made no staged change - stopping refactor phase\n", r)
-				break
-			}
-			if err := exec.Command("git", "-C", s.root, "commit", "-q", "-m", "refactor: reduce structural debt").Run(); err != nil {
-				fmt.Fprintf(s.stderr, "could not commit refactor %d: %v\n", r, err)
-				return 1
-			}
-			fmt.Fprintf(s.stdout, "  ✓ tests green - refactor %d committed\n", r)
-		} else {
-			s.checkpoint()
-			fmt.Fprintln(s.stdout, "  ✗ refactor broke the gate — rolling back")
-			rollback(s.root)
-		}
-	}
-	if _, violations := s.touchedViolations(base); violations == 0 {
-		fmt.Fprintln(s.stdout, "  structure back under budget.")
-	} else {
-		n := attempted
-		if n == 0 {
-			n = rcap
-		}
-		fmt.Fprintf(s.stdout, "  ⚠ still over budget after %d refactor pass(es) - review manually, or run a Bench deep pass with bench structure and craft-seams.\n", n)
-	}
-	return 0
-}
-
-// runAdapter invokes the harness adapter with the prompt as its single positional
-// argument, BENCH_SHIFT=1 armed (which arms the Stop hook so the agent cannot declare
-// done on red), from the worktree root. The child runs in its own process group so a
-// pulled line can tear down the whole adapter tree, not just the immediate child. The
-// adapter's exit status is ignored — the gate, not the adapter, decides an iteration.
-func (s *session) runAdapter(prompt string) {
-	cmd := exec.Command(s.agent, prompt)
-	cmd.Dir = s.root
-	cmd.Env = append(os.Environ(), "BENCH_SHIFT=1")
-	cmd.Stdin, cmd.Stdout, cmd.Stderr = s.stdin, s.stdout, s.stderr
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	s.mu.Lock()
-	s.adapter = cmd
-	s.mu.Unlock()
-	if err := cmd.Start(); err == nil {
-		_ = cmd.Wait()
-	}
-	s.mu.Lock()
-	s.adapter = nil
-	s.mu.Unlock()
-}
-
-// killAdapter signals the in-flight adapter's whole process group, so a pulled line
-// reaches the adapter and everything it spawned. A no-op when no adapter is running.
-func (s *session) killAdapter(sig syscall.Signal) {
-	s.mu.Lock()
-	cmd := s.adapter
-	s.mu.Unlock()
-	if cmd != nil && cmd.Process != nil {
-		_ = syscall.Kill(-cmd.Process.Pid, sig)
-	}
-}
-
-func (s *session) runGate() int {
-	ctx, cancel := context.WithCancel(context.Background())
-	s.mu.Lock()
-	s.cancelGate = cancel
-	s.mu.Unlock()
-	rc := gate.RunAndRecordContext(ctx, s.root, s.stdout, s.stderr)
-	if ctx.Err() != nil {
-		s.preserve.Store(true)
-	}
-	s.mu.Lock()
-	s.cancelGate = nil
-	s.mu.Unlock()
-	cancel()
-	return rc
-}
-
-// runPreservingGate records a failed iteration's ownership before returning control
-// to the caller, so an interrupt at the next checkpoint cannot release its worktree.
-// Refactor probes use runGate directly because their red result is rolled back.
-func (s *session) runPreservingGate() int {
-	rc := s.runGate()
-	if rc != 0 {
-		s.preserve.Store(true)
-	}
-	return rc
-}
-
-func (s *session) cancelRunningGate() {
-	s.mu.Lock()
-	cancel := s.cancelGate
-	s.mu.Unlock()
-	if cancel != nil {
-		s.preserve.Store(true)
-		cancel()
-	}
-}
-
-// checkpoint exits when a signal has been caught, after the running adapter or gate
-// has been signaled. This is the well-defined point (mirroring bash's
-// trap-between-commands) at which an interrupt takes effect.
-func (s *session) checkpoint() {
-	if s.interrupted.Load() {
-		if !s.preserve.Load() {
-			s.teardown()
-		}
-		os.Exit(130)
-	}
-}
-
-// teardown removes the shift scratch and releases the pool lease, exactly once whether
-// reached by the normal path, the deferred cleanup, or the signal handler.
-func (s *session) teardown() {
-	s.teardownOne.Do(func() {
-		cleanupScratch(s.root)
-		worktree.Release(s.root)
+	return finish(stdout, stderr, mainRoot, &intentEntry, Result{
+		Outcome: outcome, Branch: branch, Committed: s.committed, IterationsUsed: s.iterationsUsed, Recovery: recovery, Detail: detail,
 	})
-}
-
-// nothingStaged reports whether the index has no staged changes — the "gate green, no
-// change this iteration" signal.
-func nothingStaged(root string) bool {
-	return exec.Command("git", "-C", root, "diff", "--cached", "--quiet").Run() == nil
-}
-
-// rollback discards a red iteration's work while preserving the shift scratch, so the
-// next iteration still reads what the last one learned.
-func rollback(root string) {
-	_ = exec.Command("git", "-C", root, "reset", "-q", "--hard").Run()
-	_ = exec.Command("git", "-C", root, "clean", "-qfdx", "-e", ".bench-objective", "-e", ".bench-notes.md").Run()
 }

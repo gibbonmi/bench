@@ -29,7 +29,11 @@ func TestOperationalNotInRepoOnePhrase(t *testing.T) {
 	cases := []struct {
 		name     string
 		wantExit int
-		run      func(t *testing.T, f contract.Fixture) contract.Probe
+		// wantStdout is the exact stdout the command's own result contract emits
+		// alongside the shared stderr phrase; "" pins stdout empty (stderr is the
+		// contract channel for a bare operational failure).
+		wantStdout string
+		run        func(t *testing.T, f contract.Fixture) contract.Probe
 	}{
 		{
 			name:     "bench gate",
@@ -89,8 +93,12 @@ func TestOperationalNotInRepoOnePhrase(t *testing.T) {
 			},
 		},
 		{
-			name:     "bench shift",
-			wantExit: 1,
+			// FT79: not-in-repo is a setup failure before the first adapter run, so
+			// shift resolves it to usage/2 and emits its shift_result block on stdout
+			// at every exit path — including this one.
+			name:       "bench shift",
+			wantExit:   2,
+			wantStdout: "shift_result[1]{outcome,exit,branch,committed,iterations_used,recovery,detail}:\n  usage,\"2\",none,\"0\",\"0\",none,not in a git repository\n",
 			run: func(t *testing.T, f contract.Fixture) contract.Probe {
 				return f.BenchEnv(map[string]string{"BENCH_AGENT": "true"}, "shift", "an objective")
 			},
@@ -105,8 +113,8 @@ func TestOperationalNotInRepoOnePhrase(t *testing.T) {
 			out := c.run(t, f)
 			out.RequireExit(c.wantExit)
 			out.RequireContains(out.Stderr, notInRepoPhrase)
-			if out.Stdout != "" {
-				t.Fatalf("expected no stdout for an operational not-in-repo failure (stderr is the contract channel)\nstdout:\n%s", out.Stdout)
+			if out.Stdout != c.wantStdout {
+				t.Fatalf("operational not-in-repo stdout = %q, want %q (stderr is the contract channel)", out.Stdout, c.wantStdout)
 			}
 		})
 	}

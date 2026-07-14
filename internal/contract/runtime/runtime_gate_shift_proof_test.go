@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -46,7 +47,7 @@ func proveShiftResult(t *testing.T, variant string) {
 		t.Fatalf("%s shift exit = %d, want 1\n%s%s", variant, probe.ExitCode, probe.Stdout, probe.Stderr)
 	}
 	want := map[string]string{
-		"red":         "gate failed — preserving iteration 1",
+		"red":         "gate failed — snapshotting iteration 1",
 		"lock":        "gate execution already in progress",
 		"persistence": "gate pending persistence failed",
 		"drift":       "gate subject changed during execution",
@@ -186,34 +187,45 @@ func requirePreservedShift(t *testing.T, run shiftProofRun, output string) {
 		t.Fatalf("shift acquired %q, want seeded warm worktree %q", worktree, run.pool.Warm)
 	}
 	branch := shiftBranchFromStart(t, output)
-	requireRegisteredWorktree(t, run.f, worktree)
-	lease := strings.TrimSpace(contract.RunAt(t, run.f, worktree, nil, "git", "rev-parse", "--git-path", "bench-lease").Stdout)
 	state := run.env()["BENCH_TEST_STATE"]
-	requirePreservedFile(t, lease, filepath.Join(state, "lease"))
-	if got := strings.TrimSpace(runGitAt(t, worktree, "rev-parse", "HEAD")); got != run.base {
-		t.Fatalf("failed shift moved HEAD to %s, want %s", got, run.base)
+
+	// FT79 replaces the old "retain the charged worktree verbatim" special case with the
+	// uniform rule: snapshot the dirty tree to refs/bench/recovery/<branch> and release
+	// the pool worktree normally. The preserved evidence now lives in the recovery ref's
+	// tree, not the (now-clean, released) physical worktree.
+	ref := "refs/bench/recovery/" + branch
+	run.f.Git("show-ref", "--verify", ref)
+	tree := run.f.Git("ls-tree", "-r", "--name-only", ref).Stdout
+	if !strings.Contains(tree, "charged.txt") {
+		t.Fatalf("recovery snapshot did not preserve charged.txt:\n%s", tree)
 	}
-	status := runGitAt(t, worktree, "status", "--porcelain=v1", "--untracked-files=all")
-	if want := string(mustReadRuntime(t, filepath.Join(state, "status"))); status != want {
-		t.Fatalf("failed shift changed complete status\nwant:\n%s\ngot:\n%s", want, status)
+	for _, scratch := range []string{".bench-objective", ".bench-notes.md"} {
+		if strings.Contains(tree, scratch) {
+			t.Fatalf("recovery snapshot rode scratch %s into the tree:\n%s", scratch, tree)
+		}
 	}
-	diff := runGitAt(t, worktree, "diff", "--binary", "HEAD", "--")
-	if want := string(mustReadRuntime(t, filepath.Join(state, "diff"))); diff != want {
-		t.Fatalf("failed shift changed complete diff\nwant:\n%s\ngot:\n%s", want, diff)
+	if got := run.f.Git("show", ref+":charged.txt").Stdout; got != string(mustReadRuntime(t, filepath.Join(state, "charged"))) {
+		t.Fatalf("recovery snapshot charged.txt = %q, want %q", got, string(mustReadRuntime(t, filepath.Join(state, "charged"))))
 	}
-	for path, snapshot := range map[string]string{
-		"charged.txt": "charged", ".bench-objective": "objective", ".bench-notes.md": "notes",
-	} {
-		requirePreservedFile(t, filepath.Join(worktree, path), filepath.Join(state, snapshot))
+	requireNoWorktreeLease(t, worktree)
+	if got := strings.TrimSpace(runGitAt(t, worktree, "status", "--porcelain")); got != "" {
+		t.Fatalf("released pool worktree is not clean:\n%s", got)
 	}
+
 	intentPath, err := intent.Address(run.f.Root)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requirePreservedFile(t, intentPath, filepath.Join(state, "intent"))
-	if got := strings.TrimSpace(runGitAt(t, worktree, "branch", "--show-current")); got != branch {
-		t.Fatalf("failed shift branch = %q, want %q", got, branch)
+	// FT79 now upserts the shift's final outcome and recovery pointer onto its intent
+	// entry at every exit path (including this preserving one), so the ledger is no
+	// longer byte-identical to the pre-outcome snapshot the agent captured mid-run —
+	// only those two fields legitimately drift, to the values this preserving failure
+	// resolves to.
+	wantOutcome := "failed"
+	if run.variant == "cancellation" {
+		wantOutcome = "interrupted"
 	}
+	requirePreservedIntentLedger(t, intentPath, filepath.Join(state, "intent"), wantOutcome, "ref:"+ref)
 	entries, err := intent.Snapshot(run.f.Root)
 	if err != nil {
 		t.Fatal(err)
@@ -240,6 +252,68 @@ func requirePreservedFile(t *testing.T, gotPath, snapshotPath string) {
 	want, wantErr := os.ReadFile(snapshotPath)
 	if gotErr != nil || wantErr != nil || !bytes.Equal(got, want) {
 		t.Fatalf("preserved file bytes %s: got=%q/%v snapshot=%q/%v", gotPath, got, gotErr, want, wantErr)
+	}
+}
+
+// requireNoWorktreeLease asserts the pool worktree's bench-lease file is gone — the
+// signal that preserveAndRecover released it back to the pool rather than retaining it.
+func requireNoWorktreeLease(t *testing.T, worktree string) {
+	t.Helper()
+	lease := strings.TrimSpace(runGitAt(t, worktree, "rev-parse", "--git-path", "bench-lease"))
+	if !filepath.IsAbs(lease) {
+		lease = filepath.Join(worktree, lease)
+	}
+	if _, err := os.Stat(lease); err == nil {
+		t.Fatalf("worktree lease %s was not released", lease)
+	}
+}
+
+// requirePreservedIntentLedger compares the current intent ledger to the pre-outcome
+// snapshot the agent captured mid-run, tolerating exactly two legitimate drifts: each
+// entry's Outcome and Recovery fields, which FT79's finish()/checkpoint() now set at
+// every shift exit path — including this preserving one. Every other field, and the
+// entry count and order, must match byte-for-byte-equivalent (via a decoded structural
+// compare, since the Outcome/Recovery fields shift the encoded byte length).
+func requirePreservedIntentLedger(t *testing.T, gotPath, snapshotPath, wantOutcome, wantRecovery string) {
+	t.Helper()
+	gotInfo, gotErr := os.Lstat(gotPath)
+	wantInfo, wantErr := os.Lstat(snapshotPath)
+	if gotErr != nil || wantErr != nil {
+		t.Fatalf("preserved intent ledger existence %s: got=%v snapshot=%v", gotPath, gotErr, wantErr)
+	}
+	if !gotInfo.Mode().IsRegular() || !wantInfo.Mode().IsRegular() {
+		t.Fatalf("preserved intent ledger mode %s: got=%v snapshot=%v, want matching regular files", gotPath, gotInfo.Mode(), wantInfo.Mode())
+	}
+	gotBytes, err := os.ReadFile(gotPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantBytes, err := os.ReadFile(snapshotPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got, want intent.Ledger
+	if err := json.Unmarshal(gotBytes, &got); err != nil {
+		t.Fatalf("decode intent ledger %s: %v", gotPath, err)
+	}
+	if err := json.Unmarshal(wantBytes, &want); err != nil {
+		t.Fatalf("decode intent ledger snapshot %s: %v", snapshotPath, err)
+	}
+	if len(got.Entries) != len(want.Entries) {
+		t.Fatalf("preserved intent ledger entry count = %d, want %d", len(got.Entries), len(want.Entries))
+	}
+	for i := range got.Entries {
+		g, w := got.Entries[i], want.Entries[i]
+		if g.Outcome != wantOutcome {
+			t.Fatalf("preserved intent entry[%d] outcome = %q, want %q", i, g.Outcome, wantOutcome)
+		}
+		if g.Recovery != wantRecovery {
+			t.Fatalf("preserved intent entry[%d] recovery = %q, want %q", i, g.Recovery, wantRecovery)
+		}
+		g.Outcome, g.Recovery = "", ""
+		if g != w {
+			t.Fatalf("preserved intent entry[%d] drifted beyond outcome/recovery:\ngot=%#v\nwant=%#v", i, g, w)
+		}
 	}
 }
 

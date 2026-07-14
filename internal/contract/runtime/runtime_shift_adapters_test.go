@@ -393,7 +393,9 @@ func testShiftAdapterSingleArgument(t *testing.T) {
 	home := t.TempDir()
 	record := filepath.Join(t.TempDir(), "record.txt")
 
-	f.BenchEnv(map[string]string{"BENCH_TEST_RECORD": record, "BENCH_AGENT": filepath.Join(f.Root, "adapter"), "BENCH_MAX_ITERS": "1", "BENCH_HOME": home}, "shift", "adapter-arg-probe").RequireExit(0)
+	// The probe adapter only records its invocation; it never mutates the tree, so the
+	// honest taxonomy is no-op/4, not complete/0.
+	f.BenchEnv(map[string]string{"BENCH_TEST_RECORD": record, "BENCH_AGENT": filepath.Join(f.Root, "adapter"), "BENCH_MAX_ITERS": "1", "BENCH_HOME": home}, "shift", "adapter-arg-probe").RequireExit(4)
 
 	data, err := os.ReadFile(record)
 	if err != nil {

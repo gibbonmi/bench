@@ -71,13 +71,6 @@ func requireNoLease(t *testing.T, home string) {
 	}
 }
 
-func requireRegisteredWorktree(t *testing.T, f contract.Fixture, worktree string) {
-	t.Helper()
-	if !strings.Contains(f.Git("worktree", "list", "--porcelain").Stdout, "worktree "+worktree) {
-		t.Fatalf("failed shift did not retain registered worktree %s", worktree)
-	}
-}
-
 func requireEqual(t *testing.T, got, want, msg string) {
 	t.Helper()
 	if got != want {

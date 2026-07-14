@@ -2,6 +2,7 @@ package shift
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -77,8 +78,13 @@ func TestRequireAdapter(t *testing.T) {
 	}
 }
 
-func TestLoopReportsBranchCreationFailure(t *testing.T) {
-	tmp := t.TempDir()
+// shiftCollisionFixture builds a bare repo plus a passing gate and agent, and points
+// timeNow at a fixed instant so the derived branch name is deterministic. preExisting
+// names additional branches (relative to the base bench/shift-<ts> name, e.g. "-2") to
+// pre-create so the loop's collision retry is exercised.
+func shiftCollisionFixture(t *testing.T, preExisting ...string) (tmp, baseBranch string) {
+	t.Helper()
+	tmp = t.TempDir()
 	runGit := func(args ...string) {
 		t.Helper()
 		cmd := exec.Command("git", args...)
@@ -103,8 +109,11 @@ func TestLoopReportsBranchCreationFailure(t *testing.T) {
 	runGit("-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "-m", "init")
 
 	fixed := time.Date(2026, 7, 4, 9, 30, 0, 0, time.UTC)
-	branch := "bench/shift-" + fixed.Format("20060102-150405")
-	runGit("branch", branch)
+	baseBranch = "bench/shift-" + fixed.Format("20060102-150405")
+	runGit("branch", baseBranch)
+	for _, suffix := range preExisting {
+		runGit("branch", baseBranch+suffix)
+	}
 	oldNow := timeNow
 	timeNow = func() time.Time { return fixed }
 	t.Cleanup(func() { timeNow = oldNow })
@@ -120,17 +129,51 @@ func TestLoopReportsBranchCreationFailure(t *testing.T) {
 	t.Setenv("BENCH_AGENT", agentPath)
 	t.Setenv("BENCH_HOME", filepath.Join(tmp, "bench-home"))
 	t.Setenv("BENCH_MAX_ITERS", "1")
+	return tmp, baseBranch
+}
+
+// TestLoopRetriesBranchCreationOnCollision covers spec row 18: when the derived
+// bench/shift-<ts> branch already exists (two shifts landing in the same second), the
+// loop retries with a disambiguating "-2" suffix rather than failing the shift, and the
+// recovery ref path (built from s.branch) follows the resolved, suffixed name.
+func TestLoopRetriesBranchCreationOnCollision(t *testing.T) {
+	_, baseBranch := shiftCollisionFixture(t)
+
+	var stdout, stderr bytes.Buffer
+	code := Loop("branch collision", bytes.NewReader(nil), &stdout, &stderr)
+	if code != 4 { // no-op adapter (exit 0, no commit) reads as no-op/4
+		t.Fatalf("Loop = %d, want 4 (no-op); stdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
+	}
+	wantBranch := baseBranch + "-2"
+	if !contains(stdout.String(), wantBranch) {
+		t.Fatalf("stdout did not name the suffixed branch %s:\n%s", wantBranch, stdout.String())
+	}
+	if contains(stderr.String(), "could not create shift branch") {
+		t.Fatalf("stderr reported a branch creation failure despite the retry:\n%s", stderr.String())
+	}
+}
+
+// TestLoopReportsBranchCreationFailureAfterExhaustingRetries covers the bound on row
+// 18's retry: once every suffix through -10 is already taken, the loop gives up and
+// reports the failure exactly as it always has for an unresolvable collision.
+func TestLoopReportsBranchCreationFailureAfterExhaustingRetries(t *testing.T) {
+	var taken []string
+	for i := 2; i <= 10; i++ {
+		taken = append(taken, fmt.Sprintf("-%d", i))
+	}
+	_, baseBranch := shiftCollisionFixture(t, taken...)
 
 	var stdout, stderr bytes.Buffer
 	if code := Loop("branch collision", bytes.NewReader(nil), &stdout, &stderr); code == 0 {
-		t.Fatalf("Loop returned success on branch collision; stdout:\n%s\nstderr:\n%s", stdout.String(), stderr.String())
+		t.Fatalf("Loop returned success despite exhausted collision retries; stdout:\n%s\nstderr:\n%s", stdout.String(), stderr.String())
 	}
-	if !contains(stderr.String(), "could not create shift branch "+branch) {
+	if !contains(stderr.String(), "could not create shift branch") {
 		t.Fatalf("stderr did not report branch creation failure:\n%s", stderr.String())
 	}
 	if contains(stdout.String(), "shift done") {
-		t.Fatalf("shift reported completion after branch creation failure:\n%s", stdout.String())
+		t.Fatalf("shift reported completion after exhausting branch creation retries:\n%s", stdout.String())
 	}
+	_ = baseBranch
 }
 
 func TestLoopPersistsIntentBeforeAcquireFailure(t *testing.T) {
@@ -166,7 +209,12 @@ func TestLoopPersistsIntentBeforeAcquireFailure(t *testing.T) {
 	}
 }
 
-func TestRunPreservingGateMarksRedSessionBeforeReturning(t *testing.T) {
+// TestRunGateReportsRed pins runGate's contract after FT79 folded runPreservingGate
+// into it: it reports a red gate's exit code straight through and does nothing to the
+// session itself. Preservation (snapshot-and-release, or retain-and-lock on a snapshot
+// failure) is the caller's job, done once explicitly via preserveAndRecover at the
+// return site — never implied by a flag runGate sets on its way out.
+func TestRunGateReportsRed(t *testing.T) {
 	root := t.TempDir()
 	gitCmd := func(args ...string) {
 		t.Helper()
@@ -188,11 +236,153 @@ func TestRunPreservingGateMarksRedSessionBeforeReturning(t *testing.T) {
 	gitCmd("add", "-A")
 	gitCmd("-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "init")
 	s := &session{root: root, stdout: io.Discard, stderr: io.Discard}
-	if rc := s.runPreservingGate(); rc == 0 {
+	if rc := s.runGate(); rc == 0 {
 		t.Fatal("red gate returned zero")
 	}
-	if !s.preserve.Load() {
-		t.Fatal("runPreservingGate returned a red result before marking the session for preservation")
+	if s.preserve.Load() {
+		t.Fatal("runGate must not itself mark the session preserved — that is preserveAndRecover's job")
+	}
+}
+
+// TestCheckpointOutcomeDeadlineWinsOverInterrupt pins the decided precedence when a
+// wall deadline and a pulled line race and both flags land before the next checkpoint:
+// the deadline outcome (incomplete/3) wins over interrupted/130. checkpoint's decision
+// is exercised through checkpointOutcome directly, since checkpoint itself exits the
+// process on a hit.
+func TestCheckpointOutcomeDeadlineWinsOverInterrupt(t *testing.T) {
+	s := &session{}
+	s.deadline.Store(true)
+	s.interrupted.Store(true)
+
+	outcome, detail, ok := s.checkpointOutcome()
+
+	if !ok {
+		t.Fatal("checkpointOutcome reported no hit with both flags set")
+	}
+	if outcome != OutcomeIncomplete {
+		t.Fatalf("outcome = %q, want %q (deadline must win over interrupted)", outcome, OutcomeIncomplete)
+	}
+	if detail != "wall deadline exceeded" {
+		t.Fatalf("detail = %q, want the deadline detail", detail)
+	}
+}
+
+func TestValidateObjective(t *testing.T) {
+	cases := []struct {
+		name      string
+		objective string
+		wantErr   bool
+	}{
+		{"empty", "", true},
+		{"whitespace only spaces", "   ", true},
+		{"whitespace only tab", "\t\t", true},
+		{"plain", "improve the parser", false},
+		{"esc byte", "bad\x1bobjective", true},
+		{"tab byte", "bad\tobjective", true},
+		{"del byte", "bad\x7fobjective", true},
+		{"newline byte", "bad\nobjective", true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateObjective(tc.objective)
+			if tc.wantErr && err == nil {
+				t.Errorf("validateObjective(%q) = nil, want error", tc.objective)
+			}
+			if !tc.wantErr && err != nil {
+				t.Errorf("validateObjective(%q) = %v, want nil", tc.objective, err)
+			}
+		})
+	}
+}
+
+func TestParseBoundedInt(t *testing.T) {
+	const name = "BENCH_TEST_ITERS"
+	cases := []struct {
+		name    string
+		env     string // "" means unset
+		unset   bool
+		want    int
+		wantErr bool
+	}{
+		{"unset", "", true, 12, false},
+		{"empty string", "", false, 12, false},
+		{"valid", "5", false, 5, false},
+		{"min boundary", "1", false, 1, false},
+		{"max boundary", "100", false, 100, false},
+		{"zero", "0", false, 0, true},
+		{"negative", "-1", false, 0, true},
+		{"over max", "101", false, 0, true},
+		{"non-integer", "abc", false, 0, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.unset {
+				os.Unsetenv(name)
+			} else {
+				t.Setenv(name, tc.env)
+			}
+			got, err := parseBoundedInt(name, 12, 1, 100)
+			if tc.wantErr {
+				if err == nil {
+					t.Fatalf("parseBoundedInt(%q) = %d, nil, want error", tc.env, got)
+				}
+				if !contains(err.Error(), name) || !contains(err.Error(), "[1,100]") {
+					t.Errorf("error %q does not name the variable and range", err.Error())
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("parseBoundedInt(%q) = %v, want nil", tc.env, err)
+			}
+			if got != tc.want {
+				t.Errorf("parseBoundedInt(%q) = %d, want %d", tc.env, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestParseWallDuration(t *testing.T) {
+	const name = "BENCH_TEST_WALL"
+	cases := []struct {
+		name    string
+		env     string
+		unset   bool
+		want    time.Duration
+		wantErr bool
+	}{
+		{"unset", "", true, 2 * time.Hour, false},
+		{"empty string", "", false, 2 * time.Hour, false},
+		{"valid", "30m", false, 30 * time.Minute, false},
+		{"max boundary", "24h", false, 24 * time.Hour, false},
+		{"zero", "0s", false, 0, true},
+		{"negative", "-1h", false, 0, true},
+		{"over max", "48h", false, 0, true},
+		{"unparseable", "soon", false, 0, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.unset {
+				os.Unsetenv(name)
+			} else {
+				t.Setenv(name, tc.env)
+			}
+			got, err := parseWallDuration(name, 2*time.Hour, 24*time.Hour)
+			if tc.wantErr {
+				if err == nil {
+					t.Fatalf("parseWallDuration(%q) = %v, nil, want error", tc.env, got)
+				}
+				if !contains(err.Error(), name) {
+					t.Errorf("error %q does not name the variable", err.Error())
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("parseWallDuration(%q) = %v, want nil", tc.env, err)
+			}
+			if got != tc.want {
+				t.Errorf("parseWallDuration(%q) = %v, want %v", tc.env, got, tc.want)
+			}
+		})
 	}
 }
 

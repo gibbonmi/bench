@@ -28,6 +28,7 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/roadmap"
+	"github.com/gibbonmi/bench/internal/shift"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/structure"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -268,6 +269,9 @@ func appendIntent(rows []row, root string) []row {
 		}
 	}
 	detail := fmt.Sprintf("%d correlated, %d uncorrelated; oldest: %s", correlated, uncorrelated, intent.Preview(live[0].Objective))
+	if r := live[0].Recovery; r != "" && r != shift.RecoveryNone {
+		detail += "; recovery: " + intent.Preview(r)
+	}
 	return append(rows, row{2, "intent", detail, "resume interrupted work"})
 }
 
@@ -289,6 +293,9 @@ func expandIntentSignals(root string, signals []Signal) []Signal {
 		}
 		if entry.Branch != "" {
 			parts = append(parts, "branch="+intent.Preview(entry.Branch))
+		}
+		if entry.Recovery != "" && entry.Recovery != shift.RecoveryNone {
+			parts = append(parts, "recovery="+intent.Preview(entry.Recovery))
 		}
 		parts = append(parts, "objective="+intent.Preview(entry.Objective))
 		out = append(out, Signal{Severity: 2, Name: "intent", Detail: strings.Join(parts, " "), Action: "resume interrupted work"})
