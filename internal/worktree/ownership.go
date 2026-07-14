@@ -371,14 +371,18 @@ func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceip
 		}
 		return intent.PutCleanupReceipt(root, receiptFromRelease(repo, request, current, string(plan.Action)))
 	}
+	var plan CleanupPlan
 	if resumeFingerprint == "" {
-		_, err = applyAutomaticWithTerminal(root, target, nil, terminal)
+		plan, err = applyAutomaticWithTerminal(root, target, nil, terminal)
 	} else {
 		planner := func(path string) (CleanupPlan, error) { return PlanAutomatic(root, path) }
-		_, err = applyCleanupTransaction(root, target, resumeFingerprint, planner, nil, terminal)
+		plan, err = applyCleanupTransaction(root, target, resumeFingerprint, planner, nil, terminal)
 	}
 	if err != nil {
 		return intent.CleanupReceipt{}, err
+	}
+	if plan.Action == ActionRetain {
+		return intent.CleanupReceipt{}, retainedReleaseError(plan, requestArg, targetArg)
 	}
 	receipt, found, readErr := intent.CleanupReceiptFor(root, repo, releaseOperation, target, request)
 	if readErr != nil {
@@ -388,6 +392,20 @@ func releaseAssignment(root, requestArg, targetArg string) (intent.CleanupReceip
 		return intent.CleanupReceipt{}, errors.New("terminal receipt missing")
 	}
 	return receipt, nil
+}
+
+// retainedReleaseError turns a retain plan — the safe planner declining to remove the
+// tree — into the verdict a session can act on: what blocked, and the exact command to
+// re-run once it is cleared. It never points at `bench worktree clean --discard-ignored`,
+// whose request-less form orphans the assignment (FT93b); the tree stays for the caller
+// to resolve, then release again.
+func retainedReleaseError(plan CleanupPlan, request, target string) error {
+	reason := plan.Reason
+	if reason == "" {
+		reason = string(plan.ReasonCode)
+	}
+	return fmt.Errorf("worktree retained (%s): %s; resolve the retained state in %s, then re-run: bench worktree release --request %s %s",
+		plan.ReasonCode, reason, target, request, target)
 }
 func renderRelease(stdout io.Writer, assignment intent.Assignment, action string) int {
 	out, err := toon.Table("worktree_release", []string{"path", "assignment", "state", "action"}, [][]string{{assignment.Worktree, assignment.ID, string(assignment.State), action}})

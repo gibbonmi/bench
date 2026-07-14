@@ -224,6 +224,36 @@ func TestCleanupDeletesOnlyExactBranchAndRetiresLastRecoveryRef(t *testing.T) {
 	})
 }
 
+// TestReleaseSurfacesRetainedVerdict pins FT93(a): when the automatic plan retains
+// (here, an ignored residual the safe planner will not discard), release must report
+// the retained verdict and the exact next command, not the internal-bookkeeping
+// "terminal receipt missing". The pre-fix path discards the retain plan, finds no
+// terminal receipt, and returns the masking error; this goes red on that message.
+func TestReleaseSurfacesRetainedVerdict(t *testing.T) {
+	root := newWorktreeRepo(t)
+	gitRun(t, root, "branch", "-M", "main")
+	mustWrite(t, filepath.Join(root, ".git", "info", "exclude"), []byte("residual.txt\n"), 0o644)
+	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	creation := mustCreate(t, root, "retain-verdict", "retain verdict")
+	residual := filepath.Join(creation.Path, "residual.txt")
+	mustWrite(t, residual, []byte("build output\n"), 0o600)
+	requirePlanAction(t, root, creation.Path, ActionRetain)
+
+	args := []string{"--request", "retain-verdict", creation.Path}
+	var out, errb strings.Builder
+	code := ReleaseCommand(root, args, &out, &errb)
+	msg := errb.String()
+	requireTest(t, code != 0, "retained release exit = %d, want non-zero", code)
+	requireTest(t, !strings.Contains(msg, "terminal receipt missing"), "masking error still present: %q", msg)
+	requireTest(t, strings.Contains(msg, "retained") && strings.Contains(msg, "bench worktree release"),
+		"retained verdict is not actionable: %q", msg)
+
+	mustNoError(t, os.Remove(residual))
+	var out2 strings.Builder
+	code = ReleaseCommand(root, args, &out2, io.Discard)
+	requireTest(t, code == 0, "recovery release exit = %d, want 0; out=%q", code, out2.String())
+}
+
 func TestReleaseReconcilesInFlightAutomaticCleanup(t *testing.T) {
 	root, creation := newPendingAssignment(t, "release-in-flight")
 	stop := errors.New("crash after removal")
