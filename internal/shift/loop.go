@@ -55,6 +55,36 @@ func evidenceResult(s *session, detail string) Result {
 	}
 }
 
+// branchCollisionRetries bounds how many disambiguating suffixes createShiftBranch will
+// try before giving up and reporting the creation failure — ten total attempts (the
+// bare per-second name, then -2 through -10) is generous headroom for concurrent
+// same-second shifts while still failing fast on a genuinely broken repo.
+const branchCollisionRetries = 10
+
+// createShiftBranch derives the bench/shift-<timestamp> branch name and switches wt
+// onto a freshly created branch of that name. A same-second collision (two shifts
+// deriving the same timestamp) is not fatal: it retries with a disambiguating "-2",
+// "-3", … suffix — appended to the per-second name, so the recovery ref path, which is
+// built from the resolved branch name, gets a fresh, non-colliding pair too — until
+// creation succeeds or branchCollisionRetries is exhausted, at which point it reports
+// the same creation failure this always reported for an unresolvable collision.
+func createShiftBranch(wt, timestamp string) (string, error) {
+	base := "bench/shift-" + timestamp
+	var lastErr error
+	for attempt := 1; attempt <= branchCollisionRetries; attempt++ {
+		candidate := base
+		if attempt > 1 {
+			candidate = fmt.Sprintf("%s-%d", base, attempt)
+		}
+		if err := exec.Command("git", "-C", wt, "switch", "-q", "-c", candidate).Run(); err != nil {
+			lastErr = fmt.Errorf("could not create shift branch %s: %w", candidate, err)
+			continue
+		}
+		return candidate, nil
+	}
+	return "", lastErr
+}
+
 // Loop runs the gated shift: validate the objective and env, preflight the adapter,
 // acquire a pooled worktree, branch, iterate (commit on green, preserve on a red gate)
 // to the objective or the iteration cap, pay down touched-scope structural debt at
@@ -113,11 +143,11 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 
 	s := &session{agent: os.Getenv("BENCH_AGENT"), root: wt, stdin: stdin, stdout: stdout, stderr: stderr, mainRoot: mainRoot, entry: &intentEntry}
-	branch := "bench/shift-" + timeNow().Format("20060102-150405")
-	if err := exec.Command("git", "-C", wt, "switch", "-q", "-c", branch).Run(); err != nil {
-		fmt.Fprintf(stderr, "could not create shift branch %s: %v\n", branch, err)
+	branch, err := createShiftBranch(wt, timeNow().Format("20060102-150405"))
+	if err != nil {
+		fmt.Fprintf(stderr, "%v\n", err)
 		s.teardown()
-		return finish(stdout, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Detail: "could not create shift branch " + branch})
+		return finish(stdout, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Detail: err.Error()})
 	}
 	s.branch = branch
 	intentEntry.Worktree = wt
