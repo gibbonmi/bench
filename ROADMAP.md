@@ -216,9 +216,9 @@ line between speed and oracle authority is a reviewer decision; graduate only
 if 50s demonstrably still drags shift iteration.
 
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.** Make
-roadmap maintenance consume one full schema snapshot; make every documented
-CLI example executable; parse and validate real YAML frontmatter; derive the
-skills index and inventories from one implementation; embed design-it-twice
+every documented CLI example executable; parse and validate real YAML
+frontmatter; derive the skills index and inventories from one implementation;
+embed design-it-twice
 briefs in complete delegation charges; and admit reviewer-approved assessment
 findings as a legal synthesis origin. Use the canonical iteration-cap line
 definition and only recommend shifts that meet the routing contract.

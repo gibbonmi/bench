@@ -8,6 +8,15 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Roadmap reconcile (2026-07-15, scope: post-FT96 promotion).** Reworded FT89
+  after roadmap maintenance's single schema-1 snapshot contract shipped and
+  this run exercised it; the other 17 rows still match the snapshot, and the
+  FT6, FT24, FT8, FT38, and FT91 external triggers remain unmet. IDEAS.md was
+  already empty, so zero ideas drained; the journal had zero open entries, so
+  there were no verdicts. The previous run's FT96 promotion-build record is
+  present, so no build entry is missing. The refreshed sequence remains FT82's
+  authoritative release preflight, then FT83's governed offline release bundle.
+
 - **FT96 promotion build (2026-07-15).** The learnings-origin rule is folded
   into `/bench-write-spec`'s existing complete-map entry contract: when every
   load-bearing fork was put to the reviewer and closed in the current session,
