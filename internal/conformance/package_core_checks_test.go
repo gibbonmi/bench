@@ -161,25 +161,7 @@ func checkGoCore(root string) []string {
 	} else if !strings.Contains(race.Stdout, "=== RUN   "+cleanupRaceTest) {
 		diags = append(diags, "worktree cleanup race test did not run")
 	}
-	if exists(filepath.Join(root, "scripts", "platforms.json")) && exists(buildHelper) {
-		matrix, err := platformMatrix(filepath.Join(root, "scripts", "platforms.json"))
-		if err != nil {
-			diags = append(diags, "platform matrix unreadable: "+err.Error())
-		}
-		tmp, err := os.MkdirTemp("", "bench-cross-*")
-		if err != nil {
-			diags = append(diags, "cross-compile setup failed: "+err.Error())
-		} else {
-			defer os.RemoveAll(tmp)
-			for _, target := range matrix {
-				env := append(conformanceSubprocessEnv(), "GOOS="+target.Goos, "GOARCH="+target.Goarch)
-				probe := runAtEnv(root, env, "bash", buildHelper, root, filepath.Join(tmp, "bench-"+target.Goos+"-"+target.Goarch))
-				if probe == nil || probe.ExitCode != 0 {
-					diags = append(diags, fmt.Sprintf("cross-compile failed: %s/%s", target.Goos, target.Goarch))
-				}
-			}
-		}
-	}
+	diags = append(diags, crossCompileMatrix(root, buildHelper)...)
 	return diags
 }
 
