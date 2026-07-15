@@ -8,6 +8,17 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-15, scope: post-structure-wave reconcile).** Removed
+  FT100–FT113 after all 14 cited gate-package and worktree-package violations
+  left the live structure report; the 20 remaining roadmap rows still match the
+  tree, and the FT6, FT24, FT8, FT38, and FT91 triggers remain unmet. IDEAS.md
+  was already empty, so zero ideas drained. Dismissed the one open journal
+  entry (interactive shell read used `head`) because the existing repository
+  convention already requires `rg`-scoped reads and the entry proposed no rule
+  change. The previous run promoted no work, so no promotion-build entry is
+  missing. The refreshed sequence returns to FT81's distributable-runtime
+  shaping pass, then FT96's XS synthesis promotion.
+
 - **Roadmap reconcile (2026-07-15, scope: post-isolated-structure splits).**
   Removed FT97–FT99 after all three cited file violations left the live
   structure report; the 14 remaining violations still map exactly to the

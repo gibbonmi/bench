@@ -279,66 +279,6 @@ left open. Name this path in `/bench-write-spec`'s entry contract so the map
 gate stops forcing a shape detour over already-made decisions. Kit edit, built
 under `craft-synthesis`.
 
-**FT100 (LOW) — structure debt: `internal/gate/` at 13/12 files.** Group related
-files behind a package seam or propose a reviewer grant. Coordinate this pass
-with FT101–FT105 before splitting any over-budget gate file so the package does
-not trade line debt for deeper directory debt. Next: `/bench-implement-spec`
-(lighter path).
-
-**FT101 (LOW) — structure debt: `internal/gate/gate_test.go` at 412/400.** Split
-along responsibility or propose a reviewer grant, coordinated with FT100's
-directory seam. Next: `/bench-implement-spec` (lighter path).
-
-**FT102 (LOW) — structure debt: `internal/gate/runner_serial_test.go` at
-410/400.** Split along responsibility or propose a reviewer grant, coordinated
-with FT100's directory seam. Next: `/bench-implement-spec` (lighter path).
-
-**FT103 (LOW) — structure debt: `internal/gate/story4_proof_test.go` at
-415/400.** Split along responsibility or propose a reviewer grant, coordinated
-with FT100's directory seam. Next: `/bench-implement-spec` (lighter path).
-
-**FT104 (LOW) — structure debt: `internal/gate/subject.go` at 422/400.** Split
-along responsibility or propose a reviewer grant, coordinated with FT100's
-directory seam. Next: `/bench-implement-spec` (lighter path).
-
-**FT105 (LOW) — structure debt: `internal/gate/verdict.go` at 431/400.** Split
-along responsibility or propose a reviewer grant, coordinated with FT100's
-directory seam. Next: `/bench-implement-spec` (lighter path).
-
-**FT106 (LOW) — structure debt: `internal/worktree/` at 18/12 files.** Group
-related files behind a package seam or propose a reviewer grant. Coordinate
-this pass with FT107–FT113 before splitting any over-budget worktree file so
-the package does not trade line debt for deeper directory debt. Next:
-`/bench-implement-spec` (lighter path).
-
-**FT107 (LOW) — structure debt: `internal/worktree/clean.go` at 406/400.** Split
-along responsibility or propose a reviewer grant, coordinated with FT106's
-directory seam. Next: `/bench-implement-spec` (lighter path).
-
-**FT108 (LOW) — structure debt: `internal/worktree/lifecycle.go` at 450/400.**
-Split along responsibility or propose a reviewer grant, coordinated with
-FT106's directory seam. Next: `/bench-implement-spec` (lighter path).
-
-**FT109 (LOW) — structure debt: `internal/worktree/ownership.go` at 465/400.**
-Split along responsibility or propose a reviewer grant, coordinated with
-FT106's directory seam. Next: `/bench-implement-spec` (lighter path).
-
-**FT110 (LOW) — structure debt: `internal/worktree/resume.go` at 436/400.**
-Split along responsibility or propose a reviewer grant, coordinated with
-FT106's directory seam. Next: `/bench-implement-spec` (lighter path).
-
-**FT111 (LOW) — structure debt: `internal/worktree/subshell.go` at 417/400.**
-Split along responsibility or propose a reviewer grant, coordinated with
-FT106's directory seam. Next: `/bench-implement-spec` (lighter path).
-
-**FT112 (LOW) — structure debt: `internal/worktree/worktree.go` at 402/400.**
-Split along responsibility or propose a reviewer grant, coordinated with
-FT106's directory seam. Next: `/bench-implement-spec` (lighter path).
-
-**FT113 (LOW) — structure debt: `internal/worktree/worktree_test.go` at
-533/400.** Split along responsibility or propose a reviewer grant, coordinated
-with FT106's directory seam. Next: `/bench-implement-spec` (lighter path).
-
 ## Release and bank reassessment gate
 
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
@@ -401,8 +341,5 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT100–FT105 gate-package structure wave
-   (coordinate the directory seam before file splits).
-2. `/bench-implement-spec` — FT106–FT113 worktree-package structure wave
-   (coordinate the directory seam before file splits).
-3. `/bench-shape-idea` — FT81 usable, platform-correct distributable runtime.
+1. `/bench-shape-idea` — specify FT81, the platform-correct distributable runtime.
+2. `/bench-implement-spec` — FT96, the write-spec fast-path rule edit (XS synthesis promotion).
