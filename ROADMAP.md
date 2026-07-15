@@ -262,16 +262,6 @@ left open. Name this path in `/bench-write-spec`'s entry contract so the map
 gate stops forcing a shape detour over already-made decisions. Kit edit, built
 under `craft-synthesis`.
 
-**FT114 (LOW) — structure debt: `internal/contract/surface/` at 13/12 files.**
-The FT81 build added a cohesive two-file distributable-artifact contract to a
-directory already spanning adoption, routing, packaging, repair, and hook
-surfaces. Move `artifact_test.go` and `artifact_fixture_test.go` behind an
-`artifact` contract-package seam; the pair owns its lifecycle fixture and can
-keep consuming the shared contract harness without duplication, reducing the
-parent package to 11 files. If package isolation proves false, propose a
-reviewer grant rather than fragmenting the tests. Next: `/bench-implement-spec`
-(lighter path).
-
 ## Release and bank reassessment gate
 
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
@@ -334,8 +324,6 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT114, split the distributable-artifact contracts
-   into their own package (lighter path).
-2. `/bench-implement-spec` — FT96, the write-spec fast-path rule edit (XS
+1. `/bench-implement-spec` — FT96, the write-spec fast-path rule edit (XS
    synthesis promotion).
-3. `/bench-shape-idea` — specify FT82, the authoritative release preflight.
+2. `/bench-shape-idea` — specify FT82, the authoritative release preflight.
