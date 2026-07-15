@@ -1075,10 +1075,11 @@
                   (or resumes) a compact decision map in <code>decisions/&lt;topic&gt;.md</code>:
                   the open questions as tickets, sequenced so answering one unlocks the next,
                   with resolved answers written into the file. The agent works the frontier one
-                  question at a time until nothing unresolved still blocks a spec. Shaping runs
-                  on the top-tier model, because eliminating uncertainty is exactly what the
-                  smartest model is for; once the map is clear, the handoff is a fresh mid-tier
-                  session to write the spec.</p>
+                  question at a time until nothing unresolved still blocks a spec. Decision maps
+                  normally come from this phase; the write-spec entry contract owns the narrow
+                  recording exception. Shaping runs on the top-tier model, because eliminating
+                  uncertainty is exactly what the smartest model is for; once the map is clear,
+                  the handoff is a fresh mid-tier session by default.</p>
                 </div>
               </div></div>
             </details>
@@ -1104,11 +1105,12 @@
                   decisions, <em>pre-agreed test seams</em>, an acceptance coverage map, and the
                   gate expectations that define done. It synthesizes what's already been discussed
                   rather than re-interviewing you. A spec is one of the most token-heavy
-                  artifacts the agent produces, so it runs on the mid tier, on a fresh session
-                  that reads the finished decision map instead of inheriting the shaping
-                  conversation. The spec stops for your sign-off, then the build runs on yet
-                  another fresh session. The target is locked before the loop starts, so the
-                  loop can't renegotiate it.</p>
+                  artifacts the agent produces, so by default it runs on the mid tier, in a fresh
+                  session that reads the finished decision map instead of inheriting the shaping
+                  conversation. Its entry contract owns the narrow same-session recording
+                  exception. The spec stops for your sign-off, then the build runs on another
+                  fresh session. The target is locked before the loop starts, so the loop can't
+                  renegotiate it.</p>
                 </div>
               </div></div>
             </details>
@@ -1644,7 +1646,7 @@
           </tr>
           <tr>
             <td><code>decisions/</code></td>
-            <td>Decision maps from <code>/bench-shape-idea</code>: open tickets and resolved answers.</td>
+            <td>Decision maps normally come from <code>/bench-shape-idea</code>; the write-spec entry contract owns the narrow recording exception.</td>
             <td>Feeds <code>/bench-write-spec</code> once no open ticket blocks the build.</td>
           </tr>
           <tr>

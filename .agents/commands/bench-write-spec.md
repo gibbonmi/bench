@@ -31,20 +31,25 @@ from conversation alone. One override exists: an explicit reviewer-directed
 batch drain (an assessment or reviewed findings doc pushed into specs on the
 reviewer's instruction) may substitute for per-spec maps, with every defaulted
 decision flagged in-spec for post-hoc veto — absent that explicit instruction,
-the map gate stands. When every load-bearing fork has already been put to the
-reviewer and closed in the current session, write those decisions directly into
-a new decision map with a complete Handoff, flag that map in the spec for reviewer
-veto, and compile the spec without routing through `/bench-shape-idea`. This path
-records settled decisions rather than bypassing them: if any fork remains open,
-run `/bench-shape-idea` and keep the normal map gate. Bugs are the exception: they
-route to `/bench-debug`, which needs no spec.
+the map gate stands. Default spec authoring starts in a fresh mid-tier session
+and reads the complete map plus the repo rather than inheriting the shaping
+conversation. The sole same-session exception applies when every load-bearing
+fork has already been put to the reviewer and closed in the current session:
+write those decisions directly into a new decision map with a complete Handoff,
+then continue from that file rather than unwritten grill memory, flag the map in
+the spec for reviewer veto, and compile the spec without routing through
+`/bench-shape-idea`. This path records settled decisions rather than bypassing
+them: if any fork remains open, run `/bench-shape-idea` and keep the normal map
+gate. Bugs are the exception: they route to `/bench-debug`, which needs no spec.
 
 **Who runs this phase.** The mid tier authors ordinary specs. The top tier is an
 explicit exception only when the Handoff carries uncertainty flags and I approve
-the escalation. Either way, keep the fresh-session discipline: write from the
-map plus the repo, and treat any reach into grill memory as a missing Handoff
-fact. A same-session mid **delegate** is allowed only on my explicit ask: it is
-read-only (or worktree-isolated) and returns the spec text for the invoking
+the escalation. Ordinary authoring stays in a fresh session. The reviewer-closed
+path in the entry contract is the sole same-session exception, and it writes the
+complete map before continuing from that file. Either way, write from the map
+plus the repo, and treat any reach into unwritten grill memory as a missing
+Handoff fact. A same-session mid **delegate** is allowed only on my explicit ask:
+it is read-only (or worktree-isolated) and returns the spec text for the invoking
 session to write.
 
 Synthesize the current conversation and codebase understanding into a spec the

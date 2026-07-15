@@ -176,16 +176,37 @@ func checkWorkflowAnchors(root string) []string {
 		".agents/commands/bench-review-implementation.md dropped the terminal repair-pass bound")
 
 	shapeIdeaPath := filepath.Join(root, ".agents", "commands", "bench-shape-idea.md")
-	if exists(shapeIdeaPath) && strings.Contains(collapseSpace(readIfExists(shapeIdeaPath)), "straight to `/bench-write-spec`") {
+	shapeIdeaActive := collapseSpace(stripHTMLComments(readIfExists(shapeIdeaPath)))
+	if exists(shapeIdeaPath) && strings.Contains(shapeIdeaActive, "straight to `/bench-write-spec`") {
 		diags = append(diags, ".agents/commands/bench-shape-idea.md reintroduces the skip-to-spec bypass fragment; every idea must yield a map with a Handoff before a spec")
 	}
 	writeSpecPath := filepath.Join(root, ".agents", "commands", "bench-write-spec.md")
-	if exists(writeSpecPath) && !strings.Contains(collapseSpace(readIfExists(writeSpecPath)), "refuses to run without") {
-		diags = append(diags, ".agents/commands/bench-write-spec.md dropped the map-required entry contract (refuses to run without a complete map)")
+	writeSpecActive := collapseSpace(stripHTMLComments(readIfExists(writeSpecPath)))
+	if exists(writeSpecPath) {
+		if !strings.Contains(writeSpecActive, "refuses to run without") {
+			diags = append(diags, ".agents/commands/bench-write-spec.md dropped the map-required entry contract (refuses to run without a complete map)")
+		}
+		reviewerClosedFastPathAnchors := []string{
+			"Default spec authoring starts in a fresh mid-tier session",
+			"sole same-session exception",
+			"every load-bearing fork has already been put to the reviewer and closed in the current session",
+			"write those decisions directly into a new decision map with a complete Handoff",
+			"continue from that file rather than unwritten grill memory",
+			"compile the spec without routing through `/bench-shape-idea`",
+		}
+		for _, anchor := range reviewerClosedFastPathAnchors {
+			if !strings.Contains(writeSpecActive, anchor) {
+				diags = append(diags, ".agents/commands/bench-write-spec.md dropped the active reviewer-closed-forks same-session fast path")
+				break
+			}
+		}
+		if !strings.Contains(writeSpecActive, "if any fork remains open, run `/bench-shape-idea` and keep the normal map gate") {
+			diags = append(diags, ".agents/commands/bench-write-spec.md dropped the explicit open-fork fallback to /bench-shape-idea")
+		}
 	}
-	requireCollapsed(".agents/commands/bench-write-spec.md",
-		"When every load-bearing fork has already been put to the reviewer and closed in the current session, write those decisions directly into a new decision map with a complete Handoff, flag that map in the spec for reviewer veto, and compile the spec without routing through `/bench-shape-idea`.",
-		".agents/commands/bench-write-spec.md dropped the reviewer-closed-forks fast path")
+	if exists(shapeIdeaPath) && !strings.Contains(shapeIdeaActive, "`/bench-write-spec`'s entry contract owns the narrow recording path for decisions already closed with the reviewer in the current session") {
+		diags = append(diags, ".agents/commands/bench-shape-idea.md dropped the pointer to /bench-write-spec's entry contract for reviewer-closed forks")
+	}
 
 	readme := readIfExists(filepath.Join(root, "README.md"))
 	if readme != "" {

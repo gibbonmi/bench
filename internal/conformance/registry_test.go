@@ -84,6 +84,10 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"line-anchor-missing":                        conformanceFixture(".bench/gate-line-contracts.sh"),
 	"broken-coverage-map":                        conformanceFixture(".bench/gate-docs-contracts.sh"),
 
+	"write-spec-reviewer-closed-comment-spoof":     conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"write-spec-open-fork-fallback":                conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"shape-idea-write-spec-entry-contract-pointer": conformanceFixture(".bench/gate-docs-contracts.sh"),
+
 	"line-binding-prose-drift": conformanceFixture(".bench/gate-line-contracts.sh"),
 	"agent-hook-unwired":       conformanceFixture(".bench/gate-line-contracts.sh"),
 	"agent-hook-broken":        conformanceFixture(".bench/gate-line-contracts.sh"),
