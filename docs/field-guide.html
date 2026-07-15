@@ -1,0 +1,1341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bench Field Guide — working with an agentic code harness</title>
+<style>
+  :root {
+    --paper: #F6F7F5;
+    --card: #FFFFFF;
+    --ink: #1C2420;
+    --muted: #5A665F;
+    --line: #DAE0DA;
+    --accent: #157A4E;
+    --accent-soft: #E3F0E8;
+    --red: #B3382E;
+    --red-soft: #F6E7E5;
+    --code-bg: #EDF1ED;
+    --shadow: 0 1px 3px rgba(28, 36, 32, 0.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #121815;
+      --card: #182019;
+      --ink: #E7ECE8;
+      --muted: #94A198;
+      --line: #273129;
+      --accent: #4CC38A;
+      --accent-soft: #1B2E23;
+      --red: #E5675C;
+      --red-soft: #35201D;
+      --code-bg: #1F2A22;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --paper: #F6F7F5;
+    --card: #FFFFFF;
+    --ink: #1C2420;
+    --muted: #5A665F;
+    --line: #DAE0DA;
+    --accent: #157A4E;
+    --accent-soft: #E3F0E8;
+    --red: #B3382E;
+    --red-soft: #F6E7E5;
+    --code-bg: #EDF1ED;
+    --shadow: 0 1px 3px rgba(28, 36, 32, 0.07);
+  }
+  :root[data-theme="dark"] {
+    --paper: #121815;
+    --card: #182019;
+    --ink: #E7ECE8;
+    --muted: #94A198;
+    --line: #273129;
+    --accent: #4CC38A;
+    --accent-soft: #1B2E23;
+    --red: #E5675C;
+    --red-soft: #35201D;
+    --code-bg: #1F2A22;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; animation: none !important; }
+  }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 16.5px;
+    line-height: 1.65;
+    margin: 0;
+  }
+  code, .mono {
+    font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+  }
+  code {
+    background: var(--code-bg);
+    border-radius: 4px;
+    padding: 0.08em 0.35em;
+    font-size: 0.86em;
+  }
+  h1, h2, h3 {
+    font-family: Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
+    font-weight: 700;
+    line-height: 1.2;
+    text-wrap: balance;
+    margin: 0;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  a:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- top nav ---------- */
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+  }
+  nav .wrap {
+    display: flex; align-items: center; gap: 22px;
+    padding-top: 12px; padding-bottom: 12px;
+    overflow-x: auto; white-space: nowrap;
+  }
+  nav .brand {
+    font-family: Charter, Cambria, Georgia, serif;
+    font-weight: 700; font-size: 1.05rem;
+  }
+  nav .brand em { color: var(--accent); font-style: normal; }
+  nav a.tab {
+    color: var(--muted); font-size: 0.85rem;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  nav a.tab:hover { color: var(--accent); text-decoration: none; }
+
+  /* ---------- hero ---------- */
+  header.hero { padding: 72px 0 56px; }
+  .eyebrow {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  header.hero h1 { font-size: clamp(2rem, 5vw, 3rem); max-width: 21ch; }
+  header.hero p.lede {
+    max-width: 62ch;
+    font-size: 1.1rem;
+    color: var(--muted);
+    margin: 22px 0 0;
+  }
+  header.hero p.lede strong { color: var(--ink); font-weight: 600; }
+
+  .gate-strip {
+    display: flex; flex-wrap: wrap; gap: 12px;
+    margin-top: 34px;
+  }
+  .gate-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+    border: 1px solid var(--line);
+    background: var(--card);
+    border-radius: 999px;
+    padding: 6px 14px;
+    color: var(--muted);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .dot.green { background: var(--accent); }
+  .dot.red { background: var(--red); }
+
+  /* ---------- section scaffolding: the spine ---------- */
+  section.station { padding: 26px 0 10px; }
+  .station-head {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 18px;
+    align-items: start;
+    padding-top: 26px;
+  }
+  .node {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--card);
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-weight: 700; font-size: 0.95rem;
+    flex: none;
+  }
+  .station-head h2 { font-size: clamp(1.45rem, 3vw, 1.9rem); padding-top: 5px; }
+  .station-head .kicker {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.13em;
+    color: var(--muted); margin-bottom: 6px;
+  }
+  .station-body {
+    border-left: 2px solid var(--line);
+    margin-left: 21px;
+    padding: 18px 0 30px 40px;
+  }
+  section.station:last-of-type .station-body { border-left-color: transparent; }
+  .station-body > p.intro {
+    max-width: 62ch;
+    color: var(--muted);
+    margin: 0 0 22px;
+  }
+  .station-body > p.intro strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------- expandable cards ---------- */
+  .cards { display: flex; flex-direction: column; gap: 12px; }
+  details.card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  details.card[open] { border-color: var(--accent); }
+  details.card summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex; align-items: baseline; gap: 12px;
+    padding: 14px 18px;
+  }
+  details.card summary::-webkit-details-marker { display: none; }
+  details.card summary::before {
+    content: "+";
+    font-family: ui-monospace, Menlo, monospace;
+    color: var(--accent);
+    font-weight: 700;
+    flex: none;
+    width: 1em;
+    transform: translateY(-1px);
+  }
+  details.card[open] summary::before { content: "–"; }
+  details.card summary .name { font-weight: 650; }
+  details.card summary .name code {
+    background: transparent; padding: 0;
+    color: var(--accent); font-size: 0.92em; font-weight: 600;
+  }
+  details.card summary .role {
+    color: var(--muted); font-size: 0.9rem;
+    flex: 1 1 12em; min-width: 0;
+  }
+  details.card .body {
+    padding: 4px 18px 18px 18px;
+    border-top: 1px dashed var(--line);
+  }
+  .ps { display: grid; gap: 14px; padding-top: 14px; max-width: 68ch; }
+  .ps .label {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.13em;
+    margin-bottom: 4px;
+  }
+  .ps .problem .label { color: var(--red); }
+  .ps .solution .label { color: var(--accent); }
+  .ps p { margin: 0; }
+
+  /* ---------- fit diagram ---------- */
+  .fit {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .fit .piece {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .fit .piece h3 { font-size: 1.02rem; margin-bottom: 6px; }
+  .fit .piece .tag {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--accent); display: block; margin-bottom: 8px;
+  }
+  .fit .piece p { margin: 0; font-size: 0.9rem; color: var(--muted); }
+
+  /* ---------- workflow rail ---------- */
+  .flow { display: flex; flex-direction: column; gap: 0; margin-top: 8px; }
+  .flow-step { display: grid; grid-template-columns: 34px 1fr; gap: 16px; }
+  .flow-step .rail { display: flex; flex-direction: column; align-items: center; }
+  .flow-step .n {
+    width: 30px; height: 30px; border-radius: 50%; flex: none;
+    background: var(--accent); color: var(--paper);
+    display: flex; align-items: center; justify-content: center;
+    font-family: ui-monospace, Menlo, monospace; font-size: 0.8rem; font-weight: 700;
+  }
+  .flow-step .n.alt { background: var(--card); color: var(--red); border: 2px solid var(--red); }
+  .flow-step .rail .cord { width: 2px; flex: 1; background: var(--line); }
+  .flow-step:last-child .rail .cord { background: transparent; }
+  .flow-step .content { padding-bottom: 22px; min-width: 0; }
+  .flow-step .content > .cards { margin-top: 2px; }
+  .branch-note {
+    font-size: 0.85rem; color: var(--muted);
+    font-family: ui-monospace, Menlo, monospace;
+    margin: 0 0 8px;
+  }
+
+  .callout {
+    background: var(--accent-soft);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 20px;
+    max-width: 68ch;
+    margin: 22px 0 0;
+    font-size: 0.95rem;
+  }
+  .callout.red { background: var(--red-soft); }
+  .callout .label {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.13em;
+    color: var(--accent); display: block; margin-bottom: 6px;
+  }
+  .callout.red .label { color: var(--red); }
+  .callout p { margin: 0; }
+
+  .group-label {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.13em;
+    color: var(--muted);
+    margin: 26px 0 10px;
+  }
+  .cards + .group-label { margin-top: 30px; }
+
+  table.files {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.9rem; margin-top: 8px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .table-scroll { overflow-x: auto; border-radius: 10px; }
+  table.files th, table.files td {
+    text-align: left; padding: 10px 16px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  table.files tr:last-child td { border-bottom: none; }
+  table.files th {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--muted); font-weight: 600;
+    background: var(--code-bg);
+  }
+  table.files td:first-child { white-space: nowrap; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    margin-top: 60px;
+    padding: 32px 0 56px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  footer .wrap { max-width: 880px; }
+</style>
+
+<nav>
+  <div class="wrap">
+    <span class="brand">Bench <em>Field Guide</em></span>
+    <a class="tab" href="#start">Start here</a>
+    <a class="tab" href="#invariants">Invariants</a>
+    <a class="tab" href="#machinery">Machinery</a>
+    <a class="tab" href="#workflow">Workflow</a>
+    <a class="tab" href="#skills">Craft skills</a>
+    <a class="tab" href="#artifacts">Artifacts</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">User documentation · agentic development, made accountable</div>
+    <h1>How Bench keeps an AI coding agent honest</h1>
+    <p class="lede">
+      Coding agents are fast, confident, and unsupervised — which is exactly the problem.
+      An agent will happily declare its own work finished, quietly burn an expensive model
+      on trivial edits, and write documentation only it can understand. <strong>Bench is a
+      workflow kit that closes those gaps</strong>: an external gate decides what "done" means,
+      declared budgets bound every long run, and a small set of commands and skills give the
+      agent a repeatable way to shape, build, review, and ship work you can trust.
+      Read this page top to bottom; each station starts with the core idea and unfolds into detail.
+    </p>
+    <div class="gate-strip">
+      <span class="gate-chip"><span class="dot green"></span>gate green — work may commit</span>
+      <span class="gate-chip"><span class="dot red"></span>gate red — work is not done</span>
+      <span class="gate-chip">you review · the agent builds</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ STATION 1: START HERE ============ -->
+  <section class="station" id="start">
+    <div class="station-head">
+      <div class="node">1</div>
+      <div>
+        <div class="kicker">Start here</div>
+        <h2>The mental model: two roles, four kinds of pieces</h2>
+      </div>
+    </div>
+    <div class="station-body">
+      <p class="intro">
+        Everything in Bench follows from one division of labor. <strong>The agent is the
+        worker; you are the reviewer, and you own the merge.</strong> The worker builds on
+        your behalf but never decides what ships, what a spec should say, or anything
+        irreversible — when a decision is genuinely yours, it surfaces the question and
+        stops. Around that agreement sit four kinds of pieces, each answering a different
+        failure mode of agentic work:
+      </p>
+      <div class="fit">
+        <div class="piece">
+          <span class="tag">Guidance</span>
+          <h3>Skills</h3>
+          <p>Shape <em>how</em> the agent generates — craft disciplines it reaches for when a task matches. Probabilistic guidance, not rules.</p>
+        </div>
+        <div class="piece">
+          <span class="tag">Process</span>
+          <h3>Commands</h3>
+          <p>The canonical phases of the workflow — shape, spec, build, review, verify — plus maintenance passes you invoke deliberately.</p>
+        </div>
+        <div class="piece">
+          <span class="tag">Enforcement</span>
+          <h3>The gate &amp; hooks</h3>
+          <p>Checks with authority the agent does not have. The gate decides "done"; git hooks protect the main branch no matter who pushes.</p>
+        </div>
+        <div class="piece">
+          <span class="tag">Operations</span>
+          <h3>The <code>bench</code> CLI</h3>
+          <p>The operational layer the agent drives — worktrees, the gated loop, status, capture — with the same behavior in every harness.</p>
+        </div>
+      </div>
+      <div class="callout">
+        <span class="label">Why this shape</span>
+        <p>
+          Guidance can be ignored, so it never carries safety. Enforcement can't be ignored,
+          so it carries all of it. Commands make good process cheap to follow, and the CLI
+          makes the mechanics identical whether the agent runs in Claude Code, Codex, or any
+          other harness. When you know which kind of piece you're looking at, you know how
+          much to trust it.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STATION 2: INVARIANTS ============ -->
+  <section class="station" id="invariants">
+    <div class="station-head">
+      <div class="node">2</div>
+      <div>
+        <div class="kicker">Foundations</div>
+        <h2>The four invariants</h2>
+      </div>
+    </div>
+    <div class="station-body">
+      <p class="intro">
+        Four rules override convenience in every session, every phase, every harness.
+        Each one exists because agents fail in a predictable way without it.
+      </p>
+      <div class="cards">
+        <details class="card">
+          <summary><span class="name">The gate is the oracle</span><span class="role">the agent never grades its own work</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>A model judging its own output is circular: it built the code from the same
+              understanding it now uses to approve it, so its blind spots pass their own review.
+              "Looks correct to me" is precisely the signal that fails when it matters most.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>"Done" means <code>bench gate</code> exits zero — tests, types, lint, and any
+              project conformance check, external to the model. If the gate is red, the work is
+              not done, no matter how good the diff looks. The agent may never edit, skip, weaken,
+              or delete a check to get to green; if a check seems wrong, it stops and says so.
+              The rule extends to delegation: a subagent's "done" is a claim, verified against
+              the gate and <code>git status</code> before it's accepted.</p>
+            </div>
+          </div></div>
+        </details>
+        <details class="card">
+          <summary><span class="name">Declare the line</span><span class="role">no silent escalation of model or effort</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>Long agent runs have real costs, and left alone an agent will spend a top-tier
+              model on routine plumbing or grind indefinitely on a problem it can't crack —
+              you find out from the bill, or from a stuck session, after the fact.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>Before any multi-cycle stage, the agent states one line: which model tier
+              (cheap / mid / top), what effort, and a rough iteration cap, with a clause of
+              justification. Cheap model for plumbing at a known seam; top model only where the
+              answer is genuinely uncertain. If the cap runs out, the agent stops and reports
+              rather than grinding. The abstract tiers are bound to real model ids per repo,
+              so the budget survives model churn.</p>
+            </div>
+          </div></div>
+        </details>
+        <details class="card">
+          <summary><span class="name">Document for the teammate who just walked in</span><span class="role">every agent session starts with amnesia</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>Agent sessions have no memory of each other. Documentation written as
+              change-narration ("we moved X to Y") is useless to a reader who never saw the
+              before-state — and every future session is that reader.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>Project docs and decision records describe the <em>current decided state</em>,
+              addressed to someone with no memory of how it got that way. History lives in git,
+              where it's already recorded. Decision records carry no file paths or code
+              snippets, because those rot the moment the code moves.</p>
+            </div>
+          </div></div>
+        </details>
+        <details class="card">
+          <summary><span class="name">One small change at a time, repo stays green</span><span class="role">small diffs are the reviewable unit</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>Agents can produce enormous diffs in minutes, and an enormous diff is
+              unreviewable — the reviewer either rubber-stamps it or blocks everything.
+              Worse, an agent that wants a shortcut will quietly reframe the task until
+              the shortcut looks legitimate.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>The smallest diff that advances the objective; commit on green, never on red.
+              The agent reads the surrounding code before writing, and prefers composing an
+              existing seam to inventing a new one. The tell it's taught to watch for:
+              if it catches itself reframing the task to make a shortcut feel acceptable,
+              that reframing is the signal to stop and ask you.</p>
+            </div>
+          </div></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STATION 3: MACHINERY ============ -->
+  <section class="station" id="machinery">
+    <div class="station-head">
+      <div class="node">3</div>
+      <div>
+        <div class="kicker">Architecture</div>
+        <h2>The machinery that enforces it</h2>
+      </div>
+    </div>
+    <div class="station-body">
+      <p class="intro">
+        The invariants would be wishes without teeth. These components are the teeth —
+        and deliberately, the ones that matter work <strong>independently of any particular
+        AI harness</strong>, so the safety doesn't evaporate when you switch tools.
+      </p>
+      <div class="cards">
+        <details class="card">
+          <summary><span class="name">The gate — <code>.bench/gate.sh</code></span><span class="role">one script that defines "done" for this repo</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>Every repo has a different definition of correct — its own tests, type
+              checker, linter, conformance rules. Without one agreed entry point, each agent
+              session improvises its own verification, and improvised verification gets skipped.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p><code>bench gate</code> runs the project's gate script and exits zero or
+              nonzero — that exit code is the entire vocabulary of done-ness. You configure
+              what's inside it once (during setup); after that, agent, hooks, and loop all
+              defer to the same oracle. Changing what the gate checks is itself a disciplined
+              act, covered by its own skill, because whoever edits the oracle edits the
+              meaning of "done".</p>
+            </div>
+          </div></div>
+        </details>
+        <details class="card">
+          <summary><span class="name">The <code>bench</code> CLI</span><span class="role">the operational layer the agent drives</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>If workflow mechanics live inside one AI tool's configuration, they behave
+              differently — or not at all — in the next tool, and the human ends up doing
+              clerical work (parking ideas, checking status) that the agent should absorb.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>One CLI, driven by the agent, with harness-independent behavior. Its
+              subcommands group into: <strong>adoption</strong> (<code>link</code>,
+              <code>init</code>, <code>doctor</code>), <strong>ambient context</strong>
+              (<code>status</code>, <code>dashboard</code>, <code>roadmap</code>,
+              <code>learnings</code>, <code>idea</code>), <strong>oracle and diagnostics</strong>
+              (<code>gate</code>, <code>canary</code>, <code>structure</code>, <code>guards</code>,
+              <code>coverage</code>, <code>models</code>), and <strong>work execution</strong>
+              (<code>worktree</code>, <code>shift</code>, path-scoped <code>commit</code>, and
+              the <code>spec</code> lifecycle). You never need to type these yourself —
+              the agent runs them and reports.</p>
+            </div>
+          </div></div>
+        </details>
+        <details class="card">
+          <summary><span class="name">The shift loop — <code>bench shift</code></span><span class="role">an unattended build loop that can only commit green work</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>Letting an agent iterate unattended is where the leverage is — and where the
+              risk is. An unsupervised loop that commits its own unverified output will
+              cheerfully stack broken commits all night.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p><code>bench shift</code> drives whatever harness you point it at (a small
+              adapter maps the generated prompt to that tool's noninteractive mode — reference
+              adapters ship for Claude Code, Codex, and OpenCode). After <em>every</em>
+              iteration it runs the gate, and it commits only on green. In a repo with a tier
+              binding, the adapters refuse to run at all unless an explicit, bound model is
+              declared — so a headless run always carries a budget, never a default.</p>
+            </div>
+          </div></div>
+        </details>
+        <details class="card">
+          <summary><span class="name">Worktrees — <code>bench worktree</code></span><span class="role">one isolated copy of the repo per stream of work</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>When two writers — you and an agent, or two agents — edit the same checkout,
+              their changes interleave. A gate verdict over a mixed tree answers for nobody's
+              diff, and a delegate's stray edit can land silently in files you own.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p><code>bench worktree</code> gives each stream of work its own git worktree —
+              a separate directory sharing the same repository. Side-work and write-delegations
+              go to their own worktree, so every gate verdict answers for exactly one diff and
+              stray edits physically cannot reach the main checkout. Worktrees are pooled and
+              reconciled on resume, so they're cheap to hand out.</p>
+            </div>
+          </div></div>
+        </details>
+        <details class="card">
+          <summary><span class="name">Layered git safety — hooks</span><span class="role">protection that survives a harness swap</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>AI-tool safety settings only bind that one tool. An agent run from a different
+              harness — or a human in a hurry — can push straight to main, run destructive git
+              commands, or stop a loop mid-red, and nothing objects.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>Safety is layered from most to least universal. A git <code>pre-push</code>
+              hook blocks direct pushes to the default branch for <em>any</em> pusher, and can
+              pin the enforcement files themselves against drift. Where the harness supports
+              hooks, extra interactive guards wire in: one blocks destructive git commands
+              (force-push, hard reset, history rewrites), one blocks delegating to a model
+              outside the bound tiers, one blocks stopping an armed shift while the gate is red.
+              Linked repos carry a local copy of the CLI so the hooks work even with nothing
+              installed globally. Harness hooks are ergonomics; the git hook and the gate are
+              the backstops.</p>
+            </div>
+          </div></div>
+        </details>
+        <details class="card">
+          <summary><span class="name">Tier binding — <code>.bench/lines.env</code></span><span class="role">abstract model tiers, bound per repo</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>Model names churn constantly. Rules written against concrete model ids rot in
+              months, and a harness that silently substitutes "the closest available model"
+              defeats the declared budget without anyone noticing.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>The workflow speaks only in abstract tiers — cheap, mid, top. You, the
+              reviewer, bind each tier to a concrete model id in <code>.bench/lines.env</code>
+              and the project profile. The agent resolves tiers through that binding, a hook
+              rejects delegations that step outside it, and if a bound model is reported
+              unavailable the agent re-checks the binding with you instead of letting the
+              harness pick a stand-in.</p>
+            </div>
+          </div></div>
+        </details>
+        <details class="card">
+          <summary><span class="name">Two-file context — <code>BENCH.md</code> and <code>BENCH-reference.md</code></span><span class="role">always-loaded rules, on-demand lookup</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>Everything an agent must know competes for the same scarce context window.
+              Load it all every session and you pay for file maps and adapter contracts on
+              every message; load too little and cold sessions miss the rules that matter.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>The operating guide (<code>.bench/BENCH.md</code>) is always loaded and carries
+              only what steers generation: roles, the four invariants, the workflow, the
+              communication rules, and the CLI inventory a cold session needs. Everything
+              that's lookup rather than steering — the file map, the skills index, hook
+              layering, the shift adapter contract — lives in
+              <code>.bench/BENCH-reference.md</code>, referenced by path and read only when
+              needed. It costs no tokens until opened.</p>
+            </div>
+          </div></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STATION 4: WORKFLOW ============ -->
+  <section class="station" id="workflow">
+    <div class="station-head">
+      <div class="node">4</div>
+      <div>
+        <div class="kicker">Process</div>
+        <h2>The workflow: five phases, one bug path</h2>
+      </div>
+    </div>
+    <div class="station-body">
+      <p class="intro">
+        Commands are the phases of building a feature, in order. Each one hands off to the
+        next with an explicit recommendation, so you always know where the work stands and
+        what comes next. The numbering below is the real sequence — but the process is
+        <strong>right-sized, not ritual</strong>: a few-line change may take a lighter path,
+        with your explicit OK before any canonical step is skipped.
+      </p>
+
+      <div class="flow">
+        <div class="flow-step">
+          <div class="rail"><div class="n">1</div><div class="cord"></div></div>
+          <div class="content"><div class="cards">
+            <details class="card">
+              <summary><span class="name"><code>/bench-shape-idea</code></span><span class="role">turn a loose idea into a sequenced decision map</span></summary>
+              <div class="body"><div class="ps">
+                <div class="problem">
+                  <div class="label">The problem</div>
+                  <p>Building on top of unresolved decisions produces confident code that answers
+                  the wrong question. Big ideas hide questions whose answers change what gets
+                  built — and an agent asked to "just build it" will guess at all of them.</p>
+                </div>
+                <div class="solution">
+                  <div class="label">How it works</div>
+                  <p>Used only when an idea needs more than one session of decisions. It produces
+                  (or resumes) a compact decision map in <code>decisions/&lt;topic&gt;.md</code>:
+                  the open questions as tickets, sequenced so answering one unlocks the next,
+                  with resolved answers written into the file. The agent works the frontier one
+                  question at a time until nothing unresolved still blocks a spec.</p>
+                </div>
+              </div></div>
+            </details>
+          </div></div>
+        </div>
+
+        <div class="flow-step">
+          <div class="rail"><div class="n">2</div><div class="cord"></div></div>
+          <div class="content"><div class="cards">
+            <details class="card">
+              <summary><span class="name"><code>/bench-write-spec</code></span><span class="role">lock stories, seams, and the definition of done — before the loop runs</span></summary>
+              <div class="body"><div class="ps">
+                <div class="problem">
+                  <div class="label">The problem</div>
+                  <p>An agent iterating without a fixed target drifts: the build's scope quietly
+                  grows or shrinks mid-loop, and the tests written at the end conveniently fit
+                  whatever got built rather than what was asked.</p>
+                </div>
+                <div class="solution">
+                  <div class="label">How it works</div>
+                  <p>Before any substantial build, this phase turns the conversation and decision
+                  map into <code>specs/&lt;feature&gt;.md</code>: user stories, implementation
+                  decisions, <em>pre-agreed test seams</em>, an acceptance coverage map, and the
+                  gate expectations that define done. It synthesizes what's already been discussed
+                  rather than re-interviewing you. The spec stops for your sign-off, then the
+                  build runs on a fresh session — the target is locked before the loop starts,
+                  so it can't be renegotiated by the loop.</p>
+                </div>
+              </div></div>
+            </details>
+          </div></div>
+        </div>
+
+        <div class="flow-step">
+          <div class="rail"><div class="n">3</div><div class="cord"></div></div>
+          <div class="content"><div class="cards">
+            <details class="card">
+              <summary><span class="name"><code>/bench-implement-spec</code></span><span class="role">do the work at the agreed seams</span></summary>
+              <div class="body"><div class="ps">
+                <div class="problem">
+                  <div class="label">The problem</div>
+                  <p>Unstructured implementation is where budgets blow up and scope wanders —
+                  the agent picks its own boundaries, invents new abstractions, and touches
+                  more of the codebase than the change needs.</p>
+                </div>
+                <div class="solution">
+                  <div class="label">How it works</div>
+                  <p>Starting from the approved spec, the agent declares its line (tier, effort,
+                  iteration cap), then builds in vertical slices at the seams the spec agreed,
+                  writing tests first where the spec marked seams for TDD. The acceptance
+                  coverage map keeps the target fixed; the phase ends on a green gate. A build
+                  that stalls exits early with an honest report instead of grinding past its cap.</p>
+                </div>
+              </div></div>
+            </details>
+          </div></div>
+        </div>
+
+        <div class="flow-step">
+          <div class="rail"><div class="n">4</div><div class="cord"></div></div>
+          <div class="content"><div class="cards">
+            <details class="card">
+              <summary><span class="name"><code>/bench-review-implementation</code></span><span class="role">the check the gate can't run</span></summary>
+              <div class="body"><div class="ps">
+                <div class="problem">
+                  <div class="label">The problem</div>
+                  <p>A green gate proves the tests pass; it can't see that the diff violates the
+                  repo's conventions, quietly diverges from what the spec asked, or leaves a
+                  class of breaking inputs that no test exercises.</p>
+                </div>
+                <div class="solution">
+                  <div class="label">How it works</div>
+                  <p>A semantic review of the branch diff on three separate axes:
+                  <strong>Standards</strong> (does it follow this repo's documented conventions),
+                  <strong>Spec</strong> (does it match what was approved), and
+                  <strong>Coverage</strong> (what breaking inputs does nothing exercise). Every
+                  finding must meet a citation standard — it points at evidence, not vibes.
+                  The review is advisory: it produces findings and persists them for a fix pass,
+                  but it never overrides the gate's authority on done-ness.</p>
+                </div>
+              </div></div>
+            </details>
+          </div></div>
+        </div>
+
+        <div class="flow-step">
+          <div class="rail"><div class="n">5</div><div class="cord"></div></div>
+          <div class="content"><div class="cards">
+            <details class="card">
+              <summary><span class="name"><code>/bench-final-check</code></span><span class="role">run the oracle, commit on green</span></summary>
+              <div class="body"><div class="ps">
+                <div class="problem">
+                  <div class="label">The problem</div>
+                  <p>"It's done" is the cheapest sentence an agent can produce. Work that ends on
+                  a claim rather than a verdict leaves you to discover the red gate yourself.</p>
+                </div>
+                <div class="solution">
+                  <div class="label">How it works</div>
+                  <p>The phase runs the external gate and reports the result plainly — including
+                  a red one, with the failing output. On green, it lands the work with a
+                  path-scoped <code>bench commit</code>, which gates and commits the named files
+                  atomically; when the commit finishes a spec, the spec's status flips to
+                  implemented in the same commit. Model judgment is never a substitute for
+                  the gate here — that's the whole point of the phase.</p>
+                </div>
+              </div></div>
+            </details>
+          </div></div>
+        </div>
+
+        <div class="flow-step">
+          <div class="rail"><div class="n alt">✕</div><div class="cord"></div></div>
+          <div class="content">
+            <p class="branch-note">branch — when the work is "fix", not "build"</p>
+            <div class="cards">
+              <details class="card">
+                <summary><span class="name"><code>/bench-debug</code></span><span class="role">the bug path: repro first, fix second</span></summary>
+                <div class="body"><div class="ps">
+                  <div class="problem">
+                    <div class="label">The problem</div>
+                    <p>Pointed at a bug, an agent's instinct is to hypothesize a cause and patch
+                    it — and a plausible-sounding fix for the wrong cause passes review, ships,
+                    and leaves the bug alive.</p>
+                  </div>
+                  <div class="solution">
+                    <div class="label">How it works</div>
+                    <p>The bug path replaces the feature path the moment something is broken,
+                    throwing, failing, or slow. Step one is a tight, <em>red-capable</em>
+                    reproduction loop — a command that demonstrably fails because of this bug.
+                    That loop, not the agent's theory, is the oracle for the diagnosis and the
+                    fix: the fix is right when the repro turns green and stays green as a
+                    regression check. The phase also reports any architecture finding that would
+                    have prevented the bug.</p>
+                  </div>
+                </div></div>
+              </details>
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="rail"><div class="n alt">⟳</div><div class="cord"></div></div>
+          <div class="content">
+            <p class="branch-note">outside the sequence — setup once, maintain on cadence</p>
+            <div class="cards">
+              <details class="card">
+                <summary><span class="name"><code>/bench-setup-repo</code></span><span class="role">configure a repo for Bench, once</span></summary>
+                <div class="body"><div class="ps">
+                  <div class="problem">
+                    <div class="label">The problem</div>
+                    <p>The kit can't guess the parts that are specific to your repo — what the
+                    real gate should run, where the seams are, which models the tiers bind to.
+                    Defaults here would be silently wrong.</p>
+                  </div>
+                  <div class="solution">
+                    <div class="label">How it works</div>
+                    <p>A one-time interview after linking a repo. It checks the wiring, then fills
+                    in what can't be hardcoded: the actual gate script, the project profile
+                    (seams, tier bindings, design sources), and optionally a <code>CONTEXT.md</code>
+                    seeding the project's mental model and vocabulary. It ends by confirming the
+                    gate runs green on the untouched repo.</p>
+                  </div>
+                </div></div>
+              </details>
+              <details class="card">
+                <summary><span class="name"><code>/bench-what-next</code></span><span class="role">reconcile the roadmap, drain the capture — one reviewed diff</span></summary>
+                <div class="body"><div class="ps">
+                  <div class="problem">
+                    <div class="label">The problem</div>
+                    <p>Parked ideas and process learnings accumulate faster than anyone triages
+                    them, and a roadmap nobody reconciles against reality decays into fiction —
+                    listing work that already shipped and missing work that emerged.</p>
+                  </div>
+                  <div class="solution">
+                    <div class="label">How it works</div>
+                    <p>The single exit for everything captured along the way. One run reconciles
+                    <code>ROADMAP.md</code> against the actual tree, drains parked ideas from
+                    <code>IDEAS.md</code> and open entries from the learnings journal into it,
+                    refreshes the recommended sequence, and hands you the whole pass as one batch
+                    diff to approve. Nothing graduates from "parked" to "planned" without your eyes
+                    on it — but it costs you exactly one review.</p>
+                  </div>
+                </div></div>
+              </details>
+              <details class="card">
+                <summary><span class="name"><code>/bench-assess</code></span><span class="role">re-baseline the platform with a fresh ranked backlog</span></summary>
+                <div class="body"><div class="ps">
+                  <div class="problem">
+                    <div class="label">The problem</div>
+                    <p>Day-to-day phases see one diff at a time. Nothing in that loop ever steps
+                    back to ask what the whole codebase needs — so structural debt accumulates
+                    invisibly between features.</p>
+                  </div>
+                  <div class="solution">
+                    <div class="label">How it works</div>
+                    <p>A periodic pass, run on your cadence, never autonomously. It first verifies
+                    the <em>previous</em> assessment's backlog actually landed, then fans out
+                    read-only sweeps across the codebase area by area, synthesizes the findings
+                    under adversarial re-verification, and replaces <code>ASSESSMENT.md</code>
+                    with a dated, ranked, effort-sized backlog. It surfaces; it never merges.</p>
+                  </div>
+                </div></div>
+              </details>
+              <details class="card">
+                <summary><span class="name"><code>/bench-update-kit</code></span><span class="role">sync the kit against upstream, adoption by proposal</span></summary>
+                <div class="body"><div class="ps">
+                  <div class="problem">
+                    <div class="label">The problem</div>
+                    <p>The kit improves upstream, but blindly merging upstream changes into the
+                    tool that governs your agents would let the rules rewrite themselves without
+                    review — the one thing this whole system exists to prevent.</p>
+                  </div>
+                  <div class="solution">
+                    <div class="label">How it works</div>
+                    <p>It diffs the current upstream sources against what Bench already
+                    incorporates, tags each candidate change, and runs it through the synthesis
+                    discipline (respect closed decisions, assess by the gap it fills, pass the
+                    quality loops) before <em>proposing</em> adoption. Accepted changes are
+                    recorded in a provenance table and changelog. It proposes; it never
+                    auto-merges.</p>
+                  </div>
+                </div></div>
+              </details>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="label">Right-sizing</span>
+        <p>
+          The pipeline is proportional. A genuinely small change can propose a lighter path —
+          but skipping canonical steps is the reviewer's call, requested before the skip, never
+          after. A fix for concrete review findings may go straight to fix-and-gate. And when
+          you give a standing rule for changes of a given size, the agent follows it and stops
+          asking.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STATION 5: SKILLS ============ -->
+  <section class="station" id="skills">
+    <div class="station-head">
+      <div class="node">5</div>
+      <div>
+        <div class="kicker">Guidance</div>
+        <h2>The craft skills</h2>
+      </div>
+    </div>
+    <div class="station-body">
+      <p class="intro">
+        Skills are the disciplines the agent loads when a task matches — how to write a spec,
+        where a test belongs, when to delegate. They steer generation rather than enforce it:
+        think of them as the studio's craft manuals, one per recurring judgment call. Grouped
+        here by the moment they fire.
+      </p>
+
+      <div class="group-label">Deciding &amp; specifying</div>
+      <div class="cards">
+        <details class="card">
+          <summary><span class="name"><code>craft-grill</code></span><span class="role">surface a decision one question at a time</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>Asked to clarify requirements, an agent dumps five questions at once. You answer
+              two, the rest get guessed, and the guesses surface as defects weeks later.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>Disciplined elicitation: one sharp question at a time, each leading with the
+              agent's recommended answer and a one-clause why, continuing until nothing
+              unresolved remains. Used inside decision-mapping, before fuzzy specs, or whenever
+              you say "grill me".</p>
+            </div>
+          </div></div>
+        </details>
+        <details class="card">
+          <summary><span class="name"><code>craft-spec</code></span><span class="role">what makes a spec's coverage real</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>A spec whose acceptance criteria can't actually fail is decoration — the build
+              "passes" it no matter what gets built, and edge cases nobody inventoried become
+              production surprises.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>The authoring discipline behind every spec: each acceptance-coverage row names a
+              real <em>red signal</em> — a check that demonstrably fails when the story isn't
+              met — plus a canonical inventory of edge classes to walk, and sizing rules for
+              stories and scope cuts so "out of scope" is a genuine decision, not a dodge.</p>
+            </div>
+          </div></div>
+        </details>
+        <details class="card">
+          <summary><span class="name"><code>craft-seams</code></span><span class="role">where interfaces and tests belong</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>Tests placed at the wrong boundary calcify the implementation instead of the
+              behavior — every refactor breaks them — and every unnecessary abstraction an agent
+              invents is one more surface future sessions must understand.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>Shared vocabulary and principles for placing test seams and designing deep
+              modules: which boundary a test should observe, when an abstraction earns its
+              existence, and why composing an existing seam beats inventing a new one. This is
+              the skill the spec phase leans on when it pre-agrees seams.</p>
+            </div>
+          </div></div>
+        </details>
+        <details class="card">
+          <summary><span class="name"><code>craft-adr</code></span><span class="role">decision records that survive amnesia</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>Decision records written as narratives of change assume a reader who remembers
+              the before-state. Agent sessions never do — so those records read as noise, and
+              the decision gets relitigated.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>Write the resulting state, not the change: what is decided, why, addressed to a
+              teammate with no memory of the project's history. No file paths or code snippets —
+              they rot. This is the third invariant turned into a writing method.</p>
+            </div>
+          </div></div>
+        </details>
+      </div>
+
+      <div class="group-label">Building</div>
+      <div class="cards">
+        <details class="card">
+          <summary><span class="name"><code>craft-tdd</code></span><span class="role">test-first without the cost blowup</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>Naive TDD with an agent fails two ways: applied everywhere, it multiplies cost
+              on code that never needed it; applied carelessly, the agent writes an
+              implementation that over-fits the test and stops, green but wrong.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>Bounds where and how test-first applies: at the seams the spec marked for it,
+              with red observed before green, and with guards against declaring victory on an
+              over-fit implementation. Read before any TDD pass starts, not during.</p>
+            </div>
+          </div></div>
+        </details>
+        <details class="card">
+          <summary><span class="name"><code>craft-cli</code></span><span class="role">design standards for agent-facing CLIs</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>Tools built for humans waste an agent's context on prose and ASCII art, and fail
+              in ways an agent can't parse — so the agent burns tokens re-asking and guessing.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>Standards for CLIs whose primary user is an agent: compact structured output,
+              minimal schemas, structured errors that say what to do next, and ambient context
+              surfaced without being asked. Applies when building or reviewing any conforming
+              agent-facing CLI.</p>
+            </div>
+          </div></div>
+        </details>
+        <details class="card">
+          <summary><span class="name"><code>craft-design-system</code></span><span class="role">consume the design system; never regenerate it</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>Asked for UI, an agent invents plausible colors, spacing, and components from
+              scratch each time — producing screens that drift from the product's actual design
+              system one hardcoded value at a time.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>On any UI work: pull values from the project's tokens, compose its canonical
+              components, and never hardcode or regenerate what the design source already
+              defines. The skill pairs with whatever design source the project profile names.</p>
+            </div>
+          </div></div>
+        </details>
+      </div>
+
+      <div class="group-label">Governing the run</div>
+      <div class="cards">
+        <details class="card">
+          <summary><span class="name"><code>craft-line</code></span><span class="role">which model tier and effort a task deserves</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>Model choice is a budget decision, but it's made dozens of times a day in the
+              middle of other work — so it defaults to "the biggest model, just in case", and
+              the spend is invisible until it isn't.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>The judgment half of the second invariant: how to pick the tier and effort for
+              a build, shift, TDD pass, or delegated task; when a tier moves up or down; and how
+              the abstract tiers resolve through the repo's binding. Cheap for plumbing at a
+              known seam, top only where the answer is genuinely uncertain.</p>
+            </div>
+          </div></div>
+        </details>
+        <details class="card">
+          <summary><span class="name"><code>craft-delegate</code></span><span class="role">when to spawn a subagent, and how to trust its answer</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>Delegation multiplies throughput and risk together: a vaguely-charged subagent
+              wanders, a shared checkout lets its stray edits land in your files, and its
+              cheerful "done" may describe work that doesn't exist.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>The delegation discipline: when a task is worth spawning for, how to charge and
+              scope the delegate, when it needs an isolated worktree (any write-delegation does),
+              and the rule that a done-claim is a claim — verified against the gate and
+              <code>git status</code> before acceptance, never taken on trust.</p>
+            </div>
+          </div></div>
+        </details>
+        <details class="card">
+          <summary><span class="name"><code>craft-gate</code></span><span class="role">how to edit the oracle itself</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>The gate defines "done", which makes it the most dangerous file in the repo to
+              edit: a well-meaning tweak that can never fail is indistinguishable from safety,
+              and a weakened check fails silently forever.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>The authoring discipline for gate checks: how to add or change one, how to
+              choose its fail posture, and the requirement to <em>prove the check bites</em> —
+              demonstrate the red it's supposed to produce before trusting its green. Reached
+              for before touching the gate script, any enforcement hook, or a gate scaffold.</p>
+            </div>
+          </div></div>
+        </details>
+        <details class="card">
+          <summary><span class="name"><code>craft-review</code></span><span class="role">the three-axis review and its citation standard</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>Agent code review degrades into two failure modes: vague vibes ("consider
+              improving error handling") that no one can act on, or invented problems cited
+              against code that doesn't say what the reviewer claims.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>The judgment behind every review: three separate axes — Standards, Spec,
+              Coverage — and a citation standard every finding must meet before it's reported.
+              The review phase, a delegate's returned work, a PR, and a self-review before
+              commit all charge from this one discipline. Advisory always; the gate stays
+              the oracle.</p>
+            </div>
+          </div></div>
+        </details>
+      </div>
+
+      <div class="group-label">Maintaining the kit itself</div>
+      <div class="cards">
+        <details class="card">
+          <summary><span class="name"><code>craft-skills</code></span><span class="role">writing skills that fire reliably and stay lean</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>A skill that doesn't trigger when it should is dead weight; one that's bloated
+              taxes every session that loads it. Skills accrete both failure modes unless
+              someone curates them.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>Principles for creating, editing, and pruning skills — the kit's own and your
+              project's: how to write triggers that actually fire, how to keep the body lean,
+              and when a skill should be deleted rather than grown.</p>
+            </div>
+          </div></div>
+        </details>
+        <details class="card">
+          <summary><span class="name"><code>craft-synthesis</code></span><span class="role">folding changes into the kit without letting rules rewrite themselves</span></summary>
+          <div class="body"><div class="ps">
+            <div class="problem">
+              <div class="label">The problem</div>
+              <p>The kit governs the agents — so a change to the kit is a change to the
+              governor, and an unreviewed one reopens decisions that were deliberately closed
+              or quietly weakens the discipline it came from.</p>
+            </div>
+            <div class="solution">
+              <div class="label">How it works</div>
+              <p>Every candidate kit change — from upstream sync or from a learnings-sourced
+              roadmap item — passes the same discipline: respect closed decisions, assess the
+              change by the gap it fills, run three quality loops (legibility, consistency,
+              dogfood), and <em>propose</em> the result for your sign-off rather than merging it.</p>
+            </div>
+          </div></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STATION 6: ARTIFACTS ============ -->
+  <section class="station" id="artifacts">
+    <div class="station-head">
+      <div class="node">6</div>
+      <div>
+        <div class="kicker">Memory</div>
+        <h2>Capture: how nothing gets lost between sessions</h2>
+      </div>
+    </div>
+    <div class="station-body">
+      <p class="intro">
+        Sessions end; files persist. Bench routes every kind of in-flight thought to a named
+        file with a defined exit, so a good idea mentioned in passing survives the session
+        that heard it — and nothing graduates into planned work without your review.
+        Capture is conversational: when you want an idea set aside, the <strong>agent</strong>
+        runs <code>bench idea</code> for you; you never type the chore yourself.
+      </p>
+      <div class="table-scroll">
+        <table class="files">
+          <tr><th>File</th><th>What lives there</th><th>How it drains</th></tr>
+          <tr>
+            <td><code>IDEAS.md</code></td>
+            <td>Parked ideas — tangents worth keeping, captured in one dated line.</td>
+            <td>Graduates into the roadmap only through a reviewed <code>/bench-what-next</code> pass.</td>
+          </tr>
+          <tr>
+            <td><code>ROADMAP.md</code></td>
+            <td>Planned work with a recommended sequence.</td>
+            <td>Reconciled against the tree each <code>/bench-what-next</code>; items leave when they ship.</td>
+          </tr>
+          <tr>
+            <td><code>.bench/learnings.md</code></td>
+            <td>The agent's process journal: deviations, uncertain judgment calls, should-have-askeds. The agent captures; it never rewrites its own rules.</td>
+            <td>Each entry gets a verdict in the next <code>/bench-what-next</code>; generalizable ones become reviewed kit improvements.</td>
+          </tr>
+          <tr>
+            <td><code>decisions/</code></td>
+            <td>Decision maps from <code>/bench-shape-idea</code> — open tickets and resolved answers.</td>
+            <td>Feeds <code>/bench-write-spec</code> once no open ticket blocks the build.</td>
+          </tr>
+          <tr>
+            <td><code>specs/</code></td>
+            <td>Build specs with a status lifecycle: staged → implemented at the green gate → promoted then deleted on merge.</td>
+            <td>Status flips ride the green commit; retired specs keep their history via <code>bench spec history</code>.</td>
+          </tr>
+          <tr>
+            <td><code>reviews/</code></td>
+            <td>Persisted findings from semantic review that await a fix pass.</td>
+            <td>Cleared by the fix pass — or deleted deliberately when you accept the residual risk, named in the final check.</td>
+          </tr>
+          <tr>
+            <td><code>CONTEXT.md</code></td>
+            <td>The project's current mental model and shared vocabulary — the first thing a cold session reads.</td>
+            <td>Maintained as the model evolves; always present-tense (invariant three).</td>
+          </tr>
+          <tr>
+            <td><code>projects/&lt;name&gt;.md</code></td>
+            <td>The project profile: the gate's shape, the seams, the tier bindings.</td>
+            <td>Owned by the reviewer; edited through setup and deliberate decisions.</td>
+          </tr>
+          <tr>
+            <td><code>ASSESSMENT.md</code></td>
+            <td>The latest dated platform assessment with its ranked backlog.</td>
+            <td>Wholly replaced by the next <code>/bench-assess</code>, which first verifies the old backlog landed.</td>
+          </tr>
+        </table>
+      </div>
+      <div class="callout">
+        <span class="label">The loop closes</span>
+        <p>
+          Notice the shape: ideas and learnings flow in from conversation, drain through one
+          reviewed batch into the roadmap, become decisions, then specs, then gated commits —
+          and what the process learns about <em>itself</em> follows the same path back into
+          the kit. Every arrow in that loop passes through your review exactly once, which is
+          how the system improves from real use without ever changing its own rules behind
+          your back.
+        </p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>
+      Bench Field Guide — an orientation to the Bench agent-development kit. Start with the
+      two roles, trust the gate over any claim, and let the workflow phases carry the rest.
+      The canonical rules live in <code>.bench/BENCH.md</code> in your repo; this page is the
+      guided tour, not the source of truth.
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
