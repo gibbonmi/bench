@@ -163,16 +163,20 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 		return CleanupPlan{}, err
 	}
 	buildOutputs, buildOutputEvidence, buildOutputErr := loadBuildOutputs(root)
-	if info, statErr := os.Lstat(leasePath); statErr == nil && info.Mode().IsRegular() {
-		if !plan.owned {
-			plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonLiveLease, "unowned assignment has an ambiguous lease"
-		} else {
-			switch ProbeLease(leasePath) {
-			case LeaseLive:
+	if _, statErr := os.Lstat(leasePath); statErr == nil {
+		switch ProbeLease(leasePath) {
+		case LeaseLive:
+			if plan.owned {
 				plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonLiveLease, "assignment has a live lease"
-			case LeaseUnknown:
-				plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUncertain, "assignment lease state is unknown"
+			} else {
+				plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonLiveLease, "unowned assignment has an ambiguous lease"
 			}
+		case LeaseDead:
+			if !plan.owned {
+				plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonLiveLease, "unowned assignment has an ambiguous lease"
+			}
+		case LeaseUnknown:
+			plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUncertain, "assignment lease state is unknown"
 		}
 	} else if statErr != nil && !errors.Is(statErr, os.ErrNotExist) {
 		if plan.owned {

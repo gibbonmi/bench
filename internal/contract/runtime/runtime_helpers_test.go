@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -55,7 +56,7 @@ func addRuntimePoolWorktrees(t testing.TB, f contract.Fixture, benchHome string)
 	f.Git("worktree", "add", "-q", "--detach", warm, "HEAD")
 	f.Git("worktree", "add", "-q", "--detach", leased, "HEAD")
 	lease := strings.TrimSpace(contract.RunAt(t, f, leased, nil, "git", "rev-parse", "--git-path", "bench-lease").Stdout)
-	contract.WriteFileAbs(t, lease, "")
+	contract.WriteFileAbs(t, lease, fmt.Sprintf("%d 2026-01-01T00:00:00Z\n", os.Getpid()))
 	return runtimePoolWorktrees{Pool: pool, Warm: warm, Leased: leased, LeaseFile: lease}
 }
 

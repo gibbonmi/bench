@@ -34,6 +34,8 @@ var ErrCleanupInterrupted = errors.New("cleanup interrupted")
 // staleAfter separates a crashed legacy lease from a fresh writer mid-claim.
 const staleAfter = time.Minute
 
+const leaseTimeLayout = "2006-01-02T15:04:05Z"
+
 var chmodPool = os.Chmod
 
 type LeaseState string
@@ -51,12 +53,19 @@ func pidAlive(pid int) bool {
 }
 
 func leaseOwnerPID(content []byte) (int, bool) {
-	fields := strings.Fields(string(content))
-	if len(fields) == 0 {
+	if len(content) == 0 || content[len(content)-1] != '\n' || bytes.Count(content, []byte{'\n'}) != 1 {
+		return 0, false
+	}
+	fields := strings.Split(string(content[:len(content)-1]), " ")
+	if len(fields) != 2 {
 		return 0, false
 	}
 	pid, err := strconv.Atoi(fields[0])
-	return pid, err == nil && pid > 0
+	if err != nil || pid <= 0 || strconv.Itoa(pid) != fields[0] {
+		return 0, false
+	}
+	stamp, err := time.Parse(leaseTimeLayout, fields[1])
+	return pid, err == nil && stamp.Format(leaseTimeLayout) == fields[1]
 }
 
 // ProbeLease reports whether a well-formed lease's recorded owner is live.
@@ -95,7 +104,7 @@ func candidateName(pool string, unixSecs int64, pid, try int) string {
 
 // leaseLine is the bytes an owner writes into its lease: "<pid> <utc-time>\n".
 func leaseLine() []byte {
-	return []byte(fmt.Sprintf("%d %s\n", os.Getpid(), time.Now().UTC().Format("2006-01-02T15:04:05Z")))
+	return []byte(fmt.Sprintf("%d %s\n", os.Getpid(), time.Now().UTC().Format(leaseTimeLayout)))
 }
 
 // tryCreate wins a lease only through an atomic O_EXCL create.

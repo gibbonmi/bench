@@ -277,7 +277,7 @@ func testRuntimeWorktreeAutomaticEligibilityMatrix(t *testing.T) {
 	}
 	contract.WriteFileAbs(t, filepath.Join(dirty.Worktree, "dirty.txt"), "recover me\n")
 	lease := strings.TrimSpace(contract.RunAt(t, f, live.Worktree, nil, "git", "rev-parse", "--path-format=absolute", "--git-path", "bench-lease").Stdout)
-	contract.WriteFileAbs(t, lease, fmt.Sprintf("%d live\n", os.Getpid()))
+	contract.WriteFileAbs(t, lease, fmt.Sprintf("%d 2026-01-01T00:00:00Z\n", os.Getpid()))
 	contract.WriteFileAbs(t, filepath.Join(unmerged.Worktree, "unique.txt"), "unique\n")
 	contract.RunAt(t, f, unmerged.Worktree, nil, "git", "add", "unique.txt").RequireExit(0)
 	contract.RunAt(t, f, unmerged.Worktree, nil, "git", "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "unique").RequireExit(0)

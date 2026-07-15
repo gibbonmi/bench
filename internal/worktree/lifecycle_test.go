@@ -12,7 +12,7 @@ import (
 )
 
 // TestReclaimable pins the four-way lease decision the black-box lease-hardening
-// contract exercises but cannot cheaply enumerate: a recorded numeric pid gates on
+// contract exercises but cannot cheaply enumerate: a canonical lease gates on pid
 // liveness, and unreadable/empty content reclaims only once aged past the threshold —
 // so a fresh-empty writer mid-claim is never stolen while a legacy/crashed lease is.
 
@@ -27,8 +27,8 @@ func TestReclaimable(t *testing.T) {
 		alive   func(int) bool
 		want    bool
 	}{
-		{"live pid respected", "4242 2026-07-04T11:59:00Z", 30 * time.Second, live, false},
-		{"dead pid reclaimed", "4242 2026-07-04T11:59:00Z", 30 * time.Second, dead, true},
+		{"live pid respected", "4242 2026-07-04T11:59:00Z\n", 30 * time.Second, live, false},
+		{"dead pid reclaimed", "4242 2026-07-04T11:59:00Z\n", 30 * time.Second, dead, true},
 		{"non-numeric legacy aged out reclaimed", "garbage content", 2 * time.Minute, dead, true},
 		{"fresh empty writer mid-claim respected", "", 5 * time.Second, dead, false},
 		{"aged-out empty crash reclaimed", "", 2 * time.Minute, dead, true},

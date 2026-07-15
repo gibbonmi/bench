@@ -208,13 +208,57 @@ func TestReleaseLiveLeaseRetains(t *testing.T) {
 }
 
 func TestReleaseMalformedLeaseRetainsAsUncertain(t *testing.T) {
-	root, creation := newOwnedAssignment(t, "malformed-lease-release")
+	assertReleaseLeaseRetainedAsUncertain(t, "malformed-lease-release", func(lease string) {
+		mustWrite(t, lease, []byte("garbage\n"), 0o600)
+	})
+}
+
+func TestReleaseNumericLeaseWithBadTimestampAndExtraFieldsRetainsAsUncertain(t *testing.T) {
+	assertReleaseLeaseRetainedAsUncertain(t, "numeric-bad-timestamp-extra-lease-release", func(lease string) {
+		mustWrite(t, lease, []byte(fmt.Sprintf("%d not-a-time trailing\n", os.Getpid())), 0o600)
+	})
+}
+
+func TestReleasePartialNumericLeaseRetainsAsUncertain(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		content string
+	}{
+		{"pid-only", fmt.Sprintf("%d", os.Getpid())},
+		{"missing-final-newline", fmt.Sprintf("%d 2026-07-15T00:00:00Z", os.Getpid())},
+		{"truncated-timestamp", fmt.Sprintf("%d 2026-07-15T00:00:\n", os.Getpid())},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assertReleaseLeaseRetainedAsUncertain(t, "partial-"+tc.name+"-lease-release", func(lease string) {
+				mustWrite(t, lease, []byte(tc.content), 0o600)
+			})
+		})
+	}
+}
+
+func TestReleaseSymlinkLeaseRetainsAsUncertain(t *testing.T) {
+	assertReleaseLeaseRetainedAsUncertain(t, "symlink-lease-release", func(lease string) {
+		target := filepath.Join(t.TempDir(), "lease-target")
+		mustWrite(t, target, []byte(fmt.Sprintf("%d 2026-07-15T00:00:00Z\n", os.Getpid())), 0o600)
+		mustNoError(t, os.Symlink(target, lease))
+	})
+}
+
+func TestReleaseDirectoryLeaseRetainsAsUncertain(t *testing.T) {
+	assertReleaseLeaseRetainedAsUncertain(t, "directory-lease-release", func(lease string) {
+		mustMkdirAll(t, lease, 0o700)
+	})
+}
+
+func assertReleaseLeaseRetainedAsUncertain(t *testing.T, request string, makeLease func(string)) {
+	t.Helper()
+	root, creation := newOwnedAssignment(t, request)
 	lease, err := LeaseFile(creation.Path)
 	mustNoError(t, err)
-	mustWrite(t, lease, []byte("garbage\n"), 0o600)
+	makeLease(lease)
 
 	var stderr bytes.Buffer
-	code := ReleaseCommand(root, []string{"--request", "landed-malformed-lease-release", creation.Path}, io.Discard, &stderr)
+	code := ReleaseCommand(root, []string{"--request", "landed-" + request, creation.Path}, io.Discard, &stderr)
 	requireTest(t, code == 1, "malformed-lease release exit=%d stderr=%q", code, stderr.String())
 	requireTest(t, strings.Contains(stderr.String(), "worktree retained (uncertain)") && strings.Contains(stderr.String(), "lease state is unknown"),
 		"malformed-lease reason missing: %q", stderr.String())
