@@ -215,24 +215,6 @@ actionable.
 
 Sources: `RR:C-04`; `RC:M-01`.
 
-**FT93 (MEDIUM, evidence supplied) — worktree release surfaces the retained
-verdict; cleaned assignments reconcile.** When the automatic cleanup plan
-retains (reproduced 2026-07-14: one gitignored file in the tree), `bench
-worktree release --request <id> <path>` records the retain receipt but never
-writes its terminal release receipt, so it exits "terminal receipt missing" —
-an internal-bookkeeping message that masks the real verdict. A session that
-then removes the tree with a request-less `bench worktree clean
---discard-ignored --apply` is stuck permanently: release answers "cleanup
-receipt does not authorize release reconciliation" and the assignment is
-orphaned (session start reports 10 open assignments). Release on a retain plan
-must report what blocked and the exact next command; a cleaned-but-unreleased
-assignment needs a reconciliation or explicit recovery path.
-
-Closure: the reproduced red (ignored file → release → "terminal receipt
-missing") becomes an actionable retained verdict; a request-less-cleaned
-assignment either reconciles or names its recovery command; the existing
-orphaned assignment records get a sweep.
-
 **FT71 (HIGH on the bank track, evidence supplied) — versioned local shift
 evidence.** Emit a redacted, append-only local event schema for shift/session
 start and end, resolved agent and line, gate fingerprint and verdict, adapter
@@ -249,14 +231,16 @@ repository-controlled bank evidence requirement makes this row active.
 
 Sources: `RR:C-05`; `RC:H-03`.
 
-**FT91 (MEDIUM) — gate wall-clock proportional to the diff.** The full suite
-runs ~4 minutes for any diff; conformance (~100s) and runtime contracts
-(~123s) dominate, so a one-line change pays the whole-oracle price on every
-shift iteration. Investigate phase parallelism, caching keyed on the pinned
-gate subject, or scoped verdicts — without weakening the oracle: green must
-keep meaning the same thing, and any scoped verdict must be explicit evidence,
+**FT91 (LOW) — gate wall-clock proportional to the diff.** The full suite now
+runs ~50s wall-clock for any diff (phases parallelized; conformance ~46s and
+runtime contracts ~41s dominate), so a one-line change still pays the
+whole-oracle price on every shift iteration, but the per-iteration pain is an
+order of magnitude down. The remaining arms — caching keyed on the pinned gate
+subject, or scoped verdicts — must not weaken the oracle: green must keep
+meaning the same thing, and any scoped verdict must be explicit evidence,
 never a silent skip. Starts as a grill (`/bench-shape-idea`) because the cut
-line between speed and oracle authority is a reviewer decision.
+line between speed and oracle authority is a reviewer decision; graduate only
+if 50s demonstrably still drags shift iteration.
 
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.** Make
 roadmap maintenance consume one full schema snapshot; make every documented
@@ -284,6 +268,16 @@ should say what moved (the tree hash versus which declared manifest path) so
 the next FT90-shaped defect self-diagnoses. The gitignored-declared-input
 conformance check is benchkit-only; ship it as consumer gate scaffolding so
 linked repos get the same protection.
+
+**FT94 (LOW, evidence supplied) — single-sourced `bench resume` summary
+golden.** The resume summary line is asserted as a hardcoded exact-string
+golden in three places (`internal/worktree/resume_test.go` and twice in
+`internal/contract/runtime/runtime_worktree_test.go`), so a format change is a
+three-package hunt. Extract one shared expected-format helper: the unit and
+runtime-binary seams stay distinct while the literal is single-sourced. This
+is test-vs-test duplication, not the expectation-versus-implementation
+independence the code standard protects, so collapsing it is consistent with
+the one-source-per-fact rule.
 
 ## Release and bank reassessment gate
 
@@ -347,6 +341,6 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-debug` — fix FT93, the worktree-release retained-verdict defect; small evidenced fix (repro in hand) that stops sessions orphaning assignments.
-2. `/bench-shape-idea` — specify FT80, static bounded guard discovery.
-3. `/bench-shape-idea` — specify FT81, the platform-correct distributable runtime.
+1. `/bench-shape-idea` — specify FT80, static bounded guard discovery; top open HIGH row.
+2. `/bench-shape-idea` — specify FT81, the platform-correct distributable runtime.
+3. `/bench-implement-spec` — FT94, single-source the resume-summary golden; small evidenced cleanup on the lighter path.

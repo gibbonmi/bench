@@ -8,6 +8,24 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Roadmap reconcile (2026-07-15, scope: post-FT93-ship drain).** Removed FT93
+  after both halves landed — the retained-verdict surfacing at `bf31967` and the
+  (b)/(c) orphan reconcile at `4d6c290` — and retired its merged spec
+  (`worktree-orphan-reconcile`). Reworded FT91 to the measured post-perf
+  numbers: the parallelized gate now runs ~50s wall-clock (was ~4 min), so the
+  row demotes MEDIUM→LOW and graduates only if 50s demonstrably still drags
+  shift iteration; the remaining rows verify current and the FT6, FT24, FT8,
+  and FT38 triggers remain unmet. Drained one idea into new row FT94: the
+  `bench resume` summary line is asserted as a verbatim golden in three test
+  files — test-vs-test duplication the one-source standard does not protect —
+  so a shared expected-format helper single-sources the literal. Dismissed the
+  one open journal entry (FT93(b)/(c) reconcile-vs-preserve) as resolved: the
+  shipped spec encodes exactly the conditional compact-residue /
+  report-preserved fork it proposed, and it proposed no rule change. The
+  previous run promoted no rule edits, and the FT65 and FT66 promotion-build
+  records remain present. The refreshed sequence leads with FT80 and FT81
+  through `/bench-shape-idea`, then FT94 as a small lighter-path cleanup.
+
 - **Learnings run (2026-07-14, scope: post-FT90-fix reconcile).** Removed FT90
   after its fix landed at `19fa3bc` — `dist/bench` is out of the declared gate
   inputs and the gitignored-declared-input conformance check plus bite fixture
