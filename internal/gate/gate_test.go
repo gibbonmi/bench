@@ -14,7 +14,6 @@ import (
 	"time"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/toon"
 )
 
 // TestResolvePrecedence pins the ordered chain as a pure function: `.bench/gate.sh`
@@ -276,21 +275,6 @@ func TestNoGateReturnsThreeWithoutRecord(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(root, ".git", benchgit.GateCacheFile)); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("no gate wrote verdict: %v", err)
-	}
-}
-
-// TestPinCommandNotInRepo injects the terminal precondition so the shared
-// not-in-repo branch remains reachable through this in-process seam.
-func TestPinCommandNotInRepo(t *testing.T) {
-	chdir(t, t.TempDir())
-
-	var stdout, stderr bytes.Buffer
-	code := pinCommand(nil, strings.NewReader(""), &stdout, &stderr, func(io.Reader) bool { return true })
-	if code != 1 {
-		t.Fatalf("pinCommand rc = %d, want 1; stderr:\n%s", code, stderr.String())
-	}
-	if strings.TrimSpace(stderr.String()) != toon.NotInRepo() {
-		t.Fatalf("stderr = %q, want %q", stderr.String(), toon.NotInRepo())
 	}
 }
 

@@ -16,3 +16,12 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
 - **What happened:** …
 - **Right behavior:** …
 - **Proposed rule change:** … (or "none")
+
+## 2026-07-15 — interactive shell read used `head`  [open]
+
+- **What happened:** While locating structure-grant references, an interactive
+  search pipeline used `head` despite this repository's `rg`-only shell-reading
+  convention.
+- **Right behavior:** Bound `rg` output with its own match or file scope instead
+  of piping it through `head`.
+- **Proposed rule change:** none

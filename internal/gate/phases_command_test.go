@@ -1,12 +1,13 @@
 package gate
 
-// The PhasesCommand surface: signal handling across the process boundary, the
-// benchkit phase table, and shellcheck file expansion. The runner engine's own
-// tests (concurrency, output shape, exit codes, cancel) live in phases_test.go.
+// The command surface: signal handling across the process boundary, the benchkit
+// phase table, pinning, and shellcheck behavior. The runner engine's own tests
+// (concurrency, output shape, exit codes, cancel) live in runner tests.
 
 import (
 	"bytes"
 	"context"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,7 +15,24 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/toon"
 )
+
+// TestPinCommandNotInRepo injects the terminal precondition so the shared
+// not-in-repo branch remains reachable through this in-process seam.
+func TestPinCommandNotInRepo(t *testing.T) {
+	chdir(t, t.TempDir())
+
+	var stdout, stderr bytes.Buffer
+	code := pinCommand(nil, strings.NewReader(""), &stdout, &stderr, func(io.Reader) bool { return true })
+	if code != 1 {
+		t.Fatalf("pinCommand rc = %d, want 1; stderr:\n%s", code, stderr.String())
+	}
+	if strings.TrimSpace(stderr.String()) != toon.NotInRepo() {
+		t.Fatalf("stderr = %q, want %q", stderr.String(), toon.NotInRepo())
+	}
+}
 
 func TestPhasesCommandSignalCancelsRunningPhaseGroups(t *testing.T) {
 	root := t.TempDir()
@@ -197,6 +215,23 @@ func TestShellcheckPhaseExpandsHookAndLibShellFiles(t *testing.T) {
 	}
 	if !reflect.DeepEqual(shellcheck.Argv, want) {
 		t.Fatalf("shellcheck argv = %#v, want %#v", shellcheck.Argv, want)
+	}
+}
+
+func TestRunnerShellcheckAbsentSkips(t *testing.T) {
+	root := t.TempDir()
+	phase := Phase{Name: "shellcheck", Argv: []string{"definitely-not-installed-shellcheck-for-bench-test"}, Optional: true}
+	var stdout, stderr bytes.Buffer
+	rc := runPhases(context.Background(), root, []Phase{phase}, outerMode, &stdout, &stderr)
+	if rc != 0 {
+		t.Fatalf("runPhases rc = %d, want skip to stay green; stdout=%q stderr=%q", rc, stdout.String(), stderr.String())
+	}
+	out := stdout.String() + stderr.String()
+	if strings.Contains(out, "gate: red") || strings.Contains(out, "shellcheck reported issues") {
+		t.Fatalf("optional missing shellcheck looked red:\n%s", out)
+	}
+	if !strings.Contains(out, "phase shellcheck: skipped") {
+		t.Fatalf("missing shellcheck skip summary:\n%s", out)
 	}
 }
 

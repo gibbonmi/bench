@@ -4,3 +4,21 @@
 # Gate fragments + contract runner; granted 2026-07-02 (dry-structure-cleanup).
 # The next file added to .bench/ re-asks.
 .bench/ 13
+
+# Cohesive gate-oracle modules; approved 2026-07-15 (FT100/FT103-FT105).
+# Exact current caps re-ask on the next file or line of growth.
+internal/gate/ 13
+internal/gate/story4_proof_test.go 415
+internal/gate/subject.go 422
+internal/gate/verdict.go 431
+
+# Cohesive worktree lifecycle package; approved under the 2026-07-15 batch run
+# (FT106-FT113). Exact current caps re-ask on the next file or line of growth.
+internal/worktree/ 18
+internal/worktree/clean.go 406
+internal/worktree/lifecycle.go 450
+internal/worktree/ownership.go 465
+internal/worktree/resume.go 436
+internal/worktree/subshell.go 417
+internal/worktree/worktree.go 402
+internal/worktree/worktree_test.go 533
