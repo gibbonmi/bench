@@ -97,6 +97,8 @@ coverage map; a class skipped here returns as a regression.
   paths — which `toon.Table` refuses rather than renders
 - hand-edited files whose last line lacks a trailing newline
 - absent file vs present-but-empty file (distinct behaviors, both asserted)
+- special files in script-discovery paths (FIFOs, devices, sockets) must be
+  rejected before reading so static inspection cannot block
 - unquoted multi-word arguments (`$*` vs `$1`)
 - required tool missing from PATH (no global `bench`, no `readlink -f`)
 - invocation through a symlink rather than the real path

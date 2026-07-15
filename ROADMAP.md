@@ -20,17 +20,6 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT80 (HIGH) — static, bounded guard discovery.** Guard descriptions come
-from static managed metadata, not executing every shell file in the hooks
-directory. Only an exact managed allowlist may execute where execution is
-actually required; unknown additions are reported without running. The whole
-SessionStart inspection has one aggregate deadline.
-
-Closure requires an unwired sentinel that never executes through `bench
-guards` or SessionStart, plus a canary proving the non-execution rule bites.
-
-Sources: `RR:R-07`; `RC:H-02`.
-
 **FT81 (HIGH) — usable, platform-correct distributable runtime.** Build wrapper
 and platform packages in clean staging trees from explicit allowlists. The
 wrapper contains no build-host binary or nested platform-package tree; runtime
@@ -295,8 +284,8 @@ under `craft-synthesis`.
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
 to one immutable version and its generated manifest after:
 
-1. FT80 through FT82 have executable regression contracts and are closed
-   (FT79 shipped 2026-07-14 with its regression contracts).
+1. FT81 and FT82 have executable regression contracts and are closed
+   (FT79 and FT80 shipped with their regression contracts).
 2. The same commit passes the full gate, race tests, vet, canary, vulnerability
    scan, package inspection, reproducibility comparison, and clean-room
    installed smokes.
@@ -352,6 +341,5 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — specify FT80, static bounded guard discovery.
-2. `/bench-shape-idea` — specify FT81, the platform-correct distributable runtime.
-3. `/bench-implement-spec` — FT96, the write-spec fast-path rule edit (XS synthesis promotion).
+1. `/bench-shape-idea` — specify FT81, the platform-correct distributable runtime.
+2. `/bench-implement-spec` — FT96, the write-spec fast-path rule edit (XS synthesis promotion).
