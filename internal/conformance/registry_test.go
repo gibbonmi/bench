@@ -96,6 +96,7 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"guard-resolver-order-drift":      conformanceFixture(".bench/gate.sh"),
 	"missing-license":                 conformanceFixture(".bench/gate.sh"),
 	"mutable-workflow-action":         conformanceFixture(".bench/gate.sh"),
+	"native-smoke-workflow-dropped":   conformanceFixture(".bench/gate.sh"),
 
 	"doctor-foreign-clobbered":             behaviorFixture(),
 	"doctor-manager-dir-chosen":            behaviorFixture(),
@@ -114,6 +115,8 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"diff-recorded-base-dropped":           behaviorFixture(),
 	"roadmap-context-incomplete":           behaviorFixture(),
 	"repo-local-forwarding-dropped":        behaviorFixture(),
+	"native-selection-regressed":           behaviorFixture(),
+	"wrapper-contamination-admitted":       behaviorFixture(),
 	"session-start-resume-cleanup-dropped": behaviorFixture(),
 	"intent-common-dir-address-regressed":  behaviorFixture(),
 	"status-landed-aggregation-regressed":  behaviorFixture(),

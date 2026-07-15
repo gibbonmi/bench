@@ -1,6 +1,7 @@
 package surface
 
 import (
+	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"path/filepath"
@@ -14,8 +15,38 @@ func TestDoctorShimContracts(t *testing.T) {
 	contract.RunParallel(t, "bench doctor shim stale-target contract", testDoctorShimStaleTarget)
 	contract.RunParallel(t, "bench doctor shim arg-passthrough contract", testDoctorShimArgPassthrough)
 	contract.RunParallel(t, "repo-local wrapper forwarding contract failed", testDoctorShimRepoLocalForwarding)
+	contract.RunParallel(t, "maintenance command escaped installed target", testDoctorShimMaintenanceMatrix)
 	contract.RunParallel(t, "bench doctor postinstall contract", testDoctorPostinstall)
 	contract.RunParallel(t, "bench doctor session-start advisory contract", testDoctorSessionStartAdvisory)
+}
+
+func testDoctorShimMaintenanceMatrix(t *testing.T) {
+	f := contract.NewFixture(t)
+	installed := filepath.Join(f.Root, "installed target")
+	local := filepath.Join(f.Root, ".bench", "bin", "bench.sh")
+	shim := filepath.Join(f.Root, "stable bench")
+	mustWriteFile(t, installed, "#!/bin/sh\nprintf 'installed:%s\\n' \"$1\"\nexit 7\n", 0o755)
+	mustWriteFile(t, local, "#!/bin/sh\nprintf 'local:%s\\n' \"$1\"\nexit 3\n", 0o755)
+	mustWriteFile(t, shim, adopt.ShimContent(installed)+"\n", 0o755)
+
+	for _, command := range []string{"setup", "link", "init", "doctor", "unlink"} {
+		probe := f.RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, shim, command)
+		probe.RequireExit(7)
+		if probe.Stdout != "installed:"+command+"\n" {
+			t.Fatalf("maintenance command %s escaped installed target: %q", command, probe.Stdout)
+		}
+	}
+	for _, args := range [][]string{{}, {"--context"}, {"status"}, {"unknown"}} {
+		probe := f.RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, shim, args...)
+		probe.RequireExit(3)
+		want := "local:\n"
+		if len(args) > 0 {
+			want = "local:" + args[0] + "\n"
+		}
+		if probe.Stdout != want {
+			t.Fatalf("default shim dispatch %v = %q, want %q", args, probe.Stdout, want)
+		}
+	}
 }
 
 func testDoctorShimRepoLocalForwarding(t *testing.T) {

@@ -145,7 +145,7 @@ bench_binary_path() {
   suffix="$(platform_suffix)"
   main="$(main_tree_kit "$kit")"
   for k in "$kit" ${main:+"$main"}; do
-    for c in "$k/node_modules/$pkg/bin/bench" "$k/../$pkg/bin/bench"; do
+    for c in "$k/dist/bench" "$k/node_modules/$pkg/bin/bench" "$k/../$pkg/bin/bench"; do
       [[ -x "$c" && -s "$c" ]] && { printf '%s\n' "$c"; return 0; }
     done
   done

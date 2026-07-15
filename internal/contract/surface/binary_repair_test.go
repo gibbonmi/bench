@@ -23,6 +23,26 @@ func TestBinaryRepairContracts(t *testing.T) {
 	contract.RunParallel(t, "binary repair no-node contract failed", testRepairNoNode)
 	contract.RunParallel(t, "binary repair disabled contract failed", testRepairDisabled)
 	contract.RunParallel(t, "binary repair torn-cache contract failed", testRepairReplacesTornCache)
+	contract.RunParallel(t, "linked manifest repair contract failed", testRepairReadsLinkedManifestWithoutNewline)
+}
+
+func testRepairReadsLinkedManifestWithoutNewline(t *testing.T) {
+	f, kit := binaryRepairFixtureKit(t, contract.WithSpacePath())
+	version := "9.8.7"
+	if err := os.Remove(filepath.Join(kit, "package.json")); err != nil {
+		t.Fatal(err)
+	}
+	contract.WriteFileAbs(t, filepath.Join(kit, "link-manifest.tsv"), "#kit\t"+version)
+	registry := newBinaryRepairRegistry(t, version, "#!/bin/sh\nprintf 'manifest:%s\\n' \"$1\"\n")
+	env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL}
+
+	out := f.BenchEnv(env, "version")
+
+	out.RequireExit(0)
+	if strings.TrimSpace(out.Stdout) != "manifest:version" {
+		t.Fatalf("linked manifest repair selected wrong runtime: %q", out.Stdout)
+	}
+	requireFileExecutable(t, binaryRepairCachePath(t, f, version), "manifest repair did not promote exact cache binary")
 }
 
 func testRepairDownloadsAndRuns(t *testing.T) {
@@ -232,16 +252,16 @@ func testRepairReplacesTornCache(t *testing.T) {
 	requireFileExecutable(t, cachePath, "torn cache replacement is not executable")
 }
 
-// requireInterim127Remedy is the single source for the pre-publish 127 contract:
-// the missing-binary error prints the clone/git build remedy and no npm line (the
-// npm remedy would name unpublished @redbench/* packages; it rejoins publish-day).
+// requireInterim127Remedy is the single source for the fail-closed 127 contract:
+// the missing-binary error points to reinstall or repair rather than a maintainer
+// build script that a linked clone does not ship.
 func requireInterim127Remedy(t *testing.T, stderr string) {
 	t.Helper()
-	if !strings.Contains(stderr, "scripts/go-build.sh") {
-		t.Fatalf("127 error did not name the build remedy scripts/go-build.sh\nstderr:\n%s", stderr)
+	if !strings.Contains(stderr, "reinstall redbench") || !strings.Contains(stderr, "repair") {
+		t.Fatalf("127 error did not name reinstall/repair remedies\nstderr:\n%s", stderr)
 	}
-	if strings.Contains(stderr, "npm install") {
-		t.Fatalf("127 error named an npm install remedy before publish\nstderr:\n%s", stderr)
+	if strings.Contains(stderr, "scripts/go-build.sh") {
+		t.Fatalf("127 error named the maintainer-only build script\nstderr:\n%s", stderr)
 	}
 }
 

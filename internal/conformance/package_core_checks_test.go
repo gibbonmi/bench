@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -19,6 +20,7 @@ func checkPackageCoreAndGuards(root string) []string {
 	diags = append(diags, checkPackageFiles(root)...)
 	diags = append(diags, checkGoCore(root)...)
 	diags = append(diags, checkReleaseWorkflow(root)...)
+	diags = append(diags, checkNativeRuntimeWorkflow(root)...)
 	diags = append(diags, checkShippedIdentityStrings(root)...)
 	diags = append(diags, checkGuardHeaderManifests(root)...)
 	diags = append(diags, checkGuardResolverOrderDrift(root)...)
@@ -265,17 +267,55 @@ func checkReleaseWorkflow(root string) []string {
 	if !regexp.MustCompile(`(?m)^\s*tags:`).MatchString(text) {
 		diags = append(diags, "release workflow does not trigger on tags")
 	}
-	if !strings.Contains(text, "scripts/platforms.json") {
-		diags = append(diags, "release workflow does not derive targets from the matrix (scripts/platforms.json)")
+	if !strings.Contains(readIfExists(filepath.Join(root, "scripts", "build-artifacts.sh")), "scripts/platforms.json") {
+		diags = append(diags, "artifact builder does not derive targets from the matrix (scripts/platforms.json)")
 	}
-	if !strings.Contains(text, "scripts/gen-platform-packages.sh") {
-		diags = append(diags, "release workflow does not run the platform-package generator")
+	if !strings.Contains(text, "scripts/build-artifacts.sh") {
+		diags = append(diags, "release workflow does not run the artifact builder")
 	}
 	if !strings.Contains(text, "npm publish") {
 		diags = append(diags, "release workflow does not publish to npm")
 	}
 	if !strings.Contains(text, "provenance") {
 		diags = append(diags, "release workflow does not publish with provenance")
+	}
+	return diags
+}
+
+func checkNativeRuntimeWorkflow(root string) []string {
+	workflow := filepath.Join(root, ".github", "workflows", "native-runtime.yml")
+	if !exists(workflow) {
+		return []string{"native verification workflow missing (.github/workflows/native-runtime.yml)"}
+	}
+	text := readIfExists(workflow)
+	var diags []string
+	for label, anchor := range map[string]string{
+		"pull requests":         "pull_request:",
+		"default branch pushes": "branches:",
+		"main branch":           "- main",
+		"canonical matrix":      "scripts/platforms.json",
+		"derived matrix":        "fromJSON(needs.build.outputs.matrix)",
+		"artifact builder":      "scripts/build-artifacts.sh",
+		"shared smoke":          "scripts/smoke-artifacts.sh",
+	} {
+		if !strings.Contains(text, anchor) {
+			diags = append(diags, "native verification workflow does not include "+label)
+		}
+	}
+	var matrix []struct {
+		Runner string `json:"runner"`
+	}
+	data, err := os.ReadFile(filepath.Join(root, "scripts", "platforms.json"))
+	if err != nil || json.Unmarshal(data, &matrix) != nil {
+		return append(diags, "native verification matrix is unreadable")
+	}
+	want := []string{"macos-15", "macos-15-intel", "ubuntu-24.04-arm", "ubuntu-24.04"}
+	got := make([]string, 0, len(matrix))
+	for _, row := range matrix {
+		got = append(got, row.Runner)
+	}
+	if !reflect.DeepEqual(got, want) {
+		diags = append(diags, fmt.Sprintf("native verification runner labels = %v, want %v", got, want))
 	}
 	return diags
 }

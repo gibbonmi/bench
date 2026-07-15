@@ -28,10 +28,6 @@ var RequiredPackAssets = []string{
 // CLAUDE.md, and HANDOFF equivalents from constants, so shipping the kit's copies
 // would export a stale handoff and a duplicate agreement). Both the surface contract
 // test and the conformance package check iterate this one list.
-//
-// dist/bench is deliberately in neither list: with dist/ in files[] the npx-from-git
-// prepare build packs it (present on a built tree, absent in the CI publish checkout),
-// so requiring or forbidding it would make the dry-run shape check tree-state-dependent.
 var ForbiddenPackAssets = []string{
 	"projects/benchkit.md",
 	".bench/gate.sh",

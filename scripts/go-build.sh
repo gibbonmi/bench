@@ -27,4 +27,4 @@ version="$(node -e '
 ' "$modroot/package.json")"
 
 cd "$modroot"
-go build -trimpath -ldflags "-X main.version=$version" -o "$out" ./cmd/bench
+go build -trimpath -ldflags "-s -w -X main.version=$version" -o "$out" ./cmd/bench
