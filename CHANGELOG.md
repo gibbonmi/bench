@@ -8,6 +8,23 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Learnings run (2026-07-15, scope: post-worktree-lifecycle drain).** Reworded
+  FT58 after the lifecycle build shipped its lock-protocol half — a live owner
+  is never aged out, competing reclaimers serialize through the
+  rename-and-identity-check takeover, and a successor's lease survives release,
+  each with a red-capable test — leaving the pool-root hardening residue
+  (propagating tighten failures, symlink/non-owned-root rejection, post-create
+  mode revalidation); the row demotes MEDIUM→LOW and now records that the tree
+  asserts best-effort tighten, a fork the build must put to the reviewer.
+  Reworded FT94 after the resume golden grew a fourth site
+  (`lifecycle_policy_test.go`). IDEAS.md was empty, so zero ideas drained.
+  Promoted the one open journal entry to FT96, a rule-shaped
+  `/bench-write-spec` edit naming the fast path for reviewer-closed in-session
+  forks (recorded straight into a decision map, flagged in-spec for veto). The
+  previous run promoted no rule edits, so no promotion-build entry was due. The
+  refreshed sequence keeps FT80 and FT81 first and slots FT96 third as an XS
+  synthesis promotion.
+
 - **Roadmap reconcile (2026-07-15, scope: post-FT93-ship drain).** Removed FT93
   after both halves landed — the retained-verdict surfacing at `bf31967` and the
   (b)/(c) orphan reconcile at `4d6c290` — and retired its merged spec

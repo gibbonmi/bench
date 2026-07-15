@@ -201,17 +201,18 @@ master-only, and unknown-default fixtures in both contracts and canaries.
 
 Sources: `RR:C-01`, `RR:C-02`, `RR:C-03`; `RC:H-08`.
 
-**FT58 (MEDIUM, evidence supplied) — identity-safe intent reclamation and
-private pool roots.** Replace age-only stale takeover and unconditional release
-with an identity-safe lock protocol: a live owner is never aged out, competing
-reclaimers serialize, and release cannot remove a successor's lock. Permission
-failures on Bench-selected pool roots propagate; non-owned or symlinked roots
-are rejected and modes are revalidated after creation.
+**FT58 (LOW) — hardened pool roots.** The identity-safe lock protocol shipped
+with the worktree-lifecycle build: a live owner is never aged out, competing
+reclaimers serialize through a rename-and-identity-check takeover, and a
+successor's lease survives release, each with a red-capable test. What remains
+is pool-root hardening: permission failures on Bench-selected pool roots
+should propagate — the tree currently asserts best-effort tighten
+(continue-on-chmod-failure), a fork the build must put to the reviewer — and
+non-owned or symlinked roots are neither rejected nor mode-revalidated after
+creation.
 
-Closure covers a live old PID, two-reclaimer race, successor replacement,
-permissive pre-existing directory, chmod failure, symlink root, and crash-safe
-re-entry. Current live-owner and successor-release defects make this row
-actionable.
+Closure covers a permissive pre-existing directory, chmod failure, symlink
+root, and crash-safe re-entry.
 
 Sources: `RR:C-04`; `RC:M-01`.
 
@@ -271,13 +272,23 @@ linked repos get the same protection.
 
 **FT94 (LOW, evidence supplied) — single-sourced `bench resume` summary
 golden.** The resume summary line is asserted as a hardcoded exact-string
-golden in three places (`internal/worktree/resume_test.go` and twice in
+golden at four sites across three files (`internal/worktree/resume_test.go`,
+`internal/worktree/lifecycle_policy_test.go`, and twice in
 `internal/contract/runtime/runtime_worktree_test.go`), so a format change is a
-three-package hunt. Extract one shared expected-format helper: the unit and
+multi-file hunt. Extract one shared expected-format helper: the unit and
 runtime-binary seams stay distinct while the literal is single-sourced. This
 is test-vs-test duplication, not the expectation-versus-implementation
 independence the code standard protects, so collapsing it is consistent with
 the one-source-per-fact rule.
+
+**FT96 (LOW, rule-shaped, learnings 2026-07-15) — `/bench-write-spec` fast path
+for reviewer-closed forks.** When every load-bearing fork was put to the
+reviewer and closed in the same session, the spec phase may record those
+decisions straight into `decisions/<topic>.md` and compile the spec from it,
+flagging the map in-spec for veto — no shape phase required when nothing is
+left open. Name this path in `/bench-write-spec`'s entry contract so the map
+gate stops forcing a shape detour over already-made decisions. Kit edit, built
+under `craft-synthesis`.
 
 ## Release and bank reassessment gate
 
@@ -343,3 +354,4 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 1. `/bench-shape-idea` — specify FT80, static bounded guard discovery.
 2. `/bench-shape-idea` — specify FT81, the platform-correct distributable runtime.
+3. `/bench-implement-spec` — FT96, the write-spec fast-path rule edit (XS synthesis promotion).
