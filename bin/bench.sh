@@ -86,12 +86,14 @@ platform_suffix() {
 }
 
 package_version() {
-  local kit="${1:-$(kit_dir)}" pkg_json manifest line
+  local kit="${1:-$(kit_dir)}" pkg_json manifest line version
   pkg_json="$kit/package.json"
   if [[ -f "$pkg_json" ]]; then
     while IFS= read -r line || [[ -n "$line" ]]; do
       if [[ "$line" =~ \"version\"[[:space:]]*:[[:space:]]*\"([^\"]+)\" ]]; then
-        printf '%s\n' "${BASH_REMATCH[1]}"
+        version="${BASH_REMATCH[1]}"
+        valid_package_version "$version" || return 1
+        printf '%s\n' "$version"
         return 0
       fi
     done < "$pkg_json"
@@ -100,12 +102,18 @@ package_version() {
   if [[ -f "$manifest" ]]; then
     while IFS= read -r line || [[ -n "$line" ]]; do
       if [[ "$line" == \#kit$'\t'* ]]; then
-        printf '%s\n' "${line#*$'\t'}"
+        version="${line#*$'\t'}"
+        valid_package_version "$version" || return 1
+        printf '%s\n' "$version"
         return 0
       fi
     done < "$manifest"
   fi
   return 1
+}
+
+valid_package_version() {
+  [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]
 }
 
 # main_tree_kit <kit> — when <kit> sits inside a linked git worktree, echo the same

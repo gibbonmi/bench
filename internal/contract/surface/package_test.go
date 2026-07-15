@@ -44,38 +44,6 @@ func TestPackageContracts(t *testing.T) {
 	contract.RunParallel(t, "npm pack installable-surface contract", testPackageNpmPackInstallableSurface)
 }
 
-func testPackageGeneratorFirstRun(t *testing.T) {
-	out := filepath.Join(t.TempDir(), "a")
-
-	packageRunGenerator(t, out).RequireExit(0)
-}
-
-func testPackageGeneratorSecondRun(t *testing.T) {
-	tmp := t.TempDir()
-
-	packageRunGenerator(t, filepath.Join(tmp, "a")).RequireExit(0)
-	packageRunGenerator(t, filepath.Join(tmp, "b")).RequireExit(0)
-}
-
-func testPackageGeneratorIdempotent(t *testing.T) {
-	tmp := t.TempDir()
-	a := filepath.Join(tmp, "a")
-	b := filepath.Join(tmp, "b")
-	packageRunGenerator(t, a).RequireExit(0)
-	packageRunGenerator(t, b).RequireExit(0)
-
-	diff := execFixtureAt(t, tmp).Run("diff", "-r", a, b)
-
-	diff.RequireExit(0)
-}
-
-func testPackageGeneratorOutput(t *testing.T) {
-	tmp := t.TempDir()
-	gen := filepath.Join(tmp, "gen")
-	packageRunGenerator(t, gen).RequireExit(0)
-	testPackageGeneratorOutputAt(t, gen)
-}
-
 func testPackageGeneratorOutputAt(t *testing.T, gen string) {
 	t.Helper()
 	matrix := packageReadPlatforms(t)

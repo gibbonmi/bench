@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { createHash, randomUUID } from "node:crypto";
 import { createGunzip } from "node:zlib";
-import { mkdir, open, rename, rm } from "node:fs/promises";
+import { access, mkdir, open, rename, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { Readable } from "node:stream";
 
@@ -9,6 +9,10 @@ const [kit, pkgName, version, platform] = process.argv.slice(2);
 
 if (!kit || !pkgName || !version || !platform) {
   console.error("bench: repair failed: internal launcher arguments missing");
+  process.exit(1);
+}
+if (!/^[0-9]+\.[0-9]+\.[0-9]+(?:[+-][0-9A-Za-z.-]+)?$/.test(version)) {
+  console.error(`bench: repair failed: invalid kit version ${JSON.stringify(version)}`);
   process.exit(1);
 }
 
@@ -58,6 +62,19 @@ try {
       await fh.close();
     }
     console.error(`bench: wrote ${tmp}`);
+    if (process.env.BENCH_TEST_REPAIR_READY_FILE) {
+      const ready = process.env.BENCH_TEST_REPAIR_READY_FILE;
+      const marker = await open(ready, "w");
+      await marker.close();
+      while (true) {
+        try {
+          await access(ready);
+          await new Promise((resolve) => setTimeout(resolve, 25));
+        } catch {
+          break;
+        }
+      }
+    }
     await rename(tmp, target);
     tempPath = undefined;
     console.error(`bench: wrote ${target}`);

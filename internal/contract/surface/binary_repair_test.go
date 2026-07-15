@@ -6,7 +6,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
 )
 
 func TestBinaryRepairContracts(t *testing.T) {
@@ -24,6 +26,129 @@ func TestBinaryRepairContracts(t *testing.T) {
 	contract.RunParallel(t, "binary repair disabled contract failed", testRepairDisabled)
 	contract.RunParallel(t, "binary repair torn-cache contract failed", testRepairReplacesTornCache)
 	contract.RunParallel(t, "linked manifest repair contract failed", testRepairReadsLinkedManifestWithoutNewline)
+	contract.RunParallel(t, "malformed manifest version escaped repair cache", testRepairRejectsMalformedVersion)
+	contract.RunParallel(t, "interrupted repair promoted partial cache", testRepairInterruptedPromotion)
+	contract.RunParallel(t, "fresh clone repair required ambient tooling", testRepairMinimalPortablePath)
+}
+
+func testRepairMinimalPortablePath(t *testing.T) {
+	f, kit := binaryRepairFixtureKit(t, contract.WithSpacePath())
+	version := "9.8.7"
+	hostileKit := filepath.Join(f.Root, "linked clone [*]")
+	if err := os.Rename(kit, hostileKit); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(filepath.Join(hostileKit, "package.json")); err != nil {
+		t.Fatal(err)
+	}
+	contract.WriteFileAbs(t, filepath.Join(hostileKit, "link-manifest.tsv"), "#kit\t"+version)
+	registry := newBinaryRepairRegistry(t, version, "#!/bin/sh\nprintf 'portable:%s\\n' \"$1\"\n")
+	tools := filepath.Join(f.Root, "portable tools [*]")
+	if err := os.MkdirAll(tools, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"bash", "basename", "dirname", "git", "node", "tr", "uname"} {
+		target, err := exec.LookPath(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Symlink(target, filepath.Join(tools, name)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	readlink, err := exec.LookPath("readlink")
+	if err != nil {
+		t.Fatal(err)
+	}
+	readlinkStub := "#!/bin/sh\n[ \"${1:-}\" != -f ] || { echo forbidden-readlink-f >&2; exit 91; }\nexec " + readlink + " \"$@\"\n"
+	if err := os.WriteFile(filepath.Join(tools, "readlink"), []byte(readlinkStub), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	home := filepath.Join(f.Root, "cache home [*]")
+	env := map[string]string{
+		"BENCH_KIT": hostileKit, "BENCH_HOME": home, "HOME": home,
+		"BENCH_NPM_REGISTRY": registry.URL, "PATH": tools,
+	}
+
+	out := f.BenchEnv(env, "version")
+
+	out.RequireExit(0)
+	if strings.TrimSpace(out.Stdout) != "portable:version" || registry.Hits() != 2 {
+		t.Fatalf("portable repair identity/hits = %q/%d", out.Stdout, registry.Hits())
+	}
+	requireFileExecutable(t, filepath.Join(home, "cache", "bin", version, binaryRepairPlatformSuffix(t), "bench"), "portable repair did not promote exact target")
+	if strings.Contains(out.Stderr, "forbidden-readlink-f") {
+		t.Fatalf("portable repair invoked GNU-only readlink -f: %s", out.Stderr)
+	}
+}
+
+func testRepairInterruptedPromotion(t *testing.T) {
+	f, kit := binaryRepairFixtureKit(t, contract.WithSpacePath())
+	version := "9.8.7"
+	registry := newBinaryRepairRegistry(t, version, "#!/bin/sh\necho repaired-after-interrupt\n")
+	ready := filepath.Join(f.Root, "repair ready [*]")
+	env := cloneEnv(f.Env)
+	env["BENCH_KIT"], env["BENCH_NPM_REGISTRY"], env["BENCH_TEST_REPAIR_READY_FILE"] = kit, registry.URL, ready
+	cmd := exec.Command("bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "version")
+	cmd.Dir, cmd.Env = f.Root, lifecycleEnv(env)
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(15 * time.Second)
+	for {
+		if _, err := os.Stat(ready); err == nil {
+			break
+		}
+		if time.Now().After(deadline) {
+			_ = cmd.Process.Kill()
+			t.Fatal("repair did not reach promotion seam")
+		}
+		time.Sleep(25 * time.Millisecond)
+	}
+	if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
+		t.Fatal(err)
+	}
+	if err := cmd.Wait(); err == nil {
+		t.Fatal("interrupted repair exited successfully")
+	}
+	requirePathAbsent(t, binaryRepairCachePath(t, f, version), "interrupted repair promoted cache binary")
+	env["BENCH_TEST_REPAIR_READY_FILE"] = ""
+	out := f.BenchEnv(env, "version")
+	out.RequireExit(0)
+	if strings.TrimSpace(out.Stdout) != "repaired-after-interrupt" {
+		t.Fatalf("repair rerun did not recover: %q", out.Stdout)
+	}
+}
+
+func testRepairRejectsMalformedVersion(t *testing.T) {
+	f, kit := binaryRepairFixtureKit(t, contract.WithSpacePath())
+	if err := os.Remove(filepath.Join(kit, "package.json")); err != nil {
+		t.Fatal(err)
+	}
+	contract.WriteFileAbs(t, filepath.Join(kit, "link-manifest.tsv"), "#kit\t../../escape")
+	registry := newBinaryRepairRegistry(t, "9.8.7", "#!/bin/sh\necho escaped\n")
+	globalDir := filepath.Join(f.Root, "planted global [*]")
+	globalBench := filepath.Join(globalDir, "bench")
+	contract.WriteFileAbs(t, globalBench, "#!/bin/sh\necho GLOBAL-RUNTIME\n")
+	if err := os.Chmod(globalBench, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	env := map[string]string{
+		"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL,
+		"BENCH_HOME": filepath.Join(f.Root, "cache home [*]"),
+		"PATH":       globalDir + string(os.PathListSeparator) + os.Getenv("PATH"),
+	}
+
+	out := f.BenchEnv(env, "version")
+
+	out.RequireExit(127)
+	requireInterim127Remedy(t, out.Stderr)
+	if strings.Contains(out.Stdout, "GLOBAL-RUNTIME") || registry.Hits() != 0 {
+		t.Fatalf("malformed version reached fallback or registry: stdout=%q hits=%d", out.Stdout, registry.Hits())
+	}
+	if _, err := os.Stat(filepath.Join(f.Root, "escape")); !os.IsNotExist(err) {
+		t.Fatalf("malformed version escaped cache root: %v", err)
+	}
 }
 
 func testRepairReadsLinkedManifestWithoutNewline(t *testing.T) {
@@ -239,7 +364,7 @@ func testRepairReplacesTornCache(t *testing.T) {
 	f, kit := binaryRepairFixtureKit(t)
 	version := "9.8.7"
 	cachePath := binaryRepairCachePath(t, f, version)
-	contract.WriteFileAbs(t, cachePath, "")
+	contract.WriteFileAbs(t, cachePath, "#!/bin/sh\necho non-executable\n")
 	registry := newBinaryRepairRegistry(t, version, "#!/bin/sh\necho healed\n")
 	env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL}
 
@@ -262,16 +387,5 @@ func requireInterim127Remedy(t *testing.T, stderr string) {
 	}
 	if strings.Contains(stderr, "scripts/go-build.sh") {
 		t.Fatalf("127 error named the maintainer-only build script\nstderr:\n%s", stderr)
-	}
-}
-
-func requireFileExecutable(t testing.TB, path, msg string) {
-	t.Helper()
-	info, err := os.Stat(path)
-	if err != nil {
-		t.Fatalf("%s: %v", msg, err)
-	}
-	if info.Size() == 0 || info.Mode().Perm()&0o111 == 0 {
-		t.Fatalf("%s: mode=%v size=%d", msg, info.Mode().Perm(), info.Size())
 	}
 }

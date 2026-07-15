@@ -9,7 +9,13 @@ source_root="$(cd "$source_root" && pwd)"
 parent="$(dirname "$output")"
 mkdir -p "$parent"
 stage="$(mktemp -d "$parent/.bench-artifacts.XXXXXX")"
-trap 'rm -rf "$stage"' EXIT
+backup=""
+cleanup() {
+  if [[ -n "$backup" && -e "$backup" && ! -e "$output" ]]; then mv "$backup" "$output"; fi
+  [[ -z "$backup" || ! -e "$backup" ]] || rm -rf "$backup"
+  rm -rf "$stage"
+}
+trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM HUP
 wrapper="$stage/wrapper"
@@ -90,7 +96,17 @@ expected="$(node -e 'process.stdout.write(String(require(process.argv[1]).length
 actual="$(find "$artifacts" -maxdepth 1 -type f -name '*.tgz' -print | wc -l | tr -d ' ')"
 [[ "$actual" == "$expected" ]] || { printf 'bench artifacts: emitted %s tarballs, expected %s\n' "$actual" "$expected" >&2; exit 1; }
 
-rm -rf "$output"
+if [[ -e "$output" ]]; then
+  backup="$(mktemp -d "$parent/.bench-artifacts.previous.XXXXXX")"
+  rmdir "$backup"
+  mv "$output" "$backup"
+fi
+if [[ -n "${BENCH_TEST_PROMOTION_READY_FILE:-}" ]]; then
+  : > "$BENCH_TEST_PROMOTION_READY_FILE"
+  while [[ -e "$BENCH_TEST_PROMOTION_READY_FILE" ]]; do sleep 0.05; done
+fi
 mv "$artifacts" "$output"
+[[ -z "$backup" || ! -e "$backup" ]] || rm -rf "$backup"
+backup=""
 trap - EXIT INT TERM HUP
 rm -rf "$stage"

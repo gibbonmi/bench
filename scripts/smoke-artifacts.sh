@@ -4,13 +4,10 @@ set -euo pipefail
 artifacts="${1:?usage: smoke-artifacts.sh <artifact-dir>}"
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 version="$(node -p 'require(process.argv[1]).version' "$root/package.json")"
-case "$(uname -s):$(uname -m)" in
-  Darwin:arm64) target=darwin-arm64 ;;
-  Darwin:x86_64) target=darwin-x64 ;;
-  Linux:aarch64|Linux:arm64) target=linux-arm64 ;;
-  Linux:x86_64|Linux:amd64) target=linux-x64 ;;
-  *) printf 'bench artifacts: unsupported smoke host %s/%s\n' "$(uname -s)" "$(uname -m)" >&2; exit 2 ;;
-esac
+case "$(uname -s)" in Darwin) host_os=darwin ;; Linux) host_os=linux ;; *) host_os=unsupported ;; esac
+case "$(uname -m)" in arm64|aarch64) host_arch=arm64 ;; x86_64|amd64) host_arch=x64 ;; *) host_arch=unsupported ;; esac
+target="$(node -e 'const [matrix, os, arch] = process.argv.slice(1); const p = require(matrix).find(p => p.os === os && p.arch === arch); if (p) process.stdout.write(p.os + "-" + p.arch)' "$root/scripts/platforms.json" "$host_os" "$host_arch")"
+[[ -n "$target" ]] || { printf 'bench artifacts: unsupported smoke host %s/%s\n' "$(uname -s)" "$(uname -m)" >&2; exit 2; }
 wrapper="$artifacts/redbench-$version.tgz"
 native="$artifacts/redbench-$target-$version.tgz"
 [[ -f "$wrapper" && -f "$native" ]] || { printf 'bench artifacts: host tarballs missing for %s\n' "$target" >&2; exit 1; }

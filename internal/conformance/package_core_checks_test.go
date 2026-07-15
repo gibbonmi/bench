@@ -289,14 +289,21 @@ func checkNativeRuntimeWorkflow(root string) []string {
 	}
 	text := readIfExists(workflow)
 	var diags []string
+	triggers := nativeWorkflowTriggers(text)
+	for label, present := range map[string]bool{
+		"pull requests":         triggers.pullRequest,
+		"default branch pushes": triggers.pushBranches,
+		"main branch":           triggers.mainBranch,
+	} {
+		if !present {
+			diags = append(diags, "native verification workflow does not include "+label)
+		}
+	}
 	for label, anchor := range map[string]string{
-		"pull requests":         "pull_request:",
-		"default branch pushes": "branches:",
-		"main branch":           "- main",
-		"canonical matrix":      "scripts/platforms.json",
-		"derived matrix":        "fromJSON(needs.build.outputs.matrix)",
-		"artifact builder":      "scripts/build-artifacts.sh",
-		"shared smoke":          "scripts/smoke-artifacts.sh",
+		"canonical matrix": "scripts/platforms.json",
+		"derived matrix":   "fromJSON(needs.build.outputs.matrix)",
+		"artifact builder": "scripts/build-artifacts.sh",
+		"shared smoke":     "scripts/smoke-artifacts.sh",
 	} {
 		if !strings.Contains(text, anchor) {
 			diags = append(diags, "native verification workflow does not include "+label)

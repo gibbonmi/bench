@@ -1,0 +1,7 @@
+[
+  {
+    "path": "scripts/wrapper-assets.json",
+    "old": "  { \"source\": \"bin/bench-postinstall.sh\", \"mode\": \"0644\" },\n",
+    "new": "  { \"source\": \"bin/bench-postinstall.sh\", \"mode\": \"0644\" },\n  { \"source\": \"dist/bench\", \"mode\": \"0755\" },\n"
+  }
+]

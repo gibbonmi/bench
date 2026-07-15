@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -44,8 +43,9 @@ func TestDistributableArtifactContracts(t *testing.T) {
 	assertWrapperAssetPolicy(t, contract.SubjectRoot(t))
 	contract.SkipIfSubjectFileMissing(t, "scripts/build-artifacts.sh")
 	root := contract.SubjectRoot(t)
+	buildRoot := committedHostileArtifactSource(t, root)
 	out := filepath.Join(t.TempDir(), "artifact output [hostile]")
-	probe := execFixtureAt(t, root).Run("bash", filepath.Join(root, "scripts", "build-artifacts.sh"), root, out)
+	probe := execFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-artifacts.sh"), buildRoot, out)
 	probe.RequireExit(0)
 
 	var matrix []artifactPlatform
@@ -68,9 +68,10 @@ func TestDistributableArtifactContracts(t *testing.T) {
 	assertInstalledArtifactLifecycle(t, out, wrapper.Version)
 	execFixtureAt(t, root).Run("bash", filepath.Join(root, "scripts", "smoke-artifacts.sh"), out).RequireExit(0)
 
-	// Repacking the same destination replaces the complete set safely rather than
-	// accumulating stale outputs.
-	execFixtureAt(t, root).Run("bash", filepath.Join(root, "scripts", "build-artifacts.sh"), root, out).RequireExit(0)
+	// A signal in the promotion window restores the old complete set. The same
+	// hostile-path invocation can then be rerun and replace it safely.
+	assertInterruptedArtifactPromotion(t, buildRoot, out, len(matrix)+1)
+	execFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-artifacts.sh"), buildRoot, out).RequireExit(0)
 	files, err = os.ReadDir(out)
 	if err != nil || len(files) != len(matrix)+1 {
 		t.Fatalf("second artifact build was not safe: files=%d err=%v", len(files), err)
@@ -114,9 +115,19 @@ func assertWrapperAssetPolicy(t *testing.T, root string) {
 	}
 	var assets []wrapperAsset
 	packageReadJSON(t, manifest, &assets)
+	present := map[string]bool{}
 	for _, asset := range assets {
+		present[asset.Source] = true
 		if asset.Source == "dist/bench" || strings.HasPrefix(asset.Source, "dist/packages/") {
 			t.Fatalf("wrapper artifact contains forbidden entry package/%s", asset.Source)
+		}
+	}
+	// Independent omission oracle: these public caller families must be shipped.
+	// The manifest remains the production policy; this named expectation exists so
+	// deleting a whole caller family cannot make builder and inventory agree falsely.
+	for _, required := range []string{"bin/bench.sh", ".bench/adapters", ".bench/hooks", ".bench/lib"} {
+		if !present[required] {
+			t.Fatalf("wrapper artifact omits required shipped surface %s", required)
 		}
 	}
 }
@@ -179,11 +190,23 @@ func assertInstalledArtifactLifecycle(t *testing.T, artifacts, version string) {
 	runLifecycle(t, repo, env, "bash", wrapper, "init")
 	runLifecycle(t, repo, env, "bash", wrapper, "init")
 	runLifecycle(t, repo, env, "bash", wrapper, "doctor", "--fix")
+	shim := filepath.Join(stableBin, "bench")
+	if info, err := os.Stat(shim); err != nil || info.Mode().Perm()&0o111 == 0 {
+		t.Fatalf("packed doctor did not generate executable stable shim: %v, %v", info, err)
+	}
+	assertPackedSetupForwarding(t, tmp, wrapper, shim, env)
 	localOut := runLifecycle(t, repo, env, "bash", filepath.Join(repo, ".bench", "bin", "bench.sh"), "version")
 	if localOut != versionOut {
 		t.Fatalf("linked operation output %q != installed output %q", localOut, versionOut)
 	}
+	assertPackedEntrySurfaceIdentity(t, repo, env, versionOut)
 	runLifecycle(t, repo, env, "bash", wrapper, "link")
+	runLifecycle(t, repo, env, "bash", wrapper, "init")
+	status := runLifecycle(t, repo, nil, "git", "status", "--short", "--ignored")
+	if !strings.Contains(status, "!! .bench/dist/") {
+		t.Fatalf("packed linked repo did not retain ignored runtime state:\n%s", status)
+	}
+	runPackedFreshClone(t, repo, wrapper, shim, version)
 	runLifecycle(t, repo, env, "bash", wrapper, "unlink")
 	agents, err = os.ReadFile(filepath.Join(repo, "AGENTS.md"))
 	if err != nil || string(agents) != "project owner text\n" {
@@ -192,30 +215,6 @@ func assertInstalledArtifactLifecycle(t *testing.T, artifacts, version string) {
 	if _, err := os.Stat(filepath.Join(repo, ".bench", "link-manifest.tsv")); !os.IsNotExist(err) {
 		t.Fatalf("packed unlink left link manifest: %v", err)
 	}
-}
-
-func runLifecycle(t *testing.T, dir string, overrides map[string]string, name string, args ...string) string {
-	t.Helper()
-	cmd := exec.Command(name, args...)
-	cmd.Dir = dir
-	env := map[string]string{}
-	for _, pair := range os.Environ() {
-		if key, value, ok := strings.Cut(pair, "="); ok {
-			env[key] = value
-		}
-	}
-	for key, value := range overrides {
-		env[key] = value
-	}
-	cmd.Env = make([]string, 0, len(env))
-	for key, value := range env {
-		cmd.Env = append(cmd.Env, key+"="+value)
-	}
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("%s %v failed: %v\n%s", name, args, err, out)
-	}
-	return string(out)
 }
 
 func assertWrapperArtifact(t *testing.T, root, path, version string, matrix []artifactPlatform) {
