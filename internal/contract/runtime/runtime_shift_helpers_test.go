@@ -103,3 +103,40 @@ func requireFileContains(t *testing.T, path, needle, msg string) {
 		t.Fatal(msg)
 	}
 }
+
+func requireWorktreeLifecycleSharedResolver(t *testing.T, f contract.Fixture) {
+	t.Helper()
+	hook := f.ReadFile(".bench/hooks/worktree-lifecycle.sh")
+	for _, needle := range []string{"../lib/resolve-bench.sh", `. "$lib"`, "bench_resolve_wrapper"} {
+		if !strings.Contains(hook, needle) {
+			t.Fatalf("linked worktree lifecycle hook does not use the shared wrapper resolver: missing %q", needle)
+		}
+	}
+	for _, duplicate := range []string{"for candidate in", `"$root/.bench/bin/bench.sh"`, `"$root/bin/bench.sh"`} {
+		if strings.Contains(hook, duplicate) {
+			t.Fatalf("linked worktree lifecycle hook duplicates wrapper resolution instead of using the shared resolver: found %q", duplicate)
+		}
+	}
+}
+
+// requireNoShiftBranch asserts no branch matching bench/shift-* exists — the signal
+// that a usage failure exited before the loop created anything.
+func requireNoShiftBranch(t *testing.T, f contract.Fixture) {
+	t.Helper()
+	if out := f.Git("for-each-ref", "refs/heads/bench/shift-*").Stdout; strings.TrimSpace(out) != "" {
+		t.Fatalf("usage failure created a shift branch:\n%s", out)
+	}
+}
+
+// requireShiftResult asserts the shift_result TOON block's row equals wantRow exactly —
+// header plus the one data row, in the pinned field order.
+func requireShiftResult(t *testing.T, stdout, wantRow string) {
+	t.Helper()
+	header := "shift_result[1]{outcome,exit,branch,committed,iterations_used,recovery,detail}:"
+	if !strings.Contains(stdout, header) {
+		t.Fatalf("shift_result block missing or malformed header:\n%s", stdout)
+	}
+	if !strings.Contains(stdout, wantRow) {
+		t.Fatalf("shift_result row = %q not found in:\n%s", wantRow, stdout)
+	}
+}
