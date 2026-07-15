@@ -1,14 +1,11 @@
-package surface
+package artifact
 
 import (
-	"archive/tar"
 	"bytes"
-	"compress/gzip"
 	"debug/elf"
 	"debug/macho"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -34,23 +31,21 @@ type wrapperAsset struct {
 	Tree   bool   `json:"tree"`
 }
 
-type tarEntry struct {
-	Mode int64
-	Data []byte
-}
-
 func TestDistributableArtifactContracts(t *testing.T) {
 	assertWrapperAssetPolicy(t, contract.SubjectRoot(t))
 	contract.SkipIfSubjectFileMissing(t, "scripts/build-artifacts.sh")
 	root := contract.SubjectRoot(t)
 	buildRoot := committedHostileArtifactSource(t, root)
 	out := filepath.Join(t.TempDir(), "artifact output [hostile]")
-	probe := execFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-artifacts.sh"), buildRoot, out)
+	probe := contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-artifacts.sh"), buildRoot, out)
 	probe.RequireExit(0)
 
 	var matrix []artifactPlatform
-	packageReadJSON(t, filepath.Join(root, "scripts", "platforms.json"), &matrix)
-	wrapper := packageReadWrapper(t)
+	contract.ReadJSONFile(t, filepath.Join(root, "scripts", "platforms.json"), &matrix)
+	var wrapper struct {
+		Version string `json:"version"`
+	}
+	contract.ReadJSONFile(t, filepath.Join(root, "package.json"), &wrapper)
 	files, err := os.ReadDir(out)
 	if err != nil {
 		t.Fatal(err)
@@ -66,12 +61,12 @@ func TestDistributableArtifactContracts(t *testing.T) {
 		assertPlatformArtifact(t, filepath.Join(out, name), wrapper.Version, platform)
 	}
 	assertInstalledArtifactLifecycle(t, out, wrapper.Version)
-	execFixtureAt(t, root).Run("bash", filepath.Join(root, "scripts", "smoke-artifacts.sh"), out).RequireExit(0)
+	contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(root, "scripts", "smoke-artifacts.sh"), out).RequireExit(0)
 
 	// A signal in the promotion window restores the old complete set. The same
 	// hostile-path invocation can then be rerun and replace it safely.
 	assertInterruptedArtifactPromotion(t, buildRoot, out, len(matrix)+1)
-	execFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-artifacts.sh"), buildRoot, out).RequireExit(0)
+	contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-artifacts.sh"), buildRoot, out).RequireExit(0)
 	files, err = os.ReadDir(out)
 	if err != nil || len(files) != len(matrix)+1 {
 		t.Fatalf("second artifact build was not safe: files=%d err=%v", len(files), err)
@@ -98,7 +93,7 @@ func TestDistributableArtifactContracts(t *testing.T) {
 	if err := os.WriteFile(sentinel, []byte("owned"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	bad := execFixtureAt(t, root).Run("bash", filepath.Join(root, "scripts", "build-artifacts.sh"), broken, out)
+	bad := contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(root, "scripts", "build-artifacts.sh"), broken, out)
 	if bad.ExitCode == 0 {
 		t.Fatal("incomplete artifact builder unexpectedly succeeded")
 	}
@@ -114,7 +109,7 @@ func assertWrapperAssetPolicy(t *testing.T, root string) {
 		return
 	}
 	var assets []wrapperAsset
-	packageReadJSON(t, manifest, &assets)
+	contract.ReadJSONFile(t, manifest, &assets)
 	present := map[string]bool{}
 	for _, asset := range assets {
 		present[asset.Source] = true
@@ -219,10 +214,10 @@ func assertInstalledArtifactLifecycle(t *testing.T, artifacts, version string) {
 
 func assertWrapperArtifact(t *testing.T, root, path, version string, matrix []artifactPlatform) {
 	t.Helper()
-	entries := readTarball(t, path)
+	entries := contract.ReadTarball(t, path)
 	expectedModes := map[string]int64{"package/package.json": 0o644}
 	var assets []wrapperAsset
-	packageReadJSON(t, filepath.Join(root, "scripts", "wrapper-assets.json"), &assets)
+	contract.ReadJSONFile(t, filepath.Join(root, "scripts", "wrapper-assets.json"), &assets)
 	for _, asset := range assets {
 		mode := int64(0)
 		fmt.Sscanf(asset.Mode, "%o", &mode)
@@ -289,7 +284,7 @@ func assertWrapperArtifact(t *testing.T, root, path, version string, matrix []ar
 
 func assertPlatformArtifact(t *testing.T, path, version string, platform artifactPlatform) {
 	t.Helper()
-	entries := readTarball(t, path)
+	entries := contract.ReadTarball(t, path)
 	_, hasBinary := entries["package/bin/bench"]
 	_, hasPackage := entries["package/package.json"]
 	if len(entries) != 2 || !hasBinary || !hasPackage {
@@ -339,38 +334,4 @@ func assertPlatformArtifact(t *testing.T, path, version string, platform artifac
 			t.Fatalf("darwin/%s format=%v, want %v", platform.Arch, f.Cpu, wantCPU)
 		}
 	}
-}
-
-func readTarball(t *testing.T, path string) map[string]tarEntry {
-	t.Helper()
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer f.Close()
-	gz, err := gzip.NewReader(f)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer gz.Close()
-	entries := map[string]tarEntry{}
-	tr := tar.NewReader(gz)
-	for {
-		h, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			t.Fatal(err)
-		}
-		if h.Typeflag != tar.TypeReg && h.Typeflag != tar.TypeRegA {
-			continue
-		}
-		data, err := io.ReadAll(tr)
-		if err != nil {
-			t.Fatal(err)
-		}
-		entries[strings.TrimPrefix(h.Name, "./")] = tarEntry{Mode: h.Mode, Data: data}
-	}
-	return entries
 }

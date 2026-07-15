@@ -55,7 +55,7 @@ func testDoctorShimMaintenanceMatrix(t *testing.T) {
 	if err := os.MkdirAll(nested, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	probe := execFixtureAt(t, nested).RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, shim, "status", "nested arg")
+	probe := contract.NewExecFixtureAt(t, nested).RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, shim, "status", "nested arg")
 	probe.RequireExit(3)
 	doctorRequireEqual(t, probe.Stdout, fmt.Sprintf("local:%s:2:[status][nested arg]\n", local), "nested shim selected wrong target")
 
@@ -67,7 +67,7 @@ func testDoctorShimMaintenanceMatrix(t *testing.T) {
 	if err := os.Symlink(shim, alias); err != nil {
 		t.Fatal(err)
 	}
-	probe = execFixtureAt(t, outside).RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, alias, "status", "outside arg")
+	probe = contract.NewExecFixtureAt(t, outside).RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, alias, "status", "outside arg")
 	probe.RequireExit(7)
 	doctorRequireEqual(t, probe.Stdout, fmt.Sprintf("installed:%s:2:[status][outside arg]\n", installed), "outside/symlink shim selected wrong target")
 }

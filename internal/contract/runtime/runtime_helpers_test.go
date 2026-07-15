@@ -91,23 +91,7 @@ type normalizedCleanupState struct {
 }
 
 func surfaceEnv(f contract.Fixture, extra map[string]string) []string {
-	merged := make(map[string]string, len(os.Environ())+len(f.Env)+len(extra))
-	for _, entry := range os.Environ() {
-		if key, value, ok := strings.Cut(entry, "="); ok {
-			merged[key] = value
-		}
-	}
-	for key, value := range f.Env {
-		merged[key] = value
-	}
-	for key, value := range extra {
-		merged[key] = value
-	}
-	env := make([]string, 0, len(merged))
-	for key, value := range merged {
-		env = append(env, key+"="+value)
-	}
-	return env
+	return contract.ProcessEnv(f.Env, extra)
 }
 
 func waitForSurfacePath(t *testing.T, ready string, cmd *exec.Cmd) string {

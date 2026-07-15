@@ -2,15 +2,13 @@ package surface
 
 import (
 	"encoding/json"
-	"github.com/gibbonmi/bench/internal/contract"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"sort"
-	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/packagesurface"
 )
 
@@ -48,7 +46,7 @@ func testPackageGeneratorOutputAt(t *testing.T, gen string) {
 	t.Helper()
 	matrix := packageReadPlatforms(t)
 	sourceWrapper := packageReadWrapper(t)
-	wrapperEntries := readTarball(t, filepath.Join(gen, "redbench-"+sourceWrapper.Version+".tgz"))
+	wrapperEntries := contract.ReadTarball(t, filepath.Join(gen, "redbench-"+sourceWrapper.Version+".tgz"))
 	var wrapper packageWrapper
 	if err := json.Unmarshal(wrapperEntries["package/package.json"].Data, &wrapper); err != nil {
 		t.Fatalf("parse emitted wrapper metadata: %v", err)
@@ -66,7 +64,7 @@ func testPackageGeneratorOutputAt(t *testing.T, gen string) {
 			OS      []string `json:"os"`
 			CPU     []string `json:"cpu"`
 		}
-		entries := readTarball(t, path)
+		entries := contract.ReadTarball(t, path)
 		if err := json.Unmarshal(entries["package/package.json"].Data, &got); err != nil {
 			t.Fatalf("parse %s package metadata: %v", name, err)
 		}
@@ -108,7 +106,7 @@ func packageArtifactNames(t testing.TB, dir string) []string {
 }
 
 func testPackageNpmPackInstallableSurface(t *testing.T) {
-	f := execFixtureAt(t, contract.SubjectRoot(t))
+	f := contract.NewExecFixtureAt(t, contract.SubjectRoot(t))
 
 	// --ignore-scripts: inspect files[] membership only, not the prepare build (which the
 	// git-install probe exercises); running prepare here would rebuild dist/bench and
@@ -154,45 +152,22 @@ type packageWrapper struct {
 
 func packageRunGenerator(t testing.TB, out string) contract.Probe {
 	t.Helper()
-	return execFixtureAt(t, contract.SubjectRoot(t)).Run("bash", filepath.Join(contract.SubjectRoot(t), "scripts", "gen-platform-packages.sh"), out)
+	return contract.NewExecFixtureAt(t, contract.SubjectRoot(t)).Run("bash", filepath.Join(contract.SubjectRoot(t), "scripts", "gen-platform-packages.sh"), out)
 }
 
 func packageReadPlatforms(t testing.TB) []packagePlatform {
 	t.Helper()
 	var platforms []packagePlatform
-	packageReadJSON(t, filepath.Join(contract.SubjectRoot(t), "scripts", "platforms.json"), &platforms)
+	contract.ReadJSONFile(t, filepath.Join(contract.SubjectRoot(t), "scripts", "platforms.json"), &platforms)
 	return platforms
 }
 
 func packageReadWrapper(t testing.TB) packageWrapper {
 	t.Helper()
 	var wrapper packageWrapper
-	packageReadJSON(t, filepath.Join(contract.SubjectRoot(t), "package.json"), &wrapper)
+	contract.ReadJSONFile(t, filepath.Join(contract.SubjectRoot(t), "package.json"), &wrapper)
 	if wrapper.OptionalDependencies == nil {
 		wrapper.OptionalDependencies = map[string]string{}
 	}
 	return wrapper
-}
-
-func packageReadJSON(t testing.TB, path string, dst any) {
-	t.Helper()
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("read %s: %v", path, err)
-	}
-	if err := json.Unmarshal(data, dst); err != nil {
-		t.Fatalf("parse %s: %v", path, err)
-	}
-}
-
-func execFixtureAt(t testing.TB, root string) contract.Fixture {
-	t.Helper()
-	f := contract.NewFixtureAt(t, root, contract.IsolatedEnv(t, t.TempDir()))
-	f.Env["PATH"] = os.Getenv("PATH")
-	for _, key := range []string{"GOCACHE", "GOMODCACHE"} {
-		if value, err := exec.Command("go", "env", key).Output(); err == nil {
-			f.Env[key] = strings.TrimSpace(string(value))
-		}
-	}
-	return f
 }

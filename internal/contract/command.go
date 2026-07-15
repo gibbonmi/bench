@@ -244,3 +244,26 @@ func IsolatedEnv(t testing.TB, root string) map[string]string {
 	t.Helper()
 	return isolatedEnv(t, root)
 }
+
+func ProcessEnv(base, overrides map[string]string) []string {
+	env := os.Environ()
+	for key, value := range base {
+		env = setEnv(env, key, value)
+	}
+	for key, value := range overrides {
+		env = setEnv(env, key, value)
+	}
+	return env
+}
+
+func NewExecFixtureAt(t testing.TB, root string) Fixture {
+	t.Helper()
+	f := NewFixtureAt(t, root, IsolatedEnv(t, t.TempDir()))
+	f.Env["PATH"] = os.Getenv("PATH")
+	for _, key := range []string{"GOCACHE", "GOMODCACHE"} {
+		if value, err := exec.Command("go", "env", key).Output(); err == nil {
+			f.Env[key] = strings.TrimSpace(string(value))
+		}
+	}
+	return f
+}

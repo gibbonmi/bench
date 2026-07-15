@@ -1,7 +1,8 @@
-package surface
+package artifact
 
 import (
 	"bytes"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,6 +11,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/contract"
 )
 
 func assertPackedSetupForwarding(t *testing.T, dir, wrapper, shim string, env map[string]string) {
@@ -24,7 +27,7 @@ func assertPackedSetupForwarding(t *testing.T, dir, wrapper, shim string, env ma
 		t.Fatal(err)
 	}
 	probe := exec.Command(shim, "setup", "a b")
-	probe.Dir, probe.Env = dir, lifecycleEnv(env)
+	probe.Dir, probe.Env = dir, contract.ProcessEnv(nil, env)
 	out, err := probe.CombinedOutput()
 	if exit, ok := err.(*exec.ExitError); !ok || exit.ExitCode() != 23 || string(out) != "installed-setup:setup:a b\n" {
 		t.Fatalf("stable shim setup forwarding = %v, %q", err, out)
@@ -44,7 +47,7 @@ func assertPackedEntrySurfaceIdentity(t *testing.T, repo string, env map[string]
 		t.Fatalf("session hook did not identify linked launcher:\n%s", hookOut)
 	}
 	stop := exec.Command("bash", filepath.Join(repo, ".bench", "hooks", "stop.sh"))
-	stop.Dir, stop.Env, stop.Stdin = repo, lifecycleEnv(env), strings.NewReader("{}\n")
+	stop.Dir, stop.Env, stop.Stdin = repo, contract.ProcessEnv(nil, env), strings.NewReader("{}\n")
 	if out, err := stop.CombinedOutput(); err != nil || strings.Contains(string(out), "GLOBAL-RUNTIME") {
 		t.Fatalf("stop hook escaped linked launcher: %v\n%s", err, out)
 	}
@@ -57,7 +60,7 @@ func assertPackedEntrySurfaceIdentity(t *testing.T, repo string, env map[string]
 		if err := os.WriteFile(filepath.Join(stubDir, provider), []byte(body), 0o755); err != nil {
 			t.Fatal(err)
 		}
-		adapterEnv := cloneEnv(env)
+		adapterEnv := maps.Clone(env)
 		adapterEnv["PATH"] = stubDir + string(os.PathListSeparator) + os.Getenv("PATH")
 		out := runLifecycle(t, repo, adapterEnv, "bash", filepath.Join(repo, ".bench", "adapters", provider), "identity prompt")
 		if !strings.Contains(out, "provider:"+provider+":") {
@@ -95,37 +98,12 @@ func runPackedFreshClone(t *testing.T, repo, _, shim, version string) {
 func runLifecycle(t *testing.T, dir string, overrides map[string]string, name string, args ...string) string {
 	t.Helper()
 	cmd := exec.Command(name, args...)
-	cmd.Dir, cmd.Env = dir, lifecycleEnv(overrides)
+	cmd.Dir, cmd.Env = dir, contract.ProcessEnv(nil, overrides)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("%s %v failed: %v\n%s", name, args, err, out)
 	}
 	return string(out)
-}
-
-func lifecycleEnv(overrides map[string]string) []string {
-	env := map[string]string{}
-	for _, pair := range os.Environ() {
-		if key, value, ok := strings.Cut(pair, "="); ok {
-			env[key] = value
-		}
-	}
-	for key, value := range overrides {
-		env[key] = value
-	}
-	out := make([]string, 0, len(env))
-	for key, value := range env {
-		out = append(out, key+"="+value)
-	}
-	return out
-}
-
-func cloneEnv(env map[string]string) map[string]string {
-	clone := map[string]string{}
-	for key, value := range env {
-		clone[key] = value
-	}
-	return clone
 }
 
 func committedHostileArtifactSource(t *testing.T, root string) string {

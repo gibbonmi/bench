@@ -1,7 +1,6 @@
 package surface
 
 import (
-	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,6 +8,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/contract"
 )
 
 func TestBinaryRepairContracts(t *testing.T) {
@@ -87,10 +88,13 @@ func testRepairInterruptedPromotion(t *testing.T) {
 	version := "9.8.7"
 	registry := newBinaryRepairRegistry(t, version, "#!/bin/sh\necho repaired-after-interrupt\n")
 	ready := filepath.Join(f.Root, "repair ready [*]")
-	env := cloneEnv(f.Env)
-	env["BENCH_KIT"], env["BENCH_NPM_REGISTRY"], env["BENCH_TEST_REPAIR_READY_FILE"] = kit, registry.URL, ready
+	env := map[string]string{
+		"BENCH_KIT":                    kit,
+		"BENCH_NPM_REGISTRY":           registry.URL,
+		"BENCH_TEST_REPAIR_READY_FILE": ready,
+	}
 	cmd := exec.Command("bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "version")
-	cmd.Dir, cmd.Env = f.Root, lifecycleEnv(env)
+	cmd.Dir, cmd.Env = f.Root, contract.ProcessEnv(f.Env, env)
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
