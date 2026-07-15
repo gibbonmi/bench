@@ -870,12 +870,18 @@
       </div>
       <div class="callout">
         <span class="label">So how does the agent know to approve the work?</span>
-        <p>It never does, and that is the design. Two verdicts matter and the agent owns
-        neither: the gate's exit code decides <em>done</em> (whether work may commit), and
-        you decide <em>shipped</em> (whether it merges). The agent's belief that the code
-        works is never a completion signal. It applies the same rule to its own subagents:
-        a delegate saying "done" is a claim, and the claim is re-checked against the gate
-        and <code>git status</code> before it's accepted.</p>
+        <p>It doesn't, because a model grading its own output is the weakest link in any
+        agent workflow. The same reasoning that produced a bug will look at that bug and
+        call it correct: the model's confidence and its errors come from the same place,
+        so one cannot audit the other. The gate breaks that circle with a verdict computed
+        entirely outside the model. It is a deterministic script that compiles the code,
+        runs the tests and checks, and returns an exit code, and that code is the same no
+        matter who asks or how persuasively. This is why a green gate is allowed to mean
+        "may commit" while no amount of model conviction is: the verdict is reproducible,
+        you can re-run it yourself, and it cannot be talked into agreeing. The exit code
+        decides <em>done</em>; you decide <em>shipped</em>. The same logic covers
+        delegation: a subagent's "done" is one model's claim about another model's work, so
+        it is re-checked against the gate and <code>git status</code> before it counts.</p>
       </div>
 
       <div class="group-label">The components</div>
