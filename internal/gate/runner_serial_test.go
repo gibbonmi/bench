@@ -19,6 +19,23 @@ import (
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
+func TestRunnerShellcheckAbsentSkips(t *testing.T) {
+	root := t.TempDir()
+	phase := Phase{Name: "shellcheck", Argv: []string{"definitely-not-installed-shellcheck-for-bench-test"}, Optional: true}
+	var stdout, stderr bytes.Buffer
+	rc := runPhases(context.Background(), root, []Phase{phase}, outerMode, &stdout, &stderr)
+	if rc != 0 {
+		t.Fatalf("runPhases rc = %d, want skip to stay green; stdout=%q stderr=%q", rc, stdout.String(), stderr.String())
+	}
+	out := stdout.String() + stderr.String()
+	if strings.Contains(out, "gate: red") || strings.Contains(out, "shellcheck reported issues") {
+		t.Fatalf("optional missing shellcheck looked red:\n%s", out)
+	}
+	if !strings.Contains(out, "phase shellcheck: skipped") {
+		t.Fatalf("missing shellcheck skip summary:\n%s", out)
+	}
+}
+
 func r12Contention(id, action string) r21ProofCase {
 	return r21ProofCase{id: id, driver: func(t *testing.T) {
 		root := gateTestRepo(t, "#!/usr/bin/env bash\ngitdir=\"$(git rev-parse --absolute-git-dir)\"\nprintf 'run\\n' >> \"$gitdir/owner-runs\"\n[ \"$(wc -l < \"$gitdir/owner-runs\")\" -eq 1 ] || exit 0\ntouch \"$gitdir/owner-started\"\nwhile [ ! -f \"$gitdir/release-owner\" ]; do sleep .01; done\nexit 0\n", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)

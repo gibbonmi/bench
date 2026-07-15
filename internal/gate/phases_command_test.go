@@ -218,23 +218,6 @@ func TestShellcheckPhaseExpandsHookAndLibShellFiles(t *testing.T) {
 	}
 }
 
-func TestRunnerShellcheckAbsentSkips(t *testing.T) {
-	root := t.TempDir()
-	phase := Phase{Name: "shellcheck", Argv: []string{"definitely-not-installed-shellcheck-for-bench-test"}, Optional: true}
-	var stdout, stderr bytes.Buffer
-	rc := runPhases(context.Background(), root, []Phase{phase}, outerMode, &stdout, &stderr)
-	if rc != 0 {
-		t.Fatalf("runPhases rc = %d, want skip to stay green; stdout=%q stderr=%q", rc, stdout.String(), stderr.String())
-	}
-	out := stdout.String() + stderr.String()
-	if strings.Contains(out, "gate: red") || strings.Contains(out, "shellcheck reported issues") {
-		t.Fatalf("optional missing shellcheck looked red:\n%s", out)
-	}
-	if !strings.Contains(out, "phase shellcheck: skipped") {
-		t.Fatalf("missing shellcheck skip summary:\n%s", out)
-	}
-}
-
 // TestShellcheckPhaseLintsNamedEnforcementShell is the bite-proof for the extended
 // lint set: a lint error planted in a shift adapter, in .bench/gate.sh, and in the
 // embedded pre-push asset must each turn the shellcheck phase red and be cited by
