@@ -1,6 +1,6 @@
 # Static, bounded guard discovery (FT80)
 
-Status: staged
+Status: implemented
 
 ## Problem
 

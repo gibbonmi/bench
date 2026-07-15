@@ -251,13 +251,3 @@ func resolveModelVerdict(benchModel string, benchModelSet bool, linesEnvExists b
 	return "", 1, "bench shift: BENCH_MODEL='" + benchModel + "' is not a bound model; set it to one of top=" +
 		b.Top + " mid=" + b.Mid + " cheap=" + b.Cheap
 }
-
-// DescribeBinding returns the denies-clause body the shim prints after "denies: ".
-func DescribeBinding(linesEnvExists bool, content []byte) string {
-	if !linesEnvExists {
-		return "unrouted (no .bench/lines.env binding)"
-	}
-	b := ParseBinding(content)
-	return "Agent delegation off the bound line (top=" + dash(b.Top) + " mid=" + dash(b.Mid) +
-		" cheap=" + dash(b.Cheap) + ")"
-}

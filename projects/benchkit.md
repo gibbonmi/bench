@@ -32,8 +32,8 @@ branch-agnostic. This line is only the binding.)
   TOON emitter behind them). The agent-facing read-only
   surface, and the AXI-conformant half of the hybrid output contract: TOON stdout,
   definitive empty states, structured errors on stdout, exit 0/1/2. Gate-tested by
-  the AXI contract fragments. Guard manifests come from each guard script's own
-  `--describe` (generated from the rules it enforces — never a registry), and
+  the AXI contract fragments. Guard manifests come from each guard script's static
+  leading-comment header (read as data, never executed), and
   `bench guards --brief` is the surface the SessionStart hook injects.
   `bench diff` is the single source of review-base truth: the shift loop records
   the pre-shift HEAD in `branch.<name>.benchBase`, `diff` resolves that key first
@@ -133,7 +133,7 @@ byte-shape is load-bearing:
    metadata, Claude skill mirroring, shared-rule single-sourcing, stale command
    references, token-diet placement, workflow anchors, line-routing enforcement,
    compiled-core build/vet/test/cross-compile checks, release-workflow structure,
-   guard `--describe` manifests, the profile's hostile-input checklist anchor, and
+   static guard-header manifests, the profile's hostile-input checklist anchor, and
    acceptance-coverage map validation.
 2. **shellcheck** — best-effort, runs only when installed (`-S warning`). Not a hard
    dependency; upgrades the shell lint automatically once present.

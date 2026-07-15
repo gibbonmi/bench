@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# name: stop
+# boundary: Stop
+# denies: stopping an armed shift while the gate is red
+# why: the gate is the completion oracle; the agent cannot declare done on red
 # Stop hook: the completion oracle. When a shift is armed (BENCH_SHIFT=1), the
 # agent is not allowed to stop while the gate is red. This is what makes "the
 # gate is the oracle, you never grade your own work" enforceable rather than
@@ -9,26 +13,14 @@
 # honors stop_hook_active, enforces only when BENCH_SHIFT=1, runs `<wrapper> gate`,
 # truncates the output for the BLOCKED message, and writes the verdict cache (keyed
 # to the tree hash from the Go core — never a forged verdict). The shim owns only
-# `--describe` and the fail-OPEN rim: a missing lib, wrapper, or core warns loudly,
+# the fail-OPEN rim: a missing lib, wrapper, or core warns loudly,
 # writes NO cache, and allows the stop (exit 0). A missing oracle must degrade to
 # "no verdict", never a false green — the mirror of the git guard's fail-closed.
 #
 # Wire it in .claude/settings.json under hooks.Stop (and .codex/hooks.json Stop).
 # The harness feeds the hook JSON on stdin; exit 2 blocks the stop and returns
-# stderr to the agent. `--describe` (first arg) prints the guard manifest and exits
-# 0 without reading stdin.
+# stderr to the agent.
 set -uo pipefail
-
-# `--describe` short-circuits before any stdin read or wrapper resolution. The stop
-# manifest's denies clause is fixed (unlike the agent-line guard's live binding), so
-# it needs no core call.
-if [[ "${1:-}" == "--describe" ]]; then
-  printf 'name: stop\n'
-  printf 'boundary: Stop\n'
-  printf 'denies: stopping an armed shift (BENCH_SHIFT=1) while the gate is red\n'
-  printf 'why: the gate is the completion oracle; the agent cannot declare done on red\n'
-  exit 0
-fi
 
 # Fail open: allow the stop with a loud warning and write no gate cache — never forge
 # a verdict the ambient dashboard would then report as real.

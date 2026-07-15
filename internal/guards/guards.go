@@ -1,11 +1,9 @@
 // Package guards ports `bench guards` (and `--brief`): every deny-capable guard's
 // manifest aggregated into a `guards[N]{guard,boundary,denies,wired}:` TOON table, so the
 // block surface is learnable without a collision. Guards are discovered by convention
-// (each .bench/hooks/*.sh and the installed git pre-push hook); each guard's --describe
-// is read under a hard time bound so a hook that
-// ignores --describe cannot stall aggregation, and an unmanaged pre-push is never
-// executed — running an unknown hook's body just to read a manifest is the collision
-// this surface avoids.
+// (each .bench/hooks/*.sh and the installed git pre-push hook), and their manifests are
+// parsed from static leading-comment headers. Discovery reads scripts only as data and
+// never executes them.
 //
 // The `wired` cell names which harness configs actually reference a hook script, so the
 // deny surface the reader sees matches the hooks that can fire here: it is derived (never
@@ -18,89 +16,55 @@ package guards
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
-	"syscall"
-	"time"
 
 	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// describeTimeout bounds each guard's --describe. Replaces the shell's coreutils
-// `timeout 5` / watchdog with exec.CommandContext. The deadline kills the hook's
-// whole process group (its own group via Setpgid), so a grandchild (a `sleep`)
-// dies with it instead of holding the stdout pipe; waitGrace is the backstop that
-// forces Wait to return even if something in the group survives the kill.
-const (
-	describeTimeout = 5 * time.Second
-	waitGrace       = 3 * time.Second
-)
-
-// guardDescribe runs `bash <path> --describe` with stdin on the null device under the
-// time bound, returning its stdout and exit code — or 124 when the bound trips.
-func guardDescribe(path string) (string, int) {
-	ctx, cancel := context.WithTimeout(context.Background(), describeTimeout)
-	defer cancel()
-	cmd := exec.CommandContext(ctx, "bash", path, "--describe")
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	cmd.Cancel = func() error {
-		if cmd.Process == nil {
-			return nil
-		}
-		return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+// HeaderFields reads the static manifest in path's leading comment block. The first
+// occurrence of each key wins; an empty first value remains missing/invalid.
+func HeaderFields(path string) (map[string]string, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
 	}
-	cmd.WaitDelay = waitGrace
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if ctx.Err() == context.DeadlineExceeded {
-		return "", 124
-	}
-	if err == nil {
-		return out.String(), 0
-	}
-	var ee *exec.ExitError
-	if errors.As(err, &ee) {
-		return out.String(), ee.ExitCode()
-	}
-	return out.String(), 1
+	return parseHeader(string(content)), nil
 }
 
-// manifestField pulls one `key: value` field from a manifest blob; "" if absent.
-func manifestField(out, key string) string {
-	prefix := key + ": "
-	for _, line := range strings.Split(out, "\n") {
-		if strings.HasPrefix(line, prefix) {
-			return strings.TrimPrefix(line, prefix)
+func parseHeader(content string) map[string]string {
+	fields := map[string]string{}
+	for _, line := range strings.Split(content, "\n") {
+		if strings.TrimSpace(line) != "" && !strings.HasPrefix(line, "#") {
+			break
+		}
+		for _, key := range []string{"name", "boundary", "denies", "why"} {
+			prefix := "# " + key + ": "
+			if _, found := fields[key]; !found && strings.HasPrefix(line, prefix) {
+				fields[key] = strings.TrimRight(strings.TrimPrefix(line, prefix), " \t\r")
+			}
 		}
 	}
-	return ""
+	return fields
 }
+
+func manifestField(content, key string) string { return parseHeader(content)[key] }
 
 // guardRow builds the row for one discovered guard, or (nil,false) when the guard is
-// informational (`denies: nothing`) and excluded. A guard that does not answer
-// --describe (nonzero, timeout, or a manifest missing any of the three fields) gets a
+// informational and excluded. A guard with an unreadable or incomplete header gets a
 // definitive `no manifest` row under its fallback name rather than a silent omission.
 func guardRow(path, fallback string) ([]string, bool) {
-	out, rc := guardDescribe(path)
-	switch {
-	case rc == 124:
-		return []string{fallback, "", "no manifest (timed out)"}, true
-	case rc != 0:
+	fields, err := HeaderFields(path)
+	if err != nil {
 		return []string{fallback, "", "no manifest"}, true
 	}
-	name := manifestField(out, "name")
-	boundary := manifestField(out, "boundary")
-	denies := manifestField(out, "denies")
-	if name == "" || boundary == "" || denies == "" {
+	name, boundary, denies, why := fields["name"], fields["boundary"], fields["denies"], fields["why"]
+	if name == "" || boundary == "" || denies == "" || why == "" {
 		return []string{fallback, "", "no manifest"}, true
 	}
 	if denies == "nothing (informational)" {

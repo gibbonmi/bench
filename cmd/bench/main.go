@@ -33,6 +33,7 @@ import (
 	"github.com/gibbonmi/bench/internal/models"
 	"github.com/gibbonmi/bench/internal/outline"
 	"github.com/gibbonmi/bench/internal/roadmap"
+	"github.com/gibbonmi/bench/internal/sessioninspect"
 	"github.com/gibbonmi/bench/internal/shift"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/status"
@@ -149,19 +150,12 @@ func resolveModel(args []string) (string, int) {
 // an exit code — 0 allow (or any degraded warn-and-allow, with its WARNING on stderr), 2
 // deny (with the DENIED message on stderr). The deferred recover maps any panic to 3, so
 // exit 2 means only an intentional deny and the shim's fail-open rim catches a crash.
-// `--describe-binding` emits the live denies clause to stdout without reading stdin,
-// feeding the shim's `--describe`.
-func checkAgentLine(args []string, stdin io.Reader, stdout, stderr io.Writer) (code int) {
+func checkAgentLine(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writer) (code int) {
 	defer func() {
 		if r := recover(); r != nil {
 			code = 3
 		}
 	}()
-	if len(args) > 0 && args[0] == "--describe-binding" {
-		_, exists, content := linesEnv()
-		fmt.Fprintln(stdout, lines.DescribeBinding(exists, content))
-		return 0
-	}
 	data, err := io.ReadAll(stdin)
 	if err != nil {
 		data = nil // unreadable stdin reads as unparseable → fail open
@@ -258,18 +252,13 @@ func treeHash(args []string) (string, int) {
 // stdin, classifies through internal/gitguard, and yields the verdict as an exit code —
 // 0 allow, 2 block (with the `BLOCKED:` message on stderr), 3 a genuine failure to run.
 // The deferred recover maps any panic to 3, not Go's default exit-2, so exit 2 means
-// only an intentional block and the shim can trust it. `--describe-classes` prints the
-// deny surface to stdout without reading stdin, feeding the shim's `--describe`.
-func guardGit(args []string, stdin io.Reader, stdout, stderr io.Writer) (code int) {
+// only an intentional block and the shim can trust it.
+func guardGit(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writer) (code int) {
 	defer func() {
 		if r := recover(); r != nil {
 			code = 3
 		}
 	}()
-	if len(args) > 0 && args[0] == "--describe-classes" {
-		fmt.Fprintln(stdout, gitguard.DescribeClasses())
-		return 0
-	}
 	data, err := io.ReadAll(stdin)
 	if err != nil {
 		return 3
@@ -338,6 +327,8 @@ func run(args []string, stdout, stderr *os.File) int {
 		return worktree.Subshell(args[1:], os.Stdin, stdout, stderr)
 	case "resume-clean":
 		return worktree.ResumeCleanCommand(args[1:], stdout, stderr)
+	case "session-inspect":
+		return sessioninspect.Command(args[1:], stdout, stderr)
 	case "worktree-hook":
 		return harness.WorktreeCommand(args[1:], os.Stdin, stdout, stderr)
 	case "shift":

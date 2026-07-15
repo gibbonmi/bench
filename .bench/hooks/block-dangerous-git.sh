@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# name: block-dangerous-git
+# boundary: PreToolUse:Bash
+# denies: destructive git operations
+# why: agents lack destructive-git authority; merge and history rewrites belong to the reviewer
 # PreToolUse guard: the agent has no destructive git authority. This makes
 # invariant #4 ("you assist, you don't decide where a decision is mine")
 # enforceable for the operations that can silently destroy a shift's work or
@@ -20,7 +24,7 @@
 # PreToolUse envelope to `bench guard-git`, and passes the verdict through. All
 # classification (tokenize, scan, verdict, the BLOCKED message) lives in
 # internal/gitguard. The shim owns exactly two fail-closed rims — core
-# unresolvable/missing, and core errored — plus `--describe`. Wire under
+# unresolvable/missing, and core errored. Wire under
 # hooks.PreToolUse with matcher "Bash". Exit 2 blocks and returns the message to
 # the agent.
 set -uo pipefail
@@ -42,23 +46,6 @@ resolve_wrapper() {
   fi
   command -v bench 2>/dev/null || return 1
 }
-
-# `--describe` prints the guard manifest and exits 0 without reading stdin, so
-# `bench guards` can aggregate the deny surface without a collision. The denies
-# clause is generated from the core's `guard-git --describe-classes` — the same
-# deny table classification uses, so the advertisement cannot drift. Core
-# unreachable → the manifest degrades honestly rather than lying.
-if [[ "${1:-}" == "--describe" ]]; then
-  printf 'name: block-dangerous-git\n'
-  printf 'boundary: PreToolUse:Bash\n'
-  if cmd="$(resolve_wrapper)" && classes="$("$cmd" guard-git --describe-classes 2>/dev/null)" && [[ -n "$classes" ]]; then
-    printf 'denies: destructive git — %s\n' "$classes"
-  else
-    printf 'denies: manifest unavailable (analyzer missing)\n'
-  fi
-  printf 'why: agents lack destructive-git authority; merge and history rewrites belong to the reviewer\n'
-  exit 0
-fi
 
 input="$(cat)"
 

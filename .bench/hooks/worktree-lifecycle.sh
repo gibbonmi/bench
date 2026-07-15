@@ -1,16 +1,12 @@
 #!/usr/bin/env bash
+# name: worktree-lifecycle
+# boundary: WorktreeCreate/WorktreeRemove
+# denies: nothing (informational)
+# why: routes Claude worktree events through the deterministic Bench lifecycle
 # Claude WorktreeCreate/WorktreeRemove adapter. This shim resolves the launcher
 # through the shared resolver and passes the official stdin event to the Go adapter;
 # it owns no JSON parsing, request identity, ownership, lock, or cleanup policy.
 set -uo pipefail
-
-if [[ "${1:-}" == "--describe" ]]; then
-  printf 'name: worktree-lifecycle\n'
-  printf 'boundary: WorktreeCreate/WorktreeRemove\n'
-  printf 'denies: nothing (informational)\n'
-  printf 'why: routes Claude worktree events through the deterministic Bench lifecycle\n'
-  exit 0
-fi
 
 case "${1:-}" in
   create | remove) action="$1" ;;

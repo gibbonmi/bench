@@ -129,6 +129,10 @@ func testDoctorSessionStartAdvisory(t *testing.T) {
 		t.Fatalf("create repo bin: %v", err)
 	}
 	copyBenchScripts(t, filepath.Join(repo, "bin"))
+	if err := os.MkdirAll(filepath.Join(repo, "dist"), 0o755); err != nil {
+		t.Fatalf("create repo dist: %v", err)
+	}
+	copyFileTo(t, filepath.Join(contract.SubjectRoot(t), "dist", "bench"), filepath.Join(repo, "dist", "bench"))
 	repoFixture := contract.NewFixtureAt(t, repo, contract.IsolatedEnv(t, repo))
 	repoFixture.Run("git", "init", "-q").RequireExit(0)
 	hook := filepath.Join(contract.SubjectRoot(t), ".bench", "hooks", "session-start.sh")

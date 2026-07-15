@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/guards"
 	"github.com/gibbonmi/bench/internal/packagesurface"
 )
 
@@ -19,7 +20,7 @@ func checkPackageCoreAndGuards(root string) []string {
 	diags = append(diags, checkGoCore(root)...)
 	diags = append(diags, checkReleaseWorkflow(root)...)
 	diags = append(diags, checkShippedIdentityStrings(root)...)
-	diags = append(diags, checkGuardDescribeManifests(root)...)
+	diags = append(diags, checkGuardHeaderManifests(root)...)
 	diags = append(diags, checkGuardResolverOrderDrift(root)...)
 	return diags
 }
@@ -279,29 +280,35 @@ func checkReleaseWorkflow(root string) []string {
 	return diags
 }
 
-func checkGuardDescribeManifests(root string) []string {
+func checkGuardHeaderManifests(root string) []string {
 	var diags []string
-	for _, guard := range []string{"block-dangerous-git", "check-agent-line", "stop", "session-start"} {
-		path := filepath.Join(root, ".bench", "hooks", guard+".sh")
+	for _, guard := range []struct {
+		name string
+		path string
+	}{
+		{"block-dangerous-git", filepath.Join(root, ".bench", "hooks", "block-dangerous-git.sh")},
+		{"check-agent-line", filepath.Join(root, ".bench", "hooks", "check-agent-line.sh")},
+		{"stop", filepath.Join(root, ".bench", "hooks", "stop.sh")},
+		{"session-start", filepath.Join(root, ".bench", "hooks", "session-start.sh")},
+		{"worktree-lifecycle", filepath.Join(root, ".bench", "hooks", "worktree-lifecycle.sh")},
+		{"pre-push", filepath.Join(root, "internal", "adopt", "prepush.sh")},
+	} {
+		path := guard.path
 		if !exists(path) {
 			continue
 		}
-		probe := runAtCleanEnv(root, "bash", path, "--describe")
-		if probe == nil || probe.ExitCode != 0 {
-			exit := 1
-			if probe != nil {
-				exit = probe.ExitCode
-			}
-			diags = append(diags, fmt.Sprintf("guard %s --describe did not exit 0 (exit %d)", guard, exit))
+		fields, err := guards.HeaderFields(path)
+		if err != nil {
+			diags = append(diags, fmt.Sprintf("guard %s manifest unreadable", guard.name))
 			continue
 		}
 		for _, key := range []string{"name", "boundary", "denies", "why"} {
-			if !regexp.MustCompile(`(?m)^` + regexp.QuoteMeta(key) + `: `).MatchString(probe.Stdout) {
-				diags = append(diags, fmt.Sprintf("guard %s --describe manifest missing %s key", guard, key))
+			if fields[key] == "" {
+				diags = append(diags, fmt.Sprintf("guard %s manifest missing %s key", guard.name, key))
 			}
 		}
-		if guard == "session-start" && !regexp.MustCompile(`(?m)^denies: nothing \(informational\)$`).MatchString(probe.Stdout) {
-			diags = append(diags, "session-start --describe is not classified informational (denies: nothing)")
+		if guard.name == "session-start" && fields["denies"] != "nothing (informational)" {
+			diags = append(diags, "session-start is not classified informational (denies: nothing)")
 		}
 	}
 	return diags

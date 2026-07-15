@@ -8,7 +8,6 @@ import (
 	"regexp"
 	"strings"
 	"testing"
-	"time"
 )
 
 func TestAXIGuardsContracts(t *testing.T) {
@@ -18,9 +17,8 @@ func TestAXIGuardsContracts(t *testing.T) {
 	contract.RunParallel(t, "AXI guards --brief contract", testAXIGuardsBrief)
 	contract.RunParallel(t, "AXI guards usage/subdirectory contract", testAXIGuardsUsageSubdirectory)
 	contract.RunParallel(t, "AXI guards path-with-spaces contract", testAXIGuardsPathWithSpaces)
-	contract.RunParallel(t, "AXI guards --describe timeout-bound contract", testAXIGuardsDescribeTimeoutBound)
 	contract.RunParallel(t, "AXI guards unmanaged-pre-push safety contract", testAXIGuardsUnmanagedPrePushSafety)
-	contract.RunParallel(t, "AXI block-dangerous-git core-unreachable manifest contract", testAXIBlockDangerousGitCoreUnreachableManifest)
+	contract.RunParallel(t, "AXI guards static non-execution sentinel contract", testAXIGuardsStaticNonExecution)
 	contract.RunParallel(t, "AXI block-dangerous-git linked-worktree classification contract", testAXIBlockDangerousGitLinkedWorktreeClassification)
 	contract.RunParallel(t, "session-start guard-brief injection contract", testSessionStartGuardBriefInjection)
 	contract.RunParallel(t, "session-start resume failure warning contract", testSessionStartSurfacesResumeFailure)
@@ -49,12 +47,6 @@ func testAXIGuardsAggregation(t *testing.T) {
 	requireGuardsLineMatching(t, out.Stdout, `^  block-dangerous-git,.*,"claude,codex"$`)
 
 	prepush := gitPrePushPath(t, f)
-	manifest := f.Run("bash", prepush, "--describe")
-	manifest.RequireExit(0)
-	for _, key := range []string{"name", "boundary", "denies", "why"} {
-		requireGuardsLineMatching(t, manifest.Stdout, "^"+key+": ")
-	}
-
 	// An orphan hook script referenced by neither config renders the definitive
 	// `none`, never a blank cell.
 	f.WriteExecutable(".bench/hooks/extra.sh", "#!/usr/bin/env bash\ncat >/dev/null\nexit 0\n")
@@ -115,21 +107,6 @@ func testAXIGuardsPathWithSpaces(t *testing.T) {
 	}
 }
 
-func testAXIGuardsDescribeTimeoutBound(t *testing.T) {
-	f := contract.NewFixture(t)
-	f.WriteExecutable(".bench/hooks/slow.sh", "#!/usr/bin/env bash\nif [ \"${1:-}\" = \"--describe\" ]; then sleep 30; fi\nexit 0\n")
-
-	start := time.Now()
-	out := f.Bench("guards")
-	elapsed := time.Since(start)
-
-	out.RequireExit(0)
-	if elapsed >= 10*time.Second {
-		t.Fatalf("guards did not bound a slow --describe (took %v)", elapsed)
-	}
-	requireGuardsLine(t, out.Stdout, `  slow,"",no manifest (timed out),none`)
-}
-
 func testAXIGuardsUnmanagedPrePushSafety(t *testing.T) {
 	f := contract.NewFixture(t)
 	sentinel := filepath.Join(t.TempDir(), "ran-foreign-prepush")
@@ -152,17 +129,36 @@ func testAXIGuardsUnmanagedPrePushSafety(t *testing.T) {
 	}
 }
 
-func testAXIBlockDangerousGitCoreUnreachableManifest(t *testing.T) {
-	hook := filepath.Join(contract.SubjectRoot(t), ".bench", "hooks", "block-dangerous-git.sh")
-	if _, err := os.Stat(hook); err != nil {
-		t.Skipf("block-dangerous-git hook unavailable: %v", err)
-	}
+func testAXIGuardsStaticNonExecution(t *testing.T) {
 	f := contract.NewFixture(t)
+	type sentinel struct {
+		name   string
+		header string
+		path   string
+	}
+	fixtures := []sentinel{
+		{"full", "# name: full\n# boundary: test\n# denies: a guarded action\n# why: sentinel\n", filepath.Join(t.TempDir(), "full-executed")},
+		{"incomplete", "# name: incomplete\n# boundary: test\n# denies: a guarded action\n", filepath.Join(t.TempDir(), "incomplete-executed")},
+		{"absent", "", filepath.Join(t.TempDir(), "absent-executed")},
+		{"informational", "# name: informational\n# boundary: test\n# denies: nothing (informational)\n# why: sentinel\n", filepath.Join(t.TempDir(), "informational-executed")},
+	}
+	for _, fixture := range fixtures {
+		body := fmt.Sprintf("#!/usr/bin/env bash\n%stouch %q\nexit 0\n", fixture.header, fixture.path)
+		f.WriteExecutable(filepath.Join(".bench", "hooks", fixture.name+".sh"), body)
+	}
 
-	out := f.RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, "bash", hook, "--describe")
-
-	out.RequireExit(0)
-	out.RequireContains(out.Stdout, "manifest unavailable (analyzer missing)")
+	guards := f.Bench("guards")
+	guards.RequireExit(0)
+	requireGuardsLine(t, guards.Stdout, `  full,test,a guarded action,none`)
+	requireGuardsLine(t, guards.Stdout, `  incomplete,"",no manifest,none`)
+	requireGuardsLine(t, guards.Stdout, `  absent,"",no manifest,none`)
+	requireNoGuardsLineMatching(t, guards.Stdout, `^  informational,`)
+	f.Bench("session-inspect").RequireExit(0)
+	for _, fixture := range fixtures {
+		if _, err := os.Stat(fixture.path); !os.IsNotExist(err) {
+			t.Fatalf("%s header fixture executed; evidence stat err=%v", fixture.name, err)
+		}
+	}
 }
 
 func testAXIBlockDangerousGitLinkedWorktreeClassification(t *testing.T) {
@@ -238,14 +234,10 @@ func testSessionStartSurfacesResumeFailure(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteExecutable(".bench/bin/bench.sh", `#!/usr/bin/env bash
 case "${1:-}" in
-  resume-clean)
+  session-inspect)
     printf 'injected resume failure\n' >&2
-    exit 1
-    ;;
-  status)
+    printf 'warning: bench session-start: resume-clean failed; inspect retained worktree state\n' >&2
     printf 'bench: clean — nothing pending\n'
-    ;;
-  guards)
     printf 'full manifests: bench guards\n'
     ;;
 esac

@@ -99,7 +99,7 @@ hook and adapter plumbing is described in the sections below.
 Driven by hooks and adapters, never typed by sessions — the one enumeration
 (the always-loaded inventory in `.bench/BENCH.md` points here): `bench tree-hash`,
 `bench gate-run`, `bench gate-phases`, `bench guard-git`, `bench resolve-model`,
-`bench check-agent-line`, `bench stop-verdict`, `bench worktree-pool`,
+`bench check-agent-line`, `bench stop-verdict`, `bench session-inspect`, `bench worktree-pool`,
 `bench worktree-lease-file`, `bench worktree-hook`, `bench resume-clean`.
 
 ## Harness adapter for the shift loop
@@ -128,8 +128,8 @@ Git safety is layered:
 
 - The git `pre-push` hook blocks direct pushes to the default branch and, when
   a gate pin is recorded (`bench gate pin`), `.bench` drift from the pinned
-  tree. Unpinned, the drift check is disarmed and the hook's `--describe`
-  manifest says so.
+  tree. Unpinned, the drift check is disarmed; guard discovery reports a static,
+  generic deny surface while enforcement remains live.
 - Claude Code and Codex hook adapters call the shared scripts in `.bench/hooks/`.
   Codex loads `.codex/hooks.json` only after you trust it once via `/hooks`
   (its project-hook trust step), and only on a Codex build new enough to support

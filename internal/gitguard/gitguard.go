@@ -12,7 +12,6 @@ package gitguard
 
 import (
 	"encoding/json"
-	"strings"
 )
 
 // Checker resolves repository truth for the two verdicts that need it (checkout
@@ -23,9 +22,8 @@ type Checker struct {
 	BranchExists func(string) bool
 }
 
-// denyTable is the ordered source for every destructive class: classify returns from it
-// (via denyLabels) and DescribeClasses enumerates it, so the block surface and its
-// advertised manifest share one definition.
+// denyTable is the ordered source for every destructive class; classification returns
+// its labels in the live block verdict.
 var denyTable = []struct{ key, label string }{
 	{"push", "git push"},
 	{"reset", "git reset --hard"},
@@ -81,25 +79,4 @@ func BlockMessage(label string) string {
 	return "BLOCKED: `" + label + "` — you don't have authority over this. " +
 		"The merge and any history rewrite are the user's; a failed shift is rolled back " +
 		"by bench, not by you. Stop and hand back."
-}
-
-// DescribeClasses is the comma-joined deny surface for the guard manifest
-// (`--describe-classes`): the unique labels in table order.
-func DescribeClasses() string {
-	var seen []string
-	for _, d := range denyTable {
-		if !containsStr(seen, d.label) {
-			seen = append(seen, d.label)
-		}
-	}
-	return strings.Join(seen, ", ")
-}
-
-func containsStr(xs []string, s string) bool {
-	for _, x := range xs {
-		if x == s {
-			return true
-		}
-	}
-	return false
 }

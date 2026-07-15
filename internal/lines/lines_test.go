@@ -337,26 +337,6 @@ func TestResolveProviderModelVerdictCompatibility(t *testing.T) {
 	}
 }
 
-func TestDescribeBinding(t *testing.T) {
-	tests := []struct {
-		name    string
-		exists  bool
-		content string
-		want    string
-	}{
-		{"unrouted", false, "", "unrouted (no .bench/lines.env binding)"},
-		{"routed-full", true, fullBinding, "Agent delegation off the bound line (top=fable-5 mid=opus-4-8 cheap=sonnet-5)"},
-		{"routed-empty-tiers", true, "", "Agent delegation off the bound line (top=- mid=- cheap=-)"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := DescribeBinding(tt.exists, []byte(tt.content)); got != tt.want {
-				t.Errorf("DescribeBinding = %q, want %q", got, tt.want)
-			}
-		})
-	}
-}
-
 func contains(s, sub string) bool {
 	return strings.Contains(s, sub)
 }

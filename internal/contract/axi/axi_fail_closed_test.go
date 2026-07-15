@@ -20,10 +20,6 @@ func testAXIBlockDangerousGitAnalyzerMissing(t *testing.T) {
 	hook := filepath.Join(contract.SubjectRoot(t), ".bench", "hooks", "block-dangerous-git.sh")
 	pathEnv := map[string]string{"PATH": "/usr/bin:/bin"}
 
-	describe := contract.RunAtWithInput(t, f, f.Root, pathEnv, "", bashPath(t), hook, "--describe")
-	describe.RequireExit(0)
-	requireAXILine(t, describe.Stdout, "denies: manifest unavailable (analyzer missing)")
-
 	enforce := contract.RunAtWithInput(t, f, f.Root, pathEnv, `{"tool_input":{"command":"git push"}}`, bashPath(t), hook)
 	enforce.RequireExit(2)
 	enforce.RequireContains(enforce.Stderr, "BLOCKED")

@@ -123,16 +123,6 @@ printf '%s\n' "$@" > "$BENCH_TEST_ARGV"
 	}
 }
 
-func TestGuardGitDescribeClasses(t *testing.T) {
-	var out bytes.Buffer
-	if code := guardGit([]string{"--describe-classes"}, strings.NewReader(""), &out, io.Discard); code != 0 {
-		t.Fatalf("--describe-classes exit = %d, want 0", code)
-	}
-	if !strings.HasPrefix(out.String(), "git push, ") {
-		t.Errorf("--describe-classes did not print the deny surface to stdout: %q", out.String())
-	}
-}
-
 func TestGuardGitBlockAllow(t *testing.T) {
 	var errb bytes.Buffer
 	block := `{"tool_input":{"command":"git push"}}`

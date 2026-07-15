@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
+# name: session-start
+# boundary: SessionStart
+# denies: nothing (informational)
+# why: fixture for the by-path advisory contract
 # Canary fixture: the by-path advisory branch omits the "run `bench doctor --fix`"
 # pointer (story 14), so a cold session where bench resolves only by path gets no
 # repair hint. The session-start advisory contract must go red.
 set -uo pipefail
-if [[ "${1:-}" == "--describe" ]]; then
-  printf 'name: session-start\nboundary: SessionStart\ndenies: nothing (informational)\nwhy: x\n'; exit 0
-fi
 bench_cmd() {
   local root candidate
   root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
