@@ -341,10 +341,6 @@ func ConservativeCleanup(root string) (ResumeResult, error) {
 		if wt.Class == ClassRoot {
 			continue
 		}
-		if wt.Class == ClassPoolLease {
-			result.Retained[ReasonLiveLease]++
-			continue
-		}
 		if _, err := os.Stat(wt.Path); os.IsNotExist(err) {
 			continue
 		}

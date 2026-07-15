@@ -36,19 +36,54 @@ const staleAfter = time.Minute
 
 var chmodPool = os.Chmod
 
+type LeaseState string
+
+const (
+	LeaseLive    LeaseState = "live"
+	LeaseDead    LeaseState = "dead"
+	LeaseUnknown LeaseState = "unknown"
+)
+
 // pidAlive treats kill-0 success and EPERM as alive; only ESRCH means gone.
 func pidAlive(pid int) bool {
 	err := syscall.Kill(pid, 0)
 	return err == nil || errors.Is(err, syscall.EPERM)
 }
 
+func leaseOwnerPID(content []byte) (int, bool) {
+	fields := strings.Fields(string(content))
+	if len(fields) == 0 {
+		return 0, false
+	}
+	pid, err := strconv.Atoi(fields[0])
+	return pid, err == nil && pid > 0
+}
+
+// ProbeLease reports whether a well-formed lease's recorded owner is live.
+// Every unreadable or malformed lease is unknown so lifecycle consumers fail closed.
+func ProbeLease(leasePath string) LeaseState {
+	info, err := os.Lstat(leasePath)
+	if err != nil || !info.Mode().IsRegular() {
+		return LeaseUnknown
+	}
+	content, err := os.ReadFile(leasePath)
+	if err != nil {
+		return LeaseUnknown
+	}
+	pid, ok := leaseOwnerPID(content)
+	if !ok {
+		return LeaseUnknown
+	}
+	if pidAlive(pid) {
+		return LeaseLive
+	}
+	return LeaseDead
+}
+
 // reclaimable requires a dead recorded pid or an aged unreadable/legacy lease.
 func reclaimable(content []byte, mtime, now time.Time, alive func(int) bool) bool {
-	field := strings.Fields(string(content))
-	if len(field) > 0 {
-		if pid, err := strconv.Atoi(field[0]); err == nil {
-			return !alive(pid)
-		}
+	if pid, ok := leaseOwnerPID(content); ok {
+		return !alive(pid)
 	}
 	return now.Sub(mtime) > staleAfter
 }

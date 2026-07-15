@@ -162,10 +162,20 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	if err != nil {
 		return CleanupPlan{}, err
 	}
-	if plan.owned {
-		if info, statErr := os.Lstat(leasePath); statErr == nil && info.Mode().IsRegular() {
-			plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonLiveLease, "assignment has a live or ambiguous lease"
-		} else if statErr != nil && !errors.Is(statErr, os.ErrNotExist) {
+	buildOutputs, buildOutputEvidence, buildOutputErr := loadBuildOutputs(root)
+	if info, statErr := os.Lstat(leasePath); statErr == nil && info.Mode().IsRegular() {
+		if !plan.owned {
+			plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonLiveLease, "unowned assignment has an ambiguous lease"
+		} else {
+			switch ProbeLease(leasePath) {
+			case LeaseLive:
+				plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonLiveLease, "assignment has a live lease"
+			case LeaseUnknown:
+				plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUncertain, "assignment lease state is unknown"
+			}
+		}
+	} else if statErr != nil && !errors.Is(statErr, os.ErrNotExist) {
+		if plan.owned {
 			plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUncertain, "assignment lease state is unknown"
 		}
 	}
@@ -182,11 +192,14 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	}
 	ignored, ignoredCanonical, ignoredErr := inventoryIgnored(target, options.Full)
 	plan.Ignored = ignored
-	if ignoredErr != nil {
+	declaredIgnored := buildOutputErr == nil && ignoredWithinBuildOutputs(ignored, buildOutputs)
+	if buildOutputErr != nil {
+		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonMalformed, "build-output declaration is malformed"
+	} else if ignoredErr != nil {
 		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonUncertain, "ignored inventory is uncertain"
 	} else if ignored.OverLimit {
 		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonIgnored, "ignored inventory exceeds the destructive limit"
-	} else if ignored.Count > 0 && !options.DiscardIgnored {
+	} else if ignored.Count > 0 && !options.DiscardIgnored && !declaredIgnored {
 		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonIgnored, "ignored residuals require --discard-ignored"
 	}
 	landed := "foreign"
@@ -225,7 +238,7 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 			return CleanupPlan{}, err
 		}
 	}
-	if plan.Action != ActionRetain && ignored.Count > 0 && options.DiscardIgnored {
+	if plan.Action != ActionRetain && ignored.Count > 0 && (options.DiscardIgnored || declaredIgnored) {
 		plan.Action = ActionDiscardRemove
 	}
 	if unsafeTarget {
@@ -236,7 +249,7 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 		[]byte("bench-explicit/v2"), []byte(common), []byte(defaultRef), []byte(defaultOID),
 		[]byte(target), []byte(admin), []byte(registration.Path), []byte(registration.BranchRef),
 		[]byte(strconv.FormatBool(registration.Detached)), []byte(strconv.FormatBool(registration.Locked)), []byte(registration.LockReason),
-		markerBytes, ledgerBytes, []byte(head), []byte(headRef), indexBytes, status, []byte(contentIdentity), leaseBytes,
+		markerBytes, ledgerBytes, []byte(head), []byte(headRef), indexBytes, status, []byte(contentIdentity), leaseBytes, buildOutputEvidence,
 		[]byte(landed), []byte(nestedEvidence), ignoredCanonical, []byte(plan.Recovery), []byte(strconv.FormatBool(options.DiscardIgnored)),
 		[]byte(plan.Action), []byte(plan.ReasonCode), []byte(plan.Reason), []byte(strconv.FormatBool(plan.deleteBranch)),
 	}
