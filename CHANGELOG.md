@@ -8,6 +8,16 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **FT96 promotion build (2026-07-15).** The learnings-origin rule is folded
+  into `/bench-write-spec`'s existing complete-map entry contract: when every
+  load-bearing fork was put to the reviewer and closed in the current session,
+  the phase records those settled decisions directly in a complete decision map,
+  flags the map in-spec for veto, and compiles without a shape detour; any open
+  fork still routes through `/bench-shape-idea`. A collapsed-space conformance
+  anchor and targeted canary keep both arms live. Root conformance observed the
+  missing fast path red, then the guidance change took it green; the full gate
+  closed the promotion.
+
 - **Roadmap reconcile (2026-07-15, scope: post-FT114 split).** Removed FT114
   after `5c2d4d5` moved the distributable-artifact contracts behind their own
   package seam; the live structure report now has zero unaccepted findings.

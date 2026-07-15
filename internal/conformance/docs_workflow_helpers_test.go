@@ -183,6 +183,9 @@ func checkWorkflowAnchors(root string) []string {
 	if exists(writeSpecPath) && !strings.Contains(collapseSpace(readIfExists(writeSpecPath)), "refuses to run without") {
 		diags = append(diags, ".agents/commands/bench-write-spec.md dropped the map-required entry contract (refuses to run without a complete map)")
 	}
+	requireCollapsed(".agents/commands/bench-write-spec.md",
+		"When every load-bearing fork has already been put to the reviewer and closed in the current session, write those decisions directly into a new decision map with a complete Handoff, flag that map in the spec for reviewer veto, and compile the spec without routing through `/bench-shape-idea`.",
+		".agents/commands/bench-write-spec.md dropped the reviewer-closed-forks fast path")
 
 	readme := readIfExists(filepath.Join(root, "README.md"))
 	if readme != "" {

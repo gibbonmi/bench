@@ -253,15 +253,6 @@ is test-vs-test duplication, not the expectation-versus-implementation
 independence the code standard protects, so collapsing it is consistent with
 the one-source-per-fact rule.
 
-**FT96 (LOW, rule-shaped, learnings 2026-07-15) — `/bench-write-spec` fast path
-for reviewer-closed forks.** When every load-bearing fork was put to the
-reviewer and closed in the same session, the spec phase may record those
-decisions straight into `decisions/<topic>.md` and compile the spec from it,
-flagging the map in-spec for veto — no shape phase required when nothing is
-left open. Name this path in `/bench-write-spec`'s entry contract so the map
-gate stops forcing a shape detour over already-made decisions. Kit edit, built
-under `craft-synthesis`.
-
 ## Release and bank reassessment gate
 
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
@@ -324,6 +315,5 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT96, the write-spec fast-path rule edit (XS
-   synthesis promotion).
-2. `/bench-shape-idea` — specify FT82, the authoritative release preflight.
+1. `/bench-shape-idea` — specify FT82, the authoritative release preflight.
+2. `/bench-shape-idea` — specify FT83, the governed offline release bundle.
