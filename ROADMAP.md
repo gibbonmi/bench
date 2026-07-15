@@ -279,25 +279,6 @@ left open. Name this path in `/bench-write-spec`'s entry contract so the map
 gate stops forcing a shape detour over already-made decisions. Kit edit, built
 under `craft-synthesis`.
 
-**FT97 (LOW) — structure debt: `internal/conformance/validity_checks_test.go`
-at 419/400.** Split along responsibility or propose a reviewer grant, checking
-both file and directory budgets before choosing. Next: `/bench-implement-spec`
-(lighter path).
-
-**FT98 (LOW) — structure debt:
-`internal/contract/runtime/runtime_shift_adapters_test.go` at 451/400.** Split
-along responsibility or propose a reviewer grant, checking both file and
-directory budgets before choosing. The runtime contract directory already has
-an accepted crowding grant, so an in-place split must not worsen its file-count
-debt. Next: `/bench-implement-spec` (lighter path).
-
-**FT99 (LOW) — structure debt:
-`internal/contract/runtime/runtime_shift_test.go` at 823/400.** Split along
-responsibility or propose a reviewer grant, checking both file and directory
-budgets before choosing. The runtime contract directory already has an accepted
-crowding grant, so an in-place split must not worsen its file-count debt. Next:
-`/bench-implement-spec` (lighter path).
-
 **FT100 (LOW) — structure debt: `internal/gate/` at 13/12 files.** Group related
 files behind a package seam or propose a reviewer grant. Coordinate this pass
 with FT101–FT105 before splitting any over-budget gate file so the package does
@@ -420,9 +401,8 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT97–FT99 isolated structure split-or-grant passes
-   (lighter path, one file per pass).
-2. `/bench-implement-spec` — FT100–FT105 gate-package structure wave
+1. `/bench-implement-spec` — FT100–FT105 gate-package structure wave
    (coordinate the directory seam before file splits).
-3. `/bench-implement-spec` — FT106–FT113 worktree-package structure wave
+2. `/bench-implement-spec` — FT106–FT113 worktree-package structure wave
    (coordinate the directory seam before file splits).
+3. `/bench-shape-idea` — FT81 usable, platform-correct distributable runtime.

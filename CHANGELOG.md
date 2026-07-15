@@ -8,6 +8,16 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Roadmap reconcile (2026-07-15, scope: post-isolated-structure splits).**
+  Removed FT97–FT99 after all three cited file violations left the live
+  structure report; the 14 remaining violations still map exactly to the
+  coordinated gate-package and worktree-package waves in FT100–FT113. IDEAS.md
+  was already empty, so zero ideas drained; the journal had zero open entries,
+  so there were no verdicts. The previous run promoted no now-shipped work, so
+  no promotion-build entry is missing. The refreshed sequence clears the gate
+  and worktree package waves, then returns to FT81's distributable-runtime
+  shaping pass.
+
 - **Roadmap reconcile (2026-07-15, scope: post-FT80 retirement + structure
   drain).** FT80 and its spec already left through the retirement commit; all
   20 remaining rows still match the tree, and the FT6, FT24, FT8, FT38, and
