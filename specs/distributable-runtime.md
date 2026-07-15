@@ -1,6 +1,6 @@
 # FT81 — distributable runtime
 
-Status: staged
+Status: implemented
 
 Decision map: `decisions/distributable-runtime.md`
 

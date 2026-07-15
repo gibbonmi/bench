@@ -104,14 +104,14 @@ func Sweep(root string, runner Runner) error {
 	_ = gitInit(baselineDir)
 	baseline := runner(RunCall{Cwd: baselineDir, Gate: gate, Env: env})
 
-	errs := runFixtures(fixtures, baseline.Output, gate, env, runner)
+	errs := runFixtures(root, fixtures, baseline.Output, gate, env, runner)
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, "\n"))
 	}
 	return nil
 }
 
-func runFixtures(fixtures []string, baselineOutput, gate string, env []string, runner Runner) []string {
+func runFixtures(root string, fixtures []string, baselineOutput, gate string, env []string, runner Runner) []string {
 	errs := make([]string, len(fixtures))
 	jobs := make(chan int)
 	workers := runtime.NumCPU()
@@ -128,7 +128,7 @@ func runFixtures(fixtures []string, baselineOutput, gate string, env []string, r
 		go func() {
 			defer wg.Done()
 			for idx := range jobs {
-				errs[idx] = runFixture(fixtures[idx], baselineOutput, gate, env, runner)
+				errs[idx] = runFixture(root, fixtures[idx], baselineOutput, gate, env, runner)
 			}
 		}()
 	}
@@ -147,7 +147,7 @@ func runFixtures(fixtures []string, baselineOutput, gate string, env []string, r
 	return out
 }
 
-func runFixture(fx, baselineOutput, gate string, env []string, runner Runner) string {
+func runFixture(root, fx, baselineOutput, gate string, env []string, runner Runner) string {
 	name := filepath.Base(fx)
 	expectPath := filepath.Join(fx, "EXPECT")
 	filesDir := filepath.Join(fx, "files")
@@ -156,7 +156,8 @@ func runFixture(fx, baselineOutput, gate string, env []string, runner Runner) st
 	if err != nil {
 		return fmt.Sprintf("canary fixture '%s' has no EXPECT file", name)
 	}
-	if info, err := os.Stat(filesDir); err != nil || !info.IsDir() {
+	basePath := filepath.Join(fx, "BASE")
+	if info, err := os.Stat(filesDir); (err != nil || !info.IsDir()) && !regularFile(basePath) {
 		return fmt.Sprintf("canary fixture '%s' has no files/ tree", name)
 	}
 	expect := trimExpectation(expBytes)
@@ -169,7 +170,7 @@ func runFixture(fx, baselineOutput, gate string, env []string, runner Runner) st
 		return fmt.Sprintf("canary '%s' setup failed: %v", name, err)
 	}
 	defer os.RemoveAll(work)
-	if err := materialize(filesDir, work); err != nil {
+	if err := materializeMutationFixture(root, fx, work); err != nil {
 		return fmt.Sprintf("canary '%s' setup failed: %v", name, err)
 	}
 	_ = gitInit(work)

@@ -1,0 +1,7 @@
+[
+  {
+    "path": "bin/bench.sh",
+    "old": "for c in \"$k/node_modules/$pkg/bin/bench\" \"$k/../$pkg/bin/bench\"; do",
+    "new": "for c in \"$k/dist/bench\" \"$k/node_modules/$pkg/bin/bench\" \"$k/../$pkg/bin/bench\"; do"
+  }
+]

@@ -1,6 +1,8 @@
 package surface
 
 import (
+	"fmt"
+	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"path/filepath"
@@ -14,8 +16,64 @@ func TestDoctorShimContracts(t *testing.T) {
 	contract.RunParallel(t, "bench doctor shim stale-target contract", testDoctorShimStaleTarget)
 	contract.RunParallel(t, "bench doctor shim arg-passthrough contract", testDoctorShimArgPassthrough)
 	contract.RunParallel(t, "repo-local wrapper forwarding contract failed", testDoctorShimRepoLocalForwarding)
+	contract.RunParallel(t, "maintenance command escaped installed target", testDoctorShimMaintenanceMatrix)
 	contract.RunParallel(t, "bench doctor postinstall contract", testDoctorPostinstall)
 	contract.RunParallel(t, "bench doctor session-start advisory contract", testDoctorSessionStartAdvisory)
+}
+
+func testDoctorShimMaintenanceMatrix(t *testing.T) {
+	f := contract.NewFixture(t)
+	installed := filepath.Join(f.Root, "installed target")
+	local := filepath.Join(f.Root, ".bench", "bin", "bench.sh")
+	shim := filepath.Join(f.Root, "stable bench")
+	mustWriteFile(t, installed, shimIdentityScript("installed", 7), 0o755)
+	mustWriteFile(t, local, shimIdentityScript("local", 3), 0o755)
+	mustWriteFile(t, shim, adopt.ShimContent(installed)+"\n", 0o755)
+
+	for _, command := range []string{"setup", "link", "init", "doctor", "unlink"} {
+		probe := f.RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, shim, command, "a b", "*")
+		probe.RequireExit(7)
+		want := fmt.Sprintf("installed:%s:3:[%s][a b][*]\n", installed, command)
+		if probe.Stdout != want {
+			t.Fatalf("maintenance command %s escaped installed target: %q", command, probe.Stdout)
+		}
+	}
+	for _, args := range [][]string{{}, {""}, {"--context"}, {"status"}, {"unknown"}} {
+		probe := f.RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, shim, args...)
+		probe.RequireExit(3)
+		want := fmt.Sprintf("local:%s:%d:", local, len(args))
+		for _, arg := range args {
+			want += "[" + arg + "]"
+		}
+		want += "\n"
+		if probe.Stdout != want {
+			t.Fatalf("default shim dispatch %v = %q, want %q", args, probe.Stdout, want)
+		}
+	}
+
+	nested := filepath.Join(f.Root, "nested", "below")
+	if err := os.MkdirAll(nested, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	probe := execFixtureAt(t, nested).RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, shim, "status", "nested arg")
+	probe.RequireExit(3)
+	doctorRequireEqual(t, probe.Stdout, fmt.Sprintf("local:%s:2:[status][nested arg]\n", local), "nested shim selected wrong target")
+
+	outside := filepath.Join(t.TempDir(), "outside repo [*]")
+	if err := os.MkdirAll(outside, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	alias := filepath.Join(outside, "bench alias")
+	if err := os.Symlink(shim, alias); err != nil {
+		t.Fatal(err)
+	}
+	probe = execFixtureAt(t, outside).RunEnv(map[string]string{"PATH": "/usr/bin:/bin"}, alias, "status", "outside arg")
+	probe.RequireExit(7)
+	doctorRequireEqual(t, probe.Stdout, fmt.Sprintf("installed:%s:2:[status][outside arg]\n", installed), "outside/symlink shim selected wrong target")
+}
+
+func shimIdentityScript(identity string, exit int) string {
+	return fmt.Sprintf("#!/bin/sh\nprintf '%s:%%s:%%s:' \"$0\" \"$#\"\nfor arg in \"$@\"; do printf '[%%s]' \"$arg\"; done\nprintf '\\n'\nexit %d\n", identity, exit)
 }
 
 func testDoctorShimRepoLocalForwarding(t *testing.T) {

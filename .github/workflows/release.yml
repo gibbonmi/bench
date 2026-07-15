@@ -39,28 +39,21 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@v1.6.0
           govulncheck ./...
 
-      - name: Build binaries and generate platform packages
+      - name: Build exact artifact set
         run: |
           set -euo pipefail
-          out=dist/packages
-          # Generate the four package skeletons from the single matrix source, then
-          # cross-compile each target's binary into its package. Both the target list
-          # and the metadata derive from scripts/platforms.json — no second source.
-          bash scripts/gen-platform-packages.sh "$out"
-          while read -r os arch goos goarch; do
-            GOOS="$goos" GOARCH="$goarch" bash scripts/go-build.sh "$PWD" "$out/@redbench/$os-$arch/bin/bench"
-          done < <(node -e 'for (const p of require("./scripts/platforms.json")) console.log(p.os, p.arch, p.goos, p.goarch)')
+          bash scripts/build-artifacts.sh "$PWD" dist/artifacts
 
       - name: Publish platform packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           set -euo pipefail
-          for d in dist/packages/@redbench/*/; do
-            npm publish "$d" --access public --provenance
+          for tarball in dist/artifacts/redbench-*-*-*.tgz; do
+            npm publish "$tarball" --access public --provenance
           done
 
       - name: Publish wrapper
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public --provenance
+        run: npm publish "dist/artifacts/redbench-$(node -p 'require("./package.json").version').tgz" --access public --provenance

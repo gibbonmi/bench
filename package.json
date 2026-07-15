@@ -44,11 +44,5 @@
     "darwin",
     "linux"
   ],
-  "optionalDependencies": {
-    "@redbench/darwin-arm64": "0.2.0",
-    "@redbench/darwin-x64": "0.2.0",
-    "@redbench/linux-x64": "0.2.0",
-    "@redbench/linux-arm64": "0.2.0"
-  },
   "license": "MIT"
 }

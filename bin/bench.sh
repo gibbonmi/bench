@@ -86,16 +86,34 @@ platform_suffix() {
 }
 
 package_version() {
-  local kit="${1:-$(kit_dir)}" pkg_json line
+  local kit="${1:-$(kit_dir)}" pkg_json manifest line version
   pkg_json="$kit/package.json"
-  [[ -f "$pkg_json" ]] || return 1
-  while IFS= read -r line || [[ -n "$line" ]]; do
-    if [[ "$line" =~ \"version\"[[:space:]]*:[[:space:]]*\"([^\"]+)\" ]]; then
-      printf '%s\n' "${BASH_REMATCH[1]}"
-      return 0
-    fi
-  done < "$pkg_json"
+  if [[ -f "$pkg_json" ]]; then
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      if [[ "$line" =~ \"version\"[[:space:]]*:[[:space:]]*\"([^\"]+)\" ]]; then
+        version="${BASH_REMATCH[1]}"
+        valid_package_version "$version" || return 1
+        printf '%s\n' "$version"
+        return 0
+      fi
+    done < "$pkg_json"
+  fi
+  manifest="$kit/link-manifest.tsv"
+  if [[ -f "$manifest" ]]; then
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      if [[ "$line" == \#kit$'\t'* ]]; then
+        version="${line#*$'\t'}"
+        valid_package_version "$version" || return 1
+        printf '%s\n' "$version"
+        return 0
+      fi
+    done < "$manifest"
+  fi
   return 1
+}
+
+valid_package_version() {
+  [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]
 }
 
 # main_tree_kit <kit> — when <kit> sits inside a linked git worktree, echo the same
@@ -117,9 +135,9 @@ main_tree_kit() {
 }
 
 # bench_binary_path — echo the resolved Go binary path, or fail with a distinct exit
-# code the caller maps to a message. Resolution order: (1) repo-local dev build (kit
-# checkout), (2) the platform package bundled under the wrapper's node_modules, (3) the
-# hoisted sibling npm produces for global installs — tried first against the kit dir
+# code the caller maps to a message. Resolution order: (1) the platform package bundled
+# under the wrapper's node_modules, (2) the hoisted sibling npm produces for global
+# installs, (3) the exact version/target cache, then (4) a repo-local dev build — tried against the kit dir
 # itself, then re-anchored at the main tree when the kit dir is a linked git worktree
 # (worktrees carry the tracked wrapper but not the untracked binary). First executable,
 # non-empty match wins; a present-but-empty or non-executable file is treated as missing
@@ -135,7 +153,7 @@ bench_binary_path() {
   suffix="$(platform_suffix)"
   main="$(main_tree_kit "$kit")"
   for k in "$kit" ${main:+"$main"}; do
-    for c in "$k/dist/bench" "$k/node_modules/$pkg/bin/bench" "$k/../$pkg/bin/bench"; do
+    for c in "$k/node_modules/$pkg/bin/bench" "$k/../$pkg/bin/bench"; do
       [[ -x "$c" && -s "$c" ]] && { printf '%s\n' "$c"; return 0; }
     done
   done
@@ -144,6 +162,10 @@ bench_binary_path() {
     cache="$BENCH_HOME/cache/bin/$version/$suffix/bench"
     [[ -x "$cache" && -s "$cache" ]] && { printf '%s\n' "$cache"; return 0; }
   fi
+  for k in "$kit" ${main:+"$main"}; do
+    c="$k/dist/bench"
+    [[ -x "$c" && -s "$c" ]] && { printf '%s\n' "$c"; return 0; }
+  done
   return 127
 }
 
@@ -188,7 +210,7 @@ route_binary() {
         repair_binary "$kit" "$wrapper" || true
         bin="$(bench_binary_path "$kit")" && BENCH_KIT="${BENCH_KIT:-$kit}" BENCH_WRAPPER="${BENCH_WRAPPER:-$wrapper}" exec "$bin" "$@"
       fi
-      echo 'bench: no binary for this platform — build it from a clone: bash scripts/go-build.sh "$PWD" dist/bench' >&2
+      echo 'bench: no pinned binary for this platform — reinstall redbench or enable repair with node on PATH' >&2
       exit 127
       ;;
   esac
@@ -201,7 +223,7 @@ route_porcelain() {
 adoption_route() {
   local kit
   kit="${BENCH_KIT:-$(kit_dir)}"
-  if [[ ! -d "$kit/.agents/commands" || ! -f "$kit/AGENTS.md" ]]; then
+  if [[ ! -d "$kit/.agents/commands" || ( ! -f "$kit/.bench/BENCH.md" && ! -f "$kit/AGENTS.md" ) ]]; then
     echo "bench: link/init/doctor must run from the real Bench kit; no source asset tree at $kit" >&2
     echo "bench: use the installed 'bench' command or the source kit's bin/bench.sh" >&2
     exit 1

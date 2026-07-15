@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -18,6 +19,17 @@ import (
 
 	"github.com/gibbonmi/bench/internal/contract"
 )
+
+func requireFileExecutable(t testing.TB, path, msg string) {
+	t.Helper()
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatalf("%s: %v", msg, err)
+	}
+	if info.Size() == 0 || info.Mode().Perm()&0o111 == 0 {
+		t.Fatalf("%s: mode=%v size=%d", msg, info.Mode().Perm(), info.Size())
+	}
+}
 
 type binaryRepairRegistry struct {
 	*httptest.Server

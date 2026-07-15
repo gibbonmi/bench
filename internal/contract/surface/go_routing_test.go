@@ -185,14 +185,19 @@ func testGoRoutingFabricatedVersionRouting(t *testing.T) {
 	goRoutingWriteStub(t, filepath.Join(kit, "dist", "bench"), "devbuild")
 	goRoutingWriteStub(t, filepath.Join(kit, "node_modules", hostPackage, "bin", "bench"), "bundled")
 	goRoutingWriteStub(t, filepath.Join(kit, "..", hostPackage, "bin", "bench"), "hoisted")
-	if got := strings.TrimSpace(run(nil).Stdout); got != "devbuild" {
-		t.Fatalf("dev build not preferred over bundled: got %q", got)
-	}
-	goRoutingRemove(t, filepath.Join(kit, "dist", "bench"))
 	if got := strings.TrimSpace(run(nil).Stdout); got != "bundled" {
-		t.Fatalf("bundled not preferred over hoisted: got %q", got)
+		t.Fatalf("declared native package was not selected before root build: got %q", got)
 	}
 	goRoutingRemove(t, filepath.Join(kit, "node_modules", hostPackage, "bin", "bench"))
+	if got := strings.TrimSpace(run(nil).Stdout); got != "hoisted" {
+		t.Fatalf("hoisted package was not selected before root build: got %q", got)
+	}
+	goRoutingRemove(t, filepath.Join(kit, "..", hostPackage, "bin", "bench"))
+	if got := strings.TrimSpace(run(nil).Stdout); got != "devbuild" {
+		t.Fatalf("root build fallback = %q", got)
+	}
+	goRoutingRemove(t, filepath.Join(kit, "dist", "bench"))
+	goRoutingWriteStub(t, filepath.Join(kit, "..", hostPackage, "bin", "bench"), "hoisted")
 	if got := strings.TrimSpace(run(nil).Stdout); got != "hoisted" {
 		t.Fatalf("hoisted sibling not resolved: got %q", got)
 	}

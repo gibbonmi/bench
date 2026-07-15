@@ -4,8 +4,11 @@ import (
 	"encoding/json"
 	"github.com/gibbonmi/bench/internal/contract"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/packagesurface"
@@ -14,50 +17,48 @@ import (
 func TestPackageContracts(t *testing.T) {
 	t.Parallel()
 	contract.SkipIfSubjectFileMissing(t, "scripts/gen-platform-packages.sh")
-	contract.RunParallel(t, "platform-package generator failed", testPackageGeneratorFirstRun)
-	contract.RunParallel(t, "platform-package generator (2nd run) failed", testPackageGeneratorSecondRun)
-	contract.RunParallel(t, "platform-package generator is not idempotent", testPackageGeneratorIdempotent)
-	contract.RunParallel(t, "platform-package generator output contract failed", testPackageGeneratorOutput)
+	tmp := t.TempDir()
+	gen := filepath.Join(tmp, "artifacts")
+	packageRunGenerator(t, gen).RequireExit(0)
+	first := packageArtifactNames(t, gen)
+	t.Run("platform-package generator failed", func(t *testing.T) {
+		if len(first) != len(packageReadPlatforms(t))+1 {
+			t.Fatalf("artifact count = %d, want matrix + wrapper", len(first))
+		}
+	})
+	packageRunGenerator(t, gen).RequireExit(0)
+	second := packageArtifactNames(t, gen)
+	t.Run("platform-package generator (2nd run) failed", func(t *testing.T) {
+		if len(second) == 0 {
+			t.Fatal("second artifact build emitted no tarballs")
+		}
+	})
+	t.Run("platform-package generator is not idempotent", func(t *testing.T) {
+		if !reflect.DeepEqual(first, second) {
+			t.Fatalf("artifact inventory changed on repack: %v != %v", first, second)
+		}
+	})
+	t.Run("platform-package generator output contract failed", func(t *testing.T) {
+		testPackageGeneratorOutputAt(t, gen)
+	})
 	contract.RunParallel(t, "npm pack installable-surface contract", testPackageNpmPackInstallableSurface)
 }
 
-func testPackageGeneratorFirstRun(t *testing.T) {
-	out := filepath.Join(t.TempDir(), "a")
-
-	packageRunGenerator(t, out).RequireExit(0)
-}
-
-func testPackageGeneratorSecondRun(t *testing.T) {
-	tmp := t.TempDir()
-
-	packageRunGenerator(t, filepath.Join(tmp, "a")).RequireExit(0)
-	packageRunGenerator(t, filepath.Join(tmp, "b")).RequireExit(0)
-}
-
-func testPackageGeneratorIdempotent(t *testing.T) {
-	tmp := t.TempDir()
-	a := filepath.Join(tmp, "a")
-	b := filepath.Join(tmp, "b")
-	packageRunGenerator(t, a).RequireExit(0)
-	packageRunGenerator(t, b).RequireExit(0)
-
-	diff := execFixtureAt(t, tmp).Run("diff", "-r", a, b)
-
-	diff.RequireExit(0)
-}
-
-func testPackageGeneratorOutput(t *testing.T) {
-	tmp := t.TempDir()
-	gen := filepath.Join(tmp, "gen")
-	packageRunGenerator(t, gen).RequireExit(0)
+func testPackageGeneratorOutputAt(t *testing.T, gen string) {
+	t.Helper()
 	matrix := packageReadPlatforms(t)
-	wrapper := packageReadWrapper(t)
+	sourceWrapper := packageReadWrapper(t)
+	wrapperEntries := readTarball(t, filepath.Join(gen, "redbench-"+sourceWrapper.Version+".tgz"))
+	var wrapper packageWrapper
+	if err := json.Unmarshal(wrapperEntries["package/package.json"].Data, &wrapper); err != nil {
+		t.Fatalf("parse emitted wrapper metadata: %v", err)
+	}
 	wantOptional := map[string]string{}
 
 	for _, p := range matrix {
 		name := "@redbench/" + p.OS + "-" + p.Arch
 		wantOptional[name] = wrapper.Version
-		path := filepath.Join(gen, "@redbench", p.OS+"-"+p.Arch, "package.json")
+		path := filepath.Join(gen, "redbench-"+p.OS+"-"+p.Arch+"-"+wrapper.Version+".tgz")
 		var got struct {
 			Name    string   `json:"name"`
 			Version string   `json:"version"`
@@ -65,7 +66,10 @@ func testPackageGeneratorOutput(t *testing.T) {
 			OS      []string `json:"os"`
 			CPU     []string `json:"cpu"`
 		}
-		packageReadJSON(t, path, &got)
+		entries := readTarball(t, path)
+		if err := json.Unmarshal(entries["package/package.json"].Data, &got); err != nil {
+			t.Fatalf("parse %s package metadata: %v", name, err)
+		}
 		if got.Name != name {
 			t.Fatalf("%s: name is %s", name, got.Name)
 		}
@@ -85,6 +89,22 @@ func testPackageGeneratorOutput(t *testing.T) {
 	if !reflect.DeepEqual(wrapper.OptionalDependencies, wantOptional) {
 		t.Fatalf("wrapper optionalDependencies %v != matrix %v", wrapper.OptionalDependencies, wantOptional)
 	}
+}
+
+func packageArtifactNames(t testing.TB, dir string) []string {
+	t.Helper()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	names := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			names = append(names, entry.Name())
+		}
+	}
+	sort.Strings(names)
+	return names
 }
 
 func testPackageNpmPackInstallableSurface(t *testing.T) {
@@ -169,5 +189,10 @@ func execFixtureAt(t testing.TB, root string) contract.Fixture {
 	t.Helper()
 	f := contract.NewFixtureAt(t, root, contract.IsolatedEnv(t, t.TempDir()))
 	f.Env["PATH"] = os.Getenv("PATH")
+	for _, key := range []string{"GOCACHE", "GOMODCACHE"} {
+		if value, err := exec.Command("go", "env", key).Output(); err == nil {
+			f.Env[key] = strings.TrimSpace(string(value))
+		}
+	}
 	return f
 }

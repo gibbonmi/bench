@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".github/workflows/native-runtime.yml",
+    "old": "  pull_request:\n",
+    "new": "  # pull_request:\n"
+  }
+]
