@@ -270,21 +270,7 @@
   .fit .piece p { margin: 0; font-size: 0.9rem; color: var(--muted); }
 
   /* ---------- vocabulary ---------- */
-  .vocab {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-    gap: 12px;
-    margin-top: 8px;
-  }
-  .vocab .term {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 16px 18px;
-    box-shadow: var(--shadow);
-  }
-  .vocab .term h3 { font-size: 1rem; margin-bottom: 7px; }
-  .vocab .term p { margin: 0; font-size: 0.9rem; }
+  details.card .body p.def { margin: 14px 0 0; max-width: 68ch; }
 
   .seam-example {
     display: grid;
@@ -616,113 +602,146 @@
         </div>
       </div>
 
-      <div class="vocab">
-        <div class="term">
-          <h3>Seam</h3>
-          <p>The place where you can change behavior without editing in that place. It is
-          where a module's interface lives, and where callers and tests both cross.
-          Placing the seam is a design decision in its own right, separate from what goes
-          behind it: a well-placed seam makes tests cheap and stable, and a badly placed
-          one makes the suite break on every refactor. Bench deliberately avoids the word
-          "boundary", which means too many things.</p>
-        </div>
-        <div class="term">
-          <h3>Interface</h3>
-          <p>Everything a caller must know to use a module: signature, invariants,
-          ordering, error modes, configuration, performance. The smaller the interface,
-          the less every caller, and every future agent session, has to learn.</p>
-        </div>
-        <div class="term">
-          <h3>Deep module</h3>
-          <p>A module that hides a lot of behavior behind a small interface. Depth is the
-          design goal, for two payoffs: leverage, where callers learn a little and get a
-          lot, and locality, where changes concentrate in one place instead of rippling
-          across the codebase.</p>
-        </div>
-        <div class="term">
-          <h3>The deletion test</h3>
-          <p>The quick check for whether a module earns its existence. Imagine deleting
-          it: if the complexity simply vanishes, it was a pass-through and shouldn't
-          exist; if the complexity reappears across its callers, it earned its place. A
-          related rule keeps speculative seams out: one adapter is a hypothetical seam,
-          two adapters is a real one.</p>
-        </div>
-        <div class="term">
-          <h3>The interface is the test surface</h3>
-          <p>Tests cross the same seam callers use and assert observable behavior, never
-          private internals. If a test wants to reach past the interface, the module is
-          the wrong shape, and the fix is to reshape it rather than reach around it.</p>
-        </div>
-        <div class="term">
-          <h3>TDD at the seams</h3>
-          <p>Test-first development happens only at the seams the spec marked, never
-          everywhere. At a marked seam the target is external, so passing the test means
-          matching the spec. Off the marked seams, the agent writes the code and lets the
-          gate catch regressions, which keeps the ceremony where it pays for itself.</p>
-        </div>
-        <div class="term">
-          <h3>Red, green, refactor</h3>
-          <p>The cycle at a marked seam. Red: one failing test through the interface,
-          confirmed to fail for the right reason, meaning an assertion failure rather
-          than a compile error. Green: the smallest change that passes it. Refactor:
-          clean up with the test still green. A good test survives the refactor; one
-          that breaks was attached to an internal and gets re-placed.</p>
-        </div>
-        <div class="term">
-          <h3>Red signal</h3>
-          <p>The evidence that coverage is real: a check that demonstrably fails when the
-          behavior it maps is absent or wrong. A test that cannot go red proves nothing,
-          so every acceptance row has to name one.</p>
-        </div>
-        <div class="term">
-          <h3>Acceptance coverage map</h3>
-          <p>The table in every spec that maps each story to its red signal. During the
-          build it is the unit of TDD coverage and the thing that keeps the target fixed:
-          rows go red one at a time as each slice starts, never batched into an upfront
-          pile of failing tests.</p>
-        </div>
-        <div class="term">
-          <h3>Edge inventory</h3>
-          <p>The enumerated ways a seam's inputs can go wrong: hostile inputs, error
-          paths, and the domain's own edge classes. The spec's stories are the breadth
-          floor, not the ceiling. When the build finds an edge the spec forgot, it
-          proposes a new coverage row for your veto instead of silently skipping it.</p>
-        </div>
-        <div class="term">
-          <h3>Over-fitting</h3>
-          <p>The characteristic failure of TDD with agents: the loop invents its own test
-          target, writes the minimum to pass it, and stops, green but wrong. The guard is
-          that seams and semantics come from the spec, never from the loop. An agent that
-          catches itself inventing a target mid-loop treats that as the signal to stop.</p>
-        </div>
-        <div class="term">
-          <h3>Honest test doubles</h3>
-          <p>Mocks and fakes belong only at real system boundaries such as time,
-          randomness, network, and filesystem, never on internal collaborators, and never
-          asserting call counts or call order. A stub scripted to return exactly the
-          happy reply hollows a test out, so stubs keep realistic shapes and fail in the
-          ways the edge inventory says the real dependency fails.</p>
-        </div>
-        <div class="term">
-          <h3>Vertical slice</h3>
-          <p>The build order inside implementation: one story at a time, cut through the
-          whole stack, each slice ending on a green gate. Every slice is reviewable on
-          its own, which is what keeps the repo green between commits.</p>
-        </div>
-        <div class="term">
-          <h3>Design it twice</h3>
-          <p>The rule for a genuinely uncertain seam: don't settle for the first
-          interface idea. Several radically different designs are drafted in parallel and
-          compared before one is chosen. This is exactly what a declared high-effort line
-          buys; at a known seam, one design is fine.</p>
-        </div>
-        <div class="term">
-          <h3>The structure gate</h3>
-          <p><code>bench structure</code> flags files and directories that outgrow their
-          budgets. Splits follow responsibility, never line count, and a genuinely deep
-          module can earn a reviewer-approved budget grant instead of being fragmented to
-          dodge the limit.</p>
-        </div>
+      <div class="cards">
+        <details class="card">
+          <summary><span class="name">Seam</span><span class="role">where behavior can change without editing in that place</span></summary>
+          <div class="body">
+            <p class="def">The place where you can change behavior without editing in that
+            place. It is where a module's interface lives, and where callers and tests both
+            cross. Placing the seam is a design decision in its own right, separate from
+            what goes behind it: a well-placed seam makes tests cheap and stable, and a
+            badly placed one makes the suite break on every refactor. Bench deliberately
+            avoids the word "boundary", which means too many things.</p>
+          </div>
+        </details>
+        <details class="card">
+          <summary><span class="name">Interface</span><span class="role">everything a caller must know to use a module</span></summary>
+          <div class="body">
+            <p class="def">The full contract a caller depends on: signature, invariants,
+            ordering, error modes, configuration, performance. The smaller the interface,
+            the less every caller, and every future agent session, has to learn.</p>
+          </div>
+        </details>
+        <details class="card">
+          <summary><span class="name">Deep module</span><span class="role">a lot of behavior behind a small interface</span></summary>
+          <div class="body">
+            <p class="def">A module that hides a lot of behavior behind a small interface.
+            Depth is the design goal, for two payoffs: leverage, where callers learn a
+            little and get a lot, and locality, where changes concentrate in one place
+            instead of rippling across the codebase.</p>
+          </div>
+        </details>
+        <details class="card">
+          <summary><span class="name">The deletion test</span><span class="role">does this module earn its existence</span></summary>
+          <div class="body">
+            <p class="def">The quick check for whether a module earns its existence. Imagine
+            deleting it: if the complexity simply vanishes, it was a pass-through and
+            shouldn't exist; if the complexity reappears across its callers, it earned its
+            place. A related rule keeps speculative seams out: one adapter is a
+            hypothetical seam, two adapters is a real one.</p>
+          </div>
+        </details>
+        <details class="card">
+          <summary><span class="name">The interface is the test surface</span><span class="role">tests cross the same seam callers use</span></summary>
+          <div class="body">
+            <p class="def">Tests cross the same seam callers use and assert observable
+            behavior, never private internals. If a test wants to reach past the interface,
+            the module is the wrong shape, and the fix is to reshape it rather than reach
+            around it.</p>
+          </div>
+        </details>
+        <details class="card">
+          <summary><span class="name">TDD at the seams</span><span class="role">test-first only where the spec marked it</span></summary>
+          <div class="body">
+            <p class="def">Test-first development happens only at the seams the spec marked,
+            never everywhere. At a marked seam the target is external, so passing the test
+            means matching the spec. Off the marked seams, the agent writes the code and
+            lets the gate catch regressions, which keeps the ceremony where it pays for
+            itself.</p>
+          </div>
+        </details>
+        <details class="card">
+          <summary><span class="name">Red, green, refactor</span><span class="role">the cycle at a marked seam</span></summary>
+          <div class="body">
+            <p class="def">Red: one failing test through the interface, confirmed to fail
+            for the right reason, meaning an assertion failure rather than a compile error.
+            Green: the smallest change that passes it. Refactor: clean up with the test
+            still green. A good test survives the refactor; one that breaks was attached to
+            an internal and gets re-placed.</p>
+          </div>
+        </details>
+        <details class="card">
+          <summary><span class="name">Red signal</span><span class="role">proof that coverage is real</span></summary>
+          <div class="body">
+            <p class="def">The evidence that coverage is real: a check that demonstrably
+            fails when the behavior it maps is absent or wrong. A test that cannot go red
+            proves nothing, so every acceptance row has to name one.</p>
+          </div>
+        </details>
+        <details class="card">
+          <summary><span class="name">Acceptance coverage map</span><span class="role">each story mapped to its red signal</span></summary>
+          <div class="body">
+            <p class="def">The table in every spec that maps each story to its red signal.
+            During the build it is the unit of TDD coverage and the thing that keeps the
+            target fixed: rows go red one at a time as each slice starts, never batched
+            into an upfront pile of failing tests.</p>
+          </div>
+        </details>
+        <details class="card">
+          <summary><span class="name">Edge inventory</span><span class="role">the enumerated ways inputs can go wrong</span></summary>
+          <div class="body">
+            <p class="def">The enumerated ways a seam's inputs can go wrong: hostile inputs,
+            error paths, and the domain's own edge classes. The spec's stories are the
+            breadth floor, not the ceiling. When the build finds an edge the spec forgot,
+            it proposes a new coverage row for your veto instead of silently skipping it.</p>
+          </div>
+        </details>
+        <details class="card">
+          <summary><span class="name">Over-fitting</span><span class="role">green but wrong</span></summary>
+          <div class="body">
+            <p class="def">The characteristic failure of TDD with agents: the loop invents
+            its own test target, writes the minimum to pass it, and stops, green but wrong.
+            The guard is that seams and semantics come from the spec, never from the loop.
+            An agent that catches itself inventing a target mid-loop treats that as the
+            signal to stop.</p>
+          </div>
+        </details>
+        <details class="card">
+          <summary><span class="name">Honest test doubles</span><span class="role">mocks only at real system boundaries</span></summary>
+          <div class="body">
+            <p class="def">Mocks and fakes belong only at real system boundaries such as
+            time, randomness, network, and filesystem, never on internal collaborators, and
+            never asserting call counts or call order. A stub scripted to return exactly
+            the happy reply hollows a test out, so stubs keep realistic shapes and fail in
+            the ways the edge inventory says the real dependency fails.</p>
+          </div>
+        </details>
+        <details class="card">
+          <summary><span class="name">Vertical slice</span><span class="role">one story at a time, each ending green</span></summary>
+          <div class="body">
+            <p class="def">The build order inside implementation: one story at a time, cut
+            through the whole stack, each slice ending on a green gate. Every slice is
+            reviewable on its own, which is what keeps the repo green between commits.</p>
+          </div>
+        </details>
+        <details class="card">
+          <summary><span class="name">Design it twice</span><span class="role">several interfaces drafted for the uncertain seam</span></summary>
+          <div class="body">
+            <p class="def">The rule for a genuinely uncertain seam: don't settle for the
+            first interface idea. Several radically different designs are drafted in
+            parallel and compared before one is chosen. This is exactly what a declared
+            high-effort line buys; at a known seam, one design is fine.</p>
+          </div>
+        </details>
+        <details class="card">
+          <summary><span class="name">The structure gate</span><span class="role">size budgets for files and directories</span></summary>
+          <div class="body">
+            <p class="def"><code>bench structure</code> flags files and directories that
+            outgrow their budgets. Splits follow responsibility, never line count, and a
+            genuinely deep module can earn a reviewer-approved budget grant instead of
+            being fragmented to dodge the limit.</p>
+          </div>
+        </details>
       </div>
 
       <div class="callout">
