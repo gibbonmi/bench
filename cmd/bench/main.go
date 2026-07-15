@@ -303,6 +303,11 @@ func run(args []string, stdout, stderr *os.File) int {
 		fmt.Fprintln(stdout, versionLine(version, runtime.GOOS, runtime.GOARCH))
 		return 0
 	case "worktree":
+		if len(args) > 1 && args[1] == "list" {
+			out, code := worktree.ListCommand(args[2:])
+			fmt.Fprint(stdout, out)
+			return code
+		}
 		if len(args) == 2 && (args[1] == "help" || args[1] == "--help" || args[1] == "-h") {
 			fmt.Fprint(stdout, usage.WorktreeUsage())
 			return 0

@@ -34,6 +34,126 @@ func TestRuntimeWorktreeContracts(t *testing.T) {
 	contract.RunParallel(t, "bench worktree exact dry-run purity contract", testRuntimeWorktreeExactDryRunPurity)
 	contract.RunParallel(t, "bench worktree ignored discard contract", testRuntimeWorktreeIgnoredDiscard)
 	contract.RunParallel(t, "bench worktree hostile surfaces contract", testRuntimeWorktreeHostileSurfaces)
+	contract.RunParallel(t, "bench worktree list rows contract", testRuntimeWorktreeListRows)
+	contract.RunParallel(t, "bench worktree list AXI posture contract", testRuntimeWorktreeListAXIPosture)
+	contract.RunParallel(t, "bench worktree list shell surface contract", testRuntimeWorktreeListShellSurface)
+}
+
+func testRuntimeWorktreeListShellSurface(t *testing.T) {
+	f := onMainFixture(t)
+	general := f.Bench("--help")
+	general.RequireExit(0)
+	contract.RequireContains(t, general.Stdout, "bench worktree list")
+	worktreeHelp := f.Bench("worktree", "--help")
+	worktreeHelp.RequireExit(0)
+	contract.RequireContains(t, worktreeHelp.Stdout, "bench worktree list")
+	list := f.Bench("worktree", "list")
+	list.RequireExit(0)
+	if list.Stdout != "worktrees[0]{id,label,state,source,tree,lease,landed,ignored}:\n" || list.Stderr != "" {
+		t.Fatalf("wrapper list streams = stdout %q stderr %q", list.Stdout, list.Stderr)
+	}
+}
+
+func testRuntimeWorktreeListAXIPosture(t *testing.T) {
+	f := onMainFixture(t)
+	unknown := f.Bench("worktree", "list", "bogus")
+	unknown.RequireExit(2)
+	if unknown.Stdout != "usage: bench worktree list (unknown argument: bogus)\n" || unknown.Stderr != "" {
+		t.Fatalf("unknown argument streams = stdout %q stderr %q", unknown.Stdout, unknown.Stderr)
+	}
+	for _, flag := range []string{"-h", "--help"} {
+		help := f.Bench("worktree", "list", flag)
+		help.RequireExit(0)
+		if help.Stdout != "usage: bench worktree list\n" || help.Stderr != "" {
+			t.Fatalf("%s streams = stdout %q stderr %q", flag, help.Stdout, help.Stderr)
+		}
+	}
+	outside := contract.NewFixture(t, contract.WithNoRepo()).Bench("worktree", "list")
+	outside.RequireExit(1)
+	if outside.Stdout != "error: not in a git repository — run inside a Bench-linked repo\n" || outside.Stderr != "" {
+		t.Fatalf("outside-repository streams = stdout %q stderr %q", outside.Stdout, outside.Stderr)
+	}
+}
+
+func testRuntimeWorktreeListRows(t *testing.T) {
+	empty := onMainFixture(t)
+	emptyList := empty.Bench("worktree", "list")
+	emptyList.RequireExit(0)
+	if emptyList.Stdout != "worktrees[0]{id,label,state,source,tree,lease,landed,ignored}:\n" || emptyList.Stderr != "" {
+		t.Fatalf("empty list streams = stdout %q stderr %q", emptyList.Stdout, emptyList.Stderr)
+	}
+	unresolved := contract.NewFixture(t)
+	commitAllowEmpty(t, unresolved, "unresolved default fixture")
+	unresolved.Git("branch", "other-default-candidate")
+	unresolvedEnv := map[string]string{"BENCH_HOME": filepath.Join(unresolved.Root, ".bench-home")}
+	createRuntimeAssignment(t, unresolved, unresolvedEnv, "list-unresolved")
+	unresolvedList := unresolved.BenchEnv(unresolvedEnv, "worktree", "list")
+	unresolvedList.RequireExit(0)
+	contract.RequireContains(t, unresolvedList.Stdout, ",list-unresolved,active,assignment,present,none,unknown,0")
+
+	f := onMainFixture(t)
+	f.WriteFile(".gitignore", "list-ignored\n")
+	f.CommitAll("list fixture")
+	env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bench-home")}
+	present := createRuntimeAssignment(t, f, env, "list-present")
+	contract.WriteFileAbs(t, filepath.Join(present.Worktree, "list-ignored"), "residue\n")
+	dead := exec.Command("sh", "-c", "exit 0")
+	if err := dead.Start(); err != nil {
+		t.Fatal(err)
+	}
+	deadPID := dead.Process.Pid
+	if err := dead.Wait(); err != nil {
+		t.Fatal(err)
+	}
+	lease := strings.TrimSpace(contract.RunAt(t, f, present.Worktree, nil, "git", "rev-parse", "--path-format=absolute", "--git-path", "bench-lease").Stdout)
+	contract.WriteFileAbs(t, lease, fmt.Sprintf("%d 2026-01-01T00:00:00Z\n", deadPID))
+	missing := createRuntimeAssignment(t, f, env, "list-missing")
+	f.Git("worktree", "unlock", missing.Worktree)
+	f.Git("worktree", "remove", "--force", missing.Worktree)
+	live := createRuntimeAssignment(t, f, env, "list-live")
+	liveLease := strings.TrimSpace(contract.RunAt(t, f, live.Worktree, nil, "git", "rev-parse", "--path-format=absolute", "--git-path", "bench-lease").Stdout)
+	contract.WriteFileAbs(t, liveLease, fmt.Sprintf("%d 2026-01-01T00:00:00Z\n", os.Getpid()))
+	unknown := createRuntimeAssignment(t, f, env, "list-unknown")
+	unknownLease := strings.TrimSpace(contract.RunAt(t, f, unknown.Worktree, nil, "git", "rev-parse", "--path-format=absolute", "--git-path", "bench-lease").Stdout)
+	contract.WriteFileAbs(t, unknownLease, "not a lease\n")
+	foreignPath := filepath.Join(t.TempDir(), "foreign-list")
+	f.Git("worktree", "add", "-q", "-b", "foreign-list", foreignPath, "HEAD")
+	contract.WriteFileAbs(t, filepath.Join(foreignPath, "foreign.txt"), "unique\n")
+	contract.RunAt(t, f, foreignPath, nil, "git", "add", "foreign.txt").RequireExit(0)
+	contract.RunAt(t, f, foreignPath, nil, "git", "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "foreign unique").RequireExit(0)
+	deep := filepath.Join(f.Root, "deep", "cwd")
+	contract.Mkdir(t, deep)
+
+	out := contract.RunAt(t, f, deep, env, "bash", benchPath(t), "worktree", "list")
+	out.RequireExit(0)
+	if out.Stderr != "" {
+		t.Fatalf("list wrote stderr: %q", out.Stderr)
+	}
+	lines := contract.NonEmptyLines(out.Stdout)
+	if len(lines) != 6 || lines[0] != "worktrees[5]{id,label,state,source,tree,lease,landed,ignored}:" {
+		t.Fatalf("list block = %q", out.Stdout)
+	}
+	for _, want := range []string{
+		",list-present,active,assignment,present,dead,true,1",
+		",list-missing,active,assignment,missing,none,true,unknown",
+		",list-live,active,assignment,present,live,true,0",
+		",list-unknown,active,assignment,present,unknown,true,0",
+		"foreign,foreign-list,foreign,foreign,present,none,false,0",
+	} {
+		contract.RequireContains(t, out.Stdout, want)
+	}
+
+	hostile := createRuntimeAssignment(t, f, env, "hostile-label")
+	hostile.Label = "unsafe\x1blabel"
+	if err := intent.PutAssignment(f.Root, hostile); err != nil {
+		t.Fatal(err)
+	}
+	refused := f.BenchEnv(env, "worktree", "list")
+	refused.RequireExit(1)
+	contract.RequireContains(t, refused.Stdout, "error: unrepresentable TOON cell")
+	if refused.Stderr != "" || strings.Contains(refused.Stdout, "\x1b") {
+		t.Fatalf("hostile list streams = stdout %q stderr %q", refused.Stdout, refused.Stderr)
+	}
 }
 
 // onMainFixture returns a fixture whose default branch resolves to a real `main` commit — the
