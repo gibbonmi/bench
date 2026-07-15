@@ -1,9 +1,10 @@
 // Command bench is the compiled core of the Bench kit — the strangler target the
 // shell CLI routes ported subcommands into. Dispatch is a `commands` map of the ported
-// AXI query subcommands (learnings, maps, guards, diff, coverage), each resolving repo
-// state and returning its stdout plus an exit code, plus a direct `version` case that
-// needs the build-time GOOS/GOARCH rather than repo state. Every later slice adds names
-// to that map; the shell router (bin/bench.sh) grows names, not mechanisms.
+// AXI query subcommands (learnings, maps, guards, diff, coverage, worktree list),
+// each resolving repo state and returning its stdout plus an exit code, plus a direct
+// `version` case that needs the build-time GOOS/GOARCH rather than repo state. Every
+// later slice adds names to that map; the shell router (bin/bench.sh) grows names,
+// not mechanisms.
 package main
 
 import (
@@ -303,6 +304,11 @@ func run(args []string, stdout, stderr *os.File) int {
 		fmt.Fprintln(stdout, versionLine(version, runtime.GOOS, runtime.GOARCH))
 		return 0
 	case "worktree":
+		if len(args) > 1 && args[1] == "list" {
+			out, code := worktree.ListCommand(args[2:])
+			fmt.Fprint(stdout, out)
+			return code
+		}
 		if len(args) == 2 && (args[1] == "help" || args[1] == "--help" || args[1] == "-h") {
 			fmt.Fprint(stdout, usage.WorktreeUsage())
 			return 0

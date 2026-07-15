@@ -1,6 +1,6 @@
 # Worktree lifecycle reaches released by default
 
-Status: staged
+Status: implemented
 
 ## Problem
 

@@ -28,8 +28,8 @@ branch-agnostic. This line is only the binding.)
   implementation behind each is free to change. Keep gate resolution
   (`.bench/gate.sh` → `$BENCH_GATE` → auto-detect) in one place.
 - **The AXI query surface** (`bench learnings`, `bench maps`, `bench guards`,
-  `bench diff`, `bench coverage`, and the shared flat-table TOON emitter behind
-  them). The agent-facing read-only
+  `bench diff`, `bench coverage`, `bench worktree list`, and the shared flat-table
+  TOON emitter behind them). The agent-facing read-only
   surface, and the AXI-conformant half of the hybrid output contract: TOON stdout,
   definitive empty states, structured errors on stdout, exit 0/1/2. Gate-tested by
   the AXI contract fragments. Guard manifests come from each guard script's own

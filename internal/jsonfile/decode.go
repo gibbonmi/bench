@@ -15,7 +15,19 @@ func Decode(data []byte, target any) error {
 	if len(data) == 0 || data[len(data)-1] != '\n' {
 		return errors.New("persisted JSON requires a final newline")
 	}
-	body := data[:len(data)-1]
+	return decodeDocument(data[:len(data)-1], target)
+}
+
+// DecodeDocument strictly decodes one complete JSON document without imposing
+// the final-newline framing required by Bench-owned persisted records.
+func DecodeDocument(data []byte, target any) error {
+	if len(data) == 0 {
+		return errors.New("JSON document is empty")
+	}
+	return decodeDocument(data, target)
+}
+
+func decodeDocument(body []byte, target any) error {
 	scan := json.NewDecoder(bytes.NewReader(body))
 	scan.UseNumber()
 	if err := scanValue(scan); err != nil {
