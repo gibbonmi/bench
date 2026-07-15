@@ -49,7 +49,7 @@ func ListCommand(args []string) (string, int) {
 		if label == "" {
 			label = registration.Path
 		}
-		rows = append(rows, []any{"foreign", label, "foreign", "foreign", "present", listLease(registration.Path), listLanded(root, registration.Branch, def, defaultResolved), listIgnored(registration.Path)})
+		rows = append(rows, []any{"foreign", label, "foreign", "foreign", listTree(registration.Path), listLease(registration.Path), listLanded(root, registration.Branch, def, defaultResolved), listIgnored(registration.Path)})
 	}
 	out, err := toon.TableTyped("worktrees", worktreeListFields, rows)
 	if err != nil {
@@ -59,11 +59,14 @@ func ListCommand(args []string) (string, int) {
 }
 
 func listAssignmentRow(root string, assignment intent.Assignment, def string, defaultResolved bool) []any {
-	tree := "present"
-	if _, err := os.Stat(assignment.Worktree); err != nil {
-		tree = "missing"
+	return []any{assignment.ID, assignment.Label, string(assignment.State), "assignment", listTree(assignment.Worktree), listLease(assignment.Worktree), listLanded(root, assignment.Branch, def, defaultResolved), listIgnored(assignment.Worktree)}
+}
+
+func listTree(path string) string {
+	if _, err := os.Stat(path); err != nil {
+		return "missing"
 	}
-	return []any{assignment.ID, assignment.Label, string(assignment.State), "assignment", tree, listLease(assignment.Worktree), listLanded(root, assignment.Branch, def, defaultResolved), listIgnored(assignment.Worktree)}
+	return "present"
 }
 
 func listLease(path string) string {
