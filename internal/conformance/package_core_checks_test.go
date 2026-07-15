@@ -302,10 +302,8 @@ func checkGuardHeaderManifests(root string) []string {
 			diags = append(diags, fmt.Sprintf("guard %s manifest unreadable", guard.name))
 			continue
 		}
-		for _, key := range []string{"name", "boundary", "denies", "why"} {
-			if fields[key] == "" {
-				diags = append(diags, fmt.Sprintf("guard %s manifest missing %s key", guard.name, key))
-			}
+		for _, key := range fields.MissingRequired() {
+			diags = append(diags, fmt.Sprintf("guard %s manifest missing %s key", guard.name, key))
 		}
 		if guard.name == "session-start" && fields["denies"] != "nothing (informational)" {
 			diags = append(diags, "session-start is not classified informational (denies: nothing)")

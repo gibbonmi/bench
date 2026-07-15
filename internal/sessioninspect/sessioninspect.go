@@ -2,7 +2,6 @@
 package sessioninspect
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -59,8 +58,7 @@ func Command(args []string, stdout, stderr io.Writer) int {
 func resumePhase(ctx context.Context, stdout, stderr io.Writer, root string) int {
 	_ = ctx
 	_ = root
-	var phaseErr bytes.Buffer
-	code := worktree.ResumeCleanCommand(nil, stdout, &phaseErr)
+	code := worktree.ResumeCleanCommand(nil, stdout, stderr)
 	if code != 0 {
 		fmt.Fprintln(stderr, "warning: bench session-start: resume-clean failed; inspect retained worktree state")
 	}

@@ -27,9 +27,30 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
+type Manifest map[string]string
+
+var requiredManifestKeys = []string{"name", "boundary", "denies", "why"}
+
+func (m Manifest) MissingRequired() []string {
+	var missing []string
+	for _, key := range requiredManifestKeys {
+		if m[key] == "" {
+			missing = append(missing, key)
+		}
+	}
+	return missing
+}
+
 // HeaderFields reads the static manifest in path's leading comment block. The first
 // occurrence of each key wins; an empty first value remains missing/invalid.
-func HeaderFields(path string) (map[string]string, error) {
+func HeaderFields(path string) (Manifest, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if !info.Mode().IsRegular() {
+		return nil, fmt.Errorf("guard manifest is not a regular file")
+	}
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -37,13 +58,13 @@ func HeaderFields(path string) (map[string]string, error) {
 	return parseHeader(string(content)), nil
 }
 
-func parseHeader(content string) map[string]string {
-	fields := map[string]string{}
+func parseHeader(content string) Manifest {
+	fields := Manifest{}
 	for _, line := range strings.Split(content, "\n") {
 		if strings.TrimSpace(line) != "" && !strings.HasPrefix(line, "#") {
 			break
 		}
-		for _, key := range []string{"name", "boundary", "denies", "why"} {
+		for _, key := range requiredManifestKeys {
 			prefix := "# " + key + ": "
 			if _, found := fields[key]; !found && strings.HasPrefix(line, prefix) {
 				fields[key] = strings.TrimRight(strings.TrimPrefix(line, prefix), " \t\r")
@@ -63,10 +84,10 @@ func guardRow(path, fallback string) ([]string, bool) {
 	if err != nil {
 		return []string{fallback, "", "no manifest"}, true
 	}
-	name, boundary, denies, why := fields["name"], fields["boundary"], fields["denies"], fields["why"]
-	if name == "" || boundary == "" || denies == "" || why == "" {
+	if len(fields.MissingRequired()) != 0 {
 		return []string{fallback, "", "no manifest"}, true
 	}
+	name, boundary, denies := fields["name"], fields["boundary"], fields["denies"]
 	if denies == "nothing (informational)" {
 		return nil, false
 	}

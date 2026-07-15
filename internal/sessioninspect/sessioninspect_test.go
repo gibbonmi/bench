@@ -45,3 +45,19 @@ func TestCommandInstallsTenSecondDeadline(t *testing.T) {
 		t.Fatalf("Command exit = %d, want 0", code)
 	}
 }
+
+func TestResumePhaseForwardsUnderlyingFailure(t *testing.T) {
+	t.Chdir(t.TempDir())
+	var stdout, stderr bytes.Buffer
+	if code := resumePhase(context.Background(), &stdout, &stderr, t.TempDir()); code == 0 {
+		t.Fatal("resumePhase exit = 0 outside a repository")
+	}
+	for _, want := range []string{
+		"error: not in a git repository — run inside a Bench-linked repo",
+		"warning: bench session-start: resume-clean failed; inspect retained worktree state",
+	} {
+		if !strings.Contains(stderr.String(), want) {
+			t.Fatalf("resumePhase stderr missing %q:\n%s", want, stderr.String())
+		}
+	}
+}
