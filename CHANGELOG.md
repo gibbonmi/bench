@@ -8,6 +8,19 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Roadmap reconcile (2026-07-15, scope: post-FT80 retirement + structure
+  drain).** FT80 and its spec already left through the retirement commit; all
+  20 remaining rows still match the tree, and the FT6, FT24, FT8, FT38, and
+  FT91 external triggers remain unmet. Added FT97–FT113 for the 17 unaccepted
+  structure findings introduced or exposed by the completed build: three
+  isolated over-budget test files, a coordinated gate-package directory/file
+  wave, and a coordinated worktree-package directory/file wave. IDEAS.md was
+  already empty, so zero ideas drained; the journal had zero open entries, so
+  there were no verdicts. The previous run promoted FT96, but it remains
+  unbuilt, so no promotion-build entry is due. The refreshed sequence clears
+  the isolated files first, then the gate and worktree package waves before
+  returning to FT81.
+
 - **Learnings run (2026-07-15, scope: post-worktree-lifecycle drain).** Reworded
   FT58 after the lifecycle build shipped its lock-protocol half — a live owner
   is never aged out, competing reclaimers serialize through the
