@@ -1,9 +1,10 @@
 // Command bench is the compiled core of the Bench kit — the strangler target the
 // shell CLI routes ported subcommands into. Dispatch is a `commands` map of the ported
-// AXI query subcommands (learnings, maps, guards, diff, coverage), each resolving repo
-// state and returning its stdout plus an exit code, plus a direct `version` case that
-// needs the build-time GOOS/GOARCH rather than repo state. Every later slice adds names
-// to that map; the shell router (bin/bench.sh) grows names, not mechanisms.
+// AXI query subcommands (learnings, maps, guards, diff, coverage, worktree list),
+// each resolving repo state and returning its stdout plus an exit code, plus a direct
+// `version` case that needs the build-time GOOS/GOARCH rather than repo state. Every
+// later slice adds names to that map; the shell router (bin/bench.sh) grows names,
+// not mechanisms.
 package main
 
 import (
