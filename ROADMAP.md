@@ -20,24 +20,6 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT95 (HIGH, evidence supplied, reviewer-prioritized 2026-07-15) — worktree
-lifecycle reaches released by default.** Worktrees accumulate structurally,
-not from bookkeeping bugs. Running the gate in a worktree creates `dist/`
-(gitignored), so the automatic cleanup plan retains every normally used tree
-and full release requires a manual `clean --discard-ignored`. A session that
-ends without releasing leaves its record `active` forever; resume's
-conservative sweep is right to skip active records but has no owner-liveness
-check, so a dead session's tree is re-retained at every session start. The
-population is invisible between session starts: bare `bench worktree` creates
-an assignment rather than listing them. Live inventory 2026-07-15: three
-stale trees, none doing work.
-
-Closure: a used worktree whose tracked tree is clean reaches full release
-without manual flags (the discard scope for ignored build output is a
-reviewer-decided default); a dead owner's `active` record ages out safely
-under the FT58 constraint that a live owner is never aged out; and the
-worktree population gets a first-class list surface.
-
 **FT80 (HIGH) — static, bounded guard discovery.** Guard descriptions come
 from static managed metadata, not executing every shell file in the hooks
 directory. Only an exact managed allowlist may execute where execution is
@@ -359,6 +341,5 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT95, worktree lifecycle reaches released by default; reviewer-prioritized, decisions settled in conversation 2026-07-15.
-2. `/bench-shape-idea` — specify FT80, static bounded guard discovery.
-3. `/bench-shape-idea` — specify FT81, the platform-correct distributable runtime.
+1. `/bench-shape-idea` — specify FT80, static bounded guard discovery.
+2. `/bench-shape-idea` — specify FT81, the platform-correct distributable runtime.
