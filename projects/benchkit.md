@@ -77,6 +77,12 @@ branch-agnostic. This line is only the binding.)
   assets, fail on same-named project-owned skills/commands/hooks, and be idempotent
   through the link manifest. It also installs the `.bench/bin/` local CLI set the
   shared hooks use when no global `bench` command is on PATH.
+- **The distributable artifact contract** (wrapper and native package tarballs).
+  The exact tarballs are the acceptance subject: one private-staging builder consumes
+  the canonical asset manifest and platform matrix, artifact tests inspect and install
+  its output, and the native workflow executes the same host smoke used locally. The
+  installed shim keeps maintenance on the installed kit and routes operations through
+  the linked repository's tracked launcher; staging details remain free to change.
 - **AGENTS.md** — the canonical working agreement for project-owned content. `CLAUDE.md`
   imports it (and `.bench/BENCH.md`); never duplicate content there. The four invariants
   and the communication rules are canonical in `.bench/BENCH.md`; the craft skill and

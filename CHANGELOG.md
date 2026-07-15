@@ -8,6 +8,19 @@ one entry per `/bench-update-kit` run or learnings-sourced promotion (queued by
 
 ## Unreleased
 
+- **Roadmap reconcile (2026-07-15, scope: post-FT81 retirement).** Removed FT81
+  after the distributable runtime shipped at `bbae286`, retired its implemented
+  spec and decision map, and promoted the exact-tarball acceptance seam to the
+  project profile. Added FT114 for the resulting 13/12
+  `internal/contract/surface/` structure finding: the two-file artifact contract
+  is a cohesive package split, not a directory grant. The other 19 roadmap rows
+  still match the tree, and the FT6, FT24, FT8, FT38, and FT91 triggers remain
+  unmet. IDEAS.md was already empty, so zero ideas drained; the journal had zero
+  open entries, so there were no verdicts. The previous run promoted no work,
+  and FT96 remains queued rather than built, so no promotion-build entry is
+  missing. The refreshed sequence clears FT114, promotes FT96, then shapes
+  FT82's authoritative release preflight.
+
 - **Learnings run (2026-07-15, scope: post-structure-wave reconcile).** Removed
   FT100–FT113 after all 14 cited gate-package and worktree-package violations
   left the live structure report; the 20 remaining roadmap rows still match the

@@ -20,23 +20,6 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT81 (HIGH) — usable, platform-correct distributable runtime.** Build wrapper
-and platform packages in clean staging trees from explicit allowlists. The
-wrapper contains no build-host binary or nested platform-package tree; runtime
-selection reaches the declared native package first. Packed installs can run
-setup, `link`, `init`, and `doctor`. The stable shim routes maintenance to the
-installed kit and operational commands to the project-local runtime. A fresh
-clone retains a runnable tracked local path without referring to maintainer-only
-build scripts.
-
-The acceptance seam is the exact tarball: isolated-prefix tests exercise
-version, setup/link, doctor, one local operation, relink, fresh clone, and
-unlink. Native smokes prove executable mode, embedded version, target format,
-and selection on every advertised OS/architecture; FT83 supplies the artifact
-governance and offline evidence for the same bytes.
-
-Sources: `RR:R-04`, `RR:R-05`, `RR:R-09`, `RR:A-06`; `RC:C-04`.
-
 **FT82 (HIGH) — one authoritative release preflight.** A repository-owned
 preflight runs the full Bench gate, race tests, vet, vulnerability scan,
 artifact build and inspection, and clean-room installed smoke against the same
@@ -279,13 +262,23 @@ left open. Name this path in `/bench-write-spec`'s entry contract so the map
 gate stops forcing a shape detour over already-made decisions. Kit edit, built
 under `craft-synthesis`.
 
+**FT114 (LOW) — structure debt: `internal/contract/surface/` at 13/12 files.**
+The FT81 build added a cohesive two-file distributable-artifact contract to a
+directory already spanning adoption, routing, packaging, repair, and hook
+surfaces. Move `artifact_test.go` and `artifact_fixture_test.go` behind an
+`artifact` contract-package seam; the pair owns its lifecycle fixture and can
+keep consuming the shared contract harness without duplication, reducing the
+parent package to 11 files. If package isolation proves false, propose a
+reviewer grant rather than fragmenting the tests. Next: `/bench-implement-spec`
+(lighter path).
+
 ## Release and bank reassessment gate
 
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
 to one immutable version and its generated manifest after:
 
-1. FT81 and FT82 have executable regression contracts and are closed
-   (FT79 and FT80 shipped with their regression contracts).
+1. FT82 has an executable regression contract and is closed (FT79–FT81 shipped
+   with their regression contracts).
 2. The same commit passes the full gate, race tests, vet, canary, vulnerability
    scan, package inspection, reproducibility comparison, and clean-room
    installed smokes.
@@ -341,5 +334,8 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — specify FT81, the platform-correct distributable runtime.
-2. `/bench-implement-spec` — FT96, the write-spec fast-path rule edit (XS synthesis promotion).
+1. `/bench-implement-spec` — FT114, split the distributable-artifact contracts
+   into their own package (lighter path).
+2. `/bench-implement-spec` — FT96, the write-spec fast-path rule edit (XS
+   synthesis promotion).
+3. `/bench-shape-idea` — specify FT82, the authoritative release preflight.
