@@ -300,6 +300,31 @@
   }
   .seam-example .why { margin: 0; padding: 8px 16px 14px; font-size: 0.88rem; color: var(--muted); }
 
+  /* ---------- gate loop diagram ---------- */
+  .gateflow { display: flex; flex-direction: column; gap: 0; margin-top: 8px; max-width: 760px; }
+  .gf-step { display: grid; grid-template-columns: 78px 1fr; gap: 16px; }
+  .gf-step .rail { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .gf-step .who {
+    flex: none; width: 78px; text-align: center;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+    border: 1px solid var(--line); border-radius: 999px; padding: 5px 0;
+    background: var(--card); color: var(--muted);
+  }
+  .gf-step .who.you { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .gf-step .who.gate { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .gf-step .rail .cord { width: 2px; flex: 1; background: var(--line); min-height: 14px; }
+  .gf-step:last-child .rail .cord { background: transparent; }
+  .gf-step .content { padding-bottom: 22px; min-width: 0; }
+  .gf-step .content h3 { font-size: 1rem; margin-bottom: 4px; }
+  .gf-step .content > p { margin: 0; font-size: 0.92rem; color: var(--muted); max-width: 58ch; }
+  .gf-step .when {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--accent); display: block; margin-bottom: 3px;
+  }
+  .gf-step .seam-example { margin: 14px 0 0; }
+
   /* ---------- workflow rail ---------- */
   .flow { display: flex; flex-direction: column; gap: 0; margin-top: 8px; }
   .flow-step { display: grid; grid-template-columns: 34px 1fr; gap: 16px; }
@@ -773,6 +798,87 @@
         deliberately, the ones that matter work <strong>independently of any particular
         AI harness</strong>, so the safety doesn't evaporate when you switch tools.
       </p>
+
+      <div class="group-label">The gate loop: who does what, and when</div>
+      <div class="gateflow">
+        <div class="gf-step">
+          <div class="rail"><span class="who you">You</span><div class="cord"></div></div>
+          <div class="content">
+            <span class="when">Once, at setup</span>
+            <h3>Define what "done" means</h3>
+            <p>During <code>/bench-setup-repo</code> you decide what the gate checks
+            (tests, types, lint, conformance) and that becomes <code>.bench/gate.sh</code>.
+            From here on, nobody improvises verification: every session defers to this
+            one script.</p>
+          </div>
+        </div>
+        <div class="gf-step">
+          <div class="rail"><span class="who agent">Agent</span><div class="cord"></div></div>
+          <div class="content">
+            <span class="when">Every iteration</span>
+            <h3>Make one small change</h3>
+            <p>The smallest diff that advances the spec, in its own worktree, so that the
+            verdict coming next answers for exactly one diff and nobody else's edits.</p>
+          </div>
+        </div>
+        <div class="gf-step">
+          <div class="rail"><span class="who agent">Agent</span><div class="cord"></div></div>
+          <div class="content">
+            <span class="when">Every iteration</span>
+            <h3>Ask the oracle, don't judge</h3>
+            <p>The agent runs <code>bench gate</code> after the change (the shift loop runs
+            it automatically after every iteration). Its job is to report the verdict, not
+            to form one. "The code looks right to me" carries no weight here.</p>
+          </div>
+        </div>
+        <div class="gf-step">
+          <div class="rail"><span class="who gate">Gate</span><div class="cord"></div></div>
+          <div class="content">
+            <span class="when">Every iteration</span>
+            <h3>Answer with an exit code</h3>
+            <p>The gate runs the checks and exits zero or nonzero. That exit code is the
+            entire vocabulary of done-ness, and no amount of model confidence overrides it.</p>
+            <div class="seam-example">
+              <div class="pane bad">
+                <div class="pane-head">exit nonzero · red · back to step 2</div>
+                <p class="why">The work is not done, however good the diff looks. The agent
+                keeps iterating; in a shift, an iteration that ends red is rolled back
+                entirely. What it may never do is edit, weaken, or delete a check to reach
+                green. If it believes a check itself is wrong, it stops and tells you.</p>
+              </div>
+              <div class="pane good">
+                <div class="pane-head">exit zero · green · continue</div>
+                <p class="why">The only state in which a commit may happen.
+                <code>bench commit</code> stages the named paths; the shift loop commits on
+                its own. Green means the external checks passed, nothing more, so the work
+                still goes to review.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gf-step">
+          <div class="rail"><span class="who you">You</span><div class="cord"></div></div>
+          <div class="content">
+            <span class="when">End of the phase</span>
+            <h3>Review, then merge</h3>
+            <p>A green gate earns a commit, not a merge. <code>/bench-review-implementation</code>
+            checks what the gate can't see (spec fit, design, duplication), and the merge stays
+            physically yours: the <code>pre-push</code> hook blocks anyone, human or agent, from
+            pushing straight to main.</p>
+          </div>
+        </div>
+      </div>
+      <div class="callout">
+        <span class="label">So how does the agent know to approve the work?</span>
+        <p>It never does, and that is the design. Two verdicts matter and the agent owns
+        neither: the gate's exit code decides <em>done</em> (whether work may commit), and
+        you decide <em>shipped</em> (whether it merges). The agent's belief that the code
+        works is never a completion signal. It applies the same rule to its own subagents:
+        a delegate saying "done" is a claim, and the claim is re-checked against the gate
+        and <code>git status</code> before it's accepted.</p>
+      </div>
+
+      <div class="group-label">The components</div>
       <div class="cards">
         <details class="card">
           <summary><span class="name">The gate (<code>.bench/gate.sh</code>)</span><span class="role">one script that defines "done" for this repo</span></summary>
