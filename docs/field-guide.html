@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bench Field Guide — working with an agentic code harness</title>
+<title>Bench Field Guide: working with an agentic code harness</title>
 <style>
   :root {
     --paper: #F6F7F5;
@@ -269,6 +269,51 @@
   }
   .fit .piece p { margin: 0; font-size: 0.9rem; color: var(--muted); }
 
+  /* ---------- vocabulary ---------- */
+  .vocab {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .vocab .term {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .vocab .term h3 { font-size: 1rem; margin-bottom: 7px; }
+  .vocab .term p { margin: 0; font-size: 0.9rem; }
+
+  .seam-example {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+    margin: 0 0 26px;
+  }
+  .seam-example .pane {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--card);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .seam-example .pane-head {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em;
+    padding: 8px 16px;
+  }
+  .seam-example .pane.good .pane-head { color: var(--accent); background: var(--accent-soft); }
+  .seam-example .pane.bad .pane-head { color: var(--red); background: var(--red-soft); }
+  .seam-example pre {
+    margin: 0; padding: 14px 16px 6px;
+    overflow-x: auto;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.83rem;
+  }
+  .seam-example .why { margin: 0; padding: 8px 16px 14px; font-size: 0.88rem; color: var(--muted); }
+
   /* ---------- workflow rail ---------- */
   .flow { display: flex; flex-direction: column; gap: 0; margin-top: 8px; }
   .flow-step { display: grid; grid-template-columns: 34px 1fr; gap: 16px; }
@@ -354,6 +399,7 @@
     <span class="brand">Bench <em>Field Guide</em></span>
     <a class="tab" href="#start">Start here</a>
     <a class="tab" href="#invariants">Invariants</a>
+    <a class="tab" href="#approach">The approach</a>
     <a class="tab" href="#machinery">Machinery</a>
     <a class="tab" href="#workflow">Workflow</a>
     <a class="tab" href="#skills">Craft skills</a>
@@ -366,17 +412,17 @@
     <div class="eyebrow">User documentation · agentic development, made accountable</div>
     <h1>How Bench keeps an AI coding agent honest</h1>
     <p class="lede">
-      Coding agents are fast, confident, and unsupervised — which is exactly the problem.
+      Coding agents are fast, confident, and unsupervised, which is exactly the problem.
       An agent will happily declare its own work finished, quietly burn an expensive model
       on trivial edits, and write documentation only it can understand. <strong>Bench is a
-      workflow kit that closes those gaps</strong>: an external gate decides what "done" means,
+      workflow kit that closes those gaps.</strong> An external gate decides what "done" means,
       declared budgets bound every long run, and a small set of commands and skills give the
       agent a repeatable way to shape, build, review, and ship work you can trust.
       Read this page top to bottom; each station starts with the core idea and unfolds into detail.
     </p>
     <div class="gate-strip">
-      <span class="gate-chip"><span class="dot green"></span>gate green — work may commit</span>
-      <span class="gate-chip"><span class="dot red"></span>gate red — work is not done</span>
+      <span class="gate-chip"><span class="dot green"></span>gate green: work may commit</span>
+      <span class="gate-chip"><span class="dot red"></span>gate red: work is not done</span>
       <span class="gate-chip">you review · the agent builds</span>
     </div>
   </div>
@@ -398,7 +444,7 @@
         Everything in Bench follows from one division of labor. <strong>The agent is the
         worker; you are the reviewer, and you own the merge.</strong> The worker builds on
         your behalf but never decides what ships, what a spec should say, or anything
-        irreversible — when a decision is genuinely yours, it surfaces the question and
+        irreversible. When a decision is genuinely yours, it surfaces the question and
         stops. Around that agreement sit four kinds of pieces, each answering a different
         failure mode of agentic work:
       </p>
@@ -406,12 +452,12 @@
         <div class="piece">
           <span class="tag">Guidance</span>
           <h3>Skills</h3>
-          <p>Shape <em>how</em> the agent generates — craft disciplines it reaches for when a task matches. Probabilistic guidance, not rules.</p>
+          <p>Shape <em>how</em> the agent generates: the craft disciplines it reaches for when a task matches. Probabilistic guidance, not rules.</p>
         </div>
         <div class="piece">
           <span class="tag">Process</span>
           <h3>Commands</h3>
-          <p>The canonical phases of the workflow — shape, spec, build, review, verify — plus maintenance passes you invoke deliberately.</p>
+          <p>The canonical phases of the workflow, from shaping an idea through the final check, plus maintenance passes you invoke deliberately.</p>
         </div>
         <div class="piece">
           <span class="tag">Enforcement</span>
@@ -421,7 +467,7 @@
         <div class="piece">
           <span class="tag">Operations</span>
           <h3>The <code>bench</code> CLI</h3>
-          <p>The operational layer the agent drives — worktrees, the gated loop, status, capture — with the same behavior in every harness.</p>
+          <p>The operational layer the agent drives: worktrees, the gated loop, status, and capture, with the same behavior in every harness.</p>
         </div>
       </div>
       <div class="callout">
@@ -463,8 +509,8 @@
             </div>
             <div class="solution">
               <div class="label">How it works</div>
-              <p>"Done" means <code>bench gate</code> exits zero — tests, types, lint, and any
-              project conformance check, external to the model. If the gate is red, the work is
+              <p>"Done" means <code>bench gate</code> exits zero: tests, types, lint, and any
+              project conformance check, all external to the model. If the gate is red, the work is
               not done, no matter how good the diff looks. The agent may never edit, skip, weaken,
               or delete a check to get to green; if a check seems wrong, it stops and says so.
               The rule extends to delegation: a subagent's "done" is a claim, verified against
@@ -478,8 +524,8 @@
             <div class="problem">
               <div class="label">The problem</div>
               <p>Long agent runs have real costs, and left alone an agent will spend a top-tier
-              model on routine plumbing or grind indefinitely on a problem it can't crack —
-              you find out from the bill, or from a stuck session, after the fact.</p>
+              model on routine plumbing, or grind indefinitely on a problem it can't crack.
+              You find out from the bill, or from a stuck session, after the fact.</p>
             </div>
             <div class="solution">
               <div class="label">How it works</div>
@@ -499,7 +545,7 @@
               <div class="label">The problem</div>
               <p>Agent sessions have no memory of each other. Documentation written as
               change-narration ("we moved X to Y") is useless to a reader who never saw the
-              before-state — and every future session is that reader.</p>
+              before-state, and every future session is that reader.</p>
             </div>
             <div class="solution">
               <div class="label">How it works</div>
@@ -516,7 +562,7 @@
             <div class="problem">
               <div class="label">The problem</div>
               <p>Agents can produce enormous diffs in minutes, and an enormous diff is
-              unreviewable — the reviewer either rubber-stamps it or blocks everything.
+              unreviewable: the reviewer either rubber-stamps it or blocks everything.
               Worse, an agent that wants a shortcut will quietly reframe the task until
               the shortcut looks legitimate.</p>
             </div>
@@ -524,7 +570,7 @@
               <div class="label">How it works</div>
               <p>The smallest diff that advances the objective; commit on green, never on red.
               The agent reads the surrounding code before writing, and prefers composing an
-              existing seam to inventing a new one. The tell it's taught to watch for:
+              existing seam to inventing a new one. It is also taught to watch for one tell:
               if it catches itself reframing the task to make a shortcut feel acceptable,
               that reframing is the signal to stop and ask you.</p>
             </div>
@@ -534,10 +580,169 @@
     </div>
   </section>
 
-  <!-- ============ STATION 3: MACHINERY ============ -->
-  <section class="station" id="machinery">
+  <!-- ============ STATION 3: THE APPROACH ============ -->
+  <section class="station" id="approach">
     <div class="station-head">
       <div class="node">3</div>
+      <div>
+        <div class="kicker">Vocabulary</div>
+        <h2>How Bench builds: at the seams</h2>
+      </div>
+    </div>
+    <div class="station-body">
+      <p class="intro">
+        Bench takes one development approach everywhere, and it fits in a sentence:
+        <strong>the spec chooses a small number of seams before the build starts, the
+        build does test-driven development only at those seams, modules stay deep so
+        the seams stay small, and the gate judges the result.</strong> The point of the
+        arrangement is that the test target is external to the agent. You chose the seam
+        and the behavior, so a passing test means the code matches your spec rather than
+        the agent's own guess. The terms below carry that approach, and you will meet
+        them everywhere: in specs, in reviews, and in the agent's explanations.
+      </p>
+
+      <div class="seam-example">
+        <div class="pane good">
+          <div class="pane-head">a well-placed seam</div>
+          <pre>new Scheduler(clock).nextRun()</pre>
+          <p class="why">Time enters through the constructor, so a test injects a fixed
+          clock through the same seam callers use.</p>
+        </div>
+        <div class="pane bad">
+          <div class="pane-head">a missing seam</div>
+          <pre>nextRun() { return Date.now() + this.interval }</pre>
+          <p class="why">The dependency is hardwired. A test has to patch
+          <code>Date.now</code> behind the interface, binding itself to an internal.</p>
+        </div>
+      </div>
+
+      <div class="vocab">
+        <div class="term">
+          <h3>Seam</h3>
+          <p>The place where you can change behavior without editing in that place. It is
+          where a module's interface lives, and where callers and tests both cross.
+          Placing the seam is a design decision in its own right, separate from what goes
+          behind it: a well-placed seam makes tests cheap and stable, and a badly placed
+          one makes the suite break on every refactor. Bench deliberately avoids the word
+          "boundary", which means too many things.</p>
+        </div>
+        <div class="term">
+          <h3>Interface</h3>
+          <p>Everything a caller must know to use a module: signature, invariants,
+          ordering, error modes, configuration, performance. The smaller the interface,
+          the less every caller, and every future agent session, has to learn.</p>
+        </div>
+        <div class="term">
+          <h3>Deep module</h3>
+          <p>A module that hides a lot of behavior behind a small interface. Depth is the
+          design goal, for two payoffs: leverage, where callers learn a little and get a
+          lot, and locality, where changes concentrate in one place instead of rippling
+          across the codebase.</p>
+        </div>
+        <div class="term">
+          <h3>The deletion test</h3>
+          <p>The quick check for whether a module earns its existence. Imagine deleting
+          it: if the complexity simply vanishes, it was a pass-through and shouldn't
+          exist; if the complexity reappears across its callers, it earned its place. A
+          related rule keeps speculative seams out: one adapter is a hypothetical seam,
+          two adapters is a real one.</p>
+        </div>
+        <div class="term">
+          <h3>The interface is the test surface</h3>
+          <p>Tests cross the same seam callers use and assert observable behavior, never
+          private internals. If a test wants to reach past the interface, the module is
+          the wrong shape, and the fix is to reshape it rather than reach around it.</p>
+        </div>
+        <div class="term">
+          <h3>TDD at the seams</h3>
+          <p>Test-first development happens only at the seams the spec marked, never
+          everywhere. At a marked seam the target is external, so passing the test means
+          matching the spec. Off the marked seams, the agent writes the code and lets the
+          gate catch regressions, which keeps the ceremony where it pays for itself.</p>
+        </div>
+        <div class="term">
+          <h3>Red, green, refactor</h3>
+          <p>The cycle at a marked seam. Red: one failing test through the interface,
+          confirmed to fail for the right reason, meaning an assertion failure rather
+          than a compile error. Green: the smallest change that passes it. Refactor:
+          clean up with the test still green. A good test survives the refactor; one
+          that breaks was attached to an internal and gets re-placed.</p>
+        </div>
+        <div class="term">
+          <h3>Red signal</h3>
+          <p>The evidence that coverage is real: a check that demonstrably fails when the
+          behavior it maps is absent or wrong. A test that cannot go red proves nothing,
+          so every acceptance row has to name one.</p>
+        </div>
+        <div class="term">
+          <h3>Acceptance coverage map</h3>
+          <p>The table in every spec that maps each story to its red signal. During the
+          build it is the unit of TDD coverage and the thing that keeps the target fixed:
+          rows go red one at a time as each slice starts, never batched into an upfront
+          pile of failing tests.</p>
+        </div>
+        <div class="term">
+          <h3>Edge inventory</h3>
+          <p>The enumerated ways a seam's inputs can go wrong: hostile inputs, error
+          paths, and the domain's own edge classes. The spec's stories are the breadth
+          floor, not the ceiling. When the build finds an edge the spec forgot, it
+          proposes a new coverage row for your veto instead of silently skipping it.</p>
+        </div>
+        <div class="term">
+          <h3>Over-fitting</h3>
+          <p>The characteristic failure of TDD with agents: the loop invents its own test
+          target, writes the minimum to pass it, and stops, green but wrong. The guard is
+          that seams and semantics come from the spec, never from the loop. An agent that
+          catches itself inventing a target mid-loop treats that as the signal to stop.</p>
+        </div>
+        <div class="term">
+          <h3>Honest test doubles</h3>
+          <p>Mocks and fakes belong only at real system boundaries such as time,
+          randomness, network, and filesystem, never on internal collaborators, and never
+          asserting call counts or call order. A stub scripted to return exactly the
+          happy reply hollows a test out, so stubs keep realistic shapes and fail in the
+          ways the edge inventory says the real dependency fails.</p>
+        </div>
+        <div class="term">
+          <h3>Vertical slice</h3>
+          <p>The build order inside implementation: one story at a time, cut through the
+          whole stack, each slice ending on a green gate. Every slice is reviewable on
+          its own, which is what keeps the repo green between commits.</p>
+        </div>
+        <div class="term">
+          <h3>Design it twice</h3>
+          <p>The rule for a genuinely uncertain seam: don't settle for the first
+          interface idea. Several radically different designs are drafted in parallel and
+          compared before one is chosen. This is exactly what a declared high-effort line
+          buys; at a known seam, one design is fine.</p>
+        </div>
+        <div class="term">
+          <h3>The structure gate</h3>
+          <p><code>bench structure</code> flags files and directories that outgrow their
+          budgets. Splits follow responsibility, never line count, and a genuinely deep
+          module can earn a reviewer-approved budget grant instead of being fragmented to
+          dodge the limit.</p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="label">A feature, end to end</span>
+        <p>
+          The spec names the seams and writes the coverage map, and you sign off. The
+          build declares its line, then works vertical slices: each row's red signal goes
+          red, the smallest change turns it green, and a refactor pass cleans up behind
+          it. Review checks what the gate can't see, and the final check runs the gate
+          and commits. At every step the thing being satisfied is a target you chose,
+          which is what makes the output trustworthy.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STATION 4: MACHINERY ============ -->
+  <section class="station" id="machinery">
+    <div class="station-head">
+      <div class="node">4</div>
       <div>
         <div class="kicker">Architecture</div>
         <h2>The machinery that enforces it</h2>
@@ -545,25 +750,25 @@
     </div>
     <div class="station-body">
       <p class="intro">
-        The invariants would be wishes without teeth. These components are the teeth —
-        and deliberately, the ones that matter work <strong>independently of any particular
+        The invariants would be wishes without teeth. These components are the teeth, and
+        deliberately, the ones that matter work <strong>independently of any particular
         AI harness</strong>, so the safety doesn't evaporate when you switch tools.
       </p>
       <div class="cards">
         <details class="card">
-          <summary><span class="name">The gate — <code>.bench/gate.sh</code></span><span class="role">one script that defines "done" for this repo</span></summary>
+          <summary><span class="name">The gate (<code>.bench/gate.sh</code>)</span><span class="role">one script that defines "done" for this repo</span></summary>
           <div class="body"><div class="ps">
             <div class="problem">
               <div class="label">The problem</div>
-              <p>Every repo has a different definition of correct — its own tests, type
+              <p>Every repo has a different definition of correct: its own tests, type
               checker, linter, conformance rules. Without one agreed entry point, each agent
               session improvises its own verification, and improvised verification gets skipped.</p>
             </div>
             <div class="solution">
               <div class="label">How it works</div>
               <p><code>bench gate</code> runs the project's gate script and exits zero or
-              nonzero — that exit code is the entire vocabulary of done-ness. You configure
-              what's inside it once (during setup); after that, agent, hooks, and loop all
+              nonzero, and that exit code is the entire vocabulary of done-ness. You configure
+              what's inside it once, during setup; after that, agent, hooks, and loop all
               defer to the same oracle. Changing what the gate checks is itself a disciplined
               act, covered by its own skill, because whoever edits the oracle edits the
               meaning of "done".</p>
@@ -576,7 +781,7 @@
             <div class="problem">
               <div class="label">The problem</div>
               <p>If workflow mechanics live inside one AI tool's configuration, they behave
-              differently — or not at all — in the next tool, and the human ends up doing
+              differently, or not at all, in the next tool, and the human ends up doing
               clerical work (parking ideas, checking status) that the agent should absorb.</p>
             </div>
             <div class="solution">
@@ -589,43 +794,44 @@
               (<code>gate</code>, <code>canary</code>, <code>structure</code>, <code>guards</code>,
               <code>coverage</code>, <code>models</code>), and <strong>work execution</strong>
               (<code>worktree</code>, <code>shift</code>, path-scoped <code>commit</code>, and
-              the <code>spec</code> lifecycle). You never need to type these yourself —
+              the <code>spec</code> lifecycle). You never need to type these yourself;
               the agent runs them and reports.</p>
             </div>
           </div></div>
         </details>
         <details class="card">
-          <summary><span class="name">The shift loop — <code>bench shift</code></span><span class="role">an unattended build loop that can only commit green work</span></summary>
+          <summary><span class="name">The shift loop (<code>bench shift</code>)</span><span class="role">an unattended build loop that can only commit green work</span></summary>
           <div class="body"><div class="ps">
             <div class="problem">
               <div class="label">The problem</div>
-              <p>Letting an agent iterate unattended is where the leverage is — and where the
-              risk is. An unsupervised loop that commits its own unverified output will
+              <p>Letting an agent iterate unattended is where the leverage is, and also where
+              the risk is. An unsupervised loop that commits its own unverified output will
               cheerfully stack broken commits all night.</p>
             </div>
             <div class="solution">
               <div class="label">How it works</div>
-              <p><code>bench shift</code> drives whatever harness you point it at (a small
-              adapter maps the generated prompt to that tool's noninteractive mode — reference
-              adapters ship for Claude Code, Codex, and OpenCode). After <em>every</em>
+              <p><code>bench shift</code> drives whatever harness you point it at; a small
+              adapter maps the generated prompt to that tool's noninteractive mode, and
+              reference adapters ship for Claude Code, Codex, and OpenCode. After <em>every</em>
               iteration it runs the gate, and it commits only on green. In a repo with a tier
               binding, the adapters refuse to run at all unless an explicit, bound model is
-              declared — so a headless run always carries a budget, never a default.</p>
+              declared, so a headless run always carries a budget rather than a default.</p>
             </div>
           </div></div>
         </details>
         <details class="card">
-          <summary><span class="name">Worktrees — <code>bench worktree</code></span><span class="role">one isolated copy of the repo per stream of work</span></summary>
+          <summary><span class="name">Worktrees (<code>bench worktree</code>)</span><span class="role">one isolated copy of the repo per stream of work</span></summary>
           <div class="body"><div class="ps">
             <div class="problem">
               <div class="label">The problem</div>
-              <p>When two writers — you and an agent, or two agents — edit the same checkout,
-              their changes interleave. A gate verdict over a mixed tree answers for nobody's
-              diff, and a delegate's stray edit can land silently in files you own.</p>
+              <p>When two writers edit the same checkout, whether that's you and an agent or
+              two agents at once, their changes interleave. A gate verdict over a mixed tree
+              answers for nobody's diff, and a delegate's stray edit can land silently in
+              files you own.</p>
             </div>
             <div class="solution">
               <div class="label">How it works</div>
-              <p><code>bench worktree</code> gives each stream of work its own git worktree —
+              <p><code>bench worktree</code> gives each stream of work its own git worktree,
               a separate directory sharing the same repository. Side-work and write-delegations
               go to their own worktree, so every gate verdict answers for exactly one diff and
               stray edits physically cannot reach the main checkout. Worktrees are pooled and
@@ -634,12 +840,12 @@
           </div></div>
         </details>
         <details class="card">
-          <summary><span class="name">Layered git safety — hooks</span><span class="role">protection that survives a harness swap</span></summary>
+          <summary><span class="name">Layered git safety (hooks)</span><span class="role">protection that survives a harness swap</span></summary>
           <div class="body"><div class="ps">
             <div class="problem">
               <div class="label">The problem</div>
               <p>AI-tool safety settings only bind that one tool. An agent run from a different
-              harness — or a human in a hurry — can push straight to main, run destructive git
+              harness, or a human in a hurry, can push straight to main, run destructive git
               commands, or stop a loop mid-red, and nothing objects.</p>
             </div>
             <div class="solution">
@@ -657,7 +863,7 @@
           </div></div>
         </details>
         <details class="card">
-          <summary><span class="name">Tier binding — <code>.bench/lines.env</code></span><span class="role">abstract model tiers, bound per repo</span></summary>
+          <summary><span class="name">Tier binding (<code>.bench/lines.env</code>)</span><span class="role">abstract model tiers, bound per repo</span></summary>
           <div class="body"><div class="ps">
             <div class="problem">
               <div class="label">The problem</div>
@@ -667,7 +873,7 @@
             </div>
             <div class="solution">
               <div class="label">How it works</div>
-              <p>The workflow speaks only in abstract tiers — cheap, mid, top. You, the
+              <p>The workflow speaks only in abstract tiers: cheap, mid, and top. You, the
               reviewer, bind each tier to a concrete model id in <code>.bench/lines.env</code>
               and the project profile. The agent resolves tiers through that binding, a hook
               rejects delegations that step outside it, and if a bound model is reported
@@ -677,7 +883,7 @@
           </div></div>
         </details>
         <details class="card">
-          <summary><span class="name">Two-file context — <code>BENCH.md</code> and <code>BENCH-reference.md</code></span><span class="role">always-loaded rules, on-demand lookup</span></summary>
+          <summary><span class="name">Two-file context (<code>BENCH.md</code> + <code>BENCH-reference.md</code>)</span><span class="role">always-loaded rules, on-demand lookup</span></summary>
           <div class="body"><div class="ps">
             <div class="problem">
               <div class="label">The problem</div>
@@ -690,8 +896,8 @@
               <p>The operating guide (<code>.bench/BENCH.md</code>) is always loaded and carries
               only what steers generation: roles, the four invariants, the workflow, the
               communication rules, and the CLI inventory a cold session needs. Everything
-              that's lookup rather than steering — the file map, the skills index, hook
-              layering, the shift adapter contract — lives in
+              that's lookup rather than steering (the file map, the skills index, hook
+              layering, the shift adapter contract) lives in
               <code>.bench/BENCH-reference.md</code>, referenced by path and read only when
               needed. It costs no tokens until opened.</p>
             </div>
@@ -701,10 +907,10 @@
     </div>
   </section>
 
-  <!-- ============ STATION 4: WORKFLOW ============ -->
+  <!-- ============ STATION 5: WORKFLOW ============ -->
   <section class="station" id="workflow">
     <div class="station-head">
-      <div class="node">4</div>
+      <div class="node">5</div>
       <div>
         <div class="kicker">Process</div>
         <h2>The workflow: five phases, one bug path</h2>
@@ -714,7 +920,7 @@
       <p class="intro">
         Commands are the phases of building a feature, in order. Each one hands off to the
         next with an explicit recommendation, so you always know where the work stands and
-        what comes next. The numbering below is the real sequence — but the process is
+        what comes next. The numbering below is the real sequence, but the process is
         <strong>right-sized, not ritual</strong>: a few-line change may take a lighter path,
         with your explicit OK before any canonical step is skipped.
       </p>
@@ -730,7 +936,7 @@
                   <div class="label">The problem</div>
                   <p>Building on top of unresolved decisions produces confident code that answers
                   the wrong question. Big ideas hide questions whose answers change what gets
-                  built — and an agent asked to "just build it" will guess at all of them.</p>
+                  built, and an agent asked to "just build it" will guess at all of them.</p>
                 </div>
                 <div class="solution">
                   <div class="label">How it works</div>
@@ -738,7 +944,10 @@
                   (or resumes) a compact decision map in <code>decisions/&lt;topic&gt;.md</code>:
                   the open questions as tickets, sequenced so answering one unlocks the next,
                   with resolved answers written into the file. The agent works the frontier one
-                  question at a time until nothing unresolved still blocks a spec.</p>
+                  question at a time until nothing unresolved still blocks a spec. Shaping runs
+                  on the top-tier model, because eliminating uncertainty is exactly what the
+                  smartest model is for; once the map is clear, the handoff is a fresh mid-tier
+                  session to write the spec.</p>
                 </div>
               </div></div>
             </details>
@@ -749,7 +958,7 @@
           <div class="rail"><div class="n">2</div><div class="cord"></div></div>
           <div class="content"><div class="cards">
             <details class="card">
-              <summary><span class="name"><code>/bench-write-spec</code></span><span class="role">lock stories, seams, and the definition of done — before the loop runs</span></summary>
+              <summary><span class="name"><code>/bench-write-spec</code></span><span class="role">lock stories, seams, and the definition of done before the loop runs</span></summary>
               <div class="body"><div class="ps">
                 <div class="problem">
                   <div class="label">The problem</div>
@@ -763,9 +972,12 @@
                   map into <code>specs/&lt;feature&gt;.md</code>: user stories, implementation
                   decisions, <em>pre-agreed test seams</em>, an acceptance coverage map, and the
                   gate expectations that define done. It synthesizes what's already been discussed
-                  rather than re-interviewing you. The spec stops for your sign-off, then the
-                  build runs on a fresh session — the target is locked before the loop starts,
-                  so it can't be renegotiated by the loop.</p>
+                  rather than re-interviewing you. A spec is one of the most token-heavy
+                  artifacts the agent produces, so it runs on the mid tier, on a fresh session
+                  that reads the finished decision map instead of inheriting the shaping
+                  conversation. The spec stops for your sign-off, then the build runs on yet
+                  another fresh session. The target is locked before the loop starts, so the
+                  loop can't renegotiate it.</p>
                 </div>
               </div></div>
             </details>
@@ -780,7 +992,7 @@
               <div class="body"><div class="ps">
                 <div class="problem">
                   <div class="label">The problem</div>
-                  <p>Unstructured implementation is where budgets blow up and scope wanders —
+                  <p>Unstructured implementation is where budgets blow up and scope wanders:
                   the agent picks its own boundaries, invents new abstractions, and touches
                   more of the codebase than the change needs.</p>
                 </div>
@@ -815,8 +1027,8 @@
                   <strong>Standards</strong> (does it follow this repo's documented conventions),
                   <strong>Spec</strong> (does it match what was approved), and
                   <strong>Coverage</strong> (what breaking inputs does nothing exercise). Every
-                  finding must meet a citation standard — it points at evidence, not vibes.
-                  The review is advisory: it produces findings and persists them for a fix pass,
+                  finding must meet a citation standard: it points at evidence, not vibes.
+                  The review is advisory. It produces findings and persists them for a fix pass,
                   but it never overrides the gate's authority on done-ness.</p>
                 </div>
               </div></div>
@@ -837,12 +1049,12 @@
                 </div>
                 <div class="solution">
                   <div class="label">How it works</div>
-                  <p>The phase runs the external gate and reports the result plainly — including
-                  a red one, with the failing output. On green, it lands the work with a
+                  <p>The phase runs the external gate and reports the result plainly, including
+                  a red one with the failing output. On green, it lands the work with a
                   path-scoped <code>bench commit</code>, which gates and commits the named files
                   atomically; when the commit finishes a spec, the spec's status flips to
                   implemented in the same commit. Model judgment is never a substitute for
-                  the gate here — that's the whole point of the phase.</p>
+                  the gate here. That is the whole point of the phase.</p>
                 </div>
               </div></div>
             </details>
@@ -852,7 +1064,7 @@
         <div class="flow-step">
           <div class="rail"><div class="n alt">✕</div><div class="cord"></div></div>
           <div class="content">
-            <p class="branch-note">branch — when the work is "fix", not "build"</p>
+            <p class="branch-note">branch: when the work is a fix, not a build</p>
             <div class="cards">
               <details class="card">
                 <summary><span class="name"><code>/bench-debug</code></span><span class="role">the bug path: repro first, fix second</span></summary>
@@ -860,16 +1072,16 @@
                   <div class="problem">
                     <div class="label">The problem</div>
                     <p>Pointed at a bug, an agent's instinct is to hypothesize a cause and patch
-                    it — and a plausible-sounding fix for the wrong cause passes review, ships,
+                    it, and a plausible-sounding fix for the wrong cause passes review, ships,
                     and leaves the bug alive.</p>
                   </div>
                   <div class="solution">
                     <div class="label">How it works</div>
                     <p>The bug path replaces the feature path the moment something is broken,
                     throwing, failing, or slow. Step one is a tight, <em>red-capable</em>
-                    reproduction loop — a command that demonstrably fails because of this bug.
+                    reproduction loop: a command that demonstrably fails because of this bug.
                     That loop, not the agent's theory, is the oracle for the diagnosis and the
-                    fix: the fix is right when the repro turns green and stays green as a
+                    fix. The fix is right when the repro turns green and stays green as a
                     regression check. The phase also reports any architecture finding that would
                     have prevented the bug.</p>
                   </div>
@@ -882,14 +1094,14 @@
         <div class="flow-step">
           <div class="rail"><div class="n alt">⟳</div><div class="cord"></div></div>
           <div class="content">
-            <p class="branch-note">outside the sequence — setup once, maintain on cadence</p>
+            <p class="branch-note">outside the sequence: set up once, maintain on cadence</p>
             <div class="cards">
               <details class="card">
                 <summary><span class="name"><code>/bench-setup-repo</code></span><span class="role">configure a repo for Bench, once</span></summary>
                 <div class="body"><div class="ps">
                   <div class="problem">
                     <div class="label">The problem</div>
-                    <p>The kit can't guess the parts that are specific to your repo — what the
+                    <p>The kit can't guess the parts that are specific to your repo: what the
                     real gate should run, where the seams are, which models the tiers bind to.
                     Defaults here would be silently wrong.</p>
                   </div>
@@ -904,12 +1116,12 @@
                 </div></div>
               </details>
               <details class="card">
-                <summary><span class="name"><code>/bench-what-next</code></span><span class="role">reconcile the roadmap, drain the capture — one reviewed diff</span></summary>
+                <summary><span class="name"><code>/bench-what-next</code></span><span class="role">reconcile the roadmap and drain the capture in one reviewed diff</span></summary>
                 <div class="body"><div class="ps">
                   <div class="problem">
                     <div class="label">The problem</div>
                     <p>Parked ideas and process learnings accumulate faster than anyone triages
-                    them, and a roadmap nobody reconciles against reality decays into fiction —
+                    them, and a roadmap nobody reconciles against reality decays into fiction,
                     listing work that already shipped and missing work that emerged.</p>
                   </div>
                   <div class="solution">
@@ -919,7 +1131,7 @@
                     <code>IDEAS.md</code> and open entries from the learnings journal into it,
                     refreshes the recommended sequence, and hands you the whole pass as one batch
                     diff to approve. Nothing graduates from "parked" to "planned" without your eyes
-                    on it — but it costs you exactly one review.</p>
+                    on it, and it costs you exactly one review.</p>
                   </div>
                 </div></div>
               </details>
@@ -929,7 +1141,7 @@
                   <div class="problem">
                     <div class="label">The problem</div>
                     <p>Day-to-day phases see one diff at a time. Nothing in that loop ever steps
-                    back to ask what the whole codebase needs — so structural debt accumulates
+                    back to ask what the whole codebase needs, so structural debt accumulates
                     invisibly between features.</p>
                   </div>
                   <div class="solution">
@@ -949,7 +1161,7 @@
                     <div class="label">The problem</div>
                     <p>The kit improves upstream, but blindly merging upstream changes into the
                     tool that governs your agents would let the rules rewrite themselves without
-                    review — the one thing this whole system exists to prevent.</p>
+                    review, which is the one thing this whole system exists to prevent.</p>
                   </div>
                   <div class="solution">
                     <div class="label">How it works</div>
@@ -968,10 +1180,28 @@
       </div>
 
       <div class="callout">
+        <span class="label">When to start a new session, and on which model</span>
+        <p>
+          Each phase boundary is also a session boundary, and that's deliberate. A phase
+          leaves behind an artifact written for a reader with no memory (a decision map, a
+          spec, a reviewed branch), so the next phase starts fresh and reads the artifact
+          instead of dragging along a long conversation. The handoff out of shaping is the
+          one to internalize: shaping runs on the smartest model available, because its
+          whole job is to eliminate uncertainty, and by the time it finishes, the session
+          is carrying a large and expensive context. Writing the spec then starts clean on
+          a mid-tier session. This matters because specs and code are the two most
+          token-intensive things an agent produces; neither belongs on the top model by
+          default. The spec is written on the mid tier from the finished decision map, and
+          the build is orchestrated on the mid tier with cheap-tier work at known seams,
+          escalating a stage only where a seam is genuinely uncertain.
+        </p>
+      </div>
+
+      <div class="callout">
         <span class="label">Right-sizing</span>
         <p>
-          The pipeline is proportional. A genuinely small change can propose a lighter path —
-          but skipping canonical steps is the reviewer's call, requested before the skip, never
+          The pipeline is proportional. A genuinely small change can propose a lighter path,
+          but skipping canonical steps is your call, requested before the skip rather than
           after. A fix for concrete review findings may go straight to fix-and-gate. And when
           you give a standing rule for changes of a given size, the agent follows it and stops
           asking.
@@ -980,10 +1210,10 @@
     </div>
   </section>
 
-  <!-- ============ STATION 5: SKILLS ============ -->
+  <!-- ============ STATION 6: SKILLS ============ -->
   <section class="station" id="skills">
     <div class="station-head">
-      <div class="node">5</div>
+      <div class="node">6</div>
       <div>
         <div class="kicker">Guidance</div>
         <h2>The craft skills</h2>
@@ -991,9 +1221,9 @@
     </div>
     <div class="station-body">
       <p class="intro">
-        Skills are the disciplines the agent loads when a task matches — how to write a spec,
-        where a test belongs, when to delegate. They steer generation rather than enforce it:
-        think of them as the studio's craft manuals, one per recurring judgment call. Grouped
+        Skills are the disciplines the agent loads when a task matches: how to write a spec,
+        where a test belongs, when to delegate. They steer generation rather than enforce it.
+        Think of them as the studio's craft manuals, one per recurring judgment call. Grouped
         here by the moment they fire.
       </p>
 
@@ -1021,16 +1251,17 @@
           <div class="body"><div class="ps">
             <div class="problem">
               <div class="label">The problem</div>
-              <p>A spec whose acceptance criteria can't actually fail is decoration — the build
+              <p>A spec whose acceptance criteria can't actually fail is decoration: the build
               "passes" it no matter what gets built, and edge cases nobody inventoried become
               production surprises.</p>
             </div>
             <div class="solution">
               <div class="label">How it works</div>
-              <p>The authoring discipline behind every spec: each acceptance-coverage row names a
-              real <em>red signal</em> — a check that demonstrably fails when the story isn't
-              met — plus a canonical inventory of edge classes to walk, and sizing rules for
-              stories and scope cuts so "out of scope" is a genuine decision, not a dodge.</p>
+              <p>The authoring discipline behind every spec. Each acceptance-coverage row names a
+              real <em>red signal</em>, meaning a check that demonstrably fails when the story
+              isn't met. Alongside that come a canonical inventory of edge classes to walk, and
+              sizing rules for stories and scope cuts so "out of scope" is a genuine decision,
+              not a dodge.</p>
             </div>
           </div></div>
         </details>
@@ -1040,7 +1271,7 @@
             <div class="problem">
               <div class="label">The problem</div>
               <p>Tests placed at the wrong boundary calcify the implementation instead of the
-              behavior — every refactor breaks them — and every unnecessary abstraction an agent
+              behavior, so every refactor breaks them. And every unnecessary abstraction an agent
               invents is one more surface future sessions must understand.</p>
             </div>
             <div class="solution">
@@ -1058,14 +1289,14 @@
             <div class="problem">
               <div class="label">The problem</div>
               <p>Decision records written as narratives of change assume a reader who remembers
-              the before-state. Agent sessions never do — so those records read as noise, and
+              the before-state. Agent sessions never do, so those records read as noise, and
               the decision gets relitigated.</p>
             </div>
             <div class="solution">
               <div class="label">How it works</div>
               <p>Write the resulting state, not the change: what is decided, why, addressed to a
-              teammate with no memory of the project's history. No file paths or code snippets —
-              they rot. This is the third invariant turned into a writing method.</p>
+              teammate with no memory of the project's history. No file paths or code snippets,
+              because they rot. This is the third invariant turned into a writing method.</p>
             </div>
           </div></div>
         </details>
@@ -1096,7 +1327,7 @@
             <div class="problem">
               <div class="label">The problem</div>
               <p>Tools built for humans waste an agent's context on prose and ASCII art, and fail
-              in ways an agent can't parse — so the agent burns tokens re-asking and guessing.</p>
+              in ways an agent can't parse, so the agent burns tokens re-asking and guessing.</p>
             </div>
             <div class="solution">
               <div class="label">How it works</div>
@@ -1113,7 +1344,7 @@
             <div class="problem">
               <div class="label">The problem</div>
               <p>Asked for UI, an agent invents plausible colors, spacing, and components from
-              scratch each time — producing screens that drift from the product's actual design
+              scratch each time, producing screens that drift from the product's actual design
               system one hardcoded value at a time.</p>
             </div>
             <div class="solution">
@@ -1134,13 +1365,13 @@
             <div class="problem">
               <div class="label">The problem</div>
               <p>Model choice is a budget decision, but it's made dozens of times a day in the
-              middle of other work — so it defaults to "the biggest model, just in case", and
+              middle of other work, so it defaults to "the biggest model, just in case", and
               the spend is invisible until it isn't.</p>
             </div>
             <div class="solution">
               <div class="label">How it works</div>
               <p>The judgment half of the second invariant: how to pick the tier and effort for
-              a build, shift, TDD pass, or delegated task; when a tier moves up or down; and how
+              a build, shift, TDD pass, or delegated task, when a tier moves up or down, and how
               the abstract tiers resolve through the repo's binding. Cheap for plumbing at a
               known seam, top only where the answer is genuinely uncertain.</p>
             </div>
@@ -1158,9 +1389,10 @@
             <div class="solution">
               <div class="label">How it works</div>
               <p>The delegation discipline: when a task is worth spawning for, how to charge and
-              scope the delegate, when it needs an isolated worktree (any write-delegation does),
-              and the rule that a done-claim is a claim — verified against the gate and
-              <code>git status</code> before acceptance, never taken on trust.</p>
+              scope the delegate, and when it needs an isolated worktree (any write-delegation
+              does). It also carries the rule that a done-claim is only a claim, verified
+              against the gate and <code>git status</code> before acceptance and never taken
+              on trust.</p>
             </div>
           </div></div>
         </details>
@@ -1176,8 +1408,8 @@
             <div class="solution">
               <div class="label">How it works</div>
               <p>The authoring discipline for gate checks: how to add or change one, how to
-              choose its fail posture, and the requirement to <em>prove the check bites</em> —
-              demonstrate the red it's supposed to produce before trusting its green. Reached
+              choose its fail posture, and the requirement to <em>prove the check bites</em> by
+              demonstrating the red it's supposed to produce before trusting its green. Reached
               for before touching the gate script, any enforcement hook, or a gate scaffold.</p>
             </div>
           </div></div>
@@ -1193,8 +1425,8 @@
             </div>
             <div class="solution">
               <div class="label">How it works</div>
-              <p>The judgment behind every review: three separate axes — Standards, Spec,
-              Coverage — and a citation standard every finding must meet before it's reported.
+              <p>The judgment behind every review: three separate axes (Standards, Spec, and
+              Coverage) and a citation standard every finding must meet before it's reported.
               The review phase, a delegate's returned work, a PR, and a self-review before
               commit all charge from this one discipline. Advisory always; the gate stays
               the oracle.</p>
@@ -1216,9 +1448,9 @@
             </div>
             <div class="solution">
               <div class="label">How it works</div>
-              <p>Principles for creating, editing, and pruning skills — the kit's own and your
-              project's: how to write triggers that actually fire, how to keep the body lean,
-              and when a skill should be deleted rather than grown.</p>
+              <p>Principles for creating, editing, and pruning skills, covering the kit's own and
+              your project's: how to write triggers that actually fire, how to keep the body
+              lean, and when a skill should be deleted rather than grown.</p>
             </div>
           </div></div>
         </details>
@@ -1227,14 +1459,14 @@
           <div class="body"><div class="ps">
             <div class="problem">
               <div class="label">The problem</div>
-              <p>The kit governs the agents — so a change to the kit is a change to the
+              <p>The kit governs the agents, so a change to the kit is a change to the
               governor, and an unreviewed one reopens decisions that were deliberately closed
               or quietly weakens the discipline it came from.</p>
             </div>
             <div class="solution">
               <div class="label">How it works</div>
-              <p>Every candidate kit change — from upstream sync or from a learnings-sourced
-              roadmap item — passes the same discipline: respect closed decisions, assess the
+              <p>Every candidate kit change, whether from upstream sync or a learnings-sourced
+              roadmap item, passes the same discipline: respect closed decisions, assess the
               change by the gap it fills, run three quality loops (legibility, consistency,
               dogfood), and <em>propose</em> the result for your sign-off rather than merging it.</p>
             </div>
@@ -1244,10 +1476,10 @@
     </div>
   </section>
 
-  <!-- ============ STATION 6: ARTIFACTS ============ -->
+  <!-- ============ STATION 7: ARTIFACTS ============ -->
   <section class="station" id="artifacts">
     <div class="station-head">
-      <div class="node">6</div>
+      <div class="node">7</div>
       <div>
         <div class="kicker">Memory</div>
         <h2>Capture: how nothing gets lost between sessions</h2>
@@ -1257,7 +1489,7 @@
       <p class="intro">
         Sessions end; files persist. Bench routes every kind of in-flight thought to a named
         file with a defined exit, so a good idea mentioned in passing survives the session
-        that heard it — and nothing graduates into planned work without your review.
+        that heard it, and nothing graduates into planned work without your review.
         Capture is conversational: when you want an idea set aside, the <strong>agent</strong>
         runs <code>bench idea</code> for you; you never type the chore yourself.
       </p>
@@ -1266,7 +1498,7 @@
           <tr><th>File</th><th>What lives there</th><th>How it drains</th></tr>
           <tr>
             <td><code>IDEAS.md</code></td>
-            <td>Parked ideas — tangents worth keeping, captured in one dated line.</td>
+            <td>Parked ideas: tangents worth keeping, captured in one dated line.</td>
             <td>Graduates into the roadmap only through a reviewed <code>/bench-what-next</code> pass.</td>
           </tr>
           <tr>
@@ -1281,22 +1513,22 @@
           </tr>
           <tr>
             <td><code>decisions/</code></td>
-            <td>Decision maps from <code>/bench-shape-idea</code> — open tickets and resolved answers.</td>
+            <td>Decision maps from <code>/bench-shape-idea</code>: open tickets and resolved answers.</td>
             <td>Feeds <code>/bench-write-spec</code> once no open ticket blocks the build.</td>
           </tr>
           <tr>
             <td><code>specs/</code></td>
-            <td>Build specs with a status lifecycle: staged → implemented at the green gate → promoted then deleted on merge.</td>
+            <td>Build specs with a status lifecycle: staged, then implemented at the green gate, then promoted and deleted on merge.</td>
             <td>Status flips ride the green commit; retired specs keep their history via <code>bench spec history</code>.</td>
           </tr>
           <tr>
             <td><code>reviews/</code></td>
             <td>Persisted findings from semantic review that await a fix pass.</td>
-            <td>Cleared by the fix pass — or deleted deliberately when you accept the residual risk, named in the final check.</td>
+            <td>Cleared by the fix pass, or deleted deliberately when you accept the residual risk, named in the final check.</td>
           </tr>
           <tr>
             <td><code>CONTEXT.md</code></td>
-            <td>The project's current mental model and shared vocabulary — the first thing a cold session reads.</td>
+            <td>The project's current mental model and shared vocabulary, the first thing a cold session reads.</td>
             <td>Maintained as the model evolves; always present-tense (invariant three).</td>
           </tr>
           <tr>
@@ -1315,11 +1547,11 @@
         <span class="label">The loop closes</span>
         <p>
           Notice the shape: ideas and learnings flow in from conversation, drain through one
-          reviewed batch into the roadmap, become decisions, then specs, then gated commits —
-          and what the process learns about <em>itself</em> follows the same path back into
-          the kit. Every arrow in that loop passes through your review exactly once, which is
-          how the system improves from real use without ever changing its own rules behind
-          your back.
+          reviewed batch into the roadmap, and become decisions, then specs, then gated
+          commits. What the process learns about <em>itself</em> follows the same path back
+          into the kit. Every arrow in that loop passes through your review exactly once,
+          which is how the system improves from real use without ever changing its own rules
+          behind your back.
         </p>
       </div>
     </div>
@@ -1329,10 +1561,10 @@
 <footer>
   <div class="wrap">
     <p>
-      Bench Field Guide — an orientation to the Bench agent-development kit. Start with the
-      two roles, trust the gate over any claim, and let the workflow phases carry the rest.
-      The canonical rules live in <code>.bench/BENCH.md</code> in your repo; this page is the
-      guided tour, not the source of truth.
+      The Bench Field Guide is an orientation to the Bench agent-development kit. Start with
+      the two roles, trust the gate over any claim, and let the workflow phases carry the
+      rest. The canonical rules live in <code>.bench/BENCH.md</code> in your repo; this page
+      is the guided tour, not the source of truth.
     </p>
   </div>
 </footer>
