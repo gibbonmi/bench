@@ -121,6 +121,11 @@ func testRuntimeWorktreeListRows(t *testing.T) {
 	contract.WriteFileAbs(t, filepath.Join(foreignPath, "foreign.txt"), "unique\n")
 	contract.RunAt(t, f, foreignPath, nil, "git", "add", "foreign.txt").RequireExit(0)
 	contract.RunAt(t, f, foreignPath, nil, "git", "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "foreign unique").RequireExit(0)
+	missingForeignPath := filepath.Join(t.TempDir(), "foreign-list-missing")
+	f.Git("worktree", "add", "-q", "-b", "foreign-list-missing", missingForeignPath, "HEAD")
+	if err := os.Rename(missingForeignPath, missingForeignPath+"-moved"); err != nil {
+		t.Fatal(err)
+	}
 	deep := filepath.Join(f.Root, "deep", "cwd")
 	contract.Mkdir(t, deep)
 
@@ -130,7 +135,7 @@ func testRuntimeWorktreeListRows(t *testing.T) {
 		t.Fatalf("list wrote stderr: %q", out.Stderr)
 	}
 	lines := contract.NonEmptyLines(out.Stdout)
-	if len(lines) != 6 || lines[0] != "worktrees[5]{id,label,state,source,tree,lease,landed,ignored}:" {
+	if len(lines) != 7 || lines[0] != "worktrees[6]{id,label,state,source,tree,lease,landed,ignored}:" {
 		t.Fatalf("list block = %q", out.Stdout)
 	}
 	for _, want := range []string{
@@ -139,6 +144,7 @@ func testRuntimeWorktreeListRows(t *testing.T) {
 		",list-live,active,assignment,present,live,true,0",
 		",list-unknown,active,assignment,present,unknown,true,0",
 		"foreign,foreign-list,foreign,foreign,present,none,false,0",
+		"foreign,foreign-list-missing,foreign,foreign,missing,none,true,unknown",
 	} {
 		contract.RequireContains(t, out.Stdout, want)
 	}
