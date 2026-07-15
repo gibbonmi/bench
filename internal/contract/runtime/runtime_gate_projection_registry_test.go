@@ -65,8 +65,5 @@ func TestFT78Story6ProofLedgerCompleteness(t *testing.T) {
 
 func TestFT78Story6ProofLedger(t *testing.T) {
 	contract.SkipIfSubjectBenchMissing(t)
-	for _, c := range ft78Story6Proofs {
-		c := c
-		t.Run(c.id, c.driver)
-	}
+	runProofLedger(t, ft78Story6Proofs, parallelProof)
 }

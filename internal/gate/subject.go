@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -23,9 +24,30 @@ import (
 var envNameRE = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 
 type identityCollector struct {
-	w       io.Writer
-	entries int
-	bytes   int64
+	w          io.Writer
+	entries    int
+	entryLimit int
+	bytes      int64
+}
+
+// defaultManifestEntryLimit caps how many filesystem entries the identity collector
+// will hash while fingerprinting the gate's declared inputs — a resource guard so a
+// declared path holding an unbounded tree cannot make identity computation run away.
+// Its exact value is pinned by an in-package test.
+const defaultManifestEntryLimit = 100000
+
+// manifestEntryLimit resolves the effective entry limit. BENCH_GATE_ENTRY_LIMIT may
+// only *lower* it (a test seam that lets the boundary proof run at tiny scale); a lower
+// limit opens the subject sooner, which only disables verdict reuse — it can never let a
+// stale green be reused — so the override is fail-safe and ignored when it would raise
+// the ceiling.
+func manifestEntryLimit() int {
+	if v := os.Getenv("BENCH_GATE_ENTRY_LIMIT"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 && n < defaultManifestEntryLimit {
+			return n
+		}
+	}
+	return defaultManifestEntryLimit
 }
 
 func buildSubject(root string) (subject, error) {
@@ -51,7 +73,7 @@ func buildSubject(root string) (subject, error) {
 	for _, value := range []string{policyVersion, root, tree, resolutionName(res.Kind), res.Command, pathEnv, manifestIdentity} {
 		frame(h, value)
 	}
-	c := &identityCollector{w: h}
+	c := &identityCollector{w: h, entryLimit: manifestEntryLimit()}
 	if res.Kind != None {
 		if err := c.hashResolution(root, res, pathEnv); err != nil {
 			s.open("launcher closure unavailable")
@@ -162,7 +184,7 @@ func frame(w io.Writer, value string) {
 
 func (c *identityCollector) addEntry() error {
 	c.entries++
-	if c.entries > 100000 {
+	if c.entries > c.entryLimit {
 		return errors.New("entry limit")
 	}
 	return nil

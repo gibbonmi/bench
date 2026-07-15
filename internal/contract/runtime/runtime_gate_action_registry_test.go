@@ -92,8 +92,5 @@ func TestFT78Story5ProofLedgerCompleteness(t *testing.T) {
 func TestFT78Story5ProofLedger(t *testing.T) {
 	contract.SkipIfSubjectBenchMissing(t)
 	r17BridgeBinary = buildR17Bridge(t)
-	for _, c := range ft78Story5Proofs {
-		c := c
-		t.Run(c.id, c.driver)
-	}
+	runProofLedger(t, ft78Story5Proofs, serialProof)
 }

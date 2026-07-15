@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -17,7 +18,35 @@ const ft78ProofLedgerFailure = "FT78 proof ledger completeness contract failed"
 type ft78ProofCase struct {
 	id     string
 	driver func(*testing.T)
+	// serial keeps a proof off the parallel pool. Only proofs that mutate process state
+	// (t.Setenv) need it — Go forbids t.Parallel under t.Setenv — and they are cheap
+	// enough that running them serially costs nothing.
+	serial bool
 }
+
+// runProofLedger is the one source of the proof-ledger execution shape: each proof runs
+// as an isolated subtest, parallel by default (the fixtures are independent), except any
+// marked serial. This collapses a ledger's ~40-proof serial walk into a fan-out bounded
+// by the core count. expand adapts each ledger's proof type to (id, driver, serial).
+func runProofLedger[T any](t *testing.T, proofs []T, expand func(T) (id string, driver func(*testing.T), serial bool)) {
+	for _, proof := range proofs {
+		id, driver, serial := expand(proof)
+		t.Run(id, func(t *testing.T) {
+			if !serial {
+				t.Parallel()
+			}
+			driver(t)
+		})
+	}
+}
+
+func gateProofCase(p ft78ProofCase) (string, func(*testing.T), bool) { return p.id, p.driver, p.serial }
+func parallelProof(p actionProof) (string, func(*testing.T), bool)   { return p.id, p.driver, false }
+
+// serialProof keeps a ledger off the parallel pool. R14's gate-lifecycle proofs
+// (locking, interruption, pending/final persistence, cancellation) drive shared gate
+// state through the built binary and must not overlap, so that ledger runs serially.
+func serialProof(p actionProof) (string, func(*testing.T), bool) { return p.id, p.driver, true }
 
 var ft78Story2Proofs = []ft78ProofCase{
 	manifestProof("R1/manifest-absent", "", "gate input manifest absent", 0),
@@ -29,8 +58,8 @@ var ft78Story2Proofs = []ft78ProofCase{
 	manifestProof("R1/manifest-missing-path", `{"schema":1,"closure":"local","environment":[],"paths":["missing"],"tools":[]}`, "declared path unavailable", 1),
 	manifestProof("R1/manifest-missing-tool", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":["ft78-missing"]}`, "declared tool unavailable", 1),
 	{id: "R1/manifest-escaped-symlink", driver: escapedManifestPathProof},
-	{id: "R1/manifest-entry-total-100000", driver: func(t *testing.T) { manifestCollectorLimitProof(t, 100_000, "", true) }},
-	{id: "R1/manifest-entry-total-100001", driver: func(t *testing.T) { manifestCollectorLimitProof(t, 100_001, "declared path unavailable", false) }},
+	{id: "R1/manifest-entry-total-at-limit", serial: true, driver: func(t *testing.T) { manifestCollectorLimitProof(t, 10, 10, "", true) }},
+	{id: "R1/manifest-entry-total-over-limit", serial: true, driver: func(t *testing.T) { manifestCollectorLimitProof(t, 10, 11, "declared path unavailable", false) }},
 	{id: "R1/manifest-byte-limit-16384", driver: func(t *testing.T) { manifestByteLimitProof(t, 16_384, gate.Ready, "") }},
 	{id: "R1/manifest-byte-limit-16385", driver: func(t *testing.T) { manifestByteLimitProof(t, 16_385, gate.Ready, "gate input manifest invalid") }},
 	manifestProof("R1/manifest-decoded-control-byte", `{"schema":1,"closure":"local","environment":[],"paths":["bad\u0007path"],"tools":[]}`, "gate input manifest invalid", 1),
@@ -82,14 +111,25 @@ var ft78Story2Proofs = []ft78ProofCase{
 }
 
 var ft78Story2ExpectedIDs = []string{
-	"R1/manifest-absent", "R1/manifest-empty", "R1/manifest-malformed", "R1/manifest-wrong-schema", "R1/manifest-remote", "R1/manifest-missing-variable", "R1/manifest-missing-path", "R1/manifest-missing-tool", "R1/manifest-escaped-symlink", "R1/manifest-entry-total-100000", "R1/manifest-entry-total-100001", "R1/manifest-byte-limit-16384", "R1/manifest-byte-limit-16385", "R1/manifest-decoded-control-byte",
+	"R1/manifest-absent", "R1/manifest-empty", "R1/manifest-malformed", "R1/manifest-wrong-schema", "R1/manifest-remote", "R1/manifest-missing-variable", "R1/manifest-missing-path", "R1/manifest-missing-tool", "R1/manifest-escaped-symlink", "R1/manifest-entry-total-at-limit", "R1/manifest-entry-total-over-limit", "R1/manifest-byte-limit-16384", "R1/manifest-byte-limit-16385", "R1/manifest-decoded-control-byte",
 	"R2/gate-script-mutation", "R2/gate-interpreter-mutation", "R2/manifest-mutation", "R2/declared-tool-content-mutation", "R2/declared-tool-mode-mutation", "R2/declared-tool-target-mutation", "R2/declared-file-mutation", "R2/declared-directory-mutation", "R2/path-environment-mutation", "R2/repository-root-mutation", "R2/auto-detected-kind-mutation", "R2/ignored-input-rerun", "R2/ignored-input-refusal",
 	"R3/path-retained", "R3/bench-kit-absent", "R3/bench-wrapper-absent", "R3/ci-absent", "R3/lang-absent", "R3/lc-all-absent", "R3/lc-ctype-absent", "R3/arbitrary-inherited-name-absent", "R3/declared-absent-variable",
 	"R4/real-pnpm-path", "R4/real-python-path", "R4/real-cargo-path", "R4/gate-sh-launcher-mutation", "R4/gate-sh-interpreter-mutation", "R4/bench-gate-bash-mutation", "R4/pnpm-bash-mutation", "R4/pnpm-tool-mutation", "R4/npm-bash-mutation", "R4/npm-tool-mutation", "R4/python-bash-mutation", "R4/python-mypy-mutation", "R4/python-pytest-mutation", "R4/python-ruff-mutation", "R4/cargo-bash-mutation", "R4/cargo-tool-mutation", "R4/cargo-rustc-mutation", "R4/cargo-clippy-driver-mutation", "R4/full-real-wrapper-precedence", "R4/no-gate-exit-3-no-record",
 }
 
-func manifestCollectorLimitProof(t *testing.T, totalEntries int, reason string, reusable bool) {
+// manifestCollectorLimitProof drives the built gate against a declared path holding
+// exactly totalEntries collector entries and asserts the boundary at `limit`: at or under
+// the limit the subject stays closed (reusable green); one over, it opens ("declared path
+// unavailable"). The limit is injected via BENCH_GATE_ENTRY_LIMIT — a tighten-only seam
+// (subject.go) — so the every-gate boundary proof runs at tiny scale. The real
+// 100_000-entry exercise lives behind the `stress` build tag; TestManifestEntryLimitConstant
+// pins that production ceiling so this cheap proof cannot mask a drift in the shipped limit.
+func manifestCollectorLimitProof(t *testing.T, limit, totalEntries int, reason string, reusable bool) {
 	t.Helper()
+	// Both the subprocess gate run and the in-process gate.Inspect below must resolve the
+	// same lowered ceiling, or Inspect recomputes the subject at the default limit and
+	// reports "oracle changed" instead of the boundary's "declared path unavailable".
+	t.Setenv("BENCH_GATE_ENTRY_LIMIT", strconv.Itoa(limit))
 	f := contract.NewFixture(t)
 	interpreter, err := exec.LookPath("sh")
 	if err != nil {
@@ -117,13 +157,13 @@ func manifestCollectorLimitProof(t *testing.T, totalEntries int, reason string, 
 	}
 	f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":["inputs/entry-limit"],"tools":[]}`)
 	f.CommitAll("collector limit fixture")
-	f.Bench("gate").RequireExit(0)
+	f.BenchEnv(map[string]string{"BENCH_GATE_ENTRY_LIMIT": strconv.Itoa(limit)}, "gate").RequireExit(0)
 	got := gate.Inspect(f.Root)
 	if got.State != gate.Ready || got.Status != "green" || got.Reason != reason || got.ReusableGreen != reusable {
-		t.Fatalf("total %d inspection = %+v, want ready/green/reason %q/reusable %v", totalEntries, got, reason, reusable)
+		t.Fatalf("limit %d total %d inspection = %+v, want ready/green/reason %q/reusable %v", limit, totalEntries, got, reason, reusable)
 	}
 	if runs := strings.Count(contract.ReadFileAbs(t, filepath.Join(gitDir(t, f), "ft78-runs")), "run\n"); runs != 1 {
-		t.Fatalf("total %d gate runs = %d, want 1", totalEntries, runs)
+		t.Fatalf("limit %d total %d gate runs = %d, want 1", limit, totalEntries, runs)
 	}
 }
 
@@ -148,8 +188,5 @@ func TestFT78Story2ProofLedgerCompleteness(t *testing.T) {
 
 func TestFT78Story2ProofLedger(t *testing.T) {
 	contract.SkipIfSubjectBenchMissing(t)
-	for _, proof := range ft78Story2Proofs {
-		proof := proof
-		t.Run(proof.id, proof.driver)
-	}
+	runProofLedger(t, ft78Story2Proofs, gateProofCase)
 }
