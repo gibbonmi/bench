@@ -1,1 +1,1 @@
-[{"path":"internal/preflight/release_evidence.go","old":"component_manifest_sha256","new":"component_manifest_digest"}]
+[{"path":"internal/releaseevidence/release_evidence.go","old":"component_manifest_sha256","new":"component_manifest_digest"}]

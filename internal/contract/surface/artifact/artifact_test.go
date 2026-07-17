@@ -25,7 +25,6 @@ type artifactPlatform struct {
 	GOArch string `json:"goarch"`
 	Runner string `json:"runner"`
 }
-
 type wrapperAsset struct {
 	Source string `json:"source"`
 	Mode   string `json:"mode"`
@@ -290,13 +289,16 @@ func assertPlatformArtifact(t *testing.T, root, path, version string, platform a
 	entries := contract.ReadTarball(t, path)
 	want := map[string]bool{"package/bin/bench": true, "package/package.json": true, "package/component-manifest.json": true}
 	var registry struct {
-		PackageEvidence []struct {
-			Path string `json:"path"`
-		} `json:"package_evidence"`
+		Records []struct {
+			Path        string `json:"path"`
+			PackageMode string `json:"package_mode"`
+		} `json:"records"`
 	}
-	contract.ReadJSONFile(t, filepath.Join(root, "internal", "preflight", "requirements.json"), &registry)
-	for _, evidence := range registry.PackageEvidence {
-		want["package/"+evidence.Path] = true
+	contract.ReadJSONFile(t, filepath.Join(root, "internal", "releaseevidence", "requirements.json"), &registry)
+	for _, record := range registry.Records {
+		if record.PackageMode != "" {
+			want["package/"+record.Path] = true
+		}
 	}
 	if len(entries) != len(want) {
 		t.Fatalf("%s platform artifact entries = %v", platform.OS+"-"+platform.Arch, reflect.ValueOf(entries).MapKeys())

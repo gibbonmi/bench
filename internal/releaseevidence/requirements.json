@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "toolchains": [
+    {"name":"go","version_argv":["go","env","GOVERSION"],"flags":["build:-trimpath","build:-ldflags=-s -w -X main.version=<package-version>"]},
+    {"name":"node","version_argv":["node","--version"],"flags":[]},
+    {"name":"npm","version_argv":["npm","--version"],"flags":["pack:--ignore-scripts --silent","install:--ignore-scripts --omit=optional"]}
+  ],
+  "component_manifest": {
+    "schema_version": 1,
+    "path": "component-manifest.json",
+    "root_fields": {"schema_version":"schema_version","component":"component","files":"files"},
+    "component_fields": {"name":"name","version":"version","target":"target"},
+    "target_fields": {"os":"os","arch":"arch"},
+    "file_fields": {"path":"path","mode":"mode","size":"size","sha256":"sha256"}
+  },
+  "records": [
+    {"key":"core.license","owner":"FT83","schema":"license/v1","profiles":["public","bank"],"requiredness":"required","path":"LICENSE","package_mode":"0644"},
+    {"key":"core.policy.supported_versions","owner":"FT83","schema":"governance-policy/v1","profiles":["public","bank"],"requiredness":"required","path":"governance/policies/supported-versions.json","package_mode":"0644"},
+    {"key":"core.policy.security_response","owner":"FT83","schema":"governance-policy/v1","profiles":["public","bank"],"requiredness":"required","path":"governance/policies/security-response.json","package_mode":"0644"},
+    {"key":"core.policy.dependency_license_change","owner":"FT83","schema":"governance-policy/v1","profiles":["public","bank"],"requiredness":"required","path":"governance/policies/dependency-license-change.json","package_mode":"0644"},
+    {"key":"core.policy.threat_model","owner":"FT83","schema":"governance-policy/v1","profiles":["public","bank"],"requiredness":"required","path":"governance/policies/threat-model.json","package_mode":"0644"},
+    {"key":"core.policy.recovery_rollback","owner":"FT83","schema":"governance-policy/v1","profiles":["public","bank"],"requiredness":"required","path":"governance/policies/recovery-rollback.json","package_mode":"0644"},
+    {"key":"core.policy.support","owner":"FT83","schema":"governance-policy/v1","profiles":["public","bank"],"requiredness":"required","path":"governance/policies/support.json","package_mode":"0644"},
+    {"key":"core.third_party_notices","owner":"FT83","schema":"notices/v1","profiles":["public","bank"],"requiredness":"required","path":"governance/THIRD_PARTY_NOTICES.txt","package_mode":"0644"},
+    {"key":"core.sbom","owner":"FT83","schema":"spdx-json/2.3","profiles":["public","bank"],"requiredness":"required","path":"governance/sbom.spdx.json","package_mode":"0644"},
+    {"key":"public.ft88.data_handling","owner":"FT88","schema":"ft88/data-handling/v1","profiles":["public","bank"],"requiredness":"required","path":"release-evidence/ft88-data-handling.json","producer":true},
+    {"key":"public.ft87.offline_network_control","owner":"FT87","schema":"ft87/offline-network-control/v1","profiles":["public","bank"],"requiredness":"required","path":"release-evidence/ft87-offline-network-control.json","producer":true},
+    {"key":"bank.ft71.local_event","owner":"FT71","schema":"ft71/local-event/v1","profiles":["bank"],"requiredness":"required","path":"release-evidence/ft71-local-event.json","producer":true}
+  ]
+}

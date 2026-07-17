@@ -1,4 +1,4 @@
-package preflight
+package releaseevidence
 
 import (
 	"bytes"
@@ -52,7 +52,7 @@ type releaseIdentity struct {
 	Toolchain        string `json:"toolchain,omitempty"`
 }
 
-type releaseIndex struct {
+type Index struct {
 	SchemaVersion  int                 `json:"schema_version"`
 	Mode           Mode                `json:"mode"`
 	Scope          Scope               `json:"scope"`
@@ -65,19 +65,19 @@ type releaseIndex struct {
 	Inputs         []evidenceDigest    `json:"inputs"`
 	Targets        []targetEvidence    `json:"targets"`
 	Phases         []phaseEvidence     `json:"phases"`
-	Requirements   []requirementStatus `json:"requirements"`
+	Requirements   []RequirementStatus `json:"requirements"`
 	Artifacts      []artifactEvidence  `json:"artifacts"`
 }
 
-type releaseIntentError struct{ message string }
+type ReleaseIntentError struct{ Message string }
 
-func (e *releaseIntentError) Error() string { return e.message }
+func (e *ReleaseIntentError) Error() string { return e.Message }
 
 func FinalizeEvidence(ctx context.Context, root string, run RunEvidence) error {
 	if err := validateRun(root, run); err != nil {
 		return err
 	}
-	if ctx.Err() != nil || terminalStatus(run.Phases) == StatusInterrupted {
+	if ctx.Err() != nil || TerminalStatus(run.Phases) == StatusInterrupted {
 		return context.Canceled
 	}
 	if run.Scope == ScopeFocused {
@@ -89,16 +89,13 @@ func FinalizeEvidence(ctx context.Context, root string, run RunEvidence) error {
 			return err
 		}
 		if run.Mode == ModePublish {
-			return &releaseIntentError{message: "focused publish runs cannot authorize publication"}
+			return &ReleaseIntentError{Message: "focused publish runs cannot authorize publication"}
 		}
 		return nil
 	}
 
 	built, err := assembleReleaseEvidence(ctx, root, run)
 	if err != nil {
-		return err
-	}
-	if err := waitForEvidenceProbe(ctx); err != nil {
 		return err
 	}
 	if err := ctx.Err(); err != nil {
@@ -125,17 +122,17 @@ func FinalizeEvidence(ctx context.Context, root string, run RunEvidence) error {
 		return fmt.Errorf("could not promote complete release evidence: %w", err)
 	}
 	if built.unsatisfied != "" {
-		return &releaseIntentError{message: built.unsatisfied}
+		return &ReleaseIntentError{Message: built.unsatisfied}
 	}
 	return nil
 }
 
 func manifestFor(run RunEvidence) Manifest {
-	return Manifest{SchemaVersion: 1, Mode: run.Mode, Scope: run.Scope, Status: terminalStatus(run.Phases), Identity: run.Identity, Phases: phaseSummaries(run.Phases)}
+	return Manifest{SchemaVersion: 1, Mode: run.Mode, Scope: run.Scope, Status: TerminalStatus(run.Phases), Identity: run.Identity, Phases: PhaseSummaries(run.Phases)}
 }
 
 type assembledEvidence struct {
-	index       releaseIndex
+	index       Index
 	fingerprint string
 	unsatisfied string
 }
@@ -160,7 +157,7 @@ func validateRun(root string, run RunEvidence) error {
 	}
 	want := PhaseNames(run.Mode)
 	if run.Scope == ScopeFocused {
-		if len(run.Phases) != 1 || !contains(want, run.Phases[0].Name) {
+		if len(run.Phases) != 1 || !Contains(want, run.Phases[0].Name) {
 			return errors.New("focused release evidence must contain one registered phase")
 		}
 	} else if len(run.Phases) != len(want) {
@@ -199,9 +196,16 @@ func assembleReleaseEvidence(ctx context.Context, root string, run RunEvidence) 
 		return assembledEvidence{}, err
 	}
 	flags := phaseFlags(run)
-	artifacts, targets, err := inspectArtifacts(root)
+	artifacts, targets, artifactFingerprint, err := inspectArtifacts(root)
 	if err != nil {
 		return assembledEvidence{}, err
+	}
+	if err := waitForEvidenceProbe(ctx); err != nil {
+		return assembledEvidence{}, err
+	}
+	currentArtifacts, err := fingerprintArtifactSet(root)
+	if err != nil || currentArtifacts != artifactFingerprint {
+		return assembledEvidence{}, errors.New("release evidence artifact drift detected during assembly")
 	}
 	toolchains, err := observeToolchains(ctx, root)
 	if err != nil {
@@ -224,11 +228,11 @@ func assembleReleaseEvidence(ctx context.Context, root string, run RunEvidence) 
 		}
 		return targets[i].Arch < targets[j].Arch
 	})
-	status := terminalStatus(run.Phases)
+	status := TerminalStatus(run.Phases)
 	if status == StatusGreen && unsatisfied != "" {
 		status = StatusRed
 	}
-	index := releaseIndex{
+	index := Index{
 		SchemaVersion:  1,
 		Mode:           run.Mode,
 		Scope:          run.Scope,
@@ -271,7 +275,7 @@ func observeToolchains(ctx context.Context, root string) ([]toolchainEvidence, e
 func phaseFlags(run RunEvidence) []string {
 	flags := make([]string, 0, len(run.Phases))
 	for _, result := range run.Phases {
-		definition, ok := phaseDefinition(result.Name)
+		definition, ok := PhaseDefinitionFor(result.Name)
 		if !ok {
 			continue
 		}
@@ -308,7 +312,7 @@ func canonicalJSON(value any) ([]byte, error) {
 	return append(data, '\n'), nil
 }
 
-func deriveChecksums(index releaseIndex) []byte {
+func deriveChecksums(index Index) []byte {
 	var out bytes.Buffer
 	artifacts := append([]artifactEvidence(nil), index.Artifacts...)
 	sort.Slice(artifacts, func(i, j int) bool { return artifacts[i].Name < artifacts[j].Name })
@@ -327,4 +331,26 @@ func stringPointer(value *string) string {
 		return ""
 	}
 	return *value
+}
+
+func TerminalStatus(results []Result) Status {
+	status := StatusGreen
+	for _, result := range results {
+		if result.Status == StatusInterrupted {
+			return StatusInterrupted
+		}
+		if result.Status == StatusRed || result.Status == StatusNotRun {
+			status = StatusRed
+		}
+	}
+	return status
+}
+
+func Contains(items []string, want string) bool {
+	for _, item := range items {
+		if item == want {
+			return true
+		}
+	}
+	return false
 }

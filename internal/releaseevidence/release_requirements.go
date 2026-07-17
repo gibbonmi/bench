@@ -1,4 +1,4 @@
-package preflight
+package releaseevidence
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-type requirementStatus struct {
+type RequirementStatus struct {
 	Key          string `json:"key"`
 	Owner        string `json:"owner"`
 	Schema       string `json:"schema"`
@@ -45,45 +45,27 @@ func hasControlBytes(value string) bool {
 	return false
 }
 
-func validateRequirementRegistry(registry requirementRegistry) error {
-	if registry.SchemaVersion != 1 || len(registry.PackageEvidence) == 0 || len(registry.Toolchains) != 3 || len(registry.Records) == 0 {
+func validateRequirementRegistry(registry Registry) error {
+	if registry.SchemaVersion != 1 || len(registry.Toolchains) == 0 || len(registry.Records) == 0 {
 		return errors.New("invalid requirement registry version or records")
 	}
 	manifest := registry.ComponentManifest
-	if manifest.SchemaVersion != 1 || !safeRegistryPath(manifest.Path) || len(manifest.RootFields) != 3 || len(manifest.ComponentFields) != 3 || len(manifest.TargetFields) != 2 || len(manifest.FileFields) != 4 {
+	if manifest.SchemaVersion != 1 || !safeRegistryPath(manifest.Path) {
 		return errors.New("invalid component manifest schema")
 	}
-	manifestFields := append(append(append(append([]string{}, manifest.RootFields...), manifest.ComponentFields...), manifest.TargetFields...), manifest.FileFields...)
+	manifestFields := []string{manifest.RootFields.SchemaVersion, manifest.RootFields.Component, manifest.RootFields.Files, manifest.ComponentFields.Name, manifest.ComponentFields.Version, manifest.ComponentFields.Target, manifest.TargetFields.OS, manifest.TargetFields.Arch, manifest.FileFields.Path, manifest.FileFields.Mode, manifest.FileFields.Size, manifest.FileFields.SHA256}
+	seenManifestField := map[string]bool{}
 	for _, field := range manifestFields {
-		if field == "" || hasControlBytes(field) {
+		if field == "" || hasControlBytes(field) || seenManifestField[field] {
 			return errors.New("invalid component manifest schema field")
 		}
-	}
-	packagePaths := map[string]bool{}
-	for _, evidence := range registry.PackageEvidence {
-		if packagePaths[evidence.Path] || !safeRegistryPath(evidence.Path) || evidence.Schema == "" || evidence.Mode != "0644" {
-			return fmt.Errorf("invalid package evidence registry entry %q", evidence.Path)
-		}
-		if evidence.Schema != "license/v1" && evidence.Schema != "notices/v1" && evidence.Schema != "spdx-json/2.3" && evidence.Schema != "governance-policy/v1" {
-			return fmt.Errorf("unsupported package evidence schema %q", evidence.Schema)
-		}
-		if evidence.Path != "LICENSE" {
-			bound := false
-			for _, record := range registry.Records {
-				if record.Path == evidence.Path && record.Schema == evidence.Schema {
-					bound = true
-				}
-			}
-			if !bound {
-				return fmt.Errorf("package evidence registry is not bound to requirement %q", evidence.Path)
-			}
-		}
-		packagePaths[evidence.Path] = true
+		seenManifestField[field] = true
 	}
 	seen := map[string]bool{}
+	packagePaths := map[string]bool{}
 	public, bank := map[string]bool{}, map[string]bool{}
 	for _, record := range registry.Records {
-		coreSchema := record.Schema == "notices/v1" || record.Schema == "spdx-json/2.3" || record.Schema == "governance-policy/v1"
+		coreSchema := record.Schema == "license/v1" || record.Schema == "notices/v1" || record.Schema == "spdx-json/2.3" || record.Schema == "governance-policy/v1"
 		if seen[record.Key] || record.Key == "" || record.Owner == "" || record.Schema == "" || (!record.Producer && !coreSchema) || !safeRegistryPath(record.Path) || len(record.Profiles) == 0 || record.Requiredness != "required" && record.Requiredness != "conditional" {
 			return fmt.Errorf("invalid requirement registry record %q", record.Key)
 		}
@@ -93,6 +75,12 @@ func validateRequirementRegistry(registry requirementRegistry) error {
 			}
 		}
 		seen[record.Key] = true
+		if record.PackageMode != "" {
+			if record.Producer || record.PackageMode != "0644" || packagePaths[record.Path] {
+				return fmt.Errorf("invalid packaged requirement %q", record.Key)
+			}
+			packagePaths[record.Path] = true
+		}
 		profiles := map[Profile]bool{}
 		for _, profile := range record.Profiles {
 			if profiles[profile] {
@@ -116,11 +104,6 @@ func validateRequirementRegistry(registry requirementRegistry) error {
 		}
 		toolchains[toolchain.Name] = true
 	}
-	for _, name := range []string{"go", "node", "npm"} {
-		if !toolchains[name] {
-			return fmt.Errorf("requirement registry omits toolchain %s", name)
-		}
-	}
 	for key := range public {
 		if !bank[key] {
 			return fmt.Errorf("bank profile is not a strict public superset: %s", key)
@@ -141,7 +124,7 @@ func safeRegistryPath(value string) bool {
 }
 
 func readRollbackTarget(root string) (string, error) {
-	data, err := readRegular(filepath.Join(root, "governance", "policies", "recovery-rollback.json"))
+	data, err := ReadRegular(filepath.Join(root, "governance", "policies", "recovery-rollback.json"))
 	if err != nil {
 		return "", fmt.Errorf("rollback policy is unreadable: %w", err)
 	}
@@ -178,6 +161,12 @@ func validateRequirementBytes(record Requirement, data []byte, identity Identity
 		}
 		return nil
 	}
+	if record.Schema == "license/v1" {
+		if len(bytes.TrimSpace(data)) == 0 {
+			return fmt.Errorf("license record %s is empty", record.Key)
+		}
+		return nil
+	}
 	if record.Schema == "notices/v1" {
 		if len(bytes.TrimSpace(data)) == 0 {
 			return fmt.Errorf("governance record %s is empty", record.Key)
@@ -185,7 +174,7 @@ func validateRequirementBytes(record Requirement, data []byte, identity Identity
 		return nil
 	}
 	if record.Schema == "spdx-json/2.3" {
-		if err := validateSPDXDocument(data, "", ""); err != nil {
+		if err := validateSPDXDocument(data, "", "__PACKAGE_VERSION__"); err != nil {
 			return fmt.Errorf("governance record %s has invalid SPDX JSON: %w", record.Key, err)
 		}
 		return nil

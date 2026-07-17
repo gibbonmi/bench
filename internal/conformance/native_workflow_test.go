@@ -19,9 +19,19 @@ type workflowTriggerShape struct {
 	pullRequest, pushBranches, mainBranch bool
 }
 
+type requirementRecord struct {
+	Key          string   `json:"key"`
+	Owner        string   `json:"owner"`
+	Schema       string   `json:"schema"`
+	Profiles     []string `json:"profiles"`
+	Requiredness string   `json:"requiredness"`
+	Path         string   `json:"path"`
+	PackageMode  string   `json:"package_mode"`
+}
+
 func checkReleasePreflight(root string) []string {
 	var diags []string
-	data, err := os.ReadFile(filepath.Join(root, "internal", "preflight", "registry.json"))
+	data, err := os.ReadFile(filepath.Join(root, "internal", "releaseevidence", "registry.json"))
 	if err != nil {
 		if os.IsNotExist(err) {
 			diags = append(diags, "release preflight registry is absent")
@@ -40,7 +50,7 @@ func checkReleasePreflight(root string) []string {
 			registryUsable = false
 		}
 	}
-	requirementData, err := os.ReadFile(filepath.Join(root, "internal", "preflight", "requirements.json"))
+	requirementData, err := os.ReadFile(filepath.Join(root, "internal", "releaseevidence", "requirements.json"))
 	if err != nil {
 		if os.IsNotExist(err) {
 			diags = append(diags, "release requirement registry is absent")
@@ -50,18 +60,8 @@ func checkReleasePreflight(root string) []string {
 	}
 	requirementUsable := err == nil
 	var requirementRegistry struct {
-		SchemaVersion   int `json:"schema_version"`
-		PackageEvidence []struct {
-			Path string `json:"path"`
-		} `json:"package_evidence"`
-		Records []struct {
-			Key          string   `json:"key"`
-			Owner        string   `json:"owner"`
-			Schema       string   `json:"schema"`
-			Profiles     []string `json:"profiles"`
-			Requiredness string   `json:"requiredness"`
-			Path         string   `json:"path"`
-		} `json:"records"`
+		SchemaVersion int                 `json:"schema_version"`
+		Records       []requirementRecord `json:"records"`
 	}
 	if requirementUsable {
 		if decodeErr := json.Unmarshal(requirementData, &requirementRegistry); decodeErr != nil {
@@ -142,7 +142,7 @@ func checkReleasePreflight(root string) []string {
 		diags = append(diags, "release preflight requires an exact Go patch toolchain")
 	}
 	if registryUsable && requirementUsable {
-		diags = append(diags, runReleaseEvidenceProbe(root, requirementRegistry.PackageEvidence)...)
+		diags = append(diags, runReleaseEvidenceProbe(root, requirementRegistry.Records)...)
 	}
 	return diags
 }
@@ -153,13 +153,13 @@ func TestReleasePreflightDiagnosticsDistinguishAndAggregate(t *testing.T) {
 		t.Fatalf("absent diagnostics = %q", got)
 	}
 	malformed := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(malformed, "internal", "preflight"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(malformed, "internal", "releaseevidence"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(malformed, "internal", "preflight", "registry.json"), []byte("{\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(malformed, "internal", "releaseevidence", "registry.json"), []byte("{\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(malformed, "internal", "preflight", "requirements.json"), []byte("{\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(malformed, "internal", "releaseevidence", "requirements.json"), []byte("{\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	got := strings.Join(checkReleasePreflight(malformed), "\n")
@@ -168,9 +168,7 @@ func TestReleasePreflightDiagnosticsDistinguishAndAggregate(t *testing.T) {
 	}
 }
 
-func runReleaseEvidenceProbe(root string, packageEvidence []struct {
-	Path string `json:"path"`
-}) []string {
+func runReleaseEvidenceProbe(root string, packageEvidence []requirementRecord) []string {
 	probeMain := filepath.Join(root, "cmd", "bench", "main.go")
 	probeDirCreated := false
 	if info, err := os.Stat(probeMain); err == nil {
@@ -251,6 +249,9 @@ func main() {
 			return []string{"release package evidence artifact is unreadable: " + name}
 		}
 		for _, evidence := range packageEvidence {
+			if evidence.PackageMode == "" {
+				continue
+			}
 			if !names["package/"+evidence.Path] {
 				return []string{"release package evidence allowlist omits " + evidence.Path}
 			}
@@ -333,14 +334,7 @@ func archiveNames(path string) (map[string]bool, error) {
 	}
 }
 
-func containsKey(records []struct {
-	Key          string   `json:"key"`
-	Owner        string   `json:"owner"`
-	Schema       string   `json:"schema"`
-	Profiles     []string `json:"profiles"`
-	Requiredness string   `json:"requiredness"`
-	Path         string   `json:"path"`
-}, want string) bool {
+func containsKey(records []requirementRecord, want string) bool {
 	for _, record := range records {
 		if record.Key == want {
 			return true

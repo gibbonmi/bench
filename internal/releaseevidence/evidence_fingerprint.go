@@ -1,4 +1,4 @@
-package preflight
+package releaseevidence
 
 import (
 	"crypto/sha256"
@@ -12,7 +12,7 @@ import (
 
 func inputFingerprint(root string, run RunEvidence) (string, error) {
 	h := sha256.New()
-	paths := append([]string{"internal/preflight/requirements.json"}, releaseInputPaths...)
+	paths := append([]string{"internal/releaseevidence/requirements.json"}, releaseInputPaths...)
 	for _, record := range requirements.Records {
 		paths = append(paths, record.Path)
 	}

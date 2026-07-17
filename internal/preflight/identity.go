@@ -3,9 +3,7 @@ package preflight
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -100,19 +98,6 @@ func (r *runner) checkChangelog() error {
 	return nil
 }
 
-func readPackageVersion(root string) (string, error) {
-	data, err := readRegular(filepath.Join(root, "package.json"))
-	if err != nil {
-		return "", err
-	}
-	var pkg struct {
-		Version string `json:"version"`
-	}
-	if json.Unmarshal(data, &pkg) != nil || pkg.Version == "" {
-		return "", errors.New("invalid package version")
-	}
-	return pkg.Version, nil
-}
 func readToolchain(root string) (string, error) {
 	data, err := readRegular(filepath.Join(root, "go.mod"))
 	if err != nil {
@@ -129,15 +114,4 @@ func gitOutput(root string, args ...string) (string, error) {
 	argv := append([]string{"-C", root}, args...)
 	out, err := exec.Command("git", argv...).Output()
 	return strings.TrimSpace(string(out)), err
-}
-
-func readRegular(path string) ([]byte, error) {
-	info, err := os.Lstat(path)
-	if err != nil {
-		return nil, err
-	}
-	if !info.Mode().IsRegular() {
-		return nil, fmt.Errorf("%s is not a regular file", filepath.Base(path))
-	}
-	return os.ReadFile(path)
 }

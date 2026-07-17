@@ -1,6 +1,6 @@
 //go:build !linux && !darwin
 
-package preflight
+package releaseevidence
 
 import (
 	"fmt"

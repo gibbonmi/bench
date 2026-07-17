@@ -1,6 +1,6 @@
 //go:build darwin
 
-package preflight
+package releaseevidence
 
 import (
 	"syscall"

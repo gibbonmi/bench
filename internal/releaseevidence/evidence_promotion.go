@@ -1,13 +1,25 @@
-package preflight
+package releaseevidence
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
+var stageOwnerBytes = []byte("bench-preflight-stage-v1\n")
+
 var exchangeEvidenceDirs = atomicExchangeDirs
+
+func SetExchangeForTesting(exchange func(string, string) error) func() {
+	previous := exchangeEvidenceDirs
+	exchangeEvidenceDirs = exchange
+	return func() { exchangeEvidenceDirs = previous }
+}
+
+func AtomicExchangeForTesting(left, right string) error { return atomicExchangeDirs(left, right) }
 
 func PromoteEvidence(root string, mode Mode, results []Result, manifest Manifest) error {
 	return PromoteEvidenceFiles(root, mode, results, manifest, nil)
@@ -23,14 +35,23 @@ func PromoteEvidenceFiles(root string, mode Mode, results []Result, manifest Man
 	if err := os.MkdirAll(dist, 0o755); err != nil {
 		return err
 	}
+	if err := cleanupAbandonedStages(dist); err != nil {
+		return err
+	}
 	stage, err := os.MkdirTemp(dist, ".preflight-stage-")
 	if err != nil {
+		return err
+	}
+	owner := stage + ".owner"
+	if err := writeBytesSync(owner, stageOwnerBytes); err != nil {
+		_ = os.RemoveAll(stage)
 		return err
 	}
 	keep := false
 	defer func() {
 		if !keep {
 			_ = os.RemoveAll(stage)
+			_ = os.Remove(owner)
 		}
 	}()
 	for _, result := range results {
@@ -77,6 +98,43 @@ func PromoteEvidenceFiles(root string, mode Mode, results []Result, manifest Man
 	}
 	if err := os.RemoveAll(stage); err != nil {
 		return err
+	}
+	if err := os.Remove(owner); err != nil {
+		return err
+	}
+	return nil
+}
+
+func cleanupAbandonedStages(dist string) error {
+	entries, err := os.ReadDir(dist)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		name := entry.Name()
+		if !strings.HasPrefix(name, ".preflight-stage-") || !strings.HasSuffix(name, ".owner") {
+			continue
+		}
+		owner := filepath.Join(dist, name)
+		info, err := os.Lstat(owner)
+		if err != nil || !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("unsafe preflight stage ownership lease: %s", name)
+		}
+		data, err := os.ReadFile(owner)
+		if err != nil || !bytes.Equal(data, stageOwnerBytes) {
+			return fmt.Errorf("invalid preflight stage ownership lease: %s", name)
+		}
+		stage := strings.TrimSuffix(owner, ".owner")
+		stageInfo, err := os.Lstat(stage)
+		if err != nil || !stageInfo.IsDir() || stageInfo.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("owned preflight stage is unsafe: %s", filepath.Base(stage))
+		}
+		if err := os.RemoveAll(stage); err != nil {
+			return err
+		}
+		if err := os.Remove(owner); err != nil {
+			return err
+		}
 	}
 	return nil
 }

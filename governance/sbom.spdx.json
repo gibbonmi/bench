@@ -9,7 +9,7 @@
     {
       "SPDXID": "SPDXRef-Package-redbench",
       "name": "redbench",
-      "versionInfo": "0.2.0",
+      "versionInfo": "__PACKAGE_VERSION__",
       "downloadLocation": "NOASSERTION",
       "licenseConcluded": "MIT",
       "licenseDeclared": "MIT"

@@ -1,3 +1,3 @@
 .github/workflows/release.yml
-internal/preflight/registry.json
+internal/releaseevidence/registry.json
 go.mod

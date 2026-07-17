@@ -7,13 +7,17 @@ if (!root || !wrapperDir || !packagesDir) throw new Error("usage: build-release-
 
 const matrix = readJSON(path.join(root, "scripts/platforms.json"));
 const assets = readJSON(path.join(root, "scripts/wrapper-assets.json"));
-const requirements = readJSON(path.join(root, "internal/preflight/requirements.json"));
+const requirements = readJSON(path.join(root, "internal/releaseevidence/requirements.json"));
 const componentSchema = requirements.component_manifest;
 const sourcePackage = readJSON(path.join(root, "package.json"));
 const seenDestinations = new Set();
 const byteOrder = (a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
 
-if (!Array.isArray(matrix) || matrix.length !== 4 || !Array.isArray(assets) || !Array.isArray(requirements.package_evidence) || requirements.package_evidence.length === 0 || !Array.isArray(requirements.records) || !componentSchema || componentSchema.schema_version !== 1 || !Array.isArray(componentSchema.root_fields) || componentSchema.root_fields.length !== 3 || !Array.isArray(componentSchema.component_fields) || componentSchema.component_fields.length !== 3 || !Array.isArray(componentSchema.target_fields) || componentSchema.target_fields.length !== 2 || !Array.isArray(componentSchema.file_fields) || componentSchema.file_fields.length !== 4) throw new Error("release evidence matrix, asset, or package evidence registry is invalid");
+if (!Array.isArray(matrix) || matrix.length !== 4 || !Array.isArray(assets) || !Array.isArray(requirements.records) || !componentSchema || componentSchema.schema_version !== 1) throw new Error("release evidence matrix, asset, or requirement registry is invalid");
+const schemaFields = [componentSchema.root_fields, componentSchema.component_fields, componentSchema.target_fields, componentSchema.file_fields].flatMap(fields => fields && typeof fields === "object" ? Object.values(fields) : []);
+if (schemaFields.some(field => typeof field !== "string" || field.length === 0) || new Set(schemaFields).size !== schemaFields.length) throw new Error("component manifest schema fields are invalid");
+const packageEvidence = requirements.records.filter(record => record.package_mode !== undefined);
+if (packageEvidence.length === 0) throw new Error("requirement registry has no packaged evidence");
 
 function readJSON(file) {
   const stat = fs.lstatSync(file);
@@ -73,13 +77,9 @@ function copyRegular(src, dst, mode, label, destinationRoot = wrapperDir) {
 }
 
 function validateRequiredSources() {
-  for (const evidence of requirements.package_evidence) {
-    if (!evidence || typeof evidence.path !== "string" || typeof evidence.schema !== "string" || evidence.mode !== "0644") throw new Error("package evidence registry entry is invalid");
-    const relative = evidence.path;
-    if (relative !== "LICENSE") {
-      const record = requirements.records.find(candidate => candidate.path === relative);
-      if (!record || record.schema !== evidence.schema) throw new Error(`package evidence registry is not bound to requirement: ${relative}`);
-    }
+	for (const evidence of packageEvidence) {
+		if (!evidence || typeof evidence.path !== "string" || typeof evidence.schema !== "string" || evidence.package_mode !== "0644") throw new Error("packaged requirement entry is invalid");
+		const relative = evidence.path;
     const source = sourcePath(relative);
     const stat = fs.lstatSync(source);
     if (!stat.isFile() || stat.isSymbolicLink() || stat.size === 0 || (stat.mode & 0o777) !== 0o644 || (stat.mode & 0o7000) !== 0) throw new Error(`required release evidence source is invalid: ${relative}`);
@@ -130,19 +130,20 @@ function packageFiles(dir) {
       else if (name.isFile() && name.name !== componentSchema.path) {
         const rel = safeRelative(path.relative(dir, file), "component manifest path");
         const stat = fs.lstatSync(file);
-        const fields = componentSchema.file_fields;
-        files.push({[fields[0]]: rel, [fields[1]]: (stat.mode & 0o777).toString(8), [fields[2]]: stat.size, [fields[3]]: sha256(fs.readFileSync(file))});
+		const fields = componentSchema.file_fields;
+		files.push({[fields.path]: rel, [fields.mode]: (stat.mode & 0o777).toString(8), [fields.size]: stat.size, [fields.sha256]: sha256(fs.readFileSync(file))});
       } else throw new Error(`component package contains unsafe file: ${file}`);
     }
   };
   walk(dir);
-  const pathField = componentSchema.file_fields[0];
+	const pathField = componentSchema.file_fields.path;
   files.sort((a, b) => a[pathField] < b[pathField] ? -1 : a[pathField] > b[pathField] ? 1 : 0);
   return files;
 }
 
 function writeEvidence(dir, name, version, target) {
-  const sbom = readJSON(path.join(root, "governance", "sbom.spdx.json"));
+	const sbom = readJSON(path.join(root, "governance", "sbom.spdx.json"));
+	if (sbom.packages?.[0]?.versionInfo !== "__PACKAGE_VERSION__") throw new Error("source SBOM package version must use the package-version sentinel");
   sbom.name = `${name}-release`;
   sbom.documentNamespace = `https://github.com/gibbonmi/bench/releases/sbom/${name}`;
   sbom.packages[0].name = name;
@@ -150,9 +151,9 @@ function writeEvidence(dir, name, version, target) {
   sbom.packages[0].SPDXID = "SPDXRef-Package-" + name.replaceAll(/[^A-Za-z0-9.-]/g, "-");
   sbom.relationships[0].relatedSpdxElement = sbom.packages[0].SPDXID;
   writeJSON(path.join(dir, "governance", "sbom.spdx.json"), sbom);
-  const [schemaField, componentField, filesField] = componentSchema.root_fields;
-  const [nameField, versionField, targetField] = componentSchema.component_fields;
-  const [osField, archField] = componentSchema.target_fields;
+	const {schema_version: schemaField, component: componentField, files: filesField} = componentSchema.root_fields;
+	const {name: nameField, version: versionField, target: targetField} = componentSchema.component_fields;
+	const {os: osField, arch: archField} = componentSchema.target_fields;
   const component = {
     [schemaField]: componentSchema.schema_version,
     [componentField]: {[nameField]: name, [versionField]: version, [targetField]: {[osField]: target.os, [archField]: target.arch}},

@@ -23,9 +23,7 @@ func TestEvidencePromotionKeepsPriorVerdictAtCanonicalPathOnSwapFailure(t *testi
 	if err := os.WriteFile(filepath.Join(old, "manifest.json"), []byte("old\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	previous := exchangeEvidenceDirs
-	exchangeEvidenceDirs = func(_, _ string) error { return os.ErrPermission }
-	t.Cleanup(func() { exchangeEvidenceDirs = previous })
+	t.Cleanup(setExchangeForTesting(func(_, _ string) error { return os.ErrPermission }))
 	results := []Result{{Name: "gate", Status: StatusGreen, ExitCode: intPtr(0)}}
 	manifest := Manifest{SchemaVersion: 1, Mode: ModeVerify, Scope: ScopeFocused, Status: StatusGreen, Phases: phaseSummaries(results)}
 	if err := PromoteEvidence(root, ModeVerify, results, manifest); err == nil {
@@ -43,17 +41,16 @@ func TestEvidenceSIGKILLAtPromotionBoundaryKeepsOldOrNew(t *testing.T) {
 	}
 	if point := os.Getenv("BENCH_TEST_PROMOTION_KILL"); point != "" {
 		root := os.Getenv("BENCH_TEST_PROMOTION_ROOT")
-		previous := exchangeEvidenceDirs
-		exchangeEvidenceDirs = func(stage, target string) error {
+		setExchangeForTesting(func(stage, target string) error {
 			if point == "before" {
 				_ = syscall.Kill(os.Getpid(), syscall.SIGKILL)
 			}
-			err := previous(stage, target)
+			err := atomicExchangeForTesting(stage, target)
 			if err == nil && point == "after" {
 				_ = syscall.Kill(os.Getpid(), syscall.SIGKILL)
 			}
 			return err
-		}
+		})
 		results := []Result{{Name: "gate", Status: StatusGreen, ExitCode: intPtr(0)}}
 		manifest := Manifest{SchemaVersion: 1, Mode: ModeVerify, Scope: ScopeFocused, Status: StatusGreen, Phases: phaseSummaries(results)}
 		_ = PromoteEvidence(root, ModeVerify, results, manifest)
@@ -88,8 +85,28 @@ func TestEvidenceSIGKILLAtPromotionBoundaryKeepsOldOrNew(t *testing.T) {
 			if point == "after" && string(data) == "old\n" {
 				t.Fatalf("after exchange retained old verdict")
 			}
+			results := []Result{{Name: "gate", Status: StatusGreen, ExitCode: intPtr(0)}}
+			manifest := Manifest{SchemaVersion: 1, Mode: ModeVerify, Scope: ScopeFocused, Status: StatusGreen, Phases: phaseSummaries(results)}
+			if err := PromoteEvidence(root, ModeVerify, results, manifest); err != nil {
+				t.Fatalf("rerun after abandoned stage: %v", err)
+			}
+			entries, err := os.ReadDir(filepath.Join(root, "dist"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(entries) != 1 || entries[0].Name() != "preflight" {
+				t.Fatalf("rerun left non-canonical generations: %v", entryNames(entries))
+			}
 		})
 	}
+}
+
+func entryNames(entries []os.DirEntry) []string {
+	names := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		names = append(names, entry.Name())
+	}
+	return names
 }
 
 func TestEvidenceRejectsHostileCanonicalTargets(t *testing.T) {

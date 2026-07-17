@@ -1,6 +1,6 @@
 //go:build linux
 
-package preflight
+package releaseevidence
 
 import (
 	"fmt"

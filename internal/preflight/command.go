@@ -337,23 +337,3 @@ func failureFrom(err error, phase string) Failure {
 	}
 	return Failure{Kind: "phase", Message: phase + " phase failed: " + err.Error()}
 }
-func terminalStatus(results []Result) Status {
-	status := StatusGreen
-	for _, r := range results {
-		if r.Status == StatusInterrupted {
-			return StatusInterrupted
-		}
-		if r.Status != StatusGreen {
-			status = StatusRed
-		}
-	}
-	return status
-}
-func contains(items []string, want string) bool {
-	for _, v := range items {
-		if v == want {
-			return true
-		}
-	}
-	return false
-}

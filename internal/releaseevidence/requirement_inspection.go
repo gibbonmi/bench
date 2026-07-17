@@ -1,4 +1,4 @@
-package preflight
+package releaseevidence
 
 import (
 	"fmt"
@@ -6,18 +6,18 @@ import (
 	"path/filepath"
 )
 
-func inspectRequirements(root string, run RunEvidence, profile Profile) ([]requirementStatus, []evidenceDigest, string, error) {
-	statuses := make([]requirementStatus, 0, len(requirements.Records))
+func inspectRequirements(root string, run RunEvidence, profile Profile) ([]RequirementStatus, []evidenceDigest, string, error) {
+	statuses := make([]RequirementStatus, 0, len(requirements.Records))
 	inputs := make([]evidenceDigest, 0, len(requirements.Records)+1)
 	for _, record := range requirements.Records {
-		status := requirementStatus{Key: record.Key, Owner: record.Owner, Schema: record.Schema, Requiredness: record.Requiredness, Status: "not_applicable"}
+		status := RequirementStatus{Key: record.Key, Owner: record.Owner, Schema: record.Schema, Requiredness: record.Requiredness, Status: "not_applicable"}
 		if !containsProfile(record.Profiles, profile) {
 			status.Reason = "requirement is not applicable to selected profile"
 			statuses = append(statuses, status)
 			continue
 		}
 		status.Applicable = true
-		data, err := readRegular(filepath.Join(root, filepath.FromSlash(record.Path)))
+		data, err := ReadRegular(filepath.Join(root, filepath.FromSlash(record.Path)))
 		if os.IsNotExist(err) && record.Producer {
 			if run.Mode == ModeVerify {
 				status.Status, status.Reason = "pending", "producer record is not present"
@@ -63,9 +63,9 @@ func inspectRequirements(root string, run RunEvidence, profile Profile) ([]requi
 			break
 		}
 	}
-	inputs = append(inputs, evidenceDigest{Path: "internal/preflight/requirements.json", SHA256: digest(requirementsJSON)})
+	inputs = append(inputs, evidenceDigest{Path: "internal/releaseevidence/requirements.json", SHA256: digest(requirementsJSON)})
 	for _, rel := range releaseInputPaths {
-		data, err := readRegular(filepath.Join(root, filepath.FromSlash(rel)))
+		data, err := ReadRegular(filepath.Join(root, filepath.FromSlash(rel)))
 		if err != nil {
 			return nil, nil, "", fmt.Errorf("release input %s is unreadable: %w", rel, err)
 		}
