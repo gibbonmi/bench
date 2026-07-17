@@ -301,3 +301,5 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 ## Recommended sequence
 
 1. `/bench-shape-idea` — specify FT83, the governed offline release bundle.
+2. `/bench-shape-idea` — specify FT88, minimal subprocess data exposure.
+3. `/bench-shape-idea` — specify FT87, bounded network, resource, and CLI behavior.
