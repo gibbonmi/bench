@@ -1,6 +1,6 @@
 # FT83 slice 1 — governed release evidence
 
-Status: staged
+Status: implemented
 
 Decision map: `decisions/governed-offline-release-bundle.md` (reviewer-closed in
 the shaping session; this same-session compilation remains open to reviewer veto).

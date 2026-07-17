@@ -94,6 +94,61 @@ func TestCommandFullVerifyWritesSixGreenRecords(t *testing.T) {
 	}
 }
 
+func TestReleaseProfilesStayPendingInVerifyAndRedInPublish(t *testing.T) {
+	root := preflightRepo(t)
+	for _, rel := range []string{"release-evidence/ft88-data-handling.json", "release-evidence/ft87-offline-network-control.json"} {
+		if err := os.Remove(filepath.Join(root, filepath.FromSlash(rel))); err != nil {
+			t.Fatal(err)
+		}
+	}
+	old, _ := os.Getwd()
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(old) })
+	var stderr bytes.Buffer
+	if code := Command([]string{"--mode", "verify"}, "0.2.0", &stderr); code != 0 {
+		t.Fatalf("verify exit=%d stderr=%s", code, stderr.String())
+	}
+	indexData, err := os.ReadFile(filepath.Join(root, "dist", "preflight", "release-index.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var index releaseIndex
+	if err := json.Unmarshal(indexData, &index); err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"public.ft88.data_handling", "public.ft87.offline_network_control"} {
+		if status := requirementIndexStatus(index.Requirements, key); status != "pending" {
+			t.Fatalf("verify status for %s = %q", key, status)
+		}
+	}
+	tagRelease(t, root, true)
+	stderr.Reset()
+	if code := Command([]string{"--mode", "publish", "--profile", "public"}, "0.2.0", &stderr); code != 1 {
+		t.Fatalf("publish exit=%d stderr=%s", code, stderr.String())
+	}
+	indexData, err = os.ReadFile(filepath.Join(root, "dist", "preflight", "release-index.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(indexData, &index); err != nil {
+		t.Fatal(err)
+	}
+	if index.Status != StatusRed || requirementIndexStatus(index.Requirements, "public.ft88.data_handling") != "missing" {
+		t.Fatalf("publish index = %+v", index)
+	}
+}
+
+func requirementIndexStatus(statuses []requirementStatus, key string) string {
+	for _, status := range statuses {
+		if status.Key == key {
+			return status.Status
+		}
+	}
+	return ""
+}
+
 func TestCommandPublishIsGreenStrictSuperset(t *testing.T) {
 	root := preflightRepo(t)
 	if err := os.WriteFile(filepath.Join(root, "CHANGELOG.md"), []byte(releaseChangelog("2026-07-16")), 0o644); err != nil {
@@ -113,7 +168,7 @@ func TestCommandPublishIsGreenStrictSuperset(t *testing.T) {
 	t.Cleanup(func() { _ = os.Chdir(old) })
 	t.Setenv("BENCH_PREFLIGHT_REF", "refs/tags/v0.2.0")
 	var stderr bytes.Buffer
-	if code := Command([]string{"--mode", "publish"}, "0.2.0", &stderr); code != 0 {
+	if code := Command([]string{"--mode", "publish", "--profile", "public"}, "0.2.0", &stderr); code != 0 {
 		t.Fatalf("exit=%d stderr=%s", code, stderr.String())
 	}
 	data, err := os.ReadFile(filepath.Join(root, "dist", "preflight", "manifest.json"))

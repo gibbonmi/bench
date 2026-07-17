@@ -27,7 +27,7 @@ jobs:
       - run: bash scripts/install-govulncheck.sh
       - id: matrix
         run: node -e 'const fs=require("fs"); const rows=require("./scripts/platforms.json"); fs.appendFileSync(process.env.GITHUB_OUTPUT, `rows=${JSON.stringify({include:rows})}\n`)'
-      - run: bash scripts/release-preflight.sh --mode publish
+      - run: bash scripts/release-preflight.sh --mode publish --profile public
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: release-artifacts
@@ -57,7 +57,7 @@ jobs:
         with:
           name: release-artifacts
           path: dist/artifacts
-      - run: bash scripts/release-preflight.sh --mode publish --phase smoke
+      - run: bash scripts/release-preflight.sh --mode publish --profile public --phase smoke
 
   publish:
     needs: [preflight, smoke]

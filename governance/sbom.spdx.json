@@ -1,0 +1,21 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "SPDXVersion": "SPDX-2.3",
+  "creationInfo": {"creators": ["Tool: redbench-governance/1"]},
+  "dataLicense": "CC0-1.0",
+  "name": "redbench-release",
+  "documentNamespace": "https://github.com/gibbonmi/bench/releases/sbom",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-redbench",
+      "name": "redbench",
+      "versionInfo": "0.2.0",
+      "downloadLocation": "NOASSERTION",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT"
+    }
+  ],
+  "relationships": [
+    {"spdxElementId": "SPDXRef-DOCUMENT", "relationshipType": "DESCRIBES", "relatedSpdxElement": "SPDXRef-Package-redbench"}
+  ]
+}

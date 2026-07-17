@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "policy": "supported-versions",
+  "support": "latest-minor-and-previous-minor",
+  "previous_minor_days": 90,
+  "eol": "explicit"
+}

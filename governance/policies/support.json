@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "policy": "support",
+  "route": "GitHub Issues",
+  "personal_email": false,
+  "non_personal": true
+}

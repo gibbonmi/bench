@@ -289,7 +289,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench outline [path]       locate candidate seams (file:line) as TOON; does not identify the project's blessed seams
   bench doctor [--fix]       report (and repair) the PATH shim under a node version manager
   bench gate                 run the project gate (the oracle)
-  bench release-preflight --mode verify|publish [--phase name]  run repository release authorization
+  bench release-preflight --mode verify|publish [--profile public|bank] [--phase name]  run repository release authorization
   bench gate pin             pin HEAD's .bench tree for pre-push verification
   bench worktree [objective] create an owned worktree subshell and release it on exit
   bench worktree list        list assignments and registered worktrees as TOON

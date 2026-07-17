@@ -10,15 +10,27 @@ type Scope string
 type Status string
 
 const (
-	ModeVerify        Mode   = "verify"
-	ModePublish       Mode   = "publish"
-	ScopePreflight    Scope  = "preflight"
-	ScopeFocused      Scope  = "focused"
-	StatusGreen       Status = "green"
-	StatusRed         Status = "red"
-	StatusNotRun      Status = "not_run"
-	StatusInterrupted Status = "interrupted"
+	ModeVerify        Mode    = "verify"
+	ModePublish       Mode    = "publish"
+	ScopePreflight    Scope   = "preflight"
+	ScopeFocused      Scope   = "focused"
+	StatusGreen       Status  = "green"
+	StatusRed         Status  = "red"
+	StatusNotRun      Status  = "not_run"
+	StatusInterrupted Status  = "interrupted"
+	ProfilePublic     Profile = "public"
+	ProfileBank       Profile = "bank"
 )
+
+type Profile string
+
+type RunEvidence struct {
+	Mode     Mode
+	Scope    Scope
+	Identity Identity
+	Profile  Profile
+	Phases   []Result
+}
 
 type Failure struct {
 	Kind    string `json:"kind"`
@@ -68,6 +80,9 @@ type Result struct {
 //go:embed registry.json
 var registryJSON []byte
 
+//go:embed requirements.json
+var requirementsJSON []byte
+
 var registry = loadRegistry()
 
 type phaseRegistry struct {
@@ -85,6 +100,20 @@ type PhaseDefinition struct {
 	ExactToolchain bool     `json:"exact_toolchain"`
 }
 
+type Requirement struct {
+	Key          string    `json:"key"`
+	Owner        string    `json:"owner"`
+	Schema       string    `json:"schema"`
+	Profiles     []Profile `json:"profiles"`
+	Requiredness string    `json:"requiredness"`
+	Path         string    `json:"path"`
+}
+
+type requirementRegistry struct {
+	SchemaVersion int           `json:"schema_version"`
+	Records       []Requirement `json:"records"`
+}
+
 func loadRegistry() phaseRegistry {
 	var value phaseRegistry
 	if err := json.Unmarshal(registryJSON, &value); err != nil {
@@ -96,6 +125,30 @@ func loadRegistry() phaseRegistry {
 		}
 	}
 	return value
+}
+
+var requirements = loadRequirements()
+
+func loadRequirements() requirementRegistry {
+	var value requirementRegistry
+	if err := json.Unmarshal(requirementsJSON, &value); err != nil {
+		panic("invalid embedded requirement registry: " + err.Error())
+	}
+	if value.SchemaVersion != 1 || len(value.Records) == 0 {
+		panic("invalid embedded requirement registry version or records")
+	}
+	seen := map[string]bool{}
+	for _, record := range value.Records {
+		if record.Key == "" || record.Owner == "" || record.Schema == "" || record.Path == "" || seen[record.Key] || len(record.Profiles) == 0 || record.Requiredness != "required" && record.Requiredness != "conditional" {
+			panic("invalid embedded requirement registry record")
+		}
+		seen[record.Key] = true
+	}
+	return value
+}
+
+func Requirements() []Requirement {
+	return append([]Requirement(nil), requirements.Records...)
 }
 
 func PhaseNames(mode Mode) []string {

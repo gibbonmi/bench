@@ -61,6 +61,9 @@ func TestReleasePreflightScriptBootstrapsBuiltFullAndFocusedCommands(t *testing.
 	}
 	env := append([]string{}, os.Environ()...)
 	for _, phase := range PhaseNames(ModeVerify) {
+		if phase == "artifacts" {
+			continue
+		}
 		env = append(env, "BENCH_PREFLIGHT_"+strings.ToUpper(phase)+"="+fake)
 	}
 	for _, args := range [][]string{{"--mode", "verify"}, {"--mode", "verify", "--phase", "smoke"}} {
@@ -88,7 +91,7 @@ func TestBuiltCommandReleasePolicyFailuresAreRed(t *testing.T) {
 		if err := os.WriteFile(filepath.Join(root, "package.json"), []byte(`{"version":"0.2.1"}`), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		assertBuiltRed(t, binary, root, []string{"--mode", "publish", "--phase", "identity"}, "must agree")
+		assertBuiltRed(t, binary, root, []string{"--mode", "publish", "--profile", "public", "--phase", "identity"}, "must agree")
 	})
 	t.Run("stranded changelog", func(t *testing.T) {
 		root := preflightRepo(t)
@@ -97,7 +100,7 @@ func TestBuiltCommandReleasePolicyFailuresAreRed(t *testing.T) {
 		if err := os.WriteFile(filepath.Join(root, "CHANGELOG.md"), []byte(body), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		assertBuiltRed(t, binary, root, []string{"--mode", "publish"}, "stranded content")
+		assertBuiltRed(t, binary, root, []string{"--mode", "publish", "--profile", "public"}, "stranded content")
 	})
 	t.Run("unrelated ancestry cannot be proven", func(t *testing.T) {
 		root := preflightRepo(t)
@@ -119,7 +122,7 @@ func TestBuiltCommandReleasePolicyFailuresAreRed(t *testing.T) {
 		if output, err := refCmd.CombinedOutput(); err != nil {
 			t.Fatalf("origin: %v %s", err, output)
 		}
-		assertBuiltRed(t, binary, root, []string{"--mode", "publish"}, "ancestry")
+		assertBuiltRed(t, binary, root, []string{"--mode", "publish", "--profile", "public"}, "ancestry")
 	})
 	for _, policy := range []struct{ name, body, want string }{
 		{"malformed exceptions", `{`, "malformed"},
@@ -204,7 +207,7 @@ func projectRoot(t *testing.T) string {
 func preflightRepo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
-	for _, rel := range []string{"bin/bench.sh", ".bench/gate.sh", "scripts/build-artifacts.sh", "scripts/smoke-artifacts.sh", "scripts/platforms.json", "scripts/wrapper-assets.json", "package.json"} {
+	for _, rel := range []string{"bin/bench.sh", ".bench/gate.sh", "scripts/build-artifacts.sh", "scripts/smoke-artifacts.sh", "scripts/go-build.sh", "scripts/platforms.json", "scripts/wrapper-assets.json", "package.json"} {
 		path := filepath.Join(root, filepath.FromSlash(rel))
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			t.Fatal(err)
@@ -215,6 +218,9 @@ func preflightRepo(t *testing.T) string {
 		}
 		if rel == "package.json" {
 			body = `{"version":"0.2.0"}`
+		}
+		if rel == "scripts/platforms.json" {
+			body = `[{"os":"darwin","arch":"arm64","goos":"darwin","goarch":"arm64","runner":"macos-14"},{"os":"darwin","arch":"x64","goos":"darwin","goarch":"amd64","runner":"macos-13"},{"os":"linux","arch":"arm64","goos":"linux","goarch":"arm64","runner":"ubuntu-24.04"},{"os":"linux","arch":"x64","goos":"linux","goarch":"amd64","runner":"ubuntu-24.04"}]` + "\n"
 		}
 		if err := os.WriteFile(path, []byte(body), 0o755); err != nil {
 			t.Fatal(err)
@@ -240,6 +246,7 @@ func preflightRepo(t *testing.T) string {
 			t.Fatalf("git %v: %v %s", args, err, out)
 		}
 	}
+	seedEvidenceFixture(t, root)
 	return root
 }
 

@@ -65,12 +65,12 @@ func BenchkitPhases(root, kit string) []Phase {
 	return append(phases, []Phase{
 		{
 			Name: "conformance",
-			Argv: []string{"go", "test", "-count=1", "./internal/conformance", "-run", "^TestRootConformance$"},
+			Argv: goTestArgv(kit, "./internal/conformance", "-run", "^TestRootConformance$"),
 			Env:  []string{"BENCH_CONFORMANCE_ROOT=" + root},
 		},
 		{
 			Name: "contract",
-			Argv: []string{"go", "test", "-count=1", "./internal/contract/..."},
+			Argv: goTestArgv(kit, "./internal/contract/..."),
 			Env:  []string{"BENCH_CONTRACT_ROOT=" + root},
 		},
 		{
@@ -83,6 +83,14 @@ func BenchkitPhases(root, kit string) []Phase {
 			Argv: []string{"bash", filepath.Join(kit, "bin", "bench.sh"), "canary", root},
 		},
 	}...)
+}
+
+func goTestArgv(kit string, args ...string) []string {
+	argv := []string{"go"}
+	if kit != "" {
+		argv = append(argv, "-C", kit)
+	}
+	return append(append(argv, "test", "-count=1"), args...)
 }
 
 // PhasesCommand is the `bench gate-phases [root]` plumbing command. It intentionally

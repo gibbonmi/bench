@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "records": [
+    {"key":"core.policy.supported_versions","owner":"FT83","schema":"governance-policy/v1","profiles":["public","bank"],"requiredness":"required","path":"governance/policies/supported-versions.json"},
+    {"key":"core.policy.security_response","owner":"FT83","schema":"governance-policy/v1","profiles":["public","bank"],"requiredness":"required","path":"governance/policies/security-response.json"},
+    {"key":"core.policy.dependency_license_change","owner":"FT83","schema":"governance-policy/v1","profiles":["public","bank"],"requiredness":"required","path":"governance/policies/dependency-license-change.json"},
+    {"key":"core.policy.threat_model","owner":"FT83","schema":"governance-policy/v1","profiles":["public","bank"],"requiredness":"required","path":"governance/policies/threat-model.json"},
+    {"key":"core.policy.recovery_rollback","owner":"FT83","schema":"governance-policy/v1","profiles":["public","bank"],"requiredness":"required","path":"governance/policies/recovery-rollback.json"},
+    {"key":"core.policy.support","owner":"FT83","schema":"governance-policy/v1","profiles":["public","bank"],"requiredness":"required","path":"governance/policies/support.json"},
+    {"key":"core.third_party_notices","owner":"FT83","schema":"notices/v1","profiles":["public","bank"],"requiredness":"required","path":"governance/THIRD_PARTY_NOTICES.txt"},
+    {"key":"core.sbom","owner":"FT83","schema":"spdx-json/2.3","profiles":["public","bank"],"requiredness":"required","path":"governance/sbom.spdx.json"},
+    {"key":"public.ft88.data_handling","owner":"FT88","schema":"ft88/data-handling/v1","profiles":["public","bank"],"requiredness":"required","path":"release-evidence/ft88-data-handling.json"},
+    {"key":"public.ft87.offline_network_control","owner":"FT87","schema":"ft87/offline-network-control/v1","profiles":["public","bank"],"requiredness":"required","path":"release-evidence/ft87-offline-network-control.json"},
+    {"key":"bank.ft71.local_event","owner":"FT71","schema":"ft71/local-event/v1","profiles":["bank"],"requiredness":"required","path":"release-evidence/ft71-local-event.json"}
+  ]
+}

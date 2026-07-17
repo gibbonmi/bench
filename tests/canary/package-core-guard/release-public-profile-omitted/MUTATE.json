@@ -1,0 +1,1 @@
+[{"path":".github/workflows/release.yml","old":"      - run: bash scripts/release-preflight.sh --mode publish --profile public\n","new":"      - run: bash scripts/release-preflight.sh --mode publish --profile bank\n"}]

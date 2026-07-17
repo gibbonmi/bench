@@ -116,6 +116,10 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"preflight-release-call-bypassed":        conformanceFixture(".bench/gate.sh"),
 	"preflight-publish-needs-bypassed":       conformanceFixture(".bench/gate.sh"),
 	"preflight-publish-order-bypassed":       conformanceFixture(".bench/gate.sh"),
+	"release-package-evidence-omitted":       conformanceFixture(".bench/gate.sh"),
+	"release-future-owner-omitted":           conformanceFixture(".bench/gate.sh"),
+	"release-public-profile-omitted":         conformanceFixture(".bench/gate.sh"),
+	"release-digest-binding-omitted":         conformanceFixture(".bench/gate.sh"),
 
 	"doctor-foreign-clobbered":             behaviorFixture(),
 	"doctor-manager-dir-chosen":            behaviorFixture(),

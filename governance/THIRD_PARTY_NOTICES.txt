@@ -1,0 +1,6 @@
+redbench includes the Go standard library and npm packaging metadata. The Go
+standard library is distributed under its own license terms; npm is used only by
+the private staging builder and is not a runtime dependency of the Bench binary.
+
+This notice is a canonical release input. Dependency and license changes are
+reviewed by the dependency-license-change policy before publication.

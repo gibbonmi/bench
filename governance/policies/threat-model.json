@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "policy": "threat-model",
+  "release_input": true,
+  "trust_boundary": "source-to-published-artifact",
+  "primary_threats": ["tampered-input", "dependency-confusion", "artifact-drift"]
+}

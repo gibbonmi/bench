@@ -2,6 +2,7 @@ package artifact
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"debug/elf"
 	"debug/macho"
 	"encoding/json"
@@ -215,7 +216,7 @@ func assertInstalledArtifactLifecycle(t *testing.T, artifacts, version string) {
 func assertWrapperArtifact(t *testing.T, root, path, version string, matrix []artifactPlatform) {
 	t.Helper()
 	entries := contract.ReadTarball(t, path)
-	expectedModes := map[string]int64{"package/package.json": 0o644}
+	expectedModes := map[string]int64{"package/package.json": 0o644, "package/component-manifest.json": 0o644}
 	var assets []wrapperAsset
 	contract.ReadJSONFile(t, filepath.Join(root, "scripts", "wrapper-assets.json"), &assets)
 	for _, asset := range assets {
@@ -280,15 +281,23 @@ func assertWrapperArtifact(t *testing.T, root, path, version string, matrix []ar
 	if pkg.Version != version || !reflect.DeepEqual(pkg.OptionalDependencies, want) {
 		t.Fatalf("wrapper platform dependencies = %v at %s, want %v at %s", pkg.OptionalDependencies, pkg.Version, want, version)
 	}
+	assertComponentManifest(t, entries, "redbench", version, "all", "all")
 }
 
 func assertPlatformArtifact(t *testing.T, path, version string, platform artifactPlatform) {
 	t.Helper()
 	entries := contract.ReadTarball(t, path)
-	_, hasBinary := entries["package/bin/bench"]
-	_, hasPackage := entries["package/package.json"]
-	if len(entries) != 2 || !hasBinary || !hasPackage {
+	want := map[string]bool{"package/bin/bench": true, "package/package.json": true, "package/LICENSE": true, "package/component-manifest.json": true, "package/governance/THIRD_PARTY_NOTICES.txt": true, "package/governance/sbom.spdx.json": true}
+	for _, policy := range []string{"supported-versions.json", "security-response.json", "dependency-license-change.json", "threat-model.json", "recovery-rollback.json", "support.json"} {
+		want["package/governance/policies/"+policy] = true
+	}
+	if len(entries) != len(want) {
 		t.Fatalf("%s platform artifact entries = %v", platform.OS+"-"+platform.Arch, reflect.ValueOf(entries).MapKeys())
+	}
+	for name := range want {
+		if _, ok := entries[name]; !ok {
+			t.Fatalf("%s platform artifact omitted %s", platform.OS+"-"+platform.Arch, name)
+		}
 	}
 	binaryBytes := entries["package/bin/bench"].Data
 	if len(binaryBytes) == 0 || entries["package/bin/bench"].Mode&0o111 == 0 {
@@ -332,6 +341,51 @@ func assertPlatformArtifact(t *testing.T, path, version string, platform artifac
 		}
 		if f.Cpu != wantCPU {
 			t.Fatalf("darwin/%s format=%v, want %v", platform.Arch, f.Cpu, wantCPU)
+		}
+	}
+	assertComponentManifest(t, entries, "@redbench/"+platform.OS+"-"+platform.Arch, version, platform.OS, platform.Arch)
+}
+
+func assertComponentManifest(t *testing.T, entries map[string]contract.TarEntry, name, version, osName, arch string) {
+	t.Helper()
+	var manifest struct {
+		SchemaVersion int `json:"schema_version"`
+		Component     struct {
+			Name, Version string
+			Target        struct {
+				OS   string `json:"os"`
+				Arch string `json:"arch"`
+			} `json:"target"`
+		} `json:"component"`
+		Files []struct {
+			Path, Mode string
+			Size       int64
+			SHA256     string `json:"sha256"`
+		} `json:"files"`
+	}
+	if err := json.Unmarshal(entries["package/component-manifest.json"].Data, &manifest); err != nil {
+		t.Fatal(err)
+	}
+	if manifest.SchemaVersion != 1 || manifest.Component.Name != name || manifest.Component.Version != version || manifest.Component.Target.OS != osName || manifest.Component.Target.Arch != arch {
+		t.Fatalf("component identity = %+v", manifest)
+	}
+	paths := make([]string, 0, len(entries)-1)
+	for path := range entries {
+		if path != "package/component-manifest.json" {
+			paths = append(paths, strings.TrimPrefix(path, "package/"))
+		}
+	}
+	sort.Strings(paths)
+	if len(paths) != len(manifest.Files) {
+		t.Fatalf("component inventory count = %d, want %d", len(manifest.Files), len(paths))
+	}
+	for i, item := range manifest.Files {
+		if item.Path != paths[i] || item.Mode != fmt.Sprintf("%o", entries["package/"+item.Path].Mode&0o777) || item.Size != int64(len(entries["package/"+item.Path].Data)) {
+			t.Fatalf("component inventory item = %+v", item)
+		}
+		sum := sha256.Sum256(entries["package/"+item.Path].Data)
+		if item.SHA256 != fmt.Sprintf("%x", sum) {
+			t.Fatalf("component digest %s = %s", item.Path, item.SHA256)
 		}
 	}
 }

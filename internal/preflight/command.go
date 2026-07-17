@@ -28,7 +28,7 @@ type runner struct {
 }
 
 func Command(args []string, binaryVersion string, stderr io.Writer) int {
-	mode, focused, usage := parseArgs(args)
+	mode, focused, profile, usage := parseArgs(args)
 	if usage != nil {
 		emitFailure(stderr, *usage)
 		return 2
@@ -58,8 +58,14 @@ func Command(args []string, binaryVersion string, stderr io.Writer) int {
 	results := r.run(ctx, focused)
 	status := terminalStatus(results)
 	scope := scopeFor(focused)
-	manifest := Manifest{SchemaVersion: 1, Mode: mode, Scope: scope, Status: status, Identity: r.identity, Phases: phaseSummaries(results)}
-	if err := PromoteEvidence(root, mode, results, manifest); err != nil {
+	run := RunEvidence{Mode: mode, Scope: scope, Identity: r.identity, Profile: profile, Phases: results}
+	finalizeErr := FinalizeEvidence(ctx, root, run)
+	if err := finalizeErr; err != nil {
+		var intentErr *releaseIntentError
+		if errors.As(err, &intentErr) {
+			emitFailure(stderr, Failure{Kind: "requirement", Message: intentErr.Error()})
+			return 1
+		}
 		emitFailure(stderr, Failure{Kind: "evidence", Message: "could not promote complete preflight evidence: " + err.Error()})
 		return 1
 	}
@@ -103,37 +109,50 @@ func initializationResults(mode Mode, focused string, failure Failure) []Result 
 
 func intPointer(value int) *int { return &value }
 
-func parseArgs(args []string) (Mode, string, *Failure) {
+func parseArgs(args []string) (Mode, string, Profile, *Failure) {
 	mode := Mode("")
 	focused := ""
+	profile := Profile("")
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "--mode":
 			i++
 			if i >= len(args) {
-				return "", "", usageFailure()
+				return "", "", "", usageFailure()
 			}
 			mode = Mode(args[i])
 		case "--phase":
 			i++
 			if i >= len(args) {
-				return "", "", usageFailure()
+				return "", "", "", usageFailure()
 			}
 			focused = args[i]
+		case "--profile":
+			i++
+			if i >= len(args) {
+				return "", "", "", usageFailure()
+			}
+			profile = Profile(args[i])
 		default:
-			return "", "", usageFailure()
+			return "", "", "", usageFailure()
 		}
 	}
 	if mode != ModeVerify && mode != ModePublish {
-		return "", "", usageFailure()
+		return "", "", "", usageFailure()
 	}
 	if focused != "" && !contains(PhaseNames(mode), focused) {
-		return "", "", usageFailure()
+		return "", "", "", usageFailure()
 	}
-	return mode, focused, nil
+	if profile != "" && profile != ProfilePublic && profile != ProfileBank {
+		return "", "", "", usageFailure()
+	}
+	if mode == ModePublish && profile == "" && focused == "" {
+		return "", "", "", usageFailure()
+	}
+	return mode, focused, profile, nil
 }
 func usageFailure() *Failure {
-	return &Failure{Kind: "usage", Message: "usage: bench release-preflight --mode verify|publish [--phase <name>]"}
+	return &Failure{Kind: "usage", Message: "usage: bench release-preflight --mode verify|publish [--profile public|bank] [--phase <name>]"}
 }
 func emitFailure(w io.Writer, failure Failure) {
 	data, _ := json.Marshal(failure)
@@ -279,6 +298,11 @@ func (r *runner) populateBaseIdentity() error {
 		return commandFailure{Failure{Kind: "input", Message: err.Error()}}
 	}
 	r.identity.SourceCommit = &commit
+	packageVersion, err := readPackageVersion(r.root)
+	if err != nil {
+		return commandFailure{failure: Failure{Kind: "input", Message: "package.json version is unreadable"}}
+	}
+	r.identity.PackageVersion = &packageVersion
 	r.identity.Toolchain = &toolchain
 	return nil
 }

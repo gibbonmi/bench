@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "policy": "dependency-license-change",
+  "review_required": true,
+  "license_change_requires": "release-preflight",
+  "dependency_change_requires": "release-preflight"
+}

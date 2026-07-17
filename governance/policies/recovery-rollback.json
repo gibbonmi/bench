@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "policy": "recovery-rollback",
+  "rollback_target": "previous-supported-release",
+  "preserve_prior_generation": true,
+  "npm_rollback": "tags-and-deprecation-not-unpublish"
+}
