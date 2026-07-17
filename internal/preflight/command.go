@@ -47,11 +47,6 @@ func Command(args []string, binaryVersion string, stderr io.Writer) int {
 	r := &runner{root: root, mode: mode, binaryVersion: binaryVersion, stderr: stderr}
 	if err := r.populateBaseIdentity(); err != nil {
 		failure := failureFrom(err, "identity")
-		results := initializationResults(mode, focused, failure)
-		manifest := Manifest{SchemaVersion: 1, Mode: mode, Scope: scopeFor(focused), Status: StatusRed, Identity: r.identity, Phases: phaseSummaries(results)}
-		if promoteErr := PromoteEvidence(root, mode, results, manifest); promoteErr != nil {
-			emitFailure(stderr, Failure{Kind: "evidence", Message: "could not promote complete preflight evidence: " + promoteErr.Error()})
-		}
 		emitFailure(stderr, failure)
 		return 1
 	}
@@ -96,22 +91,6 @@ func scopeFor(focused string) Scope {
 	return ScopePreflight
 }
 
-func initializationResults(mode Mode, focused string, failure Failure) []Result {
-	names := PhaseNames(mode)
-	if focused != "" {
-		names = []string{focused}
-	}
-	results := make([]Result, 0, len(names))
-	for i, name := range names {
-		if i == 0 {
-			results = append(results, Result{Name: name, Status: StatusRed, ExitCode: intPointer(1), Failure: &failure})
-		} else {
-			results = append(results, Result{Name: name, Status: StatusNotRun})
-		}
-	}
-	return results
-}
-
 func intPointer(value int) *int { return &value }
 
 func parseArgs(args []string) (Mode, string, Profile, *Failure) {
@@ -148,13 +127,10 @@ func parseArgs(args []string) (Mode, string, Profile, *Failure) {
 	if focused != "" && !contains(PhaseNames(mode), focused) {
 		return "", "", "", usageFailure()
 	}
-	if mode == ModePublish && focused != "" {
-		return "", "", "", &Failure{Kind: "usage", Message: usageFailure().Message + "; focused publish runs cannot authorize publication"}
-	}
 	if profile != "" && profile != ProfilePublic && profile != ProfileBank {
 		return "", "", "", usageFailure()
 	}
-	if mode == ModePublish && profile == "" && focused == "" {
+	if mode == ModePublish && profile == "" {
 		return "", "", "", usageFailure()
 	}
 	return mode, focused, profile, nil

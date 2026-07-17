@@ -72,6 +72,7 @@ func TestDistributableArtifactContracts(t *testing.T) {
 	if err != nil || len(files) != len(matrix)+1 {
 		t.Fatalf("second artifact build was not safe: files=%d err=%v", len(files), err)
 	}
+	assertConcurrentFirstArtifactPromotion(t, buildRoot, len(matrix)+1)
 
 	// A staging failure must leave an existing promoted set untouched.
 	broken := filepath.Join(t.TempDir(), "broken source [*]")

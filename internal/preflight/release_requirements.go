@@ -2,15 +2,10 @@ package preflight
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 )
 
@@ -50,21 +45,36 @@ func hasControlBytes(value string) bool {
 	return false
 }
 
-func validateRequirementRegistry() error {
-	if requirements.SchemaVersion != 1 || len(requirements.PackageEvidence) == 0 || len(requirements.Records) == 0 {
+func validateRequirementRegistry(registry requirementRegistry) error {
+	if registry.SchemaVersion != 1 || len(registry.PackageEvidence) == 0 || len(registry.Toolchains) != 3 || len(registry.Records) == 0 {
 		return errors.New("invalid requirement registry version or records")
 	}
+	manifest := registry.ComponentManifest
+	if manifest.SchemaVersion != 1 || !safeRegistryPath(manifest.Path) || len(manifest.RootFields) != 3 || len(manifest.ComponentFields) != 3 || len(manifest.TargetFields) != 2 || len(manifest.FileFields) != 4 {
+		return errors.New("invalid component manifest schema")
+	}
+	manifestFields := append(append(append(append([]string{}, manifest.RootFields...), manifest.ComponentFields...), manifest.TargetFields...), manifest.FileFields...)
+	for _, field := range manifestFields {
+		if field == "" || hasControlBytes(field) {
+			return errors.New("invalid component manifest schema field")
+		}
+	}
 	packagePaths := map[string]bool{}
-	for _, evidence := range requirements.PackageEvidence {
+	for _, evidence := range registry.PackageEvidence {
 		if packagePaths[evidence.Path] || !safeRegistryPath(evidence.Path) || evidence.Schema == "" || evidence.Mode != "0644" {
 			return fmt.Errorf("invalid package evidence registry entry %q", evidence.Path)
 		}
-		if evidence.Schema != "license/v1" && !knownRequirementSchema(evidence.Schema) {
+		if evidence.Schema != "license/v1" && evidence.Schema != "notices/v1" && evidence.Schema != "spdx-json/2.3" && evidence.Schema != "governance-policy/v1" {
 			return fmt.Errorf("unsupported package evidence schema %q", evidence.Schema)
 		}
 		if evidence.Path != "LICENSE" {
-			record, found := requirementForPath(evidence.Path)
-			if !found || record.Schema != evidence.Schema {
+			bound := false
+			for _, record := range registry.Records {
+				if record.Path == evidence.Path && record.Schema == evidence.Schema {
+					bound = true
+				}
+			}
+			if !bound {
 				return fmt.Errorf("package evidence registry is not bound to requirement %q", evidence.Path)
 			}
 		}
@@ -72,8 +82,9 @@ func validateRequirementRegistry() error {
 	}
 	seen := map[string]bool{}
 	public, bank := map[string]bool{}, map[string]bool{}
-	for _, record := range requirements.Records {
-		if seen[record.Key] || record.Key == "" || record.Owner == "" || !knownRequirementSchema(record.Schema) || !safeRegistryPath(record.Path) || len(record.Profiles) == 0 || record.Requiredness != "required" && record.Requiredness != "conditional" {
+	for _, record := range registry.Records {
+		coreSchema := record.Schema == "notices/v1" || record.Schema == "spdx-json/2.3" || record.Schema == "governance-policy/v1"
+		if seen[record.Key] || record.Key == "" || record.Owner == "" || record.Schema == "" || (!record.Producer && !coreSchema) || !safeRegistryPath(record.Path) || len(record.Profiles) == 0 || record.Requiredness != "required" && record.Requiredness != "conditional" {
 			return fmt.Errorf("invalid requirement registry record %q", record.Key)
 		}
 		for _, value := range []string{record.Key, record.Owner, record.Schema, record.Path} {
@@ -96,6 +107,18 @@ func validateRequirementRegistry() error {
 			default:
 				return fmt.Errorf("requirement %s has unknown profile %q", record.Key, profile)
 			}
+		}
+	}
+	toolchains := map[string]bool{}
+	for _, toolchain := range registry.Toolchains {
+		if toolchains[toolchain.Name] || toolchain.Name == "" || len(toolchain.VersionArgv) == 0 || toolchain.VersionArgv[0] != toolchain.Name {
+			return fmt.Errorf("invalid toolchain requirement %q", toolchain.Name)
+		}
+		toolchains[toolchain.Name] = true
+	}
+	for _, name := range []string{"go", "node", "npm"} {
+		if !toolchains[name] {
+			return fmt.Errorf("requirement registry omits toolchain %s", name)
 		}
 	}
 	for key := range public {
@@ -132,85 +155,11 @@ func readRollbackTarget(root string) (string, error) {
 	return record.RollbackTarget, nil
 }
 
-func inspectRequirements(root string, run RunEvidence, profile Profile) ([]requirementStatus, []evidenceDigest, string, error) {
-	statuses := make([]requirementStatus, 0, len(requirements.Records))
-	inputs := make([]evidenceDigest, 0, len(requirements.Records)+1)
-	for _, record := range requirements.Records {
-		status := requirementStatus{Key: record.Key, Owner: record.Owner, Schema: record.Schema, Requiredness: record.Requiredness, Status: "not_applicable"}
-		applicable := containsProfile(record.Profiles, profile)
-		if !applicable {
-			status.Reason = "requirement is not applicable to selected profile"
-			statuses = append(statuses, status)
-			continue
-		}
-		status.Applicable = true
-		path := filepath.Join(root, filepath.FromSlash(record.Path))
-		data, err := readRegular(path)
-		if os.IsNotExist(err) && isProducerOwner(record.Owner) {
-			if run.Mode == ModeVerify {
-				status.Status, status.Reason = "pending", "producer record is not present"
-			} else {
-				status.Status, status.Reason = "missing", "required producer record is not present"
-			}
-			statuses = append(statuses, status)
-			continue
-		}
-		if err != nil {
-			if os.IsNotExist(err) {
-				status.Status, status.Reason = "missing", "required governance record is not present"
-				statuses = append(statuses, status)
-				continue
-			}
-			return nil, nil, "", fmt.Errorf("requirement %s is unreadable: %w", record.Key, err)
-		}
-		if len(data) == 0 {
-			status.Status, status.Reason = "invalid", "record is empty"
-			statuses = append(statuses, status)
-			continue
-		}
-		if err := validateRequirementBytes(record, data, run.Identity); err != nil {
-			status.Status, status.Reason = "invalid", err.Error()
-			statuses = append(statuses, status)
-			continue
-		}
-		status.Status = "satisfied"
-		if record.Requiredness == "conditional" && isProducerOwner(record.Owner) {
-			var envelope producerEnvelope
-			if err := decodeStrict(data, &envelope); err == nil && envelope.Status == "not_applicable" {
-				status.Status, status.Reason = "not_applicable", envelope.Reason
-			}
-		}
-		status.Digest = digest(data)
-		inputs = append(inputs, evidenceDigest{Path: record.Path, SHA256: status.Digest})
-		statuses = append(statuses, status)
-	}
-	unsatisfied := ""
-	for _, status := range statuses {
-		if status.Status == "missing" || status.Status == "invalid" {
-			unsatisfied = fmt.Sprintf("release requirement %s is %s: %s", status.Key, status.Status, status.Reason)
-			break
-		}
-	}
-	registryDigest := digest(requirementsJSON)
-	inputs = append(inputs, evidenceDigest{Path: "internal/preflight/requirements.json", SHA256: registryDigest})
-	for _, rel := range releaseInputPaths {
-		data, err := readRegular(filepath.Join(root, filepath.FromSlash(rel)))
-		if err != nil {
-			return nil, nil, "", fmt.Errorf("release input %s is unreadable: %w", rel, err)
-		}
-		inputs = append(inputs, evidenceDigest{Path: rel, SHA256: digest(data)})
-	}
-	return statuses, inputs, unsatisfied, nil
-}
-
 func validateRequirementBytes(record Requirement, data []byte, identity Identity) error {
 	if !bytes.HasSuffix(data, []byte("\n")) {
 		return fmt.Errorf("requirement %s is missing a final newline", record.Key)
 	}
-	if isProducerOwner(record.Owner) {
-		if record.Schema != producerSchema(record.Owner) {
-			return fmt.Errorf("producer record %s has unsupported schema %s", record.Key, record.Schema)
-		}
+	if record.Producer {
 		var envelope producerEnvelope
 		if err := decodeStrict(data, &envelope); err != nil {
 			return fmt.Errorf("producer record %s is malformed: %w", record.Key, err)
@@ -248,23 +197,6 @@ func validateRequirementBytes(record Requirement, data []byte, identity Identity
 		return nil
 	}
 	return fmt.Errorf("requirement %s has unsupported schema %s", record.Key, record.Schema)
-}
-
-func isProducerOwner(owner string) bool {
-	return owner == "FT71" || owner == "FT87" || owner == "FT88"
-}
-
-func producerSchema(owner string) string {
-	switch owner {
-	case "FT71":
-		return "ft71/local-event/v1"
-	case "FT87":
-		return "ft87/offline-network-control/v1"
-	case "FT88":
-		return "ft88/data-handling/v1"
-	default:
-		return ""
-	}
 }
 
 type supportedVersionsPolicy struct {
@@ -436,71 +368,6 @@ type producerIdentity struct {
 	PackageVersion string `json:"package_version"`
 }
 
-func inputFingerprint(root string, run RunEvidence) (string, error) {
-	h := sha256.New()
-	paths := append([]string{"internal/preflight/requirements.json"}, releaseInputPaths...)
-	for _, record := range requirements.Records {
-		paths = append(paths, record.Path)
-	}
-	paths = append(paths, "dist/artifacts")
-	sort.Strings(paths)
-	seen := map[string]bool{}
-	for _, rel := range paths {
-		if seen[rel] {
-			continue
-		}
-		seen[rel] = true
-		if err := fingerprintPath(h, root, rel); err != nil {
-			return "", err
-		}
-	}
-	for _, result := range run.Phases {
-		_, _ = h.Write([]byte(result.Name))
-		_, _ = h.Write([]byte{0})
-	}
-	return hex.EncodeToString(h.Sum(nil)), nil
-}
-
-func fingerprintPath(h io.Writer, root, rel string) error {
-	path := filepath.Join(root, filepath.FromSlash(rel))
-	info, err := os.Lstat(path)
-	if os.IsNotExist(err) {
-		_, _ = io.WriteString(h, "absent:\x00"+rel+"\n")
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	if info.Mode()&os.ModeSymlink != 0 || (!info.Mode().IsRegular() && !info.IsDir()) {
-		return fmt.Errorf("unsafe release evidence input: %s", rel)
-	}
-	if info.IsDir() {
-		entries, err := os.ReadDir(path)
-		if err != nil {
-			return err
-		}
-		names := make([]string, 0, len(entries))
-		for _, entry := range entries {
-			names = append(names, entry.Name())
-		}
-		sort.Strings(names)
-		for _, name := range names {
-			if err := fingerprintPath(h, root, filepath.ToSlash(filepath.Join(rel, name))); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	_, _ = io.WriteString(h, fmt.Sprintf("file:%s:%o:%d:", rel, info.Mode().Perm(), len(data)))
-	_, _ = h.Write(data)
-	_, _ = h.Write([]byte{0})
-	return nil
-}
-
 func containsProfile(profiles []Profile, want Profile) bool {
 	for _, profile := range profiles {
 		if profile == want {
@@ -508,70 +375,4 @@ func containsProfile(profiles []Profile, want Profile) bool {
 		}
 	}
 	return false
-}
-
-func decodeStrict(data []byte, value any) error {
-	if !json.Valid(data) {
-		return errors.New("invalid JSON")
-	}
-	if err := rejectDuplicateJSONKeys(data); err != nil {
-		return err
-	}
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(value); err != nil {
-		return err
-	}
-	var extra any
-	if err := decoder.Decode(&extra); err != io.EOF {
-		return errors.New("trailing JSON")
-	}
-	return nil
-}
-
-func rejectDuplicateJSONKeys(data []byte) error {
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	var scan func() error
-	scan = func() error {
-		token, err := decoder.Token()
-		if err != nil {
-			return err
-		}
-		delim, isDelim := token.(json.Delim)
-		if !isDelim {
-			return nil
-		}
-		switch delim {
-		case '{':
-			seen := map[string]bool{}
-			for decoder.More() {
-				keyToken, err := decoder.Token()
-				if err != nil {
-					return err
-				}
-				key, ok := keyToken.(string)
-				if !ok {
-					return errors.New("JSON object key is not a string")
-				}
-				if seen[key] {
-					return fmt.Errorf("duplicate JSON key %q", key)
-				}
-				seen[key] = true
-				if err := scan(); err != nil {
-					return err
-				}
-			}
-		case '[':
-			for decoder.More() {
-				if err := scan(); err != nil {
-					return err
-				}
-			}
-		default:
-			return errors.New("unexpected JSON delimiter")
-		}
-		_, err = decoder.Token()
-		return err
-	}
-	return scan()
 }

@@ -8,11 +8,12 @@ if (!root || !wrapperDir || !packagesDir) throw new Error("usage: build-release-
 const matrix = readJSON(path.join(root, "scripts/platforms.json"));
 const assets = readJSON(path.join(root, "scripts/wrapper-assets.json"));
 const requirements = readJSON(path.join(root, "internal/preflight/requirements.json"));
+const componentSchema = requirements.component_manifest;
 const sourcePackage = readJSON(path.join(root, "package.json"));
 const seenDestinations = new Set();
 const byteOrder = (a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
 
-if (!Array.isArray(matrix) || matrix.length !== 4 || !Array.isArray(assets) || !Array.isArray(requirements.package_evidence) || requirements.package_evidence.length === 0 || !Array.isArray(requirements.records)) throw new Error("release evidence matrix, asset, or package evidence registry is invalid");
+if (!Array.isArray(matrix) || matrix.length !== 4 || !Array.isArray(assets) || !Array.isArray(requirements.package_evidence) || requirements.package_evidence.length === 0 || !Array.isArray(requirements.records) || !componentSchema || componentSchema.schema_version !== 1 || !Array.isArray(componentSchema.root_fields) || componentSchema.root_fields.length !== 3 || !Array.isArray(componentSchema.component_fields) || componentSchema.component_fields.length !== 3 || !Array.isArray(componentSchema.target_fields) || componentSchema.target_fields.length !== 2 || !Array.isArray(componentSchema.file_fields) || componentSchema.file_fields.length !== 4) throw new Error("release evidence matrix, asset, or package evidence registry is invalid");
 
 function readJSON(file) {
   const stat = fs.lstatSync(file);
@@ -126,15 +127,17 @@ function packageFiles(dir) {
     for (const name of fs.readdirSync(current, {withFileTypes: true}).sort(byteOrder)) {
       const file = path.join(current, name.name);
       if (name.isDirectory()) walk(file);
-      else if (name.isFile() && name.name !== "component-manifest.json") {
+      else if (name.isFile() && name.name !== componentSchema.path) {
         const rel = safeRelative(path.relative(dir, file), "component manifest path");
         const stat = fs.lstatSync(file);
-        files.push({path: rel, mode: (stat.mode & 0o777).toString(8), size: stat.size, sha256: sha256(fs.readFileSync(file))});
+        const fields = componentSchema.file_fields;
+        files.push({[fields[0]]: rel, [fields[1]]: (stat.mode & 0o777).toString(8), [fields[2]]: stat.size, [fields[3]]: sha256(fs.readFileSync(file))});
       } else throw new Error(`component package contains unsafe file: ${file}`);
     }
   };
   walk(dir);
-  files.sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
+  const pathField = componentSchema.file_fields[0];
+  files.sort((a, b) => a[pathField] < b[pathField] ? -1 : a[pathField] > b[pathField] ? 1 : 0);
   return files;
 }
 
@@ -147,8 +150,15 @@ function writeEvidence(dir, name, version, target) {
   sbom.packages[0].SPDXID = "SPDXRef-Package-" + name.replaceAll(/[^A-Za-z0-9.-]/g, "-");
   sbom.relationships[0].relatedSpdxElement = sbom.packages[0].SPDXID;
   writeJSON(path.join(dir, "governance", "sbom.spdx.json"), sbom);
-  const component = {schema_version: 1, component: {name, version, target: target || null}, files: packageFiles(dir)};
-  writeJSON(path.join(dir, "component-manifest.json"), component);
+  const [schemaField, componentField, filesField] = componentSchema.root_fields;
+  const [nameField, versionField, targetField] = componentSchema.component_fields;
+  const [osField, archField] = componentSchema.target_fields;
+  const component = {
+    [schemaField]: componentSchema.schema_version,
+    [componentField]: {[nameField]: name, [versionField]: version, [targetField]: {[osField]: target.os, [archField]: target.arch}},
+    [filesField]: packageFiles(dir),
+  };
+  writeJSON(path.join(dir, componentSchema.path), component);
 }
 
 validateRequiredSources();
@@ -157,7 +167,7 @@ const optionalDependencies = Object.fromEntries(matrix.map(p => [`@redbench/${p.
 const wrapperPackage = {...sourcePackage, optionalDependencies};
 wrapperPackage.scripts = {...(sourcePackage.scripts || {})};
 delete wrapperPackage.scripts.prepare;
-wrapperPackage.files = [...assets.map(a => a.source), "component-manifest.json"];
+wrapperPackage.files = [...assets.map(a => a.source), componentSchema.path];
 writeJSON(path.join(wrapperDir, "package.json"), wrapperPackage);
 writeEvidence(wrapperDir, sourcePackage.name, sourcePackage.version, {os: "all", arch: "all"});
 

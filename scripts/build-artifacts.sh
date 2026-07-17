@@ -10,9 +10,11 @@ parent="$(dirname "$output")"
 mkdir -p "$parent"
 stage="$(mktemp -d "$parent/.bench-artifacts.XXXXXX")"
 backup=""
+lock=""
 cleanup() {
   if [[ -n "$backup" && -e "$backup" && ! -e "$output" ]]; then mv "$backup" "$output"; fi
   [[ -z "$backup" || ! -e "$backup" ]] || rm -rf "$backup"
+  [[ -z "$lock" || ! -d "$lock" ]] || rmdir "$lock"
   rm -rf "$stage"
 }
 trap cleanup EXIT
@@ -52,17 +54,25 @@ expected="$((matrix_count + 1))"
 actual="$(find "$artifacts" -maxdepth 1 -type f -name '*.tgz' -print | wc -l | tr -d ' ')"
 [[ "$actual" == "$expected" ]] || { printf 'bench artifacts: emitted %s tarballs, expected %s\n' "$actual" "$expected" >&2; exit 1; }
 
+lock_path="${output}.lock"
+if ! mkdir "$lock_path" 2>/dev/null; then
+  printf 'bench artifacts: another build owns output %s\n' "$output" >&2
+  exit 1
+fi
+lock="$lock_path"
+if [[ -n "${BENCH_TEST_PROMOTION_READY_FILE:-}" ]]; then
+  : > "$BENCH_TEST_PROMOTION_READY_FILE"
+  while [[ -e "$BENCH_TEST_PROMOTION_READY_FILE" ]]; do sleep 0.05; done
+fi
 if [[ -e "$output" ]]; then
   backup="$(mktemp -d "$parent/.bench-artifacts.previous.XXXXXX")"
   rmdir "$backup"
   mv "$output" "$backup"
 fi
-if [[ -n "${BENCH_TEST_PROMOTION_READY_FILE:-}" ]]; then
-  : > "$BENCH_TEST_PROMOTION_READY_FILE"
-  while [[ -e "$BENCH_TEST_PROMOTION_READY_FILE" ]]; do sleep 0.05; done
-fi
 mv "$artifacts" "$output"
 [[ -z "$backup" || ! -e "$backup" ]] || rm -rf "$backup"
 backup=""
+rmdir "$lock"
+lock=""
 trap - EXIT INT TERM HUP
 rm -rf "$stage"

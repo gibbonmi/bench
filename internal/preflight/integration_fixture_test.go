@@ -48,7 +48,7 @@ func seedEvidenceFixture(t *testing.T, root string) {
 	}
 	commit := gitFixtureOutput(t, root, "rev-parse", "HEAD")
 	for _, requirement := range Requirements() {
-		if !isProducerOwner(requirement.Owner) {
+		if !requirement.Producer {
 			continue
 		}
 		payload := json.RawMessage(`{"fixture":true}`)

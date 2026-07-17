@@ -14,7 +14,7 @@ import (
 func TestReleasePreflightScriptBootstrapsBuiltFullAndFocusedCommands(t *testing.T) {
 	source := projectRoot(t)
 	root := t.TempDir()
-	listed := exec.Command("git", "-C", source, "ls-files", "-z")
+	listed := exec.Command("git", "-C", source, "ls-files", "--cached", "--others", "--exclude-standard", "-z")
 	out, err := listed.Output()
 	if err != nil {
 		t.Fatal(err)
@@ -158,27 +158,6 @@ func TestBuiltCommandReleasePolicyFailuresAreRed(t *testing.T) {
 			t.Fatalf("prior target changed: %q %v", data, err)
 		}
 	})
-}
-
-func TestBuiltCommandFocusedPublishCannotAuthorize(t *testing.T) {
-	binary := filepath.Join(t.TempDir(), "bench")
-	build := exec.Command("bash", filepath.Join(projectRoot(t), "scripts", "go-build.sh"), projectRoot(t), binary)
-	if output, err := build.CombinedOutput(); err != nil {
-		t.Fatalf("build: %v\n%s", err, output)
-	}
-	root := preflightRepo(t)
-	cmd := exec.Command(binary, "release-preflight", "--mode", "publish", "--profile", "public", "--phase", "gate")
-	cmd.Dir = root
-	output, err := cmd.CombinedOutput()
-	if exit, ok := err.(*exec.ExitError); !ok || exit.ExitCode() != 2 {
-		t.Fatalf("focused publish exit = %v, want usage exit 2\n%s", err, output)
-	}
-	if !strings.Contains(string(output), "focused") && !strings.Contains(string(output), "usage") {
-		t.Fatalf("focused publish output does not explain non-authorization:\n%s", output)
-	}
-	if _, err := os.Stat(filepath.Join(root, "dist", "preflight", "release-index.json")); !os.IsNotExist(err) {
-		t.Fatalf("focused publish created release evidence: %v", err)
-	}
 }
 
 func TestBuiltCommandCancellationPreservesPriorCompleteEvidence(t *testing.T) {

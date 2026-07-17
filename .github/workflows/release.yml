@@ -57,7 +57,7 @@ jobs:
         with:
           name: release-artifacts
           path: dist/artifacts
-      - run: bash scripts/release-preflight.sh --mode publish --profile public --phase smoke
+      - run: bash scripts/release-preflight.sh --mode verify --phase smoke
 
   publish:
     needs: [preflight, smoke]

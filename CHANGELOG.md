@@ -15,6 +15,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 - Added recoverable gated shifts and identity-safe worktree lifecycle management.
 - Added an authoritative release preflight that binds source, artifact, version,
   ancestry, and changelog evidence before publication.
+- Added profile-governed release evidence, exact component inventories, and
+  diagnostic focused release preflight runs.
 
 ### Changed
 

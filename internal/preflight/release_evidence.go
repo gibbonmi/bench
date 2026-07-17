@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"sort"
 	"strings"
 	"time"
@@ -36,6 +37,12 @@ type artifactEvidence struct {
 	InventoryDigest string `json:"inventory_sha256"`
 }
 
+type toolchainEvidence struct {
+	Name    string   `json:"name"`
+	Version string   `json:"version"`
+	Flags   []string `json:"flags"`
+}
+
 type releaseIdentity struct {
 	Tag              string `json:"tag,omitempty"`
 	PackageVersion   string `json:"package_version,omitempty"`
@@ -54,6 +61,7 @@ type releaseIndex struct {
 	Identity       releaseIdentity     `json:"identity"`
 	RollbackTarget string              `json:"rollback_target"`
 	Flags          []string            `json:"flags"`
+	Toolchains     []toolchainEvidence `json:"toolchains"`
 	Inputs         []evidenceDigest    `json:"inputs"`
 	Targets        []targetEvidence    `json:"targets"`
 	Phases         []phaseEvidence     `json:"phases"`
@@ -73,7 +81,17 @@ func FinalizeEvidence(ctx context.Context, root string, run RunEvidence) error {
 		return context.Canceled
 	}
 	if run.Scope == ScopeFocused {
-		return PromoteEvidence(root, run.Mode, run.Phases, manifestFor(run))
+		manifest := manifestFor(run)
+		if run.Mode == ModePublish {
+			manifest.Status = StatusRed
+		}
+		if err := PromoteEvidence(root, run.Mode, run.Phases, manifest); err != nil {
+			return err
+		}
+		if run.Mode == ModePublish {
+			return &releaseIntentError{message: "focused publish runs cannot authorize publication"}
+		}
+		return nil
 	}
 
 	built, err := assembleReleaseEvidence(ctx, root, run)
@@ -129,9 +147,6 @@ func validateRun(root string, run RunEvidence) error {
 	if run.Mode == ModePublish && run.Scope == ScopePreflight && run.Profile != ProfilePublic && run.Profile != ProfileBank {
 		return errors.New("publish requires an explicit profile")
 	}
-	if run.Mode == ModePublish && run.Scope == ScopeFocused {
-		return errors.New("focused publish runs cannot authorize publication")
-	}
 	if run.Profile != "" && run.Profile != ProfilePublic && run.Profile != ProfileBank {
 		return fmt.Errorf("unknown release profile %q", run.Profile)
 	}
@@ -140,7 +155,7 @@ func validateRun(root string, run RunEvidence) error {
 			return fmt.Errorf("release identity %s contains control bytes", label)
 		}
 	}
-	if err := validateRequirementRegistry(); err != nil {
+	if err := validateRequirementRegistry(requirements); err != nil {
 		return err
 	}
 	want := PhaseNames(run.Mode)
@@ -188,6 +203,10 @@ func assembleReleaseEvidence(ctx context.Context, root string, run RunEvidence) 
 	if err != nil {
 		return assembledEvidence{}, err
 	}
+	toolchains, err := observeToolchains(ctx, root)
+	if err != nil {
+		return assembledEvidence{}, err
+	}
 	phases := make([]phaseEvidence, 0, len(run.Phases))
 	for _, result := range run.Phases {
 		record := Record{SchemaVersion: 1, Phase: result.Name, Mode: run.Mode, Status: result.Status, ExitCode: result.ExitCode, Error: result.Failure}
@@ -218,6 +237,7 @@ func assembleReleaseEvidence(ctx context.Context, root string, run RunEvidence) 
 		Identity:       releaseIdentityFrom(run.Identity),
 		RollbackTarget: rollbackTarget,
 		Flags:          flags,
+		Toolchains:     toolchains,
 		Inputs:         inputs,
 		Targets:        targets,
 		Phases:         phases,
@@ -229,6 +249,23 @@ func assembleReleaseEvidence(ctx context.Context, root string, run RunEvidence) 
 		return assembledEvidence{}, err
 	}
 	return assembledEvidence{index: index, fingerprint: fingerprint, unsatisfied: unsatisfied}, nil
+}
+
+func observeToolchains(ctx context.Context, root string) ([]toolchainEvidence, error) {
+	out := make([]toolchainEvidence, 0, len(requirements.Toolchains))
+	for _, requirement := range requirements.Toolchains {
+		if len(requirement.VersionArgv) == 0 {
+			return nil, fmt.Errorf("toolchain %s has no version command", requirement.Name)
+		}
+		command := exec.CommandContext(ctx, requirement.VersionArgv[0], requirement.VersionArgv[1:]...)
+		command.Dir = root
+		version, err := command.Output()
+		if err != nil || strings.TrimSpace(string(version)) == "" {
+			return nil, fmt.Errorf("toolchain %s version is unavailable", requirement.Name)
+		}
+		out = append(out, toolchainEvidence{Name: requirement.Name, Version: strings.TrimSpace(string(version)), Flags: append([]string(nil), requirement.Flags...)})
+	}
+	return out, nil
 }
 
 func phaseFlags(run RunEvidence) []string {

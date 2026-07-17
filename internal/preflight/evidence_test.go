@@ -3,7 +3,7 @@ package preflight
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -129,35 +129,34 @@ func TestEvidenceRejectsHostileCanonicalTargets(t *testing.T) {
 	}
 }
 
-func TestInitializationFailureWritesCompleteTerminalEvidence(t *testing.T) {
+func TestInitializationFailurePreservesPriorCompleteEvidence(t *testing.T) {
 	root := preflightRepo(t)
-	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module fixture\n\ntoolchain go1.25\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
 	old, _ := os.Getwd()
 	if err := os.Chdir(root); err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = os.Chdir(old) })
 	var stderr bytes.Buffer
-	if code := Command([]string{"--mode", "verify"}, "0.2.0", &stderr); code != 1 {
-		t.Fatalf("exit=%d stderr=%s", code, stderr.String())
+	if code := Command([]string{"--mode", "verify"}, "0.2.0", &stderr); code != 0 {
+		t.Fatalf("initial exit=%d stderr=%s", code, stderr.String())
 	}
-	data, err := os.ReadFile(filepath.Join(root, "dist", "preflight", "manifest.json"))
+	prior, err := snapshotTree(filepath.Join(root, "dist", "preflight"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	var manifest Manifest
-	if err := json.Unmarshal(data, &manifest); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module fixture\n\ntoolchain go1.25\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if manifest.Status != StatusRed || len(manifest.Phases) != len(PhaseNames(ModeVerify)) {
-		t.Fatalf("manifest=%+v", manifest)
+	stderr.Reset()
+	if code := Command([]string{"--mode", "verify"}, "0.2.0", &stderr); code != 1 {
+		t.Fatalf("exit=%d stderr=%s", code, stderr.String())
 	}
-	for _, phase := range manifest.Phases {
-		if _, err := os.Stat(filepath.Join(root, "dist", "preflight", phase.Name+".json")); err != nil {
-			t.Fatal(err)
-		}
+	after, err := snapshotTree(filepath.Join(root, "dist", "preflight"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(prior, after) {
+		t.Fatal("unreadable initialization input replaced prior trusted evidence")
 	}
 }
 
@@ -201,4 +200,28 @@ func TestVulnerabilityCancellationKillsDescendantProcessGroup(t *testing.T) {
 	if err := syscall.Kill(pid, 0); err == nil {
 		t.Fatalf("scanner descendant %d survived cancellation", pid)
 	}
+}
+
+func snapshotTree(root string) ([]byte, error) {
+	var snapshot bytes.Buffer
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(&snapshot, "%s\x00%d\x00", filepath.ToSlash(rel), len(data))
+		snapshot.Write(data)
+		return nil
+	})
+	return snapshot.Bytes(), err
 }

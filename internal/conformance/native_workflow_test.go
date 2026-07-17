@@ -126,7 +126,7 @@ func checkReleasePreflight(root string) []string {
 		}
 	}
 	if release != "" {
-		for message, anchor := range map[string]string{"tag publication bypasses full release preflight": "scripts/release-preflight.sh --mode publish --profile public\n", "tag publication does not upload preflight evidence": "publish-preflight-evidence", "tag runner matrix bypasses focused smoke": "--mode publish --profile public --phase smoke", "tag evidence does not request repository maximum retention": "retention-days: ${{ github.retention_days }}", "publication does not wait for preflight and every native smoke row": "needs: [preflight, smoke]"} {
+		for message, anchor := range map[string]string{"tag publication bypasses full release preflight": "scripts/release-preflight.sh --mode publish --profile public\n", "tag publication does not upload preflight evidence": "publish-preflight-evidence", "tag runner matrix bypasses focused smoke": "--mode verify --phase smoke", "tag evidence does not request repository maximum retention": "retention-days: ${{ github.retention_days }}", "publication does not wait for preflight and every native smoke row": "needs: [preflight, smoke]"} {
 			if !strings.Contains(release, anchor) {
 				diags = append(diags, message)
 			}

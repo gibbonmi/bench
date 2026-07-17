@@ -12,14 +12,9 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
-	"syscall"
-	"unsafe"
 )
-
-var exchangeEvidenceDirs = atomicExchangeDirs
 
 type tarFile struct {
 	mode int64
@@ -27,27 +22,27 @@ type tarFile struct {
 }
 
 type componentManifest struct {
-	SchemaVersion int               `json:"schema_version"`
-	Component     componentIdentity `json:"component"`
-	Files         []manifestFile    `json:"files"`
+	SchemaVersion int
+	Component     componentIdentity
+	Files         []manifestFile
 }
 
 type componentIdentity struct {
-	Name    string     `json:"name"`
-	Version string     `json:"version"`
-	Target  targetName `json:"target"`
+	Name    string
+	Version string
+	Target  targetName
 }
 
 type targetName struct {
-	OS   string `json:"os"`
-	Arch string `json:"arch"`
+	OS   string
+	Arch string
 }
 
 type manifestFile struct {
-	Path   string `json:"path"`
-	Mode   string `json:"mode"`
-	Size   int64  `json:"size"`
-	SHA256 string `json:"sha256"`
+	Path   string
+	Mode   string
+	Size   int64
+	SHA256 string
 }
 
 type packageIdentity struct {
@@ -125,11 +120,11 @@ func inspectArtifacts(root string) ([]artifactEvidence, []targetEvidence, error)
 		if err := validatePackageEvidence(files, manifest, target, version); err != nil {
 			return nil, nil, fmt.Errorf("artifact %s evidence is invalid: %w", entry.Name(), err)
 		}
-		inventory, err := canonicalJSON(manifest.Files)
+		inventory, err := canonicalManifestFiles(manifest.Files)
 		if err != nil {
 			return nil, nil, err
 		}
-		artifacts = append(artifacts, artifactEvidence{Name: entry.Name(), Target: target, Size: int64(len(data)), SHA256: digest(data), ComponentDigest: digest(files["component-manifest.json"].data), SBOMDigest: digest(files["governance/sbom.spdx.json"].data), InventoryDigest: digest(inventory)})
+		artifacts = append(artifacts, artifactEvidence{Name: entry.Name(), Target: target, Size: int64(len(data)), SHA256: digest(data), ComponentDigest: digest(files[requirements.ComponentManifest.Path].data), SBOMDigest: digest(files["governance/sbom.spdx.json"].data), InventoryDigest: digest(inventory)})
 	}
 	return artifacts, targets, nil
 }
@@ -173,12 +168,12 @@ func readTarball(data []byte) (map[string]tarFile, componentManifest, error) {
 		}
 		files[name] = tarFile{mode: header.Mode & 0o777, data: body}
 	}
-	manifestFile, ok := files["component-manifest.json"]
+	manifestFile, ok := files[requirements.ComponentManifest.Path]
 	if !ok {
 		return nil, componentManifest{}, errors.New("component manifest is missing")
 	}
-	var manifest componentManifest
-	if err := decodeStrict(manifestFile.data, &manifest); err != nil {
+	manifest, err := decodeComponentManifest(manifestFile.data)
+	if err != nil {
 		return nil, componentManifest{}, fmt.Errorf("component manifest is malformed: %w", err)
 	}
 	return files, manifest, nil
@@ -261,7 +256,7 @@ func validatePackageEvidence(files map[string]tarFile, manifest componentManifes
 	if len(manifestPaths) != len(files)-1 {
 		return errors.New("component inventory does not enumerate every package file")
 	}
-	if _, ok := manifestPaths["component-manifest.json"]; ok {
+	if _, ok := manifestPaths[requirements.ComponentManifest.Path]; ok {
 		return errors.New("component inventory self-references its manifest")
 	}
 	return nil
@@ -286,140 +281,4 @@ func archiveRelativePath(name string) (string, error) {
 		return "", fmt.Errorf("unsafe archive path %q", name)
 	}
 	return clean, nil
-}
-
-func PromoteEvidence(root string, mode Mode, results []Result, manifest Manifest) error {
-	return PromoteEvidenceFiles(root, mode, results, manifest, nil)
-}
-
-func PromoteEvidenceFiles(root string, mode Mode, results []Result, manifest Manifest, files map[string][]byte) error {
-	dist := filepath.Join(root, "dist")
-	if info, err := os.Lstat(dist); err == nil && (!info.IsDir() || info.Mode()&os.ModeSymlink != 0) {
-		return fmt.Errorf("dist output target is not a real directory")
-	} else if err != nil && !os.IsNotExist(err) {
-		return err
-	}
-	if err := os.MkdirAll(dist, 0o755); err != nil {
-		return err
-	}
-	stage, err := os.MkdirTemp(dist, ".preflight-stage-")
-	if err != nil {
-		return err
-	}
-	keep := false
-	defer func() {
-		if !keep {
-			_ = os.RemoveAll(stage)
-		}
-	}()
-	for _, result := range results {
-		record := Record{SchemaVersion: 1, Phase: result.Name, Mode: mode, Status: result.Status, ExitCode: result.ExitCode, Error: result.Failure}
-		if err := writeJSONSync(filepath.Join(stage, result.Name+".json"), record); err != nil {
-			return err
-		}
-	}
-	if err := writeJSONSync(filepath.Join(stage, "manifest.json"), manifest); err != nil {
-		return err
-	}
-	for name, data := range files {
-		if filepath.Base(name) != name || name == "" {
-			return fmt.Errorf("invalid promoted evidence file name: %s", name)
-		}
-		if err := writeBytesSync(filepath.Join(stage, name), data); err != nil {
-			return err
-		}
-	}
-	if err := syncDir(stage); err != nil {
-		return err
-	}
-	target := filepath.Join(dist, "preflight")
-	if info, err := os.Lstat(target); err == nil && (!info.IsDir() || info.Mode()&os.ModeSymlink != 0) {
-		return fmt.Errorf("preflight output target is not a real directory")
-	} else if err != nil && !os.IsNotExist(err) {
-		return err
-	}
-	if _, err := os.Lstat(target); os.IsNotExist(err) {
-		if err := os.Rename(stage, target); err != nil {
-			return err
-		}
-		keep = true
-	} else if err != nil {
-		return err
-	} else {
-		if err := exchangeEvidenceDirs(stage, target); err != nil {
-			return err
-		}
-		keep = true
-	}
-	if err := syncDir(dist); err != nil {
-		return err
-	}
-	if err := os.RemoveAll(stage); err != nil {
-		return err
-	}
-	return nil
-}
-
-func atomicExchangeDirs(left, right string) error {
-	if runtime.GOOS != "linux" {
-		return fmt.Errorf("atomic evidence replacement is unsupported on %s", runtime.GOOS)
-	}
-	var trap uintptr
-	switch runtime.GOARCH {
-	case "amd64":
-		trap = 316
-	case "arm64":
-		trap = 276
-	default:
-		return fmt.Errorf("atomic evidence replacement is unsupported on linux/%s", runtime.GOARCH)
-	}
-	l, err := syscall.BytePtrFromString(left)
-	if err != nil {
-		return err
-	}
-	r, err := syscall.BytePtrFromString(right)
-	if err != nil {
-		return err
-	}
-	atFDCWD := ^uintptr(99)
-	_, _, errno := syscall.Syscall6(trap, atFDCWD, uintptr(unsafe.Pointer(l)), atFDCWD, uintptr(unsafe.Pointer(r)), 2, 0)
-	if errno != 0 {
-		return errno
-	}
-	return nil
-}
-
-func writeJSONSync(path string, value any) error {
-	data, err := json.Marshal(value)
-	if err != nil {
-		return err
-	}
-	return writeBytesSync(path, append(data, '\n'))
-}
-
-func writeBytesSync(path string, data []byte) error {
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
-	if err != nil {
-		return err
-	}
-	if _, err = f.Write(data); err == nil {
-		err = f.Sync()
-	}
-	closeErr := f.Close()
-	if err != nil {
-		return err
-	}
-	return closeErr
-}
-
-func syncDir(path string) error {
-	f, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	if err := f.Sync(); err != nil {
-		return fmt.Errorf("sync %s: %w", path, err)
-	}
-	return nil
 }
