@@ -290,7 +290,7 @@ enforcement it didn't have.
 
 Both upstream repos move. `/bench-update-kit` re-runs the synthesis against their latest
 state: it pulls Pocock's skills and kunchenguid's tooling, diffs them against what
-Bench already incorporates (the provenance table and `CHANGELOG.md` are the record),
+Bench already incorporates (the provenance table is the current record),
 and proposes adoptions — then runs three quality loops before anything ships. The
 first loop is anti-sediment (`craft-skills`: does the change earn its place
 or just enlarge the kit?), the second is a consistency audit (re-grep for stale

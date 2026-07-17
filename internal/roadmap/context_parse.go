@@ -17,8 +17,6 @@ var roadmapStartRe = regexp.MustCompile(`^\*\*([A-Za-z]+[0-9]+)(.*)$`)
 var specPathRe = regexp.MustCompile(`specs/([A-Za-z0-9_-]+)\.md`)
 var commandRe = regexp.MustCompile(`/bench-[A-Za-z0-9-]+`)
 var ideaRe = regexp.MustCompile(`^- ([0-9]{4}-[0-9]{2}-[0-9]{2})  (.*)$`)
-var promotionDateRe = regexp.MustCompile(`([0-9]{4}-[0-9]{2}-[0-9]{2})`)
-var roadmapIDRe = regexp.MustCompile(`[A-Z]+[0-9]+`)
 
 func ParseDocument(content []byte, statuses map[string]string, full bool) (Document, []ParseFailure) {
 	lines := strings.Split(string(content), "\n")
@@ -170,53 +168,9 @@ func parseIdeas(content []byte, full bool) ([]IdeaFact, []ParseFailure, []string
 	return facts, failures, rawLines
 }
 
-func parsePromotions(content []byte, full bool) []PromotionFact {
-	lines := strings.Split(string(content), "\n")
-	var out []PromotionFact
-	for i := 0; i < len(lines); i++ {
-		line := lines[i]
-		lower := strings.ToLower(line)
-		if !strings.HasPrefix(line, "- **") || !strings.Contains(lower, "promotion") {
-			continue
-		}
-		start := i
-		i++
-		for i < len(lines) && !strings.HasPrefix(lines[i], "- **") {
-			i++
-		}
-		i--
-		bodyRaw := strings.TrimSpace(strings.Join(lines[start:i+1], "\n"))
-		body, n, tr := limited(bodyRaw, full)
-		date := ""
-		if m := promotionDateRe.FindString(bodyRaw); m != "" {
-			date = m
-		}
-		ids := roadmapIDRe.FindAllString(bodyRaw, -1)
-		ids = unique(ids)
-		kind := "promotion"
-		if strings.Contains(lower, "build") {
-			kind = "build"
-		}
-		out = append(out, PromotionFact{kind, date, strings.Trim(strings.TrimPrefix(line, "- **"), "* ."), strings.Join(ids, " "), body, n, tr})
-	}
-	return out
-}
-
-func unique(in []string) []string {
-	seen := map[string]bool{}
-	var out []string
-	for _, s := range in {
-		if !seen[s] {
-			seen[s] = true
-			out = append(out, s)
-		}
-	}
-	return out
-}
-
 func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, error) {
 	s := ContextSnapshot{Full: full}
-	labels := []string{"ROADMAP.md", "IDEAS.md", ".bench/learnings.md", ".bench/structure.budgets", ".bench/structure-accept", "specs/", "CHANGELOG.md"}
+	labels := []string{"ROADMAP.md", "IDEAS.md", ".bench/learnings.md", ".bench/structure.budgets", ".bench/structure-accept", "specs/"}
 	data := map[string][]byte{}
 	for _, label := range labels {
 		if label == "specs/" {
@@ -287,7 +241,6 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 		s.GitChanges = append(s.GitChanges, []string{c.Status, c.Path})
 	}
 	s.GateCache = [][]any{{gate.Present, gate.State, gate.PendingStatus, gate.Status, gate.CachedTree, gate.WorkTree, gate.Timestamp, gate.Stale}}
-	s.Promotions = parsePromotions(data["CHANGELOG.md"], full)
 	for i := range s.Sources {
 		for _, f := range s.Failures {
 			if f.Source == s.Sources[i].Source {

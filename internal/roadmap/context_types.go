@@ -34,11 +34,6 @@ type LearningFact struct {
 	BodyBytes                int
 	Truncated                bool
 }
-type PromotionFact struct {
-	Kind, Date, Scope, RoadmapIDs, Body string
-	BodyBytes                           int
-	Truncated                           bool
-}
 type ParseFailure struct {
 	Source, Reason, Raw string
 	RawBytes            int
@@ -72,7 +67,6 @@ type ContextSnapshot struct {
 	Git         [][]any
 	GitChanges  [][]string
 	GateCache   [][]any
-	Promotions  []PromotionFact
 	Failures    []ParseFailure
 }
 

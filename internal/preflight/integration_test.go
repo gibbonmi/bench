@@ -93,7 +93,7 @@ func TestBuiltCommandReleasePolicyFailuresAreRed(t *testing.T) {
 	t.Run("stranded changelog", func(t *testing.T) {
 		root := preflightRepo(t)
 		tagRelease(t, root, true)
-		body := "# Changelog\n\n## Unreleased\n\n- stranded\n\n## v0.2.0 (2026-07-16)\n\n- release\n"
+		body := "# Changelog\n\n## [Unreleased]\n\n- stranded\n\n## [0.2.0] - 2026-07-16\n\n- release\n"
 		if err := os.WriteFile(filepath.Join(root, "CHANGELOG.md"), []byte(body), 0o644); err != nil {
 			t.Fatal(err)
 		}
@@ -172,7 +172,7 @@ func assertBuiltRed(t *testing.T, binary, root string, args []string, want strin
 
 func tagRelease(t *testing.T, root string, withOrigin bool) {
 	t.Helper()
-	if err := os.WriteFile(filepath.Join(root, "CHANGELOG.md"), []byte("# Changelog\n\n## v0.2.0 (2026-07-16)\n\n- release\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "CHANGELOG.md"), []byte(releaseChangelog("2026-07-16")), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	for _, args := range [][]string{{"tag", "v0.2.0"}} {

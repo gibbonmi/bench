@@ -13,7 +13,7 @@ entries. One run reconciles the roadmap against the tree, drains both capture
 sources, refreshes the recommended sequence, and hands the reviewer one diff to
 approve.
 
-At entry, invoke `bench roadmap --context` exactly once. Its successful schema-1
+At entry, invoke `bench roadmap --context` exactly once. Its successful schema-2
 snapshot is the complete local evidence for every step below. If the query fails,
 stop the phase and report its error; manual evidence reconstruction would create a
 different, partial input and is not a fallback.
@@ -69,9 +69,10 @@ does no judgment, so this section is where the judgment lands.
 
 Draft the full pass — reconciled roadmap, emptied inbox, journal verdicts
 including dismissals — as one uncommitted batch diff. The diff includes the
-run's CHANGELOG entry — the append duty CHANGELOG.md's header names is owned
-here — and this step also checks that the previous run's promotion builds
-appended theirs. That diff is the verdict
+run's concise `CHANGELOG.md` entry only when the pass changes notable user-facing
+behavior. The approved commit and Git history own reconcile verdicts, dismissed
+learnings, and promotion evidence; do not mirror that history in a second ledger.
+That diff is the verdict
 sheet: the reviewer approves or adjusts it once, and there are no per-item
 interactive sign-offs. On approval, commit on green. Never commit the drain
 without that approval; a standing batch approval (the AGENTS.md rule) counts,

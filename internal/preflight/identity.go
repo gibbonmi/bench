@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 )
 
 var exactTag = regexp.MustCompile(`^refs/tags/(v[0-9]+\.[0-9]+\.[0-9]+)$`)
@@ -72,21 +73,27 @@ func (r *runner) checkChangelog() error {
 	if err != nil {
 		return commandFailure{Failure{Kind: "input", Message: "CHANGELOG.md is unreadable"}}
 	}
-	re := regexp.MustCompile(`(?m)^## ` + regexp.QuoteMeta(*r.identity.Tag) + ` \([0-9]{4}-[0-9]{2}-[0-9]{2}\)$`)
-	matches := re.FindAll(data, -1)
+	version := strings.TrimPrefix(*r.identity.Tag, "v")
+	re := regexp.MustCompile(`(?m)^## \[` + regexp.QuoteMeta(version) + `\] - ([0-9]{4}-[0-9]{2}-[0-9]{2})$`)
+	matches := re.FindAllSubmatch(data, -1)
 	if len(matches) != 1 {
 		return commandFailure{Failure{Kind: "identity", Message: "CHANGELOG.md must contain exactly one matching release heading"}}
 	}
-	heading := string(matches[0])
-	releaseAt := bytes.Index(data, matches[0])
-	unreleasedAt := bytes.Index(data, []byte("## Unreleased"))
-	if unreleasedAt >= 0 && unreleasedAt < releaseAt {
-		between := string(data[unreleasedAt+len("## Unreleased") : releaseAt])
-		for _, line := range strings.Split(between, "\n") {
-			line = strings.TrimSpace(line)
-			if line != "" && !strings.HasPrefix(line, "#") {
-				return commandFailure{Failure{Kind: "identity", Message: "CHANGELOG.md has stranded content under Unreleased"}}
-			}
+	if _, err := time.Parse("2006-01-02", string(matches[0][1])); err != nil {
+		return commandFailure{Failure{Kind: "identity", Message: "CHANGELOG.md release heading date is invalid"}}
+	}
+	heading := string(matches[0][0])
+	releaseAt := bytes.Index(data, matches[0][0])
+	unreleasedHeading := []byte("## [Unreleased]")
+	unreleasedAt := bytes.Index(data, unreleasedHeading)
+	if bytes.Count(data, unreleasedHeading) != 1 || unreleasedAt >= releaseAt {
+		return commandFailure{Failure{Kind: "identity", Message: "CHANGELOG.md must contain one Unreleased heading before the release"}}
+	}
+	between := string(data[unreleasedAt+len(unreleasedHeading) : releaseAt])
+	for _, line := range strings.Split(between, "\n") {
+		line = strings.TrimSpace(line)
+		if line != "" && !strings.HasPrefix(line, "#") {
+			return commandFailure{Failure{Kind: "identity", Message: "CHANGELOG.md has stranded content under Unreleased"}}
 		}
 	}
 	r.identity.ChangelogHeading = &heading

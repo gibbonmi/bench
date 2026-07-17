@@ -42,15 +42,15 @@ tables, escaping, and refusal of unrepresentable control bytes
 | `git[1]` | `branch,default_branch,dirty,ahead,behind` |
 | `git_changes[N]` | `status,path` |
 | `gate_cache[1]` | `present,status,cached_tree,work_tree,timestamp,stale` |
-| `promotion_records[N]` | `kind,date,scope,roadmap_ids,body,body_bytes,truncated` |
 | `parse_failures[N]` | `source,reason,raw,raw_bytes,truncated` |
 
-`schema` starts at integer `1`; `full` is a boolean. `sources.state` is one of
+`schema` is integer `2`; `full` is a boolean. `sources.state` is one of
 `absent`, `empty`, `parsed`, or `malformed`, preserving absent-versus-empty evidence.
-The eight `sources.source` rows are fixed and ordered as `ROADMAP.md`, `IDEAS.md`,
+The seven `sources.source` rows are fixed and ordered as `ROADMAP.md`, `IDEAS.md`,
 `.bench/learnings.md`, `.bench/structure.budgets`, `.bench/structure-accept`, `specs/`,
-`CHANGELOG.md`, and `.git/bench-last-gate` (the last is a logical label for the
-worktree's actual git-dir cache path).
+and `.git/bench-last-gate` (the last is a logical label for the worktree's actual
+git-dir cache path). Historical reconcile and promotion evidence stays in Git rather
+than being copied into the snapshot.
 An unreadable required source or failed git derivation emits one structured AXI error
 and exit 1 rather than a partial snapshot. Unknown or conflicting arguments emit usage
 on stdout and exit 2. `-h`/`--help` emit usage on stdout and exit 0. Successful output
@@ -65,7 +65,7 @@ or ordering. Boundary probes use 4095, 4096, and 4097 bytes plus a multibyte run
 the cut. Invalid or TOON-unrepresentable bytes fail closed instead of being replaced.
 
 Blocks and rows are deterministic: document order for roadmap rows, sequence, ideas,
-learnings, and promotion records; path order for structure, specs, and git changes;
+and learnings; path order for structure, specs, and git changes;
 newest-first for each slug's history, matching the existing history query
 ([history ordering](../internal/spec/history.go#L50)). Exact stdout must repeat
 byte-for-byte on a second unchanged invocation.

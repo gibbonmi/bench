@@ -32,7 +32,6 @@ func contextFixture(t *testing.T) contract.Fixture {
 	f.WriteFile(".bench/structure.budgets", "")
 	f.WriteFile(".bench/structure-accept", "")
 	f.WriteFile("specs/one.md", "# One\n\nStatus: staged\nRoadmap: FT1\n")
-	f.WriteFile("CHANGELOG.md", "# Changelog\n\n- **FT1 promotion build (2026-07-10).** Done.\n")
 	f.Git("add", "-A")
 	f.Git("-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "fixture")
 	return f
@@ -46,15 +45,15 @@ func testRoadmapContextComplete(t *testing.T) {
 	if out.Stderr != "" {
 		t.Fatalf("stderr not empty: %s", out.Stderr)
 	}
+	out.RequireContains(out.Stdout, "2,false")
 	headers := []string{
-		"context[1]{schema,full}:", "sources[8]{source,state,bytes}:",
+		"context[1]{schema,full}:", "sources[7]{source,state,bytes}:",
 		"roadmap_rows[1]{id,title,spec,spec_status,external_trigger,body,body_bytes,truncated}:",
 		"roadmap_sequence[1]{rank,text,command}:", "ideas[1]{date,text,text_bytes,truncated}:",
 		"learnings[1]{date,title,state,body,body_bytes,truncated}:", "structure[0]{kind,path,actual,limit,state,detail}:",
 		"specs[1]{slug,status,roadmap_id}:", "spec_history[0]{slug,hash,date,kind,subject}:",
 		"git[1]{branch,default_branch,dirty,ahead,behind}:", "git_changes[0]{status,path}:",
 		"gate_cache[1]{present,state,pending_status,status,cached_tree,work_tree,timestamp,stale}:",
-		"promotion_records[1]{kind,date,scope,roadmap_ids,body,body_bytes,truncated}:",
 		"parse_failures[0]{source,reason,raw,raw_bytes,truncated}:",
 	}
 	last := -1

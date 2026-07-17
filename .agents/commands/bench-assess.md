@@ -42,8 +42,8 @@ source and running live commands but writing nothing. The six areas:
    vocabulary that carry the method.
 3. **Enforcement layer** — the gate, the hooks, harness parity, the guards.
 4. **CLI and Go core** — `bin/bench.sh` and the `internal/` packages behind it.
-5. **Gate authority, tests, records** — seam coverage, the canary, the ADRs and
-   CHANGELOG the records rest on.
+5. **Gate authority, tests, records** — seam coverage, the canary, ADRs, the
+   user-facing changelog, and relevant Git history.
 6. **Live operational state** — a real gate run, the roadmap, open learnings, parked
    ideas, stray branches.
 

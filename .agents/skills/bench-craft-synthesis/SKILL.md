@@ -22,8 +22,8 @@ Drop every candidate the baseline already settled and that hasn't materially cha
 A rejected item does not reopen on a cosmetic change — only a material change reopens
 it, and then you show the diff that justifies reopening. For `upstream`, that's a
 source repo whose technique actually moved; for `learnings`, an entry already
-resolved (pruned from the journal — its verdict lives in the CHANGELOG and the
-integration commit) is not re-litigated. A loop that re-opens settled calls every
+resolved (pruned from the journal — its verdict lives in the integration commit)
+is not re-litigated. A loop that re-opens settled calls every
 run is worse than no loop.
 
 ## Assess — propose, don't decide
@@ -63,6 +63,7 @@ Run in order; a change that fails a loop is pruned or sent back, not shipped.
 ## Propose; the reviewer merges
 
 Never auto-apply. After the loops pass and the reviewer has signed off, hand back to
-the calling path to record the result — `/bench-update-kit` to the provenance table and
-CHANGELOG; a learnings-sourced build into the fixed artifact, the CHANGELOG verdict
-line, and the retired roadmap row. The merge is the reviewer's.
+the calling path to record the result — `/bench-update-kit` to the current provenance
+table; a learnings-sourced build into the fixed artifact and the retired roadmap row.
+User-visible behavior also gets one concise, typed `CHANGELOG.md` entry. The approved
+commit is the historical record; the merge is the reviewer's.

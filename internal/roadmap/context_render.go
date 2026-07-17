@@ -9,7 +9,7 @@ import (
 
 func contextUsage() string { return "usage: bench roadmap --context [--full]\n" }
 
-// ContextCommand implements the read-only schema-1 AXI roadmap snapshot.
+// ContextCommand implements the read-only schema-2 AXI roadmap snapshot.
 func ContextCommand(args []string, gate func(string) GateCacheFact) (string, int) {
 	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
 		return contextUsage(), 0
@@ -44,7 +44,7 @@ func renderContext(s ContextSnapshot) (string, error) {
 		rows   [][]any
 	}
 	var bs []block
-	bs = append(bs, block{"context", []string{"schema", "full"}, [][]any{{1, s.Full}}})
+	bs = append(bs, block{"context", []string{"schema", "full"}, [][]any{{2, s.Full}}})
 	rows := make([][]any, len(s.Sources))
 	for i, r := range s.Sources {
 		rows[i] = []any{r.Source, r.State, r.Bytes}
@@ -78,11 +78,6 @@ func renderContext(s ContextSnapshot) (string, error) {
 	bs = append(bs, block{"git", []string{"branch", "default_branch", "dirty", "ahead", "behind"}, s.Git})
 	bs = append(bs, block{"git_changes", []string{"status", "path"}, stringRows(s.GitChanges)})
 	bs = append(bs, block{"gate_cache", []string{"present", "state", "pending_status", "status", "cached_tree", "work_tree", "timestamp", "stale"}, s.GateCache})
-	rows = nil
-	for _, r := range s.Promotions {
-		rows = append(rows, []any{r.Kind, r.Date, r.Scope, r.RoadmapIDs, r.Body, r.BodyBytes, r.Truncated})
-	}
-	bs = append(bs, block{"promotion_records", []string{"kind", "date", "scope", "roadmap_ids", "body", "body_bytes", "truncated"}, rows})
 	rows = nil
 	for _, r := range s.Failures {
 		rows = append(rows, []any{r.Source, r.Reason, r.Raw, r.RawBytes, r.Truncated})

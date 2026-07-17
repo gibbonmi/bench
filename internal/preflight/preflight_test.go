@@ -96,7 +96,7 @@ func TestCommandFullVerifyWritesSixGreenRecords(t *testing.T) {
 
 func TestCommandPublishIsGreenStrictSuperset(t *testing.T) {
 	root := preflightRepo(t)
-	if err := os.WriteFile(filepath.Join(root, "CHANGELOG.md"), []byte("# Changelog\n\n## v0.2.0 (2026-07-16)\n\n- release\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "CHANGELOG.md"), []byte(releaseChangelog("2026-07-16")), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	for _, args := range [][]string{{"tag", "v0.2.0"}, {"update-ref", "refs/remotes/origin/main", "HEAD"}} {
@@ -173,11 +173,29 @@ func TestReleasePolicyFailureClassesAreRed(t *testing.T) {
 	}
 	tag := "v0.2.0"
 	r.identity.Tag = &tag
-	if err := os.WriteFile(filepath.Join(root, "CHANGELOG.md"), []byte("## v0.2.0 (2026-07-16)\n## v0.2.0 (2026-07-17)\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "CHANGELOG.md"), []byte("## [0.2.0] - 2026-07-16\n## [0.2.0] - 2026-07-17\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := r.checkChangelog(); err == nil {
 		t.Fatal("duplicate changelog heading passed")
+	}
+	if err := os.WriteFile(filepath.Join(root, "CHANGELOG.md"), []byte("## v0.2.0 (2026-07-16)\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.checkChangelog(); err == nil {
+		t.Fatal("legacy changelog heading passed")
+	}
+	if err := os.WriteFile(filepath.Join(root, "CHANGELOG.md"), []byte("## [Unreleased]\n\n## [0.2.0] - 2026-02-30\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.checkChangelog(); err == nil {
+		t.Fatal("invalid changelog date passed")
+	}
+	if err := os.WriteFile(filepath.Join(root, "CHANGELOG.md"), []byte("## [0.2.0] - 2026-07-16\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.checkChangelog(); err == nil {
+		t.Fatal("missing Unreleased heading passed")
 	}
 	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module fixture\n\ntoolchain go1.25\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -185,6 +203,10 @@ func TestReleasePolicyFailureClassesAreRed(t *testing.T) {
 	if _, err := readToolchain(root); err == nil {
 		t.Fatal("non-patch toolchain passed")
 	}
+}
+
+func releaseChangelog(date string) string {
+	return "# Changelog\n\n## [Unreleased]\n\n## [0.2.0] - " + date + "\n\n- release\n"
 }
 
 func TestCancellationAndUnsafePromotionFailClosed(t *testing.T) {

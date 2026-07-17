@@ -171,7 +171,7 @@ humans alike; `/bench-what-next` needs no resolver-specific shell ceremony.
    cache reader. The top-level shell wrapper owns repo-local forwarding. The canonical
    `/bench-what-next` command consumes the query and retains all judgment.
 2. **Contracts.** `bench roadmap --context [--full]` is read-only and offline, emits
-   the fixed schema-1 TOON blocks in the gate asset, uses exit 0 with empty stderr on
+   the fixed schema-2 TOON blocks in the gate asset, uses exit 0 with empty stderr on
    success, structured stdout/exit 1 on unsatisfied reads or derivations, and stdout
    usage with exit 2 for bad arguments. `--full` removes only the 4096-byte body ceiling.
    The top-level wrapper forwards the entire argv to a distinct repo-local wrapper and
