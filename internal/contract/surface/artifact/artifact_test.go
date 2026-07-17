@@ -13,7 +13,6 @@ import (
 	"runtime"
 	"sort"
 	"strings"
-	"syscall"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/contract"
@@ -73,34 +72,7 @@ func TestDistributableArtifactContracts(t *testing.T) {
 	}
 	assertConcurrentFirstArtifactPromotion(t, buildRoot, len(matrix)+1)
 
-	// A staging failure must leave an existing promoted set untouched.
-	broken := filepath.Join(t.TempDir(), "broken source [*]")
-	if err := os.MkdirAll(filepath.Join(broken, "scripts"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	for path, content := range map[string]string{
-		"package.json":                `{"version":"1.0.0"}`,
-		"scripts/platforms.json":      "[]\n",
-		"scripts/wrapper-assets.json": `[{"source":"special","mode":"0644"}]`,
-	} {
-		if err := os.WriteFile(filepath.Join(broken, path), []byte(content), 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if err := syscall.Mkfifo(filepath.Join(broken, "special"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	sentinel := filepath.Join(out, "promoted-sentinel")
-	if err := os.WriteFile(sentinel, []byte("owned"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	bad := contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(root, "scripts", "build-artifacts.sh"), broken, out)
-	if bad.ExitCode == 0 {
-		t.Fatal("incomplete artifact builder unexpectedly succeeded")
-	}
-	if got, err := os.ReadFile(sentinel); err != nil || string(got) != "owned" {
-		t.Fatalf("failed build changed promoted artifacts: %q, %v", got, err)
-	}
+	assertSpecialFileArtifactFailure(t, root, out)
 }
 
 func assertWrapperAssetPolicy(t *testing.T, root string) {
@@ -114,6 +86,9 @@ func assertWrapperAssetPolicy(t *testing.T, root string) {
 	present := map[string]bool{}
 	for _, asset := range assets {
 		present[asset.Source] = true
+		if asset.Source == "LICENSE" || asset.Source == "governance" || strings.HasPrefix(asset.Source, "governance/") {
+			t.Fatalf("wrapper asset manifest duplicates packaged evidence policy: %s", asset.Source)
+		}
 		if asset.Source == "dist/bench" || strings.HasPrefix(asset.Source, "dist/packages/") {
 			t.Fatalf("wrapper artifact contains forbidden entry package/%s", asset.Source)
 		}
@@ -240,6 +215,21 @@ func assertWrapperArtifact(t *testing.T, root, path, version string, matrix []ar
 		if err != nil {
 			t.Fatal(err)
 		}
+	}
+	var registry struct {
+		Records []struct {
+			Path        string `json:"path"`
+			PackageMode string `json:"package_mode"`
+		} `json:"records"`
+	}
+	contract.ReadJSONFile(t, filepath.Join(root, "internal", "releaseevidence", "requirements.json"), &registry)
+	for _, record := range registry.Records {
+		if record.PackageMode == "" {
+			continue
+		}
+		mode := int64(0)
+		fmt.Sscanf(record.PackageMode, "%o", &mode)
+		expectedModes["package/"+record.Path] = mode
 	}
 	gotNames := make([]string, 0, len(entries))
 	for name := range entries {

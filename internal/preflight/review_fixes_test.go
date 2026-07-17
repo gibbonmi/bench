@@ -3,6 +3,7 @@ package preflight
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -23,10 +24,110 @@ func buildPreflightBinary(t *testing.T) string {
 
 func runBuilt(t *testing.T, binary, root string, env []string) ([]byte, error) {
 	t.Helper()
-	cmd := exec.Command(binary, "release-preflight", "--mode", "verify")
+	return runBuiltArgs(t, binary, root, env, "--mode", "verify")
+}
+
+func runBuiltArgs(t *testing.T, binary, root string, env []string, args ...string) ([]byte, error) {
+	t.Helper()
+	cmd := exec.Command(binary, append([]string{"release-preflight"}, args...)...)
 	cmd.Dir = root
 	cmd.Env = env
 	return cmd.CombinedOutput()
+}
+
+func TestBuiltCommandProfileAcceptanceMatrix(t *testing.T) {
+	binary := buildPreflightBinary(t)
+	for _, test := range []struct {
+		name string
+		args []string
+	}{
+		{name: "missing profile", args: []string{"--mode", "publish"}},
+		{name: "unknown profile", args: []string{"--mode", "publish", "--profile", "unknown"}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			output, err := runBuiltArgs(t, binary, preflightRepo(t), os.Environ(), test.args...)
+			var exitErr *exec.ExitError
+			if !errors.As(err, &exitErr) || exitErr.ExitCode() != 2 || !strings.Contains(string(output), `"kind":"usage"`) {
+				t.Fatalf("error=%v, want usage exit 2\n%s", err, output)
+			}
+		})
+	}
+	for _, profile := range []string{"public", "bank"} {
+		t.Run("green "+profile, func(t *testing.T) {
+			root := preflightRepo(t)
+			tagRelease(t, root, true)
+			output, err := runBuiltArgs(t, binary, root, os.Environ(), "--mode", "publish", "--profile", profile)
+			if err != nil {
+				t.Fatalf("green %s publish: %v\n%s", profile, err, output)
+			}
+		})
+	}
+}
+
+func TestConditionalRecordReasonFlowsThroughAuthoritativeEvidence(t *testing.T) {
+	root := preflightRepo(t)
+	registry := requirements
+	registry.Records = append([]Requirement(nil), requirements.Records...)
+	for i := range registry.Records {
+		if registry.Records[i].Key == "bank.ft71.local_event" {
+			registry.Records[i].Requiredness = "conditional"
+		}
+	}
+	t.Cleanup(setRequirementsForTesting(registry))
+	recordPath := filepath.Join(root, "release-evidence", "ft71-local-event.json")
+	data, err := os.ReadFile(recordPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var record map[string]any
+	if err := json.Unmarshal(data, &record); err != nil {
+		t.Fatal(err)
+	}
+	record["status"] = "not_applicable"
+	record["reason"] = "fixture has no local-event capability"
+	writeRecord := func() {
+		encoded, err := json.MarshalIndent(record, "", "  ")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(recordPath, append(encoded, '\n'), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	writeRecord()
+	tagRelease(t, root, true)
+	old, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(old) })
+	var stderr bytes.Buffer
+	if code := Command([]string{"--mode", "publish", "--profile", "bank"}, "0.2.0", &stderr); code != 0 {
+		t.Fatalf("conditional bank publish exit=%d\n%s", code, stderr.String())
+	}
+	indexData := mustFixtureFile(t, filepath.Join(root, "dist", "preflight", "release-index.json"))
+	var index releaseIndex
+	if err := json.Unmarshal(indexData, &index); err != nil {
+		t.Fatal(err)
+	}
+	foundReason := false
+	for _, status := range index.Requirements {
+		if status.Key == "bank.ft71.local_event" && status.Status == "not_applicable" && status.Reason == "fixture has no local-event capability" {
+			foundReason = true
+		}
+	}
+	if !foundReason {
+		t.Fatalf("conditional reason was not bound in release index: %+v", index.Requirements)
+	}
+	record["reason"] = ""
+	writeRecord()
+	stderr.Reset()
+	if code := Command([]string{"--mode", "publish", "--profile", "bank"}, "0.2.0", &stderr); code != 1 || !strings.Contains(stderr.String(), "mismatched schema, key, owner, or status") {
+		t.Fatalf("missing conditional reason exit=%d\n%s", code, stderr.String())
+	}
 }
 
 func priorGeneration(t *testing.T, binary, root string) []byte {
@@ -57,6 +158,8 @@ func TestBuiltCommandRejectsProducerRecordMutationsDistinctly(t *testing.T) {
 	for _, test := range []struct {
 		name, mutation, want string
 	}{
+		{"empty", "", "record is empty"},
+		{"malformed syntax", "", "is malformed"},
 		{"unknown version", `"schema_version": 1`, "mismatched schema"},
 		{"duplicate key", `"key":"public.ft88.data_handling"`, "duplicate JSON key"},
 		{"mismatched identity", `"source_commit": "`, "identity does not match release"},
@@ -70,6 +173,10 @@ func TestBuiltCommandRejectsProducerRecordMutationsDistinctly(t *testing.T) {
 				t.Fatal(err)
 			}
 			switch test.name {
+			case "empty":
+				data = nil
+			case "malformed syntax":
+				data = []byte("{\n")
 			case "unknown version":
 				data = bytes.Replace(data, []byte(test.mutation), []byte(`"schema_version": 2`), 1)
 			case "duplicate key":
@@ -133,6 +240,77 @@ func TestBuiltCommandControlByteArchivePathPreservesPriorGeneration(t *testing.T
 		t.Fatalf("error=%v\n%s", err, output)
 	}
 	assertPriorGeneration(t, root, prior)
+}
+
+func TestBuiltCommandArchiveBudgetsFailPromptlyAndPreservePriorGeneration(t *testing.T) {
+	binary := buildPreflightBinary(t)
+	for _, test := range []struct {
+		name  string
+		want  string
+		write func(*testing.T, string)
+	}{
+		{name: "compressed bytes", want: "compressed size exceeds inspection limit", write: func(t *testing.T, path string) {
+			if err := os.Truncate(path, (128<<20)+1); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{name: "member count", want: "member count exceeds inspection limit", write: func(t *testing.T, path string) {
+			if err := os.WriteFile(path, hostileArchive(t, 10_001, 0), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{name: "expanded bytes", want: "expanded size exceeds inspection limit", write: func(t *testing.T, path string) {
+			if err := os.WriteFile(path, hostileArchive(t, 65, 1<<20), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			root := preflightRepo(t)
+			prior := priorGeneration(t, binary, root)
+			test.write(t, filepath.Join(root, "dist", "artifacts", "redbench-0.2.0.tgz"))
+			started := time.Now()
+			output, err := runBuilt(t, binary, root, os.Environ())
+			if err == nil || time.Since(started) > 5*time.Second || !strings.Contains(string(output), test.want) {
+				t.Fatalf("error=%v elapsed=%v, want %q\n%s", err, time.Since(started), test.want, output)
+			}
+			assertPriorGeneration(t, root, prior)
+		})
+	}
+}
+
+func TestIndexEncodingFailurePreservesPriorGeneration(t *testing.T) {
+	root := preflightRepo(t)
+	old, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(old) })
+	var stderr bytes.Buffer
+	if code := Command([]string{"--mode", "verify"}, "0.2.0", &stderr); code != 0 {
+		t.Fatalf("initial verify exit=%d\n%s", code, stderr.String())
+	}
+	prior, err := snapshotTree(filepath.Join(root, "dist", "preflight"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(setIndexEncoderForTesting(func(any) ([]byte, error) {
+		return nil, errors.New("deterministic encoding fault")
+	}))
+	stderr.Reset()
+	if code := Command([]string{"--mode", "verify"}, "0.2.0", &stderr); code != 1 || !strings.Contains(stderr.String(), "release index encoding failed: deterministic encoding fault") {
+		t.Fatalf("encoding failure exit=%d\n%s", code, stderr.String())
+	}
+	after, err := snapshotTree(filepath.Join(root, "dist", "preflight"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(after, prior) {
+		t.Fatal("encoding failure replaced the prior complete generation")
+	}
 }
 
 func TestBuiltCommandSourceIdentityDriftPreservesPriorGeneration(t *testing.T) {

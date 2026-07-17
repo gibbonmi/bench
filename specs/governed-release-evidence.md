@@ -219,6 +219,7 @@ Seam 3 — project gate and workflow structure:
 | 4 | Publish without `--profile`, with an unknown profile, or from a focused run exits 2 or non-authorizing red as specified; full public/bank fixtures can become green only with all requirements | authoritative preflight command | R2: the CLI rejects the profile flag entirely | Negative and positive baselines defeat both an always-green bypass and an always-red guard |
 | 4 | Missing, empty, malformed, unknown-version, duplicate-key, mismatched-identity, or digest-mismatched producer records are distinctly red | authoritative preflight evidence | R2: no external-owner record validator exists | One fixture per failure class proves schema parsing and cross-record relationships affect the public verdict |
 | edge of 4 | Spaces/globs, no final newline, absent versus empty, control bytes, symlink escape, FIFO/device/socket, descendant cwd, and missing required tools fail safely without blocking | command plus evidence and package seams | R1 and R2: current surfaces do not accept or validate this evidence | Hostile process/filesystem fixtures catch shell expansion, unsafe reads, normalization, and cwd assumptions at public exits |
+| edge of 4 | Artifact inspection rejects excessive compressed bytes, member count, or aggregate expanded bytes promptly and preserves the prior generation | authoritative preflight command plus evidence | The current inspector limits only one member and otherwise reads or accumulates the entire archive | A built-command fixture for each independent budget catches compressed-input exhaustion, header floods, decompression bombs, and fail-open replacement |
 | 4 | An input changed between validation and promotion produces a drift failure and never promotes an index for mixed bytes | authoritative preflight evidence | R1: no index-generation drift check exists | A synchronized mutation fixture catches validate-then-use implementations that hash different generations |
 | 5 | Green and deterministically red runs promote complete generations; interrupted, unreadable, encode-failed, or promotion-failed runs preserve the prior generation | exact promoted evidence directory | Existing atomic preflight lifecycle is already covered; new release-index members are not yet part of it | Extending the established fault matrix to the new files catches direct writes and mixed old/new evidence |
 | 5 | Green-after-green, green-after-red, red-after-green, and abandoned-stage reruns are idempotent and leave exactly one complete generation | exact promoted evidence directory | Existing rerun behavior is already covered; the expanded evidence set is absent | Two-run exact-set assertions catch append, stale record retention, and incomplete cleanup |
@@ -241,8 +242,9 @@ evidence writes fail the prior-generation fault matrix.
   profile argument, and prior generation distinguishes absent from present-empty in a
   coverage row.
 - **Boundary values:** zero-byte payload rejection, one-entry inventory, all five npm
-  artifacts, exactly four target tuples, latest/previous-minor support, and public/bank
-  superset boundaries are coverage rows.
+  artifacts, exactly four target tuples, compressed/member/aggregate archive inspection
+  budgets, latest/previous-minor support, and public/bank superset boundaries are coverage
+  rows.
 - **Malformed input:** JSON syntax, unknown fields/schema versions, duplicate keys and
   normalized paths, invalid SPDX shape, identity disagreement, and malformed registry
   status are coverage rows.

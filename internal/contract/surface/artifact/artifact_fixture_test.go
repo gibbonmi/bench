@@ -158,6 +158,31 @@ func committedHostileArtifactSource(t *testing.T, root string) string {
 	return clone
 }
 
+func assertSpecialFileArtifactFailure(t *testing.T, root, output string) {
+	t.Helper()
+	broken := committedHostileArtifactSource(t, root)
+	if err := os.Remove(filepath.Join(broken, "LICENSE")); err != nil {
+		t.Fatal(err)
+	}
+	if err := syscall.Mkfifo(filepath.Join(broken, "LICENSE"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	sentinel := filepath.Join(output, "promoted-sentinel")
+	if err := os.WriteFile(sentinel, []byte("owned"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	bad := contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(root, "scripts", "build-artifacts.sh"), broken, output)
+	if bad.ExitCode == 0 {
+		t.Fatal("special-file artifact builder unexpectedly succeeded")
+	}
+	if !strings.Contains(bad.Stderr, "required release evidence source is invalid: LICENSE") {
+		t.Fatalf("special-file diagnostic was not distinct:\n%s", bad.Stderr)
+	}
+	if got, err := os.ReadFile(sentinel); err != nil || string(got) != "owned" {
+		t.Fatalf("failed build changed promoted artifacts: %q, %v", got, err)
+	}
+}
+
 func assertInterruptedArtifactPromotion(t *testing.T, source, output string, wantFiles int) {
 	t.Helper()
 	ready := filepath.Join(t.TempDir(), "promotion-ready")

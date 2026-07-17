@@ -1,12 +1,18 @@
 package preflight
 
 import (
+	"archive/tar"
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -49,6 +55,7 @@ func TestReleaseEvidenceIsDeterministicBoundAndIdempotent(t *testing.T) {
 	if !goSumBound {
 		t.Fatal("release index does not bind go.sum")
 	}
+	assertReleaseIndexRelationships(t, root, index)
 	wantVersions := map[string]string{}
 	for _, command := range [][]string{{"go", "env", "GOVERSION"}, {"node", "--version"}, {"npm", "--version"}} {
 		out, err := exec.Command(command[0], command[1:]...).Output()
@@ -156,6 +163,136 @@ func TestReleaseEvidenceIsDeterministicBoundAndIdempotent(t *testing.T) {
 	if len(files) != len(PhaseNames(ModeVerify))+3 {
 		t.Fatalf("promoted evidence file count=%d, want %d", len(files), len(PhaseNames(ModeVerify))+3)
 	}
+}
+
+func assertReleaseIndexRelationships(t *testing.T, root string, index releaseIndex) {
+	t.Helper()
+	commit := gitFixtureOutput(t, root, "rev-parse", "HEAD")
+	if index.Identity.SourceCommit != commit || index.Identity.PackageVersion != "0.2.0" || index.Identity.BinaryVersion != "" || index.Identity.Tag != "" || index.Identity.ChangelogHeading != "" || index.Identity.Toolchain != "1.25.0" {
+		t.Fatalf("release identity does not bind fixture facts: %+v", index.Identity)
+	}
+	wantTargets := []string{"darwin/arm64/darwin/arm64/macos-14", "darwin/x64/darwin/amd64/macos-13", "linux/arm64/linux/arm64/ubuntu-24.04", "linux/x64/linux/amd64/ubuntu-24.04"}
+	gotTargets := make([]string, 0, len(index.Targets))
+	for _, target := range index.Targets {
+		gotTargets = append(gotTargets, fmt.Sprintf("%s/%s/%s/%s/%s", target.OS, target.Arch, target.GOOS, target.GOArch, target.Runner))
+	}
+	if !reflect.DeepEqual(gotTargets, wantTargets) {
+		t.Fatalf("release target bindings = %v, want %v", gotTargets, wantTargets)
+	}
+
+	artifactDir := filepath.Join(root, "dist", "artifacts")
+	for _, artifact := range index.Artifacts {
+		data := mustFixtureFile(t, filepath.Join(artifactDir, artifact.Name))
+		files := independentlyReadArchive(t, data)
+		manifestBytes := files["component-manifest.json"]
+		var manifest struct {
+			Files []fixtureManifestFile `json:"files"`
+		}
+		if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
+			t.Fatal(err)
+		}
+		inventory := independentInventoryBytes(t, manifest.Files)
+		if artifact.Size != int64(len(data)) || artifact.SHA256 != sha256Hex(data) || artifact.ComponentDigest != sha256Hex(manifestBytes) || artifact.SBOMDigest != sha256Hex(files["governance/sbom.spdx.json"]) || artifact.InventoryDigest != sha256Hex(inventory) {
+			t.Fatalf("artifact/component/SBOM/inventory relationship is incomplete for %s: %+v", artifact.Name, artifact)
+		}
+	}
+
+	wantInputs := map[string]string{}
+	for _, path := range []string{"LICENSE", "go.mod", "go.sum", "governance/THIRD_PARTY_NOTICES.txt", "governance/policies/dependency-license-change.json", "governance/policies/recovery-rollback.json", "governance/policies/security-response.json", "governance/policies/support.json", "governance/policies/supported-versions.json", "governance/policies/threat-model.json", "governance/sbom.spdx.json", "internal/releaseevidence/registry.json", "internal/releaseevidence/requirements.json", "release-evidence/ft87-offline-network-control.json", "release-evidence/ft88-data-handling.json", ".bench/gate.sh", "bin/bench.sh", "package.json", "scripts/build-artifacts.sh", "scripts/build-release-evidence.mjs", "scripts/go-build.sh", "scripts/platforms.json", "scripts/smoke-artifacts.sh", "scripts/wrapper-assets.json"} {
+		wantInputs[path] = sha256Hex(mustFixtureFile(t, filepath.Join(root, filepath.FromSlash(path))))
+	}
+	gotInputs := map[string]string{}
+	for _, input := range index.Inputs {
+		gotInputs[input.Path] = input.SHA256
+	}
+	if !reflect.DeepEqual(gotInputs, wantInputs) {
+		t.Fatalf("policy/input bindings differ\ngot: %v\nwant: %v", gotInputs, wantInputs)
+	}
+
+	wantRequirements := map[string]string{}
+	for _, requirement := range Requirements() {
+		status, reason := "satisfied", ""
+		if requirement.Key == "bank.ft71.local_event" {
+			status, reason = "not_applicable", "requirement is not applicable to selected profile"
+		}
+		digest := ""
+		if status == "satisfied" {
+			digest = sha256Hex(mustFixtureFile(t, filepath.Join(root, filepath.FromSlash(requirement.Path))))
+		}
+		wantRequirements[requirement.Key] = fmt.Sprintf("%s|%s|%s|%s|%t|%s|%s", requirement.Owner, requirement.Schema, requirement.Requiredness, status, status == "satisfied", reason, digest)
+	}
+	gotRequirements := map[string]string{}
+	for _, status := range index.Requirements {
+		gotRequirements[status.Key] = fmt.Sprintf("%s|%s|%s|%s|%t|%s|%s", status.Owner, status.Schema, status.Requiredness, status.Status, status.Applicable, status.Reason, status.Digest)
+	}
+	if !reflect.DeepEqual(gotRequirements, wantRequirements) {
+		t.Fatalf("requirement bindings differ\ngot: %v\nwant: %v", gotRequirements, wantRequirements)
+	}
+
+	wantPhases := []string{"gate", "race", "vet", "vulnerability", "artifacts", "smoke"}
+	for i, phase := range index.Phases {
+		if i >= len(wantPhases) || phase.Name != wantPhases[i] || phase.Status != StatusGreen {
+			t.Fatalf("phase ordering/status differs: %+v", index.Phases)
+		}
+		record := fmt.Sprintf("{\"schema_version\":1,\"phase\":%q,\"mode\":\"verify\",\"status\":\"green\",\"exit_code\":0,\"error\":null}\n", phase.Name)
+		if phase.Digest != sha256Hex([]byte(record)) {
+			t.Fatalf("phase %s record digest is not bound", phase.Name)
+		}
+	}
+	if len(index.Phases) != len(wantPhases) {
+		t.Fatalf("phase bindings = %+v", index.Phases)
+	}
+	wantFlags := []string{"gate={root}/bin/bench.sh gate", "race=go test -race -count=1 ./...", "vet=go vet ./...", "vulnerability=", "artifacts=bash {root}/scripts/build-artifacts.sh {root} {root}/dist/artifacts", "smoke=bash {root}/scripts/smoke-artifacts.sh {root}/dist/artifacts"}
+	if !reflect.DeepEqual(index.Flags, wantFlags) {
+		t.Fatalf("phase flags = %v, want %v", index.Flags, wantFlags)
+	}
+}
+
+func independentlyReadArchive(t *testing.T, data []byte) map[string][]byte {
+	t.Helper()
+	gz, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer gz.Close()
+	reader := tar.NewReader(gz)
+	files := map[string][]byte{}
+	for {
+		header, err := reader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		if header.Typeflag != tar.TypeReg {
+			continue
+		}
+		body, err := io.ReadAll(reader)
+		if err != nil {
+			t.Fatal(err)
+		}
+		files[strings.TrimPrefix(header.Name, "package/")] = body
+	}
+	return files
+}
+
+func independentInventoryBytes(t *testing.T, files []fixtureManifestFile) []byte {
+	t.Helper()
+	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
+	var out bytes.Buffer
+	out.WriteByte('[')
+	for i, file := range files {
+		if i > 0 {
+			out.WriteByte(',')
+		}
+		pathJSON, _ := json.Marshal(file.Path)
+		modeJSON, _ := json.Marshal(file.Mode)
+		digestJSON, _ := json.Marshal(file.SHA256)
+		fmt.Fprintf(&out, "{\"mode\":%s,\"path\":%s,\"sha256\":%s,\"size\":%d}", modeJSON, pathJSON, digestJSON, file.Size)
+	}
+	out.WriteString("]\n")
+	return out.Bytes()
 }
 
 func TestReleasePolicyFailureClassesAreRed(t *testing.T) {

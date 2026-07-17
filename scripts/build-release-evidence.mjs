@@ -112,6 +112,14 @@ function copyAssets(destination) {
   }
 }
 
+function copyPackageEvidence(destination) {
+  for (const evidence of packageEvidence) {
+    const mode = modeFrom(evidence.package_mode);
+    const relative = safeRelative(evidence.path, "packaged evidence path");
+    copyRegular(sourcePath(relative), path.join(destination, relative), mode, "packaged evidence", destination);
+  }
+}
+
 function writeJSON(file, value) {
   fs.mkdirSync(path.dirname(file), {recursive: true});
   fs.writeFileSync(file, JSON.stringify(value, null, 2) + "\n", {mode: 0o644});
@@ -164,11 +172,12 @@ function writeEvidence(dir, name, version, target) {
 
 validateRequiredSources();
 copyAssets(wrapperDir);
+copyPackageEvidence(wrapperDir);
 const optionalDependencies = Object.fromEntries(matrix.map(p => [`@redbench/${p.os}-${p.arch}`, sourcePackage.version]));
 const wrapperPackage = {...sourcePackage, optionalDependencies};
 wrapperPackage.scripts = {...(sourcePackage.scripts || {})};
 delete wrapperPackage.scripts.prepare;
-wrapperPackage.files = [...assets.map(a => a.source), componentSchema.path];
+wrapperPackage.files = [...assets.map(a => a.source), ...packageEvidence.map(evidence => evidence.path), componentSchema.path];
 writeJSON(path.join(wrapperDir, "package.json"), wrapperPackage);
 writeEvidence(wrapperDir, sourcePackage.name, sourcePackage.version, {os: "all", arch: "all"});
 
@@ -176,8 +185,7 @@ for (const p of matrix) {
   const dir = path.join(packagesDir, `${p.os}-${p.arch}`);
   fs.mkdirSync(path.join(dir, "bin"), {recursive: true});
   seenDestinations.clear();
-  copyRegular(path.join(root, "LICENSE"), path.join(dir, "LICENSE"), 0o644, "platform license", dir);
-  copyTree(path.join(root, "governance"), path.join(dir, "governance"), 0o644, "platform governance", dir);
+  copyPackageEvidence(dir);
   const pkg = {
     name: `@redbench/${p.os}-${p.arch}`,
     version: sourcePackage.version,

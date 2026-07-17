@@ -73,6 +73,14 @@ type ReleaseIntentError struct{ Message string }
 
 func (e *ReleaseIntentError) Error() string { return e.Message }
 
+var indexEncoder = canonicalJSON
+
+func SetIndexEncoderForTesting(encoder func(any) ([]byte, error)) func() {
+	previous := indexEncoder
+	indexEncoder = encoder
+	return func() { indexEncoder = previous }
+}
+
 func FinalizeEvidence(ctx context.Context, root string, run RunEvidence) error {
 	if err := validateRun(root, run); err != nil {
 		return err
@@ -101,7 +109,7 @@ func FinalizeEvidence(ctx context.Context, root string, run RunEvidence) error {
 	if current != built.fingerprint {
 		return errors.New("release evidence input drift detected before promotion")
 	}
-	indexBytes, err := canonicalJSON(built.index)
+	indexBytes, err := indexEncoder(built.index)
 	if err != nil {
 		return fmt.Errorf("release index encoding failed: %w", err)
 	}

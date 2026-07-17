@@ -176,6 +176,12 @@ func loadRegistry() phaseRegistry {
 
 var requirements = loadRequirements()
 
+func SetRequirementsForTesting(value Registry) func() {
+	previous := requirements
+	requirements = value
+	return func() { requirements = previous }
+}
+
 func loadRequirements() Registry {
 	var value Registry
 	if err := decodeStrict(requirementsJSON, &value); err != nil {

@@ -1,5 +1,4 @@
 [
-  { "source": "LICENSE", "mode": "0644" },
   { "source": "README.md", "mode": "0644" },
   { "source": "CHANGELOG.md", "mode": "0644" },
   { "source": "bin/bench.sh", "mode": "0755" },
@@ -15,6 +14,5 @@
   { "source": ".bench/lib", "mode": "0644", "tree": true },
   { "source": ".claude/README.md", "mode": "0644" },
   { "source": ".claude/settings.json", "mode": "0644" },
-  { "source": ".codex/hooks.json", "mode": "0644" },
-  { "source": "governance", "mode": "0644", "tree": true }
+  { "source": ".codex/hooks.json", "mode": "0644" }
 ]

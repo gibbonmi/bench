@@ -21,6 +21,12 @@ type tarFile struct {
 	data []byte
 }
 
+const (
+	maxArchiveCompressedSize int64 = 128 << 20
+	maxArchiveMemberCount          = 10_000
+	maxArchiveExpandedSize   int64 = 64 << 20
+)
+
 var maxArchiveMemberSize int64 = 256 << 20
 
 func SetArchiveMemberLimitForTesting(limit int64) func() {
@@ -148,7 +154,15 @@ func inspectArtifacts(root string) ([]artifactEvidence, []targetEvidence, string
 		if !ok {
 			return nil, nil, "", fmt.Errorf("unknown artifact: %s", entry.Name())
 		}
-		data, err := os.ReadFile(filepath.Join(artifactDir, entry.Name()))
+		artifactPath := filepath.Join(artifactDir, entry.Name())
+		info, err := os.Lstat(artifactPath)
+		if err != nil {
+			return nil, nil, "", fmt.Errorf("artifact is unreadable: %s", entry.Name())
+		}
+		if info.Size() > maxArchiveCompressedSize {
+			return nil, nil, "", fmt.Errorf("artifact %s compressed size exceeds inspection limit", entry.Name())
+		}
+		data, err := os.ReadFile(artifactPath)
 		if err != nil || len(data) == 0 {
 			return nil, nil, "", fmt.Errorf("artifact is unreadable or empty: %s", entry.Name())
 		}
@@ -193,6 +207,9 @@ func fingerprintArtifactSet(root string) (string, error) {
 }
 
 func readTarball(data []byte) (map[string]tarFile, componentManifest, error) {
+	if int64(len(data)) > maxArchiveCompressedSize {
+		return nil, componentManifest{}, errors.New("archive compressed size exceeds inspection limit")
+	}
 	gz, err := gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
 		return nil, componentManifest{}, err
@@ -200,6 +217,8 @@ func readTarball(data []byte) (map[string]tarFile, componentManifest, error) {
 	defer gz.Close()
 	tr := tar.NewReader(gz)
 	files := map[string]tarFile{}
+	members := 0
+	var expanded int64
 	for {
 		header, err := tr.Next()
 		if errors.Is(err, io.EOF) {
@@ -208,6 +227,14 @@ func readTarball(data []byte) (map[string]tarFile, componentManifest, error) {
 		if err != nil {
 			return nil, componentManifest{}, err
 		}
+		members++
+		if members > maxArchiveMemberCount {
+			return nil, componentManifest{}, errors.New("archive member count exceeds inspection limit")
+		}
+		if header.Size < 0 || header.Size > maxArchiveExpandedSize-expanded {
+			return nil, componentManifest{}, errors.New("archive expanded size exceeds inspection limit")
+		}
+		expanded += header.Size
 		name, err := archiveRelativePath(header.Name)
 		if err != nil {
 			return nil, componentManifest{}, err

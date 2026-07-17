@@ -1,7 +1,9 @@
 package preflight
 
 import (
+	"archive/tar"
 	"bytes"
+	"compress/gzip"
 	"context"
 	"fmt"
 	"os"
@@ -9,10 +11,62 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
 )
+
+func hostileArchive(t *testing.T, members int, memberSize int64) []byte {
+	t.Helper()
+	var compressed bytes.Buffer
+	gz := gzip.NewWriter(&compressed)
+	tw := tar.NewWriter(gz)
+	chunk := make([]byte, memberSize)
+	for i := 0; i < members; i++ {
+		if err := tw.WriteHeader(&tar.Header{Name: fmt.Sprintf("package/member-%05d", i), Mode: 0o644, Size: memberSize, Typeflag: tar.TypeReg}); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := tw.Write(chunk); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := tw.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := gz.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return compressed.Bytes()
+}
+
+func TestArchiveRejectsAggregateBudgets(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		data []byte
+		want string
+	}{
+		{name: "compressed bytes", data: make([]byte, (128<<20)+1), want: "compressed size exceeds inspection limit"},
+		{name: "member count", data: hostileArchive(t, 10_001, 0), want: "member count exceeds inspection limit"},
+		{name: "expanded bytes", data: hostileArchive(t, 65, 1<<20), want: "expanded size exceeds inspection limit"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			err := validateTarballForTesting(test.data)
+			if err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("archive error = %v, want %q", err, test.want)
+			}
+		})
+	}
+}
+
+func TestArchiveRejectsMemberLargerThanInspectionLimit(t *testing.T) {
+	t.Cleanup(setArchiveMemberLimitForTesting(4))
+	data := hostileArchive(t, 1, 5)
+	err := validateTarballForTesting(data)
+	if err == nil || !strings.Contains(err.Error(), "exceeds inspection limit") {
+		t.Fatalf("oversize member error = %v", err)
+	}
+}
 
 func TestEvidencePromotionKeepsPriorVerdictAtCanonicalPathOnSwapFailure(t *testing.T) {
 	root := t.TempDir()
