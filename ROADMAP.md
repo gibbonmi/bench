@@ -20,21 +20,6 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT82 (HIGH) — one authoritative release preflight.** A repository-owned
-preflight runs the full Bench gate, race tests, vet, vulnerability scan,
-artifact build and inspection, and clean-room installed smoke against the same
-commit. PR/push verification and tag publication both call it. The Go patch
-toolchain is fixed and pinned; scanner failures block release unless a
-documented, reviewable exception schema applies.
-
-Preflight enforces exact SemVer and equality among tag, package, changelog,
-binary, source commit, and release manifest, plus intended release-line
-ancestry. Machine-readable phase records are retained and a canary or
-structural contract fails if a required phase is deleted or bypassed. Immutable
-registry publication and release versioning remain blocked until this is green.
-
-Sources: `RR:R-06`, `RR:A-01`; `RC:C-03`.
-
 **FT83 (HIGH on release and bank tracks) — governed, offline-verifiable release
 bundle.** Every independently published package carries the license, security
 and support policy, dependency/license notice, SBOM, checksums, and package
@@ -315,5 +300,4 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — specify FT82, the authoritative release preflight.
-2. `/bench-shape-idea` — specify FT83, the governed offline release bundle.
+1. `/bench-shape-idea` — specify FT83, the governed offline release bundle.
