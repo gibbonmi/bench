@@ -27,4 +27,12 @@ version="$(node -e '
 ' "$modroot/package.json")"
 
 cd "$modroot"
-go build -trimpath -ldflags "-s -w -X main.version=$version" -o "$out" ./cmd/bench
+go_build_flags=()
+while IFS= read -r arg; do go_build_flags+=("$arg"); done < <(node -e '
+  const registry = require(process.argv[1]);
+  for (const arg of registry.toolchains.find(tool => tool.name === "go").operations.build) console.log(arg);
+' "$modroot/internal/releaseevidence/requirements.json")
+for index in "${!go_build_flags[@]}"; do
+  go_build_flags[$index]="${go_build_flags[$index]//<package-version>/$version}"
+done
+go build "${go_build_flags[@]}" -o "$out" ./cmd/bench

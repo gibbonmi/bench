@@ -4,6 +4,8 @@ set -euo pipefail
 artifacts="${1:?usage: smoke-artifacts.sh <artifact-dir>}"
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 version="$(node -p 'require(process.argv[1]).version' "$root/package.json")"
+npm_install_flags=()
+while IFS= read -r arg; do npm_install_flags+=("$arg"); done < <(node -e 'for (const arg of require(process.argv[1]).toolchains.find(tool => tool.name === "npm").operations.install) console.log(arg)' "$root/internal/releaseevidence/requirements.json")
 case "$(uname -s)" in Darwin) host_os=darwin ;; Linux) host_os=linux ;; *) host_os=unsupported ;; esac
 case "$(uname -m)" in arm64|aarch64) host_arch=arm64 ;; x86_64|amd64) host_arch=x64 ;; *) host_arch=unsupported ;; esac
 target="$(node -e 'const [matrix, os, arch] = process.argv.slice(1); const p = require(matrix).find(p => p.os === os && p.arch === arch); if (p) process.stdout.write(p.os + "-" + p.arch)' "$root/scripts/platforms.json" "$host_os" "$host_arch")"
@@ -28,7 +30,7 @@ esac || { printf 'bench artifacts: %s format mismatch: %s\n' "$target" "$format"
 printf '#!/bin/sh\nprintf "poisoned cache\\n"\nexit 99\n' > "$tmp/home/cache/bin/$version/$target/bench"
 chmod 0755 "$tmp/home/cache/bin/$version/$target/bench"
 printf '{"private":true}\n' > "$tmp/app/package.json"
-npm install --prefix "$tmp/app" --ignore-scripts --omit=optional "$wrapper" "$native" >/dev/null
+npm install --prefix "$tmp/app" "${npm_install_flags[@]}" "$wrapper" "$native" >/dev/null
 installed="$tmp/app/node_modules/redbench/bin/bench.sh"
 out="$(BENCH_HOME="$tmp/home" bash "$installed" version)"
 case "$out" in

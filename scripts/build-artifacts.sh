@@ -28,6 +28,8 @@ mkdir -p "$wrapper" "$packages" "$artifacts"
 matrix_file="$stage/platform-matrix.tsv"
 node -e 'for (const p of require(process.argv[1])) console.log([p.os,p.arch,p.goos,p.goarch].join("\t"))' "$source_root/scripts/platforms.json" > "$matrix_file"
 matrix_count="$(wc -l < "$matrix_file" | tr -d '[:space:]')"
+npm_pack_flags=()
+while IFS= read -r arg; do npm_pack_flags+=("$arg"); done < <(node -e 'for (const arg of require(process.argv[1]).toolchains.find(tool => tool.name === "npm").operations.pack) console.log(arg)' "$source_root/internal/releaseevidence/requirements.json")
 
 while IFS=$'\t' read -r os arch _goos _goarch; do
   mkdir -p "$packages/$os-$arch/bin"
@@ -46,10 +48,10 @@ done < "$matrix_file"
 node "$source_root/scripts/build-release-evidence.mjs" "$source_root" "$wrapper" "$packages"
 
 while IFS=$'\t' read -r os arch _goos _goarch; do
-  npm pack "$packages/$os-$arch" --pack-destination "$artifacts" --ignore-scripts --silent >/dev/null
+  npm pack "$packages/$os-$arch" --pack-destination "$artifacts" "${npm_pack_flags[@]}" >/dev/null
 done < "$matrix_file"
 
-npm pack "$wrapper" --pack-destination "$artifacts" --ignore-scripts --silent >/dev/null
+npm pack "$wrapper" --pack-destination "$artifacts" "${npm_pack_flags[@]}" >/dev/null
 expected="$((matrix_count + 1))"
 actual="$(find "$artifacts" -maxdepth 1 -type f -name '*.tgz' -print | wc -l | tr -d ' ')"
 [[ "$actual" == "$expected" ]] || { printf 'bench artifacts: emitted %s tarballs, expected %s\n' "$actual" "$expected" >&2; exit 1; }

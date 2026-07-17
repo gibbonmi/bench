@@ -25,17 +25,6 @@ type evidenceDigest struct {
 	SHA256 string `json:"sha256"`
 }
 
-var releaseInputPaths = []string{
-	"go.mod",
-	"go.sum",
-	"package.json",
-	"scripts/go-build.sh",
-	"scripts/build-artifacts.sh",
-	"scripts/smoke-artifacts.sh",
-	"scripts/platforms.json",
-	"scripts/wrapper-assets.json",
-}
-
 func hasControlBytes(value string) bool {
 	for _, byteValue := range []byte(value) {
 		if byteValue < 0x20 || byteValue == 0x7f {
@@ -103,6 +92,16 @@ func validateRequirementRegistry(registry Registry) error {
 			return fmt.Errorf("invalid toolchain requirement %q", toolchain.Name)
 		}
 		toolchains[toolchain.Name] = true
+		for operation, argv := range toolchain.Operations {
+			if operation == "" || len(argv) == 0 {
+				return fmt.Errorf("invalid toolchain operation %q for %s", operation, toolchain.Name)
+			}
+			for _, arg := range argv {
+				if arg == "" || hasControlBytes(arg) {
+					return fmt.Errorf("invalid toolchain operation %q for %s", operation, toolchain.Name)
+				}
+			}
+		}
 	}
 	for key := range public {
 		if !bank[key] {

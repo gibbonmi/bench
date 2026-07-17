@@ -81,13 +81,6 @@ func FinalizeEvidence(ctx context.Context, root string, run RunEvidence) error {
 		return context.Canceled
 	}
 	if run.Scope == ScopeFocused {
-		manifest := manifestFor(run)
-		if run.Mode == ModePublish {
-			manifest.Status = StatusRed
-		}
-		if err := PromoteEvidence(root, run.Mode, run.Phases, manifest); err != nil {
-			return err
-		}
 		if run.Mode == ModePublish {
 			return &ReleaseIntentError{Message: "focused publish runs cannot authorize publication"}
 		}
@@ -267,7 +260,16 @@ func observeToolchains(ctx context.Context, root string) ([]toolchainEvidence, e
 		if err != nil || strings.TrimSpace(string(version)) == "" {
 			return nil, fmt.Errorf("toolchain %s version is unavailable", requirement.Name)
 		}
-		out = append(out, toolchainEvidence{Name: requirement.Name, Version: strings.TrimSpace(string(version)), Flags: append([]string(nil), requirement.Flags...)})
+		flags := make([]string, 0)
+		operations := make([]string, 0, len(requirement.Operations))
+		for operation := range requirement.Operations {
+			operations = append(operations, operation)
+		}
+		sort.Strings(operations)
+		for _, operation := range operations {
+			flags = append(flags, operation+":"+strings.Join(requirement.Operations[operation], " "))
+		}
+		out = append(out, toolchainEvidence{Name: requirement.Name, Version: strings.TrimSpace(string(version)), Flags: flags})
 	}
 	return out, nil
 }

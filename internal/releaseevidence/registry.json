@@ -1,12 +1,13 @@
 {
   "verify": ["gate", "race", "vet", "vulnerability", "artifacts", "smoke"],
   "publish_only": ["identity", "ancestry", "changelog"],
+  "evidence_inputs": ["go.mod", "go.sum", "internal/releaseevidence/registry.json", "internal/releaseevidence/requirements.json"],
   "phases": {
     "gate": {"handler":"external", "argv":["{root}/bin/bench.sh", "gate"], "inputs":["bin/bench.sh", ".bench/gate.sh"]},
     "race": {"handler":"external", "argv":["go", "test", "-race", "-count=1", "./..."], "tools":["go"], "exact_toolchain":true},
     "vet": {"handler":"external", "argv":["go", "vet", "./..."], "tools":["go"], "exact_toolchain":true},
     "vulnerability": {"handler":"scanner", "tools":["govulncheck"]},
-    "artifacts": {"handler":"external", "argv":["bash", "{root}/scripts/build-artifacts.sh", "{root}", "{root}/dist/artifacts"], "tools":["bash", "node", "npm"], "inputs":["scripts/build-artifacts.sh", "scripts/platforms.json", "scripts/wrapper-assets.json", "package.json"]},
+    "artifacts": {"handler":"external", "argv":["bash", "{root}/scripts/build-artifacts.sh", "{root}", "{root}/dist/artifacts"], "tools":["bash", "node", "npm"], "inputs":["scripts/build-artifacts.sh", "scripts/build-release-evidence.mjs", "scripts/go-build.sh", "scripts/platforms.json", "scripts/wrapper-assets.json", "package.json"]},
     "smoke": {"handler":"external", "argv":["bash", "{root}/scripts/smoke-artifacts.sh", "{root}/dist/artifacts"], "tools":["bash", "node", "npm"], "inputs":["scripts/smoke-artifacts.sh", "scripts/platforms.json", "package.json"], "requires":["artifacts"]},
     "identity": {"handler":"identity"},
     "ancestry": {"handler":"ancestry"},

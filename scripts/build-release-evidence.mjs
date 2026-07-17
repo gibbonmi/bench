@@ -13,7 +13,7 @@ const sourcePackage = readJSON(path.join(root, "package.json"));
 const seenDestinations = new Set();
 const byteOrder = (a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
 
-if (!Array.isArray(matrix) || matrix.length !== 4 || !Array.isArray(assets) || !Array.isArray(requirements.records) || !componentSchema || componentSchema.schema_version !== 1) throw new Error("release evidence matrix, asset, or requirement registry is invalid");
+if (!Array.isArray(matrix) || matrix.length === 0 || !Array.isArray(assets) || !Array.isArray(requirements.records) || !componentSchema || componentSchema.schema_version !== 1) throw new Error("release evidence matrix, asset, or requirement registry is invalid");
 const schemaFields = [componentSchema.root_fields, componentSchema.component_fields, componentSchema.target_fields, componentSchema.file_fields].flatMap(fields => fields && typeof fields === "object" ? Object.values(fields) : []);
 if (schemaFields.some(field => typeof field !== "string" || field.length === 0) || new Set(schemaFields).size !== schemaFields.length) throw new Error("component manifest schema fields are invalid");
 const packageEvidence = requirements.records.filter(record => record.package_mode !== undefined);

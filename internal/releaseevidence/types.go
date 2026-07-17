@@ -2,6 +2,7 @@ package releaseevidence
 
 import (
 	_ "embed"
+	"sort"
 )
 
 type Mode string
@@ -85,9 +86,10 @@ var requirementsJSON []byte
 var registry = loadRegistry()
 
 type phaseRegistry struct {
-	Verify      []string                   `json:"verify"`
-	PublishOnly []string                   `json:"publish_only"`
-	Phases      map[string]PhaseDefinition `json:"phases"`
+	Verify         []string                   `json:"verify"`
+	PublishOnly    []string                   `json:"publish_only"`
+	EvidenceInputs []string                   `json:"evidence_inputs"`
+	Phases         map[string]PhaseDefinition `json:"phases"`
 }
 
 type PhaseDefinition struct {
@@ -117,9 +119,9 @@ type PackageEvidence struct {
 }
 
 type ToolchainRequirement struct {
-	Name        string   `json:"name"`
-	VersionArgv []string `json:"version_argv"`
-	Flags       []string `json:"flags"`
+	Name        string              `json:"name"`
+	VersionArgv []string            `json:"version_argv"`
+	Operations  map[string][]string `json:"operations"`
 }
 
 type ComponentManifestSchema struct {
@@ -212,6 +214,25 @@ func PhaseNames(mode Mode) []string {
 func PhaseDefinitionFor(name string) (PhaseDefinition, bool) {
 	definition, ok := registry.Phases[name]
 	return definition, ok
+}
+
+func releaseInputPaths() []string {
+	seen := map[string]bool{}
+	paths := make([]string, 0, len(registry.EvidenceInputs))
+	add := func(values []string) {
+		for _, value := range values {
+			if !seen[value] {
+				seen[value] = true
+				paths = append(paths, value)
+			}
+		}
+	}
+	add(registry.EvidenceInputs)
+	for _, name := range append(append([]string{}, registry.Verify...), registry.PublishOnly...) {
+		add(registry.Phases[name].Inputs)
+	}
+	sort.Strings(paths)
+	return paths
 }
 
 func PhaseSummaries(results []Result) []PhaseSummary {

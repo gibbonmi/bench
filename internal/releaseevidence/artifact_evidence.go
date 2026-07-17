@@ -116,8 +116,8 @@ func inspectArtifacts(root string) ([]artifactEvidence, []targetEvidence, string
 		return nil, nil, "", fmt.Errorf("platform matrix is unreadable: %w", err)
 	}
 	var matrix []platformDefinition
-	if err := decodeStrict(matrixData, &matrix); err != nil || len(matrix) != 4 {
-		return nil, nil, "", errors.New("platform matrix must contain exactly four targets")
+	if err := decodeStrict(matrixData, &matrix); err != nil || len(matrix) == 0 {
+		return nil, nil, "", errors.New("platform matrix must contain supported targets")
 	}
 	version, err := ReadPackageVersion(root)
 	if err != nil {

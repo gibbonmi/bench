@@ -63,8 +63,7 @@ func inspectRequirements(root string, run RunEvidence, profile Profile) ([]Requi
 			break
 		}
 	}
-	inputs = append(inputs, evidenceDigest{Path: "internal/releaseevidence/requirements.json", SHA256: digest(requirementsJSON)})
-	for _, rel := range releaseInputPaths {
+	for _, rel := range releaseInputPaths() {
 		data, err := ReadRegular(filepath.Join(root, filepath.FromSlash(rel)))
 		if err != nil {
 			return nil, nil, "", fmt.Errorf("release input %s is unreadable: %w", rel, err)

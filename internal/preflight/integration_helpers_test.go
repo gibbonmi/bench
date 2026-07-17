@@ -55,12 +55,19 @@ func projectRoot(t *testing.T) string {
 func preflightRepo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
-	for _, rel := range []string{"bin/bench.sh", ".bench/gate.sh", "scripts/build-artifacts.sh", "scripts/smoke-artifacts.sh", "scripts/go-build.sh", "scripts/platforms.json", "scripts/wrapper-assets.json", "package.json"} {
+	for _, rel := range []string{"bin/bench.sh", ".bench/gate.sh", "internal/releaseevidence/registry.json", "internal/releaseevidence/requirements.json", "scripts/build-artifacts.sh", "scripts/build-release-evidence.mjs", "scripts/smoke-artifacts.sh", "scripts/go-build.sh", "scripts/platforms.json", "scripts/wrapper-assets.json", "package.json"} {
 		path := filepath.Join(root, filepath.FromSlash(rel))
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			t.Fatal(err)
 		}
 		body := "{}\n"
+		if rel == "internal/releaseevidence/registry.json" || rel == "internal/releaseevidence/requirements.json" || rel == "scripts/build-release-evidence.mjs" {
+			data, err := os.ReadFile(filepath.Join(projectRoot(t), filepath.FromSlash(rel)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			body = string(data)
+		}
 		if filepath.Ext(path) == ".sh" || rel == "bin/bench.sh" {
 			body = "#!/bin/sh\nexit 0\n"
 		}

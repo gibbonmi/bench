@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "toolchains": [
-    {"name":"go","version_argv":["go","env","GOVERSION"],"flags":["build:-trimpath","build:-ldflags=-s -w -X main.version=<package-version>"]},
-    {"name":"node","version_argv":["node","--version"],"flags":[]},
-    {"name":"npm","version_argv":["npm","--version"],"flags":["pack:--ignore-scripts --silent","install:--ignore-scripts --omit=optional"]}
+    {"name":"go","version_argv":["go","env","GOVERSION"],"operations":{"build":["-trimpath","-ldflags=-s -w -X main.version=<package-version>"]}},
+    {"name":"node","version_argv":["node","--version"],"operations":{}},
+    {"name":"npm","version_argv":["npm","--version"],"operations":{"pack":["--ignore-scripts","--silent"],"install":["--ignore-scripts","--omit=optional"]}}
   ],
   "component_manifest": {
     "schema_version": 1,

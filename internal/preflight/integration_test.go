@@ -162,7 +162,7 @@ func TestBuiltCommandReleasePolicyFailuresAreRed(t *testing.T) {
 			assertBuiltRed(t, binary, root, []string{"--mode", "verify", "--phase", "vulnerability"}, policy.want)
 		})
 	}
-	t.Run("promotion fault preserves hostile target", func(t *testing.T) {
+	t.Run("focused diagnostic preserves hostile authoritative target", func(t *testing.T) {
 		root := preflightRepo(t)
 		target := filepath.Join(root, "dist", "preflight")
 		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
@@ -171,7 +171,11 @@ func TestBuiltCommandReleasePolicyFailuresAreRed(t *testing.T) {
 		if err := os.WriteFile(target, []byte("prior"), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		assertBuiltRed(t, binary, root, []string{"--mode", "verify", "--phase", "gate"}, "not a real directory")
+		cmd := exec.Command(binary, "release-preflight", "--mode", "verify", "--phase", "gate")
+		cmd.Dir = root
+		if output, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("focused diagnostic: %v\n%s", err, output)
+		}
 		data, err := os.ReadFile(target)
 		if err != nil || string(data) != "prior" {
 			t.Fatalf("prior target changed: %q %v", data, err)

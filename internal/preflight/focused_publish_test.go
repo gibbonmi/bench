@@ -1,6 +1,7 @@
 package preflight
 
 import (
+	"bytes"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,6 +16,15 @@ func TestBuiltCommandFocusedPublishRunsDiagnosticWithoutAuthorizing(t *testing.T
 		t.Fatalf("build: %v\n%s", err, output)
 	}
 	root := preflightRepo(t)
+	full := exec.Command(binary, "release-preflight", "--mode", "verify")
+	full.Dir = root
+	if output, err := full.CombinedOutput(); err != nil {
+		t.Fatalf("initial full verify: %v\n%s", err, output)
+	}
+	prior, err := snapshotTree(filepath.Join(root, "dist", "preflight"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	marker := filepath.Join(root, "focused-publish-ran")
 	phase := filepath.Join(root, "focused-publish")
 	if err := os.WriteFile(phase, []byte("#!/bin/sh\nprintf 'ran\\n' > \"$BENCH_FOCUSED_MARKER\"\n"), 0o755); err != nil {
@@ -33,7 +43,11 @@ func TestBuiltCommandFocusedPublishRunsDiagnosticWithoutAuthorizing(t *testing.T
 	if data, err := os.ReadFile(marker); err != nil || string(data) != "ran\n" {
 		t.Fatalf("focused publish diagnostic did not run: %q %v", data, err)
 	}
-	if _, err := os.Stat(filepath.Join(root, "dist", "preflight", "release-index.json")); !os.IsNotExist(err) {
-		t.Fatalf("focused publish created release evidence: %v", err)
+	after, err := snapshotTree(filepath.Join(root, "dist", "preflight"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(prior, after) {
+		t.Fatal("focused publish replaced the prior complete authoritative generation")
 	}
 }

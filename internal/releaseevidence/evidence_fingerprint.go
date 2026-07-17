@@ -3,16 +3,19 @@ package releaseevidence
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 func inputFingerprint(root string, run RunEvidence) (string, error) {
 	h := sha256.New()
-	paths := append([]string{"internal/releaseevidence/requirements.json"}, releaseInputPaths...)
+	paths := releaseInputPaths()
 	for _, record := range requirements.Records {
 		paths = append(paths, record.Path)
 	}
@@ -31,6 +34,19 @@ func inputFingerprint(root string, run RunEvidence) (string, error) {
 	for _, result := range run.Phases {
 		_, _ = h.Write([]byte(result.Name))
 		_, _ = h.Write([]byte{0})
+	}
+	for _, value := range []*string{run.Identity.Tag, run.Identity.PackageVersion, run.Identity.SourceCommit, run.Identity.BinaryVersion, run.Identity.ChangelogHeading, run.Identity.Toolchain} {
+		if value != nil {
+			_, _ = io.WriteString(h, *value)
+		}
+		_, _ = h.Write([]byte{0})
+	}
+	if run.Identity.SourceCommit != nil {
+		command := exec.Command("git", "-C", root, "rev-parse", "HEAD")
+		current, err := command.Output()
+		if err != nil || strings.TrimSpace(string(current)) != *run.Identity.SourceCommit {
+			return "", errors.New("source identity drift detected before promotion")
+		}
 	}
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
