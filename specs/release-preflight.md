@@ -1,6 +1,6 @@
 # FT82 — authoritative release preflight
 
-Status: staged
+Status: implemented
 
 Decision map: `decisions/release-preflight.md`
 
