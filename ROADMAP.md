@@ -44,6 +44,9 @@ data-handling inventory.
 
 Sources: `RR:A-08`, `RR:A-09`, `RR:A-11`, `RR:A-12`; `RC:H-06`, `RC:H-07`.
 
+Decision map: `decisions/governed-offline-release-bundle.md`. Spec (slice 1 of 3):
+`specs/governed-release-evidence.md`. Next: `/bench-implement-spec`.
+
 **FT88 (HIGH on the bank track) — minimal subprocess data exposure.** Agents
 and gates launch from separate documented environment passlists with explicit
 opt-in additions. Prompt text travels through stdin or a mode-0600 file, never
@@ -300,6 +303,7 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — specify FT83, the governed offline release bundle.
+1. `/bench-implement-spec` — build FT83's governed release-evidence core from
+   `specs/governed-release-evidence.md`.
 2. `/bench-shape-idea` — specify FT88, minimal subprocess data exposure.
 3. `/bench-shape-idea` — specify FT87, bounded network, resource, and CLI behavior.
