@@ -21,6 +21,7 @@ func checkPackageCoreAndGuards(root string) []string {
 	diags = append(diags, checkGoCore(root)...)
 	diags = append(diags, checkReleaseWorkflow(root)...)
 	diags = append(diags, checkNativeRuntimeWorkflow(root)...)
+	diags = append(diags, checkReleasePreflight(root)...)
 	diags = append(diags, checkShippedIdentityStrings(root)...)
 	diags = append(diags, checkGuardHeaderManifests(root)...)
 	diags = append(diags, checkGuardResolverOrderDrift(root)...)
@@ -270,8 +271,8 @@ func checkReleaseWorkflow(root string) []string {
 	if !strings.Contains(readIfExists(filepath.Join(root, "scripts", "build-artifacts.sh")), "scripts/platforms.json") {
 		diags = append(diags, "artifact builder does not derive targets from the matrix (scripts/platforms.json)")
 	}
-	if !strings.Contains(text, "scripts/build-artifacts.sh") {
-		diags = append(diags, "release workflow does not run the artifact builder")
+	if !strings.Contains(text, "scripts/release-preflight.sh --mode publish") {
+		diags = append(diags, "release workflow does not run full publish preflight")
 	}
 	if !strings.Contains(text, "npm publish") {
 		diags = append(diags, "release workflow does not publish to npm")
@@ -301,9 +302,9 @@ func checkNativeRuntimeWorkflow(root string) []string {
 	}
 	for label, anchor := range map[string]string{
 		"canonical matrix": "scripts/platforms.json",
-		"derived matrix":   "fromJSON(needs.build.outputs.matrix)",
-		"artifact builder": "scripts/build-artifacts.sh",
-		"shared smoke":     "scripts/smoke-artifacts.sh",
+		"derived matrix":   "fromJSON(needs.preflight.outputs.matrix)",
+		"full preflight":   "scripts/release-preflight.sh --mode verify",
+		"focused smoke":    "scripts/release-preflight.sh --mode verify --phase smoke",
 	} {
 		if !strings.Contains(text, anchor) {
 			diags = append(diags, "native verification workflow does not include "+label)

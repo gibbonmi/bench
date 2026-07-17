@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  preflight:
     runs-on: ubuntu-24.04
     outputs:
       matrix: ${{ steps.matrix.outputs.rows }}
@@ -22,19 +22,24 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
+      - run: go install golang.org/x/vuln/cmd/govulncheck@v1.6.0
       - id: matrix
         run: node -e 'const fs=require("fs"); const rows=require("./scripts/platforms.json"); fs.appendFileSync(process.env.GITHUB_OUTPUT, `rows=${JSON.stringify({include:rows})}\n`)'
-      - run: bash scripts/build-artifacts.sh "$PWD" dist/artifacts
+      - run: bash scripts/release-preflight.sh --mode verify
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: bench-runtime-artifacts
           path: dist/artifacts/*.tgz
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: verify-preflight-evidence
+          path: dist/preflight/
 
-  verify:
-    needs: build
+  smoke:
+    needs: preflight
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.build.outputs.matrix) }}
+      matrix: ${{ fromJSON(needs.preflight.outputs.matrix) }}
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -45,4 +50,4 @@ jobs:
         with:
           name: bench-runtime-artifacts
           path: dist/artifacts
-      - run: bash scripts/smoke-artifacts.sh dist/artifacts
+      - run: bash scripts/release-preflight.sh --mode verify --phase smoke

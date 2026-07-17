@@ -1,13 +1,5 @@
 name: release
 
-# One release = one `git tag vX.Y.Z && git push --tags`. The tag drives everything;
-# package.json's version is the single source the binaries are stamped with (keep the
-# tag and package.json version in step before tagging).
-#
-# Pre-tag manual smokes for the gate-blind spots the contract fixtures fake:
-# one real `npm i -g` lifecycle run (shim postinstall), and one launcher
-# self-repair against the live registry (the fixture registry mirrors the
-# documented metadata shape; live shape drift would pass it).
 on:
   push:
     tags:
@@ -15,35 +7,68 @@ on:
 
 permissions:
   contents: read
-  id-token: write # OIDC — required for npm publish --provenance
+  id-token: write
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
+  preflight:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.rows }}
     steps:
-      # Refresh action pins by resolving each documented major tag to its current commit.
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-
-      # Inherit the toolchain pin from go.mod rather than duplicating the version here.
+        with:
+          fetch-depth: 0
       - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version-file: go.mod
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - run: go install golang.org/x/vuln/cmd/govulncheck@v1.6.0
+      - id: matrix
+        run: node -e 'const fs=require("fs"); const rows=require("./scripts/platforms.json"); fs.appendFileSync(process.env.GITHUB_OUTPUT, `rows=${JSON.stringify({include:rows})}\n`)'
+      - run: bash scripts/release-preflight.sh --mode publish
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-artifacts
+          path: dist/artifacts/*.tgz
+          retention-days: ${{ github.retention_days }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: publish-preflight-evidence
+          path: dist/preflight/
+          retention-days: ${{ github.retention_days }}
 
+  smoke:
+    needs: preflight
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.preflight.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-artifacts
+          path: dist/artifacts
+      - run: bash scripts/release-preflight.sh --mode publish --phase smoke
+
+  publish:
+    needs: [preflight, smoke]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
-
-      - name: Check Go dependencies for known vulnerabilities
-        run: |
-          go install golang.org/x/vuln/cmd/govulncheck@v1.6.0
-          govulncheck ./...
-
-      - name: Build exact artifact set
-        run: |
-          set -euo pipefail
-          bash scripts/build-artifacts.sh "$PWD" dist/artifacts
-
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-artifacts
+          path: dist/artifacts
       - name: Publish platform packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -52,7 +77,6 @@ jobs:
           for tarball in dist/artifacts/redbench-*-*-*.tgz; do
             npm publish "$tarball" --access public --provenance
           done
-
       - name: Publish wrapper
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

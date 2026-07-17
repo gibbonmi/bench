@@ -32,6 +32,7 @@ import (
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/models"
 	"github.com/gibbonmi/bench/internal/outline"
+	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/sessioninspect"
 	"github.com/gibbonmi/bench/internal/shift"
@@ -345,6 +346,8 @@ func run(args []string, stdout, stderr *os.File) int {
 		return gate.PinCommand(args[1:], os.Stdin, stdout, stderr)
 	case "gate-phases":
 		return gatePhasesCommand(args[1:], stdout, stderr)
+	case "release-preflight":
+		return preflight.Command(args[1:], version, stderr)
 	case "canary":
 		return canary.Run(args[1:], stdout, stderr)
 	case "guard-git":

@@ -1,0 +1,4 @@
+{
+  "verify": ["gate", "race", "vet", "vulnerability", "artifacts", "smoke"],
+  "publish_only": ["identity", "ancestry", "changelog"]
+}
