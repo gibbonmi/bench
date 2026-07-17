@@ -21,31 +21,24 @@ means the repository-controlled compliance assessment.
 ## Features, in priority order
 
 **FT83 (HIGH on release and bank tracks) — governed, offline-verifiable release
-bundle.** Every independently published package carries the license, security
-and support policy, dependency/license notice, SBOM, checksums, and package
-inventory. Define an exact supported-platform contract; use static builds where
-supported, strip release symbols, and exercise native and musl-compatible
-smokes. Produce network-independent per-platform archives and npm tarballs
-with documented local and internal-registry installation.
+bundle.** Complete the reproducible-offline-artifact and governed-publication
+slices around the release evidence core. Define an exact supported-platform
+contract; use static builds where supported, strip release symbols, and exercise
+native and musl-compatible smokes. Produce byte-reproducible, network-independent
+per-platform archives and npm tarballs with documented direct, local-npm, and
+internal-registry installation.
 
 Publication preflights every name, stages under a non-default tag, verifies
-already-present immutable digests, waits for dependencies, publishes the
-wrapper last, and promotes only after verification. A deterministic release
-manifest binds source/version, Go/Node/npm versions and flags, dependency and
-platform manifests, gate/race/vet/vulnerability results, artifact inventories
-and SHA-256 digests, reproducibility comparison, rollback target, and the
-machine-readable evidence produced by the other release-readiness rows.
-
-Repository governance also defines supported versions and EOL, security
-severity intake and response targets, recovery and rollback, dependency update
-and license-change policy, threat model, and a non-personal support route. Every
-release artifact contains the applicable records, including FT88's
-data-handling inventory.
+already-present immutable digests, waits for dependencies, publishes the wrapper
+last, and promotes only after verification. Extend the canonical release index
+with reproducibility and publication evidence rather than creating another
+manifest; publication remains red until the selected profile's FT87, FT88, and,
+for bank use, FT71 records are present.
 
 Sources: `RR:A-08`, `RR:A-09`, `RR:A-11`, `RR:A-12`; `RC:H-06`, `RC:H-07`.
 
-Decision map: `decisions/governed-offline-release-bundle.md`. Spec (slice 1 of 3):
-`specs/governed-release-evidence.md`. Next: `/bench-review-implementation`.
+Decision map: `decisions/governed-offline-release-bundle.md`. Next:
+`/bench-write-spec` for slice 2 of 3, reproducible offline artifacts.
 
 **FT88 (HIGH on the bank track) — minimal subprocess data exposure.** Agents
 and gates launch from separate documented environment passlists with explicit
@@ -303,7 +296,6 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-review-implementation` — review FT83's governed release-evidence core
-   against `specs/governed-release-evidence.md`.
+1. `/bench-write-spec` — specify FT83 slice 2, reproducible offline artifacts.
 2. `/bench-shape-idea` — specify FT88, minimal subprocess data exposure.
 3. `/bench-shape-idea` — specify FT87, bounded network, resource, and CLI behavior.
