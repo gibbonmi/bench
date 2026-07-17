@@ -2,6 +2,7 @@ package preflight
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"os"
 	"os/exec"
@@ -9,6 +10,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestRegistryDerivesPublishFromVerify(t *testing.T) {
@@ -154,6 +156,69 @@ func TestArtifactFailureRecordsSmokeNotRun(t *testing.T) {
 	}
 	if record.Status != StatusNotRun || record.ExitCode != nil {
 		t.Fatalf("smoke record=%+v", record)
+	}
+}
+
+func TestReleasePolicyFailureClassesAreRed(t *testing.T) {
+	root := preflightRepo(t)
+	r := &runner{root: root, mode: ModePublish, binaryVersion: "0.2.0", stderr: &bytes.Buffer{}}
+	if err := r.populateBaseIdentity(); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("BENCH_PREFLIGHT_REF", "refs/tags/v0.2.0-beta.1")
+	if err := r.checkIdentity(context.Background()); err == nil {
+		t.Fatal("prerelease tag passed")
+	}
+	if err := r.checkAncestry(context.Background()); err == nil {
+		t.Fatal("missing origin/main ancestry passed")
+	}
+	tag := "v0.2.0"
+	r.identity.Tag = &tag
+	if err := os.WriteFile(filepath.Join(root, "CHANGELOG.md"), []byte("## v0.2.0 (2026-07-16)\n## v0.2.0 (2026-07-17)\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.checkChangelog(); err == nil {
+		t.Fatal("duplicate changelog heading passed")
+	}
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module fixture\n\ntoolchain go1.25\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := readToolchain(root); err == nil {
+		t.Fatal("non-patch toolchain passed")
+	}
+}
+
+func TestCancellationAndUnsafePromotionFailClosed(t *testing.T) {
+	root := preflightRepo(t)
+	blocking := filepath.Join(root, "blocking")
+	if err := os.WriteFile(blocking, []byte("#!/bin/sh\nsleep 30\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("BENCH_PREFLIGHT_GATE", blocking)
+	r := &runner{root: root, mode: ModeVerify, stderr: &bytes.Buffer{}}
+	if err := r.populateBaseIdentity(); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() { time.Sleep(50 * time.Millisecond); cancel() }()
+	started := time.Now()
+	result := r.runPhase(ctx, "gate")
+	if result.Status != StatusInterrupted || time.Since(started) > 2*time.Second {
+		t.Fatalf("interrupted result=%+v elapsed=%v", result, time.Since(started))
+	}
+	escape := filepath.Join(t.TempDir(), "escape")
+	if err := os.MkdirAll(filepath.Join(root, "dist"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(escape, filepath.Join(root, "dist", "preflight")); err != nil {
+		t.Fatal(err)
+	}
+	manifest := Manifest{SchemaVersion: 1, Mode: ModeVerify, Scope: ScopeFocused, Status: StatusGreen, Identity: Identity{}, Phases: []PhaseSummary{{Name: "gate", Status: StatusGreen, ExitCode: intPtr(0)}}}
+	if err := PromoteEvidence(root, ModeVerify, []Result{{Name: "gate", Status: StatusGreen, ExitCode: intPtr(0)}}, manifest); err == nil {
+		t.Fatal("symlink promotion target passed")
+	}
+	if _, err := os.Stat(escape); !os.IsNotExist(err) {
+		t.Fatalf("promotion escaped output root: %v", err)
 	}
 }
 
