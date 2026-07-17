@@ -71,14 +71,29 @@ var registryJSON []byte
 var registry = loadRegistry()
 
 type phaseRegistry struct {
-	Verify      []string `json:"verify"`
-	PublishOnly []string `json:"publish_only"`
+	Verify      []string                   `json:"verify"`
+	PublishOnly []string                   `json:"publish_only"`
+	Phases      map[string]PhaseDefinition `json:"phases"`
+}
+
+type PhaseDefinition struct {
+	Handler        string   `json:"handler"`
+	Argv           []string `json:"argv"`
+	Tools          []string `json:"tools"`
+	Inputs         []string `json:"inputs"`
+	Requires       []string `json:"requires"`
+	ExactToolchain bool     `json:"exact_toolchain"`
 }
 
 func loadRegistry() phaseRegistry {
 	var value phaseRegistry
 	if err := json.Unmarshal(registryJSON, &value); err != nil {
 		panic("invalid embedded preflight registry: " + err.Error())
+	}
+	for _, name := range append(append([]string{}, value.Verify...), value.PublishOnly...) {
+		if value.Phases[name].Handler == "" {
+			panic("missing preflight phase definition: " + name)
+		}
 	}
 	return value
 }
@@ -89,6 +104,11 @@ func PhaseNames(mode Mode) []string {
 		names = append(names, registry.PublishOnly...)
 	}
 	return names
+}
+
+func phaseDefinition(name string) (PhaseDefinition, bool) {
+	definition, ok := registry.Phases[name]
+	return definition, ok
 }
 
 func phaseSummaries(results []Result) []PhaseSummary {

@@ -5,7 +5,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
+	"syscall"
+	"unsafe"
 )
+
+var exchangeEvidenceDirs = atomicExchangeDirs
 
 func PromoteEvidence(root string, mode Mode, results []Result, manifest Manifest) error {
 	dist := filepath.Join(root, "dist")
@@ -40,32 +45,60 @@ func PromoteEvidence(root string, mode Mode, results []Result, manifest Manifest
 		return err
 	}
 	target := filepath.Join(dist, "preflight")
-	if info, err := os.Lstat(target); err == nil && info.Mode()&os.ModeSymlink != 0 {
-		return fmt.Errorf("preflight output target is a symlink")
+	if info, err := os.Lstat(target); err == nil && (!info.IsDir() || info.Mode()&os.ModeSymlink != 0) {
+		return fmt.Errorf("preflight output target is not a real directory")
 	} else if err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	backup := filepath.Join(dist, ".preflight-previous")
-	_ = os.RemoveAll(backup)
-	if _, err := os.Lstat(target); err == nil {
-		if err := os.Rename(target, backup); err != nil {
+	if _, err := os.Lstat(target); os.IsNotExist(err) {
+		if err := os.Rename(stage, target); err != nil {
 			return err
 		}
-	} else if !os.IsNotExist(err) {
+		keep = true
+	} else if err != nil {
 		return err
-	}
-	if err := os.Rename(stage, target); err != nil {
-		if _, statErr := os.Stat(backup); statErr == nil {
-			_ = os.Rename(backup, target)
+	} else {
+		// An atomic directory exchange keeps the canonical path bound to either the
+		// complete prior generation or the complete staged generation at every instant.
+		if err := exchangeEvidenceDirs(stage, target); err != nil {
+			return err
 		}
-		return err
+		keep = true // stage now names the prior complete generation
 	}
-	keep = true
 	if err := syncDir(dist); err != nil {
 		return err
 	}
-	if err := os.RemoveAll(backup); err != nil {
+	if err := os.RemoveAll(stage); err != nil {
 		return err
+	}
+	return nil
+}
+
+func atomicExchangeDirs(left, right string) error {
+	if runtime.GOOS != "linux" {
+		return fmt.Errorf("atomic evidence replacement is unsupported on %s", runtime.GOOS)
+	}
+	var trap uintptr
+	switch runtime.GOARCH {
+	case "amd64":
+		trap = 316
+	case "arm64":
+		trap = 276
+	default:
+		return fmt.Errorf("atomic evidence replacement is unsupported on linux/%s", runtime.GOARCH)
+	}
+	l, err := syscall.BytePtrFromString(left)
+	if err != nil {
+		return err
+	}
+	r, err := syscall.BytePtrFromString(right)
+	if err != nil {
+		return err
+	}
+	atFDCWD := ^uintptr(99) // -100
+	_, _, errno := syscall.Syscall6(trap, atFDCWD, uintptr(unsafe.Pointer(l)), atFDCWD, uintptr(unsafe.Pointer(r)), 2, 0)
+	if errno != 0 {
+		return errno
 	}
 	return nil
 }

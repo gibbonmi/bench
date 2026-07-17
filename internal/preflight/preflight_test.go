@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
-	"strings"
 	"testing"
 	"time"
 )
@@ -221,47 +220,3 @@ func TestCancellationAndUnsafePromotionFailClosed(t *testing.T) {
 		t.Fatalf("promotion escaped output root: %v", err)
 	}
 }
-
-func preflightRepo(t *testing.T) string {
-	t.Helper()
-	root := t.TempDir()
-	for _, rel := range []string{"bin/bench.sh", ".bench/gate.sh", "scripts/build-artifacts.sh", "scripts/smoke-artifacts.sh", "scripts/platforms.json", "scripts/wrapper-assets.json", "package.json"} {
-		path := filepath.Join(root, filepath.FromSlash(rel))
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		body := "{}\n"
-		if filepath.Ext(path) == ".sh" || rel == "bin/bench.sh" {
-			body = "#!/bin/sh\nexit 0\n"
-		}
-		if rel == "package.json" {
-			body = `{"version":"0.2.0"}`
-		}
-		if err := os.WriteFile(path, []byte(body), 0o755); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module fixture\n\ngo 1.25\ntoolchain go1.25.0\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.MkdirAll(filepath.Join(root, "nested"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	fake := filepath.Join(root, "phase")
-	if err := os.WriteFile(fake, []byte("#!/bin/sh\nprintf '{\"config\":{}}\\n'\n"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	for _, name := range PhaseNames(ModePublish) {
-		t.Setenv("BENCH_PREFLIGHT_"+strings.ToUpper(name), fake)
-	}
-	for _, args := range [][]string{{"init", "-q"}, {"config", "user.email", "test@example.invalid"}, {"config", "user.name", "Test"}, {"add", "."}, {"commit", "-qm", "fixture"}} {
-		cmd := exec.Command("git", args...)
-		cmd.Dir = root
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("git %v: %v %s", args, err, out)
-		}
-	}
-	return root
-}
-
-func intPtr(v int) *int { return &v }

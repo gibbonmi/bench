@@ -1,0 +1,204 @@
+package preflight
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strconv"
+	"syscall"
+	"testing"
+	"time"
+)
+
+func TestEvidencePromotionKeepsPriorVerdictAtCanonicalPathOnSwapFailure(t *testing.T) {
+	root := t.TempDir()
+	old := filepath.Join(root, "dist", "preflight")
+	if err := os.MkdirAll(old, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(old, "manifest.json"), []byte("old\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	previous := exchangeEvidenceDirs
+	exchangeEvidenceDirs = func(_, _ string) error { return os.ErrPermission }
+	t.Cleanup(func() { exchangeEvidenceDirs = previous })
+	results := []Result{{Name: "gate", Status: StatusGreen, ExitCode: intPtr(0)}}
+	manifest := Manifest{SchemaVersion: 1, Mode: ModeVerify, Scope: ScopeFocused, Status: StatusGreen, Phases: phaseSummaries(results)}
+	if err := PromoteEvidence(root, ModeVerify, results, manifest); err == nil {
+		t.Fatal("injected promotion failure passed")
+	}
+	data, err := os.ReadFile(filepath.Join(old, "manifest.json"))
+	if err != nil || string(data) != "old\n" {
+		t.Fatalf("canonical prior verdict lost: %q %v", data, err)
+	}
+}
+
+func TestEvidenceSIGKILLAtPromotionBoundaryKeepsOldOrNew(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("SIGKILL is POSIX")
+	}
+	if point := os.Getenv("BENCH_TEST_PROMOTION_KILL"); point != "" {
+		root := os.Getenv("BENCH_TEST_PROMOTION_ROOT")
+		previous := exchangeEvidenceDirs
+		exchangeEvidenceDirs = func(stage, target string) error {
+			if point == "before" {
+				_ = syscall.Kill(os.Getpid(), syscall.SIGKILL)
+			}
+			err := previous(stage, target)
+			if err == nil && point == "after" {
+				_ = syscall.Kill(os.Getpid(), syscall.SIGKILL)
+			}
+			return err
+		}
+		results := []Result{{Name: "gate", Status: StatusGreen, ExitCode: intPtr(0)}}
+		manifest := Manifest{SchemaVersion: 1, Mode: ModeVerify, Scope: ScopeFocused, Status: StatusGreen, Phases: phaseSummaries(results)}
+		_ = PromoteEvidence(root, ModeVerify, results, manifest)
+		os.Exit(90)
+	}
+	for _, point := range []string{"before", "after"} {
+		t.Run(point, func(t *testing.T) {
+			root := t.TempDir()
+			target := filepath.Join(root, "dist", "preflight")
+			if err := os.MkdirAll(target, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(target, "manifest.json"), []byte("old\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			testBinary, err := os.Executable()
+			if err != nil {
+				t.Fatal(err)
+			}
+			cmd := exec.Command(testBinary, "-test.run=^TestEvidenceSIGKILLAtPromotionBoundaryKeepsOldOrNew$")
+			cmd.Env = append(os.Environ(), "BENCH_TEST_PROMOTION_KILL="+point, "BENCH_TEST_PROMOTION_ROOT="+root)
+			if err := cmd.Run(); err == nil {
+				t.Fatal("promotion helper survived SIGKILL")
+			}
+			data, err := os.ReadFile(filepath.Join(target, "manifest.json"))
+			if err != nil {
+				t.Fatalf("canonical verdict missing: %v", err)
+			}
+			if point == "before" && string(data) != "old\n" {
+				t.Fatalf("before exchange = %q", data)
+			}
+			if point == "after" && string(data) == "old\n" {
+				t.Fatalf("after exchange retained old verdict")
+			}
+		})
+	}
+}
+
+func TestEvidenceRejectsHostileCanonicalTargets(t *testing.T) {
+	for _, kind := range []string{"file", "fifo"} {
+		t.Run(kind, func(t *testing.T) {
+			if kind == "fifo" && runtime.GOOS == "windows" {
+				t.Skip("no FIFO")
+			}
+			root := t.TempDir()
+			if err := os.MkdirAll(filepath.Join(root, "dist"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			target := filepath.Join(root, "dist", "preflight")
+			if kind == "file" {
+				if err := os.WriteFile(target, []byte("keep"), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			} else if err := syscall.Mkfifo(target, 0o600); err != nil {
+				t.Fatal(err)
+			}
+			results := []Result{{Name: "gate", Status: StatusGreen, ExitCode: intPtr(0)}}
+			manifest := Manifest{SchemaVersion: 1, Mode: ModeVerify, Scope: ScopeFocused, Status: StatusGreen, Phases: phaseSummaries(results)}
+			if err := PromoteEvidence(root, ModeVerify, results, manifest); err == nil {
+				t.Fatalf("%s target passed", kind)
+			}
+			info, err := os.Lstat(target)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if kind == "file" && !info.Mode().IsRegular() {
+				t.Fatal("regular target replaced")
+			}
+			if kind == "fifo" && info.Mode()&os.ModeNamedPipe == 0 {
+				t.Fatal("FIFO target replaced")
+			}
+		})
+	}
+}
+
+func TestInitializationFailureWritesCompleteTerminalEvidence(t *testing.T) {
+	root := preflightRepo(t)
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module fixture\n\ntoolchain go1.25\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	old, _ := os.Getwd()
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(old) })
+	var stderr bytes.Buffer
+	if code := Command([]string{"--mode", "verify"}, "0.2.0", &stderr); code != 1 {
+		t.Fatalf("exit=%d stderr=%s", code, stderr.String())
+	}
+	data, err := os.ReadFile(filepath.Join(root, "dist", "preflight", "manifest.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var manifest Manifest
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		t.Fatal(err)
+	}
+	if manifest.Status != StatusRed || len(manifest.Phases) != len(PhaseNames(ModeVerify)) {
+		t.Fatalf("manifest=%+v", manifest)
+	}
+	for _, phase := range manifest.Phases {
+		if _, err := os.Stat(filepath.Join(root, "dist", "preflight", phase.Name+".json")); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestVulnerabilityCancellationKillsDescendantProcessGroup(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("process groups are POSIX")
+	}
+	root := preflightRepo(t)
+	pidFile := filepath.Join(root, "child.pid")
+	scanner := filepath.Join(root, "scanner")
+	body := "#!/bin/sh\nsleep 30 &\nprintf '%s' \"$!\" > \"$BENCH_CHILD_PID\"\nwait\n"
+	if err := os.WriteFile(scanner, []byte(body), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("BENCH_PREFLIGHT_VULNERABILITY", scanner)
+	t.Setenv("BENCH_CHILD_PID", pidFile)
+	r := &runner{root: root, mode: ModeVerify, stderr: &bytes.Buffer{}}
+	if err := r.populateBaseIdentity(); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan Result, 1)
+	go func() { done <- r.runPhase(ctx, "vulnerability") }()
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		if _, err := os.Stat(pidFile); err == nil {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("scanner descendant did not start")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	cancel()
+	result := <-done
+	if result.Status != StatusInterrupted {
+		t.Fatalf("result=%+v", result)
+	}
+	data, _ := os.ReadFile(pidFile)
+	pid, _ := strconv.Atoi(string(data))
+	if err := syscall.Kill(pid, 0); err == nil {
+		t.Fatalf("scanner descendant %d survived cancellation", pid)
+	}
+}

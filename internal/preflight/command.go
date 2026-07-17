@@ -1,7 +1,6 @@
 package preflight
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -14,7 +13,6 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
-	"time"
 )
 
 type commandFailure struct{ failure Failure }
@@ -48,15 +46,18 @@ func Command(args []string, binaryVersion string, stderr io.Writer) int {
 	defer stop()
 	r := &runner{root: root, mode: mode, binaryVersion: binaryVersion, stderr: stderr}
 	if err := r.populateBaseIdentity(); err != nil {
-		emitFailure(stderr, failureFrom(err, "identity"))
+		failure := failureFrom(err, "identity")
+		results := initializationResults(mode, focused, failure)
+		manifest := Manifest{SchemaVersion: 1, Mode: mode, Scope: scopeFor(focused), Status: StatusRed, Identity: r.identity, Phases: phaseSummaries(results)}
+		if promoteErr := PromoteEvidence(root, mode, results, manifest); promoteErr != nil {
+			emitFailure(stderr, Failure{Kind: "evidence", Message: "could not promote complete preflight evidence: " + promoteErr.Error()})
+		}
+		emitFailure(stderr, failure)
 		return 1
 	}
 	results := r.run(ctx, focused)
 	status := terminalStatus(results)
-	scope := ScopePreflight
-	if focused != "" {
-		scope = ScopeFocused
-	}
+	scope := scopeFor(focused)
 	manifest := Manifest{SchemaVersion: 1, Mode: mode, Scope: scope, Status: status, Identity: r.identity, Phases: phaseSummaries(results)}
 	if err := PromoteEvidence(root, mode, results, manifest); err != nil {
 		emitFailure(stderr, Failure{Kind: "evidence", Message: "could not promote complete preflight evidence: " + err.Error()})
@@ -76,6 +77,31 @@ func Command(args []string, binaryVersion string, stderr io.Writer) int {
 	}
 	return 0
 }
+
+func scopeFor(focused string) Scope {
+	if focused != "" {
+		return ScopeFocused
+	}
+	return ScopePreflight
+}
+
+func initializationResults(mode Mode, focused string, failure Failure) []Result {
+	names := PhaseNames(mode)
+	if focused != "" {
+		names = []string{focused}
+	}
+	results := make([]Result, 0, len(names))
+	for i, name := range names {
+		if i == 0 {
+			results = append(results, Result{Name: name, Status: StatusRed, ExitCode: intPointer(1), Failure: &failure})
+		} else {
+			results = append(results, Result{Name: name, Status: StatusNotRun})
+		}
+	}
+	return results
+}
+
+func intPointer(value int) *int { return &value }
 
 func parseArgs(args []string) (Mode, string, *Failure) {
 	mode := Mode("")
@@ -128,17 +154,23 @@ func (r *runner) run(ctx context.Context, focused string) []Result {
 		names = []string{focused}
 	}
 	results := make([]Result, 0, len(names))
-	artifactGreen := true
+	statuses := make(map[string]Status, len(names))
 	for _, name := range names {
-		if name == "smoke" && focused == "" && !artifactGreen {
+		definition, _ := phaseDefinition(name)
+		blocked := false
+		for _, required := range definition.Requires {
+			if statuses[required] != StatusGreen {
+				blocked = true
+			}
+		}
+		if focused == "" && blocked {
 			results = append(results, Result{Name: name, Status: StatusNotRun})
+			statuses[name] = StatusNotRun
 			continue
 		}
 		result := r.runPhase(ctx, name)
 		results = append(results, result)
-		if name == "artifacts" && result.Status != StatusGreen {
-			artifactGreen = false
-		}
+		statuses[name] = result.Status
 		if result.Status == StatusInterrupted {
 			for _, rest := range names[len(results):] {
 				results = append(results, Result{Name: rest, Status: StatusNotRun})
@@ -152,17 +184,24 @@ func (r *runner) run(ctx context.Context, focused string) []Result {
 func (r *runner) runPhase(ctx context.Context, name string) Result {
 	var err error
 	exitCode := 0
-	switch name {
+	definition, ok := phaseDefinition(name)
+	if !ok {
+		err = commandFailure{Failure{Kind: "phase", Message: "unknown preflight phase " + name}}
+	}
+	switch definition.Handler {
 	case "identity":
 		err = r.checkIdentity(ctx)
 	case "ancestry":
 		err = r.checkAncestry(ctx)
 	case "changelog":
 		err = r.checkChangelog()
-	case "vulnerability":
+	case "scanner":
 		err = r.runVulnerability(ctx)
-	default:
+	case "external":
 		exitCode, err = r.runExternal(ctx, name)
+	case "":
+	default:
+		err = commandFailure{Failure{Kind: "phase", Message: "unknown preflight handler for " + name}}
 	}
 	if err == nil {
 		return Result{Name: name, Status: StatusGreen, ExitCode: &exitCode}
@@ -182,7 +221,11 @@ func (r *runner) runExternal(ctx context.Context, name string) (int, error) {
 	if err := r.validatePhaseInputs(ctx, name); err != nil {
 		return 1, err
 	}
-	argv := phaseArgv(r.root, name)
+	definition, ok := phaseDefinition(name)
+	if !ok {
+		return 1, commandFailure{Failure{Kind: "phase", Message: "unknown preflight phase " + name}}
+	}
+	argv := phaseArgv(r.root, definition)
 	if override := os.Getenv("BENCH_PREFLIGHT_" + strings.ToUpper(name)); override != "" {
 		argv = []string{override}
 	}
@@ -247,28 +290,22 @@ func (r *runner) validatePhaseInputs(ctx context.Context, name string) error {
 		}
 		return nil
 	}
-	if name == "race" || name == "vet" {
-		if err := requireTool("go"); err != nil {
+	definition, ok := phaseDefinition(name)
+	if !ok {
+		return commandFailure{Failure{Kind: "phase", Message: "unknown preflight phase " + name}}
+	}
+	for _, tool := range definition.Tools {
+		if err := requireTool(tool); err != nil {
 			return err
 		}
+	}
+	if definition.ExactToolchain {
 		actual, err := exec.CommandContext(ctx, "go", "env", "GOVERSION").Output()
 		if err != nil || r.identity.Toolchain == nil || strings.TrimSpace(string(actual)) != "go"+*r.identity.Toolchain {
 			return commandFailure{Failure{Kind: "tool", Message: "actual Go version must equal go.mod toolchain patch"}}
 		}
 	}
-	if name == "artifacts" || name == "smoke" {
-		for _, tool := range []string{"bash", "node", "npm"} {
-			if err := requireTool(tool); err != nil {
-				return err
-			}
-		}
-	}
-	required := map[string][]string{
-		"gate":      {"bin/bench.sh", ".bench/gate.sh"},
-		"artifacts": {"scripts/build-artifacts.sh", "scripts/platforms.json", "scripts/wrapper-assets.json", "package.json"},
-		"smoke":     {"scripts/smoke-artifacts.sh", "scripts/platforms.json", "package.json"},
-	}
-	for _, rel := range required[name] {
+	for _, rel := range definition.Inputs {
 		info, err := os.Lstat(filepath.Join(r.root, filepath.FromSlash(rel)))
 		if err != nil || !info.Mode().IsRegular() {
 			return commandFailure{Failure{Kind: "input", Message: "required repository input is missing or not a regular file: " + rel}}
@@ -277,20 +314,12 @@ func (r *runner) validatePhaseInputs(ctx context.Context, name string) error {
 	return nil
 }
 
-func phaseArgv(root, name string) []string {
-	switch name {
-	case "gate":
-		return []string{filepath.Join(root, "bin", "bench.sh"), "gate"}
-	case "race":
-		return []string{"go", "test", "-race", "-count=1", "./..."}
-	case "vet":
-		return []string{"go", "vet", "./..."}
-	case "artifacts":
-		return []string{"bash", filepath.Join(root, "scripts", "build-artifacts.sh"), root, filepath.Join(root, "dist", "artifacts")}
-	case "smoke":
-		return []string{"bash", filepath.Join(root, "scripts", "smoke-artifacts.sh"), filepath.Join(root, "dist", "artifacts")}
+func phaseArgv(root string, definition PhaseDefinition) []string {
+	argv := append([]string{}, definition.Argv...)
+	for i := range argv {
+		argv[i] = strings.ReplaceAll(argv[i], "{root}", root)
 	}
-	return nil
+	return argv
 }
 
 func failureFrom(err error, phase string) Failure {
@@ -319,44 +348,4 @@ func contains(items []string, want string) bool {
 		}
 	}
 	return false
-}
-
-func (r *runner) runVulnerability(ctx context.Context) error {
-	tool := "govulncheck"
-	if override := os.Getenv("BENCH_PREFLIGHT_VULNERABILITY"); override != "" {
-		tool = override
-	}
-	if _, err := exec.LookPath(tool); err != nil {
-		return commandFailure{Failure{Kind: "tool", Message: "required tool is missing or not executable: " + tool}}
-	}
-	cmd := exec.CommandContext(ctx, tool, "-json", "./...")
-	cmd.Dir = r.root
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = io.MultiWriter(r.stderr, &stderr)
-	runErr := cmd.Run()
-	ids, err := findingIDs(stdout.Bytes())
-	if err != nil {
-		return commandFailure{Failure{Kind: "phase", Message: err.Error()}}
-	}
-	if runErr != nil {
-		var exitErr *exec.ExitError
-		if !errors.As(runErr, &exitErr) || exitErr.ExitCode() != 3 {
-			return commandFailure{Failure{Kind: "phase", Message: "govulncheck scanner failed"}}
-		}
-	}
-	path := filepath.Join(r.root, "scripts", "vuln-exceptions.json")
-	data, err := readRegular(path)
-	present := err == nil
-	if err != nil && !os.IsNotExist(err) {
-		return commandFailure{Failure{Kind: "input", Message: "vulnerability exception policy is unreadable"}}
-	}
-	today := os.Getenv("BENCH_PREFLIGHT_DATE")
-	if today == "" {
-		today = time.Now().UTC().Format("2006-01-02")
-	}
-	if err := ValidateVulnerabilityPolicy(ids, data, present, today); err != nil {
-		return commandFailure{Failure{Kind: "phase", Message: err.Error()}}
-	}
-	return nil
 }

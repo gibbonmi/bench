@@ -34,6 +34,13 @@ func checkReleasePreflight(root string) []string {
 	}
 	native := readIfExists(filepath.Join(root, ".github", "workflows", "native-runtime.yml"))
 	release := readIfExists(filepath.Join(root, ".github", "workflows", "release.yml"))
+	installer := readIfExists(filepath.Join(root, "scripts", "install-govulncheck.sh"))
+	if strings.Count(native, "bash scripts/install-govulncheck.sh") != 1 || strings.Count(release, "bash scripts/install-govulncheck.sh") != 1 || !regexp.MustCompile(`govulncheck@v[0-9]+\.[0-9]+\.[0-9]+`).MatchString(installer) {
+		diags = append(diags, "release workflows do not consume the repository-owned govulncheck setup")
+	}
+	if strings.Contains(native, "govulncheck@") || strings.Contains(release, "govulncheck@") {
+		diags = append(diags, "release workflows duplicate the govulncheck version pin")
+	}
 	for message, anchor := range map[string]string{"native verification bypasses full release preflight": "scripts/release-preflight.sh --mode verify\n", "native verification does not upload preflight evidence": "verify-preflight-evidence", "native runner matrix bypasses focused smoke": "--mode verify --phase smoke"} {
 		if strings.Count(native, anchor) != 1 {
 			diags = append(diags, message)
