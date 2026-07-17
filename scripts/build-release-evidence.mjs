@@ -7,11 +7,12 @@ if (!root || !wrapperDir || !packagesDir) throw new Error("usage: build-release-
 
 const matrix = readJSON(path.join(root, "scripts/platforms.json"));
 const assets = readJSON(path.join(root, "scripts/wrapper-assets.json"));
+const requirements = readJSON(path.join(root, "internal/preflight/requirements.json"));
 const sourcePackage = readJSON(path.join(root, "package.json"));
 const seenDestinations = new Set();
 const byteOrder = (a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
 
-if (!Array.isArray(matrix) || matrix.length !== 4 || !Array.isArray(assets)) throw new Error("release evidence matrix or asset registry is invalid");
+if (!Array.isArray(matrix) || matrix.length !== 4 || !Array.isArray(assets) || !Array.isArray(requirements.package_evidence) || requirements.package_evidence.length === 0 || !Array.isArray(requirements.records)) throw new Error("release evidence matrix, asset, or package evidence registry is invalid");
 
 function readJSON(file) {
   const stat = fs.lstatSync(file);
@@ -57,6 +58,7 @@ function copyRegular(src, dst, mode, label, destinationRoot = wrapperDir) {
   if (!stat.isFile() || stat.isSymbolicLink()) throw new Error(`${label} is not a regular file: ${src}`);
   if (stat.size === 0) throw new Error(`${label} is empty: ${src}`);
   if ((stat.mode & 0o7000) !== 0) throw new Error(`${label} has unsafe mode: ${src}`);
+  if ((stat.mode & 0o777) !== mode) throw new Error(`${label} mode does not match the registry: ${src}`);
   const bytes = fs.readFileSync(src);
   if ((src.includes(`${path.sep}governance${path.sep}`) || path.basename(src) === "THIRD_PARTY_NOTICES.txt") && bytes[bytes.length - 1] !== 0x0a) {
     throw new Error(`${label} is missing a final newline: ${src}`);
@@ -70,13 +72,16 @@ function copyRegular(src, dst, mode, label, destinationRoot = wrapperDir) {
 }
 
 function validateRequiredSources() {
-  const required = ["LICENSE", "governance/THIRD_PARTY_NOTICES.txt", "governance/sbom.spdx.json", ...[
-    "supported-versions.json", "security-response.json", "dependency-license-change.json", "threat-model.json", "recovery-rollback.json", "support.json",
-  ].map(name => `governance/policies/${name}`)];
-  for (const relative of required) {
+  for (const evidence of requirements.package_evidence) {
+    if (!evidence || typeof evidence.path !== "string" || typeof evidence.schema !== "string" || evidence.mode !== "0644") throw new Error("package evidence registry entry is invalid");
+    const relative = evidence.path;
+    if (relative !== "LICENSE") {
+      const record = requirements.records.find(candidate => candidate.path === relative);
+      if (!record || record.schema !== evidence.schema) throw new Error(`package evidence registry is not bound to requirement: ${relative}`);
+    }
     const source = sourcePath(relative);
     const stat = fs.lstatSync(source);
-    if (!stat.isFile() || stat.isSymbolicLink() || stat.size === 0 || (stat.mode & 0o7000) !== 0) throw new Error(`required release evidence source is invalid: ${relative}`);
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.size === 0 || (stat.mode & 0o777) !== 0o644 || (stat.mode & 0o7000) !== 0) throw new Error(`required release evidence source is invalid: ${relative}`);
     if ((relative.startsWith("governance/") || relative === "LICENSE") && fs.readFileSync(source)[stat.size - 1] !== 0x0a) throw new Error(`required release evidence source is missing a final newline: ${relative}`);
   }
 }
@@ -107,6 +112,7 @@ function copyAssets(destination) {
 }
 
 function writeJSON(file, value) {
+  fs.mkdirSync(path.dirname(file), {recursive: true});
   fs.writeFileSync(file, JSON.stringify(value, null, 2) + "\n", {mode: 0o644});
 }
 

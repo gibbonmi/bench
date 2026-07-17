@@ -22,14 +22,11 @@ func regularFile(path string) bool {
 func materializeMutationFixture(root, fixture, dst string) error {
 	basePath := filepath.Join(fixture, "BASE")
 	if regularFile(basePath) {
-		data, err := os.ReadFile(basePath)
+		rels, err := basePaths(root, basePath)
 		if err != nil {
 			return err
 		}
-		for _, rel := range strings.Fields(string(data)) {
-			if filepath.IsAbs(rel) || filepath.Clean(rel) != rel || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
-				return fmt.Errorf("invalid BASE path %q", rel)
-			}
+		for _, rel := range rels {
 			if err := copyBaseFile(filepath.Join(root, rel), filepath.Join(dst, rel)); err != nil {
 				return err
 			}
@@ -68,6 +65,55 @@ func materializeMutationFixture(root, fixture, dst string) error {
 		}
 	}
 	return nil
+}
+
+func basePaths(root, basePath string) ([]string, error) {
+	seenIncludes := map[string]bool{}
+	paths := []string{}
+	var walk func([]byte) error
+	walk = func(data []byte) error {
+		for _, rel := range strings.Fields(string(data)) {
+			if strings.HasPrefix(rel, "@") {
+				include := strings.TrimPrefix(rel, "@")
+				if !safeBasePath(include) {
+					return fmt.Errorf("invalid BASE include %q", include)
+				}
+				if seenIncludes[include] {
+					return fmt.Errorf("recursive BASE include %q", include)
+				}
+				seenIncludes[include] = true
+				included, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(include)))
+				if err != nil {
+					return err
+				}
+				if err := walk(included); err != nil {
+					return err
+				}
+				continue
+			}
+			if !safeBasePath(rel) {
+				return fmt.Errorf("invalid BASE path %q", rel)
+			}
+			paths = append(paths, rel)
+		}
+		return nil
+	}
+	data, err := os.ReadFile(basePath)
+	if err != nil {
+		return nil, err
+	}
+	if err := walk(data); err != nil {
+		return nil, err
+	}
+	return paths, nil
+}
+
+func safeBasePath(value string) bool {
+	if value == "" || strings.Contains(value, "\\") || strings.Contains(value, "\x00") {
+		return false
+	}
+	clean := filepath.ToSlash(filepath.Clean(filepath.FromSlash(value)))
+	return clean == value && clean != "." && clean != ".." && !strings.HasPrefix(clean, "../") && !filepath.IsAbs(filepath.FromSlash(value))
 }
 
 func copyBaseFile(src, dst string) error {

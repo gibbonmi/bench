@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestReleasePreflightScriptBootstrapsBuiltFullAndFocusedCommands(t *testing.T) {
@@ -91,7 +92,7 @@ func TestBuiltCommandReleasePolicyFailuresAreRed(t *testing.T) {
 		if err := os.WriteFile(filepath.Join(root, "package.json"), []byte(`{"version":"0.2.1"}`), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		assertBuiltRed(t, binary, root, []string{"--mode", "publish", "--profile", "public", "--phase", "identity"}, "must agree")
+		assertBuiltRed(t, binary, root, []string{"--mode", "publish", "--profile", "public"}, "must agree")
 	})
 	t.Run("stranded changelog", func(t *testing.T) {
 		root := preflightRepo(t)
@@ -157,6 +158,167 @@ func TestBuiltCommandReleasePolicyFailuresAreRed(t *testing.T) {
 			t.Fatalf("prior target changed: %q %v", data, err)
 		}
 	})
+}
+
+func TestBuiltCommandFocusedPublishCannotAuthorize(t *testing.T) {
+	binary := filepath.Join(t.TempDir(), "bench")
+	build := exec.Command("bash", filepath.Join(projectRoot(t), "scripts", "go-build.sh"), projectRoot(t), binary)
+	if output, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("build: %v\n%s", err, output)
+	}
+	root := preflightRepo(t)
+	cmd := exec.Command(binary, "release-preflight", "--mode", "publish", "--profile", "public", "--phase", "gate")
+	cmd.Dir = root
+	output, err := cmd.CombinedOutput()
+	if exit, ok := err.(*exec.ExitError); !ok || exit.ExitCode() != 2 {
+		t.Fatalf("focused publish exit = %v, want usage exit 2\n%s", err, output)
+	}
+	if !strings.Contains(string(output), "focused") && !strings.Contains(string(output), "usage") {
+		t.Fatalf("focused publish output does not explain non-authorization:\n%s", output)
+	}
+	if _, err := os.Stat(filepath.Join(root, "dist", "preflight", "release-index.json")); !os.IsNotExist(err) {
+		t.Fatalf("focused publish created release evidence: %v", err)
+	}
+}
+
+func TestBuiltCommandCancellationPreservesPriorCompleteEvidence(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("SIGINT process control is POSIX")
+	}
+	binary := filepath.Join(t.TempDir(), "bench")
+	build := exec.Command("bash", filepath.Join(projectRoot(t), "scripts", "go-build.sh"), projectRoot(t), binary)
+	if output, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("build: %v\n%s", err, output)
+	}
+	root := preflightRepo(t)
+	first := exec.Command(binary, "release-preflight", "--mode", "verify")
+	first.Dir = root
+	if output, err := first.CombinedOutput(); err != nil {
+		t.Fatalf("initial verify: %v\n%s", err, output)
+	}
+	indexPath := filepath.Join(root, "dist", "preflight", "release-index.json")
+	sumsPath := filepath.Join(root, "dist", "preflight", "SHA256SUMS")
+	oldIndex, err := os.ReadFile(indexPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldSums, err := os.ReadFile(sumsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ready := filepath.Join(t.TempDir(), "gate-ready")
+	blocking := filepath.Join(root, "blocking-gate")
+	if err := os.WriteFile(blocking, []byte("#!/bin/sh\nprintf ready > \"$BENCH_BLOCK_READY\"\nsleep 30\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("BENCH_PREFLIGHT_GATE", blocking)
+	t.Setenv("BENCH_BLOCK_READY", ready)
+	interrupted := exec.Command(binary, "release-preflight", "--mode", "verify")
+	interrupted.Dir = root
+	if err := interrupted.Start(); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		if _, err := os.Stat(ready); err == nil {
+			break
+		}
+		if time.Now().After(deadline) {
+			_ = interrupted.Process.Kill()
+			t.Fatal("blocking phase did not start")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if err := interrupted.Process.Signal(os.Interrupt); err != nil {
+		t.Fatal(err)
+	}
+	if err := interrupted.Wait(); err == nil {
+		t.Fatal("interrupted preflight exited successfully")
+	}
+	newIndex, err := os.ReadFile(indexPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	newSums, err := os.ReadFile(sumsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(newIndex) != string(oldIndex) || string(newSums) != string(oldSums) {
+		t.Fatal("interrupted preflight replaced the prior complete evidence generation")
+	}
+}
+
+func TestBuiltCommandInputDriftPreservesPriorCompleteEvidence(t *testing.T) {
+	binary := filepath.Join(t.TempDir(), "bench")
+	build := exec.Command("bash", filepath.Join(projectRoot(t), "scripts", "go-build.sh"), projectRoot(t), binary)
+	if output, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("build: %v\n%s", err, output)
+	}
+	root := preflightRepo(t)
+	first := exec.Command(binary, "release-preflight", "--mode", "verify")
+	first.Dir = root
+	if output, err := first.CombinedOutput(); err != nil {
+		t.Fatalf("initial verify: %v\n%s", err, output)
+	}
+	indexPath := filepath.Join(root, "dist", "preflight", "release-index.json")
+	sumsPath := filepath.Join(root, "dist", "preflight", "SHA256SUMS")
+	oldIndex, err := os.ReadFile(indexPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldSums, err := os.ReadFile(sumsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ready := filepath.Join(t.TempDir(), "evidence-ready")
+	t.Setenv("BENCH_PREFLIGHT_EVIDENCE_READY_FILE", ready)
+	drifted := exec.Command(binary, "release-preflight", "--mode", "verify")
+	drifted.Dir = root
+	outputFile, err := os.Create(filepath.Join(t.TempDir(), "drift-output"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	drifted.Stdout, drifted.Stderr = outputFile, outputFile
+	if err := drifted.Start(); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		if _, err := os.Stat(ready); err == nil {
+			break
+		}
+		if time.Now().After(deadline) {
+			_ = drifted.Process.Kill()
+			t.Fatal("evidence assembly did not reach the synchronization seam")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if err := os.WriteFile(filepath.Join(root, "go.sum"), []byte("fixture.example/module v0.0.0 h1:changed\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(ready); err != nil {
+		t.Fatal(err)
+	}
+	waitErr := drifted.Wait()
+	_ = outputFile.Close()
+	output, _ := os.ReadFile(outputFile.Name())
+	if waitErr == nil {
+		t.Fatal("input drift unexpectedly passed")
+	}
+	if !strings.Contains(string(output), "drift") {
+		t.Fatalf("input drift output lacks attribution:\n%s", output)
+	}
+	newIndex, err := os.ReadFile(indexPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	newSums, err := os.ReadFile(sumsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(newIndex) != string(oldIndex) || string(newSums) != string(oldSums) {
+		t.Fatal("input drift replaced the prior complete evidence generation")
+	}
 }
 
 func assertBuiltRed(t *testing.T, binary, root string, args []string, want string) {
@@ -227,6 +389,9 @@ func preflightRepo(t *testing.T) string {
 		}
 	}
 	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module fixture\n\ngo 1.25\ntoolchain go1.25.0\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "go.sum"), []byte("fixture.example/module v0.0.0 h1:fixture\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.MkdirAll(filepath.Join(root, "nested"), 0o755); err != nil {

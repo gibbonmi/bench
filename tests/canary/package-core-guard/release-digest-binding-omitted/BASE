@@ -1,2 +1,1 @@
-internal/preflight/release_evidence.go
-internal/preflight/registry.json
+@tests/canary/package-core-guard/release-evidence-probe-base.txt

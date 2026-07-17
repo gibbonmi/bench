@@ -1,5 +1,16 @@
 {
   "schema_version": 1,
+  "package_evidence": [
+    {"path":"LICENSE","schema":"license/v1","mode":"0644"},
+    {"path":"governance/THIRD_PARTY_NOTICES.txt","schema":"notices/v1","mode":"0644"},
+    {"path":"governance/sbom.spdx.json","schema":"spdx-json/2.3","mode":"0644"},
+    {"path":"governance/policies/supported-versions.json","schema":"governance-policy/v1","mode":"0644"},
+    {"path":"governance/policies/security-response.json","schema":"governance-policy/v1","mode":"0644"},
+    {"path":"governance/policies/dependency-license-change.json","schema":"governance-policy/v1","mode":"0644"},
+    {"path":"governance/policies/threat-model.json","schema":"governance-policy/v1","mode":"0644"},
+    {"path":"governance/policies/recovery-rollback.json","schema":"governance-policy/v1","mode":"0644"},
+    {"path":"governance/policies/support.json","schema":"governance-policy/v1","mode":"0644"}
+  ],
   "records": [
     {"key":"core.policy.supported_versions","owner":"FT83","schema":"governance-policy/v1","profiles":["public","bank"],"requiredness":"required","path":"governance/policies/supported-versions.json"},
     {"key":"core.policy.security_response","owner":"FT83","schema":"governance-policy/v1","profiles":["public","bank"],"requiredness":"required","path":"governance/policies/security-response.json"},

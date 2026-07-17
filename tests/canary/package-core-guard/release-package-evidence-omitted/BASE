@@ -1,2 +1,1 @@
-scripts/wrapper-assets.json
-internal/preflight/registry.json
+@tests/canary/package-core-guard/release-evidence-probe-base.txt

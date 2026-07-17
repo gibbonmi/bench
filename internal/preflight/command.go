@@ -67,6 +67,11 @@ func Command(args []string, binaryVersion string, stderr io.Writer) int {
 			return 1
 		}
 		emitFailure(stderr, Failure{Kind: "evidence", Message: "could not promote complete preflight evidence: " + err.Error()})
+		for _, result := range results {
+			if result.Failure != nil {
+				emitFailure(stderr, *result.Failure)
+			}
+		}
 		return 1
 	}
 	for _, result := range results {
@@ -142,6 +147,9 @@ func parseArgs(args []string) (Mode, string, Profile, *Failure) {
 	}
 	if focused != "" && !contains(PhaseNames(mode), focused) {
 		return "", "", "", usageFailure()
+	}
+	if mode == ModePublish && focused != "" {
+		return "", "", "", &Failure{Kind: "usage", Message: usageFailure().Message + "; focused publish runs cannot authorize publication"}
 	}
 	if profile != "" && profile != ProfilePublic && profile != ProfileBank {
 		return "", "", "", usageFailure()

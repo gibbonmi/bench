@@ -1,1 +1,1 @@
-[{"path":"scripts/wrapper-assets.json","old":"  { \"source\": \"governance\", \"mode\": \"0644\", \"tree\": true }\n","new":""}]
+[{"path":"scripts/wrapper-assets.json","old":"  { \"source\": \".codex/hooks.json\", \"mode\": \"0644\" },\n  { \"source\": \"governance\", \"mode\": \"0644\", \"tree\": true }\n","new":"  { \"source\": \".codex/hooks.json\", \"mode\": \"0644\" }\n"}]

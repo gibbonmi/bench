@@ -59,7 +59,7 @@ func TestDistributableArtifactContracts(t *testing.T) {
 	assertWrapperArtifact(t, root, wrapperTar, wrapper.Version, matrix)
 	for _, platform := range matrix {
 		name := fmt.Sprintf("redbench-%s-%s-%s.tgz", platform.OS, platform.Arch, wrapper.Version)
-		assertPlatformArtifact(t, filepath.Join(out, name), wrapper.Version, platform)
+		assertPlatformArtifact(t, root, filepath.Join(out, name), wrapper.Version, platform)
 	}
 	assertInstalledArtifactLifecycle(t, out, wrapper.Version)
 	contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(root, "scripts", "smoke-artifacts.sh"), out).RequireExit(0)
@@ -284,12 +284,18 @@ func assertWrapperArtifact(t *testing.T, root, path, version string, matrix []ar
 	assertComponentManifest(t, entries, "redbench", version, "all", "all")
 }
 
-func assertPlatformArtifact(t *testing.T, path, version string, platform artifactPlatform) {
+func assertPlatformArtifact(t *testing.T, root, path, version string, platform artifactPlatform) {
 	t.Helper()
 	entries := contract.ReadTarball(t, path)
-	want := map[string]bool{"package/bin/bench": true, "package/package.json": true, "package/LICENSE": true, "package/component-manifest.json": true, "package/governance/THIRD_PARTY_NOTICES.txt": true, "package/governance/sbom.spdx.json": true}
-	for _, policy := range []string{"supported-versions.json", "security-response.json", "dependency-license-change.json", "threat-model.json", "recovery-rollback.json", "support.json"} {
-		want["package/governance/policies/"+policy] = true
+	want := map[string]bool{"package/bin/bench": true, "package/package.json": true, "package/component-manifest.json": true}
+	var registry struct {
+		PackageEvidence []struct {
+			Path string `json:"path"`
+		} `json:"package_evidence"`
+	}
+	contract.ReadJSONFile(t, filepath.Join(root, "internal", "preflight", "requirements.json"), &registry)
+	for _, evidence := range registry.PackageEvidence {
+		want["package/"+evidence.Path] = true
 	}
 	if len(entries) != len(want) {
 		t.Fatalf("%s platform artifact entries = %v", platform.OS+"-"+platform.Arch, reflect.ValueOf(entries).MapKeys())

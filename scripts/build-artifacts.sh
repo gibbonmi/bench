@@ -23,9 +23,13 @@ packages="$stage/packages"
 artifacts="$stage/artifacts"
 mkdir -p "$wrapper" "$packages" "$artifacts"
 
+matrix_file="$stage/platform-matrix.tsv"
+node -e 'for (const p of require(process.argv[1])) console.log([p.os,p.arch,p.goos,p.goarch].join("\t"))' "$source_root/scripts/platforms.json" > "$matrix_file"
+matrix_count="$(wc -l < "$matrix_file" | tr -d '[:space:]')"
+
 while IFS=$'\t' read -r os arch _goos _goarch; do
   mkdir -p "$packages/$os-$arch/bin"
-done < <(node -e 'for (const p of require(process.argv[1])) console.log([p.os,p.arch,p.goos,p.goarch].join("\t"))' "$source_root/scripts/platforms.json")
+done < "$matrix_file"
 
 while IFS=$'\t' read -r os arch goos goarch; do
   binary="$packages/$os-$arch/bin/bench"
@@ -35,16 +39,16 @@ while IFS=$'\t' read -r os arch goos goarch; do
     GOOS="$goos" GOARCH="$goarch" bash "$source_root/scripts/go-build.sh" "$source_root" "$binary"
   fi
   chmod 0755 "$binary"
-done < <(node -e 'for (const p of require(process.argv[1])) console.log([p.os,p.arch,p.goos,p.goarch].join("\t"))' "$source_root/scripts/platforms.json")
+done < "$matrix_file"
 
 node "$source_root/scripts/build-release-evidence.mjs" "$source_root" "$wrapper" "$packages"
 
 while IFS=$'\t' read -r os arch _goos _goarch; do
   npm pack "$packages/$os-$arch" --pack-destination "$artifacts" --ignore-scripts --silent >/dev/null
-done < <(node -e 'for (const p of require(process.argv[1])) console.log([p.os,p.arch,p.goos,p.goarch].join("\t"))' "$source_root/scripts/platforms.json")
+done < "$matrix_file"
 
 npm pack "$wrapper" --pack-destination "$artifacts" --ignore-scripts --silent >/dev/null
-expected="$(node -e 'process.stdout.write(String(require(process.argv[1]).length + 1))' "$source_root/scripts/platforms.json")"
+expected="$((matrix_count + 1))"
 actual="$(find "$artifacts" -maxdepth 1 -type f -name '*.tgz' -print | wc -l | tr -d ' ')"
 [[ "$actual" == "$expected" ]] || { printf 'bench artifacts: emitted %s tarballs, expected %s\n' "$actual" "$expected" >&2; exit 1; }
 

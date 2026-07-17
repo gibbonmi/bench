@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
@@ -140,6 +141,108 @@ func TestReleaseProfilesStayPendingInVerifyAndRedInPublish(t *testing.T) {
 	}
 }
 
+func TestBankPublishRequiresFT71Evidence(t *testing.T) {
+	root := preflightRepo(t)
+	if err := os.Remove(filepath.Join(root, "release-evidence", "ft71-local-event.json")); err != nil {
+		t.Fatal(err)
+	}
+	tagRelease(t, root, true)
+	old, _ := os.Getwd()
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(old) })
+	var stderr bytes.Buffer
+	if code := Command([]string{"--mode", "publish", "--profile", "bank"}, "0.2.0", &stderr); code != 1 {
+		t.Fatalf("bank publish exit=%d stderr=%s", code, stderr.String())
+	}
+	data, err := os.ReadFile(filepath.Join(root, "dist", "preflight", "release-index.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var index releaseIndex
+	if err := json.Unmarshal(data, &index); err != nil {
+		t.Fatal(err)
+	}
+	if index.Status != StatusRed || requirementIndexStatus(index.Requirements, "bank.ft71.local_event") != "missing" {
+		t.Fatalf("bank index = %+v", index)
+	}
+}
+
+func TestGovernanceSchemaRejectsUnknownFieldsAndVersions(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		body string
+	}{
+		{name: "unknown field", body: `{"schema_version":1,"policy":"support","route":"GitHub Issues","personal_email":false,"non_personal":true,"unexpected":true}` + "\n"},
+		{name: "unknown version", body: `{"schema_version":2,"policy":"support","route":"GitHub Issues","personal_email":false,"non_personal":true}` + "\n"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			root := preflightRepo(t)
+			if err := os.WriteFile(filepath.Join(root, "governance", "policies", "support.json"), []byte(test.body), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			old, _ := os.Getwd()
+			if err := os.Chdir(root); err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = os.Chdir(old) })
+			var stderr bytes.Buffer
+			if code := Command([]string{"--mode", "verify"}, "0.2.0", &stderr); code != 1 {
+				t.Fatalf("exit=%d stderr=%s", code, stderr.String())
+			}
+			data, err := os.ReadFile(filepath.Join(root, "dist", "preflight", "release-index.json"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			var index releaseIndex
+			if err := json.Unmarshal(data, &index); err != nil {
+				t.Fatal(err)
+			}
+			if requirementIndexStatus(index.Requirements, "core.policy.support") != "invalid" {
+				t.Fatalf("support status = %q, want invalid", requirementIndexStatus(index.Requirements, "core.policy.support"))
+			}
+		})
+	}
+}
+
+func TestFinalTarRejectsHostileEvidenceWithConsistentInventory(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		path string
+		data []byte
+		mode int64
+		want string
+	}{
+		{name: "empty notices", path: "governance/THIRD_PARTY_NOTICES.txt", data: []byte{}, mode: 0o644, want: "empty or missing"},
+		{name: "unsafe mode", path: "LICENSE", data: []byte("license\n"), mode: 0o777, want: "unsafe mode"},
+		{name: "malformed SPDX", path: "governance/sbom.spdx.json", data: []byte(`{"SPDXVersion":"SPDX-2.3","unexpected":true}` + "\n"), mode: 0o644, want: "malformed SPDX JSON"},
+		{name: "malformed policy", path: "governance/policies/support.json", data: []byte(`{"schema_version":1,"policy":"support","route":"GitHub Issues","personal_email":false,"non_personal":true,"unexpected":true}` + "\n"), mode: 0o644, want: "malformed"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			root := preflightRepo(t)
+			archive := filepath.Join(root, "dist", "artifacts", "redbench-0.2.0.tgz")
+			rewriteFixtureTarball(t, archive, func(files map[string]fixtureArchiveFile) {
+				file := files[test.path]
+				file.data, file.mode = test.data, test.mode
+				files[test.path] = file
+			})
+			old, _ := os.Getwd()
+			if err := os.Chdir(root); err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = os.Chdir(old) })
+			var stderr bytes.Buffer
+			if code := Command([]string{"--mode", "verify"}, "0.2.0", &stderr); code != 1 {
+				t.Fatalf("exit=%d stderr=%s", code, stderr.String())
+			}
+			if !strings.Contains(stderr.String(), test.want) {
+				t.Fatalf("output does not contain %q:\n%s", test.want, stderr.String())
+			}
+		})
+	}
+}
+
 func requirementIndexStatus(statuses []requirementStatus, key string) string {
 	for _, status := range statuses {
 		if status.Key == key {
@@ -210,6 +313,166 @@ func TestArtifactFailureRecordsSmokeNotRun(t *testing.T) {
 	}
 	if record.Status != StatusNotRun || record.ExitCode != nil {
 		t.Fatalf("smoke record=%+v", record)
+	}
+}
+
+func TestFullRunPhaseRedPromotesCompleteReleaseEvidence(t *testing.T) {
+	root := preflightRepo(t)
+	failing := filepath.Join(root, "fail-gate")
+	if err := os.WriteFile(failing, []byte("#!/bin/sh\nexit 9\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("BENCH_PREFLIGHT_GATE", failing)
+	old, _ := os.Getwd()
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(old) })
+	var stderr bytes.Buffer
+	if code := Command([]string{"--mode", "verify"}, "0.2.0", &stderr); code != 1 {
+		t.Fatalf("exit=%d stderr=%s", code, stderr.String())
+	}
+	indexData, err := os.ReadFile(filepath.Join(root, "dist", "preflight", "release-index.json"))
+	if err != nil {
+		t.Fatalf("complete red release index missing: %v\n%s", err, stderr.String())
+	}
+	var index releaseIndex
+	if err := json.Unmarshal(indexData, &index); err != nil {
+		t.Fatal(err)
+	}
+	if index.Status != StatusRed || len(index.Requirements) != len(Requirements()) || len(index.Artifacts) != 5 {
+		t.Fatalf("red index = %+v", index)
+	}
+	if sums, err := os.ReadFile(filepath.Join(root, "dist", "preflight", "SHA256SUMS")); err != nil || len(sums) == 0 {
+		t.Fatalf("complete red checksums missing: %v", err)
+	}
+}
+
+func TestReleaseEvidenceIsDeterministicBoundAndIdempotent(t *testing.T) {
+	root := preflightRepo(t)
+	old, _ := os.Getwd()
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(old) })
+	var stderr bytes.Buffer
+	if code := Command([]string{"--mode", "verify"}, "0.2.0", &stderr); code != 0 {
+		t.Fatalf("first verify exit=%d stderr=%s", code, stderr.String())
+	}
+	indexPath := filepath.Join(root, "dist", "preflight", "release-index.json")
+	sumsPath := filepath.Join(root, "dist", "preflight", "SHA256SUMS")
+	firstIndex, err := os.ReadFile(indexPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	firstSums, err := os.ReadFile(sumsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var index releaseIndex
+	if err := json.Unmarshal(firstIndex, &index); err != nil {
+		t.Fatal(err)
+	}
+	goSumData, err := os.ReadFile(filepath.Join(root, "go.sum"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	goSumBound := false
+	for _, input := range index.Inputs {
+		if input.Path == "go.sum" {
+			goSumBound = input.SHA256 == sha256Hex(goSumData)
+		}
+	}
+	if !goSumBound {
+		t.Fatal("release index does not bind go.sum")
+	}
+	sumByName := map[string]string{}
+	for _, line := range strings.Split(strings.TrimSpace(string(firstSums)), "\n") {
+		parts := strings.SplitN(line, "  ", 2)
+		if len(parts) != 2 {
+			t.Fatalf("malformed checksum line %q", line)
+		}
+		sumByName[parts[1]] = parts[0]
+	}
+	if len(sumByName) != len(index.Artifacts) {
+		t.Fatalf("checksum count=%d artifacts=%d", len(sumByName), len(index.Artifacts))
+	}
+	for _, artifact := range index.Artifacts {
+		data, err := os.ReadFile(filepath.Join(root, "dist", "artifacts", artifact.Name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if artifact.SHA256 != sha256Hex(data) || sumByName[artifact.Name] != artifact.SHA256 {
+			t.Fatalf("artifact digest binding failed for %s", artifact.Name)
+		}
+	}
+	artifactDir := filepath.Join(root, "dist", "artifacts")
+	staging := t.TempDir()
+	entries, err := os.ReadDir(artifactDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		if err := os.Rename(filepath.Join(artifactDir, entry.Name()), filepath.Join(staging, entry.Name())); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for i := len(entries) - 1; i >= 0; i-- {
+		if err := os.Rename(filepath.Join(staging, entries[i].Name()), filepath.Join(artifactDir, entries[i].Name())); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Setenv("LANG", "C")
+	t.Setenv("TZ", "UTC")
+	stderr.Reset()
+	if code := Command([]string{"--mode", "verify"}, "0.2.0", &stderr); code != 0 {
+		t.Fatalf("second verify exit=%d stderr=%s", code, stderr.String())
+	}
+	secondIndex, _ := os.ReadFile(indexPath)
+	secondSums, _ := os.ReadFile(sumsPath)
+	if string(secondIndex) != string(firstIndex) || string(secondSums) != string(firstSums) {
+		t.Fatal("release evidence changed with enumeration order or environment")
+	}
+
+	failing := filepath.Join(root, "fail-gate")
+	if err := os.WriteFile(failing, []byte("#!/bin/sh\nexit 9\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	greenGate := os.Getenv("BENCH_PREFLIGHT_GATE")
+	if err := os.Setenv("BENCH_PREFLIGHT_GATE", failing); err != nil {
+		t.Fatal(err)
+	}
+	if code := Command([]string{"--mode", "verify"}, "0.2.0", &stderr); code != 1 {
+		t.Fatalf("red rerun exit=%d stderr=%s", code, stderr.String())
+	}
+	redIndex, err := os.ReadFile(indexPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var red releaseIndex
+	if err := json.Unmarshal(redIndex, &red); err != nil || red.Status != StatusRed {
+		t.Fatalf("red rerun index=%s err=%v", redIndex, err)
+	}
+	if err := os.Setenv("BENCH_PREFLIGHT_GATE", greenGate); err != nil {
+		t.Fatal(err)
+	}
+	if code := Command([]string{"--mode", "verify"}, "0.2.0", &stderr); code != 0 {
+		t.Fatalf("green-after-red exit=%d stderr=%s", code, stderr.String())
+	}
+	var final releaseIndex
+	finalIndex, err := os.ReadFile(indexPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(finalIndex, &final); err != nil || final.Status != StatusGreen {
+		t.Fatalf("green-after-red index=%s err=%v", finalIndex, err)
+	}
+	files, err := os.ReadDir(filepath.Join(root, "dist", "preflight"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) != len(PhaseNames(ModeVerify))+3 {
+		t.Fatalf("promoted evidence file count=%d, want %d", len(files), len(PhaseNames(ModeVerify))+3)
 	}
 }
 

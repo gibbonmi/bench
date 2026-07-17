@@ -32,6 +32,7 @@ type evidenceDigest struct {
 
 var releaseInputPaths = []string{
 	"go.mod",
+	"go.sum",
 	"package.json",
 	"scripts/go-build.sh",
 	"scripts/build-artifacts.sh",
@@ -50,13 +51,29 @@ func hasControlBytes(value string) bool {
 }
 
 func validateRequirementRegistry() error {
-	if requirements.SchemaVersion != 1 || len(requirements.Records) == 0 {
+	if requirements.SchemaVersion != 1 || len(requirements.PackageEvidence) == 0 || len(requirements.Records) == 0 {
 		return errors.New("invalid requirement registry version or records")
+	}
+	packagePaths := map[string]bool{}
+	for _, evidence := range requirements.PackageEvidence {
+		if packagePaths[evidence.Path] || !safeRegistryPath(evidence.Path) || evidence.Schema == "" || evidence.Mode != "0644" {
+			return fmt.Errorf("invalid package evidence registry entry %q", evidence.Path)
+		}
+		if evidence.Schema != "license/v1" && !knownRequirementSchema(evidence.Schema) {
+			return fmt.Errorf("unsupported package evidence schema %q", evidence.Schema)
+		}
+		if evidence.Path != "LICENSE" {
+			record, found := requirementForPath(evidence.Path)
+			if !found || record.Schema != evidence.Schema {
+				return fmt.Errorf("package evidence registry is not bound to requirement %q", evidence.Path)
+			}
+		}
+		packagePaths[evidence.Path] = true
 	}
 	seen := map[string]bool{}
 	public, bank := map[string]bool{}, map[string]bool{}
 	for _, record := range requirements.Records {
-		if seen[record.Key] || record.Key == "" || record.Owner == "" || record.Schema == "" || !safeRegistryPath(record.Path) || len(record.Profiles) == 0 || record.Requiredness != "required" && record.Requiredness != "conditional" {
+		if seen[record.Key] || record.Key == "" || record.Owner == "" || !knownRequirementSchema(record.Schema) || !safeRegistryPath(record.Path) || len(record.Profiles) == 0 || record.Requiredness != "required" && record.Requiredness != "conditional" {
 			return fmt.Errorf("invalid requirement registry record %q", record.Key)
 		}
 		for _, value := range []string{record.Key, record.Owner, record.Schema, record.Path} {
@@ -105,15 +122,14 @@ func readRollbackTarget(root string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("rollback policy is unreadable: %w", err)
 	}
-	var record map[string]json.RawMessage
+	var record recoveryRollbackPolicy
 	if err := decodeStrict(data, &record); err != nil {
 		return "", fmt.Errorf("rollback policy is malformed: %w", err)
 	}
-	var target string
-	if err := json.Unmarshal(record["rollback_target"], &target); err != nil || target == "" || hasControlBytes(target) {
+	if record.SchemaVersion != 1 || record.Policy != "recovery-rollback" || record.RollbackTarget == "" || hasControlBytes(record.RollbackTarget) {
 		return "", errors.New("rollback policy has no rollback target")
 	}
-	return target, nil
+	return record.RollbackTarget, nil
 }
 
 func inspectRequirements(root string, run RunEvidence, profile Profile) ([]requirementStatus, []evidenceDigest, string, error) {
@@ -192,6 +208,9 @@ func validateRequirementBytes(record Requirement, data []byte, identity Identity
 		return fmt.Errorf("requirement %s is missing a final newline", record.Key)
 	}
 	if isProducerOwner(record.Owner) {
+		if record.Schema != producerSchema(record.Owner) {
+			return fmt.Errorf("producer record %s has unsupported schema %s", record.Key, record.Schema)
+		}
 		var envelope producerEnvelope
 		if err := decodeStrict(data, &envelope); err != nil {
 			return fmt.Errorf("producer record %s is malformed: %w", record.Key, err)
@@ -217,29 +236,188 @@ func validateRequirementBytes(record Requirement, data []byte, identity Identity
 		return nil
 	}
 	if record.Schema == "spdx-json/2.3" {
-		var document map[string]json.RawMessage
-		if err := decodeStrict(data, &document); err != nil {
-			return fmt.Errorf("governance record %s has malformed SPDX JSON", record.Key)
-		}
-		var version string
-		if err := json.Unmarshal(document["SPDXVersion"], &version); err != nil || version != "SPDX-2.3" {
-			return fmt.Errorf("governance record %s has unsupported SPDX schema version", record.Key)
+		if err := validateSPDXDocument(data, "", ""); err != nil {
+			return fmt.Errorf("governance record %s has invalid SPDX JSON: %w", record.Key, err)
 		}
 		return nil
 	}
-	var value map[string]json.RawMessage
-	if err := decodeStrict(data, &value); err != nil {
-		return fmt.Errorf("governance record %s is malformed: %w", record.Key, err)
+	if record.Schema == "governance-policy/v1" {
+		if err := validateGovernancePolicy(record, data); err != nil {
+			return err
+		}
+		return nil
 	}
-	var version int
-	if err := json.Unmarshal(value["schema_version"], &version); err != nil || version != 1 {
-		return fmt.Errorf("governance record %s has unsupported schema version", record.Key)
-	}
-	return nil
+	return fmt.Errorf("requirement %s has unsupported schema %s", record.Key, record.Schema)
 }
 
 func isProducerOwner(owner string) bool {
 	return owner == "FT71" || owner == "FT87" || owner == "FT88"
+}
+
+func producerSchema(owner string) string {
+	switch owner {
+	case "FT71":
+		return "ft71/local-event/v1"
+	case "FT87":
+		return "ft87/offline-network-control/v1"
+	case "FT88":
+		return "ft88/data-handling/v1"
+	default:
+		return ""
+	}
+}
+
+type supportedVersionsPolicy struct {
+	SchemaVersion     int    `json:"schema_version"`
+	Policy            string `json:"policy"`
+	Support           string `json:"support"`
+	PreviousMinorDays int    `json:"previous_minor_days"`
+	EOL               string `json:"eol"`
+}
+
+type securityResponsePolicy struct {
+	SchemaVersion           int    `json:"schema_version"`
+	Policy                  string `json:"policy"`
+	PrivateRoute            string `json:"private_route"`
+	AcknowledgeBusinessDays int    `json:"acknowledge_business_days"`
+	TriageBusinessDays      int    `json:"triage_business_days"`
+	MitigationBusinessDays  struct {
+		Critical int    `json:"critical"`
+		High     int    `json:"high"`
+		Medium   int    `json:"medium"`
+		Low      string `json:"low"`
+	} `json:"mitigation_business_days"`
+}
+
+type dependencyLicensePolicy struct {
+	SchemaVersion            int    `json:"schema_version"`
+	Policy                   string `json:"policy"`
+	ReviewRequired           bool   `json:"review_required"`
+	LicenseChangeRequires    string `json:"license_change_requires"`
+	DependencyChangeRequires string `json:"dependency_change_requires"`
+}
+
+type threatModelPolicy struct {
+	SchemaVersion  int      `json:"schema_version"`
+	Policy         string   `json:"policy"`
+	ReleaseInput   bool     `json:"release_input"`
+	TrustBoundary  string   `json:"trust_boundary"`
+	PrimaryThreats []string `json:"primary_threats"`
+}
+
+type recoveryRollbackPolicy struct {
+	SchemaVersion           int    `json:"schema_version"`
+	Policy                  string `json:"policy"`
+	RollbackTarget          string `json:"rollback_target"`
+	PreservePriorGeneration bool   `json:"preserve_prior_generation"`
+	NPMRollback             string `json:"npm_rollback"`
+}
+
+type supportPolicy struct {
+	SchemaVersion int    `json:"schema_version"`
+	Policy        string `json:"policy"`
+	Route         string `json:"route"`
+	PersonalEmail bool   `json:"personal_email"`
+	NonPersonal   bool   `json:"non_personal"`
+}
+
+func validateGovernancePolicy(record Requirement, data []byte) error {
+	valid := false
+	switch record.Key {
+	case "core.policy.supported_versions":
+		var value supportedVersionsPolicy
+		if err := decodeStrict(data, &value); err != nil {
+			return fmt.Errorf("governance record %s is malformed: %w", record.Key, err)
+		}
+		valid = value.SchemaVersion == 1 && value.Policy == "supported-versions" && value.Support != "" && value.PreviousMinorDays > 0 && value.EOL != ""
+	case "core.policy.security_response":
+		var value securityResponsePolicy
+		if err := decodeStrict(data, &value); err != nil {
+			return fmt.Errorf("governance record %s is malformed: %w", record.Key, err)
+		}
+		valid = value.SchemaVersion == 1 && value.Policy == "security-response" && value.PrivateRoute != "" && value.AcknowledgeBusinessDays > 0 && value.TriageBusinessDays > 0 && value.MitigationBusinessDays.Critical > 0 && value.MitigationBusinessDays.High > 0 && value.MitigationBusinessDays.Medium > 0 && value.MitigationBusinessDays.Low != ""
+	case "core.policy.dependency_license_change":
+		var value dependencyLicensePolicy
+		if err := decodeStrict(data, &value); err != nil {
+			return fmt.Errorf("governance record %s is malformed: %w", record.Key, err)
+		}
+		valid = value.SchemaVersion == 1 && value.Policy == "dependency-license-change" && value.ReviewRequired && value.LicenseChangeRequires != "" && value.DependencyChangeRequires != ""
+	case "core.policy.threat_model":
+		var value threatModelPolicy
+		if err := decodeStrict(data, &value); err != nil {
+			return fmt.Errorf("governance record %s is malformed: %w", record.Key, err)
+		}
+		valid = value.SchemaVersion == 1 && value.Policy == "threat-model" && value.ReleaseInput && value.TrustBoundary != "" && len(value.PrimaryThreats) > 0
+	case "core.policy.recovery_rollback":
+		var value recoveryRollbackPolicy
+		if err := decodeStrict(data, &value); err != nil {
+			return fmt.Errorf("governance record %s is malformed: %w", record.Key, err)
+		}
+		valid = value.SchemaVersion == 1 && value.Policy == "recovery-rollback" && value.RollbackTarget != "" && value.PreservePriorGeneration && value.NPMRollback != ""
+	case "core.policy.support":
+		var value supportPolicy
+		if err := decodeStrict(data, &value); err != nil {
+			return fmt.Errorf("governance record %s is malformed: %w", record.Key, err)
+		}
+		valid = value.SchemaVersion == 1 && value.Policy == "support" && value.Route != "" && !value.PersonalEmail && value.NonPersonal
+	default:
+		return fmt.Errorf("governance record %s has an unknown policy schema", record.Key)
+	}
+	if !valid {
+		return fmt.Errorf("governance record %s has invalid schema version or policy values", record.Key)
+	}
+	return nil
+}
+
+type spdxDocument struct {
+	SPDXID            string             `json:"SPDXID"`
+	SPDXVersion       string             `json:"SPDXVersion"`
+	CreationInfo      spdxCreationInfo   `json:"creationInfo"`
+	DataLicense       string             `json:"dataLicense"`
+	Name              string             `json:"name"`
+	DocumentNamespace string             `json:"documentNamespace"`
+	Packages          []spdxPackage      `json:"packages"`
+	Relationships     []spdxRelationship `json:"relationships"`
+}
+
+type spdxCreationInfo struct {
+	Creators []string `json:"creators"`
+}
+
+type spdxPackage struct {
+	SPDXID           string `json:"SPDXID"`
+	Name             string `json:"name"`
+	VersionInfo      string `json:"versionInfo"`
+	DownloadLocation string `json:"downloadLocation"`
+	LicenseConcluded string `json:"licenseConcluded"`
+	LicenseDeclared  string `json:"licenseDeclared"`
+}
+
+type spdxRelationship struct {
+	SPDXElementID      string `json:"spdxElementId"`
+	RelationshipType   string `json:"relationshipType"`
+	RelatedSPDXElement string `json:"relatedSpdxElement"`
+}
+
+func validateSPDXDocument(data []byte, expectedName, expectedVersion string) error {
+	var document spdxDocument
+	if err := decodeStrict(data, &document); err != nil {
+		return fmt.Errorf("malformed SPDX JSON: %w", err)
+	}
+	if document.SPDXID != "SPDXRef-DOCUMENT" || document.SPDXVersion != "SPDX-2.3" || document.DataLicense != "CC0-1.0" || document.Name == "" || document.DocumentNamespace == "" || len(document.CreationInfo.Creators) == 0 || len(document.Packages) != 1 || len(document.Relationships) != 1 {
+		return errors.New("SPDX document has invalid required fields or schema version")
+	}
+	pkg := document.Packages[0]
+	if pkg.SPDXID == "" || pkg.Name == "" || pkg.VersionInfo == "" || pkg.DownloadLocation == "" || pkg.LicenseConcluded == "" || pkg.LicenseDeclared == "" || document.Relationships[0].SPDXElementID != document.SPDXID || document.Relationships[0].RelationshipType != "DESCRIBES" || document.Relationships[0].RelatedSPDXElement != pkg.SPDXID {
+		return errors.New("SPDX document has incomplete package relationship")
+	}
+	if expectedName != "" && pkg.Name != expectedName {
+		return fmt.Errorf("SPDX package name %q does not match %q", pkg.Name, expectedName)
+	}
+	if expectedVersion != "" && pkg.VersionInfo != expectedVersion {
+		return fmt.Errorf("SPDX package version %q does not match %q", pkg.VersionInfo, expectedVersion)
+	}
+	return nil
 }
 
 type producerEnvelope struct {

@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -121,7 +122,7 @@ func inspectArtifacts(root string) ([]artifactEvidence, []targetEvidence, error)
 		if err != nil {
 			return nil, nil, fmt.Errorf("artifact %s is invalid: %w", entry.Name(), err)
 		}
-		if err := validatePackageEvidence(files, manifest, target, version, matrix); err != nil {
+		if err := validatePackageEvidence(files, manifest, target, version); err != nil {
 			return nil, nil, fmt.Errorf("artifact %s evidence is invalid: %w", entry.Name(), err)
 		}
 		inventory, err := canonicalJSON(manifest.Files)
@@ -159,6 +160,10 @@ func readTarball(data []byte) (map[string]tarFile, componentManifest, error) {
 		if header.Typeflag != tar.TypeReg && header.Typeflag != tar.TypeRegA {
 			return nil, componentManifest{}, fmt.Errorf("archive contains special file %s", name)
 		}
+		mode := header.Mode & 0o777
+		if header.Mode&0o7000 != 0 || mode != 0o644 && mode != 0o755 {
+			return nil, componentManifest{}, fmt.Errorf("archive contains unsafe mode %o for %s", mode, name)
+		}
 		if _, exists := files[name]; exists {
 			return nil, componentManifest{}, fmt.Errorf("archive contains duplicate path %s", name)
 		}
@@ -179,7 +184,7 @@ func readTarball(data []byte) (map[string]tarFile, componentManifest, error) {
 	return files, manifest, nil
 }
 
-func validatePackageEvidence(files map[string]tarFile, manifest componentManifest, target, version string, matrix []platformDefinition) error {
+func validatePackageEvidence(files map[string]tarFile, manifest componentManifest, target, version string) error {
 	if manifest.SchemaVersion != 1 || manifest.Component.Version != version || manifest.Component.Name == "" {
 		return errors.New("component identity or schema is invalid")
 	}
@@ -196,14 +201,34 @@ func validatePackageEvidence(files map[string]tarFile, manifest componentManifes
 			return errors.New("platform component target is invalid")
 		}
 	}
-	for _, required := range []string{"LICENSE", "governance/THIRD_PARTY_NOTICES.txt", "governance/sbom.spdx.json"} {
-		if _, ok := files[required]; !ok {
-			return fmt.Errorf("required package evidence is missing: %s", required)
+	for _, evidence := range packageEvidenceRegistry() {
+		file, ok := files[evidence.Path]
+		if !ok {
+			return fmt.Errorf("required package evidence is missing: %s", evidence.Path)
 		}
-	}
-	for _, policy := range []string{"supported-versions.json", "security-response.json", "dependency-license-change.json", "threat-model.json", "recovery-rollback.json", "support.json"} {
-		if _, ok := files["governance/policies/"+policy]; !ok {
-			return fmt.Errorf("required governance policy is missing: %s", policy)
+		mode, err := strconv.ParseInt(evidence.Mode, 8, 32)
+		if err != nil || file.mode != mode {
+			return fmt.Errorf("package evidence mode is invalid for %s", evidence.Path)
+		}
+		if len(file.data) == 0 || !bytes.HasSuffix(file.data, []byte("\n")) {
+			return fmt.Errorf("package evidence is empty or missing a final newline: %s", evidence.Path)
+		}
+		switch evidence.Schema {
+		case "license/v1":
+		case "notices/v1", "spdx-json/2.3", "governance-policy/v1":
+			record, found := requirementForPath(evidence.Path)
+			if !found {
+				return fmt.Errorf("package evidence has no requirement record: %s", evidence.Path)
+			}
+			if evidence.Schema == "spdx-json/2.3" {
+				if err := validateSPDXDocument(file.data, manifest.Component.Name, version); err != nil {
+					return err
+				}
+			} else if err := validateRequirementBytes(record, file.data, Identity{}); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("package evidence has unsupported schema: %s", evidence.Schema)
 		}
 	}
 	pkg, ok := files["package.json"]
@@ -239,8 +264,16 @@ func validatePackageEvidence(files map[string]tarFile, manifest componentManifes
 	if _, ok := manifestPaths["component-manifest.json"]; ok {
 		return errors.New("component inventory self-references its manifest")
 	}
-	_ = matrix
 	return nil
+}
+
+func requirementForPath(path string) (Requirement, bool) {
+	for _, record := range requirements.Records {
+		if record.Path == path {
+			return record, true
+		}
+	}
+	return Requirement{}, false
 }
 
 func archiveRelativePath(name string) (string, error) {

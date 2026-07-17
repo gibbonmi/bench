@@ -69,10 +69,10 @@ func FinalizeEvidence(ctx context.Context, root string, run RunEvidence) error {
 	if err := validateRun(root, run); err != nil {
 		return err
 	}
-	if run.Scope == ScopeFocused {
-		return PromoteEvidence(root, run.Mode, run.Phases, manifestFor(run))
+	if ctx.Err() != nil || terminalStatus(run.Phases) == StatusInterrupted {
+		return context.Canceled
 	}
-	if terminalStatus(run.Phases) != StatusGreen {
+	if run.Scope == ScopeFocused {
 		return PromoteEvidence(root, run.Mode, run.Phases, manifestFor(run))
 	}
 
@@ -128,6 +128,9 @@ func validateRun(root string, run RunEvidence) error {
 	}
 	if run.Mode == ModePublish && run.Scope == ScopePreflight && run.Profile != ProfilePublic && run.Profile != ProfileBank {
 		return errors.New("publish requires an explicit profile")
+	}
+	if run.Mode == ModePublish && run.Scope == ScopeFocused {
+		return errors.New("focused publish runs cannot authorize publication")
 	}
 	if run.Profile != "" && run.Profile != ProfilePublic && run.Profile != ProfileBank {
 		return fmt.Errorf("unknown release profile %q", run.Profile)
@@ -202,8 +205,8 @@ func assembleReleaseEvidence(ctx context.Context, root string, run RunEvidence) 
 		}
 		return targets[i].Arch < targets[j].Arch
 	})
-	status := StatusGreen
-	if unsatisfied != "" {
+	status := terminalStatus(run.Phases)
+	if status == StatusGreen && unsatisfied != "" {
 		status = StatusRed
 	}
 	index := releaseIndex{

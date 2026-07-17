@@ -2,7 +2,6 @@ package preflight
 
 import (
 	_ "embed"
-	"encoding/json"
 )
 
 type Mode string
@@ -109,14 +108,21 @@ type Requirement struct {
 	Path         string    `json:"path"`
 }
 
+type PackageEvidence struct {
+	Path   string `json:"path"`
+	Schema string `json:"schema"`
+	Mode   string `json:"mode"`
+}
+
 type requirementRegistry struct {
-	SchemaVersion int           `json:"schema_version"`
-	Records       []Requirement `json:"records"`
+	SchemaVersion   int               `json:"schema_version"`
+	PackageEvidence []PackageEvidence `json:"package_evidence"`
+	Records         []Requirement     `json:"records"`
 }
 
 func loadRegistry() phaseRegistry {
 	var value phaseRegistry
-	if err := json.Unmarshal(registryJSON, &value); err != nil {
+	if err := decodeStrict(registryJSON, &value); err != nil {
 		panic("invalid embedded preflight registry: " + err.Error())
 	}
 	for _, name := range append(append([]string{}, value.Verify...), value.PublishOnly...) {
@@ -131,20 +137,40 @@ var requirements = loadRequirements()
 
 func loadRequirements() requirementRegistry {
 	var value requirementRegistry
-	if err := json.Unmarshal(requirementsJSON, &value); err != nil {
+	if err := decodeStrict(requirementsJSON, &value); err != nil {
 		panic("invalid embedded requirement registry: " + err.Error())
 	}
-	if value.SchemaVersion != 1 || len(value.Records) == 0 {
+	if value.SchemaVersion != 1 || len(value.PackageEvidence) == 0 || len(value.Records) == 0 {
 		panic("invalid embedded requirement registry version or records")
+	}
+	packagePaths := map[string]bool{}
+	for _, evidence := range value.PackageEvidence {
+		if packagePaths[evidence.Path] || !safeRegistryPath(evidence.Path) || evidence.Schema == "" || evidence.Mode != "0644" {
+			panic("invalid embedded package evidence registry")
+		}
+		packagePaths[evidence.Path] = true
 	}
 	seen := map[string]bool{}
 	for _, record := range value.Records {
-		if record.Key == "" || record.Owner == "" || record.Schema == "" || record.Path == "" || seen[record.Key] || len(record.Profiles) == 0 || record.Requiredness != "required" && record.Requiredness != "conditional" {
+		if record.Key == "" || record.Owner == "" || !knownRequirementSchema(record.Schema) || record.Path == "" || seen[record.Key] || len(record.Profiles) == 0 || record.Requiredness != "required" && record.Requiredness != "conditional" {
 			panic("invalid embedded requirement registry record")
 		}
 		seen[record.Key] = true
 	}
 	return value
+}
+
+func knownRequirementSchema(schema string) bool {
+	switch schema {
+	case "governance-policy/v1", "notices/v1", "spdx-json/2.3", "ft71/local-event/v1", "ft87/offline-network-control/v1", "ft88/data-handling/v1":
+		return true
+	default:
+		return false
+	}
+}
+
+func packageEvidenceRegistry() []PackageEvidence {
+	return append([]PackageEvidence(nil), requirements.PackageEvidence...)
 }
 
 func Requirements() []Requirement {
