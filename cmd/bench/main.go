@@ -66,6 +66,7 @@ var commands = map[string]func([]string) (string, int){
 	"diff":                diff.Command,
 	"coverage":            coverage.Command,
 	"status":              status.Command,
+	"commands":            commandsCommand,
 	"dashboard":           dashboard.Command,
 	"structure":           structure.Command,
 	"models":              models.Command,
@@ -76,6 +77,13 @@ var commands = map[string]func([]string) (string, int){
 	"resolve-model":       resolveModel,
 	"worktree-pool":       worktree.PoolCommand,
 	"worktree-lease-file": worktree.LeaseFileCommand,
+}
+
+func commandsCommand(args []string) (string, int) {
+	if len(args) != 1 || args[0] != "--brief" {
+		return "usage: bench commands --brief\n", 2
+	}
+	return "version\ncommands --brief\nstatus\n", 0
 }
 
 var gatePhasesCommand = gate.PhasesCommand

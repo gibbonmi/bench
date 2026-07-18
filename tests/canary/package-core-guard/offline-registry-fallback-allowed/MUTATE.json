@@ -1,0 +1,1 @@
+[{"path":"scripts/smoke-offline.sh","old":"  printf 'offline smoke: loopback registry fixture did not start\\n' >&2\n  exit 1","new":"  printf 'offline smoke: loopback registry fixture did not start\\n' >&2\n  :"}]

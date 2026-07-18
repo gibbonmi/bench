@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Validate the complete native proof set derived from the canonical matrix.
+set -euo pipefail
+
+proofs="${1:?usage: aggregate-native-proofs.sh <proof-dir>}"
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+[[ -d "$proofs" && ! -L "$proofs" ]] || { printf 'native proof directory is unsafe\n' >&2; exit 1; }
+matrix="$(mktemp "${TMPDIR:-/tmp}/bench-native-matrix.XXXXXX")"
+trap 'rm -f "$matrix"' EXIT
+node -e 'for (const row of require(process.argv[1])) process.stdout.write(`${row.os}\t${row.arch}\t${row.runner}\n`)' "$root/scripts/platforms.json" > "$matrix"
+expected="$(while IFS=$'\t' read -r os arch _; do printf '%s-%s.json\n' "$os" "$arch"; done < "$matrix" | LC_ALL=C sort)"
+actual="$(find "$proofs" -mindepth 1 -maxdepth 1 -print0 | while IFS= read -r -d '' entry; do
+  [[ -f "$entry" && ! -L "$entry" ]] || { printf 'native proof directory contains an unsafe entry\n' >&2; exit 1; }
+  printf '%s\n' "${entry##*/}"
+done | LC_ALL=C sort)"
+[[ "$actual" == "$expected" ]] || { printf 'native proof set does not contain exactly the canonical proof files\n' >&2; exit 1; }
+count=0
+while IFS=$'\t' read -r os arch runner; do
+  file="$proofs/$os-$arch.json"
+  [[ -f "$file" && ! -L "$file" && -s "$file" ]] || { printf 'native proof set is missing %s/%s\n' "$os" "$arch" >&2; exit 1; }
+  node -e 'const fs=require("fs"), [file,os,arch,runner]=process.argv.slice(1), proof=JSON.parse(fs.readFileSync(file)); const want=`${os}-${arch}`; if (proof.schema_version!==1 || proof.target!==want || proof.runner!==runner || proof.status!=="green" || !proof.rebuilt_sha256 || !proof.binary_sha256 || !proof.package_sha256 || !proof.archive_sha256 || (os==="linux" ? proof.musl_status!=="green" : proof.musl_status!=="not_applicable")) process.exit(1)' "$file" "$os" "$arch" "$runner" || { printf 'native proof is incomplete or red for %s/%s\n' "$os" "$arch" >&2; exit 1; }
+  count=$((count + 1))
+done < "$matrix"
+[[ "$count" == 4 ]] || { printf 'native proof set has %s targets, want exactly four\n' "$count" >&2; exit 1; }
+printf 'native proof set: four canonical targets verified\n'

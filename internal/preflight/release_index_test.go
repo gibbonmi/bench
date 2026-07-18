@@ -122,6 +122,16 @@ func TestReleaseEvidenceIsDeterministicBoundAndIdempotent(t *testing.T) {
 	if string(secondIndex) != string(firstIndex) || string(secondSums) != string(firstSums) {
 		t.Fatal("release evidence changed with enumeration order or environment")
 	}
+	if err := os.WriteFile(filepath.Join(root, "dist", "native-proofs", "unexpected.json"), []byte("{}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	stderr.Reset()
+	if code := Command([]string{"--mode", "verify"}, "0.2.0", &stderr); code != 1 {
+		t.Fatalf("unexpected native proof exit=%d stderr=%s", code, stderr.String())
+	}
+	if err := os.Remove(filepath.Join(root, "dist", "native-proofs", "unexpected.json")); err != nil {
+		t.Fatal(err)
+	}
 
 	failing := filepath.Join(root, "fail-gate")
 	if err := os.WriteFile(failing, []byte("#!/bin/sh\nexit 9\n"), 0o755); err != nil {
@@ -183,6 +193,12 @@ func assertReleaseIndexRelationships(t *testing.T, root string, index releaseInd
 	artifactDir := filepath.Join(root, "dist", "artifacts")
 	for _, artifact := range index.Artifacts {
 		data := mustFixtureFile(t, filepath.Join(artifactDir, artifact.Name))
+		if strings.HasSuffix(artifact.Name, ".tar.gz") {
+			if artifact.Size != int64(len(data)) || artifact.SHA256 != sha256Hex(data) || artifact.ComponentDigest == "" || artifact.SBOMDigest == "" || artifact.InventoryDigest == "" {
+				t.Fatalf("offline artifact evidence relationship is incomplete for %s: %+v", artifact.Name, artifact)
+			}
+			continue
+		}
 		files := independentlyReadArchive(t, data)
 		manifestBytes := files["component-manifest.json"]
 		var manifest struct {
@@ -198,7 +214,7 @@ func assertReleaseIndexRelationships(t *testing.T, root string, index releaseInd
 	}
 
 	wantInputs := map[string]string{}
-	for _, path := range []string{"LICENSE", "go.mod", "go.sum", "governance/THIRD_PARTY_NOTICES.txt", "governance/policies/dependency-license-change.json", "governance/policies/recovery-rollback.json", "governance/policies/security-response.json", "governance/policies/support.json", "governance/policies/supported-versions.json", "governance/policies/threat-model.json", "governance/sbom.spdx.json", "internal/releaseevidence/registry.json", "internal/releaseevidence/requirements.json", "release-evidence/ft87-offline-network-control.json", "release-evidence/ft88-data-handling.json", ".bench/gate.sh", "bin/bench.sh", "package.json", "scripts/build-artifacts.sh", "scripts/build-release-evidence.mjs", "scripts/go-build.sh", "scripts/platforms.json", "scripts/smoke-artifacts.sh", "scripts/wrapper-assets.json"} {
+	for _, path := range []string{"LICENSE", "go.mod", "go.sum", "governance/THIRD_PARTY_NOTICES.txt", "governance/policies/dependency-license-change.json", "governance/policies/recovery-rollback.json", "governance/policies/security-response.json", "governance/policies/support.json", "governance/policies/supported-versions.json", "governance/policies/threat-model.json", "governance/sbom.spdx.json", "internal/releaseevidence/registry.json", "internal/releaseevidence/requirements.json", "release-evidence/ft87-offline-network-control.json", "release-evidence/ft88-data-handling.json", ".bench/gate.sh", "bin/bench.sh", "package.json", "scripts/build-artifacts.sh", "scripts/build-offline-archives.sh", "scripts/write-deterministic-archive.mjs", "scripts/compare-artifacts.sh", "scripts/native-proof.sh", "scripts/aggregate-native-proofs.sh", "scripts/build-release-evidence.mjs", "scripts/go-build.sh", "scripts/platforms.json", "scripts/smoke-artifacts.sh", "scripts/smoke-offline.sh", "scripts/offline-registry.mjs", "scripts/wrapper-assets.json"} {
 		wantInputs[path] = sha256Hex(mustFixtureFile(t, filepath.Join(root, filepath.FromSlash(path))))
 	}
 	gotInputs := map[string]string{}

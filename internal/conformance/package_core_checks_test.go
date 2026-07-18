@@ -42,6 +42,9 @@ func checkPackageFiles(root string) []string {
 	}
 	var diags []string
 	for _, file := range pkg.Files {
+		if strings.HasPrefix(file, "!") {
+			continue
+		}
 		if !exists(filepath.Join(root, filepath.FromSlash(file))) {
 			diags = append(diags, "package.json files[] missing "+file)
 		}
@@ -58,12 +61,19 @@ func checkPackageFiles(root string) []string {
 	if probe != nil && probe.ExitCode != 0 {
 		diags = append(diags, "npm pack --dry-run failed")
 	} else if probe != nil {
-		diags = append(diags, checkNpmPackAssets(probe.Stdout)...)
+		buildAssets, err := packagesurface.RequiredBuildPackAssets(root)
+		if err != nil {
+			diags = append(diags, "npm package build inputs are unreadable")
+		} else {
+			required := append([]string{}, packagesurface.RequiredPackAssets...)
+			required = append(required, buildAssets...)
+			diags = append(diags, checkNpmPackAssets(probe.Stdout, required)...)
+		}
 	}
 	return append(diags, checkRepoOnlyPackageClaims(root)...)
 }
 
-func checkNpmPackAssets(packJSON string) []string {
+func checkNpmPackAssets(packJSON string, required []string) []string {
 	var packs []struct {
 		Files []struct {
 			Path string `json:"path"`
@@ -79,9 +89,9 @@ func checkNpmPackAssets(packJSON string) []string {
 		}
 	}
 	var diags []string
-	for _, required := range packagesurface.RequiredPackAssets {
-		if !files[required] {
-			diags = append(diags, "npm package missing "+required)
+	for _, asset := range required {
+		if !files[asset] {
+			diags = append(diags, "npm package missing "+asset)
 		}
 	}
 	for _, forbidden := range packagesurface.ForbiddenPackAssets {
@@ -301,14 +311,20 @@ func checkNativeRuntimeWorkflow(root string) []string {
 		}
 	}
 	for label, anchor := range map[string]string{
-		"canonical matrix": "scripts/platforms.json",
-		"derived matrix":   "fromJSON(needs.preflight.outputs.matrix)",
-		"full preflight":   "scripts/release-preflight.sh --mode verify",
-		"focused smoke":    "scripts/release-preflight.sh --mode verify --phase smoke",
+		"canonical matrix":       "scripts/platforms.json",
+		"derived matrix":         "fromJSON(needs.preflight.outputs.matrix)",
+		"full preflight":         "scripts/release-preflight.sh --mode verify",
+		"focused smoke":          "scripts/release-preflight.sh --mode verify --phase smoke",
+		"native proof builder":   "scripts/native-proof.sh",
+		"native proof aggregate": "scripts/aggregate-native-proofs.sh",
+		"native proof evidence":  "dist/native-proofs",
 	} {
 		if !strings.Contains(text, anchor) {
 			diags = append(diags, "native verification workflow does not include "+label)
 		}
+	}
+	if proof := readIfExists(filepath.Join(root, "scripts", "native-proof.sh")); proof != "" && !strings.Contains(proof, "docker run --rm --network none") {
+		diags = append(diags, "native proof does not isolate the Linux non-glibc execution")
 	}
 	var matrix []struct {
 		Runner string `json:"runner"`

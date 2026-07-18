@@ -20,8 +20,9 @@ func TestPackageContracts(t *testing.T) {
 	packageRunGenerator(t, gen).RequireExit(0)
 	first := packageArtifactNames(t, gen)
 	t.Run("platform-package generator failed", func(t *testing.T) {
-		if len(first) != len(packageReadPlatforms(t))+1 {
-			t.Fatalf("artifact count = %d, want matrix + wrapper", len(first))
+		wantArtifacts := len(packageReadPlatforms(t))*2 + 1
+		if len(first) != wantArtifacts {
+			t.Fatalf("artifact count = %d, want packages plus archives = %d", len(first), wantArtifacts)
 		}
 	})
 	packageRunGenerator(t, gen).RequireExit(0)
@@ -128,7 +129,13 @@ func testPackageNpmPackInstallableSurface(t *testing.T) {
 			files[file.Path] = true
 		}
 	}
-	for _, required := range packagesurface.RequiredPackAssets {
+	buildAssets, err := packagesurface.RequiredBuildPackAssets(contract.SubjectRoot(t))
+	if err != nil {
+		t.Fatalf("read required npm build inputs: %v", err)
+	}
+	requiredAssets := append([]string{}, packagesurface.RequiredPackAssets...)
+	requiredAssets = append(requiredAssets, buildAssets...)
+	for _, required := range requiredAssets {
 		if !files[required] {
 			t.Fatalf("npm package missing %s", required)
 		}

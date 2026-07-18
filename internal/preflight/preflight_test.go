@@ -340,7 +340,7 @@ func TestFullRunPhaseRedPromotesCompleteReleaseEvidence(t *testing.T) {
 	if err := json.Unmarshal(indexData, &index); err != nil {
 		t.Fatal(err)
 	}
-	if index.Status != StatusRed || len(index.Requirements) != len(Requirements()) || len(index.Artifacts) != 5 {
+	if index.Status != StatusRed || len(index.Requirements) != len(Requirements()) || len(index.Artifacts) != 9 {
 		t.Fatalf("red index = %+v", index)
 	}
 	if sums, err := os.ReadFile(filepath.Join(root, "dist", "preflight", "SHA256SUMS")); err != nil || len(sums) == 0 {

@@ -53,7 +53,7 @@ you need adapter wiring or other lookup detail.
 Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
 
 - Adoption and setup: `bench link`, `bench init`, `bench unlink`, `bench doctor`.
-- Ambient context and capture: `bench status`, `bench dashboard`, `bench idea`,
+- Ambient context and capture: `bench status`, `bench commands --brief`, `bench dashboard`, `bench idea`,
   `bench roadmap`, `bench learnings`, `bench maps`.
 - Oracle and diagnostics: `bench gate`, `bench gate pin`, `bench canary`, `bench structure`,
   `bench guards`, `bench diff`, `bench coverage`, `bench outline`, `bench models`, `bench version`.

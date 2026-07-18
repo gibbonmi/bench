@@ -20,6 +20,7 @@ func inputFingerprint(root string, run RunEvidence) (string, error) {
 		paths = append(paths, record.Path)
 	}
 	paths = append(paths, "dist/artifacts")
+	paths = append(paths, "dist/reproducibility.json", "dist/native-proofs")
 	sort.Strings(paths)
 	seen := map[string]bool{}
 	for _, rel := range paths {

@@ -146,6 +146,71 @@ func seedEvidenceFixture(t *testing.T, root string) {
 			t.Fatal(err)
 		}
 	}
+	buildArchives := exec.Command("bash", filepath.Join(root, "scripts", "build-offline-archives.sh"), artifactDir, artifactDir)
+	buildArchives.Dir = root
+	if output, err := buildArchives.CombinedOutput(); err != nil {
+		t.Fatalf("fixture offline archives: %v\n%s", err, output)
+	}
+	artifactNames, err := os.ReadDir(artifactDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	type reproducibilityArtifact struct {
+		Name   string `json:"name"`
+		Size   int64  `json:"size"`
+		SHA256 string `json:"sha256"`
+		Match  bool   `json:"match"`
+	}
+	record := struct {
+		SchemaVersion int                       `json:"schema_version"`
+		Status        string                    `json:"status"`
+		Builds        int                       `json:"builds"`
+		Artifacts     []reproducibilityArtifact `json:"artifacts"`
+	}{SchemaVersion: 1, Status: "green", Builds: 2}
+	for _, entry := range artifactNames {
+		data := mustFixtureFile(t, filepath.Join(artifactDir, entry.Name()))
+		record.Artifacts = append(record.Artifacts, reproducibilityArtifact{Name: entry.Name(), Size: int64(len(data)), SHA256: sha256Hex(data), Match: true})
+	}
+	sort.Slice(record.Artifacts, func(i, j int) bool { return record.Artifacts[i].Name < record.Artifacts[j].Name })
+	recordBytes, err := json.Marshal(record)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "dist", "reproducibility.json"), append(recordBytes, '\n'), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// Publish-mode evidence also needs one proof for every canonical native target.
+	// The fixture binary is intentionally small, but the proof shape and its digests
+	// remain independently checked by releaseevidence, just like a runner-produced proof.
+	binaryDigest := sha256Hex([]byte("#!/bin/sh\n"))
+	proofDir := filepath.Join(root, "dist", "native-proofs")
+	if err := os.MkdirAll(proofDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, item := range []struct {
+		os, arch, runner string
+	}{{"darwin", "arm64", "macos-14"}, {"darwin", "x64", "macos-13"}, {"linux", "arm64", "ubuntu-24.04"}, {"linux", "x64", "ubuntu-24.04"}} {
+		platformName := fmt.Sprintf("redbench-%s-%s-0.2.0.tgz", item.os, item.arch)
+		archiveName := fmt.Sprintf("redbench-0.2.0-%s-%s.tar.gz", item.os, item.arch)
+		proof := map[string]any{
+			"schema_version": 1,
+			"target":         item.os + "-" + item.arch,
+			"runner":         item.runner,
+			"status":         "green",
+			"rebuilt_sha256": binaryDigest,
+			"binary_sha256":  binaryDigest,
+			"package_sha256": sha256Hex(mustFixtureFile(t, filepath.Join(artifactDir, platformName))),
+			"archive_sha256": sha256Hex(mustFixtureFile(t, filepath.Join(artifactDir, archiveName))),
+			"musl_status":    map[bool]string{true: "green", false: "not_applicable"}[item.os == "linux"],
+		}
+		data, err := json.Marshal(proof)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(proofDir, item.os+"-"+item.arch+".json"), append(data, '\n'), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
 }
 
 func fixtureTarball(t *testing.T, files map[string]fixtureArchiveFile) []byte {

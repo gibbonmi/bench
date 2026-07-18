@@ -49,8 +49,9 @@ func TestDistributableArtifactContracts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(files) != len(matrix)+1 {
-		t.Fatalf("artifact count = %d, want matrix + wrapper = %d", len(files), len(matrix)+1)
+	wantArtifacts := len(matrix)*2 + 1
+	if len(files) != wantArtifacts {
+		t.Fatalf("artifact count = %d, want packages plus archives = %d", len(files), wantArtifacts)
 	}
 
 	wrapperTar := filepath.Join(out, fmt.Sprintf("redbench-%s.tgz", wrapper.Version))
@@ -61,18 +62,12 @@ func TestDistributableArtifactContracts(t *testing.T) {
 	}
 	assertInstalledArtifactLifecycle(t, out, wrapper.Version)
 	contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(root, "scripts", "smoke-artifacts.sh"), out).RequireExit(0)
+}
 
-	// A signal in the promotion window restores the old complete set. The same
-	// hostile-path invocation can then be rerun and replace it safely.
-	assertInterruptedArtifactPromotion(t, buildRoot, out, len(matrix)+1)
-	contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-artifacts.sh"), buildRoot, out).RequireExit(0)
-	files, err = os.ReadDir(out)
-	if err != nil || len(files) != len(matrix)+1 {
-		t.Fatalf("second artifact build was not safe: files=%d err=%v", len(files), err)
-	}
-	assertConcurrentFirstArtifactPromotion(t, buildRoot, len(matrix)+1)
-
-	assertSpecialFileArtifactFailure(t, root, out)
+func TestArtifactBuilderRejectsSpecialReleaseEvidenceInput(t *testing.T) {
+	root := contract.SubjectRoot(t)
+	contract.SkipIfSubjectFileMissing(t, "scripts/build-artifacts.sh")
+	assertSpecialFileArtifactFailure(t, root, t.TempDir())
 }
 
 func assertWrapperAssetPolicy(t *testing.T, root string) {
@@ -124,9 +119,17 @@ func assertInstalledArtifactLifecycle(t *testing.T, artifacts, version string) {
 	}
 	wrapperTar := filepath.Join(artifacts, "redbench-"+version+".tgz")
 	nativeTar := filepath.Join(artifacts, "redbench-"+target+"-"+version+".tgz")
-	runLifecycle(t, app, nil, "npm", "install", "--ignore-scripts", "--omit=optional", wrapperTar, nativeTar)
+	npmEnv := map[string]string{
+		"npm_config_audit":           "false",
+		"npm_config_cache":           filepath.Join(tmp, "npm-cache"),
+		"npm_config_fund":            "false",
+		"npm_config_offline":         "true",
+		"npm_config_registry":        "http://127.0.0.1:9",
+		"npm_config_update_notifier": "false",
+	}
+	runLifecycle(t, app, npmEnv, "npm", "install", "--ignore-scripts", "--omit=optional", wrapperTar, nativeTar)
 	// A second exact-tarball install is a no-op success, not a source-tree fallback.
-	runLifecycle(t, app, nil, "npm", "install", "--ignore-scripts", "--omit=optional", wrapperTar, nativeTar)
+	runLifecycle(t, app, npmEnv, "npm", "install", "--ignore-scripts", "--omit=optional", wrapperTar, nativeTar)
 	wrapper := filepath.Join(app, "node_modules", "redbench", "bin", "bench.sh")
 	env := map[string]string{
 		"BENCH_HOME": home,

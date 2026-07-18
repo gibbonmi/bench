@@ -1,0 +1,1 @@
+[{"path":"scripts/compare-artifacts.sh","old":"cmp -s","new":"printf"}]

@@ -56,7 +56,7 @@ func requireExecutables(t *testing.T, names ...string) {
 func stageWorkingTreeRepo(t *testing.T, subject string) string {
 	t.Helper()
 	repo := t.TempDir()
-	lsOut, err := exec.Command("git", "-C", subject, "ls-files", "-z").Output()
+	lsOut, err := exec.Command("git", "-C", subject, "ls-files", "-z", "--cached", "--others", "--exclude-standard").Output()
 	if err != nil {
 		t.Fatalf("git ls-files: %v", err)
 	}

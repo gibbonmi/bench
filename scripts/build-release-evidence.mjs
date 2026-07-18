@@ -2,18 +2,14 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 
-const [root, wrapperDir, packagesDir] = process.argv.slice(2);
-if (!root || !wrapperDir || !packagesDir) throw new Error("usage: build-release-evidence.mjs <source-root> <wrapper-dir> <packages-dir>");
+const args = process.argv.slice(2);
+const validateOnly = args[0] === "--validate-required-sources";
+const [root, wrapperDir, packagesDir] = validateOnly ? [args[1], "", ""] : args;
+if (!root || !validateOnly && (!wrapperDir || !packagesDir)) throw new Error("usage: build-release-evidence.mjs [--validate-required-sources] <source-root> [<wrapper-dir> <packages-dir>]");
 
-const matrix = readJSON(path.join(root, "scripts/platforms.json"));
-const assets = readJSON(path.join(root, "scripts/wrapper-assets.json"));
 const requirements = readJSON(path.join(root, "internal/releaseevidence/requirements.json"));
 const componentSchema = requirements.component_manifest;
-const sourcePackage = readJSON(path.join(root, "package.json"));
-const seenDestinations = new Set();
-const byteOrder = (a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
-
-if (!Array.isArray(matrix) || matrix.length === 0 || !Array.isArray(assets) || !Array.isArray(requirements.records) || !componentSchema || componentSchema.schema_version !== 1) throw new Error("release evidence matrix, asset, or requirement registry is invalid");
+if (!Array.isArray(requirements.records) || !componentSchema || componentSchema.schema_version !== 1) throw new Error("release evidence requirement registry is invalid");
 const schemaFields = [componentSchema.root_fields, componentSchema.component_fields, componentSchema.target_fields, componentSchema.file_fields].flatMap(fields => fields && typeof fields === "object" ? Object.values(fields) : []);
 if (schemaFields.some(field => typeof field !== "string" || field.length === 0) || new Set(schemaFields).size !== schemaFields.length) throw new Error("component manifest schema fields are invalid");
 const packageEvidence = requirements.records.filter(record => record.package_mode !== undefined);
@@ -77,15 +73,30 @@ function copyRegular(src, dst, mode, label, destinationRoot = wrapperDir) {
 }
 
 function validateRequiredSources() {
-	for (const evidence of packageEvidence) {
-		if (!evidence || typeof evidence.path !== "string" || typeof evidence.schema !== "string" || evidence.package_mode !== "0644") throw new Error("packaged requirement entry is invalid");
-		const relative = evidence.path;
+  const sources = [];
+  for (const evidence of packageEvidence) {
+    if (!evidence || typeof evidence.path !== "string" || typeof evidence.schema !== "string" || evidence.package_mode !== "0644") throw new Error("packaged requirement entry is invalid");
+    const relative = evidence.path;
     const source = sourcePath(relative);
     const stat = fs.lstatSync(source);
     if (!stat.isFile() || stat.isSymbolicLink() || stat.size === 0 || (stat.mode & 0o777) !== 0o644 || (stat.mode & 0o7000) !== 0) throw new Error(`required release evidence source is invalid: ${relative}`);
+    sources.push({relative, source, stat});
+  }
+  for (const {relative, source, stat} of sources) {
     if ((relative.startsWith("governance/") || relative === "LICENSE") && fs.readFileSync(source)[stat.size - 1] !== 0x0a) throw new Error(`required release evidence source is missing a final newline: ${relative}`);
   }
 }
+
+validateRequiredSources();
+if (validateOnly) process.exit(0);
+
+const matrix = readJSON(path.join(root, "scripts/platforms.json"));
+const assets = readJSON(path.join(root, "scripts/wrapper-assets.json"));
+const sourcePackage = readJSON(path.join(root, "package.json"));
+const seenDestinations = new Set();
+const byteOrder = (a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
+
+if (!Array.isArray(matrix) || matrix.length === 0 || !Array.isArray(assets)) throw new Error("release evidence matrix or asset registry is invalid");
 
 function copyTree(src, dst, mode, label, destinationRoot = wrapperDir) {
   const stat = fs.lstatSync(src);
@@ -170,7 +181,6 @@ function writeEvidence(dir, name, version, target) {
   writeJSON(path.join(dir, componentSchema.path), component);
 }
 
-validateRequiredSources();
 copyAssets(wrapperDir);
 copyPackageEvidence(wrapperDir);
 const optionalDependencies = Object.fromEntries(matrix.map(p => [`@redbench/${p.os}-${p.arch}`, sourcePackage.version]));

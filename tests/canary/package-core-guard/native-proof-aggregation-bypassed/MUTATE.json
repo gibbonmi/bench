@@ -1,0 +1,1 @@
+[{"path":".github/workflows/native-runtime.yml","old":"      - run: bash scripts/aggregate-native-proofs.sh dist/native-proofs\n","new":"      - run: printf 'native proof omitted\\n'\n"}]

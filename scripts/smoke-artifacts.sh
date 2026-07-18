@@ -30,11 +30,15 @@ esac || { printf 'bench artifacts: %s format mismatch: %s\n' "$target" "$format"
 printf '#!/bin/sh\nprintf "poisoned cache\\n"\nexit 99\n' > "$tmp/home/cache/bin/$version/$target/bench"
 chmod 0755 "$tmp/home/cache/bin/$version/$target/bench"
 printf '{"private":true}\n' > "$tmp/app/package.json"
-npm install --prefix "$tmp/app" "${npm_install_flags[@]}" "$wrapper" "$native" >/dev/null
+HOME="$tmp/home" BENCH_HOME="$tmp/home/.bench" BENCH_NO_REPAIR=1 npm_config_cache="$tmp/npm-cache" npm_config_offline=true npm_config_registry=http://127.0.0.1:9 npm install --offline --prefix "$tmp/app" "${npm_install_flags[@]}" "$wrapper" "$native" >/dev/null
 installed="$tmp/app/node_modules/redbench/bin/bench.sh"
-out="$(BENCH_HOME="$tmp/home" bash "$installed" version)"
+out="$(HOME="$tmp/home" BENCH_HOME="$tmp/home/.bench" BENCH_NO_REPAIR=1 bash "$installed" version)"
 case "$out" in
   "benchkit $version "*) ;;
   *) printf 'bench artifacts: native version mismatch: %s\n' "$out" >&2; exit 1 ;;
 esac
+HOME="$tmp/home" BENCH_HOME="$tmp/home/.bench" BENCH_NO_REPAIR=1 bash "$installed" help >/dev/null
+HOME="$tmp/home" BENCH_HOME="$tmp/home/.bench" npm_config_registry=http://127.0.0.1:9 npm_config_offline=true npm uninstall --offline --prefix "$tmp/app" redbench "@redbench/$target" >/dev/null
+[[ ! -e "$tmp/app/node_modules/redbench" && ! -e "$tmp/home/.bench/cache" ]] || { printf 'bench artifacts: local npm uninstall left residue\n' >&2; exit 1; }
+bash "$root/scripts/smoke-offline.sh" "$artifacts"
 printf 'bench artifacts: %s selected %s\n' "$target" "$out"

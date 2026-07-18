@@ -27,11 +27,11 @@ jobs:
       - run: bash scripts/install-govulncheck.sh
       - id: matrix
         run: node -e 'const fs=require("fs"); const rows=require("./scripts/platforms.json"); fs.appendFileSync(process.env.GITHUB_OUTPUT, `rows=${JSON.stringify({include:rows})}\n`)'
-      - run: bash scripts/release-preflight.sh --mode publish --profile public
+      - run: bash scripts/release-preflight.sh --mode verify
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: release-artifacts
-          path: dist/artifacts/*.tgz
+          path: dist/artifacts/
           retention-days: ${{ github.retention_days }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
@@ -59,8 +59,73 @@ jobs:
           path: dist/artifacts
       - run: bash scripts/release-preflight.sh --mode verify --phase smoke
 
-  publish:
+  native-proof:
     needs: [preflight, smoke]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.preflight.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-artifacts
+          path: dist/artifacts
+      - run: bash scripts/native-proof.sh dist/artifacts "dist/native-proofs/${{ matrix.os }}-${{ matrix.arch }}.json" "${{ matrix.os }}" "${{ matrix.arch }}" "${{ matrix.runner }}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-native-proof-${{ matrix.os }}-${{ matrix.arch }}
+          path: dist/native-proofs/
+
+  native-evidence:
+    needs: native-proof
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: release-native-proof-*
+          path: dist/native-proofs
+          merge-multiple: true
+      - run: bash scripts/aggregate-native-proofs.sh dist/native-proofs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-native-proof-evidence
+          path: dist/native-proofs/
+
+  authorize:
+    needs: [preflight, smoke, native-evidence]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - run: bash scripts/install-govulncheck.sh
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-native-proof-evidence
+          path: dist/native-proofs
+      - run: bash scripts/release-preflight.sh --mode publish --profile public
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: publish-preflight-evidence
+          path: dist/preflight/
+          retention-days: ${{ github.retention_days }}
+
+  publish:
+    needs: [authorize]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4

@@ -7,14 +7,25 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/contract"
 )
 
-func assertConcurrentFirstArtifactPromotion(t *testing.T, root string, expected int) {
+func TestArtifactPromotionIsAtomicAndExclusive(t *testing.T) {
+	root := contract.SubjectRoot(t)
+	contract.SkipIfSubjectFileMissing(t, "scripts/build-artifacts.sh")
+	source := committedHostileArtifactSource(t, root)
+	prepared, expected := prepareArtifactGeneration(t, source)
+	output := filepath.Join(t.TempDir(), "artifact output")
+	assertConcurrentFirstArtifactPromotion(t, source, prepared, output, expected)
+	assertInterruptedArtifactPromotion(t, source, prepared, output, expected)
+}
+
+func assertConcurrentFirstArtifactPromotion(t *testing.T, root, prepared, output string, expected int) {
 	t.Helper()
-	output := filepath.Join(t.TempDir(), "concurrent artifact output")
 	ready := filepath.Join(t.TempDir(), "winner-ready")
 	winner := exec.Command("bash", filepath.Join(root, "scripts", "build-artifacts.sh"), root, output)
-	winner.Env = append(os.Environ(), "BENCH_TEST_PROMOTION_READY_FILE="+ready)
+	winner.Env = promotionTestEnv(prepared, ready)
 	if err := winner.Start(); err != nil {
 		t.Fatal(err)
 	}
@@ -29,6 +40,7 @@ func assertConcurrentFirstArtifactPromotion(t *testing.T, root string, expected 
 		time.Sleep(20 * time.Millisecond)
 	}
 	loser := exec.Command("bash", filepath.Join(root, "scripts", "build-artifacts.sh"), root, output)
+	loser.Env = promotionTestEnv(prepared, ready)
 	if err := loser.Run(); err == nil {
 		t.Fatal("concurrent artifact builder did not fail closed")
 	}
@@ -46,7 +58,7 @@ func assertConcurrentFirstArtifactPromotion(t *testing.T, root string, expected 
 		t.Fatalf("concurrent artifact promotion entries=%d, want one complete %d-file generation", len(entries), expected)
 	}
 	for _, entry := range entries {
-		if !entry.Type().IsRegular() || !strings.HasSuffix(entry.Name(), ".tgz") {
+		if !entry.Type().IsRegular() || (!strings.HasSuffix(entry.Name(), ".tgz") && !strings.HasSuffix(entry.Name(), ".tar.gz")) {
 			t.Fatalf("concurrent artifact promotion left nested or non-tar output: %s", entry.Name())
 		}
 	}

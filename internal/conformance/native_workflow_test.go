@@ -112,7 +112,7 @@ func checkReleasePreflight(root string) []string {
 	native := readIfExists(filepath.Join(root, ".github", "workflows", "native-runtime.yml"))
 	release := readIfExists(filepath.Join(root, ".github", "workflows", "release.yml"))
 	installer := readIfExists(filepath.Join(root, "scripts", "install-govulncheck.sh"))
-	if strings.Count(native, "bash scripts/install-govulncheck.sh") != 1 || strings.Count(release, "bash scripts/install-govulncheck.sh") != 1 || !regexp.MustCompile(`govulncheck@v[0-9]+\.[0-9]+\.[0-9]+`).MatchString(installer) {
+	if strings.Count(native, "bash scripts/install-govulncheck.sh") != 1 || strings.Count(release, "bash scripts/install-govulncheck.sh") != 2 || !regexp.MustCompile(`govulncheck@v[0-9]+\.[0-9]+\.[0-9]+`).MatchString(installer) {
 		diags = append(diags, "release workflows do not consume the repository-owned govulncheck setup")
 	}
 	if strings.Contains(native, "govulncheck@") || strings.Contains(release, "govulncheck@") {
@@ -126,7 +126,7 @@ func checkReleasePreflight(root string) []string {
 		}
 	}
 	if release != "" {
-		for message, anchor := range map[string]string{"tag publication bypasses full release preflight": "scripts/release-preflight.sh --mode publish --profile public\n", "tag publication does not upload preflight evidence": "publish-preflight-evidence", "tag runner matrix bypasses focused smoke": "--mode verify --phase smoke", "tag evidence does not request repository maximum retention": "retention-days: ${{ github.retention_days }}", "publication does not wait for preflight and every native smoke row": "needs: [preflight, smoke]"} {
+		for message, anchor := range map[string]string{"tag publication bypasses full release preflight": "scripts/release-preflight.sh --mode publish --profile public\n", "tag publication does not upload preflight evidence": "publish-preflight-evidence", "tag runner matrix bypasses focused smoke": "--mode verify --phase smoke", "tag evidence does not request repository maximum retention": "retention-days: ${{ github.retention_days }}", "publication does not wait for preflight and every native proof row": "needs: [preflight, smoke, native-evidence]", "publication does not wait for publish authorization": "needs: [authorize]"} {
 			if !strings.Contains(release, anchor) {
 				diags = append(diags, message)
 			}
@@ -143,6 +143,21 @@ func checkReleasePreflight(root string) []string {
 	}
 	if registryUsable && requirementUsable {
 		diags = append(diags, runReleaseEvidenceProbe(root, requirementRegistry.Records)...)
+	}
+	archiveEvidence := readIfExists(filepath.Join(root, "internal", "releaseevidence", "artifact_evidence.go"))
+	if archiveEvidence != "" && !strings.Contains(archiveEvidence, "approved npm tarball bytes") {
+		diags = append(diags, "release evidence does not bind archive digest bytes")
+	}
+	comparison := readIfExists(filepath.Join(root, "scripts", "compare-artifacts.sh"))
+	if comparison != "" && (!strings.Contains(comparison, "cmp -s") || !strings.Contains(comparison, "reproducibility mismatch:")) {
+		diags = append(diags, "reproducibility comparator does not require exact byte equality")
+	}
+	offlineSmoke := readIfExists(filepath.Join(root, "scripts", "smoke-offline.sh"))
+	if offlineSmoke != "" && (strings.Count(offlineSmoke, "BENCH_NO_REPAIR=1") != 7 || strings.Count(offlineSmoke, "npm_config_offline=true") != 3) {
+		diags = append(diags, "offline smoke permits repair or network fallback")
+	}
+	if offlineSmoke != "" && (!strings.Contains(offlineSmoke, "printf 'offline smoke: loopback registry fixture did not start\\n' >&2\n  exit 1") || strings.Contains(offlineSmoke, "local-fixture")) {
+		diags = append(diags, "offline registry smoke does not fail closed")
 	}
 	return diags
 }
@@ -269,6 +284,10 @@ func main() {
 	env := append([]string{}, os.Environ()...)
 	for _, phase := range []string{"gate", "race", "vet", "vulnerability", "artifacts", "smoke"} {
 		env = append(env, "BENCH_PREFLIGHT_"+strings.ToUpper(phase)+"="+fakePath)
+	}
+	preflightBinary := filepath.Join(root, "dist", "bench-preflight")
+	if err := os.Remove(preflightBinary); err != nil && !os.IsNotExist(err) {
+		return []string{"release evidence probe could not reset the preflight command"}
 	}
 	cmd := exec.Command("bash", filepath.Join(root, "scripts", "release-preflight.sh"), "--mode", "verify")
 	cmd.Dir, cmd.Env = root, env

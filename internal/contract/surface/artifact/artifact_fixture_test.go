@@ -167,6 +167,9 @@ func assertSpecialFileArtifactFailure(t *testing.T, root, output string) {
 	if err := syscall.Mkfifo(filepath.Join(broken, "LICENSE"), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.MkdirAll(output, 0o755); err != nil {
+		t.Fatal(err)
+	}
 	sentinel := filepath.Join(output, "promoted-sentinel")
 	if err := os.WriteFile(sentinel, []byte("owned"), 0o644); err != nil {
 		t.Fatal(err)
@@ -183,15 +186,30 @@ func assertSpecialFileArtifactFailure(t *testing.T, root, output string) {
 	}
 }
 
-func assertInterruptedArtifactPromotion(t *testing.T, source, output string, wantFiles int) {
+func prepareArtifactGeneration(t *testing.T, source string) (string, int) {
+	t.Helper()
+	prepared := filepath.Join(t.TempDir(), "prepared artifact generation")
+	contract.NewExecFixtureAt(t, source).Run("bash", filepath.Join(source, "scripts", "build-artifacts.sh"), source, prepared).RequireExit(0)
+	entries, err := os.ReadDir(prepared)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return prepared, len(entries)
+}
+
+func promotionTestEnv(prepared, ready string) []string {
+	return append(os.Environ(), "BENCH_TEST_PREPARED_ARTIFACTS="+prepared, "BENCH_TEST_PROMOTION_READY_FILE="+ready)
+}
+
+func assertInterruptedArtifactPromotion(t *testing.T, source, prepared, output string, wantFiles int) {
 	t.Helper()
 	ready := filepath.Join(t.TempDir(), "promotion-ready")
 	cmd := exec.Command("bash", filepath.Join(source, "scripts", "build-artifacts.sh"), source, output)
-	cmd.Env = append(os.Environ(), "BENCH_TEST_PROMOTION_READY_FILE="+ready)
+	cmd.Env = promotionTestEnv(prepared, ready)
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
-	deadline := time.Now().Add(90 * time.Second)
+	deadline := time.Now().Add(30 * time.Second)
 	for {
 		if _, err := os.Stat(ready); err == nil {
 			break

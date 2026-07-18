@@ -1,9 +1,7 @@
 package releaseevidence
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -13,73 +11,9 @@ import (
 	"time"
 )
 
-type targetEvidence struct {
-	OS     string `json:"os"`
-	Arch   string `json:"arch"`
-	GOOS   string `json:"goos"`
-	GOArch string `json:"goarch"`
-	Runner string `json:"runner"`
-}
-
-type phaseEvidence struct {
-	Name   string `json:"name"`
-	Status Status `json:"status"`
-	Digest string `json:"record_sha256"`
-}
-
-type artifactEvidence struct {
-	Name            string `json:"name"`
-	Target          string `json:"target"`
-	Size            int64  `json:"size"`
-	SHA256          string `json:"sha256"`
-	ComponentDigest string `json:"component_manifest_sha256"`
-	SBOMDigest      string `json:"sbom_sha256"`
-	InventoryDigest string `json:"inventory_sha256"`
-}
-
-type toolchainEvidence struct {
-	Name    string   `json:"name"`
-	Version string   `json:"version"`
-	Flags   []string `json:"flags"`
-}
-
-type releaseIdentity struct {
-	Tag              string `json:"tag,omitempty"`
-	PackageVersion   string `json:"package_version,omitempty"`
-	SourceCommit     string `json:"source_commit,omitempty"`
-	BinaryVersion    string `json:"binary_version,omitempty"`
-	ChangelogHeading string `json:"changelog_heading,omitempty"`
-	Toolchain        string `json:"toolchain,omitempty"`
-}
-
-type Index struct {
-	SchemaVersion  int                 `json:"schema_version"`
-	Mode           Mode                `json:"mode"`
-	Scope          Scope               `json:"scope"`
-	Profile        Profile             `json:"profile,omitempty"`
-	Status         Status              `json:"status"`
-	Identity       releaseIdentity     `json:"identity"`
-	RollbackTarget string              `json:"rollback_target"`
-	Flags          []string            `json:"flags"`
-	Toolchains     []toolchainEvidence `json:"toolchains"`
-	Inputs         []evidenceDigest    `json:"inputs"`
-	Targets        []targetEvidence    `json:"targets"`
-	Phases         []phaseEvidence     `json:"phases"`
-	Requirements   []RequirementStatus `json:"requirements"`
-	Artifacts      []artifactEvidence  `json:"artifacts"`
-}
-
 type ReleaseIntentError struct{ Message string }
 
 func (e *ReleaseIntentError) Error() string { return e.Message }
-
-var indexEncoder = canonicalJSON
-
-func SetIndexEncoderForTesting(encoder func(any) ([]byte, error)) func() {
-	previous := indexEncoder
-	indexEncoder = encoder
-	return func() { indexEncoder = previous }
-}
 
 func FinalizeEvidence(ctx context.Context, root string, run RunEvidence) error {
 	if err := validateRun(root, run); err != nil {
@@ -204,6 +138,20 @@ func assembleReleaseEvidence(ctx context.Context, root string, run RunEvidence) 
 	if err := waitForEvidenceProbe(ctx); err != nil {
 		return assembledEvidence{}, err
 	}
+	reproducibility, err := readReproducibility(root, artifacts)
+	if err != nil {
+		return assembledEvidence{}, err
+	}
+	nativeProofs, err := inspectNativeProofs(root, targets, artifacts)
+	if err != nil {
+		return assembledEvidence{}, err
+	}
+	if run.Mode == ModePublish && len(nativeProofs) != len(targets) {
+		if unsatisfied != "" {
+			unsatisfied += "; "
+		}
+		unsatisfied += "native target proof is incomplete"
+	}
 	currentArtifacts, err := fingerprintArtifactSet(root)
 	if err != nil || currentArtifacts != artifactFingerprint {
 		return assembledEvidence{}, errors.New("release evidence artifact drift detected during assembly")
@@ -234,20 +182,22 @@ func assembleReleaseEvidence(ctx context.Context, root string, run RunEvidence) 
 		status = StatusRed
 	}
 	index := Index{
-		SchemaVersion:  1,
-		Mode:           run.Mode,
-		Scope:          run.Scope,
-		Profile:        run.Profile,
-		Status:         status,
-		Identity:       releaseIdentityFrom(run.Identity),
-		RollbackTarget: rollbackTarget,
-		Flags:          flags,
-		Toolchains:     toolchains,
-		Inputs:         inputs,
-		Targets:        targets,
-		Phases:         phases,
-		Requirements:   statuses,
-		Artifacts:      artifacts,
+		SchemaVersion:   1,
+		Mode:            run.Mode,
+		Scope:           run.Scope,
+		Profile:         run.Profile,
+		Status:          status,
+		Identity:        releaseIdentityFrom(run.Identity),
+		RollbackTarget:  rollbackTarget,
+		Flags:           flags,
+		Toolchains:      toolchains,
+		Inputs:          inputs,
+		Targets:         targets,
+		Phases:          phases,
+		Requirements:    statuses,
+		Artifacts:       artifacts,
+		Reproducibility: reproducibility,
+		NativeProofs:    nativeProofs,
 	}
 	fingerprint, err := inputFingerprint(root, run)
 	if err != nil {
@@ -312,35 +262,6 @@ func waitForEvidenceProbe(ctx context.Context) error {
 		case <-time.After(10 * time.Millisecond):
 		}
 	}
-}
-
-func canonicalJSON(value any) ([]byte, error) {
-	data, err := json.Marshal(value)
-	if err != nil {
-		return nil, err
-	}
-	return append(data, '\n'), nil
-}
-
-func deriveChecksums(index Index) []byte {
-	var out bytes.Buffer
-	artifacts := append([]artifactEvidence(nil), index.Artifacts...)
-	sort.Slice(artifacts, func(i, j int) bool { return artifacts[i].Name < artifacts[j].Name })
-	for _, artifact := range artifacts {
-		fmt.Fprintf(&out, "%s  %s\n", artifact.SHA256, artifact.Name)
-	}
-	return out.Bytes()
-}
-
-func releaseIdentityFrom(identity Identity) releaseIdentity {
-	return releaseIdentity{Tag: stringPointer(identity.Tag), PackageVersion: stringPointer(identity.PackageVersion), SourceCommit: stringPointer(identity.SourceCommit), BinaryVersion: stringPointer(identity.BinaryVersion), ChangelogHeading: stringPointer(identity.ChangelogHeading), Toolchain: stringPointer(identity.Toolchain)}
-}
-
-func stringPointer(value *string) string {
-	if value == nil {
-		return ""
-	}
-	return *value
 }
 
 func TerminalStatus(results []Result) Status {

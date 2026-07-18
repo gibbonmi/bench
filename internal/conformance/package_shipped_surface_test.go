@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -24,8 +25,12 @@ func shippedFiles(root string) []string {
 	if err := json.Unmarshal(data, &pkg); err != nil {
 		return nil
 	}
-	var out []string
+	var out, excluded []string
 	for _, entry := range pkg.Files {
+		if strings.HasPrefix(entry, "!") {
+			excluded = append(excluded, strings.TrimPrefix(entry, "!"))
+			continue
+		}
 		full := filepath.Join(root, filepath.FromSlash(entry))
 		info, err := os.Stat(full)
 		if err != nil {
@@ -42,7 +47,34 @@ func shippedFiles(root string) []string {
 		}
 		out = append(out, full)
 	}
-	return uniqueSorted(out)
+	filtered := out[:0]
+	for _, file := range out {
+		rel, err := filepath.Rel(root, file)
+		if err != nil {
+			continue
+		}
+		if !npmFilesExcluded(excluded, filepath.ToSlash(rel)) {
+			filtered = append(filtered, file)
+		}
+	}
+	return uniqueSorted(filtered)
+}
+
+func npmFilesExcluded(patterns []string, value string) bool {
+	for _, pattern := range patterns {
+		if npmFilesPatternMatches(pattern, value) {
+			return true
+		}
+	}
+	return false
+}
+
+func npmFilesPatternMatches(pattern, value string) bool {
+	quoted := regexp.QuoteMeta(pattern)
+	quoted = strings.ReplaceAll(quoted, `\*\*/`, `(?:.*/)?`)
+	quoted = strings.ReplaceAll(quoted, `\*\*`, `.*`)
+	quoted = strings.ReplaceAll(quoted, `\*`, `[^/]*`)
+	return regexp.MustCompile("^" + quoted + "$").MatchString(value)
 }
 
 func packageMarkdownFiles(root string) []string {
@@ -118,6 +150,11 @@ func TestShippedIdentityStringSweepBites(t *testing.T) {
 	write("dist/bench", "stub with @benchkit/linux-x64 bytes\n")
 	if diags := checkShippedIdentityStrings(root); len(diags) != 0 {
 		t.Fatalf("clean surface (stale strings only in dist/): want no diagnostics, got %v", diags)
+	}
+	write("package.json", `{"files":["README.md","projects/","CHANGELOG.md","internal/","!internal/**/*_test.go"]}`+"\n")
+	write("internal/fixture_test.go", "npx benchkit\n")
+	if diags := checkShippedIdentityStrings(root); len(diags) != 0 {
+		t.Fatalf("negated npm test source should not be shipped, got %v", diags)
 	}
 
 	// Each pattern must fire, and each swept location (shipped doc, the profile,

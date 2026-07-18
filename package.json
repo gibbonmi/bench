@@ -12,7 +12,13 @@
   },
   "files": [
     "bin/",
+    "cmd/",
     "dist/",
+    "go.mod",
+    "go.sum",
+    "internal/",
+    "!cmd/**/*_test.go",
+    "!internal/**/*_test.go",
     "projects/gl-axi.md",
     "projects/regroup.md",
     "README.md",
@@ -25,7 +31,8 @@
     ".claude/README.md",
     ".claude/settings.json",
     ".codex/hooks.json",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "scripts/go-build.sh"
   ],
   "keywords": [
     "claude-code",

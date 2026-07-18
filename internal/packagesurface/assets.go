@@ -1,5 +1,12 @@
 package packagesurface
 
+import (
+	"io/fs"
+	"path/filepath"
+	"sort"
+	"strings"
+)
+
 var RequiredPackAssets = []string{
 	"bin/bench.sh",
 	"bin/bench-repair-binary.mjs",
@@ -31,10 +38,39 @@ var RequiredPackAssets = []string{
 var ForbiddenPackAssets = []string{
 	"projects/benchkit.md",
 	".bench/gate.sh",
-	"scripts/go-build.sh",
 	"scripts/gen-platform-packages.sh",
 	".claude/settings.local.json",
 	"HANDOFF.md",
 	"CLAUDE.md",
 	"AGENTS.md",
+}
+
+// RequiredBuildPackAssets derives the Go build inputs that an npm git install's
+// prepare script needs. Source directories are packaged recursively, so a split
+// package automatically joins this expectation without a second file registry.
+func RequiredBuildPackAssets(root string) ([]string, error) {
+	assets := []string{
+		"go.mod",
+		"go.sum",
+		"internal/releaseevidence/requirements.json",
+		"scripts/go-build.sh",
+	}
+	for _, dir := range []string{"cmd", "internal"} {
+		err := filepath.WalkDir(filepath.Join(root, dir), func(path string, entry fs.DirEntry, err error) error {
+			if err != nil || entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
+				return err
+			}
+			rel, err := filepath.Rel(root, path)
+			if err != nil {
+				return err
+			}
+			assets = append(assets, filepath.ToSlash(rel))
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	sort.Strings(assets)
+	return assets, nil
 }
