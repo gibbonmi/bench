@@ -35,7 +35,38 @@ func readReproducibility(root string, artifacts []artifactEvidence) (reproducibi
 	if len(seen) != len(want) {
 		return reproducibilityEvidence{}, errors.New("reproducibility comparison omits an inspected artifact")
 	}
+	evidence, err := reproducibilityInputs(root)
+	if err != nil || len(record.Evidence) != len(evidence) {
+		return reproducibilityEvidence{}, errors.New("reproducibility comparison release-bound evidence is incomplete")
+	}
+	seen = map[string]bool{}
+	for _, item := range record.Evidence {
+		actual, ok := evidence[item.Name]
+		if !ok || seen[item.Name] || !item.Match || item.Size != actual.Size || item.SHA256 != actual.SHA256 {
+			return reproducibilityEvidence{}, fmt.Errorf("reproducibility comparison does not match release-bound evidence: %s", item.Name)
+		}
+		seen[item.Name] = true
+	}
+	if len(seen) != len(evidence) {
+		return reproducibilityEvidence{}, errors.New("reproducibility comparison omits release-bound evidence")
+	}
 	return record, nil
+}
+
+func reproducibilityInputs(root string) (map[string]reproducibilityArtifact, error) {
+	paths := []string{"internal/releaseevidence/requirements.json", "scripts/release-plan.json"}
+	for _, item := range PackageEvidenceRegistry() {
+		paths = append(paths, item.Path)
+	}
+	result := make(map[string]reproducibilityArtifact, len(paths))
+	for _, name := range paths {
+		data, err := ReadRegular(filepath.Join(root, filepath.FromSlash(name)))
+		if err != nil || len(data) == 0 {
+			return nil, fmt.Errorf("release-bound reproducibility input is missing or unsafe: %s", name)
+		}
+		result[name] = reproducibilityArtifact{Name: name, Size: int64(len(data)), SHA256: digest(data), Match: true}
+	}
+	return result, nil
 }
 
 func inspectNativeProofs(root string, targets []targetEvidence, artifacts []artifactEvidence) ([]nativeProofEvidence, error) {
@@ -86,7 +117,7 @@ func inspectNativeProofs(root string, targets []targetEvidence, artifacts []arti
 			return nil, fmt.Errorf("native proof %s cannot inspect platform binary: %w", name, err)
 		}
 		binaryDigest := digest(packageFiles["bin/bench"].data)
-		if proof.SchemaVersion != 1 || proof.Target != name || proof.Runner != target.Runner || proof.Status != "green" || proof.RebuiltSHA256 == "" || proof.RebuiltSHA256 != binaryDigest || proof.BinarySHA256 != binaryDigest || proof.PackageSHA256 != digestByName[platform] || proof.ArchiveSHA256 != digestByName[archive] || (target.OS == "linux" && proof.MuslStatus != "green") || (target.OS == "darwin" && proof.MuslStatus != "not_applicable") {
+		if proof.SchemaVersion != 1 || proof.Target != name || proof.Runner != target.Runner || proof.Status != "green" || proof.RebuiltSHA256 == "" || proof.RebuiltSHA256 != binaryDigest || proof.BinarySHA256 != binaryDigest || proof.PackageSHA256 != digestByName[platform] || proof.ArchiveSHA256 != digestByName[archive] || proof.OperationsStatus != "green" || proof.StripStatus != "green" || proof.ToolsStatus != "green" || (target.OS == "linux" && proof.MuslStatus != "green") || (target.OS == "darwin" && proof.MuslStatus != "not_applicable") {
 			return nil, fmt.Errorf("native proof %s does not match inspected artifacts", name)
 		}
 		proofs = append(proofs, proof)

@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 # Execute the host-native tarball through the same installed wrapper users receive.
 set -euo pipefail
-artifacts="${1:?usage: smoke-artifacts.sh <artifact-dir>}"
+artifacts="${1:?usage: smoke-artifacts.sh <artifact-dir> [release-evidence-dir]}"
+evidence_dir="${2:-}"
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 version="$(node -p 'require(process.argv[1]).version' "$root/package.json")"
 npm_install_flags=()
 while IFS= read -r arg; do npm_install_flags+=("$arg"); done < <(node -e 'for (const arg of require(process.argv[1]).toolchains.find(tool => tool.name === "npm").operations.install) console.log(arg)' "$root/internal/releaseevidence/requirements.json")
 case "$(uname -s)" in Darwin) host_os=darwin ;; Linux) host_os=linux ;; *) host_os=unsupported ;; esac
 case "$(uname -m)" in arm64|aarch64) host_arch=arm64 ;; x86_64|amd64) host_arch=x64 ;; *) host_arch=unsupported ;; esac
-target="$(node -e 'const [matrix, os, arch] = process.argv.slice(1); const p = require(matrix).find(p => p.os === os && p.arch === arch); if (p) process.stdout.write(p.os + "-" + p.arch)' "$root/scripts/platforms.json" "$host_os" "$host_arch")"
+target_row="$(node "$root/scripts/release-plan.mjs" "$root" target "$host_os" "$host_arch")" || true
+target="$(cut -f1-2 <<< "$target_row" | tr '\t' '-')"
 [[ -n "$target" ]] || { printf 'bench artifacts: unsupported smoke host %s/%s\n' "$(uname -s)" "$(uname -m)" >&2; exit 2; }
 wrapper="$artifacts/redbench-$version.tgz"
 native="$artifacts/redbench-$target-$version.tgz"
@@ -40,5 +42,7 @@ esac
 HOME="$tmp/home" BENCH_HOME="$tmp/home/.bench" BENCH_NO_REPAIR=1 bash "$installed" help >/dev/null
 HOME="$tmp/home" BENCH_HOME="$tmp/home/.bench" npm_config_registry=http://127.0.0.1:9 npm_config_offline=true npm uninstall --offline --prefix "$tmp/app" redbench "@redbench/$target" >/dev/null
 [[ ! -e "$tmp/app/node_modules/redbench" && ! -e "$tmp/home/.bench/cache" ]] || { printf 'bench artifacts: local npm uninstall left residue\n' >&2; exit 1; }
-bash "$root/scripts/smoke-offline.sh" "$artifacts"
+if [[ -n "$evidence_dir" ]]; then
+  bash "$root/scripts/smoke-offline.sh" "$artifacts" "$evidence_dir"
+fi
 printf 'bench artifacts: %s selected %s\n' "$target" "$out"

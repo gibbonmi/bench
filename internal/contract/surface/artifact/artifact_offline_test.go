@@ -18,8 +18,11 @@ func TestOfflineArchiveProjection(t *testing.T) {
 	npmOut := filepath.Join(t.TempDir(), "npm artifacts [hostile]")
 	contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-artifacts.sh"), buildRoot, npmOut).RequireExit(0)
 
-	var matrix []artifactPlatform
-	contract.ReadJSONFile(t, filepath.Join(root, "scripts", "platforms.json"), &matrix)
+	var plan struct {
+		Targets []artifactPlatform `json:"targets"`
+	}
+	contract.ReadJSONFile(t, filepath.Join(root, "scripts", "release-plan.json"), &plan)
+	matrix := plan.Targets
 	var wrapper struct {
 		Version string `json:"version"`
 	}
@@ -61,6 +64,7 @@ func assertOfflineArchiveSet(t *testing.T, npmArtifacts, output, version string,
 			root + "/packages/" + wrapperName:                              0o644,
 			root + "/packages/" + platformName:                             0o644,
 			root + "/OFFLINE.md":                                           0o644,
+			root + "/evidence/component-manifest.json":                     0o644,
 			root + "/evidence/components/wrapper-component-manifest.json":  0o644,
 			root + "/evidence/components/platform-component-manifest.json": 0o644,
 		}
@@ -91,7 +95,7 @@ func assertOfflineArchiveSet(t *testing.T, npmArtifacts, output, version string,
 			t.Fatalf("offline archive %s binary differs from its platform package", name)
 		}
 		instructions := entries[root+"/OFFLINE.md"].Data
-		if !bytes.HasSuffix(instructions, []byte("\n")) || !strings.Contains(string(instructions), "npm --offline") || !strings.Contains(string(instructions), "platform tarball first") || !strings.Contains(string(instructions), "## Removal") {
+		if !bytes.HasSuffix(instructions, []byte("\n")) || !strings.Contains(string(instructions), "--offline") || !strings.Contains(string(instructions), "sha256sum -c SHA256SUMS") || !strings.Contains(string(instructions), "npm publish ./packages/") || !strings.Contains(string(instructions), "## Removal") {
 			t.Fatalf("offline archive %s instructions are incomplete or not LF-terminated", name)
 		}
 	}

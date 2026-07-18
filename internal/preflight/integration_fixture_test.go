@@ -166,12 +166,24 @@ func seedEvidenceFixture(t *testing.T, root string) {
 		Status        string                    `json:"status"`
 		Builds        int                       `json:"builds"`
 		Artifacts     []reproducibilityArtifact `json:"artifacts"`
+		Evidence      []reproducibilityArtifact `json:"evidence"`
 	}{SchemaVersion: 1, Status: "green", Builds: 2}
 	for _, entry := range artifactNames {
 		data := mustFixtureFile(t, filepath.Join(artifactDir, entry.Name()))
 		record.Artifacts = append(record.Artifacts, reproducibilityArtifact{Name: entry.Name(), Size: int64(len(data)), SHA256: sha256Hex(data), Match: true})
 	}
+	for _, rel := range append([]string{"internal/releaseevidence/requirements.json", "scripts/release-plan.json"}, func() []string {
+		paths := make([]string, 0)
+		for _, item := range packageEvidenceRegistry() {
+			paths = append(paths, item.Path)
+		}
+		return paths
+	}()...) {
+		data := mustFixtureFile(t, filepath.Join(root, filepath.FromSlash(rel)))
+		record.Evidence = append(record.Evidence, reproducibilityArtifact{Name: rel, Size: int64(len(data)), SHA256: sha256Hex(data), Match: true})
+	}
 	sort.Slice(record.Artifacts, func(i, j int) bool { return record.Artifacts[i].Name < record.Artifacts[j].Name })
+	sort.Slice(record.Evidence, func(i, j int) bool { return record.Evidence[i].Name < record.Evidence[j].Name })
 	recordBytes, err := json.Marshal(record)
 	if err != nil {
 		t.Fatal(err)
@@ -189,19 +201,22 @@ func seedEvidenceFixture(t *testing.T, root string) {
 	}
 	for _, item := range []struct {
 		os, arch, runner string
-	}{{"darwin", "arm64", "macos-14"}, {"darwin", "x64", "macos-13"}, {"linux", "arm64", "ubuntu-24.04"}, {"linux", "x64", "ubuntu-24.04"}} {
+	}{{"darwin", "arm64", "macos-15"}, {"darwin", "x64", "macos-15-intel"}, {"linux", "arm64", "ubuntu-24.04-arm"}, {"linux", "x64", "ubuntu-24.04"}} {
 		platformName := fmt.Sprintf("redbench-%s-%s-0.2.0.tgz", item.os, item.arch)
 		archiveName := fmt.Sprintf("redbench-0.2.0-%s-%s.tar.gz", item.os, item.arch)
 		proof := map[string]any{
-			"schema_version": 1,
-			"target":         item.os + "-" + item.arch,
-			"runner":         item.runner,
-			"status":         "green",
-			"rebuilt_sha256": binaryDigest,
-			"binary_sha256":  binaryDigest,
-			"package_sha256": sha256Hex(mustFixtureFile(t, filepath.Join(artifactDir, platformName))),
-			"archive_sha256": sha256Hex(mustFixtureFile(t, filepath.Join(artifactDir, archiveName))),
-			"musl_status":    map[bool]string{true: "green", false: "not_applicable"}[item.os == "linux"],
+			"schema_version":    1,
+			"target":            item.os + "-" + item.arch,
+			"runner":            item.runner,
+			"status":            "green",
+			"rebuilt_sha256":    binaryDigest,
+			"binary_sha256":     binaryDigest,
+			"package_sha256":    sha256Hex(mustFixtureFile(t, filepath.Join(artifactDir, platformName))),
+			"archive_sha256":    sha256Hex(mustFixtureFile(t, filepath.Join(artifactDir, archiveName))),
+			"musl_status":       map[bool]string{true: "green", false: "not_applicable"}[item.os == "linux"],
+			"operations_status": "green",
+			"strip_status":      "green",
+			"tools_status":      "green",
 		}
 		data, err := json.Marshal(proof)
 		if err != nil {

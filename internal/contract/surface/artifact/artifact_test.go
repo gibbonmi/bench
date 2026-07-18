@@ -39,8 +39,11 @@ func TestDistributableArtifactContracts(t *testing.T) {
 	probe := contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-artifacts.sh"), buildRoot, out)
 	probe.RequireExit(0)
 
-	var matrix []artifactPlatform
-	contract.ReadJSONFile(t, filepath.Join(root, "scripts", "platforms.json"), &matrix)
+	var plan struct {
+		Targets []artifactPlatform `json:"targets"`
+	}
+	contract.ReadJSONFile(t, filepath.Join(root, "scripts", "release-plan.json"), &plan)
+	matrix := plan.Targets
 	var wrapper struct {
 		Version string `json:"version"`
 	}

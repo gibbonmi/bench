@@ -40,34 +40,15 @@ if [[ -e "$output" ]]; then
     printf 'bench offline archives: output is not a real directory: %s\n' "$output" >&2
     exit 1
   }
-  while IFS= read -r -d '' entry; do
-    info="$(stat -c '%F' "$entry" 2>/dev/null || stat -f '%HT' "$entry")"
-    [[ "$info" == "regular file" || "$info" == "Regular File" ]] || {
-      printf 'bench offline archives: output contains a non-regular entry: %s\n' "$entry" >&2
-      exit 1
-    }
-    cp "$entry" "$stage/$(basename "$entry")"
-  done < <(find "$output" -mindepth 1 -maxdepth 1 -print0)
 fi
 mkdir -p "$stage/roots" "$stage/output"
-for entry in "$stage"/*; do
-  [[ "$(basename "$entry")" == "output" || "$(basename "$entry")" == "roots" ]] && continue
-  [[ -f "$entry" ]] && cp "$entry" "$stage/output/$(basename "$entry")"
-done
+same_output=0
+if [[ "$npm_artifacts" -ef "$output" ]]; then
+  same_output=1
+fi
 
 matrix="$stage/platform-matrix.tsv"
-node -e '
-  const rows = require(process.argv[1]);
-  if (!Array.isArray(rows) || rows.length !== 4) throw new Error("canonical platform matrix must contain exactly four rows");
-  const seen = new Set();
-  for (const row of rows) {
-    if (!row || !/^(darwin|linux)$/.test(row.os) || !/^(arm64|x64)$/.test(row.arch)) throw new Error("canonical platform matrix has an invalid target");
-    const key = `${row.os}-${row.arch}`;
-    if (seen.has(key)) throw new Error(`canonical platform matrix repeats ${key}`);
-    seen.add(key);
-    process.stdout.write(`${row.os}\t${row.arch}\n`);
-  }
-' "$root/scripts/platforms.json" > "$matrix"
+node "$root/scripts/release-plan.mjs" "$root" targets > "$matrix"
 
 version="$(node -p 'require(process.argv[1]).version' "$root/package.json")"
 [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]] || {
@@ -75,20 +56,9 @@ version="$(node -p 'require(process.argv[1]).version' "$root/package.json")"
   exit 1
 }
 
-copy_package_file() {
-  local package_dir="$1" rel="$2" destination="$3"
-  local source="$package_dir/package/$rel"
-  [[ -f "$source" && ! -L "$source" && -s "$source" ]] || {
-    printf 'bench offline archives: package evidence is missing or unsafe: %s\n' "$rel" >&2
-    exit 1
-  }
-  mkdir -p "$(dirname "$destination")"
-  cp "$source" "$destination"
-  chmod 0644 "$destination"
-}
-
 validate_npm_archive() {
-  local archive="$1" member kind
+  local archive="$1" member
+  declare -A seen=()
   while IFS= read -r member; do
     case "$member" in
       package/|package/*) ;;
@@ -97,17 +67,23 @@ validate_npm_archive() {
     case "$member" in
       *"../"*|*"/.."|/*|*"\\"*|*"//"*) printf 'bench offline archives: npm tarball has an unsafe path: %s\n' "$member" >&2; exit 1 ;;
     esac
+    [[ -n "${seen[$member]:-}" ]] && { printf 'bench offline archives: npm tarball has a duplicate path: %s\n' "$member" >&2; exit 1; }
+    seen[$member]=1
   done < <(LC_ALL=C tar -tzf "$archive")
-  while IFS= read -r member; do
-    kind="${member:0:1}"
-    case "$kind" in
-      -|d) ;;
-      *) printf 'bench offline archives: npm tarball contains a special member: %s\n' "$member" >&2; exit 1 ;;
-    esac
-  done < <(LC_ALL=C tar -tvzf "$archive")
 }
 
-while IFS=$'\t' read -r os arch; do
+validate_extracted_package() {
+  local directory="$1" entry
+  while IFS= read -r -d '' entry; do
+    [[ -d "$entry" && ! -L "$entry" ]] && continue
+    [[ -f "$entry" && ! -L "$entry" && -s "$entry" ]] || {
+      printf 'bench offline archives: npm tarball has an empty or unsafe member: %s\n' "$entry" >&2
+      exit 1
+    }
+  done < <(find "$directory/package" -mindepth 1 -print0)
+}
+
+while IFS=$'\t' read -r os arch _goos _goarch _runner; do
   archive_root="redbench-${version}-${os}-${arch}"
   archive_dir="$stage/roots/$archive_root"
   wrapper="$npm_artifacts/redbench-${version}.tgz"
@@ -118,6 +94,10 @@ while IFS=$'\t' read -r os arch; do
       exit 1
     }
     validate_npm_archive "$package"
+    if [[ "$same_output" == 1 && ! -e "$stage/output/$(basename "$package")" ]]; then
+      cp "$package" "$stage/output/$(basename "$package")"
+      chmod 0644 "$stage/output/$(basename "$package")"
+    fi
   done
 
   wrapper_extract="$stage/${os}-${arch}-wrapper"
@@ -125,56 +105,24 @@ while IFS=$'\t' read -r os arch; do
   mkdir -p "$wrapper_extract" "$native_extract"
   tar -xzf "$wrapper" -C "$wrapper_extract"
   tar -xzf "$native" -C "$native_extract"
+  validate_extracted_package "$wrapper_extract"
+  validate_extracted_package "$native_extract"
   binary="$native_extract/package/bin/bench"
   [[ -f "$binary" && ! -L "$binary" && -s "$binary" ]] || {
     printf 'bench offline archives: target package has no regular executable: %s\n' "$native" >&2
     exit 1
   }
 
-  mkdir -p "$archive_dir/bin" "$archive_dir/packages" "$archive_dir/evidence/components"
-  cp "$binary" "$archive_dir/bin/bench"
-  chmod 0755 "$archive_dir/bin/bench"
-  cp "$wrapper" "$archive_dir/packages/$(basename "$wrapper")"
-  cp "$native" "$archive_dir/packages/$(basename "$native")"
-  chmod 0644 "$archive_dir/packages/$(basename "$wrapper")" "$archive_dir/packages/$(basename "$native")"
-
-  while IFS= read -r evidence_path; do
-    [[ -n "$evidence_path" ]] || continue
-    copy_package_file "$wrapper_extract" "$evidence_path" "$archive_dir/evidence/$evidence_path"
-  done < <(node -e 'for (const record of require(process.argv[1]).records) if (record.package_mode) console.log(record.path)' "$root/internal/releaseevidence/requirements.json")
-  copy_package_file "$wrapper_extract" component-manifest.json "$archive_dir/evidence/components/wrapper-component-manifest.json"
-  copy_package_file "$native_extract" component-manifest.json "$archive_dir/evidence/components/platform-component-manifest.json"
-
-  printf '%s\n' \
-    "# Redbench ${version} offline bundle" \
-    "" \
-    "This archive is for ${os}/${arch}. Verify the externally supplied release-index.json and SHA256SUMS before use." \
-    "" \
-    "## Direct execution" \
-    "" \
-    "Run bin/bench version and bin/bench commands --brief with npm, Node, caches, and repair unavailable." \
-    "" \
-    "## Local npm installation" \
-    "" \
-    "Install packages/redbench-${version}.tgz and packages/redbench-${os}-${arch}-${version}.tgz with npm --offline and BENCH_NO_REPAIR=1." \
-    "" \
-    "## Internal registry" \
-    "" \
-    "Seed the platform tarball first and the wrapper tarball last. Serve the exact bytes at their immutable ${version} versions." \
-    "" \
-    "## Removal" \
-    "" \
-    "Uninstall the package and remove the extracted bundle, prefix, cache, and temporary home; no residue is expected." \
-    > "$archive_dir/OFFLINE.md"
-  chmod 0644 "$archive_dir/OFFLINE.md"
+  node "$root/scripts/assemble-offline-archive.mjs" "$root" "$npm_artifacts" "$archive_dir" "${os}-${arch}" "$version" "$binary" "$wrapper_extract" "$native_extract"
 
   node "$root/scripts/write-deterministic-archive.mjs" "$archive_dir" "$stage/output/${archive_root}.tar.gz"
   rm -rf "$archive_dir" "$wrapper_extract" "$native_extract"
 done < "$matrix"
 
 actual="$(find "$stage/output" -mindepth 1 -maxdepth 1 -type f -name 'redbench-*.tar.gz' -print | wc -l | tr -d '[:space:]')"
-[[ "$actual" == 4 ]] || {
-  printf 'bench offline archives: emitted %s archives, expected exactly four\n' "$actual" >&2
+expected="$(wc -l < "$matrix" | tr -d '[:space:]')"
+[[ "$actual" == "$expected" ]] || {
+  printf 'bench offline archives: emitted %s archives, expected %s from release plan\n' "$actual" "$expected" >&2
   exit 1
 }
 

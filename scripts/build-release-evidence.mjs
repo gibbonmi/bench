@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
+import {readReleasePlan} from "./release-plan.mjs";
 
 const args = process.argv.slice(2);
 const validateOnly = args[0] === "--validate-required-sources";
@@ -90,13 +91,14 @@ function validateRequiredSources() {
 validateRequiredSources();
 if (validateOnly) process.exit(0);
 
-const matrix = readJSON(path.join(root, "scripts/platforms.json"));
+const releasePlan = readReleasePlan(root);
+const matrix = releasePlan.targets;
 const assets = readJSON(path.join(root, "scripts/wrapper-assets.json"));
 const sourcePackage = readJSON(path.join(root, "package.json"));
 const seenDestinations = new Set();
 const byteOrder = (a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
 
-if (!Array.isArray(matrix) || matrix.length === 0 || !Array.isArray(assets)) throw new Error("release evidence matrix or asset registry is invalid");
+if (!Array.isArray(assets)) throw new Error("release evidence asset registry is invalid");
 
 function copyTree(src, dst, mode, label, destinationRoot = wrapperDir) {
   const stat = fs.lstatSync(src);
@@ -128,6 +130,22 @@ function copyPackageEvidence(destination) {
     const mode = modeFrom(evidence.package_mode);
     const relative = safeRelative(evidence.path, "packaged evidence path");
     copyRegular(sourcePath(relative), path.join(destination, relative), mode, "packaged evidence", destination);
+  }
+}
+
+function requirePackagedEvidence(destination) {
+  for (const evidence of packageEvidence) {
+    const relative = safeRelative(evidence.path, "packaged evidence path");
+    const target = path.join(destination, relative);
+    let stat;
+    try {
+      stat = fs.lstatSync(target);
+    } catch {
+      throw new Error(`package evidence is missing or unsafe: ${relative}`);
+    }
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.size === 0 || (stat.mode & 0o777) !== modeFrom(evidence.package_mode) || (stat.mode & 0o7000) !== 0) {
+      throw new Error(`package evidence is missing or unsafe: ${relative}`);
+    }
   }
 }
 
@@ -183,6 +201,7 @@ function writeEvidence(dir, name, version, target) {
 
 copyAssets(wrapperDir);
 copyPackageEvidence(wrapperDir);
+requirePackagedEvidence(wrapperDir);
 const optionalDependencies = Object.fromEntries(matrix.map(p => [`@redbench/${p.os}-${p.arch}`, sourcePackage.version]));
 const wrapperPackage = {...sourcePackage, optionalDependencies};
 wrapperPackage.scripts = {...(sourcePackage.scripts || {})};
@@ -196,6 +215,7 @@ for (const p of matrix) {
   fs.mkdirSync(path.join(dir, "bin"), {recursive: true});
   seenDestinations.clear();
   copyPackageEvidence(dir);
+  requirePackagedEvidence(dir);
   const pkg = {
     name: `@redbench/${p.os}-${p.arch}`,
     version: sourcePackage.version,

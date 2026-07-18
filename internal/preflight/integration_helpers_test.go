@@ -55,27 +55,24 @@ func projectRoot(t *testing.T) string {
 func preflightRepo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
-	for _, rel := range []string{"bin/bench.sh", ".bench/gate.sh", "internal/releaseevidence/registry.json", "internal/releaseevidence/requirements.json", "scripts/build-artifacts.sh", "scripts/build-offline-archives.sh", "scripts/write-deterministic-archive.mjs", "scripts/compare-artifacts.sh", "scripts/native-proof.sh", "scripts/aggregate-native-proofs.sh", "scripts/build-release-evidence.mjs", "scripts/smoke-artifacts.sh", "scripts/smoke-offline.sh", "scripts/offline-registry.mjs", "scripts/go-build.sh", "scripts/platforms.json", "scripts/wrapper-assets.json", "package.json"} {
+	for _, rel := range []string{"bin/bench.sh", ".bench/gate.sh", "internal/releaseevidence/registry.json", "internal/releaseevidence/requirements.json", "scripts/build-artifacts.sh", "scripts/build-offline-archives.sh", "scripts/assemble-offline-archive.mjs", "scripts/release-plan.mjs", "scripts/release-plan.json", "scripts/write-deterministic-archive.mjs", "scripts/compare-artifacts.sh", "scripts/native-proof.sh", "scripts/aggregate-native-proofs.sh", "scripts/build-release-evidence.mjs", "scripts/smoke-artifacts.sh", "scripts/smoke-offline.sh", "scripts/offline-registry.mjs", "scripts/go-build.sh", "scripts/wrapper-assets.json", "package.json"} {
 		path := filepath.Join(root, filepath.FromSlash(rel))
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			t.Fatal(err)
 		}
 		body := "{}\n"
-		if rel == "internal/releaseevidence/registry.json" || rel == "internal/releaseevidence/requirements.json" || rel == "scripts/build-release-evidence.mjs" || rel == "scripts/build-offline-archives.sh" || rel == "scripts/write-deterministic-archive.mjs" {
+		if rel == "internal/releaseevidence/registry.json" || rel == "internal/releaseevidence/requirements.json" || rel == "scripts/build-release-evidence.mjs" || rel == "scripts/build-offline-archives.sh" || rel == "scripts/assemble-offline-archive.mjs" || rel == "scripts/release-plan.mjs" || rel == "scripts/release-plan.json" || rel == "scripts/write-deterministic-archive.mjs" || rel == "scripts/aggregate-native-proofs.sh" {
 			data, err := os.ReadFile(filepath.Join(projectRoot(t), filepath.FromSlash(rel)))
 			if err != nil {
 				t.Fatal(err)
 			}
 			body = string(data)
 		}
-		if (filepath.Ext(path) == ".sh" && rel != "scripts/build-offline-archives.sh") || rel == "bin/bench.sh" {
+		if (filepath.Ext(path) == ".sh" && rel != "scripts/build-offline-archives.sh" && rel != "scripts/aggregate-native-proofs.sh") || rel == "bin/bench.sh" {
 			body = "#!/bin/sh\nexit 0\n"
 		}
 		if rel == "package.json" {
 			body = `{"version":"0.2.0"}`
-		}
-		if rel == "scripts/platforms.json" {
-			body = `[{"os":"darwin","arch":"arm64","goos":"darwin","goarch":"arm64","runner":"macos-14"},{"os":"darwin","arch":"x64","goos":"darwin","goarch":"amd64","runner":"macos-13"},{"os":"linux","arch":"arm64","goos":"linux","goarch":"arm64","runner":"ubuntu-24.04"},{"os":"linux","arch":"x64","goos":"linux","goarch":"amd64","runner":"ubuntu-24.04"}]` + "\n"
 		}
 		if err := os.WriteFile(path, []byte(body), 0o755); err != nil {
 			t.Fatal(err)

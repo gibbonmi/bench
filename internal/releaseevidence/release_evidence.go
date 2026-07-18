@@ -146,7 +146,7 @@ func assembleReleaseEvidence(ctx context.Context, root string, run RunEvidence) 
 	if err != nil {
 		return assembledEvidence{}, err
 	}
-	if run.Mode == ModePublish && len(nativeProofs) != len(targets) {
+	if len(nativeProofs) != len(targets) {
 		if unsatisfied != "" {
 			unsatisfied += "; "
 		}

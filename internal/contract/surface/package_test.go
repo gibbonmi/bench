@@ -164,9 +164,11 @@ func packageRunGenerator(t testing.TB, out string) contract.Probe {
 
 func packageReadPlatforms(t testing.TB) []packagePlatform {
 	t.Helper()
-	var platforms []packagePlatform
-	contract.ReadJSONFile(t, filepath.Join(contract.SubjectRoot(t), "scripts", "platforms.json"), &platforms)
-	return platforms
+	var plan struct {
+		Targets []packagePlatform `json:"targets"`
+	}
+	contract.ReadJSONFile(t, filepath.Join(contract.SubjectRoot(t), "scripts", "release-plan.json"), &plan)
+	return plan.Targets
 }
 
 func packageReadWrapper(t testing.TB) packageWrapper {

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "target_cardinality": 4,
+  "targets": [
+    {"os":"darwin","arch":"arm64","goos":"darwin","goarch":"arm64","runner":"macos-15"},
+    {"os":"darwin","arch":"x64","goos":"darwin","goarch":"amd64","runner":"macos-15-intel"},
+    {"os":"linux","arch":"arm64","goos":"linux","goarch":"arm64","runner":"ubuntu-24.04-arm"},
+    {"os":"linux","arch":"x64","goos":"linux","goarch":"amd64","runner":"ubuntu-24.04"}
+  ],
+  "archive_entries": [
+    {"path":"bin/bench","mode":"0755","kind":"binary"},
+    {"path":"packages/redbench-{version}.tgz","mode":"0644","kind":"wrapper_tarball"},
+    {"path":"packages/redbench-{target}-{version}.tgz","mode":"0644","kind":"platform_tarball"},
+    {"path":"OFFLINE.md","mode":"0644","kind":"instructions"},
+    {"path":"evidence/component-manifest.json","mode":"0644","kind":"archive_manifest"},
+    {"path":"evidence/components/wrapper-component-manifest.json","mode":"0644","kind":"wrapper_manifest"},
+    {"path":"evidence/components/platform-component-manifest.json","mode":"0644","kind":"platform_manifest"},
+    {"path":"evidence/{package_evidence}","mode":"0644","kind":"package_evidence"}
+  ]
+}

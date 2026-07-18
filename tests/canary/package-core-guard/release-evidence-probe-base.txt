@@ -87,8 +87,10 @@ scripts/go-build.sh
 scripts/native-proof.sh
 scripts/aggregate-native-proofs.sh
 scripts/offline-registry.mjs
-scripts/platforms.json
+scripts/release-plan.json
+scripts/release-plan.mjs
 scripts/release-preflight.sh
+scripts/assemble-offline-archive.mjs
 scripts/smoke-artifacts.sh
 scripts/smoke-offline.sh
 scripts/write-deterministic-archive.mjs
@@ -110,6 +112,7 @@ internal/releaseevidence/registry.json
 internal/releaseevidence/release_index.go
 internal/releaseevidence/release_evidence.go
 internal/releaseevidence/release_requirements.go
+internal/releaseevidence/release_plan.go
 internal/releaseevidence/requirement_inspection.go
 internal/releaseevidence/requirements.json
 internal/releaseevidence/types.go

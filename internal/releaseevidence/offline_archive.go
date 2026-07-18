@@ -12,16 +12,16 @@ import (
 	"strings"
 )
 
-func readOfflineArchive(data []byte, archiveName, target, version string) (map[string]tarFile, error) {
+func readOfflineArchive(rootPath string, data []byte, archiveName, target, version string) (map[string]tarFile, error) {
 	if int64(len(data)) > maxArchiveCompressedSize {
 		return nil, errors.New("offline archive compressed size exceeds inspection limit")
 	}
-	gz, err := gzip.NewReader(bytes.NewReader(data))
+	source := bytes.NewReader(data)
+	gz, err := gzip.NewReader(source)
 	if err != nil {
 		return nil, err
 	}
 	gz.Multistream(false)
-	defer gz.Close()
 	tr := tar.NewReader(gz)
 	root := strings.TrimSuffix(archiveName, ".tar.gz") + "/"
 	files := map[string]tarFile{}
@@ -99,31 +99,26 @@ func readOfflineArchive(data []byte, archiveName, target, version string) (map[s
 	if !rootSeen {
 		return nil, fmt.Errorf("offline archive root is missing: %s", root)
 	}
-	if err := validateOfflineArchiveDirs(dirs, target, version); err != nil {
+	if err := rejectGzipSuffix(gz, source); err != nil {
 		return nil, err
 	}
-	if err := validateOfflineArchiveFiles(files, target, version); err != nil {
+	plan, err := readReleasePlan(rootPath)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateOfflineArchiveDirs(dirs, plan, target, version); err != nil {
+		return nil, err
+	}
+	if err := validateOfflineArchiveFiles(files, plan, target, version); err != nil {
 		return nil, err
 	}
 	return files, nil
 }
 
-func validateOfflineArchiveDirs(dirs map[string]bool, target, version string) error {
-	files := map[string]bool{}
-	wrapper := "redbench-" + version + ".tgz"
-	platform := "redbench-" + target + "-" + version + ".tgz"
-	for _, name := range []string{
-		"bin/bench",
-		"packages/" + wrapper,
-		"packages/" + platform,
-		"OFFLINE.md",
-		"evidence/components/wrapper-component-manifest.json",
-		"evidence/components/platform-component-manifest.json",
-	} {
-		files[name] = true
-	}
-	for _, evidence := range PackageEvidenceRegistry() {
-		files["evidence/"+evidence.Path] = true
+func validateOfflineArchiveDirs(dirs map[string]bool, plan releasePlan, target, version string) error {
+	files, err := archiveInventory(plan, target, version)
+	if err != nil {
+		return err
 	}
 	want := map[string]bool{"": true}
 	for name := range files {
@@ -147,19 +142,10 @@ func validateOfflineArchiveDirs(dirs map[string]bool, target, version string) er
 	return nil
 }
 
-func validateOfflineArchiveFiles(files map[string]tarFile, target, version string) error {
-	wrapper := "redbench-" + version + ".tgz"
-	platform := "redbench-" + target + "-" + version + ".tgz"
-	want := map[string]int64{
-		"bin/bench":            0o755,
-		"packages/" + wrapper:  0o644,
-		"packages/" + platform: 0o644,
-		"OFFLINE.md":           0o644,
-		"evidence/components/wrapper-component-manifest.json":  0o644,
-		"evidence/components/platform-component-manifest.json": 0o644,
-	}
-	for _, evidence := range PackageEvidenceRegistry() {
-		want["evidence/"+evidence.Path] = 0o644
+func validateOfflineArchiveFiles(files map[string]tarFile, plan releasePlan, target, version string) error {
+	want, err := archiveInventory(plan, target, version)
+	if err != nil {
+		return err
 	}
 	if len(files) != len(want) {
 		return fmt.Errorf("offline archive inventory has %d files, want %d", len(files), len(want))
@@ -176,8 +162,32 @@ func validateOfflineArchiveFiles(files map[string]tarFile, target, version strin
 			return fmt.Errorf("offline archive file %s is missing a final newline", name)
 		}
 	}
-	if !bytes.Contains(files["OFFLINE.md"].data, []byte("npm --offline")) || !bytes.Contains(files["OFFLINE.md"].data, []byte("platform tarball first")) {
+	if !bytes.Contains(files["OFFLINE.md"].data, []byte("--offline")) || !bytes.Contains(files["OFFLINE.md"].data, []byte("sha256sum -c SHA256SUMS")) || !bytes.Contains(files["OFFLINE.md"].data, []byte("npm publish ./packages/")) {
 		return errors.New("offline archive instructions are incomplete")
+	}
+	return validateArchiveManifest(files, target, version)
+}
+
+func validateArchiveManifest(files map[string]tarFile, target, version string) error {
+	manifestFile := files["evidence/component-manifest.json"]
+	manifest, err := decodeComponentManifest(manifestFile.data)
+	if err != nil {
+		return fmt.Errorf("offline archive component manifest is malformed: %w", err)
+	}
+	parts := strings.Split(target, "-")
+	if len(parts) != 2 || manifest.SchemaVersion != 1 || manifest.Component.Name != "redbench-offline-"+target || manifest.Component.Version != version || manifest.Component.Target.OS != parts[0] || manifest.Component.Target.Arch != parts[1] {
+		return errors.New("offline archive component manifest identity is invalid")
+	}
+	if len(manifest.Files) != len(files)-1 {
+		return errors.New("offline archive component manifest does not enumerate every internal file")
+	}
+	last := ""
+	for _, item := range manifest.Files {
+		file, ok := files[item.Path]
+		if !ok || item.Path <= last || item.Path == "evidence/component-manifest.json" || item.Mode != fmt.Sprintf("%o", file.mode) || item.Size != int64(len(file.data)) || item.SHA256 != digest(file.data) {
+			return fmt.Errorf("offline archive component manifest disagrees with %s", item.Path)
+		}
+		last = item.Path
 	}
 	return nil
 }

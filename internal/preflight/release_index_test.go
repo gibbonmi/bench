@@ -113,6 +113,18 @@ func TestReleaseEvidenceIsDeterministicBoundAndIdempotent(t *testing.T) {
 	}
 	t.Setenv("LANG", "C")
 	t.Setenv("TZ", "UTC")
+	for key, directory := range map[string]string{
+		"HOME":             filepath.Join(t.TempDir(), "isolated home"),
+		"npm_config_cache": filepath.Join(t.TempDir(), "isolated npm cache"),
+		"GOCACHE":          filepath.Join(t.TempDir(), "isolated go cache"),
+		"GOMODCACHE":       filepath.Join(t.TempDir(), "isolated module cache"),
+		"TMPDIR":           filepath.Join(t.TempDir(), "isolated tmp root"),
+	} {
+		if err := os.MkdirAll(directory, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		t.Setenv(key, directory)
+	}
 	stderr.Reset()
 	if code := Command([]string{"--mode", "verify"}, "0.2.0", &stderr); code != 0 {
 		t.Fatalf("second verify exit=%d stderr=%s", code, stderr.String())
@@ -181,7 +193,7 @@ func assertReleaseIndexRelationships(t *testing.T, root string, index releaseInd
 	if index.Identity.SourceCommit != commit || index.Identity.PackageVersion != "0.2.0" || index.Identity.BinaryVersion != "" || index.Identity.Tag != "" || index.Identity.ChangelogHeading != "" || index.Identity.Toolchain != "1.25.0" {
 		t.Fatalf("release identity does not bind fixture facts: %+v", index.Identity)
 	}
-	wantTargets := []string{"darwin/arm64/darwin/arm64/macos-14", "darwin/x64/darwin/amd64/macos-13", "linux/arm64/linux/arm64/ubuntu-24.04", "linux/x64/linux/amd64/ubuntu-24.04"}
+	wantTargets := []string{"darwin/arm64/darwin/arm64/macos-15", "darwin/x64/darwin/amd64/macos-15-intel", "linux/arm64/linux/arm64/ubuntu-24.04-arm", "linux/x64/linux/amd64/ubuntu-24.04"}
 	gotTargets := make([]string, 0, len(index.Targets))
 	for _, target := range index.Targets {
 		gotTargets = append(gotTargets, fmt.Sprintf("%s/%s/%s/%s/%s", target.OS, target.Arch, target.GOOS, target.GOArch, target.Runner))
@@ -214,7 +226,7 @@ func assertReleaseIndexRelationships(t *testing.T, root string, index releaseInd
 	}
 
 	wantInputs := map[string]string{}
-	for _, path := range []string{"LICENSE", "go.mod", "go.sum", "governance/THIRD_PARTY_NOTICES.txt", "governance/policies/dependency-license-change.json", "governance/policies/recovery-rollback.json", "governance/policies/security-response.json", "governance/policies/support.json", "governance/policies/supported-versions.json", "governance/policies/threat-model.json", "governance/sbom.spdx.json", "internal/releaseevidence/registry.json", "internal/releaseevidence/requirements.json", "release-evidence/ft87-offline-network-control.json", "release-evidence/ft88-data-handling.json", ".bench/gate.sh", "bin/bench.sh", "package.json", "scripts/build-artifacts.sh", "scripts/build-offline-archives.sh", "scripts/write-deterministic-archive.mjs", "scripts/compare-artifacts.sh", "scripts/native-proof.sh", "scripts/aggregate-native-proofs.sh", "scripts/build-release-evidence.mjs", "scripts/go-build.sh", "scripts/platforms.json", "scripts/smoke-artifacts.sh", "scripts/smoke-offline.sh", "scripts/offline-registry.mjs", "scripts/wrapper-assets.json"} {
+	for _, path := range []string{"LICENSE", "go.mod", "go.sum", "governance/THIRD_PARTY_NOTICES.txt", "governance/policies/dependency-license-change.json", "governance/policies/recovery-rollback.json", "governance/policies/security-response.json", "governance/policies/support.json", "governance/policies/supported-versions.json", "governance/policies/threat-model.json", "governance/sbom.spdx.json", "internal/releaseevidence/registry.json", "internal/releaseevidence/requirements.json", "release-evidence/ft87-offline-network-control.json", "release-evidence/ft88-data-handling.json", ".bench/gate.sh", "bin/bench.sh", "package.json", "scripts/build-artifacts.sh", "scripts/build-offline-archives.sh", "scripts/assemble-offline-archive.mjs", "scripts/release-plan.mjs", "scripts/release-plan.json", "scripts/write-deterministic-archive.mjs", "scripts/compare-artifacts.sh", "scripts/native-proof.sh", "scripts/aggregate-native-proofs.sh", "scripts/build-release-evidence.mjs", "scripts/go-build.sh", "scripts/smoke-artifacts.sh", "scripts/smoke-offline.sh", "scripts/offline-registry.mjs", "scripts/wrapper-assets.json"} {
 		wantInputs[path] = sha256Hex(mustFixtureFile(t, filepath.Join(root, filepath.FromSlash(path))))
 	}
 	gotInputs := map[string]string{}

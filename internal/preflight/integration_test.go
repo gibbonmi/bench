@@ -67,7 +67,12 @@ func TestReleasePreflightScriptBootstrapsBuiltFullAndFocusedCommands(t *testing.
 		}
 		env = append(env, "BENCH_PREFLIGHT_"+strings.ToUpper(phase)+"="+fake)
 	}
-	for _, args := range [][]string{{"--mode", "verify"}, {"--mode", "verify", "--phase", "smoke"}} {
+	full := exec.Command("bash", filepath.Join(root, "scripts", "release-preflight.sh"), "--mode", "verify")
+	full.Dir, full.Env = root, env
+	if output, err := full.CombinedOutput(); err == nil || !strings.Contains(string(output), "native target proof is incomplete") {
+		t.Fatalf("full verify before native proofs did not fail closed: %v\n%s", err, output)
+	}
+	for _, args := range [][]string{{"--mode", "verify", "--phase", "smoke"}} {
 		cmd := exec.Command("bash", append([]string{filepath.Join(root, "scripts", "release-preflight.sh")}, args...)...)
 		cmd.Dir, cmd.Env = root, env
 		if output, err := cmd.CombinedOutput(); err != nil {

@@ -1,7 +1,7 @@
 [
   {
     "path": ".github/workflows/native-runtime.yml",
-    "old": "      - run: bash scripts/release-preflight.sh --mode verify --phase smoke",
+    "old": "      - run: bash scripts/smoke-artifacts.sh dist/artifacts dist/preflight",
     "new": "      - run: printf \"smoke removed\\n\""
   }
 ]

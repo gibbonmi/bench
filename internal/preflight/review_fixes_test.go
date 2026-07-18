@@ -255,7 +255,7 @@ func TestBuiltCommandArchiveBudgetsFailPromptlyAndPreservePriorGeneration(t *tes
 			}
 		}},
 		{name: "member count", want: "member count exceeds inspection limit", write: func(t *testing.T, path string) {
-			if err := os.WriteFile(path, hostileArchive(t, 10_001, 0), 0o644); err != nil {
+			if err := os.WriteFile(path, hostileArchive(t, 10_001, 1), 0o644); err != nil {
 				t.Fatal(err)
 			}
 		}},

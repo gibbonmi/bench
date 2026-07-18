@@ -1,1 +1,1 @@
-[{"path":"scripts/compare-artifacts.sh","old":"cmp -s","new":"printf"}]
+[{"path":"scripts/compare-artifacts.sh","old":"  if ! cmp -s \"$left/$name\" \"$right/$name\"; then","new":"  if false; then"}]

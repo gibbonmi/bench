@@ -17,11 +17,12 @@ func readTarball(data []byte) (map[string]tarFile, componentManifest, error) {
 	if int64(len(data)) > maxArchiveCompressedSize {
 		return nil, componentManifest{}, errors.New("archive compressed size exceeds inspection limit")
 	}
-	gz, err := gzip.NewReader(bytes.NewReader(data))
+	source := bytes.NewReader(data)
+	gz, err := gzip.NewReader(source)
 	if err != nil {
 		return nil, componentManifest{}, err
 	}
-	defer gz.Close()
+	gz.Multistream(false)
 	tr := tar.NewReader(gz)
 	files := map[string]tarFile{}
 	members := 0
@@ -69,7 +70,13 @@ func readTarball(data []byte) (map[string]tarFile, componentManifest, error) {
 		if int64(len(body)) > maxArchiveMemberSize {
 			return nil, componentManifest{}, fmt.Errorf("archive member %s exceeds inspection limit", name)
 		}
+		if len(body) == 0 {
+			return nil, componentManifest{}, fmt.Errorf("archive contains empty member %s", name)
+		}
 		files[name] = tarFile{mode: header.Mode & 0o777, data: body}
+	}
+	if err := rejectGzipSuffix(gz, source); err != nil {
+		return nil, componentManifest{}, err
 	}
 	manifestFile, ok := files[requirements.ComponentManifest.Path]
 	if !ok {
@@ -80,6 +87,22 @@ func readTarball(data []byte) (map[string]tarFile, componentManifest, error) {
 		return nil, componentManifest{}, fmt.Errorf("component manifest is malformed: %w", err)
 	}
 	return files, manifest, nil
+}
+
+func rejectGzipSuffix(gz *gzip.Reader, source *bytes.Reader) error {
+	if err := gz.Close(); err != nil {
+		return err
+	}
+	if source.Len() == 0 {
+		return nil
+	}
+	if err := gz.Reset(source); err == nil {
+		return errors.New("archive has concatenated gzip members")
+	} else if errors.Is(err, io.EOF) {
+		return nil
+	} else {
+		return fmt.Errorf("archive has invalid trailing gzip data: %w", err)
+	}
 }
 
 func validatePackageEvidence(files map[string]tarFile, manifest componentManifest, target, version string) error {

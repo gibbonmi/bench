@@ -8,18 +8,18 @@ import (
 	"path/filepath"
 )
 
-// crossCompileMatrix builds the binary for every platform in scripts/platforms.json and
+// crossCompileMatrix builds the binary for every platform in scripts/release-plan.json and
 // reports any target that fails to build. It is heavy (~8s, four serial toolchain builds)
 // and portability rarely breaks on an ordinary code change, so it is gold-plating on the
 // every-commit gate. It runs only under `go test -tags stress`; the release workflow,
 // which cross-compiles every target to ship the platform packages, is the standing
 // backstop that catches a real portability break before it can ship.
 func crossCompileMatrix(root, buildHelper string) []string {
-	if !exists(filepath.Join(root, "scripts", "platforms.json")) || !exists(buildHelper) {
+	if !exists(filepath.Join(root, "scripts", "release-plan.json")) || !exists(buildHelper) {
 		return nil
 	}
 	var diags []string
-	matrix, err := platformMatrix(filepath.Join(root, "scripts", "platforms.json"))
+	matrix, err := platformMatrix(filepath.Join(root, "scripts", "release-plan.json"))
 	if err != nil {
 		diags = append(diags, "platform matrix unreadable: "+err.Error())
 	}

@@ -2,6 +2,8 @@ package artifact
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"fmt"
 	"maps"
 	"os"
 	"os/exec"
@@ -203,6 +205,7 @@ func promotionTestEnv(prepared, ready string) []string {
 
 func assertInterruptedArtifactPromotion(t *testing.T, source, prepared, output string, wantFiles int) {
 	t.Helper()
+	prior := promotedArtifactDigests(t, output)
 	ready := filepath.Join(t.TempDir(), "promotion-ready")
 	cmd := exec.Command("bash", filepath.Join(source, "scripts", "build-artifacts.sh"), source, output)
 	cmd.Env = promotionTestEnv(prepared, ready)
@@ -230,4 +233,27 @@ func assertInterruptedArtifactPromotion(t *testing.T, source, prepared, output s
 	if err != nil || len(files) != wantFiles {
 		t.Fatalf("promotion interruption left partial/absent set: files=%d err=%v", len(files), err)
 	}
+	if after := promotedArtifactDigests(t, output); !maps.Equal(after, prior) {
+		t.Fatalf("promotion interruption changed prior-generation bytes: got=%v want=%v", after, prior)
+	}
+}
+
+func promotedArtifactDigests(t *testing.T, directory string) map[string]string {
+	t.Helper()
+	entries, err := os.ReadDir(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	digests := make(map[string]string, len(entries))
+	for _, entry := range entries {
+		if !entry.Type().IsRegular() {
+			t.Fatalf("promoted artifact entry is not regular: %s", entry.Name())
+		}
+		data, err := os.ReadFile(filepath.Join(directory, entry.Name()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		digests[entry.Name()] = fmt.Sprintf("%x", sha256.Sum256(data))
+	}
+	return digests
 }

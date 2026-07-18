@@ -23,6 +23,10 @@ promote_reproducibility=0
 # cannot affect release bytes or require a trusted ambient cache.
 export npm_config_cache="$stage/npm-cache"
 export GOCACHE="$stage/go-cache"
+export TMPDIR="$stage/tmp"
+export HOME="$stage/home"
+export GOMODCACHE="$stage/go-mod-cache"
+mkdir -p "$TMPDIR" "$HOME" "$GOMODCACHE"
 cleanup() {
   if [[ "$commit_complete" != 1 ]]; then
     if [[ "$artifacts_promoted" == 1 ]]; then
@@ -40,6 +44,9 @@ cleanup() {
   [[ -z "$repro_backup" || ! -e "$repro_backup" ]] || rm -f "$repro_backup"
   [[ -z "$lock" || ! -d "$lock" ]] || rmdir "$lock"
   [[ -z "$second_parent" || ! -d "$second_parent" ]] || rm -rf "$second_parent"
+  # Go's isolated module cache makes downloaded modules read-only. Restore
+  # owner write/search before removal, including newly-created descendants.
+  chmod -R u+rwX "$stage" 2>/dev/null || true
   rm -rf "$stage"
 }
 trap cleanup EXIT
@@ -55,7 +62,9 @@ node "$source_root/scripts/build-release-evidence.mjs" --validate-required-sourc
 wrapper="$stage/wrapper"
 packages="$stage/packages"
 artifacts="$stage/artifacts"
-mkdir -p "$wrapper" "$packages" "$artifacts"
+npm_artifacts="$stage/npm-artifacts"
+offline_archives="$stage/offline-archives"
+mkdir -p "$wrapper" "$packages" "$artifacts" "$npm_artifacts"
 
 if [[ -n "${BENCH_TEST_PREPARED_ARTIFACTS:-}" ]]; then
   [[ -n "${BENCH_TEST_PROMOTION_READY_FILE:-}" ]] || { printf 'bench artifacts: prepared artifacts require the promotion test seam\n' >&2; exit 1; }
@@ -63,16 +72,16 @@ if [[ -n "${BENCH_TEST_PREPARED_ARTIFACTS:-}" ]]; then
   cp -a "$BENCH_TEST_PREPARED_ARTIFACTS/." "$artifacts/"
 else
   matrix_file="$stage/platform-matrix.tsv"
-  node -e 'for (const p of require(process.argv[1])) console.log([p.os,p.arch,p.goos,p.goarch].join("\t"))' "$source_root/scripts/platforms.json" > "$matrix_file"
-  matrix_count="$(wc -l < "$matrix_file" | tr -d '[:space:]')"
+  node "$source_root/scripts/release-plan.mjs" "$source_root" targets > "$matrix_file"
+  version="$(node -p 'require(process.argv[1]).version' "$source_root/package.json")"
   npm_pack_flags=()
   while IFS= read -r arg; do npm_pack_flags+=("$arg"); done < <(node -e 'for (const arg of require(process.argv[1]).toolchains.find(tool => tool.name === "npm").operations.pack) console.log(arg)' "$source_root/internal/releaseevidence/requirements.json")
 
-  while IFS=$'\t' read -r os arch _goos _goarch; do
+  while IFS=$'\t' read -r os arch _goos _goarch _runner; do
     mkdir -p "$packages/$os-$arch/bin"
   done < "$matrix_file"
 
-  while IFS=$'\t' read -r os arch goos goarch; do
+  while IFS=$'\t' read -r os arch goos goarch _runner; do
     binary="$packages/$os-$arch/bin/bench"
     if [[ "$goos" == linux ]]; then
       CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" bash "$source_root/scripts/go-build.sh" "$source_root" "$binary"
@@ -84,24 +93,26 @@ else
 
   node "$source_root/scripts/build-release-evidence.mjs" "$source_root" "$wrapper" "$packages"
 
-  while IFS=$'\t' read -r os arch _goos _goarch; do
-    npm pack "$packages/$os-$arch" --pack-destination "$artifacts" "${npm_pack_flags[@]}" >/dev/null
+  while IFS=$'\t' read -r os arch _goos _goarch _runner; do
+    npm pack "$packages/$os-$arch" --pack-destination "$npm_artifacts" "${npm_pack_flags[@]}" >/dev/null
   done < "$matrix_file"
 
-  npm pack "$wrapper" --pack-destination "$artifacts" "${npm_pack_flags[@]}" >/dev/null
-  "$source_root/scripts/build-offline-archives.sh" "$artifacts" "$artifacts"
-  expected="$((matrix_count * 2 + 1))"
+  npm pack "$wrapper" --pack-destination "$npm_artifacts" "${npm_pack_flags[@]}" >/dev/null
+  bash "$source_root/scripts/build-offline-archives.sh" "$npm_artifacts" "$offline_archives"
+  cp "$npm_artifacts"/* "$offline_archives"/* "$artifacts/"
+  expected="$(node "$source_root/scripts/release-plan.mjs" "$source_root" artifact-names "$version" | wc -l | tr -d '[:space:]')"
   actual="$(find "$artifacts" -maxdepth 1 -type f \( -name '*.tgz' -o -name '*.tar.gz' \) -print | wc -l | tr -d ' ')"
   [[ "$actual" == "$expected" ]] || { printf 'bench artifacts: emitted %s tarballs, expected %s\n' "$actual" "$expected" >&2; exit 1; }
 
   if [[ "${BENCH_REPRO_BUILD:-0}" != 1 ]]; then
     second_parent="$(mktemp -d "$parent/.bench-repro-build.XXXXXX")"
+    mkdir -p "$second_parent/tmp"
     second_output="$second_parent/artifacts"
-    if ! env -u BENCH_TEST_PROMOTION_READY_FILE BENCH_REPRO_BUILD=1 bash "$source_root/scripts/build-artifacts.sh" "$source_root" "$second_output"; then
+    if ! env -u BENCH_TEST_PROMOTION_READY_FILE BENCH_REPRO_BUILD=1 HOME="$second_parent/home" TMPDIR="$second_parent/tmp" GOCACHE="$second_parent/go-cache" GOMODCACHE="$second_parent/go-mod-cache" npm_config_cache="$second_parent/npm-cache" bash "$source_root/scripts/build-artifacts.sh" "$source_root" "$second_output"; then
       printf 'bench artifacts: independent reproducibility build failed\n' >&2
       exit 1
     fi
-    bash "$source_root/scripts/compare-artifacts.sh" "$artifacts" "$second_output" "$stage/reproducibility.json"
+    bash "$source_root/scripts/compare-artifacts.sh" "$artifacts" "$second_output" "$stage/reproducibility.json" "$source_root" "$source_root"
     rm -rf "$second_parent"
     second_parent=""
     promote_reproducibility=1
@@ -135,4 +146,5 @@ repro_backup=""
 rmdir "$lock"
 lock=""
 trap - EXIT INT TERM HUP
+chmod -R u+rwX "$stage" 2>/dev/null || true
 rm -rf "$stage"

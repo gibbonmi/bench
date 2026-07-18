@@ -191,16 +191,11 @@ func TestGovernanceSchemaRejectsUnknownFieldsAndVersions(t *testing.T) {
 			if code := Command([]string{"--mode", "verify"}, "0.2.0", &stderr); code != 1 {
 				t.Fatalf("exit=%d stderr=%s", code, stderr.String())
 			}
-			data, err := os.ReadFile(filepath.Join(root, "dist", "preflight", "release-index.json"))
-			if err != nil {
-				t.Fatal(err)
+			if !strings.Contains(stderr.String(), "reproducibility comparison does not match release-bound evidence: governance/policies/support.json") {
+				t.Fatalf("corrupt release-bound source did not fail closed:\n%s", stderr.String())
 			}
-			var index releaseIndex
-			if err := json.Unmarshal(data, &index); err != nil {
-				t.Fatal(err)
-			}
-			if requirementIndexStatus(index.Requirements, "core.policy.support") != "invalid" {
-				t.Fatalf("support status = %q, want invalid", requirementIndexStatus(index.Requirements, "core.policy.support"))
+			if _, err := os.Stat(filepath.Join(root, "dist", "preflight", "release-index.json")); !os.IsNotExist(err) {
+				t.Fatalf("corrupt release-bound source promoted release index: %v", err)
 			}
 		})
 	}
@@ -214,7 +209,7 @@ func TestFinalTarRejectsHostileEvidenceWithConsistentInventory(t *testing.T) {
 		mode int64
 		want string
 	}{
-		{name: "empty notices", path: "governance/THIRD_PARTY_NOTICES.txt", data: []byte{}, mode: 0o644, want: "empty or missing"},
+		{name: "empty notices", path: "governance/THIRD_PARTY_NOTICES.txt", data: []byte{}, mode: 0o644, want: "empty member"},
 		{name: "unsafe mode", path: "LICENSE", data: []byte("license\n"), mode: 0o777, want: "unsafe mode"},
 		{name: "malformed SPDX", path: "governance/sbom.spdx.json", data: []byte(`{"SPDXVersion":"SPDX-2.3","unexpected":true}` + "\n"), mode: 0o644, want: "malformed SPDX JSON"},
 		{name: "malformed policy", path: "governance/policies/support.json", data: []byte(`{"schema_version":1,"policy":"support","route":"GitHub Issues","personal_email":false,"non_personal":true,"unexpected":true}` + "\n"), mode: 0o644, want: "malformed"},

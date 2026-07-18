@@ -16,11 +16,11 @@ done
 root="$(cd "$(dirname "$source_path")/.." && pwd)"
 version="$(node -p 'require(process.argv[1]).version' "$root/package.json")"
 target="${os_name}-${arch_name}"
-matrix_row="$(node -e 'const rows=require(process.argv[1]); const [os,arch]=process.argv.slice(2); const row=rows.find(item=>item.os===os&&item.arch===arch); if(!row) process.exit(1); process.stdout.write(`${row.goos}\t${row.goarch}\t${row.runner}`)' "$root/scripts/platforms.json" "$os_name" "$arch_name")" || {
+matrix_row="$(node "$root/scripts/release-plan.mjs" "$root" target "$os_name" "$arch_name")" || {
   printf 'native proof: target is not in the canonical platform matrix: %s\n' "$target" >&2
   exit 1
 }
-IFS=$'\t' read -r goos goarch matrix_runner <<< "$matrix_row"
+IFS=$'\t' read -r _matrix_os _matrix_arch goos goarch matrix_runner <<< "$matrix_row"
 [[ "$matrix_runner" == "$runner" ]] || { printf 'native proof: runner does not match canonical matrix for %s\n' "$target" >&2; exit 1; }
 
 native="$artifacts/redbench-${target}-${version}.tgz"
@@ -46,6 +46,7 @@ archive_root="$archive_dir/redbench-${version}-${target}"
 cmp -s "$rebuild" "$package_dir/package/bin/bench" || { printf 'native proof: rebuilt binary differs from package for %s\n' "$target" >&2; exit 1; }
 cmp -s "$rebuild" "$archive_root/bin/bench" || { printf 'native proof: rebuilt binary differs from offline archive for %s\n' "$target" >&2; exit 1; }
 "$rebuild" version >/dev/null
+"$rebuild" commands --brief >/dev/null
 if [[ "$goos" == linux ]]; then
   file_info="$(file "$rebuild")"
   [[ "$file_info" == *"statically linked"* ]] || { printf 'native proof: Linux binary is not static for %s: %s\n' "$target" "$file_info" >&2; exit 1; }
@@ -61,6 +62,9 @@ if [[ "$goos" == linux ]]; then
 else
   file_info="$(file "$rebuild")"
   [[ "$file_info" == *"Mach-O"* ]] || { printf 'native proof: Darwin binary format is invalid for %s: %s\n' "$target" "$file_info" >&2; exit 1; }
+  command -v nm >/dev/null 2>&1 || { printf 'native proof: nm is required to prove stripped Darwin output\n' >&2; exit 1; }
+  nm -a "$rebuild" > "$tmp/darwin-symbols" 2>&1 || true
+  rg -q 'no symbols|no name list' "$tmp/darwin-symbols" || { printf 'native proof: Darwin binary is not stripped for %s\n' "$target" >&2; exit 1; }
   musl_status=not_applicable
 fi
 
@@ -75,4 +79,5 @@ native_digest="$(sha256 "$native")"
 archive_digest="$(sha256 "$archive")"
 rebuilt_digest="$(sha256 "$rebuild")"
 mkdir -p "$(dirname "$proof")"
-node -e 'const fs=require("fs"), path=require("path"); const [file,target,runner,rebuilt,packaged,archive,musl]=process.argv.slice(1); const body={schema_version:1,target,runner,status:"green",rebuilt_sha256:rebuilt,binary_sha256:rebuilt,package_sha256:packaged,archive_sha256:archive,musl_status:musl}; const tmp=`${file}.tmp-${process.pid}`; fs.mkdirSync(path.dirname(file),{recursive:true}); fs.writeFileSync(tmp,JSON.stringify(body)+"\n",{mode:0o644}); fs.renameSync(tmp,file)' "$proof" "$target" "$runner" "$rebuilt_digest" "$native_digest" "$archive_digest" "$musl_status"
+# shellcheck disable=SC2016 # Node template literals are intentionally literal here.
+node -e 'const fs=require("fs"), path=require("path"); const [file,target,runner,rebuilt,packaged,archive,musl,strip]=process.argv.slice(1); const body={schema_version:1,target,runner,status:"green",rebuilt_sha256:rebuilt,binary_sha256:rebuilt,package_sha256:packaged,archive_sha256:archive,musl_status:musl,operations_status:"green",strip_status:strip,tools_status:"green"}; const tmp=`${file}.tmp-${process.pid}`; fs.mkdirSync(path.dirname(file),{recursive:true}); fs.writeFileSync(tmp,JSON.stringify(body)+"\n",{mode:0o644}); fs.renameSync(tmp,file)' "$proof" "$target" "$runner" "$rebuilt_digest" "$native_digest" "$archive_digest" "$musl_status" green

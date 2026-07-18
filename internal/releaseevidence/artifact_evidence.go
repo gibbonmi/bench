@@ -104,24 +104,11 @@ func ReadPackageVersion(root string) (string, error) {
 	return pkg.Version, nil
 }
 
-type platformDefinition struct {
-	OS     string `json:"os"`
-	Arch   string `json:"arch"`
-	GOOS   string `json:"goos"`
-	GOArch string `json:"goarch"`
-	Runner string `json:"runner"`
-}
-
 func inspectArtifacts(root string) ([]artifactEvidence, []targetEvidence, string, error) {
-	matrixData, err := ReadRegular(filepath.Join(root, "scripts", "platforms.json"))
+	plan, err := readReleasePlan(root)
 	if err != nil {
-		return nil, nil, "", fmt.Errorf("platform matrix is unreadable: %w", err)
+		return nil, nil, "", err
 	}
-	var matrix []platformDefinition
-	if err := decodeStrict(matrixData, &matrix); err != nil || len(matrix) != 4 {
-		return nil, nil, "", errors.New("platform matrix must contain exactly four supported targets")
-	}
-	seenTargets := map[string]bool{}
 	version, err := ReadPackageVersion(root)
 	if err != nil {
 		return nil, nil, "", fmt.Errorf("package identity is unreadable: %w", err)
@@ -132,26 +119,11 @@ func inspectArtifacts(root string) ([]artifactEvidence, []targetEvidence, string
 		return nil, nil, "", fmt.Errorf("artifact directory is unreadable: %w", err)
 	}
 	want := map[string]string{"redbench-" + version + ".tgz": "wrapper"}
-	targets := make([]targetEvidence, 0, len(matrix))
-	for _, item := range matrix {
-		key := item.OS + "-" + item.Arch
-		if (item.OS != "darwin" && item.OS != "linux") || (item.Arch != "arm64" && item.Arch != "x64") || item.Runner == "" || seenTargets[key] {
-			return nil, nil, "", fmt.Errorf("platform matrix contains an invalid or duplicate target: %s", key)
-		}
-		wantGOArch := map[string]string{"arm64": "arm64", "x64": "amd64"}[item.Arch]
-		if item.GOOS != item.OS || item.GOArch != wantGOArch {
-			return nil, nil, "", fmt.Errorf("platform matrix target %s has inconsistent Go target", key)
-		}
-		seenTargets[key] = true
+	targets := append([]targetEvidence(nil), plan.Targets...)
+	for _, item := range plan.Targets {
 		name := fmt.Sprintf("redbench-%s-%s-%s.tgz", item.OS, item.Arch, version)
 		want[name] = item.OS + "-" + item.Arch
 		want[fmt.Sprintf("redbench-%s-%s-%s.tar.gz", version, item.OS, item.Arch)] = item.OS + "-" + item.Arch
-		targets = append(targets, targetEvidence{OS: item.OS, Arch: item.Arch, GOOS: item.GOOS, GOArch: item.GOArch, Runner: item.Runner})
-	}
-	for _, key := range []string{"darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"} {
-		if !seenTargets[key] {
-			return nil, nil, "", fmt.Errorf("platform matrix omits %s", key)
-		}
 	}
 	if len(entries) != len(want) {
 		return nil, nil, "", fmt.Errorf("artifact set has %d entries, want %d", len(entries), len(want))
@@ -185,7 +157,7 @@ func inspectArtifacts(root string) ([]artifactEvidence, []targetEvidence, string
 		_, _ = setHash.Write([]byte{0})
 		artifactBytes[entry.Name()] = data
 		if strings.HasSuffix(entry.Name(), ".tar.gz") {
-			files, err := readOfflineArchive(data, entry.Name(), target, version)
+			files, err := readOfflineArchive(root, data, entry.Name(), target, version)
 			if err != nil {
 				return nil, nil, "", fmt.Errorf("offline archive %s is invalid: %w", entry.Name(), err)
 			}
@@ -193,7 +165,7 @@ func inspectArtifacts(root string) ([]artifactEvidence, []targetEvidence, string
 			if err != nil {
 				return nil, nil, "", err
 			}
-			artifacts = append(artifacts, artifactEvidence{Name: entry.Name(), Target: target, Size: int64(len(data)), SHA256: digest(data), ComponentDigest: digest(files["evidence/components/platform-component-manifest.json"].data), SBOMDigest: digest(files["evidence/governance/sbom.spdx.json"].data), InventoryDigest: digest(inventory)})
+			artifacts = append(artifacts, artifactEvidence{Name: entry.Name(), Target: target, Size: int64(len(data)), SHA256: digest(data), ComponentDigest: digest(files["evidence/component-manifest.json"].data), SBOMDigest: digest(files["evidence/governance/sbom.spdx.json"].data), InventoryDigest: digest(inventory)})
 			continue
 		}
 		files, manifest, err := readTarball(data)
@@ -210,11 +182,11 @@ func inspectArtifacts(root string) ([]artifactEvidence, []targetEvidence, string
 		packageFiles[entry.Name()] = files
 		artifacts = append(artifacts, artifactEvidence{Name: entry.Name(), Target: target, Size: int64(len(data)), SHA256: digest(data), ComponentDigest: digest(files[requirements.ComponentManifest.Path].data), SBOMDigest: digest(files["governance/sbom.spdx.json"].data), InventoryDigest: digest(inventory)})
 	}
-	for _, item := range matrix {
+	for _, item := range plan.Targets {
 		target := item.OS + "-" + item.Arch
 		platformName := fmt.Sprintf("redbench-%s-%s-%s.tgz", item.OS, item.Arch, version)
 		archiveName := fmt.Sprintf("redbench-%s-%s-%s.tar.gz", version, item.OS, item.Arch)
-		archiveFiles, err := readOfflineArchive(artifactBytes[archiveName], archiveName, target, version)
+		archiveFiles, err := readOfflineArchive(root, artifactBytes[archiveName], archiveName, target, version)
 		if err != nil {
 			return nil, nil, "", err
 		}

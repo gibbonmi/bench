@@ -1,2 +1,2 @@
 .github/workflows/native-runtime.yml
-scripts/platforms.json
+scripts/release-plan.json

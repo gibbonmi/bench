@@ -3,6 +3,7 @@ package conformance
 import (
 	"archive/tar"
 	"compress/gzip"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,12 +13,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
-	"testing"
 )
-
-type workflowTriggerShape struct {
-	pullRequest, pushBranches, mainBranch bool
-}
 
 type requirementRecord struct {
 	Key          string   `json:"key"`
@@ -119,17 +115,27 @@ func checkReleasePreflight(root string) []string {
 		diags = append(diags, "release workflows duplicate the govulncheck version pin")
 	}
 	if native != "" {
-		for message, anchor := range map[string]string{"native verification bypasses full release preflight": "scripts/release-preflight.sh --mode verify\n", "native verification does not upload preflight evidence": "verify-preflight-evidence", "native runner matrix bypasses focused smoke": "--mode verify --phase smoke"} {
-			if strings.Count(native, anchor) != 1 {
-				diags = append(diags, message)
-			}
+		if job := workflowJob(native, "evidence"); !strings.Contains(job, "needs: [preflight, native-proof]") || !strings.Contains(job, "scripts/release-preflight.sh --mode verify") || !strings.Contains(job, "verify-preflight-evidence") {
+			diags = append(diags, "native verification does not finalize full release evidence after native proofs")
+		}
+		if job := workflowJob(native, "smoke"); !strings.Contains(job, "needs: [preflight, evidence]") || !strings.Contains(job, "verify-preflight-evidence") || !strings.Contains(job, "scripts/smoke-artifacts.sh") {
+			diags = append(diags, "native runner matrix does not consume finalized release evidence")
 		}
 	}
 	if release != "" {
-		for message, anchor := range map[string]string{"tag publication bypasses full release preflight": "scripts/release-preflight.sh --mode publish --profile public\n", "tag publication does not upload preflight evidence": "publish-preflight-evidence", "tag runner matrix bypasses focused smoke": "--mode verify --phase smoke", "tag evidence does not request repository maximum retention": "retention-days: ${{ github.retention_days }}", "publication does not wait for preflight and every native proof row": "needs: [preflight, smoke, native-evidence]", "publication does not wait for publish authorization": "needs: [authorize]"} {
+		for message, anchor := range map[string]string{"tag publication bypasses full release preflight": "scripts/release-preflight.sh --mode publish --profile public\n", "tag publication does not upload preflight evidence": "publish-preflight-evidence", "tag evidence does not request repository maximum retention": "retention-days: ${{ github.retention_days }}", "publication does not wait for publish authorization": "needs: [authorize]"} {
 			if !strings.Contains(release, anchor) {
 				diags = append(diags, message)
 			}
+		}
+		if job := workflowJob(release, "evidence"); !strings.Contains(job, "needs: [preflight, native-proof]") || !strings.Contains(job, "scripts/release-preflight.sh --mode verify") || !strings.Contains(job, "release-native-proof-evidence") {
+			diags = append(diags, "tag evidence does not finalize complete native proofs")
+		}
+		if job := workflowJob(release, "smoke"); !strings.Contains(job, "needs: [preflight, evidence]") || !strings.Contains(job, "verify-preflight-evidence") {
+			diags = append(diags, "tag smoke does not consume finalized release evidence")
+		}
+		if job := workflowJob(release, "authorize"); !strings.Contains(job, "needs: [preflight, evidence, smoke]") || !strings.Contains(job, "release-native-proof-evidence") {
+			diags = append(diags, "publication does not wait for finalized evidence and every native proof row")
 		}
 	}
 	if release != "" {
@@ -149,7 +155,7 @@ func checkReleasePreflight(root string) []string {
 		diags = append(diags, "release evidence does not bind archive digest bytes")
 	}
 	comparison := readIfExists(filepath.Join(root, "scripts", "compare-artifacts.sh"))
-	if comparison != "" && (!strings.Contains(comparison, "cmp -s") || !strings.Contains(comparison, "reproducibility mismatch:")) {
+	if comparison != "" && (!strings.Contains(comparison, `cmp -s "$left/$name" "$right/$name"`) || !strings.Contains(comparison, "reproducibility mismatch:")) {
 		diags = append(diags, "reproducibility comparator does not require exact byte equality")
 	}
 	offlineSmoke := readIfExists(filepath.Join(root, "scripts", "smoke-offline.sh"))
@@ -160,27 +166,6 @@ func checkReleasePreflight(root string) []string {
 		diags = append(diags, "offline registry smoke does not fail closed")
 	}
 	return diags
-}
-
-func TestReleasePreflightDiagnosticsDistinguishAndAggregate(t *testing.T) {
-	missing := t.TempDir()
-	if got := strings.Join(checkReleasePreflight(missing), "\n"); !strings.Contains(got, "release preflight registry is absent") || !strings.Contains(got, "release requirement registry is absent") {
-		t.Fatalf("absent diagnostics = %q", got)
-	}
-	malformed := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(malformed, "internal", "releaseevidence"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(malformed, "internal", "releaseevidence", "registry.json"), []byte("{\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(malformed, "internal", "releaseevidence", "requirements.json"), []byte("{\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	got := strings.Join(checkReleasePreflight(malformed), "\n")
-	if !strings.Contains(got, "release preflight registry is malformed") || !strings.Contains(got, "release requirement registry is malformed") {
-		t.Fatalf("malformed diagnostics = %q", got)
-	}
 }
 
 func runReleaseEvidenceProbe(root string, packageEvidence []requirementRecord) []string {
@@ -207,7 +192,6 @@ func runReleaseEvidenceProbe(root string, packageEvidence []requirementRecord) [
 
 import (
 	"os"
-
 	"github.com/gibbonmi/bench/internal/preflight"
 )
 
@@ -238,11 +222,14 @@ func main() {
 	if output, err := build.CombinedOutput(); err != nil {
 		return []string{"release package evidence build failed: " + strings.TrimSpace(string(output))}
 	}
-	var matrix []struct {
-		OS   string `json:"os"`
-		Arch string `json:"arch"`
+	var plan struct {
+		Targets []struct {
+			OS     string `json:"os"`
+			Arch   string `json:"arch"`
+			Runner string `json:"runner"`
+		} `json:"targets"`
 	}
-	if err := readJSONAt(root, filepath.Join("scripts", "platforms.json"), &matrix); err != nil {
+	if err := readJSONAt(root, filepath.Join("scripts", "release-plan.json"), &plan); err != nil {
 		return []string{"release package evidence matrix is unreadable"}
 	}
 	var pkg struct {
@@ -252,14 +239,14 @@ func main() {
 		return []string{"release package evidence package identity is unreadable"}
 	}
 	artifacts := append([]string{"redbench-" + pkg.Version + ".tgz"}, func() []string {
-		out := make([]string, 0, len(matrix))
-		for _, target := range matrix {
+		out := make([]string, 0, len(plan.Targets))
+		for _, target := range plan.Targets {
 			out = append(out, fmt.Sprintf("redbench-%s-%s-%s.tgz", target.OS, target.Arch, pkg.Version))
 		}
 		return out
 	}()...)
 	for _, name := range artifacts {
-		names, err := archiveNames(filepath.Join(root, "dist", "artifacts", name))
+		files, err := archiveFiles(filepath.Join(root, "dist", "artifacts", name))
 		if err != nil {
 			return []string{"release package evidence artifact is unreadable: " + name}
 		}
@@ -267,9 +254,32 @@ func main() {
 			if evidence.PackageMode == "" {
 				continue
 			}
-			if !names["package/"+evidence.Path] {
+			if _, ok := files["package/"+evidence.Path]; !ok {
 				return []string{"release package evidence allowlist omits " + evidence.Path}
 			}
+		}
+	}
+	proofDir := filepath.Join(root, "dist", "native-proofs")
+	if err := os.MkdirAll(proofDir, 0o755); err != nil {
+		return []string{"release evidence probe could not prepare native proof directory"}
+	}
+	digest := func(data []byte) string { sum := sha256.Sum256(data); return fmt.Sprintf("%x", sum) }
+	for _, target := range plan.Targets {
+		platform := fmt.Sprintf("redbench-%s-%s-%s.tgz", target.OS, target.Arch, pkg.Version)
+		archive := fmt.Sprintf("redbench-%s-%s-%s.tar.gz", pkg.Version, target.OS, target.Arch)
+		files, err := archiveFiles(filepath.Join(root, "dist", "artifacts", platform))
+		binary, ok := files["package/bin/bench"]
+		if err != nil || !ok {
+			return []string{"release evidence probe could not inspect native proof binary"}
+		}
+		packageBytes, packageErr := os.ReadFile(filepath.Join(root, "dist", "artifacts", platform))
+		archiveBytes, archiveErr := os.ReadFile(filepath.Join(root, "dist", "artifacts", archive))
+		if packageErr != nil || archiveErr != nil {
+			return []string{"release evidence probe could not read native proof artifacts"}
+		}
+		proof, marshalErr := json.Marshal(map[string]any{"schema_version": 1, "target": target.OS + "-" + target.Arch, "runner": target.Runner, "status": "green", "rebuilt_sha256": digest(binary), "binary_sha256": digest(binary), "package_sha256": digest(packageBytes), "archive_sha256": digest(archiveBytes), "musl_status": map[bool]string{true: "green", false: "not_applicable"}[target.OS == "linux"], "operations_status": "green", "strip_status": "green", "tools_status": "green"})
+		if marshalErr != nil || os.WriteFile(filepath.Join(proofDir, target.OS+"-"+target.Arch+".json"), append(proof, '\n'), 0o644) != nil {
+			return []string{"release evidence probe could not write native proof"}
 		}
 	}
 	fake, err := os.CreateTemp("", "bench-preflight-probe-*")
@@ -328,7 +338,7 @@ func readJSONAt(root, rel string, value any) error {
 	return json.Unmarshal(data, value)
 }
 
-func archiveNames(path string) (map[string]bool, error) {
+func archiveFiles(path string) (map[string][]byte, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -340,16 +350,20 @@ func archiveNames(path string) (map[string]bool, error) {
 	}
 	defer gz.Close()
 	reader := tar.NewReader(gz)
-	names := map[string]bool{}
+	files := map[string][]byte{}
 	for {
 		header, err := reader.Next()
 		if err == io.EOF {
-			return names, nil
+			return files, nil
 		}
 		if err != nil {
 			return nil, err
 		}
-		names[header.Name] = true
+		body, err := io.ReadAll(reader)
+		if err != nil {
+			return nil, err
+		}
+		files[header.Name] = body
 	}
 }
 
@@ -360,40 +374,4 @@ func containsKey(records []requirementRecord, want string) bool {
 		}
 	}
 	return false
-}
-
-func nativeWorkflowTriggers(text string) workflowTriggerShape {
-	var shape workflowTriggerShape
-	inOn, inPush, inBranches := false, false, false
-	for _, raw := range strings.Split(text, "\n") {
-		line := strings.TrimRight(raw, " \t\r")
-		trimmed := strings.TrimSpace(line)
-		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
-			continue
-		}
-		indent := len(line) - len(strings.TrimLeft(line, " "))
-		if indent == 0 {
-			inOn = line == "on:"
-			inPush, inBranches = false, false
-			continue
-		}
-		if !inOn {
-			continue
-		}
-		if indent == 2 {
-			inPush, inBranches = trimmed == "push:", false
-			if trimmed == "pull_request:" {
-				shape.pullRequest = true
-			}
-			continue
-		}
-		if inPush && indent == 4 && trimmed == "branches:" {
-			shape.pushBranches, inBranches = true, true
-			continue
-		}
-		if inBranches && indent == 6 && trimmed == "- main" {
-			shape.mainBranch = true
-		}
-	}
-	return shape
 }

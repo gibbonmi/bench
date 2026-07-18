@@ -1,1 +1,1 @@
-[{"path":".github/workflows/native-runtime.yml","old":"          name: verify-preflight-evidence","new":"          name: omitted-preflight-evidence"}]
+[{"path":".github/workflows/native-runtime.yml","old":"          name: verify-preflight-evidence\n          path: dist/preflight/","new":"          name: omitted-preflight-evidence\n          path: dist/preflight/"}]

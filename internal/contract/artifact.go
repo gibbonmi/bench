@@ -48,14 +48,27 @@ func ReadTarball(t testing.TB, path string) map[string]TarEntry {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if h.Typeflag != tar.TypeReg && h.Typeflag != tar.TypeRegA {
+		name := strings.TrimPrefix(h.Name, "./")
+		if strings.Contains(name, "\\") || strings.HasPrefix(name, "/") || strings.Contains(name, "../") || name == "" {
+			t.Fatalf("unsafe tarball path %q", h.Name)
+		}
+		if h.Typeflag == tar.TypeDir {
 			continue
+		}
+		if h.Typeflag != tar.TypeReg && h.Typeflag != tar.TypeRegA {
+			t.Fatalf("tarball contains special member %s", name)
 		}
 		data, err := io.ReadAll(tr)
 		if err != nil {
 			t.Fatal(err)
 		}
-		entries[strings.TrimPrefix(h.Name, "./")] = TarEntry{Mode: h.Mode, Data: data}
+		if len(data) == 0 {
+			t.Fatalf("tarball contains empty member %s", name)
+		}
+		if _, exists := entries[name]; exists {
+			t.Fatalf("tarball contains duplicate member %s", name)
+		}
+		entries[name] = TarEntry{Mode: h.Mode, Data: data}
 	}
 	return entries
 }

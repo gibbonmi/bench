@@ -36,6 +36,7 @@ type reproducibilityEvidence struct {
 	Status        string                    `json:"status"`
 	Builds        int                       `json:"builds"`
 	Artifacts     []reproducibilityArtifact `json:"artifacts"`
+	Evidence      []reproducibilityArtifact `json:"evidence"`
 }
 
 type reproducibilityArtifact struct {
@@ -46,15 +47,18 @@ type reproducibilityArtifact struct {
 }
 
 type nativeProofEvidence struct {
-	SchemaVersion int    `json:"schema_version"`
-	Target        string `json:"target"`
-	Runner        string `json:"runner"`
-	Status        string `json:"status"`
-	RebuiltSHA256 string `json:"rebuilt_sha256"`
-	BinarySHA256  string `json:"binary_sha256"`
-	PackageSHA256 string `json:"package_sha256"`
-	ArchiveSHA256 string `json:"archive_sha256"`
-	MuslStatus    string `json:"musl_status"`
+	SchemaVersion    int    `json:"schema_version"`
+	Target           string `json:"target"`
+	Runner           string `json:"runner"`
+	Status           string `json:"status"`
+	RebuiltSHA256    string `json:"rebuilt_sha256"`
+	BinarySHA256     string `json:"binary_sha256"`
+	PackageSHA256    string `json:"package_sha256"`
+	ArchiveSHA256    string `json:"archive_sha256"`
+	MuslStatus       string `json:"musl_status"`
+	OperationsStatus string `json:"operations_status"`
+	StripStatus      string `json:"strip_status"`
+	ToolsStatus      string `json:"tools_status"`
 }
 
 type toolchainEvidence struct {
