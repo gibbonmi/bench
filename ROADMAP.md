@@ -31,8 +31,9 @@ the selected profile's FT87, FT88, and, for bank use, FT71 records are present.
 
 Sources: `RR:A-09`; `RC:H-07`.
 
-Decision map: `decisions/governed-offline-release-bundle.md`. Next:
-`/bench-write-spec` for slice 3 of 3, governed npm publication.
+Spec: `specs/governed-npm-publication.md`. Decision map:
+`decisions/governed-offline-release-bundle.md`. Next: `/bench-implement-spec`
+for slice 3 of 3, governed npm publication.
 
 **FT88 (HIGH on the bank track) — minimal subprocess data exposure.** Agents
 and gates launch from separate documented environment passlists with explicit
@@ -290,6 +291,6 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — specify FT83 slice 3, governed npm publication.
+1. `/bench-implement-spec` — build FT83 slice 3, governed npm publication (specs/governed-npm-publication.md).
 2. `/bench-shape-idea` — specify FT88, minimal subprocess data exposure.
 3. `/bench-shape-idea` — specify FT87, bounded network, resource, and CLI behavior.
