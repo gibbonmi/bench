@@ -86,6 +86,11 @@ func writeApprovedSet(t *testing.T, root string, ordered []artifactRecord, conte
 		t.Fatal(err)
 	}
 	var sums strings.Builder
+	type indexArtifact struct {
+		Name   string `json:"name"`
+		SHA256 string `json:"sha256"`
+	}
+	var artifacts []indexArtifact
 	for _, record := range ordered {
 		data, ok := contents[record.Name]
 		if !ok {
@@ -95,16 +100,104 @@ func writeApprovedSet(t *testing.T, root string, ordered []artifactRecord, conte
 			t.Fatal(err)
 		}
 		digest := sha256.Sum256(data)
-		sums.WriteString(hex.EncodeToString(digest[:]) + "  " + record.Name + "\n")
+		digestHex := hex.EncodeToString(digest[:])
+		sums.WriteString(digestHex + "  " + record.Name + "\n")
+		artifacts = append(artifacts, indexArtifact{Name: record.Name, SHA256: digestHex})
 	}
 	preflightDir := filepath.Join(root, "dist", "preflight")
 	if err := os.MkdirAll(preflightDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(preflightDir, "release-index.json"), []byte(`{"schema_version":1,"marker":"contract-fixture"}`+"\n"), 0o644); err != nil {
+	// Default index is a conforming full green publish-mode run for profile
+	// "public" — the shape VerifyPublishAuthority requires — with an artifacts
+	// binding that matches SHA256SUMS exactly, so every existing submit/promote/
+	// rollback test composes on top of a plan that agrees with the approved set
+	// by construction. Row-7 authority tests patch mode/scope/profile/status via
+	// patchReleaseIndexAuthority; drift tests patch an artifact digest to prove
+	// VerifyApprovedSet refuses a plan-vs-apply mismatch.
+	index := map[string]any{
+		"schema_version": 1,
+		"mode":           "publish",
+		"scope":          "preflight",
+		"profile":        "public",
+		"status":         "green",
+		"marker":         "contract-fixture",
+		"artifacts":      artifacts,
+	}
+	indexData, err := json.Marshal(index)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(preflightDir, "release-index.json"), append(indexData, '\n'), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(preflightDir, "SHA256SUMS"), []byte(sums.String()), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// patchReleaseIndexAuthority rewrites the mode/scope/profile/status fields of
+// an already-written dist/preflight/release-index.json, leaving every other
+// byte (and thus VerifyApprovedSet's digest binding) alone. Used only to
+// fabricate the red authority cases row 7 asserts against — the released
+// index shape itself is never re-derived, only its authority fields flexed.
+func patchReleaseIndexAuthority(t *testing.T, root string, overrides map[string]string) {
+	t.Helper()
+	path := filepath.Join(root, "dist", "preflight", "release-index.json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fields map[string]any
+	if err := json.Unmarshal(data, &fields); err != nil {
+		t.Fatal(err)
+	}
+	for key, value := range overrides {
+		fields[key] = value
+	}
+	encoded, err := json.Marshal(fields)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, append(encoded, '\n'), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// patchReleaseIndexArtifactDigest rewrites the recorded sha256 for one named
+// artifact inside an already-written release-index.json's "artifacts" array,
+// without touching SHA256SUMS or the artifact bytes on disk — fabricating
+// exactly the plan-vs-apply drift VerifyApprovedSet must refuse: the frozen
+// plan and the approved set disagree even though each is individually
+// self-consistent.
+func patchReleaseIndexArtifactDigest(t *testing.T, root, artifactName, digest string) {
+	t.Helper()
+	path := filepath.Join(root, "dist", "preflight", "release-index.json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fields map[string]any
+	if err := json.Unmarshal(data, &fields); err != nil {
+		t.Fatal(err)
+	}
+	artifacts, _ := fields["artifacts"].([]any)
+	found := false
+	for _, raw := range artifacts {
+		entry, _ := raw.(map[string]any)
+		if entry["name"] == artifactName {
+			entry["sha256"] = digest
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("release-index.json names no artifact %q to patch", artifactName)
+	}
+	encoded, err := json.Marshal(fields)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, append(encoded, '\n'), 0o644); err != nil {
 		t.Fatal(err)
 	}
 }

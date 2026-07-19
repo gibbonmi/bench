@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -41,6 +42,11 @@ func VerifyApprovedSet(root, version string) (releaseIndexSHA256 string, package
 		return "", nil, err
 	}
 
+	planDigests, err := releaseIndexArtifactDigests(indexData)
+	if err != nil {
+		return "", nil, err
+	}
+
 	records, err := PublicationSet(root, version)
 	if err != nil {
 		return "", nil, err
@@ -64,6 +70,9 @@ func VerifyApprovedSet(root, version string) (releaseIndexSHA256 string, package
 		if digest != want {
 			return "", nil, fmt.Errorf("approved artifact %s does not match its SHA256SUMS digest", record.Name)
 		}
+		if planDigest, named := planDigests[record.Name]; named && planDigest != digest {
+			return "", nil, fmt.Errorf("approved artifact %s has drifted from the release plan: release-index.json recorded digest %s but the approved set now has %s", record.Name, planDigest, digest)
+		}
 		name := "redbench"
 		if record.Kind == "platform" {
 			name = "@redbench/" + record.Target
@@ -78,6 +87,77 @@ func VerifyApprovedSet(root, version string) (releaseIndexSHA256 string, package
 		})
 	}
 	return releaseIndexSHA256, packages, nil
+}
+
+// releaseIndexAuthority is the narrow slice of dist/preflight/release-index.json
+// publication needs to compose the preflight publish-mode authority: it never
+// re-reads internal/releaseevidence/requirements.json or re-derives which
+// producer records a profile requires. That requiredness policy is owned
+// entirely by internal/preflight; publication trusts only the index's already-
+// computed verdict.
+type releaseIndexAuthority struct {
+	Mode    string `json:"mode"`
+	Scope   string `json:"scope"`
+	Profile string `json:"profile"`
+	Status  string `json:"status"`
+}
+
+// VerifyPublishAuthority refuses to proceed unless the approved release
+// directory's release-index.json is a full (non-focused) green publish-mode
+// preflight run whose recorded profile matches profile. It is the one gate
+// bench release submit composes on top of the preflight authority; it does no
+// registry I/O and must run before any registry call.
+func VerifyPublishAuthority(root, profile string) error {
+	indexPath := filepath.Join(root, "dist", "preflight", "release-index.json")
+	indexData, err := os.ReadFile(indexPath)
+	if err != nil {
+		return fmt.Errorf("approved release index is unreadable: %w", err)
+	}
+	var authority releaseIndexAuthority
+	if err := json.Unmarshal(indexData, &authority); err != nil {
+		return fmt.Errorf("approved release index is malformed: %w", err)
+	}
+	if authority.Mode != "publish" {
+		return fmt.Errorf("approved release index is a %q run, not a publish-mode run; run bench release-preflight --mode publish --profile %s first", authority.Mode, profile)
+	}
+	if authority.Scope == "focused" {
+		return fmt.Errorf("approved release index is a focused preflight run, which never authorizes publication; run a full bench release-preflight --mode publish --profile %s first", profile)
+	}
+	if authority.Status != "green" {
+		return fmt.Errorf("approved release index is %q, not green; publication requires a full green publish-mode preflight for profile %s", authority.Status, profile)
+	}
+	if authority.Profile != profile {
+		return fmt.Errorf("approved release index authorized profile %q, but this run requested profile %q", authority.Profile, profile)
+	}
+	return nil
+}
+
+// releaseIndexArtifactDigests reads the per-artifact sha256 the release-index
+// records for each named artifact ("artifacts": [{"name":..., "sha256":...}]),
+// the immutable plan preflight froze. It never re-derives an artifact digest —
+// only compares the plan's own recorded value against what SHA256SUMS/dist/
+// artifacts now say, so a release-index.json + SHA256SUMS pair that has
+// drifted apart (e.g. a tampered SHA256SUMS matching a swapped-in artifact)
+// is caught even though each file individually parses and is self-consistent.
+// An index that names no artifacts array at all (an older or synthetic index)
+// is tolerated with no drift check — the plan simply made no claim to check.
+func releaseIndexArtifactDigests(indexData []byte) (map[string]string, error) {
+	var parsed struct {
+		Artifacts []struct {
+			Name   string `json:"name"`
+			SHA256 string `json:"sha256"`
+		} `json:"artifacts"`
+	}
+	if err := json.Unmarshal(indexData, &parsed); err != nil {
+		return nil, fmt.Errorf("approved release index is malformed: %w", err)
+	}
+	digests := make(map[string]string, len(parsed.Artifacts))
+	for _, artifact := range parsed.Artifacts {
+		if artifact.Name != "" {
+			digests[artifact.Name] = artifact.SHA256
+		}
+	}
+	return digests, nil
 }
 
 func readSHA256SUMS(path string) (map[string]string, error) {

@@ -55,6 +55,9 @@ func orderedForFirstPublication(packages []ApprovedPackage) []ApprovedPackage {
 // the build set. Callers never see this ordering or resume logic — they only
 // ever get back the durable Record.
 func RunFirstPublication(ctx context.Context, root, version, profile string, registry Registry) (Record, error) {
+	if err := VerifyPublishAuthority(root, profile); err != nil {
+		return Record{}, err
+	}
 	releaseIndexSHA256, approved, err := VerifyApprovedSet(root, version)
 	if err != nil {
 		return Record{}, err
@@ -260,6 +263,9 @@ func stageAndVerify(ctx context.Context, root string, record *Record, registry R
 // (RunPromotion) so promoting is never an accidental side effect of resuming
 // submit/status.
 func RunStagedPublication(ctx context.Context, root, version, profile string, registry Registry) (Record, string, error) {
+	if err := VerifyPublishAuthority(root, profile); err != nil {
+		return Record{}, "", err
+	}
 	releaseIndexSHA256, approved, err := VerifyApprovedSet(root, version)
 	if err != nil {
 		return Record{}, "", err
