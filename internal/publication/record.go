@@ -38,7 +38,7 @@ type Provenance struct {
 type Record struct {
 	SchemaVersion      int          `json:"schema_version"`
 	ReleaseIndexSHA256 string       `json:"release_index_sha256"`
-	Path               string       `json:"path"`    // public|first
+	Path               string       `json:"path"`    // first|public
 	Profile            string       `json:"profile"` // public|bank
 	Transitions        []Transition `json:"transitions"`
 	Provenance         []Provenance `json:"provenance"`

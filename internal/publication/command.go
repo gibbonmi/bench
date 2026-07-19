@@ -12,21 +12,24 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-const usageLine = "usage: bench release prepare|submit|status --version <version> [--profile public|bank] [--root <dir>] [--registry <base-url>]"
+const usageLine = "usage: bench release prepare|submit|promote|rollback|status --version <version> [--profile public|bank] [--root <dir>] [--registry <base-url>] [--path first|staged] [--message <text>]"
 
-// Command is the `bench release <prepare|submit|status>` entry point. It is
-// idempotent and non-interactive: prepare only verifies the approved release
-// directory locally; submit runs (or resumes) the first-publication state
-// machine; status reports the durable record without touching the registry.
-// TOON tables go to stdout, progress to stderr, structured errors to stdout.
-// Exit 0 success/no-op, 1 unsatisfied release intent, 2 usage.
+// Command is the `bench release <prepare|submit|promote|rollback|status>`
+// entry point. It is idempotent and non-interactive: prepare only verifies
+// the approved release directory locally; submit runs (or resumes) the
+// first-publication or staged-submission state machine depending on --path;
+// promote moves the "latest" dist-tag once the complete set reverifies live;
+// rollback removes candidate tags and deprecates a bad version; status
+// reports the durable record without touching the registry. TOON tables go to
+// stdout, progress to stderr, structured errors to stdout. Exit 0
+// success/no-op, 1 unsatisfied release intent, 2 usage.
 func Command(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
 		fmt.Fprintln(stdout, toon.Usage("bench release", "<missing subcommand>"))
 		return 2
 	}
 	sub := args[0]
-	root, version, profile, registryBase, usageErr := parseCommandArgs(args[1:])
+	root, version, profile, registryBase, path, message, usageErr := parseCommandArgs(args[1:])
 	if usageErr != nil {
 		fmt.Fprintln(stdout, usageErr.Error())
 		return 2
@@ -45,7 +48,11 @@ func Command(args []string, stdout, stderr io.Writer) int {
 	case "prepare":
 		return runPrepare(root, version, stdout, stderr)
 	case "submit":
-		return runSubmit(root, version, profile, registryBase, stdout, stderr)
+		return runSubmit(root, version, profile, registryBase, path, stdout, stderr)
+	case "promote":
+		return runPromote(root, version, profile, registryBase, stdout, stderr)
+	case "rollback":
+		return runRollback(root, version, profile, registryBase, message, stdout, stderr)
 	case "status":
 		return runStatus(root, stdout)
 	default:
@@ -54,41 +61,56 @@ func Command(args []string, stdout, stderr io.Writer) int {
 	}
 }
 
-func parseCommandArgs(args []string) (root, version, profile, registryBase string, err error) {
+func parseCommandArgs(args []string) (root, version, profile, registryBase, path, message string, err error) {
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "--root":
 			i++
 			if i >= len(args) {
-				return "", "", "", "", fmt.Errorf("%s", toon.MissingArg("bench release", "--root value"))
+				return "", "", "", "", "", "", fmt.Errorf("%s", toon.MissingArg("bench release", "--root value"))
 			}
 			root = args[i]
 		case "--version":
 			i++
 			if i >= len(args) {
-				return "", "", "", "", fmt.Errorf("%s", toon.MissingArg("bench release", "--version value"))
+				return "", "", "", "", "", "", fmt.Errorf("%s", toon.MissingArg("bench release", "--version value"))
 			}
 			version = args[i]
 		case "--profile":
 			i++
 			if i >= len(args) {
-				return "", "", "", "", fmt.Errorf("%s", toon.MissingArg("bench release", "--profile value"))
+				return "", "", "", "", "", "", fmt.Errorf("%s", toon.MissingArg("bench release", "--profile value"))
 			}
 			profile = args[i]
 		case "--registry":
 			i++
 			if i >= len(args) {
-				return "", "", "", "", fmt.Errorf("%s", toon.MissingArg("bench release", "--registry value"))
+				return "", "", "", "", "", "", fmt.Errorf("%s", toon.MissingArg("bench release", "--registry value"))
 			}
 			registryBase = args[i]
+		case "--path":
+			i++
+			if i >= len(args) {
+				return "", "", "", "", "", "", fmt.Errorf("%s", toon.MissingArg("bench release", "--path value"))
+			}
+			path = args[i]
+		case "--message":
+			i++
+			if i >= len(args) {
+				return "", "", "", "", "", "", fmt.Errorf("%s", toon.MissingArg("bench release", "--message value"))
+			}
+			message = args[i]
 		default:
-			return "", "", "", "", fmt.Errorf("%s", toon.Usage("bench release", args[i]))
+			return "", "", "", "", "", "", fmt.Errorf("%s", toon.Usage("bench release", args[i]))
 		}
 	}
 	if profile != "" && profile != "public" && profile != "bank" {
-		return "", "", "", "", fmt.Errorf("%s", toon.Usage("bench release", "--profile "+profile))
+		return "", "", "", "", "", "", fmt.Errorf("%s", toon.Usage("bench release", "--profile "+profile))
 	}
-	return root, version, profile, registryBase, nil
+	if path != "" && path != "first" && path != "staged" {
+		return "", "", "", "", "", "", fmt.Errorf("%s", toon.Usage("bench release", "--path "+path))
+	}
+	return root, version, profile, registryBase, path, message, nil
 }
 
 func runPrepare(root, version string, stdout, stderr io.Writer) int {
@@ -121,7 +143,7 @@ func runPrepare(root, version string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-func runSubmit(root, version, profile, registryBase string, stdout, stderr io.Writer) int {
+func runSubmit(root, version, profile, registryBase, path string, stdout, stderr io.Writer) int {
 	if version == "" {
 		fmt.Fprintln(stdout, toon.MissingArg("bench release submit", "--version"))
 		return 2
@@ -137,12 +159,88 @@ func runSubmit(root, version, profile, registryBase string, stdout, stderr io.Wr
 		fmt.Fprintln(stdout, toon.MissingArg("bench release submit", "--registry or BENCH_RELEASE_REGISTRY"))
 		return 2
 	}
+	if path == "" {
+		path = "first"
+	}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	registry := NewFixtureRegistry(registryBase)
-	fmt.Fprintf(stderr, "release submit: publishing %s (profile %s) against %s\n", version, profile, registryBase)
-	record, err := RunFirstPublication(ctx, root, version, profile, registry)
+	fmt.Fprintf(stderr, "release submit: publishing %s (profile %s, path %s) against %s\n", version, profile, path, registryBase)
+
+	var record Record
+	var nextAction string
+	var err error
+	if path == "staged" {
+		record, nextAction, err = RunStagedPublication(ctx, root, version, profile, registry)
+	} else {
+		record, err = RunFirstPublication(ctx, root, version, profile, registry)
+		nextAction = "release-complete"
+	}
+	exit := 0
+	if err != nil {
+		if nextAction == "" {
+			nextAction = "resolve-integrity-mismatch"
+		}
+		exit = 1
+	}
+	printRecord(stdout, record, nextAction)
+	if err != nil {
+		fmt.Fprintln(stdout, toon.Errorf("unsatisfied release intent", err.Error()))
+	}
+	return exit
+}
+
+func runPromote(root, version, profile, registryBase string, stdout, stderr io.Writer) int {
+	if version == "" {
+		fmt.Fprintln(stdout, toon.MissingArg("bench release promote", "--version"))
+		return 2
+	}
+	if registryBase == "" {
+		registryBase = os.Getenv("BENCH_RELEASE_REGISTRY")
+	}
+	if registryBase == "" {
+		fmt.Fprintln(stdout, toon.MissingArg("bench release promote", "--registry or BENCH_RELEASE_REGISTRY"))
+		return 2
+	}
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+	registry := NewFixtureRegistry(registryBase)
+	fmt.Fprintf(stderr, "release promote: promoting %s against %s\n", version, registryBase)
+	record, err := RunPromotion(ctx, root, version, profile, registry)
 	nextAction := "release-complete"
+	exit := 0
+	if err != nil {
+		nextAction = "resolve-integrity-mismatch"
+		exit = 1
+	}
+	printRecord(stdout, record, nextAction)
+	if err != nil {
+		fmt.Fprintln(stdout, toon.Errorf("unsatisfied release intent", err.Error()))
+	}
+	return exit
+}
+
+func runRollback(root, version, profile, registryBase, message string, stdout, stderr io.Writer) int {
+	if version == "" {
+		fmt.Fprintln(stdout, toon.MissingArg("bench release rollback", "--version"))
+		return 2
+	}
+	if registryBase == "" {
+		registryBase = os.Getenv("BENCH_RELEASE_REGISTRY")
+	}
+	if registryBase == "" {
+		fmt.Fprintln(stdout, toon.MissingArg("bench release rollback", "--registry or BENCH_RELEASE_REGISTRY"))
+		return 2
+	}
+	if message == "" {
+		message = fmt.Sprintf("release %s was rolled back; see the publication record for details", version)
+	}
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+	registry := NewFixtureRegistry(registryBase)
+	fmt.Fprintf(stderr, "release rollback: rolling back %s against %s\n", version, registryBase)
+	record, err := RunRollback(ctx, root, version, profile, message, registry)
+	nextAction := "prepare"
 	exit := 0
 	if err != nil {
 		nextAction = "resolve-integrity-mismatch"
@@ -172,12 +270,50 @@ func runStatus(root string, stdout io.Writer) int {
 		nextAction = "release-complete"
 	case "failed":
 		nextAction = "resolve-integrity-mismatch"
+	case "rolled_back":
+		nextAction = "prepare"
+	case "in_progress":
+		if record.Path == "public" {
+			nextAction = statusNextActionForStaged(record)
+		}
 	}
 	printRecord(stdout, record, nextAction)
 	if record.Result == "failed" {
 		return 1
 	}
 	return 0
+}
+
+// statusNextActionForStaged reports the staged path's handoff from the
+// durable record alone (status never touches the registry): it walks the
+// transitions to see which platform packages are already verified live, so
+// a rerun of `status` shows the same next_action `submit` would compute
+// without needing a registry round trip.
+func statusNextActionForStaged(record Record) string {
+	verifiedLive := map[string]bool{}
+	var wrapper string
+	for _, t := range record.Transitions {
+		if t.Action == "verify" && t.Result == "success" {
+			verifiedLive[t.Package] = true
+		}
+	}
+	for _, p := range record.Provenance {
+		if p.Package == "redbench" {
+			wrapper = p.Package
+		}
+	}
+	for _, p := range record.Provenance {
+		if p.Package == wrapper {
+			continue
+		}
+		if !verifiedLive[p.Package] {
+			return nextActionApprovePlatforms
+		}
+	}
+	if wrapper != "" && !verifiedLive[wrapper] {
+		return nextActionApproveWrapper
+	}
+	return nextActionPromote
 }
 
 func printRecord(stdout io.Writer, record Record, nextAction string) {

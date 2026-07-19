@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 // NPMCLIRegistry is the public-npm adapter: it shells the real `npm` CLI in a
@@ -71,15 +72,91 @@ func (n *NPMCLIRegistry) Publish(ctx context.Context, name, version, tag string,
 	return integrity, nil
 }
 
+// minStagedNPMVersion and minStagedNodeVersion are the tool floors the public
+// npm OIDC trusted-publishing staged flow requires. This precondition belongs
+// only to this adapter: the fixture path (FixtureRegistry) never shells npm or
+// node, so it must never be made to depend on a locally installed tool
+// version the gate cannot control.
+const (
+	minStagedNPMVersion  = "11.15.0"
+	minStagedNodeVersion = "22.14.0"
+)
+
+func (n *NPMCLIRegistry) checkStagedToolPreconditions(ctx context.Context) error {
+	npmVersion, err := n.toolVersion(ctx, "npm", "--version")
+	if err != nil {
+		return fmt.Errorf("could not determine npm version: %w", err)
+	}
+	if compareSemver(npmVersion, minStagedNPMVersion) < 0 {
+		return fmt.Errorf("staged publication requires npm %s or newer (found %s)", minStagedNPMVersion, npmVersion)
+	}
+	nodeVersion, err := n.toolVersion(ctx, "node", "--version")
+	if err != nil {
+		return fmt.Errorf("could not determine node version: %w", err)
+	}
+	nodeVersion = strings.TrimPrefix(nodeVersion, "v")
+	if compareSemver(nodeVersion, minStagedNodeVersion) < 0 {
+		return fmt.Errorf("staged publication requires node %s or newer (found %s)", minStagedNodeVersion, nodeVersion)
+	}
+	return nil
+}
+
+func (n *NPMCLIRegistry) toolVersion(ctx context.Context, tool string, args ...string) (string, error) {
+	cmd := exec.CommandContext(ctx, tool, args...)
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+// compareSemver compares two dotted major.minor.patch version strings
+// (ignoring any pre-release/build suffix), returning -1/0/1 like strings.Compare.
+func compareSemver(a, b string) int {
+	pa, pb := semverParts(a), semverParts(b)
+	for i := 0; i < 3; i++ {
+		if pa[i] != pb[i] {
+			if pa[i] < pb[i] {
+				return -1
+			}
+			return 1
+		}
+	}
+	return 0
+}
+
+func semverParts(v string) [3]int {
+	core := strings.SplitN(v, "-", 2)[0]
+	fields := strings.SplitN(core, ".", 3)
+	var out [3]int
+	for i := 0; i < 3 && i < len(fields); i++ {
+		n := 0
+		for _, r := range fields[i] {
+			if r < '0' || r > '9' {
+				break
+			}
+			n = n*10 + int(r-'0')
+		}
+		out[i] = n
+	}
+	return out
+}
+
 func (n *NPMCLIRegistry) StageSubmit(ctx context.Context, name, version string, tarball []byte) (string, error) {
 	// Public npm has no staged-submit primitive of its own; the OIDC trusted-
 	// publishing flow performs an authenticated exchange the CLI drives
 	// end-to-end. This adapter is construct-only for now — the state machine's
 	// staged path is exercised against the fixture adapter, never this one.
+	if err := n.checkStagedToolPreconditions(ctx); err != nil {
+		return "", err
+	}
 	return "", fmt.Errorf("staged submission is not implemented for the public npm adapter")
 }
 
 func (n *NPMCLIRegistry) Approve(ctx context.Context, stageID string) error {
+	if err := n.checkStagedToolPreconditions(ctx); err != nil {
+		return err
+	}
 	return fmt.Errorf("approve is not implemented for the public npm adapter")
 }
 
