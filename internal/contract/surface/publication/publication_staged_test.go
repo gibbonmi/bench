@@ -455,8 +455,11 @@ func TestPublicationRecordCarriesCompleteTransitionsWithNoCredential(t *testing.
 	if record["profile"] != "public" {
 		t.Fatalf("record profile = %v, want public", record["profile"])
 	}
-	if record["result"] != "success" {
-		t.Fatalf("record result = %v, want success", record["result"])
+	// A first-publication submit alone never moves "latest"; it stays
+	// "in_progress" awaiting an explicit promote (see the promote-side test
+	// in publication_offline_test.go).
+	if record["result"] != "in_progress" {
+		t.Fatalf("record result = %v, want in_progress", record["result"])
 	}
 
 	provenance, _ := record["provenance"].([]any)

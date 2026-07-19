@@ -340,9 +340,98 @@ func TestFirstPublicationPublishesPlatformsBeforeWrapperLast(t *testing.T) {
 		t.Fatalf("wrapper was published before a platform package; request log:\n%s", strings.Join(lines, "\n"))
 	}
 
+	// A first-publication submit only ever publishes+verifies under the
+	// candidate tag; it must never move "latest" on its own, so the record
+	// stays "in_progress" with next_action "promote" until an explicit
+	// promote runs — a first-path submit can never leave the release
+	// silently un-promotable by masquerading as terminal "success" here.
+	record := readPublicationRecord(t, root)
+	if record["result"] != "in_progress" {
+		t.Fatalf("publication record result = %v, want in_progress (latest has not moved yet):\n%v", record["result"], record)
+	}
+}
+
+// TestFirstPublicationPromoteMovesLatestPlatformFirstWrapperLast is coverage
+// row 1's promote half: a first-publication submit alone must never move
+// "latest" (see the sibling test above); a subsequent, separate `bench
+// release promote` reverifies the complete live set and only then moves
+// platform "latest" tags before the wrapper's, strictly last. A second
+// promote afterward is an idempotent no-op: it must issue no further
+// dist-tag-add calls and still report overall success.
+func TestFirstPublicationPromoteMovesLatestPlatformFirstWrapperLast(t *testing.T) {
+	const version = "9.9.40"
+	root := copyPublicationScripts(t)
+	ordered := releasePlanArtifacts(t, root, version)
+	writeApprovedSet(t, root, ordered, nil)
+	base, requestFile := startRegistry(t, root, filepath.Join(t.TempDir(), "store"))
+
+	exitCode, output := runReleaseSubmit(t, root, version, base)
+	if exitCode != 0 {
+		t.Fatalf("release submit exit=%d:\n%s", exitCode, output)
+	}
+	if !strings.Contains(output, "promote") {
+		t.Fatalf("first-path submit did not report next_action promote:\n%s", output)
+	}
+	for _, line := range requestLines(t, requestFile) {
+		if strings.Contains(line, "DIST-TAG-ADD") && strings.Contains(line, "latest") {
+			t.Fatalf("submit alone moved latest before an explicit promote:\n%s", line)
+		}
+	}
+
+	exitCode, output = runRelease(t, root, "promote", runPromoteArgs(root, version, base), nil)
+	if exitCode != 0 {
+		t.Fatalf("promote exit=%d:\n%s", exitCode, output)
+	}
+	if !strings.Contains(output, "release-complete") {
+		t.Fatalf("promote did not report next_action release-complete:\n%s", output)
+	}
+
+	lines := requestLines(t, requestFile)
+	platformTag := regexp.MustCompile(`^DIST-TAG-ADD @redbench/\S+ latest=`)
+	wrapperTag := regexp.MustCompile(`^DIST-TAG-ADD redbench latest=`)
+	lastPlatform, wrapperIndex := -1, -1
+	for i, line := range lines {
+		if platformTag.MatchString(line) {
+			lastPlatform = i
+		}
+		if wrapperTag.MatchString(line) {
+			wrapperIndex = i
+		}
+	}
+	if lastPlatform == -1 || wrapperIndex == -1 {
+		t.Fatalf("expected both platform and wrapper latest DIST-TAG-ADD calls:\n%s", strings.Join(lines, "\n"))
+	}
+	if wrapperIndex < lastPlatform {
+		t.Fatalf("wrapper latest was promoted before a platform package; request log:\n%s", strings.Join(lines, "\n"))
+	}
+
 	record := readPublicationRecord(t, root)
 	if record["result"] != "success" {
-		t.Fatalf("publication record result = %v, want success:\n%v", record["result"], record)
+		t.Fatalf("record result = %v, want success after promote", record["result"])
+	}
+
+	tagAddCountAfterFirstPromote := 0
+	for _, line := range requestLines(t, requestFile) {
+		if strings.Contains(line, "DIST-TAG-ADD") && strings.Contains(line, "latest") {
+			tagAddCountAfterFirstPromote++
+		}
+	}
+
+	exitCode, output = runRelease(t, root, "promote", runPromoteArgs(root, version, base), nil)
+	if exitCode != 0 {
+		t.Fatalf("second promote exit=%d, want 0 (idempotent no-op):\n%s", exitCode, output)
+	}
+	tagAddCountAfterSecondPromote := 0
+	for _, line := range requestLines(t, requestFile) {
+		if strings.Contains(line, "DIST-TAG-ADD") && strings.Contains(line, "latest") {
+			tagAddCountAfterSecondPromote++
+		}
+	}
+	if tagAddCountAfterSecondPromote != tagAddCountAfterFirstPromote {
+		t.Fatalf("second promote issued new latest dist-tag-add calls: %d -> %d", tagAddCountAfterFirstPromote, tagAddCountAfterSecondPromote)
+	}
+	if readPublicationRecord(t, root)["result"] != "success" {
+		t.Fatal("second promote's record result != success")
 	}
 }
 

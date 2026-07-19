@@ -197,9 +197,11 @@ func TestReleaseSubmitInterruptedMidPublishRecoversAtomically(t *testing.T) {
 	if resumeExit != 0 {
 		t.Fatalf("resumed submit did not complete: exit=%d\n%s", resumeExit, resumeOutput)
 	}
+	// A first-publication submit only ever reaches "in_progress" (next_action
+	// "promote") — "latest" never moves without an explicit promote.
 	resumedRecord := readPublicationRecord(t, root)
-	if resumedRecord["result"] != "success" {
-		t.Fatalf("resumed submit result = %v, want success:\n%v", resumedRecord["result"], resumedRecord)
+	if resumedRecord["result"] != "in_progress" {
+		t.Fatalf("resumed submit result = %v, want in_progress:\n%v", resumedRecord["result"], resumedRecord)
 	}
 	afterPUTCount := 0
 	for _, line := range requestLines(t, requestFile) {
@@ -235,11 +237,11 @@ func TestReleasePromoteInterruptedMidTagAddRecoversAtomically(t *testing.T) {
 	store := filepath.Join(t.TempDir(), "store")
 	base, requestFile := startRegistryWithEnv(t, root, store, []string{registryStallEnv})
 
-	// Drive the staged path through full approval to next_action "promote":
-	// this is the one path RunPromotion actually runs on (record.Result stays
-	// "in_progress" until an explicit promote succeeds — the "first"/direct
-	// path instead reaches terminal "success" at the end of submit itself, so
-	// staging is the seam to exercise the promote transition through).
+	// Drive the staged path through full approval to next_action "promote"
+	// (record.Result stays "in_progress" until an explicit promote succeeds —
+	// true of both the staged and the first/direct path now that neither
+	// moves "latest" from inside submit; staging is simply the more direct
+	// seam to reach next_action promote from here).
 	stagedFlowReadyToPromote(t, root, version, base)
 
 	target := ordered[0]

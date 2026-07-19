@@ -52,8 +52,13 @@ func orderedForFirstPublication(packages []ApprovedPackage) []ApprovedPackage {
 // as complete and is never republished (idempotent); any live package whose
 // registry integrity does not exactly match the approved local tarball is a
 // terminal failure that stops the whole release without touching the rest of
-// the build set. Callers never see this ordering or resume logic — they only
-// ever get back the durable Record.
+// the build set. Publishing and verifying the complete set under the
+// candidate tag never moves "latest" — the record is left "in_progress" with
+// next_action "promote", and a subsequent resume of this same function is
+// itself an idempotent no-op (it never re-issues a registry check once the
+// record already proves the set is fully verified live); only an explicit
+// RunPromotion call moves "latest". Callers never see this ordering or
+// resume logic — they only ever get back the durable Record.
 func RunFirstPublication(ctx context.Context, root, version, profile string, registry Registry) (Record, error) {
 	if err := VerifyPublishAuthority(root, profile); err != nil {
 		return Record{}, err
@@ -69,7 +74,7 @@ func RunFirstPublication(ctx context.Context, root, version, profile string, reg
 	if record.SchemaVersion == 0 {
 		record = Record{Path: "first", Profile: profile, Result: "in_progress"}
 		for _, pkg := range approved {
-			record.Provenance = append(record.Provenance, Provenance{Package: pkg.Name, SHA256: pkg.SHA256})
+			record.Provenance = append(record.Provenance, Provenance{Package: pkg.Name, SHA256: pkg.SHA256, Kind: pkg.Kind})
 		}
 	} else if record.ReleaseIndexSHA256 != releaseIndexSHA256 {
 		return Record{}, fmt.Errorf("publication record was built against a different approved release index; resume is unsafe")
@@ -77,7 +82,14 @@ func RunFirstPublication(ctx context.Context, root, version, profile string, reg
 	record.ReleaseIndexSHA256 = releaseIndexSHA256
 
 	if record.Result == "success" {
-		// Already complete: resuming a finished release is a no-op.
+		// Already promoted: resuming a finished release is a no-op.
+		return record, nil
+	}
+	if nextActionForInProgress(record) == nextActionPromote {
+		// Every approved package already verified live in a prior run: the
+		// first-publication path has nothing left to do until an explicit
+		// `bench release promote` moves "latest" — resuming here must never
+		// reissue a live registry check for a set the record already proved.
 		return record, nil
 	}
 
@@ -157,7 +169,16 @@ func RunFirstPublication(ctx context.Context, root, version, profile string, reg
 		}
 	}
 
-	record.Result = "success"
+	// Every package is now published and verified live under the candidate
+	// tag. record.Result goes (back) to "in_progress" (mirroring the staged
+	// path's convention): "latest" has not moved yet, and only an explicit
+	// bench release promote is allowed to do that. next_action for this
+	// state (nextActionForInProgress) reports "promote". The explicit
+	// (re)assignment matters on a resume from an earlier interrupted publish
+	// that had marked the record "failed" before this run's retries cleared
+	// every mismatch — otherwise a fully-recovered release would be left
+	// wrongly reporting "failed".
+	record.Result = "in_progress"
 	if err := SaveRecord(root, record); err != nil {
 		return record, err
 	}
@@ -177,7 +198,56 @@ const (
 	nextActionApprovePlatforms = "approve-platform-packages"
 	nextActionApproveWrapper   = "approve-wrapper"
 	nextActionPromote          = "promote"
+	nextActionSubmit           = "submit"
 )
+
+// packagesVerifiedLive reports, from the record's transitions alone (no
+// registry I/O), which packages already have a verified-live "verify"
+// transition — either a fresh publish/stage verify or an idempotent resume —
+// the one signal every next_action derivation below reads.
+func packagesVerifiedLive(record Record) map[string]bool {
+	live := map[string]bool{}
+	for _, t := range record.Transitions {
+		if t.Action == "verify" && (t.Result == "success" || t.Result == "resumed") {
+			live[t.Package] = true
+		}
+	}
+	return live
+}
+
+// nextActionForInProgress derives the in-progress next_action purely from
+// state already on disk (record.Transitions and record.Provenance, whose
+// Kind field is the one source of wrapper-vs-platform identity) — no
+// registry I/O. It is the single ordering policy (platforms live, then the
+// wrapper, then promote) both the staged state machine — immediately after
+// appending this run's own transitions — and status (which never touches
+// the registry) consult, so the policy is never re-derived twice. The first-
+// publication path has no approval step, so its only two states are still
+// "submit" (resume publishing) or "promote" (fully verified, awaiting an
+// explicit promote).
+func nextActionForInProgress(record Record) string {
+	live := packagesVerifiedLive(record)
+	var wrapper string
+	for _, p := range record.Provenance {
+		if p.Kind == "wrapper" {
+			wrapper = p.Package
+			continue
+		}
+		if !live[p.Package] {
+			if record.Path == "first" {
+				return nextActionSubmit
+			}
+			return nextActionApprovePlatforms
+		}
+	}
+	if wrapper != "" && !live[wrapper] {
+		if record.Path == "first" {
+			return nextActionSubmit
+		}
+		return nextActionApproveWrapper
+	}
+	return nextActionPromote
+}
 
 // alreadyStaged reports the stage id a prior run recorded for pkg@version, if
 // any — the record is the one source of truth for resume, never re-derived
@@ -277,7 +347,7 @@ func RunStagedPublication(ctx context.Context, root, version, profile string, re
 	if record.SchemaVersion == 0 {
 		record = Record{Path: "public", Profile: profile, Result: "in_progress"}
 		for _, pkg := range approved {
-			record.Provenance = append(record.Provenance, Provenance{Package: pkg.Name, SHA256: pkg.SHA256})
+			record.Provenance = append(record.Provenance, Provenance{Package: pkg.Name, SHA256: pkg.SHA256, Kind: pkg.Kind})
 		}
 	} else if record.ReleaseIndexSHA256 != releaseIndexSHA256 {
 		return Record{}, "", fmt.Errorf("publication record was built against a different approved release index; resume is unsafe")
@@ -346,18 +416,13 @@ func RunStagedPublication(ctx context.Context, root, version, profile string, re
 				return record, "", err
 			}
 		}
-		return record, nextActionApprovePlatforms, nil
+		return record, nextActionForInProgress(record), nil
 	}
 
-	wrapperVerified, err := stageAndVerify(ctx, root, &record, registry, wrapper, tag)
-	if err != nil {
+	if _, err := stageAndVerify(ctx, root, &record, registry, wrapper, tag); err != nil {
 		return record, "", err
 	}
-	if !wrapperVerified {
-		return record, nextActionApproveWrapper, nil
-	}
-
-	return record, nextActionPromote, nil
+	return record, nextActionForInProgress(record), nil
 }
 
 // RunPromotion moves the "latest" dist-tag onto version, platform packages
@@ -380,6 +445,9 @@ func RunPromotion(ctx context.Context, root, version, profile string, registry R
 	}
 	if record.ReleaseIndexSHA256 != releaseIndexSHA256 {
 		return Record{}, fmt.Errorf("publication record was built against a different approved release index; promote is unsafe")
+	}
+	if record.Profile != profile {
+		return Record{}, fmt.Errorf("publication record was recorded for profile %q, not %q; promote refuses to act across profiles", record.Profile, profile)
 	}
 	if record.Result == "success" {
 		return record, nil
@@ -436,9 +504,13 @@ func RunPromotion(ctx context.Context, root, version, profile string, registry R
 // it never even reads), deprecates the bad version with message, and never
 // issues an unpublish call — there is no such operation in the Registry port.
 // It tolerates a tag that was never set (a package that failed before it was
-// ever tagged) and a version that never went live (nothing to deprecate).
+// ever tagged) and a version that never went live (nothing to deprecate). Like
+// submit and promote, it refuses to act against a record built from a
+// different approved release index, and refuses to act across profiles —
+// profile is never a dead parameter here, it is the same cross-run safety
+// binding submit/promote already enforce.
 func RunRollback(ctx context.Context, root, version, profile, message string, registry Registry) (Record, error) {
-	_, approved, err := VerifyApprovedSet(root, version)
+	releaseIndexSHA256, approved, err := VerifyApprovedSet(root, version)
 	if err != nil {
 		return Record{}, err
 	}
@@ -448,6 +520,12 @@ func RunRollback(ctx context.Context, root, version, profile, message string, re
 	}
 	if record.SchemaVersion == 0 {
 		return Record{}, fmt.Errorf("no publication record for %s; nothing to roll back", version)
+	}
+	if record.ReleaseIndexSHA256 != releaseIndexSHA256 {
+		return Record{}, fmt.Errorf("publication record was built against a different approved release index; rollback is unsafe")
+	}
+	if record.Profile != profile {
+		return Record{}, fmt.Errorf("publication record was recorded for profile %q, not %q; rollback refuses to act across profiles", record.Profile, profile)
 	}
 
 	tag := CandidateTag(version)

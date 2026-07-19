@@ -9,3 +9,4 @@ internal/publication/npm_registry.go
 internal/publication/plan.go
 internal/publication/record.go
 internal/publication/registry.go
+internal/publication/canary_shared_test.go

@@ -128,7 +128,13 @@ func (f *FixtureRegistry) Integrity(ctx context.Context, name, version string) (
 	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
 		return "", false, fmt.Errorf("registry integrity response is malformed: %w", err)
 	}
-	return payload.Integrity, true, nil
+	integrity := strings.TrimSpace(payload.Integrity)
+	if integrity == "" {
+		// The version exists (200 OK) but reports no integrity — a
+		// malformed/hostile registry response, not a live/not-live fact.
+		return "", false, fmt.Errorf("registry reports %s@%s live with no integrity value", name, version)
+	}
+	return integrity, true, nil
 }
 
 func (f *FixtureRegistry) TagAdd(ctx context.Context, name, tag, version string) error {

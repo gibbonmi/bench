@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -88,5 +89,95 @@ func TestFixtureRegistryStagedOpsNeverCheckToolVersions(t *testing.T) {
 	}
 	if strings.Contains(err.Error(), "npm") || strings.Contains(err.Error(), "node") {
 		t.Fatalf("fixture adapter must never require npm/node tooling, got: %v", err)
+	}
+}
+
+// stubNPMView writes an npm stub onto a fresh PATH directory that responds to
+// `npm view ...` as directed: exitCode != 0 simulates the real npm CLI's E404
+// on a missing version (Integrity's absent case); exitCode == 0 prints
+// stdout, simulating `npm view ... dist.integrity --json` output for a
+// version that exists.
+func stubNPMView(t *testing.T, stdout string, exitCode int) {
+	t.Helper()
+	dir := t.TempDir()
+	script := "#!/bin/sh\n"
+	if exitCode != 0 {
+		script += "exit " + strconv.Itoa(exitCode) + "\n"
+	} else {
+		script += "cat <<'EOF'\n" + stdout + "\nEOF\n"
+	}
+	if err := os.WriteFile(filepath.Join(dir, "npm"), []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	original := os.Getenv("PATH")
+	if err := os.Setenv("PATH", dir+string(os.PathListSeparator)+original); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Setenv("PATH", original) })
+}
+
+// TestNPMCLIRegistryIntegrityAbsentVersion is the CLI adapter's absent-version
+// case: npm view exiting non-zero (E404) must classify as not-live with no
+// error, never a mismatch.
+func TestNPMCLIRegistryIntegrityAbsentVersion(t *testing.T) {
+	stubNPMView(t, "", 1)
+	registry := NewNPMCLIRegistry("")
+	integrity, live, err := registry.Integrity(context.Background(), "redbench", "1.0.0")
+	if err != nil {
+		t.Fatalf("expected no error for an absent version, got: %v", err)
+	}
+	if live {
+		t.Fatal("expected an absent version to classify as not live")
+	}
+	if integrity != "" {
+		t.Fatalf("expected empty integrity for an absent version, got: %q", integrity)
+	}
+}
+
+// TestNPMCLIRegistryIntegrityPresentVersion is the CLI adapter's ordinary
+// live case: a version with a real integrity value must classify as live
+// with that value.
+func TestNPMCLIRegistryIntegrityPresentVersion(t *testing.T) {
+	stubNPMView(t, `"sha512-abc123"`, 0)
+	registry := NewNPMCLIRegistry("")
+	integrity, live, err := registry.Integrity(context.Background(), "redbench", "1.0.0")
+	if err != nil {
+		t.Fatalf("expected no error for a present version, got: %v", err)
+	}
+	if !live {
+		t.Fatal("expected a present version with integrity to classify as live")
+	}
+	if integrity != "sha512-abc123" {
+		t.Fatalf("integrity = %q, want sha512-abc123", integrity)
+	}
+}
+
+// TestNPMCLIRegistryIntegrityPresentEmptyIsError is the review-fixed edge:
+// the version exists (npm view succeeded) but reports an empty/whitespace
+// integrity — a malformed/hostile registry response — must fail closed with
+// an attributed error, never be misread as live=true-with-empty-integrity or
+// as live=false-not-yet-published.
+func TestNPMCLIRegistryIntegrityPresentEmptyIsError(t *testing.T) {
+	for name, stdout := range map[string]string{
+		"empty string":      `""`,
+		"whitespace string": `"   "`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			stubNPMView(t, stdout, 0)
+			registry := NewNPMCLIRegistry("")
+			integrity, live, err := registry.Integrity(context.Background(), "redbench", "1.0.0")
+			if err == nil {
+				t.Fatal("expected an error for a present version with empty integrity")
+			}
+			if !strings.Contains(err.Error(), "no integrity value") {
+				t.Fatalf("error did not attribute the empty-integrity response: %v", err)
+			}
+			if live {
+				t.Fatal("expected a present-but-empty-integrity version not to classify as live")
+			}
+			if integrity != "" {
+				t.Fatalf("expected empty integrity on error, got: %q", integrity)
+			}
+		})
 	}
 }

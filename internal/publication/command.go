@@ -162,6 +162,12 @@ func runSubmit(root, version, profile, registryBase, path string, stdout, stderr
 	if path == "" {
 		path = "first"
 	}
+	release, err := AcquireReleaseLock(root)
+	if err != nil {
+		fmt.Fprintln(stdout, toon.Errorf("unsatisfied release intent", err.Error()))
+		return 1
+	}
+	defer release()
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	registry := NewFixtureRegistry(registryBase)
@@ -169,12 +175,16 @@ func runSubmit(root, version, profile, registryBase, path string, stdout, stderr
 
 	var record Record
 	var nextAction string
-	var err error
 	if path == "staged" {
 		record, nextAction, err = RunStagedPublication(ctx, root, version, profile, registry)
 	} else {
 		record, err = RunFirstPublication(ctx, root, version, profile, registry)
-		nextAction = "release-complete"
+		if err == nil {
+			nextAction = "release-complete"
+			if record.Result != "success" {
+				nextAction = nextActionForInProgress(record)
+			}
+		}
 	}
 	exit := 0
 	if err != nil {
@@ -195,6 +205,10 @@ func runPromote(root, version, profile, registryBase string, stdout, stderr io.W
 		fmt.Fprintln(stdout, toon.MissingArg("bench release promote", "--version"))
 		return 2
 	}
+	if profile == "" {
+		fmt.Fprintln(stdout, toon.MissingArg("bench release promote", "--profile"))
+		return 2
+	}
 	if registryBase == "" {
 		registryBase = os.Getenv("BENCH_RELEASE_REGISTRY")
 	}
@@ -202,6 +216,12 @@ func runPromote(root, version, profile, registryBase string, stdout, stderr io.W
 		fmt.Fprintln(stdout, toon.MissingArg("bench release promote", "--registry or BENCH_RELEASE_REGISTRY"))
 		return 2
 	}
+	release, err := AcquireReleaseLock(root)
+	if err != nil {
+		fmt.Fprintln(stdout, toon.Errorf("unsatisfied release intent", err.Error()))
+		return 1
+	}
+	defer release()
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	registry := NewFixtureRegistry(registryBase)
@@ -225,6 +245,10 @@ func runRollback(root, version, profile, registryBase, message string, stdout, s
 		fmt.Fprintln(stdout, toon.MissingArg("bench release rollback", "--version"))
 		return 2
 	}
+	if profile == "" {
+		fmt.Fprintln(stdout, toon.MissingArg("bench release rollback", "--profile"))
+		return 2
+	}
 	if registryBase == "" {
 		registryBase = os.Getenv("BENCH_RELEASE_REGISTRY")
 	}
@@ -235,6 +259,12 @@ func runRollback(root, version, profile, registryBase, message string, stdout, s
 	if message == "" {
 		message = fmt.Sprintf("release %s was rolled back; see the publication record for details", version)
 	}
+	release, err := AcquireReleaseLock(root)
+	if err != nil {
+		fmt.Fprintln(stdout, toon.Errorf("unsatisfied release intent", err.Error()))
+		return 1
+	}
+	defer release()
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	registry := NewFixtureRegistry(registryBase)
@@ -273,47 +303,18 @@ func runStatus(root string, stdout io.Writer) int {
 	case "rolled_back":
 		nextAction = "prepare"
 	case "in_progress":
-		if record.Path == "public" {
-			nextAction = statusNextActionForStaged(record)
-		}
+		// Registry-free by construction: nextActionForInProgress reads only
+		// record.Transitions and record.Provenance, the exact ordering
+		// policy the staged state machine derives from the same fields
+		// after appending its own run's transitions — one source, never
+		// re-derived here.
+		nextAction = nextActionForInProgress(record)
 	}
 	printRecord(stdout, record, nextAction)
 	if record.Result == "failed" {
 		return 1
 	}
 	return 0
-}
-
-// statusNextActionForStaged reports the staged path's handoff from the
-// durable record alone (status never touches the registry): it walks the
-// transitions to see which platform packages are already verified live, so
-// a rerun of `status` shows the same next_action `submit` would compute
-// without needing a registry round trip.
-func statusNextActionForStaged(record Record) string {
-	verifiedLive := map[string]bool{}
-	var wrapper string
-	for _, t := range record.Transitions {
-		if t.Action == "verify" && t.Result == "success" {
-			verifiedLive[t.Package] = true
-		}
-	}
-	for _, p := range record.Provenance {
-		if p.Package == "redbench" {
-			wrapper = p.Package
-		}
-	}
-	for _, p := range record.Provenance {
-		if p.Package == wrapper {
-			continue
-		}
-		if !verifiedLive[p.Package] {
-			return nextActionApprovePlatforms
-		}
-	}
-	if wrapper != "" && !verifiedLive[wrapper] {
-		return nextActionApproveWrapper
-	}
-	return nextActionPromote
 }
 
 func printRecord(stdout io.Writer, record Record, nextAction string) {

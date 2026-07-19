@@ -41,10 +41,12 @@ func TestReleaseSubmitExitCodeTriple(t *testing.T) {
 }
 
 // TestReleaseSubmitRerunIsIdempotentNoOp is coverage row 8's load-bearing
-// rerun assertion: once a first-publication submit has already succeeded, a
-// second identical run against the same state must not repeat a single live
-// registry mutation (no second publish or dist-tag-add hits the request log)
-// and must exit 0 as a no-op with the record left byte-identical.
+// rerun assertion: once a first-publication submit has already fully
+// verified the complete set live (record "in_progress", next_action
+// "promote" — submit alone never moves "latest"), a second identical run
+// against the same state must not repeat a single live registry mutation (no
+// second publish or integrity re-check hits the request log) and must exit 0
+// as a no-op with the record left byte-identical.
 func TestReleaseSubmitRerunIsIdempotentNoOp(t *testing.T) {
 	version := "9.9.23"
 	root := copyPublicationScripts(t)
@@ -56,8 +58,8 @@ func TestReleaseSubmitRerunIsIdempotentNoOp(t *testing.T) {
 	if exitCode != 0 {
 		t.Fatalf("first submit exit=%d:\n%s", exitCode, output)
 	}
-	if !strings.Contains(output, "release-complete") {
-		t.Fatalf("first submit did not reach next_action release-complete:\n%s", output)
+	if !strings.Contains(output, "promote") {
+		t.Fatalf("first submit did not reach next_action promote:\n%s", output)
 	}
 	firstLines := requestLines(t, requestFile)
 	firstRecord, err := readRawRecord(t, root)
@@ -69,8 +71,8 @@ func TestReleaseSubmitRerunIsIdempotentNoOp(t *testing.T) {
 	if exitCode != 0 {
 		t.Fatalf("rerun submit exit=%d, want 0 (idempotent no-op):\n%s", exitCode, output)
 	}
-	if !strings.Contains(output, "release-complete") {
-		t.Fatalf("rerun submit did not report next_action release-complete:\n%s", output)
+	if !strings.Contains(output, "promote") {
+		t.Fatalf("rerun submit did not report next_action promote:\n%s", output)
 	}
 
 	secondLines := requestLines(t, requestFile)

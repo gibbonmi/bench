@@ -141,6 +141,40 @@ func TestFirstPublicationClassifiesControlByteIntegrityTerminalFailClosed(t *tes
 	}
 }
 
+// TestFirstPublicationClassifiesEmptyIntegrityTerminalFailClosed is edge row
+// A's absent-vs-present-empty distinction: a registry that answers the
+// post-publish integrity re-check with 200 and a well-formed but empty
+// integrity string is reporting the version live with no integrity value —
+// a malformed/hostile response, not a live/not-live fact — and must fail
+// closed with an attributed error rather than being misread as either a
+// terminal mismatch (live=true, integrity="") or a missed republish
+// (live=false).
+func TestFirstPublicationClassifiesEmptyIntegrityTerminalFailClosed(t *testing.T) {
+	version := "9.9.34"
+	root := copyPublicationScripts(t)
+	ordered := releasePlanArtifacts(t, root, version)
+	writeApprovedSet(t, root, ordered, nil)
+	base := hostileRegistry(t, http.StatusOK, `{"integrity":""}`, 0, "")
+
+	exitCode, output := runReleaseSubmit(t, root, version, base)
+	if exitCode != 1 {
+		t.Fatalf("exit = %d, want 1 for an empty registry integrity value:\n%s", exitCode, output)
+	}
+	if !strings.Contains(output, "no integrity value") {
+		t.Fatalf("error output did not attribute the empty-integrity response:\n%s", output)
+	}
+	// As with the malformed-JSON sibling case, this is the very first
+	// exploratory integrity check — before any transition is recorded — so
+	// there may be nothing to write yet; only assert "not fabricated success"
+	// when a record exists.
+	if _, err := os.Stat(filepath.Join(root, "dist", "publication", "publication-record.json")); err == nil {
+		record := readPublicationRecord(t, root)
+		if record["result"] == "success" {
+			t.Fatal("record was marked success despite an empty registry integrity response")
+		}
+	}
+}
+
 // TestStagedSubmitClassifiesInvalidStageIDTypeTerminalFailClosed is edge row
 // A: a registry that replies to stage-submit with a wrong-typed stage_id
 // (unknown/hostile shape, not the expected string) must fail closed with an
@@ -165,5 +199,116 @@ func TestStagedSubmitClassifiesInvalidStageIDTypeTerminalFailClosed(t *testing.T
 	record := readPublicationRecord(t, root)
 	if record["result"] != "failed" {
 		t.Fatalf("record result = %v, want failed", record["result"])
+	}
+}
+
+// TestSubmitRefusesWhenReleaseLockIsHeld is the concurrency-lock coverage: a
+// lock file already present at dist/publication/release.lock (as if another
+// bench release submit/promote/rollback were already running against this
+// root) must make a concurrent submit fail closed rather than race the
+// durable record's load-modify-save cycle — exit 1, with an attributed error
+// naming the lock path, and no registry call at all.
+func TestSubmitRefusesWhenReleaseLockIsHeld(t *testing.T) {
+	version := "9.9.43"
+	root := copyPublicationScripts(t)
+	ordered := releasePlanArtifacts(t, root, version)
+	writeApprovedSet(t, root, ordered, nil)
+	base, requestFile := startRegistry(t, root, filepath.Join(t.TempDir(), "store"))
+
+	lockDir := filepath.Join(root, "dist", "publication")
+	if err := os.MkdirAll(lockDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	lockPath := filepath.Join(lockDir, "release.lock")
+	if err := os.WriteFile(lockPath, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	exitCode, output := runReleaseSubmit(t, root, version, base)
+	if exitCode != 1 {
+		t.Fatalf("submit against a held release lock exit=%d, want 1:\n%s", exitCode, output)
+	}
+	if !strings.Contains(output, lockPath) {
+		t.Fatalf("submit's error did not name the lock path %s:\n%s", lockPath, output)
+	}
+	if lines := requestLines(t, requestFile); len(lines) != 0 {
+		t.Fatalf("submit issued a registry call despite a held release lock:\n%s", strings.Join(lines, "\n"))
+	}
+}
+
+// TestSubmitAndPromoteRefuseAfterReleaseIndexDrift is coverage row 3's
+// resume-safety guard, exercised through the CLI: once a publication record
+// has been created against one dist/preflight/release-index.json, any later
+// drift in that same file — even a change that leaves the frozen per-
+// artifact digest bindings untouched — invalidates resuming submit or
+// promoting against it. The whole approved index, not just its artifact
+// bindings, is the trust boundary a resumed operation must reverify.
+func TestSubmitAndPromoteRefuseAfterReleaseIndexDrift(t *testing.T) {
+	version := "9.9.44"
+	root := copyPublicationScripts(t)
+	ordered := releasePlanArtifacts(t, root, version)
+	writeApprovedSet(t, root, ordered, nil)
+	base, _ := startRegistry(t, root, filepath.Join(t.TempDir(), "store"))
+
+	exitCode, output := runReleaseSubmit(t, root, version, base)
+	if exitCode != 0 {
+		t.Fatalf("initial submit exit=%d:\n%s", exitCode, output)
+	}
+
+	// Leaves mode/scope/profile/status and the artifacts binding untouched —
+	// only the index's own bytes (and thus its frozen sha256) change.
+	patchReleaseIndexAuthority(t, root, map[string]string{"marker": "drifted-after-submit"})
+
+	exitCode, output = runReleaseSubmit(t, root, version, base)
+	if exitCode != 1 {
+		t.Fatalf("resumed submit against a drifted release index exit=%d, want 1:\n%s", exitCode, output)
+	}
+	if !strings.Contains(output, "different approved release index") {
+		t.Fatalf("submit did not attribute the release-index drift:\n%s", output)
+	}
+
+	exitCode, output = runRelease(t, root, "promote", runPromoteArgs(root, version, base), nil)
+	if exitCode != 1 {
+		t.Fatalf("promote against a drifted release index exit=%d, want 1:\n%s", exitCode, output)
+	}
+	if !strings.Contains(output, "different approved release index") {
+		t.Fatalf("promote did not attribute the release-index drift:\n%s", output)
+	}
+}
+
+// TestStatusAndSubmitRefuseCorruptRecord is coverage row 3's malformed-record
+// guard: a durable record file that is present but not valid JSON must fail
+// closed with the attributed "publication record is malformed" message on
+// both status and submit, never a panic or a silent reset back to a fresh
+// record.
+func TestStatusAndSubmitRefuseCorruptRecord(t *testing.T) {
+	version := "9.9.45"
+	root := copyPublicationScripts(t)
+	ordered := releasePlanArtifacts(t, root, version)
+	writeApprovedSet(t, root, ordered, nil)
+	base, _ := startRegistry(t, root, filepath.Join(t.TempDir(), "store"))
+
+	recordDir := filepath.Join(root, "dist", "publication")
+	if err := os.MkdirAll(recordDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(recordDir, "publication-record.json"), []byte("{garbage"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	exitCode, output := runRelease(t, root, "status", []string{"--root", root}, nil)
+	if exitCode != 1 {
+		t.Fatalf("status against a corrupt record exit=%d, want 1:\n%s", exitCode, output)
+	}
+	if !strings.Contains(output, "publication record is malformed") {
+		t.Fatalf("status did not attribute the corrupt record:\n%s", output)
+	}
+
+	exitCode, output = runReleaseSubmit(t, root, version, base)
+	if exitCode != 1 {
+		t.Fatalf("submit against a corrupt record exit=%d, want 1:\n%s", exitCode, output)
+	}
+	if !strings.Contains(output, "publication record is malformed") {
+		t.Fatalf("submit did not attribute the corrupt record:\n%s", output)
 	}
 }

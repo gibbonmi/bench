@@ -169,18 +169,19 @@ func (n *NPMCLIRegistry) Integrity(ctx context.Context, name, version string) (s
 	args := append([]string{"view", name + "@" + version, "dist.integrity", "--json"}, n.registryArgs()...)
 	out, err := n.run(ctx, dir, args...)
 	if err != nil {
+		// npm view exits non-zero (E404) when the version does not exist —
+		// that is absent, not an error: no republish-blocking mismatch.
 		return "", false, nil
 	}
 	var integrity string
 	if err := json.Unmarshal(out, &integrity); err != nil {
-		trimmed := bytes.TrimSpace(out)
-		if len(trimmed) == 0 {
-			return "", false, nil
-		}
-		integrity = string(trimmed)
+		integrity = string(bytes.TrimSpace(out))
 	}
+	integrity = strings.TrimSpace(integrity)
 	if integrity == "" {
-		return "", false, nil
+		// The version exists (npm view succeeded) but reports no integrity —
+		// a malformed/hostile registry response, not a live/not-live fact.
+		return "", false, fmt.Errorf("npm registry reports %s@%s live with no integrity value", name, version)
 	}
 	return integrity, true, nil
 }
