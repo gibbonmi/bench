@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 func readReproducibility(root string, artifacts []artifactEvidence) (reproducibilityEvidence, error) {
@@ -54,10 +55,11 @@ func readReproducibility(root string, artifacts []artifactEvidence) (reproducibi
 }
 
 func reproducibilityInputs(root string) (map[string]reproducibilityArtifact, error) {
-	paths := []string{"internal/releaseevidence/requirements.json", "scripts/release-plan.json"}
-	for _, item := range PackageEvidenceRegistry() {
-		paths = append(paths, item.Path)
+	data, err := releasePlanOutput(root, "evidence-names")
+	if err != nil {
+		return nil, errors.New("release-bound reproducibility inventory is unavailable")
 	}
+	paths := strings.Fields(string(data))
 	result := make(map[string]reproducibilityArtifact, len(paths))
 	for _, name := range paths {
 		data, err := ReadRegular(filepath.Join(root, filepath.FromSlash(name)))
@@ -96,6 +98,18 @@ func inspectNativeProofs(root string, targets []targetEvidence, artifacts []arti
 	for _, artifact := range artifacts {
 		digestByName[artifact.Name] = artifact.SHA256
 	}
+	version := mustPackageVersion(root)
+	planned, err := readReleaseArtifacts(root, version)
+	if err != nil {
+		return nil, err
+	}
+	plannedByTarget := map[string]map[string]string{}
+	for _, artifact := range planned {
+		if plannedByTarget[artifact.Target] == nil {
+			plannedByTarget[artifact.Target] = map[string]string{}
+		}
+		plannedByTarget[artifact.Target][artifact.Kind] = artifact.Name
+	}
 	proofs := make([]nativeProofEvidence, 0, len(targets))
 	for _, target := range targets {
 		name := target.OS + "-" + target.Arch
@@ -110,8 +124,8 @@ func inspectNativeProofs(root string, targets []targetEvidence, artifacts []arti
 		if err := decodeStrict(data, &proof); err != nil {
 			return nil, fmt.Errorf("native proof %s is malformed: %w", name, err)
 		}
-		platform := fmt.Sprintf("redbench-%s-%s-%s.tgz", target.OS, target.Arch, mustPackageVersion(root))
-		archive := fmt.Sprintf("redbench-%s-%s-%s.tar.gz", mustPackageVersion(root), target.OS, target.Arch)
+		platform := plannedByTarget[name]["platform"]
+		archive := plannedByTarget[name]["archive"]
 		packageFiles, _, err := readTarball(mustArtifactBytes(root, platform))
 		if err != nil {
 			return nil, fmt.Errorf("native proof %s cannot inspect platform binary: %w", name, err)

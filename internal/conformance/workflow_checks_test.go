@@ -38,6 +38,9 @@ func checkReleaseWorkflow(root string) []string {
 			diags = append(diags, message)
 		}
 	}
+	if job := workflowJob(text, "verify"); !strings.Contains(job, "uses: ./.github/workflows/native-runtime.yml") || !strings.Contains(job, "artifact-prefix: release") {
+		diags = append(diags, "release workflow does not compose shared native verification")
+	}
 	return diags
 }
 
@@ -61,7 +64,7 @@ func checkNativeRuntimeWorkflow(root string) []string {
 	if job := workflowJob(text, "evidence"); !strings.Contains(job, "needs: [preflight, native-proof]") || !strings.Contains(job, "scripts/release-preflight.sh --mode verify") {
 		diags = append(diags, "native verification does not finalize evidence after every native proof")
 	}
-	if job := workflowJob(text, "smoke"); !strings.Contains(job, "needs: [preflight, evidence]") || !strings.Contains(job, "verify-preflight-evidence") || !strings.Contains(job, "scripts/smoke-artifacts.sh") {
+	if job := workflowJob(text, "smoke"); !strings.Contains(job, "needs: [preflight, evidence]") || !strings.Contains(job, "preflight-evidence") || !strings.Contains(job, "scripts/smoke-artifacts.sh") {
 		diags = append(diags, "native verification does not run smoke from finalized evidence")
 	}
 	if proof := readIfExists(filepath.Join(root, "scripts", "native-proof.sh")); proof != "" && !strings.Contains(proof, "docker run --rm --network none") {

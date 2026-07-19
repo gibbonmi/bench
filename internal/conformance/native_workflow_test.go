@@ -108,17 +108,17 @@ func checkReleasePreflight(root string) []string {
 	native := readIfExists(filepath.Join(root, ".github", "workflows", "native-runtime.yml"))
 	release := readIfExists(filepath.Join(root, ".github", "workflows", "release.yml"))
 	installer := readIfExists(filepath.Join(root, "scripts", "install-govulncheck.sh"))
-	if strings.Count(native, "bash scripts/install-govulncheck.sh") != 1 || strings.Count(release, "bash scripts/install-govulncheck.sh") != 2 || !regexp.MustCompile(`govulncheck@v[0-9]+\.[0-9]+\.[0-9]+`).MatchString(installer) {
+	if strings.Count(native, "bash scripts/install-govulncheck.sh") != 1 || strings.Count(release, "bash scripts/install-govulncheck.sh") != 1 || !regexp.MustCompile(`govulncheck@v[0-9]+\.[0-9]+\.[0-9]+`).MatchString(installer) {
 		diags = append(diags, "release workflows do not consume the repository-owned govulncheck setup")
 	}
 	if strings.Contains(native, "govulncheck@") || strings.Contains(release, "govulncheck@") {
 		diags = append(diags, "release workflows duplicate the govulncheck version pin")
 	}
 	if native != "" {
-		if job := workflowJob(native, "evidence"); !strings.Contains(job, "needs: [preflight, native-proof]") || !strings.Contains(job, "scripts/release-preflight.sh --mode verify") || !strings.Contains(job, "verify-preflight-evidence") {
+		if job := workflowJob(native, "evidence"); !strings.Contains(job, "needs: [preflight, native-proof]") || !strings.Contains(job, "scripts/release-preflight.sh --mode verify") || !strings.Contains(job, "preflight-evidence") {
 			diags = append(diags, "native verification does not finalize full release evidence after native proofs")
 		}
-		if job := workflowJob(native, "smoke"); !strings.Contains(job, "needs: [preflight, evidence]") || !strings.Contains(job, "verify-preflight-evidence") || !strings.Contains(job, "scripts/smoke-artifacts.sh") {
+		if job := workflowJob(native, "smoke"); !strings.Contains(job, "needs: [preflight, evidence]") || !strings.Contains(job, "preflight-evidence") || !strings.Contains(job, "scripts/smoke-artifacts.sh") {
 			diags = append(diags, "native runner matrix does not consume finalized release evidence")
 		}
 	}
@@ -128,13 +128,10 @@ func checkReleasePreflight(root string) []string {
 				diags = append(diags, message)
 			}
 		}
-		if job := workflowJob(release, "evidence"); !strings.Contains(job, "needs: [preflight, native-proof]") || !strings.Contains(job, "scripts/release-preflight.sh --mode verify") || !strings.Contains(job, "release-native-proof-evidence") {
-			diags = append(diags, "tag evidence does not finalize complete native proofs")
+		if job := workflowJob(release, "verify"); !strings.Contains(job, "uses: ./.github/workflows/native-runtime.yml") || !strings.Contains(job, "artifact-prefix: release") {
+			diags = append(diags, "tag verification does not compose shared native verification")
 		}
-		if job := workflowJob(release, "smoke"); !strings.Contains(job, "needs: [preflight, evidence]") || !strings.Contains(job, "verify-preflight-evidence") {
-			diags = append(diags, "tag smoke does not consume finalized release evidence")
-		}
-		if job := workflowJob(release, "authorize"); !strings.Contains(job, "needs: [preflight, evidence, smoke]") || !strings.Contains(job, "release-native-proof-evidence") {
+		if job := workflowJob(release, "authorize"); !strings.Contains(job, "needs: [verify]") || !strings.Contains(job, "release-native-proof-evidence") {
 			diags = append(diags, "publication does not wait for finalized evidence and every native proof row")
 		}
 	}
@@ -159,13 +156,34 @@ func checkReleasePreflight(root string) []string {
 		diags = append(diags, "reproducibility comparator does not require exact byte equality")
 	}
 	offlineSmoke := readIfExists(filepath.Join(root, "scripts", "smoke-offline.sh"))
-	if offlineSmoke != "" && (strings.Count(offlineSmoke, "BENCH_NO_REPAIR=1") != 7 || strings.Count(offlineSmoke, "npm_config_offline=true") != 3) {
+	if offlineSmoke != "" && !offlineSmokeDeniesRepairAndEgress(offlineSmoke) {
 		diags = append(diags, "offline smoke permits repair or network fallback")
 	}
 	if offlineSmoke != "" && (!strings.Contains(offlineSmoke, "printf 'offline smoke: loopback registry fixture did not start\\n' >&2\n  exit 1") || strings.Contains(offlineSmoke, "local-fixture")) {
 		diags = append(diags, "offline registry smoke does not fail closed")
 	}
 	return diags
+}
+
+func offlineSmokeDeniesRepairAndEgress(smoke string) bool {
+	requiredOnce := []string{
+		`repair_disabled="${BENCH_OFFLINE_REPAIR_DISABLED:-1}"`,
+		`offline_mode=true`,
+		`[[ "$repair_disabled" == 1 && "$offline_mode" == true ]]`,
+		`BENCH_OFFLINE_ALLOWED_ORIGIN="$registry_origin"`,
+	}
+	for _, anchor := range requiredOnce {
+		if strings.Count(smoke, anchor) != 1 {
+			return false
+		}
+	}
+	return strings.Count(smoke, `BENCH_NO_REPAIR="$repair_disabled"`) == 2 &&
+		strings.Count(smoke, "BENCH_NO_REPAIR=1") == 8 &&
+		strings.Count(smoke, `npm_config_offline="$offline_mode"`) == 1 &&
+		strings.Count(smoke, "npm_config_offline=true") == 2 &&
+		strings.Count(smoke, `NODE_OPTIONS="--require=$root/scripts/offline-network-sentinel.cjs"`) == 4 &&
+		strings.Count(smoke, `[[ ! -s "$egress_log" ]]`) == 4 &&
+		strings.Count(smoke, "BENCH_OFFLINE_ALLOWED_ORIGIN=") == 1
 }
 
 func runReleaseEvidenceProbe(root string, packageEvidence []requirementRecord) []string {

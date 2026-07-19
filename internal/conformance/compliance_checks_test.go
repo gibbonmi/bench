@@ -12,6 +12,7 @@ import (
 var (
 	workflowActionKey = regexp.MustCompile(`^[[:space:]]*(?:-[[:space:]]*)?uses:[[:space:]]*`)
 	workflowActionPin = regexp.MustCompile(`^[[:space:]]*(?:-[[:space:]]*)?uses:[[:space:]]*[^@[:space:]]+@[0-9a-f]{40}(?:[[:space:]]+#.*)?[[:space:]]*$`)
+	workflowLocalCall = regexp.MustCompile(`^[[:space:]]*(?:-[[:space:]]*)?uses:[[:space:]]*\./[^@[:space:]]+(?:[[:space:]]+#.*)?[[:space:]]*$`)
 )
 
 func checkKitCompliance(kitRoot string) []string {
@@ -43,7 +44,7 @@ func checkKitCompliance(kitRoot string) []string {
 			continue
 		}
 		for lineNo, line := range strings.Split(string(body), "\n") {
-			if workflowActionKey.MatchString(line) && !workflowActionPin.MatchString(line) {
+			if workflowActionKey.MatchString(line) && !workflowActionPin.MatchString(line) && !workflowLocalCall.MatchString(line) {
 				diags = append(diags, fmt.Sprintf("workflow action is not pinned to a 40-character commit digest: %s:%d", slashRel(kitRoot, workflow), lineNo+1))
 			}
 		}
@@ -87,5 +88,25 @@ func TestKitComplianceScansWorkflowYAMLKeysWithoutGlobOrSubstringFalsePositives(
 	diags := checkKitCompliance(kitRoot)
 	if len(diags) != 1 || !strings.Contains(diags[0], "not pinned to a 40-character commit digest") {
 		t.Fatalf("workflow diagnostics = %v, want only the mutable .yaml action", diags)
+	}
+}
+
+func TestKitComplianceAcceptsLocalReusableWorkflowAndRejectsMutableExternalAction(t *testing.T) {
+	kitRoot := t.TempDir()
+	workflowDir := filepath.Join(kitRoot, ".github", "workflows")
+	if err := os.MkdirAll(workflowDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(kitRoot, "LICENSE"), []byte("MIT License\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	body := "jobs:\n  verify:\n    uses: ./.github/workflows/native-runtime.yml\nsteps:\n  - uses: actions/setup-go@v5\n"
+	if err := os.WriteFile(filepath.Join(workflowDir, "release.yml"), []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	diags := checkKitCompliance(kitRoot)
+	if len(diags) != 1 || !strings.Contains(diags[0], "not pinned to a 40-character commit digest") || !strings.Contains(diags[0], "release.yml:5") {
+		t.Fatalf("workflow diagnostics = %v, want only the mutable external action", diags)
 	}
 }

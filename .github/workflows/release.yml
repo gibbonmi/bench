@@ -10,115 +10,13 @@ permissions:
   id-token: write
 
 jobs:
-  preflight:
-    runs-on: ubuntu-24.04
-    outputs:
-      matrix: ${{ steps.matrix.outputs.rows }}
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
-        with:
-          go-version-file: go.mod
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: '22'
-      - id: matrix
-        run: node scripts/release-plan.mjs . matrix-json | node -e 'let data="";process.stdin.on("data",chunk=>data+=chunk);process.stdin.on("end",()=>require("fs").appendFileSync(process.env.GITHUB_OUTPUT,`rows=${data.trim()}\n`))'
-      - run: bash scripts/build-artifacts.sh . dist/artifacts
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: release-artifacts
-          path: dist/artifacts/
-          retention-days: ${{ github.retention_days }}
-
-  native-proof:
-    needs: preflight
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.preflight.outputs.matrix) }}
-    runs-on: ${{ matrix.runner }}
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
-        with:
-          go-version-file: go.mod
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: '22'
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        with:
-          name: release-artifacts
-          path: dist/artifacts
-      - run: bash scripts/native-proof.sh dist/artifacts "dist/native-proofs/${{ matrix.os }}-${{ matrix.arch }}.json" "${{ matrix.os }}" "${{ matrix.arch }}" "${{ matrix.runner }}"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: release-native-proof-${{ matrix.os }}-${{ matrix.arch }}
-          path: dist/native-proofs/
-
-  evidence:
-    needs: [preflight, native-proof]
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
-        with:
-          go-version-file: go.mod
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: '22'
-      - run: bash scripts/install-govulncheck.sh
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        with:
-          name: release-artifacts
-          path: dist/artifacts
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        with:
-          pattern: release-native-proof-*
-          path: dist/native-proofs
-          merge-multiple: true
-      - run: bash scripts/aggregate-native-proofs.sh dist/native-proofs
-      - run: bash scripts/release-preflight.sh --mode verify
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: release-native-proof-evidence
-          path: dist/native-proofs/
-          retention-days: ${{ github.retention_days }}
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: verify-preflight-evidence
-          path: dist/preflight/
-          retention-days: ${{ github.retention_days }}
-
-  smoke:
-    needs: [preflight, evidence]
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.preflight.outputs.matrix) }}
-    runs-on: ${{ matrix.runner }}
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
-        with:
-          go-version-file: go.mod
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: '22'
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        with:
-          name: release-artifacts
-          path: dist/artifacts
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        with:
-          name: verify-preflight-evidence
-          path: dist/preflight
-      - run: bash scripts/smoke-artifacts.sh dist/artifacts dist/preflight
+  verify:
+    uses: ./.github/workflows/native-runtime.yml
+    with:
+      artifact-prefix: release
 
   authorize:
-    needs: [preflight, evidence, smoke]
+    needs: [verify]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4

@@ -118,12 +118,19 @@ func inspectArtifacts(root string) ([]artifactEvidence, []targetEvidence, string
 	if err != nil {
 		return nil, nil, "", fmt.Errorf("artifact directory is unreadable: %w", err)
 	}
-	want := map[string]string{"redbench-" + version + ".tgz": "wrapper"}
+	plannedArtifacts, err := readReleaseArtifacts(root, version)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	want := make(map[string]string, len(plannedArtifacts))
+	plannedByTarget := map[string]map[string]string{}
 	targets := append([]targetEvidence(nil), plan.Targets...)
-	for _, item := range plan.Targets {
-		name := fmt.Sprintf("redbench-%s-%s-%s.tgz", item.OS, item.Arch, version)
-		want[name] = item.OS + "-" + item.Arch
-		want[fmt.Sprintf("redbench-%s-%s-%s.tar.gz", version, item.OS, item.Arch)] = item.OS + "-" + item.Arch
+	for _, artifact := range plannedArtifacts {
+		want[artifact.Name] = artifact.Target
+		if plannedByTarget[artifact.Target] == nil {
+			plannedByTarget[artifact.Target] = map[string]string{}
+		}
+		plannedByTarget[artifact.Target][artifact.Kind] = artifact.Name
 	}
 	if len(entries) != len(want) {
 		return nil, nil, "", fmt.Errorf("artifact set has %d entries, want %d", len(entries), len(want))
@@ -184,8 +191,8 @@ func inspectArtifacts(root string) ([]artifactEvidence, []targetEvidence, string
 	}
 	for _, item := range plan.Targets {
 		target := item.OS + "-" + item.Arch
-		platformName := fmt.Sprintf("redbench-%s-%s-%s.tgz", item.OS, item.Arch, version)
-		archiveName := fmt.Sprintf("redbench-%s-%s-%s.tar.gz", version, item.OS, item.Arch)
+		platformName := plannedByTarget[target]["platform"]
+		archiveName := plannedByTarget[target]["archive"]
 		archiveFiles, err := readOfflineArchive(root, artifactBytes[archiveName], archiveName, target, version)
 		if err != nil {
 			return nil, nil, "", err

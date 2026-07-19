@@ -32,6 +32,58 @@ func TestOfflineArchiveProjection(t *testing.T) {
 	assertOfflineArchiveSet(t, npmOut, offlineOut, wrapper.Version, matrix)
 }
 
+func TestOfflineInstructionsVerifyOnlyTargetArchive(t *testing.T) {
+	root := contract.SubjectRoot(t)
+	contract.SkipIfSubjectFileMissing(t, "scripts/assemble-offline-archive.mjs")
+	stage := t.TempDir()
+	npmDir, archiveDir := filepath.Join(stage, "packages"), filepath.Join(stage, "archive")
+	wrapperExtract, platformExtract := filepath.Join(stage, "wrapper"), filepath.Join(stage, "platform")
+	for _, directory := range []string{npmDir, archiveDir, filepath.Join(wrapperExtract, "package"), filepath.Join(platformExtract, "package")} {
+		if err := os.MkdirAll(directory, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write := func(path string, data []byte, mode os.FileMode) {
+		t.Helper()
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, data, mode); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write(filepath.Join(stage, "bench"), []byte("fixture binary\n"), 0o755)
+	write(filepath.Join(npmDir, "redbench-0.1.0.tgz"), []byte("wrapper\n"), 0o644)
+	write(filepath.Join(npmDir, "redbench-linux-x64-0.1.0.tgz"), []byte("platform\n"), 0o644)
+	write(filepath.Join(wrapperExtract, "package", "component-manifest.json"), []byte("{}\n"), 0o644)
+	write(filepath.Join(platformExtract, "package", "component-manifest.json"), []byte("{}\n"), 0o644)
+	var requirements struct {
+		Records []struct {
+			Path        string `json:"path"`
+			PackageMode string `json:"package_mode"`
+		} `json:"records"`
+	}
+	contract.ReadJSONFile(t, filepath.Join(root, "internal", "releaseevidence", "requirements.json"), &requirements)
+	for _, record := range requirements.Records {
+		if record.PackageMode != "" {
+			data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(record.Path)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			write(filepath.Join(wrapperExtract, "package", filepath.FromSlash(record.Path)), data, 0o644)
+		}
+	}
+	contract.NewExecFixtureAt(t, root).Run("node", filepath.Join(root, "scripts", "assemble-offline-archive.mjs"), root, npmDir, archiveDir, "linux-x64", "0.1.0", filepath.Join(stage, "bench"), wrapperExtract, platformExtract).RequireExit(0)
+	instructions, err := os.ReadFile(filepath.Join(archiveDir, "OFFLINE.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	const targeted = `awk '$2 == "redbench-0.1.0-linux-x64.tar.gz" { print }' SHA256SUMS | sha256sum -c -`
+	if !bytes.Contains(instructions, []byte(targeted)) || bytes.Contains(instructions, []byte("sha256sum -c SHA256SUMS")) {
+		t.Fatalf("offline instructions do not verify only the selected target archive:\n%s", instructions)
+	}
+}
+
 func assertOfflineArchiveSet(t *testing.T, npmArtifacts, output, version string, matrix []artifactPlatform) {
 	t.Helper()
 	files, err := os.ReadDir(output)
@@ -95,7 +147,8 @@ func assertOfflineArchiveSet(t *testing.T, npmArtifacts, output, version string,
 			t.Fatalf("offline archive %s binary differs from its platform package", name)
 		}
 		instructions := entries[root+"/OFFLINE.md"].Data
-		if !bytes.HasSuffix(instructions, []byte("\n")) || !strings.Contains(string(instructions), "--offline") || !strings.Contains(string(instructions), "sha256sum -c SHA256SUMS") || !strings.Contains(string(instructions), "npm publish ./packages/") || !strings.Contains(string(instructions), "## Removal") {
+		checksumCommand := fmt.Sprintf(`awk '$2 == "%s" { print }' SHA256SUMS | sha256sum -c -`, name)
+		if !bytes.HasSuffix(instructions, []byte("\n")) || !strings.Contains(string(instructions), "--offline") || !strings.Contains(string(instructions), checksumCommand) || strings.Contains(string(instructions), "sha256sum -c SHA256SUMS") || !strings.Contains(string(instructions), "npm publish ./packages/") || !strings.Contains(string(instructions), "## Removal") {
 			t.Fatalf("offline archive %s instructions are incomplete or not LF-terminated", name)
 		}
 	}

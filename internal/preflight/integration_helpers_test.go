@@ -55,7 +55,7 @@ func projectRoot(t *testing.T) string {
 func preflightRepo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
-	for _, rel := range []string{"bin/bench.sh", ".bench/gate.sh", "internal/releaseevidence/registry.json", "internal/releaseevidence/requirements.json", "scripts/build-artifacts.sh", "scripts/build-offline-archives.sh", "scripts/assemble-offline-archive.mjs", "scripts/release-plan.mjs", "scripts/release-plan.json", "scripts/write-deterministic-archive.mjs", "scripts/compare-artifacts.sh", "scripts/native-proof.sh", "scripts/aggregate-native-proofs.sh", "scripts/build-release-evidence.mjs", "scripts/smoke-artifacts.sh", "scripts/smoke-offline.sh", "scripts/offline-registry.mjs", "scripts/go-build.sh", "scripts/wrapper-assets.json", "package.json"} {
+	for _, rel := range []string{"bin/bench.sh", ".bench/gate.sh", "internal/releaseevidence/registry.json", "internal/releaseevidence/requirements.json", "scripts/build-artifacts.sh", "scripts/build-offline-archives.sh", "scripts/assemble-offline-archive.mjs", "scripts/release-plan.mjs", "scripts/release-plan.json", "scripts/write-deterministic-archive.mjs", "scripts/compare-artifacts.sh", "scripts/native-proof.sh", "scripts/aggregate-native-proofs.sh", "scripts/build-release-evidence.mjs", "scripts/smoke-artifacts.sh", "scripts/smoke-offline.sh", "scripts/verify-release-artifact.mjs", "scripts/offline-network-sentinel.cjs", "scripts/offline-registry.mjs", "scripts/go-build.sh", "scripts/wrapper-assets.json", "package.json"} {
 		path := filepath.Join(root, filepath.FromSlash(rel))
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			t.Fatal(err)

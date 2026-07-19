@@ -118,6 +118,10 @@ func assembleReleaseEvidence(ctx context.Context, root string, run RunEvidence) 
 	if err := ctx.Err(); err != nil {
 		return assembledEvidence{}, err
 	}
+	toolchains, err := observeToolchains(ctx, root)
+	if err != nil {
+		return assembledEvidence{}, err
+	}
 	effectiveProfile := run.Profile
 	if effectiveProfile == "" {
 		effectiveProfile = ProfilePublic
@@ -155,10 +159,6 @@ func assembleReleaseEvidence(ctx context.Context, root string, run RunEvidence) 
 	currentArtifacts, err := fingerprintArtifactSet(root)
 	if err != nil || currentArtifacts != artifactFingerprint {
 		return assembledEvidence{}, errors.New("release evidence artifact drift detected during assembly")
-	}
-	toolchains, err := observeToolchains(ctx, root)
-	if err != nil {
-		return assembledEvidence{}, err
 	}
 	phases := make([]phaseEvidence, 0, len(run.Phases))
 	for _, result := range run.Phases {

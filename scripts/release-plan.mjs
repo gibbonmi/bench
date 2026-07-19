@@ -30,10 +30,17 @@ export function targetFor(plan, os, arch) {
 }
 
 export function artifactNames(plan, version) {
-  return [`redbench-${version}.tgz`, ...plan.targets.flatMap(target => [
-    `redbench-${target.os}-${target.arch}-${version}.tgz`,
-    `redbench-${version}-${target.os}-${target.arch}.tar.gz`,
-  ])].sort(byteOrder);
+	return artifactRecords(plan, version).map(item => item.name);
+}
+
+export function artifactRecords(plan, version) {
+	return [{name: `redbench-${version}.tgz`, target: "wrapper", kind: "wrapper"}, ...plan.targets.flatMap(target => {
+		const name = `${target.os}-${target.arch}`;
+		return [
+			{name: `redbench-${name}-${version}.tgz`, target: name, kind: "platform"},
+			{name: `redbench-${version}-${name}.tar.gz`, target: name, kind: "archive"},
+		];
+	})].sort((left, right) => byteOrder(left.name, right.name));
 }
 
 export function archiveEntries(plan, target, version, packageEvidence) {
@@ -44,17 +51,32 @@ export function archiveEntries(plan, target, version, packageEvidence) {
   }).map(entry => ({...entry, archive_path: `${root}/${entry.path}`})).sort((a, b) => byteOrder(a.path, b.path));
 }
 
+export function releaseEvidenceNames(root) {
+  const requirements = JSON.parse(fs.readFileSync(path.join(root, "internal", "releaseevidence", "requirements.json"), "utf8"));
+  if (requirements?.schema_version !== 1 || !Array.isArray(requirements.records)) throw new Error("release evidence requirements are invalid");
+  const names = ["internal/releaseevidence/requirements.json", "scripts/release-plan.json", ...requirements.records.filter(record => record.package_mode).map(record => record.path)];
+  if (names.some(name => typeof name !== "string" || name.length === 0) || new Set(names).size !== names.length) throw new Error("release-bound evidence inventory is invalid");
+  return names.sort(byteOrder);
+}
+
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [root, command, ...args] = process.argv.slice(2);
-  if (!root || !command) throw new Error("usage: release-plan.mjs <root> <targets|matrix-json|artifact-names|target> [arguments]");
+	if (!root || !command) throw new Error("usage: release-plan.mjs <root> <normalized-json|targets|matrix-json|artifact-names|artifact-records|evidence-names|target> [arguments]");
   const plan = readReleasePlan(root);
-  if (command === "targets") {
+  if (command === "normalized-json") {
+    process.stdout.write(JSON.stringify(plan) + "\n");
+  } else if (command === "targets") {
     for (const target of plan.targets) process.stdout.write([target.os, target.arch, target.goos, target.goarch, target.runner].join("\t") + "\n");
   } else if (command === "matrix-json") {
     process.stdout.write(JSON.stringify({include: plan.targets}) + "\n");
-  } else if (command === "artifact-names") {
+	} else if (command === "artifact-names") {
     if (args.length !== 1) throw new Error("artifact-names requires version");
-    process.stdout.write(artifactNames(plan, args[0]).join("\n") + "\n");
+		process.stdout.write(artifactNames(plan, args[0]).join("\n") + "\n");
+	} else if (command === "artifact-records") {
+		if (args.length !== 1) throw new Error("artifact-records requires version");
+		process.stdout.write(JSON.stringify(artifactRecords(plan, args[0])) + "\n");
+  } else if (command === "evidence-names") {
+    process.stdout.write(releaseEvidenceNames(root).join("\n") + "\n");
   } else if (command === "target") {
     if (args.length !== 2) throw new Error("target requires os and arch");
     const target = targetFor(plan, args[0], args[1]);

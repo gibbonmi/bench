@@ -8,7 +8,7 @@
     "vet": {"handler":"external", "argv":["go", "vet", "./..."], "tools":["go"], "exact_toolchain":true},
     "vulnerability": {"handler":"scanner", "tools":["govulncheck"]},
     "artifacts": {"handler":"external", "argv":["bash", "{root}/scripts/build-artifacts.sh", "{root}", "{root}/dist/artifacts"], "tools":["bash", "node", "npm"], "inputs":["scripts/build-artifacts.sh", "scripts/build-offline-archives.sh", "scripts/assemble-offline-archive.mjs", "scripts/release-plan.mjs", "scripts/release-plan.json", "scripts/write-deterministic-archive.mjs", "scripts/compare-artifacts.sh", "scripts/native-proof.sh", "scripts/aggregate-native-proofs.sh", "scripts/build-release-evidence.mjs", "scripts/go-build.sh", "scripts/wrapper-assets.json", "package.json"]},
-    "smoke": {"handler":"external", "argv":["bash", "{root}/scripts/smoke-artifacts.sh", "{root}/dist/artifacts"], "tools":["bash", "node", "npm"], "inputs":["scripts/smoke-artifacts.sh", "scripts/smoke-offline.sh", "scripts/offline-registry.mjs", "scripts/release-plan.mjs", "scripts/release-plan.json", "package.json"], "requires":["artifacts"]},
+    "smoke": {"handler":"external", "argv":["bash", "{root}/scripts/smoke-artifacts.sh", "{root}/dist/artifacts"], "tools":["bash", "node", "npm"], "inputs":["scripts/smoke-artifacts.sh", "scripts/smoke-offline.sh", "scripts/verify-release-artifact.mjs", "scripts/offline-network-sentinel.cjs", "scripts/offline-registry.mjs", "scripts/release-plan.mjs", "scripts/release-plan.json", "package.json"], "requires":["artifacts"]},
     "identity": {"handler":"identity"},
     "ancestry": {"handler":"ancestry"},
     "changelog": {"handler":"changelog"}

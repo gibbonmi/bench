@@ -1,6 +1,6 @@
 # FT83 slice 2 — reproducible offline artifacts
 
-Status: staged
+Status: implemented
 
 Decision map: `decisions/governed-offline-release-bundle.md` at `62e50d7`.
 

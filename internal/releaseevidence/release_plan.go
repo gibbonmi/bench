@@ -1,10 +1,9 @@
 package releaseevidence
 
 import (
-	"errors"
 	"fmt"
+	"os/exec"
 	"path/filepath"
-	"sort"
 	"strings"
 )
 
@@ -21,8 +20,14 @@ type archivePlanEntry struct {
 	Kind string `json:"kind"`
 }
 
+type releaseArtifact struct {
+	Name   string `json:"name"`
+	Target string `json:"target"`
+	Kind   string `json:"kind"`
+}
+
 func readReleasePlan(root string) (releasePlan, error) {
-	data, err := ReadRegular(filepath.Join(root, "scripts", "release-plan.json"))
+	data, err := releasePlanOutput(root, "normalized-json")
 	if err != nil {
 		return releasePlan{}, fmt.Errorf("release plan is unreadable: %w", err)
 	}
@@ -30,35 +35,24 @@ func readReleasePlan(root string) (releasePlan, error) {
 	if err := decodeStrict(data, &plan); err != nil {
 		return releasePlan{}, fmt.Errorf("release plan is malformed: %w", err)
 	}
-	if plan.SchemaVersion != 1 || plan.TargetCardinality < 1 || len(plan.Targets) != plan.TargetCardinality || len(plan.ArchiveEntries) == 0 {
-		return releasePlan{}, errors.New("release plan cardinality or inventory is invalid")
-	}
-	seenTargets := map[string]bool{}
-	for _, target := range plan.Targets {
-		key := target.OS + "-" + target.Arch
-		if (target.OS != "darwin" && target.OS != "linux") || (target.Arch != "arm64" && target.Arch != "x64") || target.GOOS != target.OS || target.GOArch != map[string]string{"arm64": "arm64", "x64": "amd64"}[target.Arch] || target.Runner == "" || seenTargets[key] {
-			return releasePlan{}, fmt.Errorf("release plan target is invalid or duplicate: %s", key)
-		}
-		seenTargets[key] = true
-	}
-	seenEntries := map[string]bool{}
-	for _, entry := range plan.ArchiveEntries {
-		clean := filepath.ToSlash(filepath.Clean(filepath.FromSlash(entry.Path)))
-		if entry.Path == "" || clean != entry.Path || strings.Contains(entry.Path, "\\") || strings.HasPrefix(clean, "../") || filepath.IsAbs(clean) || (entry.Mode != "0644" && entry.Mode != "0755") || entry.Kind == "" || seenEntries[entry.Path] {
-			return releasePlan{}, fmt.Errorf("release plan archive entry is invalid: %s", entry.Path)
-		}
-		seenEntries[entry.Path] = true
-	}
 	return plan, nil
 }
 
-func artifactNames(plan releasePlan, version string) []string {
-	names := []string{"redbench-" + version + ".tgz"}
-	for _, target := range plan.Targets {
-		names = append(names, "redbench-"+target.OS+"-"+target.Arch+"-"+version+".tgz", "redbench-"+version+"-"+target.OS+"-"+target.Arch+".tar.gz")
+func releasePlanOutput(root string, arguments ...string) ([]byte, error) {
+	args := append([]string{filepath.Join(root, "scripts", "release-plan.mjs"), root}, arguments...)
+	return exec.Command("node", args...).Output()
+}
+
+func readReleaseArtifacts(root, version string) ([]releaseArtifact, error) {
+	data, err := releasePlanOutput(root, "artifact-records", version)
+	if err != nil {
+		return nil, fmt.Errorf("release artifact inventory is unavailable: %w", err)
 	}
-	sort.Strings(names)
-	return names
+	var artifacts []releaseArtifact
+	if err := decodeStrict(data, &artifacts); err != nil {
+		return nil, fmt.Errorf("release artifact inventory is malformed: %w", err)
+	}
+	return artifacts, nil
 }
 
 func archiveInventory(plan releasePlan, target, version string) (map[string]int64, error) {

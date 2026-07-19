@@ -41,15 +41,7 @@ while IFS= read -r name; do
 done < "$names_file"
 
 evidence_names="$names_file.evidence"
-node - <<'NODE' "$left_root" > "$evidence_names"
-const fs = require("node:fs");
-const path = require("node:path");
-const root = process.argv[2];
-const requirements = JSON.parse(fs.readFileSync(path.join(root, "internal/releaseevidence/requirements.json")));
-const names = ["internal/releaseevidence/requirements.json", "scripts/release-plan.json", ...requirements.records.filter(record => record.package_mode).map(record => record.path)];
-if (new Set(names).size !== names.length) throw new Error("release-bound evidence inventory has duplicate paths");
-process.stdout.write(names.sort((left, right) => Buffer.compare(Buffer.from(left), Buffer.from(right))).join("\n") + "\n");
-NODE
+node "$root/scripts/release-plan.mjs" "$left_root" evidence-names > "$evidence_names"
 while IFS= read -r name; do
   [[ -f "$left_root/$name" && ! -L "$left_root/$name" ]] || { printf 'reproducibility comparison missing first-build release evidence: %s\n' "$name" >&2; exit 1; }
   [[ -f "$right_root/$name" && ! -L "$right_root/$name" ]] || { printf 'reproducibility comparison missing second-build release evidence: %s\n' "$name" >&2; exit 1; }
@@ -59,17 +51,16 @@ while IFS= read -r name; do
   fi
 done < "$evidence_names"
 
-node - <<'NODE' "$left" "$record" "$left_root" "${entries[@]}"
+node - <<'NODE' "$left" "$record" "$left_root" "$evidence_names" "${entries[@]}"
 const fs = require("node:fs");
 const crypto = require("node:crypto");
 const path = require("node:path");
-const [directory, record, root, ...names] = process.argv.slice(2);
+const [directory, record, root, evidenceFile, ...names] = process.argv.slice(2);
 const artifacts = names.map(name => {
   const data = fs.readFileSync(`${directory}/${name}`);
   return {name, size: data.length, sha256: crypto.createHash("sha256").update(data).digest("hex"), match: true};
 });
-const requirements = JSON.parse(fs.readFileSync(path.join(root, "internal/releaseevidence/requirements.json")));
-const evidenceNames = ["internal/releaseevidence/requirements.json", "scripts/release-plan.json", ...requirements.records.filter(record => record.package_mode).map(record => record.path)].sort((a, b) => Buffer.compare(Buffer.from(a), Buffer.from(b)));
+const evidenceNames = fs.readFileSync(evidenceFile, "utf8").trimEnd().split("\n");
 const evidence = evidenceNames.map(name => { const data = fs.readFileSync(path.join(root, name)); return {name, size: data.length, sha256: crypto.createHash("sha256").update(data).digest("hex"), match: true}; });
 const payload = JSON.stringify({schema_version: 1, status: "green", builds: 2, artifacts, evidence}) + "\n";
 fs.mkdirSync(require("node:path").dirname(record), {recursive: true});

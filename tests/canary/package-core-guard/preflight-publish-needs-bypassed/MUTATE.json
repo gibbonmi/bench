@@ -1,1 +1,1 @@
-[{"path":".github/workflows/release.yml","old":"    needs: [preflight, evidence, smoke]","new":"    needs: preflight"}]
+[{"path":".github/workflows/release.yml","old":"    needs: [verify]","new":"    needs: []"}]

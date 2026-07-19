@@ -1,10 +1,12 @@
 package artifact
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/contract"
@@ -101,6 +103,38 @@ func TestOfflineSmokeRequiresApprovedReleaseEvidence(t *testing.T) {
 		t.Fatal("offline smoke accepted missing approved release evidence")
 	}
 	probe.RequireContains(probe.Stderr, "offline smoke: approved release evidence is missing or unsafe")
+}
+
+func TestReleaseArtifactVerifierAcceptsValidEvidenceAndRejectsChecksumMutation(t *testing.T) {
+	root := contract.SubjectRoot(t)
+	contract.SkipIfSubjectFileMissing(t, "scripts/verify-release-artifact.mjs")
+	dir := t.TempDir()
+	artifact := filepath.Join(dir, "redbench-0.1.0-linux-x64.tar.gz")
+	data := []byte("exact artifact bytes\n")
+	if err := os.WriteFile(artifact, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	digest := fmt.Sprintf("%x", sha256.Sum256(data))
+	index := []byte(fmt.Sprintf("{\"artifacts\":[{\"name\":\"%s\",\"sha256\":\"%s\"}]}\n", filepath.Base(artifact), digest))
+	indexPath, sumsPath := filepath.Join(dir, "release-index.json"), filepath.Join(dir, "SHA256SUMS")
+	if err := os.WriteFile(indexPath, index, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(sumsPath, []byte(digest+"  "+filepath.Base(artifact)+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	run := func() contract.Probe {
+		return contract.NewExecFixtureAt(t, root).Run("node", filepath.Join(root, "scripts", "verify-release-artifact.mjs"), indexPath, sumsPath, artifact)
+	}
+	run().RequireExit(0)
+	if err := os.WriteFile(sumsPath, []byte(strings.Repeat("0", 64)+"  "+filepath.Base(artifact)+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	probe := run()
+	if probe.ExitCode == 0 {
+		t.Fatal("offline artifact verifier accepted a checksum mutation")
+	}
+	probe.RequireContains(probe.Stderr, "offline smoke: supplied release evidence does not bind artifact bytes")
 }
 
 func assertComparatorRed(t *testing.T, probe contract.Probe, message string) {

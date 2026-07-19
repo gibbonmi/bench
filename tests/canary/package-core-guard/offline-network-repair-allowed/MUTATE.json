@@ -1,1 +1,1 @@
-[{"path":"scripts/smoke-offline.sh","old":"BENCH_NO_REPAIR=1 npm_config_cache=\"$tmp/registry-cache\"","new":"BENCH_REPAIR_ALLOWED=1 npm_config_cache=\"$tmp/registry-cache\""}]
+[{"path":"scripts/smoke-offline.sh","old":"repair_disabled=\"${BENCH_OFFLINE_REPAIR_DISABLED:-1}\"","new":"repair_disabled=\"${BENCH_OFFLINE_REPAIR_DISABLED:-0}\""}]
