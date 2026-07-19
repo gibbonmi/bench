@@ -62,6 +62,20 @@ func TestReleasePlanProjectsRelocatedPackageEvidence(t *testing.T) {
 			t.Fatalf("relocated package evidence %s was not projected from the release plan: %v\n%s", record.Key, err, data)
 		}
 	}
+	archiveDir := assembleOfflineArchiveStage(t, root, fixture, root)
+	for _, record := range requirements.Records {
+		if record.PackageMode == "" {
+			continue
+		}
+		want, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(record.Path)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := os.ReadFile(filepath.Join(archiveDir, "relocated", filepath.FromSlash(record.Path)))
+		if err != nil || !bytes.Equal(got, want) {
+			t.Fatalf("relocated package evidence %s was not assembled from %s: %v", record.Key, record.Path, err)
+		}
+	}
 }
 
 func TestNativeProofAggregatorRejectsOneTargetOmission(t *testing.T) {
@@ -229,6 +243,19 @@ func TestOfflineArchiveProjection(t *testing.T) {
 func TestOfflineInstructionsVerifyOnlyTargetArchive(t *testing.T) {
 	root := contract.SubjectRoot(t)
 	contract.SkipIfSubjectFileMissing(t, "scripts/assemble-offline-archive.mjs")
+	archiveDir := assembleOfflineArchiveStage(t, root, root, root)
+	instructions, err := os.ReadFile(filepath.Join(archiveDir, "OFFLINE.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	const targeted = `awk '$2 == "redbench-0.1.0-linux-x64.tar.gz" { print }' SHA256SUMS | sha256sum -c -`
+	if !bytes.Contains(instructions, []byte(targeted)) || bytes.Contains(instructions, []byte("sha256sum -c SHA256SUMS")) {
+		t.Fatalf("offline instructions do not verify only the selected target archive:\n%s", instructions)
+	}
+}
+
+func assembleOfflineArchiveStage(t *testing.T, scriptRoot, planRoot, evidenceRoot string) string {
+	t.Helper()
 	stage := t.TempDir()
 	npmDir, archiveDir := filepath.Join(stage, "packages"), filepath.Join(stage, "archive")
 	wrapperExtract, platformExtract := filepath.Join(stage, "wrapper"), filepath.Join(stage, "platform")
@@ -257,25 +284,18 @@ func TestOfflineInstructionsVerifyOnlyTargetArchive(t *testing.T) {
 			PackageMode string `json:"package_mode"`
 		} `json:"records"`
 	}
-	contract.ReadJSONFile(t, filepath.Join(root, "internal", "releaseevidence", "requirements.json"), &requirements)
+	contract.ReadJSONFile(t, filepath.Join(planRoot, "internal", "releaseevidence", "requirements.json"), &requirements)
 	for _, record := range requirements.Records {
 		if record.PackageMode != "" {
-			data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(record.Path)))
+			data, err := os.ReadFile(filepath.Join(evidenceRoot, filepath.FromSlash(record.Path)))
 			if err != nil {
 				t.Fatal(err)
 			}
 			write(filepath.Join(wrapperExtract, "package", filepath.FromSlash(record.Path)), data, 0o644)
 		}
 	}
-	contract.NewExecFixtureAt(t, root).Run("node", filepath.Join(root, "scripts", "assemble-offline-archive.mjs"), root, npmDir, archiveDir, "linux-x64", "0.1.0", filepath.Join(stage, "bench"), wrapperExtract, platformExtract).RequireExit(0)
-	instructions, err := os.ReadFile(filepath.Join(archiveDir, "OFFLINE.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	const targeted = `awk '$2 == "redbench-0.1.0-linux-x64.tar.gz" { print }' SHA256SUMS | sha256sum -c -`
-	if !bytes.Contains(instructions, []byte(targeted)) || bytes.Contains(instructions, []byte("sha256sum -c SHA256SUMS")) {
-		t.Fatalf("offline instructions do not verify only the selected target archive:\n%s", instructions)
-	}
+	contract.NewExecFixtureAt(t, scriptRoot).Run("node", filepath.Join(scriptRoot, "scripts", "assemble-offline-archive.mjs"), planRoot, npmDir, archiveDir, "linux-x64", "0.1.0", filepath.Join(stage, "bench"), wrapperExtract, platformExtract).RequireExit(0)
+	return archiveDir
 }
 
 func assertOfflineArchiveSet(t *testing.T, npmArtifacts, output, version string, matrix []artifactPlatform) {

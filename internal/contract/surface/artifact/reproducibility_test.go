@@ -206,9 +206,18 @@ func TestReleaseArtifactVerifierRequiresFullyApprovedEvidence(t *testing.T) {
 			phases := index["phases"].([]map[string]any)
 			index["phases"] = phases[:len(phases)-1]
 		}},
-		{"target matrix", "release target evidence is malformed", func() {
-			index["targets"].([]map[string]any)[0]["runner"] = "index-owned-runner"
-			index["native_proofs"].([]map[string]any)[0]["runner"] = "index-owned-runner"
+		{"target matrix os", "release target evidence is malformed", func() { index["targets"].([]map[string]any)[0]["os"] = "index-owned-os" }},
+		{"target matrix arch", "release target evidence is malformed", func() { index["targets"].([]map[string]any)[0]["arch"] = "index-owned-arch" }},
+		{"target matrix goos", "release target evidence is malformed", func() { index["targets"].([]map[string]any)[0]["goos"] = "index-owned-goos" }},
+		{"target matrix goarch", "release target evidence is malformed", func() { index["targets"].([]map[string]any)[0]["goarch"] = "index-owned-goarch" }},
+		{"target matrix runner", "release target evidence is malformed", func() { index["targets"].([]map[string]any)[0]["runner"] = "index-owned-runner" }},
+		{"target matrix order", "release target evidence is malformed", func() {
+			targets := index["targets"].([]map[string]any)
+			targets[0], targets[1] = targets[1], targets[0]
+		}},
+		{"target matrix cardinality", "release target evidence is malformed", func() {
+			targets := index["targets"].([]map[string]any)
+			index["targets"] = targets[:len(targets)-1]
 		}},
 		{"requirement completeness", "release requirements are incomplete or unsatisfied", func() {
 			requirements := index["requirements"].([]map[string]any)
