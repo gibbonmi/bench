@@ -1,17 +1,13 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import {archiveEntries, readReleasePlan} from "./release-plan.mjs";
+import {archiveEntries, packagedEvidenceRecords, readReleasePlan, readReleaseRequirements} from "./release-plan.mjs";
 
 const [root, npmDir, archiveDir, target, version, binary, wrapperExtract, platformExtract] = process.argv.slice(2);
 if (![root, npmDir, archiveDir, target, version, binary, wrapperExtract, platformExtract].every(Boolean)) throw new Error("usage: assemble-offline-archive.mjs <root> <npm-dir> <archive-dir> <target> <version> <binary> <wrapper-extract> <platform-extract>");
 const plan = readReleasePlan(root);
 if (!plan.targets.some(item => `${item.os}-${item.arch}` === target)) throw new Error(`release plan does not contain ${target}`);
-const requirementsPath = path.join(root, "internal", "releaseevidence", "requirements.json");
-const requirementsInfo = fs.lstatSync(requirementsPath);
-if (!requirementsInfo.isFile() || requirementsInfo.isSymbolicLink()) throw new Error("release requirements are unsafe");
-const requirements = JSON.parse(fs.readFileSync(requirementsPath, "utf8"));
-const packageEvidence = requirements.records.filter(item => typeof item.path === "string" && item.package_mode === "0644");
+const packageEvidence = packagedEvidenceRecords(readReleaseRequirements(root));
 const entries = archiveEntries(plan, target, version, packageEvidence);
 const rootName = `redbench-${version}-${target}`;
 const archiveManifestPath = "evidence/component-manifest.json";

@@ -10,9 +10,9 @@ export function readReleasePlan(root) {
   if (!info.isFile() || info.isSymbolicLink() || info.size === 0) throw new Error("release plan is not a non-empty regular file");
   const plan = JSON.parse(fs.readFileSync(file, "utf8"));
   if (plan?.schema_version !== 1 || !Array.isArray(plan.targets) || plan.targets.length === 0 || !Array.isArray(plan.archive_entries)) throw new Error("release plan cardinality is invalid");
-  const seen = new Set();
-  for (const target of plan.targets) {
-    if (!target || !/^(darwin|linux)$/.test(target.os) || !/^(arm64|x64)$/.test(target.arch) || target.goos !== target.os || target.goarch !== (target.arch === "x64" ? "amd64" : "arm64") || typeof target.runner !== "string" || target.runner.length === 0) throw new Error("release plan target is invalid");
+	const seen = new Set();
+	for (const target of plan.targets) {
+		if (!target || ![target.os, target.arch, target.goos, target.goarch, target.runner].every(value => typeof value === "string" && /^[0-9A-Za-z.-]+$/.test(value))) throw new Error("release plan target is invalid");
     const key = `${target.os}-${target.arch}`;
     if (seen.has(key)) throw new Error(`release plan repeats ${key}`);
     seen.add(key);
@@ -23,6 +23,19 @@ export function readReleasePlan(root) {
     entries.add(entry.path);
   }
   return plan;
+}
+
+export function readReleaseRequirements(root) {
+	const file = path.join(root, "internal", "releaseevidence", "requirements.json");
+	const info = fs.lstatSync(file);
+	if (!info.isFile() || info.isSymbolicLink() || info.size === 0) throw new Error("release evidence requirements are unsafe");
+	const requirements = JSON.parse(fs.readFileSync(file, "utf8"));
+	if (requirements?.schema_version !== 1 || !Array.isArray(requirements.records)) throw new Error("release evidence requirements are invalid");
+	return requirements;
+}
+
+export function packagedEvidenceRecords(requirements) {
+	return requirements.records.filter(record => Object.hasOwn(record, "package_mode"));
 }
 
 export function targetFor(plan, os, arch) {
@@ -52,16 +65,12 @@ export function archiveEntries(plan, target, version, packageEvidence) {
 }
 
 export function archiveInventory(root, plan, target, version) {
-  const requirements = JSON.parse(fs.readFileSync(path.join(root, "internal", "releaseevidence", "requirements.json"), "utf8"));
-  if (requirements?.schema_version !== 1 || !Array.isArray(requirements.records)) throw new Error("release evidence requirements are invalid");
-  const packageEvidence = requirements.records.filter(record => record.package_mode).map(record => ({path: record.path}));
-  return Object.fromEntries(archiveEntries(plan, target, version, packageEvidence).map(entry => [entry.path, Number.parseInt(entry.mode, 8)]));
+	const packageEvidence = packagedEvidenceRecords(readReleaseRequirements(root));
+	return Object.fromEntries(archiveEntries(plan, target, version, packageEvidence).map(entry => [entry.path, Number.parseInt(entry.mode, 8)]));
 }
 
 export function releaseEvidenceNames(root) {
-  const requirements = JSON.parse(fs.readFileSync(path.join(root, "internal", "releaseevidence", "requirements.json"), "utf8"));
-  if (requirements?.schema_version !== 1 || !Array.isArray(requirements.records)) throw new Error("release evidence requirements are invalid");
-  const names = ["internal/releaseevidence/requirements.json", "scripts/release-plan.json", ...requirements.records.filter(record => record.package_mode).map(record => record.path)];
+	const names = ["internal/releaseevidence/requirements.json", "scripts/release-plan.json", ...packagedEvidenceRecords(readReleaseRequirements(root)).map(record => record.path)];
   if (names.some(name => typeof name !== "string" || name.length === 0) || new Set(names).size !== names.length) throw new Error("release-bound evidence inventory is invalid");
   return names.sort(byteOrder);
 }

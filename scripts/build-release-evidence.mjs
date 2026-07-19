@@ -1,19 +1,19 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import {readReleasePlan} from "./release-plan.mjs";
+import {packagedEvidenceRecords, readReleasePlan, readReleaseRequirements} from "./release-plan.mjs";
 
 const args = process.argv.slice(2);
 const validateOnly = args[0] === "--validate-required-sources";
 const [root, wrapperDir, packagesDir] = validateOnly ? [args[1], "", ""] : args;
 if (!root || !validateOnly && (!wrapperDir || !packagesDir)) throw new Error("usage: build-release-evidence.mjs [--validate-required-sources] <source-root> [<wrapper-dir> <packages-dir>]");
 
-const requirements = readJSON(path.join(root, "internal/releaseevidence/requirements.json"));
+const requirements = readReleaseRequirements(root);
 const componentSchema = requirements.component_manifest;
 if (!Array.isArray(requirements.records) || !componentSchema || componentSchema.schema_version !== 1) throw new Error("release evidence requirement registry is invalid");
 const schemaFields = [componentSchema.root_fields, componentSchema.component_fields, componentSchema.target_fields, componentSchema.file_fields].flatMap(fields => fields && typeof fields === "object" ? Object.values(fields) : []);
 if (schemaFields.some(field => typeof field !== "string" || field.length === 0) || new Set(schemaFields).size !== schemaFields.length) throw new Error("component manifest schema fields are invalid");
-const packageEvidence = requirements.records.filter(record => record.package_mode !== undefined);
+const packageEvidence = packagedEvidenceRecords(requirements);
 if (packageEvidence.length === 0) throw new Error("requirement registry has no packaged evidence");
 
 function readJSON(file) {

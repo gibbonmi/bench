@@ -5,7 +5,7 @@ set -euo pipefail
 left="${1:?usage: compare-artifacts.sh <first-dir> <second-dir> <record> [first-root second-root [first-final-evidence second-final-evidence]]}"
 right="${2:?usage: compare-artifacts.sh <first-dir> <second-dir> <record> [first-root second-root [first-final-evidence second-final-evidence]]}"
 record="${3:?usage: compare-artifacts.sh <first-dir> <second-dir> <record> [first-root second-root [first-final-evidence second-final-evidence]]}"
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+root="$(node -e 'const fs=require("node:fs"),path=require("node:path");process.stdout.write(path.dirname(path.dirname(fs.realpathSync(process.argv[1]))))' "${BASH_SOURCE[0]}")"
 left_root="${4:-$root}"
 right_root="${5:-$root}"
 left_final="${6:-}"

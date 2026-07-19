@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/contract"
 )
@@ -23,6 +25,108 @@ func TestReleasePlanProjectsDerivedArchiveInventory(t *testing.T) {
 	var inventory map[string]int64
 	if json.Unmarshal(data, &inventory) != nil || inventory["bin/bench"] != 0o755 || inventory["packages/redbench-0.1.0.tgz"] != 0o644 {
 		t.Fatalf("canonical archive inventory is incomplete: %s", data)
+	}
+}
+
+func TestNativeProofAggregatorRejectsOneTargetOmission(t *testing.T) {
+	root := contract.SubjectRoot(t)
+	contract.SkipIfSubjectFileMissing(t, "scripts/aggregate-native-proofs.sh")
+	var plan struct {
+		Targets []struct {
+			OS     string `json:"os"`
+			Arch   string `json:"arch"`
+			Runner string `json:"runner"`
+		} `json:"targets"`
+	}
+	contract.ReadJSONFile(t, filepath.Join(root, "scripts", "release-plan.json"), &plan)
+	if len(plan.Targets) < 2 {
+		t.Fatal("release plan needs multiple targets for omission coverage")
+	}
+	proofs := t.TempDir()
+	for _, target := range plan.Targets[:len(plan.Targets)-1] {
+		name := target.OS + "-" + target.Arch
+		musl := "not_applicable"
+		if target.OS == "linux" {
+			musl = "green"
+		}
+		proof := map[string]any{"schema_version": 1, "target": name, "runner": target.Runner, "status": "green", "rebuilt_sha256": "rebuilt", "binary_sha256": "binary", "package_sha256": "package", "archive_sha256": "archive", "musl_status": musl, "operations_status": "green", "strip_status": "green", "tools_status": "green"}
+		data, err := json.Marshal(proof)
+		if err != nil || os.WriteFile(filepath.Join(proofs, name+".json"), append(data, '\n'), 0o644) != nil {
+			t.Fatalf("write native proof: %v", err)
+		}
+	}
+	command := exec.Command("bash", filepath.Join(root, "scripts", "aggregate-native-proofs.sh"), proofs)
+	output, err := command.CombinedOutput()
+	if err == nil {
+		t.Fatalf("one-target omission passed native proof aggregation:\n%s", output)
+	}
+	missing := plan.Targets[len(plan.Targets)-1]
+	if !strings.Contains(string(output), "native proof set is missing "+missing.OS+"/"+missing.Arch) {
+		t.Fatalf("one-target omission was not attributed:\n%s", output)
+	}
+}
+
+func TestOfflineRegistryDerivesAcceptedTargetsFromReleasePlan(t *testing.T) {
+	root := contract.SubjectRoot(t)
+	contract.SkipIfSubjectFileMissing(t, "scripts/offline-registry.mjs")
+	fixture := t.TempDir()
+	for _, relative := range []string{"scripts/offline-registry.mjs", "scripts/release-plan.mjs"} {
+		data, err := os.ReadFile(filepath.Join(root, relative))
+		if err != nil {
+			t.Fatal(err)
+		}
+		target := filepath.Join(fixture, relative)
+		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil || os.WriteFile(target, data, 0o644) != nil {
+			t.Fatalf("copy registry fixture: %v", err)
+		}
+	}
+	plan := `{"schema_version":1,"targets":[{"os":"haiku","arch":"riscv64","goos":"haiku","goarch":"riscv64","runner":"changed-runner"}],"archive_entries":[]}` + "\n"
+	if err := os.WriteFile(filepath.Join(fixture, "scripts", "release-plan.json"), []byte(plan), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	store := filepath.Join(fixture, "store")
+	if err := os.MkdirAll(store, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"redbench-haiku-riscv64-1.2.3.tgz", "redbench-darwin-x64-1.2.3.tgz"} {
+		if err := os.WriteFile(filepath.Join(store, name), []byte(name+"\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	portFile, requestFile := filepath.Join(fixture, "port"), filepath.Join(fixture, "requests")
+	server := exec.Command("node", filepath.Join(fixture, "scripts", "offline-registry.mjs"), store, portFile, requestFile)
+	if err := server.Start(); err != nil {
+		t.Fatalf("start registry: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = server.Process.Signal(os.Interrupt)
+		_ = server.Wait()
+	})
+	var port string
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		if data, err := os.ReadFile(portFile); err == nil {
+			port = strings.TrimSpace(string(data))
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if port == "" {
+		t.Fatal("offline registry did not publish its port")
+	}
+	client := &http.Client{Timeout: 2 * time.Second}
+	for _, test := range []struct {
+		name string
+		want int
+	}{{"haiku-riscv64", http.StatusOK}, {"darwin-x64", http.StatusNotFound}} {
+		response, err := client.Get("http://127.0.0.1:" + port + "/%40redbench%2F" + test.name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = response.Body.Close()
+		if response.StatusCode != test.want {
+			t.Fatalf("registry target %s status = %d, want %d", test.name, response.StatusCode, test.want)
+		}
 	}
 }
 

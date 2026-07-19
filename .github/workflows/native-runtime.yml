@@ -59,6 +59,16 @@ jobs:
           name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-artifacts-second
           path: ${{ runner.temp }}/bench-second-source/dist/artifacts/
           retention-days: ${{ github.retention_days }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-reproducibility-first
+          path: dist/reproducibility.json
+          retention-days: ${{ github.retention_days }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-reproducibility-second
+          path: ${{ runner.temp }}/bench-second-source/dist/reproducibility.json
+          retention-days: ${{ github.retention_days }}
 
   native-proof:
     needs: [preflight, artifacts]
@@ -116,6 +126,14 @@ jobs:
         with:
           name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-artifacts-second
           path: ${{ runner.temp }}/bench-second-source/dist/artifacts
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-reproducibility-first
+          path: dist
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-reproducibility-second
+          path: ${{ runner.temp }}/bench-second-source/dist
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: ${{ inputs.artifact-prefix || 'bench-runtime' }}-native-proof-first-*

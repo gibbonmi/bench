@@ -49,14 +49,14 @@ func TestReleasePreflightScriptBootstrapsBuiltFullAndFocusedCommands(t *testing.
 			t.Fatal(err)
 		}
 	}
-	for _, args := range [][]string{{"init", "-q"}, {"config", "user.email", "test@example.invalid"}, {"config", "user.name", "Test"}, {"add", "."}, {"commit", "-qm", "clean checkout"}} {
+	for _, args := range [][]string{{"init", "-q"}, {"config", "user.email", "test@example.invalid"}, {"config", "user.name", "Test"}, {"add", "-f", "."}, {"commit", "-qm", "clean checkout"}} {
 		cmd := exec.Command("git", args...)
 		cmd.Dir = root
 		if output, err := cmd.CombinedOutput(); err != nil {
 			t.Fatalf("git %v: %v %s", args, err, output)
 		}
 	}
-	fake := filepath.Join(root, "phase")
+	fake := filepath.Join(t.TempDir(), "phase")
 	if err := os.WriteFile(fake, []byte("#!/bin/sh\nprintf '{\"config\":{}}\\n'\n"), fs.FileMode(0o755)); err != nil {
 		t.Fatal(err)
 	}

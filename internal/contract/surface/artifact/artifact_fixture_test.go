@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/contract"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 func assertPackedSetupForwarding(t *testing.T, dir, wrapper, shim string, env map[string]string) {
@@ -111,47 +112,8 @@ func runLifecycle(t *testing.T, dir string, overrides map[string]string, name st
 func committedHostileArtifactSource(t *testing.T, root string) string {
 	t.Helper()
 	origin := filepath.Join(t.TempDir(), "committed origin [*]")
-	out, err := exec.Command("git", "-C", root, "ls-files", "-z", "--cached", "--others", "--exclude-standard").Output()
-	if err != nil {
+	if err := testrepo.CommitWorkingTree(root, origin); err != nil {
 		t.Fatal(err)
-	}
-	rels := strings.Split(strings.TrimSuffix(string(out), "\x00"), "\x00")
-	rels = append(rels, "projects/gl-axi.md", "projects/regroup.md")
-	for _, rel := range rels {
-		src, dst := filepath.Join(root, rel), filepath.Join(origin, rel)
-		info, err := os.Lstat(src)
-		if os.IsNotExist(err) {
-			continue
-		}
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if info.Mode()&os.ModeSymlink != 0 {
-			target, err := os.Readlink(src)
-			if err == nil {
-				err = os.Symlink(target, dst)
-			}
-			if err != nil {
-				t.Fatal(err)
-			}
-			continue
-		}
-		data, err := os.ReadFile(src)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(dst, data, info.Mode().Perm()); err != nil {
-			t.Fatal(err)
-		}
-	}
-	for _, args := range [][]string{{"init", "-q"}, {"config", "user.email", "bench@local"}, {"config", "user.name", "bench"}, {"add", "-f", "."}, {"commit", "-qm", "artifact source"}} {
-		cmd := exec.Command("git", append([]string{"-C", origin}, args...)...)
-		if output, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("git %v: %v\n%s", args, err, output)
-		}
 	}
 	clone := filepath.Join(t.TempDir(), "fresh source clone [*]")
 	if output, err := exec.Command("git", "clone", "-q", origin, clone).CombinedOutput(); err != nil {
@@ -201,6 +163,32 @@ func prepareArtifactGeneration(t *testing.T, source string) (string, int) {
 
 func promotionTestEnv(prepared, ready string) []string {
 	return append(os.Environ(), "BENCH_TEST_PREPARED_ARTIFACTS="+prepared, "BENCH_TEST_PROMOTION_READY_FILE="+ready)
+}
+
+func runArtifactBuildThroughPromotionSeam(t *testing.T, command *exec.Cmd, ready string) ([]byte, error) {
+	t.Helper()
+	stop := make(chan struct{})
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		ticker := time.NewTicker(10 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-stop:
+				return
+			case <-ticker.C:
+				if _, err := os.Stat(ready); err == nil {
+					_ = os.Remove(ready)
+					return
+				}
+			}
+		}
+	}()
+	output, err := command.CombinedOutput()
+	close(stop)
+	<-done
+	return output, err
 }
 
 func assertInterruptedArtifactPromotion(t *testing.T, source, prepared, output string, wantFiles int) {

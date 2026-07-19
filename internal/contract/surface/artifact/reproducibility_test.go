@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/contract"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 func TestGoBuildIgnoresCheckoutTopology(t *testing.T) {
@@ -84,12 +85,22 @@ func TestReproducibilityComparatorRejectsArtifactAndEvidenceMutations(t *testing
 		}
 	}
 	record := filepath.Join(t.TempDir(), "reproducibility.json")
+	comparator := filepath.Join(root, "scripts", "compare-artifacts.sh")
+	externalComparator, cleanupComparator, err := testrepo.TwoHopRelativeSymlink(comparator)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cleanupComparator()
+	runWith := func(script string) contract.Probe {
+		return contract.NewExecFixtureAt(t, root).Run("bash", script, left, right, record, root, rightRoot, finalLeft, finalRight)
+	}
 	run := func() contract.Probe {
-		return contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(root, "scripts", "compare-artifacts.sh"), left, right, record, root, rightRoot, finalLeft, finalRight)
+		return runWith(comparator)
 	}
 	sameRoot := contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(root, "scripts", "compare-artifacts.sh"), left, right, record, root, root)
 	assertComparatorRed(t, sameRoot, "reproducibility comparison requires isolated source roots")
 	run().RequireExit(0)
+	runWith(externalComparator).RequireExit(0)
 	var green struct {
 		Artifacts []struct {
 			Match bool `json:"match"`

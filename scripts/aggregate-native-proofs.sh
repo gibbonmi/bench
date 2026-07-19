@@ -3,7 +3,7 @@
 set -euo pipefail
 
 proofs="${1:?usage: aggregate-native-proofs.sh <proof-dir>}"
-root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+root="$(node -e 'const fs=require("node:fs"),path=require("node:path");process.stdout.write(path.dirname(path.dirname(fs.realpathSync(process.argv[1]))))' "${BASH_SOURCE[0]}")"
 [[ -d "$proofs" && ! -L "$proofs" ]] || { printf 'native proof directory is unsafe\n' >&2; exit 1; }
 matrix="$(mktemp "${TMPDIR:-/tmp}/bench-native-matrix.XXXXXX")"
 trap 'rm -f "$matrix"' EXIT

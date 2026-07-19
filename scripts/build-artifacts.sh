@@ -5,7 +5,21 @@ set -euo pipefail
 
 source_root="${1:?usage: build-artifacts.sh <source-root> <output-dir>}"
 output="${2:?usage: build-artifacts.sh <source-root> <output-dir>}"
-source_root="$(cd "$source_root" && pwd)"
+source_root="$(cd "$source_root" && pwd -P)"
+node "$source_root/scripts/build-release-evidence.mjs" --validate-required-sources "$source_root"
+if ! git -C "$source_root" rev-parse --verify HEAD >/dev/null 2>&1; then
+  printf 'bench artifacts: source state has no authenticated HEAD\n' >&2
+  exit 1
+fi
+source_status=""
+if ! source_status="$(git -C "$source_root" status --porcelain=v1 --untracked-files=all --ignore-submodules=none)"; then
+  printf 'bench artifacts: could not verify source state at HEAD\n' >&2
+  exit 1
+fi
+if [[ -n "$source_status" ]]; then
+  printf 'bench artifacts: source state must be clean and tracked at HEAD\n' >&2
+  exit 1
+fi
 parent="$(dirname "$output")"
 mkdir -p "$parent"
 stage="$(mktemp -d "$parent/.bench-artifacts.XXXXXX")"
@@ -58,7 +72,6 @@ if ! mkdir "$lock_path" 2>/dev/null; then
   exit 1
 fi
 lock="$lock_path"
-node "$source_root/scripts/build-release-evidence.mjs" --validate-required-sources "$source_root"
 wrapper="$stage/wrapper"
 packages="$stage/packages"
 artifacts="$stage/artifacts"
@@ -109,7 +122,6 @@ else
     second_source="$second_parent/source"
     mkdir -p "$second_parent/tmp"
     git clone -q --no-hardlinks "$source_root" "$second_source"
-    tar -C "$source_root" --exclude='./.git' --exclude='./dist' -cf - . | tar -C "$second_source" -xf -
     second_output="$second_parent/artifacts"
     if ! env -u BENCH_TEST_PROMOTION_READY_FILE BENCH_REPRO_BUILD=1 HOME="$second_parent/home" TMPDIR="$second_parent/tmp" GOCACHE="$second_parent/go-cache" GOMODCACHE="$second_parent/go-mod-cache" npm_config_cache="$second_parent/npm-cache" bash "$second_source/scripts/build-artifacts.sh" "$second_source" "$second_output"; then
       printf 'bench artifacts: independent reproducibility build failed\n' >&2

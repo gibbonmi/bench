@@ -2,17 +2,27 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
+import {fileURLToPath} from "node:url";
+import {readReleasePlan} from "./release-plan.mjs";
 
 const [store, portFile, requestFile] = process.argv.slice(2);
 if (!store || !portFile || !requestFile) throw new Error("usage: offline-registry.mjs <store> <port-file> <request-log>");
-const versionPattern = /^(?:redbench|redbench-(?:darwin|linux)-(?:arm64|x64))-(\d+\.\d+\.\d+(?:[+-][0-9A-Za-z.-]+)?)\.tgz$/;
+const versionPattern = /^(\d+\.\d+\.\d+(?:[+-][0-9A-Za-z.-]+)?)$/;
+const scriptRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const plannedTargets = readReleasePlan(scriptRoot).targets.map(target => `${target.os}-${target.arch}`);
 const sha256 = data => crypto.createHash("sha256").update(data).digest("hex");
 
 function packageForFile(file) {
-  const match = versionPattern.exec(file);
-  if (!match) return null;
-  const name = file === `redbench-${match[1]}.tgz` ? "redbench" : `@redbench/${file.slice("redbench-".length, -(`-${match[1]}.tgz`).length)}`;
-  return {file, name, version: match[1]};
+	if (!file.startsWith("redbench-") || !file.endsWith(".tgz")) return null;
+	const body = file.slice("redbench-".length, -".tgz".length);
+	if (versionPattern.test(body)) return {file, name: "redbench", version: body};
+	for (const target of plannedTargets) {
+		const prefix = `${target}-`;
+		if (!body.startsWith(prefix)) continue;
+		const version = body.slice(prefix.length);
+		if (versionPattern.test(version)) return {file, name: `@redbench/${target}`, version};
+	}
+	return null;
 }
 
 function packages() {

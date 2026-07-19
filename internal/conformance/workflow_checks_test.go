@@ -69,6 +69,17 @@ func checkNativeRuntimeWorkflow(root string) []string {
 	if !strings.Contains(artifacts, `git clone --quiet --no-hardlinks . "$second_source"`) || !strings.Contains(artifacts, `"$second_source/scripts/build-artifacts.sh" "$second_source" "$second_source/dist/artifacts"`) || !strings.Contains(evidence, `bash scripts/compare-artifacts.sh dist/artifacts "$second_source/dist/artifacts" dist/workflow-reproducibility.json . "$second_source" dist/preflight "$second_source/dist/preflight"`) {
 		diags = append(diags, "native verification does not compare independently finalized evidence")
 	}
+	for _, handoff := range []struct{ name, upload, download string }{
+		{name: "first", upload: "path: dist/reproducibility.json", download: "path: dist"},
+		{name: "second", upload: "path: ${{ runner.temp }}/bench-second-source/dist/reproducibility.json", download: "path: ${{ runner.temp }}/bench-second-source/dist"},
+	} {
+		upload := "name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-reproducibility-" + handoff.name + "\n          " + handoff.upload + "\n"
+		download := "name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-reproducibility-" + handoff.name + "\n          " + handoff.download + "\n"
+		if !strings.Contains(artifacts, upload) || !strings.Contains(evidence, download) {
+			diags = append(diags, "native verification does not hand reproducibility records to evidence finalization")
+			break
+		}
+	}
 	if job := workflowJob(text, "smoke"); !strings.Contains(job, "needs: [preflight, artifacts, evidence]") || !strings.Contains(job, "preflight-evidence") || !strings.Contains(job, "scripts/smoke-artifacts.sh") {
 		diags = append(diags, "native verification does not run smoke from finalized evidence")
 	}
@@ -183,5 +194,25 @@ func TestNativeWorkflowEvidenceEdgeBites(t *testing.T) {
 	}
 	if diagnostics := strings.Join(checkNativeRuntimeWorkflow(root), "\n"); !strings.Contains(diagnostics, "native verification does not compare independently finalized evidence") {
 		t.Fatalf("removed finalized-evidence comparison did not bite:\n%s", diagnostics)
+	}
+	broken = strings.Replace(string(workflow), "path: dist/reproducibility.json", "path: dist/wrong-reproducibility.json", 1)
+	if broken == string(workflow) {
+		t.Fatal("native workflow mutation did not break reproducibility upload path")
+	}
+	if err := os.WriteFile(path, []byte(broken), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if diagnostics := strings.Join(checkNativeRuntimeWorkflow(root), "\n"); !strings.Contains(diagnostics, "native verification does not hand reproducibility records to evidence finalization") {
+		t.Fatalf("broken reproducibility upload path did not bite:\n%s", diagnostics)
+	}
+	broken = strings.Replace(string(workflow), "name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-reproducibility-first\n          path: dist\n      - uses: actions/download-artifact@", "name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-reproducibility-first\n          path: wrong-dist\n      - uses: actions/download-artifact@", 1)
+	if broken == string(workflow) {
+		t.Fatal("native workflow mutation did not break reproducibility download path")
+	}
+	if err := os.WriteFile(path, []byte(broken), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if diagnostics := strings.Join(checkNativeRuntimeWorkflow(root), "\n"); !strings.Contains(diagnostics, "native verification does not hand reproducibility records to evidence finalization") {
+		t.Fatalf("broken reproducibility download path did not bite:\n%s", diagnostics)
 	}
 }

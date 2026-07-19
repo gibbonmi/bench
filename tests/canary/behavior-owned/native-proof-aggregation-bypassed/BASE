@@ -1,0 +1,3 @@
+scripts/aggregate-native-proofs.sh
+scripts/release-plan.mjs
+scripts/release-plan.json

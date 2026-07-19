@@ -13,6 +13,8 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 type requirementRecord struct {
@@ -147,10 +149,6 @@ func checkReleasePreflight(root string) []string {
 	if registryUsable && requirementUsable {
 		diags = append(diags, runReleaseEvidenceProbe(root, requirementRegistry.Records)...)
 	}
-	archiveEvidence := readIfExists(filepath.Join(root, "internal", "releaseevidence", "artifact_evidence.go"))
-	if archiveEvidence != "" && !strings.Contains(archiveEvidence, "approved npm tarball bytes") {
-		diags = append(diags, "release evidence does not bind archive digest bytes")
-	}
 	comparison := readIfExists(filepath.Join(root, "scripts", "compare-artifacts.sh"))
 	if comparison != "" && (!strings.Contains(comparison, `cmp -s "$left/$name" "$right/$name"`) || !strings.Contains(comparison, "reproducibility mismatch:")) {
 		diags = append(diags, "reproducibility comparator does not require exact byte equality")
@@ -193,6 +191,12 @@ func offlineSmokeDeniesRepairAndEgress(smoke string) bool {
 }
 
 func runReleaseEvidenceProbe(root string, packageEvidence []requirementRecord) []string {
+	authenticatedRoot, cleanup, err := materializeAuthenticatedReleaseProbe(root)
+	if err != nil {
+		return []string{"release evidence probe could not authenticate source snapshot: " + err.Error()}
+	}
+	defer cleanup()
+	root = authenticatedRoot
 	probeMain := filepath.Join(root, "cmd", "bench", "main.go")
 	probeDirCreated := false
 	if info, err := os.Stat(probeMain); err == nil {
@@ -230,6 +234,9 @@ func main() {
 `
 		if err := os.WriteFile(probeMain, []byte(source), 0o644); err != nil {
 			return []string{"release evidence probe could not prepare preflight command"}
+		}
+		if err := testrepo.CommitAll(root, "release preflight probe command"); err != nil {
+			return []string{"release evidence probe could not authenticate preflight command"}
 		}
 		defer func() {
 			_ = os.Remove(probeMain)

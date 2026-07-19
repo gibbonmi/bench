@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 type canonicalTarget struct {
@@ -35,14 +37,24 @@ func TestNativeProofAggregationRejectsIncompleteAndRedProofs(t *testing.T) {
 	root := preflightRepo(t)
 	proofs := filepath.Join(root, "dist", "native-proofs")
 	writeNativeProofs(t, root, proofs, nil)
-	run := func() (string, error) {
-		command := exec.Command("bash", filepath.Join(root, "scripts", "aggregate-native-proofs.sh"), proofs)
+	aggregator := filepath.Join(root, "scripts", "aggregate-native-proofs.sh")
+	externalAggregator, cleanupAggregator, err := testrepo.TwoHopRelativeSymlink(aggregator)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cleanupAggregator()
+	runWith := func(script string) (string, error) {
+		command := exec.Command("bash", script, proofs)
 		command.Dir = root
 		output, err := command.CombinedOutput()
 		return string(output), err
 	}
+	run := func() (string, error) { return runWith(aggregator) }
 	if output, err := run(); err != nil || !strings.Contains(output, "canonical targets verified") {
 		t.Fatalf("valid four-target aggregation failed: %v\n%s", err, output)
+	}
+	if output, err := runWith(externalAggregator); err != nil || !strings.Contains(output, "canonical targets verified") {
+		t.Fatalf("external-symlink aggregation failed: %v\n%s", err, output)
 	}
 	if err := os.Remove(filepath.Join(proofs, "linux-x64.json")); err != nil {
 		t.Fatal(err)

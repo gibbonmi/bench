@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/packagesurface"
+	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 func TestPackageContracts(t *testing.T) {
@@ -159,7 +160,12 @@ type packageWrapper struct {
 
 func packageRunGenerator(t testing.TB, out string) contract.Probe {
 	t.Helper()
-	return contract.NewExecFixtureAt(t, contract.SubjectRoot(t)).Run("bash", filepath.Join(contract.SubjectRoot(t), "scripts", "gen-platform-packages.sh"), out)
+	subject := contract.SubjectRoot(t)
+	candidate := filepath.Join(t.TempDir(), "authenticated candidate")
+	if err := testrepo.CommitWorkingTree(subject, candidate); err != nil {
+		t.Fatal(err)
+	}
+	return contract.NewExecFixtureAt(t, subject).Run("bash", filepath.Join(candidate, "scripts", "gen-platform-packages.sh"), out)
 }
 
 func packageReadPlatforms(t testing.TB) []packagePlatform {

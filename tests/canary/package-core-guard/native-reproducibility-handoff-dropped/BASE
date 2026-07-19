@@ -1,2 +1,3 @@
 .github/workflows/native-runtime.yml
 scripts/release-plan.json
+scripts/native-proof.sh
