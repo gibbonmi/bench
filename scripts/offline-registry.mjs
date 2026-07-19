@@ -14,6 +14,18 @@ const plannedTargets = readReleasePlan(scriptRoot).targets.map(target => `${targ
 const sha256 = data => crypto.createHash("sha256").update(data).digest("hex");
 const integrityOf = data => `sha512-${crypto.createHash("sha512").update(data).digest("base64")}`;
 
+// Test-only knob: BENCH_REGISTRY_STALL_MS delays the HTTP response of a
+// committing PUT (upload or dist-tag) by this many ms, *after* the server-side
+// state (store write, tag) is already committed and logged. This lets a test
+// interrupt the client mid-request against a deterministic, already-observed
+// commit — the exact "server did it, client never heard back" shape a crash
+// recovery test needs — instead of racing a sleep. Off by default (0); never
+// read outside test fixtures.
+const stallMs = Number(process.env.BENCH_REGISTRY_STALL_MS || 0);
+function maybeStall() {
+  return stallMs > 0 ? new Promise(resolve => setTimeout(resolve, stallMs)) : Promise.resolve();
+}
+
 // In-memory registry state that outlives a single request: dist-tag assignments,
 // deprecation messages, and pending (not-yet-approved) staged submissions. This
 // fixture models exactly the state a real registry keeps server-side; it is not a
@@ -118,6 +130,7 @@ const server = http.createServer(async (request, response) => {
       tagState.get(item.name).set(tag, item.version);
     }
     writeLog(`PUT ${item.name}@${item.version} ${sha256(data)}${tag ? ` tag=${tag}` : ""}`);
+    await maybeStall();
     response.writeHead(201); response.end("stored\n");
     return;
   }
@@ -166,6 +179,7 @@ const server = http.createServer(async (request, response) => {
     if (!tagState.has(control.name)) tagState.set(control.name, new Map());
     tagState.get(control.name).set(control.tag, version);
     writeLog(`DIST-TAG-ADD ${control.name} ${control.tag}=${version}`);
+    await maybeStall();
     response.writeHead(200); response.end("tagged\n");
     return;
   }

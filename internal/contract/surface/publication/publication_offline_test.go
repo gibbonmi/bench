@@ -208,12 +208,24 @@ func patchReleaseIndexArtifactDigest(t *testing.T, root, artifactName, digest st
 // after calling this, since the registry rereads the directory per request.
 func startRegistry(t *testing.T, fixtureRoot, store string) (base, requestFile string) {
 	t.Helper()
+	return startRegistryWithEnv(t, fixtureRoot, store, nil)
+}
+
+// startRegistryWithEnv is the one source startRegistry composes on top of: it
+// takes extra environment variables (e.g. BENCH_REGISTRY_STALL_MS, the
+// test-only stall knob offline-registry.mjs honors) for the tests that need a
+// deterministic mid-request interrupt point.
+func startRegistryWithEnv(t *testing.T, fixtureRoot, store string, extraEnv []string) (base, requestFile string) {
+	t.Helper()
 	if err := os.MkdirAll(store, 0o755); err != nil {
 		t.Fatal(err)
 	}
 	portFile := filepath.Join(t.TempDir(), "port")
 	requestFile = filepath.Join(t.TempDir(), "requests")
 	server := exec.Command("node", filepath.Join(fixtureRoot, "scripts", "offline-registry.mjs"), store, portFile, requestFile)
+	if len(extraEnv) > 0 {
+		server.Env = append(os.Environ(), extraEnv...)
+	}
 	if err := server.Start(); err != nil {
 		t.Fatalf("start registry: %v", err)
 	}

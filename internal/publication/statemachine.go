@@ -407,8 +407,16 @@ func RunPromotion(ctx context.Context, root, version, profile string, registry R
 			Result: resultOf(err), Timestamp: clock().Format(time.RFC3339),
 		})
 		if err != nil {
-			record.Result = "failed"
-			_ = SaveRecord(root, record)
+			// A tag-add failure here is an operational hiccup (network
+			// error, SIGINT) — the reverify loop above already ruled out a
+			// data-integrity concern, the only reason promote should ever
+			// demand an explicit rollback. Leave record.Result at
+			// "in_progress" (never "failed") so a plain rerun of promote can
+			// retry: TagAdd is idempotent at the registry, so redoing an
+			// already-tagged package is harmless.
+			if err := SaveRecord(root, record); err != nil {
+				return record, err
+			}
 			return record, fmt.Errorf("promote failed for %s@%s: %w", pkg.Name, pkg.Version, err)
 		}
 		if err := SaveRecord(root, record); err != nil {
