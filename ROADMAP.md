@@ -20,22 +20,16 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT83 (HIGH on release and bank tracks) — governed, offline-verifiable release
-bundle.** Complete the reproducible-offline-artifact and governed-publication
-slices around the release evidence core. Define an exact supported-platform
-contract; use static builds where supported, strip release symbols, and exercise
-native and musl-compatible smokes. Produce byte-reproducible, network-independent
-per-platform archives and npm tarballs with documented direct, local-npm, and
-internal-registry installation.
+**FT83 (HIGH on release and bank tracks) — governed npm publication.** The
+release-evidence core and the reproducible-offline-artifact slices have shipped;
+what remains is the final slice: governed publication. Publication preflights
+every name, stages under a non-default tag, verifies already-present immutable
+digests, waits for dependencies, publishes the wrapper last, and promotes only
+after verification. Extend the canonical release index with publication
+evidence rather than creating another manifest; publication remains red until
+the selected profile's FT87, FT88, and, for bank use, FT71 records are present.
 
-Publication preflights every name, stages under a non-default tag, verifies
-already-present immutable digests, waits for dependencies, publishes the wrapper
-last, and promotes only after verification. Extend the canonical release index
-with reproducibility and publication evidence rather than creating another
-manifest; publication remains red until the selected profile's FT87, FT88, and,
-for bank use, FT71 records are present.
-
-Sources: `RR:A-08`, `RR:A-09`, `RR:A-11`, `RR:A-12`; `RC:H-06`, `RC:H-07`.
+Sources: `RR:A-09`; `RC:H-07`.
 
 Decision map: `decisions/governed-offline-release-bundle.md`. Next:
 `/bench-write-spec` for slice 3 of 3, governed npm publication.
