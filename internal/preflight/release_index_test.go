@@ -193,7 +193,10 @@ func assertReleaseIndexRelationships(t *testing.T, root string, index releaseInd
 	if index.Identity.SourceCommit != commit || index.Identity.PackageVersion != "0.2.0" || index.Identity.BinaryVersion != "" || index.Identity.Tag != "" || index.Identity.ChangelogHeading != "" || index.Identity.Toolchain != "1.25.0" {
 		t.Fatalf("release identity does not bind fixture facts: %+v", index.Identity)
 	}
-	wantTargets := []string{"darwin/arm64/darwin/arm64/macos-15", "darwin/x64/darwin/amd64/macos-15-intel", "linux/arm64/linux/arm64/ubuntu-24.04-arm", "linux/x64/linux/amd64/ubuntu-24.04"}
+	wantTargets := make([]string, 0)
+	for _, target := range canonicalReleaseTargets(t, root) {
+		wantTargets = append(wantTargets, fmt.Sprintf("%s/%s/%s/%s/%s", target.os, target.arch, target.goos, target.goarch, target.runner))
+	}
 	gotTargets := make([]string, 0, len(index.Targets))
 	for _, target := range index.Targets {
 		gotTargets = append(gotTargets, fmt.Sprintf("%s/%s/%s/%s/%s", target.OS, target.Arch, target.GOOS, target.GOArch, target.Runner))

@@ -1,0 +1,1 @@
+[{"path":"scripts/smoke-offline.sh","old":"trap interrupt INT TERM HUP","new":"trap cleanup INT TERM HUP"}]

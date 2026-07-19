@@ -2,14 +2,29 @@ package artifact
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/contract"
 )
+
+func TestReleasePlanProjectsDerivedArchiveInventory(t *testing.T) {
+	root := contract.SubjectRoot(t)
+	command := exec.Command("node", filepath.Join(root, "scripts", "release-plan.mjs"), root, "archive-inventory", "linux-x64", "0.1.0")
+	data, err := command.Output()
+	if err != nil {
+		t.Fatalf("canonical release plan did not project archive inventory: %v", err)
+	}
+	var inventory map[string]int64
+	if json.Unmarshal(data, &inventory) != nil || inventory["bin/bench"] != 0o755 || inventory["packages/redbench-0.1.0.tgz"] != 0o644 {
+		t.Fatalf("canonical archive inventory is incomplete: %s", data)
+	}
+}
 
 func TestOfflineArchiveProjection(t *testing.T) {
 	root := contract.SubjectRoot(t)
@@ -90,8 +105,8 @@ func assertOfflineArchiveSet(t *testing.T, npmArtifacts, output, version string,
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(files) != 4 {
-		t.Fatalf("offline archive count = %d, want exactly four", len(files))
+	if len(files) != len(matrix) {
+		t.Fatalf("offline archive count = %d, want release-plan count %d", len(files), len(matrix))
 	}
 	var requirements struct {
 		Records []struct {

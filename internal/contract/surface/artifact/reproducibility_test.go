@@ -5,12 +5,45 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/contract"
 )
+
+func TestGoBuildIgnoresCheckoutTopology(t *testing.T) {
+	root := contract.SubjectRoot(t)
+	clone := filepath.Join(t.TempDir(), "isolated-source")
+	command := exec.Command("git", "clone", "--quiet", "--no-hardlinks", root, clone)
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("clone isolated source: %v\n%s", err, output)
+	}
+	overlay := exec.Command("bash", "-c", `tar -C "$1" --exclude='./.git' --exclude='./dist' -cf - . | tar -C "$2" -xf -`, "overlay", root, clone)
+	if output, err := overlay.CombinedOutput(); err != nil {
+		t.Fatalf("overlay source snapshot: %v\n%s", err, output)
+	}
+	outputs := []string{filepath.Join(t.TempDir(), "worktree-binary"), filepath.Join(t.TempDir(), "clone-binary")}
+	for index, source := range []string{root, clone} {
+		build := exec.Command("bash", filepath.Join(root, "scripts", "go-build.sh"), source, outputs[index])
+		build.Env = append(os.Environ(), "CGO_ENABLED=0", "GOOS=darwin", "GOARCH=arm64")
+		if output, err := build.CombinedOutput(); err != nil {
+			t.Fatalf("build checkout %d: %v\n%s", index, err, output)
+		}
+	}
+	first, err := os.ReadFile(outputs[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := os.ReadFile(outputs[1])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sha256.Sum256(first) != sha256.Sum256(second) {
+		t.Fatal("checkout topology changed release binary bytes")
+	}
+}
 
 func TestReproducibilityComparatorRejectsArtifactAndEvidenceMutations(t *testing.T) {
 	root := contract.SubjectRoot(t)
@@ -39,10 +72,23 @@ func TestReproducibilityComparatorRejectsArtifactAndEvidenceMutations(t *testing
 		}
 	}
 	rightRoot := copyReleaseBoundEvidenceRoot(t, root)
+	finalLeft, finalRight := filepath.Join(t.TempDir(), "first-final"), filepath.Join(t.TempDir(), "second-final")
+	for _, directory := range []string{finalLeft, finalRight} {
+		if err := os.MkdirAll(directory, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		for _, name := range []string{"release-index.json", "SHA256SUMS", "run-manifest.json", "phase-artifacts.json"} {
+			if err := os.WriteFile(filepath.Join(directory, name), []byte("independently generated "+name+"\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
 	record := filepath.Join(t.TempDir(), "reproducibility.json")
 	run := func() contract.Probe {
-		return contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(root, "scripts", "compare-artifacts.sh"), left, right, record, root, rightRoot)
+		return contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(root, "scripts", "compare-artifacts.sh"), left, right, record, root, rightRoot, finalLeft, finalRight)
 	}
+	sameRoot := contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(root, "scripts", "compare-artifacts.sh"), left, right, record, root, root)
+	assertComparatorRed(t, sameRoot, "reproducibility comparison requires isolated source roots")
 	run().RequireExit(0)
 	var green struct {
 		Artifacts []struct {
@@ -92,6 +138,14 @@ func TestReproducibilityComparatorRejectsArtifactAndEvidenceMutations(t *testing
 		t.Fatal(err)
 	}
 	assertComparatorRed(t, run(), "reproducibility comparison missing second-build release evidence: LICENSE")
+	license, err := os.ReadFile(filepath.Join(root, "LICENSE"))
+	if err != nil || os.WriteFile(evidencePath, license, 0o644) != nil {
+		t.Fatalf("restore isolated evidence root: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(finalRight, "release-index.json"), []byte("drifted final index\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	assertComparatorRed(t, run(), "reproducibility final-evidence mismatch: release-index.json")
 }
 
 func TestOfflineSmokeRequiresApprovedReleaseEvidence(t *testing.T) {

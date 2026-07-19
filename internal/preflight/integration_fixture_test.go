@@ -199,9 +199,7 @@ func seedEvidenceFixture(t *testing.T, root string) {
 	if err := os.MkdirAll(proofDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	for _, item := range []struct {
-		os, arch, runner string
-	}{{"darwin", "arm64", "macos-15"}, {"darwin", "x64", "macos-15-intel"}, {"linux", "arm64", "ubuntu-24.04-arm"}, {"linux", "x64", "ubuntu-24.04"}} {
+	for _, item := range canonicalReleaseTargets(t, root) {
 		platformName := fmt.Sprintf("redbench-%s-%s-0.2.0.tgz", item.os, item.arch)
 		archiveName := fmt.Sprintf("redbench-0.2.0-%s-%s.tar.gz", item.os, item.arch)
 		proof := map[string]any{

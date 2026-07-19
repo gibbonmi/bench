@@ -17,6 +17,8 @@ All notable user-facing changes to Bench are documented here. The format follows
   ancestry, and changelog evidence before publication.
 - Added profile-governed release evidence, exact component inventories, and
   diagnostic focused release preflight runs.
+- Added reproducible per-platform offline archives for direct, local npm, and
+  internal-registry use, plus `bench commands --brief` for compact command discovery.
 
 ### Changed
 

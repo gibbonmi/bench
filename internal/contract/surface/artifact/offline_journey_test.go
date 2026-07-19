@@ -6,10 +6,14 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
+	"syscall"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/contract"
 )
@@ -60,6 +64,21 @@ func TestOfflineSmokeRunsThePublicJourneyAndAttributesMutations(t *testing.T) {
 	t.Run("repair-control", func(t *testing.T) {
 		assertOfflineSmokeRed(t, run(t, artifacts, evidence, map[string]string{"BENCH_OFFLINE_REPAIR_DISABLED": "0"}), "offline smoke: fetch, rebuild, or repair control is disabled")
 	})
+	t.Run("rebuild-attempt", func(t *testing.T) {
+		assertOfflineSmokeRed(t, run(t, artifacts, evidence, map[string]string{"BENCH_OFFLINE_TEST_PROCESS": "go"}), "offline smoke: forbidden repair or rebuild process attempted: go")
+	})
+	t.Run("native-egress", func(t *testing.T) {
+		listener, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer listener.Close()
+		marker := filepath.Join(t.TempDir(), "native-egress-attempted")
+		run(t, artifacts, evidence, map[string]string{"BENCH_OFFLINE_TEST_NATIVE_EGRESS": listener.Addr().String(), "BENCH_OFFLINE_TEST_NATIVE_MARKER": marker}).RequireExit(0)
+		if _, err := os.Stat(marker); err != nil {
+			t.Fatal("native binary did not exercise the public network sentinel")
+		}
+	})
 	t.Run("residue", func(t *testing.T) {
 		fake := t.TempDir()
 		realNPM, err := filepath.Abs(filepath.Join("/usr", "bin", "npm"))
@@ -100,6 +119,50 @@ func TestOfflineNetworkSentinelDeniesUndeclaredEgress(t *testing.T) {
 	}
 }
 
+func TestOfflineSmokeRecoversFromEveryStageInterruption(t *testing.T) {
+	root := contract.SubjectRoot(t)
+	contract.SkipIfSubjectFileMissing(t, "scripts/smoke-offline.sh")
+	artifacts, evidence := makeOfflineJourneyFixture(t)
+	for _, stage := range []string{"comparison", "installation", "registry-service", "removal"} {
+		t.Run(stage, func(t *testing.T) {
+			tmp, ready := t.TempDir(), t.TempDir()
+			cmd := exec.Command("bash", filepath.Join(root, "scripts", "smoke-offline.sh"), artifacts, evidence)
+			cmd.Env = append(os.Environ(), "TMPDIR="+tmp, "BENCH_OFFLINE_TEST_INTERRUPT_STAGE="+stage, "BENCH_OFFLINE_TEST_STAGE_READY_DIR="+ready)
+			cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+			if err := cmd.Start(); err != nil {
+				t.Fatal(err)
+			}
+			stageReady := filepath.Join(ready, stage)
+			deadline := time.Now().Add(15 * time.Second)
+			for {
+				if _, err := os.Stat(stageReady); err == nil {
+					break
+				}
+				if time.Now().After(deadline) {
+					_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+					t.Fatalf("offline smoke did not reach interruption stage %s", stage)
+				}
+				time.Sleep(20 * time.Millisecond)
+			}
+			if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGINT); err != nil {
+				t.Fatal(err)
+			}
+			if err := cmd.Wait(); err == nil {
+				t.Fatalf("offline smoke ignored SIGINT at %s", stage)
+			}
+			entries, err := os.ReadDir(tmp)
+			if err != nil || len(entries) != 0 {
+				names := make([]string, 0, len(entries))
+				for _, entry := range entries {
+					names = append(names, entry.Name())
+				}
+				t.Fatalf("offline smoke leaked scratch state after %s interruption: entries=%v err=%v", stage, names, err)
+			}
+			contract.NewExecFixtureAt(t, root).RunEnv(map[string]string{"TMPDIR": tmp}, "bash", filepath.Join(root, "scripts", "smoke-offline.sh"), artifacts, evidence).RequireExit(0)
+		})
+	}
+}
+
 func makeOfflineJourneyFixture(t *testing.T) (string, string) {
 	return makeOfflineJourneyFixtureForTarget(t, "linux/amd64")
 }
@@ -113,7 +176,7 @@ func makeOfflineJourneyFixtureForTarget(t *testing.T, runtimeTarget string) (str
 	if err := os.MkdirAll(evidence, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	bench := []byte(fmt.Sprintf("#!/bin/bash\ncase \"${1:-}\" in version) printf 'benchkit 0.2.0 (%s)\\n';; commands) [[ \"${2:-}\" == --brief ]] && printf 'commands --brief\\n';; *) printf 'bench — fixture\\n';; esac\n", runtimeTarget))
+	bench := []byte(fmt.Sprintf("#!/bin/bash\nif [[ -n \"${BENCH_OFFLINE_TEST_NATIVE_EGRESS:-}\" ]]; then : > \"$BENCH_OFFLINE_TEST_NATIVE_MARKER\"; host=${BENCH_OFFLINE_TEST_NATIVE_EGRESS%%:*}; port=${BENCH_OFFLINE_TEST_NATIVE_EGRESS##*:}; if (exec 3<>\"/dev/tcp/$host/$port\") 2>/dev/null; then exit 47; fi; fi\ncase \"${1:-}\" in version) printf 'benchkit 0.2.0 (%s)\\n';; commands) [[ \"${2:-}\" == --brief ]] && printf 'commands --brief\\n';; *) printf 'bench — fixture\\n';; esac\n", runtimeTarget))
 	wrapper := []byte("#!/bin/bash\nscript=$(readlink -f \"$0\")\nexec \"$(dirname \"$script\")/../../@redbench/linux-x64/bin/bench\" \"$@\"\n")
 	nativeFiles := map[string]smokeFile{"bin/bench": {bench, 0o755}, "package.json": {[]byte("{\"name\":\"@redbench/linux-x64\",\"version\":\"0.2.0\",\"bin\":{\"bench\":\"bin/bench\"}}\n"), 0o644}}
 	wrapperFiles := map[string]smokeFile{"bin/bench.sh": {wrapper, 0o755}, "package.json": {[]byte("{\"name\":\"redbench\",\"version\":\"0.2.0\",\"bin\":{\"bench\":\"bin/bench.sh\"}}\n"), 0o644}}

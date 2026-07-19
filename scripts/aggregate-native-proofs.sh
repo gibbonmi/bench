@@ -17,10 +17,11 @@ while IFS=$'\t' read -r os arch _goos _goarch runner; do
   node -e 'const fs=require("fs"), [file,os,arch,runner]=process.argv.slice(1), proof=JSON.parse(fs.readFileSync(file)); const want=`${os}-${arch}`; if (proof.schema_version!==1 || proof.target!==want || proof.runner!==runner || proof.status!=="green" || !proof.rebuilt_sha256 || !proof.binary_sha256 || !proof.package_sha256 || !proof.archive_sha256 || proof.operations_status!=="green" || proof.strip_status!=="green" || proof.tools_status!=="green" || (os==="linux" ? proof.musl_status!=="green" : proof.musl_status!=="not_applicable")) process.exit(1)' "$file" "$os" "$arch" "$runner" || { printf 'native proof is incomplete or red for %s/%s\n' "$os" "$arch" >&2; exit 1; }
   count=$((count + 1))
 done < "$matrix"
-[[ "$count" == 4 ]] || { printf 'native proof set has %s targets, want exactly four\n' "$count" >&2; exit 1; }
+planned_count="$(wc -l < "$matrix" | tr -d '[:space:]')"
+[[ "$count" == "$planned_count" ]] || { printf 'native proof set has %s targets, want %s from release plan\n' "$count" "$planned_count" >&2; exit 1; }
 actual="$(find "$proofs" -mindepth 1 -maxdepth 1 -print0 | while IFS= read -r -d '' entry; do
   [[ -f "$entry" && ! -L "$entry" ]] || { printf 'native proof directory contains an unsafe entry\n' >&2; exit 1; }
   printf '%s\n' "${entry##*/}"
 done | LC_ALL=C sort)"
 [[ "$actual" == "$expected" ]] || { printf 'native proof set does not contain exactly the canonical proof files\n' >&2; exit 1; }
-printf 'native proof set: four canonical targets verified\n'
+printf 'native proof set: %s canonical targets verified\n' "$planned_count"

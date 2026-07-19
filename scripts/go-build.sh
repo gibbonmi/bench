@@ -3,10 +3,10 @@
 # and the release workflow (per-target cross-compile). Kept as one file so the
 # reproducibility flags cannot drift between "what the gate proved" and "what ships".
 #
-# -trimpath + the pinned toolchain (go.mod) = reproducible builds, per the map's
-# watch-out that Go builds are reproducible only under both. The version stamp comes
-# from package.json — the one canonical version — so an unstamped build (prints "dev")
-# never masquerades as a release.
+# -trimpath + the pinned toolchain (go.mod) = reproducible builds, while
+# -buildvcs=false prevents checkout topology from changing embedded module/VCS facts.
+# The version stamp comes from package.json — the one canonical version — so an
+# unstamped build (prints "dev") never masquerades as a release.
 #
 #   Usage: go-build.sh <module-root> <output-path>
 #   Cross-compile: set GOOS / GOARCH in the environment.

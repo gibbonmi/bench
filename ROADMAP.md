@@ -38,7 +38,7 @@ for bank use, FT71 records are present.
 Sources: `RR:A-08`, `RR:A-09`, `RR:A-11`, `RR:A-12`; `RC:H-06`, `RC:H-07`.
 
 Decision map: `decisions/governed-offline-release-bundle.md`. Next:
-`/bench-write-spec` for slice 2 of 3, reproducible offline artifacts.
+`/bench-write-spec` for slice 3 of 3, governed npm publication.
 
 **FT88 (HIGH on the bank track) — minimal subprocess data exposure.** Agents
 and gates launch from separate documented environment passlists with explicit
@@ -296,6 +296,6 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — specify FT83 slice 2, reproducible offline artifacts.
+1. `/bench-write-spec` — specify FT83 slice 3, governed npm publication.
 2. `/bench-shape-idea` — specify FT88, minimal subprocess data exposure.
 3. `/bench-shape-idea` — specify FT87, bounded network, resource, and CLI behavior.

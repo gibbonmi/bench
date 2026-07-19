@@ -264,6 +264,30 @@ func containsPackageSuffix(packages []string, suffix string) bool {
 	return false
 }
 
+func offlineSmokeRecoversInterruptedStages(smoke string) bool {
+	for _, anchor := range []string{
+		"trap interrupt INT TERM HUP",
+		"offline_process comparison",
+		"offline_stage installation",
+		"offline_stage registry-service",
+		"offline_stage removal",
+	} {
+		if strings.Count(smoke, anchor) != 1 {
+			return false
+		}
+	}
+	return strings.Contains(smoke, "exit 130")
+}
+
+func containsKey(records []requirementRecord, want string) bool {
+	for _, record := range records {
+		if record.Key == want {
+			return true
+		}
+	}
+	return false
+}
+
 func checkGuardHeaderManifests(root string) []string {
 	var diags []string
 	for _, guard := range []struct {

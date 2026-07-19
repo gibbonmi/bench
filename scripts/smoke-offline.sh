@@ -30,6 +30,8 @@ for input in "$wrapper" "$native" "$archive"; do
 done
 
 tmp="$(mktemp -d)"
+mkdir -p "$tmp/process-tmp"
+export TMPDIR="$tmp/process-tmp"
 registry_pid=""
 egress_log="$tmp/undeclared-egress"
 : > "$egress_log"
@@ -40,7 +42,55 @@ cleanup() {
   fi
   rm -rf "$tmp"
 }
-trap cleanup EXIT INT TERM HUP
+interrupt() {
+  cleanup
+  exit 130
+}
+trap cleanup EXIT
+trap interrupt INT TERM HUP
+
+offline_stage() {
+  local stage="$1"
+  if [[ "${BENCH_OFFLINE_TEST_INTERRUPT_STAGE:-}" == "$stage" ]]; then
+    [[ -n "${BENCH_OFFLINE_TEST_STAGE_READY_DIR:-}" ]] || { printf 'offline smoke: interruption stage requires a ready directory\n' >&2; return 1; }
+    : > "$BENCH_OFFLINE_TEST_STAGE_READY_DIR/$stage"
+    while [[ -e "$BENCH_OFFLINE_TEST_STAGE_READY_DIR/$stage" ]]; do sleep 0.02; done
+  fi
+}
+
+offline_process() {
+  local stage="$1" process
+  shift
+  offline_stage "$stage"
+  process="$(basename "$1")"
+  case "$process" in
+    go|cargo|cc|gcc|clang|make)
+      printf 'offline smoke: forbidden repair or rebuild process attempted: %s\n' "$process" >&2
+      return 1
+      ;;
+  esac
+  "$@"
+}
+
+native_offline_process() {
+  local stage="$1"
+  shift
+  offline_stage "$stage"
+  case "$host_os" in
+    linux)
+      command -v bwrap >/dev/null 2>&1 || { printf 'offline smoke: native network sentinel is unavailable: bwrap\n' >&2; return 1; }
+      local -a writable=(--bind "$tmp" "$tmp")
+      if [[ -n "${BENCH_OFFLINE_TEST_NATIVE_MARKER:-}" ]]; then
+        writable+=(--bind "$(dirname "$BENCH_OFFLINE_TEST_NATIVE_MARKER")" "$(dirname "$BENCH_OFFLINE_TEST_NATIVE_MARKER")")
+      fi
+      bwrap --unshare-net --ro-bind / / "${writable[@]}" --dev /dev --proc /proc -- "$@"
+      ;;
+    darwin)
+      command -v sandbox-exec >/dev/null 2>&1 || { printf 'offline smoke: native network sentinel is unavailable: sandbox-exec\n' >&2; return 1; }
+      sandbox-exec -p '(version 1) (allow default) (deny network*)' "$@"
+      ;;
+  esac
+}
 
 bundle="$tmp/bundle"
 mkdir -p "$bundle"
@@ -90,13 +140,17 @@ verify_component_manifest "$native_extract/package" "$native_extract/package/com
 verify_component_manifest "$wrapper_extract/package" "$wrapper_extract/package/component-manifest.json" || { printf 'offline smoke: wrapper component manifest does not verify package files\n' >&2; exit 1; }
 cmp -s "$native_extract/package/bin/bench" "$bundle_root/bin/bench" || { printf 'offline smoke: archive binary differs from platform package\n' >&2; exit 1; }
 
-node "$root/scripts/verify-release-artifact.mjs" "$evidence_dir/release-index.json" "$evidence_dir/SHA256SUMS" "$archive" || { printf 'offline smoke: supplied release evidence does not bind archive bytes\n' >&2; exit 1; }
+offline_process comparison node "$root/scripts/verify-release-artifact.mjs" "$evidence_dir/release-index.json" "$evidence_dir/SHA256SUMS" "$archive" || { printf 'offline smoke: supplied release evidence does not bind archive bytes\n' >&2; exit 1; }
+
+if [[ -n "${BENCH_OFFLINE_TEST_PROCESS:-}" ]]; then
+  offline_process repair "$BENCH_OFFLINE_TEST_PROCESS" version
+fi
 
 direct_home="$tmp/direct-home"
 mkdir -p "$direct_home" "$tmp/empty-path"
-direct_version="$(env -i HOME="$direct_home" BENCH_HOME="$direct_home/.bench" PATH="$tmp/empty-path" BENCH_NO_REPAIR=1 "$bundle_root/bin/bench" version)"
+direct_version="$(native_offline_process direct env -i HOME="$direct_home" BENCH_HOME="$direct_home/.bench" PATH="$tmp/empty-path" BENCH_NO_REPAIR=1 "$bundle_root/bin/bench" version)"
 [[ "$direct_version" == "benchkit ${version} (${runtime_target})" ]] || { printf 'offline smoke: direct version output is wrong: %s\n' "$direct_version" >&2; exit 1; }
-env -i HOME="$direct_home" BENCH_HOME="$direct_home/.bench" PATH="$tmp/empty-path" BENCH_NO_REPAIR=1 "$bundle_root/bin/bench" commands --brief > "$tmp/direct-commands"
+native_offline_process direct env -i HOME="$direct_home" BENCH_HOME="$direct_home/.bench" PATH="$tmp/empty-path" BENCH_NO_REPAIR=1 "$bundle_root/bin/bench" commands --brief > "$tmp/direct-commands"
 rg -q '^commands --brief$' "$tmp/direct-commands" || { printf 'offline smoke: direct operational probe failed\n' >&2; exit 1; }
 rm -rf "$bundle"
 [[ ! -e "$bundle" && ! -e "$direct_home/.bench" ]] || { printf 'offline smoke: direct removal left bundle or Bench state residue\n' >&2; exit 1; }
@@ -112,14 +166,16 @@ offline_mode=true
 mkdir -p "$local_home" "$local_prefix"
 printf '{"private":true}\n' > "$local_prefix/package.json"
 [[ "$repair_disabled" == 1 && "$offline_mode" == true ]] || { printf 'offline smoke: fetch, rebuild, or repair control is disabled\n' >&2; exit 1; }
+offline_stage installation
 HOME="$local_home" BENCH_HOME="$local_home/.bench" BENCH_NO_REPAIR="$repair_disabled" NODE_OPTIONS="--require=$root/scripts/offline-network-sentinel.cjs" BENCH_OFFLINE_EGRESS_LOG="$egress_log" npm_config_cache="$tmp/local-cache" npm_config_offline="$offline_mode" npm_config_registry=http://127.0.0.1:9 npm_config_audit=false npm_config_fund=false npm_config_update_notifier=false npm_config_fetch_retries=0 npm_config_proxy='' npm_config_https_proxy='' NO_PROXY='*' npm install --offline --ignore-scripts --omit=optional --prefix "$local_prefix" "$bundle_root/packages/redbench-${version}.tgz" "$bundle_root/packages/redbench-${target}-${version}.tgz" >/dev/null
 [[ ! -s "$egress_log" ]] || { printf 'offline smoke: local npm attempted undeclared egress: %s\n' "$(tr '\n' ' ' < "$egress_log")" >&2; exit 1; }
 installed="$local_prefix/node_modules/redbench/bin/bench.sh"
 [[ -x "$installed" ]] || { printf 'offline smoke: local npm install did not produce wrapper\n' >&2; exit 1; }
-local_version="$(HOME="$local_home" BENCH_HOME="$local_home/.bench" BENCH_NO_REPAIR=1 bash "$installed" version)"
+local_version="$(HOME="$local_home" BENCH_HOME="$local_home/.bench" BENCH_NO_REPAIR=1 native_offline_process local-runtime bash "$installed" version)"
 [[ "$local_version" == "benchkit ${version} "* ]] || { printf 'offline smoke: local npm version output is wrong: %s\n' "$local_version" >&2; exit 1; }
-HOME="$local_home" BENCH_HOME="$local_home/.bench" BENCH_NO_REPAIR=1 bash "$installed" help > "$tmp/local-help"
+HOME="$local_home" BENCH_HOME="$local_home/.bench" BENCH_NO_REPAIR=1 native_offline_process local-runtime bash "$installed" help > "$tmp/local-help"
 rg -q '^bench —' "$tmp/local-help" || { printf 'offline smoke: local npm operational probe failed\n' >&2; exit 1; }
+offline_stage removal
 HOME="$local_home" BENCH_HOME="$local_home/.bench" BENCH_NO_REPAIR=1 NODE_OPTIONS="--require=$root/scripts/offline-network-sentinel.cjs" BENCH_OFFLINE_EGRESS_LOG="$egress_log" npm_config_registry=http://127.0.0.1:9 npm_config_offline=true npm_config_audit=false npm_config_fund=false npm_config_update_notifier=false npm_config_fetch_retries=0 npm_config_proxy='' npm_config_https_proxy='' NO_PROXY='*' npm uninstall --offline --ignore-scripts --prefix "$local_prefix" redbench "@redbench/${target}" >/dev/null
 [[ ! -s "$egress_log" ]] || { printf 'offline smoke: local npm uninstall attempted undeclared egress: %s\n' "$(tr '\n' ' ' < "$egress_log")" >&2; exit 1; }
 [[ ! -e "$local_prefix/node_modules/redbench" && ! -e "$local_prefix/node_modules/@redbench/${target}" && ! -e "$local_home/.bench" ]] || { printf 'offline smoke: local npm uninstall left package or Bench state residue\n' >&2; exit 1; }
@@ -131,6 +187,7 @@ request_file="$tmp/registry-requests"
 : > "$request_file"
 node "$root/scripts/offline-registry.mjs" "$store" "$port_file" "$request_file" &
 registry_pid=$!
+offline_stage registry-service
 for _ in $(seq 1 100); do [[ -s "$port_file" || -s "$port_file.error" ]] && break; sleep 0.02; done
 if [[ ! -s "$port_file" ]]; then
   printf 'offline smoke: loopback registry fixture did not start\n' >&2
@@ -162,9 +219,9 @@ HOME="$registry_home" BENCH_HOME="$registry_home/.bench" BENCH_NO_REPAIR="$repai
 rg -q '^GET ' "$request_file" || { printf 'offline smoke: registry fixture observed no package requests\n' >&2; exit 1; }
 registry_installed="$registry_prefix/node_modules/redbench/bin/bench.sh"
 [[ -x "$registry_installed" ]] || { printf 'offline smoke: registry install did not produce wrapper\n' >&2; exit 1; }
-registry_version="$(HOME="$registry_home" BENCH_HOME="$registry_home/.bench" BENCH_NO_REPAIR=1 bash "$registry_installed" version)"
+registry_version="$(HOME="$registry_home" BENCH_HOME="$registry_home/.bench" BENCH_NO_REPAIR=1 native_offline_process registry-runtime bash "$registry_installed" version)"
 [[ "$registry_version" == "benchkit ${version} "* ]] || { printf 'offline smoke: registry version output is wrong: %s\n' "$registry_version" >&2; exit 1; }
-HOME="$registry_home" BENCH_HOME="$registry_home/.bench" BENCH_NO_REPAIR=1 bash "$registry_installed" commands --brief > "$tmp/registry-commands"
+HOME="$registry_home" BENCH_HOME="$registry_home/.bench" BENCH_NO_REPAIR=1 native_offline_process registry-runtime bash "$registry_installed" commands --brief > "$tmp/registry-commands"
 rg -q '^commands --brief$' "$tmp/registry-commands" || { printf 'offline smoke: registry operational probe failed\n' >&2; exit 1; }
 HOME="$registry_home" BENCH_HOME="$registry_home/.bench" BENCH_NO_REPAIR=1 NODE_OPTIONS="--require=$root/scripts/offline-network-sentinel.cjs" BENCH_OFFLINE_EGRESS_LOG="$egress_log" npm_config_registry=http://127.0.0.1:9 npm_config_offline=true npm_config_audit=false npm_config_fund=false npm_config_update_notifier=false npm_config_fetch_retries=0 npm_config_proxy='' npm_config_https_proxy='' NO_PROXY='*' npm uninstall --offline --ignore-scripts --prefix "$registry_prefix" redbench "@redbench/${target}" >/dev/null
 [[ ! -s "$egress_log" ]] || { printf 'offline smoke: registry uninstall attempted undeclared egress: %s\n' "$(tr '\n' ' ' < "$egress_log")" >&2; exit 1; }

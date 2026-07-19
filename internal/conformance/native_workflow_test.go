@@ -115,10 +115,10 @@ func checkReleasePreflight(root string) []string {
 		diags = append(diags, "release workflows duplicate the govulncheck version pin")
 	}
 	if native != "" {
-		if job := workflowJob(native, "evidence"); !strings.Contains(job, "needs: [preflight, native-proof]") || !strings.Contains(job, "scripts/release-preflight.sh --mode verify") || !strings.Contains(job, "preflight-evidence") {
+		if job := workflowJob(native, "evidence"); !strings.Contains(job, "needs: [artifacts, native-proof]") || !strings.Contains(job, "scripts/release-preflight.sh --mode verify") || !strings.Contains(job, "preflight-evidence") {
 			diags = append(diags, "native verification does not finalize full release evidence after native proofs")
 		}
-		if job := workflowJob(native, "smoke"); !strings.Contains(job, "needs: [preflight, evidence]") || !strings.Contains(job, "preflight-evidence") || !strings.Contains(job, "scripts/smoke-artifacts.sh") {
+		if job := workflowJob(native, "smoke"); !strings.Contains(job, "needs: [preflight, artifacts, evidence]") || !strings.Contains(job, "preflight-evidence") || !strings.Contains(job, "scripts/smoke-artifacts.sh") {
 			diags = append(diags, "native runner matrix does not consume finalized release evidence")
 		}
 	}
@@ -159,6 +159,9 @@ func checkReleasePreflight(root string) []string {
 	if offlineSmoke != "" && !offlineSmokeDeniesRepairAndEgress(offlineSmoke) {
 		diags = append(diags, "offline smoke permits repair or network fallback")
 	}
+	if offlineSmoke != "" && !offlineSmokeRecoversInterruptedStages(offlineSmoke) {
+		diags = append(diags, "offline smoke omits stage interruption recovery")
+	}
 	if offlineSmoke != "" && (!strings.Contains(offlineSmoke, "printf 'offline smoke: loopback registry fixture did not start\\n' >&2\n  exit 1") || strings.Contains(offlineSmoke, "local-fixture")) {
 		diags = append(diags, "offline registry smoke does not fail closed")
 	}
@@ -171,6 +174,9 @@ func offlineSmokeDeniesRepairAndEgress(smoke string) bool {
 		`offline_mode=true`,
 		`[[ "$repair_disabled" == 1 && "$offline_mode" == true ]]`,
 		`BENCH_OFFLINE_ALLOWED_ORIGIN="$registry_origin"`,
+		`go|cargo|cc|gcc|clang|make)`,
+		`bwrap --unshare-net`,
+		`sandbox-exec -p '(version 1) (allow default) (deny network*)'`,
 	}
 	for _, anchor := range requiredOnce {
 		if strings.Count(smoke, anchor) != 1 {
@@ -383,13 +389,4 @@ func archiveFiles(path string) (map[string][]byte, error) {
 		}
 		files[header.Name] = body
 	}
-}
-
-func containsKey(records []requirementRecord, want string) bool {
-	for _, record := range records {
-		if record.Key == want {
-			return true
-		}
-	}
-	return false
 }

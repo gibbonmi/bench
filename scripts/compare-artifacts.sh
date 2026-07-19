@@ -2,12 +2,24 @@
 # Compare two complete release-bound artifact sets and write a deterministic record.
 set -euo pipefail
 
-left="${1:?usage: compare-artifacts.sh <first-dir> <second-dir> <record> [first-root second-root]}"
-right="${2:?usage: compare-artifacts.sh <first-dir> <second-dir> <record> [first-root second-root]}"
-record="${3:?usage: compare-artifacts.sh <first-dir> <second-dir> <record> [first-root second-root]}"
+left="${1:?usage: compare-artifacts.sh <first-dir> <second-dir> <record> [first-root second-root [first-final-evidence second-final-evidence]]}"
+right="${2:?usage: compare-artifacts.sh <first-dir> <second-dir> <record> [first-root second-root [first-final-evidence second-final-evidence]]}"
+record="${3:?usage: compare-artifacts.sh <first-dir> <second-dir> <record> [first-root second-root [first-final-evidence second-final-evidence]]}"
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 left_root="${4:-$root}"
 right_root="${5:-$root}"
+left_final="${6:-}"
+right_final="${7:-}"
+[[ -z "$left_final" && -z "$right_final" || -n "$left_final" && -n "$right_final" ]] || {
+  printf 'reproducibility comparison requires both final-evidence directories\n' >&2
+  exit 1
+}
+left_root_physical="$(cd "$left_root" && pwd -P)"
+right_root_physical="$(cd "$right_root" && pwd -P)"
+[[ "$left_root_physical" != "$right_root_physical" ]] || {
+  printf 'reproducibility comparison requires isolated source roots\n' >&2
+  exit 1
+}
 [[ -d "$left" && ! -L "$left" && -d "$right" && ! -L "$right" ]] || {
   printf 'reproducibility comparison input is not a real directory\n' >&2
   exit 1
@@ -15,7 +27,8 @@ right_root="${5:-$root}"
 
 names_file="$(mktemp)"
 evidence_names=""
-trap 'rm -f "$names_file" "$evidence_names"' EXIT
+final_names=""
+trap 'rm -f "$names_file" "$evidence_names" "$final_names"' EXIT
 version="$(node -p 'require(process.argv[1]).version' "$root/package.json")"
 node "$root/scripts/release-plan.mjs" "$root" artifact-names "$version" > "$names_file"
 
@@ -50,6 +63,35 @@ while IFS= read -r name; do
     exit 1
   fi
 done < "$evidence_names"
+
+if [[ -n "$left_final" ]]; then
+  [[ -d "$left_final" && ! -L "$left_final" && -d "$right_final" && ! -L "$right_final" ]] || {
+    printf 'reproducibility final-evidence input is not a real directory\n' >&2
+    exit 1
+  }
+  final_names="$names_file.final"
+  while IFS= read -r -d '' entry; do
+    name="$(basename "$entry")"
+    [[ -f "$entry" && ! -L "$entry" ]] || { printf 'reproducibility comparison contains unsafe first-build final evidence: %s\n' "$name" >&2; exit 1; }
+    printf '%s\n' "$name"
+  done < <(find "$left_final" -mindepth 1 -maxdepth 1 -print0) | LC_ALL=C sort > "$final_names"
+  for required in release-index.json SHA256SUMS; do
+    rg -Fqx -- "$required" "$final_names" || { printf 'reproducibility comparison missing first-build final evidence: %s\n' "$required" >&2; exit 1; }
+  done
+  while IFS= read -r name; do
+    [[ -f "$left_final/$name" && ! -L "$left_final/$name" ]] || { printf 'reproducibility comparison contains unsafe first-build final evidence: %s\n' "$name" >&2; exit 1; }
+    [[ -f "$right_final/$name" && ! -L "$right_final/$name" ]] || { printf 'reproducibility comparison missing second-build final evidence: %s\n' "$name" >&2; exit 1; }
+    if ! cmp -s "$left_final/$name" "$right_final/$name"; then
+      printf 'reproducibility final-evidence mismatch: %s\n' "$name" >&2
+      exit 1
+    fi
+  done < "$final_names"
+  while IFS= read -r -d '' entry; do
+    name="$(basename "$entry")"
+    [[ -f "$entry" && ! -L "$entry" ]] || { printf 'reproducibility comparison contains unsafe second-build final evidence: %s\n' "$name" >&2; exit 1; }
+    rg -Fqx -- "$name" "$final_names" || { printf 'reproducibility comparison found unexpected final evidence: %s\n' "$name" >&2; exit 1; }
+  done < <(find "$right_final" -mindepth 1 -maxdepth 1 -print0)
+fi
 
 node - <<'NODE' "$left" "$record" "$left_root" "$evidence_names" "${entries[@]}"
 const fs = require("node:fs");

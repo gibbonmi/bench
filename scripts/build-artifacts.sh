@@ -106,13 +106,16 @@ else
 
   if [[ "${BENCH_REPRO_BUILD:-0}" != 1 ]]; then
     second_parent="$(mktemp -d "$parent/.bench-repro-build.XXXXXX")"
+    second_source="$second_parent/source"
     mkdir -p "$second_parent/tmp"
+    git clone -q --no-hardlinks "$source_root" "$second_source"
+    tar -C "$source_root" --exclude='./.git' --exclude='./dist' -cf - . | tar -C "$second_source" -xf -
     second_output="$second_parent/artifacts"
-    if ! env -u BENCH_TEST_PROMOTION_READY_FILE BENCH_REPRO_BUILD=1 HOME="$second_parent/home" TMPDIR="$second_parent/tmp" GOCACHE="$second_parent/go-cache" GOMODCACHE="$second_parent/go-mod-cache" npm_config_cache="$second_parent/npm-cache" bash "$source_root/scripts/build-artifacts.sh" "$source_root" "$second_output"; then
+    if ! env -u BENCH_TEST_PROMOTION_READY_FILE BENCH_REPRO_BUILD=1 HOME="$second_parent/home" TMPDIR="$second_parent/tmp" GOCACHE="$second_parent/go-cache" GOMODCACHE="$second_parent/go-mod-cache" npm_config_cache="$second_parent/npm-cache" bash "$second_source/scripts/build-artifacts.sh" "$second_source" "$second_output"; then
       printf 'bench artifacts: independent reproducibility build failed\n' >&2
       exit 1
     fi
-    bash "$source_root/scripts/compare-artifacts.sh" "$artifacts" "$second_output" "$stage/reproducibility.json" "$source_root" "$source_root"
+    bash "$source_root/scripts/compare-artifacts.sh" "$artifacts" "$second_output" "$stage/reproducibility.json" "$source_root" "$second_source"
     rm -rf "$second_parent"
     second_parent=""
     promote_reproducibility=1

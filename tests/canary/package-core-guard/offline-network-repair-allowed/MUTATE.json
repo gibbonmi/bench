@@ -1,1 +1,1 @@
-[{"path":"scripts/smoke-offline.sh","old":"repair_disabled=\"${BENCH_OFFLINE_REPAIR_DISABLED:-1}\"","new":"repair_disabled=\"${BENCH_OFFLINE_REPAIR_DISABLED:-0}\""}]
+[{"path":"scripts/smoke-offline.sh","old":"go|cargo|cc|gcc|clang|make)","new":"cargo|cc|gcc|clang|make)"}]

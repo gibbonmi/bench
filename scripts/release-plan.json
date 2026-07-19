@@ -1,6 +1,5 @@
 {
   "schema_version": 1,
-  "target_cardinality": 4,
   "targets": [
     {"os":"darwin","arch":"arm64","goos":"darwin","goarch":"arm64","runner":"macos-15"},
     {"os":"darwin","arch":"x64","goos":"darwin","goarch":"amd64","runner":"macos-15-intel"},

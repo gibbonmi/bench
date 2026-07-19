@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "toolchains": [
-    {"name":"go","version_argv":["go","env","GOVERSION"],"operations":{"build":["-trimpath","-ldflags=-s -w -X main.version=<package-version>"]}},
+    {"name":"go","version_argv":["go","env","GOVERSION"],"operations":{"build":["-trimpath","-buildvcs=false","-ldflags=-s -w -X main.version=<package-version>"]}},
     {"name":"node","version_argv":["node","--version"],"operations":{}},
     {"name":"npm","version_argv":["npm","--version"],"operations":{"pack":["--ignore-scripts","--silent"],"install":["--ignore-scripts","--omit=optional"]}}
   ],

@@ -4,20 +4,12 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
-	"strings"
 )
 
 type releasePlan struct {
-	SchemaVersion     int                `json:"schema_version"`
-	TargetCardinality int                `json:"target_cardinality"`
-	Targets           []targetEvidence   `json:"targets"`
-	ArchiveEntries    []archivePlanEntry `json:"archive_entries"`
-}
-
-type archivePlanEntry struct {
-	Path string `json:"path"`
-	Mode string `json:"mode"`
-	Kind string `json:"kind"`
+	SchemaVersion  int              `json:"schema_version"`
+	Targets        []targetEvidence `json:"targets"`
+	ArchiveEntries []map[string]any `json:"archive_entries"`
 }
 
 type releaseArtifact struct {
@@ -55,28 +47,14 @@ func readReleaseArtifacts(root, version string) ([]releaseArtifact, error) {
 	return artifacts, nil
 }
 
-func archiveInventory(plan releasePlan, target, version string) (map[string]int64, error) {
-	files := map[string]int64{}
-	for _, entry := range plan.ArchiveEntries {
-		paths := []string{entry.Path}
-		if entry.Kind == "package_evidence" {
-			paths = paths[:0]
-			for _, evidence := range PackageEvidenceRegistry() {
-				paths = append(paths, strings.Replace(entry.Path, "{package_evidence}", evidence.Path, 1))
-			}
-		}
-		for _, name := range paths {
-			name = strings.ReplaceAll(name, "{version}", version)
-			name = strings.ReplaceAll(name, "{target}", target)
-			if _, exists := files[name]; exists {
-				return nil, fmt.Errorf("release plan archive inventory duplicates %s", name)
-			}
-			if entry.Mode == "0755" {
-				files[name] = 0o755
-			} else {
-				files[name] = 0o644
-			}
-		}
+func archiveInventory(root, target, version string) (map[string]int64, error) {
+	data, err := releasePlanOutput(root, "archive-inventory", target, version)
+	if err != nil {
+		return nil, fmt.Errorf("release plan archive inventory is unavailable: %w", err)
+	}
+	var files map[string]int64
+	if err := decodeStrict(data, &files); err != nil {
+		return nil, fmt.Errorf("release plan archive inventory is malformed: %w", err)
 	}
 	return files, nil
 }

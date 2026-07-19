@@ -32,21 +32,17 @@ func readOfflineArchive(rootPath string, data []byte, archiveName, target, versi
 	if !dirs[""] {
 		return nil, fmt.Errorf("offline archive root is missing: %s", root)
 	}
-	plan, err := readReleasePlan(rootPath)
-	if err != nil {
+	if err := validateOfflineArchiveDirs(rootPath, dirs, target, version); err != nil {
 		return nil, err
 	}
-	if err := validateOfflineArchiveDirs(dirs, plan, target, version); err != nil {
-		return nil, err
-	}
-	if err := validateOfflineArchiveFiles(files, plan, target, version); err != nil {
+	if err := validateOfflineArchiveFiles(rootPath, files, target, version); err != nil {
 		return nil, err
 	}
 	return files, nil
 }
 
-func validateOfflineArchiveDirs(dirs map[string]bool, plan releasePlan, target, version string) error {
-	files, err := archiveInventory(plan, target, version)
+func validateOfflineArchiveDirs(root string, dirs map[string]bool, target, version string) error {
+	files, err := archiveInventory(root, target, version)
 	if err != nil {
 		return err
 	}
@@ -72,8 +68,8 @@ func validateOfflineArchiveDirs(dirs map[string]bool, plan releasePlan, target, 
 	return nil
 }
 
-func validateOfflineArchiveFiles(files map[string]tarFile, plan releasePlan, target, version string) error {
-	want, err := archiveInventory(plan, target, version)
+func validateOfflineArchiveFiles(root string, files map[string]tarFile, target, version string) error {
+	want, err := archiveInventory(root, target, version)
 	if err != nil {
 		return err
 	}

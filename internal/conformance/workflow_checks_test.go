@@ -1,11 +1,8 @@
 package conformance
 
 import (
-	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -61,30 +58,22 @@ func checkNativeRuntimeWorkflow(root string) []string {
 			diags = append(diags, "native verification workflow does not include "+label)
 		}
 	}
-	if job := workflowJob(text, "evidence"); !strings.Contains(job, "needs: [preflight, native-proof]") || !strings.Contains(job, "scripts/release-preflight.sh --mode verify") {
+	preflight, artifacts := workflowJob(text, "preflight"), workflowJob(text, "artifacts")
+	if !strings.Contains(preflight, "scripts/release-preflight.sh --mode verify --phase gate") || !strings.Contains(artifacts, "needs: preflight") || !strings.Contains(artifacts, "scripts/build-artifacts.sh") || !strings.Contains(artifacts, "uses: actions/upload-artifact@") {
+		diags = append(diags, "native artifact construction or upload bypasses preflight authorization")
+	}
+	evidence := workflowJob(text, "evidence")
+	if !strings.Contains(evidence, "needs: [artifacts, native-proof]") || !strings.Contains(evidence, "scripts/release-preflight.sh --mode verify") {
 		diags = append(diags, "native verification does not finalize evidence after every native proof")
 	}
-	if job := workflowJob(text, "smoke"); !strings.Contains(job, "needs: [preflight, evidence]") || !strings.Contains(job, "preflight-evidence") || !strings.Contains(job, "scripts/smoke-artifacts.sh") {
+	if !strings.Contains(artifacts, `git clone --quiet --no-hardlinks . "$second_source"`) || !strings.Contains(artifacts, `"$second_source/scripts/build-artifacts.sh" "$second_source" "$second_source/dist/artifacts"`) || !strings.Contains(evidence, `bash scripts/compare-artifacts.sh dist/artifacts "$second_source/dist/artifacts" dist/workflow-reproducibility.json . "$second_source" dist/preflight "$second_source/dist/preflight"`) {
+		diags = append(diags, "native verification does not compare independently finalized evidence")
+	}
+	if job := workflowJob(text, "smoke"); !strings.Contains(job, "needs: [preflight, artifacts, evidence]") || !strings.Contains(job, "preflight-evidence") || !strings.Contains(job, "scripts/smoke-artifacts.sh") {
 		diags = append(diags, "native verification does not run smoke from finalized evidence")
 	}
 	if proof := readIfExists(filepath.Join(root, "scripts", "native-proof.sh")); proof != "" && !strings.Contains(proof, "docker run --rm --network none") {
 		diags = append(diags, "native proof does not isolate the Linux non-glibc execution")
-	}
-	data, err := os.ReadFile(filepath.Join(root, "scripts", "release-plan.json"))
-	var plan struct {
-		Targets []struct {
-			Runner string `json:"runner"`
-		} `json:"targets"`
-	}
-	if err != nil || json.Unmarshal(data, &plan) != nil {
-		return append(diags, "native verification matrix is unreadable")
-	}
-	want, got := []string{"macos-15", "macos-15-intel", "ubuntu-24.04-arm", "ubuntu-24.04"}, make([]string, 0, len(plan.Targets))
-	for _, row := range plan.Targets {
-		got = append(got, row.Runner)
-	}
-	if !reflect.DeepEqual(got, want) {
-		diags = append(diags, fmt.Sprintf("native verification runner labels = %v, want %v", got, want))
 	}
 	return diags
 }
@@ -96,7 +85,7 @@ func workflowJob(workflow, name string) string {
 		return ""
 	}
 	rest, end := workflow[start+len(needle):], len(workflow[start+len(needle):])
-	for _, candidate := range []string{"\n  preflight:\n", "\n  native-proof:\n", "\n  evidence:\n", "\n  smoke:\n", "\n  authorize:\n", "\n  publish:\n"} {
+	for _, candidate := range []string{"\n  preflight:\n", "\n  artifacts:\n", "\n  native-proof:\n", "\n  evidence:\n", "\n  smoke:\n", "\n  authorize:\n", "\n  publish:\n"} {
 		if offset := strings.Index(rest, candidate); offset >= 0 && offset < end {
 			end = offset
 		}
@@ -161,7 +150,7 @@ func TestNativeWorkflowEvidenceEdgeBites(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	broken := strings.Replace(string(workflow), "needs: [preflight, evidence]", "needs: preflight", 1)
+	broken := strings.Replace(string(workflow), "needs: [preflight, artifacts, evidence]", "needs: [preflight, artifacts]", 1)
 	if broken == string(workflow) {
 		t.Fatal("native workflow mutation did not remove the evidence edge")
 	}
@@ -174,5 +163,25 @@ func TestNativeWorkflowEvidenceEdgeBites(t *testing.T) {
 	}
 	if diagnostics := strings.Join(checkNativeRuntimeWorkflow(root), "\n"); !strings.Contains(diagnostics, "native verification does not run smoke from finalized evidence") {
 		t.Fatalf("removed evidence edge did not bite:\n%s", diagnostics)
+	}
+	broken = strings.Replace(string(workflow), "needs: preflight", "needs: []", 1)
+	if broken == string(workflow) {
+		t.Fatal("native workflow mutation did not bypass preflight authorization")
+	}
+	if err := os.WriteFile(path, []byte(broken), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if diagnostics := strings.Join(checkNativeRuntimeWorkflow(root), "\n"); !strings.Contains(diagnostics, "native artifact construction or upload bypasses preflight authorization") {
+		t.Fatalf("bypassed preflight authorization did not bite:\n%s", diagnostics)
+	}
+	broken = strings.Replace(string(workflow), ` "$second_source/dist/preflight"`, "", 1)
+	if broken == string(workflow) {
+		t.Fatal("native workflow mutation did not remove the second finalized-evidence operand")
+	}
+	if err := os.WriteFile(path, []byte(broken), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if diagnostics := strings.Join(checkNativeRuntimeWorkflow(root), "\n"); !strings.Contains(diagnostics, "native verification does not compare independently finalized evidence") {
+		t.Fatalf("removed finalized-evidence comparison did not bite:\n%s", diagnostics)
 	}
 }

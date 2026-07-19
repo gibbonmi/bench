@@ -105,6 +105,7 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"native-proof-aggregation-bypassed":      conformanceFixture(".bench/gate.sh"),
 	"offline-archive-digest-binding-omitted": conformanceFixture(".bench/gate.sh"),
 	"offline-network-repair-allowed":         conformanceFixture(".bench/gate.sh"),
+	"offline-stage-interruption-ignored":     conformanceFixture(".bench/gate.sh"),
 	"offline-registry-fallback-allowed":      conformanceFixture(".bench/gate.sh"),
 	"native-trigger-comment-spoof":           conformanceFixture(".bench/gate.sh"),
 	"preflight-verify-gate-omitted":          conformanceFixture(".bench/gate.sh"),
