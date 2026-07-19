@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
 
@@ -207,6 +206,10 @@ func TestReleaseArtifactVerifierRequiresFullyApprovedEvidence(t *testing.T) {
 			phases := index["phases"].([]map[string]any)
 			index["phases"] = phases[:len(phases)-1]
 		}},
+		{"target matrix", "release target evidence is malformed", func() {
+			index["targets"].([]map[string]any)[0]["runner"] = "index-owned-runner"
+			index["native_proofs"].([]map[string]any)[0]["runner"] = "index-owned-runner"
+		}},
 		{"requirement completeness", "release requirements are incomplete or unsatisfied", func() {
 			requirements := index["requirements"].([]map[string]any)
 			index["requirements"] = requirements[:len(requirements)-1]
@@ -244,16 +247,32 @@ func approvedReleaseEvidenceFixture(t *testing.T, root, version, selected, selec
 	targets := []map[string]any{}
 	proofs := []map[string]any{}
 	artifacts := []map[string]any{}
-	for _, target := range []string{"darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"} {
-		parts := strings.Split(target, "-")
-		targets = append(targets, map[string]any{"os": parts[0], "arch": parts[1], "goos": parts[0], "goarch": parts[1], "runner": "runner-" + target})
-		proofs = append(proofs, map[string]any{"schema_version": 1, "target": target, "runner": "runner-" + target, "status": "green", "rebuilt_sha256": hex, "binary_sha256": hex, "package_sha256": hex, "archive_sha256": hex, "musl_status": map[bool]string{true: "green", false: "not_applicable"}[parts[0] == "linux"], "operations_status": "green", "strip_status": "green", "tools_status": "green"})
-		for _, name := range []string{"redbench-" + target + "-" + version + ".tgz", "redbench-" + version + "-" + target + ".tar.gz"} {
-			artifacts = append(artifacts, map[string]any{"name": name, "target": target, "size": int64(1), "sha256": hex, "component_manifest_sha256": hex, "sbom_sha256": hex, "inventory_sha256": hex})
-		}
+	var plan struct {
+		Targets []struct {
+			OS, Arch, GOOS, GOARCH, Runner string
+		} `json:"targets"`
 	}
-	artifacts = append(artifacts, map[string]any{"name": "redbench-" + version + ".tgz", "target": "wrapper", "size": int64(1), "sha256": hex, "component_manifest_sha256": hex, "sbom_sha256": hex, "inventory_sha256": hex})
-	slices.SortFunc(artifacts, func(a, b map[string]any) int { return strings.Compare(a["name"].(string), b["name"].(string)) })
+	contract.ReadJSONFile(t, filepath.Join(root, "scripts", "release-plan.json"), &plan)
+	for _, target := range plan.Targets {
+		name := target.OS + "-" + target.Arch
+		targets = append(targets, map[string]any{"os": target.OS, "arch": target.Arch, "goos": target.GOOS, "goarch": target.GOARCH, "runner": target.Runner})
+		proofs = append(proofs, map[string]any{"schema_version": 1, "target": name, "runner": target.Runner, "status": "green", "rebuilt_sha256": hex, "binary_sha256": hex, "package_sha256": hex, "archive_sha256": hex, "musl_status": map[bool]string{true: "green", false: "not_applicable"}[target.OS == "linux"], "operations_status": "green", "strip_status": "green", "tools_status": "green"})
+	}
+	command := exec.Command("node", filepath.Join(root, "scripts", "release-plan.mjs"), root, "artifact-records", version)
+	data, err := command.Output()
+	if err != nil {
+		t.Fatalf("read canonical artifact records: %v\n%s", err, data)
+	}
+	var records []struct{ Name, Target, Kind string }
+	if err := json.Unmarshal(data, &records); err != nil {
+		t.Fatalf("decode canonical artifact records: %v\n%s", err, data)
+	}
+	artifactsByTargetKind := make(map[string]map[string]any, len(records))
+	for _, record := range records {
+		artifact := map[string]any{"name": record.Name, "target": record.Target, "size": int64(1), "sha256": hex, "component_manifest_sha256": hex, "sbom_sha256": hex, "inventory_sha256": hex}
+		artifacts = append(artifacts, artifact)
+		artifactsByTargetKind[record.Target+"/"+record.Kind] = artifact
+	}
 	for _, artifact := range artifacts {
 		if artifact["name"] == selected {
 			artifact["sha256"], artifact["size"] = selectedDigest, selectedSize
@@ -261,14 +280,8 @@ func approvedReleaseEvidenceFixture(t *testing.T, root, version, selected, selec
 	}
 	for _, proof := range proofs {
 		target := proof["target"].(string)
-		for _, artifact := range artifacts {
-			switch artifact["name"] {
-			case "redbench-" + target + "-" + version + ".tgz":
-				proof["package_sha256"] = artifact["sha256"]
-			case "redbench-" + version + "-" + target + ".tar.gz":
-				proof["archive_sha256"] = artifact["sha256"]
-			}
-		}
+		proof["package_sha256"] = artifactsByTargetKind[target+"/platform"]["sha256"]
+		proof["archive_sha256"] = artifactsByTargetKind[target+"/archive"]["sha256"]
 	}
 	repro := []map[string]any{}
 	var sums strings.Builder

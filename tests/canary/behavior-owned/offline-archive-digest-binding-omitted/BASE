@@ -1,3 +1,5 @@
 scripts/verify-release-artifact.mjs
+scripts/release-plan.mjs
+scripts/release-plan.json
 internal/releaseevidence/registry.json
 internal/releaseevidence/requirements.json

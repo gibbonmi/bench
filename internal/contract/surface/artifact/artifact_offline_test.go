@@ -28,6 +28,42 @@ func TestReleasePlanProjectsDerivedArchiveInventory(t *testing.T) {
 	}
 }
 
+func TestReleasePlanProjectsRelocatedPackageEvidence(t *testing.T) {
+	root := contract.SubjectRoot(t)
+	fixture := t.TempDir()
+	for _, relative := range []string{"scripts/release-plan.mjs", "scripts/release-plan.json", "internal/releaseevidence/requirements.json"} {
+		data, err := os.ReadFile(filepath.Join(root, relative))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if relative == "scripts/release-plan.json" {
+			data = bytes.Replace(data, []byte("evidence/{package_evidence}"), []byte("relocated/{package_evidence}"), 1)
+		}
+		target := filepath.Join(fixture, relative)
+		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil || os.WriteFile(target, data, 0o644) != nil {
+			t.Fatalf("copy relocated release-plan fixture: %v", err)
+		}
+	}
+	var requirements struct {
+		Records []struct {
+			Key         string `json:"key"`
+			Path        string `json:"path"`
+			PackageMode string `json:"package_mode"`
+		} `json:"records"`
+	}
+	contract.ReadJSONFile(t, filepath.Join(fixture, "internal", "releaseevidence", "requirements.json"), &requirements)
+	for _, record := range requirements.Records {
+		if record.PackageMode == "" {
+			continue
+		}
+		command := exec.Command("node", filepath.Join(fixture, "scripts", "release-plan.mjs"), fixture, "archive-evidence-path", record.Key, "linux-x64", "0.1.0")
+		data, err := command.Output()
+		if err != nil || strings.TrimSpace(string(data)) != "relocated/"+record.Path {
+			t.Fatalf("relocated package evidence %s was not projected from the release plan: %v\n%s", record.Key, err, data)
+		}
+	}
+}
+
 func TestNativeProofAggregatorRejectsOneTargetOmission(t *testing.T) {
 	root := contract.SubjectRoot(t)
 	contract.SkipIfSubjectFileMissing(t, "scripts/aggregate-native-proofs.sh")

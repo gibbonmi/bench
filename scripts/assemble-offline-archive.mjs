@@ -36,7 +36,7 @@ for (const entry of entries) {
     fs.writeFileSync(destination, instructions(), {mode: Number.parseInt(entry.mode, 8)});
   } else if (entry.kind === "wrapper_manifest") copyRegular(path.join(wrapperExtract, "package", "component-manifest.json"), destination, entry.mode);
   else if (entry.kind === "platform_manifest") copyRegular(path.join(platformExtract, "package", "component-manifest.json"), destination, entry.mode);
-  else if (entry.kind === "package_evidence") copyRegular(path.join(wrapperExtract, "package", entry.path.replace("evidence/", "")), destination, entry.mode);
+  else if (entry.kind === "package_evidence") copyRegular(path.join(wrapperExtract, "package", entry.source_path), destination, entry.mode);
   else if (entry.kind !== "archive_manifest") throw new Error(`unknown archive entry kind: ${entry.kind}`);
 }
 

@@ -11,21 +11,45 @@ import (
 )
 
 func TestPublishIdentityFailurePreventsArtifactConstruction(t *testing.T) {
+	assertPublishAuthorizationFailurePreventsArtifactConstruction(t, "identity", func(_ string) {
+		t.Setenv("BENCH_PREFLIGHT_REF", "not-a-release-tag")
+	})
+}
+
+func TestPublishAncestryFailurePreventsArtifactConstruction(t *testing.T) {
+	assertPublishAuthorizationFailurePreventsArtifactConstruction(t, "ancestry", func(root string) {
+		tagRelease(t, root, false)
+	})
+}
+
+func assertPublishAuthorizationFailurePreventsArtifactConstruction(t *testing.T, want string, setup func(string)) {
+	t.Helper()
 	root := preflightRepo(t)
 	marker := filepath.Join(t.TempDir(), "artifact-construction-ran")
 	phase := filepath.Join(t.TempDir(), "artifact-phase")
 	if err := os.WriteFile(phase, []byte("#!/bin/sh\n: > \"$BENCH_ORDER_MARKER\"\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("BENCH_PREFLIGHT_REF", "not-a-release-tag")
+	setup(root)
 	t.Setenv("BENCH_PREFLIGHT_ARTIFACTS", phase)
 	t.Setenv("BENCH_ORDER_MARKER", marker)
-	results := (&runner{root: root, mode: ModePublish, binaryVersion: "0.2.0"}).run(context.Background(), "")
-	if len(results) == 0 || results[0].Name != "identity" || results[0].Status != StatusRed {
-		t.Fatalf("publish did not fail first at identity: %+v", results)
+	runner := &runner{root: root, mode: ModePublish, binaryVersion: "0.2.0"}
+	if err := runner.populateBaseIdentity(); err != nil {
+		t.Fatalf("populate release identity: %v", err)
+	}
+	results := runner.run(context.Background(), "")
+	failed := -1
+	for index, result := range results {
+		if result.Status == StatusRed {
+			failed = index
+			break
+		}
+	}
+	if failed < 0 || results[failed].Name != want {
+		t.Fatalf("publish did not fail at %s: %+v", want, results)
 	}
 	if _, err := os.Stat(marker); !os.IsNotExist(err) {
-		t.Fatalf("artifact construction ran before release identity authorization: %v", err)
+		t.Fatalf("artifact construction ran before release %s authorization: %v", want, err)
 	}
 }
 

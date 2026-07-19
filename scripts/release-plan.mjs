@@ -59,7 +59,7 @@ export function artifactRecords(plan, version) {
 export function archiveEntries(plan, target, version, packageEvidence) {
   const root = `redbench-${version}-${target}`;
   return plan.archive_entries.flatMap(entry => {
-    if (entry.kind === "package_evidence") return packageEvidence.map(item => ({...entry, path: entry.path.replace("{package_evidence}", item.path)}));
+    if (entry.kind === "package_evidence") return packageEvidence.map(item => ({...entry, path: entry.path.replace("{package_evidence}", item.path), source_path: item.path, evidence_key: item.key}));
     return [{...entry, path: entry.path.replaceAll("{version}", version).replaceAll("{target}", target)}];
   }).map(entry => ({...entry, archive_path: `${root}/${entry.path}`})).sort((a, b) => byteOrder(a.path, b.path));
 }
@@ -71,8 +71,7 @@ export function archiveEntryPath(plan, kind, target, version, packageEvidence) {
 }
 
 export function archiveEvidencePath(plan, key, target, version, packageEvidence) {
-	const records = new Map(packageEvidence.map(record => [record.path, record.key]));
-	const matches = archiveEntries(plan, target, version, packageEvidence).filter(entry => entry.kind === "package_evidence" && records.get(entry.path.replace(/^evidence\//, "")) === key);
+	const matches = archiveEntries(plan, target, version, packageEvidence).filter(entry => entry.kind === "package_evidence" && entry.evidence_key === key);
 	if (matches.length !== 1) throw new Error(`release plan has ${matches.length} packaged evidence entries for ${key}`);
 	return matches[0].path;
 }

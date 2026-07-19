@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
+import {artifactRecords, readReleasePlan} from "./release-plan.mjs";
 
 const [indexPath, sumsPath, artifactPath] = process.argv.slice(2);
 if (![indexPath, sumsPath, artifactPath].every(Boolean)) throw new Error("usage: verify-release-artifact.mjs <release-index> <SHA256SUMS> <artifact>");
@@ -10,6 +11,7 @@ const data = fs.readFileSync(artifactPath);
 const digest = crypto.createHash("sha256").update(data).digest("hex");
 const index = JSON.parse(fs.readFileSync(indexPath, "utf8"));
 const sourceRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const plan = readReleasePlan(sourceRoot);
 const registry = JSON.parse(fs.readFileSync(path.join(sourceRoot, "internal", "releaseevidence", "registry.json"), "utf8"));
 const requirementRegistry = JSON.parse(fs.readFileSync(path.join(sourceRoot, "internal", "releaseevidence", "requirements.json"), "utf8"));
 const checksumRows = fs.readFileSync(sumsPath, "utf8").trimEnd().split("\n").map(line => {
@@ -25,21 +27,19 @@ if (index?.schema_version !== 1 || !["verify", "publish"].includes(index.mode) |
 if (!index.identity || ![index.identity.package_version, index.identity.source_commit, index.identity.binary_version, index.identity.toolchain].every(value => typeof value === "string" && value.length > 0)) fail("release identity is incomplete");
 if (!unique(index.targets, item => `${item?.os}/${item?.arch}`) || !unique(index.artifacts, item => item?.name) || !unique(index.phases, item => item?.name) || !unique(index.requirements, item => item?.key) || !unique(index.native_proofs, item => item?.target)) fail("release evidence contains duplicate or malformed inventories");
 const expectedPhases = index.mode === "publish" ? [...registry.publish_before, ...registry.verify, ...registry.publish_only] : registry.verify;
-if (index.targets.length === 0 || index.artifacts.length !== 1 + 2 * index.targets.length || index.phases.length !== expectedPhases.length || index.phases.some((item, phaseIndex) => item?.name !== expectedPhases[phaseIndex] || item?.status !== "green" || !hex(item.record_sha256))) fail("release phase or artifact inventory is incomplete");
+const version = index.identity.package_version;
+const expectedArtifactRecords = artifactRecords(plan, version);
+if (index.artifacts.length !== expectedArtifactRecords.length || index.phases.length !== expectedPhases.length || index.phases.some((item, phaseIndex) => item?.name !== expectedPhases[phaseIndex] || item?.status !== "green" || !hex(item.record_sha256))) fail("release phase or artifact inventory is incomplete");
 const requirementsByKey = new Map(requirementRegistry.records.map(item => [item.key, item]));
 if (!Array.isArray(index.requirements) || index.requirements.length !== requirementsByKey.size || index.requirements.some(item => { const canonical = requirementsByKey.get(item?.key); return !canonical || item.owner !== canonical.owner || item.schema !== canonical.schema || item.requiredness !== canonical.requiredness || item?.applicable && item.status !== "satisfied" || !item?.applicable && !["satisfied", "not_applicable"].includes(item?.status); })) fail("release requirements are incomplete or unsatisfied");
 const artifactByName = new Map(index.artifacts.map(item => [item.name, item]));
 if (index.artifacts.some(item => typeof item?.name !== "string" || item.name.includes("/") || !Number.isSafeInteger(item.size) || item.size <= 0 || ![item.sha256, item.component_manifest_sha256, item.sbom_sha256, item.inventory_sha256].every(hex))) fail("release artifact evidence is malformed");
-const targetNames = new Set(index.targets.map(item => `${item.os}-${item.arch}`));
-if (index.targets.some(item => !item || ![item.os, item.arch, item.goos, item.goarch, item.runner].every(value => typeof value === "string" && value.length > 0))) fail("release target evidence is malformed");
-const version = index.identity.package_version;
-const expectedArtifacts = new Map([[`redbench-${version}.tgz`, "wrapper"]]);
-for (const target of targetNames) {
-	expectedArtifacts.set(`redbench-${target}-${version}.tgz`, target);
-	expectedArtifacts.set(`redbench-${version}-${target}.tar.gz`, target);
-}
-if (expectedArtifacts.size !== artifactByName.size || [...expectedArtifacts].some(([artifact, target]) => artifactByName.get(artifact)?.target !== target)) fail("release artifact inventory is not the canonical complete set");
-if (index.native_proofs.length !== index.targets.length || index.native_proofs.some(proof => { const platform = artifactByName.get(`redbench-${proof?.target}-${version}.tgz`), archive = artifactByName.get(`redbench-${version}-${proof?.target}.tar.gz`); return !proof || !targetNames.has(proof.target) || proof.runner !== index.targets.find(item => `${item.os}-${item.arch}` === proof.target)?.runner || proof.schema_version !== 1 || proof.status !== "green" || ![proof.rebuilt_sha256, proof.binary_sha256, proof.package_sha256, proof.archive_sha256].every(hex) || proof.rebuilt_sha256 !== proof.binary_sha256 || proof.package_sha256 !== platform?.sha256 || proof.archive_sha256 !== archive?.sha256 || proof.operations_status !== "green" || proof.strip_status !== "green" || proof.tools_status !== "green" || (proof.target.startsWith("linux-") ? proof.musl_status !== "green" : proof.musl_status !== "not_applicable"); })) fail("native proof evidence is incomplete or red");
+if (index.targets.length !== plan.targets.length || index.targets.some((item, targetIndex) => !item || ["os", "arch", "goos", "goarch", "runner"].some(field => item[field] !== plan.targets[targetIndex][field]))) fail("release target evidence is malformed");
+const targetNames = new Set(plan.targets.map(item => `${item.os}-${item.arch}`));
+const expectedArtifacts = new Map(expectedArtifactRecords.map(item => [item.name, item]));
+if (expectedArtifacts.size !== artifactByName.size || [...expectedArtifacts].some(([artifact, record]) => artifactByName.get(artifact)?.target !== record.target)) fail("release artifact inventory is not the canonical complete set");
+const artifactByTargetKind = new Map(expectedArtifactRecords.map(item => [`${item.target}/${item.kind}`, artifactByName.get(item.name)]));
+if (index.native_proofs.length !== plan.targets.length || index.native_proofs.some(proof => { const platform = artifactByTargetKind.get(`${proof?.target}/platform`), archive = artifactByTargetKind.get(`${proof?.target}/archive`); return !proof || !targetNames.has(proof.target) || proof.runner !== plan.targets.find(item => `${item.os}-${item.arch}` === proof.target)?.runner || proof.schema_version !== 1 || proof.status !== "green" || ![proof.rebuilt_sha256, proof.binary_sha256, proof.package_sha256, proof.archive_sha256].every(hex) || proof.rebuilt_sha256 !== proof.binary_sha256 || proof.package_sha256 !== platform?.sha256 || proof.archive_sha256 !== archive?.sha256 || proof.operations_status !== "green" || proof.strip_status !== "green" || proof.tools_status !== "green" || (proof.target.startsWith("linux-") ? proof.musl_status !== "green" : proof.musl_status !== "not_applicable"); })) fail("native proof evidence is incomplete or red");
 const reproducibility = index.reproducibility;
 if (!reproducibility || reproducibility.schema_version !== 1 || reproducibility.status !== "green" || reproducibility.builds !== 2 || !unique(reproducibility.artifacts, item => item?.name) || reproducibility.artifacts.length !== index.artifacts.length || !Array.isArray(reproducibility.evidence) || reproducibility.evidence.length === 0 || reproducibility.artifacts.some(item => { const artifact = artifactByName.get(item?.name); return !artifact || item.match !== true || item.size !== artifact.size || item.sha256 !== artifact.sha256; }) || reproducibility.evidence.some(item => !item || typeof item.name !== "string" || !Number.isSafeInteger(item.size) || item.size <= 0 || !hex(item.sha256) || item.match !== true)) fail("reproducibility evidence is incomplete or mismatched");
 const sortedArtifactNames = [...artifactByName.keys()].sort((left, right) => Buffer.compare(Buffer.from(left), Buffer.from(right)));
