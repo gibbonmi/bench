@@ -16,3 +16,7 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
 - **What happened:** …
 - **Right behavior:** …
 - **Proposed rule change:** … (or "none")
+
+## 2026-07-19 — transient compiled-core flake burned a full gated commit
+
+During the FT83 slice 3 close, the conformance phase's compiled-core inner `go test` failed once during a gated `bench commit` and passed on immediate retry with an identical tree; D1 independently hit a one-off `TestDoctorShimContracts` failure that also passed standalone. What happened: a transient/isolation-sensitive unit test can red a whole ~6-minute gated commit. Right behavior: retry-once-at-same-tier was correct and worked both times. Proposed change: identify and deflake the isolation-sensitive test(s) (or run the doctor-shim contract with tighter env isolation) so the oracle stops charging a full gate rerun for noise.
