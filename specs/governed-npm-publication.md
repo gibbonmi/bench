@@ -1,6 +1,6 @@
 # FT83 slice 3 — governed npm publication
 
-Status: staged
+Status: implemented
 
 Decision map: `decisions/governed-offline-release-bundle.md`; publication research
 `decisions/governed-offline-release-publication-research.md`.
