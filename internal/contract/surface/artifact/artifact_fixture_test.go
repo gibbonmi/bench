@@ -211,7 +211,7 @@ func assertInterruptedArtifactPromotion(t *testing.T, source, prepared, output s
 		}
 		time.Sleep(25 * time.Millisecond)
 	}
-	if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
+	if err := cmd.Process.Signal(syscall.SIGINT); err != nil {
 		t.Fatal(err)
 	}
 	if err := cmd.Wait(); err == nil {
@@ -223,6 +223,26 @@ func assertInterruptedArtifactPromotion(t *testing.T, source, prepared, output s
 	}
 	if after := promotedArtifactDigests(t, output); !maps.Equal(after, prior) {
 		t.Fatalf("promotion interruption changed prior-generation bytes: got=%v want=%v", after, prior)
+	}
+	if _, err := os.Stat(output + ".lock"); !os.IsNotExist(err) {
+		t.Fatalf("SIGINT left artifact output lock: %v", err)
+	}
+	stages, err := filepath.Glob(filepath.Join(filepath.Dir(output), ".bench-artifacts.*"))
+	if err != nil || len(stages) != 0 {
+		t.Fatalf("SIGINT left artifact staging directories: %v, %v", stages, err)
+	}
+	rerunReady := filepath.Join(t.TempDir(), "rerun-ready")
+	rerun := exec.Command("bash", filepath.Join(source, "scripts", "build-artifacts.sh"), source, output)
+	rerun.Env = promotionTestEnv(prepared, rerunReady)
+	if rerunOutput, err := runArtifactBuildThroughPromotionSeam(t, rerun, rerunReady); err != nil {
+		t.Fatalf("idempotent rerun after SIGINT failed: %v\n%s", err, rerunOutput)
+	}
+	files, err = os.ReadDir(output)
+	if err != nil || len(files) != wantFiles {
+		t.Fatalf("rerun after SIGINT left incomplete output: files=%d err=%v", len(files), err)
+	}
+	if after := promotedArtifactDigests(t, output); !maps.Equal(after, prior) {
+		t.Fatalf("rerun after SIGINT changed complete output: got=%v want=%v", after, prior)
 	}
 }
 

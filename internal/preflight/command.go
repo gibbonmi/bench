@@ -174,6 +174,12 @@ func (r *runner) run(ctx context.Context, focused string) []Result {
 		result := r.runPhase(ctx, name)
 		results = append(results, result)
 		statuses[name] = result.Status
+		if r.mode == ModePublish && (name == "identity" || name == "ancestry") && result.Status != StatusGreen {
+			for _, rest := range names[len(results):] {
+				results = append(results, Result{Name: rest, Status: StatusNotRun})
+			}
+			break
+		}
 		if result.Status == StatusInterrupted {
 			for _, rest := range names[len(results):] {
 				results = append(results, Result{Name: rest, Status: StatusNotRun})

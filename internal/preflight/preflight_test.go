@@ -15,7 +15,8 @@ import (
 
 func TestRegistryDerivesPublishFromVerify(t *testing.T) {
 	wantVerify := []string{"gate", "race", "vet", "vulnerability", "artifacts", "smoke"}
-	wantPublish := append(append([]string{}, wantVerify...), "identity", "ancestry", "changelog")
+	wantPublish := append([]string{"identity", "ancestry"}, wantVerify...)
+	wantPublish = append(wantPublish, "changelog")
 	if got := PhaseNames(ModeVerify); !reflect.DeepEqual(got, wantVerify) {
 		t.Fatalf("verify phases = %v, want %v", got, wantVerify)
 	}

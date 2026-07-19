@@ -103,6 +103,7 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"mutable-workflow-action":                conformanceFixture(".bench/gate.sh"),
 	"native-smoke-workflow-dropped":          conformanceFixture(".bench/gate.sh"),
 	"native-proof-aggregation-bypassed":      behaviorFixture(),
+	"native-proof-digest-binding-bypassed":   behaviorFixture(),
 	"native-reproducibility-handoff-dropped": conformanceFixture(".bench/gate.sh"),
 	"offline-archive-digest-binding-omitted": behaviorFixture(),
 	"offline-network-repair-allowed":         conformanceFixture(".bench/gate.sh"),

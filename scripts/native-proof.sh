@@ -23,8 +23,10 @@ matrix_row="$(node "$root/scripts/release-plan.mjs" "$root" target "$os_name" "$
 IFS=$'\t' read -r _matrix_os _matrix_arch goos goarch matrix_runner <<< "$matrix_row"
 [[ "$matrix_runner" == "$runner" ]] || { printf 'native proof: runner does not match canonical matrix for %s\n' "$target" >&2; exit 1; }
 
-native="$artifacts/redbench-${target}-${version}.tgz"
-archive="$artifacts/redbench-${version}-${target}.tar.gz"
+native_name="$(node "$root/scripts/release-plan.mjs" "$root" artifact-name "$version" "$target" platform)"
+archive_name="$(node "$root/scripts/release-plan.mjs" "$root" artifact-name "$version" "$target" archive)"
+native="$artifacts/$native_name"
+archive="$artifacts/$archive_name"
 [[ -f "$native" && -f "$archive" ]] || { printf 'native proof: target artifacts are missing for %s\n' "$target" >&2; exit 1; }
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT INT TERM HUP

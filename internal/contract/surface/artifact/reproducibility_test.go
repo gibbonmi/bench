@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -170,7 +171,7 @@ func TestOfflineSmokeRequiresApprovedReleaseEvidence(t *testing.T) {
 	probe.RequireContains(probe.Stderr, "offline smoke: approved release evidence is missing or unsafe")
 }
 
-func TestReleaseArtifactVerifierAcceptsValidEvidenceAndRejectsChecksumMutation(t *testing.T) {
+func TestReleaseArtifactVerifierRequiresFullyApprovedEvidence(t *testing.T) {
 	root := contract.SubjectRoot(t)
 	contract.SkipIfSubjectFileMissing(t, "scripts/verify-release-artifact.mjs")
 	dir := t.TempDir()
@@ -180,26 +181,126 @@ func TestReleaseArtifactVerifierAcceptsValidEvidenceAndRejectsChecksumMutation(t
 		t.Fatal(err)
 	}
 	digest := fmt.Sprintf("%x", sha256.Sum256(data))
-	index := []byte(fmt.Sprintf("{\"artifacts\":[{\"name\":\"%s\",\"sha256\":\"%s\"}]}\n", filepath.Base(artifact), digest))
 	indexPath, sumsPath := filepath.Join(dir, "release-index.json"), filepath.Join(dir, "SHA256SUMS")
-	if err := os.WriteFile(indexPath, index, 0o644); err != nil {
-		t.Fatal(err)
+	index, sums := approvedReleaseEvidenceFixture(t, root, "0.1.0", filepath.Base(artifact), digest, int64(len(data)))
+	write := func() {
+		encoded, err := json.Marshal(index)
+		if err != nil || os.WriteFile(indexPath, append(encoded, '\n'), 0o644) != nil || os.WriteFile(sumsPath, []byte(sums), 0o644) != nil {
+			t.Fatalf("write evidence fixture: %v", err)
+		}
 	}
-	if err := os.WriteFile(sumsPath, []byte(digest+"  "+filepath.Base(artifact)+"\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	write()
 	run := func() contract.Probe {
 		return contract.NewExecFixtureAt(t, root).Run("node", filepath.Join(root, "scripts", "verify-release-artifact.mjs"), indexPath, sumsPath, artifact)
 	}
 	run().RequireExit(0)
-	if err := os.WriteFile(sumsPath, []byte(strings.Repeat("0", 64)+"  "+filepath.Base(artifact)+"\n"), 0o644); err != nil {
+	for _, mutation := range []struct {
+		name, diagnostic string
+		apply            func()
+	}{
+		{"approval status", "release evidence is not a fully approved preflight", func() { index["status"] = "red" }},
+		{"artifact completeness", "release phase or artifact inventory is incomplete", func() {
+			artifacts := index["artifacts"].([]map[string]any)
+			index["artifacts"] = artifacts[:len(artifacts)-1]
+		}},
+		{"phase completeness", "release phase or artifact inventory is incomplete", func() {
+			phases := index["phases"].([]map[string]any)
+			index["phases"] = phases[:len(phases)-1]
+		}},
+		{"requirement completeness", "release requirements are incomplete or unsatisfied", func() {
+			requirements := index["requirements"].([]map[string]any)
+			index["requirements"] = requirements[:len(requirements)-1]
+		}},
+		{"reproducibility", "reproducibility evidence is incomplete or mismatched", func() { index["reproducibility"].(map[string]any)["status"] = "red" }},
+		{"native proof", "native proof evidence is incomplete or red", func() { index["native_proofs"].([]map[string]any)[0]["strip_status"] = "red" }},
+	} {
+		t.Run(mutation.name, func(t *testing.T) {
+			index, sums = approvedReleaseEvidenceFixture(t, root, "0.1.0", filepath.Base(artifact), digest, int64(len(data)))
+			mutation.apply()
+			write()
+			probe := run()
+			if probe.ExitCode == 0 {
+				t.Fatalf("offline artifact verifier accepted %s mutation", mutation.name)
+			}
+			probe.RequireContains(probe.Stderr, "offline smoke: "+mutation.diagnostic)
+		})
+	}
+	index, sums = approvedReleaseEvidenceFixture(t, root, "0.1.0", filepath.Base(artifact), digest, int64(len(data)))
+	write()
+	mutatedSums := strings.Replace(sums, digest+"  "+filepath.Base(artifact), strings.Repeat("0", 64)+"  "+filepath.Base(artifact), 1)
+	if err := os.WriteFile(sumsPath, []byte(mutatedSums), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	probe := run()
 	if probe.ExitCode == 0 {
 		t.Fatal("offline artifact verifier accepted a checksum mutation")
 	}
-	probe.RequireContains(probe.Stderr, "offline smoke: supplied release evidence does not bind artifact bytes")
+	probe.RequireContains(probe.Stderr, "offline smoke: SHA256SUMS does not derive exactly from the release index")
+}
+
+func approvedReleaseEvidenceFixture(t *testing.T, root, version, selected, selectedDigest string, selectedSize int64) (map[string]any, string) {
+	t.Helper()
+	hex := fmt.Sprintf("%064x", 1)
+	targets := []map[string]any{}
+	proofs := []map[string]any{}
+	artifacts := []map[string]any{}
+	for _, target := range []string{"darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"} {
+		parts := strings.Split(target, "-")
+		targets = append(targets, map[string]any{"os": parts[0], "arch": parts[1], "goos": parts[0], "goarch": parts[1], "runner": "runner-" + target})
+		proofs = append(proofs, map[string]any{"schema_version": 1, "target": target, "runner": "runner-" + target, "status": "green", "rebuilt_sha256": hex, "binary_sha256": hex, "package_sha256": hex, "archive_sha256": hex, "musl_status": map[bool]string{true: "green", false: "not_applicable"}[parts[0] == "linux"], "operations_status": "green", "strip_status": "green", "tools_status": "green"})
+		for _, name := range []string{"redbench-" + target + "-" + version + ".tgz", "redbench-" + version + "-" + target + ".tar.gz"} {
+			artifacts = append(artifacts, map[string]any{"name": name, "target": target, "size": int64(1), "sha256": hex, "component_manifest_sha256": hex, "sbom_sha256": hex, "inventory_sha256": hex})
+		}
+	}
+	artifacts = append(artifacts, map[string]any{"name": "redbench-" + version + ".tgz", "target": "wrapper", "size": int64(1), "sha256": hex, "component_manifest_sha256": hex, "sbom_sha256": hex, "inventory_sha256": hex})
+	slices.SortFunc(artifacts, func(a, b map[string]any) int { return strings.Compare(a["name"].(string), b["name"].(string)) })
+	for _, artifact := range artifacts {
+		if artifact["name"] == selected {
+			artifact["sha256"], artifact["size"] = selectedDigest, selectedSize
+		}
+	}
+	for _, proof := range proofs {
+		target := proof["target"].(string)
+		for _, artifact := range artifacts {
+			switch artifact["name"] {
+			case "redbench-" + target + "-" + version + ".tgz":
+				proof["package_sha256"] = artifact["sha256"]
+			case "redbench-" + version + "-" + target + ".tar.gz":
+				proof["archive_sha256"] = artifact["sha256"]
+			}
+		}
+	}
+	repro := []map[string]any{}
+	var sums strings.Builder
+	for _, artifact := range artifacts {
+		repro = append(repro, map[string]any{"name": artifact["name"], "size": artifact["size"], "sha256": artifact["sha256"], "match": true})
+		fmt.Fprintf(&sums, "%s  %s\n", artifact["sha256"], artifact["name"])
+	}
+	var registry struct {
+		Verify        []string `json:"verify"`
+		PublishBefore []string `json:"publish_before"`
+		PublishOnly   []string `json:"publish_only"`
+	}
+	contract.ReadJSONFile(t, filepath.Join(root, "internal", "releaseevidence", "registry.json"), &registry)
+	phases := []map[string]any{}
+	for _, name := range append(append(append([]string{}, registry.PublishBefore...), registry.Verify...), registry.PublishOnly...) {
+		phases = append(phases, map[string]any{"name": name, "status": "green", "record_sha256": hex})
+	}
+	var requirementRegistry struct {
+		Records []struct {
+			Key          string `json:"key"`
+			Owner        string `json:"owner"`
+			Schema       string `json:"schema"`
+			Requiredness string `json:"requiredness"`
+		} `json:"records"`
+	}
+	contract.ReadJSONFile(t, filepath.Join(root, "internal", "releaseevidence", "requirements.json"), &requirementRegistry)
+	requirements := []map[string]any{}
+	for _, item := range requirementRegistry.Records {
+		requirements = append(requirements, map[string]any{"key": item.Key, "owner": item.Owner, "schema": item.Schema, "requiredness": item.Requiredness, "applicable": true, "status": "satisfied"})
+	}
+	index := map[string]any{"schema_version": 1, "mode": "publish", "scope": "preflight", "profile": "public", "status": "green", "identity": map[string]any{"package_version": version, "source_commit": hex, "binary_version": version, "toolchain": "go"}, "targets": targets, "artifacts": artifacts, "phases": phases, "requirements": requirements, "native_proofs": proofs, "reproducibility": map[string]any{"schema_version": 1, "status": "green", "builds": 2, "artifacts": repro, "evidence": []map[string]any{{"name": "LICENSE", "size": int64(1), "sha256": hex, "match": true}}}}
+	return index, sums.String()
 }
 
 func assertComparatorRed(t *testing.T, probe contract.Probe, message string) {

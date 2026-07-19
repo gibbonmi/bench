@@ -44,16 +44,7 @@ func TestNativeProofAggregatorRejectsOneTargetOmission(t *testing.T) {
 	}
 	proofs := t.TempDir()
 	for _, target := range plan.Targets[:len(plan.Targets)-1] {
-		name := target.OS + "-" + target.Arch
-		musl := "not_applicable"
-		if target.OS == "linux" {
-			musl = "green"
-		}
-		proof := map[string]any{"schema_version": 1, "target": name, "runner": target.Runner, "status": "green", "rebuilt_sha256": "rebuilt", "binary_sha256": "binary", "package_sha256": "package", "archive_sha256": "archive", "musl_status": musl, "operations_status": "green", "strip_status": "green", "tools_status": "green"}
-		data, err := json.Marshal(proof)
-		if err != nil || os.WriteFile(filepath.Join(proofs, name+".json"), append(data, '\n'), 0o644) != nil {
-			t.Fatalf("write native proof: %v", err)
-		}
+		writeAggregateProof(t, proofs, target.OS, target.Arch, target.Runner, false)
 	}
 	command := exec.Command("bash", filepath.Join(root, "scripts", "aggregate-native-proofs.sh"), proofs)
 	output, err := command.CombinedOutput()
@@ -63,6 +54,54 @@ func TestNativeProofAggregatorRejectsOneTargetOmission(t *testing.T) {
 	missing := plan.Targets[len(plan.Targets)-1]
 	if !strings.Contains(string(output), "native proof set is missing "+missing.OS+"/"+missing.Arch) {
 		t.Fatalf("one-target omission was not attributed:\n%s", output)
+	}
+}
+
+func TestNativeProofAggregatorRejectsDigestMismatch(t *testing.T) {
+	root := contract.SubjectRoot(t)
+	contract.SkipIfSubjectFileMissing(t, "scripts/aggregate-native-proofs.sh")
+	var plan struct {
+		Targets []struct{ OS, Arch, Runner string } `json:"targets"`
+	}
+	contract.ReadJSONFile(t, filepath.Join(root, "scripts", "release-plan.json"), &plan)
+	proofs := t.TempDir()
+	for index, target := range plan.Targets {
+		writeAggregateProof(t, proofs, target.OS, target.Arch, target.Runner, index == 0)
+	}
+	command := exec.Command("bash", filepath.Join(root, "scripts", "aggregate-native-proofs.sh"), proofs)
+	if output, err := command.CombinedOutput(); err == nil {
+		t.Fatalf("digest binding mutation passed native proof aggregation:\n%s", output)
+	}
+}
+
+func TestAuthoritativeNativeProofBehaviorCanary(t *testing.T) {
+	root := contract.SubjectRoot(t)
+	marker := filepath.Join(root, "internal", "releaseevidence", "native_canary_test.go")
+	if _, err := os.Stat(marker); os.IsNotExist(err) {
+		t.Skip("authoritative native-proof canary fixture is not materialized")
+	}
+	command := exec.Command("go", "test", "-count=1", "-tags=bench_canary_native_proof", "-run", "^TestNativeProofAuthorizationCanary$", "./internal/releaseevidence")
+	command.Dir = root
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("authoritative native proof canary subprocess failed: %v\n%s", err, output)
+	}
+}
+
+func writeAggregateProof(t *testing.T, directory, osName, arch, runner string, mismatch bool) {
+	t.Helper()
+	digest, binary := strings.Repeat("1", 64), strings.Repeat("1", 64)
+	if mismatch {
+		binary = strings.Repeat("2", 64)
+	}
+	musl := "not_applicable"
+	if osName == "linux" {
+		musl = "green"
+	}
+	name := osName + "-" + arch
+	proof := map[string]any{"schema_version": 1, "target": name, "runner": runner, "status": "green", "rebuilt_sha256": digest, "binary_sha256": binary, "package_sha256": digest, "archive_sha256": digest, "musl_status": musl, "operations_status": "green", "strip_status": "green", "tools_status": "green"}
+	data, err := json.Marshal(proof)
+	if err != nil || os.WriteFile(filepath.Join(directory, name+".json"), append(data, '\n'), 0o644) != nil {
+		t.Fatalf("write native proof: %v", err)
 	}
 }
 

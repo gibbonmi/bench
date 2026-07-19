@@ -1,1 +1,1 @@
-[{"path":"internal/releaseevidence/registry.json","old":"\"ancestry\", ","new":""}]
+[{"path":"internal/releaseevidence/registry.json","old":"\"publish_before\": [\"identity\", \"ancestry\"],","new":"\"publish_before\": [\"identity\"],"}]

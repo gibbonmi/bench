@@ -1,6 +1,7 @@
 {
   "verify": ["gate", "race", "vet", "vulnerability", "artifacts", "smoke"],
-  "publish_only": ["identity", "ancestry", "changelog"],
+  "publish_before": ["identity", "ancestry"],
+  "publish_only": ["changelog"],
   "evidence_inputs": ["go.mod", "go.sum", "internal/releaseevidence/registry.json", "internal/releaseevidence/requirements.json"],
   "phases": {
     "gate": {"handler":"external", "argv":["{root}/bin/bench.sh", "gate"], "inputs":["bin/bench.sh", ".bench/gate.sh"]},

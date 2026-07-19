@@ -1,1 +1,1 @@
-[{"path":"internal/releaseevidence/registry.json","old":", \"changelog\"","new":""}]
+[{"path":"internal/releaseevidence/registry.json","old":"\"publish_only\": [\"changelog\"],","new":"\"publish_only\": [],"}]

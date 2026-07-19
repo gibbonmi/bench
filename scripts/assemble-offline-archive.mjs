@@ -10,7 +10,6 @@ if (!plan.targets.some(item => `${item.os}-${item.arch}` === target)) throw new 
 const packageEvidence = packagedEvidenceRecords(readReleaseRequirements(root));
 const entries = archiveEntries(plan, target, version, packageEvidence);
 const rootName = `redbench-${version}-${target}`;
-const archiveManifestPath = "evidence/component-manifest.json";
 
 function copyRegular(source, destination, mode) {
   const info = fs.lstatSync(source);
@@ -42,7 +41,8 @@ for (const entry of entries) {
 }
 
 const manifestEntry = entries.find(entry => entry.kind === "archive_manifest");
-if (!manifestEntry || manifestEntry.path !== archiveManifestPath) throw new Error("release plan has no archive component manifest");
+if (!manifestEntry) throw new Error("release plan has no archive component manifest");
+const archiveManifestPath = manifestEntry.path;
 const files = entries.filter(entry => entry.kind !== "archive_manifest").map(entry => {
   const file = path.join(archiveDir, entry.path);
   const data = fs.readFileSync(file);

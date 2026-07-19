@@ -131,13 +131,18 @@ func inspectNativeProofs(root string, targets []targetEvidence, artifacts []arti
 			return nil, fmt.Errorf("native proof %s cannot inspect platform binary: %w", name, err)
 		}
 		binaryDigest := digest(packageFiles["bin/bench"].data)
-		if proof.SchemaVersion != 1 || proof.Target != name || proof.Runner != target.Runner || proof.Status != "green" || proof.RebuiltSHA256 == "" || proof.RebuiltSHA256 != binaryDigest || proof.BinarySHA256 != binaryDigest || proof.PackageSHA256 != digestByName[platform] || proof.ArchiveSHA256 != digestByName[archive] || proof.OperationsStatus != "green" || proof.StripStatus != "green" || proof.ToolsStatus != "green" || (target.OS == "linux" && proof.MuslStatus != "green") || (target.OS == "darwin" && proof.MuslStatus != "not_applicable") {
+		if !nativeProofMatches(proof, target, binaryDigest, digestByName[platform], digestByName[archive]) {
 			return nil, fmt.Errorf("native proof %s does not match inspected artifacts", name)
 		}
 		proofs = append(proofs, proof)
 	}
 	sort.Slice(proofs, func(i, j int) bool { return proofs[i].Target < proofs[j].Target })
 	return proofs, nil
+}
+
+func nativeProofMatches(proof nativeProofEvidence, target targetEvidence, binaryDigest, packageDigest, archiveDigest string) bool {
+	name := target.OS + "-" + target.Arch
+	return proof.SchemaVersion == 1 && proof.Target == name && proof.Runner == target.Runner && proof.Status == "green" && proof.RebuiltSHA256 != "" && proof.RebuiltSHA256 == binaryDigest && proof.BinarySHA256 == binaryDigest && proof.PackageSHA256 == packageDigest && proof.ArchiveSHA256 == archiveDigest && proof.OperationsStatus == "green" && proof.StripStatus == "green" && proof.ToolsStatus == "green" && (target.OS != "linux" || proof.MuslStatus == "green") && (target.OS != "darwin" || proof.MuslStatus == "not_applicable")
 }
 
 func mustArtifactBytes(root, name string) []byte {

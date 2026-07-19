@@ -69,21 +69,41 @@ func TestNativeProofAggregationRejectsIncompleteAndRedProofs(t *testing.T) {
 	if output, err := run(); err == nil || !strings.Contains(output, "native proof is incomplete or red for darwin/arm64") {
 		t.Fatalf("corrupt proof did not fail closed: %v\n%s", err, output)
 	}
-	for label, mutate := range map[string]func(map[string]any){
-		"wrong runner":  func(proof map[string]any) { proof["runner"] = "wrong-runner" },
-		"tool failure":  func(proof map[string]any) { proof["tools_status"] = "red" },
-		"no-op failure": func(proof map[string]any) { proof["operations_status"] = "red" },
+	for label, mutate := range map[string]func(map[string]any, canonicalTarget){
+		"wrong runner":  func(proof map[string]any, _ canonicalTarget) { proof["runner"] = "wrong-runner" },
+		"tool failure":  func(proof map[string]any, _ canonicalTarget) { proof["tools_status"] = "red" },
+		"no-op failure": func(proof map[string]any, _ canonicalTarget) { proof["operations_status"] = "red" },
+		"digest binding": func(proof map[string]any, target canonicalTarget) {
+			if target.os == "darwin" && target.arch == "arm64" {
+				proof["binary_sha256"] = strings.Repeat("2", 64)
+			}
+		},
+		"Linux musl": func(proof map[string]any, target canonicalTarget) {
+			if target.os == "linux" && target.arch == "x64" {
+				proof["musl_status"] = "red"
+			}
+		},
+		"strip status": func(proof map[string]any, target canonicalTarget) {
+			if target.os == "darwin" && target.arch == "arm64" {
+				proof["strip_status"] = "red"
+			}
+		},
 	} {
 		t.Run(label, func(t *testing.T) {
 			writeNativeProofs(t, root, proofs, mutate)
-			if output, err := run(); err == nil || !strings.Contains(output, "native proof is incomplete or red for darwin/arm64") {
+			if output, err := run(); err == nil {
+				if label == "digest binding" {
+					t.Fatalf("digest binding mutation passed native proof aggregation\n%s", output)
+				}
+				t.Fatalf("%s did not fail closed: %v\n%s", label, err, output)
+			} else if !strings.Contains(output, "native proof is incomplete or red for") {
 				t.Fatalf("%s did not fail closed: %v\n%s", label, err, output)
 			}
 		})
 	}
 }
 
-func writeNativeProofs(t *testing.T, root, directory string, mutate func(map[string]any)) {
+func writeNativeProofs(t *testing.T, root, directory string, mutate func(map[string]any, canonicalTarget)) {
 	t.Helper()
 	if err := os.MkdirAll(directory, 0o755); err != nil {
 		t.Fatal(err)
@@ -98,17 +118,17 @@ func writeNativeProofs(t *testing.T, root, directory string, mutate func(map[str
 			"target":            name,
 			"runner":            runner,
 			"status":            "green",
-			"rebuilt_sha256":    "rebuilt",
-			"binary_sha256":     "binary",
-			"package_sha256":    "package",
-			"archive_sha256":    "archive",
+			"rebuilt_sha256":    strings.Repeat("1", 64),
+			"binary_sha256":     strings.Repeat("1", 64),
+			"package_sha256":    strings.Repeat("1", 64),
+			"archive_sha256":    strings.Repeat("1", 64),
 			"musl_status":       musl,
 			"operations_status": "green",
 			"strip_status":      "green",
 			"tools_status":      "green",
 		}
-		if name == "darwin-arm64" && mutate != nil {
-			mutate(proof)
+		if mutate != nil {
+			mutate(proof, target)
 		}
 		data, err := json.Marshal(proof)
 		if err != nil {

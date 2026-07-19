@@ -193,11 +193,12 @@ func makeOfflineJourneyFixtureForTarget(t *testing.T, runtimeTarget string) (str
 	archivePath := filepath.Join(artifacts, "redbench-0.2.0-linux-x64.tar.gz")
 	archive := writeSmokeTar(t, archivePath, rootName, archiveFiles)
 	digest := fmt.Sprintf("%x", sha256.Sum256(archive))
-	index, _ := json.Marshal(map[string]any{"artifacts": []map[string]string{{"name": filepath.Base(archivePath), "sha256": digest}}})
+	indexValue, sums := approvedReleaseEvidenceFixture(t, contract.SubjectRoot(t), "0.2.0", filepath.Base(archivePath), digest, int64(len(archive)))
+	index, _ := json.Marshal(indexValue)
 	if err := os.WriteFile(filepath.Join(evidence, "release-index.json"), append(index, '\n'), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(evidence, "SHA256SUMS"), []byte(digest+"  "+filepath.Base(archivePath)+"\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(evidence, "SHA256SUMS"), []byte(sums), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	return artifacts, evidence

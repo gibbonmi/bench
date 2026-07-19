@@ -87,6 +87,7 @@ var registry = loadRegistry()
 
 type phaseRegistry struct {
 	Verify         []string                   `json:"verify"`
+	PublishBefore  []string                   `json:"publish_before"`
 	PublishOnly    []string                   `json:"publish_only"`
 	EvidenceInputs []string                   `json:"evidence_inputs"`
 	Phases         map[string]PhaseDefinition `json:"phases"`
@@ -166,7 +167,8 @@ func loadRegistry() phaseRegistry {
 	if err := decodeStrict(registryJSON, &value); err != nil {
 		panic("invalid embedded preflight registry: " + err.Error())
 	}
-	for _, name := range append(append([]string{}, value.Verify...), value.PublishOnly...) {
+	allPhases := append(append(append([]string{}, value.PublishBefore...), value.Verify...), value.PublishOnly...)
+	for _, name := range allPhases {
 		if value.Phases[name].Handler == "" {
 			panic("missing preflight phase definition: " + name)
 		}
@@ -212,7 +214,7 @@ func Requirements() []Requirement {
 func PhaseNames(mode Mode) []string {
 	names := append([]string{}, registry.Verify...)
 	if mode == ModePublish {
-		names = append(names, registry.PublishOnly...)
+		names = append(append(append([]string{}, registry.PublishBefore...), names...), registry.PublishOnly...)
 	}
 	return names
 }
@@ -234,7 +236,8 @@ func releaseInputPaths() []string {
 		}
 	}
 	add(registry.EvidenceInputs)
-	for _, name := range append(append([]string{}, registry.Verify...), registry.PublishOnly...) {
+	allPhases := append(append(append([]string{}, registry.PublishBefore...), registry.Verify...), registry.PublishOnly...)
+	for _, name := range allPhases {
 		add(registry.Phases[name].Inputs)
 	}
 	sort.Strings(paths)

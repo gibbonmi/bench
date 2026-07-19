@@ -64,6 +64,19 @@ export function archiveEntries(plan, target, version, packageEvidence) {
   }).map(entry => ({...entry, archive_path: `${root}/${entry.path}`})).sort((a, b) => byteOrder(a.path, b.path));
 }
 
+export function archiveEntryPath(plan, kind, target, version, packageEvidence) {
+	const matches = archiveEntries(plan, target, version, packageEvidence).filter(entry => entry.kind === kind);
+	if (matches.length !== 1) throw new Error(`release plan has ${matches.length} archive entries for ${kind}`);
+	return matches[0].path;
+}
+
+export function archiveEvidencePath(plan, key, target, version, packageEvidence) {
+	const records = new Map(packageEvidence.map(record => [record.path, record.key]));
+	const matches = archiveEntries(plan, target, version, packageEvidence).filter(entry => entry.kind === "package_evidence" && records.get(entry.path.replace(/^evidence\//, "")) === key);
+	if (matches.length !== 1) throw new Error(`release plan has ${matches.length} packaged evidence entries for ${key}`);
+	return matches[0].path;
+}
+
 export function archiveInventory(root, plan, target, version) {
 	const packageEvidence = packagedEvidenceRecords(readReleaseRequirements(root));
 	return Object.fromEntries(archiveEntries(plan, target, version, packageEvidence).map(entry => [entry.path, Number.parseInt(entry.mode, 8)]));
@@ -77,7 +90,7 @@ export function releaseEvidenceNames(root) {
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [root, command, ...args] = process.argv.slice(2);
-	if (!root || !command) throw new Error("usage: release-plan.mjs <root> <normalized-json|targets|matrix-json|artifact-names|artifact-records|archive-inventory|evidence-names|target> [arguments]");
+	if (!root || !command) throw new Error("usage: release-plan.mjs <root> <normalized-json|targets|matrix-json|artifact-names|artifact-records|artifact-name|archive-inventory|archive-entry-path|archive-evidence-path|evidence-names|target> [arguments]");
   const plan = readReleasePlan(root);
   if (command === "normalized-json") {
     process.stdout.write(JSON.stringify(plan) + "\n");
@@ -91,9 +104,20 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
 	} else if (command === "artifact-records") {
 		if (args.length !== 1) throw new Error("artifact-records requires version");
 		process.stdout.write(JSON.stringify(artifactRecords(plan, args[0])) + "\n");
+	} else if (command === "artifact-name") {
+		if (args.length !== 3) throw new Error("artifact-name requires version, target, and kind");
+		const matches = artifactRecords(plan, args[0]).filter(item => item.target === args[1] && item.kind === args[2]);
+		if (matches.length !== 1) throw new Error(`release plan has ${matches.length} artifacts for ${args[1]} ${args[2]}`);
+		process.stdout.write(matches[0].name + "\n");
 	} else if (command === "archive-inventory") {
 		if (args.length !== 2) throw new Error("archive-inventory requires target and version");
 		process.stdout.write(JSON.stringify(archiveInventory(root, plan, args[0], args[1])) + "\n");
+	} else if (command === "archive-entry-path") {
+		if (args.length !== 3) throw new Error("archive-entry-path requires kind, target, and version");
+		process.stdout.write(archiveEntryPath(plan, args[0], args[1], args[2], packagedEvidenceRecords(readReleaseRequirements(root))) + "\n");
+	} else if (command === "archive-evidence-path") {
+		if (args.length !== 3) throw new Error("archive-evidence-path requires requirement key, target, and version");
+		process.stdout.write(archiveEvidencePath(plan, args[0], args[1], args[2], packagedEvidenceRecords(readReleaseRequirements(root))) + "\n");
   } else if (command === "evidence-names") {
     process.stdout.write(releaseEvidenceNames(root).join("\n") + "\n");
   } else if (command === "target") {

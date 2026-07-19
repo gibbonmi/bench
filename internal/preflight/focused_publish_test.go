@@ -2,12 +2,32 @@ package preflight
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 )
+
+func TestPublishIdentityFailurePreventsArtifactConstruction(t *testing.T) {
+	root := preflightRepo(t)
+	marker := filepath.Join(t.TempDir(), "artifact-construction-ran")
+	phase := filepath.Join(t.TempDir(), "artifact-phase")
+	if err := os.WriteFile(phase, []byte("#!/bin/sh\n: > \"$BENCH_ORDER_MARKER\"\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("BENCH_PREFLIGHT_REF", "not-a-release-tag")
+	t.Setenv("BENCH_PREFLIGHT_ARTIFACTS", phase)
+	t.Setenv("BENCH_ORDER_MARKER", marker)
+	results := (&runner{root: root, mode: ModePublish, binaryVersion: "0.2.0"}).run(context.Background(), "")
+	if len(results) == 0 || results[0].Name != "identity" || results[0].Status != StatusRed {
+		t.Fatalf("publish did not fail first at identity: %+v", results)
+	}
+	if _, err := os.Stat(marker); !os.IsNotExist(err) {
+		t.Fatalf("artifact construction ran before release identity authorization: %v", err)
+	}
+}
 
 func TestBuiltCommandFocusedPublishRunsDiagnosticWithoutAuthorizing(t *testing.T) {
 	binary := filepath.Join(t.TempDir(), "bench")

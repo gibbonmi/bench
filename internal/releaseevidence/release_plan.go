@@ -58,3 +58,23 @@ func archiveInventory(root, target, version string) (map[string]int64, error) {
 	}
 	return files, nil
 }
+
+func archiveEntryPath(root, kind, target, version string) (string, error) {
+	return releasePlanPath(root, "archive-entry-path", kind, target, version)
+}
+
+func archiveEvidencePath(root, requirementKey, target, version string) (string, error) {
+	return releasePlanPath(root, "archive-evidence-path", requirementKey, target, version)
+}
+
+func releasePlanPath(root string, arguments ...string) (string, error) {
+	data, err := releasePlanOutput(root, arguments...)
+	if err != nil {
+		return "", fmt.Errorf("release plan archive path is unavailable: %w", err)
+	}
+	path := string(data)
+	if len(path) == 0 || path[len(path)-1] != '\n' {
+		return "", fmt.Errorf("release plan archive path is malformed")
+	}
+	return path[:len(path)-1], nil
+}

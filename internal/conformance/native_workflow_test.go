@@ -39,8 +39,9 @@ func checkReleasePreflight(root string) []string {
 	}
 	registryUsable := err == nil
 	var registry struct {
-		Verify      []string `json:"verify"`
-		PublishOnly []string `json:"publish_only"`
+		Verify        []string `json:"verify"`
+		PublishBefore []string `json:"publish_before"`
+		PublishOnly   []string `json:"publish_only"`
 	}
 	if registryUsable {
 		if decodeErr := json.Unmarshal(data, &registry); decodeErr != nil {
@@ -104,7 +105,7 @@ func checkReleasePreflight(root string) []string {
 	if registryUsable && !reflect.DeepEqual(registry.Verify, []string{"gate", "race", "vet", "vulnerability", "artifacts", "smoke"}) {
 		diags = append(diags, "release preflight verify registry omits or reorders a required phase class")
 	}
-	if registryUsable && !reflect.DeepEqual(registry.PublishOnly, []string{"identity", "ancestry", "changelog"}) {
+	if registryUsable && (!reflect.DeepEqual(registry.PublishBefore, []string{"identity", "ancestry"}) || !reflect.DeepEqual(registry.PublishOnly, []string{"changelog"})) {
 		diags = append(diags, "release preflight publish registry omits or reorders a required phase class")
 	}
 	native := readIfExists(filepath.Join(root, ".github", "workflows", "native-runtime.yml"))
@@ -345,20 +346,18 @@ func main() {
 	if err != nil {
 		return []string{"release evidence probe did not generate release-index.json"}
 	}
-	var index struct {
-		Artifacts []struct {
-			ComponentDigest string `json:"component_manifest_sha256"`
-		} `json:"artifacts"`
+	if diagnostic := validateReleaseIndexComponentDigests(indexData); diagnostic != "" {
+		return []string{diagnostic}
 	}
-	if err := json.Unmarshal(indexData, &index); err != nil {
-		return []string{"release evidence probe generated malformed release-index.json"}
-	}
-	for _, artifact := range index.Artifacts {
-		if artifact.ComponentDigest == "" {
-			return []string{"release index does not bind component manifest digests"}
+	var proofTarget struct{ OS, Arch string }
+	for _, target := range plan.Targets {
+		if target.OS == "linux" {
+			proofTarget.OS, proofTarget.Arch = target.OS, target.Arch
+			break
 		}
 	}
-	return nil
+	proofPath := filepath.Join(proofDir, proofTarget.OS+"-"+proofTarget.Arch+".json")
+	return verifyAuthoritativeNativeProofMutations(root, proofPath, env)
 }
 
 func readJSONAt(root, rel string, value any) error {

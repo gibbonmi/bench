@@ -172,7 +172,15 @@ func inspectArtifacts(root string) ([]artifactEvidence, []targetEvidence, string
 			if err != nil {
 				return nil, nil, "", err
 			}
-			artifacts = append(artifacts, artifactEvidence{Name: entry.Name(), Target: target, Size: int64(len(data)), SHA256: digest(data), ComponentDigest: digest(files["evidence/component-manifest.json"].data), SBOMDigest: digest(files["evidence/governance/sbom.spdx.json"].data), InventoryDigest: digest(inventory)})
+			componentPath, pathErr := archiveEntryPath(root, "archive_manifest", target, version)
+			if pathErr != nil {
+				return nil, nil, "", pathErr
+			}
+			sbomPath, pathErr := archiveEvidencePath(root, "core.sbom", target, version)
+			if pathErr != nil {
+				return nil, nil, "", pathErr
+			}
+			artifacts = append(artifacts, artifactEvidence{Name: entry.Name(), Target: target, Size: int64(len(data)), SHA256: digest(data), ComponentDigest: digest(files[componentPath].data), SBOMDigest: digest(files[sbomPath].data), InventoryDigest: digest(inventory)})
 			continue
 		}
 		files, manifest, err := readTarball(data)
@@ -197,13 +205,33 @@ func inspectArtifacts(root string) ([]artifactEvidence, []targetEvidence, string
 		if err != nil {
 			return nil, nil, "", err
 		}
-		if !bytes.Equal(archiveFiles["packages/redbench-"+version+".tgz"].data, artifactBytes["redbench-"+version+".tgz"]) || !bytes.Equal(archiveFiles["packages/"+platformName].data, artifactBytes[platformName]) {
+		wrapperPath, err := archiveEntryPath(root, "wrapper_tarball", target, version)
+		if err != nil {
+			return nil, nil, "", err
+		}
+		platformPath, err := archiveEntryPath(root, "platform_tarball", target, version)
+		if err != nil {
+			return nil, nil, "", err
+		}
+		binaryPath, err := archiveEntryPath(root, "binary", target, version)
+		if err != nil {
+			return nil, nil, "", err
+		}
+		wrapperManifestPath, err := archiveEntryPath(root, "wrapper_manifest", target, version)
+		if err != nil {
+			return nil, nil, "", err
+		}
+		platformManifestPath, err := archiveEntryPath(root, "platform_manifest", target, version)
+		if err != nil {
+			return nil, nil, "", err
+		}
+		if !bytes.Equal(archiveFiles[wrapperPath].data, artifactBytes["redbench-"+version+".tgz"]) || !bytes.Equal(archiveFiles[platformPath].data, artifactBytes[platformName]) {
 			return nil, nil, "", fmt.Errorf("offline archive %s does not carry the approved npm tarball bytes", archiveName)
 		}
-		if !bytes.Equal(archiveFiles["bin/bench"].data, packageFiles[platformName]["bin/bench"].data) {
+		if !bytes.Equal(archiveFiles[binaryPath].data, packageFiles[platformName]["bin/bench"].data) {
 			return nil, nil, "", fmt.Errorf("offline archive %s binary differs from platform package", archiveName)
 		}
-		if !bytes.Equal(archiveFiles["evidence/components/wrapper-component-manifest.json"].data, packageFiles["redbench-"+version+".tgz"][requirements.ComponentManifest.Path].data) || !bytes.Equal(archiveFiles["evidence/components/platform-component-manifest.json"].data, packageFiles[platformName][requirements.ComponentManifest.Path].data) {
+		if !bytes.Equal(archiveFiles[wrapperManifestPath].data, packageFiles["redbench-"+version+".tgz"][requirements.ComponentManifest.Path].data) || !bytes.Equal(archiveFiles[platformManifestPath].data, packageFiles[platformName][requirements.ComponentManifest.Path].data) {
 			return nil, nil, "", fmt.Errorf("offline archive %s component evidence differs from package evidence", archiveName)
 		}
 	}

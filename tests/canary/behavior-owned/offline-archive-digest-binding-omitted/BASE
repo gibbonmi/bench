@@ -1,1 +1,3 @@
 scripts/verify-release-artifact.mjs
+internal/releaseevidence/registry.json
+internal/releaseevidence/requirements.json

@@ -91,11 +91,15 @@ func validateOfflineArchiveFiles(root string, files map[string]tarFile, target, 
 	if !bytes.Contains(files["OFFLINE.md"].data, []byte("--offline")) || !bytes.Contains(files["OFFLINE.md"].data, []byte("SHA256SUMS | sha256sum -c -")) || bytes.Contains(files["OFFLINE.md"].data, []byte("sha256sum -c SHA256SUMS")) || !bytes.Contains(files["OFFLINE.md"].data, []byte("npm publish ./packages/")) {
 		return errors.New("offline archive instructions are incomplete")
 	}
-	return validateArchiveManifest(files, target, version)
+	return validateArchiveManifest(root, files, target, version)
 }
 
-func validateArchiveManifest(files map[string]tarFile, target, version string) error {
-	manifestFile := files["evidence/component-manifest.json"]
+func validateArchiveManifest(root string, files map[string]tarFile, target, version string) error {
+	manifestPath, err := archiveEntryPath(root, "archive_manifest", target, version)
+	if err != nil {
+		return err
+	}
+	manifestFile := files[manifestPath]
 	manifest, err := decodeComponentManifest(manifestFile.data)
 	if err != nil {
 		return fmt.Errorf("offline archive component manifest is malformed: %w", err)
@@ -110,7 +114,7 @@ func validateArchiveManifest(files map[string]tarFile, target, version string) e
 	last := ""
 	for _, item := range manifest.Files {
 		file, ok := files[item.Path]
-		if !ok || item.Path <= last || item.Path == "evidence/component-manifest.json" || item.Mode != fmt.Sprintf("%o", file.mode) || item.Size != int64(len(file.data)) || item.SHA256 != digest(file.data) {
+		if !ok || item.Path <= last || item.Path == manifestPath || item.Mode != fmt.Sprintf("%o", file.mode) || item.Size != int64(len(file.data)) || item.SHA256 != digest(file.data) {
 			return fmt.Errorf("offline archive component manifest disagrees with %s", item.Path)
 		}
 		last = item.Path
