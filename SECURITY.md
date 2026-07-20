@@ -8,6 +8,9 @@ against a malicious or compromised process. Security boundaries come from the
 harness or operating-system sandbox and from server-enforced repository protections,
 including protected branches and required review.
 
+For an inventory of every repository-controlled path that prompt, environment,
+file, log, network, cache, and retention data reaches, see `DATA_HANDLING.md`.
+
 ## Network egress
 
 Bench makes outbound requests in three situations:

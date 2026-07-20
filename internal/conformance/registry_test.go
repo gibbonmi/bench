@@ -88,6 +88,8 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"write-spec-open-fork-fallback":                conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"shape-idea-write-spec-entry-contract-pointer": conformanceFixture(".bench/gate-docs-contracts.sh"),
 
+	"undocumented-passlist-var": conformanceFixture(".bench/gate.sh"),
+
 	"line-binding-prose-drift": conformanceFixture(".bench/gate-line-contracts.sh"),
 	"agent-hook-unwired":       conformanceFixture(".bench/gate-line-contracts.sh"),
 	"agent-hook-broken":        conformanceFixture(".bench/gate-line-contracts.sh"),

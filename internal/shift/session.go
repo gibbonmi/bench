@@ -6,11 +6,13 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/env"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -18,10 +20,10 @@ import (
 	"github.com/gibbonmi/bench/internal/worktree"
 )
 
-// iterationPrompt is the text a shift iteration hands its adapter as the single
-// positional argument. It has always lived inside the executable (a heredoc in the
-// shell); it is reviewer-facing content only through the running loop, never a tunable
-// file. %s is the objective.
+// iterationPrompt is the text a shift iteration writes to its adapter's stdin. It has
+// always lived inside the executable (a heredoc in the shell); it is reviewer-facing
+// content only through the running loop, never a tunable file. %s is the objective. It
+// travels on stdin, never argv, so it never appears in a process listing.
 const iterationPrompt = `You are one iteration of a Bench shift. Objective: %s
 First read .bench-notes.md for what prior iterations learned, did, and left
 unfinished. Then make ONE small, self-contained change toward the objective, at
@@ -58,7 +60,6 @@ var timeNow = time.Now
 type session struct {
 	agent  string
 	root   string
-	stdin  io.Reader
 	stdout io.Writer
 	stderr io.Writer
 
@@ -150,17 +151,24 @@ func (s *session) refactorPhase(base string, rcap int) error {
 	return nil
 }
 
-// runAdapter invokes the harness adapter with the prompt as its single positional
-// argument, BENCH_SHIFT=1 armed (which arms the Stop hook so the agent cannot declare
-// done on red), from the worktree root. The child runs in its own process group so a
-// pulled line can tear down the whole adapter tree, not just the immediate child. The
-// returned error — a spawn failure or a nonzero exit — is evidence for progress, not the
-// oracle: the gate still decides whether an iteration's work counts.
+// runAdapter invokes the harness adapter with the prompt written to its stdin and no
+// positional argument, BENCH_SHIFT=1 armed (which arms the Stop hook so the agent cannot
+// declare done on red), from the worktree root. Stdin transport keeps the prompt out of
+// the machine's process listing on the hop Bench controls. The child runs in its own
+// process group so a pulled line can tear down the whole adapter tree, not just the
+// immediate child. The returned error — a spawn failure or a nonzero exit — is evidence
+// for progress, not the oracle: the gate still decides whether an iteration's work counts.
 func (s *session) runAdapter(prompt string) error {
-	cmd := exec.Command(s.agent, prompt)
+	adapterEnv, err := env.Build(s.root)
+	if err != nil {
+		fmt.Fprintln(s.stderr, err)
+		return err
+	}
+	cmd := exec.Command(s.agent)
 	cmd.Dir = s.root
-	cmd.Env = append(os.Environ(), "BENCH_SHIFT=1")
-	cmd.Stdin, cmd.Stdout, cmd.Stderr = s.stdin, s.stdout, s.stderr
+	cmd.Env = append(adapterEnv, "BENCH_SHIFT=1")
+	cmd.Stdin = strings.NewReader(prompt)
+	cmd.Stdout, cmd.Stderr = s.stdout, s.stderr
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	s.mu.Lock()
 	s.adapter = cmd

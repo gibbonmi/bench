@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -18,9 +17,9 @@ func TestLedgerCommonDirectoryAndSchemaUpsert(t *testing.T) {
 	runGit(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
 	created := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	entries := []Entry{
-		{Key: "shift-1", Kind: KindShift, Objective: "ship the thing", CreatedAt: created, Worktree: linked, Branch: "bench/shift-1"},
-		{Key: "worktree-1", Kind: KindWorktree, Objective: "inspect", CreatedAt: created},
-		{Key: "agent-1", Kind: KindClaudeAgent, Objective: "delegate", CreatedAt: created},
+		{Key: "shift-1", Kind: KindShift, CreatedAt: created, Worktree: linked, Branch: "bench/shift-1"},
+		{Key: "worktree-1", Kind: KindWorktree, CreatedAt: created},
+		{Key: "agent-1", Kind: KindClaudeAgent, CreatedAt: created},
 	}
 	for i, e := range entries {
 		writerRoot := root
@@ -70,9 +69,9 @@ func TestReadEvidenceStates(t *testing.T) {
 		{"malformed", "{\n"},
 		{"missing final newline", `{"schema":1,"entries":[]}`},
 		{"duplicate field", "{\"schema\":1,\"schema\":1,\"entries\":[]}\n"},
-		{"nested duplicate field", "{\"schema\":1,\"entries\":[{\"key\":\"legacy\",\"key\":\"legacy\",\"kind\":\"shift\",\"objective\":\"x\",\"created_at\":\"2026-07-11T00:00:00Z\"}]}\n"},
+		{"nested duplicate field", "{\"schema\":1,\"entries\":[{\"key\":\"legacy\",\"key\":\"legacy\",\"kind\":\"shift\",\"created_at\":\"2026-07-11T00:00:00Z\"}]}\n"},
 		{"unknown field", "{\"schema\":1,\"entries\":[],\"unknown\":true}\n"},
-		{"nested unknown field", "{\"schema\":1,\"entries\":[{\"key\":\"legacy\",\"kind\":\"shift\",\"objective\":\"x\",\"created_at\":\"2026-07-11T00:00:00Z\",\"unknown\":true}]}\n"},
+		{"nested unknown field", "{\"schema\":1,\"entries\":[{\"key\":\"legacy\",\"kind\":\"shift\",\"created_at\":\"2026-07-11T00:00:00Z\",\"unknown\":true}]}\n"},
 		{"trailing value", "{\"schema\":1,\"entries\":[]} {}\n"},
 		{"trailing bytes", "{\"schema\":1,\"entries\":[]} nope\n"},
 		{"wrong field type", "{\"schema\":\"1\",\"entries\":[]}\n"},
@@ -88,7 +87,7 @@ func TestReadEvidenceStates(t *testing.T) {
 			}
 		})
 	}
-	legacy := " \n { \"schema\" : 1, \"entries\" : [ { \"key\" : \"legacy-1\", \"kind\" : \"shift\", \"objective\" : \"legacy objective\", \"created_at\" : \"2026-07-11T00:00:00Z\" } ] } \t\n"
+	legacy := " \n { \"schema\" : 1, \"entries\" : [ { \"key\" : \"legacy-1\", \"kind\" : \"shift\", \"created_at\" : \"2026-07-11T00:00:00Z\" } ] } \t\n"
 	if err := os.WriteFile(path, []byte(legacy), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -105,21 +104,6 @@ func TestReadEvidenceStates(t *testing.T) {
 	}
 }
 
-func TestPreviewBoundariesAndControls(t *testing.T) {
-	cases := []struct{ in, want string }{
-		{"", ""},
-		{"a", "a"},
-		{"line\n\x1b\a", `line\n\u001b\u0007`},
-		{strings.Repeat("é", 120), strings.Repeat("é", 120)},
-		{strings.Repeat("é", 121), strings.Repeat("é", 120) + "… (242 bytes)"},
-	}
-	for _, tc := range cases {
-		if got := Preview(tc.in); got != tc.want {
-			t.Errorf("Preview(%q) = %q, want %q", tc.in, got, tc.want)
-		}
-	}
-}
-
 func TestConcurrentWritersKeepEveryEntryAndStaleLockReclaims(t *testing.T) {
 	root := newRepo(t)
 	const n = 12
@@ -129,7 +113,7 @@ func TestConcurrentWritersKeepEveryEntryAndStaleLockReclaims(t *testing.T) {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			errCh <- Upsert(root, Entry{Key: string(rune('a' + i)), Kind: KindShift, Objective: "x", CreatedAt: time.Unix(int64(i+1), 0).UTC()})
+			errCh <- Upsert(root, Entry{Key: string(rune('a' + i)), Kind: KindShift, CreatedAt: time.Unix(int64(i+1), 0).UTC()})
 		}(i)
 	}
 	wg.Wait()
@@ -147,7 +131,7 @@ func TestConcurrentWritersKeepEveryEntryAndStaleLockReclaims(t *testing.T) {
 	if err := os.WriteFile(path+".lock", []byte("999999 1\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := Upsert(root, Entry{Key: "reclaimed", Kind: KindWorktree, Objective: "x", CreatedAt: time.Now().UTC()}); err != nil {
+	if err := Upsert(root, Entry{Key: "reclaimed", Kind: KindWorktree, CreatedAt: time.Now().UTC()}); err != nil {
 		t.Fatalf("stale lock not reclaimed: %v", err)
 	}
 }
@@ -157,9 +141,9 @@ func TestSnapshotProofLifecycle(t *testing.T) {
 	created := time.Unix(1, 0).UTC()
 	missing := filepath.Join(root, "gone")
 	for _, e := range []Entry{
-		{Key: "no-proof", Kind: KindShift, Objective: "keep", CreatedAt: created},
-		{Key: "missing", Kind: KindWorktree, Objective: "done", CreatedAt: created, Worktree: missing},
-		{Key: "landed", Kind: KindShift, Objective: "done", CreatedAt: created, Branch: "landed"},
+		{Key: "no-proof", Kind: KindShift, CreatedAt: created},
+		{Key: "missing", Kind: KindWorktree, CreatedAt: created, Worktree: missing},
+		{Key: "landed", Kind: KindShift, CreatedAt: created, Branch: "landed"},
 	} {
 		if err := Upsert(root, e); err != nil {
 			t.Fatal(err)
@@ -185,14 +169,14 @@ func TestSnapshotProofLifecycle(t *testing.T) {
 func TestUncorrelatedEntriesUseCandidateSet(t *testing.T) {
 	root := newRepo(t)
 	for _, key := range []string{"agent-a", "agent-b"} {
-		if err := Upsert(root, Entry{Key: key, Kind: KindClaudeAgent, Objective: key, CreatedAt: time.Unix(1, 0).UTC()}); err != nil {
+		if err := Upsert(root, Entry{Key: key, Kind: KindClaudeAgent, CreatedAt: time.Unix(1, 0).UTC()}); err != nil {
 			t.Fatal(err)
 		}
 	}
 	if got, _ := Snapshot(root); len(got) != 0 {
 		t.Fatalf("zero candidates kept %#v", got)
 	}
-	if err := Upsert(root, Entry{Key: "agent-c", Kind: KindClaudeAgent, Objective: "c", CreatedAt: time.Unix(1, 0).UTC()}); err != nil {
+	if err := Upsert(root, Entry{Key: "agent-c", Kind: KindClaudeAgent, CreatedAt: time.Unix(1, 0).UTC()}); err != nil {
 		t.Fatal(err)
 	}
 	runGit(t, root, "branch", "worktree-agent-candidate")

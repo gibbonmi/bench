@@ -105,14 +105,23 @@ Driven by hooks and adapters, never typed by sessions — the one enumeration
 ## Harness adapter for the shift loop
 
 `bench shift` drives whatever harness `BENCH_AGENT` names: each iteration it runs
-the adapter executable with the generated prompt as its **single positional
-argument** and `BENCH_SHIFT=1` armed. There is no default — an unset `BENCH_AGENT`
+the adapter executable with the generated prompt written to its **stdin** — no
+positional argument — and `BENCH_SHIFT=1` armed. The prompt is multi-line and may
+start with a dash; an adapter reads all of stdin, must not re-expose the prompt as
+a CLI argument, and exits with its harness's exit code, which the loop takes as
+progress evidence (the gate stays the oracle). The adapter launches with a
+documented **passlisted environment**, not the parent's full environment; widen it
+only by committing extra names under the `[agent]` section (the only section) of
+`.bench/env.allow` — a variable the *gate* needs is declared in
+`.bench/gate-inputs.json` instead. There is no default — an unset `BENCH_AGENT`
 fails fast before the loop with a configure-your-adapter error. Reference adapters
 ship in `.bench/adapters/` (`claude`, `codex`, `opencode`); point `BENCH_AGENT` at
-one, or at your own wrapper that maps `$1` to your harness's noninteractive
-command. Use an absolute path or an on-`PATH` name; harness flags belong inside
-the wrapper — a multi-word `BENCH_AGENT` value is treated as one executable name
-and rejected.
+one, or at your own wrapper that pipes its stdin to your harness's noninteractive
+stdin-reading command (the `claude` and `codex` adapters do exactly this;
+`opencode` reads stdin and hands it to `opencode run` positionally after `--`, an
+upstream residual until opencode documents a stdin form). Use an absolute path or
+an on-`PATH` name; harness flags belong inside the wrapper — a multi-word
+`BENCH_AGENT` value is treated as one executable name and rejected.
 
 The adapters also carry the line (see the `craft-line` skill): `BENCH_MODEL`,
 when set, is passed to the harness's model flag. A repo with `.bench/lines.env`

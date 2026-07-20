@@ -43,11 +43,14 @@ func testRuntimeStatusIntentCommonDir(t *testing.T) {
 	f.Git("branch", "worktree-agent-live")
 	linked := filepath.Join(t.TempDir(), "linked intent reader")
 	f.Git("worktree", "add", "-q", "--detach", linked, "HEAD")
-	ledger := `{"schema":1,"entries":[{"key":"shared","kind":"claude-agent","objective":"shared objective","created_at":"2026-07-11T00:00:00Z"}]}` + "\n"
+	// The ledger stores no objective text; a claude-agent entry has no worktree file, so it
+	// renders by its entry key. The shared common-dir contract is that the linked checkout
+	// sees the same entry — proven by its key surfacing in the board.
+	ledger := `{"schema":1,"entries":[{"key":"shared","kind":"claude-agent","created_at":"2026-07-11T00:00:00Z"}]}` + "\n"
 	contract.WriteFileAbs(t, filepath.Join(gitDir(t, f), "bench-intent.json"), ledger)
 	out := contract.RunAt(t, f, linked, nil, "bash", benchPath(t), "status", "--all")
 	out.RequireExit(0)
-	out.RequireContains(out.Stdout, "shared objective")
+	out.RequireContains(out.Stdout, "objective=shared")
 }
 
 func testRuntimeStatusLandedState(t *testing.T) {
@@ -57,13 +60,15 @@ func testRuntimeStatusLandedState(t *testing.T) {
 	f.CommitAll("base")
 	f.Git("branch", "worktree-agent-live")
 	f.WriteFile("tracked.txt", "dirty\n")
+	// Six uncorrelated claude-agent entries. The ledger stores no objective text, so each
+	// renders by its key; the board must still count all six and stay control-byte-safe.
 	ledger := `{"schema":1,"entries":[` +
-		`{"key":"a","kind":"claude-agent","objective":"old` + "\\n\\u001b" + `","created_at":"2026-07-11T00:00:00Z"},` +
-		`{"key":"b","kind":"claude-agent","objective":"two","created_at":"2026-07-11T00:00:01Z"},` +
-		`{"key":"c","kind":"claude-agent","objective":"three","created_at":"2026-07-11T00:00:02Z"},` +
-		`{"key":"d","kind":"claude-agent","objective":"four","created_at":"2026-07-11T00:00:03Z"},` +
-		`{"key":"e","kind":"claude-agent","objective":"five","created_at":"2026-07-11T00:00:04Z"},` +
-		`{"key":"f","kind":"claude-agent","objective":"six","created_at":"2026-07-11T00:00:05Z"}]}` + "\n"
+		`{"key":"a","kind":"claude-agent","created_at":"2026-07-11T00:00:00Z"},` +
+		`{"key":"b","kind":"claude-agent","created_at":"2026-07-11T00:00:01Z"},` +
+		`{"key":"c","kind":"claude-agent","created_at":"2026-07-11T00:00:02Z"},` +
+		`{"key":"d","kind":"claude-agent","created_at":"2026-07-11T00:00:03Z"},` +
+		`{"key":"e","kind":"claude-agent","created_at":"2026-07-11T00:00:04Z"},` +
+		`{"key":"f","kind":"claude-agent","created_at":"2026-07-11T00:00:05Z"}]}` + "\n"
 	path := filepath.Join(gitDir(t, f), "bench-intent.json")
 	contract.WriteFileAbs(t, path, ledger)
 	before, err := os.ReadFile(path)

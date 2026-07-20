@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Bench harness adapter: maps the shift prompt ($1) to Claude Code's headless mode.
+# Bench harness adapter: maps the shift prompt (read from stdin) to Claude Code's headless mode.
 # The line binds the model to the declared line — in a routed repo (.bench/lines.env
 # present) BENCH_MODEL must name a bound tier or `bench resolve-model` refuses (exit
 # 1) and this adapter refuses to launch; see .bench/lib/resolve-bench.sh and
 # BENCH-reference.md "Harness adapter for the shift loop". The adapter fails CLOSED
 # when the wrapper resolver or the core is unreachable — an unguarded passthrough in
-# a routed repo is silent de-enforcement. `--` keeps a dash-leading prompt positional.
+# a routed repo is silent de-enforcement. The loop pipes the prompt on stdin; `claude -p`
+# reads it from stdin, so the prompt never appears on argv.
 _lib="$(dirname "$0")/../lib/resolve-bench.sh"
 [ -f "$_lib" ] || { echo "bench adapter: wrapper resolver missing at $_lib — refusing to run unguarded" >&2; exit 1; }
 # shellcheck source=../lib/resolve-bench.sh
@@ -13,6 +14,6 @@ _lib="$(dirname "$0")/../lib/resolve-bench.sh"
 _cmd="$(bench_resolve_wrapper)" || { echo "bench adapter: bench core not found — refusing to run unguarded" >&2; exit 1; }
 model="$("$_cmd" resolve-model --alias)" || exit 1
 if [ -n "$model" ]; then
-  exec claude -p --model "$model" -- "$1"
+  exec claude -p --model "$model"
 fi
-exec claude -p -- "$1"
+exec claude -p

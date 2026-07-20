@@ -19,7 +19,7 @@ func TestRuntimeFreshInstall(t *testing.T) {
 func TestRuntimeAgentEntryContracts(t *testing.T) {
 	t.Parallel()
 	contract.RunParallel(t, "bench shift adapter preflight contract", testShiftAdapterPreflight)
-	contract.RunParallel(t, "bench shift adapter single-argument contract", testShiftAdapterSingleArgument)
+	contract.RunParallel(t, "bench shift adapter stdin-transport contract", testShiftAdapterStdinTransport)
 	contract.RunParallel(t, "reference adapter files contract", testReferenceAdapterFiles)
 }
 
@@ -101,14 +101,18 @@ func testShiftAdapterPreflight(t *testing.T) {
 	keyword.RequireContains(keyword.Stderr, "not executable")
 }
 
-func testShiftAdapterSingleArgument(t *testing.T) {
+// testShiftAdapterStdinTransport pins the loop → adapter contract: the prompt reaches
+// the adapter on stdin with no positional argument, BENCH_SHIFT armed. The probe records
+// its own argc separately from its stdin, so a regression that put the prompt back on
+// argv fails the argc=0 assertion even while the stdin assertions still pass.
+func testShiftAdapterStdinTransport(t *testing.T) {
 	f := shiftFixture(t, "#!/usr/bin/env bash\nexit 0\n")
 	f.WriteExecutable("adapter", `#!/usr/bin/env bash
 {
   printf 'argc=%s\n' "$#"
   printf 'shift_env=%s\n' "${BENCH_SHIFT:-unset}"
-  printf '%s\n@@@@\n' "$1"
 } >> "$BENCH_TEST_RECORD"
+{ cat; printf '\n@@@@\n'; } >> "$BENCH_TEST_RECORD"
 `)
 	f.CommitAll("adapter")
 	home := t.TempDir()
@@ -124,7 +128,7 @@ func testShiftAdapterSingleArgument(t *testing.T) {
 	}
 	text := string(data)
 	for _, needle := range []string{
-		"argc=1",
+		"argc=0",
 		"shift_env=1",
 		"adapter-arg-probe",
 		"You are one iteration of a Bench shift",
@@ -134,8 +138,8 @@ func testShiftAdapterSingleArgument(t *testing.T) {
 			t.Fatalf("adapter record missing %q:\n%s", needle, text)
 		}
 	}
-	if regexp.MustCompile(`(?m)^-p$`).MatchString(text) {
-		t.Fatal("loop still passes the Claude-specific -p flag")
+	if strings.Contains(text, "argc=1") {
+		t.Fatalf("loop still passes the prompt as a positional argument:\n%s", text)
 	}
 }
 
@@ -159,16 +163,20 @@ func testReferenceAdapterFiles(t *testing.T) {
 		if !regexp.MustCompile(`(?m)^exec `).Match(text) {
 			t.Fatalf("reference adapter %s does not exec its harness", adapter)
 		}
-		if !strings.Contains(string(text), `"$1"`) {
-			t.Fatalf("reference adapter %s does not pass the prompt as $1", adapter)
-		}
 	}
-	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "claude"), `claude -p -- "$1"`, "claude adapter does not map the prompt to claude -p")
-	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "codex"), `codex exec --sandbox workspace-write -m "$model" -- "$1"`, "routed codex adapter does not select workspace-write while preserving model and prompt")
-	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "codex"), `codex exec --sandbox workspace-write -- "$1"`, "unrouted codex adapter does not select workspace-write while preserving the prompt")
+	// claude and codex read the prompt from the stdin the loop pipes them: no positional
+	// prompt survives on the final hop, so the prompt never reaches the harness CLI's argv.
+	requireFileNotContains(t, filepath.Join(root, ".bench", "adapters", "claude"), `"$1"`, "claude adapter still passes the prompt on argv instead of reading stdin")
+	requireFileNotContains(t, filepath.Join(root, ".bench", "adapters", "codex"), `"$1"`, "codex adapter still passes the prompt on argv instead of reading stdin")
+	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "claude"), `exec claude -p --model "$model"`, "routed claude adapter does not preserve the model while reading the prompt from stdin")
+	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "claude"), "exec claude -p\n", "unrouted claude adapter does not map stdin to claude -p")
+	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "codex"), `exec codex exec --sandbox workspace-write -m "$model"`, "routed codex adapter does not select workspace-write while preserving the model")
+	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "codex"), "exec codex exec --sandbox workspace-write\n", "unrouted codex adapter does not select workspace-write")
+	// opencode's CLI documents only a positional prompt, so its adapter reads stdin into a
+	// variable and passes it positionally — the documented residual final-hop exposure.
 	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "opencode"), `model="$("$_cmd" resolve-model --provider-model)"`, "opencode adapter does not request provider/model compatibility from the resolver")
-	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "opencode"), `opencode run --model "$model" -- "$1"`, "routed opencode adapter does not preserve model and prompt")
-	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "opencode"), `opencode run -- "$1"`, "opencode adapter does not map the prompt to opencode run")
+	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "opencode"), `opencode run --model "$model" -- "$prompt"`, "routed opencode adapter does not pass the stdin-read prompt positionally")
+	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "opencode"), `opencode run -- "$prompt"`, "opencode adapter does not pass the stdin-read prompt positionally")
 }
 
 // The keys are pinned empty so discovery is hermetic: the API sources short-circuit to

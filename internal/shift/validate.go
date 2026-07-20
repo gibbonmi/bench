@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 // Validation bounds, pinned by the spec: both iteration caps share [1,100]; the wall
@@ -20,6 +21,11 @@ const (
 	refactorItersDefault = 4
 	maxWallDefault       = 2 * time.Hour
 	maxWallCap           = 24 * time.Hour
+	// objectiveMaxRunes caps an objective in Unicode code points, not bytes, so a
+	// multibyte objective is not cut at a fraction of its apparent length. The text
+	// flows into a commit subject, a scratch file, and status; an unbounded objective
+	// would carry into all three at once.
+	objectiveMaxRunes = 200
 )
 
 // hasControlByte reports whether s carries any byte below 0x20 or the DEL byte 0x7f.
@@ -46,6 +52,9 @@ func validateObjective(objective string) error {
 	}
 	if hasControlByte(objective) {
 		return errors.New("objective contains a control byte")
+	}
+	if n := utf8.RuneCountInString(objective); n > objectiveMaxRunes {
+		return fmt.Errorf("objective too long: %d runes, maximum %d", n, objectiveMaxRunes)
 	}
 	return nil
 }

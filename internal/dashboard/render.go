@@ -8,11 +8,14 @@ import (
 	"html/template"
 	"strings"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 // view is the sanitized, render-ready projection of a Snapshot. Every git- and file-sourced
-// string is run through sanitize before it lands here, so the template only ever escapes
-// control-byte-free text — the C0 sanitize is the one step html/template does not do.
+// string is run through the shared sanitize.Controls before it lands here, so the template
+// only ever escapes control-byte-free text — control-rune escaping is the one step
+// html/template does not do.
 type view struct {
 	GeneratedAt    string
 	HasGate        bool
@@ -38,45 +41,45 @@ type worktreeView struct{ Class, Path string }
 
 // Render turns a Snapshot into the complete self-contained HTML document. It is pure: it
 // reads nothing but its argument. Escaping is contextual (html/template neutralizes markup
-// and quote injection in every interpolated field) plus the one manual C0-control-byte
-// sanitize pass the template cannot do. A template-execution error is a template-source
-// bug, unreachable from repo data, so the seam stays a total function.
+// and quote injection in every interpolated field) plus the one shared sanitize.Controls
+// pass — control-rune escaping the template cannot do. A template-execution error is a
+// template-source bug, unreachable from repo data, so the seam stays a total function.
 func Render(s Snapshot) string {
 	v := view{
 		GeneratedAt:    s.GeneratedAt.Format(time.RFC3339),
 		HasGate:        s.Gate.Present,
 		RoadmapPresent: s.RoadmapPresent,
-		RoadmapText:    sanitize(s.RoadmapText),
-		Sequence:       sanitize(s.Sequence),
+		RoadmapText:    sanitize.Controls(s.RoadmapText),
+		Sequence:       sanitize.Controls(s.Sequence),
 		OpenLearnings:  s.OpenLearnings,
-		WorktreesErr:   sanitize(s.WorktreesErr),
+		WorktreesErr:   sanitize.Controls(s.WorktreesErr),
 	}
 	if s.Gate.Present {
 		v.Gate = gateView{
-			State:         sanitize(s.Gate.State),
-			PendingStatus: sanitize(s.Gate.PendingStatus),
-			Status:        sanitize(s.Gate.Status),
-			CachedTree:    sanitize(s.Gate.CachedTree),
-			WorkTree:      sanitize(s.Gate.WorkTree),
-			Timestamp:     sanitize(s.Gate.Timestamp),
+			State:         sanitize.Controls(s.Gate.State),
+			PendingStatus: sanitize.Controls(s.Gate.PendingStatus),
+			Status:        sanitize.Controls(s.Gate.Status),
+			CachedTree:    sanitize.Controls(s.Gate.CachedTree),
+			WorkTree:      sanitize.Controls(s.Gate.WorkTree),
+			Timestamp:     sanitize.Controls(s.Gate.Timestamp),
 			Age:           gateAge(s.GeneratedAt, s.Gate.Timestamp),
 			Stale:         s.Gate.Stale,
 		}
 	}
 	for _, sig := range s.Signals {
 		v.Signals = append(v.Signals, signalView{
-			Name:   sanitize(sig.Name),
-			Detail: sanitize(sig.Detail),
-			Action: sanitize(sig.Action),
+			Name:   sanitize.Controls(sig.Name),
+			Detail: sanitize.Controls(sig.Detail),
+			Action: sanitize.Controls(sig.Action),
 		})
 	}
 	for _, idea := range s.Ideas {
-		v.Ideas = append(v.Ideas, sanitize(idea))
+		v.Ideas = append(v.Ideas, sanitize.Controls(idea))
 	}
 	for _, wt := range s.Worktrees {
 		v.Worktrees = append(v.Worktrees, worktreeView{
-			Class: sanitize(string(wt.Class)),
-			Path:  sanitize(wt.Path),
+			Class: sanitize.Controls(string(wt.Class)),
+			Path:  sanitize.Controls(wt.Path),
 		})
 	}
 	var b strings.Builder
@@ -86,21 +89,6 @@ func Render(s Snapshot) string {
 		return b.String()
 	}
 	return b.String()
-}
-
-// sanitize removes C0 control bytes other than tab and newline (and DEL) from a string —
-// the HTML analog of toon.Table refusing an unrepresentable cell. It runs before the
-// template so a terminal-escape sequence in a commit subject cannot reach the page.
-func sanitize(s string) string {
-	return strings.Map(func(r rune) rune {
-		if r == '\t' || r == '\n' {
-			return r
-		}
-		if r < 0x20 || r == 0x7f {
-			return -1
-		}
-		return r
-	}, s)
 }
 
 // gateAge renders how long before generation the gate ran, from the cache timestamp. It is

@@ -231,7 +231,7 @@ func requirePreservedShift(t *testing.T, run shiftProofRun, output string) {
 		t.Fatal(err)
 	}
 	for _, entry := range entries {
-		if entry.Kind == intent.KindShift && entry.Objective == "R15-"+run.variant && entry.Worktree == worktree && entry.Branch == branch {
+		if entry.Kind == intent.KindShift && entry.Worktree == worktree && entry.Branch == branch {
 			return
 		}
 	}

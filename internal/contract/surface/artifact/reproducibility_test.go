@@ -21,7 +21,11 @@ func TestGoBuildIgnoresCheckoutTopology(t *testing.T) {
 	if output, err := command.CombinedOutput(); err != nil {
 		t.Fatalf("clone isolated source: %v\n%s", err, output)
 	}
-	overlay := exec.Command("bash", "-c", `tar -C "$1" --exclude='./.git' --exclude='./dist' -cf - . | tar -C "$2" -xf -`, "overlay", root, clone)
+	// Mirror the working tree onto the clone so uncommitted DELETIONS (a file removed in
+	// the source but still tracked at HEAD) are reflected too — a tar overlay can only add
+	// or modify, leaving a deleted source file resurrected in the clone and drifting the
+	// binary. --delete makes the clone tree a true mirror; .git and dist stay untouched.
+	overlay := exec.Command("rsync", "-a", "--delete", "--exclude=/.git", "--exclude=/dist", root+"/", clone)
 	if output, err := overlay.CombinedOutput(); err != nil {
 		t.Fatalf("overlay source snapshot: %v\n%s", err, output)
 	}

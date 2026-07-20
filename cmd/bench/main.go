@@ -35,6 +35,7 @@ import (
 	"github.com/gibbonmi/bench/internal/preflight"
 	"github.com/gibbonmi/bench/internal/publication"
 	"github.com/gibbonmi/bench/internal/roadmap"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/sessioninspect"
 	"github.com/gibbonmi/bench/internal/shift"
 	"github.com/gibbonmi/bench/internal/spec"
@@ -197,9 +198,11 @@ func captureClaudeAgentIntent(data []byte, stderr io.Writer) {
 	if envelope.ToolName != "" && envelope.ToolName != "Agent" {
 		return
 	}
+	// objective is a capture-quality guard only — the ledger stores the entry key, not the
+	// text — so a missing objective still skips a meaningless capture.
 	objective := envelope.ToolInput.Description
 	if objective == "" {
-		objective = intent.Preview(envelope.ToolInput.Prompt)
+		objective = sanitize.Preview(envelope.ToolInput.Prompt)
 	}
 	if envelope.ToolUseID == "" || objective == "" {
 		fmt.Fprintln(stderr, "WARNING: check-agent-line: intent capture skipped: missing tool_use_id or objective")
@@ -210,7 +213,7 @@ func captureClaudeAgentIntent(data []byte, stderr io.Writer) {
 		fmt.Fprintln(stderr, "WARNING: check-agent-line: intent capture skipped outside a repository")
 		return
 	}
-	entry := intent.NewEntry(intent.KindClaudeAgent, objective)
+	entry := intent.NewEntry(intent.KindClaudeAgent)
 	entry.Key = envelope.ToolUseID
 	if err := intent.Upsert(root, entry); err != nil {
 		fmt.Fprintf(stderr, "WARNING: check-agent-line: intent capture failed: %v\n", err)
@@ -342,7 +345,7 @@ func run(args []string, stdout, stderr *os.File) int {
 	case "worktree-hook":
 		return harness.WorktreeCommand(args[1:], os.Stdin, stdout, stderr)
 	case "shift":
-		return shift.Command(args[1:], os.Stdin, stdout, stderr)
+		return shift.Command(args[1:], stdout, stderr)
 	case "commit":
 		return commit.Command(args[1:], stdout, stderr)
 	case "spec":

@@ -55,7 +55,7 @@ func checkAgentHookBehavior(root string) []string {
 	hookCase("captures allowed intent", routed, `{"tool_name":"Agent","tool_use_id":"allowed-1","tool_input":{"description":"ship safely","prompt":"fallback","resolvedModel":"gpt-5.3-codex-spark"}}`, "", 0)
 	ledgerPath := filepath.Join(routed, ".git", "bench-intent.json")
 	ledger, err := os.ReadFile(ledgerPath)
-	if err != nil || !strings.Contains(string(ledger), `"key":"allowed-1"`) || !strings.Contains(string(ledger), `"objective":"ship safely"`) {
+	if err != nil || !strings.Contains(string(ledger), `"key":"allowed-1"`) || strings.Contains(string(ledger), `"objective"`) {
 		diags = append(diags, fmt.Sprintf("check-agent-line intent capture contract failed: allowed ledger=%q err=%v", ledger, err))
 	}
 	hookCase("replays allowed intent idempotently", routed, `{"tool_name":"Agent","tool_use_id":"allowed-1","tool_input":{"description":"ship safely","prompt":"fallback","resolvedModel":"gpt-5.3-codex-spark"}}`, "", 0)
@@ -161,12 +161,12 @@ func checkAdapterLineGuards(root string) []string {
 		if name == "claude" {
 			wantModel = "opus"
 		}
-		bound := runAtEnv(routed, append(envBase, "BENCH_MODEL=gpt-5.6-terra"), "bash", path, "--line probe prompt")
+		bound := runWithInputEnv(routed, append(envBase, "BENCH_MODEL=gpt-5.6-terra"), "--line probe prompt", "bash", path)
 		if name == "opencode" {
 			if bound == nil || bound.ExitCode == 0 || (!strings.Contains(bound.Stdout, "provider/model") && !strings.Contains(bound.Stderr, "provider/model")) {
 				diags = append(diags, "adapter opencode does not reject a routed bare model before launching the harness")
 			}
-			providerBound := runAtEnv(providerRouted, append(envBase, "BENCH_MODEL=openai/gpt-5.6-terra"), "bash", path, "--line probe prompt")
+			providerBound := runWithInputEnv(providerRouted, append(envBase, "BENCH_MODEL=openai/gpt-5.6-terra"), "--line probe prompt", "bash", path)
 			if providerBound == nil || providerBound.ExitCode != 0 || !strings.Contains(providerBound.Stdout, "openai/gpt-5.6-terra") || !strings.Contains(providerBound.Stdout, "--line probe prompt") {
 				diags = append(diags, "adapter opencode does not pass a routed provider/model binding and prompt to the harness")
 			}
@@ -176,28 +176,28 @@ func checkAdapterLineGuards(root string) []string {
 		if name == "codex" && (bound == nil || !strings.Contains(bound.Stdout, "--sandbox\nworkspace-write")) {
 			diags = append(diags, "adapter codex routed path does not select the workspace-write sandbox")
 		}
-		unset := runAtEnv(routed, envBase, "bash", path, "line probe prompt")
+		unset := runWithInputEnv(routed, envBase, "line probe prompt", "bash", path)
 		if unset != nil && unset.ExitCode == 0 {
 			diags = append(diags, fmt.Sprintf("adapter %s does not refuse undeclared BENCH_MODEL in a routed repo", name))
 		}
-		unbound := runAtEnv(routed, append(envBase, "BENCH_MODEL=gpt-9"), "bash", path, "line probe prompt")
+		unbound := runWithInputEnv(routed, append(envBase, "BENCH_MODEL=gpt-9"), "line probe prompt", "bash", path)
 		if unbound != nil && unbound.ExitCode == 0 {
 			diags = append(diags, fmt.Sprintf("adapter %s does not refuse an unbound BENCH_MODEL in a routed repo", name))
 		}
-		pass := runAtEnv(unrouted, envBase, "bash", path, "line probe prompt")
+		pass := runWithInputEnv(unrouted, envBase, "line probe prompt", "bash", path)
 		if pass == nil || pass.ExitCode != 0 || !strings.Contains(pass.Stdout, "line probe prompt") {
 			diags = append(diags, fmt.Sprintf("adapter %s does not pass through in an unrouted repo", name))
 		}
 		if name == "codex" && (pass == nil || !strings.Contains(pass.Stdout, "--sandbox\nworkspace-write")) {
 			diags = append(diags, "adapter codex unrouted path does not select the workspace-write sandbox")
 		}
-		explicit := runAtEnv(unrouted, append(envBase, "BENCH_MODEL=gpt-anything-7"), "bash", path, "line probe prompt")
+		explicit := runWithInputEnv(unrouted, append(envBase, "BENCH_MODEL=gpt-anything-7"), "line probe prompt", "bash", path)
 		if name == "opencode" && (explicit == nil || explicit.ExitCode == 0 || (!strings.Contains(explicit.Stdout, "provider/model") && !strings.Contains(explicit.Stderr, "provider/model"))) {
 			diags = append(diags, "adapter opencode does not reject an explicit bare model in an unrouted repo")
 		} else if name != "opencode" && (explicit == nil || explicit.ExitCode != 0 || !strings.Contains(explicit.Stdout, "gpt-anything-7") || !strings.Contains(explicit.Stdout, "line probe prompt")) {
 			diags = append(diags, fmt.Sprintf("adapter %s does not pass an explicit BENCH_MODEL through in an unrouted repo", name))
 		}
-		partialProbe := runAtEnv(partial, append(envBase, "BENCH_MODEL=gpt-anything-7"), "bash", path, "line probe prompt")
+		partialProbe := runWithInputEnv(partial, append(envBase, "BENCH_MODEL=gpt-anything-7"), "line probe prompt", "bash", path)
 		if name == "opencode" && (partialProbe == nil || partialProbe.ExitCode == 0 || (!strings.Contains(partialProbe.Stdout, "provider/model") && !strings.Contains(partialProbe.Stderr, "provider/model"))) {
 			diags = append(diags, "adapter opencode does not reject a bare fallback from an incomplete binding")
 		} else if name != "opencode" && (partialProbe == nil || partialProbe.ExitCode != 0 || !strings.Contains(partialProbe.Stdout, "gpt-anything-7") || !strings.Contains(partialProbe.Stdout, "line probe prompt")) {

@@ -35,7 +35,6 @@ const (
 type Entry struct {
 	Key       string    `json:"key"`
 	Kind      Kind      `json:"kind"`
-	Objective string    `json:"objective"`
 	CreatedAt time.Time `json:"created_at"`
 	Worktree  string    `json:"worktree,omitempty"`
 	Branch    string    `json:"branch,omitempty"`
@@ -136,13 +135,13 @@ func readPath(path string) (Ledger, error) {
 }
 
 // NewEntry creates the stable process/time key bench-owned writers persist before
-// acquire. Callers retain the returned value and enrich that same key later.
-func NewEntry(kind Kind, objective string) Entry {
+// acquire. The key is the objective's identifier — the ledger stores no free-form
+// objective text — so callers retain the returned value and enrich that same key later.
+func NewEntry(kind Kind) Entry {
 	now := time.Now().UTC()
 	return Entry{
 		Key:       fmt.Sprintf("%s-%d-%d", kind, os.Getpid(), now.UnixNano()),
 		Kind:      kind,
-		Objective: objective,
 		CreatedAt: now,
 	}
 }

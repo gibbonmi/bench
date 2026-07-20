@@ -5,6 +5,7 @@ import (
 	"io"
 	"strconv"
 
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -73,9 +74,10 @@ func (r Result) ExitCode() int {
 }
 
 // Emit writes the shift_result TOON block to stdout exactly once. An empty branch or
-// recovery reads as "none"; numbers render as decimal strings. toon.Table makes the
-// block control-byte-safe by construction, so a hostile detail cannot corrupt the
-// surface — it degrades to the AXI error line instead of a crash or a lossy block.
+// recovery reads as "none"; numbers render as decimal strings. The detail is the one
+// operator-influenced cell, so it renders through the shared sanitizer before it reaches
+// the block — a control sequence in it is escaped, one policy with every other terminal
+// render, and toon.Table's own cell refusal remains as the backstop.
 func (r Result) Emit(stdout io.Writer) {
 	branch := r.Branch
 	if branch == "" {
@@ -92,7 +94,7 @@ func (r Result) Emit(stdout io.Writer) {
 		strconv.Itoa(r.Committed),
 		strconv.Itoa(r.IterationsUsed),
 		recovery,
-		r.Detail,
+		sanitize.Preview(r.Detail),
 	}
 	block, err := toon.Table("shift_result", resultFields, [][]string{row})
 	if err != nil {

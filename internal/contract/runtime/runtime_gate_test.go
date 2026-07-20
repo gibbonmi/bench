@@ -117,7 +117,7 @@ func testRuntimeStopHookIntentRefresh(t *testing.T) {
 	f := copiedCLIHookFixture(t, true)
 	f.CommitAll("init")
 	ledger := filepath.Join(gitDir(t, f), "bench-intent.json")
-	contract.WriteFileAbs(t, ledger, `{"schema":1,"entries":[{"key":"gone","kind":"shift","objective":"done","created_at":"2026-07-11T00:00:00Z","worktree":"/definitely/missing"}]}`+"\n")
+	contract.WriteFileAbs(t, ledger, `{"schema":1,"entries":[{"key":"gone","kind":"shift","created_at":"2026-07-11T00:00:00Z","worktree":"/definitely/missing"}]}`+"\n")
 	runStopHook(t, f, nil, "{}\n").RequireExit(0)
 	first := contract.ReadFileAbs(t, ledger)
 	if !strings.Contains(first, `"entries":[]`) {

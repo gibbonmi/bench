@@ -2,7 +2,8 @@
 
 ## Destination
 
-Agents and gates launch from separate documented environment passlists, prompt
+Agents launch from a documented environment passlist and project gates keep
+FT78's manifest-declared closed subject with a sentinel pinning it, prompt
 text never travels through argv on a repository-controlled path, durable state
 carries an objective identifier with sanitized rendering, and a data-handling
 inventory plus sentinel contracts prove it. Sources: `RR:C-08`, `RC:H-01`.
@@ -130,6 +131,33 @@ core exports the lists; the doc or check reads them) so the advertisement
 cannot drift from the enforcement. Whether consumers receive the file rides on
 FT85's payload allowlist, not decided here.
 
+## #7: Does the gate class survive FT78's closed gate subject?
+
+Type: Grill (reviewer-closed 2026-07-20, in-session, after an implementation
+stop-short)
+
+### Question
+Decision #1's gate premise was stale when the build reached it: FT78's verdict
+identity already launches a project gate from a closed subject — `PATH` plus
+only the names declared in `.bench/gate-inputs.json` — so the specced gate
+passlist is strictly *wider* than what ships. The only live `gateEnv` caller is
+the kit's own four-phase runner, and wiring the gate passlist there turned
+Bench's own gate red (silent archive corruption in the conformance phase's
+release-evidence probe, reproduced twice against a green baseline).
+
+### Answer
+Drop the gate class; `internal/env` is agent-class-only. The gate side of the
+feature becomes a sentinel contract pinning FT78's closed subject: a marker
+variable exported in the parent must not reach the gate subprocess, while
+`PATH` and manifest-declared names survive. `.bench/env.allow` keeps `[agent]`
+as its only known section — an unknown section, including a stale `[gate]`,
+is rejected fail-closed — and the gate's opt-in mechanism is the existing
+manifest declaration, documented in `DATA_HANDLING.md`. The kit's own
+four-phase runner keeps its inherited environment, grouped with the other
+subprocess classes FT87 owns. Rewiring the verdict path onto a passlist was
+rejected: it reaches into verdict-identity hashing and ADR 0002's closed trust
+posture for no added closure.
+
 ## Not yet specified
 
 - Exact membership of the two default passlists beyond the families above —
@@ -146,13 +174,15 @@ FT85's payload allowlist, not decided here.
 
 ## Handoff
 
-1. **Module boundaries.** `internal/env` (new): passlist constants, `env.allow`
-   parsing, env construction for both classes. `internal/shift`: adapter stdin
-   transport, objective file perms, intent-key identifier. `internal/gate`:
-   gate env from the gate passlist. `.bench/adapters/*`: stdin forwarding.
-   `internal/sanitize` (new or folded into an existing owner): the one shared
-   control-sequence sanitizer. Root `DATA_HANDLING.md`.
-2. **Contracts.** `internal/env`: (class, repo root) → ordered env slice or a
+1. **Module boundaries.** `internal/env` (new): the agent passlist constants,
+   `env.allow` parsing, env construction for the agent class. `internal/shift`:
+   adapter stdin transport, objective file perms, intent-key identifier.
+   `internal/gate`: unchanged — the project-gate environment is FT78's
+   manifest-declared subject, pinned by a sentinel rather than rebuilt.
+   `.bench/adapters/*`: stdin forwarding. `internal/sanitize` (new or folded
+   into an existing owner): the one shared control-sequence sanitizer. Root
+   `DATA_HANDLING.md`.
+2. **Contracts.** `internal/env`: (repo root) → ordered agent env slice or a
    fail-closed error naming the malformed `env.allow` line. Adapter contract:
    prompt on stdin, `BENCH_SHIFT=1`, exit code passthrough. Intent entries:
    key-only objective reference. `validateObjective`: empty/control-byte/
@@ -161,10 +191,12 @@ FT85's payload allowlist, not decided here.
    construction behind one call). Adapters stay thin pass-throughs — their
    assertable is the harness argv/stdin shape, not logic. The sanitizer is
    deep enough to own every rendering call site.
-4. **Black-box assertables.** Stub adapter/gate env dumps (marker absent,
-   passlist present); `/proc/self/cmdline` prompt-marker absence; stdin
-   content equality; `.bench-objective` mode bits; intent JSON field shape;
-   exit codes and stderr for malformed `env.allow` and rejected objectives.
+4. **Black-box assertables.** Stub adapter env dump (marker absent, passlist
+   present); stub gate env dump (marker absent, `PATH` and manifest-declared
+   names present — the FT78 closed-subject pin); `/proc/self/cmdline`
+   prompt-marker absence; stdin content equality; `.bench-objective` mode
+   bits; intent JSON field shape; exit codes and stderr for malformed
+   `env.allow` and rejected objectives.
 5. **Gate attachment.** All sentinel contracts run as contract tests at the
    built-binary seam inside the existing gate contract phase; the
    inventory-vs-constants check runs in the conformance phase. No seam is
@@ -176,9 +208,10 @@ FT85's payload allowlist, not decided here.
    through untouched by design — passlists filter names, never values.
 7. **Uncertainty flags.** opencode stdin support is undocumented — if upstream
    adds it before build, drop the argv residual; the spec should cite the doc
-   state at spec time. Gate-passlist breadth in consumer repos is the
-   likeliest compatibility risk; the spec must state the observable failure
-   (gate red naming a missing variable) and the one-line `env.allow` remedy.
+   state at spec time. (The gate-passlist compatibility flag is resolved by
+   #7: the gate keeps FT78's subject, and a repo whose gate needs a variable
+   declares it in `.bench/gate-inputs.json` — `DATA_HANDLING.md` states that
+   remedy.)
 8. **Rejected alternatives.** Denylist posture; wholesale inherit-all escape
    hatch; dual-mode argv+stdin adapter transition; objective-ID-only commit
    subjects; content-based secret scanning; building the 0600-file transport

@@ -138,7 +138,7 @@ func cleanupScratch(root string) {
 // Command is the `bench shift [objective...]` entry: the objective is every positional
 // argument joined (mirroring the shell's `$*`). An empty objective is not defaulted —
 // Loop's validation rejects it with exit 2.
-func Command(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+func Command(args []string, stdout, stderr io.Writer) int {
 	objective := strings.Join(args, " ")
-	return Loop(objective, stdin, stdout, stderr)
+	return Loop(objective, stdout, stderr)
 }

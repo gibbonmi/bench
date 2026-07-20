@@ -146,7 +146,7 @@ func TestLoopStagingFaultPreservesAndSplitsEvidence(t *testing.T) {
 	})
 
 	var stdout, stderr bytes.Buffer
-	code := Loop("staging fault", bytes.NewReader(nil), &stdout, &stderr)
+	code := Loop("staging fault", &stdout, &stderr)
 
 	if code != 1 {
 		t.Fatalf("Loop returned %d, want 1 (failed, zero commits): stdout=%s stderr=%s", code, stdout.String(), stderr.String())
@@ -174,7 +174,7 @@ func TestLoopTeardownFaultReportsFailed(t *testing.T) {
 	})
 
 	var stdout, stderr bytes.Buffer
-	code := Loop("teardown fault", bytes.NewReader(nil), &stdout, &stderr)
+	code := Loop("teardown fault", &stdout, &stderr)
 
 	if code != 1 {
 		t.Fatalf("Loop returned %d, want 1 (teardown failure is always failed/1): stdout=%s stderr=%s", code, stdout.String(), stderr.String())
@@ -207,7 +207,7 @@ func TestFinishReportsUpsertFailure(t *testing.T) {
 	})
 
 	var stdout, stderr bytes.Buffer
-	code := Loop("upsert fault", bytes.NewReader(nil), &stdout, &stderr)
+	code := Loop("upsert fault", &stdout, &stderr)
 
 	if code != 3 {
 		t.Fatalf("Loop returned %d, want 3 (incomplete — the fault must not change the outcome): stdout=%s stderr=%s", code, stdout.String(), stderr.String())
@@ -237,7 +237,7 @@ func TestLoopRetainsAndLocksOnSnapshotFailure(t *testing.T) {
 	runGitCmd(t, root, "update-ref", ref, head)
 
 	var stdout, stderr bytes.Buffer
-	code := Loop("snapshot conflict", bytes.NewReader(nil), &stdout, &stderr)
+	code := Loop("snapshot conflict", &stdout, &stderr)
 
 	if code != 1 {
 		t.Fatalf("Loop returned %d, want 1 (failed, zero commits): stdout=%s stderr=%s", code, stdout.String(), stderr.String())

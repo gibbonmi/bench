@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -96,13 +97,22 @@ func createShiftBranch(wt, timestamp string) (string, error) {
 	return "", lastErr
 }
 
+// objectiveBanner formats the shift-start line. The objective is reviewer-authored and
+// already rejected at intake if it carries a control byte, but the banner renders it
+// through the shared sanitizer anyway — one policy for every terminal render of
+// operator-influenced text, no render path with a raw escape sequence behind it. The
+// " — objective:" delimiter is load-bearing: the shift-start parser splits the branch on it.
+func objectiveBanner(branch, objective string) string {
+	return fmt.Sprintf("▶ shift on %s — objective: %s", branch, sanitize.Preview(objective))
+}
+
 // Loop runs the gated shift: validate the objective and env, preflight the adapter,
 // acquire a pooled worktree, branch, iterate (commit on green, preserve on a red gate)
 // to the objective or the iteration cap, pay down touched-scope structural debt at
 // green, then release. Acquire → loop → release run in one process because lease
 // ownership is this process's pid. Every exit path resolves through finish, which emits
 // the shift_result TOON block and records the outcome on the intent entry.
-func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
+func Loop(objective string, stdout, stderr io.Writer) int {
 	if err := validateObjective(objective); err != nil {
 		fmt.Fprintln(stderr, err)
 		return usage(stdout, stderr, err.Error())
@@ -142,7 +152,7 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "could not resolve HEAD")
 		return usage(stdout, stderr, "could not resolve HEAD")
 	}
-	intentEntry := intent.NewEntry(intent.KindShift, objective)
+	intentEntry := intent.NewEntry(intent.KindShift)
 	if err := intent.Upsert(mainRoot, intentEntry); err != nil {
 		fmt.Fprintf(stderr, "could not persist shift intent: %v\n", err)
 		return usage(stdout, stderr, "could not persist shift intent")
@@ -153,7 +163,7 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 		return finish(stdout, stderr, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Detail: "could not acquire a worktree"})
 	}
 
-	s := &session{agent: os.Getenv("BENCH_AGENT"), root: wt, stdin: stdin, stdout: stdout, stderr: stderr, mainRoot: mainRoot, entry: &intentEntry}
+	s := &session{agent: os.Getenv("BENCH_AGENT"), root: wt, stdout: stdout, stderr: stderr, mainRoot: mainRoot, entry: &intentEntry}
 	branch, err := createShiftBranch(wt, timeNow().Format("20060102-150405"))
 	if err != nil {
 		fmt.Fprintf(stderr, "%v\n", err)
@@ -175,7 +185,9 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 		s.teardown()
 		return finish(stdout, stderr, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not configure shift branch " + branch})
 	}
-	if err := os.WriteFile(wt+"/.bench-objective", []byte(objective+"\n"), 0o644); err != nil {
+	// 0600: the worktree scratch file is the one place the full objective text persists,
+	// so it is readable only by the user who started the shift.
+	if err := os.WriteFile(wt+"/.bench-objective", []byte(objective+"\n"), 0o600); err != nil {
 		fmt.Fprintf(stderr, "could not write shift objective: %v\n", err)
 		s.teardown()
 		return finish(stdout, stderr, mainRoot, &intentEntry, Result{Outcome: OutcomeUsage, Branch: branch, Detail: "could not write shift objective"})
@@ -217,7 +229,7 @@ func Loop(objective string, stdin io.Reader, stdout, stderr io.Writer) int {
 	})
 	defer wallTimer.Stop()
 
-	fmt.Fprintf(stdout, "▶ shift on %s — objective: %s\n", branch, objective)
+	fmt.Fprintln(stdout, objectiveBanner(branch, objective))
 	fmt.Fprintf(stdout, "  worktree: %s\n", wt)
 	fmt.Fprintf(stdout, "  cap: %d iterations. Ctrl-C to pull the line.\n", maxIters)
 	started := time.Now()

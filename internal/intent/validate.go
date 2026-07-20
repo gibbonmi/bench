@@ -6,8 +6,8 @@ import (
 )
 
 func validEntry(entry Entry) error {
-	if entry.Key == "" || entry.Objective == "" || entry.CreatedAt.IsZero() {
-		return errors.New("entry requires key, objective, and creation time")
+	if entry.Key == "" || entry.CreatedAt.IsZero() {
+		return errors.New("entry requires key and creation time")
 	}
 	switch entry.Kind {
 	case KindShift, KindWorktree, KindClaudeAgent:

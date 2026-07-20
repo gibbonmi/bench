@@ -22,6 +22,7 @@ var conformanceFamilies = []string{
 	"line-routing",
 	"package-core-guard",
 	"compliance-hardening",
+	"data-handling-derivation",
 }
 
 func RunConformance(root, kitRoot string) []string {
@@ -37,6 +38,8 @@ func RunConformance(root, kitRoot string) []string {
 	diags = append(diags, checkLineRouting(root)...)
 	diags = append(diags, checkPackageCoreAndGuards(root)...)
 	diags = append(diags, checkBenchShRoutes(root)...)
+	diags = append(diags, checkDataHandlingDerivation(root)...)
+	diags = append(diags, checkSingleControlEscaper(root)...)
 	return diags
 }
 
@@ -296,9 +299,17 @@ func adapterStubDir(realBench string) (string, func(), error) {
 	if err != nil {
 		return "", cleanup, err
 	}
+	// Under the shipped prompt-on-stdin contract, claude and codex receive the prompt on
+	// their stdin, so their stubs echo argv (which still carries the routed model flag) and
+	// then their stdin (the prompt). opencode's CLI documents only a positional prompt, so
+	// its adapter reads stdin and re-emits it positionally — its stub echoes argv alone.
+	bodies := map[string]string{
+		"claude":   "#!/usr/bin/env bash\nprintf '%s\\n' \"$@\"\ncat\n",
+		"codex":    "#!/usr/bin/env bash\nprintf '%s\\n' \"$@\"\ncat\n",
+		"opencode": "#!/usr/bin/env bash\nprintf '%s\\n' \"$@\"\n",
+	}
 	for _, name := range []string{"claude", "codex", "opencode"} {
-		content := "#!/usr/bin/env bash\nprintf '%s\\n' \"$@\"\n"
-		if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0o755); err != nil {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(bodies[name]), 0o755); err != nil {
 			cleanup()
 			return "", func() {}, err
 		}

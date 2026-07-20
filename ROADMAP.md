@@ -32,7 +32,7 @@ environment, file, log, network, cache, and retention path. Sentinel contracts
 prove denied variables do not reach default subprocesses and prompt content
 cannot leak into process listings, commits, or structured output.
 
-Sources: `RR:C-08`; `RC:H-01`.
+Spec: `specs/minimal-subprocess-data-exposure.md`. Sources: `RR:C-08`; `RC:H-01`.
 
 **FT87 (HIGH on the bank track; MEDIUM otherwise) — bounded, explicit
 network/resource and CLI behavior.** One timeout, size, cancellation, and
@@ -315,6 +315,7 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — specify FT88, minimal subprocess data exposure.
+1. `/bench-implement-spec` — build FT88 from
+   `specs/minimal-subprocess-data-exposure.md`.
 2. `/bench-shape-idea` — specify FT87, bounded network, resource, and CLI behavior.
 3. `/bench-shape-idea` — shape FT76, one-command repo-aware Bench bootstrap.

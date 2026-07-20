@@ -1,18 +1,23 @@
 #!/usr/bin/env bash
-# Bench harness adapter: maps the shift prompt ($1) to OpenCode's noninteractive mode.
+# Bench harness adapter: maps the shift prompt (read from stdin) to OpenCode's noninteractive mode.
 # The line binds the model to the declared line — in a routed repo (.bench/lines.env
 # present) BENCH_MODEL must name a bound tier or `bench resolve-model` refuses (exit
 # 1) and this adapter refuses to launch; see .bench/lib/resolve-bench.sh and
 # BENCH-reference.md "Harness adapter for the shift loop". The adapter fails CLOSED
 # when the wrapper resolver or the core is unreachable — an unguarded passthrough in
-# a routed repo is silent de-enforcement. `--` keeps a dash-leading prompt positional.
+# a routed repo is silent de-enforcement. The loop pipes the prompt on stdin, but
+# `opencode run` documents only a positional prompt (as of 2026-07-20), so this adapter
+# reads stdin into a variable and passes it positionally with `--` to keep a dash-leading
+# prompt out of flag parsing. That final-hop argv exposure is the documented residual
+# limitation, to drop once opencode documents a stdin contract.
 _lib="$(dirname "$0")/../lib/resolve-bench.sh"
 [ -f "$_lib" ] || { echo "bench adapter: wrapper resolver missing at $_lib — refusing to run unguarded" >&2; exit 1; }
 # shellcheck source=../lib/resolve-bench.sh
 . "$_lib"
 _cmd="$(bench_resolve_wrapper)" || { echo "bench adapter: bench core not found — refusing to run unguarded" >&2; exit 1; }
 model="$("$_cmd" resolve-model --provider-model)" || exit 1
+prompt="$(cat)"
 if [ -n "$model" ]; then
-  exec opencode run --model "$model" -- "$1"
+  exec opencode run --model "$model" -- "$prompt"
 fi
-exec opencode run -- "$1"
+exec opencode run -- "$prompt"

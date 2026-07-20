@@ -28,6 +28,7 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/roadmap"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/shift"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/structure"
@@ -252,6 +253,24 @@ func appendGit(rows []row, root string) []row {
 	return append(rows, row{1, "git", strings.Join(details, ", "), strings.Join(actions, " / ")})
 }
 
+// objectiveDisplay resolves the human-facing objective text for an intent entry. The
+// ledger no longer stores objective text; a live shift keeps its full objective only in
+// <worktree>/.bench-objective (mode 0600), which exists for exactly as long as the entry is
+// live. For a shift entry with a recorded worktree the renderer reads it back and previews
+// it; when the file or the worktree is gone — the normal end state — it degrades to the
+// entry key and never propagates the read error. Every other kind (claude-agent, worktree)
+// has no such file and renders the key alone.
+func objectiveDisplay(entry intent.Entry) string {
+	if entry.Kind == intent.KindShift && entry.Worktree != "" {
+		if data, err := os.ReadFile(filepath.Join(entry.Worktree, ".bench-objective")); err == nil {
+			if text := strings.TrimRight(string(data), "\n"); text != "" {
+				return sanitize.Preview(text)
+			}
+		}
+	}
+	return sanitize.Preview(entry.Key)
+}
+
 func appendIntent(rows []row, root string) []row {
 	live, err := intent.Snapshot(root)
 	if err != nil {
@@ -268,9 +287,9 @@ func appendIntent(rows []row, root string) []row {
 			correlated++
 		}
 	}
-	detail := fmt.Sprintf("%d correlated, %d uncorrelated; oldest: %s", correlated, uncorrelated, intent.Preview(live[0].Objective))
+	detail := fmt.Sprintf("%d correlated, %d uncorrelated; oldest: %s", correlated, uncorrelated, objectiveDisplay(live[0]))
 	if r := live[0].Recovery; r != "" && r != shift.RecoveryNone {
-		detail += "; recovery: " + intent.Preview(r)
+		detail += "; recovery: " + sanitize.Preview(r)
 	}
 	return append(rows, row{2, "intent", detail, "resume interrupted work"})
 }
@@ -289,15 +308,15 @@ func expandIntentSignals(root string, signals []Signal) []Signal {
 	for _, entry := range live {
 		parts := []string{string(entry.Kind)}
 		if entry.Worktree != "" {
-			parts = append(parts, "path="+intent.Preview(entry.Worktree))
+			parts = append(parts, "path="+sanitize.Preview(entry.Worktree))
 		}
 		if entry.Branch != "" {
-			parts = append(parts, "branch="+intent.Preview(entry.Branch))
+			parts = append(parts, "branch="+sanitize.Preview(entry.Branch))
 		}
 		if entry.Recovery != "" && entry.Recovery != shift.RecoveryNone {
-			parts = append(parts, "recovery="+intent.Preview(entry.Recovery))
+			parts = append(parts, "recovery="+sanitize.Preview(entry.Recovery))
 		}
-		parts = append(parts, "objective="+intent.Preview(entry.Objective))
+		parts = append(parts, "objective="+objectiveDisplay(entry))
 		out = append(out, Signal{Severity: 2, Name: "intent", Detail: strings.Join(parts, " "), Action: "resume interrupted work"})
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].Severity < out[j].Severity })

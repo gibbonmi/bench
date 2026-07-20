@@ -124,14 +124,16 @@ func testShiftIntentAndStatusSurfaceRecovery(t *testing.T) {
 		t.Fatalf("read intent ledger: %v", err)
 	}
 	var ledger struct {
-		Entries []struct{ Objective, Outcome, Recovery string }
+		Entries []struct{ Kind, Outcome, Recovery string }
 	}
 	if err := json.Unmarshal(data, &ledger); err != nil {
 		t.Fatalf("decode intent ledger: %v", err)
 	}
+	// The ledger no longer stores objective text, so the shift entry is identified by its
+	// kind — there is exactly one shift entry in this fixture.
 	found := false
 	for _, e := range ledger.Entries {
-		if e.Objective != "surface recovery" {
+		if e.Kind != "shift" {
 			continue
 		}
 		found = true

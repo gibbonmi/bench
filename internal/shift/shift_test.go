@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -140,7 +141,7 @@ func TestLoopRetriesBranchCreationOnCollision(t *testing.T) {
 	_, baseBranch := shiftCollisionFixture(t)
 
 	var stdout, stderr bytes.Buffer
-	code := Loop("branch collision", bytes.NewReader(nil), &stdout, &stderr)
+	code := Loop("branch collision", &stdout, &stderr)
 	if code != 4 { // no-op adapter (exit 0, no commit) reads as no-op/4
 		t.Fatalf("Loop = %d, want 4 (no-op); stdout:\n%s\nstderr:\n%s", code, stdout.String(), stderr.String())
 	}
@@ -164,7 +165,7 @@ func TestLoopReportsBranchCreationFailureAfterExhaustingRetries(t *testing.T) {
 	_, baseBranch := shiftCollisionFixture(t, taken...)
 
 	var stdout, stderr bytes.Buffer
-	if code := Loop("branch collision", bytes.NewReader(nil), &stdout, &stderr); code == 0 {
+	if code := Loop("branch collision", &stdout, &stderr); code == 0 {
 		t.Fatalf("Loop returned success despite exhausted collision retries; stdout:\n%s\nstderr:\n%s", stdout.String(), stderr.String())
 	}
 	if !contains(stderr.String(), "could not create shift branch") {
@@ -200,11 +201,11 @@ func TestLoopPersistsIntentBeforeAcquireFailure(t *testing.T) {
 	}
 	t.Setenv("BENCH_HOME", blockedHome)
 	var stdout, stderr bytes.Buffer
-	if code := Loop("multi word objective", bytes.NewReader(nil), &stdout, &stderr); code == 0 {
+	if code := Loop("multi word objective", &stdout, &stderr); code == 0 {
 		t.Fatal("Loop unexpectedly acquired worktree")
 	}
 	ledger, err := intent.Read(root)
-	if err != nil || len(ledger.Entries) != 1 || ledger.Entries[0].Objective != "multi word objective" || ledger.Entries[0].Worktree != "" {
+	if err != nil || len(ledger.Entries) != 1 || ledger.Entries[0].Kind != intent.KindShift || ledger.Entries[0].Worktree != "" {
 		t.Fatalf("pre-acquire intent = %#v, %v", ledger.Entries, err)
 	}
 }
@@ -267,6 +268,25 @@ func TestCheckpointOutcomeDeadlineWinsOverInterrupt(t *testing.T) {
 	}
 }
 
+// TestObjectiveBannerEscapesControls covers story 14's banner row: a control sequence in
+// the objective renders escaped in the shift-start banner rather than raw, because the
+// banner routes through the shared sanitizer. Red before the banner was wired to
+// sanitize.Preview, when it interpolated the raw objective. The " — objective:" delimiter
+// the branch parser depends on must survive.
+func TestObjectiveBannerEscapesControls(t *testing.T) {
+	esc := string(rune(0x1b))
+	got := objectiveBanner("bench/shift-x", "paint it "+esc+"[31mred")
+	if strings.ContainsRune(got, 0x1b) {
+		t.Fatalf("banner leaked a raw ESC byte: %q", got)
+	}
+	if !strings.Contains(got, `[31mred`) {
+		t.Fatalf("banner did not escape the control sequence: %q", got)
+	}
+	if !strings.Contains(got, "bench/shift-x — objective: ") {
+		t.Fatalf("banner dropped the branch delimiter the parser needs: %q", got)
+	}
+}
+
 func TestValidateObjective(t *testing.T) {
 	cases := []struct {
 		name      string
@@ -281,6 +301,10 @@ func TestValidateObjective(t *testing.T) {
 		{"tab byte", "bad\tobjective", true},
 		{"del byte", "bad\x7fobjective", true},
 		{"newline byte", "bad\nobjective", true},
+		{"at cap", strings.Repeat("a", objectiveMaxRunes), false},
+		{"over cap", strings.Repeat("a", objectiveMaxRunes+1), true},
+		{"multibyte at cap", strings.Repeat("é", objectiveMaxRunes), false},
+		{"multibyte over cap", strings.Repeat("é", objectiveMaxRunes+1), true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

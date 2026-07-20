@@ -326,7 +326,7 @@ fi
 func testShiftRefactorPromptScope(t *testing.T) {
 	f := shiftFixture(t, "#!/usr/bin/env bash\nexit 0\n")
 	f.WriteExecutable("agent", `#!/usr/bin/env bash
-printf '%s\n@@@@\n' "$1" >> "$BENCH_TEST_PROMPTS"
+{ cat; printf '@@@@\n'; } >> "$BENCH_TEST_PROMPTS"
 if [ ! -f made-big ]; then seq 401 | sed 's/^/x = /' > touched.py; : > made-big; fi
 `)
 	f.CommitAll("agent")
