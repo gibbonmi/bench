@@ -20,17 +20,29 @@ const (
 	passlistEnd   = "<!-- passlist:end -->"
 )
 
-// passlistTokenRe matches a backtick-quoted environment name or PREFIX* glob,
-// the token form the variable listing documents each passlist pattern as.
-var passlistTokenRe = regexp.MustCompile("`([A-Z][A-Z0-9_]*\\*?)`")
+// passlistTokenRe matches a backtick-quoted environment name or PREFIX* glob
+// anchored to a markdown table row's Pattern column — the row's first cell,
+// immediately after the leading `|`. Anchoring to the row start (rather than
+// matching any backtick-quoted token in the region) excludes an incidental
+// backtick-quoted mention in the Family or Doc columns, e.g. the
+// `XDG_CONFIG_HOME` aside in the `XDG_*` row's Family prose: that mention must
+// not be able to stand in for a real Pattern-column row.
+var passlistTokenRe = regexp.MustCompile(`(?m)^\|\s*` + "`([A-Z][A-Z0-9_]*\\*?)`" + `\s*\|`)
 
-// checkDataHandlingDerivation asserts DATA_HANDLING.md's variable listing
-// documents every pattern the internal/env passlist admits. The constants are
-// the compiled-in enforcement values (env.AgentPasslist, which is SharedBasics
-// plus the agent additions), so a pattern added to the code without a row in the
-// doc turns the gate red with a diagnostic naming that pattern. The check fails
-// loudly — not vacuously — when the marked region is absent or empty, so a doc
-// that dropped the listing cannot pass by carrying nothing to check.
+// checkDataHandlingDerivation asserts DATA_HANDLING.md's variable listing and
+// the internal/env passlist name exactly the same pattern set, in both
+// directions. The constants are the compiled-in enforcement values
+// (env.AgentPasslist, which is SharedBasics plus the agent additions):
+//   - a pattern added to the code without a Pattern-column row in the doc turns
+//     the gate red with a diagnostic naming that pattern (constants → doc);
+//   - a Pattern-column row in the doc naming a pattern the code doesn't admit
+//     turns the gate red with a diagnostic naming that pattern too (doc →
+//     constants), so the advertisement can't claim a passlist entry the
+//     enforcement doesn't grant.
+//
+// The check fails loudly — not vacuously — when the marked region is absent
+// or empty, so a doc that dropped the listing cannot pass by carrying nothing
+// to check.
 func checkDataHandlingDerivation(root string) []string {
 	doc := readIfExists(filepath.Join(root, "DATA_HANDLING.md"))
 	region, ok := passlistRegion(doc)
@@ -41,10 +53,19 @@ func checkDataHandlingDerivation(root string) []string {
 	if len(documented) == 0 {
 		return []string{"DATA_HANDLING.md passlist derivation region empty: no `PATTERN` tokens found between the passlist markers"}
 	}
+	constants := map[string]bool{}
+	for _, pattern := range env.AgentPasslist {
+		constants[pattern] = true
+	}
 	var diags []string
 	for _, pattern := range env.AgentPasslist {
 		if !documented[pattern] {
 			diags = append(diags, fmt.Sprintf("DATA_HANDLING.md passlist derivation: internal/env pattern %q is not documented in the variable listing", pattern))
+		}
+	}
+	for pattern := range documented {
+		if !constants[pattern] {
+			diags = append(diags, fmt.Sprintf("DATA_HANDLING.md passlist derivation: documented pattern %q is not present in internal/env.AgentPasslist", pattern))
 		}
 	}
 	return diags
@@ -129,8 +150,10 @@ func controlEscaperPackages(root string) []string {
 // TestDataHandlingDerivationBites is the recorded bite proof for
 // checkDataHandlingDerivation (per craft-gate): a doc whose region lists every
 // env.AgentPasslist pattern passes clean; dropping one pattern fires a diagnostic
-// naming exactly that pattern; and removing the marked region fails loudly rather
-// than passing vacuously.
+// naming exactly that pattern; removing the marked region fails loudly rather
+// than passing vacuously; a doc pattern the code doesn't admit fires the reverse
+// diagnostic; and a backtick-quoted mention in the Family column (not the
+// Pattern column) does not count as documenting a pattern.
 func TestDataHandlingDerivationBites(t *testing.T) {
 	writeDoc := func(t *testing.T, body string) string {
 		t.Helper()
@@ -173,6 +196,32 @@ func TestDataHandlingDerivationBites(t *testing.T) {
 	emptyRegion := passlistBegin + "\n\n" + passlistEnd + "\n"
 	if diags := checkDataHandlingDerivation(writeDoc(t, emptyRegion)); !containsDiagnostic(diags, "passlist derivation region empty") {
 		t.Fatalf("empty region: want a loud region-empty diagnostic, got %v", diags)
+	}
+
+	// Reverse direction (S1): a doc that documents a pattern env.AgentPasslist
+	// doesn't admit must fire its own diagnostic, not just pass because every
+	// constant happens to be covered.
+	orphan := "FAKE_ORPHAN_VAR"
+	withOrphan := region(append(append([]string(nil), env.AgentPasslist...), orphan))
+	diags = checkDataHandlingDerivation(writeDoc(t, withOrphan))
+	wantOrphan := fmt.Sprintf("documented pattern %q is not present in internal/env.AgentPasslist", orphan)
+	if !containsDiagnostic(diags, wantOrphan) {
+		t.Fatalf("orphan documented pattern %q: want diagnostic %q, got %v", orphan, wantOrphan, diags)
+	}
+
+	// Tightened capture (S3): a backtick-quoted name in the Family column must
+	// not stand in for a real Pattern-column row. Build a doc that documents
+	// every pattern except one, but mentions the dropped pattern only in Family
+	// prose on an unrelated row — the derivation must still report it missing.
+	familyMention := passlistBegin + "\n\n| Pattern | Family | Doc |\n|---|---|---|\n"
+	for _, p := range partial {
+		familyMention += fmt.Sprintf("| `%s` | fam | doc |\n", p)
+	}
+	familyMention += fmt.Sprintf("| `%s` | fam (`%s` mentioned in prose, not a row) | doc |\n", partial[0], dropped)
+	familyMention += "\n" + passlistEnd + "\n"
+	diags = checkDataHandlingDerivation(writeDoc(t, familyMention))
+	if !containsDiagnostic(diags, want) {
+		t.Fatalf("Family-column prose mention of %q wrongly satisfied the Pattern-column check: %v", dropped, diags)
 	}
 }
 
