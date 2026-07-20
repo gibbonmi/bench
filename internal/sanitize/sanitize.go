@@ -19,7 +19,19 @@ import (
 // to a terminal or to embed in html/template output.
 func Controls(value string) string {
 	var b strings.Builder
-	writeEscaped(&b, []rune(value))
+	writeEscaped(&b, []rune(value), false)
+	return b.String()
+}
+
+// Preformatted is Controls for text that lands inside an html/template <pre> block: html/
+// template already neutralizes markup there, so the only threat left is a raw control
+// byte, and flattening the layout to escape it is unnecessary collateral. It leaves
+// newline and tab verbatim so multi-line and tab-aligned content renders as authored,
+// while every other control rune — including carriage return — still escapes through the
+// same writeEscaped mechanism Controls uses, so no raw control byte reaches the output.
+func Preformatted(value string) string {
+	var b strings.Builder
+	writeEscaped(&b, []rune(value), true)
 	return b.String()
 }
 
@@ -34,22 +46,29 @@ func Preview(value string) string {
 		runes = runes[:120]
 	}
 	var b strings.Builder
-	writeEscaped(&b, runes)
+	writeEscaped(&b, runes, false)
 	if truncated {
 		fmt.Fprintf(&b, "… (%d bytes)", len(value))
 	}
 	return b.String()
 }
 
-// writeEscaped is the single per-rune escaping rule both Controls and Preview share.
-func writeEscaped(b *strings.Builder, runes []rune) {
+// writeEscaped is the single per-rune escaping rule Controls, Preview, and Preformatted
+// all share. When preserveLayout is false (Controls, Preview), newline, carriage return,
+// and tab escape to their backslash forms like every other control rune. When
+// preserveLayout is true (Preformatted), newline and tab pass through verbatim and only
+// carriage return joins the general control-rune case, so the \u%04x emission stays
+// single-sourced regardless of which caller reaches it.
+func writeEscaped(b *strings.Builder, runes []rune, preserveLayout bool) {
 	for _, r := range runes {
 		switch {
-		case r == '\n':
+		case preserveLayout && (r == '\n' || r == '\t'):
+			b.WriteRune(r)
+		case !preserveLayout && r == '\n':
 			b.WriteString(`\n`)
-		case r == '\r':
+		case !preserveLayout && r == '\r':
 			b.WriteString(`\r`)
-		case r == '\t':
+		case !preserveLayout && r == '\t':
 			b.WriteString(`\t`)
 		case unicode.IsControl(r):
 			fmt.Fprintf(b, "\\u%04x", r)

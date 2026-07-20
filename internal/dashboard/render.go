@@ -13,9 +13,12 @@ import (
 )
 
 // view is the sanitized, render-ready projection of a Snapshot. Every git- and file-sourced
-// string is run through the shared sanitize.Controls before it lands here, so the template
-// only ever escapes control-byte-free text — control-rune escaping is the one step
-// html/template does not do.
+// string is run through sanitize.Controls before it lands here, so the template only ever
+// escapes control-byte-free text — control-rune escaping is the one step html/template does
+// not do. RoadmapText and Sequence are the exception: they render inside <pre>, where
+// html/template's markup neutralization is enough on its own, so they route through
+// sanitize.Preformatted instead, which keeps newline and tab literal so the panel's layout
+// survives while still escaping every other control rune.
 type view struct {
 	GeneratedAt    string
 	HasGate        bool
@@ -41,16 +44,17 @@ type worktreeView struct{ Class, Path string }
 
 // Render turns a Snapshot into the complete self-contained HTML document. It is pure: it
 // reads nothing but its argument. Escaping is contextual (html/template neutralizes markup
-// and quote injection in every interpolated field) plus the one shared sanitize.Controls
-// pass — control-rune escaping the template cannot do. A template-execution error is a
+// and quote injection in every interpolated field) plus a control-rune pass the template
+// cannot do itself — sanitize.Controls for every field, sanitize.Preformatted for the two
+// <pre>-rendered fields so their layout survives. A template-execution error is a
 // template-source bug, unreachable from repo data, so the seam stays a total function.
 func Render(s Snapshot) string {
 	v := view{
 		GeneratedAt:    s.GeneratedAt.Format(time.RFC3339),
 		HasGate:        s.Gate.Present,
 		RoadmapPresent: s.RoadmapPresent,
-		RoadmapText:    sanitize.Controls(s.RoadmapText),
-		Sequence:       sanitize.Controls(s.Sequence),
+		RoadmapText:    sanitize.Preformatted(s.RoadmapText),
+		Sequence:       sanitize.Preformatted(s.Sequence),
 		OpenLearnings:  s.OpenLearnings,
 		WorktreesErr:   sanitize.Controls(s.WorktreesErr),
 	}

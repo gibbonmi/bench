@@ -73,3 +73,19 @@ func TestControlsEscapesWithoutCapping(t *testing.T) {
 		t.Error("Controls left a raw control byte in its output")
 	}
 }
+
+// TestPreformattedPreservesLayoutWhitespace pins the <pre>-panel variant: newline and tab
+// pass through verbatim (so multi-line layout survives), while carriage return and every
+// other control rune still escape through the same \uXXXX mechanism Controls uses — a raw
+// C0 byte must never reach the output.
+func TestPreformattedPreservesLayoutWhitespace(t *testing.T) {
+	in := "a" + string(rune(0x0a)) + "b" + string(rune(0x09)) + "c" + string(rune(0x0d)) + "d" + string(rune(0x07)) + "e"
+	got := Preformatted(in)
+	want := "a" + "\n" + "b" + "\t" + "c" + bs + "u000d" + "d" + bs + "u0007" + "e"
+	if got != want {
+		t.Errorf("Preformatted(%q) = %q, want %q", in, got, want)
+	}
+	if strings.ContainsRune(got, rune(0x0d)) || strings.ContainsRune(got, rune(0x07)) {
+		t.Error("Preformatted left a raw non-layout control byte in its output")
+	}
+}

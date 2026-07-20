@@ -148,6 +148,15 @@ sanitizer in `internal/sanitize`: control runes are escaped into a readable
 the one control-sequence policy; a conformance check pins it as the sole escaper
 so a second, drifting copy cannot appear.
 
+The dashboard HTML renderer (`internal/dashboard`) uses this same escaper for
+every field it interpolates, with one composed exception: the two fields
+rendered inside `<pre>` (the Roadmap panel's `RoadmapText` and `Sequence`) route
+through `sanitize.Preformatted` instead of `sanitize.Controls`. `Preformatted`
+shares the same escaping mechanism but leaves newline and tab literal so a
+multi-line panel keeps its layout — html/template's own markup neutralization
+already covers the injection risk inside `<pre>`, so flattening those two
+fields to single-line escape tokens was unnecessary collateral.
+
 TOON table output (`internal/toon`) is deliberately distinct: it *refuses* a
 control-bearing cell rather than escaping it, a closed AXI-contract decision, and
 is not folded into the sanitizer's escaping policy.

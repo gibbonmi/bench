@@ -110,6 +110,28 @@ func TestRenderRoadmapRowsAndSequence(t *testing.T) {
 	}
 }
 
+// Review finding P1: RoadmapText and Sequence render inside <pre>, where html/template
+// already neutralizes markup, so a multi-line value must keep its real newlines rather
+// than flattening to literal \n escape tokens.
+func TestRenderRoadmapAndSequencePreserveNewlinesInPre(t *testing.T) {
+	s := baseSnapshot()
+	s.RoadmapPresent = true
+	s.RoadmapText = "# Roadmap\n\nFT1 row alpha\nFT2 row beta\n"
+	s.Sequence = "## Recommended sequence\n\n1. Shape next\n2. Write spec\n"
+	out := Render(s)
+
+	roadmap := section(out, "Roadmap")
+	if strings.Contains(roadmap, `\n`) {
+		t.Errorf("RoadmapText flattened to escaped \\n tokens instead of real newlines:\n%s", roadmap)
+	}
+	if !strings.Contains(out, "FT1 row alpha\nFT2 row beta") {
+		t.Errorf("RoadmapText lost its real newline between rows:\n%s", roadmap)
+	}
+	if !strings.Contains(out, "1. Shape next\n2. Write spec") {
+		t.Errorf("Sequence lost its real newline between steps:\n%s", roadmap)
+	}
+}
+
 // Row 6: the ideas section lists each parked line.
 func TestRenderIdeas(t *testing.T) {
 	s := baseSnapshot()
