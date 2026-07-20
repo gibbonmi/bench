@@ -25,6 +25,9 @@ func TestGoBuildIgnoresCheckoutTopology(t *testing.T) {
 	// the source but still tracked at HEAD) are reflected too — a tar overlay can only add
 	// or modify, leaving a deleted source file resurrected in the clone and drifting the
 	// binary. --delete makes the clone tree a true mirror; .git and dist stay untouched.
+	if _, err := exec.LookPath("rsync"); err != nil {
+		t.Skipf("reproducibility probe needs rsync on PATH: %v", err)
+	}
 	overlay := exec.Command("rsync", "-a", "--delete", "--exclude=/.git", "--exclude=/dist", root+"/", clone)
 	if output, err := overlay.CombinedOutput(); err != nil {
 		t.Fatalf("overlay source snapshot: %v\n%s", err, output)
