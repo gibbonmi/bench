@@ -234,6 +234,17 @@ running harness's binding, or keep the schema and reorder the message so the
 enforcing layer leads with its own harness's tokens. The cut line is a
 reviewer decision; enforcement stays exact-string with no provider lookup.
 
+**FT98 (LOW, evidence supplied) — discard path for content-landed recovery
+payloads.** Recovery cleanup fail-closes permanently when a payload's content
+landed through different commits: the FT83 delegate payloads are strict subsets
+of the default branch by diff, yet `bench worktree recovery <ref> --apply
+<fingerprint>` still returns `retain` because landed-proof requires the payload
+commit itself (observed 2026-07-20), so proven-redundant refs accumulate with no
+sanctioned exit. Either extend landed-proof to content containment (patch-id or
+diff-containment against the default branch) or add an explicit
+reviewer-authorized discard path; fail-closed stays the default, and the cut
+line is a reviewer decision.
+
 ## Release and bank reassessment gate
 
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
