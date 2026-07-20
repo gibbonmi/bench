@@ -53,3 +53,11 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
   reason.
 - **Proposed rule change:** none — the fixture fix closes the gap; this entry is
   the veto surface for it.
+
+- 2026-07-20  Running four worktree `bench commit` gates concurrently flaked three
+  load-sensitive contract tests (cancellation timing, tempdir cleanup, release
+  reproducibility probe) that all pass serially; the parallel-delegate pattern is fine
+  for authoring but gate runs should be serialized by the coordinator. Right behavior:
+  delegates stop at "diff ready, focused tests green" and the coordinator runs
+  `bench commit` per worktree one at a time. Proposed rule: note in craft-delegate
+  (or the implement phase) that whole-tree gate runs are a serialized resource.
