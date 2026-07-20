@@ -223,6 +223,17 @@ lifecycle but is undocumented. Either key hook assignments per delegate or
 document the `--request` route as the canonical parallel-delegate path in
 `craft-delegate`. Kit edit under the `craft-synthesis` discipline.
 
+**FT97 (LOW, evidence supplied) — harness-native agent-line denial.** The
+agent-line deny message single-sources its bound-tiers listing, which leads
+with the three tier ids and trails the harness aliases; inside a Claude Code
+session the aliases are the only tokens the Agent tool can pass, so the error
+leads with ids that harness cannot use (observed 2026-07-19). Either
+restructure `.bench/lines.env` into per-harness tier bindings (Claude →
+alias tokens, Codex → tier ids) with each hook layer reporting only the
+running harness's binding, or keep the schema and reorder the message so the
+enforcing layer leads with its own harness's tokens. The cut line is a
+reviewer decision; enforcement stays exact-string with no provider lookup.
+
 ## Release and bank reassessment gate
 
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
