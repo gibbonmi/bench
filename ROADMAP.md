@@ -20,21 +20,6 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT83 (HIGH on release and bank tracks) — governed npm publication.** The
-release-evidence core and the reproducible-offline-artifact slices have shipped;
-what remains is the final slice: governed publication. Publication preflights
-every name, stages under a non-default tag, verifies already-present immutable
-digests, waits for dependencies, publishes the wrapper last, and promotes only
-after verification. Extend the canonical release index with publication
-evidence rather than creating another manifest; publication remains red until
-the selected profile's FT87, FT88, and, for bank use, FT71 records are present.
-
-Sources: `RR:A-09`; `RC:H-07`.
-
-Spec: `specs/governed-npm-publication.md`. Decision map:
-`decisions/governed-offline-release-bundle.md`. Next: `/bench-implement-spec`
-for slice 3 of 3, governed npm publication.
-
 **FT88 (HIGH on the bank track) — minimal subprocess data exposure.** Agents
 and gates launch from separate documented environment passlists with explicit
 opt-in additions. Prompt text travels through stdin or a mode-0600 file, never
@@ -180,16 +165,16 @@ repository-controlled bank evidence requirement makes this row active.
 
 Sources: `RR:C-05`; `RC:H-03`.
 
-**FT91 (LOW) — gate wall-clock proportional to the diff.** The full suite now
-runs ~50s wall-clock for any diff (phases parallelized; conformance ~46s and
-runtime contracts ~41s dominate), so a one-line change still pays the
-whole-oracle price on every shift iteration, but the per-iteration pain is an
-order of magnitude down. The remaining arms — caching keyed on the pinned gate
+**FT91 (LOW) — gate wall-clock proportional to the diff.** The phases were
+parallelized (once measured ~50s wall-clock), but 2026-07-19 full-gate runs
+observed ~6–7 minutes wall (conformance ~405s and surface/artifact contracts
+~345s dominate), so a one-line change still pays the whole-oracle price on
+every shift iteration. The remaining arms — caching keyed on the pinned gate
 subject, or scoped verdicts — must not weaken the oracle: green must keep
 meaning the same thing, and any scoped verdict must be explicit evidence,
 never a silent skip. Starts as a grill (`/bench-shape-idea`) because the cut
 line between speed and oracle authority is a reviewer decision; graduate only
-if 50s demonstrably still drags shift iteration.
+if the multi-minute gate demonstrably drags shift iteration.
 
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.** Make
 every documented CLI example executable; parse and validate real YAML
@@ -228,6 +213,15 @@ runtime-binary seams stay distinct while the literal is single-sourced. This
 is test-vs-test duplication, not the expectation-versus-implementation
 independence the code standard protects, so collapsing it is consistent with
 the one-source-per-fact rule.
+
+**FT96 (LOW) — parallel-delegate worktree assignments.** The WorktreeCreate
+hook keys assignments per session, so launching several parallel write
+delegates with harness worktree isolation grants one assignment and refuses
+the rest ("conflicts with its existing assignment"); the manual
+`bench worktree create --request <distinct-id>` route works and respects the
+lifecycle but is undocumented. Either key hook assignments per delegate or
+document the `--request` route as the canonical parallel-delegate path in
+`craft-delegate`. Kit edit under the `craft-synthesis` discipline.
 
 ## Release and bank reassessment gate
 
@@ -278,6 +272,14 @@ stop the subagent. The current surface verdict is canonical in
 `.bench/BENCH-reference.md` Hook Layers. Graduate only when the Codex changelog
 adds a spawn tool name or a deny-capable SubagentStart.
 
+**FT95 (parked pending evidence) — deflake isolation-sensitive gate tests.**
+2026-07-19: the conformance phase's compiled-core inner `go test` failed once
+during a gated commit and passed on identical-tree retry; a separate one-off
+`TestDoctorShimContracts` failure also passed standalone. A transient unit
+test reds a full multi-minute gated commit; retry-once-at-same-tier handled
+both. Graduation trigger: either test flakes again with the failing case and
+output captured — then deflake it or tighten its environment isolation.
+
 **FT8 (scheduled, not actionable) — Sonnet 5 mid-tier revisit.** Time-boxed to
 2026-09-01 or the next frontier shift.
 
@@ -291,6 +293,6 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — build FT83 slice 3, governed npm publication (specs/governed-npm-publication.md).
-2. `/bench-shape-idea` — specify FT88, minimal subprocess data exposure.
-3. `/bench-shape-idea` — specify FT87, bounded network, resource, and CLI behavior.
+1. `/bench-shape-idea` — specify FT88, minimal subprocess data exposure.
+2. `/bench-shape-idea` — specify FT87, bounded network, resource, and CLI behavior.
+3. `/bench-shape-idea` — shape FT76, one-command repo-aware Bench bootstrap.
