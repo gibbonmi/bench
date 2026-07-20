@@ -134,6 +134,77 @@ func TestParseAllowRejectsMalformedLines(t *testing.T) {
 	}
 }
 
+// TestParseAllowSkipsCommentLines covers the edge row (review C2): a `#`
+// comment line is skipped rather than rejected as a malformed entry.
+// DATA_HANDLING.md advertises `#` comments as part of the grammar; a
+// regression that dropped the skip branch would fail-close every env.allow
+// file that uses one.
+func TestParseAllowSkipsCommentLines(t *testing.T) {
+	got, err := parseAllow("[agent]\n# a comment\nMY_VAR\n")
+	if err != nil {
+		t.Fatalf("comment line must not error, got %v", err)
+	}
+	if len(got.agent) != 1 || got.agent[0] != "MY_VAR" {
+		t.Fatalf("comment line was not skipped cleanly, got %+v", got)
+	}
+}
+
+// TestParseAllowAcceptsCRLFLineEndings covers the edge row (review C3): a file
+// with CRLF line endings parses the same as LF-only, because TrimSpace strips
+// the trailing \r along with the line's other whitespace.
+func TestParseAllowAcceptsCRLFLineEndings(t *testing.T) {
+	got, err := parseAllow("[agent]\r\nMY_VAR\r\n")
+	if err != nil {
+		t.Fatalf("CRLF line endings must not error, got %v", err)
+	}
+	if len(got.agent) != 1 || got.agent[0] != "MY_VAR" {
+		t.Fatalf("CRLF entry was not parsed cleanly, got %+v", got)
+	}
+}
+
+// TestParseAllowRejectsUTF8BOMByName covers the edge row (review C3): a file
+// that opens with a UTF-8 byte-order mark is rejected fail-closed, and the
+// error names the BOM directly rather than reporting the garbled first line
+// as an "entry before any section header" — the BOM is not Unicode
+// whitespace, so a naive TrimSpace-only diagnosis would misname the cause.
+func TestParseAllowRejectsUTF8BOMByName(t *testing.T) {
+	_, err := parseAllow("\ufeff[agent]\nMY_VAR\n")
+	if err == nil {
+		t.Fatal("expected rejection, got nil error")
+	}
+	if !strings.Contains(err.Error(), "byte-order mark") {
+		t.Fatalf("error %q does not name the BOM", err)
+	}
+}
+
+// TestParseAllowDuplicateEntriesAreAppendedAsIs covers the edge row (review
+// C4): a duplicate entry is not deduplicated — both copies are appended,
+// which is harmless because matchesAny only needs one match. This pins
+// current behavior; there is no dedup branch to change.
+func TestParseAllowDuplicateEntriesAreAppendedAsIs(t *testing.T) {
+	got, err := parseAllow("[agent]\nMY_VAR\nMY_VAR\n")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(got.agent) != 2 || got.agent[0] != "MY_VAR" || got.agent[1] != "MY_VAR" {
+		t.Fatalf("duplicate entry was not appended as-is, got %+v", got)
+	}
+}
+
+// TestParseAllowLeadingWhitespaceEntryIsLenientlyAccepted covers the edge row
+// (review C4): an entry line with leading whitespace is accepted, not
+// rejected — TrimSpace normalizes it before the grammar checks run. This
+// pins current lenient behavior as-is.
+func TestParseAllowLeadingWhitespaceEntryIsLenientlyAccepted(t *testing.T) {
+	got, err := parseAllow("[agent]\n   MY_VAR\n")
+	if err != nil {
+		t.Fatalf("leading whitespace before an entry must not error, got %v", err)
+	}
+	if len(got.agent) != 1 || got.agent[0] != "MY_VAR" {
+		t.Fatalf("leading-whitespace entry was not accepted leniently, got %+v", got)
+	}
+}
+
 // TestDefaultGlobsDoNotStraddleFamilies covers the edge row: no default glob in
 // the agent passlist matches a name belonging to a different family, checked by
 // enumerating each default glob against a fixture of foreign names. The

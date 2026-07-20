@@ -37,6 +37,13 @@ func parseAllowFile(path string) (allowResult, error) {
 	return parseAllow(string(data))
 }
 
+// utf8BOM is the UTF-8 byte-order mark. A file that opens with it is rejected
+// by name rather than falling through to the generic "entry before any
+// section header" error the BOM bytes would otherwise trigger (the BOM is not
+// Unicode whitespace, so TrimSpace leaves it attached to the first line) —
+// fail-closed either way, but a named reason beats a misleading one.
+const utf8BOM = "\ufeff"
+
 // parseAllow implements the env.allow grammar: optional, line-oriented,
 // # comments and blank lines, an [agent] section header — the only known
 // section — and one entry per line that is either an exact name or a PREFIX*
@@ -44,10 +51,13 @@ func parseAllowFile(path string) (allowResult, error) {
 // the reason — an entry before any section header, an unknown section name
 // (including a stale [gate], since the gate opt-in is the manifest, not this
 // file), a bare *, a glob that is not a single trailing *, an entry containing
-// / or =, or any character outside the portable environment-name set. A
-// present-but-empty file yields an allowResult with no entries, which is not an
-// error.
+// / or =, or any character outside the portable environment-name set, or a
+// leading UTF-8 byte-order mark. A present-but-empty file yields an
+// allowResult with no entries, which is not an error.
 func parseAllow(data string) (allowResult, error) {
+	if strings.HasPrefix(data, utf8BOM) {
+		return allowResult{}, errors.New(".bench/env.allow:1: file begins with a UTF-8 byte-order mark (BOM); save it as UTF-8 without a BOM")
+	}
 	var result allowResult
 	section := ""
 	for i, raw := range strings.Split(data, "\n") {

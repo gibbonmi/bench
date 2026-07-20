@@ -114,8 +114,9 @@ known section), and one entry per line that is either an exact name or a
 `PREFIX*` glob. A malformed or hostile file fails closed — the launch refuses and
 the error names the offending line and reason — rather than degrading to
 defaults, because a silently ignored opt-in is indistinguishable from a working
-one. A gate-side need is declared in `.bench/gate-inputs.json` instead; `[gate]`
-is not a valid section here.
+one. A leading UTF-8 byte-order mark is rejected the same way, named explicitly
+rather than reported as a stray entry. A gate-side need is declared in
+`.bench/gate-inputs.json` instead; `[gate]` is not a valid section here.
 
 ## File paths
 
