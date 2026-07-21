@@ -9,6 +9,7 @@ package gate
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -16,12 +17,15 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 )
+
+var gateTimeout = bounds.GateTimeout
+var errGateTimeout = errors.New("gate deadline exceeded")
 
 // Kind names the resolved gate. The zero value None is the no-gate case (exit 3,
 // nothing recorded); the rest map to a command run from the repo root.
@@ -245,9 +249,20 @@ func executeWithEngine(ctx context.Context, root string, stdout, stderr io.Write
 		_ = durableReplaceWithEngine(engine, gitdir, pending)
 		return operationalWithEngine(engine, root, 0, stderr, "gate pending persistence failed")
 	}
-	rc := runCaptured(ctx, root, plan, stdout, stderr)
+	runCtx, cancelRun := context.WithTimeoutCause(ctx, gateTimeout, errGateTimeout)
+	defer cancelRun()
+	rc := runCaptured(runCtx, root, plan, stdout, stderr)
 	if ctx.Err() != nil {
 		return Result{GateExit: rc, ActionExit: rc, Inspection: inspectAt(root, engine.Now())}
+	}
+	if errors.Is(context.Cause(runCtx), errGateTimeout) {
+		fmt.Fprintln(stderr, "gate: timeout")
+		ready := verdictRecord{Schema: 1, State: Ready, Status: "timeout", Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: engine.Now().UTC().Truncate(time.Second).Format(time.RFC3339)}
+		if err := durableReplaceWithEngine(engine, gitdir, ready); err != nil {
+			_ = durableReplaceWithEngine(engine, gitdir, pending)
+			return operationalWithEngine(engine, root, 124, stderr, "gate timeout persistence failed")
+		}
+		return Result{GateExit: 124, ActionExit: 124, Inspection: inspectAt(root, engine.Now())}
 	}
 	after, err := engine.PostRunSubject(root)
 	if err != nil || !sameSubject(plan, after) {
@@ -336,55 +351,4 @@ func (w controlSafeWriter) Write(p []byte) (int, error) {
 		return 0, err
 	}
 	return len(p), nil
-}
-
-const processGroupCancelGrace = 2 * time.Second
-
-type processGroupResult struct {
-	Code     int
-	StartErr error
-}
-
-func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd) processGroupResult {
-	if cmd.SysProcAttr == nil {
-		cmd.SysProcAttr = &syscall.SysProcAttr{}
-	}
-	cmd.SysProcAttr.Setpgid = true
-	if err := cmd.Start(); err != nil {
-		if ctx.Err() != nil {
-			return processGroupResult{Code: 130, StartErr: err}
-		}
-		return processGroupResult{Code: 1, StartErr: err}
-	}
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
-	select {
-	case err := <-done:
-		return processGroupResult{Code: processExitCode(cmd, err)}
-	case <-ctx.Done():
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
-		select {
-		case <-done:
-			// The command leader may exit on INT while a descendant in the same
-			// process group ignores it. A final group kill is still required: Wait
-			// only proves the leader and its output pipes are done.
-			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-		case <-time.After(processGroupCancelGrace):
-			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-			<-done
-		}
-		return processGroupResult{Code: 130}
-	}
-}
-
-func processExitCode(cmd *exec.Cmd, err error) int {
-	if err == nil {
-		return 0
-	}
-	if cmd.ProcessState != nil {
-		if code := cmd.ProcessState.ExitCode(); code > 0 {
-			return code
-		}
-	}
-	return 1
 }

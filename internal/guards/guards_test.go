@@ -7,9 +7,65 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 )
+
+func TestCommandAlwaysEmitsCompleteGuardScanMetadata(t *testing.T) {
+	root := t.TempDir()
+	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v: %s", err, out)
+	}
+	old, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(old) })
+	out, code := Command(nil)
+	if code != 0 || !strings.Contains(out, "guard_scan[1]{status,inspected,total,omitted,reason}:") || !strings.Contains(out, "complete") {
+		t.Fatalf("code/output = %d\n%s", code, out)
+	}
+}
+
+func TestScanTimeoutPreservesPartialRowsAndHonestCounts(t *testing.T) {
+	oldEnumerate, oldInspect := enumerateGuards, inspectGuard
+	t.Cleanup(func() { enumerateGuards, inspectGuard = oldEnumerate, oldInspect })
+	enumerateGuards = func(context.Context, string) ([]candidate, error) {
+		return []candidate{{fallback: "fast"}, {fallback: "blocked"}}, nil
+	}
+	inspectGuard = func(ctx context.Context, _ string, c candidate) [][]string {
+		if c.fallback == "fast" {
+			return [][]string{{"fast", "boundary", "denies", "none"}}
+		}
+		<-ctx.Done()
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel()
+	got := Scan(ctx, "/repo")
+	if got.Status != "incomplete" || got.Reason != "timeout" || got.Inspected != "1" || got.Total != "2" || got.Omitted != "1" || len(got.Rows) != 1 {
+		t.Fatalf("Scan = %#v", got)
+	}
+}
+
+func TestScanEnumerationTimeoutUsesUnknownCounts(t *testing.T) {
+	old := enumerateGuards
+	t.Cleanup(func() { enumerateGuards = old })
+	enumerateGuards = func(ctx context.Context, _ string) ([]candidate, error) {
+		<-ctx.Done()
+		return nil, ctx.Err()
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel()
+	got := Scan(ctx, "/repo")
+	if got.Status != "incomplete" || got.Total != "unknown" || got.Omitted != "unknown" || got.Reason != "timeout" {
+		t.Fatalf("Scan = %#v", got)
+	}
+}
 
 func TestManifestFieldReadsLeadingCommentBlock(t *testing.T) {
 	header := "#!/usr/bin/env bash\n  \t\n# threat-model prose\n# denies: destructive git operations   \n# name: block-dangerous-git\n# why: protects repository history\n# boundary: PreToolUse Bash\nset -uo pipefail\n# name: too-late\n"

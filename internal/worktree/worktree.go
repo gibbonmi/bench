@@ -338,7 +338,7 @@ func renderResumeSummary(result ResumeResult) string {
 }
 func CreateCommand(root string, args []string, stdout, stderr io.Writer) int {
 	var request, label string
-	for len(args) > 0 {
+	for args = consumeRefresh(root, args, stdout); len(args) > 0; {
 		if len(args) < 2 || (args[0] != "--request" && args[0] != "--label") {
 			fmt.Fprintln(stderr, "usage: "+usage.WorktreeCreate)
 			return 2
@@ -369,7 +369,7 @@ func Subshell(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
-	objective := strings.Join(args, " ")
+	objective := strings.Join(consumeRefresh(root, args, stdout), " ")
 	if objective == "" {
 		objective = "interactive worktree"
 	}

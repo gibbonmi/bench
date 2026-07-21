@@ -175,9 +175,6 @@ func Acquire(root, resetRef, resetMode string) (string, error) {
 		return "", err
 	}
 	_ = chmodPool(pool, 0o700)
-	// Best-effort refresh so a freshly-minted worktree can detach onto origin/<branch>;
-	// a repo with no origin (the contract fixtures) just skips it.
-	_ = exec.Command("git", "-C", root, "fetch", "-q", "origin").Run()
 	var wt string
 	entries, _ := os.ReadDir(pool) // sorted by name, matching the shell glob order
 	for _, e := range entries {

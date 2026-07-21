@@ -184,6 +184,7 @@ func offlineSmokeDeniesRepairAndEgress(smoke string) bool {
 	}
 	return strings.Count(smoke, `BENCH_NO_REPAIR="$repair_disabled"`) == 2 &&
 		strings.Count(smoke, "BENCH_NO_REPAIR=1") == 8 &&
+		strings.Count(smoke, "BENCH_OFFLINE=1") == 6 &&
 		strings.Count(smoke, `npm_config_offline="$offline_mode"`) == 1 &&
 		strings.Count(smoke, "npm_config_offline=true") == 2 &&
 		strings.Count(smoke, `NODE_OPTIONS="--require=$root/scripts/offline-network-sentinel.cjs"`) == 4 &&

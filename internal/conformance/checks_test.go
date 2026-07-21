@@ -40,7 +40,62 @@ func RunConformance(root, kitRoot string) []string {
 	diags = append(diags, checkBenchShRoutes(root)...)
 	diags = append(diags, checkDataHandlingDerivation(root)...)
 	diags = append(diags, checkSingleControlEscaper(root)...)
+	diags = append(diags, checkBoundsPolicy(root)...)
 	return diags
+}
+
+func checkBoundsPolicy(root string) []string {
+	registry := readIfExists(filepath.Join(root, "internal", "bounds", "bounds.go"))
+	if registry == "" {
+		return []string{"internal/bounds policy registry is absent"}
+	}
+	required := []string{"ProviderTimeout", "GitRefreshTimeout", "GuardScanTimeout", "GateTimeout", "ModelReadLimit", "OutlineFileLimit", "OutlineRowLimit", "IterationMin", "IterationMax", "MainIterationsDefault", "RefactorIterationsDefault", "MaxWall"}
+	var diags []string
+	for _, name := range required {
+		if !strings.Contains(registry, name) {
+			diags = append(diags, "internal/bounds policy registry missing "+name)
+		}
+	}
+	owners := map[string][]string{
+		"internal/models/models.go":    {"bounds.ProviderTimeout", "bounds.ModelReadLimit"},
+		"internal/outline/outline.go":  {"bounds.OutlineFileLimit", "bounds.OutlineRowLimit"},
+		"internal/guards/guards.go":    {"bounds.GuardScanTimeout"},
+		"internal/gate/gate.go":        {"bounds.GateTimeout"},
+		"internal/worktree/refresh.go": {"bounds.GitRefreshTimeout"},
+		"internal/shift/loop.go":       {"bounds.MainIterationsDefault", "bounds.RefactorIterationsDefault", "bounds.IterationMin", "bounds.IterationMax", "bounds.MaxWall"},
+	}
+	for rel, tokens := range owners {
+		body := readIfExists(filepath.Join(root, filepath.FromSlash(rel)))
+		for _, token := range tokens {
+			if !strings.Contains(body, token) {
+				diags = append(diags, rel+" does not consume "+token)
+			}
+		}
+	}
+	wrapper := readIfExists(filepath.Join(root, "bin", "bench.sh"))
+	if !strings.Contains(wrapper, `[[ "${BENCH_OFFLINE:-}" == 1 ]]`) || !strings.Contains(registry, `os.Getenv("BENCH_OFFLINE") == "1"`) {
+		diags = append(diags, "wrapper and Go offline checks do not share exact BENCH_OFFLINE=1 semantics")
+	}
+	return diags
+}
+
+func TestBoundsPolicyOwnerMutationBites(t *testing.T) {
+	root := t.TempDir()
+	if diags := checkBoundsPolicy(root); len(diags) != 1 || !strings.Contains(diags[0], "registry is absent") {
+		t.Fatalf("absent registry diagnostics = %v", diags)
+	}
+	for _, path := range []string{"internal/bounds/bounds.go", "internal/models/models.go", "internal/outline/outline.go", "internal/guards/guards.go", "internal/gate/gate.go", "internal/worktree/refresh.go", "internal/shift/loop.go", "bin/bench.sh"} {
+		full := filepath.Join(root, filepath.FromSlash(path))
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte("package fixture\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if diags := checkBoundsPolicy(root); len(diags) < 2 {
+		t.Fatalf("empty/duplicated scaffold did not bite: %v", diags)
+	}
 }
 
 // benchShRoutes are the top-level bin/bench.sh case labels that must reach the Go core so

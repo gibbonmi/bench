@@ -820,7 +820,7 @@ func testRuntimeWorktreeRejectsUnknownArgs(t *testing.T) {
 
 	f := onMainFixture(t)
 	canonicalUsage := []string{
-		"bench worktree create --request <opaque-id> --label <work-item>",
+		"bench worktree create [--refresh] --request <opaque-id> --label <work-item>",
 		"bench worktree release --request <opaque-id> <path>",
 		"bench worktree clean [--discard-ignored] [--full] <path> [--apply <fingerprint>]",
 		"bench worktree recovery <ref> [--apply <fingerprint>]",

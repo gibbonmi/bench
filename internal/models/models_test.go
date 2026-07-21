@@ -1,16 +1,131 @@
 package models
 
 import (
+	"context"
 	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
 
+func TestCommandOfflineSuppressesEveryProviderWithEvidence(t *testing.T) {
+	t.Setenv("BENCH_OFFLINE", "1")
+	t.Setenv("OPENAI_API_KEY", "present")
+	t.Setenv("ANTHROPIC_API_KEY", "present")
+	stubCommand(t, func(string, ...string) ([]byte, error) {
+		t.Fatal("offline discovery started codex")
+		return nil, nil
+	})
+	stubHTTP(t, func(*http.Request) (*http.Response, error) {
+		t.Fatal("offline discovery started HTTP")
+		return nil, nil
+	})
+	for run := 1; run <= 2; run++ {
+		out, code := Command(nil)
+		if code != 0 {
+			t.Fatalf("run %d code = %d; out=%s", run, code, out)
+		}
+		for _, source := range []string{"codex", "openai", "anthropic"} {
+			want := source + ",offline,offline,BENCH_OFFLINE=1"
+			if !strings.Contains(out, want) {
+				t.Fatalf("run %d missing %q:\n%s", run, want, out)
+			}
+		}
+	}
+}
+
+func TestInventoryStartsProvidersConcurrentlyAndRendersStableOrder(t *testing.T) {
+	t.Setenv("OPENAI_API_KEY", "key")
+	t.Setenv("ANTHROPIC_API_KEY", "key")
+	var mu sync.Mutex
+	started := 0
+	timedOut := false
+	allStarted := make(chan struct{})
+	arrive := func() {
+		mu.Lock()
+		started++
+		if started == 3 {
+			close(allStarted)
+		}
+		mu.Unlock()
+		select {
+		case <-allStarted:
+		case <-time.After(200 * time.Millisecond):
+			mu.Lock()
+			timedOut = true
+			mu.Unlock()
+		}
+	}
+	stubCommand(t, func(string, ...string) ([]byte, error) {
+		arrive()
+		return []byte(`{"models":[{"slug":"codex-id","visibility":"list"}]}`), nil
+	})
+	stubHTTP(t, func(req *http.Request) (*http.Response, error) {
+		arrive()
+		id := "openai-id"
+		if req.URL.String() == anthropicModelsURL {
+			id = "anthropic-id"
+		}
+		return response(200, `{"data":[{"id":"`+id+`"}]}`), nil
+	})
+	out, code := Command(nil)
+	if code != 0 || started != 3 || timedOut {
+		t.Fatalf("code/started/timedOut = %d/%d/%v; out=%s", code, started, timedOut, out)
+	}
+	if !strings.Contains(out, "  codex,live,codex-id\n  openai,live,openai-id\n  anthropic,live,anthropic-id\n") {
+		t.Fatalf("provider render order changed:\n%s", out)
+	}
+}
+
+func TestModelBodyLimitAcceptsExactAndRejectsPlusOne(t *testing.T) {
+	base := `{"data":[]}`
+	for _, tt := range []struct {
+		name    string
+		size    int
+		wantErr bool
+	}{
+		{name: "exact", size: 5 << 20},
+		{name: "plus one", size: (5 << 20) + 1, wantErr: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			stubHTTP(t, func(*http.Request) (*http.Response, error) {
+				return response(200, base+strings.Repeat(" ", tt.size-len(base))), nil
+			})
+			_, err := fetchDataIDs("https://example.invalid", "key", openAIHeaders)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("size %d error = %v, wantErr=%v", tt.size, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestProviderTimeoutDoesNotCollapsePeers(t *testing.T) {
+	t.Setenv("OPENAI_API_KEY", "key")
+	t.Setenv("ANTHROPIC_API_KEY", "key")
+	oldTimeout := providerTimeout
+	providerTimeout = 20 * time.Millisecond
+	t.Cleanup(func() { providerTimeout = oldTimeout })
+	stubCommand(t, func(string, ...string) ([]byte, error) {
+		time.Sleep(30 * time.Millisecond)
+		return nil, providerError{status: "timeout", err: context.DeadlineExceeded}
+	})
+	stubHTTP(t, func(*http.Request) (*http.Response, error) {
+		return response(200, `{"data":[{"id":"peer"}]}`), nil
+	})
+	out, code := Command(nil)
+	if code != 0 || !strings.Contains(out, "codex,timeout,timeout,10s provider deadline") || strings.Count(out, ",live,peer") != 2 {
+		t.Fatalf("timeout collapsed peers: code=%d\n%s", code, out)
+	}
+}
+
 func TestAPIInventoryTimesOutAsUnavailable(t *testing.T) {
+	oldTimeout := providerTimeout
+	providerTimeout = 20 * time.Millisecond
+	t.Cleanup(func() { providerTimeout = oldTimeout })
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		<-r.Context().Done()
 	}))
@@ -18,11 +133,11 @@ func TestAPIInventoryTimesOutAsUnavailable(t *testing.T) {
 
 	started := time.Now()
 	row, models := apiInventory("openai", server.URL, "key", openAIHeaders, "set key")
-	if elapsed := time.Since(started); elapsed > 12*time.Second {
-		t.Fatalf("hung provider returned after %s, want at most 12s", elapsed)
+	if elapsed := time.Since(started); elapsed > time.Second {
+		t.Fatalf("hung provider returned after %s, want at most 1s", elapsed)
 	}
-	if row.status != "unavailable" || row.hint != "query failed" {
-		t.Fatalf("timeout row = %+v, want unavailable query failed", row)
+	if row.status != "timeout" || row.hint != "10s provider deadline" {
+		t.Fatalf("timeout row = %+v, want distinct timeout", row)
 	}
 	if len(models) != 0 {
 		t.Fatalf("timeout models = %+v, want none", models)
@@ -232,7 +347,7 @@ func TestParseDataIDs(t *testing.T) {
 func stubCommand(t *testing.T, fn func(string, ...string) ([]byte, error)) {
 	t.Helper()
 	old := runCommand
-	runCommand = fn
+	runCommand = func(_ context.Context, name string, args ...string) ([]byte, error) { return fn(name, args...) }
 	t.Cleanup(func() { runCommand = old })
 }
 

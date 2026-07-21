@@ -69,7 +69,8 @@ func testAXIGuardsBrief(t *testing.T) {
 
 	out.RequireExit(0)
 	requireGuardsStringEqual(t, fmt.Sprint(strings.Count(out.Stdout, "full manifests: bench guards")), "1", "brief footer count")
-	requireGuardsStringEqual(t, fmt.Sprint(nonEmptyGuardsLineCount(out.Stdout)), "5", "brief line count")
+	requireGuardsStringEqual(t, fmt.Sprint(nonEmptyGuardsLineCount(out.Stdout)), "6", "brief line count")
+	out.RequireContains(out.Stdout, "guard_scan: status=complete")
 	out.RequireContains(out.Stdout, "block-dangerous-git: destructive git")
 	// --brief carries the wired harnesses per guard so the SessionStart injection
 	// stays honest about which configs can actually fire each hook.

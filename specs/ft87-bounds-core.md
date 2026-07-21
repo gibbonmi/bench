@@ -1,6 +1,6 @@
 # FT87 slice 1: bounded Go-side resource policy
 
-Status: staged
+Status: implemented
 
 Map: `decisions/bounded-network-resource-cli.md` (tickets #1, #2, #4, #5,
 #6, and the Handoff), closed at `abd4a1d`.

@@ -171,6 +171,10 @@ bench_binary_path() {
 
 repair_binary() {
   local kit="$1" wrapper="$2" script version suffix
+  if [[ "${BENCH_OFFLINE:-}" == 1 ]]; then
+    echo "bench: repair suppressed by BENCH_OFFLINE=1" >&2
+    return 1
+  fi
   if [[ -n "${BENCH_NO_REPAIR:-}" ]]; then
     echo "bench: repair disabled by BENCH_NO_REPAIR" >&2
     return 1
@@ -295,10 +299,10 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench release-preflight --mode verify|publish [--profile public|bank] [--phase name]  run repository release authorization
   bench release prepare|submit|promote|rollback|status --version <v> [--profile public|bank] [--root dir] [--registry url] [--path first|staged] [--message text]  governed npm publication
   bench gate pin             pin HEAD's .bench tree for pre-push verification
-  bench worktree [objective] create an owned worktree subshell and release it on exit
+  bench worktree [--refresh] [objective] create an owned worktree subshell and release it on exit
   bench worktree list        list assignments and registered worktrees as TOON
   bench worktree --help      show exact list, create, release, clean, and recovery grammar
-  bench shift "<objective>"  gated loop in a pooled worktree; commit on green
+  bench shift [--refresh] "<objective>" gated loop in a pooled worktree; commit on green
   bench commit -m <msg> <path>...  gate, then commit named paths on green (--spec flips its status)
   bench spec implemented <slug>    flip a spec's Status: staged line to implemented
   bench spec retire <slug>         delete a merged spec + its review pickup (validated)

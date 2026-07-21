@@ -164,7 +164,10 @@ func render(root string, all bool) string {
 // appendGate projects the gate owner's typed inspection onto the existing severity
 // ladder. It does not parse, repair, or execute the oracle.
 func appendGate(rows []row, root string) []row {
-	gv := GateVerdict(root)
+	return appendGateInfo(rows, GateVerdict(root), root)
+}
+
+func appendGateInfo(rows []row, gv GateInfo, root string) []row {
 	if !gv.Present {
 		return rows
 	}
@@ -179,6 +182,9 @@ func appendGate(rows []row, root string) []row {
 	}
 	if gv.State == string(gate.Unavailable) {
 		return append(rows, row{3, "gate", "verdict unavailable", "inspect gate state"})
+	}
+	if gv.Status == "timeout" {
+		return append(rows, row{0, "gate", "timeout", "inspect the hang and re-run the gate"})
 	}
 	if gv.Status == "red" {
 		return append(rows, row{0, "gate", "red", "fix before commit"})

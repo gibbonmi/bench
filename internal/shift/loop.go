@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -113,21 +114,25 @@ func objectiveBanner(branch, objective string) string {
 // ownership is this process's pid. Every exit path resolves through finish, which emits
 // the shift_result TOON block and records the outcome on the intent entry.
 func Loop(objective string, stdout, stderr io.Writer) int {
+	return loop(objective, false, stdout, stderr)
+}
+
+func loop(objective string, refresh bool, stdout, stderr io.Writer) int {
 	if err := validateObjective(objective); err != nil {
 		fmt.Fprintln(stderr, err)
 		return usage(stdout, stderr, err.Error())
 	}
-	maxIters, err := parseBoundedInt("BENCH_MAX_ITERS", maxItersDefault, itersMin, itersMax)
+	maxIters, err := parseBoundedInt("BENCH_MAX_ITERS", bounds.MainIterationsDefault, bounds.IterationMin, bounds.IterationMax)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return usage(stdout, stderr, err.Error())
 	}
-	refactorIters, err := parseBoundedInt("BENCH_REFACTOR_ITERS", refactorItersDefault, itersMin, itersMax)
+	refactorIters, err := parseBoundedInt("BENCH_REFACTOR_ITERS", bounds.RefactorIterationsDefault, bounds.IterationMin, bounds.IterationMax)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return usage(stdout, stderr, err.Error())
 	}
-	wallDur, err := parseWallDuration("BENCH_MAX_WALL", maxWallDefault, maxWallCap)
+	wallDur, err := parseWallDuration("BENCH_MAX_WALL", 0, bounds.MaxWall)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return usage(stdout, stderr, err.Error())
@@ -151,6 +156,9 @@ func Loop(objective string, stdout, stderr io.Writer) int {
 	if err != nil {
 		fmt.Fprintln(stderr, "could not resolve HEAD")
 		return usage(stdout, stderr, "could not resolve HEAD")
+	}
+	if refresh {
+		fmt.Fprint(stdout, worktree.RenderRefresh(worktree.Refresh(mainRoot)))
 	}
 	intentEntry := intent.NewEntry(intent.KindShift)
 	if err := intent.Upsert(mainRoot, intentEntry); err != nil {
@@ -222,12 +230,14 @@ func Loop(objective string, stdout, stderr io.Writer) int {
 	// The wall deadline: on expiry it acts like a pulled line — kill the adapter process
 	// group and cancel a running gate — but sets deadline rather than interrupted, so the
 	// next checkpoint resolves incomplete/3 with a deadline detail, not interrupted/130.
-	wallTimer := time.AfterFunc(wallDur, func() {
-		s.deadline.Store(true)
-		s.killAdapter(syscall.SIGTERM)
-		s.cancelRunningGate()
-	})
-	defer wallTimer.Stop()
+	if wallDur > 0 {
+		wallTimer := time.AfterFunc(wallDur, func() {
+			s.deadline.Store(true)
+			s.killAdapter(syscall.SIGTERM)
+			s.cancelRunningGate()
+		})
+		defer wallTimer.Stop()
+	}
 
 	fmt.Fprintln(stdout, objectiveBanner(branch, objective))
 	fmt.Fprintf(stdout, "  worktree: %s\n", wt)

@@ -139,6 +139,10 @@ func cleanupScratch(root string) {
 // argument joined (mirroring the shell's `$*`). An empty objective is not defaulted —
 // Loop's validation rejects it with exit 2.
 func Command(args []string, stdout, stderr io.Writer) int {
+	refresh := len(args) > 0 && args[0] == "--refresh"
+	if refresh {
+		args = args[1:]
+	}
 	objective := strings.Join(args, " ")
-	return Loop(objective, stdout, stderr)
+	return loop(objective, refresh, stdout, stderr)
 }

@@ -19,6 +19,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -30,6 +31,8 @@ import (
 const promise = "outline locates candidate seams (file:line); it does not identify which are the project's blessed seams — projects/<name>.md owns that."
 
 const usageLine = "usage: bench outline [path]"
+
+var openOutlineFile = os.Open
 
 func helpText() string {
 	return usageLine + "\n" + promise + "\n"
@@ -164,11 +167,13 @@ func listFiles(root, path string, havePath bool) ([]string, error) {
 // for an unknown flag or a second positional argument.
 func Command(args []string) (string, int) {
 	var path string
-	var havePath bool
+	var havePath, full bool
 	for _, a := range args {
 		switch {
 		case a == "-h" || a == "--help":
 			return helpText(), 0
+		case a == "--full":
+			full = true
 		case strings.HasPrefix(a, "-"):
 			return toon.Usage("bench outline", a) + "\n", 2
 		default:
@@ -189,22 +194,43 @@ func Command(args []string) (string, int) {
 		return toon.Errorf("git ls-files failed", err.Error()) + "\n", 1
 	}
 
-	var rows [][]string
+	var rows, skips [][]string
+	scanned := 0
+	totalSymbols := 0
 	for _, rel := range files {
 		abs := filepath.Join(root, filepath.FromSlash(rel))
-		if info, err := os.Lstat(abs); err != nil || !info.Mode().IsRegular() {
-			continue // a symlink's tracked content is its target string, not the
-			// target's declarations — indexing through it would emit file:line
-			// anchors that don't hold; non-regular entries contribute no rows
+		info, statErr := os.Lstat(abs)
+		if statErr != nil {
+			skips = appendSkip(skips, rel, "unreadable")
+			continue
 		}
-		content, err := os.ReadFile(abs)
+		if !info.Mode().IsRegular() {
+			skips = appendSkip(skips, rel, "nonregular")
+			continue
+		}
+		file, err := openOutlineFile(abs)
 		if err != nil {
-			continue // an absent/unreadable tracked path contributes no rows
+			skips = appendSkip(skips, rel, "unreadable")
+			continue
 		}
+		read := bounds.Read(file, bounds.OutlineFileLimit)
+		closeErr := file.Close()
+		if read.Status == bounds.ReadOversized {
+			skips = appendSkip(skips, rel, "oversized")
+			continue
+		}
+		if read.Status == bounds.ReadFailed || closeErr != nil {
+			skips = appendSkip(skips, rel, "unreadable")
+			continue
+		}
+		content := read.Data
 		if bytes.IndexByte(content, 0) >= 0 {
-			continue // a NUL byte means binary → skip
+			skips = appendSkip(skips, rel, "binary")
+			continue
 		}
+		scanned++
 		for _, s := range Symbols(rel, content) {
+			totalSymbols++
 			if !toon.Representable(rel) || !toon.Representable(s.Name) {
 				continue // one poisoned path or name drops only its own row
 			}
@@ -212,9 +238,31 @@ func Command(args []string) (string, int) {
 		}
 	}
 
+	emitted := len(rows)
+	if !full && emitted > bounds.OutlineRowLimit {
+		emitted = bounds.OutlineRowLimit
+		rows = rows[:emitted]
+	}
+	omitted := totalSymbols - emitted
+	truncated := omitted > 0 || len(skips) > 0
 	tbl, err := toon.Table("outline", []string{"file", "line", "kind", "name"}, rows)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
-	return tbl, 0
+	meta, err := toon.Table("outline_meta", []string{"tracked_files", "scanned_files", "skipped_files", "total_symbols", "emitted_symbols", "omitted_symbols", "truncated"}, [][]string{{strconv.Itoa(len(files)), strconv.Itoa(scanned), strconv.Itoa(len(skips)), strconv.Itoa(totalSymbols), strconv.Itoa(emitted), strconv.Itoa(omitted), strconv.FormatBool(truncated)}})
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	skipTable, err := toon.Table("outline_skips", []string{"file", "reason"}, skips)
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	return tbl + meta + skipTable, 0
+}
+
+func appendSkip(rows [][]string, file, reason string) [][]string {
+	if !toon.Representable(file) {
+		return rows
+	}
+	return append(rows, []string{file, reason})
 }

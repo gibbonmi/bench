@@ -16,18 +16,67 @@ package guards
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/adopt"
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
 type Manifest map[string]string
+
+type candidate struct {
+	path, fallback, wired string
+	prepush               bool
+}
+
+type ScanResult struct {
+	Rows                     [][]string
+	Status, Inspected, Total string
+	Omitted, Reason          string
+}
+
+var guardScanTimeout = bounds.GuardScanTimeout
+
+var enumerateGuards = func(ctx context.Context, root string) ([]candidate, error) {
+	var candidates []candidate
+	hooksDir := filepath.Join(root, ".bench", "hooks")
+	entries, err := os.ReadDir(hooksDir)
+	if err == nil {
+		for _, e := range entries {
+			if e.IsDir() || !strings.HasSuffix(e.Name(), ".sh") {
+				continue
+			}
+			scriptRel := ".bench/hooks/" + e.Name()
+			candidates = append(candidates, candidate{path: filepath.Join(hooksDir, e.Name()), fallback: strings.TrimSuffix(e.Name(), ".sh"), wired: wiredHarnesses(root, scriptRel)})
+		}
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	candidates = append(candidates, candidate{fallback: "pre-push", wired: "git", prepush: true})
+	return candidates, nil
+}
+
+var inspectGuard = func(ctx context.Context, root string, c candidate) [][]string {
+	if ctx.Err() != nil {
+		return nil
+	}
+	if c.prepush {
+		return withWired(prePushRow(root), c.wired)
+	}
+	if row, emit := guardRow(c.path, c.fallback); emit {
+		return [][]string{append(row, c.wired)}
+	}
+	return nil
+}
 
 var requiredManifestKeys = []string{"name", "boundary", "denies", "why"}
 
@@ -99,25 +148,43 @@ func guardRow(path, fallback string) ([]string, bool) {
 // resolve-model` (internal/lines), not a `.sh` manifest — `bench guards` aggregates
 // hook scripts only and grows no second answerer, so that enforcement has no row here.
 func Rows(root string) [][]string {
+	return Scan(context.Background(), root).Rows
+}
+
+func Scan(ctx context.Context, root string) ScanResult {
+	type enumeration struct {
+		candidates []candidate
+		err        error
+	}
+	enumerated := make(chan enumeration, 1)
+	go func() {
+		candidates, err := enumerateGuards(ctx, root)
+		enumerated <- enumeration{candidates: candidates, err: err}
+	}()
+	var candidates []candidate
+	select {
+	case result := <-enumerated:
+		if result.err != nil && ctx.Err() != nil {
+			return ScanResult{Status: "incomplete", Inspected: "0", Total: "unknown", Omitted: "unknown", Reason: "timeout"}
+		}
+		candidates = result.candidates
+	case <-ctx.Done():
+		return ScanResult{Status: "incomplete", Inspected: "0", Total: "unknown", Omitted: "unknown", Reason: "timeout"}
+	}
 	var rows [][]string
-	add := func(path, fallback, wired string) {
-		if r, emit := guardRow(path, fallback); emit {
-			rows = append(rows, append(r, wired))
+	inspected := 0
+	for _, c := range candidates {
+		finished := make(chan [][]string, 1)
+		go func(candidate candidate) { finished <- inspectGuard(ctx, root, candidate) }(c)
+		select {
+		case candidateRows := <-finished:
+			inspected++
+			rows = append(rows, candidateRows...)
+		case <-ctx.Done():
+			return ScanResult{Rows: rows, Status: "incomplete", Inspected: strconv.Itoa(inspected), Total: strconv.Itoa(len(candidates)), Omitted: strconv.Itoa(len(candidates) - inspected), Reason: "timeout"}
 		}
 	}
-	hooksDir := filepath.Join(root, ".bench", "hooks")
-	if entries, err := os.ReadDir(hooksDir); err == nil {
-		for _, e := range entries {
-			if e.IsDir() || !strings.HasSuffix(e.Name(), ".sh") {
-				continue
-			}
-			scriptRel := ".bench/hooks/" + e.Name()
-			add(filepath.Join(hooksDir, e.Name()), strings.TrimSuffix(e.Name(), ".sh"), wiredHarnesses(root, scriptRel))
-		}
-	}
-	// The pre-push guard is wired through git, not a harness config, so its wired
-	// cell is the constant `git`; its install posture stays in the denies column.
-	return append(rows, withWired(prePushRow(root), "git")...)
+	return ScanResult{Rows: rows, Status: "complete", Inspected: strconv.Itoa(inspected), Total: strconv.Itoa(len(candidates)), Omitted: "0", Reason: "none"}
 }
 
 // wiredHarnesses names the harness configs that reference scriptRel — its relative
@@ -205,12 +272,16 @@ func Command(args []string) (string, int) {
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	rows := Rows(root)
+	ctx, cancel := context.WithTimeout(context.Background(), guardScanTimeout)
+	defer cancel()
+	scan := Scan(ctx, root)
+	rows := scan.Rows
 	if brief {
 		var b strings.Builder
 		for _, r := range rows {
 			fmt.Fprintf(&b, "%s: %s [wired: %s]\n", r[0], r[2], r[3])
 		}
+		fmt.Fprintf(&b, "guard_scan: status=%s inspected=%s total=%s omitted=%s reason=%s\n", scan.Status, scan.Inspected, scan.Total, scan.Omitted, scan.Reason)
 		b.WriteString("full manifests: bench guards\n")
 		return b.String(), 0
 	}
@@ -218,5 +289,9 @@ func Command(args []string) (string, int) {
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
-	return out, 0
+	meta, err := toon.Table("guard_scan", []string{"status", "inspected", "total", "omitted", "reason"}, [][]string{{scan.Status, scan.Inspected, scan.Total, scan.Omitted, scan.Reason}})
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	return out + meta, 0
 }

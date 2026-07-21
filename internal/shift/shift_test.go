@@ -374,8 +374,8 @@ func TestParseWallDuration(t *testing.T) {
 		want    time.Duration
 		wantErr bool
 	}{
-		{"unset", "", true, 2 * time.Hour, false},
-		{"empty string", "", false, 2 * time.Hour, false},
+		{"unset", "", true, 0, false},
+		{"empty string", "", false, 0, false},
 		{"valid", "30m", false, 30 * time.Minute, false},
 		{"max boundary", "24h", false, 24 * time.Hour, false},
 		{"zero", "0s", false, 0, true},
@@ -390,7 +390,7 @@ func TestParseWallDuration(t *testing.T) {
 			} else {
 				t.Setenv(name, tc.env)
 			}
-			got, err := parseWallDuration(name, 2*time.Hour, 24*time.Hour)
+			got, err := parseWallDuration(name, 0, 24*time.Hour)
 			if tc.wantErr {
 				if err == nil {
 					t.Fatalf("parseWallDuration(%q) = %v, nil, want error", tc.env, got)

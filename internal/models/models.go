@@ -3,14 +3,15 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"os"
 	"os/exec"
-	"time"
+	"sync"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/modelid"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -18,18 +19,32 @@ import (
 const (
 	openAIModelsURL    = "https://api.openai.com/v1/models"
 	anthropicModelsURL = "https://api.anthropic.com/v1/models"
-	// modelsQueryTimeout bounds provider discovery without treating ordinarily slow
-	// model-list responses as unavailable.
-	modelsQueryTimeout = 10 * time.Second
 )
 
 var (
-	runCommand = func(name string, args ...string) ([]byte, error) {
-		return exec.Command(name, args...).Output()
+	providerTimeout = bounds.ProviderTimeout
+	runCommand      = func(ctx context.Context, name string, args ...string) ([]byte, error) {
+		result := bounds.Run(ctx, providerTimeout, exec.Command(name, args...))
+		if result.Status != bounds.ProcessComplete {
+			return result.Output, providerError{status: string(result.Status), err: result.Err}
+		}
+		return result.Output, nil
 	}
-	modelsHTTPClient = &http.Client{Timeout: modelsQueryTimeout}
+	modelsHTTPClient = &http.Client{}
 	doHTTP           = modelsHTTPClient.Do
 )
+
+type providerError struct {
+	status string
+	err    error
+}
+
+func (e providerError) Error() string {
+	if e.err == nil {
+		return e.status
+	}
+	return e.status + ": " + e.err.Error()
+}
 
 type sourceRow struct {
 	source, freshness, status, hint string
@@ -59,32 +74,61 @@ func Command(args []string) (string, int) {
 }
 
 func inventory() ([]sourceRow, []modelRow) {
-	var sources []sourceRow
+	if bounds.Offline() {
+		sources := make([]sourceRow, 0, 3)
+		for _, source := range []string{"codex", "openai", "anthropic"} {
+			sources = append(sources, sourceRow{source: source, freshness: "offline", status: "offline", hint: "BENCH_OFFLINE=1"})
+		}
+		return sources, nil
+	}
+	type result struct {
+		source sourceRow
+		models []modelRow
+	}
+	results := make([]result, 3)
+	jobs := []func() (sourceRow, []modelRow){
+		codexInventory,
+		func() (sourceRow, []modelRow) {
+			return apiInventory("openai", openAIModelsURL, os.Getenv("OPENAI_API_KEY"), openAIHeaders, "set OPENAI_API_KEY")
+		},
+		func() (sourceRow, []modelRow) {
+			return apiInventory("anthropic", anthropicModelsURL, os.Getenv("ANTHROPIC_API_KEY"), anthropicHeaders, "set ANTHROPIC_API_KEY")
+		},
+	}
+	var wg sync.WaitGroup
+	for i := range jobs {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			results[i].source, results[i].models = jobs[i]()
+		}()
+	}
+	wg.Wait()
+	sources := make([]sourceRow, 0, 3)
 	var models []modelRow
-
-	codexSource, codexModels := codexInventory()
-	sources = append(sources, codexSource)
-	models = append(models, codexModels...)
-
-	openAISource, openAIModels := apiInventory("openai", openAIModelsURL, os.Getenv("OPENAI_API_KEY"), openAIHeaders, "set OPENAI_API_KEY")
-	sources = append(sources, openAISource)
-	models = append(models, openAIModels...)
-
-	anthropicSource, anthropicModels := apiInventory("anthropic", anthropicModelsURL, os.Getenv("ANTHROPIC_API_KEY"), anthropicHeaders, "set ANTHROPIC_API_KEY")
-	sources = append(sources, anthropicSource)
-	models = append(models, anthropicModels...)
-
+	for _, result := range results {
+		sources = append(sources, result.source)
+		models = append(models, result.models...)
+	}
 	return sources, models
 }
 
 func codexInventory() (sourceRow, []modelRow) {
-	body, err := runCommand("codex", "debug", "models")
+	ctx, cancel := context.WithTimeout(context.Background(), providerTimeout)
+	defer cancel()
+	body, err := runCommand(ctx, "codex", "debug", "models")
 	freshness := "live"
 	if err != nil {
-		body, err = runCommand("codex", "debug", "models", "--bundled")
+		if ctx.Err() != nil || errorStatus(err) == "timeout" {
+			return sourceFailure("codex", "timeout", "10s provider deadline"), nil
+		}
+		body, err = runCommand(ctx, "codex", "debug", "models", "--bundled")
 		freshness = "bundled"
 	}
 	if err != nil {
+		if ctx.Err() != nil || errorStatus(err) == "timeout" {
+			return sourceFailure("codex", "timeout", "10s provider deadline"), nil
+		}
 		return unavailable("codex", "codex debug models unavailable"), nil
 	}
 	ids, err := parseCodexSlugs(body)
@@ -98,8 +142,16 @@ func apiInventory(source, url, key string, headers func(*http.Request, string), 
 	if key == "" {
 		return unavailable(source, missingHint), nil
 	}
-	ids, err := fetchDataIDs(url, key, headers)
+	ctx, cancel := context.WithTimeout(context.Background(), providerTimeout)
+	defer cancel()
+	ids, err := fetchDataIDsContext(ctx, url, key, headers)
 	if err != nil {
+		switch errorStatus(err) {
+		case "timeout":
+			return sourceFailure(source, "timeout", "10s provider deadline"), nil
+		case "oversized":
+			return sourceFailure(source, "oversized", "5 MiB response limit"), nil
+		}
 		return unavailable(source, "query failed"), nil
 	}
 	return available(source, "live"), modelRows(source, "live", ids)
@@ -111,6 +163,18 @@ func available(source, freshness string) sourceRow {
 
 func unavailable(source, hint string) sourceRow {
 	return sourceRow{source: source, freshness: "unavailable", status: "unavailable", hint: hint}
+}
+
+func sourceFailure(source, status, hint string) sourceRow {
+	return sourceRow{source: source, freshness: status, status: status, hint: hint}
+}
+
+func errorStatus(err error) string {
+	var p providerError
+	if errors.As(err, &p) {
+		return p.status
+	}
+	return ""
 }
 
 func modelRows(source, freshness string, ids []string) []modelRow {
@@ -145,24 +209,36 @@ func render(sources []sourceRow, models []modelRow) (string, error) {
 }
 
 func fetchDataIDs(url, key string, headers func(*http.Request, string)) ([]string, error) {
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	ctx, cancel := context.WithTimeout(context.Background(), providerTimeout)
+	defer cancel()
+	return fetchDataIDsContext(ctx, url, key, headers)
+}
+
+func fetchDataIDsContext(ctx context.Context, url, key string, headers func(*http.Request, string)) ([]string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 	headers(req, key)
 	resp, err := doHTTP(req)
 	if err != nil {
+		if ctx.Err() != nil {
+			return nil, providerError{status: "timeout", err: ctx.Err()}
+		}
 		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, errors.New("non-2xx response from models API")
 	}
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
+	read := bounds.Read(resp.Body, bounds.ModelReadLimit)
+	if read.Status == bounds.ReadOversized {
+		return nil, providerError{status: "oversized", err: read.Err}
 	}
-	return parseDataIDs(body)
+	if read.Status == bounds.ReadFailed {
+		return nil, read.Err
+	}
+	return parseDataIDs(read.Data)
 }
 
 func openAIHeaders(req *http.Request, key string) {

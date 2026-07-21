@@ -147,9 +147,10 @@ func testAXIOutlineSymlinkSkipped(t *testing.T) {
 	out.RequireExit(0)
 	requireAXIFirstLine(t, out.Stdout, "outline[1]{file,line,kind,name}:")
 	requireAXILine(t, out.Stdout, "  real.go,\"3\",type,Bar")
-	if strings.Contains(out.Stdout, "link.go") {
+	if strings.Contains(out.Stdout, "  link.go,") && !strings.Contains(out.Stdout, "  link.go,nonregular") {
 		t.Fatalf("tracked symlink was indexed as its target:\n%s", out.Stdout)
 	}
+	requireAXILine(t, out.Stdout, "  link.go,nonregular")
 }
 
 func testAXIOutlineControlByte(t *testing.T) {

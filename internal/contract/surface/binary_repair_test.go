@@ -25,6 +25,7 @@ func TestBinaryRepairContracts(t *testing.T) {
 	contract.RunParallel(t, "binary repair version-keyed cache contract failed", testRepairVersionKeyed)
 	contract.RunParallel(t, "binary repair no-node contract failed", testRepairNoNode)
 	contract.RunParallel(t, "binary repair disabled contract failed", testRepairDisabled)
+	contract.RunParallel(t, "binary repair BENCH_OFFLINE exact-value contract failed", testRepairBenchOfflineExact)
 	contract.RunParallel(t, "binary repair torn-cache contract failed", testRepairReplacesTornCache)
 	contract.RunParallel(t, "linked manifest repair contract failed", testRepairReadsLinkedManifestWithoutNewline)
 	contract.RunParallel(t, "malformed manifest version escaped repair cache", testRepairRejectsMalformedVersion)
@@ -361,6 +362,32 @@ func testRepairDisabled(t *testing.T) {
 	requireInterim127Remedy(t, out.Stderr)
 	if got := registry.Hits(); got != 0 {
 		t.Fatalf("disabled repair hit registry %d time(s), want 0", got)
+	}
+}
+
+func testRepairBenchOfflineExact(t *testing.T) {
+	for _, value := range []string{"1", "", "0", "true"} {
+		t.Run("value="+value, func(t *testing.T) {
+			f, kit := binaryRepairFixtureKit(t)
+			registry := newBinaryRepairRegistry(t, "9.8.7", "#!/bin/sh\necho repaired\n")
+			env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL}
+			if value != "" {
+				env["BENCH_OFFLINE"] = value
+			}
+			out := f.BenchEnv(env, "version")
+			if value == "1" {
+				out.RequireExit(127)
+				out.RequireContains(out.Stderr, "repair suppressed by BENCH_OFFLINE=1")
+				if registry.Hits() != 0 {
+					t.Fatalf("offline repair hit registry")
+				}
+				return
+			}
+			out.RequireExit(0)
+			if registry.Hits() == 0 {
+				t.Fatalf("BENCH_OFFLINE=%q incorrectly enabled offline mode", value)
+			}
+		})
 	}
 }
 

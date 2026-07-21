@@ -10,23 +10,11 @@ import (
 	"unicode/utf8"
 )
 
-// Validation bounds, pinned by the spec: both iteration caps share [1,100]; the wall
-// deadline is a Go duration in (0,24h]. Defaults apply whenever the variable is unset
-// or set to the empty string — the two read identically through os.Getenv, so no
-// separate unset-vs-empty branch is needed to honor "empty string = unset".
-const (
-	itersMin             = 1
-	itersMax             = 100
-	maxItersDefault      = 12
-	refactorItersDefault = 4
-	maxWallDefault       = 2 * time.Hour
-	maxWallCap           = 24 * time.Hour
-	// objectiveMaxRunes caps an objective in Unicode code points, not bytes, so a
-	// multibyte objective is not cut at a fraction of its apparent length. The text
-	// flows into a commit subject, a scratch file, and status; an unbounded objective
-	// would carry into all three at once.
-	objectiveMaxRunes = 200
-)
+// objectiveMaxRunes caps an objective in Unicode code points, not bytes, so a
+// multibyte objective is not cut at a fraction of its apparent length. The text
+// flows into a commit subject, a scratch file, and status; an unbounded objective
+// would carry into all three at once.
+const objectiveMaxRunes = 200
 
 // hasControlByte reports whether s carries any byte below 0x20 or the DEL byte 0x7f.
 // This is a stricter, single-purpose check than toon.Representable's cell-escaping
@@ -77,9 +65,8 @@ func parseBoundedInt(name string, def, min, max int) (int, error) {
 }
 
 // parseWallDuration reads name from the environment as a Go duration in (0,max],
-// returning def when the variable is unset or empty. A set-but-invalid value is an
-// error naming the variable and the accepted range. This slice validates
-// BENCH_MAX_WALL but does not yet wire a wall timer — that is the next slice.
+// returning def when the variable is unset or empty. A zero default means no timer;
+// a set-but-invalid value is an error naming the variable and the accepted range.
 func parseWallDuration(name string, def, max time.Duration) (time.Duration, error) {
 	v := os.Getenv(name)
 	if v == "" {

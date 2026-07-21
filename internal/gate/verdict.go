@@ -280,7 +280,7 @@ func inspectAt(root string, now time.Time) Inspection {
 		return gi
 	}
 	if rec.Status != "green" {
-		gi.Reason = "recorded red"
+		gi.Reason = "recorded " + rec.Status
 		return gi
 	}
 	if rec.Tree != s.Tree {
@@ -362,7 +362,7 @@ func validateRecordBytes(data []byte, r verdictRecord, now time.Time) error {
 		if err := requireObjectFields(data, []string{"oracle", "recorded_at", "schema", "state", "status", "tree"}); err != nil {
 			return err
 		}
-		if (r.Status != "green" && r.Status != "red") || r.RecordedAt == "" || r.StartedAt != "" || r.OwnerPID != 0 {
+		if (r.Status != "green" && r.Status != "red" && r.Status != "timeout") || r.RecordedAt == "" || r.StartedAt != "" || r.OwnerPID != 0 {
 			return errors.New("invalid ready")
 		}
 		if tm, err := strictRecordTime(r.RecordedAt); err != nil || tm.After(now) {

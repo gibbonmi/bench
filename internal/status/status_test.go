@@ -9,6 +9,13 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 )
 
+func TestTimeoutGateIsDistinctHighestSeveritySignal(t *testing.T) {
+	rows := appendGateInfo(nil, GateInfo{Present: true, State: "ready", Status: "timeout"}, t.TempDir())
+	if len(rows) != 1 || rows[0].detail != "timeout" || rows[0].sev != 0 || !strings.Contains(rows[0].action, "hang") {
+		t.Fatalf("timeout rows = %#v", rows)
+	}
+}
+
 // retirementCount reads specs/*.md through the awk-ported predicate. The seam is the
 // directory: write spec files, then assert the count. The predicate cases (fence, CRLF,
 // trailing whitespace, wrong status) are the load-bearing behaviors.
