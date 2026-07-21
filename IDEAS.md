@@ -1,0 +1,1 @@
+- 2026-07-21  Prose-weight pass: audit craft-skill library + communication protocol — apply 'prove it bites' to prose (each skill/clause must cite an observed failure it prevents, from learnings.md or session evidence), merge overlapping craft docs, shrink BENCH.md always-loaded rules to demonstrated-delta clauses
