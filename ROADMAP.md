@@ -20,24 +20,22 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT87 (HIGH on the bank track; MEDIUM otherwise) — bounded, explicit
-network/resource and CLI behavior.** One timeout, size, cancellation, and
-iteration-cap policy governs agent and gate execution, repair, Git refresh,
-model discovery, guard startup, reads, and large output. `BENCH_OFFLINE=1`
-prevents every Bench-initiated network attempt; repair is explicit,
-independently manifest-pinned, size-bounded, and atomically promoted; Git
-refresh is explicit and noninteractive; model providers run concurrently with
-bounded reads. Default outline output is a bounded summary with counts and
-truncation metadata.
+**FT87 (HIGH on the bank track; MEDIUM otherwise) — remaining repair and CLI
+hardening.** The Go-side bounds core is shipped: one policy owns the applicable
+timeouts, size and row limits, cancellation, and iteration caps; exact
+`BENCH_OFFLINE=1` suppresses the slice's repair, Git, subprocess, and HTTP
+attempts; Git refresh is explicit; model discovery is concurrent; and outline,
+guard, gate, and shift behavior reports every bound hit honestly.
 
-Centralized argument parsing rejects trailing garbage, resolves spec slugs
-from the repository root, supports leading-dash and directory-scoped commit
-paths through a conventional grammar, and treats help as success. Capability
-skips are explicit evidence, not silent passes, and security-test deadlines
-are independent from the subprocesses they bound. Complete package metadata
-and one user-facing Bench/redbench identity ship with the bounded repair
-policy; repair cleanup is concurrency-safe and Git refresh failures are
-observable.
+Slice 2 remains the bootstrap and artifact-governance capability: harden repair
+with an independently pinned manifest, bounded fetch and extraction, atomic
+promotion and concurrency-safe cleanup; ship complete package metadata and one
+Bench/redbench identity; and produce the FT83 offline/network-control evidence
+record. Slice 3 remains the command-wide parser and security-evidence
+capability: centralize argument grammar, anchor coverage at the repository
+root, support leading-dash and directory-scoped commit paths, treat help as
+success, make capability skips explicit, and decouple security-test deadlines
+from the subprocesses they bound. The closed FT87 decision map owns both cuts.
 
 Sources: `RR:A-14`, `RR:C-06`, `RR:C-07`, `RR:C-09`, `RR:C-10`, `RR:C-11`,
 `RR:C-12`; `RC:H-04`, `RC:M-02`.
@@ -249,6 +247,16 @@ named in the spec — the same standard the coverage map already applies to its
 red signals. Next action is the kit edit to `/bench-write-spec` and
 `craft-spec`, built under the `craft-synthesis` discipline.
 
+**FT95 (LOW, evidence supplied) — attributable compiled-core gate failures.**
+The serialized root-conformance gate has again reported only `go test failed`
+from its inner whole-core test run on an otherwise idle machine, while an
+immediate identical-tree, uncached package run passed every package. The probe
+currently discards the inner stdout and stderr, so the failing package and case
+cannot be captured and the intermittent defect cannot be isolated. First make
+the failure emit bounded, control-safe diagnostic evidence; then reproduce and
+deflake the attributable case without weakening the oracle. Retry once on the
+same tree and line remains the operational response to a transient red.
+
 ## Release and bank reassessment gate
 
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
@@ -298,17 +306,6 @@ stop the subagent. The current surface verdict is canonical in
 `.bench/BENCH-reference.md` Hook Layers. Graduate only when the Codex changelog
 adds a spawn tool name or a deny-capable SubagentStart.
 
-**FT95 (parked pending evidence) — deflake isolation-sensitive gate tests.**
-2026-07-19: the conformance phase's compiled-core inner `go test` failed once
-during a gated commit and passed on identical-tree retry; a separate one-off
-`TestDoctorShimContracts` failure also passed standalone. A transient unit
-test reds a full multi-minute gated commit; retry-once-at-same-tier handled
-both. Graduation trigger: either test flakes again *on an otherwise idle
-machine*, with the failing case and output captured — then deflake it or
-tighten its environment isolation. Flakes observed under deliberately
-concurrent gate runs do not count; that contention is a delegation-discipline
-problem, carried by FT96.
-
 **FT8 (scheduled, not actionable) — Sonnet 5 mid-tier revisit.** Time-boxed to
 2026-09-01 or the next frontier shift.
 
@@ -322,7 +319,8 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — shape FT87, bounded network, resource, and CLI behavior.
+1. `/bench-write-spec` — spec FT87 slice 2, repair hardening, release identity
+   and metadata, and the offline/network-control evidence record.
 2. `/bench-shape-idea` — shape FT76, one-command repo-aware Bench bootstrap.
 3. `/bench-write-spec` — spec FT85, least-privilege consumer payload and one
    coherent phase contract.
