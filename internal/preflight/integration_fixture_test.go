@@ -56,6 +56,7 @@ func seedEvidenceFixture(t *testing.T, root string) {
 			SchemaVersion int    `json:"schema_version"`
 			Key           string `json:"key"`
 			Owner         string `json:"owner"`
+			Schema        string `json:"schema"`
 			Identity      struct {
 				SourceCommit   string `json:"source_commit"`
 				PackageVersion string `json:"package_version"`
@@ -64,7 +65,7 @@ func seedEvidenceFixture(t *testing.T, root string) {
 			Reason  string          `json:"reason"`
 			Payload json.RawMessage `json:"payload"`
 			Digest  string          `json:"digest"`
-		}{SchemaVersion: 1, Key: requirement.Key, Owner: requirement.Owner, Status: "satisfied", Payload: payload, Digest: sha256Hex(payload)}
+		}{SchemaVersion: 1, Key: requirement.Key, Owner: requirement.Owner, Schema: requirement.Schema, Status: "satisfied", Payload: payload, Digest: sha256Hex(payload)}
 		record.Identity.SourceCommit, record.Identity.PackageVersion = commit, "0.2.0"
 		data, err := json.MarshalIndent(record, "", "  ")
 		if err != nil {

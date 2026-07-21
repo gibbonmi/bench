@@ -18,9 +18,9 @@ func TestVersionLine(t *testing.T) {
 	cases := []struct {
 		v, goos, goarch, want string
 	}{
-		{"0.2.0", "linux", "amd64", "benchkit 0.2.0 (linux/amd64)"},
-		{"dev", "darwin", "arm64", "benchkit dev (darwin/arm64)"},
-		{"1.0.0", "linux", "arm64", "benchkit 1.0.0 (linux/arm64)"},
+		{"0.2.0", "linux", "amd64", "bench 0.2.0 (linux/amd64)"},
+		{"dev", "darwin", "arm64", "bench dev (darwin/arm64)"},
+		{"1.0.0", "linux", "arm64", "bench 1.0.0 (linux/arm64)"},
 	}
 	for _, c := range cases {
 		if got := versionLine(c.v, c.goos, c.goarch); got != c.want {

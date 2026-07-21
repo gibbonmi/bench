@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -37,8 +38,14 @@ type binaryRepairRegistry struct {
 }
 
 type binaryRepairRegistryConfig struct {
-	integrity string
-	tgz       []byte
+	integrity    string
+	pin          string
+	tgz          []byte
+	hangMetadata bool
+}
+
+func binaryRepairHangMetadata() binaryRepairRegistryOption {
+	return func(cfg *binaryRepairRegistryConfig) { cfg.hangMetadata = true }
 }
 
 type binaryRepairRegistryOption func(*binaryRepairRegistryConfig)
@@ -47,11 +54,15 @@ func binaryRepairIntegrity(value string) binaryRepairRegistryOption {
 	return func(cfg *binaryRepairRegistryConfig) { cfg.integrity = value }
 }
 
+func binaryRepairPinIntegrity(value string) binaryRepairRegistryOption {
+	return func(cfg *binaryRepairRegistryConfig) { cfg.pin = value }
+}
+
 func binaryRepairTarballBytes(tgz []byte) binaryRepairRegistryOption {
 	return func(cfg *binaryRepairRegistryConfig) { cfg.tgz = tgz }
 }
 
-func newBinaryRepairRegistry(t testing.TB, version, binary string, opts ...binaryRepairRegistryOption) *binaryRepairRegistry {
+func newBinaryRepairRegistry(t testing.TB, kit, version, binary string, opts ...binaryRepairRegistryOption) *binaryRepairRegistry {
 	t.Helper()
 	cfg := binaryRepairRegistryConfig{}
 	for _, opt := range opts {
@@ -63,13 +74,29 @@ func newBinaryRepairRegistry(t testing.TB, version, binary string, opts ...binar
 	}
 	sum := sha512.Sum512(tgz)
 	integrity := "sha512-" + base64.StdEncoding.EncodeToString(sum[:])
+	pin := integrity
 	if cfg.integrity != "" {
 		integrity = cfg.integrity
 	}
+	if cfg.pin != "" {
+		pin = cfg.pin
+	}
+	manifest := map[string]any{"schema_version": 1, "pins": []map[string]string{{
+		"name": "@redbench/" + binaryRepairPlatformSuffix(t), "version": version, "integrity": pin,
+	}}}
+	manifestBytes, err := json.MarshalIndent(manifest, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	contract.WriteFileAbs(t, filepath.Join(kit, "binary-pins.json"), string(manifestBytes)+"\n")
 	reg := &binaryRepairRegistry{}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/@redbench%2f"+binaryRepairPlatformSuffix(t), func(w http.ResponseWriter, r *http.Request) {
 		reg.hits.Add(1)
+		if cfg.hangMetadata {
+			<-r.Context().Done()
+			return
+		}
 		meta := map[string]any{
 			"versions": map[string]any{
 				version: map[string]any{
@@ -112,6 +139,9 @@ func binaryRepairFixtureKitVersion(t testing.TB, version string, opts ...contrac
 	kit := filepath.Join(f.Root, "kit")
 	goRoutingCopyTree(t, filepath.Join(contract.SubjectRoot(t), "bin"), filepath.Join(kit, "bin"))
 	contract.WriteFileAbs(t, filepath.Join(kit, "package.json"), `{"name":"benchkit","version":"`+version+`"}`+"\n")
+	// Existing repair cases opt into the implicit path. Explicit-default tests
+	// override this to the empty string so the same fixture covers both postures.
+	f.Env["BENCH_REPAIR"] = "1"
 	return f, kit
 }
 
@@ -160,6 +190,38 @@ func binaryRepairMalformedTarball(t testing.TB) []byte {
 		t.Fatalf("close malformed tar gzip: %v", err)
 	}
 	return gzBuf.Bytes()
+}
+
+func binaryRepairGunzip(t testing.TB, tgz []byte) []byte {
+	t.Helper()
+	r, err := gzip.NewReader(bytes.NewReader(tgz))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Close()
+	data, err := io.ReadAll(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
+}
+
+func binaryRepairGzipBomb(t testing.TB, expandedSize int) []byte {
+	t.Helper()
+	var compressed bytes.Buffer
+	writer := gzip.NewWriter(&compressed)
+	chunk := make([]byte, 32*1024)
+	for remaining := expandedSize; remaining > 0; {
+		writeSize := min(remaining, len(chunk))
+		if _, err := writer.Write(chunk[:writeSize]); err != nil {
+			t.Fatal(err)
+		}
+		remaining -= writeSize
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return compressed.Bytes()
 }
 
 func binaryRepairCachePath(t testing.TB, f contract.Fixture, version string) string {

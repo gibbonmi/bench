@@ -10,6 +10,64 @@ import (
 	"testing"
 )
 
+func TestRootPackageProjectMetadata(t *testing.T) {
+	root := NewHarness(t).Root
+	var pkg struct {
+		Repository string `json:"repository"`
+		Homepage   string `json:"homepage"`
+		Bugs       string `json:"bugs"`
+		Author     string `json:"author"`
+	}
+	data, err := os.ReadFile(filepath.Join(root, "package.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(data, &pkg); err != nil {
+		t.Fatal(err)
+	}
+	if pkg.Repository != "git+https://github.com/gibbonmi/bench.git" || pkg.Homepage != "https://github.com/gibbonmi/bench#readme" || pkg.Bugs != "https://github.com/gibbonmi/bench/issues" || pkg.Author != "gibbonmi" {
+		t.Fatalf("root project metadata = %+v", pkg)
+	}
+}
+
+func TestRepairScriptPolicyAndManifestPathParity(t *testing.T) {
+	root := NewHarness(t).Root
+	script := readIfExists(filepath.Join(root, "bin", "bench-repair-binary.mjs"))
+	for _, fact := range []string{
+		"const FETCH_DEADLINE_MS = 60_000;",
+		"const DOWNLOAD_LIMIT = 100 * 1024 * 1024;",
+		"const DECOMPRESSED_LIMIT = 200 * 1024 * 1024;",
+	} {
+		if !strings.Contains(script, fact) {
+			t.Fatalf("repair policy omits %q", fact)
+		}
+	}
+	var requirements struct {
+		BinaryPinManifest struct {
+			Path string `json:"path"`
+		} `json:"binary_pin_manifest"`
+	}
+	data, err := os.ReadFile(filepath.Join(root, "internal", "releaseevidence", "requirements.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(data, &requirements); err != nil {
+		t.Fatal(err)
+	}
+	want := `const PIN_MANIFEST_PATH = "` + requirements.BinaryPinManifest.Path + `";`
+	if requirements.BinaryPinManifest.Path == "" || !strings.Contains(script, want) {
+		t.Fatalf("repair pin path does not match requirement %q", requirements.BinaryPinManifest.Path)
+	}
+}
+
+func TestRepairAppearsInColdPickupInventory(t *testing.T) {
+	root := NewHarness(t).Root
+	guide := readIfExists(filepath.Join(root, ".bench", "BENCH.md"))
+	if !strings.Contains(guide, "`bench repair") {
+		t.Fatal("CLI inventory omits bench repair")
+	}
+}
+
 // shippedFiles returns every file the npm tarball would carry, expanding package.json
 // files[] directory entries recursively. It is the single source of the shipped-file
 // set; callers filter it (markdown prose sweep, identity-string sweep).
@@ -122,6 +180,41 @@ func checkShippedIdentityStrings(root string) []string {
 		}
 	}
 	return diags
+}
+
+func checkUserFacingBenchkitStrings(root string) []string {
+	var diags []string
+	for _, rel := range []string{"cmd/bench/main.go", "bin/bench.sh", "scripts/build-release-evidence.mjs"} {
+		file := filepath.Join(root, filepath.FromSlash(rel))
+		for lineNo, line := range strings.Split(readIfExists(file), "\n") {
+			if strings.Contains(line, "benchkit") {
+				diags = append(diags, fmt.Sprintf("%s:%d exposes internal identity benchkit in user-facing output", rel, lineNo+1))
+			}
+		}
+	}
+	return diags
+}
+
+func TestUserFacingBenchkitSweepBites(t *testing.T) {
+	root := t.TempDir()
+	for _, rel := range []string{"cmd/bench/main.go", "bin/bench.sh", "scripts/build-release-evidence.mjs"} {
+		full := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte("clean\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if got := checkUserFacingBenchkitStrings(root); len(got) != 0 {
+		t.Fatalf("clean sweep = %v", got)
+	}
+	if err := os.WriteFile(filepath.Join(root, "bin", "bench.sh"), []byte("echo benchkit\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got := checkUserFacingBenchkitStrings(root); len(got) != 1 {
+		t.Fatalf("seeded sweep = %v", got)
+	}
 }
 
 // TestShippedIdentityStringSweepBites is the recorded bite proof for

@@ -13,6 +13,7 @@
     "target_fields": {"os":"os","arch":"arch"},
     "file_fields": {"path":"path","mode":"mode","size":"size","sha256":"sha256"}
   },
+  "binary_pin_manifest": {"schema_version":1,"path":"binary-pins.json"},
   "records": [
     {"key":"core.license","owner":"FT83","schema":"license/v1","profiles":["public","bank"],"requiredness":"required","path":"LICENSE","package_mode":"0644"},
     {"key":"core.policy.supported_versions","owner":"FT83","schema":"governance-policy/v1","profiles":["public","bank"],"requiredness":"required","path":"governance/policies/supported-versions.json","package_mode":"0644"},

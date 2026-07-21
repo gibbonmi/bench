@@ -2,6 +2,7 @@ package artifact
 
 import (
 	"archive/tar"
+	"bytes"
 	"compress/gzip"
 	"crypto/sha256"
 	"encoding/json"
@@ -34,7 +35,21 @@ func TestOfflineSmokeRunsThePublicJourneyAndAttributesMutations(t *testing.T) {
 		}
 		return fixture.Run("bash", filepath.Join(root, "scripts", "smoke-offline.sh"), artifactDir, evidenceDir)
 	}
-	t.Run("baseline", func(t *testing.T) { run(t, artifacts, evidence).RequireExit(0) })
+	t.Run("baseline", func(t *testing.T) {
+		baselineEvidence := cloneSmokeDir(t, evidence)
+		run(t, artifacts, baselineEvidence).RequireExit(0)
+		assertFT87OfflineEvidence(t, root, baselineEvidence, "satisfied", map[string]int{})
+	})
+	t.Run("nonzero-sentinel-evidence", func(t *testing.T) {
+		for _, class := range []string{"wrapper_binary_repair", "worktree_git_refresh", "codex_discovery_subprocess_and_bundled_fallback", "openai_models_request", "anthropic_models_request"} {
+			t.Run(class, func(t *testing.T) {
+				failedEvidence := cloneSmokeDir(t, evidence)
+				probe := run(t, artifacts, failedEvidence, map[string]string{"BENCH_OFFLINE_TEST_INJECT_SENTINEL": class})
+				assertOfflineSmokeRed(t, probe, "offline smoke: sentinel observed a nonzero attempt")
+				assertFT87OfflineEvidence(t, root, failedEvidence, "failed", map[string]int{class: 1})
+			})
+		}
+	})
 
 	t.Run("missing-platform", func(t *testing.T) {
 		copy := cloneSmokeDir(t, artifacts)
@@ -99,6 +114,84 @@ func TestOfflineSmokeRunsThePublicJourneyAndAttributesMutations(t *testing.T) {
 		}
 		assertOfflineSmokeRed(t, run(t, artifacts, evidence, map[string]string{"PATH": fake + string(os.PathListSeparator) + os.Getenv("PATH")}), "offline smoke: registry install attempted undeclared egress")
 	})
+}
+
+func assertFT87OfflineEvidence(t *testing.T, root, evidenceDir, wantStatus string, wantAttempts map[string]int) {
+	t.Helper()
+	var registry struct {
+		Records []struct {
+			Key, Owner, Schema, Path string
+			Producer                 bool
+		} `json:"records"`
+	}
+	contract.ReadJSONFile(t, filepath.Join(root, "internal", "releaseevidence", "requirements.json"), &registry)
+	var requirement struct {
+		Key, Owner, Schema, Path string
+		Producer                 bool
+	}
+	for _, record := range registry.Records {
+		if record.Key == "public.ft87.offline_network_control" {
+			requirement = record
+			break
+		}
+	}
+	if !requirement.Producer || requirement.Path == "" {
+		t.Fatal("FT87 producer requirement is absent")
+	}
+	var envelope struct {
+		SchemaVersion int    `json:"schema_version"`
+		Key           string `json:"key"`
+		Owner         string `json:"owner"`
+		Schema        string `json:"schema"`
+		Identity      struct {
+			SourceCommit   string `json:"source_commit"`
+			PackageVersion string `json:"package_version"`
+		} `json:"identity"`
+		Status  string `json:"status"`
+		Payload struct {
+			Flag       string   `json:"flag"`
+			Journeys   []string `json:"journeys"`
+			Operations []struct {
+				Class    string `json:"class"`
+				Attempts int    `json:"observed_attempts"`
+			} `json:"operations"`
+		} `json:"payload"`
+		Digest string `json:"digest"`
+	}
+	record := filepath.Join(evidenceDir, filepath.FromSlash(requirement.Path))
+	data, err := os.ReadFile(record)
+	if err != nil {
+		t.Fatalf("offline journey did not produce FT87 evidence: %v", err)
+	}
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		t.Fatalf("parse FT87 offline evidence: %v", err)
+	}
+	commit, err := exec.Command("git", "-C", root, "rev-parse", "HEAD").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if envelope.SchemaVersion != 1 || envelope.Key != requirement.Key || envelope.Owner != requirement.Owner || envelope.Schema != requirement.Schema || envelope.Status != wantStatus || envelope.Identity.SourceCommit != string(bytes.TrimSpace(commit)) || envelope.Identity.PackageVersion != "0.2.0" {
+		t.Fatalf("FT87 offline evidence identity = %+v", envelope)
+	}
+	payload, err := json.Marshal(envelope.Payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := fmt.Sprintf("%x", sha256.Sum256(payload)); got != envelope.Digest {
+		t.Fatalf("FT87 offline evidence digest = %s, want %s", envelope.Digest, got)
+	}
+	classes := make([]string, 0, len(envelope.Payload.Operations))
+	for _, operation := range envelope.Payload.Operations {
+		if operation.Attempts != wantAttempts[operation.Class] {
+			t.Fatalf("FT87 offline operation = %+v, want %d attempt(s)", operation, wantAttempts[operation.Class])
+		}
+		classes = append(classes, operation.Class)
+	}
+	sort.Strings(classes)
+	wantClasses := []string{"anthropic_models_request", "codex_discovery_subprocess_and_bundled_fallback", "openai_models_request", "worktree_git_refresh", "wrapper_binary_repair"}
+	if fmt.Sprint(classes) != fmt.Sprint(wantClasses) {
+		t.Fatalf("FT87 offline operation classes = %v, want %v", classes, wantClasses)
+	}
 }
 
 func TestOfflineNetworkSentinelDeniesUndeclaredEgress(t *testing.T) {
@@ -179,7 +272,7 @@ func makeOfflineJourneyFixtureForTarget(t *testing.T, runtimeTarget string) (str
 	bench := []byte(fmt.Sprintf(`#!/bin/bash
 if [[ -n "${BENCH_OFFLINE_TEST_NATIVE_EGRESS:-}" ]]; then : > "$BENCH_OFFLINE_TEST_NATIVE_MARKER"; host=${BENCH_OFFLINE_TEST_NATIVE_EGRESS%%%%:*}; port=${BENCH_OFFLINE_TEST_NATIVE_EGRESS##*:}; if (exec 3<>"/dev/tcp/$host/$port") 2>/dev/null; then exit 47; fi; fi
 case "${1:-}" in
-  version) printf 'benchkit 0.2.0 (%s)\n';;
+  version) printf 'bench 0.2.0 (%s)\n';;
   commands) [[ "${2:-}" == --brief ]] && printf 'commands --brief\n';;
   models) printf 'model_sources[3]{source,freshness,status,hint}:\n  codex,offline,offline,BENCH_OFFLINE=1\n  openai,offline,offline,BENCH_OFFLINE=1\n  anthropic,offline,offline,BENCH_OFFLINE=1\nmodels[0]{source,freshness,id}:\n';;
   worktree) printf 'worktree_refresh[1]{status,detail}:\n  offline,BENCH_OFFLINE=1\nworktree_create[1]{path,assignment,state}:\n  fixture,fixture,active\n';;

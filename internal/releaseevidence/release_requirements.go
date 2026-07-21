@@ -146,7 +146,7 @@ func validateRequirementBytes(record Requirement, data []byte, identity Identity
 		if err := decodeStrict(data, &envelope); err != nil {
 			return fmt.Errorf("producer record %s is malformed: %w", record.Key, err)
 		}
-		if envelope.SchemaVersion != 1 || envelope.Key != record.Key || envelope.Owner != record.Owner || envelope.Status != "satisfied" && !(record.Requiredness == "conditional" && envelope.Status == "not_applicable" && envelope.Reason != "") {
+		if envelope.SchemaVersion != 1 || envelope.Key != record.Key || envelope.Owner != record.Owner || envelope.Schema != record.Schema || envelope.Status != "satisfied" && !(record.Requiredness == "conditional" && envelope.Status == "not_applicable" && envelope.Reason != "") {
 			return fmt.Errorf("producer record %s has mismatched schema, key, owner, or status", record.Key)
 		}
 		if identity.SourceCommit == nil || envelope.Identity.SourceCommit != *identity.SourceCommit || identity.PackageVersion == nil || envelope.Identity.PackageVersion != *identity.PackageVersion {
@@ -344,6 +344,7 @@ type producerEnvelope struct {
 	SchemaVersion int              `json:"schema_version"`
 	Key           string           `json:"key"`
 	Owner         string           `json:"owner"`
+	Schema        string           `json:"schema"`
 	Identity      producerIdentity `json:"identity"`
 	Status        string           `json:"status"`
 	Reason        string           `json:"reason"`

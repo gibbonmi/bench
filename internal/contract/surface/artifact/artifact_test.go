@@ -168,7 +168,7 @@ func assertInstalledArtifactLifecycle(t *testing.T, artifacts, version string) {
 		"PATH":       stableBin + string(os.PathListSeparator) + os.Getenv("PATH"),
 	}
 	versionOut := runLifecycle(t, tmp, env, "bash", wrapper, "version")
-	if !strings.Contains(versionOut, "benchkit "+version+" (") {
+	if !strings.Contains(versionOut, "bench "+version+" (") {
 		t.Fatalf("installed version output = %q", versionOut)
 	}
 
@@ -251,12 +251,16 @@ func assertWrapperArtifact(t *testing.T, root, path, version string, matrix []ar
 		}
 	}
 	var registry struct {
+		BinaryPinManifest struct {
+			Path string `json:"path"`
+		} `json:"binary_pin_manifest"`
 		Records []struct {
 			Path        string `json:"path"`
 			PackageMode string `json:"package_mode"`
 		} `json:"records"`
 	}
 	contract.ReadJSONFile(t, filepath.Join(root, "internal", "releaseevidence", "requirements.json"), &registry)
+	expectedModes["package/"+registry.BinaryPinManifest.Path] = 0o644
 	for _, record := range registry.Records {
 		if record.PackageMode == "" {
 			continue

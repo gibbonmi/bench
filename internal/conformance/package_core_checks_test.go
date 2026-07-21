@@ -22,6 +22,7 @@ func checkPackageCoreAndGuards(root string) []string {
 	diags = append(diags, checkNativeRuntimeWorkflow(root)...)
 	diags = append(diags, checkReleasePreflight(root)...)
 	diags = append(diags, checkShippedIdentityStrings(root)...)
+	diags = append(diags, checkUserFacingBenchkitStrings(root)...)
 	diags = append(diags, checkGuardHeaderManifests(root)...)
 	diags = append(diags, checkGuardResolverOrderDrift(root)...)
 	return diags

@@ -380,5 +380,5 @@ func run(args []string, stdout, stderr *os.File) int {
 // function so the format has one source and a table test can pin it without a
 // process boundary.
 func versionLine(v, goos, goarch string) string {
-	return fmt.Sprintf("benchkit %s (%s/%s)", v, goos, goarch)
+	return fmt.Sprintf("bench %s (%s/%s)", v, goos, goarch)
 }

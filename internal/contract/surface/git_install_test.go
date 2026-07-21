@@ -36,7 +36,7 @@ func TestGitInstallProbe(t *testing.T) {
 	benchBin := filepath.Join(prefix, "node_modules", ".bin", "bench")
 	out := f.Run(benchBin, "version")
 	out.RequireExit(0)
-	if !strings.HasPrefix(strings.TrimSpace(out.Stdout), "benchkit ") {
+	if !strings.HasPrefix(strings.TrimSpace(out.Stdout), "bench ") {
 		t.Fatalf("git-installed bench version did not print the version line\nstdout:\n%s\nstderr:\n%s", out.Stdout, out.Stderr)
 	}
 }

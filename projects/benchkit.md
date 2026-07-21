@@ -27,6 +27,9 @@ branch-agnostic. This line is only the binding.)
   re-enumerate it. Stable command names and exit codes are the contract; the
   implementation behind each is free to change. Keep gate resolution
   (`.bench/gate.sh` → `$BENCH_GATE` → auto-detect) in one place.
+  Missing-binary resolution is network-silent by default and names the explicit
+  `bench repair` action; automation opts into the same repair path with exactly
+  `BENCH_REPAIR=1`, while `BENCH_OFFLINE=1` and `BENCH_NO_REPAIR` suppress it.
 - **The AXI query surface** (`bench learnings`, `bench maps`, `bench guards`,
   `bench diff`, `bench coverage`, `bench worktree list`, and the shared flat-table
   TOON emitter behind them). The agent-facing read-only

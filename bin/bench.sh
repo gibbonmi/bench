@@ -170,14 +170,16 @@ bench_binary_path() {
 }
 
 repair_binary() {
-  local kit="$1" wrapper="$2" script version suffix
-  if [[ "${BENCH_OFFLINE:-}" == 1 ]]; then
-    echo "bench: repair suppressed by BENCH_OFFLINE=1" >&2
-    return 1
-  fi
-  if [[ -n "${BENCH_NO_REPAIR:-}" ]]; then
-    echo "bench: repair disabled by BENCH_NO_REPAIR" >&2
-    return 1
+  local kit="$1" wrapper="$2" mode="${3:-repair}" script version suffix
+  if [[ "$mode" == repair ]]; then
+    if [[ "${BENCH_OFFLINE:-}" == 1 ]]; then
+      echo "bench: repair suppressed by BENCH_OFFLINE=1" >&2
+      return 1
+    fi
+    if [[ -n "${BENCH_NO_REPAIR:-}" ]]; then
+      echo "bench: repair disabled by BENCH_NO_REPAIR" >&2
+      return 1
+    fi
   fi
   script="$(dirname "$wrapper")/bench-repair-binary.mjs"
   if ! command -v node >/dev/null 2>&1; then
@@ -188,18 +190,29 @@ repair_binary() {
   version="$(package_version "$kit" 2>/dev/null || true)"
   suffix="$(platform_suffix 2>/dev/null || true)"
   [[ -n "$version" && -n "$suffix" ]] || return 1
-  node "$script" "$kit" "$(platform_pkg)" "$version" "$suffix"
+  node "$script" "$mode" "$kit" "$(platform_pkg)" "$version" "$suffix"
+}
+
+repair_command() {
+  local mode=repair kit wrapper
+  case "$#:${1:-}" in
+    0:) ;;
+    1:--prune) mode=prune ;;
+    *)
+      echo 'usage: bench repair [--prune]' >&2
+      exit 2
+      ;;
+  esac
+  kit="${BENCH_KIT:-$(kit_dir)}"
+  wrapper="$(resolve_script_path)"
+  repair_binary "$kit" "$wrapper" "$mode"
 }
 
 # route_binary <subcommand> [args...] — resolve and exec the Go binary, passing the
 # whole argv through. The one seam the strangler grows: later slices add subcommand
 # names to the dispatch below, never a second resolver.
 route_binary() {
-  local allow_repair=0 bin rc kit wrapper
-  if [[ "${1:-}" == "--repair" ]]; then
-    allow_repair=1
-    shift
-  fi
+  local bin rc kit wrapper repair_rc
   kit="${BENCH_KIT:-$(kit_dir)}"
   wrapper="$(resolve_script_path)"
   bin="$(bench_binary_path "$kit")" && rc=0 || rc=$?
@@ -210,18 +223,19 @@ route_binary() {
       exit 2
       ;;
     *)
-      if [[ "$allow_repair" == 1 ]]; then
-        repair_binary "$kit" "$wrapper" || true
+      if [[ "${BENCH_ALLOW_IMPLICIT_REPAIR:-}" == 1 && "${BENCH_REPAIR:-}" == 1 ]]; then
+        repair_binary "$kit" "$wrapper" && repair_rc=0 || repair_rc=$?
+        [[ "$repair_rc" == 130 || "$repair_rc" == 143 ]] && exit "$repair_rc"
         bin="$(bench_binary_path "$kit")" && BENCH_KIT="${BENCH_KIT:-$kit}" BENCH_WRAPPER="${BENCH_WRAPPER:-$wrapper}" exec "$bin" "$@"
       fi
-      echo 'bench: no pinned binary for this platform — reinstall redbench or enable repair with node on PATH' >&2
+      echo 'bench: no pinned binary for this platform — reinstall redbench or run bench repair' >&2
       exit 127
       ;;
   esac
 }
 
 route_porcelain() {
-  route_binary --repair "$@"
+  BENCH_ALLOW_IMPLICIT_REPAIR=1 route_binary "$@"
 }
 
 adoption_route() {
@@ -240,6 +254,7 @@ case "${1-help}" in
   --version|-v) shift; route_porcelain version "$@" ;;
   gate)     gate_command "$@" ;;
   doctor)   adoption_route "$@" ;;
+  repair)   shift; repair_command "$@" ;;
   worktree) route_porcelain "$@" ;;
   resume-clean) route_porcelain "$@" ;;
   shift)    route_porcelain "$@" ;;
@@ -295,6 +310,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench coverage <spec>      acceptance-coverage state and rows as TOON (--check to validate)
   bench outline [path]       locate candidate seams (file:line) as TOON; does not identify the project's blessed seams
   bench doctor [--fix]       report (and repair) the PATH shim under a node version manager
+  bench repair [--prune]     explicitly install the pinned platform binary or prune stale cache entries
   bench gate                 run the project gate (the oracle)
   bench release-preflight --mode verify|publish [--profile public|bank] [--phase name]  run repository release authorization
   bench release prepare|submit|promote|rollback|status --version <v> [--profile public|bank] [--root dir] [--registry url] [--path first|staged] [--message text]  governed npm publication
@@ -307,7 +323,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench spec implemented <slug>    flip a spec's Status: staged line to implemented
   bench spec retire <slug>         delete a merged spec + its review pickup (validated)
   bench spec history <slug>        retire/delete commits for a spec, newest first (TOON)
-  bench version              print the installed benchkit version (os/arch)
+  bench version              print the installed Bench version (os/arch)
 EOF
   ;;
   # An unrecognized token (a typo, not a help request) is not this shell's job to

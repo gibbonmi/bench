@@ -34,6 +34,12 @@ mkdir -p "$tmp/process-tmp"
 export TMPDIR="$tmp/process-tmp"
 registry_pid=""
 egress_log="$tmp/undeclared-egress"
+repair_marker="$tmp/repair-attempt"
+codex_marker="$tmp/codex-attempt"
+git_marker="$tmp/git-refresh-attempt"
+offline_payload="$tmp/ft87-offline-payload.json"
+offline_flag="$(printf '%s=%s' BENCH_OFFLINE 1)"
+evidence_armed=0
 : > "$egress_log"
 cleanup() {
   if [[ -n "$registry_pid" ]]; then
@@ -42,11 +48,43 @@ cleanup() {
   fi
   rm -rf "$tmp"
 }
-interrupt() {
+write_offline_evidence() {
+  local smoke_exit="$1" requested_status=failed attempts_exit=0
+  [[ "$smoke_exit" == 0 ]] && requested_status=auto
+  node -e '
+const fs=require("fs"),[file,flag,repair,codex,git,egress]=process.argv.slice(1);
+const present=marker=>marker&&fs.existsSync(marker)?1:0;
+const lines=egress&&fs.existsSync(egress)?fs.readFileSync(egress,"utf8").split(/\r?\n/).filter(Boolean):[];
+const count=host=>lines.filter(line=>line===host||line.startsWith(host+":")).length;
+const payload={flag,journeys:["direct","local-npm","loopback-registry","offline-policy"],operations:[
+ {class:"wrapper_binary_repair",observed_attempts:present(repair)},
+ {class:"worktree_git_refresh",observed_attempts:present(git)},
+ {class:"codex_discovery_subprocess_and_bundled_fallback",observed_attempts:present(codex)},
+ {class:"openai_models_request",observed_attempts:count("api.openai.com")},
+ {class:"anthropic_models_request",observed_attempts:count("api.anthropic.com")},
+]}; fs.writeFileSync(file,JSON.stringify(payload,null,2)+"\n");
+' "$offline_payload" "$offline_flag" "$repair_marker" "$codex_marker" "$git_marker" "$egress_log" || return 1
+  node "$root/scripts/write-producer-envelope.mjs" "$root" "$evidence_dir" public.ft87.offline_network_control "$(git -C "$root" rev-parse HEAD)" "$version" "$requested_status" "$offline_payload" || return 1
+  node -e 'const payload=require(process.argv[1]);process.exit(payload.operations.some(operation=>operation.observed_attempts!==0)?1:0)' "$offline_payload" || attempts_exit=$?
+  if [[ "$attempts_exit" != 0 ]]; then
+    printf 'offline smoke: sentinel observed a nonzero attempt\n' >&2
+    return "$attempts_exit"
+  fi
+}
+finalize() {
+  local smoke_exit=$? evidence_exit=0
+  trap - EXIT
+  if [[ "$evidence_armed" == 1 ]]; then
+    write_offline_evidence "$smoke_exit" || evidence_exit=$?
+    [[ "$smoke_exit" != 0 ]] || smoke_exit="$evidence_exit"
+  fi
   cleanup
+  exit "$smoke_exit"
+}
+interrupt() {
   exit 130
 }
-trap cleanup EXIT
+trap finalize EXIT
 trap interrupt INT TERM HUP
 
 offline_stage() {
@@ -149,7 +187,7 @@ fi
 direct_home="$tmp/direct-home"
 mkdir -p "$direct_home" "$tmp/empty-path"
 direct_version="$(native_offline_process direct env -i HOME="$direct_home" BENCH_HOME="$direct_home/.bench" PATH="$tmp/empty-path" BENCH_OFFLINE=1 BENCH_NO_REPAIR=1 "$bundle_root/bin/bench" version)"
-[[ "$direct_version" == "benchkit ${version} (${runtime_target})" ]] || { printf 'offline smoke: direct version output is wrong: %s\n' "$direct_version" >&2; exit 1; }
+[[ "$direct_version" == "bench ${version} (${runtime_target})" ]] || { printf 'offline smoke: direct version output is wrong: %s\n' "$direct_version" >&2; exit 1; }
 native_offline_process direct env -i HOME="$direct_home" BENCH_HOME="$direct_home/.bench" PATH="$tmp/empty-path" BENCH_OFFLINE=1 BENCH_NO_REPAIR=1 "$bundle_root/bin/bench" commands --brief > "$tmp/direct-commands"
 rg -q '^commands --brief$' "$tmp/direct-commands" || { printf 'offline smoke: direct operational probe failed\n' >&2; exit 1; }
 rm -rf "$bundle"
@@ -172,9 +210,8 @@ HOME="$local_home" BENCH_HOME="$local_home/.bench" BENCH_NO_REPAIR="$repair_disa
 installed="$local_prefix/node_modules/redbench/bin/bench.sh"
 [[ -x "$installed" ]] || { printf 'offline smoke: local npm install did not produce wrapper\n' >&2; exit 1; }
 
-# Exercise every slice-1 suppression through shipped surfaces. These are live
-# zero-attempt sentinels, not the stable FT83 evidence record reserved for slice 2.
-repair_marker="$tmp/repair-attempt"
+# Exercise every slice-1 suppression through shipped surfaces. These live
+# zero-attempt sentinels feed the stable FT87 record after every public journey.
 repair_bin="$local_prefix/node_modules/@redbench/${target}/bin/bench"
 repair_hold="$repair_bin.offline-smoke"
 probe_bin="$tmp/offline-policy-bin"
@@ -182,6 +219,7 @@ mkdir -p "$probe_bin"
 printf '#!/bin/sh\n: > "$BENCH_OFFLINE_REPAIR_MARKER"\nexit 97\n' > "$probe_bin/node"
 chmod +x "$probe_bin/node"
 mv "$repair_bin" "$repair_hold"
+evidence_armed=1
 set +e
 repair_output="$(HOME="$local_home" BENCH_HOME="$local_home/.bench" BENCH_OFFLINE=1 BENCH_OFFLINE_REPAIR_MARKER="$repair_marker" PATH="$probe_bin:$PATH" bash "$installed" models 2>&1)"
 repair_exit=$?
@@ -189,8 +227,6 @@ set -e
 mv "$repair_hold" "$repair_bin"
 [[ "$repair_exit" == 127 && "$repair_output" == *"repair suppressed by BENCH_OFFLINE=1"* && ! -e "$repair_marker" ]] || { printf 'offline smoke: BENCH_OFFLINE=1 did not suppress wrapper repair before process start (exit=%s output=%s marker=%s)\n' "$repair_exit" "$repair_output" "$([[ -e "$repair_marker" ]] && printf present || printf absent)" >&2; exit 1; }
 
-codex_marker="$tmp/codex-attempt"
-git_marker="$tmp/git-refresh-attempt"
 printf '#!/bin/sh\n: > "$BENCH_OFFLINE_CODEX_MARKER"\nexit 97\n' > "$probe_bin/codex"
 printf '#!/bin/sh\nif [ "${1:-}" = -C ] && [ "${3:-}" = fetch ]; then : > "$BENCH_OFFLINE_GIT_MARKER"; fi\nexec "$BENCH_OFFLINE_REAL_GIT" "$@"\n' > "$probe_bin/git"
 chmod +x "$probe_bin/codex" "$probe_bin/git"
@@ -211,10 +247,19 @@ refresh_output="$tmp/offline-refresh"
 HOME="$local_home" BENCH_HOME="$tmp/offline-policy-home" BENCH_OFFLINE=1 BENCH_OFFLINE_GIT_MARKER="$git_marker" BENCH_OFFLINE_REAL_GIT="$(command -v git)" PATH="$probe_bin:$PATH" native_offline_process slice1-refresh bash -c 'cd "$1" && exec "$2" worktree create --refresh --request offline-smoke --label offline-smoke' bash "$policy_repo" "$installed" > "$refresh_output"
 grep -q '^  offline,BENCH_OFFLINE=1$' "$refresh_output" || { printf 'offline smoke: requested Git refresh lacks BENCH_OFFLINE=1 evidence\n' >&2; exit 1; }
 [[ ! -e "$git_marker" ]] || { printf 'offline smoke: requested Git refresh started under BENCH_OFFLINE=1\n' >&2; exit 1; }
+case "${BENCH_OFFLINE_TEST_INJECT_SENTINEL:-}" in
+  wrapper_binary_repair) : > "$repair_marker" ;;
+  worktree_git_refresh) : > "$git_marker" ;;
+  codex_discovery_subprocess_and_bundled_fallback) : > "$codex_marker" ;;
+  openai_models_request) printf 'api.openai.com:443\n' >> "$egress_log" ;;
+  anthropic_models_request) printf 'api.anthropic.com:443\n' >> "$egress_log" ;;
+  "") ;;
+  *) printf 'offline smoke: unknown injected sentinel class\n' >&2; exit 2 ;;
+esac
 printf 'offline suppression: repair,git_refresh,codex_live,codex_bundled,openai_http,anthropic_http BENCH_OFFLINE=1 zero_attempts\n'
 
 local_version="$(HOME="$local_home" BENCH_HOME="$local_home/.bench" BENCH_OFFLINE=1 BENCH_NO_REPAIR=1 native_offline_process local-runtime bash "$installed" version)"
-[[ "$local_version" == "benchkit ${version} "* ]] || { printf 'offline smoke: local npm version output is wrong: %s\n' "$local_version" >&2; exit 1; }
+[[ "$local_version" == "bench ${version} "* ]] || { printf 'offline smoke: local npm version output is wrong: %s\n' "$local_version" >&2; exit 1; }
 HOME="$local_home" BENCH_HOME="$local_home/.bench" BENCH_OFFLINE=1 BENCH_NO_REPAIR=1 native_offline_process local-runtime bash "$installed" help > "$tmp/local-help"
 rg -q '^bench —' "$tmp/local-help" || { printf 'offline smoke: local npm operational probe failed\n' >&2; exit 1; }
 offline_stage removal
@@ -262,7 +307,7 @@ rg -q '^GET ' "$request_file" || { printf 'offline smoke: registry fixture obser
 registry_installed="$registry_prefix/node_modules/redbench/bin/bench.sh"
 [[ -x "$registry_installed" ]] || { printf 'offline smoke: registry install did not produce wrapper\n' >&2; exit 1; }
 registry_version="$(HOME="$registry_home" BENCH_HOME="$registry_home/.bench" BENCH_OFFLINE=1 BENCH_NO_REPAIR=1 native_offline_process registry-runtime bash "$registry_installed" version)"
-[[ "$registry_version" == "benchkit ${version} "* ]] || { printf 'offline smoke: registry version output is wrong: %s\n' "$registry_version" >&2; exit 1; }
+[[ "$registry_version" == "bench ${version} "* ]] || { printf 'offline smoke: registry version output is wrong: %s\n' "$registry_version" >&2; exit 1; }
 HOME="$registry_home" BENCH_HOME="$registry_home/.bench" BENCH_OFFLINE=1 BENCH_NO_REPAIR=1 native_offline_process registry-runtime bash "$registry_installed" commands --brief > "$tmp/registry-commands"
 rg -q '^commands --brief$' "$tmp/registry-commands" || { printf 'offline smoke: registry operational probe failed\n' >&2; exit 1; }
 HOME="$registry_home" BENCH_HOME="$registry_home/.bench" BENCH_NO_REPAIR=1 NODE_OPTIONS="--require=$root/scripts/offline-network-sentinel.cjs" BENCH_OFFLINE_EGRESS_LOG="$egress_log" npm_config_registry=http://127.0.0.1:9 npm_config_offline=true npm_config_audit=false npm_config_fund=false npm_config_update_notifier=false npm_config_fetch_retries=0 npm_config_proxy='' npm_config_https_proxy='' NO_PROXY='*' npm uninstall --offline --ignore-scripts --prefix "$registry_prefix" redbench "@redbench/${target}" >/dev/null

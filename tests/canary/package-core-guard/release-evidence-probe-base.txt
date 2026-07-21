@@ -80,6 +80,7 @@ governance/policies/support.json
 governance/policies/supported-versions.json
 governance/policies/threat-model.json
 scripts/build-artifacts.sh
+scripts/build-binary-pins.mjs
 scripts/build-offline-archives.sh
 scripts/build-release-evidence.mjs
 scripts/compare-artifacts.sh

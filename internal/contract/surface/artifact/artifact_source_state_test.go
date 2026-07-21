@@ -61,6 +61,20 @@ func TestArtifactBuilderRejectsDirtyAndUntrackedSourceState(t *testing.T) {
 	}
 }
 
+func TestArtifactBuilderRefusesMissingBinaryPinManifest(t *testing.T) {
+	root := contract.SubjectRoot(t)
+	source := committedHostileArtifactSource(t, root)
+	command := exec.Command("bash", filepath.Join(source, "scripts", "build-artifacts.sh"), source, filepath.Join(t.TempDir(), "artifacts"))
+	command.Env = append(os.Environ(), "BENCH_TEST_SKIP_PIN_MANIFEST=1", "BENCH_REPRO_BUILD=1")
+	output, err := command.CombinedOutput()
+	if err == nil {
+		t.Fatalf("artifact builder packed wrapper without binary pins:\n%s", output)
+	}
+	if !strings.Contains(string(output), "binary pin manifest is missing or empty") {
+		t.Fatalf("missing pin refusal was not attributed:\n%s", output)
+	}
+}
+
 func dirtyArtifactSubmodule(t *testing.T, source string) {
 	t.Helper()
 	origin := t.TempDir()

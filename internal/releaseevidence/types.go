@@ -159,7 +159,13 @@ type Registry struct {
 	SchemaVersion     int                     `json:"schema_version"`
 	Toolchains        []ToolchainRequirement  `json:"toolchains"`
 	ComponentManifest ComponentManifestSchema `json:"component_manifest"`
+	BinaryPinManifest BinaryPinManifestSchema `json:"binary_pin_manifest"`
 	Records           []Requirement           `json:"records"`
+}
+
+type BinaryPinManifestSchema struct {
+	SchemaVersion int    `json:"schema_version"`
+	Path          string `json:"path"`
 }
 
 func loadRegistry() phaseRegistry {

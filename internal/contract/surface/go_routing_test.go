@@ -151,7 +151,7 @@ func testGoRoutingVersionFlagMatchesVersionSubcommand(t *testing.T) {
 func testGoRoutingVersionOutput(t *testing.T) {
 	f := contract.NewFixture(t)
 	version := goRoutingPackageVersion(t)
-	want := "benchkit " + version + " (" + runtime.GOOS + "/" + runtime.GOARCH + ")"
+	want := "bench " + version + " (" + runtime.GOOS + "/" + runtime.GOARCH + ")"
 
 	out := f.Bench("version")
 

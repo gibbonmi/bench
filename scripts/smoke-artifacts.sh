@@ -36,7 +36,7 @@ HOME="$tmp/home" BENCH_HOME="$tmp/home/.bench" BENCH_NO_REPAIR=1 npm_config_cach
 installed="$tmp/app/node_modules/redbench/bin/bench.sh"
 out="$(HOME="$tmp/home" BENCH_HOME="$tmp/home/.bench" BENCH_NO_REPAIR=1 bash "$installed" version)"
 case "$out" in
-  "benchkit $version "*) ;;
+	"bench $version "*) ;;
   *) printf 'bench artifacts: native version mismatch: %s\n' "$out" >&2; exit 1 ;;
 esac
 HOME="$tmp/home" BENCH_HOME="$tmp/home/.bench" BENCH_NO_REPAIR=1 bash "$installed" help >/dev/null

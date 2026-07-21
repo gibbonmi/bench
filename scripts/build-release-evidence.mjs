@@ -10,7 +10,8 @@ if (!root || !validateOnly && (!wrapperDir || !packagesDir)) throw new Error("us
 
 const requirements = readReleaseRequirements(root);
 const componentSchema = requirements.component_manifest;
-if (!Array.isArray(requirements.records) || !componentSchema || componentSchema.schema_version !== 1) throw new Error("release evidence requirement registry is invalid");
+const pinSchema = requirements.binary_pin_manifest;
+if (!Array.isArray(requirements.records) || !componentSchema || componentSchema.schema_version !== 1 || !pinSchema || pinSchema.schema_version !== 1 || typeof pinSchema.path !== "string") throw new Error("release evidence requirement registry is invalid");
 const schemaFields = [componentSchema.root_fields, componentSchema.component_fields, componentSchema.target_fields, componentSchema.file_fields].flatMap(fields => fields && typeof fields === "object" ? Object.values(fields) : []);
 if (schemaFields.some(field => typeof field !== "string" || field.length === 0) || new Set(schemaFields).size !== schemaFields.length) throw new Error("component manifest schema fields are invalid");
 const packageEvidence = packagedEvidenceRecords(requirements);
@@ -164,7 +165,8 @@ function packageFiles(dir) {
     for (const name of fs.readdirSync(current, {withFileTypes: true}).sort(byteOrder)) {
       const file = path.join(current, name.name);
       if (name.isDirectory()) walk(file);
-      else if (name.isFile() && name.name !== componentSchema.path) {
+      else if (name.isFile()) {
+        if (name.name === componentSchema.path) continue;
         const rel = safeRelative(path.relative(dir, file), "component manifest path");
         const stat = fs.lstatSync(file);
 		const fields = componentSchema.file_fields;
@@ -206,7 +208,7 @@ const optionalDependencies = Object.fromEntries(matrix.map(p => [`@redbench/${p.
 const wrapperPackage = {...sourcePackage, optionalDependencies};
 wrapperPackage.scripts = {...(sourcePackage.scripts || {})};
 delete wrapperPackage.scripts.prepare;
-wrapperPackage.files = [...assets.map(a => a.source), ...packageEvidence.map(evidence => evidence.path), componentSchema.path];
+wrapperPackage.files = [...assets.map(a => a.source), ...packageEvidence.map(evidence => evidence.path), componentSchema.path, pinSchema.path];
 writeJSON(path.join(wrapperDir, "package.json"), wrapperPackage);
 writeEvidence(wrapperDir, sourcePackage.name, sourcePackage.version, {os: "all", arch: "all"});
 
@@ -219,11 +221,15 @@ for (const p of matrix) {
   const pkg = {
     name: `@redbench/${p.os}-${p.arch}`,
     version: sourcePackage.version,
-    description: `benchkit prebuilt binary for ${p.os}-${p.arch}`,
+    description: `Bench prebuilt binary for ${p.os}-${p.arch}`,
     bin: "bin/bench",
     os: [p.os],
     cpu: [p.arch],
     license: sourcePackage.license,
+    repository: sourcePackage.repository,
+    homepage: sourcePackage.homepage,
+    bugs: sourcePackage.bugs,
+    author: sourcePackage.author,
   };
   writeJSON(path.join(dir, "package.json"), pkg);
   writeEvidence(dir, pkg.name, pkg.version, {os: p.os, arch: p.arch});

@@ -154,6 +154,7 @@ jobs:
           bash "$second_source/scripts/aggregate-native-proofs.sh" "$second_source/dist/native-proofs"
           (cd "$second_source" && bash scripts/release-preflight.sh --mode verify)
           bash scripts/compare-artifacts.sh dist/artifacts "$second_source/dist/artifacts" dist/workflow-reproducibility.json . "$second_source" dist/preflight "$second_source/dist/preflight"
+          bash scripts/smoke-artifacts.sh dist/artifacts dist/preflight
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{ inputs.artifact-prefix || 'bench-runtime' }}-native-proof-evidence

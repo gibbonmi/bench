@@ -2,6 +2,10 @@
   "name": "redbench",
   "version": "0.2.0",
   "description": "A harness-agnostic agent-development workflow: a planning pipeline plus a gated autonomous loop, where an external gate \u2014 never the model \u2014 decides when work is done. Works with Claude Code, Codex, and other AGENTS.md harnesses.",
+  "repository": "git+https://github.com/gibbonmi/bench.git",
+  "homepage": "https://github.com/gibbonmi/bench#readme",
+  "bugs": "https://github.com/gibbonmi/bench/issues",
+  "author": "gibbonmi",
   "bin": {
     "bench": "bin/bench.sh",
     "redbench": "bin/bench.sh"

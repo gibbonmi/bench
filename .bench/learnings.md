@@ -16,3 +16,9 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
 - **What happened:** …
 - **Right behavior:** …
 - **Proposed rule change:** … (or "none")
+
+## 2026-07-21 — Repair rows drafted before red capture  [open]
+
+- **What happened:** I drafted the shared repair implementation before recording the named red signal for several dependent acceptance rows.
+- **Right behavior:** Exercise and record each row's baseline red immediately before its production slice; where ordering was missed, report an honest clean-baseline red→current-green classification rather than strict TDD.
+- **Proposed rule change:** none
