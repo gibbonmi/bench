@@ -330,7 +330,7 @@ func applyAutomaticWithTerminal(root, path string, fault Fault, terminal cleanup
 	return applyCleanupTransaction(root, path, plan.Fingerprint, planner, fault, terminal)
 }
 
-// ConservativeCleanup delegates every candidate to the ownership lifecycle; names, cleanliness, and age grant no authority.
+// ConservativeCleanup cleans owned worktrees and unclaimed landed branch residue.
 func ConservativeCleanup(root string) (ResumeResult, error) {
 	registered, err := ClassifyRegisteredWorktrees(root)
 	if err != nil {
@@ -369,11 +369,11 @@ func ConservativeCleanup(root string) (ResumeResult, error) {
 	if err := sweepOrphanAssignments(root, registered, &result); err != nil {
 		return result, err
 	}
-	return result, nil
+	result.PrunedBranches, err = intent.PruneUnclaimedLandedBranches(root)
+	return result, err
 }
 
-// sweepOrphanAssignments reconciles assignment records the registered-worktree pass
-// never visits: those whose tree is gone and which are no longer registered worktrees.
+// sweepOrphanAssignments reconciles tree-gone records absent from registered worktrees.
 // Residue records are compacted and counted; records that still hold preserved work are
 // reported for a deliberate recover-or-retire and left intact. Active records are never
 // swept — a live session owns them. See specs/worktree-orphan-reconcile.md (c).

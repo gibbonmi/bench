@@ -22,6 +22,7 @@ type ResumeResult struct {
 	Retained           map[CleanupReason]int
 	Failed, Open       int
 	Reconciled         int
+	PrunedBranches     int
 	Preserved          []PreservedOrphan
 }
 
@@ -416,9 +417,9 @@ func executeCleanup(root string, plan CleanupPlan, checkpoint func(string) error
 	if err := hit(fault, StepRemoval); err != nil {
 		return plan, err
 	}
-	if plan.owned && plan.assignment != nil && plan.deleteBranch {
-		if out, err := exec.Command("git", "-C", root, "update-ref", "-d", plan.assignment.Branch, plan.branchOID).CombinedOutput(); err != nil {
-			return plan, fmt.Errorf("delete exact assignment branch: %s", strings.TrimSpace(string(out)))
+	if plan.deleteBranch {
+		if err := git.DeleteBranchExact(root, plan.branchRef, plan.branchOID); err != nil {
+			return plan, fmt.Errorf("delete exact landed branch: %w", err)
 		}
 		if err := checkpoint(intent.ReceiptPhaseBranch); err != nil {
 			return plan, err

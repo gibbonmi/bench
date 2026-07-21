@@ -328,7 +328,7 @@ func renderResumeSummary(result ResumeResult) string {
 			}
 		}
 	}
-	fmt.Fprintf(&summary, "; reconciled %d; failed %d; open assignments %d\n", result.Reconciled, result.Failed, result.Open)
+	fmt.Fprintf(&summary, "; pruned branches %d; reconciled %d; failed %d; open assignments %d\n", result.PrunedBranches, result.Reconciled, result.Failed, result.Open)
 	for _, orphan := range result.Preserved {
 		fmt.Fprintf(&summary, "preserved %s: bench worktree recovery %s\n", orphan.ID, orphan.Ref)
 	}

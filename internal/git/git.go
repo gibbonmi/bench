@@ -160,6 +160,66 @@ func LocalBranches(root string) ([]string, error) {
 	return strings.Split(out, "\n"), nil
 }
 
+// DeleteBranchExact removes one full branch ref only while it still has the
+// caller-proven OID.
+func DeleteBranchExact(root, ref, oid string) error {
+	out, err := exec.Command("git", "-C", root, "update-ref", "-d", ref, oid).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("update exact branch ref: %w: %s", err, strings.TrimSpace(string(out)))
+	}
+	return nil
+}
+
+// PruneLandedBranches removes local non-default branches whose work is already
+// contained in the default branch and which are neither checked out in a registered
+// worktree nor named by a caller-protected lifecycle record. The exact old OID makes
+// each deletion fail closed if the branch moves after classification.
+func PruneLandedBranches(root string, protectedBranches []string) (int, error) {
+	def, ok := ResolvedDefault(root)
+	if !ok {
+		return 0, fmt.Errorf("git default branch %q does not resolve", DefaultBranch(root))
+	}
+	worktrees, err := Worktrees(root)
+	if err != nil {
+		return 0, fmt.Errorf("git worktree list: %w", err)
+	}
+	checkedOut := map[string]bool{}
+	for _, worktree := range worktrees {
+		if worktree.Branch != "" {
+			checkedOut[worktree.Branch] = true
+		}
+	}
+	for _, branch := range protectedBranches {
+		checkedOut[strings.TrimPrefix(branch, "refs/heads/")] = true
+	}
+	branches, err := LocalBranches(root)
+	if err != nil {
+		return 0, fmt.Errorf("git local branches: %w", err)
+	}
+	pruned := 0
+	for _, branch := range branches {
+		if branch == def || checkedOut[branch] {
+			continue
+		}
+		landed, _, err := LandedInDefault(root, branch, def)
+		if err != nil {
+			return pruned, fmt.Errorf("git landedness %s: %w", branch, err)
+		}
+		if !landed {
+			continue
+		}
+		oid, err := Output("-C", root, "rev-parse", "--verify", "refs/heads/"+branch+"^{commit}")
+		if err != nil {
+			return pruned, fmt.Errorf("git branch identity %s: %w", branch, err)
+		}
+		if err := DeleteBranchExact(root, "refs/heads/"+branch, oid); err != nil {
+			return pruned, fmt.Errorf("delete landed branch %s: %w", branch, err)
+		}
+		pruned++
+	}
+	return pruned, nil
+}
+
 func LandedState(root string) (LandedStateFact, error) {
 	worktrees, err := Worktrees(root)
 	if err != nil {

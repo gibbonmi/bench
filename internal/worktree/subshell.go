@@ -206,11 +206,11 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	} else if ignored.Count > 0 && !options.DiscardIgnored && !declaredIgnored {
 		plan.Action, plan.ReasonCode, plan.Reason = ActionRetain, ReasonIgnored, "ignored residuals require --discard-ignored"
 	}
-	landed := "foreign"
-	if plan.owned && plan.assignment != nil {
+	landed := "detached"
+	if headRef != "detached" {
 		if defaultOID == "none" {
 			landed = "unknown"
-		} else if ok, byContent, landedErr := git.LandedInDefault(root, strings.TrimPrefix(plan.assignment.Branch, "refs/heads/"), defaultRef); landedErr != nil {
+		} else if ok, byContent, landedErr := git.LandedInDefault(root, strings.TrimPrefix(headRef, "refs/heads/"), defaultRef); landedErr != nil {
 			landed = "unknown:" + landedErr.Error()
 		} else {
 			proof := "ancestry"
@@ -220,7 +220,7 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 			landed = strconv.FormatBool(ok) + ":" + proof
 			plan.deleteBranch = ok
 			if ok {
-				plan.branchOID = head
+				plan.branchRef, plan.branchOID = headRef, head
 			}
 		}
 	}
@@ -255,7 +255,7 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 		[]byte(strconv.FormatBool(registration.Detached)), []byte(strconv.FormatBool(registration.Locked)), []byte(registration.LockReason),
 		markerBytes, ledgerBytes, []byte(head), []byte(headRef), indexBytes, status, []byte(contentIdentity), leaseBytes, buildOutputEvidence,
 		[]byte(landed), []byte(nestedEvidence), ignoredCanonical, []byte(plan.Recovery), []byte(strconv.FormatBool(options.DiscardIgnored)),
-		[]byte(plan.Action), []byte(plan.ReasonCode), []byte(plan.Reason), []byte(strconv.FormatBool(plan.deleteBranch)),
+		[]byte(plan.Action), []byte(plan.ReasonCode), []byte(plan.Reason), []byte(strconv.FormatBool(plan.deleteBranch)), []byte(plan.branchRef), []byte(plan.branchOID),
 	}
 	if plan.assignment != nil {
 		parts = append(parts, []byte(plan.assignment.Schema), []byte(plan.assignment.ID), []byte(plan.assignment.OwnerID), []byte(plan.assignment.Request), []byte(plan.assignment.Start), []byte(plan.assignment.Branch), []byte(plan.assignment.Worktree), []byte(plan.assignment.State))

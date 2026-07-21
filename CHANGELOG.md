@@ -41,6 +41,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 - Included committed, staged, and tracked working-tree changes in branch-relative
   review diffs.
+- Removed landed non-default branches during worktree and session cleanup while
+  preserving checked-out and unique branch work.
 - Preserved interrupted or failed shift work under durable recovery references.
 - Prevented gate-cache and declared-input changes from silently authorizing stale
   verdicts.

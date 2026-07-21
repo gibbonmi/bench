@@ -75,23 +75,23 @@ const (
 var ignoredLstat = os.Lstat
 
 type CleanupPlan struct {
-	Target         string
-	Action         CleanupAction
-	ReasonCode     CleanupReason
-	Reason         string
-	Assignment     string
-	Tracked        string
-	Ignored        IgnoredInventory
-	Recovery       string
-	Fingerprint    string
-	owned          bool
-	assignment     *intent.Assignment
-	registration   git.Worktree
-	discardIgnored bool
-	deleteBranch   bool
-	branchOID      string
-	ignoredSummary string
-	landed         string
+	Target               string
+	Action               CleanupAction
+	ReasonCode           CleanupReason
+	Reason               string
+	Assignment           string
+	Tracked              string
+	Ignored              IgnoredInventory
+	Recovery             string
+	Fingerprint          string
+	owned                bool
+	assignment           *intent.Assignment
+	registration         git.Worktree
+	discardIgnored       bool
+	deleteBranch         bool
+	branchRef, branchOID string
+	ignoredSummary       string
+	landed               string
 }
 type IgnoredInventory struct {
 	Count     int

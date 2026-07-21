@@ -290,10 +290,13 @@ func testRuntimeWorktreeForeignPreservation(t *testing.T) {
 	contract.RunAt(t, f, detached, nil, "git", "add", "unique.txt").RequireExit(0)
 	contract.RunAt(t, f, detached, nil, "git", "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "unique detached").RequireExit(0)
 	unique := strings.TrimSpace(contract.RunAt(t, f, detached, nil, "git", "rev-parse", "HEAD").Stdout)
+	f.Git("branch", "foreign-landed-residue", "main")
+	f.Git("update-ref", "refs/heads/foreign-unique-residue", unique)
 
 	out := f.Bench("resume-clean")
 	out.RequireExit(0)
 	contract.RequireContains(t, out.Stdout, "retained foreign=2")
+	contract.RequireContains(t, out.Stdout, "pruned branches 1")
 	for _, path := range []string{ordinary, detached} {
 		if _, err := os.Stat(path); err != nil {
 			t.Fatalf("resume-clean removed foreign worktree %q: %v", path, err)
@@ -301,6 +304,12 @@ func testRuntimeWorktreeForeignPreservation(t *testing.T) {
 	}
 	if !headExists(f, "foreign-ordinary") {
 		t.Fatal("resume-clean deleted foreign branch")
+	}
+	if headExists(f, "foreign-landed-residue") {
+		t.Fatal("resume-clean retained landed branch-only residue")
+	}
+	if !headExists(f, "foreign-unique-residue") {
+		t.Fatal("resume-clean deleted unique branch-only work")
 	}
 	if got := strings.TrimSpace(contract.RunAt(t, f, detached, nil, "git", "rev-parse", "HEAD").Stdout); got != unique {
 		t.Fatalf("resume-clean changed detached unique HEAD: got %s want %s", got, unique)
@@ -334,7 +343,7 @@ func testRuntimeResumeFailureSummary(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chmod(refs, 0o700) })
 
-	want := "bench resume: removed 0, recovered 0; reconciled 0; failed 1; open assignments 1\n"
+	want := "bench resume: removed 0, recovered 0; pruned branches 0; reconciled 0; failed 1; open assignments 1\n"
 	resume := f.BenchEnv(env, "resume-clean")
 	resume.RequireExit(1)
 	if resume.Stdout != want || !strings.Contains(resume.Stderr, "bench resume-clean:") {
@@ -391,7 +400,7 @@ func testRuntimeWorktreeAutomaticEligibilityMatrix(t *testing.T) {
 
 	out := f.BenchEnv(env, "resume-clean")
 	out.RequireExit(0)
-	want := "bench resume: removed 1, recovered 1; retained active=1 live-lease=1 unmerged=1 ignored=1 malformed=1 uncertain=1 unexpected-lock=1; reconciled 0; failed 0; open assignments 8\n"
+	want := "bench resume: removed 1, recovered 1; retained active=1 live-lease=1 unmerged=1 ignored=1 malformed=1 uncertain=1 unexpected-lock=1; pruned branches 0; reconciled 0; failed 0; open assignments 8\n"
 	if out.Stdout != want {
 		t.Fatalf("automatic matrix summary = %q, want %q", out.Stdout, want)
 	}
@@ -399,6 +408,9 @@ func testRuntimeWorktreeAutomaticEligibilityMatrix(t *testing.T) {
 		if _, err := os.Stat(path); err != nil {
 			t.Fatalf("automatic cleanup removed retained matrix target %q: %v", path, err)
 		}
+	}
+	if !headExists(f, strings.TrimPrefix(uncertain.Branch, "refs/heads/")) {
+		t.Fatal("automatic cleanup pruned the detached assignment's protected branch")
 	}
 	for _, path := range []string{clean.Worktree, dirty.Worktree} {
 		if _, err := os.Stat(path); !os.IsNotExist(err) {
@@ -680,7 +692,7 @@ func testRuntimeWorktreeReleaseVerifiesAndRecovers(t *testing.T) {
 }
 
 func testRuntimeWorktreeExactForeignCleanup(t *testing.T) {
-	t.Run("one sibling only and branch survives", func(t *testing.T) {
+	t.Run("one sibling only and landed branch pruned", func(t *testing.T) {
 		f := onMainFixture(t)
 		one := filepath.Join(t.TempDir(), "foreign one")
 		two := filepath.Join(t.TempDir(), "foreign two")
@@ -702,10 +714,11 @@ func testRuntimeWorktreeExactForeignCleanup(t *testing.T) {
 		if _, err := os.Stat(two); err != nil {
 			t.Fatalf("sibling was removed: %v", err)
 		}
-		for _, branch := range []string{"foreign-one", "foreign-two"} {
-			if !headExists(f, branch) {
-				t.Fatalf("exact foreign cleanup deleted branch %q", branch)
-			}
+		if headExists(f, "foreign-one") {
+			t.Fatal("exact foreign cleanup retained the landed target branch")
+		}
+		if !headExists(f, "foreign-two") {
+			t.Fatal("exact foreign cleanup deleted the checked-out sibling branch")
 		}
 	})
 
@@ -720,8 +733,8 @@ func testRuntimeWorktreeExactForeignCleanup(t *testing.T) {
 		if _, err := os.Stat(target); !os.IsNotExist(err) {
 			t.Fatalf("dirty exact target remains: %v", err)
 		}
-		if !headExists(f, "foreign-dirty") {
-			t.Fatal("dirty foreign branch was deleted")
+		if headExists(f, "foreign-dirty") {
+			t.Fatal("dirty foreign cleanup retained the landed target branch")
 		}
 		refs := f.Git("for-each-ref", "--format=%(refname)", "refs/bench/recovery/").Stdout
 		contract.RequireContains(t, refs, "refs/bench/recovery/")
