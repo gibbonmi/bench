@@ -20,20 +20,6 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT88 (HIGH on the bank track) — minimal subprocess data exposure.** Agents
-and gates launch from separate documented environment passlists with explicit
-opt-in additions. Prompt text travels through stdin or a mode-0600 file, never
-argv. Durable state uses an objective identifier; commit subjects, terminal
-summaries, and structured output reject or redact control characters and
-sensitive text.
-
-Ship a data-handling inventory for every repository-controlled prompt,
-environment, file, log, network, cache, and retention path. Sentinel contracts
-prove denied variables do not reach default subprocesses and prompt content
-cannot leak into process listings, commits, or structured output.
-
-Spec: `specs/minimal-subprocess-data-exposure.md`. Sources: `RR:C-08`; `RC:H-01`.
-
 **FT87 (HIGH on the bank track; MEDIUM otherwise) — bounded, explicit
 network/resource and CLI behavior.** One timeout, size, cancellation, and
 iteration-cap policy governs agent and gate execution, repair, Git refresh,
@@ -165,16 +151,17 @@ repository-controlled bank evidence requirement makes this row active.
 
 Sources: `RR:C-05`; `RC:H-03`.
 
-**FT91 (LOW) — gate wall-clock proportional to the diff.** The phases were
-parallelized (once measured ~50s wall-clock), but 2026-07-19 full-gate runs
-observed ~6–7 minutes wall (conformance ~405s and surface/artifact contracts
-~345s dominate), so a one-line change still pays the whole-oracle price on
-every shift iteration. The remaining arms — caching keyed on the pinned gate
-subject, or scoped verdicts — must not weaken the oracle: green must keep
-meaning the same thing, and any scoped verdict must be explicit evidence,
-never a silent skip. Starts as a grill (`/bench-shape-idea`) because the cut
-line between speed and oracle authority is a reviewer decision; graduate only
-if the multi-minute gate demonstrably drags shift iteration.
+**FT91 (LOW) — gate wall-clock proportional to the diff.** Two arms have
+shipped: the phases were parallelized, and host-only test builds (retired
+2026-07-20) removed the per-stage cold-`GOCACHE` four-platform matrix that
+drove the gate to ~10–15 minutes. The remaining arms — a shared hermetic build
+cache, caching keyed on the pinned gate subject, or scoped verdicts — must not
+weaken the oracle: green must keep meaning the same thing, and any scoped
+verdict must be explicit evidence, never a silent skip. Starts as a grill
+(`/bench-shape-idea`) because the cut line between speed and oracle authority
+is a reviewer decision. Graduate only on a fresh post-host-only measurement
+showing the gate still demonstrably drags shift iteration; the pre-host-only
+timings are no longer evidence.
 
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.** Make
 every documented CLI example executable; parse and validate real YAML
@@ -221,7 +208,12 @@ the rest ("conflicts with its existing assignment"); the manual
 `bench worktree create --request <distinct-id>` route works and respects the
 lifecycle but is undocumented. Either key hook assignments per delegate or
 document the `--request` route as the canonical parallel-delegate path in
-`craft-delegate`. Kit edit under the `craft-synthesis` discipline.
+`craft-delegate`. The same guidance must state that a whole-tree gate run is a
+serialized resource: four concurrent worktree `bench commit` gates flaked three
+load-sensitive contract tests (cancellation timing, tempdir cleanup, release
+reproducibility probe) that all pass serially, so delegates stop at "diff ready,
+focused tests green" and the coordinator runs `bench commit` per worktree one at
+a time. Kit edit under the `craft-synthesis` discipline.
 
 **FT97 (LOW, evidence supplied) — harness-native agent-line denial.** The
 agent-line deny message single-sources its bound-tiers listing, which leads
@@ -244,6 +236,18 @@ sanctioned exit. Either extend landed-proof to content containment (patch-id or
 diff-containment against the default branch) or add an explicit
 reviewer-authorized discard path; fail-closed stays the default, and the cut
 line is a reviewer decision.
+
+**FT99 (LOW) — spec problem-premise verification.** A spec compiled from a
+closed decision map can inherit a problem statement the tree has since
+falsified: the retired `minimal-subprocess-data-exposure` spec claimed the
+project gate "gets everything except `BENCH_KIT` and `BENCH_WRAPPER`", which
+FT78 had already
+fixed, and the build reached stage 1b on that false premise before a contract
+delegate caught it. Require every "today the code does X" claim in a spec's
+Problem section to be checked against the tree at spec time, with the check
+named in the spec — the same standard the coverage map already applies to its
+red signals. Next action is the kit edit to `/bench-write-spec` and
+`craft-spec`, built under the `craft-synthesis` discipline.
 
 ## Release and bank reassessment gate
 
@@ -299,8 +303,11 @@ adds a spawn tool name or a deny-capable SubagentStart.
 during a gated commit and passed on identical-tree retry; a separate one-off
 `TestDoctorShimContracts` failure also passed standalone. A transient unit
 test reds a full multi-minute gated commit; retry-once-at-same-tier handled
-both. Graduation trigger: either test flakes again with the failing case and
-output captured — then deflake it or tighten its environment isolation.
+both. Graduation trigger: either test flakes again *on an otherwise idle
+machine*, with the failing case and output captured — then deflake it or
+tighten its environment isolation. Flakes observed under deliberately
+concurrent gate runs do not count; that contention is a delegation-discipline
+problem, carried by FT96.
 
 **FT8 (scheduled, not actionable) — Sonnet 5 mid-tier revisit.** Time-boxed to
 2026-09-01 or the next frontier shift.
@@ -315,7 +322,7 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — build FT88 from
-   `specs/minimal-subprocess-data-exposure.md`.
-2. `/bench-shape-idea` — specify FT87, bounded network, resource, and CLI behavior.
-3. `/bench-shape-idea` — shape FT76, one-command repo-aware Bench bootstrap.
+1. `/bench-shape-idea` — shape FT87, bounded network, resource, and CLI behavior.
+2. `/bench-shape-idea` — shape FT76, one-command repo-aware Bench bootstrap.
+3. `/bench-write-spec` — spec FT85, least-privilege consumer payload and one
+   coherent phase contract.
