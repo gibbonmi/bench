@@ -99,6 +99,9 @@ func readSecureArchive(data []byte, nameFor func(*tar.Header) (string, error)) (
 }
 
 func rejectGzipSuffix(gz *gzip.Reader, source *bytes.Reader) error {
+	if _, err := io.Copy(io.Discard, gz); err != nil {
+		return err
+	}
 	if err := gz.Close(); err != nil {
 		return err
 	}

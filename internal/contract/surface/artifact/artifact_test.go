@@ -21,6 +21,7 @@ import (
 type artifactPlatform struct {
 	OS     string `json:"os"`
 	Arch   string `json:"arch"`
+	GOOS   string `json:"goos"`
 	GOArch string `json:"goarch"`
 	Runner string `json:"runner"`
 }
@@ -34,7 +35,7 @@ func TestDistributableArtifactContracts(t *testing.T) {
 	assertWrapperAssetPolicy(t, contract.SubjectRoot(t))
 	contract.SkipIfSubjectFileMissing(t, "scripts/build-artifacts.sh")
 	root := contract.SubjectRoot(t)
-	buildRoot := committedHostileArtifactSource(t, root)
+	buildRoot := committedHostileArtifactSource(t, root, includeFirstNonHostArtifactTarget)
 	out := filepath.Join(t.TempDir(), "artifact output [hostile]")
 	probe := contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-artifacts.sh"), buildRoot, out)
 	probe.RequireExit(0)
@@ -42,7 +43,7 @@ func TestDistributableArtifactContracts(t *testing.T) {
 	var plan struct {
 		Targets []artifactPlatform `json:"targets"`
 	}
-	contract.ReadJSONFile(t, filepath.Join(root, "scripts", "release-plan.json"), &plan)
+	contract.ReadJSONFile(t, filepath.Join(buildRoot, "scripts", "release-plan.json"), &plan)
 	matrix := plan.Targets
 	var wrapper struct {
 		Version string `json:"version"`

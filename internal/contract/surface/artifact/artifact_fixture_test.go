@@ -3,6 +3,7 @@ package artifact
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"maps"
 	"os"
@@ -109,7 +110,14 @@ func runLifecycle(t *testing.T, dir string, overrides map[string]string, name st
 	return string(out)
 }
 
-func committedHostileArtifactSource(t *testing.T, root string) string {
+type artifactSourceOption int
+
+const (
+	includeFirstNonHostArtifactTarget artifactSourceOption = 1
+	stageHostlessArtifactPlan         artifactSourceOption = 2
+)
+
+func committedHostileArtifactSource(t *testing.T, root string, options ...artifactSourceOption) string {
 	t.Helper()
 	origin := filepath.Join(t.TempDir(), "committed origin [*]")
 	if err := testrepo.CommitWorkingTree(root, origin); err != nil {
@@ -118,6 +126,70 @@ func committedHostileArtifactSource(t *testing.T, root string) string {
 	clone := filepath.Join(t.TempDir(), "fresh source clone [*]")
 	if output, err := exec.Command("git", "clone", "-q", origin, clone).CombinedOutput(); err != nil {
 		t.Fatalf("clone committed source: %v\n%s", err, output)
+	}
+	planPath := filepath.Join(clone, "scripts", "release-plan.json")
+	data, err := os.ReadFile(planPath)
+	if err != nil {
+		t.Fatalf("read staged release plan: %v", err)
+	}
+	var plan map[string]json.RawMessage
+	if err := json.Unmarshal(data, &plan); err != nil {
+		t.Fatalf("parse staged release plan: %v", err)
+	}
+	var targets []artifactPlatform
+	if err := json.Unmarshal(plan["targets"], &targets); err != nil {
+		t.Fatalf("parse staged release targets: %v", err)
+	}
+	goEnv, err := exec.Command("go", "env", "GOOS", "GOARCH").Output()
+	if err != nil {
+		t.Fatalf("read host Go target: %v", err)
+	}
+	host := strings.Fields(string(goEnv))
+	if len(host) != 2 {
+		t.Fatalf("unexpected go env GOOS/GOARCH output: %q", goEnv)
+	}
+	candidates := targets
+	if len(options) != 0 && options[0] == stageHostlessArtifactPlan {
+		candidates = make([]artifactPlatform, 0, len(targets))
+		for _, target := range targets {
+			if target.GOOS != host[0] || target.GOArch != host[1] {
+				candidates = append(candidates, target)
+			}
+		}
+	}
+	selected := make([]artifactPlatform, 0, 2)
+	for _, target := range candidates {
+		if target.GOOS == host[0] && target.GOArch == host[1] {
+			selected = append(selected, target)
+			break
+		}
+	}
+	if len(selected) == 0 {
+		t.Skipf("artifact contract tests require release plan target for host %s/%s", host[0], host[1])
+	}
+	if len(options) != 0 && options[0] == includeFirstNonHostArtifactTarget {
+		for _, target := range targets {
+			if target.GOOS != host[0] || target.GOArch != host[1] {
+				selected = append(selected, target)
+				break
+			}
+		}
+	}
+	plan["targets"], err = json.Marshal(selected)
+	if err != nil {
+		t.Fatalf("encode staged release targets: %v", err)
+	}
+	data, err = json.MarshalIndent(plan, "", "  ")
+	if err != nil {
+		t.Fatalf("encode staged release plan: %v", err)
+	}
+	data = append(data, '\n')
+	if err := os.WriteFile(planPath, data, 0o644); err != nil {
+		t.Fatalf("write staged release plan: %v", err)
+	}
+	commit := exec.Command("git", "-C", clone, "-c", "user.email=artifact-test@example.invalid", "-c", "user.name=artifact-test", "commit", "-qam", "stage artifact test release plan")
+	if output, err := commit.CombinedOutput(); err != nil {
+		t.Fatalf("commit staged release plan: %v\n%s", err, output)
 	}
 	return clone
 }

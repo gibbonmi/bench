@@ -30,6 +30,8 @@ All notable user-facing changes to Bench are documented here. The format follows
   Code, Codex, and other `AGENTS.md` harnesses consume one portable kit.
 - Parallelized independent gate phases while preserving one aggregate oracle
   verdict and canary coverage.
+- Reduced gate time by building host-only artifact fixtures while retaining a
+  two-target matrix-iteration contract.
 
 ### Fixed
 

@@ -229,7 +229,7 @@ func TestOfflineArchiveProjection(t *testing.T) {
 	var plan struct {
 		Targets []artifactPlatform `json:"targets"`
 	}
-	contract.ReadJSONFile(t, filepath.Join(root, "scripts", "release-plan.json"), &plan)
+	contract.ReadJSONFile(t, filepath.Join(buildRoot, "scripts", "release-plan.json"), &plan)
 	matrix := plan.Targets
 	var wrapper struct {
 		Version string `json:"version"`
