@@ -165,9 +165,8 @@ exact harness-native command and pinned repository, branch, commit, spec/status,
 and unresolved next action, so resumption never depends on conversation history.
 
 Clarify shape termination and the no-design-source branch, remove stale paths
-and inventory omissions, retire closed decision maps and obsolete historical
-reports, dogfood first-party authoring guidance, and pin normative external
-references. Rewrite ADRs and README claims to the behavior proved by artifact
+and inventory omissions, retire obsolete historical reports, dogfood
+first-party authoring guidance, and pin normative external references. Rewrite ADRs and README claims to the behavior proved by artifact
 contracts, including the actual canary phase selection and npm prepare shape.
 
 Sources: `RR:S-06`, `RR:S-07`, `RR:S-08`, `RR:S-10`, `RR:S-11`, `RR:S-12`,
@@ -209,12 +208,11 @@ a time. Kit edit under the `craft-synthesis` discipline.
 agent-line deny message single-sources its bound-tiers listing, which leads
 with the three tier ids and trails the harness aliases; inside a Claude Code
 session the aliases are the only tokens the Agent tool can pass, so the error
-leads with ids that harness cannot use (observed 2026-07-19). Either
-restructure `.bench/lines.env` into per-harness tier bindings (Claude →
-alias tokens, Codex → tier ids) with each hook layer reporting only the
-running harness's binding, or keep the schema and reorder the message so the
-enforcing layer leads with its own harness's tokens. The cut line is a
-reviewer decision; enforcement stays exact-string with no provider lookup.
+leads with ids that harness cannot use (observed 2026-07-19). The design is
+already decided: the closed `decisions/multi-harness-line-binding.md` map
+answers the schema question — symmetric per-harness bindings with no canonical
+family, each layer reporting its own harness's tokens. The row's work is
+building that map; enforcement stays exact-string with no provider lookup.
 
 **FT98 (LOW, evidence supplied) — discard path for content-landed recovery
 payloads.** Recovery cleanup fail-closes permanently when a payload's content
