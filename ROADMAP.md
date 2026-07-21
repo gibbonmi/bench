@@ -20,25 +20,17 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT87 (HIGH on the bank track; MEDIUM otherwise) — remaining repair and CLI
-hardening.** The Go-side bounds core is shipped: one policy owns the applicable
-timeouts, size and row limits, cancellation, and iteration caps; exact
-`BENCH_OFFLINE=1` suppresses the slice's repair, Git, subprocess, and HTTP
-attempts; Git refresh is explicit; model discovery is concurrent; and outline,
-guard, gate, and shift behavior reports every bound hit honestly.
+**FT87 (MEDIUM) — command-wide parser and security-evidence capability.**
+Slices 1 and 2 shipped: the bounds core, explicit pinned bounded repair, one
+Bench identity with complete package metadata, and the FT83
+offline/network-control evidence record. What remains is slice 3: centralize
+argument grammar, anchor coverage at the repository root, support leading-dash
+and directory-scoped commit paths, treat help as success, make capability
+skips explicit evidence, and decouple security-test deadlines from the
+subprocesses they bound. The closed FT87 decision map (tickets #7 and #8) owns
+the cut.
 
-Slice 2 remains the bootstrap and artifact-governance capability: harden repair
-with an independently pinned manifest, bounded fetch and extraction, atomic
-promotion and concurrency-safe cleanup; ship complete package metadata and one
-Bench/redbench identity; and produce the FT83 offline/network-control evidence
-record. Slice 3 remains the command-wide parser and security-evidence
-capability: centralize argument grammar, anchor coverage at the repository
-root, support leading-dash and directory-scoped commit paths, treat help as
-success, make capability skips explicit, and decouple security-test deadlines
-from the subprocesses they bound. The closed FT87 decision map owns both cuts.
-
-Sources: `RR:A-14`, `RR:C-06`, `RR:C-07`, `RR:C-09`, `RR:C-10`, `RR:C-11`,
-`RR:C-12`; `RC:H-04`, `RC:M-02`.
+Sources: `RR:C-09`, `RR:C-11`, `RR:C-12`.
 
 **FT76 (HIGH) — one-command, repo-aware Bench bootstrap.** Build the Bench
 counterpart to Matt Pocock's `setup-matt-pocock-skills`: an explore → present
@@ -230,8 +222,9 @@ landed through different commits: the FT83 delegate payloads are strict subsets
 of the default branch by diff, yet `bench worktree recovery <ref> --apply
 <fingerprint>` still returns `retain` because landed-proof requires the payload
 commit itself (observed 2026-07-20), so proven-redundant refs accumulate with no
-sanctioned exit. Either extend landed-proof to content containment (patch-id or
-diff-containment against the default branch) or add an explicit
+sanctioned exit. The containment primitive now exists — `LandedInDefault`
+proves patch-id containment for landed-branch pruning — so either route
+recovery-payload landed-proof through it or add an explicit
 reviewer-authorized discard path; fail-closed stays the default, and the cut
 line is a reviewer decision.
 
@@ -256,6 +249,16 @@ cannot be captured and the intermittent defect cannot be isolated. First make
 the failure emit bounded, control-safe diagnostic evidence; then reproduce and
 deflake the attributable case without weakening the oracle. Retry once on the
 same tree and line remains the operational response to a transient red.
+
+**FT100 (LOW) — prose-weight pass on the kit's guidance surface.** Apply the
+gate's "prove it bites" standard to prose: audit the craft-skill library and
+the communication protocol so each skill and always-loaded clause cites an
+observed failure it prevents (from the learnings journal or session evidence),
+merge overlapping craft docs, and shrink the always-loaded `BENCH.md` rules to
+demonstrated-delta clauses. Distinct from FT89, which fixes guidance
+*correctness*; this row cuts guidance *weight*. Kit edit under the
+`craft-synthesis` discipline; starts as a grill (`/bench-shape-idea`) because
+the cut line on always-loaded rules is a reviewer decision.
 
 ## Release and bank reassessment gate
 
@@ -319,8 +322,8 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — spec FT87 slice 2, repair hardening, release identity
-   and metadata, and the offline/network-control evidence record.
-2. `/bench-shape-idea` — shape FT76, one-command repo-aware Bench bootstrap.
-3. `/bench-write-spec` — spec FT85, least-privilege consumer payload and one
+1. `/bench-shape-idea` — shape FT76, one-command repo-aware Bench bootstrap.
+2. `/bench-write-spec` — spec FT85, least-privilege consumer payload and one
    coherent phase contract.
+3. `/bench-write-spec` — spec FT87 slice 3, command-wide parser and
+   security-evidence capability.
