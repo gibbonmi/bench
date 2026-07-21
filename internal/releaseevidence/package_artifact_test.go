@@ -4,10 +4,26 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"strings"
 	"testing"
 )
 
 func TestValidateTarballAcceptsBufferedGzipTrailer(t *testing.T) {
+	if err := ValidateTarballForTesting(bufferedPackageTarball(t)); err != nil {
+		t.Fatalf("valid tarball rejected: %v", err)
+	}
+}
+
+func TestValidateTarballRejectsCorruptActiveMemberTrailer(t *testing.T) {
+	archive := bufferedPackageTarball(t)
+	archive[len(archive)-1] ^= 0xff
+	if err := ValidateTarballForTesting(archive); err == nil || !strings.Contains(err.Error(), "gzip: invalid checksum") {
+		t.Fatalf("corrupt active-member trailer error = %v, want attributed gzip checksum rejection", err)
+	}
+}
+
+func bufferedPackageTarball(t *testing.T) []byte {
+	t.Helper()
 	// Keep the compressed stream across the gzip reader's internal read boundary,
 	// leaving bytes from the active member unread when tar reaches its end markers.
 	payload := make([]byte, 95_348)
@@ -43,8 +59,5 @@ func TestValidateTarballAcceptsBufferedGzipTrailer(t *testing.T) {
 	if err := gz.Close(); err != nil {
 		t.Fatal(err)
 	}
-
-	if err := ValidateTarballForTesting(archive.Bytes()); err != nil {
-		t.Fatalf("valid tarball rejected: %v", err)
-	}
+	return archive.Bytes()
 }

@@ -110,6 +110,50 @@ func runLifecycle(t *testing.T, dir string, overrides map[string]string, name st
 	return string(out)
 }
 
+func assertPlannedArtifactNames(t *testing.T, root, output string) {
+	t.Helper()
+	var pkg struct {
+		Version string `json:"version"`
+	}
+	contract.ReadJSONFile(t, filepath.Join(root, "package.json"), &pkg)
+	planned := strings.Fields(runLifecycle(t, root, nil, "node", filepath.Join(root, "scripts", "release-plan.mjs"), root, "artifact-names", pkg.Version))
+	want := make(map[string]bool, len(planned))
+	for _, name := range planned {
+		want[name] = true
+	}
+	entries, err := os.ReadDir(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := make(map[string]bool, len(entries))
+	for _, entry := range entries {
+		got[entry.Name()] = true
+	}
+	if len(want) != len(planned) || !maps.Equal(got, want) {
+		t.Fatalf("artifact names = %v, want staged release-plan artifact-names = %v", got, want)
+	}
+}
+
+func assertPromotedReproducibility(t *testing.T, output string) {
+	t.Helper()
+	path := filepath.Join(filepath.Dir(output), "reproducibility.json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("promoted reproducibility.json is missing: %v", err)
+	}
+	var record struct {
+		SchemaVersion int    `json:"schema_version"`
+		Status        string `json:"status"`
+		Builds        int    `json:"builds"`
+	}
+	if err := json.Unmarshal(data, &record); err != nil {
+		t.Fatalf("promoted reproducibility.json is malformed: %v", err)
+	}
+	if record.SchemaVersion != 1 || record.Status != "green" || record.Builds != 2 {
+		t.Fatalf("promoted reproducibility.json = %+v, want schema 1 green two-build evidence", record)
+	}
+}
+
 type artifactSourceOption int
 
 const (
@@ -173,6 +217,9 @@ func committedHostileArtifactSource(t *testing.T, root string, options ...artifa
 				selected = append(selected, target)
 				break
 			}
+		}
+		if len(selected) != 2 {
+			t.Skipf("artifact matrix breadth requires a non-host release plan target alongside host %s/%s", host[0], host[1])
 		}
 	}
 	plan["targets"], err = json.Marshal(selected)

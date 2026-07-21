@@ -28,13 +28,7 @@ func TestArtifactSourceStagesCommittedHostPlan(t *testing.T) {
 	}
 	out := filepath.Join(t.TempDir(), "host-only artifact output [*]")
 	contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(staged, "scripts", "build-artifacts.sh"), staged, out).RequireExit(0)
-	entries, err := os.ReadDir(out)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(entries) != 3 {
-		t.Fatalf("host-only artifact count = %d, want wrapper plus platform tarball and offline archive", len(entries))
-	}
+	assertPlannedArtifactNames(t, staged, out)
 }
 
 func TestArtifactSourceSkipsWhenHostTargetIsAbsent(t *testing.T) {

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -36,15 +37,41 @@ func TestDistributableArtifactContracts(t *testing.T) {
 	contract.SkipIfSubjectFileMissing(t, "scripts/build-artifacts.sh")
 	root := contract.SubjectRoot(t)
 	buildRoot := committedHostileArtifactSource(t, root, includeFirstNonHostArtifactTarget)
-	out := filepath.Join(t.TempDir(), "artifact output [hostile]")
-	probe := contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-artifacts.sh"), buildRoot, out)
-	probe.RequireExit(0)
-
 	var plan struct {
 		Targets []artifactPlatform `json:"targets"`
 	}
 	contract.ReadJSONFile(t, filepath.Join(buildRoot, "scripts", "release-plan.json"), &plan)
 	matrix := plan.Targets
+	goEnv, err := exec.Command("go", "env", "GOOS", "GOARCH").Output()
+	if err != nil {
+		t.Fatalf("read host Go target: %v", err)
+	}
+	host := strings.Fields(string(goEnv))
+	if len(host) != 2 {
+		t.Fatalf("unexpected go env GOOS/GOARCH output: %q", goEnv)
+	}
+	var fullPlan struct {
+		Targets []artifactPlatform `json:"targets"`
+	}
+	contract.ReadJSONFile(t, filepath.Join(root, "scripts", "release-plan.json"), &fullPlan)
+	var hostTarget, firstNonHost artifactPlatform
+	hasHost, hasNonHost := false, false
+	for _, target := range fullPlan.Targets {
+		if !hasHost && target.GOOS == host[0] && target.GOArch == host[1] {
+			hostTarget, hasHost = target, true
+		} else if !hasNonHost && (target.GOOS != host[0] || target.GOArch != host[1]) {
+			firstNonHost, hasNonHost = target, true
+		}
+	}
+	expected := []artifactPlatform{hostTarget, firstNonHost}
+	if len(matrix) != 2 || !hasHost || !hasNonHost || !reflect.DeepEqual(matrix, expected) {
+		t.Fatalf("breadth-keeper staged targets = %+v, want host %s/%s plus first non-host target %+v", matrix, host[0], host[1], expected)
+	}
+	out := filepath.Join(t.TempDir(), "artifact output [hostile]")
+	probe := contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-artifacts.sh"), buildRoot, out)
+	probe.RequireExit(0)
+	assertPromotedReproducibility(t, out)
+
 	var wrapper struct {
 		Version string `json:"version"`
 	}
