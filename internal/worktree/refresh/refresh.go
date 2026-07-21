@@ -1,4 +1,4 @@
-package worktree
+package refresh
 
 import (
 	"context"
@@ -13,37 +13,6 @@ import (
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 )
-
-func consumeRefresh(root string, args []string, stdout io.Writer) ([]string, string) {
-	filtered := args[:0]
-	requested := false
-	for _, arg := range args {
-		if arg == "--refresh" {
-			requested = true
-		} else {
-			filtered = append(filtered, arg)
-		}
-	}
-	if requested {
-		result := Refresh(root)
-		_, _ = io.WriteString(stdout, RenderRefresh(result))
-		if result.Status == "refreshed" {
-			return filtered, RefreshedStartRef(root)
-		}
-	}
-	return filtered, ""
-}
-
-func RefreshedStartRef(root string) string {
-	remote := "origin/" + git.DefaultBranch(root)
-	if git.OK("-C", root, "rev-parse", "--verify", "--quiet", remote+"^{commit}") {
-		return remote
-	}
-	if local, ok := git.ResolvedDefault(root); ok {
-		return local
-	}
-	return "HEAD"
-}
 
 type RefreshResult struct {
 	Status string
@@ -75,10 +44,41 @@ func Refresh(root string) RefreshResult {
 	return RefreshResult{Status: "failed", Detail: sanitize.Preview(detail)}
 }
 
+func RefreshedStartRef(root string) string {
+	remote := "origin/" + git.DefaultBranch(root)
+	if git.OK("-C", root, "rev-parse", "--verify", "--quiet", remote+"^{commit}") {
+		return remote
+	}
+	if local, ok := git.ResolvedDefault(root); ok {
+		return local
+	}
+	return "HEAD"
+}
+
 func RenderRefresh(result RefreshResult) string {
 	out, err := toon.Table("worktree_refresh", []string{"status", "detail"}, [][]string{{result.Status, result.Detail}})
 	if err != nil {
 		return "worktree_refresh[1]{status,detail}:\n  failed,unrepresentable refresh detail\n"
 	}
 	return out
+}
+
+func Consume(root string, args []string, stdout io.Writer) ([]string, string) {
+	filtered := args[:0]
+	requested := false
+	for _, arg := range args {
+		if arg == "--refresh" {
+			requested = true
+		} else {
+			filtered = append(filtered, arg)
+		}
+	}
+	if requested {
+		result := Refresh(root)
+		_, _ = io.WriteString(stdout, RenderRefresh(result))
+		if result.Status == "refreshed" {
+			return filtered, RefreshedStartRef(root)
+		}
+	}
+	return filtered, ""
 }

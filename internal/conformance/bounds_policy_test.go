@@ -30,7 +30,7 @@ func checkBoundsPolicy(root string) []string {
 		"internal/outline/outline.go":               {"bounds.OutlineFileLimit", "bounds.OutlineRowLimit"},
 		"internal/guards/guards.go":                 {"bounds.GuardScanTimeout"},
 		"internal/gate/gate.go":                     {"bounds.GateTimeout"},
-		"internal/worktree/refresh.go":              {"bounds.GitRefreshTimeout"},
+		"internal/worktree/refresh/refresh.go":      {"bounds.GitRefreshTimeout"},
 		"internal/shift/loop.go":                    {"bounds.MainIterationsDefault", "bounds.RefactorIterationsDefault", "bounds.IterationMin", "bounds.IterationMax", "bounds.MaxWall"},
 	}
 	for rel, tokens := range owners {

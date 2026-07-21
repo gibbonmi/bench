@@ -10,6 +10,7 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
+	refreshop "github.com/gibbonmi/bench/internal/worktree/refresh"
 	"io"
 	"os"
 	"os/exec"
@@ -335,7 +336,7 @@ func renderResumeSummary(result ResumeResult) string {
 }
 func CreateCommand(root string, args []string, stdout, stderr io.Writer) int {
 	var request, label string
-	args, startRef := consumeRefresh(root, args, stdout)
+	args, startRef := refreshop.Consume(root, args, stdout)
 	for len(args) > 0 {
 		if len(args) < 2 || (args[0] != "--request" && args[0] != "--label") {
 			fmt.Fprintln(stderr, "usage: "+usage.WorktreeCreate)
@@ -367,7 +368,7 @@ func Subshell(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
-	args, startRef := consumeRefresh(root, args, stdout)
+	args, startRef := refreshop.Consume(root, args, stdout)
 	objective := strings.Join(args, " ")
 	if objective == "" {
 		objective = "interactive worktree"

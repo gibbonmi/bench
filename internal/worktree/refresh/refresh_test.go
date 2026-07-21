@@ -1,4 +1,4 @@
-package worktree
+package refresh
 
 import (
 	"os"
@@ -9,7 +9,7 @@ import (
 )
 
 func TestRefreshUsesBoundedNoninteractiveFetch(t *testing.T) {
-	marker := installFakeRefreshGit(t, "printf '%s|%s' \"$GIT_TERMINAL_PROMPT\" \"$*\" > \"$BENCH_REFRESH_MARKER\"")
+	marker := installFakeGit(t, "printf '%s|%s' \"$GIT_TERMINAL_PROMPT\" \"$*\" > \"$BENCH_REFRESH_MARKER\"")
 	got := Refresh("/repo with space")
 	if got.Status != "refreshed" {
 		t.Fatalf("Refresh = %#v", got)
@@ -26,14 +26,14 @@ func TestRefreshUsesBoundedNoninteractiveFetch(t *testing.T) {
 
 func TestRefreshFailureAndTimeoutAreNonfatalAndDetailed(t *testing.T) {
 	t.Run("exit", func(t *testing.T) {
-		installFakeRefreshGit(t, "printf 'origin said no\\n' >&2; exit 23")
+		installFakeGit(t, "printf 'origin said no\\n' >&2; exit 23")
 		got := Refresh("/repo")
 		if got.Status != "failed" || !strings.Contains(got.Detail, "origin said no") {
 			t.Fatalf("Refresh = %#v", got)
 		}
 	})
 	t.Run("timeout", func(t *testing.T) {
-		installFakeRefreshGit(t, "sleep 5")
+		installFakeGit(t, "sleep 5")
 		old := refreshTimeout
 		refreshTimeout = 20 * time.Millisecond
 		t.Cleanup(func() { refreshTimeout = old })
@@ -46,7 +46,7 @@ func TestRefreshFailureAndTimeoutAreNonfatalAndDetailed(t *testing.T) {
 }
 
 func TestRefreshOfflineStartsNoGitAndNamesFlag(t *testing.T) {
-	marker := installFakeRefreshGit(t, ": > \"$BENCH_REFRESH_MARKER\"")
+	marker := installFakeGit(t, ": > \"$BENCH_REFRESH_MARKER\"")
 	t.Setenv("BENCH_OFFLINE", "1")
 	got := Refresh("/repo")
 	if got.Status != "offline" || got.Detail != "BENCH_OFFLINE=1" {
@@ -57,7 +57,7 @@ func TestRefreshOfflineStartsNoGitAndNamesFlag(t *testing.T) {
 	}
 }
 
-func installFakeRefreshGit(t *testing.T, body string) string {
+func installFakeGit(t *testing.T, body string) string {
 	t.Helper()
 	dir := t.TempDir()
 	marker := filepath.Join(dir, "marker")

@@ -15,6 +15,7 @@ import (
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/worktree"
+	refreshop "github.com/gibbonmi/bench/internal/worktree/refresh"
 )
 
 // finish emits the shift_result block, records the outcome on the intent entry when one
@@ -154,10 +155,10 @@ func loop(objective string, refresh bool, stdout, stderr io.Writer) int {
 	}
 	startRef := "HEAD"
 	if refresh {
-		result := worktree.Refresh(mainRoot)
-		fmt.Fprint(stdout, worktree.RenderRefresh(result))
+		result := refreshop.Refresh(mainRoot)
+		fmt.Fprint(stdout, refreshop.RenderRefresh(result))
 		if result.Status == "refreshed" {
-			startRef = worktree.RefreshedStartRef(mainRoot)
+			startRef = refreshop.RefreshedStartRef(mainRoot)
 		}
 	}
 	base, err := git.Output("-C", mainRoot, "rev-parse", startRef+"^{commit}")
