@@ -22,6 +22,7 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Made managed asset link, relink, and unlink report partial lifecycle outcomes explicitly.
 - Made binary repair explicit, manifest-pinned, resource-bounded, concurrency-safe,
   and manually prunable; unified user-facing output and package metadata on Bench.
 - Bounded Go-side network, subprocess, read, and output work; made worktree

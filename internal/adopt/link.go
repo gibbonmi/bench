@@ -47,24 +47,9 @@ func Link(args []string, stdout, stderr io.Writer, version string) int {
 		fmt.Fprintln(stdout, "(running from an ephemeral package cache - using copy mode so files don't dangle)")
 	}
 	plan := buildLinkPlan(kit)
-	if !preflightLink(root, plan, stderr) {
-		return 1
-	}
-	if err := writeAgentsFile(root); err != nil {
-		fmt.Fprintln(stderr, err)
-		return 1
-	}
-	claudeManaged, err := installClaudeMD(root)
-	if err != nil {
-		fmt.Fprintln(stderr, err)
-		return 1
-	}
-	if err := installPlan(root, mode, version, plan, claudeManaged); err != nil {
-		fmt.Fprintln(stderr, err)
-		return 1
-	}
-	if err := installGitHook(root, stderr); err != nil {
-		return 1
+	result := transactionalLink(root, kit, mode, version, plan, stdout, stderr)
+	if result != 0 && result != 3 {
+		return result
 	}
 	fmt.Fprintf(stdout, "linked Bench into %s (mode: %s).\n", root, mode)
 	fmt.Fprintln(stdout, "  instructions: AGENTS.md managed block -> .bench/BENCH.md")
@@ -72,7 +57,7 @@ func Link(args []string, stdout, stderr io.Writer, version string) int {
 	fmt.Fprintln(stdout, "  adapters: .claude/settings.json, .codex/hooks.json, .claude/{skills,commands} -> .agents")
 	fmt.Fprintln(stdout, "  enforcement: shared .bench/hooks + git pre-push guard + the bench shift loop")
 	fmt.Fprintln(stdout, "Run 'bench init' next to scaffold .bench/gate.sh.")
-	return 0
+	return result
 }
 
 func isEphemeralKit(kit string) bool {
@@ -175,56 +160,6 @@ func currentExecutablePath() string {
 	return path
 }
 
-func preflightLink(root string, plan []planEntry, stderr io.Writer) bool {
-	conflicts := 0
-	if err := validateAgentsPath(filepath.Join(root, "AGENTS.md")); err != nil {
-		fmt.Fprintln(stderr, err)
-		conflicts++
-	}
-	hooks := hooksDir(root)
-	prepush := filepath.Join(hooks, "pre-push")
-	if content, err := os.ReadFile(prepush); err == nil && !strings.Contains(string(content), PrePushMarker) {
-		fmt.Fprintf(stderr, "conflict: %s exists and is not Bench-managed\n", prepush)
-		conflicts++
-	}
-	for _, e := range plan {
-		if e.rel == "" {
-			continue
-		}
-		if e.kind != "inline" {
-			if info, err := os.Stat(e.src); err != nil || !info.Mode().IsRegular() {
-				fmt.Fprintf(stderr, "conflict: kit asset missing: %s\n", e.src)
-				conflicts++
-				continue
-			}
-		}
-		if hasSymlinkParent(root, e.rel) {
-			fmt.Fprintf(stderr, "conflict: %s has a symlink parent directory\n", e.rel)
-			conflicts++
-			continue
-		}
-		parent := filepath.Join(root, filepath.Dir(e.rel))
-		if info, err := os.Stat(parent); err == nil && !info.IsDir() {
-			fmt.Fprintf(stderr, "conflict: parent path for %s is not a directory\n", e.rel)
-			conflicts++
-			continue
-		}
-		dest := filepath.Join(root, e.rel)
-		if _, err := os.Lstat(dest); err == nil {
-			if !manifestOwnedClean(root, e.rel) {
-				old := manifestHash(root, e.rel)
-				if old != "" {
-					fmt.Fprintf(stderr, "conflict: modified Bench-managed file: %s\n", e.rel)
-				} else {
-					fmt.Fprintf(stderr, "conflict: project-owned file exists: %s\n", e.rel)
-				}
-				conflicts++
-			}
-		}
-	}
-	return conflicts == 0
-}
-
 func validateAgentsPath(path string) error {
 	content, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
@@ -270,86 +205,6 @@ func hasSymlinkParent(root, rel string) bool {
 		}
 	}
 	return false
-}
-
-func writeAgentsFile(root string) error {
-	path := filepath.Join(root, "AGENTS.md")
-	content, err := os.ReadFile(path)
-	if os.IsNotExist(err) {
-		return os.WriteFile(path, []byte(BenchAgentsBlock()), 0o644)
-	}
-	if err != nil {
-		return err
-	}
-	next, err := RewriteAgentsBlock(string(content))
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(path, []byte(next), 0o644)
-}
-
-// installClaudeMD writes CLAUDE.md in the current bench-managed shape whenever the file is
-// absent, still the retired legacy bench shape, or already the current bench shape, and
-// reports whether it left the file in that link-owned form. A pre-existing user CLAUDE.md —
-// including a present-but-empty file, which is user content rather than "absent" — is left
-// untouched and reported unowned, so the caller never records it in the link manifest.
-func installClaudeMD(root string) (bool, error) {
-	path := filepath.Join(root, "CLAUDE.md")
-	content, err := os.ReadFile(path)
-	if os.IsNotExist(err) || string(content) == legacyClaudeMD() || string(content) == benchClaudeMD() {
-		if err := os.WriteFile(path, []byte(benchClaudeMD()), 0o644); err != nil {
-			return false, err
-		}
-		return true, nil
-	}
-	return false, err
-}
-
-func installPlan(root, mode, version string, plan []planEntry, claudeManaged bool) error {
-	var rows []manifestRow
-	for _, e := range plan {
-		if err := installPlannedFile(root, mode, e); err != nil {
-			return err
-		}
-		fp, err := fingerprintPath(filepath.Join(root, e.rel))
-		if err != nil {
-			return err
-		}
-		rows = append(rows, manifestRow{e.rel, fp})
-	}
-	if claudeManaged {
-		// CLAUDE.md is not a planEntry: unlike the rest of the plan it is bespoke,
-		// conditionally owned content rather than an unconditional copy from the kit, so it
-		// gets its own row here instead of joining the generic install loop above.
-		fp, err := fingerprintPath(filepath.Join(root, "CLAUDE.md"))
-		if err != nil {
-			return err
-		}
-		rows = append(rows, manifestRow{"CLAUDE.md", fp})
-	}
-	return writeManifest(filepath.Join(root, ".bench", "link-manifest.tsv"), version, rows)
-}
-
-func installPlannedFile(root, mode string, e planEntry) error {
-	dest := filepath.Join(root, e.rel)
-	if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
-		return err
-	}
-	_ = os.Remove(dest)
-	switch {
-	case e.kind == "inline":
-		return os.WriteFile(dest, []byte(e.content), 0o644)
-	case e.kind == "adapter":
-		target, ok := AdapterTarget(e.rel)
-		if !ok {
-			return fmt.Errorf("adapter target unavailable for %s", e.rel)
-		}
-		return os.Symlink(target, dest)
-	case mode == "symlink":
-		return os.Symlink(e.src, dest)
-	default:
-		return copyFile(e.src, dest)
-	}
 }
 
 func AdapterTarget(rel string) (string, bool) {

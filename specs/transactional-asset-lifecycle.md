@@ -1,6 +1,6 @@
 # Transactional managed-asset lifecycle (FT84)
 
-Status: staged
+Status: implemented
 
 > Map provenance: this spec is compiled from `decisions/transactional-asset-lifecycle.md`, whose map was recorded under the `/bench-write-spec` **same-session exception** — every ticket restates a decision the reviewer already approved (the FT84 roadmap row through reviewed drains, and the FT76 grill of 2026-07-21). The map, and this spec's three Handoff-flag-7 proposals, are **flagged for reviewer veto** rather than re-asked.
 

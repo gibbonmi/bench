@@ -24,6 +24,8 @@ func TestUnlinkContracts(t *testing.T) {
 	contract.RunParallel(t, "bench unlink by-path CLI route contract failed", testUnlinkByPathRoute)
 	contract.RunParallel(t, "bench unlink link-created CLAUDE.md contract failed", testUnlinkRemovesLinkCreatedClaudeMD)
 	contract.RunParallel(t, "bench unlink pre-existing CLAUDE.md contract failed", testUnlinkSparesExistingClaudeMD)
+	contract.RunParallel(t, "bench unlink emits machine-readable residuals contract failed", testUnlinkResidualsMachineReadable)
+	contract.RunParallel(t, "bench unlink gives no raw deletion advice contract failed", testUnlinkNoRawDeletionAdvice)
 }
 
 const managedFileRel = ".agents/commands/bench-implement-spec.md"
@@ -49,11 +51,13 @@ func testUnlinkKeepsModified(t *testing.T) {
 	appendFile(t, filepath.Join(f.Root, filepath.FromSlash(managedFileRel)), "\nlocal edit\n")
 
 	probe := f.Bench("unlink")
-	probe.RequireExit(0)
+	probe.RequireExit(3)
 
 	requireFixtureFileContains(t, f, managedFileRel, "local edit", "unlink deleted a locally modified managed file")
 	probe.RequireContains(probe.Stdout, "modified")
 	probe.RequireContains(probe.Stdout, managedFileRel)
+	probe.RequireContains(probe.Stdout, "residuals[1]{path,reason}:")
+	probe.RequireContains(probe.Stdout, "  .agents/commands/bench-implement-spec.md,modified")
 }
 
 // Story 3: the managed pre-push hook is removed; a foreign one is left.
@@ -129,7 +133,7 @@ func testUnlinkManifestConditional(t *testing.T) {
 	refused := contract.NewFixture(t)
 	linkOK(t, refused)
 	appendFile(t, filepath.Join(refused.Root, filepath.FromSlash(managedFileRel)), "\nlocal edit\n")
-	unlinkOK(t, refused)
+	refused.Bench("unlink").RequireExit(3)
 	requireLinkFile(t, refused, ".bench/link-manifest.tsv")
 }
 
@@ -142,7 +146,7 @@ func testUnlinkRefusesTraversal(t *testing.T) {
 	appendFile(t, filepath.Join(f.Root, ".bench", "link-manifest.tsv"), "../outside-sentinel\tdeadbeef\n")
 
 	probe := f.Bench("unlink")
-	probe.RequireExit(0)
+	probe.RequireExit(3)
 
 	if got := contract.ReadFileAbs(t, outside); !strings.Contains(got, "do not delete me") {
 		t.Fatalf("unlink followed a traversal row and touched a file outside the repo:\n%s", got)
@@ -175,7 +179,7 @@ func testUnlinkReportsBothRuns(t *testing.T) {
 	linkOK(t, real)
 	appendFile(t, filepath.Join(real.Root, filepath.FromSlash(managedFileRel)), "\nlocal edit\n")
 	realProbe := real.Bench("unlink")
-	realProbe.RequireExit(0)
+	realProbe.RequireExit(3)
 	realProbe.RequireContains(realProbe.Stdout, "removed: .bench/BENCH.md")
 	realProbe.RequireContains(realProbe.Stdout, managedFileRel)
 	realProbe.RequireContains(realProbe.Stdout, "modified")
@@ -184,11 +188,41 @@ func testUnlinkReportsBothRuns(t *testing.T) {
 	linkOK(t, dry)
 	appendFile(t, filepath.Join(dry.Root, filepath.FromSlash(managedFileRel)), "\nlocal edit\n")
 	dryProbe := dry.Bench("unlink", "--dry-run")
-	dryProbe.RequireExit(0)
+	dryProbe.RequireExit(3)
 	dryProbe.RequireContains(dryProbe.Stdout, "would remove: .bench/BENCH.md")
 	dryProbe.RequireContains(dryProbe.Stdout, managedFileRel)
 	dryProbe.RequireContains(dryProbe.Stdout, "modified")
 	requireFixtureFileContains(t, dry, managedFileRel, "local edit", "dry-run report path removed the kept file")
+}
+
+func testUnlinkResidualsMachineReadable(t *testing.T) {
+	f := contract.NewFixture(t)
+	linkOK(t, f)
+	appendFile(t, filepath.Join(f.Root, filepath.FromSlash(managedFileRel)), "\nlocal edit\n")
+	appendFile(t, filepath.Join(f.Root, ".bench", "link-manifest.tsv"), "../outside-sentinel\tdeadbeef\n")
+	probe := f.Bench("unlink")
+	probe.RequireExit(3)
+	probe.RequireContains(probe.Stdout, "residuals[2]{path,reason}:")
+	probe.RequireContains(probe.Stdout, "  .agents/commands/bench-implement-spec.md,modified")
+	probe.RequireContains(probe.Stdout, "  ../outside-sentinel,refused")
+	probe.RequireContains(probe.Stdout, "kept (modified): "+managedFileRel)
+}
+
+func testUnlinkNoRawDeletionAdvice(t *testing.T) {
+	f := contract.NewFixture(t)
+	linkOK(t, f)
+	appendFile(t, filepath.Join(f.Root, filepath.FromSlash(managedFileRel)), "\nlocal edit\n")
+	foreign := prePushPath(t, f)
+	contract.WriteExecutableAbs(t, foreign, "#!/bin/sh\n# foreign executable\n")
+	probe := f.Bench("unlink")
+	probe.RequireExit(3)
+	if !f.Exists(relTo(t, f, foreign)) {
+		t.Fatal("unlink removed foreign executable")
+	}
+	lower := strings.ReplaceAll(strings.ToLower(probe.Stdout+probe.Stderr), strings.ToLower(f.Root), "")
+	for _, forbidden := range []string{"rm", "delete", "deletion"} {
+		probe.RequireNotContains(lower, forbidden)
+	}
 }
 
 // Story 10: absent or unreadable manifest exits 1; a rowless manifest exits 0; a second

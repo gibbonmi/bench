@@ -29,8 +29,14 @@ func TestLinkContracts(t *testing.T) {
 	contract.RunParallel(t, "bench link default-branch resolution contract failed", testLinkDefaultBranchResolution)
 	contract.RunParallel(t, "bench link hooksPath conflict contract failed", testLinkHooksPathConflict)
 	contract.RunParallel(t, "managed pre-push gate pin contract failed", testManagedPrePushGatePinning)
+	contract.RunParallel(t, "bench link promotion rollback contract failed", testLinkRollsBackOnFault)
+	contract.RunParallel(t, "bench link reconciles kit versions contract failed", testLinkReconcilesKitVersions)
+	contract.RunParallel(t, "bench link preserves modified dropped asset contract failed", testLinkKeepsModifiedDroppedAsset)
+	contract.RunParallel(t, "bench link lifecycle matrix contract failed", testLinkLifecycleMatrix)
 }
 
+// The wrapper process owns the fault seam, so this checks the actual shipped
+// surface rather than an adopt-package implementation detail.
 func testInitScaffoldsLearnings(t *testing.T) {
 	f := contract.NewFixture(t)
 
@@ -56,7 +62,8 @@ func testInitExistingGateIdempotence(t *testing.T) {
 func testLinkSafeFreshRelink(t *testing.T) {
 	f := contract.NewFixture(t)
 
-	linkOK(t, f)
+	legacy := f.Bench("link")
+	legacy.RequireExit(0)
 
 	requireLinkFile(t, f, "AGENTS.md")
 	requireLiteralCount(t, f, "AGENTS.md", "<!-- bench:start -->", 1, "fresh link did not create exactly one managed start marker")
@@ -119,11 +126,12 @@ func testLinkSafeFreshRelink(t *testing.T) {
 	}
 
 	f.WriteFile("CLAUDE.md", "# Custom\n\nproject-owned claude config\n")
-	linkOK(t, f)
+	custom := f.Bench("link")
+	custom.RequireExit(3)
 	requireFixtureFileContains(t, f, "CLAUDE.md", "project-owned claude config", "relink rewrote a project-owned CLAUDE.md")
 	requireFixtureFileNotContains(t, f, "CLAUDE.md", "@.bench/BENCH.md", "relink injected an import into a project-owned CLAUDE.md")
-	if got := manifestRowCount(t, f, "CLAUDE.md"); got != 0 {
-		t.Fatalf("relink recorded a project-owned CLAUDE.md in the manifest (%d rows), want 0", got)
+	if got := manifestRowCount(t, f, "CLAUDE.md"); got != 1 {
+		t.Fatalf("relink lost ownership of preserved modified CLAUDE.md (%d rows), want 1", got)
 	}
 }
 
@@ -178,12 +186,20 @@ func testLinkConflictWithoutManifest(t *testing.T) {
 
 	probe := f.Bench("link")
 
-	if probe.ExitCode == 0 {
-		t.Fatal("link succeeded despite a project-owned command conflict")
-	}
+	probe.RequireExit(3)
 	probe.RequireContains(strings.ToLower(probe.Stderr+probe.Stdout), "conflict")
 	requireFixtureFileContains(t, f, ".agents/commands/bench-implement-spec.md", "project command", "conflicting project command was overwritten")
-	requireLinkNotExists(t, f, ".bench/link-manifest.tsv", "conflicting link wrote a manifest despite failing")
+	requireLinkFile(t, f, ".bench/link-manifest.tsv")
+	probe.RequireContains(probe.Stdout, "conflicts[1]{path,reason}:")
+	probe.RequireContains(probe.Stdout, "  .agents/commands/bench-implement-spec.md,project-owned")
+	want, err := os.ReadFile(filepath.Join(contract.KitRoot(t), ".bench", "BENCH.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireLinkEqual(t, f.ReadFile(".bench/BENCH.md"), string(want), "non-conflicting managed asset did not converge")
+	if manifestRowCount(t, f, ".bench/BENCH.md") != 1 {
+		t.Fatal("non-conflicting managed asset is not manifest-owned")
+	}
 }
 
 func testLinkModifiedManaged(t *testing.T) {
@@ -193,10 +209,14 @@ func testLinkModifiedManaged(t *testing.T) {
 
 	probe := f.Bench("link")
 
-	if probe.ExitCode == 0 {
-		t.Fatal("relink overwrote a locally modified managed file")
-	}
+	probe.RequireExit(3)
 	probe.RequireContains(strings.ToLower(probe.Stderr+probe.Stdout), "modified")
+	probe.RequireContains(probe.Stdout, "conflicts[1]{path,reason}:")
+	probe.RequireContains(probe.Stdout, "  .agents/commands/bench-implement-spec.md,modified-managed")
+	requireFixtureFileContains(t, f, ".agents/commands/bench-implement-spec.md", "local edit", "modified managed bytes changed")
+	if manifestRowCount(t, f, ".bench/BENCH.md") != 1 {
+		t.Fatal("non-conflicting managed asset stopped being manifest-owned")
+	}
 }
 
 func testLinkedHooksLocalCLI(t *testing.T) {
@@ -248,6 +268,9 @@ func testLinkMetacharKitPath(t *testing.T) {
 	probe.RequireExit(0)
 	requireExecutable(t, filepath.Join(r.Root, ".bench", "bin", "bench.sh"), "metachar kit path scattered installed files")
 	requireLinkFile(t, r, ".agents/commands/bench-implement-spec.md")
+	if manifestRowCount(t, r, ".agents/commands/bench-implement-spec.md") != 1 {
+		t.Fatal("metachar kit path did not converge to a manifest-owned managed asset")
+	}
 }
 
 func testLinkWorktree(t *testing.T) {

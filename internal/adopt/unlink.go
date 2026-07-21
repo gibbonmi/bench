@@ -53,7 +53,13 @@ func Unlink(args []string, stdout, stderr io.Writer) int {
 	}
 
 	plan := planUnlink(root, m, dryRun)
-	writeUnlinkReport(stdout, root, dryRun, plan)
+	if err := writeUnlinkReport(stdout, root, dryRun, plan); err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	if plan.manifestKept {
+		return 3
+	}
 	return 0
 }
 
@@ -269,7 +275,7 @@ func removeManagedHook(root string, dryRun bool) string {
 	return "pre-push hook (managed - removed)"
 }
 
-func writeUnlinkReport(w io.Writer, root string, dryRun bool, p unlinkPlan) {
+func writeUnlinkReport(w io.Writer, root string, dryRun bool, p unlinkPlan) error {
 	verb := "removed"
 	keep := "kept (modified)"
 	if dryRun {
@@ -297,6 +303,23 @@ func writeUnlinkReport(w io.Writer, root string, dryRun bool, p unlinkPlan) {
 	for _, rel := range p.refused {
 		fmt.Fprintf(w, "  refused: %s\n", rel)
 	}
+	// Keep the prose above for humans, and expose the exact same verdict data once
+	// for automation.  Link and unlink deliberately share toon.Table rather than
+	// growing bespoke parsers for their partial outcomes.
+	verdicts := make([]lifecycleVerdict, 0, len(p.keptModified)+len(p.refused))
+	for _, rel := range p.keptModified {
+		verdicts = append(verdicts, lifecycleVerdict{rel, "modified"})
+	}
+	for _, rel := range p.refused {
+		verdicts = append(verdicts, lifecycleVerdict{rel, "refused"})
+	}
+	if len(verdicts) > 0 {
+		block, err := renderVerdicts("residuals", verdicts)
+		if err != nil {
+			return err
+		}
+		fmt.Fprint(w, block)
+	}
 	if len(p.removed) == 0 && p.agentsAction == "" && p.hookAction == "" && len(p.keptModified) == 0 && len(p.refused) == 0 {
 		fmt.Fprintln(w, "  nothing to remove (manifest had no managed rows)")
 	}
@@ -308,6 +331,7 @@ func writeUnlinkReport(w io.Writer, root string, dryRun bool, p unlinkPlan) {
 	default:
 		fmt.Fprintln(w, "  removed link manifest")
 	}
+	return nil
 }
 
 func pluralDir(n int) string {

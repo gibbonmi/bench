@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -22,6 +21,14 @@ func (m Manifest) Hash(rel string) string {
 		return ""
 	}
 	return m.hashes[rel]
+}
+
+func (m Manifest) Rows() []manifestRow {
+	rows := make([]manifestRow, 0, len(m.hashes))
+	for rel, hash := range m.hashes {
+		rows = append(rows, manifestRow{rel, hash})
+	}
+	return rows
 }
 
 func ReadManifest(path string) (Manifest, error) {
@@ -69,15 +76,7 @@ func writeManifest(path, version string, rows []manifestRow) error {
 	if err != nil {
 		return err
 	}
-	_, err = fmt.Fprintf(f, "#kit\t%s\n", version)
-	if err == nil {
-		for _, r := range rows {
-			_, err = fmt.Fprintf(f, "%s\t%s\n", r.rel, r.hash)
-			if err != nil {
-				break
-			}
-		}
-	}
+	_, err = f.Write(manifestBytes(version, rows))
 	cerr := f.Close()
 	if err != nil {
 		_ = os.Remove(tmp)
@@ -88,6 +87,15 @@ func writeManifest(path, version string, rows []manifestRow) error {
 		return cerr
 	}
 	return os.Rename(tmp, path)
+}
+
+func manifestBytes(version string, rows []manifestRow) []byte {
+	var b strings.Builder
+	b.WriteString("#kit\t" + version + "\n")
+	for _, r := range rows {
+		b.WriteString(r.rel + "\t" + r.hash + "\n")
+	}
+	return []byte(b.String())
 }
 
 func fingerprintPath(path string) (string, error) {
