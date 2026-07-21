@@ -176,8 +176,17 @@ func makeOfflineJourneyFixtureForTarget(t *testing.T, runtimeTarget string) (str
 	if err := os.MkdirAll(evidence, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	bench := []byte(fmt.Sprintf("#!/bin/bash\nif [[ -n \"${BENCH_OFFLINE_TEST_NATIVE_EGRESS:-}\" ]]; then : > \"$BENCH_OFFLINE_TEST_NATIVE_MARKER\"; host=${BENCH_OFFLINE_TEST_NATIVE_EGRESS%%:*}; port=${BENCH_OFFLINE_TEST_NATIVE_EGRESS##*:}; if (exec 3<>\"/dev/tcp/$host/$port\") 2>/dev/null; then exit 47; fi; fi\ncase \"${1:-}\" in version) printf 'benchkit 0.2.0 (%s)\\n';; commands) [[ \"${2:-}\" == --brief ]] && printf 'commands --brief\\n';; *) printf 'bench — fixture\\n';; esac\n", runtimeTarget))
-	wrapper := []byte("#!/bin/bash\nscript=$(readlink -f \"$0\")\nexec \"$(dirname \"$script\")/../../@redbench/linux-x64/bin/bench\" \"$@\"\n")
+	bench := []byte(fmt.Sprintf(`#!/bin/bash
+if [[ -n "${BENCH_OFFLINE_TEST_NATIVE_EGRESS:-}" ]]; then : > "$BENCH_OFFLINE_TEST_NATIVE_MARKER"; host=${BENCH_OFFLINE_TEST_NATIVE_EGRESS%%%%:*}; port=${BENCH_OFFLINE_TEST_NATIVE_EGRESS##*:}; if (exec 3<>"/dev/tcp/$host/$port") 2>/dev/null; then exit 47; fi; fi
+case "${1:-}" in
+  version) printf 'benchkit 0.2.0 (%s)\n';;
+  commands) [[ "${2:-}" == --brief ]] && printf 'commands --brief\n';;
+  models) printf 'model_sources[3]{source,freshness,status,hint}:\n  codex,offline,offline,BENCH_OFFLINE=1\n  openai,offline,offline,BENCH_OFFLINE=1\n  anthropic,offline,offline,BENCH_OFFLINE=1\nmodels[0]{source,freshness,id}:\n';;
+  worktree) printf 'worktree_refresh[1]{status,detail}:\n  offline,BENCH_OFFLINE=1\nworktree_create[1]{path,assignment,state}:\n  fixture,fixture,active\n';;
+  *) printf 'bench — fixture\n';;
+esac
+`, runtimeTarget))
+	wrapper := []byte("#!/bin/bash\nscript=$(readlink -f \"$0\")\nbin=\"$(dirname \"$script\")/../../@redbench/linux-x64/bin/bench\"\nif [[ -x \"$bin\" && -s \"$bin\" ]]; then exec \"$bin\" \"$@\"; fi\nif [[ \"${BENCH_OFFLINE:-}\" == 1 ]]; then printf 'bench: repair suppressed by BENCH_OFFLINE=1\\n' >&2; fi\nprintf 'bench: no pinned binary for this platform\\n' >&2\nexit 127\n")
 	nativeFiles := map[string]smokeFile{"bin/bench": {bench, 0o755}, "package.json": {[]byte("{\"name\":\"@redbench/linux-x64\",\"version\":\"0.2.0\",\"bin\":{\"bench\":\"bin/bench\"}}\n"), 0o644}}
 	wrapperFiles := map[string]smokeFile{"bin/bench.sh": {wrapper, 0o755}, "package.json": {[]byte("{\"name\":\"redbench\",\"version\":\"0.2.0\",\"bin\":{\"bench\":\"bin/bench.sh\"}}\n"), 0o644}}
 	nativeFiles["component-manifest.json"] = smokeManifest(t, nativeFiles)

@@ -27,6 +27,7 @@ func TestRuntimeWorktreeContracts(t *testing.T) {
 	contract.RunParallel(t, "bench worktree interactive release contract", testRuntimeWorktreeInteractiveRelease)
 	contract.RunParallel(t, "bench worktree lease hardening contract", testRuntimeWorktreeLeaseHardening)
 	contract.RunParallel(t, "bench worktree concurrent-acquire contract", testRuntimeWorktreeConcurrentAcquire)
+	contract.RunParallel(t, "bench worktree refresh routing matrix contract", testRuntimeWorktreeRefreshRoutingMatrix)
 	contract.RunParallel(t, "bench resume-clean and SessionStart preserve foreign worktrees contract", testRuntimeWorktreeForeignPreservation)
 	contract.RunParallel(t, "bench resume-clean failure summary contract", testRuntimeResumeFailureSummary)
 	contract.RunParallel(t, "bench automatic cleanup eligibility matrix contract", testRuntimeWorktreeAutomaticEligibilityMatrix)
@@ -37,6 +38,100 @@ func TestRuntimeWorktreeContracts(t *testing.T) {
 	contract.RunParallel(t, "bench worktree list rows contract", testRuntimeWorktreeListRows)
 	contract.RunParallel(t, "bench worktree list AXI posture contract", testRuntimeWorktreeListAXIPosture)
 	contract.RunParallel(t, "bench worktree list shell surface contract", testRuntimeWorktreeListShellSurface)
+}
+
+func testRuntimeWorktreeRefreshRoutingMatrix(t *testing.T) {
+	f := shiftFixture(t, "#!/bin/sh\nexit 0\n")
+	remote := filepath.Join(t.TempDir(), "origin.git")
+	f.Git("init", "-q", "--bare", remote)
+	branch := strings.TrimSpace(f.Git("branch", "--show-current").Stdout)
+	f.Git("remote", "add", "origin", remote)
+	f.Git("push", "-q", "-u", "origin", branch)
+	f.Git("remote", "set-head", "origin", "-a")
+
+	realGit, err := exec.LookPath("git")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fakeBin := t.TempDir()
+	marker := filepath.Join(t.TempDir(), "fetches")
+	contract.WriteFileAbs(t, filepath.Join(fakeBin, "git"), `#!/usr/bin/env bash
+if [[ " $* " == *" fetch "* ]]; then
+  printf '%s|%s\n' "${GIT_TERMINAL_PROMPT:-}" "$*" >> "$BENCH_GIT_MARKER"
+fi
+exec "$REAL_GIT" "$@"
+`)
+	if err := os.Chmod(filepath.Join(fakeBin, "git"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	contract.WriteFileAbs(t, filepath.Join(fakeBin, "refresh-shell"), "#!/bin/sh\nexit 0\n")
+	if err := os.Chmod(filepath.Join(fakeBin, "refresh-shell"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	env := map[string]string{
+		"PATH":                 fakeBin + string(os.PathListSeparator) + os.Getenv("PATH"),
+		"REAL_GIT":             realGit,
+		"BENCH_GIT_MARKER":     marker,
+		"GIT_TERMINAL_PROMPT":  "1",
+		"BENCH_HOME":           filepath.Join(t.TempDir(), "refresh-home"),
+		"BENCH_AGENT":          "/bin/true",
+		"BENCH_MAX_ITERS":      "1",
+		"BENCH_REFACTOR_ITERS": "1",
+		"SHELL":                filepath.Join(fakeBin, "refresh-shell"),
+	}
+
+	runForms := func(prefix string, extra map[string]string, refresh bool) []contract.Probe {
+		t.Helper()
+		callEnv := make(map[string]string, len(env)+len(extra))
+		for key, value := range env {
+			callEnv[key] = value
+		}
+		for key, value := range extra {
+			callEnv[key] = value
+		}
+		flag := []string{}
+		if refresh {
+			flag = append(flag, "--refresh")
+		}
+		return []contract.Probe{
+			f.BenchEnv(callEnv, append([]string{"worktree"}, append(flag, prefix+" subshell")...)...),
+			f.BenchEnv(callEnv, append([]string{"worktree", "create"}, append(flag, "--request", prefix+"-create", "--label", prefix+" create")...)...),
+			f.BenchEnv(callEnv, append([]string{"shift"}, append(flag, prefix+" shift")...)...),
+		}
+	}
+	for _, probe := range runForms("default", nil, false) {
+		if probe.ExitCode == 1 || probe.ExitCode == 2 || probe.ExitCode == 3 {
+			t.Fatalf("default acquisition failed: %+v", probe)
+		}
+	}
+	if _, err := os.Stat(marker); !os.IsNotExist(err) {
+		t.Fatalf("default acquisition fetched: %v", err)
+	}
+	for _, probe := range runForms("explicit", nil, true) {
+		if probe.ExitCode == 1 || probe.ExitCode == 2 || probe.ExitCode == 3 {
+			t.Fatalf("explicit refresh acquisition failed: %+v", probe)
+		}
+		contract.RequireContains(t, probe.Stdout, "worktree_refresh[1]{status,detail}:")
+		contract.RequireContains(t, probe.Stdout, "refreshed,none")
+	}
+	lines := contract.NonEmptyLines(contract.ReadFileAbs(t, marker))
+	if len(lines) != 3 {
+		t.Fatalf("explicit refresh fetches = %v, want one per acquisition form", lines)
+	}
+	for _, line := range lines {
+		if !strings.Contains(line, "0|-C ") || !strings.Contains(line, " fetch -q --no-recurse-submodules origin") {
+			t.Fatalf("refresh did not override prompt/argv: %q", line)
+		}
+	}
+	for _, probe := range runForms("offline", map[string]string{"BENCH_OFFLINE": "1"}, true) {
+		if probe.ExitCode == 1 || probe.ExitCode == 2 || probe.ExitCode == 3 {
+			t.Fatalf("offline refresh acquisition failed: %+v", probe)
+		}
+		contract.RequireContains(t, probe.Stdout, "offline,BENCH_OFFLINE=1")
+	}
+	if got := len(contract.NonEmptyLines(contract.ReadFileAbs(t, marker))); got != 3 {
+		t.Fatalf("offline refresh added fetch attempts: got %d total", got)
+	}
 }
 
 func testRuntimeWorktreeListShellSurface(t *testing.T) {

@@ -2,7 +2,6 @@ package worktree
 
 import (
 	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -36,7 +35,6 @@ type Creation struct {
 }
 
 func requestDigest(request string) string { return textDigest(request) }
-func labelDigest(label string) string     { return textDigest(label) }
 
 type LifecycleStep string
 
@@ -77,13 +75,13 @@ func randomID() (string, error) {
 	if _, err := io.ReadFull(rand.Reader, raw); err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(raw), nil
+	return fmt.Sprintf("%x", raw), nil
 }
 func lockReason(assignment intent.Assignment) string {
 	return "bench owner=" + assignment.OwnerID +
 		" assignment=" + assignment.ID +
 		" request=" + assignment.Request +
-		" label=" + labelDigest(assignment.Label) +
+		" label=" + textDigest(assignment.Label) +
 		" start=" + assignment.Start
 }
 func relock(root string, assignment intent.Assignment, fault Fault) error {
@@ -116,7 +114,7 @@ func lockCreationRequest(root, digest string) (func(), error) {
 }
 
 // Create makes one request-idempotent owned registration and persists its bundle.
-func Create(root, request, label string, fault Fault) (Creation, error) {
+func Create(root, request, label string, fault Fault, requestedStart ...string) (Creation, error) {
 	if request == "" || label == "" {
 		return Creation{}, errors.New("worktree create requires request and label")
 	}
@@ -150,7 +148,9 @@ func Create(root, request, label string, fault Fault) (Creation, error) {
 		return Creation{}, fmt.Errorf("generate assignment ID: %w", err)
 	}
 	startRef := "HEAD"
-	if def, ok := git.ResolvedDefault(root); ok {
+	if len(requestedStart) > 0 && requestedStart[0] != "" {
+		startRef = requestedStart[0]
+	} else if def, ok := git.ResolvedDefault(root); ok {
 		startRef = def
 	}
 	start, err := git.Output("-C", root, "rev-parse", "--verify", startRef+"^{commit}")

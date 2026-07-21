@@ -272,7 +272,7 @@ func Command(args []string) (string, int) {
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), guardScanTimeout)
+	ctx, cancel := bounds.Context(context.Background(), guardScanTimeout)
 	defer cancel()
 	scan := Scan(ctx, root)
 	rows := scan.Rows

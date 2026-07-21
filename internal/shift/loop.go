@@ -152,13 +152,18 @@ func loop(objective string, refresh bool, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "working tree not clean; commit or stash first")
 		return usage(stdout, stderr, "working tree not clean")
 	}
-	base, err := git.Output("-C", mainRoot, "rev-parse", "HEAD")
+	startRef := "HEAD"
+	if refresh {
+		result := worktree.Refresh(mainRoot)
+		fmt.Fprint(stdout, worktree.RenderRefresh(result))
+		if result.Status == "refreshed" {
+			startRef = worktree.RefreshedStartRef(mainRoot)
+		}
+	}
+	base, err := git.Output("-C", mainRoot, "rev-parse", startRef+"^{commit}")
 	if err != nil {
 		fmt.Fprintln(stderr, "could not resolve HEAD")
 		return usage(stdout, stderr, "could not resolve HEAD")
-	}
-	if refresh {
-		fmt.Fprint(stdout, worktree.RenderRefresh(worktree.Refresh(mainRoot)))
 	}
 	intentEntry := intent.NewEntry(intent.KindShift)
 	if err := intent.Upsert(mainRoot, intentEntry); err != nil {

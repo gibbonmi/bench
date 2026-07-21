@@ -1,0 +1,3 @@
+[
+  {"path":"scripts/smoke-offline.sh","old":"offline suppression: repair,git_refresh,codex_live,codex_bundled,openai_http,anthropic_http BENCH_OFFLINE=1 zero_attempts","new":"offline suppression: repair,git_refresh,codex_live,codex_bundled,openai_http BENCH_OFFLINE=1 zero_attempts"}
+]

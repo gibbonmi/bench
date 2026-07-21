@@ -1,0 +1,4 @@
+[
+  {"path":"internal/models/models.go","old":"\t\"sync\"\n","new":"\t\"sync\"\n\t\"time\"\n"},
+  {"path":"internal/models/models.go","old":"\tproviderTimeout = bounds.ProviderTimeout\n","new":"\tproviderTimeout = bounds.ProviderTimeout\n\tduplicateProviderTimeout = 10 * time.Second\n"}
+]

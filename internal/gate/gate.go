@@ -249,7 +249,7 @@ func executeWithEngine(ctx context.Context, root string, stdout, stderr io.Write
 		_ = durableReplaceWithEngine(engine, gitdir, pending)
 		return operationalWithEngine(engine, root, 0, stderr, "gate pending persistence failed")
 	}
-	runCtx, cancelRun := context.WithTimeoutCause(ctx, gateTimeout, errGateTimeout)
+	runCtx, cancelRun := bounds.ContextCause(ctx, gateTimeout, errGateTimeout)
 	defer cancelRun()
 	rc := runCaptured(runCtx, root, plan, stdout, stderr)
 	if ctx.Err() != nil {

@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
@@ -114,20 +115,20 @@ func inventory() ([]sourceRow, []modelRow) {
 }
 
 func codexInventory() (sourceRow, []modelRow) {
-	ctx, cancel := context.WithTimeout(context.Background(), providerTimeout)
+	ctx, cancel := bounds.Context(context.Background(), providerTimeout)
 	defer cancel()
 	body, err := runCommand(ctx, "codex", "debug", "models")
 	freshness := "live"
 	if err != nil {
 		if ctx.Err() != nil || errorStatus(err) == "timeout" {
-			return sourceFailure("codex", "timeout", "10s provider deadline"), nil
+			return sourceFailure("codex", "timeout", fmt.Sprintf("%s provider deadline", bounds.ProviderTimeout)), nil
 		}
 		body, err = runCommand(ctx, "codex", "debug", "models", "--bundled")
 		freshness = "bundled"
 	}
 	if err != nil {
 		if ctx.Err() != nil || errorStatus(err) == "timeout" {
-			return sourceFailure("codex", "timeout", "10s provider deadline"), nil
+			return sourceFailure("codex", "timeout", fmt.Sprintf("%s provider deadline", bounds.ProviderTimeout)), nil
 		}
 		return unavailable("codex", "codex debug models unavailable"), nil
 	}
@@ -142,15 +143,15 @@ func apiInventory(source, url, key string, headers func(*http.Request, string), 
 	if key == "" {
 		return unavailable(source, missingHint), nil
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), providerTimeout)
+	ctx, cancel := bounds.Context(context.Background(), providerTimeout)
 	defer cancel()
 	ids, err := fetchDataIDsContext(ctx, url, key, headers)
 	if err != nil {
 		switch errorStatus(err) {
 		case "timeout":
-			return sourceFailure(source, "timeout", "10s provider deadline"), nil
+			return sourceFailure(source, "timeout", fmt.Sprintf("%s provider deadline", bounds.ProviderTimeout)), nil
 		case "oversized":
-			return sourceFailure(source, "oversized", "5 MiB response limit"), nil
+			return sourceFailure(source, "oversized", fmt.Sprintf("%d MiB response limit", bounds.ModelReadLimit>>20)), nil
 		}
 		return unavailable(source, "query failed"), nil
 	}
@@ -209,7 +210,7 @@ func render(sources []sourceRow, models []modelRow) (string, error) {
 }
 
 func fetchDataIDs(url, key string, headers func(*http.Request, string)) ([]string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), providerTimeout)
+	ctx, cancel := bounds.Context(context.Background(), providerTimeout)
 	defer cancel()
 	return fetchDataIDsContext(ctx, url, key, headers)
 }

@@ -161,37 +161,14 @@ func checkReleasePreflight(root string) []string {
 	if offlineSmoke != "" && !offlineSmokeRecoversInterruptedStages(offlineSmoke) {
 		diags = append(diags, "offline smoke omits stage interruption recovery")
 	}
+	if offlineSmoke != "" && !offlineSmokeEnumeratesSliceOneSuppressions(offlineSmoke) {
+		diags = append(diags, "offline smoke omits slice-1 suppressed operation proof")
+	}
 	if offlineSmoke != "" && (!strings.Contains(offlineSmoke, "printf 'offline smoke: loopback registry fixture did not start\\n' >&2\n  exit 1") || strings.Contains(offlineSmoke, "local-fixture")) {
 		diags = append(diags, "offline registry smoke does not fail closed")
 	}
 	return diags
 }
-
-func offlineSmokeDeniesRepairAndEgress(smoke string) bool {
-	requiredOnce := []string{
-		`repair_disabled="${BENCH_OFFLINE_REPAIR_DISABLED:-1}"`,
-		`offline_mode=true`,
-		`[[ "$repair_disabled" == 1 && "$offline_mode" == true ]]`,
-		`BENCH_OFFLINE_ALLOWED_ORIGIN="$registry_origin"`,
-		`go|cargo|cc|gcc|clang|make)`,
-		`bwrap --unshare-net`,
-		`sandbox-exec -p '(version 1) (allow default) (deny network*)'`,
-	}
-	for _, anchor := range requiredOnce {
-		if strings.Count(smoke, anchor) != 1 {
-			return false
-		}
-	}
-	return strings.Count(smoke, `BENCH_NO_REPAIR="$repair_disabled"`) == 2 &&
-		strings.Count(smoke, "BENCH_NO_REPAIR=1") == 8 &&
-		strings.Count(smoke, "BENCH_OFFLINE=1") == 6 &&
-		strings.Count(smoke, `npm_config_offline="$offline_mode"`) == 1 &&
-		strings.Count(smoke, "npm_config_offline=true") == 2 &&
-		strings.Count(smoke, `NODE_OPTIONS="--require=$root/scripts/offline-network-sentinel.cjs"`) == 4 &&
-		strings.Count(smoke, `[[ ! -s "$egress_log" ]]`) == 4 &&
-		strings.Count(smoke, "BENCH_OFFLINE_ALLOWED_ORIGIN=") == 1
-}
-
 func runReleaseEvidenceProbe(root string, packageEvidence []requirementRecord) []string {
 	authenticatedRoot, cleanup, err := materializeAuthenticatedReleaseProbe(root)
 	if err != nil {

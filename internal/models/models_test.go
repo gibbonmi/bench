@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -119,6 +121,38 @@ func TestProviderTimeoutDoesNotCollapsePeers(t *testing.T) {
 	out, code := Command(nil)
 	if code != 0 || !strings.Contains(out, "codex,timeout,timeout,10s provider deadline") || strings.Count(out, ",live,peer") != 2 {
 		t.Fatalf("timeout collapsed peers: code=%d\n%s", code, out)
+	}
+}
+
+func TestCodexLiveAndBundledSharePartiallyConsumedDeadline(t *testing.T) {
+	dir := t.TempDir()
+	marker := filepath.Join(dir, "bundled-started")
+	script := filepath.Join(dir, "codex")
+	body := `#!/bin/sh
+if [ "${3:-}" = "--bundled" ]; then
+  : > "$BENCH_CODEX_BUNDLED_MARKER"
+  sleep 0.25
+  printf '{"models":[{"slug":"bundled","visibility":"list"}]}'
+  exit 0
+fi
+sleep 0.25
+exit 1
+`
+	if err := os.WriteFile(script, []byte(body), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Setenv("BENCH_CODEX_BUNDLED_MARKER", marker)
+	oldTimeout := providerTimeout
+	providerTimeout = 400 * time.Millisecond
+	t.Cleanup(func() { providerTimeout = oldTimeout })
+
+	row, models := codexInventory()
+	if _, err := os.Stat(marker); err != nil {
+		t.Fatalf("bundled attempt never started: %v", err)
+	}
+	if row.status != "timeout" || row.hint != "10s provider deadline" || len(models) != 0 {
+		t.Fatalf("partially consumed shared budget = row:%+v models:%+v", row, models)
 	}
 }
 

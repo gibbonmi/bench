@@ -2,17 +2,19 @@ package worktree
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-func consumeRefresh(root string, args []string, stdout io.Writer) []string {
+func consumeRefresh(root string, args []string, stdout io.Writer) ([]string, string) {
 	filtered := args[:0]
 	requested := false
 	for _, arg := range args {
@@ -23,9 +25,24 @@ func consumeRefresh(root string, args []string, stdout io.Writer) []string {
 		}
 	}
 	if requested {
-		_, _ = io.WriteString(stdout, RenderRefresh(Refresh(root)))
+		result := Refresh(root)
+		_, _ = io.WriteString(stdout, RenderRefresh(result))
+		if result.Status == "refreshed" {
+			return filtered, RefreshedStartRef(root)
+		}
 	}
-	return filtered
+	return filtered, ""
+}
+
+func RefreshedStartRef(root string) string {
+	remote := "origin/" + git.DefaultBranch(root)
+	if git.OK("-C", root, "rev-parse", "--verify", "--quiet", remote+"^{commit}") {
+		return remote
+	}
+	if local, ok := git.ResolvedDefault(root); ok {
+		return local
+	}
+	return "HEAD"
 }
 
 type RefreshResult struct {
@@ -50,7 +67,7 @@ func Refresh(root string) RefreshResult {
 		detail = result.Err.Error()
 	}
 	if result.Status == bounds.ProcessTimeout {
-		detail = "timeout after 30s: " + detail
+		detail = fmt.Sprintf("timeout after %s: %s", bounds.GitRefreshTimeout, detail)
 	}
 	if detail == "" {
 		detail = "git fetch failed"

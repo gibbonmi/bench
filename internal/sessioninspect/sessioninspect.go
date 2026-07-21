@@ -5,8 +5,8 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/guards"
 	"github.com/gibbonmi/bench/internal/status"
@@ -14,8 +14,6 @@ import (
 )
 
 type phase func(context.Context, io.Writer, io.Writer, string) int
-
-const commandTimeout = 10 * time.Second
 
 type stderrKey struct{}
 
@@ -49,7 +47,7 @@ func Command(args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		return 0
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), commandTimeout)
+	ctx, cancel := bounds.Context(context.Background(), bounds.ProviderTimeout)
 	defer cancel()
 	ctx = context.WithValue(ctx, stderrKey{}, stderr)
 	return runInspect(ctx, stdout, root)

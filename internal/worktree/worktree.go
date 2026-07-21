@@ -18,10 +18,7 @@ import (
 	"strings"
 )
 
-func textDigest(value string) string {
-	sum := sha256.Sum256([]byte(value))
-	return hex.EncodeToString(sum[:])
-}
+func textDigest(value string) string { return fmt.Sprintf("%x", sha256.Sum256([]byte(value))) }
 func cksum(data []byte) uint32 {
 	var crc uint32
 	step := func(value byte) {
@@ -338,7 +335,8 @@ func renderResumeSummary(result ResumeResult) string {
 }
 func CreateCommand(root string, args []string, stdout, stderr io.Writer) int {
 	var request, label string
-	for args = consumeRefresh(root, args, stdout); len(args) > 0; {
+	args, startRef := consumeRefresh(root, args, stdout)
+	for len(args) > 0 {
 		if len(args) < 2 || (args[0] != "--request" && args[0] != "--label") {
 			fmt.Fprintln(stderr, "usage: "+usage.WorktreeCreate)
 			return 2
@@ -350,7 +348,7 @@ func CreateCommand(root string, args []string, stdout, stderr io.Writer) int {
 		}
 		args = args[2:]
 	}
-	creation, err := Create(root, request, label, nil)
+	creation, err := Create(root, request, label, nil, startRef)
 	if err != nil {
 		fmt.Fprintf(stderr, "bench worktree create: %v\n", err)
 		return 1
@@ -369,7 +367,8 @@ func Subshell(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
-	objective := strings.Join(consumeRefresh(root, args, stdout), " ")
+	args, startRef := consumeRefresh(root, args, stdout)
+	objective := strings.Join(args, " ")
 	if objective == "" {
 		objective = "interactive worktree"
 	}
@@ -378,7 +377,7 @@ func Subshell(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	creation, err := Create(root, request, objective, nil)
+	creation, err := Create(root, request, objective, nil, startRef)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1

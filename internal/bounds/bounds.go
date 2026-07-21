@@ -31,6 +31,14 @@ const (
 
 func Offline() bool { return os.Getenv("BENCH_OFFLINE") == "1" }
 
+func Context(parent context.Context, limit time.Duration) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(parent, limit)
+}
+
+func ContextCause(parent context.Context, limit time.Duration, cause error) (context.Context, context.CancelFunc) {
+	return context.WithTimeoutCause(parent, limit, cause)
+}
+
 type ProcessStatus string
 
 const (

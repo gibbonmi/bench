@@ -171,6 +171,48 @@ HOME="$local_home" BENCH_HOME="$local_home/.bench" BENCH_NO_REPAIR="$repair_disa
 [[ ! -s "$egress_log" ]] || { printf 'offline smoke: local npm attempted undeclared egress: %s\n' "$(tr '\n' ' ' < "$egress_log")" >&2; exit 1; }
 installed="$local_prefix/node_modules/redbench/bin/bench.sh"
 [[ -x "$installed" ]] || { printf 'offline smoke: local npm install did not produce wrapper\n' >&2; exit 1; }
+
+# Exercise every slice-1 suppression through shipped surfaces. These are live
+# zero-attempt sentinels, not the stable FT83 evidence record reserved for slice 2.
+repair_marker="$tmp/repair-attempt"
+repair_bin="$local_prefix/node_modules/@redbench/${target}/bin/bench"
+repair_hold="$repair_bin.offline-smoke"
+probe_bin="$tmp/offline-policy-bin"
+mkdir -p "$probe_bin"
+printf '#!/bin/sh\n: > "$BENCH_OFFLINE_REPAIR_MARKER"\nexit 97\n' > "$probe_bin/node"
+chmod +x "$probe_bin/node"
+mv "$repair_bin" "$repair_hold"
+set +e
+repair_output="$(HOME="$local_home" BENCH_HOME="$local_home/.bench" BENCH_OFFLINE=1 BENCH_OFFLINE_REPAIR_MARKER="$repair_marker" PATH="$probe_bin:$PATH" bash "$installed" models 2>&1)"
+repair_exit=$?
+set -e
+mv "$repair_hold" "$repair_bin"
+[[ "$repair_exit" == 127 && "$repair_output" == *"repair suppressed by BENCH_OFFLINE=1"* && ! -e "$repair_marker" ]] || { printf 'offline smoke: BENCH_OFFLINE=1 did not suppress wrapper repair before process start (exit=%s output=%s marker=%s)\n' "$repair_exit" "$repair_output" "$([[ -e "$repair_marker" ]] && printf present || printf absent)" >&2; exit 1; }
+
+codex_marker="$tmp/codex-attempt"
+git_marker="$tmp/git-refresh-attempt"
+printf '#!/bin/sh\n: > "$BENCH_OFFLINE_CODEX_MARKER"\nexit 97\n' > "$probe_bin/codex"
+printf '#!/bin/sh\nif [ "${1:-}" = -C ] && [ "${3:-}" = fetch ]; then : > "$BENCH_OFFLINE_GIT_MARKER"; fi\nexec "$BENCH_OFFLINE_REAL_GIT" "$@"\n' > "$probe_bin/git"
+chmod +x "$probe_bin/codex" "$probe_bin/git"
+models_output="$tmp/offline-models"
+HOME="$local_home" BENCH_HOME="$local_home/.bench" BENCH_OFFLINE=1 OPENAI_API_KEY=sentinel ANTHROPIC_API_KEY=sentinel BENCH_OFFLINE_CODEX_MARKER="$codex_marker" PATH="$probe_bin:$PATH" native_offline_process slice1-models bash "$installed" models > "$models_output"
+for source in codex openai anthropic; do
+  grep -q "^  ${source},offline,offline,BENCH_OFFLINE=1$" "$models_output" || { printf 'offline smoke: %s suppression lacks BENCH_OFFLINE=1 evidence\n' "$source" >&2; exit 1; }
+done
+[[ ! -e "$codex_marker" ]] || { printf 'offline smoke: Codex live or bundled subprocess started under BENCH_OFFLINE=1\n' >&2; exit 1; }
+
+policy_repo="$tmp/offline-policy-repo"
+mkdir -p "$policy_repo"
+"$(command -v git)" -C "$policy_repo" init -q -b main
+printf 'offline\n' > "$policy_repo/tracked"
+"$(command -v git)" -C "$policy_repo" add tracked
+"$(command -v git)" -C "$policy_repo" -c user.name=bench -c user.email=bench@local commit -qm init
+refresh_output="$tmp/offline-refresh"
+HOME="$local_home" BENCH_HOME="$tmp/offline-policy-home" BENCH_OFFLINE=1 BENCH_OFFLINE_GIT_MARKER="$git_marker" BENCH_OFFLINE_REAL_GIT="$(command -v git)" PATH="$probe_bin:$PATH" native_offline_process slice1-refresh bash -c 'cd "$1" && exec "$2" worktree create --refresh --request offline-smoke --label offline-smoke' bash "$policy_repo" "$installed" > "$refresh_output"
+grep -q '^  offline,BENCH_OFFLINE=1$' "$refresh_output" || { printf 'offline smoke: requested Git refresh lacks BENCH_OFFLINE=1 evidence\n' >&2; exit 1; }
+[[ ! -e "$git_marker" ]] || { printf 'offline smoke: requested Git refresh started under BENCH_OFFLINE=1\n' >&2; exit 1; }
+printf 'offline suppression: repair,git_refresh,codex_live,codex_bundled,openai_http,anthropic_http BENCH_OFFLINE=1 zero_attempts\n'
+
 local_version="$(HOME="$local_home" BENCH_HOME="$local_home/.bench" BENCH_OFFLINE=1 BENCH_NO_REPAIR=1 native_offline_process local-runtime bash "$installed" version)"
 [[ "$local_version" == "benchkit ${version} "* ]] || { printf 'offline smoke: local npm version output is wrong: %s\n' "$local_version" >&2; exit 1; }
 HOME="$local_home" BENCH_HOME="$local_home/.bench" BENCH_OFFLINE=1 BENCH_NO_REPAIR=1 native_offline_process local-runtime bash "$installed" help > "$tmp/local-help"

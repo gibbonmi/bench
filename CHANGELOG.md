@@ -22,6 +22,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Bounded Go-side network, subprocess, read, and output work; made worktree
+  refresh explicit and offline suppression observable across providers.
 - Removed internal roadmap and learning history from release notes, leaving Git as
   the historical record, and standardized release headings for preflight checks.
 - Made linking and relinking preserve project-owned instructions, reject managed

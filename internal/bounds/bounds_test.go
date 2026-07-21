@@ -9,6 +9,18 @@ import (
 	"time"
 )
 
+func TestProductionPolicyValues(t *testing.T) {
+	if ProviderTimeout != 10*time.Second || GitRefreshTimeout != 30*time.Second || GuardScanTimeout != 5*time.Second || GateTimeout != 45*time.Minute {
+		t.Fatalf("duration policy changed: provider=%s refresh=%s guard=%s gate=%s", ProviderTimeout, GitRefreshTimeout, GuardScanTimeout, GateTimeout)
+	}
+	if ModelReadLimit != 5<<20 || OutlineFileLimit != 2<<20 || OutlineRowLimit != 200 {
+		t.Fatalf("read/output policy changed: model=%d outline_file=%d outline_rows=%d", ModelReadLimit, OutlineFileLimit, OutlineRowLimit)
+	}
+	if IterationMin != 1 || IterationMax != 100 || MainIterationsDefault != 12 || RefactorIterationsDefault != 4 || MaxWall != 24*time.Hour {
+		t.Fatalf("shift policy changed: range=[%d,%d] defaults=%d/%d max_wall=%s", IterationMin, IterationMax, MainIterationsDefault, RefactorIterationsDefault, MaxWall)
+	}
+}
+
 func TestRunClassifiesProcessOutcomes(t *testing.T) {
 	tests := []struct {
 		name   string

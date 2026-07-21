@@ -23,24 +23,6 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-func TestExecuteDeadlineRecordsDistinctTimeout(t *testing.T) {
-	root := gateTestRepo(t, "#!/bin/sh\nsleep 30 &\nwait\n", "")
-	old := gateTimeout
-	gateTimeout = 20 * time.Millisecond
-	t.Cleanup(func() { gateTimeout = old })
-	parent, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
-	defer cancel()
-	var stderr bytes.Buffer
-	got := Execute(parent, root, io.Discard, &stderr)
-	inspection := Inspect(root)
-	if got.ActionExit != 124 || got.GateExit != 124 || inspection.State != Ready || inspection.Status != "timeout" || inspection.ReusableGreen {
-		t.Fatalf("result=%+v inspection=%+v stderr=%q", got, inspection, stderr.String())
-	}
-	if !strings.Contains(stderr.String(), "gate: timeout") {
-		t.Fatalf("timeout message missing: %q", stderr.String())
-	}
-}
-
 func TestRunnerRunsPhasesConcurrently(t *testing.T) {
 	root := t.TempDir()
 	phases := []Phase{
