@@ -13,6 +13,8 @@ func Run(args []string, stdout, stderr io.Writer, version string) int {
 		return 2
 	}
 	switch args[0] {
+	case "setup":
+		return Setup(args[1:], os.Stdin, stdout, stderr, version)
 	case "link":
 		return Link(args[1:], stdout, stderr, version)
 	case "init":

@@ -1,5 +1,5 @@
 ---
-description: Configure this repo for Bench — check link/init wiring, fill in the gate, the project profile (seams + lines + design repo), and optionally seed CONTEXT.md. Run once per repo. This is one-time setup, not a workflow phase.
+description: Configure this repo for Bench — run `bench setup`, then refine the gate, the project profile (seams + lines + design repo), and optionally seed CONTEXT.md. Run once per repo. This is one-time setup, not a workflow phase.
 disable-model-invocation: true
 ---
 
@@ -7,11 +7,12 @@ disable-model-invocation: true
 
 ## Entry orientation
 
-This is the one-time setup phase. It first checks whether the repo is linked and
-initialized, handling the worker-facing `bench link` / `bench init` steps when
-needed. Then it fills in the parts that are specific to *this* repo and cannot be
-hardcoded: the real gate, the profile, and the domain language. It produces a
-configured `.bench/gate.sh`, a `projects/<name>.md` profile, and optionally
+This is the one-time setup phase. It first runs `bench setup` — one command that
+inspects the repo, previews every inferred fact, converges the managed assets, and
+scaffolds a proposed gate and a starter profile. Then it fills in the parts that
+are specific to *this* repo and cannot be inferred: the real gate command, the
+profile's seams and lines, and the domain language. It ends with a refined
+`.bench/gate.sh`, a refined `projects/<name>.md` profile, and optionally
 `CONTEXT.md`.
 
 ## Exit handoff
@@ -21,27 +22,25 @@ the configured profile path. The recommended next command is `/bench-shape-idea`
 when there is unresolved product fog, `/bench-write-spec` when the first build is
 already clear, or `/bench-debug` when setup was prompted by a concrete bug.
 
-## 0. Preflight link/init
+## 0. Run `bench setup`
 
-Before the repo-specific interview, check the mechanical setup. Do this quietly
-and report only what matters:
+Run `bench setup` first. It is one command: it inspects the repo, prints a plan
+preview of every inferred fact with its consequence, asks only genuine
+ambiguities, then transactionally converges the managed assets, `AGENTS.md` /
+`CLAUDE.md`, a proposed gate, and a starter profile, and closes by running
+`bench doctor` and naming the exact next action.
 
-- If `.bench/BENCH.md`, `.agents/commands/`, or the managed Bench block in
-  `AGENTS.md` is missing, run `bench link` if the CLI is available. If it is not
-  available, run `npx github:gibbonmi/bench#main link` from the repo. If neither can run, stop with
-  the exact command the reviewer or maintainer needs to make available.
-- If `.bench/gate.sh` is missing, run `bench init` if the CLI is available. If it
-  is not available, run `npx github:gibbonmi/bench#main init`. If `.bench/gate.sh` exists, do not
-  overwrite it.
-- If `bench link` or `bench init` reports a project-owned conflict, stop and
-  surface the conflict. Resolving ownership is the reviewer's call.
-- After a successful link/init step, continue with the repo-specific setup below;
-  do not make the reviewer rerun this command just because the mechanical half was
-  missing.
+- If `bench setup` names this command (`/bench-setup-repo`) as the next action,
+  pick up from here with the repo-specific interview below.
+- If it reports a conflict, stop and surface it — resolving ownership is the
+  reviewer's call, not something to route around.
+- If it names a different next action (a gate-configuration step for a
+  zero-signal repo, for instance), do that first, then return here for the
+  judgment content.
 
-This command is prompt-driven, not a blind script: explore, present what you
-found, confirm with me, then write. Assume I might not remember what a term means;
-explain each one briefly before asking.
+From here on, this command is prompt-driven, not a blind script: explore,
+present what you found, confirm with me, then write. Assume I might not
+remember what a term means; explain each one briefly before asking.
 
 ## 1. Explore
 
@@ -50,8 +49,8 @@ Read the repo first; don't assume. Check, quietly:
 - `git remote -v` — is there a remote? GitHub, GitLab, or local-only?
 - the stack: `package.json` / `pyproject.toml` / `Cargo.toml` / `go.mod` — what
   language, test runner, type checker, linter are actually present?
-- `.bench/gate.sh` — already filled, or still the scaffold stub?
-- `projects/<name>.md` — does a profile already exist for this repo?
+- `.bench/gate.sh` — what did `bench setup` propose or scaffold as the stub?
+- `projects/<name>.md` — what did `bench setup` seed as the starter profile?
 - **existing Pocock structure** — `CONTEXT.md`, `docs/adr/`, `docs/agents/` (an
   `issue-tracker.md` / `domain.md` from `setup-matt-pocock-skills`). If present,
   this repo is migrating from Pocock's skills: reuse all of it. Read `CONTEXT.md`
@@ -74,7 +73,9 @@ a time** — present a section, get my answer, move on. Don't dump all three at 
 > else in Bench enforces it; nothing overrides it. This is the load-bearing
 > choice — if the gate is weak, the whole system is weak.
 
-Propose a gate command from what you found in the stack, e.g.:
+`bench setup` already proposed (or, on zero signal, scaffolded a fail-closed
+stub for) the gate command from a small detection table. Confirm it's right
+and refine it — the real command is usually richer than the inferred one, e.g.:
 
 - Python: `mypy <pkg> && pytest -q && ruff check <pkg>`
 - Node: `pnpm -s typecheck && pnpm -s test && pnpm -s lint`
@@ -133,7 +134,8 @@ Ask for, with defaults proposed from exploration:
   tier: cheap + low effort for plumbing at a known seam; top + high effort only
   for the genuinely uncertain seam.
 
-Write `projects/<name>.md` from the example profiles in the kit as a template.
+Refine the starter `projects/<name>.md` that `bench setup` seeded, using the
+example profiles in the kit as a template for anything it left blank.
 
 ### Section C — domain language (CONTEXT.md), optional
 
@@ -159,5 +161,7 @@ Tell me what's now configured and that the working commands (`/bench-shape-idea`
 `/bench-debug`, `/bench-implement-spec`, `/bench-review-implementation`, `/bench-final-check`) and `bench shift` will read from these
 files. If headless runs are planned, note that `bench shift` needs `BENCH_AGENT`
 pointed at an adapter in `.bench/adapters/` — an env var setup does not write.
-Note that I can edit `.bench/gate.sh` and the profile directly later — re-running
-`/bench-setup-repo` is only for starting over.
+Note that I can edit `.bench/gate.sh` and the profile directly later. `bench setup`
+is safe to re-run — it converges and reports rather than starting over — so
+re-running `/bench-setup-repo` is for revisiting the judgment content, not undoing
+existing edits.

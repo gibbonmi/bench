@@ -236,6 +236,9 @@ func doctorReport(stdout io.Writer, version string) int {
 	if reportPrePush(stdout) {
 		rc = 1
 	}
+	if reportDoctorRows(stdout) {
+		rc = 1
+	}
 	fmt.Fprintln(stdout, "  fix:    bench doctor --fix")
 	fmt.Fprintf(stdout, "  remove: npm uninstall -g redbench && rm -f %q\n", shimPath)
 	return rc

@@ -19,8 +19,9 @@ guessing.
   Claude Code, `.claude/skills/`). The skills index in `.bench/BENCH-reference.md`
   maps triggers to skills.
 - **Commands** are the canonical phases of the workflow (see Workflow below).
-  Run `/bench-setup-repo` once when a repo is first linked — it interviews the
-  reviewer to fill in the gate and the profile. Run `/bench-update-kit`
+  Run `/bench-setup-repo` once when a repo is first adopted — it runs
+  `bench setup` to converge the repo, then interviews the reviewer to refine the
+  gate and the profile. Run `/bench-update-kit`
   periodically to pull upstream improvements into the kit. Run
   `/bench-what-next` when `bench status` or `bench roadmap` shows a drain
   pending — it reconciles `ROADMAP.md` against the tree, drains `IDEAS.md` and
@@ -52,7 +53,7 @@ you need adapter wiring or other lookup detail.
 
 Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
 
-- Adoption and setup: `bench link`, `bench init`, `bench unlink`, `bench doctor`, `bench repair` (`--prune` removes stale binary-cache entries).
+- Adoption and setup: `bench setup` (the one-command adoption route), `bench link`, `bench init`, `bench unlink`, `bench doctor`, `bench repair` (`--prune` removes stale binary-cache entries).
 - Ambient context and capture: `bench status`, `bench commands --brief`, `bench dashboard`, `bench idea`,
   `bench roadmap`, `bench learnings`, `bench maps`.
 - Oracle and diagnostics: `bench gate`, `bench gate pin`, `bench canary`, `bench structure`,

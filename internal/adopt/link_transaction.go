@@ -7,47 +7,77 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-
-	"github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/toon"
 )
 
 type lifecycleVerdict struct{ rel, reason string }
 
-func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout, stderr io.Writer) int {
+// transactionalLink stages and promotes plan into root as one FT84 transaction, and
+// reports whether anything on disk actually changed (the second return) alongside the
+// usual 0/1/2/3 result - a caller that wants to distinguish "converged, nothing to do"
+// from "converged, wrote something" (bench setup's already-converged report) reads the
+// bool; bench link ignores it.
+func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout, stderr io.Writer) (int, bool) {
 	old, err := ReadManifest(filepath.Join(root, ".bench", "link-manifest.tsv"))
 	if err != nil {
 		fmt.Fprintln(stderr, err)
-		return 1
+		return 1, false
 	}
 	accepted := make([]planEntry, 0, len(plan))
 	planned := make(map[string]bool, len(plan))
 	conflicts := []lifecycleVerdict{}
-	if err := validateAgentsPath(filepath.Join(root, "AGENTS.md")); err != nil {
+	// A FIFO/socket/device at AGENTS.md or CLAUDE.md must never be opened for read —
+	// os.ReadFile on a FIFO with no writer on the other end blocks forever. Both are
+	// read unconditionally below (validateAgentsPath, stagedAgents, stagedClaude), so
+	// the special-file check runs first and routes straight to a conflict instead.
+	agentsPath := filepath.Join(root, "AGENTS.md")
+	agentsSpecial := isSpecialFile(agentsPath)
+	if agentsSpecial {
+		conflicts = append(conflicts, lifecycleVerdict{"AGENTS.md", "project-owned"})
+	} else if err := validateAgentsPath(agentsPath); err != nil {
 		fmt.Fprintln(stderr, err)
-		return 1
+		return 1, false
+	}
+	claudeSpecial := isSpecialFile(filepath.Join(root, "CLAUDE.md"))
+	if claudeSpecial {
+		conflicts = append(conflicts, lifecycleVerdict{"CLAUDE.md", "project-owned"})
 	}
 	prepush := filepath.Join(hooksDir(root), "pre-push")
 	if content, err := os.ReadFile(prepush); err == nil && !strings.Contains(string(content), PrePushMarker) {
 		fmt.Fprintf(stderr, "conflict: %s exists and is not Bench-managed\n", prepush)
-		return 1
+		return 1, false
 	}
 	for _, e := range plan {
 		planned[e.rel] = true
-		if e.kind != "inline" {
+		// "seed" (seed-if-absent) entries - bench setup's profile - are neither a
+		// managed/converged asset nor a conflict candidate: an existing file at the
+		// path is reviewer-owned judgment content and is skipped silently (no
+		// conflict, no manifest row); an absent one is staged and promoted with the
+		// rest of the transaction like any other write.
+		if e.kind == "seed" {
+			if hasSymlinkParent(root, e.rel) {
+				fmt.Fprintf(stderr, "conflict: %s has a symlink parent directory\n", e.rel)
+				return 1, false
+			}
+			if _, err := os.Lstat(filepath.Join(root, e.rel)); err == nil {
+				continue
+			}
+			accepted = append(accepted, e)
+			continue
+		}
+		if e.kind != "inline" && e.kind != "inline-exec" {
 			if info, err := os.Stat(e.src); err != nil || !info.Mode().IsRegular() {
 				fmt.Fprintf(stderr, "conflict: kit asset missing: %s\n", e.src)
-				return 1
+				return 1, false
 			}
 		}
 		if hasSymlinkParent(root, e.rel) {
 			fmt.Fprintf(stderr, "conflict: %s has a symlink parent directory\n", e.rel)
-			return 1
+			return 1, false
 		}
 		parent := filepath.Join(root, filepath.Dir(e.rel))
 		if info, err := os.Stat(parent); err == nil && !info.IsDir() {
 			fmt.Fprintf(stderr, "conflict: parent path for %s is not a directory\n", e.rel)
-			return 1
+			return 1, false
 		}
 		if _, err := os.Lstat(filepath.Join(root, e.rel)); err == nil && !manifestOwnedClean(root, e.rel) {
 			reason := "project-owned"
@@ -62,7 +92,7 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 	stage, err := os.MkdirTemp(root, ".bench-link-")
 	if err != nil {
 		fmt.Fprintln(stderr, err)
-		return 1
+		return 1, false
 	}
 	defer os.RemoveAll(stage)
 	changes := []stagedChange{}
@@ -71,14 +101,19 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 		p, err := stagePlanEntry(stage, e, mode)
 		if err != nil {
 			fmt.Fprintln(stderr, err)
-			return 1
+			return 1, false
 		}
-		fp, err := fingerprintPath(p)
-		if err != nil {
-			fmt.Fprintln(stderr, err)
-			return 1
+		// A seed entry is never recorded as a managed row: recording it would make a
+		// later reviewer hand-edit read back as a modified-managed conflict on the
+		// next run, which defeats "seed-if-absent, then reviewer-owned".
+		if e.kind != "seed" {
+			fp, err := fingerprintPath(p)
+			if err != nil {
+				fmt.Fprintln(stderr, err)
+				return 1, false
+			}
+			rows[e.rel] = fp
 		}
-		rows[e.rel] = fp
 		changes = append(changes, stagedChange{rel: e.rel, stage: p, backup: filepath.Join(stage, fmt.Sprintf("backup-%d", len(changes)))})
 	}
 	// A dropped old row leaves only when it is still clean. Modified rows remain owned.
@@ -106,17 +141,17 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 		full, ok := resolveInside(root, row.rel)
 		if !ok || hasSymlinkParent(root, row.rel) {
 			fmt.Fprintln(stderr, "refused manifest path: "+row.rel)
-			return 1
+			return 1, false
 		}
 		if info, err := os.Lstat(full); err == nil && !info.Mode().IsRegular() && info.Mode()&os.ModeSymlink == 0 {
 			fmt.Fprintln(stderr, "refused non-regular dropped asset: "+row.rel)
-			return 1
+			return 1, false
 		}
 		if _, err := os.Lstat(full); err == nil {
 			fp, err := fingerprintPath(full)
 			if err != nil {
 				fmt.Fprintln(stderr, err)
-				return 1
+				return 1, false
 			}
 			if fp == row.hash {
 				changes = append(changes, stagedChange{rel: row.rel, backup: filepath.Join(stage, fmt.Sprintf("backup-%d", len(changes)))})
@@ -126,29 +161,33 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 			}
 		}
 	}
-	agents, err := stagedAgents(stage, root)
-	if err != nil {
-		fmt.Fprintln(stderr, err)
-		return 1
+	if !agentsSpecial {
+		agents, err := stagedAgents(stage, root)
+		if err != nil {
+			fmt.Fprintln(stderr, err)
+			return 1, false
+		}
+		if agents != "" {
+			changes = append(changes, stagedChange{rel: "AGENTS.md", stage: agents, backup: filepath.Join(stage, fmt.Sprintf("backup-%d", len(changes)))})
+		}
 	}
-	if agents != "" {
-		changes = append(changes, stagedChange{rel: "AGENTS.md", stage: agents, backup: filepath.Join(stage, fmt.Sprintf("backup-%d", len(changes)))})
-	}
-	claude, managed, err := stagedClaude(stage, root)
-	if err != nil {
-		fmt.Fprintln(stderr, err)
-		return 1
-	}
-	if managed {
-		fp, _ := fingerprintPath(claude)
-		rows["CLAUDE.md"] = fp
-		changes = append(changes, stagedChange{rel: "CLAUDE.md", stage: claude, backup: filepath.Join(stage, fmt.Sprintf("backup-%d", len(changes)))})
+	if !claudeSpecial {
+		claude, managed, err := stagedClaude(stage, root)
+		if err != nil {
+			fmt.Fprintln(stderr, err)
+			return 1, false
+		}
+		if managed {
+			fp, _ := fingerprintPath(claude)
+			rows["CLAUDE.md"] = fp
+			changes = append(changes, stagedChange{rel: "CLAUDE.md", stage: claude, backup: filepath.Join(stage, fmt.Sprintf("backup-%d", len(changes)))})
+		}
 	}
 	hookDest := filepath.Join(hooksDir(root), "pre-push")
 	hookStage, hookDirs, err := stageBeside(hookDest, []byte(strings.ReplaceAll(prePushTemplate, prePushBranchToken, hookBranch(root))), 0o755)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
-		return 1
+		return 1, false
 	}
 	promoted := false
 	defer func() {
@@ -166,159 +205,29 @@ func transactionalLink(root, kit, mode, version string, plan []planEntry, stdout
 	manifest, err := stageManifest(stage, version, manifestRows)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
-		return 1
+		return 1, false
 	}
 	changes = append(changes, stagedChange{rel: ".bench/link-manifest.tsv", stage: manifest, backup: filepath.Join(stage, fmt.Sprintf("backup-%d", len(changes)))})
 	if len(conflicts) > 0 {
 		if _, err := renderVerdicts("conflicts", conflicts); err != nil {
 			fmt.Fprintln(stderr, err)
-			return 1
+			return 1, false
 		}
+	}
+	changed, err := changesModifyTree(root, changes)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1, false
 	}
 	if err := promoteAll(root, changes); err != nil {
 		fmt.Fprintln(stderr, err)
-		return 1
+		return 1, false
 	}
 	promoted = true
 	if len(conflicts) > 0 {
 		block, _ := renderVerdicts("conflicts", conflicts)
 		fmt.Fprint(stdout, block)
-		return 3
+		return 3, changed
 	}
-	return 0
-}
-
-func stagePlanEntry(dir string, e planEntry, mode string) (string, error) {
-	name := fmt.Sprintf("asset-%x", hashBytes([]byte(e.rel)))
-	if e.kind == "adapter" {
-		target, ok := AdapterTarget(e.rel)
-		if !ok {
-			return "", fmt.Errorf("adapter target unavailable for %s", e.rel)
-		}
-		return stageSymlink(dir, name, target)
-	}
-	if mode == "symlink" && e.kind != "inline" {
-		return stageSymlink(dir, name, e.src)
-	}
-	if e.kind == "inline" {
-		return stageBytes(dir, name, []byte(e.content), 0o644)
-	}
-	b, err := os.ReadFile(e.src)
-	if err != nil {
-		return "", err
-	}
-	info, err := os.Stat(e.src)
-	if err != nil {
-		return "", err
-	}
-	return stageBytes(dir, name, b, info.Mode().Perm())
-}
-func stagedAgents(stage, root string) (string, error) {
-	b, err := os.ReadFile(filepath.Join(root, "AGENTS.md"))
-	if os.IsNotExist(err) {
-		return stageBytes(stage, "agents", []byte(BenchAgentsBlock()), 0o644)
-	}
-	if err != nil {
-		return "", err
-	}
-	next, err := RewriteAgentsBlock(string(b))
-	if err != nil {
-		return "", err
-	}
-	if next == string(b) {
-		return "", nil
-	}
-	return stageBytes(stage, "agents", []byte(next), 0o644)
-}
-func stagedClaude(stage, root string) (string, bool, error) {
-	b, err := os.ReadFile(filepath.Join(root, "CLAUDE.md"))
-	if os.IsNotExist(err) || string(b) == legacyClaudeMD() || string(b) == benchClaudeMD() {
-		p, e := stageBytes(stage, "claude", []byte(benchClaudeMD()), 0o644)
-		return p, true, e
-	}
-	return "", false, err
-}
-func reclaimableClaude(path string) bool {
-	b, err := os.ReadFile(path)
-	return err == nil && (string(b) == legacyClaudeMD() || string(b) == benchClaudeMD())
-}
-func hookBranch(root string) string {
-	if out, err := git.Output("-C", root, "ls-remote", "--symref", "origin", "HEAD"); err == nil {
-		for _, line := range strings.Split(out, "\n") {
-			if strings.HasPrefix(line, "ref: refs/heads/") {
-				fields := strings.Fields(line)
-				if len(fields) > 1 {
-					return strings.TrimPrefix(fields[1], "refs/heads/")
-				}
-			}
-		}
-	}
-	return git.DefaultBranch(root)
-}
-func stageManifest(stage, version string, rows []manifestRow) (string, error) {
-	return stageBytes(stage, "manifest", manifestBytes(version, rows), 0o644)
-}
-func renderVerdicts(name string, vs []lifecycleVerdict) (string, error) {
-	rows := make([][]string, len(vs))
-	for i, v := range vs {
-		rows[i] = []string{v.rel, v.reason}
-	}
-	return toon.Table(name, []string{"path", "reason"}, rows)
-}
-
-func stageBeside(dest string, data []byte, mode os.FileMode) (string, []string, error) {
-	dir := filepath.Dir(dest)
-	created := missingDirs(dir)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return "", nil, err
-	}
-	f, err := os.CreateTemp(dir, ".bench-link-stage-")
-	if err != nil {
-		removeEmptyDirs(created)
-		return "", nil, err
-	}
-	path := f.Name()
-	err = f.Chmod(mode)
-	if err == nil {
-		err = writeSyncClose(path, f, data)
-	}
-	if err != nil {
-		_ = f.Close()
-		_ = os.Remove(path)
-		removeEmptyDirs(created)
-		return "", nil, err
-	}
-	return path, created, nil
-}
-
-func stageSymlink(dir, name, target string) (string, error) {
-	path := filepath.Join(dir, name)
-	if err := os.Symlink(target, path); err != nil {
-		return "", err
-	}
-	if err := syncDirectory(dir); err != nil {
-		_ = os.Remove(path)
-		return "", fmt.Errorf("sync staged symlink directory %s: %w", dir, err)
-	}
-	return path, nil
-}
-
-func missingDirs(dir string) []string {
-	var dirs []string
-	for current := dir; ; current = filepath.Dir(current) {
-		if _, err := os.Lstat(current); err == nil {
-			break
-		}
-		dirs = append(dirs, current)
-		if parent := filepath.Dir(current); parent == current {
-			break
-		}
-	}
-	return dirs
-}
-
-func removeEmptyDirs(dirs []string) {
-	for _, dir := range dirs {
-		_ = os.Remove(dir)
-	}
+	return 0, changed
 }

@@ -180,3 +180,30 @@ func benchClaudeMD() string {
 func legacyClaudeMD() string {
 	return "# Bench\n\nCanonical agreement in AGENTS.md.\n\n@AGENTS.md\n"
 }
+
+// claudeImportLines returns the marker-owned import lines every reclaimable CLAUDE.md
+// form must carry, derived from legacyClaudeMD (the minimal form) rather than
+// re-declaring the "@AGENTS.md" literal a second time. The canonical form
+// (benchClaudeMD) is legacy plus one more import line, so requiring only the legacy
+// set is the single check that accepts both forms.
+func claudeImportLines() []string {
+	var lines []string
+	for _, line := range strings.Split(legacyClaudeMD(), "\n") {
+		if strings.HasPrefix(line, "@") {
+			lines = append(lines, line)
+		}
+	}
+	return lines
+}
+
+// claudeHasImports reports whether content carries every marker-owned import line —
+// true for both the canonical and legacy forms, false for a preserved CLAUDE.md whose
+// imports were stripped (doctor's row-11 red cell).
+func claudeHasImports(content string) bool {
+	for _, line := range claudeImportLines() {
+		if !strings.Contains(content, line) {
+			return false
+		}
+	}
+	return true
+}

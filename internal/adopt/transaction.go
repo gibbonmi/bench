@@ -47,6 +47,34 @@ func writeSyncClose(path string, f *os.File, data []byte) error {
 	return nil
 }
 
+// changesModifyTree reports whether promoting changes would actually alter any file's
+// content - as opposed to rewriting the same bytes back (transactionalLink always
+// restages and repromotes every accepted entry regardless of content, so mtimes/inodes
+// churn on every run even when nothing meaningful changed). It must run before
+// promoteAll: it reads each destination's current fingerprint, which promoteAll is
+// about to overwrite.
+func changesModifyTree(root string, changes []stagedChange) (bool, error) {
+	for _, c := range changes {
+		dest, ok := changeDestination(root, c)
+		if !ok {
+			return false, fmt.Errorf("invalid managed path %s", c.rel)
+		}
+		before, _ := fingerprintPath(dest)
+		after := ""
+		if c.stage != "" {
+			fp, err := fingerprintPath(c.stage)
+			if err != nil {
+				return false, err
+			}
+			after = fp
+		}
+		if before != after {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func promoteAll(root string, changes []stagedChange) error {
 	created := map[string]bool{}
 	done := make([]stagedChange, 0, len(changes))

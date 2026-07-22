@@ -40,9 +40,8 @@ Other AGENTS.md harnesses read the matching file under `.agents/commands/` when
 they do not expose a native command or skill surface.
 
 For a new repo, ask the agent to run `/bench-setup-repo` or `$bench-setup-repo`.
-That phase checks whether Bench is linked and initialized, handles the
-worker-facing setup steps when needed, then walks you through the project-specific
-gate, profile, lines, and optional `CONTEXT.md`.
+That phase runs `bench setup` to converge the repo, then walks you through the
+project-specific gate, profile, lines, and optional `CONTEXT.md`.
 
 For feature work, use the command path:
 
@@ -175,17 +174,22 @@ run `npx`), and **Go** (npx builds the compiled core on your machine at install
 time). If you install under a node version manager, mind the PATH-shim caveat noted
 with the durable-install steps below.
 
-The fastest way for the worker to wire a repo is `npx` straight from git — nothing
-to clone, no global install. Pin the ref so npx's git cache serves the build you
-expect:
+The fastest way for the worker to wire a repo today is one `npx` command straight
+from git — nothing to clone, no global install. This is the git-dependency form:
+it still requires a Go toolchain on your machine (npx builds the compiled core at
+install time), and it's what actually runs until Bench publishes to npm. Pin the
+ref so npx's git cache serves the build you expect:
 
 ```sh
 cd ~/src/your-project
-npx github:gibbonmi/bench#main link   # wire the kit into this repo for every harness
-npx github:gibbonmi/bench#main init   # scaffold .bench/gate.sh
+npx github:gibbonmi/bench#main setup   # inspect, preview, and converge the repo
 ```
 
-Run from `npx`, `link` copies the kit in (the npx cache is ephemeral, so it won't
+Once Bench has a first npm publish, the same one command becomes a pinned,
+Go-toolchain-free install: `npx redbench@<version> setup`. That form doesn't work
+yet — it's not published — so use the git-dependency form above until it lands.
+
+Run from `npx`, `setup` copies the kit in (the npx cache is ephemeral, so it won't
 leave dangling symlinks). Prefer to install once and get a durable `bench` command?
 Clone the repo, build the core, and symlink the launcher:
 

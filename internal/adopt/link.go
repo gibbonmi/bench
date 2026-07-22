@@ -47,7 +47,7 @@ func Link(args []string, stdout, stderr io.Writer, version string) int {
 		fmt.Fprintln(stdout, "(running from an ephemeral package cache - using copy mode so files don't dangle)")
 	}
 	plan := buildLinkPlan(kit)
-	result := transactionalLink(root, kit, mode, version, plan, stdout, stderr)
+	result, _ := transactionalLink(root, kit, mode, version, plan, stdout, stderr)
 	if result != 0 && result != 3 {
 		return result
 	}

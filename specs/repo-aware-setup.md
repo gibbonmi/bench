@@ -1,6 +1,6 @@
 # repo-aware-setup (FT76)
 
-Status: staged
+Status: implemented
 
 Compiled from the closed `decisions/repo-aware-bootstrap.md` map. Four
 defaulted decisions — the two Handoff uncertainty flags (non-TTY invocation,

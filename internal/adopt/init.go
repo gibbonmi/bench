@@ -75,14 +75,30 @@ func Init(args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-func scaffoldGate() string {
+// benchSentinelMarker is the fail-closed-stub trailer scaffoldGate embeds as a shell
+// comment. Doctor's gate row (detection) and setup's zero-signal message (the printed
+// remedy) both key off this same literal so the gate script, the doctor row, and the
+// printed remedy never drift apart.
+const benchSentinelMarker = "BENCH_SENTINEL"
+
+// gateScriptPreamble is the one shebang/set/git-root-guard preamble every generated
+// gate.sh carries. scaffoldGate's fail-closed stub and setup's detected-ecosystem
+// script both compose it here rather than re-authoring it, so the opening lines of a
+// written gate.sh never drift between the two writers - see setupGateScript in
+// setup.go for the second caller. comment is the writer-identifying line(s) that
+// follow the shebang, each already newline-terminated.
+func gateScriptPreamble(comment string) string {
 	return `#!/usr/bin/env bash
-# The external oracle for this repo - correctness only. Exit 0 = done is allowed.
-# No ` + "`set -e`" + `: the canary command is allowed to fail while the gate keeps collecting errors.
-set -uo pipefail
-root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "error: not in a git repository — run inside a Bench-linked repo" >&2; exit 3; }
+` + comment + `set -uo pipefail
+root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "error: not in a git repository - run inside a Bench-linked repo" >&2; exit 3; }
 cd "$root"
-fail=0
+`
+}
+
+func scaffoldGate() string {
+	return gateScriptPreamble(`# The external oracle for this repo - correctness only. Exit 0 = done is allowed.
+# No `+"`set -e`"+`: the canary command is allowed to fail while the gate keeps collecting errors.
+`) + `fail=0
 err() { echo "gate: $*" >&2; fail=1; }
 
 # Stack checks - replace the sentinel below with what fits your project, e.g.:
@@ -91,7 +107,7 @@ err() { echo "gate: $*" >&2; fail=1; }
 
 # Sentinel - keeps a fresh gate RED until you configure it, so you cannot commit real
 # work against an empty gate. Delete this one line once a real check exists above.
-err "configure .bench/gate.sh - replace this sentinel with real checks"  # BENCH_SENTINEL
+err "configure .bench/gate.sh - replace this sentinel with real checks"  # ` + benchSentinelMarker + `
 
 # Example check + its seed canary (` + seedCanaryPath + `) are the pattern to copy: run a
 # check, err on failure, and add a canary that proves it bites. This one fails if a

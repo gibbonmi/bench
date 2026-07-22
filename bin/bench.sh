@@ -260,6 +260,7 @@ case "${1-help}" in
   shift)    route_porcelain "$@" ;;
   commit)   route_porcelain "$@" ;;
   spec)     route_porcelain "$@" ;;
+  setup)    adoption_route "$@" ;;
   link)     adoption_route "$@" ;;
   init)     adoption_route "$@" ;;
   unlink)   route_porcelain "$@" ;;
