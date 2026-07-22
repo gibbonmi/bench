@@ -24,8 +24,11 @@ its count and its worst issue.
   conventions docs. Knowledge duplication is a Standards finding — two
   derivations of one fact is the code-standard defect review exists to grade.
   The smell baseline below rides this axis: classic rot counts even when no
-  doc names it. Separate hard violations from judgment calls. Skip anything
-  the gate already enforces; double-reporting what tooling caught is noise.
+  doc names it. Comment prose is graded against `craft-comments` — a comment
+  that narrates the change, cites provenance, or argues its own correctness
+  is a Standards finding. Separate hard violations from judgment calls. Skip
+  anything the gate already enforces; double-reporting what tooling caught is
+  noise.
 - **Spec** — three hunts: requirements missing or partial; behavior nobody asked
   for (scope creep); requirements implemented but wrong. "Implemented but wrong"
   includes calls the diff introduces into APIs, flags, or config keys that don't

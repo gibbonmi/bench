@@ -74,7 +74,10 @@ contract, not a preference:
 - One small change at a time, repo stays green — invariant 4 in `.bench/BENCH.md`.
 - Every delegation during the build carries its own line and, when the spec has
   a coverage map, its stories' coverage rows in the charge — every time; the
-  rules are `craft-delegate`'s (model half: `craft-line`).
+  rules are `craft-delegate`'s (model half: `craft-line`). Every write-delegate's
+  charge also names `craft-comments` by path
+  (`.agents/skills/bench-craft-comments/SKILL.md`) — comment discipline rides
+  the charge, not the delegate's priors.
 - Verify each returned done-claim against its charged rows and report the round
   in one line: accepted, or the missed case and the re-charged repair.
 - Route code authorship through `craft-delegate`: the coordinator scopes, routes,
