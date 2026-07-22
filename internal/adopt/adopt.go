@@ -23,6 +23,8 @@ func Run(args []string, stdout, stderr io.Writer, version string) int {
 		return Doctor(args[1:], stdout, stderr, version)
 	case "unlink":
 		return Unlink(args[1:], stdout, stderr)
+	case "upgrade":
+		return Upgrade(args[1:], stdout, stderr, version)
 	default:
 		fmt.Fprintf(stderr, "bench adopt: unknown subcommand: %q\n", args[0])
 		return 2

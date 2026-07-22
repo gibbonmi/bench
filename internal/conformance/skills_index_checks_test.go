@@ -1,12 +1,15 @@
 package conformance
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
+
+	kitpayload "github.com/gibbonmi/bench"
 )
 
 func checkSkillsIndexAndCommandAdapters(root string) []string {
@@ -106,9 +109,27 @@ func checkClaudeSkillMirror(root string) []string {
 	return diags
 }
 
+// kitOnlySkillSources reads root's consumer-payload allowlist and returns the skill
+// sources it withholds. The allowlist is the one source of who receives an asset, so
+// the index expectation reads it here exactly as the generator does instead of naming
+// the kit-only skills a second time. A tree with no allowlist (a stripped fixture) has
+// nothing withheld, which is also what the generator concludes.
+func kitOnlySkillSources(root string) map[string]bool {
+	var rows []kitpayload.PayloadRow
+	if err := json.Unmarshal([]byte(readIfExists(filepath.Join(root, ".bench", "consumer-payload.json"))), &rows); err != nil {
+		return nil
+	}
+	out := map[string]bool{}
+	for _, source := range kitpayload.PayloadKitOnlyPrefixes(rows) {
+		out[source] = true
+	}
+	return out
+}
+
 func checkSkillsIndex(root string) []string {
 	var diags []string
 	var expected []string
+	kitOnly := kitOnlySkillSources(root)
 	skillFiles, _ := filepath.Glob(filepath.Join(root, ".agents", "skills", "*", "SKILL.md"))
 	sort.Strings(skillFiles)
 	for _, file := range skillFiles {
@@ -122,6 +143,9 @@ func checkSkillsIndex(root string) []string {
 			continue
 		}
 		line := fmt.Sprintf("- %s \u2192 `.agents/skills/%s/SKILL.md`", index, name)
+		if kitOnly[".agents/skills/"+name] {
+			line += " (kit-only)"
+		}
 		if note := frontmatterField(file, "index-note"); note != "" {
 			line += " + " + note
 		}

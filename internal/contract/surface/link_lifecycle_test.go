@@ -48,10 +48,10 @@ func testLinkExcludesKitOnlySurfaces(t *testing.T) {
 		".agents/commands/bench-update-kit.md",
 		".agents/skills/bench-assess/SKILL.md",
 		".agents/skills/bench-update-kit/SKILL.md",
-		".agents/skills/craft-synthesis/SKILL.md",
+		".agents/skills/bench-craft-synthesis/SKILL.md",
 		".claude/commands/bench-assess.md",
 		".claude/commands/bench-update-kit.md",
-		".claude/skills/craft-synthesis/SKILL.md",
+		".claude/skills/bench-craft-synthesis/SKILL.md",
 	} {
 		requireLinkNotExists(t, f, rel, "fresh link wrote kit-only surface "+rel)
 	}

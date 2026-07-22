@@ -27,11 +27,21 @@ frontmatter_field() { # file, key — first value of key inside the --- fence
   ' "$1"
 }
 
+# Skill sources the consumer-payload allowlist withholds. The allowlist is the one
+# source of who receives an asset, so the index marks the same rows rather than
+# carrying a second list of kit-only skills. Its presence is not re-asserted here —
+# the Go core embeds the same file, so a kit without it does not build — and a tree
+# that carries no allowlist simply has no kit-only rows to mark. Read at top level:
+# expected_lines runs in a command substitution, where an err() would be lost.
+payload=".bench/consumer-payload.json"
+kit_only_sources=""
+[ -f "$payload" ] && kit_only_sources="$(sed -n 's/.*"source"[[:space:]]*:[[:space:]]*"\([^"]*\)".*"audience"[[:space:]]*:[[:space:]]*"kit-only".*/\1/p' "$payload")"
+
 # Generated lines, one per indexed skill, alphabetical by directory (glob order).
 # Validation stays out of this function: it runs in a command substitution, where
 # an err() would set fail=1 in a subshell and be lost.
 expected_lines() {
-  local d name trigger note
+  local d name trigger note marker source
   for d in .agents/skills/*/; do
     [ -f "$d/SKILL.md" ] || continue
     name="$(basename "$d")"
@@ -39,10 +49,14 @@ expected_lines() {
     trigger="$(frontmatter_field "$d/SKILL.md" index)"
     [ -z "$trigger" ] && continue
     note="$(frontmatter_field "$d/SKILL.md" index-note)"
+    marker=""
+    for source in $kit_only_sources; do
+      [ "$source" = ".agents/skills/$name" ] && marker=" (kit-only)"
+    done
     if [ -n "$note" ]; then
-      printf -- '- %s → `.agents/skills/%s/SKILL.md` + %s\n' "$trigger" "$name" "$note"
+      printf -- '- %s → `.agents/skills/%s/SKILL.md`%s + %s\n' "$trigger" "$name" "$marker" "$note"
     else
-      printf -- '- %s → `.agents/skills/%s/SKILL.md`\n' "$trigger" "$name"
+      printf -- '- %s → `.agents/skills/%s/SKILL.md`%s\n' "$trigger" "$name" "$marker"
     fi
   done
 }
@@ -75,6 +89,9 @@ if [ "$mode" = "--write" ]; then
     $0 == e { skip = 0 }
     !skip { print }
   ' "$bench_md" > "$tmp"
+  # mktemp creates 0600; the reference file is a shipped 0644 asset whose mode the
+  # release-evidence registry checks, so restore it before the file is replaced.
+  chmod 644 "$tmp"
   mv "$tmp" "$bench_md"
   exit "$fail"
 fi

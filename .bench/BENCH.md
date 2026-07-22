@@ -21,13 +21,15 @@ guessing.
 - **Commands** are the canonical phases of the workflow (see Workflow below).
   Run `/bench-setup-repo` once when a repo is first adopted — it runs
   `bench setup` to converge the repo, then interviews the reviewer to refine the
-  gate and the profile. Run `/bench-update-kit`
-  periodically to pull upstream improvements into the kit. Run
+  gate and the profile. Run
   `/bench-what-next` when `bench status` or `bench roadmap` shows a drain
   pending — it reconciles `ROADMAP.md` against the tree, drains `IDEAS.md` and
-  open learnings into it, and proposes the pass as one batch diff. Run
-  `/bench-assess` periodically to re-baseline the platform — it sweeps the
-  codebase and replaces `ASSESSMENT.md` with a fresh ranked backlog.
+  open learnings into it, and proposes the pass as one batch diff.
+  The kit-maintenance surfaces — `/bench-update-kit`, `/bench-assess`, and the
+  `craft-synthesis` skill — ship only in the Bench kit repository, where they
+  pull upstream improvements in and re-baseline the platform's own backlog; a
+  linked repo upgrades with `bench upgrade` instead, and the skills index marks
+  the rows it does not receive.
 - **The gate and the hooks** are enforcement, with authority you do not have.
   The enforcement that matters is harness-independent: the `bench shift` loop
   runs the gate after every iteration and commits only on green, and a git
@@ -53,7 +55,8 @@ you need adapter wiring or other lookup detail.
 
 Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
 
-- Adoption and setup: `bench setup` (the one-command adoption route), `bench link`, `bench init`, `bench unlink`, `bench doctor`, `bench repair` (`--prune` removes stale binary-cache entries).
+- Adoption and setup: `bench setup` (the one-command adoption route), `bench link`, `bench init`, `bench unlink`, `bench doctor`, `bench repair` (`--prune` removes stale binary-cache entries),
+  `bench upgrade` (`--check` plans without writing, `--force` accepts a downgrade).
 - Ambient context and capture: `bench status`, `bench commands --brief`, `bench dashboard`, `bench idea`,
   `bench roadmap`, `bench learnings`, `bench maps`.
 - Oracle and diagnostics: `bench gate`, `bench gate pin`, `bench canary`, `bench structure`,

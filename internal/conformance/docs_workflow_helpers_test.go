@@ -231,6 +231,17 @@ func checkWorkflowAnchors(root string) []string {
 		!strings.Contains(collapseSpace(whatNext), "manual evidence reconstruction")) {
 		diags = append(diags, "bench-what-next dropped the roadmap context query")
 	}
+	// Kit-only surfaces — the shipped guide and its generated skills index name only
+	// what a consumer actually has: the guide says once that the maintenance surfaces
+	// ship in the kit repository alone and points consumers at `bench upgrade`, and the
+	// index marks the same rows the payload allowlist withholds.
+	requireCollapsed(".bench/BENCH.md", "ship only in the Bench kit repository",
+		".bench/BENCH.md does not state that the kit-maintenance surfaces ship only in the kit repository")
+	requireCollapsed(".bench/BENCH.md", "a linked repo upgrades with `bench upgrade`",
+		".bench/BENCH.md does not name bench upgrade as the consumer's route onto a newer kit")
+	requireCollapsed(".bench/BENCH-reference.md", "`.agents/skills/bench-craft-synthesis/SKILL.md` (kit-only)",
+		".bench/BENCH-reference.md skills index does not mark the kit-only craft-synthesis row")
+
 	requireCollapsed(".bench/BENCH.md", "Parked ideas land in `IDEAS.md`",
 		".bench/BENCH.md Capture section does not name IDEAS.md as the capture sink")
 	requireCollapsed(".bench/BENCH.md", "append the dated line (`- YYYY-MM-DD <text>`) to `IDEAS.md`",
