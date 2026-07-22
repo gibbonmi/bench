@@ -12,11 +12,21 @@ project conformance.
 
 ## Exit handoff
 
-Close by reporting the gate result plainly. On green, land the verified work with
-`bench commit -m "<msg>"`, naming the files the work touched — it gates and commits
-them atomically, and it enforces the commit discipline so this phase doesn't
-restate it. Use `bench commit -m "<msg>" --spec <slug>` when the commit finishes a
-spec, so the status flip rides in the same commit. When the reviewer accepts residual review
+Close by reporting the gate result plainly. This phase owns the landing commit
+and the spec's `Status: implemented` transition — `/bench-implement-spec` ends
+at its last green build commit and hands off here. On green, land the verified
+work with `bench commit -m "<msg>"`, naming the files the work touched — it
+gates and commits them atomically, and it enforces the commit discipline so
+this phase doesn't restate it. Use `bench commit -m "<msg>" --spec <slug>` when
+the commit finishes a spec, so the status flip rides in the same commit;
+`implemented` honestly means *built, gate-green, awaiting review/merge* — the
+state `bench status`'s retirement signal keys on once the spec reaches the
+default branch. The honest no-op: a branch that arrives with nothing left to
+commit is reported green all the same, and the status flip is still performed
+via `bench spec implemented <slug>` when the spec has not already flipped —
+that command is the single source of the edit; never hand-write a line-start
+`Status: implemented` into any `specs/*.md`, or the retirement detector fires
+on a spec that is not done. When the reviewer accepts residual review
 risk and skips the fix pass, delete `reviews/<spec-slug>.md` and name it in the
 landing commit — the pickup must not outlive the decision it captured. If it
 refuses over an unexplained

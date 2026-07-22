@@ -96,16 +96,12 @@ of hand-running the two commands above.
 ## How it meets the rest of Bench
 
 The Phase 1 loop joins the project gate for the fix. If the fix launches a shift,
-add the repro as a test the gate runs alongside its existing checks, committed
-in the project's expected-failure form — a quarantine marker naming the bug (a
-skip or expected-fail annotation in the project's test framework) — so the
-committed tree stays green while the repro survives shift rollback: an
-iteration that ends red rolls the worktree back to the last commit, which
-destroys any uncommitted repro test. The fix's green commit removes the marker,
-turning the repro into the live regression test. A project with no
-expected-failure form keeps the repro out of the shift and runs it by hand
-against the fix — state that fallback in the close rather than committing a red
-tree; invariant 4 (commit only on green) has no red-commit exception. Route code
+add the repro as a test the gate runs alongside its existing checks and **commit
+that test before launching the shift** — a shift iteration that ends red rolls the
+worktree back to the last commit, so an uncommitted repro test is destroyed by the
+first failed iteration of the very shift it was built to gate. This is the one
+commit that deliberately precedes green: it strengthens the oracle rather than
+shipping work; the shift's own commits stay on-green as always. Route code
 authorship through `craft-delegate`, including a diagnosed single-seam fix; it
 owns the inline threshold, worktree isolation, and verification discipline.
 Replacing the gate with the repro weakens the oracle — that is my call, never a

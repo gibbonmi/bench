@@ -18,12 +18,22 @@ deletion, or one source-line replacement in code or tests. A replacement counts
 as one correction even though a unified diff renders it as one deleted line plus
 one added line. This allowance spans the current reviewer request — the current
 user objective — and does not reset when work is split into tasks, slices,
-delegates, or verification rounds. All other code authorship runs as a
+delegates, or verification rounds. A no-spec change admitted by the
+lighter-path threshold in `.bench/BENCH.md`'s "Right-size the process"
+paragraph may also remain inline — the only allowance beyond the
+one-source-line rule. All other code authorship runs as a
 write-delegation in an isolated worktree, including mechanical work, atomic
 diffs, and fixes the coordinator has already diagnosed. Read-only coordination
 stays inline. Never delegate a decision the reviewer owns (what ships, spec
 content, an irreversible choice); a delegate inherits your authority ceiling,
 not the reviewer's.
+
+This policy is capability-aware: a harness that cannot spawn a write subagent
+never falls back inline for work beyond the allowances above. It stops before
+editing and emits one executable resume handoff to a subagent-capable harness —
+the repository path, the working branch or worktree, the spec or change name,
+the destination harness, and that harness's exact invocation. One route, not a
+menu; the phase being resumed supplies its own harness-native invocation forms.
 
 ## The charge
 

@@ -67,7 +67,6 @@ func checkWorkflowAnchors(root string) []string {
 	require(".agents/skills/bench-craft-delegate/SKILL.md", "a claim, not a result")
 	require(".agents/commands/bench-implement-spec.md", "When the build stops short")
 	require(".agents/commands/bench-write-spec.md", "Superseded by")
-	require(".agents/commands/bench-debug.md", "before launching the shift")
 	require(".agents/commands/bench-shape-idea.md", "## Handoff")
 	require(".agents/commands/bench-shape-idea.md", "Hostile-input owner")
 	require(".agents/commands/bench-shape-idea.md", "Dependency order")
@@ -121,6 +120,16 @@ func checkWorkflowAnchors(root string) []string {
 			diags = append(diags, diag)
 		}
 	}
+	// forbid is the must-not-contain half of an anchor pair: a workflow agreement
+	// with one owner stays repaired only while the contradicting sentence cannot
+	// return to a non-owner document. Comments are stripped and whitespace
+	// collapsed so a wrapped or commented-out reintroduction still fires.
+	forbid := func(rel, needle, diag string) {
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if strings.Contains(collapseSpace(stripHTMLComments(readIfExists(path))), needle) {
+			diags = append(diags, diag)
+		}
+	}
 	diags = append(diags, checkStructuredPhaseContract(readIfExists(filepath.Join(root, ".bench", "BENCH.md")))...)
 
 	requireCollapsed(".agents/commands/bench-implement-spec.md", "apply `craft-seams`' split-or-grant rule",
@@ -132,11 +141,64 @@ func checkWorkflowAnchors(root string) []string {
 		"independent vertical slices fan out to separate parallel subagents within the harness's concurrency limit; dependent slices run sequentially; a spec that lands as one atomic diff is delegated whole to one worktree-isolated write subagent",
 		".agents/commands/bench-implement-spec.md dropped a delegation routing shape (independent-parallel, dependent-sequential, or atomic-whole)")
 	requireCollapsed(".agents/commands/bench-implement-spec.md",
-		"A read-only helper (research, review, planning, search) does not satisfy the write requirement. A no-spec change admitted by the lighter-path threshold above may remain inline — the sole inline exception.",
-		".agents/commands/bench-implement-spec.md dropped the read-only exclusion or the lighter-path sole inline exception")
+		"A read-only helper (research, review, planning, search) does not satisfy the write requirement.",
+		".agents/commands/bench-implement-spec.md dropped the read-only exclusion from the write requirement")
+
+	// One owner per workflow agreement: each repaired agreement pins the owner's
+	// full statement with a require and the reintroduced contradiction with a
+	// forbid, so the same fact cannot be stated twice and drift apart again.
+
+	// Shaping — /bench-write-spec's entry contract owns the map requirement;
+	// README points at the inline-map route instead of offering a skip.
+	forbid("README.md", "Skip `/bench-shape-idea`",
+		"README.md reintroduces the shaping skip route; every spec has a map behind it and /bench-write-spec's entry contract owns the inline-map recording path")
+	requireCollapsed("README.md", "`/bench-write-spec`'s entry contract records the map inline",
+		"README.md dropped the inline-map route pointer; /bench-write-spec's entry contract owns the shaping requirement")
+
+	// Delegation — craft-delegate owns the capability-aware policy in full;
+	// /bench-implement-spec points at it and states no inline threshold of its own.
+	requireCollapsed(".agents/skills/bench-craft-delegate/SKILL.md",
+		"admitted by the lighter-path threshold",
+		".agents/skills/bench-craft-delegate/SKILL.md dropped the lighter-path inline allowance from the delegation policy")
+	requireCollapsed(".agents/skills/bench-craft-delegate/SKILL.md",
+		"stops before editing and emits one executable resume handoff to a subagent-capable harness — the repository path, the working branch or worktree, the spec or change name, the destination harness, and that harness's exact invocation",
+		".agents/skills/bench-craft-delegate/SKILL.md dropped the no-write-subagent stop-and-handoff rule")
+	forbid(".agents/commands/bench-implement-spec.md", "the sole inline exception",
+		".agents/commands/bench-implement-spec.md restates an inline threshold of its own; craft-delegate owns the capability-aware delegation policy")
 	requireCollapsed(".agents/commands/bench-implement-spec.md",
-		"stop before editing and emit one explicit resume handoff to a subagent-capable harness — the repository path, the working branch or worktree, the spec name, the destination harness, and that harness's exact invocation",
-		".agents/commands/bench-implement-spec.md dropped the pre-edit stop and harness-native resume handoff for a harness without write subagents")
+		"states no inline threshold of its own",
+		".agents/commands/bench-implement-spec.md dropped the pointer to craft-delegate's capability-aware delegation policy")
+
+	// Landing — /bench-final-check owns the landing commit and the status
+	// transition; /bench-implement-spec ends at its last green build commit.
+	forbid(".agents/commands/bench-implement-spec.md", `bench commit -m "<msg>" --spec`,
+		".agents/commands/bench-implement-spec.md reclaims the landing --spec commit; /bench-final-check owns the landing commit and the Status: implemented transition")
+	requireCollapsed(".agents/commands/bench-implement-spec.md",
+		"ends at its last green build commit",
+		".agents/commands/bench-implement-spec.md dropped the hand-off that ends at the last green build commit")
+	requireCollapsed(".agents/commands/bench-final-check.md",
+		"owns the landing commit and the spec's `Status: implemented` transition",
+		".agents/commands/bench-final-check.md dropped the landing-commit and status-transition ownership")
+	requireCollapsed(".agents/commands/bench-final-check.md",
+		"nothing left to commit is reported green",
+		".agents/commands/bench-final-check.md dropped the honest no-op for a branch with nothing to commit")
+	requireCollapsed(".agents/commands/bench-final-check.md",
+		"still performed via `bench spec implemented <slug>`",
+		".agents/commands/bench-final-check.md dropped the bench spec implemented route for the status flip")
+
+	// Red observation — /bench-debug commits the repro only in the project's
+	// expected-failure form; a red-tree commit has no sanctioned path.
+	forbid(".agents/commands/bench-debug.md", "commit that test before launching the shift",
+		".agents/commands/bench-debug.md reintroduces the red repro commit before the shift; the repro is committed in the project's expected-failure form so the tree stays green")
+	requireCollapsed(".agents/commands/bench-debug.md",
+		"committed in the project's expected-failure form",
+		".agents/commands/bench-debug.md dropped the expected-failure quarantine form for committing the repro")
+	requireCollapsed(".agents/commands/bench-debug.md",
+		"quarantine marker naming the bug",
+		".agents/commands/bench-debug.md dropped the quarantine marker naming the bug")
+	requireCollapsed(".agents/commands/bench-debug.md",
+		"keeps the repro out of the shift and runs it by hand",
+		".agents/commands/bench-debug.md dropped the no-expected-failure-form fallback")
 	requireCollapsed(".agents/skills/bench-craft-seams/SKILL.md", "check both the file-length budget and the directory's file-count headroom",
 		".agents/skills/bench-craft-seams/SKILL.md dropped the structure split-vs-grant headroom rule")
 	requireCollapsed(".agents/skills/bench-craft-delegate/SKILL.md", "pins every file-tool path to that root",

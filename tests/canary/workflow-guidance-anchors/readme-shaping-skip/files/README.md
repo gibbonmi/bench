@@ -49,11 +49,8 @@ For feature work, use the command path:
 loose idea -> /bench-shape-idea -> /bench-write-spec -> /bench-implement-spec -> /bench-review-implementation -> /bench-final-check
 ```
 
-Every spec has a decision map behind it — there is no skip. When the idea is
-already clear because every fork was closed with the reviewer in the same
-session, `/bench-write-spec`'s entry contract records the map inline instead of
-routing through `/bench-shape-idea`; that entry contract is the one owner of the
-shaping requirement. For bugs, use `/bench-debug` instead of the feature path; it
+Skip `/bench-shape-idea` when there is no real fog and go straight to
+`/bench-write-spec`. For bugs, use `/bench-debug` instead of the feature path; it
 builds the repro loop first.
 
 Each command should orient you at entry, then hand you off at exit with what

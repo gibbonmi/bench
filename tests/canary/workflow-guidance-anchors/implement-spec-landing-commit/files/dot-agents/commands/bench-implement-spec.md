@@ -42,13 +42,16 @@ contract, not a preference:
   worktree-isolated write subagent, and the invoking session still verifies the
   returned done-claim through the `craft-delegate` contract.
 - A read-only helper (research, review, planning, search) does not satisfy the
-  write requirement. When any change may remain inline, and what a harness that
-  cannot spawn a write subagent does instead of editing, are `craft-delegate`'s
-  capability-aware delegation policy — this phase states no inline threshold of
-  its own. For the resume handoff that policy requires, this phase's invocation
-  is `$bench-implement-spec` in Codex, `/bench-implement-spec` in Claude Code,
-  or the canonical `.agents/commands/bench-implement-spec.md` file in another
-  subagent-capable AGENTS harness.
+  write requirement. A no-spec change admitted by the lighter-path threshold above
+  may remain inline — the sole inline exception.
+- A harness that cannot spawn a write subagent never falls back inline: it must
+  stop before editing and emit one explicit resume handoff to a subagent-capable
+  harness — the repository path, the working branch or worktree, the spec name,
+  the destination harness, and that harness's exact invocation:
+  `$bench-implement-spec` in Codex, `/bench-implement-spec` in Claude Code, or the
+  canonical `.agents/commands/bench-implement-spec.md` file in another
+  subagent-capable AGENTS harness. Select the real destination and present one
+  executable route, not a menu.
 
 ## Then build
 
@@ -115,15 +118,18 @@ defined route — never a silent grind, never an abandoned worktree:
   changed path once end-to-end — invoke the real command, endpoint, or call the
   diff changes and read its output. A mismatch here is a defect to fix or
   surface, never a footnote.
-- Land each green build step with path-scoped `bench commit -m "<msg>"`, naming
-  the files that step touched. It gates and commits the named paths atomically,
-  and it enforces the commit discipline so you don't have to restate it. When it
-  refuses over an unexplained working-tree file, surface the file to the
-  reviewer; don't commit or revert it on your own.
-- This phase ends at its last green build commit and hands off: the landing
-  commit and the `Status: implemented` transition are `/bench-final-check`'s.
-  Never run `bench commit --spec` and never edit a spec's status line from this
-  phase.
+- Land the finishing commit with `bench commit -m "<msg>" --spec <slug>`, naming the
+  files the build actually touched; `bench commit --help` is authoritative for
+  `--spec` semantics. It gates and commits the named paths atomically, and it
+  enforces the commit discipline so you don't have to restate it. When it refuses
+  over an unexplained working-tree file, surface the file to the reviewer; don't
+  commit or revert it on your own.
+- `implemented` honestly means *built, gate-green, awaiting review/merge* — the
+  state `bench status`'s retirement signal keys on once the spec reaches the
+  default branch. When a flip is needed outside a commit, `bench spec implemented <slug>`
+  is the single source of that edit; never hand-write a line-start
+  `Status: implemented` into any `specs/*.md`, or that detector fires on a spec
+  that is not done.
 - Before the final gate, emit the coverage table for every acceptance row —
   `bench coverage <spec>` produces it and `bench coverage --check <spec>` validates
   the map; don't hand-assemble it. Classify each row `green`, `already covered`,
