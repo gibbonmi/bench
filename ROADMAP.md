@@ -66,21 +66,6 @@ between deterministic installation and prompt-driven configuration.
 
 Sources: `RR:A-02`, `RR:A-03`, `RR:A-04`, `RR:S-09`.
 
-**FT84 (MEDIUM) — transactional managed-asset lifecycle.** Link and relink
-stage and preflight the complete write set, sync where durability matters, then
-atomically promote or roll back. Upgrade and downgrade reconcile the old and
-new manifests: removed clean assets leave, modified assets remain owned until
-explicitly resolved, and no stale skill becomes active-but-unowned. Settings
-and Git hooks compose or fail before any partial write.
-
-Unlink and shim removal verify ownership markers, return a nonzero partial
-status when residuals remain, and emit a machine-readable residual list. They
-never recommend raw deletion of an executable Bench does not own. Closure
-covers upgrade, downgrade, I/O failure, modified/stale assets, and repeated
-link/unlink matrices.
-
-Sources: `RR:A-05`, `RR:A-07`, `RR:A-10`, `RR:A-13`; `RC:M-04`.
-
 **FT85 (HIGH) — least-privilege consumer payload and one coherent phase
 contract.** Generate the consumer payload from one canonical allowlist and
 exclude kit-only assessment, update, and synthesis surfaces. Consumers receive

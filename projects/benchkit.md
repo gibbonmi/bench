@@ -75,11 +75,14 @@ branch-agnostic. This line is only the binding.)
   `.agents/commands/` and documented in `.bench/BENCH.md`. The gate's conformance
   layer enforces those contracts so disk, docs, and adapters do not drift.
   `.claude/` paths are adapters, not a second source of truth.
-- **The safe link contract** (`bench link`). The adoption surface. It must preserve
-  project-owned `AGENTS.md` text, install only a managed Bench block plus Bench-owned
-  assets, fail on same-named project-owned skills/commands/hooks, and be idempotent
-  through the link manifest. It also installs the `.bench/bin/` local CLI set the
-  shared hooks use when no global `bench` command is on PATH.
+- **The safe managed-asset lifecycle** (`bench link` and `bench unlink`). The adoption
+  surface preflights and stages the complete write set, syncs durable content, and
+  atomically promotes it or rolls the repository back. Relink reconciles old and new
+  manifests: clean removed assets leave, while modified or project-owned collisions
+  remain in place and produce a machine-readable partial result. Unlink removes only
+  clean manifest-owned assets and reports any residuals with the same partial posture.
+  The lifecycle preserves project-owned `AGENTS.md` text and installs the `.bench/bin/`
+  local CLI set the shared hooks use when no global `bench` command is on PATH.
 - **The distributable artifact contract** (wrapper and native package tarballs).
   The exact tarballs are the acceptance subject: one private-staging builder consumes
   the canonical asset manifest and platform matrix, artifact tests inspect and install
@@ -148,10 +151,11 @@ byte-shape is load-bearing:
    acceptance-coverage map validation.
 2. **shellcheck** — best-effort, runs only when installed (`-S warning`). Not a hard
    dependency; upgrades the shell lint automatically once present.
-3. **Safe-link behavior** — the gate runs `bench link` against throwaway repos to
-   prove fresh installs, existing `AGENTS.md` preservation, relink idempotence,
-   same-name conflicts, modified-managed file protection, Codex/Claude hook adapters,
-   shared hooks, and default copy mode.
+3. **Managed-asset lifecycle behavior** — the gate runs link, relink, and unlink
+   against throwaway repos to prove fresh installs, transactional rollback, manifest
+   reconciliation across upgrade and downgrade, modified and stale asset handling,
+   repeated lifecycle cycles, existing `AGENTS.md` preservation, same-name conflicts,
+   Codex/Claude hook adapters, shared hooks, and default copy mode.
 4. **Runtime and behavior contracts** — the remaining shell fragments exercise
    version routing, platform-package generation, runtime hooks, shift/worktree
    behavior, doctor/postinstall/status/roadmap behavior, and AXI query-surface
