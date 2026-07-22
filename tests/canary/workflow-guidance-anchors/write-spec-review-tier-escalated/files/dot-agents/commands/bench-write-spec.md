@@ -164,7 +164,7 @@ loop honest.
      `already covered` and `not TDD-able` outnumber rows with a real red
      command, the map can pass its format check while grading nothing.
 
-   The pass **runs at the mid tier**, read-only, one iteration. At that tier it is
+   The pass **runs at the top tier**, read-only, one iteration. At that tier it is
    not a top-tier bump, so it needs no approval to spawn — the project's `Lines`
    carries the routing. Escalating this pass to the top tier is a bump like any
    other: it pauses and asks me, per `craft-line`'s ladder. A reviewer sub-agent

@@ -81,6 +81,8 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"write-spec-handoff-anchor":                  conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"write-spec-map-required":                    conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"write-spec-reviewer-closed-fast-path":       conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"write-spec-review-trigger-dropped":          conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"write-spec-review-tier-escalated":           conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"line-anchor-missing":                        conformanceFixture(".bench/gate-line-contracts.sh"),
 	"broken-coverage-map":                        conformanceFixture(".bench/gate-docs-contracts.sh"),
 

@@ -224,6 +224,12 @@ is in `craft-line`). Tier moves still get declared — no silent escalation.
 - **Gate / conformance logic** → mid effort. Correctness of the oracle matters more
   than speed — a wrong gate is the worst class of bug in a kit whose whole premise is
   "the gate is the oracle."
+- **Spec falsification pass** (`/bench-write-spec` step 9) → **mid model, high
+  effort, 1 iteration**, read-only. Standing grant: when one of the step's
+  triggers fires, the pass spawns without asking, because at the mid binding it
+  is not a top-tier bump. Escalating it to the top binding is an ordinary bump
+  and pauses and asks. Charged at falsification questions, never an open review;
+  its verdict is advisory and sign-off stays the reviewer's.
 - **Review-axis delegate** (`/bench-review-implementation`, one per axis) → mid
   model, medium effort, **~1 iteration each** (three axes can run in parallel).
   Read-heavy: each takes the full diff plus standards docs and runs verification

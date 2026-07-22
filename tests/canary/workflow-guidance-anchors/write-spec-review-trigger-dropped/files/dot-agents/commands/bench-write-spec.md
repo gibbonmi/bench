@@ -154,7 +154,6 @@ loop honest.
 
    - the Handoff carries uncertainty flags (item 7);
    - the draft deviates from the map;
-   - **no map backs the draft** — the reviewer-directed batch-drain override in the
      entry contract. This is the path with the most undecided content and the
      least prior sign-off, so it always gets the pass;
    - **the map was written in the same session as the draft** — the
