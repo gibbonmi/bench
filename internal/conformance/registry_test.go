@@ -104,6 +104,7 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 
 	"missing-files-entry":                    conformanceFixture(".bench/gate-package-contracts.sh"),
 	"kit-only-asset-admitted":                conformanceFixture(".bench/gate-package-contracts.sh"),
+	"kit-only-allowlist-emptied":             conformanceFixture(".bench/gate-package-contracts.sh"),
 	"go-build-broken":                        conformanceFixture(".bench/gate-go-contracts.sh"),
 	"go-test-failing":                        conformanceFixture(".bench/gate-go-contracts.sh"),
 	"guard-describe-boundary-dropped":        conformanceFixture(".bench/gate-axi-contracts.sh"),

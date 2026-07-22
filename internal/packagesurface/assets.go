@@ -2,7 +2,9 @@ package packagesurface
 
 import (
 	"io/fs"
+	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -47,17 +49,32 @@ var ForbiddenPackAssets = []string{
 
 // RequiredBuildPackAssets derives the Go build inputs that an npm git install's
 // prepare script needs. Source directories are packaged recursively, so a split
-// package automatically joins this expectation without a second file registry.
+// package automatically joins this expectation without a second file registry;
+// root-level non-test sources (the module root can carry its own package
+// alongside cmd/ and internal/) and every source's //go:embed targets are
+// derived the same way, so a new root package or a new embed joins the
+// expectation without a second registry.
 func RequiredBuildPackAssets(root string) ([]string, error) {
 	assets := []string{
 		"go.mod",
 		"go.sum",
-		"internal/releaseevidence/requirements.json",
 		"scripts/go-build.sh",
+	}
+	var goFiles []string
+	rootEntries, err := os.ReadDir(root)
+	if err != nil {
+		return nil, err
+	}
+	for _, entry := range rootEntries {
+		if entry.IsDir() || !isBuildGoSource(entry.Name()) {
+			continue
+		}
+		assets = append(assets, entry.Name())
+		goFiles = append(goFiles, filepath.Join(root, entry.Name()))
 	}
 	for _, dir := range []string{"cmd", "internal"} {
 		err := filepath.WalkDir(filepath.Join(root, dir), func(path string, entry fs.DirEntry, err error) error {
-			if err != nil || entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
+			if err != nil || entry.IsDir() || !isBuildGoSource(entry.Name()) {
 				return err
 			}
 			rel, err := filepath.Rel(root, path)
@@ -65,12 +82,54 @@ func RequiredBuildPackAssets(root string) ([]string, error) {
 				return err
 			}
 			assets = append(assets, filepath.ToSlash(rel))
+			goFiles = append(goFiles, path)
 			return nil
 		})
 		if err != nil {
 			return nil, err
 		}
 	}
+	embeds, err := embeddedPackAssets(root, goFiles)
+	if err != nil {
+		return nil, err
+	}
+	assets = append(assets, embeds...)
 	sort.Strings(assets)
+	return assets, nil
+}
+
+func isBuildGoSource(name string) bool {
+	return strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, "_test.go")
+}
+
+var goEmbedDirective = regexp.MustCompile(`^//go:embed\s+(.+)$`)
+
+// embeddedPackAssets reads each Go source in goFiles and returns the repo-relative
+// path of every //go:embed target it names, resolved against that source's own
+// directory (embed patterns are directory-relative). A source with no embed
+// directive contributes nothing.
+func embeddedPackAssets(root string, goFiles []string) ([]string, error) {
+	var assets []string
+	for _, file := range goFiles {
+		data, err := os.ReadFile(file)
+		if err != nil {
+			return nil, err
+		}
+		dir := filepath.Dir(file)
+		for _, line := range strings.Split(string(data), "\n") {
+			match := goEmbedDirective.FindStringSubmatch(strings.TrimSpace(line))
+			if match == nil {
+				continue
+			}
+			for _, pattern := range strings.Fields(match[1]) {
+				pattern = strings.Trim(pattern, `"`)
+				rel, err := filepath.Rel(root, filepath.Join(dir, filepath.FromSlash(pattern)))
+				if err != nil {
+					return nil, err
+				}
+				assets = append(assets, filepath.ToSlash(rel))
+			}
+		}
+	}
 	return assets, nil
 }

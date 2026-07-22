@@ -17,10 +17,12 @@
   "files": [
     "bin/",
     "cmd/",
+    "consumer_payload.go",
     "dist/",
     "go.mod",
     "go.sum",
     "internal/",
+    ".bench/consumer-payload.json",
     "!cmd/**/*_test.go",
     "!internal/**/*_test.go",
     "projects/gl-axi.md",

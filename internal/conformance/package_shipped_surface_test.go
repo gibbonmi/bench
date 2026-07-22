@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	kitpayload "github.com/gibbonmi/bench"
 )
 
 func TestRootPackageProjectMetadata(t *testing.T) {
@@ -72,17 +74,16 @@ func TestRepairAppearsInColdPickupInventory(t *testing.T) {
 // package.json: npm cannot read .bench/consumer-payload.json (files[] is its own
 // literal input), so this derives the exclusion pattern every kit-only allowlist row
 // requires from that same canonical file and grades files[] against it, rather than
-// letting files[] carry its own independent guess at the exclusion set. Before the
-// wholesale ".agents/" entry was narrowed, this failed against every one of these rows.
+// letting files[] carry its own independent guess at the exclusion set.
 func TestPackageFilesExcludeKitOnlyAllowlistRows(t *testing.T) {
 	root := NewHarness(t).Root
-	var rows []struct {
-		Source   string `json:"source"`
-		Tree     bool   `json:"tree"`
-		Audience string `json:"audience"`
-	}
+	var rows []kitpayload.PayloadRow
 	if err := readJSONAt(root, ".bench/consumer-payload.json", &rows); err != nil {
 		t.Fatalf("read consumer payload allowlist: %v", err)
+	}
+	kitOnly := kitpayload.PayloadKitOnlyPrefixes(rows)
+	if len(kitOnly) == 0 {
+		t.Fatal("consumer payload allowlist declares no kit-only rows; this test would pass over an empty exclusion set")
 	}
 
 	var pkg struct {
@@ -100,7 +101,7 @@ func TestPackageFilesExcludeKitOnlyAllowlistRows(t *testing.T) {
 		t.Fatal("package.json files[] dropped the .agents/ tree entry the allowlist's kit-only rows are meant to narrow")
 	}
 	for _, row := range rows {
-		if row.Audience != "kit-only" {
+		if row.Audience != kitpayload.PayloadAudienceKitOnly {
 			continue
 		}
 		want := "!" + row.Source

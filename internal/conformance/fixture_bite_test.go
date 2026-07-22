@@ -171,6 +171,7 @@ func TestPackageCoreAndGuardFixturesBite(t *testing.T) {
 		"guard-describe-boundary-dropped",
 		"guard-resolver-order-drift",
 		"kit-only-asset-admitted",
+		"kit-only-allowlist-emptied",
 	}
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {
