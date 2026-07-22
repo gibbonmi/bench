@@ -33,7 +33,7 @@ the cut.
 Sources: `RR:C-09`, `RR:C-11`, `RR:C-12`.
 
 **FT85 (HIGH) — least-privilege consumer payload and one coherent phase
-contract.** Generate the consumer payload from one canonical allowlist and
+contract.** Spec: `specs/consumer-payload-and-phase-contract.md`. Generate the consumer payload from one canonical allowlist and
 exclude kit-only assessment, update, and synthesis surfaces. Consumers receive
 a narrow version-pinned, manifest-aware upgrade path. One capability-aware
 delegation policy lives in `craft-delegate`; one phase owns the green landing

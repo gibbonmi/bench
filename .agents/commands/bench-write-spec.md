@@ -150,15 +150,35 @@ loop honest.
    `bench status`.
 
 9. **Conditional top-tier review before sign-off.** Spawn a top-tier reviewer
-   sub-agent **only** when the Handoff carries uncertainty flags (item 7) or the
-   draft deviates from the map. Give it a fresh small context — the Handoff plus
-   the draft, nothing else — and charge it with falsification questions (would
-   the cheapest wrong implementation pass this map? does every Handoff
-   assertable have a row? does each line match the cached routings?), never an
-   open "review this"; it returns findings and an advisory recommend/block
-   verdict. There is no standing top-tier pass, and the verdict is
-   advisory: sign-off stays mine. A complete Handoff with no uncertainty makes the
-   mechanical case, and conformance is work the gate already covers.
+   sub-agent when any of these fire, and not otherwise:
+
+   - the Handoff carries uncertainty flags (item 7);
+   - the draft deviates from the map;
+   - **no map backs the draft** — the reviewer-directed batch-drain override in the
+     entry contract. This is the path with the most undecided content and the
+     least prior sign-off, so it always gets the pass;
+   - **the map was written in the same session as the draft** — the
+     reviewer-closed path in the entry contract. The author is checking its own
+     recall, which is the bias the fresh-session default exists to remove;
+   - **the coverage map's red signals are mostly not observed reds** — when
+     `already covered` and `not TDD-able` outnumber rows with a real red
+     command, the map can pass its format check while grading nothing.
+
+   Give it a fresh small context — the Handoff (or, with no map, the decided
+   scope and the finding inventory it was compiled from) plus the draft, nothing
+   else — and charge it with falsification questions, never an open "review
+   this": would the cheapest wrong implementation pass this map? does every
+   Handoff assertable, or every finding, have a row that would actually go red if
+   it were left unfixed? does each line match the cached routings? On the
+   no-map and same-session triggers, charge it additionally at the defaults —
+   are the decisions the draft marked for veto the *only* ones it decided
+   unilaterally? It returns findings and an advisory recommend/block verdict.
+
+   There is still no standing pass, and the verdict is advisory: sign-off stays
+   mine. A complete Handoff with no uncertainty, compiled in a fresh session,
+   makes the mechanical case, and conformance is work the gate already covers.
+   Verify the reviewer's findings against the tree before folding them in — a
+   delegate's finding is a claim, not a result.
 
 ## Template
 
