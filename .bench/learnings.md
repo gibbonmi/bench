@@ -16,3 +16,28 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
 - **What happened:** …
 - **Right behavior:** …
 - **Proposed rule change:** … (or "none")
+
+## 2026-07-22 — accepting a delegate's green without checking its assertions were non-vacuous
+
+**What happened.** During the FT85 build I accepted the payload slice (later commit
+`a6dcec3`) after verifying its gate was green, its diff was scoped to its charge, and
+its reported red signals were real. It landed with a defect: the kit-only allowlist row
+named `.agents/skills/craft-synthesis`, but the directory is `bench-craft-synthesis`.
+That skill therefore kept shipping to consumer repos and into the npm tarball — the
+exact least-privilege hole the story existed to close — while the story's contract
+assertions passed by asserting the absence of a path that never existed. The next
+slice's delegate found it.
+
+**What the right behavior was.** A green gate cannot detect a vacuous assertion: a test
+that asserts "path X is absent" passes trivially when X is misspelled. When a delegate's
+red signal is an *absence* assertion, verifying the claim requires confirming the named
+paths exist in the source tree — one `ls` would have caught this. More generally, the
+verification step in `craft-delegate` should treat absence-shaped assertions as a named
+case needing an existence check on the identifiers, not just a gate reading.
+
+**Proposed rule change.** Add to `craft-delegate`'s verification discipline: when a
+delegate's evidence rests on an assertion that something is absent, excluded, or
+withheld, verify the named identifiers resolve to real things before accepting. Consider
+whether the gate itself can hold this — a conformance check that every `source` path in
+`.bench/consumer-payload.json` exists in the tree would have made the defect red rather
+than invisible, and that is a cheap single-source check.

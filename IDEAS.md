@@ -1,0 +1,1 @@
+- 2026-07-22  TestFT78Story5ProofLedger in internal/contract/runtime flakes under parallel gate load: startStory5GateOwner gives a spawned 'bash bench.sh gate' only 5s to write its started marker. Cost two full gate re-runs during the FT85 build. Consider raising the deadline or making the wait load-aware.
