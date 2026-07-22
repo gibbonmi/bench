@@ -97,7 +97,7 @@ scripts/smoke-artifacts.sh
 scripts/smoke-offline.sh
 scripts/verify-release-artifact.mjs
 scripts/write-deterministic-archive.mjs
-scripts/wrapper-assets.json
+.bench/consumer-payload.json
 internal/releaseevidence/artifact_evidence.go
 internal/releaseevidence/artifact_proofs.go
 internal/preflight/command.go

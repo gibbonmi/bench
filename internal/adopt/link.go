@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	kitpayload "github.com/gibbonmi/bench"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -46,7 +47,11 @@ func Link(args []string, stdout, stderr io.Writer, version string) int {
 		mode = "copy"
 		fmt.Fprintln(stdout, "(running from an ephemeral package cache - using copy mode so files don't dangle)")
 	}
-	plan := buildLinkPlan(kit)
+	plan, err := buildLinkPlan(kit)
+	if err != nil {
+		fmt.Fprintln(stderr, toon.Errorf("consumer payload allowlist rejected", err.Error()))
+		return 1
+	}
 	result, _ := transactionalLink(root, kit, mode, version, plan, stdout, stderr)
 	if result != 0 && result != 3 {
 		return result
@@ -67,85 +72,143 @@ func isEphemeralKit(kit string) bool {
 		strings.Contains(kit, "/.npm/_cacache/")
 }
 
-func buildLinkPlan(kit string) []planEntry {
+// buildLinkPlan is the sole reader of the consumer-payload allowlist for the link
+// destination: every row it writes, and the audience filter that keeps kit-only rows
+// out of every destination (including the .claude/ adapter mirrors), come from the
+// root-level kitpayload package (embedding .bench/consumer-payload.json) rather than a
+// second hand-listed plan. A consumer row's destination is its source path unchanged,
+// except the top-level bin/ tree which lands under the linked repo's .bench/bin/ so a
+// consumer's own bin/ stays untouched.
+func buildLinkPlan(kit string) ([]planEntry, error) {
+	rows, err := kitpayload.PayloadRows()
+	if err != nil {
+		return nil, err
+	}
+	excluded := kitpayload.PayloadKitOnlyPrefixes(rows)
+
 	var plan []planEntry
-	appendTreeToPlan(&plan, filepath.Join(kit, "bin"), ".bench/bin", "file")
 	if bin := currentExecutablePath(); bin != "" {
 		plan = append(plan, planEntry{src: bin, rel: ".bench/dist/bench", kind: "file"})
 	}
 	plan = append(plan, planEntry{rel: ".bench/dist/.gitignore", kind: "inline", content: distGitignore})
-	for _, e := range []planEntry{
-		{src: filepath.Join(kit, ".bench", "BENCH.md"), rel: ".bench/BENCH.md", kind: "file"},
-		{src: filepath.Join(kit, ".bench", "BENCH-reference.md"), rel: ".bench/BENCH-reference.md", kind: "file"},
-		{src: filepath.Join(kit, ".claude", "README.md"), rel: ".claude/README.md", kind: "file"},
-		{src: filepath.Join(kit, ".claude", "settings.json"), rel: ".claude/settings.json", kind: "file"},
-		{src: filepath.Join(kit, ".codex", "hooks.json"), rel: ".codex/hooks.json", kind: "file"},
-	} {
-		plan = append(plan, e)
+
+	for _, row := range kitpayload.PayloadConsumerRows(rows) {
+		dest, ok := linkDestination(row.Source)
+		if !ok {
+			continue
+		}
+		src := filepath.Join(kit, filepath.FromSlash(row.Source))
+		if !row.Tree {
+			// A row absent from this kit checkout is skipped, not a hard failure:
+			// a minimal or partial kit tree (a stripped fixture, an in-progress
+			// checkout) omits assets it does not carry rather than promising ones
+			// it cannot deliver. transactionalLink still catches a source that
+			// disappears between planning and promotion.
+			if _, statErr := os.Stat(src); statErr != nil {
+				continue
+			}
+			plan = append(plan, planEntry{src: src, rel: dest, kind: "file"})
+			continue
+		}
+		entries, err := treeEntries(src, dest, "file", row.Source, excluded)
+		if err != nil {
+			return nil, err
+		}
+		plan = append(plan, entries...)
 	}
-	appendTreeToPlan(&plan, filepath.Join(kit, ".bench", "hooks"), ".bench/hooks", "file")
-	appendTreeToPlan(&plan, filepath.Join(kit, ".bench", "adapters"), ".bench/adapters", "file")
-	appendTreeToPlan(&plan, filepath.Join(kit, ".bench", "lib"), ".bench/lib", "file")
-	appendTreeToPlan(&plan, filepath.Join(kit, ".agents", "commands"), ".agents/commands", "file")
-	appendTreeToPlan(&plan, filepath.Join(kit, ".agents", "skills"), ".agents/skills", "file")
-	appendTreeToPlan(&plan, filepath.Join(kit, ".agents", "commands"), ".claude/commands", "adapter")
-	appendClaudeSkillsToPlan(&plan, kit)
-	return plan
+
+	adapterCommands, err := treeEntries(filepath.Join(kit, ".agents", "commands"), ".claude/commands", "adapter", ".agents/commands", excluded)
+	if err != nil {
+		return nil, err
+	}
+	plan = append(plan, adapterCommands...)
+
+	adapterSkills, err := claudeSkillsEntries(kit, excluded)
+	if err != nil {
+		return nil, err
+	}
+	plan = append(plan, adapterSkills...)
+	return plan, nil
 }
 
-func appendTreeToPlan(plan *[]planEntry, srcRoot, destRoot, kind string) {
+// linkDestination maps an allowlist row's kit-relative source path to the path it is
+// written at inside a linked repo. Every row's destination equals its source, except
+// the top-level bin/ tree (npm's install-time surface), which is written under the
+// linked repo's own .bench/bin/ instead of colliding with a consumer's bin/. A row
+// outside the linked destinations this function names (README.md, CHANGELOG.md,
+// projects/*.md) is not part of the link plan at all — it ships only in the npm
+// tarball, via the same allowlist read by the release-evidence and package.json
+// derivations.
+func linkDestination(src string) (string, bool) {
+	switch {
+	case strings.HasPrefix(src, "bin/"):
+		return ".bench/" + src, true
+	case strings.HasPrefix(src, ".bench/"), strings.HasPrefix(src, ".claude/"), strings.HasPrefix(src, ".codex/"), strings.HasPrefix(src, ".agents/"):
+		return src, true
+	default:
+		return "", false
+	}
+}
+
+// treeEntries walks srcRoot (the on-disk directory for the allowlist row named by
+// srcRel) and returns one planEntry per regular file, skipping any path the allowlist
+// marks kit-only. A non-regular file (FIFO, device, socket) is refused by name instead
+// of being silently skipped or blocking a later open — the kit's own source tree must
+// never be able to wedge the plan builder.
+func treeEntries(srcRoot, destRoot, kind, srcRel string, excludedPrefixes []string) ([]planEntry, error) {
 	info, err := os.Stat(srcRoot)
 	if err != nil || !info.IsDir() {
-		return
+		return nil, nil
 	}
 	var entries []planEntry
-	_ = filepath.WalkDir(srcRoot, func(path string, d os.DirEntry, err error) error {
+	walkErr := filepath.WalkDir(srcRoot, func(path string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
+			return err
+		}
+		rel, relErr := filepath.Rel(srcRoot, path)
+		if relErr != nil {
+			return relErr
+		}
+		rel = filepath.ToSlash(rel)
+		sourcePath := srcRel + "/" + rel
+		if kitpayload.PayloadExcluded(sourcePath, excludedPrefixes) {
 			return nil
 		}
-		info, err := d.Info()
-		if err != nil || !info.Mode().IsRegular() {
-			return nil
+		fileInfo, infoErr := d.Info()
+		if infoErr != nil {
+			return infoErr
 		}
-		rel, err := filepath.Rel(srcRoot, path)
-		if err != nil {
-			return nil
+		if !fileInfo.Mode().IsRegular() {
+			return fmt.Errorf("consumer payload tree %q contains a non-regular file: %s", srcRel, sourcePath)
 		}
 		entries = append(entries, planEntry{src: path, rel: filepath.ToSlash(filepath.Join(destRoot, rel)), kind: kind})
 		return nil
 	})
+	if walkErr != nil {
+		return nil, walkErr
+	}
 	sort.Slice(entries, func(i, j int) bool { return entries[i].rel < entries[j].rel })
-	*plan = append(*plan, entries...)
+	return entries, nil
 }
 
-func appendClaudeSkillsToPlan(plan *[]planEntry, kit string) {
-	srcRoot := filepath.Join(kit, ".agents", "skills")
-	info, err := os.Stat(srcRoot)
-	if err != nil || !info.IsDir() {
-		return
+// claudeSkillsEntries mirrors .agents/skills into .claude/skills for skills that have
+// no same-named command (a skill with a command already reaches Claude Code through the
+// command mirror). It reuses treeEntries for the walk, the kit-only exclusion, and the
+// non-regular-file refusal, then drops the skills a command mirror already covers.
+func claudeSkillsEntries(kit string, excludedPrefixes []string) ([]planEntry, error) {
+	entries, err := treeEntries(filepath.Join(kit, ".agents", "skills"), ".claude/skills", "adapter", ".agents/skills", excludedPrefixes)
+	if err != nil {
+		return nil, err
 	}
-	var entries []planEntry
-	_ = filepath.WalkDir(srcRoot, func(path string, d os.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
-			return nil
-		}
-		info, err := d.Info()
-		if err != nil || !info.Mode().IsRegular() {
-			return nil
-		}
-		rel, err := filepath.Rel(srcRoot, path)
-		if err != nil {
-			return nil
-		}
-		top := strings.Split(filepath.ToSlash(rel), "/")[0]
+	filtered := entries[:0]
+	for _, e := range entries {
+		top := strings.SplitN(strings.TrimPrefix(e.rel, ".claude/skills/"), "/", 2)[0]
 		if _, err := os.Stat(filepath.Join(kit, ".agents", "commands", top+".md")); err == nil {
-			return nil
+			continue
 		}
-		entries = append(entries, planEntry{src: path, rel: filepath.ToSlash(filepath.Join(".claude/skills", rel)), kind: "adapter"})
-		return nil
-	})
-	sort.Slice(entries, func(i, j int) bool { return entries[i].rel < entries[j].rel })
-	*plan = append(*plan, entries...)
+		filtered = append(filtered, e)
+	}
+	return filtered, nil
 }
 
 func currentExecutablePath() string {

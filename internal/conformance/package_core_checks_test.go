@@ -69,8 +69,72 @@ func checkPackageFiles(root string) []string {
 			required = append(required, buildAssets...)
 			diags = append(diags, checkNpmPackAssets(probe.Stdout, required)...)
 		}
+		// Independent of whether the build-input inventory resolved: the kit-only
+		// guard only needs the packed file list and the allowlist, both already in
+		// hand, so a fixture too minimal to carry cmd/ and internal/ still exercises it.
+		diags = append(diags, checkNoKitOnlyPackedAssets(root, probe.Stdout)...)
 	}
 	return append(diags, checkRepoOnlyPackageClaims(root)...)
+}
+
+// checkNoKitOnlyPackedAssets is the FT85 story 3 forbidden-asset guard: it derives the
+// kit-only prefix set from the same canonical allowlist buildLinkPlan and
+// build-release-evidence.mjs read, and grades the real npm pack --dry-run output
+// against it, so a kit-only path readmitted anywhere in package.json's files[] (not
+// just the wholesale .agents/ case the allowlist itself replaced) still turns the gate
+// red. It reads .bench/consumer-payload.json from the graded root, not the running
+// binary's own copy, so a canary fixture's mutated allowlist is what gets graded.
+func checkNoKitOnlyPackedAssets(root, packJSON string) []string {
+	prefixes, err := kitOnlyAllowlistPrefixes(root)
+	if err != nil || len(prefixes) == 0 {
+		return nil
+	}
+	var packs []struct {
+		Files []struct {
+			Path string `json:"path"`
+		} `json:"files"`
+	}
+	if err := json.Unmarshal([]byte(packJSON), &packs); err != nil || len(packs) == 0 {
+		return nil
+	}
+	var diags []string
+	for _, file := range packs[0].Files {
+		rel := strings.TrimPrefix(file.Path, "package/")
+		if excludedByAllowlistPrefix(rel, prefixes) {
+			diags = append(diags, "npm package includes kit-only allowlist asset "+rel)
+		}
+	}
+	return diags
+}
+
+func kitOnlyAllowlistPrefixes(root string) ([]string, error) {
+	data, err := os.ReadFile(filepath.Join(root, ".bench", "consumer-payload.json"))
+	if err != nil {
+		return nil, err
+	}
+	var rows []struct {
+		Source   string `json:"source"`
+		Audience string `json:"audience"`
+	}
+	if err := json.Unmarshal(data, &rows); err != nil {
+		return nil, err
+	}
+	var out []string
+	for _, r := range rows {
+		if r.Audience == "kit-only" {
+			out = append(out, r.Source)
+		}
+	}
+	return out, nil
+}
+
+func excludedByAllowlistPrefix(rel string, prefixes []string) bool {
+	for _, p := range prefixes {
+		if rel == p || strings.HasPrefix(rel, p+"/") {
+			return true
+		}
+	}
+	return false
 }
 
 func checkNpmPackAssets(packJSON string, required []string) []string {

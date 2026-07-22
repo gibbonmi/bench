@@ -11,6 +11,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/terminal"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 // Setup is the `bench setup` entry point (FT76): it composes the existing init,
@@ -293,7 +294,11 @@ func renderSetupPreview(root string, facts setupFacts) string {
 // that path is left untouched and never recorded in the manifest, so a later hand-edit
 // can never read back as a modified-managed conflict.
 func convergeSetup(root, kit, version string, facts setupFacts, stdout, stderr io.Writer) int {
-	plan := buildLinkPlan(kit)
+	plan, err := buildLinkPlan(kit)
+	if err != nil {
+		fmt.Fprintln(stderr, toon.Errorf("consumer payload allowlist rejected", err.Error()))
+		return 1
+	}
 	plan = append(plan, planEntry{rel: ".bench/gate.sh", kind: "inline-exec", content: setupGateScript(facts)})
 	profileRel := filepath.Join("projects", facts.profileName+".md")
 	plan = append(plan, planEntry{rel: filepath.ToSlash(profileRel), kind: "seed", content: scaffoldProfile(facts)})

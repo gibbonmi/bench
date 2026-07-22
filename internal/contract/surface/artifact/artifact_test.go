@@ -27,9 +27,43 @@ type artifactPlatform struct {
 	Runner string `json:"runner"`
 }
 type wrapperAsset struct {
-	Source string `json:"source"`
-	Mode   string `json:"mode"`
-	Tree   bool   `json:"tree"`
+	Source   string `json:"source"`
+	Mode     string `json:"mode"`
+	Tree     bool   `json:"tree"`
+	Audience string `json:"audience"`
+}
+
+// consumerWrapperAssets and kitOnlyWrapperPrefixes mirror the audience filter
+// scripts/build-release-evidence.mjs applies to the same allowlist: only "consumer"
+// rows reach the wrapper tarball, and a "kit-only" row is excluded even from inside a
+// consumer-audience tree it happens to sit under.
+func consumerWrapperAssets(assets []wrapperAsset) []wrapperAsset {
+	var out []wrapperAsset
+	for _, a := range assets {
+		if a.Audience == "consumer" {
+			out = append(out, a)
+		}
+	}
+	return out
+}
+
+func kitOnlyWrapperPrefixes(assets []wrapperAsset) []string {
+	var out []string
+	for _, a := range assets {
+		if a.Audience == "kit-only" {
+			out = append(out, a.Source)
+		}
+	}
+	return out
+}
+
+func excludedByKitOnlyPrefix(rel string, prefixes []string) bool {
+	for _, p := range prefixes {
+		if rel == p || strings.HasPrefix(rel, p+"/") {
+			return true
+		}
+	}
+	return false
 }
 
 func TestDistributableArtifactContracts(t *testing.T) {
@@ -103,7 +137,7 @@ func TestArtifactBuilderRejectsSpecialReleaseEvidenceInput(t *testing.T) {
 
 func assertWrapperAssetPolicy(t *testing.T, root string) {
 	t.Helper()
-	manifest := filepath.Join(root, "scripts", "wrapper-assets.json")
+	manifest := filepath.Join(root, ".bench", "consumer-payload.json")
 	if _, err := os.Stat(manifest); os.IsNotExist(err) {
 		return
 	}
@@ -227,8 +261,9 @@ func assertWrapperArtifact(t *testing.T, root, path, version string, matrix []ar
 	entries := contract.ReadTarball(t, path)
 	expectedModes := map[string]int64{"package/package.json": 0o644, "package/component-manifest.json": 0o644}
 	var assets []wrapperAsset
-	contract.ReadJSONFile(t, filepath.Join(root, "scripts", "wrapper-assets.json"), &assets)
-	for _, asset := range assets {
+	contract.ReadJSONFile(t, filepath.Join(root, ".bench", "consumer-payload.json"), &assets)
+	kitOnlyPrefixes := kitOnlyWrapperPrefixes(assets)
+	for _, asset := range consumerWrapperAssets(assets) {
 		mode := int64(0)
 		fmt.Sscanf(asset.Mode, "%o", &mode)
 		source := filepath.Join(root, filepath.FromSlash(asset.Source))
@@ -241,10 +276,14 @@ func assertWrapperArtifact(t *testing.T, root, path, version string, matrix []ar
 				return err
 			}
 			rel, err := filepath.Rel(root, name)
-			if err == nil {
-				expectedModes["package/"+filepath.ToSlash(rel)] = mode
+			if err != nil {
+				return err
 			}
-			return err
+			if excludedByKitOnlyPrefix(filepath.ToSlash(rel), kitOnlyPrefixes) {
+				return nil
+			}
+			expectedModes["package/"+filepath.ToSlash(rel)] = mode
+			return nil
 		})
 		if err != nil {
 			t.Fatal(err)

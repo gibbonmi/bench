@@ -68,6 +68,51 @@ func TestRepairAppearsInColdPickupInventory(t *testing.T) {
 	}
 }
 
+// TestPackageFilesExcludeKitOnlyAllowlistRows is the FT85 story 3 red signal for
+// package.json: npm cannot read .bench/consumer-payload.json (files[] is its own
+// literal input), so this derives the exclusion pattern every kit-only allowlist row
+// requires from that same canonical file and grades files[] against it, rather than
+// letting files[] carry its own independent guess at the exclusion set. Before the
+// wholesale ".agents/" entry was narrowed, this failed against every one of these rows.
+func TestPackageFilesExcludeKitOnlyAllowlistRows(t *testing.T) {
+	root := NewHarness(t).Root
+	var rows []struct {
+		Source   string `json:"source"`
+		Tree     bool   `json:"tree"`
+		Audience string `json:"audience"`
+	}
+	if err := readJSONAt(root, ".bench/consumer-payload.json", &rows); err != nil {
+		t.Fatalf("read consumer payload allowlist: %v", err)
+	}
+
+	var pkg struct {
+		Files []string `json:"files"`
+	}
+	if err := readJSONAt(root, "package.json", &pkg); err != nil {
+		t.Fatalf("read package.json: %v", err)
+	}
+	files := map[string]bool{}
+	for _, f := range pkg.Files {
+		files[f] = true
+	}
+
+	if !files[".agents/"] {
+		t.Fatal("package.json files[] dropped the .agents/ tree entry the allowlist's kit-only rows are meant to narrow")
+	}
+	for _, row := range rows {
+		if row.Audience != "kit-only" {
+			continue
+		}
+		want := "!" + row.Source
+		if row.Tree {
+			want += "/**"
+		}
+		if !files[want] {
+			t.Fatalf("package.json files[] is missing the derived exclusion %q for kit-only allowlist row %q", want, row.Source)
+		}
+	}
+}
+
 // shippedFiles returns every file the npm tarball would carry, expanding package.json
 // files[] directory entries recursively. It is the single source of the shipped-file
 // set; callers filter it (markdown prose sweep, identity-string sweep).

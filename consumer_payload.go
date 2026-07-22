@@ -1,0 +1,88 @@
+// Package bench embeds the consumer-payload allowlist, the single canonical source of
+// what a linked repo, the npm wrapper tarball, and the release-evidence pipeline are
+// permitted to ship. The tracked bytes live at .bench/consumer-payload.json — the one
+// copy — so shell and Node readers reach it without a Go build. go:embed cannot match a
+// pattern against a dot-prefixed directory's contents, but it can embed a file named
+// explicitly, so this root-level package (the module root carries no other .go files)
+// names the path directly and gives internal/adopt the allowlist compiled into the
+// binary rather than resolved against whatever kit directory happens to be on disk.
+package bench
+
+import (
+	_ "embed"
+	"encoding/json"
+	"fmt"
+)
+
+//go:embed .bench/consumer-payload.json
+var consumerPayloadJSON []byte
+
+// PayloadRow is one allowlist entry: a source path relative to the kit root, its
+// shipped file mode, whether it names a directory to walk, and who receives it.
+type PayloadRow struct {
+	Source   string `json:"source"`
+	Mode     string `json:"mode"`
+	Tree     bool   `json:"tree"`
+	Audience string `json:"audience"`
+}
+
+const (
+	// PayloadAudienceConsumer marks a row every linked repo and packaged artifact receives.
+	PayloadAudienceConsumer = "consumer"
+	// PayloadAudienceKitOnly marks a row withheld from every destination: linked repos,
+	// the npm wrapper tarball, and the release-evidence pipeline.
+	PayloadAudienceKitOnly = "kit-only"
+)
+
+// PayloadRows parses the embedded allowlist. buildLinkPlan is the Go caller; the Node
+// release-evidence builder and the package-shipped-surface conformance suite read the
+// same tracked bytes directly (a JSON file, not a Go call) rather than hand-listing the
+// payload a second time.
+func PayloadRows() ([]PayloadRow, error) {
+	var rows []PayloadRow
+	if err := json.Unmarshal(consumerPayloadJSON, &rows); err != nil {
+		return nil, fmt.Errorf("consumer payload allowlist is invalid: %w", err)
+	}
+	for _, r := range rows {
+		if r.Source == "" || r.Audience != PayloadAudienceConsumer && r.Audience != PayloadAudienceKitOnly {
+			return nil, fmt.Errorf("consumer payload allowlist row is invalid: %+v", r)
+		}
+	}
+	return rows, nil
+}
+
+// PayloadConsumerRows returns only the rows every destination is allowed to ship.
+func PayloadConsumerRows(rows []PayloadRow) []PayloadRow {
+	var out []PayloadRow
+	for _, r := range rows {
+		if r.Audience == PayloadAudienceConsumer {
+			out = append(out, r)
+		}
+	}
+	return out
+}
+
+// PayloadKitOnlyPrefixes returns each kit-only row's source path, for callers that need
+// to exclude a matching file (exact match) or tree (prefix match) while walking a
+// consumer-audience directory that contains both.
+func PayloadKitOnlyPrefixes(rows []PayloadRow) []string {
+	var out []string
+	for _, r := range rows {
+		if r.Audience == PayloadAudienceKitOnly {
+			out = append(out, r.Source)
+		}
+	}
+	return out
+}
+
+// PayloadExcluded reports whether sourcePath (a kit-relative path, forward-slash
+// separated) falls under one of the kit-only prefixes: an exact match (a withheld
+// file) or a path inside a withheld tree.
+func PayloadExcluded(sourcePath string, kitOnlyPrefixes []string) bool {
+	for _, ex := range kitOnlyPrefixes {
+		if sourcePath == ex || len(sourcePath) > len(ex) && sourcePath[:len(ex)+1] == ex+"/" {
+			return true
+		}
+	}
+	return false
+}

@@ -1,7 +1,7 @@
 [
   {
-    "path": "scripts/wrapper-assets.json",
-    "old": "  { \"source\": \".bench/adapters\", \"mode\": \"0755\", \"tree\": true },\n",
+    "path": ".bench/consumer-payload.json",
+    "old": "  { \"source\": \".bench/adapters\", \"mode\": \"0755\", \"tree\": true, \"audience\": \"consumer\" },\n",
     "new": ""
   }
 ]

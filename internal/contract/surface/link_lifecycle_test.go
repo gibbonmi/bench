@@ -18,6 +18,128 @@ import (
 func TestLinkLifecycleHostileContracts(t *testing.T) {
 	contract.SkipIfSubjectBenchMissing(t)
 	testLinkRejectsHostileDroppedRows(t)
+	testLinkRejectsFIFOInAllowlistedKitTree(t)
+}
+
+// TestLinkPayloadAllowlistContracts pins the consumer-payload allowlist as the single
+// source of what a fresh link writes: kit-only surfaces reach no destination (FT85
+// story 1), a stray file under an allowlisted tree's kit-only subtree is not linked
+// even though the tree itself is walked (story 2), and a space-bearing path inside an
+// allowlisted tree survives link and unlink intact (story 2 edge inventory row).
+func TestLinkPayloadAllowlistContracts(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	contract.RunParallel(t, "bench link kit-only exclusion contract failed", testLinkExcludesKitOnlySurfaces)
+	contract.RunParallel(t, "bench link stray kit-only-tree asset contract failed", testLinkExcludesStrayAssetUnderKitOnlyTree)
+	contract.RunParallel(t, "bench link space-bearing allowlisted path contract failed", testLinkSpaceBearingAllowlistedTreePath)
+}
+
+// testLinkExcludesKitOnlySurfaces is the FT85 story 1 red signal: a fresh link must
+// write no bench-assess, bench-update-kit, or craft-synthesis asset to any destination,
+// including the .claude/ adapter mirrors. Before the allowlist's audience filter
+// existed, buildLinkPlan copied both .agents trees wholesale, so every one of these
+// paths would be present.
+func testLinkExcludesKitOnlySurfaces(t *testing.T) {
+	f := contract.NewFixture(t)
+	linkOK(t, f)
+
+	for _, rel := range []string{
+		".agents/commands/bench-assess.md",
+		".agents/commands/bench-update-kit.md",
+		".agents/skills/bench-assess/SKILL.md",
+		".agents/skills/bench-update-kit/SKILL.md",
+		".agents/skills/craft-synthesis/SKILL.md",
+		".claude/commands/bench-assess.md",
+		".claude/commands/bench-update-kit.md",
+		".claude/skills/craft-synthesis/SKILL.md",
+	} {
+		requireLinkNotExists(t, f, rel, "fresh link wrote kit-only surface "+rel)
+	}
+}
+
+// testLinkExcludesStrayAssetUnderKitOnlyTree is the FT85 story 2 red signal: the link
+// plan's consumer entries equal the allowlist's consumer rows, so a file added under a
+// kit-only subtree of an otherwise-walked allowlisted tree (.agents/skills) is not
+// written even though the tree itself is linked. Before the plan was allowlist-driven,
+// the tree walk had no exclusion at all, so this stray file would appear.
+func testLinkExcludesStrayAssetUnderKitOnlyTree(t *testing.T) {
+	f := contract.NewFixture(t, contract.WithNoRepo())
+	kit := payloadTestKit(t, f, "kit-stray")
+	contract.WriteFileAbs(t, filepath.Join(kit, ".agents", "skills", "bench-assess", "stray-new-file.md"), "not part of any released bench-assess skill\n")
+
+	repo := filepath.Join(f.Root, "repo")
+	if err := os.Mkdir(repo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	r := linkFixtureAt(t, repo, f.Env)
+	r.Git("init", "-q")
+	r.BenchEnv(map[string]string{"BENCH_KIT": kit}, "link").RequireExit(0)
+
+	requireLinkNotExists(t, r, ".agents/skills/bench-assess/stray-new-file.md", "link wrote a stray file added under a kit-only subtree of an allowlisted tree")
+}
+
+// testLinkSpaceBearingAllowlistedTreePath is the FT85 story 2 edge-inventory row: an
+// allowlisted tree containing a space-bearing path links and unlinks intact.
+func testLinkSpaceBearingAllowlistedTreePath(t *testing.T) {
+	f := contract.NewFixture(t, contract.WithNoRepo())
+	kit := payloadTestKit(t, f, "kit-space")
+	spaceRel := filepath.Join(".agents", "skills", "bench-craft-seams", "extra notes.md")
+	contract.WriteFileAbs(t, filepath.Join(kit, spaceRel), "space-bearing path payload\n")
+
+	repo := filepath.Join(f.Root, "repo")
+	if err := os.Mkdir(repo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	r := linkFixtureAt(t, repo, f.Env)
+	r.Git("init", "-q")
+	r.BenchEnv(map[string]string{"BENCH_KIT": kit}, "link").RequireExit(0)
+	requireLinkFile(t, r, filepath.ToSlash(spaceRel))
+
+	unlinkOK(t, r)
+	requireLinkNotExists(t, r, filepath.ToSlash(spaceRel), "unlink left a space-bearing allowlisted path behind")
+}
+
+// testLinkRejectsFIFOInAllowlistedKitTree is the FT85 story 2 edge-inventory row for
+// special files in script-discovery paths: a non-regular file inside an allowlisted
+// tree on the kit side is refused by name before it is read, rather than blocking the
+// plan builder or silently vanishing from the linked tree.
+func testLinkRejectsFIFOInAllowlistedKitTree(t *testing.T) {
+	f := contract.NewFixture(t, contract.WithNoRepo())
+	kit := payloadTestKit(t, f, "kit-fifo")
+	fifoPath := filepath.Join(kit, ".agents", "skills", "bench-craft-seams", "blocked.fifo")
+	if err := syscall.Mkfifo(fifoPath, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	repo := filepath.Join(f.Root, "repo")
+	if err := os.Mkdir(repo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	r := linkFixtureAt(t, repo, f.Env)
+	r.Git("init", "-q")
+	probe := contract.RunAtWithTimeout(t, r, r.Root, map[string]string{"BENCH_KIT": kit}, time.Second, "bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "link")
+	if probe.TimedOut {
+		t.Fatal("link blocked opening a FIFO inside an allowlisted kit tree")
+	}
+	probe.RequireExit(1)
+	probe.RequireContains(probe.Stderr, "blocked.fifo")
+	requireLinkNotExists(t, r, ".bench/link-manifest.tsv", "link refusing a hostile kit tree still wrote a manifest")
+}
+
+// payloadTestKit builds a full working kit copy (every source the allowlist can name)
+// so a test can mutate one file before linking against it via BENCH_KIT.
+func payloadTestKit(t *testing.T, f contract.Fixture, name string) string {
+	t.Helper()
+	root := contract.KitRoot(t)
+	kit := filepath.Join(f.Root, name)
+	contract.Mkdir(t, filepath.Join(kit, ".bench"))
+	contract.Mkdir(t, filepath.Join(kit, "dist"))
+	copyPaths(t, kit, filepath.Join(root, "bin"), filepath.Join(root, ".agents"), filepath.Join(root, ".claude"), filepath.Join(root, ".codex"))
+	copyFileTo(t, filepath.Join(root, ".bench", "BENCH.md"), filepath.Join(kit, ".bench", "BENCH.md"))
+	copyFileTo(t, filepath.Join(root, ".bench", "BENCH-reference.md"), filepath.Join(kit, ".bench", "BENCH-reference.md"))
+	copyFileTo(t, filepath.Join(root, "dist", "bench"), filepath.Join(kit, "dist", "bench"))
+	copyPaths(t, filepath.Join(kit, ".bench"), filepath.Join(root, ".bench", "hooks"), filepath.Join(root, ".bench", "adapters"), filepath.Join(root, ".bench", "lib"))
+	return kit
 }
 
 func TestLinkMarkerFenceContracts(t *testing.T) {

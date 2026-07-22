@@ -94,21 +94,35 @@ if (validateOnly) process.exit(0);
 
 const releasePlan = readReleasePlan(root);
 const matrix = releasePlan.targets;
-const assets = readJSON(path.join(root, "scripts/wrapper-assets.json"));
+// .bench/consumer-payload.json is the single canonical allowlist (also read by
+// buildLinkPlan via the root-level embed in consumer_payload.go, and by the
+// package-shipped-surface conformance suite): every row names its audience, and only
+// "consumer" rows reach the npm wrapper tarball. A "kit-only" row's source is excluded
+// here even when it sits inside a consumer-audience tree (e.g. .agents/skills/bench-
+// assess inside .agents/skills), so this stays the one place that decides who
+// receives what.
+const assets = readJSON(path.join(root, ".bench/consumer-payload.json"));
 const sourcePackage = readJSON(path.join(root, "package.json"));
 const seenDestinations = new Set();
 const byteOrder = (a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
 
 if (!Array.isArray(assets)) throw new Error("release evidence asset registry is invalid");
+const consumerAssets = assets.filter(a => a && a.audience === "consumer");
+const kitOnlyPrefixes = assets.filter(a => a && a.audience === "kit-only").map(a => a.source);
+function excludedByKitOnlyPrefix(relSource) {
+  return kitOnlyPrefixes.some(prefix => relSource === prefix || relSource.startsWith(`${prefix}/`));
+}
 
-function copyTree(src, dst, mode, label, destinationRoot = wrapperDir) {
+function copyTree(src, dst, mode, label, relSource, destinationRoot = wrapperDir) {
   const stat = fs.lstatSync(src);
   if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error(`${label} is not a real directory: ${src}`);
   for (const name of fs.readdirSync(src, {withFileTypes: true}).sort(byteOrder)) {
     rejectControl(name.name, `${label} entry`);
+    const childRel = `${relSource}/${name.name}`;
+    if (excludedByKitOnlyPrefix(childRel)) continue;
     const child = path.join(src, name.name);
     const target = path.join(dst, name.name);
-    if (name.isDirectory()) copyTree(child, target, mode, label, destinationRoot);
+    if (name.isDirectory()) copyTree(child, target, mode, label, childRel, destinationRoot);
     else if (name.isFile()) copyRegular(child, target, mode, label, destinationRoot);
     else throw new Error(`${label} contains an unsafe file: ${child}`);
   }
@@ -116,12 +130,12 @@ function copyTree(src, dst, mode, label, destinationRoot = wrapperDir) {
 
 function copyAssets(destination) {
   seenDestinations.clear();
-  for (const asset of assets) {
+  for (const asset of consumerAssets) {
     if (!asset || typeof asset.source !== "string") throw new Error("release evidence asset has no source");
     const mode = modeFrom(asset.mode);
     const source = sourcePath(asset.source);
     const target = path.join(destination, safeRelative(asset.source, "package destination"));
-    if (asset.tree) copyTree(source, target, mode, "wrapper allowlist tree");
+    if (asset.tree) copyTree(source, target, mode, "wrapper allowlist tree", asset.source);
     else copyRegular(source, target, mode, "wrapper allowlist input");
   }
 }
@@ -208,7 +222,7 @@ const optionalDependencies = Object.fromEntries(matrix.map(p => [`@redbench/${p.
 const wrapperPackage = {...sourcePackage, optionalDependencies};
 wrapperPackage.scripts = {...(sourcePackage.scripts || {})};
 delete wrapperPackage.scripts.prepare;
-wrapperPackage.files = [...assets.map(a => a.source), ...packageEvidence.map(evidence => evidence.path), componentSchema.path, pinSchema.path];
+wrapperPackage.files = [...consumerAssets.map(a => a.source), ...packageEvidence.map(evidence => evidence.path), componentSchema.path, pinSchema.path];
 writeJSON(path.join(wrapperDir, "package.json"), wrapperPackage);
 writeEvidence(wrapperDir, sourcePackage.name, sourcePackage.version, {os: "all", arch: "all"});
 
