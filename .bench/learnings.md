@@ -41,3 +41,22 @@ withheld, verify the named identifiers resolve to real things before accepting. 
 whether the gate itself can hold this — a conformance check that every `source` path in
 `.bench/consumer-payload.json` exists in the tree would have made the defect red rather
 than invisible, and that is a cheap single-source check.
+
+## 2026-07-22 — a load-dependent flake cost three full gate runs before a green commit
+
+- **What happened:** The FT85 review-fix commit was refused twice by a red gate, both
+  times on `TestFT78Story5ProofLedger` R14 subtests (`commit gate did not start`,
+  `gate owner did not reach pending state`) — different subtests each run, and the
+  test passed in isolation in 10s against 80s+ under gate load. The third identical
+  attempt went green with no code change. Roughly 35 minutes of wall clock bought
+  nothing.
+- **Right behavior:** What I did was correct under invariant 1 — I never weakened the
+  test, and I re-ran it in isolation to prove the flake rather than asserting it. But
+  after the second red on the same known-flaky test (already parked in `IDEAS.md`),
+  the better move was to stop and surface the blocked commit with the evidence and a
+  recommendation, rather than spend a third full gate run on a coin flip. A known
+  flake blocking a landing is a reviewer decision, not something to grind through.
+- **Proposed rule change:** Add to the gate/commit discipline: when a commit is
+  refused twice by the same test that is already recorded as a known flake and passes
+  in isolation, stop and hand back with the evidence instead of re-running. Retrying a
+  flake is not iteration toward green.
