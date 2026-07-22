@@ -195,12 +195,10 @@ func stagePlanEntry(dir string, e planEntry, mode string) (string, error) {
 		if !ok {
 			return "", fmt.Errorf("adapter target unavailable for %s", e.rel)
 		}
-		p := filepath.Join(dir, name)
-		return p, os.Symlink(target, p)
+		return stageSymlink(dir, name, target)
 	}
 	if mode == "symlink" && e.kind != "inline" {
-		p := filepath.Join(dir, name)
-		return p, os.Symlink(e.src, p)
+		return stageSymlink(dir, name, e.src)
 	}
 	if e.kind == "inline" {
 		return stageBytes(dir, name, []byte(e.content), 0o644)
@@ -280,21 +278,29 @@ func stageBeside(dest string, data []byte, mode os.FileMode) (string, []string, 
 		return "", nil, err
 	}
 	path := f.Name()
-	if err := f.Chmod(mode); err == nil {
-		_, err = f.Write(data)
-	}
+	err = f.Chmod(mode)
 	if err == nil {
-		err = f.Sync()
-	}
-	if cerr := f.Close(); err == nil {
-		err = cerr
+		err = writeSyncClose(path, f, data)
 	}
 	if err != nil {
+		_ = f.Close()
 		_ = os.Remove(path)
 		removeEmptyDirs(created)
 		return "", nil, err
 	}
 	return path, created, nil
+}
+
+func stageSymlink(dir, name, target string) (string, error) {
+	path := filepath.Join(dir, name)
+	if err := os.Symlink(target, path); err != nil {
+		return "", err
+	}
+	if err := syncDir(dir); err != nil {
+		_ = os.Remove(path)
+		return "", fmt.Errorf("sync staged symlink directory %s: %w", dir, err)
+	}
+	return path, nil
 }
 
 func missingDirs(dir string) []string {

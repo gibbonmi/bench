@@ -22,6 +22,16 @@ func stageBytes(dir, name string, data []byte, mode os.FileMode) (string, error)
 	if err != nil {
 		return "", err
 	}
+	if err := writeSyncClose(path, f, data); err != nil {
+		return "", err
+	}
+	return path, nil
+}
+
+// writeSyncClose is the one durable staged-write lifecycle. Callers choose where
+// their stage file lives, while this owns writing, syncing, closing, and cleanup.
+func writeSyncClose(path string, f *os.File, data []byte) error {
+	var err error
 	if _, err = f.Write(data); err == nil {
 		err = f.Sync()
 	}
@@ -30,9 +40,9 @@ func stageBytes(dir, name string, data []byte, mode os.FileMode) (string, error)
 	}
 	if err != nil {
 		_ = os.Remove(path)
-		return "", err
+		return err
 	}
-	return path, nil
+	return nil
 }
 
 func promoteAll(root string, changes []stagedChange) error {
@@ -70,7 +80,36 @@ func promoteAll(root string, changes []stagedChange) error {
 	for _, c := range done {
 		_ = os.Remove(c.backup)
 	}
+	if err := syncChangeParents(root, done); err != nil {
+		return err
+	}
 	return nil
+}
+
+func syncChangeParents(root string, changes []stagedChange) error {
+	dirs := map[string]bool{}
+	for _, c := range changes {
+		dest, ok := changeDestination(root, c)
+		if !ok {
+			return fmt.Errorf("invalid managed path %s", c.rel)
+		}
+		dirs[filepath.Dir(dest)] = true
+	}
+	for dir := range dirs {
+		if err := syncDir(dir); err != nil {
+			return fmt.Errorf("sync destination directory %s: %w", dir, err)
+		}
+	}
+	return nil
+}
+
+func syncDir(dir string) error {
+	f, err := os.Open(dir)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return f.Sync()
 }
 
 func rollback(root string, done []stagedChange, created map[string]bool) {

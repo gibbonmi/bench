@@ -39,6 +39,23 @@ func testLinkRollsBackOnFault(t *testing.T) {
 	}
 }
 
+func testLinkRelinkRollsBackOnFault(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "repo [1]")
+	if err := os.MkdirAll(root, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	f := contract.NewFixtureAt(t, root, contract.IsolatedEnv(t, root))
+	f.Git("init", "-q")
+	kitA, kitB := lifecycleKits(t, f)
+	f.BenchEnv(map[string]string{"BENCH_KIT": kitA}, "link").RequireExit(0)
+	contract.WriteFileAbs(t, filepath.Join(kitB, ".bench", "BENCH.md"), "replacement from kit B\n")
+	before := fixtureState(t, f)
+	f.BenchEnv(map[string]string{"BENCH_KIT": kitB, "BENCH_LINK_FAULT": "last"}, "link").RequireExit(1)
+	if after := fixtureState(t, f); after != before {
+		t.Fatalf("relink fault left repository residue\nbefore:\n%s\nafter:\n%s", before, after)
+	}
+}
+
 func fixtureState(t *testing.T, f contract.Fixture) string {
 	t.Helper()
 	var rows []string

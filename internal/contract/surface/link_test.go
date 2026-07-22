@@ -30,6 +30,7 @@ func TestLinkContracts(t *testing.T) {
 	contract.RunParallel(t, "bench link hooksPath conflict contract failed", testLinkHooksPathConflict)
 	contract.RunParallel(t, "managed pre-push gate pin contract failed", testManagedPrePushGatePinning)
 	contract.RunParallel(t, "bench link promotion rollback contract failed", testLinkRollsBackOnFault)
+	contract.RunParallel(t, "bench link relink promotion rollback contract failed", testLinkRelinkRollsBackOnFault)
 	contract.RunParallel(t, "bench link reconciles kit versions contract failed", testLinkReconcilesKitVersions)
 	contract.RunParallel(t, "bench link preserves modified dropped asset contract failed", testLinkKeepsModifiedDroppedAsset)
 	contract.RunParallel(t, "bench link lifecycle matrix contract failed", testLinkLifecycleMatrix)
