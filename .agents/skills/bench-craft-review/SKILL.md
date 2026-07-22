@@ -50,6 +50,14 @@ the name already means — hunt each one by name:
   until it says what it's for.
 - **Duplicated Code** — the code-standard defect above, two sources for one
   fact; collapse to one.
+- **Long Function** — a body that accreted past what one read can hold; extract
+  until each piece says one thing.
+- **Long Parameter List** — arguments multiplying at a call site; introduce a
+  type before they start traveling together.
+- **Global Data** — ambient state any code can mutate from anywhere; wrap access
+  in one owner.
+- **Mutable Data** — shared state read and rewritten from multiple sites;
+  narrow who writes, or copy instead of mutate.
 - **Feature Envy** — a function mostly reaching into another module's data;
   move it to where the data lives.
 - **Data Clumps** — the same few values always traveling together; make them
@@ -62,6 +70,8 @@ the name already means — hunt each one by name:
   gather the pieces into one module.
 - **Divergent Change** — one module edited for unrelated reasons; split it by
   reason for change.
+- **Lazy Element** — an abstraction whose reason for existing has since left —
+  a wrapper forwarding one call, a type with one field; inline it.
 - **Speculative Generality** — hooks and parameters for a future nobody
   scheduled; delete until needed.
 - **Message Chains** — `a.b().c().d()` walks through the object graph; hide
