@@ -136,6 +136,40 @@ func TestManifestParseEdges(t *testing.T) {
 	}
 }
 
+func TestPromoteAllRollsBackOnDestinationSyncFailure(t *testing.T) {
+	root := t.TempDir()
+	stage := t.TempDir()
+	existing := filepath.Join(root, "existing")
+	if err := os.WriteFile(existing, []byte("before\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	oldStage := filepath.Join(stage, "existing")
+	freshStage := filepath.Join(stage, "fresh")
+	if err := os.WriteFile(oldStage, []byte("after\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(freshStage, []byte("fresh\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	oldSync := syncDirectory
+	syncDirectory = func(string) error { return os.ErrPermission }
+	t.Cleanup(func() { syncDirectory = oldSync })
+
+	err := promoteAll(root, []stagedChange{
+		{rel: "existing", stage: oldStage, backup: filepath.Join(stage, "existing.backup")},
+		{rel: "fresh", stage: freshStage, backup: filepath.Join(stage, "fresh.backup")},
+	})
+	if err == nil {
+		t.Fatal("promoteAll succeeded despite destination sync failure")
+	}
+	if got, readErr := os.ReadFile(existing); readErr != nil || string(got) != "before\n" {
+		t.Fatalf("existing destination after sync failure = %q, %v; want original bytes", got, readErr)
+	}
+	if _, statErr := os.Lstat(filepath.Join(root, "fresh")); !os.IsNotExist(statErr) {
+		t.Fatalf("fresh destination survived sync failure: %v", statErr)
+	}
+}
+
 func TestAdapterTarget(t *testing.T) {
 	cases := map[string]string{
 		".claude/commands/bench-implement-spec.md":      "../../.agents/commands/bench-implement-spec.md",

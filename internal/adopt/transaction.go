@@ -16,6 +16,8 @@ type stagedChange struct {
 	rel, dest, stage, backup string
 }
 
+var syncDirectory = syncDir
+
 func stageBytes(dir, name string, data []byte, mode os.FileMode) (string, error) {
 	path := filepath.Join(dir, name)
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, mode)
@@ -77,30 +79,50 @@ func promoteAll(root string, changes []stagedChange) error {
 			}
 		}
 	}
+	if err := syncChangeParents(root, done); err != nil {
+		rollback(root, done, created)
+		syncChangeParentsBestEffort(root, done)
+		return err
+	}
 	for _, c := range done {
 		_ = os.Remove(c.backup)
-	}
-	if err := syncChangeParents(root, done); err != nil {
-		return err
 	}
 	return nil
 }
 
 func syncChangeParents(root string, changes []stagedChange) error {
-	dirs := map[string]bool{}
-	for _, c := range changes {
-		dest, ok := changeDestination(root, c)
-		if !ok {
-			return fmt.Errorf("invalid managed path %s", c.rel)
-		}
-		dirs[filepath.Dir(dest)] = true
+	dirs, err := changeParentDirs(root, changes)
+	if err != nil {
+		return err
 	}
 	for dir := range dirs {
-		if err := syncDir(dir); err != nil {
+		if err := syncDirectory(dir); err != nil {
 			return fmt.Errorf("sync destination directory %s: %w", dir, err)
 		}
 	}
 	return nil
+}
+
+func syncChangeParentsBestEffort(root string, changes []stagedChange) {
+	dirs, err := changeParentDirs(root, changes)
+	if err != nil {
+		return
+	}
+	for dir := range dirs {
+		_ = syncDirectory(dir)
+	}
+}
+
+func changeParentDirs(root string, changes []stagedChange) (map[string]bool, error) {
+	dirs := map[string]bool{}
+	for _, c := range changes {
+		dest, ok := changeDestination(root, c)
+		if !ok {
+			return nil, fmt.Errorf("invalid managed path %s", c.rel)
+		}
+		dirs[filepath.Dir(dest)] = true
+	}
+	return dirs, nil
 }
 
 func syncDir(dir string) error {

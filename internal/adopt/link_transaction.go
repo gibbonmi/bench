@@ -296,7 +296,7 @@ func stageSymlink(dir, name, target string) (string, error) {
 	if err := os.Symlink(target, path); err != nil {
 		return "", err
 	}
-	if err := syncDir(dir); err != nil {
+	if err := syncDirectory(dir); err != nil {
 		_ = os.Remove(path)
 		return "", fmt.Errorf("sync staged symlink directory %s: %w", dir, err)
 	}
