@@ -32,42 +32,6 @@ the cut.
 
 Sources: `RR:C-09`, `RR:C-11`, `RR:C-12`.
 
-**FT76 (HIGH) — one-command, repo-aware Bench bootstrap.** Build the Bench
-counterpart to Matt Pocock's `setup-matt-pocock-skills`: an explore → present
-→ confirm → write onboarding flow behind one public entry point (`npx --yes
-redbench@<immutable-version> setup`, with `bench setup` as the installed
-equivalent). It composes the existing link/init/setup seams; it must not grow a
-second asset installer or a second source for shared rules.
-
-The bootstrap inspects Git state, remotes, harness files, language/build/test
-signals, existing gates and project docs; proposes the smallest project
-profile and gate; asks only unresolved decisions one at a time; previews the
-plan; then transactionally seeds the managed Bench assets, a validated generic
-project profile and template set, gate/canary, context and ADR scaffolds, and
-the repo-local executable path. Every emitted pointer is validated against the
-packed artifact. It adds or updates one marker-owned Bench block in the
-appropriate `AGENTS.md` or `CLAUDE.md` without overwriting surrounding project
-content, duplicating rules, or creating competing instruction files. A
-preserved Claude instruction file that does not import Bench is an explicit red
-doctor state, never a false all-harness success.
-
-The acceptance seam is the artifact a new user receives, not the source tree:
-pack → install → bootstrap in empty and established repositories, including
-spaces, existing `AGENTS.md`/`CLAUDE.md`, hooks/settings, monorepos, no-global
-installs, fresh clones, offline artifacts, and every advertised target. Re-runs
-are idempotent and downgrade-aware; clean managed content updates, modified
-content is preserved and reported, stale assets reconcile, and `unlink`
-remains a true inverse. Success is at most one shell command plus one
-harness-native setup conversation and ends with a runnable local `bench`, an
-honest doctor report, an explicit reload instruction, and the exact next
-action. The closed FT76 decision map settles instruction-file selection,
-inferred-versus-confirmed facts, conflict semantics, and the seam between the
-deterministic CLI and the harness conversation; FT84's transactional
-lifecycle — the build-first dependency — has shipped. Next action is
-`/bench-write-spec`.
-
-Sources: `RR:A-02`, `RR:A-03`, `RR:A-04`, `RR:S-09`.
-
 **FT85 (HIGH) — least-privilege consumer payload and one coherent phase
 contract.** Generate the consumer payload from one canonical allowlist and
 exclude kit-only assessment, update, and synthesis surfaces. Consumers receive

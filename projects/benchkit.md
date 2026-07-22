@@ -120,8 +120,15 @@ coverage map; a class skipped here returns as a regression.
   paths, the primary checkout, ignored residuals, dirty nested repositories, and
   plan/apply drift all fail closed without losing recovery state
 - interrupt (SIGINT) mid-loop: leftover scratch state, leases, worktrees
-- re-run idempotency: relink, reused worktree, second `init`
+- re-run idempotency: relink, reused worktree, second `init`, second `setup`
 - cwd deeper than the repo root when the command assumes root
+- non-TTY stdin on a prompting command must fail closed naming its
+  non-interactive flags; `/dev/null` stdin reads as a character device, so
+  TTY-detection contracts must drive a pipe, not the default null device
+
+Known residual risk: `bench setup`'s real-TTY confirm wiring is one untested
+constructor line binding stdin — testing it needs a pty dependency, which is a
+reviewer decision the FT76 spec deliberately left open.
 
 ## Gate (`.bench/gate.sh`)
 
