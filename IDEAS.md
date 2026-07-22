@@ -1,1 +1,6 @@
 - 2026-07-22  TestFT78Story5ProofLedger in internal/contract/runtime flakes under parallel gate load: startStory5GateOwner gives a spawned 'bash bench.sh gate' only 5s to write its started marker. Cost two full gate re-runs during the FT85 build. Consider raising the deadline or making the wait load-aware.
+- 2026-07-22  FT85 review: bench upgrade prerelease->release is a silent no-op (compareKitVersions strips the suffix, 1.2.3 vs 1.2.3-rc1 compares equal); manifest stays stamped -rc1
+- 2026-07-22  FT85 review: a symlink anywhere inside an allowlisted tree hard-fails bench link/upgrade (link.go refuses non-regular files); only FIFO is exercised, and only under .agents/skills
+- 2026-07-22  FT85 review: .bench/skills-index.sh parses the allowlist with a single-line sed requiring source-before-audience key order, and word-splits space-bearing sources; reformatting the JSON silently drops every kit-only marker
+- 2026-07-22  FT85 review (suspected): payload allowlist accepts duplicate rows and traversal sources like .bench/../../x; PayloadRows validates only non-empty source and known audience
+- 2026-07-22  FT85 review (suspected): bench upgrade lacks coverage for unknown flag, --check --force together, unparseable #kit header, unreadable manifest, concurrent runs
