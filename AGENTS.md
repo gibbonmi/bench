@@ -39,6 +39,13 @@ by the first one: official-org source, MIT-compatible license, build-time-only
 footprint (linked into the binary, no runtime service or install-time fetch).
 Anything outside that shape is a reviewer decision, not a default.
 
+**Phase-close handoff.** When a Bench phase closes (a drain committed, a spec
+staged, a build landed, a review delivered), the closing message must either
+emit a copy-paste fresh-session continuation prompt or update
+`session-handoff.md` — pinning repository, branch, commit, spec path and
+status, decisions that stay closed, and the exact harness-native next command —
+so resumption never depends on conversation history.
+
 **Shell conventions for agents in this repo.**
 
 - Use `rg` (ripgrep, installed here) instead of `grep` in interactive Bash calls —
