@@ -1,1 +1,0 @@
-- 2026-07-22  worktree recovery has no sanctioned discard path for provably-superseded payloads (patch reverse-applies on main but git cherry misses reshaped commits) — reviewer had to hand-delete refs + intent entries

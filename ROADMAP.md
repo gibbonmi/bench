@@ -165,17 +165,20 @@ answers the schema question — symmetric per-harness bindings with no canonical
 family, each layer reporting its own harness's tokens. The row's work is
 building that map; enforcement stays exact-string with no provider lookup.
 
-**FT98 (LOW, evidence supplied) — discard path for content-landed recovery
-payloads.** Recovery cleanup fail-closes permanently when a payload's content
-landed through different commits: the FT83 delegate payloads are strict subsets
-of the default branch by diff, yet `bench worktree recovery <ref> --apply
-<fingerprint>` still returns `retain` because landed-proof requires the payload
-commit itself (observed 2026-07-20), so proven-redundant refs accumulate with no
-sanctioned exit. The containment primitive now exists — `LandedInDefault`
-proves patch-id containment for landed-branch pruning — so either route
-recovery-payload landed-proof through it or add an explicit
-reviewer-authorized discard path; fail-closed stays the default, and the cut
-line is a reviewer decision.
+**FT98 (MEDIUM, evidence supplied twice) — discard path for content-landed
+recovery payloads.** Recovery cleanup fail-closes permanently when a payload's
+content landed through different commits: the FT83 delegate payloads are strict
+subsets of the default branch by diff, yet `bench worktree recovery <ref>
+--apply <fingerprint>` still returns `retain` because landed-proof requires the
+payload commit itself (observed 2026-07-20), so proven-redundant refs
+accumulate with no sanctioned exit. Recurred 2026-07-22: payloads whose patch
+reverse-applies cleanly on main were still retained because `git cherry` misses
+reshaped commits, and the reviewer had to hand-delete refs and intent entries —
+the exact manual surgery the lifecycle exists to prevent. The containment
+primitive now exists — `LandedInDefault` proves patch-id containment for
+landed-branch pruning — so either route recovery-payload landed-proof through
+it or add an explicit reviewer-authorized discard path; fail-closed stays the
+default, and the cut line is a reviewer decision.
 
 **FT99 (LOW) — spec problem-premise verification.** A spec compiled from a
 closed decision map can inherit a problem statement the tree has since
@@ -189,15 +192,22 @@ named in the spec — the same standard the coverage map already applies to its
 red signals. Next action is the kit edit to `/bench-write-spec` and
 `craft-spec`, built under the `craft-synthesis` discipline.
 
-**FT95 (LOW, evidence supplied) — attributable compiled-core gate failures.**
-The serialized root-conformance gate has again reported only `go test failed`
-from its inner whole-core test run on an otherwise idle machine, while an
-immediate identical-tree, uncached package run passed every package. The probe
-currently discards the inner stdout and stderr, so the failing package and case
-cannot be captured and the intermittent defect cannot be isolated. First make
-the failure emit bounded, control-safe diagnostic evidence; then reproduce and
-deflake the attributable case without weakening the oracle. Retry once on the
-same tree and line remains the operational response to a transient red.
+**FT95 (MEDIUM, evidence supplied) — attributable, load-tolerant gate runs.**
+The gate flake class recurred at the FT76 close: `bench gate` went red 5 of 7
+runs on an identical tree, alternating between the conformance phase's inner
+core `go test` (4×, output discarded — the diag says only `go test failed`) and
+`TestBinaryRepairContracts/repair_losing-racer` (1×, a hard 2s wall-clock
+`time.Now()` sync-marker deadline). Every suite passes solo and pairwise;
+dmesg shows WSL2 "time jumped backwards" clock jumps under the gate's peak
+parallel load, and a PATH shim cannot instrument the inner run because
+`go test` prepends `$GOROOT/bin` to child PATH. Three arms, none weakening the
+oracle: (1) the conformance diag carries the tail of the inner test output so
+failures self-attribute; (2) wall-clock `time.Now()` test deadlines (the repair
+sync marker and siblings) scale or move to monotonic-friendly generous bounds;
+(3) consider capping gate phase parallelism on hosts where load provokes the
+class. Deadline widths and the diag shape are gate-authoring decisions
+(`craft-gate`). Retry once on the same tree and line remains the operational
+response to a transient red.
 
 **FT100 (LOW) — prose-weight pass on the kit's guidance surface.** Apply the
 gate's "prove it bites" standard to prose: audit the craft-skill library and
@@ -225,8 +235,9 @@ to one immutable version and its generated manifest after:
 4. Publication is staged, resumable, digest-verified, wrapper-last, and bound
    to the repository-owned evidence bundle.
 5. Setup, doctor, relink, fresh clone, an operational command, and unlink pass
-   from an isolated prefix without a source checkout; FT76 preserves existing
-   instructions, settings, and hooks and is idempotent and reversible.
+   from an isolated prefix without a source checkout; setup preserves existing
+   instructions, settings, and hooks and is idempotent and reversible (shipped
+   with FT76; re-verified at reassessment).
 6. Consumer artifacts exclude maintainer-only capabilities and include the
    supported-platform, security, data-handling, threat, support/EOL, network,
    rollback/recovery, license/notice, SBOM, checksum, and package-inventory
@@ -271,9 +282,9 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — spec FT76, one-command repo-aware Bench bootstrap
-   (shape closed, FT84 dependency shipped).
-2. `/bench-write-spec` — spec FT85, least-privilege consumer payload and one
+1. `/bench-write-spec` — spec FT85, least-privilege consumer payload and one
    coherent phase contract.
-3. `/bench-write-spec` — spec FT87 slice 3, command-wide parser and
+2. `/bench-write-spec` — spec FT87 slice 3, command-wide parser and
    security-evidence capability.
+3. `/bench-debug` — FT95, attributable and load-tolerant gate runs (named
+   culprits in hand; it taxes every landing).
