@@ -60,9 +60,11 @@ content is preserved and reported, stale assets reconcile, and `unlink`
 remains a true inverse. Success is at most one shell command plus one
 harness-native setup conversation and ends with a runnable local `bench`, an
 honest doctor report, an explicit reload instruction, and the exact next
-action. Start with `/bench-shape-idea` to settle instruction-file selection,
-inferred versus confirmed facts, conflict/rollback semantics, and the seam
-between deterministic installation and prompt-driven configuration.
+action. The closed FT76 decision map settles instruction-file selection,
+inferred-versus-confirmed facts, conflict semantics, and the seam between the
+deterministic CLI and the harness conversation; FT84's transactional
+lifecycle — the build-first dependency — has shipped. Next action is
+`/bench-write-spec`.
 
 Sources: `RR:A-02`, `RR:A-03`, `RR:A-04`, `RR:S-09`.
 
@@ -305,7 +307,8 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — shape FT76, one-command repo-aware Bench bootstrap.
+1. `/bench-write-spec` — spec FT76, one-command repo-aware Bench bootstrap
+   (shape closed, FT84 dependency shipped).
 2. `/bench-write-spec` — spec FT85, least-privilege consumer payload and one
    coherent phase contract.
 3. `/bench-write-spec` — spec FT87 slice 3, command-wide parser and
