@@ -219,6 +219,22 @@ demonstrated-delta clauses. Distinct from FT89, which fixes guidance
 `craft-synthesis` discipline; starts as a grill (`/bench-shape-idea`) because
 the cut line on always-loaded rules is a reviewer decision.
 
+**FT101 (LOW) — multi-context domain docs for monorepos.** A monorepo has more
+than one bounded context, but the kit assumes one `CONTEXT.md`. Support a
+root `CONTEXT-MAP.md` pointing to per-context `CONTEXT.md` files, add a
+single- versus multi-context question to `/bench-setup-repo` Section C, and
+teach every `CONTEXT.md` consumer (phase commands, skills) the layout. Kit
+edit under the `craft-synthesis` discipline.
+
+**FT102 (LOW) — escalation-policy cross-check in the synthesis consistency
+loop.** A kit edit that instructs spending a model tier can contradict the
+escalation policy without any loop catching it: the widened write-spec step-9
+triggers shipped an automatic top-tier spawn past review (observed
+2026-07-22; corrected in the mid-tier rerouting commit). Make
+`craft-synthesis`'s consistency loop name the escalation policy as a standing
+cross-check for any kit edit that spends a tier. Kit edit under the
+`craft-synthesis` discipline.
+
 ## Release and bank reassessment gate
 
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
@@ -282,8 +298,9 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — spec FT85, least-privilege consumer payload and one
-   coherent phase contract.
+1. `/bench-implement-spec` — FT85, least-privilege consumer payload and one
+   coherent phase contract (spec staged at
+   `specs/consumer-payload-and-phase-contract.md`).
 2. `/bench-write-spec` — spec FT87 slice 3, command-wide parser and
    security-evidence capability.
 3. `/bench-debug` — FT95, attributable and load-tolerant gate runs (named
