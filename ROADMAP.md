@@ -20,16 +20,16 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT88 (HIGH) — a trustworthy gate verdict under load.** Spec:
-`specs/load-tolerant-marker-deadlines.md` (staged, reviewer-approved
-2026-07-22; execution prompt in `session-handoff.md`). Diagnosis is complete
-in `GATE-REPORT.md`: the two marker-deadline flakes fire when host-side VHDX
-I/O stalls the bench child's pre-marker fsync — a stall, not a wedge —
-corroborated across two independent runtimes. The approved fix raises both
-marker deadlines to 60s, fast-fails the moment the child dies (R14 site), and
-promotes the `[DEBUG-a4f2]` diagnostics to permanent untagged failure output
-so any future miss names its blocked line. After the fix lands and survives a
-host-load window, the row's remaining work: the `.bench-contract-env`
+**FT88 (HIGH) — a trustworthy gate verdict under load.** The marker-deadline
+fix landed (`380fd00`, `daf81d1`) and passed its acceptance load window 3/3
+green on 2026-07-23 at guest load averages 26→58, slower than the band in
+which the old deadlines failed 2/2. `GATE-REPORT.md` carries the closed
+diagnosis; the fsync hypothesis stays unconfirmed and the chosen option was to
+tolerate slow persistence. Remaining work: split the R14/repair marker
+deadlines into a fast liveness leg and a slow fsync leg — gate-run writes a
+marker before `durableReplace`'s pending write, so a true wedge fails in ~2s
+and only the fsync-stretchable leg carries the 60s tolerance, restoring
+fail-fast without reintroducing the load flake; the `.bench-contract-env`
 `TempDir` cleanup flake (`bench_gate_rebuilt_self-host_contract` fails under
 gate load with a child still writing at cleanup, passes in 0.4s isolated —
 the runtime contract package needs a load-robustness pass); the orphaned-gate
@@ -279,6 +279,20 @@ and proven green in isolation, stop and hand the blocked commit to the
 reviewer with the evidence instead of re-running. Replaces the retired FT95
 "retry once" operational line.
 
+**FT105 (LOW) — committed reports that contradict the tree.** A capture-style
+report can outlive its own fix and mislead the next session:
+`GATE-REPORT.md` was committed in `96ddc9f` reading `Status: diagnosis
+partial, no fix landed` two commits *after* the fix landed in `380fd00`, and
+a session briefing built from it charged the next agent to hunt a repro that
+no longer existed — three gate runs, avoided only because that agent checked
+`git log` first. Invariant 3 says docs describe the current decided state, so
+a tracked report claiming uncommitted work is a defect. Two candidate halves:
+require a capture-style report to carry its status at the top and be re-read
+at commit time (kit edit under the `craft-synthesis` discipline), and a cheap
+gate doc-conformance check flagging phrases like "nothing is committed" in a
+tracked file. The check is a weak signal with an unmeasured false-positive
+rate — whether it is worth gate weight is a reviewer decision.
+
 ## Release and bank reassessment gate
 
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
@@ -342,11 +356,12 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT88, load-tolerant marker deadlines
-   (`specs/load-tolerant-marker-deadlines.md`, reviewer-approved; execution
-   prompt pinned in `session-handoff.md`). It taxes every landing, so it goes
-   first.
-2. `/bench-final-check` — FT85 close: fix the accepted review findings via
-   the direct fix-and-gate path, then flip the spec and clear `reviews/`.
+1. `/bench-final-check` — FT85 close: fix the accepted review findings via
+   the direct fix-and-gate path, then flip the spec and clear `reviews/`. It
+   is the only staged spec left open, so it goes first.
+2. `/bench-write-spec` — FT88's remaining arms (fast/slow marker-deadline
+   legs, the `.bench-contract-env` cleanup flake, the orphaned-gate defect,
+   self-attributing conformance diags). The deadline fix shipped; these four
+   are what still taxes every landing.
 3. `/bench-write-spec` — spec FT87 slice 3, command-wide parser and
    security-evidence capability.
