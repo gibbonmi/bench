@@ -82,3 +82,42 @@ artifact class the list does not grade, say so rather than assuming it is covere
 **Cost note.** This was caught by the coordinator running the canary during
 done-claim verification, one round after the fact. Cheap here; it would have been a
 red gate at merge with an unrelated-looking failure message.
+
+## 2026-07-23 — `git commit` after `git merge --squash` swept an entire slice into a capture commit
+
+**What happened.** During the FT87 slice 3 build the coordinator ran
+`git merge --squash <branch>` to bring a delegate's work into `main`'s working
+tree, intending to land it with a path-scoped `bench commit` so the gate would
+grade exactly that diff. Before doing so, `bench commit` refused over an
+unexplained working-tree file — a parked idea in `IDEAS.md`, written by the
+coordinator moments earlier. The coordinator committed the capture file with
+`git add IDEAS.md && git commit -m "capture: ..."`. But `git merge --squash` had
+already staged the delegate's ENTIRE slice into the index, and a bare
+`git commit` commits the index, not the file just added. The result was one
+commit labelled "capture: park the gate phase-timeout headroom idea" containing
+that one line plus 649 insertions across eleven files of an unrelated feature
+slice — and landed at a moment when no gate had graded it.
+
+**What the right behavior was.** Two independent fixes, either sufficient. Use
+the pathspec form, `git commit -m "..." -- IDEAS.md`, which commits only the
+named path and ignores the rest of the index. Or — better — capture files get
+committed BEFORE a squash-merge stages anything, so the index is never a mix of
+two intents. The deeper rule: after any `git merge --squash`, treat the index as
+already full, and never issue a bare `git commit` until the intended landing
+commit.
+
+**Why the guard did not catch it.** `bench commit`'s attribution block-check is
+exactly the mechanism that makes a green gate describe the diff that lands, and
+it fired correctly. The coordinator then stepped around it with plain `git`,
+which carries no such check. That is the failure mode: the enforcement lives in
+`bench commit`, so every plain-`git` commit during a build is unguarded.
+
+**Recovering.** No content was lost or wrong, and a later full gate run on the
+identical tree came back green, so the tree is verified — the defect is purely
+history: one mislabelled commit conflating a capture with a feature slice.
+Repair is a history rewrite, which is the reviewer's call, not the worker's.
+
+**Proposed rule change.** Note in the phase guidance that the doc-only
+plain-`git` convention is safe only when the index is otherwise empty, and that
+during a squash-merge landing sequence every plain-`git` commit must use the
+explicit pathspec form.
