@@ -20,6 +20,30 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
+**FT88 (HIGH) — a trustworthy gate verdict under load.** Spec:
+`specs/load-tolerant-marker-deadlines.md` (staged, reviewer-approved
+2026-07-22; execution prompt in `session-handoff.md`). Diagnosis is complete
+in `GATE-REPORT.md`: the two marker-deadline flakes fire when host-side VHDX
+I/O stalls the bench child's pre-marker fsync — a stall, not a wedge —
+corroborated across two independent runtimes. The approved fix raises both
+marker deadlines to 60s, fast-fails the moment the child dies (R14 site), and
+promotes the `[DEBUG-a4f2]` diagnostics to permanent untagged failure output
+so any future miss names its blocked line. After the fix lands and survives a
+host-load window, the row's remaining work: the `.bench-contract-env`
+`TempDir` cleanup flake (`bench_gate_rebuilt_self-host_contract` fails under
+gate load with a child still writing at cleanup, passes in 0.4s isolated —
+the runtime contract package needs a load-robustness pass); the orphaned-gate
+defect — killing the wrapper leaves `bench canary` reparented to init,
+spawning nested gate-phases children while holding the gate flock, and the
+next run reports the misleading "gate execution already in progress" instead
+of detecting a dead holder (process-group teardown on signal, stale-holder
+detection at lock acquisition — consumer-visible in its own right); the
+conformance phase's diag carrying the tail of the inner `go test` output so
+failures self-attribute (4 of 5 reds in the FT76 recurrence said only
+`go test failed`); then retire `GATE-REPORT.md` into the profile and
+learnings. Concurrency capping lives in FT91 — one fix serves both rows.
+Absorbs FT95.
+
 **FT87 (MEDIUM) — command-wide parser and security-evidence capability.**
 Slices 1 and 2 shipped: the bounds core, explicit pinned bounded repair, one
 Bench identity with complete package metadata, and the FT83
@@ -33,17 +57,23 @@ the cut.
 Sources: `RR:C-09`, `RR:C-11`, `RR:C-12`.
 
 **FT85 (HIGH) — least-privilege consumer payload and one coherent phase
-contract.** Spec: `specs/consumer-payload-and-phase-contract.md`. Generate the consumer payload from one canonical allowlist and
-exclude kit-only assessment, update, and synthesis surfaces. Consumers receive
-a narrow version-pinned, manifest-aware upgrade path. One capability-aware
-delegation policy lives in `craft-delegate`; one phase owns the green landing
-commit and spec state transition; debug preserves a red observation without
-violating the commit-on-green invariant; and shaping requirements agree across
-README, shape, spec, and implementation guidance.
-
-Closure combines a forbidden-payload link/package contract with workflow
-scenarios for clear ideas, unavailable write delegates, implementation review
-handoff, final landing, and failing bug reproduction.
+contract.** Spec: `specs/consumer-payload-and-phase-contract.md` (staged;
+implementation landed through commits `a6dcec3`…`f00be9f`, three-axis review
+delivered 2026-07-22). Remaining work is the review-findings close: (1)
+`bench upgrade` prerelease→release is a silent no-op — `compareKitVersions`
+strips the suffix so `1.2.3` vs `1.2.3-rc1` compare equal and the manifest
+stays stamped `-rc1`; (2) a symlink anywhere inside an allowlisted tree
+hard-fails `bench link`/`upgrade` (`link.go` refuses non-regular files) while
+only FIFO is exercised, and only under `.agents/skills`; (3)
+`.bench/skills-index.sh` parses the allowlist with an order-dependent
+single-line sed and word-splits space-bearing sources, so reformatting the
+JSON silently drops every kit-only marker; (4, suspected) the payload
+allowlist accepts duplicate rows and traversal sources like
+`.bench/../../x`; (5, suspected) `bench upgrade` lacks coverage for unknown
+flag, `--check --force` together, unparseable `#kit` header, unreadable
+manifest, and concurrent runs. Fix the accepted findings via the direct
+fix-and-gate path, then `/bench-final-check` flips the spec and clears
+`reviews/`.
 
 Sources: `RR:S-01`, `RR:S-02`, `RR:S-03`, `RR:S-04`, `RR:S-05`; `RC:M-03`.
 
@@ -92,17 +122,24 @@ repository-controlled bank evidence requirement makes this row active.
 
 Sources: `RR:C-05`; `RC:H-03`.
 
-**FT91 (LOW) — gate wall-clock proportional to the diff.** Two arms have
-shipped: the phases were parallelized, and host-only test builds (retired
-2026-07-20) removed the per-stage cold-`GOCACHE` four-platform matrix that
-drove the gate to ~10–15 minutes. The remaining arms — a shared hermetic build
-cache, caching keyed on the pinned gate subject, or scoped verdicts — must not
-weaken the oracle: green must keep meaning the same thing, and any scoped
-verdict must be explicit evidence, never a silent skip. Starts as a grill
-(`/bench-shape-idea`) because the cut line between speed and oracle authority
-is a reviewer decision. Graduate only on a fresh post-host-only measurement
-showing the gate still demonstrably drags shift iteration; the pre-host-only
-timings are no longer evidence.
+**FT91 (MEDIUM, evidence supplied) — gate wall-clock proportional to the
+diff.** Two arms have shipped: the phases were parallelized, and host-only
+test builds (retired 2026-07-20) removed the per-stage cold-`GOCACHE`
+four-platform matrix. The graduation trigger is now met — fresh post-host-only
+measurement (2026-07-22): the gate still takes 10–15 minutes on the kit repo,
+largely because the canary phase nests whole gate runs, oversubscribing a
+16-core box to load average ~123, so most of the wall clock is contention,
+not work; `internal/gate/phases.go` also hardcodes `-count=1`, disabling Go's
+test cache unconditionally. First arm: core-count-aware gate/phase
+concurrency — detect the machine's cores and scale so nested phases cannot
+oversubscribe the box; the same cap is FT88's load lever, so one fix serves
+both rows. Diff-scoped gating is unsound here (contract/canary are behavior
+contracts with no file→test map). The remaining arms — a shared hermetic
+build cache, caching keyed on the pinned gate subject, or scoped verdicts —
+must not weaken the oracle: green must keep meaning the same thing, and any
+scoped verdict must be explicit evidence, never a silent skip. Starts as a
+grill (`/bench-shape-idea`) because the cut line between speed and oracle
+authority is a reviewer decision.
 
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.** Make
 every documented CLI example executable; parse and validate real YAML
@@ -192,23 +229,6 @@ named in the spec — the same standard the coverage map already applies to its
 red signals. Next action is the kit edit to `/bench-write-spec` and
 `craft-spec`, built under the `craft-synthesis` discipline.
 
-**FT95 (MEDIUM, evidence supplied) — attributable, load-tolerant gate runs.**
-The gate flake class recurred at the FT76 close: `bench gate` went red 5 of 7
-runs on an identical tree, alternating between the conformance phase's inner
-core `go test` (4×, output discarded — the diag says only `go test failed`) and
-`TestBinaryRepairContracts/repair_losing-racer` (1×, a hard 2s wall-clock
-`time.Now()` sync-marker deadline). Every suite passes solo and pairwise;
-dmesg shows WSL2 "time jumped backwards" clock jumps under the gate's peak
-parallel load, and a PATH shim cannot instrument the inner run because
-`go test` prepends `$GOROOT/bin` to child PATH. Three arms, none weakening the
-oracle: (1) the conformance diag carries the tail of the inner test output so
-failures self-attribute; (2) wall-clock `time.Now()` test deadlines (the repair
-sync marker and siblings) scale or move to monotonic-friendly generous bounds;
-(3) consider capping gate phase parallelism on hosts where load provokes the
-class. Deadline widths and the diag shape are gate-authoring decisions
-(`craft-gate`). Retry once on the same tree and line remains the operational
-response to a transient red.
-
 **FT100 (LOW) — prose-weight pass on the kit's guidance surface.** Apply the
 gate's "prove it bites" standard to prose: audit the craft-skill library and
 the communication protocol so each skill and always-loaded clause cites an
@@ -234,6 +254,30 @@ triggers shipped an automatic top-tier spawn past review (observed
 `craft-synthesis`'s consistency loop name the escalation policy as a standing
 cross-check for any kit edit that spends a tier. Kit edit under the
 `craft-synthesis` discipline.
+
+**FT103 (LOW) — existence-checked absence evidence.** A delegate's payload
+slice landed with a misspelled kit-only allowlist row (`craft-synthesis` for
+the actual `bench-craft-synthesis`), so its contract passed by asserting the
+absence of a path that never existed and the skill kept shipping to
+consumers — a vacuous green the gate cannot see. Two halves: add to
+`craft-delegate`'s verification discipline that when a delegate's evidence
+rests on an absence, exclusion, or withholding assertion, the named
+identifiers must resolve to real things before the claim is accepted (kit
+edit under the `craft-synthesis` discipline); and confirm the gate holds a
+per-source existence check on the consumer-payload allowlist — the emptied-set
+vacuity closed with the FT85 fix commit, the per-path existence guard is the
+remaining cheap single-source check.
+
+**FT104 (LOW) — stop rule for known-flake commit refusals.** Retrying a
+recorded flake is not iteration toward green: the FT85 review-fix commit was
+refused twice by `TestFT78Story5ProofLedger` under gate load (green in
+isolation both times), and the third identical run passed with no code
+change — ~35 minutes of wall clock bought nothing. Kit edit under the
+`craft-synthesis` discipline: the gate/commit discipline states that when a
+commit is refused twice by the same test already recorded as a known flake
+and proven green in isolation, stop and hand the blocked commit to the
+reviewer with the evidence instead of re-running. Replaces the retired FT95
+"retry once" operational line.
 
 ## Release and bank reassessment gate
 
@@ -298,10 +342,11 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT85, least-privilege consumer payload and one
-   coherent phase contract (spec staged at
-   `specs/consumer-payload-and-phase-contract.md`).
-2. `/bench-write-spec` — spec FT87 slice 3, command-wide parser and
+1. `/bench-implement-spec` — FT88, load-tolerant marker deadlines
+   (`specs/load-tolerant-marker-deadlines.md`, reviewer-approved; execution
+   prompt pinned in `session-handoff.md`). It taxes every landing, so it goes
+   first.
+2. `/bench-final-check` — FT85 close: fix the accepted review findings via
+   the direct fix-and-gate path, then flip the spec and clear `reviews/`.
+3. `/bench-write-spec` — spec FT87 slice 3, command-wide parser and
    security-evidence capability.
-3. `/bench-debug` — FT95, attributable and load-tolerant gate runs (named
-   culprits in hand; it taxes every landing).
