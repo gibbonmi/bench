@@ -282,6 +282,7 @@ func proveCancelledCommit(t *testing.T, f contract.Fixture, before actionSnapsho
 type story5GateOwner struct {
 	cmd      *exec.Cmd
 	gatePGID int
+	exitCh   chan error
 }
 
 func startStory5GateOwner(t *testing.T, f contract.Fixture) *story5GateOwner {
@@ -289,11 +290,19 @@ func startStory5GateOwner(t *testing.T, f contract.Fixture) *story5GateOwner {
 	cmd := exec.Command("bash", benchPath(t), "gate")
 	cmd.Dir = f.Root
 	cmd.Env = surfaceEnv(f, nil)
+	var childOut bytes.Buffer
+	cmd.Stdout = &childOut
+	cmd.Stderr = &childOut
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
-	deadline := time.Now().Add(5 * time.Second)
+	// This goroutine is the single owner of cmd.Wait; stop() below only
+	// receives from exitCh, it never calls Wait itself. A second Wait on
+	// the same process is undefined behavior once the first has reaped it.
+	exitCh := make(chan error, 1)
+	go func() { exitCh <- cmd.Wait() }()
+	deadline := time.Now().Add(60 * time.Second)
 	marker := filepath.Join(gitDir(t, f), "story5-owner-started")
 	for time.Now().Before(deadline) {
 		if _, err := os.Stat(marker); err == nil {
@@ -301,12 +310,45 @@ func startStory5GateOwner(t *testing.T, f contract.Fixture) *story5GateOwner {
 			if _, err := fmt.Sscanf(strings.TrimSpace(string(mustReadRuntime(t, filepath.Join(gitDir(t, f), "story5-gate-pgid")))), "%d", &pgid); err != nil {
 				t.Fatal(err)
 			}
-			return &story5GateOwner{cmd: cmd, gatePGID: pgid}
+			return &story5GateOwner{cmd: cmd, gatePGID: pgid, exitCh: exitCh}
+		}
+		// Check the marker before the exit channel: a marker-then-exit
+		// sequence must resolve as success, not as an early-exit failure.
+		select {
+		case err := <-exitCh:
+			t.Fatalf("gate owner exited before reaching pending state: err=%v state=%v\nchild output:\n%s", err, cmd.ProcessState, childOut.String())
+		default:
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
+	var stateMsg string
+	select {
+	case err := <-exitCh:
+		stateMsg = fmt.Sprintf("child EXITED early: err=%v state=%v", err, cmd.ProcessState)
+	default:
+		pgid := cmd.Process.Pid
+		// Per-thread dump: in a Go child the main thread futex-waits while the
+		// thread doing the real blocking syscall is elsewhere, so per-process
+		// WCHAN cannot name the blocked site.
+		tree, _ := exec.Command("bash", "-c", fmt.Sprintf(
+			"ps -eLo pid,tid,pgid,stat,wchan:30,etime,args | awk 'NR==1||$3==%d'", pgid)).CombinedOutput()
+		lock, lockErr := os.Stat(filepath.Join(gitDir(t, f), "bench-gate.lock"))
+		// SIGQUIT makes the Go runtime print every goroutine stack to stderr
+		// (captured in childOut) and exit; wait for the reap before reading
+		// childOut so the pipe copier has finished writing it.
+		_ = syscall.Kill(-pgid, syscall.SIGQUIT)
+		var quitMsg string
+		select {
+		case err := <-exitCh:
+			quitMsg = fmt.Sprintf("child reaped after SIGQUIT: err=%v", err)
+		case <-time.After(3 * time.Second):
+			quitMsg = "child did NOT exit within 3s of SIGQUIT"
+		}
+		stateMsg = fmt.Sprintf("child STILL ALIVE at deadline\nlock=%v err=%v\n%s\nprocess group (per-thread, pre-SIGQUIT):\n%s",
+			lock != nil, lockErr, quitMsg, tree)
+	}
 	_ = cmd.Process.Kill()
-	t.Fatal("gate owner did not reach pending state")
+	t.Fatalf("gate owner did not reach pending state\n%s\nchild output:\n%s", stateMsg, childOut.String())
 	return nil
 }
 
@@ -314,10 +356,8 @@ func (o *story5GateOwner) stop(t *testing.T) {
 	t.Helper()
 	_ = syscall.Kill(-o.gatePGID, syscall.SIGKILL)
 	_ = syscall.Kill(-o.cmd.Process.Pid, syscall.SIGKILL)
-	done := make(chan error, 1)
-	go func() { done <- o.cmd.Wait() }()
 	select {
-	case <-done:
+	case <-o.exitCh: // the single Wait lives in startStory5GateOwner's goroutine
 	case <-time.After(3 * time.Second):
 		t.Fatalf("timed out reaping Story5 gate owner pgid=%d", o.gatePGID)
 	}

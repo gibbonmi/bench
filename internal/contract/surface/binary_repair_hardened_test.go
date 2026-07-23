@@ -1,6 +1,7 @@
 package surface
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -54,10 +55,13 @@ func testRepairLosingRacerPreservesWinner(t *testing.T) {
 	cmd := exec.Command("bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "repair")
 	cmd.Dir, cmd.Env = f.Root, contract.ProcessEnv(f.Env, env)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	var childOut bytes.Buffer
+	cmd.Stdout = &childOut
+	cmd.Stderr = &childOut
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
-	waitForRepairMarker(t, cmd, ready)
+	waitForRepairMarker(t, cmd, ready, &childOut)
 	target := binaryRepairCachePath(t, f, "9.8.7")
 	contract.WriteFileAbs(t, target, "#!/bin/sh\necho winner\n")
 	if err := os.Chmod(target, 0o755); err != nil {
@@ -87,10 +91,13 @@ func testRepairEarliestInterrupt(t *testing.T) {
 	cmd := exec.Command("bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "repair")
 	cmd.Dir, cmd.Env = f.Root, contract.ProcessEnv(f.Env, env)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	var childOut bytes.Buffer
+	cmd.Stdout = &childOut
+	cmd.Stderr = &childOut
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
-	waitForRepairMarker(t, cmd, ready)
+	waitForRepairMarker(t, cmd, ready, &childOut)
 	if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGINT); err != nil {
 		t.Fatal(err)
 	}
@@ -102,9 +109,15 @@ func testRepairEarliestInterrupt(t *testing.T) {
 	requirePathAbsent(t, binaryRepairCachePath(t, f, "9.8.7"), "earliest interrupt changed target")
 }
 
-func waitForRepairMarker(t *testing.T, cmd *exec.Cmd, ready string) {
+// waitForRepairMarker polls up to 60s: host-side VHDX I/O contention on
+// WSL2 can stall the child's pre-marker fsync for seconds, well past a
+// short deadline. It never inspects cmd's exit status — the caller owns
+// cmd.Wait() and a second Wait here would race it — so a child that dies
+// before the marker is still reaped by the caller's later Wait, just after
+// this helper's own timeout Fatal.
+func waitForRepairMarker(t *testing.T, cmd *exec.Cmd, ready string, childOut *bytes.Buffer) {
 	t.Helper()
-	deadline := time.Now().Add(2 * time.Second)
+	deadline := time.Now().Add(60 * time.Second)
 	for {
 		if _, err := os.Stat(ready); err == nil {
 			return
@@ -112,7 +125,7 @@ func waitForRepairMarker(t *testing.T, cmd *exec.Cmd, ready string) {
 		if time.Now().After(deadline) {
 			_ = cmd.Process.Kill()
 			_ = cmd.Wait()
-			t.Fatal("repair did not reach synchronization marker")
+			t.Fatalf("repair did not reach synchronization marker\nchild output:\n%s", childOut.String())
 		}
 		time.Sleep(20 * time.Millisecond)
 	}
