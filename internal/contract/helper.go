@@ -1,10 +1,13 @@
 package contract
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/capability"
 )
 
 type FixtureOption func(*fixtureConfig)
@@ -190,7 +193,7 @@ func skipIfSubjectFileMissing(t testing.TB, rel string) {
 	t.Helper()
 	if _, err := os.Stat(filepath.Join(SubjectRoot(t), filepath.FromSlash(rel))); err != nil {
 		if os.IsNotExist(err) {
-			t.Skipf("subject root has no %s", rel)
+			capability.Environment(t, fmt.Sprintf("subject root has no %s", rel))
 		}
 		t.Fatalf("stat subject %s: %v", rel, err)
 	}
