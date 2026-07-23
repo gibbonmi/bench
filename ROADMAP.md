@@ -239,12 +239,34 @@ demonstrated-delta clauses. Distinct from FT89, which fixes guidance
 `craft-synthesis` discipline; starts as a grill (`/bench-shape-idea`) because
 the cut line on always-loaded rules is a reviewer decision.
 
-**FT101 (LOW) — multi-context domain docs for monorepos.** A monorepo has more
-than one bounded context, but the kit assumes one `CONTEXT.md`. Support a
-root `CONTEXT-MAP.md` pointing to per-context `CONTEXT.md` files, add a
-single- versus multi-context question to `/bench-setup-repo` Section C, and
-teach every `CONTEXT.md` consumer (phase commands, skills) the layout. Kit
-edit under the `craft-synthesis` discipline.
+**FT101 (LOW) — per-context scope for monorepos: domain docs and profile.** A
+monorepo has more than one bounded context, but the kit assumes one
+`CONTEXT.md` and one `projects/<name>.md`. Both halves want one resolution.
+The docs half: support a root `CONTEXT-MAP.md` pointing to per-context
+`CONTEXT.md` files, add a single- versus multi-context question to
+`/bench-setup-repo` Section C, and teach every `CONTEXT.md` consumer (phase
+commands, skills) the layout. The profile half: let a profile declare the
+paths it owns, resolve the active profile from the paths a change touches,
+and scope the ambient surfaces (`bench outline`, `bench status`) to it — a
+single-profile repo resolves exactly as today, so the change is additive.
+Whole-tree `outline` and `structure` get less useful as a tree grows, which
+is the context-cost-follows-project-size failure this row exists to fix.
+
+Scoping the *gate* is the contested part and starts as a grill
+(`/bench-shape-idea`), because narrowing what the oracle runs is a reviewer
+decision. Two guards frame it. A declared package boundary is not a diff —
+FT91 ruled diff-scoped gating unsound here because contract and canary are
+behavior contracts with no file→test map, and that ruling stands; a scoped
+gate is legitimate only where the reviewer has declared the boundary, and a
+change touching two profiles takes the whole-tree gate. And scope is not a
+speed lever: the measured cost on this repo is phase contention and a
+hardcoded `-count=1` (FT91's arms), not tree size, so any wall-clock win here
+is a monorepo side effect and must never be the justification. Green must
+keep meaning the same thing; a scoped verdict is explicit evidence, never a
+silent skip.
+
+Kit edit under the `craft-synthesis` discipline. Background and the
+alternatives considered: `docs/reporesident-distillation.md` §8.
 
 **FT102 (LOW) — escalation-policy cross-check in the synthesis consistency
 loop.** A kit edit that instructs spending a model tier can contradict the
@@ -286,12 +308,13 @@ partial, no fix landed` two commits *after* the fix landed in `380fd00`, and
 a session briefing built from it charged the next agent to hunt a repro that
 no longer existed — three gate runs, avoided only because that agent checked
 `git log` first. Invariant 3 says docs describe the current decided state, so
-a tracked report claiming uncommitted work is a defect. Two candidate halves:
-require a capture-style report to carry its status at the top and be re-read
-at commit time (kit edit under the `craft-synthesis` discipline), and a cheap
-gate doc-conformance check flagging phrases like "nothing is committed" in a
-tracked file. The check is a weak signal with an unmeasured false-positive
-rate — whether it is worth gate weight is a reviewer decision.
+a tracked report claiming uncommitted work is a defect. The work is the
+discipline alone — a capture-style report carries its status at the top and is
+re-read at the moment of commit, not only when written — as a kit edit under
+the `craft-synthesis` discipline. The gate half was cut 2026-07-23: a
+doc-conformance check grepping for phrases like "nothing is committed" would
+fire on ordinary prose in a spec's Problem section, and a check that cannot be
+shown to bite does not earn gate weight.
 
 ## Release and bank reassessment gate
 
