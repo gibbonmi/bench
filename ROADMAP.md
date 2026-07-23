@@ -28,7 +28,8 @@ argument grammar, anchor coverage at the repository root, support leading-dash
 and directory-scoped commit paths, treat help as success, make capability
 skips explicit evidence, and decouple security-test deadlines from the
 subprocesses they bound. The closed FT87 decision map (tickets #7 and #8) owns
-the cut.
+the cut; the slice is spec'd in
+`specs/cli-grammar-and-capability-evidence.md`.
 
 Sources: `RR:C-09`, `RR:C-11`, `RR:C-12`.
 
