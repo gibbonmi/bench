@@ -1,8 +1,12 @@
 # RepoResident distillation — drain notes
 
-Research note backing eight parked lines in `IDEAS.md` (all dated 2026-07-23). Each
-line names its section here. This file exists so `/bench-what-next` can verdict them
-without re-reading the source repo; delete it when the last line drains.
+Research note behind six `ROADMAP.md` rows: FT101 (§8), FT106 (§1 and §5), FT107 (§3),
+FT108 (§2), FT109 (§4), and FT110 (§6). It was written to let the 2026-07-23 drain
+verdict eight parked `IDEAS.md` lines without re-reading the source repo, and it now
+carries the design reasoning and rejected alternatives those rows point at rather than
+inline. Delete it when the last referencing row ships. Section 7 has no row: the
+`.bench/BENCH.md` Capture section already routes any tangent worth not losing to
+`bench idea`, which was the gap §7 asked about.
 
 Source: `github.com/ychamel/RepoResident` @ `10ff7bd` (2026-07-23), MIT. The whole repo
 is 840 lines of Markdown with no runtime: `CLAUDE.md` (operating manual, always loaded),

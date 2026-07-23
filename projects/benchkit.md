@@ -248,3 +248,7 @@ is in `craft-line`). Tier moves still get declared — no silent escalation.
   never the only thing enforcing an invariant.
 - The two `projects/*.md` example profiles (gl-axi, regroup) are shipped templates,
   not live projects. This file (`benchkit.md`) is the profile for this repo.
+- A symbolic link inside an allowlisted kit payload tree is refused, not followed.
+  Closed decision (2026-07-23): following the link would ship bytes the allowlist
+  never named, so the allowlist would stop being the complete statement of what a
+  consumer receives. Don't reopen it as a link/upgrade ergonomics fix.

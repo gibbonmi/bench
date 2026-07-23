@@ -56,27 +56,6 @@ the cut.
 
 Sources: `RR:C-09`, `RR:C-11`, `RR:C-12`.
 
-**FT85 (HIGH) — least-privilege consumer payload and one coherent phase
-contract.** Spec: `specs/consumer-payload-and-phase-contract.md` (staged;
-implementation landed through commits `a6dcec3`…`f00be9f`, three-axis review
-delivered 2026-07-22). Remaining work is the review-findings close: (1)
-`bench upgrade` prerelease→release is a silent no-op — `compareKitVersions`
-strips the suffix so `1.2.3` vs `1.2.3-rc1` compare equal and the manifest
-stays stamped `-rc1`; (2) a symlink anywhere inside an allowlisted tree
-hard-fails `bench link`/`upgrade` (`link.go` refuses non-regular files) while
-only FIFO is exercised, and only under `.agents/skills`; (3)
-`.bench/skills-index.sh` parses the allowlist with an order-dependent
-single-line sed and word-splits space-bearing sources, so reformatting the
-JSON silently drops every kit-only marker; (4, suspected) the payload
-allowlist accepts duplicate rows and traversal sources like
-`.bench/../../x`; (5, suspected) `bench upgrade` lacks coverage for unknown
-flag, `--check --force` together, unparseable `#kit` header, unreadable
-manifest, and concurrent runs. Fix the accepted findings via the direct
-fix-and-gate path, then `/bench-final-check` flips the spec and clears
-`reviews/`.
-
-Sources: `RR:S-01`, `RR:S-02`, `RR:S-03`, `RR:S-04`, `RR:S-05`; `RC:M-03`.
-
 **FT86 (HIGH on the bank track; MEDIUM otherwise) — fail-closed control records
 and single-sourced repository facts.** Coverage validation requires a map or
 explicit historical marker and validates exact positive story membership and
@@ -159,6 +138,50 @@ contracts, including the actual canary phase selection and npm prepare shape.
 
 Sources: `RR:S-06`, `RR:S-07`, `RR:S-08`, `RR:S-10`, `RR:S-11`, `RR:S-12`,
 `RR:S-13`, `RR:S-14`, `RR:S-15`, `RR:S-16`, `RR:S-17`, `RR:S-18`; `RC:M-05`.
+
+**FT106 (MEDIUM) — doc claims re-verified against the tree.** Invariant 3 tells
+every session to write for the teammate who just walked in, and nothing ever
+re-checks that what that teammate reads is still true: `CONTEXT.md`,
+`projects/<name>.md`, and `docs/adr/` are asserted once and trusted forever,
+while `bench structure` budgets only code. Add a probe step to
+`/bench-what-next` — the drain is already the scheduled maintenance surface
+with a batch-diff verdict mechanism to hang corrections on. Sample two doc
+claims, verify each against the code, land corrections as visible batch-diff
+entries with a one-line why (never as silent edits), and escalate the sample
+on any hit — the escalating sample is what makes the cost self-scaling on a
+clean tree and self-paying on a rotten one. Sample by staleness rather than at
+random: `git log` gives last-touched dates for both the doc and the code it
+describes, so a doc older than the code it claims to describe is the candidate
+set. Paired with it, a `(?)` marker for inferred-and-checkable claims and
+`(unverified)` for asserted-and-not-currently-checkable, written by
+`/bench-setup-repo`'s exploration half and by `craft-adr`'s doc discipline, so
+an adopting session's inferences stop reading identically to
+reviewer-confirmed facts; the probe drains marked claims before sampling
+unmarked ones. The two halves ship together — a marker nobody seeks out is
+just decoration, and a probe with no self-declared targets samples blind.
+Open: whether the probe target list is hardcoded or reviewer-declared
+alongside `.bench/structure.budgets` (recommend hardcoded — a declaration file
+is a second thing to keep current). Kit edit under the `craft-synthesis`
+discipline. Background: `docs/reporesident-distillation.md` §1 and §5.
+
+**FT107 (MEDIUM) — the standing right-sizing rules, written down.**
+`.bench/BENCH.md` says a few-line change doesn't need the full pipeline and
+that you may propose a lighter path but must get an explicit OK first — so
+every small change costs a round trip and the reviewer answers the same
+question with the same answer. The same paragraph already licenses the fix
+("if I give you a standing rule for changes of a given size, follow it and
+stop asking"), but no standing rule has ever been written. Write the table
+beside that paragraph: change shape → the path it takes → the trigger that
+forces escalation back to the full pipeline. No new phases and no new files.
+Bound the light path by blast radius rather than file count — a change
+crossing a declared seam takes the full pipeline, a change strictly inside one
+is a light-path candidate — because seams are vocabulary the profile already
+carries and a file count fails on a monorepo. Carry one escalation trigger on
+an observable rather than on self-assessed confidence: a small stated read
+budget spent without naming the cause with evidence reroutes to
+`/bench-debug`, not onward through the patch. Kit edit under the
+`craft-synthesis` discipline. Background:
+`docs/reporesident-distillation.md` §3.
 
 **FT92 (LOW) — attributed subject drift and consumer-shipped input hygiene.**
 "gate subject changed during execution" names no component; the drift message
@@ -316,6 +339,71 @@ doc-conformance check grepping for phrases like "nothing is committed" would
 fire on ordinary prose in a spec's Problem section, and a check that cannot be
 shown to bite does not earn gate weight.
 
+**FT108 (LOW) — a refactor lane with a mechanical exit test.** The kit has no
+refactor path: a pure restructure either gets forced through
+spec → implement → review, where there are no stories and no red signal so the
+coverage map is a fiction, or it takes the direct fix-and-gate path with
+nothing but the gate protecting behavior. Add a `craft-refactor` skill — a
+skill rather than a phase, because phases are reviewer-chosen entry points and
+a refactor is usually a shape the work turns out to have. It composes
+`craft-seams` (reaching a better seam is usually the point) and `craft-tdd`
+(characterization tests are TDD with the red signal running backwards). Four
+rules: tests covering the affected behavior green before any move, with
+characterization tests written first where the behavior is uncovered; an
+ordered list of mechanical moves each leaving the repo green; one move at a
+time with every caller enumerated by search rather than from recall; and the
+exit test — the suite passes with test logic unmodified, mechanical renames
+being the only permitted test edit, so a changed assertion means changed
+behavior and the move reverts and reroutes to the feature path. Carry the
+no-bundling rule too (a bug found mid-refactor is parked and fixed
+separately) — invariant 4's smallest-diff rule aimed at a failure mode the kit
+does not currently name. Propose the assertion rule as a gate check
+(`bench diff --assertions`) only if the skill gets used and the rule gets
+violated. Kit edit under the `craft-synthesis` discipline. Background:
+`docs/reporesident-distillation.md` §2.
+
+**FT109 (LOW) — handoff shape, capped and computed.** The phase-close rule in
+`AGENTS.md` says the closing message emits a continuation prompt or updates
+`session-handoff.md`, so the file's shape is entirely up to whoever writes it:
+it is currently a free-form narrative with no template, no cap, no
+rewrite-in-full rule, and nothing saying what happens when it disagrees with
+the tree. Put the template inside `session-handoff.md` itself, so the template
+cannot drift from the artifact it describes, and add the rewrite-in-full and
+conflict rules to the phase-close paragraph in `AGENTS.md` — the handoff is
+pruned rather than accreted, because a fresh session pays for every line it
+reads cold. Make the conflict rule computed rather than remembered: the
+handoff records the commit it was written at, and `bench status` compares that
+against `HEAD` and reports staleness, which the SessionStart hook already
+prints. That is one machine-readable line in the handoff and one comparison in
+`session-inspect`, and it turns "trust git over the handoff" from a rule the
+next session must recall into an ambient fact. Kit edit under the
+`craft-synthesis` discipline. Background:
+`docs/reporesident-distillation.md` §4.
+
+**FT110 (LOW) — two generation-shaping clauses on an observable.** Invariant
+4's "read the surrounding code before you write" is true but unfalsifiable —
+*surrounding* is undefined and a session always believes it read enough. Two
+sharper clauses. First, in `.bench/BENCH.md` as a clause on invariant 4 rather
+than a new invariant: never call an API or function whose definition you have
+not read this session, and verify behavior in source rather than from memory.
+Second, in `craft-seams` beside the seam-finding guidance: an exploration
+budget — a small stated number of reads without traction means stop reading,
+run `bench outline`, and pick the seam from the index. State the budget as one
+the session declares it has spent, so the behavior is observable in the
+transcript rather than counted internally. The re-scope target is computed and
+cannot go stale, which is the half worth having and also real pull for
+`bench outline`, currently underused. Kit edit under the `craft-synthesis`
+discipline. Background: `docs/reporesident-distillation.md` §6.
+
+**FT111 (LOW) — provenance tags that outlive their specs.** Code comments
+carrying `FT<n> story <n>` tags point at specs that retire — two retired on
+2026-07-23 alone — so a tag naming a retired spec points at nothing, which is
+exactly the rot `craft-comments` forbids. Reviewer-decided 2026-07-23: remove
+them, but only when already editing the line, and reject new ones in review.
+The work is the wording in `craft-review` and `craft-comments`, not a sweep of
+the roughly a dozen existing sites. Kit edit under the `craft-synthesis`
+discipline.
+
 ## Release and bank reassessment gate
 
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
@@ -357,7 +445,12 @@ detect`, `bench doc`, `bench specs --retired`, doctor binary-presence row,
 `conformanceFamilies`-vs-dispatch reconcile meta-check, and a per-anchor
 bite-proof meta-test (canaries prove one needle per family today; graduate on
 observed anchor rot). `bench symbols` is not carried; restore only if agents
-demonstrably burn turns on symbol search.
+demonstrably burn turns on symbol search. Also parked here 2026-07-23:
+concurrent `bench upgrade` runs, raised as a coverage gap by the FT85 review
+and closed by decision rather than left open — `transactionalLink` already
+moves tree, manifest rows, and version stamp together, so the damage is
+bounded; graduate on an actual report of two upgrades interleaving badly, not
+before.
 
 **FT24 (parked pending upstream) — Codex agent-line guard parity.** Researched
 2026-07-11: still not implementable on current Codex — delegation has no
@@ -379,12 +472,13 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-final-check` — FT85 close: fix the accepted review findings via
-   the direct fix-and-gate path, then flip the spec and clear `reviews/`. It
-   is the only staged spec left open, so it goes first.
-2. `/bench-write-spec` — FT88's remaining arms (fast/slow marker-deadline
+1. `/bench-write-spec` — FT88's remaining arms (fast/slow marker-deadline
    legs, the `.bench-contract-env` cleanup flake, the orphaned-gate defect,
-   self-attributing conformance diags). The deadline fix shipped; these four
-   are what still taxes every landing.
-3. `/bench-write-spec` — spec FT87 slice 3, command-wide parser and
+   self-attributing conformance diags). The deadline fix shipped and FT85
+   closed, so this is the highest row with no spec staged; these four are what
+   still taxes every landing.
+2. `/bench-write-spec` — spec FT87 slice 3, command-wide parser and
    security-evidence capability.
+3. `/bench-shape-idea` — FT91's first arm, core-count-aware gate/phase
+   concurrency. The same cap is FT88's load lever, so the grill that settles
+   the cut line between speed and oracle authority serves both rows.
