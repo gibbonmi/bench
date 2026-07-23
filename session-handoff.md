@@ -5,41 +5,41 @@ executable from a cold start; no conversation history is needed.
 
 ## State
 
-- **The drain is committed** (`dcb24b9`): FT88 removed from `ROADMAP.md` — the
-  gate owner record, the PID-naming refusal, process-group teardown, the two-leg
-  marker wait, the contract-harness reap, and self-attributing conformance diags
-  all shipped and the spec retired. `IDEAS.md` and `.bench/learnings.md` are both
+- **The roadmap drain is committed** (`dcb24b9`): FT88 removed — the gate owner
+  record, the PID-naming refusal, process-group teardown, the two-leg marker
+  wait, the contract-harness reap, and self-attributing conformance diags all
+  shipped and the spec retired. `IDEAS.md` and `.bench/learnings.md` are both
   empty; the journal's reproduction-economics entry became roadmap row FT112.
-- **FT109 is built and uncommitted** — the handoff-shape row, taken on the light
-  path with the reviewer's explicit OK (no spec). Three parts: the phase-close
-  paragraph in `AGENTS.md` gained the rewrite-in-full and conflict rules, this
-  file gained the shape section below, and `bench status` gained a `handoff` row
-  (severity 11) reporting how many commits have landed since the handoff was last
-  written. Unit tests live at the `internal/status` seam; two mutations were
-  verified red.
-- **One approved deviation from the FT109 row.** The row specified a `written-at:`
-  line inside the handoff. That was dropped: a self-reported date is the same
+- **FT109 is shipped** (`d0263c2`, gate green, row removed). `bench status` now
+  carries a `handoff` row (severity 11) reporting how many commits have landed
+  since this file was last written; it is silent on an absent, untracked, or
+  mid-rewrite handoff, and ranks last so it leads a quiet cold-pickup board
+  without displacing a red gate or a dirty tree. `AGENTS.md`'s phase-close
+  paragraph carries the rewrite-in-full and conflict rules; the Shape section
+  below is this file's own template. Built on the light path with the reviewer's
+  explicit OK — no spec.
+- **One approved deviation, now closed.** The FT109 row specified a `written-at:`
+  line inside the handoff. It was dropped: a self-reported date is the same
   remembered-not-computed defect the row exists to close, and it cannot name its
   own commit anyway, since the handoff lands in the commit it describes. The age
-  is read from git history instead — `git log -1 -- session-handoff.md` — so there
-  is nothing to maintain and nothing that can lie.
-- **`specs/` is empty.** No spec is staged and no build is mid-flight beyond the
-  uncommitted FT109 work above.
+  comes from `git log -1 -- session-handoff.md` instead.
+- **`specs/` is empty**; nothing is mid-flight and the tree is clean.
 - **Known advisory debt:** `bench structure` reports 10 violations (crowded
   `internal/adopt/` and `internal/contract/surface/`, plus seven over-length
   files). The gate is green with them and no roadmap row covers them.
-- **Unpushed:** `main` is ahead of origin by several commits. Pushing is the
-  reviewer's call.
+- **Unpushed:** `main` is ahead of origin. Pushing is the reviewer's call.
 
 ## Next command
 
-`bench commit -m "<message>" AGENTS.md ROADMAP.md session-handoff.md internal/status/`
-to land FT109 on a green gate. Its roadmap row is already removed in the same
-change, so nothing remains to reconcile afterward.
+`/bench-write-spec` for FT87 slice 3 — the command-wide parser and
+security-evidence capability — in a fresh **mid-tier** session, the profile's
+spec default. It leads the roadmap's recommended sequence and its decision map
+(FT87 tickets #7 and #8) is already closed, so the spec compiles from a reviewed
+source rather than the batch-drain override.
 
-After that, the roadmap's recommended sequence leads with `/bench-write-spec` for
-FT87 slice 3 (command-wide parser and security-evidence capability) in a fresh
-mid-tier session — its decision map is already closed.
+Fresh evidence for that row from this session: `bench commit` rejects a
+directory path (`internal/status/`) and requires each file named, which is one
+of slice 3's listed gaps.
 
 ## Shape
 
