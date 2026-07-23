@@ -72,6 +72,14 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 				if !knownFlags[a] {
 					return Result{}, toon.Usage(g.Cmd, a), 2
 				}
+				// A declared flag given twice is a usage error, not last-one-wins:
+				// silently keeping the later value hides a mistyped invocation whose
+				// two spellings disagree. The check precedes the value read, so a
+				// repeated value flag names the flag instead of consuming another
+				// argument, and one rule covers value and boolean flags alike.
+				if _, repeated := result.Flags[a]; repeated {
+					return Result{}, toon.Usage(g.Cmd, a), 2
+				}
 				if valueFlags[a] {
 					if i+1 >= len(args) {
 						return Result{}, toon.MissingArg(g.Cmd, a), 2

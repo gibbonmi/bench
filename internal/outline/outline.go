@@ -22,7 +22,18 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
+
+// grammar is the declared argument shape usage.Parse enforces for this subcommand —
+// arity, flag recognition, `--`, and help all come from there rather than a local switch.
+// Help is helpText without its trailing newline, because the caller appends one.
+var grammar = usage.Grammar{
+	Cmd:     "bench outline",
+	Help:    strings.TrimSuffix(helpText(), "\n"),
+	Flags:   []usage.Flag{{Name: "--full"}},
+	MaxArgs: 1,
+}
 
 // promise is the one-line expectation-setting clause the surface repeats: outline
 // LOCATES seams, it does not IDENTIFY the project's blessed seams. It lands verbatim
@@ -166,22 +177,15 @@ func listFiles(root, path string, havePath bool) ([]string, error) {
 // error with exit 1 outside a repo or on a git failure, and usage on stdout with exit 2
 // for an unknown flag or a second positional argument.
 func Command(args []string) (string, int) {
+	parsed, line, code := usage.Parse(grammar, args)
+	if line != "" {
+		return line + "\n", code
+	}
+	_, full := parsed.Flags["--full"]
 	var path string
-	var havePath, full bool
-	for _, a := range args {
-		switch {
-		case a == "-h" || a == "--help":
-			return helpText(), 0
-		case a == "--full":
-			full = true
-		case strings.HasPrefix(a, "-"):
-			return toon.Usage("bench outline", a) + "\n", 2
-		default:
-			if havePath {
-				return toon.Usage("bench outline", a) + "\n", 2
-			}
-			path, havePath = a, true
-		}
+	havePath := len(parsed.Positionals) == 1
+	if havePath {
+		path = parsed.Positionals[0]
 	}
 
 	root, err := git.Root()

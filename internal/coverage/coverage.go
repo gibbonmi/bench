@@ -8,13 +8,26 @@ package coverage
 
 import (
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 
 	specref "github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
+
+// grammar is the declared argument shape usage.Parse enforces for this subcommand —
+// arity, flag recognition, `--`, and help all come from there rather than a local switch.
+// MinArgs stays 0 so the absent-spec case keeps its own named message below rather than
+// the generic missing-positional one.
+var grammar = usage.Grammar{
+	Cmd:     "bench coverage",
+	Help:    "usage: bench coverage [--check] <spec.md | slug>",
+	Flags:   []usage.Flag{{Name: "--check"}},
+	MaxArgs: 1,
+}
 
 const escSentinel = "\x1c" // stands in for an escaped `\|` across the pipe split
 
@@ -198,34 +211,31 @@ func isDashes(s string) bool {
 
 // Command implements `bench coverage [--check] <spec.md | slug>`.
 func Command(args []string) (string, int) {
-	check := false
+	parsed, line, code := usage.Parse(grammar, args)
+	if line != "" {
+		return line + "\n", code
+	}
+	_, check := parsed.Flags["--check"]
 	spec := ""
-	for _, a := range args {
-		switch {
-		case a == "--check":
-			check = true
-		case a == "-h" || a == "--help":
-			return "usage: bench coverage [--check] <spec.md | slug>\n", 0
-		case strings.HasPrefix(a, "-"):
-			return toon.Usage("bench coverage", a) + "\n", 2
-		default:
-			if spec != "" {
-				return toon.Usage("bench coverage", a) + "\n", 2
-			}
-			spec = a
-		}
+	if len(parsed.Positionals) == 1 {
+		spec = parsed.Positionals[0]
 	}
 	if spec == "" {
 		return toon.MissingArg("bench coverage", "<spec.md> is required") + "\n", 2
 	}
-	content, resolved, tried, ok, err := specref.Resolve("", spec)
+	// The repo root anchors the bare-slug fallback, exactly as it does for the
+	// internal/spec subcommands, so which spec a slug names never depends on where the
+	// caller is standing. Rendering stays repo-relative for the same reason: an absolute
+	// path would make the same spec print differently per checkout.
+	base := specref.RepoBase()
+	content, resolved, tried, ok, err := specref.Resolve(base, spec)
 	if err != nil {
 		return toon.Errorf("spec not readable: "+err.Error(), "fix the file's permissions or pass another spec") + "\n", 1
 	}
 	if !ok {
 		return toon.Errorf("spec not found: "+strings.Join(tried, ", "), "pass a path to a spec markdown file") + "\n", 1
 	}
-	spec = resolved
+	spec = filepath.ToSlash(specref.RelTo(base, resolved))
 	p := parse(content)
 	if check {
 		violations := Check(p)

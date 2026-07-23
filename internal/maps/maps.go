@@ -17,7 +17,16 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
+
+// grammar is the declared argument shape usage.Parse enforces for this subcommand —
+// arity, flag recognition, `--`, and help all come from there rather than a local switch.
+var grammar = usage.Grammar{
+	Cmd:   "bench maps",
+	Help:  "usage: bench maps [--count]",
+	Flags: []usage.Flag{{Name: "--count"}},
+}
 
 var (
 	ticketRe  = regexp.MustCompile(`^## #([0-9]+):`)
@@ -207,18 +216,16 @@ func UnresolvedCount(root string) int {
 // no `## #` ticket heading is not-close-ready yet emits no row — so the adapter reads
 // the engine's own figure through the same parseFile, keeping one source of the rule.
 func Command(args []string) (string, int) {
-	switch {
-	case len(args) == 0:
-	case args[0] == "--count":
+	parsed, line, code := usage.Parse(grammar, args)
+	if line != "" {
+		return line + "\n", code
+	}
+	if _, count := parsed.Flags["--count"]; count {
 		root, err := git.Root()
 		if err != nil {
 			return "0\n", 0
 		}
 		return strconv.Itoa(UnresolvedCount(root)) + "\n", 0
-	case args[0] == "-h" || args[0] == "--help":
-		return "usage: bench maps [--count]\n", 0
-	default:
-		return toon.Usage("bench maps", args[0]) + "\n", 2
 	}
 	root, err := git.Root()
 	if err != nil {

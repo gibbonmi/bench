@@ -28,7 +28,16 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
+
+// grammar is the declared argument shape usage.Parse enforces for this subcommand —
+// arity, flag recognition, `--`, and help all come from there rather than a local switch.
+var grammar = usage.Grammar{
+	Cmd:   "bench guards",
+	Help:  "usage: bench guards [--brief]",
+	Flags: []usage.Flag{{Name: "--brief"}},
+}
 
 type Manifest map[string]string
 
@@ -258,16 +267,11 @@ func fileExists(p string) bool {
 // Command implements `bench guards [--brief]`. --brief emits one plain line per
 // deny-capable guard plus exactly one footer — the surface session-start injects.
 func Command(args []string) (string, int) {
-	brief := false
-	switch {
-	case len(args) == 0:
-	case args[0] == "--brief":
-		brief = true
-	case args[0] == "-h" || args[0] == "--help":
-		return "usage: bench guards [--brief]\n", 0
-	default:
-		return toon.Usage("bench guards", args[0]) + "\n", 2
+	parsed, line, code := usage.Parse(grammar, args)
+	if line != "" {
+		return line + "\n", code
 	}
+	_, brief := parsed.Flags["--brief"]
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1

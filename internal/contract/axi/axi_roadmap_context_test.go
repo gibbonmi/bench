@@ -109,12 +109,21 @@ func testRoadmapContextUsage(t *testing.T) {
 	if bad.Stderr != "" {
 		t.Fatal("usage wrote stderr")
 	}
-	for _, args := range [][]string{{"roadmap", "--full"}, {"roadmap", "--context", "--context"}, {"roadmap", "--help", "--full"}} {
+	for _, args := range [][]string{{"roadmap", "--full"}, {"roadmap", "--context", "--context"}} {
 		p := f.Bench(args...)
 		p.RequireExit(2)
 		if p.Stderr != "" {
 			t.Fatalf("%v wrote stderr", args)
 		}
+	}
+	// Story 4 — help, --help, and -h exit 0 on every Go subcommand — makes help win
+	// wherever it appears before `--`, so `--help --full` is a help request rather than
+	// the misuse the pre-grammar parse reported.
+	helpFirst := f.Bench("roadmap", "--help", "--full")
+	helpFirst.RequireExit(0)
+	helpFirst.RequireContains(helpFirst.Stdout, "usage:")
+	if helpFirst.Stderr != "" {
+		t.Fatal("help wrote stderr")
 	}
 	no := contract.NewFixture(t, contract.WithNoRepo()).Bench("roadmap", "--context")
 	no.RequireExit(1)

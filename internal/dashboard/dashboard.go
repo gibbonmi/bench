@@ -21,8 +21,17 @@ import (
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/status"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
+
+// grammar is the declared argument shape usage.Parse enforces for this subcommand —
+// arity, flag recognition, `--`, and help all come from there rather than a local switch.
+var grammar = usage.Grammar{
+	Cmd:   "bench dashboard",
+	Help:  "usage: bench dashboard [--stdout]",
+	Flags: []usage.Flag{{Name: "--stdout"}},
+}
 
 // Snapshot is the complete data the page renders — everything time- or environment-
 // dependent gathered up front so Render stays pure. It is assembled by gather from the
@@ -49,14 +58,11 @@ type Snapshot struct {
 // flag — any other argument is a usage error (exit 2); outside a git repository is the
 // structured not-in-repo error (exit 1), so a bad invocation never writes a stray file.
 func Command(args []string) (string, int) {
-	toStdout := false
-	switch {
-	case len(args) == 0:
-	case args[0] == "--stdout" && len(args) == 1:
-		toStdout = true
-	default:
-		return toon.Usage("bench dashboard", args[0]) + "\n", 2
+	parsed, line, code := usage.Parse(grammar, args)
+	if line != "" {
+		return line + "\n", code
 	}
+	_, toStdout := parsed.Flags["--stdout"]
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1

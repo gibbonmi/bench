@@ -23,7 +23,16 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
+
+// grammar is the declared argument shape usage.Parse enforces for this subcommand —
+// arity, flag recognition, `--`, and help all come from there rather than a local switch.
+var grammar = usage.Grammar{
+	Cmd:   "bench structure",
+	Help:  "usage: bench structure [--since <base>]",
+	Flags: []usage.Flag{{Name: "--since", HasValue: true}},
+}
 
 // sourceRe matches a tracked source file by its trailing extension — the exact
 // `py|ts|…|sh` set the shell grep filtered on. RE2 tries every alternation branch,
@@ -332,25 +341,17 @@ func allDigits(s string) bool {
 // argument → usage on stdout, exit 2; outside a repo → structured error, exit 1.
 // The exit code is 1 when the report carries any violation, else 0.
 func Command(args []string) (string, int) {
-	touched := false
-	switch {
-	case len(args) == 0:
-	case args[0] == "-h" || args[0] == "--help":
-		return "usage: bench structure [--since <base>]\n", 0
-	case args[0] == "--since":
-		if len(args) < 2 {
-			return toon.Usage("bench structure", "--since") + "\n", 2
-		}
-		touched = true
-	default:
-		return toon.Usage("bench structure", args[0]) + "\n", 2
+	parsed, line, code := usage.Parse(grammar, args)
+	if line != "" {
+		return line + "\n", code
 	}
+	base, touched := parsed.Flags["--since"]
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
 	if touched {
-		report, violations, terr := Touched(root, args[1])
+		report, violations, terr := Touched(root, base)
 		if terr != nil {
 			fmt.Fprintln(os.Stderr, gitOpError("diff", terr))
 			return "", 1

@@ -26,14 +26,19 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// Command runs the gated commit. Usage errors (no paths, no -m, unknown flag) exit 2;
-// operational failures (block, gate-red, flip failure, empty commit, git error) exit 1;
+// Command runs the gated commit. `help`, `--help`, and `-h` print the declared help at
+// exit 0; usage errors (no paths, no -m, unknown flag) exit 2; operational failures (block, gate-red, flip failure, empty commit, git error) exit 1;
 // a green gate that commits exits 0. The gate's live output streams to stdout/stderr, so
 // a red gate reports its own first failing phase.
 func Command(args []string, stdout, stderr io.Writer) int {
-	msg, specSlug, paths, usageErr := parseArgs(args)
+	msg, specSlug, paths, help, usageErr := parseArgs(args)
+	if help != "" {
+		fmt.Fprintln(stdout, help)
+		return 0
+	}
 	if usageErr != "" {
 		fmt.Fprintln(stderr, "usage: bench commit -m <msg> [--spec <slug>] <path>... (--spec marks the spec implemented; "+usageErr+")")
 		return 2
@@ -140,40 +145,37 @@ func Command(args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-// parseArgs pulls -m <msg>, --spec <slug>, and the positional paths out of args. usageErr
-// is non-empty on any misuse (no -m, no paths, unknown flag, a flag missing its value).
-func parseArgs(args []string) (msg string, specSlug string, paths []string, usageErr string) {
-	msgSet := false
-	for i := 0; i < len(args); i++ {
-		a := args[i]
-		switch {
-		case a == "-m":
-			if i+1 >= len(args) {
-				return "", "", nil, "-m needs a message"
-			}
-			i++
-			msg, msgSet = args[i], true
-		case a == "--spec":
-			if i+1 >= len(args) {
-				return "", "", nil, "--spec needs a slug"
-			}
-			i++
-			specSlug = args[i]
-		case a == "-h" || a == "--help":
-			return "", "", nil, "help"
-		case strings.HasPrefix(a, "-"):
-			return "", "", nil, "unknown flag: " + a
-		default:
-			paths = append(paths, a)
+// grammar is the declared argument shape usage.Parse enforces — arity, flag recognition,
+// `--`, and help all come from there rather than a local switch, which is what makes a
+// path beginning with a dash expressible. MinArgs stays 0 so the no-paths case keeps its
+// own named reason below rather than the generic missing-positional one.
+var grammar = usage.Grammar{
+	Cmd:     "bench commit",
+	Help:    "usage: bench commit -m <msg> [--spec <slug>] [--] <path>...",
+	Flags:   []usage.Flag{{Name: "-m", HasValue: true}, {Name: "--spec", HasValue: true}},
+	MaxArgs: -1,
+}
+
+// parseArgs routes args through the one argument grammar and applies the two requirements
+// arity alone cannot state: -m is mandatory, and at least one path must be named. help is
+// non-empty when the invocation asked for help, which is a success the caller prints;
+// usageErr is non-empty on any misuse.
+func parseArgs(args []string) (msg string, specSlug string, paths []string, help string, usageErr string) {
+	parsed, line, code := usage.Parse(grammar, args)
+	if line != "" {
+		if code == 0 {
+			return "", "", nil, line, ""
 		}
+		return "", "", nil, "", line
 	}
+	msg, msgSet := parsed.Flags["-m"]
 	if !msgSet {
-		return "", "", nil, "-m <msg> is required"
+		return "", "", nil, "", "-m <msg> is required"
 	}
-	if len(paths) == 0 {
-		return "", "", nil, "at least one <path> is required"
+	if len(parsed.Positionals) == 0 {
+		return "", "", nil, "", "at least one <path> is required"
 	}
-	return msg, specSlug, paths, ""
+	return msg, parsed.Flags["--spec"], parsed.Positionals, "", ""
 }
 
 // stagePlan classifies each named path into what the staging loop can act on. `git add -A

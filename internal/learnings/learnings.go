@@ -11,7 +11,15 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
+
+// grammar is the declared argument shape usage.Parse enforces for this subcommand —
+// arity, flag recognition, `--`, and help all come from there rather than a local switch.
+var grammar = usage.Grammar{
+	Cmd:  "bench learnings",
+	Help: "usage: bench learnings",
+}
 
 // Entry is one typed journal item. Body preserves the source text below the
 // heading so roadmap context and the human projections share this parser.
@@ -112,12 +120,8 @@ func isSpace(r rune) bool { return r < 0x80 && toon.IsSpace(byte(r)) }
 // Command implements `bench learnings`. Unknown argument → usage on stdout, exit 2;
 // outside a repo → structured error on stdout, exit 1; otherwise the TOON table, exit 0.
 func Command(args []string) (string, int) {
-	switch {
-	case len(args) == 0:
-	case args[0] == "-h" || args[0] == "--help":
-		return "usage: bench learnings\n", 0
-	default:
-		return toon.Usage("bench learnings", args[0]) + "\n", 2
+	if _, line, code := usage.Parse(grammar, args); line != "" {
+		return line + "\n", code
 	}
 	root, err := git.Root()
 	if err != nil {

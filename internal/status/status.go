@@ -33,8 +33,17 @@ import (
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/structure"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
+
+// grammar is the declared argument shape usage.Parse enforces for this subcommand —
+// arity, flag recognition, `--`, and help all come from there rather than a local switch.
+var grammar = usage.Grammar{
+	Cmd:   "bench status",
+	Help:  "usage: bench status [--all]",
+	Flags: []usage.Flag{{Name: "--all"}},
+}
 
 var captureOnlyStalePaths = map[string]bool{
 	".bench-notes.md": true,
@@ -115,16 +124,11 @@ func Signals(root string) []Signal {
 // with any trailing token — is a usage error (exit 2); outside a repo is the structured
 // error (exit 1).
 func Command(args []string) (string, int) {
-	all := false
-	switch {
-	case len(args) == 0:
-	case args[0] == "-h" || args[0] == "--help":
-		return "usage: bench status [--all]\n", 0
-	case args[0] == "--all" && len(args) == 1:
-		all = true
-	default:
-		return toon.Usage("bench status", args[0]) + "\n", 2
+	parsed, line, code := usage.Parse(grammar, args)
+	if line != "" {
+		return line + "\n", code
 	}
+	_, all := parsed.Flags["--all"]
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1

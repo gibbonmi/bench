@@ -246,9 +246,11 @@ func specArg(cmd, help string, rest []string) (arg, out string, code int, ok boo
 	return arg, "", 0, true
 }
 
-// repoBase returns the repo root that anchors the specs/<slug>.md fallback, or "" when the
-// cwd is outside a repo (then the fallback resolves relative to the process cwd).
-func repoBase() string {
+// RepoBase returns the repo root that anchors the specs/<slug>.md fallback, or "" when the
+// cwd is outside a repo (then the fallback resolves relative to the process cwd). It is the
+// one source of that anchoring for every subcommand that resolves a bare slug, so where the
+// caller happens to be standing never changes which spec a slug names.
+func RepoBase() string {
 	if root, err := git.Root(); err == nil {
 		return root
 	}
@@ -262,7 +264,7 @@ func implementedCommand(rest []string) (string, int) {
 	if !ok {
 		return out, code
 	}
-	resolved, err := Flip(repoBase(), arg)
+	resolved, err := Flip(RepoBase(), arg)
 	if err != nil {
 		return toon.Errorf(err.Error(), "pass a spec with a single `Status: staged` line") + "\n", 1
 	}
@@ -280,7 +282,7 @@ func retireCommand(rest []string) (string, int) {
 	if !ok {
 		return out, code
 	}
-	base := repoBase()
+	base := RepoBase()
 	content, resolved, tried, found, err := Resolve(base, arg)
 	if err != nil {
 		return toon.Errorf(fmt.Sprintf("spec not readable: %s: %v", resolved, err), "check file permissions") + "\n", 1
@@ -297,11 +299,11 @@ func retireCommand(rest []string) (string, int) {
 	// requires the marker at HEAD: an implemented-but-uncommitted spec means the finishing
 	// commit has not landed, so retiring it would delete work git cannot recover.
 	if !AwaitsRetirement(content) {
-		return toon.Errorf("spec not merged-implemented: "+relTo(base, resolved),
+		return toon.Errorf("spec not merged-implemented: "+RelTo(base, resolved),
 			"retire only a spec whose Status line reads implemented") + "\n", 1
 	}
 	if !implementedAtHEAD(base, resolved) {
-		return toon.Errorf("spec implemented in the working tree but not at HEAD: "+relTo(base, resolved),
+		return toon.Errorf("spec implemented in the working tree but not at HEAD: "+RelTo(base, resolved),
 			"commit the finishing flip before retiring") + "\n", 1
 	}
 	// Deletion order: review pickup first, then the spec, so an interrupt between the two
@@ -310,14 +312,14 @@ func retireCommand(rest []string) (string, int) {
 	slug := slugOf(resolved)
 	if pickup := filepath.Join(base, "reviews", slug+".md"); fileExists(pickup) {
 		if err := os.Remove(pickup); err != nil {
-			return toon.Errorf(fmt.Sprintf("remove %s: %v", relTo(base, pickup), err), "check file permissions") + "\n", 1
+			return toon.Errorf(fmt.Sprintf("remove %s: %v", RelTo(base, pickup), err), "check file permissions") + "\n", 1
 		}
-		fmt.Fprintf(&b, "retired: %s\n", relTo(base, pickup))
+		fmt.Fprintf(&b, "retired: %s\n", RelTo(base, pickup))
 	}
 	if err := os.Remove(resolved); err != nil {
-		return b.String() + toon.Errorf(fmt.Sprintf("remove %s: %v", relTo(base, resolved), err), "check file permissions") + "\n", 1
+		return b.String() + toon.Errorf(fmt.Sprintf("remove %s: %v", RelTo(base, resolved), err), "check file permissions") + "\n", 1
 	}
-	fmt.Fprintf(&b, "retired: %s\n", relTo(base, resolved))
+	fmt.Fprintf(&b, "retired: %s\n", RelTo(base, resolved))
 	fmt.Fprintf(&b, "next: promote durable content, remove the ROADMAP row, commit as `spec-retire: %s`\n", slug)
 	return b.String(), 0
 }
@@ -326,7 +328,7 @@ func retireCommand(rest []string) (string, int) {
 // marker — the "finishing commit has landed" guard. It reads the blob through git (stderr
 // is discarded), so a spec absent from HEAD or still staged there reads as false.
 func implementedAtHEAD(base, resolved string) bool {
-	rel := filepath.ToSlash(relTo(base, resolved))
+	rel := filepath.ToSlash(RelTo(base, resolved))
 	args := []string{"show", "HEAD:" + rel}
 	if base != "" {
 		args = append([]string{"-C", base}, args...)
@@ -343,7 +345,7 @@ func implementedAtHEAD(base, resolved string) bool {
 func orphanPickup(base, arg string) (string, bool) {
 	pickup := filepath.Join(base, "reviews", slugOf(arg)+".md")
 	if fileExists(pickup) {
-		return relTo(base, pickup), true
+		return RelTo(base, pickup), true
 	}
 	return "", false
 }
@@ -359,9 +361,11 @@ func fileExists(path string) bool {
 	return err == nil && !fi.IsDir()
 }
 
-// relTo renders path repo-relative to base for a stable `retired: specs/<slug>.md` line,
-// falling back to the path verbatim when base is empty or path lies outside base.
-func relTo(base, path string) string {
+// RelTo renders path repo-relative to base for a stable `retired: specs/<slug>.md` line,
+// falling back to the path verbatim when base is empty or path lies outside base. It is
+// the one source of that rendering, so a resolved spec reads the same from any cwd and
+// never leaks the machine's directory layout into agent-facing output.
+func RelTo(base, path string) string {
 	if base == "" {
 		return path
 	}

@@ -30,7 +30,18 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
+
+// grammar is the declared argument shape usage.Parse enforces for this subcommand —
+// arity, flag recognition, `--`, repeated flags, and help all come from there rather
+// than a local switch.
+// Help is fullHelp without its trailing newline, because the caller appends one.
+var grammar = usage.Grammar{
+	Cmd:   "bench diff",
+	Help:  strings.TrimSuffix(fullHelp, "\n"),
+	Flags: []usage.Flag{{Name: "--full"}, {Name: "--commit", HasValue: true}},
+}
 
 // parseNameStatusZ turns `git diff --name-status --no-renames -z` output into
 // status/path rows. The NUL framing carries each path raw (never git C-quoted), so a
@@ -184,43 +195,14 @@ func resolveBranchRange(root string) (dr diffRange, errKind, errHint string) {
 	}, "", ""
 }
 
-// parseArgs parses `bench diff`'s arguments: [--full] and [--commit <sha>] compose
-// in either order, or a lone -h/--help (recognized at any position) requests help.
-// Any other misuse — an unrecognized token, a "--commit" with no following value, or
-// a second "--commit" — reports ok=false with offender naming the exact argument at
-// fault: never a flag that parsed cleanly, so an unrecognized token past a good flag
-// still gets attributed correctly.
-func parseArgs(args []string) (full bool, commitArg string, hasCommit, help, ok bool, offender string) {
-	for i := 0; i < len(args); i++ {
-		a := args[i]
-		switch {
-		case a == "-h" || a == "--help":
-			return false, "", false, true, true, ""
-		case a == "--full":
-			full = true
-		case a == "--commit":
-			if i+1 >= len(args) || hasCommit {
-				return false, "", false, false, false, a
-			}
-			i++
-			commitArg = args[i]
-			hasCommit = true
-		default:
-			return false, "", false, false, false, a
-		}
-	}
-	return full, commitArg, hasCommit, false, true, ""
-}
-
 // Command implements `bench diff`.
 func Command(args []string) (string, int) {
-	full, commitArg, hasCommit, help, ok, offender := parseArgs(args)
-	if help {
-		return fullHelp, 0
+	parsed, line, code := usage.Parse(grammar, args)
+	if line != "" {
+		return line + "\n", code
 	}
-	if !ok {
-		return toon.Usage("bench diff", offender) + "\n", 2
-	}
+	_, full := parsed.Flags["--full"]
+	commitArg, hasCommit := parsed.Flags["--commit"]
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1

@@ -135,3 +135,68 @@ func TestParseSuccess(t *testing.T) {
 		t.Errorf("Positionals = %v, want %v", res.Positionals, want)
 	}
 }
+
+// TestParseRepeatedFlagIsUsageError pins the duplicate-flag rule and every
+// interaction it has with the rules around it. Last-one-wins is the cheapest wrong
+// implementation and it exits 0, so each case asserts the rendered line and code
+// rather than only the outcome.
+func TestParseRepeatedFlagIsUsageError(t *testing.T) {
+	g := testGrammar()
+	for _, tc := range []struct {
+		name string
+		args []string
+		want string
+	}{
+		// One rule covers both flag kinds: the value flag reports the flag itself
+		// rather than consuming the repeat's value, and the boolean flag renders
+		// through the same toon.Usage call.
+		{"repeated value flag", []string{"-m", "a", "-m", "b", "t"}, toon.Usage(g.Cmd, "-m")},
+		{"repeated boolean flag", []string{"--all", "--all", "t"}, toon.Usage(g.Cmd, "--all")},
+		// A repeated value flag missing its second value is still the duplicate,
+		// which is the earlier fault.
+		{"repeated value flag with no second value", []string{"-m", "a", "-m"}, toon.Usage(g.Cmd, "-m")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			res, line, code := Parse(g, tc.args)
+			if line != tc.want || code != 2 {
+				t.Errorf("Parse(%v) = (%+v, %q, %d), want (%q, 2)", tc.args, res, line, code, tc.want)
+			}
+		})
+	}
+}
+
+// TestParseRepeatedFlagAfterDoubleDashIsPositional pins the interaction with the
+// "--" rule: flag parsing has ended, so a repeat of a declared flag is an ordinary
+// positional and the duplicate rule must not reach it. A duplicate check applied to
+// the raw argv rather than to the flags actually parsed would fail here.
+func TestParseRepeatedFlagAfterDoubleDashIsPositional(t *testing.T) {
+	g := testGrammar()
+	res, line, code := Parse(g, []string{"--all", "--", "--all"})
+	if line != "" || code != 0 {
+		t.Fatalf("Parse(--all -- --all) errored: line=%q code=%d", line, code)
+	}
+	if len(res.Positionals) != 1 || res.Positionals[0] != "--all" {
+		t.Errorf("positionals = %v, want [--all]", res.Positionals)
+	}
+	if _, ok := res.Flags["--all"]; !ok {
+		t.Errorf("flags = %v, want the pre-`--` --all recorded", res.Flags)
+	}
+}
+
+// TestParseRepeatedHelpIsHelp pins the interaction with the help rule: help is
+// checked before any flag bookkeeping and is always success, so a repeated help
+// spelling — or help repeated alongside a repeated flag — still exits 0 with the
+// declared help text rather than becoming a duplicate-flag error.
+func TestParseRepeatedHelpIsHelp(t *testing.T) {
+	g := testGrammar()
+	for _, args := range [][]string{
+		{"--help", "--help"},
+		{"-h", "--help", "help"},
+		{"--all", "--help", "--all"},
+	} {
+		res, line, code := Parse(g, args)
+		if line != g.Help || code != 0 {
+			t.Errorf("Parse(%v) = (%+v, %q, %d), want help text and exit 0", args, res, line, code)
+		}
+	}
+}

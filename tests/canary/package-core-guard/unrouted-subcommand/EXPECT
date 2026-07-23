@@ -1,0 +1,1 @@
+cmd/bench/main.go dispatches "unregistered" with no entry in the subcommand argument-routing registry

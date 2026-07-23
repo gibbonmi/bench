@@ -15,7 +15,15 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/modelid"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
+
+// grammar is the declared argument shape usage.Parse enforces for this subcommand —
+// arity, flag recognition, `--`, and help all come from there rather than a local switch.
+var grammar = usage.Grammar{
+	Cmd:  "bench models",
+	Help: "usage: bench models",
+}
 
 const (
 	openAIModelsURL    = "https://api.openai.com/v1/models"
@@ -59,12 +67,11 @@ type modelRow struct {
 // failure becomes an unavailable row, and the command exits 0 unless rendering
 // its own structured output fails.
 func Command(args []string) (string, int) {
-	if len(args) > 0 {
-		// bench models takes no arguments; any is a misuse, rejected with a usage line at
-		// exit 2 to match every sibling porcelain's default case. This is distinct from the
-		// discovery tolerance below (unreachable providers → unavailable rows at exit 0),
-		// which the no-arg path keeps unchanged.
-		return toon.Usage("bench models", args[0]) + "\n", 2
+	// bench models takes no arguments; any is a misuse the grammar rejects with a usage
+	// line at exit 2. That is distinct from the discovery tolerance below (unreachable
+	// providers → unavailable rows at exit 0), which the no-arg path keeps unchanged.
+	if _, line, code := usage.Parse(grammar, args); line != "" {
+		return line + "\n", code
 	}
 	sources, models := inventory()
 	out, err := render(sources, models)

@@ -5,23 +5,38 @@ import (
 
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 func contextUsage() string { return "usage: bench roadmap --context [--full]\n" }
 
+// contextGrammar is the declared argument shape usage.Parse enforces for the
+// `bench roadmap --context` form — arity, flag recognition, `--`, repeated flags, and
+// help all come from there rather than a local switch. Help is contextUsage without
+// its trailing newline, because the caller appends one.
+var contextGrammar = usage.Grammar{
+	Cmd:   "bench roadmap --context",
+	Help:  strings.TrimSuffix(contextUsage(), "\n"),
+	Flags: []usage.Flag{{Name: "--context"}, {Name: "--full"}},
+}
+
 // ContextCommand implements the read-only schema-2 AXI roadmap snapshot.
 func ContextCommand(args []string, gate func(string) GateCacheFact) (string, int) {
-	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
-		return contextUsage(), 0
+	parsed, line, code := usage.Parse(contextGrammar, args)
+	if line != "" {
+		return line + "\n", code
 	}
-	full := len(args) == 2 && args[0] == "--context" && args[1] == "--full"
-	if !(len(args) == 1 && args[0] == "--context") && !full {
+	// --context is the mode selector, not an optional flag: --full alone names no mode
+	// and is the misuse this reports. Arity, unknown flags, and a repeated --context are
+	// already answered by the grammar above.
+	if _, context := parsed.Flags["--context"]; !context {
 		arg := "arguments"
 		if len(args) > 0 {
 			arg = args[0]
 		}
 		return toon.Usage("bench roadmap --context", arg) + "\n", 2
 	}
+	_, full := parsed.Flags["--full"]
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1

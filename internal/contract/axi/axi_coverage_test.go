@@ -2,6 +2,7 @@ package axi
 
 import (
 	"github.com/gibbonmi/bench/internal/contract"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -12,6 +13,38 @@ func TestAXICoverageContracts(t *testing.T) {
 	contract.RunParallel(t, "AXI coverage extraction contract", testAXICoverageExtraction)
 	contract.RunParallel(t, "AXI coverage state/error contract", testAXICoverageStateError)
 	contract.RunParallel(t, "AXI coverage --check validation contract", testAXICoverageCheckValidation)
+	contract.RunParallel(t, "AXI coverage root-anchored slug contract", testAXICoverageSlugRootAnchored)
+}
+
+// testAXICoverageSlugRootAnchored pins the slug fallback to the repository root. It
+// compares the subdirectory run against the root run rather than asserting the
+// subdirectory run succeeds: an implementation that resolved both against the process
+// cwd would still pass a bare success assertion when the root run happens to work.
+func testAXICoverageSlugRootAnchored(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteFile("specs/anchored.md", "# anchored\n\n## User stories\n1. As a, I want b, so c.\n\n### Acceptance coverage map\n| story | behavior | seam | red signal | why it catches the failure |\n|---|---|---|---|---|\n| 1 | b | s | r | w |\n")
+	subdir := filepath.Join(f.Root, "sub", "deeper")
+	contract.Mkdir(t, subdir)
+
+	root := f.Bench("coverage", "anchored")
+	nested := runBenchInDir(t, f, subdir, "coverage", "anchored")
+	explicit := f.Bench("coverage", "specs/anchored.md")
+
+	if nested.ExitCode != root.ExitCode {
+		t.Fatalf("exit code from subdirectory = %d, from root = %d\nsubdir stdout:\n%s\nroot stdout:\n%s", nested.ExitCode, root.ExitCode, nested.Stdout, root.Stdout)
+	}
+	if nested.Stdout != root.Stdout {
+		t.Fatalf("stdout differs by cwd\nsubdir:\n%s\nroot:\n%s", nested.Stdout, root.Stdout)
+	}
+	// The slug and explicit-path forms name the same file, so they must render it the
+	// same way. An absolute rendering would satisfy the cwd comparison above while still
+	// leaking the machine's layout and differing from the path form.
+	if explicit.Stdout != root.Stdout {
+		t.Fatalf("slug form differs from explicit-path form\nslug:\n%s\npath:\n%s", root.Stdout, explicit.Stdout)
+	}
+	root.RequireExit(0)
+	requireOutputLine(t, root, "spec: specs/anchored.md")
+	requireOutputLine(t, root, "state: mapped")
 }
 
 func testAXICoverageExtraction(t *testing.T) {

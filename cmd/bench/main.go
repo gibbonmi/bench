@@ -81,8 +81,22 @@ var commands = map[string]func([]string) (string, int){
 	"worktree-lease-file": worktree.LeaseFileCommand,
 }
 
+// commandsGrammar is the declared argument shape usage.Parse enforces for `bench
+// commands` — arity, flag recognition, `--`, and help all come from there rather than a
+// local switch. `--brief` is the only form that lists anything, so an invocation without
+// it keeps its exit-2 usage answer.
+var commandsGrammar = usage.Grammar{
+	Cmd:   "bench commands",
+	Help:  "usage: bench commands --brief",
+	Flags: []usage.Flag{{Name: "--brief"}},
+}
+
 func commandsCommand(args []string) (string, int) {
-	if len(args) != 1 || args[0] != "--brief" {
+	parsed, line, code := usage.Parse(commandsGrammar, args)
+	if line != "" {
+		return line + "\n", code
+	}
+	if _, brief := parsed.Flags["--brief"]; !brief {
 		return "usage: bench commands --brief\n", 2
 	}
 	return "version\ncommands --brief\nstatus\n", 0

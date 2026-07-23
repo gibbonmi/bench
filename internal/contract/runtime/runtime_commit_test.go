@@ -59,6 +59,24 @@ func TestRuntimeCommitContracts(t *testing.T) {
 	contract.RunParallel(t, "bad --spec fails before the gate", testCommitSpecFailsFast)
 	contract.RunParallel(t, "empty commit refused", testCommitEmptyRefused)
 	contract.RunParallel(t, "usage errors exit 2", testCommitUsageExitTwo)
+	contract.RunParallel(t, "-- makes a leading-dash path expressible", testCommitDoubleDashPath)
+}
+
+// testCommitDoubleDashPath drives the grammar's `--` rule end to end: a file whose name
+// begins with a dash is inexpressible without it, and the rule has to survive every layer
+// between argv and the git pathspec — the shell router, the parse, the block-check's
+// allow-set, and staging — so only the real binary against a real repo proves it.
+func testCommitDoubleDashPath(t *testing.T) {
+	f := commitFixture(t)
+	f.WriteFile("-weird.txt", "dash-led\n")
+	before := headSha(f)
+
+	f.Bench("commit", "-m", "dash path", "--", "-weird.txt").RequireExit(0)
+
+	if headSha(f) == before {
+		t.Fatal("HEAD did not advance on a green gate")
+	}
+	contract.RequireContains(t, committedNames(f), "-weird.txt")
 }
 
 func testCommitFreshVerdictReused(t *testing.T) {

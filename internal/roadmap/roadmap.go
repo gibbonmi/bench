@@ -13,7 +13,26 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
+
+// grammar is the declared argument shape usage.Parse enforces for this subcommand —
+// arity, flag recognition, `--`, and help all come from there rather than a local switch.
+// The text is variadic, so MaxArgs is unbounded; `--` is what makes idea text that
+// begins with a dash expressible.
+var ideaGrammar = usage.Grammar{
+	Cmd:     "bench idea",
+	Help:    `usage: bench idea "<text>"`,
+	MaxArgs: -1,
+}
+
+// roadmapGrammar is the bare `bench roadmap` form. Every argument-bearing invocation
+// is dispatched to the --context form, which declares its own grammar, so this one
+// takes nothing at all.
+var roadmapGrammar = usage.Grammar{
+	Cmd:  "bench roadmap",
+	Help: "usage: bench roadmap",
+}
 
 const ideasFile = "IDEAS.md"
 
@@ -24,7 +43,11 @@ const ideasFile = "IDEAS.md"
 // does not swallow the new entry onto its physical line), then appends
 // `- <ISO date>  <text>` — two spaces between date and text — creating the file if absent.
 func IdeaCommand(args []string) (string, int) {
-	text := strings.Join(args, " ")
+	parsed, line, code := usage.Parse(ideaGrammar, args)
+	if line != "" {
+		return line + "\n", code
+	}
+	text := strings.Join(parsed.Positionals, " ")
 	if strings.TrimSpace(text) == "" {
 		return "usage: bench idea \"<text>\"\n", 2
 	}
@@ -80,8 +103,8 @@ const missingRoadmap = "no ROADMAP.md — run /bench-what-next to create the wor
 // roadmap, a missing sequence section, or a section without two-or-three numbered
 // items each get an explicit message pointing at /bench-what-next, exit 0.
 func RoadmapCommand(args []string) (string, int) {
-	if len(args) > 0 {
-		return toon.Usage("bench roadmap", args[0]) + "\n", 2
+	if _, line, code := usage.Parse(roadmapGrammar, args); line != "" {
+		return line + "\n", code
 	}
 	root, err := git.Root()
 	if err != nil {
