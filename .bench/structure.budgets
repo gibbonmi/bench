@@ -5,9 +5,10 @@
 # The next file added to .bench/ re-asks.
 .bench/ 13
 
-# Cohesive gate-oracle modules; approved 2026-07-15 (FT100/FT103-FT105).
+# Cohesive gate-oracle modules; approved 2026-07-15 (FT100/FT103-FT105) and
+# re-granted 2026-07-23 for trustworthy-gate-under-load's private engine seams.
 # Exact current caps re-ask on the next file or line of growth.
-internal/gate/ 13
+internal/gate/ 16
 internal/gate/runner_serial_test.go 410
 internal/gate/story4_proof_test.go 415
 internal/gate/subject.go 422

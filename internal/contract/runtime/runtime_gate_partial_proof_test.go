@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -159,16 +160,33 @@ func proveR17Cancellation(t *testing.T) {
 		if err := cmd.Start(); err != nil {
 			t.Fatal(err)
 		}
+		done := make(chan error, 1)
+		go func() { done <- cmd.Wait() }()
 		waitR17File(t, filepath.Join(gitDir(t, f), "r17-started"))
 		var gatePGID int
 		if _, err := fmt.Sscanf(strings.TrimSpace(string(mustReadRuntime(t, filepath.Join(gitDir(t, f), "r17-pgid")))), "%d", &gatePGID); err != nil {
 			t.Fatal(err)
 		}
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
-		_ = syscall.Kill(-gatePGID, syscall.SIGKILL)
-		if err := cmd.Wait(); err == nil {
+		if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGINT); err != nil {
+			t.Fatal(err)
+		}
+		var waitErr error
+		select {
+		case waitErr = <-done:
+		case <-time.After(5 * time.Second):
+			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+			_ = syscall.Kill(-gatePGID, syscall.SIGKILL)
+			select {
+			case waitErr = <-done:
+				t.Fatalf("cancellation call %d required forced cleanup: %v\n%s", call, waitErr, out.String())
+			case <-time.After(3 * time.Second):
+				t.Fatalf("cancellation call %d owner could not be reaped", call)
+			}
+		}
+		if waitErr == nil {
 			t.Fatalf("cancellation call %d exited zero: %s", call, out.String())
 		}
+		waitR17ProcessGroupExit(t, gatePGID)
 		contract.Remove(t, filepath.Join(gitDir(t, f), "r17-started"))
 		if got := gate.Inspect(f.Root); got.State != gate.Pending || got.PendingStatus != "interrupted-pending" || got.ReusableGreen {
 			t.Fatalf("cancellation call %d = %+v", call, got)
@@ -176,6 +194,19 @@ func proveR17Cancellation(t *testing.T) {
 	}
 	assertRuns(t, f, 2)
 	assertNoR17Temps(t, f)
+}
+
+func waitR17ProcessGroupExit(t *testing.T, pgid int) {
+	t.Helper()
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		if err := syscall.Kill(-pgid, 0); errors.Is(err, syscall.ESRCH) {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	_ = syscall.Kill(-pgid, syscall.SIGKILL)
+	t.Fatalf("gate child process group %d survived cancellation", pgid)
 }
 
 func waitR17File(t *testing.T, path string) {

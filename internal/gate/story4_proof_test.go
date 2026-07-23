@@ -311,17 +311,13 @@ func r11Cancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan Result, 1)
 	go func() { done <- Execute(ctx, root, io.Discard, io.Discard) }()
-	waitFile(t, filepath.Join(root, ".git", "child-pid"))
+	pid := waitForPIDFile(t, filepath.Join(root, ".git", "child-pid"))
 	cancel()
 	got := <-done
 	if got.GateExit != 130 || got.ActionExit != 130 || got.Inspection.State != Pending {
 		t.Fatalf("cancellation result = %+v, want 130/130 pending", got)
 	}
-	var pid int
-	_, _ = fmt.Sscanf(strings.TrimSpace(string(mustRead(t, filepath.Join(root, ".git", "child-pid")))), "%d", &pid)
-	if syscall.Kill(pid, 0) == nil {
-		t.Fatalf("gate child %d survived cancellation", pid)
-	}
+	waitForProcessExit(t, pid)
 }
 
 func r12SeparateGitDir(t *testing.T) {

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -266,10 +267,34 @@ func TestVulnerabilityCancellationKillsDescendantProcessGroup(t *testing.T) {
 	if result.Status != StatusInterrupted {
 		t.Fatalf("result=%+v", result)
 	}
-	data, _ := os.ReadFile(pidFile)
-	pid, _ := strconv.Atoi(string(data))
-	if err := syscall.Kill(pid, 0); err == nil {
-		t.Fatalf("scanner descendant %d survived cancellation", pid)
+	data, err := os.ReadFile(pidFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pid, err := strconv.Atoi(string(data))
+	if err != nil || pid <= 0 {
+		t.Fatalf("scanner descendant pid = %q: %v", data, err)
+	}
+	requireProcessGone(t, pid)
+}
+
+func requireProcessGone(t *testing.T, pid int) {
+	t.Helper()
+	deadline := time.NewTimer(2 * time.Second)
+	defer deadline.Stop()
+	probe := time.NewTicker(10 * time.Millisecond)
+	defer probe.Stop()
+	for {
+		err := syscall.Kill(pid, 0)
+		if errors.Is(err, syscall.ESRCH) {
+			return
+		}
+		select {
+		case <-probe.C:
+		case <-deadline.C:
+			_ = syscall.Kill(pid, syscall.SIGKILL)
+			t.Fatalf("scanner descendant %d survived cancellation", pid)
+		}
 	}
 }
 
