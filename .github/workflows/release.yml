@@ -38,6 +38,8 @@ jobs:
           name: release-native-proof-evidence
           path: dist/native-proofs
       - run: bash scripts/release-preflight.sh --mode publish --profile public
+        env:
+          BENCH_REQUIRE_CAPABILITIES: '1'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: publish-preflight-evidence

@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -139,10 +140,14 @@ func (r Resolution) command(root string) *exec.Cmd {
 // BENCH_KIT/BENCH_WRAPPER so the binary can find its assets. Those are not part of the
 // project gate's contract; leaking them into the gate makes fixture wrappers resolve the
 // live kit instead of their own fabricated layout.
+//
+// The capability skip log goes with them: a run owns the log its own phases append to,
+// so an inherited path — the outer gate's, reaching a canary's inner run — must never
+// survive into a child. A run that collects sets its own value back on each phase.
 func gateEnv() []string {
 	var env []string
 	for _, kv := range os.Environ() {
-		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") {
+		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, capability.LogEnv+"=") {
 			continue
 		}
 		env = append(env, kv)

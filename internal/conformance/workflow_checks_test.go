@@ -30,7 +30,7 @@ func checkReleaseWorkflow(root string) []string {
 	if !strings.Contains(readIfExists(filepath.Join(root, "scripts", "build-artifacts.sh")), "scripts/release-plan.mjs") {
 		diags = append(diags, "artifact builder does not derive targets from the canonical release plan")
 	}
-	for message, anchor := range map[string]string{"release workflow does not run full publish preflight": "scripts/release-preflight.sh --mode publish", "release workflow does not publish to npm": "npm publish", "release workflow does not publish with provenance": "provenance"} {
+	for message, anchor := range map[string]string{"release workflow does not run full publish preflight": "scripts/release-preflight.sh --mode publish", "release workflow does not publish to npm": "npm publish", "release workflow does not publish with provenance": "provenance", "release workflow does not require capabilities on the gate step": requireCapabilitiesGateStep("--mode publish --profile public")} {
 		if !strings.Contains(text, anchor) {
 			diags = append(diags, message)
 		}
@@ -62,6 +62,9 @@ func checkNativeRuntimeWorkflow(root string) []string {
 	if !strings.Contains(preflight, "scripts/release-preflight.sh --mode verify --phase gate") || !strings.Contains(artifacts, "needs: preflight") || !strings.Contains(artifacts, "scripts/build-artifacts.sh") || !strings.Contains(artifacts, "uses: actions/upload-artifact@") {
 		diags = append(diags, "native artifact construction or upload bypasses preflight authorization")
 	}
+	if !strings.Contains(preflight, requireCapabilitiesGateStep("--mode verify --phase gate")) {
+		diags = append(diags, "native verification does not require capabilities on the gate step")
+	}
 	evidence := workflowJob(text, "evidence")
 	if !strings.Contains(evidence, "needs: [artifacts, native-proof]") || !strings.Contains(evidence, "scripts/release-preflight.sh --mode verify") {
 		diags = append(diags, "native verification does not finalize evidence after every native proof")
@@ -87,6 +90,20 @@ func checkNativeRuntimeWorkflow(root string) []string {
 		diags = append(diags, "native proof does not isolate the Linux non-glibc execution")
 	}
 	return diags
+}
+
+// requireCapabilitiesGateStep is the step shape both release paths must carry: the
+// strict capability flag bound to the same step that runs the gate. Matching the env
+// key against the run line rather than against the file is what makes the flag
+// provably reach the gate — a class silently skipped on a fully capable runner must
+// fail the release rather than ship.
+//
+// The env block follows the run line rather than preceding it. Canary fixtures mutate
+// these workflows by anchoring on the exact bytes of a preflight run line, six-space
+// indent included; a leading env block re-indents that line into a continuation and
+// those anchors stop occurring.
+func requireCapabilitiesGateStep(preflightArgs string) string {
+	return "run: bash scripts/release-preflight.sh " + preflightArgs + "\n        env:\n          BENCH_REQUIRE_CAPABILITIES: '1'\n"
 }
 
 func workflowJob(workflow, name string) string {
@@ -184,6 +201,16 @@ func TestNativeWorkflowEvidenceEdgeBites(t *testing.T) {
 	}
 	if diagnostics := strings.Join(checkNativeRuntimeWorkflow(root), "\n"); !strings.Contains(diagnostics, "native artifact construction or upload bypasses preflight authorization") {
 		t.Fatalf("bypassed preflight authorization did not bite:\n%s", diagnostics)
+	}
+	broken = strings.Replace(string(workflow), "\n        env:\n          BENCH_REQUIRE_CAPABILITIES: '1'\n", "\n", 1)
+	if broken == string(workflow) {
+		t.Fatal("native workflow mutation did not strip the capability flag from the gate step")
+	}
+	if err := os.WriteFile(path, []byte(broken), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if diagnostics := strings.Join(checkNativeRuntimeWorkflow(root), "\n"); !strings.Contains(diagnostics, "native verification does not require capabilities on the gate step") {
+		t.Fatalf("gate step detached from the capability flag did not bite:\n%s", diagnostics)
 	}
 	broken = strings.Replace(string(workflow), ` "$second_source/dist/preflight"`, "", 1)
 	if broken == string(workflow) {

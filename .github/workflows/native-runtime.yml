@@ -31,6 +31,8 @@ jobs:
       - id: matrix
         run: node scripts/release-plan.mjs . matrix-json | node -e 'let data="";process.stdin.on("data",chunk=>data+=chunk);process.stdin.on("end",()=>require("fs").appendFileSync(process.env.GITHUB_OUTPUT,`rows=${data.trim()}\n`))'
       - run: bash scripts/release-preflight.sh --mode verify --phase gate
+        env:
+          BENCH_REQUIRE_CAPABILITIES: '1'
 
   artifacts:
     needs: preflight

@@ -67,7 +67,7 @@ func TestRunnerPrefixesAndKeepsLinesIntact(t *testing.T) {
 	lines := strings.Split(strings.TrimSpace(stdout.String()), "\n")
 	got := map[string]bool{}
 	for _, line := range lines {
-		if strings.HasPrefix(line, "phase ") || strings.HasPrefix(line, "gate: ") {
+		if strings.HasPrefix(line, "phase ") || strings.HasPrefix(line, "gate: ") || strings.HasPrefix(line, skipRowPrefix) {
 			continue
 		}
 		got[line] = true

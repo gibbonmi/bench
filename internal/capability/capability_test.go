@@ -13,13 +13,13 @@ import (
 // kind, class, and reason must all be recoverable by a downstream collector that
 // prefix-matches bench-skip and reads the leading key=value tokens.
 func TestRenderCapabilityLine(t *testing.T) {
-	got, err := renderCapabilityLine(Symlink, "requires unprivileged symlink support")
+	got, err := Render(Skip{Kind: KindCapability, Class: Symlink, Reason: "requires unprivileged symlink support"})
 	if err != nil {
-		t.Fatalf("renderCapabilityLine: %v", err)
+		t.Fatalf("Render: %v", err)
 	}
 	want := "bench-skip kind=capability class=symlink reason=requires unprivileged symlink support\n"
 	if got != want {
-		t.Fatalf("renderCapabilityLine = %q, want %q", got, want)
+		t.Fatalf("Render = %q, want %q", got, want)
 	}
 }
 
@@ -28,12 +28,46 @@ func TestRenderCapabilityLine(t *testing.T) {
 // silently mint a class the strict count never tallies. Making Class.valid always
 // report true is the mutant this pins against: it turns this red.
 func TestRenderCapabilityLineRejectsUnknownClass(t *testing.T) {
-	got, err := renderCapabilityLine(Class("network"), "needs a socket")
+	got, err := Render(Skip{Kind: KindCapability, Class: Class("network"), Reason: "needs a socket"})
 	if err == nil {
-		t.Fatalf("renderCapabilityLine(%q) = %q, want an error for an unenumerated class", "network", got)
+		t.Fatalf("Render(%q) = %q, want an error for an unenumerated class", "network", got)
 	}
 	if got != "" {
-		t.Fatalf("renderCapabilityLine returned line %q alongside the error; want empty", got)
+		t.Fatalf("Render returned line %q alongside the error; want empty", got)
+	}
+}
+
+// TestParseLine pins the reader against the writer: every line Render produces must
+// come back with its fields intact, and anything else must be refused. A parser that
+// accepts a reason-less or unenumerated-class line would let the gate's tally credit
+// a class no writer can emit.
+func TestParseLine(t *testing.T) {
+	for _, want := range []Skip{
+		{Kind: KindCapability, Class: Symlink, Reason: "requires unprivileged symlink support"},
+		{Kind: KindCapability, Class: Privilege, Reason: "reason with kind=capability class=fifo inside it"},
+		{Kind: KindEnvironment, Reason: "subject root has no bin/bench.sh"},
+	} {
+		line, err := Render(want)
+		if err != nil {
+			t.Fatalf("Render(%#v): %v", want, err)
+		}
+		got, ok := ParseLine(line)
+		if !ok || got != want {
+			t.Fatalf("ParseLine(%q) = %#v, %v; want %#v, true", line, got, ok, want)
+		}
+	}
+
+	for _, line := range []string{
+		"",
+		"ok  \tinternal/gate\t0.4s",
+		"bench-skip kind=capability class=network reason=needs a socket",
+		"bench-skip kind=capability reason=no class token",
+		"bench-skip kind=capability class=symlink",
+		"bench-skip kind=other reason=unknown kind",
+	} {
+		if got, ok := ParseLine(line); ok {
+			t.Fatalf("ParseLine(%q) = %#v, true; want refused", line, got)
+		}
 	}
 }
 
@@ -48,7 +82,7 @@ func TestCapabilityWritesLineBeforeSkip(t *testing.T) {
 
 	t.Run("file transport", func(t *testing.T) {
 		path := filepath.Join(t.TempDir(), "skip.log")
-		t.Setenv(skipLogEnv, path)
+		t.Setenv(LogEnv, path)
 		var skipped bool
 		t.Run("skips", func(t *testing.T) {
 			t.Cleanup(func() { skipped = t.Skipped() })
@@ -68,7 +102,7 @@ func TestCapabilityWritesLineBeforeSkip(t *testing.T) {
 	})
 
 	t.Run("stdout fallback", func(t *testing.T) {
-		t.Setenv(skipLogEnv, "")
+		t.Setenv(LogEnv, "")
 		var buf bytes.Buffer
 		prev := stdout
 		stdout = &buf
@@ -94,7 +128,7 @@ func TestCapabilityWritesLineBeforeSkip(t *testing.T) {
 // transport.
 func TestEnvironmentWritesLineBeforeSkip(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "skip.log")
-	t.Setenv(skipLogEnv, path)
+	t.Setenv(LogEnv, path)
 	var skipped bool
 	t.Run("skips", func(t *testing.T) {
 		t.Cleanup(func() { skipped = t.Skipped() })

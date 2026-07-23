@@ -80,9 +80,20 @@ type phaseResult struct {
 
 func runPhases(ctx context.Context, root string, phases []Phase, mode phaseMode, stdout, stderr io.Writer) int {
 	if mode == innerMode {
+		// The inner gate grades a canary's deliberately mutated tree, so its skips
+		// describe that fixture rather than the host. It launches its phases with no
+		// skip log at all — gateEnv strips any value the outer run put in the
+		// environment — which keeps the fixture's lines out of the outer tally.
 		return runPhasesSequential(ctx, root, phases, stdout, stderr)
 	}
-	return runPhasesConcurrent(ctx, root, phases, stdout, stderr)
+	skipLog, cleanup, err := newSkipLog()
+	if err != nil {
+		fmt.Fprintf(stderr, "gate: cannot open the capability skip log: %v\n", err)
+		fmt.Fprintln(stderr, "gate: red")
+		return 1
+	}
+	defer cleanup()
+	return runPhasesConcurrent(ctx, root, withSkipLog(phases, skipLog), skipLog, stdout, stderr)
 }
 
 func runPhasesSequential(ctx context.Context, root string, phases []Phase, stdout, stderr io.Writer) int {
@@ -120,7 +131,7 @@ func runPhasesSequential(ctx context.Context, root string, phases []Phase, stdou
 	return 0
 }
 
-func runPhasesConcurrent(ctx context.Context, root string, phases []Phase, stdout, stderr io.Writer) int {
+func runPhasesConcurrent(ctx context.Context, root string, phases []Phase, skipLog string, stdout, stderr io.Writer) int {
 	var writeMu sync.Mutex
 	serial, concurrent := splitSerialPhases(phases)
 	for _, phase := range serial {
@@ -134,6 +145,7 @@ func runPhasesConcurrent(ctx context.Context, root string, phases []Phase, stdou
 		}
 		if result.Code != 0 {
 			fmt.Fprintln(stdout, phaseSummary(result))
+			reportCapabilitySkips(skipLog, stdout, stderr)
 			fmt.Fprintln(stderr, "gate: red")
 			return 1
 		}
@@ -172,6 +184,9 @@ func runPhasesConcurrent(ctx context.Context, root string, phases []Phase, stdou
 
 	for _, result := range results {
 		fmt.Fprintln(stdout, phaseSummary(result))
+	}
+	if reportCapabilitySkips(skipLog, stdout, stderr) {
+		red = true
 	}
 	if red {
 		fmt.Fprintln(stderr, "gate: red")
