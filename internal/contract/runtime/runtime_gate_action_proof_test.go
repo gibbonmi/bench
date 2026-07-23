@@ -342,7 +342,19 @@ func startStory5GateOwner(t *testing.T, f contract.Fixture) *story5GateOwner {
 		case err := <-exitCh:
 			quitMsg = fmt.Sprintf("child reaped after SIGQUIT: err=%v", err)
 		case <-time.After(3 * time.Second):
-			quitMsg = "child did NOT exit within 3s of SIGQUIT"
+			// childOut is written by the exec pipe copiers until Wait
+			// returns, so every read of it must happen after an exitCh
+			// receive; force the reap with a group kill (the direct-child
+			// Kill below can't reach group members holding the pipes open)
+			// rather than read childOut unreaped.
+			_ = syscall.Kill(-pgid, syscall.SIGKILL)
+			select {
+			case err := <-exitCh:
+				quitMsg = fmt.Sprintf("child ignored SIGQUIT and was SIGKILLed: err=%v", err)
+			case <-time.After(3 * time.Second):
+				t.Fatalf("gate owner did not reach pending state\nchild STILL ALIVE after SIGQUIT and SIGKILL\nlock=%v err=%v\nprocess group (per-thread, pre-SIGQUIT):\n%s\nchild output withheld: child was never reaped, so the exec pipe copiers may still be writing it",
+					lock != nil, lockErr, tree)
+			}
 		}
 		stateMsg = fmt.Sprintf("child STILL ALIVE at deadline\nlock=%v err=%v\n%s\nprocess group (per-thread, pre-SIGQUIT):\n%s",
 			lock != nil, lockErr, quitMsg, tree)
