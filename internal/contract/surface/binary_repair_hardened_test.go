@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/contract"
 )
 
@@ -134,7 +135,7 @@ func waitForRepairMarker(t *testing.T, cmd *exec.Cmd, ready string, childOut *by
 
 func waitForRepairMarkers(t *testing.T, cmd *exec.Cmd, startReady, ready string, childOut *bytes.Buffer) {
 	t.Helper()
-	miss := contract.WaitForTwoLegMarkers(startReady, ready, 10*time.Second, 60*time.Second,
+	miss := contract.WaitForTwoLegMarkers(startReady, ready, 10*time.Second, bounds.TestDeadline(bounds.LeaseStale),
 		func(path string) (os.FileInfo, error) {
 			info, err := os.Stat(path)
 			if err == nil && path == startReady {

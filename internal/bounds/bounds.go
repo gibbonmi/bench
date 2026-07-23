@@ -27,7 +27,21 @@ const (
 	MainIterationsDefault           = 12
 	RefactorIterationsDefault       = 4
 	MaxWall                         = 24 * time.Hour
+	LeaseStale                      = time.Minute
+	TestDeadlineFloor               = 20 * time.Second
 )
+
+// TestDeadline derives an outer test deadline from the inner bound that deadline has
+// to contain. Half the bound plus a fixed floor keeps the result strictly greater than
+// the input for every entry in the registry, so a wait can never expire at the same
+// instant as the window it is waiting out — an outer deadline equal to its inner window
+// is a coin flip, not a bound.
+func TestDeadline(inner time.Duration) time.Duration {
+	if inner < 0 {
+		inner = 0
+	}
+	return inner + inner/2 + TestDeadlineFloor
+}
 
 func Offline() bool { return os.Getenv("BENCH_OFFLINE") == "1" }
 

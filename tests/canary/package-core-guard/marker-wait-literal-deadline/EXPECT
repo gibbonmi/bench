@@ -1,0 +1,1 @@
+internal/contract/surface/binary_repair_hardened_test.go passes duration literal 60 * time.Second as the WaitForTwoLegMarkers slow deadline

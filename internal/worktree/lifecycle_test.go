@@ -2,6 +2,7 @@ package worktree
 
 import (
 	"fmt"
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/intent"
 	"os"
 	"os/exec"
@@ -27,11 +28,12 @@ func TestReclaimable(t *testing.T) {
 		alive   func(int) bool
 		want    bool
 	}{
-		{"live pid respected", "4242 2026-07-04T11:59:00Z\n", 30 * time.Second, live, false},
-		{"dead pid reclaimed", "4242 2026-07-04T11:59:00Z\n", 30 * time.Second, dead, true},
-		{"non-numeric legacy aged out reclaimed", "garbage content", 2 * time.Minute, dead, true},
-		{"fresh empty writer mid-claim respected", "", 5 * time.Second, dead, false},
-		{"aged-out empty crash reclaimed", "", 2 * time.Minute, dead, true},
+		{"live pid respected", "4242 2026-07-04T11:59:00Z\n", bounds.LeaseStale / 2, live, false},
+		{"dead pid reclaimed", "4242 2026-07-04T11:59:00Z\n", bounds.LeaseStale / 2, dead, true},
+		{"non-numeric legacy aged out reclaimed", "garbage content", 2 * bounds.LeaseStale, dead, true},
+		{"fresh empty writer mid-claim respected", "", bounds.LeaseStale / 2, dead, false},
+		{"empty lease at exactly the stale window respected", "", bounds.LeaseStale, dead, false},
+		{"aged-out empty crash reclaimed", "", 2 * bounds.LeaseStale, dead, true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

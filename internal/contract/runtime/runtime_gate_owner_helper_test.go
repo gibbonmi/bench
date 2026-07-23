@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/contract"
 )
 
@@ -44,7 +45,7 @@ func startStory5GateOwner(t *testing.T, f contract.Fixture) *story5GateOwner {
 	miss := contract.WaitForTwoLegMarkers(
 		filepath.Join(gitDir(t, f), "bench-gate-owner"),
 		filepath.Join(gitDir(t, f), "story5-owner-started"),
-		5*time.Second, 60*time.Second, os.Stat, exitReady, time.Now, time.Sleep)
+		5*time.Second, bounds.TestDeadline(bounds.LeaseStale), os.Stat, exitReady, time.Now, time.Sleep)
 	if miss == "" {
 		var pgid int
 		if _, err := fmt.Sscanf(strings.TrimSpace(string(mustReadRuntime(t, filepath.Join(gitDir(t, f), "story5-gate-pgid")))), "%d", &pgid); err != nil {

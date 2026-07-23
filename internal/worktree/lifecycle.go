@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"os"
@@ -31,9 +32,6 @@ type ResumeResult struct {
 type PreservedOrphan struct{ ID, Ref string }
 
 var ErrCleanupInterrupted = errors.New("cleanup interrupted")
-
-// staleAfter separates a crashed legacy lease from a fresh writer mid-claim.
-const staleAfter = time.Minute
 
 const leaseTimeLayout = "2006-01-02T15:04:05Z"
 
@@ -90,12 +88,13 @@ func ProbeLease(leasePath string) LeaseState {
 	return LeaseDead
 }
 
-// reclaimable requires a dead recorded pid or an aged unreadable/legacy lease.
+// reclaimable requires a dead recorded pid or a lease aged past bounds.LeaseStale,
+// the window that separates a crashed legacy lease from a fresh writer mid-claim.
 func reclaimable(content []byte, mtime, now time.Time, alive func(int) bool) bool {
 	if pid, ok := leaseOwnerPID(content); ok {
 		return !alive(pid)
 	}
-	return now.Sub(mtime) > staleAfter
+	return now.Sub(mtime) > bounds.LeaseStale
 }
 
 // candidateName keeps each unique mint attempt inside the pool.
