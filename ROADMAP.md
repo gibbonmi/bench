@@ -20,31 +20,6 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT88 (HIGH) — a trustworthy gate verdict under load.** The marker-deadline
-fix landed (`380fd00`, `daf81d1`) and passed its acceptance load window 3/3
-green on 2026-07-23 at guest load averages 26→58, slower than the band in
-which the old deadlines failed 2/2. The project profile records the WSL2
-host-I/O hazard; the fsync hypothesis stays unconfirmed and the chosen option
-was to tolerate slow persistence. Remaining work: split the R14/repair marker
-deadlines into a fast liveness leg and a slow fsync leg — gate-run writes a
-marker before `durableReplace`'s pending write, so a true wedge fails in ~2s
-and only the fsync-stretchable leg carries the 60s tolerance, restoring
-fail-fast without reintroducing the load flake; the `.bench-contract-env`
-`TempDir` cleanup flake (`bench_gate_rebuilt_self-host_contract` fails under
-gate load with a child still writing at cleanup, passes in 0.4s isolated —
-the runtime contract package needs a load-robustness pass); the orphaned-gate
-defect — killing the wrapper leaves `bench canary` reparented to init,
-spawning nested gate-phases children while holding the gate flock, and the
-next run reports the misleading "gate execution already in progress" instead
-of detecting a dead holder (process-group teardown on signal, stale-holder
-detection at lock acquisition — consumer-visible in its own right); the
-conformance phase's diag carrying the tail of the inner `go test` output so
-failures self-attribute (4 of 5 reds in the FT76 recurrence said only
-`go test failed`). The project profile owns the operational traps and
-host-I/O hazard; the open reproduction-economics entry lives in the learnings
-journal. Concurrency capping lives in FT91 — one fix serves both rows.
-Absorbs FT95.
-
 **FT87 (MEDIUM) — command-wide parser and security-evidence capability.**
 Slices 1 and 2 shipped: the bounds core, explicit pinned bounded repair, one
 Bench identity with complete package metadata, and the FT83
@@ -112,8 +87,10 @@ largely because the canary phase nests whole gate runs, oversubscribing a
 not work; `internal/gate/phases.go` also hardcodes `-count=1`, disabling Go's
 test cache unconditionally. First arm: core-count-aware gate/phase
 concurrency — detect the machine's cores and scale so nested phases cannot
-oversubscribe the box; the same cap is FT88's load lever, so one fix serves
-both rows. Diff-scoped gating is unsound here (contract/canary are behavior
+oversubscribe the box. That cap is also the load lever behind the retired
+gate-trustworthiness work: the marker stalls and cleanup flakes that arm fixed
+were all contention symptoms, so capping concurrency protects the verdict as
+well as the clock. Diff-scoped gating is unsound here (contract/canary are behavior
 contracts with no file→test map). The remaining arms — a shared hermetic
 build cache, caching keyed on the pinned gate subject, or scoped verdicts —
 must not weaken the oracle: green must keep meaning the same thing, and any
@@ -401,6 +378,22 @@ The work is the wording in `craft-review` and `craft-comments`, not a sweep of
 the roughly a dozen existing sites. Kit edit under the `craft-synthesis`
 discipline.
 
+**FT112 (LOW) — an approximation that stays green is not a cleared bug.**
+Diagnosing the gate's marker stalls (the retired
+`trustworthy-gate-under-load` work), four synthetic load shapes — guest CPU
+saturation, parallel contract loaders, inert memory ballast, and an `fsync`
+hammer — all stayed green, and only a real `bench gate` under host-side load
+reproduced the failure; each disproven shape cost a build-and-measure cycle.
+`/bench-debug` phase 1 tells a session to build a tight repro loop but says
+nothing about what a *green* approximation proves, so a fresh session can keep
+reaching for cheaper stand-ins. Add the reproduction-economics rule to the
+phase's loop-building step: a proxy that stays green narrows a hypothesis at
+best and never clears the real oracle, so when the failure is load- or
+environment-sensitive, reproduce through the accused command under the
+conditions that exposed it before spending another cycle on a stand-in. Kit
+edit under the `craft-synthesis` discipline. Source: the 2026-07-23 learnings
+entry, verdicted in this drain.
+
 ## Release and bank reassessment gate
 
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
@@ -469,13 +462,13 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT88's remaining arms (fast/slow marker-deadline
-   legs, the `.bench-contract-env` cleanup flake, the orphaned-gate defect,
-   self-attributing conformance diags). The deadline fix shipped and FT85
-   closed, so this is the highest row with no spec staged; these four are what
-   still taxes every landing.
-2. `/bench-write-spec` — spec FT87 slice 3, command-wide parser and
-   security-evidence capability.
-3. `/bench-shape-idea` — FT91's first arm, core-count-aware gate/phase
-   concurrency. The same cap is FT88's load lever, so the grill that settles
-   the cut line between speed and oracle authority serves both rows.
+1. `/bench-write-spec` — FT87 slice 3, command-wide parser and
+   security-evidence capability. The gate-trustworthiness row closed and
+   retired, so this is the highest row open, and its decision map (tickets #7
+   and #8) is already closed.
+2. `/bench-shape-idea` — FT91's first arm, core-count-aware gate/phase
+   concurrency. With the verdict-trustworthiness arms landed, contention is
+   the last unaddressed cost on every landing; the grill settles the cut line
+   between speed and oracle authority before anything is built.
+3. `/bench-write-spec` — FT86, fail-closed control records and single-sourced
+   repository facts. The highest bank-track row still open.
