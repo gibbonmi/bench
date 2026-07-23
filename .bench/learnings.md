@@ -51,3 +51,34 @@ three stories on it.
 `craft-delegate` requirement to "probe at least one accepted behavior independently
 of the delegate's own tests" was the only step in the chain that could have — the
 unit tests, the mutation testing, and a full gate run would all have been green.
+
+## 2026-07-23 — a delegate charge's verification list became the delegate's ceiling
+
+**What happened.** A write-delegate building the gate's capability-skip collector
+added `BENCH_REQUIRE_CAPABILITIES: '1'` to two GitHub workflow steps by putting an
+`env:` block *above* the `run:` line. That re-indented the run line by two spaces.
+Two existing canary fixtures anchor on that line's exact bytes, so both broke with
+`mutation anchor ... did not occur exactly once`. Nothing in the delegate's charged
+verification list could see it: unit tests, the conformance suite, and the contract
+suite were all green. The coordinator's charge had said "do NOT run `bench gate`"
+to keep delegate rounds cheap, and had listed the narrower commands to run instead.
+The delegate treated that list as the boundary of what needed checking.
+
+**What the right behavior was.** The canary layer is the only thing that grades a
+byte change under `.github/workflows/`, and the coordinator knew that — the project
+profile says so directly, and warns that the inner byte-shape is load-bearing. The
+charge should have included `bench canary <root>` the moment it authorized workflow
+edits. The delegate is not blameless either: a charge's verification list is a
+floor, not a ceiling, and "which layer grades the artifact class I just changed"
+is a question a delegate should ask itself. But the cheaper fix lives in the charge.
+
+**Proposed rule change.** In `craft-delegate`, when a charge authorizes edits to an
+artifact class that a specific gate layer owns — workflows and `.bench/` content
+(canary), gate output shape (canary), skills and commands (conformance) — the
+charge must name that layer's command in the verification list. Pair it with the
+converse instruction to the delegate: the list is a floor; if you change an
+artifact class the list does not grade, say so rather than assuming it is covered.
+
+**Cost note.** This was caught by the coordinator running the canary during
+done-claim verification, one round after the fact. Cheap here; it would have been a
+red gate at merge with an unrelated-looking failure message.
