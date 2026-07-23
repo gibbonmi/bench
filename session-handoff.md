@@ -26,11 +26,16 @@ is executable from a cold start; no conversation history is needed.
   `tests/canary/`. The coverage row's literal "over the tree returns nothing"
   can never be true while those records exist; the row's intent (no tagged
   instrumentation in code) is satisfied.
-- **Pending validation — the manual load window.** The spec's acceptance for
-  rows 1a/3 is up to 3 `bash bin/bench.sh gate` runs while the reviewer
-  generates host-side (Windows) VHDX I/O load. Not run yet; it needs the
-  reviewer at the host. Never write in the repo mid-gate; never kill only the
-  gate wrapper (see Traps in `GATE-REPORT.md`).
+- **Load window RAN 2026-07-23: 3/3 green — acceptance satisfied.** Three
+  `bash bin/bench.sh gate` passes under a reviewer-confirmed host-side load
+  window, wall clocks ~570s / 395s / 394s at guest load averages 26→58. Every
+  run was slower than the 352-465s band where the old 5s/2s deadlines failed
+  2/2, and none produced `did not start`, `did not reach pending`, or
+  `RemoveAll cleanup`. That closes the spec's acceptance for rows 1a/3. Side
+  effect worth knowing: the fsync hypothesis is now unconfirmable by this
+  route — the 60s deadline absorbs the stall, so R14 will not fail under load
+  and will never emit the goroutine dump. The diagnostics remain compiled in
+  for a genuine hang past 60s.
 - **Deliberately deferred:** `bench spec retire load-tolerant-marker-deadlines`
   (status flags it) — the spec carries four defaulted decisions flagged for
   post-hoc veto and the load window hasn't run; retire only after both.
@@ -46,11 +51,16 @@ is executable from a cold start; no conversation history is needed.
 
 ## Next command
 
-Reviewer, in this session or a fresh one:
+Reviewer, in this session or a fresh one. The load window is done; only your
+decisions remain:
 
-1. Open a host-load window (Windows-side VHDX I/O — file copies,
-   `winsat disk`, a large download) and say so; the session then runs up to 3
-   `bash bin/bench.sh gate` passes under it and reports hits/greens.
-2. On 3 greens: veto or accept the spec's four flagged defaults, then
-   `bench spec retire load-tolerant-marker-deadlines`, retire
-   `GATE-REPORT.md` (promote durables, delete), and push `main`.
+1. Veto or accept the four defaulted decisions flagged in
+   `specs/load-tolerant-marker-deadlines.md` (the 60s value and the
+   tolerate-slow-persistence choice among them).
+2. On accept: `bench spec retire load-tolerant-marker-deadlines`, then retire
+   `GATE-REPORT.md` — fold its traps and evidence table into
+   `projects/benchkit.md` and `.bench/learnings.md`, then delete it.
+3. Push `main` (ahead of origin by several commits; your call).
+4. Separately sequenced, not part of this work: the
+   `.bench-contract-env` cleanup flake, and
+   `specs/consumer-payload-and-phase-contract.md`'s own `/bench-final-check`.

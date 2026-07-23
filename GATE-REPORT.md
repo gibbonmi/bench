@@ -1,7 +1,28 @@
 # Gate trustworthiness report — runtime-contract flakes
 
-Status: **diagnosis partial, no fix landed.** Written for a session with no memory
-of this work. Repository `bench`, branch `main`, baseline commit `7699473`.
+Status: **fix landed and validated under load; diagnosis closed ahead of the
+confirming dump.** Repository `bench`, branch `main`.
+
+The body below is the diagnosis as written at baseline commit `7699473`, kept for
+its evidence table and traps. Read this header first — it supersedes the body
+wherever they disagree.
+
+- **Fix landed** in `380fd00` (marker deadlines 5s→60s in R14 and 2s→60s in the
+  losing-racer repair test, R14 fast-fail on early child exit, `[DEBUG-a4f2]`
+  diagnostics promoted untagged) and `daf81d1` (data race on the SIGQUIT-timeout
+  path). `specs/load-tolerant-marker-deadlines.md` is `Status: implemented`.
+  The chosen option was **tolerate slow persistence**, taken deliberately ahead
+  of the confirming goroutine dump — see that spec's reviewer-closed note.
+- **Acceptance load window ran 2026-07-23: 3/3 green.** Wall clocks ~570s, 395s,
+  394s at guest load averages 26→58 — every run slower than the 352-465s band in
+  which the old deadlines failed 2/2, and slower than any recorded green. Zero
+  hits of `did not start`, `did not reach pending`, or `RemoveAll cleanup`.
+- **The fsync hypothesis remains unconfirmed and now untestable by this route.**
+  The 60s deadlines absorb the stall, so R14 no longer fails under load and no
+  goroutine dump will be produced. The diagnostics stay compiled in: if a stall
+  ever exceeds 60s, the failure carries the per-thread table and the dump.
+- **Still open:** the `.bench-contract-env` cleanup flake (below, uninvestigated;
+  it did not fire in any of the three runs).
 
 The goal was to make `bench gate` give a trustworthy verdict again. Two tests in
 `internal/contract/runtime` fail only under full-gate load, which cost three
@@ -33,6 +54,7 @@ Then grep the output for `did not start`, `did not reach pending`, or
 | real `bench gate`, clean idle machine | 5 | 0 |
 | real `bench gate`, reviewer-spun load (loadavg 20-90) | 4 | 1 |
 | R14 tests alone + 4 guest-side fsync hammers (dd conv=fsync, same ext4) | 6 | 0 |
+| real `bench gate`, host-side load, **after the 60s-deadline fix** | 3 | 0 |
 
 The reviewer-spun-load row is from 2026-07-22: three runs at load averages the
 original failures never reached stayed green, and the one hit (run 3) landed at
@@ -135,8 +157,10 @@ the blocking syscall directly and should end the guessing in one hit.
 
 ## Instrumentation currently in the tree
 
-`internal/contract/runtime/runtime_gate_action_proof_test.go` carries uncommitted
-diagnostics tagged `[DEBUG-a4f2]` (find them with `rg 'DEBUG-a4f2'`):
+`internal/contract/runtime/runtime_gate_action_proof_test.go` carries these
+diagnostics. They are now **committed and permanent, with the `[DEBUG-a4f2]`
+tags removed** — `rg 'DEBUG-a4f2'` finds only records like this report, never
+code. What they do:
 
 - captures the spawned child's stdout/stderr, previously discarded;
 - reports whether the child exited early or was alive at the deadline;
@@ -150,15 +174,16 @@ diagnostics tagged `[DEBUG-a4f2]` (find them with `rg 'DEBUG-a4f2'`):
 
 The per-thread and SIGQUIT steps were added 2026-07-22 after the first
 instrumented hit showed the per-process dump was one level too coarse (proof
-item 3). They are vetted and built but have not yet caught a flake.
+item 3). They never caught a flake: the 60s deadlines landed first and stopped
+the failure from firing. They stay as the permanent diagnostic for a genuine
+hang past 60s.
 
 It also moves the single `cmd.Wait()` into `startStory5GateOwner` — `stop()`
 previously called `Wait` too, and a double `Wait` breaks the passing path.
 
-**This instrumentation is gate-green** (present for 7 consecutive green gate runs).
-Keep it until the fix lands. It weakens no assertion — it only enriches an
-existing failure message. Decide then whether to promote it to a permanent
-diagnostic or strip it.
+**This instrumentation is gate-green** and weakens no assertion — it only
+enriches an existing failure message. Promotion to a permanent diagnostic was
+the decision taken in `380fd00`.
 
 ## Third flake — cross-runtime corroboration of the fsync hypothesis
 
@@ -208,35 +233,30 @@ session should recognise them immediately.
 
 ## Next actions, in order
 
-1. Reproduce once more under real load with the upgraded (per-thread +
-   SIGQUIT) instrumentation; the goroutine dump confirms or kills the fsync
-   hypothesis in one hit. Reproduction ran ~1-in-3 under the 2026-07-22 load,
-   so budget ~3 gate runs while the load is live. Guest-side fsync hammering
-   was tried 2026-07-22 (evidence table, last row): 0/6 — the guest page
-   cache absorbs it, so if the fsync hypothesis holds, the stall needs
-   *host-side* VHDX contention (Windows-side file copies, a Steam download,
-   `winsat disk`), or an ingredient only the full gate supplies. Any host-side
-   I/O probe must be driven from Windows, not WSL.
-2. Fix at the seam the dump identifies. The old "do not raise the 5s
-   deadline" instruction is suspended — see the proof-item-2 correction; the
-   wedged-vs-stalled question is exactly what the dump settles, and the fix
-   choice is a reviewer decision. Do **not** raise the 5s deadline — a
-   child alive and silent at 160x its normal start time is wedged, and a longer
-   deadline hides it.
-3. Only then investigate the `.bench-contract-env` cleanup flake.
-4. Close via `/bench-final-check`. That phase flips
+Items 1 and 2 (reproduce under load, then fix) are **done** — see the status
+header. What remains:
+
+1. Reviewer: veto or accept the four defaulted decisions flagged in
+   `specs/load-tolerant-marker-deadlines.md`, then
+   `bench spec retire load-tolerant-marker-deadlines` and retire this report
+   (fold the traps and the evidence table into the project profile and
+   learnings, then delete it).
+2. Investigate the `.bench-contract-env` cleanup flake.
+3. Close via `/bench-final-check`. That phase flips
    `specs/consumer-payload-and-phase-contract.md` from `Status: staged` using
    `bench spec implemented` — never hand-write the status line — and deletes
    `reviews/consumer-payload-and-phase-contract.md` in the same green commit.
 
-## Uncommitted work in the tree
+## Work this diagnosis produced
+
+All of it is now committed; the tree is clean. Retained for provenance.
 
 | path | change | state |
 |---|---|---|
 | `specs/consumer-payload-and-phase-contract.md` | story 2 acceptance-coverage row reworded so its red signal matches the design and the landed test (a file under a kit-only subtree is not written) | done; `bench coverage --check` green, 12 rows valid |
-| `internal/contract/runtime/runtime_gate_action_proof_test.go` | `[DEBUG-a4f2]` diagnostics | keep until fix lands |
+| `internal/contract/runtime/runtime_gate_action_proof_test.go` | diagnostics plus the 60s deadline | committed in `380fd00`/`daf81d1`; permanent |
 | `IDEAS.md` | three parked ideas (gate speed, core capping, orphaned-gate/stale-lock) | parked |
 | `ROADMAP.md` | FT88 row proposed for this work | awaiting reviewer veto |
 
-Nothing is committed. The spec status flip and the `reviews/` deletion belong to
-the closing green commit, not to this report.
+The `consumer-payload-and-phase-contract` status flip and the `reviews/` deletion
+belong to that spec's own closing green commit, not to this report.
