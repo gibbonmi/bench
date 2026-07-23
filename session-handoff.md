@@ -1,34 +1,56 @@
 # Session handoff
 
-Repository: /home/mgibs/workspace/bench — branch `main` at `c701642`
-(`spec-retire: repo-aware-setup`, on top of `365e5bb`, the FT76 landing).
+Repository: /home/mgibs/workspace/bench — branch `main`. Written 2026-07-23 at
+the close of the load-tolerant-marker-deadlines build session. Everything below
+is executable from a cold start; no conversation history is needed.
 
 ## State
 
-- **FT76 shipped.** `bench setup` (repo-aware one-command adoption) landed
-  gate-green in `365e5bb`: wrapper route, adopt-package deep module
-  (inspect → preview → confirm → FT84 transaction → doctor → next action),
-  gate-inference table, per-harness doctor rows, packed-artifact offline leg,
-  slimmed `/bench-setup-repo`, truthful README quickstart. Spec reviewed
-  (three-axis, 11 findings fixed) and retired in `c701642`; roadmap row
-  removed; decision map `decisions/repo-aware-bootstrap.md` deleted.
-- **Decisions that stay closed:** the spec's four defaulted decisions
-  (non-TTY posture, converge-and-report re-run, gate-inference table,
-  porcelain output) were built as written. Empty pre-existing `CLAUDE.md`
-  stays preserved-and-red (link-lifecycle contract wins over the spec's
-  "converge unconditionally" sentence) — flagged for reviewer veto, default
-  is keep. Profile seeds through a `"seed"` plan kind: atomic with the
-  transaction, never manifest-tracked.
-- **Known flake (open):** under full gate load on this WSL2 host, two
-  pre-existing checks flake — conformance's inner core `go test` (diag
-  discards output) and `binary_repair_hardened_test.go`'s 2s wall-clock sync
-  deadline. Ledgered 2026-07-22 in `.bench/learnings.md` with three proposed
-  gate-authoring changes (reviewer's call). Retry-once at the same tier is the
-  working mitigation.
-- **Unpushed:** 9 commits on `main`; push is the reviewer's.
+- **Fix built, gate-green, committed, spec flipped.** All four stories of
+  `specs/load-tolerant-marker-deadlines.md` landed in `380fd00` (deadlines
+  5s/2s → 60s, R14 fast-fail on child exit, `[DEBUG-a4f2]` diagnostics
+  promoted untagged, losing-racer output capture), plus `daf81d1` fixing the
+  one confirmed semantic-review finding (data race: the SIGQUIT-timeout path
+  read `childOut` without an `exitCh` receive; now force-reaps via group
+  SIGKILL and withholds the buffer if the child is never reaped). Both commits
+  gated atomically via `bench commit`. Spec is `Status: implemented` (flipped
+  by `bench spec implemented`, commit below).
+- **Semantic review ran (3 axes, this session):** Spec clean; Coverage's one
+  medium finding fixed in `daf81d1`; Standards' one low (the 3-line
+  stdout/stderr capture block appears at both repair spawn sites) accepted as
+  residual — same inline pattern pre-exists at `proveCancelledCommit`. No
+  `reviews/` pickup file exists; nothing is pending from review.
+- **`rg 'DEBUG-a4f2'` code sweep is clean.** Remaining hits are records only:
+  `GATE-REPORT.md`, `session-handoff.md`, `ROADMAP.md`, the spec's own
+  red-signal row, and the debug skill's tag-convention example under
+  `tests/canary/`. The coverage row's literal "over the tree returns nothing"
+  can never be true while those records exist; the row's intent (no tagged
+  instrumentation in code) is satisfied.
+- **Pending validation — the manual load window.** The spec's acceptance for
+  rows 1a/3 is up to 3 `bash bin/bench.sh gate` runs while the reviewer
+  generates host-side (Windows) VHDX I/O load. Not run yet; it needs the
+  reviewer at the host. Never write in the repo mid-gate; never kill only the
+  gate wrapper (see Traps in `GATE-REPORT.md`).
+- **Deliberately deferred:** `bench spec retire load-tolerant-marker-deadlines`
+  (status flags it) — the spec carries four defaulted decisions flagged for
+  post-hoc veto and the load window hasn't run; retire only after both.
+  `GATE-REPORT.md` retirement (fold durables into profile/learnings, delete)
+  follows the same load window, per its own out-of-scope note.
+- **Untouched, other work:** `specs/consumer-payload-and-phase-contract.md`
+  (still `staged`; its row reword is uncommitted, and its status flip plus
+  `reviews/consumer-payload-and-phase-contract.md` deletion belong to its own
+  `/bench-final-check`). The drain and roadmap rows `bench status` shows are
+  reviewer-sequenced via `/bench-what-next`.
+- **Unpushed:** `main` is ahead of origin by several commits (this work plus
+  earlier sessions). Pushing is the reviewer's call.
 
 ## Next command
 
-`/bench-what-next` — drains the parked idea (worktree-recovery discard gap),
-the open learnings entry, and reconciles `ROADMAP.md` (structure row shows 8
-split suggestions).
+Reviewer, in this session or a fresh one:
+
+1. Open a host-load window (Windows-side VHDX I/O — file copies,
+   `winsat disk`, a large download) and say so; the session then runs up to 3
+   `bash bin/bench.sh gate` passes under it and reports hits/greens.
+2. On 3 greens: veto or accept the spec's four flagged defaults, then
+   `bench spec retire load-tolerant-marker-deadlines`, retire
+   `GATE-REPORT.md` (promote durables, delete), and push `main`.
