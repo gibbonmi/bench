@@ -96,6 +96,7 @@ func Signals(root string) []Signal {
 	rows = appendRetirement(rows, root)
 	rows = appendOrphanedPickup(rows, root)
 	rows = appendRoadmapReconcile(rows, root)
+	rows = appendHandoff(rows, root)
 
 	// Ascending numeric sort by severity; each severity is unique, so ordering is
 	// fully determined and the min-severity row leads.

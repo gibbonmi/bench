@@ -46,6 +46,13 @@ emit a copy-paste fresh-session continuation prompt or update
 status, decisions that stay closed, and the exact harness-native next command —
 so resumption never depends on conversation history.
 
+Rewrite `session-handoff.md` in full rather than appending to it — it is pruned,
+not accreted, because a fresh session pays for every line it reads cold. The file
+carries its own shape; follow what is already in it. Where the handoff and the
+tree disagree, the tree wins: `bench status` reports how many commits have landed
+since the handoff was last written, so a stale one is ambient rather than
+something the next session has to think to check.
+
 **Shell conventions for agents in this repo.**
 
 - Use `rg` (ripgrep, installed here) instead of `grep` in interactive Bash calls —

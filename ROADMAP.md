@@ -336,24 +336,6 @@ does not currently name. Propose the assertion rule as a gate check
 violated. Kit edit under the `craft-synthesis` discipline. Background:
 `docs/reporesident-distillation.md` §2.
 
-**FT109 (LOW) — handoff shape, capped and computed.** The phase-close rule in
-`AGENTS.md` says the closing message emits a continuation prompt or updates
-`session-handoff.md`, so the file's shape is entirely up to whoever writes it:
-it is currently a free-form narrative with no template, no cap, no
-rewrite-in-full rule, and nothing saying what happens when it disagrees with
-the tree. Put the template inside `session-handoff.md` itself, so the template
-cannot drift from the artifact it describes, and add the rewrite-in-full and
-conflict rules to the phase-close paragraph in `AGENTS.md` — the handoff is
-pruned rather than accreted, because a fresh session pays for every line it
-reads cold. Make the conflict rule computed rather than remembered: the
-handoff records the commit it was written at, and `bench status` compares that
-against `HEAD` and reports staleness, which the SessionStart hook already
-prints. That is one machine-readable line in the handoff and one comparison in
-`session-inspect`, and it turns "trust git over the handoff" from a rule the
-next session must recall into an ambient fact. Kit edit under the
-`craft-synthesis` discipline. Background:
-`docs/reporesident-distillation.md` §4.
-
 **FT110 (LOW) — two generation-shaping clauses on an observable.** Invariant
 4's "read the surrounding code before you write" is true but unfalsifiable —
 *surrounding* is undefined and a session always believes it read enough. Two
