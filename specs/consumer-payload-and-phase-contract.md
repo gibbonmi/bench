@@ -1,6 +1,6 @@
 # Least-privilege consumer payload and one coherent phase contract
 
-Status: staged
+Status: implemented
 
 <!-- Map provenance: no `decisions/` map backs this spec. It was compiled under the
 reviewer-directed batch-drain override in `/bench-write-spec`'s entry contract, from the

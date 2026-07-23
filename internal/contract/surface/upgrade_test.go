@@ -25,6 +25,9 @@ func TestUpgradeContracts(t *testing.T) {
 	contract.RunParallel(t, "bench upgrade downgrade refusal contract failed", testUpgradeRefusesDowngrade)
 	contract.RunParallel(t, "bench upgrade invocation-path contract failed", testUpgradeResolvesThroughLauncherAndSymlink)
 	contract.RunParallel(t, "bench upgrade subdirectory contract failed", testUpgradeFromSubdirectory)
+	contract.RunParallel(t, "bench upgrade prerelease-to-release contract failed", testUpgradePrereleaseToRelease)
+	contract.RunParallel(t, "bench upgrade argument contract failed", testUpgradeArgumentEdges)
+	contract.RunParallel(t, "bench upgrade unusable-manifest contract failed", testUpgradeUnusableManifestStates)
 }
 
 // TestUpgradePayloadReconcileContracts pins FT85 story 5: upgrading across the release
@@ -51,8 +54,16 @@ func linkedRepoAtOlderVersion(t *testing.T, f contract.Fixture, older string) st
 	t.Helper()
 	linkOK(t, f)
 	installed := manifestKitVersion(t, f)
-	f.WriteFile(".bench/link-manifest.tsv", strings.Replace(f.ReadFile(".bench/link-manifest.tsv"), "#kit\t"+installed+"\n", "#kit\t"+older+"\n", 1))
+	repinManifestKitVersion(t, f, older)
 	return installed
+}
+
+// repinManifestKitVersion rewrites only the manifest's #kit header, leaving every owned
+// row intact — the state a repo linked by another release is in.
+func repinManifestKitVersion(t *testing.T, f contract.Fixture, pinned string) {
+	t.Helper()
+	current := manifestKitVersion(t, f)
+	f.WriteFile(".bench/link-manifest.tsv", strings.Replace(f.ReadFile(".bench/link-manifest.tsv"), "#kit\t"+current+"\n", "#kit\t"+pinned+"\n", 1))
 }
 
 func manifestKitVersion(t *testing.T, f contract.Fixture) string {
@@ -188,6 +199,72 @@ func testUpgradeFromSubdirectory(t *testing.T) {
 	probe.RequireExit(0)
 	requireUpgradePlanRow(t, probe, "0.0.1", installed)
 	requireLinkEqual(t, manifestKitVersion(t, f), installed, "upgrade from a subdirectory did not resolve the repo root")
+}
+
+// testUpgradePrereleaseToRelease covers the release a consumer is likeliest to be
+// pinned behind: the prerelease of the version they now have installed. Ordering by
+// release components alone made this pair compare equal, so upgrade printed a plan,
+// exited 0, and left the manifest stamped at the prerelease — a silent no-op that looked
+// like success. It must relink and restamp instead.
+func testUpgradePrereleaseToRelease(t *testing.T) {
+	f := contract.NewFixture(t)
+	linkOK(t, f)
+	installed := manifestKitVersion(t, f)
+	prerelease := installed + "-rc1"
+	repinManifestKitVersion(t, f, prerelease)
+
+	probe := f.Bench("upgrade")
+
+	probe.RequireExit(0)
+	requireUpgradePlanRow(t, probe, prerelease, installed)
+	requireLinkEqual(t, manifestKitVersion(t, f), installed, "upgrading from a prerelease of the installed version left the manifest stamped at the prerelease")
+}
+
+// testUpgradeArgumentEdges pins the two argument shapes a consumer reaches by accident:
+// an unrecognized flag is a usage error rather than a silently ignored word, and
+// --check with --force still writes nothing, because --force widens what an applying run
+// will do and never turns a dry run into one.
+func testUpgradeArgumentEdges(t *testing.T) {
+	f := contract.NewFixture(t)
+	linkedRepoAtOlderVersion(t, f, "99.0.0")
+
+	unknown := f.Bench("upgrade", "--dry-run")
+	unknown.RequireExit(2)
+	unknown.RequireContains(unknown.Stderr, "usage: bench upgrade")
+
+	before := fixtureState(t, f)
+	checkForce := f.Bench("upgrade", "--check", "--force")
+	checkForce.RequireExit(0)
+	if after := fixtureState(t, f); after != before {
+		t.Fatalf("bench upgrade --check --force wrote to the repository\nbefore:\n%s\nafter:\n%s", before, after)
+	}
+}
+
+// testUpgradeUnusableManifestStates covers the two manifests a hand edit produces. A
+// version string nothing can parse must not read as a downgrade — refusing there would
+// strand the repo with no route forward — so upgrade applies and restamps. A manifest
+// that cannot be read at all fails closed by name instead of being treated as unlinked.
+func testUpgradeUnusableManifestStates(t *testing.T) {
+	f := contract.NewFixture(t)
+	installed := linkedRepoAtOlderVersion(t, f, "not-a-version")
+
+	applied := f.Bench("upgrade")
+	applied.RequireExit(0)
+	requireUpgradePlanRow(t, applied, "not-a-version", installed)
+	requireLinkEqual(t, manifestKitVersion(t, f), installed, "upgrading from an unparseable pinned version did not restamp the manifest")
+
+	if os.Geteuid() == 0 {
+		return
+	}
+	manifest := filepath.Join(f.Root, ".bench", "link-manifest.tsv")
+	if err := os.Chmod(manifest, 0o000); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chmod(manifest, 0o644)
+	unreadable := f.Bench("upgrade")
+	unreadable.RequireExit(1)
+	unreadable.RequireContains(unreadable.Stderr, "unreadable")
+	unreadable.RequireNotContains(unreadable.Stderr, "run 'bench link' first")
 }
 
 // testUpgradeRemovesPreExclusionKitOnlyAssets is the FT85 story 5 red signal. The

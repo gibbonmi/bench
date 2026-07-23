@@ -330,6 +330,39 @@ func TestInitScaffoldsTwoLevelSeedCanary(t *testing.T) {
 	}
 }
 
+// TestCompareKitVersions pins the ordering `bench upgrade` decides on. The prerelease
+// rows are the point: a repo pinned at a prerelease of the installed release must read
+// as behind it, not as equal, or the applying run returns success without relinking and
+// the manifest stays stamped at the prerelease forever.
+func TestCompareKitVersions(t *testing.T) {
+	cases := []struct {
+		a, b string
+		want int
+	}{
+		{"1.2.3", "1.2.3", 0},
+		{"1.2.4", "1.2.3", 1},
+		{"1.2.3", "1.2.4", -1},
+		{"1.3.0", "1.2.9", 1},
+		{"2.0.0", "1.9.9", 1},
+		{"1.2.3", "1.2.3-rc1", 1},
+		{"1.2.3-rc1", "1.2.3", -1},
+		{"1.2.3-rc2", "1.2.3-rc1", 1},
+		{"1.2.3-rc1", "1.2.3-rc2", -1},
+		{"1.2.4-rc1", "1.2.3", 1},
+		{"1.2.3+build9", "1.2.3+build1", 0},
+		{"1.2.3-rc1+build9", "1.2.3-rc1", 0},
+		// An unparseable stamp on either side never reports a downgrade, so a
+		// hand-edited header cannot make upgrade refuse an install it should do.
+		{"dev", "1.2.3", 1},
+		{"1.2.3", "dev", 1},
+	}
+	for _, tc := range cases {
+		if got := compareKitVersions(tc.a, tc.b); got != tc.want {
+			t.Errorf("compareKitVersions(%q, %q) = %d, want %d", tc.a, tc.b, got, tc.want)
+		}
+	}
+}
+
 func readFile(t *testing.T, path string) string {
 	t.Helper()
 	data, err := os.ReadFile(path)

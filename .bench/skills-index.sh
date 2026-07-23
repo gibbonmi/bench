@@ -33,9 +33,27 @@ frontmatter_field() { # file, key — first value of key inside the --- fence
 # the Go core embeds the same file, so a kit without it does not build — and a tree
 # that carries no allowlist simply has no kit-only rows to mark. Read at top level:
 # expected_lines runs in a command substitution, where an err() would be lost.
+#
+# The two fields are matched independently, so a row that orders "audience" before
+# "source" still resolves. A shell reader cannot parse JSON in general: a file that
+# declares kit-only rows this reader finds no source for is a parse failure, not an
+# empty result, and is reported below rather than silently generating an index with
+# every kit-only marker missing.
 payload=".bench/consumer-payload.json"
 kit_only_sources=""
-[ -f "$payload" ] && kit_only_sources="$(sed -n 's/.*"source"[[:space:]]*:[[:space:]]*"\([^"]*\)".*"audience"[[:space:]]*:[[:space:]]*"kit-only".*/\1/p' "$payload")"
+payload_unparsed=""
+if [ -f "$payload" ]; then
+  kit_only_sources="$(awk '
+    /"audience"[[:space:]]*:[[:space:]]*"kit-only"/ && match($0, /"source"[[:space:]]*:[[:space:]]*"[^"]*"/) {
+      field = substr($0, RSTART, RLENGTH)
+      sub(/^"source"[[:space:]]*:[[:space:]]*"/, "", field)
+      sub(/"$/, "", field)
+      print field
+    }' "$payload")"
+  if grep -q '"kit-only"' "$payload" && [ -z "$kit_only_sources" ]; then
+    payload_unparsed=1
+  fi
+fi
 
 # Generated lines, one per indexed skill, alphabetical by directory (glob order).
 # Validation stays out of this function: it runs in a command substitution, where
@@ -50,9 +68,11 @@ expected_lines() {
     [ -z "$trigger" ] && continue
     note="$(frontmatter_field "$d/SKILL.md" index-note)"
     marker=""
-    for source in $kit_only_sources; do
+    while IFS= read -r source; do
       [ "$source" = ".agents/skills/$name" ] && marker=" (kit-only)"
-    done
+    done <<EOF
+$kit_only_sources
+EOF
     if [ -n "$note" ]; then
       printf -- '- %s → `.agents/skills/%s/SKILL.md`%s + %s\n' "$trigger" "$name" "$marker" "$note"
     else
@@ -74,6 +94,14 @@ done
 [ -f "$bench_md" ] || { err "$bench_md missing (skills index unverifiable)"; exit 1; }
 if ! grep -qF "$start_marker" "$bench_md" || ! grep -qF "$end_marker" "$bench_md"; then
   err "$bench_md skills-index markers missing (bench:skills-index)"
+  exit 1
+fi
+
+# Fail before generating, not after: a --write that ran on an unparsed allowlist would
+# commit a block with every kit-only marker missing, and the drift it caused would be
+# attributed to the skills rather than to the reader that dropped them.
+if [ -n "$payload_unparsed" ]; then
+  err "$payload declares kit-only rows this reader could not resolve to a source (each row's \"source\" and \"audience\" must share a line)"
   exit 1
 fi
 

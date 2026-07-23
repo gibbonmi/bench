@@ -12,6 +12,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 //go:embed .bench/consumer-payload.json
@@ -43,12 +44,47 @@ func PayloadRows() ([]PayloadRow, error) {
 	if err := json.Unmarshal(consumerPayloadJSON, &rows); err != nil {
 		return nil, fmt.Errorf("consumer payload allowlist is invalid: %w", err)
 	}
-	for _, r := range rows {
-		if r.Source == "" || r.Audience != PayloadAudienceConsumer && r.Audience != PayloadAudienceKitOnly {
-			return nil, fmt.Errorf("consumer payload allowlist row is invalid: %+v", r)
-		}
+	if err := validatePayloadRows(rows); err != nil {
+		return nil, err
 	}
 	return rows, nil
+}
+
+// validatePayloadRows fails closed on the row shapes the readers downstream cannot
+// resolve safely. Every destination joins Source onto a root it owns — a linked repo, a
+// staged tarball, an evidence bundle — so an absolute path, a backslash separator, or a
+// ".." segment would write outside the tree the caller consented to. A source named
+// twice is rejected on the same footing: the two rows can disagree on mode or audience,
+// and which one wins would then depend on read order rather than on the allowlist.
+func validatePayloadRows(rows []PayloadRow) error {
+	seen := make(map[string]bool, len(rows))
+	for _, r := range rows {
+		if r.Source == "" || r.Audience != PayloadAudienceConsumer && r.Audience != PayloadAudienceKitOnly {
+			return fmt.Errorf("consumer payload allowlist row is invalid: %+v", r)
+		}
+		if !payloadSourceSafe(r.Source) {
+			return fmt.Errorf("consumer payload allowlist row names an unsafe source path: %q", r.Source)
+		}
+		if seen[r.Source] {
+			return fmt.Errorf("consumer payload allowlist names the source %q twice", r.Source)
+		}
+		seen[r.Source] = true
+	}
+	return nil
+}
+
+// payloadSourceSafe reports whether source is a kit-relative forward-slash path that
+// stays inside the kit root.
+func payloadSourceSafe(source string) bool {
+	if strings.HasPrefix(source, "/") || strings.ContainsRune(source, '\\') {
+		return false
+	}
+	for _, segment := range strings.Split(source, "/") {
+		if segment == "" || segment == "." || segment == ".." {
+			return false
+		}
+	}
+	return true
 }
 
 // PayloadConsumerRows returns only the rows every destination is allowed to ship.

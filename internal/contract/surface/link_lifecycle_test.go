@@ -19,6 +19,7 @@ func TestLinkLifecycleHostileContracts(t *testing.T) {
 	contract.SkipIfSubjectBenchMissing(t)
 	testLinkRejectsHostileDroppedRows(t)
 	testLinkRejectsFIFOInAllowlistedKitTree(t)
+	testLinkRejectsSymlinkInAllowlistedKitTree(t)
 }
 
 // TestLinkPayloadAllowlistContracts pins the consumer-payload allowlist as the single
@@ -104,10 +105,31 @@ func testLinkSpaceBearingAllowlistedTreePath(t *testing.T) {
 // tree on the kit side is refused by name before it is read, rather than blocking the
 // plan builder or silently vanishing from the linked tree.
 func testLinkRejectsFIFOInAllowlistedKitTree(t *testing.T) {
+	requireLinkRefusesSpecialFile(t, "kit-fifo", filepath.Join(".agents", "skills", "bench-craft-seams", "blocked.fifo"), "blocked.fifo",
+		func(path string) error { return syscall.Mkfifo(path, 0o644) })
+}
+
+// testLinkRejectsSymlinkInAllowlistedKitTree covers the same refusal for the special
+// file a real kit is far likelier to grow — a symbolic link — and does it under
+// .agents/commands, so the walk's refusal is pinned for an allowlisted tree other than
+// .agents/skills. The link points at a regular file that link would otherwise be happy
+// to copy, so what is refused is the indirection itself, not an unreadable target.
+func testLinkRejectsSymlinkInAllowlistedKitTree(t *testing.T) {
+	requireLinkRefusesSpecialFile(t, "kit-symlink", filepath.Join(".agents", "commands", "linked-command.md"), "symbolic link",
+		func(path string) error {
+			return os.Symlink(filepath.Join(filepath.Dir(path), "bench-implement-spec.md"), path)
+		})
+}
+
+// requireLinkRefusesSpecialFile plants one special file inside an allowlisted kit tree
+// and asserts link refuses by name without blocking and without leaving a manifest
+// behind. The deadline is the point for the FIFO case, so every case carries it: a plan
+// builder that opens what it walks would hang here rather than fail.
+func requireLinkRefusesSpecialFile(t *testing.T, kitName, relPath, wantStderr string, create func(path string) error) {
+	t.Helper()
 	f := contract.NewFixture(t, contract.WithNoRepo())
-	kit := payloadTestKit(t, f, "kit-fifo")
-	fifoPath := filepath.Join(kit, ".agents", "skills", "bench-craft-seams", "blocked.fifo")
-	if err := syscall.Mkfifo(fifoPath, 0o644); err != nil {
+	kit := payloadTestKit(t, f, kitName)
+	if err := create(filepath.Join(kit, relPath)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -119,10 +141,10 @@ func testLinkRejectsFIFOInAllowlistedKitTree(t *testing.T) {
 	r.Git("init", "-q")
 	probe := contract.RunAtWithTimeout(t, r, r.Root, map[string]string{"BENCH_KIT": kit}, time.Second, "bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "link")
 	if probe.TimedOut {
-		t.Fatal("link blocked opening a FIFO inside an allowlisted kit tree")
+		t.Fatalf("link blocked on %s inside an allowlisted kit tree", relPath)
 	}
 	probe.RequireExit(1)
-	probe.RequireContains(probe.Stderr, "blocked.fifo")
+	probe.RequireContains(probe.Stderr, wantStderr)
 	requireLinkNotExists(t, r, ".bench/link-manifest.tsv", "link refusing a hostile kit tree still wrote a manifest")
 }
 

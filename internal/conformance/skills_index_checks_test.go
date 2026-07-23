@@ -294,6 +294,15 @@ func checkSkillsIndexGenerateVerify(root, kitRoot string) []string {
 	if err := os.WriteFile(filepath.Join(tmp, ".bench", "BENCH-reference.md"), []byte("# Reference\n\n<!-- bench:skills-index:start -->\n<!-- bench:skills-index:end -->\n"), 0o644); err != nil {
 		return []string{"skills-index generate/verify contract setup failed: " + err.Error()}
 	}
+	// The allowlist is JSON, so its key order carries no meaning: this fixture writes
+	// "audience" before "source" precisely because a reader that only matches one fixed
+	// order would drop the marker and generate a consumer-visible skill for a withheld
+	// one. Marker text is not re-stated here — the assertion below reads the generated
+	// line as a whole.
+	if err := os.WriteFile(filepath.Join(tmp, ".bench", "consumer-payload.json"),
+		[]byte(`[{ "audience": "kit-only", "mode": "0644", "tree": true, "source": ".agents/skills/zeta-skill" }]`), 0o644); err != nil {
+		return []string{"skills-index generate/verify contract setup failed: " + err.Error()}
+	}
 	script := filepath.Join(kitRoot, ".bench", "skills-index.sh")
 	if probe := runAt(tmp, "bash", script, "--check"); probe == nil || probe.ExitCode == 0 {
 		return []string{"skills-index generate/verify contract failed: check passed on an empty index block"}
@@ -302,8 +311,8 @@ func checkSkillsIndexGenerateVerify(root, kitRoot string) []string {
 		return []string{"skills-index generate/verify contract failed: --write failed"}
 	}
 	generated := readIfExists(filepath.Join(tmp, ".bench", "BENCH-reference.md"))
-	if !strings.Contains(generated, "- doing zeta things \u2192 `.agents/skills/zeta-skill/SKILL.md`") {
-		return []string{"skills-index generate/verify contract failed: --write did not generate the entry from frontmatter"}
+	if !strings.Contains(generated, "- doing zeta things \u2192 `.agents/skills/zeta-skill/SKILL.md` (kit-only)") {
+		return []string{"skills-index generate/verify contract failed: --write did not generate the entry from frontmatter and the allowlist's audience"}
 	}
 	if probe := runAt(tmp, "bash", script, "--check"); probe == nil || probe.ExitCode != 0 {
 		return []string{"skills-index generate/verify contract failed: check red right after --write"}

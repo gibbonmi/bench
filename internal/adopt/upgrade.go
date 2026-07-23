@@ -137,11 +137,16 @@ func upgradePlanCounts(manifest Manifest, plan []planEntry) (added, changed, rem
 	return added, changed, removed
 }
 
-// compareKitVersions orders two kit versions by their numeric release components,
-// ignoring any prerelease or build suffix: -1 when a precedes b, 1 when it follows, 0
-// when they are the same release. A version neither side can parse (an unstamped "dev"
-// build, a hand-edited header) is never reported as a downgrade — only an equal string
-// is equal — so a malformed stamp cannot make upgrade refuse an install it should do.
+// compareKitVersions orders two kit versions by their numeric release components and,
+// when those tie, by prerelease precedence: -1 when a precedes b, 1 when it follows, 0
+// when they are the same version. A release outranks its own prerelease, so a repo
+// pinned at 1.2.3-rc1 upgrades onto 1.2.3 instead of reading as an equal version and
+// leaving the manifest stamped at the prerelease. Two differing prereleases of one
+// release order by their suffix bytes — a deterministic tiebreak, not full
+// dot-separated prerelease semantics — and build metadata never affects precedence. A
+// version neither side can parse (an unstamped "dev" build, a hand-edited header) is
+// never reported as a downgrade, so a malformed stamp cannot make upgrade refuse an
+// install it should do.
 func compareKitVersions(a, b string) int {
 	if a == b {
 		return 0
@@ -159,7 +164,34 @@ func compareKitVersions(a, b string) int {
 			return 1
 		}
 	}
-	return 0
+	return comparePrerelease(prereleaseOf(a), prereleaseOf(b))
+}
+
+// prereleaseOf returns the prerelease field: the text after the first '-' and before any
+// '+' build metadata, empty for a plain release.
+func prereleaseOf(version string) string {
+	core := version
+	if i := strings.IndexByte(core, '+'); i >= 0 {
+		core = core[:i]
+	}
+	if i := strings.IndexByte(core, '-'); i >= 0 {
+		return core[i+1:]
+	}
+	return ""
+}
+
+func comparePrerelease(a, b string) int {
+	switch {
+	case a == b:
+		return 0
+	case a == "":
+		return 1
+	case b == "":
+		return -1
+	case a < b:
+		return -1
+	}
+	return 1
 }
 
 func releaseComponents(version string) ([3]int, bool) {

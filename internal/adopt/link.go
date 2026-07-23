@@ -154,7 +154,10 @@ func linkDestination(src string) (string, bool) {
 // srcRel) and returns one planEntry per regular file, skipping any path the allowlist
 // marks kit-only. A non-regular file (FIFO, device, socket) is refused by name instead
 // of being silently skipped or blocking a later open — the kit's own source tree must
-// never be able to wedge the plan builder.
+// never be able to wedge the plan builder. A symbolic link is refused on the same path
+// and named as one: following it would copy bytes the allowlist never named, from
+// wherever the link points, so the payload stays limited to files that are what they
+// appear to be.
 func treeEntries(srcRoot, destRoot, kind, srcRel string, excludedPrefixes []string) ([]planEntry, error) {
 	info, err := os.Stat(srcRoot)
 	if err != nil || !info.IsDir() {
@@ -179,7 +182,11 @@ func treeEntries(srcRoot, destRoot, kind, srcRel string, excludedPrefixes []stri
 			return infoErr
 		}
 		if !fileInfo.Mode().IsRegular() {
-			return fmt.Errorf("consumer payload tree %q contains a non-regular file: %s", srcRel, sourcePath)
+			kind := "non-regular file"
+			if fileInfo.Mode()&os.ModeSymlink != 0 {
+				kind = "symbolic link"
+			}
+			return fmt.Errorf("consumer payload tree %q contains a %s: %s", srcRel, kind, sourcePath)
 		}
 		entries = append(entries, planEntry{src: path, rel: filepath.ToSlash(filepath.Join(destRoot, rel)), kind: kind})
 		return nil
