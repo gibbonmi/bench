@@ -60,7 +60,7 @@ func checkPackageFiles(root string) []string {
 	// this shape check is meant to hold.
 	probe := runAtCleanEnv(root, "npm", "pack", "--dry-run", "--json", "--ignore-scripts")
 	if probe != nil && probe.ExitCode != 0 {
-		diags = append(diags, "npm pack --dry-run failed")
+		diags = append(diags, formatProbeFailure("npm pack --dry-run failed", probe))
 	} else if probe != nil {
 		buildAssets, err := packagesurface.RequiredBuildPackAssets(root)
 		if err != nil {
@@ -192,43 +192,43 @@ func checkGoCore(root string) []string {
 		// build phase owns the one real write (rationale: gate.BenchkitPhases).
 		tmp, err := os.MkdirTemp("", "bench-build-*")
 		if err != nil {
-			diags = append(diags, "go build setup failed: "+err.Error())
+			diags = append(diags, formatProbeFailure("go build setup failed", &Probe{Stderr: err.Error()}))
 		} else {
 			defer os.RemoveAll(tmp)
 			if probe := runAtCleanEnv(root, "bash", buildHelper, root, filepath.Join(tmp, "bench")); probe == nil || probe.ExitCode != 0 {
-				diags = append(diags, "go build failed")
+				diags = append(diags, formatProbeFailure("go build failed", probe))
 			}
 		}
 	} else if probe := runAtCleanEnv(root, "go", "build", "./..."); probe == nil || probe.ExitCode != 0 {
-		diags = append(diags, "go build failed")
+		diags = append(diags, formatProbeFailure("go build failed", probe))
 	}
 	if probe := runAtCleanEnv(root, "go", "vet", "./..."); probe == nil || probe.ExitCode != 0 {
-		diags = append(diags, "go vet failed")
+		diags = append(diags, formatProbeFailure("go vet failed", probe))
 	}
-	testPackages, ok := goCoreTestPackages(root)
+	testPackages, listProbe, ok := goCoreTestPackages(root)
 	if !ok {
-		diags = append(diags, "go list failed")
+		diags = append(diags, formatProbeFailure("go list failed", listProbe))
 	} else if len(testPackages) > 0 {
 		args := append([]string{"go", "test"}, testPackages...)
 		if probe := runAtCleanEnv(root, args...); probe == nil || probe.ExitCode != 0 {
-			diags = append(diags, "go test failed")
+			diags = append(diags, formatProbeFailure("go test failed", probe))
 		}
 	}
 	const cleanupRaceTest = "TestConcurrentCleanupRecordsOneTransaction"
 	race := runAtCleanEnv(root, "go", "test", "-race", "-count=1", "-v", "./internal/worktree", "-run", "^"+cleanupRaceTest+"$")
 	if race == nil || race.ExitCode != 0 {
-		diags = append(diags, "worktree cleanup race test failed")
+		diags = append(diags, formatProbeFailure("worktree cleanup race test failed", race))
 	} else if !strings.Contains(race.Stdout, "=== RUN   "+cleanupRaceTest) {
-		diags = append(diags, "worktree cleanup race test did not run")
+		diags = append(diags, formatProbeFailure("worktree cleanup race test did not run", race))
 	}
 	diags = append(diags, crossCompileMatrix(root, buildHelper)...)
 	return diags
 }
 
-func goCoreTestPackages(root string) ([]string, bool) {
+func goCoreTestPackages(root string) ([]string, *Probe, bool) {
 	probe := runAtCleanEnv(root, "go", "list", "./...")
 	if probe == nil || probe.ExitCode != 0 {
-		return nil, false
+		return nil, probe, false
 	}
 	var packages []string
 	for _, pkg := range strings.Fields(probe.Stdout) {
@@ -238,7 +238,7 @@ func goCoreTestPackages(root string) ([]string, bool) {
 		}
 		packages = append(packages, pkg)
 	}
-	return packages, true
+	return packages, probe, true
 }
 
 func isContractPackage(pkg string) bool {
@@ -287,7 +287,7 @@ func writeFixtureFile(t *testing.T, path, contents string) {
 
 func TestGoCoreTestPackagesExcludesContractSubtreeOnly(t *testing.T) {
 	h := NewHarness(t)
-	packages, ok := goCoreTestPackages(h.KitRoot)
+	packages, _, ok := goCoreTestPackages(h.KitRoot)
 	if !ok {
 		t.Fatal("goCoreTestPackages failed")
 	}

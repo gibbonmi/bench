@@ -29,6 +29,7 @@ func TestRuntimeGateContracts(t *testing.T) {
 	contract.RunParallel(t, "stop hook stop_hook_active contract", testRuntimeStopHookActive)
 	contract.RunParallel(t, "stop hook missing-bench fail-open contract", testRuntimeStopHookMissingBenchFailOpen)
 	contract.RunParallel(t, "stop hook intent refresh contract", testRuntimeStopHookIntentRefresh)
+	contract.RunParallel(t, "bench gate owner and signal cleanup contract", testRuntimeGateOwnerAndSignalCleanup)
 }
 
 func testRuntimeGateRebuiltSelfHost(t *testing.T) {

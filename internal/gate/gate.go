@@ -14,9 +14,12 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
@@ -200,7 +203,7 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 		}
 		root = r
 	}
-	return RunAndRecord(root, stdout, stderr)
+	return executeWithEngineAfterAcquire(context.Background(), root, stdout, stderr, productionGateEngine{}, notifyGateSignals).ActionExit
 }
 
 type Result struct {
@@ -213,7 +216,17 @@ func Execute(ctx context.Context, root string, stdout, stderr io.Writer) Result 
 	return executeWithEngine(ctx, root, stdout, stderr, productionGateEngine{})
 }
 
+type postAcquireContextArm func(context.Context) (context.Context, func())
+
+func notifyGateSignals(ctx context.Context) (context.Context, func()) {
+	return signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
+}
+
 func executeWithEngine(ctx context.Context, root string, stdout, stderr io.Writer, engine gateEngine) Result {
+	return executeWithEngineAfterAcquire(ctx, root, stdout, stderr, engine, nil)
+}
+
+func executeWithEngineAfterAcquire(ctx context.Context, root string, stdout, stderr io.Writer, engine gateEngine, arm postAcquireContextArm) Result {
 	plan, err := engine.BuildSubject(root)
 	if err != nil {
 		return operationalWithEngine(engine, root, 0, stderr, "gate subject unavailable")
@@ -235,11 +248,22 @@ func executeWithEngine(ctx context.Context, root string, stdout, stderr io.Write
 	if err := engine.Acquire(lock); err != nil {
 		persistInterruptedIfGreen(engine, root, gitdir, plan)
 		fmt.Fprintln(stderr, "gate execution already in progress")
+		writeOwnerDiagnostic(stderr, filepath.Join(gitdir, "bench-gate-owner"))
 		inspection := inspectAt(root, engine.Now())
 		inspection.ReusableGreen = false
 		return Result{ActionExit: 1, Inspection: inspection}
 	}
 	defer engine.Unlock(lock)
+	if arm != nil {
+		var stop func()
+		ctx, stop = arm(ctx)
+		defer stop()
+	}
+	ownerPath := filepath.Join(gitdir, "bench-gate-owner")
+	defer func() { _ = engine.Remove(ownerPath) }()
+	if err := engine.WriteFile(ownerPath, ownerRecord(engine.Now()), 0o600); err != nil {
+		return operationalWithEngine(engine, root, 0, stderr, "gate owner persistence failed")
+	}
 	underLock, err := engine.BuildSubject(root)
 	if err != nil || !sameSubject(plan, underLock) {
 		return operationalWithEngine(engine, root, 0, stderr, "gate subject changed before execution")
@@ -282,18 +306,35 @@ func executeWithEngine(ctx context.Context, root string, stdout, stderr io.Write
 	return Result{GateExit: rc, ActionExit: rc, Inspection: inspectAt(root, engine.Now())}
 }
 
-func interruptedRecord(plan subject, now time.Time) verdictRecord {
-	return verdictRecord{Schema: 1, State: Pending, Tree: plan.Tree, Oracle: plan.Oracle, StartedAt: now.UTC().Truncate(time.Second).Format(time.RFC3339), OwnerPID: os.Getpid()}
+func ownerRecord(now time.Time) []byte {
+	return []byte(strconv.Itoa(os.Getpid()) + " " + now.UTC().Truncate(time.Second).Format(time.RFC3339) + "\n")
 }
 
-func persistInterruptedIfGreen(engine gateEngine, root, gitdir string, plan subject) {
-	if !inspectAt(root, engine.Now()).ReusableGreen {
+func writeOwnerDiagnostic(stderr io.Writer, path string) {
+	data, err := os.ReadFile(path)
+	if err != nil {
 		return
 	}
-	pending := interruptedRecord(plan, engine.Now())
-	if err := durableReplaceWithEngine(engine, gitdir, pending); err != nil {
-		_ = durableReplaceWithEngine(engine, gitdir, pending)
+	fields := strings.Fields(string(data))
+	if len(fields) != 2 {
+		return
 	}
+	pid, err := strconv.Atoi(fields[0])
+	if err != nil || pid <= 0 {
+		return
+	}
+	if _, err := time.Parse(time.RFC3339, fields[1]); err != nil {
+		return
+	}
+	liveness := "alive"
+	if err := syscall.Kill(pid, 0); err != nil && err != syscall.EPERM {
+		liveness = "not alive"
+	}
+	fmt.Fprintf(stderr, "gate owner: pid %d (%s)\n", pid, liveness)
+}
+
+func interruptedRecord(plan subject, now time.Time) verdictRecord {
+	return verdictRecord{Schema: 1, State: Pending, Tree: plan.Tree, Oracle: plan.Oracle, StartedAt: now.UTC().Truncate(time.Second).Format(time.RFC3339), OwnerPID: os.Getpid()}
 }
 
 func operational(root string, gateExit int, stderr io.Writer, msg string) Result {

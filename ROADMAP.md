@@ -23,9 +23,9 @@ means the repository-controlled compliance assessment.
 **FT88 (HIGH) — a trustworthy gate verdict under load.** The marker-deadline
 fix landed (`380fd00`, `daf81d1`) and passed its acceptance load window 3/3
 green on 2026-07-23 at guest load averages 26→58, slower than the band in
-which the old deadlines failed 2/2. `GATE-REPORT.md` carries the closed
-diagnosis; the fsync hypothesis stays unconfirmed and the chosen option was to
-tolerate slow persistence. Remaining work: split the R14/repair marker
+which the old deadlines failed 2/2. The project profile records the WSL2
+host-I/O hazard; the fsync hypothesis stays unconfirmed and the chosen option
+was to tolerate slow persistence. Remaining work: split the R14/repair marker
 deadlines into a fast liveness leg and a slow fsync leg — gate-run writes a
 marker before `durableReplace`'s pending write, so a true wedge fails in ~2s
 and only the fsync-stretchable leg carries the 60s tolerance, restoring
@@ -40,8 +40,9 @@ of detecting a dead holder (process-group teardown on signal, stale-holder
 detection at lock acquisition — consumer-visible in its own right); the
 conformance phase's diag carrying the tail of the inner `go test` output so
 failures self-attribute (4 of 5 reds in the FT76 recurrence said only
-`go test failed`); then retire `GATE-REPORT.md` into the profile and
-learnings. Concurrency capping lives in FT91 — one fix serves both rows.
+`go test failed`). The project profile owns the operational traps and
+host-I/O hazard; the open reproduction-economics entry lives in the learnings
+journal. Concurrency capping lives in FT91 — one fix serves both rows.
 Absorbs FT95.
 
 **FT87 (MEDIUM) — command-wide parser and security-evidence capability.**
@@ -325,16 +326,12 @@ reviewer with the evidence instead of re-running. Replaces the retired FT95
 "retry once" operational line.
 
 **FT105 (LOW) — committed reports that contradict the tree.** A capture-style
-report can outlive its own fix and mislead the next session:
-`GATE-REPORT.md` was committed in `96ddc9f` reading `Status: diagnosis
-partial, no fix landed` two commits *after* the fix landed in `380fd00`, and
-a session briefing built from it charged the next agent to hunt a repro that
-no longer existed — three gate runs, avoided only because that agent checked
-`git log` first. Invariant 3 says docs describe the current decided state, so
-a tracked report claiming uncommitted work is a defect. The work is the
-discipline alone — a capture-style report carries its status at the top and is
-re-read at the moment of commit, not only when written — as a kit edit under
-the `craft-synthesis` discipline. The gate half was cut 2026-07-23: a
+report can outlive its factual state and misdirect a cold session. Invariant 3
+says docs describe the current decided state, so a tracked report that
+contradicts the tree is a defect. The work is the discipline alone — a
+capture-style report carries its status at the top and is re-read at the
+moment of commit, not only when written — as a kit edit under the
+`craft-synthesis` discipline. The gate half is cut: a
 doc-conformance check grepping for phrases like "nothing is committed" would
 fire on ordinary prose in a spec's Problem section, and a check that cannot be
 shown to bite does not earn gate weight.

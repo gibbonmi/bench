@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"sort"
 	"testing"
 	"time"
 
@@ -224,6 +223,13 @@ func (e *faultEngine) OpenDir(path string) (gateFile, error) {
 	return &faultFile{gateFile: f, engine: e, kind: "directory"}, nil
 }
 
+func (e *faultEngine) WriteFile(path string, data []byte, mode os.FileMode) error {
+	if err := e.operation("owner-write"); err != nil {
+		return err
+	}
+	return e.productionGateEngine.WriteFile(path, data, mode)
+}
+
 func (e *faultEngine) PostRunSubject(root string) (subject, error) {
 	if err := e.operation("post-run-subject-rebuild"); err != nil {
 		return subject{}, err
@@ -278,31 +284,6 @@ func (f *faultFile) Close() error {
 	return f.gateFile.Close()
 }
 
-func TestR21DeterministicFaultProofRegistryCompleteness(t *testing.T) {
-	got := make([]string, 0, len(r21ProofRegistry))
-	seen := map[string]bool{}
-	for _, proof := range r21ProofRegistry {
-		if proof.id == "" || proof.driver == nil || seen[proof.id] {
-			t.Fatalf("%s: invalid or duplicate registration %q", r21CompletenessFailure, proof.id)
-		}
-		seen[proof.id] = true
-		got = append(got, proof.id)
-	}
-	want := append([]string(nil), r21ExpectedProofIDs...)
-	sort.Strings(got)
-	sort.Strings(want)
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("%s: got IDs %v, want %v", r21CompletenessFailure, got, want)
-	}
-}
-
-func TestR21DeterministicFaultEngine(t *testing.T) {
-	for _, proof := range r21ProofRegistry {
-		proof := proof
-		t.Run(proof.id, proof.driver)
-	}
-}
-
 func r21FaultCase(id, failOp string, wantTrace []string, durablePending bool) r21ProofCase {
 	return r21ProofCase{id: id, driver: func(t *testing.T) {
 		root := gateTestRepo(t, "#!/usr/bin/env bash\nexit 0\n", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
@@ -310,8 +291,11 @@ func r21FaultCase(id, failOp string, wantTrace []string, durablePending bool) r2
 		engine := &faultEngine{now: now, failOp: failOp}
 		got := executeWithEngine(context.Background(), root, io.Discard, io.Discard, engine)
 		expectedTrace, expectPending := wantTrace, durablePending
+		if failOp != "lock-open" && failOp != "lock-acquisition" {
+			expectedTrace = append(append([]string{}, wantTrace[:2]...), append([]string{"owner-write"}, wantTrace[2:]...)...)
+		}
 		if failOp != "lock-open" && failOp != "lock-acquisition" && failOp != "post-run-subject-rebuild" {
-			expectedTrace = append(append([]string{}, wantTrace...), pendingTrace[2:]...)
+			expectedTrace = append(expectedTrace, pendingTrace[3:]...)
 			expectPending = true
 		}
 		if !reflect.DeepEqual(engine.trace, expectedTrace) {

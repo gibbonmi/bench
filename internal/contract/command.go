@@ -87,6 +87,7 @@ func runFixtureCommandTimeout(t testing.TB, f Fixture, dir string, env Env, time
 
 	select {
 	case err := <-done:
+		terminateProcessGroup(cmd)
 		exitCode := 0
 		if err != nil {
 			exitCode = 1
@@ -97,7 +98,7 @@ func runFixtureCommandTimeout(t testing.TB, f Fixture, dir string, env Env, time
 		}
 		return Probe{t: t, ExitCode: exitCode, Stdout: stdout.String(), Stderr: stderr.String()}
 	case <-timer.C:
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		terminateProcessGroup(cmd)
 		<-done
 		return Probe{t: t, ExitCode: -1, Stdout: stdout.String(), Stderr: stderr.String(), TimedOut: true}
 	}
@@ -119,7 +120,12 @@ func runFixtureCommandSpec(t testing.TB, f Fixture, dir string, env Env, stdin, 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-	err := cmd.Run()
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	err := cmd.Start()
+	if err == nil {
+		err = cmd.Wait()
+		terminateProcessGroup(cmd)
+	}
 	exitCode := 0
 	if err != nil {
 		exitCode = 1
@@ -129,6 +135,12 @@ func runFixtureCommandSpec(t testing.TB, f Fixture, dir string, env Env, stdin, 
 		}
 	}
 	return Probe{t: t, ExitCode: exitCode, Stdout: stdout.String(), Stderr: stderr.String()}
+}
+
+func terminateProcessGroup(cmd *exec.Cmd) {
+	if cmd.Process != nil {
+		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+	}
 }
 
 func (f Fixture) Git(args ...string) Probe {
@@ -218,6 +230,7 @@ func unsetEnv(env []string, k string) []string {
 func isolatedEnv(t testing.TB, root string) map[string]string {
 	t.Helper()
 	base := filepath.Join(root, ".bench-contract-env")
+	t.Cleanup(func() { removeIsolatedEnv(t, base) })
 	home := filepath.Join(base, "home")
 	xdgConfig := filepath.Join(base, "xdg-config")
 	xdgCache := filepath.Join(base, "xdg-cache")
@@ -238,6 +251,20 @@ func isolatedEnv(t testing.TB, root string) map[string]string {
 		"GIT_CONFIG_NOSYSTEM": "1",
 		"BENCH_HOME":          benchHome,
 	}
+}
+
+func removeIsolatedEnv(t testing.TB, base string) {
+	t.Helper()
+	var err error
+	for attempt := 0; attempt < 3; attempt++ {
+		if err = os.RemoveAll(base); err == nil {
+			return
+		}
+		if attempt < 2 {
+			time.Sleep(time.Second)
+		}
+	}
+	t.Errorf("remove isolated env %s: %v", base, err)
 }
 
 func IsolatedEnv(t testing.TB, root string) map[string]string {

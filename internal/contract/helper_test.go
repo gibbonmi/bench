@@ -1,9 +1,14 @@
 package contract
 
 import (
+	"errors"
+	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
 )
 
 func TestFixtureInitializesGitRepoByDefault(t *testing.T) {
@@ -45,6 +50,47 @@ exit 7
 	probe.RequireContains(probe.Stdout, "stdout:ok:"+filepath.Join(f.Root, ".bench-contract-env", "home"))
 	probe.RequireContains(probe.Stderr, "stderr:"+filepath.Join(f.Root, ".bench-contract-env", "bench-home"))
 	probe.RequireNotContains(probe.Stdout+probe.Stderr, "ambient-")
+}
+
+func TestFixtureRunnerReapsSpawnedProcessGroup(t *testing.T) {
+	f := NewFixture(t)
+	pids := filepath.Join(f.Root, "runner-pids")
+
+	f.Run("sh", "-c", "sleep 30 >/dev/null 2>&1 & printf '%s %s\\n' \"$$\" \"$!\" > \"$1\"", "sh", pids).RequireExit(0)
+
+	data, err := os.ReadFile(pids)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fields := strings.Fields(string(data))
+	if len(fields) != 2 {
+		t.Fatalf("runner PID record = %q, want group and child PID", data)
+	}
+	group, err := strconv.Atoi(fields[0])
+	if err != nil {
+		t.Fatalf("parse group PID %q: %v", fields[0], err)
+	}
+	child, err := strconv.Atoi(fields[1])
+	if err != nil {
+		t.Fatalf("parse child PID %q: %v", fields[1], err)
+	}
+
+	deadline := time.Now().Add(2 * time.Second)
+	for processGroupAlive(group) || processAlive(child) {
+		if time.Now().After(deadline) {
+			t.Fatalf("runner returned with surviving process group %d or child %d", group, child)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+func processGroupAlive(pgid int) bool {
+	return syscall.Kill(-pgid, 0) == nil
+}
+
+func processAlive(pid int) bool {
+	err := syscall.Kill(pid, 0)
+	return err == nil || !errors.Is(err, syscall.ESRCH)
 }
 
 func TestBenchRunsKitWrapperFromFixture(t *testing.T) {

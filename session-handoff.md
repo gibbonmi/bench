@@ -8,18 +8,20 @@ executable from a cold start; no conversation history is needed.
 
 - **Spec staged and reviewer-approved.**
   `specs/trustworthy-gate-under-load.md` is `Status: staged`, covering FT88's
-  four remaining arms plus the `GATE-REPORT.md` retirement: the gate owner
+  four remaining arms plus the diagnosis-document retirement: the gate owner
   record, the already-in-progress refusal naming the owner PID, `gate-run`
   process-group teardown on signal, the two-leg marker wait (fast + slow legs),
   the `.bench-contract-env` cleanup reap, self-attributing conformance diags,
-  and deleting `GATE-REPORT.md` with its six references. `bench coverage --check`
-  passes — 17 rows, 13 with a real observed red.
+  and consolidating durable gate-under-load guidance in the project profile and
+  learnings journal. `bench coverage --check` passes — 17 rows, 13 with a real
+  observed red.
 - **No decision map backs the spec.** It was authored same-session under the
   batch-drain override, compiled from the FT88 `ROADMAP.md` row and
-  `GATE-REPORT.md`. A mid-tier falsification pass returned BLOCK on the first
-  draft; every finding was verified against the tree and folded in. Two were
-  real: story 9's oracle did not exist (the conformance sweep matches
-  slash-command tokens only, not file paths — now classified honestly, the six
+  diagnosis evidence now distilled into `projects/benchkit.md` and
+  `.bench/learnings.md`. A mid-tier falsification pass returned BLOCK on the
+  first draft; every finding was verified against the tree and folded in. Two
+  were real: story 9's oracle did not exist (the conformance sweep matches
+  slash-command tokens only, not file paths — now classified honestly, the
   live references named for the same commit, and the missing sweep parked
   Out-of-scope), and story 1's before-the-fsync ordering had no biting row (now
   routed through the `gateEngine` interface so the fake engine asserts call
@@ -31,8 +33,9 @@ executable from a cold start; no conversation history is needed.
   fast/slow split that restores fail-fast on top of that fix.
 - **Untouched, other work:** `specs/consumer-payload-and-phase-contract.md`
   (still `staged`; its status flip plus `reviews/` deletion belong to its own
-  `/bench-final-check`). `GATE-REPORT.md` retirement is now story 9 of this
-  spec, not a standalone deferral.
+  `/bench-final-check`). The project profile owns the current operational traps
+  and host-I/O hazard; the learnings journal owns the open reproduction-economics
+  entry.
 - **Unpushed:** `main` is ahead of origin by several commits. Pushing is the
   reviewer's call.
 

@@ -16,3 +16,9 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
 - **What happened:** …
 - **Right behavior:** …
 - **Proposed rule change:** … (or "none")
+
+## 2026-07-23 — Reproduce load-sensitive gate failures with the real oracle  [open]
+
+- **What happened:** Only a real `bench gate` under representative host-side load reproduced the marker stalls; guest-side CPU saturation, parallel contract loaders, inert memory ballast, and `fsync` hammers all stayed green.
+- **Right behavior:** Diagnose load-sensitive gate failures with the real gate under the host load that exposes them; synthetic guest stress can narrow a hypothesis, but a green approximation cannot clear the real oracle.
+- **Proposed rule change:** Add this reproduction-economics rule to gate-debugging guidance so a fresh session does not spend cycles rebuilding disproven guest-only load shapes.

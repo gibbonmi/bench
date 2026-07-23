@@ -82,7 +82,8 @@ func TestFT78Story4ProofLedger(t *testing.T) {
 	}
 }
 
-var pendingTrace = []string{"lock-open", "lock-acquisition", "temporary-create", "mode-establishment", "write", "file-sync", "file-close", "atomic-rename", "directory-open", "directory-sync", "directory-close"}
+var durableTrace = []string{"temporary-create", "mode-establishment", "write", "file-sync", "file-close", "atomic-rename", "directory-open", "directory-sync", "directory-close"}
+var pendingTrace = append([]string{"lock-open", "lock-acquisition", "owner-write"}, durableTrace...)
 
 func story4Repo(t *testing.T, exit int) string {
 	return gateTestRepo(t, fmt.Sprintf("#!/usr/bin/env bash\ntouch .git/gate-marker\nexit %d\n", exit), `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
@@ -136,8 +137,8 @@ func r9Fault(id, op string) r21ProofCase {
 		now := time.Now().UTC()
 		engine := &faultEngine{now: now, failOp: op}
 		got := executeWithEngine(context.Background(), root, io.Discard, io.Discard, engine)
-		want := append(append([]string{}, pendingTrace[:2]...), failedPersistenceTrace(op)...)
-		want = append(want, pendingTrace[2:]...)
+		want := append(append([]string{}, pendingTrace[:3]...), failedPersistenceTrace(op)...)
+		want = append(want, durableTrace...)
 		if !reflect.DeepEqual(engine.trace, want) {
 			t.Fatalf("trace = %v, want %v", engine.trace, want)
 		}
@@ -155,7 +156,7 @@ func r9Fault(id, op string) r21ProofCase {
 }
 
 func failedPersistenceTrace(op string) []string {
-	persistence := pendingTrace[2:]
+	persistence := durableTrace
 	idx := 0
 	for i, name := range persistence {
 		if name == op {
@@ -199,8 +200,7 @@ func r10Fault(id string, exit int, op string) r21ProofCase {
 		engine := &faultEngine{now: now, failOp: op, failAt: 2}
 		got := executeWithEngine(context.Background(), root, io.Discard, io.Discard, engine)
 		want := append(append([]string{}, pendingTrace...), "post-run-subject-rebuild")
-		want = append(want, failedPersistenceTrace(op)...)
-		want = append(want, pendingTrace[2:]...)
+		want = append(want, append(failedPersistenceTrace(op), durableTrace...)...)
 		if !reflect.DeepEqual(engine.trace, want) {
 			t.Fatalf("trace = %v, want %v", engine.trace, want)
 		}

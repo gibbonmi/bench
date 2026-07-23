@@ -125,6 +125,9 @@ coverage map; a class skipped here returns as a regression.
 - non-TTY stdin on a prompting command must fail closed naming its
   non-interactive flags; `/dev/null` stdin reads as a character device, so
   TTY-detection contracts must drive a pipe, not the default null device
+- host-backed filesystems under host-side I/O pressure: on WSL2, ext4 lives
+  behind a VHDX whose file and directory `fsync` calls can stall for seconds
+  even when guest-side CPU, memory, and `fsync` stress stay green
 
 Known residual risk: `bench setup`'s real-TTY confirm wiring is one untested
 constructor line binding stdin — testing it needs a pty dependency, which is a
@@ -252,3 +255,11 @@ is in `craft-line`). Tier moves still get declared — no silent escalation.
   Closed decision (2026-07-23): following the link would ship bytes the allowlist
   never named, so the allowlist would stop being the complete statement of what a
   consumer receives. Don't reopen it as a link/upgrade ergonomics fix.
+- Never build `dist/bench` with plain `go build`; use
+  `bash scripts/go-build.sh <root> <out>` so the binary carries the package
+  version required by the version and upgrade contracts.
+- Never mutate the repository while a gate is running. The gate binds its
+  verdict to the starting subject and rejects a run whose subject changes.
+- Never stop a gate by killing only its shell wrapper. Signal `gate-run`, which
+  owns teardown of the gate script's process group, so canary and nested
+  `gate-phases` children cannot outlive the run.

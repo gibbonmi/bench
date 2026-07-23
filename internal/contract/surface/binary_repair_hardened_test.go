@@ -50,8 +50,9 @@ func TestBinaryRepairContracts(t *testing.T) {
 func testRepairLosingRacerPreservesWinner(t *testing.T) {
 	f, kit := binaryRepairFixtureKit(t)
 	registry := newBinaryRepairRegistry(t, kit, "9.8.7", "#!/bin/sh\necho loser\n")
+	startReady := filepath.Join(f.Root, "loser-started")
 	ready := filepath.Join(f.Root, "loser-ready")
-	env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL, "BENCH_REPAIR": "", "BENCH_TEST_REPAIR_READY_FILE": ready, "BENCH_TEST_REPAIR_FAIL_AFTER_READY": "1"}
+	env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL, "BENCH_REPAIR": "", "BENCH_TEST_REPAIR_START_READY_FILE": startReady, "BENCH_TEST_REPAIR_READY_FILE": ready, "BENCH_TEST_REPAIR_FAIL_AFTER_READY": "1"}
 	cmd := exec.Command("bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "repair")
 	cmd.Dir, cmd.Env = f.Root, contract.ProcessEnv(f.Env, env)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
@@ -61,7 +62,7 @@ func testRepairLosingRacerPreservesWinner(t *testing.T) {
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
-	waitForRepairMarker(t, cmd, ready, &childOut)
+	waitForRepairMarkers(t, cmd, startReady, ready, &childOut)
 	target := binaryRepairCachePath(t, f, "9.8.7")
 	contract.WriteFileAbs(t, target, "#!/bin/sh\necho winner\n")
 	if err := os.Chmod(target, 0o755); err != nil {
@@ -129,6 +130,27 @@ func waitForRepairMarker(t *testing.T, cmd *exec.Cmd, ready string, childOut *by
 		}
 		time.Sleep(20 * time.Millisecond)
 	}
+}
+
+func waitForRepairMarkers(t *testing.T, cmd *exec.Cmd, startReady, ready string, childOut *bytes.Buffer) {
+	t.Helper()
+	miss := contract.WaitForTwoLegMarkers(startReady, ready, 10*time.Second, 60*time.Second,
+		func(path string) (os.FileInfo, error) {
+			info, err := os.Stat(path)
+			if err == nil && path == startReady {
+				// The start marker blocks the child until the test releases it.
+				if err := os.Remove(startReady); err != nil {
+					t.Fatalf("release repair start handshake: %v", err)
+				}
+			}
+			return info, err
+		}, nil, time.Now, time.Sleep)
+	if miss == "" {
+		return
+	}
+	_ = cmd.Process.Kill()
+	_ = cmd.Wait()
+	t.Fatalf("repair did not reach %s synchronization marker\nchild output:\n%s", miss, childOut.String())
 }
 
 func testRepairPinManifestFailures(t *testing.T) {
