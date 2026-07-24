@@ -6,7 +6,9 @@
 // only on green (reusing a fresh green verdict already recorded for the identical closed
 // oracle subject instead of paying the gate twice), flips the spec through internal/spec when --spec is set, and stages
 // exactly the named paths via a `:(literal)` pathspec (a named deletion included) —
-// never a bare `git add -A` over the whole tree. A named path whose removal is already
+// never a bare `git add -A` over the whole tree. A named directory covers its changed
+// children on both sides of that sequence: the pathspec sweeps them and the block-check
+// attributes them. A named path whose removal is already
 // staged (`git rm`, a rename's old half) matches no add-pathspec and is recognized as
 // already in the index rather than failed.
 // It forms no opinion of the gate's verdict and carries no branch guard: the pre-push hook
@@ -183,7 +185,9 @@ func parseArgs(args []string) (msg string, specSlug string, paths []string, help
 // exactly the state a staged removal leaves behind (`git rm`, or a `git mv` rename's old
 // half). Such a path needs no staging: absent from worktree and index but present in HEAD
 // means its deletion is already in the index. A path absent from all three is a naming
-// error reported with a real message instead of git's raw exit status.
+// error reported with a real message instead of git's raw exit status. A named directory
+// needs no case of its own: it is present in the worktree, and its one pathspec stages
+// every changed path beneath it.
 func stagePlan(root string, named []string) ([]string, error) {
 	var stage []string
 	for _, p := range named {
@@ -213,11 +217,17 @@ func inHead(root, p string) bool {
 }
 
 // unexplained lists the working-tree paths (tracked-modified or untracked) that are not in
-// the allowed set, sorted. An empty result means the tree equals the named diff.
+// the allowed set, sorted. An empty result means the tree equals the named diff. A named
+// file explains only itself; a named directory explains what lies beneath it, matching the
+// staging pathspec, which sweeps the whole directory.
 func unexplained(root string, allowed []string) []string {
 	allow := make(map[string]bool, len(allowed))
+	var dirs []string
 	for _, p := range allowed {
 		allow[p] = true
+		if isDir(root, p) {
+			dirs = append(dirs, p)
+		}
 	}
 	// Audit #12 — tolerate (flagged for reviewer veto): an empty parse relaxes this
 	// attribution guard, but the subsequent real `git commit`/`git add` fails loudly on a
@@ -229,12 +239,32 @@ func unexplained(root string, allowed []string) []string {
 	raw, _ := git.Raw("-C", root, "status", "--porcelain", "-z", "--no-renames", "--untracked-files=all")
 	var offenders []string
 	for _, e := range git.ParsePorcelainZ(raw) {
-		if e.Path == "" || allow[e.Path] {
+		if e.Path == "" || allow[e.Path] || underAny(dirs, e.Path) {
 			continue
 		}
 		offenders = append(offenders, e.Path)
 	}
 	return offenders
+}
+
+// underAny reports whether path lies beneath one of the named directories. Appending the
+// separator to the directory is what makes the comparison run on whole path segments: `sub`
+// covers `sub/x` and never reaches its prefix-sharing sibling `subdir/x`, which a bare
+// string prefix would silently pull into the commit.
+func underAny(dirs []string, path string) bool {
+	for _, d := range dirs {
+		if strings.HasPrefix(path, d+"/") {
+			return true
+		}
+	}
+	return false
+}
+
+// isDir reports whether a named path is a directory in the worktree — the condition that
+// widens its attribution from itself to everything beneath it.
+func isDir(root, p string) bool {
+	info, err := os.Lstat(filepath.Join(root, filepath.FromSlash(p)))
+	return err == nil && info.IsDir()
 }
 
 // rootRel converts a path argument (as given, cwd-relative) to its slash-formed,

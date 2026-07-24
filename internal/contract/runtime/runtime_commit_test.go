@@ -50,7 +50,10 @@ func TestRuntimeCommitContracts(t *testing.T) {
 	contract.RunParallel(t, "stale verdict re-runs the gate", testCommitStaleVerdictRerunsGate)
 	contract.RunParallel(t, "red gate refuses commit", testCommitRedRefuses)
 	contract.RunParallel(t, "unexplained file blocks before gate", testCommitUnexplainedBlocks)
-	contract.RunParallel(t, "glob/space path survives whole", testCommitWeirdPath)
+	contract.RunParallel(t, "glob/space path survives whole", testCommitHostileFilenames)
+	contract.RunParallel(t, "named directory commits its changed children", testCommitDirectoryCommitsChildren)
+	contract.RunParallel(t, "named directory stops at its own segment", testCommitDirectoryStopsAtSegment)
+	contract.RunParallel(t, "named directory leaves an outside file blocking", testCommitDirectoryLeavesOutsideFileBlocking)
 	contract.RunParallel(t, "deleted path stages the removal", testCommitStagesDeletion)
 	contract.RunParallel(t, "staged deletion commits", testCommitStagesStagedDeletion)
 	contract.RunParallel(t, "staged rename commits whole", testCommitStagesStagedRename)
@@ -245,13 +248,81 @@ func testCommitUnexplainedBlocks(t *testing.T) {
 	}
 }
 
-func testCommitWeirdPath(t *testing.T) {
+// testCommitHostileFilenames pins both hostile filename shapes a shell CLI actually meets:
+// an embedded space, which word-splits if any layer between argv and the git pathspec drops
+// its quoting, and a `*`, which selects other files if the pathspec loses its `:(literal)`
+// prefix. Naming only the glob-shaped file is the discriminator — as a glob that name also
+// matches the space-shaped one, so a non-literal chain would explain a file the reviewer
+// never named.
+func testCommitHostileFilenames(t *testing.T) {
 	f := commitFixture(t)
-	weird := "a b*c.txt"
-	f.WriteFile(weird, "weird\n")
+	space, glob := "a b.txt", "a*b.txt"
+	f.WriteFile(space, "space\n")
+	f.WriteFile(glob, "glob\n")
 
-	f.Bench("commit", "-m", "weird path", weird).RequireExit(0)
-	contract.RequireContains(t, committedNames(f), weird)
+	p := f.Bench("commit", "-m", "glob-shaped name", glob)
+	p.RequireExit(1)
+	p.RequireContains(p.Stderr, space)
+
+	f.Bench("commit", "-m", "hostile names", space, glob).RequireExit(0)
+	names := committedNames(f)
+	contract.RequireContains(t, names, space)
+	contract.RequireContains(t, names, glob)
+}
+
+// testCommitDirectoryCommitsChildren drives the conventional path grammar: a commit that
+// spans a directory is expressed by naming the directory, and every changed path beneath it
+// is thereby explained. Two changed children, because a directory holding exactly one is
+// satisfied by an implementation that never widens beyond a single path.
+func testCommitDirectoryCommitsChildren(t *testing.T) {
+	f := commitFixture(t)
+	f.WriteFile("sub/a.txt", "a\n")
+	f.WriteFile("sub/b.txt", "b\n")
+	before := headSha(f)
+
+	f.Bench("commit", "-m", "span a directory", "sub").RequireExit(0)
+
+	if headSha(f) == before {
+		t.Fatal("HEAD did not advance on a green gate")
+	}
+	names := committedNames(f)
+	contract.RequireContains(t, names, "sub/a.txt")
+	contract.RequireContains(t, names, "sub/b.txt")
+}
+
+// testCommitDirectoryStopsAtSegment pins the directory rule to whole path segments: `subdir`
+// is a sibling of `sub`, not a path beneath it, so its changed file stays unexplained. A
+// string-prefix implementation silently widens the commit to it.
+func testCommitDirectoryStopsAtSegment(t *testing.T) {
+	f := commitFixture(t)
+	f.WriteFile("sub/a.txt", "a\n")
+	f.WriteFile("subdir/x.txt", "x\n")
+	before := headSha(f)
+
+	p := f.Bench("commit", "-m", "span a directory", "sub")
+	p.RequireExit(1)
+	p.RequireContains(p.Stderr, "subdir/x.txt")
+	if headSha(f) != before {
+		t.Fatal("HEAD advanced despite a changed file under a sibling directory")
+	}
+}
+
+// testCommitDirectoryLeavesOutsideFileBlocking pins the safety property the block-check
+// exists for: a named directory explains what is beneath it and nothing else, so a change
+// anywhere outside it still refuses the commit by name.
+func testCommitDirectoryLeavesOutsideFileBlocking(t *testing.T) {
+	f := commitFixture(t)
+	f.WriteFile("sub/a.txt", "a\n")
+	f.WriteFile("stray.txt", "x\n")
+	before := headSha(f)
+
+	p := f.Bench("commit", "-m", "span a directory", "sub")
+	p.RequireExit(1)
+	p.RequireContains(p.Stderr, "outside the named set")
+	p.RequireContains(p.Stderr, "stray.txt")
+	if headSha(f) != before {
+		t.Fatal("HEAD advanced despite a changed file outside the named directory")
+	}
 }
 
 func testCommitSpecFlip(t *testing.T) {
