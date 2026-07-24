@@ -34,6 +34,18 @@ func writeSkipLog(t *testing.T, skips ...capability.Skip) string {
 	return path
 }
 
+// tallyOf reads a log that is expected to be readable. Every caller that scripts its own
+// log goes through here, so a reader that started failing on well-formed input surfaces as
+// its own named failure rather than as a puzzling row mismatch.
+func tallyOf(t *testing.T, path string) skipTally {
+	t.Helper()
+	tally, err := readSkipTally(path)
+	if err != nil {
+		t.Fatalf("read skip tally %s: %v", path, err)
+	}
+	return tally
+}
+
 // TestSkipRowsReportEveryClass drives the collector directly against a scripted log,
 // which pins the aggregation itself rather than the far weaker claim that some rows
 // appeared. Classes report in the package's declared order and each carries its own
@@ -52,7 +64,7 @@ func TestSkipRowsReportEveryClass(t *testing.T) {
 		"capability-skips class=symlink: 2",
 		"capability-skips class=privilege: 1",
 	}
-	if got := skipRows(readSkipTally(path)); !reflect.DeepEqual(got, want) {
+	if got := skipRows(tallyOf(t, path)); !reflect.DeepEqual(got, want) {
 		t.Fatalf("skipRows = %#v, want %#v", got, want)
 	}
 }
@@ -67,9 +79,37 @@ func TestSkipRowsStateZeroExplicitly(t *testing.T) {
 		"absent log": filepath.Join(t.TempDir(), "never-created.log"),
 		"noise only": writeNoiseLog(t),
 	} {
-		if got := skipRows(readSkipTally(path)); !reflect.DeepEqual(got, want) {
+		if got := skipRows(tallyOf(t, path)); !reflect.DeepEqual(got, want) {
 			t.Fatalf("%s: skipRows = %#v, want %#v", name, got, want)
 		}
+	}
+}
+
+// TestUnreadableSkipLogIsFatalOnlyUnderStrictMode separates the two ways a log fails to
+// read. Absence is a run with nothing to report; a log that exists and cannot be read
+// proves nothing, so under strict mode — where the tally is the enforcement the release
+// workflows rely on — it must not read as a fully capable runner. A directory is the
+// portable unreadable path: os.ReadFile fails on it and the failure is not fs.ErrNotExist.
+func TestUnreadableSkipLogIsFatalOnlyUnderStrictMode(t *testing.T) {
+	unreadable := t.TempDir()
+	if _, err := readSkipTally(unreadable); err == nil {
+		t.Fatal("readSkipTally on a directory reported no error, so an unreadable log reads as zero skips")
+	}
+
+	t.Setenv(requireCapabilitiesEnv, "1")
+	var stdout, stderr bytes.Buffer
+	if !reportCapabilitySkips(unreadable, &stdout, &stderr) {
+		t.Fatalf("strict run stayed green on an unreadable skip log; stderr:\n%s", stderr.String())
+	}
+	if !strings.Contains(stderr.String(), unreadable) {
+		t.Fatalf("diagnostic does not name the log path %q:\n%s", unreadable, stderr.String())
+	}
+
+	t.Setenv(requireCapabilitiesEnv, "")
+	stdout.Reset()
+	stderr.Reset()
+	if reportCapabilitySkips(unreadable, &stdout, &stderr) {
+		t.Fatalf("an unreadable skip log turned a non-strict run red; stderr:\n%s", stderr.String())
 	}
 }
 
@@ -130,11 +170,11 @@ func TestCapabilitySkipsCountEveryConcurrentPhase(t *testing.T) {
 // security class, so it never contributes; any flag value other than "1" leaves the
 // rows informational.
 func TestStrictCapabilityFailure(t *testing.T) {
-	mixed := readSkipTally(writeSkipLog(t,
+	mixed := tallyOf(t, writeSkipLog(t,
 		capability.Skip{Kind: capability.KindCapability, Class: capability.Fifo, Reason: "no fifo"},
 		capability.Skip{Kind: capability.KindEnvironment, Reason: "fixture not materialized"},
 	))
-	environmentOnly := readSkipTally(writeSkipLog(t,
+	environmentOnly := tallyOf(t, writeSkipLog(t,
 		capability.Skip{Kind: capability.KindEnvironment, Reason: "fixture not materialized"},
 	))
 

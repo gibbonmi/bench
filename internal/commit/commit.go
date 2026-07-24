@@ -268,11 +268,33 @@ func underAny(dirs []string, path string) bool {
 	return false
 }
 
-// isDir reports whether a named path is a directory in the worktree — the condition that
-// widens its attribution from itself to everything beneath it.
+// isDir reports whether a named path is a directory — the condition that widens its
+// attribution from itself to everything beneath it. A directory the working tree no longer
+// holds still counts while git tracks children under it: `rm -r sub` leaves nothing to
+// Lstat, and without the index answer every deletion it produced reads as an unexplained
+// offender that refuses the commit.
 func isDir(root, p string) bool {
-	info, err := os.Lstat(filepath.Join(root, filepath.FromSlash(p)))
-	return err == nil && info.IsDir()
+	if info, err := os.Lstat(filepath.Join(root, filepath.FromSlash(p))); err == nil {
+		return info.IsDir()
+	}
+	return tracksChildren(root, p)
+}
+
+// tracksChildren reports whether the index holds an entry strictly beneath p. The `p/` test
+// is the same whole-segment rule underAny applies, and it is what keeps a tracked file at p
+// — an ordinary named deletion — from widening to itself, and a prefix-sharing sibling like
+// `subdir` from ever being reached.
+func tracksChildren(root, p string) bool {
+	out, err := git.Raw("-C", root, "ls-files", "-z", "--", ":(literal)"+p)
+	if err != nil {
+		return false
+	}
+	for _, entry := range strings.Split(string(out), "\x00") {
+		if strings.HasPrefix(entry, p+"/") {
+			return true
+		}
+	}
+	return false
 }
 
 // rootRel converts a path argument (as given, cwd-relative) to its slash-formed,

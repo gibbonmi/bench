@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"math"
 	"os"
 	"os/exec"
 	"syscall"
@@ -35,12 +36,20 @@ const (
 // to contain. Half the bound plus a fixed floor keeps the result strictly greater than
 // the input for every entry in the registry, so a wait can never expire at the same
 // instant as the window it is waiting out — an outer deadline equal to its inner window
-// is a coin flip, not a bound.
+// is a coin flip, not a bound. A negative bound contains nothing and clamps to the floor.
+// The one place strictly-greater is unreachable is the top of the duration range, where
+// the sum saturates at math.MaxInt64: equality there is the honest answer, and the
+// alternative is the wrapped negative deadline that would expire immediately.
 func TestDeadline(inner time.Duration) time.Duration {
 	if inner < 0 {
 		inner = 0
 	}
-	return inner + inner/2 + TestDeadlineFloor
+	const ceiling = time.Duration(math.MaxInt64)
+	half := inner / 2
+	if half > ceiling-inner || TestDeadlineFloor > ceiling-inner-half {
+		return ceiling
+	}
+	return inner + half + TestDeadlineFloor
 }
 
 func Offline() bool { return os.Getenv("BENCH_OFFLINE") == "1" }

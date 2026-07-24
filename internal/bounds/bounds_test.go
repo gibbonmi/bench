@@ -11,6 +11,7 @@ import (
 	"go/parser"
 	"go/token"
 	"go/types"
+	"math"
 	"os/exec"
 	"strings"
 	"testing"
@@ -38,6 +39,38 @@ func TestDeadlineExceedsEveryRegistryDuration(t *testing.T) {
 		if got := TestDeadline(bound); got <= bound {
 			t.Errorf("TestDeadline(%s = %s) = %s, want strictly greater than the bound it contains", name, bound, got)
 		}
+	}
+}
+
+// TestDeadlineHoldsAtItsBoundaries grades the inputs the registry can never supply: a
+// negative bound, a zero bound, and the top of the duration range where inner + inner/2
+// overflows. The overflow case is the one that matters most — a wrapped sum is a negative
+// deadline, which expires before the wait it is supposed to contain even begins.
+func TestDeadlineHoldsAtItsBoundaries(t *testing.T) {
+	for _, inner := range []time.Duration{
+		-time.Hour, -1, 0, 1, time.Second,
+		math.MaxInt64 / 2, math.MaxInt64/3*2 + 1, math.MaxInt64 - 1, math.MaxInt64,
+	} {
+		got := TestDeadline(inner)
+		if got < TestDeadlineFloor {
+			t.Errorf("TestDeadline(%d) = %s, want at least the floor %s", inner, got, TestDeadlineFloor)
+			continue
+		}
+		if inner == math.MaxInt64 {
+			if got != math.MaxInt64 {
+				t.Errorf("TestDeadline(math.MaxInt64) = %s, want saturation at math.MaxInt64", got)
+			}
+			continue
+		}
+		if got <= inner {
+			t.Errorf("TestDeadline(%d) = %s, want strictly greater than the bound it contains", inner, got)
+		}
+	}
+	if got := TestDeadline(-time.Hour); got != TestDeadlineFloor {
+		t.Errorf("TestDeadline(-1h) = %s, want the floor %s a clamped-to-zero bound yields", got, TestDeadlineFloor)
+	}
+	if got := TestDeadline(0); got != TestDeadlineFloor {
+		t.Errorf("TestDeadline(0) = %s, want the floor %s", got, TestDeadlineFloor)
 	}
 }
 

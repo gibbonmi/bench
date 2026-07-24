@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
@@ -59,15 +60,20 @@ func TestResolvePrecedence(t *testing.T) {
 	}
 }
 
+// TestGateEnvStripsWrapperRoutingInternals grades what a child gate must not inherit. The
+// skip log belongs with the routing internals: an inherited path lets a canary's inner run
+// append to the outer run's tally, which under BENCH_REQUIRE_CAPABILITIES=1 turns a fixture's
+// deliberate skip into a red release.
 func TestGateEnvStripsWrapperRoutingInternals(t *testing.T) {
 	t.Setenv("BENCH_KIT", "/wrong/kit")
 	t.Setenv("BENCH_WRAPPER", "/wrong/wrapper")
+	t.Setenv(capability.LogEnv, "/wrong/outer-skips.log")
 	t.Setenv("BENCH_GATE", "echo ok")
 
 	env := gateEnv()
 	sawBenchGate := false
 	for _, kv := range env {
-		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") {
+		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, capability.LogEnv+"=") {
 			t.Fatalf("gateEnv leaked wrapper-routing internal %q", kv)
 		}
 		if kv == "BENCH_GATE=echo ok" {

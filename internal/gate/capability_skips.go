@@ -11,8 +11,10 @@ package gate
 // line. Reading happens once, single-threaded, after the phases join.
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"strings"
 
@@ -61,14 +63,19 @@ func withSkipLog(phases []Phase, path string) []Phase {
 	return out
 }
 
-// readSkipTally counts the structured skips the phases left behind. A missing log is
-// an empty tally, not an error: a run whose phases all reported everything they could
-// run leaves nothing to append.
-func readSkipTally(path string) skipTally {
+// readSkipTally counts the structured skips the phases left behind. An absent log is an
+// empty tally, not an error: a run whose phases all reported everything they could run
+// leaves nothing to append. Every other read failure is returned, because under strict
+// mode the tally is enforcement — a log that exists but cannot be read proves nothing,
+// and reporting it as zero would read exactly like a fully capable runner.
+func readSkipTally(path string) (skipTally, error) {
 	tally := skipTally{byClass: map[capability.Class]int{}}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return tally
+		if errors.Is(err, fs.ErrNotExist) {
+			return tally, nil
+		}
+		return tally, err
 	}
 	for _, line := range strings.Split(string(data), "\n") {
 		skip, ok := capability.ParseLine(line)
@@ -83,7 +90,7 @@ func readSkipTally(path string) skipTally {
 			tally.environment++
 		}
 	}
-	return tally
+	return tally, nil
 }
 
 // skipRows renders the tally. The totals row is unconditional — a run with nothing to
@@ -99,11 +106,14 @@ func skipRows(tally skipTally) []string {
 	return rows
 }
 
+// strict reports whether this run treats an incomplete capability population as red.
+func strict() bool { return os.Getenv(requireCapabilitiesEnv) == "1" }
+
 // strictFailure is the red message for a strict run, naming the classes that did not
 // run so the verdict is actionable. Environment skips never contribute: an absent
 // subject binary is a staging fact, not a security class.
 func strictFailure(tally skipTally) string {
-	if os.Getenv(requireCapabilitiesEnv) != "1" || tally.capability == 0 {
+	if !strict() || tally.capability == 0 {
 		return ""
 	}
 	var classes []string
@@ -116,16 +126,26 @@ func strictFailure(tally skipTally) string {
 }
 
 // reportCapabilitySkips prints the rows and reports whether strict mode makes the run
-// red on their account.
+// red on their account. An unreadable log is diagnosed on every run and turns the run red
+// only under strict mode, matching the fail posture of the skips themselves: a developer's
+// host is not held to a population it never promised, and an unconditional red on a
+// transient read failure would make the gate unusable locally.
 func reportCapabilitySkips(path string, stdout, stderr io.Writer) bool {
-	tally := readSkipTally(path)
+	tally, readErr := readSkipTally(path)
 	for _, row := range skipRows(tally) {
 		fmt.Fprintln(stdout, row)
 	}
-	failure := strictFailure(tally)
-	if failure == "" {
-		return false
+	red := false
+	if readErr != nil {
+		fmt.Fprintf(stderr, "gate: capability skip log %s is unreadable, so the counts above prove nothing: %v\n", path, readErr)
+		if strict() {
+			fmt.Fprintf(stderr, "gate: an unreadable skip log is fatal under %s=1\n", requireCapabilitiesEnv)
+			red = true
+		}
 	}
-	fmt.Fprintln(stderr, failure)
-	return true
+	if failure := strictFailure(tally); failure != "" {
+		fmt.Fprintln(stderr, failure)
+		red = true
+	}
+	return red
 }

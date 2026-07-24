@@ -54,6 +54,7 @@ func TestRuntimeCommitContracts(t *testing.T) {
 	contract.RunParallel(t, "named directory commits its changed children", testCommitDirectoryCommitsChildren)
 	contract.RunParallel(t, "named directory stops at its own segment", testCommitDirectoryStopsAtSegment)
 	contract.RunParallel(t, "named directory leaves an outside file blocking", testCommitDirectoryLeavesOutsideFileBlocking)
+	contract.RunParallel(t, "deleted named directory commits its removals", testCommitDeletedDirectoryCommitsRemovals)
 	contract.RunParallel(t, "deleted path stages the removal", testCommitStagesDeletion)
 	contract.RunParallel(t, "staged deletion commits", testCommitStagesStagedDeletion)
 	contract.RunParallel(t, "staged rename commits whole", testCommitStagesStagedRename)
@@ -324,6 +325,31 @@ func testCommitDirectoryLeavesOutsideFileBlocking(t *testing.T) {
 	if headSha(f) != before {
 		t.Fatal("HEAD advanced despite a changed file outside the named directory")
 	}
+}
+
+// testCommitDeletedDirectoryCommitsRemovals pins the directory rule to the side of the
+// removal: `rm -r sub` then naming `sub` is how a directory is retired, and the block-check
+// has to explain the deletions the removal produced. An attribution that asks only the
+// working tree finds nothing to widen from — the directory is gone — and reports every one
+// of its own children as an unexplained offender. Two children, because a directory holding
+// one is satisfied by an implementation that never widens past a single path.
+func testCommitDeletedDirectoryCommitsRemovals(t *testing.T) {
+	f := commitFixture(t)
+	f.WriteFile("sub/a.txt", "a\n")
+	f.WriteFile("sub/b.txt", "b\n")
+	f.Bench("commit", "-m", "add a directory", "sub").RequireExit(0)
+	contract.Remove(t, filepath.Join(f.Root, "sub"))
+	before := headSha(f)
+
+	f.Bench("commit", "-m", "retire a directory", "sub").RequireExit(0)
+
+	if headSha(f) == before {
+		t.Fatal("HEAD did not advance on a green gate")
+	}
+	names := committedNames(f)
+	contract.RequireContains(t, names, "sub/a.txt")
+	contract.RequireContains(t, names, "sub/b.txt")
+	contract.RequireNotContains(t, f.Git("ls-files").Stdout, "sub/")
 }
 
 func testCommitSpecFlip(t *testing.T) {
