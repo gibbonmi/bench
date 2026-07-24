@@ -18,6 +18,7 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
 )
 
@@ -237,7 +238,7 @@ func binaryRepairPlatformSuffix(t testing.TB) string {
 	)
 	out, err := exec.Command("bash", "-c", script).CombinedOutput()
 	if err != nil {
-		t.Skipf("launcher platform_pkg unavailable: %v\n%s", err, out)
+		capability.Environment(t, fmt.Sprintf("launcher platform_pkg unavailable: %v\n%s", err, out))
 	}
 	return strings.TrimPrefix(strings.TrimSpace(string(out)), "@redbench/")
 }

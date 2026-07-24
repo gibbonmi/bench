@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
 )
 
@@ -26,7 +27,7 @@ func TestSetupPlanContracts(t *testing.T) {
 // read-error path it is named for.
 func skipIfRoot(t *testing.T) {
 	if os.Geteuid() == 0 {
-		t.Skip("running as root - permission-denied fixtures don't apply")
+		capability.Capability(t, capability.Privilege, "running as root - permission-denied fixtures don't apply")
 	}
 }
 

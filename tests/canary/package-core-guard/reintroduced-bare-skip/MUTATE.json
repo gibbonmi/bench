@@ -1,0 +1,3 @@
+[
+  {"path":"internal/worktree/worktree_test.go","old":"capability.Capability(t, capability.Tool, \"cksum not available\")","new":"t.Skip(\"cksum not available\")"}
+]

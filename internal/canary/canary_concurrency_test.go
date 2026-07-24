@@ -2,6 +2,7 @@ package canary
 
 import (
 	"fmt"
+	"github.com/gibbonmi/bench/internal/capability"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -13,7 +14,7 @@ import (
 
 func TestSweepRunsFixturesConcurrently(t *testing.T) {
 	if runtime.NumCPU() < 2 {
-		t.Skip("NumCPU=1 makes overlap impossible by policy")
+		capability.Capability(t, capability.CPU, "NumCPU=1 makes overlap impossible by policy")
 	}
 	root := t.TempDir()
 	for _, name := range []string{"a", "b"} {
@@ -129,7 +130,7 @@ func TestSweepCompletesBaselineBeforeStartingFixtures(t *testing.T) {
 
 func TestSweepReportsErrorsInSortedFixtureOrder(t *testing.T) {
 	if runtime.NumCPU() < 2 {
-		t.Skip("NumCPU=1 makes reverse completion impossible by policy")
+		capability.Capability(t, capability.CPU, "NumCPU=1 makes reverse completion impossible by policy")
 	}
 	root := t.TempDir()
 	for _, name := range []string{"alpha", "bravo"} {

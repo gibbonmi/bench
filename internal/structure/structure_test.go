@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/git"
 )
 
@@ -375,7 +376,7 @@ func TestAcceptWhitespacePathIsStale(t *testing.T) {
 // non-zero flows through the same count both the report and ViolationCount read.
 func TestAcceptUnreadableIsLoud(t *testing.T) {
 	if os.Geteuid() == 0 {
-		t.Skip("root bypasses file permissions; cannot simulate an unreadable file")
+		capability.Capability(t, capability.Privilege, "root bypasses file permissions; cannot simulate an unreadable file")
 	}
 	root := initRepo(t)
 	write(t, root, "ok.go", lines(10)) // clean tree: no live violation to mask the loud one

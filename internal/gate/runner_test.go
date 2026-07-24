@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -308,7 +309,7 @@ func TestR17PrivateFaultBridge(t *testing.T) {
 		"directory-sync": true, "directory-close": true, "post-run-subject-rebuild": true,
 	}
 	if op == "" {
-		t.Skip("private FT78 bridge")
+		capability.Environment(t, "private FT78 bridge")
 	}
 	if !valid[op] {
 		t.Fatalf("unknown R17 fault %q", op)

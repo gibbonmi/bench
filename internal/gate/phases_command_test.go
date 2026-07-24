@@ -16,6 +16,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -226,7 +227,7 @@ func TestShellcheckPhaseExpandsHookAndLibShellFiles(t *testing.T) {
 // argv typo that drops any of them silently un-lints it and fails here, not in review.
 func TestShellcheckPhaseLintsNamedEnforcementShell(t *testing.T) {
 	if _, err := exec.LookPath("shellcheck"); err != nil {
-		t.Skip("shellcheck not installed")
+		capability.Capability(t, capability.Tool, "shellcheck not installed")
 	}
 	kit := t.TempDir()
 	const clean = "#!/usr/bin/env bash\ntrue\n"

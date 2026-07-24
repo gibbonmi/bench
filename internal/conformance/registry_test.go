@@ -145,6 +145,7 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"bounds-duplicate-owner":                 conformanceFixture(".bench/gate.sh"),
 	"marker-wait-literal-deadline":           conformanceFixture(".bench/gate.sh"),
 	"unrouted-subcommand":                    conformanceFixture(".bench/gate.sh"),
+	"reintroduced-bare-skip":                 conformanceFixture(".bench/gate.sh"),
 	"offline-slice1-operation-omitted":       conformanceFixture(".bench/gate.sh"),
 
 	"doctor-foreign-clobbered":             behaviorFixture(),

@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
 )
 
@@ -128,7 +129,7 @@ func TestAuthoritativeNativeProofBehaviorCanary(t *testing.T) {
 	root := contract.SubjectRoot(t)
 	marker := filepath.Join(root, "internal", "releaseevidence", "native_canary_test.go")
 	if _, err := os.Stat(marker); os.IsNotExist(err) {
-		t.Skip("authoritative native-proof canary fixture is not materialized")
+		capability.Environment(t, "authoritative native-proof canary fixture is not materialized")
 	}
 	command := exec.Command("go", "test", "-count=1", "-tags=bench_canary_native_proof", "-run", "^TestNativeProofAuthorizationCanary$", "./internal/releaseevidence")
 	command.Dir = root

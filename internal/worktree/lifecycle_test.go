@@ -3,6 +3,7 @@ package worktree
 import (
 	"fmt"
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/intent"
 	"os"
 	"os/exec"
@@ -117,7 +118,7 @@ func TestReleaseOwnerRestoresCleanAndUnleases(t *testing.T) {
 
 func TestReleaseRespectsLiveForeignLease(t *testing.T) {
 	if os.Getpid() == 1 {
-		t.Skip("running as pid 1")
+		capability.Capability(t, capability.PID, "running as pid 1")
 	}
 	dir, lease := leasedRepo(t, "1 2026-07-05T00:00:00Z\n")
 	dirty(t, dir)
@@ -171,7 +172,7 @@ func deadPidLine(t *testing.T) string {
 	}
 	pid := cmd.Process.Pid
 	if pidAlive(pid) {
-		t.Skip("reaped pid reused before use")
+		capability.Capability(t, capability.PID, "reaped pid reused before use")
 	}
 	return fmt.Sprintf("%d 2026-07-05T00:00:00Z\n", pid)
 }
@@ -187,7 +188,7 @@ func deadPidLine(t *testing.T) string {
 
 func TestClaimSecondReclaimerConcedes(t *testing.T) {
 	if os.Getpid() == 1 {
-		t.Skip("running as pid 1")
+		capability.Capability(t, capability.PID, "running as pid 1")
 	}
 	lease := filepath.Join(t.TempDir(), "bench-lease")
 	if err := os.WriteFile(lease, []byte(deadPidLine(t)), 0o644); err != nil {
@@ -240,7 +241,7 @@ func TestClaimSecondReclaimerConcedes(t *testing.T) {
 
 func TestClaimStealDuringTakeoverKeepsFirstWriter(t *testing.T) {
 	if os.Getpid() == 1 {
-		t.Skip("running as pid 1")
+		capability.Capability(t, capability.PID, "running as pid 1")
 	}
 	lease := filepath.Join(t.TempDir(), "bench-lease")
 	if err := os.WriteFile(lease, []byte(deadPidLine(t)), 0o644); err != nil {

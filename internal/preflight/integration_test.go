@@ -1,6 +1,7 @@
 package preflight
 
 import (
+	"github.com/gibbonmi/bench/internal/capability"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -190,7 +191,7 @@ func TestBuiltCommandReleasePolicyFailuresAreRed(t *testing.T) {
 
 func TestBuiltCommandCancellationPreservesPriorCompleteEvidence(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skip("SIGINT process control is POSIX")
+		capability.Capability(t, capability.Signal, "SIGINT process control is POSIX")
 	}
 	binary := filepath.Join(t.TempDir(), "bench")
 	build := exec.Command("bash", filepath.Join(projectRoot(t), "scripts", "go-build.sh"), projectRoot(t), binary)

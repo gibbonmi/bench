@@ -1,12 +1,14 @@
 package surface
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
 )
 
@@ -45,7 +47,7 @@ func requireExecutables(t *testing.T, names ...string) {
 	t.Helper()
 	for _, name := range names {
 		if _, err := exec.LookPath(name); err != nil {
-			t.Skipf("git-install probe needs %s on PATH: %v", name, err)
+			capability.Capability(t, capability.Tool, fmt.Sprintf("git-install probe needs %s on PATH: %v", name, err))
 		}
 	}
 }

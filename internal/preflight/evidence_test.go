@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gibbonmi/bench/internal/capability"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -92,7 +93,7 @@ func TestEvidencePromotionKeepsPriorVerdictAtCanonicalPathOnSwapFailure(t *testi
 
 func TestEvidenceSIGKILLAtPromotionBoundaryKeepsOldOrNew(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skip("SIGKILL is POSIX")
+		capability.Capability(t, capability.Signal, "SIGKILL is POSIX")
 	}
 	if point := os.Getenv("BENCH_TEST_PROMOTION_KILL"); point != "" {
 		root := os.Getenv("BENCH_TEST_PROMOTION_ROOT")
@@ -168,7 +169,7 @@ func TestEvidenceRejectsHostileCanonicalTargets(t *testing.T) {
 	for _, kind := range []string{"file", "fifo"} {
 		t.Run(kind, func(t *testing.T) {
 			if kind == "fifo" && runtime.GOOS == "windows" {
-				t.Skip("no FIFO")
+				capability.Capability(t, capability.Fifo, "no FIFO")
 			}
 			root := t.TempDir()
 			if err := os.MkdirAll(filepath.Join(root, "dist"), 0o755); err != nil {
@@ -234,7 +235,7 @@ func TestInitializationFailurePreservesPriorCompleteEvidence(t *testing.T) {
 
 func TestVulnerabilityCancellationKillsDescendantProcessGroup(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skip("process groups are POSIX")
+		capability.Capability(t, capability.Signal, "process groups are POSIX")
 	}
 	root := preflightRepo(t)
 	pidFile := filepath.Join(root, "child.pid")

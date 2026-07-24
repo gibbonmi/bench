@@ -2,6 +2,7 @@ package guards
 
 import (
 	"context"
+	"github.com/gibbonmi/bench/internal/capability"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -140,7 +141,7 @@ func TestGuardRowRejectsFIFOWithoutOpening(t *testing.T) {
 		return
 	}
 	if runtime.GOOS == "windows" {
-		t.Skip("named pipes use the Unix mkfifo fixture")
+		capability.Capability(t, capability.Fifo, "named pipes use the Unix mkfifo fixture")
 	}
 	fifo := filepath.Join(t.TempDir(), "special.sh")
 	if out, err := exec.Command("mkfifo", fifo).CombinedOutput(); err != nil {

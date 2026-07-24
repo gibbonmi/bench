@@ -2,6 +2,7 @@ package worktree
 
 import (
 	"errors"
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/intent"
 	"io"
 	"os"
@@ -36,7 +37,7 @@ func TestCksumMatchesGolden(t *testing.T) {
 
 func TestCksumMatchesSystemTool(t *testing.T) {
 	if _, err := exec.LookPath("cksum"); err != nil {
-		t.Skip("cksum not available")
+		capability.Capability(t, capability.Tool, "cksum not available")
 	}
 	for _, g := range cksumGolden {
 		// printf '%s\n' "<root>" | cksum

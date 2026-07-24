@@ -2,6 +2,7 @@ package axi
 
 import (
 	"fmt"
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
 	"os"
 	"path/filepath"
@@ -165,7 +166,7 @@ func testAXIGuardsStaticNonExecution(t *testing.T) {
 func testAXIBlockDangerousGitLinkedWorktreeClassification(t *testing.T) {
 	hook := filepath.Join(contract.SubjectRoot(t), ".bench", "hooks", "block-dangerous-git.sh")
 	if _, err := os.Stat(hook); err != nil {
-		t.Skipf("block-dangerous-git hook unavailable: %v", err)
+		capability.Environment(t, fmt.Sprintf("block-dangerous-git hook unavailable: %v", err))
 	}
 	f := contract.NewFixture(t)
 	f.Env["GIT_AUTHOR_NAME"] = "Bench"

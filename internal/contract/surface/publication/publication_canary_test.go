@@ -1,11 +1,13 @@
 package publication
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
 )
 
@@ -22,7 +24,7 @@ func publicationBehaviorCanary(t *testing.T, marker, tag, run string) {
 	t.Helper()
 	root := contract.SubjectRoot(t)
 	if _, err := os.Stat(filepath.Join(root, "internal", "publication", marker)); os.IsNotExist(err) {
-		t.Skipf("%s canary fixture is not materialized", tag)
+		capability.Environment(t, fmt.Sprintf("%s canary fixture is not materialized", tag))
 	}
 	command := exec.Command("go", "test", "-count=1", "-tags="+tag, "-run", run, "./internal/publication")
 	command.Dir = root

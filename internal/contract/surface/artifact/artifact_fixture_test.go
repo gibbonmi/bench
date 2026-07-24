@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
@@ -209,7 +210,7 @@ func committedHostileArtifactSource(t *testing.T, root string, options ...artifa
 		}
 	}
 	if len(selected) == 0 {
-		t.Skipf("artifact contract tests require release plan target for host %s/%s", host[0], host[1])
+		capability.Environment(t, fmt.Sprintf("artifact contract tests require release plan target for host %s/%s", host[0], host[1]))
 	}
 	if len(options) != 0 && options[0] == includeFirstNonHostArtifactTarget {
 		for _, target := range targets {
@@ -219,7 +220,7 @@ func committedHostileArtifactSource(t *testing.T, root string, options ...artifa
 			}
 		}
 		if len(selected) != 2 {
-			t.Skipf("artifact matrix breadth requires a non-host release plan target alongside host %s/%s", host[0], host[1])
+			capability.Environment(t, fmt.Sprintf("artifact matrix breadth requires a non-host release plan target alongside host %s/%s", host[0], host[1]))
 		}
 	}
 	plan["targets"], err = json.Marshal(selected)

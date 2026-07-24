@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/testrepo"
 )
@@ -26,7 +27,7 @@ func TestGoBuildIgnoresCheckoutTopology(t *testing.T) {
 	// or modify, leaving a deleted source file resurrected in the clone and drifting the
 	// binary. --delete makes the clone tree a true mirror; .git and dist stay untouched.
 	if _, err := exec.LookPath("rsync"); err != nil {
-		t.Skipf("reproducibility probe needs rsync on PATH: %v", err)
+		capability.Capability(t, capability.Tool, fmt.Sprintf("reproducibility probe needs rsync on PATH: %v", err))
 	}
 	overlay := exec.Command("rsync", "-a", "--delete", "--exclude=/.git", "--exclude=/dist", root+"/", clone)
 	if output, err := overlay.CombinedOutput(); err != nil {

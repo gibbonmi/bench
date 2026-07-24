@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -160,7 +161,7 @@ func TestCommand(t *testing.T) {
 
 	t.Run("present-but-unreadable file surfaces the read error, not not-found", func(t *testing.T) {
 		if os.Geteuid() == 0 {
-			t.Skip("root reads 0000-mode files; permission case unobservable")
+			capability.Capability(t, capability.Privilege, "root reads 0000-mode files; permission case unobservable")
 		}
 		t.Chdir(t.TempDir())
 		mustWrite(t, "sub/locked.md", mapped("| 1 | b | s | r | w |\n"))

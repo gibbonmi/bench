@@ -43,6 +43,7 @@ func RunConformance(root, kitRoot string) []string {
 	diags = append(diags, checkBoundsPolicy(root)...)
 	diags = append(diags, checkMarkerWaitDeadlines(root)...)
 	diags = append(diags, checkSubcommandRouting(root)...)
+	diags = append(diags, checkSkipOwnership(root)...)
 	return diags
 }
 

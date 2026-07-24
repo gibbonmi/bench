@@ -1,11 +1,13 @@
 package axi
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
 )
 
@@ -139,7 +141,7 @@ func testAXIOutlineSymlinkSkipped(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("real.go", "package pkg\n\ntype Bar struct{}\n")
 	if err := os.Symlink("real.go", filepath.Join(f.Root, "link.go")); err != nil {
-		t.Skipf("symlinks unavailable on this filesystem: %v", err)
+		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
 	}
 	stageAll(f)
 
