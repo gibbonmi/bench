@@ -78,13 +78,14 @@ concurrency — detect the machine's cores and scale so nested phases cannot
 oversubscribe the box. That cap is also the load lever behind the retired
 gate-trustworthiness work: the marker stalls and cleanup flakes that arm fixed
 were all contention symptoms, so capping concurrency protects the verdict as
-well as the clock. Diff-scoped gating is unsound here (contract/canary are behavior
+well as the clock. The closed `decisions/gate-concurrency.md` map owns that
+cut — measured `k = 2`, budget from `runtime.GOMAXPROCS(0)`, no Bench-specific
+knob — and the arm is spec'd in `specs/gate-concurrency-budget.md`.
+Diff-scoped gating is unsound here (contract/canary are behavior
 contracts with no file→test map). The remaining arms — a shared hermetic
 build cache, caching keyed on the pinned gate subject, or scoped verdicts —
 must not weaken the oracle: green must keep meaning the same thing, and any
-scoped verdict must be explicit evidence, never a silent skip. Starts as a
-grill (`/bench-shape-idea`) because the cut line between speed and oracle
-authority is a reviewer decision.
+scoped verdict must be explicit evidence, never a silent skip.
 
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.** Make
 every documented CLI example executable; parse and validate real YAML
@@ -519,12 +520,10 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT91's first arm, core-count-aware gate/phase
-   concurrency. With FT87 shipped and the verdict-trustworthiness arms landed,
-   gate contention is the last unaddressed cost on every landing — and the root
-   cause behind the load-flake rows drained this pass (FT115, FT116); the grill
-   settles the cut line between speed and oracle authority before anything is
-   built.
+1. `/bench-implement-spec` — FT91's first arm, `specs/gate-concurrency-budget.md`.
+   The map is closed and the spec is staged, so the remaining work is the build.
+   Gate contention is the last unaddressed cost on every landing, and the root
+   cause behind the load-flake rows drained this pass (FT115, FT116).
 2. `/bench-write-spec` — FT86, fail-closed control records and single-sourced
    repository facts. The highest bank-track row still open.
 3. `/bench-write-spec` — FT71, versioned local shift evidence. The other HIGH
