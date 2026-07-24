@@ -20,19 +20,6 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT87 (MEDIUM) — command-wide parser and security-evidence capability.**
-Slices 1 and 2 shipped: the bounds core, explicit pinned bounded repair, one
-Bench identity with complete package metadata, and the FT83
-offline/network-control evidence record. What remains is slice 3: centralize
-argument grammar, anchor coverage at the repository root, support leading-dash
-and directory-scoped commit paths, treat help as success, make capability
-skips explicit evidence, and decouple security-test deadlines from the
-subprocesses they bound. The closed FT87 decision map (tickets #7 and #8) owns
-the cut; the slice is spec'd in
-`specs/cli-grammar-and-capability-evidence.md`.
-
-Sources: `RR:C-09`, `RR:C-11`, `RR:C-12`.
-
 **FT86 (HIGH on the bank track; MEDIUM otherwise) — fail-closed control records
 and single-sourced repository facts.** Coverage validation requires a map or
 explicit historical marker and validates exact positive story membership and
@@ -162,6 +149,30 @@ budget spent without naming the cause with evidence reroutes to
 `craft-synthesis` discipline. Background:
 `docs/reporesident-distillation.md` §3.
 
+**FT116 (MEDIUM) — data races in `guards.Scan` the gate cannot see.** Running
+`internal/guards` under `-race` fails three tests on `main`:
+`TestScanTimeoutPreservesPartialRowsAndHonestCounts` and
+`TestScanEnumerationTimeoutUsesUnknownCounts` hit genuine data races inside
+`guards.Scan`, and `TestGuardRowRejectsFIFOWithoutOpening` carries a 750ms
+subprocess deadline too tight for a race-instrumented binary. The gate runs
+`go test` without `-race`, so it never observes them; the races are
+pre-existing, found while attributing a delegate's red during the FT87 slice 3
+build. Two halves: fix the `guards.Scan` races, and decide whether the gate
+should run `-race` on a subset so this class stays caught — the second half is a
+gate-authoring reviewer decision (`craft-gate`).
+
+**FT117 (MEDIUM) — FT87 parser-surface follow-ups.** Two leaves left flat after
+the slice 3 grammar centralization. The subcommand-routing registry's
+`whyNested` exemption reason is free text nothing grades, and it currently
+launders three hand-rolled parsers into "nested router": `internal/spec`'s
+`specArg` (also missing the `--` rule story 5 promised), `worktree list`, and
+`internal/adopt/doctor.go`. Route the two real leaves through `usage.Parse`,
+correct the registry reasons, and consider grading the exemption reason itself;
+`cmd/bench/main.go`'s worktree dispatch stays genuinely exempt. Separately,
+`bench commit`'s usage-error line nests a second full usage line inside its
+parenthetical when the fault comes from `usage.Parse` (e.g. an empty
+positional) — one flat line naming the fault reads better.
+
 **FT92 (LOW) — attributed subject drift and consumer-shipped input hygiene.**
 "gate subject changed during execution" names no component; the drift message
 should say what moved (the tree hash versus which declared manifest path) so
@@ -228,8 +239,17 @@ fixed, and the build reached stage 1b on that false premise before a contract
 delegate caught it. Require every "today the code does X" claim in a spec's
 Problem section to be checked against the tree at spec time, with the check
 named in the spec — the same standard the coverage map already applies to its
-red signals. Next action is the kit edit to `/bench-write-spec` and
-`craft-spec`, built under the `craft-synthesis` discipline.
+red signals. The same gap has a second face in the Solution and Implementation
+sections: `specs/cli-grammar-and-capability-evidence.md` asserted a structured
+line "survives non-verbose `go test`", which is false, and stories 10 and 11
+were built on it before an independent done-claim probe caught it. Extend the
+rule to those claims too — any spec sentence asserting observable third-party
+tool behavior a story's seam depends on carries either a cited command whose
+output was run or an explicit uncertainty flag, since `/bench-write-spec`
+step 9's falsification pass only fires on flagged uncertainty and a claim that
+reads as obvious fact slips through. Next action is the kit edit to
+`/bench-write-spec` and `craft-spec`, built under the `craft-synthesis`
+discipline.
 
 **FT100 (LOW) — prose-weight pass on the kit's guidance surface.** Apply the
 gate's "prove it bites" standard to prose: audit the craft-skill library and
@@ -377,6 +397,60 @@ conditions that exposed it before spending another cycle on a stand-in. Kit
 edit under the `craft-synthesis` discipline. Source: the 2026-07-23 learnings
 entry, verdicted in this drain.
 
+**FT113 (LOW) — `session-handoff.md` is capture, not a gate-staling change.** A
+handoff rewrite is doc-only capture, yet it currently marks the gate
+plain-stale, so a phase close costs the next commit a full 10–15min re-run.
+`ROADMAP.md` and `IDEAS.md` are already on `status.captureOnlyStalePaths`; add
+`session-handoff.md`. Observed 2026-07-23 right after the FT109 close.
+
+**FT114 (LOW) — mutation-probe revert versus `block-dangerous-git`.**
+Mutation-testing — deliberately weakening an implementation to prove a check
+bites — always needs a revert, but `block-dangerous-git` blocks
+`git checkout <path>`. Copy-aside works but is a papercut on a first-class
+activity in this repo (cf. `tests/canary/`). Decide whether the guard should
+recognise a scoped single-path revert, or whether the kit should offer a
+mutation-probe helper that reverts safely.
+
+**FT115 (LOW) — load-robust test and phase deadlines derived from bounds.** Two
+literal deadlines flake under concurrent gate load.
+`internal/gate/runner_test.go`'s `waitForPIDFile` hardcodes a 2s deadline for a
+bash subprocess to write `.git/child-pid` — it flaked the FT87 slice 3 landing
+gate (`TestFT78Story4ProofLedger/R11`), then passed 3/3 alone; this is the exact
+defect class story 13 fixed for `WaitForTwoLegMarkers` (an outer test deadline
+as a numeric literal rather than derived from the bound it must outlast). Extend
+`bounds.TestDeadline` and the marker-wait conformance check to cover
+`waitForPIDFile` and sibling literal deadlines. Separately, the gate's
+conformance phase runs `go test` with no `-timeout`, inheriting the 10m default;
+a 225–375s suite under a parallel worktree's load hit 600.013s and the gate went
+red on a timeout that read like a failure. Give long phases explicit timeout
+headroom, or have the runner distinguish a timeout verdict from an assertion
+failure in its phase summary.
+
+**FT118 (LOW) — a delegate charge names the gate layer that owns the artifact
+class.** A write-delegate re-indented a workflow `run:` line by two spaces (an
+`env:` block added above it), breaking two canary fixtures anchored on that
+line's exact bytes; nothing in the delegate's charged verification list — unit,
+conformance, contract — could see it, and the charge had said not to run
+`bench gate`. In `craft-delegate`: when a charge authorizes edits to an artifact
+class a specific gate layer owns (workflows and `.bench/` content → canary, gate
+output shape → canary, skills and commands → conformance), the charge must name
+that layer's command in the verification list. Pair it with the converse for the
+delegate: the list is a floor, not a ceiling — if you change an artifact class
+the list does not grade, say so rather than assume it is covered. Kit edit under
+the `craft-synthesis` discipline.
+
+**FT119 (LOW) — plain-`git` commit safety during a squash-merge landing.** The
+doc-only plain-`git` commit convention is safe only when the index is otherwise
+empty. After `git merge --squash` the index already holds the whole merged
+slice, so a bare `git commit` of a just-added capture file swept 649 insertions
+across eleven files into a commit labelled "capture: …", landed with no gate
+grading it — `bench commit`'s attribution check, which would have caught it, was
+bypassed by plain `git`. Note in the phase guidance that the plain-`git`
+convention holds only with an empty index, and that during a squash-merge
+landing every plain-`git` commit must use the explicit pathspec form
+(`git commit -m "…" -- <path>`). Kit edit under the `craft-synthesis`
+discipline.
+
 ## Release and bank reassessment gate
 
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
@@ -445,13 +519,14 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT87 slice 3, command-wide parser and
-   security-evidence capability. The gate-trustworthiness row closed and
-   retired, so this is the highest row open, and its decision map (tickets #7
-   and #8) is already closed.
-2. `/bench-shape-idea` — FT91's first arm, core-count-aware gate/phase
-   concurrency. With the verdict-trustworthiness arms landed, contention is
-   the last unaddressed cost on every landing; the grill settles the cut line
-   between speed and oracle authority before anything is built.
-3. `/bench-write-spec` — FT86, fail-closed control records and single-sourced
+1. `/bench-shape-idea` — FT91's first arm, core-count-aware gate/phase
+   concurrency. With FT87 shipped and the verdict-trustworthiness arms landed,
+   gate contention is the last unaddressed cost on every landing — and the root
+   cause behind the load-flake rows drained this pass (FT115, FT116); the grill
+   settles the cut line between speed and oracle authority before anything is
+   built.
+2. `/bench-write-spec` — FT86, fail-closed control records and single-sourced
    repository facts. The highest bank-track row still open.
+3. `/bench-write-spec` — FT71, versioned local shift evidence. The other HIGH
+   bank-track row; the repository-controlled bank evidence requirement makes it
+   active.
