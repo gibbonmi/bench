@@ -3,10 +3,19 @@
 Diff reviewed: `9732ebe..fde0b86` on `main` (FT87 slice 3, 78 files, +2792/−278).
 Three axes, run as parallel read-only delegates.
 
-**Round 1 fixes landed.** The four hard Standards violations, the empty-string
-commit path, and their cross-axis duplicates are closed — the `help`-in-positional
-regression, the three duplicated usage literals, the comment-satisfiable routing
-check, the empty positional resolving to cwd, and the `t.SkipNow()` guard gap.
+**Round 1 fixes landed** (`892eea0`). The four hard Standards violations, the
+empty-string commit path, and their cross-axis duplicates are closed — the
+`help`-in-positional regression, the three duplicated usage literals, the
+comment-satisfiable routing check, the empty positional resolving to cwd, and the
+`t.SkipNow()` guard gap.
+
+**Round 2 amended the spec.** The skip-evidence transport now describes the
+`BENCH_SKIP_LOG` file side channel rather than the stdout tee that was never built,
+repeated-flag rejection is documented as the eighth grammar rule (kept, not reverted
+— no flag in this CLI accumulates a list, so last-one-wins only hides a mistyped
+invocation), and the two rules round 1 introduced (sole-argument bare `help`, empty
+positional) are stated with coverage rows.
+
 What remains below is unfixed.
 
 ## Standards
@@ -46,9 +55,9 @@ de-enforces strict mode on an unreadable log.
 
 ## Spec
 
-**5 findings remaining.** 27 coverage rows: 26 covered with a real red signal, 1
-weak, 0 uncovered. Worst: six adopt subcommands exempted from the routing registry
-with a factually wrong reason.
+**3 findings remaining.** 30 coverage rows (three added by the amendment): 29 covered
+with a real red signal, 1 weak, 0 uncovered. Worst: six adopt subcommands exempted
+from the routing registry with a factually wrong reason.
 
 - `internal/conformance/subcommand_routing_test.go:78-89` — `setup`, `link`, `init`,
   `doctor`, `unlink`, `upgrade` are exempted under `whyNested` ("dispatches a
@@ -61,18 +70,6 @@ with a factually wrong reason.
   -- -x.md` is still rejected as an unknown flag. That is exactly the
   inexpressibility story 5 exists to close, on a subcommand whose sole argument is a
   path.
-- `specs/cli-grammar-and-capability-evidence.md:220`, `:228` — the spec states the
-  skip line is "written to stdout before the skip" and that the gate "tees that
-  stream"; the build uses a `BENCH_SKIP_LOG` file side channel
-  (`internal/capability/capability.go:90`, `internal/gate/capability_skips.go:3-11`).
-  The reversal is correct (`go test` without `-v` discards package stdout) and is
-  captured in `.bench/learnings.md:10`, but the staged spec now misdescribes what
-  shipped. **Amend before the implemented flip.**
-- `internal/usage/parse.go:80-82` — repeated-flag rejection is scope creep: not among
-  the seven rules in "Grammar semantics, in full", it narrows previously-accepted
-  invocations (`bench diff --commit a --commit b`), and is pinned by new AXI rows
-  (`internal/contract/axi/axi_grammar_test.go:43-50`) no coverage row asked for.
-  **Reviewer decision:** keep and amend the spec, or revert.
 - Row 20 (story 10, concurrency) is weak by reinterpretation: the named wrong
   implementation ("an unguarded collector under `-race`") cannot exist under the file
   transport. `internal/gate/capability_skips_test.go:92` substitutes six bash phases

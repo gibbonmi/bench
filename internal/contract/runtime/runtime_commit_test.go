@@ -63,6 +63,7 @@ func TestRuntimeCommitContracts(t *testing.T) {
 	contract.RunParallel(t, "empty commit refused", testCommitEmptyRefused)
 	contract.RunParallel(t, "usage errors exit 2", testCommitUsageExitTwo)
 	contract.RunParallel(t, "-- makes a leading-dash path expressible", testCommitDoubleDashPath)
+	contract.RunParallel(t, "empty positional is usage, not a path", testCommitEmptyPositionalIsUsage)
 }
 
 // testCommitDoubleDashPath drives the grammar's `--` rule end to end: a file whose name
@@ -370,6 +371,34 @@ func testCommitEmptyRefused(t *testing.T) {
 	if headSha(f) != before {
 		t.Fatal("HEAD advanced on an empty commit")
 	}
+}
+
+// testCommitEmptyPositionalIsUsage pins the empty-positional guard from a subdirectory
+// cwd, the shape that actually triggered the bug: an unset shell variable inside quotes
+// expands to "", and a subcommand resolving positionals against the filesystem widens
+// silently to the cwd instead of naming nothing. Two changed children under the cwd, not
+// one, so a fix that merely rejects a bare "" positional but still lets it resolve to a
+// directory would still be caught landing a commit nobody named.
+func testCommitEmptyPositionalIsUsage(t *testing.T) {
+	f := commitFixture(t)
+	f.WriteFile("sub/a.txt", "a\n")
+	f.WriteFile("sub/b.txt", "b\n")
+	before := headSha(f)
+
+	p := contract.RunAt(t, f, filepath.Join(f.Root, "sub"), nil, "bash", benchPath(t), "commit", "-m", "msg", "")
+
+	// Checked ahead of the exit code and the usage line: the historical bug was a
+	// commit landing files nobody named, not a wrong exit code, so this is the
+	// assertion the fix actually has to satisfy.
+	if headSha(f) != before {
+		t.Fatal("HEAD advanced on an empty positional")
+	}
+	status := strings.TrimSpace(f.Git("status", "--porcelain", "-uall").Stdout)
+	if status != "?? sub/a.txt\n?? sub/b.txt" && status != "?? sub/b.txt\n?? sub/a.txt" {
+		t.Fatalf("index was touched by the rejected empty positional: status = %q", status)
+	}
+	p.RequireExit(2)
+	p.RequireContains(p.Stderr, `unknown argument: ""`)
 }
 
 func testCommitUsageExitTwo(t *testing.T) {

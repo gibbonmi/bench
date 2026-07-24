@@ -61,10 +61,11 @@ directory authorizes its changed children.
 **Capability skips become evidence.** One helper package replaces every bare
 `t.Skip` in the repository. A capability skip emits a structured, recognizable line
 naming its class and reason; an environment skip (absent subject binary, unset
-conformance root) emits the same shape under a distinct kind. The line is written to
-stdout before the skip, so it survives non-verbose `go test`. The gate scans phase
-output and aggregates the lines into explicit `capability-skips` rows in its own
-output. On dev machines those rows are visible and non-fatal. Under an explicit
+conformance root) emits the same shape under a distinct kind. The line is appended to
+a skip log named by an environment variable, not written to stdout: non-verbose
+`go test` discards a passing package's stdout, so a stdout line would be invisible on
+exactly the runs that matter. The gate reads that log after its phases join and
+aggregates the lines into explicit `capability-skips` rows in its own output. On dev machines those rows are visible and non-fatal. Under an explicit
 strict flag — set by the release and native workflows — a nonzero capability-skip
 count is red.
 
@@ -184,11 +185,19 @@ code. Rendering stays in `internal/toon` (`Usage`, `MissingArg`), which remains 
 source of the usage-line shape. No third-party CLI framework; the map records that
 rejection.
 
-**Grammar semantics, in full.** `help`, `--help`, and `-h` anywhere before `--` print
-the declared help text and exit 0. `--` ends flag parsing; every later argument is a
-positional, including one that begins with a dash. An unrecognized flag is
-`toon.Usage` at exit 2. A flag requiring a value with no value following is
-`toon.MissingArg` at exit 2. More positionals than the declared arity is
+**Grammar semantics, in full.** `--help` and `-h` anywhere before `--` print the
+declared help text and exit 0; bare `help` does so only as the sole argument, because
+a variadic grammar's free text or path list can legitimately contain the word and
+recognizing it anywhere would print usage while silently discarding the rest of the
+invocation. `--` ends flag parsing; every later argument is a positional, including
+one that begins with a dash. An unrecognized flag is `toon.Usage` at exit 2. A flag
+requiring a value with no value following is `toon.MissingArg` at exit 2. A declared
+flag given twice is `toon.Usage` naming that flag at exit 2, not last-one-wins: no
+flag in this CLI accumulates a list, so the only thing silently keeping the later
+value buys is hiding a mistyped invocation whose two spellings disagree. An empty
+positional is `toon.Usage` at exit 2 — it names nothing, it is what an unset shell
+variable expands to inside quotes, and a subcommand that resolves it against the
+filesystem widens to the cwd. More positionals than the declared arity is
 `toon.Usage` on the first excess argument at exit 2 — this is the trailing-garbage
 rule. Fewer than the required arity is `toon.MissingArg` at exit 2. A bare `-` is an
 ordinary positional, not a flag and not a separator.
@@ -225,11 +234,15 @@ appear in the repository outside the helper package itself. This is a fail-close
 allowlist of exactly one owner, which is what makes the sweep provably complete rather
 than best-effort.
 
-**The gate aggregates from phase output.** The phase runner already wraps each phase's
-stdout in a per-phase writer. A collector tees that stream, recognizes the skip lines,
-and tallies them by kind and class. Phases run concurrently, so the collector is
-shared and mutex-guarded like the existing write path. After the phases join, the gate
-emits `capability-skips` rows alongside the per-phase verdicts. Zero skips still emits
+**The gate aggregates from a skip log.** The gate names a log file in the environment
+it hands its phases; the skip helper appends one line per skip to it, and after the
+phases join the gate reads the file and tallies the lines by kind and class. The
+transport is a file rather than a tee of phase stdout because `go test` without `-v`
+discards a passing package's stdout, which is where most skips happen. Phases run
+concurrently and each skip is one append under the atomic write size, so the
+concurrency is the filesystem's rather than a shared in-process collector's. The gate
+strips the log variable from the environment it gives an inner gate run, so a canary
+fixture's deliberate skips cannot contaminate the outer tally. Zero skips still emits
 a row stating zero — a definitive empty state, not silence, because absent output and
 zero skips must not look alike.
 
@@ -327,6 +340,9 @@ The built binary in a throwaway fixture repo.
 | 1 | `help`, `--help`, `-h` before `--` each return the declared help text at exit 0 | `internal/usage` unit | same table test over the three spellings — red against an implementation that handles only `--help` | Three spellings are enumerated because the tree today disagrees on which are honored; a partial implementation passes a one-spelling test |
 | 1 | A flag requiring a value with nothing after it returns `MissingArg` at exit 2, distinct from an unknown flag's `Usage` | `internal/usage` unit | same table test asserting the rendered line and code — red against an implementation that collapses both into one message | Collapsing the two labels is the cheapest wrong implementation and it still exits 2, so only asserting the rendered line catches it |
 | 1 | A bare `-` is a positional, and `--` appearing twice makes the second one a positional | `internal/usage` unit | same table test — red against an implementation that treats any dash-prefixed token as a flag | These are the two tokens a naive prefix check gets wrong, and both are legal filenames |
+| 1 | Bare `help` is help only as the sole argument: in a variadic grammar `help me remember` returns three positionals, and `help` after another positional stays a positional | `internal/usage` unit | table rows over both placements — red against an implementation that recognizes `help` anywhere before `--` | Recognizing it anywhere exits 0 while discarding the invocation, so the failure is silent data loss rather than a visible error, and only the variadic placement distinguishes the two implementations |
+| 1 | A declared flag given twice returns `Usage` naming that flag, for value and boolean flags alike, and before any value is consumed | `internal/usage` unit | same table test including a repeated value flag with no second value — red against last-one-wins | Last-one-wins still exits 0 on the invocation that meant two different things; asserting the flag is named excludes a generic error, and the missing-second-value row pins that the duplicate check precedes the value read |
+| 1 | An empty positional returns `Usage` at exit 2 rather than being accepted as a path | `internal/usage` unit, then `internal/contract/runtime` | unit row plus a contract run of `bench commit -m msg ""` from a subdirectory — red today, the empty token resolves to the cwd and stages every changed file beneath it | The unit row pins the rule at its single owner; the contract run is what proves no path-taking subcommand re-derives the guard, since the damage is a commit that lands files nobody named |
 | 2 | A subcommand whose entry point parses `args` itself, with no registry entry, is reported by the conformance check | `internal/conformance` | new check plus a canary fixture adding an unregistered subcommand — red against a check that only inspects registered names | A check that reads only its own registry passes vacuously on exactly the case it exists to catch: the newly added subcommand |
 | 3 | `bench maps --count x`, `bench guards --brief x`, `bench dashboard --stdout x`, and `bench structure --since base x` each exit 2 with a usage line naming `x` | `internal/contract/axi` | extend the AXI matrix with these four invocations — red today, all four exit 0 and do the work | Naming all four is the quantifier: they are the complete set of subcommands that ignore trailing garbage today, so a fix applied to one still fails |
 | 3 | The same four invocations without the trailing argument still exit 0 and produce their normal output | `internal/contract/axi` | same matrix — red against an implementation that rejects the legitimate form while tightening arity | Excludes the degenerate fix that makes the new assertion pass by rejecting the flag outright |
