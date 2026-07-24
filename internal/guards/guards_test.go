@@ -2,7 +2,6 @@ package guards
 
 import (
 	"context"
-	"github.com/gibbonmi/bench/internal/capability"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/capability"
 )
 
 func TestCommandAlwaysEmitsCompleteGuardScanMetadata(t *testing.T) {

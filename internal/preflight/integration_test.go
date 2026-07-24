@@ -1,7 +1,6 @@
 package preflight
 
 import (
-	"github.com/gibbonmi/bench/internal/capability"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -10,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/capability"
 )
 
 func TestReleasePreflightScriptBootstrapsBuiltFullAndFocusedCommands(t *testing.T) {

@@ -17,10 +17,9 @@ func TestAXIGrammarContracts(t *testing.T) {
 	contract.RunParallel(t, "AXI repeated-flag contract", testAXIRepeatedFlag)
 }
 
-// routedFlatCases cover the remaining flat subcommands the routing registry records as
-// routed. They are separate from the four the trailing-garbage story enumerates: these
-// already rejected an unknown token, so what routing buys them is a usage line naming the
-// offending token rather than the flag before it, plus help at exit 0 everywhere.
+// routedFlatCases are the flat subcommands the routing registry records as routed,
+// beyond the four the trailing-garbage cases enumerate. Each must produce a usage line
+// naming the offending token, plus help at exit 0.
 var routedFlatCases = []struct {
 	name    string
 	garbage []string // invocation whose last token is excess; empty skips the check

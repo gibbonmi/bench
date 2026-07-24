@@ -16,7 +16,7 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// grammar is the declared argument shape usage.Parse enforces for this subcommand —
+// ideaGrammar is the declared argument shape usage.Parse enforces for this subcommand —
 // arity, flag recognition, `--`, and help all come from there rather than a local switch.
 // The text is variadic, so MaxArgs is unbounded; `--` is what makes idea text that
 // begins with a dash expressible.

@@ -1,10 +1,11 @@
 package conformance
 
 import (
-	"github.com/gibbonmi/bench/internal/capability"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/capability"
 )
 
 func TestRootConformance(t *testing.T) {

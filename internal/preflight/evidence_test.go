@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gibbonmi/bench/internal/capability"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,6 +16,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/capability"
 )
 
 func hostileArchive(t *testing.T, members int, memberSize int64) []byte {

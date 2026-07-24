@@ -2,7 +2,6 @@ package canary
 
 import (
 	"fmt"
-	"github.com/gibbonmi/bench/internal/capability"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -10,6 +9,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/capability"
 )
 
 func TestSweepRunsFixturesConcurrently(t *testing.T) {

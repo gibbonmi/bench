@@ -143,7 +143,11 @@ The oracle for a kit, in layers (all green today). `.bench/gate.sh` is a thin
 exec into the `gate-phases` plumbing subcommand, which runs the layers below as
 four concurrent phases in outer mode (`[phase]`-prefixed output, per-phase
 verdicts, run-all-and-aggregate) and sequentially, unprefixed, sweep-skipped in
-inner mode (`BENCH_CANARY_INNER=1`). An empty or legacy-flat canary run exercises
+inner mode (`BENCH_CANARY_INNER=1`). A sibling knob, `BENCH_REQUIRE_CAPABILITIES=1`,
+turns a nonzero capability-skip count red; absent, or set to anything else, the
+`capability-skips` rows stay informational, because a developer's host legitimately
+lacks capabilities and an unconditional red would make the gate unusable locally.
+Both release workflows wire it on. An empty or legacy-flat canary run exercises
 every non-canary phase; a nested fixture exercises only its owning phase
 (conformance for conformance families, contract for `behavior-owned`). Canary
 EXPECT matching is substring-based against inner-gate output, so the inner
@@ -157,8 +161,11 @@ byte-shape is load-bearing:
    metadata, Claude skill mirroring, shared-rule single-sourcing, stale command
    references, token-diet placement, workflow anchors, line-routing enforcement,
    compiled-core build/vet/test/cross-compile checks, release-workflow structure,
-   static guard-header manifests, the profile's hostile-input checklist anchor, and
-   acceptance-coverage map validation.
+   static guard-header manifests, the profile's hostile-input checklist anchor,
+   acceptance-coverage map validation, no bare `t.Skip`/`t.Skipf`/`t.SkipNow`
+   outside the capability helper package, every subcommand entry point recorded in
+   the routing registry, and no numeric duration literal passed to the marker-wait
+   helper's slow-leg deadline.
 2. **shellcheck** — best-effort, runs only when installed (`-S warning`). Not a hard
    dependency; upgrades the shell lint automatically once present.
 3. **Managed-asset lifecycle behavior** — the gate runs link, relink, and unlink

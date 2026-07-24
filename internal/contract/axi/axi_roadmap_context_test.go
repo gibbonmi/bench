@@ -116,9 +116,8 @@ func testRoadmapContextUsage(t *testing.T) {
 			t.Fatalf("%v wrote stderr", args)
 		}
 	}
-	// Story 4 — help, --help, and -h exit 0 on every Go subcommand — makes help win
-	// wherever it appears before `--`, so `--help --full` is a help request rather than
-	// the misuse the pre-grammar parse reported.
+	// Help wins wherever it appears before `--`, so `--help --full` is a help request
+	// rather than a misuse.
 	helpFirst := f.Bench("roadmap", "--help", "--full")
 	helpFirst.RequireExit(0)
 	helpFirst.RequireContains(helpFirst.Stdout, "usage:")

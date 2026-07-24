@@ -67,9 +67,10 @@ type modelRow struct {
 // failure becomes an unavailable row, and the command exits 0 unless rendering
 // its own structured output fails.
 func Command(args []string) (string, int) {
-	// bench models takes no arguments; any is a misuse the grammar rejects with a usage
-	// line at exit 2. That is distinct from the discovery tolerance below (unreachable
-	// providers → unavailable rows at exit 0), which the no-arg path keeps unchanged.
+	// bench models takes no positional arguments; any is a misuse rejected at exit 2 —
+	// except a help spelling (--help, -h, or bare help), which is honored at exit 0.
+	// That is distinct from the discovery tolerance below (unreachable providers →
+	// unavailable rows at exit 0), which the no-arg path keeps unchanged.
 	if _, line, code := usage.Parse(grammar, args); line != "" {
 		return line + "\n", code
 	}

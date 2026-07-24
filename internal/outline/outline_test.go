@@ -2,13 +2,14 @@ package outline
 
 import (
 	"fmt"
-	"github.com/gibbonmi/bench/internal/capability"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/capability"
 )
 
 func TestCommandBoundsRowsAndFullRetainsMetadata(t *testing.T) {
