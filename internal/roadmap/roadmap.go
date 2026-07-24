@@ -49,7 +49,7 @@ func IdeaCommand(args []string) (string, int) {
 	}
 	text := strings.Join(parsed.Positionals, " ")
 	if strings.TrimSpace(text) == "" {
-		return "usage: bench idea \"<text>\"\n", 2
+		return ideaGrammar.Help + "\n", 2
 	}
 	root, err := git.Root()
 	if err != nil {

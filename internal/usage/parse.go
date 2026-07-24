@@ -33,15 +33,23 @@ type Result struct {
 
 // Parse applies g's grammar to args and returns exactly one of three
 // outcomes: a populated Result with an empty line and code 0 on a successful
-// parse; a help outcome (zero Result, g.Help as the line, code 0) when
-// help, --help, or -h appears before "--"; or a rendered usage error (zero
-// Result, a toon.Usage or toon.MissingArg line, code 2). A caller prints a
-// non-empty line and exits with code verbatim; Result is meaningful only
-// when line == "".
+// parse; a help outcome (zero Result, g.Help as the line, code 0) when --help
+// or -h appears before "--", or when bare help is the sole argument; or a
+// rendered usage error (zero Result, a toon.Usage or toon.MissingArg line,
+// code 2). A caller prints a non-empty line and exits with code verbatim;
+// Result is meaningful only when line == "".
 //
 // Rendering is delegated to toon.Usage and toon.MissingArg throughout, so
 // this package never re-derives the usage-line shape.
 func Parse(g Grammar, args []string) (Result, string, int) {
+	// Bare "help" is a request only alone: a variadic grammar's free text or path
+	// list can legitimately contain the word, and recognizing it anywhere would
+	// print usage and silently discard the rest of the invocation. The
+	// flag-spelled forms below are unambiguous, and "--" already escapes them.
+	if len(args) == 1 && args[0] == "help" {
+		return Result{}, g.Help, 0
+	}
+
 	valueFlags := make(map[string]bool, len(g.Flags))
 	knownFlags := make(map[string]bool, len(g.Flags))
 	for _, f := range g.Flags {
@@ -59,7 +67,7 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 	for i := 0; i < len(args); i++ {
 		a := args[i]
 		if !endedFlags {
-			if a == "help" || a == "--help" || a == "-h" {
+			if a == "--help" || a == "-h" {
 				return Result{}, g.Help, 0
 			}
 			if a == "--" {
@@ -91,6 +99,13 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 				}
 				continue
 			}
+		}
+		// An empty positional names nothing — it is what an unset shell variable
+		// expands to inside quotes — and a subcommand that resolves it against the
+		// filesystem silently widens to the cwd. Rejecting it here gives every
+		// grammar the guard instead of each path-taking subcommand re-deriving it.
+		if a == "" {
+			return Result{}, toon.Usage(g.Cmd, `""`), 2
 		}
 		// Trailing garbage is reported on the first excess argument, not a
 		// generic message, so a mistyped invocation names the token that

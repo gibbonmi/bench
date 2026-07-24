@@ -42,7 +42,9 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		return 0
 	}
 	if usageErr != "" {
-		fmt.Fprintln(stderr, "usage: bench commit -m <msg> [--spec <slug>] <path>... (--spec marks the spec implemented; "+usageErr+")")
+		// Derived from the grammar's own help line rather than restated, so the error
+		// path can never advertise a shape the parser no longer accepts.
+		fmt.Fprintln(stderr, grammar.Help+" (--spec marks the spec implemented; "+usageErr+")")
 		return 2
 	}
 
@@ -158,8 +160,9 @@ var grammar = usage.Grammar{
 	MaxArgs: -1,
 }
 
-// parseArgs routes args through the one argument grammar and applies the two requirements
-// arity alone cannot state: -m is mandatory, and at least one path must be named. help is
+// parseArgs routes args through the one argument grammar and applies the requirements
+// arity alone cannot state: -m is mandatory and non-blank, and at least one path must be
+// named. help is
 // non-empty when the invocation asked for help, which is a success the caller prints;
 // usageErr is non-empty on any misuse.
 func parseArgs(args []string) (msg string, specSlug string, paths []string, help string, usageErr string) {
@@ -173,6 +176,11 @@ func parseArgs(args []string) (msg string, specSlug string, paths []string, help
 	msg, msgSet := parsed.Flags["-m"]
 	if !msgSet {
 		return "", "", nil, "", "-m <msg> is required"
+	}
+	// A blank message reaches `git commit -m ""`, which fails with git's own raw error
+	// after the gate has already run; reporting it here answers like the missing -m.
+	if strings.TrimSpace(msg) == "" {
+		return "", "", nil, "", "-m <msg> must not be empty"
 	}
 	if len(parsed.Positionals) == 0 {
 		return "", "", nil, "", "at least one <path> is required"

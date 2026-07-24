@@ -20,7 +20,7 @@ const skipOwnerDir = "internal/capability"
 // skipMethods are the testing.TB methods that end a test without running it. The check
 // matches any receiver, not the literal `t.`, because a skip is just as invisible through
 // a differently named variable and an owner allowlist that a rename evades is no allowlist.
-var skipMethods = map[string]bool{"Skip": true, "Skipf": true}
+var skipMethods = map[string]bool{"Skip": true, "Skipf": true, "SkipNow": true}
 
 // checkSkipOwnership reports every skip call outside skipOwnerDir. It reads the module's
 // own Go source through the AST rather than by text search, so the forbidden call spelled
@@ -127,6 +127,13 @@ func TestSkipOwnershipBites(t *testing.T) {
 	write("internal/example/example_test.go", "package example\n\nimport \"testing\"\n\nfunc TestX(tb *testing.T) {\n\ttb.Skipf(\"no %s\", \"host support\")\n}\n")
 	if diags := checkSkipOwnership(root); len(diags) != 1 || !strings.Contains(diags[0], "calls tb.Skipf outside") {
 		t.Fatalf("renamed receiver calling Skipf: want one diagnostic, got %v", diags)
+	}
+
+	// SkipNow ends the test with no message at all, which is the most invisible of the
+	// three and so the one the check most needs to reach.
+	write("internal/example/example_test.go", "package example\n\nimport \"testing\"\n\nfunc TestX(t *testing.T) {\n\tt.SkipNow()\n}\n")
+	if diags := checkSkipOwnership(root); len(diags) != 1 || !strings.Contains(diags[0], "calls t.SkipNow outside") {
+		t.Fatalf("bare SkipNow outside the owner: want one diagnostic, got %v", diags)
 	}
 
 	// The forbidden call as data, never as a call: this is the state that would make the

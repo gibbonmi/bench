@@ -97,7 +97,7 @@ func commandsCommand(args []string) (string, int) {
 		return line + "\n", code
 	}
 	if _, brief := parsed.Flags["--brief"]; !brief {
-		return "usage: bench commands --brief\n", 2
+		return commandsGrammar.Help + "\n", 2
 	}
 	return "version\ncommands --brief\nstatus\n", 0
 }

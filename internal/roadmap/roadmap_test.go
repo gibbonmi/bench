@@ -62,15 +62,25 @@ func TestIdeaCreatesDatedLine(t *testing.T) {
 }
 
 // TestIdeaEmptyExitsTwo covers empty and whitespace-only text: exit 2, no file created.
+// An empty argument is rejected by the shared grammar and names the empty token, so it
+// renders that line rather than the blank-text one the other two reach.
 func TestIdeaEmptyExitsTwo(t *testing.T) {
-	for _, args := range [][]string{{}, {""}, {"   ", "\t"}} {
+	for _, tc := range []struct {
+		args []string
+		want string
+	}{
+		{nil, "usage: bench idea \"<text>\"\n"},
+		{[]string{""}, "usage: bench idea (unknown argument: \"\")\n"},
+		{[]string{"   ", "\t"}, "usage: bench idea \"<text>\"\n"},
+	} {
+		args := tc.args
 		root := newRepo(t)
 		out, code := IdeaCommand(args)
 		if code != 2 {
 			t.Fatalf("args %q: exit got %d, want 2", args, code)
 		}
-		if out != "usage: bench idea \"<text>\"\n" {
-			t.Fatalf("args %q: stdout got %q", args, out)
+		if out != tc.want {
+			t.Fatalf("args %q: stdout got %q, want %q", args, out, tc.want)
 		}
 		if _, err := os.Stat(ideasPath(t, root)); err == nil {
 			t.Fatalf("args %q: IDEAS.md should not have been created", args)

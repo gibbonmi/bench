@@ -20,10 +20,15 @@ const (
 	dispatchFunc = "run"
 )
 
-// grammarHelper is the single owner of arity, flag recognition, `--`, and help. A
-// subcommand recorded as routed must reach it; anything else is hand-rolling a second
-// grammar.
-const grammarHelper = "usage.Parse"
+// grammarPkg and grammarSel name the single owner of arity, flag recognition, `--`, and
+// help. A subcommand recorded as routed must reference it; anything else is hand-rolling a
+// second grammar. grammarHelper is the spelling the diagnostics use, derived from the two
+// halves the check matches on so the message can never name something else.
+const (
+	grammarPkg    = "usage"
+	grammarSel    = "Parse"
+	grammarHelper = grammarPkg + "." + grammarSel
+)
 
 // routingEntry records how one dispatch name answers for its argument grammar: Pkg names
 // the directory whose entry point must reach the helper, or Exempt states why this name is
@@ -123,7 +128,7 @@ func checkSubcommandRouting(root string) []string {
 		// The routed claim is verified only where the package is present: a canary
 		// fixture materializes the dispatch file without the tree behind it, and a
 		// partial tree must not manufacture violations it cannot answer for.
-		if pkg := filepath.Join(root, filepath.FromSlash(entry.Pkg)); exists(pkg) && !packageReaches(pkg, grammarHelper) {
+		if pkg := filepath.Join(root, filepath.FromSlash(entry.Pkg)); exists(pkg) && !packageReachesGrammar(pkg) {
 			diags = append(diags, fmt.Sprintf("%s is recorded as routing %q through %s but no file there reaches it", entry.Pkg, name, grammarHelper))
 		}
 	}
@@ -212,10 +217,13 @@ func stringLiteral(expr ast.Expr) (string, bool) {
 	return value, true
 }
 
-// packageReaches reports whether any Go source directly in dir mentions needle. The
-// entry point and its grammar declaration live in the same package, so a directory-level
-// read is enough and no import graph has to be resolved.
-func packageReaches(dir, needle string) bool {
+// packageReachesGrammar reports whether any non-test Go source directly in dir carries a
+// real reference to the grammar helper, read through the AST. Every routed package's
+// grammar doc comment names the helper in prose, so a text search would stay green on
+// exactly the state this check exists to catch: the call deleted and the comment left
+// behind. The entry point and its grammar declaration live in the same package, so a
+// directory-level read is enough and no import graph has to be resolved.
+func packageReachesGrammar(dir string) bool {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return false
@@ -225,11 +233,35 @@ func packageReaches(dir, needle string) bool {
 		if entry.IsDir() || filepath.Ext(name) != ".go" || strings.HasSuffix(name, "_test.go") {
 			continue
 		}
-		if strings.Contains(readIfExists(filepath.Join(dir, name)), needle) {
+		if fileReachesGrammar(filepath.Join(dir, name)) {
 			return true
 		}
 	}
 	return false
+}
+
+func fileReachesGrammar(path string) bool {
+	body := readIfExists(path)
+	if body == "" {
+		return false
+	}
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, path, body, 0)
+	if err != nil {
+		return false
+	}
+	found := false
+	ast.Inspect(file, func(node ast.Node) bool {
+		selector, ok := node.(*ast.SelectorExpr)
+		if !ok || selector.Sel.Name != grammarSel {
+			return true
+		}
+		if ident, ok := selector.X.(*ast.Ident); ok && ident.Name == grammarPkg {
+			found = true
+		}
+		return true
+	})
+	return found
 }
 
 // TestSubcommandRoutingRegistryBites is the recorded bite proof for
@@ -300,5 +332,16 @@ func TestSubcommandRoutingRoutedClaimBites(t *testing.T) {
 	}
 	if !containsDiagnostic(checkSubcommandRouting(root), "but no file there reaches it") {
 		t.Fatalf("package no longer reaching the helper: want a routed-claim diagnostic, got %v", checkSubcommandRouting(root))
+	}
+
+	// The state a textual search cannot see: the call deleted, the doc comment that
+	// names the helper left behind. Every routed package carries such a comment, so a
+	// substring check would pass this exact case vacuously.
+	mentionOnly := "package maps\n\n// The declared argument shape usage.Parse enforces lives here.\nconst helper = \"usage.Parse\"\n"
+	if err := os.WriteFile(filepath.Join(pkg, "maps.go"), []byte(mentionOnly), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if !containsDiagnostic(checkSubcommandRouting(root), "but no file there reaches it") {
+		t.Fatalf("helper named only in a comment and a literal: want a routed-claim diagnostic, got %v", checkSubcommandRouting(root))
 	}
 }

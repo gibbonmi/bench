@@ -36,6 +36,84 @@ func TestParseHelpSpellings(t *testing.T) {
 	}
 }
 
+// variadicGrammar is the unbounded-positional fixture: the shape `bench idea` and
+// `bench commit` take, where free text or a path list can legitimately contain the
+// word "help".
+func variadicGrammar() Grammar {
+	return Grammar{
+		Cmd:     "bench park",
+		Help:    "usage: bench park \"<text>\"\n",
+		MaxArgs: -1,
+	}
+}
+
+// TestParseBareHelpOnlyWhenSole pins the boundary between the help request and
+// ordinary input: bare "help" is a help request only as the sole argument, because a
+// variadic grammar's free text or path list may legitimately contain the word, and
+// recognizing it anywhere silently discards the rest of the invocation.
+func TestParseBareHelpOnlyWhenSole(t *testing.T) {
+	v := variadicGrammar()
+	res, line, code := Parse(v, []string{"help"})
+	if line != v.Help || code != 0 {
+		t.Errorf("Parse(help) = (%+v, %q, %d), want help text and exit 0", res, line, code)
+	}
+
+	res, line, code = Parse(v, []string{"help", "me", "remember", "the", "parser"})
+	if line != "" || code != 0 {
+		t.Fatalf("Parse(help me remember the parser) errored: line=%q code=%d", line, code)
+	}
+	want := []string{"help", "me", "remember", "the", "parser"}
+	if len(res.Positionals) != len(want) {
+		t.Fatalf("positionals = %v, want %v", res.Positionals, want)
+	}
+	for i := range want {
+		if res.Positionals[i] != want[i] {
+			t.Fatalf("positionals = %v, want %v", res.Positionals, want)
+		}
+	}
+
+	g := testGrammar()
+	res, line, code = Parse(g, []string{"target", "help"})
+	if line != "" || code != 0 {
+		t.Fatalf("Parse(target help) errored: line=%q code=%d", line, code)
+	}
+	if len(res.Positionals) != 2 || res.Positionals[1] != "help" {
+		t.Errorf("positionals = %v, want [target help]", res.Positionals)
+	}
+
+	// The flag-spelled requests are unambiguous, so they keep their anywhere-before-`--`
+	// recognition even alongside other arguments.
+	for _, spelling := range []string{"--help", "-h"} {
+		_, line, code := Parse(v, []string{"some", "text", spelling})
+		if line != v.Help || code != 0 {
+			t.Errorf("Parse(some text %s) = (%q, %d), want help text and exit 0", spelling, line, code)
+		}
+	}
+}
+
+// TestParseEmptyPositionalIsUsageError pins the shape an unset shell variable produces
+// (`bench commit -m "$MSG" "$FILE"` with FILE unset): an empty positional names no
+// path, and a path-taking subcommand that resolves it against the filesystem widens
+// silently to the cwd. Rejecting it here gives every grammar the guard at once.
+func TestParseEmptyPositionalIsUsageError(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		g    Grammar
+		args []string
+	}{
+		{"sole empty positional", testGrammar(), []string{""}},
+		{"empty among others", variadicGrammar(), []string{"a", "", "b"}},
+		{"empty after the flag terminator", variadicGrammar(), []string{"--", ""}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			res, line, code := Parse(tc.g, tc.args)
+			if want := toon.Usage(tc.g.Cmd, `""`); line != want || code != 2 {
+				t.Errorf("Parse(%q) = (%+v, %q, %d), want (%q, 2)", tc.args, res, line, code, want)
+			}
+		})
+	}
+}
+
 // TestParseDoubleDashEndsFlags pins the leading-dash-positional rule the
 // grammar exists to make expressible: once "--" is seen, a later dash-prefixed
 // token is an ordinary positional, never an unknown-flag error.

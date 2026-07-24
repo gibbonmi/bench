@@ -162,11 +162,23 @@ func testRuntimeIdeaRoadmap(t *testing.T) {
 	outsideRepo := noRepo.Bench("roadmap")
 	outsideRepo.RequireExit(1)
 	contract.RequireContains(t, outsideRepo.Stdout, "error: not in a git repository")
-	for _, args := range [][]string{nil, {""}, {"   ", "\t"}} {
+	// An empty argument is rejected by the shared argument grammar and names the empty
+	// token; whitespace-only text reaches the command's own blank-text answer. Both are
+	// exit 2 with nothing written.
+	blankIdeaCases := []struct {
+		args []string
+		want string
+	}{
+		{nil, "usage: bench idea \"<text>\""},
+		{[]string{""}, "usage: bench idea (unknown argument: \"\")"},
+		{[]string{"   ", "\t"}, "usage: bench idea \"<text>\""},
+	}
+	for _, tc := range blankIdeaCases {
+		args := tc.args
 		blank := contract.NewFixture(t)
 		p := blank.Bench(append([]string{"idea"}, args...)...)
 		p.RequireExit(2)
-		contract.RequireContains(t, p.Stdout, "usage: bench idea \"<text>\"")
+		contract.RequireContains(t, p.Stdout, tc.want)
 		if blank.Exists("IDEAS.md") {
 			t.Fatalf("args %q: empty idea created IDEAS.md", args)
 		}
@@ -183,10 +195,10 @@ func testRuntimeIdeaRoadmap(t *testing.T) {
 		t.Fatal("idea from nested cwd created sub/IDEAS.md")
 	}
 	before := contract.LineCount(f.ReadFile("IDEAS.md"))
-	for _, args := range [][]string{nil, {""}, {"   ", "\t"}} {
-		p := f.Bench(append([]string{"idea"}, args...)...)
+	for _, tc := range blankIdeaCases {
+		p := f.Bench(append([]string{"idea"}, tc.args...)...)
 		p.RequireExit(2)
-		contract.RequireContains(t, p.Stdout, "usage: bench idea \"<text>\"")
+		contract.RequireContains(t, p.Stdout, tc.want)
 	}
 	contract.RequireIntEqual(t, contract.LineCount(f.ReadFile("IDEAS.md")), before, "empty idea appended a blank entry")
 	f.Bench("idea", "capture", "all", "the", "words").RequireExit(0)

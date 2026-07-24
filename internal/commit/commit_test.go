@@ -29,6 +29,13 @@ func TestParseArgs(t *testing.T) {
 		{name: "unknown flag", args: []string{"-m", "m", "--nope", "a.txt"}, wantErr: "usage: bench commit (unknown argument: --nope)"},
 		{name: "dangling -m", args: []string{"-m"}, wantErr: "usage: bench commit (missing argument: -m)"},
 		{name: "dangling --spec", args: []string{"-m", "m", "--spec"}, wantErr: "usage: bench commit (missing argument: --spec)"},
+		// The two shapes an unset or blank shell variable produces. An empty path is
+		// caught by the shared grammar (it would otherwise resolve to the cwd and
+		// widen the commit); an empty or blank message is caught here, so it is
+		// reported like the missing -m rather than by a raw `git commit -m ""`.
+		{name: "empty path", args: []string{"-m", "m", ""}, wantErr: `usage: bench commit (unknown argument: "")`},
+		{name: "empty message", args: []string{"-m", "", "a.txt"}, wantErr: "-m <msg> must not be empty"},
+		{name: "blank message", args: []string{"-m", "   \t\n", "a.txt"}, wantErr: "-m <msg> must not be empty"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
