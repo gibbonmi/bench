@@ -5,38 +5,55 @@ executable from a cold start; no conversation history is needed.
 
 ## State
 
-- **FT91's first arm is mapped, measured, and spec-ready.**
-  `decisions/gate-concurrency.md` is closed with a full Handoff: product
-  concurrency budget (inner gates pinned to `GOMAXPROCS=k`, canary workers =
-  `max(1, GOMAXPROCS(0)/k)`), k = 2 picked from live measurement, no
-  bench-specific knob. Single spec, seams and assertables enumerated in the
-  map's Handoff section.
-- **Two veto points, chosen under the reviewer's standing batch approval.**
-  k = 2 (k = 1 tied on wall-clock at 330 s but doubles the concurrent inner
-  gates; k = 4 cost +30%); and outer conformance/contract phases stay
-  uncapped this arm. Both are recorded in the map with the measurement table.
-- **Measured payoff:** full gate 332 s at k = 2 versus the 10–15 min / load
-  ~123 baseline — on the prototype worktree. Nothing has landed in code;
-  the throwaway worktree is released. The conformance phase (319 s nested kit
-  test suite) is now the gate's long pole.
-- **FT91's roadmap row stays** until the arm ships; the remaining arms
-  (test-result caching, hermetic build cache) are out of this map's scope.
-- **`bench status` flags to ignore or resolve in passing:** one roadmap row
-  names a retired spec (a `/bench-what-next` reconcile is the backstop), and
-  the gate verdict is stale for the current tree (docs-only commits since).
+- **FT91's first arm is spec'd and approved; nothing has landed in code.**
+  `specs/gate-concurrency-budget.md` is `Status: staged`, reviewer-approved,
+  committed at `c1ac60a` along with the ROADMAP pointer. Compiled from the
+  closed `decisions/gate-concurrency.md`, whose Handoff carries the seams.
+- **What the spec locks.** Every inner gate gets an explicit `GOMAXPROCS=k` in
+  its env, stripped-then-set so an inherited value cannot leak past the cap.
+  Canary workers become `fixtureWorkers(runtime.GOMAXPROCS(0), len(fixtures))`
+  — divide by k, floor at 1, cap at the fixture count. `k = 2` lives in
+  `internal/bounds` as `CanaryInnerWidth`, consumed only by
+  `internal/canary/canary.go` and enforced by `checkBoundsPolicy`. No
+  Bench-specific knob: `GOMAXPROCS=8 bench gate` is the escape hatch.
+  `internal/gate` is untouched.
+- **The one map deviation, approved at sign-off.** Handoff item 4 says the
+  existing overlap and error-order canary tests stay unchanged. They cannot.
+  The conformance phase runs the kit's own `go test` over core packages as a
+  subprocess inheriting the phase env, so inside a fixture's inner gate the
+  canary tests run at `GOMAXPROCS=2`, where the derived bound is 1 — and both
+  tests need two workers to make progress. All three concurrency tests
+  (`TestSweepRunsFixturesConcurrently`,
+  `TestSweepReportsErrorsInSortedFixtureOrder`,
+  `TestSweepBoundsFixtureConcurrencyAtNumCPU`) retarget to the derived bound;
+  the two needing overlap gate on it through `capability.CPU`. This is story 7,
+  and it is the highest-risk part of the build.
+- **Two closed veto points from the map** (batch approval): k = 2 (k = 1 tied
+  on wall at 330 s but doubles concurrent inner gates; k = 4 cost +30%), and
+  the outer conformance/contract phases stay uncapped this arm.
+- **Ship evidence is manual.** Story 1's payoff — full gate wall and load
+  against the 10–15 min / load ~123 baseline of 2026-07-22 — is not
+  gate-assertable. Measure after the build and compare to the map's k table.
+  The prototype measured 332 s at k = 2; the conformance phase (319 s) is now
+  the long pole.
 - **Build gotcha.** A plain `go build -o dist/bench ./cmd/bench` stamps
   `version=dev` and fails two `internal/contract/surface` contracts.
   Hand-running that package needs
   `go build -ldflags "-X main.version=0.2.0" -o dist/bench ./cmd/bench`.
+- **`bench status` flags to ignore or resolve in passing:** one roadmap row
+  names a retired spec (a `/bench-what-next` reconcile is the backstop), and
+  the gate verdict is stale for the current tree (docs-only commits since).
 - **Unpushed:** `main` is well ahead of origin. Pushing is the reviewer's call.
 
 ## Next command
 
-`/bench-write-spec` in a fresh mid-tier session, seeded with
-`decisions/gate-concurrency.md` — the map's Handoff carries the seams, so the
-spec needs no interview. The build after it is small: one package
-(`internal/canary`), one constant in `internal/bounds`, and a retargeted
-concurrency-bound test.
+`/bench-implement-spec specs/gate-concurrency-budget.md` in a fresh mid-tier
+session. `bench shift` is wrong here: the spec fails `craft-line`'s
+venue-routing test, because story 1's outcome is not gate-observable and
+stories 1 and 6 are routed mid, not cheap. The build is small — one constant in
+`internal/bounds`, two functions in `internal/canary`, three registrations in
+the bounds-policy conformance check, one new canary mutation fixture, and the
+retargeted concurrency tests.
 
 ## Shape
 
