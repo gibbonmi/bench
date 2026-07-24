@@ -1,6 +1,6 @@
 # cli-grammar-and-capability-evidence
 
-Status: staged
+Status: implemented
 
 ## Problem
 
@@ -50,7 +50,8 @@ Give each re-derived fact one owner.
 **One argument grammar.** A small hand-rolled parsing helper in `internal/usage`
 owns arity, flag recognition, `--`, and help semantics for every Go subcommand.
 Rules, uniformly: exact arity with trailing garbage rejected as a usage error at
-exit 2; `help`, `--help`, and `-h` always exit 0; `--` ends flag parsing so
+exit 2; `--help` and `-h` always exit 0, and bare `help` does so as the sole
+argument; `--` ends flag parsing so
 leading-dash positionals are expressible; unknown flags exit 2 through the existing
 `toon.Usage` rendering. A conformance check keeps the next subcommand from
 hand-rolling its own parse. `bench coverage` adopts the `internal/spec` package's
@@ -65,7 +66,8 @@ conformance root) emits the same shape under a distinct kind. The line is append
 a skip log named by an environment variable, not written to stdout: non-verbose
 `go test` discards a passing package's stdout, so a stdout line would be invisible on
 exactly the runs that matter. The gate reads that log after its phases join and
-aggregates the lines into explicit `capability-skips` rows in its own output. On dev machines those rows are visible and non-fatal. Under an explicit
+aggregates the lines into explicit `capability-skips` rows in its own output. On dev
+machines those rows are visible and non-fatal. Under an explicit
 strict flag — set by the release and native workflows — a nonzero capability-skip
 count is red.
 

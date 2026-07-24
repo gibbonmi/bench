@@ -5,70 +5,80 @@ executable from a cold start; no conversation history is needed.
 
 ## State
 
-- **FT87 slice 3 is built and green.** All 13 stories of
-  `specs/cli-grammar-and-capability-evidence.md` are implemented across six
-  gated commits (`108a170`, `aff7cb8`, `3fda6e3`, `e83ac02`, `d65b315`,
-  `e52da23`). `bench coverage --check` is green on all 27 rows. The spec is
-  still `Status: staged` on purpose — the landing commit and the
-  `Status: implemented` flip belong to `/bench-final-check`, not to the build.
-- **Semantic review has not run.** That is the next phase.
-- **Two reviewer decisions made mid-build, both overriding the spec.** They are
-  closed; do not reopen them, but the spec text still describes the old designs
-  and should be corrected when the spec is next touched.
-  1. **Capability evidence travels by side-channel file, not phase stdout.** The
-     spec's "the gate aggregates from phase output" and "a collector tees that
-     stream" are dead. `go test` without `-v` discards a passing or skipping
-     package's stdout *and* stderr, so a collector teeing that stream would see
-     nothing forever. The gate now sets `BENCH_SKIP_LOG` per run; skips append
-     one atomic line; the gate reads it after the phases join.
-  2. **A repeated flag is a usage error at exit 2.** This extends story 1's
-     enumerated grammar, which said nothing about duplicates. Without it,
-     routing `diff` and `roadmap` would have silently flipped two gate-asserted
-     exit-2 contracts to exit 0.
-- **Two calls left open for reviewer veto.** Neither blocks review.
-  - The marker-wait conformance check grades only the *slow* deadline argument
-    of package-qualified `WaitForTwoLegMarkers` calls; the fast leg is bounded
-    by no named policy and the helper's own package tests a fake clock where a
-    literal is the subject.
-  - `capability.Capability`/`Environment` take a local `capability.TB`
-    interface rather than `testing.TB`, so `internal/gate` can import the line
-    shape without linking `testing` into `dist/bench`.
+- **FT87 slice 3 is built, reviewed, and green.**
+  `specs/cli-grammar-and-capability-evidence.md` is `Status: implemented`; all 13
+  stories are in, and `bench coverage --check` is green on 30 rows (27 original
+  plus three the review round added). The gate is green at HEAD.
+- **Semantic review ran and its round-1 fixes landed** (`892eea0`). Closed: the
+  `help`-in-positional regression that made `bench idea help <text>` print usage
+  and park nothing; an empty positional resolving to the cwd and staging every
+  changed file beneath it; three usage lines duplicated as literals beside their
+  grammar's `Help` (already drifted — the commit error line had lost `[--]`); a
+  routing conformance check a doc comment could satisfy; and `t.SkipNow()`
+  walking through the skip-ownership guard.
+- **The spec was amended to match the tree** (`9edfa2a`). Two decisions the build
+  made against the spec are now spec text, not drift: capability evidence travels
+  by `BENCH_SKIP_LOG` side-channel file rather than a tee of phase stdout (`go
+  test` without `-v` discards a passing package's stdout), and a repeated flag is
+  a usage error — kept rather than reverted, because no flag in this CLI
+  accumulates a list, so last-one-wins only hides a mistyped invocation. The two
+  rules round 1 introduced (sole-argument bare `help`, empty positional) are
+  stated with coverage rows.
+- **`reviews/cli-grammar-and-capability-evidence.md` is live pickup work: 16
+  findings across three axes.** It is tracked, not drift. The three with real
+  teeth:
+  - `internal/gate/capability_skips.go:67-71` — `readSkipTally` swallows
+    `os.ReadFile`'s error and returns an empty tally, so under
+    `BENCH_REQUIRE_CAPABILITIES=1` an unreadable log reads exactly like a fully
+    capable runner. That is silent de-enforcement in the release workflows.
+  - `internal/gate/gate.go:150` — `gateEnv` strips `BENCH_SKIP_LOG` so a canary's
+    inner run cannot contaminate the outer tally, but no test asserts it. Delete
+    the clause and the suite stays green; the live cost is a canary fixture's
+    skip turning a real release red.
+  - `internal/conformance/subcommand_routing_test.go:78-89` — six adopt
+    subcommands are exempted under a `whyNested` reason that is factually wrong
+    (`internal/adopt/doctor.go:181-189` is a flat hand-rolled switch, and
+    `bench doctor -h` exits 2). The exemption reason is free text nothing grades.
+- **Spec retirement is deliberately deferred.** `bench status` will flag the spec
+  for retirement now that it is `implemented`. Do not retire it while the pickup
+  file is open — those findings cite spec line numbers, and retiring deletes the
+  file they cite.
+- **Two calls still open for reviewer veto.** Neither blocks anything.
+  - The marker-wait conformance check grades only the *slow* deadline argument of
+    package-qualified `WaitForTwoLegMarkers` calls; the fast leg is bounded by no
+    named policy.
+  - `capability.Capability`/`Environment` take a local `capability.TB` interface
+    rather than `testing.TB`, so `internal/gate` can import the line shape
+    without linking `testing` into `dist/bench`.
 - **One history defect, unrepaired, reviewer's call.** Commit `c82ba1f` is
-  labelled "capture: park the gate phase-timeout headroom idea" but also
-  contains the entire stories 10–11 slice (649 insertions, 11 files). Cause: a
-  bare `git commit` after `git merge --squash` commits the whole index. A later
-  full gate ran green on that exact tree, so the content is verified; only the
-  history is wrong. `main` is unpushed, so a split is risk-free.
-- **Known advisory debt.** `bench structure` reports 14 issues, up from 10 at
-  slice start; the new one is `internal/gate/` at 18 source files against a
-  budget of 16, from the collector's two new files. Gate is green with them.
-- **Four ideas parked this session** (`bench idea`), all found while building
-  and none in scope here: the mutation-revert papercut against
-  `block-dangerous-git`; the gate's conformance phase inheriting `go test`'s
-  10-minute default with ~4 minutes of headroom; **real data races in
-  `guards.Scan`** that fail under `-race` on `main` today and that the gate
-  never runs; and `waitForPIDFile`'s hardcoded 2s literal deadline — the same
-  defect class story 13 fixed, at a call site the spec did not name.
-- **Three learnings logged** in `.bench/learnings.md`, all with proposed rule
-  changes: a spec's load-bearing tooling claim went unverified into three
-  stories; a delegate charge's verification list became the delegate's ceiling
-  and let a canary regression through; and the squash-merge index trap above.
+  labelled "capture: park the gate phase-timeout headroom idea" but also contains
+  the entire stories 10–11 slice (649 insertions, 11 files). Cause: a bare `git
+  commit` after `git merge --squash` commits the whole index. A later full gate
+  ran green on that exact tree, so the content is verified; only the history is
+  wrong. `main` is unpushed, so a split is risk-free.
+- **Known advisory debt.** `bench structure` reports 15 issues; `internal/gate/`
+  is over its 16-file budget from the collector's new files. Gate is green.
+- **Seven ideas parked, zero open learnings.** Two carry real risk and neither is
+  in the pickup file: **real data races in `guards.Scan`** that fail under
+  `-race` on `main` today, which the gate never runs; and `waitForPIDFile`'s
+  hardcoded 2s literal deadline — the same defect class story 13 fixed, at a call
+  site the spec did not name.
+- **Build gotcha.** A plain `go build -o dist/bench ./cmd/bench` stamps
+  `version=dev` and fails two `internal/contract/surface` contracts. Hand-running
+  that package needs
+  `go build -ldflags "-X main.version=0.2.0" -o dist/bench ./cmd/bench`.
 - **Unpushed:** `main` is well ahead of origin. Pushing is the reviewer's call.
 
 ## Next command
 
-`/bench-review-implementation` in a fresh session.
+`/bench-what-next` in a fresh session — seven parked ideas and a 16-finding
+pickup file are both waiting on a reconcile, and the drain is what turns them
+into sequenced roadmap rows.
 
-Review base is `9732ebe` (the commit before the build began), so `bench diff`
-resolves the whole slice. Two things worth the reviewer's attention beyond the
-usual three axes: whether the side-channel transport is the right shape now
-that it is built rather than merely decided, and whether the seven flat
-subcommands newly routed through `usage.Parse` kept their output contracts —
-their behavior changed in ways no coverage row pinned (trailing garbage now
-rejected, help now uniformly exit 0).
-
-Then `/bench-final-check` for the landing commit and the `Status: implemented`
-flip.
+If you would rather keep closing FT87 instead, the alternative is
+`/bench-implement-spec` against `reviews/cli-grammar-and-capability-evidence.md`,
+starting with the two `internal/gate` findings above — they are the only ones
+that change what the oracle reports, and both are small.
 
 ## Shape
 
