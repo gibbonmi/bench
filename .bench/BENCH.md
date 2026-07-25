@@ -194,7 +194,10 @@ proposed rule change if any. That's the whole of your authority here — you
 capture, I decide. `/bench-what-next` verdicts every open entry in its reviewed
 batch diff — the generalizable ones become roadmap items built later under the
 synthesis discipline with my sign-off — so the kit improves from real use
-without any rule ever changing itself behind my back.
+without any rule ever changing itself behind my back. A harness's auto-memory
+is not a second journal: it holds user and preference facts, while a process
+or judgment learning lands in `.bench/learnings.md`, where the reviewed drain
+is its only path into the kit.
 
 ## Capture
 

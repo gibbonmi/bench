@@ -1,6 +1,6 @@
 ---
 name: craft-design-system
-description: How to consume a project's design system when building UI. Use whenever building or modifying a UI component, applying a color/spacing/type/motion value, or composing a component. Reach for this on any UI work — pull values from tokens, compose canonical components, never hardcode or regenerate.
+description: How to consume a project's design system when building UI. Use whenever building or modifying a UI component, applying a color/spacing/type/motion value, or composing a component.
 index: any UI work
 index-note: your project's design source
 ---

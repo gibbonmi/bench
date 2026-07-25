@@ -48,6 +48,14 @@ silent escalation when you run top-tier), and the effort and iteration cap go in
 charge text, because the Agent tool has no effort parameter — effort rides in
 the charge or it rides nowhere.
 
+A context-inheriting delegate (a harness's fork type, which clones this
+conversation) is the one exception to the contextless premise — and it always
+runs the parent model, ignoring any model override, so in a top-tier session
+every fork is a top-tier delegate. A fork is legal only where `craft-line`'s
+table already routes top, and it is declared like any line. Fork because the
+read-set genuinely is this conversation, never to skip writing the charge;
+everything else spawns fresh on the bound alias.
+
 Prefer compressed inputs over inherited context: when a decision map has a
 Handoff, give the delegate that digest plus line-ranged excerpts it must quote,
 not the orchestrator's whole read list.

@@ -1,6 +1,6 @@
 ---
 name: craft-tdd
-description: How to apply test-driven development without the cost blowup or the over-fit-and-stop failure. Use whenever writing tests first, someone says "red-green-refactor" or "write the test first", or building at a seam that /bench-write-spec marked for TDD. Reach for this before starting any TDD pass to bound where and how it applies.
+description: How to apply test-driven development without the cost blowup or the over-fit-and-stop failure. Use whenever writing tests first, someone says "red-green-refactor" or "write the test first", or building at a seam that /bench-write-spec marked for TDD.
 index: writing tests first
 ---
 

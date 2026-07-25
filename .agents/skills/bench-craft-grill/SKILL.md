@@ -16,6 +16,10 @@ If a *fact* can be found by exploring the codebase, look it up rather than askin
   the answers come back partial. Wait for the answer before the next.
 - Attach your recommended answer and a one-clause reason. I confirm, adjust, or
   reject.
+- Ask through the harness's structured question surface when it has one
+  (Claude Code's AskUserQuestion): the recommendation rides as the first
+  option, marked as recommended, and the free-text escape keeps "adjust"
+  open. One question per call, same as one per turn.
 - Go in dependency order — resolve the question that unblocks the most others
   first.
 - **Surface decisions; don't make them — and scoping is a decision.** Your job is to

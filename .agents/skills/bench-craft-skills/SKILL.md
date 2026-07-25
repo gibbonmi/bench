@@ -1,6 +1,6 @@
 ---
 name: craft-skills
-description: Principles for writing and editing skills so they fire reliably and stay lean. Use whenever creating, editing, reviewing, or pruning any skill — the kit's own skills or your project's. Reach for this any time you're about to add or change a SKILL.md.
+description: Principles for writing and editing skills so they fire reliably and stay lean. Use whenever creating, editing, reviewing, or pruning any skill — the kit's own skills or your project's.
 index: writing or pruning a skill
 ---
 
@@ -90,6 +90,11 @@ lives in `craft-line`; this rule is about the prose itself.)
   irreducibly fuzzy *and* you see the rush, split to hide the later steps.
 - **Duplication** — the same meaning in two places; costs maintenance and inflates a
   meaning's apparent rank.
+- **Harness echo** — restating what the harness layer already carries (the
+  system prompt, a tool description). Single source of truth spans layers:
+  before a rule lands, check the harness surfaces it will ride beside — an
+  echo is sediment, and a near-echo drifts into conflict. A rule the kit must
+  own across harnesses is not an echo; name the harness gap it covers.
 - **Sprawl** — one skill accreting unrelated jobs until no description can say
   when to fire it; split by trigger, not by topic.
 - **No-op** — a sentence no reader can act on; the pruning hunt above exists to

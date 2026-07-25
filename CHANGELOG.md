@@ -22,6 +22,11 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Realigned the skill layer to Claude 5 harnesses: a new harness-echo rule keeps
+  skills from restating what the harness carries, fork delegations are governed
+  by the line, the review smell glosses moved behind progressive disclosure,
+  grills use the harness's structured question surface, and auto-memory is
+  routed apart from the learnings journal.
 - Made managed asset link, relink, and unlink report partial lifecycle outcomes explicitly.
 - Made binary repair explicit, manifest-pinned, resource-bounded, concurrency-safe,
   and manually prunable; unified user-facing output and package metadata on Bench.
