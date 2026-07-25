@@ -32,6 +32,9 @@ Default-branch resolution has one owner and callers handle unknown rather than
 fabricating `main`. Closure uses hostile filesystem, parse, story-gap/range,
 master-only, and unknown-default fixtures in both contracts and canaries.
 
+The closed `decisions/ft86-fail-closed-control-records.md` map owns the cut and
+the arm is spec'd in `specs/ft86-fail-closed-control-records.md`.
+
 Sources: `RR:C-01`, `RR:C-02`, `RR:C-03`; `RC:H-08`.
 
 **FT58 (LOW) — hardened pool roots.** The identity-safe lock protocol shipped
