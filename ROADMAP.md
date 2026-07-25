@@ -20,6 +20,19 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
+**FT122 (MEDIUM, in flight — spec `specs/session-handoff-emission.md` staged,
+build uncommitted) — `bench handoff`, the deterministic cold-session pin
+block.** Sessions hand-reconstruct the same continuation prompt every phase
+close — repository, branch, HEAD, spec path and `Status`, gate verdict,
+unpushed count, closed decisions, next phase command — and `bench status`
+already computes handoff staleness but cannot emit the artifact. Emit it, with
+`--harness claude|codex` translating phase names between the `/bench-*` and
+`$bench-*` forms so the recommendation lands on a key the reading harness
+actually has. Evidence: 13 hand-written fresh-session prompts in the week of
+2026-07-19. The row is listed here because the spec was staged straight from
+the parked idea without passing through a drain; it leaves at spec-retire like
+any other.
+
 **FT86 (HIGH on the bank track; MEDIUM otherwise) — fail-closed control records
 and single-sourced repository facts.** Coverage validation requires a map or
 explicit historical marker and validates exact positive story membership and
@@ -178,6 +191,28 @@ correct the registry reasons, and consider grading the exemption reason itself;
 `bench commit`'s usage-error line nests a second full usage line inside its
 parenthetical when the fault comes from `usage.Parse` (e.g. an empty
 positional) — one flat line naming the fault reads better.
+
+**FT123 (MEDIUM, evidence supplied) — worktree resolution by label.** A session
+reaches its own worktree by pasting a 110-character hashed path, and that
+plumbing is the single largest measured session tax on this repo: 1495 of 4115
+Bash calls in the week of 2026-07-19 (36%) were
+`cd /home/mgibs/.bench/worktrees/bench-<n>/<32hex>-<32hex> && …`. Add
+`bench worktree path <label>` and `bench worktree exec <label> -- <cmd>` so the
+label is the handle. Hard requirement: both emit and accept `~`-relative paths,
+because an absolute `/home/<user>` path in a transcript or a committed artifact
+does not port across machines. Distinct from FT96, which is about how hook
+assignments are keyed for parallel delegates rather than how a session names a
+worktree it already owns.
+
+**FT124 (MEDIUM, evidence supplied) — `bench test [pkg]`, structured go-test
+triage.** Sessions re-derive the same `go test` filter every time: 698 of 797
+`go test`/`go build` calls in the week of 2026-07-19 were piped through ad-hoc
+`head`/`grep`/`tail`, and the patterns recur verbatim across sessions
+(`^(ok|FAIL|---)`, `--- (SKIP|PASS|FAIL)`, `t\.Skipf?\(`, `go test failed`).
+Emit TOON instead — package, failing test, first failure line, skip reasons —
+under the `craft-cli` standards the rest of the surface already follows. This
+is a reader over `go test`, not a second oracle: the gate stays the only thing
+that calls work done.
 
 **FT92 (LOW) — attributed subject drift and consumer-shipped input hygiene.**
 "gate subject changed during execution" names no component; the drift message
@@ -502,6 +537,45 @@ calls a new decision; teaching the gate cache to record the post-flip tree when
 and its content is known; or accept the row as cosmetic and document it. Kit edit
 under the `craft-synthesis` discipline.
 
+**FT125 (LOW, evidence supplied) — reader surfaces that return the slice, not
+the file.** Two existing readers make a session pull a whole file to use one
+part of it. `bench spec show <slug> [--section stories|coverage|status]` — a
+section-scoped spec reader; ~1 MB of spec `Read`s in the week of 2026-07-19,
+with `specs/minimal-subprocess-data-exposure.md` alone read 15 times for 450 KB.
+`bench outline --symbol <name>` — print a symbol's body with context instead of
+guessing line ranges; 1247 manual `sed -n`/`cat -n`/`head` slices of source
+files (2.28 MB) over the same week, and `bench outline` locates seams today but
+does not return bodies. Both are refinements of surfaces that already exist, so
+each earns its keep only if the row can show the slice is what sessions
+actually wanted — the reads may be a search pattern that a narrower reader
+would not shorten. Check that before building; the two arms share the
+justification but not a seam.
+
+**FT126 (MEDIUM, evidence supplied) — `bench roadmap --context` reports facts
+where the drain needs verdicts.** `/bench-what-next` step 1 orders every row
+verified against the tree, and the snapshot is declared its complete local
+evidence — but two things the reconcile depends on are not in it, so each run
+re-derives them by hand (observed this drain, 2026-07-25). First, the
+workload boundary: with 39 rows, "verify every row" is tractable only by
+knowing what moved, which today means a hand-run `git log` to establish that
+nothing but docs and specs landed since the last drain. Emit it —
+last-drain commit, commits since, and which of those touched code — so the
+reconcile bounds itself and the "no row shipped" verdict rests on evidence
+rather than on the session's recall. Second, the snapshot reports
+`specs[]{slug,status,roadmap_id}` as raw fields, so a staged spec with an empty
+`roadmap_id` reads as data; the roadmap's own preamble makes that a
+discrepancy, and it went uncaught until a session happened to know the
+convention. Add a discrepancies block covering at least that case, a row naming
+a spec path with no file, and a row naming a retired spec. The CLI does no
+judgment — these are mechanical cross-checks of facts it already holds, which
+is why they belong in it rather than in the phase prose.
+
+Not carried here: verifying what a row *claims* about the code
+(does that symbol still exist, is that path still in that allowlist). That is
+per-row semantic checking with no mechanical source, and it is the same problem
+FT106 solves for docs — extend that probe to row bodies when it ships rather
+than building a second mechanism.
+
 ## Release and bank reassessment gate
 
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
@@ -570,15 +644,15 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT86, fail-closed control records and single-sourced
-   repository facts. The highest bank-track row still open, and now the top of
-   the list: FT91's canary-budget arm shipped 2026-07-24, so gate contention is
-   no longer the unaddressed cost on every landing.
-2. `/bench-write-spec` — FT71, versioned local shift evidence. The other HIGH
+1. `/bench-implement-spec` — FT122, `specs/session-handoff-emission.md`. The
+   spec is staged and an uncommitted build is already in the tree
+   (`internal/handoff/` plus its runtime contracts), so finishing it comes
+   before starting anything else: a second diff on this tree would make the
+   gate answer for two changes at once.
+2. `/bench-write-spec` — FT86, fail-closed control records and single-sourced
+   repository facts. The highest bank-track row still open: FT91's
+   canary-budget arm shipped 2026-07-24, so gate contention is no longer the
+   unaddressed cost on every landing.
+3. `/bench-write-spec` — FT71, versioned local shift evidence. The other HIGH
    bank-track row; the repository-controlled bank evidence requirement makes it
    active.
-3. `/bench-write-spec` — FT120, the two gate and canary test-harness defects.
-   Small, but it needs a spec rather than a direct fix: bounding the R12 owner's
-   wait puts a deadline on a contention proof, so the bound wants a stated red
-   signal, and the row carries the `canary_concurrency_test.go` split that the
-   FT91 arm pushed one line over budget.
