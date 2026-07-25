@@ -149,11 +149,11 @@ loop honest.
    The same pass applies when retiring a merged, implemented spec flagged by
    `bench status`.
 
-9. **Falsification review before sign-off.** Every draft gets the pass: spawn a
-   reviewer sub-agent before the approval table, unconditionally. The pass
-   **runs at the top tier**, read-only, one iteration — at that binding it is
+9. **Falsification review before sign-off.** Spawn a reviewer sub-agent when
+   any of these signals fire, and not otherwise. The pass
+   **runs at the mid tier**, read-only, one iteration — at that binding it is
    not a top-tier bump, so it spawns without asking; the project's `Lines`
-   carries the routing. These signals argue for running it at the top tier
+   carries the routing. These signals also argue for running it at the top tier
    instead:
 
    - the Handoff carries uncertainty flags (item 7);
@@ -168,8 +168,10 @@ loop honest.
      `already covered` and `not TDD-able` outnumber rows with a real red
      command, the map can pass its format check while grading nothing.
 
-   A fired signal argues for staying at the top tier; otherwise the pass may
-   drop to the mid tier at your discretion. A reviewer sub-agent is never a
+   A fired signal never escalates on its own: when one fires and you judge the
+   top tier worth it, pause and ask me before spawning — a top-tier pass is an
+   ordinary bump under `craft-line`'s ladder, with no standing opt-out. Absent
+   my yes, run the pass at the mid tier anyway. A reviewer sub-agent is never a
    licence to spend a tier the project has not granted.
 
    Give it a fresh small context — the Handoff (or, with no map, the decided

@@ -350,9 +350,10 @@ structured line "survives non-verbose `go test`", which is false, and stories 10
 and 11 were built on it before an independent done-claim probe caught it. Extend the
 rule to those claims too — any spec sentence asserting observable third-party
 tool behavior a story's seam depends on carries either a cited command whose
-output was run or an explicit uncertainty flag, since `/bench-write-spec`
-step 9's falsification pass only fires on flagged uncertainty and a claim that
-reads as obvious fact slips through. Next action is the kit edit to
+output was run or an explicit uncertainty flag. `/bench-write-spec` step 9's
+falsification pass now runs on every draft, but it is charged at the coverage
+map and the Handoff assertables, so a Problem-section claim that reads as
+obvious fact still slips through. Next action is the kit edit to
 `/bench-write-spec` and `craft-spec`, built under the `craft-synthesis`
 discipline.
 

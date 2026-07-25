@@ -79,6 +79,7 @@ func checkWorkflowAnchors(root string) []string {
 	require(".agents/commands/bench-write-spec.md", "written in the same session as the draft")
 	require(".agents/commands/bench-write-spec.md", "mostly not observed reds")
 	require(".agents/commands/bench-write-spec.md", "runs at the mid tier")
+	require(".agents/commands/bench-write-spec.md", "Every draft gets the pass")
 	require("projects/benchkit.md", "Spec falsification pass")
 	require(".agents/commands/bench-implement-spec.md", "Status: implemented")
 	require(".agents/commands/bench-debug.md", "diff-filter=D")

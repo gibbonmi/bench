@@ -149,14 +149,18 @@ loop honest.
    The same pass applies when retiring a merged, implemented spec flagged by
    `bench status`.
 
-9. **Conditional falsification review before sign-off.** Spawn a reviewer
-   sub-agent when any of these fire, and not otherwise:
+9. **Falsification review before sign-off.** Every draft gets the pass: spawn a
+   reviewer sub-agent before the approval table, unconditionally. The pass
+   **runs at the mid tier**, read-only, one iteration — at that binding it is
+   not a top-tier bump, so it spawns without asking; the project's `Lines`
+   carries the routing. These signals argue for running it at the top tier
+   instead:
 
    - the Handoff carries uncertainty flags (item 7);
    - the draft deviates from the map;
    - **no map backs the draft** — the reviewer-directed batch-drain override in the
      entry contract. This is the path with the most undecided content and the
-     least prior sign-off, so it always gets the pass;
+     least prior sign-off;
    - **the map was written in the same session as the draft** — the
      reviewer-closed path in the entry contract. The author is checking its own
      recall, which is the bias the fresh-session default exists to remove;
@@ -164,11 +168,11 @@ loop honest.
      `already covered` and `not TDD-able` outnumber rows with a real red
      command, the map can pass its format check while grading nothing.
 
-   The pass **runs at the mid tier**, read-only, one iteration. At that tier it is
-   not a top-tier bump, so it needs no approval to spawn — the project's `Lines`
-   carries the routing. Escalating this pass to the top tier is a bump like any
-   other: it pauses and asks me, per `craft-line`'s ladder. A reviewer sub-agent
-   is never a licence to spend a tier the project has not granted.
+   A fired signal never escalates on its own: when one fires and you judge the
+   top tier worth it, pause and ask me before spawning — a top-tier pass is an
+   ordinary bump under `craft-line`'s ladder, with no standing opt-out. Absent
+   my yes, run the pass at the mid tier anyway. A reviewer sub-agent is never a
+   licence to spend a tier the project has not granted.
 
    Give it a fresh small context — the Handoff (or, with no map, the decided
    scope and the finding inventory it was compiled from) plus the draft, nothing
@@ -176,15 +180,13 @@ loop honest.
    this": would the cheapest wrong implementation pass this map? does every
    Handoff assertable, or every finding, have a row that would actually go red if
    it were left unfixed? does each line match the cached routings? On the
-   no-map and same-session triggers, charge it additionally at the defaults —
+   no-map and same-session paths, charge it additionally at the defaults —
    are the decisions the draft marked for veto the *only* ones it decided
    unilaterally? It returns findings and an advisory recommend/block verdict.
 
-   There is still no standing pass, and the verdict is advisory: sign-off stays
-   mine. A complete Handoff with no uncertainty, compiled in a fresh session,
-   makes the mechanical case, and conformance is work the gate already covers.
-   Verify the reviewer's findings against the tree before folding them in — a
-   delegate's finding is a claim, not a result.
+   The verdict is advisory: sign-off stays mine. Verify the reviewer's findings
+   against the tree before folding them in — a delegate's finding is a claim,
+   not a result.
 
 ## Template
 
