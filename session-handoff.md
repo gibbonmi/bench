@@ -1,42 +1,48 @@
 # Session handoff
 
-Repository: /home/mgibs/workspace/bench — branch `main`. Everything below is
-executable from a cold start; no conversation history is needed.
+Repository: `bench` (origin `github.com/gibbonmi/bench`) — branch `main`,
+checked out at `~/workspace/bench` on the machine that wrote this. Everything
+below is executable from a cold start; no conversation history is needed.
 
 ## State
 
-- **FT91's first arm shipped, was reviewed, drained, and retired. Nothing from it
-  is open.** Four commits: `4ea4880` (the build) and `93eb291` (a capture) are
-  pushed; `0d5d935` (the drain) and `7c1ea2d` (the retirement) are **unpushed**.
-  Pushing is the reviewer's call.
-- **The payoff, for the record:** the full gate went from 10–15 minutes at load
-  ~123 to **323–336 s at peak load ~28–33** on 16 cores. The conformance phase
-  (~325 s) is now the long pole. FT91's roadmap row carries the detail.
-- **`specs/` is empty — no staged spec.** The next work starts at
-  `/bench-write-spec`, not at an implement phase. `decisions/gate-concurrency.md`
-  was deleted with the retirement; its durable content is in
-  `projects/benchkit.md` (the canary concurrency budget in the gate section, and
-  the nested-run trap in the cold-session notes). Read those before touching
-  `internal/canary` — the nested trap deadlocks rather than fails, and this file
-  deliberately does not restate it.
-- **The drain added two rows.** FT120 collects two gate/canary test-harness
-  defects (the R12 fixture's immortal spinner, and the unasserted per-fixture
-  `BENCH_CANARY_PHASE` isolation) and carries the
-  `internal/canary/canary_concurrency_test.go` split — the FT91 arm pushed it to
-  401 lines against a 400 budget, which is the one `bench structure` violation
-  this work created. FT121 is the `bench commit --spec` gate-staleness defect.
-  Both want a spec, not a direct fix; FT120's reason is in the row.
-- **No open learnings, no parked ideas.** Both capture sources are empty, so
-  `bench roadmap` prints its recommended sequence.
-- **A concurrent session was writing this repo on 2026-07-24** and edited this
-  file mid-gate, which the working-tree tripwire correctly caught. Check
-  `bench status` and `ps` for other live writers before starting a gate.
+- **FT122 is specced, approved, and ready to build.**
+  `specs/session-handoff-emission.md` (Status: staged) adds `bench handoff`:
+  it derives the cold-session pin block from the tree, prints it, and rewrites
+  this file — preserving `## State` byte-for-byte while regenerating the header,
+  `## Next command`, and `## Shape`. 24 stories, 24 coverage rows, two seams
+  (the command boundary against a fixture repo, and unit tests for the section
+  splitter). Nine stories route to mid; the rest is cheap-tier plumbing.
+- **Its map was closed in the same session as the spec**, under the
+  reviewer-closed path in `/bench-write-spec`'s entry contract.
+  `decisions/session-handoff-emission.md` carries three **[veto]** marks —
+  recorded alternatives, not open questions. **No falsification pass ran**: the
+  same-session map is a mandatory trigger for one, but that session was
+  configured not to spawn subagents unasked. Running it before the build is
+  cheap insurance and remains available.
+- **Three unpushed commits, and the gate has not run on this tree.**
+  `99139d0` (capture), `faaca55` (the spec and map), `849ff72` (ADR 0009). All
+  three are doc-only and landed with plain `git commit`, so the last green gate
+  is still the one at `4ea4880`. Pushing is the reviewer's call.
+- **Five CLI candidates are parked in `IDEAS.md`, awaiting a drain.** FT122 came
+  out of that survey; the other four — `bench worktree path` / `exec` (which
+  must render `~`-relative paths for cross-machine portability), `bench test`,
+  `bench spec show`, `bench outline --symbol` — have no maps yet. They graduate
+  through `/bench-what-next`, not directly into specs.
+- **FT120 and FT121 stay open** from the 2026-07-24 drain: gate/canary
+  test-harness defects plus a `canary_concurrency_test.go` split, and the
+  `bench commit --spec` gate-staleness defect. Both want specs.
+- `bench structure` reports 17 issues, all pre-existing. Read
+  `projects/benchkit.md`'s cold-session notes before touching
+  `internal/canary` — the nested-run trap deadlocks rather than fails, and this
+  file deliberately does not restate the commands.
 
 ## Next command
 
-`/bench-write-spec` — FT86, fail-closed control records and single-sourced
-repository facts. The highest bank-track row still open and the top of the
-roadmap's recommended sequence. FT71 is next after it, then FT120.
+`/bench-implement-spec specs/session-handoff-emission.md` — interactive rather
+than `bench shift`, because nine stories route to mid tier and the coverage map
+is not uniformly cheap, which fails `craft-line`'s venue-routing test for an
+unattended loop. In Codex, that is `$bench-implement-spec`.
 
 ## Shape
 
