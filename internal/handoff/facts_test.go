@@ -48,6 +48,17 @@ func TestFirstInvocable(t *testing.T) {
 			action: "bench spec retire <slug>", wantName: "specs", wantPresent: true,
 		},
 		{
+			// The git row takes this exact shape once the tree is clean and commits are
+			// unpushed. It opens a phase invocation, so a bare prefix test admits it and
+			// the field renders two commands where it promised one.
+			what: "a compound action naming several steps is not one invocation",
+			signals: []status.Signal{
+				{Severity: 1, Name: "git", Detail: "7 unpushed commits", Action: "/bench-final-check / push"},
+				{Severity: 4, Name: "drain", Detail: "1 idea(s)", Action: "/bench-what-next"},
+			},
+			action: "/bench-what-next", wantName: "drain", wantPresent: true,
+		},
+		{
 			what: "a word beginning with bench is not a command",
 			signals: []status.Signal{
 				{Severity: 11, Name: "handoff", Detail: "stale", Action: "benchmark the loop"},

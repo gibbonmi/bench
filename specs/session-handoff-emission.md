@@ -115,6 +115,13 @@ the failure this capability exists to remove.
    it never renders a hint as though it were a command. Selection reads the
    canonical form, so it is unaffected by story 10's harness translation.
 
+   Opening with an invocation is necessary but not sufficient. A board row may
+   join the steps of a sequence into one action — the git row reads
+   `/bench-final-check / push` once the tree is clean — and that string opens a
+   phase invocation while naming two commands. Splitting it and taking an arm
+   would be this command deciding what the board meant by a sequence, so a
+   compound action does not qualify and the walk continues past it.
+
 9. As a session whose real next step is judgment the board cannot see, I want
    `--next` to replace the derived line verbatim, so that a review pass or a
    debug loop can be named instead of a mechanical guess.
@@ -335,7 +342,7 @@ Gate command: the project gate, `bench gate`.
 | 5 | branch, HEAD, clean/dirty, unpushed count | runtime contract | `go test ./internal/contract/runtime -run TestHandoffCarriesTreeFacts` | Two fixtures — dirty with an unpushed commit, and clean with none — so hardcoded defaults fail one of them. |
 | 6 | staged spec named with Status, or explicitly none | runtime contract | `go test ./internal/contract/runtime -run TestHandoffNamesStagedSpec` | Three fixtures: two different `Status:` values plus an empty `specs/`. A constant `Status: staged` fails the second. |
 | 7 | gate field carries verdict, cached tree, and staleness; or says none has run | runtime contract | `go test ./internal/contract/runtime -run TestHandoffGateFieldIsStaleAware` | Three fixtures — green-and-current, green-but-stale, absent. A hardcoded `gate: green` fails the stale and absent cases, which is the confident-wrong-fact defect. |
-| 8 | selection returns the first invocable action, skips prose ones, and reports when a board has none | unit (`internal/handoff`) | `go test ./internal/handoff -run TestFirstInvocable` | Enumerates the selection's edges directly — empty board, all-prose board, prose ahead of an invocable row — including the all-prose case a live fixture cannot reliably produce. |
+| 8 | selection returns the first invocable action, skips prose and compound ones, and reports when a board has none | unit (`internal/handoff`) | `go test ./internal/handoff -run TestFirstInvocable` | Enumerates the selection's edges directly — empty board, all-prose board, prose ahead of an invocable row, and the git row's `/bench-final-check / push` — including the all-prose case a live fixture cannot reliably produce. A bare prefix test passes every other row and fails the compound one. |
 | 8 | next command is the board's highest-severity **invocable** action, or an explicit statement that none is | runtime contract | `go test ./internal/contract/runtime -run TestHandoffNextMatchesStatus` | Three fixtures: two whose first invocable board action differs, each compared to `bench status --all` on that same fixture, plus one whose only signals carry prose actions. A constant fails the first two; taking `signals[0].Action` unconditionally fails the third by rendering a hint as a command. |
 | 9 | `--next` replaces the derived line | runtime contract | `go test ./internal/contract/runtime -run TestHandoffNextOverride` | Asserts the override present **and** the derived line absent, so appending alongside it fails. |
 | 10 | `--harness codex` renders `$bench-*` | runtime contract | `go test ./internal/contract/runtime -run TestHandoffHarnessCodex` | Asserting `$bench-` present *and* `/bench-` absent catches an implementation that emits both forms. |

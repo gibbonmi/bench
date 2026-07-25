@@ -167,6 +167,11 @@ func treeRef(tree string) string {
 // board action takes when it is something a session can type.
 const benchCommandPrefix = "bench "
 
+// boardStepSeparator is how a board row joins the steps of a sequence into one action.
+// internal/status writes it; this package only recognizes it, to tell an action naming one
+// command apart from an action naming several.
+const boardStepSeparator = " / "
+
 // nextAction selects the board's next command under root, and reports whether a board
 // carrying signals offered none. The board is the one source of what to do next, so the
 // handoff and `bench status` cannot disagree about it.
@@ -187,8 +192,18 @@ func nextAction(root string) (action, signal string, noneInvocable bool) {
 // "split (craft-seams)" — and a field promising an invocation cannot render one of those.
 // So qualifying is syntactic, against the canonical form the board writes: an action is a
 // command when it opens a phase invocation or a `bench` subcommand and never otherwise.
+//
+// The opening is necessary but not sufficient. A board row may join several steps with the
+// separator below — the git row reads "/bench-final-check / push" once the tree is clean —
+// and that string opens a phase invocation while being two commands, which is not something
+// a reader can run. Splitting it and taking an arm would be this package deciding what the
+// board meant by a sequence, so a compound action simply does not qualify and the walk
+// continues.
 func firstInvocable(signals []status.Signal) (action, name string, ok bool) {
 	for _, s := range signals {
+		if strings.Contains(s.Action, boardStepSeparator) {
+			continue
+		}
 		if strings.HasPrefix(s.Action, harnessPrefix[harnessClaude]) || strings.HasPrefix(s.Action, benchCommandPrefix) {
 			return s.Action, s.Name, true
 		}

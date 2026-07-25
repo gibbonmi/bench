@@ -2,62 +2,50 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `fb97751`, 12 dirty paths, 5 unpushed commits
+Branch: `main` — HEAD `5ccaf6c`, 4 dirty paths, 7 unpushed commits
 Spec: `specs/session-handoff-emission.md` (Status: staged)
-Gate: red at `ee50420` — current
+Gate: green at `dcafb03` — stale, work tree `f6ce3bb`
 
 ## State
 
-- **FT122's build is in the tree, uncommitted and ungated.** `internal/handoff/`
-  (7 files, 605 lines) plus three runtime contract files, a conformance file,
-  and edits to `.bench/BENCH.md`, `bin/bench.sh`, `cmd/bench/main.go`,
-  `internal/status/handoff.go`, and `internal/conformance/subcommand_routing_test.go`.
-  `go build ./...` passes and `go test ./internal/handoff/` is green; the
-  contract and conformance layers have **not** been run, and neither has the
-  gate. Test names cover all 26 stories, but coverage-by-name is not a verdict —
-  the first `bench gate` on this tree is still the first real one.
-- **`specs/session-handoff-emission.md` is still `Status: staged`.** Flip it
-  with `bench commit --spec` on the green commit, not by hand.
-- **This file was written by the in-tree `bench handoff`, and doing so found a
-  defect.** The header block is correct and is now the single source for
-  repository, path, branch, HEAD, dirty/unpushed counts, spec status, and gate
-  verdict — do not restate those in `## State`. But the default `## Next
-  command` derivation resolved to `commit on green / /bench-final-check / push`,
-  the status board's leading signal, which is a *signal*, not the next action;
-  the real one had to be supplied with `--next`. Story 8 derives that field from
-  the same signals `bench status` ranks, and a generic dirty-tree row outranks
-  the thing a cold session should actually do. Decide before the gate run
-  whether story 8's derivation needs a rule that skips non-actionable signals,
-  or whether `--next` is simply mandatory at a phase close.
-- **Story 15 carries a reviewer-approved top-tier bump** — the scaffolded
-  skeleton's guidance prose, `gpt-5.6-sol` / high under the leverage override,
-  bounded to that prose. Story 14 (moving this file's `## Shape` text into the
-  binary) stays cheap because it is transcription. Nine stories route to mid,
-  the rest cheap.
-- **The falsification pass is folded in** (`2f51fe9`); `decisions/session-handoff-emission.md`
-  carries the **[veto]** marks. The finding worth carrying: a bare `gate: green`
-  would have emitted a cached verdict whose tree had already moved, so the field
-  renders verdict, cached tree, and staleness together.
-- **The drain ran (`120fff9`, `66991a6`) — `IDEAS.md` is empty.** Four rows
-  landed from it: FT123 (`bench worktree path`/`exec`, which must render
-  `~`-relative paths), FT124 (`bench test`), FT125 (the two reader-slice
-  candidates, merged), and FT126 (`bench roadmap --context` should report the
-  reconcile's workload boundary and a discrepancies block rather than raw
-  fields). FT122 got the row it had been missing.
-- **The last green gate is `4ea4880`**; every commit since is doc-only and
-  landed with plain `git commit`. (Counts and tree hashes are in the header.)
-- **A retired spec cited as `specs/<slug>.md` in `ROADMAP.md` reads as a
-  dangling row.** `roadmapReconcileCounts` treats any such path as a row's spec
-  pointer, so prose evidence names retired specs by bare slug. Cost one
-  follow-up commit on 2026-07-25.
-- `bench structure` reports 17 issues, all pre-existing. Read
-  `projects/benchkit.md`'s cold-session notes before touching `internal/canary` —
-  the nested-run trap deadlocks rather than fails, and this file deliberately
-  does not restate the commands.
+- **FT122 is built and landed green.** All 26 stories, 30 coverage rows, every
+  phase green. The header above is the single source for branch, HEAD, tree
+  state, spec status, and the gate verdict — do not restate those here.
+- **Semantic review has not run.** The next phase is
+  `/bench-review-implementation` against `specs/session-handoff-emission.md`;
+  `/bench-final-check` owns the landing commit and the `Status: implemented`
+  flip. Do not flip that line by hand.
+- **Story 8 was reopened and re-decided mid-build.** The board's `Action` is a
+  prose hint, not a command — most rows read `fix before commit` or
+  `split (craft-seams)` — so the original derivation rendered a hint where the
+  field promises an invocation. The reviewer chose *skip to the first invocable
+  signal*: walk the board in its own severity order, take the first action that
+  is a command, never re-rank. The accepted tradeoff is that a red gate can be
+  skipped over in this field; the header's `Gate:` line carries it regardless.
+- **Two defects came out of driving the command rather than reading it.** A
+  runtime test sliced a subject-reported hash unguarded, which panicked under
+  the canary's stub subject, killed the whole test binary, and left an unrelated
+  fixture reporting `did not bite` — the canary names the fixture that went
+  quiet, not the test that silenced it. And the compound git action
+  `/bench-final-check / push` passed a bare prefix test while being two
+  commands. Both are fixed and both have recorded red signals.
+- **`.bench/learnings.md` carries three open entries** from this build, all
+  rule-shaped, all awaiting a `/bench-what-next` verdict: the canary's panic
+  reporting, the shared-checkout write-delegation, and `bench idea` voiding an
+  in-flight gate verdict.
+- **`bench commit` advises "set them aside" for files outside the named set, and
+  no such route exists.** Parked in `IDEAS.md` (`1da9ad1`). Until it exists, the
+  only exits are naming the file in the commit or reaching for guard-blocked
+  git; name it.
+- **Never mutate the repository while a gate runs** — it cost a full re-run here
+  even though every phase was green. `projects/benchkit.md`'s cold-session notes
+  carry this and the `internal/canary` nested-run trap; read them before touching
+  either, and note that `dist/bench` must be built with `scripts/go-build.sh`.
+- `bench structure` reports 17 issues, all pre-existing.
 
 ## Next command
 
-`/bench-what-next` — the board's leading invocable signal (`drain`).
+`/bench-review-implementation specs/session-handoff-emission.md`
 
 ## Shape
 
