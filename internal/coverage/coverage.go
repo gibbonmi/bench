@@ -1,15 +1,18 @@
 // Package coverage ports `bench coverage`: the acceptance-coverage-map parser the
 // gate's docs layer and the review phase both consume. Extraction mode emits the
 // spec's state and rows as TOON; `--check` validates the map (canonical header,
-// five-cell rows, non-empty cells, in-range story references, historical opt-out).
-// The validation phrasings are load-bearing — downstream consumers match them by
-// substring — so this is the one validator for the convention.
+// five-cell rows, non-empty cells, story references against the exact declared
+// story set, historical opt-out) and requires a map at all unless the spec is
+// marked historical. The validation phrasings are load-bearing — downstream
+// consumers match them by substring — so this is the one validator for the
+// convention.
 package coverage
 
 import (
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -35,11 +38,17 @@ var (
 	storyNumRe = regexp.MustCompile(`^[0-9]+\. `)
 	mapEndRe   = regexp.MustCompile(`^#{2,} `)
 	edgeRe     = regexp.MustCompile(`^[Ee][Dd][Gg][Ee]`)
-	nonDigitRe = regexp.MustCompile(`[^0-9]+`)
 	parenRe    = regexp.MustCompile(`[ \t]*\(.*\)$`)
 	// A story reference: a number, a range (en-dash or hyphen), or a comma list of them.
 	storyRefRe = regexp.MustCompile(`^[0-9]+([ \t]*(–|-)[ \t]*[0-9]+)?([ \t]*,[ \t]*[0-9]+([ \t]*(–|-)[ \t]*[0-9]+)?)*$`)
+	// One comma-separated part of a story reference: a single number, or a range.
+	storyPartRe = regexp.MustCompile(`^([0-9]+)(?:[ \t]*(?:–|-)[ \t]*([0-9]+))?$`)
 )
+
+// historicalMarker is the literal opt-out comment: present anywhere in a spec, it
+// exempts the spec from the coverage-map requirement (a no-map state) and from
+// row validation (a mapped-but-historical state).
+const historicalMarker = "<!-- coverage-map: historical -->"
 
 var fieldNames = [5]string{"story", "behavior", "seam", "red signal", "why it catches the failure"}
 
@@ -49,14 +58,14 @@ type dataRow struct {
 }
 
 // parsed is the result of one scan of a spec: whether the map header was seen, the
-// historical opt-out, whether the parsed header matched the canonical one, the highest
-// story number, and the data rows.
+// historical opt-out, whether the parsed header matched the canonical one, the
+// declared story numbers, and the data rows.
 type parsed struct {
 	seen       bool
 	historical bool
 	gotHeader  bool
 	headerOK   bool
-	maxStory   int
+	storyNums  map[int]bool
 	dataRows   []dataRow
 }
 
@@ -65,7 +74,7 @@ func parse(content []byte) parsed {
 	inStories, inMap := false, false
 	for _, raw := range strings.Split(string(content), "\n") {
 		line := strings.TrimSuffix(raw, "\r")
-		if line == "<!-- coverage-map: historical -->" {
+		if line == historicalMarker {
 			p.historical = true
 		}
 		if line == "## User stories" {
@@ -80,8 +89,11 @@ func parse(content []byte) parsed {
 			if i := strings.IndexByte(num, '.'); i >= 0 {
 				num = num[:i]
 			}
-			if n, err := strconv.Atoi(num); err == nil && n > p.maxStory {
-				p.maxStory = n
+			if n, err := strconv.Atoi(num); err == nil {
+				if p.storyNums == nil {
+					p.storyNums = make(map[int]bool)
+				}
+				p.storyNums[n] = true
 			}
 		}
 		if line == "### Acceptance coverage map" && !p.seen {
@@ -157,10 +169,18 @@ func Rows(p parsed) [][]string {
 	return rows
 }
 
-// Check returns one violation message per problem for a mapped spec; a historical or
-// no-map spec is silent (nil). The phrasings are matched by substring downstream.
+// Check returns one violation message per problem. A historical spec (mapped or
+// not) is silent (nil); an unmapped spec with no historical marker is a violation
+// in itself — an unmapped spec cannot pass the gate's docs layer by having
+// nothing to validate. The phrasings are matched by substring downstream.
 func Check(p parsed) []string {
-	if State(p) != "mapped" {
+	switch State(p) {
+	case "no-map":
+		if p.historical {
+			return nil
+		}
+		return []string{"coverage map missing and spec is not marked historical"}
+	case "historical":
 		return nil
 	}
 	if !p.headerOK {
@@ -185,17 +205,57 @@ func Check(p parsed) []string {
 		if story == "" || edgeRe.MatchString(story) {
 			continue
 		}
-		if storyRefRe.MatchString(story) {
-			for _, tok := range strings.Fields(nonDigitRe.ReplaceAllString(story, " ")) {
-				if n, err := strconv.Atoi(tok); err == nil && n > p.maxStory {
-					v = append(v, fmt.Sprintf("coverage map row %d references story %s but the spec numbers only %d", rn, tok, p.maxStory))
-				}
-			}
-		} else {
+		if !storyRefRe.MatchString(story) {
 			v = append(v, fmt.Sprintf("coverage map row %d has an unrecognized story reference '%s'", rn, story))
+			continue
+		}
+		for _, part := range strings.Split(story, ",") {
+			m := storyPartRe.FindStringSubmatch(trimSpaceTab(part))
+			start, _ := strconv.Atoi(m[1])
+			if m[2] == "" {
+				v = append(v, p.checkStoryMember(rn, start)...)
+				continue
+			}
+			end, _ := strconv.Atoi(m[2])
+			if end < start {
+				v = append(v, fmt.Sprintf("coverage map row %d has a story range with end before start '%s-%s'", rn, m[1], m[2]))
+				continue
+			}
+			v = append(v, p.checkStoryMember(rn, start)...)
+			v = append(v, p.checkStoryMember(rn, end)...)
 		}
 	}
 	return v
+}
+
+// checkStoryMember validates one story number referenced by row rn against the
+// spec's exact declared set — a separate message for 0 (never a valid story
+// number) versus any other non-member, so each failure mode names itself. The
+// non-member message names the declared set rather than a maximum: a spec that
+// skips a number (1, 2, 4) makes "numbers only N" false for a row referencing 3.
+func (p parsed) checkStoryMember(rn, n int) []string {
+	if n == 0 {
+		return []string{fmt.Sprintf("coverage map row %d references story 0, which is not a valid story number", rn)}
+	}
+	if !p.storyNums[n] {
+		return []string{fmt.Sprintf("coverage map row %d references story %d, which the spec does not declare (has: %s)", rn, n, p.declaredStoriesList())}
+	}
+	return nil
+}
+
+// declaredStoriesList renders the spec's declared story numbers in ascending order,
+// as the "has: ..." clause of the non-member violation message.
+func (p parsed) declaredStoriesList() string {
+	nums := make([]int, 0, len(p.storyNums))
+	for n := range p.storyNums {
+		nums = append(nums, n)
+	}
+	sort.Ints(nums)
+	strs := make([]string, len(nums))
+	for i, n := range nums {
+		strs[i] = strconv.Itoa(n)
+	}
+	return strings.Join(strs, ", ")
 }
 
 func trimSpaceTab(s string) string { return strings.Trim(s, " \t") }
@@ -208,6 +268,10 @@ func isDashes(s string) bool {
 	}
 	return true
 }
+
+// checkOKLine is the one construction for a --check pass line: the `ok: ` AXI
+// prefix over a message that names why the check passed, never silence.
+func checkOKLine(msg string) string { return fmt.Sprintf("ok: %s\n", msg) }
 
 // Command implements `bench coverage [--check] <spec.md | slug>`.
 func Command(args []string) (string, int) {
@@ -240,18 +304,20 @@ func Command(args []string) (string, int) {
 	if check {
 		violations := Check(p)
 		if len(violations) == 0 {
-			// A mapped spec with zero violations gets a definitive pass line — silent
-			// success is indistinguishable from a check that produced no output by
-			// accident. A historical or no-map spec has nothing to validate, so it
-			// keeps the AXI empty-state posture (silent, exit 0).
+			// A pass is always a definitive one-line result, never silence: a spec with
+			// zero violations names why — a valid map, or an explicit historical opt-out
+			// — so "nothing to validate" is never mistaken for "nothing printed by
+			// accident". Check returns nil for exactly two cases here: a mapped spec with
+			// no violations, or a historical marker (mapped or not), so the two branches
+			// below are exhaustive.
 			if State(p) == "mapped" {
-				return fmt.Sprintf("ok: coverage map valid — %d row(s)\n", len(p.dataRows)), 0
+				return checkOKLine(fmt.Sprintf("coverage map valid — %d row(s)", len(p.dataRows))), 0
 			}
-			return "", 0
+			return checkOKLine("coverage map historical — validation skipped"), 0
 		}
 		var b strings.Builder
 		for _, viol := range violations {
-			fmt.Fprintln(&b, toon.Errorf(spec+" "+viol, "fix the map or mark it <!-- coverage-map: historical -->"))
+			fmt.Fprintln(&b, toon.Errorf(spec+" "+viol, "fix the map or mark it "+historicalMarker))
 		}
 		return b.String(), 1
 	}

@@ -51,7 +51,7 @@ func TestCheck(t *testing.T) {
 		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr, "coverage map has no data rows"},
 		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr + "| 1 | b | s | r |\n", "coverage map row 1 has 4 cells (want 5)"},
 		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr + "| 1 | b |  | r | w |\n", "coverage map row 1 has an empty 'seam' cell"},
-		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr + "| 9 | b | s | r | w |\n", "references story 9 but the spec numbers only 3"},
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr + "| 9 | b | s | r | w |\n", "references story 9, which the spec does not declare (has: 1, 2, 3)"},
 		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr + "| x | b | s | r | w |\n", "has an unrecognized story reference 'x'"},
 	}
 	for _, c := range cases {

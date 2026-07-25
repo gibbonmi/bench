@@ -7,6 +7,18 @@ import (
 	"testing"
 )
 
+// axiCoverageStories and axiCoverageHeader are the fixture bodies every coverage
+// --check contract test builds a spec from, so the declared story set (1, 2, 3)
+// and the canonical header are asserted from one source rather than re-typed per test.
+// axiCoverageGappedStories declares 1, 2, 4 — a set with a hole below its maximum, so a
+// row referencing story 3 is a number a max-only check would let through but exact-set
+// membership must reject.
+const (
+	axiCoverageStories       = "## User stories\n1. As a, I want b, so c.\n2. As d, I want e, so f.\n3. As g, I want h, so i.\n"
+	axiCoverageGappedStories = "## User stories\n1. As a, I want b, so c.\n2. As d, I want e, so f.\n4. As g, I want h, so i.\n"
+	axiCoverageHeader        = "| story | behavior | seam | red signal | why it catches the failure |\n|---|---|---|---|---|"
+)
+
 func TestAXICoverageContracts(t *testing.T) {
 	t.Parallel()
 	contract.SkipIfSubjectBenchMissing(t)
@@ -119,8 +131,8 @@ func testAXICoverageStateError(t *testing.T) {
 
 func testAXICoverageCheckValidation(t *testing.T) {
 	f := contract.NewFixture(t)
-	stories := "## User stories\n1. As a, I want b, so c.\n2. As d, I want e, so f.\n3. As g, I want h, so i.\n"
-	header := "| story | behavior | seam | red signal | why it catches the failure |\n|---|---|---|---|---|"
+	stories := axiCoverageStories
+	header := axiCoverageHeader
 	f.WriteFile("specs/v.md", "# v\n\n"+stories+"\n### Acceptance coverage map\n"+header+"\n| 1, 2–3 | b | s | r | w |\n")
 
 	out := f.Bench("coverage", "--check", "specs/v.md")
@@ -131,15 +143,20 @@ func testAXICoverageCheckValidation(t *testing.T) {
 	out.RequireExit(0)
 	requireOutputLine(t, out, "ok: coverage map valid — 1 row(s)")
 
+	// A historical spec's pass is also a definitive line, not silence — see
+	// TestAXICoverageHistoricalPasses for the pinned assertion.
 	f.WriteFile("specs/h.md", "# h\n<!-- coverage-map: historical -->\n### Acceptance coverage map\n|bad|\n")
 	out = f.Bench("coverage", "--check", "specs/h.md")
 	out.RequireExit(0)
-	requireNoOutput(t, out)
+	requireOutputLine(t, out, "ok: coverage map historical — validation skipped")
 
+	// An unmapped spec with no historical marker now fails --check outright —
+	// see TestAXICoverageNoMapFails / TestAXICoverageHistoricalPasses for the pair
+	// that pins this rule and its opt-out.
 	f.WriteFile("specs/n.md", "# n\nprose only\n")
 	out = f.Bench("coverage", "--check", "specs/n.md")
-	out.RequireExit(0)
-	requireNoOutput(t, out)
+	out.RequireExit(1)
+	out.RequireContains(out.Stdout, "coverage map missing")
 
 	cases := []struct {
 		name string
@@ -175,7 +192,7 @@ func testAXICoverageCheckValidation(t *testing.T) {
 			name: "story reference beyond numbering",
 			path: "specs/b5.md",
 			body: "# b\n\n" + stories + "\n### Acceptance coverage map\n" + header + "\n| 9 | b | s | r | w |\n",
-			want: "references story 9 but the spec numbers only 3",
+			want: "references story 9, which the spec does not declare (has: 1, 2, 3)",
 		},
 		{
 			name: "unrecognized story reference",
@@ -205,4 +222,83 @@ func testAXICoverageCheckValidation(t *testing.T) {
 	out = f.Bench("coverage", "--check", "specs/b1.md")
 	out.RequireExit(1)
 	requireOutputLine(t, out, "error: specs/b1.md coverage map missing the canonical header — fix the map or mark it <!-- coverage-map: historical -->")
+}
+
+// TestAXICoverageNoMapFails pins story 14: a spec with no acceptance coverage map and
+// no historical marker fails --check. The current implementation treats "nothing to
+// validate" as a pass, which this exit-1 assertion rejects.
+func TestAXICoverageNoMapFails(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	f := contract.NewFixture(t)
+	f.WriteFile("specs/n.md", "# n\nprose only, no map here\n")
+
+	out := f.Bench("coverage", "--check", "specs/n.md")
+
+	out.RequireExit(1)
+	out.RequireContains(out.Stdout, "coverage map missing")
+}
+
+// TestAXICoverageHistoricalPasses pairs with TestAXICoverageNoMapFails: a spec that
+// carries the historical marker but still has no map passes --check. The pass is a
+// definitive one-line result, not silence — a silent empty state is exactly the
+// defect class this spec exists to eliminate, and the historical opt-out is new code
+// that would otherwise reintroduce it.
+func TestAXICoverageHistoricalPasses(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	f := contract.NewFixture(t)
+	f.WriteFile("specs/h.md", "# h\n\n<!-- coverage-map: historical -->\n\nno map here either\n")
+
+	out := f.Bench("coverage", "--check", "specs/h.md")
+
+	out.RequireExit(0)
+	requireOutputLine(t, out, "ok: coverage map historical — validation skipped")
+}
+
+// TestAXICoverageStoryMembership pins story 15: story 0, a reference outside the
+// declared story set, and a reversed range each fail --check with their own message.
+// The non-member case uses axiCoverageGappedStories (1, 2, 4) and references story 3 —
+// a number below the maximum but inside the gap — so the fixture is discriminating: a
+// max-only validator (the prior implementation) would let it through, while only exact
+// set membership rejects it.
+func TestAXICoverageStoryMembership(t *testing.T) {
+	contract.SkipIfSubjectBenchMissing(t)
+	cases := []struct {
+		name, path, stories, storyCell, want string
+	}{
+		{"story zero", "specs/m0.md", axiCoverageStories, "0", "references story 0, which is not a valid story number"},
+		{"non-member story", "specs/m1.md", axiCoverageGappedStories, "3", "references story 3, which the spec does not declare (has: 1, 2, 4)"},
+		{"reversed range", "specs/m2.md", axiCoverageStories, "3-1", "has a story range with end before start '3-1'"},
+	}
+	for _, c := range cases {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			f := contract.NewFixture(t)
+			f.WriteFile(c.path, "# b\n\n"+c.stories+"\n### Acceptance coverage map\n"+axiCoverageHeader+
+				"\n| "+c.storyCell+" | b | s | r | w |\n")
+
+			out := f.Bench("coverage", "--check", c.path)
+
+			out.RequireExit(1)
+			out.RequireContains(out.Stdout, c.want)
+		})
+	}
+}
+
+// TestAXICoverageValidStoryRefs pairs with TestAXICoverageStoryMembership: a valid
+// comma list and a valid forward range still pass, forbidding a validator so strict it
+// rejects legitimate multi-story rows.
+func TestAXICoverageValidStoryRefs(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	f := contract.NewFixture(t)
+	f.WriteFile("specs/valid.md", "# v\n\n"+axiCoverageStories+"\n### Acceptance coverage map\n"+axiCoverageHeader+
+		"\n| 1, 2-3 | b | s | r | w |\n")
+
+	out := f.Bench("coverage", "--check", "specs/valid.md")
+
+	out.RequireExit(0)
+	out.RequireContains(out.Stdout, "ok: coverage map valid")
 }

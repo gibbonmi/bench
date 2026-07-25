@@ -131,15 +131,22 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 }
 
 func TestCoverageMapValidationFixtureBite(t *testing.T) {
-	fixture := "broken-coverage-map"
-	root := materializeConformanceFixture(t, fixture)
-	h := NewHarness(t)
-	expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
+	fixtures := []string{
+		"broken-coverage-map",
+		"no-map-not-historical",
+	}
+	for _, fixture := range fixtures {
+		t.Run(fixture, func(t *testing.T) {
+			root := materializeConformanceFixture(t, fixture)
+			h := NewHarness(t)
+			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
 
-	diags := RunConformance(root, h.KitRoot)
+			diags := RunConformance(root, h.KitRoot)
 
-	if !containsDiagnostic(diags, expect) {
-		t.Fatalf("%s did not bite under Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diags, "\n"))
+			if !containsDiagnostic(diags, expect) {
+				t.Fatalf("%s did not bite under Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diags, "\n"))
+			}
+		})
 	}
 }
 
