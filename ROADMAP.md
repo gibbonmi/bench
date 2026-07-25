@@ -126,6 +126,14 @@ and inventory omissions, retire obsolete historical reports, dogfood
 first-party authoring guidance, and pin normative external references. Rewrite ADRs and README claims to the behavior proved by artifact
 contracts, including the actual canary phase selection and npm prepare shape.
 
+The frontmatter half now has a demonstrated bite. `craft-line`'s description
+carried an unquoted ` #`, so YAML read the rest as a comment and two of its
+three trigger clauses never reached any harness — a skill silently half-armed,
+fixed 2026-07-25. The gate greps frontmatter rather than parsing it, so
+nothing saw it. A real parse closes this class; a narrower check rejecting an
+unquoted ` #` in any skill frontmatter description is the cheap version if the
+parse proves too large a step.
+
 Sources: `RR:S-06`, `RR:S-07`, `RR:S-08`, `RR:S-10`, `RR:S-11`, `RR:S-12`,
 `RR:S-13`, `RR:S-14`, `RR:S-15`, `RR:S-16`, `RR:S-17`, `RR:S-18`; `RC:M-05`.
 
@@ -219,6 +227,38 @@ under the `craft-cli` standards the rest of the surface already follows. This
 is a reader over `go test`, not a second oracle: the gate stays the only thing
 that calls work done.
 
+**FT128 (MEDIUM, evidence supplied) — the agent-line guard cannot see a fork's
+real model.** `check-agent-line` decides from the delegation envelope's
+`resolvedModel`/`model` field alone (`internal/lines/lines.go`), so a
+fork-type delegation — which inherits the parent's model and ignores any
+`model` override — passes the guard on a declared cheap alias while actually
+running the top tier. That is exactly the silent escalation invariant 2
+forbids and the guard exists to block, and it is the one delegation shape the
+guard grades backwards. Verified against the tree 2026-07-25: nothing in the
+guard reads the subagent type. The fix is to make the envelope's delegation
+type part of the verdict — deny a fork whose declared alias is not the
+session's own tier — which first needs the type's field name pinned from a
+real envelope rather than assumed. Enforcement stays exact-string with no
+provider lookup, per FT97.
+
+**FT129 (MEDIUM) — a panic in the inner test binary reads as a canary that
+stopped biting.** FT122's first gate went red as `canary
+'worktree-lifecycle-safety-bypassed' did not bite`, naming an untouched and
+correct fixture. The real cause was a new runtime contract test that sliced a
+subject-reported hash without a length guard: against the fixture's stub
+subject the hash was empty, the test panicked, the whole
+`internal/contract/runtime` binary aborted, and the contract the fixture greps
+for never ran. A check that never got to bite is not a check that stopped
+biting, and reporting the two identically points every diagnosis at the wrong
+file — this one cost a full canary sweep at HEAD just to establish the red was
+ours. Teach the canary to detect a panic or non-test abort in the inner output
+and report it as its own failure class, naming the panicking test. A second
+arm to weigh rather than assume: a conformance check that no
+`internal/contract/runtime` test slices subject-reported output without a
+length guard, since the canary subject is always a stub and any such slice is
+a latent tripwire-disarming panic. Source: the 2026-07-25 learnings entry,
+verdicted in this drain.
+
 **FT92 (LOW) — attributed subject drift and consumer-shipped input hygiene.**
 "gate subject changed during execution" names no component; the drift message
 should say what moved (the tree hash versus which declared manifest path) so
@@ -250,6 +290,22 @@ load-sensitive contract tests (cancellation timing, tempdir cleanup, release
 reproducibility probe) that all pass serially, so delegates stop at "diff ready,
 focused tests green" and the coordinator runs `bench commit` per worktree one at
 a time. Kit edit under the `craft-synthesis` discipline.
+
+The same guidance owes an answer to the case where no worktree can hold the
+work. `/bench-implement-spec` requires a write subagent and `craft-delegate`
+requires isolation for one, but FT122's ~1500-line build sat uncommitted and
+largely untracked in the main checkout with the gate red, so it could not be
+committed first and a worktree branched from HEAD would not have contained the
+code under repair at all. The session charged the delegate against the main
+checkout with a file allowlist, no commit authority, and a `git status` check
+on return, and recorded the call as unresolved. Isolation exists so stray edits
+cannot reach reviewer-owned files and so a mixed `git status` cannot make a
+done-claim unverifiable; with exactly one writer and a named allowlist both
+risks are bounded, but the skill states the rule with no exception. Write the
+clause either way — sanction the shared checkout under those two conditions, or
+name the route that gets uncommitted work into a worktree first — because the
+current silence leaves each session to improvise it. Source: the 2026-07-25
+learnings entry, verdicted in this drain.
 
 **FT97 (LOW, evidence supplied) — harness-native agent-line denial.** The
 agent-line deny message single-sources its bound-tiers listing, which leads
@@ -443,11 +499,20 @@ conditions that exposed it before spending another cycle on a stand-in. Kit
 edit under the `craft-synthesis` discipline. Source: the 2026-07-23 learnings
 entry, verdicted in this drain.
 
-**FT113 (LOW) — `session-handoff.md` is capture, not a gate-staling change.** A
-handoff rewrite is doc-only capture, yet it currently marks the gate
-plain-stale, so a phase close costs the next commit a full 10–15min re-run.
-`ROADMAP.md` and `IDEAS.md` are already on `status.captureOnlyStalePaths`; add
-`session-handoff.md`. Observed 2026-07-23 right after the FT109 close.
+**FT113 (LOW) — the handoff's own write pollutes two ambient signals.** A
+handoff rewrite is doc-only capture, but it is a tracked write, so it shows up
+in the very signals a resuming session reads. Two faces, one owner
+(`internal/status`), so they ship together. The gate face: the rewrite marks
+the gate plain-stale, costing the next commit a full 10–15min re-run;
+`ROADMAP.md` and `IDEAS.md` are already on `status.captureOnlyStalePaths`, so
+add `session-handoff.md`. Observed 2026-07-23 right after the FT109 close. The
+board face: `bench handoff` derives its Next command from `status.Signals`,
+which counts the handoff's own dirty path, so the board a session reads is not
+the tree as the reviewer left it and story 18's byte-identical guarantee cannot
+hold on a tracked repo (FT122 review finding, 2026-07-25). The FT122 build
+already carries a bespoke subtraction for the dirty-path *count*
+(`handoff.handoffIsDirty`); a path-exclusion option on the status query would
+single-source that and cover the Next derivation too.
 
 **FT114 (LOW) — mutation-probe revert versus `block-dangerous-git`.**
 Mutation-testing — deliberately weakening an implementation to prove a check
@@ -560,8 +625,9 @@ justification but not a seam.
 where the drain needs verdicts.** `/bench-what-next` step 1 orders every row
 verified against the tree, and the snapshot is declared its complete local
 evidence — but two things the reconcile depends on are not in it, so each run
-re-derives them by hand (observed this drain, 2026-07-25). First, the
-workload boundary: with 39 rows, "verify every row" is tractable only by
+re-derives them by hand (observed 2026-07-25, and again in the second drain
+that same day, which opened with the same hand-run `git log`). First, the
+workload boundary: with 40 rows, "verify every row" is tractable only by
 knowing what moved, which today means a hand-run `git log` to establish that
 nothing but docs and specs landed since the last drain. Emit it —
 last-drain commit, commits since, and which of those touched code — so the
@@ -580,6 +646,35 @@ Not carried here: verifying what a row *claims* about the code
 per-row semantic checking with no mechanical source, and it is the same problem
 FT106 solves for docs — extend that probe to row bodies when it ships rather
 than building a second mechanism.
+
+**FT127 (LOW, evidence supplied) — `bench commit`'s set-aside advice points at
+nothing.** The refusal reads "working-tree files outside the named set block
+the commit — name them, or set them aside", but no set-aside route exists in
+the CLI, so an agent's only real exits are committing an unrelated file into a
+scoped commit or reaching for `block-dangerous-git`-blocked plain git. Either
+build the route or reword the advice; building it is the better answer because
+the need is real and recurring. The candidate design is a preserve-then-discard
+set-aside modelled on `bench worktree clean`'s existing contract — recovery ref
+written first, exact fingerprint required to apply, refuses if the content
+moved — so the operation earns its authority by being recoverable rather than
+by an exemption to the guard. Note the tension with FT98, which is still
+looking for a sanctioned discard path on the recovery side; whichever ships
+first should not invent a second discard semantics.
+
+**FT130 (LOW) — parking an idea mid-gate silently voids the run.** During
+FT122's gated commit a session answered a reviewer question and ran `bench
+idea` to park the tangent, which wrote `IDEAS.md` inside the gate's window;
+every phase came back green and the commit was still refused with "gate subject
+changed during execution", costing a full ~15-minute re-run. Two standing rules
+collide: `projects/benchkit.md` forbids mutating the repository while a gate
+runs, and `.bench/BENCH.md`'s Capture section says to park a tangent the moment
+it appears. Name the collision where the capture rule lives — parking defers
+while a gate or gated commit is in flight — but prefer the mechanical fix,
+which makes the prose unnecessary: `bench idea` can see the subject lock, so it
+can queue the line and write it when the run finishes, or refuse with that
+reason rather than silently voiding the verdict. Deciding between queue and
+refuse is the row's real work. Kit edit under the `craft-synthesis` discipline.
+Source: the 2026-07-25 learnings entry, verdicted in this drain.
 
 ## Release and bank reassessment gate
 
@@ -653,6 +748,10 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
    repository facts. The highest bank-track row still open: FT91's
    canary-budget arm shipped 2026-07-24, so gate contention is no longer the
    unaddressed cost on every landing.
-2. `/bench-write-spec` — FT71, versioned local shift evidence. The other HIGH
+2. `/bench-write-spec` — FT128, the agent-line guard cannot see a fork's real
+   model. Small, and it closes a hole in an enforcement layer rather than
+   adding one — the guard currently grades the one delegation shape that
+   defeats it.
+3. `/bench-write-spec` — FT71, versioned local shift evidence. The other HIGH
    bank-track row; the repository-controlled bank evidence requirement makes it
    active.
