@@ -541,7 +541,7 @@ under the `craft-synthesis` discipline.
 the file.** Two existing readers make a session pull a whole file to use one
 part of it. `bench spec show <slug> [--section stories|coverage|status]` — a
 section-scoped spec reader; ~1 MB of spec `Read`s in the week of 2026-07-19,
-with `specs/minimal-subprocess-data-exposure.md` alone read 15 times for 450 KB.
+with the `minimal-subprocess-data-exposure` spec alone read 15 times for 450 KB.
 `bench outline --symbol <name>` — print a symbol's body with context instead of
 guessing line ranges; 1247 manual `sed -n`/`cat -n`/`head` slices of source
 files (2.28 MB) over the same week, and `bench outline` locates seams today but
