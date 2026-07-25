@@ -28,11 +28,10 @@ below is executable from a cold start; no conversation history is needed.
   blockers were degenerate-implementation holes — one-fixture rows a hardcoded
   constant would pass, and a `## Shape` row that rewarded preserve-and-append.
   `decisions/session-handoff-emission.md` carries the **[veto]** marks.
-- **Five unpushed commits, and the gate has not run on this tree.**
-  `99139d0` (capture), `faaca55` (the spec and map), `849ff72` (ADR 0009),
-  `8cbb34a` and this one (handoff rewrites), plus `2f51fe9` (the amendment). All
-  are doc-only and landed with plain `git commit`, so the last green gate is
-  still the one at `4ea4880`. Pushing is the reviewer's call.
+- **Everything is pushed, and the gate has not run on this tree.** The six
+  commits from `99139d0` through `6559953` are all doc-only and landed with
+  plain `git commit`, so the last green gate is still the one at `4ea4880`. The
+  build's first gate run will be the first real verdict on this tree.
 - **Five CLI candidates are parked in `IDEAS.md`, awaiting a drain.** FT122 came
   out of that survey; the other four — `bench worktree path` / `exec` (which
   must render `~`-relative paths for cross-machine portability), `bench test`,
