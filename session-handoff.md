@@ -2,9 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `5b2955b`, 11 dirty paths, 4 unpushed commits
+Branch: `main` — HEAD `fb97751`, 12 dirty paths, 5 unpushed commits
 Spec: `specs/session-handoff-emission.md` (Status: staged)
-Gate: green at `5b1cc38` — stale, work tree `53c6b1d`
+Gate: red at `ee50420` — current
 
 ## State
 
@@ -57,7 +57,7 @@ Gate: green at `5b1cc38` — stale, work tree `53c6b1d`
 
 ## Next command
 
-`/bench-implement-spec specs/session-handoff-emission.md`
+`/bench-what-next` — the board's leading invocable signal (`drain`).
 
 ## Shape
 

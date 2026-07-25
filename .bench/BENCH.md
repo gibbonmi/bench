@@ -57,8 +57,9 @@ Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
 
 - Adoption and setup: `bench setup` (the one-command adoption route), `bench link`, `bench init`, `bench unlink`, `bench doctor`, `bench repair` (`--prune` removes stale binary-cache entries),
   `bench upgrade` (`--check` plans without writing, `--force` accepts a downgrade).
-- Ambient context and capture: `bench status`, `bench commands --brief`, `bench dashboard`, `bench idea`,
-  `bench roadmap`, `bench learnings`, `bench maps`.
+- Ambient context and capture: `bench status`, `bench handoff` (prints the cold-start pin
+  block and rewrites `session-handoff.md`), `bench commands --brief`, `bench dashboard`,
+  `bench idea`, `bench roadmap`, `bench learnings`, `bench maps`.
 - Oracle and diagnostics: `bench gate`, `bench gate pin`, `bench canary`, `bench structure`,
   `bench guards`, `bench diff`, `bench coverage`, `bench outline`, `bench models`, `bench version`.
 - Work execution: `bench worktree`, `bench shift`, and path-scoped `bench commit
