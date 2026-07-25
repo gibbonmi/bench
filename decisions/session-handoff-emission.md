@@ -7,11 +7,16 @@ fresh session needs to resume — from the tree instead of a session
 reconstructing them by hand, and lands them in both phase-close forms
 `AGENTS.md` allows: the copy-paste continuation prompt and `session-handoff.md`.
 Source: `IDEAS.md` 2026-07-24, from a transcript survey of 2026-07-19..25 that
-counted 13 hand-written fresh-session prompts in six days.
+counted 13 reviewer requests for a fresh-session prompt in six days.
 
 Closed 2026-07-25 in the same session as the spec it feeds, under the
 reviewer-closed path in `/bench-write-spec`'s entry contract. Every fork below
 was put to the reviewer and answered; contestable calls are marked **[veto]**.
+
+Amended 2026-07-25 after a falsification pass on the compiled spec: #7 records
+the gate verdict, which the spec had added without a decision behind it, and
+Handoff items 1, 4, and 6 and the Out of scope list absorb the pass's other
+confirmed findings.
 
 ## #1: What does the command produce?
 
@@ -153,6 +158,37 @@ Nothing about a directory layout is a kit constant: a checkout at
 identity anchor covers — where path and identity disagree, identity wins, the
 same precedence `AGENTS.md` already sets between the handoff and the tree.
 
+## #7: Does the block carry the gate verdict, and how?
+
+Blocked by: #1
+Type: Reviewer addition
+
+### Question
+
+A cold session wants to know whether the tree it inherited was green. Is the
+gate verdict part of the pin block, and what stops it from asserting a verdict
+that no longer describes the tree?
+
+### Answer
+
+Yes, rendered stale-aware and never bare. The evidence for including it is
+direct: the session that wrote this map hand-wrote exactly this fact into
+`session-handoff.md` — the last green gate and the fact that no gate had run on
+the current tree — and it was among the more load-bearing lines in the document.
+
+The field renders the verdict, the tree it was computed on, and its staleness
+together (`gate: green at 4ea4880 — stale, work tree e18cb28`), or states that
+no gate has run. `internal/status.GateVerdict` already returns `Present`,
+`Stale`, `CachedTree`, and `WorkTree`, so the honest rendering needs no new
+derivation. A bare `gate: green` is forbidden: a cached verdict presented
+without its tree is precisely the confident-but-wrong pin block this whole
+capability exists to prevent, and it would reproduce the remembered-not-computed
+defect item 9 warns about.
+
+This decision was added after the map closed, on the reviewer's approval,
+because the compiled spec had introduced the field with no decision behind it.
+It is recorded here rather than left in the spec so the map stays the source.
+
 ## Not yet specified
 
 - Whether the pin block gains a machine-readable (TOON) form for other tooling
@@ -171,6 +207,15 @@ same precedence `AGENTS.md` already sets between the handoff and the tree.
 - Harnesses beyond `claude` and `codex`.
 - Committing the handoff. The staleness row resets when the rewrite lands in a
   commit, which stays the reviewer's call and the existing commit path's job.
+- Concurrent invocations racing on the same file. The working agreement already
+  routes a second writer to a `bench worktree`, and the working-tree tripwire
+  that catches concurrent writers is FT91's; duplicating it here would be a
+  second source for one enforcement.
+- Symlinked repository roots whose resolved path differs from what the git root
+  reports. The path is a hint with identity as the anchor (#6), so a divergence
+  is cosmetic rather than a wrong fact.
+- Interpreting the contents of `## State`. It is preserved verbatim, so prose
+  inside it that resembles a generated section is never parsed or acted on.
 
 ## Handoff
 
@@ -178,9 +223,10 @@ same precedence `AGENTS.md` already sets between the handoff and the tree.
    collection, section splitting, rendering, and the write. It composes
    `internal/git` (identity, branch, HEAD, dirty, unpushed), `internal/spec`
    (`Facts` for staged spec path and Status), and `internal/status` (the derived
-   next action). `internal/status` keeps sole ownership of staleness detection —
-   this command does not re-derive it. `bin/bench.sh` gains one
-   `handoff) route_porcelain "$@" ;;` line.
+   next action, and `GateVerdict` for the stale-aware gate field of #7).
+   `internal/status` keeps sole ownership of staleness detection — this command
+   does not re-derive it, for either the handoff's age or the gate's.
+   `bin/bench.sh` gains one `handoff) route_porcelain "$@" ;;` line.
 2. **Contracts.** Bare `bench handoff` writes the file and prints the block,
    exit 0. Missing file → scaffold, exit 0. File present without `## State` →
    exit non-zero, tree unchanged, message names the section. `--harness codex`
@@ -194,23 +240,41 @@ same precedence `AGENTS.md` already sets between the handoff and the tree.
    porcelain command. The harness translation is a single-sourced table, not a
    conditional at each call site.
 4. **Black-box assertables.** A fixture repo with a handoff whose `## State`
-   carries distinctive prose: after `bench handoff`, that prose is byte-identical
-   and `## Shape` matches the kit's current text. A fixture with no
-   `## State` heading: exit non-zero and the file's bytes unchanged. No file:
-   skeleton exists with an empty State. `--harness codex` output contains
-   `$bench-` and no `/bench-`; the default contains `/bench-` and no `$bench-`.
-   A repo checked out under a non-`workspace` path renders that path, proving no
-   layout constant. A repo whose root is outside `$HOME` renders absolute, not
-   `~`. Two consecutive runs produce identical bytes. A staged spec is named
-   with its Status; no staged spec says so. `--next` appears verbatim.
+   carries distinctive prose: after `bench handoff`, that prose is byte-identical,
+   `## Shape` matches the kit's current text, **and the superseded Shape text is
+   absent** — a regeneration that appends while preserving the stale copy must
+   fail. A fixture with no `## State` heading: exit non-zero and the file's bytes
+   unchanged. No file: skeleton exists with an empty State. `--harness codex`
+   output contains `$bench-` and no `/bench-`; the default contains `/bench-` and
+   no `$bench-`. A repo checked out under a non-`workspace` path renders that
+   path **in the command's own output**, proving no layout constant; a repo whose
+   root is outside `$HOME` renders absolute, not `~`. Unit tests over the path
+   transformation are an addition to that end-to-end assertion, never a
+   replacement — a correct helper the command never calls is the failure they
+   would miss, and the same holds for the section splitter. Two consecutive runs
+   produce identical bytes on **both** sinks, from a fixture whose `## State` is
+   non-empty, so the run also proves the command can re-parse its own output. A
+   staged spec is named with its Status; no staged spec says so. `--next` appears
+   verbatim **and the derived line does not**. The gate field carries its tree and
+   staleness, never a bare verdict.
+
+   Every assertable above is proved against at least two fixtures differing in
+   the value asserted, wherever one fixture would let a hardcoded constant pass:
+   two remotes, a dirty-and-unpushed tree against a clean one, two distinct spec
+   `Status:` values, and two board states whose leading signal differs. A
+   one-fixture assertion of a derived value grades nothing.
 5. **Gate attachment.** Existing runtime contract phase hosts the CLI behavior
    (this is a porcelain command with a fixture repo, the shape
    `internal/contract/runtime` already runs). Conformance hosts one check: the
    `## Shape` text the command emits is the single source, so no other kit file
    restates it. Unit tests in `internal/handoff` cover section splitting and
    `~` rendering.
-6. **Hostile-input owners.** Repeated or unknown flags → the shared arg-grammar
-   helper (FT87 #7). A handoff with two `## State` headings, or one inside a
+6. **Hostile-input owners.** Repeated or unknown flag *names* → the shared
+   arg-grammar helper (FT87 #7). An unknown `--harness` *value* → `internal/handoff`
+   itself, rendering through `toon.Usage`: the shared helper validates flag
+   spelling, repetition, and arity but accepts any value for a declared
+   value-taking flag, so it cannot own this and the spec must not assign it there.
+   A handoff with two `## State` headings, or one inside a
    fenced code block → the section splitter, which fails closed rather than
    picking one. Detached HEAD, no commits yet, no `origin` remote → fact
    collection, each rendering an explicit unknown rather than an empty field.
