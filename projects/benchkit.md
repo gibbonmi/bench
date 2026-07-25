@@ -107,6 +107,18 @@ coverage map; a class skipped here returns as a regression.
 - paths and directory names containing spaces or glob characters
 - control bytes (ESC, BEL) in git-sourced text — commit subjects, branch names,
   paths — which `toon.Table` refuses rather than renders
+- control bytes a sink *permits* but cannot survive: `toon.Representable` allows
+  tab, newline, and return because the encoder escapes them, so a line-structured
+  markdown or single-line sink borrowing that predicate accepts a value that
+  splits its own field. Assert the permitted bytes, not only the refused ones —
+  a test that exercises only what the predicate rejects proves nothing about the
+  half that reaches the document
+- a command whose own write changes a fact it reports: an artifact-rewriting
+  command that also states tree cleanliness, staleness, or a derived next step
+  falsifies its own output the moment it lands. Assert repeated application in
+  the *tracked* configuration, and decide per field whether it excludes its own
+  write or states the post-write truth — an untracked fixture holds the tree
+  still and passes either way
 - hand-edited files whose last line lacks a trailing newline
 - absent file vs present-but-empty file (distinct behaviors, both asserted)
 - special files in script-discovery paths (FIFOs, devices, sockets) must be

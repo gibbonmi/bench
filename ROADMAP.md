@@ -20,19 +20,6 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT122 (MEDIUM, in flight — spec `specs/session-handoff-emission.md` staged,
-build uncommitted) — `bench handoff`, the deterministic cold-session pin
-block.** Sessions hand-reconstruct the same continuation prompt every phase
-close — repository, branch, HEAD, spec path and `Status`, gate verdict,
-unpushed count, closed decisions, next phase command — and `bench status`
-already computes handoff staleness but cannot emit the artifact. Emit it, with
-`--harness claude|codex` translating phase names between the `/bench-*` and
-`$bench-*` forms so the recommendation lands on a key the reading harness
-actually has. Evidence: 13 hand-written fresh-session prompts in the week of
-2026-07-19. The row is listed here because the spec was staged straight from
-the parked idea without passing through a drain; it leaves at spec-retire like
-any other.
-
 **FT86 (HIGH on the bank track; MEDIUM otherwise) — fail-closed control records
 and single-sourced repository facts.** Coverage validation requires a map or
 explicit historical marker and validates exact positive story membership and
@@ -662,15 +649,10 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT122, `specs/session-handoff-emission.md`. The
-   spec is staged and an uncommitted build is already in the tree
-   (`internal/handoff/` plus its runtime contracts), so finishing it comes
-   before starting anything else: a second diff on this tree would make the
-   gate answer for two changes at once.
-2. `/bench-write-spec` — FT86, fail-closed control records and single-sourced
+1. `/bench-write-spec` — FT86, fail-closed control records and single-sourced
    repository facts. The highest bank-track row still open: FT91's
    canary-budget arm shipped 2026-07-24, so gate contention is no longer the
    unaddressed cost on every landing.
-3. `/bench-write-spec` — FT71, versioned local shift evidence. The other HIGH
+2. `/bench-write-spec` — FT71, versioned local shift evidence. The other HIGH
    bank-track row; the repository-controlled bank evidence requirement makes it
    active.
