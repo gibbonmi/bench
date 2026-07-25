@@ -1,0 +1,3 @@
+[
+  {"path":"internal/canary/canary.go","old":"const PhaseEnv = \"BENCH_CANARY_PHASE\"\n","new":"const PhaseEnv = \"BENCH_CANARY_PHASE\"\n\nconst duplicateCanaryInnerWidth = 2\n"}
+]

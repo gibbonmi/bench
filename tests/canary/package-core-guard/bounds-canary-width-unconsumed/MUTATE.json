@@ -1,0 +1,5 @@
+[
+  {"path":"internal/canary/canary.go","old":"\t\"github.com/gibbonmi/bench/internal/bounds\"\n","new":""},
+  {"path":"internal/canary/canary.go","old":"\tworkers := budget / bounds.CanaryInnerWidth\n","new":"\tworkers := budget / 2\n"},
+  {"path":"internal/canary/canary.go","old":"fmt.Sprintf(\"GOMAXPROCS=%d\", bounds.CanaryInnerWidth)","new":"fmt.Sprintf(\"GOMAXPROCS=%d\", 2)"}
+]

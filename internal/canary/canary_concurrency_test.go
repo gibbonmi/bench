@@ -5,17 +5,19 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
 )
 
 func TestSweepRunsFixturesConcurrently(t *testing.T) {
-	if runtime.NumCPU() < 2 {
-		capability.Capability(t, capability.CPU, "NumCPU=1 makes overlap impossible by policy")
+	if bound := fixtureWorkers(runtime.GOMAXPROCS(0), 2); bound < 2 {
+		capability.Capability(t, capability.CPU, fmt.Sprintf("derived worker bound %d makes overlap impossible by policy", bound))
 	}
 	root := t.TempDir()
 	for _, name := range []string{"a", "b"} {
@@ -58,18 +60,21 @@ func TestSweepRunsFixturesConcurrently(t *testing.T) {
 	}
 }
 
-func TestSweepBoundsFixtureConcurrencyAtNumCPU(t *testing.T) {
+func TestSweepBoundsFixtureConcurrencyAtDerivedWorkerBound(t *testing.T) {
 	root := t.TempDir()
-	fixtureCount := runtime.NumCPU() + 3
+	budget := runtime.GOMAXPROCS(0)
+	fixtureCount := budget + 3
 	for i := 0; i < fixtureCount; i++ {
 		name := fmt.Sprintf("fx-%02d", i)
 		fixture := canaryFixture(root, "test-family", name)
 		mkdir(t, filepath.Join(fixture, "files"))
 		write(t, filepath.Join(fixture, "EXPECT"), "target-"+name+"\n")
 	}
+	bound := fixtureWorkers(budget, fixtureCount)
 
 	release := make(chan struct{})
-	var releaseOnce sync.Once
+	reachedBound := make(chan struct{})
+	var reachedOnce sync.Once
 	var mu sync.Mutex
 	inFlight := 0
 	highWater := 0
@@ -82,8 +87,8 @@ func TestSweepBoundsFixtureConcurrencyAtNumCPU(t *testing.T) {
 		if inFlight > highWater {
 			highWater = inFlight
 		}
-		if inFlight == runtime.NumCPU() {
-			releaseOnce.Do(func() { close(release) })
+		if inFlight == bound {
+			reachedOnce.Do(func() { close(reachedBound) })
 		}
 		mu.Unlock()
 		<-release
@@ -93,11 +98,26 @@ func TestSweepBoundsFixtureConcurrencyAtNumCPU(t *testing.T) {
 		return RunResult{ExitCode: 1, Output: "target-" + filepath.Base(call.FixtureDir) + "\n"}
 	}
 
+	// A worker must not both signal reaching the bound and block on the settle,
+	// so the settle-and-release lives on its own goroutine. A budget mismatch
+	// between this test's GOMAXPROCS read and runFixtures' would otherwise leave
+	// every worker blocked on <-release forever; the timeout turns that into a
+	// reported failure instead of a hang.
+	go func() {
+		select {
+		case <-reachedBound:
+			time.Sleep(150 * time.Millisecond)
+		case <-time.After(2 * time.Second):
+			t.Errorf("in-flight count never reached the derived bound %d", bound)
+		}
+		close(release)
+	}()
+
 	if err := Sweep(root, runner); err != nil {
 		t.Fatalf("Sweep err = %v", err)
 	}
-	if highWater > runtime.NumCPU() {
-		t.Fatalf("fixture concurrency high-water = %d, want <= NumCPU %d", highWater, runtime.NumCPU())
+	if highWater != bound {
+		t.Fatalf("fixture concurrency high-water = %d, want == derived bound %d", highWater, bound)
 	}
 }
 
@@ -130,8 +150,8 @@ func TestSweepCompletesBaselineBeforeStartingFixtures(t *testing.T) {
 }
 
 func TestSweepReportsErrorsInSortedFixtureOrder(t *testing.T) {
-	if runtime.NumCPU() < 2 {
-		capability.Capability(t, capability.CPU, "NumCPU=1 makes reverse completion impossible by policy")
+	if bound := fixtureWorkers(runtime.GOMAXPROCS(0), 2); bound < 2 {
+		capability.Capability(t, capability.CPU, fmt.Sprintf("derived worker bound %d makes reverse completion impossible by policy", bound))
 	}
 	root := t.TempDir()
 	for _, name := range []string{"alpha", "bravo"} {
@@ -238,6 +258,131 @@ func assertDirEmpty(t *testing.T, path string) {
 			names = append(names, entry.Name())
 		}
 		t.Fatalf("temporary entries left behind: %v", names)
+	}
+}
+
+func TestFixtureWorkers(t *testing.T) {
+	tests := []struct {
+		name         string
+		budget       int
+		fixtureCount int
+		want         int
+	}{
+		{"negative budget floors at one", -4, 1000, 1},
+		{"budget 0 floors at one", 0, 1000, 1},
+		{"budget 1 floors at one", 1, 1000, 1},
+		{"budget 2 divides evenly", 2, 1000, 1},
+		{"budget 3 floors the division", 3, 1000, 1},
+		{"budget 16 divides by the width", 16, 1000, 8},
+		{"fixture count 1 caps at one", 16, 1, 1},
+		{"fixture count 3 caps at three", 16, 3, 3},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := fixtureWorkers(tt.budget, tt.fixtureCount)
+			if got != tt.want {
+				t.Fatalf("fixtureWorkers(%d, %d) = %d, want %d", tt.budget, tt.fixtureCount, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSweepPinsSingleGOMAXPROCSInInnerEnv(t *testing.T) {
+	tests := []struct {
+		name string
+		val  string
+	}{
+		{"present", "32"},
+		{"present but empty", ""},
+		{"non-numeric", "abc"},
+		{"zero", "0"},
+		{"negative", "-1"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("GOMAXPROCS", tt.val)
+			assertSweepPinsGOMAXPROCS(t)
+		})
+	}
+	t.Run("unset", func(t *testing.T) {
+		t.Setenv("GOMAXPROCS", "32")
+		if err := os.Unsetenv("GOMAXPROCS"); err != nil {
+			t.Fatal(err)
+		}
+		if _, ok := os.LookupEnv("GOMAXPROCS"); ok {
+			t.Fatal("GOMAXPROCS still present in the environment after Unsetenv")
+		}
+		assertSweepPinsGOMAXPROCS(t)
+	})
+}
+
+func assertSweepPinsGOMAXPROCS(t *testing.T) {
+	t.Helper()
+	outerVal, outerOK := os.LookupEnv("GOMAXPROCS")
+	outerRuntime := runtime.GOMAXPROCS(0)
+
+	root := t.TempDir()
+	fixture := canaryFixture(root, "test-family", "only")
+	mkdir(t, filepath.Join(fixture, "files"))
+	write(t, filepath.Join(fixture, "EXPECT"), "target-only\n")
+
+	var mu sync.Mutex
+	var calls []RunCall
+	runner := func(call RunCall) RunResult {
+		mu.Lock()
+		calls = append(calls, call)
+		mu.Unlock()
+		if call.FixtureDir == "" {
+			return RunResult{ExitCode: 1, Output: "baseline\n"}
+		}
+		return RunResult{ExitCode: 1, Output: "target-only\n"}
+	}
+
+	if err := Sweep(root, runner); err != nil {
+		t.Fatalf("Sweep err = %v", err)
+	}
+
+	if gotVal, gotOK := os.LookupEnv("GOMAXPROCS"); gotOK != outerOK || gotVal != outerVal {
+		t.Fatalf("outer GOMAXPROCS env = (%q, %v), want (%q, %v) unchanged by Sweep", gotVal, gotOK, outerVal, outerOK)
+	}
+	if got := runtime.GOMAXPROCS(0); got != outerRuntime {
+		t.Fatalf("outer runtime.GOMAXPROCS(0) = %d, want %d unchanged by Sweep", got, outerRuntime)
+	}
+
+	if len(calls) != 2 {
+		t.Fatalf("recorded %d calls, want 2 (baseline + one fixture)", len(calls))
+	}
+
+	baselineCall, fixtureCall := calls[0], calls[1]
+	if baselineCall.FixtureDir != "" {
+		t.Fatalf("calls[0] is not the baseline call")
+	}
+	if fixtureCall.FixtureDir == "" {
+		t.Fatalf("calls[1] is not a fixture call")
+	}
+
+	assertSinglePinnedGOMAXPROCS(t, "baseline", baselineCall.Env)
+	assertSinglePinnedGOMAXPROCS(t, "fixture", fixtureCall.Env)
+
+	if !slices.Contains(fixtureCall.Env, PhaseEnv+"=conformance") {
+		t.Fatalf("fixture call Env = %v, want a %s entry", fixtureCall.Env, PhaseEnv)
+	}
+}
+
+func assertSinglePinnedGOMAXPROCS(t *testing.T, label string, env []string) {
+	t.Helper()
+	want := fmt.Sprintf("GOMAXPROCS=%d", bounds.CanaryInnerWidth)
+	count := 0
+	for _, kv := range env {
+		if strings.HasPrefix(kv, "GOMAXPROCS=") {
+			count++
+			if kv != want {
+				t.Fatalf("%s call GOMAXPROCS entry = %q, want %q", label, kv, want)
+			}
+		}
+	}
+	if count != 1 {
+		t.Fatalf("%s call has %d GOMAXPROCS= entries, want exactly 1", label, count)
 	}
 }
 

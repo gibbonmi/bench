@@ -1,6 +1,6 @@
 # gate-concurrency-budget
 
-Status: staged
+Status: implemented
 
 ## Problem
 

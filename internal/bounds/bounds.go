@@ -29,6 +29,7 @@ const (
 	RefactorIterationsDefault       = 4
 	MaxWall                         = 24 * time.Hour
 	LeaseStale                      = time.Minute
+	CanaryInnerWidth                = 2
 	TestDeadlineFloor               = 20 * time.Second
 )
 

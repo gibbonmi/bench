@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -114,13 +115,7 @@ func Sweep(root string, runner Runner) error {
 func runFixtures(root string, fixtures []string, baselineOutput, gate string, env []string, runner Runner) []string {
 	errs := make([]string, len(fixtures))
 	jobs := make(chan int)
-	workers := runtime.NumCPU()
-	if workers < 1 {
-		workers = 1
-	}
-	if workers > len(fixtures) {
-		workers = len(fixtures)
-	}
+	workers := fixtureWorkers(runtime.GOMAXPROCS(0), len(fixtures))
 
 	var wg sync.WaitGroup
 	for range workers {
@@ -145,6 +140,20 @@ func runFixtures(root string, fixtures []string, baselineOutput, gate string, en
 		}
 	}
 	return out
+}
+
+// fixtureWorkers floors at one so a small budget still makes progress, caps at
+// fixtureCount so idle workers never outnumber the work, and takes budget as a
+// parameter rather than reading the machine so it stays pure and testable.
+func fixtureWorkers(budget, fixtureCount int) int {
+	workers := budget / bounds.CanaryInnerWidth
+	if workers < 1 {
+		workers = 1
+	}
+	if workers > fixtureCount {
+		workers = fixtureCount
+	}
+	return workers
 }
 
 func runFixture(root, fx, baselineOutput, gate string, env []string, runner Runner) string {
@@ -302,14 +311,14 @@ func restoreDotSegments(root string) error {
 }
 
 func innerEnv() []string {
-	env := make([]string, 0, len(os.Environ())+1)
+	env := make([]string, 0, len(os.Environ())+2)
 	for _, kv := range os.Environ() {
-		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, "BENCH_CANARY_INNER=") || strings.HasPrefix(kv, PhaseEnv+"=") {
+		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, "BENCH_CANARY_INNER=") || strings.HasPrefix(kv, PhaseEnv+"=") || strings.HasPrefix(kv, "GOMAXPROCS=") {
 			continue
 		}
 		env = append(env, kv)
 	}
-	return append(env, "BENCH_CANARY_INNER=1")
+	return append(env, "BENCH_CANARY_INNER=1", fmt.Sprintf("GOMAXPROCS=%d", bounds.CanaryInnerWidth))
 }
 
 func defaultRunner(call RunCall) RunResult {

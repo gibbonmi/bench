@@ -143,6 +143,8 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"release-public-profile-omitted":         conformanceFixture(".bench/gate.sh"),
 	"release-digest-binding-omitted":         conformanceFixture(".bench/gate.sh"),
 	"bounds-duplicate-owner":                 conformanceFixture(".bench/gate.sh"),
+	"bounds-duplicate-canary-width":          conformanceFixture(".bench/gate.sh"),
+	"bounds-canary-width-unconsumed":         conformanceFixture(".bench/gate.sh"),
 	"marker-wait-literal-deadline":           conformanceFixture(".bench/gate.sh"),
 	"unrouted-subcommand":                    conformanceFixture(".bench/gate.sh"),
 	"reintroduced-bare-skip":                 conformanceFixture(".bench/gate.sh"),
