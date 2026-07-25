@@ -8,17 +8,22 @@
 package maps
 
 import (
-	"os"
+	"fmt"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
+
+// decisionsDir is the one control directory this command reads, repo-relative so
+// every error line names the same path an agent would type.
+const decisionsDir = "decisions"
 
 // grammar is the declared argument shape usage.Parse enforces for this subcommand —
 // arity, flag recognition, `--`, and help all come from there rather than a local switch.
@@ -157,52 +162,93 @@ func fileRows(name string, r fileResult) [][]any {
 	return rows
 }
 
-// scan reads and parses every decisions/*.md under root in sorted order.
-func scan(root string) ([]string, map[string]fileResult) {
-	dir := filepath.Join(root, "decisions")
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return nil, nil
+// issue is one decisions file that did not feed the parser cleanly: unreadable,
+// wrong-type, malformed bytes, or — the parser-owned state — bytes that read fine
+// but attempt no ticket heading and no marker at all, so no rule in this package
+// recognizes the file as either a map or a scoped note. State is the classifier's
+// state for every case but the last, where it is bounds.StateUnsupportedSchema.
+type issue struct {
+	name, reason string
+	state        bounds.FileState
+}
+
+// scanResult is the one engine Rows, UnresolvedCount, and Command all narrow from:
+// every cleanly parsed file plus every file that could not be, so the listing and
+// the count can never disagree about what was readable. dirState is decisions/'s
+// own readability — StateAbsent (no such directory: the authoritative empty state)
+// or StateEmpty leave names and issues both nil; StateUnreadable or StateWrongType
+// mean the directory itself could not be enumerated, so names and issues stay nil
+// even though nothing was actually confirmed absent, and a caller must read
+// dirState rather than treat the zero-length results as authoritative.
+type scanResult struct {
+	names     []string
+	results   map[string]fileResult
+	issues    []issue
+	dirState  bounds.FileState
+	dirReason string
+}
+
+// scan classifies root/decisions and every *.md entry inside it, in sorted order.
+func scan(root string) scanResult {
+	dir := filepath.Join(root, decisionsDir)
+	cd := bounds.ClassifyDir(dir)
+	s := scanResult{dirState: cd.State, dirReason: cd.Reason, results: map[string]fileResult{}}
+	if cd.State != bounds.StateParsed {
+		return s
 	}
-	var names []string
-	results := map[string]fileResult{}
-	for _, e := range entries {
+	for _, e := range cd.Entries {
 		// A leading-dot file is skipped to match the shell glob decisions/*.md, which
 		// without dotglob never expands a hidden name — so a `.foo.md` stays invisible to
 		// the listing and the count (and cannot falsely nag the dashboard).
 		if e.IsDir() || !strings.HasSuffix(e.Name(), ".md") || strings.HasPrefix(e.Name(), ".") {
 			continue
 		}
-		content, err := os.ReadFile(filepath.Join(dir, e.Name()))
-		if err != nil {
+		base := strings.TrimSuffix(e.Name(), ".md")
+		fc := bounds.Classify(filepath.Join(dir, e.Name()), bounds.ModelReadLimit)
+		if fc.State == bounds.StateParsed {
+			r := parseFile(fc.Data)
+			if r.isMap || r.preHandoffMarker || r.handoffState != "" {
+				s.names = append(s.names, base)
+				s.results[base] = r
+				continue
+			}
+			s.issues = append(s.issues, issue{name: base, state: bounds.StateUnsupportedSchema, reason: "no ticket heading or marker found"})
 			continue
 		}
-		base := strings.TrimSuffix(e.Name(), ".md")
-		names = append(names, base)
-		results[base] = parseFile(content)
+		s.issues = append(s.issues, issue{name: base, state: fc.State, reason: fc.Reason})
 	}
-	sort.Strings(names)
-	return names, results
+	sort.Strings(s.names)
+	sort.Slice(s.issues, func(i, j int) bool { return s.issues[i].name < s.issues[j].name })
+	return s
 }
 
 // Rows lists every unresolved ticket and close-readiness handoff row under
-// root/decisions, in sorted file order.
+// root/decisions, in sorted file order, plus one row per file that could not be
+// classified — naming it and its state — so a broken file is a visible row rather
+// than a silent omission from the listing (story 10).
 func Rows(root string) [][]any {
-	names, results := scan(root)
+	return rowsFromScan(scan(root))
+}
+
+func rowsFromScan(s scanResult) [][]any {
 	var rows [][]any
-	for _, name := range names {
-		rows = append(rows, fileRows(name, results[name])...)
+	for _, name := range s.names {
+		rows = append(rows, fileRows(name, s.results[name])...)
+	}
+	for _, iss := range s.issues {
+		rows = append(rows, []any{iss.name, "error", string(iss.state), iss.reason})
 	}
 	return rows
 }
 
-// UnresolvedCount is the DISTINCT not-close-ready map FILE count status surfaces:
-// evaluated through the same predicate the listing uses, so the figure and the rows
-// cannot drift. Two unresolved tickets in one file count as one.
-func UnresolvedCount(root string) int {
-	_, results := scan(root)
-	n := 0
-	for _, r := range results {
+// unresolvedCount is the DISTINCT not-close-ready file count: every parsed file
+// whose notCloseReady predicate holds, plus every file this package could not
+// classify at all — an unreadable or unrecognized file is exactly as unresolved
+// as an open ticket, and it also earns a row (story 10), so the count and the
+// row listing agree by construction (story 11).
+func (s scanResult) unresolvedCount() int {
+	n := len(s.issues)
+	for _, r := range s.results {
 		if r.notCloseReady() {
 			n++
 		}
@@ -210,30 +256,63 @@ func UnresolvedCount(root string) int {
 	return n
 }
 
-// Command implements `bench maps`. `--count` is the status adapter's hook: it prints
-// the distinct not-close-ready file count as a bare integer. It exists because that
-// count is NOT recoverable from the row listing — a file with a file-scope marker but
-// no `## #` ticket heading is not-close-ready yet emits no row — so the adapter reads
-// the engine's own figure through the same parseFile, keeping one source of the rule.
+// UnresolvedCount is the count status surfaces, paired with the scan's own
+// readability state so a failed scan cannot fabricate zero. state is
+// bounds.StateParsed whenever n is trustworthy — including the legitimately
+// empty cases (no decisions/ directory, or none of its files unresolved) — and
+// the decisions/ directory's own failure state when the whole scan could not run
+// at all, in which case n is always 0 and must not be read as "nothing
+// unresolved."
+func UnresolvedCount(root string) (n int, state bounds.FileState) {
+	s := scan(root)
+	if s.dirState == bounds.StateUnreadable || s.dirState == bounds.StateWrongType {
+		return 0, s.dirState
+	}
+	return s.unresolvedCount(), bounds.StateParsed
+}
+
+// mapsError renders the one `error:` shape a whole-scan decisions/ failure uses,
+// naming the classifier state and the underlying reason.
+func mapsError(state bounds.FileState, reason string) string {
+	return toon.Errorf(fmt.Sprintf("%s is %s", decisionsDir, state), reason)
+}
+
+// Command implements `bench maps`. `--count` is the status adapter's hook: it
+// prints the distinct not-close-ready file count as a bare integer, through the
+// same scan the listing uses. Absence of root/decisions is the only authoritative
+// empty state (exit 0); a decisions/ directory that exists but cannot be
+// enumerated exits 1 with a structured `error:` line, because no per-file row is
+// possible when nothing could be listed. Once a directory listing exists, a
+// per-file failure is not whole-document: every readable file still renders its
+// rows, plus one row per file that failed, and the command exits 1 (story 10).
 func Command(args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
 		return line + "\n", code
 	}
-	if _, count := parsed.Flags["--count"]; count {
-		root, err := git.Root()
-		if err != nil {
-			return "0\n", 0
-		}
-		return strconv.Itoa(UnresolvedCount(root)) + "\n", 0
-	}
 	root, err := git.Root()
 	if err != nil {
+		if _, count := parsed.Flags["--count"]; count {
+			return "0\n", 0
+		}
 		return toon.NotInRepo() + "\n", 1
 	}
-	out, err := toon.TableTyped("maps", []string{"map", "ticket", "type", "state"}, Rows(root))
+	s := scan(root)
+	if _, count := parsed.Flags["--count"]; count {
+		if s.dirState == bounds.StateUnreadable || s.dirState == bounds.StateWrongType {
+			return "0\n", 0
+		}
+		return strconv.Itoa(s.unresolvedCount()) + "\n", 0
+	}
+	if s.dirState == bounds.StateUnreadable || s.dirState == bounds.StateWrongType {
+		return mapsError(s.dirState, s.dirReason) + "\n", 1
+	}
+	out, err := toon.TableTyped("maps", []string{"map", "ticket", "type", "state"}, rowsFromScan(s))
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
+	}
+	if len(s.issues) > 0 {
+		return out, 1
 	}
 	return out, 0
 }

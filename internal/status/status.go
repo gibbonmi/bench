@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/adopt"
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -450,9 +451,15 @@ func appendStructure(rows []row, root string) []row {
 	return rows
 }
 
-// appendMaps adds the unresolved-decision-map signal (sev 6) when the count is positive.
+// appendMaps adds the unresolved-decision-map signal (sev 6): a positive count when
+// the scan ran cleanly, or an explicit unknown row naming the decisions/ read failure
+// when it did not — a scan that could not run must never render as zero unresolved.
 func appendMaps(rows []row, root string) []row {
-	if n := maps.UnresolvedCount(root); n > 0 {
+	n, state := maps.UnresolvedCount(root)
+	if state == bounds.StateUnreadable || state == bounds.StateWrongType {
+		return append(rows, row{6, "decisions", fmt.Sprintf("unknown (decisions is %s)", state), "investigate decisions/ (bench maps)"})
+	}
+	if n > 0 {
 		return append(rows, row{6, "decisions", fmt.Sprintf("%d unresolved map(s)", n), "/bench-shape-idea"})
 	}
 	return rows

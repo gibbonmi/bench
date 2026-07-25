@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 // parseFile is the shared engine; these pin the marker/fence/handoff edges at the
@@ -84,15 +86,15 @@ func TestUnresolvedCount(t *testing.T) {
 	if got := len(Rows(root)); got != 3 {
 		t.Errorf("Rows count = %d, want 3", got)
 	}
-	if got := UnresolvedCount(root); got != 2 {
-		t.Errorf("UnresolvedCount = %d, want 2", got)
+	if got, state := UnresolvedCount(root); got != 2 || state != bounds.StateParsed {
+		t.Errorf("UnresolvedCount = (%d, %s), want (2, %s)", got, state, bounds.StateParsed)
 	}
 }
 
 // The close-readiness aggregate re-homes the shell contract's count tail: of the six
-// files, hm/hx/hp/ho are not-close-ready, hf is ready, and README is not a map → 4.
-// A file-scope marker with no ticket heading (scope.md) is also counted, though it
-// emits no listed row — the case the status adapter's --count hook exists for.
+// files, hm/hx/hp/ho are not-close-ready, hf is ready, and README attempts neither a
+// ticket heading nor a marker, so it is unsupported-schema — also unresolved, since
+// an unrecognized file is exactly as unresolved as an open ticket → 5.
 func TestUnresolvedCountCloseReadiness(t *testing.T) {
 	root := t.TempDir()
 	dir := filepath.Join(root, "decisions")
@@ -112,17 +114,18 @@ func TestUnresolvedCountCloseReadiness(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if got := UnresolvedCount(root); got != 4 {
-		t.Errorf("close-readiness UnresolvedCount = %d, want 4", got)
+	if got, _ := UnresolvedCount(root); got != 5 {
+		t.Errorf("close-readiness UnresolvedCount = %d, want 5", got)
 	}
-	// A file-scope marker without any ticket heading: no listed row, but counted.
+	// A file-scope marker without any ticket heading is a recognized shape (a marker),
+	// not unsupported-schema: no listed row, but counted via preHandoffMarker.
 	if err := os.WriteFile(filepath.Join(dir, "scope.md"), []byte("### Answer\n— (deferred)\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if got := len(fileRows("scope", parseFile([]byte("### Answer\n— (deferred)\n")))); got != 0 {
 		t.Errorf("file-scope marker emitted %d rows, want 0", got)
 	}
-	if got := UnresolvedCount(root); got != 5 {
-		t.Errorf("UnresolvedCount with file-scope marker = %d, want 5", got)
+	if got, _ := UnresolvedCount(root); got != 6 {
+		t.Errorf("UnresolvedCount with file-scope marker = %d, want 6", got)
 	}
 }
