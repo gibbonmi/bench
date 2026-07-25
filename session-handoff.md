@@ -2,19 +2,29 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `9cbb138`, clean tree, 9 unpushed commits
+Branch: `main` — HEAD `7485601`, clean tree, 13 unpushed commits
 Spec: `specs/session-handoff-emission.md` (Status: staged)
-Gate: green at `58a6303` — stale, work tree `82e83a3`
+Gate: green at `58a6303` — stale, work tree `6df45ef`
 
 ## State
 
 - **FT122 is built and landed green.** All 26 stories, 30 coverage rows, every
   phase green. The header above is the single source for branch, HEAD, tree
   state, spec status, and the gate verdict — do not restate those here.
-- **Semantic review has not run.** The next phase is
-  `/bench-review-implementation` against `specs/session-handoff-emission.md`;
-  `/bench-final-check` owns the landing commit and the `Status: implemented`
+- **Semantic review has not run — this is the outstanding phase.** The reviewer
+  still owes `/bench-review-implementation` against
+  `specs/session-handoff-emission.md`, which is why the spec reads `staged` and
+  not `implemented`. Nothing downstream should treat FT122 as closed until it
+  runs. `/bench-final-check` owns the landing commit and the `Status: implemented`
   flip. Do not flip that line by hand.
+- **The Claude 5 skill-realignment batch is merged** (`751d45c`, fast-forward,
+  all six changes reviewer-approved; its worktree is released). Dogfooding the
+  trimmed descriptions caught one regression, fixed in `7485601`: an unquoted
+  ` #` in `craft-line`'s frontmatter description started a YAML comment, so the
+  harness loaded only the first of three trigger clauses and never saw the
+  delegation or tier-escalation triggers. `craft-skills`, `craft-tdd`, and
+  `craft-design-system` fire correctly on their triggers. A gate check for the
+  same YAML trap is parked in `IDEAS.md`.
 - **Story 8 was reopened and re-decided mid-build.** The board's `Action` is a
   prose hint, not a command — most rows read `fix before commit` or
   `split (craft-seams)` — so the original derivation rendered a hint where the
@@ -52,7 +62,10 @@ Gate: green at `58a6303` — stale, work tree `82e83a3`
 
 ## Next command
 
-`/bench-review-implementation specs/session-handoff-emission.md`
+`/bench-review-implementation` against `specs/session-handoff-emission.md` — the
+outstanding phase for FT122, owed before the spec can go `implemented`. The
+board's leading invocable signal is `/bench-what-next` (`drain`, now 3 ideas and
+3 open learnings); take it after the review.
 
 ## Shape
 
