@@ -74,8 +74,8 @@ capped the nesting that dominated the clock — each inner gate is pinned to
 value cannot leak past the cap), and canary workers derive as
 `runtime.GOMAXPROCS(0)` divided by that width, floored at one and capped at the
 fixture count. Measured on a 16-core box: 323–336 s wall at peak load ~28–33,
-against the 2026-07-22 baseline of 10–15 minutes at load ~123; the closed
-`decisions/gate-concurrency.md` map predicted 332 s at `k = 2`. The conformance
+against the 2026-07-22 baseline of 10–15 minutes at load ~123; the gate-concurrency
+decision map, retired with the spec, predicted 332 s at `k = 2`. The conformance
 phase (~325 s) is now the long pole, so canary is no longer the cost.
 
 The remaining arms are each a separate capability, and none is a follow-up to
@@ -490,11 +490,11 @@ necessarily written after the gate has passed, so the gated tree can never
 contain it, and `specs/*.md` is not in the fixed capture-only allowlist — so the
 row fails closed to the strong "re-run the gate" wording after every clean
 `--spec` landing, sending the next session to a ~6-minute gate that finds
-nothing. Reproduced through the accused command on 2026-07-24: after
-`bench commit --spec gate-concurrency-budget`,
-`git diff-tree -r --name-only 20f0767 0faf47f` reports exactly `IDEAS.md` and
-`specs/gate-concurrency-budget.md` as the drift between the gated tree and the
-committed one. The fix is a reviewer decision between three options that are not
+nothing. Reproduced through the accused command on 2026-07-24: after that day's
+`bench commit --spec` landing,
+`git diff-tree -r --name-only 20f0767 0faf47f` reports exactly two paths as the
+drift between the gated tree and the committed one — `IDEAS.md`, and the spec
+file whose status line the flip rewrote. The fix is a reviewer decision between three options that are not
 equally safe: widening the allowlist to `specs/*.md` would admit arbitrary spec
 edits, which the fixed exact-path allowlist deliberately refuses and the profile
 calls a new decision; teaching the gate cache to record the post-flip tree when

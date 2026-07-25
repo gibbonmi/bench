@@ -189,7 +189,13 @@ byte-shape is load-bearing:
    the empty baseline still exercises every inner phase to reject vacuous EXPECTs.
    Fixtures hide dot-dirs behind a `dot-` prefix (e.g. `dot-claude`) so the harness
    doesn't load fixture skills as real ones; the canary restores them at run time.
-   The tripwire decision is recorded in
+   The sweep's aggregate concurrency is budgeted, not left to either factor: every
+   inner gate is invoked with an explicit `GOMAXPROCS` equal to
+   `bounds.CanaryInnerWidth`, stripped-then-set so an inherited value cannot leak
+   past the cap, and the worker pool derives as `runtime.GOMAXPROCS(0)` divided by
+   that width, floored at one and capped at the fixture count. There is no
+   Bench-specific knob — `GOMAXPROCS=8 bench gate` is the operator lever, and it
+   shrinks the whole canary budget. The tripwire decision is recorded in
    `docs/adr/0001-working-tree-gate-tripwire.md`.
 
 The gate file lives outside `package.json` `files[]`, so it never ships to consumers.
@@ -267,6 +273,17 @@ is in `craft-line`). Tier moves still get declared — no silent escalation.
   version required by the version and upgrade contracts.
 - Never mutate the repository while a gate is running. The gate binds its
   verdict to the starting subject and rejects a run whose subject changes.
+- `internal/canary`'s own tests run nested. The conformance phase runs the kit's
+  `go test` over core packages as a subprocess inheriting the phase environment,
+  so inside a fixture's inner gate they run at `GOMAXPROCS=2`, where the derived
+  worker bound is one. A concurrency expectation keyed to machine width does not
+  merely fail there — it deadlocks until the phase timeout turns conformance red.
+  Key every such expectation to the derived bound, and gate the ones that need
+  real overlap through `capability.CPU`. Prove both directions before believing
+  it: `GOMAXPROCS=2 go test -timeout 120s ./internal/canary` green with the
+  expected `bench-skip kind=capability class=cpu` lines under `-v`, and the same
+  run at full width green with none. A deleted assertion and an honest skip both
+  look green; only the emitted line tells them apart.
 - Never stop a gate by killing only its shell wrapper. Signal `gate-run`, which
   owns teardown of the gate script's process group, so canary and nested
   `gate-phases` children cannot outlive the run.
