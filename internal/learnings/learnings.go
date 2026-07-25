@@ -5,10 +5,11 @@
 package learnings
 
 import (
-	"os"
+	"fmt"
 	"path/filepath"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -27,7 +28,12 @@ type Entry struct {
 	Date, Title, State, Body string
 }
 
-type Malformed struct{ Reason, Raw string }
+// Malformed is one heading that started a `## ` entry but did not parse as a dated
+// one. Line is the 1-based source line, carried so a surface can name where to look.
+type Malformed struct {
+	Reason, Raw string
+	Line        int
+}
 
 // Entries parses every well-formed dated journal heading in document order.
 // Rows is deliberately a projection of this typed representation.
@@ -44,8 +50,11 @@ func Parse(content []byte) ([]Entry, []Malformed) {
 	for i := 0; i < len(lines); {
 		line := strings.TrimSuffix(lines[i], "\r")
 		if !strings.HasPrefix(line, "## ") || len(line) < 13 || line[7] != '-' || line[10] != '-' {
-			if strings.HasPrefix(line, "## ") {
-				malformed = append(malformed, Malformed{"malformed learning heading", line})
+			// The shipped scaffold's own worked example (internal/adopt seeds every fresh
+			// repo with it under "Format per entry:") is documentation, not a broken record,
+			// so an unedited template never counts as malformed.
+			if strings.HasPrefix(line, "## ") && !isTemplatePlaceholder(line) {
+				malformed = append(malformed, Malformed{Reason: "malformed learning heading", Raw: line, Line: i + 1})
 			}
 			i++
 			continue
@@ -71,9 +80,13 @@ func Parse(content []byte) ([]Entry, []Malformed) {
 // trailing CR (CRLF journal) is stripped first; the title is the heading minus its
 // `## <date>` prefix, the following separator run (spaces, an ASCII hyphen, or an
 // em-dash), and the trailing `[open]…`, with surrounding whitespace removed.
-func Rows(content []byte) [][]string {
+func Rows(content []byte) [][]string { return openRows(Entries(content)) }
+
+// openRows projects the open-state entries to date/title rows — the one source Rows
+// and Command both narrow to, so the listing and the open-count agree by construction.
+func openRows(entries []Entry) [][]string {
 	var rows [][]string
-	for _, e := range Entries(content) {
+	for _, e := range entries {
 		if e.State != "open" {
 			continue
 		}
@@ -98,6 +111,30 @@ func parseHeading(line string) (date, title string) {
 	return date, title
 }
 
+// isTemplatePlaceholder reports whether line is the scaffold's own worked example, whose
+// date field is the literal `<date>` token rather than a date.
+func isTemplatePlaceholder(line string) bool {
+	rest := strings.TrimPrefix(line, "## ")
+	date := rest
+	if i := strings.IndexFunc(rest, isSpace); i >= 0 {
+		date = rest[:i]
+	}
+	return date == "<date>"
+}
+
+// hasAnyHeading reports whether content attempts the journal shape at all — any line
+// beginning `## `, dated, malformed, or the template placeholder alike. Its absence is
+// what unsupported-schema means for this document: bytes that never attempt a heading,
+// as distinct from a heading attempt that failed to parse.
+func hasAnyHeading(content []byte) bool {
+	for _, raw := range strings.Split(string(content), "\n") {
+		if strings.HasPrefix(strings.TrimSuffix(raw, "\r"), "## ") {
+			return true
+		}
+	}
+	return false
+}
+
 func stripLeadingSeparators(s string) string {
 	for {
 		switch {
@@ -117,8 +154,18 @@ func stripLeadingSeparators(s string) string {
 // predicate for IndexFunc/TrimRightFunc; a multibyte rune is >= 0x80 and never a space.
 func isSpace(r rune) bool { return r < 0x80 && toon.IsSpace(byte(r)) }
 
+// journalPath is the one control record this command reads.
+const journalPath = ".bench/learnings.md"
+
 // Command implements `bench learnings`. Unknown argument → usage on stdout, exit 2;
-// outside a repo → structured error on stdout, exit 1; otherwise the TOON table, exit 0.
+// outside a repo → structured error on stdout, exit 1. Absence is the only
+// authoritative empty state: a missing journal renders the empty table at exit 0. Any
+// other non-parsed classifier state — empty, malformed bytes, unreadable, wrong-type —
+// or a document that never attempts a `## ` heading at all (unsupported-schema) exits 1
+// with a structured `error:` line naming the state, so a read failure can never print
+// as an empty table. A parsed document with malformed headings among its well-formed
+// entries renders every well-formed row plus one row per malformed heading and still
+// exits 1 (story 9): a broken entry is surfaced, never silently dropped.
 func Command(args []string) (string, int) {
 	if _, line, code := usage.Parse(grammar, args); line != "" {
 		return line + "\n", code
@@ -127,10 +174,39 @@ func Command(args []string) (string, int) {
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	content, _ := os.ReadFile(filepath.Join(root, ".bench", "learnings.md"))
-	out, err := toon.Table("learnings", []string{"date", "title"}, Rows(content))
+	c := bounds.Classify(filepath.Join(root, journalPath), bounds.ModelReadLimit)
+	switch c.State {
+	case bounds.StateAbsent:
+		out, err := toon.Table("learnings", []string{"date", "title"}, nil)
+		if err != nil {
+			return toon.RenderError(err) + "\n", 1
+		}
+		return out, 0
+	case bounds.StateParsed:
+		// falls through to the structural parse below
+	default:
+		return journalError(c.State, c.Reason) + "\n", 1
+	}
+	if !hasAnyHeading(c.Data) {
+		return journalError(bounds.StateUnsupportedSchema, "no dated heading found") + "\n", 1
+	}
+	entries, malformed := Parse(c.Data)
+	rows := openRows(entries)
+	for _, m := range malformed {
+		rows = append(rows, []string{fmt.Sprintf("line %d", m.Line), m.Reason})
+	}
+	out, err := toon.Table("learnings", []string{"date", "title"}, rows)
 	if err != nil {
 		return toon.RenderError(err) + "\n", 1
 	}
+	if len(malformed) > 0 {
+		return out, 1
+	}
 	return out, 0
+}
+
+// journalError renders the one `error:` shape every non-absent journal failure uses,
+// naming the classifier or parser state and the underlying reason.
+func journalError(state bounds.FileState, reason string) string {
+	return toon.Errorf(fmt.Sprintf("%s is %s", journalPath, state), reason)
 }
