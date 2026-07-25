@@ -78,8 +78,10 @@ repository-controlled bank evidence requirement makes this row active.
 
 Sources: `RR:C-05`; `RC:H-03`.
 
-**FT91 (MEDIUM, evidence supplied) — gate wall-clock proportional to the
-diff.** Three arms have shipped: the phases were parallelized, host-only test
+**FT91 (HIGH, evidence supplied) — gate wall-clock proportional to the
+diff.** Raised from MEDIUM by the reviewer on 2026-07-25: the gate's length is
+the dominant cost of working on this repo for small changes, and the waiting is
+paid by a human. Three arms have shipped: the phases were parallelized, host-only test
 builds (retired 2026-07-20) removed the per-stage cold-`GOCACHE` four-platform
 matrix, and the canary concurrency budget landed 2026-07-24. That third arm
 capped the nesting that dominated the clock — each inner gate is pinned to
@@ -90,6 +92,22 @@ fixture count. Measured on a 16-core box: 323–336 s wall at peak load ~28–33
 against the 2026-07-22 baseline of 10–15 minutes at load ~123; the gate-concurrency
 decision map, retired with the spec, predicted 332 s at `k = 2`. The conformance
 phase (~325 s) is now the long pole, so canary is no longer the cost.
+
+A fourth arm, not previously named here, is the one the 2026-07-25 evidence
+points at: **parallelizing the conformance checks themselves.** Two full runs
+that day measured 419 s and 552 s of wall clock with the conformance phase at
+397 s and 521 s — about 94% of the total in both, with the contract phase's
+slowest package finishing well before it. The phase is a single test, and
+`RunConformance` calls its fifteen checks strictly serially into one slice, so
+one core carries the whole phase while the rest of a sixteen-core box idles.
+Each check is a pure function over a read-only tree, so ordering is recoverable
+by collecting into an indexed slice. This is distinct from the dormant capping
+arm below, which limits concurrency rather than creating it, and it is the
+safest arm on this row against the oracle constraint: the same checks run over
+the same inputs, so green keeps meaning exactly what it means today. What it
+buys depends on how the 500 s distributes across the fifteen — if one check
+dominates, it buys little — so the first step is timing each check, which is a
+small instrumentation change and one gate run.
 
 The remaining arms are each a separate capability, and none is a follow-up to
 the one that shipped. Capping the outer conformance and contract phases is

@@ -7,10 +7,12 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 )
 
-// handoffFile is the phase-close continuation artifact `AGENTS.md` names: the document a
+// HandoffFile is the phase-close continuation artifact `AGENTS.md` names: the document a
 // cold session reads to resume without conversation history. Its shape is documented
-// inside the file itself so the template cannot drift from the artifact it describes.
-const handoffFile = "session-handoff.md"
+// inside the file itself so the template cannot drift from the artifact it describes. It
+// is exported as the one source of the artifact's name, shared with the command that emits
+// it, so the staleness signal and the emitter can never watch different files.
+const HandoffFile = "session-handoff.md"
 
 // appendHandoff adds the handoff-staleness signal (sev 11): the commits that landed since
 // the handoff was last written. It turns "trust git over the handoff" from a rule the next
@@ -35,7 +37,7 @@ func appendHandoff(rows []row, root string) []row {
 		return rows
 	}
 	detail := fmt.Sprintf("written at %s, %s behind", short(written), plural(behind, "commit", "commits"))
-	return append(rows, row{11, "handoff", detail, "rewrite " + handoffFile + " at HEAD"})
+	return append(rows, row{11, "handoff", detail, "rewrite " + HandoffFile + " at HEAD"})
 }
 
 // handoffWrittenAt returns the commit that last wrote the handoff, and whether the age is
@@ -48,11 +50,11 @@ func appendHandoff(rows []row, root string) []row {
 //   - a failed git query, tolerated the way the other advisory housekeeping rows tolerate
 //     one, because a broken query is not evidence of a stale document.
 func handoffWrittenAt(root string) (string, bool) {
-	dirty, err := git.Output("-C", root, "status", "--porcelain", "--", handoffFile)
+	dirty, err := git.Output("-C", root, "status", "--porcelain", "--", HandoffFile)
 	if err != nil || dirty != "" {
 		return "", false
 	}
-	written, err := git.Output("-C", root, "log", "-1", "--format=%H", "HEAD", "--", handoffFile)
+	written, err := git.Output("-C", root, "log", "-1", "--format=%H", "HEAD", "--", HandoffFile)
 	if err != nil || written == "" {
 		return "", false
 	}

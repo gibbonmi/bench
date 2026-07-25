@@ -97,13 +97,30 @@ the failure this capability exists to remove.
    defect this capability exists to remove, which lifts it above the low-effort
    rows.
 
-8. As a cold session, I want the next command derived from the same signals
-   `bench status` uses to compute its action, so that the handoff and the board
-   never disagree about what to do next.
+8. As a cold session, I want the next command taken from the same signals
+   `bench status` ranks — the highest-severity signal whose action is actually an
+   invocable command — so that the field names something I can run rather than a
+   description of a situation.
    Line: `gpt-5.6-terra` / medium. This deviates from the profile's cheap
    CLI-plumbing routing because reusing the board's precedence rather than
    inventing a parallel rule is the decision that keeps this single-sourced, and
    getting it wrong produces two competing recommendations.
+
+   The board's `Action` is a prose hint — `fix before commit`,
+   `split (craft-seams)`, `commit on green / /bench-final-check / push` — and only
+   a minority of rows are invocable. This field promises an invocation, so it
+   selects rather than converts: it walks the board in its own severity order and
+   takes the first action that is one, leaving the board's ranking untouched. A
+   board whose signals are all prose states that plainly and points at `--next`;
+   it never renders a hint as though it were a command. Selection reads the
+   canonical form, so it is unaffected by story 10's harness translation.
+
+   Opening with an invocation is necessary but not sufficient. A board row may
+   join the steps of a sequence into one action — the git row reads
+   `/bench-final-check / push` once the tree is clean — and that string opens a
+   phase invocation while naming two commands. Splitting it and taking an arm
+   would be this command deciding what the board meant by a sequence, so a
+   compound action does not qualify and the walk continues past it.
 
 9. As a session whose real next step is judgment the board cannot see, I want
    `--next` to replace the derived line verbatim, so that a review pass or a
@@ -232,8 +249,11 @@ matching every other porcelain command, and `bin/bench.sh` gains a single
 
 It composes rather than re-derives. `internal/git` supplies identity, branch,
 HEAD, dirty state, and unpushed count; `internal/spec.Facts` supplies the staged
-spec path and Status; `internal/status` supplies the derived next action and,
-via `GateVerdict`, the gate field's verdict, cached tree, and staleness.
+spec path and Status; `internal/status` supplies the ranked signals the next
+action is selected from and, via `GateVerdict`, the gate field's verdict, cached
+tree, and staleness. Selection over those signals is a syntactic test for an
+invocation — the prefixes the kit's own commands take — not a second opinion
+about severity, so the board keeps sole ownership of what outranks what.
 `internal/status` keeps sole ownership of staleness detection — this command
 does not compute or reset either the handoff's age or the gate's, and does not
 stamp a date into the file, because staleness is read from git history precisely
@@ -322,7 +342,8 @@ Gate command: the project gate, `bench gate`.
 | 5 | branch, HEAD, clean/dirty, unpushed count | runtime contract | `go test ./internal/contract/runtime -run TestHandoffCarriesTreeFacts` | Two fixtures — dirty with an unpushed commit, and clean with none — so hardcoded defaults fail one of them. |
 | 6 | staged spec named with Status, or explicitly none | runtime contract | `go test ./internal/contract/runtime -run TestHandoffNamesStagedSpec` | Three fixtures: two different `Status:` values plus an empty `specs/`. A constant `Status: staged` fails the second. |
 | 7 | gate field carries verdict, cached tree, and staleness; or says none has run | runtime contract | `go test ./internal/contract/runtime -run TestHandoffGateFieldIsStaleAware` | Three fixtures — green-and-current, green-but-stale, absent. A hardcoded `gate: green` fails the stale and absent cases, which is the confident-wrong-fact defect. |
-| 8 | next command matches the board's derivation | runtime contract | `go test ./internal/contract/runtime -run TestHandoffNextMatchesStatus` | Two fixtures whose leading board signal differs, each compared to `bench status` on that same fixture; one constant cannot satisfy both. |
+| 8 | selection returns the first invocable action, skips prose and compound ones, and reports when a board has none | unit (`internal/handoff`) | `go test ./internal/handoff -run TestFirstInvocable` | Enumerates the selection's edges directly — empty board, all-prose board, prose ahead of an invocable row, and the git row's `/bench-final-check / push` — including the all-prose case a live fixture cannot reliably produce. A bare prefix test passes every other row and fails the compound one. |
+| 8 | next command is the board's highest-severity **invocable** action, or an explicit statement that none is | runtime contract | `go test ./internal/contract/runtime -run TestHandoffNextMatchesStatus` | Three fixtures: two whose first invocable board action differs, each compared to `bench status --all` on that same fixture, plus one whose only signals carry prose actions. A constant fails the first two; taking `signals[0].Action` unconditionally fails the third by rendering a hint as a command. |
 | 9 | `--next` replaces the derived line | runtime contract | `go test ./internal/contract/runtime -run TestHandoffNextOverride` | Asserts the override present **and** the derived line absent, so appending alongside it fails. |
 | 10 | `--harness codex` renders `$bench-*` | runtime contract | `go test ./internal/contract/runtime -run TestHandoffHarnessCodex` | Asserting `$bench-` present *and* `/bench-` absent catches an implementation that emits both forms. |
 | 11 | default and `claude` render `/bench-*` | runtime contract | `go test ./internal/contract/runtime -run TestHandoffHarnessDefault` | The paired absence assertion catches a default that leaks the Codex form. |

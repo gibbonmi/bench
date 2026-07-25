@@ -25,6 +25,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gitguard"
 	"github.com/gibbonmi/bench/internal/guards"
+	"github.com/gibbonmi/bench/internal/handoff"
 	"github.com/gibbonmi/bench/internal/harness"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/learnings"
@@ -68,6 +69,7 @@ var commands = map[string]func([]string) (string, int){
 	"diff":                diff.Command,
 	"coverage":            coverage.Command,
 	"status":              status.Command,
+	"handoff":             handoff.Command,
 	"commands":            commandsCommand,
 	"dashboard":           dashboard.Command,
 	"structure":           structure.Command,
