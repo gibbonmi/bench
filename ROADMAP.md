@@ -66,26 +66,31 @@ repository-controlled bank evidence requirement makes this row active.
 Sources: `RR:C-05`; `RC:H-03`.
 
 **FT91 (MEDIUM, evidence supplied) — gate wall-clock proportional to the
-diff.** Two arms have shipped: the phases were parallelized, and host-only
-test builds (retired 2026-07-20) removed the per-stage cold-`GOCACHE`
-four-platform matrix. The graduation trigger is now met — fresh post-host-only
-measurement (2026-07-22): the gate still takes 10–15 minutes on the kit repo,
-largely because the canary phase nests whole gate runs, oversubscribing a
-16-core box to load average ~123, so most of the wall clock is contention,
-not work; `internal/gate/phases.go` also hardcodes `-count=1`, disabling Go's
-test cache unconditionally. First arm: core-count-aware gate/phase
-concurrency — detect the machine's cores and scale so nested phases cannot
-oversubscribe the box. That cap is also the load lever behind the retired
-gate-trustworthiness work: the marker stalls and cleanup flakes that arm fixed
-were all contention symptoms, so capping concurrency protects the verdict as
-well as the clock. The closed `decisions/gate-concurrency.md` map owns that
-cut — measured `k = 2`, budget from `runtime.GOMAXPROCS(0)`, no Bench-specific
-knob — and the arm is spec'd in `specs/gate-concurrency-budget.md`.
-Diff-scoped gating is unsound here (contract/canary are behavior
-contracts with no file→test map). The remaining arms — a shared hermetic
-build cache, caching keyed on the pinned gate subject, or scoped verdicts —
-must not weaken the oracle: green must keep meaning the same thing, and any
-scoped verdict must be explicit evidence, never a silent skip.
+diff.** Three arms have shipped: the phases were parallelized, host-only test
+builds (retired 2026-07-20) removed the per-stage cold-`GOCACHE` four-platform
+matrix, and the canary concurrency budget landed 2026-07-24. That third arm
+capped the nesting that dominated the clock — each inner gate is pinned to
+`GOMAXPROCS=2` (`bounds.CanaryInnerWidth`, stripped-then-set so an inherited
+value cannot leak past the cap), and canary workers derive as
+`runtime.GOMAXPROCS(0)` divided by that width, floored at one and capped at the
+fixture count. Measured on a 16-core box: 323–336 s wall at peak load ~28–33,
+against the 2026-07-22 baseline of 10–15 minutes at load ~123; the closed
+`decisions/gate-concurrency.md` map predicted 332 s at `k = 2`. The conformance
+phase (~325 s) is now the long pole, so canary is no longer the cost.
+
+The remaining arms are each a separate capability, and none is a follow-up to
+the one that shipped. Capping the outer conformance and contract phases is
+dormant rather than queued: it changes the phase environment in `internal/gate`
+rather than canary's nesting, and the map's evidence says it buys nothing while
+wall clock is conformance-bound — revive it only if contention flakes persist.
+Removing the hardcoded `-count=1` in `internal/gate/phases.go` changes what a
+green gate proves about freshness, which is an oracle-semantics decision rather
+than a scheduling one. A shared hermetic build cache, and caching keyed on the
+pinned gate subject, both add cache infrastructure and its invalidation rules.
+Diff-scoped gating stays ruled out here (contract and canary are behavior
+contracts with no file→test map). None of them may weaken the oracle: green
+must keep meaning the same thing, and any scoped verdict must be explicit
+evidence, never a silent skip.
 
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.** Make
 every documented CLI example executable; parse and validate real YAML
@@ -241,9 +246,9 @@ delegate caught it. Require every "today the code does X" claim in a spec's
 Problem section to be checked against the tree at spec time, with the check
 named in the spec — the same standard the coverage map already applies to its
 red signals. The same gap has a second face in the Solution and Implementation
-sections: `specs/cli-grammar-and-capability-evidence.md` asserted a structured
-line "survives non-verbose `go test`", which is false, and stories 10 and 11
-were built on it before an independent done-claim probe caught it. Extend the
+sections: the retired `cli-grammar-and-capability-evidence` spec asserted a
+structured line "survives non-verbose `go test`", which is false, and stories 10
+and 11 were built on it before an independent done-claim probe caught it. Extend the
 rule to those claims too — any spec sentence asserting observable third-party
 tool behavior a story's seam depends on carries either a cited command whose
 output was run or an explicit uncertainty flag, since `/bench-write-spec`
@@ -452,6 +457,51 @@ landing every plain-`git` commit must use the explicit pathspec form
 (`git commit -m "…" -- <path>`). Kit edit under the `craft-synthesis`
 discipline.
 
+**FT120 (LOW) — gate and canary test-harness defects nothing asserts.** Two
+independent holes in the harness that grades the oracle, both found during the
+FT91 canary-budget build. First, the R12 contention fixture can leak an immortal
+process: its owner gate script waits on a release file with an unbounded
+`while [ ! -f … ]; do sleep .01; done`, but that file lives in the test's
+`TempDir`, so once `r12Contention`'s deferred release gives up after 5 s (or the
+test binary is killed outright, skipping defers) and `TempDir` cleanup removes
+the tree, the condition can never become true. Observed 2026-07-23: an orphaned
+shell spinning 30 hours for 25 minutes of CPU, forking every 10 ms. The two
+candidate fixes are not equivalent and the row must pick deliberately — bounding
+the fixture's own wait is the only one that survives a killed binary, but it puts
+a deadline on the owner half of a *contention* proof, so too tight a bound makes
+R12 flake under exactly the load it exists to test; making the give-up path tear
+down the process group (the profile's `gate-run` teardown rule, which the test
+currently does not follow) is semantically free but does not cover the likely
+trigger. Write the bound against a stated red signal rather than guessing a
+number. Second, nothing asserts that each fixture keeps its own
+`BENCH_CANARY_PHASE` pin under a concurrent multi-family sweep: `runFixture`'s
+defensive `append([]string(nil), env...)` copy is the only thing keeping workers
+off a shared backing array, and the gate runs `go test` without `-race`, so
+deleting that copy would land green. The assertion belongs beside the existing
+fake-`Runner` tests — and `internal/canary/canary_concurrency_test.go` is already
+one line over its 400-line budget after the FT91 arm, so the added test lands
+together with a `craft-seams` split (the file now carries two concerns: worker
+derivation and bounds, versus inner-environment pinning) rather than an accept
+entry.
+
+**FT121 (LOW) — `bench commit --spec` always leaves the gate reporting
+strong-stale.** The `--spec` flip from `Status: staged` to `implemented` is
+necessarily written after the gate has passed, so the gated tree can never
+contain it, and `specs/*.md` is not in the fixed capture-only allowlist — so the
+row fails closed to the strong "re-run the gate" wording after every clean
+`--spec` landing, sending the next session to a ~6-minute gate that finds
+nothing. Reproduced through the accused command on 2026-07-24: after
+`bench commit --spec gate-concurrency-budget`,
+`git diff-tree -r --name-only 20f0767 0faf47f` reports exactly `IDEAS.md` and
+`specs/gate-concurrency-budget.md` as the drift between the gated tree and the
+committed one. The fix is a reviewer decision between three options that are not
+equally safe: widening the allowlist to `specs/*.md` would admit arbitrary spec
+edits, which the fixed exact-path allowlist deliberately refuses and the profile
+calls a new decision; teaching the gate cache to record the post-flip tree when
+`--spec` performs the flip is narrower, since the flip is the tool's own write
+and its content is known; or accept the row as cosmetic and document it. Kit edit
+under the `craft-synthesis` discipline.
+
 ## Release and bank reassessment gate
 
 A green source-tree gate is necessary but not sufficient. Reassessment attaches
@@ -520,12 +570,15 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT91's first arm, `specs/gate-concurrency-budget.md`.
-   The map is closed and the spec is staged, so the remaining work is the build.
-   Gate contention is the last unaddressed cost on every landing, and the root
-   cause behind the load-flake rows drained this pass (FT115, FT116).
-2. `/bench-write-spec` — FT86, fail-closed control records and single-sourced
-   repository facts. The highest bank-track row still open.
-3. `/bench-write-spec` — FT71, versioned local shift evidence. The other HIGH
+1. `/bench-write-spec` — FT86, fail-closed control records and single-sourced
+   repository facts. The highest bank-track row still open, and now the top of
+   the list: FT91's canary-budget arm shipped 2026-07-24, so gate contention is
+   no longer the unaddressed cost on every landing.
+2. `/bench-write-spec` — FT71, versioned local shift evidence. The other HIGH
    bank-track row; the repository-controlled bank evidence requirement makes it
    active.
+3. `/bench-write-spec` — FT120, the two gate and canary test-harness defects.
+   Small, but it needs a spec rather than a direct fix: bounding the R12 owner's
+   wait puts a deadline on a contention proof, so the bound wants a stated red
+   signal, and the row carries the `canary_concurrency_test.go` split that the
+   FT91 arm pushed one line over budget.
