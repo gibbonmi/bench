@@ -2,56 +2,59 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `bc64686`, 4 dirty paths, 16 unpushed commits
-Spec: none staged.
-Gate: green at `7ca7056` — stale, work tree `f077ff4`
+Branch: `main` — HEAD `149e8d2`, clean tree, 20 unpushed commits
+Spec: `specs/ft86-fail-closed-control-records.md` (Status: staged)
+Gate: green at `7ca7056` — stale, work tree `6bb335c`
 
 ## State
 
-- **FT122 is built, reviewed, fixed, and landed green** (`bc64686`). The spec is
-  retired and its decision map deleted; the roadmap row is gone. The header above
-  is the single source for branch, HEAD, tree state, spec status, and the gate
-  verdict — do not restate those here.
-- **The three-axis review found 18 issues and all are resolved in `bc64686`.**
-  The three that mattered: a runtime expectation still held the pre-fix invocable
-  rule and would have failed green work; `bench handoff` silently discarded
-  everything below any `## ` heading a reviewer wrote inside their own State
-  section, on exit 0; and `validate` borrowed `toon.Representable`, which permits
-  the tab, newline, and return a line-structured document cannot survive. The
-  review pickup was deleted in the same commit that closed its findings.
-- **Story 18's idempotence is fixed for the pin block and parked for the board.**
-  The dirty clause now excludes the handoff itself, so the command no longer
-  prints a fact its own write falsifies. Strict byte-identity on a *tracked* tree
-  also needs the board to ignore that write, which needs a `bench status` path
-  exclusion that does not exist — recorded as out of scope on the retired spec
-  and parked in `IDEAS.md`. This is the one call from the fix pass most worth a
-  second look.
-- **The status board's handoff row now reads `bench handoff`, not prose.** It is
-  therefore selectable as a next command, which it never was before.
+- **FT86 is spec'd and staged, not built** (`149e8d2`). The spec was compiled
+  from the closed `decisions/ft86-fail-closed-control-records.md` map, whose
+  Handoff is complete with no uncertainty flags. The reviewer approved it. The
+  header above is the single source for branch, HEAD, tree state, spec status,
+  and the gate verdict — do not restate those here.
+- **What FT86 does:** `internal/bounds` becomes the one classified reader (six
+  typed states, Lstat-first, size-bounded); `learnings`, `maps`, `roadmap`, and
+  `coverage` fail closed on any non-absent read failure; `status` and
+  `roadmap --context` stay exit 0 but degrade visibly to `unknown`;
+  `coverage --check` requires a map or the historical marker and validates exact
+  story membership; `git.DefaultBranch` is deleted with `ResolvedDefault` the
+  sole owner.
+- **Two calls are flagged in-spec for post-hoc veto and stay open until vetoed.**
+  Story 16 deviates from the map — `outline` splits its skip classes into failure
+  classes (exit 1) and content classes (binary/oversized, exit 0), because
+  exiting 1 on every binary file would make the command unusable. And the
+  ROADMAP row's `traversal` state is not adopted; it guards the
+  caller-supplied-path surface rather than the control-record reads, so it sits
+  in Out of scope at 3 edits, 2 gate runs.
+- **`DefaultBranch` has eight call sites, not the two the map implied** — `adopt`
+  (×2), `worktree` (×2), `status` (×2), and `git`'s own internals. Each posture
+  is decided in the spec's Implementation decisions; read that section before
+  touching any of them. This is why story 18 routes mid-tier.
+- **The build must not run as a bare `bench shift`.** Stories 1–3, 7, 16, and 18
+  route `gpt-5.6-terra`, so the spec fails `craft-line`'s all-cheap venue test.
+  Run `/bench-implement-spec` interactively and escalate per story.
+- **Step 9's falsification pass never ran.** Story 16's deviation fires the
+  trigger, but the authoring session carried a standing no-unasked-delegation
+  rule. Running it is still available and is the cheapest second opinion on the
+  outline split.
 - **`.bench/learnings.md` carries three open entries** from the FT122 build, all
   rule-shaped, all awaiting a `/bench-what-next` verdict: the canary's panic
   reporting, the shared-checkout write-delegation, and `bench idea` voiding an
   in-flight gate verdict.
-- **Uncommitted right now:** the profile's two new hostile-input classes, the
-  roadmap row removal, and the spec/decision-map deletions. They are the
-  spec-retire commit and nothing else.
-- **`bench commit` advises "set them aside" for files outside the named set, and
-  no such route exists.** Parked in `IDEAS.md`. Until it exists, the only exits
-  are naming the file in the commit or reaching for guard-blocked git; name it.
 - **Never mutate the repository while a gate runs.** `projects/benchkit.md`'s
   cold-session notes carry this and the `internal/canary` nested-run trap; read
   them before touching either, and note that `dist/bench` must be built with
   `scripts/go-build.sh`.
 - **FT91 was raised to HIGH by the reviewer** (`9cbb138`) — the gate's length is
-  the dominant cost of small changes here, and this session paid it four times. A
-  fourth arm is recorded on the row: `RunConformance` runs its fifteen checks
-  serially in one test, ~94% of wall clock across two measured runs. First step
-  is timing each check before committing to the arm.
+  the dominant cost of small changes here. A fourth arm is recorded on the row:
+  `RunConformance` runs its fifteen checks serially in one test, ~94% of wall
+  clock across two measured runs. First step is timing each check before
+  committing to the arm.
 - `bench structure` reports 17 issues, all pre-existing.
-
 ## Next command
 
-`/bench-what-next` — the board's leading invocable signal (`drain`).
+`/bench-implement-spec — specs/ft86-fail-closed-control-records.md`
 
 ## Shape
 
