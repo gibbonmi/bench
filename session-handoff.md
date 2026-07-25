@@ -1,8 +1,10 @@
 # Session handoff
 
-Repository: `bench` (origin `github.com/gibbonmi/bench`) — branch `main`,
-checked out at `~/workspace/bench` on the machine that wrote this. Everything
-below is executable from a cold start; no conversation history is needed.
+Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
+Path: `~/workspace/bench`
+Branch: `main` — HEAD `5b2955b`, 11 dirty paths, 4 unpushed commits
+Spec: `specs/session-handoff-emission.md` (Status: staged)
+Gate: green at `5b1cc38` — stale, work tree `53c6b1d`
 
 ## State
 
@@ -16,11 +18,17 @@ below is executable from a cold start; no conversation history is needed.
   the first `bench gate` on this tree is still the first real one.
 - **`specs/session-handoff-emission.md` is still `Status: staged`.** Flip it
   with `bench commit --spec` on the green commit, not by hand.
-- **The next writer of this file should dogfood `bench handoff` instead.** The
-  command exists in the tree and is what this build is for; this rewrite was
-  done by hand deliberately, because ungated code should not be the thing that
-  writes the reviewer's cold-start artifact. Once the gate is green, that
-  reasoning expires.
+- **This file was written by the in-tree `bench handoff`, and doing so found a
+  defect.** The header block is correct and is now the single source for
+  repository, path, branch, HEAD, dirty/unpushed counts, spec status, and gate
+  verdict — do not restate those in `## State`. But the default `## Next
+  command` derivation resolved to `commit on green / /bench-final-check / push`,
+  the status board's leading signal, which is a *signal*, not the next action;
+  the real one had to be supplied with `--next`. Story 8 derives that field from
+  the same signals `bench status` ranks, and a generic dirty-tree row outranks
+  the thing a cold session should actually do. Decide before the gate run
+  whether story 8's derivation needs a rule that skips non-actionable signals,
+  or whether `--next` is simply mandatory at a phase close.
 - **Story 15 carries a reviewer-approved top-tier bump** — the scaffolded
   skeleton's guidance prose, `gpt-5.6-sol` / high under the leverage override,
   bounded to that prose. Story 14 (moving this file's `## Shape` text into the
@@ -36,9 +44,8 @@ below is executable from a cold start; no conversation history is needed.
   candidates, merged), and FT126 (`bench roadmap --context` should report the
   reconcile's workload boundary and a discrepancies block rather than raw
   fields). FT122 got the row it had been missing.
-- **Three commits are unpushed and the gate is stale** (gated tree `5b1cc38`,
-  work tree `eae35a5`). The last green gate is still `4ea4880`; every commit
-  since is doc-only and landed with plain `git commit`.
+- **The last green gate is `4ea4880`**; every commit since is doc-only and
+  landed with plain `git commit`. (Counts and tree hashes are in the header.)
 - **A retired spec cited as `specs/<slug>.md` in `ROADMAP.md` reads as a
   dangling row.** `roadmapReconcileCounts` treats any such path as a row's spec
   pointer, so prose evidence names retired specs by bare slug. Cost one
@@ -50,14 +57,7 @@ below is executable from a cold start; no conversation history is needed.
 
 ## Next command
 
-`/bench-implement-spec specs/session-handoff-emission.md` — resume the
-in-flight build; the remaining work is verification, not authoring. Interactive
-rather than `bench shift`, because nine stories route to mid and one to top,
-which fails `craft-line`'s venue-routing test for an unattended loop. In Codex,
-that is `$bench-implement-spec`.
-
-Nothing else should touch this tree first. A second diff on top of an
-uncommitted 605-line build makes the gate answer for two changes at once.
+`/bench-implement-spec specs/session-handoff-emission.md`
 
 ## Shape
 
