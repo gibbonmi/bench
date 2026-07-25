@@ -2,9 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `5ccaf6c`, 4 dirty paths, 7 unpushed commits
+Branch: `main` — HEAD `9cbb138`, clean tree, 9 unpushed commits
 Spec: `specs/session-handoff-emission.md` (Status: staged)
-Gate: green at `dcafb03` — stale, work tree `f6ce3bb`
+Gate: green at `58a6303` — stale, work tree `82e83a3`
 
 ## State
 
@@ -41,6 +41,13 @@ Gate: green at `dcafb03` — stale, work tree `f6ce3bb`
   even though every phase was green. `projects/benchkit.md`'s cold-session notes
   carry this and the `internal/canary` nested-run trap; read them before touching
   either, and note that `dist/bench` must be built with `scripts/go-build.sh`.
+- **FT91 was raised to HIGH by the reviewer** (`9cbb138`) — the gate's length is
+  the dominant cost of small changes here. A fourth arm is recorded on the row:
+  `RunConformance` runs its fifteen checks serially in one test, and that phase
+  was ~94% of wall clock across two measured runs. First step is timing each
+  check before committing to the arm, because the win depends on how the ~500s
+  distributes. The gate reads stale in the header only because that doc commit
+  landed after the green run.
 - `bench structure` reports 17 issues, all pre-existing.
 
 ## Next command
