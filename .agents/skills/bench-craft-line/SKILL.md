@@ -1,6 +1,6 @@
 ---
 name: craft-line
-description: How to pick and govern the line — which model tier and effort a build, shift, TDD pass, or delegated task gets, and when a tier moves. Use whenever declaring the line (invariant #2), choosing a model for a subagent or headless run, or deciding whether a failure escalates a tier.
+description: How to pick and govern the line — which model tier and effort a build, shift, TDD pass, or delegated task gets, and when a tier moves. Use whenever declaring the line (invariant 2), choosing a model for a subagent or headless run, or deciding whether a failure escalates a tier.
 index: declaring the line / picking a delegate's model or effort
 ---
 
