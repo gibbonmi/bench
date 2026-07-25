@@ -175,7 +175,11 @@ func resolveCommitRange(commitArg string) (dr diffRange, errKind, errHint string
 func resolveBranchRange(root string) (dr diffRange, errKind, errHint string) {
 	base, method := resolveBase()
 	if base == "" {
-		def := git.DefaultBranch(root)
+		def, ok := git.ResolvedDefault(root)
+		if !ok {
+			return diffRange{}, "cannot resolve a review base",
+				"this repository has no resolvable default branch; record one with: git config branch.<name>.benchBase <sha>"
+		}
 		mb, err := git.Output("merge-base", def, "HEAD")
 		if err != nil {
 			return diffRange{}, "cannot resolve a review base",

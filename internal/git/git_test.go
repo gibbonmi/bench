@@ -212,3 +212,66 @@ func listDir(t *testing.T, dir string) []string {
 	}
 	return names
 }
+
+// newTwoBranchRepo initialises a repo with one commit and exactly two local branches,
+// neither of which is a resolvable default candidate: there is no origin/HEAD, and no
+// branch named "main" for the candidate probe to verify.
+func newTwoBranchRepo(t *testing.T) string {
+	t.Helper()
+	root := newRepo(t)
+	runGit(t, root, "branch", "-M", "master")
+	runGit(t, root, "branch", "feature")
+	return root
+}
+
+// TestFactsUnresolvableDefault pins what Facts reports when no default branch resolves:
+// the state, not a guess. Ahead/Behind stay zero because there is nothing to measure
+// against, and the rest of the snapshot still has to arrive.
+func TestFactsUnresolvableDefault(t *testing.T) {
+	root := newTwoBranchRepo(t)
+	if err := os.WriteFile(filepath.Join(root, "b.txt"), []byte("dirty\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	facts, err := Facts(root)
+
+	if err != nil {
+		t.Fatalf("Facts on an unresolvable default: %v", err)
+	}
+	if facts.DefaultResolved {
+		t.Error("DefaultResolved = true, want false")
+	}
+	if facts.DefaultBranch != "" {
+		t.Errorf("DefaultBranch = %q, want empty", facts.DefaultBranch)
+	}
+	if facts.Ahead != 0 || facts.Behind != 0 {
+		t.Errorf("Ahead/Behind = %d/%d, want 0/0", facts.Ahead, facts.Behind)
+	}
+	if facts.Branch != "master" || !facts.Dirty {
+		t.Errorf("rest of the snapshot lost: branch %q, dirty %v", facts.Branch, facts.Dirty)
+	}
+}
+
+// TestResolvedDefaultSoleMaster is the sole-local-branch fallback: a master-only
+// repository has no origin/HEAD and no "main" to verify, and the lone local branch is
+// the only evidence of its default.
+func TestResolvedDefaultSoleMaster(t *testing.T) {
+	root := newRepo(t)
+	runGit(t, root, "branch", "-M", "master")
+
+	def, ok := ResolvedDefault(root)
+
+	if !ok || def != "master" {
+		t.Fatalf("ResolvedDefault = (%q, %v), want (\"master\", true)", def, ok)
+	}
+}
+
+// TestResolvedDefaultUnresolvableNamesNothing pins the ok=false return: an empty name, so
+// no caller can put a branch this repository does not have into a message or a ref.
+func TestResolvedDefaultUnresolvableNamesNothing(t *testing.T) {
+	def, ok := ResolvedDefault(newTwoBranchRepo(t))
+
+	if ok || def != "" {
+		t.Fatalf("ResolvedDefault = (%q, %v), want (\"\", false)", def, ok)
+	}
+}

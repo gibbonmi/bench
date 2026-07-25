@@ -89,8 +89,12 @@ type PorcelainEntry struct {
 }
 
 // RepoFacts is the typed local repository state used by read-only query owners.
+// DefaultResolved is what makes the default-branch cells readable: when it is false,
+// DefaultBranch is empty and Ahead/Behind are zero because there is no branch to measure
+// against — an unknown, not a measurement.
 type RepoFacts struct {
 	Branch, DefaultBranch string
+	DefaultResolved       bool
 	Dirty                 bool
 	Ahead, Behind         int
 	Changes               []PorcelainEntry
@@ -177,7 +181,7 @@ func DeleteBranchExact(root, ref, oid string) error {
 func PruneLandedBranches(root string, protectedBranches []string) (int, error) {
 	def, ok := ResolvedDefault(root)
 	if !ok {
-		return 0, fmt.Errorf("git default branch %q does not resolve", DefaultBranch(root))
+		return 0, errors.New("git repository has no resolvable default branch")
 	}
 	worktrees, err := Worktrees(root)
 	if err != nil {
@@ -237,7 +241,7 @@ func LandedState(root string) (LandedStateFact, error) {
 	}
 	def, ok := ResolvedDefault(root)
 	if !ok {
-		return LandedStateFact{}, fmt.Errorf("git default branch %q does not resolve", DefaultBranch(root))
+		return LandedStateFact{}, errors.New("git repository has no resolvable default branch")
 	}
 	branches, err := LocalBranches(root)
 	if err != nil {
@@ -285,8 +289,16 @@ func Facts(root string) (RepoFacts, error) {
 	if err != nil {
 		return RepoFacts{}, err
 	}
-	f := RepoFacts{Branch: branch, DefaultBranch: DefaultBranch(root), Changes: ParsePorcelainZ(raw)}
+	f := RepoFacts{Branch: branch, Changes: ParsePorcelainZ(raw)}
 	f.Dirty = len(f.Changes) > 0
+	def, ok := ResolvedDefault(root)
+	if !ok {
+		// Divergence is derived from `rev-list <default>...HEAD`, which errors against a
+		// branch that does not exist; the caller gets the unresolved state and the rest of
+		// the snapshot instead of a failed read of the whole thing.
+		return f, nil
+	}
+	f.DefaultBranch, f.DefaultResolved = def, true
 	counts, err := Output("-C", root, "rev-list", "--left-right", "--count", f.DefaultBranch+"...HEAD")
 	if err != nil {
 		return RepoFacts{}, fmt.Errorf("git rev-list: %w", err)
@@ -316,33 +328,6 @@ func ParsePorcelainZ(raw []byte) []PorcelainEntry {
 // directory (never the worktree, so it is never a diff or commit candidate). It is the
 // one gate owner resolves and composes with its absolute Git-directory path.
 const GateCacheFile = "bench-last-gate"
-
-// DefaultBranch is the repository's default branch: origin/HEAD's short name with the
-// `origin/` prefix stripped, falling back to "main" when the ref is unset (no remote
-// HEAD) or empty. The one source both `diff` and `status` read, so the two surfaces
-// agree on what "default branch" is.
-func DefaultBranch(root string) string {
-	out, err := Output("-C", root, "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD")
-	if err != nil || out == "" {
-		return "main"
-	}
-	return strings.TrimPrefix(out, "origin/")
-}
-
-// ResolvedDefault returns the local default branch only when it resolves to a commit.
-func ResolvedDefault(root string) (string, bool) {
-	def := DefaultBranch(root)
-	if OK("-C", root, "rev-parse", "--verify", "--quiet", def+"^{commit}") {
-		return def, true
-	}
-	branches, err := LocalBranches(root)
-	if err == nil {
-		if len(branches) == 1 && OK("-C", root, "rev-parse", "--verify", "--quiet", branches[0]+"^{commit}") {
-			return branches[0], true
-		}
-	}
-	return def, false
-}
 
 // LandedInDefault proves a local branch landed by ancestry or patch containment.
 // Merge-only content cannot be proven by git cherry and is deliberately kept.

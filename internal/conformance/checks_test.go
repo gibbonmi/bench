@@ -38,6 +38,7 @@ func RunConformance(root, kitRoot string) []string {
 	diags = append(diags, checkLineRouting(root)...)
 	diags = append(diags, checkPackageCoreAndGuards(root)...)
 	diags = append(diags, checkBenchShRoutes(root)...)
+	diags = append(diags, checkDefaultBranchSingleSource(root)...)
 	diags = append(diags, checkDataHandlingDerivation(root)...)
 	diags = append(diags, checkSingleControlEscaper(root)...)
 	diags = append(diags, checkBoundsPolicy(root)...)

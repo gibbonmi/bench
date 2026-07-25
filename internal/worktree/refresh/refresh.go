@@ -45,8 +45,8 @@ func Refresh(root string) RefreshResult {
 }
 
 func RefreshedStartRef(root string) string {
-	remote := "origin/" + git.DefaultBranch(root)
-	if git.OK("-C", root, "rev-parse", "--verify", "--quiet", remote+"^{commit}") {
+	remote := git.RemoteDefaultRef(root)
+	if remote != "" && git.OK("-C", root, "rev-parse", "--verify", "--quiet", remote+"^{commit}") {
 		return remote
 	}
 	if local, ok := git.ResolvedDefault(root); ok {

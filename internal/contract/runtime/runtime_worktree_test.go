@@ -258,9 +258,9 @@ func testRuntimeWorktreeListRows(t *testing.T) {
 }
 
 // onMainFixture returns a fixture whose default branch resolves to a real `main` commit — the
-// sweep's happy-path precondition. git.DefaultBranch falls back to "main", but a bare `git init`
-// fixture is born on "master", so an explicit HEAD symref lands the first commit on main and makes
-// the default branch resolve.
+// sweep's happy-path precondition. A bare `git init` fixture is born on "master", so an explicit
+// HEAD symref lands the first commit on main and gives git.ResolvedDefault a candidate that
+// verifies.
 func onMainFixture(t *testing.T, opts ...contract.FixtureOption) contract.Fixture {
 	t.Helper()
 	f := contract.NewFixture(t, opts...)

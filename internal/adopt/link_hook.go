@@ -87,12 +87,27 @@ func hooksDir(root string) string {
 	return filepath.Join(root, out)
 }
 
+// fallbackProtectedBranch is baked into the pre-push hook when the repository has no
+// resolvable default branch. It is the guard's fail-safe rather than a claim about the
+// repository: the installed hook re-resolves origin/HEAD live on every push and reaches
+// the baked token only when that lookup is empty, and a guard protecting nothing is the
+// worse failure.
+const fallbackProtectedBranch = "main"
+
+// protectedBranch names the branch the installed hook refuses a direct push to.
+func protectedBranch(root string) string {
+	if def, ok := git.ResolvedDefault(root); ok {
+		return def
+	}
+	return fallbackProtectedBranch
+}
+
 func installGitHook(root string, stderr io.Writer) error {
 	if gitOK("-C", root, "remote", "get-url", "origin") &&
 		!gitOK("-C", root, "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD") {
 		_ = exec.Command("git", "-C", root, "remote", "set-head", "origin", "--auto").Run()
 	}
-	def := git.DefaultBranch(root)
+	def := protectedBranch(root)
 	hooks := hooksDir(root)
 	if err := os.MkdirAll(hooks, 0o755); err != nil {
 		fmt.Fprintln(stderr, err)

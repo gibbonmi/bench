@@ -94,7 +94,7 @@ func hookBranch(root string) string {
 			}
 		}
 	}
-	return git.DefaultBranch(root)
+	return protectedBranch(root)
 }
 func stageManifest(stage, version string, rows []manifestRow) (string, error) {
 	return stageBytes(stage, "manifest", manifestBytes(version, rows), 0o644)

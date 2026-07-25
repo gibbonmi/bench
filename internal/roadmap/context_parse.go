@@ -235,7 +235,13 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 	if err != nil {
 		return s, err
 	}
-	s.Git = [][]any{{gf.Branch, gf.DefaultBranch, gf.Dirty, gf.Ahead, gf.Behind}}
+	defaultBranch, ahead, behind := any(gf.DefaultBranch), any(gf.Ahead), any(gf.Behind)
+	if !gf.DefaultResolved {
+		// The three cells the unresolved default makes unknowable, named rather than
+		// rendered as the zeros they would otherwise fabricate.
+		defaultBranch, ahead, behind = "unknown", "unknown", "unknown"
+	}
+	s.Git = [][]any{{gf.Branch, defaultBranch, gf.Dirty, ahead, behind}}
 	sort.Slice(gf.Changes, func(i, j int) bool { return gf.Changes[i].Path < gf.Changes[j].Path })
 	for _, c := range gf.Changes {
 		s.GitChanges = append(s.GitChanges, []string{c.Status, c.Path})

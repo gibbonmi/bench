@@ -107,6 +107,9 @@ func testAXIDiffErrorPosture(t *testing.T) {
 	f.WriteFile("README.md", "r\n")
 	f.CommitAll("c1")
 	f.Git("branch", "-m", "trunk")
+	// Two local branches with no origin/HEAD is what leaves the default genuinely
+	// unresolvable: a lone local branch is itself the resolved default.
+	f.Git("branch", "spare")
 
 	out = f.Bench("diff")
 
@@ -280,4 +283,26 @@ func testAXIDiffControlBytePosture(t *testing.T) {
 	help := f.Bench("diff", "-h")
 	help.RequireExit(0)
 	requireContainsFold(t, help.Stdout, "control byte")
+}
+
+// TestAXIDiffUnresolvableDefault pins the fail-closed posture: with no default branch to
+// compute a review base from, diff names that reality and the escape hatch rather than
+// diffing against a branch the repository does not have.
+func TestAXIDiffUnresolvableDefault(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	f := contract.NewFixture(t)
+	f.WriteFile("README.md", "r\n")
+	f.CommitAll("c1")
+	f.Git("branch", "-M", "master")
+	f.Git("switch", "-qc", "feature")
+	f.WriteFile("work.txt", "w\n")
+	f.CommitAll("c2")
+
+	out := f.Bench("diff")
+
+	out.RequireExit(1)
+	out.RequireContains(out.Stdout, "no resolvable default branch")
+	out.RequireContains(out.Stdout, "git config branch.<name>.benchBase <sha>")
+	requireNoAXILineMatching(t, out.Stdout, `'main'`)
 }

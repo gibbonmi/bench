@@ -180,6 +180,7 @@ func TestPackageCoreAndGuardFixturesBite(t *testing.T) {
 		"go-test-failing",
 		"guard-describe-boundary-dropped",
 		"guard-resolver-order-drift",
+		"default-branch-refabricated",
 		"kit-only-asset-admitted",
 		"kit-only-allowlist-emptied",
 	}

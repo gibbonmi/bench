@@ -191,7 +191,7 @@ func Acquire(root, resetRef, resetMode string) (string, error) {
 	}
 	for try := 1; wt == "" && try <= 3; try++ {
 		cand := candidateName(pool, time.Now().Unix(), os.Getpid(), try)
-		if !worktreeAdd(root, cand, "origin/"+git.DefaultBranch(root)) && !worktreeAdd(root, cand, "") {
+		if !worktreeAdd(root, cand, git.RemoteDefaultRef(root)) && !worktreeAdd(root, cand, "") {
 			break
 		}
 		lease, err := LeaseFile(cand)

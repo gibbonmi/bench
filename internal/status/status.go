@@ -461,10 +461,11 @@ func appendMaps(rows []row, root string) []row {
 // appendRetirement adds the merged-spec-awaiting-retirement signal (sev 8), but only on
 // the default branch — a topic branch's spec is still in flight, not awaiting retirement.
 func appendRetirement(rows []row, root string) []row {
-	// Audit #5 — tolerate: a failure reads as "not the default branch", skipping this
-	// advisory housekeeping signal; non-fatal on the ambient board.
+	// Audit #5 — tolerate: an unreadable branch or an unresolvable default reads as "not
+	// the default branch", skipping this advisory housekeeping signal; non-fatal on the
+	// ambient board.
 	cur, _ := git.Output("-C", root, "rev-parse", "--abbrev-ref", "HEAD")
-	if cur != git.DefaultBranch(root) {
+	if def, ok := git.ResolvedDefault(root); !ok || cur != def {
 		return rows
 	}
 	if n := retirementCount(root); n > 0 {
@@ -492,10 +493,10 @@ func appendOrphanedPickup(rows []row, root string) []row {
 // Severity 10 ranks it below the housekeeping rows (retirement 8, orphaned-pickup 9) and far
 // below gate/git, so it never displaces a red-gate or dirty-tree row in the budget.
 func appendRoadmapReconcile(rows []row, root string) []row {
-	// Audit #6 — tolerate: as in appendRetirement, an unreadable branch reads as "not the
-	// default branch" and skips this advisory reconcile signal.
+	// Audit #6 — tolerate: as in appendRetirement, an unreadable branch or an unresolvable
+	// default reads as "not the default branch" and skips this advisory reconcile signal.
 	cur, _ := git.Output("-C", root, "rev-parse", "--abbrev-ref", "HEAD")
-	if cur != git.DefaultBranch(root) {
+	if def, ok := git.ResolvedDefault(root); !ok || cur != def {
 		return rows
 	}
 	merged, dangling := roadmapReconcileCounts(root)

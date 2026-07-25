@@ -217,3 +217,21 @@ func testRoadmapContextReadOnlyOffline(t *testing.T) {
 		t.Fatal("gate cache changed")
 	}
 }
+
+// TestAXIRoadmapContextGitUnknown pins the degradation posture at the git block: an
+// unresolvable default costs the three cells it makes unknowable, not the snapshot.
+func TestAXIRoadmapContextGitUnknown(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	f := contextFixture(t)
+	f.Git("branch", "-M", "master")
+	f.Git("branch", "feature")
+
+	out := f.Bench("roadmap", "--context")
+
+	out.RequireExit(0)
+	out.RequireContains(out.Stdout, "git[1]{branch,default_branch,dirty,ahead,behind}:")
+	out.RequireContains(out.Stdout, "master,unknown,false,unknown,unknown")
+	out.RequireContains(out.Stdout, "retain me")
+	out.RequireContains(out.Stdout, "roadmap_rows[1]{")
+}
