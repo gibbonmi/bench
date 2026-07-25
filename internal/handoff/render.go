@@ -2,6 +2,7 @@ package handoff
 
 import (
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/toon"
@@ -13,10 +14,26 @@ const harnessClaude = "claude"
 
 // harnessPrefix maps a harness to the prefix its phase invocations take. It is the only
 // place either form is written: translation reads the source prefix out of this table
-// rather than restating it, so adding a harness is a row here and nothing else.
+// rather than restating it, and the usage line reads the key set out of it through
+// harnessChoices, so adding a harness is a row here and nothing else.
 var harnessPrefix = map[string]string{
 	harnessClaude: "/bench-",
 	"codex":       "$bench-",
+}
+
+// harnessChoices renders the accepted harness names for the usage line, the default first
+// and the rest in sorted order. It derives from the table that decides which names are
+// accepted, so a usage line advertising a harness the command rejects — or omitting one it
+// takes — is not a state this package can reach.
+func harnessChoices() string {
+	rest := make([]string, 0, len(harnessPrefix))
+	for name := range harnessPrefix {
+		if name != harnessClaude {
+			rest = append(rest, name)
+		}
+	}
+	sort.Strings(rest)
+	return strings.Join(append([]string{harnessClaude}, rest...), "|")
 }
 
 // renderPath renders the git root as a reader elsewhere should see it: abbreviated to `~`
@@ -63,13 +80,13 @@ func render(f facts, state string) string {
 	if state != "" {
 		b.WriteString(state + "\n\n")
 	}
-	b.WriteString("## Next command\n\n" + nextField(f) + "\n")
+	b.WriteString(nextHeading + "\n\n" + nextField(f) + "\n")
 	return b.String()
 }
 
 // document is the file's full text: the pin block plus the Shape section stdout omits.
 func document(pin string) string {
-	return pin + "\n## Shape\n\n" + ShapeSection
+	return pin + "\n" + ShapeHeading + "\n\n" + ShapeSection
 }
 
 func originField(origin string) string {
@@ -104,13 +121,19 @@ func nextField(f facts) string {
 	return "`" + f.Action + "` — the board's leading invocable signal (`" + f.Signal + "`)."
 }
 
-// validate refuses any field carrying a byte the kit's output contract cannot represent,
+// validate refuses any field that cannot survive the sink it is about to be composed into,
 // before a line is composed. A control byte reaching the rendered block would ride into
 // every downstream reader of the artifact, so the refusal is the whole answer.
+//
+// The sink is a line-structured markdown document, which is stricter than TOON:
+// toon.Representable permits tab, newline, and return because the encoder escapes them,
+// and none of the three survives here. A newline is the sharp one — a value carrying it
+// splits its own field across lines, and a `--next` override carrying one can write a
+// second `## State` heading that makes every later run refuse the document as ambiguous.
 func validate(f facts) error {
 	fields := append([]string{f.Repo, f.Origin, f.Path, f.Branch, f.Head, f.Dirty, f.Unpushed, f.Gate, f.Action, f.Signal}, f.Specs...)
 	for _, value := range fields {
-		if !toon.Representable(value) {
+		if !toon.Representable(value) || strings.ContainsAny(value, "\n\r\t") {
 			return refusal{"unrepresentable handoff field",
 				"a derived value carries a control byte; fix the branch, spec, or status text that holds it"}
 		}

@@ -7,11 +7,9 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/contract"
+	"github.com/gibbonmi/bench/internal/handoff"
+	"github.com/gibbonmi/bench/internal/status"
 )
-
-// handoffFile is the artifact `bench handoff` writes; every row below reads it back to
-// prove the file sink and the stdout sink agree.
-const handoffFile = "session-handoff.md"
 
 // handoffFixtureOnMain pins HEAD to main. The unpushed-commit count resolves the default
 // branch, so a fixture that left the initial branch to the local git default would report a
@@ -61,12 +59,12 @@ func TestHandoffWritesAndPrints(t *testing.T) {
 	contract.RequireContains(t, out.Stdout, "# Session handoff")
 	contract.RequireContains(t, out.Stdout, "## State")
 	contract.RequireContains(t, out.Stdout, "## Next command")
-	if !f.Exists(handoffFile) {
-		t.Fatal("handoff exited zero without writing " + handoffFile)
+	if !f.Exists(status.HandoffFile) {
+		t.Fatal("handoff exited zero without writing " + status.HandoffFile)
 	}
 	// stdout is the pin block; the file is the pin block plus the Shape section. One
 	// derivation feeding both sinks means the file must start with exactly what printed.
-	written := f.ReadFile(handoffFile)
+	written := f.ReadFile(status.HandoffFile)
 	contract.RequireContains(t, written, strings.TrimRight(out.Stdout, "\n"))
 	contract.RequireContains(t, written, "## Shape")
 	contract.RequireNotContains(t, out.Stdout, "## Shape")
@@ -161,14 +159,27 @@ func TestHandoffNamesStagedSpec(t *testing.T) {
 	out.RequireExit(0)
 	contract.RequireContains(t, out.Stdout, "Spec: `specs/alpha.md` (Status: staged)")
 
-	// A second, different Status value: a constant `Status: staged` fails here.
+	// A second, different Status value: a constant `Status: staged` fails here. The
+	// status-less spec alongside it is malformed rather than staged, so the field passes
+	// over it instead of naming it with a status the file does not carry.
 	drafted := handoffFixtureOnMain(t)
 	drafted.WriteFile("specs/beta.md", "# Beta\n\nStatus: drafting\n")
 	drafted.WriteFile("specs/gamma.md", "# Gamma\n\nno status line at all\n")
 	drafted.CommitAll("drafted spec")
 	out = drafted.Bench("handoff")
 	out.RequireExit(0)
-	contract.RequireContains(t, out.Stdout, "Spec: `specs/beta.md` (Status: drafting), `specs/gamma.md` (Status: unknown)")
+	contract.RequireContains(t, out.Stdout, "Spec: `specs/beta.md` (Status: drafting)")
+	contract.RequireNotContains(t, out.Stdout, "specs/gamma.md")
+
+	// An absent specs/ directory states absence rather than failing — the third fixture
+	// row 6 names, which no case exercised while a specs/ holding an implemented spec
+	// stood in for it.
+	bare := handoffFixtureOnMain(t)
+	bare.WriteFile("tracked.txt", "base\n")
+	bare.CommitAll("no specs directory")
+	out = bare.Bench("handoff")
+	out.RequireExit(0)
+	contract.RequireContains(t, out.Stdout, "Spec: none staged.")
 
 	// No live spec: an implemented one is finished work, so the field states absence
 	// rather than naming it.
@@ -259,12 +270,17 @@ func handoffBoard(t *testing.T, f contract.Fixture) []handoffBoardRow {
 }
 
 // handoffBoardNext is the expectation, derived from the printed board rather than from the
-// subject: the first row carrying a command a session could type. The rule is spelled out
-// here rather than borrowed, so an implementation that took the leading row whatever its
-// action said would disagree with it.
+// subject: the first row carrying a command a session could type. What qualifies comes from
+// handoff.IsInvocable, the rule's one source — a copy spelled out here would keep asserting
+// whatever it was written against, which is how this expectation came to demand the
+// compound actions the rule had already stopped accepting.
+//
+// The independence that matters is in the *walk*, not the predicate: this takes the first
+// qualifying row of the board as printed, so an implementation that re-ranked the board or
+// took the leading row whatever its action said still disagrees with it.
 func handoffBoardNext(rows []handoffBoardRow) (handoffBoardRow, bool) {
 	for _, r := range rows {
-		if strings.HasPrefix(r.action, "/bench-") || strings.HasPrefix(r.action, "bench ") {
+		if handoff.IsInvocable(r.action) {
 			return r, true
 		}
 	}

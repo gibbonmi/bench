@@ -1,6 +1,6 @@
 # Session handoff emission (FT122)
 
-Status: staged
+Status: implemented
 
 Compiled from `decisions/session-handoff-emission.md`, which was closed in the
 same session that wrote this spec under the reviewer-closed path in
@@ -228,9 +228,11 @@ the failure this capability exists to remove.
     defect in this kit, and the model moves up with it.
 
 25. As a maintainer, I want a conformance check proving the harness
-    phase-prefix table is the only place either invocation form is produced, so
-    that a hardcoded `/bench-` or `$bench-` cannot survive somewhere the runtime
-    rows do not look.
+    phase-prefix table is the only place **within `internal/handoff`** that
+    either invocation form is produced, so that a hardcoded `/bench-` or
+    `$bench-` cannot survive somewhere the runtime rows do not look. The scope is
+    the package deliberately: `/bench-` is legitimately produced across
+    `internal/status`, so a repo-wide ban would forbid the board's own rows.
     Line: `gpt-5.6-terra` / medium. Gate logic, routed as story 24, and the
     counterpart that makes the map's single-sourced-table contract enforceable.
 
@@ -340,11 +342,11 @@ Gate command: the project gate, `bench gate`.
 | 4 | path outside `$HOME` renders absolute | unit (`internal/handoff`) | `go test ./internal/handoff -run TestRenderPathOutsideHome` | Forcing `~` on an outside path yields a string that does not resolve; asserting absolute catches it. |
 | 3, 4 | the *emitted* path equals the fixture's git root, `~`-abbreviated | runtime contract | `go test ./internal/contract/runtime -run TestHandoffEmitsDerivedPath` | Fixture rooted outside any `workspace` directory. Catches a command rendering `os.Getwd()` or a constant while a correct helper sits unit-tested and uncalled. |
 | 5 | branch, HEAD, clean/dirty, unpushed count | runtime contract | `go test ./internal/contract/runtime -run TestHandoffCarriesTreeFacts` | Two fixtures — dirty with an unpushed commit, and clean with none — so hardcoded defaults fail one of them. |
-| 6 | staged spec named with Status, or explicitly none | runtime contract | `go test ./internal/contract/runtime -run TestHandoffNamesStagedSpec` | Three fixtures: two different `Status:` values plus an empty `specs/`. A constant `Status: staged` fails the second. |
+| 6 | staged spec named with Status, or explicitly none | runtime contract | `go test ./internal/contract/runtime -run TestHandoffNamesStagedSpec` | Four fixtures: two different `Status:` values, a `specs/` holding only an implemented spec, and no `specs/` directory at all. A constant `Status: staged` fails the second; a listing that invents a status for a spec carrying no `Status:` line fails the second as well, since that spec must be passed over rather than named. |
 | 7 | gate field carries verdict, cached tree, and staleness; or says none has run | runtime contract | `go test ./internal/contract/runtime -run TestHandoffGateFieldIsStaleAware` | Three fixtures — green-and-current, green-but-stale, absent. A hardcoded `gate: green` fails the stale and absent cases, which is the confident-wrong-fact defect. |
 | 8 | selection returns the first invocable action, skips prose and compound ones, and reports when a board has none | unit (`internal/handoff`) | `go test ./internal/handoff -run TestFirstInvocable` | Enumerates the selection's edges directly — empty board, all-prose board, prose ahead of an invocable row, and the git row's `/bench-final-check / push` — including the all-prose case a live fixture cannot reliably produce. A bare prefix test passes every other row and fails the compound one. |
 | 8 | next command is the board's highest-severity **invocable** action, or an explicit statement that none is | runtime contract | `go test ./internal/contract/runtime -run TestHandoffNextMatchesStatus` | Three fixtures: two whose first invocable board action differs, each compared to `bench status --all` on that same fixture, plus one whose only signals carry prose actions. A constant fails the first two; taking `signals[0].Action` unconditionally fails the third by rendering a hint as a command. |
-| 9 | `--next` replaces the derived line | runtime contract | `go test ./internal/contract/runtime -run TestHandoffNextOverride` | Asserts the override present **and** the derived line absent, so appending alongside it fails. |
+| 9 | `--next` replaces the derived line | runtime contract | `go test ./internal/contract/runtime -run TestHandoffNextOverride` | Asserts the override present **and** both halves of the derived line absent — the board action and the renderer's own signal-clause wording, read from the renderer rather than approximated, so a needle the implementation cannot emit cannot stand in for the check. |
 | 10 | `--harness codex` renders `$bench-*` | runtime contract | `go test ./internal/contract/runtime -run TestHandoffHarnessCodex` | Asserting `$bench-` present *and* `/bench-` absent catches an implementation that emits both forms. |
 | 11 | default and `claude` render `/bench-*` | runtime contract | `go test ./internal/contract/runtime -run TestHandoffHarnessDefault` | The paired absence assertion catches a default that leaks the Codex form. |
 | 12 | unknown `--harness` value is a usage error, exit 2, nothing written | runtime contract | `go test ./internal/contract/runtime -run TestHandoffRejectsUnknownHarness` | A silent fallback would exit 0 and write a handoff; asserting exit 2 and an unchanged tree forbids it. |
@@ -353,15 +355,15 @@ Gate command: the project gate, `bench gate`.
 | 15 | the scaffolded skeleton's prose states the artifact's purpose and conventions | runtime contract | `go test ./internal/contract/runtime -run TestHandoffSkeletonCarriesConventions` | A skeleton that scaffolds structure without the guidance prose leaves the first session nothing to learn the conventions from. |
 | 16 | missing file scaffolded with empty State, exit 0 | runtime contract | `go test ./internal/contract/runtime -run TestHandoffScaffoldsMissing` | A fixture with no handoff proves creation happens rather than an error. |
 | 17 | no `## State` heading → non-zero, file unchanged | runtime contract | `go test ./internal/contract/runtime -run TestHandoffRefusesUnparseable` | Asserting both the exit code and the unchanged bytes forbids the write-anyway implementation. |
-| 18 | two runs byte-identical on stdout **and** the file | runtime contract | `go test ./internal/contract/runtime -run TestHandoffIdempotent` | Fixture's `## State` is non-empty, so the second run also proves the command re-parses its own output. Any emitted timestamp or reordering breaks equality. |
+| 18 | two runs byte-identical on stdout **and** the file | runtime contract | `go test ./internal/contract/runtime -run TestHandoffIdempotent` | Fixture's `## State` is non-empty, so the second run also proves the command re-parses its own output. Any emitted timestamp or reordering breaks equality. The fixture's handoff is untracked, which holds the tree state still: the command's own write is a change to the tree it reports on, so on a tracked repo the board legitimately grows a git signal the first run never saw. The pin block's dirty clause excludes the handoff for that reason and is stable either way; the board-derived line is not, and closing that needs a `bench status` path exclusion recorded as out of scope. |
 | 19 | doubled or fenced `## State` fails closed | unit (`internal/handoff`) | `go test ./internal/handoff -run TestSplitAmbiguousState` | A naive first-match splitter passes the well-formed case and fails here, which is the silent-data-loss path. |
 | 19 | the *command* refuses a fenced or doubled `## State` | runtime contract | `go test ./internal/contract/runtime -run TestHandoffRefusesAmbiguousState` | Proves the command calls the tested splitter rather than an inline fence-blind one. |
 | 20 | detached HEAD, no commits, no `origin` render explicit unknowns | runtime contract | `go test ./internal/contract/runtime -run TestHandoffDegenerateGit` | Three fixtures; an implementation emitting empty fields fails because absence must read as stated, not blank. |
 | 21 | unwritable target yields a structured error naming the path | runtime contract | `go test ./internal/contract/runtime -run TestHandoffUnwritableTarget` | Parent directory at mode 0555, skipped under the existing skip-ownership rule when running as root. A bare permission trace fails the structured-shape assertion. |
-| 22 | repeated and unknown flag names rejected by the shared grammar | runtime contract | `go test ./internal/contract/runtime -run TestHandoffArgGrammar` | Hand-rolled parsing accepts what the shared helper rejects, so the matrix catches a bypass. |
+| 22 | repeated, unknown, and empty-valued flag names rejected by the shared grammar | runtime contract | `go test ./internal/contract/runtime -run TestHandoffArgGrammar` | Hand-rolled parsing accepts what the shared helper rejects, so the matrix catches a bypass. The empty-value rejection is the grammar's `NoEmptyValue` attribute, not a per-subcommand guard, so the row's mechanism claim is the one that runs. |
 | 23 | outside a repository, `toon.NotInRepo()` and its exit code | runtime contract | `go test ./internal/contract/runtime -run TestHandoffNotInRepo` | Pins the error line and the code, not merely that no write happened. |
 | 24 | `## Shape` text exists in exactly one place | conformance | `go test ./internal/conformance -run TestHandoffShapeSingleSourced` | With the text in the binary, a surviving copy in a tracked file turns this red. |
-| 25 | the harness prefix table is the only producer of either form | conformance | `go test ./internal/conformance -run TestHarnessPrefixSingleSourced` | A trailing `strings.ReplaceAll` or an inline conditional passes rows 10 and 11 but fails here. |
+| 25 | the harness prefix table is the only producer of either form within `internal/handoff` | conformance | `go test ./internal/conformance -run TestHarnessPrefixSingleSourced` | A trailing `strings.ReplaceAll` or an inline conditional passes rows 10 and 11 but fails here. The check reads non-test `.go` files under `internal/handoff`, which is the scope the story states. |
 | 26 | `bench handoff` routes as porcelain | runtime contract | `go test ./internal/contract/runtime -run TestHandoffRouted` | Invoking through the wrapper rather than the binary fails if the case line is missing. |
 | 20 | control bytes in a branch or spec name are refused | runtime contract | `go test ./internal/contract/runtime -run TestHandoffRefusesControlBytes` | Fixture branch name carries a control byte; asserts the existing `toon` refusal fires rather than the byte reaching the rendered block. |
 
@@ -394,7 +396,18 @@ Walked per behavior; each landed as a row above or as a **Won't handle** line.
 - Symlinked repository roots resolving differently than the git root reports —
   the path is a hint with identity as the anchor, so a divergence is cosmetic.
 - Interpreting the contents of `## State` — preserved verbatim, so prose inside
-  it that resembles a generated section is never parsed.
+  it that resembles a generated section is never parsed. The body ends only at a
+  generated heading, which is what makes that true of a reviewer's own `## `
+  headings rather than only of fenced ones.
+- Byte-identical output across two runs on a *tracked* handoff — the command's
+  write is a change to the tree it reports on, so the second run's board
+  legitimately carries a git signal the first run's did not. The pin block's
+  dirty clause excludes the handoff and is stable in both configurations; making
+  the board-derived line stable needs a path exclusion `bench status` does not
+  offer, which is parked rather than built here.
+- A symlinked `session-handoff.md` — the write follows the link. Symlinked repo
+  roots are already a cut above; a symlinked artifact is the same class and is
+  left undecided rather than silently handled.
 - Non-UTF-8 bytes in the handoff *body* — preserved verbatim through the
   splitter. Control bytes in *rendered field values* are a covered row above, not
   a cut.

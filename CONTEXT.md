@@ -52,6 +52,14 @@ cold session reads this first to avoid drifting the vocabulary.
   once the work ships — durable decisions move to an ADR, this file, or the
   profile, and the map leaves the tree (history lives in git). Not "PRD", not
   "design doc" — decision map.
+- **session handoff** — the phase-close continuation artifact at `session-handoff.md`,
+  rewritten in full by `bench handoff`. Distinct from a decision map's `## Handoff`
+  section, which hands one idea's seams to the spec-writer: this one hands the whole
+  repository to the next session. Rewritten, never appended to.
+- **pin block** — the header `bench handoff` prints to stdout and writes at the top of the
+  session handoff: repository, path, branch and HEAD, tree state, staged spec, gate
+  verdict, and the next command. One derivation feeds both sinks, so the printed block and
+  the file cannot state different facts. Not "the header", not "the summary" — pin block.
 - **ambient dashboard** — what `bench status` prints: the cold-session + on-demand view
   of what needs attention. The feature that renders it is the *ambient-feedback surface*;
   the printed thing is the ambient dashboard. Not "status report", not "summary".

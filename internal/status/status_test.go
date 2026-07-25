@@ -105,8 +105,8 @@ func TestShort(t *testing.T) {
 		{"abcdef", "abcdef"},
 		{"0123456789", "0123456"},
 	} {
-		if got := short(tc.in); got != tc.want {
-			t.Errorf("short(%q) = %q, want %q", tc.in, got, tc.want)
+		if got := Short(tc.in); got != tc.want {
+			t.Errorf("Short(%q) = %q, want %q", tc.in, got, tc.want)
 		}
 	}
 }

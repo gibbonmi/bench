@@ -7,10 +7,18 @@ import (
 )
 
 // Flag declares one flag a Grammar accepts: its literal spelling (e.g. "-m",
-// "--all") and whether it consumes the following argument as its value.
+// "--all"), whether it consumes the following argument as its value, and
+// whether that value may be empty.
+//
+// NoEmptyValue applies the empty-positional rule to a flag's value: an empty
+// string is what an unset shell variable expands to inside quotes, so a flag
+// whose value names something — a command, a path, a message — treats it as
+// the mistyped invocation it almost always is. Declaring it here keeps the
+// rule in the shared parser rather than having each subcommand re-derive it.
 type Flag struct {
-	Name     string
-	HasValue bool
+	Name         string
+	HasValue     bool
+	NoEmptyValue bool
 }
 
 // Grammar declares the argument shape one subcommand parses through Parse:
@@ -52,10 +60,14 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 
 	valueFlags := make(map[string]bool, len(g.Flags))
 	knownFlags := make(map[string]bool, len(g.Flags))
+	noEmptyFlags := make(map[string]bool, len(g.Flags))
 	for _, f := range g.Flags {
 		knownFlags[f.Name] = true
 		if f.HasValue {
 			valueFlags[f.Name] = true
+		}
+		if f.NoEmptyValue {
+			noEmptyFlags[f.Name] = true
 		}
 	}
 
@@ -93,6 +105,9 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 						return Result{}, toon.MissingArg(g.Cmd, a), 2
 					}
 					i++
+					if args[i] == "" && noEmptyFlags[a] {
+						return Result{}, toon.Usage(g.Cmd, a+` ""`), 2
+					}
 					result.Flags[a] = args[i]
 				} else {
 					result.Flags[a] = ""

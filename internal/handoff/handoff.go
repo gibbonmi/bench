@@ -15,9 +15,14 @@ import (
 // The `--harness` *value* is this package's to check: the shared parser validates flag
 // spelling, repetition, and arity, and accepts anything as a declared flag's value.
 var grammar = usage.Grammar{
-	Cmd:   "bench handoff",
-	Help:  "usage: bench handoff [--harness claude|codex] [--next <command>]",
-	Flags: []usage.Flag{{Name: "--harness", HasValue: true}, {Name: "--next", HasValue: true}},
+	Cmd:  "bench handoff",
+	Help: "usage: bench handoff [--harness " + harnessChoices() + "] [--next <command>]",
+	Flags: []usage.Flag{
+		{Name: "--harness", HasValue: true, NoEmptyValue: true},
+		// An empty override names no command. Left to fall through it would read as a
+		// clean board, which is a different — and false — statement about the tree.
+		{Name: "--next", HasValue: true, NoEmptyValue: true},
+	},
 }
 
 // Command implements `bench handoff`. It prints the pin block and rewrites
@@ -53,11 +58,6 @@ func Command(args []string) (string, int) {
 
 	f := collect(root)
 	if override, present := parsed.Flags["--next"]; present {
-		// An empty override names no command. Left to fall through it would read as a
-		// clean board, which is a different — and false — statement about the tree.
-		if override == "" {
-			return toon.Usage(grammar.Cmd, `--next ""`) + "\n", 2
-		}
 		f.Action = override
 	} else {
 		action, signal, noneInvocable := nextAction(root)
@@ -68,10 +68,27 @@ func Command(args []string) (string, int) {
 	}
 
 	pin := render(f, state)
-	if err := os.WriteFile(target, []byte(document(pin)), 0o644); err != nil {
+	if err := writeDocument(target, document(pin)); err != nil {
 		return refusal{"cannot write the session handoff", err.Error()}.Error() + "\n", 1
 	}
 	return pin, 0
+}
+
+// writeDocument replaces the handoff atomically: a full write to a sibling temp file, then
+// a rename over the target. A plain write truncates before it writes, so a disk that fills
+// or a signal that lands between the two leaves the reviewer-owned State section destroyed
+// — the one thing this command promises to pass through untouched. The rename either
+// happens or does not, which is what makes "destroys never" true rather than likely.
+func writeDocument(target, content string) error {
+	temp := target + ".tmp"
+	if err := os.WriteFile(temp, []byte(content), 0o644); err != nil {
+		return err
+	}
+	if err := os.Rename(temp, target); err != nil {
+		os.Remove(temp)
+		return err
+	}
+	return nil
 }
 
 // preservedState reads the State section a run must carry forward. An absent file is the

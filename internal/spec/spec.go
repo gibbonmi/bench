@@ -86,8 +86,13 @@ func Facts(root string) ([]Fact, error) {
 // line matching the retirement regex marks the content.
 func AwaitsRetirement(content []byte) bool {
 	status, _ := metadata(content)
-	return status == "implemented"
+	return status == StatusImplemented
 }
+
+// StatusImplemented is the Status value a finished spec carries. It is exported as the one
+// source of the token, so a caller classifying a Fact by status compares against the same
+// spelling the retirement predicate does.
+const StatusImplemented = "implemented"
 
 // Resolve finds the readable file backing a spec argument: the argument as given
 // (path-first, so a same-named readable file shadows the fallback), then — for a

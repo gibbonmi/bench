@@ -36,8 +36,8 @@ func appendHandoff(rows []row, root string) []row {
 	if !ok || behind == 0 {
 		return rows
 	}
-	detail := fmt.Sprintf("written at %s, %s behind", short(written), plural(behind, "commit", "commits"))
-	return append(rows, row{11, "handoff", detail, "rewrite " + HandoffFile + " at HEAD"})
+	detail := fmt.Sprintf("written at %s, %s behind", Short(written), Plural(behind, "commit", "commits"))
+	return append(rows, row{11, "handoff", detail, "bench handoff"})
 }
 
 // handoffWrittenAt returns the commit that last wrote the handoff, and whether the age is

@@ -12,15 +12,12 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/handoff"
+	"github.com/gibbonmi/bench/internal/status"
 )
 
 // The Shape text lives in the binary; shapeSourceFile is the file that holds it and
-// handoffArtifact is the one document allowed to carry a rendered copy of it.
-const (
-	shapeSourceFile = "internal/handoff/text.go"
-	handoffArtifact = "session-handoff.md"
-	shapeHeading    = "## Shape"
-)
+// status.HandoffFile is the one document allowed to carry a rendered copy of it.
+const shapeSourceFile = "internal/handoff/text.go"
 
 // checkHandoffShape grades the Shape text's single-source claim two ways: the tracked
 // artifact must still be byte-equal to the constant the command renders from, and no other
@@ -36,17 +33,17 @@ func checkHandoffShape(root string) []string {
 	}
 
 	var diags []string
-	body, found := shapeSectionBody(readIfExists(filepath.Join(root, handoffArtifact)))
+	body, found := shapeSectionBody(readIfExists(filepath.Join(root, status.HandoffFile)))
 	switch {
 	case !found:
-		diags = append(diags, fmt.Sprintf("%s carries no %q section; run bench handoff to regenerate it", handoffArtifact, shapeHeading))
+		diags = append(diags, fmt.Sprintf("%s carries no %q section; run bench handoff to regenerate it", status.HandoffFile, handoff.ShapeHeading))
 	case body != strings.Trim(handoff.ShapeSection, "\n"):
-		diags = append(diags, fmt.Sprintf("%s has a %q section that no longer matches the text bench handoff renders, so the artifact has become a second source; run bench handoff to regenerate it", handoffArtifact, shapeHeading))
+		diags = append(diags, fmt.Sprintf("%s has a %q section that no longer matches the text bench handoff renders, so the artifact has become a second source; run bench handoff to regenerate it", status.HandoffFile, handoff.ShapeHeading))
 	}
 
 	needle := shapeSentence()
 	for _, rel := range trackedPaths(root) {
-		if rel == shapeSourceFile || rel == handoffArtifact {
+		if rel == shapeSourceFile || rel == status.HandoffFile {
 			continue
 		}
 		text := readIfExists(filepath.Join(root, filepath.FromSlash(rel)))
@@ -54,7 +51,7 @@ func checkHandoffShape(root string) []string {
 			continue
 		}
 		if strings.Contains(collapseSpace(text), needle) {
-			diags = append(diags, fmt.Sprintf("%s restates the handoff's Shape text, which %s owns and %s alone derives; delete the copy", rel, shapeSourceFile, handoffArtifact))
+			diags = append(diags, fmt.Sprintf("%s restates the handoff's Shape text, which %s owns and %s alone derives; delete the copy", rel, shapeSourceFile, status.HandoffFile))
 		}
 	}
 	return uniqueSorted(diags)
@@ -71,24 +68,17 @@ func shapeSentence() string {
 	return sentence
 }
 
-// shapeSectionBody returns the document's Shape body — the lines below the heading up to the
-// next level-two heading or EOF, with surrounding blank lines trimmed. Reading the artifact
-// this way is not a second source of the command's splitting rule: nothing here decides what
-// gets written, it only reads back what was.
+// shapeSectionBody returns the document's Shape body: everything below the heading, with
+// surrounding blank lines trimmed. It locates the heading by the writer's own constant and
+// runs to EOF because the writer places Shape last, so this restates no part of the
+// command's splitting rule — a second derivation of "where does a section end" is exactly
+// what would let the check and the emitter drift.
 func shapeSectionBody(doc string) (string, bool) {
 	lines := strings.Split(doc, "\n")
 	for i, line := range lines {
-		if strings.TrimRight(line, " \t\r") != shapeHeading {
-			continue
+		if strings.TrimRight(line, " \t\r") == handoff.ShapeHeading {
+			return strings.Trim(strings.Join(lines[i+1:], "\n"), "\n"), true
 		}
-		end := len(lines)
-		for j := i + 1; j < len(lines); j++ {
-			if strings.HasPrefix(lines[j], "## ") {
-				end = j
-				break
-			}
-		}
-		return strings.Trim(strings.Join(lines[i+1:end], "\n"), "\n"), true
 	}
 	return "", false
 }
@@ -133,7 +123,7 @@ func TestHandoffShapeSingleSourcedBites(t *testing.T) {
 	// The source file is a presence sentinel: the text the check grades against comes from
 	// the imported constant, never from this tree.
 	write(shapeSourceFile, "package handoff\n")
-	write(handoffArtifact, "# Session handoff\n\n"+shapeHeading+"\n\n"+handoff.ShapeSection)
+	write(status.HandoffFile, "# Session handoff\n\n"+handoff.ShapeHeading+"\n\n"+handoff.ShapeSection)
 
 	if diags := checkHandoffShape(root); len(diags) != 0 {
 		t.Fatalf("derived artifact and no other copy: want no diagnostics, got %v", diags)
@@ -148,7 +138,7 @@ func TestHandoffShapeSingleSourcedBites(t *testing.T) {
 	}
 	runGit(t, root, "add", "-A")
 
-	write(handoffArtifact, "# Session handoff\n\n"+shapeHeading+"\n\nRewritten whenever somebody feels like it.\n")
+	write(status.HandoffFile, "# Session handoff\n\n"+handoff.ShapeHeading+"\n\nRewritten whenever somebody feels like it.\n")
 	if !containsDiagnostic(checkHandoffShape(root), "no longer matches the text bench handoff renders") {
 		t.Fatalf("drifted Shape body: want a drift diagnostic, got %v", checkHandoffShape(root))
 	}

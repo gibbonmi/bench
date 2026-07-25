@@ -73,11 +73,15 @@ func TestAppendHandoffBehindHeadReportsDistance(t *testing.T) {
 	if !strings.Contains(rows[0].detail, "2 commits behind") {
 		t.Errorf("detail = %q, want it to name the 2-commit distance", rows[0].detail)
 	}
-	if !strings.Contains(rows[0].detail, short(written)) {
+	if !strings.Contains(rows[0].detail, Short(written)) {
 		t.Errorf("detail = %q, want it to name the commit that wrote the handoff", rows[0].detail)
 	}
-	if !strings.Contains(rows[0].action, "session-handoff.md") {
-		t.Errorf("action = %q, want it to name the file to rewrite", rows[0].action)
+	// The action is the command that rewrites the handoff, not prose describing the job.
+	// A row naming the work in words can never be selected as a next command by a reader
+	// that requires an invocation, which left this signal invisible to the handoff's own
+	// Next-command field.
+	if rows[0].action != "bench handoff" {
+		t.Errorf("action = %q, want the command that rewrites it", rows[0].action)
 	}
 }
 
@@ -138,7 +142,7 @@ func TestRenderStaleHandoffLeadsCleanBoard(t *testing.T) {
 	commitFile(t, root, "one.txt")
 
 	out := render(root, false)
-	if !strings.HasPrefix(out, "▶ rewrite session-handoff.md at HEAD  (handoff)") {
+	if !strings.HasPrefix(out, "▶ bench handoff  (handoff)") {
 		t.Fatalf("board did not lead with the handoff signal:\n%s", out)
 	}
 }

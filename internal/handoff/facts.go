@@ -3,7 +3,6 @@ package handoff
 import (
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/gate"
@@ -81,26 +80,51 @@ func head(root string) string {
 	if err != nil || sha == "" {
 		return unknownHead
 	}
-	return "HEAD `" + short(sha) + "`"
+	return "HEAD `" + status.Short(sha) + "`"
 }
 
 // landedState renders the dirty and unpushed clauses. git.LandedState answers both from one
 // repository-wide pass and fails as a unit — a repo whose default branch does not resolve
 // has no unpushed count to report — so both clauses degrade together.
+//
+// The count excludes the handoff itself. The command rewrites that file on every run, so a
+// count including it is not a fact about the tree the reader inherited: on a tracked clean
+// tree the first run prints "clean tree" and its own write makes the second run print
+// "1 dirty path", which is the confident-wrong-fact this block exists to remove and breaks
+// the byte-identical guarantee repeated application rests on. Counting the pending write
+// instead of excluding it does not close the circle — the count is part of the content
+// whose presence makes the file dirty, so that reading can never report a clean tree even
+// when the tree genuinely is one — and the reader loses nothing, because "the handoff
+// changed" is precisely what this invocation just did.
 func landedState(root string) (dirty, unpushed string) {
 	fact, err := git.LandedState(root)
 	if err != nil {
 		return unknownDirty, unknownUnpushed
 	}
-	dirty = "clean tree"
-	if fact.DirtyPaths > 0 {
-		dirty = plural(fact.DirtyPaths, "dirty path", "dirty paths")
+	paths := fact.DirtyPaths
+	if handoffIsDirty(root) && paths > 0 {
+		paths--
 	}
-	return dirty, plural(fact.UnpushedCommits, "unpushed commit", "unpushed commits")
+	dirty = "clean tree"
+	if paths > 0 {
+		dirty = status.Plural(paths, "dirty path", "dirty paths")
+	}
+	return dirty, status.Plural(fact.UnpushedCommits, "unpushed commit", "unpushed commits")
 }
 
-// liveSpecs names every spec that is not yet implemented, in path order. An implemented
-// spec is finished work and tells a resuming session nothing about what to build.
+// handoffIsDirty reports whether the handoff is among the dirty paths the repository-wide
+// pass counted. A failed query answers false, leaving the count as git reported it: an
+// unanswerable query is not evidence about any path, and overstating the tree's cleanliness
+// is the worse of the two errors.
+func handoffIsDirty(root string) bool {
+	out, err := git.Output("-C", root, "status", "--porcelain", "--", status.HandoffFile)
+	return err == nil && out != ""
+}
+
+// liveSpecs names the staged spec with its Status line, in path order. An implemented spec
+// is finished work and tells a resuming session nothing about what to build, and a spec
+// carrying no Status line is malformed rather than staged — naming it with an invented
+// status would state something the file does not say.
 func liveSpecs(root string) []string {
 	all, err := spec.Facts(root)
 	if err != nil {
@@ -108,14 +132,10 @@ func liveSpecs(root string) []string {
 	}
 	var live []string
 	for _, s := range all {
-		if s.Status == "implemented" {
+		if s.Status == "" || s.Status == spec.StatusImplemented {
 			continue
 		}
-		state := s.Status
-		if state == "" {
-			state = "unknown"
-		}
-		live = append(live, "`specs/"+s.Slug+".md` (Status: "+state+")")
+		live = append(live, "`specs/"+s.Slug+".md` (Status: "+s.Status+")")
 	}
 	return live
 }
@@ -160,17 +180,31 @@ func treeRef(tree string) string {
 	if tree == "" {
 		return "unknown"
 	}
-	return "`" + short(tree) + "`"
+	return "`" + status.Short(tree) + "`"
 }
 
 // benchCommandPrefix opens a `bench` subcommand action, the second of the two shapes a
 // board action takes when it is something a session can type.
 const benchCommandPrefix = "bench "
 
-// boardStepSeparator is how a board row joins the steps of a sequence into one action.
-// internal/status writes it; this package only recognizes it, to tell an action naming one
-// command apart from an action naming several.
-const boardStepSeparator = " / "
+// IsInvocable reports whether a board action is something a session can type. It is
+// exported as the one source of that rule: the runtime contract's expectation reads it
+// rather than restating the prefixes, so a change to what qualifies cannot leave a second
+// copy asserting the superseded rule.
+//
+// Qualifying is syntactic, against the canonical form the board writes: an action is a
+// command when it opens a phase invocation or a `bench` subcommand. The opening is
+// necessary but not sufficient — a row may join several steps with status.StepSeparator
+// ("/bench-final-check / push" once the tree is clean), and that string opens a phase
+// invocation while being two commands, which is not something a reader can run. Splitting
+// it and taking an arm would be this package deciding what the board meant by a sequence,
+// so a compound action does not qualify.
+func IsInvocable(action string) bool {
+	if strings.Contains(action, status.StepSeparator) {
+		return false
+	}
+	return strings.HasPrefix(action, harnessPrefix[harnessClaude]) || strings.HasPrefix(action, benchCommandPrefix)
+}
 
 // nextAction selects the board's next command under root, and reports whether a board
 // carrying signals offered none. The board is the one source of what to do next, so the
@@ -186,39 +220,14 @@ func nextAction(root string) (action, signal string, noneInvocable bool) {
 // firstInvocable takes the leading signal whose action is a command rather than a hint,
 // walking the signals in the order they arrive. That order is the board's severity ladder
 // and internal/status owns it, so this re-ranks nothing: the choice is only whether a row
-// qualifies, never whether it outranks another.
-//
-// Most board actions are prose describing a situation — "fix before commit",
-// "split (craft-seams)" — and a field promising an invocation cannot render one of those.
-// So qualifying is syntactic, against the canonical form the board writes: an action is a
-// command when it opens a phase invocation or a `bench` subcommand and never otherwise.
-//
-// The opening is necessary but not sufficient. A board row may join several steps with the
-// separator below — the git row reads "/bench-final-check / push" once the tree is clean —
-// and that string opens a phase invocation while being two commands, which is not something
-// a reader can run. Splitting it and taking an arm would be this package deciding what the
-// board meant by a sequence, so a compound action simply does not qualify and the walk
-// continues.
+// qualifies — which IsInvocable decides — never whether it outranks another. Most board
+// actions are prose describing a situation ("fix before commit", "split (craft-seams)"),
+// and a field promising an invocation cannot render one of those.
 func firstInvocable(signals []status.Signal) (action, name string, ok bool) {
 	for _, s := range signals {
-		if strings.Contains(s.Action, boardStepSeparator) {
-			continue
-		}
-		if strings.HasPrefix(s.Action, harnessPrefix[harnessClaude]) || strings.HasPrefix(s.Action, benchCommandPrefix) {
+		if IsInvocable(s.Action) {
 			return s.Action, s.Name, true
 		}
 	}
 	return "", "", false
-}
-
-// short is the seven-byte tree/commit prefix the board renders, guarding a value shorter
-// than the slice.
-func short(s string) string { return s[:min(7, len(s))] }
-
-func plural(n int, one, many string) string {
-	unit := many
-	if n == 1 {
-		unit = one
-	}
-	return strconv.Itoa(n) + " " + unit
 }

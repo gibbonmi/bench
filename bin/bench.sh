@@ -304,7 +304,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench idea "<text>"        park an out-of-scope idea in IDEAS.md (commit to nothing)
   bench roadmap              print the roadmap + drain status (IDEAS.md, learnings)
   bench status               ambient dashboard: what needs attention + the next action
-  bench handoff [--harness claude|codex] [--next <command>]  print the cold-start pin block and rewrite session-handoff.md
+  bench handoff [--harness <name>] [--next <command>]  print the cold-start pin block and rewrite session-handoff.md
   bench commands --brief     print the direct, read-only command probe
   bench dashboard [--stdout] write a self-contained HTML snapshot of the board (--stdout emits it)
   bench canary [root]        run the gate against known-broken fixtures

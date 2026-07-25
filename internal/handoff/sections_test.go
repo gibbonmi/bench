@@ -33,7 +33,9 @@ func TestSplitAmbiguousState(t *testing.T) {
 		name, content, want string
 	}{
 		{"body runs to EOF", "## State\n\nkeep me\n", "keep me"},
-		{"body stops at the next unfenced heading", "## State\n\nkeep me\n\n## Next command\n\n`bench status`\n", "keep me"},
+		{"body stops at the next generated heading", "## State\n\nkeep me\n\n## Next command\n\n`bench status`\n", "keep me"},
+		{"a reviewer's own heading does not end the body", "## State\n\nkeep me\n\n## Notes\n\nkeep me too\n\n## Next command\n\n`bench status`\n", "keep me\n\n## Notes\n\nkeep me too"},
+		{"a reviewer's heading survives with Shape as the terminator", "## State\n\nkeep me\n\n## Notes\n\nkeep me too\n\n## Shape\n\nshape text\n", "keep me\n\n## Notes\n\nkeep me too"},
 		{"a fenced heading inside the body does not end it", "## State\n\nkeep me\n\n```\n## Next command\n```\n\ntail\n\n## Next command\n\n`x`\n", "keep me\n\n```\n## Next command\n```\n\ntail"},
 		{"an empty body is not a refusal", "## State\n\n## Next command\n\n`x`\n", ""},
 		{"interior bytes survive verbatim", "## State\n\n  indented\ttab\n\n- list\n", "  indented\ttab\n\n- list"},

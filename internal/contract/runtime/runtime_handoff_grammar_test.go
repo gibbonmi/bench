@@ -7,6 +7,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
+	"github.com/gibbonmi/bench/internal/status"
 )
 
 // handoffPhaseFixture parks an idea so the board's leading action is a phase invocation.
@@ -29,7 +30,7 @@ func TestHandoffHarnessCodex(t *testing.T) {
 	out.RequireExit(0)
 	contract.RequireContains(t, out.Stdout, "$bench-what-next")
 	contract.RequireNotContains(t, out.Stdout, "/bench-")
-	contract.RequireNotContains(t, f.ReadFile(handoffFile), "/bench-")
+	contract.RequireNotContains(t, f.ReadFile(status.HandoffFile), "/bench-")
 }
 
 func TestHandoffHarnessDefault(t *testing.T) {
@@ -41,7 +42,7 @@ func TestHandoffHarnessDefault(t *testing.T) {
 		out.RequireExit(0)
 		contract.RequireContains(t, out.Stdout, "/bench-what-next")
 		contract.RequireNotContains(t, out.Stdout, "$bench-")
-		contract.RequireNotContains(t, f.ReadFile(handoffFile), "$bench-")
+		contract.RequireNotContains(t, f.ReadFile(status.HandoffFile), "$bench-")
 	}
 }
 
@@ -53,10 +54,14 @@ func TestHandoffNextOverride(t *testing.T) {
 	out := f.Bench("handoff", "--next", "bench debug the canary hang")
 	out.RequireExit(0)
 	contract.RequireContains(t, out.Stdout, "`bench debug the canary hang`")
-	// The derived action must be replaced, not accompanied.
+	// The derived action must be replaced, not accompanied. The signal clause is the tell:
+	// an override that appended rather than replaced would still name the board row it came
+	// from, so its absence is what distinguishes the two. The needle is the renderer's own
+	// wording — an approximation of it can never fail, which is what this assertion did
+	// while reading "the board's leading signal" against a renderer that emits "invocable".
 	contract.RequireNotContains(t, out.Stdout, "/bench-what-next")
-	contract.RequireNotContains(t, out.Stdout, "the board's leading signal")
-	contract.RequireNotContains(t, f.ReadFile(handoffFile), "/bench-what-next")
+	contract.RequireNotContains(t, out.Stdout, "the board's leading invocable signal")
+	contract.RequireNotContains(t, f.ReadFile(status.HandoffFile), "/bench-what-next")
 }
 
 func TestHandoffRejectsUnknownHarness(t *testing.T) {
@@ -68,8 +73,8 @@ func TestHandoffRejectsUnknownHarness(t *testing.T) {
 	out.RequireExit(2)
 	contract.RequireContains(t, out.Stdout, "usage: bench handoff")
 	contract.RequireContains(t, out.Stdout, "--harness gemini")
-	if f.Exists(handoffFile) {
-		t.Fatal("a usage error wrote " + handoffFile)
+	if f.Exists(status.HandoffFile) {
+		t.Fatal("a usage error wrote " + status.HandoffFile)
 	}
 }
 
@@ -98,8 +103,8 @@ func TestHandoffArgGrammar(t *testing.T) {
 		out.RequireExit(2)
 		contract.RequireContains(t, out.Stdout, "usage: bench handoff")
 		contract.RequireContains(t, out.Stdout, tc.want)
-		if f.Exists(handoffFile) {
-			t.Fatalf("args %q wrote %s", tc.args, handoffFile)
+		if f.Exists(status.HandoffFile) {
+			t.Fatalf("args %q wrote %s", tc.args, status.HandoffFile)
 		}
 	}
 }
@@ -153,9 +158,35 @@ func TestHandoffRefusesControlBytes(t *testing.T) {
 	out.RequireExit(1)
 	contract.RequireContains(t, out.Stdout, "error: ")
 	contract.RequireNotContains(t, out.Stdout, "\x1b")
-	if f.Exists(handoffFile) {
-		t.Fatal("a refused render still wrote " + handoffFile)
+	if f.Exists(status.HandoffFile) {
+		t.Fatal("a refused render still wrote " + status.HandoffFile)
 	}
+}
+
+// TestHandoffRefusesNewlineFields covers the control bytes the TOON predicate permits.
+// TOON escapes tab, newline, and return; a line-structured markdown document cannot, so a
+// value carrying one splits its own field. The `--next` carrier is the sharp one: a newline
+// there can write a second `## State` heading, after which every later run refuses the
+// document as ambiguous and the reviewer's real State is unreachable to the command.
+func TestHandoffRefusesNewlineFields(t *testing.T) {
+	contract.SkipIfSubjectBenchMissing(t)
+	t.Parallel()
+	f := handoffFixtureOnMain(t)
+	f.WriteFile("tracked.txt", "base\n")
+	f.CommitAll("base")
+
+	out := f.Bench("handoff", "--next", "run this\n\n## State\n\nhijacked")
+	out.RequireExit(1)
+	contract.RequireContains(t, out.Stdout, "error: ")
+	if f.Exists(status.HandoffFile) {
+		t.Fatal("a refused render still wrote " + status.HandoffFile)
+	}
+
+	// A spec Status carrying a tab reaches the same guard from the derived side.
+	f.WriteFile("specs/hostile.md", "# Hostile\n\nStatus: sta\tged\n")
+	tabbed := f.Bench("handoff")
+	tabbed.RequireExit(1)
+	contract.RequireContains(t, tabbed.Stdout, "error: ")
 }
 
 func TestHandoffUnwritableTarget(t *testing.T) {
@@ -177,7 +208,7 @@ func TestHandoffUnwritableTarget(t *testing.T) {
 	// A structured line naming the path, not the bare permission trace git or Go would
 	// otherwise surface.
 	contract.RequireContains(t, out.Stdout, "error: ")
-	contract.RequireContains(t, out.Stdout, handoffFile)
+	contract.RequireContains(t, out.Stdout, status.HandoffFile)
 	if !strings.HasPrefix(out.Stdout, "error: ") {
 		t.Fatalf("write failure did not take the structured error shape:\n%s", out.Stdout)
 	}
@@ -191,8 +222,8 @@ func TestHandoffNotInRepo(t *testing.T) {
 	out := f.Bench("handoff")
 	out.RequireExit(1)
 	contract.RequireContains(t, out.Stdout, "error: not in a git repository — run inside a Bench-linked repo")
-	if f.Exists(handoffFile) {
-		t.Fatal("the not-in-a-repo path wrote " + handoffFile)
+	if f.Exists(status.HandoffFile) {
+		t.Fatal("the not-in-a-repo path wrote " + status.HandoffFile)
 	}
 }
 

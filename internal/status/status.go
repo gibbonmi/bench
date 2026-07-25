@@ -217,7 +217,7 @@ func GateVerdict(root string) GateInfo {
 }
 
 func staleGateDetailAction(root, cachedTree, currentTree string) (detail, action string) {
-	detail = fmt.Sprintf("stale (gated tree %s, work tree %s)", short(cachedTree), short(currentTree))
+	detail = fmt.Sprintf("stale (gated tree %s, work tree %s)", Short(cachedTree), Short(currentTree))
 	action = "re-run the gate"
 	paths, ok := git.ChangedPathsBetweenTrees(root, cachedTree, currentTree)
 	if !ok || !captureOnlyDrift(paths) {
@@ -238,6 +238,12 @@ func captureOnlyDrift(paths []string) bool {
 	return true
 }
 
+// StepSeparator joins the steps of a board action that names a sequence rather than one
+// command. It is exported as the one source of that join: a reader deciding whether an
+// action is a single invocation recognizes the separator instead of restating it, so the
+// producer and the recognizer cannot drift apart.
+const StepSeparator = " / "
+
 // appendGit adds the uncommitted/unpushed signal (sev 1). dirty is the porcelain status;
 // ahead is the upstream-relative commit list, read only when an upstream is configured.
 func appendGit(rows []row, root string) []row {
@@ -247,21 +253,21 @@ func appendGit(rows []row, root string) []row {
 	}
 	var details, actions []string
 	if fact.DirtyPaths > 0 {
-		details = append(details, plural(fact.DirtyPaths, "dirty path", "dirty paths"))
+		details = append(details, Plural(fact.DirtyPaths, "dirty path", "dirty paths"))
 		actions = append(actions, "commit on green")
 	}
 	if fact.UnpushedCommits > 0 {
-		details = append(details, plural(fact.UnpushedCommits, "unpushed commit", "unpushed commits"))
+		details = append(details, Plural(fact.UnpushedCommits, "unpushed commit", "unpushed commits"))
 		actions = append(actions, "/bench-final-check")
 	}
 	if fact.UniqueBranches > 0 {
-		details = append(details, plural(fact.UniqueBranches, "unique branch", "unique branches"))
+		details = append(details, Plural(fact.UniqueBranches, "unique branch", "unique branches"))
 		actions = append(actions, "push")
 	}
 	if len(details) == 0 {
 		return rows
 	}
-	return append(rows, row{1, "git", strings.Join(details, ", "), strings.Join(actions, " / ")})
+	return append(rows, row{1, "git", strings.Join(details, ", "), strings.Join(actions, StepSeparator)})
 }
 
 // objectiveDisplay resolves the human-facing objective text for an intent entry. The
@@ -355,15 +361,18 @@ func appendWorktree(rows []row, root string) []row {
 		}
 	}
 	if outOfPool > 0 {
-		rows = append(rows, row{2, "worktree", plural(outOfPool, "out-of-pool worktree", "out-of-pool worktrees"), "inspect exact worktree (bench worktree clean <path>)"})
+		rows = append(rows, row{2, "worktree", Plural(outOfPool, "out-of-pool worktree", "out-of-pool worktrees"), "inspect exact worktree (bench worktree clean <path>)"})
 	}
 	if leased > 0 {
-		rows = append(rows, row{2, "worktree", plural(leased, "leased pool worktree", "leased pool worktrees"), "resume leased worktree"})
+		rows = append(rows, row{2, "worktree", Plural(leased, "leased pool worktree", "leased pool worktrees"), "resume leased worktree"})
 	}
 	return rows
 }
 
-func plural(n int, one, many string) string {
+// Plural renders a count with the unit its number takes. It is exported so a surface
+// rendering board-derived counts states them in the board's own words rather than in a
+// second phrasing of the same fact.
+func Plural(n int, one, many string) string {
 	if n == 1 {
 		return fmt.Sprintf("1 %s", one)
 	}
@@ -470,7 +479,7 @@ func appendRetirement(rows []row, root string) []row {
 // gate/git rows in the budget. A paired pickup (its spec still present) is expected state.
 func appendOrphanedPickup(rows []row, root string) []row {
 	if n := orphanedPickupCount(root); n > 0 {
-		return append(rows, row{9, "reviews", plural(n, "orphaned review pickup", "orphaned review pickups"), "promote or delete by hand"})
+		return append(rows, row{9, "reviews", Plural(n, "orphaned review pickup", "orphaned review pickups"), "promote or delete by hand"})
 	}
 	return rows
 }
@@ -495,10 +504,10 @@ func appendRoadmapReconcile(rows []row, root string) []row {
 	}
 	var details []string
 	if merged > 0 {
-		details = append(details, plural(merged, "row for merged work", "rows for merged work"))
+		details = append(details, Plural(merged, "row for merged work", "rows for merged work"))
 	}
 	if dangling > 0 {
-		details = append(details, plural(dangling, "row names a retired spec", "rows name a retired spec"))
+		details = append(details, Plural(dangling, "row names a retired spec", "rows name a retired spec"))
 	}
 	return append(rows, row{10, "roadmap", strings.Join(details, ", "), "/bench-what-next"})
 }
@@ -602,8 +611,10 @@ func learningsFloor() int {
 	return n
 }
 
-// short returns the first up-to-7 bytes of s (the shell `${var:0:7}` tree-prefix slice),
-// guarding a short or "none" hash so the slice never panics.
-func short(s string) string {
+// Short returns the first up-to-7 bytes of s (the shell `${var:0:7}` tree-prefix slice),
+// guarding a short or "none" hash so the slice never panics. It is exported as the one
+// source of the prefix width, so every surface that renders a tree or commit reference
+// cuts it at the same place.
+func Short(s string) string {
 	return s[:min(7, len(s))]
 }
