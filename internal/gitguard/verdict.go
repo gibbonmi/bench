@@ -44,8 +44,8 @@ func classify(sub string, args []string, viaXargs bool, chk Checker) string {
 	case "rebase":
 		return denyLabels["rebase"]
 	case "stash":
-		if stashVerdict(args) {
-			return denyLabels["stash"]
+		if key := stashVerdict(args); key != "" {
+			return denyLabels[key]
 		}
 	case "commit":
 		if contains(args, "--amend") {
@@ -139,9 +139,27 @@ func restoreVerdict(args []string, viaXargs bool) bool {
 	return contains(args, ".") || restoreHasPathspec(args)
 }
 
-func stashVerdict(args []string) bool {
+// stashReadOnly are the stash subcommands that only inspect the stack.
+var stashReadOnly = map[string]bool{"list": true, "show": true}
+
+// stashVerdict splits stash into its two deny classes, returning the deny key or "" to
+// allow: "stash" for the verbs that destroy stash history, "stash-push" for the verbs that
+// cross-apply working-tree state between worktrees. It fails closed — the allow set is
+// exactly the read-only verbs, so a bare `git stash` (which is `push`) and any verb not
+// enumerated here block. There is no viaXargs parameter, unlike checkoutVerdict and
+// restoreVerdict: those turn destructive when paths arrive from stdin, whereas the
+// argument-less stash form already blocks, so nothing xargs can supply loosens this
+// verdict.
+func stashVerdict(args []string) string {
 	sub, ok := firstFreeArg(args)
-	return ok && (sub == "drop" || sub == "clear")
+	switch {
+	case ok && stashReadOnly[sub]:
+		return ""
+	case ok && (sub == "drop" || sub == "clear"):
+		return "stash"
+	default:
+		return "stash-push"
+	}
 }
 
 func reflogVerdict(args []string) bool {

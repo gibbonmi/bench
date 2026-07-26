@@ -72,11 +72,7 @@ func TestClassifyVerdicts(t *testing.T) {
 		{"restore pathspec-from-file", "git restore --pathspec-from-file=p", refYes, "git restore path"},
 		{"xargs restore blocks", "xargs git restore", refYes, "git restore path"},
 
-		// stash / worktree
-		{"stash drop", "git stash drop", refYes, "git stash drop"},
-		{"stash clear", "git stash clear", refYes, "git stash drop"},
-		{"stash pop allowed", "git stash pop", refYes, ""},
-		{"stash push allowed", "git stash push -m wip", refYes, ""},
+		// worktree (stash has its own tests below)
 		{"worktree remove --force other", "git worktree remove --force wt", refYes, "git worktree remove --force"},
 		{"worktree remove delegate allowed", "git worktree remove --force .claude/worktrees/agent-x", refYes, ""},
 		{"worktree remove traversal blocks", "git worktree remove --force .claude/worktrees/../src", refYes, "git worktree remove --force"},
@@ -98,6 +94,73 @@ func TestClassifyVerdicts(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			if got := Classify(c.cmd, c.chk); got != c.want {
 				t.Errorf("Classify(%q) = %q, want %q", c.cmd, got, c.want)
+			}
+		})
+	}
+}
+
+// TestClassifyStashMutations walks both stash deny classes. Expectations read their labels
+// from the deny table rather than repeating the strings, so rewording a row cannot leave a
+// stale copy passing here. The two labels must differ: the blocked agent reads the label to
+// learn which hazard it hit.
+func TestClassifyStashMutations(t *testing.T) {
+	worktree := denyLabels["stash-push"]
+	history := denyLabels["stash"]
+	if worktree == "" || history == "" {
+		t.Fatalf("stash deny classes missing from the table: stash-push=%q stash=%q", worktree, history)
+	}
+	if worktree == history {
+		t.Fatalf("both stash classes carry label %q, so the refusal names the wrong hazard", worktree)
+	}
+	cases := []struct {
+		name string
+		cmd  string
+		want string
+	}{
+		{"bare stash is push", "git stash", worktree},
+		{"push", "git stash push", worktree},
+		{"save", "git stash save wip", worktree},
+		{"pop", "git stash pop", worktree},
+		{"apply", "git stash apply", worktree},
+		{"branch", "git stash branch recovered", worktree},
+		{"unrecognized verb fails closed", "git stash create", worktree},
+
+		// drop and clear destroy stash history, a different hazard from cross-applying
+		// working-tree state, and keep their own label.
+		{"drop", "git stash drop", history},
+		{"clear", "git stash clear", history},
+
+		{"quoted multi-word message", `git stash push -m "wip thing"`, worktree},
+		{"pathspec past the separator", `git stash push -- "path/with space"`, worktree},
+		{"one wrapper level", "bash -c 'git stash pop'", worktree},
+		{"xargs", "xargs git stash", worktree},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := Classify(c.cmd, refYes); got != c.want {
+				t.Errorf("Classify(%q) = %q, want %q", c.cmd, got, c.want)
+			}
+		})
+	}
+}
+
+// TestClassifyStashReadOnly pins the allow set. Without it, refusing every `git stash`
+// would satisfy TestClassifyStashMutations while taking away the inspection an agent
+// legitimately needs.
+func TestClassifyStashReadOnly(t *testing.T) {
+	cases := []struct {
+		name string
+		cmd  string
+	}{
+		{"list", "git stash list"},
+		{"list with args", "git stash list --stat"},
+		{"show", "git stash show"},
+		{"show with args", "git stash show stash@{0} --stat"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := Classify(c.cmd, refYes); got != "" {
+				t.Errorf("Classify(%q) = %q, want allow", c.cmd, got)
 			}
 		})
 	}
