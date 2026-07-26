@@ -2,40 +2,36 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `33724b4`, 8 dirty paths, 2 unpushed commits
-Spec: none staged.
-Gate: green at `edc15e9` — stale, work tree `5b4a4e6`
+Branch: `main` — HEAD `3c50349` plus the shaping commit, pushed through `4422d3a`
+Spec: none staged; the map is spec-ready.
+Gate: green at `edc15e9` — stale; diff since is docs/skills plus two conformance
+anchor lines (no gate run this session — shaping only).
 
 ## State
 
-- **FT136 is built, reviewed, and retired.** The slice-fence rule lives once in
-  `craft-spec` ("Slicing a build for delegates": fence rule,
-  shared-primitives-first, tier-independence); `craft-review`'s Standards axis
-  hunts fence-boundary duplication; `craft-delegate` carries the content-free
-  charge-time pointer; frontmatter/index regenerated; the section heading is
-  pinned in the conformance anchor registry (observed red-then-green). Landed
-  gate-green as `b381816`, spec retired in `33724b4`.
-- **Review disposition that stays closed:** the tier-independence clause and
-  the section placement were challenged by the Standards axis and rejected as
-  spec-closed; the pair captions were reworded to timeless register; the
-  anchor-registry rows upgraded the spec's "not TDD-able" anchor edge into
-  gate coverage — flagged for post-hoc veto, two lines in
-  `internal/conformance/docs_workflow_helpers_test.go`. Note: the
-  craft-delegate pointer sentence is anchor-pinned raw — rewrapping it mid-phrase
-  reds the gate by design.
-- **Open map tickets, untouched:** `decisions/cost-follows-project-size.md`
-  stays (backs FT91/FT101): #2 (time the conformance checks) then #3 (FT91
-  go/no-go); #6 waits opportunistically for a genuinely seam-shaped slice.
-- **The unpushed commits are ready; the push is the reviewer's.** Nothing in
-  the tree waits on it.
-- Known ambient facts, unchanged: 17 worktrees remain from earlier sessions and
-  were left untouched (the FT136 one was cleaned); the structure budget
-  violations and the conformance-phase long pole stand where they were.
+- **The cost-follows-project-size map closed its FT91 arm.** All decisions are
+  in `decisions/cost-follows-project-size.md` (#2 timing answer, #3 tier-split
+  answer, rewritten Handoff): the gate splits into a dev tier and a ship tier
+  (`bench prep-release`); fifteen-check fan-out is dead by measurement; the
+  inner `go test` excludes release-only packages; per-check timing becomes
+  permanent driver-owned gate output; pre-push stays fast-tier. Only ticket #6
+  remains open — opportunistic cheap-tier retest, non-blocking.
+- **Decisions that stay closed:** no build-approval prompt after final-check;
+  ship tier never on pre-push; restaging is not check-weakening (authority
+  binds at the release path's evidence refusal); `-count=1` and caching stay
+  deferred, now with a measured price on the map.
+- **Measured facts a spec session may want:** conformance phase ≈826 s, 99.8%
+  in `checkPackageCoreAndGuards`; `checkReleasePreflight` ≈372 s;
+  uncached `internal/preflight` exceeds 900 s (slow, not hung — go-test cache
+  normally hides it). Probe file deleted; numbers live in the map's #2 answer.
+- Known ambient facts, unchanged: 17 recovered worktrees from earlier sessions
+  left untouched; structure budget violations stand.
 
 ## Next command
 
-`git push origin main` — then `/bench-shape-idea`, the board's leading
-invocable signal (`decisions`).
+`/bench-write-spec` on a fresh mid-tier session, off
+`decisions/cost-follows-project-size.md`'s Handoff (the FT91 tier split —
+single spec, dependency order n/a).
 
 ## Shape
 

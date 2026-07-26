@@ -23,7 +23,9 @@ wall clock and its checks run strictly serially, so the pure-scheduling win is
 taken before any oracle-semantics or cache-infrastructure decision is spent.
 `-count=1` and caching are deferred until re-measurement after this arm lands
 shows conformance is no longer the long pole; the capping arm stays dormant per
-the roadmap.
+the roadmap. Superseded by #3 (2026-07-26): #2's timing showed one composite
+check owns 99.8% of the phase, so the conformance arm became the two-tier gate
+split instead of check fan-out.
 
 ## #2: How does conformance wall clock distribute across the fifteen checks?
 
@@ -38,7 +40,18 @@ function over a read-only tree, so ordering is recoverable by collecting into
 an indexed slice.
 
 ### Answer
-— (open)
+Measured 2026-07-26 (throwaway probe on this tree). The phase is one composite
+check: `checkPackageCoreAndGuards` is ~99.8% of ~826 s; the other fourteen
+checks total ~1.3 s, so fifteen-check fan-out buys nothing. Inside the
+composite: `checkReleasePreflight` ≈372 s (release artifact matrix build plus
+preflight verify) and `checkGoCore` owns the rest (inner `go test` over all
+non-contract packages, worktree race test, cross-compile matrix, build+vet).
+The inner `go test` runs without `-count=1` and leans on Go's test cache; on a
+cache miss `internal/preflight` alone exceeds the 600 s go-test default
+package timeout (its subtests rebuild the preflight binary and exercise real
+archives — slow, not hung; >900 s observed uncached), pushing the phase past
+1000 s. The levers are staging (which checks run when) and cache behavior, not
+scheduling.
 
 ## #3: Given the timings, does the parallelization spec proceed, and what ships with it?
 
@@ -51,7 +64,21 @@ its interaction with the canary concurrency budget (`bounds.CanaryInnerWidth`);
 whether per-check timing stays as permanent gate output or was a throwaway probe.
 
 ### Answer
-— (open)
+No-go on the fan-out; the gate splits into two tiers instead (reviewer,
+2026-07-26). **Dev tier** (`bench gate`, the shift loop, final-check): drops
+`checkReleasePreflight` and the cross-compile matrix, and the inner `go test`
+excludes release-only packages (`internal/preflight` and kin) the way it
+already excludes `contract` — dev green means the kit works from the tree, and
+is immune to the test-cache-miss blowup. **Ship tier** (`bench prep-release`,
+a new command): artifact matrix build, cross-compile matrix, release preflight
+verify, and the release-only package tests; the release path refuses without
+its evidence. Final-check on green prints a one-line ship-tier reminder, never
+a prompt; the pre-push hook stays fast-tier. Restaging is not check-weakening:
+every check keeps full authority at a boundary no release can bypass, and dev
+green is explicitly the narrower claim. Per-check timing becomes permanent
+gate observability, owned by the `RunConformance` driver in a stable format
+(the probe file is deleted). Worker-width policy and `CanaryInnerWidth`
+interaction: n/a — no fan-out.
 
 ## #4: Does the FT136 slicing rule wait for the cheap-tier retest?
 
@@ -123,8 +150,10 @@ trigger: a linked repo with more than one bounded context.
 ## Not yet specified
 
 - FT91 cache arms (hermetic build cache; verdicts keyed on the pinned gate
-  subject) — only if re-measurement after the conformance arm still hurts.
+  subject) — only if re-measurement after the tier split lands still hurts.
 - `-count=1` freshness semantics — same trigger; oracle decision, reviewer-led.
+  Now carries a measured price: uncached `internal/preflight` alone is 10+ min,
+  so blanket `-count=1` on the inner suite is off the table without the split.
 - FT101 docs-half and profile-half design — dim until the revive trigger fires.
 
 ## Out of scope
@@ -138,43 +167,56 @@ trigger: a linked repo with more than one bounded context.
 
 ## Handoff
 
-1. **Module boundaries.** FT136 edit: `.agents/skills/bench-craft-spec` owns the
-   slicing rule; `bench-craft-review` and `bench-craft-delegate` carry pointers
-   (`.claude/skills/*` are symlinks — edit `.agents/skills/` only). FT91 edit:
-   `internal/conformance` (check registry and driver) is the whole surface;
-   `internal/gate` phase wiring stays untouched.
-2. **Contracts.** FT91: same fifteen checks over the same read-only tree, same
-   pass/fail semantics, findings collected into an indexed slice so output
-   ordering is byte-stable; timing lands per #3's call. FT136: prose guidance,
-   no runtime contract.
-3. **Deep vs thin.** The conformance driver is the deep unit (scheduling hides
-   behind it; checks stay pure functions). The two pointer skills in FT136 are
-   deliberately thin — the rule lives once in `craft-spec`.
-4. **Black-box assertables.** FT91: gate exit code unchanged on the existing
-   fixture set; deterministic finding order across runs; a seeded failing
-   fixture still reds the phase. FT136: n/a — prose; graded by review, not
-   asserted.
-5. **Gate attachment.** FT91 attaches directly — the conformance phase is the
-   thing under change, and the existing suite plus canary observe it. FT136 the
-   gate sees only structurally (skill-shape checks); semantic quality rides the
-   `craft-synthesis` loops and review.
-6. **Hostile-input owners.** FT91: a check that panics or deadlocks under
-   fan-out must fail the phase loudly, owned by the driver; contention with
-   canary's budget is bounded by the width policy #3 sets. FT136: n/a — prose.
-7. **Uncertainty flags.** FT91 seams are provisional until #2's timing data and
-   #3's go/no-go — the spec-writer does not start the FT91 spec before #3
-   closes. Cheap-tier viability for build delegates stays open under #6.
-8. **Rejected alternatives.** Deciding `-count=1` or caching now (#1); shipping
-   the slicing rule only after the retest, or dropping the retest (#4); a
-   single-skill home for the slicing rule (#5); shaping FT101 fully or deferring
-   even its guardrails (#7); diff-scoped gating (standing FT91 ruling).
-9. **Domain watch-outs.** Seam-slicing optimizes local coherence and can
-   manufacture cross-fence knowledge duplication — when no delegate owns a
-   shared primitive, each fence writes its own copy; the deep-unit-first rule
-   exists to prevent exactly this. Conformance findings today may rely on
-   incidental serial ordering; the indexed slice is what keeps green
-   byte-comparable.
+FT136 shipped (spec retired 2026-07-26); FT101 builds nothing this cycle. The
+handoff below is the FT91 tier-split spec.
 
-Dependency order: FT136 kit edit first (fully unblocked, smallest); FT91 timing
-research (#2) can run in parallel, then #3, then the FT91 spec; FT101 builds
-nothing this cycle.
+1. **Module boundaries.** `internal/conformance` owns tier membership (which
+   sub-checks run in the dev gate vs `prep-release`), the release-only package
+   exclusion in `goCoreTestPackages`, and driver-emitted per-check timing.
+   `internal/gate` phase table stays the dev tier. `bin/bench.sh` plus the Go
+   core gain the `prep-release` route. `scripts/release-preflight.sh` and the
+   release path own the ship-evidence refusal. Final-check's green report
+   carries the one-line ship-tier reminder.
+2. **Contracts.** Dev gate: same pass/fail semantics minus ship-tier checks;
+   green claims "the kit works from the tree", nothing about release
+   packaging. `bench prep-release`: exit 0 means ship tier green with evidence
+   written (`dist/preflight/release-index.json` and artifacts); nonzero with
+   diagnostics otherwise. Release path: refuses without current ship evidence.
+   Timing: one stable-format line per check on every gate run; ordering
+   byte-stable (indexed), values free to vary.
+3. **Deep vs thin.** The conformance driver stays the deep unit — tier
+   membership and timing hide behind it; checks stay pure functions.
+   `prep-release` is a thin route over existing scripts plus the ship-tier
+   checks; it invents no new machinery.
+4. **Black-box assertables.** Dev gate green writes nothing under
+   `dist/artifacts`; `prep-release` produces the artifact set and
+   `release-index.json`; a seeded ship-tier failure reds `prep-release` while
+   the dev gate stays green; a seeded dev-tier failure reds both; the release
+   path exits nonzero without ship evidence; timing lines present, one per
+   check, stable order.
+5. **Gate attachment.** Dev tier attaches exactly as today (suite plus canary).
+   Ship tier attaches at `prep-release` and the release path's refusal — the
+   gate does not see it per-commit; that narrowing is the decided tradeoff.
+6. **Hostile-input owners.** Unchanged owners, with one move: the preflight
+   archive-hostility suites (hostile package archives, aggregate budgets)
+   ride to the ship tier with their package — dev green explicitly does not
+   cover them.
+7. **Uncertainty flags.** Whether `prep-release` requires/reruns a current
+   dev-green verdict or runs ship checks alone (recommend: require dev green
+   via the existing `bench gate pin` machinery); which tier the canary's inner
+   gates run (recommend: dev); the exact release-only package list —
+   `internal/preflight` is decided, `releaseevidence`/`publication` need an
+   import read. Cheap-tier viability for build delegates stays open under #6.
+8. **Rejected alternatives.** Fifteen-check fan-out (killed by #2's data: one
+   composite check is 99.8% of the phase); a build-approval prompt after green
+   final-check (nags at commit cadence); ship tier on the pre-push hook;
+   blanket `-count=1` now (measured 10+ min price); timing via a probe test
+   file (driver owns it instead); deciding caching now (#1).
+9. **Domain watch-outs.** The inner `go test` leans on Go's test cache — any
+   change that defeats it (env perturbation, `-count=1`, cold cache) makes
+   `internal/preflight` blow the 600 s default package timeout, which presents
+   as a gate hang; the release-only exclusion is what removes this failure
+   mode from dev runs. Timing output must keep finding order byte-stable while
+   values vary.
+
+Dependency order: n/a — single spec (the FT91 tier split).
