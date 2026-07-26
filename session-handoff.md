@@ -2,25 +2,23 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — FT91 merged and green at `880357f`, **15 commits unpushed**.
-Uncommitted: the 2026-07-26 `/bench-what-next` drain, staged as one batch diff
-**awaiting reviewer approval** — do not commit it without that approval.
+Branch: `main` — drain and spec retirement committed (`44f898c`, `1deed3c`),
+**unpushed**; `git push` is hook-blocked for the worker, so the push is the
+reviewer's own command.
 
 ## State
 
-- **The drain is done but uncommitted.** Both capture sources are empty (seven
-  ideas, two learnings), the FT91 spec and review are retired, and the board
-  now carries the pass: FT91 rewritten around the pipeline-refactor arm with
-  the canary check-scoping prerequisite and two interim defects; FT116 carries
-  the attributed `guards.Scan` goroutine leak; FT120 gained the self-host
-  teardown-race flake; FT107 gained the doc-only gate-anchored-surface clause;
-  FT141 (gate pin red verdicts) and FT142 (FT91 review residuals) are new.
-- **On approval:** run the dev gate, then commit the batch as the drain commit
-  plus a `spec-retire: ft91-gate-tier-split` commit, then push `main`.
-- **The next build work is the gate pipeline refactor** (FT91's next arm,
-  reviewer's stated top priority). Inputs are the FT91 row and
-  `decisions/gate-concurrency.md`'s watch-outs; the check-scoping levers are a
-  prerequisite slice, not a follow-up.
+- **The 2026-07-26 drain is committed.** Both capture sources are empty, the
+  FT91 spec and review are retired, and the board carries the pass: FT91
+  rewritten around the pipeline-refactor arm, FT141/FT142 opened, FT116/FT120/
+  FT107 widened.
+- **`decisions/gate-pipeline.md` is bootstrapped** — 8 open tickets, #9
+  (timing continuity) resolved inline. Frontier, nothing blocked: #1 (manifest
+  schema grill), #2 (runner-survey research, agent-alone), #5 (canary
+  check-scoping grill — the prerequisite slice, buildable on today's gate).
+  Everything else hangs off those.
+- **`bench prep-release` stays shelved** — blocked by FT116's race and FT142's
+  ship-track findings; both are board rows now, not handoff state.
 - **`bench prep-release` stays shelved** — blocked by FT116's race and FT142's
   ship-track findings; both are board rows now, not handoff state.
 - **Decisions that stay closed:** ship is a superset of dev; `internal/conformance`
@@ -32,8 +30,9 @@ Uncommitted: the 2026-07-26 `/bench-what-next` drain, staged as one batch diff
 
 ## Next command
 
-Approve or adjust the staged drain diff, then, in a fresh session:
-`/bench-shape-idea` on FT91's pipeline arm — the gate becomes a true pipeline.
+`/bench-shape-idea` resume on `decisions/gate-pipeline.md` #5 (with #2's
+research runnable agent-alone alongside). Before or after: `git push origin
+main` — reviewer-run, 18 commits waiting.
 
 ## Shape
 
