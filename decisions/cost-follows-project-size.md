@@ -49,9 +49,13 @@ non-contract packages, worktree race test, cross-compile matrix, build+vet).
 The inner `go test` runs without `-count=1` and leans on Go's test cache; on a
 cache miss `internal/preflight` alone exceeds the 600 s go-test default
 package timeout (its subtests rebuild the preflight binary and exercise real
-archives — slow, not hung; >900 s observed uncached), pushing the phase past
-1000 s. The levers are staging (which checks run when) and cache behavior, not
-scheduling.
+archives — slow, not hung; 676 s measured uncached on an idle machine),
+pushing the phase past 1000 s. Second cache-miss hazard: the inner `go test`
+includes `internal/conformance` itself, and that package's suite (run
+unfiltered) invokes `checkGoCore`/`checkReleasePreflight` for real — on a
+cache miss the gate re-spawns the full suite recursively, with each
+generation's children outliving its 600 s timeout. The levers are staging
+(which checks run when) and cache behavior, not scheduling.
 
 ## #3: Given the timings, does the parallelization spec proceed, and what ships with it?
 
@@ -173,6 +177,8 @@ handoff below is the FT91 tier-split spec.
 1. **Module boundaries.** `internal/conformance` owns tier membership (which
    sub-checks run in the dev gate vs `prep-release`), the release-only package
    exclusion in `goCoreTestPackages`, and driver-emitted per-check timing.
+   The inner `go test` also excludes `internal/conformance` itself — it is the
+   outer run; including it is the recursion hazard in the watch-outs.
    `internal/gate` phase table stays the dev tier. `bin/bench.sh` plus the Go
    core gain the `prep-release` route. `scripts/release-preflight.sh` and the
    release path own the ship-evidence refusal. Final-check's green report
@@ -216,7 +222,10 @@ handoff below is the FT91 tier-split spec.
    change that defeats it (env perturbation, `-count=1`, cold cache) makes
    `internal/preflight` blow the 600 s default package timeout, which presents
    as a gate hang; the release-only exclusion is what removes this failure
-   mode from dev runs. Timing output must keep finding order byte-stable while
-   values vary.
+   mode from dev runs. Running the conformance package inside the inner suite
+   is a live recursion: its unfiltered tests re-invoke the heavyweight checks,
+   each generation spawns the next, and children outlive the 600 s timeout as
+   orphans (observed 2026-07-26; cascade killed by hand). Timing output must
+   keep finding order byte-stable while values vary.
 
 Dependency order: n/a — single spec (the FT91 tier split).
