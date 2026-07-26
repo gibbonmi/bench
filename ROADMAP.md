@@ -403,7 +403,32 @@ clause: when a spec contradicts itself and the readings are functionally
 equivalent, take the one consistent with the tree's existing convention, flag
 it for veto, and build on — a round trip buys nothing where no behavior
 differs; the flag is mandatory, and any behavioral difference between the
-readings is a stop-and-ask. Deliberately not batched here: FT130 (mid-gate
+readings is a stop-and-ask. Fifth (parked 2026-07-26 from session
+conversation), the fix-loop escalation trigger — the symmetric partner to this
+row's first clause, which reroutes a *read* budget spent without traction. A
+fix loop has no equivalent stop, so an implementation chasing a defective seam
+grinds indefinitely: every iteration edits real code against a real red, which
+feels like progress the whole way down. The discriminating observable is not
+iteration count — `craft-line` already caps those, and a cap governs spend
+rather than diagnosis — but whether the red set *shrinks*. A converging loop
+reduces it; a loop chasing a spec defect rotates it at constant size, because
+the seam cannot satisfy two things the spec asked for at once. That is visible
+in gate output and needs no self-assessment, which is this row's design
+criterion. The reroute differs from the first clause's: not onward to
+`/bench-debug` but stop and surface, since a seam judged wrong is a
+spec-sign-off decision the reviewer owns. The clause must also gate
+`craft-line`'s escalation ladder, which today escalates a tier on the second
+red at the same tier — against a spec defect that buys a more expensive wrong
+answer faster, so classification precedes escalation. Note that this is the
+one clause in the batch reaching past always-loaded prose into a skill.
+Ordering: it depends on the `bench gate pin` red-verdict idea parked the same
+day, because the shrink measure is only meaningful over reds the diff owns —
+inherited and spec-predicted reds are constant noise that would trip a false
+stop. Evidence for both halves is the 2026-07-26 FT91 gate: three reds, one
+inherited from `3c50349` and two predicted by the spec, none belonging to the
+diff, resolved only by hand-run git archaeology. Source: session conversation,
+parked here by reviewer instruction rather than through a drain. Deliberately
+not batched here: FT130 (mid-gate
 `bench idea`) stays its own row because its preferred fix is mechanical, in
 the CLI rather than in this prose. Background:
 `docs/reporesident-distillation.md` §3 and §6.
