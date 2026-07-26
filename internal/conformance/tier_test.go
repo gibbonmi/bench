@@ -34,6 +34,21 @@ func TestTierMembership(t *testing.T) {
 	}
 }
 
+// TestEveryCheckCarriesATier closes the gap Tier's string underlying type leaves open:
+// a row whose tier is misspelled or omitted holds "", which RunsAt reads as neither dev
+// nor ship, so the check silently stops running on every commit and survives every
+// membership assertion — those compare against name lists the untiered check is in or
+// out of on both sides.
+func TestEveryCheckCarriesATier(t *testing.T) {
+	for _, check := range registry.Checks {
+		switch check.Tier {
+		case registry.Dev, registry.Ship:
+		default:
+			t.Errorf("registry check %s carries tier %q, which is neither %q nor %q, so no tier executes it on a commit", check.Name, check.Tier, registry.Dev, registry.Ship)
+		}
+	}
+}
+
 func TestRegistryBindsEveryCheck(t *testing.T) {
 	for _, check := range registry.Checks {
 		if _, bound := conformanceChecks[check.Name]; !bound {

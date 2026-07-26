@@ -71,35 +71,46 @@ func TestFixtureTierMatchesCheckTier(t *testing.T) {
 	}
 }
 
-// TestFixtureTierResolution covers the three synthetic cases the real tree cannot show
-// at once: a fixture with no CHECK file, one naming a ship-tier check, and one naming a
-// check the registry does not carry.
+// TestFixtureTierResolution covers the synthetic cases the real tree cannot show at
+// once: a fixture with no CHECK file, one naming a ship-tier check, one naming a check
+// the registry does not carry, and the two blank files that name no check at all —
+// each of which has to reach a diagnostic describing the condition it actually is.
 func TestFixtureTierResolution(t *testing.T) {
+	cases := []struct {
+		name     string
+		absent   bool
+		check    string
+		wantTier registry.Tier
+		wantErr  string
+	}{
+		{name: "plain", absent: true, wantTier: registry.Dev},
+		{name: "shipped", check: shipCheckName(t) + "\n", wantTier: registry.Ship},
+		{name: "bogus", check: "no-such-check\n", wantErr: "no-such-check"},
+		{name: "empty", check: "", wantErr: "empty " + checkFileName + " file"},
+		{name: "blank", check: " \t\n", wantErr: "empty " + checkFileName + " file"},
+	}
+
 	root := t.TempDir()
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			fx := canaryFixture(root, "test-family", tc.name)
+			mkdir(t, filepath.Join(fx, "files"))
+			write(t, filepath.Join(fx, "EXPECT"), "target-"+tc.name+"\n")
+			if !tc.absent {
+				write(t, filepath.Join(fx, checkFileName), tc.check)
+			}
 
-	plain := canaryFixture(root, "test-family", "plain")
-	mkdir(t, filepath.Join(plain, "files"))
-	write(t, filepath.Join(plain, "EXPECT"), "target-plain\n")
-
-	shipped := canaryFixture(root, "test-family", "shipped")
-	mkdir(t, filepath.Join(shipped, "files"))
-	write(t, filepath.Join(shipped, "EXPECT"), "target-shipped\n")
-	write(t, filepath.Join(shipped, "CHECK"), shipCheckName(t)+"\n")
-
-	bogus := canaryFixture(root, "test-family", "bogus")
-	mkdir(t, filepath.Join(bogus, "files"))
-	write(t, filepath.Join(bogus, "EXPECT"), "target-bogus\n")
-	write(t, filepath.Join(bogus, "CHECK"), "no-such-check\n")
-
-	if tier, err := fixtureTier(plain); err != nil || tier != registry.Dev {
-		t.Errorf("fixture without CHECK: got (%q, %v), want dev", tier, err)
-	}
-	if tier, err := fixtureTier(shipped); err != nil || tier != registry.Ship {
-		t.Errorf("fixture naming a ship check: got (%q, %v), want ship", tier, err)
-	}
-	_, err := fixtureTier(bogus)
-	if err == nil || !strings.Contains(err.Error(), "no-such-check") {
-		t.Errorf("fixture naming an unknown check: got %v, want a diagnostic naming it", err)
+			tier, err := fixtureTier(fx)
+			if tc.wantErr != "" {
+				if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+					t.Errorf("got (%q, %v), want a diagnostic naming %q", tier, err, tc.wantErr)
+				}
+				return
+			}
+			if err != nil || tier != tc.wantTier {
+				t.Errorf("got (%q, %v), want %q", tier, err, tc.wantTier)
+			}
+		})
 	}
 }
 

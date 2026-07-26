@@ -144,7 +144,10 @@ const checkFileName = "CHECK"
 // its own: it names its check, and the tier is read from the registry entry, so a check
 // that is retiered takes its fixtures with it and the two cannot disagree. A fixture
 // that names a check the registry has since renamed away is an error rather than a
-// silent demotion to dev, where it would report "did not bite" forever.
+// silent demotion to dev, where it would report "did not bite" forever. Only absence
+// means dev: a file present but holding no name is an error of its own, since dev is
+// what deleting the file asks for and a blank file is far likelier to be a truncated
+// write than an intent.
 func fixtureTier(fx string) (registry.Tier, error) {
 	data, err := os.ReadFile(filepath.Join(fx, checkFileName))
 	if errors.Is(err, os.ErrNotExist) {
@@ -154,6 +157,9 @@ func fixtureTier(fx string) (registry.Tier, error) {
 		return "", err
 	}
 	name := strings.TrimSpace(string(data))
+	if name == "" {
+		return "", fmt.Errorf("canary fixture '%s' has an empty %s file, which names no check; delete the file to sweep the fixture at the dev tier", filepath.Base(fx), checkFileName)
+	}
 	for _, check := range registry.Checks {
 		if check.Name == name {
 			return check.Tier, nil
