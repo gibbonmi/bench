@@ -140,7 +140,10 @@ refused (`worktree create request conflicts with its existing assignment`).
 The coordinator cuts the worktrees instead: run
 `bench worktree create --request <opaque-id> --label <work-item>` once per
 delegate — a distinct request id each — and hand each delegate its returned
-root path. Share a worktree — or run sequentially — only when one delegate's
+root path. Dispatch independent delegates concurrently and keep coordinating
+while they run — the charge, not the coordinator's attention, carries the
+conventions, so blocking on each return buys nothing but wall-clock. Share a
+worktree — or run sequentially — only when one delegate's
 work genuinely depends on another's output. A charge that shares an existing
 worktree names its root and pins every file-tool path to that root; shell CWD
 does not retarget file tools.
@@ -165,8 +168,8 @@ test, then copy the working file back.
 Read-only delegations need no worktree; say "do not edit any file" in the
 charge and mean it. Review delegates return findings only. The coordinator
 verifies the repair in the checkout that owns the diff. Repairs beyond the
-allowance under Delegate or inline are re-charged to a write-delegate in an
-isolated worktree; that delegate receives the finding and a commit-specific
+allowance under Delegate or inline are routed as Verifying the done-claim
+directs; a fresh repair delegate receives the finding and a commit-specific
 sentinel for the diff under repair.
 
 ### The shared-checkout exception
@@ -204,7 +207,14 @@ Accepting a done-claim unverified is grading your own work at one remove —
 invariant #1 with extra steps.
 
 Report every verification round in one line, like a ladder move: accepted, or
-what was missed and where the fix went. Reject a miss and re-charge its concrete
-repair to a write-delegate when it exceeds the canonical allowance under
-Delegate or inline. Recurring misses across delegates are a charge defect, not a
+what was missed and where the fix went. When a rejected miss exceeds the
+canonical allowance under Delegate or inline, route its concrete repair:
+continue the delegate that authored the slice when the harness can still resume
+it — for its own repair, its context is by definition the right context, and
+the resume rides the cache instead of rebuilding the read-set. Continuation
+covers only a repair to that delegate's own slice; anything else is new work
+and gets a fresh charge, because the written charge — not accumulated context —
+is what carries the conventions. When the authoring delegate is gone, re-charge
+a fresh write-delegate in an isolated worktree with the finding and sentinel.
+Recurring misses across delegates are a charge defect, not a
 delegate defect — tighten the rows in the charge before re-sending it.

@@ -104,8 +104,13 @@ declaration is not optional.
 
 ## The declaration
 
-> Line: <resolved model id> / <effort> / ~<iteration cap>. <one clause: the
-> signals that chose this row.>
+> Line: <resolved model id> / <effort> / ~<iteration cap> / <fan-out, when the
+> stage dispatches delegates>. <one clause: the signals that chose this row.>
+
+Fan-out is declared for the same reason model and effort are — visibility
+before spend, not a cost cap. A stage that plans delegates says how many
+before dispatching, and exceeding the declared count is reported like any
+ladder move, never done silently.
 
 Derive the cap; don't feel it out: expected red/green cycles, plus a margin for
 one red. A review-axis delegate is one pass with no fix iteration, so it prices
