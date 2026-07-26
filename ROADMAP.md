@@ -290,40 +290,6 @@ Make an enumerated-posture table an explicit Spec-axis audit obligation in
 table row by row against the diff. Kit edit under the `craft-synthesis`
 discipline. Source: `IDEAS.md`, drained here.
 
-**FT136 (MEDIUM, evidence supplied) — spec definition and slice sizing at
-delegate scale.** Cheap-tier delegates degrade as the project grows even with
-good specs and pre-defined seams: the unstated constraint set grows while
-spec word count stays flat, nearest-neighbor retrieval gets noisier, seams
-bound the interface but not the interior, and mature specs get more
-elliptical as `CONTEXT.md` vocabulary compresses. The charge-side
-countermeasure — exemplar files over prose conventions — shipped 2026-07-26 in
-`craft-delegate`; what stays open here is how specs are defined and how work
-is sliced.
-Evidence from the FT86 review-resolution run (2026-07-25): three concurrent
-write-delegates sliced by package ownership merged with zero conflicts,
-including two that both edited the same spec file, while the one slice cut by
-behavior theme instead ("fail-closed", spanning four packages) ran ~25 min at
-184k tokens and had to reach outside its stated fence into `internal/bounds`
-to place a shared predicate. The sharper rule than one-seam-per-delegate is
-that the slice boundary and the ownership fence must be the same line — when
-they diverge the delegate either overreaches or stops short, and both cost a
-round trip. Confound to resolve rather than inherit: that run was
-all-mid-tier AND heavily charged AND seam-sliced, so it is evidence for none
-of the three alone; the acceptance trigger for this row's build is re-testing
-the cheap tier on one genuinely seam-shaped slice before mid-tier-by-default
-is treated as settled. Quality risk to design against: seam-slicing optimizes
-local coherence and can manufacture cross-fence knowledge duplication — if no
-delegate owns the shared primitive, each seam writes its own copy, exactly
-the Standards-1 defect (a failed-read predicate hand-derived at nine sites)
-the FT86 review existed to fix — so the spec names its shared primitives up
-front and lands them as a deep-unit slice before the consuming seams, and the
-review's Standards axis explicitly hunts duplication introduced at fence
-boundaries. One of three angles on the cost-follows-project-size complaint
-(FT91: gate wall-clock; FT101: ambient-surface scope); one
-`/bench-shape-idea` session covers the three, and the rows stay separate
-because the owners differ. Entry: `/bench-shape-idea`. Source: `IDEAS.md`,
-drained here.
-
 **FT117 (MEDIUM) — FT87 parser-surface follow-ups.** Two leaves left flat after
 the slice 3 grammar centralization. The subcommand-routing registry's
 `whyNested` exemption reason is free text nothing grades, and it currently
