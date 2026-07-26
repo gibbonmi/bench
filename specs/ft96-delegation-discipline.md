@@ -1,6 +1,6 @@
 # FT96 — the delegation discipline, batched
 
-Status: staged
+Status: implemented
 
 ## Problem
 
