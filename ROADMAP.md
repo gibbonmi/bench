@@ -39,53 +39,82 @@ Sources: `RR:C-05`; `RC:H-03`.
 **FT91 (HIGH, evidence supplied) — gate wall-clock proportional to the
 diff.** Raised from MEDIUM by the reviewer on 2026-07-25: the gate's length is
 the dominant cost of working on this repo for small changes, and the waiting is
-paid by a human. Three arms have shipped: the phases were parallelized, host-only test
-builds (retired 2026-07-20) removed the per-stage cold-`GOCACHE` four-platform
-matrix, and the canary concurrency budget landed 2026-07-24. That third arm
-capped the nesting that dominated the clock — each inner gate is pinned to
-`GOMAXPROCS=2` (`bounds.CanaryInnerWidth`, stripped-then-set so an inherited
-value cannot leak past the cap), and canary workers derive as
-`runtime.GOMAXPROCS(0)` divided by that width, floored at one and capped at the
-fixture count. Measured on a 16-core box: 323–336 s wall at peak load ~28–33,
-against the 2026-07-22 baseline of 10–15 minutes at load ~123; the gate-concurrency
-decision map, retired with the spec, predicted 332 s at `k = 2`. The conformance
-phase (~325 s) is now the long pole, so canary is no longer the cost.
+paid by a human. Four arms have shipped: the phases were parallelized;
+host-only test builds (retired 2026-07-20) removed the per-stage cold-`GOCACHE`
+four-platform matrix; the canary concurrency budget landed 2026-07-24
+(`bounds.CanaryInnerWidth` pins each inner gate to `GOMAXPROCS=2`,
+stripped-then-set, workers derived from `runtime.GOMAXPROCS(0)`); and the
+dev/ship tier split landed 2026-07-26 (spec `ft91-gate-tier-split`, retired) —
+the ~372 s release-evidence probe, the cross-compile stress matrix, and the
+release-only package suites moved behind `bench prep-release`, per-check timing
+became permanent gate output, and `internal/conformance` left the inner suite,
+closing the recursion hazard. Measured after the split: whole gate
+5m50s → 4m36s, dev conformance 328.8 s → 106.9 s. The long pole is now
+`package-core-guard` (~86 s), which runs seven toolchain steps serially inside
+one Go test function, plus the canary phase's check-level redundancy below.
 
-A fourth arm, not previously named here, is the one the 2026-07-25 evidence
-points at: parallelizing the conformance checks themselves. Two full runs
-that day measured 419 s and 552 s of wall clock with the conformance phase at
-397 s and 521 s — about 94% of the total in both, with the contract phase's
-slowest package finishing well before it. The phase is a single test, and
-`RunConformance` calls its fifteen checks strictly serially into one slice, so
-one core carries the whole phase while the rest of a sixteen-core box idles.
-Each check is a pure function over a read-only tree, so ordering is recoverable
-by collecting into an indexed slice. This is distinct from the dormant capping
-arm below, which limits concurrency rather than creating it, and it is the
-safest arm on this row against the oracle constraint: the same checks run over
-the same inputs, so green keeps meaning exactly what it means today. What it
-buys depends on how the 500 s distributes across the fifteen — if one check
-dominates, it buys little — so the first step is timing each check, which is a
-small instrumentation change and one gate run.
+The next arm is the pipeline refactor. Hoist `checkGoCore`'s compile-and-test
+work out of the conformance test binary into first-class gate phases with
+declared dependencies, leaving conformance to grade structure only — this
+removes the remaining recursion surface story, the probe-truncation blindness,
+and the stale-state class the FT91 build hit, and wins duration by overlapping
+gofmt/build/vet/test/race/cross-compile instead of running them serially
+inside one check. Its second half: the phase list becomes project-owned
+declarative data instead of Go code — `BenchkitPhases` is currently a Go
+function that knows about Go, which breaks the seam every other Bench surface
+honours (`.bench/gate.sh` is already project-owned); the runner ships in the
+kit, phase definitions ship with the project. Universal today: the
+phase/verdict/timing model, subject binding, the canary premise, the tier
+split, capability detection. Go-specific today: `BenchkitPhases`,
+`checkGoCore`, package enumeration, `-tags stress`, `-skip` filters, and — the
+load-bearing one — incrementality riding on Go's content-addressed test cache
+(a cache-invalidating change swung this repo 106 s → 826 s). Language-agnostic
+incrementality therefore means phases declare input globs and the runner
+hashes them, i.e. a small build system: real cost, not built speculatively —
+design the phase manifest and DAG now, keep cross-language incrementality a
+separate later capability behind the existing revive trigger, and shape the
+manifest against regroup-app rather than generalising from this repo.
+Complication that stays: `checkGoCore` grades arbitrary roots (canary
+fixtures, linked repos), so it must split into a host-repo phase plus a
+narrower structural check, and the 19+ package-core-guard fixtures asserting
+its diagnostics move to grading the phase.
 
-The remaining arms are each a separate capability, and none is a follow-up to
-the one that shipped. Capping the outer conformance and contract phases is
-dormant rather than queued: it changes the phase environment in `internal/gate`
-rather than canary's nesting, and the map's evidence says it buys nothing while
-wall clock is conformance-bound — revive it only if contention flakes persist.
-Removing the hardcoded `-count=1` in `internal/gate/phases.go` changes what a
-green gate proves about freshness, which is an oracle-semantics decision rather
-than a scheduling one. A shared hermetic build cache, and caching keyed on the
-pinned gate subject, both add cache infrastructure and its invalidation rules.
-Diff-scoped gating stays ruled out here (contract and canary are behavior
-contracts with no file→test map). None of them may weaken the oracle: green
-must keep meaning the same thing, and any scoped verdict must be explicit
-evidence, never a silent skip.
+Prerequisite of that refactor, not a successor: the canary's residual
+redundancy is check-level, and it is the lever the pipeline idea excludes.
+`phasesForMode` already narrows each fixture's inner run to the single phase
+its family owns, but inside the conformance phase every fixture still runs all
+16 registry checks to observe the one its `CHECK` file names — cheap at dev
+(the ms-scale checks), ruinous at ship, where the 2026-07-26 sweep estimate of
+~12 min wall was rejected outright. Two levers: scope the inner run to the
+named check, not just the phase; and deduplicate by check — N fixtures grading
+one check plus a shared vacuity baseline pay N+1 runs of it, and both ship
+fixtures grade the same check, so ship's cost is irreducible by scoping alone.
 
-This row is also one of three angles on one complaint — cost grows with the
-tree while the value of a small change does not; FT101 (ambient-surface scope)
-and FT136 (delegate slicing) are the other two. One `/bench-shape-idea` session
-should shape the three together; the rows stay separate because the owners
-differ.
+Two interim defects ride this row until the refactor absorbs their surfaces.
+`conformanceSubprocessEnv` scrubs `BENCH_CONFORMANCE_ROOT` but not
+`BENCH_CONFORMANCE_TIER`, so the ship flag leaks into the inner `go test` —
+harmless today only because the filtered inner run cannot recurse, but an
+unscrubbed conformance env var is exactly the shape behind the 2026-07-26
+recursive cascade, and the scrub contract should be symmetric. And
+`formatProbeFailure` keeps the last 40 lines of a failed probe while the inner
+`go test` prints ~49 package-summary lines after any failure detail, so the
+gate systematically shows the summary and hides the failing assertion — spill
+full probe output to `<git-dir>/bench-conformance-probe.log` and name the path
+in the diagnostic, rather than truncating.
+
+The deferred arms are unchanged. Capping the outer conformance and contract
+phases stays dormant unless contention flakes persist. Removing the hardcoded
+`-count=1` changes what green proves about freshness — an oracle-semantics
+decision — and cache infrastructure (hermetic build cache, verdicts keyed on
+the pinned gate subject) waits on re-measurement after the pipeline lands.
+Diff-scoped gating stays ruled out (contract and canary are behavior contracts
+with no file→test map). None of them may weaken the oracle: green must keep
+meaning the same thing, and any scoped verdict must be explicit evidence,
+never a silent skip.
+
+Entry: `/bench-shape-idea`, inputs this row plus
+`decisions/gate-concurrency.md`'s watch-outs. Sources: `IDEAS.md`, drained
+here; `decisions/cost-follows-project-size.md`.
 
 **FT131 (MEDIUM) — a stale binary under test makes contract rows lie in both
 directions.** The AXI and runtime contract suites drive the built `dist/bench`,
@@ -103,6 +132,20 @@ the phase names these seams — stays on this row and is taken only if the
 in-helper staleness check proves unreliable; it was offered to the delegation
 batch that shipped 2026-07-26 and deliberately left untaken there. Source: the
 2026-07-25 learnings entry, verdicted in a prior drain.
+
+**FT141 (MEDIUM, evidence supplied) — `bench gate pin` records red verdicts,
+so inherited reds stop reading as caused.** The pin records only the tree it
+graded, not what failed there, so an agent that sees a failing check in a file
+its diff never touched assumes causation and starts fixing — and that loop
+does not self-terminate. Real case 2026-07-26: `main` red since `3c50349`,
+and the FT91 build paid ~12 messages of git archaeology to prove the red was
+inherited. Record which checks failed at which commit, so a stage starting
+from a pinned baseline subtracts inherited reds automatically. This is the
+containment half of the incident; the prevention half — the doc-only
+shortcut's gate-anchored-surface exception — rides FT107's sixth clause, and
+FT107's fifth clause (the fix-loop shrink measure) explicitly depends on this
+row landing first, since shrink is only meaningful over reds the diff owns.
+Source: `IDEAS.md`, drained here.
 
 **FT133 (MEDIUM) — `bench coverage --check` verifies that red-signal citations
 resolve.** A coverage-map row naming `go test -run TestFoo` where no such test
@@ -159,6 +202,42 @@ pre-existing, found while attributing a delegate's red during the FT87 slice 3
 build. Two halves: fix the `guards.Scan` races, and decide whether the gate
 should run `-race` on a subset so this class stays caught — the second half is a
 gate-authoring reviewer decision (`craft-gate`).
+
+The race is now attributed, and the row's stakes rose. `guards.Scan` leaks its
+`enumerateGuards` goroutine past the `ctx.Done()` return (`guards.go:169-170`,
+187), and the abandoned goroutine races the next test — confirmed 2026-07-26
+with `go test -race -count=1 ./internal/guards`. FT91's new ship tier found it
+on its first real run, which is the tier split working as designed; the leak
+blocks a green `bench prep-release` on any host, alongside the
+govulncheck-not-installed gap carried on FT142. Fix shape: `Scan` must not
+leave `enumerateGuards` running after the timeout path returns. Source:
+`IDEAS.md`, drained here.
+
+**FT142 (MEDIUM) — FT91 review residuals: nine open findings, two tracks.**
+The ft91-gate-tier-split semantic review found twelve; three closed before
+merge (the ship canary tier pin, the untiered-registry assertion, the
+present-but-empty `CHECK` file). The spec and review files are retired, so
+this row is the canonical carrier of what stays open — full citations
+recoverable via `bench spec history ft91-gate-tier-split`. Standards track,
+light-path candidates now: two comments that narrate the diff or cite spec
+provenance (`internal/canary/fixture_tier_test.go`, the preprelease fixture
+and `tier_test.go` failure message); the release-only package list derived
+twice (`projects/benchkit.md` prose versus `releaseOnlyPackages` — name the
+seam or anchor the string); and the `CHECK` filename hard-coded in the
+same-package test beside the constant that owns it. Ship track, riding the
+prep-release revive alongside FT116's race: the ship conformance step runs
+with no `-timeout`, so the ~372 s probe plus all three release-only suites
+share one default-bounded run — the 600 s hang hazard the spec claimed to fix
+is restaged at ship; `govulncheck` resolves four levels deep instead of in
+`requiredTools`, so a host without it burns the artifact matrix and a full
+ship conformance run before dying — the concrete limit on the up-front
+refusal; a second `prep-release` after an interrupt never cleans the orphaned
+`dist/.preflight.*` staging directory; two concurrent conformance runs on one
+root interleave the timing file (needs a coverage row or an explicit
+Won't-handle line); and the release-only `go test` step the decisions
+promised was silently folded into ship-tier `goCoreTestPackages` — flagged
+for veto, not a defect. Source: the FT91 review, promoted at spec
+retirement.
 
 **FT128 (MEDIUM, evidence supplied) — the agent-line guard cannot see a fork's
 real model.** `check-agent-line` decides from the delegation envelope's
@@ -427,7 +506,21 @@ inherited and spec-predicted reds are constant noise that would trip a false
 stop. Evidence for both halves is the 2026-07-26 FT91 gate: three reds, one
 inherited from `3c50349` and two predicted by the spec, none belonging to the
 diff, resolved only by hand-run git archaeology. Source: session conversation,
-parked here by reviewer instruction rather than through a drain. Deliberately
+parked here by reviewer instruction rather than through a drain. Sixth
+(drained 2026-07-26 from the learnings journal), the doc-only plain-`git`
+shortcut needs a gate-anchored-surface exception. Commit `3c50349` rewrote a
+craft-delegate paragraph whose exact sentence `checkWorkflowAnchors` pins,
+plain `git` committed it with no gate, and `main` stayed red for three commits
+until the FT91 build paid the diagnosis detour to prove the red was inherited.
+Kit prose is gate-anchored content, not inert text: the conformance phase
+asserts exact sentences from `.agents/skills/`, `.agents/commands/`,
+`.bench/BENCH.md`, and `projects/*.md`. Either name the cheap targeted check
+those edits must run before a plain-`git` commit (a scoped
+`go test ./internal/conformance -run` over the anchor checks), or scope the
+shortcut to surfaces no conformance check reads — reviewer's call which,
+decided when the batch builds. The containment half of the same incident — the
+gate pin recording red verdicts so inherited reds stop reading as caused — is
+FT141, which this row's fifth clause already depends on. Deliberately
 not batched here: FT130 (mid-gate
 `bench idea`) stays its own row because its preferred fix is mechanical, in
 the CLI rather than in this prose. Background:
@@ -699,7 +792,15 @@ fake-`Runner` tests — and `internal/canary/canary_concurrency_test.go` is alre
 one line over its 400-line budget after the FT91 arm, so the added test lands
 together with a `craft-seams` split (the file now carries two concerns: worker
 derivation and bounds, versus inner-environment pinning) rather than an accept
-entry.
+entry. Third, found 2026-07-26 under full gate load:
+`TestRuntimeGateContracts/bench_gate_rebuilt_self-host_contract` failed once
+with a `TempDir RemoveAll` "directory not empty" cleanup error alongside the
+contract failure, then passed standalone (all 14 subtests) and on an identical
+whole-gate re-run. That cleanup message is the signature of a gate child
+process still writing into the test's temp dir after the test returned — a
+teardown race in the self-host contract, not a diff defect. An intermittently
+red oracle is noise in the thing that defines done; pin the child-process
+teardown before it recurs. Source: `IDEAS.md`, drained here.
 
 **FT130 (LOW) — parking an idea mid-gate silently voids the run.** During
 FT122's gated commit a session answered a reviewer question and ran `bench
@@ -882,12 +983,12 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — the cost-follows-project-size complaint, one session
-   across its three angles (FT91's remaining gate arms, FT101's scoped
-   surfaces, FT136's delegate slicing). One shaping session instead of three
-   separately-shaped builds; FT91's first step — timing the fifteen
-   conformance checks — is the session's cheapest evidence request, and gate
-   wall-clock is the reviewer's stated dominant cost.
+1. `/bench-shape-idea` — FT91's pipeline arm: the gate becomes a true
+   pipeline. Gate wall-clock is the reviewer's stated dominant cost, the
+   long pole is now `package-core-guard`'s seven serial toolchain steps
+   inside one check, and the canary check-scoping prerequisite rides the
+   same session. Inputs: the FT91 row and
+   `decisions/gate-concurrency.md`'s watch-outs.
 2. `/bench-write-spec` — FT71, versioned local shift evidence. The remaining
    HIGH bank-track row; the repository-controlled bank evidence requirement
    keeps it active.

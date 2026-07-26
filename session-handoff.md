@@ -2,44 +2,38 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — FT91 merged, green, **unpushed**.
-Spec: `specs/ft91-gate-tier-split.md` — `Status: implemented`.
-Review findings: `reviews/ft91-gate-tier-split.md` — **9 still open**.
+Branch: `main` — FT91 merged and green at `880357f`, **15 commits unpushed**.
+Uncommitted: the 2026-07-26 `/bench-what-next` drain, staged as one batch diff
+**awaiting reviewer approval** — do not commit it without that approval.
 
 ## State
 
-- **FT91 landed.** The gate now splits into a dev tier and a ship tier
-  (`bench prep-release`), with per-check timing printed on every run. Whole gate
-  5m50s → 4m36s; conformance phase 328.8s → 106.9s.
-- **`/bench-review-implementation` ran and found 12 issues; 3 are closed.** The
-  inner canary gate now pins the tier being swept — before the fix the two
-  release-evidence fixtures could never bite, so `bench prep-release` could not
-  have reached green. Also closed: an untiered registry check silently left the
-  dev gate, and an empty `CHECK` file now names that condition.
-- **The next work is a gate refactor, not more FT91.** The reviewer rejected the
-  ship canary's cost outright. The measured picture: `package-core-guard` is
-  ~86s of the gate because it runs seven toolchain steps serially inside one Go
-  test function, and inside the conformance phase every canary fixture runs all
-  16 registry checks to observe the one its `CHECK` file names. `decisions/gate-concurrency.md`
-  reaches the same conclusion independently — at k≤2 the long pole is the
-  conformance phase, and further canary tuning cannot move wall-clock.
-- **`bench prep-release` is shelved,** and cannot reach green on this host anyway:
-  a real data race in `internal/guards.Scan`, and `govulncheck` is not installed.
-  Both are parked in `IDEAS.md`.
+- **The drain is done but uncommitted.** Both capture sources are empty (seven
+  ideas, two learnings), the FT91 spec and review are retired, and the board
+  now carries the pass: FT91 rewritten around the pipeline-refactor arm with
+  the canary check-scoping prerequisite and two interim defects; FT116 carries
+  the attributed `guards.Scan` goroutine leak; FT120 gained the self-host
+  teardown-race flake; FT107 gained the doc-only gate-anchored-surface clause;
+  FT141 (gate pin red verdicts) and FT142 (FT91 review residuals) are new.
+- **On approval:** run the dev gate, then commit the batch as the drain commit
+  plus a `spec-retire: ft91-gate-tier-split` commit, then push `main`.
+- **The next build work is the gate pipeline refactor** (FT91's next arm,
+  reviewer's stated top priority). Inputs are the FT91 row and
+  `decisions/gate-concurrency.md`'s watch-outs; the check-scoping levers are a
+  prerequisite slice, not a follow-up.
+- **`bench prep-release` stays shelved** — blocked by FT116's race and FT142's
+  ship-track findings; both are board rows now, not handoff state.
 - **Decisions that stay closed:** ship is a superset of dev; `internal/conformance`
-  is excluded from the unfiltered inner run at both tiers; the release-only package
-  tests are owned by the ship-tier conformance run; `prep-release`'s verify-mode
-  evidence deliberately cannot satisfy `VerifyPublishAuthority`.
+  is excluded from the unfiltered inner run at both tiers; the release-only
+  package tests are owned by the ship-tier conformance run; diff-scoped gating
+  stays ruled unsound; no check weakening for wall-clock.
+- The branch/worktree sweep (23 non-`main` branches, 19 worktrees, work
+  verified present in `main`) remains proposed, not executed — reviewer's call.
 
 ## Next command
 
-`/bench-shape-idea` on the gate pipeline refactor. A fresh-session prompt for it
-was generated at the end of the previous session; if it is lost, the inputs are
-the last three entries in `IDEAS.md` plus `decisions/gate-concurrency.md`.
-
-Before that: `main` is unpushed, and the branch/worktree sweep was proposed but
-not executed — 23 non-`main` branches and 19 worktrees, all of whose work is
-verified present in `main`. Deleting them is the reviewer's call.
+Approve or adjust the staged drain diff, then, in a fresh session:
+`/bench-shape-idea` on FT91's pipeline arm — the gate becomes a true pipeline.
 
 ## Shape
 
