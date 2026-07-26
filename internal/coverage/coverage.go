@@ -34,22 +34,22 @@ var grammar = usage.Grammar{
 
 const escSentinel = "\x1c" // stands in for an escaped `\|` across the pipe split
 
+// storyPartPattern is the one grammar for a story-reference part: a number, or a
+// range joined by an en-dash or hyphen, capturing its endpoints.
+const storyPartPattern = `([0-9]+)(?:[ \t]*(?:–|-)[ \t]*([0-9]+))?`
+
 var (
 	storyNumRe = regexp.MustCompile(`^[0-9]+\. `)
 	mapEndRe   = regexp.MustCompile(`^#{2,} `)
 	edgeRe     = regexp.MustCompile(`^[Ee][Dd][Gg][Ee]`)
 	parenRe    = regexp.MustCompile(`[ \t]*\(.*\)$`)
-	// storyPartRe matches one comma-separated part of a story reference — a single
-	// number, or a range joined by an en-dash or hyphen — capturing its endpoints.
-	// storyRefRe composes the same grammar into the whole comma list, so the two can
-	// never disagree about what a part looks like: every trimmed part storyRefRe
-	// accepts is one storyPartRe matches, which is why the submatch below is
-	// dereferenced without a nil check.
+	// storyPartRe matches one comma-separated part of a story reference; storyRefRe
+	// matches the whole comma list. Both compose storyPartPattern, so they cannot
+	// disagree about what a part looks like: every trimmed part storyRefRe accepts is
+	// one storyPartRe matches, which is why the submatch below needs no nil check.
 	storyPartRe = regexp.MustCompile(`^` + storyPartPattern + `$`)
 	storyRefRe  = regexp.MustCompile(`^` + storyPartPattern + `([ \t]*,[ \t]*` + storyPartPattern + `)*$`)
 )
-
-const storyPartPattern = `([0-9]+)(?:[ \t]*(?:–|-)[ \t]*([0-9]+))?`
 
 // historicalMarker is the literal opt-out comment: present anywhere in a spec, it
 // exempts the spec from the coverage-map requirement (a no-map state) and from
