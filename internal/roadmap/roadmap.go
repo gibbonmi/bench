@@ -94,17 +94,19 @@ func needsNewline(file string) bool {
 	return data[len(data)-1] != '\n'
 }
 
-// missingRoadmap is the absent-or-zero-byte posture: no working document is a
-// maintenance prompt, never a crash or silent empty output.
+// missingRoadmap is the absent-file posture: no working document at all is a maintenance
+// prompt, never a crash or silent empty output. A ROADMAP.md that exists but holds no
+// bytes is not this case — someone created it and left it unwritten, which the empty
+// state reports instead.
 const missingRoadmap = "no ROADMAP.md — run /bench-what-next to create the working roadmap\n"
 
 // RoadmapCommand implements `bench roadmap`: it prints ROADMAP.md verbatim followed
 // by the drain-status block when capture sources need draining, or by the
 // `## Recommended sequence` callout when nothing does. Absence renders the
-// maintenance prompt on exit 0 — the only authoritative empty state — while any
-// other classifier state (unreadable, wrong-type, a byte-level malformed read) or
-// the parser's own unsupported-schema verdict exits 1 with a structured error
-// naming it, so a read failure can never print as an empty working document.
+// maintenance prompt on exit 0 — the only authoritative empty state — while every
+// other state exits 1 with a structured error naming it: a present-but-empty file,
+// any classifier failure, or the parser's own unsupported-schema verdict. A read that
+// did not produce a working document can therefore never print as one.
 func RoadmapCommand(args []string) (string, int) {
 	if _, line, code := usage.Parse(roadmapGrammar, args); line != "" {
 		return line + "\n", code
@@ -114,10 +116,14 @@ func RoadmapCommand(args []string) (string, int) {
 		return toon.NotInRepo() + "\n", 1
 	}
 	c := bounds.Classify(filepath.Join(root, "ROADMAP.md"), controlRecordLimit)
-	switch c.State {
-	case bounds.StateAbsent, bounds.StateEmpty:
+	switch {
+	case c.State == bounds.StateAbsent:
 		return missingRoadmap, 0
-	case bounds.StateUnreadable, bounds.StateWrongType, bounds.StateMalformed:
+	case c.State == bounds.StateEmpty:
+		// The classifier carries no diagnostic for a clean read of nothing, so the
+		// error line supplies the one fact that separates this from absence.
+		return roadmapReadError(c.State, "the file exists but holds no bytes"), 1
+	case c.State.Failed():
 		return roadmapReadError(c.State, c.Reason), 1
 	}
 	doc, failures := ParseDocument(c.Data, nil, true)
@@ -146,28 +152,30 @@ func roadmapReadError(state bounds.FileState, reason string) string {
 // the ordinary quiet-inbox posture (count 0, no fail-closed state); only an unreadable
 // or wrong-type source marks a failed read, matching maps.UnresolvedCount's contract.
 func DrainCounts(root string) (ideas int, ideasState bounds.FileState, openLearnings int, learningsState bounds.FileState) {
-	ideas, ideasState = lineCount(filepath.Join(root, ideasFile))
+	parked, ideasState := ideaLines(filepath.Join(root, ideasFile))
 	openLearnings, learningsState = learningCount(root)
-	return
+	return len(parked), ideasState, openLearnings, learningsState
 }
 
-// RoadmapText returns ROADMAP.md's raw contents and whether it is present and non-empty —
-// the same absent-or-zero-byte boundary RoadmapCommand keys its empty-state posture on.
-// The dashboard renders this text; a false present flag drives its definitive empty state.
+// RoadmapText returns ROADMAP.md's rendered contents and whether the file yielded a
+// working document at all. The dashboard renders this text; a false present flag drives
+// its definitive empty state, which is where every state but a clean non-empty read
+// lands — the page degrades rather than failing, unlike the `bench roadmap` command.
 func RoadmapText(root string) (text string, present bool) {
-	data, err := os.ReadFile(filepath.Join(root, "ROADMAP.md"))
-	if err != nil || len(data) == 0 {
+	c := bounds.Classify(filepath.Join(root, "ROADMAP.md"), controlRecordLimit)
+	if c.State != bounds.StateParsed {
 		return "", false
 	}
-	doc, _ := ParseDocument(data, nil, true)
+	doc, _ := ParseDocument(c.Data, nil, true)
 	return doc.Text, true
 }
 
 // ParkedIdeas returns the parked idea lines from IDEAS.md — every line beginning `- `, the
-// same lines DrainCounts tallies (both go through ideaLines, one source). A missing or
-// unreadable file yields nil, which the dashboard renders as its empty state.
+// same lines DrainCounts tallies (both go through ideaLines, one source). A file that did
+// not read as a usable document yields nil, which the dashboard renders as its empty state.
 func ParkedIdeas(root string) []string {
-	return ideaLines(filepath.Join(root, ideasFile))
+	parked, _ := ideaLines(filepath.Join(root, ideasFile))
+	return parked
 }
 
 func drainStatus(root string) string {
@@ -209,45 +217,35 @@ func RecommendedSequence(roadmap string) string {
 }
 
 // learningCount classifies .bench/learnings.md and counts its open rows. Absent or
-// empty is 0 rows at bounds.StateParsed (the ordinary quiet-journal posture); an
-// unreadable or wrong-type journal reports 0 with that state, so the caller renders
-// unknown instead of a fabricated clean journal.
+// empty is 0 rows at bounds.StateParsed (the ordinary quiet-journal posture); a journal
+// whose read failed reports 0 with that failed state, so the caller renders unknown
+// instead of a fabricated clean journal.
 func learningCount(root string) (int, bounds.FileState) {
 	c := bounds.Classify(filepath.Join(root, ".bench", "learnings.md"), controlRecordLimit)
-	switch c.State {
-	case bounds.StateUnreadable, bounds.StateWrongType:
+	switch {
+	case c.State.Failed():
 		return 0, c.State
-	case bounds.StateAbsent, bounds.StateEmpty:
+	case c.State == bounds.StateAbsent || c.State == bounds.StateEmpty:
 		return 0, bounds.StateParsed
 	default:
 		return len(learnings.Rows(c.Data)), bounds.StateParsed
 	}
 }
 
-// lineCount classifies file and counts its parked-idea lines, in the same
-// absent/empty-is-quiet, unreadable/wrong-type-is-failed contract as learningCount.
-func lineCount(file string) (int, bounds.FileState) {
+// ideaLines is the one reader of IDEAS.md-style parked lines: every line beginning `- `,
+// returned with the file's own readability state. DrainCounts tallies them and
+// ParkedIdeas returns them for the dashboard, so the count and the rendered list can
+// never disagree about either the lines or what was readable. Absent or empty is no
+// lines at bounds.StateParsed (the ordinary quiet-inbox posture), the same
+// absent/empty-is-quiet, failed-read-is-reported contract as learningCount.
+func ideaLines(file string) ([]string, bounds.FileState) {
 	c := bounds.Classify(file, controlRecordLimit)
-	switch c.State {
-	case bounds.StateUnreadable, bounds.StateWrongType:
-		return 0, c.State
-	case bounds.StateAbsent, bounds.StateEmpty:
-		return 0, bounds.StateParsed
-	default:
-		_, _, out := parseIdeas(c.Data, true)
-		return len(out), bounds.StateParsed
+	switch {
+	case c.State.Failed():
+		return nil, c.State
+	case c.State == bounds.StateAbsent || c.State == bounds.StateEmpty:
+		return nil, bounds.StateParsed
 	}
-}
-
-// ideaLines is the one reader of IDEAS.md-style parked lines: every line beginning `- `.
-// lineCount tallies them for the drain counts and ParkedIdeas returns them for the
-// dashboard, so the count and the rendered list can never disagree. Missing or unreadable
-// file → nil.
-func ideaLines(file string) []string {
-	data, err := os.ReadFile(file)
-	if err != nil {
-		return nil
-	}
-	_, _, out := parseIdeas(data, true)
-	return out
+	_, _, out := parseIdeas(c.Data, true)
+	return out, bounds.StateParsed
 }

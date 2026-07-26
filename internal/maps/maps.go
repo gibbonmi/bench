@@ -188,6 +188,15 @@ type scanResult struct {
 	dirReason string
 }
 
+// isDirectoryDoc reports whether a decisions entry documents the directory rather than
+// claiming membership in it. A README is the one universally understood name for that,
+// and it is the only exemption: every other ordinary name in `decisions/` is a candidate
+// decision map, so a genuinely broken map still earns its row and its exit code. Without
+// the exemption a routine index file turns `bench maps` red for no defect.
+func isDirectoryDoc(name string) bool {
+	return strings.EqualFold(strings.TrimSuffix(name, ".md"), "README")
+}
+
 // scan classifies root/decisions and every *.md entry inside it, in sorted order.
 func scan(root string) scanResult {
 	dir := filepath.Join(root, decisionsDir)
@@ -201,6 +210,9 @@ func scan(root string) scanResult {
 		// without dotglob never expands a hidden name — so a `.foo.md` stays invisible to
 		// the listing and the count (and cannot falsely nag the dashboard).
 		if e.IsDir() || !strings.HasSuffix(e.Name(), ".md") || strings.HasPrefix(e.Name(), ".") {
+			continue
+		}
+		if isDirectoryDoc(e.Name()) {
 			continue
 		}
 		base := strings.TrimSuffix(e.Name(), ".md")
@@ -265,7 +277,7 @@ func (s scanResult) unresolvedCount() int {
 // unresolved."
 func UnresolvedCount(root string) (n int, state bounds.FileState) {
 	s := scan(root)
-	if s.dirState == bounds.StateUnreadable || s.dirState == bounds.StateWrongType {
+	if s.dirState.Failed() {
 		return 0, s.dirState
 	}
 	return s.unresolvedCount(), bounds.StateParsed
@@ -281,10 +293,12 @@ func mapsError(state bounds.FileState, reason string) string {
 // prints the distinct not-close-ready file count as a bare integer, through the
 // same scan the listing uses. Absence of root/decisions is the only authoritative
 // empty state (exit 0); a decisions/ directory that exists but cannot be
-// enumerated exits 1 with a structured `error:` line, because no per-file row is
-// possible when nothing could be listed. Once a directory listing exists, a
-// per-file failure is not whole-document: every readable file still renders its
-// rows, plus one row per file that failed, and the command exits 1 (story 10).
+// enumerated exits 1 with a structured `error:` line on *both* forms, because a
+// bare integer for a scan that never ran is a count nothing supports and it would
+// contradict the listing's own error on the same tree (story 11). Once a directory
+// listing exists, a per-file failure is not whole-document: every readable file
+// still renders its rows, plus one row per file that failed, and the command exits
+// 1 (story 10).
 func Command(args []string) (string, int) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
@@ -298,14 +312,11 @@ func Command(args []string) (string, int) {
 		return toon.NotInRepo() + "\n", 1
 	}
 	s := scan(root)
-	if _, count := parsed.Flags["--count"]; count {
-		if s.dirState == bounds.StateUnreadable || s.dirState == bounds.StateWrongType {
-			return "0\n", 0
-		}
-		return strconv.Itoa(s.unresolvedCount()) + "\n", 0
-	}
-	if s.dirState == bounds.StateUnreadable || s.dirState == bounds.StateWrongType {
+	if s.dirState.Failed() {
 		return mapsError(s.dirState, s.dirReason) + "\n", 1
+	}
+	if _, count := parsed.Flags["--count"]; count {
+		return strconv.Itoa(s.unresolvedCount()) + "\n", 0
 	}
 	out, err := toon.TableTyped("maps", []string{"map", "ticket", "type", "state"}, rowsFromScan(s))
 	if err != nil {

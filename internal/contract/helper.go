@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"syscall"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
@@ -140,6 +141,40 @@ func (f Fixture) WriteExecutable(path, contents string) {
 	}
 	if err := os.WriteFile(full, []byte(contents), 0o755); err != nil {
 		f.t.Fatalf("write executable %s: %v", path, err)
+	}
+}
+
+// WriteFifo puts a FIFO where a control record would be. A FIFO with no writer never
+// yields EOF, so a reader that opens the path before checking its type blocks forever:
+// this is the fixture that turns that bug into an expired deadline rather than a hung
+// suite. A filesystem without FIFOs skips through capability.Fifo rather than a bare
+// t.Skip.
+func (f Fixture) WriteFifo(path string) {
+	f.t.Helper()
+	full := filepath.Join(f.Root, filepath.FromSlash(path))
+	if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+		f.t.Fatalf("mkdir %s: %v", filepath.Dir(full), err)
+	}
+	if err := syscall.Mkfifo(full, 0o644); err != nil {
+		capability.Capability(f.t, capability.Fifo, fmt.Sprintf("FIFOs unavailable on this filesystem: %v", err))
+	}
+}
+
+// WriteUnreadable strips every permission bit from path and proves the strip took, since
+// root ignores the mode entirely and would otherwise read straight through the assertion.
+// restore is the mode the cleanup puts back — 0o644 for a file, 0o755 for a directory,
+// which must be re-entered before the fixture tree can be removed. A host that cannot
+// deny itself a read skips through capability.Privilege.
+func (f Fixture) WriteUnreadable(path string, restore os.FileMode) {
+	f.t.Helper()
+	full := filepath.Join(f.Root, filepath.FromSlash(path))
+	f.t.Cleanup(func() { _ = os.Chmod(full, restore) })
+	if err := os.Chmod(full, 0o000); err != nil {
+		capability.Capability(f.t, capability.Privilege, "cannot strip permissions: "+err.Error())
+	}
+	if fh, err := os.Open(full); err == nil {
+		fh.Close()
+		capability.Capability(f.t, capability.Privilege, "mode 0o000 is still readable by this user")
 	}
 }
 

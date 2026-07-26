@@ -26,6 +26,22 @@ const (
 	StateUnsupportedSchema FileState = "unsupported-schema"
 )
 
+// Failed reports whether a state means the read yielded nothing a consumer may trust:
+// the path could not be opened, it was not the kind of thing a control record is, or its
+// bytes are not valid UTF-8. Absence and emptiness are authoritative answers rather than
+// failures, so they are not included. Every surface's fail-closed exit and every
+// dashboard `unknown` row keys on this one predicate, so a new state cannot be honored
+// by some surfaces and fall through the default branch of others. StateUnsupportedSchema
+// is deliberately outside it: the classifier never returns it, and each parser decides
+// what an unrecognized shape costs its own command.
+func (s FileState) Failed() bool {
+	switch s {
+	case StateUnreadable, StateWrongType, StateMalformed:
+		return true
+	}
+	return false
+}
+
 // Classified is one path's state. Data carries the bytes whenever the read completed,
 // Stream exposes the underlying read outcome so an oversized record stays distinguishable
 // from a permission failure, and Reason carries the underlying diagnostic for every state

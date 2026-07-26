@@ -206,11 +206,12 @@ func testRuntimeIdeaRoadmap(t *testing.T) {
 	f.WriteFile("IDEAS.md", "- 2026-06-01  hand added")
 	f.Bench("idea", "after handedit").RequireExit(0)
 	contract.RequireIntEqual(t, strings.Count(f.ReadFile("IDEAS.md"), "- "), 2, "idea merged onto a newline-less last line")
+	// A zero-byte ROADMAP.md is present, so it takes the non-absent posture — exit 1
+	// naming the state — rather than the absent file's maintenance prompt above.
 	f.WriteFile("ROADMAP.md", "")
 	zero := f.Bench("roadmap")
-	zero.RequireExit(0)
-	contract.RequireContains(t, zero.Stdout, "no ROADMAP.md")
-	contract.RequireContains(t, zero.Stdout, "/bench-what-next")
+	zero.RequireExit(1)
+	contract.RequireContains(t, zero.Stdout, "error: ROADMAP.md is empty")
 
 	drain := contract.NewFixture(t)
 	drain.WriteFile("ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. Shape next item - /bench-shape-idea\n")

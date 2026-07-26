@@ -20,6 +20,28 @@ func TestRuntimeDashboardContracts(t *testing.T) {
 	contract.RunParallel(t, "bench dashboard idempotence contract", testRuntimeDashboardIdempotent)
 	contract.RunParallel(t, "bench dashboard error-posture contract", testRuntimeDashboardErrors)
 	contract.RunParallel(t, "typed gate inspection projection contract", testRuntimeTypedGateProjection)
+	contract.RunParallel(t, "bench dashboard special-file contract", testRuntimeDashboardSpecialFiles)
+}
+
+// testRuntimeDashboardSpecialFiles drives FIFOs where the dashboard's two narrative
+// control records belong. A FIFO with no writer never yields EOF, so a reader that opens
+// the path before checking its type blocks in open(2) forever and the page is never
+// rendered. The failure is an expired deadline rather than a wrong page, so the deadline
+// carries the assertion; the exit code then pins that the command degrades to its empty
+// state rather than failing closed, which is the dashboard's standing posture.
+func testRuntimeDashboardSpecialFiles(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteFile("README.md", "# fixture\n")
+	f.CommitAll("init")
+	f.WriteFifo("IDEAS.md")
+	f.WriteFifo("ROADMAP.md")
+
+	out := f.BenchDeadlined("dashboard", "--stdout")
+
+	if out.TimedOut {
+		t.Fatal("bench dashboard blocked on a FIFO at IDEAS.md or ROADMAP.md, so a control-record read opened the path before checking its type")
+	}
+	out.RequireExit(0)
 }
 
 func testRuntimeTypedGateProjection(t *testing.T) {
