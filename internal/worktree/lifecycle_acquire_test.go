@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"os"
 	"os/exec"
@@ -65,6 +66,30 @@ func TestAcquireTightensExistingPool(t *testing.T) {
 	}
 	if got := info.Mode().Perm(); got != 0o700 {
 		t.Fatalf("pool mode after Acquire = %04o, want 0700", got)
+	}
+}
+
+// TestAcquireWithUnresolvableDefaultAddsAtHead covers the empty-remote-ref end of the
+// pool-minting fallback: with no default branch to start from, the first add is already
+// the HEAD one, so the mint still succeeds rather than spending its attempt twice.
+func TestAcquireWithUnresolvableDefaultAddsAtHead(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("BENCH_HOME", home)
+	root := newWorktreeRepo(t)
+	gitRun(t, root, "branch", "-M", "master")
+	gitRun(t, root, "branch", "feature")
+	if ref := git.RemoteDefaultRef(root); ref != "" {
+		t.Fatalf("fixture default resolved to %q, want no resolvable default", ref)
+	}
+
+	wt, err := Acquire(root, "", "")
+
+	if err != nil {
+		t.Fatalf("Acquire with an unresolvable default: %v", err)
+	}
+	t.Cleanup(func() { Release(wt) })
+	if head := gitOutput(t, wt, "rev-parse", "HEAD"); head != gitOutput(t, root, "rev-parse", "HEAD") {
+		t.Fatalf("pool worktree HEAD = %q, want the repository HEAD", head)
 	}
 }
 

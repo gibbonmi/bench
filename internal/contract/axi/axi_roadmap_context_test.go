@@ -20,6 +20,7 @@ func TestAXIRoadmapContextContracts(t *testing.T) {
 	contract.RunParallel(t, "AXI roadmap context source-state contract failed", testRoadmapContextSourceStates)
 	contract.RunParallel(t, "AXI roadmap context fail-closed contract failed", testRoadmapContextFailClosed)
 	contract.RunParallel(t, "AXI roadmap context read-only offline contract failed", testRoadmapContextReadOnlyOffline)
+	contract.RunParallel(t, "AXI roadmap context unborn-HEAD contract failed", testRoadmapContextUnbornHead)
 }
 
 func contextFixture(t *testing.T) contract.Fixture {
@@ -216,6 +217,27 @@ func testRoadmapContextReadOnlyOffline(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(gitDir, "bench-last-gate")); !os.IsNotExist(err) {
 		t.Fatal("gate cache changed")
 	}
+}
+
+// testRoadmapContextUnbornHead pins the same degradation posture for a repository with no
+// commits: the branch HEAD points at is still named, the cells the missing commit makes
+// unknowable read unknown, and every other block still arrives.
+func testRoadmapContextUnbornHead(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.Git("checkout", "-q", "-b", "trunk")
+	f.WriteFile("ROADMAP.md", "# Roadmap\n\n## Features\n\n**FT1 — one.** Body specs/one.md.\n")
+	f.WriteFile("IDEAS.md", "- 2026-07-10  retain me\n")
+
+	out := f.Bench("roadmap", "--context")
+
+	out.RequireExit(0)
+	if out.Stderr != "" {
+		t.Fatalf("stderr not empty: %s", out.Stderr)
+	}
+	out.RequireContains(out.Stdout, "git[1]{branch,default_branch,dirty,ahead,behind}:")
+	out.RequireContains(out.Stdout, "trunk,unknown,true,unknown,unknown")
+	out.RequireContains(out.Stdout, "retain me")
+	out.RequireContains(out.Stdout, "roadmap_rows[1]{")
 }
 
 // TestAXIRoadmapContextGitUnknown pins the degradation posture at the git block: an
