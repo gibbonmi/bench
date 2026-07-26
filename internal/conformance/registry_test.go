@@ -81,6 +81,7 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"terminal-repair-bound-anchor":               conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"shared-worktree-path-pin":                   conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"delegate-parallel-route-anchor":             conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"delegate-stash-refusal-anchor":              conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"shape-idea-handoff-anchor":                  conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"shape-idea-grill-continuation":              conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"story-line-anchor-missing":                  conformanceFixture(".bench/gate-docs-contracts.sh", ".bench/gate-line-contracts.sh"),

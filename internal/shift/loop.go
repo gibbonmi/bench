@@ -150,7 +150,7 @@ func loop(objective string, refresh bool, stdout, stderr io.Writer) int {
 	// Audit #10 — tolerate: an empty parse reads as a clean tree, but the very next
 	// `rev-parse HEAD` fails the loop loudly on a broken repo, so no broken repo slips past.
 	if dirty, _ := git.Output("-C", mainRoot, "status", "--porcelain"); dirty != "" {
-		fmt.Fprintln(stderr, "working tree not clean; commit or stash first")
+		fmt.Fprintln(stderr, "working tree not clean; commit or move the change aside first")
 		return usage(stdout, stderr, "working tree not clean")
 	}
 	startRef := "HEAD"

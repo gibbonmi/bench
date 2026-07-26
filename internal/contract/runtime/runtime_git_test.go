@@ -111,6 +111,8 @@ func runtimeGitMatrix() []runtimeGitCase {
 		{name: "blocks stash pop", command: "git stash pop", block: true},
 		{name: "blocks stash apply", command: "git stash apply", block: true},
 		{name: "blocks stash push", command: "git stash push -m wip", block: true},
+		{name: "blocks stash message spelled like a read-only verb", command: "git stash -m list", block: true},
+		{name: "blocks stash pathspec spelled like a read-only verb", command: "git stash -- list", block: true},
 		{name: "allows stash list", command: "git stash list"},
 		{name: "allows stash show", command: "git stash show"},
 		{name: "allows index-only restore", command: "git restore --staged README.md"},

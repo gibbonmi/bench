@@ -104,10 +104,10 @@ func TestClassifyVerdicts(t *testing.T) {
 // stale copy passing here. The two labels must differ: the blocked agent reads the label to
 // learn which hazard it hit.
 func TestClassifyStashMutations(t *testing.T) {
-	worktree := denyLabels["stash-push"]
+	worktree := denyLabels["stash-worktree"]
 	history := denyLabels["stash"]
 	if worktree == "" || history == "" {
-		t.Fatalf("stash deny classes missing from the table: stash-push=%q stash=%q", worktree, history)
+		t.Fatalf("stash deny classes missing from the table: stash-worktree=%q stash=%q", worktree, history)
 	}
 	if worktree == history {
 		t.Fatalf("both stash classes carry label %q, so the refusal names the wrong hazard", worktree)
@@ -132,6 +132,17 @@ func TestClassifyStashMutations(t *testing.T) {
 
 		{"quoted multi-word message", `git stash push -m "wip thing"`, worktree},
 		{"pathspec past the separator", `git stash push -- "path/with space"`, worktree},
+
+		// A flag value or a pathspec can be spelled like a read-only verb. These forms omit
+		// the verb entirely, so they push a stash; a verdict that reads the first free
+		// argument instead of the subcommand position allows them.
+		{"message value spelled like a read-only verb", "git stash -m list", worktree},
+		{"pathspec spelled like a read-only verb", "git stash -- list", worktree},
+		{"long-option message value spelled like a read-only verb", "git stash --message show", worktree},
+		{"flag before a message value spelled like a read-only verb", "git stash -u -m list", worktree},
+
+		{"drop with a flag", "git stash drop -q", history},
+		{"global option before the subcommand", "git -c foo=bar stash pop", worktree},
 		{"one wrapper level", "bash -c 'git stash pop'", worktree},
 		{"xargs", "xargs git stash", worktree},
 	}
@@ -156,6 +167,10 @@ func TestClassifyStashReadOnly(t *testing.T) {
 		{"list with args", "git stash list --stat"},
 		{"show", "git stash show"},
 		{"show with args", "git stash show stash@{0} --stat"},
+		{"list with a short flag", "git stash list -p"},
+		{"show with a long flag", "git stash show --stat"},
+		{"list redirected to a file", "git stash list > out.txt"},
+		{"list after a global option", "git --git-dir=x stash list"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

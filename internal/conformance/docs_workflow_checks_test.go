@@ -171,9 +171,12 @@ func checkColdPickupCLILists(root string) []string {
 	// Reverse check: a `bench <cmd>` reference that names no route is a dead pointer.
 	// Commands and skills alike route the reader to the CLI in prose, so the whole
 	// .agents markdown tree is in scope, and its file set comes from the same walk
-	// checkStaleCommandReferences uses so the two sweeps cannot disagree about what
-	// counts as an agent-facing document. The walk also yields shell, JSON, and YAML,
-	// where a regex written for prose invites a false positive, so only .md is scanned.
+	// checkStaleCommandReferences uses, so both sweeps discover the same files. Two
+	// asymmetries are deliberate: the walk also yields shell, JSON, and YAML, where a
+	// regex written for prose invites a false positive, so only .md is scanned; and the
+	// `<!-- command-currency: historical -->` marker exempts a file from the stale-command
+	// sweep but not from this one, because a canary fixture can only assert red, so an
+	// exemption that turns a diagnostic green cannot be proven to work.
 	refFiles := []string{"HANDOFF.md", ".bench/BENCH.md", ".bench/BENCH-reference.md"}
 	agentDocs := walkConformanceDocs(filepath.Join(root, ".agents"))
 	sort.Strings(agentDocs)

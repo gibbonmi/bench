@@ -94,6 +94,7 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 		"review-persistence-anchor",
 		"shared-worktree-path-pin",
 		"delegate-parallel-route-anchor",
+		"delegate-stash-refusal-anchor",
 		"shape-idea-bypass",
 		"shape-idea-bypass-wrapped",
 		"shape-idea-handoff-anchor",

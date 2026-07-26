@@ -139,26 +139,29 @@ func restoreVerdict(args []string, viaXargs bool) bool {
 	return contains(args, ".") || restoreHasPathspec(args)
 }
 
-// stashReadOnly are the stash subcommands that only inspect the stack.
 var stashReadOnly = map[string]bool{"list": true, "show": true}
 
 // stashVerdict splits stash into its two deny classes, returning the deny key or "" to
-// allow: "stash" for the verbs that destroy stash history, "stash-push" for the verbs that
-// cross-apply working-tree state between worktrees. It fails closed — the allow set is
-// exactly the read-only verbs, so a bare `git stash` (which is `push`) and any verb not
-// enumerated here block. There is no viaXargs parameter, unlike checkoutVerdict and
-// restoreVerdict: those turn destructive when paths arrive from stdin, whereas the
-// argument-less stash form already blocks, so nothing xargs can supply loosens this
-// verdict.
+// allow: "stash" for the verbs that destroy stash history, "stash-worktree" for the verbs
+// that cross-apply working-tree state between worktrees. It fails closed — the allow set
+// is exactly the read-only verbs, so a bare `git stash` (which is `push`) and any verb not
+// enumerated here block. The subcommand is args[0] and nothing else, because git accepts
+// one only there: scanning for the first *free* argument instead lets `git stash -m list`
+// read as the allowed `list` while it pushes a stash and reverts the working tree. There
+// is no viaXargs parameter, unlike checkoutVerdict and restoreVerdict: those turn
+// destructive when paths arrive from stdin, whereas the argument-less stash form already
+// blocks, so nothing xargs can supply loosens this verdict.
 func stashVerdict(args []string) string {
-	sub, ok := firstFreeArg(args)
-	switch {
-	case ok && stashReadOnly[sub]:
+	if len(args) == 0 {
+		return "stash-worktree"
+	}
+	switch sub := args[0]; {
+	case stashReadOnly[sub]:
 		return ""
-	case ok && (sub == "drop" || sub == "clear"):
+	case sub == "drop" || sub == "clear":
 		return "stash"
 	default:
-		return "stash-push"
+		return "stash-worktree"
 	}
 }
 
