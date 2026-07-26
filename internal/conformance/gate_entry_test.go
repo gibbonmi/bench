@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
 func TestRootConformance(t *testing.T) {
@@ -14,7 +15,7 @@ func TestRootConformance(t *testing.T) {
 		capability.Environment(t, "BENCH_CONFORMANCE_ROOT not set")
 	}
 	h := NewHarness(t)
-	for _, diag := range RunConformance(root, h.KitRoot) {
+	for _, diag := range RunConformance(root, h.KitRoot, registry.Dev) {
 		t.Errorf("gate: %s", diag)
 	}
 }

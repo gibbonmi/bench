@@ -18,6 +18,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
 const processGroupCancelGrace = 2 * time.Second
@@ -264,7 +266,24 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 		return result
 	}
 	result.Code = run.Code
+	printConformanceTiming(root, phase, stdout)
 	return result
+}
+
+// printConformanceTiming emits the conformance driver's per-check timing lines. The
+// phase runs under non-verbose `go test`, which swallows a passing test binary's own
+// stdout, so the file the driver leaves under the graded root's git dir is the only
+// way that timing reaches gate output. Printing here covers both runners, both
+// verdicts, and both modes — the canary's vacuity guard grades inner-mode output, so
+// an outer-only print would leave it blind to the format. A root with no git dir or
+// no timing file prints nothing at all.
+func printConformanceTiming(root string, phase Phase, stdout io.Writer) {
+	if phase.Name != conformancePhaseName {
+		return
+	}
+	for _, line := range registry.ReadTimingLines(root) {
+		fmt.Fprintln(stdout, line)
+	}
 }
 
 // resolveOnPath reports whether a file with the given command name exists on PATH,

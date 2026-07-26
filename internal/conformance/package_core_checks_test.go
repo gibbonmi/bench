@@ -7,18 +7,20 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
 	kitpayload "github.com/gibbonmi/bench"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/guards"
 	"github.com/gibbonmi/bench/internal/packagesurface"
 )
 
-func checkPackageCoreAndGuards(root string) []string {
+func checkPackageCoreAndGuards(root string, tier registry.Tier) []string {
 	var diags []string
 	diags = append(diags, checkPackageFiles(root)...)
-	diags = append(diags, checkGoCore(root)...)
+	diags = append(diags, checkGoCore(root, tier)...)
 	diags = append(diags, checkReleaseWorkflow(root)...)
 	diags = append(diags, checkNativeRuntimeWorkflow(root)...)
 	diags = append(diags, checkReleasePreflight(root)...)
@@ -175,7 +177,7 @@ func checkRepoOnlyPackageClaims(root string) []string {
 	return diags
 }
 
-func checkGoCore(root string) []string {
+func checkGoCore(root string, tier registry.Tier) []string {
 	if !exists(filepath.Join(root, "go.mod")) {
 		return nil
 	}
@@ -205,11 +207,16 @@ func checkGoCore(root string) []string {
 	if probe := runAtCleanEnv(root, "go", "vet", "./..."); probe == nil || probe.ExitCode != 0 {
 		diags = append(diags, formatProbeFailure("go vet failed", probe))
 	}
-	testPackages, listProbe, ok := goCoreTestPackages(root)
+	testPackages, listProbe, ok := goCoreTestPackages(root, tier)
 	if !ok {
 		diags = append(diags, formatProbeFailure("go list failed", listProbe))
 	} else if len(testPackages) > 0 {
 		args := append([]string{"go", "test"}, testPackages...)
+		if probe := runAtCleanEnv(root, args...); probe == nil || probe.ExitCode != 0 {
+			diags = append(diags, formatProbeFailure("go test failed", probe))
+		}
+	}
+	if args := innerConformanceArgs(root); args != nil {
 		if probe := runAtCleanEnv(root, args...); probe == nil || probe.ExitCode != 0 {
 			diags = append(diags, formatProbeFailure("go test failed", probe))
 		}
@@ -225,15 +232,24 @@ func checkGoCore(root string) []string {
 	return diags
 }
 
-func goCoreTestPackages(root string) ([]string, *Probe, bool) {
+// conformancePackage is graded by the filtered second invocation instead of the
+// unfiltered list: it is the package whose entry point is this very run.
+const conformancePackage = "internal/conformance"
+
+// releaseOnlyPackages are reached only from cmd/bench's dispatch switch on the
+// release path. Their suites rebuild the binary and shell out to node, so on a cold
+// Go test cache they blow the 600 s package timeout and present as a hung gate; the
+// ship tier is where they earn their keep.
+var releaseOnlyPackages = []string{"internal/preflight", "internal/releaseevidence", "internal/publication"}
+
+func goCoreTestPackages(root string, tier registry.Tier) ([]string, *Probe, bool) {
 	probe := runAtCleanEnv(root, "go", "list", "./...")
 	if probe == nil || probe.ExitCode != 0 {
 		return nil, probe, false
 	}
 	var packages []string
 	for _, pkg := range strings.Fields(probe.Stdout) {
-		// The gate runs internal/contract separately with BENCH_CONTRACT_ROOT set.
-		if isContractPackage(pkg) {
+		if isExcludedTestPackage(pkg, tier) {
 			continue
 		}
 		packages = append(packages, pkg)
@@ -241,11 +257,48 @@ func goCoreTestPackages(root string) ([]string, *Probe, bool) {
 	return packages, probe, true
 }
 
+// isExcludedTestPackage reports whether the unfiltered inner `go test` leaves a
+// package to some other surface. internal/contract is run by the gate's own contract
+// phase with BENCH_CONTRACT_ROOT set; the conformance package by the filtered
+// invocation below; the release-only packages by the ship tier.
+func isExcludedTestPackage(pkg string, tier registry.Tier) bool {
+	if isContractPackage(pkg) || isPackage(pkg, conformancePackage) {
+		return true
+	}
+	if tier == registry.Ship {
+		return false
+	}
+	for _, releaseOnly := range releaseOnlyPackages {
+		if isPackage(pkg, releaseOnly) {
+			return true
+		}
+	}
+	return false
+}
+
 func isContractPackage(pkg string) bool {
-	return pkg == "internal/contract" ||
+	return isPackage(pkg, "internal/contract") ||
 		strings.HasPrefix(pkg, "internal/contract/") ||
-		strings.HasSuffix(pkg, "/internal/contract") ||
 		strings.Contains(pkg, "/internal/contract/")
+}
+
+// isPackage matches a module-relative package path against a `go list` import path,
+// which carries the module prefix in every repo but a bare fixture module.
+func isPackage(pkg, rel string) bool {
+	return pkg == rel || strings.HasSuffix(pkg, "/"+rel)
+}
+
+// innerConformanceArgs is the argv for the second inner `go test`, the one that keeps
+// the conformance package's own suite in the oracle after the unfiltered list drops
+// it. It returns nil for a graded root with no such package — linked repos and the
+// minimal fixtures that carry a go.mod — where the invocation would report a failure
+// about a package that was never there. The skip pattern comes from the registry so
+// the declared non-recursion contract has exactly one source.
+func innerConformanceArgs(root string) []string {
+	if !exists(filepath.Join(root, filepath.FromSlash(conformancePackage))) {
+		return nil
+	}
+	return []string{"go", "test", "./" + conformancePackage, "-skip", registry.InnerSkipPattern()}
 }
 
 func TestCheckGoCoreDoesNotWriteRootDistBench(t *testing.T) {
@@ -257,7 +310,7 @@ func TestCheckGoCoreDoesNotWriteRootDistBench(t *testing.T) {
 	writeFixtureFile(t, filepath.Join(root, "scripts", "go-build.sh"),
 		"#!/usr/bin/env bash\nprintf '%s\\n' \"$2\" > \"$1/recorded-out\"\n")
 
-	diags := checkGoCore(root)
+	diags := checkGoCore(root, registry.Dev)
 	for _, diag := range diags {
 		if strings.Contains(diag, "go build failed") {
 			t.Fatalf("build helper probe went red: %#v", diags)
@@ -285,9 +338,9 @@ func writeFixtureFile(t *testing.T, path, contents string) {
 	}
 }
 
-func TestGoCoreTestPackagesExcludesContractSubtreeOnly(t *testing.T) {
+func TestGoCoreTestPackagesExcludesContractSubtreeAndConformance(t *testing.T) {
 	h := NewHarness(t)
-	packages, _, ok := goCoreTestPackages(h.KitRoot)
+	packages, _, ok := goCoreTestPackages(h.KitRoot, registry.Dev)
 	if !ok {
 		t.Fatal("goCoreTestPackages failed")
 	}
@@ -297,8 +350,82 @@ func TestGoCoreTestPackagesExcludesContractSubtreeOnly(t *testing.T) {
 	if containsPackageSuffix(packages, "/internal/contract/axi") {
 		t.Fatalf("goCoreTestPackages included internal/contract/axi:\n%s", strings.Join(packages, "\n"))
 	}
-	if !containsPackageSuffix(packages, "/internal/conformance") {
-		t.Fatalf("goCoreTestPackages excluded internal/conformance:\n%s", strings.Join(packages, "\n"))
+	if containsPackageSuffix(packages, "/internal/conformance") {
+		t.Fatalf("goCoreTestPackages included internal/conformance, the package whose entry point is this run:\n%s", strings.Join(packages, "\n"))
+	}
+	if !containsPackageSuffix(packages, "/internal/conformance/registry") {
+		t.Fatalf("goCoreTestPackages excluded the conformance registry leaf, which no filtered run grades:\n%s", strings.Join(packages, "\n"))
+	}
+}
+
+func TestGoCoreTestPackagesExcludesReleaseOnly(t *testing.T) {
+	h := NewHarness(t)
+	dev, _, ok := goCoreTestPackages(h.KitRoot, registry.Dev)
+	if !ok {
+		t.Fatal("goCoreTestPackages failed at the dev tier")
+	}
+	ship, _, ok := goCoreTestPackages(h.KitRoot, registry.Ship)
+	if !ok {
+		t.Fatal("goCoreTestPackages failed at the ship tier")
+	}
+	for _, pkg := range []string{"internal/preflight", "internal/releaseevidence", "internal/publication"} {
+		if containsPackageSuffix(dev, "/"+pkg) {
+			t.Fatalf("dev tier included release-only %s:\n%s", pkg, strings.Join(dev, "\n"))
+		}
+		if !containsPackageSuffix(ship, "/"+pkg) {
+			t.Fatalf("ship tier excluded release-only %s:\n%s", pkg, strings.Join(ship, "\n"))
+		}
+	}
+}
+
+func TestInnerConformanceArgs(t *testing.T) {
+	h := NewHarness(t)
+	args := innerConformanceArgs(h.KitRoot)
+	want := []string{"go", "test", "./internal/conformance", "-skip", registry.InnerSkipPattern()}
+	if !slices.Equal(args, want) {
+		t.Fatalf("innerConformanceArgs = %#v, want %#v", args, want)
+	}
+	if args := innerConformanceArgs(t.TempDir()); args != nil {
+		t.Fatalf("innerConformanceArgs = %#v for a root with no conformance package, want none", args)
+	}
+}
+
+// TestInnerSuiteRunsConformanceFiltered drives checkGoCore against a fixture module
+// whose conformance package records which of its tests ran. The unfiltered list has
+// dropped that package, so a marker can only appear if the filtered invocation
+// happened — and the entry point's marker can only stay absent if the skip pattern
+// reached it.
+func TestInnerSuiteRunsConformanceFiltered(t *testing.T) {
+	root := t.TempDir()
+	pkgDir := filepath.Join(root, conformancePackage)
+	writeFixtureFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
+	writeFixtureFile(t, filepath.Join(pkgDir, "marker_test.go"), `package conformance
+
+import (
+	"os"
+	"testing"
+)
+
+func TestRootConformance(t *testing.T) {
+	if err := os.WriteFile("ran-entry-point", nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestFixtureSuiteMember(t *testing.T) {
+	if err := os.WriteFile("ran-suite-member", nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+`)
+
+	checkGoCore(root, registry.Dev)
+
+	if !exists(filepath.Join(pkgDir, "ran-suite-member")) {
+		t.Fatal("the conformance package's own suite did not run; excluding it from the unfiltered list dropped it from the oracle")
+	}
+	if exists(filepath.Join(pkgDir, "ran-entry-point")) {
+		t.Fatal("the filtered run executed the entry-point test, so the inner run recurses into the outer one")
 	}
 }
 

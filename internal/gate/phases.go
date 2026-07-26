@@ -23,6 +23,9 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
+// conformancePhaseName is the phase whose per-check timing the runner prints.
+const conformancePhaseName = "conformance"
+
 type phaseMode int
 
 const (
@@ -64,7 +67,7 @@ func BenchkitPhases(root, kit string) []Phase {
 	}
 	return append(phases, []Phase{
 		{
-			Name: "conformance",
+			Name: conformancePhaseName,
 			Argv: goTestArgv(kit, "./internal/conformance", "-run", "^TestRootConformance$"),
 			Env:  []string{"BENCH_CONFORMANCE_ROOT=" + root},
 		},
