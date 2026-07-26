@@ -2,48 +2,55 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `35c9a73`, 9 dirty paths, 3 unpushed commits
-Spec: `specs/ft96-delegation-discipline.md` (Status: staged)
-Gate: green at `f28e44d` — stale, work tree `b4b63d6`
+Branch: `main` — HEAD `38cc1f5`, main checkout clean, 8 unpushed commits
+Spec: none staged — FT96 shipped and retired
+Gate: green at `edc15e9`, the exact tree of HEAD
 
 ## State
 
-- **The FT96 spec is staged and reviewer-approved.** Ten stories, three seams,
-  31 coverage rows. Everything the build needs is in the spec; do not re-derive
-  it from the roadmap row.
-- **No decision map backs it.** It was compiled from `ROADMAP.md`'s FT96 row
-  under `/bench-write-spec`'s reviewer-directed batch-drain override. The spec's
-  `## Flagged for reviewer veto` section lists all six defaulted decisions; the
-  reviewer approved with those flags in place, so they are **closed** — do not
-  reopen them mid-build.
-- **A `fable` falsification pass returned block; all three findings are folded
-  in.** They grew the spec from nine stories to ten: the veto-flag section was
-  missing, story 1's cheapest wrong build passed every row (fixed by story 10's
-  anchor rows), and clause 3's concrete substitute plus clause 2's rejected arm
-  had been dropped without record.
-- **Stories 8, 9, and 10 are the only gate-observable arms.** Stories 1–7 are
-  guidance prose in one owner file
-  (`.agents/skills/bench-craft-delegate/SKILL.md`); the reviewer is their oracle,
-  which is why they route top.
-- **Do not run `bench shift` on this spec.** It fails `craft-line`'s
-  venue-routing test — stories 1–7 route top and are not gate-observable. The
-  build is interactive.
-- Verified at spec time: `bench coverage --check` green, and
-  `BENCH_CONFORMANCE_ROOT=$PWD go test ./internal/conformance -run
-  '^TestRootConformance$'` green (228s) with the spec staged, so the docs layer
-  is clean going in.
-- **Both capture sources are at zero.** `IDEAS.md` empty, `.bench/learnings.md`
-  holds no open entries.
-- Known ambient facts: the gate is stale from this commit onward
-  (`session-handoff.md` is not on the capture-only allowlist — FT113's gate
-  face); the FT91 conformance-phase long pole and the structure budget
-  violations are unchanged.
+- **FT96 is built, gate-green, and retired.** Seven guidance clauses in
+  `.agents/skills/bench-craft-delegate/SKILL.md`; a second destructive-git deny
+  class for the working-tree-mutating `git stash` verbs; the conformance
+  dead-pointer sweep widened from `.agents/commands` to the whole `.agents`
+  markdown tree; two presence anchors on craft-delegate plus three canary
+  fixtures proving the new bite paths. All ten stories shipped, all 31 coverage
+  rows classified.
+- **Nothing is uncommitted and nothing is half-done.** The gate ran green on the
+  exact tree of HEAD as one subject, after the retirement commit — not a cached
+  verdict from an earlier tree.
+- **The eight commits are unpushed, and the push is the reviewer's.** Nothing in
+  the tree waits on it.
+- **The three-axis review already ran and its findings are fixed and landed.**
+  Two mattered: the guard's first-free-argument scan let `git stash -m list` and
+  `git stash -- list` through, because a flag value was read as the subcommand;
+  and `bench shift` still advised `commit or stash first`, a command the new deny
+  class refuses. No `reviews/` pickup file exists, by design — the findings were
+  closed in the session that found them.
+- **Two calls the coordinator made and flagged rather than settled.** The anchor
+  canary fixtures went under `tests/canary/workflow-guidance-anchors/` instead of
+  the family the spec's Implementation-decisions paragraph named, because the
+  spec contradicted its own Prior-art line; and the spec text was left unamended
+  where it described the superseded free-argument mechanism. Retirement removed
+  both discrepancies, and the first is the open learnings entry.
+- **Both capture sources hold one entry and want a drain.** `IDEAS.md`: coverage
+  maps' conformance red signals omit `BENCH_CONFORMANCE_ROOT`, so the command as
+  written capability-skips and reports a false `ok`. `.bench/learnings.md`: may a
+  build correct a spec's internally-inconsistent instruction on its own when the
+  two readings are functionally equivalent?
+- **`ROADMAP.md` still carries FT96's row and six cross-references.** Left
+  deliberately — `.bench/BENCH.md` gives the roadmap reconcile to the drain phase,
+  and this is reconcile work, not retirement work. Expect it as the drain's first
+  finding.
+- Known ambient facts: 17 worktrees remain from earlier sessions, some flagged
+  unmerged or uncertain at session start, so they were left untouched — only this
+  session's six were released. The structure budget violations and the
+  conformance-phase long pole are unchanged.
 
 ## Next command
 
-`/bench-implement-spec specs/ft96-delegation-discipline.md` — in a **fresh
-session on `opus`** (the mid binding), which escalates per story rather than
-running the whole build on the top model's big-context iteration.
+`/bench-what-next` — the board needs a reconcile before anything else is built:
+FT96's roadmap row is stale, and both capture sources have an entry awaiting a
+verdict.
 
 ## Shape
 
