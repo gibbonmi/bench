@@ -2,12 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `32dbb21`, checkout clean, 1 unpushed commit (this file).
-The FT86 build and the drain are pushed: `origin/main` is at `e338cba`.
-`bench status` reports 8 dirty paths; they are the one surviving worktree
-described below, not this checkout.
-Spec: `specs/ft86-fail-closed-control-records.md` (Status: staged)
-Gate: green at `32fdf17` — current
+Branch: `main` — HEAD `e3ec73b`, 9 dirty paths, 14 unpushed commits
+Spec: none staged.
+Gate: green at `5879ced` — stale, work tree `94d7cbd`
 
 ## State
 
@@ -67,7 +64,7 @@ Gate: green at `32fdf17` — current
 
 ## Next command
 
-`/bench-review-implementation — specs/ft86-fail-closed-control-records.md`
+`/bench-what-next` — the board's leading invocable signal (`drain`).
 
 ## Shape
 
