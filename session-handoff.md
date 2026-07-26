@@ -2,46 +2,48 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `0ebba2f`, clean except this file
-Spec: none staged.
-Gate: green at `f28e44d`; only capture-only paths written since (`ROADMAP.md`,
-`IDEAS.md`, this file).
+Branch: `main` — HEAD `35c9a73`, 9 dirty paths, 3 unpushed commits
+Spec: `specs/ft96-delegation-discipline.md` (Status: staged)
+Gate: green at `f28e44d` — stale, work tree `b4b63d6`
 
 ## State
 
-- **FT86 is fully closed.** Built, three-axis reviewed (26 findings, all
-  resolved across four seam-scoped slices), spec flipped to implemented and
-  retired, decision map retired. Nothing FT86-shaped remains open except
-  FT140's two residual reviewer calls (the 2 MiB learnings read bound —
-  keep or reverse — and `TestAXILearningsWrongType`'s missing coverage
-  provenance).
-- **The 2026-07-26 drain was a reconcile + restructure pass** under the
-  reviewer's batch approval. FT86's row removed as shipped; FT96 absorbed
-  FT118, FT103's charge half, FT131's guidance arm, and the worktree-hook
-  keying idea; FT98 absorbed FT127 and FT114 as one preserve-then-discard
-  primitive; FT107 absorbed FT110 and FT119; FT113 absorbed FT121;
-  FT123/FT124/FT125 grouped under a session-tax section; ten ideas drained
-  into those merges and new rows FT133–FT140. `ROADMAP.md` parses clean
-  (FT86's bold-leading paragraph was the malformed row); the row-grammar
-  decision itself is FT132's, still the reviewer's.
-- **Calls flagged for post-hoc veto** (all deviations from the pre-approved
-  restructure plan, forced by the tree having moved past its pins):
-  FT86's row removed rather than kept (the plan assumed the review had not
-  run); FT132 narrowed because its conflation face shipped; FT130 excluded
-  from the FT107 prose batch (its preferred fix is CLI-mechanical); the
-  capability-skip visibility idea merged into FT124's reader rather than a
-  new row; the recommended sequence no longer leads with the FT86 review.
+- **The FT96 spec is staged and reviewer-approved.** Ten stories, three seams,
+  31 coverage rows. Everything the build needs is in the spec; do not re-derive
+  it from the roadmap row.
+- **No decision map backs it.** It was compiled from `ROADMAP.md`'s FT96 row
+  under `/bench-write-spec`'s reviewer-directed batch-drain override. The spec's
+  `## Flagged for reviewer veto` section lists all six defaulted decisions; the
+  reviewer approved with those flags in place, so they are **closed** — do not
+  reopen them mid-build.
+- **A `fable` falsification pass returned block; all three findings are folded
+  in.** They grew the spec from nine stories to ten: the veto-flag section was
+  missing, story 1's cheapest wrong build passed every row (fixed by story 10's
+  anchor rows), and clause 3's concrete substitute plus clause 2's rejected arm
+  had been dropped without record.
+- **Stories 8, 9, and 10 are the only gate-observable arms.** Stories 1–7 are
+  guidance prose in one owner file
+  (`.agents/skills/bench-craft-delegate/SKILL.md`); the reviewer is their oracle,
+  which is why they route top.
+- **Do not run `bench shift` on this spec.** It fails `craft-line`'s
+  venue-routing test — stories 1–7 route top and are not gate-observable. The
+  build is interactive.
+- Verified at spec time: `bench coverage --check` green, and
+  `BENCH_CONFORMANCE_ROOT=$PWD go test ./internal/conformance -run
+  '^TestRootConformance$'` green (228s) with the spec staged, so the docs layer
+  is clean going in.
 - **Both capture sources are at zero.** `IDEAS.md` empty, `.bench/learnings.md`
   holds no open entries.
-- Known ambient facts: `bench status` may report the gate stale after this
-  handoff write (`session-handoff.md` is not on the capture-only allowlist —
-  FT113's gate face); the FT91 conformance-phase long pole and the structure
-  budget violations are unchanged.
+- Known ambient facts: the gate is stale from this commit onward
+  (`session-handoff.md` is not on the capture-only allowlist — FT113's gate
+  face); the FT91 conformance-phase long pole and the structure budget
+  violations are unchanged.
 
 ## Next command
 
-`/bench-write-spec` — FT96, the batched delegation discipline (top of the
-roadmap's recommended sequence).
+`/bench-implement-spec specs/ft96-delegation-discipline.md` — in a **fresh
+session on `opus`** (the mid binding), which escalates per story rather than
+running the whole build on the top model's big-context iteration.
 
 ## Shape
 
