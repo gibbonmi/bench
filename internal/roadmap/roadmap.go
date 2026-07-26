@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -99,9 +100,11 @@ const missingRoadmap = "no ROADMAP.md — run /bench-what-next to create the wor
 
 // RoadmapCommand implements `bench roadmap`: it prints ROADMAP.md verbatim followed
 // by the drain-status block when capture sources need draining, or by the
-// `## Recommended sequence` callout when nothing does. An absent or zero-byte
-// roadmap, a missing sequence section, or a section without two-or-three numbered
-// items each get an explicit message pointing at /bench-what-next, exit 0.
+// `## Recommended sequence` callout when nothing does. Absence renders the
+// maintenance prompt on exit 0 — the only authoritative empty state — while any
+// other classifier state (unreadable, wrong-type, a byte-level malformed read) or
+// the parser's own unsupported-schema verdict exits 1 with a structured error
+// naming it, so a read failure can never print as an empty working document.
 func RoadmapCommand(args []string) (string, int) {
 	if _, line, code := usage.Parse(roadmapGrammar, args); line != "" {
 		return line + "\n", code
@@ -110,16 +113,31 @@ func RoadmapCommand(args []string) (string, int) {
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	data, err := os.ReadFile(filepath.Join(root, "ROADMAP.md"))
-	if err != nil || len(data) == 0 {
+	c := bounds.Classify(filepath.Join(root, "ROADMAP.md"), controlRecordLimit)
+	switch c.State {
+	case bounds.StateAbsent, bounds.StateEmpty:
 		return missingRoadmap, 0
+	case bounds.StateUnreadable, bounds.StateWrongType, bounds.StateMalformed:
+		return roadmapReadError(c.State, c.Reason), 1
 	}
-	doc, _ := ParseDocument(data, nil, true)
+	doc, failures := ParseDocument(c.Data, nil, true)
+	for _, f := range failures {
+		if f.Reason == noRoadmapRowsReason {
+			return roadmapReadError(bounds.StateUnsupportedSchema, f.Reason), 1
+		}
+	}
 	text := doc.Text
 	if status := drainStatus(root); status != "" {
 		return text + status, 0
 	}
 	return text + nextAction(text), 0
+}
+
+// roadmapReadError renders the AXI error line every fail-closed classifier state
+// produces for `bench roadmap`: `error: <path> is <state> — <reason>`, one grammar
+// with every other migrated surface's error line.
+func roadmapReadError(state bounds.FileState, reason string) string {
+	return toon.Errorf("ROADMAP.md is "+string(state), reason) + "\n"
 }
 
 // DrainCounts returns the maintenance inbox counts `bench roadmap` reports before a

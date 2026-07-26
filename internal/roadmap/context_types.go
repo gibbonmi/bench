@@ -1,12 +1,18 @@
 package roadmap
 
 import (
-	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"unicode/utf8"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
+
+// controlRecordLimit is the size bound every roadmap control-record read applies.
+// It reuses bounds.OutlineFileLimit rather than declaring a second constant: both
+// bound a whole small text file read into memory, and bounds is the one package
+// that owns read-size policy.
+const controlRecordLimit = bounds.OutlineFileLimit
 
 const contextBodyLimit = 4096
 
@@ -70,43 +76,20 @@ type ContextSnapshot struct {
 	Failures    []ParseFailure
 }
 
-func readSource(path string) ([]byte, string, error) {
-	b, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, "absent", nil
-		}
-		return nil, "", err
-	}
-	if !utf8.Valid(b) {
-		return b, "malformed", fmt.Errorf("invalid UTF-8")
-	}
-	if len(b) == 0 {
-		return b, "empty", nil
-	}
-	return b, "parsed", nil
-}
-
-func readDirSource(path string) ([]fs.DirEntry, string, int, error) {
-	entries, err := os.ReadDir(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, "absent", 0, nil
-		}
-		return nil, "", 0, err
-	}
-	if len(entries) == 0 {
-		return entries, "empty", 0, nil
-	}
-	bytes := 0
+// dirBytes sums the regular-file entries a classified directory listing carries —
+// the same tally readDirSource used to compute inline, kept as its own function now
+// that ClassifyDir owns the read itself.
+func dirBytes(entries []fs.DirEntry) int {
+	total := 0
 	for _, e := range entries {
-		if !e.IsDir() {
-			if i, err := e.Info(); err == nil {
-				bytes += int(i.Size())
-			}
+		if e.IsDir() {
+			continue
+		}
+		if info, err := e.Info(); err == nil {
+			total += int(info.Size())
 		}
 	}
-	return entries, "parsed", bytes, nil
+	return total
 }
 
 func limited(s string, full bool) (string, int, bool) {

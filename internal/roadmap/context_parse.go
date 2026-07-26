@@ -1,12 +1,12 @@
 package roadmap
 
 import (
-	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/spec"
@@ -68,6 +68,7 @@ func ParseDocument(content []byte, statuses map[string]string, full bool) (Docum
 		doc.Rows = append(doc.Rows, r)
 	}
 	inSequence, inFence, sequenceStart, sequenceEnd := false, false, -1, len(lines)
+	hasSection := false
 	for idx, line := range lines {
 		trimmed := strings.TrimRight(line, " \t\r")
 		if strings.HasPrefix(trimmed, "```") {
@@ -76,6 +77,13 @@ func ParseDocument(content []byte, statuses map[string]string, full bool) (Docum
 		}
 		if inFence {
 			continue
+		}
+		// Any unfenced `## ` heading — not only Recommended sequence — is roadmap
+		// structure: a document with sections is a working roadmap the reader
+		// recognizes, possibly one with nothing due yet, never "not the document
+		// you think".
+		if strings.HasPrefix(trimmed, "## ") {
+			hasSection = true
 		}
 		if !inSequence && trimmed == "## Recommended sequence" {
 			inSequence = true
@@ -109,12 +117,22 @@ func ParseDocument(content []byte, statuses map[string]string, full bool) (Docum
 			doc.SequenceText += "\n"
 		}
 	}
-	if len(content) > 0 && len(doc.Rows) == 0 && len(failures) == 0 {
+	if len(content) > 0 && len(doc.Rows) == 0 && len(failures) == 0 && !hasSection {
 		raw, n, tr := limited(string(content), full)
-		failures = append(failures, ParseFailure{"ROADMAP.md", "no roadmap rows recognized", raw, n, tr})
+		failures = append(failures, ParseFailure{"ROADMAP.md", noRoadmapRowsReason, raw, n, tr})
 	}
 	return doc, failures
 }
+
+// noRoadmapRowsReason is roadmap's unsupported-schema predicate — bytes that read
+// cleanly but in which ParseDocument recognized no roadmap structure at all: no
+// `**ID**` row and no unfenced `## ` section, Recommended sequence or otherwise. A
+// document with a section is a working roadmap, possibly an early-stage or fully
+// drained one, and that is "nothing to report" — the empty state, not
+// unsupported-schema. Named once so the AXI surface (RoadmapCommand) and the
+// --context snapshot (BuildContext) agree on exactly which parser failure means
+// "unsupported-schema" rather than "malformed".
+const noRoadmapRowsReason = "no roadmap rows recognized"
 
 // SpecSlugs returns roadmap-linked spec slugs through the canonical document parser.
 func SpecSlugs(content []byte) []string {
@@ -174,19 +192,21 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 	data := map[string][]byte{}
 	for _, label := range labels {
 		if label == "specs/" {
-			_, state, n, err := readDirSource(sourcePath(root, label))
-			if err != nil {
-				return s, fmt.Errorf("read %s: %w", label, err)
+			cd := bounds.ClassifyDir(sourcePath(root, label))
+			s.Sources = append(s.Sources, SourceFact{label, string(cd.State), dirBytes(cd.Entries)})
+			if degradedState(cd.State) {
+				s.Failures = append(s.Failures, ParseFailure{label, string(cd.State) + ": " + cd.Reason, "", 0, false})
 			}
-			s.Sources = append(s.Sources, SourceFact{label, state, n})
 			continue
 		}
-		b, state, err := readSource(sourcePath(root, label))
-		if err != nil {
-			return s, fmt.Errorf("read %s: %w", label, err)
+		c := bounds.Classify(sourcePath(root, label), controlRecordLimit)
+		if c.State == bounds.StateParsed {
+			data[label] = c.Data
 		}
-		data[label] = b
-		s.Sources = append(s.Sources, SourceFact{label, state, len(b)})
+		s.Sources = append(s.Sources, SourceFact{label, string(c.State), len(c.Data)})
+		if degradedState(c.State) {
+			s.Failures = append(s.Failures, ParseFailure{label, string(c.State) + ": " + c.Reason, "", 0, false})
+		}
 	}
 	cacheState := "absent"
 	if gate.Present {
@@ -248,11 +268,31 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 	}
 	s.GateCache = [][]any{{gate.Present, gate.State, gate.PendingStatus, gate.Status, gate.CachedTree, gate.WorkTree, gate.Timestamp, gate.Stale}}
 	for i := range s.Sources {
+		// A source already carrying a classifier-level state (unreadable, wrong-type,
+		// a byte-level malformed read) keeps it: the parser-level failures below only
+		// ever fire against bytes the classifier already handed over as parsed.
+		if s.Sources[i].State != string(bounds.StateParsed) {
+			continue
+		}
 		for _, f := range s.Failures {
-			if f.Source == s.Sources[i].Source {
-				s.Sources[i].State = "malformed"
+			if f.Source != s.Sources[i].Source {
+				continue
+			}
+			if f.Reason == noRoadmapRowsReason {
+				// unsupported-schema is the parser's own state: the bytes read fine
+				// but roadmap.go recognized no row in them, distinct from a
+				// byte-level malformed read the classifier would have caught.
+				s.Sources[i].State = string(bounds.StateUnsupportedSchema)
+			} else {
+				s.Sources[i].State = string(bounds.StateMalformed)
 			}
 		}
 	}
 	return s, nil
+}
+
+// degradedState reports whether a classifier state needs its own parse_failures row
+// naming it — every state but the two that carry no problem to explain.
+func degradedState(state bounds.FileState) bool {
+	return state != bounds.StateAbsent && state != bounds.StateEmpty && state != bounds.StateParsed
 }
