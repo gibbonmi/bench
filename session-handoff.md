@@ -2,27 +2,29 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `440266e`, main checkout clean, 9 unpushed commits
-Spec: none staged
-Gate: green at `edc15e9`, reported plain-stale — the drain's doc-only commit is
-the only drift.
+Branch: `main` — HEAD `4085b4d`, main checkout clean, 13 unpushed commits
+Spec: `specs/ft136-slice-fence-rule.md` — staged, approved 2026-07-26
+Gate: green at `edc15e9`, stale by doc-only commits (map, handoff, spec).
 
 ## State
 
-- **The board is drained and reconciled.** 46 rows, both capture sources empty,
-  `bench roadmap --context` parses with zero failures. FT96 shipped complete on
-  2026-07-26 and its row is gone; the four rows that cross-referenced it (FT103,
-  FT123, FT131, FT136) now say what actually landed.
-- **Two drain calls are open to post-hoc veto.** The self-contradicting-spec
-  learning was folded into FT107 as a fourth clause rather than dismissed — the
-  batch-approval rule covers an AFK reviewer and genuinely says nothing about a
-  spec whose own sections disagree. And FT133 was placed third in the sequence
-  ahead of FT107; a hole in the coverage oracle outranks prose, but not by much.
-- **FT133 gained a reproduced second instance.** On `main`, `go test
-  ./internal/conformance -run ^TestRootConformance$` without
-  `BENCH_CONFORMANCE_ROOT` prints `ok … 0.002s` and skips invisibly. That widens
-  the row from *does the citation resolve* to *does it actually execute*.
-- **The nine commits are unpushed, and the push is the reviewer's.** Nothing in
+- **The FT136 spec is staged and approved.** Compiled off
+  `decisions/cost-follows-project-size.md` (tickets #4/#5 closed): the fence
+  rule and shared-primitives-first land once in `craft-spec`, `craft-review`'s
+  Standards axis gains the fence-boundary duplication hunt, `craft-delegate`
+  gets a content-free charge-time pointer. The top-tier falsification pass
+  (reviewer-directed) returned RECOMMEND; its two findings are fixed in the
+  committed draft.
+- **Decisions that stay closed:** rule ships now, tier-independent — the
+  cheap-tier retest (ticket #6) gates only mid-tier-by-default, never the rule;
+  three surfaces, one source — do not re-litigate a single-skill home; the
+  build runs as one write-delegation in one worktree at `gpt-5.6-sol` / high,
+  and every build delegate for this spec is mid tier or higher (reviewer
+  directive, 2026-07-26).
+- **Open map tickets, untouched by this spec:** #2 (time the fifteen
+  conformance checks) then #3 (FT91 go/no-go) for the gate wall-clock arm;
+  #6 waits opportunistically for a genuinely seam-shaped slice.
+- **The 13 commits are unpushed, and the push is the reviewer's.** Nothing in
   the tree waits on it.
 - Known ambient facts, unchanged: 17 worktrees remain from earlier sessions and
   were left untouched; the structure budget violations and the conformance-phase
@@ -30,11 +32,10 @@ the only drift.
 
 ## Next command
 
-`/bench-shape-idea` — the cost-follows-project-size complaint, shaped once
-across its three angles (FT91's remaining gate arms, FT101's scoped surfaces,
-FT136's delegate slicing). Gate wall-clock is the reviewer's stated dominant
-cost, and FT91's first step — timing the fifteen conformance checks — is the
-session's cheapest evidence request.
+`/bench-implement-spec specs/ft136-slice-fence-rule.md` — in a fresh mid-tier
+session, per the spec-phase exit contract: orchestration stays off top-tier
+context while the spec's single write-delegate runs at its declared
+`gpt-5.6-sol` / high line.
 
 ## Shape
 
