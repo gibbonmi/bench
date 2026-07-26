@@ -1,1 +1,0 @@
-- 2026-07-26  spec coverage-map red signals for conformance rows omit BENCH_CONFORMANCE_ROOT; the bare 'go test ./internal/conformance -run ^TestRootConformance$' capability-skips and reports ok in 0.002s, so a session following the map as written gets a false green

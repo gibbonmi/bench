@@ -87,74 +87,6 @@ and FT136 (delegate slicing) are the other two. One `/bench-shape-idea` session
 should shape the three together; the rows stay separate because the owners
 differ.
 
-**FT96 (MEDIUM) — the delegation discipline, batched: every open
-`craft-delegate` clause as one diff.** One owner file
-(`.agents/skills/bench-craft-delegate/SKILL.md`), so the open delegation
-guidance lands as one row — one spec, one review, one gate — instead of four.
-Absorbs FT118, FT103's charge-side half, and FT131's guidance arm. Six
-clauses, each with a demonstrated bite:
-
-1. Parallel-delegate worktree assignments (this row's original charge). The
-   WorktreeCreate hook keys its create request on the session ID
-   (`internal/harness/worktree.go:61`), so a session holds at most one
-   harness-created worktree and a second concurrent `isolation: worktree`
-   delegate is refused with "conflicts with its existing assignment"; the
-   manual `bench worktree create --request <distinct-id>` route works and
-   respects the lifecycle but is undocumented. Either key hook assignments per
-   delegate identity or document the `--request` route as the canonical
-   parallel-delegate path. The same clause states that a whole-tree gate is a
-   serialized resource: four concurrent worktree `bench commit` gates flaked
-   three load-sensitive contract tests that all pass serially, so delegates
-   stop at "diff ready, focused tests green" and the coordinator runs
-   `bench commit` per worktree, one at a time.
-2. The no-worktree-can-hold-it exception. FT122's ~1500-line build sat
-   uncommitted and largely untracked in the main checkout with the gate red,
-   so it could not be committed first and a worktree branched from HEAD would
-   not have contained the code under repair. The session improvised: a
-   main-checkout delegate with a file allowlist, no commit authority, and a
-   `git status` check on return, recorded as unresolved. Write the clause
-   either way — sanction the shared checkout under exactly those conditions
-   (one writer, named allowlist), or name the route that gets uncommitted work
-   into a worktree first — because the current silence leaves each session to
-   improvise it.
-3. Isolation's true boundary. A worktree isolates the working tree, not
-   repository-global git surfaces — the stash stack above all: two FT86
-   delegates in separate worktrees each reached for `git stash push`/`pop`,
-   the repository-global stash cross-applied their in-flight edits, and
-   neither diff could be attributed (one slice was discarded and re-run;
-   `main` was never touched). State the boundary, ban `git stash` in a charge,
-   give the per-worktree substitute the technique actually wants (`cp` the
-   working file aside, `git show HEAD:<path> > <path>` to restore, test, copy
-   back), and consider `git stash` for the `block-dangerous-git` hook — the
-   same hazard class as the `git checkout <path>` it already refuses.
-4. Absence evidence must resolve (from FT103). When a delegate's evidence
-   rests on an absence, exclusion, or withholding assertion, the named
-   identifiers must resolve to real things before the claim is accepted — a
-   misspelled kit-only allowlist row once passed its contract by asserting the
-   absence of a path that never existed.
-5. The charge names the gate layer that owns the artifact class (from FT118):
-   workflows and `.bench/` content → canary, gate output shape → canary,
-   skills and commands → conformance. A write-delegate once re-indented a
-   workflow `run:` line and broke two canary fixtures that nothing in its
-   charged verification list could see. Converse for the delegate: the list is
-   a floor, not a ceiling — if you change an artifact class the list does not
-   grade, say so rather than assume it is covered.
-6. Exemplar files over prose conventions (from the 2026-07-25 delegate-scale
-   evidence). A charge names exemplar files to mirror — "mirror the error
-   shape in `internal/x/foo.go`" survives translation to a low-context
-   delegate, while "follow the repo's error idiom" does not, because the
-   unstated constraint set grows with the tree while the charge's word count
-   stays flat. Converse: when no exemplar exists, the charge says so
-   explicitly — an unanchored delegate mirrors the nearest
-   superficially-similar file, and that hit rate degrades as the repo grows.
-
-FT131's guidance arm — naming the `scripts/go-build.sh` rebuild where the
-phase names the `dist/bench`-driving seams — joins this diff only if FT131's
-in-helper staleness check proves unreliable. Kit edit under the
-`craft-synthesis` discipline. Sources: the 2026-07-25 learnings entries
-verdicted in prior drains, plus the worktree-hook keying and delegate-scale
-lines drained here.
-
 **FT131 (MEDIUM) — a stale binary under test makes contract rows lie in both
 directions.** The AXI and runtime contract suites drive the built `dist/bench`,
 not the package under test, so their verdict answers for whatever binary happens
@@ -166,10 +98,11 @@ to satisfy an assertion makes a broken change look green, a false done-claim the
 gate catches only later. Prefer the single-source fix: have the contract
 helper itself fail loudly when the binary under test is older than the package
 sources it exercises, which removes the instruction rather than duplicating it.
-The fallback — naming the `scripts/go-build.sh` rebuild where the phase names
-these seams — is carried as a clause on FT96's batched delegation row, taken
-only if the staleness check proves unreliable. Source: the 2026-07-25 learnings
-entry, verdicted in a prior drain.
+The fallback — naming the `scripts/go-build.sh` rebuild in the guidance where
+the phase names these seams — stays on this row and is taken only if the
+in-helper staleness check proves unreliable; it was offered to the delegation
+batch that shipped 2026-07-26 and deliberately left untaken there. Source: the
+2026-07-25 learnings entry, verdicted in a prior drain.
 
 **FT133 (MEDIUM) — `bench coverage --check` verifies that red-signal citations
 resolve.** A coverage-map row naming `go test -run TestFoo` where no such test
@@ -179,7 +112,23 @@ this: its named regression guard is a lowercase subtest dispatched via
 `RunParallel`, and cannot go red as cited. Teach `--check` to resolve each
 cited command to at least one matching test before crediting the row, and
 decide the posture for citations it cannot resolve — fail closed is the
-family default. Source: `IDEAS.md`, drained here.
+family default.
+
+A second instance, drained 2026-07-26, widens the check past mere existence: a
+row whose red signal cites a capability-gated test resolves fine and still
+cannot go red as written. `go test ./internal/conformance -run
+^TestRootConformance$` without `BENCH_CONFORMANCE_ROOT` prints `ok … 0.002s`
+and skips (`bench-skip kind=environment`, visible only under `-v`), so a
+session following the map verbatim reads a false green — reproduced through the
+cited command on `main` at 3ea3abf. The check must therefore credit a row only
+when the cited command actually executes its test, not merely matches one, and
+a capability skip is the discriminating case. The authoring-side alternative —
+a `craft-spec` rule that a conformance red signal always carries its
+`BENCH_CONFORMANCE_ROOT` prefix — is the fallback if the mechanical check
+proves too broad; prefer the check, which removes the instruction rather than
+duplicating it. Related but distinct: FT124's skip-reasons face makes skips
+visible to a reader, while this row makes an invisible skip fail the coverage
+oracle. Source: `IDEAS.md`, drained here.
 
 **FT129 (MEDIUM) — a panic in the inner test binary reads as a canary that
 stopped biting.** FT122's first gate went red as `canary
@@ -324,8 +273,12 @@ header — each restructure proposed in the same batch diff the drain already
 produces, never applied silently. The 2026-07-26 drain is the dogfood: under
 exactly these moves it merged four delegation rows into FT96, three discard
 faces into FT98, three staleness faces into FT113, and three standing-rule
-rows into FT107. Kit edit under the `craft-synthesis` discipline. Source:
-`IDEAS.md`, drained here.
+rows into FT107 — and FT96, the largest of those merges, shipped as one spec
+five days later. The 2026-07-26 drain is the second dogfood: both its inputs
+landed as clauses on existing rows (a coverage-citation instance onto FT133, a
+journal verdict onto FT107) rather than as two new rows, so the same moves
+apply to intake, not only to periodic cleanup. Kit edit under the
+`craft-synthesis` discipline. Source: `IDEAS.md`, drained here.
 
 **FT134 (MEDIUM) — enumerated-posture tables become a Spec-axis audit
 obligation.** A spec that enumerates call sites with per-site postures —
@@ -343,8 +296,9 @@ good specs and pre-defined seams: the unstated constraint set grows while
 spec word count stays flat, nearest-neighbor retrieval gets noisier, seams
 bound the interface but not the interior, and mature specs get more
 elliptical as `CONTEXT.md` vocabulary compresses. The charge-side
-countermeasure — exemplar files over prose conventions — is FT96's clause 6;
-what stays open here is how specs are defined and how work is sliced.
+countermeasure — exemplar files over prose conventions — shipped 2026-07-26 in
+`craft-delegate`; what stays open here is how specs are defined and how work
+is sliced.
 Evidence from the FT86 review-resolution run (2026-07-25): three concurrent
 write-delegates sliced by package ownership merged with zero conflicts,
 including two that both edited the same spec file, while the one slice cut by
@@ -472,9 +426,20 @@ commit labelled "capture: …", landed with no gate grading it — `bench commit
 attribution check, which would have caught it, was bypassed by plain `git`.
 Note in the phase guidance that the convention holds only with an empty index,
 and that during a squash-merge landing every plain-`git` commit uses the
-explicit pathspec form (`git commit -m "…" -- <path>`). Deliberately not
-batched here: FT130 (mid-gate `bench idea`) stays its own row because its
-preferred fix is mechanical, in the CLI rather than in this prose. Background:
+explicit pathspec form (`git commit -m "…" -- <path>`). Fourth (drained
+2026-07-26 from the learnings journal), the self-contradicting spec. The
+batch-approval clause covers a reviewer who has gone AFK, and says nothing
+about a spec whose own sections disagree — during the delegation-discipline
+build the spec placed two canary fixtures in one family while its Prior art
+line pointed at another, and the build corrected to the tree's convention,
+flagged the choice, and continued without waiting. State the rule beside that
+clause: when a spec contradicts itself and the readings are functionally
+equivalent, take the one consistent with the tree's existing convention, flag
+it for veto, and build on — a round trip buys nothing where no behavior
+differs; the flag is mandatory, and any behavioral difference between the
+readings is a stop-and-ask. Deliberately not batched here: FT130 (mid-gate
+`bench idea`) stays its own row because its preferred fix is mechanical, in
+the CLI rather than in this prose. Background:
 `docs/reporesident-distillation.md` §3 and §6.
 
 **FT58 (LOW) — hardened pool roots.** The identity-safe lock protocol shipped
@@ -599,8 +564,9 @@ delegate's payload slice landed with a misspelled kit-only allowlist row
 passed by asserting the absence of a path that never existed and the skill
 kept shipping to consumers — a vacuous green the gate cannot see. The
 charge-side half — absence evidence must name identifiers that resolve to
-real things — moved to FT96's batched delegation row. What stays here is the
-gate check: confirm a per-source existence check on the consumer-payload
+real things — shipped 2026-07-26 in the delegation-discipline batch, as a
+clause in `craft-delegate`'s done-claim verification list. What stays here is
+the gate check: confirm a per-source existence check on the consumer-payload
 allowlist — the emptied-set vacuity closed with the FT85 fix commit, the
 per-path existence guard is the remaining cheap single-source check.
 
@@ -816,9 +782,10 @@ Bash calls in the week of 2026-07-19 (36%) were
 `bench worktree path <label>` and `bench worktree exec <label> -- <cmd>` so the
 label is the handle. Hard requirement: both emit and accept `~`-relative paths,
 because an absolute `/home/<user>` path in a transcript or a committed artifact
-does not port across machines. Distinct from FT96, which is about how hook
-assignments are keyed for parallel delegates rather than how a session names a
-worktree it already owns.
+does not port across machines. Untouched by the delegation-discipline batch
+that shipped 2026-07-26: that one settled how a coordinator *cuts* parallel
+worktrees (`bench worktree create --request <opaque-id>`), leaving how a
+session names one it already owns exactly where it was.
 
 **FT124 (MEDIUM, evidence supplied) — `bench test [pkg]`, structured go-test
 triage.** Sessions re-derive the same `go test` filter every time: 698 of 797
@@ -924,15 +891,16 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT96, the batched delegation discipline. Six clauses,
-   one owner file, one spec, one review, one gate; until it lands every
-   parallel build re-risks the stash, assignment, and staleness failures
-   already paid for once.
-2. `/bench-shape-idea` — the cost-follows-project-size complaint, one session
+1. `/bench-shape-idea` — the cost-follows-project-size complaint, one session
    across its three angles (FT91's remaining gate arms, FT101's scoped
    surfaces, FT136's delegate slicing). One shaping session instead of three
    separately-shaped builds; FT91's first step — timing the fifteen
-   conformance checks — is the session's cheapest evidence request.
-3. `/bench-write-spec` — FT71, versioned local shift evidence. The remaining
+   conformance checks — is the session's cheapest evidence request, and gate
+   wall-clock is the reviewer's stated dominant cost.
+2. `/bench-write-spec` — FT71, versioned local shift evidence. The remaining
    HIGH bank-track row; the repository-controlled bank evidence requirement
    keeps it active.
+3. `/bench-write-spec` — FT133, red-signal citations that resolve *and*
+   execute. Twice demonstrated now (a dead `-run` filter, a capability skip
+   printing `ok`), and it is the coverage oracle itself reading green on
+   nothing — every spec written before it lands can carry the same hole.
