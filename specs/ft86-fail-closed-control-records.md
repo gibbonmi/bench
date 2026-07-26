@@ -1,6 +1,6 @@
 # FT86 — fail-closed control records and single-sourced repository facts
 
-Status: staged
+Status: implemented
 
 ## Problem
 
