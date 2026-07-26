@@ -92,9 +92,8 @@ func TestUnresolvedCount(t *testing.T) {
 }
 
 // The close-readiness aggregate re-homes the shell contract's count tail: of the six
-// files, hm/hx/hp/ho are not-close-ready, hf is ready, and README attempts neither a
-// ticket heading nor a marker, so it is unsupported-schema — also unresolved, since
-// an unrecognized file is exactly as unresolved as an open ticket → 5.
+// files, hm/hx/hp/ho are not-close-ready, hf is ready, and README documents the
+// directory rather than claiming to be a map, so the tally never sees it → 4.
 func TestUnresolvedCountCloseReadiness(t *testing.T) {
 	root := t.TempDir()
 	dir := filepath.Join(root, "decisions")
@@ -114,8 +113,8 @@ func TestUnresolvedCountCloseReadiness(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if got, _ := UnresolvedCount(root); got != 5 {
-		t.Errorf("close-readiness UnresolvedCount = %d, want 5", got)
+	if got, _ := UnresolvedCount(root); got != 4 {
+		t.Errorf("close-readiness UnresolvedCount = %d, want 4", got)
 	}
 	// A file-scope marker without any ticket heading is a recognized shape (a marker),
 	// not unsupported-schema: no listed row, but counted via preHandoffMarker.
@@ -125,7 +124,7 @@ func TestUnresolvedCountCloseReadiness(t *testing.T) {
 	if got := len(fileRows("scope", parseFile([]byte("### Answer\n— (deferred)\n")))); got != 0 {
 		t.Errorf("file-scope marker emitted %d rows, want 0", got)
 	}
-	if got, _ := UnresolvedCount(root); got != 6 {
-		t.Errorf("UnresolvedCount with file-scope marker = %d, want 6", got)
+	if got, _ := UnresolvedCount(root); got != 5 {
+		t.Errorf("UnresolvedCount with file-scope marker = %d, want 5", got)
 	}
 }

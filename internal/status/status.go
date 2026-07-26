@@ -443,8 +443,8 @@ func appendDrain(rows []row, root string) []row {
 	if open < learningsFloor() {
 		open = 0
 	}
-	ideasFailed := ideasState == bounds.StateUnreadable || ideasState == bounds.StateWrongType
-	learningsFailed := learningsState == bounds.StateUnreadable || learningsState == bounds.StateWrongType
+	ideasFailed := ideasState.Failed()
+	learningsFailed := learningsState.Failed()
 	if !ideasFailed && !learningsFailed {
 		if ideas == 0 && open == 0 {
 			return rows
@@ -478,7 +478,7 @@ func appendStructure(rows []row, root string) []row {
 // when it did not — a scan that could not run must never render as zero unresolved.
 func appendMaps(rows []row, root string) []row {
 	n, state := maps.UnresolvedCount(root)
-	if state == bounds.StateUnreadable || state == bounds.StateWrongType {
+	if state.Failed() {
 		return append(rows, row{6, "decisions", fmt.Sprintf("unknown (decisions is %s)", state), "investigate decisions/ (bench maps)"})
 	}
 	if n > 0 {
@@ -529,7 +529,7 @@ func appendRoadmapReconcile(rows []row, root string) []row {
 		return rows
 	}
 	merged, dangling, state := roadmapReconcileCounts(root)
-	if state == bounds.StateUnreadable || state == bounds.StateWrongType {
+	if state.Failed() {
 		return append(rows, row{10, "roadmap", fmt.Sprintf("unknown (ROADMAP.md is %s)", state), "/bench-what-next"})
 	}
 	if merged == 0 && dangling == 0 {
@@ -547,28 +547,27 @@ func appendRoadmapReconcile(rows []row, root string) []row {
 
 // retirementCount counts specs/*.md files that spec.AwaitsRetirement marks — a merged spec
 // awaiting retirement. Absent `specs/` → 0. The unfenced-marker predicate is
-// spec.AwaitsRetirement's one source.
+// spec.AwaitsRetirement's one source. Every read goes through the classifier: this signal
+// is advisory and stays quiet about a spec it could not read, but a FIFO parked at
+// specs/*.md never yields EOF, and a board that blocks forever is worse than one missing a
+// housekeeping row — `bench status` is what the SessionStart hook runs.
 func retirementCount(root string) int {
 	dir := filepath.Join(root, "specs")
-	info, err := os.Stat(dir)
-	if err != nil || !info.IsDir() {
-		return 0
-	}
-	entries, err := os.ReadDir(dir)
-	if err != nil {
+	cd := bounds.ClassifyDir(dir)
+	if cd.State != bounds.StateParsed {
 		return 0
 	}
 	n := 0
-	for _, e := range entries {
+	for _, e := range cd.Entries {
 		// specs/*.md without dotglob: skip directories, non-.md, and hidden names.
 		if e.IsDir() || !strings.HasSuffix(e.Name(), ".md") || strings.HasPrefix(e.Name(), ".") {
 			continue
 		}
-		content, err := os.ReadFile(filepath.Join(dir, e.Name()))
-		if err != nil {
+		c := bounds.Classify(filepath.Join(dir, e.Name()), bounds.OutlineFileLimit)
+		if c.State != bounds.StateParsed {
 			continue
 		}
-		if spec.AwaitsRetirement(content) {
+		if spec.AwaitsRetirement(c.Data) {
 			n++
 		}
 	}
@@ -605,16 +604,18 @@ func orphanedPickupCount(root string) int {
 // roadmap row survived); a present file that spec.AwaitsRetirement marks is a merged row (the
 // work shipped but the drain missed it). A present, still-staged spec is the normal open-work
 // state and counts nothing. Absent or empty ROADMAP.md → 0, 0, bounds.StateParsed, the ordinary
-// quiet-roadmap posture; an unreadable or wrong-type ROADMAP.md reports that state instead, so
+// quiet-roadmap posture; a ROADMAP.md whose read failed reports that state instead, so
 // appendRoadmapReconcile renders the failed read as unknown rather than a fabricated clean
-// board. The merged predicate is spec.AwaitsRetirement, the same one source the retirement
-// counter applies.
+// board. Each named spec goes through the classifier too, so a FIFO at specs/*.md cannot
+// block the board; a spec path that yields no content at all is the dangling case, whether
+// nothing is there or what is there could not be read. The merged predicate is
+// spec.AwaitsRetirement, the same one source the retirement counter applies.
 func roadmapReconcileCounts(root string) (merged, dangling int, state bounds.FileState) {
 	c := bounds.Classify(filepath.Join(root, "ROADMAP.md"), bounds.OutlineFileLimit)
-	switch c.State {
-	case bounds.StateUnreadable, bounds.StateWrongType:
+	switch {
+	case c.State.Failed():
 		return 0, 0, c.State
-	case bounds.StateAbsent, bounds.StateEmpty:
+	case c.State == bounds.StateAbsent || c.State == bounds.StateEmpty:
 		return 0, 0, bounds.StateParsed
 	}
 	seen := map[string]bool{}
@@ -624,12 +625,12 @@ func roadmapReconcileCounts(root string) (merged, dangling int, state bounds.Fil
 			continue
 		}
 		seen[path] = true
-		content, err := os.ReadFile(filepath.Join(root, path))
-		if err != nil {
+		sc := bounds.Classify(filepath.Join(root, path), bounds.OutlineFileLimit)
+		if sc.State == bounds.StateAbsent || sc.State.Failed() {
 			dangling++
 			continue
 		}
-		if spec.AwaitsRetirement(content) {
+		if spec.AwaitsRetirement(sc.Data) {
 			merged++
 		}
 	}

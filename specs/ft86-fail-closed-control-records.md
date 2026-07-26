@@ -180,7 +180,9 @@ exact membership in the declared story set, positive, and forward-ranged.
     roadmap-reconcile read; `structure.ViolationCount` and the specs housekeeping
     counters are explicitly not migrated. Line: gpt-5.6-luna / medium. The
     failure-row pattern is already established by the worktree row; this applies
-    it to the signals whose readers change here.
+    it to the signals whose readers change here. `structure.ViolationCount` and the
+    specs housekeeping counters carry no state and render no unknown row: they stay
+    advisory, degrading quietly on a source they cannot read.
 
 18. As a maintainer, I want `git.DefaultBranch` deleted and `git.ResolvedDefault`
     to be the sole owner of the default-branch fact, with every caller handling
@@ -258,16 +260,51 @@ failure; absent renders the empty state with exit 0. `bench status` exits 0 and
 renders explicit `unknown` rows. `roadmap --context` exits 0 and degrades the
 affected source or block. `bench outline` is unchanged.
 
+**A present-but-empty control record is not an absent one.** Absence is the only
+state that renders the empty-state prompt on exit 0. A zero-byte file is something
+someone created and left unwritten, so it takes the same exit-1 `error:` line naming
+`empty` that every other non-absent state takes. Every query command applies this;
+`bench roadmap` in particular must never answer a zero-byte `ROADMAP.md` with the
+"no ROADMAP.md — run /bench-what-next" prompt, which would tell a reader the
+document was never created. Both states are asserted together wherever this posture
+is pinned, because the defect is their collapse rather than either verdict alone.
+
 **Status signal counts carry state, narrowly.** `maps.UnresolvedCount` returns a
 bare integer that cannot express failure, and status gates its row on `n > 0`, so
 a failed scan renders as a clean repository. That signature changes to carry the
 count plus its readability state, so the dashboard's `unknown` row and the
 listing's rows derive from the same scan. The same applies to the capture-drain
 counts and the roadmap-reconcile read, whose sources this spec already touches.
-`structure.ViolationCount` and the specs housekeeping counters
-(`retirementCount`, `orphanedPickupCount`) are **not** migrated: `internal/
-structure` and `internal/spec` are outside the map's module boundary, and pulling
-them in would widen the spec past what was decided.
+`structure.ViolationCount` is **not** migrated: `internal/structure` is outside the
+map's module boundary, and pulling it in would widen the spec past what was decided.
+
+**The specs housekeeping counters read through the classifier without carrying
+state.** `retirementCount`, the roadmap-reconcile scan's per-spec reads, and
+`internal/spec`'s candidate resolution all classify before they open. They keep
+their existing advisory shape — a bare count, `bench status` still exits 0, an
+unreadable spec degrades the row quietly rather than failing closed — because these
+signals are housekeeping and a wrong count costs little. What the classifier buys
+them is the one failure a bare count cannot survive: a FIFO or device parked at
+`specs/*.md` never yields EOF, and `bench status` is the command the SessionStart
+hook runs, so a board that blocks forever is strictly worse than one missing a
+housekeeping row. Read safety is therefore separable from the fail-closed posture,
+and only the read safety extends here.
+
+**An unresolved-map tally counts only files that claim to be maps.** `decisions/` is
+a directory agents also keep notes in, and a file that documents the directory rather
+than claiming membership in it is not a decision map the parser should recognize:
+a `README` is exempt by name — before any read — so it earns no row, adds nothing to
+the unresolved tally, and cannot flip `bench maps` to exit 1. The exemption is name-
+based and stops there, because a content-based rule cannot separate an index file
+from a map that is simply broken: every other ordinary name in `decisions/` remains a
+candidate, so a malformed, unreadable, or unrecognized ticket map still earns its row
+and still fails closed.
+
+**The `--count` surface takes the listing's posture, not a fallback.** `bench maps
+--count` prints an integer only when a scan actually ran. When `decisions/` itself
+cannot be enumerated it emits the same `error:` line and exit 1 the listing emits on
+the same tree — a bare `0` there is a count nothing supports, and story 11 is
+precisely the rule that the two surfaces may not disagree about what was readable.
 
 **TOON state vocabulary is reused, not reinvented.** The state names are exactly
 `roadmap --context`'s existing `absent` / `empty` / `parsed` / `malformed`
@@ -439,6 +476,13 @@ The gate command is the project gate: `.bench/gate.sh`.
 | 16 | a non-regular tracked entry keeps its `nonregular` skip row and exit 0 | contract (`internal/contract/axi`) | already covered — the same test asserts the `link.go,nonregular` row and exit 0 | An implementation that promotes non-regular to a failure class turns exit 0 into exit 1 here. |
 | 17 | a signal whose read failed renders an `unknown` row and status still exits 0 | contract (`internal/contract/axi`) | `go test ./internal/contract/axi -run TestAXIStatusUnknownRow` | Asserting the row is present *and* the exit is 0 forbids both the fabricated zero (row absent) and the fail-closed over-correction. |
 | 17 | the `unknown` row is not suppressed by a zero count | contract (`internal/contract/axi`) | `go test ./internal/contract/axi -run TestAXIStatusUnknownNotSuppressed` | Every signal today is gated on `count > 0`; an unknown state reaching that gate disappears, which this row catches. |
+| 17 | a malformed control record reaches the same `unknown` row an unreadable one does | contract (`internal/contract/axi`) | `go test ./internal/contract/axi -run TestAXIStatusUnknownRow` — the malformed subtest of the same fixture | A surface that switches on unreadable and wrong-type alone lets malformed bytes fall through and be parsed, printing a clean board for a corrupt file; running one fixture per state forbids honoring only the states someone remembered. |
+| 17 | all three migrated signals render their unknown row, not two of three | contract (`internal/contract/axi`) | `go test ./internal/contract/axi -run TestAXIStatusUnknownRow` — the `decisions` assertion | The decision-map row is built but was asserted nowhere, so deleting it turned nothing red; naming every migrated signal in the same fixture is what closes that. |
+| 17 | a FIFO at `specs/*.md` cannot block `bench status` | contract (`internal/contract/axi`) | `go test ./internal/contract/axi -run TestAXIStatusSpecialFileDoesNotBlock` (`capability.Fifo`) | The housekeeping counters read every spec, so a FIFO with no writer hangs the command the SessionStart hook runs; the test expires a deadline rather than asserting a value, which is the only way a hang is visible. |
+| 17 | a FIFO at `IDEAS.md` or `ROADMAP.md` cannot block `bench dashboard` | contract (`internal/contract/runtime`) | `go test ./internal/contract/runtime -run TestRuntimeDashboardContracts` — the special-file subtest (`capability.Fifo`) | The dashboard's narrative readers are separate from the counters', so migrating one and not the other leaves two readers of one file disagreeing about whether it is safe to open. |
+| 11 | a `README` in `decisions/` earns no row, no tally entry, and no exit-1 | contract (`internal/contract/axi`) | `go test ./internal/contract/axi -run TestAXIQuerySurfaceContracts` — the maps handoff close-readiness subtest | A tally that counts every unrecognized file turns a routine index file into a red command; asserting exit 0 alongside the other files' rows forbids both that and a blanket skip that would also hide a broken map. |
+| 11 | `bench maps --count` fails closed when `decisions/` cannot be enumerated | contract (`internal/contract/axi`) | `go test ./internal/contract/axi -run TestAXIMapsCountWholeDirectoryFailure` (`capability.Privilege`) | The listing already errors on this tree, so a `--count` that prints `0` is the two-surface disagreement story 11 exists to forbid; driving both against one fixture is what catches it. |
+| 12 | a present-but-empty `ROADMAP.md` exits 1 naming `empty`, not the absent prompt | contract (`internal/contract/axi`) | `go test ./internal/contract/axi -run TestAXIRoadmapEmptyIsNotAbsent` | Asserting the absent prompt is *absent* from the empty file's output forbids the collapse that reports an unwritten roadmap as a repository that never had one. |
 | 18 | no `DefaultBranch` symbol survives anywhere in the tree | conformance | `go test ./internal/conformance -run TestRootConformance` with a source-level sweep for the identifier | A partial migration that leaves one caller behind turns this red without needing a behavioral fixture per call site. |
 | 18 | `RepoFacts` carries the unresolvable-default state rather than a guess | unit (`internal/git`) | `go test ./internal/git -run TestFactsUnresolvableDefault` | A fixture repo with no `origin/HEAD` and two local branches; an implementation returning `"main"` fails the state assertion. |
 | 18 | a sole-`master` repository still resolves, via the single-local-branch fallback | unit (`internal/git`) | `go test ./internal/git -run TestResolvedDefaultSoleMaster` | Handoff item 6 names master-only as an owned hostile input. `ResolvedDefault` is rewritten to absorb the `origin/HEAD` lookup, and without this row a rewrite that drops the sole-branch fallback turns nothing red while breaking every `master` repository. |

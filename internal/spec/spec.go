@@ -14,13 +14,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -121,21 +121,29 @@ func Resolve(base, arg string) (content []byte, resolved string, tried []string,
 	return nil, "", tried, false, nil
 }
 
-// readCandidate reads path as a candidate spec. An absent path or a directory is not a
-// candidate (nil, nil — try the next form); any other read failure is a real error to
-// surface, never masked as not-found.
+// readCandidate reads path as a candidate spec, through the classifier so a FIFO or
+// device parked where a spec belongs is rejected before the open rather than blocking
+// forever. An absent path or a directory is not a candidate (nil, nil — try the next
+// form); any other failure is a real error to surface, never masked as not-found.
 func readCandidate(path string) ([]byte, error) {
-	b, err := os.ReadFile(path)
-	if err == nil {
-		return b, nil
-	}
-	if errors.Is(err, fs.ErrNotExist) {
+	c := bounds.Classify(path, bounds.OutlineFileLimit)
+	switch {
+	case c.State == bounds.StateAbsent:
 		return nil, nil
-	}
-	if fi, statErr := os.Stat(path); statErr == nil && fi.IsDir() {
+	case c.State == bounds.StateWrongType && isDir(path):
 		return nil, nil
+	case c.State.Failed():
+		return nil, errors.New(c.Reason)
 	}
-	return nil, err
+	return c.Data, nil
+}
+
+// isDir separates the one non-regular path that means "keep resolving" from the ones that
+// mean "this read failed": a directory named like the candidate simply is not the spec
+// file, while a special file where a spec belongs is a problem the caller must hear about.
+func isDir(path string) bool {
+	fi, err := os.Stat(path)
+	return err == nil && fi.IsDir()
 }
 
 // locateStaged resolves arg (base anchors the specs/<slug>.md fallback) and requires exactly

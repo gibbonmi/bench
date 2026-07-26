@@ -281,14 +281,15 @@ Decided: yes.
 1. Module boundaries.
 — (open)
 `)
-	// README.md attempts neither a ticket heading nor a marker, so the classifier
-	// migration surfaces it as unsupported-schema (story 7) rather than the prior
-	// silent drop: it earns its own row and the command exits 1.
+	// A README documents the directory rather than claiming membership in it, so it is
+	// not a decision map and never reaches the parser: it earns no row, adds nothing to
+	// the unresolved tally, and cannot flip the command's exit code. Every other file
+	// here is close-ready or carries only a handoff row, so the exit is 0.
 	f.WriteFile("decisions/README.md", "# Decisions index\nNotes about this folder — not a map.\n")
 
 	out := f.Bench("maps")
 
-	out.RequireExit(1)
+	out.RequireExit(0)
 	requireAXILine(t, out.Stdout, "  hm,handoff,handoff,missing")
 	requireAXILine(t, out.Stdout, "  hx,handoff,handoff,missing")
 	requireAXILine(t, out.Stdout, "  hp,handoff,handoff,open")
@@ -296,7 +297,7 @@ Decided: yes.
 	requireNoAXILineMatching(t, out.Stdout, `^  ho,handoff`)
 	requireAXILine(t, out.Stdout, "  ho,1,Grill,open")
 	requireNoAXILineMatching(t, out.Stdout, `^  hp,1,`)
-	requireAXILine(t, out.Stdout, "  README,error,unsupported-schema,no ticket heading or marker found")
+	requireNoAXILineMatching(t, out.Stdout, `^  README,`)
 }
 
 func testAXIMapsCountAdapter(t *testing.T) {

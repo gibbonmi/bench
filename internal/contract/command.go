@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 type Env map[string]*string
@@ -165,6 +167,17 @@ func (f Fixture) Bench(args ...string) Probe {
 	f.t.Helper()
 	bench := filepath.Join(SubjectRoot(f.t), "bin", "bench.sh")
 	return f.Run("bash", append([]string{bench}, args...)...)
+}
+
+// BenchDeadlined drives `bench` under the kit's standard test deadline instead of
+// blocking indefinitely, for the fixtures whose failure mode is a hang rather than a
+// wrong answer — a control record that is a FIFO with no writer. The caller asserts on
+// Probe.TimedOut, so the diagnosis is "it blocked" rather than a killed suite. The
+// deadline is bounds.TestDeadline, the one policy every test wait derives from.
+func (f Fixture) BenchDeadlined(args ...string) Probe {
+	f.t.Helper()
+	bench := filepath.Join(SubjectRoot(f.t), "bin", "bench.sh")
+	return RunAtWithTimeout(f.t, f, f.Root, nil, bounds.TestDeadline(0), "bash", append([]string{bench}, args...)...)
 }
 
 func (f Fixture) BenchEnv(env map[string]string, args ...string) Probe {

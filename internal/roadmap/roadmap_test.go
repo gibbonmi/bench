@@ -119,9 +119,11 @@ func TestIdeaNewlineNormalization(t *testing.T) {
 	}
 }
 
-// TestRoadmapMissing covers the missing-roadmap posture for both an absent and a
-// zero-byte file: exit 0 with a pointer to /bench-what-next, never a crash or a
-// bare empty verdict.
+// TestRoadmapMissing covers the two states a reader could collapse onto one another. An
+// absent file is the maintenance-prompt posture: exit 0 with a pointer to
+// /bench-what-next, never a crash or a bare empty verdict. A zero-byte file is present,
+// so it takes the non-absent posture — exit 1 naming the state — and must not print the
+// prompt that would tell a reader no roadmap was ever created.
 func TestRoadmapMissing(t *testing.T) {
 	root := newRepo(t)
 	if out, code := RoadmapCommand(nil); out != missingRoadmap || code != 0 {
@@ -130,7 +132,7 @@ func TestRoadmapMissing(t *testing.T) {
 	if err := os.WriteFile(roadmapPath(t, root), nil, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if out, code := RoadmapCommand(nil); out != missingRoadmap || code != 0 {
+	if out, code := RoadmapCommand(nil); code != 1 || !strings.Contains(out, "error: ROADMAP.md is empty") || strings.Contains(out, "no ROADMAP.md") {
 		t.Fatalf("zero-byte: got %q/%d", out, code)
 	}
 	if !strings.Contains(missingRoadmap, "/bench-what-next") {

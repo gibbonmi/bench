@@ -1,12 +1,9 @@
 package axi
 
 import (
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
 )
 
@@ -41,15 +38,7 @@ func TestAXIMapsUnreadableFileRow(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("decisions/good.md", "## #1: q?\nType: Grill\n### Answer\n— (open)\n")
 	f.WriteFile("decisions/locked.md", "## #1: q?\nType: Grill\n### Answer\n— (open)\n")
-	path := filepath.Join(f.Root, "decisions", "locked.md")
-	t.Cleanup(func() { _ = os.Chmod(path, 0o644) })
-	if err := os.Chmod(path, 0o000); err != nil {
-		capability.Capability(t, capability.Privilege, "cannot strip permissions: "+err.Error())
-	}
-	if fh, err := os.Open(path); err == nil {
-		fh.Close()
-		capability.Capability(t, capability.Privilege, "mode 0o000 is still readable by this user")
-	}
+	f.WriteUnreadable("decisions/locked.md", 0o644)
 
 	out := f.Bench("maps")
 
@@ -83,15 +72,7 @@ func TestAXIMapsCountMatchesListing(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("decisions/good.md", "## #1: q?\nType: Grill\n### Answer\n— (open)\n")
 	f.WriteFile("decisions/locked.md", "## #1: q?\nType: Grill\n### Answer\n— (open)\n")
-	path := filepath.Join(f.Root, "decisions", "locked.md")
-	t.Cleanup(func() { _ = os.Chmod(path, 0o644) })
-	if err := os.Chmod(path, 0o000); err != nil {
-		capability.Capability(t, capability.Privilege, "cannot strip permissions: "+err.Error())
-	}
-	if fh, err := os.Open(path); err == nil {
-		fh.Close()
-		capability.Capability(t, capability.Privilege, "mode 0o000 is still readable by this user")
-	}
+	f.WriteUnreadable("decisions/locked.md", 0o644)
 
 	count := f.Bench("maps", "--count")
 	count.RequireExit(0)
@@ -108,4 +89,26 @@ func TestAXIMapsCountMatchesListing(t *testing.T) {
 	status.RequireExit(0)
 	requireContainsFold(t, status.Stdout, "decisions")
 	requireContainsFold(t, status.Stdout, "2 unresolved map")
+}
+
+// TestAXIMapsCountWholeDirectoryFailure is TestAXIMapsCountMatchesListing's whole-scan
+// half: there the directory listed and one file inside it failed, so a count was still
+// derivable. Here `decisions/` itself cannot be enumerated, nothing was confirmed absent,
+// and a bare `0` on the --count surface is a fabrication that contradicts the listing's
+// own exit-1 error line. Story 11 forbids exactly that disagreement, so both surfaces are
+// driven against the one fixture.
+func TestAXIMapsCountWholeDirectoryFailure(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	f := contract.NewFixture(t)
+	f.WriteFile("decisions/good.md", "## #1: q?\nType: Grill\n### Answer\n— (open)\n")
+	f.WriteUnreadable("decisions", 0o755)
+
+	count := f.Bench("maps", "--count")
+	count.RequireExit(1)
+	requireContainsFold(t, count.Stdout, "error: decisions is unreadable")
+
+	rows := f.Bench("maps")
+	rows.RequireExit(1)
+	requireContainsFold(t, rows.Stdout, "error: decisions is unreadable")
 }
