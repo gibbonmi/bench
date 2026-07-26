@@ -35,6 +35,17 @@ master-only, and unknown-default fixtures in both contracts and canaries.
 The closed `decisions/ft86-fail-closed-control-records.md` map owns the cut and
 the arm is spec'd in `specs/ft86-fail-closed-control-records.md`.
 
+**Built and landed on `main`**, all 20 stories and 34 acceptance-coverage rows
+green across seven code commits, each on its own green whole-tree gate plus a
+confirming gate on the integrated tree. The spec is still `Status: staged` and
+semantic review has not run, so the row stays: the remaining work is
+`/bench-review-implementation`, then `/bench-final-check` to flip the spec to
+`implemented`. Implementation calls left open for post-hoc veto are listed in
+`session-handoff.md`; the one with reach beyond this repo is `bench maps` now
+exiting 1 on a `decisions/` file with no ticket heading, which gives a linked
+repo holding a `README.md` there a permanent exit 1 — the spec's stated intent,
+implemented rather than quietly narrowed.
+
 Sources: `RR:C-01`, `RR:C-02`, `RR:C-03`; `RC:H-08`.
 
 **FT58 (LOW) — hardened pool roots.** The identity-safe lock protocol shipped
@@ -262,6 +273,23 @@ length guard, since the canary subject is always a stub and any such slice is
 a latent tripwire-disarming panic. Source: the 2026-07-25 learnings entry,
 verdicted in this drain.
 
+**FT131 (MEDIUM) — a stale binary under test makes contract rows lie in both
+directions.** The AXI and runtime contract suites drive the built `dist/bench`,
+not the package under test, so their verdict answers for whatever binary happens
+to be on disk. In a fresh or salvaged worktree that binary predates the change:
+during FT86 two of three rows in a correct slice went red on nothing but
+staleness, and a delegate was nearly re-charged to fix code that was already
+right. The dangerous direction is the reverse one — a stale binary that happens
+to satisfy an assertion makes a broken change look green, a false done-claim the
+gate catches only later. `/bench-implement-spec` tells delegates to run the
+relevant single test file frequently, which is incomplete at these seams without
+the `scripts/go-build.sh` step. Prefer the single-source fix: have the contract
+helper itself fail loudly when the binary under test is older than the package
+sources it exercises, which removes the instruction rather than duplicating it.
+Weigh that against naming the rebuild where the phase names those seams (a kit
+edit under the `craft-synthesis` discipline) only if the staleness check proves
+unreliable. Source: the 2026-07-25 learnings entry, verdicted in this drain.
+
 **FT92 (LOW) — attributed subject drift and consumer-shipped input hygiene.**
 "gate subject changed during execution" names no component; the drift message
 should say what moved (the tree hash versus which declared manifest path) so
@@ -280,7 +308,7 @@ is test-vs-test duplication, not the expectation-versus-implementation
 independence the code standard protects, so collapsing it is consistent with
 the one-source-per-fact rule.
 
-**FT96 (LOW) — parallel-delegate worktree assignments.** The WorktreeCreate
+**FT96 (MEDIUM) — parallel-delegate worktree assignments.** The WorktreeCreate
 hook keys assignments per session, so launching several parallel write
 delegates with harness worktree isolation grants one assignment and refuses
 the rest ("conflicts with its existing assignment"); the manual
@@ -309,6 +337,22 @@ clause either way — sanction the shared checkout under those two conditions, o
 name the route that gets uncommitted work into a worktree first — because the
 current silence leaves each session to improvise it. Source: the 2026-07-25
 learnings entry, verdicted in this drain.
+
+The same guidance states isolation with the wrong boundary, and that cost work.
+`craft-delegate` says a worktree keeps concurrent writers from colliding; that
+holds for the working tree and fails for every repository-global git surface —
+the stash stack above all. Two FT86 delegates in separate worktrees each reached
+for `git stash push`/`pop` to restore a pre-change file and observe a red, and
+because the stash ref is repository-global the two stacks were one: each pop
+applied the other's in-flight edits, both checkouts ended up holding both slices
+byte-identically, and neither diff could be attributed. One slice was discarded
+and re-run; `main` was never touched and no mixed diff reached a gate. State the
+boundary, ban `git stash` in a charge, and give the per-worktree substitute the
+technique actually wants — `cp` the working file aside, `git show HEAD:<path> >
+<path>` to restore, test, copy back. `block-dangerous-git` already refuses
+`git checkout <path>`; `git stash` is the same hazard class for concurrent work
+and is a candidate for the same hook. Source: the 2026-07-25 learnings entry,
+verdicted in this drain.
 
 **FT97 (LOW, evidence supplied) — harness-native agent-line denial.** The
 agent-line deny message single-sources its bound-tiers listing, which leads
@@ -651,6 +695,17 @@ per-row semantic checking with no mechanical source, and it is the same problem
 FT106 solves for docs — extend that probe to row bodies when it ships rather
 than building a second mechanism.
 
+**FT132 (MEDIUM, evidence supplied) — `bench roadmap` conflates an absent
+roadmap with an empty one.** A present-but-empty `ROADMAP.md` prints
+`no ROADMAP.md`, the same string as a missing file — the exact conflation FT86
+removed everywhere else, left standing in the surface the drain itself runs
+through. Only absence is an authoritative empty state; an empty document is a
+document that says nothing, and the two want different next actions. The reason
+this was parked rather than folded into FT86 is that the string is pinned by a
+green runtime contract asserting it verbatim, so changing it is a reviewer call
+rather than a build's. Decide the wording, then move the contract with it.
+Source: `IDEAS.md`, drained here.
+
 **FT127 (LOW, evidence supplied) — `bench commit`'s set-aside advice points at
 nothing.** The refusal reads "working-tree files outside the named set block
 the commit — name them, or set them aside", but no set-aside route exists in
@@ -748,14 +803,12 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT86, fail-closed control records and single-sourced
-   repository facts. The highest bank-track row still open: FT91's
-   canary-budget arm shipped 2026-07-24, so gate contention is no longer the
-   unaddressed cost on every landing.
-2. `/bench-write-spec` — FT128, the agent-line guard cannot see a fork's real
-   model. Small, and it closes a hole in an enforcement layer rather than
-   adding one — the guard currently grades the one delegation shape that
-   defeats it.
-3. `/bench-write-spec` — FT71, versioned local shift evidence. The other HIGH
+1. `/bench-review-implementation` — FT86, `specs/ft86-fail-closed-control-records.md`.
+   The build is landed and unreviewed; nothing else should start while a
+   twenty-story diff sits on `main` with only the gate's word on it.
+2. `/bench-write-spec` — FT96, parallel-delegate worktree assignments. Raised to
+   MEDIUM by the stash incident: the isolation guarantee is stated with the wrong
+   boundary, and the next parallel build repeats the failure until it is fixed.
+3. `/bench-write-spec` — FT71, versioned local shift evidence. The remaining HIGH
    bank-track row; the repository-controlled bank evidence requirement makes it
    active.

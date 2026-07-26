@@ -1,1 +1,0 @@
-- 2026-07-25  bench roadmap prints 'no ROADMAP.md' for a present-but-empty ROADMAP.md, conflating absent with empty — the distinction FT86 draws everywhere else. Pinned today by a green runtime contract asserting that string, so changing it is a reviewer call.
