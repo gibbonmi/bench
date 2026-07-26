@@ -2,7 +2,8 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `e338cba`, checkout clean, 13 unpushed commits.
+Branch: `main` — HEAD `32dbb21`, checkout clean, 1 unpushed commit (this file).
+The FT86 build and the drain are pushed: `origin/main` is at `e338cba`.
 `bench status` reports 8 dirty paths; they are the one surviving worktree
 described below, not this checkout.
 Spec: `specs/ft86-fail-closed-control-records.md` (Status: staged)
@@ -16,8 +17,9 @@ Gate: green at `32fdf17` — current
   status), each on its own green whole-tree gate, plus a confirming gate on the
   integrated tree. The spec's `Status:` line is still `staged` — the transition to
   `implemented` is `/bench-final-check`'s, not the build's.
-- **Semantic review has NOT run.** That is the next phase. Nothing has been pushed;
-  the reviewer owns the merge.
+- **Semantic review has NOT run, and the build is already pushed.** Review is still
+  the next phase, but it is now a post-push review: findings land as follow-up
+  commits on `origin/main` rather than as pre-merge fixes.
 - **The two cross-contaminated FT86 worktrees are cleaned.** Both were discarded
   with `bench worktree clean --apply`, which preserved each one's payload to a
   `refs/bench/recovery/…` ref before removing it, so the discard is reversible.
