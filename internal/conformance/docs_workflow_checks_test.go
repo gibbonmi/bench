@@ -169,13 +169,18 @@ func checkColdPickupCLILists(root string) []string {
 		}
 	}
 	// Reverse check: a `bench <cmd>` reference that names no route is a dead pointer.
-	// The command phase files are in scope so the collapsed commit-discipline prose
-	// (pointing at `bench commit` / `bench spec implemented`) is held to a routing token.
+	// Commands and skills alike route the reader to the CLI in prose, so the whole
+	// .agents markdown tree is in scope, and its file set comes from the same walk
+	// checkStaleCommandReferences uses so the two sweeps cannot disagree about what
+	// counts as an agent-facing document. The walk also yields shell, JSON, and YAML,
+	// where a regex written for prose invites a false positive, so only .md is scanned.
 	refFiles := []string{"HANDOFF.md", ".bench/BENCH.md", ".bench/BENCH-reference.md"}
-	cmdFiles, _ := filepath.Glob(filepath.Join(root, ".agents", "commands", "*.md"))
-	sort.Strings(cmdFiles)
-	for _, abs := range cmdFiles {
-		refFiles = append(refFiles, slashRel(root, abs))
+	agentDocs := walkConformanceDocs(filepath.Join(root, ".agents"))
+	sort.Strings(agentDocs)
+	for _, abs := range agentDocs {
+		if strings.HasSuffix(abs, ".md") {
+			refFiles = append(refFiles, slashRel(root, abs))
+		}
 	}
 	for _, rel := range refFiles {
 		path := filepath.Join(root, filepath.FromSlash(rel))

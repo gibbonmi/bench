@@ -65,6 +65,8 @@ func checkWorkflowAnchors(root string) []string {
 	require(".agents/skills/bench-craft-review/SKILL.md", "an edge nobody decided")
 	require(".agents/commands/bench-review-implementation.md", "craft-delegate")
 	require(".agents/skills/bench-craft-delegate/SKILL.md", "a claim, not a result")
+	require(".agents/skills/bench-craft-delegate/SKILL.md", "bench worktree create --request")
+	require(".agents/skills/bench-craft-delegate/SKILL.md", "git stash")
 	require(".agents/commands/bench-implement-spec.md", "When the build stops short")
 	require(".agents/commands/bench-write-spec.md", "Superseded by")
 	require(".agents/commands/bench-shape-idea.md", "## Handoff")
