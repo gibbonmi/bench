@@ -128,6 +128,13 @@ coverage map; a class skipped here returns as a regression.
   not-found, so a reader that does not stat first classifies a broken link as an
   authoritative empty state
 - unquoted multi-word arguments (`$*` vs `$1`)
+- a flag's value read as a positional: a parser resolving a subcommand or
+  positional as "first token not `-`-prefixed" skips flags but not their values
+  or anything after `--`, so `git stash -m list` and `git stash -- list` resolve
+  to `list` and an allow verdict lands on the mutation the guard exists to
+  refuse. The assertion must supply the sought token only as a flag value or
+  pathspec — a case that also spells the positional explicitly passes for the
+  wrong reason
 - required tool missing from PATH (no global `bench`, no `readlink -f`)
 - invocation through a symlink rather than the real path
 - invocation through every shipped surface: real kit CLI, linked-repo by-path
