@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 // newRepo initialises a git repo in a temp dir, chdirs into it (restored at test end,
@@ -336,14 +338,18 @@ func TestDrainCountsMixedLines(t *testing.T) {
 	if err := os.WriteFile(ideasPath(t, root), []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if ideas, _ := DrainCounts(root); ideas != 2 {
+	if ideas, _, _, _ := DrainCounts(root); ideas != 2 {
 		t.Fatalf("DrainCounts ideas got %d, want 2", ideas)
 	}
 }
 
 // TestDrainCountsAbsent covers the zero posture when both sources are missing.
 func TestDrainCountsAbsent(t *testing.T) {
-	if ideas, open := DrainCounts(t.TempDir()); ideas != 0 || open != 0 {
+	ideas, ideasState, open, learningsState := DrainCounts(t.TempDir())
+	if ideas != 0 || open != 0 {
 		t.Fatalf("absent sources: got %d/%d, want 0/0", ideas, open)
+	}
+	if ideasState != bounds.StateParsed || learningsState != bounds.StateParsed {
+		t.Fatalf("absent sources should read as the ordinary quiet state, got ideas=%s learnings=%s", ideasState, learningsState)
 	}
 }

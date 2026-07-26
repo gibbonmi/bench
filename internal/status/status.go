@@ -432,15 +432,37 @@ func isPrimaryCheckout(root string) bool {
 // counts are roadmap.DrainCounts — the same counters `bench roadmap` reports. The
 // learnings component shows only at or above the floor (env BENCH_LEARNINGS_FLOOR,
 // default 1); parked ideas always count.
+//
+// Each of the two sources carries its own readability state. A source whose read failed
+// (unreadable or wrong-type — the same test appendMaps applies) renders as an explicit
+// `unknown (<path> is <state>)` segment instead of a fabricated 0, and the good source's
+// count still renders alongside it: one source failing must not hide the other's number.
+// The row only disappears when both sources read cleanly and both counts are zero.
 func appendDrain(rows []row, root string) []row {
-	ideas, open := roadmap.DrainCounts(root)
+	ideas, ideasState, open, learningsState := roadmap.DrainCounts(root)
 	if open < learningsFloor() {
 		open = 0
 	}
-	if ideas == 0 && open == 0 {
-		return rows
+	ideasFailed := ideasState == bounds.StateUnreadable || ideasState == bounds.StateWrongType
+	learningsFailed := learningsState == bounds.StateUnreadable || learningsState == bounds.StateWrongType
+	if !ideasFailed && !learningsFailed {
+		if ideas == 0 && open == 0 {
+			return rows
+		}
+		return append(rows, row{4, "drain", fmt.Sprintf("%d idea(s), %d open learning(s)", ideas, open), "/bench-what-next"})
 	}
-	return append(rows, row{4, "drain", fmt.Sprintf("%d idea(s), %d open learning(s)", ideas, open), "/bench-what-next"})
+	var parts []string
+	if ideasFailed {
+		parts = append(parts, fmt.Sprintf("unknown (IDEAS.md is %s)", ideasState))
+	} else {
+		parts = append(parts, fmt.Sprintf("%d idea(s)", ideas))
+	}
+	if learningsFailed {
+		parts = append(parts, fmt.Sprintf("unknown (.bench/learnings.md is %s)", learningsState))
+	} else {
+		parts = append(parts, fmt.Sprintf("%d open learning(s)", open))
+	}
+	return append(rows, row{4, "drain", strings.Join(parts, ", "), "/bench-what-next"})
 }
 
 // appendStructure adds the structural-debt signal (sev 5) when the violation count is positive.
@@ -506,7 +528,10 @@ func appendRoadmapReconcile(rows []row, root string) []row {
 	if def, ok := git.ResolvedDefault(root); !ok || cur != def {
 		return rows
 	}
-	merged, dangling := roadmapReconcileCounts(root)
+	merged, dangling, state := roadmapReconcileCounts(root)
+	if state == bounds.StateUnreadable || state == bounds.StateWrongType {
+		return append(rows, row{10, "roadmap", fmt.Sprintf("unknown (ROADMAP.md is %s)", state), "/bench-what-next"})
+	}
 	if merged == 0 && dangling == 0 {
 		return rows
 	}
@@ -579,15 +604,21 @@ func orphanedPickupCount(root string) int {
 // distinct path against the tree: a missing file is a dangling row (the spec retired but its
 // roadmap row survived); a present file that spec.AwaitsRetirement marks is a merged row (the
 // work shipped but the drain missed it). A present, still-staged spec is the normal open-work
-// state and counts nothing. Absent ROADMAP.md → 0, 0. The merged predicate is
-// spec.AwaitsRetirement, the same one source the retirement counter applies.
-func roadmapReconcileCounts(root string) (merged, dangling int) {
-	data, err := os.ReadFile(filepath.Join(root, "ROADMAP.md"))
-	if err != nil {
-		return 0, 0
+// state and counts nothing. Absent or empty ROADMAP.md → 0, 0, bounds.StateParsed, the ordinary
+// quiet-roadmap posture; an unreadable or wrong-type ROADMAP.md reports that state instead, so
+// appendRoadmapReconcile renders the failed read as unknown rather than a fabricated clean
+// board. The merged predicate is spec.AwaitsRetirement, the same one source the retirement
+// counter applies.
+func roadmapReconcileCounts(root string) (merged, dangling int, state bounds.FileState) {
+	c := bounds.Classify(filepath.Join(root, "ROADMAP.md"), bounds.OutlineFileLimit)
+	switch c.State {
+	case bounds.StateUnreadable, bounds.StateWrongType:
+		return 0, 0, c.State
+	case bounds.StateAbsent, bounds.StateEmpty:
+		return 0, 0, bounds.StateParsed
 	}
 	seen := map[string]bool{}
-	for _, slug := range roadmap.SpecSlugs(data) {
+	for _, slug := range roadmap.SpecSlugs(c.Data) {
 		path := "specs/" + slug + ".md"
 		if seen[path] {
 			continue
@@ -602,7 +633,7 @@ func roadmapReconcileCounts(root string) (merged, dangling int) {
 			merged++
 		}
 	}
-	return merged, dangling
+	return merged, dangling, bounds.StateParsed
 }
 
 // learningsFloor reads BENCH_LEARNINGS_FLOOR, defaulting to 1 when unset, empty, or not

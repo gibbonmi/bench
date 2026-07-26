@@ -88,7 +88,9 @@ func Command(args []string) (string, int) {
 // internal/roadmap, and the worktree pool from the shared classifier.
 func gather(root string) Snapshot {
 	text, present := roadmap.RoadmapText(root)
-	_, openLearnings := roadmap.DrainCounts(root)
+	// The dashboard renders the count only; a failed learnings read degrades to 0 here,
+	// matching drainStatus's posture (the status board owns the fail-closed unknown row).
+	_, _, openLearnings, _ := roadmap.DrainCounts(root)
 	registered, werr := worktree.ClassifyRegisteredWorktrees(root)
 	snap := Snapshot{
 		GeneratedAt:    time.Now(),

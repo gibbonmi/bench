@@ -141,9 +141,14 @@ func roadmapReadError(state bounds.FileState, reason string) string {
 }
 
 // DrainCounts returns the maintenance inbox counts `bench roadmap` reports before a
-// reviewer trusts the roadmap sequence. Missing or unreadable files count as zero.
-func DrainCounts(root string) (ideas, openLearnings int) {
-	return lineCount(filepath.Join(root, ideasFile)), learningCount(root)
+// reviewer trusts the roadmap sequence, plus each source's own readability state so a
+// caller can distinguish a genuinely empty inbox from a failed read. Absent or empty is
+// the ordinary quiet-inbox posture (count 0, no fail-closed state); only an unreadable
+// or wrong-type source marks a failed read, matching maps.UnresolvedCount's contract.
+func DrainCounts(root string) (ideas int, ideasState bounds.FileState, openLearnings int, learningsState bounds.FileState) {
+	ideas, ideasState = lineCount(filepath.Join(root, ideasFile))
+	openLearnings, learningsState = learningCount(root)
+	return
 }
 
 // RoadmapText returns ROADMAP.md's raw contents and whether it is present and non-empty —
@@ -166,7 +171,11 @@ func ParkedIdeas(root string) []string {
 }
 
 func drainStatus(root string) string {
-	ideas, openLearnings := DrainCounts(root)
+	// bench roadmap's status callout only needs the counts: a source that failed to
+	// read renders as 0 here, and RoadmapCommand's own classified read above already
+	// fails closed on ROADMAP.md itself, so an unreadable IDEAS.md or learnings.md
+	// degrades this callout to quiet rather than the command's own read failing.
+	ideas, _, openLearnings, _ := DrainCounts(root)
 	if ideas == 0 && openLearnings == 0 {
 		return ""
 	}
@@ -199,16 +208,35 @@ func RecommendedSequence(roadmap string) string {
 	return doc.SequenceText
 }
 
-func learningCount(root string) int {
-	data, err := os.ReadFile(filepath.Join(root, ".bench", "learnings.md"))
-	if err != nil {
-		return 0
+// learningCount classifies .bench/learnings.md and counts its open rows. Absent or
+// empty is 0 rows at bounds.StateParsed (the ordinary quiet-journal posture); an
+// unreadable or wrong-type journal reports 0 with that state, so the caller renders
+// unknown instead of a fabricated clean journal.
+func learningCount(root string) (int, bounds.FileState) {
+	c := bounds.Classify(filepath.Join(root, ".bench", "learnings.md"), controlRecordLimit)
+	switch c.State {
+	case bounds.StateUnreadable, bounds.StateWrongType:
+		return 0, c.State
+	case bounds.StateAbsent, bounds.StateEmpty:
+		return 0, bounds.StateParsed
+	default:
+		return len(learnings.Rows(c.Data)), bounds.StateParsed
 	}
-	return len(learnings.Rows(data))
 }
 
-func lineCount(file string) int {
-	return len(ideaLines(file))
+// lineCount classifies file and counts its parked-idea lines, in the same
+// absent/empty-is-quiet, unreadable/wrong-type-is-failed contract as learningCount.
+func lineCount(file string) (int, bounds.FileState) {
+	c := bounds.Classify(file, controlRecordLimit)
+	switch c.State {
+	case bounds.StateUnreadable, bounds.StateWrongType:
+		return 0, c.State
+	case bounds.StateAbsent, bounds.StateEmpty:
+		return 0, bounds.StateParsed
+	default:
+		_, _, out := parseIdeas(c.Data, true)
+		return len(out), bounds.StateParsed
+	}
 }
 
 // ideaLines is the one reader of IDEAS.md-style parked lines: every line beginning `- `.
