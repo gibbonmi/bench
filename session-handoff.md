@@ -2,7 +2,7 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `f9cc907`, 15 dirty paths, 9 unpushed commits
+Branch: `main` — HEAD `8e4ded4`, clean, 12 unpushed commits
 Spec: `specs/ft86-fail-closed-control-records.md` (Status: staged)
 Gate: green at `32fdf17` — current
 
@@ -16,11 +16,11 @@ Gate: green at `32fdf17` — current
   `implemented` is `/bench-final-check`'s, not the build's.
 - **Semantic review has NOT run.** That is the next phase. Nothing has been pushed;
   the reviewer owns the merge.
-- **The 15 dirty paths are two abandoned worktrees, not real work.** Two
-  round-2 delegates cross-contaminated each other (see the stash learning below);
-  their worktrees still hold the discarded mixed diff. `main` itself is clean.
-  They can be discarded with `bench worktree clean <path>` — left for the reviewer
-  because discarding is hard to reverse.
+- **Two abandoned worktrees still hold discarded work.** `main` is clean; two
+  round-2 delegates cross-contaminated each other through the stash (see below),
+  and their worktrees still hold the discarded mixed diff. They can be cleared
+  with `bench worktree clean <path>` — left for the reviewer because discarding
+  is hard to reverse.
 - **Four calls are open for post-hoc veto.** (1) `bench maps` now exits 1 when
   `decisions/` holds a file with no ticket heading; all three real decision files
   have one, so this repo is unaffected, but a *linked* repo with a `README.md`
@@ -46,8 +46,9 @@ Gate: green at `32fdf17` — current
   contract tests execute the built binary, not the package source; a stale binary
   produced false reds twice this session and can equally make broken code look
   green. Captured in `.bench/learnings.md`.
-- **`.bench/learnings.md` carries 2 open entries and `IDEAS.md` 1 parked idea**, all
-  from this session and all awaiting a `/bench-what-next` verdict.
+- **Both capture sources are drained to zero** (`8e4ded4`). The stash hazard was
+  merged into FT96 and the stale-binary trap opened FT131; the parked
+  empty-vs-absent `ROADMAP.md` conflation opened FT132.
 - **Never mutate the repository while a gate runs**, and build `dist/bench` only with
   `scripts/go-build.sh`. `projects/benchkit.md`'s cold-session notes carry these and
   the `internal/canary` nested-run trap.
