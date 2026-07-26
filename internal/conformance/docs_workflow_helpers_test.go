@@ -33,6 +33,8 @@ func checkWorkflowAnchors(root string) []string {
 	require(".agents/commands/bench-write-spec.md", "bench-craft-spec")
 	require(".agents/skills/bench-craft-tdd/SKILL.md", "bench-craft-spec")
 	require(".agents/skills/bench-craft-review/SKILL.md", "bench-craft-spec")
+	require(".agents/skills/bench-craft-spec/SKILL.md", "Slicing a build for delegates")
+	require(".agents/skills/bench-craft-delegate/SKILL.md", "Slicing a build for delegates")
 	require(".agents/skills/bench-craft-tdd/SKILL.md", "acceptance row")
 	require(".agents/skills/bench-craft-tdd/SKILL.md", "not TDD-able")
 	require(".agents/skills/bench-craft-tdd/SKILL.md", "call count")

@@ -23,6 +23,9 @@ its count and its worst issue.
   working agreement, the shared platform rules, the project profile, any
   conventions docs. Knowledge duplication is a Standards finding — two
   derivations of one fact is the code-standard defect review exists to grade.
+  When the diff landed as delegate slices, hunt duplication at the fence
+  boundaries specifically — a shared primitive no slice owned arrives derived
+  once per fence (the slicing rule lives in `craft-spec`).
   The smell baseline below rides this axis: classic rot counts even when no
   doc names it. Comment prose is graded against `craft-comments` — a comment
   that narrates the change, cites provenance, or argues its own correctness

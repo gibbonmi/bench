@@ -1,7 +1,7 @@
 ---
 name: craft-spec
-description: The spec-authoring discipline — the acceptance-coverage-map row schema, what counts as a real red signal, the canonical edge-inventory classes, and how stories and scope cuts are sized. Use when authoring or auditing a spec, writing coverage rows, asking "what's the red signal", walking an edge inventory, or judging whether a cut is genuinely out of scope.
-index: coverage-map rows, edge inventories, and story sizing for a spec
+description: The spec-authoring discipline — the acceptance-coverage-map row schema, what counts as a real red signal, the canonical edge-inventory classes, how stories and scope cuts are sized, and how a build is sliced for delegates. Use when authoring or auditing a spec, writing coverage rows, asking "what's the red signal", walking an edge inventory, judging whether a cut is genuinely out of scope, or slicing a build for delegates.
+index: coverage-map rows, edge inventories, story sizing, and delegate slicing for a spec
 ---
 
 # The spec discipline: rows, edges, and scope
@@ -9,8 +9,9 @@ index: coverage-map rows, edge inventories, and story sizing for a spec
 A spec fixes the build's target: stories set the breadth, seams set where tests
 live, and the coverage map makes "done" checkable by the gate instead of by
 belief. This skill is the one source for the map's row schema, the edge-class
-list, and the sizing rules — `/bench-write-spec` composes it, and `craft-tdd`
-and `craft-review` point here when they need the schema off the phase path.
+list, the sizing rules, and the delegate-slicing rule — `/bench-write-spec`
+composes it, and `craft-tdd`, `craft-review`, and `craft-delegate` point here
+when they need the schema off the phase path.
 
 ## The acceptance coverage map
 
@@ -88,3 +89,36 @@ green because the old form still works — then contract (delete the old form
 once no caller remains). When even batches cannot hold green on their own,
 say so in the spec: the sequence rides one shared branch and green is
 promised only at a final integrate-and-verify step.
+
+## Slicing a build for delegates
+
+When a spec splits a build into delegate slices, the slice boundary and the
+ownership fence are the same line: each slice owns every file it must edit and
+edits every file it owns. Cut slices by ownership, not by behavior theme — a
+theme names what the work is about; a fence names who writes where, and only
+the fence is checkable at charge time. A slice that reaches outside its fence
+collides with another writer, and one that stops short returns with its own
+work unwritten; either way the coordinator pays a round trip.
+
+**Shared primitives land first.** Name every primitive two or more slices will
+consume up front in the spec, and land it as a deep-unit slice before the
+consuming seams. A primitive no slice owns gets hand-derived behind every
+fence that needs it — two derivations of one fact, the knowledge-duplication
+defect the code standard names.
+
+Fence alignment is tier-independent: a future cheap-tier retest changes
+delegate routing, never this rule.
+
+```
+Slice per package — internal/scan, internal/report, internal/bounds — one
+delegate each, owning every file in its package.
+```
+Good — the package boundary is the ownership fence, so no two slices write
+the same file and the merges cannot conflict.
+
+```
+Slice by theme — one delegate takes "fail-closed behavior" across the tree.
+```
+Bad — a theme touches every package that implements it, so this slice reaches
+into `internal/bounds` — another delegate's fence — and every crossing costs a
+round trip.

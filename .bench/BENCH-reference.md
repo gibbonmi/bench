@@ -52,7 +52,7 @@ not the list:
 - reviewing a diff / what a finding must cite → `.agents/skills/bench-craft-review/SKILL.md`
 - placing a test / designing an interface → `.agents/skills/bench-craft-seams/SKILL.md`
 - writing or pruning a skill → `.agents/skills/bench-craft-skills/SKILL.md`
-- coverage-map rows, edge inventories, and story sizing for a spec → `.agents/skills/bench-craft-spec/SKILL.md`
+- coverage-map rows, edge inventories, story sizing, and delegate slicing for a spec → `.agents/skills/bench-craft-spec/SKILL.md`
 - evaluating a change to the kit itself → `.agents/skills/bench-craft-synthesis/SKILL.md` (kit-only)
 - writing tests first → `.agents/skills/bench-craft-tdd/SKILL.md`
 <!-- bench:skills-index:end -->

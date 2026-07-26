@@ -1,6 +1,6 @@
 # FT136 — the slice-fence rule
 
-Status: staged
+Status: implemented
 
 ## Problem
 

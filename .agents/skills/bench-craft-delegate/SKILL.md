@@ -71,7 +71,10 @@ A write-delegation from a spec carries its stories' coverage rows — behavior,
 seam, red signal — in the charge, every time, and requires the delegate to show
 each row red before the edit and green after. That is what makes the done-claim
 verifiable by running the gate instead of re-reading the work; a charge without
-its rows buys a diff you must read line-by-line to trust.
+its rows buys a diff you must read line-by-line to trust. When the spec
+sliced the build across delegates, check each slice against `craft-spec`'s
+"Slicing a build for delegates" before sending the charge — charge time is
+when the fence is still checkable.
 
 The charge also names the gate layer that owns each artifact class the
 delegate touches — workflows and `.bench/` content to canary, gate output
