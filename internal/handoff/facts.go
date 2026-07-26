@@ -61,15 +61,12 @@ func collect(root string) facts {
 	return f
 }
 
-// branch names the checked-out branch. `rev-parse --abbrev-ref` answers "HEAD" when
-// detached and fails outright on an unborn branch, so the symbolic ref settles the second
-// case: a repo with no commits still has a named branch, and reporting it as detached would
-// state something false.
+// branch renders the checked-out branch for the pin block. git.CheckedOutBranch owns the
+// probe; this adds the two things the pin block wants and the probe does not answer — the
+// literal "HEAD" is detachment rather than a branch name, and a real name is backticked
+// for the markdown the block is written in.
 func branch(root string) string {
-	if name, err := git.Output("-C", root, "rev-parse", "--abbrev-ref", "HEAD"); err == nil && name != "" && name != "HEAD" {
-		return "`" + name + "`"
-	}
-	if name, err := git.Output("-C", root, "symbolic-ref", "--quiet", "--short", "HEAD"); err == nil && name != "" {
+	if name, err := git.CheckedOutBranch(root); err == nil && name != "" && name != "HEAD" {
 		return "`" + name + "`"
 	}
 	return unknownBranch

@@ -4,9 +4,8 @@ import "strings"
 
 // mainCandidate is the branch name probed when origin/HEAD is unset. It is a candidate to
 // verify against the object database, never an answer: a repository with no branch named
-// main falls through to the sole-local-branch fallback and then to ok=false. It is not
-// adopt's fail-safe literal, which is the branch a guard protects when nothing resolves;
-// this one is discarded the moment the object database does not confirm it.
+// main falls through to the sole-local-branch fallback and then to ok=false, and the
+// candidate is discarded the moment the object database does not confirm it.
 const mainCandidate = "main"
 
 // ResolvedDefault is the single owner of the default-branch fact. It returns the branch

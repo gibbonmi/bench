@@ -91,8 +91,10 @@ func hooksDir(root string) string {
 // resolvable default branch. It is the guard's fail-safe rather than a claim about the
 // repository: the installed hook re-resolves origin/HEAD live on every push and reaches
 // the baked token only when that lookup is empty, and a guard protecting nothing is the
-// worse failure. It is not git's object-database probe candidate, which is discarded when
-// the repository cannot confirm it; this one is kept precisely because nothing confirmed.
+// worse failure. It shares its spelling with git's default-branch probe candidate and
+// nothing else — that one is thrown away when the object database cannot confirm it,
+// while this one is kept precisely because nothing confirmed anything. Collapsing the two
+// onto one constant would make a change to either fact silently change the other.
 const fallbackProtectedBranch = "main"
 
 // protectedBranch names the branch the installed hook refuses a direct push to.

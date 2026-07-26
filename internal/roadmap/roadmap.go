@@ -35,7 +35,14 @@ var roadmapGrammar = usage.Grammar{
 	Help: "usage: bench roadmap",
 }
 
-const ideasFile = "IDEAS.md"
+// IdeasFile and RoadmapFile are the two repo-relative control records this package
+// owns. Both are exported because the status board names them in the rows it prints
+// when their reads fail, and a literal repeated there is a second derivation of a name
+// this package decides.
+const (
+	IdeasFile   = "IDEAS.md"
+	RoadmapFile = "ROADMAP.md"
+)
 
 // IdeaCommand implements `bench idea <text...>`: it appends a dated line to IDEAS.md.
 // The args are joined with single spaces; an empty or all-whitespace text yields the
@@ -56,7 +63,7 @@ func IdeaCommand(args []string) (string, int) {
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	file := filepath.Join(root, ideasFile)
+	file := filepath.Join(root, IdeasFile)
 
 	f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
@@ -77,7 +84,7 @@ func IdeaCommand(args []string) (string, int) {
 }
 
 func cannotWriteIdeas(err error) string {
-	return toon.Errorf("cannot write "+ideasFile, err.Error()) + "\n"
+	return toon.Errorf("cannot write "+IdeasFile, err.Error()) + "\n"
 }
 
 // needsNewline reports whether the file is non-empty and its last byte is not a
@@ -115,21 +122,21 @@ func RoadmapCommand(args []string) (string, int) {
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	c := bounds.Classify(filepath.Join(root, "ROADMAP.md"), controlRecordLimit)
+	c := bounds.Classify(filepath.Join(root, RoadmapFile), bounds.ControlRecordLimit)
 	switch {
 	case c.State == bounds.StateAbsent:
 		return missingRoadmap, 0
 	case c.State == bounds.StateEmpty:
 		// The classifier carries no diagnostic for a clean read of nothing, so the
 		// error line supplies the one fact that separates this from absence.
-		return roadmapReadError(c.State, "the file exists but holds no bytes"), 1
+		return toon.RecordError(RoadmapFile, c.State, "the file exists but holds no bytes") + "\n", 1
 	case c.State.Failed():
-		return roadmapReadError(c.State, c.Reason), 1
+		return toon.RecordError(RoadmapFile, c.State, c.Reason) + "\n", 1
 	}
 	doc, failures := ParseDocument(c.Data, nil, true)
 	for _, f := range failures {
 		if f.Reason == noRoadmapRowsReason {
-			return roadmapReadError(bounds.StateUnsupportedSchema, f.Reason), 1
+			return toon.RecordError(RoadmapFile, bounds.StateUnsupportedSchema, f.Reason) + "\n", 1
 		}
 	}
 	text := doc.Text
@@ -139,20 +146,13 @@ func RoadmapCommand(args []string) (string, int) {
 	return text + nextAction(text), 0
 }
 
-// roadmapReadError renders the AXI error line every fail-closed classifier state
-// produces for `bench roadmap`: `error: <path> is <state> — <reason>`, one grammar
-// with every other migrated surface's error line.
-func roadmapReadError(state bounds.FileState, reason string) string {
-	return toon.Errorf("ROADMAP.md is "+string(state), reason) + "\n"
-}
-
 // DrainCounts returns the maintenance inbox counts `bench roadmap` reports before a
 // reviewer trusts the roadmap sequence, plus each source's own readability state so a
 // caller can distinguish a genuinely empty inbox from a failed read. Absent or empty is
-// the ordinary quiet-inbox posture (count 0, no fail-closed state); only an unreadable
-// or wrong-type source marks a failed read, matching maps.UnresolvedCount's contract.
+// the ordinary quiet-inbox posture (count 0, no fail-closed state); only a state
+// FileState.Failed reports marks a failed read, matching maps.UnresolvedCount's contract.
 func DrainCounts(root string) (ideas int, ideasState bounds.FileState, openLearnings int, learningsState bounds.FileState) {
-	parked, ideasState := ideaLines(filepath.Join(root, ideasFile))
+	parked, ideasState := ideaLines(filepath.Join(root, IdeasFile))
 	openLearnings, learningsState = learningCount(root)
 	return len(parked), ideasState, openLearnings, learningsState
 }
@@ -162,7 +162,7 @@ func DrainCounts(root string) (ideas int, ideasState bounds.FileState, openLearn
 // its definitive empty state, which is where every state but a clean non-empty read
 // lands — the page degrades rather than failing, unlike the `bench roadmap` command.
 func RoadmapText(root string) (text string, present bool) {
-	c := bounds.Classify(filepath.Join(root, "ROADMAP.md"), controlRecordLimit)
+	c := bounds.Classify(filepath.Join(root, RoadmapFile), bounds.ControlRecordLimit)
 	if c.State != bounds.StateParsed {
 		return "", false
 	}
@@ -174,7 +174,7 @@ func RoadmapText(root string) (text string, present bool) {
 // same lines DrainCounts tallies (both go through ideaLines, one source). A file that did
 // not read as a usable document yields nil, which the dashboard renders as its empty state.
 func ParkedIdeas(root string) []string {
-	parked, _ := ideaLines(filepath.Join(root, ideasFile))
+	parked, _ := ideaLines(filepath.Join(root, IdeasFile))
 	return parked
 }
 
@@ -187,7 +187,7 @@ func drainStatus(root string) string {
 	if ideas == 0 && openLearnings == 0 {
 		return ""
 	}
-	return fmt.Sprintf("\n\n## Drain status\n\n- ideas: %d parked in %s\n- learnings: %d open in .bench/learnings.md\n\nRun /bench-what-next before trusting the sequence.\n", ideas, ideasFile, openLearnings)
+	return fmt.Sprintf("\n\n## Drain status\n\n- ideas: %d parked in %s\n- learnings: %d open in %s\n\nRun /bench-what-next before trusting the sequence.\n", ideas, IdeasFile, openLearnings, learnings.JournalPath)
 }
 
 // numberedItem matches one sequence entry; the format contract wants two or three.
@@ -221,7 +221,7 @@ func RecommendedSequence(roadmap string) string {
 // whose read failed reports 0 with that failed state, so the caller renders unknown
 // instead of a fabricated clean journal.
 func learningCount(root string) (int, bounds.FileState) {
-	c := bounds.Classify(filepath.Join(root, ".bench", "learnings.md"), controlRecordLimit)
+	c := bounds.Classify(filepath.Join(root, filepath.FromSlash(learnings.JournalPath)), bounds.ControlRecordLimit)
 	switch {
 	case c.State.Failed():
 		return 0, c.State
@@ -239,7 +239,7 @@ func learningCount(root string) (int, bounds.FileState) {
 // lines at bounds.StateParsed (the ordinary quiet-inbox posture), the same
 // absent/empty-is-quiet, failed-read-is-reported contract as learningCount.
 func ideaLines(file string) ([]string, bounds.FileState) {
-	c := bounds.Classify(file, controlRecordLimit)
+	c := bounds.Classify(file, bounds.ControlRecordLimit)
 	switch {
 	case c.State.Failed():
 		return nil, c.State

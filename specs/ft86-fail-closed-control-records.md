@@ -396,10 +396,11 @@ Seams, and their prior art:
 - **`internal/contract/axi`** — every surface posture: exit codes and structured
   `error:` strings for `learnings`, `maps`, `roadmap`, `roadmap --context`,
   `coverage --check`, `diff`, and `status`, plus the two parser states.
-  `bench outline` appears here only as a *regression guard* — its existing
-  `TestAXIOutlineSymlinkSkipped` must stay green, which is what forbids migrating
-  it onto the classifier. Prior art: `axi_fail_closed_test.go`,
-  `axi_outline_test.go`, `axi_coverage_test.go`, `axi_roadmap_context_test.go`.
+  `bench outline` appears here only as a *regression guard* — the existing
+  `testAXIOutlineSymlinkSkipped` subtest of `TestAXIOutlineContracts` must stay
+  green, which is what forbids migrating it onto the classifier. Prior art:
+  `axi_fail_closed_test.go`, `axi_outline_test.go`, `axi_coverage_test.go`,
+  `axi_roadmap_context_test.go`.
 - **`internal/conformance`** — the repository-wide facts: no surviving
   `DefaultBranch` symbol, and the `specs/*.md` sweep applying the new no-map
   rule. Prior art: `docs_workflow_checks_test.go`'s `checkCoverageMaps`.
@@ -472,8 +473,8 @@ The gate command is the project gate: `.bench/gate.sh`.
 | 14 | a spec carrying the historical marker still passes `--check` | contract (`internal/contract/axi`) | `go test ./internal/contract/axi -run TestAXICoverageHistoricalPasses` | Paired with the row above, this forbids the implementation that fails every unmapped spec including opted-out ones. |
 | 15 | story `0`, a non-member story number, and a reversed range each fail | contract (`internal/contract/axi`) | `go test ./internal/contract/axi -run TestAXICoverageStoryMembership` | Three fixtures in one table, each currently passing; a max-only validator fails all three assertions. |
 | 15 | a valid comma list and forward range still pass | contract (`internal/contract/axi`) | `go test ./internal/contract/axi -run TestAXICoverageValidStoryRefs` | Forbids the over-strict validator that rejects legitimate multi-story rows. |
-| 16 | a tracked symlink is skipped, not followed, and outline still exits 0 | contract (`internal/contract/axi`) | already covered — `go test ./internal/contract/axi -run TestAXIOutlineSymlinkSkipped` is green today and must stay green | This is the regression guard for the deliberate non-change: if the build migrates outline onto the classifier, story 5's follow-the-link rule indexes the target under the link's path and this test fails by name. |
-| 16 | a non-regular tracked entry keeps its `nonregular` skip row and exit 0 | contract (`internal/contract/axi`) | already covered — the same test asserts the `link.go,nonregular` row and exit 0 | An implementation that promotes non-regular to a failure class turns exit 0 into exit 1 here. |
+| 16 | a tracked symlink is skipped, not followed, and outline still exits 0 | contract (`internal/contract/axi`) | already covered — `go test ./internal/contract/axi -run 'TestAXIOutlineContracts/AXI_outline_tracked_symlink_skipped'` is green today and must stay green | This is the regression guard for the deliberate non-change: if the build migrates outline onto the classifier, story 5's follow-the-link rule indexes the target under the link's path and this test fails by name. |
+| 16 | a non-regular tracked entry keeps its `nonregular` skip row and exit 0 | contract (`internal/contract/axi`) | already covered — the same `go test ./internal/contract/axi -run 'TestAXIOutlineContracts/AXI_outline_tracked_symlink_skipped'` subtest asserts the `link.go,nonregular` row and exit 0 | An implementation that promotes non-regular to a failure class turns exit 0 into exit 1 here. |
 | 17 | a signal whose read failed renders an `unknown` row and status still exits 0 | contract (`internal/contract/axi`) | `go test ./internal/contract/axi -run TestAXIStatusUnknownRow` | Asserting the row is present *and* the exit is 0 forbids both the fabricated zero (row absent) and the fail-closed over-correction. |
 | 17 | the `unknown` row is not suppressed by a zero count | contract (`internal/contract/axi`) | `go test ./internal/contract/axi -run TestAXIStatusUnknownNotSuppressed` | Every signal today is gated on `count > 0`; an unknown state reaching that gate disappears, which this row catches. |
 | 17 | a malformed control record reaches the same `unknown` row an unreadable one does | contract (`internal/contract/axi`) | `go test ./internal/contract/axi -run TestAXIStatusUnknownRow` — the malformed subtest of the same fixture | A surface that switches on unreadable and wrong-type alone lets malformed bytes fall through and be parsed, printing a clean board for a corrupt file; running one fixture per state forbids honoring only the states someone remembered. |

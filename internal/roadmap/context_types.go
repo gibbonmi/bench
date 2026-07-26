@@ -4,15 +4,7 @@ import (
 	"io/fs"
 	"path/filepath"
 	"unicode/utf8"
-
-	"github.com/gibbonmi/bench/internal/bounds"
 )
-
-// controlRecordLimit is the size bound every roadmap control-record read applies.
-// It reuses bounds.OutlineFileLimit rather than declaring a second constant: both
-// bound a whole small text file read into memory, and bounds is the one package
-// that owns read-size policy.
-const controlRecordLimit = bounds.OutlineFileLimit
 
 const contextBodyLimit = 4096
 
@@ -76,9 +68,11 @@ type ContextSnapshot struct {
 	Failures    []ParseFailure
 }
 
-// dirBytes sums the regular-file entries a classified directory listing carries —
-// the same tally readDirSource used to compute inline, kept as its own function now
-// that ClassifyDir owns the read itself.
+// dirBytes sums the sizes of the regular-file entries in a classified directory
+// listing. A subdirectory contributes nothing: the figure reports the bytes of the
+// records the listing itself names, not a recursive tree size. An entry whose Info
+// call fails is skipped rather than failing the tally, because the directory's own
+// state already carries whether the listing could be trusted.
 func dirBytes(entries []fs.DirEntry) int {
 	total := 0
 	for _, e := range entries {

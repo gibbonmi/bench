@@ -279,11 +279,14 @@ func LandedState(root string) (LandedStateFact, error) {
 	return LandedStateFact{DirtyPaths: len(dirty), UnpushedCommits: len(commits), UniqueBranches: len(unique)}, nil
 }
 
-// checkedOutBranch names the branch HEAD points at, or "HEAD" when detached.
+// CheckedOutBranch names the branch HEAD points at, or the literal "HEAD" when detached.
 // `rev-parse --abbrev-ref` fails outright on an unborn branch, so the symbolic ref settles
 // that case: a repository with no commits still has a named branch, and losing the whole
-// snapshot over a missing commit is the worse answer.
-func checkedOutBranch(root string) (string, error) {
+// snapshot over a missing commit is the worse answer. It is exported because the probe
+// chain, not the phrasing built from it, is what every caller shares — a caller that wants
+// detachment reported as "no branch" tests the returned literal rather than running the
+// two git queries a second time.
+func CheckedOutBranch(root string) (string, error) {
 	if name, err := Output("-C", root, "rev-parse", "--abbrev-ref", "HEAD"); err == nil && name != "" {
 		return name, nil
 	}
@@ -292,7 +295,7 @@ func checkedOutBranch(root string) (string, error) {
 
 // Facts derives repository state without mutating the worktree or index.
 func Facts(root string) (RepoFacts, error) {
-	branch, err := checkedOutBranch(root)
+	branch, err := CheckedOutBranch(root)
 	if err != nil {
 		return RepoFacts{}, err
 	}

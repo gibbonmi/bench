@@ -27,6 +27,7 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -434,9 +435,10 @@ func isPrimaryCheckout(root string) bool {
 // default 1); parked ideas always count.
 //
 // Each of the two sources carries its own readability state. A source whose read failed
-// (unreadable or wrong-type — the same test appendMaps applies) renders as an explicit
-// `unknown (<path> is <state>)` segment instead of a fabricated 0, and the good source's
-// count still renders alongside it: one source failing must not hide the other's number.
+// (the FileState.Failed test appendMaps also applies) renders as toon.UnknownCell's
+// explicit `unknown (<path> is <state>)` segment instead of a fabricated 0, and the
+// good source's count still renders alongside it: one source failing must not hide the
+// other's number.
 // The row only disappears when both sources read cleanly and both counts are zero.
 func appendDrain(rows []row, root string) []row {
 	ideas, ideasState, open, learningsState := roadmap.DrainCounts(root)
@@ -453,12 +455,12 @@ func appendDrain(rows []row, root string) []row {
 	}
 	var parts []string
 	if ideasFailed {
-		parts = append(parts, fmt.Sprintf("unknown (IDEAS.md is %s)", ideasState))
+		parts = append(parts, toon.UnknownCell(roadmap.IdeasFile, ideasState))
 	} else {
 		parts = append(parts, fmt.Sprintf("%d idea(s)", ideas))
 	}
 	if learningsFailed {
-		parts = append(parts, fmt.Sprintf("unknown (.bench/learnings.md is %s)", learningsState))
+		parts = append(parts, toon.UnknownCell(learnings.JournalPath, learningsState))
 	} else {
 		parts = append(parts, fmt.Sprintf("%d open learning(s)", open))
 	}
@@ -479,7 +481,7 @@ func appendStructure(rows []row, root string) []row {
 func appendMaps(rows []row, root string) []row {
 	n, state := maps.UnresolvedCount(root)
 	if state.Failed() {
-		return append(rows, row{6, "decisions", fmt.Sprintf("unknown (decisions is %s)", state), "investigate decisions/ (bench maps)"})
+		return append(rows, row{6, "decisions", toon.UnknownCell(maps.DecisionsDir, state), "investigate decisions/ (bench maps)"})
 	}
 	if n > 0 {
 		return append(rows, row{6, "decisions", fmt.Sprintf("%d unresolved map(s)", n), "/bench-shape-idea"})
@@ -530,7 +532,7 @@ func appendRoadmapReconcile(rows []row, root string) []row {
 	}
 	merged, dangling, state := roadmapReconcileCounts(root)
 	if state.Failed() {
-		return append(rows, row{10, "roadmap", fmt.Sprintf("unknown (ROADMAP.md is %s)", state), "/bench-what-next"})
+		return append(rows, row{10, "roadmap", toon.UnknownCell(roadmap.RoadmapFile, state), "/bench-what-next"})
 	}
 	if merged == 0 && dangling == 0 {
 		return rows
@@ -563,7 +565,7 @@ func retirementCount(root string) int {
 		if e.IsDir() || !strings.HasSuffix(e.Name(), ".md") || strings.HasPrefix(e.Name(), ".") {
 			continue
 		}
-		c := bounds.Classify(filepath.Join(dir, e.Name()), bounds.OutlineFileLimit)
+		c := bounds.Classify(filepath.Join(dir, e.Name()), bounds.ControlRecordLimit)
 		if c.State != bounds.StateParsed {
 			continue
 		}
@@ -611,7 +613,7 @@ func orphanedPickupCount(root string) int {
 // nothing is there or what is there could not be read. The merged predicate is
 // spec.AwaitsRetirement, the same one source the retirement counter applies.
 func roadmapReconcileCounts(root string) (merged, dangling int, state bounds.FileState) {
-	c := bounds.Classify(filepath.Join(root, "ROADMAP.md"), bounds.OutlineFileLimit)
+	c := bounds.Classify(filepath.Join(root, roadmap.RoadmapFile), bounds.ControlRecordLimit)
 	switch {
 	case c.State.Failed():
 		return 0, 0, c.State
@@ -625,7 +627,7 @@ func roadmapReconcileCounts(root string) (merged, dangling int, state bounds.Fil
 			continue
 		}
 		seen[path] = true
-		sc := bounds.Classify(filepath.Join(root, path), bounds.OutlineFileLimit)
+		sc := bounds.Classify(filepath.Join(root, path), bounds.ControlRecordLimit)
 		if sc.State == bounds.StateAbsent || sc.State.Failed() {
 			dangling++
 			continue

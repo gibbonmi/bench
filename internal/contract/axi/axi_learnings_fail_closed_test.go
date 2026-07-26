@@ -71,3 +71,29 @@ func TestAXILearningsMalformedRows(t *testing.T) {
 	requireContainsFold(t, out.Stdout, "line 2")
 	requireContainsFold(t, out.Stdout, "malformed learning heading")
 }
+
+// TestAXILearningsWrongType drives the wrong-type state through two real commands. It
+// needs nothing of the host — a directory parked at the journal's path is wrong-type on
+// every filesystem — which is what makes it the surface-level assertion the unreadable
+// and socket fixtures cannot supply on a box without them.
+//
+// The two surfaces are asserted against one fixture on purpose: `bench learnings` fails
+// closed with the `<path> is <state>` error line while `bench status` degrades to the
+// `unknown (<path> is <state>)` cell built from the same clause, so a change that moved
+// one grammar without the other breaks one of these two assertions.
+func TestAXILearningsWrongType(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	f := contract.NewFixture(t)
+	if err := os.MkdirAll(filepath.Join(f.Root, ".bench", "learnings.md"), 0o755); err != nil {
+		t.Fatalf("park a directory at the journal path: %v", err)
+	}
+
+	out := f.Bench("learnings")
+	out.RequireExit(1)
+	requireContainsFold(t, out.Stdout, "error: .bench/learnings.md is wrong-type")
+
+	board := f.Bench("status", "--all")
+	board.RequireExit(0)
+	requireContainsFold(t, board.Stdout, "unknown (.bench/learnings.md is wrong-type)")
+}

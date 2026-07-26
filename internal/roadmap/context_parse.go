@@ -27,7 +27,7 @@ func ParseDocument(content []byte, statuses map[string]string, full bool) (Docum
 		if m == nil {
 			if strings.HasPrefix(lines[i], "**") {
 				raw, n, tr := limited(lines[i], full)
-				failures = append(failures, ParseFailure{"ROADMAP.md", "malformed roadmap row", raw, n, tr})
+				failures = append(failures, ParseFailure{RoadmapFile, "malformed roadmap row", raw, n, tr})
 			}
 			i++
 			continue
@@ -43,7 +43,7 @@ func ParseDocument(content []byte, statuses map[string]string, full bool) (Docum
 		if !closed {
 			rawText := strings.Join(lines[start:i+1], "\n")
 			raw, n, tr := limited(rawText, full)
-			failures = append(failures, ParseFailure{"ROADMAP.md", "unclosed roadmap heading", raw, n, tr})
+			failures = append(failures, ParseFailure{RoadmapFile, "unclosed roadmap heading", raw, n, tr})
 			continue
 		}
 		headerJoined := strings.Join(headerParts, "\n")
@@ -119,7 +119,7 @@ func ParseDocument(content []byte, statuses map[string]string, full bool) (Docum
 	}
 	if len(content) > 0 && len(doc.Rows) == 0 && len(failures) == 0 && !hasSection {
 		raw, n, tr := limited(string(content), full)
-		failures = append(failures, ParseFailure{"ROADMAP.md", noRoadmapRowsReason, raw, n, tr})
+		failures = append(failures, ParseFailure{RoadmapFile, noRoadmapRowsReason, raw, n, tr})
 	}
 	return doc, failures
 }
@@ -177,7 +177,7 @@ func parseIdeas(content []byte, full bool) ([]IdeaFact, []ParseFailure, []string
 		m := ideaRe.FindStringSubmatch(line)
 		if m == nil {
 			raw, n, tr := limited(line, full)
-			failures = append(failures, ParseFailure{"IDEAS.md", "malformed idea row", raw, n, tr})
+			failures = append(failures, ParseFailure{IdeasFile, "malformed idea row", raw, n, tr})
 			continue
 		}
 		text, n, tr := limited(m[2], full)
@@ -188,7 +188,7 @@ func parseIdeas(content []byte, full bool) ([]IdeaFact, []ParseFailure, []string
 
 func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, error) {
 	s := ContextSnapshot{Full: full}
-	labels := []string{"ROADMAP.md", "IDEAS.md", ".bench/learnings.md", ".bench/structure.budgets", ".bench/structure-accept", "specs/"}
+	labels := []string{RoadmapFile, IdeasFile, learnings.JournalPath, ".bench/structure.budgets", ".bench/structure-accept", "specs/"}
 	data := map[string][]byte{}
 	for _, label := range labels {
 		if label == "specs/" {
@@ -199,7 +199,7 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 			}
 			continue
 		}
-		c := bounds.Classify(sourcePath(root, label), controlRecordLimit)
+		c := bounds.Classify(sourcePath(root, label), bounds.ControlRecordLimit)
 		if c.State == bounds.StateParsed {
 			data[label] = c.Data
 		}
@@ -231,18 +231,18 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 		}
 	}
 	var roadFails []ParseFailure
-	s.Roadmap, roadFails = ParseDocument(data["ROADMAP.md"], statuses, full)
+	s.Roadmap, roadFails = ParseDocument(data[RoadmapFile], statuses, full)
 	s.Failures = append(s.Failures, roadFails...)
-	s.Ideas, roadFails, _ = parseIdeas(data["IDEAS.md"], full)
+	s.Ideas, roadFails, _ = parseIdeas(data[IdeasFile], full)
 	s.Failures = append(s.Failures, roadFails...)
-	learningFacts, malformedLearnings := learnings.Parse(data[".bench/learnings.md"])
+	learningFacts, malformedLearnings := learnings.Parse(data[learnings.JournalPath])
 	for _, e := range learningFacts {
 		body, n, tr := limited(e.Body, full)
 		s.Learnings = append(s.Learnings, LearningFact{e.Date, e.Title, e.State, body, n, tr})
 	}
 	for _, m := range malformedLearnings {
 		raw, n, tr := limited(m.Raw, full)
-		s.Failures = append(s.Failures, ParseFailure{".bench/learnings.md", m.Reason, raw, n, tr})
+		s.Failures = append(s.Failures, ParseFailure{learnings.JournalPath, m.Reason, raw, n, tr})
 	}
 	structFacts, err := structure.Facts(root)
 	if err != nil {

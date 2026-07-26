@@ -36,7 +36,7 @@ func roadmapPath(t *testing.T, root string) string {
 
 func ideasPath(t *testing.T, root string) string {
 	t.Helper()
-	return filepath.Join(root, ideasFile)
+	return filepath.Join(root, IdeasFile)
 }
 
 var datedLine = regexp.MustCompile(`(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  ship dark mode$`)

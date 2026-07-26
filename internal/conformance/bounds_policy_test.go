@@ -17,7 +17,7 @@ func checkBoundsPolicy(root string) []string {
 	if registry == "" {
 		return []string{"internal/bounds policy registry is absent"}
 	}
-	required := []string{"ProviderTimeout", "GitRefreshTimeout", "GuardScanTimeout", "GateTimeout", "ModelReadLimit", "OutlineFileLimit", "OutlineRowLimit", "IterationMin", "IterationMax", "MainIterationsDefault", "RefactorIterationsDefault", "MaxWall", "LeaseStale", "CanaryInnerWidth"}
+	required := []string{"ProviderTimeout", "GitRefreshTimeout", "GuardScanTimeout", "GateTimeout", "ModelReadLimit", "OutlineFileLimit", "ControlRecordLimit", "OutlineRowLimit", "IterationMin", "IterationMax", "MainIterationsDefault", "RefactorIterationsDefault", "MaxWall", "LeaseStale", "CanaryInnerWidth"}
 	var diags []string
 	for _, name := range required {
 		if !strings.Contains(registry, name) {
@@ -28,6 +28,9 @@ func checkBoundsPolicy(root string) []string {
 		"internal/models/models.go":                 {"bounds.ProviderTimeout", "bounds.ModelReadLimit"},
 		"internal/sessioninspect/sessioninspect.go": {"bounds.ProviderTimeout"},
 		"internal/outline/outline.go":               {"bounds.OutlineFileLimit", "bounds.OutlineRowLimit"},
+		"internal/learnings/learnings.go":           {"bounds.ControlRecordLimit"},
+		"internal/maps/maps.go":                     {"bounds.ControlRecordLimit"},
+		"internal/roadmap/roadmap.go":               {"bounds.ControlRecordLimit"},
 		"internal/guards/guards.go":                 {"bounds.GuardScanTimeout"},
 		"internal/gate/gate.go":                     {"bounds.GateTimeout"},
 		"internal/worktree/refresh/refresh.go":      {"bounds.GitRefreshTimeout"},
@@ -151,6 +154,7 @@ func boundLikeName(name, owner string) bool {
 		"GateTimeout":               {"gate", "timeout"},
 		"ModelReadLimit":            {"model", "limit"},
 		"OutlineFileLimit":          {"outline", "file", "limit"},
+		"ControlRecordLimit":        {"control", "record", "limit"},
 		"OutlineRowLimit":           {"outline", "row"},
 		"IterationMin":              {"iteration", "min"},
 		"IterationMax":              {"iteration", "max"},

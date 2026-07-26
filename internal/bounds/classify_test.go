@@ -77,6 +77,19 @@ func TestClassifyStates(t *testing.T) {
 			reason: true,
 		},
 		{
+			// The one wrong-type fixture that asks nothing of the host: every filesystem
+			// makes directories. The socket row above is the richer fixture but sits
+			// behind a capability guard, so without this row a host with no unix sockets
+			// asserts wrong-type for a file nowhere at all.
+			name: "wrong type (directory)",
+			fixture: func(t *testing.T, dir string) string {
+				return makeDir(t, dir, "learnings.md")
+			},
+			limit:  64,
+			state:  StateWrongType,
+			reason: true,
+		},
+		{
 			name: "unreadable",
 			fixture: func(t *testing.T, dir string) string {
 				path := writeFixture(t, dir, "denied.md", "secret\n")

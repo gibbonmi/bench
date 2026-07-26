@@ -15,6 +15,8 @@ import (
 	"strings"
 
 	toonlib "github.com/toon-format/toon-go"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 // table is the shared emission core behind Table and TableTyped: it marshals the rows
@@ -136,4 +138,22 @@ func MissingArg(cmd, what string) string {
 // cwd is outside a git repository — one source for the shared phrasing.
 func NotInRepo() string {
 	return Errorf("not in a git repository", "run inside a Bench-linked repo")
+}
+
+// RecordError is the AXI error line every command emits when a control record did not
+// read as something it may trust: `error: <path> is <state> — <reason>`. path is
+// repo-relative, so the line names what an agent would type. Callers add the newline and
+// the exit-1. Every fail-closed surface composes this instead of formatting the grammar
+// itself, so the phrasing an agent parses cannot drift between commands.
+func RecordError(path string, state bounds.FileState, reason string) string {
+	return Errorf(path+" is "+string(state), reason)
+}
+
+// UnknownCell is RecordError's sibling for a surface that degrades instead of exiting:
+// the `unknown (<path> is <state>)` detail cell the dashboard prints in place of a count
+// it could not derive. The parenthetical carries the same `<path> is <state>` clause as
+// the error line, so one record's failure reads the same whether the command failed on it
+// or reported around it.
+func UnknownCell(path string, state bounds.FileState) string {
+	return fmt.Sprintf("unknown (%s is %s)", path, state)
 }

@@ -126,7 +126,7 @@ func Resolve(base, arg string) (content []byte, resolved string, tried []string,
 // forever. An absent path or a directory is not a candidate (nil, nil — try the next
 // form); any other failure is a real error to surface, never masked as not-found.
 func readCandidate(path string) ([]byte, error) {
-	c := bounds.Classify(path, bounds.OutlineFileLimit)
+	c := bounds.Classify(path, bounds.ControlRecordLimit)
 	switch {
 	case c.State == bounds.StateAbsent:
 		return nil, nil

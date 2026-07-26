@@ -8,7 +8,6 @@
 package maps
 
 import (
-	"fmt"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -21,9 +20,10 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// decisionsDir is the one control directory this command reads, repo-relative so
-// every error line names the same path an agent would type.
-const decisionsDir = "decisions"
+// DecisionsDir is the one control directory this command reads, repo-relative so every
+// error line names the same path an agent would type. It is exported because the status
+// board names the same directory in the row it prints when the scan fails.
+const DecisionsDir = "decisions"
 
 // grammar is the declared argument shape usage.Parse enforces for this subcommand —
 // arity, flag recognition, `--`, and help all come from there rather than a local switch.
@@ -176,8 +176,8 @@ type issue struct {
 // every cleanly parsed file plus every file that could not be, so the listing and
 // the count can never disagree about what was readable. dirState is decisions/'s
 // own readability — StateAbsent (no such directory: the authoritative empty state)
-// or StateEmpty leave names and issues both nil; StateUnreadable or StateWrongType
-// mean the directory itself could not be enumerated, so names and issues stay nil
+// or StateEmpty leave names and issues both nil; a state FileState.Failed reports
+// means the directory itself could not be enumerated, so names and issues stay nil
 // even though nothing was actually confirmed absent, and a caller must read
 // dirState rather than treat the zero-length results as authoritative.
 type scanResult struct {
@@ -199,7 +199,7 @@ func isDirectoryDoc(name string) bool {
 
 // scan classifies root/decisions and every *.md entry inside it, in sorted order.
 func scan(root string) scanResult {
-	dir := filepath.Join(root, decisionsDir)
+	dir := filepath.Join(root, DecisionsDir)
 	cd := bounds.ClassifyDir(dir)
 	s := scanResult{dirState: cd.State, dirReason: cd.Reason, results: map[string]fileResult{}}
 	if cd.State != bounds.StateParsed {
@@ -216,7 +216,7 @@ func scan(root string) scanResult {
 			continue
 		}
 		base := strings.TrimSuffix(e.Name(), ".md")
-		fc := bounds.Classify(filepath.Join(dir, e.Name()), bounds.ModelReadLimit)
+		fc := bounds.Classify(filepath.Join(dir, e.Name()), bounds.ControlRecordLimit)
 		if fc.State == bounds.StateParsed {
 			r := parseFile(fc.Data)
 			if r.isMap || r.preHandoffMarker || r.handoffState != "" {
@@ -283,12 +283,6 @@ func UnresolvedCount(root string) (n int, state bounds.FileState) {
 	return s.unresolvedCount(), bounds.StateParsed
 }
 
-// mapsError renders the one `error:` shape a whole-scan decisions/ failure uses,
-// naming the classifier state and the underlying reason.
-func mapsError(state bounds.FileState, reason string) string {
-	return toon.Errorf(fmt.Sprintf("%s is %s", decisionsDir, state), reason)
-}
-
 // Command implements `bench maps`. `--count` is the status adapter's hook: it
 // prints the distinct not-close-ready file count as a bare integer, through the
 // same scan the listing uses. Absence of root/decisions is the only authoritative
@@ -313,7 +307,7 @@ func Command(args []string) (string, int) {
 	}
 	s := scan(root)
 	if s.dirState.Failed() {
-		return mapsError(s.dirState, s.dirReason) + "\n", 1
+		return toon.RecordError(DecisionsDir, s.dirState, s.dirReason) + "\n", 1
 	}
 	if _, count := parsed.Flags["--count"]; count {
 		return strconv.Itoa(s.unresolvedCount()) + "\n", 0

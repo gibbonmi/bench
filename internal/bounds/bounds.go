@@ -15,6 +15,14 @@ import (
 
 // The const block is the production policy registry. Callers name these entries;
 // they do not redeclare values or locally reimplement classification.
+//
+// ControlRecordLimit is the one bound every control-record read applies — the journal,
+// IDEAS.md, ROADMAP.md, a decision map, a spec — no matter which command reads it. One
+// record read under two bounds is the divergence this entry exists to forbid: the same
+// file would render rows on one surface and `unknown` on another, and a reader has no
+// way to tell which answer is the repository's. The value bounds a hand-maintained
+// markdown file read whole into memory, so it is deliberately far below ModelReadLimit,
+// which bounds an untrusted provider response instead.
 const (
 	ProviderTimeout                 = 10 * time.Second
 	GitRefreshTimeout               = 30 * time.Second
@@ -22,6 +30,7 @@ const (
 	GateTimeout                     = 45 * time.Minute
 	ModelReadLimit            int64 = 5 << 20
 	OutlineFileLimit          int64 = 2 << 20
+	ControlRecordLimit        int64 = 2 << 20
 	OutlineRowLimit                 = 200
 	IterationMin                    = 1
 	IterationMax                    = 100

@@ -154,8 +154,11 @@ func stripLeadingSeparators(s string) string {
 // predicate for IndexFunc/TrimRightFunc; a multibyte rune is >= 0x80 and never a space.
 func isSpace(r rune) bool { return r < 0x80 && toon.IsSpace(byte(r)) }
 
-// journalPath is the one control record this command reads.
-const journalPath = ".bench/learnings.md"
+// JournalPath is the repo-relative journal. It is exported because the name is one
+// fact with three readers — this command, the roadmap drain that counts its open
+// headings, and the status row that names it when the read fails — and a literal
+// repeated at each of them is how the three drift apart.
+const JournalPath = ".bench/learnings.md"
 
 // Command implements `bench learnings`. Unknown argument → usage on stdout, exit 2;
 // outside a repo → structured error on stdout, exit 1. Absence is the only
@@ -174,7 +177,7 @@ func Command(args []string) (string, int) {
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
 	}
-	c := bounds.Classify(filepath.Join(root, journalPath), bounds.ModelReadLimit)
+	c := bounds.Classify(filepath.Join(root, JournalPath), bounds.ControlRecordLimit)
 	switch c.State {
 	case bounds.StateAbsent:
 		out, err := toon.Table("learnings", []string{"date", "title"}, nil)
@@ -185,10 +188,10 @@ func Command(args []string) (string, int) {
 	case bounds.StateParsed:
 		// falls through to the structural parse below
 	default:
-		return journalError(c.State, c.Reason) + "\n", 1
+		return toon.RecordError(JournalPath, c.State, c.Reason) + "\n", 1
 	}
 	if !hasAnyHeading(c.Data) {
-		return journalError(bounds.StateUnsupportedSchema, "no dated heading found") + "\n", 1
+		return toon.RecordError(JournalPath, bounds.StateUnsupportedSchema, "no dated heading found") + "\n", 1
 	}
 	entries, malformed := Parse(c.Data)
 	rows := openRows(entries)
@@ -203,10 +206,4 @@ func Command(args []string) (string, int) {
 		return out, 1
 	}
 	return out, 0
-}
-
-// journalError renders the one `error:` shape every non-absent journal failure uses,
-// naming the classifier or parser state and the underlying reason.
-func journalError(state bounds.FileState, reason string) string {
-	return toon.Errorf(fmt.Sprintf("%s is %s", journalPath, state), reason)
 }
