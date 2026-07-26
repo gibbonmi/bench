@@ -35,3 +35,24 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
 - **Proposed rule change:** none for the kit prose — the structural fix
   (exclude the conformance package from the inner suite) is already decided on
   the cost-follows-project-size map and rides the FT91 tier-split spec.
+
+## 2026-07-26 — a doc-only commit landed main red for three commits  [open]
+
+- **What happened:** Commit `3c50349` rewrote craft-delegate's repair paragraph
+  but left `checkWorkflowAnchors`' anchor pinned to the sentence the rewrite
+  replaced. Nothing caught it, because the change was doc-only and doc-only
+  changes were being committed with plain `git commit` to avoid the whole-tree
+  gate's cost. `main` then stayed red through `e81877b` and `edd0438`, and the
+  red only surfaced when the FT91 build ran the first real gate since — where
+  it read as a possible regression from the build under way, costing a
+  diagnosis detour to prove it was pre-existing.
+- **Right behavior:** Kit prose is gate-anchored content, not inert text: the
+  conformance phase asserts exact sentences from skills and commands, so a
+  doc-only edit can red the gate exactly like a code edit. Anchored prose needs
+  at minimum a targeted `go test ./internal/conformance -run` over the anchor
+  check before committing, even when the full gate is being skipped for cost.
+- **Proposed rule change:** the "doc-only changes use plain git" shortcut needs
+  a stated exception for gate-anchored surfaces (`.agents/skills/`,
+  `.agents/commands/`, `.bench/BENCH.md`, `projects/*.md`). Either name the
+  cheap targeted check those edits must run, or scope the shortcut to surfaces
+  no conformance check reads. Reviewer's call which.
