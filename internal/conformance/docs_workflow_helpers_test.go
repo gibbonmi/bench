@@ -219,7 +219,7 @@ func checkWorkflowAnchors(root string) []string {
 		{"replacement", "one source-line replacement"},
 		{"replacement accounting", "A replacement counts as one correction"},
 		{"request scope", "does not reset when work is split into tasks, slices, delegates, or verification rounds"},
-		{"review repair", "Repairs beyond the allowance under Delegate or inline are re-charged to a write-delegate"},
+		{"review repair", "Repairs beyond the allowance under Delegate or inline are routed as Verifying the done-claim directs"},
 		{"owning checkout", "coordinator verifies the repair in the checkout that owns the diff"},
 	}
 	for _, policyCase := range delegationPolicyAnchors {
