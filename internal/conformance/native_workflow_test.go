@@ -27,56 +27,73 @@ type requirementRecord struct {
 	PackageMode  string   `json:"package_mode"`
 }
 
-func checkReleasePreflight(root string) []string {
-	var diags []string
-	data, err := os.ReadFile(filepath.Join(root, "internal", "releaseevidence", "registry.json"))
-	if err != nil {
-		if os.IsNotExist(err) {
-			diags = append(diags, "release preflight registry is absent")
-		} else {
-			diags = append(diags, "release preflight registry is unreadable")
-		}
-	}
-	registryUsable := err == nil
-	var registry struct {
+// releaseRegistries is the decoded pair of release evidence registries plus the
+// diagnostics their decode produced. The static preflight check and the ship-tier
+// evidence probe both read them, so the decode has one source.
+type releaseRegistries struct {
+	preflight struct {
 		Verify        []string `json:"verify"`
 		PublishBefore []string `json:"publish_before"`
 		PublishOnly   []string `json:"publish_only"`
 	}
-	if registryUsable {
-		if decodeErr := json.Unmarshal(data, &registry); decodeErr != nil {
-			diags = append(diags, "release preflight registry is malformed")
-			registryUsable = false
+	requirements struct {
+		SchemaVersion int                 `json:"schema_version"`
+		Records       []requirementRecord `json:"records"`
+	}
+	preflightUsable    bool
+	requirementsUsable bool
+	diags              []string
+}
+
+func readReleaseRegistries(root string) releaseRegistries {
+	var registries releaseRegistries
+	data, err := os.ReadFile(filepath.Join(root, "internal", "releaseevidence", "registry.json"))
+	if err != nil {
+		if os.IsNotExist(err) {
+			registries.diags = append(registries.diags, "release preflight registry is absent")
+		} else {
+			registries.diags = append(registries.diags, "release preflight registry is unreadable")
 		}
+	} else if decodeErr := json.Unmarshal(data, &registries.preflight); decodeErr != nil {
+		registries.diags = append(registries.diags, "release preflight registry is malformed")
+	} else {
+		registries.preflightUsable = true
 	}
 	requirementData, err := os.ReadFile(filepath.Join(root, "internal", "releaseevidence", "requirements.json"))
 	if err != nil {
 		if os.IsNotExist(err) {
-			diags = append(diags, "release requirement registry is absent")
+			registries.diags = append(registries.diags, "release requirement registry is absent")
 		} else {
-			diags = append(diags, "release requirement registry is unreadable")
+			registries.diags = append(registries.diags, "release requirement registry is unreadable")
 		}
+	} else if decodeErr := json.Unmarshal(requirementData, &registries.requirements); decodeErr != nil {
+		registries.diags = append(registries.diags, "release requirement registry is malformed")
+	} else if registries.requirements.SchemaVersion != 1 {
+		registries.diags = append(registries.diags, "release requirement registry has unsupported schema version")
+	} else {
+		registries.requirementsUsable = true
 	}
-	requirementUsable := err == nil
-	var requirementRegistry struct {
-		SchemaVersion int                 `json:"schema_version"`
-		Records       []requirementRecord `json:"records"`
+	return registries
+}
+
+// checkReleaseEvidenceProbe is the ship-tier half of release preflight: an
+// authenticated clone, a four-platform artifact build, and a real preflight verify.
+// The static half below stays at the dev tier, where it costs milliseconds.
+func checkReleaseEvidenceProbe(root string) []string {
+	registries := readReleaseRegistries(root)
+	if !registries.preflightUsable || !registries.requirementsUsable {
+		return nil
 	}
-	if requirementUsable {
-		if decodeErr := json.Unmarshal(requirementData, &requirementRegistry); decodeErr != nil {
-			diags = append(diags, "release requirement registry is malformed")
-			requirementUsable = false
-		} else if requirementRegistry.SchemaVersion != 1 {
-			diags = append(diags, "release requirement registry has unsupported schema version")
-			requirementUsable = false
-		}
-	}
-	if err != nil {
-		requirementData = nil
-	}
+	return runReleaseEvidenceProbe(root, registries.requirements.Records)
+}
+
+func checkReleasePreflight(root string) []string {
+	registries := readReleaseRegistries(root)
+	diags := append([]string(nil), registries.diags...)
+	registryUsable, requirementUsable := registries.preflightUsable, registries.requirementsUsable
 	public, bank := map[string]bool{}, map[string]bool{}
 	if requirementUsable {
-		for _, record := range requirementRegistry.Records {
+		for _, record := range registries.requirements.Records {
 			if record.Key == "" || record.Owner == "" || record.Schema == "" || record.Path == "" || record.Requiredness != "required" && record.Requiredness != "conditional" || len(record.Profiles) == 0 {
 				diags = append(diags, "release requirement registry has incomplete schema: "+record.Key)
 				continue
@@ -97,15 +114,15 @@ func checkReleasePreflight(root string) []string {
 			}
 		}
 		for _, key := range []string{"public.ft88.data_handling", "public.ft87.offline_network_control", "bank.ft71.local_event"} {
-			if !containsKey(requirementRegistry.Records, key) {
+			if !containsKey(registries.requirements.Records, key) {
 				diags = append(diags, "release requirement registry omits "+key)
 			}
 		}
 	}
-	if registryUsable && !reflect.DeepEqual(registry.Verify, []string{"gate", "race", "vet", "vulnerability", "artifacts", "smoke"}) {
+	if registryUsable && !reflect.DeepEqual(registries.preflight.Verify, []string{"gate", "race", "vet", "vulnerability", "artifacts", "smoke"}) {
 		diags = append(diags, "release preflight verify registry omits or reorders a required phase class")
 	}
-	if registryUsable && (!reflect.DeepEqual(registry.PublishBefore, []string{"identity", "ancestry"}) || !reflect.DeepEqual(registry.PublishOnly, []string{"changelog"})) {
+	if registryUsable && (!reflect.DeepEqual(registries.preflight.PublishBefore, []string{"identity", "ancestry"}) || !reflect.DeepEqual(registries.preflight.PublishOnly, []string{"changelog"})) {
 		diags = append(diags, "release preflight publish registry omits or reorders a required phase class")
 	}
 	native := readIfExists(filepath.Join(root, ".github", "workflows", "native-runtime.yml"))
@@ -146,9 +163,6 @@ func checkReleasePreflight(root string) []string {
 	}
 	if !regexp.MustCompile(`(?m)^toolchain go[0-9]+\.[0-9]+\.[0-9]+$`).MatchString(readIfExists(filepath.Join(root, "go.mod"))) {
 		diags = append(diags, "release preflight requires an exact Go patch toolchain")
-	}
-	if registryUsable && requirementUsable {
-		diags = append(diags, runReleaseEvidenceProbe(root, requirementRegistry.Records)...)
 	}
 	comparison := readIfExists(filepath.Join(root, "scripts", "compare-artifacts.sh"))
 	if comparison != "" && (!strings.Contains(comparison, `cmp -s "$left/$name" "$right/$name"`) || !strings.Contains(comparison, "reproducibility mismatch:")) {

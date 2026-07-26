@@ -10,6 +10,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
 func checkLoadValidityMetadata(root string) []string {
@@ -259,7 +261,7 @@ func TestRunConformanceDistinguishesAbsentAndEmptyInputs(t *testing.T) {
 		}
 	}
 
-	absent := RunConformance(root, NewHarness(t).KitRoot)
+	absent := RunConformance(root, NewHarness(t).KitRoot, registry.Dev)
 	assertStructuredPhaseDiags("absent", absent)
 	if !containsDiagnostic(absent, "JSON file missing: package.json") {
 		t.Fatalf("absent package.json diagnostic missing:\n%s", strings.Join(absent, "\n"))
@@ -277,7 +279,7 @@ func TestRunConformanceDistinguishesAbsentAndEmptyInputs(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, ".bench", "BENCH.md"), nil, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	empty := RunConformance(root, NewHarness(t).KitRoot)
+	empty := RunConformance(root, NewHarness(t).KitRoot, registry.Dev)
 	assertStructuredPhaseDiags("empty", empty)
 	if !containsDiagnostic(empty, "lines.env tier unset: BENCH_TIER_TOP has no value") {
 		t.Fatalf("empty lines.env diagnostic missing:\n%s", strings.Join(empty, "\n"))

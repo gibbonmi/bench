@@ -34,6 +34,7 @@ import (
 	"github.com/gibbonmi/bench/internal/models"
 	"github.com/gibbonmi/bench/internal/outline"
 	"github.com/gibbonmi/bench/internal/preflight"
+	"github.com/gibbonmi/bench/internal/preprelease"
 	"github.com/gibbonmi/bench/internal/publication"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/sanitize"
@@ -376,6 +377,8 @@ func run(args []string, stdout, stderr *os.File) int {
 		return gatePhasesCommand(args[1:], stdout, stderr)
 	case "release-preflight":
 		return preflight.Command(args[1:], version, stderr)
+	case "prep-release":
+		return preprelease.Command(args[1:], stdout, stderr)
 	case "release":
 		return publication.Command(args[1:], stdout, stderr)
 	case "canary":

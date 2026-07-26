@@ -66,8 +66,12 @@ gate; to change what runs, change `.bench/gate.sh`.
 
 ## Report
 
-- **Green:** state it plainly, land the verified work with `bench commit -m "<msg>"`
-  per the exit handoff, and hand back for me to merge.
+- **Green:** state it plainly, and add one line noting that
+  ship-tier verification has not run — dev green claims the kit works from the
+  tree; the release-evidence checks run once per release under
+  `bench prep-release`. A statement, not an approval prompt. Then land the
+  verified work with `bench commit -m "<msg>"` per the exit handoff, and hand
+  back for me to merge.
 - **Red:** report each failing check in the order it fails, with the smallest
   reproduction. Do not propose weakening the check. Diagnose the cause, propose a
   fix at the seam, and — if I approve — fix it and re-run the gate. A fix is only

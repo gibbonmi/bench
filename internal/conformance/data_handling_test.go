@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/env"
 )
 
@@ -235,7 +236,7 @@ func TestDataHandlingDerivationFixtureBite(t *testing.T) {
 	h := NewHarness(t)
 	expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
 
-	diags := RunConformance(root, h.KitRoot)
+	diags := RunConformance(root, h.KitRoot, registry.Dev)
 
 	if !containsDiagnostic(diags, expect) {
 		t.Fatalf("%s did not bite under Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diags, "\n"))

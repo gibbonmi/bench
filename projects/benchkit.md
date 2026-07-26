@@ -162,7 +162,11 @@ reviewer decision the FT76 spec deliberately left open.
 .bench/gate.sh
 ```
 
-The oracle for a kit, in layers (all green today). `.bench/gate.sh` is a thin
+The oracle for a kit runs in two tiers. The **dev tier** — `bench gate`, the
+shift loop, `/bench-final-check`, and the pre-push hook — answers one question:
+does the kit work from the tree? It runs the layers below (all green today).
+The **ship tier** — `bench prep-release` — carries the release-evidence checks,
+described after the layers. `.bench/gate.sh` is a thin
 exec into the `gate-phases` plumbing subcommand, which runs the layers below as
 four concurrent phases in outer mode (`[phase]`-prefixed output, per-phase
 verdicts, run-all-and-aggregate) and sequentially, unprefixed, sweep-skipped in
@@ -220,6 +224,28 @@ byte-shape is load-bearing:
    Bench-specific knob — `GOMAXPROCS=8 bench gate` is the operator lever, and it
    shrinks the whole canary budget. The tripwire decision is recorded in
    `docs/adr/0001-working-tree-gate-tripwire.md`.
+
+The **ship tier** — `bench prep-release`, maintainer-run once per release —
+carries what the dev tier deliberately does not run: the release-evidence probe
+(the four-platform artifact matrix build, the reproducibility rebuild, and a
+real `release-preflight.sh --mode verify`), the cross-compile matrix
+(`-tags stress`), the release-only package suites (`internal/preflight`,
+`internal/releaseevidence`, `internal/publication` — excluded from the dev
+tier's inner `go test`), and the ship-tier canary fixtures. It refuses to run
+without a current dev-green verdict for the exact tree, so a dev-tier failure
+reds the ship tier too. Exit 0 is ship green, with evidence at
+`dist/preflight/release-index.json` and `dist/artifacts`.
+
+**What dev green claims — and does not.** Dev green means the kit works from
+the tree: every static conformance check (including the static half of the
+release-preflight check), the lifecycle, contract, and AXI phases, and the
+dev-tier canary passed. It does not claim the release artifacts build,
+reproduce, or pass preflight verify — those are ship-tier facts, restaged to
+run once per release instead of once per commit, with no check losing
+authority. Neither tier grants publish authority: the publish path's
+`VerifyPublishAuthority` refusal demands a publish-mode index that only the
+release workflow's own preflight produces, while `prep-release` emits
+verify-mode evidence — a rehearsal, never a substitute for that boundary.
 
 The gate file lives outside `package.json` `files[]`, so it never ships to consumers.
 

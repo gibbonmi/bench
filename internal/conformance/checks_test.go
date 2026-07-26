@@ -9,7 +9,9 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
@@ -25,27 +27,64 @@ var conformanceFamilies = []string{
 	"data-handling-derivation",
 }
 
-func RunConformance(root, kitRoot string) []string {
+// checkFunc is the uniform shape every registered check is bound through. Only the
+// package-core check reads the tier; the rest ignore the arguments they do not need.
+type checkFunc func(root, kitRoot string, tier registry.Tier) []string
+
+// conformanceChecks binds each registry.Checks row to the function that runs it.
+// The registry owns the names, the tiers, and the order; this map owns only the
+// binding, and TestRegistryBindsEveryCheck asserts the two halves match in both
+// directions so tier metadata and executable checks cannot drift apart.
+var conformanceChecks = map[string]checkFunc{
+	"conformance-canary-families":   func(_, kitRoot string, _ registry.Tier) []string { return checkConformanceCanaryFamilies(kitRoot) },
+	"kit-compliance":                func(_, kitRoot string, _ registry.Tier) []string { return checkKitCompliance(kitRoot) },
+	"canary-inner-compliance":       func(root, _ string, _ registry.Tier) []string { return checkCanaryInnerCompliance(root) },
+	"load-validity-metadata":        func(root, _ string, _ registry.Tier) []string { return checkLoadValidityMetadata(root) },
+	"skills-index-command-adapters": func(root, _ string, _ registry.Tier) []string { return checkSkillsIndexAndCommandAdapters(root) },
+	"docs-currency-workflow": func(root, kitRoot string, _ registry.Tier) []string {
+		return checkDocsCurrencyAndWorkflow(root, kitRoot)
+	},
+	"line-routing":                 func(root, _ string, _ registry.Tier) []string { return checkLineRouting(root) },
+	"package-core-guard":           func(root, _ string, tier registry.Tier) []string { return checkPackageCoreAndGuards(root, tier) },
+	"release-evidence-probe":       func(root, _ string, _ registry.Tier) []string { return checkReleaseEvidenceProbe(root) },
+	"bench-sh-routes":              func(root, _ string, _ registry.Tier) []string { return checkBenchShRoutes(root) },
+	"default-branch-single-source": func(root, _ string, _ registry.Tier) []string { return checkDefaultBranchSingleSource(root) },
+	"data-handling-derivation":     func(root, _ string, _ registry.Tier) []string { return checkDataHandlingDerivation(root) },
+	"single-control-escaper":       func(root, _ string, _ registry.Tier) []string { return checkSingleControlEscaper(root) },
+	"bounds-policy":                func(root, _ string, _ registry.Tier) []string { return checkBoundsPolicy(root) },
+	"marker-wait-deadlines":        func(root, _ string, _ registry.Tier) []string { return checkMarkerWaitDeadlines(root) },
+	"subcommand-routing":           func(root, _ string, _ registry.Tier) []string { return checkSubcommandRouting(root) },
+	"skip-ownership":               func(root, _ string, _ registry.Tier) []string { return checkSkipOwnership(root) },
+}
+
+// RunConformance grades root against every check tier runs, timing each one. Callers
+// name a tier and learn nothing about which check belongs to which.
+func RunConformance(root, kitRoot string, tier registry.Tier) []string {
+	timing := registry.NewTimingWriter(root)
 	var diags []string
-	diags = append(diags, checkConformanceCanaryFamilies(kitRoot)...)
-	diags = append(diags, checkKitCompliance(kitRoot)...)
-	if os.Getenv("BENCH_CANARY_INNER") == "1" && exists(filepath.Join(root, ".bench-compliance-canary")) {
-		diags = append(diags, checkKitCompliance(root)...)
+	for _, check := range registry.Checks {
+		if !check.RunsAt(tier) {
+			continue
+		}
+		run, bound := conformanceChecks[check.Name]
+		if !bound {
+			diags = append(diags, "conformance check "+check.Name+" is registered with no bound function")
+			continue
+		}
+		start := time.Now()
+		diags = append(diags, run(root, kitRoot, tier)...)
+		timing.Record(check.Name, time.Since(start))
 	}
-	diags = append(diags, checkLoadValidityMetadata(root)...)
-	diags = append(diags, checkSkillsIndexAndCommandAdapters(root)...)
-	diags = append(diags, checkDocsCurrencyAndWorkflow(root, kitRoot)...)
-	diags = append(diags, checkLineRouting(root)...)
-	diags = append(diags, checkPackageCoreAndGuards(root)...)
-	diags = append(diags, checkBenchShRoutes(root)...)
-	diags = append(diags, checkDefaultBranchSingleSource(root)...)
-	diags = append(diags, checkDataHandlingDerivation(root)...)
-	diags = append(diags, checkSingleControlEscaper(root)...)
-	diags = append(diags, checkBoundsPolicy(root)...)
-	diags = append(diags, checkMarkerWaitDeadlines(root)...)
-	diags = append(diags, checkSubcommandRouting(root)...)
-	diags = append(diags, checkSkipOwnership(root)...)
 	return diags
+}
+
+// checkCanaryInnerCompliance grades the kit-compliance rules against the fixture tree
+// itself, which only the canary's own inner gate asks for.
+func checkCanaryInnerCompliance(root string) []string {
+	if os.Getenv("BENCH_CANARY_INNER") != "1" || !exists(filepath.Join(root, ".bench-compliance-canary")) {
+		return nil
+	}
+	return checkKitCompliance(root)
 }
 
 // benchShRoutes are the top-level bin/bench.sh case labels that must reach the Go core so

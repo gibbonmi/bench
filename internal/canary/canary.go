@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -83,19 +84,41 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-// Sweep runs the canary harness for root. It returns all attributable harness
-// failures it observes instead of stopping at the first one.
+// Sweep runs the dev-tier canary harness for root — the sweep `bench canary` and the
+// gate's canary phase perform. It returns all attributable harness failures it observes
+// instead of stopping at the first one.
 func Sweep(root string, runner Runner) error {
+	return SweepTier(root, registry.Dev, runner)
+}
+
+// SweepShip runs the ship-tier fixtures for root through the real inner gate. It is the
+// canary step of `bench prep-release`, which is the only surface that runs the ship-tier
+// checks those fixtures grade.
+func SweepShip(root string) error {
+	return SweepTier(root, registry.Ship, defaultRunner)
+}
+
+// SweepTier runs the canary harness for the fixtures tier owns.
+func SweepTier(root string, tier registry.Tier, runner Runner) error {
 	root, err := filepath.Abs(root)
 	if err != nil {
 		return err
 	}
-	fixtures, err := fixtures(filepath.Join(root, "tests", "canary"))
+	all, err := fixtures(filepath.Join(root, "tests", "canary"))
 	if err != nil {
 		return err
 	}
+	fixtures, err := selectTier(all, tier)
+	if err != nil {
+		return err
+	}
+	if len(fixtures) == 0 {
+		// Nothing to grade, and the vacuity baseline below is a full inner gate run —
+		// too expensive to pay for a tier that owns no fixtures.
+		return nil
+	}
 	gate := filepath.Join(root, ".bench", "gate.sh")
-	env := innerEnv()
+	env := innerEnv(tier)
 
 	baselineDir, err := os.MkdirTemp("", "bench-canary-empty-*")
 	if err != nil {
@@ -110,6 +133,57 @@ func Sweep(root string, runner Runner) error {
 		return errors.New(strings.Join(errs, "\n"))
 	}
 	return nil
+}
+
+// checkFileName optionally binds a fixture to the conformance check it grades. Absent,
+// the fixture grades a check the dev gate runs — which is all but two of them, so the
+// binding is written only where it changes the answer.
+const checkFileName = "CHECK"
+
+// fixtureTier reports which tier sweeps a fixture. The fixture never states a tier of
+// its own: it names its check, and the tier is read from the registry entry, so a check
+// that is retiered takes its fixtures with it and the two cannot disagree. A fixture
+// that names a check the registry has since renamed away is an error rather than a
+// silent demotion to dev, where it would report "did not bite" forever. Only absence
+// means dev: a file present but holding no name is an error of its own, since dev is
+// what deleting the file asks for and a blank file is far likelier to be a truncated
+// write than an intent.
+func fixtureTier(fx string) (registry.Tier, error) {
+	data, err := os.ReadFile(filepath.Join(fx, checkFileName))
+	if errors.Is(err, os.ErrNotExist) {
+		return registry.Dev, nil
+	}
+	if err != nil {
+		return "", err
+	}
+	name := strings.TrimSpace(string(data))
+	if name == "" {
+		return "", fmt.Errorf("canary fixture '%s' has an empty %s file, which names no check; delete the file to sweep the fixture at the dev tier", filepath.Base(fx), checkFileName)
+	}
+	for _, check := range registry.Checks {
+		if check.Name == name {
+			return check.Tier, nil
+		}
+	}
+	return "", fmt.Errorf("canary fixture '%s' names check %q, which the conformance registry does not carry", filepath.Base(fx), name)
+}
+
+// selectTier keeps the fixtures tier sweeps. Membership is tier equality, not the
+// registry's RunsAt superset: the tiers have to partition the harness so that every
+// fixture is swept by exactly one of them, and a fixture belonging to neither is the
+// unswept rot the canary exists to catch.
+func selectTier(fixtures []string, tier registry.Tier) ([]string, error) {
+	var out []string
+	for _, fx := range fixtures {
+		owner, err := fixtureTier(fx)
+		if err != nil {
+			return nil, err
+		}
+		if owner == tier {
+			out = append(out, fx)
+		}
+	}
+	return out, nil
 }
 
 func runFixtures(root string, fixtures []string, baselineOutput, gate string, env []string, runner Runner) []string {
@@ -310,15 +384,21 @@ func restoreDotSegments(root string) error {
 	return nil
 }
 
-func innerEnv() []string {
-	env := make([]string, 0, len(os.Environ())+2)
+// innerEnv is the environment every inner gate of a tier's sweep runs under. The tier
+// is pinned rather than inherited: a fixture grades a check its own tier runs, so an
+// inner gate at any other tier skips that check and the fixture reports "did not bite"
+// forever. Every variable set here is scrubbed from the inherited environment first —
+// a strip without its matching set, or a set without its matching strip, hands an
+// ambient export control of what the sweep grades.
+func innerEnv(tier registry.Tier) []string {
+	env := make([]string, 0, len(os.Environ())+3)
 	for _, kv := range os.Environ() {
-		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, "BENCH_CANARY_INNER=") || strings.HasPrefix(kv, PhaseEnv+"=") || strings.HasPrefix(kv, "GOMAXPROCS=") {
+		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, "BENCH_CANARY_INNER=") || strings.HasPrefix(kv, PhaseEnv+"=") || strings.HasPrefix(kv, registry.ConformanceTierEnv+"=") || strings.HasPrefix(kv, "GOMAXPROCS=") {
 			continue
 		}
 		env = append(env, kv)
 	}
-	return append(env, "BENCH_CANARY_INNER=1", fmt.Sprintf("GOMAXPROCS=%d", bounds.CanaryInnerWidth))
+	return append(env, "BENCH_CANARY_INNER=1", registry.ConformanceTierEnv+"="+string(tier), fmt.Sprintf("GOMAXPROCS=%d", bounds.CanaryInnerWidth))
 }
 
 func defaultRunner(call RunCall) RunResult {

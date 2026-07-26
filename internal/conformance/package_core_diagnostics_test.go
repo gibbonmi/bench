@@ -107,7 +107,7 @@ func TestCoreSubprocessFailuresUseProbeFormatter(t *testing.T) {
 		"go build failed":                        2,
 		"go vet failed":                          1,
 		"go list failed":                         1,
-		"go test failed":                         1,
+		"go test failed":                         2,
 		"worktree cleanup race test failed":      1,
 		"worktree cleanup race test did not run": 1,
 	}
