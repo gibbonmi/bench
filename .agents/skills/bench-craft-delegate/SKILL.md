@@ -60,11 +60,26 @@ Prefer compressed inputs over inherited context: when a decision map has a
 Handoff, give the delegate that digest plus line-ranged excerpts it must quote,
 not the orchestrator's whole read list.
 
+Name exemplar files to mirror, and say so explicitly when no exemplar exists.
+A convention stated as prose degrades as the tree grows: "follow the repo's
+error idiom" hands the delegate a judgment it cannot make, because the idiom
+lives in files it will not read; "mirror the error shape in
+`internal/x/foo.go`" survives translation to a low-context delegate, because
+a path resolves the same way at any context size.
+
 A write-delegation from a spec carries its stories' coverage rows — behavior,
 seam, red signal — in the charge, every time, and requires the delegate to show
 each row red before the edit and green after. That is what makes the done-claim
 verifiable by running the gate instead of re-reading the work; a charge without
 its rows buys a diff you must read line-by-line to trust.
+
+The charge also names the gate layer that owns each artifact class the
+delegate touches — workflows and `.bench/` content to canary, gate output
+shape to canary, skills and commands to conformance — and states the converse
+to the delegate in the same breath: the named list is a floor, not a ceiling.
+Omit the mapping and the delegate breaks a layer nothing in its charged
+verification list can see; omit the converse and it treats the list as
+permission to check nothing else.
 
 A worktree-isolated delegate's charge opens with the stale-base check: run
 `git merge --ff-only main`, verify HEAD equals main, stop and report if the
@@ -81,8 +96,8 @@ then stop and report if it is absent.
 Implement story 3 of specs/retry-backoff.md in this worktree. Open with the
 stale-base check: run `git merge --ff-only main`, verify HEAD equals main,
 stop and report if denied. Coverage rows: [the story's rows]. Effort: medium,
-~3 iterations. Commit on green with `bench commit`; return the red→green log
-per row.
+~3 iterations. Stop at diff ready with focused tests green; return the
+red→green log per row.
 ```
 Good — a write-delegation whose opener rides in the charge and whose rows make
 the done-claim verifiable.
@@ -115,17 +130,50 @@ A write-delegation runs in an isolated worktree (`bench worktree`), so stray
 edits can't land in reviewer-owned files — the delegate gets a checkout, not
 your checkout. Concurrent delegates get *separate* worktrees, one each: two
 writers in one checkout collide, and a mixed `git status` makes both
-done-claims unverifiable. Share a worktree — or run sequentially — only when
-one delegate's work genuinely depends on another's output. A charge that
-shares an existing worktree names its root and pins every file-tool path to
-that root; shell CWD does not retarget file tools. When `bench commit` reports
-nothing to commit beside a visibly modified file, diagnose a CWD/tree mismatch
-before treating the command as defective. Read-only delegations need no
-worktree; say "do not edit any file" in the charge and mean it. Review delegates
-return findings only. The coordinator verifies the repair in the checkout that
-owns the diff. Repairs beyond the allowance under Delegate or inline are
-re-charged to a write-delegate in an isolated worktree; that delegate receives
-the finding and a commit-specific sentinel for the diff under repair.
+done-claims unverifiable. The harness's own `isolation: worktree` cannot cut
+the second one — it derives its request ID from the harness session ID alone,
+so a second concurrent request collides with the first assignment and is
+refused (`worktree create request conflicts with its existing assignment`).
+The coordinator cuts the worktrees instead: run
+`bench worktree create --request <opaque-id> --label <work-item>` once per
+delegate — a distinct request id each — and hand each delegate its returned
+root path. Share a worktree — or run sequentially — only when one delegate's
+work genuinely depends on another's output. A charge that shares an existing
+worktree names its root and pins every file-tool path to that root; shell CWD
+does not retarget file tools. When `bench commit` reports nothing to commit
+beside a visibly modified file, diagnose a CWD/tree mismatch before treating
+the command as defective.
+
+The whole-tree gate is a serialized resource: concurrent `bench commit` gates
+flake load-sensitive tests that pass serially — a red that answers for machine
+load rather than for any diff. A write-delegate stops at "diff ready, focused
+tests green"; the coordinator runs `bench commit` per worktree, one at a time.
+
+A worktree isolates the working tree, not repository-global git surfaces —
+the stash stack above all. Two delegates in separate worktrees share one
+stash stack, and stashing cross-applies their in-flight edits until neither
+diff can be attributed. A charge bans `git stash` — the destructive-git guard
+refuses it, and the guard's deny table owns which verbs — and names the
+per-worktree substitute instead: copy the working file aside with `cp`,
+restore the committed version with `git show HEAD:<path> > <path>`, run the
+test, then copy the working file back.
+
+Read-only delegations need no worktree; say "do not edit any file" in the
+charge and mean it. Review delegates return findings only. The coordinator
+verifies the repair in the checkout that owns the diff. Repairs beyond the
+allowance under Delegate or inline are re-charged to a write-delegate in an
+isolated worktree; that delegate receives the finding and a commit-specific
+sentinel for the diff under repair.
+
+### The shared-checkout exception
+
+Some work no worktree can hold: a large uncommitted build the gate is red on
+cannot be committed first, and a worktree branched from HEAD would not contain
+the code under repair. A delegate may then run in the main checkout under
+exactly four conditions — one writer at a time; a named file allowlist in the
+charge; no commit authority; a `git status` check verified on return. All
+four, every time: this is the one loosening of the isolation rule, and the
+conditions are what carry the safety.
 
 ## Verifying the done-claim
 
@@ -136,6 +184,9 @@ A delegate's done-claim is a claim, not a result. Before accepting one:
   a missed case, found now instead of at review;
 - run `git status` in the worktree it used — files touched outside the charge
   are a finding, not a footnote;
+- resolve every identifier in an absence, exclusion, or withholding claim to a
+  real thing before accepting it — a misspelled identifier passes its contract
+  by asserting the absence of something that never existed;
 - probe at least one accepted behavior independently of the delegate's own
   tests — through the built binary or a fixture the delegate did not author.
   Delegates write the tests that pin their work, so gate-green alone cannot
