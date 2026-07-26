@@ -2,9 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `2de69aa`, checkout clean, 13 unpushed commits.
-`bench status` still reports 15 dirty paths; they are the abandoned worktrees
-below, not this checkout.
+Branch: `main` — HEAD `e338cba`, checkout clean, 13 unpushed commits.
+`bench status` reports 8 dirty paths; they are the one surviving worktree
+described below, not this checkout.
 Spec: `specs/ft86-fail-closed-control-records.md` (Status: staged)
 Gate: green at `32fdf17` — current
 
@@ -18,11 +18,15 @@ Gate: green at `32fdf17` — current
   `implemented` is `/bench-final-check`'s, not the build's.
 - **Semantic review has NOT run.** That is the next phase. Nothing has been pushed;
   the reviewer owns the merge.
-- **Two abandoned worktrees still hold discarded work.** `main` is clean; two
-  round-2 delegates cross-contaminated each other through the stash (see below),
-  and their worktrees still hold the discarded mixed diff. They can be cleared
-  with `bench worktree clean <path>` — left for the reviewer because discarding
-  is hard to reverse.
+- **The two cross-contaminated FT86 worktrees are cleaned.** Both were discarded
+  with `bench worktree clean --apply`, which preserved each one's payload to a
+  `refs/bench/recovery/…` ref before removing it, so the discard is reversible.
+  Their content was the superseded round-2 diff; the re-run is what landed.
+- **One unrelated worktree is still dirty and untouched** — the `spec-amend: FT86
+  falsification findings` branch, 8 paths across `bench-write-spec.md`,
+  `internal/conformance/`, `projects/benchkit.md`, and the
+  `workflow-guidance-anchors` canary fixtures. That is in-flight work from a
+  different thread, not FT86 build output. Nobody has verdicted it.
 - **Four calls are open for post-hoc veto.** (1) `bench maps` now exits 1 when
   `decisions/` holds a file with no ticket heading; all three real decision files
   have one, so this repo is unaffected, but a *linked* repo with a `README.md`
