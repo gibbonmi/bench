@@ -140,14 +140,15 @@ delegate — a distinct request id each — and hand each delegate its returned
 root path. Share a worktree — or run sequentially — only when one delegate's
 work genuinely depends on another's output. A charge that shares an existing
 worktree names its root and pins every file-tool path to that root; shell CWD
-does not retarget file tools. When `bench commit` reports nothing to commit
-beside a visibly modified file, diagnose a CWD/tree mismatch before treating
-the command as defective.
+does not retarget file tools.
 
 The whole-tree gate is a serialized resource: concurrent `bench commit` gates
 flake load-sensitive tests that pass serially — a red that answers for machine
 load rather than for any diff. A write-delegate stops at "diff ready, focused
 tests green"; the coordinator runs `bench commit` per worktree, one at a time.
+When `bench commit` reports nothing to commit beside a visibly modified file,
+the coordinator diagnoses a CWD/tree mismatch before treating the command as
+defective.
 
 A worktree isolates the working tree, not repository-global git surfaces —
 the stash stack above all. Two delegates in separate worktrees share one
