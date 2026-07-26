@@ -290,8 +290,8 @@ resolve, so it is a behavior to preserve, not incidental code. There are
 | `internal/git/git.go:240` (`LandedState`) | already errors; same message fix |
 | `internal/git/git.go:288` (`Facts`) | propagates the unresolved state (see below) |
 | `internal/git/git.go:334` (`ResolvedDefault` itself) | the delegation disappears when the lookup is absorbed |
-| `internal/adopt/link_hook.go:95` | candidate ref, already probe-guarded — skip the candidate |
-| `internal/adopt/link_stage.go:97` | candidate ref — skip the candidate |
+| `internal/adopt/link_hook.go:95` | bake a `main` fail-safe into the hook — a pre-push guard protecting nothing is worse than one on a guessed branch, and the installed hook re-resolves `origin/HEAD` live before reaching the baked token |
+| `internal/adopt/link_stage.go:97` | same fail-safe, via the same helper — the staged hook is the installed hook |
 | `internal/worktree/refresh/refresh.go:48` | candidate ref, already falls through to `ResolvedDefault` then `HEAD` |
 | `internal/worktree/lifecycle.go:194` | candidate ref, already falls through to the empty-ref `worktreeAdd` |
 

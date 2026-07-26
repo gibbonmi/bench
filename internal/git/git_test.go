@@ -266,6 +266,20 @@ func TestResolvedDefaultSoleMaster(t *testing.T) {
 	}
 }
 
+// TestResolvedDefaultNoLocalBranches covers the empty end of the sole-local-branch
+// fallback: a repository with no commits has no branch to fall back to, and indexing the
+// list before counting it would panic rather than report the unresolved state.
+func TestResolvedDefaultNoLocalBranches(t *testing.T) {
+	root := t.TempDir()
+	runGit(t, root, "init")
+
+	def, ok := ResolvedDefault(root)
+
+	if ok || def != "" {
+		t.Fatalf("ResolvedDefault = (%q, %v), want (\"\", false)", def, ok)
+	}
+}
+
 // TestResolvedDefaultUnresolvableNamesNothing pins the ok=false return: an empty name, so
 // no caller can put a branch this repository does not have into a message or a ref.
 func TestResolvedDefaultUnresolvableNamesNothing(t *testing.T) {

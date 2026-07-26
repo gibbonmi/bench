@@ -191,7 +191,10 @@ func Acquire(root, resetRef, resetMode string) (string, error) {
 	}
 	for try := 1; wt == "" && try <= 3; try++ {
 		cand := candidateName(pool, time.Now().Unix(), os.Getpid(), try)
-		if !worktreeAdd(root, cand, git.RemoteDefaultRef(root)) && !worktreeAdd(root, cand, "") {
+		// An unresolved default makes the first attempt the HEAD one already, so the HEAD
+		// fallback is a genuine second attempt only when the remote ref was non-empty.
+		remote := git.RemoteDefaultRef(root)
+		if !worktreeAdd(root, cand, remote) && (remote == "" || !worktreeAdd(root, cand, "")) {
 			break
 		}
 		lease, err := LeaseFile(cand)
