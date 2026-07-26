@@ -2,40 +2,40 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `4085b4d`, main checkout clean, 13 unpushed commits
-Spec: `specs/ft136-slice-fence-rule.md` — staged, approved 2026-07-26
-Gate: green at `edc15e9`, stale by doc-only commits (map, handoff, spec).
+Branch: `main` — HEAD `33724b4`, 8 dirty paths, 2 unpushed commits
+Spec: none staged.
+Gate: green at `edc15e9` — stale, work tree `5b4a4e6`
 
 ## State
 
-- **The FT136 spec is staged and approved.** Compiled off
-  `decisions/cost-follows-project-size.md` (tickets #4/#5 closed): the fence
-  rule and shared-primitives-first land once in `craft-spec`, `craft-review`'s
-  Standards axis gains the fence-boundary duplication hunt, `craft-delegate`
-  gets a content-free charge-time pointer. The top-tier falsification pass
-  (reviewer-directed) returned RECOMMEND; its two findings are fixed in the
-  committed draft.
-- **Decisions that stay closed:** rule ships now, tier-independent — the
-  cheap-tier retest (ticket #6) gates only mid-tier-by-default, never the rule;
-  three surfaces, one source — do not re-litigate a single-skill home; the
-  build runs as one write-delegation in one worktree at `gpt-5.6-sol` / high,
-  and every build delegate for this spec is mid tier or higher (reviewer
-  directive, 2026-07-26).
-- **Open map tickets, untouched by this spec:** #2 (time the fifteen
-  conformance checks) then #3 (FT91 go/no-go) for the gate wall-clock arm;
-  #6 waits opportunistically for a genuinely seam-shaped slice.
-- **The 13 commits are unpushed, and the push is the reviewer's.** Nothing in
+- **FT136 is built, reviewed, and retired.** The slice-fence rule lives once in
+  `craft-spec` ("Slicing a build for delegates": fence rule,
+  shared-primitives-first, tier-independence); `craft-review`'s Standards axis
+  hunts fence-boundary duplication; `craft-delegate` carries the content-free
+  charge-time pointer; frontmatter/index regenerated; the section heading is
+  pinned in the conformance anchor registry (observed red-then-green). Landed
+  gate-green as `b381816`, spec retired in `33724b4`.
+- **Review disposition that stays closed:** the tier-independence clause and
+  the section placement were challenged by the Standards axis and rejected as
+  spec-closed; the pair captions were reworded to timeless register; the
+  anchor-registry rows upgraded the spec's "not TDD-able" anchor edge into
+  gate coverage — flagged for post-hoc veto, two lines in
+  `internal/conformance/docs_workflow_helpers_test.go`. Note: the
+  craft-delegate pointer sentence is anchor-pinned raw — rewrapping it mid-phrase
+  reds the gate by design.
+- **Open map tickets, untouched:** `decisions/cost-follows-project-size.md`
+  stays (backs FT91/FT101): #2 (time the conformance checks) then #3 (FT91
+  go/no-go); #6 waits opportunistically for a genuinely seam-shaped slice.
+- **The unpushed commits are ready; the push is the reviewer's.** Nothing in
   the tree waits on it.
 - Known ambient facts, unchanged: 17 worktrees remain from earlier sessions and
-  were left untouched; the structure budget violations and the conformance-phase
-  long pole stand where they were.
+  were left untouched (the FT136 one was cleaned); the structure budget
+  violations and the conformance-phase long pole stand where they were.
 
 ## Next command
 
-`/bench-implement-spec specs/ft136-slice-fence-rule.md` — in a fresh mid-tier
-session, per the spec-phase exit contract: orchestration stays off top-tier
-context while the spec's single write-delegate runs at its declared
-`gpt-5.6-sol` / high line.
+`git push origin main` — then `/bench-shape-idea`, the board's leading
+invocable signal (`decisions`).
 
 ## Shape
 
