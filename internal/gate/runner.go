@@ -246,6 +246,13 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 		argv = append([]string{resolved}, argv[1:]...)
 	}
 
+	if phase.Name == conformancePhaseName {
+		// The run boundary is here, not at the read below: clearing first is what makes
+		// the print answer for this run, so a file some earlier gate, a killed run, or a
+		// different invocation left in the git dir cannot be printed as if it were ours.
+		_ = registry.ClearTiming(root)
+	}
+
 	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Dir = root
 	cmd.Stdout = stdout

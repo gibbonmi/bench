@@ -156,11 +156,24 @@ type TimingWriter struct {
 	count int
 }
 
-// NewTimingWriter truncates the root's timing file so each run stands alone.
+// ClearTiming empties whatever timing lines a root's file already holds, so no
+// reader can attribute an earlier run's lines to the current one. Whoever starts a
+// conformance run clears at the run boundary; a reader afterwards then sees that
+// run's lines or none at all. A root with no git dir clears nothing and reports no
+// error: the driver grades trees that are not repositories at all.
+func ClearTiming(root string) error {
+	path := TimingPath(root)
+	if path == "" {
+		return nil
+	}
+	return os.WriteFile(path, nil, 0o644)
+}
+
+// NewTimingWriter clears the root's timing file so each run stands alone.
 func NewTimingWriter(root string) *TimingWriter {
 	path := TimingPath(root)
 	if path != "" {
-		if err := os.WriteFile(path, nil, 0o644); err != nil {
+		if err := ClearTiming(root); err != nil {
 			path = ""
 		}
 	}
