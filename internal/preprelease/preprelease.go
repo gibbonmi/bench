@@ -15,6 +15,7 @@ package preprelease
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -28,6 +29,7 @@ import (
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/releaseevidence"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -38,11 +40,16 @@ import (
 const ConformanceTierEnv = "BENCH_CONFORMANCE_TIER"
 
 // ArtifactsDir and IndexPath are the evidence a green run leaves behind, root-relative
-// so a diagnostic names the path an agent would type.
+// so a diagnostic names the path an agent would type. EvidenceDir is where the preflight
+// promotes its per-phase records alongside that index.
 const (
 	ArtifactsDir = "dist/artifacts"
-	IndexPath    = "dist/preflight/release-index.json"
+	EvidenceDir  = "dist/preflight"
+	IndexPath    = EvidenceDir + "/release-index.json"
 )
+
+// preflightStep is the stage whose failure has promoted per-phase evidence to attribute.
+const preflightStep = "release-preflight"
 
 // requiredTools are the interpreters every ship-tier step reaches through. Resolving
 // them up front is what turns a missing toolchain into a named diagnostic rather than
@@ -90,7 +97,7 @@ func Steps(root, kit string) []Step {
 			// Verify mode by design: its index is deliberately insufficient for publish
 			// authority, so a rehearsal can never be mistaken for the release's own
 			// preflight.
-			Name: "release-preflight",
+			Name: preflightStep,
 			Argv: []string{"bash", filepath.Join(root, "scripts", "release-preflight.sh"), "--mode", "verify"},
 		},
 		{
@@ -150,6 +157,11 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "prep-release: %s\n", step.Name)
 		if err := runStep(ctx, root, step, stderr); err != nil {
 			fmt.Fprintf(stderr, "prep-release: %s failed: %v\n", step.Name, err)
+			if step.Name == preflightStep {
+				for _, attribution := range PreflightAttributions(root) {
+					fmt.Fprintf(stderr, "prep-release: %s\n", attribution)
+				}
+			}
 			return 1
 		}
 	}
@@ -167,6 +179,34 @@ func Refusal(inspection gate.Inspection) string {
 		cause = string(inspection.State)
 	}
 	return fmt.Sprintf("prep-release: no current dev-green verdict for this tree (%s) — run `bench gate`, then re-run prep-release", cause)
+}
+
+// PreflightAttributions names each verify phase whose promoted record is not green, with
+// that phase's own diagnostic. The preflight streams twenty minutes of phase output and
+// then exits 1, so its bare exit status leaves the cause somewhere in the scrollback;
+// the records it promoted already hold the attribution, and this reads it back rather
+// than re-deriving anything from that output.
+//
+// A record that is absent or undecodable yields no line: the phase sequence is the
+// preflight's to own, and a run interrupted before promotion has nothing to attribute.
+func PreflightAttributions(root string) []string {
+	var attributions []string
+	for _, phase := range releaseevidence.PhaseNames(releaseevidence.ModeVerify) {
+		data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(EvidenceDir), phase+".json"))
+		if err != nil {
+			continue
+		}
+		var record releaseevidence.Record
+		if json.Unmarshal(data, &record) != nil || record.Status == releaseevidence.StatusGreen {
+			continue
+		}
+		attribution := preflightStep + " phase " + phase + " is " + string(record.Status)
+		if record.Error != nil && record.Error.Message != "" {
+			attribution += ": " + record.Error.Message
+		}
+		attributions = append(attributions, attribution)
+	}
+	return attributions
 }
 
 func firstMissingTool() string {

@@ -76,6 +76,40 @@ func TestRefusalNamesTheCauseAndTheRemedy(t *testing.T) {
 	}
 }
 
+// TestPreflightAttributionsNameEveryRedPhase covers the evidence set a real red run
+// leaves: a green phase, a red one carrying its own message, a red one carrying none,
+// and a phase whose record never landed. Reporting only the first red would hide the
+// second cause, and a missing record is the interrupted run, not a failure to report.
+func TestPreflightAttributionsNameEveryRedPhase(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, filepath.FromSlash(EvidenceDir)), 0o755); err != nil {
+		t.Fatalf("create evidence dir: %v", err)
+	}
+	for name, body := range map[string]string{
+		"gate":          `{"phase":"gate","status":"green","error":null}`,
+		"vulnerability": `{"phase":"vulnerability","status":"red","error":{"kind":"tool","message":"govulncheck is missing"}}`,
+		"race":          `{"phase":"race","status":"red","error":null}`,
+	} {
+		path := filepath.Join(root, filepath.FromSlash(EvidenceDir), name+".json")
+		if err := os.WriteFile(path, []byte(body+"\n"), 0o644); err != nil {
+			t.Fatalf("write %s evidence: %v", name, err)
+		}
+	}
+
+	got := strings.Join(PreflightAttributions(root), "\n")
+	for _, want := range []string{"phase race is red", "phase vulnerability is red: govulncheck is missing"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("attributions = %q, want it to contain %q", got, want)
+		}
+	}
+	if strings.Contains(got, "gate") {
+		t.Errorf("attributions = %q, want no line for a green phase", got)
+	}
+	if strings.Contains(got, "smoke") {
+		t.Errorf("attributions = %q, want no line for a phase with no record", got)
+	}
+}
+
 func stepNamed(t *testing.T, steps []Step, name string) Step {
 	t.Helper()
 	for _, step := range steps {
