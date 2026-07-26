@@ -34,11 +34,6 @@ import (
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// ConformanceTierEnv selects the tier the conformance entry point grades. This command
-// is its only writer; every other caller of that entry point gets the dev tier by
-// omission, which is what keeps the dev default un-overridable by accident.
-const ConformanceTierEnv = "BENCH_CONFORMANCE_TIER"
-
 // ArtifactsDir and IndexPath are the evidence a green run leaves behind, root-relative
 // so a diagnostic names the path an agent would type. EvidenceDir is where the preflight
 // promotes its per-phase records alongside that index.
@@ -91,7 +86,7 @@ func Steps(root, kit string) []Step {
 			// those suites are graded here rather than by a second invocation.
 			Name: "conformance-ship",
 			Argv: append(goTestArgv(kit), "-tags", "stress", "./internal/conformance", "-run", "^TestRootConformance$"),
-			Env:  []string{"BENCH_CONFORMANCE_ROOT=" + root, ConformanceTierEnv + "=" + string(registry.Ship)},
+			Env:  []string{"BENCH_CONFORMANCE_ROOT=" + root, registry.ConformanceTierEnv + "=" + string(registry.Ship)},
 		},
 		{
 			// Verify mode by design: its index is deliberately insufficient for publish

@@ -118,7 +118,7 @@ func SweepTier(root string, tier registry.Tier, runner Runner) error {
 		return nil
 	}
 	gate := filepath.Join(root, ".bench", "gate.sh")
-	env := innerEnv()
+	env := innerEnv(tier)
 
 	baselineDir, err := os.MkdirTemp("", "bench-canary-empty-*")
 	if err != nil {
@@ -378,15 +378,21 @@ func restoreDotSegments(root string) error {
 	return nil
 }
 
-func innerEnv() []string {
-	env := make([]string, 0, len(os.Environ())+2)
+// innerEnv is the environment every inner gate of a tier's sweep runs under. The tier
+// is pinned rather than inherited: a fixture grades a check its own tier runs, so an
+// inner gate at any other tier skips that check and the fixture reports "did not bite"
+// forever. Every variable set here is scrubbed from the inherited environment first —
+// a strip without its matching set, or a set without its matching strip, hands an
+// ambient export control of what the sweep grades.
+func innerEnv(tier registry.Tier) []string {
+	env := make([]string, 0, len(os.Environ())+3)
 	for _, kv := range os.Environ() {
-		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, "BENCH_CANARY_INNER=") || strings.HasPrefix(kv, PhaseEnv+"=") || strings.HasPrefix(kv, "GOMAXPROCS=") {
+		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, "BENCH_CANARY_INNER=") || strings.HasPrefix(kv, PhaseEnv+"=") || strings.HasPrefix(kv, registry.ConformanceTierEnv+"=") || strings.HasPrefix(kv, "GOMAXPROCS=") {
 			continue
 		}
 		env = append(env, kv)
 	}
-	return append(env, "BENCH_CANARY_INNER=1", fmt.Sprintf("GOMAXPROCS=%d", bounds.CanaryInnerWidth))
+	return append(env, "BENCH_CANARY_INNER=1", registry.ConformanceTierEnv+"="+string(tier), fmt.Sprintf("GOMAXPROCS=%d", bounds.CanaryInnerWidth))
 }
 
 func defaultRunner(call RunCall) RunResult {

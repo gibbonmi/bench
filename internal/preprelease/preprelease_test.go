@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/gate"
 )
 
@@ -50,7 +51,7 @@ func TestStepsGradeTheRootTheyWereGiven(t *testing.T) {
 	if !slices.Contains(conformance.Env, "BENCH_CONFORMANCE_ROOT="+root) {
 		t.Errorf("the conformance step grades a root other than the one asked for: %v", conformance.Env)
 	}
-	if !slices.Contains(conformance.Env, ConformanceTierEnv+"=ship") {
+	if !slices.Contains(conformance.Env, registry.ConformanceTierEnv+"=ship") {
 		t.Errorf("the conformance step does not ask for the ship tier: %v", conformance.Env)
 	}
 	if !slices.Contains(stepNamed(t, steps, "artifacts").Argv, root) {

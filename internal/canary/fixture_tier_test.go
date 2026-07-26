@@ -143,6 +143,55 @@ func TestSweepTierRunsOnlyItsOwnTier(t *testing.T) {
 	}
 }
 
+// TestSweepTierPinsInnerTier proves the inner gate grades the tier whose fixtures are
+// being swept, and that an ambient export of the tier variable cannot select it — a
+// ship fixture graded by a dev inner gate reports "did not bite" forever.
+func TestSweepTierPinsInnerTier(t *testing.T) {
+	t.Setenv(registry.ConformanceTierEnv, "ambient")
+	root := t.TempDir()
+	plain := canaryFixture(root, "test-family", "plain")
+	mkdir(t, filepath.Join(plain, "files"))
+	write(t, filepath.Join(plain, "EXPECT"), "target-plain\n")
+	shipped := canaryFixture(root, "test-family", "shipped")
+	mkdir(t, filepath.Join(shipped, "files"))
+	write(t, filepath.Join(shipped, "EXPECT"), "target-shipped\n")
+	write(t, filepath.Join(shipped, "CHECK"), shipCheckName(t)+"\n")
+
+	tiersSeen := func(t *testing.T, tier registry.Tier) []string {
+		t.Helper()
+		var mu sync.Mutex
+		var seen []string
+		runner := func(call RunCall) RunResult {
+			mu.Lock()
+			for _, kv := range call.Env {
+				if value, ok := strings.CutPrefix(kv, registry.ConformanceTierEnv+"="); ok {
+					seen = append(seen, value)
+				}
+			}
+			mu.Unlock()
+			if call.FixtureDir == "" {
+				return RunResult{ExitCode: 1, Output: "baseline\n"}
+			}
+			return RunResult{ExitCode: 1, Output: "target-" + filepath.Base(call.FixtureDir) + "\n"}
+		}
+		if err := SweepTier(root, tier, runner); err != nil {
+			t.Fatalf("%s sweep: %v", tier, err)
+		}
+		if len(seen) == 0 {
+			t.Fatalf("%s sweep handed the runner no %s", tier, registry.ConformanceTierEnv)
+		}
+		return seen
+	}
+
+	for _, tier := range []registry.Tier{registry.Dev, registry.Ship} {
+		for _, got := range tiersSeen(t, tier) {
+			if got != string(tier) {
+				t.Errorf("%s sweep ran an inner gate at tier %q", tier, got)
+			}
+		}
+	}
+}
+
 // shipCheckName is the registry's ship-tier check, read rather than written down so the
 // synthetic fixtures follow a retiering instead of pinning one name.
 func shipCheckName(t *testing.T) string {

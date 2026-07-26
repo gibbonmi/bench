@@ -7,7 +7,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/contract"
-	"github.com/gibbonmi/bench/internal/preprelease"
 )
 
 // seededFailure is the test name both isolation rows look for in a run's output. It is
@@ -72,7 +71,7 @@ func gradeTier(t *testing.T, root string, tier registry.Tier) string {
 	f := contract.NewExecFixtureAt(t, root)
 	env := map[string]string{"BENCH_CONFORMANCE_ROOT": root}
 	if tier == registry.Ship {
-		env[preprelease.ConformanceTierEnv] = string(registry.Ship)
+		env[registry.ConformanceTierEnv] = string(registry.Ship)
 	}
 	probe := contract.RunAt(t, f, root, env, "go", "-C", kit, "test", "-count=1", "./internal/conformance", "-run", "^TestRootConformance$")
 	return probe.Stdout + probe.Stderr

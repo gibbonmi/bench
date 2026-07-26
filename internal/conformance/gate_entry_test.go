@@ -7,7 +7,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
-	"github.com/gibbonmi/bench/internal/preprelease"
 )
 
 func TestRootConformance(t *testing.T) {
@@ -16,15 +15,15 @@ func TestRootConformance(t *testing.T) {
 		capability.Environment(t, "BENCH_CONFORMANCE_ROOT not set")
 	}
 	h := NewHarness(t)
-	for _, diag := range RunConformance(root, h.KitRoot, entryTier(os.Getenv(preprelease.ConformanceTierEnv))) {
+	for _, diag := range RunConformance(root, h.KitRoot, entryTier(os.Getenv(registry.ConformanceTierEnv))) {
 		t.Errorf("gate: %s", diag)
 	}
 }
 
 // entryTier reads the tier this entry point grades. The env var and the token that
-// selects the ship surface both come from the only command that sets them, so nothing
-// here restates that contract. Any other value is the dev tier: a typo or a stray
-// export must never widen what the gate runs.
+// selects the ship surface both come from the registry, so nothing here restates that
+// contract. Any other value is the dev tier: a typo or a stray export must never widen
+// what the gate runs.
 func entryTier(value string) registry.Tier {
 	if value == string(registry.Ship) {
 		return registry.Ship

@@ -25,6 +25,12 @@ const (
 	Ship Tier = "ship"
 )
 
+// ConformanceTierEnv selects the tier an inner grading surface runs at: the
+// conformance entry point reads it, and so does the gate a canary sweep drives.
+// Absent, the surface grades the dev tier — the default stays un-overridable by
+// accident because a writer that means ship has to set it explicitly.
+const ConformanceTierEnv = "BENCH_CONFORMANCE_TIER"
+
 // Check is one conformance check's identity. Its position in Checks fixes both the
 // execution order and the timing-line index, so the order is part of the contract.
 type Check struct {
