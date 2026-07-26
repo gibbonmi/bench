@@ -22,8 +22,9 @@ anchor lines (no gate run this session — shaping only).
   deferred, now with a measured price on the map.
 - **Measured facts a spec session may want:** conformance phase ≈826 s, 99.8%
   in `checkPackageCoreAndGuards`; `checkReleasePreflight` ≈372 s;
-  uncached `internal/preflight` exceeds 900 s (slow, not hung — go-test cache
-  normally hides it). Probe file deleted; numbers live in the map's #2 answer.
+  uncached `internal/preflight` is 676 s (slow, not hung — go-test cache
+  normally hides it); the inner suite recurses through the conformance package
+  on a cache miss. Probe file deleted; numbers live in the map's #2 answer.
 - Known ambient facts, unchanged: 17 recovered worktrees from earlier sessions
   left untouched; structure budget violations stand.
 
