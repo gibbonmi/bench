@@ -2,7 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `8e4ded4`, clean, 12 unpushed commits
+Branch: `main` — HEAD `2de69aa`, checkout clean, 13 unpushed commits.
+`bench status` still reports 15 dirty paths; they are the abandoned worktrees
+below, not this checkout.
 Spec: `specs/ft86-fail-closed-control-records.md` (Status: staged)
 Gate: green at `32fdf17` — current
 
