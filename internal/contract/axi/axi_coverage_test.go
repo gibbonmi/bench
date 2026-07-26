@@ -200,6 +200,15 @@ func testAXICoverageCheckValidation(t *testing.T) {
 			body: "# b\n\n" + stories + "\n### Acceptance coverage map\n" + header + "\n| x | b | s | r | w |\n",
 			want: "has an unrecognized story reference 'x'",
 		},
+		{
+			// A spec with a map but no story section declares nothing, so the message
+			// must name that state outright — the set-listing phrasing degenerates into
+			// a dangling "(has: )" here and reads like a truncated line.
+			name: "story reference with no declared stories",
+			path: "specs/b7.md",
+			body: "# b\n\n### Acceptance coverage map\n" + header + "\n| 1 | b | s | r | w |\n",
+			want: "references story 1, but the spec declares no stories",
+		},
 	}
 	for _, c := range cases {
 		c := c
@@ -261,7 +270,9 @@ func TestAXICoverageHistoricalPasses(t *testing.T) {
 // The non-member case uses axiCoverageGappedStories (1, 2, 4) and references story 3 —
 // a number below the maximum but inside the gap — so the fixture is discriminating: a
 // max-only validator (the prior implementation) would let it through, while only exact
-// set membership rejects it.
+// set membership rejects it. The range case reuses the same gapped set to reach the
+// number a range spans without naming: `2-4` has declared endpoints, so only a check
+// that walks the numbers between them rejects it.
 func TestAXICoverageStoryMembership(t *testing.T) {
 	contract.SkipIfSubjectBenchMissing(t)
 	cases := []struct {
@@ -270,6 +281,7 @@ func TestAXICoverageStoryMembership(t *testing.T) {
 		{"story zero", "specs/m0.md", axiCoverageStories, "0", "references story 0, which is not a valid story number"},
 		{"non-member story", "specs/m1.md", axiCoverageGappedStories, "3", "references story 3, which the spec does not declare (has: 1, 2, 4)"},
 		{"reversed range", "specs/m2.md", axiCoverageStories, "3-1", "has a story range with end before start '3-1'"},
+		{"non-member inside a range", "specs/m3.md", axiCoverageGappedStories, "2-4", "references story 3, which the spec does not declare (has: 1, 2, 4)"},
 	}
 	for _, c := range cases {
 		c := c

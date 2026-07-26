@@ -39,11 +39,17 @@ var (
 	mapEndRe   = regexp.MustCompile(`^#{2,} `)
 	edgeRe     = regexp.MustCompile(`^[Ee][Dd][Gg][Ee]`)
 	parenRe    = regexp.MustCompile(`[ \t]*\(.*\)$`)
-	// A story reference: a number, a range (en-dash or hyphen), or a comma list of them.
-	storyRefRe = regexp.MustCompile(`^[0-9]+([ \t]*(–|-)[ \t]*[0-9]+)?([ \t]*,[ \t]*[0-9]+([ \t]*(–|-)[ \t]*[0-9]+)?)*$`)
-	// One comma-separated part of a story reference: a single number, or a range.
-	storyPartRe = regexp.MustCompile(`^([0-9]+)(?:[ \t]*(?:–|-)[ \t]*([0-9]+))?$`)
+	// storyPartRe matches one comma-separated part of a story reference — a single
+	// number, or a range joined by an en-dash or hyphen — capturing its endpoints.
+	// storyRefRe composes the same grammar into the whole comma list, so the two can
+	// never disagree about what a part looks like: every trimmed part storyRefRe
+	// accepts is one storyPartRe matches, which is why the submatch below is
+	// dereferenced without a nil check.
+	storyPartRe = regexp.MustCompile(`^` + storyPartPattern + `$`)
+	storyRefRe  = regexp.MustCompile(`^` + storyPartPattern + `([ \t]*,[ \t]*` + storyPartPattern + `)*$`)
 )
+
+const storyPartPattern = `([0-9]+)(?:[ \t]*(?:–|-)[ \t]*([0-9]+))?`
 
 // historicalMarker is the literal opt-out comment: present anywhere in a spec, it
 // exempts the spec from the coverage-map requirement (a no-map state) and from
@@ -221,26 +227,38 @@ func Check(p parsed) []string {
 				v = append(v, fmt.Sprintf("coverage map row %d has a story range with end before start '%s-%s'", rn, m[1], m[2]))
 				continue
 			}
-			v = append(v, p.checkStoryMember(rn, start)...)
-			v = append(v, p.checkStoryMember(rn, end)...)
+			// A range stands for every number it spans, not just its endpoints: a spec
+			// declaring 1, 2, 4 has both ends of `2-4` but no story 3 for the row to
+			// cover. Only the first gap is reported — it names the row's fault, and a
+			// wide range would otherwise bury the rest of the output.
+			for n := start; n <= end; n++ {
+				if msgs := p.checkStoryMember(rn, n); msgs != nil {
+					v = append(v, msgs...)
+					break
+				}
+			}
 		}
 	}
 	return v
 }
 
 // checkStoryMember validates one story number referenced by row rn against the
-// spec's exact declared set — a separate message for 0 (never a valid story
-// number) versus any other non-member, so each failure mode names itself. The
-// non-member message names the declared set rather than a maximum: a spec that
-// skips a number (1, 2, 4) makes "numbers only N" false for a row referencing 3.
+// spec's exact declared set. Each failure mode names itself: 0 is never a valid
+// story number, a spec that declares no stories at all says so plainly, and any
+// other non-member is reported against the declared set rather than a maximum —
+// a spec that skips a number (1, 2, 4) makes "numbers only N" false for a row
+// referencing 3.
 func (p parsed) checkStoryMember(rn, n int) []string {
 	if n == 0 {
 		return []string{fmt.Sprintf("coverage map row %d references story 0, which is not a valid story number", rn)}
 	}
-	if !p.storyNums[n] {
-		return []string{fmt.Sprintf("coverage map row %d references story %d, which the spec does not declare (has: %s)", rn, n, p.declaredStoriesList())}
+	if p.storyNums[n] {
+		return nil
 	}
-	return nil
+	if len(p.storyNums) == 0 {
+		return []string{fmt.Sprintf("coverage map row %d references story %d, but the spec declares no stories", rn, n)}
+	}
+	return []string{fmt.Sprintf("coverage map row %d references story %d, which the spec does not declare (has: %s)", rn, n, p.declaredStoriesList())}
 }
 
 // declaredStoriesList renders the spec's declared story numbers in ascending order,
@@ -304,12 +322,11 @@ func Command(args []string) (string, int) {
 	if check {
 		violations := Check(p)
 		if len(violations) == 0 {
-			// A pass is always a definitive one-line result, never silence: a spec with
-			// zero violations names why — a valid map, or an explicit historical opt-out
-			// — so "nothing to validate" is never mistaken for "nothing printed by
-			// accident". Check returns nil for exactly two cases here: a mapped spec with
-			// no violations, or a historical marker (mapped or not), so the two branches
-			// below are exhaustive.
+			// A pass is always a definitive one-line result, never silence, so "nothing
+			// to validate" is never mistaken for "nothing printed by accident". Check is
+			// silent for two states — a mapped spec with no violations, and a historical
+			// marker (mapped or not) — and a third silent state added there needs its own
+			// pass line here.
 			if State(p) == "mapped" {
 				return checkOKLine(fmt.Sprintf("coverage map valid — %d row(s)", len(p.dataRows))), 0
 			}
