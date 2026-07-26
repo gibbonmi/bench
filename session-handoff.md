@@ -2,55 +2,39 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `38cc1f5`, main checkout clean, 8 unpushed commits
-Spec: none staged — FT96 shipped and retired
-Gate: green at `edc15e9`, the exact tree of HEAD
+Branch: `main` — HEAD `440266e`, main checkout clean, 9 unpushed commits
+Spec: none staged
+Gate: green at `edc15e9`, reported plain-stale — the drain's doc-only commit is
+the only drift.
 
 ## State
 
-- **FT96 is built, gate-green, and retired.** Seven guidance clauses in
-  `.agents/skills/bench-craft-delegate/SKILL.md`; a second destructive-git deny
-  class for the working-tree-mutating `git stash` verbs; the conformance
-  dead-pointer sweep widened from `.agents/commands` to the whole `.agents`
-  markdown tree; two presence anchors on craft-delegate plus three canary
-  fixtures proving the new bite paths. All ten stories shipped, all 31 coverage
-  rows classified.
-- **Nothing is uncommitted and nothing is half-done.** The gate ran green on the
-  exact tree of HEAD as one subject, after the retirement commit — not a cached
-  verdict from an earlier tree.
-- **The eight commits are unpushed, and the push is the reviewer's.** Nothing in
+- **The board is drained and reconciled.** 46 rows, both capture sources empty,
+  `bench roadmap --context` parses with zero failures. FT96 shipped complete on
+  2026-07-26 and its row is gone; the four rows that cross-referenced it (FT103,
+  FT123, FT131, FT136) now say what actually landed.
+- **Two drain calls are open to post-hoc veto.** The self-contradicting-spec
+  learning was folded into FT107 as a fourth clause rather than dismissed — the
+  batch-approval rule covers an AFK reviewer and genuinely says nothing about a
+  spec whose own sections disagree. And FT133 was placed third in the sequence
+  ahead of FT107; a hole in the coverage oracle outranks prose, but not by much.
+- **FT133 gained a reproduced second instance.** On `main`, `go test
+  ./internal/conformance -run ^TestRootConformance$` without
+  `BENCH_CONFORMANCE_ROOT` prints `ok … 0.002s` and skips invisibly. That widens
+  the row from *does the citation resolve* to *does it actually execute*.
+- **The nine commits are unpushed, and the push is the reviewer's.** Nothing in
   the tree waits on it.
-- **The three-axis review already ran and its findings are fixed and landed.**
-  Two mattered: the guard's first-free-argument scan let `git stash -m list` and
-  `git stash -- list` through, because a flag value was read as the subcommand;
-  and `bench shift` still advised `commit or stash first`, a command the new deny
-  class refuses. No `reviews/` pickup file exists, by design — the findings were
-  closed in the session that found them.
-- **Two calls the coordinator made and flagged rather than settled.** The anchor
-  canary fixtures went under `tests/canary/workflow-guidance-anchors/` instead of
-  the family the spec's Implementation-decisions paragraph named, because the
-  spec contradicted its own Prior-art line; and the spec text was left unamended
-  where it described the superseded free-argument mechanism. Retirement removed
-  both discrepancies, and the first is the open learnings entry.
-- **Both capture sources hold one entry and want a drain.** `IDEAS.md`: coverage
-  maps' conformance red signals omit `BENCH_CONFORMANCE_ROOT`, so the command as
-  written capability-skips and reports a false `ok`. `.bench/learnings.md`: may a
-  build correct a spec's internally-inconsistent instruction on its own when the
-  two readings are functionally equivalent?
-- **`ROADMAP.md` still carries FT96's row and six cross-references.** Left
-  deliberately — `.bench/BENCH.md` gives the roadmap reconcile to the drain phase,
-  and this is reconcile work, not retirement work. Expect it as the drain's first
-  finding.
-- Known ambient facts: 17 worktrees remain from earlier sessions, some flagged
-  unmerged or uncertain at session start, so they were left untouched — only this
-  session's six were released. The structure budget violations and the
-  conformance-phase long pole are unchanged.
+- Known ambient facts, unchanged: 17 worktrees remain from earlier sessions and
+  were left untouched; the structure budget violations and the conformance-phase
+  long pole stand where they were.
 
 ## Next command
 
-`/bench-what-next` — the board needs a reconcile before anything else is built:
-FT96's roadmap row is stale, and both capture sources have an entry awaiting a
-verdict.
+`/bench-shape-idea` — the cost-follows-project-size complaint, shaped once
+across its three angles (FT91's remaining gate arms, FT101's scoped surfaces,
+FT136's delegate slicing). Gate wall-clock is the reviewer's stated dominant
+cost, and FT91's first step — timing the fifteen conformance checks — is the
+session's cheapest evidence request.
 
 ## Shape
 
