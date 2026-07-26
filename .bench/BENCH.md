@@ -60,7 +60,9 @@ Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
 - Ambient context and capture: `bench status`, `bench handoff` (prints the cold-start pin
   block and rewrites `session-handoff.md`), `bench commands --brief`, `bench dashboard`,
   `bench idea`, `bench roadmap`, `bench learnings`, `bench maps`.
-- Oracle and diagnostics: `bench gate`, `bench gate pin`, `bench canary`, `bench structure`,
+- Oracle and diagnostics: `bench gate` (dev tier), `bench gate pin`, `bench prep-release`
+  (maintainer-run ship tier: the release-evidence checks, once per release; refuses
+  without a current dev-green verdict), `bench canary`, `bench structure`,
   `bench guards`, `bench diff`, `bench coverage`, `bench outline`, `bench models`, `bench version`.
 - Work execution: `bench worktree`, `bench shift`, and path-scoped `bench commit
   -m <msg> <path>...` (stages its named paths; use `--spec <slug>` only on an

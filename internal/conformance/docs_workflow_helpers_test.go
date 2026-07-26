@@ -49,6 +49,7 @@ func checkWorkflowAnchors(root string) []string {
 	require(".agents/commands/bench-review-implementation.md", "bench diff --full --commit")
 	require(".agents/commands/bench-final-check.md", ".bench/gate.sh")
 	require(".agents/commands/bench-final-check.md", "BENCH_GATE")
+	require(".agents/commands/bench-final-check.md", "ship-tier verification has not run")
 	require(".agents/commands/bench-write-spec.md", "seam diagram")
 	require(".agents/commands/bench-write-spec.md", "tests attach here")
 	require(".agents/commands/bench-write-spec.md", "edge inventory")

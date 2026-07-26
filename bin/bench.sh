@@ -284,6 +284,7 @@ case "${1-help}" in
   gate-run) route_binary "$@" ;;
   gate-phases) route_binary "$@" ;;
   release-preflight) route_binary "$@" ;;
+  prep-release) route_binary "$@" ;;
   release)  route_binary "$@" ;;
   guard-git) route_binary "$@" ;;
   session-inspect) route_binary "$@" ;;
@@ -317,6 +318,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench doctor [--fix]       report (and repair) the PATH shim under a node version manager
   bench repair [--prune]     explicitly install the pinned platform binary or prune stale cache entries
   bench gate                 run the project gate (the oracle)
+  bench prep-release         ship-tier rehearsal: artifacts, cross-compile, preflight verify, ship canary
   bench release-preflight --mode verify|publish [--profile public|bank] [--phase name]  run repository release authorization
   bench release prepare|submit|promote|rollback|status --version <v> [--profile public|bank] [--root dir] [--registry url] [--path first|staged] [--message text]  governed npm publication
   bench gate pin             pin HEAD's .bench tree for pre-push verification
