@@ -40,6 +40,21 @@ if [[ -e "$output" ]]; then
     printf 'bench offline archives: output is not a real directory: %s\n' "$output" >&2
     exit 1
   }
+  # The swap below replaces this directory and deletes what was here. Only the
+  # archives this build emits and the npm tarballs it consumes are ours to
+  # destroy; anything else means the caller named a directory that is not a
+  # build output, and the refusal comes now rather than after the archives are
+  # built and the tree is already gone.
+  while IFS= read -r -d '' entry; do
+    case "${entry##*/}" in
+      redbench-*.tar.gz|redbench-*.tgz)
+        [[ -f "$entry" && ! -L "$entry" ]] && continue
+        ;;
+    esac
+    printf 'bench offline archives: output directory holds an entry this build did not produce: %s\n' "$entry" >&2
+    printf 'bench offline archives: refusing to replace %s\n' "$output" >&2
+    exit 1
+  done < <(find "$output" -mindepth 1 -maxdepth 1 -print0)
 fi
 mkdir -p "$stage/roots" "$stage/output"
 same_output=0

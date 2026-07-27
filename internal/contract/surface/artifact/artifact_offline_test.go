@@ -241,6 +241,58 @@ func TestOfflineArchiveProjection(t *testing.T) {
 	assertOfflineArchiveSet(t, npmOut, offlineOut, wrapper.Version, matrix)
 }
 
+// The offline builder replaces its output directory wholesale — it moves the old
+// one aside and deletes it. Anything in there that the build cannot account for
+// is somebody's work, so the refusal has to come before the archives are built
+// rather than beside the swap that would destroy it.
+func TestOfflineArchiveBuildRefusesOutputItCannotAccountFor(t *testing.T) {
+	root := contract.SubjectRoot(t)
+	contract.SkipIfSubjectFileMissing(t, "scripts/build-offline-archives.sh")
+	script := filepath.Join(root, "scripts", "build-offline-archives.sh")
+	const refusal = "did not produce"
+	for _, test := range []struct {
+		name    string
+		seed    func(t *testing.T, dir string)
+		refused bool
+	}{
+		{"a live checkout", func(t *testing.T, dir string) {
+			if err := os.MkdirAll(filepath.Join(dir, ".git"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(dir, "KEEP.txt"), []byte("committed work\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}, true},
+		{"the npm tarballs it consumes", func(t *testing.T, dir string) {
+			if err := os.WriteFile(filepath.Join(dir, "redbench-0.2.0.tgz"), []byte("wrapper\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}, false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			output := filepath.Join(t.TempDir(), "offline out [hostile]")
+			if err := os.MkdirAll(output, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			test.seed(t, output)
+			probe := contract.NewExecFixtureAt(t, root).Run("bash", script, t.TempDir(), output)
+			probe.RequireExit(1)
+			if test.refused {
+				probe.RequireContains(probe.Stderr, refusal)
+			} else {
+				probe.RequireNotContains(probe.Stderr, refusal)
+			}
+			entries, err := os.ReadDir(output)
+			if err != nil {
+				t.Fatalf("read output directory after refusal: %v", err)
+			}
+			if len(entries) == 0 {
+				t.Fatal("the build emptied an output directory it did not complete")
+			}
+		})
+	}
+}
+
 func TestOfflineInstructionsVerifyOnlyTargetArchive(t *testing.T) {
 	root := contract.SubjectRoot(t)
 	contract.SkipIfSubjectFileMissing(t, "scripts/assemble-offline-archive.mjs")
