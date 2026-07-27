@@ -2,39 +2,37 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — gate-pipeline map closed (`0b89710` + asset-move commit),
-**unpushed**; `git push` is hook-blocked for the worker, so the push is the
-reviewer's own command.
+Branch: `main` — spec staged and approved (`92968c5`), **unpushed**; `git push`
+is hook-blocked for the worker, so the push is the reviewer's own command.
 
 ## State
 
-- **`decisions/gate-pipeline.md` is closed** — all nine tickets resolved, the
-  `## Handoff` section is written, `bench maps` shows no gate-pipeline rows.
-  The fixture inventory asset lives at
-  `decisions/assets/gate-pipeline-fixture-inventory.md`.
-- **Recommended slicing (reviewer's call, recorded in the map's Handoff):**
-  slice A — canary check-scoping prerequisite (#5 + stray CHECK files),
-  buildable on today's gate; slice B — manifest + DAG runner; slice C —
-  `checkGoCore` split + fixture migration + parity, after A and B.
-- **Decisions that stay closed:** six-field manifest
-  (`name/argv/env/needs/optional/dir`), `.bench/phases.json`,
-  absent=built-in / empty+malformed=red; many-to-one family→check binding
-  with CHECK overrides for the nine strays; phase-named canary families with
-  new-phase fixtures authored in the migration pass; unweighted width; single
-  gate deadline naming stragglers; fixture-backed parity; diff-scoped gating
-  stays ruled unsound; cross-language incrementality stays behind FT91's
-  revive trigger.
+- **`specs/ft91-canary-check-scoping.md` is staged and reviewer-approved** —
+  slice A of the gate-pipeline map (canary check-scoping: registry
+  family→check table, `BENCH_CONFORMANCE_CHECK` env, all-loud fail postures,
+  per-check shared vacuity baselines keyed on check name alone, seven stray
+  CHECK files). Coverage map valid at 16 rows. A Sol falsification pass
+  (Codex CLI, reviewer-granted) blocked the first draft on seven findings;
+  all were verified against the tree and folded in before approval.
+- **`decisions/gate-pipeline.md` stays closed** — its Handoff carries the
+  seams for slices B (manifest + DAG runner) and C (`checkGoCore` split +
+  fixture migration), which spec after A ships.
+- **Decisions that stay closed:** baseline grouping key is the resolved check
+  name alone (unscoped fixtures share today's single full baseline); the
+  live sweep's did-not-bite verdict is the binding's enforcement; no
+  fixture merging; story lines as approved in the spec (six mid, one cheap).
+- Codex CLI note: `codex exec` must run with stdin closed (`</dev/null`) or
+  it blocks reading the pipe forever — cost two dead attempts this session.
 - `bench prep-release` stays shelved — blocked by FT116's race and FT142's
   ship-track findings; both are board rows, not handoff state.
-- The branch/worktree sweep (23 non-`main` branches, 19 worktrees, work
-  verified present in `main`) remains proposed, not executed — reviewer's call.
+- The branch/worktree sweep (23 non-`main` branches, 19 worktrees) remains
+  proposed, not executed — reviewer's call.
 
 ## Next command
 
-`/bench-write-spec` on a fresh mid-tier session, seeded with
-`decisions/gate-pipeline.md` (its Handoff carries the seams; start with
-slice A per the recorded dependency order). Reviewer-run
-`git push origin main` still pending.
+`/bench-implement-spec specs/ft91-canary-check-scoping.md` on a fresh
+mid-tier session. Reviewer-run `git push origin main` when convenient
+(1 commit waiting).
 
 ## Shape
 
