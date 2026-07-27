@@ -420,7 +420,7 @@ func residualAssignment(a intent.Assignment) bool { return len(a.Recovery) == 0 
 // owned cleanup receipt that does not match the automatic-registration reconcile shape
 // (e.g. a request-less `bench worktree clean --discard-ignored --apply`). A residue
 // record is compacted to a terminal release receipt; a record still holding preserved
-// work is left intact and its recovery command named. See specs/worktree-orphan-reconcile.md.
+// work is left intact and its recovery command named — the FT93(c) contract.
 func reconcileOutOfBand(root, repo, request, target string, cleanup intent.CleanupReceipt) (intent.CleanupReceipt, error) {
 	unauthorized := errors.New("cleanup receipt does not authorize release reconciliation")
 	if cleanup.State != intent.ReceiptComplete || !cleanup.Owned || cleanup.Assignment == "" {

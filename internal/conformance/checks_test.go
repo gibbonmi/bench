@@ -13,6 +13,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
@@ -346,7 +347,7 @@ func wrapperStubDir(realBench string) (string, func(), error) {
 		return "", func() {}, err
 	}
 	cleanup := func() { os.RemoveAll(dir) }
-	content := "#!/usr/bin/env bash\nexec " + shellQuote(realBench) + " \"$@\"\n"
+	content := "#!/usr/bin/env bash\nexec " + sanitize.ShellQuote(realBench) + " \"$@\"\n"
 	if err := os.WriteFile(filepath.Join(dir, "bench"), []byte(content), 0o755); err != nil {
 		cleanup()
 		return "", func() {}, err
@@ -396,8 +397,4 @@ func tempGitRepoWithLines(linesEnv string) (string, func(), error) {
 		return "", func() {}, err
 	}
 	return dir, cleanup, nil
-}
-
-func shellQuote(s string) string {
-	return "'" + strings.ReplaceAll(s, "'", "'\\''") + "'"
 }

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/contract"
+	"github.com/gibbonmi/bench/internal/sanitize"
 )
 
 func TestAXIRoadmapContextContracts(t *testing.T) {
@@ -163,7 +164,7 @@ func testRoadmapContextFailClosed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	writeExecutableAt(t, fake, "git", "#!/bin/sh\nfor a in \"$@\"; do [ \"$a\" = rev-list ] && exit 17; done\nexec "+shellQuote(real)+" \"$@\"\n")
+	writeExecutableAt(t, fake, "git", "#!/bin/sh\nfor a in \"$@\"; do [ \"$a\" = rev-list ] && exit 17; done\nexec "+sanitize.ShellQuote(real)+" \"$@\"\n")
 	p := f.RunEnv(map[string]string{"PATH": fake + string(os.PathListSeparator) + os.Getenv("PATH")}, "bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "roadmap", "--context")
 	p.RequireExit(1)
 	p.RequireContains(p.Stdout, "error: roadmap context failed")
@@ -183,7 +184,7 @@ func testRoadmapContextReadOnlyOffline(t *testing.T) {
 	}
 	log := filepath.Join(f.Root, "called.log")
 	for _, name := range []string{"bench", "curl", "wget", "gh", "glab", "claude", "codex", "opencode"} {
-		writeExecutableAt(t, fake, name, "#!/bin/sh\nprintf '%s\\n' "+shellQuote(name)+" >>\"$SENTINEL_LOG\"\nexit 99\n")
+		writeExecutableAt(t, fake, name, "#!/bin/sh\nprintf '%s\\n' "+sanitize.ShellQuote(name)+" >>\"$SENTINEL_LOG\"\nexit 99\n")
 	}
 	f.WriteFile(".bench/gate.sh", "#!/bin/sh\nprintf gate >>\"$SENTINEL_LOG\"\nexit 99\n")
 	if err := os.Chmod(filepath.Join(f.Root, ".bench", "gate.sh"), 0755); err != nil {

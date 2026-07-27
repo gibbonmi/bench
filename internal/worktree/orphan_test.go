@@ -2,6 +2,7 @@ package worktree
 
 import (
 	"fmt"
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/intent"
 	"io"
 	"path/filepath"
@@ -46,6 +47,14 @@ func TestOrphanedTreatsAbsentStampAsAged(t *testing.T) {
 func TestOrphanedRequiresAge(t *testing.T) {
 	young := intent.Assignment{State: intent.StateActive, CreatedAt: stampedAt(orphanNow.Add(-6 * 24 * time.Hour))}
 	requireTest(t, !orphaned(young, orphanNow), "orphaned(active, stamped 6 days ago) = true, want false")
+}
+
+// The window's edge is a decision rather than an accident of the comparison: a record
+// aged exactly AssignmentStale is still inside the window, and only a strictly older one
+// is abandoned.
+func TestOrphanedExcludesTheExactWindowEdge(t *testing.T) {
+	edge := intent.Assignment{State: intent.StateActive, CreatedAt: stampedAt(orphanNow.Add(-bounds.AssignmentStale))}
+	requireTest(t, !orphaned(edge, orphanNow), "orphaned(active, stamped exactly AssignmentStale ago) = true, want false")
 }
 
 func TestOrphanedRejectsFutureStamp(t *testing.T) {

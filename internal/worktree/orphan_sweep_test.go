@@ -116,6 +116,86 @@ func TestSweepCompactsOrphanedActiveResidue(t *testing.T) {
 	}
 }
 
+// unstamp rewrites a record with no creation stamp. created_at is omitempty, so this is
+// the shape on disk of every assignment cut before the field existed: the key is absent
+// rather than null.
+func unstamp(t *testing.T, root string, assignment intent.Assignment) {
+	t.Helper()
+	assignment.CreatedAt = nil
+	mustNoError(t, intent.PutAssignment(root, assignment))
+}
+
+// TestSweepHandlesPreStampLedgerRecords drives the pre-stamp ledger shape through the
+// sweep's destructive path. A record carrying no created_at key is the standing
+// population, and its age is inferred from the absent stamp rather than read, so both
+// verdicts for an aged record have to hold for it: tree gone and unregistered is
+// compacted, tree present is reported and left alone.
+func TestSweepHandlesPreStampLedgerRecords(t *testing.T) {
+	root := newSweepRepo(t)
+	present := mustCreate(t, root, "prestamp-present", "unstamped, tree present")
+	gone := mustCreate(t, root, "prestamp-gone", "unstamped, tree gone")
+	unstamp(t, root, present.Assignment)
+	unstamp(t, root, gone.Assignment)
+	address, err := intent.Address(root)
+	mustNoError(t, err)
+	body, err := os.ReadFile(address)
+	mustNoError(t, err)
+	requireTest(t, !strings.Contains(string(body), "created_at"),
+		"the fixture stamped a record, so it is not the pre-stamp shape:\n%s", body)
+	gitRun(t, root, "worktree", "remove", "-f", "-f", gone.Path)
+
+	result := mustSweep(t, root)
+	requireTest(t, result.Reconciled == 1,
+		"Reconciled=%d, want 1: the unstamped tree-gone residue was not compacted", result.Reconciled)
+	if _, err := assignmentByID(root, gone.Assignment.ID); err == nil {
+		t.Fatal("the unstamped tree-gone residue record survived the sweep")
+	}
+	requireTest(t, len(result.Orphans) == 1 && result.Orphans[0].ID == present.Assignment.ID,
+		"Orphans=%+v, want only the unstamped record whose tree is still present", result.Orphans)
+}
+
+// unregisterWorktree drops git's registration for path while leaving the tree and its
+// uncommitted work on disk. No `git worktree` subcommand reaches that state — remove
+// takes the tree with it — so the admin directory is deleted directly.
+func unregisterWorktree(t *testing.T, root, path string) {
+	t.Helper()
+	mustNoError(t, os.RemoveAll(filepath.Join(root, ".git", "worktrees", filepath.Base(path))))
+}
+
+// denyStat makes every stat below dir fail for a reason other than absence, and restores
+// the mode before the enclosing TempDir cleanup tries to walk it.
+func denyStat(t *testing.T, dir string) {
+	t.Helper()
+	mustNoError(t, os.Chmod(dir, 0o000))
+	t.Cleanup(func() { _ = os.Chmod(dir, 0o700) })
+}
+
+// TestSweepRetainsRecordWhenStatIsUnknown holds the sweep to the difference between a
+// tree that is gone and one it cannot see. An unreadable pool answers every stat with a
+// permission error, and reading that as absence compacts the ledger row out from under a
+// worktree that is still on disk holding uncommitted work — the one loss the sweep's
+// tree-gone verdicts exist to avoid.
+func TestSweepRetainsRecordWhenStatIsUnknown(t *testing.T) {
+	root := newSweepRepo(t)
+	unknown := mustCreate(t, root, "orphan-stat-unknown", "aged, tree present but unreadable")
+	mustWrite(t, filepath.Join(unknown.Path, "work.txt"), []byte("uncommitted\n"), 0o644)
+	backdate(t, root, unknown.Assignment, 8*24*time.Hour)
+	unregisterWorktree(t, root, unknown.Path)
+	denyStat(t, Pool(root))
+
+	_, statErr := os.Stat(unknown.Path)
+	requireTest(t, statErr != nil && !os.IsNotExist(statErr),
+		"the fixture does not induce an unknown stat (this user reads a 0o000 directory): %v", statErr)
+
+	result := mustSweep(t, root)
+	requireTest(t, result.Reconciled == 0, "Reconciled=%d, want 0: an unstattable tree is unknown, not gone", result.Reconciled)
+	if _, err := assignmentByID(root, unknown.Assignment.ID); err != nil {
+		t.Fatalf("the sweep compacted a record whose worktree it could not stat: %v", err)
+	}
+	requireTest(t, len(result.Orphans) == 0,
+		"Orphans=%+v, want none: the emitted line is a retirement command for a tree nothing here can reach", result.Orphans)
+}
+
 // TestSweepPreservesOrphanedRecoveryRecords pins the boundary of the sweep's one
 // destructive branch. No record is ever both orphaned and holding preserved work —
 // orphanhood requires state active, and ValidateAssignment refuses an active record with

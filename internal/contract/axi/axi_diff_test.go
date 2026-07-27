@@ -2,6 +2,7 @@ package axi
 
 import (
 	"github.com/gibbonmi/bench/internal/contract"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"os"
 	"path/filepath"
 	"strings"
@@ -71,7 +72,7 @@ func testAXIDiffFallbackShape(t *testing.T) {
 	f.WriteFile("a\"q.txt", "q\n")
 	f.CommitAll("c2")
 
-	out := f.Run("bash", "-c", "cd sub/deeper && "+shellQuote(contract.SubjectRoot(t)+"/bin/bench.sh")+" diff")
+	out := f.Run("bash", "-c", "cd sub/deeper && "+sanitize.ShellQuote(contract.SubjectRoot(t)+"/bin/bench.sh")+" diff")
 
 	out.RequireExit(0)
 	requireOutputLine(t, out, "base: "+c1)

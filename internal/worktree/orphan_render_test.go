@@ -87,6 +87,19 @@ func TestResumeSummaryPreservesLineStructure(t *testing.T) {
 	}
 }
 
+// TestResumeSummaryFallbackNamesTheLedgerRow grades the control-byte fallback's wording,
+// not only its line count. The line stands where a pasteable command cannot, so it has to
+// hand over the one handle that still resolves — the assignment ID, which is the key
+// `bench worktree list` reports — and must not send the reader after a path, because no
+// route emits one.
+func TestResumeSummaryFallbackNamesTheLedgerRow(t *testing.T) {
+	line := summaryLines(summaryFor([]OrphanCandidate{{ID: "a1", Path: "/pool/wt\nforged"}}, nil))[1]
+	requireTest(t, strings.Contains(line, "orphan a1:") && strings.Contains(line, "id row in bench worktree list"),
+		"fallback line does not point at the ledger row `bench worktree list` reports: %q", line)
+	requireTest(t, !strings.Contains(line, "by path"),
+		"fallback line sends the reader after a path no route emits: %q", line)
+}
+
 // TestResumeSummaryCapsListings pins the bound and its honesty together: a cap that did
 // not state what it withheld would read as "that is all of them", which is the one way
 // bounding this output could mislead rather than help.

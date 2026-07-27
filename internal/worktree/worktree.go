@@ -368,15 +368,18 @@ func listCapped(summary *strings.Builder, count int, line func(int) string) {
 // does not exist, so the reader would paste a command that cannot work.
 func orphanLine(orphan OrphanCandidate) string {
 	if !lineSafe(orphan.Path) {
-		return fmt.Sprintf("orphan %s: worktree path holds control bytes; address it by path from bench worktree list\n", orphan.ID)
+		return fmt.Sprintf("orphan %s: worktree path holds control bytes; find its id row in bench worktree list\n", orphan.ID)
 	}
 	return fmt.Sprintf("orphan %s: bench worktree clean %s (plans only; re-run with --apply <fingerprint> to remove)\n", orphan.ID, sanitize.ShellQuote(orphan.Path))
 }
 
-// lineSafe reports whether a value can enter a line-structured sink verbatim. It is
-// deliberately stricter than cleanupOutputSafe: toon.Representable permits tab, newline,
-// and return because the TOON encoder escapes them, while the resume summary writes raw
-// lines and escapes nothing, so exactly those bytes are the ones that break it.
+// lineSafe reports whether a value carries no control rune. It is deliberately stricter
+// than cleanupOutputSafe: toon.Representable admits tab, newline, and return because the
+// TOON encoder escapes them, while the resume summary writes raw lines and escapes
+// nothing, so a newline forges a line and an ESC drives the terminal that prints it.
+// Display-hostile runes outside the control categories — a bidi override, U+2028,
+// invalid UTF-8 — pass, so this guards the summary's line structure rather than how a
+// terminal renders one line.
 func lineSafe(value string) bool { return !strings.ContainsFunc(value, unicode.IsControl) }
 func CreateCommand(root string, args []string, stdout, stderr io.Writer) int {
 	var request, label string

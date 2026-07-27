@@ -382,13 +382,12 @@ func ConservativeCleanup(root string) (ResumeResult, error) {
 //
 // An active record is swept only once it is orphaned; a younger one is left alone
 // because a live session may still own it. An orphan whose tree survives is reported as
-// a candidate and never touched — removal stays behind the explicit path-addressed
-// `bench worktree clean`, which recovers dirty work into a recovery ref first. The
-// tree-gone verdicts are the FT93(c) contract, in this order: one git still registers
-// belongs to the prune path, one preserving no work is compacted and counted, and one
-// holding recovery metadata is reported for a deliberate recover-or-retire and left
-// intact. residualAssignment is the single guard between that compaction and a pointer
-// to preserved work.
+// an OrphanCandidate and never touched; that type owns why removal stays behind an
+// explicit command. The tree-gone verdicts are the FT93(c) contract, in this order: one
+// git still registers belongs to the prune path, one preserving no work is compacted and
+// counted, and one holding recovery metadata is reported for a deliberate
+// recover-or-retire and left intact. residualAssignment is the single guard between that
+// compaction and a pointer to preserved work.
 func sweepOrphanAssignments(root string, registered []Registered, result *ResumeResult) error {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
@@ -402,11 +401,21 @@ func sweepOrphanAssignments(root string, registered []Registered, result *Resume
 		if a.State == intent.StateActive && !abandoned {
 			continue
 		}
-		if _, statErr := os.Stat(a.Worktree); statErr == nil {
+		_, statErr := os.Stat(a.Worktree)
+		if statErr == nil {
 			if abandoned {
 				result.Orphans = append(result.Orphans, OrphanCandidate{ID: a.ID, Path: a.Worktree})
 			}
 			continue // the tree still exists
+		}
+		// Only absence licenses a tree-gone verdict. Any other stat error — an unreadable
+		// pool, an I/O failure — leaves the tree's existence unknown, and compacting on
+		// unknown deletes the row while the worktree and its uncommitted work are still
+		// there. Unknown is left out of the listing too: the line would name a retirement
+		// command for a path this host cannot reach, and the record stays visible in the
+		// open-assignment count either way.
+		if !os.IsNotExist(statErr) {
+			continue
 		}
 		if isRegisteredWorktree(registered, a.Worktree) {
 			continue // registered (prunable) — the git-worktree path owns it

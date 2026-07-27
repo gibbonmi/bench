@@ -151,7 +151,3 @@ func requireNoOutput(t *testing.T, probe contract.Probe) {
 		t.Fatalf("expected no output\nstdout:\n%s\nstderr:\n%s", probe.Stdout, probe.Stderr)
 	}
 }
-
-func shellQuote(s string) string {
-	return "'" + strings.ReplaceAll(s, "'", "'\\''") + "'"
-}
