@@ -57,44 +57,37 @@ and the ship sweep pays two scoped runs plus one shared baseline instead of
 three full inner gates. The long pole is now `package-core-guard` (~86 s),
 which runs seven toolchain steps serially inside one Go test function.
 
-The next arm is the pipeline refactor. Hoist `checkGoCore`'s compile-and-test
-work out of the conformance test binary into first-class gate phases with
-declared dependencies, leaving conformance to grade structure only — this
-removes the remaining recursion surface story, the probe-truncation blindness,
-and the stale-state class the FT91 build hit, and wins duration by overlapping
-gofmt/build/vet/test/race/cross-compile instead of running them serially
-inside one check. Its second half: the phase list becomes project-owned
-declarative data instead of Go code — `BenchkitPhases` is currently a Go
-function that knows about Go, which breaks the seam every other Bench surface
-honours (`.bench/gate.sh` is already project-owned); the runner ships in the
-kit, phase definitions ship with the project. Universal today: the
-phase/verdict/timing model, subject binding, the canary premise, the tier
-split, capability detection. Go-specific today: `BenchkitPhases`,
-`checkGoCore`, package enumeration, `-tags stress`, `-skip` filters, and — the
-load-bearing one — incrementality riding on Go's content-addressed test cache
-(a cache-invalidating change swung this repo 106 s → 826 s). Language-agnostic
-incrementality therefore means phases declare input globs and the runner
-hashes them, i.e. a small build system: real cost, not built speculatively —
-design the phase manifest and DAG now, keep cross-language incrementality a
-separate later capability behind the existing revive trigger, and shape the
-manifest against regroup-app rather than generalising from this repo.
-Complication that stays: `checkGoCore` grades arbitrary roots (canary
+The pipeline refactor is the sixth arm, and it ships in slices. Slice B landed
+2026-07-27 (spec `ft91-phase-manifest-dag`, retired): the phase list became
+project-owned data instead of Go code — an optional `.bench/phases.json` in the
+graded root, loaded behind the unchanged `.bench/gate.sh` entry, with an absent
+manifest keeping the built-in kit table so linked repos work through the
+migration and every malformed class failing closed — and a DAG scheduler
+replaced the serial/concurrent split, so a phase starts when its `needs`
+complete, a red phase marks its downstream dependents skipped-with-cause while
+independents run to completion, and a killed gate names the phases still
+running. The two interim defects this row carried shipped with it: the
+conformance subprocess env now scrubs all three control variables
+symmetrically, and a failed probe spills full output to a named log instead of
+truncating to the last 40 lines.
+
+Slice C is the remaining pipeline work, and it is where the duration win is.
+Hoist `checkGoCore`'s compile-and-test work out of the conformance test binary
+into first-class gate phases with declared dependencies, leaving conformance to
+grade structure only — this removes the remaining recursion surface story and
+the stale-state class the FT91 build hit, and wins duration by overlapping
+gofmt/build/vet/test/race/cross-compile instead of running them serially inside
+one check. Complication that stays: `checkGoCore` grades arbitrary roots (canary
 fixtures, linked repos), so it must split into a host-repo phase plus a
 narrower structural check, and the 19+ package-core-guard fixtures asserting
 its diagnostics move to grading the phase.
 
-Two interim defects ride this row until the refactor absorbs their surfaces.
-`conformanceSubprocessEnv` scrubs `BENCH_CONFORMANCE_ROOT` but neither
-`BENCH_CONFORMANCE_TIER` nor `BENCH_CONFORMANCE_CHECK`, so the tier flag and
-the new check scope both leak into the inner `go test` — harmless today only
-because the filtered inner run cannot recurse, but an unscrubbed conformance
-env var is exactly the shape behind the 2026-07-26 recursive cascade, and the
-scrub contract should be symmetric across all three. And
-`formatProbeFailure` keeps the last 40 lines of a failed probe while the inner
-`go test` prints ~49 package-summary lines after any failure detail, so the
-gate systematically shows the summary and hides the failing assertion — spill
-full probe output to `<git-dir>/bench-conformance-probe.log` and name the path
-in the diagnostic, rather than truncating.
+Cross-language incrementality stays a separate later capability behind the
+existing revive trigger. Incrementality rides on Go's content-addressed test
+cache today (a cache-invalidating change swung this repo 106 s → 826 s), so
+making it language-agnostic means phases declaring input globs the runner
+hashes — a small build system, real cost, not built speculatively. Shape it
+against regroup-app rather than generalising from this repo.
 
 The deferred arms are unchanged. Capping the outer conformance and contract
 phases stays dormant unless contention flakes persist. Removing the hardcoded
@@ -106,7 +99,8 @@ with no file→test map). None of them may weaken the oracle: green must keep
 meaning the same thing, and any scoped verdict must be explicit evidence,
 never a silent skip.
 
-Entry: `/bench-shape-idea`, inputs this row plus
+Entry: `/bench-write-spec` for slice C, inputs this row plus
+`decisions/gate-pipeline.md` (the map is closed) and
 `decisions/gate-concurrency.md`'s watch-outs. Sources: `IDEAS.md`, drained
 here; `decisions/cost-follows-project-size.md`.
 
@@ -614,9 +608,13 @@ tool behavior a story's seam depends on carries either a cited command whose
 output was run or an explicit uncertainty flag. `/bench-write-spec` step 9's
 falsification pass now runs on every draft, but it is charged at the coverage
 map and the Handoff assertables, so a Problem-section claim that reads as
-obvious fact still slips through. Next action is the kit edit to
-`/bench-write-spec` and `craft-spec`, built under the `craft-synthesis`
-discipline.
+obvious fact still slips through. A third instance, 2026-07-27: the
+`ft91-phase-manifest-dag` spec asserted that append semantics hand a child two
+values for one key, so its story 7 red signal could not occur — `os/exec` dedups
+`cmd.Env` before exec and the mapped test passes identically against the old
+code. Confirmed by standalone probe during the semantic review, after the build
+had shipped. Next action is the kit edit to `/bench-write-spec` and
+`craft-spec`, built under the `craft-synthesis` discipline.
 
 **FT100 (LOW) — prose-weight pass on the kit's guidance surface.** Apply the
 gate's "prove it bites" standard to prose: audit the craft-skill library and
@@ -681,16 +679,34 @@ the gate check: confirm a per-source existence check on the consumer-payload
 allowlist — the emptied-set vacuity closed with the FT85 fix commit, the
 per-path existence guard is the remaining cheap single-source check.
 
-**FT104 (LOW) — stop rule for known-flake commit refusals.** Retrying a
-recorded flake is not iteration toward green: the FT85 review-fix commit was
-refused twice by `TestFT78Story5ProofLedger` under gate load (green in
-isolation both times), and the third identical run passed with no code
-change — ~35 minutes of wall clock bought nothing. Kit edit under the
-`craft-synthesis` discipline: the gate/commit discipline states that when a
-commit is refused twice by the same test already recorded as a known flake
-and proven green in isolation, stop and hand the blocked commit to the
-reviewer with the evidence instead of re-running. Replaces the retired FT95
-"retry once" operational line.
+**FT104 (LOW) — load-induced commit refusals: the stop rule and the pre-gate
+quiet check.** Two faces of the same defect — a red answering for machine
+contention rather than for the diff — and one owner, so they ship together.
+First, the stop rule (this row's original charge). Retrying a recorded flake is
+not iteration toward green: the FT85 review-fix commit was refused twice by
+`TestFT78Story5ProofLedger` under gate load (green in isolation both times),
+and the third identical run passed with no code change — ~35 minutes of wall
+clock bought nothing. The gate/commit discipline states that when a commit is
+refused twice by the same test already recorded as a known flake and proven
+green in isolation, stop and hand the blocked commit to the reviewer with the
+evidence instead of re-running. Replaces the retired FT95 "retry once"
+operational line.
+
+Second (drained 2026-07-27 from the learnings journal), the load the
+coordinator itself caused. A write-delegate reported done while its own
+`go test ./internal/...` sweep and two shell wait-loops were still running;
+`bench commit` started immediately on its worktree and went red on
+`internal/intent`'s concurrency test timing out — the same commit passed on a
+quiet machine with no code change. A returned delegate is not a drained one:
+the done-claim says its *report* finished, not that its subprocesses did.
+`craft-delegate` already names the whole-tree gate a serialized resource for
+*concurrent* delegates, so the prose half is extending that clause to the
+sequential case — check for live test processes before gating, one `pgrep`
+against a ~12-minute false red. Prefer the mechanical half if it holds up:
+`bench commit` refusing or warning when it observes another `go test` against
+the same module removes the instruction rather than duplicating it, and is the
+same single-source preference FT131 and FT133 take. Kit edit under the
+`craft-synthesis` discipline.
 
 **FT105 (LOW) — committed reports that contradict the tree.** A capture-style
 report can outlive its factual state and misdirect a cold session. Invariant 3
@@ -816,7 +832,7 @@ defensive `append([]string(nil), env...)` copy is the only thing keeping workers
 off a shared backing array, and the gate runs `go test` without `-race`, so
 deleting that copy would land green. The assertion belongs beside the existing
 fake-`Runner` tests — and `internal/canary/canary_concurrency_test.go` is already
-one line over its 400-line budget after the FT91 arm, so the added test lands
+32 lines over its 400-line budget after the FT91 arms, so the added test lands
 together with a `craft-seams` split (the file now carries two concerns: worker
 derivation and bounds, versus inner-environment pinning) rather than an accept
 entry. Third, found 2026-07-26 under full gate load:
@@ -873,18 +889,29 @@ is set by design. Scrub the variable in the harness's environment setup so
 each subtest's premise is exactly what it asserts. Source: `IDEAS.md`,
 drained here.
 
-**FT140 (LOW) — FT86 review-resolution residuals: two reviewer calls, no
-build.** Two calls from the resolution run outlived the spec's retirement and
-want a verdict rather than code. First, `bench learnings` moved from a 5 MiB
-to a 2 MiB read bound: closing the divergence required picking one number,
-and the slice chose the lower because `bench status` already applied it to
-the same file — fail-closed and ambient-board-neutral, but a 2–5 MiB journal
-that used to render now exits 1, a real behavior change to keep or reverse.
-Second, `TestAXILearningsWrongType` has no acceptance-coverage provenance:
-the slice correctly declined to edit a shipped spec's map beyond its mandate,
-and the spec has since retired, so the options are to accept the test as
-standing coverage without a map row or to note its provenance in the family's
-decision record. One line each closes this row.
+**FT140 (LOW) — review residuals that want a verdict, not a build.** Calls
+from two resolution runs outlived their specs' retirement. The recurring one is
+the provenance question, now at three instances: a test that is the real
+coverage for a story, with no acceptance-coverage map row naming it, on a spec
+that has since retired — so the map can no longer be edited and the reviewer
+decides once whether such a test is accepted as standing coverage without a row
+or gets its provenance noted in the family's decision record. Instances:
+`TestAXILearningsWrongType` (FT86; the slice correctly declined to edit a
+shipped spec's map beyond its mandate), and from `ft91-phase-manifest-dag`'s
+review, `TestMergeEnvStripsThenSets` (the only non-vacuous coverage story 7 has,
+per FT99's third instance) and `TestManifestDirResolvesAgainstGradedRoot` (the
+real graded-root anchoring semantic; the mapped test graded a branch production
+never reaches). One decision closes all three.
+
+Two singles ride along. `internal/gate/manifest.go`'s `dedupe` has no observable
+effect — the scheduler's edge handling is already duplicate-tolerant and no
+diagnostic renders `Needs` — but it implements a spec veto item literally, so it
+is defensible dead code rather than a defect: keep or cut. And `bench learnings`
+moved from a 5 MiB to a 2 MiB read bound: closing the divergence required
+picking one number, and the slice chose the lower because `bench status`
+already applied it to the same file — fail-closed and ambient-board-neutral,
+but a 2–5 MiB journal that used to render now exits 1, a real behavior change
+to keep or reverse. One line each closes this row.
 
 ## Session tax — evidence-supplied reader rows
 
@@ -1010,12 +1037,11 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT91's pipeline arm: the gate becomes a true
-   pipeline. Gate wall-clock is the reviewer's stated dominant cost and the
-   long pole is now `package-core-guard`'s seven serial toolchain steps
-   inside one check; the canary check-scoping prerequisite has shipped, so
-   this session is the refactor alone. Inputs: the FT91 row and
-   `decisions/gate-concurrency.md`'s watch-outs.
+1. `/bench-write-spec` — FT91 slice C: split `checkGoCore` into gate phases.
+   Gate wall-clock is the reviewer's stated dominant cost, slice B shipped the
+   manifest and DAG mechanism with nothing yet consuming it, and the long pole
+   is still `package-core-guard`'s seven serial toolchain steps inside one
+   check. Inputs: the FT91 row and `decisions/gate-pipeline.md`.
 2. `/bench-write-spec` — FT71, versioned local shift evidence. The remaining
    HIGH bank-track row; the repository-controlled bank evidence requirement
    keeps it active.
