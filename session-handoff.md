@@ -2,31 +2,31 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `0f4a861`, 8 dirty paths, 7 unpushed commits
+Branch: `main` — HEAD `19d1e5b`, 8 dirty paths, 9 unpushed commits
 Spec: none staged.
-Gate: green at `523e0ff` — stale, work tree `c611032`
+Gate: green at `ad7607c` — current
 
 ## State
 
-- **The `/bench-what-next` drain is committed at `0f4a861`; both capture
-  sources are empty.** ft91-canary-check-scoping shipped, merged, and is now
-  retired, so FT91 carries it as the fifth landed arm and the check-scoping
-  prerequisite paragraph is gone. Two new rows: **FT143** (the family→check
-  binding reds only after each unbound fixture pays a full unscoped inner gate,
-  and only on the `bench gate` path — `bench canary` never reaches the
-  conformance registry) and **FT144** (a `craft-spec` edge-inventory prompt for
-  kit code with two audiences, plus your decision on an "intent stands, seam
-  moves" lighter case in the workflow). Both are open to post-hoc veto.
-- **`decisions/gate-pipeline.md` stays closed** — its Handoff carries the
-  seams for slices B (manifest + DAG runner) and C (`checkGoCore` split +
-  fixture migration), which spec now that A has shipped.
+- **The FT91 interim-defect direct pass is committed at `19d1e5b`,
+  gate-green.** `conformanceSubprocessEnv` now scrubs all three conformance
+  control vars (`ROOT`/`TIER`/`CHECK`), and `formatProbeFailure` spills full
+  probe output to `<git-dir>/bench-conformance-probe.log`, naming the path in
+  the diagnostic (additive line; canary EXPECTs pin bare labels and are
+  unaffected). Both defects can leave the FT91 row at the next drain.
+- **`decisions/gate-pipeline.md` is closed and its dependency order is
+  reviewer-confirmed (2026-07-27):** slice B next (manifest + DAG runner,
+  tickets #1/#4/#9), then slice C (`checkGoCore` split + fixture migration,
+  #3/#6/#7). FT143's cheap kit-root family→check binding assertion is
+  bundled into slice C's spec (recorded in the map's Handoff); FT143's
+  roadmap row stays until that ships.
 - **Decisions that stay closed:** baseline grouping key is the resolved check
-  name alone (unscoped fixtures share today's single full baseline); the
-  live sweep's did-not-bite verdict is the binding's enforcement; no
-  fixture merging; the family→check table stays in
-  `internal/conformance/registry` as the imported-by layer.
+  name alone; the live sweep's did-not-bite verdict is the binding's
+  enforcement; no fixture merging; the family→check table stays in
+  `internal/conformance/registry`. FT144's workflow decision ("intent
+  stands, seam moves") is still the reviewer's, unmade.
 - Codex CLI note: `codex exec` must run with stdin closed (`</dev/null`) or
-  it blocks reading the pipe forever — cost two dead attempts this session.
+  it blocks reading the pipe forever.
 - `bench prep-release` stays shelved — blocked by FT116's race and FT142's
   ship-track findings; both are board rows, not handoff state.
 - The branch/worktree sweep (23 non-`main` branches, 19 worktrees) remains
@@ -34,9 +34,8 @@ Gate: green at `523e0ff` — stale, work tree `c611032`
 
 ## Next command
 
-`/bench-shape-idea` — FT91's pipeline arm, the top of the refreshed
-recommended sequence. Inputs: the FT91 row and `decisions/gate-concurrency.md`'s
-watch-outs.
+`/bench-write-spec` — slice B of `decisions/gate-pipeline.md` (the manifest +
+DAG runner), fresh mid-tier session per the profile's spec-authoring line.
 
 ## Shape
 
