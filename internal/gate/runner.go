@@ -317,7 +317,10 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Dir = root
 	if phase.Dir != "" {
-		cmd.Dir = filepath.Join(root, phase.Dir)
+		cmd.Dir = phase.Dir
+		if !filepath.IsAbs(phase.Dir) {
+			cmd.Dir = filepath.Join(root, phase.Dir)
+		}
 	}
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr

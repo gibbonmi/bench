@@ -37,7 +37,8 @@ const (
 // must not smuggle shell-interpolated command strings through it. Needs names the
 // phases that must complete green before this one starts — a need that ends red or
 // skipped skips this phase too, because it would grade an artifact its need never
-// produced. Dir is a root-relative working directory, defaulting to the root itself.
+// produced. Dir is the phase's working directory: empty means the runner's root, a
+// relative value joins onto that root, an absolute value is used as is.
 type Phase struct {
 	Name     string
 	Argv     []string
@@ -104,9 +105,10 @@ func goTestArgv(kit string, args ...string) []string {
 	return append(append(argv, "test", "-count=1"), args...)
 }
 
-// PhasesCommand is the `bench gate-phases [root]` plumbing command. It intentionally
-// does not record the verdict cache; `gate-run` owns resolve-run-record for the public
-// `bench gate` path.
+// PhasesCommand is the `bench gate-phases [root]` plumbing command. Its table comes
+// from the graded root's phase manifest, or the built-in kit table when the root
+// declares none. It intentionally does not record the verdict cache; `gate-run` owns
+// resolve-run-record for the public `bench gate` path.
 func PhasesCommand(args []string, stdout, stderr io.Writer) int {
 	var root string
 	if len(args) > 0 && args[0] != "" {
@@ -127,9 +129,14 @@ func PhasesCommand(args []string, stdout, stderr io.Writer) int {
 	if os.Getenv("BENCH_CANARY_INNER") == "1" {
 		mode = innerMode
 	}
+	phases, err := phaseTable(root, kit)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
-	return runPhases(ctx, kit, phasesForMode(benchkitPhasesForCommand(root, kit), mode), mode, stdout, stderr)
+	return runPhases(ctx, kit, phasesForMode(phases, mode), mode, stdout, stderr)
 }
 
 func shellcheckArgv(root string) []string {
