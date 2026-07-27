@@ -2,29 +2,32 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `19d1e5b`, 8 dirty paths, 9 unpushed commits
-Spec: none staged.
-Gate: green at `ad7607c` — current
+Branch: `main` — HEAD `c311946`, 11 unpushed commits
+Spec: `specs/ft91-phase-manifest-dag.md` — staged, reviewer-approved 2026-07-27.
+Gate: green at `ad7607c` — stale only by doc commits (spec + handoff).
 
 ## State
 
-- **The FT91 interim-defect direct pass is committed at `19d1e5b`,
-  gate-green.** `conformanceSubprocessEnv` now scrubs all three conformance
-  control vars (`ROOT`/`TIER`/`CHECK`), and `formatProbeFailure` spills full
-  probe output to `<git-dir>/bench-conformance-probe.log`, naming the path in
-  the diagnostic (additive line; canary EXPECTs pin bare labels and are
-  unaffected). Both defects can leave the FT91 row at the next drain.
-- **`decisions/gate-pipeline.md` is closed and its dependency order is
-  reviewer-confirmed (2026-07-27):** slice B next (manifest + DAG runner,
-  tickets #1/#4/#9), then slice C (`checkGoCore` split + fixture migration,
-  #3/#6/#7). FT143's cheap kit-root family→check binding assertion is
-  bundled into slice C's spec (recorded in the map's Handoff); FT143's
-  roadmap row stays until that ships.
-- **Decisions that stay closed:** baseline grouping key is the resolved check
-  name alone; the live sweep's did-not-bite verdict is the binding's
-  enforcement; no fixture merging; the family→check table stays in
-  `internal/conformance/registry`. FT144's workflow decision ("intent
-  stands, seam moves") is still the reviewer's, unmade.
+- **Slice B spec is staged and approved (2026-07-27):**
+  `specs/ft91-phase-manifest-dag.md` — the phase manifest + DAG runner,
+  compiled from `decisions/gate-pipeline.md` (#1/#4/#9). The falsification
+  pass (codex `gpt-5.6-sol`, xhigh) blocked the first draft; all six
+  findings were verified and folded, and the reviewer approved the result
+  including the spec's 13-item map-silent veto inventory (items a–m).
+  Decisions that closed with approval: the single gate deadline stays
+  `gate-run`'s `bounds.GateTimeout` with SIGTERM-grace straggler naming
+  (no second timer, no new bounds constant), strict manifest decoding, and
+  the #9 timing reading (status quo — no new per-phase timing format).
+- **Build routing:** stories 8, 9, and 12 are concurrent cancellation code —
+  the spec fails `craft-line`'s venue-routing test for an unattended
+  `bench shift`; build interactively at the mid tier.
+- **After slice B builds:** slice C (`checkGoCore` split + fixture
+  migration + parity, #3/#6/#7), whose spec also carries FT143's kit-root
+  family→check binding assertion (reviewer-bundled). FT143's roadmap row
+  stays until that ships. FT144's workflow decision remains the
+  reviewer's, unmade.
+- The FT91 interim-defect pass is committed at `19d1e5b`, gate-green; both
+  defects can leave the FT91 row at the next drain.
 - Codex CLI note: `codex exec` must run with stdin closed (`</dev/null`) or
   it blocks reading the pipe forever.
 - `bench prep-release` stays shelved — blocked by FT116's race and FT142's
@@ -34,8 +37,8 @@ Gate: green at `ad7607c` — current
 
 ## Next command
 
-`/bench-write-spec` — slice B of `decisions/gate-pipeline.md` (the manifest +
-DAG runner), fresh mid-tier session per the profile's spec-authoring line.
+`/bench-implement-spec specs/ft91-phase-manifest-dag.md` — fresh mid-tier
+session, interactive build at the pre-agreed seams.
 
 ## Shape
 
