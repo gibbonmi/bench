@@ -262,6 +262,15 @@ func TestPhaseTableBuildPhase(t *testing.T) {
 		t.Fatalf("inner phases dropped the build phase: %#v", got)
 	}
 
+	// Every phase owns its edges: one shared backing array would let a caller that
+	// rewrites any phase's Needs silently rewrite the rest of the table's.
+	phases[1].Needs[0] = "rewritten"
+	for _, phase := range phases[2:] {
+		if !reflect.DeepEqual(phase.Needs, []string{"build"}) {
+			t.Fatalf("editing one phase's needs rewrote %s's to %#v", phase.Name, phase.Needs)
+		}
+	}
+
 	// Without the Go build surface the table keeps its four-phase shape — and a
 	// half-present surface (either file alone) counts as absent, not buildable.
 	bare := BenchkitPhases(t.TempDir(), "/tmp/kit")

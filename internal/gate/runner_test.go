@@ -252,7 +252,10 @@ func TestRunnerRootWithSpace(t *testing.T) {
 	}
 }
 
-func TestRunnerPhaseDirIsRelativeToRoot(t *testing.T) {
+// TestRunnerPhaseDirIsAbsoluteOrRoot pins Phase.Dir's one rule where the process is
+// launched: an absolute directory is used as it stands, and an empty one means the
+// runner's root. Anchoring a declared path belongs to whoever produced the phase.
+func TestRunnerPhaseDirIsAbsoluteOrRoot(t *testing.T) {
 	root := t.TempDir()
 	if err := os.Mkdir(filepath.Join(root, "sub"), 0o755); err != nil {
 		t.Fatalf("mkdir sub: %v", err)
@@ -260,7 +263,7 @@ func TestRunnerPhaseDirIsRelativeToRoot(t *testing.T) {
 	printCwd := []string{"bash", "-c", `printf 'cwd=%s\n' "$PWD"`}
 	phases := []Phase{
 		{Name: "rooted", Argv: printCwd},
-		{Name: "nested", Argv: printCwd, Dir: "sub"},
+		{Name: "nested", Argv: printCwd, Dir: filepath.Join(root, "sub")},
 	}
 
 	var stdout, stderr bytes.Buffer
@@ -275,6 +278,45 @@ func TestRunnerPhaseDirIsRelativeToRoot(t *testing.T) {
 		if !strings.Contains(stdout.String(), want) {
 			t.Fatalf("phase cwd line %q missing:\n%s", want, stdout.String())
 		}
+	}
+}
+
+// TestRunnerPhaseDirUnusableIsRed grades a working directory the phase cannot enter.
+// chdir fails ENOENT exactly as a missing binary does, so without its own check an
+// optional phase would answer a directory typo with "not installed" and quietly take
+// its check off the gate.
+func TestRunnerPhaseDirUnusableIsRed(t *testing.T) {
+	root := t.TempDir()
+	regular := filepath.Join(root, "regular-file")
+	writeFile(t, regular, "not a directory\n")
+	for _, tc := range []struct {
+		name string
+		dir  string
+	}{
+		{name: "missing", dir: filepath.Join(root, "absent-subdir")},
+		{name: "not-a-directory", dir: regular},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			phases := []Phase{{
+				Name:     "opt",
+				Argv:     []string{"definitely-absent-binary-for-bench-dir-test"},
+				Optional: true,
+				Dir:      tc.dir,
+			}}
+
+			var stdout, stderr bytes.Buffer
+			rc := runPhases(context.Background(), root, phases, outerMode, &stdout, &stderr)
+			if rc != 1 {
+				t.Fatalf("runPhases rc = %d, want 1; stdout=%q stderr=%q", rc, stdout.String(), stderr.String())
+			}
+			out := stdout.String() + stderr.String()
+			if strings.Contains(out, "skipped") {
+				t.Fatalf("an unusable working directory was masked as a skip:\n%s", out)
+			}
+			if !strings.Contains(out, "phase opt: red (unusable working directory "+tc.dir) || !strings.Contains(out, "gate: red") {
+				t.Fatalf("red verdict does not name the unusable working directory:\n%s", out)
+			}
+		})
 	}
 }
 

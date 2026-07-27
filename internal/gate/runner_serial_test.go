@@ -233,55 +233,6 @@ func TestRunnerRequiredStartFailureRed(t *testing.T) {
 	}
 }
 
-func TestRunnerNeededPhaseCompletesBeforeDependentsStart(t *testing.T) {
-	root := t.TempDir()
-	marker := filepath.Join(root, "built")
-	phases := []Phase{
-		{
-			Name: "build",
-			Argv: []string{"bash", "-c", `sleep 0.1; touch "$1"`, "bash", marker},
-		},
-		// Each reader phase goes red unless its need already finished: a runner that
-		// ignores edges starts these ~100ms before the marker exists.
-		{Name: "alpha", Argv: []string{"bash", "-c", `test -f "$1"`, "bash", marker}, Needs: []string{"build"}},
-		{Name: "bravo", Argv: []string{"bash", "-c", `test -f "$1"`, "bash", marker}, Needs: []string{"build"}},
-	}
-
-	var stdout, stderr bytes.Buffer
-	rc := runPhases(context.Background(), root, phases, outerMode, &stdout, &stderr)
-	if rc != 0 {
-		t.Fatalf("runPhases rc = %d; a reader phase started before its need finished\nstdout=%q\nstderr=%q", rc, stdout.String(), stderr.String())
-	}
-	if !strings.Contains(stdout.String(), "phase build: green") {
-		t.Fatalf("needed phase missing from summaries:\n%s", stdout.String())
-	}
-}
-
-func TestRunnerNeededPhaseRedSkipsDependents(t *testing.T) {
-	root := t.TempDir()
-	leak := filepath.Join(root, "leak")
-	phases := []Phase{
-		{Name: "build", Argv: []string{"bash", "-c", "exit 3"}},
-		{Name: "alpha", Argv: []string{"bash", "-c", `touch "$1"`, "bash", leak}, Needs: []string{"build"}},
-	}
-
-	var stdout, stderr bytes.Buffer
-	rc := runPhases(context.Background(), root, phases, outerMode, &stdout, &stderr)
-	if rc != 1 {
-		t.Fatalf("runPhases rc = %d, want 1", rc)
-	}
-	out := stdout.String() + stderr.String()
-	if !strings.Contains(out, "phase build: red (exit 3)") || !strings.Contains(out, "gate: red") {
-		t.Fatalf("red need not attributed:\n%s", out)
-	}
-	if !strings.Contains(stdout.String(), "phase alpha: skipped (needs build)\n") {
-		t.Fatalf("dependent of the red need is not reported as skipped-with-cause:\n%s", stdout.String())
-	}
-	if _, err := os.Stat(leak); err == nil {
-		t.Fatalf("phase behind a red need still ran (it would grade a stale or absent binary)")
-	}
-}
-
 func TestRunnerNeededPhaseRedSkipsDependentsInnerMode(t *testing.T) {
 	root := t.TempDir()
 	leak := filepath.Join(root, "leak")
@@ -341,6 +292,77 @@ func TestRunnerCancelDuringNeededPhaseReturns130(t *testing.T) {
 	}
 	if strings.Contains(stdout.String()+stderr.String(), "gate: red") {
 		t.Fatalf("interrupted needed phase was graded as red:\nstdout=%q\nstderr=%q", stdout.String(), stderr.String())
+	}
+}
+
+// TestRunnerUnsatisfiableGraphIsRed pins the fail-closed rule for a table whose edges no
+// run can satisfy. The loader refuses a cycle, but the built-in table and any injected
+// one reach the scheduler unchecked, and a run that executed nothing at all must not be
+// able to report green.
+func TestRunnerUnsatisfiableGraphIsRed(t *testing.T) {
+	root := t.TempDir()
+	leak := filepath.Join(root, "leak")
+	phases := []Phase{
+		{Name: "alpha", Argv: []string{"bash", "-c", `touch "$1"`, "bash", leak}, Needs: []string{"bravo"}},
+		{Name: "bravo", Argv: []string{"bash", "-c", `touch "$1"`, "bash", leak}, Needs: []string{"alpha"}},
+	}
+
+	var stdout, stderr bytes.Buffer
+	rc := runPhases(context.Background(), root, phases, outerMode, &stdout, &stderr)
+	if rc != 1 {
+		t.Fatalf("runPhases rc = %d, want 1 for a graph that can execute nothing; stdout=%q stderr=%q", rc, stdout.String(), stderr.String())
+	}
+	if strings.Contains(stdout.String(), ": green") {
+		t.Fatalf("a phase that never launched reported green:\n%s", stdout.String())
+	}
+	out := stdout.String() + stderr.String()
+	for _, want := range []string{
+		"phase alpha: red (stuck behind unsatisfied need bravo)\n",
+		"phase bravo: red (stuck behind unsatisfied need alpha)\n",
+		"gate: red\n",
+	} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("unsatisfiable graph output missing %q:\n%s", want, out)
+		}
+	}
+	if _, err := os.Stat(leak); err == nil {
+		t.Fatalf("a phase on an unsatisfiable edge still ran")
+	}
+
+	var innerOut, innerErr bytes.Buffer
+	if rc := runPhases(context.Background(), root, phases, innerMode, &innerOut, &innerErr); rc != 1 {
+		t.Fatalf("inner runPhases rc = %d, want 1; stdout=%q stderr=%q", rc, innerOut.String(), innerErr.String())
+	}
+}
+
+// TestRunnerPhaseExit130IsRedNotCancellation separates the two things exit 130 can mean.
+// Only the context decides that a run was cancelled; a phase that chooses 130 is an
+// ordinary red, and reading it as an interrupt suppresses the summaries and the gate
+// line and leaves the verdict recorded as pending rather than red.
+func TestRunnerPhaseExit130IsRedNotCancellation(t *testing.T) {
+	root := t.TempDir()
+	phases := []Phase{
+		fakePhase("self130", "exit 130"),
+		fakePhase("other", "true"),
+	}
+
+	var stdout, stderr bytes.Buffer
+	rc := runPhases(context.Background(), root, phases, outerMode, &stdout, &stderr)
+	if rc != 1 {
+		t.Fatalf("runPhases rc = %d, want 1; stdout=%q stderr=%q", rc, stdout.String(), stderr.String())
+	}
+	out := stdout.String() + stderr.String()
+	if strings.Contains(out, "gate: cancelled") {
+		t.Fatalf("a phase's own exit 130 was read as an interrupt:\n%s", out)
+	}
+	for _, want := range []string{
+		"phase self130: red (exit 130)\n",
+		"phase other: green\n",
+		"gate: red\n",
+	} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("self-inflicted 130 output missing %q:\n%s", want, out)
+		}
 	}
 }
 

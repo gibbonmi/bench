@@ -118,6 +118,17 @@ func TestManifestMalformed(t *testing.T) {
 			},
 		},
 		{
+			// A repeated JSON key is valid JSON that silently shadows whatever the
+			// earlier one said, so the phase a reader sees declared is not the phase
+			// that runs.
+			name:  "duplicate-json-key",
+			class: "parse error",
+			variants: []variant{
+				{manifest: `{"phases":[{"name":"a","argv":["true"]}],"phases":[{"name":"b","argv":["true"]}]}`, element: "duplicate name"},
+				{manifest: `{"phases":[{"name":"real","argv":["true"],"name":"shadow","argv":["false"]}]}`, element: "duplicate name"},
+			},
+		},
+		{
 			name:  "duplicate-name",
 			class: "duplicate phase name",
 			variants: []variant{

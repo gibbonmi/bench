@@ -37,8 +37,10 @@ const (
 // must not smuggle shell-interpolated command strings through it. Needs names the
 // phases that must complete green before this one starts — a need that ends red or
 // skipped skips this phase too, because it would grade an artifact its need never
-// produced. Dir is the phase's working directory: empty means the runner's root, a
-// relative value joins onto that root, an absolute value is used as is.
+// produced. Dir is the phase's absolute working directory; empty means the runner's
+// root. Anchoring a declared directory is the producer's job — the graded root and the
+// runner's root are different trees in a linked repo, and only the producer knows which
+// one a path was written against.
 type Phase struct {
 	Name     string
 	Argv     []string
@@ -61,38 +63,46 @@ var benchkitPhasesForCommand = BenchkitPhases
 // phase and so no edges at all.
 func BenchkitPhases(root, kit string) []Phase {
 	var phases []Phase
-	var needsBuild []string
+	built := false
 	buildHelper := filepath.Join(root, "scripts", "go-build.sh")
 	if isRegularFile(buildHelper) && isRegularFile(filepath.Join(root, "go.mod")) {
 		phases = append(phases, Phase{
 			Name: "build",
 			Argv: []string{"bash", buildHelper, root, filepath.Join(root, "dist", "bench")},
 		})
-		needsBuild = []string{"build"}
+		built = true
+	}
+	// Each downstream phase gets its own backing array: one shared slice would let an
+	// edit to any phase's Needs rewrite every other phase's edges.
+	needsBuild := func() []string {
+		if !built {
+			return nil
+		}
+		return []string{"build"}
 	}
 	return append(phases, []Phase{
 		{
 			Name:  conformancePhaseName,
 			Argv:  goTestArgv(kit, "./internal/conformance", "-run", "^TestRootConformance$"),
 			Env:   []string{"BENCH_CONFORMANCE_ROOT=" + root},
-			Needs: needsBuild,
+			Needs: needsBuild(),
 		},
 		{
 			Name:  "contract",
 			Argv:  goTestArgv(kit, "./internal/contract/..."),
 			Env:   []string{"BENCH_CONTRACT_ROOT=" + root},
-			Needs: needsBuild,
+			Needs: needsBuild(),
 		},
 		{
 			Name:     "shellcheck",
 			Argv:     shellcheckArgv(kit),
 			Optional: true,
-			Needs:    needsBuild,
+			Needs:    needsBuild(),
 		},
 		{
 			Name:  "canary",
 			Argv:  []string{"bash", filepath.Join(kit, "bin", "bench.sh"), "canary", root},
-			Needs: needsBuild,
+			Needs: needsBuild(),
 		},
 	}...)
 }

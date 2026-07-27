@@ -248,6 +248,13 @@ func inspectAt(root string, now time.Time) Inspection {
 	return gi
 }
 
+// The two rejections strictJSON adds on top of encoding/json are sentinels so a caller
+// can class them without matching on message text.
+var (
+	errTrailingJSON      = errors.New("trailing JSON")
+	errDuplicateJSONName = errors.New("duplicate name")
+)
+
 func strictJSON(data []byte, dst any) error {
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.DisallowUnknownFields()
@@ -256,7 +263,7 @@ func strictJSON(data []byte, dst any) error {
 	}
 	var trailing any
 	if err := dec.Decode(&trailing); !errors.Is(err, io.EOF) {
-		return errors.New("trailing JSON")
+		return errTrailingJSON
 	}
 	// encoding/json accepts duplicate keys; a token walk rejects them recursively.
 	dec = json.NewDecoder(bytes.NewReader(data))
@@ -281,7 +288,7 @@ func rejectDuplicateNames(dec *json.Decoder) error {
 			}
 			key := k.(string)
 			if seen[key] {
-				return errors.New("duplicate name")
+				return errDuplicateJSONName
 			}
 			seen[key] = true
 			if err := rejectDuplicateNames(dec); err != nil {

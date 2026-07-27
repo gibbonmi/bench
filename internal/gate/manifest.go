@@ -8,8 +8,6 @@ package gate
 // rather than grade the tree with the wrong oracle.
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -88,20 +86,18 @@ func parseManifest(path, root string, data []byte) ([]Phase, error) {
 	if strings.TrimSpace(string(data)) == "" {
 		return nil, defect(path, "empty manifest", "no phases declared")
 	}
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	var doc manifestDoc
-	if err := decoder.Decode(&doc); err != nil {
+	if err := strictJSON(data, &doc); err != nil {
 		if key, ok := unknownField(err); ok {
 			return nil, defect(path, "unknown field", key)
 		}
+		if errors.Is(err, errTrailingJSON) {
+			// A second document is the classic half-written or double-appended
+			// manifest, and encoding/json alone would grade it as if only the first
+			// existed.
+			return nil, defect(path, "parse error", "unexpected trailing content")
+		}
 		return nil, defect(path, "parse error", err.Error())
-	}
-	// Decode stops at the first value, so a second document — the classic half-written
-	// or double-appended manifest — would otherwise be graded as if only the first
-	// existed.
-	if decoder.More() {
-		return nil, defect(path, "parse error", "unexpected trailing content")
 	}
 	if len(doc.Phases) == 0 {
 		return nil, defect(path, "empty manifest", "no phases declared")

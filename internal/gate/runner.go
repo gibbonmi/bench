@@ -27,6 +27,9 @@ const processGroupCancelGrace = 2 * time.Second
 type processGroupResult struct {
 	Code     int
 	StartErr error
+	// Cancelled reports that the context, not the command, decided the outcome — the
+	// only way to tell a killed command from one that chose the same exit code.
+	Cancelled bool
 }
 
 func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd) processGroupResult {
@@ -36,7 +39,7 @@ func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd) processGroupResu
 	cmd.SysProcAttr.Setpgid = true
 	if err := cmd.Start(); err != nil {
 		if ctx.Err() != nil {
-			return processGroupResult{Code: 130, StartErr: err}
+			return processGroupResult{Code: 130, StartErr: err, Cancelled: true}
 		}
 		return processGroupResult{Code: 1, StartErr: err}
 	}
@@ -65,7 +68,7 @@ func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd) processGroupResu
 			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 			<-done
 		}
-		return processGroupResult{Code: code}
+		return processGroupResult{Code: code, Cancelled: true}
 	}
 }
 
@@ -88,6 +91,10 @@ type phaseResult struct {
 	// Such a phase is never red on its own: the verdict belongs to the phase that
 	// actually failed, so the red set a fix loop reads stays free of cascade noise.
 	SkippedBy string
+	// Interrupted marks a phase the cancellation caught mid-run, which is what the
+	// straggler report names. A phase that chose exit 130 itself carries the same code
+	// and is an ordinary red, so the code alone cannot identify the set.
+	Interrupted bool
 }
 
 // green reports whether a settled phase satisfies a dependent's edge. Both skip flavors
@@ -168,14 +175,12 @@ func runPhasesConcurrent(ctx context.Context, root string, phases []Phase, skipL
 
 // reportStragglers names, in table order, the phases a cancellation caught mid-run —
 // the one thing a killed gate can still tell an operator about where it was stuck.
-// Code 130 identifies that set exactly: a phase that settled on its own carries its own
-// real code, and one the interrupt kept from launching carries a skip cause. Reading it
-// off the settled results is also the only race-free way to ask, since a snapshot taken
-// in the launch loop would be stale by the time the reaping loop finished with it.
+// Reading it off the settled results is the only race-free way to ask, since a snapshot
+// taken in the launch loop would be stale by the time the reaping loop finished with it.
 func reportStragglers(results []phaseResult, stderr io.Writer) {
 	var names []string
 	for _, result := range results {
-		if result.Code == 130 {
+		if result.Interrupted {
 			names = append(names, result.Name)
 		}
 	}
@@ -205,7 +210,7 @@ func schedule(ctx context.Context, root string, phases []Phase, sequential bool,
 	settled := make([]bool, len(phases))
 	launched := make([]bool, len(phases))
 	done := make(chan int, len(phases))
-	inFlight, cancelled := 0, false
+	inFlight := 0
 
 	for {
 		progressed := false
@@ -213,7 +218,7 @@ func schedule(ctx context.Context, root string, phases []Phase, sequential bool,
 		// already in flight still have to be reaped before their output writers can
 		// be closed, but nothing new may start behind an interrupt.
 		for i, phase := range phases {
-			if settled[i] || launched[i] || cancelled || ctx.Err() != nil {
+			if settled[i] || launched[i] || ctx.Err() != nil {
 				continue
 			}
 			blocker, ready := edgeState(phase, index, settled, results)
@@ -249,21 +254,34 @@ func schedule(ctx context.Context, root string, phases []Phase, sequential bool,
 		i := <-done
 		inFlight--
 		settled[i] = true
-		if results[i].Code == 130 {
-			cancelled = true
-		}
 	}
 
-	// Anything still unsettled is either behind an interrupt or on a cycle the loader
-	// should have refused. Naming its first unmet need keeps a never-launched phase
-	// from reporting the zero value, which reads as green.
+	// The launch loop stops for exactly two reasons, and they settle the leftovers
+	// differently. Behind a stopped context a phase simply never got its turn; with the
+	// context live, no further progress means the table's own edges deadlock it — a
+	// defect the loader refuses but an injected table can still carry — and a phase the
+	// run can never launch has to be red, or a graph that executes nothing reports green.
+	interrupted := ctx.Err() != nil
 	for i, phase := range phases {
-		if !settled[i] {
-			results[i] = phaseResult{Name: phase.Name, SkippedBy: firstUnsettledNeed(phase, index, settled)}
+		if settled[i] {
+			continue
 		}
+		need := firstUnsettledNeed(phase, index, settled)
+		if !interrupted {
+			results[i] = phaseResult{Name: phase.Name, Code: 1, StartErr: fmt.Errorf("stuck behind unsatisfied need %s", need)}
+			continue
+		}
+		results[i] = phaseResult{Name: phase.Name, Skipped: true, SkippedBy: need, StartErr: errInterruptedBeforeLaunch}
 	}
-	return results, cancelled
+	// A deadline is not an interrupt: it keeps its own exit code and its summaries, so
+	// only an operator's signal suppresses the run's report.
+	return results, interrupted && !errors.Is(context.Cause(ctx), errGateTimeout)
 }
+
+// errInterruptedBeforeLaunch is the cause a phase carries when the run was stopped
+// before its turn came. It is a skip rather than a red because nothing graded it, and it
+// is never the zero value, so no summary can call such a phase green.
+var errInterruptedBeforeLaunch = errors.New("interrupted before launch")
 
 // edgeState reports the need blocking phase permanently, if any, and otherwise whether
 // every need has settled green. A need that settled non-green wins over one still
@@ -300,6 +318,9 @@ func phaseSummary(result phaseResult) string {
 		return "phase " + result.Name + ": skipped (needs " + result.SkippedBy + ")"
 	}
 	if result.Skipped {
+		if result.StartErr != nil {
+			return fmt.Sprintf("phase %s: skipped (%v)", result.Name, result.StartErr)
+		}
 		return "phase " + result.Name + ": skipped (not installed)"
 	}
 	if result.Code == 0 {
@@ -317,6 +338,16 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 		result.Code = 1
 		result.StartErr = fmt.Errorf("empty argv")
 		return result
+	}
+	// A working directory the run cannot enter is checked before the binary is: chdir
+	// fails ENOENT exactly as a missing binary does, so an optional phase whose dir is a
+	// typo would otherwise report itself not installed and take its check off the gate.
+	if phase.Dir != "" {
+		if err := usableDir(phase.Dir); err != nil {
+			result.Code = 1
+			result.StartErr = err
+			return result
+		}
 	}
 	argv := phase.Argv
 	if phase.Optional {
@@ -346,17 +377,15 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 	cmd.Dir = root
 	if phase.Dir != "" {
 		cmd.Dir = phase.Dir
-		if !filepath.IsAbs(phase.Dir) {
-			cmd.Dir = filepath.Join(root, phase.Dir)
-		}
 	}
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	cmd.Env = mergeEnv(gateEnv(), phase.Env)
 	run := runProcessGroupCommand(ctx, cmd)
+	result.Interrupted = run.Cancelled
 	if run.StartErr != nil {
-		if run.Code == 130 {
-			result.Code = 130
+		if run.Cancelled {
+			result.Code = run.Code
 			return result
 		}
 		if phase.Optional && errors.Is(run.StartErr, os.ErrNotExist) {
@@ -370,6 +399,20 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 	result.Code = run.Code
 	printConformanceTiming(root, phase, stdout)
 	return result
+}
+
+// usableDir reports why a phase's working directory cannot be entered, or nil when it
+// can. The check is the one place a dir defect is named as itself; leaving it to exec
+// hands back a bare ENOENT that reads like a missing binary.
+func usableDir(dir string) error {
+	info, err := os.Stat(dir)
+	if err != nil {
+		return fmt.Errorf("unusable working directory %s: %v", dir, err)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("unusable working directory %s: not a directory", dir)
+	}
+	return nil
 }
 
 // mergeEnv applies overrides over base strip-then-set: every base entry for an
