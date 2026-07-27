@@ -103,6 +103,57 @@ Driven by hooks and adapters, never typed by sessions — the one enumeration
 `bench check-agent-line`, `bench stop-verdict`, `bench session-inspect`, `bench worktree-pool`,
 `bench worktree-lease-file`, `bench worktree-hook`, `bench resume-clean`.
 
+## Phase manifest
+
+`.bench/phases.json` in the graded root declares the project's gate as data.
+There are exactly two states: a repo that ships a manifest replaces the built-in
+phase table entirely — there is no merge, so a partial manifest silently drops
+every phase it omits — and a repo that ships none keeps the built-in table. The
+Bench kit itself ships no manifest: it runs the built-in table, whose
+Go-toolchain phases materialize only when the graded root carries what each step
+grades. The manifest is a capability for projects whose gate is not shaped like
+the kit's, not the route the kit takes.
+
+The document is one object with a `phases` array. Per phase:
+
+- `name` (required) — the phase's addressable identity: it appears in summary
+  lines and output prefixes and targets a single phase for the canary, so it
+  must be non-empty with no whitespace or control characters.
+- `argv` (required, non-empty) — the command as an argument vector, exec'd
+  directly, never through a shell: no interpolation, globbing, or quoting.
+- `env` (optional) — string-to-string map set in the phase's environment,
+  overriding the gate's own values.
+- `needs` (optional) — names of phases that must end green before this one
+  starts. A phase whose need ends red or skipped is skipped too — it would
+  grade an artifact its need never produced. Every name must exist in the
+  manifest.
+- `optional` (optional, default false) — when the command is not installed, the
+  phase reports skipped ("not installed") instead of red. A present command
+  that fails is still red.
+- `dir` (optional) — the phase's working directory, a relative path anchored to
+  the graded root — which in a linked repo is a different tree from the kit
+  checkout, so a root-relative path is the only kind that lands where the
+  project's directories actually are. Empty means the root itself.
+
+```json
+{
+  "phases": [
+    {"name": "build", "argv": ["npm", "run", "build"]},
+    {"name": "test", "argv": ["npm", "test"], "needs": ["build"], "dir": "web"}
+  ]
+}
+```
+
+The loader fails closed. Anything between the two valid states — a truncated
+write or trailing content, a dangling symlink or non-regular file, an unknown
+field, a duplicate name, an empty argv, a `dir` that is absolute or escapes the
+root, a `needs` edge to a phase that does not exist, a cycle — reds before any
+phase runs, naming the path, the defect class, and the offending element. A
+manifest with any of these means something its author intended that the loader
+cannot know, and running a guessed-at table would grade the tree with the wrong
+oracle. If you hit one of these reds, the refusal is deliberate: fix the
+manifest — there is no lenient mode.
+
 ## Harness adapter for the shift loop
 
 `bench shift` drives whatever harness `BENCH_AGENT` names: each iteration it runs
