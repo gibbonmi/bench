@@ -2,62 +2,44 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `8436d41`, 20 unpushed commits
-Spec: `specs/ft91-phase-manifest-dag.md` — **implemented**, gate-green, unpushed.
-Gate: green at `78c917e` — stale only by the spec status-flip doc commit.
+Branch: `main` — HEAD `5614726`, 8 dirty paths, 1 unpushed commit
+Spec: none staged.
+Gate: green at `78c917e` — stale, work tree `a5f10c1`
 
 ## State
 
-- **Slice B built and landed (2026-07-27), gate-green, not yet pushed.** Six
-  commits: the DAG scheduler (`5a009ee`), the `.bench/phases.json` loader
-  (`d09635f`), the deadline straggler report (`37039a3`), the canary fixture
-  (`bd761db`), the review artifact (`d8fb574`), and the review fix pass
-  (`6d1bb80`). All 29 coverage rows realized; `bench coverage --check` valid.
-- **Pushing is the reviewer's call and has not happened.** Everything below the
-  push is done.
-- **Four items awaiting a reviewer verdict**, all surfaced in the build's exit
-  report and none of them blocking:
-  1. **Coverage row 7's red signal is wrong in the spec.** `os/exec` dedups
-     `cmd.Env` keeping the last value, so the row's "append hands the child two
-     values" cannot happen and its mapped test is vacuous. The unmapped
-     `TestMergeEnvStripsThenSets` is the only non-vacuous coverage story 7 has.
-     Amending the map is the reviewer's edit; the build left the spec alone.
-  2. **Coverage row 6 names a test that no longer exists.**
-     `TestRunnerPhaseDirIsRelativeToRoot` became
-     `TestRunnerPhaseDirIsAbsoluteOrRoot` when `Phase.Dir` was given one
-     anchoring authority; the real graded-root semantic is pinned by
-     `TestManifestDirResolvesAgainstGradedRoot`.
-  3. **`internal/gate/` holds 21 source files against a granted 16** (19 before
-     this spec). Advisory — `bench structure` is not a gate check — so it is a
-     re-grant or a split, not a defect.
-  4. **One residual fail-open left open deliberately:** a deadline firing with no
-     phase in flight can still print `gate: green` at the `runPhases` seam.
-     `Execute` overrides it to 124 via `context.Cause` and a bare
-     `bench gate-phases` carries no deadline, so it is unreachable as a false
-     green.
-- **The semantic review found four fail-open defects, all now closed and
-  verified through the built binary:** a duplicate JSON key silently shadowed a
-  phase and the gate went green; an unsatisfiable graph reported green having run
-  nothing; a phase exiting 130 on its own was read as cancellation, leaving a red
-  gate with a `Pending` verdict; an optional phase with an unusable working
-  directory read as `skipped (not installed)`.
-- **Next capability is slice C** (`checkGoCore` split + fixture migration +
-  parity, decision map #3/#6/#7), whose spec also carries FT143's kit-root
-  family→check binding assertion. Slice C is what first consumes the manifest —
-  the kit ships no `.bench/phases.json` yet, and consumer-facing manifest docs
-  land with it. FT143's roadmap row stays until that ships. FT144's workflow
-  decision remains the reviewer's, unmade.
-- `.bench/learnings.md` carries one open entry (a returned delegate is not a
-  drained one — its background test sweep flaked a load-sensitive gate).
+- **A `/bench-what-next` drain closed 2026-07-27 (`5614726`) and both inboxes
+  are empty.** 49 rows in, 49 out — nothing was removed, because FT91 has arms
+  left. `IDEAS.md` is empty and `.bench/learnings.md` carries no open entry.
+- **FT91 slice B landed and its spec is retired.** The `.bench/phases.json`
+  loader and the DAG scheduler are in; nothing consumes them yet, because the
+  kit ships no manifest of its own. Slice C is what first does.
+- **Slice B's four open reviewer items are now board rows, not handoff state.**
+  The two coverage-map corrections went to FT140 alongside FT86's identical
+  provenance question — one decision closes all three instances — and the
+  falsified `os/exec` premise went to FT99 as its third instance. The residual
+  `runPhases` fail-open was closed by decision (unreachable: `Execute` overrides
+  to 124 and a bare `bench gate-phases` carries no deadline). `internal/gate/`
+  at 21 files against a granted 16 is a live `bench structure` advisory, so it
+  surfaces on its own.
+- **Slice C is the next build** — `checkGoCore` split, fixture migration,
+  parity test, probed fallback phases (decision map #3/#6/#7) — and its spec
+  also carries FT143's kit-root family→check binding assertion. Consumer-facing
+  manifest docs land with it. FT143 and FT144 stay open until then; FT144's
+  workflow question is the reviewer's, unmade.
+- **Two folds in the drain are flagged for veto.** FT104 was widened past its
+  original title to carry both faces of a load-induced commit refusal, and the
+  review residuals were folded onto existing rows rather than opening FT145 —
+  both are FT137's not-yet-shipped restructuring moves, applied on the
+  2026-07-26 precedent.
 - `bench prep-release` stays shelved — blocked by FT116's race and FT142's
-  ship-track findings; both are board rows, not handoff state.
+  ship-track findings; both are board rows.
 - The branch/worktree sweep remains proposed, not executed — reviewer's call.
-  The six worktrees this build cut were all released.
 
 ## Next command
 
-Push is yours. After that, `/bench-what-next` — `bench status` flags one open
-learning to drain, and the reconcile will want the FT91 row updated for slice B.
+`/bench-write-spec` — FT91 slice C: split `checkGoCore` into first-class gate
+phases. Inputs: the FT91 row and `decisions/gate-pipeline.md`.
 
 ## Shape
 
