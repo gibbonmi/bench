@@ -1,6 +1,6 @@
 # FT91 slice B — phase manifest + DAG runner
 
-Status: staged
+Status: implemented
 
 Compiled from `decisions/gate-pipeline.md` (#1 manifest, #4 execution semantics,
 #9 output contract; Handoff items 1–9). Slice order is reviewer-confirmed
