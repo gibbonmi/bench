@@ -53,54 +53,15 @@ Gate: green at `08482c6`; every commit since is doc-only
 - **Push needs `bench gate pin` first** — interactive TTY, so it is yours.
 - Drain pending: 3 parked ideas, 1 open learning.
 
-## Cleanup sequence (reviewer-run, in order)
+## Cleanup sequence (reviewer-run)
 
-```bash
-POOL=~/.bench/worktrees/bench-2826441890
-
-# 1. The 16 assign-branch worktrees: plan, then apply with the printed fingerprint.
-for w in 2e244b92*-71e2c598* 3262b7b3*-ef31c1dc* 3be84fa2*-b7fc1bae* 5096abf2*-e48a7258* \
-         7c14860e*-1d9a75cf* 877c99aa*-2cd80392* 8ddd3feb*-b0ba1a29* 9ff77f4a*-cab958cc* \
-         cc14983b*-a4de1307* fc05fad7*-9566bd64* ebd6824d*-43613d5d* b6192cf8*-0507f12a* \
-         88203ee7*-5d7a0f1b* ccb9f04c*-f632161c* ad1d12a2*-d73215b5* e8e880c7*-324fd4dc*; do
-  p=$(echo $POOL/$w)
-  fp=$(bench worktree clean "$p" | awk -F, 'NR==2{print $6}')
-  [ ${#fp} -eq 64 ] && bench worktree clean "$p" --apply "$fp" || echo "SKIPPED (retain?): $p"
-done
-
-# 2. The four fix/ft86-review-* worktrees: restore the assign branch so the
-#    registration matches the ledger, re-plan (the retain should flip), apply.
-declare -A FIX=(
-  [0431f7e9aa9247fc30c6479b0b0b0f0e-48e207f910fb3750ea69c997e9cc9471]=bench/assign/0431f7e9aa9247fc30c6479b0b0b0f0e/48e207f910fb3750ea69c997e9cc9471
-  [30a9b2979dacaef03a1e0f30b419a0da-b8c88a40709f436a455638a5c8f59da0]=bench/assign/30a9b2979dacaef03a1e0f30b419a0da/b8c88a40709f436a455638a5c8f59da0
-  [478c3ac90c1c2d3628a111a7710d7b72-3f0111d86e5be84a13ea97b49cad20ee]=bench/assign/478c3ac90c1c2d3628a111a7710d7b72/3f0111d86e5be84a13ea97b49cad20ee
-  [cfa2d2942c5089c406ada0811dce4735-d72ea6f38ca718dba5a6f3103bf305ff]=bench/assign/cfa2d2942c5089c406ada0811dce4735/d72ea6f38ca718dba5a6f3103bf305ff
-)
-for w in "${!FIX[@]}"; do
-  git -C "$POOL/$w" checkout -b "${FIX[$w]}"
-  fp=$(bench worktree clean "$POOL/$w" | awk -F, 'NR==2{print $6}')
-  [ ${#fp} -eq 64 ] && bench worktree clean "$POOL/$w" --apply "$fp" || echo "SKIPPED (retain?): $POOL/$w"
-done
-
-# 3. The unregistered empty directory (outside bench's authority).
-rm -r "$POOL/eb04fb610b43d73caa1f0d9e4a4e5f4d"
-
-# 4. Branches clean leaves behind (it deletes only proof-landed ones itself).
-#    -d proves its own safety; the -D set is superseded drafts + the abandoned
-#    FT91 arm, all signed off 2026-07-27.
-git branch -d fix/ft86-review-coverage fix/ft86-review-singlesource \
-              fix/ft86-review-failclosed fix/ft86-review-git
-git branch -D \
-  bench/assign/88203ee7d603436167ef591631a6d1da/5d7a0f1b9b784de9b8a7717a04217ad7 \
-  bench/assign/ccb9f04ce873be7000146c9486df1584/f632161c5b91ce924d471c7842aa3a4f \
-  bench/assign/ad1d12a248a7e4e4ce87f8839970ac77/d73215b551ad2003b9c623b113be1068 \
-  bench/assign/e8e880c740767330755ca5f6f22d7fd3/324fd4dc5335ae6b08cf65bd3b2e52eb
-
-# 5. Retire recovery refs once the pool is empty: inspect each, apply when the
-#    plan says it can retire. (Per-ref by hand — payload verdicts differ.)
-git for-each-ref 'refs/bench/recovery/**' --format='%(refname)'
-# then per ref:  bench worktree recovery <ref>   →   bench worktree recovery <ref> --apply <fingerprint>
-```
+`./cleanup-worktree-pool.sh` — untracked script at the repo root, the single
+source of the five-step sequence (16 assign-branch cleans; the four
+fix/ft86-review-* branch restores + cleans; the unregistered directory; the
+leftover branch deletions, all signed off 2026-07-27; the recovery-ref
+retirement, applying only where the tool's own plan says retire). Idempotent;
+prints a summary and lists anything retained. Delete the script after the run
+is verified.
 
 ## Next command
 
