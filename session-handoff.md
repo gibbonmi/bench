@@ -12,7 +12,11 @@ Gate: green at `78c917e` — stale, work tree `a68a7e1`
   (`85c55fc`).** `specs/ft91-gate-phase-split.md` — the `checkGoCore` split into
   first-class gate phases. It is the next build, and it is the first consumer of
   slice B's manifest loader and DAG scheduler, which shipped with nothing using
-  them.
+  them. The build runs interactively at the mid tier, not under `bench shift`:
+  stories 14 and 15 author canary fixtures whose EXPECT strings settle at build
+  time, which fails `craft-line`'s venue-routing test for an unattended loop. Its
+  inputs are `decisions/gate-pipeline.md` #3/#6/#7 and
+  `decisions/assets/gate-pipeline-fixture-inventory.md`.
 - **Two closed decisions the build must not reopen.** Canary fixture EXPECTs
   carry the tool's own diagnostic only, *not* the `phase <name>: red` half the
   map prescribed — inner mode emits no summary lines, and that byte shape is
@@ -38,13 +42,7 @@ Gate: green at `78c917e` — stale, work tree `a68a7e1`
 
 ## Next command
 
-`/bench-implement-spec` against `specs/ft91-gate-phase-split.md`, in a fresh
-mid-tier session. Interactive, not `bench shift`: stories 14 and 15 author canary
-fixtures whose EXPECT strings settle at build time, which fails `craft-line`'s
-venue-routing test for an unattended loop. Read `decisions/gate-pipeline.md`
-#3/#6/#7 and `decisions/assets/gate-pipeline-fixture-inventory.md` first. Adding
-`.bench/phases.json` changes the `.bench` tree, so the pre-push hook wants a fresh
-`bench gate pin` before any push.
+`/bench-implement-spec specs/ft91-gate-phase-split.md`
 
 ## Shape
 
