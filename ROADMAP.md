@@ -54,8 +54,7 @@ check-scoping, landed 2026-07-26 (spec `ft91-canary-check-scoping`, retired):
 a registry-owned family→check table scopes each conformance fixture's inner
 run to the one check it grades, vacuity baselines are shared per scope group,
 and the ship sweep pays two scoped runs plus one shared baseline instead of
-three full inner gates. The long pole is now `package-core-guard` (~86 s),
-which runs seven toolchain steps serially inside one Go test function.
+three full inner gates.
 
 The pipeline refactor is the sixth arm, and it ships in slices. Slice B landed
 2026-07-27 (spec `ft91-phase-manifest-dag`, retired): the phase list became
@@ -71,16 +70,33 @@ conformance subprocess env now scrubs all three control variables
 symmetrically, and a failed probe spills full output to a named log instead of
 truncating to the last 40 lines.
 
-Slice C is the remaining pipeline work, and it is where the duration win is.
-Hoist `checkGoCore`'s compile-and-test work out of the conformance test binary
-into first-class gate phases with declared dependencies, leaving conformance to
-grade structure only — this removes the remaining recursion surface story and
-the stale-state class the FT91 build hit, and wins duration by overlapping
-gofmt/build/vet/test/race/cross-compile instead of running them serially inside
-one check. Complication that stays: `checkGoCore` grades arbitrary roots (canary
-fixtures, linked repos), so it must split into a host-repo phase plus a
-narrower structural check, and the 19+ package-core-guard fixtures asserting
-its diagnostics move to grading the phase.
+Slice C landed 2026-07-27 (spec `specs/ft91-gate-phase-split.md`, implemented and
+deliberately unretired — see below). `checkGoCore`'s seven serial toolchain steps
+became first-class phases: `gofmt`, `vet`, `test`, `race`, and
+`conformance-suite`, with the four policy-carrying steps behind a new
+`bench gate-go` plumbing subcommand and the residual check keeping only the
+absent-toolchain diagnostic and the ship cross-compile matrix. FT143's kit-root
+family→check binding assertion shipped with it. Two spec deviations are open for
+veto, which is why the spec stays unretired: stories 4 and 5 shipped as *probed*
+phases (`race` materializes only where the graded root declares
+`TestConcurrentCleanupRecordsOneTransaction`, `conformance-suite` only where it
+declares `TestRootConformance`) instead of the kit-owned `.bench/phases.json` the
+spec named, and story 9 — that manifest itself — is unbuilt, its acceptance row
+unsatisfiable because the loader forces `Dir` onto every declared phase, the
+`build` argv carries absolute paths a committed file cannot hold, and
+`shellcheck`'s argv is discovered at run time.
+
+The slice's duration premise did not hold, and retargeting this row on that
+measurement is the work it now carries. Measured on the reviewer's host:
+`package-core-guard` 1m52.8s → 3.3s and the `conformance` phase 117.4s → 8.5s,
+while the whole gate stayed unchanged at ~4m51s. Conformance was never the
+critical path. `internal/contract/surface/artifact` (~207 s) and
+`internal/contract/surface` (~178 s) are, and neither has been touched by any of
+the six arms — every arm so far optimized a phase that was not the long pole.
+Any further wall-clock work starts by attacking those two contract suites, and
+starts by asking why they cost what they cost rather than by assuming the
+pipeline shape is the answer; the DAG scheduler and the phase table are now in
+place to absorb whatever the answer is.
 
 Cross-language incrementality stays a separate later capability behind the
 existing revive trigger. Incrementality rides on Go's content-addressed test
@@ -99,15 +115,37 @@ with no file→test map). None of them may weaken the oracle: green must keep
 meaning the same thing, and any scoped verdict must be explicit evidence,
 never a silent skip.
 
-Entry: `/bench-write-spec` for slice C, inputs this row plus
-`decisions/gate-pipeline.md` (the map is closed) and
-`decisions/gate-concurrency.md`'s watch-outs. Sources: `IDEAS.md`, drained
-here; `decisions/cost-follows-project-size.md`.
+Entry: `/bench-shape-idea` — the next arm's target is known (the two contract
+surface suites) but its shape is not, and `decisions/gate-pipeline.md` is closed
+on a premise the measurement falsified. Inputs: this row,
+`decisions/gate-concurrency.md`'s watch-outs, and
+`decisions/cost-follows-project-size.md`. Sources: `IDEAS.md`, drained here;
+`decisions/cost-follows-project-size.md`.
 
-**FT131 (MEDIUM) — a stale binary under test makes contract rows lie in both
-directions.** The AXI and runtime contract suites drive the built `dist/bench`,
-not the package under test, so their verdict answers for whatever binary happens
-to be on disk. In a fresh or salvaged worktree that binary predates the change:
+**FT146 (HIGH, evidence supplied) — `build-offline-archives.sh` destroys a live
+tree handed to it as `<output-dir>`.** The script validates only that `$output`
+is a real directory, then does `mv "$output" "$backup"; mv "$stage/output"
+"$output"; rm -rf "$backup"` (`scripts/build-offline-archives.sh:134-141`) — it
+never checks the target is disposable. On 2026-07-27 the artifact contract test
+was driven with `BENCH_CONTRACT_ROOT` pointing at a live checkout, and an entire
+`bench` worktree was replaced by nine release tarballs; the commits survived on
+the branch, the working tree did not. This is the only surface in the kit that
+deletes a directory it did not create, which is why it outranks every MEDIUM
+here regardless of how rarely it is invoked. Two halves, and both are wanted:
+the script refuses an `$output` that is a git worktree or that holds anything it
+did not produce, and the artifact contract tests are made structurally unable to
+resolve their output directory to the graded root. Note that the residue is
+still on disk — a pool entry at
+`~/.bench/worktrees/bench-2826441890/220aa857…-72b9811f…` holds the tarballs and
+no git repo, and both `bench worktree release` and `bench worktree clean` fail
+closed on it, so clearing it is a manual reviewer action. Source: `IDEAS.md`,
+drained here.
+
+**FT131 (MEDIUM) — a stale `dist/bench` is trusted by both the contract suites
+and the gate's own phase resolution.** The AXI and runtime contract suites
+drive the built `dist/bench`, not the package under test, so their verdict
+answers for whatever binary happens to be on disk. In a fresh or salvaged
+worktree that binary predates the change:
 during FT86 two of three rows in a correct slice went red on nothing but
 staleness, and a delegate was nearly re-charged to fix code that was already
 right. The dangerous direction is the reverse one — a stale binary that happens
@@ -118,8 +156,21 @@ sources it exercises, which removes the instruction rather than duplicating it.
 The fallback — naming the `scripts/go-build.sh` rebuild in the guidance where
 the phase names these seams — stays on this row and is taken only if the
 in-helper staleness check proves unreliable; it was offered to the delegation
-batch that shipped 2026-07-26 and deliberately left untaken there. Source: the
-2026-07-25 learnings entry, verdicted in a prior drain.
+batch that shipped 2026-07-26 and deliberately left untaken there.
+
+A second face, observed during the slice C build 2026-07-27, moves the same
+staleness from the test harness into the oracle itself: a phase-table change
+does not take effect until the *next* gate run. `.bench/gate.sh` execs
+`bench gate-phases` from a process that started before the build phase rewrote
+`dist/bench`, so the first run after a table edit silently grades with the old
+table — observed as a green run showing five phases, then ten on an immediate
+re-run with no code change. Silently grading with the previous table is a
+stronger version of the same defect than a red contract row, because nothing
+reports it at all, and it shares the fix shape: the consumer detects that
+`dist/bench` predates the sources it answers for. Whether the gate should
+refuse, re-resolve, or simply say so is the row's open question. Sources: the
+2026-07-25 learnings entry, verdicted in a prior drain; `session-handoff.md`,
+drained here.
 
 **FT141 (MEDIUM, evidence supplied) — `bench gate pin` records red verdicts,
 so inherited reds stop reading as caused.** The pin records only the tree it
@@ -201,7 +252,7 @@ govulncheck-not-installed gap carried on FT142. Fix shape: `Scan` must not
 leave `enumerateGuards` running after the timeout path returns. Source:
 `IDEAS.md`, drained here.
 
-**FT142 (MEDIUM) — FT91 review residuals: nine open findings, two tracks.**
+**FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
 The ft91-gate-tier-split semantic review found twelve; three closed before
 merge (the ship canary tier pin, the untiered-registry assertion, the
 present-but-empty `CHECK` file). The spec and review files are retired, so
@@ -220,27 +271,13 @@ is restaged at ship; `govulncheck` resolves four levels deep instead of in
 `requiredTools`, so a host without it burns the artifact matrix and a full
 ship conformance run before dying — the concrete limit on the up-front
 refusal; a second `prep-release` after an interrupt never cleans the orphaned
-`dist/.preflight.*` staging directory; two concurrent conformance runs on one
-root interleave the timing file (needs a coverage row or an explicit
-Won't-handle line); and the release-only `go test` step the decisions
-promised was silently folded into ship-tier `goCoreTestPackages` — flagged
-for veto, not a defect. Source: the FT91 review, promoted at spec
+`dist/.preflight.*` staging directory; and two concurrent conformance runs on
+one root interleave the timing file (needs a coverage row or an explicit
+Won't-handle line). The ninth finding — the release-only `go test` step the
+decisions promised, silently folded into ship-tier `goCoreTestPackages` —
+closed 2026-07-27 with `ft91-gate-phase-split` story 18, which makes it an
+explicit `prep-release` step. Source: the FT91 review, promoted at spec
 retirement.
-
-**FT143 (MEDIUM) — the family→check binding is enforced late and on one
-surface only.** `ft91-canary-check-scoping` story 4's amended seam put the
-unbound-family red in the conformance layer's kit-scoped family check, which
-is correct about audience — the sweep grades adopting repos a kit-owned table
-can never bind — but it lands the red after the cost and only on one path.
-Two consequences. First, an unbound family resolves to no scope, so each of
-its fixtures pays a full unscoped inner gate during the canary phase before
-the conformance phase reds; loud but late, tolerable at dev and worse at ship,
-which is exactly the cost this arm removed. Second, standalone `bench canary
-[root]` runs `canary.Run` alone and never reaches the conformance registry, so
-on that surface an unbound family sweeps unscoped and silent — only `bench
-gate` catches it. Candidate fix: a cheap kit-root-scoped binding assertion
-before the sweep starts, reachable from both entry points, leaving the
-adopting-repo path untouched. Sources: `IDEAS.md`, drained here.
 
 **FT144 (MEDIUM) — kit specs have two audiences and the discipline names
 neither.** The `ft91-canary-check-scoping` build discovered mid-flight that
@@ -258,7 +295,21 @@ finding quoted. Either the existing route is right and the build should have
 paid the round-trip, or the workflow wants a named lighter case for
 "intent stands, seam moves" that a build may take under batch approval and
 flag for veto — the reviewer's call, and the decision the row exists to get.
-Source: `.bench/learnings.md`, drained here.
+
+Both halves gained a second instance 2026-07-27, from `ft91-gate-phase-split`.
+The audience half was applied by hand: that spec's edge inventory walked the
+kit-versus-linked-repo split explicitly for all three of its new fail postures,
+ahead of the `craft-spec` edit that would make it standing — and the semantic
+review still found one probe testing for a directory *name* that any linked repo
+could carry, so the prompt is worth having even where a spec remembers to ask.
+The workflow half recurred in a sharper form: stories 4, 5, and 9 shipped as
+probed phases rather than the manifest the spec named, and story 9 was dropped
+outright as unsatisfiable — the seam moved *and* a story died, discovered
+mid-build, shipped under batch approval and flagged for veto rather than routed
+back. That is a larger deviation than the case this row was opened on, which
+makes the named-lighter-path question the one to answer first. Sources:
+`.bench/learnings.md`, drained in a prior run; `session-handoff.md`, drained
+here.
 
 **FT128 (MEDIUM, evidence supplied) — the agent-line guard cannot see a fork's
 real model.** `check-agent-line` decides from the delegation envelope's
@@ -284,6 +335,26 @@ a branch that may not be the default, FT86's own failure class one layer
 down. `bench doctor` (or `bench link`'s output) should report whether the
 installed guard's protected branch was resolved or guessed, so the false
 armor is visible where the reviewer looks. Source: `IDEAS.md`, drained here.
+
+**FT145 (MEDIUM, evidence supplied) — the severity-1 git signal aggregates
+across every worktree and fails whole.** Two 2026-07-27 observations turned out
+to be one function: `git.LandedState` (`internal/git/git.go:227-241`) walks
+every registered worktree and unions their porcelain output into a single
+path-keyed dirty set, then returns an error for the entire fact if any one of
+those `git status` calls fails. The visibility face — a broken pool entry left
+by FT146 made `bench status`'s git row read `git state unavailable`, so
+dirty-path, unpushed-commit, and branch signals vanished for the whole repo
+because one directory in the pool was no longer a git repository. A severity-1
+signal that silently stops reporting is worse than one that reports a gap; the
+aggregation should skip the unreadable worktree and name it. The counting face —
+`bench handoff`'s pin block printed "8 dirty paths" twice against a tree with
+exactly one (`git status --porcelain | wc -l` == 1) on `main` at `85c55fc`, with
+the unpushed-commit count correct. The capture guessed staleness; the code says
+otherwise, and the reading to confirm is that the pool's other worktrees
+contributed the remaining seven while the label claims to describe this tree.
+The set is keyed by relative path, so the same file dirty in two worktrees also
+collapses to one — decide what the number is supposed to mean before fixing
+either face. Source: `IDEAS.md`, drained here.
 
 **FT98 (MEDIUM, evidence supplied twice) — one preserve-then-discard primitive;
 three faces.** Three rows were faces of one missing primitive — a sanctioned,
@@ -889,6 +960,22 @@ is set by design. Scrub the variable in the harness's environment setup so
 each subtest's premise is exactly what it asserts. Source: `IDEAS.md`,
 drained here.
 
+**FT147 (LOW) — the handoff's `## Next command` field is stated twice and
+enforced nowhere.** The field is supposed to hold the exact harness-native
+invocation and nothing else, and sessions keep writing a paragraph there
+instead — the invocation plus rationale, tier, venue, and a gotcha, which is
+aimed at a session that has already started and so can only misfire on the cold
+one that actually reads it. The rule is already written in two places
+(`AGENTS.md`'s phase-close paragraph and the Shape section `internal/handoff`
+writes), which is why the fix is not a third statement of it: what is missing is
+authority. Grade the field — the `## Next command` body is a single line holding
+exactly one backticked invocation, prose refused. The owner is decided: a
+conformance check rather than write-time validation inside `bench handoff`,
+because the field is most often hand-written and a check is a permanent tripwire
+on any root carrying the file. Small enough for the light path; the care is in
+the check biting for the right reason, so it is `craft-gate` work rather than a
+one-line regex. Source: `.bench/learnings.md`, verdicted here.
+
 **FT140 (LOW) — review residuals that want a verdict, not a build.** Calls
 from two resolution runs outlived their specs' retirement. The recurring one is
 the provenance question, now at three instances: a test that is the real
@@ -1037,15 +1124,14 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT91 slice C: split `checkGoCore` into gate phases.
-   Gate wall-clock is the reviewer's stated dominant cost, slice B shipped the
-   manifest and DAG mechanism with nothing yet consuming it, and the long pole
-   is still `package-core-guard`'s seven serial toolchain steps inside one
-   check. Inputs: the FT91 row and `decisions/gate-pipeline.md`.
-2. `/bench-write-spec` — FT71, versioned local shift evidence. The remaining
+1. `/bench-write-spec` — FT146, the offline-archive script that deletes a live
+   tree. It already destroyed a worktree once, it is the only surface in the kit
+   that removes a directory it did not create, and the fix is small and bounded.
+   A known-destructive path outranks the wall-clock work it interrupted.
+2. `/bench-shape-idea` — FT91's next arm. Slice C landed and its premise was
+   falsified: the whole gate is unchanged at ~4m51s and the critical path is the
+   two `internal/contract/surface` suites, not conformance. The target is known
+   and the shape is not, and the closed pipeline map no longer answers it.
+3. `/bench-write-spec` — FT71, versioned local shift evidence. The remaining
    HIGH bank-track row; the repository-controlled bank evidence requirement
    keeps it active.
-3. `/bench-write-spec` — FT133, red-signal citations that resolve *and*
-   execute. Twice demonstrated now (a dead `-run` filter, a capability skip
-   printing `ok`), and it is the coverage oracle itself reading green on
-   nothing — every spec written before it lands can carry the same hole.
