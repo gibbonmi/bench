@@ -93,7 +93,7 @@ func TestFixtureTierResolution(t *testing.T) {
 	root := t.TempDir()
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			fx := canaryFixture(root, mappedFamily, tc.name)
+			fx := canaryFixture(root, mappedFamily(t), tc.name)
 			mkdir(t, filepath.Join(fx, "files"))
 			write(t, filepath.Join(fx, "EXPECT"), "target-"+tc.name+"\n")
 			if !tc.absent {
@@ -118,10 +118,10 @@ func TestFixtureTierResolution(t *testing.T) {
 // stopping at the helper: each tier's runner sees its own fixtures and no others.
 func TestSweepTierRunsOnlyItsOwnTier(t *testing.T) {
 	root := t.TempDir()
-	plain := canaryFixture(root, mappedFamily, "plain")
+	plain := canaryFixture(root, mappedFamily(t), "plain")
 	mkdir(t, filepath.Join(plain, "files"))
 	write(t, filepath.Join(plain, "EXPECT"), "target-plain\n")
-	shipped := canaryFixture(root, mappedFamily, "shipped")
+	shipped := canaryFixture(root, mappedFamily(t), "shipped")
 	mkdir(t, filepath.Join(shipped, "files"))
 	write(t, filepath.Join(shipped, "EXPECT"), "target-shipped\n")
 	write(t, filepath.Join(shipped, "CHECK"), shipCheckName(t)+"\n")
@@ -160,10 +160,10 @@ func TestSweepTierRunsOnlyItsOwnTier(t *testing.T) {
 func TestSweepTierPinsInnerTier(t *testing.T) {
 	t.Setenv(registry.ConformanceTierEnv, "ambient")
 	root := t.TempDir()
-	plain := canaryFixture(root, mappedFamily, "plain")
+	plain := canaryFixture(root, mappedFamily(t), "plain")
 	mkdir(t, filepath.Join(plain, "files"))
 	write(t, filepath.Join(plain, "EXPECT"), "target-plain\n")
-	shipped := canaryFixture(root, mappedFamily, "shipped")
+	shipped := canaryFixture(root, mappedFamily(t), "shipped")
 	mkdir(t, filepath.Join(shipped, "files"))
 	write(t, filepath.Join(shipped, "EXPECT"), "target-shipped\n")
 	write(t, filepath.Join(shipped, "CHECK"), shipCheckName(t)+"\n")

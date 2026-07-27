@@ -16,7 +16,7 @@ func TestSweepAbsolutizesRelativeRootFromDifferentCwd(t *testing.T) {
 	parent := t.TempDir()
 	root := filepath.Join(parent, "myroot")
 	mkdir(t, root)
-	fixture := canaryFixture(root, mappedFamily, "relroot")
+	fixture := canaryFixture(root, mappedFamily(t), "relroot")
 	mkdir(t, filepath.Join(fixture, "files"))
 	write(t, filepath.Join(fixture, "EXPECT"), "targeted diagnostic\n")
 
@@ -50,7 +50,7 @@ func TestSweepDoesNotLetFixtureShadowTheRealGate(t *testing.T) {
 	parent := t.TempDir()
 	root := filepath.Join(parent, "myroot")
 	mkdir(t, root)
-	fixture := canaryFixture(root, mappedFamily, "shadow-gate")
+	fixture := canaryFixture(root, mappedFamily(t), "shadow-gate")
 	mkdir(t, filepath.Join(fixture, "files"))
 	write(t, filepath.Join(fixture, "EXPECT"), "targeted diagnostic\n")
 	// Materializes to work/myroot/.bench/gate.sh — the exact relative path the
@@ -78,7 +78,7 @@ func TestSweepCleansTrailingSlashInRoot(t *testing.T) {
 	parent := t.TempDir()
 	root := filepath.Join(parent, "myroot")
 	mkdir(t, root)
-	fixture := canaryFixture(root, mappedFamily, "trailing-slash")
+	fixture := canaryFixture(root, mappedFamily(t), "trailing-slash")
 	mkdir(t, filepath.Join(fixture, "files"))
 	write(t, filepath.Join(fixture, "EXPECT"), "targeted diagnostic\n")
 

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
 // TestRunPrintsCanaryOkOnCleanSweep pins the `bench canary` success feedback,
@@ -14,12 +16,15 @@ import (
 // exiting 0 silently.
 func TestRunPrintsCanaryOkOnCleanSweep(t *testing.T) {
 	root := t.TempDir()
-	fixture := canaryFixture(root, mappedFamily, "mybreak")
+	fixture := canaryFixture(root, mappedFamily(t), "mybreak")
 	mkdir(t, filepath.Join(fixture, "files"))
 	write(t, filepath.Join(fixture, "EXPECT"), "boom detected\n")
 	write(t, filepath.Join(fixture, "files", "marker.txt"), "x\n")
+	// The phase line prints before the branch, as the real gate's do: a gate silent on
+	// an empty tree yields an empty vacuity baseline, which grades nothing and is a
+	// sweep error rather than a clean sweep.
 	write(t, filepath.Join(root, ".bench", "gate.sh"),
-		"#!/bin/sh\nif [ -f marker.txt ]; then echo \"boom detected\"; exit 1; else exit 0; fi\n")
+		"#!/bin/sh\necho \"gate: running\"\nif [ -f marker.txt ]; then echo \"boom detected\"; exit 1; else exit 0; fi\n")
 
 	var stdout, stderr bytes.Buffer
 	code := Run([]string{root}, &stdout, &stderr)
@@ -54,8 +59,8 @@ func TestSweepRejectsMissingAndEmptyHarness(t *testing.T) {
 
 func TestSweepRejectsMalformedFixtures(t *testing.T) {
 	root := t.TempDir()
-	missingExpect := canaryFixture(root, mappedFamily, "missing-expect")
-	missingFiles := canaryFixture(root, mappedFamily, "missing-files")
+	missingExpect := canaryFixture(root, mappedFamily(t), "missing-expect")
+	missingFiles := canaryFixture(root, mappedFamily(t), "missing-files")
 	mkdir(t, filepath.Join(missingExpect, "files"))
 	mkdir(t, missingFiles)
 	write(t, filepath.Join(missingFiles, "EXPECT"), "target\n")
@@ -75,7 +80,7 @@ func TestSweepRejectsMalformedFixtures(t *testing.T) {
 
 func TestSweepRejectsVacuousExpect(t *testing.T) {
 	root := t.TempDir()
-	fixture := canaryFixture(root, mappedFamily, "generic")
+	fixture := canaryFixture(root, mappedFamily(t), "generic")
 	mkdir(t, filepath.Join(fixture, "files"))
 	write(t, filepath.Join(fixture, "EXPECT"), "generic failure\n")
 
@@ -91,7 +96,7 @@ func TestSweepRejectsVacuousExpect(t *testing.T) {
 
 func TestSweepMaterializesFixtureAndRequiresTargetedBite(t *testing.T) {
 	root := t.TempDir()
-	fixture := canaryFixture(root, mappedFamily, "dot-restore")
+	fixture := canaryFixture(root, mappedFamily(t), "dot-restore")
 	mkdir(t, filepath.Join(fixture, "files", "dot-bench", "hooks"))
 	mkdir(t, filepath.Join(fixture, "files", "nested", "dot-codex"))
 	write(t, filepath.Join(fixture, "EXPECT"), "targeted regression\n")
@@ -130,7 +135,7 @@ func TestSweepMaterializesFixtureAndRequiresTargetedBite(t *testing.T) {
 
 func TestSweepReportsDidNotBite(t *testing.T) {
 	root := t.TempDir()
-	fixture := canaryFixture(root, mappedFamily, "weak")
+	fixture := canaryFixture(root, mappedFamily(t), "weak")
 	mkdir(t, filepath.Join(fixture, "files"))
 	write(t, filepath.Join(fixture, "EXPECT"), "target\n")
 
@@ -198,7 +203,7 @@ func TestSweepUsesLiteralFixturePathWithSpacesAndGlobCharacters(t *testing.T) {
 
 func TestSweepRejectsDuplicateFixtureBaseNames(t *testing.T) {
 	root := t.TempDir()
-	for _, family := range []string{mappedFamily, secondMappedFamily} {
+	for _, family := range []string{mappedFamily(t), secondMappedFamily(t)} {
 		fixture := canaryFixture(root, family, "duplicate")
 		mkdir(t, filepath.Join(fixture, "files"))
 		write(t, filepath.Join(fixture, "EXPECT"), "target\n")
@@ -240,15 +245,40 @@ func (r *recordingRunner) Run(call RunCall) RunResult {
 	return RunResult{ExitCode: 1, Output: "other failure\n"}
 }
 
-// mappedFamily and secondMappedFamily are conformance families the registry's
-// family table binds. Synthetic trees have to sit under real families: a
-// conformance family the table does not bind is a sweep error, so an invented
-// name reds every sweep these tests drive before it reaches the behavior under
-// test.
-const (
-	mappedFamily       = "package-core-guard"
-	secondMappedFamily = "line-routing"
-)
+// mappedFamily and secondMappedFamily are conformance families the registry's family
+// table binds, read rather than written down so the synthetic trees follow a rename or
+// a rebinding instead of pinning two names. Synthetic trees have to sit under real
+// families: a conformance family the table does not bind runs unscoped, so an invented
+// name silently drops the scoping these tests grade.
+func mappedFamily(t *testing.T) string {
+	t.Helper()
+	first, _ := mappedFamilies(t)
+	return first
+}
+
+func secondMappedFamily(t *testing.T) string {
+	t.Helper()
+	_, second := mappedFamilies(t)
+	return second
+}
+
+// mappedFamilies picks two bound families whose checks differ. The scope-group tests
+// need the pair to land in separate groups, and several families in the table share one
+// check, so the distinct-check condition is what the pair is selected on.
+func mappedFamilies(t *testing.T) (string, string) {
+	t.Helper()
+	families := registry.Families()
+	for _, first := range families {
+		firstCheck, _ := registry.FamilyCheck(first)
+		for _, second := range families {
+			if secondCheck, _ := registry.FamilyCheck(second); secondCheck != firstCheck {
+				return first, second
+			}
+		}
+	}
+	t.Fatal("registry family table binds no two families to different checks")
+	return "", ""
+}
 
 func canaryFixture(root, family, name string) string {
 	return filepath.Join(root, "tests", "canary", family, name)

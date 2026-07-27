@@ -88,7 +88,9 @@ var familyChecks = map[string]string{
 	"compliance-hardening":          "canary-inner-compliance",
 }
 
-// Families lists the canary conformance family directories in sorted order.
+// Families lists the family names this table binds, in sorted order. They are the
+// table's own keys, not a reading of tests/canary/, so a family directory the table
+// omits does not appear here; grading the tree against the table is a caller's job.
 func Families() []string {
 	names := make([]string, 0, len(familyChecks))
 	for family := range familyChecks {

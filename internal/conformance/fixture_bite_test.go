@@ -1,13 +1,17 @@
 package conformance
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/canary"
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
@@ -289,6 +293,112 @@ func TestRunConformanceReportsUnboundCanaryFamily(t *testing.T) {
 		if strings.Contains(joined, excluded) {
 			t.Errorf("%q is not a conformance family but was reported:\n%s", excluded, joined)
 		}
+	}
+}
+
+// TestSymlinkedCanaryFamilyIsInvisibleToTreeAndSweep pins the agreement that makes
+// skipping a symlinked family directory the right answer rather than a hole. os.ReadDir
+// reports a symlink by its own type, so neither the unbound-family read nor the canary
+// package's fixture walk descends into one — a symlinked family therefore contributes
+// no fixture to the sweep, has no inner run to scope, and cannot be unbound. Reporting
+// it would demand a table binding no fixture ever uses. The two sides share one reading
+// of the tree; changing either alone reds a family with no fixtures or leaves a real
+// family's fixtures silently unscoped.
+func TestSymlinkedCanaryFamilyIsInvisibleToTreeAndSweep(t *testing.T) {
+	root := t.TempDir()
+	runGit(t, root, "init")
+	kitRoot := t.TempDir()
+	canaryDir := filepath.Join(kitRoot, "tests", "canary")
+	for _, family := range registry.Families() {
+		writeCanaryFixture(t, filepath.Join(canaryDir, family, family+"-fx"))
+	}
+	// The target sits outside tests/canary, so only the link can make it read as a
+	// family — and it holds a real fixture, so a walk that followed the link would both
+	// report the family unbound and sweep the fixture under it.
+	target := filepath.Join(kitRoot, "outside", "linked-family")
+	writeCanaryFixture(t, filepath.Join(target, "linked-fixture"))
+	if err := os.Symlink(target, filepath.Join(canaryDir, "symlinked-family")); err != nil {
+		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable on this filesystem: %v", err))
+	}
+
+	diags := RunConformance(root, kitRoot, registry.Dev, "")
+	if joined := strings.Join(diags, "\n"); strings.Contains(joined, "symlinked-family") {
+		t.Errorf("a symlinked family contributes no fixtures but was reported:\n%s", joined)
+	}
+
+	var mu sync.Mutex
+	var swept []string
+	err := canary.Sweep(kitRoot, func(call canary.RunCall) canary.RunResult {
+		if call.FixtureDir == "" {
+			return canary.RunResult{ExitCode: 1, Output: "baseline noise\n"}
+		}
+		mu.Lock()
+		swept = append(swept, filepath.Base(call.FixtureDir))
+		mu.Unlock()
+		return canary.RunResult{ExitCode: 1, Output: "target-" + filepath.Base(call.FixtureDir) + "\n"}
+	})
+	if err != nil {
+		t.Fatalf("Sweep err = %v", err)
+	}
+	if slices.Contains(swept, "linked-fixture") {
+		t.Errorf("the sweep graded %v, which reaches through the symlinked family the tree check skips", swept)
+	}
+}
+
+// TestRunConformanceReportsEveryFamilyWhenCanaryTreeIsUnreadable pins the direction the
+// unbound-family read cannot cover. It returns nothing when tests/canary will not open,
+// which is safe only because the family-presence loop iterates the registry table and
+// reports every family it cannot find fixtures for — an absent or unreadable tree is
+// therefore the loudest red the check has, not a silent skip.
+func TestRunConformanceReportsEveryFamilyWhenCanaryTreeIsUnreadable(t *testing.T) {
+	tests := []struct {
+		name  string
+		setup func(t *testing.T, canaryDir string)
+	}{
+		{"absent", func(*testing.T, string) {}},
+		{"unreadable", func(t *testing.T, canaryDir string) {
+			for _, family := range registry.Families() {
+				writeCanaryFixture(t, filepath.Join(canaryDir, family, family+"-fx"))
+			}
+			// The restore is registered before the strip so it runs ahead of TempDir's
+			// own removal, which cannot descend into a directory it cannot enter.
+			t.Cleanup(func() { _ = os.Chmod(canaryDir, 0o700) })
+			if err := os.Chmod(canaryDir, 0o000); err != nil {
+				capability.Capability(t, capability.Privilege, fmt.Sprintf("cannot strip directory permissions: %v", err))
+			}
+			if _, err := os.ReadDir(canaryDir); err == nil {
+				capability.Capability(t, capability.Privilege, "mode 0o000 directory is still readable by this user")
+			}
+		}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root := t.TempDir()
+			runGit(t, root, "init")
+			kitRoot := t.TempDir()
+			tt.setup(t, filepath.Join(kitRoot, "tests", "canary"))
+
+			diags := RunConformance(root, kitRoot, registry.Dev, "")
+
+			for _, family := range registry.Families() {
+				want := fmt.Sprintf("canary conformance family %q has no fixture directories", family)
+				if !containsDiagnostic(diags, want) {
+					t.Errorf("no diagnostic %q:\n%s", want, strings.Join(diags, "\n"))
+				}
+			}
+		})
+	}
+}
+
+// writeCanaryFixture creates the minimum a canary fixture needs to be swept: a files/
+// tree and an EXPECT the sweep helpers echo back.
+func writeCanaryFixture(t *testing.T, dir string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Join(dir, "files"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "EXPECT"), []byte("target-"+filepath.Base(dir)+"\n"), 0o644); err != nil {
+		t.Fatal(err)
 	}
 }
 

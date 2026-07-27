@@ -183,21 +183,20 @@ func unboundCanaryFamilies(kitRoot string) []string {
 	var diags []string
 	for _, entry := range entries {
 		name := entry.Name()
-		if !entry.IsDir() || canary.FixturePhase(name) != "conformance" {
+		if !entry.IsDir() || !canary.IsConformanceFamily(filepath.Join(canaryDir, name)) {
 			continue
 		}
-		// A directory carrying its own EXPECT is a legacy flat fixture, not a family.
-		if _, err := os.Stat(filepath.Join(canaryDir, name, "EXPECT")); err == nil {
-			continue
-		}
-		if !isConformanceFamily(name) {
+		if !familyIsBound(name) {
 			diags = append(diags, fmt.Sprintf("canary conformance family %q is bound to no conformance check; add it to the registry family table so its fixtures run scoped", name))
 		}
 	}
 	return diags
 }
 
-func isConformanceFamily(family string) bool {
+// familyIsBound reports whether the registry's family table binds family to a check,
+// which is a separate question from whether the directory is a family at all — the
+// canary package answers that one.
+func familyIsBound(family string) bool {
 	_, bound := registry.FamilyCheck(family)
 	return bound
 }

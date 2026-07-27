@@ -17,8 +17,17 @@ func TestFamilyCheckTableBindsRegisteredChecks(t *testing.T) {
 		t.Fatal("the family→check table is empty, so no conformance fixture resolves a scope")
 	}
 	for family, name := range familyChecks {
-		if _, found := Find(name); !found {
+		check, found := Find(name)
+		if !found {
 			t.Errorf("family %q binds check %q, which no registry row carries", family, name)
+			continue
+		}
+		// A fixture with no CHECK file of its own is swept at the dev tier and takes its
+		// scope from this table. Bind a family to a ship-tier check and every such
+		// fixture in it is scoped to a check the dev sweep never executes, which the
+		// conformance driver reds outright as a scope the tier does not run.
+		if check.Tier != Dev {
+			t.Errorf("family %q binds check %q, which runs at the %s tier; its CHECK-less fixtures are swept at dev and would red for naming a check that tier does not run", family, name, check.Tier)
 		}
 	}
 }

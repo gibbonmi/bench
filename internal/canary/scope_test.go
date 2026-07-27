@@ -1,6 +1,7 @@
 package canary
 
 import (
+	"fmt"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -17,19 +18,22 @@ import (
 // enumerated so that an implementation merging same-check fixtures into one inner
 // run grades fewer mutated trees than were selected.
 func TestSweepScopesFixtureRunsToTheirCheck(t *testing.T) {
-	t.Setenv(registry.ConformanceCheckEnv, "ambient-scope")
-	override := devCheckNameOtherThan(t, mappedFamily)
+	const ambient = "ambient-scope"
+	t.Setenv(registry.ConformanceCheckEnv, ambient)
+	family := mappedFamily(t)
+	bound := boundCheck(t, family)
+	override := devCheckNameOtherThan(t, bound)
 
 	root := t.TempDir()
-	fixture(t, canaryFixture(root, mappedFamily, "family-bound"), "")
-	fixture(t, canaryFixture(root, mappedFamily, "check-bound"), override)
+	fixture(t, canaryFixture(root, family, "family-bound"), "")
+	fixture(t, canaryFixture(root, family, "check-bound"), override)
 	fixture(t, canaryFixture(root, "behavior-owned", "contract-fx"), "")
 	fixture(t, filepath.Join(root, "tests", "canary", "flat-fx"), "")
 
 	calls := sweepCalls(t, root, registry.Dev)
 
 	want := map[string]string{
-		"family-bound": mappedFamily,
+		"family-bound": bound,
 		"check-bound":  override,
 		"contract-fx":  "",
 		"flat-fx":      "",
@@ -56,6 +60,29 @@ func TestSweepScopesFixtureRunsToTheirCheck(t *testing.T) {
 			t.Errorf("fixture %s carried scopes %v, want exactly [%s]", name, scopes, wantScope)
 		}
 	}
+
+	// Baselines are the half the loop above skips, having no FixtureDir to key on, and
+	// they are where an inherited scope does the most damage: an empty tree graded under
+	// the operator's check produces output belonging to no group, and every fixture in
+	// the group is then graded vacuous or not against the wrong run. The unscoped group
+	// carries no scope variable at all, so an ambient value surviving the strip shows up
+	// here as a scope where none belongs.
+	if got := baselineScopes(t, calls); !slices.Equal(got, sortedScopes("", bound, override)) {
+		t.Errorf("baseline scopes = %v, want the three groups' own scopes and no ambient value", got)
+	}
+	for _, call := range calls {
+		if slices.Contains(scopeValues(call.Env), ambient) {
+			t.Errorf("call %q carried the ambient scope %s, want it stripped", call.FixtureDir, ambient)
+		}
+	}
+}
+
+// sortedScopes is the sorted form baselineScopes returns, so a wanted set is written in
+// the order it reads best and compared in the order the helper produces.
+func sortedScopes(scopes ...string) []string {
+	out := append([]string(nil), scopes...)
+	slices.Sort(out)
+	return out
 }
 
 // TestSweepRunsUnmappedConformanceFamilyUnscoped pins the fallback every adopting
@@ -84,18 +111,19 @@ func TestSweepRunsUnmappedConformanceFamilyUnscoped(t *testing.T) {
 // baseline per distinct scope, whatever the fixture count, and one full baseline
 // shared by every unscoped fixture.
 func TestSweepRunsOneBaselinePerScopeGroup(t *testing.T) {
-	override := devCheckNameOtherThan(t, mappedFamily)
+	family := mappedFamily(t)
+	bound := boundCheck(t, family)
+	override := devCheckNameOtherThan(t, bound)
 
 	root := t.TempDir()
-	fixture(t, canaryFixture(root, mappedFamily, "family-a"), "")
-	fixture(t, canaryFixture(root, mappedFamily, "family-b"), "")
-	fixture(t, canaryFixture(root, mappedFamily, "check-bound"), override)
+	fixture(t, canaryFixture(root, family, "family-a"), "")
+	fixture(t, canaryFixture(root, family, "family-b"), "")
+	fixture(t, canaryFixture(root, family, "check-bound"), override)
 	fixture(t, canaryFixture(root, "behavior-owned", "contract-fx"), "")
 	fixture(t, filepath.Join(root, "tests", "canary", "flat-fx"), "")
 
 	got := baselineScopes(t, sweepCalls(t, root, registry.Dev))
-	want := []string{"", mappedFamily, override}
-	slices.Sort(want)
+	want := sortedScopes("", bound, override)
 	if !slices.Equal(got, want) {
 		t.Fatalf("baseline scopes = %v, want %v", got, want)
 	}
@@ -120,16 +148,17 @@ func TestAllUnscopedSweepRunsOneBaseline(t *testing.T) {
 // vacuous, and the same text emitted only by another group's baseline is not.
 func TestSweepGradesVacuityAgainstItsOwnGroupBaseline(t *testing.T) {
 	root := t.TempDir()
-	own := canaryFixture(root, mappedFamily, "own-group")
+	ownScope := boundCheck(t, mappedFamily(t))
+	own := canaryFixture(root, mappedFamily(t), "own-group")
 	fixture(t, own, "")
 	write(t, filepath.Join(own, "EXPECT"), "shared noise\n")
-	other := canaryFixture(root, secondMappedFamily, "other-group")
+	other := canaryFixture(root, secondMappedFamily(t), "other-group")
 	fixture(t, other, "")
 	write(t, filepath.Join(other, "EXPECT"), "shared noise\n")
 
 	err := Sweep(root, func(call RunCall) RunResult {
 		if call.FixtureDir == "" {
-			if slices.Equal(scopeValues(call.Env), []string{mappedFamily}) {
+			if slices.Equal(scopeValues(call.Env), []string{ownScope}) {
 				return RunResult{ExitCode: 1, Output: "shared noise\n"}
 			}
 			return RunResult{ExitCode: 1, Output: "unrelated noise\n"}
@@ -147,14 +176,51 @@ func TestSweepGradesVacuityAgainstItsOwnGroupBaseline(t *testing.T) {
 	}
 }
 
+// TestSweepRejectsGroupBaselineThatPrintedNothing grades the group the vacuity check
+// cannot defend on its own: a baseline that dies before printing contains no EXPECT,
+// so every fixture in its group would clear the vacuity test unguarded while the other
+// groups stayed graded. The sweep stops instead, and names the group so the failure is
+// attributable.
+func TestSweepRejectsGroupBaselineThatPrintedNothing(t *testing.T) {
+	root := t.TempDir()
+	starved := boundCheck(t, secondMappedFamily(t))
+	fixture(t, canaryFixture(root, mappedFamily(t), "graded"), "")
+	fixture(t, canaryFixture(root, secondMappedFamily(t), "starved"), "")
+
+	var mu sync.Mutex
+	var ran []string
+	err := Sweep(root, func(call RunCall) RunResult {
+		if call.FixtureDir != "" {
+			mu.Lock()
+			ran = append(ran, filepath.Base(call.FixtureDir))
+			mu.Unlock()
+			return RunResult{ExitCode: 1, Output: "target-" + filepath.Base(call.FixtureDir) + "\n"}
+		}
+		if slices.Equal(scopeValues(call.Env), []string{starved}) {
+			return RunResult{ExitCode: 1, Output: ""}
+		}
+		return RunResult{ExitCode: 1, Output: "baseline noise\n"}
+	})
+
+	if err == nil {
+		t.Fatal("Sweep err = nil, want the empty baseline reported")
+	}
+	if want := fmt.Sprintf("scope group %q", starved); !strings.Contains(err.Error(), want) {
+		t.Fatalf("Sweep err = %v, want a diagnostic naming %s", err, want)
+	}
+	if len(ran) != 0 {
+		t.Fatalf("fixtures %v ran against an ungradeable baseline, want none", ran)
+	}
+}
+
 // TestShipSweepScopesItsFixtures covers the release path: ship's fixtures all name
 // the one ship-tier check, so the sweep is their scoped runs plus a single shared
 // scoped baseline rather than a full inner gate apiece.
 func TestShipSweepScopesItsFixtures(t *testing.T) {
 	ship := shipCheckName(t)
 	root := t.TempDir()
-	fixture(t, canaryFixture(root, mappedFamily, "ship-a"), ship)
-	fixture(t, canaryFixture(root, mappedFamily, "ship-b"), ship)
+	fixture(t, canaryFixture(root, mappedFamily(t), "ship-a"), ship)
+	fixture(t, canaryFixture(root, mappedFamily(t), "ship-b"), ship)
 
 	calls := sweepCalls(t, root, registry.Ship)
 	if len(calls) != 3 {
@@ -210,15 +276,7 @@ func baselineScopes(t *testing.T, calls []RunCall) []string {
 		if call.FixtureDir != "" {
 			continue
 		}
-		scopes := scopeValues(call.Env)
-		switch len(scopes) {
-		case 0:
-			out = append(out, "")
-		case 1:
-			out = append(out, scopes[0])
-		default:
-			t.Fatalf("baseline call carried scopes %v, want at most one", scopes)
-		}
+		out = append(out, callGroup(t, call))
 	}
 	slices.Sort(out)
 	return out
@@ -232,6 +290,18 @@ func scopeValues(env []string) []string {
 		}
 	}
 	return out
+}
+
+// boundCheck is the check the registry binds family to, which is what the sweep resolves
+// a family's fixtures to. A family name reads as its own scope only for the families
+// named after the check they grade, so the two are never used interchangeably here.
+func boundCheck(t *testing.T, family string) string {
+	t.Helper()
+	check, bound := registry.FamilyCheck(family)
+	if !bound {
+		t.Fatalf("registry binds no check to family %s", family)
+	}
+	return check
 }
 
 // devCheckNameOtherThan is a registered dev-tier check that is not exclude, read

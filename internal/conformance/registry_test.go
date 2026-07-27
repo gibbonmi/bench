@@ -204,7 +204,7 @@ func TestCanaryFixtureRegistryClassifiesEveryFixture(t *testing.T) {
 		case "contract":
 			wantOwner = ownerBehavior
 		case "conformance":
-			if !isConformanceFamily(family) {
+			if !familyIsBound(family) {
 				t.Errorf("canary fixture %q has unknown conformance family %q", name, family)
 				continue
 			}
@@ -285,7 +285,7 @@ func canaryFixturePaths(t *testing.T, fixturesDir string) map[string]string {
 		if !family.IsDir() {
 			continue
 		}
-		if family.Name() != "behavior-owned" && !isConformanceFamily(family.Name()) {
+		if family.Name() != "behavior-owned" && !familyIsBound(family.Name()) {
 			t.Errorf("canary family %q is not canonical", family.Name())
 		}
 		familyDir := filepath.Join(fixturesDir, family.Name())

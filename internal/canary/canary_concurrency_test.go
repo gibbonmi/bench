@@ -21,7 +21,7 @@ func TestSweepRunsFixturesConcurrently(t *testing.T) {
 	}
 	root := t.TempDir()
 	for _, name := range []string{"a", "b"} {
-		fixture := canaryFixture(root, mappedFamily, name)
+		fixture := canaryFixture(root, mappedFamily(t), name)
 		mkdir(t, filepath.Join(fixture, "files"))
 		write(t, filepath.Join(fixture, "EXPECT"), "target-"+name+"\n")
 	}
@@ -66,7 +66,7 @@ func TestSweepBoundsFixtureConcurrencyAtDerivedWorkerBound(t *testing.T) {
 	fixtureCount := budget + 3
 	for i := 0; i < fixtureCount; i++ {
 		name := fmt.Sprintf("fx-%02d", i)
-		fixture := canaryFixture(root, mappedFamily, name)
+		fixture := canaryFixture(root, mappedFamily(t), name)
 		mkdir(t, filepath.Join(fixture, "files"))
 		write(t, filepath.Join(fixture, "EXPECT"), "target-"+name+"\n")
 	}
@@ -121,31 +121,62 @@ func TestSweepBoundsFixtureConcurrencyAtDerivedWorkerBound(t *testing.T) {
 	}
 }
 
-func TestSweepCompletesBaselineBeforeStartingFixtures(t *testing.T) {
+// TestSweepCompletesEachGroupsBaselineBeforeItsFixtures grades the barrier per scope
+// group, which is the only form of it that holds: a fixture is graded vacuous against
+// its own group's baseline alone, so a run that starts before that baseline finishes
+// compares against an absent output and clears the vacuity check unguarded. A single
+// tracked flag would pass on any baseline finishing before any fixture, which a sweep
+// that raced a later group's baseline against that group's fixtures still satisfies —
+// hence the three groups and the per-group flags.
+func TestSweepCompletesEachGroupsBaselineBeforeItsFixtures(t *testing.T) {
 	root := t.TempDir()
-	for _, name := range []string{"a", "b"} {
-		fixture := canaryFixture(root, mappedFamily, name)
-		mkdir(t, filepath.Join(fixture, "files"))
-		write(t, filepath.Join(fixture, "EXPECT"), "target-"+name+"\n")
+	first, second := mappedFamilies(t)
+	for _, family := range []string{first, second, "behavior-owned"} {
+		for _, name := range []string{"a", "b"} {
+			fixture := canaryFixture(root, family, family+"-"+name)
+			mkdir(t, filepath.Join(fixture, "files"))
+			write(t, filepath.Join(fixture, "EXPECT"), "target-"+family+"-"+name+"\n")
+		}
 	}
 
-	baselineDone := false
 	var mu sync.Mutex
+	baselineDone := map[string]bool{}
 	runner := func(call RunCall) RunResult {
+		group := callGroup(t, call)
 		mu.Lock()
 		defer mu.Unlock()
 		if call.FixtureDir == "" {
-			baselineDone = true
+			baselineDone[group] = true
 			return RunResult{ExitCode: 1, Output: "baseline\n"}
 		}
-		if !baselineDone {
-			t.Errorf("fixture %s started before baseline completed", filepath.Base(call.FixtureDir))
+		if !baselineDone[group] {
+			t.Errorf("fixture %s started before the baseline of its own group %q completed", filepath.Base(call.FixtureDir), group)
 		}
 		return RunResult{ExitCode: 1, Output: "target-" + filepath.Base(call.FixtureDir) + "\n"}
 	}
 
 	if err := Sweep(root, runner); err != nil {
 		t.Fatalf("Sweep err = %v", err)
+	}
+	if len(baselineDone) != 3 {
+		t.Fatalf("sweep ran baselines for %d groups, want 3 distinct groups", len(baselineDone))
+	}
+}
+
+// callGroup names the scope group a call belongs to, which is the key the sweep pairs a
+// fixture with its baseline under. More than one scope on a call means the pairing is
+// ambiguous, so it fails rather than picking one.
+func callGroup(t *testing.T, call RunCall) string {
+	t.Helper()
+	scopes := scopeValues(call.Env)
+	switch len(scopes) {
+	case 0:
+		return ""
+	case 1:
+		return scopes[0]
+	default:
+		t.Fatalf("call %q carried scopes %v, want at most one", call.FixtureDir, scopes)
+		return ""
 	}
 }
 
@@ -155,7 +186,7 @@ func TestSweepReportsErrorsInSortedFixtureOrder(t *testing.T) {
 	}
 	root := t.TempDir()
 	for _, name := range []string{"alpha", "bravo"} {
-		fixture := canaryFixture(root, mappedFamily, name)
+		fixture := canaryFixture(root, mappedFamily(t), name)
 		mkdir(t, filepath.Join(fixture, "files"))
 		write(t, filepath.Join(fixture, "EXPECT"), "target-"+name+"\n")
 	}
@@ -199,7 +230,7 @@ func TestSweepRemovesTempWorkDirsOnGreenPath(t *testing.T) {
 	tmpRoot := t.TempDir()
 	t.Setenv("TMPDIR", tmpRoot)
 	root := t.TempDir()
-	fixture := canaryFixture(root, mappedFamily, "valid")
+	fixture := canaryFixture(root, mappedFamily(t), "valid")
 	mkdir(t, filepath.Join(fixture, "files"))
 	write(t, filepath.Join(fixture, "EXPECT"), "target-valid\n")
 
@@ -219,13 +250,13 @@ func TestSweepRemovesTempWorkDirsOnRedPaths(t *testing.T) {
 	tmpRoot := t.TempDir()
 	t.Setenv("TMPDIR", tmpRoot)
 	root := t.TempDir()
-	valid := canaryFixture(root, mappedFamily, "valid")
+	valid := canaryFixture(root, mappedFamily(t), "valid")
 	mkdir(t, filepath.Join(valid, "files"))
 	write(t, filepath.Join(valid, "EXPECT"), "target-valid\n")
-	vacuous := canaryFixture(root, mappedFamily, "vacuous")
+	vacuous := canaryFixture(root, mappedFamily(t), "vacuous")
 	mkdir(t, filepath.Join(vacuous, "files"))
 	write(t, filepath.Join(vacuous, "EXPECT"), "vacuous\n")
-	brokenLink := canaryFixture(root, mappedFamily, "broken-link")
+	brokenLink := canaryFixture(root, mappedFamily(t), "broken-link")
 	mkdir(t, filepath.Join(brokenLink, "files"))
 	write(t, filepath.Join(brokenLink, "EXPECT"), "target-broken-link\n")
 	if err := os.Symlink("missing-target", filepath.Join(brokenLink, "files", "broken")); err != nil {
@@ -322,7 +353,7 @@ func assertSweepPinsGOMAXPROCS(t *testing.T) {
 	outerRuntime := runtime.GOMAXPROCS(0)
 
 	root := t.TempDir()
-	fixture := canaryFixture(root, mappedFamily, "only")
+	fixture := canaryFixture(root, mappedFamily(t), "only")
 	mkdir(t, filepath.Join(fixture, "files"))
 	write(t, filepath.Join(fixture, "EXPECT"), "target-only\n")
 

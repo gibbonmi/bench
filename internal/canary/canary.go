@@ -40,6 +40,28 @@ func FixturePhase(family string) string {
 	}
 }
 
+// expectFileName holds the diagnostic a fixture's inner gate must emit. Its presence
+// directly under tests/canary/ doubles as the marker of a legacy flat fixture, since a
+// family directory holds fixture directories and never an expectation of its own.
+const expectFileName = "EXPECT"
+
+// IsConformanceFamily reports whether dir, a directory directly under tests/canary/, is
+// a conformance family holding fixtures rather than a fixture in its own right. This
+// package owns the fixture-tree layout, so a caller grading the tree against the
+// registry's family table asks here instead of rederiving either half: a second reading
+// of the flat-fixture marker fails open, reporting every flat fixture as an unbound
+// family the day the marker moves.
+func IsConformanceFamily(dir string) bool {
+	return FixturePhase(filepath.Base(dir)) == "conformance" && !isFlatFixture(dir)
+}
+
+// isFlatFixture reports whether dir is a legacy flat fixture — one living directly under
+// tests/canary/ instead of inside a family.
+func isFlatFixture(dir string) bool {
+	_, err := os.Stat(filepath.Join(dir, expectFileName))
+	return err == nil
+}
+
 // RunCall is one inner gate invocation: Cwd is the materialized repo under grade,
 // Gate is the real gate script from the root being checked, and FixtureDir names
 // the source fixture or is empty for the vacuity baseline.
@@ -221,6 +243,12 @@ func selectTier(fixtures []string, tier registry.Tier) ([]selected, error) {
 // checks, so it would both miss a genuinely vacuous EXPECT and flag a sound one. The
 // key is the resolved check alone, which keeps every unscoped fixture on the single
 // full baseline they share today.
+//
+// A group whose baseline prints nothing is an error rather than a group that runs on:
+// the vacuity test asks whether the baseline output already contains the EXPECT, and
+// an empty output contains none of them, so every fixture in that group would clear
+// the check unguarded while the other groups stayed graded. Errors for all such groups
+// are reported together, matching how the sweep reports its fixture failures.
 func scopeBaselines(fixtures []selected, gate string, env []string, runner Runner) (map[string]string, error) {
 	var scopes []string
 	seen := map[string]bool{}
@@ -254,10 +282,28 @@ func scopeBaselines(fixtures []selected, gate string, env []string, runner Runne
 	})
 
 	baselines := make(map[string]string, len(scopes))
+	var empty []string
 	for idx, scope := range scopes {
+		if outputs[idx] == "" {
+			empty = append(empty, fmt.Sprintf("canary baseline for %s produced no output, so it can grade no EXPECT as vacuous", groupLabel(scope)))
+			continue
+		}
 		baselines[scope] = outputs[idx]
 	}
+	if len(empty) > 0 {
+		return nil, errors.New(strings.Join(empty, "\n"))
+	}
 	return baselines, nil
+}
+
+// groupLabel names a scope group in a diagnostic. The unscoped group's key is the
+// empty string, which reads as a missing name rather than as the group every fixture
+// needing the full inner gate shares, so it is named by what it runs.
+func groupLabel(scope string) string {
+	if scope == "" {
+		return "the unscoped group"
+	}
+	return fmt.Sprintf("scope group %q", scope)
 }
 
 func runFixtures(root string, fixtures []selected, baselines map[string]string, gate string, env []string, runner Runner) []string {
@@ -315,7 +361,7 @@ func fixtureWorkers(budget, fixtureCount int) int {
 func runFixture(root string, fixture selected, baselineOutput, gate string, env []string, runner Runner) string {
 	fx := fixture.dir
 	name := filepath.Base(fx)
-	expectPath := filepath.Join(fx, "EXPECT")
+	expectPath := filepath.Join(fx, expectFileName)
 	filesDir := filepath.Join(fx, "files")
 
 	expBytes, err := os.ReadFile(expectPath)
@@ -371,7 +417,7 @@ func fixtures(dir string) ([]string, error) {
 			continue
 		}
 		familyDir := filepath.Join(dir, family.Name())
-		if _, err := os.Stat(filepath.Join(familyDir, "EXPECT")); err == nil {
+		if isFlatFixture(familyDir) {
 			if err := addFixture(family.Name(), familyDir); err != nil {
 				return nil, err
 			}
