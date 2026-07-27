@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -216,6 +218,103 @@ func TestCleanupReceiptWindowKeepsExactlyLast256Completions(t *testing.T) {
 	after, err := LifecycleEvidence(root)
 	if err != nil || !bytes.Equal(before, after) {
 		t.Fatalf("receipts changed assignment evidence: %q -> %q, %v", before, after, err)
+	}
+}
+
+func TestUnstampedAssignmentRoundTripsThroughLedger(t *testing.T) {
+	root := newRepo(t)
+	want := activeAssignment()
+	if err := PutAssignment(root, want); err != nil {
+		t.Fatal(err)
+	}
+	got, err := Assignments(root)
+	if err != nil || len(got) != 1 {
+		t.Fatalf("Assignments = %#v, %v", got, err)
+	}
+	if !reflect.DeepEqual(got[0], want) {
+		t.Fatalf("round-tripped assignment = %#v, want %#v", got[0], want)
+	}
+	path, err := Address(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(body, []byte("created_at")) {
+		t.Fatalf("unstamped assignment serialized a created_at key: %s", body)
+	}
+}
+
+// An identical re-write must preserve the ledger bytes, which PutAssignment
+// decides with reflect.DeepEqual — so a stamp held behind a pointer has to
+// compare by its value, not by its address.
+func TestIdenticalStampedAssignmentWritePreservesBytes(t *testing.T) {
+	root := newRepo(t)
+	first, second := "2026-07-27T00:00:00Z", "2026-07-27T00:00:00Z"
+	assignment := activeAssignment()
+	assignment.CreatedAt = &first
+	if err := PutAssignment(root, assignment); err != nil {
+		t.Fatal(err)
+	}
+	path, err := Address(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	before, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assignment.CreatedAt = &second
+	if err := PutAssignment(root, assignment); err != nil {
+		t.Fatal(err)
+	}
+	after, _ := os.ReadFile(path)
+	if !bytes.Equal(before, after) {
+		t.Fatalf("identical stamped upsert changed bytes\nbefore=%s\nafter=%s", before, after)
+	}
+}
+
+func TestAssignmentCreatedAtRejectsMalformed(t *testing.T) {
+	cases := []struct{ name, value string }{
+		{"empty string", ""},
+		{"non-timestamp text", "yesterday"},
+		{"date without time", "2026-07-27"},
+		{"control byte", "2026-07-27T00:00:00Z\x1b"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			assignment := activeAssignment()
+			assignment.CreatedAt = &tc.value
+			if err := ValidateAssignment(assignment); err == nil {
+				t.Fatalf("ValidateAssignment accepted created_at %q", tc.value)
+			}
+		})
+	}
+}
+
+func TestAssignmentCreatedAtAcceptsFuture(t *testing.T) {
+	future := "2126-07-27T00:00:00Z"
+	assignment := activeAssignment()
+	assignment.CreatedAt = &future
+	if err := ValidateAssignment(assignment); err != nil {
+		t.Fatalf("ValidateAssignment rejected a future created_at: %v", err)
+	}
+}
+
+func activeAssignment() Assignment {
+	owner, id := strings.Repeat("a", 32), strings.Repeat("b", 32)
+	return Assignment{
+		Schema:   AssignmentRecordSchema,
+		ID:       id,
+		OwnerID:  owner,
+		Request:  strings.Repeat("c", 64),
+		Label:    "delegate",
+		Start:    strings.Repeat("d", 40),
+		Branch:   AssignmentBranchRef(owner, id),
+		Worktree: "/pool/delegate",
+		State:    StateActive,
 	}
 }
 

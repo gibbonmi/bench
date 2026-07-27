@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 )
 
 const AssignmentRecordSchema = "bench-assignment/v1"
@@ -59,6 +60,11 @@ type Assignment struct {
 	Worktree string          `json:"worktree"`
 	State    AssignmentState `json:"state"`
 	Recovery []Recovery      `json:"recovery"`
+	// CreatedAt is an RFC3339 creation time. A nil stamp is absence, which stays
+	// valid because records written before the field existed carry none and
+	// serialize without the key. A present stamp must parse, so the pointer is
+	// what keeps a hand-written empty string distinguishable from absence.
+	CreatedAt *string `json:"created_at,omitempty"`
 }
 
 const (
@@ -276,6 +282,14 @@ func ValidateAssignment(a Assignment) error {
 	}
 	if !filepath.IsAbs(a.Worktree) || filepath.Clean(a.Worktree) != a.Worktree {
 		return fmt.Errorf("assignment %q has non-canonical worktree", a.ID)
+	}
+	// A stamp ahead of the reading host's clock stays valid here: skew is the age
+	// predicate's to interpret, and rejecting it would make one skewed write
+	// unreadable to every command, since this runs on every ledger read.
+	if a.CreatedAt != nil {
+		if _, err := time.Parse(time.RFC3339, *a.CreatedAt); err != nil {
+			return fmt.Errorf("assignment %q has unparseable created_at", a.ID)
+		}
 	}
 	switch a.State {
 	case StateActive, StateCleanupPending, StateComplete:

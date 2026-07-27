@@ -106,6 +106,12 @@ defined route — never a silent grind, never an abandoned worktree:
      with the finding quoted;
    - wrong scope (the spec is bigger than one build) → propose the split; the
      reviewer decides.
+4. **Leave the worktree owned:** the coordinator that cut it owns its retirement.
+   A route that drops the work releases the worktree now (`bench worktree
+   release`, the creating request's id); a route that carries uncommitted work
+   forward names the worktree path in the report, and the session resuming that
+   route retires it with path-addressed `bench worktree clean` once the work
+   lands.
 
 ## Close on green
 

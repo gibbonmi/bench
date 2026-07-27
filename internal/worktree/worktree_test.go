@@ -322,6 +322,12 @@ func TestReleaseNamesRecoveryForPreservedOrphan(t *testing.T) {
 // tree-gone, unregistered residue records (compacts, counts them), reports preserved-
 // work records with their recovery command without deleting them, and never touches an
 // active record or one whose tree still exists.
+//
+// What holds the active, tree-gone record here is its age, not its state: the sweep
+// compacts an orphaned active record, and this one survives only because it was stamped
+// moments ago and so is not aged. That is the race this fixture guards — a sweep that
+// compacted on tree-absence alone would catch a session between `worktree add` and its
+// first write.
 func TestResumeSweepsResidueAndReportsPreserved(t *testing.T) {
 	root := newWorktreeRepo(t)
 	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))

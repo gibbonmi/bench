@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 	refreshop "github.com/gibbonmi/bench/internal/worktree/refresh"
@@ -17,6 +18,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 func textDigest(value string) string { return fmt.Sprintf("%x", sha256.Sum256([]byte(value))) }
@@ -322,18 +324,60 @@ func renderResumeSummary(result ResumeResult) string {
 	}
 	if retained > 0 {
 		summary.WriteString("; retained")
-		for _, reason := range []CleanupReason{ReasonForeign, ReasonActive, ReasonLiveLease, ReasonUnmerged, ReasonIgnored, ReasonMalformed, ReasonUncertain, ReasonUnexpectedLock} {
+		for _, reason := range []CleanupReason{ReasonForeign, ReasonActive, ReasonOrphaned, ReasonLiveLease, ReasonUnmerged, ReasonIgnored, ReasonMalformed, ReasonUncertain, ReasonUnexpectedLock} {
 			if count := result.Retained[reason]; count > 0 {
 				fmt.Fprintf(&summary, " %s=%d", reason, count)
 			}
 		}
 	}
 	fmt.Fprintf(&summary, "; pruned branches %d; reconciled %d; failed %d; open assignments %d\n", result.PrunedBranches, result.Reconciled, result.Failed, result.Open)
-	for _, orphan := range result.Preserved {
-		fmt.Fprintf(&summary, "preserved %s: bench worktree recovery %s\n", orphan.ID, orphan.Ref)
-	}
+	listCapped(&summary, len(result.Orphans), func(i int) string { return orphanLine(result.Orphans[i]) })
+	listCapped(&summary, len(result.Preserved), func(i int) string {
+		return fmt.Sprintf("preserved %s: bench worktree recovery %s\n", result.Preserved[i].ID, result.Preserved[i].Ref)
+	})
 	return summary.String()
 }
+
+// resumeListingCap bounds each listing in the resume summary. This prints at every
+// session start, so an unbounded backlog would bury the counted line above it and be
+// scrolled past rather than read.
+const resumeListingCap = 3
+
+// listCapped writes at most resumeListingCap lines and, when the cap bites, one line
+// naming both how many it withheld and the true total. Stating the total is what keeps a
+// bounded listing from reading as the whole set; every record stays listable through
+// `bench worktree list`.
+func listCapped(summary *strings.Builder, count int, line func(int) string) {
+	for i := 0; i < count && i < resumeListingCap; i++ {
+		summary.WriteString(line(i))
+	}
+	if count > resumeListingCap {
+		fmt.Fprintf(summary, "and %d more (%d total)\n", count-resumeListingCap, count)
+	}
+}
+
+// orphanLine renders one abandoned assignment's retirement command. The bare
+// `bench worktree clean` prints a plan and a fingerprint and removes nothing, so the line
+// names the apply half rather than reading as one destructive step. It never suggests
+// `--discard-ignored`, whose request-less form orphans the assignment (FT93b) — the
+// remedy would manufacture the next generation of the residue reported here.
+//
+// A path this sink cannot carry verbatim is replaced by a pointer rather than escaped or
+// digested. Quoting alone is not enough — single quotes make a newline literal but still
+// emit the byte, which forges an extra line — and an escaped path would name a tree that
+// does not exist, so the reader would paste a command that cannot work.
+func orphanLine(orphan OrphanCandidate) string {
+	if !lineSafe(orphan.Path) {
+		return fmt.Sprintf("orphan %s: worktree path holds control bytes; address it by path from bench worktree list\n", orphan.ID)
+	}
+	return fmt.Sprintf("orphan %s: bench worktree clean %s (plans only; re-run with --apply <fingerprint> to remove)\n", orphan.ID, sanitize.ShellQuote(orphan.Path))
+}
+
+// lineSafe reports whether a value can enter a line-structured sink verbatim. It is
+// deliberately stricter than cleanupOutputSafe: toon.Representable permits tab, newline,
+// and return because the TOON encoder escapes them, while the resume summary writes raw
+// lines and escapes nothing, so exactly those bytes are the ones that break it.
+func lineSafe(value string) bool { return !strings.ContainsFunc(value, unicode.IsControl) }
 func CreateCommand(root string, args []string, stdout, stderr io.Writer) int {
 	var request, label string
 	args, startRef := refreshop.Consume(root, args, stdout)

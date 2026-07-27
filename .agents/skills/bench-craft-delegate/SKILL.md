@@ -218,3 +218,10 @@ is what carries the conventions. When the authoring delegate is gone, re-charge
 a fresh write-delegate in an isolated worktree with the finding and sentinel.
 Recurring misses across delegates are a charge defect, not a
 delegate defect — tighten the rows in the charge before re-sending it.
+
+Acceptance closes the worktree too: once the slice's `bench commit` lands, the
+coordinator releases the worktree it cut — `bench worktree release --request
+<opaque-id> <path>`, the same request id create used — one release per create,
+before this session ends. Release matches only the creating request, so a
+worktree that outlives its coordinator is unreleasable and falls to the slower
+path-addressed `bench worktree clean`.

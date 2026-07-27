@@ -25,11 +25,18 @@ type ResumeResult struct {
 	Reconciled         int
 	PrunedBranches     int
 	Preserved          []PreservedOrphan
+	Orphans            []OrphanCandidate
 }
 
 // PreservedOrphan names a tree-gone assignment record the sweep left intact because it
 // still holds preserved work; Ref is the recovery pointer to recover or retire.
 type PreservedOrphan struct{ ID, Ref string }
+
+// OrphanCandidate names an assignment the sweep judged abandoned while its worktree is
+// still on disk; Path is the argument `bench worktree clean` needs to start retiring it.
+// The sweep only reports these — removal stays behind that explicit path-addressed
+// command, which recovers dirty work into a recovery ref before it removes anything.
+type OrphanCandidate struct{ ID, Path string }
 
 var ErrCleanupInterrupted = errors.New("cleanup interrupted")
 

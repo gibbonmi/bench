@@ -3,6 +3,7 @@ package worktree
 import (
 	"errors"
 	"fmt"
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 type CleanupAction string
@@ -70,6 +72,7 @@ const (
 	ReasonMalformed      CleanupReason = "malformed"
 	ReasonUncertain      CleanupReason = "uncertain"
 	ReasonUnexpectedLock CleanupReason = "unexpected-lock"
+	ReasonOrphaned       CleanupReason = "orphaned"
 )
 
 var ignoredLstat = os.Lstat
@@ -127,6 +130,31 @@ func (inventory IgnoredInventory) Summary() string {
 	}
 	return fmt.Sprintf("count=%s bytes=%d shown=%d truncated=%t", count, inventory.Bytes, inventory.Shown, inventory.Truncated)
 }
+
+// orphaned reports whether an assignment has been abandoned by the session that cut it.
+// Age is the whole test: nothing records liveness for a request-created worktree, so
+// bounds.AssignmentStale is the only thing separating a long-running one from residue,
+// and every consumer must ask this one question so the window has a single meaning.
+//
+// An absent stamp is aged, because a record written before the field existed carries
+// none and would otherwise be immortal. A stamp the reading host's clock has not
+// reached yet is not aged, so skew cannot manufacture an orphan. An unparseable stamp
+// is unknown age rather than infinite age; ValidateAssignment rejects one on every
+// ledger read, so a record reaching here with one never came from the ledger.
+func orphaned(a intent.Assignment, now time.Time) bool {
+	if a.State != intent.StateActive {
+		return false
+	}
+	if a.CreatedAt == nil {
+		return true
+	}
+	created, err := time.Parse(time.RFC3339, *a.CreatedAt)
+	if err != nil {
+		return false
+	}
+	return now.Sub(created) > bounds.AssignmentStale
+}
+
 func PlanAutomatic(root, path string) (CleanupPlan, error) {
 	plan, err := PlanExplicit(root, path)
 	if err != nil {
@@ -147,6 +175,9 @@ func PlanAutomatic(root, path string) (CleanupPlan, error) {
 		reason := ReasonUncertain
 		if plan.assignment.State == intent.StateActive {
 			reason = ReasonActive
+			if orphaned(*plan.assignment, time.Now()) {
+				reason = ReasonOrphaned
+			}
 		}
 		return automaticRetain(plan, reason, "assignment is not cleanup-pending"), nil
 	}

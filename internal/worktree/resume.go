@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 var errStaleFingerprint = errors.New("cleanup fingerprint is stale")
@@ -373,20 +374,38 @@ func ConservativeCleanup(root string) (ResumeResult, error) {
 	return result, err
 }
 
-// sweepOrphanAssignments reconciles tree-gone records absent from registered worktrees.
-// Residue records are compacted and counted; records that still hold preserved work are
-// reported for a deliberate recover-or-retire and left intact. Active records are never
-// swept — a live session owns them. See specs/worktree-orphan-reconcile.md (c).
+// sweepOrphanAssignments turns the ledger's own view of each record into a verdict. It
+// asks orphaned directly rather than reading a cleanup plan's reason code: PlanAutomatic
+// returns at its first retain reason, and ignored build output is the normal state of a
+// worktree a shift ran in, so a plan-derived sweep would report nothing for exactly the
+// population this exists for.
+//
+// An active record is swept only once it is orphaned; a younger one is left alone
+// because a live session may still own it. An orphan whose tree survives is reported as
+// a candidate and never touched — removal stays behind the explicit path-addressed
+// `bench worktree clean`, which recovers dirty work into a recovery ref first. The
+// tree-gone verdicts are the FT93(c) contract, in this order: one git still registers
+// belongs to the prune path, one preserving no work is compacted and counted, and one
+// holding recovery metadata is reported for a deliberate recover-or-retire and left
+// intact. residualAssignment is the single guard between that compaction and a pointer
+// to preserved work.
 func sweepOrphanAssignments(root string, registered []Registered, result *ResumeResult) error {
 	assignments, err := intent.Assignments(root)
 	if err != nil {
 		return err
 	}
+	// One instant for the whole pass, so two records of the same age cannot straddle the
+	// window and disagree.
+	now := time.Now()
 	for _, a := range assignments {
-		if a.State == intent.StateActive {
+		abandoned := orphaned(a, now)
+		if a.State == intent.StateActive && !abandoned {
 			continue
 		}
 		if _, statErr := os.Stat(a.Worktree); statErr == nil {
+			if abandoned {
+				result.Orphans = append(result.Orphans, OrphanCandidate{ID: a.ID, Path: a.Worktree})
+			}
 			continue // the tree still exists
 		}
 		if isRegisteredWorktree(registered, a.Worktree) {

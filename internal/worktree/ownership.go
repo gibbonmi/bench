@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 )
 
 const (
@@ -169,10 +170,11 @@ func Create(root, request, label string, fault Fault, requestedStart ...string) 
 	}
 	branch := intent.AssignmentBranchRef(ownerID, assignmentID)
 	shortBranch := strings.TrimPrefix(branch, "refs/heads/")
+	createdAt := time.Now().UTC().Format(time.RFC3339)
 	assignment := intent.Assignment{
 		Schema: intent.AssignmentRecordSchema, ID: assignmentID, OwnerID: ownerID,
 		Request: digest, Label: label, Start: start, Branch: branch, Worktree: path,
-		State: intent.StateActive, Recovery: []intent.Recovery{},
+		State: intent.StateActive, Recovery: []intent.Recovery{}, CreatedAt: &createdAt,
 	}
 	args := []string{"-C", root, "worktree", "add", "-q", "--lock", "--reason", lockReason(assignment), "-b", shortBranch, path, start}
 	if out, err := exec.Command("git", args...).CombinedOutput(); err != nil {
