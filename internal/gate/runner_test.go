@@ -14,6 +14,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"syscall"
 	"testing"
@@ -171,6 +172,36 @@ func TestRunnerInnerModeByteShape(t *testing.T) {
 	}
 }
 
+// TestRunnerSummaryLineByteShape pins the outer summary vocabulary byte for byte. The
+// canary sweep matches EXPECT substrings against gate output and downstream parsers key
+// on these lines, so a reworded or dropped summary is a contract break that no other
+// test in this package would notice.
+func TestRunnerSummaryLineByteShape(t *testing.T) {
+	root := t.TempDir()
+	phases := []Phase{
+		fakePhase("green-phase", "true"),
+		fakePhase("red-phase", "exit 4"),
+		{Name: "absent-phase", Argv: []string{"definitely-absent-binary-for-bench-summary-test"}, Optional: true},
+		{Name: "blocked-phase", Argv: []string{"bash", "-c", "true"}, Needs: []string{"red-phase"}},
+	}
+
+	var stdout, stderr bytes.Buffer
+	rc := runPhases(context.Background(), root, phases, outerMode, &stdout, &stderr)
+	if rc != 1 {
+		t.Fatalf("runPhases rc = %d, want 1; stdout=%q stderr=%q", rc, stdout.String(), stderr.String())
+	}
+	for _, want := range []string{
+		"phase green-phase: green\n",
+		"phase red-phase: red (exit 4)\n",
+		"phase absent-phase: skipped (not installed)\n",
+		"phase blocked-phase: skipped (needs red-phase)\n",
+	} {
+		if !strings.Contains(stdout.String(), want) {
+			t.Fatalf("summary line %q missing from stdout:\n%s", want, stdout.String())
+		}
+	}
+}
+
 func TestRunnerCancelKillsGroup(t *testing.T) {
 	root := t.TempDir()
 	pidfile := filepath.Join(root, "sleep.pid")
@@ -218,6 +249,74 @@ func TestRunnerRootWithSpace(t *testing.T) {
 	}
 	if !strings.Contains(stdout.String(), "[pwd] root="+root) {
 		t.Fatalf("stdout does not show literal root argv:\n%s", stdout.String())
+	}
+}
+
+func TestRunnerPhaseDirIsRelativeToRoot(t *testing.T) {
+	root := t.TempDir()
+	if err := os.Mkdir(filepath.Join(root, "sub"), 0o755); err != nil {
+		t.Fatalf("mkdir sub: %v", err)
+	}
+	printCwd := []string{"bash", "-c", `printf 'cwd=%s\n' "$PWD"`}
+	phases := []Phase{
+		{Name: "rooted", Argv: printCwd},
+		{Name: "nested", Argv: printCwd, Dir: "sub"},
+	}
+
+	var stdout, stderr bytes.Buffer
+	rc := runPhases(context.Background(), root, phases, outerMode, &stdout, &stderr)
+	if rc != 0 {
+		t.Fatalf("runPhases rc = %d; stdout=%q stderr=%q", rc, stdout.String(), stderr.String())
+	}
+	for _, want := range []string{
+		"[rooted] cwd=" + root + "\n",
+		"[nested] cwd=" + filepath.Join(root, "sub") + "\n",
+	} {
+		if !strings.Contains(stdout.String(), want) {
+			t.Fatalf("phase cwd line %q missing:\n%s", want, stdout.String())
+		}
+	}
+}
+
+// TestMergeEnvStripsThenSets grades the merge rule where it is decidable. os/exec
+// collapses a repeated key on its way to the child in favor of the later value, so no
+// subprocess can distinguish strip-then-set from plain appending — the slice this
+// function returns is the last place the difference is visible.
+func TestMergeEnvStripsThenSets(t *testing.T) {
+	base := []string{"KEEP=base", "REPLACED=base", "REPLACED=base-again", "PREFIXY_KEY=base"}
+	got := mergeEnv(base, []string{"REPLACED=phase", "ADDED=phase"})
+	want := []string{"KEEP=base", "PREFIXY_KEY=base", "REPLACED=phase", "ADDED=phase"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("mergeEnv = %#v, want %#v", got, want)
+	}
+	if merged := mergeEnv(base, nil); !reflect.DeepEqual(merged, base) {
+		t.Fatalf("mergeEnv with no overrides = %#v, want the base unchanged", merged)
+	}
+}
+
+// TestRunnerPhaseEnvStripsThenSets pins what the child actually receives for an
+// overridden key. It execs env(1) directly rather than through a shell: a shell folds a
+// repeated key into one variable as it imports the environment, so only the raw environ
+// block can show what the phase was handed.
+func TestRunnerPhaseEnvStripsThenSets(t *testing.T) {
+	const key = "BENCH_PHASE_ENV_PROBE"
+	t.Setenv(key, "from-gate-env")
+	root := t.TempDir()
+	phase := Phase{Name: "env", Argv: []string{"env"}, Env: []string{key + "=from-phase"}}
+
+	var stdout, stderr bytes.Buffer
+	rc := runPhases(context.Background(), root, []Phase{phase}, outerMode, &stdout, &stderr)
+	if rc != 0 {
+		t.Fatalf("runPhases rc = %d; stdout=%q stderr=%q", rc, stdout.String(), stderr.String())
+	}
+	var got []string
+	for _, line := range strings.Split(stdout.String(), "\n") {
+		if strings.HasPrefix(line, "[env] "+key+"=") {
+			got = append(got, strings.TrimPrefix(line, "[env] "))
+		}
+	}
+	if len(got) != 1 || got[0] != key+"=from-phase" {
+		t.Fatalf("child environ carries %#v for %s, want exactly one entry with the phase's value", got, key)
 	}
 }
 

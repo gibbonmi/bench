@@ -161,12 +161,19 @@ func TestPhaseTableBuildPhase(t *testing.T) {
 		t.Fatalf("BenchkitPhases len = %d, want build + 4: %#v", len(phases), phases)
 	}
 	build := phases[0]
-	if build.Name != "build" || !build.Serial {
-		t.Fatalf("first phase = %#v, want serial build phase", build)
+	if build.Name != "build" || len(build.Needs) != 0 {
+		t.Fatalf("first phase = %#v, want the edge-free build phase", build)
 	}
 	want := []string{"bash", filepath.Join(root, "scripts", "go-build.sh"), root, filepath.Join(root, "dist", "bench")}
 	if !reflect.DeepEqual(build.Argv, want) {
 		t.Fatalf("build argv = %#v, want %#v", build.Argv, want)
+	}
+	// The build phase owns the only write to dist/bench, so every downstream phase
+	// carries the edge that keeps it from grading a half-written binary.
+	for _, phase := range phases[1:] {
+		if !reflect.DeepEqual(phase.Needs, []string{"build"}) {
+			t.Fatalf("phase %s needs = %#v, want [build]", phase.Name, phase.Needs)
+		}
 	}
 	if got := phaseNames(phasesForMode(phases, innerMode)); got[0] != "build" {
 		t.Fatalf("inner phases dropped the build phase: %#v", got)
@@ -174,8 +181,16 @@ func TestPhaseTableBuildPhase(t *testing.T) {
 
 	// Without the Go build surface the table keeps its four-phase shape — and a
 	// half-present surface (either file alone) counts as absent, not buildable.
-	if bare := BenchkitPhases(t.TempDir(), "/tmp/kit"); len(bare) != 4 {
+	bare := BenchkitPhases(t.TempDir(), "/tmp/kit")
+	if len(bare) != 4 {
 		t.Fatalf("bare root BenchkitPhases len = %d, want 4: %#v", len(bare), phaseNames(bare))
+	}
+	// No build phase means nothing to wait for: an edge to an absent phase would be
+	// a dangling need in every table the fallback emits.
+	for _, phase := range bare {
+		if len(phase.Needs) != 0 {
+			t.Fatalf("bare root phase %s needs = %#v, want none", phase.Name, phase.Needs)
+		}
 	}
 	modOnly := t.TempDir()
 	writeFile(t, filepath.Join(modOnly, "go.mod"), "module fixture\n")

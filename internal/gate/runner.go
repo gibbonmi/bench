@@ -1,6 +1,6 @@
 package gate
 
-// The execution engine for gate phases: the serial-then-concurrent runners, the
+// The execution engine for gate phases: the DAG scheduler both runners share, the
 // per-phase process launch with optional-binary resolution, and the prefixed
 // output plumbing. The phase table and the PhasesCommand surface live in
 // phases.go.
@@ -78,6 +78,17 @@ type phaseResult struct {
 	Code     int
 	Skipped  bool
 	StartErr error
+	// SkippedBy names the need whose own red or skip kept this phase from launching.
+	// Such a phase is never red on its own: the verdict belongs to the phase that
+	// actually failed, so the red set a fix loop reads stays free of cascade noise.
+	SkippedBy string
+}
+
+// green reports whether a settled phase satisfies a dependent's edge. Both skip flavors
+// are excluded: a dependent needs its need's artifact, and neither a skip nor a red
+// produced one.
+func (r phaseResult) green() bool {
+	return r.Code == 0 && !r.Skipped && r.SkippedBy == ""
 }
 
 func runPhases(ctx context.Context, root string, phases []Phase, mode phaseMode, stdout, stderr io.Writer) int {
@@ -99,35 +110,17 @@ func runPhases(ctx context.Context, root string, phases []Phase, mode phaseMode,
 }
 
 func runPhasesSequential(ctx context.Context, root string, phases []Phase, stdout, stderr io.Writer) int {
-	// splitSerialPhases is the one source of the serial-first ordering for both
-	// runners; without it a serial phase in a non-first table position would
-	// fail-fast in outer mode but not here.
-	serial, concurrent := splitSerialPhases(phases)
-	red := false
-	for _, phase := range serial {
-		result := runPhase(ctx, root, phase, stdout, stderr)
-		if result.Code == 130 {
-			return 130
-		}
+	results, cancelled := schedule(ctx, root, phases, true, func(Phase) (io.Writer, io.Writer, func()) {
+		return stdout, stderr, func() {}
+	})
+	if cancelled {
+		return 130
+	}
+	for _, result := range results {
 		if result.Code != 0 {
-			red = true
-			break
+			fmt.Fprintln(stderr, "gate: red")
+			return 1
 		}
-	}
-	if !red {
-		for _, phase := range concurrent {
-			result := runPhase(ctx, root, phase, stdout, stderr)
-			if result.Code == 130 {
-				return 130
-			}
-			if result.Code != 0 {
-				red = true
-			}
-		}
-	}
-	if red {
-		fmt.Fprintln(stderr, "gate: red")
-		return 1
 	}
 	fmt.Fprintln(stdout, "gate: green")
 	return 0
@@ -135,57 +128,23 @@ func runPhasesSequential(ctx context.Context, root string, phases []Phase, stdou
 
 func runPhasesConcurrent(ctx context.Context, root string, phases []Phase, skipLog string, stdout, stderr io.Writer) int {
 	var writeMu sync.Mutex
-	serial, concurrent := splitSerialPhases(phases)
-	for _, phase := range serial {
+	results, cancelled := schedule(ctx, root, phases, false, func(phase Phase) (io.Writer, io.Writer, func()) {
 		out := newPrefixWriter(&writeMu, stdout, phase.Name)
 		err := newPrefixWriter(&writeMu, stderr, phase.Name)
-		result := runPhase(ctx, root, phase, out, err)
-		out.Close()
-		err.Close()
-		if result.Code == 130 {
-			return 130
-		}
-		if result.Code != 0 {
-			fmt.Fprintln(stdout, phaseSummary(result))
-			reportCapabilitySkips(skipLog, stdout, stderr)
-			fmt.Fprintln(stderr, "gate: red")
-			return 1
-		}
-		fmt.Fprintln(stdout, phaseSummary(result))
-	}
-
-	results := make([]phaseResult, len(concurrent))
-	var wg sync.WaitGroup
-	for idx, phase := range concurrent {
-		idx, phase := idx, phase
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			out := newPrefixWriter(&writeMu, stdout, phase.Name)
-			err := newPrefixWriter(&writeMu, stderr, phase.Name)
-			results[idx] = runPhase(ctx, root, phase, out, err)
-			out.Close()
-			err.Close()
-		}()
-	}
-	wg.Wait()
-
-	cancelled := false
-	red := false
-	for _, result := range results {
-		if result.Code == 130 {
-			cancelled = true
-		}
-		if result.Code != 0 {
-			red = true
-		}
-	}
+		return out, err, func() { out.Close(); err.Close() }
+	})
+	// An interrupt is not a verdict, so a cancelled run publishes neither summaries
+	// nor a gate line — reporting one would grade phases that never got to answer.
 	if cancelled {
 		return 130
 	}
 
+	red := false
 	for _, result := range results {
 		fmt.Fprintln(stdout, phaseSummary(result))
+		if result.Code != 0 {
+			red = true
+		}
 	}
 	if reportCapabilitySkips(skipLog, stdout, stderr) {
 		red = true
@@ -198,18 +157,120 @@ func runPhasesConcurrent(ctx context.Context, root string, phases []Phase, skipL
 	return 0
 }
 
-func splitSerialPhases(phases []Phase) (serial, concurrent []Phase) {
-	for _, phase := range phases {
-		if phase.Serial {
-			serial = append(serial, phase)
-		} else {
-			concurrent = append(concurrent, phase)
+// schedule runs phases in dependency order and returns their results in table order,
+// plus whether the run was interrupted. A phase launches once every need present in the
+// table has settled green; a need that settled red or skipped resolves the dependent as
+// skipped-with-cause without launching it, so a red phase costs the run only the work
+// that actually depended on it. Sequential caps the run at one phase in flight and
+// takes the first ready phase in declaration order, which is the topological order
+// inner mode's pinned byte shape needs.
+//
+// A need naming a phase absent from the table is already satisfied: phasesForMode
+// filters the table after the edges are declared, so an inner run legitimately carries
+// edges to phases it does not execute.
+func schedule(ctx context.Context, root string, phases []Phase, sequential bool, open func(Phase) (io.Writer, io.Writer, func())) ([]phaseResult, bool) {
+	index := make(map[string]int, len(phases))
+	for i, phase := range phases {
+		index[phase.Name] = i
+	}
+	results := make([]phaseResult, len(phases))
+	settled := make([]bool, len(phases))
+	launched := make([]bool, len(phases))
+	done := make(chan int, len(phases))
+	inFlight, cancelled := 0, false
+
+	for {
+		progressed := false
+		// Cancellation stops the launch loop rather than the whole scheduler: phases
+		// already in flight still have to be reaped before their output writers can
+		// be closed, but nothing new may start behind an interrupt.
+		for i, phase := range phases {
+			if settled[i] || launched[i] || cancelled || ctx.Err() != nil {
+				continue
+			}
+			blocker, ready := edgeState(phase, index, settled, results)
+			if blocker != "" {
+				results[i] = phaseResult{Name: phase.Name, SkippedBy: blocker}
+				settled[i] = true
+				progressed = true
+				continue
+			}
+			if !ready {
+				continue
+			}
+			launched[i] = true
+			inFlight++
+			progressed = true
+			i, phase := i, phase
+			go func() {
+				out, errOut, closeWriters := open(phase)
+				results[i] = runPhase(ctx, root, phase, out, errOut)
+				closeWriters()
+				done <- i
+			}()
+			if sequential {
+				break
+			}
+		}
+		if inFlight == 0 {
+			if !progressed {
+				break
+			}
+			continue
+		}
+		i := <-done
+		inFlight--
+		settled[i] = true
+		if results[i].Code == 130 {
+			cancelled = true
 		}
 	}
-	return serial, concurrent
+
+	// Anything still unsettled is either behind an interrupt or on a cycle the loader
+	// should have refused. Naming its first unmet need keeps a never-launched phase
+	// from reporting the zero value, which reads as green.
+	for i, phase := range phases {
+		if !settled[i] {
+			results[i] = phaseResult{Name: phase.Name, SkippedBy: firstUnsettledNeed(phase, index, settled)}
+		}
+	}
+	return results, cancelled
+}
+
+// edgeState reports the need blocking phase permanently, if any, and otherwise whether
+// every need has settled green. A need that settled non-green wins over one still
+// running: the outcome is already decided, so the dependent need not wait to learn it.
+func edgeState(phase Phase, index map[string]int, settled []bool, results []phaseResult) (blocker string, ready bool) {
+	ready = true
+	for _, need := range phase.Needs {
+		i, present := index[need]
+		if !present {
+			continue
+		}
+		if !settled[i] {
+			ready = false
+			continue
+		}
+		if !results[i].green() {
+			return need, false
+		}
+	}
+	return "", ready
+}
+
+func firstUnsettledNeed(phase Phase, index map[string]int, settled []bool) string {
+	for _, need := range phase.Needs {
+		if i, present := index[need]; present && !settled[i] {
+			return need
+		}
+	}
+	return ""
 }
 
 func phaseSummary(result phaseResult) string {
+	if result.SkippedBy != "" {
+		return "phase " + result.Name + ": skipped (needs " + result.SkippedBy + ")"
+	}
 	if result.Skipped {
 		return "phase " + result.Name + ": skipped (not installed)"
 	}
@@ -255,9 +316,12 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 
 	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Dir = root
+	if phase.Dir != "" {
+		cmd.Dir = filepath.Join(root, phase.Dir)
+	}
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
-	cmd.Env = append(gateEnv(), phase.Env...)
+	cmd.Env = mergeEnv(gateEnv(), phase.Env)
 	run := runProcessGroupCommand(ctx, cmd)
 	if run.StartErr != nil {
 		if run.Code == 130 {
@@ -275,6 +339,35 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 	result.Code = run.Code
 	printConformanceTiming(root, phase, stdout)
 	return result
+}
+
+// mergeEnv applies overrides over base strip-then-set: every base entry for an
+// overridden key is dropped before the override is appended, so the child is handed one
+// value per key. Plain appending leaves both, and which one a program's getenv answers
+// with is not something a phase may be built on. withSkipLog rides the same path — the
+// capability log variable is an override like any other.
+func mergeEnv(base, overrides []string) []string {
+	if len(overrides) == 0 {
+		return base
+	}
+	overridden := make(map[string]bool, len(overrides))
+	for _, entry := range overrides {
+		overridden[envKey(entry)] = true
+	}
+	merged := make([]string, 0, len(base)+len(overrides))
+	for _, entry := range base {
+		if !overridden[envKey(entry)] {
+			merged = append(merged, entry)
+		}
+	}
+	return append(merged, overrides...)
+}
+
+func envKey(entry string) string {
+	if idx := strings.Index(entry, "="); idx >= 0 {
+		return entry[:idx]
+	}
+	return entry
 }
 
 // printConformanceTiming emits the conformance driver's per-check timing lines. The

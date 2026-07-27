@@ -33,16 +33,18 @@ const (
 	innerMode
 )
 
-// Phase is one independent benchkit gate check. Argv is passed directly to
-// exec.Command; callers must not smuggle shell-interpolated command strings through it.
-// A Serial phase runs to completion before any other phase starts, and its red stops
-// the run: the phases behind it would grade the artifact it failed to produce.
+// Phase is one benchkit gate check. Argv is passed directly to exec.Command; callers
+// must not smuggle shell-interpolated command strings through it. Needs names the
+// phases that must complete green before this one starts — a need that ends red or
+// skipped skips this phase too, because it would grade an artifact its need never
+// produced. Dir is a root-relative working directory, defaulting to the root itself.
 type Phase struct {
 	Name     string
 	Argv     []string
 	Env      []string
 	Optional bool
-	Serial   bool
+	Needs    []string
+	Dir      string
 }
 
 var benchkitPhasesForCommand = BenchkitPhases
@@ -50,40 +52,46 @@ var benchkitPhasesForCommand = BenchkitPhases
 // BenchkitPhases is the real phase table for the kit gate. root is the tree under
 // grade; kit is the checkout that owns the Go tests and wrapper scripts.
 //
-// The serial build phase owns the only write to root's dist/bench during a gate run.
-// The contract and canary phases exec and copy that binary, and `go build` replaces a
-// stale output non-atomically — a concurrent rebuild hands readers a stale or
-// partially-written binary. Conformance's own build check goes to a throwaway path
-// for the same reason.
+// The build phase owns the only write to root's dist/bench during a gate run, which is
+// why every other phase needs it. The contract and canary phases exec and copy that
+// binary, and `go build` replaces a stale output non-atomically — a concurrent rebuild
+// hands readers a stale or partially-written binary. Conformance's own build check goes
+// to a throwaway path for the same reason. A root with no Go build surface has no build
+// phase and so no edges at all.
 func BenchkitPhases(root, kit string) []Phase {
 	var phases []Phase
+	var needsBuild []string
 	buildHelper := filepath.Join(root, "scripts", "go-build.sh")
 	if isRegularFile(buildHelper) && isRegularFile(filepath.Join(root, "go.mod")) {
 		phases = append(phases, Phase{
-			Name:   "build",
-			Argv:   []string{"bash", buildHelper, root, filepath.Join(root, "dist", "bench")},
-			Serial: true,
+			Name: "build",
+			Argv: []string{"bash", buildHelper, root, filepath.Join(root, "dist", "bench")},
 		})
+		needsBuild = []string{"build"}
 	}
 	return append(phases, []Phase{
 		{
-			Name: conformancePhaseName,
-			Argv: goTestArgv(kit, "./internal/conformance", "-run", "^TestRootConformance$"),
-			Env:  []string{"BENCH_CONFORMANCE_ROOT=" + root},
+			Name:  conformancePhaseName,
+			Argv:  goTestArgv(kit, "./internal/conformance", "-run", "^TestRootConformance$"),
+			Env:   []string{"BENCH_CONFORMANCE_ROOT=" + root},
+			Needs: needsBuild,
 		},
 		{
-			Name: "contract",
-			Argv: goTestArgv(kit, "./internal/contract/..."),
-			Env:  []string{"BENCH_CONTRACT_ROOT=" + root},
+			Name:  "contract",
+			Argv:  goTestArgv(kit, "./internal/contract/..."),
+			Env:   []string{"BENCH_CONTRACT_ROOT=" + root},
+			Needs: needsBuild,
 		},
 		{
 			Name:     "shellcheck",
 			Argv:     shellcheckArgv(kit),
 			Optional: true,
+			Needs:    needsBuild,
 		},
 		{
-			Name: "canary",
-			Argv: []string{"bash", filepath.Join(kit, "bin", "bench.sh"), "canary", root},
+			Name:  "canary",
+			Argv:  []string{"bash", filepath.Join(kit, "bin", "bench.sh"), "canary", root},
+			Needs: needsBuild,
 		},
 	}...)
 }

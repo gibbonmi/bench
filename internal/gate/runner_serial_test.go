@@ -1,8 +1,9 @@
 package gate
 
-// The serial-phase contract: a Serial phase completes before any concurrent phase
-// starts regardless of table position, its red fails the run fast, and an interrupt
-// during it is a 130, never a graded red — in both outer and inner modes.
+// The needs-edge contract: a phase waits for its needs regardless of table position,
+// a need's red or skip skips its dependents with cause while unrelated phases still
+// run, and an interrupt is a 130 that launches nothing further, never a graded red —
+// in both outer and inner modes.
 
 import (
 	"bytes"
@@ -232,38 +233,36 @@ func TestRunnerRequiredStartFailureRed(t *testing.T) {
 	}
 }
 
-func TestRunnerSerialPhaseCompletesBeforeConcurrentPhasesStart(t *testing.T) {
+func TestRunnerNeededPhaseCompletesBeforeDependentsStart(t *testing.T) {
 	root := t.TempDir()
 	marker := filepath.Join(root, "built")
 	phases := []Phase{
 		{
-			Name:   "build",
-			Argv:   []string{"bash", "-c", `sleep 0.1; touch "$1"`, "bash", marker},
-			Serial: true,
+			Name: "build",
+			Argv: []string{"bash", "-c", `sleep 0.1; touch "$1"`, "bash", marker},
 		},
-		// Each reader phase goes red unless the serial phase already finished:
-		// a runner that launches everything concurrently starts these ~100ms
-		// before the marker exists.
-		{Name: "alpha", Argv: []string{"bash", "-c", `test -f "$1"`, "bash", marker}},
-		{Name: "bravo", Argv: []string{"bash", "-c", `test -f "$1"`, "bash", marker}},
+		// Each reader phase goes red unless its need already finished: a runner that
+		// ignores edges starts these ~100ms before the marker exists.
+		{Name: "alpha", Argv: []string{"bash", "-c", `test -f "$1"`, "bash", marker}, Needs: []string{"build"}},
+		{Name: "bravo", Argv: []string{"bash", "-c", `test -f "$1"`, "bash", marker}, Needs: []string{"build"}},
 	}
 
 	var stdout, stderr bytes.Buffer
 	rc := runPhases(context.Background(), root, phases, outerMode, &stdout, &stderr)
 	if rc != 0 {
-		t.Fatalf("runPhases rc = %d; a reader phase started before the serial phase finished\nstdout=%q\nstderr=%q", rc, stdout.String(), stderr.String())
+		t.Fatalf("runPhases rc = %d; a reader phase started before its need finished\nstdout=%q\nstderr=%q", rc, stdout.String(), stderr.String())
 	}
 	if !strings.Contains(stdout.String(), "phase build: green") {
-		t.Fatalf("serial phase missing from summaries:\n%s", stdout.String())
+		t.Fatalf("needed phase missing from summaries:\n%s", stdout.String())
 	}
 }
 
-func TestRunnerSerialRedFailsFast(t *testing.T) {
+func TestRunnerNeededPhaseRedSkipsDependents(t *testing.T) {
 	root := t.TempDir()
 	leak := filepath.Join(root, "leak")
 	phases := []Phase{
-		{Name: "build", Argv: []string{"bash", "-c", "exit 3"}, Serial: true},
-		{Name: "alpha", Argv: []string{"bash", "-c", `touch "$1"`, "bash", leak}},
+		{Name: "build", Argv: []string{"bash", "-c", "exit 3"}},
+		{Name: "alpha", Argv: []string{"bash", "-c", `touch "$1"`, "bash", leak}, Needs: []string{"build"}},
 	}
 
 	var stdout, stderr bytes.Buffer
@@ -273,19 +272,22 @@ func TestRunnerSerialRedFailsFast(t *testing.T) {
 	}
 	out := stdout.String() + stderr.String()
 	if !strings.Contains(out, "phase build: red (exit 3)") || !strings.Contains(out, "gate: red") {
-		t.Fatalf("serial red not attributed:\n%s", out)
+		t.Fatalf("red need not attributed:\n%s", out)
+	}
+	if !strings.Contains(stdout.String(), "phase alpha: skipped (needs build)\n") {
+		t.Fatalf("dependent of the red need is not reported as skipped-with-cause:\n%s", stdout.String())
 	}
 	if _, err := os.Stat(leak); err == nil {
-		t.Fatalf("phase after failed serial phase still ran (it would grade a stale or absent binary)")
+		t.Fatalf("phase behind a red need still ran (it would grade a stale or absent binary)")
 	}
 }
 
-func TestRunnerSerialRedFailsFastInnerMode(t *testing.T) {
+func TestRunnerNeededPhaseRedSkipsDependentsInnerMode(t *testing.T) {
 	root := t.TempDir()
 	leak := filepath.Join(root, "leak")
 	phases := []Phase{
-		{Name: "build", Argv: []string{"bash", "-c", "exit 3"}, Serial: true},
-		{Name: "alpha", Argv: []string{"bash", "-c", `touch "$1"`, "bash", leak}},
+		{Name: "build", Argv: []string{"bash", "-c", "exit 3"}},
+		{Name: "alpha", Argv: []string{"bash", "-c", `touch "$1"`, "bash", leak}, Needs: []string{"build"}},
 	}
 
 	var stdout, stderr bytes.Buffer
@@ -297,21 +299,20 @@ func TestRunnerSerialRedFailsFastInnerMode(t *testing.T) {
 		t.Fatalf("stderr final line = %q, want gate: red", stderr.String())
 	}
 	if _, err := os.Stat(leak); err == nil {
-		t.Fatalf("inner-mode phase after failed serial phase still ran")
+		t.Fatalf("inner-mode phase behind a red need still ran")
 	}
 }
 
-func TestRunnerCancelDuringSerialPhaseReturns130(t *testing.T) {
+func TestRunnerCancelDuringNeededPhaseReturns130(t *testing.T) {
 	root := t.TempDir()
 	pidfile := filepath.Join(root, "sleep.pid")
 	leak := filepath.Join(root, "leak")
 	phases := []Phase{
 		{
-			Name:   "build",
-			Argv:   []string{"bash", "-c", `sleep 30 & echo $! > "$1"; wait`, "bash", pidfile},
-			Serial: true,
+			Name: "build",
+			Argv: []string{"bash", "-c", `sleep 30 & echo $! > "$1"; wait`, "bash", pidfile},
 		},
-		{Name: "alpha", Argv: []string{"bash", "-c", `touch "$1"`, "bash", leak}},
+		{Name: "alpha", Argv: []string{"bash", "-c", `touch "$1"`, "bash", leak}, Needs: []string{"build"}},
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	var stdout, stderr bytes.Buffer
@@ -330,72 +331,162 @@ func TestRunnerCancelDuringSerialPhaseReturns130(t *testing.T) {
 			t.Fatalf("runPhases rc = %d, want 130; stdout=%q stderr=%q", rc, stdout.String(), stderr.String())
 		}
 	case <-time.After(5 * time.Second):
-		t.Fatal("runPhases did not return after cancellation during the serial phase")
+		t.Fatal("runPhases did not return after cancellation during the needed phase")
 	}
 	waitForProcessExit(t, pid)
 	// An interrupt is not a verdict: no phase behind the interrupted build may run,
 	// and the run must not present itself as a graded red.
 	if _, err := os.Stat(leak); err == nil {
-		t.Fatalf("concurrent phase ran after the serial phase was interrupted")
+		t.Fatalf("dependent phase ran after its need was interrupted")
 	}
 	if strings.Contains(stdout.String()+stderr.String(), "gate: red") {
-		t.Fatalf("interrupted serial phase was graded as red:\nstdout=%q\nstderr=%q", stdout.String(), stderr.String())
+		t.Fatalf("interrupted needed phase was graded as red:\nstdout=%q\nstderr=%q", stdout.String(), stderr.String())
 	}
 }
 
-func TestRunnerSerialPhaseNotFirstStillRunsFirst(t *testing.T) {
+func TestRunnerNeededPhaseNotFirstStillRunsFirst(t *testing.T) {
 	root := t.TempDir()
 	marker := filepath.Join(root, "built")
 	phases := []Phase{
-		// Readers listed ahead of the serial phase: only the runner's own
-		// reordering keeps them from starting before the marker exists.
-		{Name: "alpha", Argv: []string{"bash", "-c", `test -f "$1"`, "bash", marker}},
-		{Name: "bravo", Argv: []string{"bash", "-c", `test -f "$1"`, "bash", marker}},
+		// Readers listed ahead of their need: only the edges keep them from
+		// starting before the marker exists.
+		{Name: "alpha", Argv: []string{"bash", "-c", `test -f "$1"`, "bash", marker}, Needs: []string{"build"}},
+		{Name: "bravo", Argv: []string{"bash", "-c", `test -f "$1"`, "bash", marker}, Needs: []string{"build"}},
 		{
-			Name:   "build",
-			Argv:   []string{"bash", "-c", `sleep 0.1; touch "$1"`, "bash", marker},
-			Serial: true,
+			Name: "build",
+			Argv: []string{"bash", "-c", `sleep 0.1; touch "$1"`, "bash", marker},
 		},
 	}
 
 	var stdout, stderr bytes.Buffer
 	rc := runPhases(context.Background(), root, phases, outerMode, &stdout, &stderr)
 	if rc != 0 {
-		t.Fatalf("runPhases rc = %d; a reader phase ran before the non-first serial phase\nstdout=%q\nstderr=%q", rc, stdout.String(), stderr.String())
+		t.Fatalf("runPhases rc = %d; a reader phase ran before its later-declared need\nstdout=%q\nstderr=%q", rc, stdout.String(), stderr.String())
 	}
 	if !strings.Contains(stdout.String(), "phase build: green") {
-		t.Fatalf("serial phase missing from summaries:\n%s", stdout.String())
+		t.Fatalf("needed phase missing from summaries:\n%s", stdout.String())
 	}
 }
 
-func TestRunnerSerialPhaseNotFirstInnerMode(t *testing.T) {
+func TestSchedulerRespectsNeeds(t *testing.T) {
+	root := t.TempDir()
+	marker := filepath.Join(root, "made")
+	phases := []Phase{
+		{Name: "maker", Argv: []string{"bash", "-c", `sleep 0.1; touch "$1"`, "bash", marker}},
+		// Red unless the edge is honored: ignoring it starts the reader ~100ms
+		// before the marker exists.
+		{Name: "reader", Argv: []string{"bash", "-c", `test -f "$1"`, "bash", marker}, Needs: []string{"maker"}},
+	}
+
+	var stdout, stderr bytes.Buffer
+	rc := runPhases(context.Background(), root, phases, outerMode, &stdout, &stderr)
+	if rc != 0 {
+		t.Fatalf("runPhases rc = %d; the reader started before its need completed\nstdout=%q\nstderr=%q", rc, stdout.String(), stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "phase reader: green\n") {
+		t.Fatalf("dependent phase missing from summaries:\n%s", stdout.String())
+	}
+}
+
+// TestSchedulerOverlapsIndependents holds four edge-free phases at a barrier that only
+// opens once all four subprocesses exist at the same time, so a serializing or
+// fixed-width scheduler starves rather than merely running slower. The waiters are
+// syscall-blocked subprocesses, not goroutines, so the barrier is GOMAXPROCS-safe.
+func TestSchedulerOverlapsIndependents(t *testing.T) {
+	root := t.TempDir()
+	started := filepath.Join(root, "started")
+	if err := os.Mkdir(started, 0o755); err != nil {
+		t.Fatalf("mkdir started: %v", err)
+	}
+	const barrier = `d="$1"; touch "$d/$2"; for _ in $(seq 500); do [ "$(ls "$d" | wc -l)" -ge 4 ] && exit 0; sleep 0.01; done; exit 1`
+	var phases []Phase
+	for _, name := range []string{"alpha", "bravo", "charlie", "delta"} {
+		phases = append(phases, Phase{Name: name, Argv: []string{"bash", "-c", barrier, "bash", started, name}})
+	}
+
+	var stdout, stderr bytes.Buffer
+	rc := runPhases(context.Background(), root, phases, outerMode, &stdout, &stderr)
+	if rc != 0 {
+		t.Fatalf("runPhases rc = %d; four independent phases never overlapped\nstdout=%q\nstderr=%q", rc, stdout.String(), stderr.String())
+	}
+}
+
+func TestSchedulerSkipsDependentsOfRed(t *testing.T) {
+	root := t.TempDir()
+	leak, ran := filepath.Join(root, "leak"), filepath.Join(root, "ran")
+	phases := []Phase{
+		fakePhase("build", "exit 3"),
+		{Name: "dependent", Argv: []string{"bash", "-c", `touch "$1"`, "bash", leak}, Needs: []string{"build"}},
+		{Name: "independent", Argv: []string{"bash", "-c", `touch "$1"`, "bash", ran}},
+	}
+
+	var stdout, stderr bytes.Buffer
+	rc := runPhases(context.Background(), root, phases, outerMode, &stdout, &stderr)
+	if rc != 1 {
+		t.Fatalf("runPhases rc = %d, want 1; stdout=%q stderr=%q", rc, stdout.String(), stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "phase dependent: skipped (needs build)\n") {
+		t.Fatalf("dependent of a red phase is not reported as skipped-with-cause:\n%s", stdout.String())
+	}
+	if _, err := os.Stat(leak); err == nil {
+		t.Fatalf("dependent of a red phase still ran (it would grade an artifact its need failed to produce)")
+	}
+	if !strings.Contains(stdout.String(), "phase independent: green\n") {
+		t.Fatalf("phase with no path from the red one lost its summary:\n%s", stdout.String())
+	}
+	if _, err := os.Stat(ran); err != nil {
+		t.Fatalf("phase with no path from the red one did not run: %v", err)
+	}
+}
+
+func TestSchedulerPropagatesOptionalSkip(t *testing.T) {
+	root := t.TempDir()
+	leak := filepath.Join(root, "leak")
+	phases := []Phase{
+		{Name: "linter", Argv: []string{"definitely-absent-linter-for-bench-test"}, Optional: true},
+		{Name: "dependent", Argv: []string{"bash", "-c", `touch "$1"`, "bash", leak}, Needs: []string{"linter"}},
+	}
+
+	var stdout, stderr bytes.Buffer
+	rc := runPhases(context.Background(), root, phases, outerMode, &stdout, &stderr)
+	if rc != 0 {
+		t.Fatalf("runPhases rc = %d, want a propagated skip to stay green; stdout=%q stderr=%q", rc, stdout.String(), stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "phase dependent: skipped (needs linter)\n") {
+		t.Fatalf("dependent of a skipped optional phase is not reported as skipped-with-cause:\n%s", stdout.String())
+	}
+	if _, err := os.Stat(leak); err == nil {
+		t.Fatalf("dependent ran against an artifact its skipped need never produced")
+	}
+}
+
+func TestRunnerNeededPhaseNotFirstInnerMode(t *testing.T) {
 	t.Run("runs first", func(t *testing.T) {
 		root := t.TempDir()
 		marker := filepath.Join(root, "built")
 		phases := []Phase{
-			// A reader listed ahead of the serial phase: sequential execution in
-			// table order would run it before the marker exists.
-			{Name: "alpha", Argv: []string{"bash", "-c", `test -f "$1"`, "bash", marker}},
+			// A reader listed ahead of its need: sequential execution in table
+			// order would run it before the marker exists.
+			{Name: "alpha", Argv: []string{"bash", "-c", `test -f "$1"`, "bash", marker}, Needs: []string{"build"}},
 			{
-				Name:   "build",
-				Argv:   []string{"bash", "-c", `touch "$1"`, "bash", marker},
-				Serial: true,
+				Name: "build",
+				Argv: []string{"bash", "-c", `touch "$1"`, "bash", marker},
 			},
 		}
 
 		var stdout, stderr bytes.Buffer
 		rc := runPhases(context.Background(), root, phases, innerMode, &stdout, &stderr)
 		if rc != 0 {
-			t.Fatalf("runPhases rc = %d; the reader ran before the non-first serial phase\nstdout=%q\nstderr=%q", rc, stdout.String(), stderr.String())
+			t.Fatalf("runPhases rc = %d; the reader ran before its later-declared need\nstdout=%q\nstderr=%q", rc, stdout.String(), stderr.String())
 		}
 	})
 
-	t.Run("red fails fast", func(t *testing.T) {
+	t.Run("red need skips its dependent", func(t *testing.T) {
 		root := t.TempDir()
 		leak := filepath.Join(root, "leak")
 		phases := []Phase{
-			{Name: "alpha", Argv: []string{"bash", "-c", `touch "$1"`, "bash", leak}},
-			{Name: "build", Argv: []string{"bash", "-c", "exit 3"}, Serial: true},
+			{Name: "alpha", Argv: []string{"bash", "-c", `touch "$1"`, "bash", leak}, Needs: []string{"build"}},
+			{Name: "build", Argv: []string{"bash", "-c", "exit 3"}},
 		}
 
 		var stdout, stderr bytes.Buffer
@@ -404,7 +495,7 @@ func TestRunnerSerialPhaseNotFirstInnerMode(t *testing.T) {
 			t.Fatalf("runPhases rc = %d, want 1", rc)
 		}
 		if _, err := os.Stat(leak); err == nil {
-			t.Fatalf("phase listed ahead of the failed serial phase still ran")
+			t.Fatalf("phase listed ahead of its failed need still ran")
 		}
 	})
 }
