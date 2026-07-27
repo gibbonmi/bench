@@ -2,33 +2,28 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — shape pass committed (`f56b522`), **unpushed**; `git push` is
-hook-blocked for the worker, so the push is the reviewer's own command.
+Branch: `main` — gate-pipeline map closed (`0b89710` + asset-move commit),
+**unpushed**; `git push` is hook-blocked for the worker, so the push is the
+reviewer's own command.
 
 ## State
 
-- **`decisions/gate-pipeline.md` is nearly closed.** Resolved this pass: #1
-  (manifest: five fields, `.bench/phases.json`, gate.sh stays the entry,
-  absent=built-in / empty+malformed=red), #2 (runner survey: extension not
-  rewrite; seams are `benchkitPhasesForCommand` and `splitSerialPhases`), #3
-  (`checkGoCore` split: gofmt/vet/test/race out, build collapses into the
-  serial build phase, structural residual stays; universal phases in the
-  built-in table, kit-specific in the kit manifest; test enumeration via a
-  bench plumbing subcommand), #4 (unweighted width, cancel-dependents red
-  posture, gate-deadline-plus-name-stragglers timeouts), #5 (the prerequisite
-  canary check-scoping slice: family→check registry table + CHECK override,
-  `BENCH_CONFORMANCE_CHECK` env, all-loud fail posture, per-check shared
-  vacuity baseline), #7 (fixture-backed parity + recorded reds).
-- **Open: #6 and #8.** #6 is Research, agent-alone, now unblocked: bucket the
-  39 package-core-guard fixtures by destination phase and verify the
-  family→check assumption across all nine conformance families. #8 is the
-  reviewer's task: make regroup-app's toolchain shape readable so the v1
-  schema can be walked against it.
-- The map's `## Handoff` section is written at close, after #6 and #8.
-- **Decisions that stay closed:** ship is a superset of dev; diff-scoped
-  gating stays ruled unsound; no check weakening for wall-clock;
-  cross-language incrementality stays behind FT91's revive trigger; no weight
-  field, no per-phase timeouts, no manifest tier field in v1.
+- **`decisions/gate-pipeline.md` is closed** — all nine tickets resolved, the
+  `## Handoff` section is written, `bench maps` shows no gate-pipeline rows.
+  The fixture inventory asset lives at
+  `decisions/assets/gate-pipeline-fixture-inventory.md`.
+- **Recommended slicing (reviewer's call, recorded in the map's Handoff):**
+  slice A — canary check-scoping prerequisite (#5 + stray CHECK files),
+  buildable on today's gate; slice B — manifest + DAG runner; slice C —
+  `checkGoCore` split + fixture migration + parity, after A and B.
+- **Decisions that stay closed:** six-field manifest
+  (`name/argv/env/needs/optional/dir`), `.bench/phases.json`,
+  absent=built-in / empty+malformed=red; many-to-one family→check binding
+  with CHECK overrides for the nine strays; phase-named canary families with
+  new-phase fixtures authored in the migration pass; unweighted width; single
+  gate deadline naming stragglers; fixture-backed parity; diff-scoped gating
+  stays ruled unsound; cross-language incrementality stays behind FT91's
+  revive trigger.
 - `bench prep-release` stays shelved — blocked by FT116's race and FT142's
   ship-track findings; both are board rows, not handoff state.
 - The branch/worktree sweep (23 non-`main` branches, 19 worktrees, work
@@ -36,9 +31,10 @@ hook-blocked for the worker, so the push is the reviewer's own command.
 
 ## Next command
 
-`/bench-shape-idea` resume on `decisions/gate-pipeline.md` #6 (Research,
-agent-alone). #8 waits on the reviewer supplying regroup-app's build/test/lint
-commands. Reviewer-run `git push origin main` still pending.
+`/bench-write-spec` on a fresh mid-tier session, seeded with
+`decisions/gate-pipeline.md` (its Handoff carries the seams; start with
+slice A per the recorded dependency order). Reviewer-run
+`git push origin main` still pending.
 
 ## Shape
 

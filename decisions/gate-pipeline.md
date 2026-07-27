@@ -257,7 +257,7 @@ must end with ≥1 fixture biting at its destination phase.
 
 ### Answer
 Resolved 2026-07-26; full inventory in
-`decisions/gate-pipeline-fixture-inventory.md` (per-claim citations,
+`decisions/assets/gate-pipeline-fixture-inventory.md` (per-claim citations,
 spot-checked). Headlines: of 39 fixtures, 28 stay with the structural
 residual, 2 are ship, 7 are strays belonging to six other checks, and only 2
 move to new phases — and both die on the move (their EXPECTs are
