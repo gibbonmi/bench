@@ -1,6 +1,6 @@
 # FT91 slice C — the checkGoCore split
 
-Status: staged
+Status: implemented
 
 Compiled from `decisions/gate-pipeline.md` (#3 the split, #6 fixture migration,
 #7 parity, #9 output contract; Handoff items 1–9), which the reviewer confirmed
