@@ -2,68 +2,63 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — clean, in sync with `origin/main`
-Spec: `specs/ft148-worktree-orphan-retirement.md` (Status: staged, approved
-2026-07-27) — the next build
-Gate: green at `08482c6`; every commit since is doc-only
+Branch: `main` — HEAD `36049d8`, clean tree, 5 unpushed commits
+Spec: `specs/ft148-worktree-orphan-retirement.md` — `Status: implemented`
+Gate: green at HEAD — current
 
 ## State
 
-- **FT148's spec is staged and signed off, and the build has not started.**
-  Twelve stories: a `created_at` field on the assignment record, an age-only
-  orphan predicate, a labelling change in `PlanAutomatic`, orphan lines and a
-  cap in the resume summary, ledger compaction for tree-gone rows, three kit-prose
-  edits with conformance anchors, and one dead comment pointer. The map behind it
-  is `decisions/worktree-orphan-retirement.md`; read its **Provenance** section
-  before trusting any decision in it, because it was written in the same session
-  as the spec.
-- **Orphanhood is age alone, and that is the load-bearing fact.** There is no
-  liveness signal: `bench worktree create` writes no lease, and a lease records a
-  pid that dies the moment the create hook exits — a request-created worktree
-  outliving its creating process is the design. Safety therefore rests on three
-  things: `bounds.AssignmentStale` is 7 days, the sweep only ever reports, and the
-  explicit cleanup recovers dirty work into a recovery ref before removing. A
-  build that shortens the window or makes the sweep reap is a spec deviation, not
-  a refinement.
-- **The sweep must read the ledger, not a plan.** `PlanAutomatic` returns at its
-  first retain verdict, before it reaches the assignment-state branch, so an
-  orphan carrying ignored build output — the normal state of a worktree a shift
-  ran in — never reaches the orphan label. Deriving the sweep's verdict from the
-  plan's reason code reports nothing for exactly the population this row is about,
-  while every coverage row stays green.
-- **Decisions that stay closed.** Orphans route to `bench worktree clean`; a
-  request-derivation override for `release` is rejected. An unstamped record
-  counts as aged, which is what drains today's residue. The sweep reports and
-  never removes. Three calls the roadmap row did not decide — the 7-day window,
-  the summary cap, and ledger compaction — were put to the reviewer and approved
-  2026-07-27.
-- **A first draft was blocked by a mid-tier falsification pass and rewritten.**
-  Its findings were verified against the tree before folding. Do not re-litigate
-  them: the lease conjunct, the plan-derived sweep, a named conformance test that
-  does not exist, and a compaction story carrying a sign-off it did not have are
-  all already fixed in the staged spec.
-- **The "preserved" wall at session start is expected.** The pool itself is
-  drained, but 17 tree-missing assignment rows and their retained recovery refs
-  survive. FT148 compacts one of them and bounds how loudly the rest print; the
-  other 16 need FT98's landed proof for reshaped commits and are explicitly out of
-  this spec's scope. One ref,
-  `refs/bench/recovery/incident-20260712-ambient-probe`, matches no assignment and
-  still wants a by-hand look.
-- **`ft91-gate-phase-split` stays unretired on purpose** — retiring it destroys
-  the veto surface on stories 4, 5, and 9.
-- **The gate verdict is stale; the gate pin is not.** Last green at `08482c6`,
-  and every commit since is doc-only — specs, maps, roadmap, this file — so the
-  next `bench gate` run is the first check of this tree. That is separate from
-  the pin, which tracks `.bench` integrity: `.bench` has not drifted and the pin
-  still matches HEAD. The reviewer pushed through `--no-verify` on 2026-07-27,
-  which bypassed the pre-push hook's protected-branch block, not any gate check —
-  and that block exists to stop agents pushing `main`, not the reviewer.
+- **FT148 is built, reviewed, gate-green, and unpushed. The reviewer owns the
+  push.** Three commits: `a1aaafb` (all twelve stories), `f4103e4` (eight review
+  findings fixed), `36049d8` (the status flip). Every phase of the gate is green
+  including canary; ship-tier verification has not run and is not expected to —
+  that is `bench prep-release`, once per release.
+- **The feature works on real data, verified end-to-end rather than only by
+  tests.** The session-start wall went from twenty-odd lines to five. One genuine
+  residue row was compacted, the two worktrees this build cut were reported as
+  orphans and then retired through the emitted command, and a freshly stamped
+  worktree was correctly left alone. Seventeen `recovered` rows remain and are
+  FT98's, not a defect.
+- **Orphanhood is age alone, and that is still the load-bearing fact.** No
+  liveness signal exists: `bench worktree create` writes no lease, and a lease
+  records a pid that dies when the create hook exits. Safety rests on
+  `bounds.AssignmentStale` being 7 days, the sweep only ever reporting, and the
+  explicit cleanup recovering into a recovery ref before removing. Shortening the
+  window or making the sweep reap is a spec deviation, not a refinement.
+- **Two spec defects the build found and did not silently paper over.** Story 7's
+  "an orphaned record that does hold recovery metadata is preserved" describes an
+  unreachable state — `orphaned` requires `active`, and validation rejects an
+  `active` record holding recovery metadata — so the sentence wants restating and
+  coverage row 20 wants reclassifying. Coverage row 12 was mislabelled red-first;
+  nothing faithful could have reddened it, and the build reclassified it with a
+  mutation proof. Both are the reviewer's to edit; this session did not touch the
+  spec beyond its status line.
+- **Three review findings were accepted as residual risk, not fixed.** `lineSafe`
+  admits display-hostile non-control runes (U+202E RLO renders the `--apply`
+  disclaimer reversed); the sweep grades `residualAssignment` against a snapshot
+  taken outside the ledger lock, so a concurrent `clean --apply` promoting a row
+  to `recovered` between snapshot and delete would orphan its recovery ref; and
+  interrupt-mid-sweep has no fault injection, mitigated by asserted idempotency.
+  Each is a design change the reviewer owns, and none is a regression — all three
+  are properties the pre-build code shared or did not reach.
+- **Two specs sit unretired on purpose.** `ft148-worktree-orphan-retirement`
+  must not be retired before the reviewer has merged it — retirement deletes the
+  review surface for work they have not seen. `ft91-gate-phase-split` stays
+  unretired for the reason it always has: retiring it destroys the veto surface
+  on stories 4, 5, and 9.
+- **One open learning is parked for the drain.** The `reviews/` pickup artifact
+  was written and deleted inside one session without ever being committed, so it
+  was never the tracked state the phase requires. Net tree state is correct; the
+  rule was not followed. `.bench/learnings.md` carries the entry.
+- **One recovery ref still wants a by-hand look:**
+  `refs/bench/recovery/incident-20260712-ambient-probe` matches no assignment.
 
 ## Next command
 
-`/bench-implement-spec` — in a **fresh mid-tier session**, not this one. Not
-`bench shift`: stories 3, 7, and 8–10 are not cheap-line work, so the spec fails
-`craft-line`'s venue-routing test.
+Push is the reviewer's: `git push origin main`. After the push lands, the
+retirement row fires and the next session runs
+`bench spec retire ft148-worktree-orphan-retirement`, promoting durable content
+first. The drain row (`1 idea, 1 open learning`) belongs to `/bench-what-next`.
 
 ## Shape
 
