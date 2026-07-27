@@ -2,7 +2,7 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — clean, 22 unpushed commits ahead of `origin/main`
+Branch: `main` — clean, in sync with `origin/main`
 Spec: `specs/ft148-worktree-orphan-retirement.md` (Status: staged, approved
 2026-07-27) — the next build
 Gate: green at `08482c6`; every commit since is doc-only
@@ -51,8 +51,11 @@ Gate: green at `08482c6`; every commit since is doc-only
   still wants a by-hand look.
 - **`ft91-gate-phase-split` stays unretired on purpose** — retiring it destroys
   the veto surface on stories 4, 5, and 9.
-- **Push needs `bench gate pin` first** — interactive TTY, so it is the
-  reviewer's.
+- **`origin/main` is ahead of the last gate-verified tree.** The reviewer pushed
+  through `--no-verify` on 2026-07-27, so no gate pin backs anything after
+  `08482c6`. Everything in that span is doc-only — specs, maps, roadmap, this
+  file — so the exposure is a stale verdict rather than unverified code, but the
+  next `bench gate` run is still the first check of this tree.
 
 ## Next command
 
