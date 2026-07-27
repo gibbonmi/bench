@@ -49,9 +49,13 @@ the ~372 s release-evidence probe, the cross-compile stress matrix, and the
 release-only package suites moved behind `bench prep-release`, per-check timing
 became permanent gate output, and `internal/conformance` left the inner suite,
 closing the recursion hazard. Measured after the split: whole gate
-5m50s → 4m36s, dev conformance 328.8 s → 106.9 s. The long pole is now
-`package-core-guard` (~86 s), which runs seven toolchain steps serially inside
-one Go test function, plus the canary phase's check-level redundancy below.
+5m50s → 4m36s, dev conformance 328.8 s → 106.9 s. The fifth arm, canary
+check-scoping, landed 2026-07-26 (spec `ft91-canary-check-scoping`, retired):
+a registry-owned family→check table scopes each conformance fixture's inner
+run to the one check it grades, vacuity baselines are shared per scope group,
+and the ship sweep pays two scoped runs plus one shared baseline instead of
+three full inner gates. The long pole is now `package-core-guard` (~86 s),
+which runs seven toolchain steps serially inside one Go test function.
 
 The next arm is the pipeline refactor. Hoist `checkGoCore`'s compile-and-test
 work out of the conformance test binary into first-class gate phases with
@@ -79,23 +83,13 @@ fixtures, linked repos), so it must split into a host-repo phase plus a
 narrower structural check, and the 19+ package-core-guard fixtures asserting
 its diagnostics move to grading the phase.
 
-Prerequisite of that refactor, not a successor: the canary's residual
-redundancy is check-level, and it is the lever the pipeline idea excludes.
-`phasesForMode` already narrows each fixture's inner run to the single phase
-its family owns, but inside the conformance phase every fixture still runs all
-16 registry checks to observe the one its `CHECK` file names — cheap at dev
-(the ms-scale checks), ruinous at ship, where the 2026-07-26 sweep estimate of
-~12 min wall was rejected outright. Two levers: scope the inner run to the
-named check, not just the phase; and deduplicate by check — N fixtures grading
-one check plus a shared vacuity baseline pay N+1 runs of it, and both ship
-fixtures grade the same check, so ship's cost is irreducible by scoping alone.
-
 Two interim defects ride this row until the refactor absorbs their surfaces.
-`conformanceSubprocessEnv` scrubs `BENCH_CONFORMANCE_ROOT` but not
-`BENCH_CONFORMANCE_TIER`, so the ship flag leaks into the inner `go test` —
-harmless today only because the filtered inner run cannot recurse, but an
-unscrubbed conformance env var is exactly the shape behind the 2026-07-26
-recursive cascade, and the scrub contract should be symmetric. And
+`conformanceSubprocessEnv` scrubs `BENCH_CONFORMANCE_ROOT` but neither
+`BENCH_CONFORMANCE_TIER` nor `BENCH_CONFORMANCE_CHECK`, so the tier flag and
+the new check scope both leak into the inner `go test` — harmless today only
+because the filtered inner run cannot recurse, but an unscrubbed conformance
+env var is exactly the shape behind the 2026-07-26 recursive cascade, and the
+scrub contract should be symmetric across all three. And
 `formatProbeFailure` keeps the last 40 lines of a failed probe while the inner
 `go test` prints ~49 package-summary lines after any failure detail, so the
 gate systematically shows the summary and hides the failing assertion — spill
@@ -238,6 +232,39 @@ Won't-handle line); and the release-only `go test` step the decisions
 promised was silently folded into ship-tier `goCoreTestPackages` — flagged
 for veto, not a defect. Source: the FT91 review, promoted at spec
 retirement.
+
+**FT143 (MEDIUM) — the family→check binding is enforced late and on one
+surface only.** `ft91-canary-check-scoping` story 4's amended seam put the
+unbound-family red in the conformance layer's kit-scoped family check, which
+is correct about audience — the sweep grades adopting repos a kit-owned table
+can never bind — but it lands the red after the cost and only on one path.
+Two consequences. First, an unbound family resolves to no scope, so each of
+its fixtures pays a full unscoped inner gate during the canary phase before
+the conformance phase reds; loud but late, tolerable at dev and worse at ship,
+which is exactly the cost this arm removed. Second, standalone `bench canary
+[root]` runs `canary.Run` alone and never reaches the conformance registry, so
+on that surface an unbound family sweeps unscoped and silent — only `bench
+gate` catches it. Candidate fix: a cheap kit-root-scoped binding assertion
+before the sweep starts, reachable from both entry points, leaving the
+adopting-repo path untouched. Sources: `IDEAS.md`, drained here.
+
+**FT144 (MEDIUM) — kit specs have two audiences and the discipline names
+neither.** The `ft91-canary-check-scoping` build discovered mid-flight that
+story 4's pinned seam was correct for the kit's own tree and a shipped
+regression for every linked repo, because `bench init` scaffolds a seed canary
+family a kit-owned table can never bind. The spec's edge inventory had walked
+its hostile inputs without ever asking which repo was being swept. Two kit
+edits, both built later under `craft-synthesis`. First, a `craft-spec`
+edge-inventory prompt for kit code with two audiences (the Bench tree versus a
+linked repo), since a fail posture that is right for one is a regression for
+the other. Second, a reviewer decision on the workflow: the build preserved
+the story's stated intent while moving the seam it pinned, and shipped that
+under batch approval rather than routing back to `/bench-write-spec` with the
+finding quoted. Either the existing route is right and the build should have
+paid the round-trip, or the workflow wants a named lighter case for
+"intent stands, seam moves" that a build may take under batch approval and
+flag for veto — the reviewer's call, and the decision the row exists to get.
+Source: `.bench/learnings.md`, drained here.
 
 **FT128 (MEDIUM, evidence supplied) — the agent-line guard cannot see a fork's
 real model.** `check-agent-line` decides from the delegation envelope's
@@ -984,10 +1011,10 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 ## Recommended sequence
 
 1. `/bench-shape-idea` — FT91's pipeline arm: the gate becomes a true
-   pipeline. Gate wall-clock is the reviewer's stated dominant cost, the
+   pipeline. Gate wall-clock is the reviewer's stated dominant cost and the
    long pole is now `package-core-guard`'s seven serial toolchain steps
-   inside one check, and the canary check-scoping prerequisite rides the
-   same session. Inputs: the FT91 row and
+   inside one check; the canary check-scoping prerequisite has shipped, so
+   this session is the refactor alone. Inputs: the FT91 row and
    `decisions/gate-concurrency.md`'s watch-outs.
 2. `/bench-write-spec` — FT71, versioned local shift evidence. The remaining
    HIGH bank-track row; the repository-controlled bank evidence requirement

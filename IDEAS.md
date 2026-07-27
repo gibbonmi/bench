@@ -1,2 +1,0 @@
-- 2026-07-26  gate-pipeline: an unbound canary family's fixtures each pay one full inner gate in the canary phase before the conformance family check reds — the red is loud but arrives after the cost. Tolerable at dev, worse at ship; consider a cheaper pre-sweep assertion.
-- 2026-07-26  gate-pipeline: standalone 'bench canary [root]' never runs the conformance family check, so an unbound family sweeps unscoped and silent on that surface — only 'bench gate' catches it.
