@@ -62,7 +62,7 @@ func checkPackageFiles(root string) []string {
 	// this shape check is meant to hold.
 	probe := runAtCleanEnv(root, "npm", "pack", "--dry-run", "--json", "--ignore-scripts")
 	if probe != nil && probe.ExitCode != 0 {
-		diags = append(diags, formatProbeFailure("npm pack --dry-run failed", probe))
+		diags = append(diags, formatProbeFailure("npm pack --dry-run failed", probe, root))
 	} else if probe != nil {
 		buildAssets, err := packagesurface.RequiredBuildPackAssets(root)
 		if err != nil {
@@ -194,39 +194,39 @@ func checkGoCore(root string, tier registry.Tier) []string {
 		// build phase owns the one real write (rationale: gate.BenchkitPhases).
 		tmp, err := os.MkdirTemp("", "bench-build-*")
 		if err != nil {
-			diags = append(diags, formatProbeFailure("go build setup failed", &Probe{Stderr: err.Error()}))
+			diags = append(diags, formatProbeFailure("go build setup failed", &Probe{Stderr: err.Error()}, root))
 		} else {
 			defer os.RemoveAll(tmp)
 			if probe := runAtCleanEnv(root, "bash", buildHelper, root, filepath.Join(tmp, "bench")); probe == nil || probe.ExitCode != 0 {
-				diags = append(diags, formatProbeFailure("go build failed", probe))
+				diags = append(diags, formatProbeFailure("go build failed", probe, root))
 			}
 		}
 	} else if probe := runAtCleanEnv(root, "go", "build", "./..."); probe == nil || probe.ExitCode != 0 {
-		diags = append(diags, formatProbeFailure("go build failed", probe))
+		diags = append(diags, formatProbeFailure("go build failed", probe, root))
 	}
 	if probe := runAtCleanEnv(root, "go", "vet", "./..."); probe == nil || probe.ExitCode != 0 {
-		diags = append(diags, formatProbeFailure("go vet failed", probe))
+		diags = append(diags, formatProbeFailure("go vet failed", probe, root))
 	}
 	testPackages, listProbe, ok := goCoreTestPackages(root, tier)
 	if !ok {
-		diags = append(diags, formatProbeFailure("go list failed", listProbe))
+		diags = append(diags, formatProbeFailure("go list failed", listProbe, root))
 	} else if len(testPackages) > 0 {
 		args := append([]string{"go", "test"}, testPackages...)
 		if probe := runAtCleanEnv(root, args...); probe == nil || probe.ExitCode != 0 {
-			diags = append(diags, formatProbeFailure("go test failed", probe))
+			diags = append(diags, formatProbeFailure("go test failed", probe, root))
 		}
 	}
 	if args := innerConformanceArgs(root); args != nil {
 		if probe := runAtCleanEnv(root, args...); probe == nil || probe.ExitCode != 0 {
-			diags = append(diags, formatProbeFailure("go test failed", probe))
+			diags = append(diags, formatProbeFailure("go test failed", probe, root))
 		}
 	}
 	const cleanupRaceTest = "TestConcurrentCleanupRecordsOneTransaction"
 	race := runAtCleanEnv(root, "go", "test", "-race", "-count=1", "-v", "./internal/worktree", "-run", "^"+cleanupRaceTest+"$")
 	if race == nil || race.ExitCode != 0 {
-		diags = append(diags, formatProbeFailure("worktree cleanup race test failed", race))
+		diags = append(diags, formatProbeFailure("worktree cleanup race test failed", race, root))
 	} else if !strings.Contains(race.Stdout, "=== RUN   "+cleanupRaceTest) {
-		diags = append(diags, formatProbeFailure("worktree cleanup race test did not run", race))
+		diags = append(diags, formatProbeFailure("worktree cleanup race test did not run", race, root))
 	}
 	diags = append(diags, crossCompileMatrix(root, buildHelper)...)
 	return diags

@@ -165,7 +165,7 @@ func TestFilteredRunSelectsRealTests(t *testing.T) {
 	h := NewHarness(t)
 	probe := runAtCleanEnv(h.KitRoot, "go", "test", "./"+conformancePackage, "-list", ".*")
 	if probe == nil || probe.ExitCode != 0 {
-		t.Fatalf("listing the conformance tests failed: %s", formatProbeFailure("go test -list failed", probe))
+		t.Fatalf("listing the conformance tests failed: %s", formatProbeFailure("go test -list failed", probe, ""))
 	}
 	inventory := strings.Fields(probe.Stdout)
 	for _, name := range registry.InnerSkipTests {

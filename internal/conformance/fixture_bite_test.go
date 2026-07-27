@@ -439,12 +439,16 @@ func TestRunConformanceChecksExecutableGitMode(t *testing.T) {
 	}
 }
 
-func TestConformanceSubprocessEnvStripsRootOverride(t *testing.T) {
+func TestConformanceSubprocessEnvStripsConformanceControlVars(t *testing.T) {
 	t.Setenv("BENCH_CONFORMANCE_ROOT", "/tmp/outer-root")
+	t.Setenv(registry.ConformanceTierEnv, "ship")
+	t.Setenv(registry.ConformanceCheckEnv, "package-core-guard")
 
 	for _, kv := range conformanceSubprocessEnv() {
-		if strings.HasPrefix(kv, "BENCH_CONFORMANCE_ROOT=") {
-			t.Fatalf("BENCH_CONFORMANCE_ROOT leaked into subprocess env: %q", kv)
+		for _, name := range []string{"BENCH_CONFORMANCE_ROOT", registry.ConformanceTierEnv, registry.ConformanceCheckEnv} {
+			if strings.HasPrefix(kv, name+"=") {
+				t.Fatalf("%s leaked into the probe subprocess env: %q", name, kv)
+			}
 		}
 	}
 }

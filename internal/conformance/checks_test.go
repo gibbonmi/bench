@@ -345,7 +345,11 @@ func conformanceSubprocessEnv() []string {
 	env := make([]string, 0, len(os.Environ()))
 	hasNpmCache := false
 	for _, kv := range os.Environ() {
-		if strings.HasPrefix(kv, "BENCH_CONFORMANCE_ROOT=") {
+		// The scrub is symmetric across every conformance control var: any one
+		// leaking into a probe subprocess is the recursive-cascade shape.
+		if strings.HasPrefix(kv, "BENCH_CONFORMANCE_ROOT=") ||
+			strings.HasPrefix(kv, registry.ConformanceTierEnv+"=") ||
+			strings.HasPrefix(kv, registry.ConformanceCheckEnv+"=") {
 			continue
 		}
 		if strings.HasPrefix(kv, "NPM_CONFIG_CACHE=") && strings.TrimPrefix(kv, "NPM_CONFIG_CACHE=") != "" {

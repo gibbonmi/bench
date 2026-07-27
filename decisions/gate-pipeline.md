@@ -460,9 +460,12 @@ map; any change to the format is its own reviewer decision later.
    `TestCoreSubprocessFailuresUseProbeFormatter` text-scans the composite's
    label inventory and goes red when any label leaves it.
 
-Dependency order: recommendation — slice A first, the canary check-scoping
-prerequisite (#5 + the stray CHECK files), buildable on today's gate; slice
-B, the manifest + DAG runner (#1, #4, #9), independent of A; slice C, the
-`checkGoCore` split with the fixture migration and parity test (#3, #6, #7),
-after both, since its fixtures need B's phases and its scoping wins ride A.
-Slicing stays the reviewer's call.
+Dependency order: confirmed by the reviewer 2026-07-27. Slice A (the canary
+check-scoping prerequisite, #5) shipped 2026-07-26 (spec
+`ft91-canary-check-scoping`, retired). Next is slice B, the manifest + DAG
+runner (#1, #4, #9); then slice C, the `checkGoCore` split with the fixture
+migration and parity test (#3, #6, #7) — C's spec also carries FT143's cheap
+kit-root family→check binding assertion (reviewer-bundled 2026-07-27), so the
+registry rework cannot reintroduce the late red on either entry point. The
+two interim FT91 defects (conformance env-scrub symmetry, probe-output spill)
+land ahead of both slices as a reviewer-approved direct fix-and-gate pass.
