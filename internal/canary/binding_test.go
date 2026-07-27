@@ -48,6 +48,33 @@ func TestSweepRefusesUnboundFamilyBeforeAnyRun(t *testing.T) {
 	})
 }
 
+// TestSweepBindingAssertionSkipsWithoutTheWrapperExport covers the shapes under which
+// the kit's own assertion silently does not run. The wrapper exports BENCH_KIT as an
+// absolute path; anything else is some other caller, so the sweep falls through to the
+// adopting-repo behavior rather than refusing a tree whose families a kit-owned table
+// will never carry. Every other test here sets the variable to a real kit, so this is
+// the side no other assertion reaches.
+func TestSweepBindingAssertionSkipsWithoutTheWrapperExport(t *testing.T) {
+	root := t.TempDir()
+	fixture(t, canaryFixture(root, "unbound-family", "orphan"), "")
+
+	for name, kit := range map[string]string{
+		"empty":    "",
+		"relative": filepath.Base(root),
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Setenv("BENCH_KIT", kit)
+			calls, err := countedSweep(t, root)
+			if err != nil {
+				t.Fatalf("SweepTier err = %v, want the unbound family swept rather than refused", err)
+			}
+			if calls == 0 {
+				t.Error("sweep ran no inner gates, want the fixture and its baseline graded")
+			}
+		})
+	}
+}
+
 // TestSweepBindingAssertionResolvesSymlinks pins the comparison both sides go through.
 // bin/bench.sh derives BENCH_KIT with a physical cd while the sweep normalizes its root
 // with filepath.Abs alone, so a raw string compare makes a symlinked kit checkout read

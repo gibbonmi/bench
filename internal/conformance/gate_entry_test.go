@@ -17,30 +17,8 @@ func TestRootConformance(t *testing.T) {
 	h := NewHarness(t)
 	// The scope env is passed through verbatim: any normalising here would let a stale
 	// or misspelled value slide into a silent full run instead of the driver's red.
-	for _, diag := range RunConformance(root, h.KitRoot, entryTier(os.Getenv(registry.ConformanceTierEnv)), os.Getenv(registry.ConformanceCheckEnv)) {
+	for _, diag := range RunConformance(root, h.KitRoot, registry.TierFor(os.Getenv(registry.ConformanceTierEnv)), os.Getenv(registry.ConformanceCheckEnv)) {
 		t.Errorf("gate: %s", diag)
-	}
-}
-
-// entryTier reads the tier this entry point grades. The resolution belongs to the
-// registry, which owns the env var and the tier vocabulary alike, so nothing here
-// restates that contract.
-var entryTier = registry.TierFor
-
-func TestEntryTierDefaultsToDev(t *testing.T) {
-	for _, test := range []struct {
-		value string
-		want  registry.Tier
-	}{
-		{"", registry.Dev},
-		{"Ship", registry.Dev},
-		{"dev", registry.Dev},
-		{"anything", registry.Dev},
-		{string(registry.Ship), registry.Ship},
-	} {
-		if got := entryTier(test.value); got != test.want {
-			t.Errorf("entryTier(%q) = %q, want %q", test.value, got, test.want)
-		}
 	}
 }
 

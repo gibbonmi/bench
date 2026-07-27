@@ -13,7 +13,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
@@ -28,9 +27,9 @@ const cleanupRaceTest = "TestConcurrentCleanupRecordsOneTransaction"
 const gateGoUsage = "usage: bench gate-go <gofmt|test|race|conformance-suite> [root]"
 
 // GateGoCommand is the `bench gate-go <step> [root]` plumbing command. Exit 0 is a
-// green step, 1 a red one, and 2 a usage error — an unrecognized step is never a
-// silent success, because a typo in a phase manifest would otherwise grade nothing
-// while reporting green.
+// green step, 1 a red one, 2 a usage error, and 3 an omitted root that no git worktree
+// resolves. An unrecognized step is never a silent success, because a typo in a phase
+// manifest would otherwise grade nothing while reporting green.
 func GateGoCommand(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 || len(args) > 2 {
 		fmt.Fprintln(stderr, gateGoUsage)
@@ -99,18 +98,22 @@ func CoreTestPackages(root string, tier registry.Tier) ([]string, string, error)
 
 // ConformanceSuiteArgv is the argv for the filtered conformance run, the one that
 // keeps the conformance package's own suite in the oracle after the core enumeration
-// drops it. It is nil for a root carrying no such package — linked repos and the
-// minimal fixtures with a go.mod — where the invocation would report a failure about
-// a package that was never there.
+// drops it. It is nil for a root that declares no conformance entry point — linked
+// repos and the minimal fixtures with a go.mod — where the invocation would report a
+// failure about a suite that was never there. The declaration, not the directory, is
+// what the probe asks for: any repo may keep a package at that path, and only the entry
+// point marks the one this run implements.
 func ConformanceSuiteArgv(root string) []string {
-	if !isDir(filepath.Join(root, filepath.FromSlash(registry.ConformancePackage))) {
+	if !declaresTest(conformancePackageDir(root), registry.RootConformanceTest) {
 		return nil
 	}
 	return []string{"go", "test", "./" + registry.ConformancePackage, "-skip", registry.InnerSkipPattern()}
 }
 
-// gofmtStep keeps the label the conformance check emitted before the step became a
-// phase, so a fixture's expectation and a reader's vocabulary survive the move.
+// gofmtStep reds on the files `gofmt -l` names, which it cannot do on its own: the
+// listing is a green exit with output. The verdict goes to stderr, where every other
+// red in this file writes, so a caller reading a step's stdout for the tool's own
+// output never finds a policy line folded into it.
 func gofmtStep(root string, stdout, stderr io.Writer) int {
 	listed, combined, err := stepOutput(root, "gofmt", "-l", ".")
 	if err != nil {
@@ -118,12 +121,26 @@ func gofmtStep(root string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, combined)
 		return 1
 	}
-	files := strings.Fields(listed)
+	files := listedFiles(listed)
 	if len(files) == 0 {
 		return 0
 	}
-	fmt.Fprintln(stdout, "gofmt: unformatted Go files: "+strings.Join(files, " "))
+	fmt.Fprintln(stderr, "gofmt: unformatted Go files: "+strings.Join(files, " "))
 	return 1
+}
+
+// listedFiles splits a one-path-per-line tool listing. Splitting on whitespace instead
+// would report a path containing a space as two paths that do not exist, and neither
+// would name the file a reader has to go fix. A final line with no newline after it
+// still names a file, so the split is on the separator rather than on a terminator.
+func listedFiles(listed string) []string {
+	var files []string
+	for _, line := range strings.Split(listed, "\n") {
+		if line != "" {
+			files = append(files, line)
+		}
+	}
+	return files
 }
 
 func coreTestStep(root string, stdout, stderr io.Writer) int {
@@ -176,6 +193,13 @@ func runStep(root string, argv []string, stdout, stderr io.Writer) int {
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	err := cmd.Run()
+	// A tool that never started (ProcessState nil) wrote to neither stream, so without
+	// this the phase reds carrying no account of itself — the one shape a reader cannot
+	// diagnose from the output.
+	if err != nil && cmd.ProcessState == nil {
+		fmt.Fprintf(stderr, "%s failed to start: %v\n", argv[0], err)
+		return 1
+	}
 	if code := processExitCode(cmd, err); code != 0 {
 		return 1
 	}
@@ -198,9 +222,4 @@ func stepOutput(root string, argv ...string) (out, combined string, err error) {
 		combined += "\n"
 	}
 	return stdout.String(), combined + stderr.String(), err
-}
-
-func isDir(path string) bool {
-	info, err := os.Stat(path)
-	return err == nil && info.IsDir()
 }

@@ -176,13 +176,11 @@ func checkRepoOnlyPackageClaims(root string) []string {
 	return diags
 }
 
-// checkGoToolchain is what survives of the old checkGoCore after gofmt, the throwaway
-// build validation, vet, the core `go test`, the filtered conformance suite, and the
-// worktree race test became gate phases of their own. The two things left are the ones
-// no phase can own: a toolchain absent from PATH is the condition under which every
-// probed phase silently declines to materialize, so the diagnostic naming it has to
-// come from a check that runs without Go; and the cross-compile matrix stays ship-tier,
-// which the dev phase table does not reach. Both grade any root cheaply.
+// checkGoToolchain grades the two Go facts no gate phase can own. A toolchain absent
+// from PATH is the condition under which every probed phase silently declines to
+// materialize, so the diagnostic naming it has to come from a check that runs without
+// Go. The cross-compile matrix is ship-tier, which the dev phase table does not reach.
+// Both grade any root cheaply.
 func checkGoToolchain(root string) []string {
 	if !exists(filepath.Join(root, "go.mod")) {
 		return nil
@@ -193,11 +191,10 @@ func checkGoToolchain(root string) []string {
 	return crossCompileMatrix(root, filepath.Join(root, "scripts", "go-build.sh"))
 }
 
-// TestResidualCheckBuildsNothing pins the deletion of the throwaway build validation.
-// The gate's build phase is now the single build, so the residual check must reach no
-// build helper at all — a deletion that left the probe behind passes every other test
-// in the package, and a probe writing to a throwaway path passes an assertion about
-// dist/bench alone.
+// TestResidualCheckBuildsNothing keeps the gate's build phase the single build of a
+// graded root. A second build here costs a full compile on every run and races the
+// phase for dist/bench; an assertion about dist/bench alone would miss it, because a
+// build aimed at a throwaway path still pays for itself.
 func TestResidualCheckBuildsNothing(t *testing.T) {
 	root := t.TempDir()
 	writeFixtureFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
@@ -217,10 +214,10 @@ func TestResidualCheckBuildsNothing(t *testing.T) {
 	}
 }
 
-// TestResidualCheckReportsAbsentToolchain keeps the one diagnostic that outlives the
-// steps it used to introduce. Without it a host with no Go grades green on a tree whose
-// compiled core is load-bearing, because every phase that would have noticed is gated
-// on the same absent toolchain.
+// TestResidualCheckReportsAbsentToolchain keeps the only diagnostic a host with no Go
+// can produce. Without it such a host grades green on a tree whose compiled core is
+// load-bearing, because every phase that would have noticed is gated on the same absent
+// toolchain.
 func TestResidualCheckReportsAbsentToolchain(t *testing.T) {
 	root := t.TempDir()
 	writeFixtureFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")

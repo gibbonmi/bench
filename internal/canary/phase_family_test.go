@@ -14,7 +14,7 @@ import (
 // phase every other family resolves to. The phase name itself is asserted, since a
 // fixture routed to the wrong phase still reds — for the wrong reason, and forever.
 func TestSweepRoutesPhaseNamedFamilies(t *testing.T) {
-	families := []string{"build", "gofmt", "vet", "test", "race", "conformance-suite"}
+	families := []string{PhaseBuild, PhaseGofmt, PhaseVet, PhaseTest, PhaseRace, PhaseConformanceSuite}
 	root := t.TempDir()
 	for _, family := range families {
 		fixture(t, canaryFixture(root, family, family+"-fx"), "")

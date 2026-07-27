@@ -42,16 +42,30 @@ func FixturePhase(family string) string {
 	return "conformance"
 }
 
+// The toolchain gate phases, named here because the fixture router and the phase table
+// must agree on every one of them and only one of the two can own the string. This
+// package is the owner: internal/gate imports it to build the table, and the edge does
+// not run the other way, so a name typed a second time in the table could disagree with
+// the routing forever.
+const (
+	PhaseBuild            = "build"
+	PhaseGofmt            = "gofmt"
+	PhaseVet              = "vet"
+	PhaseTest             = "test"
+	PhaseRace             = "race"
+	PhaseConformanceSuite = "conformance-suite"
+)
+
 // phaseFamilies are the family names that name a gate phase rather than a conformance
 // check. A fixture under one of them runs only the phase that owns its failure, instead
 // of the every-non-canary-phase run a family the gate cannot attribute has to pay for.
 var phaseFamilies = map[string]bool{
-	"build":             true,
-	"gofmt":             true,
-	"vet":               true,
-	"test":              true,
-	"race":              true,
-	"conformance-suite": true,
+	PhaseBuild:            true,
+	PhaseGofmt:            true,
+	PhaseVet:              true,
+	PhaseTest:             true,
+	PhaseRace:             true,
+	PhaseConformanceSuite: true,
 }
 
 // expectFileName holds the diagnostic a fixture's inner gate must emit. Its presence
@@ -201,13 +215,16 @@ func SweepTier(root string, tier registry.Tier, runner Runner) error {
 // there is bound to no check, ahead of the first inner gate — an unbound family costs a
 // full unscoped run per fixture, so reporting it afterwards means paying for it first.
 //
-// BENCH_KIT is the discriminator: the wrapper always exports it, so equality means the
-// kit is grading itself and the kit-owned family table is authoritative, while an unequal
-// or absent value means an adopting repo, whose families that table will never carry and
-// whose correct answer is the unscoped fallback. Both sides resolve through
-// EvalSymlinks first, because bin/bench.sh derives its default with a physical cd while
-// this root is normalized with filepath.Abs alone; a raw compare would make a symlinked
-// kit checkout read as an adopting repo and skip the kit's own assertion silently.
+// BENCH_KIT is the discriminator: the wrapper always exports it as an absolute path, so
+// equality means the kit is grading itself and the kit-owned family table is
+// authoritative. Anything else — unset, empty, relative, or naming another tree — is not
+// that export, so the sweep is grading a repo whose families a kit-owned table will never
+// carry and the assertion stays out of the way. The unscoped fallback that repo already
+// gets is the correct answer there, and refusing on it would red every adopting repo.
+// Both sides resolve through EvalSymlinks first, because bin/bench.sh derives its default
+// with a physical cd while this root is normalized with filepath.Abs alone; a raw compare
+// would make a symlinked kit checkout read as an adopting repo and skip the kit's own
+// assertion silently.
 func assertFamilyBinding(root string) error {
 	kit, err := filepath.EvalSymlinks(os.Getenv("BENCH_KIT"))
 	if err != nil {

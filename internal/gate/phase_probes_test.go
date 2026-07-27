@@ -6,6 +6,7 @@ package gate
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -78,8 +79,8 @@ func TestPhaseTableProbedToolchainPhases(t *testing.T) {
 }
 
 // TestPhaseTableKitOnlyPhasesProbe grades the two phases that exist only for a root
-// carrying what they grade. The race probe requires the test name rather than the
-// directory, because an unrelated internal/worktree package would otherwise get a phase
+// carrying what they grade. Both probes require a declared test name rather than a
+// directory, because an unrelated package at either path would otherwise get a phase
 // that can only red.
 func TestPhaseTableKitOnlyPhasesProbe(t *testing.T) {
 	requireGoToolchain(t)
@@ -113,7 +114,8 @@ func TestPhaseTableKitOnlyPhasesProbe(t *testing.T) {
 
 	suiteRoot := t.TempDir()
 	writeFile(t, filepath.Join(suiteRoot, "go.mod"), "module fixture\n")
-	writeFile(t, filepath.Join(suiteRoot, filepath.FromSlash(registry.ConformancePackage), "doc.go"), "package conformance\n")
+	writeFile(t, filepath.Join(suiteRoot, filepath.FromSlash(registry.ConformancePackage), "suite_test.go"),
+		"package conformance\n\nimport \"testing\"\n\nfunc "+registry.RootConformanceTest+"(t *testing.T) {}\n")
 	suite, ok := phaseNamed(BenchkitPhases(suiteRoot, kit), "conformance-suite")
 	if !ok {
 		t.Fatalf("conformance-suite phase absent for a root carrying %s", registry.ConformancePackage)
@@ -133,6 +135,45 @@ func TestPhaseTableKitOnlyPhasesProbe(t *testing.T) {
 	inner := ConformanceSuiteArgv(suiteRoot)
 	if !reflect.DeepEqual(inner[len(inner)-2:], []string{"-skip", pattern}) {
 		t.Fatalf("gate-go conformance-suite argv = %#v, want it to end in -skip %s", inner, pattern)
+	}
+
+	// A package sitting at the conformance path that declares no entry point is some
+	// other repo's package with the same name. Probing the path instead would hand any
+	// such repo the kit's filtered suite run.
+	strangerSuite := t.TempDir()
+	writeFile(t, filepath.Join(strangerSuite, "go.mod"), "module fixture\n")
+	writeFile(t, filepath.Join(strangerSuite, filepath.FromSlash(registry.ConformancePackage), "suite_test.go"),
+		"package conformance\n\nimport \"testing\"\n\nfunc TestSomethingElse(t *testing.T) {}\n")
+	if _, ok := phaseNamed(BenchkitPhases(strangerSuite, kit), "conformance-suite"); ok {
+		t.Fatalf("conformance-suite phase materialized for a package declaring no %s", registry.RootConformanceTest)
+	}
+	if argv := ConformanceSuiteArgv(strangerSuite); argv != nil {
+		t.Fatalf("ConformanceSuiteArgv = %#v for a package declaring no entry point, want none", argv)
+	}
+}
+
+// TestPhaseProbesReadSyntaxNotBytes closes the false positive a byte scan cannot: a name
+// occurring in a comment or a string literal is not a declaration, and a phase built on
+// one runs a `-run` filter that matches nothing, whose did-it-run guard then reds a repo
+// that declares no such test.
+func TestPhaseProbesReadSyntaxNotBytes(t *testing.T) {
+	requireGoToolchain(t)
+	mention := "package %s\n\nimport \"testing\"\n\n// func %s(t *testing.T) {}\n\nfunc TestOther(t *testing.T) {\n\t_ = \"func %s(\"\n}\n"
+
+	raceRoot := t.TempDir()
+	writeFile(t, filepath.Join(raceRoot, "go.mod"), "module fixture\n")
+	writeFile(t, filepath.Join(raceRoot, "internal", "worktree", "mention_test.go"),
+		fmt.Sprintf(mention, "worktree", cleanupRaceTest, cleanupRaceTest))
+	if _, ok := phaseNamed(BenchkitPhases(raceRoot, "/tmp/kit"), "race"); ok {
+		t.Errorf("race phase materialized for a package that only mentions %s", cleanupRaceTest)
+	}
+
+	suiteRoot := t.TempDir()
+	writeFile(t, filepath.Join(suiteRoot, "go.mod"), "module fixture\n")
+	writeFile(t, filepath.Join(suiteRoot, filepath.FromSlash(registry.ConformancePackage), "mention_test.go"),
+		fmt.Sprintf(mention, "conformance", registry.RootConformanceTest, registry.RootConformanceTest))
+	if _, ok := phaseNamed(BenchkitPhases(suiteRoot, "/tmp/kit"), "conformance-suite"); ok {
+		t.Errorf("conformance-suite phase materialized for a package that only mentions %s", registry.RootConformanceTest)
 	}
 }
 

@@ -47,6 +47,26 @@ func TestFamiliesIsSortedAndComplete(t *testing.T) {
 	}
 }
 
+// TestTierForDefaultsToDev pins the asymmetry that keeps the default un-overridable by
+// accident: only the exact ship name widens a run, so an unset, misspelled, or
+// differently-cased value grades the dev tier instead of quietly reaching ship work.
+func TestTierForDefaultsToDev(t *testing.T) {
+	for _, test := range []struct {
+		value string
+		want  Tier
+	}{
+		{"", Dev},
+		{"Ship", Dev},
+		{"dev", Dev},
+		{"anything", Dev},
+		{string(Ship), Ship},
+	} {
+		if got := TierFor(test.value); got != test.want {
+			t.Errorf("TierFor(%q) = %q, want %q", test.value, got, test.want)
+		}
+	}
+}
+
 func TestFamilyCheckReportsUnboundFamily(t *testing.T) {
 	if _, bound := FamilyCheck("no-such-family"); bound {
 		t.Error("FamilyCheck reported a binding for a family the table does not carry")

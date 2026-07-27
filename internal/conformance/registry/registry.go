@@ -144,10 +144,17 @@ func Names(tier Tier) []string {
 	return names
 }
 
+// RootConformanceTest is the conformance suite's entry point — the test the gate's
+// conformance phase runs, and the declaration a probe looks for to tell a root carrying
+// a real conformance suite from one that merely has a package at the same path. Probes
+// and the skip list read it from here, so the test a probe requires and the test the
+// filtered run excludes cannot come to name different things.
+const RootConformanceTest = "TestRootConformance"
+
 // InnerSkipTests names the conformance tests the gate's filtered inner run excludes.
-// TestRootConformance is the outer run's own entry point, so running it inside the
-// run that implements it is the recursion this list exists to make impossible.
-var InnerSkipTests = []string{"TestRootConformance"}
+// The entry point is the outer run's own, so running it inside the run that implements
+// it is the recursion this list exists to make impossible.
+var InnerSkipTests = []string{RootConformanceTest}
 
 // InnerSkipPattern is the `go test -skip` argument built from InnerSkipTests.
 func InnerSkipPattern() string {

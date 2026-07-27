@@ -13,8 +13,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/toon"
 )
 
 func kitRootForTest(t *testing.T) string {
@@ -222,6 +224,54 @@ func TestGateGoUnknownStep(t *testing.T) {
 	errOut.Reset()
 	if code := GateGoCommand(nil, &out, &errOut); code != 2 {
 		t.Fatalf("no step rc = %d, want 2; stderr=%q", code, errOut.String())
+	}
+}
+
+// TestGateGoWithoutRootOutsideARepo grades the exit code that separates "this step is
+// red" from "this invocation never had a tree to grade". Both argument forms reach it —
+// an omitted root and an empty one — because a manifest that interpolates an unset
+// variable produces the second, and a caller that reads 1 as a red step would report a
+// finding about a tree that was never resolved.
+func TestGateGoWithoutRootOutsideARepo(t *testing.T) {
+	outside := t.TempDir()
+	if _, err := git.Output("-C", outside, "rev-parse", "--show-toplevel"); err == nil {
+		capability.Environment(t, "the temp directory sits inside a git repository")
+	}
+	t.Chdir(outside)
+
+	for name, args := range map[string][]string{
+		"omitted root": {"gofmt"},
+		"empty root":   {"gofmt", ""},
+	} {
+		t.Run(name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			code := GateGoCommand(args, &stdout, &stderr)
+			if code != 3 {
+				t.Fatalf("rc = %d outside a repo, want 3; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+			}
+			if !strings.Contains(stderr.String(), toon.NotInRepo()) {
+				t.Fatalf("stderr = %q, want the not-in-repo diagnostic", stderr.String())
+			}
+		})
+	}
+}
+
+// TestGateGoStepReportsASpawnFailure covers the one red that otherwise carries no
+// account of itself: a tool absent from PATH writes to neither stream, so the phase
+// reds with empty output and nothing names the cause.
+func TestGateGoStepReportsASpawnFailure(t *testing.T) {
+	root := t.TempDir()
+	writeGateGoFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
+	writeGateGoFile(t, filepath.Join(root, "internal", "worktree", "worktree_test.go"),
+		"package worktree\n\nimport \"testing\"\n\nfunc TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {}\n")
+	t.Setenv("PATH", "")
+
+	code, stdout, stderr := runGateGo(t, "race", root)
+	if code != 1 {
+		t.Fatalf("race rc = %d with go off PATH, want 1; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if !strings.Contains(stderr, "failed to start") {
+		t.Fatalf("a step that never spawned reported nothing; stdout=%q stderr=%q", stdout, stderr)
 	}
 }
 

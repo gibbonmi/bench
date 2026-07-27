@@ -3,6 +3,7 @@ package preprelease
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"slices"
 	"strings"
@@ -60,10 +61,10 @@ func TestStepsGradeTheRootTheyWereGiven(t *testing.T) {
 }
 
 // TestStepsRunReleaseOnlyPackages pins the step that keeps internal/preflight,
-// internal/releaseevidence, and internal/publication in ship green. Once the core test
-// run became a gate phase, the conformance step stopped reaching them, and no dev-tier
-// test observes their absence; an end-to-end prep-release run cannot stand in here
-// because the command is blocked on an unrelated guard-enumeration leak.
+// internal/releaseevidence, and internal/publication in ship green. No dev-tier run
+// executes those suites, so nothing else observes this step going missing, and an
+// end-to-end prep-release run cannot stand in here because the command is blocked on an
+// unrelated guard-enumeration leak.
 func TestStepsRunReleaseOnlyPackages(t *testing.T) {
 	root, kit := filepath.Join("elsewhere", "graded root"), filepath.Join("other", "kit")
 	step := stepNamed(t, Steps(root, kit), "core-tests-ship")
@@ -74,6 +75,35 @@ func TestStepsRunReleaseOnlyPackages(t *testing.T) {
 	if !slices.Contains(step.Env, registry.ConformanceTierEnv+"="+string(registry.Ship)) {
 		t.Errorf("the release-only suites step does not ask for the ship tier: %v", step.Env)
 	}
+}
+
+// TestConformanceShipRunsTheStressAssertions pins the `-run` filter as the thing that
+// makes `-tags stress` more than a compile: a filter naming only the entry point builds
+// the stress-tagged files and executes nothing in them, so an assertion that exists on
+// no other surface never runs anywhere. That each name is declared in the conformance
+// package is graded there, where the declarations are.
+func TestConformanceShipRunsTheStressAssertions(t *testing.T) {
+	step := stepNamed(t, Steps("root", "kit"), "conformance-ship")
+	filter := regexp.MustCompile(runFilter(t, step.Argv))
+	if len(ShipConformanceTests) < 2 {
+		t.Fatalf("the ship run names only %v, so the stress assertions compile and never run", ShipConformanceTests)
+	}
+	for _, name := range ShipConformanceTests {
+		if !filter.MatchString(name) {
+			t.Errorf("the ship conformance filter %q does not select %q", filter, name)
+		}
+	}
+}
+
+func runFilter(t *testing.T, argv []string) string {
+	t.Helper()
+	for i, arg := range argv {
+		if arg == "-run" && i+1 < len(argv) {
+			return argv[i+1]
+		}
+	}
+	t.Fatalf("argv carries no -run filter: %v", argv)
+	return ""
 }
 
 // TestRefusalNamesTheCauseAndTheRemedy covers the state the gate reports with no reason

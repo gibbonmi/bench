@@ -46,6 +46,18 @@ const (
 // preflightStep is the stage whose failure has promoted per-phase evidence to attribute.
 const preflightStep = "release-preflight"
 
+// ShipConformanceTests are the conformance tests the ship tier's filtered run executes:
+// the entry point, plus the stress-tagged assertions that no other surface builds. A
+// stress test left out of this list is compiled by the `-tags stress` step and then run
+// by nothing, so it exists without ever executing. Test functions are not importable, so
+// the names are literals — the conformance package grades that each one is declared.
+var ShipConformanceTests = []string{registry.RootConformanceTest, "TestResidualCheckKeepsCrossCompile"}
+
+// ShipConformanceRun is the `go test -run` filter built from ShipConformanceTests.
+func ShipConformanceRun() string {
+	return "^(" + strings.Join(ShipConformanceTests, "|") + ")$"
+}
+
 // requiredTools are the interpreters every ship-tier step reaches through. Resolving
 // them up front is what turns a missing toolchain into a named diagnostic rather than
 // an `exec: not found` surfacing from four levels inside a shell script.
@@ -80,20 +92,19 @@ func Steps(root, kit string) []Step {
 			Argv: []string{"bash", filepath.Join(root, "scripts", "build-artifacts.sh"), root, filepath.Join(root, filepath.FromSlash(ArtifactsDir))},
 		},
 		{
-			// -tags stress is what makes crossCompileMatrix more than a no-op; without
-			// it this step runs a check that silently returns nil. The suite grades no
-			// package suites of its own — the step below is what runs those.
+			// -tags stress is what makes the cross-compile matrix more than a no-op;
+			// without it this step runs a check that silently returns nil. The suite
+			// grades no package suites of its own — the step below is what runs those.
 			Name: "conformance-ship",
-			Argv: append(goTestArgv(kit), "-tags", "stress", "./internal/conformance", "-run", "^TestRootConformance$"),
+			Argv: append(goTestArgv(kit), "-tags", "stress", "./internal/conformance", "-run", ShipConformanceRun()),
 			Env:  []string{"BENCH_CONFORMANCE_ROOT=" + root, registry.ConformanceTierEnv + "=" + string(registry.Ship)},
 		},
 		{
 			// The release-only package suites — internal/preflight,
-			// internal/releaseevidence, internal/publication — are excluded from the
-			// dev tier's package enumeration, and once the core test run became a gate
-			// phase of its own nothing else reached them. This is the only surface that
-			// still does, so without it ship green would cover three fewer suites than
-			// its exit code claims.
+			// internal/releaseevidence, internal/publication — are excluded from the dev
+			// tier's package enumeration, so this ship-tier run is the only surface that
+			// executes them. Without it ship green covers three fewer suites than its
+			// exit code claims.
 			Name: "core-tests-ship",
 			Argv: gate.GateGoArgv(kit, "test", root),
 			Env:  []string{registry.ConformanceTierEnv + "=" + string(registry.Ship)},

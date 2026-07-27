@@ -39,10 +39,11 @@ func crossCompileMatrix(root, buildHelper string) []string {
 	return diags
 }
 
-// TestResidualCheckKeepsCrossCompile is the tripwire for the one thing the toolchain
-// split could drop in silence. Cross-compile is a no-op on the dev tier and owns no
-// canary fixture, so a subtraction that took the matrix call out with the steps around
-// it would leave every other assertion green while ship lost the four-platform matrix.
+// TestResidualCheckKeepsCrossCompile grades that the residual check drives a matrix that
+// works. It runs only under `-tags stress`, where the matrix is not the dev tier's
+// no-op, and prep-release's ship `-run` filter is what executes it. The dev tier's
+// TestResidualCheckCallsCrossCompileMatrix grades the other fact — that the call site is
+// still there — which is all a tier whose matrix returns nil can observe.
 func TestResidualCheckKeepsCrossCompile(t *testing.T) {
 	root := t.TempDir()
 	writeFixtureFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")

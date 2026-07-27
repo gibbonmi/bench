@@ -16,9 +16,8 @@ const (
 	ownerConformance fixtureOwner = "conformance"
 	ownerBehavior    fixtureOwner = "behavior"
 	// ownerPhase is a fixture grading a gate phase rather than a conformance check or a
-	// behavior contract. It carries no retired shell source: these steps were hoisted out
-	// of Go, not out of a gate fragment, so there is no shell twin for the EXPECT to drift
-	// back into.
+	// behavior contract. It names no shell source: a phase runs a Go step, so there is no
+	// retired gate fragment whose message its EXPECT could drift back into.
 	ownerPhase fixtureOwner = "phase"
 )
 
@@ -219,8 +218,8 @@ func TestCanaryFixtureRegistryClassifiesEveryFixture(t *testing.T) {
 		switch phase := canary.FixturePhase(family); {
 		case phase == "contract":
 			wantOwner = ownerBehavior
-		// A family routing to a phase of its own name is a phase family. Asking the
-		// router keeps the phase names in one place instead of listing them again here.
+		// A family routing to a phase of its own name is a phase family. The router owns
+		// the phase names, so asking it beats listing them again here.
 		case phase == family:
 			wantOwner = ownerPhase
 		case phase == "conformance" && familyIsBound(family):
@@ -291,13 +290,12 @@ func TestRetiredConformanceFixturesDoNotLeaveShellTwinMessages(t *testing.T) {
 	}
 }
 
-// presplitPhases are the gate phases that predate the checkGoCore split. Every other
-// phase in the table is a step this split moved out of a conformance check, and each of
-// those has to keep a canary fixture behind it. Naming the four that came before, rather
-// than the ones that moved, is what makes the inventory widen by itself: a phase added
-// later joins the set that must be canaried instead of quietly sitting outside a
-// hand-written list.
-var presplitPhases = map[string]bool{
+// fixtureExemptPhases are the phases whose bite is proved by a surface other than a
+// canary fixture: each of these four drives fixtures rather than being one. Stating the
+// exemptions rather than the obligations is what makes the inventory widen by itself —
+// a phase added later must own a fixture or be exempted here on purpose, instead of
+// quietly sitting outside a hand-written list.
+var fixtureExemptPhases = map[string]bool{
 	"conformance": true,
 	"contract":    true,
 	"shellcheck":  true,
@@ -305,9 +303,9 @@ var presplitPhases = map[string]bool{
 }
 
 // TestEveryMovedStepOwnsAFixture reads the phase table and the fixture tree, and reds
-// when a moved step owns no fixture routed to it. A static step-to-owner mapping would
-// stay green while a migrated EXPECT matched nothing; only the tree side makes an
-// orphaned step visible.
+// when a phase owns no fixture routed to it. A static phase-to-owner mapping would stay
+// green while the fixture behind it matched nothing; only the tree side makes an
+// orphaned phase visible.
 func TestEveryMovedStepOwnsAFixture(t *testing.T) {
 	h := NewHarness(t)
 	covered := map[string]bool{}
@@ -315,7 +313,7 @@ func TestEveryMovedStepOwnsAFixture(t *testing.T) {
 		covered[canary.FixturePhase(filepath.Base(filepath.Dir(path)))] = true
 	}
 	for _, phase := range gate.BenchkitPhases(h.KitRoot, h.KitRoot) {
-		if presplitPhases[phase.Name] || covered[phase.Name] {
+		if fixtureExemptPhases[phase.Name] || covered[phase.Name] {
 			continue
 		}
 		t.Errorf("gate phase %q owns no canary fixture; add one under tests/canary/%s/ so the step stays graded", phase.Name, phase.Name)
