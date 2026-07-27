@@ -182,6 +182,7 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"worktree-lifecycle-safety-bypassed":   behaviorFixture(),
 	"gate-verdict-oracle-binding-bypassed": behaviorFixture(),
 	"gate-verdict-invalidation-bypassed":   behaviorFixture(),
+	"phase-manifest-defect-admitted":       behaviorFixture(),
 }
 
 func conformanceFixture(shellSources ...string) fixtureRegistration {

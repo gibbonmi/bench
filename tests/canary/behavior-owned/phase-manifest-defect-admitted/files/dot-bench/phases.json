@@ -1,0 +1,6 @@
+{
+  "phases": [
+    { "name": "typecheck", "argv": ["true"] },
+    { "name": "contract", "argv": ["true"], "needs": ["typechek"] }
+  ]
+}
