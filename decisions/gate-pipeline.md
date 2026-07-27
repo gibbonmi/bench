@@ -28,10 +28,12 @@ repo keeps meeting and must be decided, not defaulted.
 ### Answer
 Resolved 2026-07-26.
 
-**v1 fields — five:** `name`; `argv` as an exec array (no shell strings, the
+**v1 fields — six:** `name`; `argv` as an exec array (no shell strings, the
 existing Phase contract); `env` pairs; `needs` as dependency edges by phase
-name; `optional` for skip-if-binary-absent. `Serial` disappears — it is the
-degenerate edge build→everything, expressed via `needs`. Timeout stays a
+name; `optional` for skip-if-binary-absent; `dir` — phase working directory
+relative to the graded root, default the root, validated to stay inside it
+(added by #8: regroup-app's frontend phases forced it). `Serial` disappears —
+it is the degenerate edge build→everything, expressed via `needs`. Timeout stays a
 runner concern pending #4; tier stays out (ship-tier manifest membership is
 declared fog); no weight field without a scheduler that reads it.
 
@@ -210,9 +212,9 @@ Resolved 2026-07-26, buildable on today's gate as the prerequisite slice.
 **Scope source:** a registry-owned family→check table, extending the
 `FixturePhase` family→phase convention; a fixture-level `CHECK` file
 overrides, as the two ship fixtures already do. Family membership stays the
-binding and `CHECK` stays written only where it changes the answer. Carries
-an assumption to verify (#6-style, per family): every fixture in a family
-grades that family's mapped check.
+binding and `CHECK` stays written only where it changes the answer. #6
+verified the mapping per emitting code: it holds many-to-one, and the nine
+stray fixtures carry CHECK overrides (see #6).
 
 **Transport:** a new `BENCH_CONFORMANCE_CHECK` env read at the conformance
 entry point, filtering `RunConformance`'s registry loop; the canary sets it
@@ -254,7 +256,35 @@ bucketed inventory. The #7 parity requirement reads off it: every moved step
 must end with ≥1 fixture biting at its destination phase.
 
 ### Answer
-— (open)
+Resolved 2026-07-26; full inventory in
+`decisions/gate-pipeline-fixture-inventory.md` (per-claim citations,
+spot-checked). Headlines: of 39 fixtures, 28 stay with the structural
+residual, 2 are ship, 7 are strays belonging to six other checks, and only 2
+move to new phases — and both die on the move (their EXPECTs are
+`formatProbeFailure` framing no standalone phase emits;
+`go-build-broken`'s tree also lacks the build-phase predicate,
+`scripts/go-build.sh`). gofmt, vet, and race have zero fixtures today, so
+the split creates uncanaried seams unless fixtures are authored in the same
+pass. `TestCoreSubprocessFailuresUseProbeFormatter` text-scans the label
+inventory and breaks the moment a label leaves — mechanical migration
+casualty. Family→check verification: mapping holds per emitter, but
+many-to-one (three families share `docs-currency-workflow`) and
+`compliance-hardening` binds to `canary-inner-compliance`, not the
+same-named kit check.
+
+Decisions taken on the findings: **binding is many-to-one** — scoping needs
+no partition (that is tier's job) — and the 7 stray fixtures without CHECK
+files gain them (the decided override mechanism; no directory moves).
+**Fixtures reach new phases via phase-named top-level families**
+(`tests/canary/build|gofmt|vet|test|race/`), extending the directory
+convention `FixturePhase` already implements, with `phasesForMode`'s owner
+allowlist widened to the phase table's names; the two movers get
+phase-native EXPECTs (tool diagnostics plus the stable `phase <name>: red`
+summary) and `go-build-broken`'s tree gains what the build predicate needs;
+the missing gofmt/vet/race/test fixtures are **authored in the same pass** —
+#7's parity requirement already demands one biting fixture per moved step.
+Rejected: a per-fixture PHASE file (second binding file where the directory
+carries the fact); deferring the new fixtures (ships uncanaried phases).
 
 ## #7: What proves parity — that restaging lost no check?
 
@@ -296,7 +326,26 @@ schema against it on paper and reports where the schema bends. No code — the
 deliverable is the list of schema changes regroup-app forces.
 
 ### Answer
-— (open)
+Resolved 2026-07-26 against `~/workspace/regroup-app` (Python backend via uv
++ TS frontend). Its gate phases: `uv run ruff check`, `uv run mypy`,
+`uv run pytest` at the root, all independent; `npm run build`
+(`tsc --noEmit && vite build`), `npm run test` (vitest), `npm run test:e2e`
+(Playwright, needs the built dist — a real `needs` edge — plus env like
+`REGROUP_E2E_REUSE_DIST=1`), `npm run lint:design` — all run from
+`frontend/`. Composite package scripts stay composite; the manifest points
+at them. Service lifecycle (the e2e backend server) stays inside the phase
+command — the runner never manages services.
+
+**One schema change forced: a `dir` field** — phase working directory
+relative to the graded root, default the root, validated to stay inside it.
+The runner hardcodes cwd=root and argv is an exec array (no shell, no `cd`);
+the alternatives are tool-specific luck (`npm --prefix`) or a wrapper script
+per phase. Adopted into v1 (see #1). **One gap recorded as fog, not v1:**
+only the kit's Go helpers can write capability-skip rows, so a non-Go phase
+(Playwright browsers missing) has no structured skipped-not-green surface;
+`optional` covers absent binaries, everything else is red-on-missing, and
+regroup's own `dev-preflight.sh` diagnoses the host. Everything else in the
+five-field schema held.
 
 ## #9: What happens to the gate's timing and output contract?
 
@@ -313,9 +362,12 @@ map; any change to the format is its own reviewer decision later.
 ## Not yet specified
 
 - Ship-tier phases joining the manifest (`prep-release` as a manifest
-  consumer) — dim until #1 fixes the schema.
+  consumer).
 - How linked repos receive runner upgrades once phase definitions are theirs
   (`bench upgrade` semantics for a project-owned manifest).
+- A cross-language capability-skip surface — a documented skip-line contract
+  or a `bench skip` helper a non-Go phase can exec to report
+  skipped-not-green (#8's gap; `optional` covers absent binaries today).
 
 ## Out of scope
 
@@ -334,3 +386,83 @@ map; any change to the format is its own reviewer decision later.
 - The two interim defects on the FT91 row (`BENCH_CONFORMANCE_TIER` scrub
   symmetry, probe-output spill) — shape already decided there; build work,
   not map fog.
+
+## Handoff
+
+1. **Module boundaries.** `internal/gate` owns the manifest loader/validator,
+   the DAG scheduler that replaces `splitSerialPhases`, the built-in fallback
+   table (gaining go.mod-probed gofmt/vet/test phases), and
+   straggler-naming at the gate deadline. `internal/conformance` owns the
+   residual `package-core-guard` check and the check-filter in
+   `RunConformance`. `internal/conformance/registry` owns the family→check
+   table and the filter-env constant. `internal/canary` owns scope
+   resolution (family/CHECK → env), per-check shared vacuity baselines, and
+   the widened family→phase routing. A new bench plumbing subcommand owns
+   test-phase package enumeration. The kit's `.bench/phases.json` declares
+   the kit-specific phases (worktree race test, filtered conformance suite).
+   `internal/bounds` and the shift/verdict machinery are outside — untouched.
+2. **Contracts.** Manifest: JSON at `.bench/phases.json`, six fields
+   (`name`, `argv` exec-array, `env`, `needs`, `optional`, `dir`
+   default-root inside-root); absent → built-in table, empty or malformed
+   (parse error, duplicate name, dangling/cyclic needs, empty argv,
+   escaping dir) → red naming the defect. Scoping env
+   `BENCH_CONFORMANCE_CHECK`: absent → full tier; unknown name or
+   tier-mismatch → red. Runner output: today's `phase <name>: green|red`
+   summary lines and timing formats unchanged (#9); dependents of a red
+   phase report skipped-with-cause, distinct from red; exit codes
+   0/1/3/124/130 unchanged; on deadline the runner names still-running
+   phases. `.bench/gate.sh` stays the one-line exec entry.
+3. **Deep vs thin.** Deep: the scheduler (hides DAG execution and
+   cancellation), the manifest loader (hides the validation family), the
+   canary scope resolver + baseline grouping, the test-enumeration
+   subcommand (owns exclusion policy). Thin: `gate.sh`, the manifest itself
+   (data), the phase-named family convention.
+4. **Black-box assertables.** Loader: exit code + stderr diagnostic per
+   malformed-manifest class from fixture files. Scheduler (fake runner):
+   needs-respecting order, dependents-cancelled-with-cause, independents
+   complete, straggler naming. Canary (fake `Runner`): each fixture's
+   `RunCall.Env` carries the resolved check var; baseline run count equals
+   the number of check groups present. Parity: the inventory test asserting
+   every moved step has a fixture bound to its destination phase; each new
+   fixture's recorded red. Conformance filter: scoped run executes exactly
+   the named check (timing lines observable).
+5. **Gate attachment.** The kit's own suites run inside the gate's
+   conformance/test phases, so the gate sees every seam above; the canary
+   sweep itself proves fixture routing and scoping bite. Not
+   gate-assertable: the wall-clock outcome — ship evidence is the manual
+   post-change measurement against the 4m36s / `package-core-guard` ~86 s
+   baseline.
+6. **Hostile-input owners.** Malformed-manifest family → loader.
+   Hostile `BENCH_CONFORMANCE_CHECK` values → conformance entry (unknown /
+   tier-mismatch reds). Empty or unknown CHECK file → existing
+   `fixtureTier` posture; unmapped conformance family → sweep error.
+   `dir` escaping the root → loader validation. Duplicate env keys →
+   strip-then-set everywhere (see watch-outs).
+7. **Uncertainty flags.** None blocking. The exact EXPECT strings for the
+   new phase fixtures are settled at build time within the decided rule
+   (tool diagnostic + `phase <name>: red`).
+8. **Rejected alternatives.** Manifest: weight field, per-phase timeout
+   field, tier field, YAML/TOON, generated gate.sh shim, generator-written
+   package lists, static `go test ./...`. Execution: weighted budget,
+   full fail-fast, run-everything-on-red, runner per-phase timeout default.
+   Canary: single full baseline for scoped runs, merging same-check fixture
+   runs, per-fixture PHASE file, relocating stray fixtures, deferring the
+   new-phase fixtures. Silent fallback on any malformed input.
+9. **Domain watch-outs.** The kit's own test suite runs nested inside the
+   gate's conformance phase with the phase env passed through, and Go's exec
+   env has no duplicate-key precedence — every inner env pin must
+   strip-then-set, never append. The gate's build phase materializes only
+   when both `scripts/go-build.sh` and `go.mod` exist in the graded tree — a
+   fixture targeting it must ship both. Conformance-family fixtures are
+   routed by `FixturePhase` and `phasesForMode`'s owner allowlist; a phase
+   name absent from both runs every non-canary phase, so fixture migration
+   and allowlist widening must land together.
+   `TestCoreSubprocessFailuresUseProbeFormatter` text-scans the composite's
+   label inventory and goes red when any label leaves it.
+
+Dependency order: recommendation — slice A first, the canary check-scoping
+prerequisite (#5 + the stray CHECK files), buildable on today's gate; slice
+B, the manifest + DAG runner (#1, #4, #9), independent of A; slice C, the
+`checkGoCore` split with the fixture migration and parity test (#3, #6, #7),
+after both, since its fixtures need B's phases and its scoping wins ride A.
+Slicing stays the reviewer's call.
