@@ -1,6 +1,6 @@
 # FT148 — worktree orphan retirement
 
-Status: staged
+Status: implemented
 
 Compiled from `decisions/worktree-orphan-retirement.md`, written in the same
 session as this draft from the fix shape signed off on 2026-07-27 in
