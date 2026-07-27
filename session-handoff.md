@@ -2,25 +2,33 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — spec staged and approved (`92968c5`), **unpushed**; `git push`
-is hook-blocked for the worker, so the push is the reviewer's own command.
+Branch: `main` — HEAD `fc99aee`, 8 dirty paths, 5 unpushed commits
+Spec: `specs/ft91-canary-check-scoping.md` — implemented, gate-green, unpushed.
+Gate: green at `fc99aee`
 
 ## State
 
-- **`specs/ft91-canary-check-scoping.md` is staged and reviewer-approved** —
-  slice A of the gate-pipeline map (canary check-scoping: registry
-  family→check table, `BENCH_CONFORMANCE_CHECK` env, all-loud fail postures,
-  per-check shared vacuity baselines keyed on check name alone, seven stray
-  CHECK files). Coverage map valid at 16 rows. A Sol falsification pass
-  (Codex CLI, reviewer-granted) blocked the first draft on seven findings;
-  all were verified against the tree and folded in before approval.
+- **ft91-canary-check-scoping is built and landed on `main`, awaiting your
+  merge/push** — five commits `4f046f0`, `f9bb33d`, `95981b9`, `31ab979`,
+  `fc99aee`. All seven stories built; coverage map valid at 17 rows; the gate
+  ran green on every commit. Three review axes produced 12 findings: Standards
+  and Coverage findings are all fixed, one Standards finding was rejected as
+  closed by the spec, and the Spec finding is the amendment below.
+- **Story 4's seam was amended during the build — open to your veto.** The
+  spec placed the unbound-family red in the sweep, during fixture selection.
+  Built that way it reddened every adopting repo, because `bench init`
+  scaffolds a seed canary family a kit-owned table can never bind. The sweep
+  now resolves an unbound family to no scope, and the conformance layer's
+  kit-scoped family check raises the red. The spec records the amendment;
+  `.bench/learnings.md` journals the deviation.
 - **`decisions/gate-pipeline.md` stays closed** — its Handoff carries the
   seams for slices B (manifest + DAG runner) and C (`checkGoCore` split +
-  fixture migration), which spec after A ships.
+  fixture migration), which spec now that A has shipped.
 - **Decisions that stay closed:** baseline grouping key is the resolved check
   name alone (unscoped fixtures share today's single full baseline); the
   live sweep's did-not-bite verdict is the binding's enforcement; no
-  fixture merging; story lines as approved in the spec (six mid, one cheap).
+  fixture merging; the family→check table stays in
+  `internal/conformance/registry` as the imported-by layer.
 - Codex CLI note: `codex exec` must run with stdin closed (`</dev/null`) or
   it blocks reading the pipe forever — cost two dead attempts this session.
 - `bench prep-release` stays shelved — blocked by FT116's race and FT142's
@@ -30,9 +38,9 @@ is hook-blocked for the worker, so the push is the reviewer's own command.
 
 ## Next command
 
-`/bench-implement-spec specs/ft91-canary-check-scoping.md` on a fresh
-mid-tier session. Reviewer-run `git push origin main` when convenient
-(1 commit waiting).
+`/bench-what-next` — the board's leading invocable signal (`drain`): two parked
+ideas and one open learning, all from this build. Push `main` first if you
+accept story 4's amended seam.
 
 ## Shape
 
