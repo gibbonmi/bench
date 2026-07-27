@@ -122,25 +122,6 @@ on a premise the measurement falsified. Inputs: this row,
 `decisions/cost-follows-project-size.md`. Sources: `IDEAS.md`, drained here;
 `decisions/cost-follows-project-size.md`.
 
-**FT146 (HIGH, evidence supplied) — `build-offline-archives.sh` destroys a live
-tree handed to it as `<output-dir>`.** The script validates only that `$output`
-is a real directory, then does `mv "$output" "$backup"; mv "$stage/output"
-"$output"; rm -rf "$backup"` (`scripts/build-offline-archives.sh:134-141`) — it
-never checks the target is disposable. On 2026-07-27 the artifact contract test
-was driven with `BENCH_CONTRACT_ROOT` pointing at a live checkout, and an entire
-`bench` worktree was replaced by nine release tarballs; the commits survived on
-the branch, the working tree did not. This is the only surface in the kit that
-deletes a directory it did not create, which is why it outranks every MEDIUM
-here regardless of how rarely it is invoked. Two halves, and both are wanted:
-the script refuses an `$output` that is a git worktree or that holds anything it
-did not produce, and the artifact contract tests are made structurally unable to
-resolve their output directory to the graded root. Note that the residue is
-still on disk — a pool entry at
-`~/.bench/worktrees/bench-2826441890/220aa857…-72b9811f…` holds the tarballs and
-no git repo, and both `bench worktree release` and `bench worktree clean` fail
-closed on it, so clearing it is a manual reviewer action. Source: `IDEAS.md`,
-drained here.
-
 **FT131 (MEDIUM) — a stale `dist/bench` is trusted by both the contract suites
 and the gate's own phase resolution.** The AXI and runtime contract suites
 drive the built `dist/bench`, not the package under test, so their verdict
@@ -349,12 +330,15 @@ signal that silently stops reporting is worse than one that reports a gap; the
 aggregation should skip the unreadable worktree and name it. The counting face —
 `bench handoff`'s pin block printed "8 dirty paths" twice against a tree with
 exactly one (`git status --porcelain | wc -l` == 1) on `main` at `85c55fc`, with
-the unpushed-commit count correct. The capture guessed staleness; the code says
-otherwise, and the reading to confirm is that the pool's other worktrees
-contributed the remaining seven while the label claims to describe this tree.
-The set is keyed by relative path, so the same file dirty in two worktrees also
-collapses to one — decide what the number is supposed to mean before fixing
-either face. Source: `IDEAS.md`, drained here.
+the unpushed-commit count correct. The capture guessed staleness; staleness is
+now ruled out and the union is confirmed as the cause. Second observation the
+same day, against a tree with *zero* dirty paths: `bench status` still reported
+"8 dirty paths → commit on green", every one of them contributed by other pool
+worktrees. So the count is honest arithmetic over the wrong set, and the action
+text is actively misleading — it names work that is not in this tree and cannot
+be committed from it. The set is keyed by relative path, so the same file dirty
+in two worktrees also collapses to one — decide what the number is supposed to
+mean before fixing either face. Sources: `IDEAS.md`, drained across two runs.
 
 **FT98 (MEDIUM, evidence supplied twice) — one preserve-then-discard primitive;
 three faces.** Three rows were faces of one missing primitive — a sanctioned,
@@ -387,6 +371,46 @@ papercut on a first-class activity in this repo (cf. `tests/canary/`), and a
 scoped single-path revert through the same recoverable primitive replaces
 both the papercut and any guard exemption. Whichever face ships first defines
 the one discard semantics; the others reuse it.
+
+**FT148 (MEDIUM, evidence supplied, fix shape signed off) — a worktree outlives
+the session that cut it, and nothing retires it.** `bench worktree release`
+matches only the exact plaintext request string that created the assignment
+(`internal/worktree/ownership.go:339-346` resolves through
+`intent.FindAssignmentByRequest`), the ledger stores a one-way digest of that
+string, and the harness hook derives it from the session id — so once the
+creating session is gone its worktrees are structurally unreleasable, not
+accidentally so. Reproduced through the accused command 2026-07-27: one
+`--request` refused all 19 live pool worktrees identically with "request,
+assignment, or path mismatch; checkout retained", including the 12 the tool
+itself reported `landed=true`. The pool had accreted since 2026-07-09 and every
+entry was re-preserved at every `bench resume`, so the reviewer read a
+20-line "preserved" wall at each session start. Draining it by hand took a
+staged script and a full session.
+
+Three feeders, and the shape is signed off (2026-07-27). Kit prose orders
+worktree *creation* twelve times for every retirement instruction — `bench
+worktree release` is named in no guidance file at all, only in the CLI
+inventory. Assignments carry no created-at timestamp, no lease, and no reaper,
+and the resume classifier hard-retains `active`. And FT98's landed proof misses
+reshaped commits, so payloads main actually shipped still read as unlanded and
+their recovery refs are retained forever. Fix as signed off: (a) prose — a
+`craft-delegate` close-out duty that the coordinator releases each worktree it
+cut at done-claim acceptance, a retirement owner named in
+`bench-implement-spec`'s stop-short, and the subcommands named in the
+`.bench/BENCH.md` inventory; (b) code — a created-at timestamp plus an
+`orphaned` classifier verdict that `bench resume` surfaces as ready-to-run
+clean commands; (c) the landed-proof half rides FT98 rather than duplicating
+it. Decided and closed: orphans route to `bench worktree clean` by design — a
+request-derivation override for `release` is rejected as voiding the ownership
+model. The prose edits are a `craft-synthesis` build like any other.
+
+Residue this leaves behind, and the second thing the row must answer: after the
+manual drain, 17 assignment rows survive with no tree on disk — 16 `recovered`
+plus one stuck `active` — because nothing today compacts an active record whose
+tree is missing. Ledger rows that outlive their trees are the same accretion one
+layer down. Sources: `IDEAS.md`, drained here; the signed-off investigation in
+`session-handoff.md`. Numbering note: that handoff calls this row "FT147", which
+was already taken; renumbered here.
 
 **FT132 (MEDIUM, evidence supplied) — the roadmap row grammar is undeclared,
 and the parser's malformed verdict proved it.** The absent-versus-empty face
@@ -433,6 +457,22 @@ Not carried here: verifying what a row *claims* about the code
 per-row semantic checking with no mechanical source, and it is the same problem
 FT106 solves for docs — extend that probe to row bodies when it ships rather
 than building a second mechanism.
+
+That parked half now has a demonstrated cost, and a cheaper option than the
+probe it was parked behind. The 2026-07-27 drain promoted an `IDEAS.md` capture
+into a HIGH row and carried the capture's *diagnosis* forward as fact, including
+the half claiming the artifact contract tests resolve their output directory to
+the graded root. The very next phase read the tree and found it false — both
+call sites already used `t.TempDir()` — so half a HIGH row was fiction, and it
+cost that phase a false start into `/bench-write-spec`. The gap bit inside one
+phase transition rather than eventually, which is the evidence the parked half
+lacked. The cheap partial worth weighing against the general prober: a
+`/bench-what-next` rule that a capture's symptom is promoted as evidence while
+its diagnosis is either checked against the tree or written as the capture's
+claim rather than as fact. That rule is prose, needs no new mechanism, and was
+applied by hand in the 2026-07-27 drain — every diagnosis drained there was read
+out of the tree first. Source of this clause: `.bench/learnings.md`, verdicted
+here.
 
 **FT137 (MEDIUM) — `/bench-what-next` gains a restructuring step.** The drain
 only adds and verifies rows, so the board accretes near-duplicates that each
@@ -976,6 +1016,23 @@ on any root carrying the file. Small enough for the light path; the care is in
 the check biting for the right reason, so it is `craft-gate` work rather than a
 one-line regex. Source: `.bench/learnings.md`, verdicted here.
 
+**FT149 (LOW, evidence supplied) — `block-dangerous-git` refuses a branch
+deletion by quoting an operation the caller did not run.** `branchVerdict`
+(`internal/gitguard/verdict.go:74-94`) matches `-d`, `-D`, and `--delete`, which
+is the right scope — any branch deletion outside the `worktree-*` carve-out is
+the reviewer's. But the label is looked up by the fixed key `branch-delete`,
+whose `denyTable` entry hardcodes the string `git branch -D`
+(`gitguard.go:32`), so a plain `git branch -d` is refused with a message naming
+the force form. The two are not the same operation: `-D` discards unmerged work,
+`-d` refuses to, so the refusal overstates what the session tried to do.
+Reproduced through the accused command 2026-07-27: `git branch -d` in the
+envelope returns `BLOCKED: \`git branch -D\``, exit 2. Same misattribution class
+as FT129, one layer cheaper — the block itself is correct, only its account of
+the block is wrong. Fix is to derive the label from the flag the classifier
+already matched, which means the `branch-delete` row's single label becomes a
+`-d`/`-D` pair; keep it single-sourced through `denyTable` rather than
+formatting the string at the call site. Source: `IDEAS.md`, drained here.
+
 **FT140 (LOW) — review residuals that want a verdict, not a build.** Calls
 from two resolution runs outlived their specs' retirement. The recurring one is
 the provenance question, now at three instances: a test that is the real
@@ -1124,14 +1181,17 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT146, the offline-archive script that deletes a live
-   tree. It already destroyed a worktree once, it is the only surface in the kit
-   that removes a directory it did not create, and the fix is small and bounded.
-   A known-destructive path outranks the wall-clock work it interrupted.
-2. `/bench-shape-idea` — FT91's next arm. Slice C landed and its premise was
-   falsified: the whole gate is unchanged at ~4m51s and the critical path is the
-   two `internal/contract/surface` suites, not conformance. The target is known
-   and the shape is not, and the closed pipeline map no longer answers it.
+1. `/bench-write-spec` — FT148, worktree orphan retirement. Its fix shape is
+   already signed off and its cause is confirmed in code, so it is the one ready
+   row on the board; the leak bites every session start and cost a full session
+   to drain by hand. It jumps a HIGH because it is decided work, not because it
+   outranks the bank track.
+2. `/bench-debug` — FT91's next arm. Slice C landed and its premise was
+   falsified: the whole gate is unchanged at ~4m51s and the critical path is
+   `internal/contract/surface/artifact` (~207 s) and `internal/contract/surface`
+   (~178 s), untouched by any of the six arms. The row's own instruction is to
+   ask why those two cost what they cost before assuming a shape, which is a
+   diagnosis rather than a design question.
 3. `/bench-write-spec` — FT71, versioned local shift evidence. The remaining
    HIGH bank-track row; the repository-controlled bank evidence requirement
    keeps it active.
