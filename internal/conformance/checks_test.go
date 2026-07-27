@@ -164,33 +164,10 @@ func checkConformanceCanaryFamilies(kitRoot string) []string {
 			diags = append(diags, fmt.Sprintf("canary conformance family %q has no fixture directories under %s", family, filepath.ToSlash(filepath.Join("tests", "canary", family))))
 		}
 	}
-	return append(diags, unboundCanaryFamilies(kitRoot)...)
-}
-
-// unboundCanaryFamilies reports the kit's conformance family directories the registry
-// table binds to no check. The sweep scopes a fixture's inner gate by its family, and
-// falls back to a full run for a family it cannot resolve — correct for an adopting
-// repo, whose families this table will never carry, but in the kit it is the whole
-// per-fixture cost the scoping removes, paid in silence. Reading the tree is what
-// catches it: the family-presence loop above iterates the table, so a family the table
-// omits is invisible from that side.
-func unboundCanaryFamilies(kitRoot string) []string {
-	canaryDir := filepath.Join(kitRoot, "tests", "canary")
-	entries, err := os.ReadDir(canaryDir)
-	if err != nil {
-		return nil
-	}
-	var diags []string
-	for _, entry := range entries {
-		name := entry.Name()
-		if !entry.IsDir() || !canary.IsConformanceFamily(filepath.Join(canaryDir, name)) {
-			continue
-		}
-		if !familyIsBound(name) {
-			diags = append(diags, fmt.Sprintf("canary conformance family %q is bound to no conformance check; add it to the registry family table so its fixtures run scoped", name))
-		}
-	}
-	return diags
+	// The scan lives in the canary package, which owns the fixture-tree layout and asserts
+	// the same binding at the top of its sweep. One derivation serves both callers, so the
+	// check and the sweep cannot disagree about which family is unbound.
+	return append(diags, canary.UnboundConformanceFamilies(kitRoot)...)
 }
 
 // familyIsBound reports whether the registry's family table binds family to a check,

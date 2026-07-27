@@ -297,19 +297,37 @@ func phasesForMode(phases []Phase, mode phaseMode) []Phase {
 	if mode != innerMode {
 		return phases
 	}
-	owner := os.Getenv(canary.PhaseEnv)
-	if owner != "conformance" && owner != "contract" {
-		owner = ""
-	}
-	filtered := make([]Phase, 0, len(phases))
+	// An inner gate never sweeps fixtures of its own, so the canary phase is gone before
+	// the owner is read — which also keeps it from being an owner an ambient export could
+	// name, leaving a run of no phases that greens on nothing.
+	inner := make([]Phase, 0, len(phases))
 	for _, phase := range phases {
-		if phase.Name == "canary" {
-			continue
+		if phase.Name != "canary" {
+			inner = append(inner, phase)
 		}
-		if owner != "" && phase.Name != owner {
-			continue
+	}
+	// The resolved table is the only list of phase names here: an owner it carries names
+	// a real phase and the fixture runs that one alone, while an owner it does not — a
+	// phase this root lacks, or no owner at all — falls back to the full inner gate. A
+	// second list of names would silently disagree with the table the run is made of.
+	owner := os.Getenv(canary.PhaseEnv)
+	if !carriesPhase(inner, owner) {
+		return inner
+	}
+	filtered := make([]Phase, 0, 1)
+	for _, phase := range inner {
+		if phase.Name == owner {
+			filtered = append(filtered, phase)
 		}
-		filtered = append(filtered, phase)
 	}
 	return filtered
+}
+
+func carriesPhase(phases []Phase, name string) bool {
+	for _, phase := range phases {
+		if phase.Name == name {
+			return true
+		}
+	}
+	return false
 }

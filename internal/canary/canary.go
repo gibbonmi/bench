@@ -35,9 +35,23 @@ func FixturePhase(family string) string {
 		return ""
 	case "behavior-owned":
 		return "contract"
-	default:
-		return "conformance"
 	}
+	if phaseFamilies[family] {
+		return family
+	}
+	return "conformance"
+}
+
+// phaseFamilies are the family names that name a gate phase rather than a conformance
+// check. A fixture under one of them runs only the phase that owns its failure, instead
+// of the every-non-canary-phase run a family the gate cannot attribute has to pay for.
+var phaseFamilies = map[string]bool{
+	"build":             true,
+	"gofmt":             true,
+	"vet":               true,
+	"test":              true,
+	"race":              true,
+	"conformance-suite": true,
 }
 
 // expectFileName holds the diagnostic a fixture's inner gate must emit. Its presence
@@ -53,6 +67,32 @@ const expectFileName = "EXPECT"
 // family the day the marker moves.
 func IsConformanceFamily(dir string) bool {
 	return FixturePhase(filepath.Base(dir)) == "conformance" && !isFlatFixture(dir)
+}
+
+// UnboundConformanceFamilies reports the conformance family directories under kitRoot
+// that the registry's family table binds to no check, one diagnostic apiece. The sweep
+// scopes a fixture's inner gate by its family and falls back to a full run for a family
+// it cannot resolve — correct for an adopting repo, whose families this table will never
+// carry, but in the kit it is the whole per-fixture cost the scoping removes, paid in
+// silence. Reading the tree is what catches it: a caller iterating the table instead sees
+// nothing, because a family the table omits is invisible from that side.
+func UnboundConformanceFamilies(kitRoot string) []string {
+	canaryDir := filepath.Join(kitRoot, "tests", "canary")
+	entries, err := os.ReadDir(canaryDir)
+	if err != nil {
+		return nil
+	}
+	var diags []string
+	for _, entry := range entries {
+		name := entry.Name()
+		if !entry.IsDir() || !IsConformanceFamily(filepath.Join(canaryDir, name)) {
+			continue
+		}
+		if _, bound := registry.FamilyCheck(name); !bound {
+			diags = append(diags, fmt.Sprintf("canary conformance family %q is bound to no conformance check; add it to the registry family table so its fixtures run scoped", name))
+		}
+	}
+	return diags
 }
 
 // isFlatFixture reports whether dir is a legacy flat fixture — one living directly under
@@ -126,6 +166,9 @@ func SweepTier(root string, tier registry.Tier, runner Runner) error {
 	if err != nil {
 		return err
 	}
+	if err := assertFamilyBinding(root); err != nil {
+		return err
+	}
 	all, err := fixtures(filepath.Join(root, "tests", "canary"))
 	if err != nil {
 		return err
@@ -150,6 +193,32 @@ func SweepTier(root string, tier registry.Tier, runner Runner) error {
 	errs := runFixtures(root, fixtures, baselines, gate, env, runner)
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, "\n"))
+	}
+	return nil
+}
+
+// assertFamilyBinding refuses a sweep of the kit's own tree while a conformance family
+// there is bound to no check, ahead of the first inner gate — an unbound family costs a
+// full unscoped run per fixture, so reporting it afterwards means paying for it first.
+//
+// BENCH_KIT is the discriminator: the wrapper always exports it, so equality means the
+// kit is grading itself and the kit-owned family table is authoritative, while an unequal
+// or absent value means an adopting repo, whose families that table will never carry and
+// whose correct answer is the unscoped fallback. Both sides resolve through
+// EvalSymlinks first, because bin/bench.sh derives its default with a physical cd while
+// this root is normalized with filepath.Abs alone; a raw compare would make a symlinked
+// kit checkout read as an adopting repo and skip the kit's own assertion silently.
+func assertFamilyBinding(root string) error {
+	kit, err := filepath.EvalSymlinks(os.Getenv("BENCH_KIT"))
+	if err != nil {
+		return nil
+	}
+	swept, err := filepath.EvalSymlinks(root)
+	if err != nil || swept != kit {
+		return nil
+	}
+	if unbound := UnboundConformanceFamilies(root); len(unbound) > 0 {
+		return errors.New(strings.Join(unbound, "\n"))
 	}
 	return nil
 }
