@@ -2,7 +2,7 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `bd1a7f8`, clean, 10 unpushed commits
+Branch: `main` — clean, 10 unpushed commits ahead of `origin/main`
 Spec: `specs/ft91-gate-phase-split.md` (Status: implemented)
 Gate: green at HEAD — all ten phases
 
