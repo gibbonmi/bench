@@ -22,16 +22,10 @@ func TestRootConformance(t *testing.T) {
 	}
 }
 
-// entryTier reads the tier this entry point grades. The env var and the token that
-// selects the ship surface both come from the registry, so nothing here restates that
-// contract. Any other value is the dev tier: a typo or a stray export must never widen
-// what the gate runs.
-func entryTier(value string) registry.Tier {
-	if value == string(registry.Ship) {
-		return registry.Ship
-	}
-	return registry.Dev
-}
+// entryTier reads the tier this entry point grades. The resolution belongs to the
+// registry, which owns the env var and the tier vocabulary alike, so nothing here
+// restates that contract.
+var entryTier = registry.TierFor
 
 func TestEntryTierDefaultsToDev(t *testing.T) {
 	for _, test := range []struct {

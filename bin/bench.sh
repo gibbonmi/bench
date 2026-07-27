@@ -283,6 +283,7 @@ case "${1-help}" in
   tree-hash) route_binary "$@" ;;
   gate-run) route_binary "$@" ;;
   gate-phases) route_binary "$@" ;;
+  gate-go) route_binary "$@" ;;
   release-preflight) route_binary "$@" ;;
   prep-release) route_binary "$@" ;;
   release)  route_binary "$@" ;;

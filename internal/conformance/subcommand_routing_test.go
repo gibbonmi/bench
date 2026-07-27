@@ -72,6 +72,7 @@ var subcommandRouting = map[string]routingEntry{
 	"structure":    routed("internal/structure"),
 
 	"check-agent-line":    exempt(whyPlumbing),
+	"gate-go":             exempt(whyPlumbing),
 	"gate-phases":         exempt(whyPlumbing),
 	"guard-git":           exempt(whyPlumbing),
 	"resolve-model":       exempt(whyPlumbing),

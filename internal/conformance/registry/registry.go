@@ -39,6 +39,16 @@ const ConformanceTierEnv = "BENCH_CONFORMANCE_TIER"
 // green silence.
 const ConformanceCheckEnv = "BENCH_CONFORMANCE_CHECK"
 
+// TierFor resolves a tier name to a Tier. Anything but the ship name is the dev
+// tier, so a surface that means ship has to say so and an unset or misspelled value
+// can never quietly widen what a run grades.
+func TierFor(name string) Tier {
+	if name == string(Ship) {
+		return Ship
+	}
+	return Dev
+}
+
 // Check is one conformance check's identity. Its position in Checks fixes both the
 // execution order and the timing-line index, so the order is part of the contract.
 type Check struct {

@@ -163,7 +163,7 @@ func recordedScopeRoot(t *testing.T) string {
 // that it leaves the cheap tests the filtered run exists to keep running.
 func TestFilteredRunSelectsRealTests(t *testing.T) {
 	h := NewHarness(t)
-	probe := runAtCleanEnv(h.KitRoot, "go", "test", "./"+conformancePackage, "-list", ".*")
+	probe := runAtCleanEnv(h.KitRoot, "go", "test", "./"+registry.ConformancePackage, "-list", ".*")
 	if probe == nil || probe.ExitCode != 0 {
 		t.Fatalf("listing the conformance tests failed: %s", formatProbeFailure("go test -list failed", probe, ""))
 	}

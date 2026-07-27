@@ -375,6 +375,8 @@ func run(args []string, stdout, stderr *os.File) int {
 		return gate.PinCommand(args[1:], os.Stdin, stdout, stderr)
 	case "gate-phases":
 		return gatePhasesCommand(args[1:], stdout, stderr)
+	case "gate-go":
+		return gate.GateGoCommand(args[1:], stdout, stderr)
 	case "release-preflight":
 		return preflight.Command(args[1:], version, stderr)
 	case "prep-release":
