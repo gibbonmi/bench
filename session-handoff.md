@@ -2,41 +2,49 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — clean, 12 unpushed commits ahead of `origin/main`
+Branch: `main` — clean, 14 unpushed commits ahead of `origin/main`
 Spec: `specs/ft91-gate-phase-split.md` (Status: implemented, deliberately unretired)
-Gate: green as of the last code commit; every commit since has been doc-only
+Gate: green at `08482c6`, all ten phases
 
 ## State
 
-- **The drain is committed and both inboxes are empty.** FT143 left the board
-  (shipped with slice C), FT146 and FT145 opened from `IDEAS.md`, FT147 from the
-  journal, and FT131/FT142/FT144 absorbed what belonged to rows that already
-  existed. 51 rows, no parse failures.
-- **FT91 is retargeted, and this is the finding worth carrying forward.** Slice C
-  did what it said — `package-core-guard` 1m52.8s → 3.3s, the `conformance` phase
-  117.4s → 8.5s — and the whole gate did not move (~4m51s). Conformance was never
-  the critical path. `internal/contract/surface/artifact` (~207 s) and
-  `internal/contract/surface` (~178 s) are, and no arm has touched them. The row's
-  entry is now `/bench-shape-idea`, because `decisions/gate-pipeline.md` is closed
-  on a premise the measurement killed.
-- **One spec deviation is still open for your veto, which is why the spec is
-  unretired.** Stories 4 and 5 shipped as *probed* phases rather than the kit-owned
-  `.bench/phases.json` they named, and story 9 — the manifest itself — is unbuilt
-  as unsatisfiable. Retiring the spec destroys the veto surface, so the drain left
-  it alone.
-- **Push needs `bench gate pin` first.** `.bench/` changed back in slice C and the
-  pre-push hook wants a fresh pin. That command needs an interactive TTY, so it is
-  yours.
-- **A destroyed worktree left residue you have to clear by hand.** A pool entry at
-  `~/.bench/worktrees/bench-2826441890/220aa857…-72b9811f…` holds ~47 MB of release
-  tarballs and no git repo; `bench worktree release` and `bench worktree clean`
-  both fail closed on it, so it is a manual `rm -rf`. Until it goes,
-  `bench status`'s git row reads `git state unavailable` — that blinding is FT145,
-  and the script that caused the destruction is FT146, the top of the sequence.
+- **FT146 is fixed and gate-green.** `scripts/build-offline-archives.sh` now
+  enumerates its output directory before doing any archive work and refuses
+  unless every entry is a regular file named `redbench-*.tar.gz` or
+  `redbench-*.tgz`. Reproduced first through the script itself — a git worktree
+  with a committed file came back as four release archives, exit 0 — and that
+  repro no longer reproduces. Regression test is
+  `TestOfflineArchiveBuildRefusesOutputItCannotAccountFor`.
+- **Half of the FT146 row was a mis-attribution, and it needs your verdict.** The
+  row's second half says the artifact contract tests can resolve their output
+  directory to the graded root. They cannot: both call sites in
+  `artifact_offline_test.go` already use `t.TempDir()`, and the production caller
+  passes a fresh path inside its own mktemp stage, so neither ever reaches the
+  destructive branch. Nothing is left to build there. **The row should come off
+  the board** — that removal is yours, not something the fix commit took.
+- **The original destroying invocation was never pinned.** The defect is proved
+  through the accused script, which is what the fix answers for, but which caller
+  passed a live worktree as `<output-dir>` on 2026-07-27 is still unknown. The
+  capture's "nine tarballs" means it ran in same-output mode. If you want that
+  chased, it is a separate question from the fix.
+- **A stale pool entry still needs your `rm -rf`.**
+  `~/.bench/worktrees/bench-2826441890/220aa857…-72b9811f…` holds the tarballs and
+  no git repo; `bench worktree release` and `bench worktree clean` both fail
+  closed on it. Until it goes, `bench status`'s git row reads
+  `git state unavailable` — that blinding is FT145.
+- **`ft91-gate-phase-split` is still unretired on purpose.** Stories 4 and 5
+  shipped as probed phases instead of the kit-owned `.bench/phases.json` they
+  named, and story 9 is unbuilt as unsatisfiable. Retiring the spec destroys your
+  veto surface.
+- **Push needs `bench gate pin` first** — `.bench/` changed in slice C and the
+  pre-push hook wants a fresh pin. That command needs an interactive TTY, so it
+  is yours.
+- One open `.bench/learnings.md` entry: the drain promoted a capture's diagnosis
+  without checking it, which is what produced the false half of FT146.
 
 ## Next command
 
-`/bench-write-spec`
+`/bench-what-next`
 
 ## Shape
 
