@@ -46,20 +46,26 @@ func runProcessGroupCommand(ctx context.Context, cmd *exec.Cmd) processGroupResu
 	case err := <-done:
 		return processGroupResult{Code: processExitCode(cmd, err)}
 	case <-ctx.Done():
+		// Both flavors of cancellation get the same cascade — a catchable signal, the
+		// grace, then SIGKILL — and differ only in which signal and which code. The
+		// deadline needs the grace most: it fires with no operator watching, so what
+		// the child says on its way out is the only account of what the run was stuck
+		// on, and opening with SIGKILL takes that account with it.
+		notice, code := syscall.SIGINT, 130
 		if errors.Is(context.Cause(ctx), errGateTimeout) {
-			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-			<-done
-			return processGroupResult{Code: 124}
+			notice, code = syscall.SIGTERM, 124
 		}
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
+		_ = syscall.Kill(-cmd.Process.Pid, notice)
 		select {
 		case <-done:
+			// The leader can honor the signal while a descendant it left behind
+			// ignores it; the group kill is what reaps that orphan.
 			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 		case <-time.After(processGroupCancelGrace):
 			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 			<-done
 		}
-		return processGroupResult{Code: 130}
+		return processGroupResult{Code: code}
 	}
 }
 
@@ -114,6 +120,7 @@ func runPhasesSequential(ctx context.Context, root string, phases []Phase, stdou
 		return stdout, stderr, func() {}
 	})
 	if cancelled {
+		reportStragglers(results, stderr)
 		return 130
 	}
 	for _, result := range results {
@@ -135,7 +142,9 @@ func runPhasesConcurrent(ctx context.Context, root string, phases []Phase, skipL
 	})
 	// An interrupt is not a verdict, so a cancelled run publishes neither summaries
 	// nor a gate line — reporting one would grade phases that never got to answer.
+	// Naming the stragglers is not a verdict either: it says what the run was doing.
 	if cancelled {
+		reportStragglers(results, stderr)
 		return 130
 	}
 
@@ -155,6 +164,25 @@ func runPhasesConcurrent(ctx context.Context, root string, phases []Phase, skipL
 	}
 	fmt.Fprintln(stdout, "gate: green")
 	return 0
+}
+
+// reportStragglers names, in table order, the phases a cancellation caught mid-run —
+// the one thing a killed gate can still tell an operator about where it was stuck.
+// Code 130 identifies that set exactly: a phase that settled on its own carries its own
+// real code, and one the interrupt kept from launching carries a skip cause. Reading it
+// off the settled results is also the only race-free way to ask, since a snapshot taken
+// in the launch loop would be stale by the time the reaping loop finished with it.
+func reportStragglers(results []phaseResult, stderr io.Writer) {
+	var names []string
+	for _, result := range results {
+		if result.Code == 130 {
+			names = append(names, result.Name)
+		}
+	}
+	if len(names) == 0 {
+		return
+	}
+	fmt.Fprintln(stderr, "gate: cancelled; still running: "+strings.Join(names, ", "))
 }
 
 // schedule runs phases in dependency order and returns their results in table order,

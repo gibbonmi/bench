@@ -33,6 +33,53 @@ func TestExecuteDeadlineRecordsDistinctTimeout(t *testing.T) {
 	waitForProcessExit(t, child)
 }
 
+// TestGateRunDeadlineTermGraceThenKill grades the kill cascade on the deadline path.
+// A deadline fires with no operator present, so the gate's own dying words are the
+// only account of what the run was stuck on; a teardown that opens with SIGKILL takes
+// that account with it. The stubborn half pins the opposite edge — the grace is a
+// bounded courtesy, not a licence for a gate that ignores TERM to outlive its deadline.
+func TestGateRunDeadlineTermGraceThenKill(t *testing.T) {
+	const trapMarker = "gate-term-trap-ran"
+	for _, tc := range []struct {
+		name    string
+		script  string
+		reports bool
+	}{
+		{
+			name:    "trapping gate speaks before it dies",
+			script:  "#!/usr/bin/env bash\ntrap 'echo " + trapMarker + "; exit 143' TERM\nsleep 30 &\nwait\n",
+			reports: true,
+		},
+		{
+			name:   "gate ignoring TERM is killed after the grace",
+			script: "#!/usr/bin/env bash\ntrap '' TERM\nwhile :; do sleep 0.2; done\n",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := gateTestRepo(t, tc.script, "")
+			old := gateTimeout
+			gateTimeout = 50 * time.Millisecond
+			t.Cleanup(func() { gateTimeout = old })
+
+			var stdout, stderr bytes.Buffer
+			done := make(chan Result, 1)
+			go func() { done <- Execute(context.Background(), root, &stdout, &stderr) }()
+			var got Result
+			select {
+			case got = <-done:
+			case <-time.After(processGroupCancelGrace + 30*time.Second):
+				t.Fatal("deadline path never returned; the grace did not escalate to SIGKILL")
+			}
+			if got.ActionExit != 124 || got.GateExit != 124 {
+				t.Fatalf("deadline result = %+v, want exit 124; stdout=%q stderr=%q", got, stdout.String(), stderr.String())
+			}
+			if tc.reports && !strings.Contains(stdout.String(), trapMarker) {
+				t.Fatalf("gate's TERM trap never ran, so nothing it had to say survived the teardown; stdout=%q stderr=%q", stdout.String(), stderr.String())
+			}
+		})
+	}
+}
+
 func TestExecuteHealthyGateJustBelowDeadlineRecordsOrdinaryGreen(t *testing.T) {
 	root := gateTestRepo(t, "#!/bin/sh\nsleep 0.6\nexit 0\n", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
 	old := gateTimeout

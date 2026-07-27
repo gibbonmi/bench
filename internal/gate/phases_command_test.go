@@ -91,6 +91,89 @@ func TestPhasesCommandSignalHelper(t *testing.T) {
 	os.Exit(PhasesCommand([]string{root}, os.Stdout, os.Stderr))
 }
 
+// TestPhasesCommandNamesStragglersOnTermination grades the straggler report at the
+// command seam, because that is where the signal wiring lives — a runner-only exercise
+// never arms signal.NotifyContext, so it cannot show that an operator's signal reaches
+// the report at all. The two-phase table separates the two ways the report can be
+// wrong: naming nothing, and naming everything. The slow phase publishes its pidfile
+// only once the quick phase's marker exists, so by the time the parent signals, the
+// quick phase has long since exited — its absence from the line is a real exclusion
+// rather than a race the scheduler happened to win.
+func TestPhasesCommandNamesStragglersOnTermination(t *testing.T) {
+	root := t.TempDir()
+	marker := filepath.Join(root, "quick.done")
+	pidfile := filepath.Join(root, "slow.pid")
+	exe, err := os.Executable()
+	if err != nil {
+		t.Fatalf("resolve test executable: %v", err)
+	}
+	cmd := exec.Command(exe, "-test.run=^TestPhasesCommandStragglerHelper$", "--", root)
+	cmd.Env = append(os.Environ(),
+		"BENCH_TEST_PHASES_STRAGGLER_HELPER=1",
+		"BENCH_TEST_PHASES_MARKER="+marker,
+		"BENCH_TEST_PHASES_PIDFILE="+pidfile,
+		"BENCH_TEST_PHASES_ROOT="+root,
+	)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Start(); err != nil {
+		t.Fatalf("start helper: %v", err)
+	}
+	t.Cleanup(func() {
+		if cmd.Process != nil {
+			_ = cmd.Process.Kill()
+		}
+	})
+
+	pid := waitForPIDFile(t, pidfile)
+	t.Cleanup(func() { _ = syscall.Kill(pid, syscall.SIGKILL) })
+	if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
+		t.Fatalf("send SIGTERM to helper: %v", err)
+	}
+	err = cmd.Wait()
+	exitErr, ok := err.(*exec.ExitError)
+	if !ok || exitErr.ExitCode() != 130 {
+		t.Fatalf("helper exit = %v, want code 130; stdout=%q stderr=%q", err, stdout.String(), stderr.String())
+	}
+	const want = "gate: cancelled; still running: slow"
+	if got := stragglerLine(stderr.String()); got != want {
+		t.Fatalf("straggler line = %q, want %q; helper stderr:\n%s", got, want, stderr.String())
+	}
+	waitForProcessExit(t, pid)
+}
+
+func TestPhasesCommandStragglerHelper(t *testing.T) {
+	if os.Getenv("BENCH_TEST_PHASES_STRAGGLER_HELPER") != "1" {
+		return
+	}
+	root := os.Getenv("BENCH_TEST_PHASES_ROOT")
+	marker := os.Getenv("BENCH_TEST_PHASES_MARKER")
+	pidfile := os.Getenv("BENCH_TEST_PHASES_PIDFILE")
+	benchkitPhasesForCommand = func(root, kit string) []Phase {
+		return []Phase{
+			{Name: "quick", Argv: []string{"bash", "-c", `printf done > "$1"`, "bash", marker}},
+			{Name: "slow", Argv: []string{"bash", "-c",
+				`n=0; while [ ! -f "$1" ] && [ "$n" -lt 100 ]; do n=$((n + 1)); sleep 0.05; done
+sleep 30 & echo $! > "$2"; wait`,
+				"bash", marker, pidfile}},
+		}
+	}
+	os.Exit(PhasesCommand([]string{root}, os.Stdout, os.Stderr))
+}
+
+// stragglerLine returns the run's straggler report, or "" when it printed none. It
+// scans for the line rather than matching whole output because phase-prefixed output
+// shares the stream.
+func stragglerLine(stderr string) string {
+	for _, line := range strings.Split(stderr, "\n") {
+		if strings.HasPrefix(line, "gate: cancelled;") {
+			return line
+		}
+	}
+	return ""
+}
+
 func TestPhaseTable(t *testing.T) {
 	root := "/tmp/root with spaces"
 	kit := "/tmp/kit"
