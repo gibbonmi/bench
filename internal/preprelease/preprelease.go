@@ -81,12 +81,22 @@ func Steps(root, kit string) []Step {
 		},
 		{
 			// -tags stress is what makes crossCompileMatrix more than a no-op; without
-			// it this step runs a check that silently returns nil. The ship tier also
-			// widens the suite's own inner `go test` to the release-only packages, so
-			// those suites are graded here rather than by a second invocation.
+			// it this step runs a check that silently returns nil. The suite grades no
+			// package suites of its own — the step below is what runs those.
 			Name: "conformance-ship",
 			Argv: append(goTestArgv(kit), "-tags", "stress", "./internal/conformance", "-run", "^TestRootConformance$"),
 			Env:  []string{"BENCH_CONFORMANCE_ROOT=" + root, registry.ConformanceTierEnv + "=" + string(registry.Ship)},
+		},
+		{
+			// The release-only package suites — internal/preflight,
+			// internal/releaseevidence, internal/publication — are excluded from the
+			// dev tier's package enumeration, and once the core test run became a gate
+			// phase of its own nothing else reached them. This is the only surface that
+			// still does, so without it ship green would cover three fewer suites than
+			// its exit code claims.
+			Name: "core-tests-ship",
+			Argv: gate.GateGoArgv(kit, "test", root),
+			Env:  []string{registry.ConformanceTierEnv + "=" + string(registry.Ship)},
 		},
 		{
 			// Verify mode by design: its index is deliberately insufficient for publish

@@ -240,9 +240,6 @@ func TestPhaseTableBuildPhase(t *testing.T) {
 	writeFile(t, filepath.Join(root, "go.mod"), "module fixture\n")
 
 	phases := BenchkitPhases(root, "/tmp/kit")
-	if len(phases) != 5 {
-		t.Fatalf("BenchkitPhases len = %d, want build + 4: %#v", len(phases), phases)
-	}
 	build := phases[0]
 	if build.Name != "build" || len(build.Needs) != 0 {
 		t.Fatalf("first phase = %#v, want the edge-free build phase", build)
@@ -251,11 +248,16 @@ func TestPhaseTableBuildPhase(t *testing.T) {
 	if !reflect.DeepEqual(build.Argv, want) {
 		t.Fatalf("build argv = %#v, want %#v", build.Argv, want)
 	}
-	// The build phase owns the only write to dist/bench, so every downstream phase
-	// carries the edge that keeps it from grading a half-written binary.
-	for _, phase := range phases[1:] {
+	// The build phase owns the only write to dist/bench, so every phase that execs or
+	// copies that binary carries the edge that keeps it from grading a half-written one.
+	consumers := []string{"conformance", "contract", "shellcheck", "canary"}
+	for _, name := range consumers {
+		phase, ok := phaseNamed(phases, name)
+		if !ok {
+			t.Fatalf("phase %s absent from %#v", name, phaseNames(phases))
+		}
 		if !reflect.DeepEqual(phase.Needs, []string{"build"}) {
-			t.Fatalf("phase %s needs = %#v, want [build]", phase.Name, phase.Needs)
+			t.Fatalf("phase %s needs = %#v, want [build]", name, phase.Needs)
 		}
 	}
 	if got := phaseNames(phasesForMode(phases, innerMode)); got[0] != "build" {
@@ -264,10 +266,12 @@ func TestPhaseTableBuildPhase(t *testing.T) {
 
 	// Every phase owns its edges: one shared backing array would let a caller that
 	// rewrites any phase's Needs silently rewrite the rest of the table's.
-	phases[1].Needs[0] = "rewritten"
-	for _, phase := range phases[2:] {
+	first, _ := phaseNamed(phases, consumers[0])
+	first.Needs[0] = "rewritten"
+	for _, name := range consumers[1:] {
+		phase, _ := phaseNamed(phases, name)
 		if !reflect.DeepEqual(phase.Needs, []string{"build"}) {
-			t.Fatalf("editing one phase's needs rewrote %s's to %#v", phase.Name, phase.Needs)
+			t.Fatalf("editing one phase's needs rewrote %s's to %#v", name, phase.Needs)
 		}
 	}
 
@@ -284,10 +288,13 @@ func TestPhaseTableBuildPhase(t *testing.T) {
 			t.Fatalf("bare root phase %s needs = %#v, want none", phase.Name, phase.Needs)
 		}
 	}
+	// A half-present build surface — either file alone — is not buildable. The go.mod
+	// half still probes the toolchain phases in, so the build phase's own absence is
+	// what this asserts.
 	modOnly := t.TempDir()
 	writeFile(t, filepath.Join(modOnly, "go.mod"), "module fixture\n")
-	if got := BenchkitPhases(modOnly, "/tmp/kit"); len(got) != 4 {
-		t.Fatalf("go.mod-only root BenchkitPhases len = %d, want 4: %#v", len(got), phaseNames(got))
+	if _, ok := phaseNamed(BenchkitPhases(modOnly, "/tmp/kit"), "build"); ok {
+		t.Fatalf("go.mod-only root grew a build phase")
 	}
 	helperOnly := t.TempDir()
 	writeFile(t, filepath.Join(helperOnly, "scripts", "go-build.sh"), "#!/usr/bin/env bash\n")

@@ -7,6 +7,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/contract"
+	"github.com/gibbonmi/bench/internal/gate"
 )
 
 // seededFailure is the test name both isolation rows look for in a run's output. It is
@@ -50,7 +51,7 @@ func TestDevTierFailureRedsBothTiers(t *testing.T) {
 
 // newTierTree is a graded tree the tier split is observable in: a module carrying one
 // package whose single test fails. Nothing else is present, so the only diagnostic that
-// can name the seeded test is the inner `go test` the tier decides the package list for.
+// can name the seeded test is the `go test` whose package list the tier decides.
 func newTierTree(t *testing.T, dir, pkg string) string {
 	t.Helper()
 	root := t.TempDir()
@@ -60,19 +61,22 @@ func newTierTree(t *testing.T, dir, pkg string) string {
 	return root
 }
 
-// gradeTier runs the real conformance entry point over root at one tier — the dev call
-// is byte-for-byte the gate's own conformance phase, and the ship call adds only the
-// tier variable prep-release sets — and returns everything it reported. The output is
-// noisy by construction: a bare module answers for none of the kit's static checks, so
-// the assertion is which tier names the seeded test, not the exit code.
+// gradeTier runs the core test step over root at one tier and returns everything it
+// reported. The tier-dependent package set lives behind `bench gate-go test`, so the dev
+// call is byte-for-byte the gate's own `test` phase and the ship call is byte-for-byte
+// prep-release's core-tests-ship step, which differs only by the tier variable. The argv
+// comes from gate.GateGoArgv rather than a literal because that function is what both of
+// those surfaces call: a row assembling its own argv could keep passing after the real
+// invocation moved. The output is noisy by construction — the exit code answers for the
+// whole enumeration — so the assertion is which tier names the seeded test.
 func gradeTier(t *testing.T, root string, tier registry.Tier) string {
 	t.Helper()
-	kit := contract.SubjectRoot(t)
 	f := contract.NewExecFixtureAt(t, root)
-	env := map[string]string{"BENCH_CONFORMANCE_ROOT": root}
+	env := map[string]string{}
 	if tier == registry.Ship {
 		env[registry.ConformanceTierEnv] = string(registry.Ship)
 	}
-	probe := contract.RunAt(t, f, root, env, "go", "-C", kit, "test", "-count=1", "./internal/conformance", "-run", "^TestRootConformance$")
+	argv := gate.GateGoArgv(contract.SubjectRoot(t), "test", root)
+	probe := contract.RunAt(t, f, root, env, argv[0], argv[1:]...)
 	return probe.Stdout + probe.Stderr
 }

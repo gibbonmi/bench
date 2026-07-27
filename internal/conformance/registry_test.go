@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/canary"
+	"github.com/gibbonmi/bench/internal/gate"
 )
 
 type fixtureOwner string
@@ -14,6 +15,11 @@ type fixtureOwner string
 const (
 	ownerConformance fixtureOwner = "conformance"
 	ownerBehavior    fixtureOwner = "behavior"
+	// ownerPhase is a fixture grading a gate phase rather than a conformance check or a
+	// behavior contract. It carries no retired shell source: these steps were hoisted out
+	// of Go, not out of a gate fragment, so there is no shell twin for the EXPECT to drift
+	// back into.
+	ownerPhase fixtureOwner = "phase"
 )
 
 type fixtureRegistration struct {
@@ -110,8 +116,6 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"missing-files-entry":                    conformanceFixture(".bench/gate-package-contracts.sh"),
 	"kit-only-asset-admitted":                conformanceFixture(".bench/gate-package-contracts.sh"),
 	"kit-only-allowlist-emptied":             conformanceFixture(".bench/gate-package-contracts.sh"),
-	"go-build-broken":                        conformanceFixture(".bench/gate-go-contracts.sh"),
-	"go-test-failing":                        conformanceFixture(".bench/gate-go-contracts.sh"),
 	"guard-describe-boundary-dropped":        conformanceFixture(".bench/gate-axi-contracts.sh"),
 	"default-branch-refabricated":            conformanceFixture(".bench/gate.sh"),
 	"guard-resolver-order-drift":             conformanceFixture(".bench/gate.sh"),
@@ -156,6 +160,13 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"reintroduced-bare-skip":                 conformanceFixture(".bench/gate.sh"),
 	"offline-slice1-operation-omitted":       conformanceFixture(".bench/gate.sh"),
 
+	"go-build-broken":           phaseFixture(),
+	"gofmt-unformatted":         phaseFixture(),
+	"vet-printf-arg":            phaseFixture(),
+	"go-test-failing":           phaseFixture(),
+	"race-cleanup-test-failing": phaseFixture(),
+	"conformance-suite-failing": phaseFixture(),
+
 	"doctor-foreign-clobbered":             behaviorFixture(),
 	"doctor-manager-dir-chosen":            behaviorFixture(),
 	"doctor-stale-silent":                  behaviorFixture(),
@@ -193,6 +204,10 @@ func behaviorFixture() fixtureRegistration {
 	return fixtureRegistration{Owner: ownerBehavior}
 }
 
+func phaseFixture() fixtureRegistration {
+	return fixtureRegistration{Owner: ownerPhase}
+}
+
 func TestCanaryFixtureRegistryClassifiesEveryFixture(t *testing.T) {
 	h := NewHarness(t)
 	fixturesDir := h.KitPath("tests", "canary")
@@ -200,15 +215,16 @@ func TestCanaryFixtureRegistryClassifiesEveryFixture(t *testing.T) {
 
 	for name, path := range fixturePaths {
 		family := filepath.Base(filepath.Dir(path))
-		wantOwner := ownerConformance
-		switch canary.FixturePhase(family) {
-		case "contract":
+		var wantOwner fixtureOwner
+		switch phase := canary.FixturePhase(family); {
+		case phase == "contract":
 			wantOwner = ownerBehavior
-		case "conformance":
-			if !familyIsBound(family) {
-				t.Errorf("canary fixture %q has unknown conformance family %q", name, family)
-				continue
-			}
+		// A family routing to a phase of its own name is a phase family. Asking the
+		// router keeps the phase names in one place instead of listing them again here.
+		case phase == family:
+			wantOwner = ownerPhase
+		case phase == "conformance" && familyIsBound(family):
+			wantOwner = ownerConformance
 		default:
 			t.Errorf("canary fixture %q has unknown conformance family %q", name, family)
 			continue
@@ -218,7 +234,7 @@ func TestCanaryFixtureRegistryClassifiesEveryFixture(t *testing.T) {
 			t.Errorf("canary fixture %q is unclassified", name)
 			continue
 		}
-		if reg.Owner != ownerConformance && reg.Owner != ownerBehavior {
+		if reg.Owner != ownerConformance && reg.Owner != ownerBehavior && reg.Owner != ownerPhase {
 			t.Errorf("canary fixture %q has invalid owner %q", name, reg.Owner)
 		}
 		if reg.Owner == ownerConformance && len(reg.ShellSources) == 0 {
@@ -275,6 +291,37 @@ func TestRetiredConformanceFixturesDoNotLeaveShellTwinMessages(t *testing.T) {
 	}
 }
 
+// presplitPhases are the gate phases that predate the checkGoCore split. Every other
+// phase in the table is a step this split moved out of a conformance check, and each of
+// those has to keep a canary fixture behind it. Naming the four that came before, rather
+// than the ones that moved, is what makes the inventory widen by itself: a phase added
+// later joins the set that must be canaried instead of quietly sitting outside a
+// hand-written list.
+var presplitPhases = map[string]bool{
+	"conformance": true,
+	"contract":    true,
+	"shellcheck":  true,
+	"canary":      true,
+}
+
+// TestEveryMovedStepOwnsAFixture reads the phase table and the fixture tree, and reds
+// when a moved step owns no fixture routed to it. A static step-to-owner mapping would
+// stay green while a migrated EXPECT matched nothing; only the tree side makes an
+// orphaned step visible.
+func TestEveryMovedStepOwnsAFixture(t *testing.T) {
+	h := NewHarness(t)
+	covered := map[string]bool{}
+	for _, path := range canaryFixturePaths(t, h.KitPath("tests", "canary")) {
+		covered[canary.FixturePhase(filepath.Base(filepath.Dir(path)))] = true
+	}
+	for _, phase := range gate.BenchkitPhases(h.KitRoot, h.KitRoot) {
+		if presplitPhases[phase.Name] || covered[phase.Name] {
+			continue
+		}
+		t.Errorf("gate phase %q owns no canary fixture; add one under tests/canary/%s/ so the step stays graded", phase.Name, phase.Name)
+	}
+}
+
 func canaryFixturePaths(t *testing.T, fixturesDir string) map[string]string {
 	t.Helper()
 	families, err := os.ReadDir(fixturesDir)
@@ -286,7 +333,11 @@ func canaryFixturePaths(t *testing.T, fixturesDir string) map[string]string {
 		if !family.IsDir() {
 			continue
 		}
-		if family.Name() != "behavior-owned" && !familyIsBound(family.Name()) {
+		// A family is canonical when the sweep can route it: to a phase (the behavior
+		// family's contract phase, or a phase family named for its own phase) or to a
+		// conformance check the registry binds. Only a family that routes to conformance
+		// and is bound to nothing is unattributable.
+		if canary.FixturePhase(family.Name()) == "conformance" && !familyIsBound(family.Name()) {
 			t.Errorf("canary family %q is not canonical", family.Name())
 		}
 		familyDir := filepath.Join(fixturesDir, family.Name())

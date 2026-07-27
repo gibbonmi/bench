@@ -182,10 +182,12 @@ func TestLineRoutingFixturesBite(t *testing.T) {
 }
 
 func TestPackageCoreAndGuardFixturesBite(t *testing.T) {
+	// go-build-broken and go-test-failing left this list with the steps they grade: the
+	// build and test phases own them now, so their bite is proved by the canary sweep at
+	// those phases rather than by running conformance over their trees, which no longer
+	// compiles or tests anything.
 	fixtures := []string{
 		"missing-files-entry",
-		"go-build-broken",
-		"go-test-failing",
 		"guard-describe-boundary-dropped",
 		"guard-resolver-order-drift",
 		"default-branch-refabricated",

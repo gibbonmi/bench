@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/canary"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/terminal"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -80,6 +81,7 @@ func BenchkitPhases(root, kit string) []Phase {
 		}
 		return []string{"build"}
 	}
+	phases = append(phases, toolchainPhases(root, kit)...)
 	return append(phases, []Phase{
 		{
 			Name:  conformancePhaseName,
@@ -105,6 +107,65 @@ func BenchkitPhases(root, kit string) []Phase {
 			Needs: needsBuild(),
 		},
 	}...)
+}
+
+// toolchainPhases are the Go steps that grade source rather than the built binary. Each
+// materializes only when the graded root carries what the step grades, so a linked repo
+// never reds on a check the kit wrote for itself: gofmt, vet, and test need a Go module
+// and a toolchain to run it, race needs the one test it filters for, and the filtered
+// conformance suite needs the package it filters.
+//
+// None of them declares a need on the build phase. That edge exists only to sequence the
+// writers and readers of root's dist/bench, and none of these steps execs it — they run
+// through `go run`, which the build cache backs. The absent edge is where the split's
+// overlap comes from, so restoring it costs the whole win.
+func toolchainPhases(root, kit string) []Phase {
+	if !isRegularFile(filepath.Join(root, "go.mod")) {
+		return nil
+	}
+	if _, err := exec.LookPath("go"); err != nil {
+		return nil
+	}
+	phases := []Phase{
+		{Name: "gofmt", Argv: GateGoArgv(kit, "gofmt", root)},
+		// vet needs no gate-go wrapper: it exits nonzero on its own findings and carries
+		// no policy the argv would have to encode.
+		{Name: "vet", Argv: []string{"go", "-C", root, "vet", "./..."}},
+		{Name: "test", Argv: GateGoArgv(kit, "test", root)},
+	}
+	if declaresCleanupRaceTest(filepath.Join(root, "internal", "worktree")) {
+		phases = append(phases, Phase{Name: "race", Argv: GateGoArgv(kit, "race", root)})
+	}
+	if isDir(filepath.Join(root, filepath.FromSlash(registry.ConformancePackage))) {
+		phases = append(phases, Phase{Name: "conformance-suite", Argv: GateGoArgv(kit, "conformance-suite", root)})
+	}
+	return phases
+}
+
+// declaresCleanupRaceTest reports whether dir holds a test file declaring the one test
+// the race step runs. The directory alone is not enough: the step's `-run` filter matches
+// nothing in an unrelated package of the same name, and its did-it-run guard would then
+// red a repo that never asked for the check.
+func declaresCleanupRaceTest(dir string) bool {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return false
+	}
+	for _, entry := range entries {
+		// Only a regular file is read: a FIFO named like a test file would block the
+		// open forever, wedging the phase table before the gate starts.
+		if !entry.Type().IsRegular() || !strings.HasSuffix(entry.Name(), "_test.go") {
+			continue
+		}
+		source, err := os.ReadFile(filepath.Join(dir, entry.Name()))
+		if err != nil {
+			continue
+		}
+		if strings.Contains(string(source), "func "+cleanupRaceTest+"(") {
+			return true
+		}
+	}
+	return false
 }
 
 func goTestArgv(kit string, args ...string) []string {

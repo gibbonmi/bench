@@ -59,6 +59,23 @@ func TestStepsGradeTheRootTheyWereGiven(t *testing.T) {
 	}
 }
 
+// TestStepsRunReleaseOnlyPackages pins the step that keeps internal/preflight,
+// internal/releaseevidence, and internal/publication in ship green. Once the core test
+// run became a gate phase, the conformance step stopped reaching them, and no dev-tier
+// test observes their absence; an end-to-end prep-release run cannot stand in here
+// because the command is blocked on an unrelated guard-enumeration leak.
+func TestStepsRunReleaseOnlyPackages(t *testing.T) {
+	root, kit := filepath.Join("elsewhere", "graded root"), filepath.Join("other", "kit")
+	step := stepNamed(t, Steps(root, kit), "core-tests-ship")
+
+	if want := gate.GateGoArgv(kit, "test", root); !slices.Equal(step.Argv, want) {
+		t.Errorf("the release-only suites run as %v, want the shared gate-go argv %v", step.Argv, want)
+	}
+	if !slices.Contains(step.Env, registry.ConformanceTierEnv+"="+string(registry.Ship)) {
+		t.Errorf("the release-only suites step does not ask for the ship tier: %v", step.Env)
+	}
+}
+
 // TestRefusalNamesTheCauseAndTheRemedy covers the state the gate reports with no reason
 // attached — an absent cache — where a message built only from Inspection.Reason would
 // name nothing at all.

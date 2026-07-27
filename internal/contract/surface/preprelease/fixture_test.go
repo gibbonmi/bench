@@ -129,6 +129,7 @@ func newStubKit(t *testing.T) string {
 	contract.WriteFileAbs(t, filepath.Join(pkg, "entry_test.go"), stubEntrySource)
 	contract.WriteFileAbs(t, filepath.Join(pkg, "stress_test.go"), stubStressSource)
 	contract.WriteFileAbs(t, filepath.Join(pkg, "nostress_test.go"), stubNoStressSource)
+	contract.WriteFileAbs(t, filepath.Join(kit, "cmd", "bench", "main.go"), stubGateGoSource)
 
 	binary := filepath.Join(kit, "dist", "bench")
 	if err := os.MkdirAll(filepath.Dir(binary), 0o755); err != nil {
@@ -286,3 +287,10 @@ func TestRootConformance(t *testing.T) {
 const stubStressSource = "//go:build stress\n\npackage conformance\n\nconst stressTag = \"on\"\n"
 
 const stubNoStressSource = "//go:build !stress\n\npackage conformance\n\nconst stressTag = \"off\"\n"
+
+// stubGateGoSource stands in for the `go run ./cmd/bench gate-go test` the ship-tier core
+// test step drives. These rows grade orchestration — that the sequence runs and leaves its
+// evidence — and the real step would enumerate and test the throwaway module's packages,
+// which is cost with nothing to observe. What the step actually asks for is pinned at the
+// Steps seam by TestStepsRunReleaseOnlyPackages, not here.
+const stubGateGoSource = "package main\n\nfunc main() {}\n"

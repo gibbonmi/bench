@@ -205,15 +205,11 @@ func TestCoreSubprocessFailuresUseProbeFormatter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// One label survives the toolchain split: every Go step that used to run here now
+	// streams its own output from a gate phase, and only the npm pack probe is still a
+	// subprocess this file has to frame.
 	labels := map[string]int{
-		"npm pack --dry-run failed":              1,
-		"go build setup failed":                  1,
-		"go build failed":                        2,
-		"go vet failed":                          1,
-		"go list failed":                         1,
-		"go test failed":                         2,
-		"worktree cleanup race test failed":      1,
-		"worktree cleanup race test did not run": 1,
+		"npm pack --dry-run failed": 1,
 	}
 	text := string(source)
 	total := 0

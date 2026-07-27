@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"testing"
 )
 
 // crossCompileMatrix builds the binary for every platform in scripts/release-plan.json and
@@ -36,4 +37,25 @@ func crossCompileMatrix(root, buildHelper string) []string {
 		}
 	}
 	return diags
+}
+
+// TestResidualCheckKeepsCrossCompile is the tripwire for the one thing the toolchain
+// split could drop in silence. Cross-compile is a no-op on the dev tier and owns no
+// canary fixture, so a subtraction that took the matrix call out with the steps around
+// it would leave every other assertion green while ship lost the four-platform matrix.
+func TestResidualCheckKeepsCrossCompile(t *testing.T) {
+	root := t.TempDir()
+	writeFixtureFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
+	writeFixtureFile(t, filepath.Join(root, "scripts", "release-plan.json"),
+		`{"targets":[{"goos":"linux","goarch":"amd64"}]}`+"\n")
+	// A helper that refuses every target: the assertion is that the matrix is reached,
+	// not that a real cross-compile succeeds, and a real one would cost four builds.
+	writeFixtureFile(t, filepath.Join(root, "scripts", "go-build.sh"),
+		"#!/usr/bin/env bash\nexit 1\n")
+
+	diags := checkGoToolchain(root)
+
+	if !containsDiagnostic(diags, "cross-compile failed: linux/amd64") {
+		t.Fatalf("residual check no longer reaches the cross-compile matrix: %#v", diags)
+	}
 }

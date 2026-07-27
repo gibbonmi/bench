@@ -12,7 +12,6 @@ import (
 
 	kitpayload "github.com/gibbonmi/bench"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
-	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/guards"
 	"github.com/gibbonmi/bench/internal/packagesurface"
 )
@@ -20,7 +19,7 @@ import (
 func checkPackageCoreAndGuards(root string, tier registry.Tier) []string {
 	var diags []string
 	diags = append(diags, checkPackageFiles(root)...)
-	diags = append(diags, checkGoCore(root, tier)...)
+	diags = append(diags, checkGoToolchain(root)...)
 	diags = append(diags, checkReleaseWorkflow(root)...)
 	diags = append(diags, checkNativeRuntimeWorkflow(root)...)
 	diags = append(diags, checkReleasePreflight(root)...)
@@ -177,85 +176,60 @@ func checkRepoOnlyPackageClaims(root string) []string {
 	return diags
 }
 
-func checkGoCore(root string, tier registry.Tier) []string {
+// checkGoToolchain is what survives of the old checkGoCore after gofmt, the throwaway
+// build validation, vet, the core `go test`, the filtered conformance suite, and the
+// worktree race test became gate phases of their own. The two things left are the ones
+// no phase can own: a toolchain absent from PATH is the condition under which every
+// probed phase silently declines to materialize, so the diagnostic naming it has to
+// come from a check that runs without Go; and the cross-compile matrix stays ship-tier,
+// which the dev phase table does not reach. Both grade any root cheaply.
+func checkGoToolchain(root string) []string {
 	if !exists(filepath.Join(root, "go.mod")) {
 		return nil
 	}
 	if _, err := exec.LookPath("go"); err != nil {
 		return []string{"go.mod present but no Go toolchain on PATH — the compiled core is load-bearing; install Go"}
 	}
-	var diags []string
-	if probe := runAtCleanEnv(root, "gofmt", "-l", "."); probe != nil && strings.TrimSpace(probe.Stdout) != "" {
-		diags = append(diags, "gofmt: unformatted Go files: "+strings.Join(strings.Fields(probe.Stdout), " "))
-	}
-	buildHelper := filepath.Join(root, "scripts", "go-build.sh")
-	if exists(buildHelper) {
-		// Throwaway output path, never root's dist/bench — the gate's serial
-		// build phase owns the one real write (rationale: gate.BenchkitPhases).
-		tmp, err := os.MkdirTemp("", "bench-build-*")
-		if err != nil {
-			diags = append(diags, formatProbeFailure("go build setup failed", &Probe{Stderr: err.Error()}, root))
-		} else {
-			defer os.RemoveAll(tmp)
-			if probe := runAtCleanEnv(root, "bash", buildHelper, root, filepath.Join(tmp, "bench")); probe == nil || probe.ExitCode != 0 {
-				diags = append(diags, formatProbeFailure("go build failed", probe, root))
-			}
-		}
-	} else if probe := runAtCleanEnv(root, "go", "build", "./..."); probe == nil || probe.ExitCode != 0 {
-		diags = append(diags, formatProbeFailure("go build failed", probe, root))
-	}
-	if probe := runAtCleanEnv(root, "go", "vet", "./..."); probe == nil || probe.ExitCode != 0 {
-		diags = append(diags, formatProbeFailure("go vet failed", probe, root))
-	}
-	testPackages, listOutput, err := gate.CoreTestPackages(root, tier)
-	if err != nil {
-		diags = append(diags, formatProbeFailure("go list failed", &Probe{Stderr: strings.TrimSpace(listOutput + "\n" + err.Error())}, root))
-	} else if len(testPackages) > 0 {
-		args := append([]string{"go", "test"}, testPackages...)
-		if probe := runAtCleanEnv(root, args...); probe == nil || probe.ExitCode != 0 {
-			diags = append(diags, formatProbeFailure("go test failed", probe, root))
-		}
-	}
-	if args := gate.ConformanceSuiteArgv(root); args != nil {
-		if probe := runAtCleanEnv(root, args...); probe == nil || probe.ExitCode != 0 {
-			diags = append(diags, formatProbeFailure("go test failed", probe, root))
-		}
-	}
-	const cleanupRaceTest = "TestConcurrentCleanupRecordsOneTransaction"
-	race := runAtCleanEnv(root, "go", "test", "-race", "-count=1", "-v", "./internal/worktree", "-run", "^"+cleanupRaceTest+"$")
-	if race == nil || race.ExitCode != 0 {
-		diags = append(diags, formatProbeFailure("worktree cleanup race test failed", race, root))
-	} else if !strings.Contains(race.Stdout, "=== RUN   "+cleanupRaceTest) {
-		diags = append(diags, formatProbeFailure("worktree cleanup race test did not run", race, root))
-	}
-	diags = append(diags, crossCompileMatrix(root, buildHelper)...)
-	return diags
+	return crossCompileMatrix(root, filepath.Join(root, "scripts", "go-build.sh"))
 }
 
-func TestCheckGoCoreDoesNotWriteRootDistBench(t *testing.T) {
+// TestResidualCheckBuildsNothing pins the deletion of the throwaway build validation.
+// The gate's build phase is now the single build, so the residual check must reach no
+// build helper at all — a deletion that left the probe behind passes every other test
+// in the package, and a probe writing to a throwaway path passes an assertion about
+// dist/bench alone.
+func TestResidualCheckBuildsNothing(t *testing.T) {
 	root := t.TempDir()
 	writeFixtureFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
 	writeFixtureFile(t, filepath.Join(root, "cmd", "bench", "main.go"), "package main\n\nfunc main() {}\n")
-	// Records the output path it was handed instead of building, so the assertion
-	// reads the real argv checkGoCore passes to the helper.
+	// Records the invocation instead of building, so the assertion reads whether the
+	// check reached the helper at all rather than what it asked it to produce.
 	writeFixtureFile(t, filepath.Join(root, "scripts", "go-build.sh"),
 		"#!/usr/bin/env bash\nprintf '%s\\n' \"$2\" > \"$1/recorded-out\"\n")
 
-	diags := checkGoCore(root, registry.Dev)
-	for _, diag := range diags {
-		if strings.Contains(diag, "go build failed") {
-			t.Fatalf("build helper probe went red: %#v", diags)
-		}
-	}
-	recorded := strings.TrimSpace(readIfExists(filepath.Join(root, "recorded-out")))
-	if recorded == "" {
-		t.Fatal("build helper was not invoked")
-	}
-	if strings.HasPrefix(recorded, root) {
-		t.Fatalf("build output path %q is inside the tree under grade; the gate's serialized build phase owns the real dist/bench write", recorded)
+	checkGoToolchain(root)
+
+	if recorded := strings.TrimSpace(readIfExists(filepath.Join(root, "recorded-out"))); recorded != "" {
+		t.Fatalf("residual check invoked the build helper (output path %q); the gate's build phase owns the only build", recorded)
 	}
 	if exists(filepath.Join(root, "dist", "bench")) {
-		t.Fatal("checkGoCore wrote the graded root's dist/bench")
+		t.Fatal("residual check wrote the graded root's dist/bench")
+	}
+}
+
+// TestResidualCheckReportsAbsentToolchain keeps the one diagnostic that outlives the
+// steps it used to introduce. Without it a host with no Go grades green on a tree whose
+// compiled core is load-bearing, because every phase that would have noticed is gated
+// on the same absent toolchain.
+func TestResidualCheckReportsAbsentToolchain(t *testing.T) {
+	root := t.TempDir()
+	writeFixtureFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
+	t.Setenv("PATH", "")
+
+	diags := checkGoToolchain(root)
+
+	if !containsDiagnostic(diags, "go.mod present but no Go toolchain on PATH") {
+		t.Fatalf("residual check lost the absent-toolchain diagnostic: %#v", diags)
 	}
 }
 
