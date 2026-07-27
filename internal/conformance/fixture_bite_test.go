@@ -253,6 +253,45 @@ func TestRunConformanceReportsEmptyCanaryFamily(t *testing.T) {
 	}
 }
 
+// TestRunConformanceReportsUnboundCanaryFamily grades the direction the derived
+// family list cannot see: a family directory on disk that the table does not bind.
+// Its fixtures would each silently run a full inner gate — the cost the scoping
+// exists to remove — so the kit's tree and its table have to agree in both
+// directions. The behavior-owned directory and the legacy flat fixture beside it are
+// not conformance families and must stay unreported.
+func TestRunConformanceReportsUnboundCanaryFamily(t *testing.T) {
+	root := t.TempDir()
+	runGit(t, root, "init")
+	kitRoot := t.TempDir()
+	canaryDir := filepath.Join(kitRoot, "tests", "canary")
+	families := append(registry.Families(), "unbound-family", "behavior-owned")
+	for _, family := range families {
+		if err := os.MkdirAll(filepath.Join(canaryDir, family, "sentinel"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	flat := filepath.Join(canaryDir, "legacy-flat")
+	if err := os.MkdirAll(filepath.Join(flat, "files"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(flat, "EXPECT"), []byte("target\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	diags := RunConformance(root, kitRoot, registry.Dev, "")
+
+	want := `canary conformance family "unbound-family" is bound to no conformance check; add it to the registry family table so its fixtures run scoped`
+	if !containsDiagnostic(diags, want) {
+		t.Fatalf("unbound canary family did not produce diagnostic %q:\n%s", want, strings.Join(diags, "\n"))
+	}
+	joined := strings.Join(diags, "\n")
+	for _, excluded := range []string{"behavior-owned", "legacy-flat"} {
+		if strings.Contains(joined, excluded) {
+			t.Errorf("%q is not a conformance family but was reported:\n%s", excluded, joined)
+		}
+	}
+}
+
 func TestRunConformanceAcceptsHostileRootPath(t *testing.T) {
 	parent := t.TempDir()
 	root := filepath.Join(parent, "root with spaces [glob]")

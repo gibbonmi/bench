@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
@@ -161,6 +162,36 @@ func checkConformanceCanaryFamilies(kitRoot string) []string {
 		}
 		if count == 0 {
 			diags = append(diags, fmt.Sprintf("canary conformance family %q has no fixture directories under %s", family, filepath.ToSlash(filepath.Join("tests", "canary", family))))
+		}
+	}
+	return append(diags, unboundCanaryFamilies(kitRoot)...)
+}
+
+// unboundCanaryFamilies reports the kit's conformance family directories the registry
+// table binds to no check. The sweep scopes a fixture's inner gate by its family, and
+// falls back to a full run for a family it cannot resolve — correct for an adopting
+// repo, whose families this table will never carry, but in the kit it is the whole
+// per-fixture cost the scoping removes, paid in silence. Reading the tree is what
+// catches it: the family-presence loop above iterates the table, so a family the table
+// omits is invisible from that side.
+func unboundCanaryFamilies(kitRoot string) []string {
+	canaryDir := filepath.Join(kitRoot, "tests", "canary")
+	entries, err := os.ReadDir(canaryDir)
+	if err != nil {
+		return nil
+	}
+	var diags []string
+	for _, entry := range entries {
+		name := entry.Name()
+		if !entry.IsDir() || canary.FixturePhase(name) != "conformance" {
+			continue
+		}
+		// A directory carrying its own EXPECT is a legacy flat fixture, not a family.
+		if _, err := os.Stat(filepath.Join(canaryDir, name, "EXPECT")); err == nil {
+			continue
+		}
+		if !isConformanceFamily(name) {
+			diags = append(diags, fmt.Sprintf("canary conformance family %q is bound to no conformance check; add it to the registry family table so its fixtures run scoped", name))
 		}
 	}
 	return diags

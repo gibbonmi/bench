@@ -14,7 +14,7 @@ import (
 // exiting 0 silently.
 func TestRunPrintsCanaryOkOnCleanSweep(t *testing.T) {
 	root := t.TempDir()
-	fixture := canaryFixture(root, "test-family", "mybreak")
+	fixture := canaryFixture(root, mappedFamily, "mybreak")
 	mkdir(t, filepath.Join(fixture, "files"))
 	write(t, filepath.Join(fixture, "EXPECT"), "boom detected\n")
 	write(t, filepath.Join(fixture, "files", "marker.txt"), "x\n")
@@ -54,8 +54,8 @@ func TestSweepRejectsMissingAndEmptyHarness(t *testing.T) {
 
 func TestSweepRejectsMalformedFixtures(t *testing.T) {
 	root := t.TempDir()
-	missingExpect := canaryFixture(root, "test-family", "missing-expect")
-	missingFiles := canaryFixture(root, "test-family", "missing-files")
+	missingExpect := canaryFixture(root, mappedFamily, "missing-expect")
+	missingFiles := canaryFixture(root, mappedFamily, "missing-files")
 	mkdir(t, filepath.Join(missingExpect, "files"))
 	mkdir(t, missingFiles)
 	write(t, filepath.Join(missingFiles, "EXPECT"), "target\n")
@@ -75,7 +75,7 @@ func TestSweepRejectsMalformedFixtures(t *testing.T) {
 
 func TestSweepRejectsVacuousExpect(t *testing.T) {
 	root := t.TempDir()
-	fixture := canaryFixture(root, "test-family", "generic")
+	fixture := canaryFixture(root, mappedFamily, "generic")
 	mkdir(t, filepath.Join(fixture, "files"))
 	write(t, filepath.Join(fixture, "EXPECT"), "generic failure\n")
 
@@ -91,7 +91,7 @@ func TestSweepRejectsVacuousExpect(t *testing.T) {
 
 func TestSweepMaterializesFixtureAndRequiresTargetedBite(t *testing.T) {
 	root := t.TempDir()
-	fixture := canaryFixture(root, "test-family", "dot-restore")
+	fixture := canaryFixture(root, mappedFamily, "dot-restore")
 	mkdir(t, filepath.Join(fixture, "files", "dot-bench", "hooks"))
 	mkdir(t, filepath.Join(fixture, "files", "nested", "dot-codex"))
 	write(t, filepath.Join(fixture, "EXPECT"), "targeted regression\n")
@@ -130,7 +130,7 @@ func TestSweepMaterializesFixtureAndRequiresTargetedBite(t *testing.T) {
 
 func TestSweepReportsDidNotBite(t *testing.T) {
 	root := t.TempDir()
-	fixture := canaryFixture(root, "test-family", "weak")
+	fixture := canaryFixture(root, mappedFamily, "weak")
 	mkdir(t, filepath.Join(fixture, "files"))
 	write(t, filepath.Join(fixture, "EXPECT"), "target\n")
 
@@ -173,7 +173,10 @@ func TestSweepAcceptsLegacyFlatSeedCanary(t *testing.T) {
 
 func TestSweepUsesLiteralFixturePathWithSpacesAndGlobCharacters(t *testing.T) {
 	root := t.TempDir()
-	fixture := canaryFixture(root, "family with spaces [abc]", "fixture * with spaces")
+	// A legacy flat fixture is where a hostile name still fits: family directories
+	// name conformance checks, so the spaces and glob metacharacters live in the
+	// fixture's own base name and the sweep resolves it to no scope.
+	fixture := filepath.Join(root, "tests", "canary", "fixture * with spaces [abc]")
 	mkdir(t, filepath.Join(fixture, "files"))
 	write(t, filepath.Join(fixture, "EXPECT"), "literal path check\n")
 
@@ -195,7 +198,7 @@ func TestSweepUsesLiteralFixturePathWithSpacesAndGlobCharacters(t *testing.T) {
 
 func TestSweepRejectsDuplicateFixtureBaseNames(t *testing.T) {
 	root := t.TempDir()
-	for _, family := range []string{"alpha-family", "bravo-family"} {
+	for _, family := range []string{mappedFamily, secondMappedFamily} {
 		fixture := canaryFixture(root, family, "duplicate")
 		mkdir(t, filepath.Join(fixture, "files"))
 		write(t, filepath.Join(fixture, "EXPECT"), "target\n")
@@ -236,6 +239,16 @@ func (r *recordingRunner) Run(call RunCall) RunResult {
 	}
 	return RunResult{ExitCode: 1, Output: "other failure\n"}
 }
+
+// mappedFamily and secondMappedFamily are conformance families the registry's
+// family table binds. Synthetic trees have to sit under real families: a
+// conformance family the table does not bind is a sweep error, so an invented
+// name reds every sweep these tests drive before it reaches the behavior under
+// test.
+const (
+	mappedFamily       = "package-core-guard"
+	secondMappedFamily = "line-routing"
+)
 
 func canaryFixture(root, family, name string) string {
 	return filepath.Join(root, "tests", "canary", family, name)

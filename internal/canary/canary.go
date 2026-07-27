@@ -113,26 +113,31 @@ func SweepTier(root string, tier registry.Tier, runner Runner) error {
 		return err
 	}
 	if len(fixtures) == 0 {
-		// Nothing to grade, and the vacuity baseline below is a full inner gate run —
+		// Nothing to grade, and the vacuity baselines below are inner gate runs —
 		// too expensive to pay for a tier that owns no fixtures.
 		return nil
 	}
 	gate := filepath.Join(root, ".bench", "gate.sh")
 	env := innerEnv(tier)
 
-	baselineDir, err := os.MkdirTemp("", "bench-canary-empty-*")
+	baselines, err := scopeBaselines(fixtures, gate, env, runner)
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(baselineDir)
-	_ = gitInit(baselineDir)
-	baseline := runner(RunCall{Cwd: baselineDir, Gate: gate, Env: env})
 
-	errs := runFixtures(root, fixtures, baseline.Output, gate, env, runner)
+	errs := runFixtures(root, fixtures, baselines, gate, env, runner)
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, "\n"))
 	}
 	return nil
+}
+
+// selected is one fixture a tier sweeps, paired with the conformance check its inner
+// run is scoped to. An empty scope runs the whole tier: contract and legacy flat
+// fixtures grade surfaces no single conformance check owns.
+type selected struct {
+	dir   string
+	scope string
 }
 
 // checkFileName optionally binds a fixture to the conformance check it grades. Absent,
@@ -140,72 +145,126 @@ func SweepTier(root string, tier registry.Tier, runner Runner) error {
 // binding is written only where it changes the answer.
 const checkFileName = "CHECK"
 
-// fixtureTier reports which tier sweeps a fixture. The fixture never states a tier of
-// its own: it names its check, and the tier is read from the registry entry, so a check
-// that is retiered takes its fixtures with it and the two cannot disagree. A fixture
-// that names a check the registry has since renamed away is an error rather than a
-// silent demotion to dev, where it would report "did not bite" forever. Only absence
-// means dev: a file present but holding no name is an error of its own, since dev is
-// what deleting the file asks for and a blank file is far likelier to be a truncated
-// write than an intent.
-func fixtureTier(fx string) (registry.Tier, error) {
+// fixtureCheck reports which tier sweeps a fixture and which check its CHECK file
+// names. The fixture never states a tier of its own: it names its check, and the tier
+// is read from the registry entry, so a check that is retiered takes its fixtures with
+// it and the two cannot disagree. One read answers both questions for the same reason
+// — the tier and the inner run's scope must not be able to disagree about what the
+// file says. A fixture that names a check the registry has since renamed away is an
+// error rather than a silent demotion to dev, where it would report "did not bite"
+// forever. Only absence means dev and no name: a file present but holding no name is
+// an error of its own, since dev is what deleting the file asks for and a blank file
+// is far likelier to be a truncated write than an intent.
+func fixtureCheck(fx string) (registry.Tier, string, error) {
 	data, err := os.ReadFile(filepath.Join(fx, checkFileName))
 	if errors.Is(err, os.ErrNotExist) {
-		return registry.Dev, nil
+		return registry.Dev, "", nil
 	}
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	name := strings.TrimSpace(string(data))
 	if name == "" {
-		return "", fmt.Errorf("canary fixture '%s' has an empty %s file, which names no check; delete the file to sweep the fixture at the dev tier", filepath.Base(fx), checkFileName)
+		return "", "", fmt.Errorf("canary fixture '%s' has an empty %s file, which names no check; delete the file to sweep the fixture at the dev tier", filepath.Base(fx), checkFileName)
 	}
-	for _, check := range registry.Checks {
-		if check.Name == name {
-			return check.Tier, nil
-		}
+	check, carried := registry.Find(name)
+	if !carried {
+		return "", "", fmt.Errorf("canary fixture '%s' names check %q, which the conformance registry does not carry", filepath.Base(fx), name)
 	}
-	return "", fmt.Errorf("canary fixture '%s' names check %q, which the conformance registry does not carry", filepath.Base(fx), name)
+	return check.Tier, check.Name, nil
 }
 
-// selectTier keeps the fixtures tier sweeps. Membership is tier equality, not the
-// registry's RunsAt superset: the tiers have to partition the harness so that every
-// fixture is swept by exactly one of them, and a fixture belonging to neither is the
-// unswept rot the canary exists to catch.
-func selectTier(fixtures []string, tier registry.Tier) ([]string, error) {
-	var out []string
+// fixtureScope names the one check a fixture's inner gate runs, or nothing for a
+// fixture whose bite needs the full tier. A conformance family's fixtures all grade
+// the check the registry binds the family to, and a fixture's own CHECK file overrides
+// that for the strays living in a family they do not grade.
+//
+// A family the table does not bind falls back to the full inner gate. This sweep runs
+// against every adopting repo, whose family names a kit-owned table will never carry,
+// so the fallback is the only correct answer at this layer. The kit's own unbound
+// family is a red the conformance layer raises instead, where the table and the tree
+// it describes are both in scope.
+func fixtureScope(fx, checkName string) string {
+	family := filepath.Base(filepath.Dir(fx))
+	if FixturePhase(family) != "conformance" {
+		return ""
+	}
+	if checkName != "" {
+		return checkName
+	}
+	scope, _ := registry.FamilyCheck(family)
+	return scope
+}
+
+// selectTier keeps the fixtures tier sweeps, each with its resolved scope. Membership
+// is tier equality, not the registry's RunsAt superset: the tiers have to partition the
+// harness so that every fixture is swept by exactly one of them, and a fixture
+// belonging to neither is the unswept rot the canary exists to catch.
+func selectTier(fixtures []string, tier registry.Tier) ([]selected, error) {
+	var out []selected
 	for _, fx := range fixtures {
-		owner, err := fixtureTier(fx)
+		owner, checkName, err := fixtureCheck(fx)
 		if err != nil {
 			return nil, err
 		}
-		if owner == tier {
-			out = append(out, fx)
+		if owner != tier {
+			continue
 		}
+		out = append(out, selected{dir: fx, scope: fixtureScope(fx, checkName)})
 	}
 	return out, nil
 }
 
-func runFixtures(root string, fixtures []string, baselineOutput, gate string, env []string, runner Runner) []string {
-	errs := make([]string, len(fixtures))
-	jobs := make(chan int)
-	workers := fixtureWorkers(runtime.GOMAXPROCS(0), len(fixtures))
+// scopeBaselines runs one empty-tree gate per scope group the sweep grades, and
+// returns each group's output for the vacuity comparison. A fixture's EXPECT is
+// compared against a run of its own shape: another group's baseline executes different
+// checks, so it would both miss a genuinely vacuous EXPECT and flag a sound one. The
+// key is the resolved check alone, which keeps every unscoped fixture on the single
+// full baseline they share today.
+func scopeBaselines(fixtures []selected, gate string, env []string, runner Runner) (map[string]string, error) {
+	var scopes []string
+	seen := map[string]bool{}
+	for _, fx := range fixtures {
+		if !seen[fx.scope] {
+			seen[fx.scope] = true
+			scopes = append(scopes, fx.scope)
+		}
+	}
 
-	var wg sync.WaitGroup
-	for range workers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for idx := range jobs {
-				errs[idx] = runFixture(root, fixtures[idx], baselineOutput, gate, env, runner)
+	dirs := make([]string, len(scopes))
+	defer func() {
+		for _, dir := range dirs {
+			if dir != "" {
+				os.RemoveAll(dir)
 			}
-		}()
+		}
+	}()
+	for idx := range scopes {
+		dir, err := os.MkdirTemp("", "bench-canary-empty-*")
+		if err != nil {
+			return nil, err
+		}
+		dirs[idx] = dir
+		_ = gitInit(dir)
 	}
-	for idx := range fixtures {
-		jobs <- idx
+
+	outputs := make([]string, len(scopes))
+	eachIndex(len(scopes), func(idx int) {
+		outputs[idx] = runner(RunCall{Cwd: dirs[idx], Gate: gate, Env: scopedEnv(env, scopes[idx])}).Output
+	})
+
+	baselines := make(map[string]string, len(scopes))
+	for idx, scope := range scopes {
+		baselines[scope] = outputs[idx]
 	}
-	close(jobs)
-	wg.Wait()
+	return baselines, nil
+}
+
+func runFixtures(root string, fixtures []selected, baselines map[string]string, gate string, env []string, runner Runner) []string {
+	errs := make([]string, len(fixtures))
+	eachIndex(len(fixtures), func(idx int) {
+		errs[idx] = runFixture(root, fixtures[idx], baselines[fixtures[idx].scope], gate, env, runner)
+	})
 
 	out := errs[:0]
 	for _, err := range errs {
@@ -214,6 +273,29 @@ func runFixtures(root string, fixtures []string, baselineOutput, gate string, en
 		}
 	}
 	return out
+}
+
+// eachIndex runs body over every index below count under the sweep's worker budget,
+// and returns once all of them have finished. Baselines and fixtures share the one
+// budget: an inner gate costs the same either way, and the fixtures cannot start until
+// the baseline of their group has an output to compare against.
+func eachIndex(count int, body func(int)) {
+	jobs := make(chan int)
+	var wg sync.WaitGroup
+	for range fixtureWorkers(runtime.GOMAXPROCS(0), count) {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for idx := range jobs {
+				body(idx)
+			}
+		}()
+	}
+	for idx := range count {
+		jobs <- idx
+	}
+	close(jobs)
+	wg.Wait()
 }
 
 // fixtureWorkers floors at one so a small budget still makes progress, caps at
@@ -230,7 +312,8 @@ func fixtureWorkers(budget, fixtureCount int) int {
 	return workers
 }
 
-func runFixture(root, fx, baselineOutput, gate string, env []string, runner Runner) string {
+func runFixture(root string, fixture selected, baselineOutput, gate string, env []string, runner Runner) string {
+	fx := fixture.dir
 	name := filepath.Base(fx)
 	expectPath := filepath.Join(fx, "EXPECT")
 	filesDir := filepath.Join(fx, "files")
@@ -257,7 +340,7 @@ func runFixture(root, fx, baselineOutput, gate string, env []string, runner Runn
 		return fmt.Sprintf("canary '%s' setup failed: %v", name, err)
 	}
 	_ = gitInit(work)
-	fixtureEnv := append([]string(nil), env...)
+	fixtureEnv := scopedEnv(env, fixture.scope)
 	if phase := FixturePhase(filepath.Base(filepath.Dir(fx))); phase != "" {
 		fixtureEnv = append(fixtureEnv, PhaseEnv+"="+phase)
 	}
@@ -384,16 +467,30 @@ func restoreDotSegments(root string) error {
 	return nil
 }
 
+// scopedEnv is env plus the check an inner gate is scoped to. A run with no scope
+// carries no scope variable at all rather than an empty one, which names no check and
+// reds the inner gate. The copy is what keeps concurrent runs from appending into one
+// shared backing array.
+func scopedEnv(env []string, scope string) []string {
+	out := append([]string(nil), env...)
+	if scope == "" {
+		return out
+	}
+	return append(out, registry.ConformanceCheckEnv+"="+scope)
+}
+
 // innerEnv is the environment every inner gate of a tier's sweep runs under. The tier
 // is pinned rather than inherited: a fixture grades a check its own tier runs, so an
 // inner gate at any other tier skips that check and the fixture reports "did not bite"
-// forever. Every variable set here is scrubbed from the inherited environment first —
-// a strip without its matching set, or a set without its matching strip, hands an
-// ambient export control of what the sweep grades.
+// forever. Every variable an inner gate may carry is scrubbed from the inherited
+// environment here — a strip without its matching set, or a set without its matching
+// strip, hands an ambient export control of what the sweep grades. The phase and the
+// check scope vary per run, so they are stripped here and set by the caller that knows
+// the run's fixture and group.
 func innerEnv(tier registry.Tier) []string {
 	env := make([]string, 0, len(os.Environ())+3)
 	for _, kv := range os.Environ() {
-		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, "BENCH_CANARY_INNER=") || strings.HasPrefix(kv, PhaseEnv+"=") || strings.HasPrefix(kv, registry.ConformanceTierEnv+"=") || strings.HasPrefix(kv, "GOMAXPROCS=") {
+		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, "BENCH_CANARY_INNER=") || strings.HasPrefix(kv, PhaseEnv+"=") || strings.HasPrefix(kv, registry.ConformanceTierEnv+"=") || strings.HasPrefix(kv, registry.ConformanceCheckEnv+"=") || strings.HasPrefix(kv, "GOMAXPROCS=") {
 			continue
 		}
 		env = append(env, kv)

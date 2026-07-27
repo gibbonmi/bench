@@ -43,25 +43,25 @@ func TestFixtureTierMatchesCheckTier(t *testing.T) {
 	if len(dev)+len(ship) != len(all) {
 		t.Fatalf("tiers do not partition the harness: %d dev + %d ship != %d fixtures", len(dev), len(ship), len(all))
 	}
-	union := append(append([]string(nil), dev...), ship...)
+	union := append(fixtureDirs(dev), fixtureDirs(ship)...)
 	slices.Sort(union)
 	if !slices.Equal(union, all) {
 		t.Fatalf("tier selections do not reconstruct the fixture list")
 	}
 
 	for _, fx := range dev {
-		tier, err := fixtureTier(fx)
+		tier, _, err := fixtureCheck(fx.dir)
 		if err != nil {
-			t.Fatalf("%s: %v", fx, err)
+			t.Fatalf("%s: %v", fx.dir, err)
 		}
 		if tier != registry.Dev {
-			t.Errorf("dev sweep selected %s, whose tier is %q", filepath.Base(fx), tier)
+			t.Errorf("dev sweep selected %s, whose tier is %q", filepath.Base(fx.dir), tier)
 		}
 	}
 
 	var shipNames []string
 	for _, fx := range ship {
-		shipNames = append(shipNames, filepath.Base(fx))
+		shipNames = append(shipNames, filepath.Base(fx.dir))
 	}
 	slices.Sort(shipNames)
 	want := slices.Clone(shipFixtures)
@@ -93,14 +93,14 @@ func TestFixtureTierResolution(t *testing.T) {
 	root := t.TempDir()
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			fx := canaryFixture(root, "test-family", tc.name)
+			fx := canaryFixture(root, mappedFamily, tc.name)
 			mkdir(t, filepath.Join(fx, "files"))
 			write(t, filepath.Join(fx, "EXPECT"), "target-"+tc.name+"\n")
 			if !tc.absent {
 				write(t, filepath.Join(fx, checkFileName), tc.check)
 			}
 
-			tier, err := fixtureTier(fx)
+			tier, _, err := fixtureCheck(fx)
 			if tc.wantErr != "" {
 				if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
 					t.Errorf("got (%q, %v), want a diagnostic naming %q", tier, err, tc.wantErr)
@@ -118,10 +118,10 @@ func TestFixtureTierResolution(t *testing.T) {
 // stopping at the helper: each tier's runner sees its own fixtures and no others.
 func TestSweepTierRunsOnlyItsOwnTier(t *testing.T) {
 	root := t.TempDir()
-	plain := canaryFixture(root, "test-family", "plain")
+	plain := canaryFixture(root, mappedFamily, "plain")
 	mkdir(t, filepath.Join(plain, "files"))
 	write(t, filepath.Join(plain, "EXPECT"), "target-plain\n")
-	shipped := canaryFixture(root, "test-family", "shipped")
+	shipped := canaryFixture(root, mappedFamily, "shipped")
 	mkdir(t, filepath.Join(shipped, "files"))
 	write(t, filepath.Join(shipped, "EXPECT"), "target-shipped\n")
 	write(t, filepath.Join(shipped, "CHECK"), shipCheckName(t)+"\n")
@@ -160,10 +160,10 @@ func TestSweepTierRunsOnlyItsOwnTier(t *testing.T) {
 func TestSweepTierPinsInnerTier(t *testing.T) {
 	t.Setenv(registry.ConformanceTierEnv, "ambient")
 	root := t.TempDir()
-	plain := canaryFixture(root, "test-family", "plain")
+	plain := canaryFixture(root, mappedFamily, "plain")
 	mkdir(t, filepath.Join(plain, "files"))
 	write(t, filepath.Join(plain, "EXPECT"), "target-plain\n")
-	shipped := canaryFixture(root, "test-family", "shipped")
+	shipped := canaryFixture(root, mappedFamily, "shipped")
 	mkdir(t, filepath.Join(shipped, "files"))
 	write(t, filepath.Join(shipped, "EXPECT"), "target-shipped\n")
 	write(t, filepath.Join(shipped, "CHECK"), shipCheckName(t)+"\n")
@@ -201,6 +201,16 @@ func TestSweepTierPinsInnerTier(t *testing.T) {
 			}
 		}
 	}
+}
+
+// fixtureDirs is the selection's fixture paths, for comparison against the
+// directory listing the selection was drawn from.
+func fixtureDirs(selection []selected) []string {
+	out := make([]string, 0, len(selection))
+	for _, fx := range selection {
+		out = append(out, fx.dir)
+	}
+	return out
 }
 
 // shipCheckName is the registry's ship-tier check, read rather than written down so the
