@@ -30,7 +30,7 @@ func TestLoadValidityMetadataFixturesBite(t *testing.T) {
 			h := NewHarness(t)
 			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
 
-			diags := RunConformance(root, h.KitRoot, registry.Dev)
+			diags := RunConformance(root, h.KitRoot, registry.Dev, "")
 
 			if !containsDiagnostic(diags, expect) {
 				t.Fatalf("%s did not bite under Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diags, "\n"))
@@ -53,7 +53,7 @@ func TestSkillsIndexAndCommandAdapterFixturesBite(t *testing.T) {
 			h := NewHarness(t)
 			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
 
-			diags := RunConformance(root, h.KitRoot, registry.Dev)
+			diags := RunConformance(root, h.KitRoot, registry.Dev, "")
 
 			if !containsDiagnostic(diags, expect) {
 				t.Fatalf("%s did not bite under Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diags, "\n"))
@@ -125,7 +125,7 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 			h := NewHarness(t)
 			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
 
-			diags := RunConformance(root, h.KitRoot, registry.Dev)
+			diags := RunConformance(root, h.KitRoot, registry.Dev, "")
 
 			if !containsDiagnostic(diags, expect) {
 				t.Fatalf("%s did not bite under Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diags, "\n"))
@@ -145,7 +145,7 @@ func TestCoverageMapValidationFixtureBite(t *testing.T) {
 			h := NewHarness(t)
 			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
 
-			diags := RunConformance(root, h.KitRoot, registry.Dev)
+			diags := RunConformance(root, h.KitRoot, registry.Dev, "")
 
 			if !containsDiagnostic(diags, expect) {
 				t.Fatalf("%s did not bite under Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diags, "\n"))
@@ -168,7 +168,7 @@ func TestLineRoutingFixturesBite(t *testing.T) {
 			h := NewHarness(t)
 			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
 
-			diags := RunConformance(root, h.KitRoot, registry.Dev)
+			diags := RunConformance(root, h.KitRoot, registry.Dev, "")
 
 			if !containsDiagnostic(diags, expect) {
 				t.Fatalf("%s did not bite under Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diags, "\n"))
@@ -194,7 +194,7 @@ func TestPackageCoreAndGuardFixturesBite(t *testing.T) {
 			h := NewHarness(t)
 			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
 
-			diags := RunConformance(root, h.KitRoot, registry.Dev)
+			diags := RunConformance(root, h.KitRoot, registry.Dev, "")
 
 			if !containsDiagnostic(diags, expect) {
 				t.Fatalf("%s did not bite under Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diags, "\n"))
@@ -207,7 +207,7 @@ func TestRunConformanceReportsAbsentCanaryFamily(t *testing.T) {
 	root := t.TempDir()
 	runGit(t, root, "init")
 	kitRoot := t.TempDir()
-	for _, family := range conformanceFamilies {
+	for _, family := range registry.Families() {
 		if family == "coverage-map-validation" {
 			continue
 		}
@@ -220,7 +220,7 @@ func TestRunConformanceReportsAbsentCanaryFamily(t *testing.T) {
 		}
 	}
 
-	diags := RunConformance(root, kitRoot, registry.Dev)
+	diags := RunConformance(root, kitRoot, registry.Dev, "")
 
 	want := `canary conformance family "coverage-map-validation" has no fixture directories under tests/canary/coverage-map-validation`
 	if !containsDiagnostic(diags, want) {
@@ -232,7 +232,7 @@ func TestRunConformanceReportsEmptyCanaryFamily(t *testing.T) {
 	root := t.TempDir()
 	runGit(t, root, "init")
 	kitRoot := t.TempDir()
-	for _, family := range conformanceFamilies {
+	for _, family := range registry.Families() {
 		familyDir := filepath.Join(kitRoot, "tests", "canary", family)
 		if err := os.MkdirAll(familyDir, 0o755); err != nil {
 			t.Fatal(err)
@@ -245,7 +245,7 @@ func TestRunConformanceReportsEmptyCanaryFamily(t *testing.T) {
 		}
 	}
 
-	diags := RunConformance(root, kitRoot, registry.Dev)
+	diags := RunConformance(root, kitRoot, registry.Dev, "")
 
 	want := `canary conformance family "coverage-map-validation" has no fixture directories under tests/canary/coverage-map-validation`
 	if !containsDiagnostic(diags, want) {
@@ -265,7 +265,7 @@ func TestRunConformanceAcceptsHostileRootPath(t *testing.T) {
 	}
 	runGit(t, root, "init")
 
-	diags := RunConformance(root, h.KitRoot, registry.Dev)
+	diags := RunConformance(root, h.KitRoot, registry.Dev, "")
 
 	if !containsDiagnostic(diags, "invalid JSON in package.json") {
 		t.Fatalf("hostile root path did not produce expected diagnostic:\n%s", strings.Join(diags, "\n"))
@@ -283,7 +283,7 @@ func TestRunConformanceChecksExecutableGitMode(t *testing.T) {
 	}
 	runGit(t, root, "add", "bin/bench.sh")
 
-	diags := RunConformance(root, NewHarness(t).KitRoot, registry.Dev)
+	diags := RunConformance(root, NewHarness(t).KitRoot, registry.Dev, "")
 
 	if !containsDiagnostic(diags, "bin/bench.sh is not executable in git") {
 		t.Fatalf("non-executable tracked command path was not diagnosed:\n%s", strings.Join(diags, "\n"))

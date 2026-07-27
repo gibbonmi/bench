@@ -15,18 +15,6 @@ import (
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
-var conformanceFamilies = []string{
-	"load-validity-metadata",
-	"skills-index-command-adapters",
-	"docs-currency-token-diet",
-	"workflow-guidance-anchors",
-	"coverage-map-validation",
-	"line-routing",
-	"package-core-guard",
-	"compliance-hardening",
-	"data-handling-derivation",
-}
-
 // checkFunc is the uniform shape every registered check is bound through. Only the
 // package-core check reads the tier; the rest ignore the arguments they do not need.
 type checkFunc func(root, kitRoot string, tier registry.Tier) []string
@@ -57,13 +45,34 @@ var conformanceChecks = map[string]checkFunc{
 	"skip-ownership":               func(root, _ string, _ registry.Tier) []string { return checkSkipOwnership(root) },
 }
 
-// RunConformance grades root against every check tier runs, timing each one. Callers
-// name a tier and learn nothing about which check belongs to which.
-func RunConformance(root, kitRoot string, tier registry.Tier) []string {
+// RunConformance grades root against the checks tier runs, timing each one. An empty
+// scope runs the whole tier; otherwise it names the single check to run. Callers name
+// a tier and learn nothing about which check belongs to which.
+//
+// A scope the tier will not execute is a diagnostic and runs nothing at all, because
+// the alternative — falling back to the full tier or to zero checks in silence — hands
+// a stale binding a green verdict. All three postures live here so no entry point has
+// to restate them.
+func RunConformance(root, kitRoot string, tier registry.Tier, scope string) []string {
+	// The writer clears the root's timing file, so it is established before the scope
+	// postures return: a run that executes nothing still has to leave the file empty,
+	// or a reader attributes the previous run's lines to this one.
 	timing := registry.NewTimingWriter(root)
+	if scope != "" {
+		check, found := registry.Find(scope)
+		if !found {
+			return []string{fmt.Sprintf("conformance scope %q names no registered check", scope)}
+		}
+		if !check.RunsAt(tier) {
+			return []string{fmt.Sprintf("conformance scope %q names a check the %s tier does not run", scope, tier)}
+		}
+	}
 	var diags []string
 	for _, check := range registry.Checks {
 		if !check.RunsAt(tier) {
+			continue
+		}
+		if scope != "" && check.Name != scope {
 			continue
 		}
 		run, bound := conformanceChecks[check.Name]
@@ -137,7 +146,7 @@ func TestBenchShRouteAnchorBites(t *testing.T) {
 
 func checkConformanceCanaryFamilies(kitRoot string) []string {
 	var diags []string
-	for _, family := range conformanceFamilies {
+	for _, family := range registry.Families() {
 		familyDir := filepath.Join(kitRoot, "tests", "canary", family)
 		entries, err := os.ReadDir(familyDir)
 		if err != nil {
@@ -158,12 +167,8 @@ func checkConformanceCanaryFamilies(kitRoot string) []string {
 }
 
 func isConformanceFamily(family string) bool {
-	for _, candidate := range conformanceFamilies {
-		if family == candidate {
-			return true
-		}
-	}
-	return false
+	_, bound := registry.FamilyCheck(family)
+	return bound
 }
 
 func containsDiagnostic(diags []string, want string) bool {

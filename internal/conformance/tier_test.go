@@ -64,7 +64,7 @@ func TestRegistryBindsEveryCheck(t *testing.T) {
 
 func TestDevTierExecutesExactlyDevChecks(t *testing.T) {
 	root := gitInitedRoot(t)
-	RunConformance(root, NewHarness(t).KitRoot, registry.Dev)
+	RunConformance(root, NewHarness(t).KitRoot, registry.Dev, "")
 
 	got := timingNames(t, root)
 	if want := registry.Names(registry.Dev); !slices.Equal(got, want) {
@@ -77,7 +77,7 @@ func TestDevTierExecutesExactlyDevChecks(t *testing.T) {
 
 func TestTimingLinePerCheck(t *testing.T) {
 	root := gitInitedRoot(t)
-	RunConformance(root, NewHarness(t).KitRoot, registry.Dev)
+	RunConformance(root, NewHarness(t).KitRoot, registry.Dev, "")
 
 	lines := registry.ReadTimingLines(root)
 	if want := len(registry.Names(registry.Dev)); len(lines) != want {
@@ -89,9 +89,9 @@ func TestTimingOrderStable(t *testing.T) {
 	root := gitInitedRoot(t)
 	kitRoot := NewHarness(t).KitRoot
 
-	RunConformance(root, kitRoot, registry.Dev)
+	RunConformance(root, kitRoot, registry.Dev, "")
 	first := timingNames(t, root)
-	RunConformance(root, kitRoot, registry.Dev)
+	RunConformance(root, kitRoot, registry.Dev, "")
 	second := timingNames(t, root)
 
 	if !slices.Equal(first, second) {
@@ -100,6 +100,61 @@ func TestTimingOrderStable(t *testing.T) {
 	if want := registry.Names(registry.Dev); !slices.Equal(first, want) {
 		t.Fatalf("timing order is not the registry's order:\n%s\nwant\n%s", strings.Join(first, "\n"), strings.Join(want, "\n"))
 	}
+}
+
+func TestScopedRunExecutesOnlyTheNamedCheck(t *testing.T) {
+	root := gitInitedRoot(t)
+	const scope = "line-routing"
+	RunConformance(root, NewHarness(t).KitRoot, registry.Dev, scope)
+
+	if got := timingNames(t, root); !slices.Equal(got, []string{scope}) {
+		t.Fatalf("scoped run executed\n%s\nwant only %s", strings.Join(got, "\n"), scope)
+	}
+}
+
+// TestUnknownScopeIsRedAndRunsNothing pins the posture a silent fallback would break:
+// a scope naming no check re-pays the full run and hides the drift that renamed it.
+// The hostile value is deliberate — the diagnostic quotes the scope, so control bytes
+// have to survive as escapes rather than as a mangled line.
+func TestUnknownScopeIsRedAndRunsNothing(t *testing.T) {
+	root := recordedScopeRoot(t)
+	const scope = "no-such-check\x01\n"
+	diags := RunConformance(root, NewHarness(t).KitRoot, registry.Dev, scope)
+
+	if len(diags) != 1 || !strings.Contains(diags[0], `"no-such-check\x01\n"`) {
+		t.Fatalf("unknown scope: want one diagnostic quoting the scope, got %q", diags)
+	}
+	if got := timingNames(t, root); len(got) != 0 {
+		t.Fatalf("unknown scope left timing lines standing:\n%s", strings.Join(got, "\n"))
+	}
+}
+
+// TestScopeOutsideTierIsRedAndRunsNothing covers the scope that exists but sits on a
+// tier this run does not grade: executing zero checks in silence would read as green
+// and leave the fixture reporting a baffling did-not-bite.
+func TestScopeOutsideTierIsRedAndRunsNothing(t *testing.T) {
+	root := recordedScopeRoot(t)
+	diags := RunConformance(root, NewHarness(t).KitRoot, registry.Dev, releaseEvidenceProbeCheck)
+
+	if len(diags) != 1 || !strings.Contains(diags[0], releaseEvidenceProbeCheck) || !strings.Contains(diags[0], string(registry.Dev)) {
+		t.Fatalf("tier-mismatched scope: want one diagnostic naming the scope and the tier, got %q", diags)
+	}
+	if got := timingNames(t, root); len(got) != 0 {
+		t.Fatalf("tier-mismatched scope left timing lines standing:\n%s", strings.Join(got, "\n"))
+	}
+}
+
+// recordedScopeRoot is a graded root whose timing file already holds a completed run's
+// lines. Against a pristine root a red posture cannot be told from one that left the
+// last run's record standing; against this one, only an emptied file passes.
+func recordedScopeRoot(t *testing.T) string {
+	t.Helper()
+	root := gitInitedRoot(t)
+	RunConformance(root, NewHarness(t).KitRoot, registry.Dev, "line-routing")
+	if len(registry.ReadTimingLines(root)) == 0 {
+		t.Fatal("the seeding run recorded no timing lines, so the posture assertion proves nothing")
+	}
+	return root
 }
 
 // TestFilteredRunSelectsRealTests keeps the skip list from rotting in either

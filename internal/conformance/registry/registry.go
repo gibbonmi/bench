@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -30,6 +31,13 @@ const (
 // Absent, the surface grades the dev tier — the default stays un-overridable by
 // accident because a writer that means ship has to set it explicitly.
 const ConformanceTierEnv = "BENCH_CONFORMANCE_TIER"
+
+// ConformanceCheckEnv scopes an inner grading surface to a single check: the
+// conformance entry point reads it, and a canary sweep sets it per fixture. Absent,
+// the surface runs the whole tier. Any value naming no check the tier runs is a red
+// diagnostic rather than a fallback, so a stale or misspelled scope can never read as
+// green silence.
+const ConformanceCheckEnv = "BENCH_CONFORMANCE_CHECK"
 
 // Check is one conformance check's identity. Its position in Checks fixes both the
 // execution order and the timing-line index, so the order is part of the contract.
@@ -57,6 +65,55 @@ var Checks = []Check{
 	{Name: "marker-wait-deadlines", Tier: Dev},
 	{Name: "subcommand-routing", Tier: Dev},
 	{Name: "skip-ownership", Tier: Dev},
+}
+
+// familyChecks binds each canary conformance family directory to the check whose
+// diagnostics its fixtures grade. The binding follows the emitting code, not the
+// directory's name: three doc families share docs-currency-workflow, and
+// compliance-hardening grades canary-inner-compliance — the check that runs against
+// the fixture tree — rather than the similarly named kit-compliance, which grades the
+// kit root instead and would scope those fixtures away from their emitter.
+//
+// It is unexported because map iteration order is nondeterministic and the family
+// list feeds a diagnostic; Families is the ordered way in.
+var familyChecks = map[string]string{
+	"package-core-guard":            "package-core-guard",
+	"line-routing":                  "line-routing",
+	"load-validity-metadata":        "load-validity-metadata",
+	"skills-index-command-adapters": "skills-index-command-adapters",
+	"data-handling-derivation":      "data-handling-derivation",
+	"docs-currency-token-diet":      "docs-currency-workflow",
+	"workflow-guidance-anchors":     "docs-currency-workflow",
+	"coverage-map-validation":       "docs-currency-workflow",
+	"compliance-hardening":          "canary-inner-compliance",
+}
+
+// Families lists the canary conformance family directories in sorted order.
+func Families() []string {
+	names := make([]string, 0, len(familyChecks))
+	for family := range familyChecks {
+		names = append(names, family)
+	}
+	sort.Strings(names)
+	return names
+}
+
+// FamilyCheck names the check a conformance family's fixtures grade, and reports
+// false for a family the table does not bind — an unbound family is a caller's error
+// to raise, never a silent unscoped run.
+func FamilyCheck(family string) (string, bool) {
+	check, bound := familyChecks[family]
+	return check, bound
+}
+
+// Find returns the registry row for a check name.
+func Find(name string) (Check, bool) {
+	for _, check := range Checks {
+		if check.Name == name {
+			return check, true
+		}
+	}
+	return Check{}, false
 }
 
 // RunsAt reports whether tier executes the check. Ship is a superset of Dev: the
