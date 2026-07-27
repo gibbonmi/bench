@@ -2,7 +2,7 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` @ `29ea46c` — 16 unpushed commits ahead of `origin/main`; `IDEAS.md` dirty with 3 parked lines
+Branch: `main` — clean, 19 unpushed commits ahead of `origin/main`
 Spec: `specs/ft91-gate-phase-split.md` (Status: implemented, deliberately unretired)
 Gate: green at `08482c6`; every commit since is doc-only
 
@@ -17,23 +17,23 @@ Gate: green at `08482c6`; every commit since is doc-only
   reproduced through the accused command. Decided: orphans route to
   `bench worktree clean` by design — a request-derivation override for `release`
   is rejected as voiding the ownership model.
-- **All 20 pool branches are disposable.** Twelve are landed and clean; the three
-  FT87s3 branches and one agent branch are drafts of work main shipped reshaped
-  (bench's `landed=false` is the FT98 patch-id gap, seen in the wild); the FT91
-  concurrency-budget arm is abandoned per the retarget — sign-off covers
-  deleting its branch. The four `fix/ft86-review-*` worktrees need their assign
-  branch recreated before `clean` accepts them. One unregistered empty directory
-  remains for plain `rm`.
-- **The cleanup sequence below has not been run.** It is reviewer-run: branch
-  deletion and `rm` are guard-refused from agents, and `clean --apply` was left
-  to the same pass. `clean` writes a recovery ref before destroying anything
-  dirty and deletes branches itself only with landed proof.
-- **Ledger residue outlives the pool drain.** Assignment `72b9811f`
-  (ft91-gate-phase-split) is `active` with its tree already gone — nothing today
-  compacts an active record with a missing tree; FT147(b) covers it. The ~21
-  recovery refs (the "preserved" wall at session start) retire per-ref after the
-  drain: `bench worktree recovery <ref>` to inspect, `--apply <fingerprint>` to
-  retire when the plan allows.
+- **The pool is drained and verified (2026-07-27).** All 20 registered
+  worktrees, the stray directory, and all 20 branches are gone; `git worktree
+  list` shows only the main checkout and `main` is the only branch. All 20
+  branches were disposable: twelve landed clean, four were drafts of work main
+  shipped reshaped (bench's `landed=false` on them is the FT98 patch-id gap,
+  seen in the wild), the FT91 concurrency-budget arm was abandoned per the
+  retarget. The temporary cleanup script has been deleted as agreed.
+- **Ledger residue outlives the drain.** 17 assignment rows remain, all
+  tree-missing: 16 `recovered` plus `72b9811f` (ft91-gate-phase-split) stuck
+  `active` — nothing today compacts an active record with a missing tree;
+  FT147(b) covers it. 20 recovery refs were retained by the tool's own plans
+  (payloads it cannot prove landed — the same FT98 gap; six others retired
+  cleanly during the run). The "preserved" wall at session start persists until
+  they retire: `bench worktree recovery <ref>` to inspect,
+  `--apply <fingerprint>` when its plan allows. One odd-shaped ref,
+  `refs/bench/recovery/incident-20260712-ambient-probe`, matches no assignment
+  and needs a by-hand look.
 - **FT147 is signed off and awaits the drain.** The leak: kit prose orders
   worktree creation 12× for every retirement instruction (`release` is named in
   no guidance file), assignments have no timestamp/lease/reaper and the resume
@@ -53,21 +53,9 @@ Gate: green at `08482c6`; every commit since is doc-only
 - **Push needs `bench gate pin` first** — interactive TTY, so it is yours.
 - Drain pending: 3 parked ideas, 1 open learning.
 
-## Cleanup sequence (reviewer-run)
-
-`./cleanup-worktree-pool.sh` — untracked script at the repo root, the single
-source of the five-step sequence (16 assign-branch cleans; the four
-fix/ft86-review-* branch restores + cleans; the unregistered directory; the
-leftover branch deletions, all signed off 2026-07-27; the recovery-ref
-retirement, applying only where the tool's own plan says retire). Idempotent;
-prints a summary and lists anything retained. Delete the script after the run
-is verified.
-
 ## Next command
 
 `/bench-what-next`
-
-(after running the cleanup sequence above)
 
 ## Shape
 
