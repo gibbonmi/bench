@@ -2,25 +2,21 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `fc99aee`, 8 dirty paths, 5 unpushed commits
-Spec: `specs/ft91-canary-check-scoping.md` — implemented, gate-green, unpushed.
-Gate: green at `fc99aee`
+Branch: `main` — HEAD `0f4a861`, 8 dirty paths, 7 unpushed commits
+Spec: none staged.
+Gate: green at `523e0ff` — stale, work tree `c611032`
 
 ## State
 
-- **ft91-canary-check-scoping is built and landed on `main`, awaiting your
-  merge/push** — five commits `4f046f0`, `f9bb33d`, `95981b9`, `31ab979`,
-  `fc99aee`. All seven stories built; coverage map valid at 17 rows; the gate
-  ran green on every commit. Three review axes produced 12 findings: Standards
-  and Coverage findings are all fixed, one Standards finding was rejected as
-  closed by the spec, and the Spec finding is the amendment below.
-- **Story 4's seam was amended during the build — open to your veto.** The
-  spec placed the unbound-family red in the sweep, during fixture selection.
-  Built that way it reddened every adopting repo, because `bench init`
-  scaffolds a seed canary family a kit-owned table can never bind. The sweep
-  now resolves an unbound family to no scope, and the conformance layer's
-  kit-scoped family check raises the red. The spec records the amendment;
-  `.bench/learnings.md` journals the deviation.
+- **The `/bench-what-next` drain is committed at `0f4a861`; both capture
+  sources are empty.** ft91-canary-check-scoping shipped, merged, and is now
+  retired, so FT91 carries it as the fifth landed arm and the check-scoping
+  prerequisite paragraph is gone. Two new rows: **FT143** (the family→check
+  binding reds only after each unbound fixture pays a full unscoped inner gate,
+  and only on the `bench gate` path — `bench canary` never reaches the
+  conformance registry) and **FT144** (a `craft-spec` edge-inventory prompt for
+  kit code with two audiences, plus your decision on an "intent stands, seam
+  moves" lighter case in the workflow). Both are open to post-hoc veto.
 - **`decisions/gate-pipeline.md` stays closed** — its Handoff carries the
   seams for slices B (manifest + DAG runner) and C (`checkGoCore` split +
   fixture migration), which spec now that A has shipped.
@@ -38,9 +34,9 @@ Gate: green at `fc99aee`
 
 ## Next command
 
-`/bench-what-next` — the board's leading invocable signal (`drain`): two parked
-ideas and one open learning, all from this build. Push `main` first if you
-accept story 4's amended seam.
+`/bench-shape-idea` — FT91's pipeline arm, the top of the refreshed
+recommended sequence. Inputs: the FT91 row and `decisions/gate-concurrency.md`'s
+watch-outs.
 
 ## Shape
 
