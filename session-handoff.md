@@ -51,11 +51,13 @@ Gate: green at `08482c6`; every commit since is doc-only
   still wants a by-hand look.
 - **`ft91-gate-phase-split` stays unretired on purpose** — retiring it destroys
   the veto surface on stories 4, 5, and 9.
-- **`origin/main` is ahead of the last gate-verified tree.** The reviewer pushed
-  through `--no-verify` on 2026-07-27, so no gate pin backs anything after
-  `08482c6`. Everything in that span is doc-only — specs, maps, roadmap, this
-  file — so the exposure is a stale verdict rather than unverified code, but the
-  next `bench gate` run is still the first check of this tree.
+- **The gate verdict is stale; the gate pin is not.** Last green at `08482c6`,
+  and every commit since is doc-only — specs, maps, roadmap, this file — so the
+  next `bench gate` run is the first check of this tree. That is separate from
+  the pin, which tracks `.bench` integrity: `.bench` has not drifted and the pin
+  still matches HEAD. The reviewer pushed through `--no-verify` on 2026-07-27,
+  which bypassed the pre-push hook's protected-branch block, not any gate check —
+  and that block exists to stop agents pushing `main`, not the reviewer.
 
 ## Next command
 
