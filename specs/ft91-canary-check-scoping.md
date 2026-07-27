@@ -1,6 +1,6 @@
 # ft91-canary-check-scoping
 
-Status: staged
+Status: implemented
 
 Source map: `decisions/gate-pipeline.md` (#5, #6; Handoff slice A). Inventory
 evidence: `decisions/assets/gate-pipeline-fixture-inventory.md`.
@@ -54,11 +54,20 @@ no check is weakened or dropped; only redundant re-execution is removed.
    exists in `innerEnv` and the seam is the injected Runner, so the mid model
    at medium effort is enough.
 
-4. As the kit maintainer, I want the sweep to fail loudly when a conformance
-   family is missing from the family→check table, so adding a family without
-   binding it is an error at the sweep, not a silent cost regression.
+4. As the kit maintainer, I want the gate to fail loudly when one of the kit's
+   own conformance families is missing from the family→check table, so adding a
+   family without binding it is an error, not a silent cost regression.
    Line: opus (`gpt-5.6-terra`) / medium. A small, precisely specified fail
    posture at the same seam as story 3 keeps the mid model at medium effort.
+   **Amended during implementation (reviewer veto surface):** this story
+   originally placed the error in the sweep, during fixture selection. That
+   seam is wrong — `internal/canary` sweeps every adopting repo, and `bench
+   init` scaffolds a seed canary family a kit-owned table can never bind, so
+   the sweep-side error reddened every linked repo on its first sweep. The
+   sweep now resolves an unbound family to no scope (a full inner run, exactly
+   today's behavior), and the conformance layer's family check raises the red
+   against the kit root alone, where the table and the tree it describes are
+   both in scope.
 
 5. As the kit maintainer, I want one shared empty-tree vacuity baseline per
    scope group present in the tier's sweep — each EXPECT vacuity-checked
@@ -104,8 +113,10 @@ no check is weakened or dropped; only redundant re-execution is removed.
   tier and check name, so tier and scope cannot disagree about what the file
   says. Scope resolution: `CHECK` name if present; else the family table;
   behavior-owned and legacy flat fixtures resolve to no scope. A conformance
-  family absent from the table is a sweep error raised during fixture
-  selection, before any inner run.
+  family absent from the table resolves to no scope too — the sweep grades
+  adopting repos whose families a kit-owned table never carries — and the
+  conformance layer's family check reads the kit's own tree and reds on any
+  family the table leaves unbound.
 - `innerEnv` strips the inherited scope env (strip-then-set discipline);
   `runFixture` appends the fixture's resolved scope beside the existing
   per-fixture phase env.
@@ -158,7 +169,7 @@ Seam 2 — the canary sweep behind the injected Runner:
 | story | behavior | seam | red signal | why it catches the failure |
 |---|---|---|---|---|
 | 1 | every family-table value names a registered check | registry unit test | new `TestFamilyCheckTableBindsRegisteredChecks` red before the table exists | a table row naming a phantom check would scope fixtures to a check that never runs, reporting did-not-bite forever |
-| 1 | dropping a family from the table cannot silently shrink the derived family list | seam 2 | covered by story 4's row — the on-disk family becomes unmapped and the sweep errors before any run | the disk tree is the independent anchor: the family-presence check iterates the derived list, so only the sweep-side error can red a table omission |
+| 1 | dropping a family from the table cannot silently shrink the derived family list | seam 1 | covered by story 4's row — the on-disk family becomes unbound and the conformance family check reds | the disk tree is the independent anchor: the family-presence check iterates the derived list, so only a check that reads the tree can red a table omission |
 | 1, 3 | a wrong-but-registered binding, or a conformance fixture left unscoped, cannot survive | gate canary phase (live sweep) | already covered — a mis-scoped fixture's inner run never emits its EXPECT and the sweep reports did-not-bite | scoping a fixture away from its emitter turns the strongest existing signal (every fixture must bite) into the binding's own enforcement, fixture by fixture |
 | 2 | scoped run executes exactly the named check | seam 1 | new driver test asserting the timing file records only the named check — red today (driver has no scope parameter) | an ignored filter leaves all 16 checks in the timing record |
 | 2 | unknown scope name → red diagnostic | seam 1 | new driver test — red today | silent fallback would re-pay the full run and hide binding drift |
@@ -167,7 +178,8 @@ Seam 2 — the canary sweep behind the injected Runner:
 | 3 | scoped fixture's `RunCall.Env` carries exactly one scope var, inherited outer value stripped | seam 2 | new fake-Runner test with `t.Setenv` outer scope — red today | a leaked or duplicated env pair hands ambient exports control of what the sweep grades (no duplicate-key precedence in exec env) |
 | 3 | behavior-owned and legacy flat fixtures carry no scope var | seam 2 | not TDD-able as a pre-red — green today by construction; lands with story 3's tests as a regression guard on the new scoping path | wrongly scoping a contract fixture would skip the phase its EXPECT needs and kill the bite |
 | 3 | every selected fixture yields exactly one inner run carrying its `FixtureDir` | seam 2 | not TDD-able as a pre-red — green today by construction; the fake-Runner scoping test enumerates the `RunCall`s per fixture as a regression guard | an implementation that merged or skipped same-check fixtures would grade fewer mutated trees than were selected — the map's rejected shortcut |
-| 4 | conformance family absent from the table → sweep error before any run | seam 2 | new fake-Runner test with an unmapped family — red today | an unmapped family silently running unscoped re-pays the cost this slice removes and hides the missing binding |
+| 4 | the kit's own unbound conformance family → red from the conformance family check | seam 1 | new driver test with an unbound family in a synthetic kit tree — red today | an unbound family silently running unscoped re-pays the cost this slice removes and hides the missing binding; reading the tree is the only direction that sees a table omission |
+| 4 | an unbound family still sweeps, unscoped, so an adopting repo is never reddened by the kit's table | seam 2 | new fake-Runner test asserting the sweep succeeds and injects no scope var — red today | `bench init` scaffolds a seed canary family a kit-owned table can never bind, so a sweep-side error breaks every linked repo on first run |
 | 5 | one baseline per check group present, not one per fixture and not one full gate | seam 2 | new fake-Runner test counting empty-`FixtureDir` calls per check group — red today | the N+1 cost and the run-shape mismatch both reappear if grouping is wrong |
 | 5 | vacuity graded against the fixture's own group baseline | seam 2 | new fake-Runner test: EXPECT matching its own group's baseline output → vacuous error; matching only another group's → no error — red today | cross-group comparison either false-flags scoped EXPECTs or lets a genuinely vacuous EXPECT pass |
 | 5 | an all-unscoped sweep runs exactly one full baseline | seam 2 | not TDD-able as a pre-red — green today by construction; lands with story 5's tests as a regression guard proving the check-name grouping key never splits the unscoped group | phase-keyed grouping would split contract fixtures from flat ones into two baselines, changing today's semantics and doubling flat-sweep cost |
