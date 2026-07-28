@@ -134,8 +134,13 @@ why the obvious alternatives fail.
 7. As the resume sweep, I want an orphaned assignment whose tree is already gone
    and which preserves no work to be deleted from the ledger, so that rows stop
    outliving their trees. The sweep still skips non-orphaned `active` records — a
-   live session may own those. An orphaned record that does hold recovery
-   metadata is preserved and reported, never deleted.
+   live session may own those. No record is ever both orphaned and holding
+   recovery metadata: orphanhood requires state `active`, and validation has
+   refused an active record carrying recovery since ownership-safe cleanup
+   landed. So the preserve branch guards every tree-gone record rather than only
+   orphans — one holding recovery metadata is preserved and reported, never
+   deleted — and the population that actually reaches it is the `recovered`
+   records, exactly as today.
    Line: `gpt-5.6-terra` / high (`opus`). This is the only story that destroys
    state, and the preserve-if-recovery branch is what stands between it and
    losing work.
@@ -239,9 +244,13 @@ recovers dirty work into a recovery ref before removing. With no liveness signal
 this is not a preference — it is the only thing between a long-lived legitimate
 worktree and an unattended destructive command.
 
-**Ledger compaction is bounded by preserved work.** The sweep deletes an orphaned
-tree-gone record only when it holds no recovery metadata. One holding recovery
-metadata is preserved and reported, exactly as `recovered` records are today.
+**Ledger compaction is bounded by preserved work.** The sweep deletes a tree-gone
+record only when it holds no recovery metadata, and it asks that question of every
+such record rather than only of orphans. It cannot be asked of orphans alone and
+still bite: orphanhood requires state `active`, and validation refuses an active
+record carrying recovery, so the orphan-plus-preserved-work state is unreachable
+and the records that reach the preserve branch are the `recovered` ones, reported
+exactly as today.
 
 **A pinned contract changes meaning underneath its test.**
 `TestResumeSweepsResidueAndReportsPreserved` pins the FT93(c) contract that an
@@ -323,7 +332,7 @@ Covers stories 2 through 7 and 12.
 | 3 | a stamp in the future is not aged | Seam A, predicate with `now` before the stamp | `go test ./internal/worktree -run TestOrphanedRejectsFutureStamp` observed red before build | a subtraction that ignores sign makes clock skew read as enormous age, so a worktree created minutes ago on a skewed host becomes an orphan |
 | 3 | an assignment that is not `active` is never orphaned | Seam A, predicate over `cleanup-pending`, `recovered`, `complete` | `go test ./internal/worktree -run TestOrphanedOnlyActiveState` observed red before build | a state-blind predicate double-claims a record already on the recovery path, so the sweep offers a cleanup command for work being preserved |
 | 4 | `PlanAutomatic` labels an orphan `orphaned` where it would otherwise say `active` | Seam A, plan against a temp repo with an aged assignment and a clean tree | `go test ./internal/worktree -run TestPlanAutomaticLabelsOrphaned` observed red before build | without it the plan's own explanation still says the record is merely active, contradicting the sweep line that just told the reader to clean it |
-| 4 | `PlanAutomatic` keeps the earlier retain reason when one fires first | Seam A, aged assignment carrying ignored residue | `go test ./internal/worktree -run TestPlanAutomaticKeepsEarlierRetainReason` observed red before build | the early return means the state branch is unreachable here; an implementation that "fixes" that by hoisting the orphan label above the safety branches loses the reason that actually blocks removal |
+| 4 | `PlanAutomatic` keeps the earlier retain reason when one fires first | Seam A, aged assignment carrying ignored residue | already covered by construction — the early return already reports `ignored` for this record pre-build, so no faithful implementation reddens this row; it is the regression guard on story 4's label, written before that label lands and green across it | the early return means the state branch is unreachable here; an implementation that "fixes" that by hoisting the orphan label above the safety branches loses the reason that actually blocks removal, and this is the only row that would catch it |
 | 5 | the summary emits one `bench worktree clean <path>` line per orphan | Seam A, `ConservativeCleanup` then the rendered summary | `go test ./internal/worktree -run TestResumeSummaryNamesCleanCommand` observed red before build | a summary that only counts orphans leaves the reviewer with the same undecodable wall the row was opened about |
 | 5 | an orphan carrying ignored residue still gets its summary line | Seam A, aged assignment with ignored build output | `go test ./internal/worktree -run TestResumeSummaryReportsOrphanWithIgnoredResidue` observed red before build | this is the normal state of a worktree a shift ran in; a sweep that read `PlanAutomatic`'s reason instead of the ledger reports nothing for exactly this population while every other row stays green |
 | 5 | the emitted line never contains `--discard-ignored` | Seam A, same summary | `go test ./internal/worktree -run TestResumeSummaryNeverSuggestsDiscardIgnored` observed red before build | the codebase documents that flag's request-less form as orphaning the assignment, so an emitted remedy naming it manufactures the next generation of this defect |
@@ -331,7 +340,7 @@ Covers stories 2 through 7 and 12.
 | 5 | a control byte in a path cannot split the summary's line structure | Seam A, summary over a path containing a newline and an ESC | `go test ./internal/worktree -run TestResumeSummaryPreservesLineStructure` observed red before build, asserting the emitted line count | `renderResumeSummary` is a raw line sink with no safety predicate and this build puts the first attacker-influenced path into it; quoting stops argument splitting but not an embedded newline forging a whole extra summary line |
 | 6 | the summary caps orphan and preserved lines and states the true total | Seam A, summary over more records than the cap | `go test ./internal/worktree -run TestResumeSummaryCapsListings` observed red before build, asserting both the line count and the `and <n> more` total | a cap without the count reads as "that is all of them", which is the one way bounding the output could mislead rather than help |
 | 7 | an orphaned, tree-gone record with no recovery metadata is deleted and counted as reconciled | Seam A, `ConservativeCleanup` then a ledger read | `go test ./internal/worktree -run TestSweepCompactsOrphanedActiveResidue` observed red before build | today's sweep skips every `active` record unconditionally, which is exactly why one row survived the manual drain |
-| 7 | an orphaned, tree-gone record holding recovery metadata is preserved, not deleted | Seam A, same sweep with recovery metadata present | `go test ./internal/worktree -run TestSweepPreservesOrphanedRecoveryRecords` observed red before build | this is the only destructive path in the build; a sweep that drops the preserve branch deletes the ledger's pointer to preserved work and orphans the recovery refs permanently |
+| 7 | a tree-gone record holding recovery metadata is preserved, not deleted, and the ledger refuses the orphan-plus-recovery record that would bypass that guard | Seam A, same sweep with recovery metadata present | already covered by construction — the preserve branch is FT93(c)'s and validation has refused an active record carrying recovery since ownership-safe cleanup, so nothing faithful reddens either half; the test is the regression guard on the build's one destructive path and pins the unreachability it rests on | this is the only destructive path in the build; a sweep that drops the preserve branch deletes the ledger's pointer to preserved work and orphans the recovery refs permanently, and a validation change that let an active record carry recovery would put an orphan on that path |
 | 7 | a freshly stamped active record with a missing tree is still skipped | Seam A, the existing FT93(c) fixture, re-read | already covered — `TestResumeSweepsResidueAndReportsPreserved` asserts this record must survive, and after this build it survives because it is not aged rather than because it is active; the build annotates that shift in the test | a sweep that compacts on tree-absence alone races a session between `worktree add` and its first write, and the existing test would keep passing while the contract it pins had silently changed |
 | 7 | a tree-gone record that is still a registered worktree is left to the prune path | Seam A, the existing `isRegisteredWorktree` branch | already covered — the branch and its assertions in `worktree_test.go` | a new orphan branch placed above that check compacts a record git is about to prune, producing a ledger and a registration that disagree |
 | 7 | two consecutive sweeps produce the same summary and delete nothing twice | Seam A, `ConservativeCleanup` run twice against one tree | `go test ./internal/worktree -run TestSweepIsIdempotent` observed red before build, comparing both summaries | the summary reprints at every session start and story 6 exists to bound it, so a sweep whose second run reports different counts falsifies the artifact the reviewer actually reads |
