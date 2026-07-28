@@ -7,6 +7,13 @@ confirmed with the reviewer 2026-07-28: the map's slices A and B land as one
 spec in A-then-B story order, because both are the same ownership fence —
 platform and command prose plus the anchors and canary fixtures that observe it.
 
+Stories 1 through 10 carry that A-then-B order. Stories 11 through 15 were added
+after approval, in the same ownership fence, and append rather than re-sort — so
+story 15 is slice-A material sitting at the end. Build order follows the
+dependencies stated in each story, not the numbering: story 4 writes the bounded
+`--full` section that stories 5, 6, 7, 8, and 11 through 14 anchor facts inside,
+and story 2 registers the markers whose prose stories 1 and 15 write.
+
 Flagged for reviewer veto — decided here, not carried by the map:
 
 - Routing the `--full` review through one fresh-context delegate charged with
@@ -34,6 +41,19 @@ Flagged for reviewer veto — decided here, not carried by the map:
   stays its one source.
 - The review-delegate-unavailable stop in story 5, and story 10's mid-tier line
   for a story the profile's leverage override would otherwise route top.
+- Fencing the run's diff to the spec's stories as an anchored counterweight to
+  fix-don't-park, which the map never opened.
+- Requiring the exit report to enumerate the coverage map row by row and to cite
+  the record behind each phase claim, rather than leaving both to story 10's
+  one-time observation.
+- Adding stories 11 through 15's anchors without new canary fixtures, on the
+  family's established density rule.
+- Hanging a cross-harness falsification pass on story 8's size trigger as a
+  separate question rather than a fourth route in that story's fixed menu.
+- Routing story 15's warrant rule into this spec directly rather than through a
+  `/bench-what-next` drain, on the reviewer's 2026-07-28 instruction. The journal
+  entry that sourced it stays open in `.bench/learnings.md` for that drain to
+  verdict as shipped.
 
 ## Problem
 
@@ -46,18 +66,28 @@ tree keeps known-bad code while the backlog grows; and the "NEVER assume,
 always verify" rule sits once in `.bench/BENCH.md` Roles, far from the three
 moments where sessions actually violate it — asking about a fact the tree
 already answers, implementing against remembered instead of read code, and
-reviewing from recall instead of citation.
+reviewing from recall instead of citation. A run that reports on itself compounds
+all of it: a diff that widened past the spec, a coverage map left
+part-implemented, and a phase that never ran each produce an exit report that
+reads exactly like a clean one.
 
 ## Solution
 
 An opt-in `--full` mode on `/bench-implement-spec` that carries a spec from
-build to push-ready — implement inline, review in a fresh-context delegate,
-final-check inline, debug on demand — with `session-handoff.md` rewritten at
+build to push-ready — implement inline, review in a fresh-context delegate with a
+cross-harness falsification pass offered when the diff is large, final-check
+inline, debug on demand — with `session-handoff.md` rewritten at
 every phase boundary so a cold session can resume mid-run. Alongside it, two
 shared-rule changes the mode leans on: fix-don't-park, which sends a discovered
 defect into the active workflow unless it genuinely needs a reviewer decision;
 and point-of-use reinforcement of the assume/verify rule at the three phases
-where the failure was observed. Every prose change gets an anchor scoped to the
+where the failure was observed. A third shared rule rides the same marker list
+without belonging to the mode at all: in the communication rules, a claim resting
+on a source outside the tree names what was read and what was not. The run's own
+diff is fenced to the spec's
+stories, and its exit report enumerates the coverage map row by row and cites the
+record behind every phase claim — so a run that widened, stopped short, or skipped
+a phase is visible without re-deriving it. Every prose change gets an anchor scoped to the
 section that owns it, so it cannot drift out, be commented out, or be
 contradicted elsewhere in the same file.
 
@@ -75,12 +105,13 @@ contradicted elsewhere in the same file.
    session's park-versus-fix call, which is the leverage override's cached
    routing in the profile.
 
-2. As the conformance gate, I hold both the fix-don't-park rule and the Roles
-   sentence "NEVER assume, always verify" in
-   `checkSharedRuleSingleSource`'s marker list, so each one reds when
-   `.bench/BENCH.md` loses it and reds again when `AGENTS.md` or `README.md`
-   restates it. One list entry per rule carries both directions; neither rule
-   gets a second, independently-worded assertion. Line: gpt-5.6-terra / medium.
+2. As the conformance gate, I hold three rules in
+   `checkSharedRuleSingleSource`'s marker list — the fix-don't-park rule, the
+   Roles sentence "NEVER assume, always verify", and story 15's warrant rule — so
+   each one reds when `.bench/BENCH.md` loses it and reds again when `AGENTS.md`
+   or `README.md` restates it. This story owns every registration in that list;
+   stories 1 and 15 own their rules' prose. One list entry per rule carries both
+   directions; no rule gets a second, independently-worded assertion. Line: gpt-5.6-terra / medium.
    Registering a marker is mechanical at a known seam, but it is oracle code —
    a marker that names a string the canonical file does not contain would red
    the gate on a correct tree.
@@ -191,11 +222,69 @@ contradicted elsewhere in the same file.
     describes a run that did not happen — which is why it does not take the
     cheap tier despite being read-and-compare work.
 
+11. As a `--full` run, I implement the spec's stories and nothing else: work I
+    notice outside them — an adjacent refactor, an unrelated improvement, a story
+    the spec chose not to take — is recorded for the reviewer rather than built.
+    The fence sits in the `--full` section beside the fix-don't-park route it
+    counterweights, and a sentence licensing opportunistic improvement while the
+    file is open is prohibited alongside it. The park-versus-fix test itself stays
+    story 1's; this fact is only about the run's diff staying inside the spec's
+    stories and seams. Line: gpt-5.6-sol / high. Fix-don't-park ratchets a run's
+    diff in one direction only, and invariant 4's smallest-diff rule sits once in
+    `.bench/BENCH.md` — the same distance-from-the-moment failure story 3 exists
+    to fix.
+
+12. As the reviewer reading a `--full` exit report, I get one disposition per row
+    of the spec's acceptance coverage map — implemented, deferred, or won't-handle
+    — named row by row against `bench coverage <spec>`'s enumeration, rather than
+    a summary asserting the spec is done. A phrasing that reports completion in
+    aggregate is prohibited alongside the rule. When the spec carries no coverage
+    map, the report says so and accounts for the user stories instead. Line:
+    gpt-5.6-sol / high. Stopping early is invisible in an aggregate claim and
+    obvious in an enumeration, and `bench coverage` already emits that enumeration,
+    so the rule adds a duty rather than a second source for what the rows are.
+
+13. As the reviewer, every phase claim in a `--full` exit report cites the record
+    that proves it — the review delegate's invocation, the commit shas the phase
+    landed, the `session-handoff.md` boundary rewrite — rather than asserting the
+    phase ran. A phrasing that reports a phase complete without its record is
+    prohibited alongside the rule. Line: gpt-5.6-sol / high. Story 10 buys this
+    observation once, by hand; making the report cite its own records is what makes
+    every run after the first cheap to check, and it applies `craft-review`'s
+    existing citation standard to the run's claims about itself.
+
+14. As a `--full` run whose diff trips story 8's size condition, I ask a second
+    question at that same trigger: whether to add a cross-harness falsification
+    pass over the diff before final-check — the Codex CLI at the top binding,
+    charged to refute the claim that the spec was implemented rather than to grade
+    it against the three axes. It is its own question, not a fourth route in story
+    8's fixed menu, because it changes the review rather than the build line, and
+    it never runs standing — absent the trigger it is not offered. When this
+    harness cannot invoke Codex the pass is omitted and the omission is stated,
+    the same posture story 8 takes. Line: gpt-5.6-sol / high. The three review
+    axes are already fresh contexts, so a second same-family review buys little;
+    what this adds is a different model and a refutation charge — the pair that
+    returned block on FT91's draft after this repo's own axes had cleared it.
+
+15. As any session making a claim that rests on a source outside the tree — a
+    reference repo, a vendored kit, an upstream doc — I read one rule in
+    `.bench/BENCH.md`'s communication section telling me to name what I read and
+    what I did not, so a claim's warrant travels with the claim. Story 2 registers
+    its marker alongside the other two; this story owns the prose and a
+    section-scoped assertion, so the anchor means placement in the communication
+    rules rather than presence anywhere in the file.
+    A phrasing asking for thoroughness rather than for disclosure is prohibited
+    alongside it: thoroughness is unfalsifiable and a session always believes it
+    read enough, while what went unread is checkable by the reviewer at a glance.
+    Line: gpt-5.6-sol / high. This is always-loaded prose governing every claim in
+    every session, which is the leverage override's cached routing in the profile.
+
 ## Implementation decisions
 
-- The whole change is prose plus its observers: `.bench/BENCH.md`, four
-  `.agents/commands/*.md` files with their byte-identical `.claude/commands/`
-  mirrors, assertions in `internal/conformance/docs_workflow_helpers_test.go`
+- The whole change is prose plus its observers: `.bench/BENCH.md`, three
+  `.agents/commands/*.md` files — `bench-shape-idea.md`,
+  `bench-implement-spec.md`, and `bench-review-implementation.md` — with their
+  byte-identical `.claude/commands/` mirrors, assertions in `internal/conformance/docs_workflow_helpers_test.go`
   and `internal/conformance/validity_checks_test.go`, and four canary fixtures.
   No `bench` subcommand, no new flag parsing, no Go production code — `--full`
   is read by the session from its own invocation, which is why the map called
@@ -241,8 +330,9 @@ contradicted elsewhere in the same file.
   The map's Handoff item 7 flagged these mechanics as unverified; they were
   verified in the tree while writing this spec, so the route is specified as
   real rather than as a stub reporting unavailability.
-- Both shared rules ride `checkSharedRuleSingleSource`'s existing marker list
-  rather than new `requireCollapsed` calls. One list entry gives the
+- All three shared rules — fix-don't-park, the Roles assume/verify sentence, and
+  story 15's warrant rule — ride `checkSharedRuleSingleSource`'s existing marker
+  list rather than new `requireCollapsed` calls. One list entry gives the
   must-be-in-BENCH.md and must-not-be-in-AGENTS.md/README.md halves from a
   single source, which is exactly the map's item 9 watch-out; a separate anchor
   would state the same fact twice.
@@ -251,6 +341,14 @@ contradicted elsewhere in the same file.
   already-proven check does not automatically earn a fixture. The four fixtures
   cover four distinct classes, and that is the honest floor given the gate is
   currently canary-bound.
+- The scope fence, the coverage-map accounting, the record-citation rule, and the
+  falsification-pass offer are four more section-scoped require/`forbid` pairs
+  inside the already-bounded
+  `--full` section, not new checks. They earn no new fixture: the family's density
+  rule buys a fixture per class, and story 9's four already prove this feature's
+  section-scoped anchor class. `bench coverage <spec>` is the enumeration the
+  accounting rule points at — the rows are its output, so the rule adds a duty
+  rather than a second source for what they are.
 - The `.claude/commands/` mirror is updated in the same change. No gate check
   compares the two command trees for content; that gap is named in Out of scope.
 
@@ -276,7 +374,7 @@ contradicted elsewhere in the same file.
 
 ### Seam diagram
 
-Prose-anchor seam (stories 1, 3, 4, 5, 6, 7, 8):
+Prose-anchor seam (stories 1, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15):
 
     trigger: gate conformance phase → checkDocsCurrencyAndWorkflow(root, kitRoot)
         │
@@ -287,7 +385,7 @@ Prose-anchor seam (stories 1, 3, 4, 5, 6, 7, 8):
                         every gate; canary fixtures run the same check against a
                         tree with one anchored fact removed and match EXPECT
 
-Shared-rule marker seam (story 2):
+Shared-rule marker seam (stories 2, 15):
 
     trigger: gate conformance phase → checkSharedRuleSingleSource(root)
         │
@@ -317,7 +415,7 @@ Canary-bite seam (story 9):
 | 1 | the fix-don't-park rule is present in `.bench/BENCH.md` and inside its Workflow section, not merely somewhere in the file | shared-rule marker seam plus a section-scoped assertion | new marker plus the section-scoped assertion added before the prose; conformance reds `shared rule missing from canonical .bench/BENCH.md` and reds again when the sentence sits outside Workflow | the marker alone passes a rule pasted into any section or an HTML comment, since `requireCollapsed` is whole-file and does not strip comments; the section scope is what makes the anchor mean placement |
 | 1 | the rule appears in `.bench/BENCH.md` and nowhere else | shared-rule marker seam | already covered — the same marker's `AGENTS.md`/`README.md` half, proven biting by the `shared-rule-drift` and `readme-shared-rule-drift` fixtures | restating a shared rule in `AGENTS.md` is the drift the map's item 9 named; the existing fixtures prove the direction fires for any marker in the list |
 | 2 | `NEVER assume, always verify` reds when `.bench/BENCH.md` loses it | shared-rule marker seam | new marker added before any prose change; conformance reds naming the marker on a tree with the sentence removed | the Roles sentence is currently unanchored, so it can drift out silently — the exact failure the map's #6 opened on |
-| 2 | both new markers red when `AGENTS.md` or `README.md` restates them | shared-rule marker seam | restate either sentence in `AGENTS.md` on a scratch tree; conformance reds `shared rule duplicated in AGENTS.md` naming it | a presence-only assertion added outside the marker loop would satisfy the removal direction while leaving the duplication direction unguarded — the cheapest wrong implementation of story 2 |
+| 2 | all three markers red when `AGENTS.md` or `README.md` restates them | shared-rule marker seam | restate any of the three sentences in `AGENTS.md` on a scratch tree; conformance reds `shared rule duplicated in AGENTS.md` naming it | a presence-only assertion added outside the marker loop would satisfy the removal direction while leaving the duplication direction unguarded — the cheapest wrong implementation of story 2 |
 | 3 | `/bench-shape-idea` carries the look-it-up-before-asking hook | prose-anchor seam | new `requireCollapsed` added before the sentence; conformance reds with its diagnostic | without the assertion the hook is ordinary prose that a later trim removes; the diagnostic names which phase lost it |
 | 3 | `/bench-implement-spec` carries the verify-against-the-tree-not-memory hook | prose-anchor seam | new `requireCollapsed` added before the sentence; conformance reds with its diagnostic | same class, different owner — one assertion per phase is what makes the diagnostic actionable rather than a generic "a hook is missing" |
 | 3 | `/bench-review-implementation` carries the cite-what-you-read hook | prose-anchor seam | new `requireCollapsed` added before the sentence; conformance reds with its diagnostic | a review that recalls instead of citing is the observed failure; the hook must be pinned in the review phase specifically |
@@ -342,6 +440,18 @@ Canary-bite seam (story 9):
 | 9 | no new fixture is vacuous | canary-bite seam | already covered — the sweep grades every EXPECT against its scope group's empty-tree baseline | an EXPECT the baseline already emits would pass without the mutation, making the fixture decorative |
 | 9 | fixture base names stay globally unique across families | canary sweep | already covered — the existing `fixtures()` uniqueness check | a collision with a `behavior-owned` name would misroute scope resolution once FT91's migration lands |
 | 10 | the first real `--full` run is graded against independent records — the delegate invocation, `git log`, and the committed `session-handoff.md` at each boundary — not against its own exit report | manual, dogfood | not TDD-able — orchestration behavior is prose-driven and has no gate seam (map Handoff item 5) | a run that silently self-reviewed or skipped a boundary rewrite can still emit a correct-looking exit report; only records the run did not author separate the two |
+| 11 | the `--full` section fences the run's diff to the spec's stories and seams, with work outside them recorded rather than built | prose-anchor seam | new require on the fence plus a `forbid` on an opportunistic-improvement phrasing; conformance reds before the section is written | fix-don't-park is a one-way ratchet, and the cheapest wrong reading discharges a defect by widening the diff into a refactor no story asked for; the require alone passes a section that states the fence and licenses the widening two sentences later |
+| 11 (edge of 3) | whether a given run's diff actually stayed inside the spec's seams | manual, review-graded | not TDD-able — the fence is judgment prose, and no gate check compares a diff against a spec's named seams | recorded rather than claimed covered: `/bench-review-implementation`'s Spec axis already grades a diff against its spec, and this row claims only that the anchor is present |
+| 12 | the exit report accounts for every coverage-map row by name, with the no-map fallback stated | prose-anchor seam | new require naming the per-row disposition and `bench coverage <spec>` as the enumeration, plus a `forbid` on an aggregate-completion phrasing; conformance reds before the section is written | a run that implemented eight of twelve rows emits an aggregate claim identical to a complete one; the enumeration is what makes the four missing rows visible, and the forbid catches the version that states the rule and then summarizes anyway |
+| 13 | the exit report cites the record behind each phase claim | prose-anchor seam | new require on the citation rule plus a `forbid` on an uncited phase-complete phrasing; conformance reds before the section is written | story 10 buys this observation once, by hand; without the anchored rule every run after the first is graded on its own unsupported report, which is the failure story 10's row already names |
+| 14 | the falsification pass is offered on story 8's trigger, as its own question rather than a fourth route, and never runs standing | prose-anchor seam | new require naming the trigger, the refutation charge, and the separate question, plus a `forbid` on a standing-pass phrasing; conformance reds before the section is written | the two cheapest wrong readings are folding it into story 8's menu — which breaks that story's fixed-three anchor — and making it standing, which doubles review cost on every three-file run; the forbid catches the second, and naming the separate question closes the first |
+| 14 (edge of 3) | whether a given run's trigger fires and the pass is actually offered | manual, dogfood | not TDD-able — it shares story 8's judgment trigger, which the map's Handoff item 7 already accepted as unobservable to the gate | story 10's independent records are the observation, by the same argument story 8's row makes: a large-diff run with no recorded question is the visible signature |
+| 15 | the warrant rule is present in `.bench/BENCH.md` and inside its communication section, not merely somewhere in the file | shared-rule marker seam plus a section-scoped assertion | new marker plus the section-scoped assertion added before the prose; conformance reds `shared rule missing from canonical .bench/BENCH.md` and reds again when the sentence sits outside the communication rules | the same argument story 1's first row makes, and it binds harder here: a whole-file marker passes a rule pasted into any section or commented out, and this rule only works if it is loaded at the moment a claim is made |
+| 15 | the rule appears in `.bench/BENCH.md` and nowhere else | shared-rule marker seam | already covered — the same marker's `AGENTS.md`/`README.md` half, proven biting by the `shared-rule-drift` and `readme-shared-rule-drift` fixtures | a third entry rides the loop the first two ride; the existing fixtures prove the direction fires for any marker in the list |
+| 15 | the rule asks for disclosure of what went unread, not for thoroughness | prose-anchor seam | new `forbid` on a be-thorough phrasing; conformance reds on a scratch tree carrying one | a be-thorough restatement is the cheapest wrong implementation and is worse than nothing: it reads as compliance while staying unfalsifiable, so no reviewer can ever catch a breach of it |
+| 15 (edge of 3) | whether a session actually discloses what it left unread | manual, review-graded | not TDD-able — the gate grades the tree and cannot observe a conversational claim; no seam exists and none is invented | recorded as the rule's honest limit rather than an implied guarantee. Its whole design concedes this: it cannot prevent a breach, only make one visible in the message where it happens, which is exactly why the anchored form is disclosure rather than thoroughness |
+| 11, 12, 13, 14 | each new `--full` anchor bites when its fact is removed | canary-bite seam | already covered — story 9's `--full` fixtures prove the section-scoped require/`forbid` class in `.agents/commands/`, and the family's density rule earns no fixture for a new assertion inside a proven check | flagged for veto: four more fixtures would restate the proven class rather than extend coverage, so the bite claim for these anchors rests on the class, not on a fixture each |
+| 15 (edge of 3) | story 15's section-scoped anchor in `.bench/BENCH.md` bites when the sentence moves out of the communication rules | manual, review-graded | not TDD-able as specified — the `shared-rule-drift` fixtures prove the *marker* directions for any list entry, and story 9's four fixtures prove section scoping only in `.agents/commands/`; no fixture proves a section-scoped anchor over `.bench/BENCH.md` | recorded rather than claimed covered, and it names a gap this spec inherits rather than creates: story 1's Workflow-section half rests on the same untested combination. If the reviewer wants either proven, one fixture removing a section-scoped `.bench/BENCH.md` sentence covers both stories at once |
 
 ### Edge inventory
 
@@ -364,15 +474,17 @@ Canary-bite seam (story 9):
   handle**: `session-handoff.md` is a markdown file any editor writes, so there
   is no CLI dependency to fall back from; `bench handoff --next` is the route
   that derives the pin block, not a prerequisite for writing the file.
-- Hostile environment (Codex CLI absent when escalation is offered) → covered by
-  story 8's omit-and-say-so clause; no separate row.
+- Hostile environment (Codex CLI absent when escalation is offered, or when the
+  story 14 falsification pass is) → covered by story 8's omit-and-say-so clause,
+  which story 14 adopts rather than restates; no separate row.
 - `--full` on a spec already `Status: implemented` → **Won't handle**:
   `/bench-final-check` owns the status transition and already reports an honest
   green for a branch with nothing to commit, so the run terminates correctly
   without a new rule.
-- Empty input (a spec with no acceptance coverage map) → **Won't handle**:
-  `/bench-implement-spec` already handles a spec without a map, and `--full`
-  changes nothing about that path.
+- Empty input (a spec with no acceptance coverage map) → coverage row (story 12):
+  the exit report states the map's absence and accounts for the user stories
+  instead. `/bench-implement-spec` already handles building without a map, and
+  `--full` changes nothing about that path.
 - Concurrent runs (two `--full` runs on one tree) → **Won't handle**: invariant 1
   already forbids a gate verdict answering for two diffs, and `bench worktree`
   is the existing isolation route.
