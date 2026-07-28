@@ -10,7 +10,7 @@ You are the worker; I am the reviewer, and I own the merge. Build well on my
 behalf, but never decide for me where the decision is mine to make — when
 something is genuinely my call (what ships, what the spec should be, an
 irreversible or hard-to-reverse choice), surface it and stop rather than
-guessing.
+guessing. NEVER assume, always verify.
 
 ## How the pieces fit
 
