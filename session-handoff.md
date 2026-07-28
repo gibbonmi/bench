@@ -2,65 +2,62 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — clean tree, pushed to origin at `5650b8a`
-Spec: `specs/ft91-artifact-build-tiering.md` (Status: implemented)
-Gate: green for all code at `64635b8`; the pin reads stale only because the
-spec-status and handoff commits landed after it, both doc-only
+Branch: `main` — clean tree, three commits ahead of origin
+Spec: none active — `specs/ft91-gate-phase-split.md` (Status: implemented) is
+held unretired on purpose, see below
+Gate: green for all code at `64635b8`; the pin reads stale only because
+doc-only commits landed after it
 
 ## State
 
-- **FT91 artifact build tiering is built, gate-green, and unpushed.** All ten
-  stories landed across three commits: the build, a review fix pass closing
-  findings on all three axes, and the status flip. Nothing was parked. The
-  reviewer owns the push.
-- **What it does.** `scripts/build-artifacts.sh` gained
-  `BENCH_SHARED_BUILD_CACHE`, matched exactly against `1` so every other value —
-  absent, empty, `yes`, `" 1"` — resolves hermetic. Under the opt-in it honors
-  the ambient Go build and module caches (resolved before the `HOME` override,
-  which is the whole correctness of that story), skips the reproducibility
-  second build, and removes a stale `reproducibility.json` as part of the same
-  atomic promotion, restoring it if the promotion fails. The two dev contract
-  packages set the opt-in in `TestMain`. Byte-reproducibility across independent
-  builds stays a ship-tier claim.
-- **Measured effect, solo runs against the spec's recorded baselines:** the
-  artifact suite 133.5 s → 106 s, the surface suite 115.5 s → 12 s. That is
-  249 s → 118 s, and it already absorbs ~50 s of new hermetic-posture tests the
-  spec's polarity rows require.
-- **The gate wall-clock did not drop by that much — 4m51s → 4m27s — and nobody
-  has diagnosed why.** Under gate parallelism the artifact suite inflates to
-  ~152 s, so the contract phase is no longer clearly the critical path. The
-  spec's motive was gate time, so this gap is worth a look before anyone calls
-  FT91 done on its own terms. The remaining artifact-suite lever is already
-  diagnosed and parked in `IDEAS.md`: the residual is invocation count, not
-  per-invocation cost.
-- **Four post-approval spec corrections await veto.** The semantic review found
-  four statements in the spec that were factually wrong about the code — story
-  4's rollback row described a seam that parks above the promotion backups,
-  story 9 over-stated a deletion, and two edge-inventory exclusions rested on
-  reasons the opt-in invalidated. Each is marked `**Post-approval correction,
-  flagged:**` in the spec. The code is right in all four cases; only the prose
-  changed. Whether that edit was mine to make is the open question captured in
-  `.bench/learnings.md`.
-- **One open learning, unverdicted:** whether a review's Spec-axis finding may
-  correct an approved spec in place, or must stop for sign-off. It proposes two
-  candidate rules and asks the reviewer to pick.
-- **`ft91-gate-phase-split` stays unretired on purpose,** so `bench status`
-  keeps reporting one spec awaiting retirement until the reviewer rules on its
-  stories 4, 5, and 9.
+- **The drain closed 2026-07-28, approved as one batch diff.** Both inboxes are
+  empty, the roadmap parses clean, and `bench roadmap` extracts the sequence.
+- **FT91 is retargeted on the seventh arm.** `ft91-artifact-build-tiering`
+  shipped and retired: a `BENCH_SHARED_BUILD_CACHE` opt-in, dev-tier only, lets
+  the contract suites honor the ambient Go caches and skip the reproducibility
+  second build. Measured solo — artifact suite 133.5 s → 106 s, surface suite
+  115.5 s → 12 s. **The whole gate absorbed only 24 s of that 131 s** (4m51s →
+  4m27s), because under gate parallelism the artifact suite inflates to ~152 s.
+  Nobody has diagnosed the gap, and it is the first question the next arm
+  answers.
+- **The remaining artifact lever is diagnosed but is a decision, not a build.**
+  The cost is invocation count — ~20 host-only generator runs at ~3.7 s each,
+  not packing. The `BENCH_TEST_PREPARED_ARTIFACTS` seam exists but is scoped
+  per-test. Hoisting it to package scope needs a ruling on which tests may share
+  one artifact set without losing independence.
+- **The spec-edit learning became FT144's third instance.** The question
+  generalized: when a phase's finding lands on an *approved* spec rather than on
+  the code, what may it do under batch approval? FT144 already carried the
+  build-side face; the review-side face now rides it, with two candidate rules
+  for the reviewer to pick between. One decision closes both phases.
+- **The four post-approval spec corrections were not individually vetoed.** They
+  were surfaced at the drain close, the reviewer approved the batch including the
+  retirement, and the spec file went with it. Recoverable via
+  `bench spec history ft91-artifact-build-tiering`. The code was right in all
+  four cases; only prose moved.
+- **`ft91-gate-phase-split` stays unretired on purpose,** so `bench status` keeps
+  reporting one spec awaiting retirement until the reviewer rules on its stories
+  4, 5, and 9 — two shipped as probed phases rather than the manifest the spec
+  named, and story 9 was dropped as unsatisfiable.
+- **`decisions/cost-follows-project-size.md` is kept, not deleted.** Ticket #6 is
+  open and `## Not yet specified` still parks `-count=1` freshness semantics as a
+  reviewer-led oracle decision, so `bench status` reports one unresolved map by
+  design.
 
 ## Next command
 
-`/bench-what-next` in a fresh mid-tier session — the drain has one parked idea
-and one open learning, and it is the only path either takes into the roadmap. It
-also owns the roadmap row for the merged FT91 work.
+`/bench-shape-idea` for FT91's eighth arm.
 
-`ft91-artifact-build-tiering` is merged and retirable, and its retirement is
-deliberately deferred to that drain (reviewer, 2026-07-27) so the whole backlog
-gets judged in one reviewed batch diff. When it runs: **keep** the decision map
-`decisions/cost-follows-project-size.md`. It is not fully shipped — ticket #6 is
-still open and `## Not yet specified` still parks `-count=1` freshness semantics
-as a reviewer-led oracle decision — so the usual "delete the shipped map" half of
-retirement does not apply here.
+Three open decisions want one map rather than three patches: why the gate
+absorbed only 24 s of a 131 s suite win, which tests may share one prepared
+artifact set, and whether `decisions/gate-pipeline.md` — closed on a premise the
+slice-C measurement falsified — reopens. Inputs are the FT91 row,
+`decisions/gate-concurrency.md`'s watch-outs, and
+`decisions/cost-follows-project-size.md`.
+
+Behind it: `/bench-write-spec` for FT98 (the one preserve-then-discard
+primitive), then FT71 (versioned local shift evidence, the remaining HIGH
+bank-track row).
 
 ## Shape
 
