@@ -2,43 +2,46 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — clean tree apart from this commit, ahead of origin
-Spec: none active — `specs/ft91-gate-phase-split.md` (Status: implemented) is
-held unretired on purpose; its stories-4/5/9 ruling now rides map ticket #4
-Gate: green for all code at `64635b8`; the pin reads stale only because
-doc-only commits landed after it
+Branch: `main` — clean tree, ahead of origin
+Spec: none active; `ft91-gate-phase-split` retired 2026-07-28 (stories 4/5
+accepted as probed phases, story 9 dropped — map #4)
+Gate: green, measured 2026-07-28 at 267 s wall (the instrumented run behind
+map ticket #1)
 
 ## State
 
-- **FT91's eighth arm is mapped: `decisions/gate-critical-path.md`, opened
-  2026-07-28.** Five tickets. The frontier is two agent-alone Research
-  tickets: #1 diagnoses why the gate absorbed only 24 s of the seventh arm's
-  131 s suite win (phase-timeline capture; names the current critical path and
-  the artifact-suite inflation mechanism), #2 inventories the artifact suite
-  by build-vs-inspect. The grills hang behind them: #3 prepared-artifact
-  sharing (blocked by #2), #4 gate-pipeline reopen plus the unretired spec's
-  stories 4/5/9 (blocked by #1), #5 the closing ticket — FT91's stop
-  condition and the arm selection (blocked by #1, #3, #4).
-- **Two scope rulings taken at bootstrap (reviewer, 2026-07-28):** the
-  stories-4/5/9 spec-retirement ruling folds into ticket #4, and FT91's stop
-  condition is decided in-map against #1's evidence rather than set now.
-- **`decisions/cost-follows-project-size.md` stays open by design.** Ticket #6
-  (cheap-tier retest, opportunistic Task) and the parked `-count=1` decision
-  keep its `bench status` row; unrelated to this map.
-- **Both inboxes are empty; the drain closed 2026-07-28** and the roadmap
-  parses clean.
+- **FT91's eighth arm is diagnosed and mostly ruled:
+  `decisions/gate-critical-path.md`.** The gate is canary-bound (canary solo
+  250 s of a 267 s gate): the 34 `behavior-owned` fixtures each re-run the
+  full kit contract suite in their nested gates. Evidence asset:
+  `decisions/assets/gate-critical-path-timeline.md`.
+- **Reviewer rulings taken 2026-07-28, all recorded in the map:** stage 1 —
+  behavior-owned fixtures scope to one contract package via subfamily
+  directories (#6); stage 2 — canary nesting removed for that family, bites
+  proven in-process at the owning contract test (#7; the gate-pipeline
+  nesting clause transferred here and reopened); gate-pipeline.md stays
+  closed and the phase-split spec retired (#4); **FT91's stop condition is a
+  measured dev gate ≤60 s** — the oracle-semantics levers enter this map if
+  the post-stage-2 re-measurement stays above it (#5).
+- **Open tickets: #2 and #3 only.** #2 (Research, agent-alone) buckets the
+  artifact suite build-vs-inspect; #3 (Grill, blocked by #2) rules which
+  tests share one prepared artifact set. They gate only the artifact-hoist
+  slice, not the two canary slices.
+- **The roadmap's FT91 row still describes the phase-split spec as
+  unretired** — stale as of this session; the next `/bench-what-next`
+  reconcile owns the row rewrite. The tree wins meanwhile.
+- **`decisions/cost-follows-project-size.md` stays open by design** (ticket
+  #6 there, opportunistic cheap-tier retest).
 
 ## Next command
 
-`/bench-shape-idea` resume on `decisions/gate-critical-path.md` ticket #1 —
-Research, agent-alone: capture the gate phase timeline and diagnose the
-parallelism gap. Ticket #2 (artifact-suite inventory) is likewise unblocked
-and independent, so either order works; #1 first, since #4 and #5 both grill
-against its numbers.
+`/bench-write-spec` for stage 1 — the behavior-owned package-scoping slice —
+on a fresh mid-tier session; map tickets #1/#6/#7 plus the timeline asset
+carry the seams. The reviewer wants this moving now.
 
-Behind the map: `/bench-write-spec` for FT98 (the one preserve-then-discard
-primitive), then FT71 (versioned local shift evidence, the remaining HIGH
-bank-track row).
+After it: `/bench-shape-idea` resume on `gate-critical-path` #2 (agent-alone
+research), which unblocks #3 and the artifact-hoist slice; stage 2 specs the
+moment stage 1 lands.
 
 ## Shape
 
