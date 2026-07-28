@@ -58,7 +58,7 @@ func TestReproducibilityComparatorRejectsArtifactAndEvidenceMutations(t *testing
 	root := contract.SubjectRoot(t)
 	contract.SkipIfSubjectFileMissing(t, "scripts/compare-artifacts.sh")
 	var plan struct {
-		Targets []artifactPlatform `json:"targets"`
+		Targets []contract.ReleaseTarget `json:"targets"`
 	}
 	var wrapper struct {
 		Version string `json:"version"`

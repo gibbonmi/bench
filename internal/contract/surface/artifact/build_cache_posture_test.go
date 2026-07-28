@@ -12,9 +12,10 @@ import (
 	"github.com/gibbonmi/bench/internal/contract"
 )
 
-// TestMain puts the whole package on the dev-tier build posture. contract.ProcessEnv and
-// the fixture-driven mergeEnv both start from os.Environ(), so one assignment here reaches
-// every subprocess either path spawns and no individual call site can drift.
+// TestMain puts the whole package on the dev-tier build posture; contract.ProcessEnv and
+// the fixture-driven mergeEnv both start from os.Environ(), so it reaches every subprocess
+// the package spawns. The rows asserting the hermetic default strip the token back out
+// through ambientBuildEnv.
 func TestMain(m *testing.M) {
 	if err := os.Setenv(contract.SharedBuildCacheEnv, "1"); err != nil {
 		panic(err)
@@ -38,19 +39,6 @@ func ambientBuildEnv(extra []string, remove ...string) []string {
 		}
 	}
 	return append(env, extra...)
-}
-
-func ambientGoCaches(t *testing.T) (string, string) {
-	t.Helper()
-	out, err := exec.Command("go", "env", "GOCACHE", "GOMODCACHE").Output()
-	if err != nil {
-		t.Fatalf("read ambient Go caches: %v", err)
-	}
-	caches := strings.Fields(string(out))
-	if len(caches) != 2 {
-		t.Fatalf("unexpected go env GOCACHE/GOMODCACHE output: %q", out)
-	}
-	return caches[0], caches[1]
 }
 
 func TestArtifactBuilderHonorsHermeticDefault(t *testing.T) {
@@ -82,7 +70,7 @@ func TestArtifactBuilderHonorsHermeticDefault(t *testing.T) {
 func TestBuildCachePostureUnderGoproxyOff(t *testing.T) {
 	root := contract.SubjectRoot(t)
 	contract.SkipIfSubjectFileMissing(t, "scripts/build-artifacts.sh")
-	goCache, goModCache := ambientGoCaches(t)
+	goCache, goModCache := contract.GoEnvPair(t, "GOCACHE", "GOMODCACHE")
 	for _, test := range []struct {
 		name      string
 		env       []string

@@ -228,7 +228,7 @@ func TestOfflineArchiveProjection(t *testing.T) {
 	contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-artifacts.sh"), buildRoot, npmOut).RequireExit(0)
 
 	var plan struct {
-		Targets []artifactPlatform `json:"targets"`
+		Targets []contract.ReleaseTarget `json:"targets"`
 	}
 	contract.ReadJSONFile(t, filepath.Join(buildRoot, "scripts", "release-plan.json"), &plan)
 	matrix := plan.Targets
@@ -351,7 +351,7 @@ func assembleOfflineArchiveStage(t *testing.T, scriptRoot, planRoot, evidenceRoo
 	return archiveDir
 }
 
-func assertOfflineArchiveSet(t *testing.T, npmArtifacts, output, version string, matrix []artifactPlatform) {
+func assertOfflineArchiveSet(t *testing.T, npmArtifacts, output, version string, matrix []contract.ReleaseTarget) {
 	t.Helper()
 	files, err := os.ReadDir(output)
 	if err != nil {

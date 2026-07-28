@@ -4,12 +4,14 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
 	"sort"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/packagesurface"
 	"github.com/gibbonmi/bench/internal/testrepo"
@@ -243,11 +245,6 @@ func testPackageNpmPackInstallableSurface(t *testing.T) {
 	}
 }
 
-type packagePlatform struct {
-	OS   string `json:"os"`
-	Arch string `json:"arch"`
-}
-
 type packageWrapper struct {
 	Version              string            `json:"version"`
 	OptionalDependencies map[string]string `json:"optionalDependencies"`
@@ -270,14 +267,17 @@ func packageRunGenerator(t testing.TB, candidate, out string) contract.Probe {
 func packageHostCandidate(t testing.TB) string {
 	t.Helper()
 	return contract.NarrowReleasePlan(t, contract.SubjectRoot(t), func(matrix contract.ReleasePlanTargets) []contract.ReleaseTarget {
+		if len(matrix.Host) == 0 {
+			capability.Environment(t, fmt.Sprintf("package contract tests require release plan target for host %s/%s", matrix.GOOS, matrix.GOArch))
+		}
 		return matrix.Host
 	})
 }
 
-func packageReadPlatforms(t testing.TB, root string) []packagePlatform {
+func packageReadPlatforms(t testing.TB, root string) []contract.ReleaseTarget {
 	t.Helper()
 	var plan struct {
-		Targets []packagePlatform `json:"targets"`
+		Targets []contract.ReleaseTarget `json:"targets"`
 	}
 	contract.ReadJSONFile(t, filepath.Join(root, "scripts", "release-plan.json"), &plan)
 	return plan.Targets

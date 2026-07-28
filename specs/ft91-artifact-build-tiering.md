@@ -168,8 +168,11 @@ ship-tier proof — it does not remove the proof.
 
 9. As `TestDistributableArtifactContracts`, I want the dev-tier two-build
    assertion removed, so that dev asserts only what the dev posture produces.
-   `assertPromotedReproducibility` and its single call at `artifact_test.go:107`
-   go; the ship-tier proof named in the Solution is unchanged and untouched.
+   **Post-approval correction, flagged:** the dev-tier *call* to
+   `assertPromotedReproducibility` goes; the helper itself stays, called from
+   story 1's hermetic-default test, which keeps the record-shape assertion
+   single-sourced as the code standard requires. The ship-tier proof named in
+   the Solution is unchanged and untouched.
    Line: `gpt-5.6-terra` / medium. Deleting an assertion is exactly the move
    invariant 1 forbids doing casually, so it carries the argument for why the
    property is still proven elsewhere.
@@ -294,7 +297,7 @@ Seam 3 — host-only breadth (stories 6–7):
 | 3 | opt-in skips the second build | seam 1 | same test, token set | The inner build at `build-artifacts.sh:135` forces its own private `GOMODCACHE`, so if it still runs under the opt-in the offline build fails. This is the discriminator the record-absence check could not provide: an implementation that suppresses the record but still rebuilds stays green on the record and reds here. |
 | 3 | opt-in promotes no record | seam 1 | `go test ./internal/contract/surface/artifact -run TestSharedCacheBuildPromotesNoRecord` | Asserts no `reproducibility.json` appears; paired with the row above so neither "no record" nor "no rebuild" can be satisfied alone. |
 | 4 | stale record removed under opt-in | seam 1 | `go test ./internal/contract/surface/artifact -run TestSharedCacheBuildRemovesStaleReproducibilityRecord` | Seeds a `reproducibility.json` beside the output, runs an opt-in build, asserts it is gone; leaving it would let a one-build run present two-build evidence for bytes it did not compare. |
-| 4 | failed opt-in promotion restores the record | seam 1 | `go test ./internal/contract/surface/artifact -run TestSharedCacheBuildRestoresRecordOnInterruptedPromotion` | Drives the existing `BENCH_TEST_PROMOTION_READY_FILE` seam, which blocks *inside* the promotion block at line 146, then interrupts — so the failure lands after the record has been moved. The tarball-count refusal at line 127 fires before promotion and can never exercise the trap, which is why it is not the injection used here. |
+| 4 | failed opt-in promotion restores the record | seam 1 | `go test ./internal/contract/surface/artifact -run TestSharedCacheBuildRestoresRecordOnInterruptedPromotion` | **Post-approval correction, flagged:** two subtests share the `BENCH_TEST_PROMOTION_READY_FILE` seam, whose wait loop parks the script *above* both the artifacts backup and the record backup. Signaling there proves the weaker guard — a SIGINT at the seam exits before either backup, so it can never move the record. The restore branch is reached by the second subtest, `failArtifactPromotionAfterRecordMove`: it deletes the staged generation while the build is parked, then releases the seam, so both backups are taken and `mv "$artifacts" "$output"` fails under `set -e` — cleanup then restores the record with the artifacts not yet promoted. The tarball-count refusal fires before promotion and can never exercise the trap, which is why it is not the injection used here. |
 | 5 | prep-release passes no opt-in | seam 2 | `go test ./internal/preprelease -run TestArtifactStepIsHermetic` | Reads the `artifacts` step and fails if the token appears in its `Env`; a later edit adding it reds here without needing a release run. Ambient inheritance is out of this seam's reach by design — see the fail-closed argument in Implementation decisions. |
 | 6 | narrowing helper preserves artifact-suite behavior | seam 3 | `go test ./internal/contract/surface/artifact` (whole package) | already covered — the twenty existing call sites are the regression suite for the extraction; any behavior change in the moved code reds one of them. |
 | 7 | generator proves idempotency at host breadth | seam 3 | `go test ./internal/contract/surface -run TestPackageContracts` | The existing idempotency and pin-reproducibility subtests keep their assertions over the narrowed plan; a narrowing that broke plan-derived counts reds the artifact-count subtest. |
@@ -318,9 +321,16 @@ Walked against the profile's hostile-input checklist for shell CLIs.
   configuration survives a failed promotion.
 - **Hand-edited file with no trailing newline** — **Won't handle**: the script
   never parses `reproducibility.json`, only creates or removes it.
-- **Special files and dangling symlinks in the output path** — **Won't handle**:
-  the output directory's hostility is owned by the existing promotion block and is
-  unchanged by this spec; no new path is read.
+- **Special files and dangling symlinks in the output path** — **Won't handle**,
+  **post-approval correction, flagged:** the opt-in gives the script a new
+  destructive touch on a path it may not have created — whenever the token is
+  set it moves `$parent/reproducibility.json` aside and deletes the backup on
+  success, where before this spec that block ran only for a record the script
+  had just written itself. A hostile record (say, a directory named
+  `reproducibility.json`) still fails closed: the move fails under `set -e` and
+  cleanup restores — but it dies with a bare `mv` error rather than an
+  attributed `bench artifacts:` diagnostic. The exclusion stands as an argued
+  cut of the diagnostic polish, not on the original no-new-path ground.
 - **Required tool missing from PATH** — **Won't handle** for `go`: an absent
   toolchain fails the build long before posture matters, and the existing
   absent-toolchain diagnostic owns it.
@@ -337,9 +347,14 @@ Walked against the profile's hostile-input checklist for shell CLIs.
   (`native_workflow_test.go:244`) and the CI artifacts workflow
   (`.github/workflows/native-runtime.yml:52-53`, itself pinned by
   `workflow_checks_test.go:62-72`, which greps for its clone-and-compare).
-- **Concurrent invocation** — covered by the existing output-directory lock, which
-  this spec does not touch; sharing a Go build cache across concurrent invocations
-  is safe because Go's cache takes its own locks.
+- **Concurrent invocation** — covered for the artifacts, **post-approval
+  correction, flagged:** the existing lock is `${output}.lock`, so it serializes
+  only builds naming the same output directory. The record lives one directory
+  up at `$parent/reproducibility.json`, outside any lock: two builds with
+  different output names under a shared parent race it, and the opt-in adds a
+  new unconditional writer of that path (the move-aside and backup deletion).
+  That residual is unhandled. Sharing a Go build cache across concurrent
+  invocations is safe because Go's cache takes its own locks.
 
 ## Out of scope
 

@@ -32,30 +32,8 @@ commit_complete=0
 artifacts_promoted=0
 reproducibility_promoted=0
 promote_reproducibility=0
-# Dev-tier posture opt-in, matched exactly against 1. Absent, empty, and every other
-# value resolve hermetic, so no environment accident can hand a release build the
-# ambient caches or drop its reproducibility evidence.
-shared_build_cache=0
-[[ "${BENCH_SHARED_BUILD_CACHE:-}" != 1 ]] || shared_build_cache=1
-if [[ "$shared_build_cache" == 1 ]]; then
-  # Resolve while HOME is still ambient: go env reports the environment's value when
-  # one is set and the computed default otherwise, and that default sits under HOME.
-  { IFS= read -r ambient_gocache; IFS= read -r ambient_gomodcache; } < <(go env GOCACHE GOMODCACHE)
-fi
-# npm writes pack bookkeeping even for local, script-free packs. Keep that mutable
-# state, TMPDIR, and HOME inside the private generation under both postures so
-# HOME/cache/locale perturbations cannot affect release bytes.
-export npm_config_cache="$stage/npm-cache"
-export TMPDIR="$stage/tmp"
-export HOME="$stage/home"
-if [[ "$shared_build_cache" == 1 ]]; then
-  export GOCACHE="$ambient_gocache"
-  export GOMODCACHE="$ambient_gomodcache"
-else
-  export GOCACHE="$stage/go-cache"
-  export GOMODCACHE="$stage/go-mod-cache"
-fi
-mkdir -p "$TMPDIR" "$HOME" "$GOMODCACHE"
+# Armed before anything below can fail, so every later exit takes the staging
+# directory with it. Everything cleanup touches is initialized above.
 cleanup() {
   if [[ "$commit_complete" != 1 ]]; then
     if [[ "$artifacts_promoted" == 1 ]]; then
@@ -81,6 +59,38 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM HUP
+# Dev-tier posture opt-in, matched exactly against 1. Absent, empty, and every other
+# value resolve hermetic, so no environment accident can hand a release build the
+# ambient caches or drop its reproducibility evidence.
+shared_build_cache=0
+[[ "${BENCH_SHARED_BUILD_CACHE:-}" != 1 ]] || shared_build_cache=1
+if [[ "$shared_build_cache" == 1 ]]; then
+  # Resolve while HOME is still ambient: go env reports the environment's value when
+  # one is set and the computed default otherwise, and that default sits under HOME.
+  ambient_go_caches=""
+  if ! ambient_go_caches="$(go env GOCACHE GOMODCACHE)"; then
+    printf 'bench artifacts: could not read the ambient Go caches\n' >&2
+    exit 1
+  fi
+  if ! { IFS= read -r ambient_gocache && IFS= read -r ambient_gomodcache; } <<<"$ambient_go_caches"; then
+    printf 'bench artifacts: ambient Go caches did not resolve to a cache and a module cache\n' >&2
+    exit 1
+  fi
+fi
+# npm writes pack bookkeeping even for local, script-free packs. Keep that mutable
+# state, TMPDIR, and HOME inside the private generation under both postures so
+# HOME/cache/locale perturbations cannot affect release bytes.
+export npm_config_cache="$stage/npm-cache"
+export TMPDIR="$stage/tmp"
+export HOME="$stage/home"
+if [[ "$shared_build_cache" == 1 ]]; then
+  export GOCACHE="$ambient_gocache"
+  export GOMODCACHE="$ambient_gomodcache"
+else
+  export GOCACHE="$stage/go-cache"
+  export GOMODCACHE="$stage/go-mod-cache"
+fi
+mkdir -p "$TMPDIR" "$HOME" "$GOMODCACHE"
 lock_path="${output}.lock"
 if ! mkdir "$lock_path" 2>/dev/null; then
   printf 'bench artifacts: another build owns output %s\n' "$output" >&2

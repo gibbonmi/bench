@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/testrepo"
@@ -63,15 +62,7 @@ func NarrowReleasePlan(t testing.TB, root string, narrow func(ReleasePlanTargets
 	if err := json.Unmarshal(plan["targets"], &matrix.All); err != nil {
 		t.Fatalf("parse staged release targets: %v", err)
 	}
-	goEnv, err := exec.Command("go", "env", "GOOS", "GOARCH").Output()
-	if err != nil {
-		t.Fatalf("read host Go target: %v", err)
-	}
-	host := strings.Fields(string(goEnv))
-	if len(host) != 2 {
-		t.Fatalf("unexpected go env GOOS/GOARCH output: %q", goEnv)
-	}
-	matrix.GOOS, matrix.GOArch = host[0], host[1]
+	matrix.GOOS, matrix.GOArch = GoEnvPair(t, "GOOS", "GOARCH")
 	for _, target := range matrix.All {
 		if target.GOOS == matrix.GOOS && target.GOArch == matrix.GOArch {
 			matrix.Host = []ReleaseTarget{target}

@@ -3,8 +3,10 @@ package contract
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
 	"testing"
 
@@ -51,6 +53,22 @@ func SubjectRoot(t testing.TB) string {
 		return abs
 	}
 	return KitRoot(t)
+}
+
+// GoEnvPair returns the two values `go env` resolves for first and second, in that order.
+// The variable names carry the failure diagnostic, so a caller reading GOOS/GOARCH stays
+// distinguishable from one reading GOCACHE/GOMODCACHE by the message alone.
+func GoEnvPair(t testing.TB, first, second string) (string, string) {
+	t.Helper()
+	out, err := exec.Command("go", "env", first, second).Output()
+	if err != nil {
+		t.Fatalf("read go env %s/%s: %v", first, second, err)
+	}
+	values := strings.Fields(string(out))
+	if len(values) != 2 {
+		t.Fatalf("unexpected go env %s/%s output: %q", first, second, out)
+	}
+	return values[0], values[1]
 }
 
 func NewFixture(t testing.TB, opts ...FixtureOption) Fixture {

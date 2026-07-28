@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -19,13 +18,6 @@ import (
 	"github.com/gibbonmi/bench/internal/contract"
 )
 
-type artifactPlatform struct {
-	OS     string `json:"os"`
-	Arch   string `json:"arch"`
-	GOOS   string `json:"goos"`
-	GOArch string `json:"goarch"`
-	Runner string `json:"runner"`
-}
 type wrapperAsset struct {
 	Source   string `json:"source"`
 	Mode     string `json:"mode"`
@@ -72,34 +64,27 @@ func TestDistributableArtifactContracts(t *testing.T) {
 	root := contract.SubjectRoot(t)
 	buildRoot := committedHostileArtifactSource(t, root, includeFirstNonHostArtifactTarget)
 	var plan struct {
-		Targets []artifactPlatform `json:"targets"`
+		Targets []contract.ReleaseTarget `json:"targets"`
 	}
 	contract.ReadJSONFile(t, filepath.Join(buildRoot, "scripts", "release-plan.json"), &plan)
 	matrix := plan.Targets
-	goEnv, err := exec.Command("go", "env", "GOOS", "GOARCH").Output()
-	if err != nil {
-		t.Fatalf("read host Go target: %v", err)
-	}
-	host := strings.Fields(string(goEnv))
-	if len(host) != 2 {
-		t.Fatalf("unexpected go env GOOS/GOARCH output: %q", goEnv)
-	}
+	hostOS, hostArch := contract.GoEnvPair(t, "GOOS", "GOARCH")
 	var fullPlan struct {
-		Targets []artifactPlatform `json:"targets"`
+		Targets []contract.ReleaseTarget `json:"targets"`
 	}
 	contract.ReadJSONFile(t, filepath.Join(root, "scripts", "release-plan.json"), &fullPlan)
-	var hostTarget, firstNonHost artifactPlatform
+	var hostTarget, firstNonHost contract.ReleaseTarget
 	hasHost, hasNonHost := false, false
 	for _, target := range fullPlan.Targets {
-		if !hasHost && target.GOOS == host[0] && target.GOArch == host[1] {
+		if !hasHost && target.GOOS == hostOS && target.GOArch == hostArch {
 			hostTarget, hasHost = target, true
-		} else if !hasNonHost && (target.GOOS != host[0] || target.GOArch != host[1]) {
+		} else if !hasNonHost && (target.GOOS != hostOS || target.GOArch != hostArch) {
 			firstNonHost, hasNonHost = target, true
 		}
 	}
-	expected := []artifactPlatform{hostTarget, firstNonHost}
+	expected := []contract.ReleaseTarget{hostTarget, firstNonHost}
 	if len(matrix) != 2 || !hasHost || !hasNonHost || !reflect.DeepEqual(matrix, expected) {
-		t.Fatalf("breadth-keeper staged targets = %+v, want host %s/%s plus first non-host target %+v", matrix, host[0], host[1], expected)
+		t.Fatalf("breadth-keeper staged targets = %+v, want host %s/%s plus first non-host target %+v", matrix, hostOS, hostArch, expected)
 	}
 	out := filepath.Join(t.TempDir(), "artifact output [hostile]")
 	probe := contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-artifacts.sh"), buildRoot, out)
@@ -255,7 +240,7 @@ func assertInstalledArtifactLifecycle(t *testing.T, artifacts, version string) {
 	}
 }
 
-func assertWrapperArtifact(t *testing.T, root, path, version string, matrix []artifactPlatform) {
+func assertWrapperArtifact(t *testing.T, root, path, version string, matrix []contract.ReleaseTarget) {
 	t.Helper()
 	entries := contract.ReadTarball(t, path)
 	expectedModes := map[string]int64{"package/package.json": 0o644, "package/component-manifest.json": 0o644}
@@ -350,7 +335,7 @@ func assertWrapperArtifact(t *testing.T, root, path, version string, matrix []ar
 	assertComponentManifest(t, entries, "redbench", version, "all", "all")
 }
 
-func assertPlatformArtifact(t *testing.T, root, path, version string, platform artifactPlatform) {
+func assertPlatformArtifact(t *testing.T, root, path, version string, platform contract.ReleaseTarget) {
 	t.Helper()
 	entries := contract.ReadTarball(t, path)
 	want := map[string]bool{"package/bin/bench": true, "package/package.json": true, "package/component-manifest.json": true}
