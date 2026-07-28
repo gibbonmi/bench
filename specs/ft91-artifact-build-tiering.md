@@ -343,10 +343,29 @@ Walked against the profile's hostile-input checklist for shell CLIs.
 
 ## Out of scope
 
-- **The npm/node/git-clone residual in both suites** — a separate capability: it
-  is per-tarball packing and archive assembly work, not build-cache posture, and
-  attacking it means changing what `npm pack` is asked to do. 73.2 s of the
-  artifact suite survives this spec. Estimate: 6 edits, 4 gate runs.
+- **The artifact suite's ~73 s warm residual** — a separate capability, and the
+  first draft's reasoning for cutting it was wrong. Measured 2026-07-27: it is
+  not per-tarball packing cost. One warm full-matrix invocation with the second
+  build skipped is 19.26 s, of which only ~5.2 s is the four cross-compiles; npm
+  pack is 0.61 s per tarball and is *unaffected* by its cache being fresh
+  (0.61 s against 0.59 s shared), node script startup is 0.02 s, and a repo clone
+  is 0.15 s. The residual is therefore **invocation count, not per-invocation
+  cost** — roughly twenty host-only generator runs at ~3.7 s each.
+
+  The lever is the `BENCH_TEST_PREPARED_ARTIFACTS` seam that already exists
+  (`build-artifacts.sh:82-85`): `artifactPreparedGeneration` builds a real
+  artifact set once and hands it to tests that only need artifacts to *exist*,
+  but it is scoped per-test, so `TestArtifactPromotionIsAtomicAndExclusive`
+  still pays a full build (7.98 s warm) to produce its own prepared set.
+  Hoisting that generation to package scope would let one build serve every test
+  that only inspects output.
+
+  It stays out of scope because it is a test-isolation decision, not a
+  build-posture one: sharing one artifact set across tests trades each test's
+  independence for time, and which tests may safely share is a reviewer call this
+  map never asked. Estimate deferred rather than guessed — sizing needs a count
+  of how many of the seven build-bound tests only inspect output, which this spec
+  did not establish.
 - **Vendoring `toon-go`** — a separate capability (dependency-management posture,
   governed by the dependency standard in `AGENTS.md`), and ticket #10 chose the
   shared module cache instead. It would make a bare-machine first build offline,
