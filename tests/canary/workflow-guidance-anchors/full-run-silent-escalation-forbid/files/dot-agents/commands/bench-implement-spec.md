@@ -203,8 +203,10 @@ list with a recommendation for this run, offering three routes: continue at
 the mid binding; escalate to the top binding in this harness; escalate to the
 top binding via the Codex CLI. Those three are the fixed menu — a route is
 omitted only when this harness cannot invoke it at all, and the omission is
-stated rather than silent. Never escalate without asking. A harness with no
-structured-prompt surface asks the same question as a plain numbered list.
+stated rather than silent. Never escalate without asking. Skip the pause when
+escalation is obviously needed and route straight to the top binding. A harness
+with no structured-prompt surface asks the same question as a plain numbered
+list.
 The Codex route is `codex exec`: set the model, the reasoning effort, the
 working directory, and a non-interactive approval posture — `codex exec
 --help` is authoritative for the flag spellings, so none are pinned here.

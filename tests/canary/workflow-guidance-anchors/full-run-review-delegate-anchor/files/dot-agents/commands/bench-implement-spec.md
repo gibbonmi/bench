@@ -166,9 +166,8 @@ standalone phases; their contracts stay theirs:
 - **Review in a delegate:** Inline self-review is closed, not deprioritized —
   the context that produced the code carries the assumptions that produced its
   bugs — and a context-inheriting delegate is the same failure wearing a
-  delegate's name. Verify the delegate's done-claim against the gate and
-  `git status` before acting on it — invariant 1 in `.bench/BENCH.md` and
-  `craft-delegate`'s verification discipline, not restated here. When the
+  delegate's name. The delegate's done-claim answers to invariant 1 in
+  `.bench/BENCH.md` and `craft-delegate`'s verification discipline. When the
   review delegate cannot run or returns nothing, the run stops and reports at
   that boundary rather than proceeding to final-check with review unrun.
 - **Final-check inline** per `/bench-final-check`, and **debug inline** with
@@ -184,17 +183,17 @@ allowance; this mode adds no second version of either.
 **The scope fence.** The run implements the spec's stories and nothing else:
 work noticed outside them — an adjacent refactor, an unrelated improvement, a
 story the spec chose not to take — is recorded for the reviewer rather than
-built. This is the counterweight to the fix-don't-park route, whose
-park-versus-fix test is `.bench/BENCH.md`'s Workflow section's: a defect in
-the run's own path is fixed in-run; everything wider is recorded.
+built. The fence bounds the run's diff to the spec's stories and seams; it
+counterweights the fix-don't-park route, and whether a discovered defect is
+fixed or parked stays `.bench/BENCH.md`'s Workflow section's test.
 
 **Phase boundaries persist.** At every phase boundary the run writes the phase
 reached into `session-handoff.md`'s State section, then refreshes the pin
 block with `bench handoff --next <command>`. The phase reached is the one fact
 this mode adds; every other field is the existing handoff contract's. A
 re-invoked `--full` resumes from the phase the handoff names instead of
-re-implementing from the top, and where the handoff and the tree disagree the
-tree wins.
+re-implementing from the top; a stale handoff is arbitrated by `AGENTS.md`'s
+tree-wins rule.
 
 **Escalation asks first.** When the diff is large enough that the mid binding
 could miss important bugs, pause and ask the reviewer as a structured decision

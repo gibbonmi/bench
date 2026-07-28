@@ -1,0 +1,1 @@
+.agents/commands/bench-implement-spec.md `--full` section reintroduces escalate-if-obviously-needed; escalation always pauses and asks the reviewer

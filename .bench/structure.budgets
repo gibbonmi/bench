@@ -24,3 +24,11 @@ internal/worktree/resume.go 436
 internal/worktree/subshell.go 417
 internal/worktree/worktree.go 402
 internal/worktree/worktree_test.go 533
+
+# One workflow-anchor family: every require/forbid the conformance phase runs
+# over kit prose, plus the helpers they share. Splitting was ruled out under
+# FT152 — internal/conformance/ has no file-count headroom, so a split trades a
+# line breach for a directory breach and scatters one signal across two files.
+# Granted 2026-07-28 on reviewer authorization during the FT152 build; the exact
+# cap re-asks on the next line of growth.
+internal/conformance/docs_workflow_helpers_test.go 660

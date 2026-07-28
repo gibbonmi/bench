@@ -126,6 +126,8 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 		"full-run-review-delegate-anchor",
 		"full-run-handoff-persistence-anchor",
 		"full-run-escalation-menu-anchor",
+		"full-run-silent-escalation-forbid",
+		"full-run-scope-fence-relocated",
 	}
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {

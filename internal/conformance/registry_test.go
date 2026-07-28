@@ -107,6 +107,8 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"full-run-review-delegate-anchor":              conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"full-run-handoff-persistence-anchor":          conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"full-run-escalation-menu-anchor":              conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"full-run-silent-escalation-forbid":            conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"full-run-scope-fence-relocated":               conformanceFixture(".bench/gate-docs-contracts.sh"),
 
 	"undocumented-passlist-var": conformanceFixture(".bench/gate.sh"),
 

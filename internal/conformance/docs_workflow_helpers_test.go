@@ -147,31 +147,42 @@ func checkWorkflowAnchors(root string) []string {
 			diags = append(diags, diag)
 		}
 	}
-	// requireCollapsedInSection is the placement half of a section-owned anchor:
-	// whole-file requireCollapsed neither strips comments nor sees headings, so a
-	// sentence commented out or pasted into the wrong section would satisfy it.
-	requireCollapsedInSection := func(rel, section, needle, diag string) {
+	// scopedSection resolves the one H2 section a family of scoped anchors owns,
+	// diagnosing an absent file, a missing section, and a duplicated heading each
+	// exactly once, ahead of the per-anchor matching. It returns the section body
+	// collapsed and lowercased: whole-file requireCollapsed neither strips
+	// comments nor sees headings, so a sentence commented out or pasted into the
+	// wrong section would satisfy it, and case is folded so a sentence-initial
+	// recasing cannot slip past a needle.
+	scopedSection := func(rel, section string) (string, bool) {
 		path := filepath.Join(root, filepath.FromSlash(rel))
 		if !exists(path) {
-			diags = append(diags, "acceptance coverage anchor file missing: "+rel)
-			return
+			diags = append(diags, "section-scoped anchor file missing: "+rel)
+			return "", false
 		}
-		body := markdownH2Section(stripHTMLComments(readIfExists(path)), section)
-		if body == "" {
+		body, count := markdownH2Sections(stripHTMLComments(readIfExists(path)), section)
+		if count == 0 {
 			diags = append(diags, fmt.Sprintf("%s is missing the %q section that owns a scoped anchor", rel, section))
-			return
+			return "", false
 		}
-		if !strings.Contains(collapseSpace(body), needle) {
+		if count > 1 {
+			diags = append(diags, fmt.Sprintf("%s carries %d %q sections; a scoped anchor needs exactly one owning section", rel, count, section))
+			return "", false
+		}
+		return strings.ToLower(collapseSpace(body)), true
+	}
+	// requireInSection is the placement half of a section-owned anchor and
+	// forbidInSection the must-not half, banning the contradiction from the
+	// section that owns the fact so a contradicting sentence cannot sit beside
+	// the fact it undoes. Both take a body scopedSection already resolved, so a
+	// broken section reports once rather than once per anchor.
+	requireInSection := func(body, needle, diag string) {
+		if !strings.Contains(body, strings.ToLower(needle)) {
 			diags = append(diags, diag)
 		}
 	}
-	// forbidInSection is the must-not half of a section-owned anchor pair: the
-	// contradiction is banned from the section that owns the fact, comments
-	// stripped, so a contradicting sentence cannot sit beside the fact it undoes.
-	forbidInSection := func(rel, section, needle, diag string) {
-		path := filepath.Join(root, filepath.FromSlash(rel))
-		body := markdownH2Section(stripHTMLComments(readIfExists(path)), section)
-		if strings.Contains(collapseSpace(body), needle) {
+	forbidInSection := func(body, needle, diag string) {
+		if strings.Contains(body, strings.ToLower(needle)) {
 			diags = append(diags, diag)
 		}
 	}
@@ -295,10 +306,14 @@ func checkWorkflowAnchors(root string) []string {
 	// Shared-rule placement — checkSharedRuleSingleSource's marker list owns each
 	// sentence's presence and non-duplication; these anchors add only placement,
 	// pinning the rule inside the section that owns it.
-	requireCollapsedInSection(".bench/BENCH.md", "Workflow", fixDontParkMarker,
-		".bench/BENCH.md Workflow section dropped the fix-don't-park rule; a mid-work defect fix belongs in the active workflow, not the backlog")
-	requireCollapsedInSection(".bench/BENCH.md", "How to talk to me", sourceWarrantMarker,
-		".bench/BENCH.md How to talk to me section dropped the outside-source warrant rule; a claim resting on a source outside the tree names what was and was not read")
+	if body, ok := scopedSection(".bench/BENCH.md", "Workflow"); ok {
+		requireInSection(body, fixDontParkMarker,
+			".bench/BENCH.md Workflow section dropped the fix-don't-park rule; a mid-work defect fix belongs in the active workflow, not the backlog")
+	}
+	if body, ok := scopedSection(".bench/BENCH.md", "How to talk to me"); ok {
+		requireInSection(body, sourceWarrantMarker,
+			".bench/BENCH.md How to talk to me section dropped the outside-source warrant rule; a claim resting on a source outside the tree names what was and was not read")
+	}
 	forbid(".bench/BENCH.md", "thorough",
 		".bench/BENCH.md phrases the outside-source warrant rule as thoroughness; the rule asks for disclosure of what went unread, which the reviewer can check — thoroughness nobody can")
 	requireCollapsed(".agents/commands/bench-write-spec.md", "promote-then-delete commit removes the spec's `ROADMAP.md` row",
@@ -339,7 +354,7 @@ func checkWorkflowAnchors(root string) []string {
 			"dropped the fresh-context review delegate and its spec-and-diff-only inputs"},
 		{"Inline self-review is closed, not deprioritized — the context that produced the code carries the assumptions that produced its bugs — and a context-inheriting delegate is the same failure wearing a delegate's name",
 			"dropped the closure of inline self-review and context inheritance"},
-		{"Verify the delegate's done-claim against the gate and `git status` before acting on it",
+		{"The delegate's done-claim answers to invariant 1 in `.bench/BENCH.md` and `craft-delegate`'s verification discipline",
 			"dropped the done-claim verification pointer to invariant 1 and craft-delegate"},
 		{"When the review delegate cannot run or returns nothing, the run stops and reports at that boundary rather than proceeding to final-check with review unrun",
 			"dropped the stop-at-the-boundary rule for an unavailable or empty-handed review delegate"},
@@ -349,7 +364,7 @@ func checkWorkflowAnchors(root string) []string {
 			"dropped the repair-bound pointers; this mode adds no second version of either rule"},
 		{"At every phase boundary the run writes the phase reached into `session-handoff.md`'s State section, then refreshes the pin block with `bench handoff --next <command>`",
 			"dropped the phase-boundary State write and pin-block refresh"},
-		{"A re-invoked `--full` resumes from the phase the handoff names instead of re-implementing from the top, and where the handoff and the tree disagree the tree wins",
+		{"A re-invoked `--full` resumes from the phase the handoff names instead of re-implementing from the top; a stale handoff is arbitrated by `AGENTS.md`'s tree-wins rule",
 			"dropped the resume-don't-restart rule for a re-invoked run"},
 		{"pause and ask the reviewer as a structured decision list with a recommendation for this run, offering three routes: continue at the mid binding; escalate to the top binding in this harness; escalate to the top binding via the Codex CLI",
 			"dropped the pause-and-ask escalation menu with its three fixed routes"},
@@ -370,9 +385,12 @@ func checkWorkflowAnchors(root string) []string {
 		{"its own question, not a fourth route in the escalation menu, and it never runs standing: absent the trigger it is not offered",
 			"dropped the falsification pass's separate-question and never-standing bounds"},
 	}
-	for _, a := range fullRunRequires {
-		requireCollapsedInSection(fullRunFile, fullRunSection, a.needle,
-			fullRunFile+" `--full` section "+a.diag)
+	fullRunBody, fullRunOK := scopedSection(fullRunFile, fullRunSection)
+	if fullRunOK {
+		for _, a := range fullRunRequires {
+			requireInSection(fullRunBody, a.needle,
+				fullRunFile+" `--full` section "+a.diag)
+		}
 	}
 	fullRunForbids := []struct{ needle, diag string }{
 		{"by default", "phrases `--full` as default-on; the mode is opt-in and plain invocation keeps implement-only semantics"},
@@ -386,9 +404,11 @@ func checkWorkflowAnchors(root string) []string {
 		{"without its record", "reports a phase complete without its record; every phase claim cites the record that proves it"},
 		{"on every run", "makes the falsification pass standing; it is offered only on the size trigger"},
 	}
-	for _, a := range fullRunForbids {
-		forbidInSection(fullRunFile, fullRunSection, a.needle,
-			fullRunFile+" `--full` section "+a.diag)
+	if fullRunOK {
+		for _, a := range fullRunForbids {
+			forbidInSection(fullRunBody, a.needle,
+				fullRunFile+" `--full` section "+a.diag)
+		}
 	}
 
 	shapeIdeaPath := filepath.Join(root, ".agents", "commands", "bench-shape-idea.md")
@@ -516,23 +536,42 @@ func checkStructuredPhaseContract(sharedRules string) []string {
 	return diags
 }
 
+// markdownH2Section returns the first "## title" section body, or "" when the
+// heading is absent. A caller that must reject a duplicated heading — one whose
+// second body could contradict the first unseen — uses markdownH2Sections for
+// the occurrence count.
 func markdownH2Section(text, title string) string {
+	body, _ := markdownH2Sections(text, title)
+	return body
+}
+
+// markdownH2Sections returns the first "## title" section body and how many
+// times the heading occurs in text.
+func markdownH2Sections(text, title string) (string, int) {
 	lines := strings.Split(text, "\n")
 	heading := "## " + title
+	count := 0
 	start := -1
+	end := -1
 	for i, line := range lines {
 		if strings.TrimSpace(line) == heading {
-			start = i + 1
+			count++
+			if count == 1 {
+				start = i + 1
+			}
 			continue
 		}
-		if start >= 0 && strings.HasPrefix(line, "## ") {
-			return strings.Join(lines[start:i], "\n")
+		if start >= 0 && end < 0 && strings.HasPrefix(line, "## ") {
+			end = i
 		}
 	}
-	if start < 0 {
-		return ""
+	if count == 0 {
+		return "", 0
 	}
-	return strings.Join(lines[start:], "\n")
+	if end < 0 {
+		end = len(lines)
+	}
+	return strings.Join(lines[start:end], "\n"), count
 }
 
 func stripHTMLComments(text string) string {

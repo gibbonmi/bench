@@ -283,9 +283,9 @@ contradicted elsewhere in the same file.
 
 - The whole change is prose plus its observers: `.bench/BENCH.md`, three
   `.agents/commands/*.md` files — `bench-shape-idea.md`,
-  `bench-implement-spec.md`, and `bench-review-implementation.md` — with their
-  byte-identical `.claude/commands/` mirrors, assertions in `internal/conformance/docs_workflow_helpers_test.go`
-  and `internal/conformance/validity_checks_test.go`, and four canary fixtures.
+  `bench-implement-spec.md`, and `bench-review-implementation.md` — assertions in
+  `internal/conformance/docs_workflow_helpers_test.go`
+  and `internal/conformance/validity_checks_test.go`, and six canary fixtures.
   No `bench` subcommand, no new flag parsing, no Go production code — `--full`
   is read by the session from its own invocation, which is why the map called
   the orchestration thin coordination over existing phases.
@@ -349,8 +349,11 @@ contradicted elsewhere in the same file.
   section-scoped anchor class. `bench coverage <spec>` is the enumeration the
   accounting rule points at — the rows are its output, so the rule adds a duty
   rather than a second source for what they are.
-- The `.claude/commands/` mirror is updated in the same change. No gate check
-  compares the two command trees for content; that gap is named in Out of scope.
+- There is no `.claude/commands/` mirror to update. In this repository
+  `.claude/commands` is a git-tracked symlink to `../.agents/commands`, so the
+  two trees are the same bytes by construction and no content drift is possible.
+  Corrected during the build; the map and this spec had both assumed a copied
+  tree.
 
 ## Testing decisions
 
@@ -494,12 +497,12 @@ Canary-bite seam (story 9):
 
 ## Out of scope
 
-- **A command-mirror content check** — a conformance check proving
-  `.agents/commands/` and `.claude/commands/` are byte-identical. A separate
-  capability: it decides whether the Claude tree is generated-and-verified or
-  hand-maintained, which is an architectural call this map never opened, and it
-  guards a drift class wider than this feature. Today only `.agents/commands/`
-  is anchored, so a mirror that drifts is gate-invisible. ~4 edits, ~2 gate runs.
+- **A command-mirror content check** — **withdrawn, not deferred.** This entry
+  assumed `.claude/commands/` was a copied tree that could drift from
+  `.agents/commands/`. It is a git-tracked symlink, so the drift class it would
+  guard cannot exist here and there is nothing to build. Do not carry it to a
+  roadmap row. It would become real only if a future decision replaced the
+  symlink with a generated tree.
 - **A model-token sweep over shipped command prose** — a check that no
   `.agents/commands/*.md` names a tier's model token, which would turn story 8's
   binding rule from review-graded into gate-graded. A separate capability: it

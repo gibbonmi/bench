@@ -149,6 +149,13 @@ For UI work, if your project has an interaction-layer skill and a screenshot loo
 they're part of the gate alongside the `craft-design-system` skill — a green test suite is
 necessary but not sufficient for UI.
 
+**The scope fence.** The run implements the spec's stories and nothing else:
+work noticed outside them — an adjacent refactor, an unrelated improvement, a
+story the spec chose not to take — is recorded for the reviewer rather than
+built. The fence bounds the run's diff to the spec's stories and seams; it
+counterweights the fix-don't-park route, and whether a discovered defect is
+fixed or parked stays `.bench/BENCH.md`'s Workflow section's test.
+
 ## The `--full` run
 
 `--full` is an opt-in flag: plain `/bench-implement-spec` keeps today's
@@ -181,13 +188,6 @@ judgment findings are flagged in the exit report for reviewer veto, not
 applied. The repair pass is bounded by `/bench-review-implementation`'s
 terminal repair-pass rule and routed through `craft-delegate`'s repair
 allowance; this mode adds no second version of either.
-
-**The scope fence.** The run implements the spec's stories and nothing else:
-work noticed outside them — an adjacent refactor, an unrelated improvement, a
-story the spec chose not to take — is recorded for the reviewer rather than
-built. The fence bounds the run's diff to the spec's stories and seams; it
-counterweights the fix-don't-park route, and whether a discovered defect is
-fixed or parked stays `.bench/BENCH.md`'s Workflow section's test.
 
 **Phase boundaries persist.** At every phase boundary the run writes the phase
 reached into `session-handoff.md`'s State section, then refreshes the pin
