@@ -42,14 +42,14 @@ type manifestPhase struct {
 // declares one, the built-in kit table when it declares none. root is the tree under
 // grade, resolved through git by every caller and so absolute — a manifest phase's
 // working directory is anchored to it.
-func phaseTable(root, kit string, mode phaseMode) ([]Phase, error) {
+func phaseTable(root, kit string) ([]Phase, error) {
 	path := manifestPath(root)
 	data, present, err := readManifest(path)
 	if err != nil {
 		return nil, err
 	}
 	if !present {
-		return narrowContractScope(benchkitPhasesForCommand(root, kit), kit, mode)
+		return benchkitPhasesForCommand(root, kit), nil
 	}
 	return parseManifest(path, root, data)
 }

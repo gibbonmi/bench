@@ -1,5 +1,52 @@
 # Gate critical-path timeline (2026-07-28)
 
+## Post-stage-2 measurement (2026-07-28, ft91-canary-compiled-bites built)
+
+Same box (16 cores) and method, warm caches, idle box, on the worktree
+carrying the full stage-2 build: behavior-owned fixtures graded by compiled
+contract test binaries, no nested gates.
+
+- Solo canary **151.4 s** (post-stage-1: 151.5 s). **No change at all.**
+- Full dev gate **~161 s** mean over three consecutive green runs
+  (164.4 / 158.4 / 161.1 s), against 172 s post-stage-1 — roughly 11 s
+  better, and the wall is now bound by the contract phase alone rather than
+  jointly by contract and canary.
+- Contract per-package (`ok` lines, third green run): artifact **140.9 s**,
+  runtime 42.8 s, surface 36.1 s, publication 16.5 s, axi 4.1 s,
+  preprelease 4.0 s, contract 0.4 s.
+- All 33 behavior-owned fixtures still bite non-vacuously under the compiled
+  shape with **zero fixture edits** — the migration-casualty class the
+  decision map named (an EXPECT observable only in gate-level framing) did
+  not materialize.
+
+**Why the canary did not move.** Stage 1 had already scoped each
+behavior-owned fixture's inner gate to the single contract package owning its
+EXPECT. What stage 2 removes on top of that is per-fixture gate startup and
+the per-fixture `go test` compile — on the order of a second each, and
+absorbed by the 8-worker pool. The canary's wall is set by the longest single
+fixture, and that fixture still runs the `surface/artifact` contract suite in
+full, because the compiled binary runs every `Test*` in the package. The
+artifact multiplier is untouched by design: the spec's own "Out of scope"
+section names the prepared-artifact hoist (map #2/#3) as the next slice and
+the thing that attacks this tail. Until it lands, this arm cannot move the
+canary wall.
+
+**Mechanism confirmed, not assumed.** Process sampling during a live sweep
+showed roughly ten concurrent processes executing out of the sweep-owned
+`bench-canary-bin-*` temporary directory (including the encoded
+`surface_sartifact.test` binary), against a single `gate.sh` — the one
+non-behavior-owned family that still spawns an inner gate correctly. The
+sweep is genuinely taking the compiled-bite path; the flat canary number is
+not a silent fallback to nested gates.
+
+**Open observation — one unreproduced red.** The very first full gate run
+against this build came back red on the `test` phase; the canary and contract
+phases were green in that same run. Its output was not captured, so the
+failing package is unknown. Three subsequent full gate runs were green, and
+`go test ./internal/...` run separately was clean. The red is therefore
+unreproduced and unattributed: it is not known to be caused by this diff, and
+it is equally not known to be unrelated.
+
 ## Post-stage-1 measurement (2026-07-28, ft91-canary-contract-scoping landed)
 
 Same box and method, main at the scoping commits (`bbfe233` + `f10faae`):

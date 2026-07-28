@@ -110,6 +110,9 @@ func countedSweep(t *testing.T, root string) (int, error) {
 		mu.Lock()
 		calls++
 		mu.Unlock()
+		if result, done := stubCompile(call); done {
+			return result
+		}
 		if call.FixtureDir == "" {
 			return RunResult{ExitCode: 1, Output: "baseline noise\n"}
 		}

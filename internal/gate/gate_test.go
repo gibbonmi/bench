@@ -13,7 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
@@ -65,22 +64,16 @@ func TestResolvePrecedence(t *testing.T) {
 // skip log belongs with the routing internals: an inherited path lets a canary's inner run
 // append to the outer run's tally, which under BENCH_REQUIRE_CAPABILITIES=1 turns a fixture's
 // deliberate skip into a red release.
-//
-// The canary's contract scope goes with them, and the strip is the only place its removal
-// can be expressed — merging a phase's own Env can override a value, never delete one. An
-// operator export surviving into a real gate would narrow the contract phase to one
-// package while the run still reported itself green on the whole suite.
 func TestGateEnvStripsWrapperRoutingInternals(t *testing.T) {
 	t.Setenv("BENCH_KIT", "/wrong/kit")
 	t.Setenv("BENCH_WRAPPER", "/wrong/wrapper")
 	t.Setenv(capability.LogEnv, "/wrong/outer-skips.log")
-	t.Setenv(canary.ContractPackageEnv, "surface/artifact")
 	t.Setenv("BENCH_GATE", "echo ok")
 
 	env := gateEnv()
 	sawBenchGate := false
 	for _, kv := range env {
-		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, capability.LogEnv+"=") || strings.HasPrefix(kv, canary.ContractPackageEnv+"=") {
+		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, capability.LogEnv+"=") {
 			t.Fatalf("gateEnv leaked wrapper-routing internal %q", kv)
 		}
 		if kv == "BENCH_GATE=echo ok" {

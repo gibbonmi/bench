@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
 )
 
@@ -45,10 +46,10 @@ func KitRoot(t testing.TB) string {
 
 func SubjectRoot(t testing.TB) string {
 	t.Helper()
-	if root := os.Getenv("BENCH_CONTRACT_ROOT"); root != "" {
+	if root := os.Getenv(canary.SubjectRootEnv); root != "" {
 		abs, err := filepath.Abs(root)
 		if err != nil {
-			t.Fatalf("resolve BENCH_CONTRACT_ROOT: %v", err)
+			t.Fatalf("resolve %s: %v", canary.SubjectRootEnv, err)
 		}
 		return abs
 	}

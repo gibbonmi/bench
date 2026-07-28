@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
-	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -145,15 +144,10 @@ func (r Resolution) command(root string) *exec.Cmd {
 // The capability skip log goes with them: a run owns the log its own phases append to,
 // so an inherited path — the outer gate's, reaching a canary's inner run — must never
 // survive into a child. A run that collects sets its own value back on each phase.
-//
-// The canary's contract scope goes with them too, and this strip is the only place its
-// removal can be expressed: a phase's own Env is merged over the inherited one, which can
-// override a value but never delete it. An operator export reaching a real gate would
-// narrow the contract phase to a single package while the run still called itself green.
 func gateEnv() []string {
 	var env []string
 	for _, kv := range os.Environ() {
-		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, capability.LogEnv+"=") || strings.HasPrefix(kv, canary.ContractPackageEnv+"=") {
+		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, capability.LogEnv+"=") {
 			continue
 		}
 		env = append(env, kv)

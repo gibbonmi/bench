@@ -14,7 +14,7 @@ var ReleaseOnlyPackages = []string{"internal/preflight", "internal/releaseeviden
 
 // IsExcludedTestPackage reports whether the unfiltered core `go test` leaves a
 // package to some other surface. internal/contract is run by the gate's own contract
-// phase with BENCH_CONTRACT_ROOT set; the conformance package by the filtered
+// phase with the subject root pinned; the conformance package by the filtered
 // invocation; the release-only packages by the ship tier.
 func IsExcludedTestPackage(pkg string, tier Tier) bool {
 	if isContractPackage(pkg) || isPackage(pkg, ConformancePackage) {

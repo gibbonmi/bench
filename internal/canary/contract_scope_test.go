@@ -1,8 +1,8 @@
 package canary
 
 import (
+	"maps"
 	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
 
@@ -10,10 +10,10 @@ import (
 )
 
 // TestSweepDiscoversContractFixturesUnderTheirPackage grades the walk's whole answer for
-// a nested package: the fixture is the directory holding EXPECT, it is enumerated once
-// under its own base name, and the package it carries is every segment between the family
-// and it. A walk keeping only the last segment binds the fixture to a package that does
-// not exist, which is why the multi-segment path is the case under test.
+// a nested package: the fixture is the directory holding EXPECT, it is graded by exactly
+// one run, and the package it carries is every segment between the family and it. A walk
+// keeping only the last segment binds the fixture to a package that does not exist, which
+// is why the multi-segment path is the case under test.
 func TestSweepDiscoversContractFixturesUnderTheirPackage(t *testing.T) {
 	root := t.TempDir()
 	contractFixture(t, root, "surface/artifact", "nested-fx")
@@ -26,18 +26,13 @@ func TestSweepDiscoversContractFixturesUnderTheirPackage(t *testing.T) {
 		"flat-pkg-fx": "axi",
 	}
 	for name, pkg := range want {
-		var got []RunCall
-		for _, call := range calls {
-			if call.FixtureDir != "" && filepath.Base(call.FixtureDir) == name {
-				got = append(got, call)
-			}
-		}
+		got := fixtureCalls(calls, name)
 		if len(got) != 1 {
-			t.Errorf("fixture %s ran %d inner gates, want exactly 1", name, len(got))
+			t.Errorf("fixture %s ran %d graded runs, want exactly 1", name, len(got))
 			continue
 		}
-		if values := envValues(got[0].Env, ContractPackageEnv); !slices.Equal(values, []string{pkg}) {
-			t.Errorf("fixture %s carried packages %v, want exactly [%s]", name, values, pkg)
+		if got[0].Kind != RunBite || got[0].Package != pkg {
+			t.Errorf("fixture %s ran kind %v for package %q, want a bite of %s", name, got[0].Kind, got[0].Package, pkg)
 		}
 	}
 }
@@ -58,10 +53,10 @@ func TestSweepRejectsDuplicateNamesAcrossContractPackages(t *testing.T) {
 	}
 }
 
-// TestSweepRejectsStructurallyUnscopableContractFixtures grades the three structural
-// defects that would each leave a behavior-owned fixture paying the full contract suite
-// in silence — the cost this scoping exists to remove. Every diagnostic names the
-// fixture, because the sweep's tree is the only place the defect can be repaired.
+// TestSweepRejectsStructurallyUnscopableContractFixtures grades the two structural defects
+// that each leave a behavior-owned fixture with no contract package to be graded by at
+// all. Every diagnostic names the fixture, because the sweep's tree is the only place the
+// defect can be repaired.
 func TestSweepRejectsStructurallyUnscopableContractFixtures(t *testing.T) {
 	cases := []struct {
 		name  string
@@ -81,25 +76,6 @@ func TestSweepRejectsStructurallyUnscopableContractFixtures(t *testing.T) {
 				fixture(t, filepath.Join(root, "tests", "canary", "behavior-owned", "ghost", "rotted-fx"), "")
 			},
 			want: []string{"rotted-fx", "ghost"},
-		},
-		{
-			name: "fixture declares a phase manifest",
-			build: func(t *testing.T, root string) {
-				fx := contractFixture(t, root, "axi", "manifest-fx")
-				write(t, filepath.Join(fx, "files", "dot-bench", "phases.json"), "{}\n")
-			},
-			want: []string{"manifest-fx", "phases.json", "flat"},
-		},
-		{
-			// The dot- prefix is a storage convention, not the only way to write the
-			// path: a literal .bench directory materializes the same manifest-declaring
-			// root, so a check reading one spelling passes the other through unscoped.
-			name: "fixture declares a phase manifest in a literal dot directory",
-			build: func(t *testing.T, root string) {
-				fx := contractFixture(t, root, "axi", "literal-manifest-fx")
-				write(t, filepath.Join(fx, "files", ".bench", "phases.json"), "{}\n")
-			},
-			want: []string{"literal-manifest-fx", "phases.json", "flat"},
 		},
 	}
 
@@ -156,59 +132,58 @@ func TestSweepRejectsExpectAbovePackagedFixtures(t *testing.T) {
 	}
 }
 
-// TestContractFixtureCarriesExactlyItsPhaseAndPackage pins the whole control set a
-// behavior-owned fixture's inner gate runs under. The conformance check variable is
-// asserted absent rather than ignored: it is what a scope resolved from the fixture's
-// parent directory would leak in, and an inner gate carrying one grades a conformance
-// check instead of the contract package that owns the EXPECT.
-func TestContractFixtureCarriesExactlyItsPhaseAndPackage(t *testing.T) {
+// TestContractFixtureBiteCarriesOnlyItsSubjectRoot pins the whole control set a compiled
+// bite runs under: the tree it grades, and the width pin the sweep's worker budget is
+// derived from. Every gate-era variable is asserted absent rather than ignored — there is
+// no gate in this run to read one, and a binary carrying the inner-gate marker or a phase
+// pin claims to be a nested gate to whatever reads them next.
+func TestContractFixtureBiteCarriesOnlyItsSubjectRoot(t *testing.T) {
 	t.Setenv(PhaseEnv, "ambient-phase")
-	t.Setenv(ContractPackageEnv, "ambient/package")
 	t.Setenv(registry.ConformanceCheckEnv, "ambient-check")
 
 	root := t.TempDir()
 	contractFixture(t, root, "surface/artifact", "scoped-fx")
 
-	var fixtureCall RunCall
-	for _, call := range sweepCalls(t, root, registry.Dev) {
-		if call.FixtureDir != "" {
-			fixtureCall = call
+	got := fixtureCalls(sweepCalls(t, root, registry.Dev), "scoped-fx")
+	if len(got) != 1 {
+		t.Fatalf("fixture ran %d graded runs, want exactly 1", len(got))
+	}
+	for _, key := range []string{PhaseEnv, registry.ConformanceCheckEnv, registry.ConformanceTierEnv, "BENCH_CANARY_INNER"} {
+		if values := envValues(got[0].Env, key); len(values) != 0 {
+			t.Errorf("bite carried %s=%v, want the variable absent", key, values)
 		}
 	}
-	want := []string{ContractPackageEnv + "=surface/artifact", PhaseEnv + "=contract"}
-	if got := controlValues(fixtureCall.Env); !slices.Equal(got, want) {
-		t.Fatalf("fixture control env = %v, want exactly %v", got, want)
+	if values := envValues(got[0].Env, "GOMAXPROCS"); len(values) != 1 {
+		t.Errorf("bite carried GOMAXPROCS=%v, want exactly the sweep's width pin", values)
 	}
 }
 
 // TestSweepBaselinesContractGroupsPerPackage grades the vacuity groups two packages
-// produce: one baseline each, and each baseline running under the same phase and package
-// its own fixtures carry. A single shared baseline — the degenerate grouping — fails on
-// the call count and on every env comparison at once.
+// produce: one baseline each, run in the same shape as the group's own fixtures and with
+// the group's own binary. A single shared baseline — the degenerate grouping — fails on
+// the count, and a baseline that spawned a gate instead fails on the kind.
 func TestSweepBaselinesContractGroupsPerPackage(t *testing.T) {
 	root := t.TempDir()
 	contractFixture(t, root, "axi", "axi-a")
 	contractFixture(t, root, "axi", "axi-b")
 	contractFixture(t, root, "surface/artifact", "artifact-fx")
 
-	var baselines [][]string
-	for _, call := range sweepCalls(t, root, registry.Dev) {
-		if call.FixtureDir == "" {
-			baselines = append(baselines, controlValues(call.Env))
+	calls := sweepCalls(t, root, registry.Dev)
+	compiled := compileOutputs(t, calls)
+
+	baselines := map[string]int{}
+	for _, call := range baselineCalls(calls) {
+		if call.Kind != RunBite {
+			t.Fatalf("contract baseline ran kind %v, want the same bite its fixtures run", call.Kind)
 		}
-	}
-	slices.SortFunc(baselines, func(a, b []string) int { return slices.Compare(a, b) })
-	want := [][]string{
-		{ContractPackageEnv + "=axi", PhaseEnv + "=contract"},
-		{ContractPackageEnv + "=surface/artifact", PhaseEnv + "=contract"},
-	}
-	if len(baselines) != len(want) {
-		t.Fatalf("sweep ran %d baselines (%v), want one per contract package", len(baselines), baselines)
-	}
-	for idx := range want {
-		if !slices.Equal(baselines[idx], want[idx]) {
-			t.Errorf("baseline control env = %v, want %v", baselines[idx], want[idx])
+		if want := compiled[call.Package]; call.Binary != want {
+			t.Errorf("baseline for %s ran binary %q, want its group's compile output %q", call.Package, call.Binary, want)
 		}
+		baselines[call.Package]++
+	}
+	want := map[string]int{"axi": 1, "surface/artifact": 1}
+	if !maps.Equal(baselines, want) {
+		t.Fatalf("contract baselines = %v, want one per package", baselines)
 	}
 }
 
@@ -224,8 +199,11 @@ func TestContractFixtureGradesVacuityAgainstItsOwnPackageBaseline(t *testing.T) 
 	write(t, filepath.Join(other, "EXPECT"), "shared noise\n")
 
 	err := Sweep(root, func(call RunCall) RunResult {
+		if result, done := stubCompile(call); done {
+			return result
+		}
 		if call.FixtureDir == "" {
-			if slices.Contains(call.Env, ContractPackageEnv+"=axi") {
+			if call.Package == "axi" {
 				return RunResult{ExitCode: 1, Output: "shared noise\n"}
 			}
 			return RunResult{ExitCode: 1, Output: "unrelated noise\n"}
@@ -254,16 +232,44 @@ func contractFixture(t *testing.T, root, pkg, name string) string {
 	return dir
 }
 
-// controlValues lists the sorted scope variables one inner gate runs under, so an
-// assertion states the whole set a run carries rather than the presence of one entry.
-func controlValues(env []string) []string {
-	var out []string
-	for _, key := range []string{PhaseEnv, ContractPackageEnv, registry.ConformanceCheckEnv} {
-		for _, value := range envValues(env, key) {
-			out = append(out, key+"="+value)
+// fixtureCalls lists the graded runs of one fixture by base name, so a count is what a
+// test states rather than the first matching call.
+func fixtureCalls(calls []RunCall, name string) []RunCall {
+	var out []RunCall
+	for _, call := range calls {
+		if call.FixtureDir != "" && filepath.Base(call.FixtureDir) == name {
+			out = append(out, call)
 		}
 	}
-	slices.Sort(out)
+	return out
+}
+
+// baselineCalls lists the empty-tree baselines. A compile shares their empty FixtureDir
+// and grades no tree, so it is excluded by kind.
+func baselineCalls(calls []RunCall) []RunCall {
+	var out []RunCall
+	for _, call := range calls {
+		if call.Kind != RunCompile && call.FixtureDir == "" {
+			out = append(out, call)
+		}
+	}
+	return out
+}
+
+// compileOutputs maps each compiled package to the binary path its compile wrote, and
+// fails on a second compile of one package — the per-fixture compile this slice removes.
+func compileOutputs(t *testing.T, calls []RunCall) map[string]string {
+	t.Helper()
+	out := map[string]string{}
+	for _, call := range calls {
+		if call.Kind != RunCompile {
+			continue
+		}
+		if _, seen := out[call.Package]; seen {
+			t.Errorf("package %s was compiled more than once, want one compile per group", call.Package)
+		}
+		out[call.Package] = call.Binary
+	}
 	return out
 }
 
