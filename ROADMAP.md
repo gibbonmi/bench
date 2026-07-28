@@ -101,19 +101,6 @@ Entry: `/bench-shape-idea` on `decisions/gate-critical-path.md` #2 and #3.
 Sources: `IDEAS.md`, drained across prior runs;
 `decisions/cost-follows-project-size.md`.
 
-**FT152 (MEDIUM) — `/bench-implement-spec --full`: built, gate-green on
-`main`, awaiting the reviewer's veto pass.** Spec:
-`specs/implement-spec-full-run.md`, status `implemented` — the build landed
-2026-07-28 with the three-axis review's repairs and the cross-harness
-falsification fix in the same landing. What remains is reviewer action, not
-build: the fifteen veto-flagged decisions in the spec's own header are its
-sign-off surface, retirement is held for that pass, and the landed commits are
-unpushed. Next action: the veto pass, then `/bench-final-check` to push and
-`bench spec retire implement-spec-full-run`, which removes this row. Three
-follow-up defects the build and its falsification pass surfaced were drained
-2026-07-28: the story-12 row-accounting gap onto FT133, the anchor-mechanism
-weakness as FT156, and the falsification-trigger question parked as FT158.
-
 **FT154 (MEDIUM) — `craft-tickets`: the slice unit, mapped and ready to spec.**
 Map: `decisions/slice-unit.md`, closed 2026-07-28 with all eight tickets
 resolved — the map is the one source for the decisions, so this row carries
@@ -131,11 +118,18 @@ double as the cheap-tier re-test `decisions/cost-follows-project-size.md` #6
 waits on. The `internal/spec` layout change is Go work, not prose — the map's
 Handoff enumerates the flat-path consumers and the retired-path watch-out.
 
+One reviewer decision before the spec is written, drained 2026-07-28: the map
+(items at ~L182 and ~L285) names `implement-spec-full-run` as the one staged
+spec to migrate to the `specs/<slug>/spec.md` layout and as the next queued
+build, but that spec was retired 2026-07-28, so there are now zero flat specs
+to migrate — the migration story is a no-op or changes shape (e.g. the layout
+ships as convention for the *next* spec, this one, with no migration at all).
+The spec session puts that to the reviewer first.
+
 Entry: `/bench-write-spec` from the map, on a fresh mid-tier session —
-unblocked 2026-07-28 now FT152's build has landed (its spec is the migration
-target and both builds edit `bench-implement-spec.md`, the map's dependency
-order). Kit edit under the `craft-synthesis` discipline. Sources: the map and
-its own `## Sources` section.
+unblocked 2026-07-28 now FT152's build has landed and its spec retired. Kit
+edit under the `craft-synthesis` discipline. Sources: the map and its own
+`## Sources` section; `IDEAS.md`, drained here.
 
 **FT131 (MEDIUM) — a stale `dist/bench` is trusted by both the contract suites
 and the gate's own phase resolution.** The AXI and runtime contract suites
@@ -273,8 +267,16 @@ natural evading phrasing — the spec's coverage rows claim those pairs close th
 cheap wrong implementation, but they close one spelling of it. Either the rows
 state the weaker claim honestly or anchors get a stronger mechanism than
 substring matching; that ruling also decides how much the comment fix is worth,
-so both faces take one grill. Entry: `/bench-shape-idea`. Source: `IDEAS.md`,
-drained here; found by the Codex falsification pass on `3eb1c9a`.
+so both faces take one grill. A third face, drained 2026-07-28, is a coverage
+hole in the same mechanism: no canary fixture proves a section-scoped anchor
+over `.bench/BENCH.md` — story 9's four fixtures prove section scoping only in
+`.agents/commands/`, and the shared-rule fixtures prove the marker directions
+only, so FT152's story 1 (Workflow section) and story 15 (communication rules)
+both rest on that untested combination. One fixture removing a section-scoped
+`.bench/BENCH.md` sentence covers both; it rides whatever mechanism the grill
+decides. Entry: `/bench-shape-idea`. Source: `IDEAS.md`,
+drained here and in a prior run; found by the Codex falsification pass on
+`3eb1c9a`.
 
 **FT116 (MEDIUM) — data races in `guards.Scan` the gate cannot see.** Running
 `internal/guards` under `-race` fails three tests on `main`:
@@ -1175,6 +1177,34 @@ the member must be entered in, found by grepping an existing sibling across
 the package rather than recalled. Kit edit under the `craft-synthesis`
 discipline. Source: `.bench/learnings.md`, verdicted here.
 
+**FT159 (LOW) — model-token sweep over shipped command prose.** A conformance
+check that no `.agents/commands/*.md` names a tier's model token, turning
+FT152 story 8's binding rule from review-graded to gate-graded. It polices
+every command file against `.bench/lines.env`, not one section, so a future
+command edit cannot reintroduce a hardcoded model where the binding belongs.
+Deferred out of FT152's scope by size (~5 edits, ~2 gate runs); small enough
+for the light path, but the check must bite for the right reason, so it is
+`craft-gate` work. Source: `IDEAS.md`, drained here.
+
+**FT160 (LOW) — a `bench` subcommand for the full run.** Move `--full`
+orchestration from `/bench-implement-spec`'s command prose into the CLI, so
+the full run's sequencing is enforced rather than advised. This changes the
+enforcement layer rather than extending it — what the harness-independent
+substrate may own versus what stays phase prose is exactly the boundary the
+kit currently draws the other way — so it needs its own decision map before
+any build (~30 edits, ~6 gate runs, estimated at deferral). Entry:
+`/bench-shape-idea`. Source: `IDEAS.md`, drained here.
+
+**FT161 (LOW) — spec-retire and final-check give the retiring session opposite
+roadmap instructions.** `bench spec retire`'s emitted next-line says "remove
+the ROADMAP row", while `/bench-final-check`'s post-merge tail says to leave
+roadmap and capture rows to `/bench-what-next` — one of them is wrong, and a
+session holding both obeys whichever it read last. `/bench-what-next`'s own
+prose calls the drain "the backstop for anything spec-retire missed", which
+reads as the retire-time removal being sanctioned, but which source yields is
+the reviewer's call, then a one-line kit edit to the loser. Kit edit under the
+`craft-synthesis` discipline. Source: `IDEAS.md`, drained here.
+
 **FT140 (LOW) — review residuals that want a verdict, not a build.** Calls
 from two resolution runs outlived their specs' retirement. The recurring one is
 the provenance question, now at three instances: a test that is the real
@@ -1336,12 +1366,12 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-final-check` — FT152 close-out: after the reviewer's veto pass on
-   `specs/implement-spec-full-run.md`, push the landed commits and retire the
-   spec; the build is on `main`, gate-green and unpushed.
+1. `/bench-final-check` — push the landed work: `main` is six commits ahead of
+   `origin/main` (FT152's close-out plus this drain), and the gate cache is
+   stale, so the check re-runs, pins, and pushes.
 2. `/bench-write-spec` — FT154, from the closed `decisions/slice-unit.md`, on
-   a fresh mid-tier session; unblocked now FT152's build has landed, and its
-   build follows the map's dependency order.
+   a fresh mid-tier session; put the migration-story ruling (the target spec
+   retired, zero flat specs remain) to the reviewer first.
 3. `/bench-shape-idea` — FT91, `decisions/gate-critical-path.md` #2 and #3.
    The prepared-artifact hoist is the last structural lever before the ≤60 s
    stop rule is judged; the gate's 167.3 s is still the dominant human cost on
