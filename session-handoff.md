@@ -2,46 +2,51 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — clean tree, ahead of origin
-Spec: none active; `ft91-gate-phase-split` retired 2026-07-28 (stories 4/5
-accepted as probed phases, story 9 dropped — map #4)
-Gate: green, measured 2026-07-28 at 267 s wall (the instrumented run behind
-map ticket #1)
+Branch: `main` — clean tree after this commit, ahead of origin
+Spec: `specs/ft91-canary-contract-scoping.md` — Status: staged, reviewer-approved
+2026-07-28 (approval was conditional on clean review findings; both passes ran
+and their surviving findings are folded in)
+Gate: green, measured 2026-07-28 at 267 s wall
 
 ## State
 
-- **FT91's eighth arm is diagnosed and mostly ruled:
-  `decisions/gate-critical-path.md`.** The gate is canary-bound (canary solo
-  250 s of a 267 s gate): the 34 `behavior-owned` fixtures each re-run the
-  full kit contract suite in their nested gates. Evidence asset:
-  `decisions/assets/gate-critical-path-timeline.md`.
-- **Reviewer rulings taken 2026-07-28, all recorded in the map:** stage 1 —
-  behavior-owned fixtures scope to one contract package via subfamily
-  directories (#6); stage 2 — canary nesting removed for that family, bites
-  proven in-process at the owning contract test (#7; the gate-pipeline
-  nesting clause transferred here and reopened); gate-pipeline.md stays
-  closed and the phase-split spec retired (#4); **FT91's stop condition is a
-  measured dev gate ≤60 s** — the oracle-semantics levers enter this map if
-  the post-stage-2 re-measurement stays above it (#5).
-- **Open tickets: #2 and #3 only.** #2 (Research, agent-alone) buckets the
-  artifact suite build-vs-inspect; #3 (Grill, blocked by #2) rules which
-  tests share one prepared artifact set. They gate only the artifact-hoist
-  slice, not the two canary slices.
-- **The roadmap's FT91 row still describes the phase-split spec as
-  unretired** — stale as of this session; the next `/bench-what-next`
-  reconcile owns the row rewrite. The tree wins meanwhile.
-- **`decisions/cost-follows-project-size.md` stays open by design** (ticket
-  #6 there, opportunistic cheap-tier retest).
+- **Stage 1 of FT91's eighth arm is staged and approved.** The spec scopes
+  each `behavior-owned` canary fixture's nested gate to the one contract
+  package owning its EXPECT via subfamily directories
+  (`tests/canary/behavior-owned/<package path>/<fixture>/`), with
+  `BENCH_CANARY_CONTRACT_PACKAGE` narrowing the inner contract argv, loud
+  reds for every failure mode, per-group scoped vacuity baselines, a
+  kit-only guard pinning the flat set to the two named relocations, and a
+  ≤100 s solo-canary acceptance threshold on the ship evidence. Build
+  inputs: the spec, `decisions/gate-critical-path.md` (Handoff),
+  `decisions/assets/gate-critical-path-timeline.md`, and
+  `decisions/assets/behavior-owned-package-bindings.md` (traced fixture →
+  package inventory; two fixtures relocate to legacy flat).
+- **Two falsification passes ran:** mid-tier (13 findings, all verified and
+  folded — manifest bypass, baseline key desync, parent-basename call sites,
+  strays) and a reviewer-directed Codex `gpt-5.6-sol` xhigh pass (2 real
+  findings — degenerate all-flat migration, single-baseline degenerate —
+  both closed with new red-capable rows; verdicts were advisory BLOCKs on
+  pre-fix drafts, and every surviving finding is addressed in the committed
+  spec).
+- **Map state:** `gate-critical-path` tickets #2 (artifact-suite
+  build-vs-inspect research) and #3 (prepared-artifact sharing ruling,
+  blocked by #2) are the only open tickets; they gate the artifact-hoist
+  slice, not this build. FT91's stop condition is a measured dev gate ≤60 s.
+- **Roadmap's FT91 row is stale** on the phase-split spec (retired this
+  session) and this new staging; the next `/bench-what-next` reconcile owns
+  the rewrite. The tree wins meanwhile.
 
 ## Next command
 
-`/bench-write-spec` for stage 1 — the behavior-owned package-scoping slice —
-on a fresh mid-tier session; map tickets #1/#6/#7 plus the timeline asset
-carry the seams. The reviewer wants this moving now.
+`/bench-implement-spec specs/ft91-canary-contract-scoping.md` on a fresh
+mid-tier session — the spec is approved, seams are pre-agreed, and stories
+route `gpt-5.6-terra` (alias `opus` for Claude Code delegation) per the
+cached Lines.
 
-After it: `/bench-shape-idea` resume on `gate-critical-path` #2 (agent-alone
-research), which unblocks #3 and the artifact-hoist slice; stage 2 specs the
-moment stage 1 lands.
+After it lands green: stage 2 (`/bench-write-spec` from map #7), and
+`/bench-shape-idea` resume on `gate-critical-path` #2 for the artifact-hoist
+slice.
 
 ## Shape
 

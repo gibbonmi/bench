@@ -130,6 +130,63 @@ casualty class). Expected canary → ~20–40 s; the inner-width pin becomes
 moot for this family. Transport details (env contract for the fixture list,
 baseline invocation shape) are spec-time within this decided shape.
 
+## Handoff
+
+Written 2026-07-28 for the two canary slices (#6, #7), same-session with the
+reviewer's rulings; #2/#3 stay open and gate only the artifact-hoist slice.
+
+1. **Module boundaries.** `internal/canary` owns the fixture walk extension
+   (package subpaths under `behavior-owned`, fixture = directory holding
+   EXPECT), contract scope resolution, per-package vacuity baseline groups,
+   and the per-fixture inner env. `internal/gate` owns the inner-mode
+   contract-phase argv narrowing and the outer-mode scrub of the new env.
+   Stage 2 adds the fixture-parameterized bite mode to the owning
+   `internal/contract` packages. `tests/canary/behavior-owned/<package
+   path>/<fixture>/` is the binding — data, no second file.
+   `internal/bounds` untouched.
+2. **Contracts.** One new env var carrying the bound package path relative to
+   `internal/contract` (scrub-then-set everywhere; exact name is spec-time).
+   Absent → today's full `./internal/contract/...` argv, so adopting repos
+   and non-contract fixtures are untouched. Set to a package the kit tree
+   lacks → red naming it. A behavior-owned fixture directly under the family
+   (no package dir) → red, missing binding. EXPECT, bite, did-not-bite, and
+   vacuity semantics unchanged; gate exit codes unchanged.
+3. **Deep vs thin.** The sweep (walk, scope resolution, baseline grouping)
+   stays the deep unit behind the injected `Runner` seam; `scopedEnv`-style
+   plumbing and the subfamily convention are thin.
+4. **Black-box assertables.** Via a fake `Runner`: each behavior-owned
+   fixture's `RunCall.Env` carries phase=contract plus its package env;
+   baseline run count equals the scope groups present; unbound fixture and
+   unknown package each produce their red. Via the gate's phase-table tests:
+   inner-mode argv narrows to the one package; outer mode strips an ambient
+   export of the env.
+5. **Gate attachment.** The canary sweep itself enforces bite and vacuity
+   per fixture; the kit's own suites run in the gate's test and
+   conformance-suite phases. The wall-clock outcome is not gate-assertable —
+   ship evidence is the post-change measurement against
+   `assets/gate-critical-path-timeline.md`.
+6. **Hostile-input owners.** Garbage package values (traversal, absolute,
+   empty) → the scope resolver / phase-table reader, red. Ambient export of
+   the new env → `innerEnv` strip list plus the outer-mode scrub. Empty or
+   missing binding directory → the walk, red (empty-CHECK precedent).
+7. **Uncertainty flags.** None blocking stage 1. Stage 2's transport (fixture
+   list env, baseline invocation) is spec-time within #7's decided shape.
+8. **Rejected alternatives.** Per-fixture binding file; registry
+   fixture→package table; test-level `-run` binding at stage 1; keeping
+   full-suite nesting; any silent fallback for a kit-owned unbound fixture.
+9. **Domain watch-outs.** Go's exec env has no duplicate-key precedence —
+   every inner pin strips-then-sets. Fixture base names are globally unique
+   across all families; subfamily moves must not collide them. The empty-tree
+   vacuity baseline runs whatever phases its env selects, so a scoped group's
+   baseline must carry exactly its fixtures' phase+package env or the
+   scoped-vs-scoped comparison silently breaks. The walk today treats any
+   directory under a family as a fixture; EXPECT presence is the only safe
+   discriminator once package segments nest.
+
+Dependency order: stage 1 (#6, package-scoped nesting) → stage 2 (#7,
+in-process bites) → artifact hoist (pends #2/#3) → re-measure against the
+≤60 s stop rule; oracle-semantics tickets only if the re-measure stays above.
+
 ## Not yet specified
 
 - Oracle-semantics levers — gate-verdict caching keyed on the pinned subject,
