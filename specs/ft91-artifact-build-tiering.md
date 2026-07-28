@@ -1,6 +1,6 @@
 # FT91 — artifact build tiering
 
-Status: staged
+Status: implemented
 
 Compiled from `decisions/cost-follows-project-size.md`, tickets #8, #9, and #10.
 
