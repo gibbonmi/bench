@@ -2,7 +2,7 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — clean tree, 11 unpushed commits
+Branch: `main` — clean tree, pushed to origin at `5650b8a`
 Spec: `specs/ft91-artifact-build-tiering.md` (Status: implemented)
 Gate: green for all code at `64635b8`; the pin reads stale only because the
 spec-status and handoff commits landed after it, both doc-only
@@ -50,9 +50,15 @@ spec-status and handoff commits landed after it, both doc-only
 
 ## Next command
 
-Push, which is the reviewer's to perform. Then `/bench-what-next` in a fresh
-mid-tier session — the drain has one parked idea and one open learning, and
-`/bench-what-next` is the only path either takes into the roadmap.
+`/bench-what-next` in a fresh mid-tier session — the drain has one parked idea
+and one open learning, and it is the only path either takes into the roadmap. It
+also owns the roadmap row for the merged FT91 work.
+
+`ft91-artifact-build-tiering` is merged and retirable, but its decision map
+`decisions/cost-follows-project-size.md` is **not** fully shipped — ticket #6 is
+still open and `## Not yet specified` still parks `-count=1` freshness semantics
+as a reviewer-led oracle decision. So retirement here keeps the map rather than
+deleting it, which is why it has not been run unasked.
 
 ## Shape
 
