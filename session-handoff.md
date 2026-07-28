@@ -38,12 +38,14 @@ Gate: green at `85e757e` — stale, work tree `fa03401`
   invocation count, not packing cost. Out of scope for this spec by reviewer
   decision, because which tests may share an artifact set is a test-isolation
   call.
-- **One blocker for the build session.** `/bench-implement-spec` requires
-  assigning write work to a subagent before the first edit, and this repo's
-  recent sessions carry a standing instruction forbidding the Agent tool unless
-  the reviewer asks. Get a yes or a no on delegates before starting. The
-  unresolved rule conflict is `.bench/learnings.md`'s territory and is already
-  queued as FT107's eighth clause.
+- **Delegates are authorized for this build** (reviewer, 2026-07-27). That
+  clears `/bench-implement-spec`'s write-subagent requirement, which would
+  otherwise collide with the standing instruction forbidding the Agent tool
+  unless the reviewer asks. The grant is scoped to this build, not standing.
+  Route write delegates through isolated worktrees per `craft-delegate`, and
+  treat each done-claim as a claim until the gate and `git status` confirm it.
+  The underlying rule conflict is unchanged and stays queued as FT107's eighth
+  clause — the reviewer resolved this instance, not the kit's silence.
 - **`ft91-gate-phase-split` stays unretired on purpose,** so `bench status` keeps
   reporting one spec awaiting retirement and one roadmap row for merged work
   until the reviewer rules on its stories 4, 5, and 9.
