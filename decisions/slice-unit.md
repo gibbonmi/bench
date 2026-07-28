@@ -179,12 +179,12 @@ stay convention-only in v1.
 
 ### Answer
 
-Folder-only with one migration: teach `internal/spec` the
-`specs/<slug>/spec.md` form, migrate the one staged spec
-(`implement-spec-full-run`) in the same change, and keep only that shape going
-forward — no standing dual-form resolution. `bench spec history` stays able to
-see both forms, because retired specs live at their old flat paths in git
-history and its pathspec must keep resolving them. The roadmap/status
+Folder-only: teach `internal/spec` the `specs/<slug>/spec.md` form and keep only
+that shape going forward — no standing dual-form resolution. No migration is
+needed: `specs/` holds no staged spec, so the folder form is the only live form
+from the change forward. `bench spec history` stays able to see both forms,
+because retired specs live at their old flat paths in git history and its
+pathspec must keep resolving them. The roadmap/status
 cross-check and the roadmap preamble's stated path convention move with the
 layout in the same change. Ticket files are convention-only in v1 — the CLI
 learns the folder, not the ticket format; a `bench` frontier surface
@@ -237,11 +237,12 @@ re-test evidence `decisions/cost-follows-project-size.md` #6 waits on.
 
 1. **Module boundaries.** `craft-tickets` skill (unit definition, breakdown
    procedure, ticket-file template, frontier rule) — new
-   `.agents/skills/bench-craft-tickets/` with `.claude` mirror.
+   `.agents/skills/bench-craft-tickets/` plus its `.claude/skills/` symlink
+   entry (the mirror is per-skill symlinks, not copied files).
    `/bench-implement-spec` gains the breakdown step charging it.
-   `internal/spec` learns the `specs/<slug>/spec.md` layout; the one staged
-   spec migrates in the same change. `.bench/BENCH.md` gains the light-path
-   table with the one-ticket observable. `craft-line` gains the per-stage
+   `internal/spec` learns the `specs/<slug>/spec.md` layout, with no spec to
+   migrate. `.bench/BENCH.md` gains the light-path table with the one-ticket
+   observable. `craft-line` gains the per-stage
    default table (#8). Outside: no ticket parser, no new subcommand, no
    tracker.
 2. **Contracts.** `internal/spec`: a bare slug resolves to
@@ -283,13 +284,11 @@ re-test evidence `decisions/cost-follows-project-size.md` #6 waits on.
    literal git pathspec, so retired flat paths must stay reachable after the
    layout moves. Any `specs/*.md` glob (in `Facts`, gate prose, or
    conformance) silently misses folder specs — an invisible-skip class, so
-   each glob is enumerated and moved, not patched as found. The staged
-   `implement-spec-full-run` spec is both the migration target and the next
-   queued build: build it first on the flat layout, then migrate here.
+   each glob is enumerated and moved, not patched as found.
 
-Dependency order: FT152's build lands first (flat layout, unchanged); then
-this map's build — CLI layout + migration before the skill/phase/table prose
-that names the folder form. Slicing within that is the reviewer's call.
+Dependency order within this map's build: the CLI layout change lands before
+the skill/phase/table prose that names the folder form. Slicing within that is
+the reviewer's call.
 
 ## Sources
 

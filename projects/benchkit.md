@@ -359,8 +359,11 @@ is in `craft-line`). Tier moves still get declared — no silent escalation.
 - Never stop a gate by killing only its shell wrapper. Signal `gate-run`, which
   owns teardown of the gate script's process group, so canary and nested
   `gate-phases` children cannot outlive the run.
-- `.claude/commands` is a git-tracked symlink to `../.agents/commands` in this
-  repo, not a copied tree. Edit `.agents/commands/` only; there is no mirror to
-  update and no content drift for a check to guard. Two FT152 artifacts assumed
-  a copy and specified mirror work that did not exist, so state this before
-  planning any command-file change.
+- Nothing under `.claude/` is a copy. `.claude/commands` is a git-tracked
+  symlink to `../.agents/commands`; `.claude/skills` is a real directory whose
+  every entry is a symlink to `../../.agents/skills/<name>`. So editing
+  `.agents/` is the whole edit — there is no mirror to sync and no content drift
+  for a check to guard — but *adding* a skill still needs its new
+  `.claude/skills/` symlink entry created. Read "mirror" in any artifact as
+  "symlink"; FT152's spec and map both assumed copied trees and specified
+  mirror work that did not exist.
