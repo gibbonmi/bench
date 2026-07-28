@@ -2,9 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `d09d081`, clean tree, 14 unpushed commits
+Branch: `main` — HEAD `9977c27`, clean tree, 9 unpushed commits
 Spec: none staged.
-Gate: green at `0eaef37` — stale, work tree `faf8040`
+Gate: green at `0eaef37` — stale, work tree `ab832d6`
 
 ## State
 
@@ -38,20 +38,16 @@ Gate: green at `0eaef37` — stale, work tree `faf8040`
   `.claude/commands/` mirror decisions, which assumed a copied tree where the
   repo has a symlink). Retire after the reviewer has read that list, not before.
 
-- **Three findings were parked rather than fixed**, in `IDEAS.md`: story 12's
-  per-row coverage accounting is unexecutable because `bench coverage` emits no
-  stable row identity; `requireCollapsed` does not strip HTML comments, so any
-  anchored sentence can be commented out and still pass; substring forbids die to
-  paraphrase. The first two are real gaps in the oracle this spec just extended.
-
-- **Three learnings are open** in `.bench/learnings.md`: a write-charge that named
-  a family binding but not the registration seam (cost one delegate round when the
-  gate went red on unclassified fixtures); a universal claim shipped from a
-  truncated read; and the falsification pass's two-for-two record.
+- **The 2026-07-28 drain landed at `9977c27`** — inbox and journal are empty.
+  FT152's follow-up findings now live on the roadmap: the coverage row-identity
+  gap as a clause on FT133, the anchor-mechanism weakness as FT156 (grill), the
+  falsification-trigger question parked as FT158, the registration-seam charge
+  rule as FT157. FT154 is marked unblocked and specs next after FT152's
+  close-out.
 
 ## Next command
 
-`/bench-what-next`
+`/bench-final-check`
 
 ## Shape
 
