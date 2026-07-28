@@ -2,52 +2,46 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `9977c27`, clean tree, 9 unpushed commits
-Spec: none staged.
-Gate: green at `0eaef37` — stale, work tree `ab832d6`
+Branch: `main` — HEAD `c56be81`, clean tree, 2 unpushed commits (`9977c27` drain,
+`c56be81` handoff)
+Spec: `specs/implement-spec-full-run.md` — `Status: implemented`, merged, awaiting
+retirement.
+Gate: green at `c56be81`.
 
 ## State
 
-- **FT152 is built, gate-green, and on `main` — unpushed.** `specs/implement-spec-full-run.md`
-  is `Status: implemented`. The build is five commits: `3eb1c9a` (stories 1-9,
-  11-15), `8218f92` (review repairs), `7f3f25b` (merge of FT155), `dbdcbda`
-  (fixture refresh), `fa83f64` (status flip), plus `d09d081` for the captures.
-  Gate green on `main`. The push is the reviewer's.
+- **FT152 is closed out.** `/bench-final-check` ran the gate on `main` at
+  `c56be81`: green across build, gofmt, vet, test, race, conformance,
+  conformance-suite, contract, shellcheck, canary. No commit — the work was
+  already landed and the status already flipped, so the phase was an honest
+  no-op. Ship-tier verification has not run; `bench prep-release` covers that
+  once per release.
 
-- **What shipped.** Two shared rules in `.bench/BENCH.md` — fix-don't-park in
-  Workflow, the outside-source warrant rule in How to talk to me — each pinned by
-  a marker in `checkSharedRuleSingleSource` plus a section-scoped anchor, so the
-  anchor means placement, not presence. `NEVER assume, always verify` is now
-  anchored too; it was unguarded before. Three point-of-use verify hooks in
-  `bench-shape-idea`, `bench-implement-spec`, `bench-review-implementation`. One
-  bounded `## The `--full` run` section in `bench-implement-spec.md` with 20
-  section-scoped requires and 10 paired forbids. Six canary fixtures.
+- **The FT152 build commits are already pushed.** Only the drain and this
+  handoff remain unpushed. No leftover worktrees, no orphaned review pickup.
 
-- **The falsification pass changed the outcome, and that is the headline.** A
-  three-axis review returned 29 findings and cleared the scope fence. A Codex
-  `gpt-5.6-sol` xhigh pass charged to refute found that the fence re-derived
-  fix-don't-park as path-width-based where `.bench/BENCH.md` sets it
-  decision-based — the two gave opposite answers for a small out-of-story bug.
-  Fixed in `8218f92`. Second such result after FT91; journaled, not yet a rule.
-
-- **Spec retirement is deliberately NOT done.** `bench status` will show
-  `1 merged spec awaiting retirement`. Retiring deletes the spec and its decision
-  map, and the spec header carries the reviewer's open veto list — including
-  calls I made on their blanket authorization (the `.bench/structure.budgets`
+- **Retirement is the one open FT152 action, and it is the reviewer's.**
+  `bench spec retire implement-spec-full-run` deletes the spec and its decision
+  map, and the spec header (lines 17-56) carries a 15-item veto list of calls
+  decided in the spec rather than carried by the map. Two were made on blanket
+  authorization and are the ones most worth a look: the `.bench/structure.budgets`
   grant for `docs_workflow_helpers_test.go 660`, and correcting the spec's
-  `.claude/commands/` mirror decisions, which assumed a copied tree where the
-  repo has a symlink). Retire after the reviewer has read that list, not before.
+  `.claude/commands/` mirror decisions, which assumed a copied tree where this
+  repo has a symlink. Read the list, then retire — retiring first destroys the
+  surface.
 
-- **The 2026-07-28 drain landed at `9977c27`** — inbox and journal are empty.
-  FT152's follow-up findings now live on the roadmap: the coverage row-identity
-  gap as a clause on FT133, the anchor-mechanism weakness as FT156 (grill), the
-  falsification-trigger question parked as FT158, the registration-seam charge
-  rule as FT157. FT154 is marked unblocked and specs next after FT152's
-  close-out.
+- **Next build is FT154**, marked unblocked by the 2026-07-28 drain and specs-next
+  after FT152. `bench status` also flags 35 structure issues, 2 unresolved
+  decision maps, and 1 roadmap row for merged work — the roadmap row belongs to
+  `/bench-what-next`, not to a build.
 
 ## Next command
 
-`/bench-final-check`
+Reviewer decision first: read the veto list at
+`specs/implement-spec-full-run.md:17-56`, then retire with
+`bench spec retire implement-spec-full-run`.
+
+Then `/bench-write-spec` for FT154.
 
 ## Shape
 
