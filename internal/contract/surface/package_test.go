@@ -33,7 +33,7 @@ func TestPlatformPackageMetadataDerivesFromRoot(t *testing.T) {
 		t.Fatal(err)
 	}
 	wrapper, packages := filepath.Join(candidate, "generated-wrapper"), filepath.Join(candidate, "generated-packages")
-	for _, platform := range packageReadPlatforms(t) {
+	for _, platform := range packageReadPlatforms(t, candidate) {
 		bin := filepath.Join(packages, platform.OS+"-"+platform.Arch, "bin", "bench")
 		if err := os.MkdirAll(filepath.Dir(bin), 0o755); err != nil {
 			t.Fatal(err)
@@ -44,7 +44,7 @@ func TestPlatformPackageMetadataDerivesFromRoot(t *testing.T) {
 	}
 	probe := contract.NewExecFixtureAt(t, candidate).Run("node", filepath.Join(candidate, "scripts", "build-release-evidence.mjs"), candidate, wrapper, packages)
 	probe.RequireExit(0)
-	for _, platform := range packageReadPlatforms(t) {
+	for _, platform := range packageReadPlatforms(t, candidate) {
 		var got struct{ Repository, Homepage, Bugs, Author string }
 		contract.ReadJSONFile(t, filepath.Join(packages, platform.OS+"-"+platform.Arch, "package.json"), &got)
 		if got.Repository != root["repository"] || got.Homepage != root["homepage"] || got.Bugs != root["bugs"] || got.Author != "mutation-proves-derivation" {
@@ -58,16 +58,18 @@ func TestPackageContracts(t *testing.T) {
 	contract.SkipIfSubjectFileMissing(t, "scripts/gen-platform-packages.sh")
 	tmp := t.TempDir()
 	gen := filepath.Join(tmp, "artifacts")
-	packageRunGenerator(t, gen).RequireExit(0)
+	firstCandidate := packageHostCandidate(t)
+	packageRunGenerator(t, firstCandidate, gen).RequireExit(0)
 	first := packageArtifactNames(t, gen)
 	firstPins := packagePinManifest(t, gen)
 	t.Run("platform-package generator failed", func(t *testing.T) {
-		wantArtifacts := len(packageReadPlatforms(t))*2 + 1
+		wantArtifacts := len(packageReadPlatforms(t, firstCandidate))*2 + 1
 		if len(first) != wantArtifacts {
 			t.Fatalf("artifact count = %d, want packages plus archives = %d", len(first), wantArtifacts)
 		}
 	})
-	packageRunGenerator(t, gen).RequireExit(0)
+	secondCandidate := packageHostCandidate(t)
+	packageRunGenerator(t, secondCandidate, gen).RequireExit(0)
 	second := packageArtifactNames(t, gen)
 	secondPins := packagePinManifest(t, gen)
 	t.Run("platform-package generator (2nd run) failed", func(t *testing.T) {
@@ -86,14 +88,14 @@ func TestPackageContracts(t *testing.T) {
 		}
 	})
 	t.Run("platform-package generator output contract failed", func(t *testing.T) {
-		testPackageGeneratorOutputAt(t, gen)
+		testPackageGeneratorOutputAt(t, secondCandidate, gen)
 	})
 	contract.RunParallel(t, "npm pack installable-surface contract", testPackageNpmPackInstallableSurface)
 }
 
-func testPackageGeneratorOutputAt(t *testing.T, gen string) {
+func testPackageGeneratorOutputAt(t *testing.T, root, gen string) {
 	t.Helper()
-	matrix := packageReadPlatforms(t)
+	matrix := packageReadPlatforms(t, root)
 	sourceWrapper := packageReadWrapper(t)
 	wrapperEntries := contract.ReadTarball(t, filepath.Join(gen, "redbench-"+sourceWrapper.Version+".tgz"))
 	var wrapper packageWrapper
@@ -255,22 +257,29 @@ type packageWrapper struct {
 	Author               string            `json:"author"`
 }
 
-func packageRunGenerator(t testing.TB, out string) contract.Probe {
+func packageRunGenerator(t testing.TB, candidate, out string) contract.Probe {
 	t.Helper()
-	subject := contract.SubjectRoot(t)
-	candidate := filepath.Join(t.TempDir(), "authenticated candidate")
-	if err := testrepo.CommitWorkingTree(subject, candidate); err != nil {
-		t.Fatal(err)
-	}
-	return contract.NewExecFixtureAt(t, subject).Run("bash", filepath.Join(candidate, "scripts", "gen-platform-packages.sh"), out)
+	return contract.NewExecFixtureAt(t, contract.SubjectRoot(t)).Run("bash", filepath.Join(candidate, "scripts", "gen-platform-packages.sh"), out)
 }
 
-func packageReadPlatforms(t testing.TB) []packagePlatform {
+// packageHostCandidate stages an independent generator candidate whose release plan
+// carries the host target alone. Dev proves the generator's logic and idempotency, which
+// one target demonstrates; full matrix breadth is a release-tier claim. Each call builds
+// its own candidate, so two generator runs stay the independent builds the pin
+// reproducibility assertion compares.
+func packageHostCandidate(t testing.TB) string {
+	t.Helper()
+	return contract.NarrowReleasePlan(t, contract.SubjectRoot(t), func(matrix contract.ReleasePlanTargets) []contract.ReleaseTarget {
+		return matrix.Host
+	})
+}
+
+func packageReadPlatforms(t testing.TB, root string) []packagePlatform {
 	t.Helper()
 	var plan struct {
 		Targets []packagePlatform `json:"targets"`
 	}
-	contract.ReadJSONFile(t, filepath.Join(contract.SubjectRoot(t), "scripts", "release-plan.json"), &plan)
+	contract.ReadJSONFile(t, filepath.Join(root, "scripts", "release-plan.json"), &plan)
 	return plan.Targets
 }
 

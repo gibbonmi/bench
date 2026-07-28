@@ -17,7 +17,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
-	"github.com/gibbonmi/bench/internal/testrepo"
 )
 
 func assertPackedSetupForwarding(t *testing.T, dir, wrapper, shim string, env map[string]string) {
@@ -164,82 +163,27 @@ const (
 
 func committedHostileArtifactSource(t *testing.T, root string, options ...artifactSourceOption) string {
 	t.Helper()
-	origin := filepath.Join(t.TempDir(), "committed origin [*]")
-	if err := testrepo.CommitWorkingTree(root, origin); err != nil {
-		t.Fatal(err)
-	}
-	clone := filepath.Join(t.TempDir(), "fresh source clone [*]")
-	if output, err := exec.Command("git", "clone", "-q", origin, clone).CombinedOutput(); err != nil {
-		t.Fatalf("clone committed source: %v\n%s", err, output)
-	}
-	planPath := filepath.Join(clone, "scripts", "release-plan.json")
-	data, err := os.ReadFile(planPath)
-	if err != nil {
-		t.Fatalf("read staged release plan: %v", err)
-	}
-	var plan map[string]json.RawMessage
-	if err := json.Unmarshal(data, &plan); err != nil {
-		t.Fatalf("parse staged release plan: %v", err)
-	}
-	var targets []artifactPlatform
-	if err := json.Unmarshal(plan["targets"], &targets); err != nil {
-		t.Fatalf("parse staged release targets: %v", err)
-	}
-	goEnv, err := exec.Command("go", "env", "GOOS", "GOARCH").Output()
-	if err != nil {
-		t.Fatalf("read host Go target: %v", err)
-	}
-	host := strings.Fields(string(goEnv))
-	if len(host) != 2 {
-		t.Fatalf("unexpected go env GOOS/GOARCH output: %q", goEnv)
-	}
-	candidates := targets
-	if len(options) != 0 && options[0] == stageHostlessArtifactPlan {
-		candidates = make([]artifactPlatform, 0, len(targets))
-		for _, target := range targets {
-			if target.GOOS != host[0] || target.GOArch != host[1] {
-				candidates = append(candidates, target)
+	return contract.NarrowReleasePlan(t, root, func(matrix contract.ReleasePlanTargets) []contract.ReleaseTarget {
+		selected := append(make([]contract.ReleaseTarget, 0, 2), matrix.Host...)
+		if len(options) != 0 && options[0] == stageHostlessArtifactPlan {
+			selected = selected[:0]
+		}
+		if len(selected) == 0 {
+			capability.Environment(t, fmt.Sprintf("artifact contract tests require release plan target for host %s/%s", matrix.GOOS, matrix.GOArch))
+		}
+		if len(options) != 0 && options[0] == includeFirstNonHostArtifactTarget {
+			for _, target := range matrix.All {
+				if target.GOOS != matrix.GOOS || target.GOArch != matrix.GOArch {
+					selected = append(selected, target)
+					break
+				}
+			}
+			if len(selected) != 2 {
+				capability.Environment(t, fmt.Sprintf("artifact matrix breadth requires a non-host release plan target alongside host %s/%s", matrix.GOOS, matrix.GOArch))
 			}
 		}
-	}
-	selected := make([]artifactPlatform, 0, 2)
-	for _, target := range candidates {
-		if target.GOOS == host[0] && target.GOArch == host[1] {
-			selected = append(selected, target)
-			break
-		}
-	}
-	if len(selected) == 0 {
-		capability.Environment(t, fmt.Sprintf("artifact contract tests require release plan target for host %s/%s", host[0], host[1]))
-	}
-	if len(options) != 0 && options[0] == includeFirstNonHostArtifactTarget {
-		for _, target := range targets {
-			if target.GOOS != host[0] || target.GOArch != host[1] {
-				selected = append(selected, target)
-				break
-			}
-		}
-		if len(selected) != 2 {
-			capability.Environment(t, fmt.Sprintf("artifact matrix breadth requires a non-host release plan target alongside host %s/%s", host[0], host[1]))
-		}
-	}
-	plan["targets"], err = json.Marshal(selected)
-	if err != nil {
-		t.Fatalf("encode staged release targets: %v", err)
-	}
-	data, err = json.MarshalIndent(plan, "", "  ")
-	if err != nil {
-		t.Fatalf("encode staged release plan: %v", err)
-	}
-	data = append(data, '\n')
-	if err := os.WriteFile(planPath, data, 0o644); err != nil {
-		t.Fatalf("write staged release plan: %v", err)
-	}
-	commit := exec.Command("git", "-C", clone, "-c", "user.email=artifact-test@example.invalid", "-c", "user.name=artifact-test", "commit", "-qam", "stage artifact test release plan")
-	if output, err := commit.CombinedOutput(); err != nil {
-		t.Fatalf("commit staged release plan: %v\n%s", err, output)
-	}
-	return clone
+		return selected
+	})
 }
 
 func assertSpecialFileArtifactFailure(t *testing.T, root, output string) {
@@ -311,19 +255,15 @@ func runArtifactBuildThroughPromotionSeam(t *testing.T, command *exec.Cmd, ready
 	return output, err
 }
 
-func assertInterruptedArtifactPromotion(t *testing.T, source, prepared, output string, wantFiles int) {
+// awaitArtifactPromotionSeam blocks until the build has parked at the promotion seam. The
+// seam sits above every move the promotion makes, so nothing has been promoted yet when
+// this returns.
+func awaitArtifactPromotionSeam(t *testing.T, cmd *exec.Cmd, ready string) {
 	t.Helper()
-	prior := promotedArtifactDigests(t, output)
-	ready := filepath.Join(t.TempDir(), "promotion-ready")
-	cmd := exec.Command("bash", filepath.Join(source, "scripts", "build-artifacts.sh"), source, output)
-	cmd.Env = promotionTestEnv(prepared, ready)
-	if err := cmd.Start(); err != nil {
-		t.Fatal(err)
-	}
 	deadline := time.Now().Add(30 * time.Second)
 	for {
 		if _, err := os.Stat(ready); err == nil {
-			break
+			return
 		}
 		if time.Now().After(deadline) {
 			_ = cmd.Process.Kill()
@@ -331,12 +271,31 @@ func assertInterruptedArtifactPromotion(t *testing.T, source, prepared, output s
 		}
 		time.Sleep(25 * time.Millisecond)
 	}
+}
+
+// interruptArtifactPromotion signals a build parked at the promotion seam, so the failure
+// lands inside the promotion block rather than during generation.
+func interruptArtifactPromotion(t *testing.T, source, prepared, output string) {
+	t.Helper()
+	ready := filepath.Join(t.TempDir(), "promotion-ready")
+	cmd := exec.Command("bash", filepath.Join(source, "scripts", "build-artifacts.sh"), source, output)
+	cmd.Env = promotionTestEnv(prepared, ready)
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	awaitArtifactPromotionSeam(t, cmd, ready)
 	if err := cmd.Process.Signal(syscall.SIGINT); err != nil {
 		t.Fatal(err)
 	}
 	if err := cmd.Wait(); err == nil {
 		t.Fatal("interrupted builder exited successfully")
 	}
+}
+
+func assertInterruptedArtifactPromotion(t *testing.T, source, prepared, output string, wantFiles int) {
+	t.Helper()
+	prior := promotedArtifactDigests(t, output)
+	interruptArtifactPromotion(t, source, prepared, output)
 	files, err := os.ReadDir(output)
 	if err != nil || len(files) != wantFiles {
 		t.Fatalf("promotion interruption left partial/absent set: files=%d err=%v", len(files), err)

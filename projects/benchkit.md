@@ -242,7 +242,11 @@ release-preflight check), the lifecycle, contract, and AXI phases, and the
 dev-tier canary passed. It does not claim the release artifacts build,
 reproduce, or pass preflight verify — those are ship-tier facts, restaged to
 run once per release instead of once per commit, with no check losing
-authority. Neither tier grants publish authority: the publish path's
+authority. The dev contract suites drive `scripts/build-artifacts.sh` under
+the shared-build-cache opt-in, so their green proves the generator's logic —
+the planned artifact set, idempotently, with reproducible pins — not
+byte-reproducibility across independent builds, which stays with the ship
+tier above. Neither tier grants publish authority: the publish path's
 `VerifyPublishAuthority` refusal demands a publish-mode index that only the
 release workflow's own preflight produces, while `prep-release` emits
 verify-mode evidence — a rehearsal, never a substitute for that boundary.

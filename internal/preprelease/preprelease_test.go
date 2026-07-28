@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/gate"
 )
 
@@ -74,6 +75,23 @@ func TestStepsRunReleaseOnlyPackages(t *testing.T) {
 	}
 	if !slices.Contains(step.Env, registry.ConformanceTierEnv+"="+string(registry.Ship)) {
 		t.Errorf("the release-only suites step does not ask for the ship tier: %v", step.Env)
+	}
+}
+
+// TestArtifactStepIsHermetic keeps the release build off the dev tier's shared build
+// cache. No step sets the opt-in, so this is a pin rather than a description: it holds on
+// an unmodified tree and reds the moment an edit hands the token to the artifacts step.
+// The ship tier does catch that edit — an opt-in build promotes no reproducibility record,
+// and both chains that read one refuse its absence — but only once per release and only
+// after a full hermetic build. This pin catches the likely regression per commit for the
+// price of reading a struct. A token inherited from the surrounding shell is out of reach
+// here by construction, since each step runs with append(os.Environ(), step.Env...).
+func TestArtifactStepIsHermetic(t *testing.T) {
+	step := stepNamed(t, Steps("root", "kit"), "artifacts")
+	for _, env := range step.Env {
+		if strings.Contains(env, contract.SharedBuildCacheEnv) {
+			t.Errorf("the artifact build opts into the shared build cache via %q, so the release bytes are not hermetic", env)
+		}
 	}
 }
 

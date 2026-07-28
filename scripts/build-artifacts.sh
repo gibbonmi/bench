@@ -32,14 +32,29 @@ commit_complete=0
 artifacts_promoted=0
 reproducibility_promoted=0
 promote_reproducibility=0
-# npm writes pack bookkeeping even for local, script-free packs. Keep that
-# mutable state inside the private generation so HOME/cache/locale perturbations
-# cannot affect release bytes or require a trusted ambient cache.
+# Dev-tier posture opt-in, matched exactly against 1. Absent, empty, and every other
+# value resolve hermetic, so no environment accident can hand a release build the
+# ambient caches or drop its reproducibility evidence.
+shared_build_cache=0
+[[ "${BENCH_SHARED_BUILD_CACHE:-}" != 1 ]] || shared_build_cache=1
+if [[ "$shared_build_cache" == 1 ]]; then
+  # Resolve while HOME is still ambient: go env reports the environment's value when
+  # one is set and the computed default otherwise, and that default sits under HOME.
+  { IFS= read -r ambient_gocache; IFS= read -r ambient_gomodcache; } < <(go env GOCACHE GOMODCACHE)
+fi
+# npm writes pack bookkeeping even for local, script-free packs. Keep that mutable
+# state, TMPDIR, and HOME inside the private generation under both postures so
+# HOME/cache/locale perturbations cannot affect release bytes.
 export npm_config_cache="$stage/npm-cache"
-export GOCACHE="$stage/go-cache"
 export TMPDIR="$stage/tmp"
 export HOME="$stage/home"
-export GOMODCACHE="$stage/go-mod-cache"
+if [[ "$shared_build_cache" == 1 ]]; then
+  export GOCACHE="$ambient_gocache"
+  export GOMODCACHE="$ambient_gomodcache"
+else
+  export GOCACHE="$stage/go-cache"
+  export GOMODCACHE="$stage/go-mod-cache"
+fi
 mkdir -p "$TMPDIR" "$HOME" "$GOMODCACHE"
 cleanup() {
   if [[ "$commit_complete" != 1 ]]; then
@@ -126,7 +141,7 @@ else
   actual="$(find "$artifacts" -maxdepth 1 -type f \( -name '*.tgz' -o -name '*.tar.gz' \) -print | wc -l | tr -d ' ')"
   [[ "$actual" == "$expected" ]] || { printf 'bench artifacts: emitted %s tarballs, expected %s\n' "$actual" "$expected" >&2; exit 1; }
 
-  if [[ "${BENCH_REPRO_BUILD:-0}" != 1 ]]; then
+  if [[ "${BENCH_REPRO_BUILD:-0}" != 1 && "$shared_build_cache" != 1 ]]; then
     second_parent="$(mktemp -d "$parent/.bench-repro-build.XXXXXX")"
     second_source="$second_parent/source"
     mkdir -p "$second_parent/tmp"
@@ -152,7 +167,10 @@ if [[ -e "$output" ]]; then
   rmdir "$backup"
   mv "$output" "$backup"
 fi
-if [[ "$promote_reproducibility" == 1 && -e "$repro_file" ]]; then
+# A shared-cache build compares nothing, so any record beside the output grades bytes
+# it never saw. Either posture moves that record aside with the artifacts it replaces,
+# and cleanup returns both together if the promotion does not complete.
+if [[ "$promote_reproducibility" == 1 || "$shared_build_cache" == 1 ]] && [[ -e "$repro_file" ]]; then
   repro_backup="$(mktemp "$parent/.bench-reproducibility.previous.XXXXXX")"
   mv "$repro_file" "$repro_backup"
 fi

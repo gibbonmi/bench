@@ -104,7 +104,6 @@ func TestDistributableArtifactContracts(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "artifact output [hostile]")
 	probe := contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-artifacts.sh"), buildRoot, out)
 	probe.RequireExit(0)
-	assertPromotedReproducibility(t, out)
 
 	var wrapper struct {
 		Version string `json:"version"`

@@ -14,6 +14,10 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 )
 
+// SharedBuildCacheEnv is the dev-tier build posture opt-in scripts/build-artifacts.sh
+// reads; its absence is hermetic.
+const SharedBuildCacheEnv = "BENCH_SHARED_BUILD_CACHE"
+
 type Env map[string]*string
 
 type Probe struct {
