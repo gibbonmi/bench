@@ -4,7 +4,8 @@ Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
 Branch: `main` — clean tree, 11 unpushed commits
 Spec: `specs/ft91-artifact-build-tiering.md` (Status: implemented)
-Gate: green
+Gate: green for all code at `64635b8`; the pin reads stale only because the
+spec-status and handoff commits landed after it, both doc-only
 
 ## State
 
