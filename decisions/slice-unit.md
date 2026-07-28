@@ -185,7 +185,30 @@ layout in the same change. Ticket files are convention-only in v1 — the CLI
 learns the folder, not the ticket format; a `bench` frontier surface
 graduates later on demonstrated use, the FT6 posture.
 
-## Not yet specified
+## #8: What line does each stage of a ticketed build run?
+
+Blocked by: #1
+Type: Grill
+
+### Question
+
+With tickets small enough to charge cheap, does the kit bind a standing tier
+per stage — orchestration, implementation, review — instead of per-build
+deliberation, and how hard is the binding?
+
+### Answer
+
+Defaults with the ladder, recorded as a standing table in `craft-line`:
+orchestration mid; ticket implementation cheap at medium effort; review mid
+at high. Each is the default charge, not a flat rule — a failed done-claim or
+a red the delegate cannot clear escalates one tier, declared per the existing
+ladder, never silently. The profile's leverage override stands: kit
+always-loaded prose still routes top, for review and build alike. Stage is
+not machine-visible to `check-agent-line` (the envelope carries no stage
+field — FT128's gap class), so the binding is prose plus review in v1.
+Reviewer-decided 2026-07-28: this replaces "builds route mid" for
+ticket-sized charges, and the first builds under it are the cheap-tier
+re-test evidence `decisions/cost-follows-project-size.md` #6 waits on.
 
 - Gate anchors for the new prose (which conformance assertions pin the
   breakdown step and the light-path table), decided at spec time.
@@ -213,8 +236,9 @@ graduates later on demonstrated use, the FT6 posture.
    `/bench-implement-spec` gains the breakdown step charging it.
    `internal/spec` learns the `specs/<slug>/spec.md` layout; the one staged
    spec migrates in the same change. `.bench/BENCH.md` gains the light-path
-   table with the one-ticket observable. Outside: no ticket parser, no new
-   subcommand, no tracker.
+   table with the one-ticket observable. `craft-line` gains the per-stage
+   default table (#8). Outside: no ticket parser, no new subcommand, no
+   tracker.
 2. **Contracts.** `internal/spec`: a bare slug resolves to
    `specs/<slug>/spec.md`; `Facts` enumerates folder specs; retire validates
    and removes the folder; `history` keeps resolving retired flat paths.
@@ -248,7 +272,8 @@ graduates later on demonstrated use, the FT6 posture.
    artifacts (#3). A separate ticketing phase, and spec-phase ticketing (#4).
    Delete-on-land done-marking (#5 — checkboxes chosen). Context fit as the
    grading rule (#1). Dual-form resolution and convention-only layout (#7).
-   A frontier CLI surface in v1 (#7).
+   A frontier CLI surface in v1 (#7). A flat no-escalation stage rule, and
+   dropping the review leverage override (#8).
 9. **Domain watch-outs.** `bench spec history` resolves retired specs by
    literal git pathspec, so retired flat paths must stay reachable after the
    layout moves. Any `specs/*.md` glob (in `Facts`, gate prose, or
