@@ -204,8 +204,9 @@ deliberation, and how hard is the binding?
 ### Answer
 
 Defaults with the ladder, recorded as a standing table in `craft-line`:
-orchestration mid; ticket implementation cheap at medium effort; review mid
-at high. Each is the default charge, not a flat rule — a failed done-claim or
+orchestration mid; ticket implementation cheap at low effort
+(reviewer-amended 2026-07-28 at spec time from the original medium); review
+mid at high. Each is the default charge, not a flat rule — a failed done-claim or
 a red the delegate cannot clear escalates one tier, declared per the existing
 ladder, never silently. The profile's leverage override stands: kit
 always-loaded prose still routes top, for review and build alike. Stage is
