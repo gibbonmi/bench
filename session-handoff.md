@@ -2,46 +2,48 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `c56be81`, clean tree, 2 unpushed commits (`9977c27` drain,
-`c56be81` handoff)
-Spec: `specs/implement-spec-full-run.md` — `Status: implemented`, merged, awaiting
-retirement.
-Gate: green at `c56be81`.
+Branch: `main` — HEAD `16cc9b5`, clean tree, 4 unpushed commits
+Spec: none staged.
+Gate: green at `16cc9b5`.
 
 ## State
 
-- **FT152 is closed out.** `/bench-final-check` ran the gate on `main` at
-  `c56be81`: green across build, gofmt, vet, test, race, conformance,
-  conformance-suite, contract, shellcheck, canary. No commit — the work was
-  already landed and the status already flipped, so the phase was an honest
-  no-op. Ship-tier verification has not run; `bench prep-release` covers that
-  once per release.
+- **FT152 is done and retired.** The gate ran green on `main`; the build was
+  already landed and status-flipped, so `/bench-final-check` was an honest
+  no-op. `bench spec retire implement-spec-full-run` then removed the spec and
+  its decision map in `16cc9b5`, gate-green. Ship-tier verification has not run;
+  `bench prep-release` covers that once per release.
 
-- **The FT152 build commits are already pushed.** Only the drain and this
-  handoff remain unpushed. No leftover worktrees, no orphaned review pickup.
+- **What the retirement promoted before deleting.** One cold-session note in
+  `projects/benchkit.md`: `.claude/commands` is a git-tracked symlink to
+  `../.agents/commands`, not a copied tree — two FT152 artifacts assumed a copy
+  and specified mirror work that did not exist. Everything else the spec decided
+  is enforced in the tree by its own anchors, so it needed no second home.
 
-- **Retirement is the one open FT152 action, and it is the reviewer's.**
-  `bench spec retire implement-spec-full-run` deletes the spec and its decision
-  map, and the spec header (lines 17-56) carries a 15-item veto list of calls
-  decided in the spec rather than carried by the map. Two were made on blanket
-  authorization and are the ones most worth a look: the `.bench/structure.budgets`
-  grant for `docs_workflow_helpers_test.go 660`, and correcting the spec's
-  `.claude/commands/` mirror decisions, which assumed a copied tree where this
-  repo has a symlink. Read the list, then retire — retiring first destroys the
-  surface.
+- **Five entries are parked in `IDEAS.md` for the next drain.** Three are FT152
+  deferrals that would have died with the spec: the section-scoped-anchor
+  fixture gap (a clause for FT156), the model-token sweep over shipped command
+  prose, and a `bench` subcommand for the full run. Two are findings the
+  retirement surfaced — see below.
 
-- **Next build is FT154**, marked unblocked by the 2026-07-28 drain and specs-next
-  after FT152. `bench status` also flags 35 structure issues, 2 unresolved
-  decision maps, and 1 roadmap row for merged work — the roadmap row belongs to
-  `/bench-what-next`, not to a build.
+- **Retirement broke a pointer in FT154's map, and that is the one thing worth
+  reading before FT154 is specced.** `decisions/slice-unit.md` names
+  `implement-spec-full-run` as the single staged spec to migrate to the
+  `specs/<slug>/spec.md` layout, and as the next queued build. There are now zero
+  flat specs, so that migration story is a no-op or changes shape. Parked, not
+  fixed — it is spec-level design, so it is the reviewer's call.
+
+- **A second finding: two sources give the retiring session opposite orders.**
+  `bench spec retire` prints "remove the ROADMAP row"; `/bench-final-check`'s
+  post-merge tail says to leave roadmap rows to `/bench-what-next`. I followed
+  the command file, and `bench status` agrees — it now flags `1 row names a
+  retired spec → /bench-what-next`. Parked for the drain to verdict.
 
 ## Next command
 
-Reviewer decision first: read the veto list at
-`specs/implement-spec-full-run.md:17-56`, then retire with
-`bench spec retire implement-spec-full-run`.
-
-Then `/bench-write-spec` for FT154.
+`/bench-what-next` — the drain owns the stale FT152 roadmap row and the five
+parked ideas, and its verdict on the FT154 map pointer is what unblocks the next
+build.
 
 ## Shape
 
