@@ -90,6 +90,17 @@ func TestSweepRejectsStructurallyUnscopableContractFixtures(t *testing.T) {
 			},
 			want: []string{"manifest-fx", "phases.json", "flat"},
 		},
+		{
+			// The dot- prefix is a storage convention, not the only way to write the
+			// path: a literal .bench directory materializes the same manifest-declaring
+			// root, so a check reading one spelling passes the other through unscoped.
+			name: "fixture declares a phase manifest in a literal dot directory",
+			build: func(t *testing.T, root string) {
+				fx := contractFixture(t, root, "axi", "literal-manifest-fx")
+				write(t, filepath.Join(fx, "files", ".bench", "phases.json"), "{}\n")
+			},
+			want: []string{"literal-manifest-fx", "phases.json", "flat"},
+		},
 	}
 
 	for _, tc := range cases {
@@ -110,6 +121,38 @@ func TestSweepRejectsStructurallyUnscopableContractFixtures(t *testing.T) {
 				t.Errorf("sweep ran %d inner gates before refusing, want none", calls)
 			}
 		})
+	}
+}
+
+// TestSweepRejectsExpectAbovePackagedFixtures grades the walk's stopping rule. An EXPECT
+// left at package depth makes that directory look like the fixture, and every real
+// fixture below it disappears from the sweep — the harness silently stops grading them
+// while staying green. A fixture is a leaf: files/ and its own marker files, nothing
+// else, so a directory holding both an EXPECT and further fixture directories is the
+// defect and is named.
+func TestSweepRejectsExpectAbovePackagedFixtures(t *testing.T) {
+	root := t.TempDir()
+	contractFixture(t, root, "surface/artifact", "buried-a")
+	contractFixture(t, root, "surface/artifact", "buried-b")
+	pkgDir := filepath.Join(root, "tests", "canary", "behavior-owned", "surface", "artifact")
+	write(t, filepath.Join(pkgDir, "EXPECT"), "stray expectation\n")
+
+	calls, err := countedSweep(t, root)
+	if err == nil {
+		t.Fatal("Sweep err = nil, want the stray EXPECT refused")
+	}
+	for _, want := range []string{"artifact", "EXPECT"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("Sweep err = %v, want a diagnostic naming %q", err, want)
+		}
+	}
+	for _, buried := range []string{"buried-a", "buried-b"} {
+		if strings.Contains(err.Error(), buried) {
+			t.Errorf("Sweep err = %v, want the containing directory named rather than %s", err, buried)
+		}
+	}
+	if calls != 0 {
+		t.Errorf("sweep ran %d inner gates before refusing, want none", calls)
 	}
 }
 

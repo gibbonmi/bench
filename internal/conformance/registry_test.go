@@ -219,7 +219,7 @@ func TestCanaryFixtureRegistryClassifiesEveryFixture(t *testing.T) {
 		// A legacy flat fixture belongs to no family at all: its EXPECT is emitted by no
 		// single conformance check and no contract package, which is what earns it the
 		// full inner gate.
-		case family == "", phase == "contract":
+		case family == "", phase == canary.PhaseContract:
 			wantOwner = ownerBehavior
 		// A family routing to a phase of its own name is a phase family. The router owns
 		// the phase names, so asking it beats listing them again here.

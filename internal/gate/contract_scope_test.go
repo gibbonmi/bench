@@ -57,13 +57,22 @@ func TestContractPhaseUnnarrowedWithoutAScope(t *testing.T) {
 // binding rot pass as green, and one that reached `go test` unchecked would red with a
 // toolchain error naming nothing the fixture author can act on — so each class reds here,
 // naming the value.
+//
+// The unclean spellings are the quiet half. Each of them resolves to a real directory, so
+// nothing errors: "." grades ./internal/contract/. — the parent package, which holds no
+// tests — and the rest build argv a package path was never meant to be. The fixture reds
+// as "did not bite" forever, and the binding it was supposed to prove is never proven.
 func TestInnerContractScopeRejectsUnusableValues(t *testing.T) {
 	kit := contractKit(t, "surface/artifact")
 	for name, value := range map[string]string{
-		"empty":       "",
-		"absolute":    "/internal/contract/axi",
-		"traversal":   "surface/../../axi",
-		"unknown dir": "no-such-package",
+		"empty":             "",
+		"absolute":          "/internal/contract/axi",
+		"traversal":         "surface/../../axi",
+		"unknown dir":       "no-such-package",
+		"current dir":       ".",
+		"dot prefixed":      "./surface/artifact",
+		"trailing slash":    "surface/artifact/",
+		"doubled separator": "surface//artifact",
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Setenv(canary.ContractPackageEnv, value)
@@ -113,9 +122,9 @@ func contractArgv(t *testing.T, root, kit string, mode phaseMode) []string {
 	if err != nil {
 		t.Fatalf("phaseTable: %v", err)
 	}
-	phase, ok := phaseNamed(phases, contractPhaseName)
+	phase, ok := phaseNamed(phases, canary.PhaseContract)
 	if !ok {
-		t.Fatalf("resolved table carries no %s phase: %v", contractPhaseName, phaseNames(phases))
+		t.Fatalf("resolved table carries no %s phase: %v", canary.PhaseContract, phaseNames(phases))
 	}
 	return phase.Argv
 }

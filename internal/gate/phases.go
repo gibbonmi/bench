@@ -32,10 +32,6 @@ import (
 // conformancePhaseName is the phase whose per-check timing the runner prints.
 const conformancePhaseName = "conformance"
 
-// contractPhaseName is the phase that grades the behavior contracts, and the one phase a
-// canary fixture can narrow further than the table declares.
-const contractPhaseName = "contract"
-
 // contractPackagePrefix is the import-path prefix the contract phase grades under. The
 // declared table names every package below it; a scoped canary fixture names exactly one.
 const contractPackagePrefix = "./internal/contract/"
@@ -105,7 +101,7 @@ func BenchkitPhases(root, kit string) []Phase {
 			Needs: needsBuild(),
 		},
 		{
-			Name:  contractPhaseName,
+			Name:  canary.PhaseContract,
 			Argv:  goTestArgv(kit, contractSubtree),
 			Env:   []string{"BENCH_CONTRACT_ROOT=" + root},
 			Needs: needsBuild(),
@@ -433,7 +429,7 @@ func narrowContractScope(phases []Phase, kit string, mode phaseMode) ([]Phase, e
 	out := make([]Phase, len(phases))
 	copy(out, phases)
 	for idx, phase := range out {
-		if phase.Name != contractPhaseName {
+		if phase.Name != canary.PhaseContract {
 			continue
 		}
 		// The argv gets its own backing array: the caller's table and this one would
@@ -460,6 +456,14 @@ func checkContractPackage(kit, pkg string) error {
 		reason = "is an absolute path, and the contract phase grades package paths relative to internal/contract"
 	case slices.Contains(strings.Split(pkg, "/"), ".."):
 		reason = "climbs out of internal/contract"
+	// An unclean spelling is the quiet failure: "." and "./axi" and "axi/" all resolve to
+	// a real directory, so nothing errors — the argv just grades a package the fixture's
+	// EXPECT does not come from, and the fixture reports "did not bite" forever. Only the
+	// one canonical spelling of a package path is a binding this gate can stand behind.
+	case pkg == ".":
+		reason = "names internal/contract itself rather than a package under it"
+	case path.Clean(pkg) != pkg:
+		reason = "is not a clean package path relative to internal/contract; write " + path.Clean(pkg)
 	case !isDir(filepath.Join(kit, "internal", "contract", filepath.FromSlash(pkg))):
 		reason = "names no directory under " + filepath.Join(kit, "internal", "contract")
 	default:

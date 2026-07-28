@@ -32,7 +32,7 @@ func materializeMutationFixture(root, fixture, dst string) error {
 			}
 		}
 	}
-	filesDir := filepath.Join(fixture, "files")
+	filesDir := filepath.Join(fixture, filesDirName)
 	if info, err := os.Stat(filesDir); err == nil && info.IsDir() {
 		if err := materialize(filesDir, dst); err != nil {
 			return err

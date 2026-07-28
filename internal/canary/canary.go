@@ -39,11 +39,6 @@ const ContractPackageEnv = "BENCH_CANARY_CONTRACT_PACKAGE"
 // whose tree carries it never reaches the narrowing the built-in contract phase applies.
 const PhaseManifestPath = ".bench/phases.json"
 
-// contractPhase runs the contract suite, and is the phase a behavior-owned fixture's
-// EXPECT is emitted by. It is the one phase a fixture can narrow further, to the single
-// contract package that owns its diagnostic.
-const contractPhase = "contract"
-
 // FixturePhase maps the canary directory convention to the phase that owns it.
 // Legacy flat fixtures have tests/canary as their parent and keep the full gate.
 func FixturePhase(family string) string {
@@ -51,7 +46,7 @@ func FixturePhase(family string) string {
 	case "", "canary":
 		return ""
 	case "behavior-owned":
-		return contractPhase
+		return PhaseContract
 	}
 	if phaseFamilies[family] {
 		return family
@@ -59,11 +54,15 @@ func FixturePhase(family string) string {
 	return "conformance"
 }
 
-// The toolchain gate phases, named here because the fixture router and the phase table
-// must agree on every one of them and only one of the two can own the string. This
+// The gate phases the fixture router names, held here because the router and the phase
+// table must agree on every one of them and only one of the two can own the string. This
 // package is the owner: internal/gate imports it to build the table, and the edge does
 // not run the other way, so a name typed a second time in the table could disagree with
 // the routing forever.
+//
+// PhaseContract sits apart from the rest: no family is named after it — behavior-owned
+// routes there — and it is the one phase a fixture narrows further, to the single
+// contract package that owns its diagnostic.
 const (
 	PhaseBuild            = "build"
 	PhaseGofmt            = "gofmt"
@@ -71,6 +70,7 @@ const (
 	PhaseTest             = "test"
 	PhaseRace             = "race"
 	PhaseConformanceSuite = "conformance-suite"
+	PhaseContract         = "contract"
 )
 
 // phaseFamilies are the family names that name a gate phase rather than a conformance
@@ -89,6 +89,10 @@ var phaseFamilies = map[string]bool{
 // directly under tests/canary/ doubles as the marker of a legacy flat fixture, since a
 // family directory holds fixture directories and never an expectation of its own.
 const expectFileName = "EXPECT"
+
+// filesDirName holds the tree a fixture materializes over its base. It is the only
+// directory a fixture carries, which is what makes a fixture a leaf of the walk.
+const filesDirName = "files"
 
 // IsConformanceFamily reports whether dir, a directory directly under tests/canary/, is
 // a conformance family holding fixtures rather than a fixture in its own right. This
@@ -313,7 +317,7 @@ type selected struct {
 
 // contractGroupPrefix keys a contract package's vacuity group, so a package path can
 // never collide with a conformance check that happens to share its name.
-const contractGroupPrefix = contractPhase + ":"
+const contractGroupPrefix = PhaseContract + ":"
 
 // group names the vacuity baseline this fixture's EXPECT is graded against. Fixtures of
 // one group run the same checks, so a baseline of any other group both misses a genuinely
@@ -409,7 +413,7 @@ func selectTier(fixtures []selected, tier registry.Tier) ([]selected, error) {
 func assertContractScopes(root string, fixtures []selected) error {
 	var errs []string
 	for _, fx := range fixtures {
-		if FixturePhase(fx.family) != contractPhase {
+		if FixturePhase(fx.family) != PhaseContract {
 			continue
 		}
 		name := filepath.Base(fx.dir)
@@ -418,14 +422,27 @@ func assertContractScopes(root string, fixtures []selected) error {
 			errs = append(errs, fmt.Sprintf("canary fixture '%s' sits directly under tests/canary/%s/, which binds it to no contract package; move it to tests/canary/%s/<package path>/%s/", name, fx.family, fx.family, name))
 		case !isDir(filepath.Join(root, "internal", "contract", filepath.FromSlash(fx.pkg))):
 			errs = append(errs, fmt.Sprintf("canary fixture '%s' is bound to contract package %q, which does not exist under internal/contract/", name, fx.pkg))
-		case regularFile(filepath.Join(fx.dir, "files", dotEncodedPath(PhaseManifestPath))):
-			errs = append(errs, fmt.Sprintf("canary fixture '%s' declares files/%s, and a declared phase table replaces the built-in one its contract scoping lives in; make it a legacy flat fixture at tests/canary/%s/ instead", name, dotEncodedPath(PhaseManifestPath), name))
+		case declaresPhaseManifest(fx.dir):
+			errs = append(errs, fmt.Sprintf("canary fixture '%s' declares %s/%s, and a declared phase table replaces the built-in one its contract scoping lives in; make it a legacy flat fixture at tests/canary/%s/ instead", name, filesDirName, PhaseManifestPath, name))
 		}
 	}
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, "\n"))
 	}
 	return nil
+}
+
+// declaresPhaseManifest reports whether a fixture's files/ tree carries a phase table of
+// its own. Both spellings count: the dot- form the harness stores, and a literal dot
+// directory, which materializes into exactly the same declaring root. Reading one
+// spelling alone lets the other run unscoped in silence.
+func declaresPhaseManifest(fixtureDir string) bool {
+	for _, rel := range []string{dotEncodedPath(PhaseManifestPath), filepath.FromSlash(PhaseManifestPath)} {
+		if regularFile(filepath.Join(fixtureDir, filesDirName, rel)) {
+			return true
+		}
+	}
+	return false
 }
 
 // scopeBaselines runs one empty-tree gate per scope group the sweep grades, and
@@ -558,7 +575,7 @@ func runFixture(root string, fixture selected, baselineOutput, gate string, env 
 	fx := fixture.dir
 	name := filepath.Base(fx)
 	expectPath := filepath.Join(fx, expectFileName)
-	filesDir := filepath.Join(fx, "files")
+	filesDir := filepath.Join(fx, filesDirName)
 
 	expBytes, err := os.ReadFile(expectPath)
 	if err != nil {
@@ -626,7 +643,7 @@ func fixtures(dir string) ([]selected, error) {
 			}
 			continue
 		}
-		if FixturePhase(name) == contractPhase {
+		if FixturePhase(name) == PhaseContract {
 			if err := addContractFixtures(familyDir, name, "", addFixture); err != nil {
 				return nil, err
 			}
@@ -668,6 +685,13 @@ func addContractFixtures(dir, family, pkg string, addFixture func(selected) erro
 		}
 		child := filepath.Join(dir, ent.Name())
 		if holdsExpect(child) {
+			leaf, err := fixtureLeaf(child)
+			if err != nil {
+				return err
+			}
+			if !leaf {
+				return fmt.Errorf("canary directory '%s' holds an %s and further directories; a fixture is a leaf carrying only %s/, so every fixture below this %s goes unswept", path.Join(family, pkg, ent.Name()), expectFileName, filesDirName, expectFileName)
+			}
 			if err := addFixture(selected{dir: child, family: family, pkg: pkg}); err != nil {
 				return err
 			}
@@ -678,6 +702,23 @@ func addContractFixtures(dir, family, pkg string, addFixture func(selected) erro
 		}
 	}
 	return nil
+}
+
+// fixtureLeaf reports whether dir carries nothing but its files/ tree and its own marker
+// files. The walk stops at the first EXPECT it finds, so a package directory that also
+// holds one takes the place of every fixture beneath it — a harness that grades those
+// fixtures no longer, and says nothing about it.
+func fixtureLeaf(dir string) (bool, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return false, err
+	}
+	for _, ent := range entries {
+		if ent.IsDir() && ent.Name() != filesDirName {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 func trimExpectation(data []byte) string {
