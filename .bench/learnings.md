@@ -35,3 +35,24 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
   ("commit the artifact, then repair"), since the current wording puts the
   tracked-at-birth requirement in a subordinate clause at the end of a long
   paragraph and it reads as advisory.
+
+## 2026-07-27 — the write-delegate requirement met a harness-level prohibition  [open]
+
+- **What happened:** `/bench-implement-spec`'s "Route the venue" says every
+  spec-backed run assigns genuine write work to at least one write subagent before
+  the first implementation edit, with no inline threshold of its own. This session
+  carries a standing harness instruction forbidding the Agent tool unless the user
+  asks for it. The two rules point opposite ways and neither yields to the other, so
+  I edited the spec inline and flagged it rather than spawning a delegate against an
+  explicit prohibition. The change was four prose edits to an already-implemented
+  spec's stories and coverage rows — no code, no seams.
+- **Right behavior:** unclear, which is why this is here. The route I took keeps the
+  harness instruction (which the reviewer set for this session) above a phase rule,
+  and it matches the phase's own lighter-path posture for a few-line change — but
+  the phase makes no exception for either, so I took an unsanctioned one.
+- **Proposed rule change:** give "Route the venue" a stated precedence clause — when
+  the harness cannot or may not spawn a write subagent, name the fallback rather than
+  leaving the phase unsatisfiable. `craft-delegate`'s capability-aware policy covers
+  *cannot*; it does not cover *may not*. A second candidate: exempt a spec-doc-only
+  correction (no code, no seams) from the write-delegate requirement outright, since
+  routing prose edits through a worktree-isolated delegate costs more than it catches.
