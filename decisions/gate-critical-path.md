@@ -114,78 +114,119 @@ Blocked by: #6
 Type: Grill
 
 ### Answer
-Resolved 2026-07-28 (reviewer): the nesting premise is formally narrowed —
-a behavior-owned fixture's bite is proven at its owning contract test, not by
-a nested gate. The sweep stops spawning nested gates for this family; the
-owning package's test binary runs once per package group with each fixture
-root as a subtest (same test code, same `BENCH_CONTRACT_ROOT` seam, one
-process instead of a process tree). Bite and vacuity semantics unchanged:
-EXPECT observed as a real failure per fixture, EXPECT absent on the unmutated
-baseline under the same run shape. The gate-level plumbing (red test → red
-phase → red gate) is asserted once by the gate's own phase tests, not 34
-times. Stage 1's subfamily binding is stage 2's input — nothing is throwaway.
-The migration must verify per fixture that every EXPECT is observable in
-test-level output rather than gate-level framing (the slice-C migration
-casualty class). Expected canary → ~20–40 s; the inner-width pin becomes
-moot for this family. Transport details (env contract for the fixture list,
-baseline invocation shape) are spec-time within this decided shape.
+Resolved 2026-07-28 (reviewer), refined same-day after stage 1 landed. The
+nesting premise is formally narrowed: a behavior-owned fixture's bite is
+proven at its owning contract test, not by a nested gate. The sweep stops
+spawning nested gates for this family.
+
+**Run shape.** `go test -c` compiles the owning contract package once per
+package group; that binary is then invoked once per fixture root with
+`BENCH_CONTRACT_ROOT` set. The originally-worded "each fixture root as a
+subtest in one process" is not buildable — `SubjectRoot` reads the env per
+call, and Go cannot re-enter a package's `Test*` functions as parameterized
+subtests without a per-package registry, which would duplicate the package's
+own test list and collide with the `t.Parallel` those tests already call.
+Compile-once delivers the same intent: no nested gate, no process tree, no
+inner-width throttle, compile paid once per group, and each fixture keeps the
+clean process the root swap needs anyway.
+
+**Ownership.** The canary sweep still invokes these runs and still owns bite,
+did-not-bite, and the vacuity baseline, so `bench canary .` stays
+standalone-provable and vacuity stays a canary concept. Bite and vacuity
+semantics unchanged: EXPECT observed as a real failure per fixture, EXPECT
+absent on the unmutated baseline under the same run shape. The gate-level
+plumbing (red test → red phase → red gate) is asserted once by the gate's own
+phase tests, not 33 times. Stage 1's subfamily binding is stage 2's input —
+nothing is throwaway, and the inner-width pin becomes moot for this family.
+
+**Migration casualties.** Every EXPECT must be observable in test-level output
+rather than gate-level framing (the slice-C casualty class). One that is not is
+an ordinary did-not-bite red, fixed by making the owning test's own failure
+message carry the fact — no hybrid family, no fallback to nesting.
+
+**Stage 1's inner-mode narrowing is removed by stage 2.** Contract scope is
+behavior-owned-only, so once no such fixture spawns an inner gate,
+`narrowContractScope` and the package env's inner-gate plumbing have no caller;
+they go, with their now-unreachable tests. The subfamily directory binding
+stays — stage 2 reads it.
+
+**Acceptance.** No wall-clock threshold on this slice; ship evidence is a
+recorded before/after in `assets/gate-critical-path-timeline.md`. #5's ≤60 s
+gate rule stays the only hard bar and is judged after the artifact hoist.
+Stage 1 showed a per-slice threshold did not change the decision, and
+degenerate migration is caught by bite and vacuity semantics, not by a clock.
+The artifact multiplier stage 1 exposed — five `surface/artifact` fixtures each
+paying the artifact suite — is not stage 2's to solve; it belongs to the
+prepared-artifact hoist (#2/#3), which stays the next slice.
+
+Remaining spec-time detail: where the compiled test binaries live, and their
+cleanup.
 
 ## Handoff
 
-Written 2026-07-28 for the two canary slices (#6, #7), same-session with the
-reviewer's rulings; #2/#3 stay open and gate only the artifact-hoist slice.
+Rewritten 2026-07-28 for stage 2 (#7) after stage 1 shipped and was measured;
+#2/#3 stay open and gate only the artifact-hoist slice.
 
-1. **Module boundaries.** `internal/canary` owns the fixture walk extension
-   (package subpaths under `behavior-owned`, fixture = directory holding
-   EXPECT), contract scope resolution, per-package vacuity baseline groups,
-   and the per-fixture inner env. `internal/gate` owns the inner-mode
-   contract-phase argv narrowing and the outer-mode scrub of the new env.
-   Stage 2 adds the fixture-parameterized bite mode to the owning
-   `internal/contract` packages. `tests/canary/behavior-owned/<package
-   path>/<fixture>/` is the binding — data, no second file.
-   `internal/bounds` untouched.
-2. **Contracts.** One new env var carrying the bound package path relative to
-   `internal/contract` (scrub-then-set everywhere; exact name is spec-time).
-   Absent → today's full `./internal/contract/...` argv, so adopting repos
-   and non-contract fixtures are untouched. Set to a package the kit tree
-   lacks → red naming it. A behavior-owned fixture directly under the family
-   (no package dir) → red, missing binding. EXPECT, bite, did-not-bite, and
-   vacuity semantics unchanged; gate exit codes unchanged.
-3. **Deep vs thin.** The sweep (walk, scope resolution, baseline grouping)
-   stays the deep unit behind the injected `Runner` seam; `scopedEnv`-style
-   plumbing and the subfamily convention are thin.
-4. **Black-box assertables.** Via a fake `Runner`: each behavior-owned
-   fixture's `RunCall.Env` carries phase=contract plus its package env;
-   baseline run count equals the scope groups present; unbound fixture and
-   unknown package each produce their red. Via the gate's phase-table tests:
-   inner-mode argv narrows to the one package; outer mode strips an ambient
-   export of the env.
-5. **Gate attachment.** The canary sweep itself enforces bite and vacuity
-   per fixture; the kit's own suites run in the gate's test and
-   conformance-suite phases. The wall-clock outcome is not gate-assertable —
-   ship evidence is the post-change measurement against
-   `assets/gate-critical-path-timeline.md`.
-6. **Hostile-input owners.** Garbage package values (traversal, absolute,
-   empty) → the scope resolver / phase-table reader, red. Ambient export of
-   the new env → `innerEnv` strip list plus the outer-mode scrub. Empty or
-   missing binding directory → the walk, red (empty-CHECK precedent).
-7. **Uncertainty flags.** None blocking stage 1. Stage 2's transport (fixture
-   list env, baseline invocation) is spec-time within #7's decided shape.
-8. **Rejected alternatives.** Per-fixture binding file; registry
-   fixture→package table; test-level `-run` binding at stage 1; keeping
-   full-suite nesting; any silent fallback for a kit-owned unbound fixture.
-9. **Domain watch-outs.** Go's exec env has no duplicate-key precedence —
-   every inner pin strips-then-sets. Fixture base names are globally unique
-   across all families; subfamily moves must not collide them. The empty-tree
-   vacuity baseline runs whatever phases its env selects, so a scoped group's
-   baseline must carry exactly its fixtures' phase+package env or the
-   scoped-vs-scoped comparison silently breaks. The walk today treats any
-   directory under a family as a fixture; EXPECT presence is the only safe
-   discriminator once package segments nest.
+1. **Module boundaries.** `internal/canary` owns the whole stage-2 change:
+   the behavior-owned family's run mode becomes compile-then-invoke instead of
+   nested-gate spawn, keeping the existing walk, the subfamily package binding,
+   and per-package vacuity baseline grouping. `internal/gate` **loses** the
+   inner-mode contract-phase argv narrowing and its env plumbing, which stage 2
+   deletes. The `internal/contract` packages are untouched except where an
+   EXPECT proves unobservable in test-level output, where the fix is that
+   owning test's failure message. `tests/canary/behavior-owned/<package
+   path>/<fixture>/` stays the binding — data, no second file. `internal/bounds`
+   untouched.
+2. **Contracts.** Per package group: one `go test -c` producing a binary, then
+   one invocation of that binary per fixture root with `BENCH_CONTRACT_ROOT`
+   set to the mutated tree, plus one baseline invocation on the unmutated tree.
+   A compile failure for a group is a red naming the package, never a skipped
+   group. EXPECT, bite, did-not-bite, and vacuity semantics unchanged; canary
+   and gate exit codes unchanged. The contract-package env disappears as an
+   external contract along with the inner-gate narrowing.
+3. **Deep vs thin.** The sweep (walk, group resolution, compile, per-fixture
+   invocation, baseline grouping) stays the deep unit behind the injected
+   `Runner` seam. The compile step and per-root env are thin plumbing inside it.
+4. **Black-box assertables.** Via a fake `Runner`: one compile call per package
+   group present; one invocation per fixture carrying that group's binary and
+   its own `BENCH_CONTRACT_ROOT`; no call carrying the canary inner-gate mode
+   for this family; baseline invocation count equals the group count; a failed
+   compile surfaces as that group's red. Via the gate's phase-table tests: the
+   contract phase's argv is the unnarrowed subtree in every mode, and an ambient
+   export of the retired env changes nothing.
+5. **Gate attachment.** The canary sweep still enforces bite and vacuity per
+   fixture; the kit's own suites run in the gate's test and conformance-suite
+   phases. The red-test → red-phase → red-gate path is asserted once by the
+   gate's own phase tests. The wall-clock outcome is not gate-assertable — ship
+   evidence is the post-change measurement recorded in
+   `assets/gate-critical-path-timeline.md`, with no threshold gating the slice.
+6. **Hostile-input owners.** Missing or empty subfamily binding directory → the
+   walk, red (empty-CHECK precedent). A bound package the kit tree lacks → the
+   group resolver at compile time, red naming it. Ambient export of the retired
+   contract-package env → inert, asserted by the phase-table test. A fixture
+   root that fails to materialize → the sweep, red, never a silent skip.
+7. **Uncertainty flags.** None blocking stage 2. Compiled-binary location and
+   cleanup are spec-time within the decided shape.
+8. **Rejected alternatives.** Per-package registry of parameterized subtests
+   (duplicates the test list, forces `t.Setenv`, kills `t.Parallel`); plain
+   `go test -run` per fixture with no pre-compile (re-pays link per fixture);
+   folding the bites into the contract phase and dropping the family from
+   canary; a hybrid family keeping nesting for gate-framed EXPECTs; keeping the
+   now-callerless inner-mode narrowing; a wall-clock threshold gating the slice;
+   resequencing the artifact hoist ahead of stage 2.
+9. **Domain watch-outs.** `SubjectRoot` reads `BENCH_CONTRACT_ROOT` per call, so
+   one process cannot serve two roots — the per-fixture process is load-bearing,
+   not incidental. Go's exec env has no duplicate-key precedence: every pin
+   strips-then-sets. The vacuity baseline must run the identical shape as its
+   group's fixtures or the scoped-vs-scoped comparison silently breaks. Fixture
+   base names are globally unique across all families. The five
+   `surface/artifact` fixtures each pay a full artifact suite; that multiplier
+   survives stage 2 by design and is the hoist's target.
 
-Dependency order: stage 1 (#6, package-scoped nesting) → stage 2 (#7,
-in-process bites) → artifact hoist (pends #2/#3) → re-measure against the
-≤60 s stop rule; oracle-semantics tickets only if the re-measure stays above.
+Dependency order: stage 1 (#6, package-scoped nesting) — **shipped** → stage 2
+(#7, compile-once bites) → artifact hoist (pends #2/#3) → re-measure against
+the ≤60 s stop rule; oracle-semantics tickets only if the re-measure stays
+above.
 
 ## Not yet specified
 
