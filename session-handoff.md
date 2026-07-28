@@ -54,11 +54,13 @@ spec-status and handoff commits landed after it, both doc-only
 and one open learning, and it is the only path either takes into the roadmap. It
 also owns the roadmap row for the merged FT91 work.
 
-`ft91-artifact-build-tiering` is merged and retirable, but its decision map
-`decisions/cost-follows-project-size.md` is **not** fully shipped — ticket #6 is
+`ft91-artifact-build-tiering` is merged and retirable, and its retirement is
+deliberately deferred to that drain (reviewer, 2026-07-27) so the whole backlog
+gets judged in one reviewed batch diff. When it runs: **keep** the decision map
+`decisions/cost-follows-project-size.md`. It is not fully shipped — ticket #6 is
 still open and `## Not yet specified` still parks `-count=1` freshness semantics
-as a reviewer-led oracle decision. So retirement here keeps the map rather than
-deleting it, which is why it has not been run unasked.
+as a reviewer-led oracle decision — so the usual "delete the shipped map" half of
+retirement does not apply here.
 
 ## Shape
 
