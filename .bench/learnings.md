@@ -16,3 +16,19 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
 - **What happened:** …
 - **Right behavior:** …
 - **Proposed rule change:** … (or "none")
+
+## 2026-07-28 — decision maps should cite the sources they were researched from  [open]
+
+- **What happened:** The closed `decisions/slice-unit.md` map carried claims
+  from six read sources (the vendored to-tickets family, two tree files) with
+  no pointers, until the reviewer asked for them — a fresh session picking up
+  the map would have re-derived which files hold the evidence.
+- **Right behavior:** A map's Handoff cites the primary sources each decision
+  rests on, with one clause of what each fed, so pickup is one hop; paths
+  flagged as drift-prone rather than trusted.
+- **Proposed rule change:** Add a `## Sources` section to the
+  `/bench-shape-idea` map template — read sources with what-each-fed, required
+  when any ticket's answer rests on files outside the map. Consistent with the
+  staged warrant rule (spec story 15): the map is where external-source claims
+  become reviewer decisions, so the warrant belongs on the artifact, not only
+  in conversation.
