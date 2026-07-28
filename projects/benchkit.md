@@ -359,3 +359,8 @@ is in `craft-line`). Tier moves still get declared — no silent escalation.
 - Never stop a gate by killing only its shell wrapper. Signal `gate-run`, which
   owns teardown of the gate script's process group, so canary and nested
   `gate-phases` children cannot outlive the run.
+- `.claude/commands` is a git-tracked symlink to `../.agents/commands` in this
+  repo, not a copied tree. Edit `.agents/commands/` only; there is no mirror to
+  update and no content drift for a check to guard. Two FT152 artifacts assumed
+  a copy and specified mirror work that did not exist, so state this before
+  planning any command-file change.
