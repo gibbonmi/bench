@@ -190,9 +190,7 @@ built. This is the counterweight to the fix-don't-park route, whose
 park-versus-fix test is `.bench/BENCH.md`'s Workflow section's: a defect in
 the run's own path is fixed in-run; everything wider is recorded.
 
-**Phase boundaries persist.** At every phase boundary the run writes the phase
-reached into `session-handoff.md`'s State section, then refreshes the pin
-block with `bench handoff --next <command>`. The phase reached is the one fact
+**Phase boundaries persist.** The phase reached is the one fact
 this mode adds; every other field is the existing handoff contract's. A
 re-invoked `--full` resumes from the phase the handoff names instead of
 re-implementing from the top, and where the handoff and the tree disagree the

@@ -163,9 +163,7 @@ The run carries the named spec from build to push-ready by orchestrating the
 standalone phases; their contracts stay theirs:
 
 - **Implement inline**, under everything above this section.
-- **Review in a delegate:** spawn one fresh-context delegate charged with the
-  standalone `/bench-review-implementation` contract and given the spec and
-  the diff and nothing else. Inline self-review is closed, not deprioritized —
+- **Review in a delegate:** Inline self-review is closed, not deprioritized —
   the context that produced the code carries the assumptions that produced its
   bugs — and a context-inheriting delegate is the same failure wearing a
   delegate's name. Verify the delegate's done-claim against the gate and

@@ -9,6 +9,11 @@ import (
 const (
 	structuredPhaseDeclaration = "- **Structured Bench phase conversation:**"
 	structuredPhaseUnavailable = ".bench/BENCH.md cannot verify the structured Bench phase contract because shared rules are missing or empty"
+	// Shared by checkSharedRuleSingleSource's marker list and the section-scoped
+	// placement anchors, so one string pins each rule's presence, non-duplication,
+	// and placement.
+	fixDontParkMarker   = "lands in the active workflow as its own commit"
+	sourceWarrantMarker = "names what you read and what you did not"
 )
 
 func checkWorkflowAnchors(root string) []string {
@@ -142,6 +147,34 @@ func checkWorkflowAnchors(root string) []string {
 			diags = append(diags, diag)
 		}
 	}
+	// requireCollapsedInSection is the placement half of a section-owned anchor:
+	// whole-file requireCollapsed neither strips comments nor sees headings, so a
+	// sentence commented out or pasted into the wrong section would satisfy it.
+	requireCollapsedInSection := func(rel, section, needle, diag string) {
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		if !exists(path) {
+			diags = append(diags, "acceptance coverage anchor file missing: "+rel)
+			return
+		}
+		body := markdownH2Section(stripHTMLComments(readIfExists(path)), section)
+		if body == "" {
+			diags = append(diags, fmt.Sprintf("%s is missing the %q section that owns a scoped anchor", rel, section))
+			return
+		}
+		if !strings.Contains(collapseSpace(body), needle) {
+			diags = append(diags, diag)
+		}
+	}
+	// forbidInSection is the must-not half of a section-owned anchor pair: the
+	// contradiction is banned from the section that owns the fact, comments
+	// stripped, so a contradicting sentence cannot sit beside the fact it undoes.
+	forbidInSection := func(rel, section, needle, diag string) {
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		body := markdownH2Section(stripHTMLComments(readIfExists(path)), section)
+		if strings.Contains(collapseSpace(body), needle) {
+			diags = append(diags, diag)
+		}
+	}
 	diags = append(diags, checkStructuredPhaseContract(readIfExists(filepath.Join(root, ".bench", "BENCH.md")))...)
 
 	requireCollapsed(".agents/commands/bench-implement-spec.md", "apply `craft-seams`' split-or-grant rule",
@@ -258,12 +291,105 @@ func checkWorkflowAnchors(root string) []string {
 		".bench/BENCH.md Capture section does not name IDEAS.md as the capture sink")
 	requireCollapsed(".bench/BENCH.md", "append the dated line (`- YYYY-MM-DD <text>`) to `IDEAS.md`",
 		".bench/BENCH.md Capture section lost the no-PATH fallback append to IDEAS.md")
+
+	// Shared-rule placement — checkSharedRuleSingleSource's marker list owns each
+	// sentence's presence and non-duplication; these anchors add only placement,
+	// pinning the rule inside the section that owns it.
+	requireCollapsedInSection(".bench/BENCH.md", "Workflow", fixDontParkMarker,
+		".bench/BENCH.md Workflow section dropped the fix-don't-park rule; a mid-work defect fix belongs in the active workflow, not the backlog")
+	requireCollapsedInSection(".bench/BENCH.md", "How to talk to me", sourceWarrantMarker,
+		".bench/BENCH.md How to talk to me section dropped the outside-source warrant rule; a claim resting on a source outside the tree names what was and was not read")
+	forbid(".bench/BENCH.md", "thorough",
+		".bench/BENCH.md phrases the outside-source warrant rule as thoroughness; the rule asks for disclosure of what went unread, which the reviewer can check — thoroughness nobody can")
 	requireCollapsed(".agents/commands/bench-write-spec.md", "promote-then-delete commit removes the spec's `ROADMAP.md` row",
 		".agents/commands/bench-write-spec.md does not remove the spec's ROADMAP.md row in the promote-then-delete commit (row presence is status)")
 	requireCollapsed(".agents/commands/bench-shape-idea.md", "never pause for permission or a re-prompt",
 		".agents/commands/bench-shape-idea.md dropped the resume-mode grill continuation rule; a running grill carries into newly-unblocked tickets without pausing for a re-prompt")
 	requireCollapsed(".agents/commands/bench-review-implementation.md", "Integrate the findings accepted for this round, run focused checks for the changed behavior, then run one final gate and stop. Open another semantic review round only when that gate fails or the reviewer requests one.",
 		".agents/commands/bench-review-implementation.md dropped the terminal repair-pass bound")
+
+	// Verify hooks — the Roles verify rule's point-of-use pointers, one per phase
+	// command. Whole-file anchors by design: the three files hang their hooks on
+	// three different structures, so the gate proves presence and the review axis
+	// grades placement.
+	requireCollapsed(".agents/commands/bench-shape-idea.md",
+		"Before asking me about a fact, look it up in the tree",
+		".agents/commands/bench-shape-idea.md dropped the look-it-up-before-asking hook; the shaping grill spends reviewer answers on decisions, and looks facts up in the tree")
+	requireCollapsed(".agents/commands/bench-implement-spec.md",
+		"Verify a claim against the tree as it stands, not against memory; a claim over a whole set is verified by enumerating the set, never by extending one measured member.",
+		".agents/commands/bench-implement-spec.md dropped the verify-against-the-tree hook; the build verifies claims against the tree, not memory, and a set claim by enumerating the set")
+	requireCollapsed(".agents/commands/bench-review-implementation.md",
+		"A finding cites what its axis read now, not what it recalls; the bar for a universal claim — cite the enumeration or name itself a sample — is that citation standard's.",
+		".agents/commands/bench-review-implementation.md dropped the cite-what-you-read hook; a review finding cites what its axis read now, and a universal claim answers to craft-review's citation standard")
+
+	// --full — the orchestrated-run contract lives in one bounded section of
+	// bench-implement-spec.md and nowhere else. Every anchor is scoped to that
+	// section so it means placement, not mere presence, and each fact with a
+	// cheap contradicting reading is a require/forbid pair.
+	const fullRunFile = ".agents/commands/bench-implement-spec.md"
+	const fullRunSection = "The `--full` run"
+	fullRunRequires := []struct{ needle, diag string }{
+		{"`--full` is an opt-in flag: plain `/bench-implement-spec` keeps today's implement-only semantics",
+			"dropped the opt-in entry contract; plain invocation keeps implement-only semantics"},
+		{"`/bench-review-implementation`, `/bench-final-check`, and `/bench-debug` stay standalone commands for strict phased use and mid-run resumption",
+			"dropped the standalone-phases guarantee for strict phased use and mid-run resumption"},
+		{"`--full` invoked with no spec argument, or with one naming a path that does not exist, refuses at the entry contract and says which of the two it was",
+			"dropped the missing-or-unknown-spec refusal; a full run never builds a guessed target"},
+		{"spawn one fresh-context delegate charged with the standalone `/bench-review-implementation` contract and given the spec and the diff and nothing else",
+			"dropped the fresh-context review delegate and its spec-and-diff-only inputs"},
+		{"Inline self-review is closed, not deprioritized — the context that produced the code carries the assumptions that produced its bugs — and a context-inheriting delegate is the same failure wearing a delegate's name",
+			"dropped the closure of inline self-review and context inheritance"},
+		{"Verify the delegate's done-claim against the gate and `git status` before acting on it",
+			"dropped the done-claim verification pointer to invariant 1 and craft-delegate"},
+		{"When the review delegate cannot run or returns nothing, the run stops and reports at that boundary rather than proceeding to final-check with review unrun",
+			"dropped the stop-at-the-boundary rule for an unavailable or empty-handed review delegate"},
+		{"Concrete defects — bugs, spec misses, missing coverage — are fixed and re-gated without stopping; contestable design and judgment findings are flagged in the exit report for reviewer veto, not applied",
+			"dropped a finding-disposition half (fix-and-re-gate concrete, or flag-don't-apply judgment)"},
+		{"bounded by `/bench-review-implementation`'s terminal repair-pass rule and routed through `craft-delegate`'s repair allowance",
+			"dropped the repair-bound pointers; this mode adds no second version of either rule"},
+		{"At every phase boundary the run writes the phase reached into `session-handoff.md`'s State section, then refreshes the pin block with `bench handoff --next <command>`",
+			"dropped the phase-boundary State write and pin-block refresh"},
+		{"A re-invoked `--full` resumes from the phase the handoff names instead of re-implementing from the top, and where the handoff and the tree disagree the tree wins",
+			"dropped the resume-don't-restart rule for a re-invoked run"},
+		{"pause and ask the reviewer as a structured decision list with a recommendation for this run, offering three routes: continue at the mid binding; escalate to the top binding in this harness; escalate to the top binding via the Codex CLI",
+			"dropped the pause-and-ask escalation menu with its three fixed routes"},
+		{"a route is omitted only when this harness cannot invoke it at all, and the omission is stated rather than silent",
+			"dropped the stated-omission rule for an uninvokable escalation route"},
+		{"Never escalate without asking. A harness with no structured-prompt surface asks the same question as a plain numbered list",
+			"dropped the never-escalate-without-asking rule and its numbered-list fallback"},
+		{"The run implements the spec's stories and nothing else: work noticed outside them — an adjacent refactor, an unrelated improvement, a story the spec chose not to take — is recorded for the reviewer rather than built",
+			"dropped the scope fence; out-of-story work is recorded, never built"},
+		{"one disposition per row of the spec's acceptance coverage map — implemented, deferred, or won't-handle — named row by row against `bench coverage <spec>`'s enumeration",
+			"dropped the per-row coverage accounting against bench coverage's enumeration"},
+		{"When the spec carries no coverage map, the report says so and accounts for the user stories instead",
+			"dropped the no-coverage-map fallback to user-story accounting"},
+		{"Every phase claim in the exit report cites the record that proves it: the review delegate's invocation, the commit shas the phase landed, the `session-handoff.md` boundary rewrite",
+			"dropped the record-citation rule for phase claims in the exit report"},
+		{"ask a second, separate question: whether to add a cross-harness falsification pass over the diff before final-check — the Codex CLI at the top binding, charged to refute the claim that the spec was implemented rather than to grade it against the three axes",
+			"dropped the falsification-pass offer with its refutation charge"},
+		{"its own question, not a fourth route in the escalation menu, and it never runs standing: absent the trigger it is not offered",
+			"dropped the falsification pass's separate-question and never-standing bounds"},
+	}
+	for _, a := range fullRunRequires {
+		requireCollapsedInSection(fullRunFile, fullRunSection, a.needle,
+			fullRunFile+" `--full` section "+a.diag)
+	}
+	fullRunForbids := []struct{ needle, diag string }{
+		{"by default", "phrases `--full` as default-on; the mode is opt-in and plain invocation keeps implement-only semantics"},
+		{"infers the spec", "reintroduces a spec-inferring fallback; a missing or unknown spec argument refuses and says which"},
+		{"review the diff inline", "reintroduces the inline self-review fallback; the review runs in one fresh-context delegate"},
+		{"stops on a concrete defect", "stops the run on a concrete defect; concrete defects are fixed and re-gated in-run"},
+		{"applies a judgment finding", "applies a judgment finding; design and judgment findings are flagged for reviewer veto"},
+		{"obviously needed", "reintroduces escalate-if-obviously-needed; escalation always pauses and asks the reviewer"},
+		{"while the file is open", "licenses opportunistic improvement while the file is open; the scope fence records it instead"},
+		{"fully implemented", "reports completion in aggregate; the exit report gives one disposition per coverage-map row"},
+		{"without its record", "reports a phase complete without its record; every phase claim cites the record that proves it"},
+		{"on every run", "makes the falsification pass standing; it is offered only on the size trigger"},
+	}
+	for _, a := range fullRunForbids {
+		forbidInSection(fullRunFile, fullRunSection, a.needle,
+			fullRunFile+" `--full` section "+a.diag)
+	}
 
 	shapeIdeaPath := filepath.Join(root, ".agents", "commands", "bench-shape-idea.md")
 	shapeIdeaActive := collapseSpace(stripHTMLComments(readIfExists(shapeIdeaPath)))

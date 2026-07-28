@@ -142,6 +142,9 @@ code, the journal — those stay as full as their templates need).
   what the reviewer can invoke *here*: the slash command in Claude Code, the
   `$bench-*` skill in Codex, the `.agents/commands/<name>.md` file elsewhere.
   Pointing at a surface this harness lacks sends them to a dead key.
+- A claim resting on a source outside the tree — a reference repo, a vendored
+  kit, an upstream doc — names what you read and what you did not, so the
+  claim's warrant travels with the claim.
 - Format for scan: tables and lists make things easy to parse — use them. Short
   lines, bold sparingly. Routine declarations (the line, the seams, a deferred cut)
   are one line each.
@@ -185,6 +188,12 @@ from the workflow is my call, not yours. A reviewer-requested fix for concrete
 review findings may use a direct fix-and-gate path; run focused regression
 checks for behavior defects, then the gate. If I give you a standing rule for
 changes of a given size, follow it and stop asking.
+
+**Fix, don't park.** A small defect you discover mid-work is not backlog: the
+fix lands in the active workflow as its own commit. Parking it to `IDEAS.md`
+or `.bench/learnings.md` is reserved for a fix that needs a reviewer decision,
+a new seam, or spec-level design — the boundary is a decision test, not a
+size guess.
 
 **A batch approval covers per-spec sign-offs when I'm unreachable.** If I've
 approved a batch plan ("roll the roadmap") and go AFK mid-run, build on rather

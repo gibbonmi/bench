@@ -198,11 +198,7 @@ re-invoked `--full` resumes from the phase the handoff names instead of
 re-implementing from the top, and where the handoff and the tree disagree the
 tree wins.
 
-**Escalation asks first.** When the diff is large enough that the mid binding
-could miss important bugs, pause and ask the reviewer as a structured decision
-list with a recommendation for this run, offering three routes: continue at
-the mid binding; escalate to the top binding in this harness; escalate to the
-top binding via the Codex CLI. Those three are the fixed menu — a route is
+**Escalation asks first.** Those three are the fixed menu — a route is
 omitted only when this harness cannot invoke it at all, and the omission is
 stated rather than silent. Never escalate without asking. A harness with no
 structured-prompt surface asks the same question as a plain numbered list.

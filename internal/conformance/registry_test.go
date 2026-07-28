@@ -103,6 +103,10 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"write-spec-reviewer-closed-comment-spoof":     conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"write-spec-open-fork-fallback":                conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"shape-idea-write-spec-entry-contract-pointer": conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"shape-idea-verify-hook-anchor":                conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"full-run-review-delegate-anchor":              conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"full-run-handoff-persistence-anchor":          conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"full-run-escalation-menu-anchor":              conformanceFixture(".bench/gate-docs-contracts.sh"),
 
 	"undocumented-passlist-var": conformanceFixture(".bench/gate.sh"),
 

@@ -122,6 +122,10 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 		"write-spec-open-fork-fallback",
 		"shape-idea-write-spec-entry-contract-pointer",
 		"line-anchor-missing",
+		"shape-idea-verify-hook-anchor",
+		"full-run-review-delegate-anchor",
+		"full-run-handoff-persistence-anchor",
+		"full-run-escalation-menu-anchor",
 	}
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {
