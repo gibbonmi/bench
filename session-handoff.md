@@ -2,61 +2,56 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `0dd9c83`, clean tree, 6 unpushed commits
-Spec: `specs/ft91-artifact-build-tiering.md` (Status: staged)
-Gate: green at `85e757e` — stale, work tree `fa03401`
+Branch: `main` — clean tree, 11 unpushed commits
+Spec: `specs/ft91-artifact-build-tiering.md` (Status: implemented)
+Gate: green
 
 ## State
 
-- **`specs/ft91-artifact-build-tiering.md` is staged and reviewer-approved.**
-  Ten stories, three seams, sixteen coverage rows, `bench coverage --check`
-  green. Nothing of it is built yet. Six commits are unpushed; the reviewer owns
-  the push.
-- **It re-tiers release-build hermeticity out of the dev gate.**
-  `scripts/build-artifacts.sh` gains one posture switch whose *absence* is
-  hermetic — that polarity is the whole safety argument, and inverting it would
-  let a release build inherit dev posture silently. Under the opt-in the script
-  honors ambient Go caches and skips the reproducibility second build; the
-  two-build proof stays on the ship tier, where `release-evidence-probe`
-  (`Tier: Ship`) already validates it.
-- **Four decisions in the spec are the author's, not the map's, and are flagged
-  in it for veto:** the token name `BENCH_SHARED_BUILD_CACHE=1`, using the
-  `internal/preprelease` unit seam instead of the conformance check the Handoff
-  named, *deleting* a stale `reproducibility.json` (the spec's only destructive
-  file operation), and setting the opt-in in `TestMain` per package.
-- **A top-tier falsification pass returned BLOCK on the first draft and every
-  finding verified against the tree.** The revision replaced three coverage rows
-  whose red signal could not fire, a citation that matched no test and exited 0,
-  and a rollback injection that fired before the block it claimed to test. The
-  `GOPROXY=off` lever is now the discriminator for four separate failures. Do not
-  re-loosen those rows.
-- **Measured baselines, for judging whether the build worked:** artifact suite
-  133.5 s and surface suite 115.5 s before; a cold-cache build is 4.79 s against
-  0.20 s warm. The artifact suite fell to 73.2 s with a shared cache in a
-  throwaway probe.
-- **The ~73 s residual is already diagnosed and parked in `IDEAS.md`** — it is
-  invocation count, not packing cost. Out of scope for this spec by reviewer
-  decision, because which tests may share an artifact set is a test-isolation
-  call.
-- **Delegates are authorized for this build** (reviewer, 2026-07-27). That
-  clears `/bench-implement-spec`'s write-subagent requirement, which would
-  otherwise collide with the standing instruction forbidding the Agent tool
-  unless the reviewer asks. The grant is scoped to this build, not standing.
-  Route write delegates through isolated worktrees per `craft-delegate`, and
-  treat each done-claim as a claim until the gate and `git status` confirm it.
-  The underlying rule conflict is unchanged and stays queued as FT107's eighth
-  clause — the reviewer resolved this instance, not the kit's silence.
-- **`ft91-gate-phase-split` stays unretired on purpose,** so `bench status` keeps
-  reporting one spec awaiting retirement and one roadmap row for merged work
-  until the reviewer rules on its stories 4, 5, and 9.
+- **FT91 artifact build tiering is built, gate-green, and unpushed.** All ten
+  stories landed across three commits: the build, a review fix pass closing
+  findings on all three axes, and the status flip. Nothing was parked. The
+  reviewer owns the push.
+- **What it does.** `scripts/build-artifacts.sh` gained
+  `BENCH_SHARED_BUILD_CACHE`, matched exactly against `1` so every other value —
+  absent, empty, `yes`, `" 1"` — resolves hermetic. Under the opt-in it honors
+  the ambient Go build and module caches (resolved before the `HOME` override,
+  which is the whole correctness of that story), skips the reproducibility
+  second build, and removes a stale `reproducibility.json` as part of the same
+  atomic promotion, restoring it if the promotion fails. The two dev contract
+  packages set the opt-in in `TestMain`. Byte-reproducibility across independent
+  builds stays a ship-tier claim.
+- **Measured effect, solo runs against the spec's recorded baselines:** the
+  artifact suite 133.5 s → 106 s, the surface suite 115.5 s → 12 s. That is
+  249 s → 118 s, and it already absorbs ~50 s of new hermetic-posture tests the
+  spec's polarity rows require.
+- **The gate wall-clock did not drop by that much — 4m51s → 4m27s — and nobody
+  has diagnosed why.** Under gate parallelism the artifact suite inflates to
+  ~152 s, so the contract phase is no longer clearly the critical path. The
+  spec's motive was gate time, so this gap is worth a look before anyone calls
+  FT91 done on its own terms. The remaining artifact-suite lever is already
+  diagnosed and parked in `IDEAS.md`: the residual is invocation count, not
+  per-invocation cost.
+- **Four post-approval spec corrections await veto.** The semantic review found
+  four statements in the spec that were factually wrong about the code — story
+  4's rollback row described a seam that parks above the promotion backups,
+  story 9 over-stated a deletion, and two edge-inventory exclusions rested on
+  reasons the opt-in invalidated. Each is marked `**Post-approval correction,
+  flagged:**` in the spec. The code is right in all four cases; only the prose
+  changed. Whether that edit was mine to make is the open question captured in
+  `.bench/learnings.md`.
+- **One open learning, unverdicted:** whether a review's Spec-axis finding may
+  correct an approved spec in place, or must stop for sign-off. It proposes two
+  candidate rules and asks the reviewer to pick.
+- **`ft91-gate-phase-split` stays unretired on purpose,** so `bench status`
+  keeps reporting one spec awaiting retirement until the reviewer rules on its
+  stories 4, 5, and 9.
 
 ## Next command
 
-`/bench-implement-spec specs/ft91-artifact-build-tiering.md` — in a fresh
-mid-tier session, per the spec's approval. Not `bench shift`: the coverage map is
-not fully gate-observable (story 8 is honestly marked not-TDD-able, story 9's
-proof is ship-tier-only), so it fails `craft-line`'s venue-routing test for an
-unattended run.
+Push, which is the reviewer's to perform. Then `/bench-what-next` in a fresh
+mid-tier session — the drain has one parked idea and one open learning, and
+`/bench-what-next` is the only path either takes into the roadmap.
 
 ## Shape
 
