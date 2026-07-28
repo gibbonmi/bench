@@ -151,10 +151,97 @@ half (`CONTEXT-MAP.md` layout, setup question, consumer teaching) and profile
 half (path ownership, ambient-surface scoping) are deferred undesigned. Revive
 trigger: a linked repo with more than one bounded context.
 
+## #8: Is byte-reproducibility of release artifacts a dev-gate property?
+
+Type: Grill
+
+### Question
+The re-measurement trigger the cache arms were parked behind fired 2026-07-27.
+`scripts/build-artifacts.sh` forces an empty private `GOCACHE` per invocation
+(line 39, and again for the reproducibility clone at line 135), so every build
+recompiles the standard library and dependencies: 4.79 s cold against 0.20 s
+warm, a 24x penalty. Each invocation is also two builds, not one — lines 129-143
+clone the source, rerun the whole script under `BENCH_REPRO_BUILD=1`, and compare
+bytes.
+
+The dev gate pays this every run. `internal/contract/surface/artifact` is 133 s
+across roughly twenty invocations at host-only breadth;
+`internal/contract/surface` is 115 s, of which `TestPackageContracts` alone is
+112.9 s. Together that is 249 s of a ~291 s contract phase, against a whole gate
+of ~4m51s — and neither suite was touched by any of the six shipped arms. A
+throwaway clone honoring an inherited warm cache cut the artifact suite
+133.5 s to 73.2 s (-45%); the residual is npm pack, node, and git-clone work
+rather than compilation, so the cache is the largest single cause and not the
+only one.
+
+The hermeticity is deliberate — the script's own comment says the private cache
+exists so ambient state cannot affect release bytes or require a trusted cache.
+So this is not a defect to fix but the same tier question #3 already answered
+once: is byte-reproducibility a per-commit property or a once-per-release one?
+Re-tiering it moves an explicit evidence obligation to `prep-release`; it does
+not weaken a check, which stays out of scope.
+
+### Answer
+Move it to the ship tier (reviewer, 2026-07-27). The dev tier honors the
+ambient Go build and module caches and proves the generator's *logic*;
+`prep-release` keeps the private-cache, clone-and-compare hermetic proof at full
+breadth. This lands where the shipped split already put the artifact matrix —
+`internal/preprelease` runs `build-artifacts.sh` against the real root as its
+`artifacts` step, and its header says the surface exists for exactly that — so
+no coverage leaves the board, it changes tier. Re-tiering an explicit evidence
+obligation is #3's precedent, not the check-weakening ruled out of scope.
+
+## #9: Does the dev tier prove the generator at full four-platform breadth?
+
+Blocked by: #8
+Type: Grill
+
+### Question
+`scripts/gen-platform-packages.sh` is a seven-line `exec` shim onto
+`build-artifacts.sh` against the real release plan, with no way to narrow the
+matrix. `TestPackageContracts` runs it twice to prove idempotency, so four
+targets are built twice and each run double-builds — sixteen cold cross-compiles
+for a property two targets would demonstrate. The artifact suite already solved
+this for itself: `committedHostileArtifactSource` rewrites the staged release
+plan down to the host target, which is the retired host-only arm. The generator
+test has no equivalent seam. Breadth and hermeticity are independent levers on
+the same test, so this stays separable from #8.
+
+### Answer
+Host-only in dev (reviewer, 2026-07-27). `TestPackageContracts` proves
+generator logic and idempotency at the host target, reusing the staged-release-plan
+rewrite `committedHostileArtifactSource` already owns rather than growing a second
+copy; full four-platform breadth belongs to `prep-release`. Expected saving ~85 s
+on its own.
+
+## #10: Must the dev gate build without network egress?
+
+Type: Grill
+
+### Question
+Each invocation also sets a fresh `GOMODCACHE` (line 42, and line 135 for the
+clone), so every build re-downloads `github.com/toon-format/toon-go` from
+`proxy.golang.org`. Verified 2026-07-27: `GOPROXY=off bash
+scripts/build-artifacts.sh` exits 1 with `module lookup disabled by
+GOPROXY=off` — the dev gate is unrunnable air-gapped, while the same package
+asserts an offline posture three files away
+(`TestOfflineNetworkSentinelDeniesUndeclaredEgress`). This is a correctness
+question rather than a wall-clock one, but it shares #8's lever: a shared module
+cache answers both, while vendoring the dependency answers offline without
+touching build hermeticity. Recorded here rather than parked in `IDEAS.md`
+because it constrains #8; drain it to its own roadmap row if it should be
+tracked separately from the cost work.
+
+### Answer
+Yes — share the module cache (reviewer, 2026-07-27). The dev path stops
+forcing a fresh `GOMODCACHE`, which removes the per-invocation `toon-go` download
+and the air-gapped failure with one lever. Scope, stated honestly: this makes the
+gate offline-capable *given a populated ambient module cache*; a first-ever build
+on a bare machine still fetches. `prep-release` keeps its private module cache, so
+the hermetic proof is unchanged.
+
 ## Not yet specified
 
-- FT91 cache arms (hermetic build cache; verdicts keyed on the pinned gate
-  subject) — only if re-measurement after the tier split lands still hurts.
 - `-count=1` freshness semantics — same trigger; oracle decision, reviewer-led.
   Now carries a measured price: uncached `internal/preflight` alone is 10+ min,
   so blanket `-count=1` on the inner suite is off the table without the split.
@@ -171,61 +258,70 @@ trigger: a linked repo with more than one bounded context.
 
 ## Handoff
 
-FT136 shipped (spec retired 2026-07-26); FT101 builds nothing this cycle. The
-handoff below is the FT91 tier-split spec.
+FT136 and the FT91 tier split both shipped (specs retired). The handoff below is
+the next FT91 spec: re-tiering release-build hermeticity out of the dev gate.
 
-1. **Module boundaries.** `internal/conformance` owns tier membership (which
-   sub-checks run in the dev gate vs `prep-release`), the release-only package
-   exclusion in `goCoreTestPackages`, and driver-emitted per-check timing.
-   The inner `go test` also excludes `internal/conformance` itself — it is the
-   outer run; including it is the recursion hazard in the watch-outs.
-   `internal/gate` phase table stays the dev tier. `bin/bench.sh` plus the Go
-   core gain the `prep-release` route. `scripts/release-preflight.sh` and the
-   release path own the ship-evidence refusal. Final-check's green report
-   carries the one-line ship-tier reminder.
-2. **Contracts.** Dev gate: same pass/fail semantics minus ship-tier checks;
-   green claims "the kit works from the tree", nothing about release
-   packaging. `bench prep-release`: exit 0 means ship tier green with evidence
-   written (`dist/preflight/release-index.json` and artifacts); nonzero with
-   diagnostics otherwise. Release path: refuses without current ship evidence.
-   Timing: one stable-format line per check on every gate run; ordering
-   byte-stable (indexed), values free to vary.
-3. **Deep vs thin.** The conformance driver stays the deep unit — tier
-   membership and timing hide behind it; checks stay pure functions.
-   `prep-release` is a thin route over existing scripts plus the ship-tier
-   checks; it invents no new machinery.
-4. **Black-box assertables.** Dev gate green writes nothing under
-   `dist/artifacts`; `prep-release` produces the artifact set and
-   `release-index.json`; a seeded ship-tier failure reds `prep-release` while
-   the dev gate stays green; a seeded dev-tier failure reds both; the release
-   path exits nonzero without ship evidence; timing lines present, one per
-   check, stable order.
-5. **Gate attachment.** Dev tier attaches exactly as today (suite plus canary).
-   Ship tier attaches at `prep-release` and the release path's refusal — the
-   gate does not see it per-commit; that narrowing is the decided tradeoff.
-6. **Hostile-input owners.** Unchanged owners, with one move: the preflight
-   archive-hostility suites (hostile package archives, aggregate budgets)
-   ride to the ship tier with their package — dev green explicitly does not
-   cover them.
-7. **Uncertainty flags.** Whether `prep-release` requires/reruns a current
-   dev-green verdict or runs ship checks alone (recommend: require dev green
-   via the existing `bench gate pin` machinery); which tier the canary's inner
-   gates run (recommend: dev); the exact release-only package list —
-   `internal/preflight` is decided, `releaseevidence`/`publication` need an
-   import read. Cheap-tier viability for build delegates stays open under #6.
-8. **Rejected alternatives.** Fifteen-check fan-out (killed by #2's data: one
-   composite check is 99.8% of the phase); a build-approval prompt after green
-   final-check (nags at commit cadence); ship tier on the pre-push hook;
-   blanket `-count=1` now (measured 10+ min price); timing via a probe test
-   file (driver owns it instead); deciding caching now (#1).
-9. **Domain watch-outs.** The inner `go test` leans on Go's test cache — any
-   change that defeats it (env perturbation, `-count=1`, cold cache) makes
-   `internal/preflight` blow the 600 s default package timeout, which presents
-   as a gate hang; the release-only exclusion is what removes this failure
-   mode from dev runs. Running the conformance package inside the inner suite
-   is a live recursion: its unfiltered tests re-invoke the heavyweight checks,
-   each generation spawns the next, and children outlive the 600 s timeout as
-   orphans (observed 2026-07-26; cascade killed by hand). Timing output must
-   keep finding order byte-stable while values vary.
+1. **Module boundaries.** `scripts/build-artifacts.sh` owns cache posture and is
+   the single source of it — hermetic by default (private `GOCACHE`,
+   `GOMODCACHE`, and the clone-and-compare second build), relaxed only when the
+   dev opt-in is present. `scripts/gen-platform-packages.sh` stays a
+   pass-through and gains nothing. The staged-release-plan narrowing that
+   `committedHostileArtifactSource` already owns in
+   `internal/contract/surface/artifact` becomes the one shared helper both
+   contract packages call. `internal/preprelease` owns the ship-tier
+   invocation and passes no opt-in — absence is what makes it hermetic.
+2. **Contracts.** `build-artifacts.sh` argv, exit codes, and every existing
+   refusal (dirty source, missing pin manifest, tarball-count mismatch) are
+   unchanged. With the opt-in unset the behavior is byte-identical to today,
+   including `reproducibility.json` at `builds: 2`. With it set, the script
+   inherits the ambient Go build and module caches and skips the second build,
+   and it writes no `reproducibility.json` at all — it must never emit a record
+   claiming evidence it did not produce. `npm_config_cache`, `TMPDIR`, and
+   `HOME` stay private in both tiers: they were not measured as cost drivers and
+   their concurrency posture is untested.
+3. **Deep vs thin.** `build-artifacts.sh` is the deep unit — both tiers enter at
+   one argv and the posture hides behind one env contract.
+   `gen-platform-packages.sh` is a thin shim with no seam of its own. The
+   staged-plan rewrite is a shared test helper, promoted rather than copied.
+4. **Black-box assertables.** Opt-in unset: `reproducibility.json` present,
+   `status: green`, `builds: 2`. Opt-in set: no `reproducibility.json`, and the
+   emitted tarball names and count still satisfy the release plan unchanged. An
+   unrecognized opt-in value builds hermetically. With a populated ambient module
+   cache, `GOPROXY=off` succeeds on the dev path and still fails on the hermetic
+   one. `prep-release`'s `artifacts` step argv carries the real root and no
+   opt-in.
+5. **Gate attachment.** The dev contract phase observes the opt-in path; the
+   hermetic path attaches at `bench prep-release` and is no longer exercised
+   per-commit. That narrowing is the decided tradeoff, identical in kind to #3's.
+   Because the release path must never silently inherit dev posture, a
+   conformance check pins that `prep-release`'s artifact step passes no opt-in —
+   fail-closed, matching the family default.
+6. **Hostile-input owners.** Dirty or untracked source state stays with
+   `build-artifacts.sh`'s existing HEAD check. A garbage opt-in value is owned by
+   the posture resolver, which treats anything but the exact token as hermetic. A
+   poisoned ambient build cache is accepted in dev by this decision and
+   impossible in ship tier by construction. Concurrent dev invocations already
+   serialize on the existing output-directory lock.
+7. **Uncertainty flags.** The opt-in token name is unchosen. One dev assertion
+   depends on the double-build — `assertPromotedReproducibility`, called only
+   from `artifact_test.go:107` inside `TestDistributableArtifactContracts` — and
+   it is the one coverage row that must move to the ship tier. The comparator's
+   own red-capable coverage in `reproducibility_test.go` drives
+   `compare-artifacts.sh` against synthetic inputs and stays per-commit, so
+   moving the double-build costs no comparator coverage.
+8. **Rejected alternatives.** Dropping only the second build while keeping the
+   private cache (halves the cost but leaves the 24x cache penalty, the larger
+   cause); keeping full four-platform breadth in the dev generator test;
+   vendoring `toon-go` (answers offline only, leaves the cost); making the
+   release build non-hermetic anywhere (the proof is the point); diff-scoped
+   gating and gate scope as a speed lever, both closed above.
+9. **Domain watch-outs.** A cold Go build cache costs 4.79 s against 0.20 s warm
+   on this module, so any change that re-cold-starts a cache inside the inner
+   suite reintroduces the 600 s package-timeout hazard the split removed. A fresh
+   `GOMODCACHE` forces a module download, which is why an air-gapped run fails
+   today. Go's build and module caches are concurrency-safe; npm's is not
+   assumed to be. Reproducibility evidence is only meaningful when both builds
+   are independent — the second build's separate clone and separate caches are
+   load-bearing, not incidental.
 
-Dependency order: n/a — single spec (the FT91 tier split).
+Dependency order: n/a — single spec.
