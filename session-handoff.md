@@ -2,11 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — clean tree after this commit, ahead of origin
-Specs staged: `specs/ft91-canary-contract-scoping.md` and
-`specs/implement-spec-full-run.md` — both Status: staged, both
-reviewer-approved
-Gate: green, measured 2026-07-28 at 267 s wall
+Branch: `main` — HEAD `1b04333`, 1 dirty path, 14 unpushed commits
+Spec: `specs/implement-spec-full-run.md` (Status: staged)
+Gate: green at `56eedcc` — stale, work tree `a266821`
 
 ## State
 
@@ -52,20 +50,7 @@ Gate: green, measured 2026-07-28 at 267 s wall
 
 ## Next command
 
-`/bench-implement-spec specs/ft91-canary-contract-scoping.md` on a fresh
-mid-tier session — approved, seams pre-agreed, every story routes
-`gpt-5.6-terra` (alias `opus` for Claude Code delegation) per the cached
-Lines.
-
-After it lands green: `/bench-implement-spec
-specs/implement-spec-full-run.md` on a fresh session. That one is *not* a
-`bench shift` candidate — seven of its ten stories route the top binding
-under `craft-line`'s leverage override, which fails the venue-routing test
-for a headless run.
-
-Then: stage 2 (`/bench-write-spec` from `gate-critical-path` #7), and
-`/bench-shape-idea` resume on `gate-critical-path` #2 for the artifact-hoist
-slice.
+`/bench-shape-idea` — the board's leading invocable signal (`decisions`).
 
 ## Shape
 

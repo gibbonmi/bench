@@ -16,3 +16,11 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
 - **What happened:** …
 - **Right behavior:** …
 - **Proposed rule change:** … (or "none")
+
+## 2026-07-28 — FT91 stage-1 floor estimate keyed on the wrong tail
+
+What happened: the gate-critical-path map predicted post-scoping solo canary at 60–80 s by keying on the 45 s surface straggler; the measured result was 151.5 s because the five surface/artifact-bound fixtures each pay the ~134 s artifact suite at inner width 2. The spec's ≤100 s acceptance then failed and needed a reviewer veto to ship.
+
+Right behavior: a scoping floor estimate should key on the largest bound package's suite time inflated to the inner width, not on the observed straggler of the pre-change mix.
+
+Proposed rule change: none — map-authoring judgment, not a kit rule; fold into the next gate-critical-path re-measure (map #5) when stage 2 lands.
