@@ -14,9 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"path"
 	"path/filepath"
-	"slices"
 	"sort"
 	"strings"
 	"syscall"
@@ -32,12 +30,9 @@ import (
 // conformancePhaseName is the phase whose per-check timing the runner prints.
 const conformancePhaseName = "conformance"
 
-// contractPackagePrefix is the import-path prefix the contract phase grades under. The
-// declared table names every package below it; a scoped canary fixture names exactly one.
-const contractPackagePrefix = "./internal/contract/"
-
-// contractSubtree is the argv element the unscoped contract phase grades.
-const contractSubtree = contractPackagePrefix + "..."
+// contractSubtree is the argv element the contract phase grades: every package below
+// internal/contract, in every mode.
+const contractSubtree = "./internal/contract/..."
 
 type phaseMode int
 
@@ -103,7 +98,7 @@ func BenchkitPhases(root, kit string) []Phase {
 		{
 			Name:  canary.PhaseContract,
 			Argv:  goTestArgv(kit, contractSubtree),
-			Env:   []string{"BENCH_CONTRACT_ROOT=" + root},
+			Env:   []string{canary.SubjectRootEnv + "=" + root},
 			Needs: needsBuild(),
 		},
 		{
@@ -225,7 +220,7 @@ func PhasesCommand(args []string, stdout, stderr io.Writer) int {
 	if os.Getenv("BENCH_CANARY_INNER") == "1" {
 		mode = innerMode
 	}
-	phases, err := phaseTable(root, kit, mode)
+	phases, err := phaseTable(root, kit)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
@@ -407,74 +402,6 @@ func phasesForMode(phases []Phase, mode phaseMode) []Phase {
 		}
 	}
 	return filtered
-}
-
-// narrowContractScope rewrites the built-in table's contract phase to grade the one
-// contract package a scoped canary fixture's EXPECT belongs to. Only an inner gate reads
-// the scope: an outer run grades the whole subtree whatever an operator exported, and a
-// table the graded root declared owns its own argv outright.
-//
-// The value is resolved against the kit tree the argv is built for, because an
-// unresolvable package makes `go test` red with a toolchain error naming nothing the
-// fixture expects — a fixture would report "did not bite" forever, which is what a
-// scoping that quietly ran the wrong packages looks like from the gate.
-func narrowContractScope(phases []Phase, kit string, mode phaseMode) ([]Phase, error) {
-	pkg, scoped := os.LookupEnv(canary.ContractPackageEnv)
-	if !scoped || mode != innerMode {
-		return phases, nil
-	}
-	if err := checkContractPackage(kit, pkg); err != nil {
-		return nil, err
-	}
-	out := make([]Phase, len(phases))
-	copy(out, phases)
-	for idx, phase := range out {
-		if phase.Name != canary.PhaseContract {
-			continue
-		}
-		// The argv gets its own backing array: the caller's table and this one would
-		// otherwise share it, and the scoped run would rewrite the unscoped one's argv.
-		argv := append([]string(nil), phase.Argv...)
-		for pos, arg := range argv {
-			if arg == contractSubtree {
-				argv[pos] = contractPackagePrefix + pkg
-			}
-		}
-		out[idx].Argv = argv
-	}
-	return out, nil
-}
-
-// checkContractPackage reports why pkg cannot name one package under kit's
-// internal/contract, naming the value so the diagnostic points at what has to change.
-func checkContractPackage(kit, pkg string) error {
-	reason := ""
-	switch {
-	case pkg == "":
-		reason = "names no package"
-	case path.IsAbs(pkg) || filepath.IsAbs(pkg):
-		reason = "is an absolute path, and the contract phase grades package paths relative to internal/contract"
-	case slices.Contains(strings.Split(pkg, "/"), ".."):
-		reason = "climbs out of internal/contract"
-	// An unclean spelling is the quiet failure: "." and "./axi" and "axi/" all resolve to
-	// a real directory, so nothing errors — the argv just grades a package the fixture's
-	// EXPECT does not come from, and the fixture reports "did not bite" forever. Only the
-	// one canonical spelling of a package path is a binding this gate can stand behind.
-	case pkg == ".":
-		reason = "names internal/contract itself rather than a package under it"
-	case path.Clean(pkg) != pkg:
-		reason = "is not a clean package path relative to internal/contract; write " + path.Clean(pkg)
-	case !isDir(filepath.Join(kit, "internal", "contract", filepath.FromSlash(pkg))):
-		reason = "names no directory under " + filepath.Join(kit, "internal", "contract")
-	default:
-		return nil
-	}
-	return fmt.Errorf("error: %s=%q %s", canary.ContractPackageEnv, pkg, reason)
-}
-
-func isDir(path string) bool {
-	info, err := os.Stat(path)
-	return err == nil && info.IsDir()
 }
 
 func carriesPhase(phases []Phase, name string) bool {

@@ -62,6 +62,34 @@ func TestPhaseNamedFamiliesJoinTheUnscopedBaseline(t *testing.T) {
 	}
 }
 
+// TestBaselinesRunUnpinnedByPhase pins the shape every vacuity baseline keeps: the whole
+// inner gate, never one phase of it. A baseline narrowed to a phase prints a fraction of
+// what the empty tree can produce, so an EXPECT the full run already emits stops being
+// caught as vacuous and every fixture in the group clears the check unguarded.
+//
+// A group is represented by whichever of its fixtures sorts first, and the only pin a
+// baseline could inherit is that representative's family phase. Every fixture here belongs
+// to a family that names one for exactly that reason: a legacy flat fixture sorting first
+// would name no phase, and the assertion would then hold over a baseline never at risk.
+func TestBaselinesRunUnpinnedByPhase(t *testing.T) {
+	root := t.TempDir()
+	fixture(t, canaryFixture(root, PhaseBuild, "build-fx"), "")
+	fixture(t, canaryFixture(root, PhaseGofmt, "gofmt-fx"), "")
+	conformance := mappedFamily(t)
+	fixture(t, canaryFixture(root, conformance, "conformance-fx"), "")
+
+	baselines := baselineCalls(sweepCalls(t, root, registry.Dev))
+
+	if len(baselines) != 2 {
+		t.Fatalf("sweep ran %d baselines, want the unscoped group's and family %s's", len(baselines), conformance)
+	}
+	for _, call := range baselines {
+		if phases := phaseValues(call.Env); len(phases) != 0 {
+			t.Errorf("baseline for %s carried phases %v, want the full inner gate", groupLabel(callGroup(t, call)), phases)
+		}
+	}
+}
+
 func phaseValues(env []string) []string {
 	return envValues(env, PhaseEnv)
 }

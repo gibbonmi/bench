@@ -2,6 +2,7 @@ package canary
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -250,6 +251,20 @@ func fixture(t *testing.T, dir, check string) {
 	}
 }
 
+// stubCompile answers a compile call the way a successful `go test -c` does — exit zero
+// and a binary on disk — and reports whether it handled the call. Every fake runner routes
+// compiles through it, because the sweep checks the binary exists before invoking it, so a
+// runner that only returned exit zero would red every contract group in every test.
+func stubCompile(call RunCall) (RunResult, bool) {
+	if call.Kind != RunCompile {
+		return RunResult{}, false
+	}
+	if err := os.WriteFile(call.Binary, nil, 0o755); err != nil {
+		return RunResult{ExitCode: 1, Output: err.Error()}, true
+	}
+	return RunResult{}, true
+}
+
 // sweepCalls runs a green sweep of tier and returns every RunCall it made.
 func sweepCalls(t *testing.T, root string, tier registry.Tier) []RunCall {
 	t.Helper()
@@ -259,6 +274,9 @@ func sweepCalls(t *testing.T, root string, tier registry.Tier) []RunCall {
 		mu.Lock()
 		calls = append(calls, call)
 		mu.Unlock()
+		if result, done := stubCompile(call); done {
+			return result
+		}
 		if call.FixtureDir == "" {
 			return RunResult{ExitCode: 1, Output: "baseline noise\n"}
 		}
@@ -271,12 +289,13 @@ func sweepCalls(t *testing.T, root string, tier registry.Tier) []RunCall {
 }
 
 // baselineGroups lists the group each empty-tree baseline ran for, sorted, so a
-// duplicate baseline for one group shows up as a repeated entry.
+// duplicate baseline for one group shows up as a repeated entry. A compile shares the
+// baselines' empty FixtureDir and grades no tree, so it is excluded by kind.
 func baselineGroups(t *testing.T, calls []RunCall) []string {
 	t.Helper()
 	var out []string
 	for _, call := range calls {
-		if call.FixtureDir != "" {
+		if call.Kind == RunCompile || call.FixtureDir != "" {
 			continue
 		}
 		out = append(out, callGroup(t, call))

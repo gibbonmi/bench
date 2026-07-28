@@ -150,6 +150,28 @@ func TestSweepReportsDidNotBite(t *testing.T) {
 	}
 }
 
+// TestSweepReportsDidNotBiteWhenARedRunOmitsItsExpect is the other half of the bite
+// condition: the test above grades a green run whose output matched, this one a red run
+// whose output did not. A fixture whose EXPECT stops appearing while its run still fails
+// is the failure a red-alone check reports as a bite forever, and it is reached through
+// the compiled path because that is where a behavior-owned fixture's output comes from.
+func TestSweepReportsDidNotBiteWhenARedRunOmitsItsExpect(t *testing.T) {
+	root := t.TempDir()
+	contractFixture(t, root, "axi", "axi-fx")
+
+	err := Sweep(root, func(call RunCall) RunResult {
+		if result, done := stubCompile(call); done {
+			return result
+		}
+		return RunResult{ExitCode: 1, Output: "unrelated failure\n"}
+	})
+
+	want := `canary 'axi-fx' did not bite (want red + "target-axi-fx"; got exit 1)`
+	if err == nil || err.Error() != want {
+		t.Fatalf("Sweep err = %v, want %s", err, want)
+	}
+}
+
 func TestSweepAcceptsLegacyFlatSeedCanary(t *testing.T) {
 	root := t.TempDir()
 	fixture := filepath.Join(root, "tests", "canary", "example")
@@ -227,6 +249,9 @@ func (r *recordingRunner) Run(call RunCall) RunResult {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.calls = append(r.calls, call)
+	if result, done := stubCompile(call); done {
+		return result
+	}
 	if r.sawMaterialized == nil {
 		r.sawMaterialized = map[string]bool{}
 	}

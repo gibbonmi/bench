@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -28,15 +29,15 @@ const absentHarnessMessage = "canary harness absent — tests/canary/ has no fix
 // An absent value means the fixture must exercise the full inner gate.
 const PhaseEnv = "BENCH_CANARY_PHASE"
 
-// ContractPackageEnv carries the one contract package a behavior-owned fixture's EXPECT
-// belongs to, as a slash path relative to internal/contract. It narrows the contract
-// phase's argv to that package alone; an absent value leaves the phase grading every
-// contract package, which is what every other run wants.
-const ContractPackageEnv = "BENCH_CANARY_CONTRACT_PACKAGE"
+// SubjectRootEnv names the tree a contract test grades instead of the kit checkout it was
+// compiled from. It lives beside the phase names for the same reason they do: the sweep,
+// the gate's contract phase, and internal/contract's helper must agree on one spelling,
+// and this package is the only one all three can read — internal/gate and
+// internal/contract each import it, and neither edge runs the other way.
+const SubjectRootEnv = "BENCH_CONTRACT_ROOT"
 
 // PhaseManifestPath is where a graded root declares a phase table of its own, relative
-// to that root. Declaring one replaces the built-in table outright, so a canary fixture
-// whose tree carries it never reaches the narrowing the built-in contract phase applies.
+// to that root. Declaring one replaces the built-in table outright.
 const PhaseManifestPath = ".bench/phases.json"
 
 // FixturePhase maps the canary directory convention to the phase that owns it.
@@ -61,8 +62,8 @@ func FixturePhase(family string) string {
 // the routing forever.
 //
 // PhaseContract sits apart from the rest: no family is named after it — behavior-owned
-// routes there — and it is the one phase a fixture narrows further, to the single
-// contract package that owns its diagnostic.
+// routes there — and it is the one phase whose fixtures spawn no gate at all, being
+// graded by the compiled test binary of the contract package that owns the diagnostic.
 const (
 	PhaseBuild            = "build"
 	PhaseGofmt            = "gofmt"
@@ -172,23 +173,44 @@ func isDir(path string) bool {
 	return err == nil && info.IsDir()
 }
 
-// RunCall is one inner gate invocation: Cwd is the materialized repo under grade,
-// Gate is the real gate script from the root being checked, and FixtureDir names
-// the source fixture or is empty for the vacuity baseline.
+// RunKind names the three things a sweep runs. A behavior-owned fixture's EXPECT is a
+// contract test's own failure message, so that family is graded by compiling the owning
+// package's test binary once and invoking it per subject tree; every other family needs a
+// whole gate around its mutated tree and spawns one.
+type RunKind int
+
+const (
+	RunGate RunKind = iota
+	RunCompile
+	RunBite
+)
+
+// RunCall is one thing the sweep runs. Kind says which, and the fields the other kinds
+// need stay zero: a gate spawn carries Gate, a compile carries Package and Binary, and a
+// bite invocation carries the Binary it runs and the Package that produced it. FixtureDir
+// names the source fixture, or is empty for a vacuity baseline.
+//
+// Cwd is the working directory, which differs by kind: a gate spawn and a compile both
+// run over a tree (the materialized repo under grade, and the swept root), while a bite
+// invocation runs in its package's source directory — where `go test` runs a test binary —
+// and carries the tree it grades in the environment instead.
 type RunCall struct {
+	Kind       RunKind
 	Cwd        string
 	Gate       string
 	FixtureDir string
+	Package    string
+	Binary     string
 	Env        []string
 }
 
-// RunResult captures the inner gate verdict and combined output.
+// RunResult captures the verdict and combined output of one run.
 type RunResult struct {
 	ExitCode int
 	Output   string
 }
 
-// Runner runs one inner gate invocation.
+// Runner runs one call of any kind.
 type Runner func(RunCall) RunResult
 
 // Run is the `bench canary [root]` command.
@@ -251,23 +273,51 @@ func SweepTier(root string, tier registry.Tier, runner Runner) error {
 		return err
 	}
 	if len(fixtures) == 0 {
-		// Nothing to grade, and the vacuity baselines below are inner gate runs —
+		// Nothing to grade, and the compiles and vacuity baselines below are real runs —
 		// too expensive to pay for a tier that owns no fixtures.
 		return nil
 	}
-	gate := filepath.Join(root, ".bench", "gate.sh")
-	env := innerEnv(tier)
+	base := sweepEnv()
+	run := sweepRun{
+		root:    root,
+		gate:    filepath.Join(root, ".bench", "gate.sh"),
+		base:    base,
+		gateEnv: gateEnv(base, tier),
+	}
 
-	baselines, err := scopeBaselines(fixtures, gate, env, runner)
+	binDir, binaries, err := compileContractPackages(root, fixtures, base, runner)
+	if binDir != "" {
+		// Every return below this point is an exit path the binaries must not survive,
+		// including the compile's own failure, which reports a directory it has already
+		// half-filled.
+		defer os.RemoveAll(binDir)
+	}
+	if err != nil {
+		return err
+	}
+	run.binaries = binaries
+
+	baselines, err := scopeBaselines(fixtures, run, runner)
 	if err != nil {
 		return err
 	}
 
-	errs := runFixtures(root, fixtures, baselines, gate, env, runner)
+	errs := runFixtures(fixtures, baselines, run, runner)
 	if len(errs) > 0 {
 		return errors.New(strings.Join(errs, "\n"))
 	}
 	return nil
+}
+
+// sweepRun is everything a graded run needs that does not vary from fixture to fixture:
+// the swept tree, the gate script a spawning family runs, the two environments, and the
+// compiled test binary of each contract package.
+type sweepRun struct {
+	root     string
+	gate     string
+	base     []string
+	gateEnv  []string
+	binaries map[string]string
 }
 
 // assertFamilyBinding refuses a sweep of the kit's own tree while a conformance family
@@ -319,9 +369,10 @@ type selected struct {
 // never collide with a conformance check that happens to share its name.
 const contractGroupPrefix = PhaseContract + ":"
 
-// group names the vacuity baseline this fixture's EXPECT is graded against. Fixtures of
-// one group run the same checks, so a baseline of any other group both misses a genuinely
-// vacuous EXPECT and flags a sound one.
+// group names the baseline this fixture's EXPECT is graded against. Fixtures of one
+// group run the same checks, so another group's baseline is output no run in this group
+// can produce; what the comparison does and does not establish is stated on
+// scopeBaselines.
 func (s selected) group() string {
 	if s.pkg != "" {
 		return contractGroupPrefix + s.pkg
@@ -404,12 +455,12 @@ func selectTier(fixtures []selected, tier registry.Tier) ([]selected, error) {
 	return out, nil
 }
 
-// assertContractScopes refuses a sweep while a behavior-owned fixture cannot be scoped to
-// one contract package, ahead of the first inner gate. Each of these defects leaves the
-// fixture grading every contract package instead of the one that owns its EXPECT — the
-// whole per-fixture cost the scoping removes, paid in silence — so reporting them
-// afterwards means paying for them first. Every defect is reported, matching how the
-// sweep reports its fixture failures.
+// assertContractScopes refuses a sweep while a behavior-owned fixture cannot be bound to
+// one contract package, ahead of the first run. A fixture whose binding names no package,
+// or a package the swept tree does not hold, has no test binary to be graded by at all, so
+// the sweep says which fixture and stops rather than reaching a compile that would name
+// the package without naming the fixture that asked for it. Every defect is reported,
+// matching how the sweep reports its fixture failures.
 func assertContractScopes(root string, fixtures []selected) error {
 	var errs []string
 	for _, fx := range fixtures {
@@ -420,10 +471,8 @@ func assertContractScopes(root string, fixtures []selected) error {
 		switch {
 		case fx.pkg == "":
 			errs = append(errs, fmt.Sprintf("canary fixture '%s' sits directly under tests/canary/%s/, which binds it to no contract package; move it to tests/canary/%s/<package path>/%s/", name, fx.family, fx.family, name))
-		case !isDir(filepath.Join(root, "internal", "contract", filepath.FromSlash(fx.pkg))):
+		case !isDir(contractPackageDir(root, fx.pkg)):
 			errs = append(errs, fmt.Sprintf("canary fixture '%s' is bound to contract package %q, which does not exist under internal/contract/", name, fx.pkg))
-		case declaresPhaseManifest(fx.dir):
-			errs = append(errs, fmt.Sprintf("canary fixture '%s' declares %s/%s, and a declared phase table replaces the built-in one its contract scoping lives in; make it a legacy flat fixture at tests/canary/%s/ instead", name, filesDirName, PhaseManifestPath, name))
 		}
 	}
 	if len(errs) > 0 {
@@ -432,37 +481,121 @@ func assertContractScopes(root string, fixtures []selected) error {
 	return nil
 }
 
-// declaresPhaseManifest reports whether a fixture's files/ tree carries a phase table of
-// its own. Both spellings count: the dot- form the harness stores, and a literal dot
-// directory, which materializes into exactly the same declaring root. Reading one
-// spelling alone lets the other run unscoped in silence.
-func declaresPhaseManifest(fixtureDir string) bool {
-	for _, rel := range []string{dotEncodedPath(PhaseManifestPath), filepath.FromSlash(PhaseManifestPath)} {
-		if regularFile(filepath.Join(fixtureDir, filesDirName, rel)) {
-			return true
-		}
-	}
-	return false
+// contractPackageDir is where a contract package's source lives under a swept tree. The
+// binding a fixture's directory nesting states is resolved against the swept root, so the
+// package the sweep compiles and the package the structural refusal accepts are the same
+// directory by construction.
+func contractPackageDir(root, pkg string) string {
+	return filepath.Join(root, "internal", "contract", filepath.FromSlash(pkg))
 }
 
-// scopeBaselines runs one empty-tree gate per scope group the sweep grades, and
-// returns each group's output for the vacuity comparison. A fixture's EXPECT is
-// compared against a run of its own shape: another group's baseline executes different
-// checks, so it would both miss a genuinely vacuous EXPECT and flag a sound one. The
-// key is the group each fixture resolves to, which keeps every unscoped fixture on the
-// single full baseline they share today.
+// contractPackages lists, sorted, each contract package the swept fixtures bind to. One
+// entry is one compile: every fixture of a package reuses that package's binary, which is
+// the whole saving over a process tree per fixture.
+func contractPackages(fixtures []selected) []string {
+	seen := map[string]bool{}
+	var out []string
+	for _, fx := range fixtures {
+		if fx.pkg == "" || seen[fx.pkg] {
+			continue
+		}
+		seen[fx.pkg] = true
+		out = append(out, fx.pkg)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// compileContractPackages builds each bound contract package's test binary into one
+// sweep-owned temporary directory, and returns that directory alongside the binary path
+// of every package. The directory is returned even when the compile fails, because the
+// caller owns removing it on every exit path and a failed compile still leaves files.
+//
+// A compile that exits nonzero and a compile that exits zero having written nothing are
+// both errors naming the package. The second is not hypothetical: `go test -c` on a
+// package holding no test files succeeds and writes no binary, so an exit-code-only check
+// would go on to invoke a path that does not exist and surface an exec error naming
+// nothing an author can act on.
+func compileContractPackages(root string, fixtures []selected, base []string, runner Runner) (string, map[string]string, error) {
+	pkgs := contractPackages(fixtures)
+	if len(pkgs) == 0 {
+		return "", nil, nil
+	}
+	dir, err := os.MkdirTemp("", "bench-canary-bin-*")
+	if err != nil {
+		return "", nil, err
+	}
+	binaries := make(map[string]string, len(pkgs))
+	for _, pkg := range pkgs {
+		binaries[pkg] = filepath.Join(dir, contractBinaryName(pkg))
+	}
+
+	errs := make([]string, len(pkgs))
+	eachIndex(len(pkgs), func(idx int) {
+		pkg := pkgs[idx]
+		result := runner(RunCall{Kind: RunCompile, Cwd: root, Package: pkg, Binary: binaries[pkg], Env: base})
+		switch {
+		case result.ExitCode != 0:
+			errs[idx] = fmt.Sprintf("canary could not compile contract package %q (exit %d): %s", pkg, result.ExitCode, strings.TrimSpace(result.Output))
+		case !regularFile(binaries[pkg]):
+			errs[idx] = fmt.Sprintf("canary compiled contract package %q to no binary, so none of its fixtures can be graded; a package holding no test files compiles to nothing", pkg)
+		}
+	})
+
+	var failed []string
+	for _, msg := range errs {
+		if msg != "" {
+			failed = append(failed, msg)
+		}
+	}
+	if len(failed) > 0 {
+		return dir, nil, errors.New(strings.Join(failed, "\n"))
+	}
+	return dir, binaries, nil
+}
+
+// contractBinaryName is the file name one package path compiles to. The escape character
+// is encoded before the separator is, which is what makes the encoding injective: without
+// that first pass a path already containing the escape would collide with a differently
+// nested one, and the loser of the collision would grade the wrong package's tests.
+func contractBinaryName(pkg string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(pkg, "_", "_u"), "/", "_s") + ".test"
+}
+
+// scopeBaselines runs one empty-tree run per scope group the sweep grades, and
+// returns each group's output for the baseline comparison. A fixture's EXPECT is
+// compared against a run of its own shape; the key is the group each fixture resolves
+// to, which keeps every unscoped fixture on the single full baseline they share today.
+//
+// For a contract group the comparison is a collision screen, not a vacuity check. The
+// empty tree is a degenerate tree, not an unmutated twin of any fixture's: a baseline
+// match means the EXPECT collides with the infrastructure noise a test binary emits
+// over a tree it cannot grade — missing files, exit-status text — and a miss says
+// nothing about whether the fixture's mutation is what makes the EXPECT appear.
+// Mutation-specificity would take a per-fixture unmutated twin, which no group has.
+// The screen stays because it costs one run per group and rejects an EXPECT sloppy
+// enough to match that noise. Nothing reads a baseline's exit code, and nothing may
+// start to: the groups share no exit shape — one whose tests all skip over a
+// subjectless tree exits green, one whose tests reach the tree reds loudly — so any
+// invariant keyed on it is broken on arrival.
 //
 // A group whose baseline prints nothing is an error rather than a group that runs on:
-// the vacuity test asks whether the baseline output already contains the EXPECT, and
+// the baseline check asks whether the baseline output already contains the EXPECT, and
 // an empty output contains none of them, so every fixture in that group would clear
 // the check unguarded while the other groups stayed graded. Errors for all such groups
 // are reported together, matching how the sweep reports its fixture failures.
 //
-// Each group is represented by one of its own fixtures, so the environment a baseline
-// runs under is built by the same function that builds its fixtures': a baseline that
-// ran a wider set of checks than its group grades EXPECTs against output no fixture in
-// the group can produce.
-func scopeBaselines(fixtures []selected, gate string, env []string, runner Runner) (map[string]string, error) {
+// Each group is represented by one of its own fixtures, so a baseline call is built by
+// the same function that builds its fixtures': a baseline of a different scope, or a gate
+// spawn where the group's fixtures invoke a test binary, grades its group's EXPECTs
+// against output no fixture in the group can produce.
+//
+// The phase pin is the one axis where the two deliberately part — a baseline runs the
+// whole inner gate even where its group's fixtures are each pinned to a single phase —
+// because the two directions fail differently. A baseline narrower than the runs it
+// grades passes every vacuous EXPECT in its group in silence; a wider one at worst calls
+// a sound EXPECT vacuous, which is a red someone reads.
+func scopeBaselines(fixtures []selected, run sweepRun, runner Runner) (map[string]string, error) {
 	var scopes []selected
 	seen := map[string]bool{}
 	for _, fx := range fixtures {
@@ -491,7 +624,7 @@ func scopeBaselines(fixtures []selected, gate string, env []string, runner Runne
 
 	outputs := make([]string, len(scopes))
 	eachIndex(len(scopes), func(idx int) {
-		outputs[idx] = runner(RunCall{Cwd: dirs[idx], Gate: gate, Env: baselineEnv(env, scopes[idx])}).Output
+		outputs[idx] = runner(subjectCall(scopes[idx], dirs[idx], "", run, noPhasePin)).Output
 	})
 
 	baselines := make(map[string]string, len(scopes))
@@ -519,10 +652,10 @@ func groupLabel(group string) string {
 	return fmt.Sprintf("scope group %q", group)
 }
 
-func runFixtures(root string, fixtures []selected, baselines map[string]string, gate string, env []string, runner Runner) []string {
+func runFixtures(fixtures []selected, baselines map[string]string, run sweepRun, runner Runner) []string {
 	errs := make([]string, len(fixtures))
 	eachIndex(len(fixtures), func(idx int) {
-		errs[idx] = runFixture(root, fixtures[idx], baselines[fixtures[idx].group()], gate, env, runner)
+		errs[idx] = runFixture(fixtures[idx], baselines[fixtures[idx].group()], run, runner)
 	})
 
 	out := errs[:0]
@@ -535,9 +668,9 @@ func runFixtures(root string, fixtures []selected, baselines map[string]string, 
 }
 
 // eachIndex runs body over every index below count under the sweep's worker budget,
-// and returns once all of them have finished. Baselines and fixtures share the one
-// budget: an inner gate costs the same either way, and the fixtures cannot start until
-// the baseline of their group has an output to compare against.
+// and returns once all of them have finished. Compiles, baselines, and fixtures share the
+// one budget, and run as three sequenced stages: a group's fixtures cannot start until
+// its package is compiled and its baseline has an output to compare against.
 func eachIndex(count int, body func(int)) {
 	jobs := make(chan int)
 	var wg sync.WaitGroup
@@ -571,7 +704,7 @@ func fixtureWorkers(budget, fixtureCount int) int {
 	return workers
 }
 
-func runFixture(root string, fixture selected, baselineOutput, gate string, env []string, runner Runner) string {
+func runFixture(fixture selected, baselineOutput string, run sweepRun, runner Runner) string {
 	fx := fixture.dir
 	name := filepath.Base(fx)
 	expectPath := filepath.Join(fx, expectFileName)
@@ -595,15 +728,11 @@ func runFixture(root string, fixture selected, baselineOutput, gate string, env 
 		return fmt.Sprintf("canary '%s' setup failed: %v", name, err)
 	}
 	defer os.RemoveAll(work)
-	if err := materializeMutationFixture(root, fx, work); err != nil {
+	if err := materializeMutationFixture(run.root, fx, work); err != nil {
 		return fmt.Sprintf("canary '%s' setup failed: %v", name, err)
 	}
 	_ = gitInit(work)
-	fixtureEnv := scopedEnv(env, fixture)
-	if phase := FixturePhase(fixture.family); phase != "" {
-		fixtureEnv = append(fixtureEnv, PhaseEnv+"="+phase)
-	}
-	result := runner(RunCall{Cwd: work, Gate: gate, FixtureDir: fx, Env: fixtureEnv})
+	result := runner(subjectCall(fixture, work, fx, run, pinFamilyPhase))
 	if result.ExitCode == 0 || !strings.Contains(result.Output, expect) {
 		return fmt.Sprintf("canary '%s' did not bite (want red + %q; got exit %d)", name, expect, result.ExitCode)
 	}
@@ -771,18 +900,6 @@ func copyTree(src, dst string) error {
 // restored only in the materialized copy under grade.
 const dotPrefix = "dot-"
 
-// dotEncodedPath is the stored form of a slash path whose segments start with a dot —
-// the shape a fixture's files/ tree holds, and the inverse of restoreDotSegments.
-func dotEncodedPath(rel string) string {
-	segments := strings.Split(rel, "/")
-	for idx, segment := range segments {
-		if bare, dotted := strings.CutPrefix(segment, "."); dotted {
-			segments[idx] = dotPrefix + bare
-		}
-	}
-	return filepath.Join(segments...)
-}
-
 func restoreDotSegments(root string) error {
 	var dirs []string
 	if err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
@@ -806,58 +923,145 @@ func restoreDotSegments(root string) error {
 	return nil
 }
 
-// scopedEnv is env plus the variables naming what one inner gate grades: the conformance
-// check the fixture's family binds, and the contract package that owns a behavior-owned
-// fixture's EXPECT. A run without one of them carries no variable at all rather than an
-// empty one, which names nothing and reds the inner gate. The copy is what keeps
-// concurrent runs from appending into one shared backing array.
+// phasePin says whether a subject call narrows its inner gate to the one phase the
+// fixture's family names. Only a mutated tree is graded that narrowly: a baseline pinned
+// to a phase prints a fraction of what the empty tree can produce, so an EXPECT the full
+// run already emits goes unflagged and every fixture in the group clears the vacuity
+// check unguarded.
+type phasePin bool
+
+const (
+	pinFamilyPhase phasePin = true
+	noPhasePin     phasePin = false
+)
+
+// subjectCall is the call that grades one tree — a fixture's materialized mutation, or a
+// group's empty baseline, which is why fixtureDir and the pin are parameters rather than
+// read from the fixture. Both shapes come from here so a group's baseline can never drift
+// from the runs it is the yardstick for.
+//
+// A fixture bound to a contract package invokes that package's compiled test binary over
+// the tree; every other fixture spawns the inner gate around it.
+func subjectCall(fixture selected, subjectRoot, fixtureDir string, run sweepRun, pin phasePin) RunCall {
+	if fixture.pkg != "" {
+		return RunCall{
+			Kind:       RunBite,
+			Cwd:        contractPackageDir(run.root, fixture.pkg),
+			FixtureDir: fixtureDir,
+			Package:    fixture.pkg,
+			Binary:     run.binaries[fixture.pkg],
+			Env:        biteEnv(run.base, subjectRoot),
+		}
+	}
+	env := scopedEnv(run.gateEnv, fixture)
+	if phase := FixturePhase(fixture.family); pin == pinFamilyPhase && phase != "" {
+		env = append(env, PhaseEnv+"="+phase)
+	}
+	return RunCall{Cwd: subjectRoot, Gate: run.gate, FixtureDir: fixtureDir, Env: env}
+}
+
+// scopedEnv is env plus the conformance check the fixture's family binds. A run without
+// one carries no variable at all rather than an empty one, which names nothing and reds
+// the inner gate. The copy is what keeps concurrent runs from appending into one shared
+// backing array.
 func scopedEnv(env []string, fixture selected) []string {
 	out := append([]string(nil), env...)
 	if fixture.scope != "" {
 		out = append(out, registry.ConformanceCheckEnv+"="+fixture.scope)
 	}
-	if fixture.pkg != "" {
-		out = append(out, ContractPackageEnv+"="+fixture.pkg)
-	}
 	return out
 }
 
-// baselineEnv is the environment a group's empty-tree baseline runs under: the group's
-// own scope variables, plus the phase pin for a contract group. The pin belongs to the
-// baseline as much as to the fixture — a contract package narrows that one phase's argv,
-// so a baseline running the full inner gate would grade its group's EXPECTs against the
-// output of checks no fixture in the group runs.
-func baselineEnv(env []string, group selected) []string {
-	out := scopedEnv(env, group)
-	if group.pkg != "" {
-		out = append(out, PhaseEnv+"="+FixturePhase(group.family))
-	}
-	return out
+// biteEnv is the environment a compiled contract test binary is invoked under: the tree it
+// grades, and nothing else the gate would have read. No inner-gate marker, no phase pin,
+// and no conformance scope — there is no gate in this run to read any of them, and a
+// binary carrying them claims to be a nested gate to whatever reads them next.
+//
+// The width pin stays, because the sweep's worker budget still divides the machine by the
+// inner width: unpinned binaries running at full width in every worker would oversubscribe
+// the machine exactly as the nested gates did.
+func biteEnv(base []string, subjectRoot string) []string {
+	out := append([]string(nil), base...)
+	return append(out, SubjectRootEnv+"="+subjectRoot, innerWidthPin())
 }
 
-// innerEnv is the environment every inner gate of a tier's sweep runs under. The tier
-// is pinned rather than inherited: a fixture grades a check its own tier runs, so an
-// inner gate at any other tier skips that check and the fixture reports "did not bite"
-// forever. Every variable an inner gate may carry is scrubbed from the inherited
-// environment here — a strip without its matching set, or a set without its matching
-// strip, hands an ambient export control of what the sweep grades. The phase, the check
-// scope, and the contract package vary per run, so they are stripped here and set by the
-// caller that knows the run's fixture and group.
-func innerEnv(tier registry.Tier) []string {
-	env := make([]string, 0, len(os.Environ())+3)
+// innerWidthPin holds the budget arithmetic in one place: the divisor fixtureWorkers uses
+// and the width each run is pinned to have to be the same number, or the sweep sizes its
+// worker pool against a width nothing enforces.
+func innerWidthPin() string {
+	return fmt.Sprintf("GOMAXPROCS=%d", bounds.CanaryInnerWidth)
+}
+
+// sweepEnvKeys are the variables the sweep decides the value of for every call it makes.
+// The whole list is stripped from the inherited environment before any of it is set again:
+// Go's exec environment has no duplicate-key precedence, so a set without its matching
+// strip hands an ambient export control of what the sweep grades, and a strip without its
+// matching set leaves a run reading a value the sweep never chose.
+var sweepEnvKeys = []string{
+	"BENCH_KIT",
+	"BENCH_WRAPPER",
+	"BENCH_CANARY_INNER",
+	PhaseEnv,
+	registry.ConformanceTierEnv,
+	registry.ConformanceCheckEnv,
+	"GOMAXPROCS",
+	SubjectRootEnv,
+}
+
+// sweepEnv is the inherited environment with every sweep-controlled variable removed. It
+// is the base each call kind sets its own variables onto.
+func sweepEnv() []string {
+	env := make([]string, 0, len(os.Environ()))
 	for _, kv := range os.Environ() {
-		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, "BENCH_CANARY_INNER=") || strings.HasPrefix(kv, PhaseEnv+"=") || strings.HasPrefix(kv, ContractPackageEnv+"=") || strings.HasPrefix(kv, registry.ConformanceTierEnv+"=") || strings.HasPrefix(kv, registry.ConformanceCheckEnv+"=") || strings.HasPrefix(kv, "GOMAXPROCS=") {
+		if slices.ContainsFunc(sweepEnvKeys, func(key string) bool { return strings.HasPrefix(kv, key+"=") }) {
 			continue
 		}
 		env = append(env, kv)
 	}
-	return append(env, "BENCH_CANARY_INNER=1", registry.ConformanceTierEnv+"="+string(tier), fmt.Sprintf("GOMAXPROCS=%d", bounds.CanaryInnerWidth))
+	return env
 }
 
+// gateEnv is the environment every inner gate of a tier's sweep runs under. The tier is
+// pinned rather than inherited: a fixture grades a check its own tier runs, so an inner
+// gate at any other tier skips that check and the fixture reports "did not bite" forever.
+// The phase and the check scope vary per run, so they are left to the caller that knows
+// the run's fixture and group.
+func gateEnv(base []string, tier registry.Tier) []string {
+	out := append([]string(nil), base...)
+	return append(out, "BENCH_CANARY_INNER=1", registry.ConformanceTierEnv+"="+string(tier), innerWidthPin())
+}
+
+// runnerCommand is what a call of each kind actually executes. It is separate from the
+// runner that runs it so the dispatch can be graded without spawning anything: every other
+// assertion about the sweep runs through an injected fake, so a change that emitted the
+// right call metadata while still spawning a gate would satisfy all of them.
+func runnerCommand(call RunCall) *exec.Cmd {
+	switch call.Kind {
+	case RunCompile:
+		// -C rather than a working directory, so the package argument resolves against
+		// the swept module the same way the structural refusal resolves the binding.
+		cmd := exec.Command("go", "-C", call.Cwd, "test", "-c", "-o", call.Binary, contractPackagePrefix+call.Package)
+		cmd.Env = call.Env
+		return cmd
+	case RunBite:
+		cmd := exec.Command(call.Binary)
+		cmd.Dir = call.Cwd
+		cmd.Env = call.Env
+		return cmd
+	default:
+		cmd := exec.Command("bash", call.Gate)
+		cmd.Dir = call.Cwd
+		cmd.Env = call.Env
+		return cmd
+	}
+}
+
+// contractPackagePrefix is the import path a bound package's slash path hangs off, which
+// is the same directory contractPackageDir resolves to under the swept root.
+const contractPackagePrefix = "./internal/contract/"
+
 func defaultRunner(call RunCall) RunResult {
-	cmd := exec.Command("bash", call.Gate)
-	cmd.Dir = call.Cwd
-	cmd.Env = call.Env
+	cmd := runnerCommand(call)
 	r := subprocess.CaptureMerged(cmd)
 	output := r.Stdout
 	// A spawn failure (ProcessState nil) writes nothing, so append the error.

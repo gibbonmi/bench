@@ -146,6 +146,9 @@ func TestSweepCompletesEachGroupsBaselineBeforeItsFixtures(t *testing.T) {
 	var mu sync.Mutex
 	baselineDone := map[string]bool{}
 	runner := func(call RunCall) RunResult {
+		if result, done := stubCompile(call); done {
+			return result
+		}
 		group := callGroup(t, call)
 		mu.Lock()
 		defer mu.Unlock()
@@ -168,11 +171,12 @@ func TestSweepCompletesEachGroupsBaselineBeforeItsFixtures(t *testing.T) {
 }
 
 // callGroup names the scope group a call belongs to, which is the key the sweep pairs a
-// fixture with its baseline under.
+// fixture with its baseline under. A contract group's runs name their package on the call
+// itself, since a compiled bite carries no scope variables at all.
 func callGroup(t *testing.T, call RunCall) string {
 	t.Helper()
-	if pkg := soleValue(t, call, ContractPackageEnv); pkg != "" {
-		return contractGroupPrefix + pkg
+	if call.Package != "" {
+		return contractGroupPrefix + call.Package
 	}
 	return soleValue(t, call, registry.ConformanceCheckEnv)
 }
