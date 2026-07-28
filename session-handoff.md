@@ -2,9 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `a113719`, clean, 16 unpushed commits
-Spec: `specs/ft91-canary-compiled-bites.md` (Status: staged, approved)
-Gate: green at `56eedcc` — stale
+Branch: `main` — HEAD `57799ee`, 1 dirty path, 6 unpushed commits
+Spec: `specs/implement-spec-full-run.md` (Status: staged)
+Gate: green at `073cd6e` — stale, work tree `6e566d0`
 
 ## State
 
@@ -53,9 +53,7 @@ Gate: green at `56eedcc` — stale
 
 ## Next command
 
-`/bench-implement-spec specs/ft91-canary-compiled-bites.md` — approved, and the
-interactive path rather than `bench shift`, because stories 7 and 9 turn on judgment
-the gate can only grade red or green.
+`/bench-implement-spec — FT152, specs/implement-spec-full-run.md (staged, amended; the build is the only remaining action)`
 
 ## Shape
 
