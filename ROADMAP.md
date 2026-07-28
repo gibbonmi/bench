@@ -101,35 +101,18 @@ Entry: `/bench-shape-idea` on `decisions/gate-critical-path.md` #2 and #3.
 Sources: `IDEAS.md`, drained across prior runs;
 `decisions/cost-follows-project-size.md`.
 
-**FT152 (MEDIUM) — `/bench-implement-spec --full`: specced, staged, amended,
-unbuilt.** Spec: `specs/implement-spec-full-run.md` (staged, amended
-2026-07-28). The map `decisions/implement-spec-full-run.md` closed 2026-07-28
-and its slices A and B were confirmed as one spec: a `--full` route that carries
-the phase end to end — the build, then a fresh-context delegate charged with the
-standalone `/bench-review-implementation` contract, then the fix-don't-park rule
-and the verify-hook reinforcement — with the orchestrator writing the State
-section and refreshing the pin block through `bench handoff --next`, no CLI
-change. The post-approval amendment appended stories 11 through 15 in the same
-ownership fence: the run's diff fenced to the spec's stories, the exit report
-enumerating the coverage map row by row, phase claims citing their records, a
-cross-harness falsification offer on story 8's size trigger, and the
-warrant rule — a claim resting on a source outside the tree names what was read
-and what was not — landing in `.bench/BENCH.md`'s communication rules. Fifteen
-decisions are flagged for veto in the spec's own header, five joined by the
-amendment; those are its sign-off surface, not this row's.
-
-The row exists because the spec had no roadmap row, so nothing on the ambient
-board cross-checked it — the discrepancy class FT126 asks `bench roadmap
---context` to report. Both journal clauses it carried are now in the spec:
-story 3's verify hook holds the quantifier-discipline clause (a universal claim
-cites its enumeration or names itself a sample) and its measurement sibling (a
-claim over a whole set is verified by enumerating the set, not by extending one
-measured member — from the 110 s canary "regression" escalated while three
-green 167 s gates sat in the same table). A third journal verdict joined at
-this drain: the warrant-rule entry (a comparative claim rested on one side,
-half-read) closed as shipped into story 15 at reviewer instruction, so the
-build is what makes it enforced. Next action is the build. Source:
-`.bench/learnings.md`, verdicted here and at this drain.
+**FT152 (MEDIUM) — `/bench-implement-spec --full`: built, gate-green on
+`main`, awaiting the reviewer's veto pass.** Spec:
+`specs/implement-spec-full-run.md`, status `implemented` — the build landed
+2026-07-28 with the three-axis review's repairs and the cross-harness
+falsification fix in the same landing. What remains is reviewer action, not
+build: the fifteen veto-flagged decisions in the spec's own header are its
+sign-off surface, retirement is held for that pass, and the landed commits are
+unpushed. Next action: the veto pass, then `/bench-final-check` to push and
+`bench spec retire implement-spec-full-run`, which removes this row. Three
+follow-up defects the build and its falsification pass surfaced were drained
+2026-07-28: the story-12 row-accounting gap onto FT133, the anchor-mechanism
+weakness as FT156, and the falsification-trigger question parked as FT158.
 
 **FT154 (MEDIUM) — `craft-tickets`: the slice unit, mapped and ready to spec.**
 Map: `decisions/slice-unit.md`, closed 2026-07-28 with all eight tickets
@@ -148,11 +131,11 @@ double as the cheap-tier re-test `decisions/cost-follows-project-size.md` #6
 waits on. The `internal/spec` layout change is Go work, not prose — the map's
 Handoff enumerates the flat-path consumers and the retired-path watch-out.
 
-Entry: `/bench-write-spec` from the map, on a fresh mid-tier session, after
-FT152's build lands (its staged spec is the migration target and both builds
-edit `bench-implement-spec.md` — the map's dependency order). Kit edit under
-the `craft-synthesis` discipline. Sources: the map and its own `## Sources`
-section.
+Entry: `/bench-write-spec` from the map, on a fresh mid-tier session —
+unblocked 2026-07-28 now FT152's build has landed (its spec is the migration
+target and both builds edit `bench-implement-spec.md`, the map's dependency
+order). Kit edit under the `craft-synthesis` discipline. Sources: the map and
+its own `## Sources` section.
 
 **FT131 (MEDIUM) — a stale `dist/bench` is trusted by both the contract suites
 and the gate's own phase resolution.** The AXI and runtime contract suites
@@ -225,6 +208,16 @@ duplicating it. Related but distinct: FT124's skip-reasons face makes skips
 visible to a reader, while this row makes an invisible skip fail the coverage
 oracle. Source: `IDEAS.md`, drained here.
 
+A third face, drained 2026-07-28, is row identity rather than citation
+resolution: `bench coverage` emits only story/seam/red_signal, so a spec whose
+rows share all three — `implement-spec-full-run`'s three story-3 hook rows —
+cannot be enumerated row by row, and FT152's story-12 per-row accounting rule
+is unexecutable as specified. Either the emission gains a stable row identity
+(row number or the behavior field) or the rule names rows by story plus
+behavior off the spec's own map — decide it alongside the check, same owner.
+Found by the Codex falsification pass on `3eb1c9a`. Source: `IDEAS.md`,
+drained here.
+
 **FT129 (MEDIUM) — a panic in the inner test binary reads as a canary that
 stopped biting.** FT122's first gate went red as `canary
 'worktree-lifecycle-safety-bypassed' did not bite`, naming an untouched and
@@ -265,6 +258,23 @@ twin question rather than separately — both rule on what a baseline must run t
 mean what it claims. Entry: `/bench-shape-idea`. Sources: `IDEAS.md`, drained
 here; the `ft91-canary-compiled-bites` review S1, recoverable via `git show
 4429b05:reviews/ft91-canary-compiled-bites.md`.
+
+**FT156 (MEDIUM) — the anchor mechanism is weaker than its coverage rows
+claim.** Two faces from FT152's build, one owner (the conformance anchor
+checks), one decision. First, `requireCollapsed` does not strip HTML comments
+while `forbid` does, so any anchored guidance sentence can be commented out and
+still satisfy its anchor — the three new point-of-use verify hooks and every
+shared-rule marker included; fixing the asymmetry touches roughly 100 existing
+anchors across the kit, so it needs its own spec. The
+`shape-idea-bypass-wrapped` fixture proves the forbid direction only. Second,
+substring forbids die to paraphrase: "Plain invocation also starts the full
+run" evades the "by default" needle, and each of the ten `--full` forbids has a
+natural evading phrasing — the spec's coverage rows claim those pairs close the
+cheap wrong implementation, but they close one spelling of it. Either the rows
+state the weaker claim honestly or anchors get a stronger mechanism than
+substring matching; that ruling also decides how much the comment fix is worth,
+so both faces take one grill. Entry: `/bench-shape-idea`. Source: `IDEAS.md`,
+drained here; found by the Codex falsification pass on `3eb1c9a`.
 
 **FT116 (MEDIUM) — data races in `guards.Scan` the gate cannot see.** Running
 `internal/guards` under `-race` fails three tests on `main`:
@@ -729,7 +739,13 @@ the clause a stated precedence — name the fallback when delegation is
 unavailable for either reason — and decide alongside it whether a spec-doc-only
 correction (no code, no seams) is exempt outright, since routing prose edits
 through an isolated worktree costs more than it catches. Like the fifth, this
-clause reaches past always-loaded prose into a skill. Deliberately
+clause reaches past always-loaded prose into a skill. Ninth (drained
+2026-07-28 from `IDEAS.md`), shell wait-loop hygiene in `AGENTS.md`'s shell
+conventions: a wait-loop whose predicate matches its own command line never
+terminates — `until ! pgrep -f "codex exec"; do sleep 20; done` matches the
+loop's own bash process, and one such loop left an orphaned background process
+through the FT152 build. One line: wait on a PID or a sentinel file, never on
+a `pgrep` pattern the waiting command itself contains. Deliberately
 not batched here: FT130 (mid-gate
 `bench idea`) stays its own row because its preferred fix is mechanical, in
 the CLI rather than in this prose. Background:
@@ -1147,6 +1163,18 @@ entries leave the journal entirely, so every dated heading in it should carry
 the marker; grade that rather than restating the format a third time (FT147's
 shape). Source: observed at this drain, 2026-07-28.
 
+**FT157 (LOW) — a write-charge names every registration seam its new member
+must enter.** The FT152 build charged a delegate to add four canary fixtures
+and named the family→scope binding in the conformance registry as the gate
+layer, but not the per-fixture classification `canaryFixtureRegistry` requires;
+the delegate was correct against its charge and the full gate still went red on
+four `is unclassified` errors, costing one repair round. Extend
+`craft-delegate`'s "The charge" gate-layer clause: when a delegate adds a
+member to an enumerated or registered family, the charge names each registry
+the member must be entered in, found by grepping an existing sibling across
+the package rather than recalled. Kit edit under the `craft-synthesis`
+discipline. Source: `.bench/learnings.md`, verdicted here.
+
 **FT140 (LOW) — review residuals that want a verdict, not a build.** Calls
 from two resolution runs outlived their specs' retirement. The recurring one is
 the provenance question, now at three instances: a test that is the real
@@ -1275,6 +1303,19 @@ moves tree, manifest rows, and version stamp together, so the damage is
 bounded; graduate on an actual report of two upgrades interleaving badly, not
 before.
 
+**FT158 (parked pending evidence) — the cross-harness falsification pass is
+two-for-two against cleared reviews.** On both FT91's draft and FT152's build,
+a Codex falsification pass charged to refute rather than grade found a real
+defect after this repo's own three-axis review had cleared the surface — for
+FT152, a scope fence re-deriving the fix-don't-park boundary as
+path-width-based where `.bench/BENCH.md` sets it decision-based. FT152 ships
+the pass as an offer behind a judgment-sized trigger; two-for-two suggests the
+trigger sits too high, but two runs is not a measurement. Graduate on a third
+data point — or a run where the pass returns nothing — and if the pattern
+holds, the candidate rule is making the pass standing for kit-guidance diffs
+specifically, where a defect compounds through every session that loads the
+prose. Source: `.bench/learnings.md`, verdicted here.
+
 **FT24 (parked pending upstream) — Codex agent-line guard parity.** Researched
 2026-07-11: still not implementable on current Codex — delegation has no
 matchable `tool_name` on a deny-capable hook event, and `SubagentStart` cannot
@@ -1295,11 +1336,12 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT152, `specs/implement-spec-full-run.md`. Staged,
-   amended, map closed; the build is the only remaining action, and it lands
-   before FT154's build touches the same command file and migrates its spec.
+1. `/bench-final-check` — FT152 close-out: after the reviewer's veto pass on
+   `specs/implement-spec-full-run.md`, push the landed commits and retire the
+   spec; the build is on `main`, gate-green and unpushed.
 2. `/bench-write-spec` — FT154, from the closed `decisions/slice-unit.md`, on
-   a fresh mid-tier session; its build follows the map's dependency order.
+   a fresh mid-tier session; unblocked now FT152's build has landed, and its
+   build follows the map's dependency order.
 3. `/bench-shape-idea` — FT91, `decisions/gate-critical-path.md` #2 and #3.
    The prepared-artifact hoist is the last structural lever before the ≤60 s
    stop rule is judged; the gate's 167.3 s is still the dominant human cost on
