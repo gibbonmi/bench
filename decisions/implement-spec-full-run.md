@@ -99,7 +99,7 @@ run — offering: (1) continue with mid, (2) top tier via Claude CLI (fable),
 ## Out of scope
 
 - Making orchestration the default invocation (rejected in #2).
-- A new `/bench-build` wrapper command (rejected in #2).
+- A new `bench-build` wrapper command (rejected in #2).
 - A dedicated run-state file or per-spec status block (rejected in #3).
 - Auto-applying design-judgment review findings (rejected in #4).
 
