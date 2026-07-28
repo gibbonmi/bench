@@ -1,6 +1,6 @@
 # implement-spec-full-run
 
-Status: staged
+Status: implemented
 
 Map: `decisions/implement-spec-full-run.md` (closed, commit 9a5d2e4). Slicing
 confirmed with the reviewer 2026-07-28: the map's slices A and B land as one
