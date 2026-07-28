@@ -58,6 +58,15 @@ stays here. Don't pre-slice fog into ticket-sized pieces.>
 
 <work ruled beyond the destination — one line each. Unlike fog it never
 graduates; a line here stops a later session reopening it.>
+
+## Sources
+
+<required whenever a ticket's answer rests on files outside the map: each
+source read, with one clause of what it fed which decision, so pickup is one
+hop instead of a re-derivation. Flag paths as drift-prone rather than
+trusted — a vendored repo or tree file moves, so citations are re-verified
+before being cited onward. A map whose every answer came from live grilling
+writes `n/a — all decisions grilled in-session`.>
 ```
 
 Each ticket is sized to one focused session. Four kinds:
