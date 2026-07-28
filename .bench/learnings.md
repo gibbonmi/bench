@@ -24,3 +24,11 @@ What happened: the gate-critical-path map predicted post-scoping solo canary at 
 Right behavior: a scoping floor estimate should key on the largest bound package's suite time inflated to the inner width, not on the observed straggler of the pre-change mix.
 
 Proposed rule change: none — map-authoring judgment, not a kit rule; fold into the next gate-critical-path re-measure (map #5) when stage 2 lands.
+
+## 2026-07-28 — sampled one, claimed all (FT91 C1 consultation)  [open]
+
+What happened: the FT91 stage-2 worker measured one contract group (axi: exit 0, all tests skip on the empty baseline), silently generalized that to all five groups, and classified 20 mutation-specific EXPECTs as vacuity-safe from string shape without running them. Independent measurement showed 4 of 5 groups exit 1 on the empty tree and 6 of the 20 flag vacuous under the proposed baseline — overturning both fix routes built on the extrapolation. Half the leap was flagged as unverified; the load-bearing half (exit-0 generalizes) was silent, and a design (the tripwire) was proposed on top of it.
+
+Right behavior: a claim quantified over an enumerable set ("no fixture can", "all groups skip", "the 20 are safe") is verified by enumerating the set — or explicitly labeled a sample with the unmeasured remainder named — before any design is built on it. Enumeration here cost five compiles and ten binary runs.
+
+Proposed rule change: name the quantifier discipline at two points — the verify hook story 3 of `specs/implement-spec-full-run.md` (staged) adds to `/bench-implement-spec` and `/bench-review-implementation`, and `craft-review`'s citation standard: a universal claim cites its enumeration or names itself a sample. Applied 2026-07-28 at reviewer direction, ahead of the drain: story 3 amended, citation standard extended, `craft-review` named the clause's one source. Entry stays open for the drain's verdict only.

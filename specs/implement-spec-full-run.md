@@ -88,10 +88,13 @@ contradicted elsewhere in the same file.
 3. As a session entering a grill, an implementation, or a review, I meet a
    one-clause verify hook at the point of use: `/bench-shape-idea` tells me to
    look a fact up in the tree before asking about it, `/bench-implement-spec`
-   tells me to verify a claim against the tree rather than memory, and
-   `/bench-review-implementation` tells me a finding cites what I read now, not
-   what I recall. The Roles sentence stays where it is; each hook points at the
-   moment, not at a restated rule. Line: gpt-5.6-sol / high. Three phase-command
+   tells me to verify a claim against the tree rather than memory — and a claim
+   over a whole set by enumerating the set, not by extending one measured
+   member — and `/bench-review-implementation` tells me a finding cites what I
+   read now, not what I recall, and that a universal claim cites its
+   enumeration or names itself a sample. The Roles sentence stays where it is;
+   each hook points at the moment, not at a restated rule, and the quantifier
+   clause's source is `craft-review`'s citation standard. Line: gpt-5.6-sol / high. Three phase-command
    edits are guidance prose whose defect is invisible to the gate and multiplies
    through every session that loads them.
 

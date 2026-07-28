@@ -74,6 +74,13 @@ A finding without a citation is an opinion.
 - Coverage: the input or state, the expected break, and the row or test that
   should exist.
 
+One rule cuts across the axes: a universal claim without an enumeration is a
+sample. A finding quantified over a set — "no caller", "every fixture", "all N
+are safe" — cites the enumeration of that set (the grep over all of it, the
+per-member run), not one measured member extended to the rest. A claim that was
+sampled says so and names the unmeasured remainder, and nothing is built on the
+extrapolated part.
+
 ```
 Spec: story 4 asks "adapter refuses an unbound BENCH_MODEL"; the diff guards
 claude and codex but not opencode — no guard call in the opencode adapter.
