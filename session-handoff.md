@@ -2,51 +2,59 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `5f9e997`, clean tree, 1 unpushed commit
-Spec: none staged.
-Gate: green at `a9aeffc` — stale, work tree `448815b`
+Branch: `main` — HEAD `0dd9c83`, clean tree, 6 unpushed commits
+Spec: `specs/ft91-artifact-build-tiering.md` (Status: staged)
+Gate: green at `85e757e` — stale, work tree `fa03401`
 
 ## State
 
-- **The drain closed and is unpushed.** Commit `5f9e997` reconciled the board,
-  emptied `IDEAS.md`, cleared `.bench/learnings.md`, and retired
-  `specs/ft148-worktree-orphan-retirement.md`. Both capture sources are at zero
-  and `bench roadmap --context` parses clean. The reviewer approved the batch and
-  owns the push.
-- **FT148 shipped and its residue moved to FT98.** Orphan retirement works, but
-  the session-start wall is only partly gone: 21 recovery refs and the 17
-  assignment rows holding them survive because compaction correctly declines rows
-  that preserve work. `bench worktree recovery <ref>` returns `retain … unlanded`
-  on a sampled ref. That is FT98's landed-proof, now recorded in its face one as
-  current evidence — not a defect in what FT148 built.
-- **Two learnings became FT107 clauses seven and eight.** The review-pickup
-  commit is reworded from a buried subordinate clause into its own ordered step,
-  and "Route the venue" gets a precedence clause for a harness that *may not*
-  spawn a write subagent — `craft-delegate` covers only *cannot*. Both are kit
-  prose, built later under `craft-synthesis`. The drained `bench gate pin`
-  discoverability idea is FT150 (LOW).
-- **`ft91-gate-phase-split` stays unretired on purpose,** so `bench status` will
-  keep reporting one spec awaiting retirement until the reviewer rules. Retiring
-  it destroys the veto surface on stories 4, 5, and 9: stories 4 and 5 shipped as
-  *probed* phases instead of the kit-owned `.bench/phases.json` the spec named,
-  and story 9 — that manifest — is unbuilt. The matching roadmap row is the
-  `roadmap` signal's "1 row for merged work"; both clear together when the
-  reviewer decides.
-- **Three FT148 review findings were accepted as residual risk, not fixed,** and
-  each is a design change the reviewer owns rather than a regression: `lineSafe`
-  admits display-hostile non-control runes, the sweep grades `residualAssignment`
-  against a snapshot taken outside the ledger lock, and interrupt-mid-sweep has no
-  fault injection.
-- **One recovery ref still wants a by-hand look:**
-  `refs/bench/recovery/incident-20260712-ambient-probe` matches no assignment.
+- **`specs/ft91-artifact-build-tiering.md` is staged and reviewer-approved.**
+  Ten stories, three seams, sixteen coverage rows, `bench coverage --check`
+  green. Nothing of it is built yet. Six commits are unpushed; the reviewer owns
+  the push.
+- **It re-tiers release-build hermeticity out of the dev gate.**
+  `scripts/build-artifacts.sh` gains one posture switch whose *absence* is
+  hermetic — that polarity is the whole safety argument, and inverting it would
+  let a release build inherit dev posture silently. Under the opt-in the script
+  honors ambient Go caches and skips the reproducibility second build; the
+  two-build proof stays on the ship tier, where `release-evidence-probe`
+  (`Tier: Ship`) already validates it.
+- **Four decisions in the spec are the author's, not the map's, and are flagged
+  in it for veto:** the token name `BENCH_SHARED_BUILD_CACHE=1`, using the
+  `internal/preprelease` unit seam instead of the conformance check the Handoff
+  named, *deleting* a stale `reproducibility.json` (the spec's only destructive
+  file operation), and setting the opt-in in `TestMain` per package.
+- **A top-tier falsification pass returned BLOCK on the first draft and every
+  finding verified against the tree.** The revision replaced three coverage rows
+  whose red signal could not fire, a citation that matched no test and exited 0,
+  and a rollback injection that fired before the block it claimed to test. The
+  `GOPROXY=off` lever is now the discriminator for four separate failures. Do not
+  re-loosen those rows.
+- **Measured baselines, for judging whether the build worked:** artifact suite
+  133.5 s and surface suite 115.5 s before; a cold-cache build is 4.79 s against
+  0.20 s warm. The artifact suite fell to 73.2 s with a shared cache in a
+  throwaway probe.
+- **The ~73 s residual is already diagnosed and parked in `IDEAS.md`** — it is
+  invocation count, not packing cost. Out of scope for this spec by reviewer
+  decision, because which tests may share an artifact set is a test-isolation
+  call.
+- **One blocker for the build session.** `/bench-implement-spec` requires
+  assigning write work to a subagent before the first edit, and this repo's
+  recent sessions carry a standing instruction forbidding the Agent tool unless
+  the reviewer asks. Get a yes or a no on delegates before starting. The
+  unresolved rule conflict is `.bench/learnings.md`'s territory and is already
+  queued as FT107's eighth clause.
+- **`ft91-gate-phase-split` stays unretired on purpose,** so `bench status` keeps
+  reporting one spec awaiting retirement and one roadmap row for merged work
+  until the reviewer rules on its stories 4, 5, and 9.
 
 ## Next command
 
-`/bench-debug` — FT91's next arm, the top of the refreshed sequence. Slice C's
-premise was falsified: the whole gate is unchanged at ~4m51s and the critical
-path is `internal/contract/surface/artifact` (~207 s) and
-`internal/contract/surface` (~178 s), untouched by any of the six arms. Ask why
-those two cost what they cost before assuming a pipeline shape.
+`/bench-implement-spec specs/ft91-artifact-build-tiering.md` — in a fresh
+mid-tier session, per the spec's approval. Not `bench shift`: the coverage map is
+not fully gate-observable (story 8 is honestly marked not-TDD-able, story 9's
+proof is ship-tier-only), so it fails `craft-line`'s venue-routing test for an
+unattended run.
 
 ## Shape
 
