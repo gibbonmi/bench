@@ -285,3 +285,24 @@ re-test evidence `decisions/cost-follows-project-size.md` #6 waits on.
 Dependency order: FT152's build lands first (flat layout, unchanged); then
 this map's build — CLI layout + migration before the skill/phase/table prose
 that names the folder form. Slicing within that is the reviewer's call.
+
+## Sources
+
+Read in full for this map, 2026-07-28. The reference repo is vendored at
+`~/workspace/reference-skill-repos/skills`; paths under it may drift with the
+vendor, tree paths with the tree — re-verify before citing onward.
+
+- `skills/engineering/to-tickets/SKILL.md` (vendored) — the ticket template,
+  frontier rule, and wide-refactor expand–contract; the model for #1, #3, #4.
+- `skills/engineering/to-spec/SKILL.md` (vendored) — the spec-as-parent /
+  tickets-as-children interaction #3's folder layout mirrors.
+- `skills/engineering/implement/SKILL.md` and `skills/engineering/tdd/SKILL.md`
+  (vendored) — the loop rules; confirmed they mirror what `craft-tdd` and the
+  phase already carry, so nothing was borrowed from them.
+- `.agents/commands/bench-implement-spec.md` — the venue routing whose
+  write-delegate boundary is #5's reset, and the file the breakdown step edits.
+- `.agents/skills/bench-craft-spec/SKILL.md` — the ownership fence #1 keeps
+  orthogonal and the expand–contract rule Out of scope points at.
+- `internal/spec/spec.go`, `internal/spec/history.go` — the flat-path
+  consumers #7 enumerates (resolution fallback, `Facts` glob, retire
+  validation, history's literal pathspec).
