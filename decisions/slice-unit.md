@@ -28,7 +28,12 @@ can land committed on a green gate by itself. The gate grades it — a commit
 either lands green or the group wasn't a ticket. Context fit is the sizing
 heuristic that says "split further"; it never grades anything. The ownership
 fence stays orthogonal: fences say who writes where, tickets say what lands
-green next.
+green next. Verticality is part of the definition, not inherited from phase
+prose (reviewer-confirmed 2026-07-28): a ticket is a tracer bullet — a small,
+tightly related scope cutting a narrow but complete path through the layers,
+demoable or verifiable on its own — so a horizontal green grouping (one
+layer, or tests without behavior) does not qualify however green it lands.
+"Fits one context" is the consequence of small-and-cohesive, never the rule.
 
 ## #2: Which file owns the breakdown procedure?
 

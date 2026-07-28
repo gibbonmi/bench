@@ -131,73 +131,44 @@ half-read) closed as shipped into story 15 at reviewer instruction, so the
 build is what makes it enforced. Next action is the build. Source:
 `.bench/learnings.md`, verdicted here and at this drain.
 
-**FT154 (MEDIUM) — `craft-tickets`: a slice unit sized to one context window.**
-Bench sizes slices by *ownership fence* — `craft-spec`'s rule that each slice owns
-every file it edits and edits every file it owns, shipped as FT136 — which
-guarantees two delegates never collide and says nothing about whether a slice fits
-one session. Nothing in the kit sizes work by context. A spec that is one ownership
-fence is one slice by that rule whether it carries three stories or fourteen, so
-the build working it accumulates a single context across the whole span and the
-last story is written by the most drifted context in the run. That is the same
-failure `specs/implement-spec-full-run.md` story 5 closes for the review phase —
-the context that produced the code carries the assumptions that produced its
-bugs — left open for the build phase.
+**FT154 (MEDIUM) — `craft-tickets`: the slice unit, mapped and ready to spec.**
+Map: `decisions/slice-unit.md`, closed 2026-07-28 with all eight tickets
+resolved — the map is the one source for the decisions, so this row carries
+only status. The decided shape in one line each: a ticket is the smallest
+independently-green story group (the gate grades it; context fit is the
+heuristic); specs move to per-spec folders (`specs/<slug>/spec.md` +
+`tickets/`), folder-only with one migration, ticket files convention-only in
+v1; `/bench-implement-spec`'s first act writes the tickets, a new
+`craft-tickets` skill owns the unit, and the unspecced light path is the
+one-ticket degenerate case; one ticket = one write-delegate charge, checkboxes
+mark done; FT107's light-path table folds into this build; `craft-line` gains
+the per-stage line defaults (orchestrate mid, implement cheap at medium,
+review mid at high, ladder and leverage override intact), whose first builds
+double as the cheap-tier re-test `decisions/cost-follows-project-size.md` #6
+waits on. The `internal/spec` layout change is Go work, not prose — the map's
+Handoff enumerates the flat-path consumers and the retired-path watch-out.
 
-The reference implementation is `to-tickets` in `mattpocock/skills`, vendored at
-`~/workspace/reference-skill-repos/skills` and read 2026-07-28: a ticket is a
-tracer-bullet vertical slice that cuts a narrow but complete path through every
-layer, is demoable or verifiable on its own, is sized to fit a single fresh context
-window, and declares the tickets that block it. Sessions work the frontier — any
-ticket whose blockers are all done — one at a time, clearing context between
-tickets.
+Entry: `/bench-write-spec` from the map, on a fresh mid-tier session, after
+FT152's build lands (its staged spec is the migration target and both builds
+edit `bench-implement-spec.md` — the map's dependency order). Kit edit under
+the `craft-synthesis` discipline. Sources: the map and its own `## Sources`
+section.
 
-Three sizing axes, of which Bench has one. Ownership fence, which it has, answers
-who writes where. Independent green, which it lacks, answers whether a slice can
-land committed on a green gate by itself — Bench's TDD unit is the coverage row,
-which goes deliberately red first, so neither a row nor a story is a commit
-boundary. Context window, which it lacks, answers whether one session can hold the
-slice. A ticket is the unit where all three hold at once, and it is a different
-unit from both the coverage row beneath it and the spec above it.
-
-Reviewer-stated shape, 2026-07-28: the breakdown belongs inside
-`/bench-implement-spec` rather than in a separate ticket phase, and that same
-breakdown is the short path for quick changes — a small change decomposes to one
-ticket, so the light route is the general route's degenerate case rather than a
-second mechanism carrying its own threshold. That makes this row the slicing half
-of FT107's first clause, which owns the light-path table (change shape → the path
-it takes → the escalation trigger). The two decide one boundary from opposite
-sides and must land consistent: FT107 bounds the light path by blast radius, and
-this row would let "decomposes to one ticket" be the observable that blast radius
-is approximating. Decide this row's unit first, then sequence FT107's table behind
-it or fold the two.
-
-Open questions, every one a reviewer call. Whether a ticket becomes an artifact —
-his route writes `tickets.md` — or stays in-session: Bench already carries the spec
-and the coverage map, so a third enumeration of the same work is the
-knowledge-duplication defect the code standard names, and deriving tickets from
-coverage rows is the cheaper shape. How "fits one context window" is made
-observable rather than a vibe, since an unfalsifiable sizing rule is the defect
-FT107's second clause names about "read the surrounding code before you write".
-Whether blocking edges are declared per story or computed from the seams the
-stories touch. And whether a context reset actually happens between tickets, which
-is both the payoff and the constraint that makes ticket text load-bearing — a reset
-is only safe if the next ticket is resumable from its own text, which is invariant
-3 applied at slice granularity. The staged `--full` route is that question's first
-consumer: a `--full` run accumulates one context across all stories — the same
-failure its story 5 closes for review, left open for the build — so a reset at
-story-group boundaries inside the run is this decision applied to the route the
-kit already carries, not a separate mechanism.
-
-Not in scope: the wide-refactor exception. `craft-spec` already carries
-expand–contract for the blast-radius class no vertical slice can hold green, and
-`to-tickets` carries the same rule, so this row points at the existing one rather
-than growing a second copy.
-
-Entry: `/bench-shape-idea` — the unit, the artifact question, and the FT107
-boundary are all decisions before anything is specced. Kit edit under the
-`craft-synthesis` discipline. Sources: `IDEAS.md`, both slicing lines drained
-here; `specs/implement-spec-full-run.md`, whose fifteen stories inside one
-ownership fence are the instance that surfaced it.
+**FT155 (MEDIUM, reviewer-expedited) — `/bench-shape-idea` maps carry a
+`## Sources` section.** A closed map's claims rest on reads a fresh session
+cannot reconstruct: `decisions/slice-unit.md` cited six sources (the vendored
+`to-tickets` family, two tree files) only after the reviewer asked, and
+without them pickup means re-deriving which files hold the evidence. Add a
+`## Sources` section to the map template in
+`.agents/commands/bench-shape-idea.md` (with its `.claude/commands/` mirror):
+read sources with one clause of what each fed, required whenever a ticket's
+answer rests on files outside the map, paths flagged as drift-prone rather
+than trusted. Consistent with the staged warrant rule (FT152's story 15) — the
+map is where external-source claims become reviewer decisions, so the warrant
+belongs on the artifact. Reviewer-directed 2026-07-28: roll in ASAP; small
+enough for the direct fix-and-gate path under the `craft-synthesis` loops,
+flagged here rather than silently taken. Source: `.bench/learnings.md`,
+verdicted at this drain; `decisions/slice-unit.md` is the exemplar.
 
 **FT131 (MEDIUM) — a stale `dist/bench` is trusted by both the contract suites
 and the gate's own phase resolution.** The AXI and runtime contract suites
@@ -672,18 +643,15 @@ discipline. Background: `docs/reporesident-distillation.md` §1 and §5.
 always-loaded-prose diff.** Three rows edited the same standing-guidance
 surface — `.bench/BENCH.md` and the phase prose beside it — and collapse into
 one batched kit edit under the `craft-synthesis` discipline: one spec, one
-review, one gate. First, the right-sizing table (this row's original charge).
-`.bench/BENCH.md` says a few-line change doesn't need the full pipeline and
-that you may propose a lighter path but must get an explicit OK first — so
-every small change costs a round trip that the same paragraph already licenses
-away ("if I give you a standing rule for changes of a given size, follow it
-and stop asking"), yet no standing rule has ever been written. Write the table
-beside that paragraph: change shape → the path it takes → the trigger that
-forces escalation back to the full pipeline; no new phases and no new files.
-Bound the light path by blast radius rather than file count — a change
-crossing a declared seam takes the full pipeline, a change strictly inside one
-is a light-path candidate — and carry one escalation trigger on an observable
-rather than on self-assessed confidence: a small stated read budget spent
+review, one gate. First, the right-sizing table — this row's original charge,
+now moved: `decisions/slice-unit.md` #6 (reviewer-decided 2026-07-28) folds
+the table into FT154's build, with "decomposes to one independently-green
+ticket that crosses no declared seam" as its blast-radius observable, so this
+row no longer builds the table and its batch is the remaining clauses.
+For the record the clause carried: `.bench/BENCH.md` licenses a standing rule
+for small changes yet none was ever written, and the table's escalation
+trigger rides an observable
+rather than self-assessed confidence: a small stated read budget spent
 without naming the cause with evidence reroutes to `/bench-debug`, not onward
 through the patch. Second (was FT110), two generation-shaping clauses on an
 observable. Invariant 4's "read the surrounding code before you write" is true
@@ -1343,18 +1311,14 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT154, the slice unit. Reviewer-prioritized
-   2026-07-28: slicing belongs inside `/bench-implement-spec` with the light
-   path as its degenerate case, and the unit decision bounds both FT107's
-   light-path table and how the staged `--full` route resets context — so the
-   map comes before the build that edits the same command file.
+1. `/bench-implement-spec` — FT155, the map `## Sources` template edit.
+   Reviewer-expedited: one prose section in `bench-shape-idea.md` plus its
+   mirror, direct fix-and-gate under the `craft-synthesis` loops — minutes of
+   work, and every map closed after it carries its warrant.
 2. `/bench-implement-spec` — FT152, `specs/implement-spec-full-run.md`. Staged,
-   amended, map closed; the build is the only remaining action, and landing it
-   after FT154's map lets the `--full` section agree with the slice unit
-   instead of being rewritten a week later.
-3. `/bench-shape-idea` — FT91, `decisions/gate-critical-path.md` #2 and #3. The
-   gate is 167.3 s, bound by one 140.9 s contract package; the
-   prepared-artifact hoist is the last structural lever before the ≤60 s stop
-   rule is judged, and it opens with a test-independence ruling. The gate's
-   length is still the dominant human cost on this board — it yields the top
-   slot only on the reviewer's 2026-07-28 direction.
+   amended, map closed; the build is the only remaining action, and it lands
+   before FT154's build touches the same command file and migrates its spec.
+3. `/bench-write-spec` — FT154, from the closed `decisions/slice-unit.md`, on
+   a fresh mid-tier session. FT91's gate map (`gate-critical-path.md` #2/#3)
+   re-enters the top three once these land — the gate's 167.3 s is still the
+   dominant human cost on the board.
