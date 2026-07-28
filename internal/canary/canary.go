@@ -369,9 +369,10 @@ type selected struct {
 // never collide with a conformance check that happens to share its name.
 const contractGroupPrefix = PhaseContract + ":"
 
-// group names the vacuity baseline this fixture's EXPECT is graded against. Fixtures of
-// one group run the same checks, so a baseline of any other group both misses a genuinely
-// vacuous EXPECT and flags a sound one.
+// group names the baseline this fixture's EXPECT is graded against. Fixtures of one
+// group run the same checks, so another group's baseline is output no run in this group
+// can produce; what the comparison does and does not establish is stated on
+// scopeBaselines.
 func (s selected) group() string {
 	if s.pkg != "" {
 		return contractGroupPrefix + s.pkg
@@ -562,22 +563,38 @@ func contractBinaryName(pkg string) string {
 }
 
 // scopeBaselines runs one empty-tree run per scope group the sweep grades, and
-// returns each group's output for the vacuity comparison. A fixture's EXPECT is
-// compared against a run of its own shape: another group's baseline executes different
-// checks, so it would both miss a genuinely vacuous EXPECT and flag a sound one. The
-// key is the group each fixture resolves to, which keeps every unscoped fixture on the
-// single full baseline they share today.
+// returns each group's output for the baseline comparison. A fixture's EXPECT is
+// compared against a run of its own shape; the key is the group each fixture resolves
+// to, which keeps every unscoped fixture on the single full baseline they share today.
+//
+// For a contract group the comparison is a collision screen, not a vacuity check. The
+// empty tree is a degenerate tree, not an unmutated twin of any fixture's: a baseline
+// match means the EXPECT collides with the infrastructure noise a test binary emits
+// over a tree it cannot grade — missing files, exit-status text — and a miss says
+// nothing about whether the fixture's mutation is what makes the EXPECT appear.
+// Mutation-specificity would take a per-fixture unmutated twin, which no group has.
+// The screen stays because it costs one run per group and rejects an EXPECT sloppy
+// enough to match that noise. Nothing reads a baseline's exit code, and nothing may
+// start to: the groups share no exit shape — one whose tests all skip over a
+// subjectless tree exits green, one whose tests reach the tree reds loudly — so any
+// invariant keyed on it is broken on arrival.
 //
 // A group whose baseline prints nothing is an error rather than a group that runs on:
-// the vacuity test asks whether the baseline output already contains the EXPECT, and
+// the baseline check asks whether the baseline output already contains the EXPECT, and
 // an empty output contains none of them, so every fixture in that group would clear
 // the check unguarded while the other groups stayed graded. Errors for all such groups
 // are reported together, matching how the sweep reports its fixture failures.
 //
 // Each group is represented by one of its own fixtures, so a baseline call is built by
-// the same function that builds its fixtures': a baseline of a different shape — a wider
-// set of checks, or a gate spawn where the group's fixtures invoke a test binary — grades
-// its group's EXPECTs against output no fixture in the group can produce.
+// the same function that builds its fixtures': a baseline of a different scope, or a gate
+// spawn where the group's fixtures invoke a test binary, grades its group's EXPECTs
+// against output no fixture in the group can produce.
+//
+// The phase pin is the one axis where the two deliberately part — a baseline runs the
+// whole inner gate even where its group's fixtures are each pinned to a single phase —
+// because the two directions fail differently. A baseline narrower than the runs it
+// grades passes every vacuous EXPECT in its group in silence; a wider one at worst calls
+// a sound EXPECT vacuous, which is a red someone reads.
 func scopeBaselines(fixtures []selected, run sweepRun, runner Runner) (map[string]string, error) {
 	var scopes []selected
 	seen := map[string]bool{}
@@ -607,7 +624,7 @@ func scopeBaselines(fixtures []selected, run sweepRun, runner Runner) (map[strin
 
 	outputs := make([]string, len(scopes))
 	eachIndex(len(scopes), func(idx int) {
-		outputs[idx] = runner(subjectCall(scopes[idx], dirs[idx], "", run)).Output
+		outputs[idx] = runner(subjectCall(scopes[idx], dirs[idx], "", run, noPhasePin)).Output
 	})
 
 	baselines := make(map[string]string, len(scopes))
@@ -715,7 +732,7 @@ func runFixture(fixture selected, baselineOutput string, run sweepRun, runner Ru
 		return fmt.Sprintf("canary '%s' setup failed: %v", name, err)
 	}
 	_ = gitInit(work)
-	result := runner(subjectCall(fixture, work, fx, run))
+	result := runner(subjectCall(fixture, work, fx, run, pinFamilyPhase))
 	if result.ExitCode == 0 || !strings.Contains(result.Output, expect) {
 		return fmt.Sprintf("canary '%s' did not bite (want red + %q; got exit %d)", name, expect, result.ExitCode)
 	}
@@ -906,14 +923,26 @@ func restoreDotSegments(root string) error {
 	return nil
 }
 
+// phasePin says whether a subject call narrows its inner gate to the one phase the
+// fixture's family names. Only a mutated tree is graded that narrowly: a baseline pinned
+// to a phase prints a fraction of what the empty tree can produce, so an EXPECT the full
+// run already emits goes unflagged and every fixture in the group clears the vacuity
+// check unguarded.
+type phasePin bool
+
+const (
+	pinFamilyPhase phasePin = true
+	noPhasePin     phasePin = false
+)
+
 // subjectCall is the call that grades one tree — a fixture's materialized mutation, or a
-// group's empty baseline, which is why fixtureDir is a parameter rather than read from the
-// fixture. Both shapes come from here so a group's baseline can never drift from the runs
-// it is the yardstick for.
+// group's empty baseline, which is why fixtureDir and the pin are parameters rather than
+// read from the fixture. Both shapes come from here so a group's baseline can never drift
+// from the runs it is the yardstick for.
 //
 // A fixture bound to a contract package invokes that package's compiled test binary over
 // the tree; every other fixture spawns the inner gate around it.
-func subjectCall(fixture selected, subjectRoot, fixtureDir string, run sweepRun) RunCall {
+func subjectCall(fixture selected, subjectRoot, fixtureDir string, run sweepRun, pin phasePin) RunCall {
 	if fixture.pkg != "" {
 		return RunCall{
 			Kind:       RunBite,
@@ -925,7 +954,7 @@ func subjectCall(fixture selected, subjectRoot, fixtureDir string, run sweepRun)
 		}
 	}
 	env := scopedEnv(run.gateEnv, fixture)
-	if phase := FixturePhase(fixture.family); phase != "" {
+	if phase := FixturePhase(fixture.family); pin == pinFamilyPhase && phase != "" {
 		env = append(env, PhaseEnv+"="+phase)
 	}
 	return RunCall{Cwd: subjectRoot, Gate: run.gate, FixtureDir: fixtureDir, Env: env}

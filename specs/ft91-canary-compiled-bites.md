@@ -1,6 +1,6 @@
 # ft91-canary-compiled-bites
 
-Status: staged
+Status: implemented
 
 Compiled from `decisions/gate-critical-path.md` (#7, resolved 2026-07-28) — FT91's
 eighth arm, stage 2. Stage 1 (`ft91-canary-contract-scoping`) shipped and is retired;
@@ -60,11 +60,18 @@ compiles in 0.5 s warm, and the resulting binary run against the materialized
    Line: gpt-5.6-terra / medium. A subject root that leaked between concurrent
    invocations would produce a green that means nothing, which is oracle logic.
 
-4. As the reviewer, I want each contract group's vacuity baseline to run the identical
-   compile-and-invoke shape against an empty tree, so the scoped-vs-scoped comparison
-   keeps the meaning stage 1 gave it.
+4. As the reviewer, I want each contract group's baseline to run the identical
+   compile-and-invoke shape against an empty tree, so an EXPECT that collides with the
+   infrastructure noise a test binary emits over a tree it cannot grade is screened out.
+   That screen is all the empty-tree comparison establishes for this family — vacuity
+   checking is not live here, and was not live before either, when the same empty tree
+   sat under a phase-narrowed gate — because an empty tree is a degenerate tree, not an
+   unmutated twin of any fixture's. What the comparison does and does not establish is
+   stated on the baseline comparison in `internal/canary`.
    Line: gpt-5.6-terra / medium. A baseline whose shape differs from its group's fixtures
-   silently breaks vacuity in both directions, which is the map's named watch-out.
+   emits output no fixture in the group can produce, so the collision screen compares
+   against the wrong noise in both directions — matching what the group never prints,
+   missing what it does — and a silently wrong screen is oracle logic.
 
 5. As the reviewer, I want a package group whose test binary fails to compile — or whose
    compile produces no binary at all — to red naming that package, never to be skipped.
@@ -288,9 +295,9 @@ Gate command: the project gate, `bench gate`.
 | 2 | every fixture in a group is invoked with that group's binary | seam A, recording runner | new test asserting each invocation's binary path equals its group's compile output; reds if the paths are per-fixture or crossed | a per-group compile whose output nobody reuses is the same waste wearing the right call count |
 | 3 | each invocation carries its own fixture's materialized tree as the subject root | seam A, recording runner | new test asserting the subject-root value per invocation is that fixture's own work directory and distinct across fixtures; reds on a shared or empty value | a shared root would grade every fixture against one tree, so 32 of 33 would report did-not-bite — or worse, all 33 would bite for one fixture's reason |
 | 3 | an ambient export of the subject-root variable does not reach a bite invocation | seam A, recording runner | new test exporting the variable in the test process and asserting exactly one occurrence per invocation env, carrying the sweep's value | Go's exec environment has no duplicate-key precedence, so a set without its matching strip hands an ambient export control of what every fixture grades |
-| 4 | one baseline invocation per package group, in the same shape as the group's fixtures | seam A, recording runner | new test asserting baseline invocation count equals group count and each baseline carries its group's binary; reds on a single shared baseline or a gate-spawn baseline | a baseline running a different shape both misses a genuinely vacuous EXPECT and flags a sound one, which is the map's named watch-out |
+| 4 | one baseline invocation per package group, in the same shape as the group's fixtures | seam A, recording runner | new test asserting baseline invocation count equals group count and each baseline carries its group's binary; reds on a single shared baseline or a gate-spawn baseline | a baseline running a different shape emits output no fixture in the group can produce, so the collision screen compares against the wrong noise in both directions — matching what the group never prints, missing what it does |
 | 4 | contract groups do not fold into the unscoped baseline legacy flat fixtures share | seam A, recording runner | new test with a behavior-owned group and a legacy flat fixture in one tree, asserting the unscoped baseline count stays at one and the contract group gets its own | the existing unscoped-baseline test builds no behavior-owned group at all, so it cannot see this folding; a map claiming it as covered would grade nothing |
-| 4 | a contract group whose baseline produces no output is a red naming the group | seam A, fake runner returning empty baseline output | new test driving the empty output through a behavior-owned group under the compiled shape; reds if the refusal is bypassed on the new path | the existing empty-baseline test exercises conformance groups through the gate-spawn path, so the compiled path could route around the refusal and still pass it — and an empty baseline contains no EXPECT, so every fixture in that group would clear vacuity unguarded |
+| 4 | a contract group whose baseline produces no output is a red naming the group | seam A, fake runner returning empty baseline output | new test driving the empty output through a behavior-owned group under the compiled shape; reds if the refusal is bypassed on the new path | the existing empty-baseline test exercises conformance groups through the gate-spawn path, so the compiled path could route around the refusal and still pass it — and an empty baseline contains no EXPECT, so every fixture in that group would clear the collision screen unguarded |
 | 5 | a compile that exits nonzero reds naming the package, and no fixture of that group reports green | seam A, fake runner returning a compile failure | new test asserting the returned error names the package and that the group's fixtures do not report success; reds if the failure is swallowed or reported as did-not-bite | a swallowed compile failure turns a broken package into a silently unswept family, which is the same class as an unbound family stage 1 refused |
 | 5 | a compile that exits zero but writes no binary reds naming the package | seam A, fake runner returning success with no binary written | new test asserting the same red; reds if the sweep proceeds to invoke a path that does not exist | `go test -c` on a package with no test files exits zero and writes nothing, so an exit-code-only check would invoke a missing file and surface an exec error naming nothing the author can act on |
 | 6 | every compiled binary lands under one sweep-owned temporary directory | seam A, recording runner | new test asserting all compile output paths share one parent and that the parent is not inside the kit tree | binaries written beside the source would dirty the tree the gate grades, turning a sweep into a git-status change |

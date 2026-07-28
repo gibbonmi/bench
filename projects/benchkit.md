@@ -214,6 +214,12 @@ byte-shape is load-bearing:
    is the gate guarding the gate. Each nested fixture keeps the real gate entry path
    but runs only the phase that owns its failure, avoiding unrelated whole-gate work;
    the empty baseline still exercises every inner phase to reject vacuous EXPECTs.
+   An EXPECT for a `behavior-owned` fixture is never checked for mutation-specificity:
+   its contract group's empty-tree baseline is only a collision screen against
+   infrastructure noise, so a generic banner that any failure prints passes it forever.
+   Write the EXPECT as the owning contract test's own failure message for the specific
+   mutated fact; what the comparison does and does not establish is stated on the
+   baseline comparison in `internal/canary`.
    Fixtures hide dot-dirs behind a `dot-` prefix (e.g. `dot-claude`) so the harness
    doesn't load fixture skills as real ones; the canary restores them at run time.
    The sweep's aggregate concurrency is budgeted, not left to either factor: every
@@ -325,6 +331,12 @@ is in `craft-line`). Tier moves still get declared — no silent escalation.
 - Never build `dist/bench` with plain `go build`; use
   `bash scripts/go-build.sh <root> <out>` so the binary carries the package
   version required by the version and upgrade contracts.
+- To exercise or measure a worktree's build, invoke that worktree's own
+  `./dist/bench`. `bench` on PATH resolves to the main checkout's wrapper,
+  which runs the main checkout's `dist/bench` — a different binary, usually
+  older than the one under test, so the timings and behavior belong to the
+  wrong subject. The gate is exempt: it hands off to the worktree binary for
+  its phases.
 - Never mutate the repository while a gate is running. The gate binds its
   verdict to the starting subject and rejects a run whose subject changes.
 - `internal/canary`'s own tests run nested. The conformance phase runs the kit's
