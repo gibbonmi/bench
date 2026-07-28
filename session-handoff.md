@@ -2,58 +2,56 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `57799ee`, 1 dirty path, 6 unpushed commits
-Spec: `specs/implement-spec-full-run.md` (Status: staged)
-Gate: green at `073cd6e` — stale, work tree `6e566d0`
+Branch: `main` — HEAD `d09d081`, clean tree, 14 unpushed commits
+Spec: none staged.
+Gate: green at `0eaef37` — stale, work tree `faf8040`
 
 ## State
 
-- **Two approved specs are queued; build FT91 first.** The reviewer's 2026-07-28
-  sequencing stands: FT91 lands before `specs/implement-spec-full-run.md`, because
-  every later build pays the current gate price otherwise. The two do not collide
-  on files.
-- **FT91 stage 2 (`specs/ft91-canary-compiled-bites.md`, approved) is the build.**
-  Behavior-owned fixtures stop spawning nested gates: one `go test -c` per contract
-  package group, then one invocation of that binary per fixture root with the
-  contract subject root swapped to the materialized tree. The canary sweep still
-  owns bite, did-not-bite, and the vacuity baseline. The gate's inner-mode contract
-  narrowing, its environment variable, and their tests retire. 12 stories, 28
-  coverage rows, three seams. Build inputs: the spec,
-  `decisions/gate-critical-path.md` (Handoff, rewritten for stage 2), and
-  `decisions/assets/gate-critical-path-timeline.md`.
-- **Four deviations from the map were approved with the spec** and stay closed:
-  compile from the swept root rather than the kit checkout; keep the `GOMAXPROCS`
-  pin on bite invocations (the map called it moot — true of the nested gate, not of
-  the test binary underneath); single-source `BENCH_CONTRACT_ROOT` across the
-  contract helper, which the Handoff had said stays untouched; and drop the
-  phase-manifest refusal for this family, whose mechanism no longer exists.
-- **Stage 2's mechanism is prototyped, not assumed.** `go test -c
-  ./internal/contract/axi` compiles in 0.5 s warm, and the binary run against the
-  materialized `roadmap-regressed` tree reds in 0.49 s with its EXPECT present in
-  test-level output. The remaining 32 fixtures are unverified until the sweep runs —
-  an EXPECT observable only in gate framing is an ordinary did-not-bite red, fixed
-  at the owning test's failure message (story 9).
-- **The falsification pass is folded in.** A reviewer-directed Codex `gpt-5.6-sol`
-  xhigh pass returned block on the first draft. Its load-bearing finding: every
-  sweep assertion runs through an injected fake, so a change emitting correct call
-  metadata while the real runner still spawned gates would have passed the whole
-  map. There is now a row on the default runner's actual dispatch. Two findings were
-  rejected on inspection — the linked-repo refusal claim, and a doc-authoring line
-  bump for stories 10 and 11, whose deviations are named in the spec instead.
-- **implement-spec-full-run** is unchanged and still staged: an opt-in `--full` mode
-  for `/bench-implement-spec`, plus the fix-don't-park and point-of-use verify-hook
-  shared-rule changes. Prose plus its observers only. Twelve decisions flagged in
-  that spec's header were approved with it and stay closed.
-- **Map state:** `gate-critical-path` #2 and #3 are the only open tickets and gate
-  the artifact-hoist slice that follows stage 2, not either queued build. FT91's
-  stop condition is a measured dev gate ≤60 s, judged after the artifact hoist.
-- **`ROADMAP.md` is stale** — one row names a retired spec, and neither staged spec
-  has a row. The next `/bench-what-next` reconcile owns the rewrite; the tree wins
-  meanwhile.
+- **FT152 is built, gate-green, and on `main` — unpushed.** `specs/implement-spec-full-run.md`
+  is `Status: implemented`. The build is five commits: `3eb1c9a` (stories 1-9,
+  11-15), `8218f92` (review repairs), `7f3f25b` (merge of FT155), `dbdcbda`
+  (fixture refresh), `fa83f64` (status flip), plus `d09d081` for the captures.
+  Gate green on `main`. The push is the reviewer's.
+
+- **What shipped.** Two shared rules in `.bench/BENCH.md` — fix-don't-park in
+  Workflow, the outside-source warrant rule in How to talk to me — each pinned by
+  a marker in `checkSharedRuleSingleSource` plus a section-scoped anchor, so the
+  anchor means placement, not presence. `NEVER assume, always verify` is now
+  anchored too; it was unguarded before. Three point-of-use verify hooks in
+  `bench-shape-idea`, `bench-implement-spec`, `bench-review-implementation`. One
+  bounded `## The `--full` run` section in `bench-implement-spec.md` with 20
+  section-scoped requires and 10 paired forbids. Six canary fixtures.
+
+- **The falsification pass changed the outcome, and that is the headline.** A
+  three-axis review returned 29 findings and cleared the scope fence. A Codex
+  `gpt-5.6-sol` xhigh pass charged to refute found that the fence re-derived
+  fix-don't-park as path-width-based where `.bench/BENCH.md` sets it
+  decision-based — the two gave opposite answers for a small out-of-story bug.
+  Fixed in `8218f92`. Second such result after FT91; journaled, not yet a rule.
+
+- **Spec retirement is deliberately NOT done.** `bench status` will show
+  `1 merged spec awaiting retirement`. Retiring deletes the spec and its decision
+  map, and the spec header carries the reviewer's open veto list — including
+  calls I made on their blanket authorization (the `.bench/structure.budgets`
+  grant for `docs_workflow_helpers_test.go 660`, and correcting the spec's
+  `.claude/commands/` mirror decisions, which assumed a copied tree where the
+  repo has a symlink). Retire after the reviewer has read that list, not before.
+
+- **Three findings were parked rather than fixed**, in `IDEAS.md`: story 12's
+  per-row coverage accounting is unexecutable because `bench coverage` emits no
+  stable row identity; `requireCollapsed` does not strip HTML comments, so any
+  anchored sentence can be commented out and still pass; substring forbids die to
+  paraphrase. The first two are real gaps in the oracle this spec just extended.
+
+- **Three learnings are open** in `.bench/learnings.md`: a write-charge that named
+  a family binding but not the registration seam (cost one delegate round when the
+  gate went red on unclassified fixtures); a universal claim shipped from a
+  truncated read; and the falsification pass's two-for-two record.
 
 ## Next command
 
-`/bench-implement-spec — FT152, specs/implement-spec-full-run.md (staged, amended; the build is the only remaining action)`
+`/bench-what-next`
 
 ## Shape
 
