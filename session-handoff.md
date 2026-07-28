@@ -2,48 +2,47 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `16cc9b5`, clean tree, 4 unpushed commits
-Spec: none staged.
-Gate: green at `16cc9b5`.
+Branch: `main` — HEAD `e3e8c1e`, clean tree, pushed and level with origin.
+Spec: none staged. `specs/` is empty.
+Gate: green at `16cc9b5`; two doc-only commits have landed since
+(`877b65c` drain, `e3e8c1e` map edit), so the pin is stale but nothing
+executable changed.
 
 ## State
 
-- **FT152 is done and retired.** The gate ran green on `main`; the build was
-  already landed and status-flipped, so `/bench-final-check` was an honest
-  no-op. `bench spec retire implement-spec-full-run` then removed the spec and
-  its decision map in `16cc9b5`, gate-green. Ship-tier verification has not run;
-  `bench prep-release` covers that once per release.
+- **FT152 is done, retired, and pushed.** The gate ran green, the spec and its
+  decision map are gone, and the durable content was promoted before deletion.
+  Ship-tier verification has not run; `bench prep-release` covers that once per
+  release.
 
-- **What the retirement promoted before deleting.** One cold-session note in
-  `projects/benchkit.md`: `.claude/commands` is a git-tracked symlink to
-  `../.agents/commands`, not a copied tree — two FT152 artifacts assumed a copy
-  and specified mirror work that did not exist. Everything else the spec decided
-  is enforced in the tree by its own anchors, so it needed no second home.
+- **FT154 is unblocked and is the next build.** Its map, `decisions/slice-unit.md`,
+  had assumed one staged spec to migrate to the `specs/<slug>/spec.md` layout;
+  FT152's retirement emptied `specs/`, so the migration and the build-sequencing
+  premises were struck in `e3e8c1e`. Every decision in the map survived — no
+  standing dual-form resolution, `bench spec history` still resolving retired
+  flat paths, enumerate-every-glob rather than patch-as-found.
 
-- **Five entries are parked in `IDEAS.md` for the next drain.** Three are FT152
-  deferrals that would have died with the spec: the section-scoped-anchor
-  fixture gap (a clause for FT156), the model-token sweep over shipped command
-  prose, and a `bench` subcommand for the full run. Two are findings the
-  retirement surfaced — see below.
+- **Read "mirror" as "symlink" anywhere under `.claude/`.** `.claude/commands`
+  is one directory-level symlink; `.claude/skills` is a real directory of
+  per-skill symlinks. Neither holds copies, so editing `.agents/` is the whole
+  edit — but adding a skill still needs its own `.claude/skills/` entry created,
+  which FT154's build will hit. The profile's cold-session notes carry this.
 
-- **Retirement broke a pointer in FT154's map, and that is the one thing worth
-  reading before FT154 is specced.** `decisions/slice-unit.md` names
-  `implement-spec-full-run` as the single staged spec to migrate to the
-  `specs/<slug>/spec.md` layout, and as the next queued build. There are now zero
-  flat specs, so that migration story is a no-op or changes shape. Parked, not
-  fixed — it is spec-level design, so it is the reviewer's call.
+- **FT161 (LOW) is open and needs a ruling, not a build.** `bench spec retire`
+  tells the retiring session to remove the ROADMAP row;
+  `/bench-final-check`'s post-merge tail says to leave roadmap rows to
+  `/bench-what-next`; `/bench-what-next`'s own prose calls itself "the backstop
+  for anything spec-retire missed", which leans the third way. Three sources,
+  one of them wrong. Which yields is the reviewer's call, then a one-line kit
+  edit to the loser at `internal/spec/spec.go:336`.
 
-- **A second finding: two sources give the retiring session opposite orders.**
-  `bench spec retire` prints "remove the ROADMAP row"; `/bench-final-check`'s
-  post-merge tail says to leave roadmap rows to `/bench-what-next`. I followed
-  the command file, and `bench status` agrees — it now flags `1 row names a
-  retired spec → /bench-what-next`. Parked for the drain to verdict.
+- **The 2026-07-28 drain landed at `877b65c`** — `IDEAS.md` and the journal are
+  empty. It created FT159 (model-token sweep), FT160 (a `bench` subcommand for
+  the full run), FT161, and a third face on FT156.
 
 ## Next command
 
-`/bench-what-next` — the drain owns the stale FT152 roadmap row and the five
-parked ideas, and its verdict on the FT154 map pointer is what unblocks the next
-build.
+`/bench-write-spec` for FT154.
 
 ## Shape
 
