@@ -1,1 +1,0 @@
-- 2026-07-27  bench gate pin is undiscoverable to a first-time user: the pre-push failure and bench status both name the command without saying what pinning is or why it needs a human. Consider a one-line 'what this does' in the refusal path and in the status row.

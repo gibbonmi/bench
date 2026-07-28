@@ -357,7 +357,13 @@ and intent entries, the exact manual surgery the lifecycle exists to prevent.
 The containment primitive now exists — `LandedInDefault` proves patch-id
 containment for landed-branch pruning — so either route recovery-payload
 landed-proof through it or add the explicit reviewer-authorized discard;
-fail-closed stays the default and the cut line is a reviewer decision. Face
+fail-closed stays the default and the cut line is a reviewer decision. This
+face now owns the whole visible residue: FT148's orphan retirement shipped
+2026-07-27 and its ledger compaction correctly declines these rows because
+they preserve work, so 21 recovery refs and the 17 assignment rows holding
+them are re-preserved at every session start and nothing else will retire
+them (`bench worktree recovery <ref>` returns `retain … unlanded` on a
+sampled ref, 2026-07-27). Face
 two, `bench commit`'s set-aside (was FT127): the refusal reads "working-tree
 files outside the named set block the commit — name them, or set them aside",
 but no set-aside route exists in the CLI, so an agent's only real exits are
@@ -371,46 +377,6 @@ papercut on a first-class activity in this repo (cf. `tests/canary/`), and a
 scoped single-path revert through the same recoverable primitive replaces
 both the papercut and any guard exemption. Whichever face ships first defines
 the one discard semantics; the others reuse it.
-
-**FT148 (MEDIUM, evidence supplied, fix shape signed off) — a worktree outlives
-the session that cut it, and nothing retires it.** `bench worktree release`
-matches only the exact plaintext request string that created the assignment
-(`internal/worktree/ownership.go:339-346` resolves through
-`intent.FindAssignmentByRequest`), the ledger stores a one-way digest of that
-string, and the harness hook derives it from the session id — so once the
-creating session is gone its worktrees are structurally unreleasable, not
-accidentally so. Reproduced through the accused command 2026-07-27: one
-`--request` refused all 19 live pool worktrees identically with "request,
-assignment, or path mismatch; checkout retained", including the 12 the tool
-itself reported `landed=true`. The pool had accreted since 2026-07-09 and every
-entry was re-preserved at every `bench resume`, so the reviewer read a
-20-line "preserved" wall at each session start. Draining it by hand took a
-staged script and a full session.
-
-Three feeders, and the shape is signed off (2026-07-27). Kit prose orders
-worktree *creation* twelve times for every retirement instruction — `bench
-worktree release` is named in no guidance file at all, only in the CLI
-inventory. Assignments carry no created-at timestamp, no lease, and no reaper,
-and the resume classifier hard-retains `active`. And FT98's landed proof misses
-reshaped commits, so payloads main actually shipped still read as unlanded and
-their recovery refs are retained forever. Fix as signed off: (a) prose — a
-`craft-delegate` close-out duty that the coordinator releases each worktree it
-cut at done-claim acceptance, a retirement owner named in
-`bench-implement-spec`'s stop-short, and the subcommands named in the
-`.bench/BENCH.md` inventory; (b) code — a created-at timestamp plus an
-`orphaned` classifier verdict that `bench resume` surfaces as ready-to-run
-clean commands; (c) the landed-proof half rides FT98 rather than duplicating
-it. Decided and closed: orphans route to `bench worktree clean` by design — a
-request-derivation override for `release` is rejected as voiding the ownership
-model. The prose edits are a `craft-synthesis` build like any other.
-
-Residue this leaves behind, and the second thing the row must answer: after the
-manual drain, 17 assignment rows survive with no tree on disk — 16 `recovered`
-plus one stuck `active` — because nothing today compacts an active record whose
-tree is missing. Ledger rows that outlive their trees are the same accretion one
-layer down. Sources: `IDEAS.md`, drained here; the signed-off investigation in
-`session-handoff.md`. Numbering note: that handoff calls this row "FT147", which
-was already taken; renumbered here.
 
 **FT132 (MEDIUM, evidence supplied) — the roadmap row grammar is undeclared,
 and the parser's malformed verdict proved it.** The absent-versus-empty face
@@ -652,7 +618,29 @@ those edits must run before a plain-`git` commit (a scoped
 shortcut to surfaces no conformance check reads — reviewer's call which,
 decided when the batch builds. The containment half of the same incident — the
 gate pin recording red verdicts so inherited reds stop reading as caused — is
-FT141, which this row's fifth clause already depends on. Deliberately
+FT141, which this row's fifth clause already depends on. Seventh (drained
+2026-07-27 from the learnings journal), a mandatory step written as a
+subordinate clause is read as advice. `/bench-review-implementation` step 5
+says the `reviews/<slug>.md` pickup is "tracked state at birth", committed in
+the session that writes it — the clause exists so findings survive a session
+death mid-repair — but it trails a long paragraph and the FT148 review read it
+as advisory, wrote the pickup, and went straight into the repair pass, so the
+artifact lived and died untracked. Net tree state was identical and the failure
+mode was not exercised, which is exactly why the wording rather than the rule is
+the defect. Name the commit as its own ordered step ("commit the pickup, then
+repair"). Eighth (drained the same day), `/bench-implement-spec`'s "Route the
+venue" is unsatisfiable under a harness that forbids delegation. It requires
+every spec-backed run to assign genuine write work to a write subagent before
+the first implementation edit, with no inline threshold; a session carrying a
+reviewer-set standing instruction against the Agent tool cannot comply, and the
+FT148 session took an unsanctioned inline route for four prose edits to an
+already-implemented spec. `craft-delegate`'s capability-aware policy covers a
+harness that *cannot* spawn one and says nothing about one that *may not*. Give
+the clause a stated precedence — name the fallback when delegation is
+unavailable for either reason — and decide alongside it whether a spec-doc-only
+correction (no code, no seams) is exempt outright, since routing prose edits
+through an isolated worktree costs more than it catches. Like the fifth, this
+clause reaches past always-loaded prose into a skill. Deliberately
 not batched here: FT130 (mid-gate
 `bench idea`) stays its own row because its preferred fix is mechanical, in
 the CLI rather than in this prose. Background:
@@ -1033,6 +1021,20 @@ already matched, which means the `branch-delete` row's single label becomes a
 `-d`/`-D` pair; keep it single-sourced through `denyTable` rather than
 formatting the string at the call site. Source: `IDEAS.md`, drained here.
 
+**FT150 (LOW) — `bench gate pin` is named everywhere it is needed and
+explained nowhere.** Every surface that demands the pin quotes the command and
+nothing else: `internal/adopt/prepush.sh` refuses a push three ways
+(unpinned, no `.bench` tree, tree mismatch) with "run `bench gate pin`", and
+the `bench status` gate row names it the same way. A first-time user — the
+`bench setup` adoption path — is told to run a command without being told that
+pinning records the `.bench` tree a human has reviewed, or why the refusal
+cannot be cleared automatically. One clause of "what this does" at each refusal
+site, single-sourced rather than written three times, and the same clause on the
+status row's action text. Scoped to the explanatory half only: what the pin
+*records* is FT141, and that row's build visits the pin's data rather than these
+messages, so the two are adjacent but not the same call sites — if FT141 lands
+first, ride its visit. Source: `IDEAS.md`, drained here.
+
 **FT140 (LOW) — review residuals that want a verdict, not a build.** Calls
 from two resolution runs outlived their specs' retirement. The recurring one is
 the provenance question, now at three instances: a test that is the real
@@ -1181,17 +1183,19 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT148, worktree orphan retirement. Its fix shape is
-   already signed off and its cause is confirmed in code, so it is the one ready
-   row on the board; the leak bites every session start and cost a full session
-   to drain by hand. It jumps a HIGH because it is decided work, not because it
-   outranks the bank track.
-2. `/bench-debug` — FT91's next arm. Slice C landed and its premise was
+1. `/bench-debug` — FT91's next arm. Slice C landed and its premise was
    falsified: the whole gate is unchanged at ~4m51s and the critical path is
    `internal/contract/surface/artifact` (~207 s) and `internal/contract/surface`
    (~178 s), untouched by any of the six arms. The row's own instruction is to
    ask why those two cost what they cost before assuming a shape, which is a
-   diagnosis rather than a design question.
+   diagnosis rather than a design question — and the gate's length is still the
+   dominant cost of every other row on this board.
+2. `/bench-write-spec` — FT98, the one preserve-then-discard primitive. FT148
+   shipped and handed this row the whole visible residue: 21 unlanded recovery
+   refs and 17 assignment rows now re-preserve at every session start with no
+   route to retirement, so the wall FT148 was meant to clear is still there.
+   Face one is the cut; the reviewer decides fail-closed-plus-landed-proof
+   versus an authorized discard at spec sign-off.
 3. `/bench-write-spec` — FT71, versioned local shift evidence. The remaining
    HIGH bank-track row; the repository-controlled bank evidence requirement
    keeps it active.
