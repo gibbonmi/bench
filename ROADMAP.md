@@ -91,12 +91,35 @@ measurement is the work it now carries. Measured on the reviewer's host:
 `package-core-guard` 1m52.8s → 3.3s and the `conformance` phase 117.4s → 8.5s,
 while the whole gate stayed unchanged at ~4m51s. Conformance was never the
 critical path. `internal/contract/surface/artifact` (~207 s) and
-`internal/contract/surface` (~178 s) are, and neither has been touched by any of
-the six arms — every arm so far optimized a phase that was not the long pole.
-Any further wall-clock work starts by attacking those two contract suites, and
-starts by asking why they cost what they cost rather than by assuming the
-pipeline shape is the answer; the DAG scheduler and the phase table are now in
-place to absorb whatever the answer is.
+`internal/contract/surface` (~178 s) are, and no arm through slice C had touched
+either — every arm to that point optimized a phase that was not the long pole.
+
+The seventh arm took that retarget and landed 2026-07-27 (spec
+`ft91-artifact-build-tiering`, retired at this drain): a `BENCH_SHARED_BUILD_CACHE`
+opt-in, matched exactly against `1` so every other value resolves hermetic, lets
+the dev contract suites honor the ambient Go build and module caches and skip the
+reproducibility second build, with stale-record removal folded into the same
+atomic promotion. Byte-reproducibility across independent builds stays a
+ship-tier claim, and `bench prep-release` passes no opt-in. Measured solo against
+the spec's baselines: the artifact suite 133.5 s → 106 s and the surface suite
+115.5 s → 12 s, absorbing ~50 s of new hermetic-posture tests along the way. The
+whole gate moved 4m51s → 4m27s, far less than 249 s → 118 s predicts, because
+under gate parallelism the artifact suite inflates to ~152 s and the contract
+phase is no longer clearly the critical path. Nobody has diagnosed that gap, and
+it is the first question the next arm answers.
+
+The remaining artifact-suite lever is already diagnosed: the cost is invocation
+count, not per-invocation packing. Measured 2026-07-27, one warm full-matrix
+`build-artifacts.sh` run is 19.26 s, of which only ~5.2 s is the four
+cross-compiles; `npm pack` is 0.61 s/tarball and indifferent to a fresh cache,
+node startup 0.02 s, repo clone 0.15 s. The suite is ~20 host-only generator runs
+at ~3.7 s each. The `BENCH_TEST_PREPARED_ARTIFACTS` seam already exists, but
+`artifactPreparedGeneration` is scoped per-test, so
+`TestArtifactPromotionIsAtomicAndExclusive` still pays a full 7.98 s build to make
+its own prepared set; hoisting it to package scope would let one build serve every
+test that only inspects output. That hoist is a reviewer decision before it is a
+build — which tests may share one artifact set without losing test independence —
+so it enters through the entry phase below rather than as a light-path patch.
 
 Cross-language incrementality stays a separate later capability behind the
 existing revive trigger. Incrementality rides on Go's content-addressed test
@@ -108,19 +131,21 @@ against regroup-app rather than generalising from this repo.
 The deferred arms are unchanged. Capping the outer conformance and contract
 phases stays dormant unless contention flakes persist. Removing the hardcoded
 `-count=1` changes what green proves about freshness — an oracle-semantics
-decision — and cache infrastructure (hermetic build cache, verdicts keyed on
-the pinned gate subject) waits on re-measurement after the pipeline lands.
-Diff-scoped gating stays ruled out (contract and canary are behavior contracts
+decision — and gate-verdict caching keyed on the pinned gate subject waits on
+re-measurement after the pipeline lands. The shared-build-cache half of that
+deferred pair is no longer deferred: it shipped as the seventh arm, dev-tier and
+opt-in. Diff-scoped gating stays ruled out (contract and canary are behavior contracts
 with no file→test map). None of them may weaken the oracle: green must keep
 meaning the same thing, and any scoped verdict must be explicit evidence,
 never a silent skip.
 
-Entry: `/bench-shape-idea` — the next arm's target is known (the two contract
-surface suites) but its shape is not, and `decisions/gate-pipeline.md` is closed
-on a premise the measurement falsified. Inputs: this row,
-`decisions/gate-concurrency.md`'s watch-outs, and
-`decisions/cost-follows-project-size.md`. Sources: `IDEAS.md`, drained here;
-`decisions/cost-follows-project-size.md`.
+Entry: `/bench-shape-idea` — three things now want deciding together and none of
+them is a shape the tree already implies: why the gate absorbed only 24 s of a
+131 s suite win, which tests may share one prepared artifact set, and whether
+`decisions/gate-pipeline.md` — closed on a premise the slice-C measurement
+falsified — reopens. Inputs: this row, `decisions/gate-concurrency.md`'s
+watch-outs, and `decisions/cost-follows-project-size.md`. Sources: `IDEAS.md`,
+drained here and in a prior run; `decisions/cost-follows-project-size.md`.
 
 **FT131 (MEDIUM) — a stale `dist/bench` is trusted by both the contract suites
 and the gate's own phase resolution.** The AXI and runtime contract suites
@@ -288,9 +313,32 @@ probed phases rather than the manifest the spec named, and story 9 was dropped
 outright as unsatisfiable — the seam moved *and* a story died, discovered
 mid-build, shipped under batch approval and flagged for veto rather than routed
 back. That is a larger deviation than the case this row was opened on, which
-makes the named-lighter-path question the one to answer first. Sources:
-`.bench/learnings.md`, drained in a prior run; `session-handoff.md`, drained
-here.
+makes the named-lighter-path question the one to answer first.
+
+A third instance arrived 2026-07-27 from `ft91-artifact-build-tiering`, and it
+moves the question from the build phase to the review phase. That build's
+semantic review found four statements in the *approved* spec that the code
+falsified — a coverage row describing a seam that parks above the backups it
+claimed to exercise, a story over-stating a deletion, and two edge-inventory
+exclusions resting on invalidated reasons — and corrected all four in place,
+each marked `**Post-approval correction, flagged:**` for veto. The code was
+right in every case; only the prose moved. So the workflow question generalizes:
+when a phase's finding lands on an approved spec rather than on the code, what
+may it do under batch approval? `.bench/BENCH.md` leaves each spec in `specs/`
+as post-hoc veto surface, which is what the review relied on, but a
+reviewer-approved spec is a stronger artifact than a staged one, and "correct a
+false citation" and "change what gets built" are not obviously the same
+permission. Two candidate rules for `/bench-review-implementation`, the reviewer
+picks: (a) a factual correction — a citation resolving to nothing, or a
+described mechanism the tree contradicts — may be made post-approval under the
+existing in-line veto-flag convention, while anything changing what gets built
+stops for sign-off; or (b) all post-approval spec edits stop and the review
+persists them to `reviews/<spec-slug>.md` instead. This matters standing-wise
+because the Spec axis is charged to audit every coverage row, so it will keep
+producing this class of finding. Answer it with the named-lighter-path question
+above — one decision, both phases — then build the kit edit under
+`craft-synthesis`. Sources: `.bench/learnings.md`, drained in a prior run and
+here; `session-handoff.md`, drained in a prior run.
 
 **FT128 (MEDIUM, evidence supplied) — the agent-line guard cannot see a fork's
 real model.** `check-agent-line` decides from the delegation envelope's
@@ -1035,6 +1083,19 @@ status row's action text. Scoped to the explanatory half only: what the pin
 messages, so the two are adjacent but not the same call sites — if FT141 lands
 first, ride its visit. Source: `IDEAS.md`, drained here.
 
+**FT151 (LOW) — `bench learnings` fails closed on the state a successful drain
+produces.** A journal with no open entries is exactly what `/bench-what-next`
+leaves behind, and reading it exits 1 with
+`unsupported-schema — no dated heading found`. Reproduced through the accused
+command at this drain's own end state, and the same file content at `5f9e997`
+reproduces it identically, so it is not new. `bench status` is unaffected — it
+reports the drain row's absence correctly — which is why the defect has stayed
+invisible: the ambient board is right and only the direct reader lies. Empty is
+a valid journal, not a malformed one, so the parse wants an explicit
+zero-entry case that renders an empty rowset rather than falling through to the
+schema refusal. Check the same reader's other zero-entry surfaces for the same
+fall-through while there. Source: observed at this drain, 2026-07-28.
+
 **FT140 (LOW) — review residuals that want a verdict, not a build.** Calls
 from two resolution runs outlived their specs' retirement. The recurring one is
 the provenance question, now at three instances: a test that is the real
@@ -1183,13 +1244,13 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-debug` — FT91's next arm. Slice C landed and its premise was
-   falsified: the whole gate is unchanged at ~4m51s and the critical path is
-   `internal/contract/surface/artifact` (~207 s) and `internal/contract/surface`
-   (~178 s), untouched by any of the six arms. The row's own instruction is to
-   ask why those two cost what they cost before assuming a shape, which is a
-   diagnosis rather than a design question — and the gate's length is still the
-   dominant cost of every other row on this board.
+1. `/bench-shape-idea` — FT91's eighth arm. The seventh arm did what the
+   retarget asked and cut 131 s off the two critical-path suites, yet the whole
+   gate absorbed only 24 s of it. That gap is undiagnosed, the remaining
+   artifact lever is a test-independence decision rather than a build, and
+   `decisions/gate-pipeline.md` is still closed on a falsified premise — three
+   open decisions that want one map, not three patches. The gate's length
+   remains the dominant cost of every other row on this board.
 2. `/bench-write-spec` — FT98, the one preserve-then-discard primitive. FT148
    shipped and handed this row the whole visible residue: 21 unlanded recovery
    refs and 17 assignment rows now re-preserve at every session start with no
