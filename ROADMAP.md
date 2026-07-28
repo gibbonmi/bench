@@ -154,22 +154,6 @@ edit `bench-implement-spec.md` — the map's dependency order). Kit edit under
 the `craft-synthesis` discipline. Sources: the map and its own `## Sources`
 section.
 
-**FT155 (MEDIUM, reviewer-expedited) — `/bench-shape-idea` maps carry a
-`## Sources` section.** A closed map's claims rest on reads a fresh session
-cannot reconstruct: `decisions/slice-unit.md` cited six sources (the vendored
-`to-tickets` family, two tree files) only after the reviewer asked, and
-without them pickup means re-deriving which files hold the evidence. Add a
-`## Sources` section to the map template in
-`.agents/commands/bench-shape-idea.md` (with its `.claude/commands/` mirror):
-read sources with one clause of what each fed, required whenever a ticket's
-answer rests on files outside the map, paths flagged as drift-prone rather
-than trusted. Consistent with the staged warrant rule (FT152's story 15) — the
-map is where external-source claims become reviewer decisions, so the warrant
-belongs on the artifact. Reviewer-directed 2026-07-28: roll in ASAP; small
-enough for the direct fix-and-gate path under the `craft-synthesis` loops,
-flagged here rather than silently taken. Source: `.bench/learnings.md`,
-verdicted at this drain; `decisions/slice-unit.md` is the exemplar.
-
 **FT131 (MEDIUM) — a stale `dist/bench` is trusted by both the contract suites
 and the gate's own phase resolution.** The AXI and runtime contract suites
 drive the built `dist/bench`, not the package under test, so their verdict
@@ -1311,14 +1295,12 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT155, the map `## Sources` template edit.
-   Reviewer-expedited: one prose section in `bench-shape-idea.md` plus its
-   mirror, direct fix-and-gate under the `craft-synthesis` loops — minutes of
-   work, and every map closed after it carries its warrant.
-2. `/bench-implement-spec` — FT152, `specs/implement-spec-full-run.md`. Staged,
+1. `/bench-implement-spec` — FT152, `specs/implement-spec-full-run.md`. Staged,
    amended, map closed; the build is the only remaining action, and it lands
    before FT154's build touches the same command file and migrates its spec.
-3. `/bench-write-spec` — FT154, from the closed `decisions/slice-unit.md`, on
-   a fresh mid-tier session. FT91's gate map (`gate-critical-path.md` #2/#3)
-   re-enters the top three once these land — the gate's 167.3 s is still the
-   dominant human cost on the board.
+2. `/bench-write-spec` — FT154, from the closed `decisions/slice-unit.md`, on
+   a fresh mid-tier session; its build follows the map's dependency order.
+3. `/bench-shape-idea` — FT91, `decisions/gate-critical-path.md` #2 and #3.
+   The prepared-artifact hoist is the last structural lever before the ≤60 s
+   stop rule is judged; the gate's 167.3 s is still the dominant human cost on
+   the board.
