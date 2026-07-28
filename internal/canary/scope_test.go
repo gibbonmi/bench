@@ -27,7 +27,7 @@ func TestSweepScopesFixtureRunsToTheirCheck(t *testing.T) {
 	root := t.TempDir()
 	fixture(t, canaryFixture(root, family, "family-bound"), "")
 	fixture(t, canaryFixture(root, family, "check-bound"), override)
-	fixture(t, canaryFixture(root, "behavior-owned", "contract-fx"), "")
+	contractFixture(t, root, "axi", "contract-fx")
 	fixture(t, filepath.Join(root, "tests", "canary", "flat-fx"), "")
 
 	calls := sweepCalls(t, root, registry.Dev)
@@ -67,8 +67,9 @@ func TestSweepScopesFixtureRunsToTheirCheck(t *testing.T) {
 	// the group is then graded vacuous or not against the wrong run. The unscoped group
 	// carries no scope variable at all, so an ambient value surviving the strip shows up
 	// here as a scope where none belongs.
-	if got := baselineScopes(t, calls); !slices.Equal(got, sortedScopes("", bound, override)) {
-		t.Errorf("baseline scopes = %v, want the three groups' own scopes and no ambient value", got)
+	wantGroups := sortedGroups("", bound, override, contractGroupPrefix+"axi")
+	if got := baselineGroups(t, calls); !slices.Equal(got, wantGroups) {
+		t.Errorf("baseline groups = %v, want the four groups' own keys and no ambient value", got)
 	}
 	for _, call := range calls {
 		if slices.Contains(scopeValues(call.Env), ambient) {
@@ -77,10 +78,10 @@ func TestSweepScopesFixtureRunsToTheirCheck(t *testing.T) {
 	}
 }
 
-// sortedScopes is the sorted form baselineScopes returns, so a wanted set is written in
+// sortedGroups is the sorted form baselineGroups returns, so a wanted set is written in
 // the order it reads best and compared in the order the helper produces.
-func sortedScopes(scopes ...string) []string {
-	out := append([]string(nil), scopes...)
+func sortedGroups(groups ...string) []string {
+	out := append([]string(nil), groups...)
 	slices.Sort(out)
 	return out
 }
@@ -108,8 +109,8 @@ func TestSweepRunsUnmappedConformanceFamilyUnscoped(t *testing.T) {
 }
 
 // TestSweepRunsOneBaselinePerScopeGroup pins the shared-baseline cost model: one
-// baseline per distinct scope, whatever the fixture count, and one full baseline
-// shared by every unscoped fixture.
+// baseline per distinct group, whatever the fixture count, and one full baseline
+// shared by every fixture needing the full inner gate.
 func TestSweepRunsOneBaselinePerScopeGroup(t *testing.T) {
 	family := mappedFamily(t)
 	bound := boundCheck(t, family)
@@ -119,27 +120,29 @@ func TestSweepRunsOneBaselinePerScopeGroup(t *testing.T) {
 	fixture(t, canaryFixture(root, family, "family-a"), "")
 	fixture(t, canaryFixture(root, family, "family-b"), "")
 	fixture(t, canaryFixture(root, family, "check-bound"), override)
-	fixture(t, canaryFixture(root, "behavior-owned", "contract-fx"), "")
+	contractFixture(t, root, "axi", "contract-a")
+	contractFixture(t, root, "axi", "contract-b")
 	fixture(t, filepath.Join(root, "tests", "canary", "flat-fx"), "")
 
-	got := baselineScopes(t, sweepCalls(t, root, registry.Dev))
-	want := sortedScopes("", bound, override)
+	got := baselineGroups(t, sweepCalls(t, root, registry.Dev))
+	want := sortedGroups("", bound, override, contractGroupPrefix+"axi")
 	if !slices.Equal(got, want) {
-		t.Fatalf("baseline scopes = %v, want %v", got, want)
+		t.Fatalf("baseline groups = %v, want %v", got, want)
 	}
 }
 
 // TestAllUnscopedSweepRunsOneBaseline is the regression guard on the grouping key:
-// grouping by anything finer than the resolved check name — the fixture's phase, say
-// — splits contract fixtures from legacy flat ones and doubles today's cost.
+// grouping by anything finer than the group a fixture resolves to — the fixture's
+// family, say — splits legacy flat fixtures from phase-named ones and multiplies the
+// cost of the one baseline they all share.
 func TestAllUnscopedSweepRunsOneBaseline(t *testing.T) {
 	root := t.TempDir()
-	fixture(t, canaryFixture(root, "behavior-owned", "contract-a"), "")
-	fixture(t, canaryFixture(root, "behavior-owned", "contract-b"), "")
+	fixture(t, canaryFixture(root, PhaseGofmt, "gofmt-fx"), "")
+	fixture(t, canaryFixture(root, PhaseVet, "vet-fx"), "")
 	fixture(t, filepath.Join(root, "tests", "canary", "flat-fx"), "")
 
-	if got := baselineScopes(t, sweepCalls(t, root, registry.Dev)); !slices.Equal(got, []string{""}) {
-		t.Fatalf("baseline scopes = %v, want one unscoped baseline", got)
+	if got := baselineGroups(t, sweepCalls(t, root, registry.Dev)); !slices.Equal(got, []string{""}) {
+		t.Fatalf("baseline groups = %v, want one unscoped baseline", got)
 	}
 }
 
@@ -226,8 +229,8 @@ func TestShipSweepScopesItsFixtures(t *testing.T) {
 	if len(calls) != 3 {
 		t.Fatalf("ship sweep ran %d inner gates, want 2 fixtures + 1 shared baseline", len(calls))
 	}
-	if got := baselineScopes(t, calls); !slices.Equal(got, []string{ship}) {
-		t.Fatalf("ship baseline scopes = %v, want one baseline scoped to %s", got, ship)
+	if got := baselineGroups(t, calls); !slices.Equal(got, []string{ship}) {
+		t.Fatalf("ship baseline groups = %v, want one baseline scoped to %s", got, ship)
 	}
 	for _, call := range calls {
 		if got := scopeValues(call.Env); !slices.Equal(got, []string{ship}) {
@@ -267,9 +270,9 @@ func sweepCalls(t *testing.T, root string, tier registry.Tier) []RunCall {
 	return calls
 }
 
-// baselineScopes lists the scope each empty-tree baseline ran under, sorted, so a
+// baselineGroups lists the group each empty-tree baseline ran for, sorted, so a
 // duplicate baseline for one group shows up as a repeated entry.
-func baselineScopes(t *testing.T, calls []RunCall) []string {
+func baselineGroups(t *testing.T, calls []RunCall) []string {
 	t.Helper()
 	var out []string
 	for _, call := range calls {
@@ -283,13 +286,7 @@ func baselineScopes(t *testing.T, calls []RunCall) []string {
 }
 
 func scopeValues(env []string) []string {
-	var out []string
-	for _, kv := range env {
-		if value, ok := strings.CutPrefix(kv, registry.ConformanceCheckEnv+"="); ok {
-			out = append(out, value)
-		}
-	}
-	return out
+	return envValues(env, registry.ConformanceCheckEnv)
 }
 
 // boundCheck is the check the registry binds family to, which is what the sweep resolves

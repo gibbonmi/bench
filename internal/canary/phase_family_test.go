@@ -3,7 +3,6 @@ package canary
 import (
 	"path/filepath"
 	"sort"
-	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
@@ -38,12 +37,13 @@ func TestSweepRoutesPhaseNamedFamilies(t *testing.T) {
 }
 
 // TestPhaseNamedFamiliesJoinTheUnscopedBaseline pins the cost model the routing must not
-// disturb: a phase-named family resolves to no conformance check, so its fixtures share
-// the single full baseline every unscoped fixture already runs against.
+// disturb: a phase-named family resolves to no conformance check and to no contract
+// package, so its fixtures share the single full baseline every legacy flat fixture
+// already runs against.
 func TestPhaseNamedFamiliesJoinTheUnscopedBaseline(t *testing.T) {
 	root := t.TempDir()
 	fixture(t, canaryFixture(root, "gofmt", "gofmt-fx"), "")
-	fixture(t, canaryFixture(root, "behavior-owned", "contract-fx"), "")
+	fixture(t, filepath.Join(root, "tests", "canary", "flat-fx"), "")
 
 	calls := sweepCalls(t, root, registry.Dev)
 
@@ -58,16 +58,10 @@ func TestPhaseNamedFamiliesJoinTheUnscopedBaseline(t *testing.T) {
 		}
 	}
 	if baselines != 1 {
-		t.Errorf("sweep ran %d baselines, want the one unscoped baseline shared with contract fixtures", baselines)
+		t.Errorf("sweep ran %d baselines, want the one unscoped baseline shared with legacy flat fixtures", baselines)
 	}
 }
 
 func phaseValues(env []string) []string {
-	var out []string
-	for _, kv := range env {
-		if value, ok := strings.CutPrefix(kv, PhaseEnv+"="); ok {
-			out = append(out, value)
-		}
-	}
-	return out
+	return envValues(env, PhaseEnv)
 }

@@ -22,11 +22,7 @@ var shipFixtures = []string{
 // to the tier of the registry check it names, the two tiers partition the harness so no
 // fixture can quietly stop being swept, and the dev sweep runs dev-tier fixtures alone.
 func TestFixtureTierMatchesCheckTier(t *testing.T) {
-	root, err := filepath.Abs(filepath.Join("..", ".."))
-	if err != nil {
-		t.Fatal(err)
-	}
-	all, err := fixtures(filepath.Join(root, "tests", "canary"))
+	all, err := fixtures(filepath.Join(kitRoot(t), "tests", "canary"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +41,7 @@ func TestFixtureTierMatchesCheckTier(t *testing.T) {
 	}
 	union := append(fixtureDirs(dev), fixtureDirs(ship)...)
 	slices.Sort(union)
-	if !slices.Equal(union, all) {
+	if !slices.Equal(union, fixtureDirs(all)) {
 		t.Fatalf("tier selections do not reconstruct the fixture list")
 	}
 

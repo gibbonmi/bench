@@ -532,11 +532,11 @@ func materializeConformanceFixture(t *testing.T, fixture string) string {
 
 func canaryFixturePath(t *testing.T, kitRoot, fixture string) string {
 	t.Helper()
-	path, ok := canaryFixturePaths(t, filepath.Join(kitRoot, "tests", "canary"))[fixture]
+	found, ok := canaryFixturePaths(t, filepath.Join(kitRoot, "tests", "canary"))[fixture]
 	if !ok {
 		t.Fatalf("canary fixture %q not found", fixture)
 	}
-	return path
+	return found.Dir
 }
 
 func readExpectation(t *testing.T, path string) string {

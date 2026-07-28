@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -27,6 +28,22 @@ const absentHarnessMessage = "canary harness absent — tests/canary/ has no fix
 // An absent value means the fixture must exercise the full inner gate.
 const PhaseEnv = "BENCH_CANARY_PHASE"
 
+// ContractPackageEnv carries the one contract package a behavior-owned fixture's EXPECT
+// belongs to, as a slash path relative to internal/contract. It narrows the contract
+// phase's argv to that package alone; an absent value leaves the phase grading every
+// contract package, which is what every other run wants.
+const ContractPackageEnv = "BENCH_CANARY_CONTRACT_PACKAGE"
+
+// PhaseManifestPath is where a graded root declares a phase table of its own, relative
+// to that root. Declaring one replaces the built-in table outright, so a canary fixture
+// whose tree carries it never reaches the narrowing the built-in contract phase applies.
+const PhaseManifestPath = ".bench/phases.json"
+
+// contractPhase runs the contract suite, and is the phase a behavior-owned fixture's
+// EXPECT is emitted by. It is the one phase a fixture can narrow further, to the single
+// contract package that owns its diagnostic.
+const contractPhase = "contract"
+
 // FixturePhase maps the canary directory convention to the phase that owns it.
 // Legacy flat fixtures have tests/canary as their parent and keep the full gate.
 func FixturePhase(family string) string {
@@ -34,7 +51,7 @@ func FixturePhase(family string) string {
 	case "", "canary":
 		return ""
 	case "behavior-owned":
-		return "contract"
+		return contractPhase
 	}
 	if phaseFamilies[family] {
 		return family
@@ -80,7 +97,7 @@ const expectFileName = "EXPECT"
 // of the flat-fixture marker fails open, reporting every flat fixture as an unbound
 // family the day the marker moves.
 func IsConformanceFamily(dir string) bool {
-	return FixturePhase(filepath.Base(dir)) == "conformance" && !isFlatFixture(dir)
+	return FixturePhase(filepath.Base(dir)) == "conformance" && !holdsExpect(dir)
 }
 
 // UnboundConformanceFamilies reports the conformance family directories under kitRoot
@@ -109,11 +126,46 @@ func UnboundConformanceFamilies(kitRoot string) []string {
 	return diags
 }
 
-// isFlatFixture reports whether dir is a legacy flat fixture — one living directly under
-// tests/canary/ instead of inside a family.
-func isFlatFixture(dir string) bool {
+// Fixture is one discovered canary fixture as a caller outside the sweep sees it: where
+// it lives, the family that routes its inner gate, and the contract package that owns its
+// EXPECT where one does. An empty Family is a legacy flat fixture, which belongs to no
+// family and runs the full inner gate.
+type Fixture struct {
+	Dir     string
+	Family  string
+	Package string
+}
+
+// Fixtures maps each fixture's base name under canaryDir — a tests/canary tree — to what
+// the sweep discovered about it. This package owns the layout, including the package
+// nesting under the behavior-owned family, so a caller grading that tree against an
+// inventory of its own asks here instead of walking it a second way: a second walk
+// disagrees with the sweep the day the layout moves, and reports fixtures the sweep never
+// runs — or reads a family from a parent directory that is a package path.
+func Fixtures(canaryDir string) (map[string]Fixture, error) {
+	found, err := fixtures(canaryDir)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]Fixture, len(found))
+	for _, fx := range found {
+		out[filepath.Base(fx.dir)] = Fixture{Dir: fx.dir, Family: fx.family, Package: fx.pkg}
+	}
+	return out, nil
+}
+
+// holdsExpect reports whether dir states an expectation of its own, which is what marks
+// a directory as a fixture rather than a family or a package path above one.
+func holdsExpect(dir string) bool {
 	_, err := os.Stat(filepath.Join(dir, expectFileName))
 	return err == nil
+}
+
+// isDir reports whether path is a directory, following symlinks as the tools reading
+// these trees do.
+func isDir(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
 }
 
 // RunCall is one inner gate invocation: Cwd is the materialized repo under grade,
@@ -191,6 +243,9 @@ func SweepTier(root string, tier registry.Tier, runner Runner) error {
 	if err != nil {
 		return err
 	}
+	if err := assertContractScopes(root, fixtures); err != nil {
+		return err
+	}
 	if len(fixtures) == 0 {
 		// Nothing to grade, and the vacuity baselines below are inner gate runs —
 		// too expensive to pay for a tier that owns no fixtures.
@@ -240,12 +295,34 @@ func assertFamilyBinding(root string) error {
 	return nil
 }
 
-// selected is one fixture a tier sweeps, paired with the conformance check its inner
-// run is scoped to. An empty scope runs the whole tier: contract and legacy flat
-// fixtures grade surfaces no single conformance check owns.
+// selected is one fixture the sweep grades, with everything its inner run is scoped by:
+// the family directory it lives under, the contract package that owns its EXPECT for a
+// behavior-owned fixture, and the conformance check for a fixture whose family binds one.
+// The family and package are carried rather than re-derived from the path at each use,
+// because a nested package puts more than one directory between the family and the
+// fixture and a parent-basename read would silently name the wrong one.
+//
+// An empty scope and an empty package together run the whole tier: legacy flat fixtures
+// grade surfaces no single check or package owns.
 type selected struct {
-	dir   string
-	scope string
+	dir    string
+	family string
+	pkg    string
+	scope  string
+}
+
+// contractGroupPrefix keys a contract package's vacuity group, so a package path can
+// never collide with a conformance check that happens to share its name.
+const contractGroupPrefix = contractPhase + ":"
+
+// group names the vacuity baseline this fixture's EXPECT is graded against. Fixtures of
+// one group run the same checks, so a baseline of any other group both misses a genuinely
+// vacuous EXPECT and flags a sound one.
+func (s selected) group() string {
+	if s.pkg != "" {
+		return contractGroupPrefix + s.pkg
+	}
+	return s.scope
 }
 
 // checkFileName optionally binds a fixture to the conformance check it grades. Absent,
@@ -292,8 +369,7 @@ func fixtureCheck(fx string) (registry.Tier, string, error) {
 // so the fallback is the only correct answer at this layer. The kit's own unbound
 // family is a red the conformance layer raises instead, where the table and the tree
 // it describes are both in scope.
-func fixtureScope(fx, checkName string) string {
-	family := filepath.Base(filepath.Dir(fx))
+func fixtureScope(family, checkName string) string {
 	if FixturePhase(family) != "conformance" {
 		return ""
 	}
@@ -308,40 +384,74 @@ func fixtureScope(fx, checkName string) string {
 // is tier equality, not the registry's RunsAt superset: the tiers have to partition the
 // harness so that every fixture is swept by exactly one of them, and a fixture
 // belonging to neither is the unswept rot the canary exists to catch.
-func selectTier(fixtures []string, tier registry.Tier) ([]selected, error) {
+func selectTier(fixtures []selected, tier registry.Tier) ([]selected, error) {
 	var out []selected
 	for _, fx := range fixtures {
-		owner, checkName, err := fixtureCheck(fx)
+		owner, checkName, err := fixtureCheck(fx.dir)
 		if err != nil {
 			return nil, err
 		}
 		if owner != tier {
 			continue
 		}
-		out = append(out, selected{dir: fx, scope: fixtureScope(fx, checkName)})
+		fx.scope = fixtureScope(fx.family, checkName)
+		out = append(out, fx)
 	}
 	return out, nil
+}
+
+// assertContractScopes refuses a sweep while a behavior-owned fixture cannot be scoped to
+// one contract package, ahead of the first inner gate. Each of these defects leaves the
+// fixture grading every contract package instead of the one that owns its EXPECT — the
+// whole per-fixture cost the scoping removes, paid in silence — so reporting them
+// afterwards means paying for them first. Every defect is reported, matching how the
+// sweep reports its fixture failures.
+func assertContractScopes(root string, fixtures []selected) error {
+	var errs []string
+	for _, fx := range fixtures {
+		if FixturePhase(fx.family) != contractPhase {
+			continue
+		}
+		name := filepath.Base(fx.dir)
+		switch {
+		case fx.pkg == "":
+			errs = append(errs, fmt.Sprintf("canary fixture '%s' sits directly under tests/canary/%s/, which binds it to no contract package; move it to tests/canary/%s/<package path>/%s/", name, fx.family, fx.family, name))
+		case !isDir(filepath.Join(root, "internal", "contract", filepath.FromSlash(fx.pkg))):
+			errs = append(errs, fmt.Sprintf("canary fixture '%s' is bound to contract package %q, which does not exist under internal/contract/", name, fx.pkg))
+		case regularFile(filepath.Join(fx.dir, "files", dotEncodedPath(PhaseManifestPath))):
+			errs = append(errs, fmt.Sprintf("canary fixture '%s' declares files/%s, and a declared phase table replaces the built-in one its contract scoping lives in; make it a legacy flat fixture at tests/canary/%s/ instead", name, dotEncodedPath(PhaseManifestPath), name))
+		}
+	}
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "\n"))
+	}
+	return nil
 }
 
 // scopeBaselines runs one empty-tree gate per scope group the sweep grades, and
 // returns each group's output for the vacuity comparison. A fixture's EXPECT is
 // compared against a run of its own shape: another group's baseline executes different
 // checks, so it would both miss a genuinely vacuous EXPECT and flag a sound one. The
-// key is the resolved check alone, which keeps every unscoped fixture on the single
-// full baseline they share today.
+// key is the group each fixture resolves to, which keeps every unscoped fixture on the
+// single full baseline they share today.
 //
 // A group whose baseline prints nothing is an error rather than a group that runs on:
 // the vacuity test asks whether the baseline output already contains the EXPECT, and
 // an empty output contains none of them, so every fixture in that group would clear
 // the check unguarded while the other groups stayed graded. Errors for all such groups
 // are reported together, matching how the sweep reports its fixture failures.
+//
+// Each group is represented by one of its own fixtures, so the environment a baseline
+// runs under is built by the same function that builds its fixtures': a baseline that
+// ran a wider set of checks than its group grades EXPECTs against output no fixture in
+// the group can produce.
 func scopeBaselines(fixtures []selected, gate string, env []string, runner Runner) (map[string]string, error) {
-	var scopes []string
+	var scopes []selected
 	seen := map[string]bool{}
 	for _, fx := range fixtures {
-		if !seen[fx.scope] {
-			seen[fx.scope] = true
-			scopes = append(scopes, fx.scope)
+		if key := fx.group(); !seen[key] {
+			seen[key] = true
+			scopes = append(scopes, fx)
 		}
 	}
 
@@ -364,17 +474,17 @@ func scopeBaselines(fixtures []selected, gate string, env []string, runner Runne
 
 	outputs := make([]string, len(scopes))
 	eachIndex(len(scopes), func(idx int) {
-		outputs[idx] = runner(RunCall{Cwd: dirs[idx], Gate: gate, Env: scopedEnv(env, scopes[idx])}).Output
+		outputs[idx] = runner(RunCall{Cwd: dirs[idx], Gate: gate, Env: baselineEnv(env, scopes[idx])}).Output
 	})
 
 	baselines := make(map[string]string, len(scopes))
 	var empty []string
 	for idx, scope := range scopes {
 		if outputs[idx] == "" {
-			empty = append(empty, fmt.Sprintf("canary baseline for %s produced no output, so it can grade no EXPECT as vacuous", groupLabel(scope)))
+			empty = append(empty, fmt.Sprintf("canary baseline for %s produced no output, so it can grade no EXPECT as vacuous", groupLabel(scope.group())))
 			continue
 		}
-		baselines[scope] = outputs[idx]
+		baselines[scope.group()] = outputs[idx]
 	}
 	if len(empty) > 0 {
 		return nil, errors.New(strings.Join(empty, "\n"))
@@ -385,17 +495,17 @@ func scopeBaselines(fixtures []selected, gate string, env []string, runner Runne
 // groupLabel names a scope group in a diagnostic. The unscoped group's key is the
 // empty string, which reads as a missing name rather than as the group every fixture
 // needing the full inner gate shares, so it is named by what it runs.
-func groupLabel(scope string) string {
-	if scope == "" {
+func groupLabel(group string) string {
+	if group == "" {
 		return "the unscoped group"
 	}
-	return fmt.Sprintf("scope group %q", scope)
+	return fmt.Sprintf("scope group %q", group)
 }
 
 func runFixtures(root string, fixtures []selected, baselines map[string]string, gate string, env []string, runner Runner) []string {
 	errs := make([]string, len(fixtures))
 	eachIndex(len(fixtures), func(idx int) {
-		errs[idx] = runFixture(root, fixtures[idx], baselines[fixtures[idx].scope], gate, env, runner)
+		errs[idx] = runFixture(root, fixtures[idx], baselines[fixtures[idx].group()], gate, env, runner)
 	})
 
 	out := errs[:0]
@@ -472,8 +582,8 @@ func runFixture(root string, fixture selected, baselineOutput, gate string, env 
 		return fmt.Sprintf("canary '%s' setup failed: %v", name, err)
 	}
 	_ = gitInit(work)
-	fixtureEnv := scopedEnv(env, fixture.scope)
-	if phase := FixturePhase(filepath.Base(filepath.Dir(fx))); phase != "" {
+	fixtureEnv := scopedEnv(env, fixture)
+	if phase := FixturePhase(fixture.family); phase != "" {
 		fixtureEnv = append(fixtureEnv, PhaseEnv+"="+phase)
 	}
 	result := runner(RunCall{Cwd: work, Gate: gate, FixtureDir: fx, Env: fixtureEnv})
@@ -483,28 +593,41 @@ func runFixture(root string, fixture selected, baselineOutput, gate string, env 
 	return ""
 }
 
-func fixtures(dir string) ([]string, error) {
+// fixtures discovers every fixture under dir, the tests/canary tree: a legacy flat
+// fixture directly under it, and otherwise the fixtures of each family directory. Base
+// names are globally unique across the whole tree — two fixtures sharing a name collide
+// in their diagnostics and in their temporary work directories wherever they live, so
+// nesting is no escape from the check.
+func fixtures(dir string) ([]selected, error) {
 	families, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, errors.New(absentHarnessMessage)
 	}
-	var out []string
-	seen := map[string]string{}
-	addFixture := func(name, fixtureDir string) error {
-		if first := seen[name]; first != "" {
+	var out []selected
+	seen := map[string]bool{}
+	addFixture := func(fixture selected) error {
+		name := filepath.Base(fixture.dir)
+		if seen[name] {
 			return fmt.Errorf("canary fixture name %q appears in multiple families; base names must be globally unique", name)
 		}
-		seen[name] = fixtureDir
-		out = append(out, fixtureDir)
+		seen[name] = true
+		out = append(out, fixture)
 		return nil
 	}
 	for _, family := range families {
 		if !family.IsDir() {
 			continue
 		}
-		familyDir := filepath.Join(dir, family.Name())
-		if isFlatFixture(familyDir) {
-			if err := addFixture(family.Name(), familyDir); err != nil {
+		name := family.Name()
+		familyDir := filepath.Join(dir, name)
+		if holdsExpect(familyDir) {
+			if err := addFixture(selected{dir: familyDir}); err != nil {
+				return nil, err
+			}
+			continue
+		}
+		if FixturePhase(name) == contractPhase {
+			if err := addContractFixtures(familyDir, name, "", addFixture); err != nil {
 				return nil, err
 			}
 			continue
@@ -517,9 +640,7 @@ func fixtures(dir string) ([]string, error) {
 			if !ent.IsDir() {
 				continue
 			}
-			name := ent.Name()
-			fixtureDir := filepath.Join(familyDir, name)
-			if err := addFixture(name, fixtureDir); err != nil {
+			if err := addFixture(selected{dir: filepath.Join(familyDir, ent.Name()), family: name}); err != nil {
 				return nil, err
 			}
 		}
@@ -527,8 +648,36 @@ func fixtures(dir string) ([]string, error) {
 	if len(out) == 0 {
 		return nil, errors.New(absentHarnessMessage)
 	}
-	sort.Strings(out)
+	sort.Slice(out, func(i, j int) bool { return out[i].dir < out[j].dir })
 	return out, nil
+}
+
+// addContractFixtures walks the family whose fixtures are bound to a contract package,
+// where the directory holding EXPECT is the fixture and pkg accumulates every directory
+// between the family and it. The descent is what lets a nested contract package
+// (surface/artifact) bind its fixtures; a fixture reached with an empty pkg is bound to
+// no package at all, which assertContractScopes reports.
+func addContractFixtures(dir, family, pkg string, addFixture func(selected) error) error {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+	for _, ent := range entries {
+		if !ent.IsDir() {
+			continue
+		}
+		child := filepath.Join(dir, ent.Name())
+		if holdsExpect(child) {
+			if err := addFixture(selected{dir: child, family: family, pkg: pkg}); err != nil {
+				return err
+			}
+			continue
+		}
+		if err := addContractFixtures(child, family, path.Join(pkg, ent.Name()), addFixture); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func trimExpectation(data []byte) string {
@@ -576,13 +725,30 @@ func copyTree(src, dst string) error {
 	})
 }
 
+// dotPrefix stands in for a leading dot in a fixture's stored files/ tree, so that a
+// fixture's dot directories are visible to the tools that read the harness and are
+// restored only in the materialized copy under grade.
+const dotPrefix = "dot-"
+
+// dotEncodedPath is the stored form of a slash path whose segments start with a dot —
+// the shape a fixture's files/ tree holds, and the inverse of restoreDotSegments.
+func dotEncodedPath(rel string) string {
+	segments := strings.Split(rel, "/")
+	for idx, segment := range segments {
+		if bare, dotted := strings.CutPrefix(segment, "."); dotted {
+			segments[idx] = dotPrefix + bare
+		}
+	}
+	return filepath.Join(segments...)
+}
+
 func restoreDotSegments(root string) error {
 	var dirs []string
 	if err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if d.IsDir() && strings.HasPrefix(d.Name(), "dot-") {
+		if d.IsDir() && strings.HasPrefix(d.Name(), dotPrefix) {
 			dirs = append(dirs, path)
 		}
 		return nil
@@ -591,7 +757,7 @@ func restoreDotSegments(root string) error {
 	}
 	sort.Slice(dirs, func(i, j int) bool { return len(dirs[i]) > len(dirs[j]) })
 	for _, old := range dirs {
-		newPath := filepath.Join(filepath.Dir(old), "."+strings.TrimPrefix(filepath.Base(old), "dot-"))
+		newPath := filepath.Join(filepath.Dir(old), "."+strings.TrimPrefix(filepath.Base(old), dotPrefix))
 		if err := os.Rename(old, newPath); err != nil {
 			return err
 		}
@@ -599,16 +765,33 @@ func restoreDotSegments(root string) error {
 	return nil
 }
 
-// scopedEnv is env plus the check an inner gate is scoped to. A run with no scope
-// carries no scope variable at all rather than an empty one, which names no check and
-// reds the inner gate. The copy is what keeps concurrent runs from appending into one
-// shared backing array.
-func scopedEnv(env []string, scope string) []string {
+// scopedEnv is env plus the variables naming what one inner gate grades: the conformance
+// check the fixture's family binds, and the contract package that owns a behavior-owned
+// fixture's EXPECT. A run without one of them carries no variable at all rather than an
+// empty one, which names nothing and reds the inner gate. The copy is what keeps
+// concurrent runs from appending into one shared backing array.
+func scopedEnv(env []string, fixture selected) []string {
 	out := append([]string(nil), env...)
-	if scope == "" {
-		return out
+	if fixture.scope != "" {
+		out = append(out, registry.ConformanceCheckEnv+"="+fixture.scope)
 	}
-	return append(out, registry.ConformanceCheckEnv+"="+scope)
+	if fixture.pkg != "" {
+		out = append(out, ContractPackageEnv+"="+fixture.pkg)
+	}
+	return out
+}
+
+// baselineEnv is the environment a group's empty-tree baseline runs under: the group's
+// own scope variables, plus the phase pin for a contract group. The pin belongs to the
+// baseline as much as to the fixture — a contract package narrows that one phase's argv,
+// so a baseline running the full inner gate would grade its group's EXPECTs against the
+// output of checks no fixture in the group runs.
+func baselineEnv(env []string, group selected) []string {
+	out := scopedEnv(env, group)
+	if group.pkg != "" {
+		out = append(out, PhaseEnv+"="+FixturePhase(group.family))
+	}
+	return out
 }
 
 // innerEnv is the environment every inner gate of a tier's sweep runs under. The tier
@@ -616,13 +799,13 @@ func scopedEnv(env []string, scope string) []string {
 // inner gate at any other tier skips that check and the fixture reports "did not bite"
 // forever. Every variable an inner gate may carry is scrubbed from the inherited
 // environment here — a strip without its matching set, or a set without its matching
-// strip, hands an ambient export control of what the sweep grades. The phase and the
-// check scope vary per run, so they are stripped here and set by the caller that knows
-// the run's fixture and group.
+// strip, hands an ambient export control of what the sweep grades. The phase, the check
+// scope, and the contract package vary per run, so they are stripped here and set by the
+// caller that knows the run's fixture and group.
 func innerEnv(tier registry.Tier) []string {
 	env := make([]string, 0, len(os.Environ())+3)
 	for _, kv := range os.Environ() {
-		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, "BENCH_CANARY_INNER=") || strings.HasPrefix(kv, PhaseEnv+"=") || strings.HasPrefix(kv, registry.ConformanceTierEnv+"=") || strings.HasPrefix(kv, registry.ConformanceCheckEnv+"=") || strings.HasPrefix(kv, "GOMAXPROCS=") {
+		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, "BENCH_CANARY_INNER=") || strings.HasPrefix(kv, PhaseEnv+"=") || strings.HasPrefix(kv, ContractPackageEnv+"=") || strings.HasPrefix(kv, registry.ConformanceTierEnv+"=") || strings.HasPrefix(kv, registry.ConformanceCheckEnv+"=") || strings.HasPrefix(kv, "GOMAXPROCS=") {
 			continue
 		}
 		env = append(env, kv)

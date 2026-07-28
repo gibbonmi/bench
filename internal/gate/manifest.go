@@ -17,10 +17,12 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/gibbonmi/bench/internal/canary"
 )
 
 func manifestPath(root string) string {
-	return filepath.Join(root, ".bench", "phases.json")
+	return filepath.Join(root, filepath.FromSlash(canary.PhaseManifestPath))
 }
 
 type manifestDoc struct {
@@ -40,14 +42,14 @@ type manifestPhase struct {
 // declares one, the built-in kit table when it declares none. root is the tree under
 // grade, resolved through git by every caller and so absolute — a manifest phase's
 // working directory is anchored to it.
-func phaseTable(root, kit string) ([]Phase, error) {
+func phaseTable(root, kit string, mode phaseMode) ([]Phase, error) {
 	path := manifestPath(root)
 	data, present, err := readManifest(path)
 	if err != nil {
 		return nil, err
 	}
 	if !present {
-		return benchkitPhasesForCommand(root, kit), nil
+		return narrowContractScope(benchkitPhasesForCommand(root, kit), kit, mode)
 	}
 	return parseManifest(path, root, data)
 }

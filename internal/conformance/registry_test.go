@@ -212,11 +212,14 @@ func TestCanaryFixtureRegistryClassifiesEveryFixture(t *testing.T) {
 	fixturesDir := h.KitPath("tests", "canary")
 	fixturePaths := canaryFixturePaths(t, fixturesDir)
 
-	for name, path := range fixturePaths {
-		family := filepath.Base(filepath.Dir(path))
+	for name, fx := range fixturePaths {
+		family := fx.Family
 		var wantOwner fixtureOwner
 		switch phase := canary.FixturePhase(family); {
-		case phase == "contract":
+		// A legacy flat fixture belongs to no family at all: its EXPECT is emitted by no
+		// single conformance check and no contract package, which is what earns it the
+		// full inner gate.
+		case family == "", phase == "contract":
 			wantOwner = ownerBehavior
 		// A family routing to a phase of its own name is a phase family. The router owns
 		// the phase names, so asking it beats listing them again here.
@@ -242,7 +245,7 @@ func TestCanaryFixtureRegistryClassifiesEveryFixture(t *testing.T) {
 		if reg.Owner != wantOwner {
 			t.Errorf("canary fixture %q under %q has owner %q, want %q", name, family, reg.Owner, wantOwner)
 		}
-		if _, err := os.Stat(filepath.Join(path, "EXPECT")); err != nil {
+		if _, err := os.Stat(filepath.Join(fx.Dir, "EXPECT")); err != nil {
 			t.Errorf("canary fixture %q has no EXPECT: %v", name, err)
 		}
 	}
@@ -276,11 +279,11 @@ func TestRetiredConformanceFixturesDoNotLeaveShellTwinMessages(t *testing.T) {
 			}
 			shellText[source] = string(data)
 		}
-		fixturePath, ok := fixturePaths[fixture]
+		fx, ok := fixturePaths[fixture]
 		if !ok {
 			t.Fatalf("registry names nonexistent conformance fixture %q", fixture)
 		}
-		expect := readExpectation(t, filepath.Join(fixturePath, "EXPECT"))
+		expect := readExpectation(t, filepath.Join(fx.Dir, "EXPECT"))
 		for _, source := range reg.ShellSources {
 			text := shellText[source]
 			if strings.Contains(text, expect) {
@@ -309,8 +312,8 @@ var fixtureExemptPhases = map[string]bool{
 func TestEveryMovedStepOwnsAFixture(t *testing.T) {
 	h := NewHarness(t)
 	covered := map[string]bool{}
-	for _, path := range canaryFixturePaths(t, h.KitPath("tests", "canary")) {
-		covered[canary.FixturePhase(filepath.Base(filepath.Dir(path)))] = true
+	for _, fx := range canaryFixturePaths(t, h.KitPath("tests", "canary")) {
+		covered[canary.FixturePhase(fx.Family)] = true
 	}
 	for _, phase := range gate.BenchkitPhases(h.KitRoot, h.KitRoot) {
 		if fixtureExemptPhases[phase.Name] || covered[phase.Name] {
@@ -320,13 +323,12 @@ func TestEveryMovedStepOwnsAFixture(t *testing.T) {
 	}
 }
 
-func canaryFixturePaths(t *testing.T, fixturesDir string) map[string]string {
+func canaryFixturePaths(t *testing.T, fixturesDir string) map[string]canary.Fixture {
 	t.Helper()
 	families, err := os.ReadDir(fixturesDir)
 	if err != nil {
 		t.Fatalf("read canary fixtures: %v", err)
 	}
-	paths := map[string]string{}
 	for _, family := range families {
 		if !family.IsDir() {
 			continue
@@ -334,25 +336,17 @@ func canaryFixturePaths(t *testing.T, fixturesDir string) map[string]string {
 		// A family is canonical when the sweep can route it: to a phase (the behavior
 		// family's contract phase, or a phase family named for its own phase) or to a
 		// conformance check the registry binds. Only a family that routes to conformance
-		// and is bound to nothing is unattributable.
-		if canary.FixturePhase(family.Name()) == "conformance" && !familyIsBound(family.Name()) {
+		// and is bound to nothing is unattributable — a legacy flat fixture is a fixture
+		// in its own right rather than a family, and runs the full inner gate.
+		if canary.IsConformanceFamily(filepath.Join(fixturesDir, family.Name())) && !familyIsBound(family.Name()) {
 			t.Errorf("canary family %q is not canonical", family.Name())
 		}
-		familyDir := filepath.Join(fixturesDir, family.Name())
-		entries, err := os.ReadDir(familyDir)
-		if err != nil {
-			t.Fatalf("read canary family %q: %v", family.Name(), err)
-		}
-		for _, entry := range entries {
-			if !entry.IsDir() {
-				continue
-			}
-			if first := paths[entry.Name()]; first != "" {
-				t.Errorf("canary fixture %q appears at both %s and %s", entry.Name(), first, filepath.Join(familyDir, entry.Name()))
-				continue
-			}
-			paths[entry.Name()] = filepath.Join(familyDir, entry.Name())
-		}
 	}
-	return paths
+	// The sweep's own walk enumerates the fixtures, base-name uniqueness included: a
+	// second walk here would disagree with the tree the sweep actually runs.
+	discovered, err := canary.Fixtures(fixturesDir)
+	if err != nil {
+		t.Fatalf("walk canary fixtures: %v", err)
+	}
+	return discovered
 }

@@ -32,6 +32,7 @@ one reds as did-not-bite at the first gate.
 | unscaffolded-bench-file | surface |
 | wrapper-args-dropped | surface |
 | native-proof-aggregation-bypassed | surface/artifact |
+| native-proof-digest-binding-bypassed | surface/artifact (the fixture injects a build-tagged test into the graded root; `TestAuthoritativeNativeProofBehaviorCanary` drives it as a subprocess and reports its output, so the identically worded string in the release-evidence probe is not the emitter under the gate) |
 | offline-archive-digest-binding-omitted | surface/artifact |
 | wrapper-contamination-admitted | surface/artifact |
 | wrapper-required-surface-dropped | surface/artifact |
@@ -43,15 +44,14 @@ one reds as did-not-bite at the first gate.
 
 ## Not contract-owned — relocate to legacy flat fixtures
 
-Two EXPECTs are not emitted by any contract package, so these fixtures are
-mis-familied today and cannot take a package binding:
+One EXPECT is emitted by no phase at all, so that fixture is mis-familied
+today and can take no package binding:
 
 | fixture | actual emitter |
 |---|---|
 | phase-manifest-defect-admitted | the gate's manifest loader (`internal/gate`), which reds before any phase runs |
-| native-proof-digest-binding-bypassed | the conformance release-probe suite (`internal/conformance`) |
 
-Both move to `tests/canary/<fixture>/` — the existing legacy flat class:
-full inner gate, shared unscoped baseline, no new mechanism. Cost accepted:
-two full inner runs (~1 worker-minute each) against ~1,600 worker-seconds
-removed from the other 32.
+It moves to `tests/canary/<fixture>/` — the existing legacy flat class: full
+inner gate, shared unscoped baseline, no new mechanism. Cost accepted: one
+full inner run (~1 worker-minute) against ~1,600 worker-seconds removed from
+the other 33.

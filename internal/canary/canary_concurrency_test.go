@@ -13,6 +13,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
 func TestSweepRunsFixturesConcurrently(t *testing.T) {
@@ -131,12 +132,15 @@ func TestSweepBoundsFixtureConcurrencyAtDerivedWorkerBound(t *testing.T) {
 func TestSweepCompletesEachGroupsBaselineBeforeItsFixtures(t *testing.T) {
 	root := t.TempDir()
 	first, second := mappedFamilies(t)
-	for _, family := range []string{first, second, "behavior-owned"} {
+	for _, family := range []string{first, second} {
 		for _, name := range []string{"a", "b"} {
 			fixture := canaryFixture(root, family, family+"-"+name)
 			mkdir(t, filepath.Join(fixture, "files"))
 			write(t, filepath.Join(fixture, "EXPECT"), "target-"+family+"-"+name+"\n")
 		}
+	}
+	for _, name := range []string{"a", "b"} {
+		contractFixture(t, root, "axi", "contract-"+name)
 	}
 
 	var mu sync.Mutex
@@ -164,18 +168,27 @@ func TestSweepCompletesEachGroupsBaselineBeforeItsFixtures(t *testing.T) {
 }
 
 // callGroup names the scope group a call belongs to, which is the key the sweep pairs a
-// fixture with its baseline under. More than one scope on a call means the pairing is
-// ambiguous, so it fails rather than picking one.
+// fixture with its baseline under.
 func callGroup(t *testing.T, call RunCall) string {
 	t.Helper()
-	scopes := scopeValues(call.Env)
-	switch len(scopes) {
+	if pkg := soleValue(t, call, ContractPackageEnv); pkg != "" {
+		return contractGroupPrefix + pkg
+	}
+	return soleValue(t, call, registry.ConformanceCheckEnv)
+}
+
+// soleValue is the one value call carries for key, or the empty string for none. Two
+// values leave the group ambiguous, so it fails rather than picking one.
+func soleValue(t *testing.T, call RunCall, key string) string {
+	t.Helper()
+	values := envValues(call.Env, key)
+	switch len(values) {
 	case 0:
 		return ""
 	case 1:
-		return scopes[0]
+		return values[0]
 	default:
-		t.Fatalf("call %q carried scopes %v, want at most one", call.FixtureDir, scopes)
+		t.Fatalf("call %q carried %s values %v, want at most one", call.FixtureDir, key, values)
 		return ""
 	}
 }
