@@ -175,10 +175,12 @@ turns a nonzero capability-skip count red; absent, or set to anything else, the
 `capability-skips` rows stay informational, because a developer's host legitimately
 lacks capabilities and an unconditional red would make the gate unusable locally.
 Both release workflows wire it on. An empty or legacy-flat canary run exercises
-every non-canary phase; a nested fixture exercises only its owning phase
-(conformance for conformance families, contract for `behavior-owned`). Canary
-EXPECT matching is substring-based against inner-gate output, so the inner
-byte-shape is load-bearing:
+every non-canary phase; a nested fixture exercises only the phase its family
+binds, which today means conformance. A `behavior-owned` fixture nests no gate
+at all — it is graded by the compiled test binary of the one contract package
+that owns its EXPECT, invoked against the fixture's tree. Canary EXPECT matching
+is substring-based against that run's output, so the byte-shape of whichever
+runs — inner gate or contract binary — is load-bearing:
 
 1. **Go root conformance** — the conformance phase runs
    `go test -count=1 ./internal/conformance -run '^TestRootConformance$'` with
@@ -211,9 +213,12 @@ byte-shape is load-bearing:
 6. **Canary (meta)** — the gate runs itself against deliberately-broken fixtures in
    `tests/canary/` and asserts each goes red with its targeted error substring. Proves
    the checks above still *bite*: a check rotted into an always-pass fails here. This
-   is the gate guarding the gate. Each nested fixture keeps the real gate entry path
-   but runs only the phase that owns its failure, avoiding unrelated whole-gate work;
-   the empty baseline still exercises every inner phase to reject vacuous EXPECTs.
+   is the gate guarding the gate. A nested fixture keeps the real gate entry path but
+   runs only the phase that owns its failure, avoiding unrelated whole-gate work,
+   while the baseline that rejects vacuous EXPECTs carries no phase pin and so still
+   exercises every inner phase. A
+   `behavior-owned` fixture nests nothing: its owning contract package is compiled
+   once per package group and that binary is invoked per fixture tree.
    An EXPECT for a `behavior-owned` fixture is never checked for mutation-specificity:
    its contract group's empty-tree baseline is only a collision screen against
    infrastructure noise, so a generic banner that any failure prints passes it forever.
@@ -223,7 +228,8 @@ byte-shape is load-bearing:
    Fixtures hide dot-dirs behind a `dot-` prefix (e.g. `dot-claude`) so the harness
    doesn't load fixture skills as real ones; the canary restores them at run time.
    The sweep's aggregate concurrency is budgeted, not left to either factor: every
-   inner gate is invoked with an explicit `GOMAXPROCS` equal to
+   run it makes — inner gate or contract binary — is invoked with an explicit
+   `GOMAXPROCS` equal to
    `bounds.CanaryInnerWidth`, stripped-then-set so an inherited value cannot leak
    past the cap, and the worker pool derives as `runtime.GOMAXPROCS(0)` divided by
    that width, floored at one and capped at the fixture count. There is no
