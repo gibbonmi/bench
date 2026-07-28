@@ -1,6 +1,6 @@
 # ft91-canary-contract-scoping
 
-Status: staged
+Status: implemented
 
 Map: `decisions/gate-critical-path.md` (#1, #6; Handoff written same-session
 2026-07-28 under the entry contract's reviewer-closed exception). Flagged for

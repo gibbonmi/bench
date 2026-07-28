@@ -1,5 +1,23 @@
 # Gate critical-path timeline (2026-07-28)
 
+## Post-stage-1 measurement (2026-07-28, ft91-canary-contract-scoping landed)
+
+Same box and method, main at the scoping commits (`bbfe233` + `f10faae`):
+instrumented `bench gate` then solo `bench canary .`, warm caches.
+
+- Gate wall **172 s** (was 267 s), all phases green. Contract phase ended
+  t+143 (artifact 133.8 s of it); canary summary at t+172 — the gate is now
+  jointly contract/canary-bound instead of canary-bound by 105 s.
+- Solo canary **151.5 s** (was 250 s). Against the spec's ≤100 s acceptance
+  this is a **miss**: real reduction, not the degenerate-migration signature,
+  but above threshold.
+- Why above the 60–80 s floor estimate: the estimate keyed on the 45 s
+  surface straggler, but the five `surface/artifact`-bound fixtures each pay
+  the artifact suite (~134 s at full width, more at inner width 2) — the
+  artifact suite is now the canary tail exactly as it is the contract-phase
+  tail. Stage 2 (in-process bite checks) and the prepared-artifact hoist
+  (map #3) both attack that same tail.
+
 Instrumented full dev gate plus a solo canary run, kit repo, 16 cores, idle
 box, warm caches. Method: `bench gate` piped through a per-line epoch
 timestamper; a 5 s sampler recording `/proc/loadavg` and the top processes by
