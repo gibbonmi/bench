@@ -2,63 +2,51 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `36049d8`, clean tree, 5 unpushed commits
-Spec: `specs/ft148-worktree-orphan-retirement.md` — `Status: implemented`
-Gate: green at HEAD — current
+Branch: `main` — HEAD `5f9e997`, clean tree, 1 unpushed commit
+Spec: none staged.
+Gate: green at `a9aeffc` — stale, work tree `448815b`
 
 ## State
 
-- **FT148 is built, reviewed, gate-green, and unpushed. The reviewer owns the
-  push.** Three commits: `a1aaafb` (all twelve stories), `f4103e4` (eight review
-  findings fixed), `36049d8` (the status flip). Every phase of the gate is green
-  including canary; ship-tier verification has not run and is not expected to —
-  that is `bench prep-release`, once per release.
-- **The feature works on real data, verified end-to-end rather than only by
-  tests.** The session-start wall went from twenty-odd lines to five. One genuine
-  residue row was compacted, the two worktrees this build cut were reported as
-  orphans and then retired through the emitted command, and a freshly stamped
-  worktree was correctly left alone. Seventeen `recovered` rows remain and are
-  FT98's, not a defect.
-- **Orphanhood is age alone, and that is still the load-bearing fact.** No
-  liveness signal exists: `bench worktree create` writes no lease, and a lease
-  records a pid that dies when the create hook exits. Safety rests on
-  `bounds.AssignmentStale` being 7 days, the sweep only ever reporting, and the
-  explicit cleanup recovering into a recovery ref before removing. Shortening the
-  window or making the sweep reap is a spec deviation, not a refinement.
-- **Two spec defects the build found and did not silently paper over.** Story 7's
-  "an orphaned record that does hold recovery metadata is preserved" describes an
-  unreachable state — `orphaned` requires `active`, and validation rejects an
-  `active` record holding recovery metadata — so the sentence wants restating and
-  coverage row 20 wants reclassifying. Coverage row 12 was mislabelled red-first;
-  nothing faithful could have reddened it, and the build reclassified it with a
-  mutation proof. Both are the reviewer's to edit; this session did not touch the
-  spec beyond its status line.
-- **Three review findings were accepted as residual risk, not fixed.** `lineSafe`
-  admits display-hostile non-control runes (U+202E RLO renders the `--apply`
-  disclaimer reversed); the sweep grades `residualAssignment` against a snapshot
-  taken outside the ledger lock, so a concurrent `clean --apply` promoting a row
-  to `recovered` between snapshot and delete would orphan its recovery ref; and
-  interrupt-mid-sweep has no fault injection, mitigated by asserted idempotency.
-  Each is a design change the reviewer owns, and none is a regression — all three
-  are properties the pre-build code shared or did not reach.
-- **Two specs sit unretired on purpose.** `ft148-worktree-orphan-retirement`
-  must not be retired before the reviewer has merged it — retirement deletes the
-  review surface for work they have not seen. `ft91-gate-phase-split` stays
-  unretired for the reason it always has: retiring it destroys the veto surface
-  on stories 4, 5, and 9.
-- **One open learning is parked for the drain.** The `reviews/` pickup artifact
-  was written and deleted inside one session without ever being committed, so it
-  was never the tracked state the phase requires. Net tree state is correct; the
-  rule was not followed. `.bench/learnings.md` carries the entry.
+- **The drain closed and is unpushed.** Commit `5f9e997` reconciled the board,
+  emptied `IDEAS.md`, cleared `.bench/learnings.md`, and retired
+  `specs/ft148-worktree-orphan-retirement.md`. Both capture sources are at zero
+  and `bench roadmap --context` parses clean. The reviewer approved the batch and
+  owns the push.
+- **FT148 shipped and its residue moved to FT98.** Orphan retirement works, but
+  the session-start wall is only partly gone: 21 recovery refs and the 17
+  assignment rows holding them survive because compaction correctly declines rows
+  that preserve work. `bench worktree recovery <ref>` returns `retain … unlanded`
+  on a sampled ref. That is FT98's landed-proof, now recorded in its face one as
+  current evidence — not a defect in what FT148 built.
+- **Two learnings became FT107 clauses seven and eight.** The review-pickup
+  commit is reworded from a buried subordinate clause into its own ordered step,
+  and "Route the venue" gets a precedence clause for a harness that *may not*
+  spawn a write subagent — `craft-delegate` covers only *cannot*. Both are kit
+  prose, built later under `craft-synthesis`. The drained `bench gate pin`
+  discoverability idea is FT150 (LOW).
+- **`ft91-gate-phase-split` stays unretired on purpose,** so `bench status` will
+  keep reporting one spec awaiting retirement until the reviewer rules. Retiring
+  it destroys the veto surface on stories 4, 5, and 9: stories 4 and 5 shipped as
+  *probed* phases instead of the kit-owned `.bench/phases.json` the spec named,
+  and story 9 — that manifest — is unbuilt. The matching roadmap row is the
+  `roadmap` signal's "1 row for merged work"; both clear together when the
+  reviewer decides.
+- **Three FT148 review findings were accepted as residual risk, not fixed,** and
+  each is a design change the reviewer owns rather than a regression: `lineSafe`
+  admits display-hostile non-control runes, the sweep grades `residualAssignment`
+  against a snapshot taken outside the ledger lock, and interrupt-mid-sweep has no
+  fault injection.
 - **One recovery ref still wants a by-hand look:**
   `refs/bench/recovery/incident-20260712-ambient-probe` matches no assignment.
 
 ## Next command
 
-Push is the reviewer's: `git push origin main`. After the push lands, the
-retirement row fires and the next session runs
-`bench spec retire ft148-worktree-orphan-retirement`, promoting durable content
-first. The drain row (`1 idea, 1 open learning`) belongs to `/bench-what-next`.
+`/bench-debug` — FT91's next arm, the top of the refreshed sequence. Slice C's
+premise was falsified: the whole gate is unchanged at ~4m51s and the critical
+path is `internal/contract/surface/artifact` (~207 s) and
+`internal/contract/surface` (~178 s), untouched by any of the six arms. Ask why
+those two cost what they cost before assuming a pipeline shape.
 
 ## Shape
 
