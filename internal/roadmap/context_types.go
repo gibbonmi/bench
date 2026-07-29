@@ -32,6 +32,11 @@ type LearningFact struct {
 	BodyBytes                int
 	Truncated                bool
 }
+type RetroFact struct {
+	Path, State, Body string
+	BodyBytes         int
+	Truncated         bool
+}
 type ParseFailure struct {
 	Source, Reason, Raw string
 	RawBytes            int
@@ -59,6 +64,7 @@ type ContextSnapshot struct {
 	Roadmap     Document
 	Ideas       []IdeaFact
 	Learnings   []LearningFact
+	Retros      []RetroFact
 	Structure   [][]any
 	Specs       [][]string
 	SpecHistory [][]string

@@ -13,6 +13,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/learnings"
+	"github.com/gibbonmi/bench/internal/retros"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -146,15 +147,23 @@ func RoadmapCommand(args []string) (string, int) {
 	return text + nextAction(text), 0
 }
 
-// DrainCounts returns the maintenance inbox counts `bench roadmap` reports before a
-// reviewer trusts the roadmap sequence, plus each source's own readability state so a
-// caller can distinguish a genuinely empty inbox from a failed read. Absent or empty is
-// the ordinary quiet-inbox posture (count 0, no fail-closed state); only a state
-// FileState.Failed reports marks a failed read, matching maps.UnresolvedCount's contract.
-func DrainCounts(root string) (ideas int, ideasState bounds.FileState, openLearnings int, learningsState bounds.FileState) {
+// Drain is the typed capture-source snapshot `bench roadmap` and `bench status` project.
+// It carries each pending count and its source state so absence and empty remain the
+// ordinary quiet posture while failed reads render fail-closed unknown evidence.
+type Drain struct {
+	Ideas, OpenLearnings, Retros            int
+	IdeasState, LearningsState, RetrosState bounds.FileState
+}
+
+// DrainCounts gathers every capture source used by the roadmap and status surfaces.
+func DrainCounts(root string) Drain {
 	parked, ideasState := ideaLines(filepath.Join(root, IdeasFile))
-	openLearnings, learningsState = learningCount(root)
-	return len(parked), ideasState, openLearnings, learningsState
+	openLearnings, learningsState := learningCount(root)
+	retroFacts := retros.Facts(root)
+	return Drain{
+		Ideas: len(parked), OpenLearnings: openLearnings, Retros: len(retroFacts.Entries),
+		IdeasState: ideasState, LearningsState: learningsState, RetrosState: retroFacts.State,
+	}
 }
 
 // RoadmapText returns ROADMAP.md's rendered contents and whether the file yielded a
@@ -179,15 +188,17 @@ func ParkedIdeas(root string) []string {
 }
 
 func drainStatus(root string) string {
-	// bench roadmap's status callout only needs the counts: a source that failed to
-	// read renders as 0 here, and RoadmapCommand's own classified read above already
-	// fails closed on ROADMAP.md itself, so an unreadable IDEAS.md or learnings.md
-	// degrades this callout to quiet rather than the command's own read failing.
-	ideas, _, openLearnings, _ := DrainCounts(root)
-	if ideas == 0 && openLearnings == 0 {
+	// bench roadmap's status callout keeps degraded retrospective evidence visible while
+	// its existing idea and learning behavior remains count-only.
+	drain := DrainCounts(root)
+	if drain.Ideas == 0 && drain.OpenLearnings == 0 && drain.Retros == 0 && !drain.RetrosState.Failed() {
 		return ""
 	}
-	return fmt.Sprintf("\n\n## Drain status\n\n- ideas: %d parked in %s\n- learnings: %d open in %s\n\nRun /bench-what-next before trusting the sequence.\n", ideas, IdeasFile, openLearnings, learnings.JournalPath)
+	retro := fmt.Sprintf("%d pending in %s/", drain.Retros, retros.Directory)
+	if drain.RetrosState.Failed() {
+		retro = toon.UnknownCell(retros.Directory+"/", drain.RetrosState)
+	}
+	return fmt.Sprintf("\n\n## Drain status\n\n- ideas: %d parked in %s\n- learnings: %d open in %s\n- retros: %s\n\nRun /bench-what-next before trusting the sequence.\n", drain.Ideas, IdeasFile, drain.OpenLearnings, learnings.JournalPath, retro)
 }
 
 // numberedItem matches one sequence entry; the format contract wants two or three.

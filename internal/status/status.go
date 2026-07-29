@@ -29,6 +29,7 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/maps"
+	"github.com/gibbonmi/bench/internal/retros"
 	"github.com/gibbonmi/bench/internal/roadmap"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/shift"
@@ -434,24 +435,26 @@ func isPrimaryCheckout(root string) bool {
 // learnings component shows only at or above the floor (env BENCH_LEARNINGS_FLOOR,
 // default 1); parked ideas always count.
 //
-// Each of the two sources carries its own readability state. A source whose read failed
+// Each capture source carries its own readability state. A source whose read failed
 // (the FileState.Failed test appendMaps also applies) renders as toon.UnknownCell's
 // explicit `unknown (<path> is <state>)` segment instead of a fabricated 0, and the
 // good source's count still renders alongside it: one source failing must not hide the
 // other's number.
-// The row only disappears when both sources read cleanly and both counts are zero.
+// The row only disappears when every source reads cleanly and every count is zero.
 func appendDrain(rows []row, root string) []row {
-	ideas, ideasState, open, learningsState := roadmap.DrainCounts(root)
+	drain := roadmap.DrainCounts(root)
+	ideas, ideasState, open, learningsState, retroCount, retrosState := drain.Ideas, drain.IdeasState, drain.OpenLearnings, drain.LearningsState, drain.Retros, drain.RetrosState
 	if open < learningsFloor() {
 		open = 0
 	}
 	ideasFailed := ideasState.Failed()
 	learningsFailed := learningsState.Failed()
-	if !ideasFailed && !learningsFailed {
-		if ideas == 0 && open == 0 {
+	retrosFailed := retrosState.Failed()
+	if !ideasFailed && !learningsFailed && !retrosFailed {
+		if ideas == 0 && open == 0 && retroCount == 0 {
 			return rows
 		}
-		return append(rows, row{4, "drain", fmt.Sprintf("%d idea(s), %d open learning(s)", ideas, open), "/bench-what-next"})
+		return append(rows, row{4, "drain", fmt.Sprintf("%d idea(s), %d open learning(s), %d pending retro(s)", ideas, open, retroCount), "/bench-what-next"})
 	}
 	var parts []string
 	if ideasFailed {
@@ -463,6 +466,11 @@ func appendDrain(rows []row, root string) []row {
 		parts = append(parts, toon.UnknownCell(learnings.JournalPath, learningsState))
 	} else {
 		parts = append(parts, fmt.Sprintf("%d open learning(s)", open))
+	}
+	if retrosFailed {
+		parts = append(parts, toon.UnknownCell(retros.Directory+"/", retrosState))
+	} else {
+		parts = append(parts, fmt.Sprintf("%d pending retro(s)", retroCount))
 	}
 	return append(rows, row{4, "drain", strings.Join(parts, ", "), "/bench-what-next"})
 }

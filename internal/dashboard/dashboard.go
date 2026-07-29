@@ -90,7 +90,7 @@ func gather(root string) Snapshot {
 	text, present := roadmap.RoadmapText(root)
 	// The dashboard renders the count only; a failed learnings read degrades to 0 here,
 	// matching drainStatus's posture (the status board owns the fail-closed unknown row).
-	_, _, openLearnings, _ := roadmap.DrainCounts(root)
+	drain := roadmap.DrainCounts(root)
 	registered, werr := worktree.ClassifyRegisteredWorktrees(root)
 	snap := Snapshot{
 		GeneratedAt:    time.Now(),
@@ -100,7 +100,7 @@ func gather(root string) Snapshot {
 		RoadmapPresent: present,
 		Sequence:       roadmap.RecommendedSequence(text),
 		Ideas:          roadmap.ParkedIdeas(root),
-		OpenLearnings:  openLearnings,
+		OpenLearnings:  drain.OpenLearnings,
 		Worktrees:      poolWorktrees(registered),
 	}
 	if werr != nil {

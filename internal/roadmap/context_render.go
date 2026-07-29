@@ -85,6 +85,11 @@ func renderContext(s ContextSnapshot) (string, error) {
 		rows = append(rows, []any{r.Date, r.Title, r.State, r.Body, r.BodyBytes, r.Truncated})
 	}
 	bs = append(bs, block{"learnings", []string{"date", "title", "state", "body", "body_bytes", "truncated"}, rows})
+	rows = nil
+	for _, r := range s.Retros {
+		rows = append(rows, []any{r.Path, r.State, r.Body, r.BodyBytes, r.Truncated})
+	}
+	bs = append(bs, block{"retros", []string{"path", "state", "body", "body_bytes", "truncated"}, rows})
 	bs = append(bs, block{"structure", []string{"kind", "path", "actual", "limit", "state", "detail"}, s.Structure})
 	rows = stringRows(s.Specs)
 	bs = append(bs, block{"specs", []string{"slug", "status", "roadmap_id"}, rows})

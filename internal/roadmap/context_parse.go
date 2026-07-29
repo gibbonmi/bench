@@ -9,6 +9,7 @@ import (
 	"github.com/gibbonmi/bench/internal/bounds"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/learnings"
+	"github.com/gibbonmi/bench/internal/retros"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/structure"
 )
@@ -177,6 +178,25 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 		if degradedState(c.State) {
 			s.Failures = append(s.Failures, ParseFailure{label, string(c.State) + ": " + c.Reason, "", 0, false})
 		}
+	}
+	retroFacts := retros.Facts(root)
+	retroBytes := 0
+	for _, f := range retroFacts.Entries {
+		retroBytes += len(f.Body)
+		body := ""
+		bytes := len(f.Body)
+		truncated := false
+		if f.State == bounds.StateParsed || f.State == bounds.StateEmpty {
+			body, bytes, truncated = limited(string(f.Body), full)
+		}
+		s.Retros = append(s.Retros, RetroFact{f.Path, string(f.State), body, bytes, truncated})
+		if degradedState(f.State) {
+			s.Failures = append(s.Failures, ParseFailure{f.Path, string(f.State) + ": " + f.Reason, "", 0, false})
+		}
+	}
+	s.Sources = append(s.Sources, SourceFact{retros.Directory + "/", string(retroFacts.State), retroBytes})
+	if degradedState(retroFacts.State) && len(retroFacts.Entries) == 0 {
+		s.Failures = append(s.Failures, ParseFailure{retros.Directory + "/", string(retroFacts.State) + ": " + retroFacts.Reason, "", 0, false})
 	}
 	cacheState := "absent"
 	if gate.Present {

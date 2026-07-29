@@ -17,6 +17,7 @@ func TestRuntimeStatusContracts(t *testing.T) {
 	contract.RunParallel(t, "bench idea/roadmap contract", testRuntimeIdeaRoadmap)
 	contract.RunParallel(t, "bench status clean contract", testRuntimeStatusClean)
 	contract.RunParallel(t, "bench status drain-row contract", testRuntimeStatusDrainRow)
+	contract.RunParallel(t, "bench status degraded-retro contract", testRuntimeStatusDegradedRetro)
 	contract.RunParallel(t, "bench status stale-gate contract", testRuntimeStatusStaleGate)
 	contract.RunParallel(t, "bench status stale-gate drift classification contract", testRuntimeStatusStaleGateDriftClassification)
 	contract.RunParallel(t, "bench status fresh-green contract", testRuntimeStatusFreshGreen)
@@ -281,6 +282,19 @@ func testRuntimeStatusDrainRow(t *testing.T) {
 	out = clean.Bench("status").Stdout
 	contract.RequireContains(t, out, "clean — nothing pending")
 	contract.RequireNotContains(t, out, "/bench-what-next")
+}
+
+func testRuntimeStatusDegradedRetro(t *testing.T) {
+	contract.NoteContractFailure(t, "status degraded-retro contract failed")
+	f := contract.NewFixture(t)
+	f.WriteFifo(".bench/retros/wait.md")
+	out := f.BenchDeadlined("status", "--all")
+	if out.TimedOut {
+		t.Fatal("bench status blocked on a retrospective FIFO")
+	}
+	out.RequireExit(0)
+	out.RequireContains(out.Stdout, "unknown (.bench/retros/ is wrong-type)")
+	out.RequireContains(out.Stdout, "/bench-what-next")
 }
 
 func testRuntimeStatusStaleGate(t *testing.T) {

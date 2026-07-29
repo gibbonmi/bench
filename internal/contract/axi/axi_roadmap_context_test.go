@@ -21,6 +21,7 @@ func TestAXIRoadmapContextContracts(t *testing.T) {
 	contract.RunParallel(t, "AXI roadmap context source-state contract failed", testRoadmapContextSourceStates)
 	contract.RunParallel(t, "AXI roadmap context fail-closed contract failed", testRoadmapContextFailClosed)
 	contract.RunParallel(t, "AXI roadmap context read-only offline contract failed", testRoadmapContextReadOnlyOffline)
+	contract.RunParallel(t, "AXI roadmap context retrospective evidence contract failed", testRoadmapContextRetros)
 	contract.RunParallel(t, "AXI roadmap context unborn-HEAD contract failed", testRoadmapContextUnbornHead)
 }
 
@@ -67,10 +68,10 @@ func testRoadmapContextComplete(t *testing.T) {
 	}
 	out.RequireContains(out.Stdout, "2,false")
 	headers := []string{
-		"context[1]{schema,full}:", "sources[7]{source,state,bytes}:",
+		"context[1]{schema,full}:", "sources[8]{source,state,bytes}:",
 		"roadmap_rows[1]{id,title,spec,spec_status,external_trigger,body,body_bytes,truncated}:",
 		"roadmap_sequence[1]{rank,text,command}:", "ideas[1]{date,text,text_bytes,truncated}:",
-		"learnings[1]{date,title,state,body,body_bytes,truncated}:", "structure[0]{kind,path,actual,limit,state,detail}:",
+		"learnings[1]{date,title,state,body,body_bytes,truncated}:", "retros[0]{path,state,body,body_bytes,truncated}:", "structure[0]{kind,path,actual,limit,state,detail}:",
 		"specs[1]{slug,status,roadmap_id}:", "spec_history[0]{slug,hash,date,kind,subject}:",
 		"git[1]{branch,default_branch,dirty,ahead,behind}:", "git_changes[0]{status,path}:",
 		"gate_cache[1]{present,state,pending_status,status,cached_tree,work_tree,timestamp,stale}:",
@@ -100,6 +101,27 @@ func testRoadmapContextComplete(t *testing.T) {
 	if fromDeep.Stdout != out.Stdout {
 		t.Fatal("deep-CWD output differs")
 	}
+}
+
+func testRoadmapContextRetros(t *testing.T) {
+	f := contextFixture(t)
+	f.WriteFile(".bench/retros/z.md", strings.Repeat("z", 4097))
+	f.WriteFile(".bench/retros/a.md", "first")
+	f.WriteFifo(".bench/retros/wait.md")
+	short := f.BenchDeadlined("roadmap", "--context")
+	if short.TimedOut {
+		t.Fatal("bench roadmap --context blocked on a retrospective FIFO")
+	}
+	short.RequireExit(0)
+	short.RequireContains(short.Stdout, "retros[3]{path,state,body,body_bytes,truncated}:")
+	short.RequireContains(short.Stdout, ".bench/retros/a.md,parsed,first,5,false")
+	short.RequireContains(short.Stdout, ".bench/retros/wait.md,wrong-type,\"\",0,false")
+	short.RequireContains(short.Stdout, ".bench/retros/z.md,parsed,")
+	short.RequireContains(short.Stdout, "4097,true")
+	short.RequireContains(short.Stdout, ".bench/retros/wait.md,\"wrong-type:")
+	full := f.Bench("roadmap", "--context", "--full")
+	full.RequireExit(0)
+	full.RequireContains(full.Stdout, "4097,false")
 }
 
 func testRoadmapContextTruncation(t *testing.T) {

@@ -86,7 +86,7 @@ func TestAXIStatusUnknownNotSuppressed(t *testing.T) {
 			out := f.Bench("status", "--all")
 
 			out.RequireExit(0)
-			requireAXILine(t, out.Stdout, "  drain      unknown (IDEAS.md is "+c.state+"), 0 open learning(s) → /bench-what-next")
+			requireAXILine(t, out.Stdout, "  drain      unknown (IDEAS.md is "+c.state+"), 0 open learning(s), 0 pending retro(s) → /bench-what-next")
 			requireAXILine(t, out.Stdout, "  roadmap    unknown (ROADMAP.md is "+c.state+") → /bench-what-next")
 			requireAXILine(t, out.Stdout, "  decisions  unknown (decisions is wrong-type) → investigate decisions/ (bench maps)")
 		})

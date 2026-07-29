@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 )
@@ -312,6 +313,57 @@ func TestRoadmapDrainStatus(t *testing.T) {
 	}
 }
 
+func TestRoadmapDrainStatusIncludesPendingRetros(t *testing.T) {
+	root := newRepo(t)
+	if err := os.WriteFile(roadmapPath(t, root), []byte("# Roadmap\n\n## Recommended sequence\n\n1. First - /bench-shape-idea\n2. Second - /bench-implement-spec\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	retro := filepath.Join(root, ".bench", "retros", "done.md")
+	if err := os.MkdirAll(filepath.Dir(retro), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(retro, []byte("evidence\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, code := RoadmapCommand(nil)
+	if code != 0 || !strings.Contains(out, "retros: 1 pending in .bench/retros/") {
+		t.Fatalf("roadmap = %q/%d", out, code)
+	}
+}
+
+func TestRoadmapDrainStatusNamesDegradedRetros(t *testing.T) {
+	root := newRepo(t)
+	if err := os.WriteFile(roadmapPath(t, root), []byte("# Roadmap\n\n## Recommended sequence\n\n1. First - /bench-shape-idea\n2. Second - /bench-implement-spec\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	retro := filepath.Join(root, ".bench", "retros", "wait.md")
+	if err := os.MkdirAll(filepath.Dir(retro), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := exec.Command("mkfifo", retro).Run(); err != nil {
+		t.Fatal(err)
+	}
+	type result struct {
+		out  string
+		code int
+	}
+	done := make(chan result, 1)
+	go func() {
+		out, code := RoadmapCommand(nil)
+		done <- result{out, code}
+	}()
+	var got result
+	select {
+	case got = <-done:
+	case <-time.After(bounds.TestDeadline(bounds.TestDeadlineFloor)):
+		t.Fatal("bench roadmap blocked on a retrospective FIFO")
+	}
+	out, code := got.out, got.code
+	if code != 0 || !strings.Contains(out, "retros: unknown (.bench/retros/ is wrong-type)") {
+		t.Fatalf("roadmap = %q/%d", out, code)
+	}
+}
+
 // TestRoadmapRecommendedSequenceCallout covers the no-drain extraction branch.
 func TestRoadmapRecommendedSequenceCallout(t *testing.T) {
 	root := newRepo(t)
@@ -340,18 +392,18 @@ func TestDrainCountsMixedLines(t *testing.T) {
 	if err := os.WriteFile(ideasPath(t, root), []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if ideas, _, _, _ := DrainCounts(root); ideas != 2 {
-		t.Fatalf("DrainCounts ideas got %d, want 2", ideas)
+	if drain := DrainCounts(root); drain.Ideas != 2 {
+		t.Fatalf("DrainCounts ideas got %d, want 2", drain.Ideas)
 	}
 }
 
 // TestDrainCountsAbsent covers the zero posture when both sources are missing.
 func TestDrainCountsAbsent(t *testing.T) {
-	ideas, ideasState, open, learningsState := DrainCounts(t.TempDir())
-	if ideas != 0 || open != 0 {
-		t.Fatalf("absent sources: got %d/%d, want 0/0", ideas, open)
+	drain := DrainCounts(t.TempDir())
+	if drain.Ideas != 0 || drain.OpenLearnings != 0 || drain.Retros != 0 {
+		t.Fatalf("absent sources: got %#v, want all zero", drain)
 	}
-	if ideasState != bounds.StateParsed || learningsState != bounds.StateParsed {
-		t.Fatalf("absent sources should read as the ordinary quiet state, got ideas=%s learnings=%s", ideasState, learningsState)
+	if drain.IdeasState != bounds.StateParsed || drain.LearningsState != bounds.StateParsed || drain.RetrosState != bounds.StateParsed {
+		t.Fatalf("absent sources should read as the ordinary quiet state, got %#v", drain)
 	}
 }
