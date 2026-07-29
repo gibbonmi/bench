@@ -40,8 +40,9 @@ that fits the failure: usually `/bench-implement-spec` for a feature regression 
 branch, read `bench status` and run the housekeeping rows it flags before
 closing: a merged spec awaiting retirement gets `bench spec retire <slug>` and
 its `spec-retire: <slug>` commit — promoting durable content first (a decision
-to an ADR, a hostile edge to the profile) and deleting the shipped decision map
-behind the spec in the same pass; an orphaned review pickup is promoted or
+to an ADR, a hostile edge to the profile); retiring the whole
+`specs/<slug>/` folder removes its compiled decision provenance with its tickets,
+so there is no separate top-level decision-map delete; an orphaned review pickup is promoted or
 deleted by hand; leftover worktrees and scratch branches go through
 `bench worktree clean`. Leave the roadmap and capture rows to
 `/bench-what-next` — that phase owns the reconcile and the drain, and this duty

@@ -53,8 +53,13 @@ Every spec has a decision map behind it — there is no skip. When the idea is
 already clear because every fork was closed with the reviewer in the same
 session, `/bench-write-spec`'s entry contract records the map inline instead of
 routing through `/bench-shape-idea`; that entry contract is the one owner of the
-shaping requirement. For bugs, use `/bench-debug` instead of the feature path; it
-builds the repro loop first.
+shaping requirement. Pre-spec working maps live at top-level
+`decisions/<topic>.md`; when
+`/bench-write-spec` compiles one, it moves the map and its owned assets beside
+the spec under `specs/<slug>/decisions/` and updates their references in the
+same green change. They remain settled provenance until whole-folder spec
+retirement. For bugs, use `/bench-debug` instead of the feature path; it builds
+the repro loop first.
 
 Each command should orient you at entry, then hand you off at exit with what
 changed, the current artifact or gate state, and the single next command it
@@ -357,9 +362,10 @@ cd ~/src/regroup
 # 1. is the domain change settled? if not, map it.
 #    /bench-shape-idea  →  grills the zone-entry decision, writes decisions/zone-entries.md
 # 2. spec it — this picks the seam (the state machine) and the tests up front
-#    /bench-write-spec →  specs/zone-entries.md with stories + the transition-test seam
+#    /bench-write-spec →  specs/zone-entries/spec.md with stories + the transition-test seam
+#                         and moves the map to specs/zone-entries/decisions/
 # 3. run the shift. heavy line, because the ontology is the uncertain seam.
-BENCH_MAX_ITERS=8 bench shift "add zone-entry events to the phase taxonomy per specs/zone-entries.md"
+BENCH_MAX_ITERS=8 bench shift "add zone-entry events to the phase taxonomy per specs/zone-entries/spec.md"
 # each iteration commits only if mypy + pytest + ruff pass. you review the branch.
 ```
 

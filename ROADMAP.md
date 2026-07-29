@@ -101,10 +101,11 @@ Entry: `/bench-shape-idea` on `decisions/gate-critical-path.md` #2 and #3.
 Sources: `IDEAS.md`, drained across prior runs;
 `decisions/cost-follows-project-size.md`.
 
-**FT154 (MEDIUM) — `craft-tickets`: the slice unit, mapped and ready to spec.**
-Map: `decisions/slice-unit.md`, closed 2026-07-28 with all eight tickets
-resolved — the map is the one source for the decisions, so this row carries
-only status. The decided shape in one line each: a ticket is the smallest
+**FT154 (MEDIUM) — `craft-tickets`: the slice unit, staged and building.**
+Compiled map: `specs/craft-tickets/decisions/slice-unit.md`, closed 2026-07-28
+with all nine tickets resolved — the map is settled provenance beside the
+spec, so this row carries only status. The decided shape in one line each: a
+ticket is the smallest
 independently-green story group (the gate grades it; context fit is the
 heuristic); specs move to per-spec folders (`specs/<slug>/spec.md` +
 `tickets/`), folder-only with one migration, ticket files convention-only in
@@ -640,7 +641,8 @@ always-loaded-prose diff.** Three rows edited the same standing-guidance
 surface — `.bench/BENCH.md` and the phase prose beside it — and collapse into
 one batched kit edit under the `craft-synthesis` discipline: one spec, one
 review, one gate. First, the right-sizing table — this row's original charge,
-now moved: `decisions/slice-unit.md` #6 (reviewer-decided 2026-07-28) folds
+now moved: `specs/craft-tickets/decisions/slice-unit.md` #6
+(reviewer-decided 2026-07-28) folds
 the table into FT154's build, with "decomposes to one independently-green
 ticket that crosses no declared seam" as its blast-radius observable, so this
 row no longer builds the table and its batch is the remaining clauses.
@@ -1369,9 +1371,9 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 1. `/bench-final-check` — push the landed work: `main` is six commits ahead of
    `origin/main` (FT152's close-out plus this drain), and the gate cache is
    stale, so the check re-runs, pins, and pushes.
-2. `/bench-write-spec` — FT154, from the closed `decisions/slice-unit.md`, on
-   a fresh mid-tier session; put the migration-story ruling (the target spec
-   retired, zero flat specs remain) to the reviewer first.
+2. `/bench-implement-spec` — continue FT154 from
+   `specs/craft-tickets/spec.md`; the next frontier is the unblocked
+   `Define ticket workflow guidance` ticket.
 3. `/bench-shape-idea` — FT91, `decisions/gate-critical-path.md` #2 and #3.
    The prepared-artifact hoist is the last structural lever before the ≤60 s
    stop rule is judged; the gate's 167.3 s is still the dominant human cost on

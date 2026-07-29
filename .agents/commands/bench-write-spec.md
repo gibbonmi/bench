@@ -7,7 +7,7 @@ description: Turn the current conversation into a build spec — user stories, p
 ## Entry orientation
 
 This is the feature-spec phase. It turns the current conversation, decision map,
-and codebase context into `specs/<feature>.md`: user stories, implementation
+and codebase context into `specs/<feature>/spec.md`: user stories, implementation
 decisions, pre-agreed seams, testing decisions, and the gate that defines done.
 
 ## Exit handoff
@@ -23,11 +23,13 @@ session runs
 spec is locked and it passes `craft-line`'s venue-routing test: every story's line
 is cheap and the coverage map is fully gate-observable.
 
-**This phase refuses to run without a complete map.** Every spec is compiled from
-a named `decisions/<topic>.md` whose `## Handoff` is placeholder-free — run
-`bench maps` and confirm it shows no row for the map. On a missing map, or one
-whose Handoff is still open, name the map to close and stop; never draft a spec
-from conversation alone. One override exists: an explicit reviewer-directed
+**This phase refuses to run without a complete map.** A new spec is compiled from
+a named top-level `decisions/<topic>.md` whose `## Handoff` is placeholder-free —
+run `bench maps` and confirm it shows no row for the map. A revision to a live
+spec reads its compiled map under `specs/<slug>/decisions/`; settled provenance
+there is deliberately outside the top-level `bench maps` query. On a missing
+map, or one whose Handoff is still open, name the map to close and stop; never
+draft a spec from conversation alone. One override exists: an explicit reviewer-directed
 batch drain (an assessment or reviewed findings doc pushed into specs on the
 reviewer's instruction) may substitute for per-spec maps, with every defaulted
 decision flagged in-spec for post-hoc veto — absent that explicit instruction,
@@ -66,9 +68,10 @@ loop honest.
 
 1. **Read the current state.** Explore the repo. Use the project's vocabulary.
    Respect settled ADRs in the area you're touching — read `docs/adr/` when
-   present, plus any `projects/<name>.md`. `decisions/` holds working maps, not
-   settled records: treat an open map as questions to respect, never as decisions
-   already made.
+   present, plus any `projects/<name>.md`. Top-level `decisions/` holds
+   pre-spec working maps: treat unresolved questions with respect, never as
+   decisions already made. A map under `specs/<slug>/decisions/` is settled provenance compiled
+   with that spec, not a shaping frontier.
 
 2. **Pick the seams — off the map's Handoff first.** If a decision map produced
    this spec, read its `## Handoff` section and take the seams from there: items
@@ -125,15 +128,19 @@ loop honest.
    the spec-time half of invariant #2: the build inherits routing I approved,
    instead of picking models mid-loop.
 
-7. **Write `specs/<feature>.md`** using the template below, then run
+7. **Write `specs/<feature>/spec.md`** using the template below, then run
    `bench coverage --check` on the draft, so map-format defects surface at
    author time instead of at the gate. A spec whose deliverable is a new
    `/bench-*` phase command lands in the same diff as the command, because the
    stale-command-reference sweep remains fail-closed across staged specs rather
-   than exempting them.
+   than exempting them. In that same green change, move (do not copy) the source
+   map and any map-owned assets from top-level `decisions/` into
+   `specs/<slug>/decisions/`, preserving their useful relative layout, and
+   update every reference to the moved paths. A re-run reads the already-compiled
+   spec-local map; it never recreates a top-level copy.
 
 8. **Retire what this spec supersedes — promote, then delete.** If the new spec
-   replaces an existing `specs/*.md` (same feature, new direction), it does **not**
+   replaces an existing `specs/*/spec.md` (same feature, new direction), it does **not**
    get a **Superseded by** marker left in place — a superseded spec left live reads
    as a second source of truth. Instead, in the same change: promote anything still
    durable (a decision → an ADR, a hostile edge → the profile checklist, a seam →
@@ -147,7 +154,9 @@ loop honest.
    hand-running that query. Retiring the old spec is part of writing the new one,
    not a cleanup for later.
    The same pass applies when retiring a merged, implemented spec flagged by
-   `bench status`.
+   `bench status`. Whole-folder retirement removes the compiled maps and
+   map-owned assets under `specs/<slug>/decisions/` with the spec and its tickets;
+   there is no separate decision-map cleanup step.
 
 9. **Falsification review before sign-off.** Every draft gets the pass: spawn a
    reviewer sub-agent before the approval table, unconditionally. The pass

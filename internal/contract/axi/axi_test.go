@@ -90,6 +90,7 @@ Type: Grill
 ### Answer
 Decided: yes, do the thing.
 `)
+	f.WriteFile("specs/x/decisions/compiled.md", "## #1: settled?\nType: Grill\n### Answer\n— (open)\n")
 	out := f.Bench("maps")
 
 	out.RequireExit(0)

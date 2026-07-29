@@ -22,6 +22,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Co-located compiled decision maps and their owned assets with their specs while
+  keeping top-level `decisions/` reserved for pre-spec decision work.
 - Realigned the skill layer to Claude 5 harnesses: a new harness-echo rule keeps
   skills from restating what the harness carries, fork delegations are governed
   by the line, the review smell glosses moved behind progressive disclosure,

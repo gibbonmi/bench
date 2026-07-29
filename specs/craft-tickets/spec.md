@@ -3,9 +3,9 @@
 Status: staged
 Roadmap: FT154
 
-Compiled from `decisions/slice-unit.md` (closed 2026-07-28, all eight decisions
-resolved, no blocking uncertainty flags). Every seam below is map-sourced;
-deviations from the map are flagged inline as **[flagged]**.
+Compiled from `specs/craft-tickets/decisions/slice-unit.md` (closed 2026-07-28,
+all nine decisions resolved, no blocking uncertainty flags). Every seam below
+is map-sourced; deviations from the map are flagged inline as **[flagged]**.
 
 ## Problem
 
@@ -14,7 +14,8 @@ for what lands green next. Builds either run whole-spec in one accumulating
 context or get sliced ad hoc mid-loop; small unspecced changes have no defined
 light route, so every few-line change either over-runs the full pipeline or
 skips it silently. Separately, spec artifacts are single flat files with
-nowhere for a build breakdown to live beside them.
+nowhere for a build breakdown to live beside them, and closed maps remain mixed
+with open shaping work after their specs compile.
 
 ## Solution
 
@@ -28,7 +29,9 @@ the breakdown to `specs/<slug>/tickets/` beside the spec, which moves to
 light path is the one-ticket degenerate case, bounded by a standing table in
 `.bench/BENCH.md`; one ticket = one write-delegate charge; `craft-line` gains
 the per-stage default line table. `internal/spec` is the deep unit every
-consumer sees the layout through.
+consumer sees the layout through. Compiled decision maps and their owned assets
+move beside the spec as settled provenance, leaving top-level `decisions/` for
+pre-spec working maps and whole-folder retirement to remove the compiled artifacts.
 
 ## User stories
 
@@ -134,6 +137,13 @@ Prose and skill — lands after the Go slice (map dependency order):
     regress out of the files that carry it. Line: gpt-5.6-terra / medium.
     Anchor plumbing follows the existing workflow-guidance-anchors family
     mechanically.
+17. As a spec author, I want `/bench-write-spec` to move a closed source map
+    and its map-owned assets from top-level `decisions/` into
+    `specs/<slug>/decisions/`, updating references in the same green change,
+    so that `bench maps` reports only open shaping work and whole-folder spec
+    retirement removes tickets and settled provenance together. Line:
+    gpt-5.6-sol / high. This changes phase-command and shipped lifecycle prose,
+    so the kit-prose leverage override applies.
 
 ## Implementation decisions
 
@@ -204,6 +214,16 @@ Prose and skill — lands after the Go slice (map dependency order):
   (the mirror is per-skill symlinks — creating the entry is part of adding a
   skill), and a skills-index regeneration (`.bench/skills-index.sh --write`).
   The conformance phase enforces all three.
+- **Decision-map lifecycle.** A pre-spec working map stays at top-level
+  `decisions/<topic>.md`, where `bench maps` scans it. When
+  `/bench-write-spec` compiles the map, that same green change moves rather
+  than copies the source map and any map-owned assets into
+  `specs/<slug>/decisions/`, updates every moved-path reference, and leaves no
+  duplicate source at top level. A later spec-authoring pass reads the
+  spec-local map as settled provenance. `bench maps` remains a top-level query;
+  it does not scan spec-local provenance. `bench spec retire` removes the
+  entire spec folder, so final-check relies on that retirement and performs no
+  separate shipped-map deletion.
 - **Gate anchors** (map left these to spec time): new `require()` lines in
   `checkWorkflowAnchors`, one per load-bearing clause rather than one per
   file — `bench-implement-spec.md` charges `bench-craft-tickets`, writes
@@ -220,6 +240,12 @@ Prose and skill — lands after the Go slice (map dependency order):
   check is fixture count = new anchor-family count. Anchors pin presence of
   the load-bearing clauses only — prose *semantics* stay review-owned, the
   gap the map accepts for v1.
+- **Story 17 gate-anchor inventory.** The later
+  `pin-ticket-guidance-in-conformance` ticket owns the comprehensive new
+  anchor/canary family, including the open-map, compile-time move, and
+  whole-folder retirement clauses. This slice adds no unpaired presence
+  anchors. Its current evidence is the dogfood move plus focused AXI/runtime
+  contracts for spec-local-map exclusion and folder deletion.
 - **Self-hosting window, accepted:** between this spec's staging commit and
   story 9 landing, the conformance sweep (today globbing `specs/*.md`) does
   not validate this spec's coverage map, and `bench status` does not
@@ -310,6 +336,8 @@ Seam 2 — the conformance/canary seam (prose anchors and the sweep's bite):
 | 12 | `.bench/BENCH.md` carries the light-path table with both observables ("independently-green ticket", "crosses no declared seam") | seam 2 | red at build: two anchors + canary fixture removing the table | a table missing the seam clause would license the light path for cross-seam changes — the anchor pair pins both halves of the observable |
 | 15 | no kit prose states the flat convention | seam 2 | not TDD-able as a class — the sweep is a hand-enumerated edit list (write-spec, final-check, craft-delegate, ROADMAP preamble, README, field guide); review verifies it | a "no stale path form" checker would need semantic judgment; the enumerated list plus review is the honest posture, and story 9's stray-file red guards the repo itself |
 | 16 | every new anchor family bites | seam 2 | red at build: the canary sweep itself — each new fixture's EXPECT must match a real red; fixture *existence* is not gate-checkable, so the build lands each fixture in the same commit as its anchor and the reviewer verifies fixture count = new anchor-family count | the canary baseline rejects vacuous EXPECTs, so a rotted anchor fails here; the same-commit rule plus the count check covers the omission the sweep cannot see |
+| 17 | shaping keeps pre-spec working maps top-level; write-spec moves the closed map and map-owned assets into `specs/<slug>/decisions/`, updates references in the same green change, and final-check relies on whole-folder retirement | seam 2 | red at the later `pin-ticket-guidance-in-conformance` ticket: its anchor/canary family removes each lifecycle clause in turn; this slice is not TDD-able at the prose seam, so current evidence is the dogfood move and exact-reference sweep | the later canaries will catch a partial prose edit that teaches only the destination, omits the move/reference update, or reintroduces separate map cleanup; the current move proves the contract is usable without creating an unpaired anchor family |
+| 17 | `bench maps` ignores compiled spec-local provenance, while `bench spec retire` removes that provenance with the complete spec folder | seam 1 | already covered — the focused `TestAXIQuerySurfaceContracts/AXI_maps_unresolved-ticket_contract` fixture parks an open-looking map under a spec and retains only top-level rows; `TestRuntimeSpecRetireContracts/retire_deletes_pickup_and_complete_spec_folder` parks a compiled map and observes the folder absent | pins both runtime edges without teaching either command a second lifecycle rule: maps remains rooted at top-level `decisions/`, and retire remains whole-folder deletion |
 
 ### Edge inventory
 
@@ -340,6 +368,14 @@ classes; each lands as a row above or a **Won't handle** line here.
 - Kit vs linked repo: the kit repo gets the conformance red (story 9); a
   linked repo upgrading with staged flat specs gets the named CLI refusal
   whose text is the migration instruction (story 2). Both audiences walked.
+- Closed map with no owned assets vs a map with owned assets → story 17's
+  move rule covers both; shared assets are not map-owned and stay at their
+  existing authoritative location.
+- Stale references after the move → story 17's same-green-change requirement
+  and focused reference sweep; the dogfood move enumerates the spec, roadmap,
+  README, and field guide.
+- Re-running spec authoring after compilation → story 17 reads the spec-local
+  map and never recreates a top-level copy.
 - **Won't handle:** malformed ticket files — nothing parses tickets in v1;
   quality is caught at breakdown approval (accepted v1 gap, map #5/#7).
 - **Won't handle:** ticket sizing/edge quality as a gate check — reviewed at

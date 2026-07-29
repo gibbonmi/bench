@@ -139,6 +139,7 @@ func testSpecRetireMergedDeletesBoth(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("specs/x/spec.md", "# x\n\nStatus: implemented\n")
 	f.WriteFile("specs/x/tickets/work.md", "# work\n")
+	f.WriteFile("specs/x/decisions/source.md", "# settled provenance\n")
 	f.WriteFile("reviews/x.md", "# review of x\n")
 	f.CommitAll("merge x")
 

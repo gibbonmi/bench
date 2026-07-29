@@ -1,6 +1,6 @@
 # Define ticket workflow guidance
 
-Blocked by: Contract live specs to folder only
+Blocked by: Co-locate compiled decision maps
 
 ## What to build
 

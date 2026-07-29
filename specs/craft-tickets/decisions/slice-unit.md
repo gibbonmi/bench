@@ -216,6 +216,31 @@ Reviewer-decided 2026-07-28: this replaces "builds route mid" for
 ticket-sized charges, and the first builds under it are the cheap-tier
 re-test evidence `decisions/cost-follows-project-size.md` #6 waits on.
 
+## #9: Where does a closed decision map live after its spec compiles?
+
+Blocked by: #3, #7
+Type: Grill
+
+### Question
+
+The folder layout gives a compiled map a natural home beside its spec, but
+`bench maps` currently treats top-level `decisions/` as the shaping frontier.
+Should a closed source map remain top-level until final-check deletes it, be
+copied beside the spec, or move into the spec folder with a defined asset,
+reference, query, and retirement lifecycle?
+
+### Answer
+
+Pre-spec working maps stay top-level under `decisions/` through shaping and
+until compilation. When
+`/bench-write-spec` compiles a closed map, it moves rather than copies the
+source map and any map-owned assets into `specs/<slug>/decisions/` and updates
+every moved-path reference in the same green change. The spec-local files are
+settled provenance, so `bench maps` continues to scan only top-level
+`decisions/`. `bench spec retire` removes the whole spec folder, including the
+compiled map, its owned assets, and tickets; final-check does not separately
+delete a top-level shipped map.
+
 - Gate anchors for the new prose (which conformance assertions pin the
   breakdown step and the light-path table), decided at spec time.
 - The exact ticket-file template wording and the light-path table's wording —
@@ -244,8 +269,9 @@ re-test evidence `decisions/cost-follows-project-size.md` #6 waits on.
    `internal/spec` learns the `specs/<slug>/spec.md` layout, with no spec to
    migrate. `.bench/BENCH.md` gains the light-path table with the one-ticket
    observable. `craft-line` gains the per-stage
-   default table (#8). Outside: no ticket parser, no new subcommand, no
-   tracker.
+   default table (#8). `/bench-write-spec` owns the map move into the spec's
+   `decisions/` folder (#9). Outside: no ticket parser, no new subcommand,
+   no tracker.
 2. **Contracts.** `internal/spec`: a bare slug resolves to
    `specs/<slug>/spec.md`; `Facts` enumerates folder specs; retire validates
    and removes the folder; `history` keeps resolving retired flat paths.
@@ -253,7 +279,11 @@ re-test evidence `decisions/cost-follows-project-size.md` #6 waits on.
    file (convention, unparsed): title, What to build (end-to-end behavior),
    `Blocked by:` naming sibling titles, acceptance checkboxes checked as work
    lands. Skill contract: one ticket = smallest independently-green story
-   group = one write-delegate charge.
+   group = one write-delegate charge. Decision-map lifecycle: pre-spec working
+   maps stay top-level; compilation moves the closed map and map-owned assets
+   into `specs/<slug>/decisions/` with same-change reference updates;
+   `bench maps` ignores the settled provenance and whole-folder retirement
+   removes it.
 3. **Deep vs thin.** `internal/spec`'s resolution is the deep unit — every
    consumer (coverage, commit --spec, retire, status, roadmap) sees the
    layout only through it. The phase's breakdown step is thin: it charges the
@@ -262,11 +292,16 @@ re-test evidence `decisions/cost-follows-project-size.md` #6 waits on.
    `bench coverage`/`bench status`/`bench roadmap` against a folder-form spec
    (exit codes, TOON rows naming the folder path). Conformance assertions
    that the breakdown step, the light-path table, and the skill's charge line
-   are present in the owning prose files.
+   are present in the owning prose files. `bench maps` reports no row for an
+   open-looking map parked under a spec, and retirement leaves no spec-local
+   decision provenance behind.
 5. **Gate attachment.** The layout change is ordinary Go under existing
    test/contract phases; prose anchors ride the conformance phase like FT152's
-   family. Not gate-visible: ticket quality (sizing, edge correctness) — it is
-   reviewed at breakdown approval, and that gap is accepted in v1.
+   family. The later ticket-guidance conformance slice owns the decision-map
+   lifecycle anchors and biting canary; existing AXI/runtime contracts cover
+   the query and retirement behavior. Not gate-visible: ticket quality
+   (sizing, edge correctness) — it is reviewed at breakdown approval, and
+   that gap is accepted in v1.
 6. **Hostile-input owners.** Flat/folder collision and folder-sans-spec.md →
    `internal/spec` resolution, fail closed naming the conflict. Malformed
    ticket file → n/a in v1, nothing parses it. Kit-versus-linked-repo (FT144
@@ -280,16 +315,20 @@ re-test evidence `decisions/cost-follows-project-size.md` #6 waits on.
    Delete-on-land done-marking (#5 — checkboxes chosen). Context fit as the
    grading rule (#1). Dual-form resolution and convention-only layout (#7).
    A frontier CLI surface in v1 (#7). A flat no-escalation stage rule, and
-   dropping the review leverage override (#8).
+   dropping the review leverage override (#8). Leaving compiled maps
+   top-level, copying them into specs, scanning spec-local provenance with
+   `bench maps`, and separate final-check deletion (#9).
 9. **Domain watch-outs.** `bench spec history` resolves retired specs by
    literal git pathspec, so retired flat paths must stay reachable after the
    layout moves. Any `specs/*.md` glob (in `Facts`, gate prose, or
    conformance) silently misses folder specs — an invisible-skip class, so
-   each glob is enumerated and moved, not patched as found.
+   each glob is enumerated and moved, not patched as found. A map move is one
+   green change with every map-owned asset and exact path reference; splitting
+   those edits creates either duplicate authority or a dangling reference.
 
 Dependency order within this map's build: the CLI layout change lands before
-the skill/phase/table prose that names the folder form. Slicing within that is
-the reviewer's call.
+the compiled-map move; the skill/phase/table prose follows the lifecycle it
+names. Slicing within that is the reviewer's call.
 
 ## Sources
 

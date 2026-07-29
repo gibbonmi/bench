@@ -7,7 +7,7 @@ description: Turn a loose idea into a sequenced decision map. Use only when the 
 ## Entry orientation
 
 This is the decision-mapping phase. Use it when the idea has unresolved questions
-whose answers change what gets built. It produces or resumes a compact
+whose answers change what gets built. It produces or resumes a compact top-level
 `decisions/<topic>.md` map, with the current frontier recorded and resolved
 answers written into the file.
 
@@ -26,8 +26,12 @@ assumed forks; `/bench-write-spec`'s entry contract owns the narrow recording
 path for decisions already closed with the reviewer in the current session.
 
 The output is a single compact markdown file, `decisions/<topic>.md`, git-tracked.
-It is loaded whole into every planning session, so keep it tight. Link to assets;
-don't inline them.
+It stays top-level while shaping is open and is loaded whole into every planning
+session, so keep it tight. Link to assets; don't inline them. When
+`/bench-write-spec` compiles the closed map, that phase moves the map and any
+map-owned assets into `specs/<slug>/decisions/` and updates their references in
+the same green change. Compiled maps there are settled provenance, not shaping
+work, and `bench maps` deliberately scans only top-level pre-spec working maps.
 
 ## Structure
 
@@ -169,7 +173,8 @@ move to another answerable ticket, or stop.
 The map is deliberately incomplete beyond the frontier — the dim remainder
 lives under `## Not yet specified`, not in anyone's head. You are done when the
 path to the finish line is clear — no unresolved tickets blocking the build. Before
-declaring the map closed, run `bench maps` — it lists every ticket still holding a
+declaring the map closed, run `bench maps` against the top-level map — it lists
+every ticket still holding a
 `— (open` / `— (deferred` placeholder or a `GRILL DEFERRED` banner, and on a map
 with no open tickets a missing or still-placeholdered `## Handoff` section — and
 refuse to close while this map still shows a row; a decision made in conversation
