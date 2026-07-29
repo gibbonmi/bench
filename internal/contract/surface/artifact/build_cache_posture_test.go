@@ -2,6 +2,7 @@ package artifact
 
 import (
 	"bytes"
+	"fmt"
 	"maps"
 	"os"
 	"os/exec"
@@ -15,12 +16,17 @@ import (
 // TestMain puts the whole package on the dev-tier build posture; contract.ProcessEnv and
 // the fixture-driven mergeEnv both start from os.Environ(), so it reaches every subprocess
 // the package spawns. The rows asserting the hermetic default strip the token back out
-// through ambientBuildEnv.
+// through ambientBuildEnv. It also removes the package-owned shared set after every run.
 func TestMain(m *testing.M) {
 	if err := os.Setenv(contract.SharedBuildCacheEnv, "1"); err != nil {
 		panic(err)
 	}
-	os.Exit(m.Run())
+	code := m.Run()
+	if err := packageSharedArtifactSet.cleanup(); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "clean up shared artifact set: %v\n", err)
+		code = 1
+	}
+	os.Exit(code)
 }
 
 // ambientBuildEnv is the real process environment plus extra, minus remove. These rows turn
@@ -97,11 +103,8 @@ func TestBuildCachePostureUnderGoproxyOff(t *testing.T) {
 }
 
 func TestSharedCacheBuildPromotesNoRecord(t *testing.T) {
-	root := contract.SubjectRoot(t)
 	contract.SkipIfSubjectFileMissing(t, "scripts/build-artifacts.sh")
-	source := committedHostileArtifactSource(t, root)
-	output := filepath.Join(t.TempDir(), "shared cache artifact output [*]")
-	contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(source, "scripts", "build-artifacts.sh"), source, output).RequireExit(0)
+	output := requireSharedArtifactSet(t).outputDir
 	if _, err := os.Stat(filepath.Join(filepath.Dir(output), "reproducibility.json")); !os.IsNotExist(err) {
 		t.Fatalf("shared-cache build promoted a reproducibility record: %v", err)
 	}
@@ -135,8 +138,10 @@ func TestSharedCacheBuildRemovesStaleReproducibilityRecord(t *testing.T) {
 func TestSharedCacheBuildRestoresRecordOnInterruptedPromotion(t *testing.T) {
 	root := contract.SubjectRoot(t)
 	contract.SkipIfSubjectFileMissing(t, "scripts/build-artifacts.sh")
+	shared := requireSharedArtifactSet(t)
 	source := committedHostileArtifactSource(t, root)
-	prepared, expected := prepareArtifactGeneration(t, source)
+	prepared := copyPreparedArtifactGeneration(t, shared.outputDir)
+	expected := shared.entryCount
 	for _, test := range []struct {
 		name  string
 		abort func(*testing.T, string, string, string)

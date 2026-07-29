@@ -20,9 +20,8 @@ import (
 func TestPackedArtifactRunsSetupOfflineFromASpacedPrefix(t *testing.T) {
 	root := contract.SubjectRoot(t)
 	contract.SkipIfSubjectFileMissing(t, "scripts/build-artifacts.sh")
-	buildRoot := committedHostileArtifactSource(t, root)
-	out := filepath.Join(t.TempDir(), "packed setup artifacts")
-	contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-artifacts.sh"), buildRoot, out).RequireExit(0)
+	shared := requireSharedArtifactSet(t)
+	out := shared.outputDir
 
 	var wrapper struct {
 		Version string `json:"version"`

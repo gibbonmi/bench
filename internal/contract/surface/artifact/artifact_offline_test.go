@@ -223,9 +223,8 @@ func TestOfflineRegistryDerivesAcceptedTargetsFromReleasePlan(t *testing.T) {
 func TestOfflineArchiveProjection(t *testing.T) {
 	root := contract.SubjectRoot(t)
 	contract.SkipIfSubjectFileMissing(t, "scripts/build-artifacts.sh")
-	buildRoot := committedHostileArtifactSource(t, root)
-	npmOut := filepath.Join(t.TempDir(), "npm artifacts [hostile]")
-	contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-artifacts.sh"), buildRoot, npmOut).RequireExit(0)
+	shared := requireSharedArtifactSet(t)
+	buildRoot, npmOut := shared.sourceRoot, shared.outputDir
 
 	var plan struct {
 		Targets []contract.ReleaseTarget `json:"targets"`

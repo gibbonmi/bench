@@ -41,11 +41,18 @@ type ReleasePlanTargets struct {
 // every count-derived assertion trivially satisfied.
 func NarrowReleasePlan(t testing.TB, root string, narrow func(ReleasePlanTargets) []ReleaseTarget) string {
 	t.Helper()
-	origin := filepath.Join(t.TempDir(), "committed origin [*]")
+	return NarrowReleasePlanIn(t, t.TempDir(), root, narrow)
+}
+
+// NarrowReleasePlanIn stages the narrowed clone under directory, whose lifetime
+// remains owned by the caller.
+func NarrowReleasePlanIn(t testing.TB, directory, root string, narrow func(ReleasePlanTargets) []ReleaseTarget) string {
+	t.Helper()
+	origin := filepath.Join(directory, "committed origin [*]")
 	if err := testrepo.CommitWorkingTree(root, origin); err != nil {
 		t.Fatal(err)
 	}
-	clone := filepath.Join(t.TempDir(), "fresh source clone [*]")
+	clone := filepath.Join(directory, "fresh source clone [*]")
 	if output, err := exec.Command("git", "clone", "-q", origin, clone).CombinedOutput(); err != nil {
 		t.Fatalf("clone committed source: %v\n%s", err, output)
 	}

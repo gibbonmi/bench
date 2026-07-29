@@ -163,7 +163,17 @@ const (
 
 func committedHostileArtifactSource(t *testing.T, root string, options ...artifactSourceOption) string {
 	t.Helper()
-	return contract.NarrowReleasePlan(t, root, func(matrix contract.ReleasePlanTargets) []contract.ReleaseTarget {
+	return contract.NarrowReleasePlan(t, root, artifactSourceNarrowing(t, options...))
+}
+
+func committedHostileArtifactSourceIn(t *testing.T, directory, root string, options ...artifactSourceOption) string {
+	t.Helper()
+	return contract.NarrowReleasePlanIn(t, directory, root, artifactSourceNarrowing(t, options...))
+}
+
+func artifactSourceNarrowing(t *testing.T, options ...artifactSourceOption) func(contract.ReleasePlanTargets) []contract.ReleaseTarget {
+	t.Helper()
+	return func(matrix contract.ReleasePlanTargets) []contract.ReleaseTarget {
 		selected := append(make([]contract.ReleaseTarget, 0, 2), matrix.Host...)
 		if len(options) != 0 && options[0] == stageHostlessArtifactPlan {
 			selected = selected[:0]
@@ -183,7 +193,7 @@ func committedHostileArtifactSource(t *testing.T, root string, options ...artifa
 			}
 		}
 		return selected
-	})
+	}
 }
 
 func assertSpecialFileArtifactFailure(t *testing.T, root, output string) {
@@ -214,15 +224,22 @@ func assertSpecialFileArtifactFailure(t *testing.T, root, output string) {
 	}
 }
 
-func prepareArtifactGeneration(t *testing.T, source string) (string, int) {
+func copyPreparedArtifactGeneration(t *testing.T, source string) string {
 	t.Helper()
 	prepared := filepath.Join(t.TempDir(), "prepared artifact generation")
-	contract.NewExecFixtureAt(t, source).Run("bash", filepath.Join(source, "scripts", "build-artifacts.sh"), source, prepared).RequireExit(0)
-	entries, err := os.ReadDir(prepared)
-	if err != nil {
+	if err := os.Mkdir(prepared, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	return prepared, len(entries)
+	command := exec.Command("cp", "-a", source+string(os.PathSeparator)+".", prepared)
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("copy prepared artifact generation: %v\n%s", err, output)
+	}
+	// The private root must stay movable while cp -a preserves the shared
+	// tarballs' read-only modes.
+	if err := os.Chmod(prepared, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return prepared
 }
 
 func promotionTestEnv(prepared, ready string) []string {
@@ -327,20 +344,28 @@ func assertInterruptedArtifactPromotion(t *testing.T, source, prepared, output s
 
 func promotedArtifactDigests(t *testing.T, directory string) map[string]string {
 	t.Helper()
-	entries, err := os.ReadDir(directory)
+	digests, err := promotedArtifactDigestMap(directory)
 	if err != nil {
 		t.Fatal(err)
+	}
+	return digests
+}
+
+func promotedArtifactDigestMap(directory string) (map[string]string, error) {
+	entries, err := os.ReadDir(directory)
+	if err != nil {
+		return nil, err
 	}
 	digests := make(map[string]string, len(entries))
 	for _, entry := range entries {
 		if !entry.Type().IsRegular() {
-			t.Fatalf("promoted artifact entry is not regular: %s", entry.Name())
+			return nil, fmt.Errorf("promoted artifact entry is not regular: %s", entry.Name())
 		}
 		data, err := os.ReadFile(filepath.Join(directory, entry.Name()))
 		if err != nil {
-			t.Fatal(err)
+			return nil, err
 		}
 		digests[entry.Name()] = fmt.Sprintf("%x", sha256.Sum256(data))
 	}
-	return digests
+	return digests, nil
 }

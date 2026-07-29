@@ -11,9 +11,9 @@ import (
 )
 
 func TestArtifactSourceStagesCommittedHostPlan(t *testing.T) {
-	root := contract.SubjectRoot(t)
 	contract.SkipIfSubjectFileMissing(t, "scripts/build-artifacts.sh")
-	staged := committedHostileArtifactSource(t, root)
+	shared := requireSharedArtifactSet(t)
+	staged := shared.sourceRoot
 	var plan struct {
 		Targets []contract.ReleaseTarget `json:"targets"`
 	}
@@ -22,8 +22,7 @@ func TestArtifactSourceStagesCommittedHostPlan(t *testing.T) {
 	if len(plan.Targets) != 1 || plan.Targets[0].OS != hostOS || plan.Targets[0].GOArch != hostArch {
 		t.Fatalf("staged release plan targets = %+v, want exactly host %s/%s", plan.Targets, hostOS, hostArch)
 	}
-	out := filepath.Join(t.TempDir(), "host-only artifact output [*]")
-	contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(staged, "scripts", "build-artifacts.sh"), staged, out).RequireExit(0)
+	out := shared.outputDir
 	assertPlannedArtifactNames(t, staged, out)
 }
 

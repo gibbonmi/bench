@@ -14,8 +14,10 @@ import (
 func TestArtifactPromotionIsAtomicAndExclusive(t *testing.T) {
 	root := contract.SubjectRoot(t)
 	contract.SkipIfSubjectFileMissing(t, "scripts/build-artifacts.sh")
+	shared := requireSharedArtifactSet(t)
 	source := committedHostileArtifactSource(t, root)
-	prepared, expected := prepareArtifactGeneration(t, source)
+	prepared := copyPreparedArtifactGeneration(t, shared.outputDir)
+	expected := shared.entryCount
 	output := filepath.Join(t.TempDir(), "artifact output")
 	assertConcurrentFirstArtifactPromotion(t, source, prepared, output, expected)
 	assertInterruptedArtifactPromotion(t, source, prepared, output, expected)
