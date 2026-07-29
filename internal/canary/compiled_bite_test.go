@@ -165,7 +165,7 @@ func TestEachFixtureBitesTheTestItsMarkerNames(t *testing.T) {
 	root := t.TempDir()
 	owners := map[string]string{"axi-a": "TestOwnerA", "axi-b": "TestOwnerB"}
 	for name, owner := range owners {
-		write(t, filepath.Join(contractFixture(t, root, "axi", name), testFileName), owner+"\n")
+		bindOwner(t, root, "axi", contractFixture(t, root, "axi", name), owner)
 	}
 
 	calls := sweepCalls(t, root, registry.Dev)
@@ -217,7 +217,7 @@ func TestBiteFilterMatchesOnlyTheOwnerItNames(t *testing.T) {
 // fixture in the group goes ungraded for vacuity.
 func TestContractBaselineRunsItsPackageWide(t *testing.T) {
 	root := t.TempDir()
-	write(t, filepath.Join(contractFixture(t, root, "axi", "axi-fx"), testFileName), "TestOwnerA\n")
+	bindOwner(t, root, "axi", contractFixture(t, root, "axi", "axi-fx"), "TestOwnerA")
 
 	var baselines int
 	for _, call := range baselineCalls(sweepCalls(t, root, registry.Dev)) {
@@ -234,25 +234,6 @@ func TestContractBaselineRunsItsPackageWide(t *testing.T) {
 	}
 	if baselines != 1 {
 		t.Fatalf("contract baselines = %d, want exactly 1", baselines)
-	}
-}
-
-// TestFixtureNamingNoOwnerRunsItsPackageWide pins what an absent marker asks for: the
-// package-wide run every behavior-owned fixture had before any owner could be named, with
-// no refusal in between.
-func TestFixtureNamingNoOwnerRunsItsPackageWide(t *testing.T) {
-	root := t.TempDir()
-	contractFixture(t, root, "axi", "axi-fx")
-
-	got := fixtureCalls(sweepCalls(t, root, registry.Dev), "axi-fx")
-	if len(got) != 1 {
-		t.Fatalf("fixture ran %d graded runs, want exactly 1", len(got))
-	}
-	if got[0].Test != "" {
-		t.Errorf("fixture naming no owner bit test %q, want its package whole", got[0].Test)
-	}
-	if filter := runFilter(t, got[0]); filter != "" {
-		t.Errorf("fixture naming no owner ran filter %q, want none", filter)
 	}
 }
 
@@ -332,7 +313,7 @@ func TestContractGroupBaselineThatPrintedNothingIsRefused(t *testing.T) {
 	var mu sync.Mutex
 	var graded []string
 	err := Sweep(root, func(call RunCall) RunResult {
-		if result, done := stubCompile(call); done {
+		if result, done := stubToolchain(call); done {
 			return result
 		}
 		if call.FixtureDir == "" {
@@ -371,7 +352,7 @@ func TestFailedCompileRedsNamingItsPackage(t *testing.T) {
 			// would take a broken package's stale artifact for a good compile.
 			name: "compile exits nonzero",
 			compile: func(call RunCall) RunResult {
-				stubCompile(call)
+				stubToolchain(call)
 				return RunResult{ExitCode: 2, Output: "undefined: Foo\n"}
 			},
 		},
@@ -448,7 +429,7 @@ func TestBinaryDirectoryIsRemovedOnEveryErrorPath(t *testing.T) {
 			// creation, and the one a defer written below it never reaches.
 			name: "the compile itself fails",
 			compile: func(call RunCall) RunResult {
-				stubCompile(call)
+				stubToolchain(call)
 				return RunResult{ExitCode: 2, Output: "undefined: Foo\n"}
 			},
 		},
@@ -475,7 +456,7 @@ func TestBinaryDirectoryIsRemovedOnEveryErrorPath(t *testing.T) {
 					if tc.compile != nil {
 						return tc.compile(call)
 					}
-					result, _ := stubCompile(call)
+					result, _ := stubToolchain(call)
 					return result
 				}
 				if call.FixtureDir == "" {

@@ -251,18 +251,38 @@ func fixture(t *testing.T, dir, check string) {
 	}
 }
 
-// stubCompile answers a compile call the way a successful `go test -c` does — exit zero
-// and a binary on disk — and reports whether it handled the call. Every fake runner routes
-// compiles through it, because the sweep checks the binary exists before invoking it, so a
-// runner that only returned exit zero would red every contract group in every test.
-func stubCompile(call RunCall) (RunResult, bool) {
-	if call.Kind != RunCompile {
-		return RunResult{}, false
+// stubToolchain answers the two calls a contract package's binary is the subject of, and
+// reports whether it handled the call. Every fake runner routes both through it: the sweep
+// checks the binary exists before invoking it, so a runner that only returned exit zero for
+// a compile would red every contract group in every test, and a list answered as if it were
+// a graded run would fail every fixture's owner against output that names no test.
+//
+// A compile answers the way a successful `go test -c` does — exit zero and a binary on disk.
+// A list answers from the roster the fixture helpers write beside the package source, which
+// is what keeps a fixture's declared owner and the membership it is graded against on one
+// source in the synthetic tree, the way the kit's own fixtures and binaries are.
+func stubToolchain(call RunCall) (RunResult, bool) {
+	switch call.Kind {
+	case RunCompile:
+		if err := os.WriteFile(call.Binary, nil, 0o755); err != nil {
+			return RunResult{ExitCode: 1, Output: err.Error()}, true
+		}
+		return RunResult{}, true
+	case RunList:
+		roster, err := os.ReadFile(filepath.Join(call.Cwd, testRosterName))
+		if err != nil {
+			return RunResult{ExitCode: 1, Output: err.Error()}, true
+		}
+		return RunResult{Output: string(roster)}, true
 	}
-	if err := os.WriteFile(call.Binary, nil, 0o755); err != nil {
-		return RunResult{ExitCode: 1, Output: err.Error()}, true
-	}
-	return RunResult{}, true
+	return RunResult{}, false
+}
+
+// isBaseline reports whether a call is one of the empty-tree vacuity baselines. The compile
+// and list calls a contract group needs share the baselines' empty FixtureDir and grade no
+// tree, so membership is stated by kind rather than read from the absent fixture.
+func isBaseline(call RunCall) bool {
+	return call.FixtureDir == "" && (call.Kind == RunGate || call.Kind == RunBite)
 }
 
 // sweepCalls runs a green sweep of tier and returns every RunCall it made.
@@ -274,7 +294,7 @@ func sweepCalls(t *testing.T, root string, tier registry.Tier) []RunCall {
 		mu.Lock()
 		calls = append(calls, call)
 		mu.Unlock()
-		if result, done := stubCompile(call); done {
+		if result, done := stubToolchain(call); done {
 			return result
 		}
 		if call.FixtureDir == "" {
@@ -289,13 +309,12 @@ func sweepCalls(t *testing.T, root string, tier registry.Tier) []RunCall {
 }
 
 // baselineGroups lists the group each empty-tree baseline ran for, sorted, so a
-// duplicate baseline for one group shows up as a repeated entry. A compile shares the
-// baselines' empty FixtureDir and grades no tree, so it is excluded by kind.
+// duplicate baseline for one group shows up as a repeated entry.
 func baselineGroups(t *testing.T, calls []RunCall) []string {
 	t.Helper()
 	var out []string
 	for _, call := range calls {
-		if call.Kind == RunCompile || call.FixtureDir != "" {
+		if !isBaseline(call) {
 			continue
 		}
 		out = append(out, callGroup(t, call))

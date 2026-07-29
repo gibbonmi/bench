@@ -110,7 +110,7 @@ func countedSweep(t *testing.T, root string) (int, error) {
 		mu.Lock()
 		calls++
 		mu.Unlock()
-		if result, done := stubCompile(call); done {
+		if result, done := stubToolchain(call); done {
 			return result
 		}
 		if call.FixtureDir == "" {

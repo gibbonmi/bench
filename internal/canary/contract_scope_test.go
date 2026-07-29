@@ -2,6 +2,7 @@ package canary
 
 import (
 	"maps"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -199,7 +200,7 @@ func TestContractFixtureGradesVacuityAgainstItsOwnPackageBaseline(t *testing.T) 
 	write(t, filepath.Join(other, "EXPECT"), "shared noise\n")
 
 	err := Sweep(root, func(call RunCall) RunResult {
-		if result, done := stubCompile(call); done {
+		if result, done := stubToolchain(call); done {
 			return result
 		}
 		if call.FixtureDir == "" {
@@ -222,14 +223,40 @@ func TestContractFixtureGradesVacuityAgainstItsOwnPackageBaseline(t *testing.T) 
 }
 
 // contractFixture writes a biting behavior-owned fixture under pkg, together with the
-// contract package directory the sweep resolves the binding against, and returns the
-// fixture directory.
+// contract package directory the sweep resolves the binding against, binds it to a default
+// owning test, and returns the fixture directory.
 func contractFixture(t *testing.T, root, pkg, name string) string {
 	t.Helper()
 	dir := filepath.Join(root, "tests", "canary", "behavior-owned", filepath.FromSlash(pkg), name)
 	fixture(t, dir, "")
-	mkdir(t, filepath.Join(root, "internal", "contract", filepath.FromSlash(pkg)))
+	mkdir(t, contractPackageDir(root, pkg))
+	bindOwner(t, root, pkg, dir, defaultOwner)
 	return dir
+}
+
+// defaultOwner is the owning test a fixture built by contractFixture names. Tests that grade
+// the resolution itself bind their own names; everything else needs a well-formed binding
+// rather than a particular one.
+const defaultOwner = "TestCanaryOwner"
+
+// testRosterName holds the test names the stub runner's fake binary lists back for a package.
+// It sits in the package source directory because that is the only tree a list call names,
+// which is what lets one stub answer for every synthetic package.
+const testRosterName = "TESTS"
+
+// bindOwner writes a well-formed binding: the fixture's TEST names owner, and owner joins the
+// roster its package's fake binary lists back. Both halves land together because a binding
+// the binary does not carry is precisely the defect the sweep refuses — a test stating that
+// defect writes TEST alone.
+func bindOwner(t *testing.T, root, pkg, dir, owner string) {
+	t.Helper()
+	write(t, filepath.Join(dir, testFileName), owner+"\n")
+	roster := filepath.Join(contractPackageDir(root, pkg), testRosterName)
+	carried, err := os.ReadFile(roster)
+	if err != nil && !os.IsNotExist(err) {
+		t.Fatal(err)
+	}
+	write(t, roster, string(carried)+owner+"\n")
 }
 
 // fixtureCalls lists the graded runs of one fixture by base name, so a count is what a
@@ -244,12 +271,11 @@ func fixtureCalls(calls []RunCall, name string) []RunCall {
 	return out
 }
 
-// baselineCalls lists the empty-tree baselines. A compile shares their empty FixtureDir
-// and grades no tree, so it is excluded by kind.
+// baselineCalls lists the empty-tree baselines.
 func baselineCalls(calls []RunCall) []RunCall {
 	var out []RunCall
 	for _, call := range calls {
-		if call.Kind != RunCompile && call.FixtureDir == "" {
+		if isBaseline(call) {
 			out = append(out, call)
 		}
 	}

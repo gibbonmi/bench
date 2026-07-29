@@ -146,7 +146,7 @@ func TestSweepCompletesEachGroupsBaselineBeforeItsFixtures(t *testing.T) {
 	var mu sync.Mutex
 	baselineDone := map[string]bool{}
 	runner := func(call RunCall) RunResult {
-		if result, done := stubCompile(call); done {
+		if result, done := stubToolchain(call); done {
 			return result
 		}
 		group := callGroup(t, call)

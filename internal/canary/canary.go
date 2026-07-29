@@ -283,7 +283,8 @@ func SweepTier(root string, tier registry.Tier, runner Runner) error {
 	if err := assertFamilyBinding(root); err != nil {
 		return err
 	}
-	all, err := fixtures(filepath.Join(root, "tests", "canary"))
+	canaryDir := filepath.Join(root, "tests", "canary")
+	all, err := fixtures(canaryDir)
 	if err != nil {
 		return err
 	}
@@ -292,6 +293,9 @@ func SweepTier(root string, tier registry.Tier, runner Runner) error {
 		return err
 	}
 	if err := assertContractScopes(root, fixtures); err != nil {
+		return err
+	}
+	if err := assertTestBindings(canaryDir, all); err != nil {
 		return err
 	}
 	if len(fixtures) == 0 {
@@ -318,6 +322,10 @@ func SweepTier(root string, tier registry.Tier, runner Runner) error {
 		return err
 	}
 	run.binaries = binaries
+
+	if err := assertDeclaredOwners(fixtures, run, runner); err != nil {
+		return err
+	}
 
 	baselines, err := scopeBaselines(fixtures, run, runner)
 	if err != nil {
@@ -380,8 +388,9 @@ func assertFamilyBinding(root string) error {
 // would silently name the wrong one.
 //
 // An empty scope and an empty package together run the whole tier: legacy flat fixtures
-// grade surfaces no single check or package owns. An empty test runs a bound package
-// whole.
+// grade surfaces no single check or package owns. Only a group's vacuity baseline runs a
+// bound package whole, which is why the narrowing is a parameter of the call rather than a
+// state a fixture can be in.
 type selected struct {
 	dir    string
 	family string
@@ -410,9 +419,10 @@ func (s selected) group() string {
 // binding is written only where it changes the answer.
 const checkFileName = "CHECK"
 
-// testFileName optionally binds a behavior-owned fixture to the one contract test whose
-// failure message its EXPECT quotes. Absent, the fixture is graded by everything its
-// package carries.
+// testFileName binds a behavior-owned fixture to the one contract test whose failure message
+// its EXPECT quotes. Every such fixture carries one: the binding is what narrows its bite to
+// the test that owns the expectation, so a fixture without it would pay for its whole package
+// while the tree around it claims otherwise.
 const testFileName = "TEST"
 
 // readMarker reports the trimmed name a fixture's marker file carries and whether the
@@ -487,10 +497,13 @@ func fixtureScope(family, checkName string) string {
 }
 
 // selectTier keeps the fixtures tier sweeps, each with its resolved scope and the test
-// that owns its EXPECT where the fixture names one. Membership is tier equality, not the
-// registry's RunsAt superset: the tiers have to partition the harness so that every
-// fixture is swept by exactly one of them, and a fixture belonging to neither is the
-// unswept rot the canary exists to catch.
+// that owns its EXPECT. It reads the binding rather than grading it: assertTestBindings
+// answers for the whole tree, including the fixtures this tier leaves behind, so a defect
+// caught here would be reported for a subset of the tree it belongs to.
+//
+// Membership is tier equality, not the registry's RunsAt superset: the tiers have to
+// partition the harness so that every fixture is swept by exactly one of them, and a
+// fixture belonging to neither is the unswept rot the canary exists to catch.
 func selectTier(fixtures []selected, tier registry.Tier) ([]selected, error) {
 	var out []selected
 	for _, fx := range fixtures {
@@ -540,6 +553,159 @@ func assertContractScopes(root string, fixtures []selected) error {
 		return errors.New(strings.Join(errs, "\n"))
 	}
 	return nil
+}
+
+// assertTestBindings refuses a sweep while any owner binding in the harness tree is one no
+// run would read, ahead of the first compile. Two shapes cost the harness its scoping: a
+// behavior-owned fixture naming no owner — the file absent, or present and blank — falls back
+// to running every test its package carries, which is the cost the binding exists to remove
+// and is paid in silence; and a TEST anywhere no fixture reads it states an owner nothing
+// applies, which reads as a binding to the next author and is a lie in the tree. Every defect
+// is reported, matching how the sweep reports its fixture failures.
+//
+// The whole tree is graded rather than the tier's own fixtures: an unread binding misleads
+// wherever it sits, including under a family this sweep does not select.
+func assertTestBindings(canaryDir string, all []selected) error {
+	owned := map[string]bool{}
+	var errs []string
+	for _, fx := range all {
+		if FixturePhase(fx.family) != PhaseContract {
+			continue
+		}
+		owned[fx.dir] = true
+		name, present, err := readMarker(fx.dir, testFileName)
+		marker := filepath.Join(fx.dir, testFileName)
+		switch {
+		case err != nil:
+			errs = append(errs, err.Error())
+		case !present:
+			errs = append(errs, fmt.Sprintf("canary fixture '%s' has no %s file at %s, so it names no owning test; name the one contract test whose failure message its EXPECT quotes", filepath.Base(fx.dir), testFileName, marker))
+		case name == "":
+			errs = append(errs, fmt.Sprintf("canary fixture '%s' has an empty %s file at %s, which names no test; name the one contract test whose failure message its EXPECT quotes", filepath.Base(fx.dir), testFileName, marker))
+		}
+	}
+	unread, err := unreadTestBindings(canaryDir, owned)
+	if err != nil {
+		return err
+	}
+	errs = append(errs, unread...)
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "\n"))
+	}
+	return nil
+}
+
+// unreadTestBindings reports every TEST in the harness tree that sits where no run resolves
+// it: outside the behavior-owned family, whose fixtures are the only ones a compiled binary
+// can be narrowed for, and above the fixtures inside it, where a family or package directory
+// is a step of the walk rather than something graded. Each names the offending path, because
+// the file itself is what has to move or go.
+//
+// A fixture's files/ tree is skipped: it is payload materialized into a graded repo rather
+// than harness metadata, and a repo under grade is free to carry a file of that name.
+func unreadTestBindings(canaryDir string, owned map[string]bool) ([]string, error) {
+	var errs []string
+	err := filepath.WalkDir(canaryDir, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			if entry.Name() == filesDirName {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if entry.Name() != testFileName || owned[filepath.Dir(path)] {
+			return nil
+		}
+		rel, err := filepath.Rel(canaryDir, path)
+		if err != nil {
+			return err
+		}
+		family, _, _ := strings.Cut(filepath.ToSlash(rel), "/")
+		if FixturePhase(family) == PhaseContract {
+			errs = append(errs, fmt.Sprintf("canary %s file %s sits above the fixtures it would bind, where no run reads it; an owner is named in the fixture directory that grades it", testFileName, path))
+			return nil
+		}
+		errs = append(errs, fmt.Sprintf("canary %s file %s sits outside the behavior-owned family, where no run reads it; only a fixture graded by a compiled contract binary names an owning test", testFileName, path))
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return errs, nil
+}
+
+// assertDeclaredOwners refuses a sweep while a fixture names an owning test its package's
+// compiled binary does not carry, after the compiles and ahead of the first graded run. The
+// binary is asked what it holds rather than the package source read a second way, because the
+// names a run can be narrowed to are exactly the ones the binary carries. Every defect is
+// reported: a renamed owner otherwise surfaces as a did-not-bite per fixture, which is an
+// archaeology session ending at the marker this refusal names outright.
+func assertDeclaredOwners(fixtures []selected, run sweepRun, runner Runner) error {
+	pkgs := contractPackages(fixtures)
+	if len(pkgs) == 0 {
+		return nil
+	}
+
+	carried := make([]map[string]bool, len(pkgs))
+	listErrs := make([]string, len(pkgs))
+	eachIndex(len(pkgs), func(idx int) {
+		pkg := pkgs[idx]
+		result := runner(RunCall{
+			Kind:    RunList,
+			Cwd:     contractPackageDir(run.root, pkg),
+			Package: pkg,
+			Binary:  run.binaries[pkg],
+			Env:     binaryEnv(run.base),
+		})
+		if result.ExitCode != 0 {
+			listErrs[idx] = fmt.Sprintf("canary could not list the tests of contract package %q (exit %d): %s", pkg, result.ExitCode, strings.TrimSpace(result.Output))
+			return
+		}
+		carried[idx] = listedTests(result.Output)
+	})
+
+	var errs []string
+	for _, msg := range listErrs {
+		if msg != "" {
+			errs = append(errs, msg)
+		}
+	}
+	// A package whose membership is unknown can grade none of its fixtures' owners, so the
+	// list failures answer alone rather than joined by every owner they made unresolvable.
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "\n"))
+	}
+
+	membership := make(map[string]map[string]bool, len(pkgs))
+	for idx, pkg := range pkgs {
+		membership[pkg] = carried[idx]
+	}
+	for _, fx := range fixtures {
+		if fx.pkg == "" || membership[fx.pkg][fx.test] {
+			continue
+		}
+		errs = append(errs, fmt.Sprintf("canary fixture '%s' names owning test %q, which the compiled binary of contract package %q does not carry", filepath.Base(fx.dir), fx.test, fx.pkg))
+	}
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "\n"))
+	}
+	return nil
+}
+
+// listedTests is the set of test names a -test.list output carries. The flag lists every
+// runnable name the binary holds — benchmarks, fuzz targets, and examples among them — and
+// none of those can own a fixture's EXPECT or be reached by a -test.run filter, so only the
+// Test names are membership.
+func listedTests(output string) map[string]bool {
+	out := map[string]bool{}
+	for _, line := range strings.Split(output, "\n") {
+		if name := strings.TrimSpace(line); strings.HasPrefix(name, "Test") {
+			out[name] = true
+		}
+	}
+	return out
 }
 
 // contractPackageDir is where a contract package's source lives under a swept tree. The
@@ -1037,17 +1203,24 @@ func scopedEnv(env []string, fixture selected) []string {
 	return out
 }
 
-// biteEnv is the environment a compiled contract test binary is invoked under: the tree it
-// grades, and nothing else the gate would have read. No inner-gate marker, no phase pin,
+// binaryEnv is the environment every invocation of a compiled contract test binary runs
+// under, and nothing else the gate would have read. No inner-gate marker, no phase pin,
 // and no conformance scope — there is no gate in this run to read any of them, and a
 // binary carrying them claims to be a nested gate to whatever reads them next.
 //
 // The width pin stays, because the sweep's worker budget still divides the machine by the
 // inner width: unpinned binaries running at full width in every worker would oversubscribe
 // the machine exactly as the nested gates did.
-func biteEnv(base []string, subjectRoot string) []string {
+func binaryEnv(base []string) []string {
 	out := append([]string(nil), base...)
-	return append(out, SubjectRootEnv+"="+subjectRoot, innerWidthPin())
+	return append(out, innerWidthPin())
+}
+
+// biteEnv is binaryEnv plus the tree the bite grades. A list call takes the environment
+// without it: it asks the binary which tests it carries rather than grading anything, so
+// naming a tree there would state a subject its answer does not depend on.
+func biteEnv(base []string, subjectRoot string) []string {
+	return append(binaryEnv(base), SubjectRootEnv+"="+subjectRoot)
 }
 
 // innerWidthPin holds the budget arithmetic in one place: the divisor fixtureWorkers uses

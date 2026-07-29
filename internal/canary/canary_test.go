@@ -160,7 +160,7 @@ func TestSweepReportsDidNotBiteWhenARedRunOmitsItsExpect(t *testing.T) {
 	contractFixture(t, root, "axi", "axi-fx")
 
 	err := Sweep(root, func(call RunCall) RunResult {
-		if result, done := stubCompile(call); done {
+		if result, done := stubToolchain(call); done {
 			return result
 		}
 		return RunResult{ExitCode: 1, Output: "unrelated failure\n"}
@@ -249,7 +249,7 @@ func (r *recordingRunner) Run(call RunCall) RunResult {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.calls = append(r.calls, call)
-	if result, done := stubCompile(call); done {
+	if result, done := stubToolchain(call); done {
 		return result
 	}
 	if r.sawMaterialized == nil {
