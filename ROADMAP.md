@@ -177,8 +177,28 @@ an explicit codification-candidate pass — inspect the session for repeated
 ad-hoc checks, decision procedures, or reconstructed logic worth codifying,
 each candidate naming its session evidence, proposed durable owner (CLI,
 skill, gate, or process prose), and expected effect; today those finds are
-incidental. Kit edit under the `craft-synthesis` discipline. Sources: the
-craft-tickets retro, drained here; `.bench/learnings.md`, verdicted here.
+incidental. Fifth clause, from the light-path retro: concurrent main-tree
+writers need a visible intent or lease signal — that close repeatedly polled
+process state and delayed gates just to learn when another session finished
+landing on `main`; it is the same subject-visibility surface as the CLI
+diagnostic, so it rides that clause. Kit edit under the `craft-synthesis`
+discipline. Sources: the craft-tickets and light-path retros, drained here;
+`.bench/learnings.md`, verdicted here.
+
+**FT167 (MEDIUM, evidence supplied) — an identical tree repays the full gate;
+reuse the green verdict.** The light-path close's final `bench gate` on
+`e467d1d` repaid the whole ~146 s suite for a tree a gated worktree commit had
+just proven green — the fast-forward changed no content, and the gate cache
+already records the graded tree hash, so reuse is a cache read plus a
+freshness rule rather than new grading machinery. Deliberately narrower than
+FT91's parked oracle-semantics levers: those cache per-check results inside a
+changed tree and stay parked behind the hoist re-measurement; this row reuses
+a whole-tree verdict for the *identical* tree, the same identity
+`bench commit`'s subject check already trusts. Decide the freshness bound and
+whether reuse is automatic or a named flag; a reused verdict must say so
+rather than print as a fresh run. Flagged for veto: if the reviewer reads
+this as the parked verdict-caching lever, it re-parks with FT91. Source: the
+light-path retro, drained here.
 
 **FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
 The ft91-gate-tier-split semantic review found twelve; three closed before
@@ -940,8 +960,14 @@ is green` checkbox, so the coordinator ran the full gate, checked the box,
 and then `bench commit` ran the same gate again — keep gate state out of the
 ticket template (the green landing commit is its one source) and define the
 cadence as focused seam checks while iterating, one full gate at the atomic
-commit, one composed gate at final check. Kit edit under the
-`craft-synthesis` discipline. Source: `.bench/learnings.md`, verdicted here.
+commit, one composed gate at final check. A third clause, from the light-path
+retro: the independently-green rule holds, but name its proportionality
+ceiling — FT139's one-line test-helper change still paid a worktree, a fresh
+delegate, a focused proof, and a full gate; a one-line test-harness ticket is
+the light path's ceiling, noted beside the rule so paying that cost is a
+choice rather than a default. Kit edit under the `craft-synthesis`
+discipline. Sources: `.bench/learnings.md`, verdicted here; the light-path
+retro, drained here.
 
 **FT165 (LOW) — fold the domain-modeling discipline into
 `/bench-shape-idea`.** Upstream candidate (mattpocock/skills,
@@ -960,8 +986,33 @@ set.** Commit the capture surfaces (`.bench/learnings.md`, `IDEAS.md`,
 doc-only standing rule, so the plain-`git` step every session hand-assembles —
 with FT107's empty-index hazard attached — becomes one sanctioned command.
 Weigh it beside FT107's third clause, which owns the hazard prose; the
-porcelain would remove the instruction rather than duplicate it. Source:
-`IDEAS.md`, drained here.
+porcelain would remove the instruction rather than duplicate it.
+
+The capture-only commit-path idea (2026-07-29) merges in — same visit, one
+route: extend `internal/status`'s `captureOnlyStalePaths` from governing only
+the gate-staleness signal to also governing the commit path, so a change
+confined to capture-only files does not pay the full gate. Single-sourced in
+the existing map, and sound only with a conformance check asserting no gate
+check reads those paths; it is a path-scoped oracle exemption sitting near
+the closed diff-scoped-gating ruling, so the exemption itself is a reviewer
+ruling, not a default. The same-day journal entry lands here too: with two
+unrelated dirty changes on `main` there is no sanctioned two-commit route
+(`bench commit` refuses on out-of-set dirty paths, the guard refuses
+`git stash`), and the session bundled with disclosure at `5fd3789` — until
+this row ships, that is the convention to write down (bundle, lead with the
+substantive change, name the ride-along, flag for veto); FT98's face-two
+set-aside is the general primitive that would dissolve the case. Sources:
+`IDEAS.md`, drained here and in a prior run; `.bench/learnings.md`,
+verdicted here.
+
+**FT168 (LOW) — a fixture-selecting canary invocation.** Proving one changed
+fixture currently costs the whole canary sweep: the light-path repair pass
+needed evidence for a single race fixture, and the whole-sweep-only surface
+invited expensive duplicate runs (the repair delegate launched one unbidden).
+Add a `bench canary` path that runs one named fixture or family as iteration
+evidence only — the full sweep remains the only thing the gate credits, so
+this is a focused check, not a second oracle. Source: the light-path retro,
+drained here.
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.** Calls
 from two resolution runs outlived their specs' retirement. The recurring one is
@@ -1157,6 +1208,18 @@ against a ~12-minute false red. Prefer the mechanical half if it holds up:
 the same module removes the instruction rather than duplicating it, and is the
 same single-source preference FT131 and FT133 take. Kit edit under the
 `craft-synthesis` discipline.
+
+A third face, from the light-path retro (2026-07-29), widens the owner from
+`bench commit` to every aggregate-evidence launch: the terminal repair
+delegate started a strict full gate and a whole canary concurrently despite
+its charge, and the coordinator had to stop the process groups by hand. The
+serialized-resource rule covers standalone canary and `gate-phases`
+invocations from delegated worktrees, not only `bench commit`;
+`craft-delegate` names whole-canary and direct `gate-phases` runs as
+full-gate work reserved for the coordinator; and a terminal repair pass is
+one declared serialized stage — focused tests may run inside it, but
+aggregate gate and canary evidence gets one coordinator-owned launch.
+Source: the light-path retro, drained here.
 
 **FT115 (LOW) — load-robust test and phase deadlines derived from bounds.** Two
 literal deadlines flake under concurrent gate load.
@@ -1375,5 +1438,6 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-review-implementation` — FT163/FT116/FT149/FT151/FT139.
-2. `/bench-final-check` — the reviewed composed tree.
+1. `/bench-shape-idea` — FT91 maps #2/#3 (the prepared-artifact hoist): the board's largest recurring payoff, 167 s of human-paid gate on every commit; reviewer-priced HIGH, re-priced 2026-07-29 by the payoff-versus-effort directive.
+2. `/bench-implement-spec` — FT113 + FT145, light-path fix batch: the cheapest reproduced defects, each ending a recurring cost (capture writes forcing full gate re-runs; the severity-1 git signal counting other worktrees' dirt).
+3. `/bench-write-spec` — FT123 + FT124: the measured session-tax pair (36% of a week's Bash calls; 698/797 `go test` calls hand-filtered).
