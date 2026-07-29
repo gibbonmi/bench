@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"slices"
 	"sort"
@@ -174,16 +175,19 @@ func isDir(path string) bool {
 	return err == nil && info.IsDir()
 }
 
-// RunKind names the three things a sweep runs. A behavior-owned fixture's EXPECT is a
-// contract test's own failure message, so that family is graded by compiling the owning
-// package's test binary once and invoking it per subject tree; every other family needs a
-// whole gate around its mutated tree and spawns one.
+// RunKind names what a sweep runs. A behavior-owned fixture's EXPECT is a contract test's
+// own failure message, so that family is graded by compiling the owning package's test
+// binary once and invoking it per subject tree; every other family needs a whole gate
+// around its mutated tree and spawns one. RunList asks a compiled binary which tests it
+// carries, which is how a fixture's named owner is graded against the binary that would
+// run it rather than against a second reading of the package source.
 type RunKind int
 
 const (
 	RunGate RunKind = iota
 	RunCompile
 	RunBite
+	RunList
 )
 
 // RunCall is one thing the sweep runs. Kind says which, and the fields the other kinds
@@ -195,6 +199,9 @@ const (
 // run over a tree (the materialized repo under grade, and the swept root), while a bite
 // invocation runs in its package's source directory — where `go test` runs a test binary —
 // and carries the tree it grades in the environment instead.
+//
+// Test is the one contract test a bite runs, and is empty for a bite that runs its package
+// whole.
 type RunCall struct {
 	Kind       RunKind
 	Cwd        string
@@ -202,6 +209,7 @@ type RunCall struct {
 	FixtureDir string
 	Package    string
 	Binary     string
+	Test       string
 	Env        []string
 }
 
@@ -365,17 +373,20 @@ func assertFamilyBinding(root string) error {
 
 // selected is one fixture the sweep grades, with everything its inner run is scoped by:
 // the family directory it lives under, the contract package that owns its EXPECT for a
-// behavior-owned fixture, and the conformance check for a fixture whose family binds one.
-// The family and package are carried rather than re-derived from the path at each use,
-// because a nested package puts more than one directory between the family and the
-// fixture and a parent-basename read would silently name the wrong one.
+// behavior-owned fixture, the one test inside that package the EXPECT belongs to, and the
+// conformance check for a fixture whose family binds one. The family and package are
+// carried rather than re-derived from the path at each use, because a nested package puts
+// more than one directory between the family and the fixture and a parent-basename read
+// would silently name the wrong one.
 //
 // An empty scope and an empty package together run the whole tier: legacy flat fixtures
-// grade surfaces no single check or package owns.
+// grade surfaces no single check or package owns. An empty test runs a bound package
+// whole.
 type selected struct {
 	dir    string
 	family string
 	pkg    string
+	test   string
 	scope  string
 }
 
@@ -398,6 +409,11 @@ func (s selected) group() string {
 // the fixture grades a check the dev gate runs — which is all but two of them, so the
 // binding is written only where it changes the answer.
 const checkFileName = "CHECK"
+
+// testFileName optionally binds a behavior-owned fixture to the one contract test whose
+// failure message its EXPECT quotes. Absent, the fixture is graded by everything its
+// package carries.
+const testFileName = "TEST"
 
 // readMarker reports the trimmed name a fixture's marker file carries and whether the
 // file is there at all. Absence is a separate answer from a present-but-empty file: for
@@ -470,10 +486,11 @@ func fixtureScope(family, checkName string) string {
 	return scope
 }
 
-// selectTier keeps the fixtures tier sweeps, each with its resolved scope. Membership
-// is tier equality, not the registry's RunsAt superset: the tiers have to partition the
-// harness so that every fixture is swept by exactly one of them, and a fixture
-// belonging to neither is the unswept rot the canary exists to catch.
+// selectTier keeps the fixtures tier sweeps, each with its resolved scope and the test
+// that owns its EXPECT where the fixture names one. Membership is tier equality, not the
+// registry's RunsAt superset: the tiers have to partition the harness so that every
+// fixture is swept by exactly one of them, and a fixture belonging to neither is the
+// unswept rot the canary exists to catch.
 func selectTier(fixtures []selected, tier registry.Tier) ([]selected, error) {
 	var out []selected
 	for _, fx := range fixtures {
@@ -485,6 +502,15 @@ func selectTier(fixtures []selected, tier registry.Tier) ([]selected, error) {
 			continue
 		}
 		fx.scope = fixtureScope(fx.family, checkName)
+		// Only a bound package's compiled binary can be narrowed to one test; a fixture
+		// graded by a spawned gate has no such notion, so its marker is never read here.
+		if fx.pkg != "" {
+			test, _, err := readMarker(fx.dir, testFileName)
+			if err != nil {
+				return nil, err
+			}
+			fx.test = test
+		}
 		out = append(out, fx)
 	}
 	return out, nil
@@ -659,7 +685,7 @@ func scopeBaselines(fixtures []selected, run sweepRun, runner Runner) (map[strin
 
 	outputs := make([]string, len(scopes))
 	eachIndex(len(scopes), func(idx int) {
-		outputs[idx] = runner(subjectCall(scopes[idx], dirs[idx], "", run, noPhasePin)).Output
+		outputs[idx] = runner(subjectCall(scopes[idx], dirs[idx], "", run, wideBaseline)).Output
 	})
 
 	baselines := make(map[string]string, len(scopes))
@@ -767,7 +793,7 @@ func runFixture(fixture selected, baselineOutput string, run sweepRun, runner Ru
 		return fmt.Sprintf("canary '%s' setup failed: %v", name, err)
 	}
 	_ = gitInit(work)
-	result := runner(subjectCall(fixture, work, fx, run, pinFamilyPhase))
+	result := runner(subjectCall(fixture, work, fx, run, narrowToFixture))
 	if result.ExitCode == 0 || !strings.Contains(result.Output, expect) {
 		return fmt.Sprintf("canary '%s' did not bite (want red + %q; got exit %d)", name, expect, result.ExitCode)
 	}
@@ -958,28 +984,28 @@ func restoreDotSegments(root string) error {
 	return nil
 }
 
-// phasePin says whether a subject call narrows its inner gate to the one phase the
-// fixture's family names. Only a mutated tree is graded that narrowly: a baseline pinned
-// to a phase prints a fraction of what the empty tree can produce, so an EXPECT the full
-// run already emits goes unflagged and every fixture in the group clears the vacuity
-// check unguarded.
-type phasePin bool
+// narrowing says whether a subject call is scoped down to what one fixture needs — the
+// phase its family names, and the contract test its EXPECT belongs to. Only a mutated tree
+// is graded that narrowly: a baseline scoped by either axis prints a fraction of what the
+// empty tree can produce, so an EXPECT the wide run already emits goes unflagged and every
+// fixture in the group clears the vacuity check unguarded.
+type narrowing bool
 
 const (
-	pinFamilyPhase phasePin = true
-	noPhasePin     phasePin = false
+	narrowToFixture narrowing = true
+	wideBaseline    narrowing = false
 )
 
 // subjectCall is the call that grades one tree — a fixture's materialized mutation, or a
-// group's empty baseline, which is why fixtureDir and the pin are parameters rather than
-// read from the fixture. Both shapes come from here so a group's baseline can never drift
-// from the runs it is the yardstick for.
+// group's empty baseline, which is why fixtureDir and the narrowing are parameters rather
+// than read from the fixture. Both shapes come from here so a group's baseline can never
+// drift from the runs it is the yardstick for.
 //
 // A fixture bound to a contract package invokes that package's compiled test binary over
 // the tree; every other fixture spawns the inner gate around it.
-func subjectCall(fixture selected, subjectRoot, fixtureDir string, run sweepRun, pin phasePin) RunCall {
+func subjectCall(fixture selected, subjectRoot, fixtureDir string, run sweepRun, narrow narrowing) RunCall {
 	if fixture.pkg != "" {
-		return RunCall{
+		call := RunCall{
 			Kind:       RunBite,
 			Cwd:        contractPackageDir(run.root, fixture.pkg),
 			FixtureDir: fixtureDir,
@@ -987,9 +1013,13 @@ func subjectCall(fixture selected, subjectRoot, fixtureDir string, run sweepRun,
 			Binary:     run.binaries[fixture.pkg],
 			Env:        biteEnv(run.base, subjectRoot),
 		}
+		if narrow == narrowToFixture {
+			call.Test = fixture.test
+		}
+		return call
 	}
 	env := scopedEnv(run.gateEnv, fixture)
-	if phase := FixturePhase(fixture.family); pin == pinFamilyPhase && phase != "" {
+	if phase := FixturePhase(fixture.family); narrow == narrowToFixture && phase != "" {
 		env = append(env, PhaseEnv+"="+phase)
 	}
 	return RunCall{Cwd: subjectRoot, Gate: run.gate, FixtureDir: fixtureDir, Env: env}
@@ -1079,7 +1109,15 @@ func runnerCommand(call RunCall) *exec.Cmd {
 		cmd.Env = call.Env
 		return cmd
 	case RunBite:
-		cmd := exec.Command(call.Binary)
+		cmd := exec.Command(call.Binary, biteArgs(call.Test)...)
+		cmd.Dir = call.Cwd
+		cmd.Env = call.Env
+		return cmd
+	case RunList:
+		// The pattern matches every name the binary carries: a list call asks what the
+		// package holds, and narrowing it would answer with a subset of the membership the
+		// answer is compared against.
+		cmd := exec.Command(call.Binary, "-test.list", ".*")
 		cmd.Dir = call.Cwd
 		cmd.Env = call.Env
 		return cmd
@@ -1089,6 +1127,18 @@ func runnerCommand(call RunCall) *exec.Cmd {
 		cmd.Env = call.Env
 		return cmd
 	}
+}
+
+// biteArgs narrows a bite to the one test its fixture names, and runs the package whole
+// for a fixture naming none. The name is quoted and anchored because -test.run takes an
+// unanchored regexp: raw, a name matches every test it is a substring of, and one carrying
+// a metacharacter matches a superset of itself — either way a test the fixture does not
+// own can satisfy the bite.
+func biteArgs(test string) []string {
+	if test == "" {
+		return nil
+	}
+	return []string{"-test.run", "^" + regexp.QuoteMeta(test) + "$"}
 }
 
 // contractPackagePrefix is the import path a bound package's slash path hangs off, which

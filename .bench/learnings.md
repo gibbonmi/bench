@@ -26,3 +26,4 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
   has approved a batch plan in terms that cover unseen specs ("roll the
   roadmap"). Proposed rule: none needed; BENCH.md already states it — the miss
   was classification, not a rule gap.
+- 2026-07-29  Landing a ticket's `bench commit` while a concurrent write-delegate ran heavy focused contract tests produced a transient full-gate red (phase output lost to a `tail` filter; serial rerun green). Right behavior: treat the whole-tree gate as a serialized resource against delegates' *test* phases too, not just other gates — either stagger the landing until the delegate's test phase is done, or capture the full gate log before retrying so a real red is attributable. Proposed rule: none yet; second occurrence should promote it to craft-delegate's serialization clause.

@@ -5,6 +5,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"sync"
@@ -55,6 +56,18 @@ func TestDefaultRunnerDispatchesOnCallKind(t *testing.T) {
 			name: "bite runs the compiled binary in its package source directory",
 			call: RunCall{Kind: RunBite, Cwd: "/root/internal/contract/axi", Binary: "/bin/axi.test"},
 			args: []string{"/bin/axi.test"},
+			dir:  "/root/internal/contract/axi",
+		},
+		{
+			name: "bite naming an owning test runs that test alone",
+			call: RunCall{Kind: RunBite, Cwd: "/root/internal/contract/axi", Binary: "/bin/axi.test", Test: "TestOwner"},
+			args: []string{"/bin/axi.test", "-test.run", "^TestOwner$"},
+			dir:  "/root/internal/contract/axi",
+		},
+		{
+			name: "list asks the compiled binary which tests it carries",
+			call: RunCall{Kind: RunList, Cwd: "/root/internal/contract/axi", Binary: "/bin/axi.test"},
+			args: []string{"/bin/axi.test", "-test.list", ".*"},
 			dir:  "/root/internal/contract/axi",
 		},
 	}
@@ -142,6 +155,123 @@ func TestBiteCarriesItsOwnFixtureTreeAsSubjectRoot(t *testing.T) {
 		}
 		seen[roots[0]] = name
 	}
+}
+
+// TestEachFixtureBitesTheTestItsMarkerNames grades the owner resolution per fixture rather
+// than per package. Resolving one owner for a whole group — or letting the first fixture
+// read win — satisfies any single-fixture assertion while grading every other fixture in
+// the group against a test that is not its own.
+func TestEachFixtureBitesTheTestItsMarkerNames(t *testing.T) {
+	root := t.TempDir()
+	owners := map[string]string{"axi-a": "TestOwnerA", "axi-b": "TestOwnerB"}
+	for name, owner := range owners {
+		write(t, filepath.Join(contractFixture(t, root, "axi", name), testFileName), owner+"\n")
+	}
+
+	calls := sweepCalls(t, root, registry.Dev)
+	seen := map[string]string{}
+	for name, owner := range owners {
+		got := fixtureCalls(calls, name)
+		if len(got) != 1 {
+			t.Fatalf("fixture %s ran %d graded runs, want exactly 1", name, len(got))
+		}
+		if got[0].Test != owner {
+			t.Errorf("fixture %s bit test %q, want %q", name, got[0].Test, owner)
+		}
+		filter := runFilter(t, got[0])
+		if want := "^" + owner + "$"; filter != want {
+			t.Errorf("fixture %s ran filter %q, want %q", name, filter, want)
+		}
+		if other, clash := seen[filter]; clash {
+			t.Errorf("fixtures %s and %s both ran filter %q", name, other, filter)
+		}
+		seen[filter] = name
+	}
+}
+
+// TestBiteFilterMatchesOnlyTheOwnerItNames grades the quoting rather than the filter's
+// existence. An owner interpolated raw leaves its metacharacters reading as pattern syntax,
+// so a name carrying a dot matches a superset of itself and the fixture is graded by
+// whichever test that superset catches; an unanchored one matches every test the name is a
+// substring of.
+func TestBiteFilterMatchesOnlyTheOwnerItNames(t *testing.T) {
+	const owner = "TestOwner.Case"
+	filter := runFilter(t, RunCall{Kind: RunBite, Binary: "/bin/axi.test", Test: owner})
+	pattern, err := regexp.Compile(filter)
+	if err != nil {
+		t.Fatalf("filter %q does not compile: %v", filter, err)
+	}
+	if !pattern.MatchString(owner) {
+		t.Fatalf("filter %q does not match the owner %q it was built from", filter, owner)
+	}
+	for _, other := range []string{"TestOwnerXCase", "TestOwner.CaseTwo", "OuterTestOwner.Case"} {
+		if pattern.MatchString(other) {
+			t.Errorf("filter %q also matches %q", filter, other)
+		}
+	}
+}
+
+// TestContractBaselineRunsItsPackageWide keeps the vacuity screen wider than the runs it
+// grades. A baseline narrowed to one fixture's owner prints a fraction of what its group's
+// bites can, so an EXPECT the wide run already emits clears the screen in silence and every
+// fixture in the group goes ungraded for vacuity.
+func TestContractBaselineRunsItsPackageWide(t *testing.T) {
+	root := t.TempDir()
+	write(t, filepath.Join(contractFixture(t, root, "axi", "axi-fx"), testFileName), "TestOwnerA\n")
+
+	var baselines int
+	for _, call := range baselineCalls(sweepCalls(t, root, registry.Dev)) {
+		if call.Kind != RunBite {
+			continue
+		}
+		baselines++
+		if call.Test != "" {
+			t.Errorf("contract baseline named owner %q, want none", call.Test)
+		}
+		if filter := runFilter(t, call); filter != "" {
+			t.Errorf("contract baseline ran filter %q, want its package whole", filter)
+		}
+	}
+	if baselines != 1 {
+		t.Fatalf("contract baselines = %d, want exactly 1", baselines)
+	}
+}
+
+// TestFixtureNamingNoOwnerRunsItsPackageWide pins what an absent marker asks for: the
+// package-wide run every behavior-owned fixture had before any owner could be named, with
+// no refusal in between.
+func TestFixtureNamingNoOwnerRunsItsPackageWide(t *testing.T) {
+	root := t.TempDir()
+	contractFixture(t, root, "axi", "axi-fx")
+
+	got := fixtureCalls(sweepCalls(t, root, registry.Dev), "axi-fx")
+	if len(got) != 1 {
+		t.Fatalf("fixture ran %d graded runs, want exactly 1", len(got))
+	}
+	if got[0].Test != "" {
+		t.Errorf("fixture naming no owner bit test %q, want its package whole", got[0].Test)
+	}
+	if filter := runFilter(t, got[0]); filter != "" {
+		t.Errorf("fixture naming no owner ran filter %q, want none", filter)
+	}
+}
+
+// runFilter is the -test.run value a call actually executes, empty for a call that runs its
+// binary unfiltered. It reads the built argv rather than the call's own field, so an owner
+// is graded where it takes effect instead of where it is recorded.
+func runFilter(t *testing.T, call RunCall) string {
+	t.Helper()
+	args := runnerCommand(call).Args
+	for idx, arg := range args {
+		if arg != "-test.run" {
+			continue
+		}
+		if idx+1 == len(args) {
+			t.Fatalf("argv %v ends at -test.run, naming no filter", args)
+		}
+		return args[idx+1]
+	}
+	return ""
 }
 
 // TestAmbientSubjectRootDoesNotReachABite grades the strip half of the strip-then-set
