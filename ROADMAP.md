@@ -46,7 +46,8 @@ subject: solo canary fell from about 172 s to 25.2 s, unchanged-tree gate to
 condition fired; the changed-tree gate is still floored by the serial artifact
 package.
 
-`decisions/gate-critical-path.md` now owns the measured wall and the remaining
+`specs/ft91-artifact-suite/decisions/gate-critical-path.md` now owns the
+measured wall and the remaining
 sequence. One lever remains: split the artifact suite by subject so the Go
 scheduler can overlap its independent groups, taking the changed-tree gate
 toward ~60–75 s. Its spec must record both the share being removed and the process
@@ -55,7 +56,8 @@ critical path rather than a local speedup. Remove `-count=1`, canary input-key
 skipping, fixture batching, and diff-scoped gating remain rejected as
 incomplete-key or isolation failures.
 
-Entry: `/bench-write-spec` on `decisions/gate-critical-path.md` lever 4.
+Entry: `/bench-write-spec` on
+`specs/ft91-artifact-suite/decisions/gate-critical-path.md` ticket 1.
 Sources: `IDEAS.md`, drained across prior runs;
 `decisions/cost-follows-project-size.md`; the artifact-hoist and gate-fastpath
 retros, drained here.
