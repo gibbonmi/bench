@@ -2,32 +2,28 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `235ca1d`, FT91 retirement edits pending, 8 unpushed commits
-Spec: `ft91-artifact-hoist` implemented at `235ca1d`; retirement pending
-Gate: green for the implemented FT91 tree
+Branch: `main` — HEAD `0721d9a`, 1 dirty path, 10 unpushed commits
+Spec: `specs/ft91-gate-fastpath/spec.md` (Status: staged)
+Gate: green at `543ca92` — stale, work tree `fe3ed27`
 
 ## State
 
-- **FT91 implementation and semantic review are complete.**
-  `8d074d3` adds the package-scoped lazy artifact set, belts, probes, helper,
-  cleanup, and six consumer migrations. `187bc36` records the post-hoist
-  measurements and the ≤60-second stop-rule miss. `4016db5` single-sources the
-  shared-set count and makes the read-only belt capability-honest under UID 0;
-  `235ca1d` is the green implemented-status transition.
-- **Fresh semantic review ran on `gpt-5.6-sol`, high reasoning, fast yolo.**
-  Standards and coverage findings above were repaired and re-gated; Spec had no
-  findings. Its FIFO build-log-path observation remains a contestable judgment
-  for reviewer veto, not an applied change.
-- **Retirement promotes the surviving result.** `decisions/gate-critical-path.md`
-  owns the measured 130–134-second wall and the three remaining levers; the
-  staged spec, tickets, and build-time inventories retire as historical evidence.
-- **Closed decisions stay closed.** Non-sharers retain private builds; production
-  artifact scripts remain untouched; incomplete-key caching and diff-scoped
-  gating remain rejected.
+- **`--full` run phase: implement (in progress).** Tickets derived under
+  `specs/ft91-gate-fastpath/tickets/` — ten tickets, two chains: canary lever
+  (guard-marker-reader → carry-per-test-scoping → migrate-fixture-test-bindings
+  → enforce-test-bindings) and gate lever (extend-freshness-close-tools →
+  reuse-gate-verdict → plumb-gate-fresh-flag → collapse-commit-reuse-check),
+  then revise-adr-0002 and record-fastpath-evidence.
+- **No ticket has landed yet.** Frontier: guard-marker-reader and
+  extend-freshness-close-tools, dispatched to worktree-isolated write
+  delegates at the mid binding.
+- **Closed decisions stay closed:** lever 3 (`-count=1` removal) refused;
+  scoped baselines rejected (wide-baseline principle); `bench commit` gains no
+  `--fresh`; `shellcheck` stays undeclared in the closure.
 
 ## Next command
 
-`$bench-write-spec`
+`/bench-implement-spec --full ft91-gate-fastpath`
 
 ## Shape
 

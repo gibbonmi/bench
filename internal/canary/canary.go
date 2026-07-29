@@ -399,6 +399,28 @@ func (s selected) group() string {
 // binding is written only where it changes the answer.
 const checkFileName = "CHECK"
 
+// readMarker reports the trimmed name a fixture's marker file carries and whether the
+// file is there at all. Absence is a separate answer from a present-but-empty file: for
+// every marker, deleting the file is how a fixture asks for the default, while a blank
+// file is far likelier to be a truncated write than an intent, so only the caller can say
+// what each one costs.
+//
+// The path is typed before it is opened, because the sweep discovers marker files rather
+// than being handed them: an open of a FIFO planted at one blocks until a writer that
+// never comes, and the whole harness would hang with no diagnostic naming the path that
+// stopped it. Anything but a regular file is refused here instead.
+func readMarker(fx, marker string) (string, bool, error) {
+	path := filepath.Join(fx, marker)
+	read := bounds.Classify(path, bounds.ControlRecordLimit)
+	switch read.State {
+	case bounds.StateAbsent:
+		return "", false, nil
+	case bounds.StateEmpty, bounds.StateParsed:
+		return strings.TrimSpace(string(read.Data)), true, nil
+	}
+	return "", false, fmt.Errorf("canary fixture marker %s cannot be read: %s", path, read.Reason)
+}
+
 // fixtureCheck reports which tier sweeps a fixture and which check its CHECK file
 // names. The fixture never states a tier of its own: it names its check, and the tier
 // is read from the registry entry, so a check that is retiered takes its fixtures with
@@ -410,14 +432,13 @@ const checkFileName = "CHECK"
 // an error of its own, since dev is what deleting the file asks for and a blank file
 // is far likelier to be a truncated write than an intent.
 func fixtureCheck(fx string) (registry.Tier, string, error) {
-	data, err := os.ReadFile(filepath.Join(fx, checkFileName))
-	if errors.Is(err, os.ErrNotExist) {
-		return registry.Dev, "", nil
-	}
+	name, present, err := readMarker(fx, checkFileName)
 	if err != nil {
 		return "", "", err
 	}
-	name := strings.TrimSpace(string(data))
+	if !present {
+		return registry.Dev, "", nil
+	}
 	if name == "" {
 		return "", "", fmt.Errorf("canary fixture '%s' has an empty %s file, which names no check; delete the file to sweep the fixture at the dev tier", filepath.Base(fx), checkFileName)
 	}
