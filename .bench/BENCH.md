@@ -163,11 +163,19 @@ code, the journal — those stay as full as their templates need).
     genuinely parallel facts.
   These patterns do not govern CLI or TOON output, repository artifacts, or ordinary
   conversation.
+- Keep the names, drop the ceremony. Identifiers, file paths, and roadmap IDs stay:
+  they are the handle I use to find the thing. What goes is the abstract phrasing
+  built around them — say what something does rather than naming its category.
 - Clear beats dense. Terse but packed is still hard to read. One main point per
   message; plain sentences first. Don't cram — a short follow-up beats one wall; go
-  easy on stacked clauses and em-dash/parenthetical pile-ups. Slow down to speed up:
+  easy on stacked clauses and em-dash/parenthetical pile-ups. Density lives inside
+  the sentence, so cut clauses rather than adding whitespace: one-sentence paragraphs
+  stacked in a row read as a formatting error, not as prose. Slow down to speed up:
   I'd rather read it once than decode it.
-- Read like a terse senior colleague on a code review, not like this kit. When in
+- Read like a warm and efficient senior colleague on a code review, not like this
+  kit. Warmth lives in how a sentence is built, never in anything added to the
+  message: no preamble, no praise, no softening, and no self-criticism — an apology
+  or a tally of past mistakes spends my attention and moves nothing forward. When in
   doubt, cut it in half. Closed decisions stay closed unless I reopen them.
 
 ## Workflow
