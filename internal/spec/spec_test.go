@@ -3,6 +3,7 @@ package spec
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -15,6 +16,18 @@ func writeSpec(t *testing.T, dir, slug, content string) string {
 		t.Fatal(err)
 	}
 	path := filepath.Join(specsDir, slug+".md")
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+func writeFolderSpec(t *testing.T, dir, slug, content string) string {
+	t.Helper()
+	path := filepath.Join(dir, "specs", slug, "spec.md")
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -156,5 +169,43 @@ func TestResolveBaseAnchorsFallbackFromAnyCwd(t *testing.T) {
 	}
 	if resolved != filepath.Join(root, "specs", "anchored.md") {
 		t.Errorf("resolved = %q, want root-anchored path", resolved)
+	}
+}
+
+func TestResolveFolderFormFromDeeperCWD(t *testing.T) {
+	root := t.TempDir()
+	want := writeFolderSpec(t, root, "folder", "Status: staged\n")
+	deep := filepath.Join(root, "deep", "cwd")
+	if err := os.MkdirAll(deep, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(deep)
+
+	_, resolved, _, ok, err := Resolve(root, "folder")
+	if err != nil || !ok {
+		t.Fatalf("folder slug: ok=%v err=%v", ok, err)
+	}
+	if resolved != want {
+		t.Errorf("resolved = %q, want %q", resolved, want)
+	}
+}
+
+func TestFactsIncludesFolderSpecsAndMalformedEvidence(t *testing.T) {
+	root := t.TempDir()
+	writeSpec(t, root, "flat", "Status: staged\n")
+	writeFolderSpec(t, root, "good", "Status: staged\nRoadmap: FT1\n")
+	writeFolderSpec(t, root, "bad", "# no metadata\n")
+
+	facts, err := Facts(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []Fact{
+		{Slug: "bad"},
+		{Slug: "flat", Status: "staged"},
+		{Slug: "good", Status: "staged", RoadmapID: "FT1"},
+	}
+	if !reflect.DeepEqual(facts, want) {
+		t.Fatalf("Facts = %#v, want %#v", facts, want)
 	}
 }

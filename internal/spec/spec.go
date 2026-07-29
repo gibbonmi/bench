@@ -1,7 +1,7 @@
 // Package spec owns spec-file addressing and the two spec-lifecycle operations: the
 // `bench spec implemented <slug>` status flip (Flip) and the `bench spec retire <slug>`
 // deletion. Resolve is the one source of the spec-argument convention (path-first, then a
-// specs/<slug>.md fallback) that `bench coverage`, `bench commit --spec`, and both
+// specs/<slug>/spec.md and specs/<slug>.md fallbacks) that `bench coverage`, `bench commit --spec`, and both
 // operations take their argument through. Flip is the single source of the status-line
 // flip: it turns exactly one line-start `Status: staged` into the retirement-detector form
 // `Status: implemented`, preserving every other byte, and is composed by `bench commit`.
@@ -57,13 +57,18 @@ func metadata(content []byte) (status, roadmapID string) {
 	return status, roadmapID
 }
 
-// Facts reads specs/*.md in path order. Malformed files are retained with an
+// Facts reads folder and flat specs in path order. Malformed files are retained with an
 // empty status so callers can report the evidence rather than silently omit it.
 func Facts(root string) ([]Fact, error) {
-	paths, err := filepath.Glob(filepath.Join(root, "specs", "*.md"))
+	flat, err := filepath.Glob(filepath.Join(root, "specs", "*.md"))
 	if err != nil {
 		return nil, err
 	}
+	folder, err := filepath.Glob(filepath.Join(root, "specs", "*", "spec.md"))
+	if err != nil {
+		return nil, err
+	}
+	paths := append(flat, folder...)
 	sort.Strings(paths)
 	out := make([]Fact, 0, len(paths))
 	for _, path := range paths {
@@ -72,6 +77,9 @@ func Facts(root string) ([]Fact, error) {
 			return nil, err
 		}
 		f := Fact{Slug: strings.TrimSuffix(filepath.Base(path), ".md")}
+		if filepath.Base(path) == "spec.md" {
+			f.Slug = filepath.Base(filepath.Dir(path))
+		}
 		f.Status, f.RoadmapID = metadata(b)
 		out = append(out, f)
 	}
@@ -96,8 +104,8 @@ const StatusImplemented = "implemented"
 
 // Resolve finds the readable file backing a spec argument: the argument as given
 // (path-first, so a same-named readable file shadows the fallback), then — for a
-// separator-free argument only — a specs/<slug>.md fallback, appending .md only when the
-// argument doesn't already end in it. base anchors that fallback: pass the repo root to
+// separator-free argument only — a flat fallback followed by a folder fallback. base
+// anchors those fallbacks: pass the repo root to
 // resolve it repo-root-relative (so a cwd deeper than the root still finds it), or "" to
 // resolve it relative to the process cwd. ok is false when no form resolves; tried holds
 // every form attempted, for the not-found error. A non-nil err is a read failure on an
@@ -108,14 +116,16 @@ func Resolve(base, arg string) (content []byte, resolved string, tried []string,
 		return b, arg, tried, err == nil, err
 	}
 	if !strings.ContainsRune(arg, '/') {
-		slug := arg
-		if !strings.HasSuffix(slug, ".md") {
-			slug += ".md"
+		slug := strings.TrimSuffix(arg, ".md")
+		flat := filepath.Join(base, "specs", slug+".md")
+		tried = append(tried, flat)
+		if b, err := readCandidate(flat); err != nil || b != nil {
+			return b, flat, tried, err == nil, err
 		}
-		fallback := filepath.Join(base, "specs", slug)
-		tried = append(tried, fallback)
-		if b, err := readCandidate(fallback); err != nil || b != nil {
-			return b, fallback, tried, err == nil, err
+		folder := filepath.Join(base, "specs", slug, "spec.md")
+		tried = append(tried, folder)
+		if b, err := readCandidate(folder); err != nil || b != nil {
+			return b, folder, tried, err == nil, err
 		}
 	}
 	return nil, "", tried, false, nil
@@ -146,7 +156,7 @@ func isDir(path string) bool {
 	return err == nil && fi.IsDir()
 }
 
-// locateStaged resolves arg (base anchors the specs/<slug>.md fallback) and requires exactly
+// locateStaged resolves arg (base anchors both spec fallbacks) and requires exactly
 // one line-start `Status: staged`, returning the resolved path, the file split into lines, and
 // the index of that one line. It never writes — it is the shared core of CheckStaged
 // (validate only) and Flip (validate then rewrite), so the resolution + single-staged-line
