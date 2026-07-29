@@ -80,6 +80,18 @@ is a test-independence ruling, not a build. Re-measure against ≤60 s after it
 lands; only a gap that survives that re-measurement graduates the parked
 oracle-semantics levers (verdict caching, `-count=1`) into this row.
 
+The hoist diagnosis is corroborated by an isolated profile from the FT154
+close (2026-07-28): the contract phase alone is 120.71 s and the artifact
+package alone 109.81 s on an otherwise idle box, forcing that package
+single-threaded is *worse* (168.35 s), and phase overlap adds ~28 s of
+contention — so the cost is repeated artifact generation inside one
+sequential package, not duplicate invocation. Same source, one new arm for
+the map sessions to weigh rather than assume: the gate summary reports only
+green/red, so total and per-phase wall time in a concurrency-aware form —
+with a sustained phase-budget breach named rather than left as invisible
+green latency — would have made that reconstruction free; it slots behind the
+hoist, not ahead of it. Source: `.bench/learnings.md`, verdicted here.
+
 When that re-measurement is predicted, key the floor on the largest bound
 package's suite time inflated to the inner width, not on the observed straggler
 of the pre-change mix: stage 1's estimate keyed on the 45 s surface straggler,
@@ -100,37 +112,6 @@ explicit evidence, never a silent skip.
 Entry: `/bench-shape-idea` on `decisions/gate-critical-path.md` #2 and #3.
 Sources: `IDEAS.md`, drained across prior runs;
 `decisions/cost-follows-project-size.md`.
-
-**FT154 (MEDIUM) — `craft-tickets`: the slice unit, staged and building.**
-Compiled map: `specs/craft-tickets/decisions/slice-unit.md`, closed 2026-07-28
-with all nine tickets resolved — the map is settled provenance beside the
-spec, so this row carries only status. The decided shape in one line each: a
-ticket is the smallest
-independently-green story group (the gate grades it; context fit is the
-heuristic); specs move to per-spec folders (`specs/<slug>/spec.md` +
-`tickets/`), folder-only with one migration, ticket files convention-only in
-v1; `/bench-implement-spec`'s first act writes the tickets, a new
-`craft-tickets` skill owns the unit, and the unspecced light path is the
-one-ticket degenerate case; one ticket = one write-delegate charge, checkboxes
-mark done; FT107's light-path table folds into this build; `craft-line` gains
-the per-stage line defaults (orchestrate mid, implement cheap at medium,
-review mid at high, ladder and leverage override intact), whose first builds
-double as the cheap-tier re-test `decisions/cost-follows-project-size.md` #6
-waits on. The `internal/spec` layout change is Go work, not prose — the map's
-Handoff enumerates the flat-path consumers and the retired-path watch-out.
-
-One reviewer decision before the spec is written, drained 2026-07-28: the map
-(items at ~L182 and ~L285) names `implement-spec-full-run` as the one staged
-spec to migrate to the `specs/<slug>/spec.md` layout and as the next queued
-build, but that spec was retired 2026-07-28, so there are now zero flat specs
-to migrate — the migration story is a no-op or changes shape (e.g. the layout
-ships as convention for the *next* spec, this one, with no migration at all).
-The spec session puts that to the reviewer first.
-
-Entry: `/bench-write-spec` from the map, on a fresh mid-tier session —
-unblocked 2026-07-28 now FT152's build has landed and its spec retired. Kit
-edit under the `craft-synthesis` discipline. Sources: the map and its own
-`## Sources` section; `IDEAS.md`, drained here.
 
 **FT131 (MEDIUM) — a stale `dist/bench` is trusted by both the contract suites
 and the gate's own phase resolution.** The AXI and runtime contract suites
@@ -275,9 +256,33 @@ over `.bench/BENCH.md` — story 9's four fixtures prove section scoping only in
 only, so FT152's story 1 (Workflow section) and story 15 (communication rules)
 both rest on that untested combination. One fixture removing a section-scoped
 `.bench/BENCH.md` sentence covers both; it rides whatever mechanism the grill
-decides. Entry: `/bench-shape-idea`. Source: `IDEAS.md`,
-drained here and in a prior run; found by the Codex falsification pass on
+decides. A rider drained 2026-07-29: `bench anchors <path>` — query which
+conformance anchors pin a doc file before editing it — needs exactly the
+registry-or-parser seam the mechanism ruling decides, so the grill weighs it
+as a consumer of that seam rather than a separate build.
+Entry: `/bench-shape-idea`. Source: `IDEAS.md`,
+drained here and in prior runs; found by the Codex falsification pass on
 `3eb1c9a`.
+
+**FT162 (MEDIUM) — `/bench-final-check` names its oracle subject; the retro
+digs for codification candidates.** Three recommendations from the
+craft-tickets retro plus one journal entry, one phase owner. The close's
+coordinator gated `main` while the final ticket sat uncommitted in its
+assignment worktree — the aggregate dashboard signaled dirty work but nothing
+identified the authoritative final-check tree, so the first green verdict
+answered for the wrong checkout and cost a full redundant gate. Three edits:
+a final-check entry check that resolves active assignment worktrees and
+states the exact oracle subject before any gate starts; a subject-oriented
+`bench` diagnostic exposing an active dirty assignment before a
+primary-checkout gate begins (the CLI half, Go work); and the implementation
+handoff naming any still-open assignment and whether its branch is committed.
+Fourth clause, from the journal: the implementation-retro instructions gain
+an explicit codification-candidate pass — inspect the session for repeated
+ad-hoc checks, decision procedures, or reconstructed logic worth codifying,
+each candidate naming its session evidence, proposed durable owner (CLI,
+skill, gate, or process prose), and expected effect; today those finds are
+incidental. Kit edit under the `craft-synthesis` discipline. Sources: the
+craft-tickets retro, drained here; `.bench/learnings.md`, verdicted here.
 
 **FT116 (MEDIUM) — data races in `guards.Scan` the gate cannot see.** Running
 `internal/guards` under `-race` fails three tests on `main`:
@@ -421,6 +426,19 @@ a branch that may not be the default, FT86's own failure class one layer
 down. `bench doctor` (or `bench link`'s output) should report whether the
 installed guard's protected branch was resolved or guessed, so the false
 armor is visible where the reviewer looks. Source: `IDEAS.md`, drained here.
+
+A second face, drained 2026-07-29: currency, not resolution. This repo's own
+installed hook is a bench-managed copy from Jul 6 predating the static
+manifest header, so `bench guards` and every SessionStart banner report
+`pre-push: no manifest` with an empty boundary — the guard reads as inert
+while it in fact blocks pushes to `main`, and one session told the reviewer
+`main` was unprotected. `bench doctor` reports ok because it checks only the
+`bench:managed` marker, never content currency against the embedded template.
+Same owner, same fix surface: doctor (or link's output) reports template
+currency alongside resolved-versus-guessed. The local instance is repaired by
+re-running `bench link` (`installPrePush` overwrites a managed hook) — offered
+alongside this drain rather than performed silently, since it rewrites an
+enforcement hook. Source: `IDEAS.md`, drained here.
 
 **FT145 (MEDIUM, evidence supplied) — the severity-1 git signal aggregates
 across every worktree and fails whole.** Two 2026-07-27 observations turned out
@@ -641,11 +659,12 @@ always-loaded-prose diff.** Three rows edited the same standing-guidance
 surface — `.bench/BENCH.md` and the phase prose beside it — and collapse into
 one batched kit edit under the `craft-synthesis` discipline: one spec, one
 review, one gate. First, the right-sizing table — this row's original charge,
-now moved: `specs/craft-tickets/decisions/slice-unit.md` #6
-(reviewer-decided 2026-07-28) folds
-the table into FT154's build, with "decomposes to one independently-green
-ticket that crosses no declared seam" as its blast-radius observable, so this
-row no longer builds the table and its batch is the remaining clauses.
+now shipped: the slice-unit map #6 (reviewer-decided 2026-07-28; the spec
+retired 2026-07-29, map recoverable via `bench spec history craft-tickets`)
+folded the table into FT154's build, which landed it in `.bench/BENCH.md`
+with "decomposes to one independently-green ticket and crosses no declared
+seam" as its blast-radius observable, so this row no longer builds the table
+and its batch is the remaining clauses.
 For the record the clause carried: `.bench/BENCH.md` licenses a standing rule
 for small changes yet none was ever written, and the table's escalation
 trigger rides an observable
@@ -1204,8 +1223,65 @@ roadmap and capture rows to `/bench-what-next` — one of them is wrong, and a
 session holding both obeys whichever it read last. `/bench-what-next`'s own
 prose calls the drain "the backstop for anything spec-retire missed", which
 reads as the retire-time removal being sanctioned, but which source yields is
-the reviewer's call, then a one-line kit edit to the loser. Kit edit under the
-`craft-synthesis` discipline. Source: `IDEAS.md`, drained here.
+the reviewer's call, then a one-line kit edit to the loser. A second clause,
+same owner, drained 2026-07-29: `bench spec retire` leaves the retirement as
+ordinary dirty paths — it should perform or offer the spec-retire commit
+itself, and `bench status` could name an uncommitted retirement instead of
+generic dirty paths. Decide it with the instruction conflict, since both rule
+what the retiring session does the moment the spec leaves the tree. Kit edit
+under the `craft-synthesis` discipline. Source: `IDEAS.md`, drained here and
+in a prior run.
+
+**FT163 (LOW) — `bench gate --help` runs the oracle; unknown gate args are
+silently absorbed.** `gate_command`'s catch-all routes any unrecognized
+argument into `run_gate` (`bin/bench.sh`), so a help probe starts a real
+concurrent gate. Reproduced through the accused command 2026-07-29:
+`bench gate --help` immediately emitted live phase output, and the killed run
+overwrote the current green verdict with an `interrupted-pending` record — so
+the trap not only spends a full gate's wall-clock, it destroys gate evidence
+when interrupted. Fix to the posture `eb51958` just gave `bench canary`: help
+flags print usage at exit 0, unknown flags or excess arguments refuse at exit
+2, both pinned in the runtime CLI contract; `bench gate pin` keeps its
+argument route. One independently-green ticket crossing no declared seam —
+light path. Source: `.bench/learnings.md`, verdicted here (defect entry,
+repro recorded in the drain).
+
+**FT164 (LOW) — `craft-tickets` refinements from the first dogfood.** Two
+rule-shaped journal entries from FT154's own build, one owner file. First,
+the wide-refactor branch: the first folder-layout ticket grouped a deep-unit
+change with every consumer family, and the delegate exhausted its fresh
+context before the fixture migration closed, so the ticket could not land
+independently green — make blast-radius classification the explicit first
+branch of the breakdown procedure, ahead of vertical drafting: a wide
+refactor takes expand–migrate–contract sequencing, migration tickets sized by
+an ownership fence (package or consumer family), the contract ticket blocked
+by every migration. Second, the cadence rule: tickets carried a `project gate
+is green` checkbox, so the coordinator ran the full gate, checked the box,
+and then `bench commit` ran the same gate again — keep gate state out of the
+ticket template (the green landing commit is its one source) and define the
+cadence as focused seam checks while iterating, one full gate at the atomic
+commit, one composed gate at final check. Kit edit under the
+`craft-synthesis` discipline. Source: `.bench/learnings.md`, verdicted here.
+
+**FT165 (LOW) — fold the domain-modeling discipline into
+`/bench-shape-idea`.** Upstream candidate (mattpocock/skills,
+domain-modeling): as grill tickets resolve decisions, challenge fuzzy or
+overloaded terms, stress-test the emerging model with concrete edge-case
+scenarios, and keep `CONTEXT.md` plus applicable ADRs current inline. One
+source per fact holds: the decision map owns the build decision, `CONTEXT.md`
+owns ubiquitous language, ADRs own hard-to-reverse architectural state.
+Integrates into the existing phase rather than adding a parallel skill. Kit
+edit under the `craft-synthesis` discipline. Source: `IDEAS.md`, drained
+here.
+
+**FT166 (LOW) — `bench capture commit`: porcelain for the ambient capture
+set.** Commit the capture surfaces (`.bench/learnings.md`, `IDEAS.md`,
+`session-handoff.md`, `.bench/retros/`) with a conventional message under the
+doc-only standing rule, so the plain-`git` step every session hand-assembles —
+with FT107's empty-index hazard attached — becomes one sanctioned command.
+Weigh it beside FT107's third clause, which owns the hazard prose; the
+porcelain would remove the instruction rather than duplicate it. Source:
+`IDEAS.md`, drained here.
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.** Calls
 from two resolution runs outlived their specs' retirement. The recurring one is
@@ -1368,13 +1444,12 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-final-check` — push the landed work: `main` is six commits ahead of
-   `origin/main` (FT152's close-out plus this drain), and the gate cache is
-   stale, so the check re-runs, pins, and pushes.
-2. `/bench-implement-spec` — continue FT154 from
-   `specs/craft-tickets/spec.md`; the next frontier is the unblocked
-   `Define ticket workflow guidance` ticket.
-3. `/bench-shape-idea` — FT91, `decisions/gate-critical-path.md` #2 and #3.
+1. `/bench-shape-idea` — FT91, `decisions/gate-critical-path.md` #2 and #3.
    The prepared-artifact hoist is the last structural lever before the ≤60 s
-   stop rule is judged; the gate's 167.3 s is still the dominant human cost on
-   the board.
+   stop rule is judged; the 167.3 s gate is still the dominant human cost on
+   the board, re-confirmed by the FT154 close's isolated profile.
+2. `/bench-implement-spec` — FT163 via the light path: give `bench gate` the
+   help/refuse posture `bench canary` got in `eb51958`; its landing commit
+   also replaces the interrupted-pending verdict the drain's repro left.
+3. `/bench-shape-idea` — FT156, the anchor-mechanism grill, now also deciding
+   the registry seam `bench anchors <path>` would consume.
