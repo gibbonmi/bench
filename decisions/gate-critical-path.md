@@ -1,4 +1,4 @@
-# Gate assessment — where the wall lives, and the levers left
+# Gate critical path — where the wall lives, and the levers left
 
 Assessed 2026-07-29 at working tree of `187bc36`, re-measured on the landed
 tree of `d91b709` once moves 1 and 2 shipped. Question: how fast can the dev
