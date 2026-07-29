@@ -28,14 +28,21 @@ func Inspect(ctx context.Context, w io.Writer, root string) int {
 	for _, run := range phases {
 		done := make(chan int, 1)
 		go func(run phase) { done <- run(ctx, w, stderr, root) }(run)
-		select {
-		case <-done:
-		case <-ctx.Done():
+		if !phaseFinished(ctx, done) {
 			fmt.Fprintln(stderr, "warning: bench session-inspect: deadline exceeded; session inspection stopped")
 			return 0
 		}
 	}
 	return 0
+}
+
+func phaseFinished(ctx context.Context, done <-chan int) bool {
+	select {
+	case <-done:
+		return ctx.Err() == nil
+	case <-ctx.Done():
+		return false
+	}
 }
 
 func Command(args []string, stdout, stderr io.Writer) int {

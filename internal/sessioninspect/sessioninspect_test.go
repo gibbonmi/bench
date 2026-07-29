@@ -22,8 +22,20 @@ func TestInspectDeadlineWarnsAndReturnsZero(t *testing.T) {
 	if code := Inspect(ctx, &out, t.TempDir()); code != 0 {
 		t.Fatalf("Inspect exit = %d, want 0", code)
 	}
-	if !strings.Contains(out.String(), "warning: bench session-inspect: deadline exceeded; session inspection stopped") {
-		t.Fatalf("Inspect warning missing:\n%s", out.String())
+	const warning = "warning: bench session-inspect: deadline exceeded; session inspection stopped\n"
+	if got := out.String(); got != warning {
+		t.Fatalf("Inspect warning = %q, want %q", got, warning)
+	}
+}
+
+func TestPhaseFinishedHonorsCancellationAfterResult(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan int, 1)
+	done <- 1
+	cancel()
+
+	if phaseFinished(ctx, done) {
+		t.Fatal("phaseFinished = true after cancellation and result, want false")
 	}
 }
 
