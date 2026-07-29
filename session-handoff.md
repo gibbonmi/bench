@@ -8,27 +8,27 @@ Gate: green at `2aab503` — current
 
 ## State
 
-- **The 2026-07-29 drain is committed at `6cd2657`.** FT154 shipped and its
-  row is gone; ideas, journal, and retros are all at zero. New rows FT162–166;
-  clauses merged onto FT91, FT135, FT156, FT161; FT107 reworded. Decisions in
-  that commit stay closed.
+- **The 2026-07-29 what-next pass is committed at `09b8fd0` (drain) plus two
+  gated kit commits.** Ideas, journal, and retros are all at zero. The drain:
+  FT135 gained the `bench link` symlink-refusal face; FT98 counts re-measured;
+  FT97 merged into FT128; FT150 folded into FT141; false-green, load-red, and
+  standards-debt theme sections added; sequence reordered fixes-first. The kit
+  commits shipped FT137 (its row is gone): `/bench-what-next` now classifies
+  every row fix/feature/decision-only on every run, and the board-restructuring
+  pass is opt-in via `--restructure`. Decisions in those commits stay closed.
 
-- **The gate cache reads `interrupted-pending` at `23293e0`.** A sanctioned
-  defect repro (`bench gate --help`, now FT163) overwrote the green verdict;
-  the tree is not suspect. FT163's own landing commit — or any gated commit —
-  replaces it.
+- **Flagged for post-hoc veto:** FT91's hoist grill dropped out of the
+  recommended sequence's top three under the reviewer's fixes-first
+  instruction; the row itself stays HIGH.
 
 - **This repo's pre-push hook was refreshed by hand-copy from the current
   template** after `bench link` refused to converge the kit repo (symlink
-  parent conflict, parked in `IDEAS.md`). `bench guards` now reports the full
+  parent conflict, now FT135's third face). `bench guards` reports the full
   manifest.
-
-- **`IDEAS.md` holds one parked line** (the `bench link` refusal), dirty in
-  the main checkout, awaiting the next drain.
 
 ## Next command
 
-`/bench-final-check` — the board's leading invocable signal (`git`).
+`/bench-implement-spec` — FT163 via the light path.
 
 ## Shape
 
