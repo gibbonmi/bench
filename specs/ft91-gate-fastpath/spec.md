@@ -1,6 +1,6 @@
 # ft91-gate-fastpath — per-test canary bites + gate-level verdict reuse
 
-Status: staged
+Status: implemented
 
 Compiled from `decisions/gate-critical-path.md` (the gate assessment, adopted
 as the working map) under the reviewer-directed batch-drain override: levers 1

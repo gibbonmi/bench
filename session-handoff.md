@@ -2,28 +2,32 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `c481e2b`, clean tree, 20 unpushed commits
+Branch: `main` — HEAD `ea9dcaf`, clean tree, 21 unpushed commits
 Spec: `specs/ft91-gate-fastpath/spec.md` (Status: staged)
-Gate: green at `fcafeb2` — stale, work tree `8bbfbc5`
+Gate: green at `fcafeb2` — stale, work tree `e26358a`
 
 ## State
 
-- **`--full` run phase: implement complete; review not yet run.** All ten
-  tickets landed as gate-green commits from the staging commit forward; every
-  TDD-able coverage row went red→green; measurements recorded in the spec's
-  map (canary 25.2 s — stop rule met; forced full gate 128.0 s; unchanged-tree
-  reuse 0.57 s).
-- **Reviewer items pending:** escalation/falsification questions for the
-  review pass; the load-coupled `TestExecuteDeadlineRecordsDistinctTimeout`
-  timing flake (attributed in `.bench/learnings.md`, fix is a gate-test edit
-  and therefore a reviewer call); the ADR reopen-trigger wording (commit-shaped
-  vs work-shaped); the npm closure-hash cost (drop-npm lever if it ever bites).
-- **Closed decisions stay closed:** lever 3 refused; scoped baselines
-  rejected; `bench commit` gains no `--fresh`; `shellcheck` undeclared.
+- **The `--full` run is complete.** Ten build tickets, a semantic review
+  (fresh delegate, mid binding), a Codex falsification pass (top binding), and
+  one reviewer-signed repair pass all landed as gate-green commits. Measured:
+  solo canary 25.2 s (≤60 s stop rule met), forced full gate 128.0 s,
+  unchanged-tree reuse 0.57 s.
+- **Reviewer-ruled during the run:** commit reuses pre-lock via the gate home
+  (`ExecuteReusingFreshGreen`); `npm` dropped from the subject closure (node
+  stays); freshness 60 min; ADR 0002 posture 5 revised.
+- **Open reviewer items (flagged, not applied):** the load-coupled
+  `TestExecuteDeadlineRecordsDistinctTimeout` flake (attributed in
+  `.bench/learnings.md`; a fix edits a gate test); the ADR reopen trigger
+  stays commit-shaped; minor fail-closed observations from review (empty
+  `-test.list` output, live-symlink markers, `--frsh`-as-positional plumbing).
+- **Unpushed commits await the reviewer's push; ship-tier (`bench
+  prep-release`) has not run.** Retirement of `specs/ft91-gate-fastpath/`
+  waits for the retirement signal after merge; retro pending drain.
 
 ## Next command
 
-`/bench-implement-spec --full ft91-gate-fastpath`
+`/bench-what-next`
 
 ## Shape
 
