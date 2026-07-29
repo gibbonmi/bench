@@ -864,16 +864,6 @@ per-spec granularity; retention and pruning; agent-facing AXI or
 reviewer-facing — mean the work starts as a grill. Entry:
 `/bench-shape-idea`. Source: `IDEAS.md`, drained here.
 
-**FT139 (LOW) — the runtime gate capability-skip contract test inherits
-ambient strict mode.** The suite builds its subtest environments by adding to
-the ambient environment rather than scrubbing it
-(`internal/contract/runtime/runtime_gate_capability_skips_test.go`), so an
-inherited `BENCH_REQUIRE_CAPABILITIES` reaches the unset-flag subtest and
-fails it — observed under the FT86 spec-mandated strict run, where the flag
-is set by design. Scrub the variable in the harness's environment setup so
-each subtest's premise is exactly what it asserts. Source: `IDEAS.md`,
-drained here.
-
 **FT147 (LOW) — the handoff's `## Next command` field is stated twice and
 enforced nowhere.** The field is supposed to hold the exact harness-native
 invocation and nothing else, and sessions keep writing a paragraph there
@@ -1385,4 +1375,5 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT139 as an independently-green light-path ticket.
+1. `/bench-review-implementation` — FT163/FT116/FT149/FT151/FT139.
+2. `/bench-final-check` — the reviewed composed tree.

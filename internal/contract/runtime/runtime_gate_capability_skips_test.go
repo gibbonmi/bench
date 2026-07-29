@@ -72,11 +72,12 @@ func runCapabilitySkipGate(t *testing.T, env map[string]string, skip capability.
 	kit := capabilitySkipKit(t, skip)
 	graded := t.TempDir()
 	f := contract.NewExecFixtureAt(t, kit)
-	run := map[string]string{"BENCH_KIT": kit}
+	run := contract.Env{"BENCH_KIT": &kit, "BENCH_REQUIRE_CAPABILITIES": nil}
 	for key, value := range env {
-		run[key] = value
+		value := value
+		run[key] = &value
 	}
-	return contract.RunAt(t, f, kit, run, filepath.Join(contract.SubjectRoot(t), "dist", "bench"), "gate-phases", graded)
+	return f.RunEnvSpec(run, filepath.Join(contract.SubjectRoot(t), "dist", "bench"), "gate-phases", graded)
 }
 
 // capabilitySkipKit builds the smallest tree BenchkitPhases resolves to green phases:
