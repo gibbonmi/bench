@@ -483,23 +483,6 @@ applied by hand in the 2026-07-27 drain — every diagnosis drained there was re
 out of the tree first. Source of this clause: `.bench/learnings.md`, verdicted
 here.
 
-**FT137 (MEDIUM) — `/bench-what-next` gains a restructuring step.** The drain
-only adds and verifies rows, so the board accretes near-duplicates that each
-pay a full pipeline and gate separately. Add a restructuring step to the
-phase: merge rows that edit the same owner file into one batched row,
-collapse rows that are faces of one missing primitive, fold leftovers into
-their parent row, and group evidence-backed rows under a shared theme
-header — each restructure proposed in the same batch diff the drain already
-produces, never applied silently. The 2026-07-26 drain is the dogfood: under
-exactly these moves it merged four delegation rows into FT96, three discard
-faces into FT98, three staleness faces into FT113, and three standing-rule
-rows into FT107 — and FT96, the largest of those merges, shipped as one spec
-five days later. The 2026-07-26 drain is the second dogfood: both its inputs
-landed as clauses on existing rows (a coverage-citation instance onto FT133, a
-journal verdict onto FT107) rather than as two new rows, so the same moves
-apply to intake, not only to periodic cleanup. Kit edit under the
-`craft-synthesis` discipline. Source: `IDEAS.md`, drained here.
-
 **FT134 (MEDIUM) — enumerated-posture tables become a Spec-axis audit
 obligation.** A spec that enumerates call sites with per-site postures —
 FT86's eleven-row DefaultBranch table — has no check that the build took the

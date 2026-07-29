@@ -22,6 +22,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Extended roadmap maintenance with a board-restructuring step: merge, collapse,
+  fold, and theme-grouping moves proposed in the batch diff, fix-versus-feature
+  classification, and a fixes-first recommended sequence.
 - Made semantic review hand off instead of repairing: the terminal repair-pass
   bound now lives with implementation, and final check lands through
   `bench commit` as its one oracle run instead of a standalone gate first.
