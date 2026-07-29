@@ -456,17 +456,26 @@ func TestR17PrivateFaultBridge(t *testing.T) {
 		t.Fatalf("unknown R17 fault %q", op)
 	}
 	root := gateTestRepo(t, "#!/usr/bin/env bash\nexit 0\n", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
-	seed := Execute(context.Background(), root, io.Discard, io.Discard)
+	// The seed is recorded a full freshness window in the past. Faults after lock
+	// acquisition are reached only past the reuse short-circuit, which a fresh green
+	// answers without ever running them, so they are driven at the present clock where
+	// the seed has expired. The pre-acquire pair is driven at the seed's own clock,
+	// where the green is still reusable and its interrupted-pending demotion fires.
+	seedNow := time.Now().UTC().Truncate(time.Second).Add(-freshness - time.Minute)
+	seed := executeWithEngine(context.Background(), root, io.Discard, io.Discard, &faultEngine{now: seedNow})
 	if seed.ActionExit != 0 || !seed.Inspection.ReusableGreen {
 		t.Fatalf("seed = %+v, want reusable green", seed)
 	}
 	durable := "ready-green"
 	wantAttempts := 2
-	if op == "lock-open" || op == "lock-acquisition" || op == "post-run-subject-rebuild" {
+	faultNow := time.Now().UTC().Truncate(time.Second)
+	if op == "lock-open" || op == "lock-acquisition" {
+		wantAttempts, faultNow = 1, seedNow
+	} else if op == "post-run-subject-rebuild" {
 		wantAttempts = 1
 	}
 	for call := 1; call <= 2; call++ {
-		engine := &faultEngine{now: time.Now().UTC().Truncate(time.Second), failOp: op}
+		engine := &faultEngine{now: faultNow, failOp: op}
 		got := executeWithEngine(context.Background(), root, io.Discard, io.Discard, engine)
 		if got.GateExit != 0 || got.ActionExit != 1 || got.Inspection.ReusableGreen || !engine.failed || engine.opCounts[op] != wantAttempts {
 			t.Fatalf("call %d tuple = gate:%d action:%d reusable:%v failed:%v hits:%d trace:%v", call, got.GateExit, got.ActionExit, got.Inspection.ReusableGreen, engine.failed, engine.opCounts[op], engine.trace)

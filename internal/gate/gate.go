@@ -273,6 +273,14 @@ func executeWithEngineAfterAcquire(ctx context.Context, root string, stdout, std
 	if err != nil || !sameSubject(plan, underLock) {
 		return operationalWithEngine(engine, root, 0, stderr, "gate subject changed before execution")
 	}
+	// A reusable green is answered from the record without touching it: re-recording the
+	// verdict would push RecordedAt forward on every read and make the freshness window
+	// unbounded. The check sits here so the verdict it reuses belongs to the subject the
+	// held lock froze, and so nothing has been written yet when it returns.
+	if reuse := inspectAt(root, engine.Now()); reuse.ReusableGreen {
+		fmt.Fprintln(stdout, "gate: green (fresh verdict reused for this tree)")
+		return Result{Inspection: reuse}
+	}
 	pending := interruptedRecord(plan, engine.Now())
 	if err := durableReplaceWithEngine(engine, gitdir, pending); err != nil {
 		_ = durableReplaceWithEngine(engine, gitdir, pending)
