@@ -201,9 +201,9 @@ func TestFactsIncludesFolderSpecsAndMalformedEvidence(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []Fact{
-		{Slug: "bad"},
-		{Slug: "flat", Status: "staged"},
-		{Slug: "good", Status: "staged", RoadmapID: "FT1"},
+		{Slug: "bad", Path: "specs/bad/spec.md"},
+		{Slug: "flat", Path: "specs/flat.md", Status: "staged"},
+		{Slug: "good", Path: "specs/good/spec.md", Status: "staged", RoadmapID: "FT1"},
 	}
 	if !reflect.DeepEqual(facts, want) {
 		t.Fatalf("Facts = %#v, want %#v", facts, want)

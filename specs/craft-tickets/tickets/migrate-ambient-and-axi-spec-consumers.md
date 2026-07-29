@@ -1,6 +1,6 @@
 # Migrate ambient and AXI spec consumers
 
-Blocked by: Expand spec resolution with folder form
+Blocked by: Expose live spec path to consumers
 
 ## What to build
 

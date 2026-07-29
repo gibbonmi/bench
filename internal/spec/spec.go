@@ -31,9 +31,9 @@ import (
 // place therefore yields exactly the detector's accepted form by construction.
 var stagedRe = regexp.MustCompile(`^Status:[ \t]+staged[ \t]*$`)
 
-// Fact is one typed live spec record.
+// Fact is one typed live spec record. Path is its repository-relative path.
 type Fact struct {
-	Slug, Status, RoadmapID string
+	Slug, Path, Status, RoadmapID string
 }
 
 func metadata(content []byte) (status, roadmapID string) {
@@ -76,7 +76,14 @@ func Facts(root string) ([]Fact, error) {
 		if err != nil {
 			return nil, err
 		}
-		f := Fact{Slug: strings.TrimSuffix(filepath.Base(path), ".md")}
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			return nil, err
+		}
+		f := Fact{
+			Slug: strings.TrimSuffix(filepath.Base(path), ".md"),
+			Path: filepath.ToSlash(rel),
+		}
 		if filepath.Base(path) == "spec.md" {
 			f.Slug = filepath.Base(filepath.Dir(path))
 		}
