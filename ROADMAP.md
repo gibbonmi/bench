@@ -38,29 +38,27 @@ Sources: `RR:C-05`; `RC:H-03`.
 
 **FT91 (HIGH, evidence supplied) — gate wall-clock proportional to the
 diff.** The gate's length remains the dominant human-paid cost of working on
-this repo. Nine arms have shipped, most recently the prepared-artifact hoist:
-six ruled consumers now share one package-scoped, lazily built artifact set
-with read-only and digest belts. That reduced the artifact package from about
-141 s to about 109 s solo; under full-gate load it remains 130–134 s, and the
-full dev gate remains roughly 135–172 s. The ≤60 s stop condition therefore
-did not fire.
+this repo. The prepared-artifact hoist reduced the artifact package from about
+141 s to about 109 s solo. The next slice bound each behavior-owned canary to
+its owning test and reused a fresh green verdict for an identical closed
+subject: solo canary fell from about 172 s to 25.2 s, unchanged-tree gate to
+0.57 s, and a forced changed-tree gate remains about 128 s. The canary stop
+condition fired; the changed-tree gate is still floored by the serial artifact
+package.
 
 `decisions/gate-critical-path.md` now owns the measured wall and the remaining
-sequence. The gate is one package wide in two places: the contract phase runs
-the serial `internal/contract/surface/artifact` suite once, and five
-behavior-owned canary fixtures each rerun that whole package. Three levers
-remain: bind each canary fixture to its owning test (changed-tree gate
-~110–135 s); reuse a fresh green verdict for the exact closed subject
-(unchanged-tree rerun ~2–5 s, with tool closure and a freshness ruling); then
-split the artifact suite by subject so the Go scheduler can overlap its
-independent groups (changed-tree gate ~60–75 s). Remove `-count=1`, canary
-input-key skipping, fixture batching, and diff-scoped gating remain rejected
-as incomplete-key or isolation failures.
+sequence. One lever remains: split the artifact suite by subject so the Go
+scheduler can overlap its independent groups, taking the changed-tree gate
+toward ~60–75 s. Its spec must record both the share being removed and the process
+boundaries that prevent reuse, so future performance slices price the whole
+critical path rather than a local speedup. Remove `-count=1`, canary input-key
+skipping, fixture batching, and diff-scoped gating remain rejected as
+incomplete-key or isolation failures.
 
-Entry: `/bench-write-spec` on `decisions/gate-critical-path.md` lever 1,
-followed by the lever-2 reviewer ruling and the ordinary package split.
+Entry: `/bench-write-spec` on `decisions/gate-critical-path.md` lever 4.
 Sources: `IDEAS.md`, drained across prior runs;
-`decisions/cost-follows-project-size.md`.
+`decisions/cost-follows-project-size.md`; the artifact-hoist and gate-fastpath
+retros, drained here.
 
 **FT129 (MEDIUM) — a panic in the inner test binary reads as a canary that
 stopped biting.** FT122's first gate went red as `canary
@@ -133,21 +131,6 @@ landing on `main`; it is the same subject-visibility surface as the CLI
 diagnostic, so it rides that clause. Kit edit under the `craft-synthesis`
 discipline. Sources: the craft-tickets and light-path retros, drained here;
 `.bench/learnings.md`, verdicted here.
-
-**FT167 (MEDIUM, evidence supplied) — an identical tree repays the full gate;
-reuse the green verdict.** The light-path close's final `bench gate` on
-`e467d1d` repaid the whole ~146 s suite for a tree a gated worktree commit had
-just proven green — the fast-forward changed no content, and the gate cache
-already records the graded tree hash, so reuse is a cache read plus a
-freshness rule rather than new grading machinery. Deliberately narrower than
-FT91's parked oracle-semantics levers: those cache per-check results inside a
-changed tree and stay parked behind the hoist re-measurement; this row reuses
-a whole-tree verdict for the *identical* tree, the same identity
-`bench commit`'s subject check already trusts. Decide the freshness bound and
-whether reuse is automatic or a named flag; a reused verdict must say so
-rather than print as a fresh run. Flagged for veto: if the reviewer reads
-this as the parked verdict-caching lever, it re-parks with FT91. Source: the
-light-path retro, drained here.
 
 **FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
 The ft91-gate-tier-split semantic review found twelve; three closed before
@@ -367,6 +350,20 @@ papercut on a first-class activity in this repo (cf. `tests/canary/`), and a
 scoped single-path revert through the same recoverable primitive replaces
 both the papercut and any guard exemption. Whichever face ships first defines
 the one discard semantics; the others reuse it.
+
+**FT169 (MEDIUM, evidence supplied) — one sanctioned worktree landing command
+owns the stale-base dance.** The gate-fastpath build hand-ran the same sequence
+for eleven ticket landings: fast-forward the assignment worktree onto the
+current default branch immediately before landing, create the gated commit,
+fast-forward the result back, then release the worktree. One stale-base miss
+diverged and required a manual no-commit cherry-pick plus a fresh gate before
+the sequence could continue. A `bench worktree land` command should make the
+subject transition atomic from the session's point of view and fail closed
+with recovery state intact when the branches cannot fast-forward. The exact
+authority, interruption recovery, and relationship to `bench commit` and
+`bench worktree release` start as a reviewer decision rather than being
+inferred from the hand-run sequence. Entry: `/bench-shape-idea`. Source: the
+gate-fastpath retro, drained here.
 
 **FT132 (MEDIUM, evidence supplied) — the roadmap row grammar is undeclared,
 and the parser's malformed verdict proved it.** The absent-versus-empty face
@@ -822,7 +819,9 @@ mid-tier default) actually blocks on it. Candidate
 metrics: delegate tokens per slice, coordinator tokens, review findings per
 implemented slice split by axis (Standards/Spec/Coverage), rework tokens
 spent after a build already went green, gate runs per spec, iterations
-against the declared cap, and tier declared versus tier actually used. The
+against the declared cap, tier declared versus tier actually used, and phase
+plus package timings in the normal gate summary so critical-path diagnosis
+does not require a separate instrumented run. The
 only baseline that exists (FT86 review resolution: 26 findings, roughly 350k
 delegate tokens of rework) survives by accident in one session transcript
 rather than in any artifact. Open questions — which metrics earn their
@@ -890,10 +889,14 @@ the reviewer's call, then a one-line kit edit to the loser. A second clause,
 same owner, drained 2026-07-29: `bench spec retire` leaves the retirement as
 ordinary dirty paths — it should perform or offer the spec-retire commit
 itself, and `bench status` could name an uncommitted retirement instead of
-generic dirty paths. Decide it with the instruction conflict, since both rule
-what the retiring session does the moment the spec leaves the tree. Kit edit
-under the `craft-synthesis` discipline. Source: `IDEAS.md`, drained here and
-in a prior run.
+generic dirty paths. That surface also owns the artifact-hoist retro's two
+retirement requests: show a planned promotion/removal manifest before deleting
+spec-local evidence, and budget the default-branch retirement commit explicitly
+when implementation already landed there. Decide them with the instruction
+conflict, since all four rule what the retiring session does the moment the spec
+leaves the tree. Kit edit under the `craft-synthesis` discipline. Sources:
+`IDEAS.md`, drained here and in a prior run; the artifact-hoist retro, drained
+here.
 
 **FT164 (LOW) — `craft-tickets` refinements from the first dogfood.** Two
 rule-shaped journal entries from FT154's own build, one owner file. First,
@@ -1119,6 +1122,13 @@ FT107's fifth clause (the fix-loop shrink measure) explicitly depends on this
 row landing first, since shrink is only meaningful over reds the diff owns.
 Source: `IDEAS.md`, drained here.
 
+The gate-fastpath retro adds the output half of the same attribution problem:
+`bench commit`'s final refusal must retain the failing phase name, and the
+implementation landing guidance must capture the full gate log rather than
+tail-filtering it away. Two reds with discarded phase output forced full
+reruns before the failure could be attributed. Source: the gate-fastpath
+retro, drained here.
+
 FT150 folds in here, 2026-07-29: every surface that demands the pin quotes
 the command and explains nothing — `internal/adopt/prepush.sh` refuses a push
 three ways (unpinned, no `.bench` tree, tree mismatch) with "run `bench gate
@@ -1158,6 +1168,13 @@ the same module removes the instruction rather than duplicating it, and is the
 same single-source preference FT131 and FT133 take. Kit edit under the
 `craft-synthesis` discipline.
 
+The gate-fastpath run supplied the concurrent form too: landing a ticket while
+another write-delegate was still running heavy focused contract tests produced
+the same load-coupled red. The serialized-resource clause covers active test
+phases against the same module, not only concurrent gates or subprocesses left
+behind after a done-claim; stagger the landing or retain the complete gate log
+before classifying the red.
+
 A third face, from the light-path retro (2026-07-29), widens the owner from
 `bench commit` to every aggregate-evidence launch: the terminal repair
 delegate started a strict full gate and a whole canary concurrently despite
@@ -1184,6 +1201,15 @@ a 225–375s suite under a parallel worktree's load hit 600.013s and the gate we
 red on a timeout that read like a failure. Give long phases explicit timeout
 headroom, or have the runner distinguish a timeout verdict from an assertion
 failure in its phase summary.
+
+A third literal race reproduced about three times across twelve sanctioned
+landing-gate runs in the gate-fastpath build:
+`TestExecuteDeadlineRecordsDistinctTimeout` gives its stubbed gate timeout 50
+ms inside a 500 ms parent context, but under the gate's concurrent artifact
+load on WSL2 the parent can expire first and return GateExit 130 instead of
+124. The test passed 10/10 alone. Derive both legs from the shared bounds so
+the assertion preserves their ordering under the load the gate itself creates.
+Source: the gate-fastpath journal and retro, drained here.
 
 **FT120 (LOW) — gate and canary test-harness defects nothing asserts.** Two
 independent holes in the harness that grades the oracle, both found during the
@@ -1365,7 +1391,10 @@ trigger sits too high, but two runs is not a measurement. Graduate on a third
 data point — or a run where the pass returns nothing — and if the pattern
 holds, the candidate rule is making the pass standing for kit-guidance diffs
 specifically, where a defect compounds through every session that loads the
-prose. Source: `.bench/learnings.md`, verdicted here.
+prose. If it graduates, its output takes the same explicit
+accept/merge/dismiss disposition pass as review findings; the gate-fastpath
+run found the adversarial pressure useful but only moderately precise. Sources:
+`.bench/learnings.md`, verdicted here; the gate-fastpath retro, drained here.
 
 **FT24 (parked pending upstream) — Codex agent-line guard parity.** Researched
 2026-07-11: still not implementable on current Codex — delegation has no
@@ -1387,6 +1416,6 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT91 per-test canary bites: scope each behavior-owned fixture to the owning test its EXPECT already names, taking the changed-tree gate toward ~110–135 s without weakening the declared oracle.
+1. `/bench-write-spec` — FT91 artifact-suite scheduling: split the serial package by subject, the remaining measured critical-path lever toward a ~60–75 s changed-tree gate.
 2. `/bench-implement-spec` — FT113 + FT145, light-path fix batch: the cheapest reproduced defects, each ending a recurring cost (capture writes forcing full gate re-runs; the severity-1 git signal counting other worktrees' dirt).
 3. `/bench-write-spec` — FT123 + FT124: the measured session-tax pair (36% of a week's Bash calls; 698/797 `go test` calls hand-filtered).
