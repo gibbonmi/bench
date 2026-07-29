@@ -84,3 +84,18 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
 - **Proposed rule change:** Make `bench gate --help` print usage without running
   the gate, and make unknown gate arguments refuse with exit 2; pin both
   postures in the runtime CLI contract.
+
+## 2026-07-29 — Implementation retro does not explicitly seek codification candidates  [open]
+
+- **What happened:** Reviewing the implementation-retro prompt showed that it
+  asks for coordinator catches and CLI, skill, and process improvements, but
+  does not explicitly inspect the completed session for ad-hoc checks, decision
+  procedures, or reconstructed logic worth codifying. Finding those candidates
+  is therefore incidental.
+- **Right behavior:** A spec-backed run's retro should deliberately inspect its
+  session evidence for logic that was repeated, reconstructed, or required
+  coordinator judgment, then name the appropriate durable owner such as the
+  Bench CLI, a skill, the gate, or process guidance.
+- **Proposed rule change:** Add an explicit codification-candidate pass to
+  `/bench-final-check`'s implementation-retro instructions, requiring each
+  candidate to name the session evidence, proposed owner, and expected effect.
