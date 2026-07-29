@@ -113,87 +113,6 @@ Entry: `/bench-shape-idea` on `decisions/gate-critical-path.md` #2 and #3.
 Sources: `IDEAS.md`, drained across prior runs;
 `decisions/cost-follows-project-size.md`.
 
-**FT131 (MEDIUM) — a stale `dist/bench` is trusted by both the contract suites
-and the gate's own phase resolution.** The AXI and runtime contract suites
-drive the built `dist/bench`, not the package under test, so their verdict
-answers for whatever binary happens to be on disk. In a fresh or salvaged
-worktree that binary predates the change:
-during FT86 two of three rows in a correct slice went red on nothing but
-staleness, and a delegate was nearly re-charged to fix code that was already
-right. The dangerous direction is the reverse one — a stale binary that happens
-to satisfy an assertion makes a broken change look green, a false done-claim the
-gate catches only later. Prefer the single-source fix: have the contract
-helper itself fail loudly when the binary under test is older than the package
-sources it exercises, which removes the instruction rather than duplicating it.
-The fallback — naming the `scripts/go-build.sh` rebuild in the guidance where
-the phase names these seams — stays on this row and is taken only if the
-in-helper staleness check proves unreliable; it was offered to the delegation
-batch that shipped 2026-07-26 and deliberately left untaken there.
-
-A second face, observed during the slice C build 2026-07-27, moves the same
-staleness from the test harness into the oracle itself: a phase-table change
-does not take effect until the *next* gate run. `.bench/gate.sh` execs
-`bench gate-phases` from a process that started before the build phase rewrote
-`dist/bench`, so the first run after a table edit silently grades with the old
-table — observed as a green run showing five phases, then ten on an immediate
-re-run with no code change. Silently grading with the previous table is a
-stronger version of the same defect than a red contract row, because nothing
-reports it at all, and it shares the fix shape: the consumer detects that
-`dist/bench` predates the sources it answers for. Whether the gate should
-refuse, re-resolve, or simply say so is the row's open question. Sources: the
-2026-07-25 learnings entry, verdicted in a prior drain; `session-handoff.md`,
-drained here.
-
-**FT141 (MEDIUM, evidence supplied) — `bench gate pin` records red verdicts,
-so inherited reds stop reading as caused.** The pin records only the tree it
-graded, not what failed there, so an agent that sees a failing check in a file
-its diff never touched assumes causation and starts fixing — and that loop
-does not self-terminate. Real case 2026-07-26: `main` red since `3c50349`,
-and the FT91 build paid ~12 messages of git archaeology to prove the red was
-inherited. Record which checks failed at which commit, so a stage starting
-from a pinned baseline subtracts inherited reds automatically. This is the
-containment half of the incident; the prevention half — the doc-only
-shortcut's gate-anchored-surface exception — rides FT107's sixth clause, and
-FT107's fifth clause (the fix-loop shrink measure) explicitly depends on this
-row landing first, since shrink is only meaningful over reds the diff owns.
-Source: `IDEAS.md`, drained here.
-
-**FT133 (MEDIUM) — `bench coverage --check` verifies that red-signal citations
-resolve.** A coverage-map row naming `go test -run TestFoo` where no such test
-exists exits 0 with `[no tests to run]`, so a dead citation reads as a green
-guard — a hole in the coverage oracle itself. FT86 story 16 shipped exactly
-this: its named regression guard is a lowercase subtest dispatched via
-`RunParallel`, and cannot go red as cited. Teach `--check` to resolve each
-cited command to at least one matching test before crediting the row, and
-decide the posture for citations it cannot resolve — fail closed is the
-family default.
-
-A second instance, drained 2026-07-26, widens the check past mere existence: a
-row whose red signal cites a capability-gated test resolves fine and still
-cannot go red as written. `go test ./internal/conformance -run
-^TestRootConformance$` without `BENCH_CONFORMANCE_ROOT` prints `ok … 0.002s`
-and skips (`bench-skip kind=environment`, visible only under `-v`), so a
-session following the map verbatim reads a false green — reproduced through the
-cited command on `main` at 3ea3abf. The check must therefore credit a row only
-when the cited command actually executes its test, not merely matches one, and
-a capability skip is the discriminating case. The authoring-side alternative —
-a `craft-spec` rule that a conformance red signal always carries its
-`BENCH_CONFORMANCE_ROOT` prefix — is the fallback if the mechanical check
-proves too broad; prefer the check, which removes the instruction rather than
-duplicating it. Related but distinct: FT124's skip-reasons face makes skips
-visible to a reader, while this row makes an invisible skip fail the coverage
-oracle. Source: `IDEAS.md`, drained here.
-
-A third face, drained 2026-07-28, is row identity rather than citation
-resolution: `bench coverage` emits only story/seam/red_signal, so a spec whose
-rows share all three — `implement-spec-full-run`'s three story-3 hook rows —
-cannot be enumerated row by row, and FT152's story-12 per-row accounting rule
-is unexecutable as specified. Either the emission gains a stable row identity
-(row number or the behavior field) or the rule names rows by story plus
-behavior off the spec's own map — decide it alongside the check, same owner.
-Found by the Codex falsification pass on `3eb1c9a`. Source: `IDEAS.md`,
-drained here.
-
 **FT129 (MEDIUM) — a panic in the inner test binary reads as a canary that
 stopped biting.** FT122's first gate went red as `canary
 'worktree-lifecycle-safety-bypassed' did not bite`, naming an untouched and
@@ -211,29 +130,6 @@ arm to weigh rather than assume: a conformance check that no
 length guard, since the canary subject is always a stub and any such slice is
 a latent tripwire-disarming panic. Source: the 2026-07-25 learnings entry,
 verdicted in this drain.
-
-**FT153 (MEDIUM) — the canary's vacuity baseline is a collision screen, not a
-vacuity proof.** A behavior-owned fixture's EXPECT is compared against its
-contract group's empty-tree baseline, which establishes only that the string is
-not infrastructure noise. A generic banner that any failure prints passes that
-screen forever, so nothing grades mutation-specificity for the 33 fixtures
-carrying the gate-guarding-the-gate proof — the profile now says so, but saying
-so is not checking it. Real vacuity wants the unmutated twin: BASE plus `files/`
-without `MUTATE.json`, run in the same shape and required to *not* show the
-EXPECT. That is derivable today for the 9 MUTATE-shaped fixtures, while the 24
-`files/`-only ones bake the mutation into the fixture tree and would need a
-delete-or-absence op `MUTATE.json` cannot express — so the shape is genuinely
-open and the row starts as a grill.
-
-Second clause, same owner and same question: whether a non-contract vacuity
-baseline needs a full inner gate. The stage-2 build silently narrowed every one
-of them to a single phase, which is semantically wrong and was reverted before
-landing, but the revert cost ~6 s of gate and ~1 s of canary. A deliberate
-scoping with correct semantics may recover that legitimately. Decide it with the
-twin question rather than separately — both rule on what a baseline must run to
-mean what it claims. Entry: `/bench-shape-idea`. Sources: `IDEAS.md`, drained
-here; the `ft91-canary-compiled-bites` review S1, recoverable via `git show
-4429b05:reviews/ft91-canary-compiled-bites.md`.
 
 **FT156 (MEDIUM) — the anchor mechanism is weaker than its coverage rows
 claim.** Two faces from FT152's build, one owner (the conformance anchor
@@ -414,7 +310,17 @@ guard reads the subagent type. The fix is to make the envelope's delegation
 type part of the verdict — deny a fork whose declared alias is not the
 session's own tier — which first needs the type's field name pinned from a
 real envelope rather than assumed. Enforcement stays exact-string with no
-provider lookup, per FT97.
+provider lookup.
+
+FT97 merges in here, 2026-07-29 — same enforcement surface, one visit. The
+deny message single-sources its bound-tiers listing, which leads with the
+three tier ids and trails the harness aliases; inside a Claude Code session
+the aliases are the only tokens the Agent tool can pass, so the error leads
+with ids that harness cannot use (observed 2026-07-19). The design is already
+decided: the closed `decisions/multi-harness-line-binding.md` map answers the
+schema question — symmetric per-harness bindings with no canonical family,
+each layer reporting its own harness's tokens. One build fixes the fork
+verdict and re-leads the denial from that map in the same diff.
 
 **FT135 (MEDIUM) — a pre-push guard on a guessed branch looks armed while
 protecting nothing.** When the repository has no resolvable default branch,
@@ -439,6 +345,18 @@ currency alongside resolved-versus-guessed. The local instance is repaired by
 re-running `bench link` (`installPrePush` overwrites a managed hook) — offered
 alongside this drain rather than performed silently, since it rewrites an
 enforcement hook. Source: `IDEAS.md`, drained here.
+
+A third face, drained 2026-07-29: the sanctioned repair route refuses on this
+repo. `bench link` aborts with `conflict: .claude/commands/bench-debug.md has
+a symlink parent directory` — `.claude/commands` is a symlink to
+`.agents/commands`, verified in-tree — and the capture records the refusal
+landing before the pre-push hook refresh, so the second face's repair
+(re-running `bench link`) is unavailable exactly where the stale hook lives; a
+hand-copy fallback was used 2026-07-29. Whether link should traverse the
+symlinked directory, skip already-converged files, or order the hook refresh
+ahead of the conflict check joins the same doctor/link visit this row owns;
+the abort-before-refresh sequencing is the capture's claim, not re-verified
+here. Source: `IDEAS.md`, drained here.
 
 **FT145 (MEDIUM, evidence supplied) — the severity-1 git signal aggregates
 across every worktree and fails whole.** Two 2026-07-27 observations turned out
@@ -483,10 +401,12 @@ landed-proof through it or add the explicit reviewer-authorized discard;
 fail-closed stays the default and the cut line is a reviewer decision. This
 face now owns the whole visible residue: FT148's orphan retirement shipped
 2026-07-27 and its ledger compaction correctly declines these rows because
-they preserve work, so 21 recovery refs and the 17 assignment rows holding
-them are re-preserved at every session start and nothing else will retire
-them (`bench worktree recovery <ref>` returns `retain … unlanded` on a
-sampled ref, 2026-07-27). Face
+they preserve work, so 27 recovery refs across 23 preserved worktrees (24
+assignment rows open, one active, at the 2026-07-29 session start) are
+re-preserved at every session start and nothing else will retire them
+(`bench worktree recovery <ref>` returns `retain … unlanded` on a sampled
+ref, 2026-07-27; ref count re-taken 2026-07-29) — the residue is growing,
+not draining. Face
 two, `bench commit`'s set-aside (was FT127): the refusal reads "working-tree
 files outside the named set block the commit — name them, or set them aside",
 but no set-aside route exists in the CLI, so an agent's only real exits are
@@ -589,18 +509,6 @@ Make an enumerated-posture table an explicit Spec-axis audit obligation in
 `craft-review`, the way the coverage map already is: the reviewer walks the
 table row by row against the diff. Kit edit under the `craft-synthesis`
 discipline. Source: `IDEAS.md`, drained here.
-
-**FT117 (MEDIUM) — FT87 parser-surface follow-ups.** Two leaves left flat after
-the slice 3 grammar centralization. The subcommand-routing registry's
-`whyNested` exemption reason is free text nothing grades, and it currently
-launders three hand-rolled parsers into "nested router": `internal/spec`'s
-`specArg` (also missing the `--` rule story 5 promised), `worktree list`, and
-`internal/adopt/doctor.go`. Route the two real leaves through `usage.Parse`,
-correct the registry reasons, and consider grading the exemption reason itself;
-`cmd/bench/main.go`'s worktree dispatch stays genuinely exempt. Separately,
-`bench commit`'s usage-error line nests a second full usage line inside its
-parenthetical when the fault comes from `usage.Parse` (e.g. an empty
-positional) — one flat line naming the fault reads better.
 
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.** Make
 every documented CLI example executable; parse and validate real YAML
@@ -796,27 +704,6 @@ the next FT90-shaped defect self-diagnoses. The gitignored-declared-input
 conformance check is benchkit-only; ship it as consumer gate scaffolding so
 linked repos get the same protection.
 
-**FT94 (LOW, evidence supplied) — single-sourced `bench resume` summary
-golden.** The resume summary line is asserted as a hardcoded exact-string
-golden at four sites across three files (`internal/worktree/resume_test.go`,
-`internal/worktree/lifecycle_policy_test.go`, and twice in
-`internal/contract/runtime/runtime_worktree_test.go`), so a format change is a
-multi-file hunt. Extract one shared expected-format helper: the unit and
-runtime-binary seams stay distinct while the literal is single-sourced. This
-is test-vs-test duplication, not the expectation-versus-implementation
-independence the code standard protects, so collapsing it is consistent with
-the one-source-per-fact rule.
-
-**FT97 (LOW, evidence supplied) — harness-native agent-line denial.** The
-agent-line deny message single-sources its bound-tiers listing, which leads
-with the three tier ids and trails the harness aliases; inside a Claude Code
-session the aliases are the only tokens the Agent tool can pass, so the error
-leads with ids that harness cannot use (observed 2026-07-19). The design is
-already decided: the closed `decisions/multi-harness-line-binding.md` map
-answers the schema question — symmetric per-harness bindings with no canonical
-family, each layer reporting its own harness's tokens. The row's work is
-building that map; enforcement stays exact-string with no provider lookup.
-
 **FT99 (LOW) — spec problem-premise verification.** A spec compiled from a
 closed decision map can inherit a problem statement the tree has since
 falsified: the retired `minimal-subprocess-data-exposure` spec claimed the
@@ -892,47 +779,6 @@ triggers shipped an automatic top-tier spawn past review (observed
 2026-07-22; corrected in the mid-tier rerouting commit). Make
 `craft-synthesis`'s consistency loop name the escalation policy as a standing
 cross-check for any kit edit that spends a tier. Kit edit under the
-`craft-synthesis` discipline.
-
-**FT103 (LOW) — existence-checked absence evidence: the gate half.** A
-delegate's payload slice landed with a misspelled kit-only allowlist row
-(`craft-synthesis` for the actual `bench-craft-synthesis`), so its contract
-passed by asserting the absence of a path that never existed and the skill
-kept shipping to consumers — a vacuous green the gate cannot see. The
-charge-side half — absence evidence must name identifiers that resolve to
-real things — shipped 2026-07-26 in the delegation-discipline batch, as a
-clause in `craft-delegate`'s done-claim verification list. What stays here is
-the gate check: confirm a per-source existence check on the consumer-payload
-allowlist — the emptied-set vacuity closed with the FT85 fix commit, the
-per-path existence guard is the remaining cheap single-source check.
-
-**FT104 (LOW) — load-induced commit refusals: the stop rule and the pre-gate
-quiet check.** Two faces of the same defect — a red answering for machine
-contention rather than for the diff — and one owner, so they ship together.
-First, the stop rule (this row's original charge). Retrying a recorded flake is
-not iteration toward green: the FT85 review-fix commit was refused twice by
-`TestFT78Story5ProofLedger` under gate load (green in isolation both times),
-and the third identical run passed with no code change — ~35 minutes of wall
-clock bought nothing. The gate/commit discipline states that when a commit is
-refused twice by the same test already recorded as a known flake and proven
-green in isolation, stop and hand the blocked commit to the reviewer with the
-evidence instead of re-running. Replaces the retired FT95 "retry once"
-operational line.
-
-Second (drained 2026-07-27 from the learnings journal), the load the
-coordinator itself caused. A write-delegate reported done while its own
-`go test ./internal/...` sweep and two shell wait-loops were still running;
-`bench commit` started immediately on its worktree and went red on
-`internal/intent`'s concurrency test timing out — the same commit passed on a
-quiet machine with no code change. A returned delegate is not a drained one:
-the done-claim says its *report* finished, not that its subprocesses did.
-`craft-delegate` already names the whole-tree gate a serialized resource for
-*concurrent* delegates, so the prose half is extending that clause to the
-sequential case — check for live test processes before gating, one `pgrep`
-against a ~12-minute false red. Prefer the mechanical half if it holds up:
-`bench commit` refusing or warning when it observes another `go test` against
-the same module removes the instruction rather than duplicating it, and is the
-same single-source preference FT131 and FT133 take. Kit edit under the
 `craft-synthesis` discipline.
 
 **FT105 (LOW) — committed reports that contradict the tree.** A capture-style
@@ -1022,56 +868,6 @@ post-flip tree when `--spec` itself performs the flip (narrower — the flip is
 the tool's own write and its content is known); or accepting the face as
 cosmetic and documenting it.
 
-**FT115 (LOW) — load-robust test and phase deadlines derived from bounds.** Two
-literal deadlines flake under concurrent gate load.
-`internal/gate/runner_test.go`'s `waitForPIDFile` hardcodes a 2s deadline for a
-bash subprocess to write `.git/child-pid` — it flaked the FT87 slice 3 landing
-gate (`TestFT78Story4ProofLedger/R11`), then passed 3/3 alone; this is the exact
-defect class story 13 fixed for `WaitForTwoLegMarkers` (an outer test deadline
-as a numeric literal rather than derived from the bound it must outlast). Extend
-`bounds.TestDeadline` and the marker-wait conformance check to cover
-`waitForPIDFile` and sibling literal deadlines. Separately, the gate's
-conformance phase runs `go test` with no `-timeout`, inheriting the 10m default;
-a 225–375s suite under a parallel worktree's load hit 600.013s and the gate went
-red on a timeout that read like a failure. Give long phases explicit timeout
-headroom, or have the runner distinguish a timeout verdict from an assertion
-failure in its phase summary.
-
-**FT120 (LOW) — gate and canary test-harness defects nothing asserts.** Two
-independent holes in the harness that grades the oracle, both found during the
-FT91 canary-budget build. First, the R12 contention fixture can leak an immortal
-process: its owner gate script waits on a release file with an unbounded
-`while [ ! -f … ]; do sleep .01; done`, but that file lives in the test's
-`TempDir`, so once `r12Contention`'s deferred release gives up after 5 s (or the
-test binary is killed outright, skipping defers) and `TempDir` cleanup removes
-the tree, the condition can never become true. Observed 2026-07-23: an orphaned
-shell spinning 30 hours for 25 minutes of CPU, forking every 10 ms. The two
-candidate fixes are not equivalent and the row must pick deliberately — bounding
-the fixture's own wait is the only one that survives a killed binary, but it puts
-a deadline on the owner half of a *contention* proof, so too tight a bound makes
-R12 flake under exactly the load it exists to test; making the give-up path tear
-down the process group (the profile's `gate-run` teardown rule, which the test
-currently does not follow) is semantically free but does not cover the likely
-trigger. Write the bound against a stated red signal rather than guessing a
-number. Second, nothing asserts that each fixture keeps its own
-`BENCH_CANARY_PHASE` pin under a concurrent multi-family sweep: `runFixture`'s
-defensive `append([]string(nil), env...)` copy is the only thing keeping workers
-off a shared backing array, and the gate runs `go test` without `-race`, so
-deleting that copy would land green. The assertion belongs beside the existing
-fake-`Runner` tests — and `internal/canary/canary_concurrency_test.go` is already
-49 lines over its 400-line budget after the FT91 arms, so the added test lands
-together with a `craft-seams` split (the file now carries two concerns: worker
-derivation and bounds, versus inner-environment pinning) rather than an accept
-entry. Third, found 2026-07-26 under full gate load:
-`TestRuntimeGateContracts/bench_gate_rebuilt_self-host_contract` failed once
-with a `TempDir RemoveAll` "directory not empty" cleanup error alongside the
-contract failure, then passed standalone (all 14 subtests) and on an identical
-whole-gate re-run. That cleanup message is the signature of a gate child
-process still writing into the test's temp dir after the test returned — a
-teardown race in the self-host contract, not a diff defect. An intermittently
-red oracle is noise in the thing that defines done; pin the child-process
-teardown before it recurs. Source: `IDEAS.md`, drained here.
-
 **FT130 (LOW) — parking an idea mid-gate silently voids the run.** During
 FT122's gated commit a session answered a reviewer question and ran `bench
 idea` to park the tangent, which wrote `IDEAS.md` inside the gate's window;
@@ -1149,20 +945,6 @@ the block is wrong. Fix is to derive the label from the flag the classifier
 already matched, which means the `branch-delete` row's single label becomes a
 `-d`/`-D` pair; keep it single-sourced through `denyTable` rather than
 formatting the string at the call site. Source: `IDEAS.md`, drained here.
-
-**FT150 (LOW) — `bench gate pin` is named everywhere it is needed and
-explained nowhere.** Every surface that demands the pin quotes the command and
-nothing else: `internal/adopt/prepush.sh` refuses a push three ways
-(unpinned, no `.bench` tree, tree mismatch) with "run `bench gate pin`", and
-the `bench status` gate row names it the same way. A first-time user — the
-`bench setup` adoption path — is told to run a command without being told that
-pinning records the `.bench` tree a human has reviewed, or why the refusal
-cannot be cleared automatically. One clause of "what this does" at each refusal
-site, single-sourced rather than written three times, and the same clause on the
-status row's action text. Scoped to the explanatory half only: what the pin
-*records* is FT141, and that row's build visits the pin's data rather than these
-messages, so the two are adjacent but not the same call sites — if FT141 lands
-first, ride its visit. Source: `IDEAS.md`, drained here.
 
 **FT151 (LOW) — `bench learnings` fails closed on the state a successful drain
 produces.** A journal with no open entries is exactly what `/bench-what-next`
@@ -1307,6 +1089,257 @@ already applied it to the same file — fail-closed and ambient-board-neutral,
 but a 2–5 MiB journal that used to render now exits 1, a real behavior change
 to keep or reverse. One line each closes this row.
 
+## False greens — verdicts that credit unchecked work
+
+Four rows, one failure class: a green whose warrant is missing — a stale
+binary, a dead or skipping citation, a vacuous baseline, an unchecked absence.
+Each hardens a different oracle surface, so they stay separate builds, but
+they read and prioritize as one theme; FT124's skip-reasons face is the same
+class carried on its own row.
+
+**FT131 (MEDIUM) — a stale `dist/bench` is trusted by both the contract suites
+and the gate's own phase resolution.** The AXI and runtime contract suites
+drive the built `dist/bench`, not the package under test, so their verdict
+answers for whatever binary happens to be on disk. In a fresh or salvaged
+worktree that binary predates the change:
+during FT86 two of three rows in a correct slice went red on nothing but
+staleness, and a delegate was nearly re-charged to fix code that was already
+right. The dangerous direction is the reverse one — a stale binary that happens
+to satisfy an assertion makes a broken change look green, a false done-claim the
+gate catches only later. Prefer the single-source fix: have the contract
+helper itself fail loudly when the binary under test is older than the package
+sources it exercises, which removes the instruction rather than duplicating it.
+The fallback — naming the `scripts/go-build.sh` rebuild in the guidance where
+the phase names these seams — stays on this row and is taken only if the
+in-helper staleness check proves unreliable; it was offered to the delegation
+batch that shipped 2026-07-26 and deliberately left untaken there.
+
+A second face, observed during the slice C build 2026-07-27, moves the same
+staleness from the test harness into the oracle itself: a phase-table change
+does not take effect until the *next* gate run. `.bench/gate.sh` execs
+`bench gate-phases` from a process that started before the build phase rewrote
+`dist/bench`, so the first run after a table edit silently grades with the old
+table — observed as a green run showing five phases, then ten on an immediate
+re-run with no code change. Silently grading with the previous table is a
+stronger version of the same defect than a red contract row, because nothing
+reports it at all, and it shares the fix shape: the consumer detects that
+`dist/bench` predates the sources it answers for. Whether the gate should
+refuse, re-resolve, or simply say so is the row's open question. Sources: the
+2026-07-25 learnings entry, verdicted in a prior drain; `session-handoff.md`,
+drained here.
+
+**FT133 (MEDIUM) — `bench coverage --check` verifies that red-signal citations
+resolve.** A coverage-map row naming `go test -run TestFoo` where no such test
+exists exits 0 with `[no tests to run]`, so a dead citation reads as a green
+guard — a hole in the coverage oracle itself. FT86 story 16 shipped exactly
+this: its named regression guard is a lowercase subtest dispatched via
+`RunParallel`, and cannot go red as cited. Teach `--check` to resolve each
+cited command to at least one matching test before crediting the row, and
+decide the posture for citations it cannot resolve — fail closed is the
+family default.
+
+A second instance, drained 2026-07-26, widens the check past mere existence: a
+row whose red signal cites a capability-gated test resolves fine and still
+cannot go red as written. `go test ./internal/conformance -run
+^TestRootConformance$` without `BENCH_CONFORMANCE_ROOT` prints `ok … 0.002s`
+and skips (`bench-skip kind=environment`, visible only under `-v`), so a
+session following the map verbatim reads a false green — reproduced through the
+cited command on `main` at 3ea3abf. The check must therefore credit a row only
+when the cited command actually executes its test, not merely matches one, and
+a capability skip is the discriminating case. The authoring-side alternative —
+a `craft-spec` rule that a conformance red signal always carries its
+`BENCH_CONFORMANCE_ROOT` prefix — is the fallback if the mechanical check
+proves too broad; prefer the check, which removes the instruction rather than
+duplicating it. Related but distinct: FT124's skip-reasons face makes skips
+visible to a reader, while this row makes an invisible skip fail the coverage
+oracle. Source: `IDEAS.md`, drained here.
+
+A third face, drained 2026-07-28, is row identity rather than citation
+resolution: `bench coverage` emits only story/seam/red_signal, so a spec whose
+rows share all three — `implement-spec-full-run`'s three story-3 hook rows —
+cannot be enumerated row by row, and FT152's story-12 per-row accounting rule
+is unexecutable as specified. Either the emission gains a stable row identity
+(row number or the behavior field) or the rule names rows by story plus
+behavior off the spec's own map — decide it alongside the check, same owner.
+Found by the Codex falsification pass on `3eb1c9a`. Source: `IDEAS.md`,
+drained here.
+
+**FT153 (MEDIUM) — the canary's vacuity baseline is a collision screen, not a
+vacuity proof.** A behavior-owned fixture's EXPECT is compared against its
+contract group's empty-tree baseline, which establishes only that the string is
+not infrastructure noise. A generic banner that any failure prints passes that
+screen forever, so nothing grades mutation-specificity for the 33 fixtures
+carrying the gate-guarding-the-gate proof — the profile now says so, but saying
+so is not checking it. Real vacuity wants the unmutated twin: BASE plus `files/`
+without `MUTATE.json`, run in the same shape and required to *not* show the
+EXPECT. That is derivable today for the 9 MUTATE-shaped fixtures, while the 24
+`files/`-only ones bake the mutation into the fixture tree and would need a
+delete-or-absence op `MUTATE.json` cannot express — so the shape is genuinely
+open and the row starts as a grill.
+
+Second clause, same owner and same question: whether a non-contract vacuity
+baseline needs a full inner gate. The stage-2 build silently narrowed every one
+of them to a single phase, which is semantically wrong and was reverted before
+landing, but the revert cost ~6 s of gate and ~1 s of canary. A deliberate
+scoping with correct semantics may recover that legitimately. Decide it with the
+twin question rather than separately — both rule on what a baseline must run to
+mean what it claims. Entry: `/bench-shape-idea`. Sources: `IDEAS.md`, drained
+here; the `ft91-canary-compiled-bites` review S1, recoverable via `git show
+4429b05:reviews/ft91-canary-compiled-bites.md`.
+
+**FT103 (LOW) — existence-checked absence evidence: the gate half.** A
+delegate's payload slice landed with a misspelled kit-only allowlist row
+(`craft-synthesis` for the actual `bench-craft-synthesis`), so its contract
+passed by asserting the absence of a path that never existed and the skill
+kept shipping to consumers — a vacuous green the gate cannot see. The
+charge-side half — absence evidence must name identifiers that resolve to
+real things — shipped 2026-07-26 in the delegation-discipline batch, as a
+clause in `craft-delegate`'s done-claim verification list. What stays here is
+the gate check: confirm a per-source existence check on the consumer-payload
+allowlist — the emptied-set vacuity closed with the FT85 fix commit, the
+per-path existence guard is the remaining cheap single-source check.
+
+## Reds the diff doesn't own — inheritance, load, and harness defects
+
+Four rows, one failure class: a red that answers for something other than the
+diff in front of the gate — an inherited baseline, machine contention, a
+literal deadline, a harness defect. FT141 is the dependency root: FT107's
+fifth clause (the fix-loop shrink measure) blocks on it, because shrink is
+only meaningful over reds the diff owns.
+
+**FT141 (MEDIUM, evidence supplied) — `bench gate pin` records red verdicts,
+so inherited reds stop reading as caused.** The pin records only the tree it
+graded, not what failed there, so an agent that sees a failing check in a file
+its diff never touched assumes causation and starts fixing — and that loop
+does not self-terminate. Real case 2026-07-26: `main` red since `3c50349`,
+and the FT91 build paid ~12 messages of git archaeology to prove the red was
+inherited. Record which checks failed at which commit, so a stage starting
+from a pinned baseline subtracts inherited reds automatically. This is the
+containment half of the incident; the prevention half — the doc-only
+shortcut's gate-anchored-surface exception — rides FT107's sixth clause, and
+FT107's fifth clause (the fix-loop shrink measure) explicitly depends on this
+row landing first, since shrink is only meaningful over reds the diff owns.
+Source: `IDEAS.md`, drained here.
+
+FT150 folds in here, 2026-07-29: every surface that demands the pin quotes
+the command and explains nothing — `internal/adopt/prepush.sh` refuses a push
+three ways (unpinned, no `.bench` tree, tree mismatch) with "run `bench gate
+pin`", and the `bench status` gate row names it the same way, so a first-time
+user on the `bench setup` adoption path is never told the pin records the
+`.bench` tree a human has reviewed, or why the refusal cannot clear
+automatically. This row's build already visits the pin's data; add the one
+explanatory clause at those refusal sites and the status row's action text in
+the same visit, single-sourced rather than written four times.
+
+**FT104 (LOW) — load-induced commit refusals: the stop rule and the pre-gate
+quiet check.** Two faces of the same defect — a red answering for machine
+contention rather than for the diff — and one owner, so they ship together.
+First, the stop rule (this row's original charge). Retrying a recorded flake is
+not iteration toward green: the FT85 review-fix commit was refused twice by
+`TestFT78Story5ProofLedger` under gate load (green in isolation both times),
+and the third identical run passed with no code change — ~35 minutes of wall
+clock bought nothing. The gate/commit discipline states that when a commit is
+refused twice by the same test already recorded as a known flake and proven
+green in isolation, stop and hand the blocked commit to the reviewer with the
+evidence instead of re-running. Replaces the retired FT95 "retry once"
+operational line.
+
+Second (drained 2026-07-27 from the learnings journal), the load the
+coordinator itself caused. A write-delegate reported done while its own
+`go test ./internal/...` sweep and two shell wait-loops were still running;
+`bench commit` started immediately on its worktree and went red on
+`internal/intent`'s concurrency test timing out — the same commit passed on a
+quiet machine with no code change. A returned delegate is not a drained one:
+the done-claim says its *report* finished, not that its subprocesses did.
+`craft-delegate` already names the whole-tree gate a serialized resource for
+*concurrent* delegates, so the prose half is extending that clause to the
+sequential case — check for live test processes before gating, one `pgrep`
+against a ~12-minute false red. Prefer the mechanical half if it holds up:
+`bench commit` refusing or warning when it observes another `go test` against
+the same module removes the instruction rather than duplicating it, and is the
+same single-source preference FT131 and FT133 take. Kit edit under the
+`craft-synthesis` discipline.
+
+**FT115 (LOW) — load-robust test and phase deadlines derived from bounds.** Two
+literal deadlines flake under concurrent gate load.
+`internal/gate/runner_test.go`'s `waitForPIDFile` hardcodes a 2s deadline for a
+bash subprocess to write `.git/child-pid` — it flaked the FT87 slice 3 landing
+gate (`TestFT78Story4ProofLedger/R11`), then passed 3/3 alone; this is the exact
+defect class story 13 fixed for `WaitForTwoLegMarkers` (an outer test deadline
+as a numeric literal rather than derived from the bound it must outlast). Extend
+`bounds.TestDeadline` and the marker-wait conformance check to cover
+`waitForPIDFile` and sibling literal deadlines. Separately, the gate's
+conformance phase runs `go test` with no `-timeout`, inheriting the 10m default;
+a 225–375s suite under a parallel worktree's load hit 600.013s and the gate went
+red on a timeout that read like a failure. Give long phases explicit timeout
+headroom, or have the runner distinguish a timeout verdict from an assertion
+failure in its phase summary.
+
+**FT120 (LOW) — gate and canary test-harness defects nothing asserts.** Two
+independent holes in the harness that grades the oracle, both found during the
+FT91 canary-budget build. First, the R12 contention fixture can leak an immortal
+process: its owner gate script waits on a release file with an unbounded
+`while [ ! -f … ]; do sleep .01; done`, but that file lives in the test's
+`TempDir`, so once `r12Contention`'s deferred release gives up after 5 s (or the
+test binary is killed outright, skipping defers) and `TempDir` cleanup removes
+the tree, the condition can never become true. Observed 2026-07-23: an orphaned
+shell spinning 30 hours for 25 minutes of CPU, forking every 10 ms. The two
+candidate fixes are not equivalent and the row must pick deliberately — bounding
+the fixture's own wait is the only one that survives a killed binary, but it puts
+a deadline on the owner half of a *contention* proof, so too tight a bound makes
+R12 flake under exactly the load it exists to test; making the give-up path tear
+down the process group (the profile's `gate-run` teardown rule, which the test
+currently does not follow) is semantically free but does not cover the likely
+trigger. Write the bound against a stated red signal rather than guessing a
+number. Second, nothing asserts that each fixture keeps its own
+`BENCH_CANARY_PHASE` pin under a concurrent multi-family sweep: `runFixture`'s
+defensive `append([]string(nil), env...)` copy is the only thing keeping workers
+off a shared backing array, and the gate runs `go test` without `-race`, so
+deleting that copy would land green. The assertion belongs beside the existing
+fake-`Runner` tests — and `internal/canary/canary_concurrency_test.go` is already
+49 lines over its 400-line budget after the FT91 arms, so the added test lands
+together with a `craft-seams` split (the file now carries two concerns: worker
+derivation and bounds, versus inner-environment pinning) rather than an accept
+entry. Third, found 2026-07-26 under full gate load:
+`TestRuntimeGateContracts/bench_gate_rebuilt_self-host_contract` failed once
+with a `TempDir RemoveAll` "directory not empty" cleanup error alongside the
+contract failure, then passed standalone (all 14 subtests) and on an identical
+whole-gate re-run. That cleanup message is the signature of a gate child
+process still writing into the test's temp dir after the test returned — a
+teardown race in the self-host contract, not a diff defect. An intermittently
+red oracle is noise in the thing that defines done; pin the child-process
+teardown before it recurs. Source: `IDEAS.md`, drained here.
+
+## Standards debt — one batched light-path pass
+
+Two rows plus FT142's standards track, shippable together as small
+one-source-per-fact and cleanup sweeps under one gate; FT117's parser-routing
+half is the largest item in the batch. FT142 itself stays on the main list
+because its ship track rides the prep-release revive with FT116.
+
+**FT117 (MEDIUM) — FT87 parser-surface follow-ups.** Two leaves left flat after
+the slice 3 grammar centralization. The subcommand-routing registry's
+`whyNested` exemption reason is free text nothing grades, and it currently
+launders three hand-rolled parsers into "nested router": `internal/spec`'s
+`specArg` (also missing the `--` rule story 5 promised), `worktree list`, and
+`internal/adopt/doctor.go`. Route the two real leaves through `usage.Parse`,
+correct the registry reasons, and consider grading the exemption reason itself;
+`cmd/bench/main.go`'s worktree dispatch stays genuinely exempt. Separately,
+`bench commit`'s usage-error line nests a second full usage line inside its
+parenthetical when the fault comes from `usage.Parse` (e.g. an empty
+positional) — one flat line naming the fault reads better.
+
+**FT94 (LOW, evidence supplied) — single-sourced `bench resume` summary
+golden.** The resume summary line is asserted as a hardcoded exact-string
+golden at four sites across three files (`internal/worktree/resume_test.go`,
+`internal/worktree/lifecycle_policy_test.go`, and twice in
+`internal/contract/runtime/runtime_worktree_test.go`), so a format change is a
+multi-file hunt. Extract one shared expected-format helper: the unit and
+runtime-binary seams stay distinct while the literal is single-sourced. This
+is test-vs-test duplication, not the expectation-versus-implementation
+independence the code standard protects, so collapsing it is consistent with
+the one-source-per-fact rule.
+
 ## Session tax — evidence-supplied reader rows
 
 Three rows, one theme: each is a measured, recurring plumbing cost from the
@@ -1444,12 +1477,12 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT91, `decisions/gate-critical-path.md` #2 and #3.
-   The prepared-artifact hoist is the last structural lever before the ≤60 s
-   stop rule is judged; the 167.3 s gate is still the dominant human cost on
-   the board, re-confirmed by the FT154 close's isolated profile.
-2. `/bench-implement-spec` — FT163 via the light path: give `bench gate` the
+1. `/bench-implement-spec` — FT163 via the light path: give `bench gate` the
    help/refuse posture `bench canary` got in `eb51958`; its landing commit
-   also replaces the interrupted-pending verdict the drain's repro left.
-3. `/bench-shape-idea` — FT156, the anchor-mechanism grill, now also deciding
-   the registry seam `bench anchors <path>` would consume.
+   also replaces the interrupted-pending verdict the repro left behind.
+2. `/bench-implement-spec` — FT116's race fix via the light path: stop
+   `guards.Scan` leaking `enumerateGuards` past the timeout return; it blocks
+   any green `bench prep-release`, and the `-race`-in-gate half is the
+   `craft-gate` reviewer decision to take at the same visit.
+3. `/bench-implement-spec` — the small-fix batch: FT149, FT151, and FT139 as
+   three independently-green light-path tickets.
