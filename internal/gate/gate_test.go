@@ -171,7 +171,9 @@ func TestStrictVerdictInspection(t *testing.T) {
 	}
 	cache := filepath.Join(gitdir, benchgit.GateCacheFile)
 	now := time.Date(2026, 7, 13, 12, 0, 0, 0, time.UTC)
-	ready := fmt.Sprintf(`{"schema":1,"state":"ready","status":"green","tree":%q,"oracle":%q,"recorded_at":"2026-07-13T11:50:01Z"}`, s.Tree, s.Oracle)
+	// Recorded 59 minutes before now, so the two inspections below straddle the
+	// freshness window: reusable at 59 minutes, expired at 61.
+	ready := fmt.Sprintf(`{"schema":1,"state":"ready","status":"green","tree":%q,"oracle":%q,"recorded_at":"2026-07-13T11:01:00Z"}`, s.Tree, s.Oracle)
 	write := func(body string, mode os.FileMode) {
 		t.Helper()
 		if err := os.RemoveAll(cache); err != nil {
@@ -183,10 +185,10 @@ func TestStrictVerdictInspection(t *testing.T) {
 	}
 	write(ready, 0o600)
 	if got := inspectAt(root, now); !got.ReusableGreen {
-		t.Fatalf("fresh exact ready not reusable: %+v", got)
+		t.Fatalf("ready 59 minutes old not reusable: %+v", got)
 	}
-	if got := inspectAt(root, now.Add(time.Second)); got.ReusableGreen || got.Reason != "verdict expired" {
-		t.Fatalf("exact ten-minute boundary reused: %+v", got)
+	if got := inspectAt(root, now.Add(2*time.Minute)); got.ReusableGreen || got.Reason != "verdict expired" {
+		t.Fatalf("ready 61 minutes old reused: %+v", got)
 	}
 	for _, invalid := range []string{
 		"green " + s.Tree + " 2026-07-13T11:50:01Z\n",

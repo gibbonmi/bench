@@ -79,7 +79,7 @@ var ft78Story3Proofs = []r21ProofCase{
 	codecProof("R5/truncated-record", codecTruncated), codecProof("R5/byte-bound-16384", codec16384),
 	codecProof("R5/byte-bound-16385", codec16385), codecProof("R5/cache-symlink", codecSymlink),
 	codecProof("R5/cache-directory", codecDirectory), codecProof("R5/cache-unreadable", codecUnreadable),
-	freshnessProof("R6/after-ten-minutes", freshnessAfter), freshnessProof("R6/exact-ten-minutes", freshnessExact),
+	freshnessProof("R6/after-window", freshnessAfter), freshnessProof("R6/exact-window", freshnessExact),
 	freshnessProof("R6/future-record", freshnessFuture), freshnessProof("R6/malformed-time", freshnessMalformed),
 	freshnessProof("R6/fingerprint-mismatch", freshnessFingerprint), freshnessProof("R6/freshness-policy-mismatch", freshnessPolicy),
 	secretProof("R7/sentinel-command", secretCommand), secretProof("R7/sentinel-environment-name", secretEnvironmentName),
@@ -95,7 +95,7 @@ var ft78Story3Proofs = []r21ProofCase{
 
 var ft78Story3ExpectedIDs = []string{
 	"R5/cache-absent", "R5/ready-red", "R5/subject-unavailable", "R5/zero-byte", "R5/ready-green-no-final-newline", "R5/ready-red-no-final-newline", "R5/trailing-json", "R5/duplicate-field", "R5/unknown-field", "R5/wrong-field-type", "R5/wrong-schema", "R5/wrong-state-enum", "R5/wrong-status-enum", "R5/wrong-hash", "R5/wrong-time", "R5/legacy-record", "R5/truncated-record", "R5/byte-bound-16384", "R5/byte-bound-16385", "R5/cache-symlink", "R5/cache-directory", "R5/cache-unreadable",
-	"R6/after-ten-minutes", "R6/exact-ten-minutes", "R6/future-record", "R6/malformed-time", "R6/fingerprint-mismatch", "R6/freshness-policy-mismatch",
+	"R6/after-window", "R6/exact-window", "R6/future-record", "R6/malformed-time", "R6/fingerprint-mismatch", "R6/freshness-policy-mismatch",
 	"R7/sentinel-command", "R7/sentinel-environment-name", "R7/sentinel-environment-value", "R7/sentinel-manifest-path", "R7/sentinel-input-content", "R7/sentinel-tool-output", "R7/sentinel-gate-output", "R7/unsafe-control-bytes",
 	"R8/repository-path-spaces", "R8/repository-path-glob", "R8/declared-path-spaces", "R8/declared-path-glob", "R8/manifest-no-final-newline", "R8/symlink-chain", "R8/external-symlink-target", "R8/missing-global-bench", "R8/executable-mode-change", "R8/control-byte-safe-output",
 }

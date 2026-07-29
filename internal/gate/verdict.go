@@ -21,7 +21,7 @@ const (
 	verdictSchema = 1
 	cacheLimit    = 16 * 1024
 	manifestLimit = 16 * 1024
-	freshness     = 10 * time.Minute
+	freshness     = 60 * time.Minute
 	policyVersion = "oracle-v1/freshness-v1"
 )
 

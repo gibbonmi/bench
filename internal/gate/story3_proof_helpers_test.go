@@ -177,9 +177,9 @@ func runFreshnessProof(t *testing.T, kind freshnessKind) {
 	wantState, wantReason := Ready, "verdict expired"
 	switch kind {
 	case freshnessAfter:
-		data = replaceJSONField(t, data, "recorded_at", now.Add(-10*time.Minute-time.Second).Format(time.RFC3339))
+		data = replaceJSONField(t, data, "recorded_at", now.Add(-freshness-time.Second).Format(time.RFC3339))
 	case freshnessExact:
-		data = replaceJSONField(t, data, "recorded_at", now.Add(-10*time.Minute).Format(time.RFC3339))
+		data = replaceJSONField(t, data, "recorded_at", now.Add(-freshness).Format(time.RFC3339))
 	case freshnessFuture:
 		data = replaceJSONField(t, data, "recorded_at", now.Add(time.Minute).Format(time.RFC3339))
 		wantState, wantReason = Invalid, "invalid cache record"
