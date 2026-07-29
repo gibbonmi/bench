@@ -31,9 +31,41 @@ import (
 // place therefore yields exactly the detector's accepted form by construction.
 var stagedRe = regexp.MustCompile(`^Status:[ \t]+staged[ \t]*$`)
 
+var liveSpecPathTokenRe = regexp.MustCompile(`specs/([A-Za-z0-9_-]+)/spec\.md`)
+
 // Fact is one typed live spec record. Path is its repository-relative path.
 type Fact struct {
 	Slug, Path, Status, RoadmapID string
+}
+
+// LiveSpecPath returns a live folder spec's repository-relative path.
+func LiveSpecPath(slug string) string {
+	return filepath.ToSlash(filepath.Join("specs", slug, "spec.md"))
+}
+
+// LiveSpecSlugs enumerates distinct live folder-spec slugs named outside fenced code.
+func LiveSpecSlugs(content []byte) []string {
+	seen := map[string]bool{}
+	var slugs []string
+	inFence := false
+	for _, line := range strings.Split(string(content), "\n") {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "```") {
+			inFence = !inFence
+			continue
+		}
+		if inFence {
+			continue
+		}
+		for _, match := range liveSpecPathTokenRe.FindAllStringSubmatch(line, -1) {
+			slug := match[1]
+			if !seen[slug] {
+				seen[slug] = true
+				slugs = append(slugs, slug)
+			}
+		}
+	}
+	return slugs
 }
 
 func metadata(content []byte) (status, roadmapID string) {
@@ -57,8 +89,10 @@ func metadata(content []byte) (status, roadmapID string) {
 	return status, roadmapID
 }
 
-// Facts reads folder specs in path order. Malformed files are retained with an
-// empty status so callers can report the evidence rather than silently omit it.
+// Facts reads folder specs in path order. Every globbed path is classified before it is
+// opened: only bounds.StateParsed supplies metadata; every other bounds.FileState remains an
+// empty-metadata evidence row instead of becoming an omission or a returned read error. This
+// fail-closed posture gives ambient consumers evidence without letting a special file block.
 func Facts(root string) ([]Fact, error) {
 	folder, err := filepath.Glob(filepath.Join(root, "specs", "*", "spec.md"))
 	if err != nil {
@@ -68,19 +102,15 @@ func Facts(root string) ([]Fact, error) {
 	sort.Strings(paths)
 	out := make([]Fact, 0, len(paths))
 	for _, path := range paths {
-		b, err := os.ReadFile(path)
-		if err != nil {
-			return nil, err
-		}
-		rel, err := filepath.Rel(root, path)
-		if err != nil {
-			return nil, err
-		}
+		slug := filepath.Base(filepath.Dir(path))
 		f := Fact{
-			Slug: filepath.Base(filepath.Dir(path)),
-			Path: filepath.ToSlash(rel),
+			Slug: slug,
+			Path: LiveSpecPath(slug),
 		}
-		f.Status, f.RoadmapID = metadata(b)
+		c := bounds.Classify(path, bounds.ControlRecordLimit)
+		if c.State == bounds.StateParsed {
+			f.Status, f.RoadmapID = metadata(c.Data)
+		}
 		out = append(out, f)
 	}
 	return out, nil

@@ -1,11 +1,18 @@
 package spec
 
 import (
+	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
+
+	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/capability"
 )
 
 // writeSpec writes content to <dir>/specs/<slug>/spec.md and returns the path.
@@ -208,6 +215,90 @@ func TestFactsIncludesFolderSpecsAndMalformedEvidence(t *testing.T) {
 		{Slug: "flat", Path: "specs/flat/spec.md", Status: "staged"},
 		{Slug: "good", Path: "specs/good/spec.md", Status: "staged", RoadmapID: "FT1"},
 	}
+	if !reflect.DeepEqual(facts, want) {
+		t.Fatalf("Facts = %#v, want %#v", facts, want)
+	}
+}
+
+func TestLiveSpecPrimitives(t *testing.T) {
+	if got, want := LiveSpecPath("ticket-19"), "specs/ticket-19/spec.md"; got != want {
+		t.Errorf("LiveSpecPath = %q, want %q", got, want)
+	}
+	content := []byte("specs/one/spec.md specs/two_2/spec.md specs/one/spec.md\n```\nspecs/hidden/spec.md\n```\nspecs/<slug>/spec.md\n")
+	if got, want := LiveSpecSlugs(content), []string{"one", "two_2"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("LiveSpecSlugs = %q, want %q", got, want)
+	}
+}
+
+func TestFactsRetainsHostileCandidates(t *testing.T) {
+	root := t.TempDir()
+	writeFolderSpec(t, root, "malformed", "Status: sta\xffged\n")
+	writeFolderSpec(t, root, "oversized", string(bytes.Repeat([]byte("x"), int(bounds.ControlRecordLimit+1))))
+
+	dangling := filepath.Join(root, "specs", "dangling", "spec.md")
+	if err := os.MkdirAll(filepath.Dir(dangling), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("missing.md", dangling); err != nil {
+		capability.Capability(t, capability.Symlink, fmt.Sprintf("symlinks unavailable: %v", err))
+	}
+
+	fifo := filepath.Join(root, "specs", "fifo", "spec.md")
+	if err := os.MkdirAll(filepath.Dir(fifo), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := syscall.Mkfifo(fifo, 0o644); err != nil {
+		capability.Capability(t, capability.Fifo, fmt.Sprintf("FIFOs unavailable: %v", err))
+	}
+
+	done := make(chan struct {
+		facts []Fact
+		err   error
+	}, 1)
+	go func() {
+		facts, err := Facts(root)
+		done <- struct {
+			facts []Fact
+			err   error
+		}{facts, err}
+	}()
+	select {
+	case got := <-done:
+		if got.err != nil {
+			t.Fatalf("Facts: %v", got.err)
+		}
+		want := []Fact{
+			{Slug: "dangling", Path: "specs/dangling/spec.md"},
+			{Slug: "fifo", Path: "specs/fifo/spec.md"},
+			{Slug: "malformed", Path: "specs/malformed/spec.md"},
+			{Slug: "oversized", Path: "specs/oversized/spec.md"},
+		}
+		if !reflect.DeepEqual(got.facts, want) {
+			t.Fatalf("Facts = %#v, want %#v", got.facts, want)
+		}
+	case <-time.After(bounds.TestDeadline(0)):
+		t.Fatal("Facts blocked on a FIFO candidate, so it read before classifying the path")
+	}
+}
+
+func TestFactsRetainsUnreadableCandidate(t *testing.T) {
+	root := t.TempDir()
+	path := writeFolderSpec(t, root, "unreadable", "Status: staged\n")
+	t.Cleanup(func() { _ = os.Chmod(path, 0o600) })
+	if err := os.Chmod(path, 0o000); err != nil {
+		capability.Capability(t, capability.Privilege, fmt.Sprintf("cannot strip permissions: %v", err))
+	}
+	file, err := os.Open(path)
+	if err == nil {
+		_ = file.Close()
+		capability.Capability(t, capability.Privilege, "mode 0o000 is still readable by this user")
+	}
+
+	facts, err := Facts(root)
+	if err != nil {
+		t.Fatalf("Facts: %v", err)
+	}
+	want := []Fact{{Slug: "unreadable", Path: "specs/unreadable/spec.md"}}
 	if !reflect.DeepEqual(facts, want) {
 		t.Fatalf("Facts = %#v, want %#v", facts, want)
 	}

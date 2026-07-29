@@ -270,6 +270,36 @@ green. A red attempt is repaired and retried; the normal green path is one full
 gate.
 `/bench-final-check` remains the final full gate over the composed feature.
 
+## #11: Where does an implementation retrospective live and leave?
+
+Blocked by: #3, #10
+Type: Reviewer decision
+
+### Question
+
+The ticketed build now produces evidence about ticket fit, delegate
+performance, gate cost, and agent-facing friction, but chat is the only place
+that evidence survives. Where should a final retrospective live, when is it
+written, and how does it leave without becoming another permanent journal?
+
+### Answer
+
+Reviewer-decided 2026-07-28: every spec-backed implementation writes one
+complete retrospective to `.bench/retros/<spec-slug>.md` after its final
+landing gate is green. A re-run rewrites that file in full rather than
+appending. The retrospective records the outcome, ticket-versus-spec-slice
+delegate performance, gate-stage timings, coordinator catches, and concrete
+agent-experience improvements across the Bench CLI, skills, and process.
+
+The retro is a capture artifact, not a second roadmap or permanent history.
+`bench status` and `bench roadmap` include pending retros in the ordinary
+capture-drain signal, and `bench roadmap --context` carries each bounded
+regular Markdown body as the evidence `/bench-what-next` reads.
+`/bench-what-next` gives every actionable recommendation a roadmap merge,
+new row, learning/rule disposition, or explicit dismissal, then removes every
+drained retro file in the same reviewer-approved batch. Special files and
+oversized bodies fail closed rather than blocking or disappearing.
+
 ## Out of scope
 
 - A second wide-refactor rule in `craft-spec` — `craft-tickets` owns the

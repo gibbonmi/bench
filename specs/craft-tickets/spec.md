@@ -4,7 +4,7 @@ Status: staged
 Roadmap: FT154
 
 Compiled from `specs/craft-tickets/decisions/slice-unit.md` (closed 2026-07-28,
-all ten decisions resolved, no blocking uncertainty flags). Every seam below
+all eleven decisions resolved, no blocking uncertainty flags). Every seam below
 is map-sourced; deviations from the map are flagged inline as **[flagged]**.
 
 ## Problem
@@ -31,7 +31,10 @@ light path is the one-ticket degenerate case, bounded by a standing table in
 the per-stage default line table. `internal/spec` is the deep unit every
 consumer sees the layout through. Compiled decision maps and their owned assets
 move beside the spec as settled provenance, leaving top-level `decisions/` for
-pre-spec working maps and whole-folder retirement to remove the compiled artifacts.
+pre-spec working maps and whole-folder retirement to remove the compiled
+artifacts. A final green spec-backed implementation writes a bounded
+`.bench/retros/<spec-slug>.md` capture artifact; roadmap/status surface it and
+`/bench-what-next` owns its reviewed drain.
 
 ## User stories
 
@@ -146,6 +149,34 @@ Prose and skill — lands after the Go slice (map dependency order):
     retirement removes tickets and settled provenance together. Line:
     gpt-5.6-sol / high. This changes phase-command and shipped lifecycle prose,
     so the kit-prose leverage override applies.
+18. As an ambient-command caller, I want `spec.Facts` to classify each
+    discovered `specs/*/spec.md` before reading it, so a FIFO, device, socket,
+    dangling link, or oversized control record fails closed instead of
+    blocking `bench handoff` or `bench roadmap --context`. Line:
+    gpt-5.6-terra / medium. This is the review-found special-file edge at the
+    shared enumeration seam.
+19. As a maintainer, I want `internal/spec` to own live-spec path construction
+    and token parsing, with status and roadmap consuming those primitives, so
+    the folder layout has one derivation. Line: gpt-5.6-terra / medium. This
+    is review repair for the repository's one-source-per-fact standard.
+20. As a reviewer, I want folder retirement to perform pickup, `tickets/`,
+    `spec.md`, and folder deletion in the specified recovery order, and its
+    comments to describe folder output, so the implementation and its
+    explanation match the accepted interrupt posture. Line:
+    gpt-5.6-terra / medium. This repairs the Spec and Standards findings at
+    the existing lifecycle seam.
+21. As a completed spec-backed implementation, I want `/bench-final-check` to
+    rewrite `.bench/retros/<spec-slug>.md` after its landing gate is green,
+    recording outcome, gate timings, ticket/delegate performance,
+    coordinator catches, and agent-experience improvements, so operational
+    evidence survives chat without becoming a second roadmap. Line:
+    gpt-5.6-sol / high. This is always-loaded phase prose.
+22. As a roadmap maintainer, I want `bench status` and `bench roadmap` to
+    surface pending retros, `bench roadmap --context` to carry their bounded
+    regular-file bodies, and `/bench-what-next` to disposition every
+    recommendation and remove every drained retro in its approved batch, so
+    the capture artifact has one visible exit. Line: gpt-5.6-terra / medium
+    for the Go surface and gpt-5.6-sol / high for the phase prose.
 
 ## Implementation decisions
 
@@ -235,6 +266,15 @@ Prose and skill — lands after the Go slice (map dependency order):
   it does not scan spec-local provenance. `bench spec retire` removes the
   entire spec folder, so final-check relies on that retirement and performs no
   separate shipped-map deletion.
+- **Implementation-retro lifecycle.** A spec-backed `/bench-final-check`
+  writes `.bench/retros/<spec-slug>.md` only after the landing gate and commit
+  are green; a re-run rewrites the whole file. The retro carries the outcome,
+  gate-stage timings, ticket-versus-spec-slice and delegate performance,
+  coordinator catches, and concrete Bench CLI/skill/process improvements.
+  It is pending capture, not durable roadmap state: status and roadmap count
+  regular `.md` files below `.bench/retros/`, roadmap context carries each
+  bounded body, and `/bench-what-next` dispositions the recommendations and
+  removes every drained file in its approved batch.
 - **Gate anchors** (map left these to spec time): new `require()` lines in
   `checkWorkflowAnchors`, one per load-bearing clause rather than one per
   file — `bench-implement-spec.md` charges `craft-tickets`, writes
@@ -354,6 +394,12 @@ Seam 2 — the conformance/canary seam (prose anchors and the sweep's bite):
 | 16 | every new anchor family bites | seam 2 | red at build: the canary sweep itself — each new fixture's EXPECT must match a real red; fixture *existence* is not gate-checkable, so the build lands each fixture in the same commit as its anchor and the reviewer verifies fixture count = new anchor-family count | the canary baseline rejects vacuous EXPECTs, so a rotted anchor fails here; the same-commit rule plus the count check covers the omission the sweep cannot see |
 | 17 | shaping keeps pre-spec working maps top-level; write-spec moves the closed map and map-owned assets into `specs/<slug>/decisions/`, updates references in the same green change, and final-check relies on whole-folder retirement | seam 2 | red at the later `pin-ticket-guidance-in-conformance` ticket: its anchor/canary family removes each lifecycle clause in turn; this slice is not TDD-able at the prose seam, so current evidence is the dogfood move and exact-reference sweep | the later canaries will catch a partial prose edit that teaches only the destination, omits the move/reference update, or reintroduces separate map cleanup; the current move proves the contract is usable without creating an unpaired anchor family |
 | 17 | `bench maps` ignores compiled spec-local provenance, while `bench spec retire` removes that provenance with the complete spec folder | seam 1 | already covered — the focused `TestAXIQuerySurfaceContracts/AXI_maps_unresolved-ticket_contract` fixture parks an open-looking map under a spec and retains only top-level rows; `TestRuntimeSpecRetireContracts/retire_deletes_pickup_and_complete_spec_folder` parks a compiled map and observes the folder absent | pins both runtime edges without teaching either command a second lifecycle rule: maps remains rooted at top-level `decisions/`, and retire remains whole-folder deletion |
+| 18 | `Facts` rejects a FIFO or other non-regular `specs/*/spec.md` before reading; handoff and roadmap context return instead of blocking | seam 1 | red observed at review: `Facts` calls `os.ReadFile` directly after the glob; new deadline-backed handoff and roadmap-context cases park a FIFO at the discovered path | drives both ambient consumers through the vulnerable shared enumeration rather than proving only `bench status`'s separate classifier |
+| 19 | live-spec path construction and ROADMAP token parsing have one owner in `internal/spec`; status and roadmap consume it | seam 1 | red at repair: focused unit cases call the new primitive before it exists, then the consumer diff removes every manual folder-path construction and independent token regex enumerated by review | a layout change should require one production edit; the enumeration catches a helper added without migrating its consumers |
+| 20 | retire explicitly removes pickup, `tickets/`, `spec.md`, then the folder; folder-output comments match the emitted path | seam 1 | red at repair: fault-seam tests interrupt after each named removal and assert the next re-run posture; comment sweep finds the stale flat example | `RemoveAll` cannot guarantee the promised recoverable boundary, while the fault rows prove each step and the comment check prevents the old output contract from surviving |
+| 21 | final-check writes or rewrites `.bench/retros/<spec-slug>.md` only after the landing gate is green and the file contains the required evidence sections | seam 2 | red at repair: workflow-guidance anchor/canary removes the after-green placement or one required evidence family | pins the timing and shape of the capture artifact without pretending model-authored retrospective quality is machine-checkable |
+| 22 | pending regular retro files appear in status/roadmap drain counts and bounded roadmap context; special or oversized entries fail closed | seam 1 | red at repair: runtime/AXI cases add absent, one-file, multiple-file, FIFO, and oversized `.bench/retros/` fixtures before the scanner exists | covers visibility, stable enumeration, bounded evidence, and the hostile discovered-path cases needed for an ambient command |
+| 22 | what-next dispositions every retro and removes the drained files in the approved batch | seam 2 | red at repair: workflow-guidance anchors plus a canary overlay omit the retro drain source or delete-all rule | prevents the new capture sink from becoming an append-only journal or bypassing the reviewer-approved drain |
 
 ### Edge inventory
 
@@ -392,6 +438,14 @@ classes; each lands as a row above or a **Won't handle** line here.
   README, and field guide.
 - Re-running spec authoring after compilation → story 17 reads the spec-local
   map and never recreates a top-level copy.
+- FIFO/device/socket/dangling link or oversized file below `.bench/retros/` →
+  story 22 classifies before reading and reports degraded evidence.
+- Multiple pending retros and a final-check re-run for one slug → stable path
+  order in roadmap context; final-check rewrites that slug's complete file and
+  leaves the others untouched.
+- Retro recommendation already covered by a roadmap row or deliberately
+  dismissed → story 22 requires an explicit disposition before removing the
+  source file.
 - **Won't handle:** malformed ticket files — nothing parses tickets in v1;
   quality is caught at breakdown approval (accepted v1 gap, map #5/#7).
 - **Won't handle:** ticket sizing/edge quality as a gate check — reviewed at
