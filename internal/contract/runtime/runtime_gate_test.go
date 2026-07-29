@@ -22,6 +22,9 @@ func TestRuntimeGateContracts(t *testing.T) {
 	contract.RunParallel(t, "bench gate missing-core-binary fail-safe contract", testRuntimeGateMissingCoreBinary)
 	contract.RunParallel(t, "bench gate verdict-record contract", testRuntimeGateVerdictRecord)
 	contract.RunParallel(t, "bench gate rebuilt self-host contract", testRuntimeGateRebuiltSelfHost)
+	contract.RunParallel(t, "bench gate help avoids the oracle contract", testRuntimeGateHelpAvoidsOracle)
+	contract.RunParallel(t, "bench gate misuse avoids the oracle contract", testRuntimeGateMisuseAvoidsOracle)
+	contract.RunParallel(t, "bench gate pin forwards arguments contract", testRuntimeGatePinForwardsArguments)
 	contract.RunParallel(t, "oracle-bound gate verdict contract", testRuntimeOracleBoundVerdict)
 	contract.RunParallel(t, "fail-closed gate verdict persistence contract", testRuntimePendingBeforeGate)
 	contract.RunParallel(t, "bench gate pin non-TTY refusal contract", testRuntimeGatePinNonTTYRefusal)
@@ -30,6 +33,67 @@ func TestRuntimeGateContracts(t *testing.T) {
 	contract.RunParallel(t, "stop hook missing-bench fail-open contract", testRuntimeStopHookMissingBenchFailOpen)
 	contract.RunParallel(t, "stop hook intent refresh contract", testRuntimeStopHookIntentRefresh)
 	contract.RunParallel(t, "bench gate owner and signal cleanup contract", testRuntimeGateOwnerAndSignalCleanup)
+}
+
+const gateUsageEvidence = "preserved evidence\n"
+
+func testRuntimeGateHelpAvoidsOracle(t *testing.T) {
+	f, cache := gateUsageFixture(t)
+	for _, args := range [][]string{{"--help"}, {"-h"}, {"help"}} {
+		probe := f.Bench(append([]string{"gate"}, args...)...)
+		probe.RequireExit(0)
+		probe.RequireContains(probe.Stdout, "usage: bench gate")
+		if probe.Stderr != "" {
+			t.Fatalf("bench gate %q wrote stderr:\n%s", args, probe.Stderr)
+		}
+		requireGateUntouched(t, f, cache, args)
+	}
+}
+
+func testRuntimeGateMisuseAvoidsOracle(t *testing.T) {
+	f, cache := gateUsageFixture(t)
+	for _, args := range [][]string{{"--unknown"}, {"one", "two"}} {
+		probe := f.Bench(append([]string{"gate"}, args...)...)
+		probe.RequireExit(2)
+		probe.RequireContains(probe.Stderr, "usage: bench gate")
+		if probe.Stdout != "" {
+			t.Fatalf("bench gate %q wrote stdout:\n%s", args, probe.Stdout)
+		}
+		requireGateUntouched(t, f, cache, args)
+	}
+}
+
+func gateUsageFixture(t *testing.T) (contract.Fixture, string) {
+	t.Helper()
+	f := contract.NewFixture(t)
+	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\nprintf 'ran\\n' > .git/gate-ran\n")
+	f.CommitAll("init")
+	cache := filepath.Join(gitDir(t, f), "bench-last-gate")
+	contract.WriteFileAbs(t, cache, gateUsageEvidence)
+	return f, cache
+}
+
+func requireGateUntouched(t *testing.T, f contract.Fixture, cache string, args []string) {
+	t.Helper()
+	if _, err := os.Stat(filepath.Join(gitDir(t, f), "gate-ran")); !os.IsNotExist(err) {
+		t.Fatalf("bench gate %q started the oracle: %v", args, err)
+	}
+	if got := contract.ReadFileAbs(t, cache); got != gateUsageEvidence {
+		t.Fatalf("bench gate %q replaced gate evidence: got %q, want %q", args, got, gateUsageEvidence)
+	}
+}
+
+func testRuntimeGatePinForwardsArguments(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\nprintf 'ran\\n' > .git/gate-ran\n")
+	f.CommitAll("init")
+
+	probe := f.Bench("gate", "pin", "unexpected")
+	probe.RequireExit(2)
+	probe.RequireContains(probe.Stderr, "usage: bench gate pin")
+	if _, err := os.Stat(filepath.Join(gitDir(t, f), "gate-ran")); !os.IsNotExist(err) {
+		t.Fatalf("bench gate pin argument started the oracle: %v", err)
+	}
 }
 
 func testRuntimeGateRebuiltSelfHost(t *testing.T) {

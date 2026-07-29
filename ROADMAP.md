@@ -997,20 +997,6 @@ what the retiring session does the moment the spec leaves the tree. Kit edit
 under the `craft-synthesis` discipline. Source: `IDEAS.md`, drained here and
 in a prior run.
 
-**FT163 (LOW) — `bench gate --help` runs the oracle; unknown gate args are
-silently absorbed.** `gate_command`'s catch-all routes any unrecognized
-argument into `run_gate` (`bin/bench.sh`), so a help probe starts a real
-concurrent gate. Reproduced through the accused command 2026-07-29:
-`bench gate --help` immediately emitted live phase output, and the killed run
-overwrote the current green verdict with an `interrupted-pending` record — so
-the trap not only spends a full gate's wall-clock, it destroys gate evidence
-when interrupted. Fix to the posture `eb51958` just gave `bench canary`: help
-flags print usage at exit 0, unknown flags or excess arguments refuse at exit
-2, both pinned in the runtime CLI contract; `bench gate pin` keeps its
-argument route. One independently-green ticket crossing no declared seam —
-light path. Source: `.bench/learnings.md`, verdicted here (defect entry,
-repro recorded in the drain).
-
 **FT164 (LOW) — `craft-tickets` refinements from the first dogfood.** Two
 rule-shaped journal entries from FT154's own build, one owner file. First,
 the wide-refactor branch: the first folder-layout ticket grouped a deep-unit
@@ -1460,12 +1446,9 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT163 via the light path: give `bench gate` the
-   help/refuse posture `bench canary` got in `eb51958`; its landing commit
-   also replaces the interrupted-pending verdict the repro left behind.
-2. `/bench-implement-spec` — FT116's race fix via the light path: stop
+1. `/bench-implement-spec` — FT116's race fix via the light path: stop
    `guards.Scan` leaking `enumerateGuards` past the timeout return; it blocks
    any green `bench prep-release`, and the `-race`-in-gate half is the
    `craft-gate` reviewer decision to take at the same visit.
-3. `/bench-implement-spec` — the small-fix batch: FT149, FT151, and FT139 as
+2. `/bench-implement-spec` — the small-fix batch: FT149, FT151, and FT139 as
    three independently-green light-path tickets.

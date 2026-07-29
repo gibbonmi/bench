@@ -22,11 +22,25 @@ export BENCH_HOME="${BENCH_HOME:-$HOME/.bench}"
 # record; a missing binary exits 127 via route_binary, which writes no forged verdict.
 run_gate() { route_porcelain gate-run; }
 
+gate_usage() { printf 'usage: bench gate [pin]\n'; }
+
 gate_command() {
-  case "${2:-}" in
-    "") run_gate ;;
-    pin) route_porcelain gate-pin "${@:3}" ;;
-    *) run_gate ;;
+  case "$#" in
+    1) run_gate ;;
+    2)
+      case "$2" in
+        pin) route_porcelain gate-pin ;;
+        --help|-h|help) gate_usage ;;
+        *) gate_usage >&2; return 2 ;;
+      esac
+      ;;
+    *)
+      if [[ "$2" == pin ]]; then
+        route_porcelain gate-pin "${@:3}"
+      fi
+      gate_usage >&2
+      return 2
+      ;;
   esac
 }
 

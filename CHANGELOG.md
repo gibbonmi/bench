@@ -58,6 +58,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- Made `bench gate` treat help and invalid arguments as usage without starting
+  the oracle or replacing gate evidence.
 - Included committed, staged, and tracked working-tree changes in branch-relative
   review diffs.
 - Removed landed non-default branches during worktree and session cleanup while
