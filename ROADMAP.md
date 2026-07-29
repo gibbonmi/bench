@@ -890,23 +890,6 @@ on any root carrying the file. Small enough for the light path; the care is in
 the check biting for the right reason, so it is `craft-gate` work rather than a
 one-line regex. Source: `.bench/learnings.md`, verdicted here.
 
-**FT149 (LOW, evidence supplied) — `block-dangerous-git` refuses a branch
-deletion by quoting an operation the caller did not run.** `branchVerdict`
-(`internal/gitguard/verdict.go:74-94`) matches `-d`, `-D`, and `--delete`, which
-is the right scope — any branch deletion outside the `worktree-*` carve-out is
-the reviewer's. But the label is looked up by the fixed key `branch-delete`,
-whose `denyTable` entry hardcodes the string `git branch -D`
-(`gitguard.go:32`), so a plain `git branch -d` is refused with a message naming
-the force form. The two are not the same operation: `-D` discards unmerged work,
-`-d` refuses to, so the refusal overstates what the session tried to do.
-Reproduced through the accused command 2026-07-27: `git branch -d` in the
-envelope returns `BLOCKED: \`git branch -D\``, exit 2. Same misattribution class
-as FT129, one layer cheaper — the block itself is correct, only its account of
-the block is wrong. Fix is to derive the label from the flag the classifier
-already matched, which means the `branch-delete` row's single label becomes a
-`-d`/`-D` pair; keep it single-sourced through `denyTable` rather than
-formatting the string at the call site. Source: `IDEAS.md`, drained here.
-
 **FT151 (LOW) — `bench learnings` fails closed on the state a successful drain
 produces.** A journal with no open entries is exactly what `/bench-what-next`
 leaves behind, and reading it exits 1 with
@@ -1424,5 +1407,5 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — the small-fix batch: FT149, FT151, and FT139 as
-   three independently-green light-path tickets.
+1. `/bench-implement-spec` — FT151, then FT139, as independently-green
+   light-path tickets.

@@ -37,6 +37,11 @@ func TestClassifyVerdicts(t *testing.T) {
 
 		// branch delete / force + worktree- carve-out
 		{"branch -D other", "git branch -D old-work", refYes, "git branch -D"},
+		{"branch -d other", "git branch -d old-work", refYes, "git branch -d"},
+		{"branch --delete other", "git branch --delete old-work", refYes, "git branch -d"},
+		{"branch mixed delete flags favors force", "git branch -d -D old-work", refYes, "git branch -D"},
+		{"branch safe delete with short force favors force", "git branch -d -f old-work", refYes, "git branch -D"},
+		{"branch safe delete with long force favors force", "git branch --delete --force old-work", refYes, "git branch -D"},
 		{"branch -f move", "git branch -f main HEAD~1", refYes, "git branch -f"},
 		{"branch -D delegate allowed", "git branch -D worktree-agent-x", refYes, ""},
 		{"branch -d two delegates allowed", "git branch -d worktree-a worktree-b", refYes, ""},

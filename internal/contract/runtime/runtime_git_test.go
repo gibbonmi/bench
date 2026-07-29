@@ -26,6 +26,9 @@ func testBlockDangerousGitMatrix(t *testing.T) {
 			if c.block {
 				probe.RequireExit(2)
 				probe.RequireContains(probe.Stdout+probe.Stderr, "BLOCKED:")
+				if c.label != "" {
+					probe.RequireContains(probe.Stdout+probe.Stderr, c.label)
+				}
 				return
 			}
 			probe.RequireExit(0)
@@ -37,6 +40,7 @@ type runtimeGitCase struct {
 	name        string
 	command     string
 	block       bool
+	label       string
 	outsideRepo bool
 }
 
@@ -46,7 +50,10 @@ func runtimeGitMatrix() []runtimeGitCase {
 		{name: "blocks git -C push", command: "git -C . push", block: true},
 		{name: "blocks git -C reset hard", command: "git -C /tmp reset --hard", block: true},
 		{name: "blocks forced clean", command: "git -C . clean -fd", block: true},
-		{name: "blocks branch delete", command: "git branch -D old-work", block: true},
+		{name: "blocks branch safe delete", command: "git branch -d old-work", block: true, label: "git branch -d"},
+		{name: "blocks branch long safe delete", command: "git branch --delete old-work", block: true, label: "git branch -d"},
+		{name: "blocks branch force delete", command: "git branch -D old-work", block: true, label: "git branch -D"},
+		{name: "blocks branch safe delete with force", command: "git branch -d -f old-work", block: true, label: "git branch -D"},
 		{name: "blocks rebase", command: "git rebase main", block: true},
 		{name: "blocks checkout explicit pathspec", command: "git checkout -- README.md", block: true},
 		{name: "blocks checkout pathspec-from-file equals", command: "git checkout --pathspec-from-file=paths.txt", block: true},

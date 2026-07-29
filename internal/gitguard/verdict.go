@@ -23,11 +23,8 @@ func classify(sub string, args []string, viaXargs bool, chk Checker) string {
 			return denyLabels["clean"]
 		}
 	case "branch":
-		if branchVerdict(args) {
-			if hasAny(args, "-f", "--force") && !hasAny(args, "-D", "-d", "--delete") {
-				return denyLabels["branch-force"]
-			}
-			return denyLabels["branch-delete"]
+		if key := branchVerdict(args); key != "" {
+			return denyLabels[key]
 		}
 	case "checkout":
 		if checkoutVerdict(args, viaXargs, chk) {
@@ -71,26 +68,33 @@ func classify(sub string, args []string, viaXargs bool, chk Checker) string {
 	return ""
 }
 
-func branchVerdict(args []string) bool {
+func branchVerdict(args []string) string {
 	if !hasAny(args, "-D", "-d", "--delete", "-f", "--force") {
-		return false
+		return ""
 	}
 	// Force-move (-f/--force without a delete flag) always blocks.
 	if hasAny(args, "-f", "--force") && !hasAny(args, "-D", "-d", "--delete") {
-		return true
+		return "branch-force"
 	}
 	// Carve-out: deleting harness-delegate branches (worktree-*) is cleanup of
 	// agent-created scratch, not reviewer history.
 	names := freeArgs(args)
 	if len(names) == 0 {
-		return true
+		return branchDeleteKey(args)
 	}
 	for _, name := range names {
 		if !strings.HasPrefix(name, "worktree-") {
-			return true
+			return branchDeleteKey(args)
 		}
 	}
-	return false
+	return ""
+}
+
+func branchDeleteKey(args []string) string {
+	if hasAny(args, "-D", "-f", "--force") {
+		return "branch-delete-force"
+	}
+	return "branch-delete-safe"
 }
 
 func checkoutVerdict(args []string, viaXargs bool, chk Checker) bool {
