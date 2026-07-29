@@ -229,6 +229,26 @@ func Execute(ctx context.Context, root string, stdout, stderr io.Writer) Result 
 	return executeWithEngine(ctx, root, stdout, stderr, productionGateEngine{})
 }
 
+// ExecuteReusingFreshGreen answers for root's tree like Execute, but a verdict already
+// reusable for this subject answers before the execution lock is touched. A gate run in
+// progress elsewhere therefore neither refuses the caller nor demotes the green it would
+// have reused, which is what makes the gated commit safe to run beside one. Everything else
+// falls through to Execute and pays a real run under the lock.
+func ExecuteReusingFreshGreen(ctx context.Context, root string, stdout, stderr io.Writer) Result {
+	if reuse := Inspect(root); reuse.ReusableGreen {
+		return reusedGreenResult(stdout, reuse)
+	}
+	return Execute(ctx, root, stdout, stderr)
+}
+
+// reusedGreenResult is the one place a reused verdict is announced and shaped into a result.
+// The announcement is not optional: a skipped run that says nothing reads as a gate that
+// never ran, and the operator has no way to tell the difference.
+func reusedGreenResult(stdout io.Writer, reuse Inspection) Result {
+	fmt.Fprintln(stdout, "gate: green (fresh verdict reused for this tree)")
+	return Result{Inspection: reuse}
+}
+
 // runMode says whether a fresh green already recorded for this subject may answer the
 // execution. `bench gate --fresh` picks forceRun: it is the operator's only escape from a
 // green the closure still calls current but the oracle would no longer stand behind.
@@ -293,12 +313,11 @@ func executeWithEngineAfterAcquire(ctx context.Context, root string, stdout, std
 	}
 	// A reusable green is answered from the record without touching it: re-recording the
 	// verdict would push RecordedAt forward on every read and make the freshness window
-	// unbounded. The check sits here so the verdict it reuses belongs to the subject the
-	// held lock froze, and so nothing has been written yet when it returns.
+	// unbounded. The check sits ahead of the pending replace so a reuse returns with nothing
+	// written — no pending record to leave behind, no verdict to restore.
 	if mode == reuseFreshGreen {
 		if reuse := inspectAt(root, engine.Now()); reuse.ReusableGreen {
-			fmt.Fprintln(stdout, "gate: green (fresh verdict reused for this tree)")
-			return Result{Inspection: reuse}
+			return reusedGreenResult(stdout, reuse)
 		}
 	}
 	pending := interruptedRecord(plan, engine.Now())

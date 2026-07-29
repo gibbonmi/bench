@@ -2,24 +2,24 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `0721d9a`, 1 dirty path, 10 unpushed commits
+Branch: `main` — HEAD `c481e2b`, clean tree, 20 unpushed commits
 Spec: `specs/ft91-gate-fastpath/spec.md` (Status: staged)
-Gate: green at `543ca92` — stale, work tree `fe3ed27`
+Gate: green at `fcafeb2` — stale, work tree `8bbfbc5`
 
 ## State
 
-- **`--full` run phase: implement (in progress).** Tickets derived under
-  `specs/ft91-gate-fastpath/tickets/` — ten tickets, two chains: canary lever
-  (guard-marker-reader → carry-per-test-scoping → migrate-fixture-test-bindings
-  → enforce-test-bindings) and gate lever (extend-freshness-close-tools →
-  reuse-gate-verdict → plumb-gate-fresh-flag → collapse-commit-reuse-check),
-  then revise-adr-0002 and record-fastpath-evidence.
-- **No ticket has landed yet.** Frontier: guard-marker-reader and
-  extend-freshness-close-tools, dispatched to worktree-isolated write
-  delegates at the mid binding.
-- **Closed decisions stay closed:** lever 3 (`-count=1` removal) refused;
-  scoped baselines rejected (wide-baseline principle); `bench commit` gains no
-  `--fresh`; `shellcheck` stays undeclared in the closure.
+- **`--full` run phase: implement complete; review not yet run.** All ten
+  tickets landed as gate-green commits from the staging commit forward; every
+  TDD-able coverage row went red→green; measurements recorded in the spec's
+  map (canary 25.2 s — stop rule met; forced full gate 128.0 s; unchanged-tree
+  reuse 0.57 s).
+- **Reviewer items pending:** escalation/falsification questions for the
+  review pass; the load-coupled `TestExecuteDeadlineRecordsDistinctTimeout`
+  timing flake (attributed in `.bench/learnings.md`, fix is a gate-test edit
+  and therefore a reviewer call); the ADR reopen-trigger wording (commit-shaped
+  vs work-shaped); the npm closure-hash cost (drop-npm lever if it ever bites).
+- **Closed decisions stay closed:** lever 3 refused; scoped baselines
+  rejected; `bench commit` gains no `--fresh`; `shellcheck` undeclared.
 
 ## Next command
 

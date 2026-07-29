@@ -3,5 +3,5 @@
   "closure": "local",
   "environment": ["BENCH_HOME", "HOME"],
   "paths": ["bin/bench.sh", "package.json"],
-  "tools": ["bash", "basename", "dirname", "git", "go", "node", "npm", "readlink", "uname"]
+  "tools": ["bash", "basename", "dirname", "git", "go", "node", "readlink", "uname"]
 }

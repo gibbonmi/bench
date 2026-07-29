@@ -82,12 +82,17 @@ unchanged-tree path beats its expected ~2–5 s by an order of magnitude: it
 prints `gate: green (fresh verdict reused for this tree)` and does no phase
 work.
 
-**The toolchain closure is not a material cost.** With `go`, `node`, and
-`npm` declared, every subject hash now walks each binary and its shebang
-chain — `npm`'s chain, which re-hashes `node`, is the worst component. The
-0.57 s reuse timing covers that whole hash-and-look-up path, so on warm
-caches the added hashing is an observed non-issue at this measurement. A
-cold cache or a slower filesystem is untested.
+**The toolchain closure declares `go` and `node`, not `npm`.** Every subject
+hash walks each declared binary and its shebang chain, and the 0.57 s reuse
+timing covers that whole hash-and-look-up path, so on warm caches the hashing
+is an observed non-issue at this measurement. A cold cache or a slower
+filesystem is untested. `npm` is deliberately outside the closure on the
+reviewer's ruling, for two reasons: a host with node but no npm (the Debian
+split packaging) would hold a permanently open subject, which disables reuse
+and locks `bench prep-release`'s dev-green entry check with no operator
+escape; and npm's shebang chain re-hashes `node`, doubling the closure's cost
+for a signal already carried. Nothing is lost, because an npm upgrade ships
+with its node — a toolchain upgrade still changes the subject through `node`.
 
 ## What already shipped (do not re-litigate)
 
@@ -102,8 +107,8 @@ cold cache or a slower filesystem is untested.
   (ADR 0002 posture 5).
 - Per-test canary bites (lever 1): canary ~152 s → 25 s.
 - Gate-level verdict reuse at a 60 min freshness window, over a subject
-  closure that now declares `go`, `node`, and `npm` (lever 2): a re-judged
-  unchanged tree → 0.6 s.
+  closure that now declares `go` and `node` (lever 2): a re-judged unchanged
+  tree → 0.6 s.
 
 Closed rulings that stay closed: diff-scoped gating is unsound; no check is
 weakened or dropped for wall-clock; canary skip-on-"inputs unchanged" key
@@ -188,10 +193,11 @@ refused). Extending it to `bench gate` widens *where* the claim is made, not
   residual ADR 0002 posture 5 records: declaring it would disable reuse on
   every host that legitimately lacks it. Clock- and network-dependence stay
   outside any closure too; they are why expiry does not go to infinity.
-- The `go`, `node`, and `npm` binaries *are* declared, so a toolchain
-  upgrade changes the subject. The collector hashes each binary and its
-  shebang chain on every subject build; the post-build measurement shows
-  that cost is not material on warm caches.
+- The `go` and `node` binaries *are* declared, so a toolchain upgrade changes
+  the subject. The collector hashes each binary and its shebang chain on every
+  subject build; the post-build measurement shows that cost is not material on
+  warm caches. `npm` is not declared — see the toolchain-closure ruling above —
+  and needs none of its own, since it upgrades with the node it ships beside.
 
 **Reviewer rulings:** gate-level reuse granted, and the freshness window set
 to 60 min once the tools closure landed. That covers the real

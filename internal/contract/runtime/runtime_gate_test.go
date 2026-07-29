@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -132,6 +133,7 @@ func testRuntimeGateRebuiltSelfHost(t *testing.T) {
 	wrapper := filepath.Join(f.Root, "bin", "bench.sh")
 	copyRuntimeFile(t, filepath.Join(root, "bin", "bench.sh"), wrapper, 0o755)
 	copyRuntimeFile(t, filepath.Join(root, ".bench", "gate-inputs.json"), filepath.Join(f.Root, ".bench", "gate-inputs.json"), 0o644)
+	requireDeclaredToolchain(t, f)
 	copyRuntimeFile(t, filepath.Join(root, "package.json"), filepath.Join(f.Root, "package.json"), 0o644)
 	f.WriteFile(".gitignore", ".bench-contract-env/\n")
 	f.WriteExecutable(".bench/gate.sh", `#!/usr/bin/env bash
@@ -160,6 +162,26 @@ exec "$root/bin/bench.sh" version
 	f.RunEnv(map[string]string{"BENCH_HOME": benchHome, "HOME": home}, "bash", wrapper, "gate").RequireExit(0)
 	if _, err := os.Stat(filepath.Join(home, ".bench")); !os.IsNotExist(err) {
 		t.Fatalf("default HOME cache exists after cache-only gate run: %v", err)
+	}
+}
+
+// requireDeclaredToolchain grades the closure this fixture copied out of the repo under
+// test: `go` and `node` are declared so that upgrading either one changes the oracle subject
+// instead of hiding behind a reused green. Dropping one from the production
+// `.bench/gate-inputs.json` reds here, rather than going unnoticed until a verdict recorded
+// against the old toolchain authorizes a commit.
+func requireDeclaredToolchain(t *testing.T, f contract.Fixture) {
+	t.Helper()
+	var declared struct {
+		Tools []string `json:"tools"`
+	}
+	if err := json.Unmarshal([]byte(f.ReadFile(".bench/gate-inputs.json")), &declared); err != nil {
+		t.Fatalf("decode copied gate manifest: %v", err)
+	}
+	for _, tool := range []string{"go", "node"} {
+		if !slices.Contains(declared.Tools, tool) {
+			t.Fatalf("copied gate manifest declares tools %v, missing %q — a %s upgrade would not change the subject", declared.Tools, tool, tool)
+		}
 	}
 }
 

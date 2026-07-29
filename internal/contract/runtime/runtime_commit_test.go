@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -29,11 +30,6 @@ func commitFixture(t *testing.T) contract.Fixture {
 	return f
 }
 
-func gateRuns(t *testing.T, f contract.Fixture) int {
-	t.Helper()
-	return len(contract.NonEmptyLines(contract.ReadFileAbs(t, filepath.Join(f.Root, ".git", "gate-runs"))))
-}
-
 func headSha(f contract.Fixture) string {
 	return strings.TrimSpace(f.Git("rev-parse", "HEAD").Stdout)
 }
@@ -47,6 +43,7 @@ func TestRuntimeCommitContracts(t *testing.T) {
 	t.Parallel()
 	contract.RunParallel(t, "green gate commits named path", testCommitGreenCommits)
 	contract.RunParallel(t, "fresh green verdict is reused, gate not re-run", testCommitFreshVerdictReused)
+	contract.RunParallel(t, "fresh green is reused while another run holds the gate lock", testCommitReusesFreshVerdictUnderHeldLock)
 	contract.RunParallel(t, "stale verdict re-runs the gate", testCommitStaleVerdictRerunsGate)
 	contract.RunParallel(t, "red gate refuses commit", testCommitRedRefuses)
 	contract.RunParallel(t, "unexplained file blocks before gate", testCommitUnexplainedBlocks)
@@ -100,11 +97,48 @@ func testCommitFreshVerdictReused(t *testing.T) {
 	if headSha(f) == before {
 		t.Fatal("HEAD did not advance on a green gate")
 	}
-	contract.RequireIntEqual(t, gateRuns(t, f), 1, "commit re-ran the gate despite a fresh green verdict for the identical tree")
+	contract.RequireIntEqual(t, gateRunTally(t, f), 1, "commit re-ran the gate despite a fresh green verdict for the identical tree")
 	// The reuse is silent to the operator unless the gate says so: a skipped run that
 	// reports nothing reads as a gate that never ran. The line comes from the gate's own
 	// emitter, the single home of verdict-reuse policy.
 	contract.RequireContains(t, res.Stdout, "gate: green (fresh verdict reused for this tree)")
+}
+
+// testCommitReusesFreshVerdictUnderHeldLock pins reuse against contention, the state a
+// concurrent gate run leaves behind: the verdict for this exact tree is already green, so a
+// commit must be answered from it without queueing for the execution lock. A reuse check
+// that sits under the lock instead refuses the commit and — worse — demotes the green it
+// could have reused to `pending` on the way out, which is why the record's bytes are graded
+// beside the exit code.
+func testCommitReusesFreshVerdictUnderHeldLock(t *testing.T) {
+	f := commitFixture(t)
+	f.WriteFile("work.txt", "changed\n")
+	f.Bench("gate").RequireExit(0)
+	cache := filepath.Join(gitDir(t, f), "bench-last-gate")
+	seeded := contract.ReadFileAbs(t, cache)
+	contract.RequireContains(t, seeded, `"state":"ready"`)
+	contract.RequireContains(t, seeded, `"status":"green"`)
+	before := headSha(f)
+
+	held, err := os.OpenFile(filepath.Join(gitDir(t, f), "bench-gate.lock"), os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer held.Close()
+	acquireTestGateLock(t, held)
+	defer releaseTestGateLock(held)
+
+	res := f.Bench("commit", "-m", "do work", "work.txt")
+	res.RequireExit(0)
+
+	if headSha(f) == before {
+		t.Fatal("HEAD did not advance on a reusable green verdict")
+	}
+	contract.RequireContains(t, res.Stdout, "gate: green (fresh verdict reused for this tree)")
+	contract.RequireIntEqual(t, gateRunTally(t, f), 1, "commit reached the oracle despite a reusable green verdict")
+	if got := contract.ReadFileAbs(t, cache); got != seeded {
+		t.Fatalf("contended commit rewrote the verdict record:\nseeded %q\ngot    %q", seeded, got)
+	}
 }
 
 func testCommitStaleVerdictRerunsGate(t *testing.T) {
@@ -120,7 +154,7 @@ func testCommitStaleVerdictRerunsGate(t *testing.T) {
 	if headSha(f) == before {
 		t.Fatal("HEAD did not advance on a green gate")
 	}
-	contract.RequireIntEqual(t, gateRuns(t, f), 2, "commit trusted a verdict recorded for a different tree")
+	contract.RequireIntEqual(t, gateRunTally(t, f), 2, "commit trusted a verdict recorded for a different tree")
 }
 
 func testCommitGreenCommits(t *testing.T) {
