@@ -75,7 +75,7 @@ func TestRunCanaryDispatchesToCommand(t *testing.T) {
 		t.Fatalf("run canary usage exit = %d, want 2", rc)
 	}
 	got := readFile(t, stderr)
-	if !strings.Contains(got, "usage: bench canary [root]") {
+	if !strings.Contains(got, "usage: bench canary") {
 		t.Fatalf("canary did not dispatch to command usage, stderr:\n%s", got)
 	}
 }

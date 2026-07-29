@@ -343,3 +343,42 @@ func envHasPrefix(env []string, prefix string) bool {
 	}
 	return false
 }
+
+func TestRunUsage(t *testing.T) {
+	cases := []struct {
+		name     string
+		args     []string
+		wantCode int
+		// wantOn is the stream the line must land on: stdout for help, stderr for misuse.
+		helpOnStdout bool
+	}{
+		{name: "help flag", args: []string{"--help"}, wantCode: 0, helpOnStdout: true},
+		{name: "short help", args: []string{"-h"}, wantCode: 0, helpOnStdout: true},
+		{name: "bare help", args: []string{"help"}, wantCode: 0, helpOnStdout: true},
+		{name: "unknown flag", args: []string{"--nope"}, wantCode: 2},
+		{name: "excess arguments", args: []string{"a", "b"}, wantCode: 2},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			code := Run(tc.args, &stdout, &stderr)
+			if code != tc.wantCode {
+				t.Fatalf("Run(%q) = %d, want %d; stderr:\n%s", tc.args, code, tc.wantCode, stderr.String())
+			}
+			got, other := stderr.String(), stdout.String()
+			if tc.helpOnStdout {
+				got, other = stdout.String(), stderr.String()
+			}
+			wantLine := "usage: bench canary"
+			if tc.helpOnStdout {
+				wantLine = "usage: bench canary [root]"
+			}
+			if !strings.Contains(got, wantLine) {
+				t.Fatalf("Run(%q) output = %q, want it to contain %q", tc.args, got, wantLine)
+			}
+			if strings.Contains(other, "canary harness absent") || strings.Contains(other, "no fixtures") {
+				t.Fatalf("Run(%q) reached the sweep; other stream = %q", tc.args, other)
+			}
+		})
+	}
+}

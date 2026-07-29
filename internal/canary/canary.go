@@ -21,6 +21,7 @@ import (
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
+	"github.com/gibbonmi/bench/internal/usage"
 )
 
 const absentHarnessMessage = "canary harness absent — tests/canary/ has no fixtures; the gate cannot prove its own checks bite"
@@ -213,15 +214,28 @@ type RunResult struct {
 // Runner runs one call of any kind.
 type Runner func(RunCall) RunResult
 
+// grammar is the declared argument shape usage.Parse enforces, so help flags and
+// unknown flags answer as invocations instead of resolving as fixture roots.
+var grammar = usage.Grammar{
+	Cmd:     "bench canary",
+	Help:    "usage: bench canary [root]",
+	MaxArgs: 1,
+}
+
 // Run is the `bench canary [root]` command.
 func Run(args []string, stdout, stderr io.Writer) int {
-	if len(args) > 1 {
-		fmt.Fprintln(stderr, "usage: bench canary [root]")
-		return 2
+	parsed, line, code := usage.Parse(grammar, args)
+	if line != "" {
+		if code == 0 {
+			fmt.Fprintln(stdout, line)
+		} else {
+			fmt.Fprintln(stderr, line)
+		}
+		return code
 	}
 	root := ""
-	if len(args) == 1 && args[0] != "" {
-		root = args[0]
+	if len(parsed.Positionals) == 1 {
+		root = parsed.Positionals[0]
 	} else {
 		var err error
 		root, err = git.Root()
