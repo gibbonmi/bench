@@ -99,10 +99,11 @@ Run it on the branch diff against its true base, on three axes that stay separat
    `reviews/<spec-slug>.md` in the same green fix commit that closes them, so
    resolved findings can never resurface as false pickup work.
 
-6. **Bound the terminal repair pass.** Integrate the findings accepted for this
-   round, run focused checks for the changed behavior, then run one final gate and
-   stop. Open another semantic review round only when that gate fails or the
-   reviewer requests one.
+6. **Hand off, don't repair.** This phase makes no fixes and runs no gate:
+   findings that need work go to `/bench-implement-spec`, which owns the fix
+   pass, the pickup file's resolution, and the terminal repair-pass bound; a
+   clean or risk-accepted review goes to `/bench-final-check`, which owns the
+   oracle run.
 
 ## Where it sits
 

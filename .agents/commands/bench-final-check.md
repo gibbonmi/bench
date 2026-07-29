@@ -93,23 +93,31 @@ opinion about whether the work is good, it reports what the gate says.
 
 ## Run it
 
+When there is work to land, the oracle run and the landing are one command:
+
 ```sh
-bench gate
+bench commit -m "<msg>" <path>...
 ```
 
-`bench gate` runs the project's gate: an executable `.bench/gate.sh` when present,
-else the `$BENCH_GATE` command string, else stack auto-detect (typecheck → test →
+`bench commit` runs the gate itself and commits only on green — a red run
+reports its own first failing phase and refuses. Don't run `bench gate` first;
+the commit is the gate run (a fresh green verdict for the identical tree is
+reused, never re-paid). Standalone `bench gate` has two jobs here: the honest
+no-op (nothing left to commit, the verdict still gets reported) and diagnosing
+a red run.
+
+The gate itself is an executable `.bench/gate.sh` when present, else the
+`$BENCH_GATE` command string, else stack auto-detect (typecheck → test →
 lint). `projects/<name>.md` documents what the gate covers — it never selects the
 gate; to change what runs, change `.bench/gate.sh`.
 
 ## Report
 
-- **Green:** state it plainly, and add one line noting that
-  ship-tier verification has not run — dev green claims the kit works from the
-  tree; the release-evidence checks run once per release under
-  `bench prep-release`. A statement, not an approval prompt. Then land the
-  verified work with `bench commit -m "<msg>"` per the exit handoff, and hand
-  back for me to merge.
+- **Green:** the work is committed; state it plainly, and add one line noting
+  that ship-tier verification has not run — dev green claims the kit works from
+  the tree; the release-evidence checks run once per release under
+  `bench prep-release`. A statement, not an approval prompt. Hand back for me
+  to merge.
 - **Red:** report each failing check in the order it fails, with the smallest
   reproduction. Do not propose weakening the check. Diagnose the cause, propose a
   fix at the seam, and — if I approve — fix it and re-run the gate. A fix is only
@@ -121,7 +129,6 @@ when I approve one, the `craft-gate` skill governs how it's made.
 
 ## Findings that the gate can't see
 
-The gate catches regressions and conformance, not whether the design is right. If
-while verifying you notice a real design problem the tests pass through — a leaky
-seam, a story the spec missed, a shortcut that will cost later — name it
-separately as a finding. Don't fold it silently into a fix.
+If verifying surfaces a design problem the tests pass through, name it as a
+finding for `/bench-review-implementation` — that phase owns semantic review;
+don't fold it silently into a fix.

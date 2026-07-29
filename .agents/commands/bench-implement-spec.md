@@ -165,6 +165,10 @@ defined route — never a silent grind, never an abandoned worktree:
   built the wrong way, wrong thing built cleanly, or breaking inputs nothing
   exercises. Read its findings and route concrete repairs through a repair
   ticket with its own focused checks and one atomic `bench commit`.
+- **The terminal repair-pass bound.** A repair pass integrates the findings
+  accepted for its round and stops at its repair ticket's green landing;
+  another semantic review round opens only when that gate fails or the
+  reviewer requests one.
 - Then summarize what changed in plain language and hand back. I own the merge;
   propose it, don't perform it.
 
@@ -203,9 +207,9 @@ coverage — are fixed and re-gated without stopping; contestable design and
 judgment findings are flagged in the exit report for reviewer veto, not
 applied. Re-gating follows the repair-ticket cadence: focused checks, then
 `bench commit` as the only per-ticket full-gate boundary. The repair pass is
-bounded by `/bench-review-implementation`'s
-terminal repair-pass rule and routed through `craft-delegate`'s repair
-allowance; this mode adds no second version of either.
+bounded by this command's terminal repair-pass bound and routed through
+`craft-delegate`'s repair allowance; this mode adds no second version of
+either.
 
 **The scope fence.** The run implements the spec's stories and nothing else:
 work noticed outside them — an adjacent refactor, an unrelated improvement, a

@@ -22,6 +22,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Made semantic review hand off instead of repairing: the terminal repair-pass
+  bound now lives with implementation, and final check lands through
+  `bench commit` as its one oracle run instead of a standalone gate first.
 - Made implementation start from independently-green ticket files, with one
   fresh write-delegate charge and one atomic full-gate landing per ticket.
 - Made final check capture a spec-backed implementation retro after green

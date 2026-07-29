@@ -320,8 +320,8 @@ func checkWorkflowAnchors(root string) []string {
 		".agents/commands/bench-write-spec.md does not remove the spec's ROADMAP.md row in the promote-then-delete commit (row presence is status)")
 	requireCollapsed(".agents/commands/bench-shape-idea.md", "never pause for permission or a re-prompt",
 		".agents/commands/bench-shape-idea.md dropped the resume-mode grill continuation rule; a running grill carries into newly-unblocked tickets without pausing for a re-prompt")
-	requireCollapsed(".agents/commands/bench-review-implementation.md", "Integrate the findings accepted for this round, run focused checks for the changed behavior, then run one final gate and stop. Open another semantic review round only when that gate fails or the reviewer requests one.",
-		".agents/commands/bench-review-implementation.md dropped the terminal repair-pass bound")
+	requireCollapsed(".agents/commands/bench-review-implementation.md", "This phase makes no fixes and runs no gate: findings that need work go to `/bench-implement-spec`, which owns the fix pass, the pickup file's resolution, and the terminal repair-pass bound; a clean or risk-accepted review goes to `/bench-final-check`, which owns the oracle run.",
+		".agents/commands/bench-review-implementation.md dropped the hand-off-don't-repair rule; the fix pass belongs to implement-spec and the oracle run to final-check")
 
 	// Ticket guidance is convention-only, so these anchors pin the load-bearing
 	// workflow clauses without inventing a parser for ticket files.
@@ -384,6 +384,8 @@ func checkWorkflowAnchors(root string) []string {
 		".agents/commands/bench-implement-spec.md dropped the ticket one-full-gate green cadence")
 	requireCollapsed(".agents/commands/bench-implement-spec.md", "/bench-final-check` still runs the final full gate over the composed feature",
 		".agents/commands/bench-implement-spec.md dropped the composed-feature final gate")
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "A repair pass integrates the findings accepted for its round and stops at its repair ticket's green landing; another semantic review round opens only when that gate fails or the reviewer requests one.",
+		".agents/commands/bench-implement-spec.md dropped the terminal repair-pass bound")
 
 	requireCollapsed(".agents/commands/bench-write-spec.md", "Top-level `decisions/` holds pre-spec working maps",
 		".agents/commands/bench-write-spec.md dropped the top-level pre-spec working-map posture")
@@ -468,7 +470,7 @@ func checkWorkflowAnchors(root string) []string {
 			"dropped the stop-at-the-boundary rule for an unavailable or empty-handed review delegate"},
 		{"Concrete defects — bugs, spec misses, missing coverage — are fixed and re-gated without stopping; contestable design and judgment findings are flagged in the exit report for reviewer veto, not applied",
 			"dropped a finding-disposition half (fix-and-re-gate concrete, or flag-don't-apply judgment)"},
-		{"bounded by `/bench-review-implementation`'s terminal repair-pass rule and routed through `craft-delegate`'s repair allowance",
+		{"bounded by this command's terminal repair-pass bound and routed through `craft-delegate`'s repair allowance",
 			"dropped the repair-bound pointers; this mode adds no second version of either rule"},
 		{"At every phase boundary the run writes the phase reached into `session-handoff.md`'s State section, then refreshes the pin block with `bench handoff --next <command>`",
 			"dropped the phase-boundary State write and pin-block refresh"},
