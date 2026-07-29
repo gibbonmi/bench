@@ -24,6 +24,24 @@ func TestAXIRoadmapContextContracts(t *testing.T) {
 	contract.RunParallel(t, "AXI roadmap context unborn-HEAD contract failed", testRoadmapContextUnbornHead)
 }
 
+func TestAXIRoadmapContextRetainsSpecialSpecEvidence(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	f := contract.NewFixture(t)
+	f.Git("branch", "-M", "main")
+	f.WriteFile("README.md", "# fixture\n")
+	f.CommitAll("init")
+	f.WriteFifo("specs/hang/spec.md")
+
+	out := f.BenchDeadlined("roadmap", "--context")
+	if out.TimedOut {
+		t.Fatal("bench roadmap --context blocked on a FIFO at specs/hang/spec.md, so its live-spec facts opened the path before classifying it")
+	}
+	out.RequireExit(0)
+	out.RequireContains(out.Stdout, "specs[1]{slug,status,roadmap_id}:")
+	out.RequireContains(out.Stdout, "hang,\"\",\"\"")
+}
+
 func contextFixture(t *testing.T) contract.Fixture {
 	t.Helper()
 	f := contract.NewFixture(t)

@@ -14,7 +14,6 @@ import (
 )
 
 var roadmapStartRe = regexp.MustCompile(`^\*\*([A-Za-z]+[0-9]+)(.*)$`)
-var specPathRe = regexp.MustCompile(`specs/([A-Za-z0-9_-]+)/spec\.md`)
 var commandRe = regexp.MustCompile(`/bench-[A-Za-z0-9-]+`)
 var ideaRe = regexp.MustCompile(`^- ([0-9]{4}-[0-9]{2}-[0-9]{2})  (.*)$`)
 
@@ -59,7 +58,7 @@ func ParseDocument(content []byte, statuses map[string]string, full bool) (Docum
 		body, bodyBytes, truncated := limited(bodyRaw, full)
 		r := RoadmapRow{ID: m[1], Title: title, Body: body, BodyBytes: bodyBytes, Truncated: truncated}
 		joined := strings.Join(lines[start:i], "\n")
-		if slugs := specSlugsFromText([]byte(joined)); len(slugs) > 0 {
+		if slugs := spec.LiveSpecSlugs([]byte(joined)); len(slugs) > 0 {
 			r.Spec = slugs[0]
 			r.SpecStatus = statuses[slugs[0]]
 		}
@@ -133,35 +132,6 @@ func ParseDocument(content []byte, statuses map[string]string, full bool) (Docum
 // --context snapshot (BuildContext) agree on exactly which parser failure means
 // "unsupported-schema" rather than "malformed".
 const noRoadmapRowsReason = "no roadmap rows recognized"
-
-// SpecSlugs returns roadmap-linked spec slugs through the canonical document parser.
-func SpecSlugs(content []byte) []string {
-	return specSlugsFromText(content)
-}
-
-func specSlugsFromText(content []byte) []string {
-	seen := map[string]bool{}
-	var out []string
-	inFence := false
-	for _, line := range strings.Split(string(content), "\n") {
-		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "```") {
-			inFence = !inFence
-			continue
-		}
-		if inFence {
-			continue
-		}
-		for _, m := range specPathRe.FindAllStringSubmatch(line, -1) {
-			slug := m[1]
-			if !seen[slug] {
-				seen[slug] = true
-				out = append(out, slug)
-			}
-		}
-	}
-	return out
-}
 
 func parseIdeas(content []byte, full bool) ([]IdeaFact, []ParseFailure, []string) {
 	var facts []IdeaFact

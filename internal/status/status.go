@@ -595,7 +595,7 @@ func orphanedPickupCount(root string) int {
 			continue
 		}
 		slug := strings.TrimSuffix(e.Name(), ".md")
-		folder := filepath.Join(root, "specs", slug, "spec.md")
+		folder := filepath.Join(root, spec.LiveSpecPath(slug))
 		if info, err := os.Stat(folder); err == nil && !info.IsDir() {
 			continue // paired: its folder spec is still present
 		}
@@ -604,11 +604,6 @@ func orphanedPickupCount(root string) int {
 	return n
 }
 
-// roadmapReconcileRe matches a live `specs/<slug>/spec.md` token
-// in a ROADMAP.md row, with a
-// kebab/alnum slug. It matches the bare path inside backticks/bold since the markdown decoration
-// isn't part of the token, and the char class excludes `<>` so a literal `specs/<slug>/spec.md`
-// placeholder in the header prose can't false-fire.
 // roadmapReconcileCounts scans ROADMAP.md for live spec-path tokens and classifies each
 // distinct path against the tree: a missing file is a dangling row (the spec retired but its
 // roadmap row survived); a present file that spec.AwaitsRetirement marks is a merged row (the
@@ -616,7 +611,7 @@ func orphanedPickupCount(root string) int {
 // state and counts nothing. Absent or empty ROADMAP.md → 0, 0, bounds.StateParsed, the ordinary
 // quiet-roadmap posture; a ROADMAP.md whose read failed reports that state instead, so
 // appendRoadmapReconcile renders the failed read as unknown rather than a fabricated clean
-// board. Each named spec goes through the classifier too, so a FIFO at either layout cannot
+// board. Each named live spec goes through the classifier too, so a FIFO cannot
 // block the board; a spec path that yields no content at all is the dangling case, whether
 // nothing is there or what is there could not be read. The merged predicate is
 // spec.AwaitsRetirement, the same one source the retirement counter applies.
@@ -628,13 +623,8 @@ func roadmapReconcileCounts(root string) (merged, dangling int, state bounds.Fil
 	case c.State == bounds.StateAbsent || c.State == bounds.StateEmpty:
 		return 0, 0, bounds.StateParsed
 	}
-	seen := map[string]bool{}
-	for _, slug := range roadmap.SpecSlugs(c.Data) {
-		folderPath := "specs/" + slug + "/spec.md"
-		if seen[folderPath] {
-			continue
-		}
-		seen[folderPath] = true
+	for _, slug := range spec.LiveSpecSlugs(c.Data) {
+		folderPath := spec.LiveSpecPath(slug)
 		sc := bounds.Classify(filepath.Join(root, folderPath), bounds.ControlRecordLimit)
 		if sc.State == bounds.StateAbsent || sc.State.Failed() {
 			dangling++

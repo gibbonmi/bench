@@ -200,6 +200,23 @@ func TestHandoffNamesStagedSpec(t *testing.T) {
 	contract.RequireNotContains(t, out.Stdout, "specs/done/spec.md")
 }
 
+func TestHandoffDoesNotBlockOnSpecialSpec(t *testing.T) {
+	contract.SkipIfSubjectBenchMissing(t)
+	t.Parallel()
+
+	f := handoffFixtureOnMain(t)
+	f.WriteFile("README.md", "# fixture\n")
+	f.CommitAll("init")
+	f.WriteFifo("specs/hang/spec.md")
+
+	out := f.BenchDeadlined("handoff")
+	if out.TimedOut {
+		t.Fatal("bench handoff blocked on a FIFO at specs/hang/spec.md, so its live-spec facts opened the path before classifying it")
+	}
+	out.RequireExit(0)
+	contract.RequireContains(t, out.Stdout, "Spec: none staged.")
+}
+
 func TestHandoffGateFieldIsStaleAware(t *testing.T) {
 	contract.SkipIfSubjectBenchMissing(t)
 	t.Parallel()

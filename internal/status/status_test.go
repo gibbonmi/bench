@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/roadmap"
 )
 
 func TestTimeoutGateIsDistinctHighestSeveritySignal(t *testing.T) {
@@ -94,6 +95,44 @@ func TestRetirementCount(t *testing.T) {
 func TestRetirementCountNoSpecsDir(t *testing.T) {
 	if got := retirementCount(t.TempDir()); got != 0 {
 		t.Errorf("retirementCount with no specs/ = %d, want 0", got)
+	}
+}
+
+func TestOrphanedPickupCount(t *testing.T) {
+	root := t.TempDir()
+	for name, body := range map[string]string{
+		"reviews/paired.md":    "pickup\n",
+		"reviews/orphaned.md":  "pickup\n",
+		"specs/paired/spec.md": "Status: staged\n",
+	} {
+		path := filepath.Join(root, name)
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if got := orphanedPickupCount(root); got != 1 {
+		t.Fatalf("orphanedPickupCount = %d, want 1", got)
+	}
+}
+
+func TestRoadmapReconcileCounts(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, "specs", "merged"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "specs", "merged", "spec.md"), []byte("Status: implemented\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	content := "specs/merged/spec.md specs/retired/spec.md specs/<slug>/spec.md\n```\nspecs/fenced/spec.md\n```\n"
+	if err := os.WriteFile(filepath.Join(root, roadmap.RoadmapFile), []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	merged, dangling, state := roadmapReconcileCounts(root)
+	if merged != 1 || dangling != 1 || state.Failed() {
+		t.Fatalf("roadmapReconcileCounts = (%d, %d, %s), want (1, 1, parsed)", merged, dangling, state)
 	}
 }
 
