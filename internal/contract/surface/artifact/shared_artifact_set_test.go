@@ -11,6 +11,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
 )
 
@@ -41,6 +42,9 @@ func (state *sharedArtifactSetState) resolve() (*sharedArtifactSet, error) {
 
 func requireSharedArtifactSet(t *testing.T) *sharedArtifactSet {
 	t.Helper()
+	if os.Geteuid() == 0 {
+		capability.Capability(t, capability.Privilege, "root bypasses file mode write protection; shared artifact set read-only writes are unobservable")
+	}
 	packageSharedArtifactSet.once.Do(func() {
 		packageSharedArtifactSet.stage(t)
 	})
@@ -68,10 +72,6 @@ func (state *sharedArtifactSetState) stage(t *testing.T) {
 	source := committedHostileArtifactSourceIn(t, directory, root)
 	output := filepath.Join(directory, "promoted artifacts [*]")
 	state.build(t, root, source, output)
-	entries, err := os.ReadDir(output)
-	if err != nil {
-		t.Fatal(err)
-	}
 	fingerprint, err := promotedArtifactDigestMap(output)
 	if err != nil {
 		t.Fatal(err)
@@ -84,7 +84,7 @@ func (state *sharedArtifactSetState) stage(t *testing.T) {
 	state.set = &sharedArtifactSet{
 		sourceRoot:  source,
 		outputDir:   output,
-		entryCount:  len(entries),
+		entryCount:  len(fingerprint),
 		fingerprint: fingerprint,
 	}
 }
