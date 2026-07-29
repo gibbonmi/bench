@@ -2,9 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `6cd2657`, 1 dirty path, 1 unpushed commit
+Branch: `main` — HEAD `89a6474`, clean tree, 5 unpushed commits
 Spec: none staged.
-Gate: pending at `23293e0`
+Gate: green at `2aab503` — current
 
 ## State
 
@@ -28,7 +28,7 @@ Gate: pending at `23293e0`
 
 ## Next command
 
-`/bench-shape-idea`
+`/bench-final-check` — the board's leading invocable signal (`git`).
 
 ## Shape
 
