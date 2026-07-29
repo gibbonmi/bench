@@ -94,12 +94,17 @@ func testCommitFreshVerdictReused(t *testing.T) {
 	f.Bench("gate").RequireExit(0)
 	before := headSha(f)
 
-	f.Bench("commit", "-m", "do work", "work.txt").RequireExit(0)
+	res := f.Bench("commit", "-m", "do work", "work.txt")
+	res.RequireExit(0)
 
 	if headSha(f) == before {
 		t.Fatal("HEAD did not advance on a green gate")
 	}
 	contract.RequireIntEqual(t, gateRuns(t, f), 1, "commit re-ran the gate despite a fresh green verdict for the identical tree")
+	// The reuse is silent to the operator unless the gate says so: a skipped run that
+	// reports nothing reads as a gate that never ran. The line comes from the gate's own
+	// emitter, the single home of verdict-reuse policy.
+	contract.RequireContains(t, res.Stdout, "gate: green (fresh verdict reused for this tree)")
 }
 
 func testCommitStaleVerdictRerunsGate(t *testing.T) {

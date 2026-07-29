@@ -3,8 +3,9 @@
 // code, not in prose the agent must remember. It sequences block-check → gate → flip →
 // stage → commit: it refuses before gating if any working-tree file outside the named set
 // (plus the --spec file) is dirty, runs the project gate through internal/gate and commits
-// only on green (reusing a fresh green verdict already recorded for the identical closed
-// oracle subject instead of paying the gate twice), flips the spec through internal/spec when --spec is set, and stages
+// only on green (a gate-then-commit sequence pays one run: the gate answers from the
+// verdict it already recorded for the identical subject), flips the spec through
+// internal/spec when --spec is set, and stages
 // exactly the named paths via a `:(literal)` pathspec (a named deletion included) —
 // never a bare `git add -A` over the whole tree. A named directory covers its changed
 // children on both sides of that sequence: the pathspec sweeps them and the block-check
@@ -111,13 +112,10 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 
-	// A green verdict recorded for the identical closed oracle subject already proves
-	// this diff and the inputs that can affect its oracle (the block-check above pinned
-	// the tree to the named set), so re-running the gate buys nothing but its full cost.
-	// Anything less — stale, red, untrusted, or absent — pays the real gate run.
-	if gv := gate.Inspect(root); gv.ReusableGreen {
-		fmt.Fprintln(stdout, "gate: green (fresh verdict reused for this tree)")
-	} else if result := gate.Execute(context.Background(), root, stdout, stderr); result.ActionExit != 0 {
+	// The gate is asked unconditionally: whether a verdict already recorded for this
+	// subject can answer in place of a real run is the gate's policy, and a second
+	// opinion here could only drift from it. Commit reads the returned verdict alone.
+	if result := gate.Execute(context.Background(), root, stdout, stderr); result.ActionExit != 0 {
 		fmt.Fprintln(stderr, "error: gate is red — commit refused (see the failing phase above)")
 		return 1
 	}
