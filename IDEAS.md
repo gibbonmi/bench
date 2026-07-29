@@ -1,0 +1,1 @@
+- 2026-07-29  bench link refuses to converge the kit repo itself: 'conflict: .claude/commands/bench-debug.md has a symlink parent directory', and the refusal aborts before the pre-push hook refresh — the sanctioned hook-currency repair route (FT135 second face) is unavailable on this repo; hand-copy fallback used 2026-07-29

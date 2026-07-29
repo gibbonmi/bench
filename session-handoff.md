@@ -2,39 +2,33 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `517e996`, 17 dirty paths, 2 unpushed commits
+Branch: `main` — HEAD `6cd2657`, 1 dirty path, 1 unpushed commit
 Spec: none staged.
-Gate: green at `a0be126` — stale, work tree `c189925`
+Gate: pending at `23293e0`
 
 ## State
 
-- **FT154 `--full` reached implementation and stopped at the first ticket's
-  cap.** The approved folder spec is staged at
-  `specs/craft-tickets/spec.md` in green commit `517e996`; the old binary's
-  flat-only `Facts` scan is why the generated pin block above says no spec is
-  staged.
+- **The 2026-07-29 drain is committed at `6cd2657`.** FT154 shipped and its
+  row is gone; ideas, journal, and retros are all at zero. New rows FT162–166;
+  clauses merged onto FT91, FT135, FT156, FT161; FT107 reworded. Decisions in
+  that commit stay closed.
 
-- **The partial ticket work is preserved at
-  `/home/mgibs/.bench/worktrees/bench-2826441890/b6f4c57d40d54a8053bc12141783227a-4c89fbebe1fec7cbc54d1a3f5077bd76`.**
-  `internal/spec`, status, coverage, the focused runtime spec/history tests,
-  and the coverage-map canary are green. Runtime gate-proof, handoff,
-  status/commit and AXI coverage/roadmap fixtures remain flat-form red; the
-  retire interrupt-resume cases remain unwritten. No implementation commit or
-  whole gate run exists.
+- **The gate cache reads `interrupted-pending` at `23293e0`.** A sanctioned
+  defect repro (`bench gate --help`, now FT163) overwrote the green verdict;
+  the tree is not suspect. FT163's own landing commit — or any gated commit —
+  replaces it.
 
-- **The first ticket did not fit one fresh context.** It combined a wide
-  folder-layout refactor with every consumer migration. Recommended repair:
-  approve an expand–migrate–contract split so each replacement ticket can land
-  green, while the final state still refuses live flat specs. Do not continue
-  the existing atomic ticket without that reviewer ruling.
+- **This repo's pre-push hook was refreshed by hand-copy from the current
+  template** after `bench link` refused to converge the kit repo (symlink
+  parent conflict, parked in `IDEAS.md`). `bench guards` now reports the full
+  manifest.
 
-- **`IDEAS.md` is unrelated reviewer-owned capture.** It remains modified in
-  the main checkout and was deliberately excluded from the FT154 staging
-  commit.
+- **`IDEAS.md` holds one parked line** (the `bench link` refusal), dirty in
+  the main checkout, awaiting the next drain.
 
 ## Next command
 
-`$bench-implement-spec --full specs/craft-tickets/spec.md`
+`/bench-shape-idea`
 
 ## Shape
 
