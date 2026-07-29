@@ -75,18 +75,24 @@ raw `git add` standing in for `bench commit`) proves nothing about the accused
 path: without the real repro, dismiss the entry as unreproduced, or re-park it
 with the missing repro named as its graduation trigger.
 
-## 5. Restructure the board
+## 5. Classify every run; restructure on request
 
-The drain adds rows; this step subtracts them, so the board does not accrete
-near-duplicates that each pay a full pipeline and gate separately. Propose the
-reducing moves in the same batch diff, never applied silently: merge rows that
-edit the same owner surface into one batched row, collapse rows that are faces
-of one missing primitive, fold a leftover clause into its parent row, and
-group rows sharing one failure class under a theme header. While walking the
-rows, classify each as a fix (a defect in existing behavior, with evidence), a
-feature (new capability or guidance), or decision-only; report the
-classification in the exit rather than writing it into the row grammar — it
-exists to steer the sequence.
+While walking the rows, classify each as a fix (a defect in existing
+behavior, with evidence), a feature (new capability or guidance), or
+decision-only; report the classification in the exit rather than writing it
+into the row grammar — it exists to steer the sequence. Every run classifies;
+no invocation skips it.
+
+The board-restructuring pass is opt-in: it runs only when the reviewer
+invokes the phase with `--restructure`, because the whole-board pass is heavy
+and most runs rightly stop at draining and updating the docs. When invoked,
+propose the reducing moves in the same batch diff, never applied silently:
+merge rows that edit the same owner surface into one batched row, collapse
+rows that are faces of one missing primitive, fold a leftover clause into its
+parent row, and group rows sharing one failure class under a theme header —
+the board otherwise accretes near-duplicates that each pay a full pipeline
+and gate separately. A default run that spots a restructure candidate names
+it in the exit rather than applying it.
 
 ## 6. Refresh the sequence
 
