@@ -189,6 +189,11 @@ review findings may use a direct fix-and-gate path; run focused regression
 checks for behavior defects, then the gate. If I give you a standing rule for
 changes of a given size, follow it and stop asking.
 
+| Observable | Route |
+|---|---|
+| Decomposes to one independently-green ticket and crosses no declared seam | Light path: charge `craft-tickets`, write the one ticket, then implement it without a spec. This table is the standing approval to skip the spec phase; the ticket still rides the session's existing approval surface. |
+| Either observable is false | Normal full workflow. |
+
 **Fix, don't park.** A small defect you discover mid-work is not backlog: the
 fix lands in the active workflow as its own commit. Parking it to `IDEAS.md`
 or `.bench/learnings.md` is reserved for a fix that needs a reviewer decision,

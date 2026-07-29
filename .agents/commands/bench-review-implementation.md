@@ -38,7 +38,7 @@ Run it on the branch diff against its true base, on three axes that stay separat
    landing commit instead: `bench diff --full --commit <sha>` bounds the same
    bundle to exactly what that commit landed.
 
-2. **Find the sources.** Spec: `specs/<feature>.md` for this work (or the path I
+2. **Find the sources.** Spec: `specs/<feature>/spec.md` for this work (or the path I
    give you). Standards: `AGENTS.md` and `.bench/BENCH.md` — the working agreement
    and shared platform rules; `CLAUDE.md` is import pointers only — plus
    `projects/<name>.md` and any `CONTRIBUTING`/conventions docs in the repo.
@@ -76,7 +76,7 @@ Run it on the branch diff against its true base, on three axes that stay separat
 5. **Persist actionable findings — the pickup file.** When the review surfaces
    actionable findings that need a later fix pass, write `reviews/<spec-slug>.md`
    before closing, where `<spec-slug>` is the basename of the reviewed
-   `specs/<spec-slug>.md` (write the file directly rather than through shell
+   `specs/<spec-slug>/spec.md` (write the file directly rather than through shell
    snippets, so paths with spaces survive). Mirror the handoff's shape: one
    section per axis — `## Standards`, `## Spec`, `## Coverage` — each with its
    finding count, its worst issue, and every actionable finding with the file or

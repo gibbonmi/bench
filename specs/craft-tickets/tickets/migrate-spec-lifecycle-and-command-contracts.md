@@ -16,4 +16,3 @@ interrupted-retire behavior observable.
 - [x] Recoverable interrupted retire states rerun cleanly.
 - [x] Terminal folder residue refuses with the named hand-clean instruction.
 - [x] Both historic flat and new folder deletions appear in history.
-- [x] The project gate is green.

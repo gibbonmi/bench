@@ -13,4 +13,3 @@ each new anchor family with a canary fixture that proves the check bites.
 - [ ] Story 16 and its acceptance coverage row are green.
 - [ ] Fixture count equals the new anchor-family count.
 - [ ] Every fixture EXPECT matches the targeted red diagnostic.
-- [ ] The project gate is green.

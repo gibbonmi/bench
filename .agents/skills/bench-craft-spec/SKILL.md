@@ -80,15 +80,10 @@ rather than guessed: agent time is dominated by verification, so state it as
   stories and the map so the gate enforces it. You can't ticket your way out
   of the spec's own breadth.
 
-**One class of work never slices vertically: the wide refactor.** A single
-mechanical change with a large blast radius — renaming a column, retyping a
-shared symbol — breaks every call site at once, so no vertical slice lands
-green. Sequence it by **expand–contract**: expand (the new form lands beside
-the old), migrate call sites in batches sized by blast radius — each batch
-green because the old form still works — then contract (delete the old form
-once no caller remains). When even batches cannot hold green on their own,
-say so in the spec: the sequence rides one shared branch and green is
-promised only at a final integrate-and-verify step.
+`craft-tickets` owns build-time wide-refactor classification and its
+expand–migrate–contract sequence. A spec names that the build is wide and
+keeps the ownership fences below explicit; it points to that rule rather than
+restating the sequence.
 
 ## Slicing a build for delegates
 
@@ -100,14 +95,16 @@ the fence is checkable at charge time. A slice that reaches outside its fence
 collides with another writer, and one that stops short returns with its own
 work unwritten; either way the coordinator pays a round trip.
 
-**Shared primitives land first.** Name every primitive two or more slices will
-consume up front in the spec, and land it as a deep-unit slice before the
-consuming seams. A primitive no slice owns gets hand-derived behind every
-fence that needs it — two derivations of one fact, the knowledge-duplication
-defect the code standard names.
+`craft-tickets` also owns prefactoring shared primitives before their
+consumers. This skill gives the resulting primitive ticket one ownership fence;
+it does not repeat the ordering rule.
 
 Fence alignment is tier-independent: a future cheap-tier retest changes
 delegate routing, never this rule.
+
+`craft-tickets` owns the build-time **what-lands-green-next** unit. This
+section owns only the spec-time **who-writes-where** fence; point to the ticket
+rule by name rather than restating it here.
 
 ```
 Slice per package — internal/scan, internal/report, internal/bounds — one

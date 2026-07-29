@@ -16,4 +16,3 @@ reject stray flat specs while leaving retired flat history intact.
 - [x] Conformance validates `specs/*/spec.md`.
 - [x] Conformance rejects a stray live `specs/*.md`.
 - [x] Retired flat history remains green.
-- [x] The project gate is green.

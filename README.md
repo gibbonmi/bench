@@ -364,7 +364,9 @@ cd ~/src/regroup
 # 2. spec it — this picks the seam (the state machine) and the tests up front
 #    /bench-write-spec →  specs/zone-entries/spec.md with stories + the transition-test seam
 #                         and moves the map to specs/zone-entries/decisions/
-# 3. run the shift. heavy line, because the ontology is the uncertain seam.
+# 3. run the shift. implementation first derives independently-green tickets
+#    beside the spec, then works the frontier with one fresh write-delegate per ticket.
+#    heavy line, because the ontology is the uncertain seam.
 BENCH_MAX_ITERS=8 bench shift "add zone-entry events to the phase taxonomy per specs/zone-entries/spec.md"
 # each iteration commits only if mypy + pytest + ruff pass. you review the branch.
 ```

@@ -14,4 +14,3 @@ changing every live path rendered by ambient surfaces.
 - [x] ROADMAP reconciliation recognizes folder tokens and excludes template text.
 - [x] Handoff and roadmap context render folder paths.
 - [x] AXI coverage behavior remains unchanged apart from the live path form.
-- [x] The project gate is green.

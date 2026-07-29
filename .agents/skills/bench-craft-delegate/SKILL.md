@@ -96,7 +96,7 @@ commit under fix — and requires the delegate to verify it before editing,
 then stop and report if it is absent.
 
 ```
-Implement story 3 of specs/retry-backoff.md in this worktree. Open with the
+Implement story 3 of specs/retry-backoff/spec.md in this worktree. Open with the
 stale-base check: run `git merge --ff-only main`, verify HEAD equals main,
 stop and report if denied. Coverage rows: [the story's rows]. Effort: medium,
 ~3 iterations. Stop at diff ready with focused tests green; return the

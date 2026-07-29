@@ -66,6 +66,19 @@ place where routing cheap is the expensive choice.
 Check `Lines` for a cached routing before assessing from scratch — common
 work types in a project get precomputed rows. Cache hits still get declared.
 
+## Ticketed-build stage defaults
+
+| Stage | Default line |
+|---|---|
+| Orchestration | mid + medium |
+| Ticket implementation | cheap + low |
+| Review (axis or falsification) | mid + high |
+
+These are starting defaults under the decision table and ladder, not a flat
+rule. A failed done-claim or an uncleared red moves through the same declared
+ladder below. The leverage override still wins: kit guidance prose routes
+top + high in every stage.
+
 ## Route the venue, not just the tier
 
 The same signals pick the model and effort for a spec'd build. `craft-delegate`

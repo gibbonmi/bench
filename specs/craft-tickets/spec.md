@@ -4,7 +4,7 @@ Status: staged
 Roadmap: FT154
 
 Compiled from `specs/craft-tickets/decisions/slice-unit.md` (closed 2026-07-28,
-all nine decisions resolved, no blocking uncertainty flags). Every seam below
+all ten decisions resolved, no blocking uncertainty flags). Every seam below
 is map-sourced; deviations from the map are flagged inline as **[flagged]**.
 
 ## Problem
@@ -97,7 +97,9 @@ Prose and skill — lands after the Go slice (map dependency order):
     (`.agents/skills/bench-craft-tickets/SKILL.md` + its `.claude/skills/`
     symlink + skills-index regeneration) owning the unit definition, the
     breakdown procedure, the ticket-file template, the frontier rule, and the
-    one-ticket-one-delegate reset, so that build-time slicing has one source.
+    one-ticket-one-delegate reset, including behavioral-only ticket checkboxes
+    and the bench-commit-only full-gate boundary, so that build-time
+    slicing has one source.
     Line: gpt-5.6-sol / high. Skill authoring is the leverage override —
     guidance prose compounds through every session that loads it.
 11. As a build session, I want `/bench-implement-spec`'s first act to derive
@@ -187,11 +189,20 @@ Prose and skill — lands after the Go slice (map dependency order):
   checkboxes checked as work lands; a landed ticket stays in place until the
   spec retires (whole folder leaves together). The exact template lives in the
   `craft-tickets` skill; the skill is its one source.
+- **Ticket gate cadence.** Ticket files carry behavioral acceptance
+  checkboxes only; they do not carry a "project gate green" checkbox because
+  the green landing commit is the one source for that verdict. Iteration runs
+  focused checks at the ticket's seams, with no standalone full gate.
+  `bench commit` is the only per-ticket full-gate boundary and commits only on
+  green; a red attempt is repaired and retried, while the normal green path is
+  one full gate.
+  `/bench-final-check` remains the final full gate over the composed feature.
 - **The light-path table** (drafted; wording is veto surface) lands beside
   `.bench/BENCH.md`'s "Right-size the process" rule as the standing rule that
   paragraph licenses: a change that decomposes to one independently-green
   ticket and crosses no declared seam takes the light path — charge
-  `craft-tickets` bare, write the one ticket, fix and gate, no spec. The
+  `craft-tickets` bare, write the one ticket, run focused checks, and land it
+  through `bench commit`, no spec. The
   table is the standing OK for taking that route, so no per-change ask to
   skip the spec phase; the one ticket itself still rides the session's
   existing approval surface exactly as map #4 decided (sign-off when the
@@ -226,7 +237,7 @@ Prose and skill — lands after the Go slice (map dependency order):
   separate shipped-map deletion.
 - **Gate anchors** (map left these to spec time): new `require()` lines in
   `checkWorkflowAnchors`, one per load-bearing clause rather than one per
-  file — `bench-implement-spec.md` charges `bench-craft-tickets`, writes
+  file — `bench-implement-spec.md` charges `craft-tickets`, writes
   `tickets/`, derives tickets "from the spec's stories and seams", and
   presents the breakdown under the existing approval surface;
   `.bench/BENCH.md` carries "independently-green ticket" and "crosses no
@@ -234,7 +245,12 @@ Prose and skill — lands after the Go slice (map dependency order):
   `bench-craft-tickets/SKILL.md` carries "smallest independently-green",
   "one write-delegate charge", and the ticket template's structural headings
   (`Blocked by:`, "What to build", acceptance checkboxes); `craft-spec` and
-  `craft-tickets` carry each other's names. Each new anchor family gets a
+  `craft-tickets` carry each other's names. The ticket-cadence anchor family
+  pins "no standalone full gate", "`bench commit` is the only per-ticket
+  full-gate boundary", red repair-and-retry, the normal green path's one full
+  gate, and `/bench-final-check`'s composed-feature gate in the owning skill
+  and phase prose. The later `pin-ticket-guidance-in-conformance` ticket lands
+  this comprehensive anchor set. Each new anchor family gets a
   canary fixture in `tests/canary/workflow-guidance-anchors/` proving it
   bites, landed in the same commit as its anchor; the reviewer's completeness
   check is fixture count = new anchor-family count. Anchors pin presence of
@@ -330,10 +346,10 @@ Seam 2 — the conformance/canary seam (prose anchors and the sweep's bite):
 | 9 | conformance validates `specs/*/spec.md` coverage maps | seam 2 | red at build: canary fixture (conformance family) carrying a folder spec with a malformed map, EXPECT its `coverage --check` diagnostic | a sweep still globbing `specs/*.md` skips the folder spec and the fixture stays green — exactly the miss this row exists to catch |
 | 9 | conformance reds on a stray flat `specs/*.md` in the kit repo | seam 2 | red at build: canary fixture with one flat spec file, EXPECT the stray-flat diagnostic | without it a dead-form file survives invisibly beside the folder convention |
 | 10 | skill exists, indexed, mirrored | seam 2 | already covered — `checkSkillsIndexGenerateVerify` + Claude skill-mirroring checks red on a missing symlink or unregenerated index the moment the skill directory lands | existing conformance owns the three-artifact contract; no new check needed |
-| 10, 13, 14 | skill carries the unit-definition and charge clauses; `craft-line` carries all three stage-table rows; cross-pointers present | seam 2 | red at build: new `require()` anchors (one per load-bearing clause, enumerated under Implementation decisions) + one canary fixture per family mutating the anchored text | anchors pin the presence of each load-bearing clause; the canary proves each bites; wording semantics beyond the pinned clauses are review-owned, the map's accepted v1 gap |
-| 10 | skill carries the ticket template's structural headings (`Blocked by:`, What to build, acceptance checkboxes) | seam 2 | red at build: template-heading anchors + a canary fixture dropping a heading | the template is the Handoff item-2 ticket-file contract; heading anchors are its gate-visible half, since nothing parses tickets in v1 |
-| 11 | `/bench-implement-spec` carries the breakdown step: charges `bench-craft-tickets`, writes `tickets/`, derives "from the spec's stories and seams", presents under the existing approval surface | seam 2 | red at build: one anchor per clause + workflow-guidance-anchors canary fixture dropping the step | a name-drop edit that only mentions the skill fails the derivation and approval-surface anchors |
-| 12 | `.bench/BENCH.md` carries the light-path table with both observables ("independently-green ticket", "crosses no declared seam") | seam 2 | red at build: two anchors + canary fixture removing the table | a table missing the seam clause would license the light path for cross-seam changes — the anchor pair pins both halves of the observable |
+| 10, 13, 14 | skill carries the unit-definition and charge clauses; `craft-line` carries all three stage-table rows; cross-pointers present | seam 2 | red at the later `pin-ticket-guidance-in-conformance` ticket: new `require()` anchors (one per load-bearing clause, enumerated under Implementation decisions) + one canary fixture per family mutating the anchored text | anchors pin the presence of each load-bearing clause; the canary proves each bites; wording semantics beyond the pinned clauses are review-owned, the map's accepted v1 gap |
+| 10 | skill carries the ticket template's structural headings (`Blocked by:`, What to build, behavioral acceptance checkboxes), excludes a project-gate checkbox, and owns focused checks plus `bench commit` as the only per-ticket full-gate boundary | seam 2 | red at the later `pin-ticket-guidance-in-conformance` ticket: template/cadence anchors + a canary fixture dropping a heading or cadence clause | the template and cadence are the Handoff item-2 ticket-file contract; the later anchors are their gate-visible half, since nothing parses tickets in v1 |
+| 11 | `/bench-implement-spec` carries the breakdown step: charges `craft-tickets`, writes `tickets/`, derives "from the spec's stories and seams", presents under the existing approval surface | seam 2 | red at the later `pin-ticket-guidance-in-conformance` ticket: one anchor per clause + workflow-guidance-anchors canary fixture dropping the step | a name-drop edit that only mentions the skill fails the derivation and approval-surface anchors |
+| 12 | `.bench/BENCH.md` carries the light-path table with both observables ("independently-green ticket", "crosses no declared seam") | seam 2 | red at the later `pin-ticket-guidance-in-conformance` ticket: two anchors + canary fixture removing the table | a table missing the seam clause would license the light path for cross-seam changes — the anchor pair pins both halves of the observable |
 | 15 | no kit prose states the flat convention | seam 2 | not TDD-able as a class — the sweep is a hand-enumerated edit list (write-spec, final-check, craft-delegate, ROADMAP preamble, README, field guide); review verifies it | a "no stale path form" checker would need semantic judgment; the enumerated list plus review is the honest posture, and story 9's stray-file red guards the repo itself |
 | 16 | every new anchor family bites | seam 2 | red at build: the canary sweep itself — each new fixture's EXPECT must match a real red; fixture *existence* is not gate-checkable, so the build lands each fixture in the same commit as its anchor and the reviewer verifies fixture count = new anchor-family count | the canary baseline rejects vacuous EXPECTs, so a rotted anchor fails here; the same-commit rule plus the count check covers the omission the sweep cannot see |
 | 17 | shaping keeps pre-spec working maps top-level; write-spec moves the closed map and map-owned assets into `specs/<slug>/decisions/`, updates references in the same green change, and final-check relies on whole-folder retirement | seam 2 | red at the later `pin-ticket-guidance-in-conformance` ticket: its anchor/canary family removes each lifecycle clause in turn; this slice is not TDD-able at the prose seam, so current evidence is the dogfood move and exact-reference sweep | the later canaries will catch a partial prose edit that teaches only the destination, omits the move/reference update, or reintroduces separate map cleanup; the current move proves the contract is usable without creating an unpaired anchor family |

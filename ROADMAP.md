@@ -4,7 +4,7 @@ The working prioritization document: every row is open work, verified against
 the tree; a row leaves when the work ships (spec-retire) or a
 `/bench-what-next` reconcile removes it. Raw capture never lands here — it
 goes to `IDEAS.md` and enters only through a reviewed drain. A row for spec'd
-work names its spec path (`specs/<slug>.md`) — that path is what `bench status`
+work names its spec path (`specs/<slug>/spec.md`) — that path is what `bench status`
 cross-checks against the tree, so a row that omits it is a visible choice to
 stay outside the ambient check.
 

@@ -17,4 +17,3 @@ whole-folder spec retirement to remove them with the tickets.
 - [x] Write-spec, shape-idea, and final-check agree on the open, compiled, and retired lifecycle.
 - [x] The FT154 source map and every in-scope affected reference moved together.
 - [x] README, field guide, and changelog teach the user-visible lifecycle.
-- [x] The project gate is green.

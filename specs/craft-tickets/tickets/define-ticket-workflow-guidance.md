@@ -11,7 +11,6 @@ cross-pointer, and every shipped spec-path reference to that source.
 
 ## Acceptance
 
-- [ ] Stories 10–15 and their acceptance coverage rows are green or retain their recorded classification.
-- [ ] The skill, Claude symlink, and generated skills index agree.
-- [ ] Every enumerated prose surface uses the folder spec path.
-- [ ] The project gate is green.
+- [x] Stories 10–15 and their acceptance coverage rows are green or retain their recorded classification.
+- [x] The skill, Claude symlink, and generated skills index agree.
+- [x] Every enumerated prose surface uses the folder spec path.

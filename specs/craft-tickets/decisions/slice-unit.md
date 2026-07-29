@@ -248,10 +248,34 @@ delete a top-level shipped map.
 - The fail posture when one slug carries both the flat and folder form, and
   for a folder without `spec.md` — edge-inventory work at spec time.
 
+## #10: Where does the full project gate run for a ticket?
+
+Blocked by: #1, #5
+Type: Reviewer decision
+
+### Question
+
+Should every ticket repeat a "project gate green" acceptance checkbox and run
+the full gate during iteration, or should the landing operation remain the one
+source for the gate verdict?
+
+### Answer
+
+Reviewer-decided 2026-07-28: ticket files carry behavioral acceptance
+checkboxes only. They do not carry a "project gate green" checkbox because the
+green landing commit is the one source for that verdict. During a ticket,
+iterate with focused checks at its declared seams and no standalone full gate.
+`bench commit` is the only per-ticket full-gate boundary and commits only on
+green. A red attempt is repaired and retried; the normal green path is one full
+gate.
+`/bench-final-check` remains the final full gate over the composed feature.
+
 ## Out of scope
 
-- The wide-refactor exception — expand–contract already lives in `craft-spec`
-  and is mirrored in `to-tickets`; this map points at it, never copies it.
+- A second wide-refactor rule in `craft-spec` — `craft-tickets` owns the
+  exception and drew its expand–migrate–contract guidance from the cited
+  `to-tickets` source; `craft-spec` only declares the wide shape and ownership
+  fences, then points to the owning skill.
 - Tracker publication (`to-tickets`' GitHub/Linear route) — Bench has no
   tracker; tickets never become external issues here.
 - Retesting delegate tiers — fence and unit rules stay tier-independent.
@@ -277,9 +301,12 @@ delete a top-level shipped map.
    and removes the folder; `history` keeps resolving retired flat paths.
    Fail postures for flat/folder collisions are spec-time edge work. Ticket
    file (convention, unparsed): title, What to build (end-to-end behavior),
-   `Blocked by:` naming sibling titles, acceptance checkboxes checked as work
-   lands. Skill contract: one ticket = smallest independently-green story
-   group = one write-delegate charge. Decision-map lifecycle: pre-spec working
+   `Blocked by:` naming sibling titles, behavioral acceptance checkboxes
+   checked as work lands, and no project-gate checkbox. Skill contract: one
+   ticket = smallest independently-green story group = one write-delegate
+   charge; focused iteration has no standalone full gate, and `bench commit`
+   is the only per-ticket full-gate boundary, while `/bench-final-check` gates
+   the composed feature. Decision-map lifecycle: pre-spec working
    maps stay top-level; compilation moves the closed map and map-owned assets
    into `specs/<slug>/decisions/` with same-change reference updates;
    `bench maps` ignores the settled provenance and whole-folder retirement
@@ -291,17 +318,17 @@ delete a top-level shipped map.
 4. **Black-box assertables.** `bench spec` resolution/retire/history and
    `bench coverage`/`bench status`/`bench roadmap` against a folder-form spec
    (exit codes, TOON rows naming the folder path). Conformance assertions
-   that the breakdown step, the light-path table, and the skill's charge line
-   are present in the owning prose files. `bench maps` reports no row for an
-   open-looking map parked under a spec, and retirement leaves no spec-local
-   decision provenance behind.
+   that the breakdown step, the light-path table, the skill's charge line, and
+   the ticket gate cadence are present in the owning prose files. `bench maps`
+   reports no row for an open-looking map parked under a spec, and retirement
+   leaves no spec-local decision provenance behind.
 5. **Gate attachment.** The layout change is ordinary Go under existing
    test/contract phases; prose anchors ride the conformance phase like FT152's
-   family. The later ticket-guidance conformance slice owns the decision-map
-   lifecycle anchors and biting canary; existing AXI/runtime contracts cover
-   the query and retirement behavior. Not gate-visible: ticket quality
-   (sizing, edge correctness) — it is reviewed at breakdown approval, and
-   that gap is accepted in v1.
+   family. The later ticket-guidance conformance slice owns the ticket-cadence
+   and decision-map lifecycle anchors and biting canaries; existing AXI/runtime
+   contracts cover the query and retirement behavior. Not gate-visible:
+   ticket quality (sizing, edge correctness) — it is reviewed at breakdown
+   approval, and that gap is accepted in v1.
 6. **Hostile-input owners.** Flat/folder collision and folder-sans-spec.md →
    `internal/spec` resolution, fail closed naming the conflict. Malformed
    ticket file → n/a in v1, nothing parses it. Kit-versus-linked-repo (FT144
@@ -315,7 +342,9 @@ delete a top-level shipped map.
    Delete-on-land done-marking (#5 — checkboxes chosen). Context fit as the
    grading rule (#1). Dual-form resolution and convention-only layout (#7).
    A frontier CLI surface in v1 (#7). A flat no-escalation stage rule, and
-   dropping the review leverage override (#8). Leaving compiled maps
+   dropping the review leverage override (#8). Repeating the project-gate
+   verdict as a ticket checkbox or running unbounded full gates during ticket
+   iteration (#10). Leaving compiled maps
    top-level, copying them into specs, scanning spec-local provenance with
    `bench maps`, and separate final-check deletion (#9).
 9. **Domain watch-outs.** `bench spec history` resolves retired specs by
@@ -346,7 +375,7 @@ vendor, tree paths with the tree — re-verify before citing onward.
 - `.agents/commands/bench-implement-spec.md` — the venue routing whose
   write-delegate boundary is #5's reset, and the file the breakdown step edits.
 - `.agents/skills/bench-craft-spec/SKILL.md` — the ownership fence #1 keeps
-  orthogonal and the expand–contract rule Out of scope points at.
+  orthogonal to the ticket unit.
 - `internal/spec/spec.go`, `internal/spec/history.go` — the flat-path
   consumers #7 enumerates (resolution fallback, `Facts` glob, retire
   validation, history's literal pathspec).

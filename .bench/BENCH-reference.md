@@ -55,6 +55,7 @@ not the list:
 - coverage-map rows, edge inventories, story sizing, and delegate slicing for a spec → `.agents/skills/bench-craft-spec/SKILL.md`
 - evaluating a change to the kit itself → `.agents/skills/bench-craft-synthesis/SKILL.md` (kit-only)
 - writing tests first → `.agents/skills/bench-craft-tdd/SKILL.md`
+- breaking a build into independently-green tickets → `.agents/skills/bench-craft-tickets/SKILL.md`
 <!-- bench:skills-index:end -->
 
 ## Harness Invocation

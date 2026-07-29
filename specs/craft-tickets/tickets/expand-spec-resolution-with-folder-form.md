@@ -15,4 +15,3 @@ support and establishes the final fail-closed behavior.
 - [x] Explicit paths remain path-first.
 - [x] Folder specs appear in `Facts` with the folder name as slug.
 - [x] Existing flat-form behavior remains green until the contract ticket.
-- [x] The project gate is green.

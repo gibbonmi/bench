@@ -25,7 +25,7 @@ default branch. The honest no-op: a branch that arrives with nothing left to
 commit is reported green all the same, and the status flip is still performed
 via `bench spec implemented <slug>` when the spec has not already flipped —
 that command is the single source of the edit; never hand-write a line-start
-`Status: implemented` into any `specs/*.md`, or the retirement detector fires
+`Status: implemented` into any `specs/*/spec.md`, or the retirement detector fires
 on a spec that is not done. When the reviewer accepts residual review
 risk and skips the fix pass, delete `reviews/<spec-slug>.md` and name it in the
 landing commit — the pickup must not outlive the decision it captured. If it

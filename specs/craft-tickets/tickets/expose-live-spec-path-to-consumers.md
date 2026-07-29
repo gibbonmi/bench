@@ -14,4 +14,3 @@ real path until the contract ticket removes them.
 - [x] Folder facts carry `specs/<slug>/spec.md`.
 - [x] Transitional flat facts carry `specs/<slug>.md`.
 - [x] Consumers need no file-existence probe to choose a layout.
-- [x] The project gate is green.

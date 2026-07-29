@@ -22,6 +22,24 @@ Implement the spec at the seams it names. If there's no spec, the change must fa
 under the lighter-path threshold `.bench/BENCH.md`'s "Right-size the process"
 paragraph sets; if it doesn't, stop and run `/bench-write-spec` first.
 
+## First derive the tickets
+
+Charge `craft-tickets` before the first implementation edit. For a spec-backed
+build, derive ticket files from the spec's stories and seams, write them under
+`specs/<slug>/tickets/`, and present the breakdown as the build plan under the
+session's existing approval surface. For the light path, apply the same
+procedure to the unspecced change and write its one ticket.
+
+Work the unblocked frontier under the routing rules below. One ticket is one
+write-delegate charge in a fresh context; reset the write delegate between
+tickets and retain only the parent spec and frontier in the coordinator.
+During a ticket run focused checks at its declared seams, with no standalone
+full gate before landing. The path-scoped `bench commit` is the only
+per-ticket full-project-gate boundary and commits atomically only on green. If
+it goes red, repair from that output and retry; the normal green path is one
+full gate. `/bench-final-check` still runs the final full gate over the
+composed feature.
+
 ## Open with the line
 
 Declare the line before touching code — the declaration template, the decision
@@ -40,7 +58,8 @@ contract, not a preference:
   subagents within the harness's concurrency limit; dependent slices run
   sequentially; a spec that lands as one atomic diff is delegated whole to one
   worktree-isolated write subagent, and the invoking session still verifies the
-  returned done-claim through the `craft-delegate` contract.
+  returned done-claim through the `craft-delegate` contract. Each routed slice
+  is an independently-green frontier ticket with its own fresh charge.
 - A read-only helper (research, review, planning, search) does not satisfy the
   write requirement. When any change may remain inline, and what a harness that
   cannot spawn a write subagent does instead of editing, are `craft-delegate`'s
@@ -65,8 +84,8 @@ contract, not a preference:
   editing that slice, and marks that row's task in-progress as it does. Rows
   marked `already covered` or `not TDD-able` keep their recorded reason; don't
   silently upgrade them into TDD coverage.
-- Run typecheck and the relevant single test file frequently as you go. Run the
-  full gate once at the end.
+- Run typecheck and the relevant single test file frequently as you go. The
+  only full project gate for a ticket runs inside its atomic `bench commit`.
 - During structure housekeeping, apply `craft-seams`' split-or-grant rule.
 - One small change at a time, repo stays green — invariant 4 in `.bench/BENCH.md`.
 - Every delegation during the build carries its own line and, when the spec has
@@ -118,14 +137,15 @@ defined route — never a silent grind, never an abandoned worktree:
 
 ## Close on green
 
-- The build is done when `bench gate` is green, and only then — invariant 1 in
-  `.bench/BENCH.md` (the gate is the oracle).
+- A ticket is done only when its atomic `bench commit` gate is green — invariant
+  1 in `.bench/BENCH.md` (the gate is the oracle). The composed build remains
+  subject to `/bench-final-check`.
 - A green gate proves what the tests observe. Before handing back, drive the
   changed path once end-to-end — invoke the real command, endpoint, or call the
   diff changes and read its output. A mismatch here is a defect to fix or
   surface, never a footnote.
-- Land each green build step with path-scoped `bench commit -m "<msg>"`, naming
-  the files that step touched. It gates and commits the named paths atomically,
+- Land each ticket with path-scoped `bench commit -m "<msg>"`, naming the files
+  that ticket touched. It gates and commits the named paths atomically,
   and it enforces the commit discipline so you don't have to restate it. When it
   refuses over an unexplained working-tree file, surface the file to the
   reviewer; don't commit or revert it on your own.
@@ -133,15 +153,18 @@ defined route — never a silent grind, never an abandoned worktree:
   commit and the `Status: implemented` transition are `/bench-final-check`'s.
   Never run `bench commit --spec` and never edit a spec's status line from this
   phase.
-- Before the final gate, emit the coverage table for every acceptance row —
+- Before the composed feature's final gate, emit the coverage table for every
+  acceptance row —
   `bench coverage <spec>` produces it and `bench coverage --check <spec>` validates
   the map; don't hand-assemble it. Classify each row `green`, `already covered`,
   or `not TDD-able`. If any mapped behavior is missing, partial, or unclassified,
   the build is not ready for the gate.
-- Once the gate is green, run `/bench-review-implementation` — the semantic three-axis
+- Once every ticket has landed green, run `/bench-review-implementation` — the
+  semantic three-axis
   pass (Standards + Spec + Coverage) that catches what the gate can't: right thing
   built the wrong way, wrong thing built cleanly, or breaking inputs nothing
-  exercises. Read its findings, fix what matters, re-run the gate.
+  exercises. Read its findings and route concrete repairs through a repair
+  ticket with its own focused checks and one atomic `bench commit`.
 - Then summarize what changed in plain language and hand back. I own the merge;
   propose it, don't perform it.
 
@@ -162,7 +185,7 @@ wrong spec with every phase green.
 The run carries the named spec from build to push-ready by orchestrating the
 standalone phases; their contracts stay theirs:
 
-- **Implement inline**, under everything above this section.
+- **Implement through ticket delegates**, under everything above this section.
 - **Review in a delegate:** spawn one fresh-context delegate charged with the
   standalone `/bench-review-implementation` contract and given the spec and
   the diff and nothing else. Inline self-review is closed, not deprioritized —
@@ -178,7 +201,9 @@ standalone phases; their contracts stay theirs:
 **Finding disposition.** Concrete defects — bugs, spec misses, missing
 coverage — are fixed and re-gated without stopping; contestable design and
 judgment findings are flagged in the exit report for reviewer veto, not
-applied. The repair pass is bounded by `/bench-review-implementation`'s
+applied. Re-gating follows the repair-ticket cadence: focused checks, then
+`bench commit` as the only per-ticket full-gate boundary. The repair pass is
+bounded by `/bench-review-implementation`'s
 terminal repair-pass rule and routed through `craft-delegate`'s repair
 allowance; this mode adds no second version of either.
 

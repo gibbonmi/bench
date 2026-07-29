@@ -1134,11 +1134,13 @@
                 </div>
                 <div class="solution">
                   <div class="label">How it works</div>
-                  <p>Starting from the approved spec, the agent declares its line (tier, effort,
-                  iteration cap), then builds in vertical slices at the seams the spec agreed,
-                  writing tests first where the spec marked seams for TDD. The acceptance
-                  coverage map keeps the target fixed; the phase ends on a green gate. A build
-                  that stalls exits early with an honest report instead of grinding past its cap.</p>
+                  <p>Starting from the approved spec, the agent derives independently-green
+                  tracer tickets under <code>specs/&lt;feature&gt;/tickets/</code>, then works one
+                  unblocked frontier ticket per fresh write-delegate context. Focused seam checks
+                  drive iteration; each ticket lands through one atomic full-gate commit, and
+                  final-check gates the composed feature. The acceptance coverage map keeps the
+                  target fixed. A build that stalls exits early with an honest report instead of
+                  grinding past its cap.</p>
                 </div>
               </div></div>
             </details>
