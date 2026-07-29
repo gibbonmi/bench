@@ -20,9 +20,9 @@ export BENCH_HOME="${BENCH_HOME:-$HOME/.bench}"
 # `<wrapper> gate` path share exactly one resolver — never a second live implementation.
 # exec, not run: the gate case is terminal and the binary owns the exit code and the
 # record; a missing binary exits 127 via route_binary, which writes no forged verdict.
-run_gate() { route_porcelain gate-run; }
+run_gate() { route_porcelain gate-run "$@"; }
 
-gate_usage() { printf 'usage: bench gate [pin]\n'; }
+gate_usage() { printf 'usage: bench gate [--fresh|pin]\n'; }
 
 gate_command() {
   case "$#" in
@@ -30,6 +30,7 @@ gate_command() {
     2)
       case "$2" in
         pin) route_porcelain gate-pin ;;
+        --fresh) run_gate --fresh ;;
         --help|-h|help) gate_usage ;;
         *) gate_usage >&2; return 2 ;;
       esac
@@ -332,7 +333,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench outline [path]       locate candidate seams (file:line) as TOON; does not identify the project's blessed seams
   bench doctor [--fix]       report (and repair) the PATH shim under a node version manager
   bench repair [--prune]     explicitly install the pinned platform binary or prune stale cache entries
-  bench gate                 run the project gate (the oracle)
+  bench gate [--fresh]       run the project gate (the oracle; --fresh ignores a reusable green)
   bench prep-release         ship-tier rehearsal: artifacts, cross-compile, preflight verify, ship canary
   bench release-preflight --mode verify|publish [--profile public|bank] [--phase name]  run repository release authorization
   bench release prepare|submit|promote|rollback|status --version <v> [--profile public|bank] [--root dir] [--registry url] [--path first|staged] [--message text]  governed npm publication

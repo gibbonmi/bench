@@ -22,7 +22,7 @@ func TestGateSignalArmFollowsAcquireAndPrecedesOwnerWrite(t *testing.T) {
 	t.Run("acquired", func(t *testing.T) {
 		root := gateTestRepo(t, "#!/usr/bin/env bash\nexit 0\n", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
 		engine := &faultEngine{now: time.Date(2026, 7, 23, 12, 0, 0, 0, time.UTC)}
-		_ = executeWithEngineAfterAcquire(context.Background(), root, io.Discard, io.Discard, engine, arm(engine))
+		_ = executeWithEngineAfterAcquire(context.Background(), root, io.Discard, io.Discard, engine, arm(engine), reuseFreshGreen)
 		wantPrefix := []string{"lock-open", "lock-acquisition", "signal-arm", "owner-write"}
 		if !reflect.DeepEqual(engine.trace[:len(wantPrefix)], wantPrefix) {
 			t.Fatalf("gate acquisition prefix = %v, want %v", engine.trace, wantPrefix)
@@ -38,7 +38,7 @@ func TestGateSignalArmFollowsAcquireAndPrecedesOwnerWrite(t *testing.T) {
 				t.Fatalf("seed inspection = %+v, want reusable green", seed.Inspection)
 			}
 			engine := &faultEngine{now: now, failOp: failOp}
-			got := executeWithEngineAfterAcquire(context.Background(), root, io.Discard, io.Discard, engine, arm(engine))
+			got := executeWithEngineAfterAcquire(context.Background(), root, io.Discard, io.Discard, engine, arm(engine), reuseFreshGreen)
 			for _, operation := range engine.trace {
 				if operation == "signal-arm" || operation == "owner-write" {
 					t.Fatalf("pre-acquire %s reached %s: trace=%v", failOp, operation, engine.trace)

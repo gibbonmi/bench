@@ -192,15 +192,23 @@ func RunAndRecordContext(ctx context.Context, root string, stdout, stderr io.Wri
 	return Execute(ctx, root, stdout, stderr).ActionExit
 }
 
-// RunCommand is the `bench gate-run [root]` plumbing subcommand: the shell's one-glance
-// run_gate forwards here so gate resolution lives in exactly one place. Root is args[0]
-// when the shell passes the resolved repo root, else the cwd's repo — resolved so the
-// gate always runs from the top level even when invoked from a subdirectory.
+// RunCommand is the `bench gate-run [--fresh] [root]` plumbing subcommand: the shell's
+// one-glance run_gate forwards here so gate resolution lives in exactly one place. Root
+// is the first non-flag argument when the shell passes the resolved repo root, else the
+// cwd's repo — resolved so the gate always runs from the top level even when invoked from
+// a subdirectory. `--fresh` may sit on either side of it.
 func RunCommand(args []string, stdout, stderr io.Writer) int {
 	var root string
-	if len(args) > 0 && args[0] != "" {
-		root = args[0]
-	} else {
+	mode := reuseFreshGreen
+	for _, arg := range args {
+		switch {
+		case arg == "--fresh":
+			mode = forceRun
+		case root == "":
+			root = arg
+		}
+	}
+	if root == "" {
 		r, err := git.Root()
 		if err != nil {
 			fmt.Fprintln(stderr, toon.NotInRepo())
@@ -208,7 +216,7 @@ func RunCommand(args []string, stdout, stderr io.Writer) int {
 		}
 		root = r
 	}
-	return executeWithEngineAfterAcquire(context.Background(), root, stdout, stderr, productionGateEngine{}, notifyGateSignals).ActionExit
+	return executeWithEngineAfterAcquire(context.Background(), root, stdout, stderr, productionGateEngine{}, notifyGateSignals, mode).ActionExit
 }
 
 type Result struct {
@@ -221,6 +229,16 @@ func Execute(ctx context.Context, root string, stdout, stderr io.Writer) Result 
 	return executeWithEngine(ctx, root, stdout, stderr, productionGateEngine{})
 }
 
+// runMode says whether a fresh green already recorded for this subject may answer the
+// execution. `bench gate --fresh` picks forceRun: it is the operator's only escape from a
+// green the closure still calls current but the oracle would no longer stand behind.
+type runMode int
+
+const (
+	reuseFreshGreen runMode = iota
+	forceRun
+)
+
 type postAcquireContextArm func(context.Context) (context.Context, func())
 
 func notifyGateSignals(ctx context.Context) (context.Context, func()) {
@@ -228,10 +246,10 @@ func notifyGateSignals(ctx context.Context) (context.Context, func()) {
 }
 
 func executeWithEngine(ctx context.Context, root string, stdout, stderr io.Writer, engine gateEngine) Result {
-	return executeWithEngineAfterAcquire(ctx, root, stdout, stderr, engine, nil)
+	return executeWithEngineAfterAcquire(ctx, root, stdout, stderr, engine, nil, reuseFreshGreen)
 }
 
-func executeWithEngineAfterAcquire(ctx context.Context, root string, stdout, stderr io.Writer, engine gateEngine, arm postAcquireContextArm) Result {
+func executeWithEngineAfterAcquire(ctx context.Context, root string, stdout, stderr io.Writer, engine gateEngine, arm postAcquireContextArm, mode runMode) Result {
 	plan, err := engine.BuildSubject(root)
 	if err != nil {
 		return operationalWithEngine(engine, root, 0, stderr, "gate subject unavailable")
@@ -277,9 +295,11 @@ func executeWithEngineAfterAcquire(ctx context.Context, root string, stdout, std
 	// verdict would push RecordedAt forward on every read and make the freshness window
 	// unbounded. The check sits here so the verdict it reuses belongs to the subject the
 	// held lock froze, and so nothing has been written yet when it returns.
-	if reuse := inspectAt(root, engine.Now()); reuse.ReusableGreen {
-		fmt.Fprintln(stdout, "gate: green (fresh verdict reused for this tree)")
-		return Result{Inspection: reuse}
+	if mode == reuseFreshGreen {
+		if reuse := inspectAt(root, engine.Now()); reuse.ReusableGreen {
+			fmt.Fprintln(stdout, "gate: green (fresh verdict reused for this tree)")
+			return Result{Inspection: reuse}
+		}
 	}
 	pending := interruptedRecord(plan, engine.Now())
 	if err := durableReplaceWithEngine(engine, gitdir, pending); err != nil {

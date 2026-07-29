@@ -62,6 +62,40 @@ func TestReusableGreenIsReusedWithoutRunningOrWriting(t *testing.T) {
 	}
 }
 
+// TestFreshFlagForcesARealRunPastAReusableGreen grades the operator's escape from a
+// green the oracle would no longer stand behind. The flag has to survive RunCommand's
+// argument parsing, where it shares the argument list with the optional root positional,
+// and it has to stay opt-in: the same tree without it still answers from the record.
+func TestFreshFlagForcesARealRunPastAReusableGreen(t *testing.T) {
+	const closed = `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`
+	for _, order := range []struct {
+		name string
+		args func(root string) []string
+	}{
+		{"flag first", func(root string) []string { return []string{"--fresh", root} }},
+		{"root first", func(root string) []string { return []string{root, "--fresh"} }},
+	} {
+		t.Run(order.name, func(t *testing.T) {
+			root := reuseMarkerRepo(t, 0, closed)
+			if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 || !got.Inspection.ReusableGreen {
+				t.Fatalf("seed execution = %+v, want a reusable green", got)
+			}
+			if got := RunCommand(order.args(root), io.Discard, io.Discard); got != 0 {
+				t.Fatalf("forced run exit = %d, want 0", got)
+			}
+			if got := gateRunCount(t, root); got != 2 {
+				t.Fatalf("gate runs after --fresh = %d, want 2 — the flag did not force a real run", got)
+			}
+			if got := RunCommand([]string{root}, io.Discard, io.Discard); got != 0 {
+				t.Fatalf("following run exit = %d, want 0", got)
+			}
+			if got := gateRunCount(t, root); got != 2 {
+				t.Fatalf("gate runs after a plain run = %d, want 2 — the force outlived the flag", got)
+			}
+		})
+	}
+}
+
 // TestNonReusableSubjectsPayARealRun pins the short-circuit to the ReusableGreen
 // predicate. The cheapest wrong implementation short-circuits on any cached green; each
 // case here leaves exactly one run behind and requires the next execution to reach the

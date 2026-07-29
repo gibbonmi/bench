@@ -25,6 +25,7 @@ func TestRuntimeGateContracts(t *testing.T) {
 	contract.RunParallel(t, "bench gate help avoids the oracle contract", testRuntimeGateHelpAvoidsOracle)
 	contract.RunParallel(t, "bench gate misuse avoids the oracle contract", testRuntimeGateMisuseAvoidsOracle)
 	contract.RunParallel(t, "bench gate pin forwards arguments contract", testRuntimeGatePinForwardsArguments)
+	contract.RunParallel(t, "bench gate --fresh forwards to the oracle contract", testRuntimeGateFreshForcesRealRun)
 	contract.RunParallel(t, "oracle-bound gate verdict contract", testRuntimeOracleBoundVerdict)
 	contract.RunParallel(t, "fail-closed gate verdict persistence contract", testRuntimePendingBeforeGate)
 	contract.RunParallel(t, "bench gate pin non-TTY refusal contract", testRuntimeGatePinNonTTYRefusal)
@@ -94,6 +95,34 @@ func testRuntimeGatePinForwardsArguments(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(gitDir(t, f), "gate-ran")); !os.IsNotExist(err) {
 		t.Fatalf("bench gate pin argument started the oracle: %v", err)
 	}
+}
+
+// testRuntimeGateFreshForcesRealRun pins the flag's whole journey: the wrapper accepts
+// the token where every other second argument is a usage refusal, forwards it to the
+// binary, and the run it forces reaches the oracle past a verdict the previous run made
+// reusable. Counting runs on the fixture's own gate is what separates "forwarded" from
+// "silently swallowed on the way".
+func testRuntimeGateFreshForcesRealRun(t *testing.T) {
+	contract.NoteContractFailure(t, "bench gate --fresh contract failed")
+	f := contract.NewFixture(t)
+	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\necho run >> .git/gate-runs\nexit 0\n")
+	f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`+"\n")
+	f.CommitAll("init")
+
+	f.Bench("gate").RequireExit(0)
+	f.Bench("gate").RequireExit(0)
+	if runs := gateRunTally(t, f); runs != 1 {
+		t.Fatalf("gate runs over an unchanged tree = %d, want 1", runs)
+	}
+	f.Bench("gate", "--fresh").RequireExit(0)
+	if runs := gateRunTally(t, f); runs != 2 {
+		t.Fatalf("gate runs after --fresh = %d, want 2 — the flag never reached the oracle", runs)
+	}
+}
+
+func gateRunTally(t *testing.T, f contract.Fixture) int {
+	t.Helper()
+	return len(contract.NonEmptyLines(contract.ReadFileAbs(t, filepath.Join(gitDir(t, f), "gate-runs"))))
 }
 
 func testRuntimeGateRebuiltSelfHost(t *testing.T) {
