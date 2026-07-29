@@ -2,47 +2,39 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `e3e8c1e`, clean tree, pushed and level with origin.
-Spec: none staged. `specs/` is empty.
-Gate: green at `16cc9b5`; two doc-only commits have landed since
-(`877b65c` drain, `e3e8c1e` map edit), so the pin is stale but nothing
-executable changed.
+Branch: `main` — HEAD `517e996`, 17 dirty paths, 2 unpushed commits
+Spec: none staged.
+Gate: green at `a0be126` — stale, work tree `c189925`
 
 ## State
 
-- **FT152 is done, retired, and pushed.** The gate ran green, the spec and its
-  decision map are gone, and the durable content was promoted before deletion.
-  Ship-tier verification has not run; `bench prep-release` covers that once per
-  release.
+- **FT154 `--full` reached implementation and stopped at the first ticket's
+  cap.** The approved folder spec is staged at
+  `specs/craft-tickets/spec.md` in green commit `517e996`; the old binary's
+  flat-only `Facts` scan is why the generated pin block above says no spec is
+  staged.
 
-- **FT154 is unblocked and is the next build.** Its map, `decisions/slice-unit.md`,
-  had assumed one staged spec to migrate to the `specs/<slug>/spec.md` layout;
-  FT152's retirement emptied `specs/`, so the migration and the build-sequencing
-  premises were struck in `e3e8c1e`. Every decision in the map survived — no
-  standing dual-form resolution, `bench spec history` still resolving retired
-  flat paths, enumerate-every-glob rather than patch-as-found.
+- **The partial ticket work is preserved at
+  `/home/mgibs/.bench/worktrees/bench-2826441890/b6f4c57d40d54a8053bc12141783227a-4c89fbebe1fec7cbc54d1a3f5077bd76`.**
+  `internal/spec`, status, coverage, the focused runtime spec/history tests,
+  and the coverage-map canary are green. Runtime gate-proof, handoff,
+  status/commit and AXI coverage/roadmap fixtures remain flat-form red; the
+  retire interrupt-resume cases remain unwritten. No implementation commit or
+  whole gate run exists.
 
-- **Read "mirror" as "symlink" anywhere under `.claude/`.** `.claude/commands`
-  is one directory-level symlink; `.claude/skills` is a real directory of
-  per-skill symlinks. Neither holds copies, so editing `.agents/` is the whole
-  edit — but adding a skill still needs its own `.claude/skills/` entry created,
-  which FT154's build will hit. The profile's cold-session notes carry this.
+- **The first ticket did not fit one fresh context.** It combined a wide
+  folder-layout refactor with every consumer migration. Recommended repair:
+  approve an expand–migrate–contract split so each replacement ticket can land
+  green, while the final state still refuses live flat specs. Do not continue
+  the existing atomic ticket without that reviewer ruling.
 
-- **FT161 (LOW) is open and needs a ruling, not a build.** `bench spec retire`
-  tells the retiring session to remove the ROADMAP row;
-  `/bench-final-check`'s post-merge tail says to leave roadmap rows to
-  `/bench-what-next`; `/bench-what-next`'s own prose calls itself "the backstop
-  for anything spec-retire missed", which leans the third way. Three sources,
-  one of them wrong. Which yields is the reviewer's call, then a one-line kit
-  edit to the loser at `internal/spec/spec.go:336`.
-
-- **The 2026-07-28 drain landed at `877b65c`** — `IDEAS.md` and the journal are
-  empty. It created FT159 (model-token sweep), FT160 (a `bench` subcommand for
-  the full run), FT161, and a third face on FT156.
+- **`IDEAS.md` is unrelated reviewer-owned capture.** It remains modified in
+  the main checkout and was deliberately excluded from the FT154 staging
+  commit.
 
 ## Next command
 
-`/bench-write-spec` for FT154.
+`$bench-implement-spec --full specs/craft-tickets/spec.md`
 
 ## Shape
 
