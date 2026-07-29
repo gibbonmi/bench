@@ -11,9 +11,9 @@ interrupted-retire behavior observable.
 
 ## Acceptance
 
-- [ ] Coverage, commit, implemented, retire, and history contracts use folder specs.
-- [ ] Retire removes the pickup and complete folder, including tickets.
-- [ ] Recoverable interrupted retire states rerun cleanly.
-- [ ] Terminal folder residue refuses with the named hand-clean instruction.
-- [ ] Both historic flat and new folder deletions appear in history.
-- [ ] The project gate is green.
+- [x] Coverage, commit, implemented, retire, and history contracts use folder specs.
+- [x] Retire removes the pickup and complete folder, including tickets.
+- [x] Recoverable interrupted retire states rerun cleanly.
+- [x] Terminal folder residue refuses with the named hand-clean instruction.
+- [x] Both historic flat and new folder deletions appear in history.
+- [x] The project gate is green.

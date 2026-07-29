@@ -130,13 +130,15 @@ func retireTokenMatches(subject, slug string) bool {
 }
 
 // historyDeleteLog runs the file-deletion query: every commit that deleted
-// specs/<slug>.md. The pathspec carries two magic words: `literal` so a slug
+// both historical specs/<slug>.md and folder specs/<slug>/spec.md. The pathspecs carry
+// two magic words: `literal` so a slug
 // containing `*`/`?`/`[` is matched as an exact path rather than a glob, and `top` so
 // the path resolves from the repository root regardless of the process cwd — a
 // subdirectory invocation must see the same history a repo-root invocation does.
 func historyDeleteLog(slug string) ([]byte, error) {
-	pathspec := ":(literal,top)specs/" + slug + ".md"
-	return git.Raw("log", "--diff-filter=D", historyLogFormat, "--", pathspec)
+	flat := ":(literal,top)specs/" + slug + ".md"
+	folder := ":(literal,top)specs/" + slug + "/spec.md"
+	return git.Raw("log", "--diff-filter=D", historyLogFormat, "--", flat, folder)
 }
 
 // historyCommand runs `bench spec history <slug>`: merges the two queries above,

@@ -46,9 +46,9 @@ func snapshotAction(t *testing.T, f contract.Fixture) actionSnapshot {
 	t.Helper()
 	return actionSnapshot{
 		head: headSha(f), index: strings.TrimSpace(f.Git("write-tree").Stdout),
-		status: f.Git("status", "--porcelain=v1", "--untracked-files=all", "--", "work.txt", "specs/proof.md").Stdout,
+		status: f.Git("status", "--porcelain=v1", "--untracked-files=all", "--", "work.txt", "specs/proof/spec.md").Stdout,
 		work:   snapshotActionPath(t, filepath.Join(f.Root, "work.txt")),
-		spec:   snapshotActionPath(t, filepath.Join(f.Root, "specs", "proof.md")),
+		spec:   snapshotActionPath(t, filepath.Join(f.Root, "specs", "proof", "spec.md")),
 	}
 }
 
@@ -298,7 +298,7 @@ func story5ActionFixture(t *testing.T, gateBody, manifest string) contract.Fixtu
 		f.WriteFile(".bench/gate-inputs.json", manifest)
 	}
 	f.WriteFile("tracked.txt", "base\n")
-	f.WriteFile("specs/proof.md", "# proof\nStatus: staged\n")
+	f.WriteFile("specs/proof/spec.md", "# proof\nStatus: staged\n")
 	f.CommitAll("base")
 	return f
 }

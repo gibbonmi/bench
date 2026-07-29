@@ -12,6 +12,7 @@ func TestRuntimeSpecHistoryContracts(t *testing.T) {
 	contract.SkipIfSubjectBenchMissing(t)
 	t.Parallel()
 	contract.RunParallel(t, "history merges retire and delete commits, deduped, newest first", testSpecHistoryMergedDeduped)
+	contract.RunParallel(t, "history finds a folder spec deletion", testSpecHistoryFolderDeletion)
 	contract.RunParallel(t, "history accepts a bare slug or a specs/<slug>.md path", testSpecHistorySlugForms)
 	contract.RunParallel(t, "history renders the definitive empty state for an unknown slug", testSpecHistoryEmptyState)
 	contract.RunParallel(t, "history usage errors exit 2", testSpecHistoryUsageErrors)
@@ -20,6 +21,21 @@ func TestRuntimeSpecHistoryContracts(t *testing.T) {
 	contract.RunParallel(t, "history slug that is a prefix of another slug finds only its own commit", testSpecHistoryPrefixSlug)
 	contract.RunParallel(t, "history invoked from a subdirectory sees the full-repo history", testSpecHistorySubdirInvocation)
 	contract.RunParallel(t, "history outside a git repo exits 1 with the not-in-repo error", testSpecHistoryNotInRepo)
+}
+
+func testSpecHistoryFolderDeletion(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteFile("README.md", "r\n")
+	f.CommitAll("c1")
+	f.WriteFile("specs/folder/spec.md", "# folder\n")
+	f.CommitAll("add folder")
+	f.Git("rm", "-qr", "specs/folder")
+	f.CommitAll("delete folder without retire token")
+
+	out := f.Bench("spec", "history", "folder")
+	out.RequireExit(0)
+	requireOutputLine(t, out, "history[1]{hash,date,kind,subject}:")
+	out.RequireContains(out.Stdout, "delete folder without retire token")
 }
 
 // testSpecHistoryMergedDeduped pins story 3 and the story-1 basic listing: a

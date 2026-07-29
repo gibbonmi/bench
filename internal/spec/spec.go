@@ -295,7 +295,7 @@ func implementedCommand(rest []string) (string, int) {
 }
 
 // retireCommand runs `bench spec retire <slug>`: on a merged-implemented spec it deletes
-// the review pickup (when present) then the spec, and prints what it removed plus the
+// the review pickup (when present) then the complete folder spec, and prints what it removed plus the
 // judgment duties that remain. It never commits and never runs the gate — `bench commit`
 // owns commit discipline. Every unsafe input refuses at exit 1 without deleting anything: a
 // spec that is not merged-implemented (staged, or implemented only in the working tree and
@@ -311,6 +311,10 @@ func retireCommand(rest []string) (string, int) {
 		return toon.Errorf(fmt.Sprintf("spec not readable: %s: %v", resolved, err), "check file permissions") + "\n", 1
 	}
 	if !found {
+		if residue, ok := folderResidue(base, arg); ok {
+			return toon.Errorf("incomplete retired spec folder: "+residue,
+				"remove "+residue+" by hand after reviewing its residue; retire will not auto-clean it") + "\n", 1
+		}
 		// A review pickup with no spec is a reviewer judgment, never an auto-clean.
 		if orphan, ok := orphanPickup(base, arg); ok {
 			return toon.Errorf("orphaned review pickup: "+orphan+" has no spec",
@@ -339,12 +343,36 @@ func retireCommand(rest []string) (string, int) {
 		}
 		fmt.Fprintf(&b, "retired: %s\n", RelTo(base, pickup))
 	}
-	if err := os.Remove(resolved); err != nil {
+	if filepath.Base(resolved) == "spec.md" {
+		folder := filepath.Dir(resolved)
+		if err := os.RemoveAll(folder); err != nil {
+			return b.String() + toon.Errorf(fmt.Sprintf("remove %s: %v", RelTo(base, folder), err), "check file permissions") + "\n", 1
+		}
+		fmt.Fprintf(&b, "retired: %s\n", RelTo(base, folder))
+	} else if err := os.Remove(resolved); err != nil {
 		return b.String() + toon.Errorf(fmt.Sprintf("remove %s: %v", RelTo(base, resolved), err), "check file permissions") + "\n", 1
+	} else {
+		fmt.Fprintf(&b, "retired: %s\n", RelTo(base, resolved))
 	}
-	fmt.Fprintf(&b, "retired: %s\n", RelTo(base, resolved))
 	fmt.Fprintf(&b, "next: promote durable content, remove the ROADMAP row, commit as `spec-retire: %s`\n", slug)
 	return b.String(), 0
+}
+
+// folderResidue identifies the terminal interrupted-retire state: a folder remains but
+// its spec file is gone. It is not safe to infer which residual files a reviewer accepts.
+func folderResidue(base, arg string) (string, bool) {
+	if strings.ContainsRune(arg, '/') {
+		return "", false
+	}
+	folder := filepath.Join(base, "specs", strings.TrimSuffix(arg, ".md"))
+	fi, err := os.Stat(folder)
+	if err != nil || !fi.IsDir() {
+		return "", false
+	}
+	if _, err := os.Stat(filepath.Join(folder, "spec.md")); !os.IsNotExist(err) {
+		return "", false
+	}
+	return RelTo(base, folder), true
 }
 
 // implementedAtHEAD reports whether the spec's content at HEAD carries the retirement
@@ -373,8 +401,12 @@ func orphanPickup(base, arg string) (string, bool) {
 	return "", false
 }
 
-// slugOf is the spec slug of a path or bare argument: its basename without the .md suffix.
+// slugOf is the spec slug of a path or bare argument. A folder spec's filename is always
+// spec.md, so its parent folder supplies the slug rather than the generic filename.
 func slugOf(arg string) string {
+	if filepath.Base(arg) == "spec.md" {
+		return filepath.Base(filepath.Dir(arg))
+	}
 	return strings.TrimSuffix(filepath.Base(arg), ".md")
 }
 

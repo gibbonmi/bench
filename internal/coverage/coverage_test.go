@@ -106,25 +106,25 @@ func TestCommand(t *testing.T) {
 		}
 	})
 
-	t.Run("separator-free slug resolves specs/<slug>.md", func(t *testing.T) {
+	t.Run("separator-free slug resolves specs/<slug>/spec.md", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 		body := mapped("| 2 | b2 | s2 | r2 | w2 |\n")
-		mustWrite(t, "specs/foo.md", body)
+		mustWrite(t, "specs/foo/spec.md", body)
 
 		out, code := Command([]string{"foo"})
-		if want := wantTable(t, "specs/foo.md", body); out != want || code != 0 {
+		if want := wantTable(t, "specs/foo/spec.md", body); out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
 		}
 	})
 
-	t.Run("slug already ending .md is not double-appended", func(t *testing.T) {
+	t.Run("slug already ending .md resolves folder spec", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 		body := mapped("| 3 | b3 | s3 | r3 | w3 |\n")
-		mustWrite(t, "specs/bar.md", body)
+		mustWrite(t, "specs/bar/spec.md", body)
 
 		out, code := Command([]string{"bar.md"})
-		if want := wantTable(t, "specs/bar.md", body); out != want || code != 0 {
-			t.Errorf("Command = (%q, %d), want (%q, 0) — a double-append would look up specs/bar.md.md and miss", out, code, want)
+		if want := wantTable(t, "specs/bar/spec.md", body); out != want || code != 0 {
+			t.Errorf("Command = (%q, %d), want (%q, 0)", out, code, want)
 		}
 	})
 
@@ -151,7 +151,7 @@ func TestCommand(t *testing.T) {
 		cwdBody := mapped("| 4 | cwd | cwd-seam | cwd-red | cwd-why |\n")
 		specsBody := mapped("| 5 | specs | specs-seam | specs-red | specs-why |\n")
 		mustWrite(t, "foo", cwdBody)
-		mustWrite(t, "specs/foo.md", specsBody)
+		mustWrite(t, "specs/foo/spec.md", specsBody)
 
 		out, code := Command([]string{"foo"})
 		if want := wantTable(t, "foo", cwdBody); out != want || code != 0 {
@@ -175,25 +175,25 @@ func TestCommand(t *testing.T) {
 		}
 	})
 
-	t.Run("slug matching a directory falls back to specs/<slug>.md", func(t *testing.T) {
+	t.Run("slug matching a directory falls back to specs/<slug>/spec.md", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 		body := mapped("| 1 | b | s | r | w |\n")
 		mustWrite(t, "dist/keep", "x") // a directory named like the slug
-		mustWrite(t, "specs/dist.md", body)
+		mustWrite(t, "specs/dist/spec.md", body)
 
 		out, code := Command([]string{"dist"})
-		if want := wantTable(t, "specs/dist.md", body); out != want || code != 0 {
+		if want := wantTable(t, "specs/dist/spec.md", body); out != want || code != 0 {
 			t.Errorf("Command = (%q, %d), want (%q, 0) — a directory is not a spec candidate", out, code, want)
 		}
 	})
 
 	t.Run("--check resolves a slug and reports violations under the resolved label", func(t *testing.T) {
 		t.Chdir(t.TempDir())
-		mustWrite(t, "specs/chk.md", mapped("| 1 | | s | r | w |\n")) // empty behavior cell
+		mustWrite(t, "specs/chk/spec.md", mapped("| 1 | | s | r | w |\n")) // empty behavior cell
 
 		out, code := Command([]string{"--check", "chk"})
-		if code != 1 || !strings.Contains(out, "error: specs/chk.md coverage map row 1 has an empty 'behavior' cell") {
-			t.Errorf("Command = (%q, %d), want exit 1 with the violation under the resolved specs/chk.md label", out, code)
+		if code != 1 || !strings.Contains(out, "error: specs/chk/spec.md coverage map row 1 has an empty 'behavior' cell") {
+			t.Errorf("Command = (%q, %d), want exit 1 with the violation under the resolved folder label", out, code)
 		}
 	})
 

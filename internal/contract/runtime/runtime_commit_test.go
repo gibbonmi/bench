@@ -356,16 +356,16 @@ func testCommitSpecFlip(t *testing.T) {
 	f := commitFixture(t)
 	// The staged spec already exists and is tracked at build finish; commit it clean
 	// first, then the build modifies work.txt and flips the spec in one commit.
-	f.WriteFile("specs/feature.md", "# feature\nStatus: staged\n")
-	f.Bench("commit", "-m", "add spec", "specs/feature.md").RequireExit(0)
+	f.WriteFile("specs/feature/spec.md", "# feature\nStatus: staged\n")
+	f.Bench("commit", "-m", "add spec", "specs/feature").RequireExit(0)
 
 	f.WriteFile("work.txt", "changed\n")
 	f.Bench("commit", "-m", "finish", "--spec", "feature", "work.txt").RequireExit(0)
 
 	names := committedNames(f)
 	contract.RequireContains(t, names, "work.txt")
-	contract.RequireContains(t, names, "specs/feature.md")
-	contract.RequireContains(t, f.ReadFile("specs/feature.md"), "Status: implemented")
+	contract.RequireContains(t, names, "specs/feature/spec.md")
+	contract.RequireContains(t, f.ReadFile("specs/feature/spec.md"), "Status: implemented")
 }
 
 func testCommitSpecFailsFast(t *testing.T) {
