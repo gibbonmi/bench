@@ -37,82 +37,28 @@ repository-controlled bank evidence requirement makes this row active.
 Sources: `RR:C-05`; `RC:H-03`.
 
 **FT91 (HIGH, evidence supplied) — gate wall-clock proportional to the
-diff.** Raised from MEDIUM by the reviewer on 2026-07-25: the gate's length is
-the dominant cost of working on this repo for small changes, and the waiting is
-paid by a human. Eight arms have shipped, and the row is now governed by
-`specs/ft91-artifact-hoist/decisions/gate-critical-path.md` (compiled with the
-staged hoist spec), which owns wall-clock and carries the stop
-condition: **a measured full dev gate ≤60 s on this repo retires the row.**
+diff.** The gate's length remains the dominant human-paid cost of working on
+this repo. Nine arms have shipped, most recently the prepared-artifact hoist:
+six ruled consumers now share one package-scoped, lazily built artifact set
+with read-only and digest belts. That reduced the artifact package from about
+141 s to about 109 s solo; under full-gate load it remains 130–134 s, and the
+full dev gate remains roughly 135–172 s. The ≤60 s stop condition therefore
+did not fire.
 
-Where it stands, measured 2026-07-28 (16 cores, warm caches, idle box; method
-and citations in
-`specs/ft91-artifact-hoist/decisions/assets/gate-critical-path-timeline.md`): full dev
-gate **167.3 s** mean over three consecutive green runs, against 5m50s before
-the tier split. The wall is bound by the contract phase alone, and inside it by
-one package — `internal/contract/surface/artifact` at 140.9 s, with runtime
-42.8 s, surface 36.1 s, publication 16.5 s, axi 4.1 s, preprelease 4.0 s. Solo
-canary is 152.6 s and no longer joint-binds.
+`decisions/gate-critical-path.md` now owns the measured wall and the remaining
+sequence. The gate is one package wide in two places: the contract phase runs
+the serial `internal/contract/surface/artifact` suite once, and five
+behavior-owned canary fixtures each rerun that whole package. Three levers
+remain: bind each canary fixture to its owning test (changed-tree gate
+~110–135 s); reuse a fresh green verdict for the exact closed subject
+(unchanged-tree rerun ~2–5 s, with tool closure and a freshness ruling); then
+split the artifact suite by subject so the Go scheduler can overlap its
+independent groups (changed-tree gate ~60–75 s). Remove `-count=1`, canary
+input-key skipping, fixture batching, and diff-scoped gating remain rejected
+as incomplete-key or isolation failures.
 
-The shipped arms, detail in git and in the retired specs they name: phase
-parallelization; host-only test builds; the canary concurrency budget
-(`bounds.CanaryInnerWidth`); the dev/ship tier split (`ft91-gate-tier-split`);
-canary check-scoping (`ft91-canary-check-scoping`); the pipeline refactor's
-slices B and C (`ft91-phase-manifest-dag`; `ft91-gate-phase-split`, whose
-stories 4 and 5 are accepted as the probed phases that shipped and whose story 9
-is dropped as unsatisfiable, ruled by map #4); artifact build tiering
-(`ft91-artifact-build-tiering`); and the eighth arm in two stages —
-behavior-owned canary fixtures scoped to the one contract package owning their
-EXPECT (`ft91-canary-contract-scoping`, canary 250 s → 151.5 s), then graded by
-that package's compiled test binary instead of a nested gate
-(`ft91-canary-compiled-bites`, gate 172 s → 167.3 s, all 33 fixtures still biting
-with zero fixture edits, and the inner-mode contract narrowing and its
-environment variable retired).
-
-Next is the prepared-artifact hoist, the one structural lever left before the
-≤60 s rule is judged. The artifact suite's cost is invocation count, not
-per-invocation packing: one warm full-matrix `build-artifacts.sh` run is 19.26 s
-(only ~5.2 s of it the four cross-compiles), and the suite is ~20 host-only
-generator runs at ~3.7 s each because `artifactPreparedGeneration` is scoped
-per-test, so even an inspection-only test pays a full build. Five
-`surface/artifact` canary fixtures each pay the whole suite on top. Map #2
-classifies every artifact test as mutating, generation-asserting, or
-inspection-only; map #3 rules which classes may share one package-scoped set and
-the fail posture when a sharer mutates it. Both are open and gate the slice — #3
-is a test-independence ruling, not a build. Re-measure against ≤60 s after it
-lands; only a gap that survives that re-measurement graduates the parked
-oracle-semantics levers (verdict caching, `-count=1`) into this row.
-
-The hoist diagnosis is corroborated by an isolated profile from the FT154
-close (2026-07-28): the contract phase alone is 120.71 s and the artifact
-package alone 109.81 s on an otherwise idle box, forcing that package
-single-threaded is *worse* (168.35 s), and phase overlap adds ~28 s of
-contention — so the cost is repeated artifact generation inside one
-sequential package, not duplicate invocation. Same source, one new arm for
-the map sessions to weigh rather than assume: the gate summary reports only
-green/red, so total and per-phase wall time in a concurrency-aware form —
-with a sustained phase-budget breach named rather than left as invisible
-green latency — would have made that reconstruction free; it slots behind the
-hoist, not ahead of it. Source: `.bench/learnings.md`, verdicted here.
-
-When that re-measurement is predicted, key the floor on the largest bound
-package's suite time inflated to the inner width, not on the observed straggler
-of the pre-change mix: stage 1's estimate keyed on the 45 s surface straggler,
-predicted 60–80 s, and measured 151.5 s because five fixtures each pay the
-~134 s artifact suite — which then failed the spec's own ≤100 s acceptance and
-needed a veto to ship. Source: `.bench/learnings.md`, verdicted here.
-
-Deferred and ruled, unchanged: capping the outer conformance and contract phases
-stays dormant unless contention flakes persist, and is worth re-checking only
-after the hoist, since the CPU oversubscription map #1 measured may be gone with
-nesting; cross-language incrementality stays a later capability shaped against
-regroup-app rather than generalised from this repo; diff-scoped gating stays
-ruled out (contract and canary are behavior contracts with no file→test map);
-`decisions/gate-pipeline.md` stays closed (map #4). None of them may weaken the
-oracle: green must keep meaning the same thing, and any scoped verdict must be
-explicit evidence, never a silent skip.
-
-Entry: `/bench-shape-idea` on
-`specs/ft91-artifact-hoist/decisions/gate-critical-path.md` #2 and #3.
+Entry: `/bench-write-spec` on `decisions/gate-critical-path.md` lever 1,
+followed by the lever-2 reviewer ruling and the ordinary package split.
 Sources: `IDEAS.md`, drained across prior runs;
 `decisions/cost-follows-project-size.md`.
 
@@ -1441,6 +1387,6 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT91 maps #2/#3 (the prepared-artifact hoist): the board's largest recurring payoff, 167 s of human-paid gate on every commit; reviewer-priced HIGH, re-priced 2026-07-29 by the payoff-versus-effort directive.
+1. `/bench-write-spec` — FT91 per-test canary bites: scope each behavior-owned fixture to the owning test its EXPECT already names, taking the changed-tree gate toward ~110–135 s without weakening the declared oracle.
 2. `/bench-implement-spec` — FT113 + FT145, light-path fix batch: the cheapest reproduced defects, each ending a recurring cost (capture writes forcing full gate re-runs; the severity-1 git signal counting other worktrees' dirt).
 3. `/bench-write-spec` — FT123 + FT124: the measured session-tax pair (36% of a week's Bash calls; 698/797 `go test` calls hand-filtered).
