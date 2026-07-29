@@ -72,6 +72,8 @@ func runCapabilitySkipGate(t *testing.T, env map[string]string, skip capability.
 	kit := capabilitySkipKit(t, skip)
 	graded := t.TempDir()
 	f := contract.NewExecFixtureAt(t, kit)
+	// The nil override must scrub an already-hostile fixture environment.
+	f.Env["BENCH_REQUIRE_CAPABILITIES"] = "1"
 	run := contract.Env{"BENCH_KIT": &kit, "BENCH_REQUIRE_CAPABILITIES": nil}
 	for key, value := range env {
 		value := value

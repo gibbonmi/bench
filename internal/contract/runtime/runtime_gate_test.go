@@ -52,7 +52,7 @@ func testRuntimeGateHelpAvoidsOracle(t *testing.T) {
 
 func testRuntimeGateMisuseAvoidsOracle(t *testing.T) {
 	f, cache := gateUsageFixture(t)
-	for _, args := range [][]string{{"--unknown"}, {"one", "two"}} {
+	for _, args := range [][]string{{"--unknown"}, {"one", "two"}, {"--help", "extra"}} {
 		probe := f.Bench(append([]string{"gate"}, args...)...)
 		probe.RequireExit(2)
 		probe.RequireContains(probe.Stderr, "usage: bench gate")

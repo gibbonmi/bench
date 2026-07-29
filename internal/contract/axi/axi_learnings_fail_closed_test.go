@@ -146,6 +146,7 @@ func TestAXILearningsWrongType(t *testing.T) {
 	t.Parallel()
 	contract.SkipIfSubjectBenchMissing(t)
 	f := contract.NewFixture(t)
+	f.WriteFile("ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. first\n2. second\n")
 	if err := os.MkdirAll(filepath.Join(f.Root, ".bench", "learnings.md"), 0o755); err != nil {
 		t.Fatalf("park a directory at the journal path: %v", err)
 	}
@@ -157,4 +158,8 @@ func TestAXILearningsWrongType(t *testing.T) {
 	board := f.Bench("status", "--all")
 	board.RequireExit(0)
 	requireContainsFold(t, board.Stdout, "unknown (.bench/learnings.md is wrong-type)")
+
+	roadmap := f.Bench("roadmap")
+	roadmap.RequireExit(0)
+	requireContainsFold(t, roadmap.Stdout, "unknown (.bench/learnings.md is wrong-type)")
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/racetests"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -43,6 +44,17 @@ func runGateGo(t *testing.T, step, root string) (int, string, string) {
 	var stdout, stderr bytes.Buffer
 	code := GateGoCommand([]string{step, root}, &stdout, &stderr)
 	return code, stdout.String(), stderr.String()
+}
+
+func writeRaceTestSources(t *testing.T, root string) {
+	writeRaceTestSourcesFor(t, root, racetests.Tests)
+}
+
+func writeRaceTestSourcesFor(t *testing.T, root string, tests []racetests.Test) {
+	t.Helper()
+	for rel, source := range racetests.SyntheticSourcesFor(tests) {
+		writeGateGoFile(t, filepath.Join(root, filepath.FromSlash(rel)), source)
+	}
 }
 
 func TestGateGoGofmt(t *testing.T) {
@@ -131,8 +143,8 @@ func TestGateGoRaceRequiresTheTestToRun(t *testing.T) {
 		t.Fatalf("race rc = %d when the target test never ran, want 1; stdout=%q stderr=%q", code, stdout, stderr)
 	}
 	for _, test := range raceTests {
-		if !strings.Contains(stderr, "race test did not run: "+test.packagePath+" "+test.name) {
-			t.Fatalf("missing named-test diagnostic for %s; stdout=%q stderr=%q", test.name, stdout, stderr)
+		if !strings.Contains(stderr, "race test did not run: "+test.PackagePath+" "+test.Name) {
+			t.Fatalf("missing named-test diagnostic for %s; stdout=%q stderr=%q", test.Name, stdout, stderr)
 		}
 	}
 
@@ -141,20 +153,17 @@ func TestGateGoRaceRequiresTheTestToRun(t *testing.T) {
 	// -race is what proves the tap shares no buffer with the untouched stderr.
 	ran := t.TempDir()
 	writeGateGoFile(t, filepath.Join(ran, "go.mod"), "module fixture\n\ngo 1.25\n")
-	writeGateGoFile(t, filepath.Join(ran, "internal", "worktree", "worktree_test.go"),
-		"package worktree\n\nimport (\n\t\"fmt\"\n\t\"os\"\n\t\"testing\"\n)\n\nfunc TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {\n\tfmt.Fprintln(os.Stderr, \"cleanup noise\")\n}\n")
-	writeGateGoFile(t, filepath.Join(ran, "internal", "guards", "guards_test.go"),
-		"package guards\n\nimport \"testing\"\n\nfunc TestScanTimeoutPreservesPartialRowsAndHonestCounts(t *testing.T) {}\n\nfunc TestScanEnumerationTimeoutUsesUnknownCounts(t *testing.T) {}\n")
+	writeRaceTestSources(t, ran)
 	code, stdout, stderr = runGateGo(t, "race", ran)
 	if code != 0 {
 		t.Fatalf("race rc = %d when the target test ran and passed, want 0; stdout=%q stderr=%q", code, stdout, stderr)
 	}
 	for _, test := range raceTests {
-		if !strings.Contains(stdout, "=== RUN   "+test.name) {
-			t.Fatalf("race step did not run %s; stdout=%q stderr=%q", test.name, stdout, stderr)
+		if !strings.Contains(stdout, "=== RUN   "+test.Name) {
+			t.Fatalf("race step did not run %s; stdout=%q stderr=%q", test.Name, stdout, stderr)
 		}
 	}
-	if !strings.Contains(stdout, "cleanup noise") {
+	if !strings.Contains(stdout, "race test noise") {
 		t.Fatalf("race step swallowed the tool's output; stdout=%q stderr=%q", stdout, stderr)
 	}
 }
@@ -276,8 +285,7 @@ func TestGateGoWithoutRootOutsideARepo(t *testing.T) {
 func TestGateGoStepReportsASpawnFailure(t *testing.T) {
 	root := t.TempDir()
 	writeGateGoFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
-	writeGateGoFile(t, filepath.Join(root, "internal", "worktree", "worktree_test.go"),
-		"package worktree\n\nimport \"testing\"\n\nfunc TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {}\n")
+	writeRaceTestSources(t, root)
 	t.Setenv("PATH", "")
 
 	code, stdout, stderr := runGateGo(t, "race", root)

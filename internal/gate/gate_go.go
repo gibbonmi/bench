@@ -19,21 +19,12 @@ import (
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/racetests"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-type raceTest struct {
-	packagePath string
-	name        string
-}
-
-// raceTests names the regression tests that need race instrumentation because the
-// ordinary suite cannot observe their concurrent failure modes.
-var raceTests = []raceTest{
-	{packagePath: "./internal/worktree", name: "TestConcurrentCleanupRecordsOneTransaction"},
-	{packagePath: "./internal/guards", name: "TestScanTimeoutPreservesPartialRowsAndHonestCounts"},
-	{packagePath: "./internal/guards", name: "TestScanEnumerationTimeoutUsesUnknownCounts"},
-}
+// raceTests is the gate view of the authoritative race-test registry.
+var raceTests = racetests.Tests
 
 const gateGoUsage = "usage: bench gate-go <gofmt|test|race|conformance-suite> [root]"
 
@@ -177,17 +168,17 @@ func raceStep(root string, stdout, stderr io.Writer) int {
 	var seen bytes.Buffer
 	argv := []string{"go", "test", "-race", "-count=1", "-v"}
 	for _, test := range raceTests {
-		if !contains(argv, test.packagePath) {
-			argv = append(argv, test.packagePath)
+		if !contains(argv, test.PackagePath) {
+			argv = append(argv, test.PackagePath)
 		}
 	}
 	argv = append(argv, "-run", raceTestFilter())
 	code := runStep(root, argv, io.MultiWriter(stdout, &seen), stderr)
 	for _, test := range raceTests {
-		if strings.Contains(seen.String(), "=== RUN   "+test.name) {
+		if strings.Contains(seen.String(), "=== RUN   "+test.Name) {
 			continue
 		}
-		fmt.Fprintf(stderr, "race test did not run: %s %s\n", test.packagePath, test.name)
+		fmt.Fprintf(stderr, "race test did not run: %s %s\n", test.PackagePath, test.Name)
 		code = 1
 	}
 	return code
@@ -196,7 +187,7 @@ func raceStep(root string, stdout, stderr io.Writer) int {
 func raceTestFilter() string {
 	names := make([]string, 0, len(raceTests))
 	for _, test := range raceTests {
-		names = append(names, regexp.QuoteMeta(test.name))
+		names = append(names, regexp.QuoteMeta(test.Name))
 	}
 	return "^(" + strings.Join(names, "|") + ")$"
 }
@@ -212,7 +203,7 @@ func contains(values []string, want string) bool {
 
 func declaresRaceTest(root string) bool {
 	for _, test := range raceTests {
-		if declaresTest(filepath.Join(root, filepath.FromSlash(test.packagePath)), test.name) {
+		if declaresTest(filepath.Join(root, filepath.FromSlash(test.PackagePath)), test.Name) {
 			return true
 		}
 	}

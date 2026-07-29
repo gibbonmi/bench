@@ -6,7 +6,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/racetests"
 )
+
+const raceTestsMarker = "RACE_TESTS"
 
 type fixtureMutation struct {
 	Path string `json:"path"`
@@ -36,6 +40,20 @@ func materializeMutationFixture(root, fixture, dst string) error {
 	if info, err := os.Stat(filesDir); err == nil && info.IsDir() {
 		if err := materialize(filesDir, dst); err != nil {
 			return err
+		}
+	}
+	if regularFile(filepath.Join(dst, raceTestsMarker)) {
+		if err := os.Remove(filepath.Join(dst, raceTestsMarker)); err != nil {
+			return err
+		}
+		for rel, source := range racetests.SyntheticSources() {
+			path := filepath.Join(dst, filepath.FromSlash(rel))
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				return err
+			}
+			if err := os.WriteFile(path, []byte(source), 0o644); err != nil {
+				return err
+			}
 		}
 	}
 	mutatePath := filepath.Join(fixture, "MUTATE.json")

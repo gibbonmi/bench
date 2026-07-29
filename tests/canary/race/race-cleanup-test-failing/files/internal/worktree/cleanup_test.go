@@ -1,6 +1,7 @@
 package worktree
 
 import (
+	"os"
 	"sync"
 	"testing"
 )
@@ -11,12 +12,7 @@ import (
 // window.
 var recorded []string
 
-// The race phase probes for a registered declaration before it materializes, and its
-// -run filter exits 0 on a package that never declares it, so the fixture has to carry
-// the real name. The assertion itself passes: the plain test phase runs this same test
-// without -race and has to stay green there, or the fixture would bite from a phase that
-// does not own it and the race phase could be deleted unnoticed.
-func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
+func TestMain(m *testing.M) {
 	var wg sync.WaitGroup
 	for range 2 {
 		wg.Add(1)
@@ -27,6 +23,7 @@ func TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {
 	}
 	wg.Wait()
 	if len(recorded) == 0 {
-		t.Fatal("no cleanup transaction was recorded")
+		panic("no cleanup transaction was recorded")
 	}
+	os.Exit(m.Run())
 }
