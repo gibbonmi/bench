@@ -1,6 +1,6 @@
 # ft91-artifact-hoist — package-scoped prepared-artifact set
 
-Status: staged
+Status: implemented
 
 ## Problem
 

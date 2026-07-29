@@ -2,33 +2,29 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `89a6474`, clean tree, 5 unpushed commits
-Spec: none staged.
-Gate: green at `2aab503` — current
+Branch: `main` — HEAD `4016db5`, dirty handoff plus unrelated untracked gate assessment, 7 unpushed commits
+Spec: `specs/ft91-artifact-hoist/spec.md` (Status: staged)
+Gate: green for `4016db5` — final spec-closing gate pending
 
 ## State
 
-- **The 2026-07-29 what-next pass is committed at `09b8fd0` (drain) plus two
-  gated kit commits.** Ideas, journal, and retros are all at zero. The drain:
-  FT135 gained the `bench link` symlink-refusal face; FT98 counts re-measured;
-  FT97 merged into FT128; FT150 folded into FT141; false-green, load-red, and
-  standards-debt theme sections added; sequence reordered fixes-first. The kit
-  commits shipped FT137 (its row is gone): `/bench-what-next` now classifies
-  every row fix/feature/decision-only on every run, and the board-restructuring
-  pass is opt-in via `--restructure`. Decisions in those commits stay closed.
-
-- **Flagged for post-hoc veto:** FT91's hoist grill dropped out of the
-  recommended sequence's top three under the reviewer's fixes-first
-  instruction; the row itself stays HIGH.
-
-- **This repo's pre-push hook was refreshed by hand-copy from the current
-  template** after `bench link` refused to converge the kit repo (symlink
-  parent conflict, now FT135's third face). `bench guards` reports the full
-  manifest.
+- **FT91 implementation and semantic review are complete through three green
+  ticket commits.**
+  `8d074d3` adds the package-scoped lazy artifact set, belts, probes, helper,
+  cleanup, and six consumer migrations. `187bc36` records the post-hoist
+  measurements and the ≤60-second stop-rule miss. `4016db5` single-sources the
+  shared-set count and makes the read-only belt capability-honest under UID 0.
+- **Fresh semantic review ran on `gpt-5.6-sol`, high reasoning, fast yolo.**
+  Standards and coverage findings above were repaired and re-gated; Spec had no
+  findings. Its FIFO build-log-path observation remains a contestable judgment
+  for reviewer veto, not an applied change.
+- **Closed decisions stay closed.** Non-sharers retain private builds; production
+  artifact scripts remain untouched; the separately scoped oracle-semantics work
+  triggered by the 133–142-second result is not part of FT91.
 
 ## Next command
 
-`/bench-implement-spec` — FT163 via the light path.
+`$bench-final-check specs/ft91-artifact-hoist/spec.md`
 
 ## Shape
 
