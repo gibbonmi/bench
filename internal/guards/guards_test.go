@@ -148,7 +148,7 @@ func TestGuardRowRejectsFIFOWithoutOpening(t *testing.T) {
 	if out, err := exec.Command("mkfifo", fifo).CombinedOutput(); err != nil {
 		t.Fatalf("mkfifo: %v: %s", err, out)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 750*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestGuardRowRejectsFIFOWithoutOpening$")
 	cmd.Env = append(os.Environ(), "BENCH_TEST_GUARD_FIFO="+fifo)

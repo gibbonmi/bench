@@ -90,15 +90,25 @@ func TestPhaseTableKitOnlyPhasesProbe(t *testing.T) {
 	writeFile(t, filepath.Join(raceRoot, "go.mod"), "module fixture\n")
 	writeFile(t, filepath.Join(raceRoot, "internal", "worktree", "cleanup_test.go"),
 		"package worktree\n\nimport \"testing\"\n\nfunc TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {}\n")
+	writeFile(t, filepath.Join(raceRoot, "internal", "guards", "guards_test.go"),
+		"package guards\n\nimport \"testing\"\n\nfunc TestScanTimeoutPreservesPartialRowsAndHonestCounts(t *testing.T) {}\n\nfunc TestScanEnumerationTimeoutUsesUnknownCounts(t *testing.T) {}\n")
 	race, ok := phaseNamed(BenchkitPhases(raceRoot, kit), "race")
 	if !ok {
-		t.Fatalf("race phase absent for a root carrying the cleanup race test")
+		t.Fatalf("race phase absent for a root carrying every race test")
 	}
 	if want := GateGoArgv(kit, "race", raceRoot); !reflect.DeepEqual(race.Argv, want) {
 		t.Fatalf("race argv = %#v, want %#v", race.Argv, want)
 	}
 	if len(race.Needs) != 0 {
 		t.Fatalf("race needs = %#v, want none", race.Needs)
+	}
+
+	missingRaceTestRoot := t.TempDir()
+	writeFile(t, filepath.Join(missingRaceTestRoot, "go.mod"), "module fixture\n")
+	writeFile(t, filepath.Join(missingRaceTestRoot, "internal", "worktree", "cleanup_test.go"),
+		"package worktree\n\nimport \"testing\"\n\nfunc TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {}\n")
+	if _, ok := phaseNamed(BenchkitPhases(missingRaceTestRoot, kit), "race"); !ok {
+		t.Fatal("race phase absent when registered guards tests are missing")
 	}
 
 	// An internal/worktree package that never declares the target test is not a race
@@ -163,9 +173,9 @@ func TestPhaseProbesReadSyntaxNotBytes(t *testing.T) {
 	raceRoot := t.TempDir()
 	writeFile(t, filepath.Join(raceRoot, "go.mod"), "module fixture\n")
 	writeFile(t, filepath.Join(raceRoot, "internal", "worktree", "mention_test.go"),
-		fmt.Sprintf(mention, "worktree", cleanupRaceTest, cleanupRaceTest))
+		fmt.Sprintf(mention, "worktree", raceTests[0].name, raceTests[0].name))
 	if _, ok := phaseNamed(BenchkitPhases(raceRoot, "/tmp/kit"), "race"); ok {
-		t.Errorf("race phase materialized for a package that only mentions %s", cleanupRaceTest)
+		t.Errorf("race phase materialized for a package that only mentions %s", raceTests[0].name)
 	}
 
 	suiteRoot := t.TempDir()

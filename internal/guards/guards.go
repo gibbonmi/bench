@@ -178,6 +178,7 @@ func Scan(ctx context.Context, root string) ScanResult {
 		}
 		candidates = result.candidates
 	case <-ctx.Done():
+		<-enumerated
 		return ScanResult{Status: "incomplete", Inspected: "0", Total: "unknown", Omitted: "unknown", Reason: "timeout"}
 	}
 	var rows [][]string
@@ -190,6 +191,7 @@ func Scan(ctx context.Context, root string) ScanResult {
 			inspected++
 			rows = append(rows, candidateRows...)
 		case <-ctx.Done():
+			<-finished
 			return ScanResult{Rows: rows, Status: "incomplete", Inspected: strconv.Itoa(inspected), Total: strconv.Itoa(len(candidates)), Omitted: strconv.Itoa(len(candidates) - inspected), Reason: "timeout"}
 		}
 	}

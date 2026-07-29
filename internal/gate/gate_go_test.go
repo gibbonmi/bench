@@ -124,9 +124,16 @@ func TestGateGoRaceRequiresTheTestToRun(t *testing.T) {
 	writeGateGoFile(t, filepath.Join(unrun, "go.mod"), "module fixture\n\ngo 1.25\n")
 	writeGateGoFile(t, filepath.Join(unrun, "internal", "worktree", "worktree_test.go"),
 		"package worktree\n\nimport \"testing\"\n\nfunc TestSomethingElse(t *testing.T) {}\n")
+	writeGateGoFile(t, filepath.Join(unrun, "internal", "guards", "guards_test.go"),
+		"package guards\n\nimport \"testing\"\n\nfunc TestSomethingElse(t *testing.T) {}\n")
 	code, stdout, stderr := runGateGo(t, "race", unrun)
 	if code != 1 {
 		t.Fatalf("race rc = %d when the target test never ran, want 1; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	for _, test := range raceTests {
+		if !strings.Contains(stderr, "race test did not run: "+test.packagePath+" "+test.name) {
+			t.Fatalf("missing named-test diagnostic for %s; stdout=%q stderr=%q", test.name, stdout, stderr)
+		}
 	}
 
 	// The green side, with the target test emitting output of its own: the step taps
@@ -136,11 +143,18 @@ func TestGateGoRaceRequiresTheTestToRun(t *testing.T) {
 	writeGateGoFile(t, filepath.Join(ran, "go.mod"), "module fixture\n\ngo 1.25\n")
 	writeGateGoFile(t, filepath.Join(ran, "internal", "worktree", "worktree_test.go"),
 		"package worktree\n\nimport (\n\t\"fmt\"\n\t\"os\"\n\t\"testing\"\n)\n\nfunc TestConcurrentCleanupRecordsOneTransaction(t *testing.T) {\n\tfmt.Fprintln(os.Stderr, \"cleanup noise\")\n}\n")
+	writeGateGoFile(t, filepath.Join(ran, "internal", "guards", "guards_test.go"),
+		"package guards\n\nimport \"testing\"\n\nfunc TestScanTimeoutPreservesPartialRowsAndHonestCounts(t *testing.T) {}\n\nfunc TestScanEnumerationTimeoutUsesUnknownCounts(t *testing.T) {}\n")
 	code, stdout, stderr = runGateGo(t, "race", ran)
 	if code != 0 {
 		t.Fatalf("race rc = %d when the target test ran and passed, want 0; stdout=%q stderr=%q", code, stdout, stderr)
 	}
-	if !strings.Contains(stdout, "=== RUN   "+cleanupRaceTest) || !strings.Contains(stdout, "cleanup noise") {
+	for _, test := range raceTests {
+		if !strings.Contains(stdout, "=== RUN   "+test.name) {
+			t.Fatalf("race step did not run %s; stdout=%q stderr=%q", test.name, stdout, stderr)
+		}
+	}
+	if !strings.Contains(stdout, "cleanup noise") {
 		t.Fatalf("race step swallowed the tool's output; stdout=%q stderr=%q", stdout, stderr)
 	}
 }

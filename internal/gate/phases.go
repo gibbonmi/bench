@@ -141,7 +141,7 @@ func toolchainPhases(root, kit string) []Phase {
 		{Name: canary.PhaseVet, Argv: []string{"go", "-C", root, "vet", "./..."}},
 		{Name: canary.PhaseTest, Argv: GateGoArgv(kit, "test", root)},
 	}
-	if declaresTest(filepath.Join(root, "internal", "worktree"), cleanupRaceTest) {
+	if declaresRaceTest(root) {
 		phases = append(phases, Phase{Name: canary.PhaseRace, Argv: GateGoArgv(kit, "race", root)})
 	}
 	if declaresTest(conformancePackageDir(root), registry.RootConformanceTest) {

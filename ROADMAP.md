@@ -180,28 +180,6 @@ skill, gate, or process prose), and expected effect; today those finds are
 incidental. Kit edit under the `craft-synthesis` discipline. Sources: the
 craft-tickets retro, drained here; `.bench/learnings.md`, verdicted here.
 
-**FT116 (MEDIUM) — data races in `guards.Scan` the gate cannot see.** Running
-`internal/guards` under `-race` fails three tests on `main`:
-`TestScanTimeoutPreservesPartialRowsAndHonestCounts` and
-`TestScanEnumerationTimeoutUsesUnknownCounts` hit genuine data races inside
-`guards.Scan`, and `TestGuardRowRejectsFIFOWithoutOpening` carries a 750ms
-subprocess deadline too tight for a race-instrumented binary. The gate runs
-`go test` without `-race`, so it never observes them; the races are
-pre-existing, found while attributing a delegate's red during the FT87 slice 3
-build. Two halves: fix the `guards.Scan` races, and decide whether the gate
-should run `-race` on a subset so this class stays caught — the second half is a
-gate-authoring reviewer decision (`craft-gate`).
-
-The race is now attributed, and the row's stakes rose. `guards.Scan` leaks its
-`enumerateGuards` goroutine past the `ctx.Done()` return (`guards.go:169-170`,
-187), and the abandoned goroutine races the next test — confirmed 2026-07-26
-with `go test -race -count=1 ./internal/guards`. FT91's new ship tier found it
-on its first real run, which is the tier split working as designed; the leak
-blocks a green `bench prep-release` on any host, alongside the
-govulncheck-not-installed gap carried on FT142. Fix shape: `Scan` must not
-leave `enumerateGuards` running after the timeout path returns. Source:
-`IDEAS.md`, drained here.
-
 **FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
 The ft91-gate-tier-split semantic review found twelve; three closed before
 merge (the ship canary tier pin, the untiered-registry assertion, the
@@ -1446,9 +1424,5 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT116's race fix via the light path: stop
-   `guards.Scan` leaking `enumerateGuards` past the timeout return; it blocks
-   any green `bench prep-release`, and the `-race`-in-gate half is the
-   `craft-gate` reviewer decision to take at the same visit.
-2. `/bench-implement-spec` — the small-fix batch: FT149, FT151, and FT139 as
+1. `/bench-implement-spec` — the small-fix batch: FT149, FT151, and FT139 as
    three independently-green light-path tickets.

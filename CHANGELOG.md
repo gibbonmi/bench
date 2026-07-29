@@ -58,6 +58,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- Made `bench guards` finish timed-out scan workers before returning, and kept
+  its timeout races under the dev gate's race check.
 - Made `bench gate` treat help and invalid arguments as usage without starting
   the oracle or replacing gate evidence.
 - Included committed, staged, and tracked working-tree changes in branch-relative

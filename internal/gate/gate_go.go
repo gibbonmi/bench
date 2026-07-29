@@ -13,6 +13,8 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
@@ -20,9 +22,18 @@ import (
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
-// cleanupRaceTest is the one test the race step runs: the concurrent-cleanup
-// transaction is the only place a data race would be silent under the ordinary suite.
-const cleanupRaceTest = "TestConcurrentCleanupRecordsOneTransaction"
+type raceTest struct {
+	packagePath string
+	name        string
+}
+
+// raceTests names the regression tests that need race instrumentation because the
+// ordinary suite cannot observe their concurrent failure modes.
+var raceTests = []raceTest{
+	{packagePath: "./internal/worktree", name: "TestConcurrentCleanupRecordsOneTransaction"},
+	{packagePath: "./internal/guards", name: "TestScanTimeoutPreservesPartialRowsAndHonestCounts"},
+	{packagePath: "./internal/guards", name: "TestScanEnumerationTimeoutUsesUnknownCounts"},
+}
 
 const gateGoUsage = "usage: bench gate-go <gofmt|test|race|conformance-suite> [root]"
 
@@ -156,24 +167,56 @@ func coreTestStep(root string, stdout, stderr io.Writer) int {
 	return runStep(root, append([]string{"go", "test"}, packages...), stdout, stderr)
 }
 
-// raceStep reds when the target test did not execute, not only when it failed: the
-// `-run` filter exits 0 when it matches nothing, so the `=== RUN` line is the only
-// thing separating a pass from a test that was never there. Only stdout is captured,
+// raceStep reds when a target test did not execute, not only when one failed: the
+// `-run` filter exits 0 when it matches nothing, so each `=== RUN` line separates a
+// pass from a test that was never there. Only stdout is captured,
 // where `go test -v` writes that line: tapping both streams would hand exec.Cmd two
 // distinct writers over one buffer, and its per-stream copying goroutines would race
 // on it.
 func raceStep(root string, stdout, stderr io.Writer) int {
 	var seen bytes.Buffer
-	argv := []string{"go", "test", "-race", "-count=1", "-v", "./internal/worktree", "-run", "^" + cleanupRaceTest + "$"}
+	argv := []string{"go", "test", "-race", "-count=1", "-v"}
+	for _, test := range raceTests {
+		if !contains(argv, test.packagePath) {
+			argv = append(argv, test.packagePath)
+		}
+	}
+	argv = append(argv, "-run", raceTestFilter())
 	code := runStep(root, argv, io.MultiWriter(stdout, &seen), stderr)
-	if code != 0 {
-		return code
+	for _, test := range raceTests {
+		if strings.Contains(seen.String(), "=== RUN   "+test.name) {
+			continue
+		}
+		fmt.Fprintf(stderr, "race test did not run: %s %s\n", test.packagePath, test.name)
+		code = 1
 	}
-	if !strings.Contains(seen.String(), "=== RUN   "+cleanupRaceTest) {
-		fmt.Fprintln(stderr, "worktree cleanup race test did not run: "+cleanupRaceTest)
-		return 1
+	return code
+}
+
+func raceTestFilter() string {
+	names := make([]string, 0, len(raceTests))
+	for _, test := range raceTests {
+		names = append(names, regexp.QuoteMeta(test.name))
 	}
-	return 0
+	return "^(" + strings.Join(names, "|") + ")$"
+}
+
+func contains(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
+}
+
+func declaresRaceTest(root string) bool {
+	for _, test := range raceTests {
+		if declaresTest(filepath.Join(root, filepath.FromSlash(test.packagePath)), test.name) {
+			return true
+		}
+	}
+	return false
 }
 
 func conformanceSuiteStep(root string, stdout, stderr io.Writer) int {
