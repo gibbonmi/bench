@@ -338,8 +338,8 @@ func implementedCommand(rest []string) (string, int) {
 }
 
 // retireCommand runs `bench spec retire <slug>`: on a merged-implemented spec it deletes
-// the review pickup (when present) then the complete folder spec, and prints what it removed plus the
-// judgment duties that remain. It never commits and never runs the gate — `bench commit`
+// the review pickup (when present), tickets, spec file, and complete folder, and prints what it removed
+// plus the judgment duties that remain. It never commits and never runs the gate — `bench commit`
 // owns commit discipline. Every unsafe input refuses at exit 1 without deleting anything: a
 // spec that is not merged-implemented (staged, or implemented only in the working tree and
 // not yet at HEAD), an unknown slug, or an orphaned review pickup with no spec.
@@ -379,8 +379,8 @@ func retireCommand(rest []string) (string, int) {
 		return toon.Errorf("spec implemented in the working tree but not at HEAD: "+RelTo(base, resolved),
 			"commit the finishing flip before retiring") + "\n", 1
 	}
-	// Deletion order: review pickup first, then the spec, so an interrupt between the two
-	// leaves a valid spec that a re-run retires cleanly — never an orphaned review file.
+	// Deletion order leaves each recoverable interrupt state with a spec file, never an
+	// orphaned review pickup. Once the spec file is gone, remaining folder content is terminal.
 	var b strings.Builder
 	slug := slugOf(resolved)
 	if pickup := filepath.Join(base, "reviews", slug+".md"); fileExists(pickup) {
@@ -391,6 +391,12 @@ func retireCommand(rest []string) (string, int) {
 	}
 	if filepath.Base(resolved) == "spec.md" {
 		folder := filepath.Dir(resolved)
+		if err := os.RemoveAll(filepath.Join(folder, "tickets")); err != nil {
+			return b.String() + toon.Errorf(fmt.Sprintf("remove %s: %v", RelTo(base, filepath.Join(folder, "tickets")), err), "check file permissions") + "\n", 1
+		}
+		if err := os.Remove(resolved); err != nil {
+			return b.String() + toon.Errorf(fmt.Sprintf("remove %s: %v", RelTo(base, resolved), err), "check file permissions") + "\n", 1
+		}
 		if err := os.RemoveAll(folder); err != nil {
 			return b.String() + toon.Errorf(fmt.Sprintf("remove %s: %v", RelTo(base, folder), err), "check file permissions") + "\n", 1
 		}
@@ -462,7 +468,7 @@ func fileExists(path string) bool {
 	return err == nil && !fi.IsDir()
 }
 
-// RelTo renders path repo-relative to base for a stable `retired: specs/<slug>.md` line,
+// RelTo renders path repo-relative to base for stable command output,
 // falling back to the path verbatim when base is empty or path lies outside base. It is
 // the one source of that rendering, so a resolved spec reads the same from any cwd and
 // never leaks the machine's directory layout into agent-facing output.
