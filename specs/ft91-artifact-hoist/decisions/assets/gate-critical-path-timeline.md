@@ -1,4 +1,18 @@
-# Gate critical-path timeline (2026-07-28)
+# Gate critical-path timeline (2026-07-29)
+
+## Post-artifact-hoist measurement (2026-07-29)
+
+Subject commit `8d074d3974413befd7fb1bf889f0f94867f5a14d`.
+The artifact package was measured fresh with
+`/usr/bin/time -p go test -count=1 ./internal/contract/surface/artifact`;
+the package passed in **108.66 s** wall time (`ok` line: 103.482 s).
+The successful path-scoped commit gate for the same subject took approximately
+**135.3 s** wall time with every phase green; its artifact contract-package
+line was **123.289 s** under gate load.
+
+The FT91 stop rule is a **miss**: the full dev gate remains above **60 s**.
+The trigger for separately scoped oracle-semantics decision and ticketing work
+has therefore fired; that capability remains outside this artifact-hoist slice.
 
 ## Post-stage-2 measurement (2026-07-28, ft91-canary-compiled-bites built)
 
