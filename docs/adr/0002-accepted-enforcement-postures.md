@@ -39,20 +39,27 @@ it does not have is worse than silence.
    whose closed branch is the one that mattered. Reopens on evidence that a
    residual rim is exploited as a silent-escalation path.
 
-5. **The gated commit reuses only a fresh green verdict for the same closed
-   oracle subject; every other consumer observes the verdict without granting
-   authority.** The subject binds the working tree, resolved oracle, execution
-   policy, and every project-declared environment, path, and tool input. Gate
-   execution serializes on one lock, durably replaces any older verdict with a
-   pending record before running that exact subject, and atomically records the
-   final ready verdict only if the subject remains unchanged. An open subject
-   can run and report diagnostics but cannot authorize reuse; stale, red,
-   pending, invalid, unavailable, or mismatched state pays a real gate run or
-   fails closed. Accepted because re-judging an identical closed subject buys
-   no correctness for the gate's full cost, while subject binding and durable
-   invalidation prevent an older green from authorizing changed or interrupted
-   work. Reopens on evidence that a reused verdict authorized a commit the gate
-   would have refused.
+5. **Gate execution — and through it the gated commit — reuses only a fresh
+   green verdict for the identical closed oracle subject; every other consumer
+   observes the verdict without granting authority.** The subject binds the
+   working tree, resolved oracle, execution policy, and every project-declared
+   environment, path, and tool input. Gate execution serializes on one lock; a
+   subject that still holds a fresh green under that lock is answered from the
+   record without a write, so reuse never slides its own freshness window. Any
+   other state durably replaces the older verdict with a pending record before
+   running that exact subject and atomically records the final ready verdict
+   only if the subject remains unchanged. An open subject can run and report
+   diagnostics but cannot authorize reuse; stale, red, pending, invalid,
+   unavailable, or mismatched state pays a real gate run or fails closed. One
+   residual rides the closure: shellcheck, an optional phase, is deliberately
+   undeclared in the subject, because declaring it would open the subject on
+   every host that legitimately lacks it and silently disable reuse there — so
+   an in-place shellcheck upgrade inside the freshness window can hide behind
+   a reused green. Accepted because re-judging an identical closed subject
+   buys no correctness for the gate's full cost, while subject binding and
+   durable invalidation prevent an older green from authorizing changed or
+   interrupted work. Reopens on evidence that a reused verdict authorized a
+   commit the gate would have refused.
 
 6. **Canary coverage is family-level.** The tripwire proves one planted needle
    per check family still bites; it does not plant a needle per individual
