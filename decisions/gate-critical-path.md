@@ -47,7 +47,18 @@ is made against facts. Deliverable: a bucketed inventory asset with per-claim
 citations.
 
 ### Answer
-— (open)
+Resolved 2026-07-29; full inventory with per-claim citations in
+`decisions/assets/artifact-test-inventory.md`. Load-bearing facts: the
+prepared seam copies rather than consumes (`build-artifacts.sh:110` `cp -a`),
+so a prepared set is read-only input; no test in the package calls
+`t.Parallel`, so sharing faces ordering hazards only; `TestMain` puts the
+package on the shared-cache posture and posture tests strip it per row; the
+hermetic default is a double generation; the missing-pin refusal fires after
+the build matrix, so that test pays a full generation before refusing. Up to
+7 of ~17 generation passes are host-only builds of the identical recipe and
+collapse to one shared set; non-collapsible by subject: 4 hermetic
+double-build passes, 3 GOPROXY-off passes, 2 stale-record passes, and
+`TestDistributableArtifactContracts`' unique host+non-host shape.
 
 ## #3: Which tests may share one package-scoped prepared artifact set?
 
@@ -62,7 +73,27 @@ takes, and the fail posture when a test in the sharing group mutates the
 shared set.
 
 ### Answer
-— (open)
+Resolved 2026-07-29 (reviewer). **Who shares:** the inspection/consumption
+tests (`TestArtifactSourceStagesCommittedHostPlan`,
+`TestSharedCacheBuildPromotesNoRecord`, `TestOfflineArchiveProjection`,
+`TestPackedArtifactRunsSetupOfflineFromASpacedPrefix`) plus the two
+prepared-seam promotion tests (`TestArtifactPromotionIsAtomicAndExclusive`,
+`TestSharedCacheBuildRestoresRecordOnInterruptedPromotion`) share one
+package-scoped host-only set. Posture tests (hermetic, GOPROXY-off,
+stale-record), refusal tests, and `TestDistributableArtifactContracts`'
+host+non-host build stay private — their build is the subject.
+`TestArtifactBuilderRefusesMissingBinaryPinManifest` joins only if the seam
+still reaches the pin check; otherwise it stays private. **Seam shape:** a
+lazy in-package singleton — first requester stages the host-narrowed
+committed clone and runs one real shared-cache build, exposing the staged
+source and promoted output read-only; prepared-seam tests use the output as
+their prepared input; nothing builds when no sharer is selected; fresh per
+`go test` invocation, so no cross-run staleness and no contact with the
+parked verdict-caching levers. **Fail posture:** both belts — the set is
+chmod'd read-only after generation so a mutator fails at write time with
+attribution, and a digest fingerprint recorded at build is re-verified before
+each consumer use, failing loud as "shared artifact set mutated" (the digest
+helper exists: `promotedArtifactDigests`).
 
 ## #4: Does `decisions/gate-pipeline.md` reopen, and what happens to `ft91-gate-phase-split` stories 4, 5, and 9?
 
@@ -164,69 +195,60 @@ cleanup.
 
 ## Handoff
 
-Rewritten 2026-07-28 for stage 2 (#7) after stage 1 shipped and was measured;
-#2/#3 stay open and gate only the artifact-hoist slice.
+Rewritten 2026-07-29 for the artifact-hoist slice after stages 1 and 2
+shipped (their decisions stay recorded in #6 and #7); #2/#3 are closed and
+this is the map's last open slice before the #5 re-measurement.
 
-1. **Module boundaries.** `internal/canary` owns the whole stage-2 change:
-   the behavior-owned family's run mode becomes compile-then-invoke instead of
-   nested-gate spawn, keeping the existing walk, the subfamily package binding,
-   and per-package vacuity baseline grouping. `internal/gate` **loses** the
-   inner-mode contract-phase argv narrowing and its env plumbing, which stage 2
-   deletes. The `internal/contract` packages are untouched except where an
-   EXPECT proves unobservable in test-level output, where the fix is that
-   owning test's failure message. `tests/canary/behavior-owned/<package
-   path>/<fixture>/` stays the binding — data, no second file. `internal/bounds`
-   untouched.
-2. **Contracts.** Per package group: one `go test -c` producing a binary, then
-   one invocation of that binary per fixture root with `BENCH_CONTRACT_ROOT`
-   set to the mutated tree, plus one baseline invocation on the unmutated tree.
-   A compile failure for a group is a red naming the package, never a skipped
-   group. EXPECT, bite, did-not-bite, and vacuity semantics unchanged; canary
-   and gate exit codes unchanged. The contract-package env disappears as an
-   external contract along with the inner-gate narrowing.
-3. **Deep vs thin.** The sweep (walk, group resolution, compile, per-fixture
-   invocation, baseline grouping) stays the deep unit behind the injected
-   `Runner` seam. The compile step and per-root env are thin plumbing inside it.
-4. **Black-box assertables.** Via a fake `Runner`: one compile call per package
-   group present; one invocation per fixture carrying that group's binary and
-   its own `BENCH_CONTRACT_ROOT`; no call carrying the canary inner-gate mode
-   for this family; baseline invocation count equals the group count; a failed
-   compile surfaces as that group's red. Via the gate's phase-table tests: the
-   contract phase's argv is the unnarrowed subtree in every mode, and an ambient
-   export of the retired env changes nothing.
-5. **Gate attachment.** The canary sweep still enforces bite and vacuity per
-   fixture; the kit's own suites run in the gate's test and conformance-suite
-   phases. The red-test → red-phase → red-gate path is asserted once by the
-   gate's own phase tests. The wall-clock outcome is not gate-assertable — ship
-   evidence is the post-change measurement recorded in
-   `assets/gate-critical-path-timeline.md`, with no threshold gating the slice.
-6. **Hostile-input owners.** Missing or empty subfamily binding directory → the
-   walk, red (empty-CHECK precedent). A bound package the kit tree lacks → the
-   group resolver at compile time, red naming it. Ambient export of the retired
-   contract-package env → inert, asserted by the phase-table test. A fixture
-   root that fails to materialize → the sweep, red, never a silent skip.
-7. **Uncertainty flags.** None blocking stage 2. Compiled-binary location and
-   cleanup are spec-time within the decided shape.
-8. **Rejected alternatives.** Per-package registry of parameterized subtests
-   (duplicates the test list, forces `t.Setenv`, kills `t.Parallel`); plain
-   `go test -run` per fixture with no pre-compile (re-pays link per fixture);
-   folding the bites into the contract phase and dropping the family from
-   canary; a hybrid family keeping nesting for gate-framed EXPECTs; keeping the
-   now-callerless inner-mode narrowing; a wall-clock threshold gating the slice;
-   resequencing the artifact hoist ahead of stage 2.
-9. **Domain watch-outs.** `SubjectRoot` reads `BENCH_CONTRACT_ROOT` per call, so
-   one process cannot serve two roots — the per-fixture process is load-bearing,
-   not incidental. Go's exec env has no duplicate-key precedence: every pin
-   strips-then-sets. The vacuity baseline must run the identical shape as its
-   group's fixtures or the scoped-vs-scoped comparison silently breaks. Fixture
-   base names are globally unique across all families. The five
-   `surface/artifact` fixtures each pay a full artifact suite; that multiplier
-   survives stage 2 by design and is the hoist's target.
+1. **Module boundaries.** The whole change is test-harness work inside
+   `internal/contract/surface/artifact`: a package-scoped lazy singleton
+   helper owning the staged host-narrowed clone and its one real build, plus
+   the sharer migrations. `scripts/build-artifacts.sh` untouched — the
+   existing prepared seam (`cp -a`, copy-not-consume) already serves.
+   Production packages untouched.
+2. **Contracts.** The helper: first requester stages one host-narrowed
+   committed clone and runs one real shared-cache build; it exposes the
+   staged source root, the promoted output dir, and the build fingerprint,
+   all read-only; later requesters reuse; no requester selected → no build.
+   The six ruled sharers (#3) consume it; a verify-before-use check reds with
+   a failure naming the shared set as mutated, never a downstream assertion.
+3. **Deep vs thin.** The singleton (staging, build, chmod, fingerprint,
+   verify) is the deep unit; per-test verify-and-consume calls are thin.
+4. **Black-box assertables.** All six sharers pass against the shared set; a
+   deliberate probe that writes into the shared set produces the named
+   mutation red, not a downstream failure; a `-run` selecting only
+   fabricated-fixture tests invokes no build; suite time drop recorded in
+   `assets/gate-critical-path-timeline.md`.
+5. **Gate attachment.** The gate's contract phase runs the package as today;
+   no new gate check. Wall-clock is not gate-assertable — ship evidence is
+   the post-change measurement, and #5's ≤60 s rule is judged on the full
+   re-measure after this slice lands.
+6. **Hostile-input owners.** A sharer mutating the set → write-time chmod red
+   or the fingerprint verify, attributed to the set. A chmod or fingerprint
+   failure at build → the helper, red, fail closed. A test needing a
+   different plan shape → private build by ruling, never a widened shared
+   set. The pin-manifest refusal test → private unless the spec shows the
+   seam reaches the pin check.
+7. **Uncertainty flags.** Only the `TestArtifactBuilderRefusesMissingBinaryPinManifest`
+   membership: the prepared seam today skips packing, so the pin check is
+   unreachable through it; joining would need a narrower prepared-binaries
+   seam in the production script, which crosses boundary 1 — recommend it
+   stays private, spec decides with that constraint stated.
+8. **Rejected alternatives.** Seam-tests-only minimal sharing; a host+non-host
+   shared shape folding `TestDistributableArtifactContracts` (drifts every
+   host-only consumer's assertions); a `TestMain` up-front build (pays on
+   every `-run`); an on-disk tree-hash cache (cross-run staleness — the
+   parked oracle-semantics territory); convention-only mutation posture.
+9. **Domain watch-outs.** The prepared seam copies (`cp -a`), so a prepared
+   set is reusable input. No test in the package calls `t.Parallel`;
+   introducing it changes the hazard analysis from ordering to races.
+   `TestMain` sets the shared-cache posture package-wide — the shared build
+   inherits it, and posture tests strip it and must never share. The five
+   `surface/artifact` canary fixtures each pay the whole suite, so the
+   per-suite saving multiplies about six-fold.
 
-Dependency order: stage 1 (#6, package-scoped nesting) — **shipped** → stage 2
-(#7, compile-once bites) → artifact hoist (pends #2/#3) → re-measure against
-the ≤60 s stop rule; oracle-semantics tickets only if the re-measure stays
-above.
+Dependency order: single spec — the hoist — then the full-gate re-measure
+against the ≤60 s stop rule (#5); oracle-semantics tickets only if the
+re-measure stays above.
 
 ## Not yet specified
 
