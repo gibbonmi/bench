@@ -16,3 +16,13 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
 - **What happened:** …
 - **Right behavior:** …
 - **Proposed rule change:** … (or "none")
+
+- 2026-07-29  Treated a session-opening venue directive ("I want this session to
+  build it with a codex reviewer") as a batch approval and entered
+  /bench-implement-spec right after emitting the spec approval table, without
+  waiting for sign-off. Right behavior: a directive that names the venue and
+  reviewer setup for a build is a plan for the session, not approval of a spec
+  that does not yet exist — spec sign-off stays a hard stop unless the reviewer
+  has approved a batch plan in terms that cover unseen specs ("roll the
+  roadmap"). Proposed rule: none needed; BENCH.md already states it — the miss
+  was classification, not a rule gap.

@@ -40,11 +40,13 @@ Sources: `RR:C-05`; `RC:H-03`.
 diff.** Raised from MEDIUM by the reviewer on 2026-07-25: the gate's length is
 the dominant cost of working on this repo for small changes, and the waiting is
 paid by a human. Eight arms have shipped, and the row is now governed by
-`decisions/gate-critical-path.md`, which owns wall-clock and carries the stop
+`specs/ft91-artifact-hoist/decisions/gate-critical-path.md` (compiled with the
+staged hoist spec), which owns wall-clock and carries the stop
 condition: **a measured full dev gate ≤60 s on this repo retires the row.**
 
 Where it stands, measured 2026-07-28 (16 cores, warm caches, idle box; method
-and citations in `decisions/assets/gate-critical-path-timeline.md`): full dev
+and citations in
+`specs/ft91-artifact-hoist/decisions/assets/gate-critical-path-timeline.md`): full dev
 gate **167.3 s** mean over three consecutive green runs, against 5m50s before
 the tier split. The wall is bound by the contract phase alone, and inside it by
 one package — `internal/contract/surface/artifact` at 140.9 s, with runtime
@@ -109,7 +111,8 @@ ruled out (contract and canary are behavior contracts with no file→test map);
 oracle: green must keep meaning the same thing, and any scoped verdict must be
 explicit evidence, never a silent skip.
 
-Entry: `/bench-shape-idea` on `decisions/gate-critical-path.md` #2 and #3.
+Entry: `/bench-shape-idea` on
+`specs/ft91-artifact-hoist/decisions/gate-critical-path.md` #2 and #3.
 Sources: `IDEAS.md`, drained across prior runs;
 `decisions/cost-follows-project-size.md`.
 

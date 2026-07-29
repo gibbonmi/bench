@@ -382,7 +382,8 @@ map; any change to the format is its own reviewer decision later.
 - Outer conformance/contract width capping — dormant unless contention
   flakes persist.
 - Removing canary nesting — clause transferred to
-  `decisions/gate-critical-path.md`, where it was reopened and ruled
+  `specs/ft91-artifact-hoist/decisions/gate-critical-path.md`, where it was
+  reopened and ruled
   (2026-07-28): behavior-owned bites move to the owning contract test.
 - The two interim defects on the FT91 row (`BENCH_CONFORMANCE_TIER` scrub
   symmetry, probe-output spill) — shape already decided there; build work,

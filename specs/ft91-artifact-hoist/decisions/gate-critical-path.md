@@ -21,7 +21,7 @@ critical path. Nobody has diagnosed the gap.
 
 ### Answer
 Measured 2026-07-28; full timeline, decomposition, and citations in
-`decisions/assets/gate-critical-path-timeline.md`. The gate is canary-bound end
+`assets/gate-critical-path-timeline.md`. The gate is canary-bound end
 to end: gate wall 267 s, canary solo 250 s, contract phase done at t+162. The
 34 `behavior-owned` fixtures route to the contract phase, so each inner gate
 re-runs the entire kit contract suite (`go test -count=1
@@ -48,7 +48,7 @@ citations.
 
 ### Answer
 Resolved 2026-07-29; full inventory with per-claim citations in
-`decisions/assets/artifact-test-inventory.md`. Load-bearing facts: the
+`assets/artifact-test-inventory.md`. Load-bearing facts: the
 prepared seam copies rather than consumes (`build-artifacts.sh:110` `cp -a`),
 so a prepared set is read-only input; no test in the package calls
 `t.Parallel`, so sharing faces ordering hazards only; `TestMain` puts the
