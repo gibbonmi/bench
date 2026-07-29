@@ -400,6 +400,37 @@ func checkWorkflowAnchors(root string) []string {
 	requireCollapsed(".agents/commands/bench-write-spec.md", "Whole-folder retirement removes the compiled maps and map-owned assets",
 		".agents/commands/bench-write-spec.md dropped the whole-folder compiled decision-map retirement")
 
+	requireCollapsed(".agents/commands/bench-final-check.md", "only after both the spec's landing gate and landing commit are green",
+		".agents/commands/bench-final-check.md dropped the after-green implementation-retro placement")
+	for _, section := range []string{
+		"## Outcome",
+		"## Gate-stage timings",
+		"## Ticket-versus-spec-slice and delegate performance",
+		"## Coordinator catches",
+		"## Agent-experience improvements",
+		"### Bench CLI",
+		"### Skills",
+		"### Process",
+	} {
+		requireCollapsed(".agents/commands/bench-final-check.md", section,
+			fmt.Sprintf(".agents/commands/bench-final-check.md dropped the required implementation-retro evidence section: %s", section))
+	}
+	requireCollapsed(".agents/commands/bench-final-check.md", "rewrite `.bench/retros/<spec-slug>.md` in full",
+		".agents/commands/bench-final-check.md dropped whole-file implementation-retro replacement")
+	requireCollapsed(".agents/commands/bench-final-check.md", "Do not run another gate or commit just to capture the retro",
+		".agents/commands/bench-final-check.md added an implementation-retro gate outside the normal cadence")
+	requireCollapsed(".bench/BENCH.md", "/bench-final-check` writes `.bench/retros/<spec-slug>.md`",
+		".bench/BENCH.md dropped the implementation-retro capture owner")
+
+	requireCollapsed(".agents/commands/bench-what-next.md", "The snapshot's `retros` bodies are the only retro evidence this run reads",
+		".agents/commands/bench-what-next.md dropped the roadmap-context retro drain source")
+	requireCollapsed(".agents/commands/bench-what-next.md", "merge into an existing roadmap row, a new roadmap row, a learning-or-rule disposition, or an explicit dismissal",
+		".agents/commands/bench-what-next.md dropped an implementation-retro recommendation disposition")
+	requireCollapsed(".agents/commands/bench-what-next.md", "remove every drained `.bench/retros/*.md` file in the same reviewer-approved batch",
+		".agents/commands/bench-what-next.md dropped the delete-all implementation-retro drain rule")
+	requireCollapsed(".bench/BENCH.md", "/bench-what-next` owns their reviewed drain",
+		".bench/BENCH.md dropped the implementation-retro drain owner")
+
 	// Verify hooks — the Roles verify rule's point-of-use pointers, one per phase
 	// command. Whole-file anchors by design: the three files hang their hooks on
 	// three different structures, so the gate proves presence and the review axis

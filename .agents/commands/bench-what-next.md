@@ -1,5 +1,5 @@
 ---
-description: Roadmap maintenance — reconcile ROADMAP.md against the tree, drain IDEAS.md and the learnings journal into it, refresh the recommended sequence, and propose the whole pass as one batch diff for reviewer approval. The single exit for parked ideas and open learnings. Maintenance, not a workflow phase.
+description: Roadmap maintenance — reconcile ROADMAP.md against the tree, drain IDEAS.md, implementation retros, and the learnings journal into it, refresh the recommended sequence, and propose the whole pass as one batch diff for reviewer approval. The single exit for parked ideas, pending retros, and open learnings. Maintenance, not a workflow phase.
 disable-model-invocation: true
 ---
 
@@ -8,10 +8,10 @@ disable-model-invocation: true
 ## Entry orientation
 
 This is the single roadmap-maintenance phase. `bench status` and `bench roadmap`
-point here whenever `IDEAS.md` has parked lines or `.bench/learnings.md` has open
-entries. One run reconciles the roadmap against the tree, drains both capture
-sources, refreshes the recommended sequence, and hands the reviewer one diff to
-approve.
+point here whenever `IDEAS.md` has parked lines, `.bench/learnings.md` has open
+entries, or `.bench/retros/` has pending implementation retros. One run
+reconciles the roadmap against the tree, drains all three capture sources,
+refreshes the recommended sequence, and hands the reviewer one diff to approve.
 
 At entry, invoke `bench roadmap --context` exactly once. Its successful schema-2
 snapshot is the complete local evidence for every step below. If the query fails,
@@ -21,9 +21,10 @@ different, partial input and is not a fallback.
 ## Exit handoff
 
 Close by reporting the reconcile verdicts (rows removed or reworded), the drained
-idea count, each journal verdict, and the refreshed sequence — with judgment
-calls flagged for veto. On approval, commit on green; the recommended next
-command is the top line of the refreshed `## Recommended sequence`.
+idea count, each retro recommendation disposition, each journal verdict, and the
+refreshed sequence — with judgment calls flagged for veto. On approval, commit
+on green; the recommended next command is the top line of the refreshed
+`## Recommended sequence`.
 
 ## 1. Reconcile first
 
@@ -42,7 +43,23 @@ already covers it, or a drop as already-triaged — and the parked-pending-evide
 tier is a valid destination for items awaiting a real trigger. No line stays
 parked in the inbox; partial drains would kill the empty-state trigger.
 
-## 3. Verdict the journal
+## 3. Drain implementation retros
+
+The snapshot's `retros` bodies are the only retro evidence this run reads; do
+not re-read the directory into a second, potentially different snapshot. For
+every actionable recommendation in every body, record one explicit disposition:
+merge into an existing roadmap row, a new roadmap row, a learning-or-rule
+disposition, or an explicit dismissal with one line of why. When a
+learning-or-rule disposition adds journal material, carry it immediately
+through the journal verdict step below so the run does not create a fresh open
+entry behind itself.
+
+After every recommendation has a disposition, remove every drained
+`.bench/retros/*.md` file in the same reviewer-approved batch. A partial retro
+drain is not allowed: the pending count must reach zero, and no source file is
+removed before its dispositions are present for review.
+
+## 4. Verdict the journal
 
 Read `.bench/learnings.md` itself, not just the open-entry count — a malformed
 entry still needs a verdict. Every open entry gets a verdict in the batch diff:
@@ -58,22 +75,22 @@ raw `git add` standing in for `bench commit`) proves nothing about the accused
 path: without the real repro, dismiss the entry as unreproduced, or re-park it
 with the missing repro named as its graduation trigger.
 
-## 4. Refresh the sequence
+## 5. Refresh the sequence
 
 Rewrite the `## Recommended sequence` section: two or three numbered lines, each
 naming the item and the phase command to run. This is the format contract
-`bench roadmap` extracts verbatim once both capture sources are empty — the CLI
+`bench roadmap` extracts verbatim once all capture sources are empty — the CLI
 does no judgment, so this section is where the judgment lands.
 
-## 5. Batch-propose, then commit on green
+## 6. Batch-propose, then commit on green
 
-Draft the full pass — reconciled roadmap, emptied inbox, journal verdicts
-including dismissals — as one uncommitted batch diff. The diff includes the
-run's concise `CHANGELOG.md` entry only when the pass changes notable user-facing
-behavior. The approved commit and Git history own reconcile verdicts, dismissed
-learnings, and promotion evidence; do not mirror that history in a second ledger.
-That diff is the verdict
-sheet: the reviewer approves or adjusts it once, and there are no per-item
-interactive sign-offs. On approval, commit on green. Never commit the drain
-without that approval; a standing batch approval (the AGENTS.md rule) counts,
-with contestable calls flagged for post-hoc veto.
+Draft the full pass — reconciled roadmap, emptied inbox, retro dispositions and
+removals, journal verdicts including dismissals — as one uncommitted batch diff.
+The diff includes the run's concise `CHANGELOG.md` entry only when the pass
+changes notable user-facing behavior. The approved commit and Git history own
+reconcile verdicts, dismissed learnings, and promotion evidence; do not mirror
+that history in a second ledger. That diff is the verdict sheet: the reviewer
+approves or adjusts it once, and there are no per-item interactive sign-offs. On
+approval, commit on green. Never commit the drain without that approval; a
+standing batch approval (the AGENTS.md rule) counts, with contestable calls
+flagged for post-hoc veto.

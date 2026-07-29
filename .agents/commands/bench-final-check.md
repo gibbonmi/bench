@@ -51,6 +51,43 @@ fire only on the default branch, and the next default-branch session's
 SessionStart status re-surfaces them — state the deferral in the close instead
 of silently skipping it.
 
+## Capture the implementation retro
+
+After the landing commit and any applicable post-merge tail complete, a
+spec-backed run has one last exit duty: rewrite
+`.bench/retros/<spec-slug>.md` in full. Do this only after both the spec's
+landing gate and landing commit are green. A re-run replaces that slug's whole
+file; it never appends, and it leaves other pending retros untouched.
+
+Use these headings exactly:
+
+```markdown
+## Outcome
+
+## Gate-stage timings
+
+## Ticket-versus-spec-slice and delegate performance
+
+## Coordinator catches
+
+## Agent-experience improvements
+
+### Bench CLI
+
+### Skills
+
+### Process
+```
+
+Record concrete evidence: what landed; elapsed time for each measured gate
+stage; how ticket-sized delegate charges performed against charges handed a
+spec slice; what the coordinator caught while accepting delegate claims; and
+specific improvements to Bench CLI, skills, and process, with the friction and
+expected effect named. This file is pending capture for `/bench-what-next`, not
+a second roadmap. Do not run another gate or commit just to capture the retro;
+the successful landing boundary is already the verdict, and the retro leaves
+through the next reviewer-approved capture drain.
+
 Run the gate and report. The gate is the oracle; this command does not form an
 opinion about whether the work is good, it reports what the gate says.
 

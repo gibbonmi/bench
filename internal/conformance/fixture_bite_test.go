@@ -136,6 +136,8 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 		"ticket-cross-pointers-anchor",
 		"ticket-gate-cadence-anchor",
 		"ticket-decision-map-lifecycle-anchor",
+		"implementation-retro-authoring-anchor",
+		"implementation-retro-drain-anchor",
 	}
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {

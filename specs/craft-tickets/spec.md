@@ -1,6 +1,6 @@
 # craft-tickets — the slice unit, the folder spec layout, and the light path
 
-Status: staged
+Status: implemented
 Roadmap: FT154
 
 Compiled from `specs/craft-tickets/decisions/slice-unit.md` (closed 2026-07-28,

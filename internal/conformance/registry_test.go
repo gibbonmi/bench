@@ -118,6 +118,8 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"ticket-cross-pointers-anchor":                 conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"ticket-gate-cadence-anchor":                   conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"ticket-decision-map-lifecycle-anchor":         conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"implementation-retro-authoring-anchor":        conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"implementation-retro-drain-anchor":            conformanceFixture(".bench/gate-docs-contracts.sh"),
 
 	"undocumented-passlist-var": conformanceFixture(".bench/gate.sh"),
 

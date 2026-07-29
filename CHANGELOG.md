@@ -24,6 +24,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 - Made implementation start from independently-green ticket files, with one
   fresh write-delegate charge and one atomic full-gate landing per ticket.
+- Made final check capture a spec-backed implementation retro after green
+  landing, with reviewed disposition and removal through roadmap maintenance.
 - Co-located compiled decision maps and their owned assets with their specs while
   keeping top-level `decisions/` reserved for pre-spec decision work.
 - Realigned the skill layer to Claude 5 harnesses: a new harness-echo rule keeps

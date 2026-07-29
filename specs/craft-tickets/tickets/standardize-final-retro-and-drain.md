@@ -13,6 +13,6 @@ paired conformance anchors and registered canary fixtures.
 
 ## Acceptance
 
-- [ ] Stories 21–22 and their prose acceptance-coverage rows are green.
-- [ ] Final-check owns after-green creation; what-next owns reviewed disposition and removal.
-- [ ] Every new anchor family has a classified fixture whose EXPECT matches its targeted diagnostic.
+- [x] Stories 21–22 and their prose acceptance-coverage rows are green.
+- [x] Final-check owns after-green creation; what-next owns reviewed disposition and removal.
+- [x] Every new anchor family has a classified fixture whose EXPECT matches its targeted diagnostic.

@@ -227,3 +227,6 @@ run `bench idea "<text>"`; they never type it. Offer once when a clear tangent
 appears, then let it go — don't nag. Parked ideas land in `IDEAS.md` and graduate
 into `ROADMAP.md` only through a reviewed `/bench-what-next` drain. If `bench` isn't
 on PATH, append the dated line (`- YYYY-MM-DD  <text>`) to `IDEAS.md` yourself.
+
+Spec-backed implementation retros are capture too: `/bench-final-check` writes
+`.bench/retros/<spec-slug>.md`, and `/bench-what-next` owns their reviewed drain.
