@@ -28,12 +28,12 @@ func contextFixture(t *testing.T) contract.Fixture {
 	t.Helper()
 	f := contract.NewFixture(t)
 	f.Git("branch", "-M", "main")
-	f.WriteFile("ROADMAP.md", "# Roadmap\n\n## Features\n\n**FT1 — one.** Body specs/one.md.\n\n## Recommended sequence\n\n1. `/bench-implement-spec` — one\n")
+	f.WriteFile("ROADMAP.md", "# Roadmap\n\n## Features\n\n**FT1 — one.** Body specs/one/spec.md.\n\n## Recommended sequence\n\n1. `/bench-implement-spec` — one\n")
 	f.WriteFile("IDEAS.md", "- 2026-07-10  retain me\n")
 	f.WriteFile(".bench/learnings.md", "## 2026-07-10 — lesson  [open]\n- body\n")
 	f.WriteFile(".bench/structure.budgets", "")
 	f.WriteFile(".bench/structure-accept", "")
-	f.WriteFile("specs/one.md", "# One\n\nStatus: staged\nRoadmap: FT1\n")
+	f.WriteFile("specs/one/spec.md", "# One\n\nStatus: staged\nRoadmap: FT1\n")
 	f.Git("add", "-A")
 	f.Git("-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "fixture")
 	return f
@@ -226,7 +226,7 @@ func testRoadmapContextReadOnlyOffline(t *testing.T) {
 func testRoadmapContextUnbornHead(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.Git("checkout", "-q", "-b", "trunk")
-	f.WriteFile("ROADMAP.md", "# Roadmap\n\n## Features\n\n**FT1 — one.** Body specs/one.md.\n")
+	f.WriteFile("ROADMAP.md", "# Roadmap\n\n## Features\n\n**FT1 — one.** Body specs/one/spec.md.\n")
 	f.WriteFile("IDEAS.md", "- 2026-07-10  retain me\n")
 
 	out := f.Bench("roadmap", "--context")

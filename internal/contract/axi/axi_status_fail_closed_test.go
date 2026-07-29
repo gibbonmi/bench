@@ -104,14 +104,14 @@ func TestAXIStatusSpecialFileDoesNotBlock(t *testing.T) {
 	contract.SkipIfSubjectBenchMissing(t)
 	f := contract.NewFixture(t)
 	f.WriteFile("README.md", "# fixture\n")
-	f.WriteFile("ROADMAP.md", "# Roadmap\n\n- FT1 — specs/hang.md\n\n## Recommended sequence\n\n1. do the thing\n")
+	f.WriteFile("ROADMAP.md", "# Roadmap\n\n- FT1 — specs/hang/spec.md\n\n## Recommended sequence\n\n1. do the thing\n")
 	f.CommitAll("init")
-	f.WriteFifo("specs/hang.md")
+	f.WriteFifo("specs/hang/spec.md")
 
 	out := f.BenchDeadlined("status", "--all")
 
 	if out.TimedOut {
-		t.Fatal("bench status blocked on a FIFO at specs/hang.md, so a spec read opened the path before checking its type")
+		t.Fatal("bench status blocked on a FIFO at specs/hang/spec.md, so a spec read opened the path before checking its type")
 	}
 	out.RequireExit(0)
 }

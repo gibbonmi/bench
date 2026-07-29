@@ -153,23 +153,31 @@ func TestHandoffNamesStagedSpec(t *testing.T) {
 	t.Parallel()
 
 	staged := handoffFixtureOnMain(t)
-	staged.WriteFile("specs/alpha.md", "# Alpha\n\nStatus: staged\n")
+	staged.WriteFile("specs/alpha/spec.md", "# Alpha\n\nStatus: staged\n")
 	staged.CommitAll("staged spec")
 	out := staged.Bench("handoff")
 	out.RequireExit(0)
-	contract.RequireContains(t, out.Stdout, "Spec: `specs/alpha.md` (Status: staged)")
+	contract.RequireContains(t, out.Stdout, "Spec: `specs/alpha/spec.md` (Status: staged)")
+
+	flat := handoffFixtureOnMain(t)
+	flat.WriteFile("specs/transitional.md", "# Transitional\n\nStatus: staged\n")
+	flat.CommitAll("transitional flat spec")
+	out = flat.Bench("handoff")
+	out.RequireExit(0)
+	contract.RequireContains(t, out.Stdout, "Spec: `specs/transitional.md` (Status: staged)")
+	contract.RequireNotContains(t, out.Stdout, "specs/transitional/spec.md")
 
 	// A second, different Status value: a constant `Status: staged` fails here. The
 	// status-less spec alongside it is malformed rather than staged, so the field passes
 	// over it instead of naming it with a status the file does not carry.
 	drafted := handoffFixtureOnMain(t)
-	drafted.WriteFile("specs/beta.md", "# Beta\n\nStatus: drafting\n")
-	drafted.WriteFile("specs/gamma.md", "# Gamma\n\nno status line at all\n")
+	drafted.WriteFile("specs/beta/spec.md", "# Beta\n\nStatus: drafting\n")
+	drafted.WriteFile("specs/gamma/spec.md", "# Gamma\n\nno status line at all\n")
 	drafted.CommitAll("drafted spec")
 	out = drafted.Bench("handoff")
 	out.RequireExit(0)
-	contract.RequireContains(t, out.Stdout, "Spec: `specs/beta.md` (Status: drafting)")
-	contract.RequireNotContains(t, out.Stdout, "specs/gamma.md")
+	contract.RequireContains(t, out.Stdout, "Spec: `specs/beta/spec.md` (Status: drafting)")
+	contract.RequireNotContains(t, out.Stdout, "specs/gamma/spec.md")
 
 	// An absent specs/ directory states absence rather than failing — the third fixture
 	// row 6 names, which no case exercised while a specs/ holding an implemented spec
@@ -184,12 +192,12 @@ func TestHandoffNamesStagedSpec(t *testing.T) {
 	// No live spec: an implemented one is finished work, so the field states absence
 	// rather than naming it.
 	none := handoffFixtureOnMain(t)
-	none.WriteFile("specs/done.md", "# Done\n\nStatus: implemented\n")
+	none.WriteFile("specs/done/spec.md", "# Done\n\nStatus: implemented\n")
 	none.CommitAll("no staged spec")
 	out = none.Bench("handoff")
 	out.RequireExit(0)
 	contract.RequireContains(t, out.Stdout, "Spec: none staged.")
-	contract.RequireNotContains(t, out.Stdout, "specs/done.md")
+	contract.RequireNotContains(t, out.Stdout, "specs/done/spec.md")
 }
 
 func TestHandoffGateFieldIsStaleAware(t *testing.T) {
@@ -299,7 +307,7 @@ func TestHandoffNextMatchesStatus(t *testing.T) {
 	drain.WriteFile("scratch.txt", "uncommitted\n")
 
 	specs := handoffFixtureOnMain(t)
-	specs.WriteFile("specs/done.md", "# Done\n\nStatus: implemented\n")
+	specs.WriteFile("specs/done/spec.md", "# Done\n\nStatus: implemented\n")
 	specs.CommitAll("merged spec awaiting retirement")
 
 	found := map[string]handoffBoardRow{}

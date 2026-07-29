@@ -132,7 +132,7 @@ func liveSpecs(root string) []string {
 		if s.Status == "" || s.Status == spec.StatusImplemented {
 			continue
 		}
-		live = append(live, "`specs/"+s.Slug+".md` (Status: "+s.Status+")")
+		live = append(live, "`"+s.Path+"` (Status: "+s.Status+")")
 	}
 	return live
 }

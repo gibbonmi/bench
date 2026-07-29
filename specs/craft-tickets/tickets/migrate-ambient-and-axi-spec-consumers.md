@@ -10,8 +10,8 @@ changing every live path rendered by ambient surfaces.
 
 ## Acceptance
 
-- [ ] Status counts folder specs and pairs review pickups by folder slug.
-- [ ] ROADMAP reconciliation recognizes folder tokens and excludes template text.
-- [ ] Handoff and roadmap context render folder paths.
-- [ ] AXI coverage behavior remains unchanged apart from the live path form.
-- [ ] The project gate is green.
+- [x] Status counts folder specs and pairs review pickups by folder slug.
+- [x] ROADMAP reconciliation recognizes folder tokens and excludes template text.
+- [x] Handoff and roadmap context render folder paths.
+- [x] AXI coverage behavior remains unchanged apart from the live path form.
+- [x] The project gate is green.
