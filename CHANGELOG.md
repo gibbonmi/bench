@@ -58,6 +58,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- Made `bench learnings` render a drained journal as empty and reject dated headings
+  without a final `[open]` state across learnings and drain status.
+
 - Made blocked branch-deletion refusals name the safe or force form the caller used.
 - Made `bench guards` finish timed-out scan workers before returning, and kept
   its timeout races under the dev gate's race check.

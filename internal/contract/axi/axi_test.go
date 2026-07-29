@@ -51,6 +51,11 @@ func testAXILearningsEmptyTemplate(t *testing.T) {
 	template := f.Bench("learnings")
 	template.RequireExit(0)
 	requireAXILine(t, template.Stdout, "learnings[0]{date,title}:")
+
+	f.WriteFile(".bench/learnings.md", "# Learnings — usage journal\n\nFormat per entry. Heading: `## YYYY-MM-DD — short title  [open]`\n")
+	drained := f.Bench("learnings")
+	drained.RequireExit(0)
+	requireAXILine(t, drained.Stdout, "learnings[0]{date,title}:")
 }
 
 func testAXIMapsUnresolvedTicket(t *testing.T) {

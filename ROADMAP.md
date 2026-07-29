@@ -890,28 +890,6 @@ on any root carrying the file. Small enough for the light path; the care is in
 the check biting for the right reason, so it is `craft-gate` work rather than a
 one-line regex. Source: `.bench/learnings.md`, verdicted here.
 
-**FT151 (LOW) — `bench learnings` fails closed on the state a successful drain
-produces.** A journal with no open entries is exactly what `/bench-what-next`
-leaves behind, and reading it exits 1 with
-`unsupported-schema — no dated heading found`. Reproduced through the accused
-command at this drain's own end state, and the same file content at `5f9e997`
-reproduces it identically, so it is not new. `bench status` is unaffected — it
-reports the drain row's absence correctly — which is why the defect has stayed
-invisible: the ambient board is right and only the direct reader lies. Empty is
-a valid journal, not a malformed one, so the parse wants an explicit
-zero-entry case that renders an empty rowset rather than falling through to the
-schema refusal. Check the same reader's other zero-entry surfaces for the same
-fall-through while there. Source: observed at this drain, 2026-07-28.
-
-A second face, same file and the same "what counts as an entry" question: a
-dated heading that omits its `[open]` marker is invisible to every open-entry
-count, so it can sit un-verdicted through any number of drains. The 2026-07-28
-floor-estimate entry did exactly that — `bench status` reported two open entries
-against a file holding three, and only reading the file caught it. Resolved
-entries leave the journal entirely, so every dated heading in it should carry
-the marker; grade that rather than restating the format a third time (FT147's
-shape). Source: observed at this drain, 2026-07-28.
-
 **FT157 (LOW) — a write-charge names every registration seam its new member
 must enter.** The FT152 build charged a delegate to add four canary fixtures
 and named the family→scope binding in the conformance registry as the gate
@@ -1407,5 +1385,4 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT151, then FT139, as independently-green
-   light-path tickets.
+1. `/bench-implement-spec` — FT139 as an independently-green light-path ticket.

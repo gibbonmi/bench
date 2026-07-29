@@ -49,7 +49,7 @@ func Parse(content []byte) ([]Entry, []Malformed) {
 	var malformed []Malformed
 	for i := 0; i < len(lines); {
 		line := strings.TrimSuffix(lines[i], "\r")
-		if !strings.HasPrefix(line, "## ") || len(line) < 13 || line[7] != '-' || line[10] != '-' {
+		if !isDatedHeading(line) {
 			// The shipped scaffold's own worked example (internal/adopt seeds every fresh
 			// repo with it under "Format per entry:") is documentation, not a broken record,
 			// so an unedited template never counts as malformed.
@@ -59,11 +59,7 @@ func Parse(content []byte) ([]Entry, []Malformed) {
 			i++
 			continue
 		}
-		date, title := parseHeading(line)
-		state := ""
-		if j := strings.LastIndex(line, "["); j >= 0 && strings.HasSuffix(line, "]") {
-			state = line[j+1 : len(line)-1]
-		}
+		date, title, state := parseHeading(line)
 		start := i + 1
 		i = start
 		for i < len(lines) && !strings.HasPrefix(strings.TrimSuffix(lines[i], "\r"), "## ") {
@@ -71,6 +67,10 @@ func Parse(content []byte) ([]Entry, []Malformed) {
 		}
 		body := strings.Join(lines[start:i], "\n")
 		body = strings.Trim(body, "\n")
+		if state != "open" {
+			malformed = append(malformed, Malformed{Reason: "dated learning heading must end with [open]", Raw: line, Line: start})
+			continue
+		}
 		out = append(out, Entry{Date: date, Title: title, State: state, Body: body})
 	}
 	return out, malformed
@@ -95,20 +95,38 @@ func openRows(entries []Entry) [][]string {
 	return rows
 }
 
-func parseHeading(line string) (date, title string) {
+func parseHeading(line string) (date, title, state string) {
 	rest := strings.TrimPrefix(line, "## ")
 	date = rest
 	if i := strings.IndexFunc(rest, isSpace); i >= 0 {
 		date = rest[:i]
 	}
 	title = stripLeadingSeparators(strings.TrimPrefix(rest, date))
-	// Strip from the last `[open]` (the shell `%[open]*` shortest-suffix removal),
-	// then trim trailing whitespace so no padding rides into the field.
-	if i := strings.LastIndex(title, "[open]"); i >= 0 {
+	if i := strings.LastIndex(title, "["); i >= 0 && strings.HasSuffix(title, "]") {
+		state = title[i+1 : len(title)-1]
 		title = title[:i]
 	}
 	title = strings.TrimRightFunc(title, isSpace)
-	return date, title
+	return date, title, state
+}
+
+func isDatedHeading(line string) bool {
+	if !strings.HasPrefix(line, "## ") || len(line) < len("## 2006-01-02") {
+		return false
+	}
+	date := line[len("## "):len("## 2006-01-02")]
+	for i, b := range []byte(date) {
+		if i == 4 || i == 7 {
+			if b != '-' {
+				return false
+			}
+			continue
+		}
+		if b < '0' || b > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // isTemplatePlaceholder reports whether line is the scaffold's own worked example, whose
@@ -135,6 +153,17 @@ func hasAnyHeading(content []byte) bool {
 	return false
 }
 
+func hasJournalSchema(content []byte) bool {
+	for _, raw := range strings.Split(string(content), "\n") {
+		line := strings.TrimSuffix(raw, "\r")
+		if line == "" {
+			continue
+		}
+		return line == JournalSchemaHeading
+	}
+	return false
+}
+
 func stripLeadingSeparators(s string) string {
 	for {
 		switch {
@@ -153,6 +182,9 @@ func stripLeadingSeparators(s string) string {
 // isSpace adapts toon.IsSpace (the one source of the AXI whitespace class) to a rune
 // predicate for IndexFunc/TrimRightFunc; a multibyte rune is >= 0x80 and never a space.
 func isSpace(r rune) bool { return r < 0x80 && toon.IsSpace(byte(r)) }
+
+// JournalSchemaHeading identifies a zero-entry learnings journal.
+const JournalSchemaHeading = "# Learnings — usage journal"
 
 // JournalPath is the repo-relative journal. It is exported because the name is one
 // fact with three readers — this command, the roadmap drain that counts its open
@@ -190,7 +222,7 @@ func Command(args []string) (string, int) {
 	default:
 		return toon.RecordError(JournalPath, c.State, c.Reason) + "\n", 1
 	}
-	if !hasAnyHeading(c.Data) {
+	if !hasAnyHeading(c.Data) && !hasJournalSchema(c.Data) {
 		return toon.RecordError(JournalPath, bounds.StateUnsupportedSchema, "no dated heading found") + "\n", 1
 	}
 	entries, malformed := Parse(c.Data)

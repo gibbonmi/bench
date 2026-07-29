@@ -52,6 +52,27 @@ func TestAXILearningsAbsentIsEmpty(t *testing.T) {
 	requireAXILine(t, out.Stdout, "learnings[0]{date,title}:")
 }
 
+func TestAXILearningsPresentNonJournalIsNotEmpty(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	for _, tc := range []struct {
+		name, content, state string
+	}{
+		{"zero byte", "", "empty"},
+		{"arbitrary prose", "a note without journal headings\n", "unsupported-schema"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := contract.NewFixture(t)
+			f.WriteFile(".bench/learnings.md", tc.content)
+
+			out := f.Bench("learnings")
+
+			out.RequireExit(1)
+			requireContainsFold(t, out.Stdout, "error: .bench/learnings.md is "+tc.state)
+		})
+	}
+}
+
 // TestAXILearningsMalformedRows pins story 9: a journal mixing one well-formed entry
 // with one malformed heading renders both — the good row plus an explicit row naming
 // the malformed heading's line and reason — and exits 1. This forbids a hard fail that
@@ -70,6 +91,46 @@ func TestAXILearningsMalformedRows(t *testing.T) {
 	requireAXILine(t, out.Stdout, "  2026-01-01,good entry")
 	requireContainsFold(t, out.Stdout, "line 2")
 	requireContainsFold(t, out.Stdout, "malformed learning heading")
+}
+
+func TestAXILearningsDatedStateRequired(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	for _, tc := range []struct {
+		name    string
+		heading string
+	}{
+		{"missing state", "## 2026-01-01 — missing state"},
+		{"non-open state", "## 2026-01-01 — resolved  [resolved]"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := contract.NewFixture(t)
+			f.WriteFile(".bench/learnings.md", "## 2026-01-02 — good entry  [open]\n"+tc.heading)
+
+			out := f.Bench("learnings")
+
+			out.RequireExit(1)
+			requireAXILine(t, out.Stdout, "  2026-01-02,good entry")
+			requireContainsFold(t, out.Stdout, "line 2")
+			requireContainsFold(t, out.Stdout, "must end with [open]")
+		})
+	}
+}
+
+func TestAXILearningsMalformedStateKeepsDrainVisible(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	f := contract.NewFixture(t)
+	f.WriteFile("ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. first\n2. second\n")
+	f.WriteFile(".bench/learnings.md", "## 2026-01-01 — missing state\n")
+
+	roadmap := f.Bench("roadmap")
+	roadmap.RequireExit(0)
+	requireContainsFold(t, roadmap.Stdout, "unknown (.bench/learnings.md is malformed)")
+
+	status := f.Bench("status", "--all")
+	status.RequireExit(0)
+	requireContainsFold(t, status.Stdout, "unknown (.bench/learnings.md is malformed)")
 }
 
 // TestAXILearningsWrongType drives the wrong-type state through two real commands. It

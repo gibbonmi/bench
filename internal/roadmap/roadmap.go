@@ -188,17 +188,20 @@ func ParkedIdeas(root string) []string {
 }
 
 func drainStatus(root string) string {
-	// bench roadmap's status callout keeps degraded retrospective evidence visible while
-	// its existing idea and learning behavior remains count-only.
+	// bench roadmap's status callout preserves failed capture-source evidence.
 	drain := DrainCounts(root)
-	if drain.Ideas == 0 && drain.OpenLearnings == 0 && drain.Retros == 0 && !drain.RetrosState.Failed() {
+	if drain.Ideas == 0 && drain.OpenLearnings == 0 && drain.Retros == 0 && !drain.LearningsState.Failed() && !drain.RetrosState.Failed() {
 		return ""
+	}
+	learningsStatus := fmt.Sprintf("%d open in %s", drain.OpenLearnings, learnings.JournalPath)
+	if drain.LearningsState.Failed() {
+		learningsStatus = toon.UnknownCell(learnings.JournalPath, drain.LearningsState)
 	}
 	retro := fmt.Sprintf("%d pending in %s/", drain.Retros, retros.Directory)
 	if drain.RetrosState.Failed() {
 		retro = toon.UnknownCell(retros.Directory+"/", drain.RetrosState)
 	}
-	return fmt.Sprintf("\n\n## Drain status\n\n- ideas: %d parked in %s\n- learnings: %d open in %s\n- retros: %s\n\nRun /bench-what-next before trusting the sequence.\n", drain.Ideas, IdeasFile, drain.OpenLearnings, learnings.JournalPath, retro)
+	return fmt.Sprintf("\n\n## Drain status\n\n- ideas: %d parked in %s\n- learnings: %s\n- retros: %s\n\nRun /bench-what-next before trusting the sequence.\n", drain.Ideas, IdeasFile, learningsStatus, retro)
 }
 
 // numberedItem matches one sequence entry; the format contract wants two or three.
@@ -227,20 +230,22 @@ func RecommendedSequence(roadmap string) string {
 	return doc.SequenceText
 }
 
-// learningCount classifies .bench/learnings.md and counts its open rows. Absent or
-// empty is 0 rows at bounds.StateParsed (the ordinary quiet-journal posture); a journal
-// whose read failed reports 0 with that failed state, so the caller renders unknown
-// instead of a fabricated clean journal.
+// learningCount classifies .bench/learnings.md and counts its parser-approved open rows.
+// Absent is the quiet-journal posture; every present non-document state is retained so
+// the drain surfaces unknown evidence instead of a fabricated clean journal.
 func learningCount(root string) (int, bounds.FileState) {
 	c := bounds.Classify(filepath.Join(root, filepath.FromSlash(learnings.JournalPath)), bounds.ControlRecordLimit)
 	switch {
-	case c.State.Failed():
-		return 0, c.State
-	case c.State == bounds.StateAbsent || c.State == bounds.StateEmpty:
+	case c.State == bounds.StateAbsent:
 		return 0, bounds.StateParsed
-	default:
-		return len(learnings.Rows(c.Data)), bounds.StateParsed
+	case c.State != bounds.StateParsed:
+		return 0, c.State
 	}
+	_, malformed := learnings.Parse(c.Data)
+	if len(malformed) > 0 {
+		return 0, bounds.StateMalformed
+	}
+	return len(learnings.Rows(c.Data)), bounds.StateParsed
 }
 
 // ideaLines is the one reader of IDEAS.md-style parked lines: every line beginning `- `,

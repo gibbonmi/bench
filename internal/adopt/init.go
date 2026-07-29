@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/learnings"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -135,7 +136,7 @@ exit "$fail"
 }
 
 func scaffoldLearnings() string {
-	return `# Learnings - usage journal
+	return learnings.JournalSchemaHeading + `
 
 Append one entry when you deviate from the workflow, make a judgment call you're
 unsure about, catch a should-have-asked in hindsight, or catch yourself assembling
