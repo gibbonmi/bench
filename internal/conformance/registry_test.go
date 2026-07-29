@@ -110,6 +110,14 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"full-run-escalation-menu-anchor":              conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"full-run-silent-escalation-forbid":            conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"full-run-scope-fence-relocated":               conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"ticket-breakdown-step-anchor":                 conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"ticket-light-path-anchor":                     conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"ticket-stage-routing-anchor":                  conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"ticket-skill-contract-anchor":                 conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"ticket-template-anchor":                       conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"ticket-cross-pointers-anchor":                 conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"ticket-gate-cadence-anchor":                   conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"ticket-decision-map-lifecycle-anchor":         conformanceFixture(".bench/gate-docs-contracts.sh"),
 
 	"undocumented-passlist-var": conformanceFixture(".bench/gate.sh"),
 

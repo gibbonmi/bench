@@ -10,6 +10,6 @@ each new anchor family with a canary fixture that proves the check bites.
 
 ## Acceptance
 
-- [ ] Story 16 and its acceptance coverage row are green.
-- [ ] Fixture count equals the new anchor-family count.
-- [ ] Every fixture EXPECT matches the targeted red diagnostic.
+- [x] Story 16 and its acceptance coverage row are green.
+- [x] Fixture count equals the new anchor-family count.
+- [x] Every fixture EXPECT matches the targeted red diagnostic.

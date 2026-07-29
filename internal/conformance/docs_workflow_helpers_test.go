@@ -323,6 +323,83 @@ func checkWorkflowAnchors(root string) []string {
 	requireCollapsed(".agents/commands/bench-review-implementation.md", "Integrate the findings accepted for this round, run focused checks for the changed behavior, then run one final gate and stop. Open another semantic review round only when that gate fails or the reviewer requests one.",
 		".agents/commands/bench-review-implementation.md dropped the terminal repair-pass bound")
 
+	// Ticket guidance is convention-only, so these anchors pin the load-bearing
+	// workflow clauses without inventing a parser for ticket files.
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "Charge `craft-tickets` before the first implementation edit",
+		".agents/commands/bench-implement-spec.md dropped the craft-tickets breakdown charge")
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "derive ticket files from the spec's stories and seams",
+		".agents/commands/bench-implement-spec.md dropped the ticket breakdown derivation from the spec's stories and seams")
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "`specs/<slug>/tickets/`",
+		".agents/commands/bench-implement-spec.md dropped the ticket breakdown destination")
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "under the session's existing approval surface",
+		".agents/commands/bench-implement-spec.md dropped the ticket breakdown approval surface")
+
+	requireCollapsed(".bench/BENCH.md", "one independently-green ticket",
+		".bench/BENCH.md dropped the light-path independently-green-ticket observable")
+	requireCollapsed(".bench/BENCH.md", "crosses no declared seam",
+		".bench/BENCH.md dropped the light-path declared-seam observable")
+
+	requireCollapsed(".agents/skills/bench-craft-line/SKILL.md", "| Orchestration | mid + medium |",
+		".agents/skills/bench-craft-line/SKILL.md dropped the orchestration mid/medium stage default")
+	requireCollapsed(".agents/skills/bench-craft-line/SKILL.md", "| Ticket implementation | cheap + low |",
+		".agents/skills/bench-craft-line/SKILL.md dropped the ticket implementation cheap/low stage default")
+	requireCollapsed(".agents/skills/bench-craft-line/SKILL.md", "| Review (axis or falsification) | mid + high |",
+		".agents/skills/bench-craft-line/SKILL.md dropped the review mid/high stage default")
+
+	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "smallest independently-green",
+		".agents/skills/bench-craft-tickets/SKILL.md dropped the smallest-independently-green ticket contract")
+	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "one write-delegate charge",
+		".agents/skills/bench-craft-tickets/SKILL.md dropped the one-write-delegate-charge ticket contract")
+	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "Blocked by:",
+		".agents/skills/bench-craft-tickets/SKILL.md dropped the ticket template Blocked by heading")
+	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "## What to build",
+		".agents/skills/bench-craft-tickets/SKILL.md dropped the ticket template What to build heading")
+	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "## Acceptance",
+		".agents/skills/bench-craft-tickets/SKILL.md dropped the ticket template Acceptance heading")
+	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "- [ ] <Observable behavioral criterion>",
+		".agents/skills/bench-craft-tickets/SKILL.md dropped the ticket template behavioral acceptance checkbox")
+
+	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "`craft-spec` owns the spec-time **who-writes-where** fence",
+		".agents/skills/bench-craft-tickets/SKILL.md dropped the craft-spec ownership-fence cross-pointer")
+	requireCollapsed(".agents/skills/bench-craft-spec/SKILL.md", "`craft-tickets` owns the build-time **what-lands-green-next** unit",
+		".agents/skills/bench-craft-spec/SKILL.md dropped the craft-tickets build-time-unit cross-pointer")
+
+	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "do not run a standalone full gate",
+		".agents/skills/bench-craft-tickets/SKILL.md dropped the no-standalone-full-gate ticket cadence")
+	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "`bench commit` is the only per-ticket full-project-gate boundary",
+		".agents/skills/bench-craft-tickets/SKILL.md dropped the bench-commit-only ticket gate boundary")
+	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "If it goes red, repair from that output and retry",
+		".agents/skills/bench-craft-tickets/SKILL.md dropped the ticket red repair-and-retry cadence")
+	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "normal green path runs one full gate",
+		".agents/skills/bench-craft-tickets/SKILL.md dropped the ticket one-full-gate green cadence")
+	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "/bench-final-check` remains the final full gate over the composed feature",
+		".agents/skills/bench-craft-tickets/SKILL.md dropped the composed-feature final gate")
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "no standalone full gate before landing",
+		".agents/commands/bench-implement-spec.md dropped the no-standalone-full-gate ticket cadence")
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "`bench commit` is the only per-ticket full-project-gate boundary",
+		".agents/commands/bench-implement-spec.md dropped the bench-commit-only ticket gate boundary")
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "If it goes red, repair from that output and retry",
+		".agents/commands/bench-implement-spec.md dropped the ticket red repair-and-retry cadence")
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "normal green path is one full gate",
+		".agents/commands/bench-implement-spec.md dropped the ticket one-full-gate green cadence")
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "/bench-final-check` still runs the final full gate over the composed feature",
+		".agents/commands/bench-implement-spec.md dropped the composed-feature final gate")
+
+	requireCollapsed(".agents/commands/bench-write-spec.md", "Top-level `decisions/` holds pre-spec working maps",
+		".agents/commands/bench-write-spec.md dropped the top-level pre-spec working-map posture")
+	requireCollapsed(".agents/commands/bench-write-spec.md", "run `bench maps` and confirm it shows no row for the map",
+		".agents/commands/bench-write-spec.md dropped the bench-maps working-map lifecycle check")
+	requireCollapsed(".agents/commands/bench-write-spec.md", "deliberately outside the top-level `bench maps` query",
+		".agents/commands/bench-write-spec.md dropped the spec-local-provenance exclusion from bench maps")
+	requireCollapsed(".agents/commands/bench-write-spec.md", "move (do not copy) the source map and any map-owned assets from top-level `decisions/` into `specs/<slug>/decisions/`",
+		".agents/commands/bench-write-spec.md dropped the compile-time decision-map move")
+	requireCollapsed(".agents/commands/bench-write-spec.md", "update every reference to the moved paths",
+		".agents/commands/bench-write-spec.md dropped the moved decision-map reference update")
+	requireCollapsed(".agents/commands/bench-write-spec.md", "re-run reads the already-compiled spec-local map; it never recreates a top-level copy",
+		".agents/commands/bench-write-spec.md dropped the compiled decision-map re-run lifecycle")
+	requireCollapsed(".agents/commands/bench-write-spec.md", "Whole-folder retirement removes the compiled maps and map-owned assets",
+		".agents/commands/bench-write-spec.md dropped the whole-folder compiled decision-map retirement")
+
 	// Verify hooks — the Roles verify rule's point-of-use pointers, one per phase
 	// command. Whole-file anchors by design: the three files hang their hooks on
 	// three different structures, so the gate proves presence and the review axis

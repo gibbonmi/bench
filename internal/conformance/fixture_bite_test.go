@@ -128,6 +128,14 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 		"full-run-escalation-menu-anchor",
 		"full-run-silent-escalation-forbid",
 		"full-run-scope-fence-relocated",
+		"ticket-breakdown-step-anchor",
+		"ticket-light-path-anchor",
+		"ticket-stage-routing-anchor",
+		"ticket-skill-contract-anchor",
+		"ticket-template-anchor",
+		"ticket-cross-pointers-anchor",
+		"ticket-gate-cadence-anchor",
+		"ticket-decision-map-lifecycle-anchor",
 	}
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {
