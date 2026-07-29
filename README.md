@@ -424,7 +424,7 @@ building.
 
 | Bench piece | Pocock | Kun Chen | Your discovery |
 | --- | --- | --- | --- |
-| `/bench-shape-idea`, `/bench-write-spec`, `/bench-implement-spec`, `/bench-review-implementation`, `/bench-final-check` | decision-mapping, to-prd, implement, review | — | — |
+| `/bench-shape-idea`, `/bench-write-spec`, `/bench-implement-spec`, `/bench-review-implementation`, `/bench-final-check` | decision-mapping, research, to-prd, implement, review | — | — |
 | Bench craft skills | codebase-design, tdd, grilling, writing-great-skills | AXI spec | generated skills index in `.bench/BENCH-reference.md`; stateless-reader docs; effort, review, delegate, gate, and design guidance |
 | `bench worktree` | — | treehouse | — |
 | `bench shift` (gated loop) | — | gnhf + no-mistakes | gate-on-green, not self-graded |

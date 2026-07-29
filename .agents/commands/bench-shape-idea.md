@@ -88,8 +88,11 @@ Each ticket is sized to one focused session. Four kinds:
 
 Grill and Prototype tickets resolve only through live exchange with me — a
 session that answers its own grill questions has broken that contract.
-Research runs agent-alone. Before asking me about a fact, look it up in the
-tree — a grill question spends my answer on a decision, not a lookup.
+Research runs agent-alone. When the harness can delegate and another unblocked
+ticket can proceed concurrently, route Research through `craft-delegate` as a
+read-only delegation; otherwise resolve it inline. Before asking me about a
+fact, look it up in the tree — a grill question spends my answer on a decision,
+not a lookup.
 
 ## The Handoff — the seams a closed map hands the spec-writer
 

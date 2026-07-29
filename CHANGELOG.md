@@ -22,6 +22,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Made Research tickets use concurrent read-only delegation when another
+  unblocked ticket can proceed, with an inline fallback.
 - Extended roadmap maintenance with per-run fix-versus-feature classification,
   a fixes-first recommended sequence, and an opt-in `--restructure` board pass
   whose merge, collapse, fold, and theme-grouping moves are proposed in the
