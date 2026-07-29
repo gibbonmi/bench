@@ -94,7 +94,7 @@ func TestAXIStatusUnknownNotSuppressed(t *testing.T) {
 }
 
 // TestAXIStatusSpecialFileDoesNotBlock drives a FIFO where a spec file belongs. The
-// housekeeping counters walk `specs/*.md` and read each entry, and a FIFO with no writer
+// housekeeping counters walk `specs/*/spec.md` and read each entry, and a FIFO with no writer
 // never yields EOF, so a counter that opens before checking the type blocks in open(2)
 // forever — the SessionStart hook runs `bench status`, which makes a hang worse than any
 // wrong count. The failure is an expired deadline rather than a wrong answer, so the

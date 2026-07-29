@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/contract"
@@ -14,7 +15,41 @@ func TestRuntimeSpecImplementedContracts(t *testing.T) {
 	contract.RunParallel(t, "bare slug anchors at repo root from a subdir", testSpecSlugAnchored)
 	contract.RunParallel(t, "flip preserves every other byte", testSpecByteIdentity)
 	contract.RunParallel(t, "error branches exit 1", testSpecErrorBranches)
+	contract.RunParallel(t, "live flat forms refuse with migration guidance", testSpecLiveFlatRefusals)
 	contract.RunParallel(t, "usage errors exit 2", testSpecUsageExitTwo)
+}
+
+func testSpecLiveFlatRefusals(t *testing.T) {
+	const instruction = "flat spec layout: move to specs/<slug>/spec.md"
+	for _, tc := range []struct {
+		name, slug string
+		write      func(contract.Fixture)
+		want       []string
+	}{
+		{"flat only", "flat", func(f contract.Fixture) { f.WriteFile("specs/flat.md", "Status: staged\n") }, []string{instruction, "specs/flat.md", "specs/flat/spec.md"}},
+		{"both forms", "collision", func(f contract.Fixture) {
+			f.WriteFile("specs/collision.md", "Status: staged\n")
+			f.WriteFile("specs/collision/spec.md", "Status: staged\n")
+		}, []string{instruction, "specs/collision.md", "specs/collision/spec.md"}},
+		{"incomplete folder", "incomplete", func(f contract.Fixture) { contract.Mkdir(t, filepath.Join(f.Root, "specs", "incomplete")) }, []string{"spec folder is missing", "specs/incomplete/spec.md"}},
+		{"flat precedes incomplete folder", "partial", func(f contract.Fixture) {
+			f.WriteFile("specs/partial.md", "Status: staged\n")
+			contract.Mkdir(t, filepath.Join(f.Root, "specs", "partial"))
+		}, []string{instruction, "specs/partial.md", "specs/partial/spec.md"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := contract.NewFixture(t)
+			tc.write(f)
+			p := f.Bench("spec", "implemented", tc.slug)
+			p.RequireExit(1)
+			for _, want := range tc.want {
+				p.RequireContains(p.Stdout+p.Stderr, want)
+			}
+			if tc.name == "flat precedes incomplete folder" && strings.Contains(p.Stdout+p.Stderr, "spec folder is missing") {
+				t.Fatalf("combined refusal used incomplete-folder diagnostic: %s", p.Stdout+p.Stderr)
+			}
+		})
+	}
 }
 
 func testSpecFlipForm(t *testing.T) {
@@ -97,6 +132,7 @@ func TestRuntimeSpecRetireContracts(t *testing.T) {
 	contract.RunParallel(t, "retire refuses an orphaned pickup", testSpecRetireOrphanedPickup)
 	contract.RunParallel(t, "retire recovers interrupted folder deletion", testSpecRetireRecoversInterruptedFolder)
 	contract.RunParallel(t, "retire refuses terminal folder residue", testSpecRetireRefusesFolderResidue)
+	contract.RunParallel(t, "retire keeps flat refusal ahead of incomplete-folder residue", testSpecRetireFlatPrecedence)
 }
 
 func testSpecRetireMergedDeletesBoth(t *testing.T) {
@@ -212,13 +248,26 @@ func testSpecRetireRefusesFolderResidue(t *testing.T) {
 	}
 }
 
+func testSpecRetireFlatPrecedence(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteFile("specs/partial.md", "Status: staged\n")
+	f.WriteFile("specs/partial/tickets/work.md", "# residue\n")
+
+	p := f.Bench("spec", "retire", "partial")
+	p.RequireExit(1)
+	p.RequireContains(p.Stdout+p.Stderr, "flat spec layout: move to specs/<slug>/spec.md")
+	p.RequireContains(p.Stdout+p.Stderr, "specs/partial.md")
+	p.RequireContains(p.Stdout+p.Stderr, "specs/partial/spec.md")
+	p.RequireNotContains(p.Stdout+p.Stderr, "incomplete retired spec folder")
+}
+
 func testSpecRetireBadArgs(t *testing.T) {
 	f := contract.NewFixture(t)
 	// Unknown slug: exit 1 naming the tried paths.
 	p := f.Bench("spec", "retire", "nope")
 	p.RequireExit(1)
 	p.RequireContains(p.Stdout+p.Stderr, "not found")
-	p.RequireContains(p.Stdout+p.Stderr, "specs/nope.md")
+	p.RequireContains(p.Stdout+p.Stderr, "specs/nope/spec.md")
 	// Extra positional, unknown flag, and missing slug: usage errors exit 2.
 	f.Bench("spec", "retire", "x", "y").RequireExit(2)
 	f.Bench("spec", "retire", "--x").RequireExit(2)

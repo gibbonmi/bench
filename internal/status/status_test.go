@@ -16,7 +16,7 @@ func TestTimeoutGateIsDistinctHighestSeveritySignal(t *testing.T) {
 	}
 }
 
-// retirementCount reads specs/*.md through the awk-ported predicate. The seam is the
+// retirementCount reads specs/*/spec.md through the shared predicate. The seam is the
 // directory: write spec files, then assert the count. The predicate cases (fence, CRLF,
 // trailing whitespace, wrong status) are the load-bearing behaviors.
 func TestRetirementCount(t *testing.T) {
@@ -27,46 +27,46 @@ func TestRetirementCount(t *testing.T) {
 	}{
 		{
 			name:  "unfenced implemented marker is counted",
-			files: map[string]string{"a.md": "# spec\nStatus: implemented\n"},
+			files: map[string]string{"a/spec.md": "# spec\nStatus: implemented\n"},
 			want:  1,
 		},
 		{
 			name:  "staged status is not counted",
-			files: map[string]string{"a.md": "# spec\nStatus: staged\n"},
+			files: map[string]string{"a/spec.md": "# spec\nStatus: staged\n"},
 			want:  0,
 		},
 		{
 			name:  "no status line is not counted",
-			files: map[string]string{"a.md": "# spec\njust prose\n"},
+			files: map[string]string{"a/spec.md": "# spec\njust prose\n"},
 			want:  0,
 		},
 		{
 			name:  "implemented inside a code fence is not counted",
-			files: map[string]string{"a.md": "# spec\n```\nStatus: implemented\n```\n"},
+			files: map[string]string{"a/spec.md": "# spec\n```\nStatus: implemented\n```\n"},
 			want:  0,
 		},
 		{
 			name:  "CRLF line endings still match",
-			files: map[string]string{"a.md": "# spec\r\nStatus: implemented\r\n"},
+			files: map[string]string{"a/spec.md": "# spec\r\nStatus: implemented\r\n"},
 			want:  1,
 		},
 		{
 			name:  "trailing tabs and spaces after the value still match",
-			files: map[string]string{"a.md": "Status: implemented\t \n"},
+			files: map[string]string{"a/spec.md": "Status: implemented\t \n"},
 			want:  1,
 		},
 		{
 			name: "multiple specs counted correctly",
 			files: map[string]string{
-				"a.md": "Status: implemented\n",
-				"b.md": "Status: staged\n",
-				"c.md": "Status:\timplemented\n",
+				"a/spec.md": "Status: implemented\n",
+				"b/spec.md": "Status: staged\n",
+				"c/spec.md": "Status:\timplemented\n",
 			},
 			want: 2,
 		},
 		{
 			name:  "hidden spec file is ignored",
-			files: map[string]string{".hidden.md": "Status: implemented\n"},
+			files: map[string]string{".hidden/spec.md": "Status: implemented\n"},
 			want:  0,
 		},
 	}

@@ -11,9 +11,9 @@ reject stray flat specs while leaving retired flat history intact.
 
 ## Acceptance
 
-- [ ] Every specified flat/collision/missing-file refusal is green.
-- [ ] The combined collision state follows the specified precedence.
-- [ ] Conformance validates `specs/*/spec.md`.
-- [ ] Conformance rejects a stray live `specs/*.md`.
-- [ ] Retired flat history remains green.
-- [ ] The project gate is green.
+- [x] Every specified flat/collision/missing-file refusal is green.
+- [x] The combined collision state follows the specified precedence.
+- [x] Conformance validates `specs/*/spec.md`.
+- [x] Conformance rejects a stray live `specs/*.md`.
+- [x] Retired flat history remains green.
+- [x] The project gate is green.

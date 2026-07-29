@@ -373,8 +373,8 @@ func testCommitSpecFailsFast(t *testing.T) {
 	// a green one burns. Pair the bad spec with a red gate: if the check preceded the gate the
 	// flip error surfaces; a check that ran only after the gate would report "gate is red".
 	f := commitFixture(t)
-	f.WriteFile("specs/done.md", "# done\nStatus: implemented\n")
-	f.Bench("commit", "-m", "add spec", "specs/done.md").RequireExit(0)
+	f.WriteFile("specs/done/spec.md", "# done\nStatus: implemented\n")
+	f.Bench("commit", "-m", "add spec", "specs/done/spec.md").RequireExit(0)
 
 	f.WriteFile("work.txt", "changed\n")
 	before := headSha(f)

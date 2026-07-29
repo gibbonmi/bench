@@ -31,9 +31,14 @@ func checkCoverageMaps(root string) []string {
 	if !exists(specsDir) {
 		return nil
 	}
-	matches, _ := filepath.Glob(filepath.Join(specsDir, "*.md"))
+	matches, _ := filepath.Glob(filepath.Join(specsDir, "*", "spec.md"))
+	flat, _ := filepath.Glob(filepath.Join(specsDir, "*.md"))
 	sort.Strings(matches)
+	sort.Strings(flat)
 	var diags []string
+	for _, path := range flat {
+		diags = append(diags, fmt.Sprintf("stray flat live spec: %s; move it to a folder containing spec.md", slashRel(root, path)))
+	}
 	for _, path := range matches {
 		out, code := coverage.Command([]string{"--check", path})
 		if code == 0 {

@@ -132,8 +132,8 @@ func TestCommand(t *testing.T) {
 		t.Chdir(t.TempDir())
 
 		out, code := Command([]string{"missing"})
-		if code != 1 || !strings.Contains(out, "spec not found: missing, specs/missing.md") {
-			t.Errorf("Command = (%q, %d), want exit 1 naming both 'missing' and 'specs/missing.md' in the not-found message", out, code)
+		if code != 1 || !strings.Contains(out, "spec not found: missing, specs/missing/spec.md") {
+			t.Errorf("Command = (%q, %d), want exit 1 naming both 'missing' and 'specs/missing/spec.md' in the not-found message", out, code)
 		}
 	})
 

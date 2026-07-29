@@ -8,14 +8,17 @@ import (
 	"testing"
 )
 
-// writeSpec writes content to <dir>/specs/<slug>.md and returns the path.
+// writeSpec writes content to <dir>/specs/<slug>/spec.md and returns the path.
 func writeSpec(t *testing.T, dir, slug, content string) string {
 	t.Helper()
 	specsDir := filepath.Join(dir, "specs")
 	if err := os.MkdirAll(specsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(specsDir, slug+".md")
+	path := filepath.Join(specsDir, slug, "spec.md")
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -133,7 +136,7 @@ func TestResolveConvention(t *testing.T) {
 	dir := t.TempDir()
 	slugPath := writeSpec(t, dir, "mine", "Status: staged\n")
 
-	// bare slug resolves to <base>/specs/<slug>.md
+	// bare slug resolves to <base>/specs/<slug>/spec.md
 	_, resolved, _, ok, err := Resolve(dir, "mine")
 	if err != nil || !ok {
 		t.Fatalf("bare slug: ok=%v err=%v", ok, err)
@@ -167,7 +170,7 @@ func TestResolveBaseAnchorsFallbackFromAnyCwd(t *testing.T) {
 	if err != nil || !ok {
 		t.Fatalf("anchored resolve: ok=%v err=%v", ok, err)
 	}
-	if resolved != filepath.Join(root, "specs", "anchored.md") {
+	if resolved != filepath.Join(root, "specs", "anchored", "spec.md") {
 		t.Errorf("resolved = %q, want root-anchored path", resolved)
 	}
 }
@@ -202,10 +205,63 @@ func TestFactsIncludesFolderSpecsAndMalformedEvidence(t *testing.T) {
 	}
 	want := []Fact{
 		{Slug: "bad", Path: "specs/bad/spec.md"},
-		{Slug: "flat", Path: "specs/flat.md", Status: "staged"},
+		{Slug: "flat", Path: "specs/flat/spec.md", Status: "staged"},
 		{Slug: "good", Path: "specs/good/spec.md", Status: "staged", RoadmapID: "FT1"},
 	}
 	if !reflect.DeepEqual(facts, want) {
 		t.Fatalf("Facts = %#v, want %#v", facts, want)
+	}
+}
+
+func TestResolveRefusesLiveFlatForms(t *testing.T) {
+	root := t.TempDir()
+	flat := filepath.Join(root, "specs", "legacy.md")
+	if err := os.MkdirAll(filepath.Dir(flat), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(flat, []byte("Status: staged\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, _, _, ok, err := Resolve(root, "legacy")
+	if ok || err == nil || !strings.Contains(err.Error(), flatLayoutInstruction) || !strings.Contains(err.Error(), flat) || !strings.Contains(err.Error(), filepath.Join(root, "specs", "legacy", "spec.md")) {
+		t.Fatalf("flat-only resolve = ok %v, err %v", ok, err)
+	}
+	if err := os.Mkdir(filepath.Join(root, "specs", "legacy"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "specs", "legacy", "spec.md"), []byte("Status: staged\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, _, _, ok, err = Resolve(root, "legacy")
+	if ok || err == nil || !strings.Contains(err.Error(), flatLayoutInstruction) || !strings.Contains(err.Error(), flat) || !strings.Contains(err.Error(), filepath.Join(root, "specs", "legacy", "spec.md")) {
+		t.Fatalf("collision resolve = ok %v, err %v", ok, err)
+	}
+}
+
+func TestResolveFlatPrecedesIncompleteFolder(t *testing.T) {
+	root := t.TempDir()
+	flat := filepath.Join(root, "specs", "partial.md")
+	folder := filepath.Join(root, "specs", "partial", "spec.md")
+	if err := os.MkdirAll(filepath.Dir(folder), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(flat, []byte("Status: staged\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, _, _, ok, err := Resolve(root, "partial")
+	if ok || err == nil || !strings.Contains(err.Error(), flatLayoutInstruction) || !strings.Contains(err.Error(), flat) || !strings.Contains(err.Error(), folder) || strings.Contains(err.Error(), "spec folder is missing") {
+		t.Fatalf("flat plus incomplete folder resolve = ok %v, err %v", ok, err)
+	}
+}
+
+func TestResolveRefusesIncompleteFolderWithoutFlat(t *testing.T) {
+	root := t.TempDir()
+	missing := filepath.Join(root, "specs", "partial", "spec.md")
+	if err := os.MkdirAll(filepath.Dir(missing), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	_, _, _, ok, err := Resolve(root, "partial")
+	if ok || err == nil || !strings.Contains(err.Error(), missing) {
+		t.Fatalf("incomplete folder resolve = ok %v, err %v", ok, err)
 	}
 }

@@ -1,7 +1,7 @@
 // Package spec owns spec-file addressing and the two spec-lifecycle operations: the
 // `bench spec implemented <slug>` status flip (Flip) and the `bench spec retire <slug>`
 // deletion. Resolve is the one source of the spec-argument convention (path-first, then a
-// specs/<slug>/spec.md and specs/<slug>.md fallbacks) that `bench coverage`, `bench commit --spec`, and both
+// specs/<slug>/spec.md fallback) that `bench coverage`, `bench commit --spec`, and both
 // operations take their argument through. Flip is the single source of the status-line
 // flip: it turns exactly one line-start `Status: staged` into the retirement-detector form
 // `Status: implemented`, preserving every other byte, and is composed by `bench commit`.
@@ -57,18 +57,14 @@ func metadata(content []byte) (status, roadmapID string) {
 	return status, roadmapID
 }
 
-// Facts reads folder and flat specs in path order. Malformed files are retained with an
+// Facts reads folder specs in path order. Malformed files are retained with an
 // empty status so callers can report the evidence rather than silently omit it.
 func Facts(root string) ([]Fact, error) {
-	flat, err := filepath.Glob(filepath.Join(root, "specs", "*.md"))
-	if err != nil {
-		return nil, err
-	}
 	folder, err := filepath.Glob(filepath.Join(root, "specs", "*", "spec.md"))
 	if err != nil {
 		return nil, err
 	}
-	paths := append(flat, folder...)
+	paths := folder
 	sort.Strings(paths)
 	out := make([]Fact, 0, len(paths))
 	for _, path := range paths {
@@ -81,11 +77,8 @@ func Facts(root string) ([]Fact, error) {
 			return nil, err
 		}
 		f := Fact{
-			Slug: strings.TrimSuffix(filepath.Base(path), ".md"),
+			Slug: filepath.Base(filepath.Dir(path)),
 			Path: filepath.ToSlash(rel),
-		}
-		if filepath.Base(path) == "spec.md" {
-			f.Slug = filepath.Base(filepath.Dir(path))
 		}
 		f.Status, f.RoadmapID = metadata(b)
 		out = append(out, f)
@@ -109,9 +102,12 @@ func AwaitsRetirement(content []byte) bool {
 // spelling the retirement predicate does.
 const StatusImplemented = "implemented"
 
+const flatLayoutInstruction = "flat spec layout: move to specs/<slug>/spec.md"
+
 // Resolve finds the readable file backing a spec argument: the argument as given
 // (path-first, so a same-named readable file shadows the fallback), then — for a
-// separator-free argument only — a flat fallback followed by a folder fallback. base
+// separator-free argument only — the folder fallback. A live flat spec is refused with
+// an explicit migration diagnostic before a folder is considered. base
 // anchors those fallbacks: pass the repo root to
 // resolve it repo-root-relative (so a cwd deeper than the root still finds it), or "" to
 // resolve it relative to the process cwd. ok is false when no form resolves; tried holds
@@ -125,17 +121,27 @@ func Resolve(base, arg string) (content []byte, resolved string, tried []string,
 	if !strings.ContainsRune(arg, '/') {
 		slug := strings.TrimSuffix(arg, ".md")
 		flat := filepath.Join(base, "specs", slug+".md")
-		tried = append(tried, flat)
-		if b, err := readCandidate(flat); err != nil || b != nil {
-			return b, flat, tried, err == nil, err
-		}
 		folder := filepath.Join(base, "specs", slug, "spec.md")
 		tried = append(tried, folder)
+		if pathExists(flat) {
+			if pathExists(filepath.Dir(folder)) {
+				return nil, flat, tried, false, fmt.Errorf("%s; found flat %s and folder form %s", flatLayoutInstruction, flat, folder)
+			}
+			return nil, flat, tried, false, fmt.Errorf("%s; found flat %s; target %s", flatLayoutInstruction, flat, folder)
+		}
+		if pathExists(filepath.Dir(folder)) && !pathExists(folder) {
+			return nil, folder, tried, false, fmt.Errorf("spec folder is missing %s", folder)
+		}
 		if b, err := readCandidate(folder); err != nil || b != nil {
 			return b, folder, tried, err == nil, err
 		}
 	}
 	return nil, "", tried, false, nil
+}
+
+func pathExists(path string) bool {
+	_, err := os.Lstat(path)
+	return err == nil
 }
 
 // readCandidate reads path as a candidate spec, through the classifier so a FIFO or
@@ -163,7 +169,7 @@ func isDir(path string) bool {
 	return err == nil && fi.IsDir()
 }
 
-// locateStaged resolves arg (base anchors both spec fallbacks) and requires exactly
+// locateStaged resolves arg (base anchors the spec fallback) and requires exactly
 // one line-start `Status: staged`, returning the resolved path, the file split into lines, and
 // the index of that one line. It never writes — it is the shared core of CheckStaged
 // (validate only) and Flip (validate then rewrite), so the resolution + single-staged-line
@@ -205,7 +211,7 @@ func CheckStaged(base, arg string) (resolved string, err error) {
 	return resolved, err
 }
 
-// Flip resolves arg (base anchors the specs/<slug>.md fallback), requires exactly one
+// Flip resolves arg (base anchors the specs/<slug>/spec.md fallback), requires exactly one
 // line-start `Status: staged`, rewrites that one line to `Status: implemented` in place —
 // every other byte, including a missing final newline, preserved — writes the file, and
 // returns the resolved path. It edits the file only; it never stages. The error names the
@@ -231,7 +237,7 @@ func Flip(base, arg string) (resolved string, err error) {
 // Command implements `bench spec <subcommand> <slug>`: `implemented` flips the status line
 // (Flip), `retire` deletes a merged spec and its review pickup, `history` reports the
 // commits that retired or deleted it (a read-only AXI query — see history.go). The
-// slug's specs/<slug>.md fallback is anchored at the repo root, so it resolves from any
+// slug's specs/<slug>/spec.md fallback is anchored at the repo root, so it resolves from any
 // cwd inside the repo; a path argument stays cwd-relative. Usage errors (missing/unknown
 // subcommand, missing or extra argument, unknown flag) exit 2; a resolve/validate/delete
 // failure exits 1 naming the file and reason.
@@ -276,7 +282,7 @@ func specArg(cmd, help string, rest []string) (arg, out string, code int, ok boo
 	return arg, "", 0, true
 }
 
-// RepoBase returns the repo root that anchors the specs/<slug>.md fallback, or "" when the
+// RepoBase returns the repo root that anchors the specs/<slug>/spec.md fallback, or "" when the
 // cwd is outside a repo (then the fallback resolves relative to the process cwd). It is the
 // one source of that anchoring for every subcommand that resolves a bare slug, so where the
 // caller happens to be standing never changes which spec a slug names.
@@ -315,13 +321,16 @@ func retireCommand(rest []string) (string, int) {
 	base := RepoBase()
 	content, resolved, tried, found, err := Resolve(base, arg)
 	if err != nil {
+		folder := filepath.Join(base, "specs", strings.TrimSuffix(arg, ".md"), "spec.md")
+		if resolved == folder {
+			if residue, ok := folderResidue(base, arg); ok {
+				return toon.Errorf("incomplete retired spec folder: "+residue,
+					"remove "+residue+" by hand after reviewing its residue; retire will not auto-clean it") + "\n", 1
+			}
+		}
 		return toon.Errorf(fmt.Sprintf("spec not readable: %s: %v", resolved, err), "check file permissions") + "\n", 1
 	}
 	if !found {
-		if residue, ok := folderResidue(base, arg); ok {
-			return toon.Errorf("incomplete retired spec folder: "+residue,
-				"remove "+residue+" by hand after reviewing its residue; retire will not auto-clean it") + "\n", 1
-		}
 		// A review pickup with no spec is a reviewer judgment, never an auto-clean.
 		if orphan, ok := orphanPickup(base, arg); ok {
 			return toon.Errorf("orphaned review pickup: "+orphan+" has no spec",

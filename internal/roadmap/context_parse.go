@@ -14,7 +14,7 @@ import (
 )
 
 var roadmapStartRe = regexp.MustCompile(`^\*\*([A-Za-z]+[0-9]+)(.*)$`)
-var specPathRe = regexp.MustCompile(`specs/([A-Za-z0-9_-]+)(?:/spec)?\.md`)
+var specPathRe = regexp.MustCompile(`specs/([A-Za-z0-9_-]+)/spec\.md`)
 var commandRe = regexp.MustCompile(`/bench-[A-Za-z0-9-]+`)
 var ideaRe = regexp.MustCompile(`^- ([0-9]{4}-[0-9]{2}-[0-9]{2})  (.*)$`)
 

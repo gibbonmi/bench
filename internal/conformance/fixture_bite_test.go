@@ -148,6 +148,7 @@ func TestCoverageMapValidationFixtureBite(t *testing.T) {
 	fixtures := []string{
 		"broken-coverage-map",
 		"no-map-not-historical",
+		"stray-flat-live-spec",
 	}
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {

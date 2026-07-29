@@ -506,7 +506,7 @@ func appendRetirement(rows []row, root string) []row {
 }
 
 // appendOrphanedPickup adds the orphaned-review-pickup signal (sev 9): a reviews/<slug>.md
-// with no matching live specs/<slug>/spec.md (or transitional flat spec) is a pickup file that
+// with no matching live specs/<slug>/spec.md is a pickup file that
 // escaped its lifecycle. It ranks
 // with the housekeeping rows, just below the retirement signal, so it never displaces the
 // gate/git rows in the budget. A paired pickup (its spec still present) is expected state.
@@ -548,12 +548,11 @@ func appendRoadmapReconcile(rows []row, root string) []row {
 	return append(rows, row{10, "roadmap", strings.Join(details, ", "), "/bench-what-next"})
 }
 
-// retirementCount counts live folder specs and transitional flat specs that spec.AwaitsRetirement
-// marks — a merged spec
+// retirementCount counts live folder specs that spec.AwaitsRetirement marks — a merged spec
 // awaiting retirement. Absent `specs/` → 0. The unfenced-marker predicate is
 // spec.AwaitsRetirement's one source. Every read goes through the classifier: this signal
 // is advisory and stays quiet about a spec it could not read, but a FIFO parked at
-// specs/*/spec.md (or a transitional flat spec) never yields EOF, and a board that blocks forever is worse than one missing a
+// specs/*/spec.md never yields EOF, and a board that blocks forever is worse than one missing a
 // housekeeping row — `bench status` is what the SessionStart hook runs.
 func retirementCount(root string) int {
 	dir := filepath.Join(root, "specs")
@@ -567,11 +566,10 @@ func retirementCount(root string) int {
 			continue
 		}
 		path := filepath.Join(dir, e.Name())
-		if e.IsDir() {
-			path = filepath.Join(path, "spec.md")
-		} else if !strings.HasSuffix(e.Name(), ".md") {
+		if !e.IsDir() {
 			continue
 		}
+		path = filepath.Join(path, "spec.md")
 		c := bounds.Classify(path, bounds.ControlRecordLimit)
 		if c.State != bounds.StateParsed {
 			continue
@@ -583,8 +581,7 @@ func retirementCount(root string) int {
 	return n
 }
 
-// orphanedPickupCount counts reviews/*.md files with no matching live specs/<slug>/spec.md or
-// transitional flat spec — a review
+// orphanedPickupCount counts reviews/*.md files with no matching live specs/<slug>/spec.md — a review
 // pickup whose spec retired first or was never present. Absent `reviews/` → 0. Hidden and
 // non-.md entries are skipped, mirroring the retirementCount dir-walk.
 func orphanedPickupCount(root string) int {
@@ -599,24 +596,20 @@ func orphanedPickupCount(root string) int {
 		}
 		slug := strings.TrimSuffix(e.Name(), ".md")
 		folder := filepath.Join(root, "specs", slug, "spec.md")
-		flat := filepath.Join(root, "specs", e.Name())
 		if info, err := os.Stat(folder); err == nil && !info.IsDir() {
 			continue // paired: its folder spec is still present
-		}
-		if info, err := os.Stat(flat); err == nil && !info.IsDir() {
-			continue // paired: its spec is still present
 		}
 		n++
 	}
 	return n
 }
 
-// roadmapReconcileRe matches a live `specs/<slug>/spec.md` or transitional flat spec-path token
+// roadmapReconcileRe matches a live `specs/<slug>/spec.md` token
 // in a ROADMAP.md row, with a
 // kebab/alnum slug. It matches the bare path inside backticks/bold since the markdown decoration
 // isn't part of the token, and the char class excludes `<>` so a literal `specs/<slug>/spec.md`
 // placeholder in the header prose can't false-fire.
-// roadmapReconcileCounts scans ROADMAP.md for live or transitional spec-path tokens and classifies each
+// roadmapReconcileCounts scans ROADMAP.md for live spec-path tokens and classifies each
 // distinct path against the tree: a missing file is a dangling row (the spec retired but its
 // roadmap row survived); a present file that spec.AwaitsRetirement marks is a merged row (the
 // work shipped but the drain missed it). A present, still-staged spec is the normal open-work
@@ -643,9 +636,6 @@ func roadmapReconcileCounts(root string) (merged, dangling int, state bounds.Fil
 		}
 		seen[folderPath] = true
 		sc := bounds.Classify(filepath.Join(root, folderPath), bounds.ControlRecordLimit)
-		if sc.State == bounds.StateAbsent {
-			sc = bounds.Classify(filepath.Join(root, "specs", slug+".md"), bounds.ControlRecordLimit)
-		}
 		if sc.State == bounds.StateAbsent || sc.State.Failed() {
 			dangling++
 			continue

@@ -152,7 +152,7 @@ func TestHandoffRefusesControlBytes(t *testing.T) {
 	f.CommitAll("base")
 	// git rejects a control byte in a ref name, so the reachable carrier is a spec's
 	// Status value, which reaches the rendered block through the same field validation.
-	f.WriteFile("specs/hostile.md", "# Hostile\n\nStatus: sta\x1bged\n")
+	f.WriteFile("specs/hostile/spec.md", "# Hostile\n\nStatus: sta\x1bged\n")
 
 	out := f.Bench("handoff")
 	out.RequireExit(1)
@@ -183,7 +183,7 @@ func TestHandoffRefusesNewlineFields(t *testing.T) {
 	}
 
 	// A spec Status carrying a tab reaches the same guard from the derived side.
-	f.WriteFile("specs/hostile.md", "# Hostile\n\nStatus: sta\tged\n")
+	f.WriteFile("specs/hostile/spec.md", "# Hostile\n\nStatus: sta\tged\n")
 	tabbed := f.Bench("handoff")
 	tabbed.RequireExit(1)
 	contract.RequireContains(t, tabbed.Stdout, "error: ")

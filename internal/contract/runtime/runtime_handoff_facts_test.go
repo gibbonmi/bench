@@ -164,8 +164,8 @@ func TestHandoffNamesStagedSpec(t *testing.T) {
 	flat.CommitAll("transitional flat spec")
 	out = flat.Bench("handoff")
 	out.RequireExit(0)
-	contract.RequireContains(t, out.Stdout, "Spec: `specs/transitional.md` (Status: staged)")
-	contract.RequireNotContains(t, out.Stdout, "specs/transitional/spec.md")
+	contract.RequireContains(t, out.Stdout, "Spec: none staged.")
+	contract.RequireNotContains(t, out.Stdout, "specs/transitional.md")
 
 	// A second, different Status value: a constant `Status: staged` fails here. The
 	// status-less spec alongside it is malformed rather than staged, so the field passes
