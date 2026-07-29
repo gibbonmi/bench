@@ -79,6 +79,7 @@ func Classify(command string, chk Checker) string {
 // command, naming the deny label. One source for the message the hook emits.
 func BlockMessage(label string) string {
 	return "BLOCKED: `" + label + "` — you don't have authority over this. " +
-		"The merge and any history rewrite are the user's; a failed shift is rolled back " +
-		"by bench, not by you. Stop and hand back."
+		"The merge and any history rewrite are the user's, and setting work aside or " +
+		"discarding it leaves a gate verdict answering for something other than what is " +
+		"on disk. A failed shift is rolled back by bench, not by you. Stop and hand back."
 }
