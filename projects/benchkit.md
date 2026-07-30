@@ -51,12 +51,12 @@ branch-agnostic. This line is only the binding.)
   not a clean bill, and one combined capture-drain row (parked ideas + open learnings)
   pointing at `/bench-what-next`. A stale gate softens to `capture-only drift` /
   `re-run when convenient` only when every changed path is in the fixed, exact
-  allowlist (`ROADMAP.md`, `IDEAS.md`, `.bench-notes.md` — no directory, suffix, or
-  markdown-class matching; expanding it is a new decision); any mixed or untrusted
-  diff fails closed to the strong stale row.
-  Its severity-1 git signal aggregates dirty paths, unpushed commits, and unique local
-  branches across the repository; severity-2 intent joins the shared common-directory
-  ledger, compact by default and expanded by `--all`.
+  allowlist (`ROADMAP.md`, `IDEAS.md`, `.bench-notes.md`, `session-handoff.md` — no
+  directory, suffix, or markdown-class matching; expanding it is a new decision); any
+  mixed or untrusted diff fails closed to the strong stale row. Its severity-1 git
+  signal reports dirty paths from the named/current checkout while aggregating
+  unpushed commits and unique local branches across the repository; severity-2 intent
+  joins the shared common-directory ledger, compact by default and expanded by `--all`.
 - **The capture inbox and working roadmap** (`bench idea` → `IDEAS.md`;
   `bench roadmap` → `ROADMAP.md`). Capture-and-forget: park an out-of-scope idea,
   commit to nothing; ideas graduate only through a `/bench-what-next` drain into the

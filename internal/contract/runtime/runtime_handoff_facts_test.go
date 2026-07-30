@@ -387,4 +387,24 @@ func TestHandoffTrackedCaptureIsNeutral(t *testing.T) {
 	contract.RequireContains(t, out.Stdout, "clean tree")
 	contract.RequireContains(t, out.Stdout, "Nothing pending — the board is clean.")
 	contract.RequireNotContains(t, out.Stdout, "commit on green")
+
+	f.WriteFile("scratch.txt", "uncommitted\n")
+	signals := status.SignalsWith(f.Root, status.Query{ExcludeDirtyPaths: []string{status.HandoffFile}})
+	var gitSignal *status.Signal
+	for i := range signals {
+		if signals[i].Name == "git" {
+			gitSignal = &signals[i]
+			break
+		}
+	}
+	if gitSignal == nil {
+		t.Fatalf("tracked handoff plus scratch path suppressed the git row: %v", signals)
+	}
+	if gitSignal.Detail != "1 dirty path" || gitSignal.Action != "commit on green" {
+		t.Fatalf("git signal = %#v, want one dirty path with commit-on-green action", *gitSignal)
+	}
+
+	out = f.Bench("handoff")
+	out.RequireExit(0)
+	contract.RequireContains(t, out.Stdout, "Branch: `main` — HEAD `"+handoffShortSHA(t, f)+"`, 1 dirty path, 0 unpushed commits")
 }

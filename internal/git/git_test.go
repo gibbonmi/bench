@@ -114,12 +114,30 @@ func TestLandedStateCountsDirtyPathsOnlyInNamedCheckout(t *testing.T) {
 		runGit(t, root, "config", "branch."+branch+".remote", "origin")
 		runGit(t, root, "config", "branch."+branch+".merge", "refs/heads/main")
 	}
-	state, err := LandedState(root)
-	if err != nil {
+	if err := os.WriteFile(filepath.Join(root, "a.txt"), []byte("root dirty\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if state.DirtyPaths != 0 || state.UnpushedCommits != 1 || state.UniqueBranches != 2 {
-		t.Fatalf("LandedState = %#v, want dirty=0 ahead=1 unique=2", state)
+	if err := os.WriteFile(filepath.Join(linked, "linked.txt"), []byte("linked dirty\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, tc := range []struct {
+		name      string
+		root      string
+		wantDirty int
+	}{
+		{name: "primary", root: root, wantDirty: 1},
+		{name: "linked", root: linked, wantDirty: 2},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			state, err := LandedState(tc.root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if state.DirtyPaths != tc.wantDirty || state.UnpushedCommits != 1 || state.UniqueBranches != 2 {
+				t.Fatalf("LandedState = %#v, want dirty=%d ahead=1 unique=2", state, tc.wantDirty)
+			}
+		})
 	}
 }
 
