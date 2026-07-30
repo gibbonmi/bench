@@ -186,8 +186,9 @@ code, the journal — those stay as full as their templates need).
 
 Use the canonical phases when the work needs them:
 
-1. `/bench-shape-idea` for unresolved decisions.
-2. `/bench-write-spec` to lock stories, seams, and gate expectations.
+1. `/bench-shape-idea` for a multi-session unresolved decision tree.
+2. `/bench-write-spec` from one reviewed decision source to lock stories,
+   engineering seams, and gate expectations.
 3. `/bench-implement-spec` to implement at the chosen seams.
 4. `/bench-review-implementation` for semantic review against standards and spec.
 5. `/bench-final-check` to report the gate result and, on green, commit to the

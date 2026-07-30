@@ -46,20 +46,18 @@ project-specific gate, profile, lines, and optional `CONTEXT.md`.
 For feature work, use the command path:
 
 ```text
-loose idea -> /bench-shape-idea -> /bench-write-spec -> /bench-implement-spec -> /bench-review-implementation -> /bench-final-check
+clear reviewed intent -----------------> /bench-write-spec -> /bench-implement-spec -> /bench-review-implementation -> /bench-final-check
+multi-session decision fog -> /bench-shape-idea ---^
 ```
 
-Every spec has a decision map behind it — there is no skip. When the idea is
-already clear because every fork was closed with the reviewer in the same
-session, `/bench-write-spec`'s entry contract records the map inline instead of
-routing through `/bench-shape-idea`; that entry contract is the one owner of the
-shaping requirement. Pre-spec working maps live at top-level
-`decisions/<topic>.md`; when
-`/bench-write-spec` compiles one, it moves the map and its owned assets beside
-the spec under `specs/<slug>/decisions/` and updates their references in the
-same green change. They remain settled provenance until whole-folder spec
-retirement. For bugs, use `/bench-debug` instead of the feature path; it builds
-the repro loop first.
+Decision maps are situational: `/bench-shape-idea` uses decision tickets only
+when reviewer choices form a multi-session dependency tree. A ready map is
+compiled beside its spec under `specs/<slug>/decisions/`; a clear idea may
+authorize `/bench-write-spec` through the reviewer-confirmed current
+conversation or a named reviewed artifact. Spec authoring records exactly one
+`Decision source:` line and owns engineering seams and coverage. Implementation
+then derives independently-green implementation tickets. For bugs, use
+`/bench-debug`; it builds the repro loop first.
 
 Each command should orient you at entry, then hand you off at exit with what
 changed, the current artifact or gate state, and the single next command it
@@ -150,7 +148,7 @@ bench/
 │   ├── adopt/                # link/init/doctor adoption mutators
 │   ├── toon/                 # the shared flat-table TOON emitter (one escaping rule)
 │   ├── learnings/            # bench learnings parser
-│   ├── maps/                 # bench maps engine (tickets + close-readiness + count)
+│   ├── maps/                 # bench maps engine (decision tickets + close-readiness + count)
 │   ├── guards/               # bench guards aggregation
 │   ├── diff/                 # bench diff review-base resolution
 │   ├── coverage/             # bench coverage extraction + --check validation
@@ -359,8 +357,8 @@ A typical feature — say, adding zone-entry events to the phase taxonomy:
 
 ```sh
 cd ~/src/regroup
-# 1. is the domain change settled? if not, map it.
-#    /bench-shape-idea  →  grills the zone-entry decision, writes decisions/zone-entries.md
+# 1. is the domain change a multi-session decision tree? if so, map it.
+#    /bench-shape-idea  →  grills decision tickets, writes decisions/zone-entries.md
 # 2. spec it — this picks the seam (the state machine) and the tests up front
 #    /bench-write-spec →  specs/zone-entries/spec.md with stories + the transition-test seam
 #                         and moves the map to specs/zone-entries/decisions/

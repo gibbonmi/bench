@@ -298,12 +298,13 @@ is in `craft-line`). Tier moves still get declared — no silent escalation.
   leverage override in `craft-line`: guidance prose compounds through every
   session that loads it while the edit costs few tokens. The `craft-skills` and
   `craft-adr` skills apply. Spend here.
-- **Spec authoring** → **mid model, fresh session by default**. Every spec is
-  compiled from a closed map's Handoff; `/bench-write-spec` owns the venue
-  mechanic. Top + high is allowed only when the Handoff carries uncertainty flags
-  and the reviewer approves the escalation. Distinct from the doc-authoring
-  leverage override above: that spends the top tier on the kit's guidance prose; a
-  normal spec is decided content transcribed off a Handoff.
+- **Spec authoring** → **mid model, fresh session by default**.
+  `/bench-write-spec` accepts exactly one of three sources: a ready compiled
+  map, a reviewer-confirmed current conversation, or a named reviewed artifact, then
+  derives engineering seams, tests, coverage, hostile-input attachment, and
+  gate attachment from that source and the current tree. Top + high remains a
+  reviewer-approved escalation. Distinct from the doc-authoring leverage
+  override above: that spends the top tier on the kit's guidance prose.
 - **`bench` CLI shell plumbing** → cheap model, low–medium effort at the known seam.
   Mechanical once the gate-resolution and worktree-pool shapes exist.
 - **Gate / conformance logic** → mid effort. Correctness of the oracle matters more

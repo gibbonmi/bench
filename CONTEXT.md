@@ -46,16 +46,18 @@ cold session reads this first to avoid drifting the vocabulary.
 - **park** — to capture an idea in the **ideas inbox** without committing to it
   (`bench idea "<text>"`). A *parked idea* graduates into committed work only when
   `/bench-shape-idea` pulls it into a decision map. Not "stash", not "file" — park.
-- **decision map** — the working map of the open decisions behind one idea, at
-  `decisions/<topic>.md`: grill tickets with answers, closed by a `## Handoff`
-  that hands the spec-writer its seams. Like a spec, it is promoted-then-deleted
-  once the work ships — durable decisions move to an ADR, this file, or the
-  profile, and the map leaves the tree (history lives in git). Not "PRD", not
-  "design doc" — decision map.
-- **session handoff** — the phase-close continuation artifact at `session-handoff.md`,
-  rewritten in full by `bench handoff`. Distinct from a decision map's `## Handoff`
-  section, which hands one idea's seams to the spec-writer: this one hands the whole
-  repository to the next session. Rewritten, never appended to.
+- **decision map** — a situational working map for a multi-session unresolved
+  decision tree at `decisions/<topic>.md`. Its **decision tickets** record
+  reviewer choices, constraints, exclusions, research objects, and bounded
+  discretion; a ready map is compiled beside its spec. It does not choose the
+  spec's engineering seams or tests. Not "PRD", not "design doc" — decision map.
+- **decision ticket** — one reviewer choice or evidence-producing question in
+  a decision map, linked to other decision tickets by `Blocked by`. Distinct
+  from an **implementation ticket**, the independently-green build unit under
+  `specs/<slug>/tickets/`.
+- **session handoff** — the phase-close continuation artifact at
+  `session-handoff.md`, rewritten in full by `bench handoff`. It hands the whole
+  repository to the next session and is rewritten, never appended to.
 - **pin block** — the header `bench handoff` prints to stdout and writes at the top of the
   session handoff: repository, path, branch and HEAD, tree state, staged spec, gate
   verdict, and the next command. One derivation feeds both sinks, so the printed block and

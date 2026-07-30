@@ -11,19 +11,19 @@ coverage.
 
 ## Acceptance
 
-- [ ] Spec writing accepts a ready compiled map, a reviewer-confirmed current
+- [x] Spec writing accepts a ready compiled map, a reviewer-confirmed current
   conversation, or a named reviewed artifact and records exactly one Decision
   source line.
-- [ ] Spec writing re-verifies map Sources and asks at most two late
+- [x] Spec writing re-verifies map Sources and asks at most two late
   clarifications one at a time with a recommendation before routing dependency
   fog back to shaping.
-- [ ] Shaping uses decision-ticket vocabulary, points to `bench maps --template`,
+- [x] Shaping uses decision-ticket vocabulary, points to `bench maps --template`,
   removes Handoff, and owns reviewer decisions, constraints, exclusions,
   research objects, and bounded discretion.
-- [ ] Spec guidance owns engineering seams, tests, acceptance coverage, hostile
+- [x] Spec guidance owns engineering seams, tests, acceptance coverage, hostile
   inputs, and gate attachment without copying a second research manifest.
-- [ ] `craft-tickets` keeps independently-green implementation-ticket semantics,
+- [x] `craft-tickets` keeps independently-green implementation-ticket semantics,
   while CONTEXT, README, the profile, adapters, indexes, and CHANGELOG use the
   new phase vocabulary consistently.
-- [ ] Guidance conformance mutations fail when any authorization, ownership, or
+- [x] Guidance conformance mutations fail when any authorization, ownership, or
   vocabulary anchor is removed or reverted.

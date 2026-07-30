@@ -82,17 +82,10 @@ func checkWorkflowAnchors(root string) []string {
 	require(".bench/BENCH.md", "bench worktree clean")
 	require(".bench/BENCH.md", "bench worktree recovery")
 	require(".agents/commands/bench-write-spec.md", "Superseded by")
-	require(".agents/commands/bench-shape-idea.md", "## Handoff")
-	require(".agents/commands/bench-shape-idea.md", "Hostile-input owner")
-	require(".agents/commands/bench-shape-idea.md", "Dependency order")
-	require(".agents/commands/bench-shape-idea.md", "n/a \u2014")
-	require(".agents/commands/bench-write-spec.md", "map's Handoff")
 	require(".agents/commands/bench-write-spec.md", "spec-retire:")
 	require(".agents/commands/bench-write-spec.md", "Status: staged")
 	require(".agents/commands/bench-write-spec.md", "new session on the mid tier")
-	require(".agents/commands/bench-write-spec.md", "no map backs the draft")
-	require(".agents/commands/bench-write-spec.md", "written in the same session as the draft")
-	require(".agents/commands/bench-write-spec.md", "mostly not observed reds")
+	require(".agents/commands/bench-write-spec.md", "mostly not")
 	require(".agents/commands/bench-write-spec.md", "runs at the mid tier")
 	require(".agents/commands/bench-write-spec.md", "Every draft gets the pass")
 	require("projects/benchkit.md", "Spec falsification pass")
@@ -204,12 +197,12 @@ func checkWorkflowAnchors(root string) []string {
 	// full statement with a require and the reintroduced contradiction with a
 	// forbid, so the same fact cannot be stated twice and drift apart again.
 
-	// Shaping — /bench-write-spec's entry contract owns the map requirement;
-	// README points at the inline-map route instead of offering a skip.
-	forbid("README.md", "Skip `/bench-shape-idea`",
-		"README.md reintroduces the shaping skip route; every spec has a map behind it and /bench-write-spec's entry contract owns the inline-map recording path")
-	requireCollapsed("README.md", "`/bench-write-spec`'s entry contract records the map inline",
-		"README.md dropped the inline-map route pointer; /bench-write-spec's entry contract owns the shaping requirement")
+	// Shaping is situational; README names both authorized routes without
+	// copying the command's full entry contract.
+	forbid("README.md", "Every spec has a decision map behind it",
+		"README.md reintroduced mandatory decision maps; shaping is situational")
+	requireCollapsed("README.md", "Decision maps are situational",
+		"README.md dropped the situational decision-map vocabulary")
 
 	// Delegation — craft-delegate owns the capability-aware policy in full;
 	// /bench-implement-spec points at it and states no inline threshold of its own.
@@ -389,10 +382,8 @@ func checkWorkflowAnchors(root string) []string {
 
 	requireCollapsed(".agents/commands/bench-write-spec.md", "Top-level `decisions/` holds pre-spec working maps",
 		".agents/commands/bench-write-spec.md dropped the top-level pre-spec working-map posture")
-	requireCollapsed(".agents/commands/bench-write-spec.md", "run `bench maps` and confirm it shows no row for the map",
-		".agents/commands/bench-write-spec.md dropped the bench-maps working-map lifecycle check")
-	requireCollapsed(".agents/commands/bench-write-spec.md", "deliberately outside the top-level `bench maps` query",
-		".agents/commands/bench-write-spec.md dropped the spec-local-provenance exclusion from bench maps")
+	requireCollapsed(".agents/commands/bench-shape-idea.md", "Run `bench maps` before declaring readiness",
+		".agents/commands/bench-shape-idea.md dropped the bench-maps readiness check")
 	requireCollapsed(".agents/commands/bench-write-spec.md", "move (do not copy) the source map and any map-owned assets from top-level `decisions/` into `specs/<slug>/decisions/`",
 		".agents/commands/bench-write-spec.md dropped the compile-time decision-map move")
 	requireCollapsed(".agents/commands/bench-write-spec.md", "update every reference to the moved paths",
@@ -521,38 +512,40 @@ func checkWorkflowAnchors(root string) []string {
 		}
 	}
 
-	shapeIdeaPath := filepath.Join(root, ".agents", "commands", "bench-shape-idea.md")
-	shapeIdeaActive := collapseSpace(stripHTMLComments(readIfExists(shapeIdeaPath)))
-	if exists(shapeIdeaPath) && strings.Contains(shapeIdeaActive, "straight to `/bench-write-spec`") {
-		diags = append(diags, ".agents/commands/bench-shape-idea.md reintroduces the skip-to-spec bypass fragment; every idea must yield a map with a Handoff before a spec")
+	diags = append(diags, checkSpecAuthorizationContract(root)...)
+	for _, anchor := range []struct{ rel, needle, diag string }{
+		{".agents/commands/bench-write-spec.md", "Record exactly one `Decision source:` line", ".agents/commands/bench-write-spec.md dropped the exactly-one Decision source contract"},
+		{".agents/commands/bench-write-spec.md", "re-read and re-verify every structured `## Sources` entry", ".agents/commands/bench-write-spec.md dropped the map Sources re-verification or single-manifest contract"},
+		{".agents/commands/bench-write-spec.md", "without copying a research manifest into the spec", ".agents/commands/bench-write-spec.md dropped the map Sources re-verification or single-manifest contract"},
+		{".agents/commands/bench-write-spec.md", "Ask at most two late clarification questions, one at a time, each with a recommended answer; route a dependency tree or multi-session fog to `$bench-shape-idea`", ".agents/commands/bench-write-spec.md dropped the bounded late-uncertainty route"},
+		{".agents/commands/bench-shape-idea.md", "Decision maps are situational, not mandatory", ".agents/commands/bench-shape-idea.md dropped the situational-map contract"},
+		{".agents/commands/bench-shape-idea.md", "Run `bench maps --template` for the canonical paste-ready schema", ".agents/commands/bench-shape-idea.md dropped the canonical map-template pointer"},
+		{".agents/commands/bench-shape-idea.md", "A decision ticket is one unresolved reviewer choice", ".agents/commands/bench-shape-idea.md dropped decision-ticket vocabulary"},
+		{".agents/commands/bench-shape-idea.md", "Shaping owns reviewer decisions, constraints, exclusions, research objects, rejected alternatives, and bounded discretion", ".agents/commands/bench-shape-idea.md dropped shaping ownership of reviewer decisions, constraints, exclusions, research objects, rejected alternatives, or bounded discretion"},
+		{".agents/commands/bench-write-spec.md", "Spec authoring owns engineering seams, deep-versus-thin design, tests, acceptance coverage, hostile-input attachment, and gate attachment", ".agents/commands/bench-write-spec.md dropped spec ownership of engineering seams, tests, coverage, hostile inputs, or gate attachment"},
+	} {
+		requireCollapsed(anchor.rel, anchor.needle, anchor.diag)
 	}
-	writeSpecPath := filepath.Join(root, ".agents", "commands", "bench-write-spec.md")
-	writeSpecActive := collapseSpace(stripHTMLComments(readIfExists(writeSpecPath)))
-	if exists(writeSpecPath) {
-		if !strings.Contains(writeSpecActive, "refuses to run without") {
-			diags = append(diags, ".agents/commands/bench-write-spec.md dropped the map-required entry contract (refuses to run without a complete map)")
-		}
-		reviewerClosedFastPathAnchors := []string{
-			"Default spec authoring starts in a fresh mid-tier session",
-			"sole same-session exception",
-			"every load-bearing fork has already been put to the reviewer and closed in the current session",
-			"write those decisions directly into a new decision map with a complete Handoff",
-			"continue from that file rather than unwritten grill memory",
-			"compile the spec without routing through `/bench-shape-idea`",
-		}
-		for _, anchor := range reviewerClosedFastPathAnchors {
-			if !strings.Contains(writeSpecActive, anchor) {
-				diags = append(diags, ".agents/commands/bench-write-spec.md dropped the active reviewer-closed-forks same-session fast path")
-				break
-			}
-		}
-		if !strings.Contains(writeSpecActive, "if any fork remains open, run `/bench-shape-idea` and keep the normal map gate") {
-			diags = append(diags, ".agents/commands/bench-write-spec.md dropped the explicit open-fork fallback to /bench-shape-idea")
-		}
-	}
-	if exists(shapeIdeaPath) && !strings.Contains(shapeIdeaActive, "`/bench-write-spec`'s entry contract owns the narrow recording path for decisions already closed with the reviewer in the current session") {
-		diags = append(diags, ".agents/commands/bench-shape-idea.md dropped the pointer to /bench-write-spec's entry contract for reviewer-closed forks")
-	}
+	forbid(".agents/commands/bench-shape-idea.md", "## Handoff",
+		".agents/commands/bench-shape-idea.md reintroduced decision-map Handoff ownership")
+	forbid(".agents/commands/bench-write-spec.md", "## Handoff",
+		".agents/commands/bench-write-spec.md reintroduced decision-map Handoff consumption")
+	forbid(".agents/commands/bench-write-spec.md", "map's Handoff",
+		".agents/commands/bench-write-spec.md reintroduced decision-map Handoff consumption")
+	requireCollapsed(".agents/skills/bench-craft-grill/SKILL.md", "Grill is a decision-ticket type",
+		".agents/skills/bench-craft-grill/SKILL.md dropped decision-ticket vocabulary")
+	requireCollapsed(".agents/skills/bench-craft-spec/SKILL.md", "authorized decision source",
+		".agents/skills/bench-craft-spec/SKILL.md reintroduced Handoff-owned acceptance behavior")
+	requireCollapsed(".agents/skills/bench-craft-delegate/SKILL.md", "named decision source",
+		".agents/skills/bench-craft-delegate/SKILL.md reintroduced Handoff-owned delegate context")
+	requireCollapsed("CONTEXT.md", "**decision ticket**",
+		"CONTEXT.md dropped the decision-ticket versus implementation-ticket distinction")
+	requireCollapsed("README.md", "independently-green implementation tickets",
+		"README.md dropped implementation-ticket vocabulary")
+	requireCollapsed("projects/benchkit.md", "derives engineering seams, tests, coverage, hostile-input attachment, and gate attachment",
+		"projects/benchkit.md dropped spec-authoring phase ownership")
+	requireCollapsed("CHANGELOG.md", "separated shaping decision tickets from independently-green implementation tickets",
+		"CHANGELOG.md dropped the decision-ticket phase-ownership change")
 
 	readme := readIfExists(filepath.Join(root, "README.md"))
 	if readme != "" {

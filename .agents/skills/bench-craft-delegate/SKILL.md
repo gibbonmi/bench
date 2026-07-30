@@ -56,9 +56,9 @@ table already routes top, and it is declared like any line. Fork because the
 read-set genuinely is this conversation, never to skip writing the charge;
 everything else spawns fresh on the bound alias.
 
-Prefer compressed inputs over inherited context: when a decision map has a
-Handoff, give the delegate that digest plus line-ranged excerpts it must quote,
-not the orchestrator's whole read list.
+Prefer compressed inputs over inherited context: give the delegate the named
+decision source plus the exact source passages and coverage rows its slice
+needs, not the orchestrator's whole read list.
 
 Name exemplar files to mirror, and say so explicitly when no exemplar exists.
 A convention stated as prose degrades as the tree grows: "follow the repo's

@@ -26,6 +26,36 @@ func checkDocsCurrencyAndWorkflow(root, kitRoot string) []string {
 	return diags
 }
 
+func checkSpecAuthorizationContract(root string) []string {
+	path := filepath.Join(root, ".agents", "commands", "bench-write-spec.md")
+	if !exists(path) {
+		return nil
+	}
+	entryContract, ok := markdownH2Sections(stripHTMLComments(readIfExists(path)), "Entry contract")
+	if ok != 1 {
+		return []string{".agents/commands/bench-write-spec.md dropped the exactly-three authorization boundary"}
+	}
+	declaration := strings.ToLower(collapseSpace(entryContract))
+	if marker := strings.Index(declaration, "- **"); marker >= 0 {
+		declaration = declaration[:marker]
+	}
+	var diags []string
+	for _, authorization := range []struct{ anchor, diag string }{
+		{"a ready compiled map", ".agents/commands/bench-write-spec.md dropped the ready compiled map authorization"},
+		{"reviewer-confirmed current conversation", ".agents/commands/bench-write-spec.md dropped the reviewer-confirmed current conversation authorization"},
+		{"named reviewed artifact", ".agents/commands/bench-write-spec.md dropped the named reviewed artifact authorization"},
+	} {
+		if !strings.Contains(declaration, authorization.anchor) {
+			diags = append(diags, authorization.diag)
+		}
+	}
+	if !strings.Contains(declaration, "accept exactly one of three decision sources") ||
+		!strings.Contains(declaration, "no unnamed memory, unreviewed note, or fourth override authorizes a draft") {
+		diags = append(diags, ".agents/commands/bench-write-spec.md dropped the exactly-three authorization boundary")
+	}
+	return diags
+}
+
 func checkCoverageMaps(root string) []string {
 	specsDir := filepath.Join(root, "specs")
 	if !exists(specsDir) {

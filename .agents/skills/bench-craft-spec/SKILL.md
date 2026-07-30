@@ -33,9 +33,9 @@ Three rules keep a map honest:
   state the granularity explicitly — per item or per class. An unenumerated
   "each" lets the build pick the cheapest reading, and review is the wrong
   place to catch that.
-- **Assertables become rows.** When a decision map's Handoff names black-box
-  assertables, each one lands as a coverage row or a stated exception; an
-  assertable with no row is a missing behavior, not an editorial choice.
+- **Source behaviors become rows.** Every observable behavior promised by the
+  authorized decision source lands as a coverage row or a stated exception; a
+  promised behavior with no row is missing coverage, not an editorial choice.
 
 ## The edge inventory
 

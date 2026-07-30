@@ -1,6 +1,6 @@
 ---
 name: craft-grill
-description: Disciplined one-question-at-a-time elicitation to surface a decision or a spec. Use during /bench-shape-idea tickets, before /bench-write-spec when requirements are fuzzy, or any time I say "grill me" or the work can't proceed until an open question is resolved. Reach for this instead of asking five questions at once.
+description: Disciplined one-question-at-a-time elicitation to surface a decision or a spec. Use during /bench-shape-idea decision tickets, before /bench-write-spec when requirements are fuzzy, or any time I say "grill me" or the work can't proceed until an open question is resolved. Reach for this instead of asking five questions at once.
 index: surfacing a decision one question at a time
 ---
 
@@ -48,13 +48,14 @@ If a *fact* can be found by exploring the codebase, look it up rather than askin
 
 ## What it feeds
 
-In `/bench-shape-idea`, a grill is a ticket type — its output is a resolved decision recorded
-in the map (current state only). Before `/bench-write-spec`, a grill closes the gaps so the
-spec can be synthesized without an interview. When you've grilled enough that the
-build path is clear, say so and hand to `/bench-write-spec`.
+In `/bench-shape-idea`, Grill is a decision-ticket type — its output is one
+reviewer decision recorded as current state. Decision maps are situational:
+use one for a multi-session dependency tree, while ordinary late uncertainty
+inside `/bench-write-spec` stays bounded there. When the fog is gone, hand the
+reviewed source to `/bench-write-spec`.
 
-Before you call a map resolved, run `bench maps` — it lists any ticket whose
+Before you call a map ready, run `bench maps` — it lists any decision ticket whose
 Answer is still a `— (open` / `— (deferred` placeholder or whose section carries a
-`GRILL DEFERRED` banner — and refuse to close while the map still shows a row. A decision made in
+`GRILL DEFERRED` banner — and refuse readiness while the map still shows a row. A decision made in
 conversation but not written into the map is not recorded; the artifact is the source
 of truth, not the chat.
