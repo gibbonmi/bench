@@ -202,7 +202,7 @@ func sourceDiagnostics(root, body string) []Diagnostic {
 		}
 	}
 	for _, line := range nonEmptyLines(body) {
-		if strings.HasPrefix(line, "- Path: ") || strings.HasPrefix(line, "- URL: ") {
+		if strings.HasPrefix(line, "- ") {
 			validate(record)
 			record = []string{line}
 		} else if len(record) == 0 {

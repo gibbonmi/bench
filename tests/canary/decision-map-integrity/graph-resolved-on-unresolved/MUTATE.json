@@ -1,0 +1,4 @@
+[
+  {"path":"specs/ft128-agent-line-binding/decisions/multi-harness-line-binding.md","old":"**Symmetric peers.**","new":"— (open)"},
+  {"path":"specs/ft128-agent-line-binding/decisions/multi-harness-line-binding.md","old":"## #2: lines.env schema — key shape and harness set\n\nBlocked by: none","new":"## #2: lines.env schema — key shape and harness set\n\nBlocked by: #1"}
+]

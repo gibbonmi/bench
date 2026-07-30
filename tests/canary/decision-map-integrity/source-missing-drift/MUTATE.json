@@ -1,0 +1,3 @@
+[
+  {"path":"specs/ft128-agent-line-binding/decisions/multi-harness-line-binding.md","old":"## Sources\n\n## Out of scope","new":"## Sources\n\n- Path: `specs/ft128-agent-line-binding/decisions/multi-harness-line-binding.md`\n  Supports: retained map.\n\n## Out of scope"}
+]

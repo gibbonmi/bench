@@ -239,6 +239,64 @@ func TestDiscoverDecisionMapCandidatesDirectChildren(t *testing.T) {
 	}
 }
 
+func TestValidateDecisionMapTreeValidatesActiveAndCompiledCandidates(t *testing.T) {
+	root := t.TempDir()
+	writeMap := func(path, document string) {
+		t.Helper()
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(document), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	active := strings.Replace(DecisionMapTemplate(), "<answer>", "Resolved.", 1)
+	compiled := strings.Replace(active, "Status: shaping", "Status: ready", 1)
+	writeMap(filepath.Join(root, "decisions", "active.md"), active)
+	writeMap(filepath.Join(root, "specs", "compiled", "decisions", "compiled.md"), compiled)
+	writeMap(filepath.Join(root, "specs", "no-map", "spec.md"), "# No map\n")
+
+	if diagnostics := ValidateDecisionMapTree(root); len(diagnostics) != 0 {
+		t.Fatalf("ValidateDecisionMapTree diagnostics = %v", diagnostics)
+	}
+
+	writeMap(filepath.Join(root, "specs", "broken", "decisions", "broken.md"), "# Broken\n")
+	writeMap(filepath.Join(root, "decisions", "graph.md"), strings.Replace(active, "Blocked by: none", "Blocked by: #1", 1))
+	diagnostics := ValidateDecisionMapTree(root)
+	for _, want := range []string{
+		"specs/broken/decisions/broken.md: missing Status",
+		"decisions/graph.md: ticket #1: <decision question> self-edge #1 -> #1",
+	} {
+		if !hasTreeDiagnostic(diagnostics, want) {
+			t.Fatalf("ValidateDecisionMapTree diagnostics = %v, want %q", diagnostics, want)
+		}
+	}
+}
+
+func TestActiveRowsExcludeInvalidCompiledCandidates(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "specs", "compiled", "decisions", "broken.md")
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte("# Broken\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	rows, count, state := ActiveRows(root)
+	if state != bounds.StateParsed || len(rows) != 0 || count != 0 {
+		t.Fatalf("ActiveRows = (%v, %d, %s), want no active rows or count for an invalid compiled candidate", rows, count, state)
+	}
+}
+
+func hasTreeDiagnostic(diagnostics []string, want string) bool {
+	for _, diagnostic := range diagnostics {
+		if strings.Contains(diagnostic, want) {
+			return true
+		}
+	}
+	return false
+}
+
 func TestActiveScanSharesDirectCandidateDiscovery(t *testing.T) {
 	root := t.TempDir()
 	for _, name := range []string{"active.md", ".hidden.md", "README.md", "uppercase.MD"} {

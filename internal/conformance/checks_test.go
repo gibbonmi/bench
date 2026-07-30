@@ -13,6 +13,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/maps"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
@@ -45,6 +46,7 @@ var conformanceChecks = map[string]checkFunc{
 	"marker-wait-deadlines":        func(root, _ string, _ registry.Tier) []string { return checkMarkerWaitDeadlines(root) },
 	"subcommand-routing":           func(root, _ string, _ registry.Tier) []string { return checkSubcommandRouting(root) },
 	"skip-ownership":               func(root, _ string, _ registry.Tier) []string { return checkSkipOwnership(root) },
+	"decision-map-integrity":       func(root, _ string, _ registry.Tier) []string { return maps.ValidateDecisionMapTree(root) },
 }
 
 // RunConformance grades root against the checks tier runs, timing each one. An empty

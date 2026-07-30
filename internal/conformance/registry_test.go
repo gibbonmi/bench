@@ -24,6 +24,7 @@ const (
 type fixtureRegistration struct {
 	Owner        fixtureOwner
 	ShellSources []string
+	GoSources    []string
 }
 
 var canaryFixtureRegistry = map[string]fixtureRegistration{
@@ -212,8 +213,23 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"phase-manifest-defect-admitted":       behaviorFixture(),
 }
 
+// canaryFixtureFamilyRegistry assigns one owner to every fixture in a family whose
+// checks share one Go implementation. Exact fixture registrations override this table.
+var canaryFixtureFamilyRegistry = map[string]fixtureRegistration{
+	"decision-map-integrity": conformanceGoFixture(
+		"internal/maps/schema.go",
+		"internal/maps/validation.go",
+		"internal/maps/tree_validation.go",
+		"internal/conformance/checks_test.go",
+	),
+}
+
 func conformanceFixture(shellSources ...string) fixtureRegistration {
 	return fixtureRegistration{Owner: ownerConformance, ShellSources: shellSources}
+}
+
+func conformanceGoFixture(goSources ...string) fixtureRegistration {
+	return fixtureRegistration{Owner: ownerConformance, GoSources: goSources}
 }
 
 func behaviorFixture() fixtureRegistration {
@@ -222,6 +238,14 @@ func behaviorFixture() fixtureRegistration {
 
 func phaseFixture() fixtureRegistration {
 	return fixtureRegistration{Owner: ownerPhase}
+}
+
+func fixtureRegistrationFor(name, family string) (fixtureRegistration, bool) {
+	if registration, found := canaryFixtureRegistry[name]; found {
+		return registration, true
+	}
+	registration, found := canaryFixtureFamilyRegistry[family]
+	return registration, found
 }
 
 func TestCanaryFixtureRegistryClassifiesEveryFixture(t *testing.T) {
@@ -248,7 +272,7 @@ func TestCanaryFixtureRegistryClassifiesEveryFixture(t *testing.T) {
 			t.Errorf("canary fixture %q has unknown conformance family %q", name, family)
 			continue
 		}
-		reg, ok := canaryFixtureRegistry[name]
+		reg, ok := fixtureRegistrationFor(name, family)
 		if !ok {
 			t.Errorf("canary fixture %q is unclassified", name)
 			continue
@@ -256,8 +280,13 @@ func TestCanaryFixtureRegistryClassifiesEveryFixture(t *testing.T) {
 		if reg.Owner != ownerConformance && reg.Owner != ownerBehavior && reg.Owner != ownerPhase {
 			t.Errorf("canary fixture %q has invalid owner %q", name, reg.Owner)
 		}
-		if reg.Owner == ownerConformance && len(reg.ShellSources) == 0 {
-			t.Errorf("canary fixture %q has no retired shell source", name)
+		if reg.Owner == ownerConformance && len(reg.ShellSources) == 0 && len(reg.GoSources) == 0 {
+			t.Errorf("canary fixture %q has no conformance owner source", name)
+		}
+		for _, source := range reg.GoSources {
+			if _, err := os.Stat(h.KitPath(filepath.FromSlash(source))); err != nil {
+				t.Errorf("canary fixture %q names missing Go owner source %s: %v", name, source, err)
+			}
 		}
 		if reg.Owner != wantOwner {
 			t.Errorf("canary fixture %q under %q has owner %q, want %q", name, family, reg.Owner, wantOwner)
@@ -271,6 +300,39 @@ func TestCanaryFixtureRegistryClassifiesEveryFixture(t *testing.T) {
 		if _, ok := fixturePaths[name]; !ok {
 			t.Errorf("registry names nonexistent canary fixture %q", name)
 		}
+	}
+	for family := range canaryFixtureFamilyRegistry {
+		found := false
+		for _, fixture := range fixturePaths {
+			if fixture.Family == family {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("family registry names nonexistent canary family %q", family)
+		}
+		if !familyIsBound(family) {
+			t.Errorf("family registry names unbound conformance family %q", family)
+		}
+	}
+}
+
+func TestCanaryFixtureFamilyRegistrationInheritance(t *testing.T) {
+	registration, found := fixtureRegistrationFor("future-decision-map-fixture", "decision-map-integrity")
+	if !found || registration.Owner != ownerConformance || len(registration.GoSources) == 0 {
+		t.Fatalf("future decision-map fixture registration = %#v, %v; want conformance family registration with Go sources", registration, found)
+	}
+
+	canaryFixtureRegistry["decision-map-override"] = behaviorFixture()
+	t.Cleanup(func() { delete(canaryFixtureRegistry, "decision-map-override") })
+	override, found := fixtureRegistrationFor("decision-map-override", "decision-map-integrity")
+	if !found || override.Owner != ownerBehavior {
+		t.Fatalf("exact fixture registration = %#v, %v; want exact override", override, found)
+	}
+
+	if _, found := fixtureRegistrationFor("unregistered-fixture", "unregistered-family"); found {
+		t.Fatal("unregistered canary family resolved a fixture registration")
 	}
 }
 

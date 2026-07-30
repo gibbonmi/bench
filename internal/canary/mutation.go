@@ -85,6 +85,11 @@ func materializeMutationFixture(root, fixture, dst string) error {
 	return nil
 }
 
+// MaterializeMutationFixture copies a fixture's base, files, and anchored mutations.
+func MaterializeMutationFixture(root, fixture, dst string) error {
+	return materializeMutationFixture(root, fixture, dst)
+}
+
 func basePaths(root, basePath string) ([]string, error) {
 	seenIncludes := map[string]bool{}
 	paths := []string{}

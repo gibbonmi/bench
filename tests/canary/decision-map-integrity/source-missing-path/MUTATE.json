@@ -1,0 +1,3 @@
+[
+  {"path":"specs/ft128-agent-line-binding/decisions/multi-harness-line-binding.md","old":"## Sources\n\n## Out of scope","new":"## Sources\n\n- Path: `missing-evidence.md`\n  Supports: unavailable evidence.\n  Drift: never.\n\n## Out of scope"}
+]

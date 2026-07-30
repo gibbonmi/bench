@@ -2,7 +2,6 @@ package maps
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -45,38 +44,52 @@ func discoverDirectoryCandidates(root, dir string, compiled bool) ([]DecisionMap
 
 // DiscoverDecisionMapCandidates finds active and compiled direct Markdown candidates.
 func DiscoverDecisionMapCandidates(root string) ([]DecisionMapCandidate, error) {
+	candidates, diagnostics := discoverDecisionMapCandidates(root)
+	if len(diagnostics) > 0 {
+		return nil, fmt.Errorf("%s", diagnostics[0])
+	}
+	return candidates, nil
+}
+
+// discoverDecisionMapCandidates is the sole active-and-compiled candidate traversal.
+// Callers receive every readable candidate plus any independent directory diagnostics.
+func discoverDecisionMapCandidates(root string) ([]DecisionMapCandidate, []string) {
 	var candidates []DecisionMapCandidate
-	appendDirectory := func(dir string, compiled bool) error {
+	var diagnostics []string
+	appendDirectory := func(dir string, compiled bool) {
 		discovered, state, reason := discoverDirectoryCandidates(root, dir, compiled)
 		if state == bounds.StateAbsent {
-			return nil
+			return
 		}
-		if state.Failed() {
-			return fmt.Errorf("read %s: %s", dir, reason)
+		if state != bounds.StateParsed && state != bounds.StateEmpty {
+			rel, err := filepath.Rel(root, dir)
+			if err != nil {
+				rel = dir
+			}
+			diagnostics = append(diagnostics, fmt.Sprintf("%s: %s: %s", filepath.ToSlash(rel), state, reason))
+			return
 		}
 		candidates = append(candidates, discovered...)
-		return nil
 	}
-	if err := appendDirectory(filepath.Join(root, DecisionsDir), false); err != nil {
-		return nil, err
+	appendDirectory(filepath.Join(root, DecisionsDir), false)
+	specs := filepath.Join(root, "specs")
+	classified := bounds.ClassifyDir(specs)
+	if classified.State == bounds.StateAbsent {
+		sort.Slice(candidates, func(i, j int) bool { return candidates[i].Path < candidates[j].Path })
+		return candidates, diagnostics
 	}
-	specs, err := os.ReadDir(filepath.Join(root, "specs"))
-	if os.IsNotExist(err) {
-		return candidates, nil
+	if classified.State != bounds.StateParsed && classified.State != bounds.StateEmpty {
+		diagnostics = append(diagnostics, fmt.Sprintf("specs: %s: %s", classified.State, classified.Reason))
+		return candidates, diagnostics
 	}
-	if err != nil {
-		return nil, err
-	}
-	for _, spec := range specs {
+	for _, spec := range classified.Entries {
 		if !spec.IsDir() || strings.HasPrefix(spec.Name(), ".") {
 			continue
 		}
-		if err := appendDirectory(filepath.Join(root, "specs", spec.Name(), DecisionsDir), true); err != nil {
-			return nil, err
-		}
+		appendDirectory(filepath.Join(specs, spec.Name(), DecisionsDir), true)
 	}
 	sort.Slice(candidates, func(i, j int) bool { return candidates[i].Path < candidates[j].Path })
-	return candidates, nil
+	return candidates, diagnostics
 }
 
 type field struct {

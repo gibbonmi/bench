@@ -535,8 +535,8 @@ func materializeConformanceFixture(t *testing.T, fixture string) string {
 	t.Helper()
 	h := NewHarness(t)
 	root := t.TempDir()
-	src := filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "files")
-	if err := canary.MaterializeFixture(src, root); err != nil {
+	fixturePath := canaryFixturePath(t, h.KitRoot, fixture)
+	if err := canary.MaterializeMutationFixture(h.KitRoot, fixturePath, root); err != nil {
 		t.Fatalf("materialize %s: %v", fixture, err)
 	}
 	cmd := exec.Command("git", "init", "-q")

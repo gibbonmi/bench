@@ -10,12 +10,12 @@ every refusal live.
 
 ## Acceptance
 
-- [ ] The focused check accepts valid active and compiled maps and specs with no
+- [x] The focused check accepts valid active and compiled maps and specs with no
   decisions directory.
-- [ ] An invalid compiled map makes the focused check and the real gate red with
+- [x] An invalid compiled map makes the focused check and the real gate red with
   its compiled path and targeted diagnostic.
-- [ ] Schema, graph, readiness, and source refusal classes each have a canary
+- [x] Schema, graph, readiness, and source refusal classes each have a canary
   expectation matching their own diagnostic.
-- [ ] The check records independent candidate diagnostics instead of stopping at
+- [x] The check records independent candidate diagnostics instead of stopping at
   the first failure.
-- [ ] Compiled failures stay outside `bench maps` rows and ambient count.
+- [x] Compiled failures stay outside `bench maps` rows and ambient count.
