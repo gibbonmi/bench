@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<!-- PROTOTYPE — throwaway, ticket #10 of decisions/diff-visual.md.
+     Animated terminal report: problem/change prose, confidence, before/after
+     call chains, hub change map, observability, expandable reading order.
+     Data = the real FT131 change (5417f0b..a3acb3c, 31 files), hand-derived
+     from the diff, the spec, and the tree. Delete when #10 closes. -->
+<html>
+<head>
+<meta charset="utf-8">
+<title>PROTOTYPE — diff visual (ticket #10)</title>
+<style>
+  :root {
+    --bg: #0a0c0b; --panel: #161b22; --line: #30363d; --fg: #e6edf3; --dim: #8b949e;
+    --low: #58627a; --focus: #d29922; --hotspot: #f85149;
+    --calls: #79c0ff; --dataflow: #d2a8ff; --tests: #3fb950; --configures: #ffa657; --ripple: #6e7681;
+    --term-green: #4ade80; --term-bg: #131715; --new: #3fb950; --mod: #d29922; --grey: #4d5761;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--fg); font: 14px/1.45 -apple-system, "Segoe UI", sans-serif; }
+  #stage { min-height: 100vh; }
+  svg text { user-select: none; }
+
+  button { background: #21262d; color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 12px; cursor: pointer; font-size: 13px; }
+  button:hover { border-color: var(--dim); }
+
+  .vd-window { max-width: 980px; margin: 28px auto 80px; background: var(--term-bg); border-radius: 10px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.7); font-family: "SFMono-Regular", ui-monospace, Consolas, monospace; }
+  .vd-titlebar { background: #000; padding: 12px 16px; display: flex; align-items: center; gap: 8px; }
+  .vd-hex { width: 14px; height: 14px; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
+  .vd-titlebar .cmd { margin-left: 12px; color: var(--dim); font-size: 12px; }
+  .vd-titlebar button { margin-left: auto; font-family: inherit; font-size: 12px; }
+  .vd-body { padding: 20px 26px 30px; }
+  .vd-h { color: var(--term-green); font-weight: 700; letter-spacing: .12em; font-size: 15px; margin: 26px 0 10px; }
+  .vd-h:first-child { margin-top: 0; }
+  .vd-prose { font-size: 13.5px; line-height: 1.6; color: #c9d1d9; }
+  .vd-box { border: 1px solid var(--term-green); border-radius: 4px; padding: 12px 14px; font-size: 15px; }
+  .vd-box .big { color: var(--term-green); font-weight: 700; }
+  .vd-caret { display: inline-block; width: 9px; height: 17px; background: var(--term-green); vertical-align: text-bottom; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .vd-sub { color: var(--dim); font-size: 12px; margin-top: 6px; }
+
+  /* call chains */
+  .vd-lane { border: 1px solid var(--line); border-radius: 4px; margin-bottom: 10px; padding: 8px 12px 4px; overflow-x: auto; }
+  .vd-lane .lt { color: var(--fg); font-weight: 700; font-size: 12px; letter-spacing: .1em; }
+  .vd-lane .pain { color: var(--hotspot); font-size: 11.5px; }
+  .vd-lane svg { display: block; }
+
+  .vd-diagram { border: 1px solid var(--term-green); border-radius: 4px; overflow-x: auto; }
+  .vd-diagram svg { display: block; margin: 0 auto; }
+  .vd-legend { color: var(--dim); font-size: 12px; margin-top: 8px; line-height: 1.7; }
+  .vd-legend b { font-weight: 700; }
+
+  /* observability */
+  .vd-obs { display: flex; gap: 10px; padding: 7px 10px; font-size: 12.5px; border-left: 3px solid var(--term-green); background: #14201a33; margin-bottom: 6px; border-radius: 0 4px 4px 0; }
+  .vd-obs .txt { color: #c9d1d9; }
+  .vd-obs a { color: var(--term-green); cursor: pointer; text-decoration: none; white-space: nowrap; }
+  .vd-obs a:hover { text-decoration: underline; }
+
+  /* retro */
+  .vd-commit { display: flex; gap: 10px; align-items: baseline; padding: 3px 0; font-size: 12.5px; }
+  .vd-commit .h { color: var(--term-green); }
+  .vd-commit .m { color: #c9d1d9; }
+  .vd-commit .n { color: var(--dim); margin-left: auto; text-align: right; }
+  .vd-found { display: flex; gap: 10px; padding: 7px 10px; font-size: 12.5px; border-left: 3px solid var(--focus); background: #2c231122; margin-bottom: 6px; border-radius: 0 4px 4px 0; }
+  .vd-found .txt { color: #c9d1d9; }
+  .vd-found a { color: var(--term-green); cursor: pointer; text-decoration: none; white-space: nowrap; }
+  .vd-found a:hover { text-decoration: underline; }
+  .vd-retro-sub { color: var(--term-green); font-weight: 700; font-size: 11px; letter-spacing: .08em; margin: 12px 0 6px; }
+  .vd-provenance { color: var(--dim); font-style: italic; font-size: 11.5px; margin-bottom: 8px; }
+  .vd-proc { color: #c9d1d9; font-size: 12.5px; padding: 2px 0 2px 14px; text-indent: -14px; }
+
+  /* reading order: expandable steps */
+  .vd-step { border: 1px solid transparent; border-radius: 4px; opacity: 0; transform: translateY(6px); transition: opacity .35s, transform .35s, border-color .15s, background .15s; }
+  .vd-step.shown { opacity: 1; transform: none; }
+  .vd-step:hover { border-color: var(--line); background: #161b18; }
+  .vd-step.open { border-color: var(--term-green); background: #14201a; }
+  .vd-step > .head { display: flex; align-items: baseline; gap: 10px; padding: 9px 12px; cursor: pointer; font-size: 13.5px; }
+  .vd-num { color: var(--dim); min-width: 20px; text-align: right; }
+  .vd-chip { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 3px; color: #0d1117; flex-shrink: 0; }
+  .vd-chip.hotspot { background: var(--hotspot); }
+  .vd-chip.focus { background: var(--focus); }
+  .vd-chip.low { background: #3d4455; color: #c9d1d9; }
+  .vd-path { color: var(--fg); }
+  .vd-note { color: var(--dim); font-size: 12.5px; }
+  .vd-badge { margin-left: auto; white-space: nowrap; font-size: 12px; }
+  .vd-stat { color: var(--dim); font-size: 12px; white-space: nowrap; }
+
+  .vd-step .expand { display: none; padding: 2px 12px 12px 42px; font-size: 12.5px; line-height: 1.55; }
+  .vd-step.open .expand { display: block; }
+  .vd-field { margin-top: 7px; }
+  .vd-lab { color: var(--term-green); font-weight: 700; font-size: 11px; letter-spacing: .08em; }
+  .vd-lab.hot { color: var(--hotspot); }
+  .vd-lab.warm { color: var(--focus); }
+  .vd-lab.obs { color: #58a6ff; }
+  .vd-field .txt { color: #c9d1d9; }
+  .vd-role { color: var(--dim); font-style: italic; margin-top: 4px; }
+  .vd-sym { display: inline-block; background: #21262d; border: 1px solid var(--line); border-radius: 10px; padding: 0 8px; margin: 2px 2px 0 0; font-size: 12px; }
+  .vd-conn { margin-top: 2px; }
+
+  /* literal diff drop-down inside a row, GitHub-style table */
+  .vd-difftoggle { display: inline-block; color: #58a6ff; cursor: pointer; font-weight: 700; font-size: 12px; border: 1px solid #58a6ff; border-radius: 6px; padding: 4px 12px; background: rgba(88,166,255,.08); transition: background .15s, box-shadow .15s; }
+  .vd-difftoggle:hover { background: rgba(88,166,255,.18); box-shadow: 0 0 0 1px #58a6ff33; }
+  .vd-diff { display: none; margin-top: 6px; border: 1px solid var(--line); border-radius: 4px; background: #0d1117; max-height: 420px; overflow: auto; }
+  .vd-diff table { border-collapse: collapse; width: 100%; font-size: 11.5px; line-height: 1.5; }
+  .vd-diff td { padding: 0 8px; white-space: pre; font-family: inherit; }
+  .vd-diff td.ln { width: 1%; min-width: 38px; text-align: right; color: #6e7681; user-select: none; }
+  .vd-diff td.code { color: #adbac7; }
+  .vd-diff tr.add td.code { background: rgba(46,160,67,.15); }
+  .vd-diff tr.add td.ln { background: rgba(46,160,67,.1); }
+  .vd-diff tr.del td.code { background: rgba(248,81,73,.15); }
+  .vd-diff tr.del td.ln { background: rgba(248,81,73,.1); }
+  .vd-diff tr.hunk td { background: rgba(56,139,253,.12); color: #58a6ff; padding: 3px 8px; }
+
+  .vd-reveal { opacity: 0; transform: translateY(10px); transition: opacity .45s, transform .45s; }
+  .vd-reveal.shown { opacity: 1; transform: none; }
+
+  .vd-group { border: 1px dashed var(--line); border-radius: 4px; margin-top: 10px; opacity: 0; transform: translateY(6px); transition: opacity .35s, transform .35s; }
+  .vd-group.shown { opacity: 1; transform: none; }
+  .vd-group > .head { display: flex; align-items: baseline; gap: 10px; padding: 9px 12px; cursor: pointer; font-size: 13.5px; }
+  .vd-group > .head:hover { background: #161b18; }
+  .vd-group .tri { color: var(--dim); width: 12px; display: inline-block; transition: transform .2s; }
+  .vd-group.open .tri { transform: rotate(90deg); }
+  .vd-group .members { display: none; padding: 0 12px 8px 34px; }
+  .vd-group.open .members { display: block; }
+  .vd-member { padding: 3px 0; font-size: 12.5px; cursor: pointer; }
+  .vd-member .line { display: flex; gap: 10px; align-items: baseline; }
+  .vd-member:hover .vd-path { color: var(--term-green); }
+  .vd-member .tgt { color: var(--dim); }
+  .vd-member .mexp { display: none; color: var(--dim); padding: 2px 0 4px 0; }
+  .vd-member.open .mexp { display: block; }
+</style>
+</head>
+<body>
+
+<div id="stage"></div>
+
+<script>
+// ---------- report: the real FT131 change, hand-derived from diff + spec + tree ----------
+const COV = {
+  unit:        { sym:'✓', word:'unit tests',        hex:'#3fb950' },
+  conformance: { sym:'✓', word:'conformance tests', hex:'#3fb950' },
+  e2e:         { sym:'◆', word:'end-to-end only',   hex:'#58a6ff' },
+  infra:       { sym:'🧪', word:'test infra',        hex:'#8b949e' },
+};
+const report = {
+  problem: 'Contract suites and the gate entry trusted whatever dist/bench happened to be sitting on disk, even when it no longer matched the sources under test. A stale binary could fail a correct change, or quietly pass a broken one. The first gate run after a phase table change could even be graded by the previous table.',
+  change: 'Every successful build now stages the binary, promotes it with an atomic rename, and publishes a content seal derived from the full build input set. The gate entry and the contract helpers verify that seal from current sources before they trust dist/bench. A mismatch refuses with the exact rebuild command instead of running the stale binary.',
+  confidence: { pct: 78, level: 'HIGH', verdict: 'ready to push',
+    justification: 'The seal core carries 526 lines of unit tests and the gate refusal is proven by conformance tests driving the real gate entry. The build script seam is covered only end to end, so hand review the staging and publish steps in scripts/go-build.sh.' },
+  meta: { author: 'implementer (self-graded)', range: '5417f0b..a3acb3c', files: 31, stat: '+1,966 −19' },
+  // what an operator or reviewer will actually SEE in operation, and which file owns it
+  observability: [
+    { see: 'The gate has a new kind of red. When the built binary is out of date it stops and prints the exact rebuild command. The first run after changing source is supposed to stop this way: rebuild, run again, and it goes green.', owner: 'f_gate' },
+    { see: 'Test suites that drive the built binary now stop before running anything if the binary is out of date, with the same rebuild message.', owner: 'f_helper' },
+    { see: 'The dist folder now holds a bench.seal file next to the binary. If the seal is missing or does not match, the binary is refused. There is no warning mode.', owner: 'f_core' },
+    { see: 'A dist/.freshness-go-cache folder will appear. It is a private build cache the gate uses to run its check quickly.', owner: 'f_gate' },
+    { see: 'If a build is interrupted, a dist/.bench.tmp.* file is left behind and the old binary keeps working. The binary is never swapped without its matching seal.', owner: 'f_build' },
+  ],
+  // build retrospective. In the real feature this section is filled from
+  // .bench/retros/<spec-slug>.md; none was written for FT131, so this is
+  // reconstructed from git history and the spec's tickets.
+  retro: {
+    provenance: 'Rebuilt from the git history; the build did not leave a retro file behind.',
+    commits: [
+      { h:'2498e0f', m:'seal core and build script', note:'' },
+      { h:'3888495', m:'test suites refuse a stale binary', note:'' },
+      { h:'5f82a97', m:'the gate refuses a stale binary', note:'' },
+      { h:'231f67a', m:'fixes from code review', note:'5 real holes' },
+      { h:'a3acb3c', m:'marked done', note:'' },
+    ],
+    reviewCaught: [
+      { t:'The binary was allowed to vouch for its own freshness. The check now runs from source instead, which is why check/main.go exists.', owner:'f_gate' },
+      { t:'An empty binary could be sealed and accepted. It is now refused.', owner:'f_core' },
+      { t:'Files reached through a symlinked parent folder were followed. They are now refused.', owner:'f_core' },
+      { t:'The printed rebuild command broke on folder names with spaces. It is now quoted.', owner:'f_core' },
+      { t:'The list of build inputs lived in two places that could drift apart. It now lives in one file that both sides read.', owner:'f_inputs' },
+    ],
+    process: [
+      'Built in four steps, each landing with tests green. The design choices were made by standing default rules rather than a live discussion, and each one is written in the spec where it can still be overturned.',
+    ],
+  },
+  nodes: [
+    { id:'f_core', path:'internal/freshness/freshness.go', status:'new', attention:'hotspot', cov:'unit', via:'internal/freshness/freshness_test.go (526 lines)', stat:'+394', group:'flow',
+      symbols:['Digest','Publish','Verify','Check','rejectSymlinkComponents'],
+      role:'New Go package: the single owner of binary freshness for the whole kit.',
+      whatChanged:'Digest hashes the full build input set, Publish writes the seal only after the executable is atomically replaced, Verify and Check decide fresh or actionable refusal, rejectSymlinkComponents guards the artifact paths.',
+      whyCare:'Every trust decision the kit now makes routes through this file. If it is wrong, the gate and every contract are wrong together.',
+      obs:'Refusals are one stable diagnostic naming the binary and the rebuild command. If gate output ever mentions freshness, this file decided it.',
+      tourNote:'Start here. Everything else in the change either feeds this file or trusts it.',
+      heat: { why:'394 new lines that own the trust decision for every gate run and contract, including filesystem security logic (symlink rejection, partial writes) where a subtle bug is silent.',
+              improve:'Nothing structural. It is directly unit-tested. Read Digest and Verify closely; the test file enumerates the hostile states (tamper, truncation, symlink, legacy).',
+              matters:'Yes. A false "fresh" here reopens the exact false-green hole this change exists to close.' } },
+    { id:'f_build', path:'scripts/go-build.sh', status:'modified', attention:'hotspot', cov:'e2e', via:'gate build phase and preflight integration runs', stat:'+31 −6', group:'flow',
+      symbols:[],
+      role:'The shell script that compiles dist/bench for every build path: gate, npm package, release.',
+      whatChanged:'Now reads the go-build.inputs manifest, builds to a staged temp file, promotes it with an atomic rename, then runs the publish entrypoint to write the seal.',
+      whyCare:'This is where "a build happened" becomes "this binary is trusted". A bug here poisons every seal that follows.',
+      obs:'A leftover dist/.bench.tmp.* file means an interrupted build. A binary newer than its seal means someone bypassed this script.',
+      tourNote:'The seam to hand-review. Trace stage, rename, publish in order.',
+      heat: { why:'31 changed shell lines with no direct test: manifest parsing, a cleanup trap, an atomic rename, and the publish call. Shell quoting and trap ordering are easy to get subtly wrong, and only end-to-end runs exercise this.',
+              improve:'A focused shell test for stage-fail and rename-fail paths, or moving staging and publish into the Go build owner, would drop this to FOCUS.',
+              matters:'Yes. If publish ever runs after a failed build, every seal from then on is a lie and staleness detection silently dies.' } },
+    { id:'f_gate', path:'.bench/gate.sh', status:'modified', attention:'focus', cov:'conformance', via:'internal/conformance/gate_entry_test.go (+201 lines)', stat:'+7 −1', group:'flow',
+      symbols:[],
+      role:'The tiny shell entry every bench gate run goes through before the Go core takes over.',
+      whatChanged:'Runs the freshness checker from current sources (go run, kit-local build cache) and only execs dist/bench gate-phases when the check passes. Note it now execs dist/bench directly instead of going back through bin/bench.sh.',
+      whyCare:'This closes the "old binary grades the new phase table" hole at the exact door it leaked through.',
+      obs:'Exit 1 with the refusal before any phase runs. The first gate after a source change is supposed to refuse: that red is the feature working, not a regression.',
+      tourNote:'Read after the core: this is where refusal meets a real gate run.',
+      heat: { why:'Only 7 lines, but they sit on the gate\'s front door: a mistake here either blocks every gate run or waves stale binaries through.' } },
+    { id:'f_main', path:'cmd/bench/main.go', status:'modified', attention:'focus', cov:'unit', via:'main_test.go and conformance routing tests', stat:'+25', group:'flow',
+      symbols:['run','treeHash'],
+      role:'The Go binary\'s argv dispatcher: every dist/bench subcommand enters here.',
+      whatChanged:'Adds a thin freshness-check subcommand over the same freshness package, for callers that only have the executable.',
+      whyCare:'The exit codes here are contract: a pre-FT131 binary answers "unknown subcommand" and that answer is deliberately treated as stale.',
+      tourNote:'Skim: plumbing, no policy.',
+      heat: { why:'The exit codes this dispatcher returns are what callers normalize into the legacy-stale red, so the contract is behavioral, not just wiring.' } },
+    { id:'f_helper', path:'internal/contract/helper.go', status:'modified', attention:'focus', cov:'infra', via:'refusal asserted by freshness_subject_test.go', stat:'+10', group:'flow',
+      symbols:['SubjectRoot'],
+      role:'Shared helper every AXI and runtime contract test calls to locate the binary under test.',
+      whatChanged:'SubjectRoot now verifies the seal before returning the subject root, so no contract can run a stale dist/bench.',
+      whyCare:'This is what makes a contract answer "for these sources" instead of "for whatever binary was lying around".',
+      obs:'A refused contract run fails fast inside SubjectRoot with the rebuild diagnostic, before any assertion output.',
+      tourNote:'Read with the fixtures: the contract-side trust seam.',
+      heat: { why:'Ten lines, but every contract run\'s trust flows through this one function.' } },
+    { id:'f_fix', path:'internal/contract/internal/freshnessfixture/fixture.go', status:'new', attention:'focus', cov:'infra', via:'used by the refusal tests', stat:'+53', group:'flow',
+      symbols:['PublishedSubject','StaleSubject'],
+      role:'New test-only package that builds throwaway sealed subjects in temp dirs.',
+      whatChanged:'PublishedSubject builds a minimal sealed subject via Publish; StaleSubject edits a source file after sealing to make refusal observable.',
+      whyCare:'The refusal tests are only as honest as these fixtures. A fixture that stays fresh by accident makes the tests pass vacuously.',
+      tourNote:'Read with helper.go: how the refusal tests get their subjects.',
+      heat: { why:'A fixture that accidentally stays fresh would make the refusal tests pass vacuously, weakening the oracle without any red.' } },
+    { id:'f_chk', path:'internal/freshness/check/main.go', status:'new', attention:'low', cov:'e2e', via:'run by the gate entry on every gate', stat:'+19', group:'flow',
+      symbols:['main'],
+      role:'Standalone main so the gate can run the checker from sources without trusting dist/bench.',
+      whatChanged:'Nineteen lines: parse argv, call Check, print the refusal.',
+      whyCare:'Running from sources is what breaks the circular trust: the checker itself can never be stale.',
+      tourNote:'Skim: thin entrypoint.' },
+    { id:'f_pub', path:'internal/freshness/cmd/main.go', status:'new', attention:'low', cov:'e2e', via:'runs on every build', stat:'+19', group:'flow',
+      symbols:['main'],
+      role:'Standalone main the build script invokes to publish the seal.',
+      whatChanged:'Nineteen lines: parse argv, call Publish.',
+      whyCare:'Keeps seal policy in Go; the shell script never constructs a seal itself.',
+      tourNote:'Skim: thin entrypoint.' },
+    { id:'f_sh', path:'bin/bench.sh', status:'modified', attention:'low', cov:'conformance', via:'internal/conformance/subcommand_routing_test.go', stat:'+1', group:'flow',
+      symbols:[],
+      role:'The user-facing bench CLI wrapper that routes each subcommand to shell or the Go core.',
+      whatChanged:'One routing line: freshness-check goes to the Go binary like the other plumbing subcommands.',
+      whyCare:'Only matters so ad-hoc callers can reach the checker; the gate no longer routes through here.',
+      tourNote:'Skim: one routing line.' },
+    { id:'f_inputs', path:'scripts/go-build.inputs', status:'new', attention:'low', cov:'e2e', via:'read by every build', stat:'+3', group:'flow',
+      symbols:[],
+      role:'New manifest the build script reads instead of hard-coding paths.',
+      whatChanged:'Three keys naming the build script, version file, and Go flag inputs whose bytes feed the digest.',
+      whyCare:'Editing any file this manifest names invalidates the seal, on purpose.',
+      tourNote:'Skim: the manifest the digest trusts.' },
+    { id:'f_art', path:'scripts/build-artifacts.sh', status:'modified', attention:'low', cov:'e2e', via:'internal/preflight/release_index_test.go', stat:'+2', group:'flow',
+      symbols:[],
+      role:'Packages dist artifacts for the npm platform packages.',
+      whatChanged:'Reuses the sealed build instead of rebuilding.',
+      whyCare:'Keeps release artifacts under the same trust rule as dev builds.',
+      tourNote:'Skim.' },
+    // tests tier
+    { id:'t1',  path:'internal/freshness/freshness_test.go', attention:'focus', cov:'infra', group:'tests', tests:'f_core', stat:'+526', note:'tamper, truncation, symlink, legacy, and partial-write cases' },
+    { id:'t2',  path:'cmd/bench/main_test.go', attention:'low', cov:'infra', group:'tests', tests:'f_main', stat:'+16', note:'subcommand exit codes' },
+    { id:'t3',  path:'internal/conformance/gate_entry_test.go', attention:'focus', cov:'infra', group:'tests', tests:'f_gate', stat:'+201', note:'drives the real gate.sh: refusal, rebuild remedy, then green' },
+    { id:'t4',  path:'internal/conformance/subcommand_routing_test.go', attention:'low', cov:'infra', group:'tests', tests:'f_sh', stat:'+1', note:'routing table row' },
+    { id:'t5',  path:'internal/contract/freshness_subject_test.go', attention:'focus', cov:'infra', group:'tests', tests:'f_helper', stat:'+221', note:'SubjectRoot refuses the stale fixture, accepts the sealed one' },
+    { id:'t6',  path:'internal/contract/axi/axi_freshness_test.go', attention:'low', cov:'infra', group:'tests', tests:'f_helper', stat:'+39', note:'AXI wrapper path' },
+    { id:'t7',  path:'internal/contract/axi/axi_helpers_test.go', attention:'low', cov:'infra', group:'tests', tests:'f_helper', stat:'+1', note:'helper wiring' },
+    { id:'t8',  path:'internal/contract/runtime/runtime_gate_freshness_routes_test.go', attention:'focus', cov:'infra', group:'tests', tests:'f_main', stat:'+156', note:'dist/bench freshness routes end to end' },
+    { id:'t9',  path:'internal/contract/runtime/runtime_helpers_test.go', attention:'low', cov:'infra', group:'tests', tests:'f_helper', stat:'+86', note:'runtime launch path' },
+    { id:'t10', path:'internal/contract/runtime/runtime_gate_capability_skips_test.go', attention:'low', cov:'infra', group:'tests', tests:'f_gate', stat:'+45', note:'capability skip paths' },
+    { id:'t11', path:'internal/contract/runtime/runtime_worktree_test.go', attention:'low', cov:'infra', group:'tests', tests:'f_helper', stat:'+1', note:'worktree launch path' },
+    { id:'t12', path:'internal/canary/gate_entry_test.go', attention:'low', cov:'infra', group:'tests', tests:'f_gate', stat:'+7', note:'canary gate entry' },
+    { id:'t13', path:'internal/preflight/integration_helpers_test.go', attention:'low', cov:'infra', group:'tests', tests:'f_build', stat:'+4', note:'integration build path' },
+    { id:'t14', path:'internal/preflight/release_index_test.go', attention:'low', cov:'infra', group:'tests', tests:'f_art', stat:'+2', note:'release artifact index' },
+    // ripple tier
+    { id:'r1', path:'internal/packagesurface/assets.go', attention:'low', cov:'unit', group:'ripple', touches:'f_inputs', note:'ships go-build.inputs with the package' },
+    { id:'r2', path:'internal/releaseevidence/registry.json', attention:'low', cov:'e2e', group:'ripple', touches:'f_build', note:'release evidence digest updated' },
+    { id:'r3', path:'package.json', attention:'low', cov:'e2e', group:'ripple', touches:'f_build', note:'named as the version input' },
+    { id:'r4', path:'CHANGELOG.md', attention:'low', cov:'e2e', group:'ripple', touches:'f_core', note:'records the feature' },
+    { id:'r5', path:'projects/benchkit.md', attention:'low', cov:'e2e', group:'ripple', touches:'f_gate', note:'profile documents the freshness gate' },
+    { id:'r6', path:'.bench/BENCH-reference.md', attention:'low', cov:'e2e', group:'ripple', touches:'f_sh', note:'plumbing subcommand list updated' },
+  ],
+  edges: [
+    { from:'f_inputs', to:'f_build', kind:'data-flow',  note:'names the inputs whose bytes feed the digest' },
+    { from:'f_build',  to:'f_pub',   kind:'calls',      note:'staged build, then publish' },
+    { from:'f_pub',    to:'f_core',  kind:'calls',      note:'Publish() seals after atomic replace' },
+    { from:'f_art',    to:'f_build', kind:'calls',      note:'release artifacts reuse the sealed build' },
+    { from:'f_gate',   to:'f_chk',   kind:'calls',      note:'go run from current sources, before gate-phases' },
+    { from:'f_chk',    to:'f_core',  kind:'calls',      note:'Check(root, executable)' },
+    { from:'f_gate',   to:'f_main',  kind:'calls',      note:'exec dist/bench gate-phases only when fresh' },
+    { from:'f_main',   to:'f_core',  kind:'calls',      note:'freshness-check subcommand plumbing' },
+    { from:'f_sh',     to:'f_main',  kind:'configures', note:'routes freshness-check to the Go core' },
+    { from:'f_helper', to:'f_core',  kind:'calls',      note:'SubjectRoot verifies before contracts run dist/bench' },
+    { from:'f_fix',    to:'f_core',  kind:'calls',      note:'Publish() builds sealed and stale fixtures' },
+  ],
+  tour: ['f_core','f_build','f_pub','f_gate','f_chk','f_main','f_sh','f_helper','f_fix','f_inputs','f_art'],
+};
+const byId = Object.fromEntries(report.nodes.map(n => [n.id, n]));
+
+// literal per-file diffs (real, from the FT131 range), injected at build time
+const DIFFS = {"f_core": "diff --git a/internal/freshness/freshness.go b/internal/freshness/freshness.go\nnew file mode 100644\nindex 0000000..d21d883\n--- /dev/null\n+++ b/internal/freshness/freshness.go\n@@ -0,0 +1,394 @@\n+// Package freshness verifies that a Bench executable was built from the current sources.\n+package freshness\n+\n+import (\n+\t\"crypto/sha256\"\n+\t\"encoding/hex\"\n+\t\"encoding/json\"\n+\t\"fmt\"\n+\t\"io\"\n+\t\"os\"\n+\t\"os/exec\"\n+\t\"path/filepath\"\n+\t\"sort\"\n+\t\"strings\"\n+\t\"syscall\"\n+)\n+\n+const sealSchema = 1\n+const auxiliaryInputsManifest = \"scripts/go-build.inputs\"\n+\n+type seal struct {\n+\tSchema     int    `json:\"schema\"`\n+\tSources    string `json:\"sources\"`\n+\tExecutable string `json:\"executable\"`\n+}\n+\n+// Digest returns the deterministic content digest of Bench's local build inputs.\n+func Digest(root string) (string, error) {\n+\troot, err := filepath.Abs(root)\n+\tif err != nil {\n+\t\treturn \"\", err\n+\t}\n+\tpaths, err := buildInputs(root)\n+\tif err != nil {\n+\t\treturn \"\", err\n+\t}\n+\thash := sha256.New()\n+\tfor _, path := range paths {\n+\t\trel, err := filepath.Rel(root, path)\n+\t\tif err != nil {\n+\t\t\treturn \"\", err\n+\t\t}\n+\t\tcontents, err := regularContents(path)\n+\t\tif err != nil {\n+\t\t\treturn \"\", fmt.Errorf(\"read build input %q: %w\", rel, err)\n+\t\t}\n+\t\tname := filepath.ToSlash(rel)\n+\t\tfmt.Fprintf(hash, \"%d:%s%d:\", len(name), name, len(contents))\n+\t\tif _, err := hash.Write(contents); err != nil {\n+\t\t\treturn \"\", err\n+\t\t}\n+\t}\n+\treturn hex.EncodeToString(hash.Sum(nil)), nil\n+}\n+\n+// Publish replaces executable with staged and writes its matching content seal.\n+func Publish(root, staged, executable string) error {\n+\tsources, err := Digest(root)\n+\tif err != nil {\n+\t\treturn err\n+\t}\n+\tbinary, err := secureContents(staged, true)\n+\tif err != nil {\n+\t\treturn fmt.Errorf(\"stage executable %q: %w\", staged, err)\n+\t}\n+\tencoded, err := json.Marshal(seal{\n+\t\tSchema:     sealSchema,\n+\t\tSources:    sources,\n+\t\tExecutable: digestBytes(binary),\n+\t})\n+\tif err != nil {\n+\t\treturn err\n+\t}\n+\tif err := os.Remove(sealPath(executable)); err != nil && !os.IsNotExist(err) {\n+\t\treturn fmt.Errorf(\"remove old seal: %w\", err)\n+\t}\n+\tif err := os.Rename(staged, executable); err != nil {\n+\t\treturn fmt.Errorf(\"publish executable: %w\", err)\n+\t}\n+\tif err := writeSeal(sealPath(executable), encoded); err != nil {\n+\t\treturn fmt.Errorf(\"publish seal: %w\", err)\n+\t}\n+\treturn nil\n+}\n+\n+type listedPackage struct {\n+\tDir          string\n+\tGoFiles      []string\n+\tCgoFiles     []string\n+\tCFiles       []string\n+\tCXXFiles     []string\n+\tMFiles       []string\n+\tHFiles       []string\n+\tFFiles       []string\n+\tSFiles       []string\n+\tSwigFiles    []string\n+\tSwigCXXFiles []string\n+\tSysoFiles    []string\n+\tEmbedFiles   []string\n+}\n+\n+func buildInputs(root string) ([]string, error) {\n+\troot, err := filepath.Abs(root)\n+\tif err != nil {\n+\t\treturn nil, err\n+\t}\n+\tcommand := exec.Command(\"go\", \"list\", \"-json\", \"-deps\", \"./cmd/bench\")\n+\tcommand.Dir = root\n+\toutput, err := command.Output()\n+\tif err != nil {\n+\t\treturn nil, fmt.Errorf(\"resolve Bench build inputs: %w\", err)\n+\t}\n+\tdecoder := json.NewDecoder(strings.NewReader(string(output)))\n+\tpaths := map[string]struct{}{}\n+\tfor {\n+\t\tvar pkg listedPackage\n+\t\tif err := decoder.Decode(&pkg); err == io.EOF {\n+\t\t\tbreak\n+\t\t} else if err != nil {\n+\t\t\treturn nil, fmt.Errorf(\"decode resolved Bench build inputs: %w\", err)\n+\t\t}\n+\t\tfor _, name := range packageFiles(pkg) {\n+\t\t\tpath := filepath.Join(pkg.Dir, name)\n+\t\t\tif isWithinRoot(root, path) {\n+\t\t\t\tpaths[path] = struct{}{}\n+\t\t\t}\n+\t\t}\n+\t}\n+\tfor _, name := range []string{\n+\t\t\"go.mod\",\n+\t} {\n+\t\tpath := filepath.Join(root, filepath.FromSlash(name))\n+\t\tif _, err := os.Lstat(path); err != nil {\n+\t\t\treturn nil, fmt.Errorf(\"required build input %q: %w\", name, err)\n+\t\t}\n+\t\tpaths[path] = struct{}{}\n+\t}\n+\tauxiliary, err := auxiliaryBuildInputs(root)\n+\tif err != nil {\n+\t\treturn nil, err\n+\t}\n+\tfor _, path := range auxiliary {\n+\t\tpaths[path] = struct{}{}\n+\t}\n+\tif path := filepath.Join(root, \"go.sum\"); exists(path) {\n+\t\tpaths[path] = struct{}{}\n+\t}\n+\tordered := make([]string, 0, len(paths))\n+\tfor path := range paths {\n+\t\tordered = append(ordered, path)\n+\t}\n+\tsort.Slice(ordered, func(i, j int) bool {\n+\t\treturn filepath.ToSlash(ordered[i]) < filepath.ToSlash(ordered[j])\n+\t})\n+\treturn ordered, nil\n+}\n+\n+func auxiliaryBuildInputs(root string) ([]string, error) {\n+\tmanifest := filepath.Join(root, filepath.FromSlash(auxiliaryInputsManifest))\n+\tdata, err := regularContents(manifest)\n+\tif err != nil {\n+\t\treturn nil, fmt.Errorf(\"read auxiliary build-input manifest %q: %w\", auxiliaryInputsManifest, err)\n+\t}\n+\tpaths := []string{manifest}\n+\tkeys := map[string]struct{}{}\n+\tfor number, raw := range strings.Split(string(data), \"\\n\") {\n+\t\tline := strings.TrimSpace(raw)\n+\t\tif line == \"\" {\n+\t\t\tcontinue\n+\t\t}\n+\t\tkey, name, ok := strings.Cut(line, \"=\")\n+\t\tif !ok || key == \"\" || name == \"\" || strings.TrimSpace(key) != key || strings.TrimSpace(name) != name {\n+\t\t\treturn nil, fmt.Errorf(\"malformed auxiliary build input at %s:%d\", auxiliaryInputsManifest, number+1)\n+\t\t}\n+\t\tif _, exists := keys[key]; exists {\n+\t\t\treturn nil, fmt.Errorf(\"duplicate auxiliary build input key %q\", key)\n+\t\t}\n+\t\tkeys[key] = struct{}{}\n+\t\tpath := filepath.Join(root, filepath.FromSlash(name))\n+\t\tif !isWithinRoot(root, path) || filepath.IsAbs(name) {\n+\t\t\treturn nil, fmt.Errorf(\"auxiliary build input %q leaves the source root\", name)\n+\t\t}\n+\t\tif _, err := os.Lstat(path); err != nil {\n+\t\t\treturn nil, fmt.Errorf(\"required build input %q: %w\", name, err)\n+\t\t}\n+\t\tpaths = append(paths, path)\n+\t}\n+\tif len(paths) == 1 {\n+\t\treturn nil, fmt.Errorf(\"auxiliary build-input manifest %q is empty\", auxiliaryInputsManifest)\n+\t}\n+\treturn paths, nil\n+}\n+\n+func packageFiles(pkg listedPackage) []string {\n+\tvar files []string\n+\tfor _, group := range [][]string{\n+\t\tpkg.GoFiles, pkg.CgoFiles, pkg.CFiles, pkg.CXXFiles, pkg.MFiles, pkg.HFiles,\n+\t\tpkg.FFiles, pkg.SFiles, pkg.SwigFiles, pkg.SwigCXXFiles, pkg.SysoFiles, pkg.EmbedFiles,\n+\t} {\n+\t\tfiles = append(files, group...)\n+\t}\n+\treturn files\n+}\n+\n+func isWithinRoot(root, path string) bool {\n+\trel, err := filepath.Rel(root, path)\n+\treturn err == nil && rel != \"..\" && !strings.HasPrefix(rel, \"..\"+string(filepath.Separator))\n+}\n+\n+func exists(path string) bool {\n+\t_, err := os.Lstat(path)\n+\treturn err == nil\n+}\n+\n+func regularContents(path string) ([]byte, error) {\n+\treturn secureContents(path, false)\n+}\n+\n+func secureContents(path string, executable bool) ([]byte, error) {\n+\tif err := rejectSymlinkComponents(path); err != nil {\n+\t\treturn nil, err\n+\t}\n+\tinfo, err := os.Lstat(path)\n+\tif err != nil {\n+\t\treturn nil, err\n+\t}\n+\tif info.Mode()&os.ModeSymlink != 0 {\n+\t\treturn nil, fmt.Errorf(\"is a symbolic link\")\n+\t}\n+\tif !info.Mode().IsRegular() {\n+\t\treturn nil, fmt.Errorf(\"is not a regular file\")\n+\t}\n+\tif executable && info.Mode()&0o111 == 0 {\n+\t\treturn nil, fmt.Errorf(\"is not executable\")\n+\t}\n+\tif executable && info.Size() == 0 {\n+\t\treturn nil, fmt.Errorf(\"is empty\")\n+\t}\n+\t// A path replacement after Lstat stays untrusted instead of redirecting this read.\n+\tfd, err := syscall.Open(path, syscall.O_RDONLY|syscall.O_CLOEXEC|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)\n+\tif err != nil {\n+\t\treturn nil, err\n+\t}\n+\tfile := os.NewFile(uintptr(fd), path)\n+\tdefer file.Close()\n+\topened, err := file.Stat()\n+\tif err != nil {\n+\t\treturn nil, err\n+\t}\n+\tif !os.SameFile(info, opened) {\n+\t\treturn nil, fmt.Errorf(\"changed while opening\")\n+\t}\n+\tdata, err := io.ReadAll(file)\n+\tif err != nil {\n+\t\treturn nil, err\n+\t}\n+\tif executable && len(data) == 0 {\n+\t\treturn nil, fmt.Errorf(\"is empty\")\n+\t}\n+\treturn data, nil\n+}\n+\n+func rejectSymlinkComponents(path string) error {\n+\tabsolute, err := filepath.Abs(path)\n+\tif err != nil {\n+\t\treturn err\n+\t}\n+\tvolume := filepath.VolumeName(absolute)\n+\tcurrent := volume + string(filepath.Separator)\n+\trelative := strings.TrimPrefix(absolute, current)\n+\tfor _, component := range strings.Split(relative, string(filepath.Separator)) {\n+\t\tif component == \"\" {\n+\t\t\tcontinue\n+\t\t}\n+\t\tcurrent = filepath.Join(current, component)\n+\t\tinfo, err := os.Lstat(current)\n+\t\tif err != nil {\n+\t\t\treturn err\n+\t\t}\n+\t\tif info.Mode()&os.ModeSymlink != 0 {\n+\t\t\treturn fmt.Errorf(\"path component %q is a symbolic link\", current)\n+\t\t}\n+\t}\n+\treturn nil\n+}\n+\n+// Verify reports whether executable has a matching content seal for root.\n+func Verify(root, executable string) error {\n+\tbinary, err := secureContents(executable, true)\n+\tif err != nil {\n+\t\treturn refusal(root, executable, err)\n+\t}\n+\tsealData, err := secureContents(sealPath(executable), false)\n+\tif err != nil {\n+\t\treturn refusal(root, executable, fmt.Errorf(\"seal %q: %w\", sealPath(executable), err))\n+\t}\n+\tstored, err := parseSeal(sealData)\n+\tif err != nil {\n+\t\treturn refusal(root, executable, fmt.Errorf(\"seal %q: %w\", sealPath(executable), err))\n+\t}\n+\tsources, err := Digest(root)\n+\tif err != nil {\n+\t\treturn refusal(root, executable, err)\n+\t}\n+\tif stored.Sources != sources {\n+\t\treturn refusal(root, executable, fmt.Errorf(\"seal source digest does not match current build inputs\"))\n+\t}\n+\tif stored.Executable != digestBytes(binary) {\n+\t\treturn refusal(root, executable, fmt.Errorf(\"seal executable digest does not match binary contents\"))\n+\t}\n+\treturn nil\n+}\n+\n+// Check verifies an executable from current sources, then requires its freshness subcommand.\n+func Check(root, executable string) error {\n+\tif err := Verify(root, executable); err != nil {\n+\t\treturn err\n+\t}\n+\tcommand := exec.Command(executable, \"freshness-check\", root)\n+\tcommand.Stdout = io.Discard\n+\tcommand.Stderr = io.Discard\n+\tif err := command.Run(); err != nil {\n+\t\treturn refusal(root, executable, fmt.Errorf(\"freshness-check failed\"))\n+\t}\n+\treturn nil\n+}\n+\n+func parseSeal(data []byte) (seal, error) {\n+\tdecoder := json.NewDecoder(strings.NewReader(string(data)))\n+\tdecoder.DisallowUnknownFields()\n+\tvar stored seal\n+\tif err := decoder.Decode(&stored); err != nil {\n+\t\treturn seal{}, fmt.Errorf(\"malformed: %w\", err)\n+\t}\n+\tif err := decoder.Decode(&struct{}{}); err != io.EOF {\n+\t\treturn seal{}, fmt.Errorf(\"malformed trailing data\")\n+\t}\n+\tif stored.Schema != sealSchema || !isDigest(stored.Sources) || !isDigest(stored.Executable) {\n+\t\treturn seal{}, fmt.Errorf(\"malformed contents\")\n+\t}\n+\treturn stored, nil\n+}\n+\n+func writeSeal(path string, data []byte) (err error) {\n+\ttemporary, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+\".tmp-*\")\n+\tif err != nil {\n+\t\treturn err\n+\t}\n+\tdefer func() {\n+\t\tif err != nil {\n+\t\t\t_ = os.Remove(temporary.Name())\n+\t\t}\n+\t}()\n+\tif _, err := temporary.Write(data); err != nil {\n+\t\t_ = temporary.Close()\n+\t\treturn err\n+\t}\n+\tif err := temporary.Chmod(0o644); err != nil {\n+\t\t_ = temporary.Close()\n+\t\treturn err\n+\t}\n+\tif err := temporary.Close(); err != nil {\n+\t\treturn err\n+\t}\n+\treturn os.Rename(temporary.Name(), path)\n+}\n+\n+func sealPath(executable string) string { return executable + \".seal\" }\n+\n+func digestBytes(data []byte) string {\n+\tsum := sha256.Sum256(data)\n+\treturn hex.EncodeToString(sum[:])\n+}\n+\n+func isDigest(value string) bool {\n+\tif len(value) != sha256.Size*2 {\n+\t\treturn false\n+\t}\n+\t_, err := hex.DecodeString(value)\n+\treturn err == nil\n+}\n+\n+func refusal(root, executable string, cause error) error {\n+\treturn fmt.Errorf(\"bench binary %q is untrusted: %v; rebuild with %s\", executable, cause, RebuildAction(root))\n+}\n+\n+// RebuildAction returns the copy-paste command that republishes root's Bench binary.\n+func RebuildAction(root string) string {\n+\treturn fmt.Sprintf(\"cd %s && bash scripts/go-build.sh %s %s\", shellQuote(root), shellQuote(root), shellQuote(filepath.Join(root, \"dist\", \"bench\")))\n+}\n+\n+func shellQuote(value string) string {\n+\treturn \"'\" + strings.ReplaceAll(value, \"'\", \"'\\\\''\") + \"'\"\n+}\n", "f_build": "diff --git a/scripts/go-build.sh b/scripts/go-build.sh\nindex 18206b1..462f9e6 100755\n--- a/scripts/go-build.sh\n+++ b/scripts/go-build.sh\n@@ -15,24 +15,49 @@\n # get prebuilt binaries via the @redbench/<os>-<arch> platform packages.\n set -euo pipefail\n \n-modroot=\"${1:?usage: go-build.sh <module-root> <output-path>}\"\n+modroot=\"$(cd \"${1:?usage: go-build.sh <module-root> <output-path>}\" && pwd -P)\"\n out=\"${2:?usage: go-build.sh <module-root> <output-path>}\"\n+build_script=\n+package_version=\n+go_requirements=\n+while IFS='=' read -r key value; do\n+  case \"$key\" in\n+    build_script) build_script=\"$value\" ;;\n+    package_version) package_version=\"$value\" ;;\n+    go_requirements) go_requirements=\"$value\" ;;\n+    \"\") ;;\n+    *) printf 'unknown Go build input key: %s\\n' \"$key\" >&2; exit 1 ;;\n+  esac\n+done < \"$modroot/scripts/go-build.inputs\"\n+: \"${build_script:?go-build.inputs missing build_script}\"\n+: \"${package_version:?go-build.inputs missing package_version}\"\n+: \"${go_requirements:?go-build.inputs missing go_requirements}\"\n+for input in \"$build_script\" \"$package_version\" \"$go_requirements\"; do\n+  test -f \"$modroot/$input\" || { printf 'missing Go build input: %s\\n' \"$input\" >&2; exit 1; }\n+done\n \n-# Version is package.json's; absent or unreadable \u2192 \"dev\" (the canary fixtures carry\n-# a go.mod but no package.json, and an unstamped dev build is a legitimate outcome).\n+# Version comes from the package-version input named by the build owner manifest.\n version=\"$(node -e '\n   const fs = require(\"fs\");\n   try { process.stdout.write(String(JSON.parse(fs.readFileSync(process.argv[1], \"utf8\")).version || \"dev\")); }\n   catch { process.stdout.write(\"dev\"); }\n-' \"$modroot/package.json\")\"\n+' \"$modroot/$package_version\")\"\n \n cd \"$modroot\"\n go_build_flags=()\n while IFS= read -r arg; do go_build_flags+=(\"$arg\"); done < <(node -e '\n   const registry = require(process.argv[1]);\n   for (const arg of registry.toolchains.find(tool => tool.name === \"go\").operations.build) console.log(arg);\n-' \"$modroot/internal/releaseevidence/requirements.json\")\n+' \"$modroot/$go_requirements\")\n for index in \"${!go_build_flags[@]}\"; do\n   go_build_flags[$index]=\"${go_build_flags[$index]//<package-version>/$version}\"\n done\n-go build \"${go_build_flags[@]}\" -o \"$out\" ./cmd/bench\n+\n+# Staging beside the target makes executable promotion an atomic rename.\n+out_dir=\"$(dirname \"$out\")\"\n+mkdir -p \"$out_dir\"\n+staged=\"$(mktemp \"$out_dir/.bench.tmp.XXXXXX\")\"\n+trap 'rm -f \"$staged\"' EXIT\n+go build \"${go_build_flags[@]}\" -o \"$staged\" ./cmd/bench\n+env -u GOOS -u GOARCH go run ./internal/freshness/cmd \"$modroot\" \"$staged\" \"$out\"\n+trap - EXIT\n", "f_gate": "diff --git a/.bench/gate.sh b/.bench/gate.sh\nindex 25fd680..ed01df9 100755\n--- a/.bench/gate.sh\n+++ b/.bench/gate.sh\n@@ -11,4 +11,10 @@ set -uo pipefail\n root=\"$(git rev-parse --show-toplevel 2>/dev/null)\" || { echo \"error: not in a git repository \u2014 run inside a Bench-linked repo\" >&2; exit 3; }\n gate_dir=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)\"\n kit=\"$(cd \"$gate_dir/..\" && pwd)\"\n-exec \"$kit/bin/bench.sh\" gate-phases \"$root\"\n+bench=\"$kit/dist/bench\"\n+freshness_cache=\"${GOCACHE:-$kit/dist/.freshness-go-cache}\"\n+mkdir -p \"$freshness_cache\"\n+if ! (cd \"$kit\" && GOCACHE=\"$freshness_cache\" go run ./internal/freshness/check \"$kit\" \"$bench\"); then\n+  exit 1\n+fi\n+exec env BENCH_KIT=\"$kit\" \"$bench\" gate-phases \"$root\"\n", "f_main": "diff --git a/cmd/bench/main.go b/cmd/bench/main.go\nindex 64d29eb..3987d96 100644\n--- a/cmd/bench/main.go\n+++ b/cmd/bench/main.go\n@@ -21,6 +21,7 @@ import (\n \t\"github.com/gibbonmi/bench/internal/coverage\"\n \t\"github.com/gibbonmi/bench/internal/dashboard\"\n \t\"github.com/gibbonmi/bench/internal/diff\"\n+\t\"github.com/gibbonmi/bench/internal/freshness\"\n \t\"github.com/gibbonmi/bench/internal/gate\"\n \t\"github.com/gibbonmi/bench/internal/git\"\n \t\"github.com/gibbonmi/bench/internal/gitguard\"\n@@ -288,6 +289,28 @@ func treeHash(args []string) (string, int) {\n \treturn git.TreeHash(root) + \"\\n\", 0\n }\n \n+func freshnessCheck(args []string, invoked string, stderr io.Writer) int {\n+\tif len(args) != 1 {\n+\t\tfmt.Fprintln(stderr, \"usage: bench freshness-check <root>\")\n+\t\treturn 2\n+\t}\n+\troot, err := filepath.Abs(args[0])\n+\tif err != nil {\n+\t\tfmt.Fprintln(stderr, err)\n+\t\treturn 1\n+\t}\n+\texecutable, err := filepath.Abs(invoked)\n+\tif err != nil {\n+\t\tfmt.Fprintln(stderr, err)\n+\t\treturn 1\n+\t}\n+\tif err := freshness.Verify(root, executable); err != nil {\n+\t\tfmt.Fprintln(stderr, err)\n+\t\treturn 1\n+\t}\n+\treturn 0\n+}\n+\n // guardGit is the destructive-git guard subcommand: it reads the PreToolUse envelope on\n // stdin, classifies through internal/gitguard, and yields the verdict as an exit code \u2014\n // 0 allow, 2 block (with the `BLOCKED:` message on stderr), 3 a genuine failure to run.\n@@ -401,6 +424,8 @@ func run(args []string, stdout, stderr *os.File) int {\n \t\treturn gate.PinCommand(args[1:], os.Stdin, stdout, stderr)\n \tcase \"gate-phases\":\n \t\treturn gatePhasesCommand(args[1:], stdout, stderr)\n+\tcase \"freshness-check\":\n+\t\treturn freshnessCheck(args[1:], os.Args[0], stderr)\n \tcase \"gate-go\":\n \t\treturn gate.GateGoCommand(args[1:], stdout, stderr)\n \tcase \"release-preflight\":\n", "f_helper": "diff --git a/internal/contract/helper.go b/internal/contract/helper.go\nindex 67b3bea..ff606ba 100644\n--- a/internal/contract/helper.go\n+++ b/internal/contract/helper.go\n@@ -12,6 +12,7 @@ import (\n \n \t\"github.com/gibbonmi/bench/internal/canary\"\n \t\"github.com/gibbonmi/bench/internal/capability\"\n+\t\"github.com/gibbonmi/bench/internal/freshness\"\n )\n \n type FixtureOption func(*fixtureConfig)\n@@ -56,6 +57,15 @@ func SubjectRoot(t testing.TB) string {\n \treturn KitRoot(t)\n }\n \n+// RequireFreshBench refuses an untrusted selected Bench executable before a contract uses it.\n+func RequireFreshBench(t testing.TB) {\n+\tt.Helper()\n+\troot := SubjectRoot(t)\n+\tif err := freshness.Verify(root, filepath.Join(root, \"dist\", \"bench\")); err != nil {\n+\t\tt.Fatal(err)\n+\t}\n+}\n+\n // GoEnvPair returns the two values `go env` resolves for first and second, in that order.\n // The variable names carry the failure diagnostic, so a caller reading GOOS/GOARCH stays\n // distinguishable from one reading GOCACHE/GOMODCACHE by the message alone.\n", "f_fix": "diff --git a/internal/contract/internal/freshnessfixture/fixture.go b/internal/contract/internal/freshnessfixture/fixture.go\nnew file mode 100644\nindex 0000000..83f292d\n--- /dev/null\n+++ b/internal/contract/internal/freshnessfixture/fixture.go\n@@ -0,0 +1,53 @@\n+// Package freshnessfixture builds contract subjects with fresh or deliberately stale seals.\n+package freshnessfixture\n+\n+import (\n+\t\"os\"\n+\t\"path/filepath\"\n+\t\"testing\"\n+\n+\t\"github.com/gibbonmi/bench/internal/freshness\"\n+)\n+\n+// PublishedSubject returns a minimal selected subject with a matching executable and seal.\n+func PublishedSubject(t testing.TB, output string) string {\n+\tt.Helper()\n+\troot := filepath.Join(t.TempDir(), \"subject [glob]* path\")\n+\tfiles := map[string]string{\n+\t\t\"go.mod\":                  \"module freshnesssubject\\n\\ngo 1.25\\n\",\n+\t\t\"cmd/bench/main.go\":       \"package main\\n\\nfunc main() {}\\n\",\n+\t\t\"scripts/go-build.sh\":     \"#!/usr/bin/env bash\\n\",\n+\t\t\"scripts/go-build.inputs\": \"build_script=scripts/go-build.sh\\npackage_version=package.json\\ngo_requirements=internal/releaseevidence/requirements.json\\n\",\n+\t\t\"package.json\":            \"{}\\n\",\n+\t\t\"internal/releaseevidence/requirements.json\": \"{}\\n\",\n+\t\t\"bin/bench.sh\": \"#!/bin/sh\\nexec \\\"$(dirname \\\"$0\\\")/../dist/bench\\\" \\\"$@\\\"\\n\",\n+\t\t\"dist/staged\":  \"#!/bin/sh\\nprintf '%s\\\\n' '\" + output + \"'\\n\",\n+\t}\n+\tfor path, contents := range files {\n+\t\tmode := os.FileMode(0o644)\n+\t\tif path == \"bin/bench.sh\" || path == \"dist/staged\" || path == \"scripts/go-build.sh\" {\n+\t\t\tmode = 0o755\n+\t\t}\n+\t\tfull := filepath.Join(root, filepath.FromSlash(path))\n+\t\tif err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {\n+\t\t\tt.Fatal(err)\n+\t\t}\n+\t\tif err := os.WriteFile(full, []byte(contents), mode); err != nil {\n+\t\t\tt.Fatal(err)\n+\t\t}\n+\t}\n+\tif err := freshness.Publish(root, filepath.Join(root, \"dist\", \"staged\"), filepath.Join(root, \"dist\", \"bench\")); err != nil {\n+\t\tt.Fatalf(\"publish subject: %v\", err)\n+\t}\n+\treturn root\n+}\n+\n+// StaleSubject returns a minimal selected subject whose executable predates its sources.\n+func StaleSubject(t testing.TB, output string) string {\n+\tt.Helper()\n+\troot := PublishedSubject(t, output)\n+\tif err := os.WriteFile(filepath.Join(root, \"cmd\", \"bench\", \"main.go\"), []byte(\"package main\\n\\nfunc main() { println(\\\"changed\\\") }\\n\"), 0o644); err != nil {\n+\t\tt.Fatal(err)\n+\t}\n+\treturn root\n+}\n", "f_chk": "diff --git a/internal/freshness/check/main.go b/internal/freshness/check/main.go\nnew file mode 100644\nindex 0000000..14ab38a\n--- /dev/null\n+++ b/internal/freshness/check/main.go\n@@ -0,0 +1,19 @@\n+package main\n+\n+import (\n+\t\"fmt\"\n+\t\"os\"\n+\n+\t\"github.com/gibbonmi/bench/internal/freshness\"\n+)\n+\n+func main() {\n+\tif len(os.Args) != 3 {\n+\t\tfmt.Fprintln(os.Stderr, \"usage: freshness-check <root> <executable>\")\n+\t\tos.Exit(2)\n+\t}\n+\tif err := freshness.Check(os.Args[1], os.Args[2]); err != nil {\n+\t\tfmt.Fprintln(os.Stderr, err)\n+\t\tos.Exit(1)\n+\t}\n+}\n", "f_pub": "diff --git a/internal/freshness/cmd/main.go b/internal/freshness/cmd/main.go\nnew file mode 100644\nindex 0000000..d8f3025\n--- /dev/null\n+++ b/internal/freshness/cmd/main.go\n@@ -0,0 +1,19 @@\n+package main\n+\n+import (\n+\t\"fmt\"\n+\t\"os\"\n+\n+\t\"github.com/gibbonmi/bench/internal/freshness\"\n+)\n+\n+func main() {\n+\tif len(os.Args) != 4 {\n+\t\tfmt.Fprintln(os.Stderr, \"usage: freshness-publish <root> <staged-executable> <output-path>\")\n+\t\tos.Exit(2)\n+\t}\n+\tif err := freshness.Publish(os.Args[1], os.Args[2], os.Args[3]); err != nil {\n+\t\tfmt.Fprintln(os.Stderr, err)\n+\t\tos.Exit(1)\n+\t}\n+}\n", "f_sh": "diff --git a/bin/bench.sh b/bin/bench.sh\nindex 9a3930b..db4db19 100755\n--- a/bin/bench.sh\n+++ b/bin/bench.sh\n@@ -298,6 +298,7 @@ case \"${1-help}\" in\n   test)     route_porcelain \"$@\" ;;\n   tree-hash) route_binary \"$@\" ;;\n   gate-run) route_binary \"$@\" ;;\n+  freshness-check) route_binary \"$@\" ;;\n   gate-phases) route_binary \"$@\" ;;\n   gate-go) route_binary \"$@\" ;;\n   release-preflight) route_binary \"$@\" ;;\n", "f_inputs": "diff --git a/scripts/go-build.inputs b/scripts/go-build.inputs\nnew file mode 100644\nindex 0000000..423e908\n--- /dev/null\n+++ b/scripts/go-build.inputs\n@@ -0,0 +1,3 @@\n+build_script=scripts/go-build.sh\n+package_version=package.json\n+go_requirements=internal/releaseevidence/requirements.json\n", "f_art": "diff --git a/scripts/build-artifacts.sh b/scripts/build-artifacts.sh\nindex 92ec7b7..38012e0 100755\n--- a/scripts/build-artifacts.sh\n+++ b/scripts/build-artifacts.sh\n@@ -127,6 +127,8 @@ else\n       GOOS=\"$goos\" GOARCH=\"$goarch\" bash \"$source_root/scripts/go-build.sh\" \"$source_root\" \"$binary\"\n     fi\n     chmod 0755 \"$binary\"\n+    # Platform packages are release artifacts, not local freshness-verification subjects.\n+    rm -f \"$binary.seal\"\n   done < \"$matrix_file\"\n \n   node \"$source_root/scripts/build-release-evidence.mjs\" \"$source_root\" \"$wrapper\" \"$packages\"\n"};
+function diffTable(text) {
+  // unified diff → GitHub-style two-gutter table; file headers are dropped
+  const rows = [];
+  let oldN = 0, newN = 0;
+  for (const l of text.split('\n')) {
+    if (/^(diff |index |new file|deleted file|old mode|new mode|--- |\+\+\+ )/.test(l)) continue;
+    const esc = l.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const h = l.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+    if (h) { oldN = +h[1]; newN = +h[2]; rows.push(`<tr class="hunk"><td colspan="3">${esc}</td></tr>`); continue; }
+    if (l.startsWith('+')) rows.push(`<tr class="add"><td class="ln"></td><td class="ln">${newN++}</td><td class="code">${esc}</td></tr>`);
+    else if (l.startsWith('-')) rows.push(`<tr class="del"><td class="ln">${oldN++}</td><td class="ln"></td><td class="code">${esc}</td></tr>`);
+    else if (l.startsWith('\\')) rows.push(`<tr><td class="ln"></td><td class="ln"></td><td class="code" style="color:#6e7681">${esc}</td></tr>`);
+    else rows.push(`<tr><td class="ln">${oldN++}</td><td class="ln">${newN++}</td><td class="code">${esc}</td></tr>`);
+  }
+  return `<table>${rows.join('')}</table>`;
+}
+
+// before/after call chains. kind: grey = untouched context, mod = modified file,
+// new = new file, art = build artifact. ref links a box to its reading-order step.
+const CHAINS = [
+  { title: 'BUILD',
+    pain: 'nothing recorded what built dist/bench; any stray go build silently replaced it',
+    before: [
+      { l:'bench build', k:'grey' }, { l:'go-build.sh', k:'grey' },
+      { l:'go build ./cmd/bench', k:'grey' }, { l:'dist/bench', k:'art', sub:'trusted blindly ⚠' },
+    ],
+    after: [
+      { l:'go-build.inputs', k:'new', ref:'f_inputs', sub:'NEW +3' },
+      { l:'go-build.sh', k:'mod', ref:'f_build', sub:'MOD +31 −6' },
+      { l:'staged go build', k:'grey', sub:'unchanged' },
+      { l:'atomic rename', k:'mod', ref:'f_build', sub:'MOD' },
+      { l:'freshness/cmd', k:'new', ref:'f_pub', sub:'NEW +19' },
+      { l:'Publish()', k:'new', ref:'f_core', sub:'NEW +394' },
+      { l:'bench + bench.seal', k:'art', sub:'sealed artifact' },
+    ] },
+  { title: 'GATE RUN',
+    pain: 'a stale binary resolved the phase table; the first run after a change graded the old world',
+    before: [
+      { l:'bench gate', k:'grey' }, { l:'.bench/gate.sh', k:'grey' },
+      { l:'bin/bench.sh', k:'grey' }, { l:'dist/bench gate-phases', k:'art', sub:'trusted blindly ⚠' },
+    ],
+    after: [
+      { l:'bench gate', k:'grey', sub:'unchanged' },
+      { l:'.bench/gate.sh', k:'mod', ref:'f_gate', sub:'MOD +7 −1' },
+      { l:'check (from sources)', k:'new', ref:'f_chk', sub:'NEW +19' },
+      { l:'Check()', k:'new', ref:'f_core', sub:'NEW' },
+      { l:'fresh?', k:'fork' },
+    ],
+    ok: { l:'dist/bench gate-phases', k:'art', sub:'unchanged' },
+    no: 'refuse: rebuild dist/bench, rerun the gate' },
+  { title: 'CONTRACT RUN',
+    pain: 'AXI and runtime contracts tested whatever binary was on disk',
+    before: [
+      { l:'go test', k:'grey' }, { l:'SubjectRoot', k:'grey' },
+      { l:'dist/bench under test', k:'art', sub:'trusted blindly ⚠' },
+    ],
+    after: [
+      { l:'go test', k:'grey', sub:'unchanged' },
+      { l:'SubjectRoot', k:'mod', ref:'f_helper', sub:'MOD +10' },
+      { l:'Verify()', k:'new', ref:'f_core', sub:'NEW' },
+      { l:'fresh?', k:'fork' },
+    ],
+    ok: { l:'dist/bench under test', k:'art', sub:'unchanged' },
+    no: 'refuse with the rebuild command' },
+];
+
+const HEAT = { low:'#58627a', focus:'#d29922', hotspot:'#f85149' };
+const EDGE = {
+  'calls':      { hex:'#79c0ff', dash:'',      label:'calls' },
+  'data-flow':  { hex:'#d2a8ff', dash:'7 4',   label:'data-flow' },
+  'tests':      { hex:'#3fb950', dash:'2 4',   label:'tests' },
+  'configures': { hex:'#ffa657', dash:'12 3',  label:'configures' },
+  'ripple':     { hex:'#6e7681', dash:'1 6',   label:'ripple' },
+};
+const base = p => p.split('/').pop();
+const cov = n => COV[n.cov];
+
+const allEdges = [
+  ...report.edges,
+  ...report.nodes.filter(n => n.group === 'tests').map(n => ({ from: n.id, to: n.tests, kind: 'tests', note: n.note })),
+  ...report.nodes.filter(n => n.group === 'ripple').map(n => ({ from: n.id, to: n.touches, kind: 'ripple', note: n.note })),
+];
+
+function connectionsHtml(n) {
+  return allEdges.filter(e => e.from === n.id || e.to === n.id)
+    .map(e => {
+      const other = e.from === n.id ? byId[e.to] : byId[e.from];
+      const dir = e.from === n.id ? '→' : '←';
+      return `<div class="vd-conn"><span style="color:${EDGE[e.kind].hex}">${e.kind}</span> ${dir} ${base(other.path)}${e.note ? ` <span style="color:var(--dim)">${e.note}</span>` : ''}</div>`;
+    }).join('');
+}
+
+// ---------- hub graph layout (hand-placed for the prototype; real thing computes it) ----------
+const GW = 908, GH = 470;
+const BOX = { w: 128, h: 46 };
+const POS = {
+  f_core:   { x: 460, y: 240, w: 158, h: 54 },
+  f_inputs: { x: 100, y: 100 },
+  f_build:  { x: 250, y: 195 },
+  f_art:    { x: 100, y: 290 },
+  f_pub:    { x: 395, y:  95 },
+  f_fix:    { x: 310, y: 385 },
+  f_helper: { x: 585, y: 400 },
+  f_chk:    { x: 625, y:  95 },
+  f_gate:   { x: 800, y: 150 },
+  f_main:   { x: 790, y: 280 },
+  f_sh:     { x: 795, y: 405 },
+};
+function boxOf(id) { const p = POS[id]; return { x: p.x, y: p.y, w: p.w || BOX.w, h: p.h || BOX.h }; }
+function trimToBox(from, to) {
+  const dx = to.x - from.x, dy = to.y - from.y;
+  const m = 6;
+  const t = 1 / Math.max(Math.abs(dx) / (from.w / 2 + m), Math.abs(dy) / (from.h / 2 + m));
+  return { x: from.x + dx * t, y: from.y + dy * t };
+}
+
+const ANIMATE = false; // intro animation disabled per review; flip to re-enable
+let timers = [];
+function later(ms, fn) { if (!ANIMATE) return; timers.push(setTimeout(fn, ms)); }
+const svgNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, text) {
+  const e = document.createElementNS(svgNS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+// chain box styling per kind
+const CKIND = {
+  grey: { stroke:'#3a424c', fill:'#171c21', text:'#8b949e', dash:'' },
+  mod:  { stroke:'#d29922', fill:'#2c2311', text:'#e6edf3', dash:'' },
+  new:  { stroke:'#3fb950', fill:'#14231a', text:'#e6edf3', dash:'5 3' },
+  art:  { stroke:'#3a424c', fill:'#10141a', text:'#8b949e', dash:'2 3' },
+  fork: { stroke:'#d29922', fill:'#2c2311', text:'#e6edf3', dash:'' },
+};
+
+function renderChain(lane, openStep) {
+  const wrap = document.createElement('div');
+  wrap.className = 'vd-lane vd-reveal';
+  wrap.innerHTML = `<div class="lt">${lane.title}</div>`;
+  const CH = 13.2, PAD = 16, GAPX = 30, BH = 34, BH2 = 42;
+  const width = items => items.reduce((x, it) => x + Math.max(64, it.l.length * 6.6 + PAD) + GAPX, 20);
+  const boxW = it => Math.max(64, it.l.length * 6.6 + PAD);
+  const forkExtra = lane.ok ? boxW(lane.ok) + GAPX + 40 : 0;
+  const W = Math.max(width(lane.before), width(lane.after) + forkExtra) + 20;
+  const H = lane.ok ? 178 : 152;
+  const svg = el('svg', { width: W, height: H });
+  wrap.appendChild(svg);
+
+  // BEFORE row (the old world: all grey, with the pain called out)
+  svg.appendChild(el('text', { x: 4, y: 26, fill: '#6e7681', 'font-size': 10, 'font-weight': 700 }, 'BEFORE'));
+  let x = 58;
+  lane.before.forEach((it, i) => {
+    const w = boxW(it), st = CKIND[it.k];
+    const r = el('rect', { x, y: 14, width: w, height: BH, rx: 4, fill: st.fill, stroke: st.stroke, 'stroke-width': 1.2 });
+    if (CKIND[it.k].dash) r.setAttribute('stroke-dasharray', CKIND[it.k].dash);
+    svg.appendChild(r);
+    svg.appendChild(el('text', { x: x + w / 2, y: 14 + (it.sub ? 15 : 21), 'text-anchor': 'middle', fill: st.text, 'font-size': 10.5, 'font-family': 'inherit' }, it.l));
+    if (it.sub) svg.appendChild(el('text', { x: x + w / 2, y: 42, 'text-anchor': 'middle', fill: it.sub.includes('⚠') ? '#f85149' : '#6e7681', 'font-size': 9, 'font-family': 'inherit' }, it.sub));
+    if (i < lane.before.length - 1) {
+      svg.appendChild(el('line', { x1: x + w + 4, y1: 31, x2: x + w + GAPX - 6, y2: 31, stroke: '#4d5761', 'stroke-width': 1.4, 'marker-end': 'url(#carr)' }));
+    }
+    x += w + GAPX;
+  });
+  svg.appendChild(el('text', { x: 58, y: 66, fill: '#f85149', 'font-size': 10.5, 'font-family': 'inherit' }, '⚠ ' + lane.pain));
+
+  // AFTER row
+  const ay = 84;
+  svg.appendChild(el('text', { x: 4, y: ay + 12, fill: '#4ade80', 'font-size': 10, 'font-weight': 700 }, 'AFTER'));
+  x = 58;
+  const afterBoxes = [];
+  lane.after.forEach((it, i) => {
+    const w = boxW(it), st = CKIND[it.k];
+    const g = el('g', {});
+    g.style.cursor = it.ref ? 'pointer' : 'default';
+    const r = el('rect', { x, y: ay, width: w, height: BH2, rx: 4, fill: st.fill, stroke: st.stroke, 'stroke-width': it.k === 'grey' || it.k === 'art' ? 1.2 : 1.7 });
+    if (st.dash) r.setAttribute('stroke-dasharray', st.dash);
+    g.appendChild(r);
+    g.appendChild(el('text', { x: x + w / 2, y: ay + 17, 'text-anchor': 'middle', fill: st.text, 'font-size': 10.5, 'font-family': 'inherit' }, it.l));
+    if (it.sub) g.appendChild(el('text', { x: x + w / 2, y: ay + 33, 'text-anchor': 'middle',
+      fill: it.k === 'new' ? '#3fb950' : it.k === 'mod' ? '#d29922' : '#6e7681', 'font-size': 9, 'font-weight': 700, 'font-family': 'inherit' }, it.sub));
+    if (it.ref) g.addEventListener('click', () => openStep(it.ref, true));
+    svg.appendChild(g);
+    afterBoxes.push({ x, w, it });
+    if (i < lane.after.length - 1) {
+      svg.appendChild(el('line', { x1: x + w + 4, y1: ay + BH2 / 2, x2: x + w + GAPX - 6, y2: ay + BH2 / 2, stroke: '#79c0ff', 'stroke-width': 1.5, 'marker-end': 'url(#carrB)' }));
+    }
+    x += w + GAPX;
+  });
+  if (lane.ok) {
+    // fork: ✓ continues right, ✗ refusal drops below
+    const last = afterBoxes[afterBoxes.length - 1];
+    const fx = last.x + last.w;
+    const okW = boxW(lane.ok), st = CKIND[lane.ok.k];
+    svg.appendChild(el('line', { x1: fx + 4, y1: ay + BH2 / 2 - 6, x2: fx + GAPX + 8, y2: ay + BH2 / 2 - 6, stroke: '#3fb950', 'stroke-width': 1.5, 'marker-end': 'url(#carrG)' }));
+    svg.appendChild(el('text', { x: fx + GAPX / 2 + 2, y: ay + 10, fill: '#3fb950', 'font-size': 10, 'font-weight': 700 }, '✓'));
+    const okr = el('rect', { x: fx + GAPX + 12, y: ay, width: okW, height: BH2, rx: 4, fill: st.fill, stroke: st.stroke, 'stroke-width': 1.2, 'stroke-dasharray': st.dash });
+    svg.appendChild(okr);
+    svg.appendChild(el('text', { x: fx + GAPX + 12 + okW / 2, y: ay + 17, 'text-anchor': 'middle', fill: st.text, 'font-size': 10.5, 'font-family': 'inherit' }, lane.ok.l));
+    if (lane.ok.sub) svg.appendChild(el('text', { x: fx + GAPX + 12 + okW / 2, y: ay + 33, 'text-anchor': 'middle', fill: '#6e7681', 'font-size': 9, 'font-family': 'inherit' }, lane.ok.sub));
+    const fy = ay + BH2 + 18;
+    svg.appendChild(el('line', { x1: last.x + last.w / 2, y1: ay + BH2 + 2, x2: last.x + last.w / 2, y2: fy - 2, stroke: '#f85149', 'stroke-width': 1.5, 'marker-end': 'url(#carrR)' }));
+    svg.appendChild(el('text', { x: last.x + last.w / 2 + 10, y: fy + 4, fill: '#f85149', 'font-size': 10.5, 'font-family': 'inherit' }, '✗ ' + lane.no));
+  }
+  return wrap;
+}
+
+function render() {
+  timers.forEach(clearTimeout); timers = [];
+  const stage = document.getElementById('stage');
+  stage.innerHTML = '';
+  const win = document.createElement('div');
+  win.className = 'vd-window';
+  stage.appendChild(win);
+
+  win.innerHTML = `
+    <div class="vd-titlebar">
+      <span class="vd-hex" style="background:#ff6b6b"></span>
+      <span class="vd-hex" style="background:#e8f562"></span>
+      <span class="vd-hex" style="background:#2fd882"></span>
+      <span class="cmd">bench diff-visual · ${report.meta.range} · ${report.meta.files} files · ${report.meta.stat} · ${report.meta.author}</span>
+      <button id="vdReplay">↻ replay</button>
+    </div>
+    <div class="vd-body">
+      <div class="vd-h">THE PROBLEM</div>
+      <div class="vd-prose vd-reveal" id="vdProblem"></div>
+      <div class="vd-h vd-reveal" id="vdHChange">THE CHANGE</div>
+      <div class="vd-prose vd-reveal" id="vdChange"></div>
+      <div class="vd-h vd-reveal" id="vdHConf">CONFIDENCE SCORE</div>
+      <div class="vd-box vd-reveal" id="vdConfBox"><span id="vdConf"></span><span class="vd-caret" id="vdCaret"></span>
+        <div class="vd-sub vd-reveal" id="vdJust"></div>
+      </div>
+      <div class="vd-h vd-reveal" id="vdHChains">CALL CHAINS · BEFORE → AFTER</div>
+      <div id="vdChains"></div>
+      <div class="vd-legend vd-reveal" id="vdChainLegend">
+        <span style="color:#8b949e">grey = untouched context</span> ·
+        <b style="color:#d29922">amber = modified</b> ·
+        <b style="color:#3fb950">green dashed = NEW</b> ·
+        <span style="color:#8b949e">dotted = build artifact</span> · click a colored box for detail
+      </div>
+      <div class="vd-h vd-reveal" id="vdHMap">CHANGE MAP</div>
+      <div class="vd-diagram vd-reveal" id="vdDiagram"></div>
+      <div class="vd-legend vd-reveal" id="vdLegend">
+        <b style="color:#79c0ff">calls</b> · <b style="color:#d2a8ff">data-flow</b> · <b style="color:#ffa657">configures</b>
+        &nbsp;|&nbsp; <span style="color:#3fb950">✓ direct tests</span> · <span style="color:#58a6ff">◆ end-to-end only</span> · <span style="color:#8b949e">🧪 test infra</span>
+        &nbsp;|&nbsp; border = attention heat
+      </div>
+      <div class="vd-h vd-reveal" id="vdHObs">OBSERVABILITY · WHAT YOU WILL SEE IN OPERATION</div>
+      <div id="vdObs"></div>
+      <div class="vd-h vd-reveal" id="vdHRetro">RETRO · HOW THIS GOT BUILT</div>
+      <div class="vd-reveal" id="vdRetro"></div>
+      <div class="vd-h vd-reveal" id="vdHOrder">READING ORDER</div>
+      <div id="vdRows"></div>
+    </div>`;
+
+  document.getElementById('vdProblem').textContent = report.problem;
+  document.getElementById('vdChange').textContent = report.change;
+  document.getElementById('vdReplay').onclick = render;
+
+  // shared arrow markers for chains (one hidden svg)
+  const mdefs = el('svg', { width: 0, height: 0 });
+  const defsC = el('defs', {});
+  [['carr','#4d5761'],['carrB','#79c0ff'],['carrG','#3fb950'],['carrR','#f85149']].forEach(([id, color]) => {
+    const m = el('marker', { id, markerWidth: 8, markerHeight: 8, refX: 7, refY: 4, orient: 'auto' });
+    m.appendChild(el('path', { d: 'M0,0 L8,4 L0,8 z', fill: color }));
+    defsC.appendChild(m);
+  });
+  mdefs.appendChild(defsC);
+  win.appendChild(mdefs);
+
+  // --- hub graph ---
+  const svg = el('svg', { width: GW, height: GH });
+  document.getElementById('vdDiagram').appendChild(svg);
+  const defs = el('defs', {});
+  for (const [k, s] of Object.entries(EDGE)) {
+    const m = el('marker', { id: 'arr-' + k, markerWidth: 9, markerHeight: 9, refX: 8, refY: 4.5, orient: 'auto' });
+    m.appendChild(el('path', { d: 'M0,0 L9,4.5 L0,9 z', fill: s.hex }));
+    defs.appendChild(m);
+  }
+  svg.appendChild(defs);
+
+  const edgeEls = [];
+  report.edges.forEach(e => {
+    const a = boxOf(e.from), b = boxOf(e.to), s = EDGE[e.kind];
+    const p1 = trimToBox(a, b), p2 = trimToBox(b, a);
+    const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+    const dx = p2.x - p1.x, dy = p2.y - p1.y, len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const bend = Math.min(26, len * 0.14);
+    const cx = mx - dy / len * bend, cy = my + dx / len * bend;
+    const g = el('g', { opacity: 0 });
+    g.style.transition = 'opacity .3s';
+    const path = el('path', { d: `M ${p1.x} ${p1.y} Q ${cx} ${cy} ${p2.x} ${p2.y}`, fill: 'none', stroke: s.hex, 'stroke-width': 1.7, 'marker-end': `url(#arr-${e.kind})` });
+    if (s.dash) path.setAttribute('stroke-dasharray', s.dash);
+    g.appendChild(path);
+    const label = el('text', { x: cx, y: cy - 4, 'text-anchor': 'middle', 'font-size': 10, 'font-family': 'inherit', fill: s.hex, 'font-weight': 700 }, e.kind);
+    g.appendChild(label);
+    svg.appendChild(g);
+    edgeEls.push({ g, path, e });
+  });
+
+  const nodeEls = {};
+  for (const n of report.nodes.filter(n => n.group === 'flow')) {
+    const b = boxOf(n.id);
+    const g = el('g', { opacity: 0 });
+    g.style.cursor = 'pointer';
+    g.style.transition = 'opacity .35s';
+    const rect = el('rect', { x: b.x - b.w / 2, y: b.y - b.h / 2, width: b.w, height: b.h, rx: 5,
+      fill: n.attention === 'hotspot' ? '#31171a' : n.attention === 'focus' ? '#2c2311' : '#1c2321',
+      stroke: HEAT[n.attention], 'stroke-width': n.id === 'f_core' ? 2.2 : 1.5 });
+    if (n.status === 'new') rect.setAttribute('stroke-dasharray', '6 3');
+    g.appendChild(rect);
+    g.appendChild(el('text', { x: b.x, y: b.y - 3, 'text-anchor': 'middle', fill: '#e6edf3', 'font-size': n.id === 'f_core' ? 12 : 10.5, 'font-family': 'inherit' },
+      base(n.path).length > 19 ? base(n.path).slice(0, 18) + '…' : base(n.path)));
+    g.appendChild(el('text', { x: b.x, y: b.y + 14, 'text-anchor': 'middle', fill: cov(n).hex, 'font-size': 10 }, `${cov(n).sym} ${cov(n).word}`));
+    g.onclick = ev => { ev.stopPropagation(); openStep(n.id, true); };
+    svg.appendChild(g);
+    nodeEls[n.id] = g;
+  }
+
+  // --- reading order: expandable steps ---
+  const rowsHost = document.getElementById('vdRows');
+  const stepEls = {};
+  report.tour.forEach((id, i) => {
+    const n = byId[id];
+    const step = document.createElement('div');
+    step.className = 'vd-step';
+    const heatHtml = !n.heat ? '' :
+      `<div class="vd-field"><span class="vd-lab ${n.attention === 'hotspot' ? 'hot' : 'warm'}">WHY ${n.attention === 'hotspot' ? 'HOT' : 'FOCUS'}</span><br><span class="txt">${n.heat.why}</span></div>` +
+      (n.heat.improve ? `<div class="vd-field"><span class="vd-lab hot">WHAT WOULD COOL IT</span><br><span class="txt">${n.heat.improve}</span></div>` : '') +
+      (n.heat.matters ? `<div class="vd-field"><span class="vd-lab hot">DOES IT MATTER</span><br><span class="txt">${n.heat.matters}</span></div>` : '');
+    step.innerHTML = `<div class="head">
+        <span class="vd-num">${i + 1}</span>
+        <span class="vd-chip ${n.attention}">${n.attention === 'hotspot' ? 'HOT' : n.attention === 'focus' ? 'FOCUS' : 'LOW'}</span>
+        <span><span class="vd-path">${n.path}</span> <span class="vd-stat">${n.stat}</span>${n.status === 'new' ? ' <span style="color:var(--new);font-size:11px;font-weight:700">NEW</span>' : ''}<br><span class="vd-note">${n.tourNote}</span></span>
+        <span class="vd-badge" style="color:${cov(n).hex}">${cov(n).sym} ${cov(n).word}</span>
+      </div>
+      <div class="expand">
+        <div class="vd-field" style="margin-top:4px"><span class="vd-difftoggle">+ view diff (${n.stat})</span><div class="vd-diff"></div></div>
+        <div class="vd-role">${n.role}</div>
+        <div class="vd-field"><span class="vd-lab">WHAT CHANGED</span><br><span class="txt">${n.whatChanged}</span></div>
+        <div class="vd-field"><span class="vd-lab">WHY YOU SHOULD CARE</span><br><span class="txt">${n.whyCare}</span></div>
+        <div class="vd-field"><span class="vd-lab">COVERAGE</span><br><span class="txt" style="color:${cov(n).hex}">${cov(n).sym} ${cov(n).word}</span> <span class="txt" style="color:var(--dim)">· ${n.via}</span></div>
+        ${n.obs ? `<div class="vd-field"><span class="vd-lab obs">OBSERVABILITY</span><br><span class="txt">${n.obs}</span></div>` : ''}
+        ${heatHtml}
+        ${n.symbols.length ? `<div class="vd-field"><span class="vd-lab">SYMBOLS</span><br>${n.symbols.map(s => `<span class="vd-sym">${s}</span>`).join('')}</div>` : ''}
+        <div class="vd-field"><span class="vd-lab">CONNECTIONS</span>${connectionsHtml(n)}</div>
+      </div>`;
+    step.querySelector('.head').onclick = () => openStep(id, false);
+    const dt = step.querySelector('.vd-difftoggle');
+    dt.onclick = ev => {
+      ev.stopPropagation();
+      const dv = step.querySelector('.vd-diff');
+      const isOpen = dv.style.display === 'block';
+      dv.style.display = isOpen ? 'none' : 'block';
+      dt.textContent = `${isOpen ? '+' : '−'} view diff (${n.stat})`;
+      if (!isOpen && !dv.dataset.filled) {
+        dv.dataset.filled = '1';
+        dv.innerHTML = diffTable(DIFFS[n.id] || 'diff not embedded in this prototype');
+      }
+    };
+    rowsHost.appendChild(step);
+    stepEls[id] = step;
+  });
+
+  function openStep(id, scrollTo) {
+    const step = stepEls[id];
+    const wasOpen = step.classList.contains('open');
+    Object.values(stepEls).forEach(s => s.classList.remove('open'));
+    if (wasOpen && !scrollTo) { spotlight(null); return; }
+    step.classList.add('open');
+    spotlight(id);
+    if (scrollTo) step.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
+  // --- call chains (need openStep, so built after it exists) ---
+  const chainsHost = document.getElementById('vdChains');
+  const laneEls = CHAINS.map(lane => {
+    const w = renderChain(lane, openStep);
+    chainsHost.appendChild(w);
+    return w;
+  });
+
+  // --- observability list ---
+  const obsHost = document.getElementById('vdObs');
+  const obsEls = report.observability.map(o => {
+    const d = document.createElement('div');
+    d.className = 'vd-obs vd-reveal';
+    d.innerHTML = `<span>👁</span><span class="txt">${o.see}</span><a>${base(byId[o.owner].path)}</a>`;
+    d.querySelector('a').onclick = () => openStep(o.owner, true);
+    obsHost.appendChild(d);
+    return d;
+  });
+
+  // --- retro ---
+  const retroHost = document.getElementById('vdRetro');
+  retroHost.innerHTML = `
+    <div class="vd-provenance">${report.retro.provenance}</div>
+    <div class="vd-retro-sub">BUILD PATH</div>
+    ${report.retro.commits.map(c => `<div class="vd-commit"><span class="h">${c.h}</span><span class="m">${c.m}</span><span class="n">${c.note}</span></div>`).join('')}
+    <div class="vd-retro-sub">WHAT REVIEW CAUGHT</div>
+    ${report.retro.reviewCaught.map((f, i) => `<div class="vd-found"><span>⚠</span><span class="txt">${f.t}</span><a data-owner="${f.owner}">${base(byId[f.owner].path)}</a></div>`).join('')}
+    <div class="vd-retro-sub">PROCESS NOTES</div>
+    ${report.retro.process.map(p => `<div class="vd-proc">· ${p}</div>`).join('')}`;
+  retroHost.querySelectorAll('a[data-owner]').forEach(a => {
+    a.onclick = () => openStep(a.dataset.owner, true);
+  });
+
+  const groupEls = [];
+  const groups = [
+    { title: 'TEST COVERAGE', key: 'tests', desc: n => `tests ${base(byId[n.tests].path)}` },
+    { title: 'CONFIG & DOCS RIPPLE', key: 'ripple', desc: n => `${n.note} (${base(byId[n.touches].path)})` },
+  ];
+  for (const spec of groups) {
+    const members = report.nodes.filter(n => n.group === spec.key);
+    const g = document.createElement('div');
+    g.className = 'vd-group';
+    g.innerHTML = `<div class="head"><span class="tri">▶</span>
+        <span class="vd-path">${spec.title}</span>
+        <span class="vd-note">${members.length} files, expand when the flow above makes sense</span></div>
+      <div class="members"></div>`;
+    const host = g.querySelector('.members');
+    for (const m of members) {
+      const memEl = document.createElement('div');
+      memEl.className = 'vd-member';
+      memEl.innerHTML = `<div class="line">
+          <span class="vd-chip ${m.attention}" style="font-size:10px">${m.attention === 'focus' ? 'FOCUS' : 'LOW'}</span>
+          <span class="vd-path">${m.path}</span>${m.stat ? ` <span class="vd-stat">${m.stat}</span>` : ''}
+          <span class="tgt">${spec.desc(m)}</span></div>
+        <div class="mexp">${m.note ? m.note + ' · ' : ''}<span style="color:${cov(m).hex}">${cov(m).sym} ${cov(m).word}</span></div>`;
+      memEl.querySelector('.line').onclick = ev => { ev.stopPropagation(); memEl.classList.toggle('open'); };
+      host.appendChild(memEl);
+    }
+    g.querySelector('.head').onclick = () => g.classList.toggle('open');
+    rowsHost.appendChild(g);
+    groupEls.push(g);
+  }
+
+  function spotlight(id) {
+    for (const [nid, nEl] of Object.entries(nodeEls)) nEl.setAttribute('opacity', !id || nid === id ? 1 : 0.22);
+    edgeEls.forEach(({ g, e }) => g.setAttribute('opacity', !id || e.from === id || e.to === id ? 1 : 0.1));
+  }
+
+  // --- animation: any interaction fast-forwards the intro so timers never fight the user ---
+  const show = id => document.getElementById(id).classList.add('shown');
+  const confText = `${report.confidence.pct}% — ${report.confidence.verdict} · ${report.confidence.level}`;
+  const confEl = document.getElementById('vdConf');
+  let animDone = false;
+  function finishIntro() {
+    if (animDone) return;
+    animDone = true;
+    timers.forEach(clearTimeout); timers = [];
+    win.querySelectorAll('.vd-reveal').forEach(e => e.classList.add('shown'));
+    confEl.innerHTML = `<span class="big">${confText}</span>`;
+    const j = document.getElementById('vdJust');
+    j.textContent = '"' + report.confidence.justification + '"';
+    const caret = document.getElementById('vdCaret');
+    if (caret) caret.remove();
+    edgeEls.forEach(({ g, path }) => {
+      g.setAttribute('opacity', 1);
+      path.style.transition = ''; path.style.strokeDasharray = ''; path.style.strokeDashoffset = '';
+    });
+    Object.values(nodeEls).forEach(nEl => nEl.setAttribute('opacity', 1));
+    Object.values(stepEls).forEach(r => r.classList.add('shown'));
+    groupEls.forEach(g => g.classList.add('shown'));
+  }
+  win.addEventListener('pointerdown', () => finishIntro(), true);
+  if (!ANIMATE) finishIntro();
+
+  later(150, () => show('vdProblem'));
+  later(800, () => { show('vdHChange'); show('vdChange'); });
+  later(1500, () => { show('vdHConf'); show('vdConfBox'); });
+  later(1700, () => {
+    let ci = 0;
+    const typer = setInterval(() => {
+      if (ci >= confText.length) {
+        clearInterval(typer);
+        if (animDone) return;
+        confEl.innerHTML = `<span class="big">${confText}</span>`;
+        const j = document.getElementById('vdJust');
+        j.textContent = '"' + report.confidence.justification + '"';
+        j.classList.add('shown');
+
+        later(300, () => {
+          show('vdHChains');
+          laneEls.forEach((w, i) => later(200 + i * 380, () => w.classList.add('shown')));
+          later(200 + laneEls.length * 380, () => show('vdChainLegend'));
+          const afterChains = 300 + laneEls.length * 380 + 300;
+          later(afterChains, () => {
+            show('vdHMap'); show('vdDiagram'); show('vdLegend');
+            const revealed = new Set();
+            edgeEls.forEach(({ g, path, e }, i) => later(150 + i * 240, () => {
+              for (const id of [e.from, e.to]) if (!revealed.has(id)) { revealed.add(id); nodeEls[id].setAttribute('opacity', 1); }
+              const len = path.getTotalLength();
+              if (!EDGE[e.kind].dash) {
+                path.style.strokeDasharray = `${len}`;
+                path.style.strokeDashoffset = len;
+                path.style.transition = 'stroke-dashoffset .45s ease';
+              }
+              g.setAttribute('opacity', 1);
+              if (!EDGE[e.kind].dash) requestAnimationFrame(() => path.style.strokeDashoffset = 0);
+            }));
+            const afterGraph = 150 + edgeEls.length * 240 + 250;
+            later(afterGraph - 400, () => show('vdHObs'));
+            obsEls.forEach((o, i) => later(afterGraph + i * 130, () => o.classList.add('shown')));
+            const afterObs = afterGraph + obsEls.length * 130 + 150;
+            later(afterObs, () => { show('vdHRetro'); show('vdRetro'); });
+            const afterRetro = afterObs + 450;
+            later(afterRetro - 150, () => show('vdHOrder'));
+            report.tour.forEach((id, i) => later(afterRetro + i * 120, () => stepEls[id].classList.add('shown')));
+            groupEls.forEach((g, i) => later(afterRetro + report.tour.length * 120 + i * 120, () => g.classList.add('shown')));
+            later(afterRetro + (report.tour.length + 2) * 120, () => {
+              animDone = true;
+              const caret = document.getElementById('vdCaret');
+              if (caret) caret.remove();
+            });
+          });
+        });
+        return;
+      }
+      confEl.textContent = confText.slice(0, ++ci);
+    }, 20);
+    timers.push(typer);
+  });
+}
+render();
+</script>
+</body>
+</html>
