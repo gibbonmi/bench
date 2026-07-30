@@ -323,6 +323,14 @@ func run(args []string, stdout, stderr *os.File) int {
 		fmt.Fprintln(stdout, versionLine(version, runtime.GOOS, runtime.GOARCH))
 		return 0
 	case "worktree":
+		if len(args) > 1 && args[1] == "path" {
+			root, err := git.Root()
+			if err != nil {
+				fmt.Fprintln(stderr, toon.NotInRepo())
+				return 1
+			}
+			return worktree.PathCommand(root, args[2:], stdout, stderr)
+		}
 		if len(args) > 1 && args[1] == "list" {
 			out, code := worktree.ListCommand(args[2:])
 			fmt.Fprint(stdout, out)

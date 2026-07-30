@@ -38,6 +38,183 @@ func TestRuntimeWorktreeContracts(t *testing.T) {
 	contract.RunParallel(t, "bench worktree list rows contract", testRuntimeWorktreeListRows)
 	contract.RunParallel(t, "bench worktree list AXI posture contract", testRuntimeWorktreeListAXIPosture)
 	contract.RunParallel(t, "bench worktree list shell surface contract", testRuntimeWorktreeListShellSurface)
+	contract.RunParallel(t, "bench worktree path resolves owned active labels contract", testRuntimeWorktreePathResolvesOwnedActiveLabel)
+	contract.RunParallel(t, "bench worktree path target forms and refusals contract", testRuntimeWorktreePathTargetFormsAndRefusals)
+	contract.RunParallel(t, "bench worktree path refuses stale or unowned state without mutation contract", testRuntimeWorktreePathRefusesStaleOrUnownedState)
+}
+
+func testRuntimeWorktreePathResolvesOwnedActiveLabel(t *testing.T) {
+	f := onMainFixture(t)
+	created := f.BenchEnv(map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bench-home")}, "worktree", "create", "--request", "path-alpha", "--label", "alpha")
+	created.RequireExit(0)
+	want := worktreeCreatePath(t, created.Stdout) + "\n"
+
+	got := f.BenchEnv(map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bench-home")}, "worktree", "path", "alpha")
+	if got.ExitCode != 0 || got.Stdout != want || got.Stderr != "" {
+		t.Fatalf("bench worktree path alpha = exit %d stdout %q stderr %q, want exit 0 stdout %q stderr empty", got.ExitCode, got.Stdout, got.Stderr, want)
+	}
+}
+
+func testRuntimeWorktreePathTargetFormsAndRefusals(t *testing.T) {
+	f := onMainFixture(t)
+	home := filepath.Join(f.Root, "home")
+	env := map[string]string{"BENCH_HOME": home, "HOME": home}
+	created := f.BenchEnv(env, "worktree", "create", "--request", "path-forms", "--label", "a label with spaces and *")
+	created.RequireExit(0)
+	path := worktreeCreatePath(t, created.Stdout)
+	rel, err := filepath.Rel(home, path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join("~", rel) + "\n"
+	for _, target := range []string{"a label with spaces and *", path, filepath.Join("~", rel)} {
+		got := f.BenchEnv(env, "worktree", "path", target)
+		if got.ExitCode != 0 || got.Stdout != want || got.Stderr != "" {
+			t.Fatalf("bench worktree path %q = exit %d stdout %q stderr %q, want exit 0 stdout %q stderr empty", target, got.ExitCode, got.Stdout, got.Stderr, want)
+		}
+	}
+
+	exactHome := f.BenchEnv(map[string]string{"BENCH_HOME": filepath.Join(f.Root, "other-home"), "HOME": path}, "worktree", "path", "~")
+	if exactHome.ExitCode != 0 || exactHome.Stdout != "~\n" || exactHome.Stderr != "" {
+		t.Fatalf("bench worktree path ~ = exit %d stdout %q stderr %q, want exit 0 stdout %q stderr empty", exactHome.ExitCode, exactHome.Stdout, exactHome.Stderr, "~\\n")
+	}
+
+	prefixHome := filepath.Join(f.Root, "prefix")
+	prefixCreated := f.BenchEnv(map[string]string{"BENCH_HOME": prefixHome + "-sibling", "HOME": prefixHome}, "worktree", "create", "--request", "path-prefix", "--label", "prefix sibling")
+	prefixCreated.RequireExit(0)
+	prefixPath := worktreeCreatePath(t, prefixCreated.Stdout)
+	prefix := f.BenchEnv(map[string]string{"BENCH_HOME": prefixHome + "-sibling", "HOME": prefixHome}, "worktree", "path", "prefix sibling")
+	if prefix.ExitCode != 0 || prefix.Stdout != prefixPath+"\n" || prefix.Stderr != "" {
+		t.Fatalf("bench worktree path prefix sibling = exit %d stdout %q stderr %q, want exit 0 stdout %q stderr empty", prefix.ExitCode, prefix.Stdout, prefix.Stderr, prefixPath+"\n")
+	}
+	relativeCreated := f.BenchEnv(env, "worktree", "create", "--request", "path-relative", "--label", "./relative")
+	relativeCreated.RequireExit(0)
+	relativePath := worktreeCreatePath(t, relativeCreated.Stdout)
+
+	ledger := contract.ReadFileAbs(t, filepath.Join(f.Root, ".git", "bench-intent.json"))
+	registrations := f.Git("worktree", "list", "--porcelain").Stdout
+	beforeRefusals := snapshotRuntimePaths(t, gitDir(t, f), path, prefixPath, relativePath)
+	for _, target := range []string{"", " \t", "./relative", "~other", "bad\x1btarget"} {
+		got := f.BenchEnv(env, "worktree", "path", target)
+		if got.ExitCode == 0 || got.Stdout != "" || got.Stderr == "" || strings.Contains(got.Stdout+got.Stderr, "\x1b") {
+			t.Fatalf("bench worktree path %q = exit %d stdout %q stderr %q, want refused safe diagnostic", target, got.ExitCode, got.Stdout, got.Stderr)
+		}
+		if current := contract.ReadFileAbs(t, filepath.Join(f.Root, ".git", "bench-intent.json")); current != ledger {
+			t.Fatalf("bench worktree path %q mutated ledger", target)
+		}
+		if current := f.Git("worktree", "list", "--porcelain").Stdout; current != registrations {
+			t.Fatalf("bench worktree path %q mutated registrations", target)
+		}
+		if after := snapshotRuntimePaths(t, gitDir(t, f), path, prefixPath, relativePath); after != beforeRefusals {
+			t.Fatalf("bench worktree path %q mutated filesystem state", target)
+		}
+	}
+
+	unsafePath := filepath.Join(f.Root, "unsafe\x1boutput")
+	addRuntimeOwnedWorktree(t, f, unsafePath, "unsafe output")
+	unsafeBefore := snapshotRuntimePaths(t, gitDir(t, f), unsafePath)
+	unsafe := f.BenchEnv(env, "worktree", "path", "unsafe output")
+	if unsafe.ExitCode == 0 || unsafe.Stdout != "" || strings.Contains(unsafe.Stdout+unsafe.Stderr, "\x1b") {
+		t.Fatalf("bench worktree path control-bearing output = exit %d stdout %q stderr %q, want refused safe diagnostic", unsafe.ExitCode, unsafe.Stdout, unsafe.Stderr)
+	}
+	if unsafeAfter := snapshotRuntimePaths(t, gitDir(t, f), unsafePath); unsafeAfter != unsafeBefore {
+		t.Fatal("bench worktree path control-bearing output mutated filesystem state")
+	}
+}
+
+func testRuntimeWorktreePathRefusesStaleOrUnownedState(t *testing.T) {
+	for _, mutate := range []func(t *testing.T, f contract.Fixture, path string){
+		func(t *testing.T, f contract.Fixture, _ string) {
+			assignments, err := intent.Assignments(f.Root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := intent.DeleteAssignment(f.Root, assignments[0].ID); err != nil {
+				t.Fatal(err)
+			}
+		},
+		func(t *testing.T, f contract.Fixture, _ string) {
+			f.BenchEnv(map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bench-home")}, "worktree", "create", "--request", "path-duplicate", "--label", "state-target").RequireExit(0)
+		},
+		func(t *testing.T, f contract.Fixture, _ string) {
+			assignments, err := intent.Assignments(f.Root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			assignments[0].State = intent.StateCleanupPending
+			if err := intent.PutAssignment(f.Root, assignments[0]); err != nil {
+				t.Fatal(err)
+			}
+		},
+		func(t *testing.T, f contract.Fixture, path string) {
+			f.Git("worktree", "unlock", path)
+			f.Git("worktree", "remove", "--force", path)
+		},
+		func(t *testing.T, f contract.Fixture, _ string) {
+			foreign := filepath.Join(f.Root, "foreign")
+			f.Git("worktree", "add", "-q", "-b", "path-foreign", foreign, "HEAD")
+			assignments, err := intent.Assignments(f.Root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			assignments[0].Worktree = foreign
+			if err := intent.PutAssignment(f.Root, assignments[0]); err != nil {
+				t.Fatal(err)
+			}
+		},
+		func(t *testing.T, f contract.Fixture, path string) {
+			admin := strings.TrimSpace(contract.RunAt(t, f, path, nil, "git", "rev-parse", "--git-dir").Stdout)
+			marker := fmt.Sprintf("{\"schema\":\"bench-owner/v1\",\"owner_id\":\"00000000000000000000000000000000\",\"path\":%q}\n", path)
+			if err := os.WriteFile(filepath.Join(admin, "bench-owner"), []byte(marker), 0o600); err != nil {
+				t.Fatal(err)
+			}
+		},
+	} {
+		f := onMainFixture(t)
+		env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bench-home")}
+		created := f.BenchEnv(env, "worktree", "create", "--request", "path-state", "--label", "state-target")
+		created.RequireExit(0)
+		path := worktreeCreatePath(t, created.Stdout)
+		mutate(t, f, path)
+		ledger := contract.ReadFileAbs(t, filepath.Join(f.Root, ".git", "bench-intent.json"))
+		registrations := f.Git("worktree", "list", "--porcelain").Stdout
+		before := snapshotRuntimePaths(t, gitDir(t, f), f.Root)
+
+		got := f.BenchEnv(env, "worktree", "path", "state-target")
+		if got.ExitCode == 0 || got.Stdout != "" || got.Stderr == "" {
+			t.Fatalf("bench worktree path stale state = exit %d stdout %q stderr %q, want refusal", got.ExitCode, got.Stdout, got.Stderr)
+		}
+		if current := contract.ReadFileAbs(t, filepath.Join(f.Root, ".git", "bench-intent.json")); current != ledger {
+			t.Fatal("bench worktree path mutated ledger while refusing stale state")
+		}
+		if current := f.Git("worktree", "list", "--porcelain").Stdout; current != registrations {
+			t.Fatal("bench worktree path mutated registrations while refusing stale state")
+		}
+		if after := snapshotRuntimePaths(t, gitDir(t, f), f.Root); after != before {
+			t.Fatal("bench worktree path mutated filesystem state while refusing stale state")
+		}
+	}
+}
+
+func addRuntimeOwnedWorktree(t *testing.T, f contract.Fixture, path, label string) {
+	t.Helper()
+	owner := "11111111111111111111111111111111"
+	id := "22222222222222222222222222222222"
+	request := fmt.Sprintf("%x", sha256.Sum256([]byte("path-unsafe")))
+	start := strings.TrimSpace(f.Git("rev-parse", "HEAD").Stdout)
+	branch := intent.AssignmentBranchRef(owner, id)
+	labelDigest := fmt.Sprintf("%x", sha256.Sum256([]byte(label)))
+	reason := "bench owner=" + owner + " assignment=" + id + " request=" + request + " label=" + labelDigest + " start=" + start
+	f.Git("worktree", "add", "-q", "--lock", "--reason", reason, "-b", strings.TrimPrefix(branch, "refs/heads/"), path, start)
+	admin := strings.TrimSpace(contract.RunAt(t, f, path, nil, "git", "rev-parse", "--path-format=absolute", "--git-dir").Stdout)
+	marker := fmt.Sprintf("{\"schema\":\"bench-owner/v1\",\"owner_id\":%q,\"path\":%q}\n", owner, path)
+	if err := os.WriteFile(filepath.Join(admin, "bench-owner"), []byte(marker), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	assignment := intent.Assignment{Schema: intent.AssignmentRecordSchema, ID: id, OwnerID: owner, Request: request, Label: label, Start: start, Branch: branch, Worktree: path, State: intent.StateActive}
+	if err := intent.PutAssignment(f.Root, assignment); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testRuntimeWorktreeRefreshRoutingMatrix(t *testing.T) {
