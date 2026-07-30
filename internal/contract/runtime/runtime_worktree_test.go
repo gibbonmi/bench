@@ -3,14 +3,18 @@ package runtime
 import (
 	"crypto/sha256"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/intent"
 )
@@ -41,6 +45,157 @@ func TestRuntimeWorktreeContracts(t *testing.T) {
 	contract.RunParallel(t, "bench worktree path resolves owned active labels contract", testRuntimeWorktreePathResolvesOwnedActiveLabel)
 	contract.RunParallel(t, "bench worktree path target forms and refusals contract", testRuntimeWorktreePathTargetFormsAndRefusals)
 	contract.RunParallel(t, "bench worktree path refuses stale or unowned state without mutation contract", testRuntimeWorktreePathRefusesStaleOrUnownedState)
+	contract.RunParallel(t, "bench worktree exec preserves the direct child contract", testRuntimeWorktreeExecDirectChild)
+	contract.RunParallel(t, "bench worktree exec preserves exit and non-TTY stdin contract", testRuntimeWorktreeExecExitMatrix)
+	contract.RunParallel(t, "bench worktree exec reports start errors without mutation contract", testRuntimeWorktreeExecStartError)
+	contract.RunParallel(t, "bench worktree exec interrupts its child group without worktree mutation contract", testRuntimeWorktreeExecInterrupt)
+	contract.RunParallel(t, "linked worktree wrapper routes path and exec contract", testRuntimeLinkedWorktreePathAndExec)
+	contract.RunParallel(t, "bench worktree help advertises local execution contract", testRuntimeWorktreeExecHelp)
+}
+
+func testRuntimeWorktreeExecInterrupt(t *testing.T) {
+	f := onMainFixture(t)
+	env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bench-home")}
+	created := f.BenchEnv(env, "worktree", "create", "--request", "exec-interrupt", "--label", "exec interrupt")
+	created.RequireExit(0)
+	ledger := contract.ReadFileAbs(t, filepath.Join(f.Root, ".git", "bench-intent.json"))
+	registrations := f.Git("worktree", "list", "--porcelain").Stdout
+	path := worktreeCreatePath(t, created.Stdout)
+	before := snapshotRuntimePaths(t, gitDir(t, f), path)
+	pidfile := filepath.Join(t.TempDir(), "descendant.pid")
+
+	cmd := exec.Command("bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "worktree", "exec", "exec interrupt", "--", "sh", "-c", "sleep 30 & echo $! > \"$1\"; wait", "ignored", pidfile)
+	cmd.Dir, cmd.Env, cmd.Stdout, cmd.Stderr = f.Root, contract.ProcessEnv(f.Env, env), io.Discard, io.Discard
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) }()
+	exited := make(chan struct{})
+	go func() { _ = cmd.Wait(); close(exited) }()
+	if miss := contract.WaitForTwoLegMarkers(pidfile, pidfile, 10*time.Second, bounds.TestDeadline(bounds.TestDeadlineFloor), os.Stat, exited, time.Now, time.Sleep); miss != "" {
+		t.Fatalf("worktree exec child did not publish its descendant pid: %s", miss)
+	}
+	pid, err := strconv.Atoi(strings.TrimSpace(contract.ReadFileAbs(t, pidfile)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cmd.Process.Signal(syscall.SIGINT); err != nil {
+		t.Fatal(err)
+	}
+	<-exited
+	if cmd.ProcessState.ExitCode() != 130 {
+		t.Fatalf("interrupted worktree exec exit = %d, want 130", cmd.ProcessState.ExitCode())
+	}
+	if err := syscall.Kill(pid, 0); err == nil {
+		t.Fatalf("interrupted worktree exec left descendant %d running", pid)
+	}
+	if got := contract.ReadFileAbs(t, filepath.Join(f.Root, ".git", "bench-intent.json")); got != ledger {
+		t.Fatal("interrupted worktree exec mutated intent ledger")
+	}
+	if got := f.Git("worktree", "list", "--porcelain").Stdout; got != registrations {
+		t.Fatal("interrupted worktree exec mutated worktree registrations")
+	}
+	if after := snapshotRuntimePaths(t, gitDir(t, f), path); after != before {
+		t.Fatal("interrupted worktree exec mutated filesystem state")
+	}
+}
+
+func testRuntimeWorktreeExecExitMatrix(t *testing.T) {
+	f := onMainFixture(t)
+	env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bench-home")}
+	created := f.BenchEnv(env, "worktree", "create", "--request", "exec-exits", "--label", "exec exits")
+	created.RequireExit(0)
+	for _, exit := range []int{0, 1, 2, 37, 130} {
+		got := contract.RunAtWithInput(t, f, f.Root, env, "not a terminal\n", "bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "worktree", "exec", "exec exits", "--", "sh", "-c", "IFS= read -r line; test \"$line\" = 'not a terminal'; exit \"$1\"", "ignored", fmt.Sprint(exit))
+		if got.ExitCode != exit || got.Stdout != "" || got.Stderr != "" {
+			t.Fatalf("bench worktree exec exit %d = exit %d stdout %q stderr %q, want exact child exit with transparent non-TTY streams", exit, got.ExitCode, got.Stdout, got.Stderr)
+		}
+	}
+	signaled := f.BenchEnv(env, "worktree", "exec", "exec exits", "--", "sh", "-c", "kill -INT $$")
+	if signaled.ExitCode != 130 || signaled.Stdout != "" || signaled.Stderr != "" {
+		t.Fatalf("bench worktree exec child SIGINT = exit %d stdout %q stderr %q, want 130 and transparent streams", signaled.ExitCode, signaled.Stdout, signaled.Stderr)
+	}
+}
+
+func testRuntimeWorktreeExecStartError(t *testing.T) {
+	f := onMainFixture(t)
+	env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bench-home")}
+	created := f.BenchEnv(env, "worktree", "create", "--request", "exec-start", "--label", "exec start")
+	created.RequireExit(0)
+	path := worktreeCreatePath(t, created.Stdout)
+	ledger := contract.ReadFileAbs(t, filepath.Join(f.Root, ".git", "bench-intent.json"))
+	registrations := f.Git("worktree", "list", "--porcelain").Stdout
+	before := snapshotRuntimePaths(t, gitDir(t, f), path)
+
+	got := f.BenchEnv(env, "worktree", "exec", "exec start", "--", "definitely-missing-bench-exec-command")
+	if got.ExitCode != 1 || got.Stdout != "" || !strings.Contains(got.Stderr, "bench worktree exec:") {
+		t.Fatalf("bench worktree exec missing command = exit %d stdout %q stderr %q, want Bench start error", got.ExitCode, got.Stdout, got.Stderr)
+	}
+	if current := contract.ReadFileAbs(t, filepath.Join(f.Root, ".git", "bench-intent.json")); current != ledger {
+		t.Fatal("failed worktree exec start mutated intent ledger")
+	}
+	if current := f.Git("worktree", "list", "--porcelain").Stdout; current != registrations {
+		t.Fatal("failed worktree exec start mutated worktree registrations")
+	}
+	if after := snapshotRuntimePaths(t, gitDir(t, f), path); after != before {
+		t.Fatal("failed worktree exec start mutated filesystem state")
+	}
+}
+
+func testRuntimeLinkedWorktreePathAndExec(t *testing.T) {
+	f := onMainFixture(t)
+	f.Bench("link").RequireExit(0)
+	env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bench-home")}
+	launcher := filepath.Join(f.Root, ".bench", "bin", "bench.sh")
+	deep := filepath.Join(f.Root, "deep", "cwd")
+	contract.Mkdir(t, deep)
+	created := contract.RunAt(t, f, deep, env, "bash", launcher, "worktree", "create", "--request", "linked-exec", "--label", "linked exec")
+	created.RequireExit(0)
+	path := worktreeCreatePath(t, created.Stdout)
+
+	resolved := contract.RunAt(t, f, deep, env, "bash", launcher, "worktree", "path", "linked exec")
+	if resolved.ExitCode != 0 || resolved.Stdout != path+"\n" || resolved.Stderr != "" {
+		t.Fatalf("linked worktree path = exit %d stdout %q stderr %q, want exact assigned path", resolved.ExitCode, resolved.Stdout, resolved.Stderr)
+	}
+	executed := contract.RunAt(t, f, deep, env, "bash", launcher, "worktree", "exec", "linked exec", "--", "sh", "-c", "printf %s \"$PWD\"; exit 37")
+	if executed.ExitCode != 37 || executed.Stdout != path || executed.Stderr != "" {
+		t.Fatalf("linked worktree exec = exit %d stdout %q stderr %q, want assigned cwd and child exit", executed.ExitCode, executed.Stdout, executed.Stderr)
+	}
+}
+
+func testRuntimeWorktreeExecHelp(t *testing.T) {
+	f := onMainFixture(t)
+	for _, args := range [][]string{{"--help"}, {"worktree", "--help"}} {
+		got := f.Bench(args...)
+		if got.ExitCode != 0 || got.Stderr != "" {
+			t.Fatalf("bench %v = exit %d stderr %q, want help on stdout", args, got.ExitCode, got.Stderr)
+		}
+		for _, want := range []string{"bench worktree path <target>", "bench worktree exec <target> -- <command> [args...]", "bash bin/bench.sh gate --fresh"} {
+			contract.RequireContains(t, got.Stdout, want)
+		}
+	}
+}
+
+func testRuntimeWorktreeExecDirectChild(t *testing.T) {
+	f := onMainFixture(t)
+	home := filepath.Join(f.Root, "home")
+	env := map[string]string{"BENCH_HOME": home, "HOME": home, "EXEC_ENV": "present"}
+	created := f.BenchEnv(env, "worktree", "create", "--request", "exec-direct", "--label", "argv with spaces and *")
+	created.RequireExit(0)
+	path := worktreeCreatePath(t, created.Stdout)
+
+	probe := contract.RunAtWithInput(t, f, f.Root, env, "stdin payload\n", "bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "worktree", "exec", "argv with spaces and *", "--", "sh", "-c", `printf 'arg=%s glob=%s cwd=%s env=%s stdin=' "$1" "$2" "$PWD" "$EXEC_ENV"; IFS= read -r line; printf '%s\n' "$line"; printf 'stderr=%s\n' "$1" >&2; exit 37`, "ignored", "two words", "*")
+	if probe.ExitCode != 37 || probe.Stdout != "arg=two words glob=* cwd="+path+" env=present stdin=stdin payload\n" || probe.Stderr != "stderr=two words\n" {
+		t.Fatalf("bench worktree exec direct child = exit %d stdout %q stderr %q, want exit 37 with exact child streams", probe.ExitCode, probe.Stdout, probe.Stderr)
+	}
+
+	for _, args := range [][]string{{"worktree", "exec", "argv with spaces and *", "sh"}, {"worktree", "exec", "argv with spaces and *", "--"}} {
+		got := f.BenchEnv(env, args...)
+		if got.ExitCode != 2 || got.Stdout != "" || got.Stderr == "" {
+			t.Fatalf("bench %v = exit %d stdout %q stderr %q, want usage exit 2 on stderr", args, got.ExitCode, got.Stdout, got.Stderr)
+		}
+	}
 }
 
 func testRuntimeWorktreePathResolvesOwnedActiveLabel(t *testing.T) {

@@ -37,6 +37,7 @@ type Grammar struct {
 type Result struct {
 	Flags       map[string]string
 	Positionals []string
+	EndedFlags  bool
 }
 
 // Parse applies g's grammar to args and returns exactly one of three
@@ -84,6 +85,7 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 			}
 			if a == "--" {
 				endedFlags = true
+				result.EndedFlags = true
 				continue
 			}
 			// A bare "-" is a legal filename, not a flag: only a longer

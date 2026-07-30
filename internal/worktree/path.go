@@ -32,6 +32,14 @@ func PathCommand(root string, args []string, stdout, stderr io.Writer) int {
 }
 
 func resolvePath(root, target string) (string, error) {
+	path, err := resolveWorktree(root, target)
+	if err != nil {
+		return "", err
+	}
+	return compactHomePath(path)
+}
+
+func resolveWorktree(root, target string) (string, error) {
 	if !lineSafe(target) {
 		return "", errors.New("target contains control characters")
 	}
@@ -49,7 +57,7 @@ func resolvePath(root, target string) (string, error) {
 	if err := validateCreationBundle(root, selected); err != nil {
 		return "", err
 	}
-	return compactHomePath(selected.Worktree)
+	return selected.Worktree, nil
 }
 
 func selectAssignment(assignments []intent.Assignment, target string) (intent.Assignment, error) {

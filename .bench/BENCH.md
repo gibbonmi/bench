@@ -65,7 +65,8 @@ Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
   (maintainer-run ship tier: the release-evidence checks, once per release; refuses
   without a current dev-green verdict), `bench canary`, `bench structure`,
   `bench guards`, `bench diff`, `bench coverage`, `bench outline`, `bench models`, `bench version`.
-- Work execution: `bench worktree` (retire one with `bench worktree release` by
+- Work execution: `bench worktree` (`bench worktree path <target>` resolves an active owned
+  assignment and `bench worktree exec <target> -- <command> [args...]` runs directly inside it; retire one with `bench worktree release` by
   the creating request, `bench worktree clean` for plan/apply removal, or
   `bench worktree recovery` for preserved-work refs), `bench shift`, and
   path-scoped `bench commit -m <msg> <path>...` (stages its named paths; use
