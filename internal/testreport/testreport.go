@@ -84,6 +84,9 @@ func Command(root string, args []string) (string, int) {
 	if !report.terminal {
 		return toon.Errorf("go test reported no packages", "no package terminal event") + "\n", 1
 	}
+	if incomplete := report.incompletePackages(); len(incomplete) != 0 {
+		return toon.Errorf("go test reported incomplete packages", strings.Join(incomplete, ", ")) + "\n", 1
+	}
 	_, full := parsed.Flags["--full"]
 	out, renderErr := report.render(full)
 	if renderErr != nil {
@@ -200,6 +203,17 @@ func (r *report) markNonzeroFailures() {
 	}
 }
 
+func (r *report) incompletePackages() []string {
+	packages := make([]string, 0)
+	for pkg := range r.seen {
+		if r.statuses[pkg] == "" {
+			packages = append(packages, pkg)
+		}
+	}
+	sort.Strings(packages)
+	return packages
+}
+
 func (r *report) test(packageName, name string) *testResult {
 	key := packageName + "\x00" + name
 	if r.tests[key] == nil {
@@ -248,7 +262,7 @@ func (r *report) skips(full bool) [][]string {
 		if reason == "" {
 			reason = test.last
 		}
-		if reason == "" || strings.HasSuffix(reason, ":") {
+		if reason == "" || goLocationOnly(reason) {
 			reason = "reason not emitted"
 		}
 		rows = append(rows, []string{test.packageName, test.test, diagnosticCell(reason, full)})
@@ -257,6 +271,25 @@ func (r *report) skips(full bool) [][]string {
 		return rows[i][0] < rows[j][0] || rows[i][0] == rows[j][0] && rows[i][1] < rows[j][1]
 	})
 	return rows
+}
+
+func goLocationOnly(reason string) bool {
+	for start := 0; start < len(reason); {
+		i := strings.IndexByte(reason[start:], ':')
+		if i < 0 {
+			return false
+		}
+		i += start
+		end := i + 1
+		for end < len(reason) && reason[end] >= '0' && reason[end] <= '9' {
+			end++
+		}
+		if end > i+1 && end < len(reason) && reason[end] == ':' {
+			return end == len(reason)-1
+		}
+		start = i + 1
+	}
+	return false
 }
 
 func (r *report) failures(full bool) [][]string {

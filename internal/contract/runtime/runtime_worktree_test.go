@@ -46,6 +46,7 @@ func TestRuntimeWorktreeContracts(t *testing.T) {
 	contract.RunParallel(t, "bench worktree path target forms and refusals contract", testRuntimeWorktreePathTargetFormsAndRefusals)
 	contract.RunParallel(t, "bench worktree path refuses stale or unowned state without mutation contract", testRuntimeWorktreePathRefusesStaleOrUnownedState)
 	contract.RunParallel(t, "bench worktree exec preserves the direct child contract", testRuntimeWorktreeExecDirectChild)
+	contract.RunParallel(t, "bench worktree exec requires its target before the separator contract", testRuntimeWorktreeExecRequiresTargetBeforeSeparator)
 	contract.RunParallel(t, "bench worktree exec preserves exit and non-TTY stdin contract", testRuntimeWorktreeExecExitMatrix)
 	contract.RunParallel(t, "bench worktree exec reports start errors without mutation contract", testRuntimeWorktreeExecStartError)
 	contract.RunParallel(t, "bench worktree exec interrupts its child group without worktree mutation contract", testRuntimeWorktreeExecInterrupt)
@@ -195,6 +196,31 @@ func testRuntimeWorktreeExecDirectChild(t *testing.T) {
 		if got.ExitCode != 2 || got.Stdout != "" || got.Stderr == "" {
 			t.Fatalf("bench %v = exit %d stdout %q stderr %q, want usage exit 2 on stderr", args, got.ExitCode, got.Stdout, got.Stderr)
 		}
+	}
+}
+
+func testRuntimeWorktreeExecRequiresTargetBeforeSeparator(t *testing.T) {
+	f := onMainFixture(t)
+	env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bench-home")}
+	created := f.BenchEnv(env, "worktree", "create", "--request", "exec-separator", "--label", "exec separator")
+	created.RequireExit(0)
+	path := worktreeCreatePath(t, created.Stdout)
+	ledger := contract.ReadFileAbs(t, filepath.Join(f.Root, ".git", "bench-intent.json"))
+	registrations := f.Git("worktree", "list", "--porcelain").Stdout
+	before := snapshotRuntimePaths(t, gitDir(t, f), path)
+
+	got := f.BenchEnv(env, "worktree", "exec", "--", "exec separator", "sh")
+	if got.ExitCode != 2 || got.Stdout != "" || got.Stderr != "usage: bench worktree exec <target> -- <command> [args...]\n" {
+		t.Fatalf("bench worktree exec -- target child = exit %d stdout %q stderr %q, want exact usage on stderr", got.ExitCode, got.Stdout, got.Stderr)
+	}
+	if current := contract.ReadFileAbs(t, filepath.Join(f.Root, ".git", "bench-intent.json")); current != ledger {
+		t.Fatal("reversed worktree exec mutated intent ledger")
+	}
+	if current := f.Git("worktree", "list", "--porcelain").Stdout; current != registrations {
+		t.Fatal("reversed worktree exec mutated worktree registrations")
+	}
+	if after := snapshotRuntimePaths(t, gitDir(t, f), path); after != before {
+		t.Fatal("reversed worktree exec mutated filesystem state")
 	}
 }
 

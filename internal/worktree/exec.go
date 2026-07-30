@@ -27,7 +27,7 @@ func ExecCommand(root string, args []string, stdin io.Reader, stdout, stderr io.
 		fmt.Fprintln(stderr, line)
 		return code
 	}
-	if !parsed.EndedFlags || len(parsed.Positionals) < 2 {
+	if !parsed.EndedFlags || parsed.PositionalsBeforeTerminator != 1 || len(parsed.Positionals) < 2 {
 		fmt.Fprintln(stderr, worktreeExecGrammar.Help)
 		return 2
 	}

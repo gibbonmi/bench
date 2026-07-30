@@ -31,6 +31,8 @@ func TestRuntimeTestReportContracts(t *testing.T) {
 	contract.RunParallel(t, "bench test interrupts the entire Go process group contract", testRuntimeTestInterruptsProcessGroup)
 	contract.RunParallel(t, "bench test bounds hostile diagnostic cells contract", testRuntimeTestHostileDiagnostics)
 	contract.RunParallel(t, "bench test reports malformed, empty, and unavailable Go output contract", testRuntimeTestErrorPostures)
+	contract.RunParallel(t, "bench test refuses incomplete package streams contract", testRuntimeTestRefusesIncompletePackages)
+	contract.RunParallel(t, "bench test reports unrepresentable package and test cells contract", testRuntimeTestRenderRefusals)
 }
 
 func testRuntimeTestRunsFreshGoAtRoot(t *testing.T) {
@@ -194,12 +196,12 @@ func testRuntimeTestSelectsFailureDiagnostics(t *testing.T) {
 func testRuntimeTestRendersSkips(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("go.mod", "module example.com/skip\n\ngo 1.25\n")
-	f.WriteFile("generic/generic_test.go", "package generic\n\nimport \"testing\"\n\nfunc TestGeneric(t *testing.T) { t.Skip(\"generic skip\") }\n")
+	f.WriteFile("generic/generic_test.go", "package generic\n\nimport \"testing\"\n\nfunc TestGeneric(t *testing.T) { t.Skip(\"generic skip ending: port:5:\") }\n")
 	f.WriteFile("structured/structured_test.go", "package structured\n\nimport (\n\t\"fmt\"\n\t\"os\"\n\t\"testing\"\n)\n\nfunc TestCapability(t *testing.T) { fmt.Println(\"bench-skip kind=capability class=symlink reason=host cannot link\"); t.Skip() }\nfunc TestNoProse(t *testing.T) { t.Skip() }\nfunc TestStructured(t *testing.T) {\n\tif path := os.Getenv(\"BENCH_SKIP_LOG\"); path != \"\" {\n\t\t_ = os.WriteFile(path, []byte(\"diverted\\n\"), 0o644)\n\t} else {\n\t\tfmt.Println(\"bench-skip kind=environment reason=host absent\")\n\t}\n\tt.Skip(\"fallback skip\")\n}\n")
 	sentinel := filepath.Join(f.Root, "skip-sentinel")
 	contract.WriteFileAbs(t, sentinel, "unchanged\n")
 	out := f.BenchEnv(map[string]string{"BENCH_SKIP_LOG": sentinel}, "test")
-	want := "packages[2]{package,status}:\n  example.com/skip/generic,pass\n  example.com/skip/structured,pass\nfailures[0]{package,test,line}:\nskips[4]{package,test,reason}:\n  example.com/skip/generic,TestGeneric,\"generic_test.go:5: generic skip\"\n  example.com/skip/structured,TestCapability,\"capability: symlink: host cannot link\"\n  example.com/skip/structured,TestNoProse,reason not emitted\n  example.com/skip/structured,TestStructured,\"environment: host absent\"\n"
+	want := "packages[2]{package,status}:\n  example.com/skip/generic,pass\n  example.com/skip/structured,pass\nfailures[0]{package,test,line}:\nskips[4]{package,test,reason}:\n  example.com/skip/generic,TestGeneric,\"generic_test.go:5: generic skip ending: port:5:\"\n  example.com/skip/structured,TestCapability,\"capability: symlink: host cannot link\"\n  example.com/skip/structured,TestNoProse,reason not emitted\n  example.com/skip/structured,TestStructured,\"environment: host absent\"\n"
 	if out.ExitCode != 0 || out.Stderr != "" || out.Stdout != want {
 		t.Fatalf("bench test skips = exit %d stdout %q stderr %q, want %q", out.ExitCode, out.Stdout, out.Stderr, want)
 	}
@@ -316,5 +318,33 @@ func testRuntimeTestErrorPostures(t *testing.T) {
 	out := f.BenchEnv(map[string]string{"PATH": "/usr/bin:/bin"}, "test")
 	if out.ExitCode != 1 || out.Stderr != "" || !strings.HasPrefix(out.Stdout, "error: go test failed to start — ") {
 		t.Fatalf("bench test without Go = exit %d stdout %q stderr %q, want structured stdout error", out.ExitCode, out.Stdout, out.Stderr)
+	}
+}
+
+func testRuntimeTestRefusesIncompletePackages(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteExecutable("go", "#!/bin/sh\nprintf '%s\\n' '{\"Action\":\"output\",\"Package\":\"example/z\",\"Output\":\"observed\\\\n\"}' '{\"Action\":\"output\",\"Package\":\"example/a\",\"Output\":\"observed\\\\n\"}' '{\"Action\":\"pass\",\"Package\":\"example/pass\"}'\n")
+	out := f.BenchEnv(map[string]string{"PATH": f.Root + string(os.PathListSeparator) + os.Getenv("PATH")}, "test")
+	want := "error: go test reported incomplete packages — example/a, example/z\n"
+	if out.ExitCode != 1 || out.Stderr != "" || out.Stdout != want {
+		t.Fatalf("bench test incomplete packages = exit %d stdout %q stderr %q, want %q", out.ExitCode, out.Stdout, out.Stderr, want)
+	}
+}
+
+func testRuntimeTestRenderRefusals(t *testing.T) {
+	for _, tc := range []struct {
+		name, script string
+	}{
+		{"package", "#!/bin/sh\nprintf '%s\\n' '{\"Action\":\"pass\",\"Package\":\"example/\\u000cbad\"}'\n"},
+		{"test", "#!/bin/sh\nprintf '%s\\n' '{\"Action\":\"output\",\"Package\":\"example/test\",\"Test\":\"Test\\u000cBad\",\"Output\":\"failure\\n\"}' '{\"Action\":\"fail\",\"Package\":\"example/test\",\"Test\":\"Test\\u000cBad\"}' '{\"Action\":\"fail\",\"Package\":\"example/test\"}'\nexit 1\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := contract.NewFixture(t)
+			f.WriteExecutable("go", tc.script)
+			out := f.BenchEnv(map[string]string{"PATH": f.Root + string(os.PathListSeparator) + os.Getenv("PATH")}, "test")
+			if out.ExitCode != 1 || out.Stderr != "" || !strings.HasPrefix(out.Stdout, "error: unrepresentable TOON cell — ") || strings.Contains(out.Stdout, "packages[") || hasRawControl(out.Stdout) {
+				t.Fatalf("bench test unrepresentable %s cell = exit %d stdout %q stderr %q, want one structured render refusal", tc.name, out.ExitCode, out.Stdout, out.Stderr)
+			}
+		})
 	}
 }

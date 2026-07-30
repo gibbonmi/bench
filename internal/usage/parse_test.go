@@ -126,6 +126,17 @@ func TestParseDoubleDashEndsFlags(t *testing.T) {
 	if len(res.Positionals) != 1 || res.Positionals[0] != "-x" {
 		t.Errorf("Parse(-- -x) positionals = %v, want [-x]", res.Positionals)
 	}
+	if res.PositionalsBeforeTerminator != 0 {
+		t.Errorf("Parse(-- -x) positionals before terminator = %d, want 0", res.PositionalsBeforeTerminator)
+	}
+
+	res, line, code = Parse(g, []string{"target", "--", "child"})
+	if line != "" || code != 0 {
+		t.Fatalf("Parse(target -- child) errored: line=%q code=%d", line, code)
+	}
+	if res.PositionalsBeforeTerminator != 1 {
+		t.Errorf("Parse(target -- child) positionals before terminator = %d, want 1", res.PositionalsBeforeTerminator)
+	}
 }
 
 // TestParseBareDashAndSecondDoubleDash pins the two tokens a naive

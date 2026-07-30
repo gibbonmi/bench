@@ -35,9 +35,10 @@ type Grammar struct {
 // Result is a successful parse: the flags present (an empty string value for
 // a boolean flag) and the positionals in argv order.
 type Result struct {
-	Flags       map[string]string
-	Positionals []string
-	EndedFlags  bool
+	Flags                       map[string]string
+	Positionals                 []string
+	PositionalsBeforeTerminator int
+	EndedFlags                  bool
 }
 
 // Parse applies g's grammar to args and returns exactly one of three
@@ -131,6 +132,9 @@ func Parse(g Grammar, args []string) (Result, string, int) {
 			return Result{}, toon.Usage(g.Cmd, a), 2
 		}
 		result.Positionals = append(result.Positionals, a)
+		if !endedFlags {
+			result.PositionalsBeforeTerminator++
+		}
 	}
 
 	if len(result.Positionals) < g.MinArgs {
