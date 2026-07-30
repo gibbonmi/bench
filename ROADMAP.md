@@ -66,10 +66,14 @@ focused run while other outer phases overlapped. The existing gate-concurrency
 decision deliberately left outer phases uncapped until that evidence existed;
 the gate-critical-path map now records that the trigger fired but grants no
 authority to choose a cap. Price candidate outer widths with repeated full-gate
-measurements on the same tree, preserving every phase and unchanged green
-semantics. Scoped gating remains ruled out and is not a speed lever. Entry:
+measurements on the same tree, recording the exact commit, worktree, and run
+time beside every sample. Measure enough repetitions to state the variance;
+discard a sample whose subject does not match the build under test rather than
+reporting it. Preserve every phase and unchanged green semantics. Scoped
+gating remains ruled out and is not a speed lever. Entry:
 `/bench-shape-idea`. Sources: `IDEAS.md`, drained here;
-`decisions/gate-concurrency.md`; `decisions/gate-critical-path.md`.
+`decisions/gate-concurrency.md`; `decisions/gate-critical-path.md`; the
+2026-07-30 Claude usage-report assessment, drained here.
 
 **FT156 (MEDIUM) — the anchor mechanism is weaker than its coverage rows
 claim.** Two faces from FT152's build, one owner (the conformance anchor
@@ -127,7 +131,10 @@ subcommand only if the decision map rules that the harness-independent
 substrate should own it. That command records the staging base and terminal
 implementation SHA as first-class review inputs; the artifact-suite run had to
 reconstruct that range after `bench diff --full` on the default branch reduced
-to the handoff path. Entry: `/bench-shape-idea`.
+to the handoff path. The same subject record binds any performance number in
+the close to the exact commit and worktree that produced it; a number from a
+different subject is omitted, not carried forward as evidence. Entry:
+`/bench-shape-idea`.
 
 The close itself has one unresolved ownership decision. `bench spec retire`
 says to remove the roadmap row while `/bench-final-check` says to leave it for
@@ -481,7 +488,7 @@ discipline check: phrase-grepping project prose cannot demonstrate a reliable
 bite. Source: the learnings journal, verdicted in a prior drain.
 
 **FT107 (MEDIUM) — the standing guidance rules, batched: one
-always-loaded-prose diff.** Eight remaining clauses edit the same
+always-loaded-prose diff.** Eleven remaining clauses edit the same
 standing-guidance surface — `.bench/BENCH.md`, the phase prose beside it, and
 two craft skills — and collapse into one batched kit edit under the
 `craft-synthesis` discipline: one spec, one review, one gate. First (was
@@ -585,8 +592,26 @@ through the FT152 build. One line: wait on a PID or a sentinel file, never on
 a `pgrep` pattern the waiting command itself contains. Deliberately
 not batched here: FT130 (mid-gate
 `bench idea`) stays its own row because its preferred fix is mechanical, in
-the CLI rather than in this prose. Background:
-`docs/reporesident-distillation.md` §3 and §6.
+the CLI rather than in this prose. Ninth (drained 2026-07-30 from the Claude
+usage-report assessment), wide edits to structured prose need an
+artifact-level consistency pass. The observed failure was not the use of
+item-wise edits itself; it was reporting completion without re-reading the
+whole spec after those edits introduced cross-story contradictions. Put one
+completion criterion in the authoring discipline for specs, roadmaps, and
+decision maps: re-read the complete affected artifact and reconcile every
+repeated field or cross-reference. Do not prescribe one editing mechanism —
+the document's actual structure decides whether a batch or item-wise patch is
+safer. Tenth (same source), an ad-hoc script that can delete, prune, release,
+or otherwise discard state defaults to a plan: resolve and print the exact
+targets and commands, show parsed fields for a small sample, and mutate only
+on an explicit apply. This is one shell-conventions clause, not a new skill;
+Bench-owned commands keep their stronger typed plan/apply and recovery
+contracts. Eleventh (same source), phase exits state every material acceptance
+shortfall and unverified tier with actual-versus-target evidence where a
+target exists. Fold it into the existing structured exit rules: omit empty
+groups rather than emitting ceremonial `none` sections. Background:
+`docs/reporesident-distillation.md` §3 and §6; the 2026-07-30 Claude
+usage-report assessment, drained here.
 
 **FT58 (LOW) — hardened pool roots.** Permission failures on Bench-selected pool roots
 should propagate — the tree currently asserts best-effort tighten
