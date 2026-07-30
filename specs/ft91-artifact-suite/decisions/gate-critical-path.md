@@ -1,7 +1,8 @@
 # Gate critical path — where the wall lives, and the levers left
 
 Assessed 2026-07-29 at working tree of `187bc36`, re-measured on the landed
-tree of `d91b709` once moves 1 and 2 shipped. Question: how fast can the dev
+tree of `d91b709` once moves 1 and 2 shipped, and on the artifact-split landed
+tree of `6016be6`. Question: how fast can the dev
 gate get without sacrificing quality, including the oracle-semantics levers
 FT91 parked as reviewer decisions — verdict reuse for the exact tree, canary
 narrowing, and freshness relaxation. This record incorporates the retired
@@ -10,29 +11,32 @@ the wall, the post-build re-measurement, and the resulting decision analysis.
 
 ## Result
 
-The changed-tree gate is **one package wide**: `internal/contract/surface/artifact`
-(~109 s solo) floors the contract phase and with it the whole run. Everything
-else in the gate finishes by ~t+62, and the canary sweep — formerly the tail,
-because it re-ran that same package once per `surface/artifact` fixture — is
-now 25 s.
+The artifact split is landed. Its four package processes overlap: a focused
+recursive run spans about 51 s while their package spans total about 127 s.
+The changed-tree gate is now 89.91 s, down from 128 s, but its critical path is
+still the contract phase: `posture` takes 85.415 s under the full gate. The
+focused posture span is 50.917 s, so concurrent outer phases materially extend
+the process that otherwise bounds the split suite.
 
-Three moves take the gate from its ~135–172 s baseline; two are measured,
-the third is an estimate:
+Three moves take the gate from its ~135–172 s baseline; all are measured:
 
 | after | changed-tree gate | unchanged-tree gate |
 |---|---|---|
 | baseline | 135–172 s | 135–172 s |
 | 1. per-test canary bites *(landed)* | **128 s** | same |
 | 2. gate-level verdict reuse + freshness ruling *(landed)* | same | **0.6 s** |
-| 3. artifact-suite restructure (parallelism) *(open)* | **~60–75 s** | 0.6 s |
+| 3. artifact-suite restructure (parallelism) *(landed)* | **89.91 s** | 0.6 s |
 
 Moves 1 and 2 landed in FT91's gate-fastpath build: move 1 on semantics the
 reviewer had already ruled (stage 2's own wording), move 2 on an authority
 ADR 0002 already granted `bench commit` and now extends to gate execution.
-Move 3 is ordinary spec work with no semantic content, and is the one slice
-left that moves the changed-tree wall. A full gate re-write is **not**
-warranted — the scheduler is already maximally concurrent and the bound is
-elsewhere (see "Re-design verdict").
+Move 3 exposed package-level parallelism without changing oracle semantics and
+removed 38.09 s from the measured changed-tree wall. The split's focused trace
+shows that repeated package processes are not the dominant residual cost. A
+reviewer decision is needed before reviving the dormant outer-width cap: the
+full gate's 85.415 s posture span is 34.498 s longer than the 50.917 s focused
+span while the 69.506 s test phase and other outer phases overlap it. A full
+gate re-write is **not** warranted (see "Re-design verdict").
 
 ## Where the wall was (2026-07-29, this box, warm caches, session load present)
 
@@ -76,11 +80,43 @@ rebuilt via `scripts/go-build.sh` first.
 
 **Stop rule.** FT91's ≤60 s rule is **met on the canary critical path** the
 rule was written against — the sweep is 25 s. It is **not met on the
-changed-tree full gate**, which stands at 128 s, floored by the contract
-phase's `internal/contract/surface/artifact` package (~109 s solo). The
+changed-tree full gate**, which stands at 89.91 s, floored by the contract
+phase's `posture` package (85.415 s under the gate). The
 unchanged-tree path beats its expected ~2–5 s by an order of magnitude: it
 prints `gate: green (fresh verdict reused for this tree)` and does no phase
 work.
+
+## Artifact-split measurement (2026-07-29, `6016be6`, WSL2 host, warm caches)
+
+The worktree binary was rebuilt with `bash scripts/go-build.sh "$PWD"
+dist/bench`. The focused command was `/usr/bin/time -p go test -json -count=1
+./internal/contract/surface/artifact/...`; its JSON timestamps provide the
+package intervals below. The public worktree-local gate command was
+`/usr/bin/time -p bash bin/bench.sh gate --fresh`, which routes through that
+rebuilt binary. Wall clock is evidence, not a timeout assertion.
+
+| package | JSON start → pass | span |
+|---|---|---:|
+| `distributable` | 20:09:16.526 → 20:09:30.830 | 14.304 s |
+| `offline` | 20:09:16.577 → 20:09:49.471 | 32.893 s |
+| `posture` | 20:09:16.577 → 20:10:07.494 | 50.917 s |
+| `prepared` | 20:09:16.578 → 20:09:44.826 | 28.249 s |
+
+All four starts occur within 52 ms and every interval overlaps the others; a
+serialized trace would not satisfy this record. The focused envelope is 50.97
+s. Its 127.363 s of package spans is 18.363 s (17%) above the former 109 s
+single-process package, while 76.393 s of that work overlaps. The repeated
+process overhead is therefore visible but not the remaining wall.
+
+The fresh gate is green in **89.91 s**, a 38.09 s (30%) reduction from the
+128 s baseline. Its longest phase is contract: posture 85.415 s, offline
+70.327 s, prepared 68.353 s, and distributable 45.497 s; the concurrently
+running test phase is 69.506 s and conformance-suite is 36.696 s. The remaining
+critical path is contract/posture plus gate setup. The focused 50.917 s posture
+span becoming 85.415 s under those outer spans is an oversubscription signal,
+so the dormant outer-width cap should return as a **reviewer decision**. It is
+not implemented here: this single host-sensitive observation establishes the
+contention to price, not a scheduler policy or width.
 
 **The toolchain closure declares `go` and `node`, not `npm`.** Every subject
 hash walks each declared binary and its shebang chain, and the 0.57 s reuse
@@ -205,9 +241,9 @@ review-then-commit gap the old 10 min window defeated, while keeping a bound
 on ambient drift.
 
 **What this does not buy:** the first gate after any edit. The FT91 ≤60 s
-stop rule is about a changed tree — lever 1 took that to 128 s and ticket 1 is
-what moves it further; lever 2 makes the *second* judgment of the same tree
-free, at 0.57 s.
+stop rule remains about a changed tree — the split took the observed first run
+to 89.91 s, while lever 2 makes the *second* judgment of the same tree free,
+at 0.57 s.
 
 ## Lever 3 — `-count=1` on the contract phase (recommend: reject)
 
@@ -234,10 +270,9 @@ without weakening a check or changing oracle semantics?
 
 ### Answer
 
-With lever 1 landed, the wall is the contract phase ≈ the artifact package
-(~109 s solo) inside a 128 s changed-tree gate — which is why this is the
-next slice, and why FT91 ruled it out of its own scope as a separate
-capability (test-package architecture, not oracle semantics). The retired
+With lever 1 landed, the wall was the contract phase ≈ the artifact package
+(~109 s solo) inside a 128 s changed-tree gate — which is why this became a
+separate capability (test-package architecture, not oracle semantics). The retired
 FT91 inventory established that the package's remaining cost is legitimate:
 the collapsible generations already share one build; what remains is posture
 subjects (4 hermetic double-builds, 3 GOPROXY-off, 2 stale-record),
@@ -258,11 +293,12 @@ hazard analysis from ordering to races (inventory's explicit warning) and is
 the worse trade. Expected: artifact wall ~109 s → ~40–60 s, gate wall →
 ~60–75 s (then jointly bound with the `test` phase at ~62 s).
 
-The dormant outer conformance/contract width cap
-(`decisions/gate-concurrency.md`) rides the same 128 s figure: the canary no
-longer overlaps the contract phase, and the wall did not drop below the
-contract phase's own length, so there is no oversubscription symptom to act
-on yet. Re-check it on the measurement that follows this split.
+The split's measurement changes the dormant outer conformance/contract
+width-cap posture. The focused package trace completes posture in 50.917 s,
+but the full gate leaves posture at 85.415 s while the 69.506 s test phase
+overlaps it. That is enough contention evidence to ask the reviewer whether a
+bounded outer scheduler is worth its policy and implementation cost; it is not
+enough authority to choose or install a cap.
 
 ## Re-design verdict
 
@@ -335,18 +371,18 @@ granularity, and the machinery for it already exists.
    package its own process, `TestMain`, globals, and temp lifecycle. A singleton
    copied into several packages silently becomes several builds. Canary
    fixtures compile and invoke the owning package binary, so their package
-   paths must move with their tests. Re-measure the dormant outer width cap
-   after the split; do not revive it on estimate alone.
+   paths must move with their tests. The split measurement shows outer-phase
+   contention; any outer width cap remains a reviewer decision, not an
+   implementation consequence of the package split.
 
 ## Recommended sequence
 
 Done: per-test canary bites (lever 1); tools-closure completion, gate-level
-reuse, and the 60 min freshness window (lever 2). What is left:
-
-1. **Artifact package split** (ticket 1) — ordinary spec; the one slice that
-   takes the changed-tree gate from 128 s to ~60–75 s.
-2. **Re-measure** against the FT91 ≤60 s stop rule and update this record;
-   re-check the dormant width cap on the same run.
+reuse, and the 60 min freshness window (lever 2); and the artifact package
+split (lever 4). The fresh changed-tree measurement is 89.91 s, so the FT91
+≤60 s stop rule remains unmet. The next action is a reviewer decision on a
+bounded outer width cap, priced against the observed 50.917 s focused versus
+85.415 s in-gate posture span; no split work remains open.
 
 Reject: `-count=1` removal (lever 3), canary input-key skip, fixture
 batching, diff-scoped gating — all unsound or already ruled.
