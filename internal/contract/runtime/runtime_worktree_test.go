@@ -1351,6 +1351,7 @@ func testRuntimeWorktreeRejectsUnknownArgs(t *testing.T) {
 }
 
 func testRuntimeWorktreeHostileSurfaces(t *testing.T) {
+	contract.RequireFreshBench(t)
 	f := onMainFixture(t)
 	f.Bench("link").RequireExit(0)
 	shim := t.TempDir()

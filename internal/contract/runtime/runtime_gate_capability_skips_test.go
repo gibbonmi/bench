@@ -6,17 +6,58 @@ package runtime
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
+	"github.com/gibbonmi/bench/internal/contract/internal/freshnessfixture"
 )
 
+const runtimeFreshnessChildEnv = "BENCH_FT131_RUNTIME_FRESHNESS_CHILD"
+
+func TestRuntimeDirectSubjectRefusesStaleBeforeAssertions(t *testing.T) {
+	for _, tc := range []struct {
+		name, assertion string
+	}{
+		{"false green", "pass"},
+		{"false red", "fail"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if os.Getenv(runtimeFreshnessChildEnv) == tc.assertion {
+				probe := runCapabilitySkipGate(t, nil, capability.Skip{Kind: capability.KindCapability, Class: capability.Symlink, Reason: "fixture"})
+				if tc.assertion == "pass" {
+					probe.RequireExit(0)
+					return
+				}
+				t.Fatalf("correct runtime assertion rejected:\n%s\n%s", probe.Stdout, probe.Stderr)
+			}
+
+			root := freshnessfixture.StaleSubject(t, "old runtime assertion output")
+			command := exec.Command(os.Args[0], "-test.run=^TestRuntimeDirectSubjectRefusesStaleBeforeAssertions$/"+tc.name+"$")
+			command.Env = append(os.Environ(), runtimeFreshnessChildEnv+"="+tc.assertion, canary.SubjectRootEnv+"="+root)
+			output, err := command.CombinedOutput()
+			if err == nil {
+				t.Fatalf("stale runtime subject satisfied a %s assertion:\n%s", tc.name, output)
+			}
+			if !strings.Contains(string(output), "rebuild with bash scripts/go-build.sh") {
+				t.Fatalf("stale runtime subject did not report freshness:\n%s", output)
+			}
+			for _, forbidden := range []string{"old runtime assertion output", "correct runtime assertion rejected"} {
+				if strings.Contains(string(output), forbidden) {
+					t.Fatalf("stale runtime subject reached assertion output %q:\n%s", forbidden, output)
+				}
+			}
+		})
+	}
+}
+
 func TestRuntimeGateCapabilitySkipContracts(t *testing.T) {
-	contract.SkipIfSubjectFileMissing(t, "dist/bench")
+	contract.RequireFreshBench(t)
 	t.Parallel()
 	contract.RunParallel(t, "strict capability skip is red naming the class", testRuntimeStrictCapabilitySkipIsRed)
 	contract.RunParallel(t, "unset strict flag keeps skips informational", testRuntimeCapabilitySkipRowsWithoutStrict)
@@ -69,6 +110,7 @@ func testRuntimeEnvironmentSkipIsNotStrict(t *testing.T) {
 // `go test` without -v discards a passing package's output entirely.
 func runCapabilitySkipGate(t *testing.T, env map[string]string, skip capability.Skip) contract.Probe {
 	t.Helper()
+	contract.RequireFreshBench(t)
 	kit := capabilitySkipKit(t, skip)
 	graded := t.TempDir()
 	f := contract.NewExecFixtureAt(t, kit)

@@ -12,6 +12,7 @@ import (
 
 func runBenchInDir(t testing.TB, f contract.Fixture, dir string, args ...string) contract.Probe {
 	t.Helper()
+	contract.RequireFreshBench(t)
 	bench := filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh")
 	return contract.RunAtWithInput(t, f, dir, nil, "", "bash", append([]string{bench}, args...)...)
 }

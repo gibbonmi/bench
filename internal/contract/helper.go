@@ -12,6 +12,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/freshness"
 )
 
 type FixtureOption func(*fixtureConfig)
@@ -54,6 +55,15 @@ func SubjectRoot(t testing.TB) string {
 		return abs
 	}
 	return KitRoot(t)
+}
+
+// RequireFreshBench refuses an untrusted selected Bench executable before a contract uses it.
+func RequireFreshBench(t testing.TB) {
+	t.Helper()
+	root := SubjectRoot(t)
+	if err := freshness.Verify(root, filepath.Join(root, "dist", "bench")); err != nil {
+		t.Fatal(err)
+	}
 }
 
 // GoEnvPair returns the two values `go env` resolves for first and second, in that order.

@@ -10,12 +10,12 @@ execution, so assertions never credit an unverified subject.
 
 ## Acceptance
 
-- [ ] Every current AXI suite using `runBenchInDir` rejects a changed source
+- [x] Every current AXI suite using `runBenchInDir` rejects a changed source
   before an old executable can emit otherwise-acceptable output.
-- [ ] Paired runtime fixtures prove stale subjects cannot create either a false
+- [x] Paired runtime fixtures prove stale subjects cannot create either a false
   green or a false red; both report freshness instead of assertion output.
-- [ ] Missing, malformed, legacy, unreadable, partial, or mismatched artifacts
+- [x] Missing, malformed, legacy, unreadable, partial, or mismatched artifacts
   produce the same actionable rebuild diagnostic before subject execution.
-- [ ] Coarse or misleading mtimes do not change the contract verdict.
-- [ ] Root, nested-cwd, and repeated unchanged launches agree without tracked
+- [x] Coarse or misleading mtimes do not change the contract verdict.
+- [x] Root, nested-cwd, and repeated unchanged launches agree without tracked
   writes or self-invalidation.
