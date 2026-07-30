@@ -62,11 +62,10 @@ out-of-scope rulings, bounded spec-writer discretion, and required research
 objects. A seam appears as a decision-ticket answer only when the reviewer
 explicitly chose that seam.
 
-The future decision-map format removes the nine-item `## Handoff`. The map
-itself is the handoff: ticket answers own decisions, `## Sources` owns the
-read-set, `## Out of scope` owns exclusions, and `## Spec-writer discretion`
-owns intentionally delegated choices. This compiled map retains a transitional Handoff
-because the currently installed phase contract still requires one.
+The decision-map format has no `## Handoff`. The map itself is the handoff:
+ticket answers own decisions, `## Sources` owns the read-set, `## Out of
+scope` owns exclusions, and `## Spec-writer discretion` owns intentionally
+delegated choices.
 
 ## #4: Where does the spec writer's required read-set live?
 
@@ -75,8 +74,8 @@ Type: Grill
 
 ### Question
 
-Decide whether to add a research-object manifest to the Handoff or strengthen
-the existing `## Sources` section.
+Decide whether a research-object manifest needs a separate Handoff-style owner
+or belongs in the existing `## Sources` section.
 
 ### Answer
 
@@ -84,8 +83,8 @@ the existing `## Sources` section.
 decision tickets and every code file, document, asset, or external source the
 spec writer must read. Each entry names what it supports and its drift posture.
 `/bench-write-spec` must consume and re-verify the section before deriving
-seams or drafting the spec. No second research-object list appears in the
-Handoff or spec.
+seams or drafting the spec. No second research-object list appears in the map
+or spec.
 
 For a ready map, the Go validator requires structured source entries.
 Repository paths must resolve to regular files. External URLs are
@@ -210,10 +209,10 @@ dependency tree or multi-session fog, stop and route to
 ## Sources
 
 - Path: `.agents/commands/bench-shape-idea.md`
-  Supports: current map schema, Handoff requirement, lifecycle, and phase trigger.
+  Supports: situational shaping trigger, map-content ownership, and readiness lifecycle.
   Drift: repository source; re-read by the spec writer.
 - Path: `.agents/commands/bench-write-spec.md`
-  Supports: current mandatory-map entry, seam ownership, source inputs, and clarification posture.
+  Supports: three-source spec-authoring entry contract, source re-verification, seam ownership, and clarification posture.
   Drift: repository source; re-read by the spec writer.
 - Path: `.agents/skills/bench-craft-grill/SKILL.md`
   Supports: reviewer authority, one-question cadence, and shared-understanding gate.
@@ -221,9 +220,18 @@ dependency tree or multi-session fog, stop and route to
 - Path: `.agents/skills/bench-craft-tickets/SKILL.md`
   Supports: the distinct implementation-ticket meaning.
   Drift: repository source; re-read when changing terminology.
+- Path: `internal/maps/schema.go`
+  Supports: canonical decision-map schema, parsing, and direct active and compiled candidate discovery.
+  Drift: repository source; re-read before changing map shape or discovery.
+- Path: `internal/maps/validation.go`
+  Supports: per-map graph, readiness, and structured-source validation.
+  Drift: repository source; re-read before changing validation or readiness rules.
+- Path: `internal/maps/tree_validation.go`
+  Supports: whole-tree validation of discovered active and compiled maps.
+  Drift: repository source; re-read before changing the gate-facing tree check.
 - Path: `internal/maps/maps.go`
-  Supports: the existing single parser, unresolved-marker scan, and close-readiness projection.
-  Drift: repository source; re-read before choosing the implementation seam.
+  Supports: active-map query projection and distinct active-map count.
+  Drift: repository source; re-read before changing query or status projection.
 - Path: `internal/status/status.go`
   Supports: the existing `maps.UnresolvedCount` consumer and dashboard behavior.
   Drift: repository source; re-read before changing parser output.
