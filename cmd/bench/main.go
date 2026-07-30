@@ -1,6 +1,6 @@
 // Command bench is the compiled core of the Bench kit — the strangler target the
 // shell CLI routes ported subcommands into. Dispatch is a `commands` map of the ported
-// AXI query subcommands (learnings, maps, guards, diff, coverage, worktree list),
+// AXI query subcommands (learnings, maps, guards, diff, coverage, test, worktree list),
 // each resolving repo state and returning its stdout plus an exit code, plus a direct
 // `version` case that needs the build-time GOOS/GOARCH rather than repo state. Every
 // later slice adds names to that map; the shell router (bin/bench.sh) grows names,
@@ -44,6 +44,7 @@ import (
 	"github.com/gibbonmi/bench/internal/status"
 	"github.com/gibbonmi/bench/internal/stophook"
 	"github.com/gibbonmi/bench/internal/structure"
+	"github.com/gibbonmi/bench/internal/testreport"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 	"github.com/gibbonmi/bench/internal/worktree"
@@ -82,6 +83,15 @@ var commands = map[string]func([]string) (string, int){
 	"resolve-model":       resolveModel,
 	"worktree-pool":       worktree.PoolCommand,
 	"worktree-lease-file": worktree.LeaseFileCommand,
+	"test":                testCommand,
+}
+
+func testCommand(args []string) (string, int) {
+	root, err := git.Root()
+	if err != nil {
+		return toon.NotInRepo() + "\n", 1
+	}
+	return testreport.Command(root, args)
 }
 
 // commandsGrammar is the declared argument shape usage.Parse enforces for `bench

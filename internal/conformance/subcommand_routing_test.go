@@ -70,6 +70,7 @@ var subcommandRouting = map[string]routingEntry{
 	"roadmap":      routed("internal/roadmap"),
 	"status":       routed("internal/status"),
 	"structure":    routed("internal/structure"),
+	"test":         routed("internal/testreport"),
 
 	"check-agent-line":    exempt(whyPlumbing),
 	"gate-go":             exempt(whyPlumbing),
