@@ -36,32 +36,6 @@ repository-controlled bank evidence requirement makes this row active.
 
 Sources: `RR:C-05`; `RC:H-03`.
 
-**FT91 (HIGH, evidence supplied) — gate wall-clock proportional to the
-diff.** The gate's length remains the dominant human-paid cost of working on
-this repo. The prepared-artifact hoist reduced the artifact package from about
-141 s to about 109 s solo. The next slice bound each behavior-owned canary to
-its owning test and reused a fresh green verdict for an identical closed
-subject: solo canary fell from about 172 s to 25.2 s, unchanged-tree gate to
-0.57 s, and a forced changed-tree gate remains about 128 s. The canary stop
-condition fired; the changed-tree gate is still floored by the serial artifact
-package.
-
-`specs/ft91-artifact-suite/decisions/gate-critical-path.md` now owns the
-measured wall and the remaining
-sequence. One lever remains: split the artifact suite by subject so the Go
-scheduler can overlap its independent groups, taking the changed-tree gate
-toward ~60–75 s. Its spec must record both the share being removed and the process
-boundaries that prevent reuse, so future performance slices price the whole
-critical path rather than a local speedup. Remove `-count=1`, canary input-key
-skipping, fixture batching, and diff-scoped gating remain rejected as
-incomplete-key or isolation failures.
-
-Entry: `/bench-write-spec` on
-`specs/ft91-artifact-suite/decisions/gate-critical-path.md` ticket 1.
-Sources: `IDEAS.md`, drained across prior runs;
-`decisions/cost-follows-project-size.md`; the artifact-hoist and gate-fastpath
-retros, drained here.
-
 **FT129 (MEDIUM) — a panic in the inner test binary reads as a canary that
 stopped biting.** FT122's first gate went red as `canary
 'worktree-lifecycle-safety-bypassed' did not bite`, naming an untouched and
@@ -1418,6 +1392,5 @@ starts as a grill (`/bench-shape-idea`); decision detail recoverable via
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT91 artifact-suite scheduling: split the serial package by subject, the remaining measured critical-path lever toward a ~60–75 s changed-tree gate.
-2. `/bench-implement-spec` — FT113 + FT145, light-path fix batch: the cheapest reproduced defects, each ending a recurring cost (capture writes forcing full gate re-runs; the severity-1 git signal counting other worktrees' dirt).
-3. `/bench-write-spec` — FT123 + FT124: the measured session-tax pair (36% of a week's Bash calls; 698/797 `go test` calls hand-filtered).
+1. `/bench-implement-spec` — FT113 + FT145, light-path fix batch: the cheapest reproduced defects, each ending a recurring cost (capture writes forcing full gate re-runs; the severity-1 git signal counting other worktrees' dirt).
+2. `/bench-write-spec` — FT123 + FT124: the measured session-tax pair (36% of a week's Bash calls; 698/797 `go test` calls hand-filtered).

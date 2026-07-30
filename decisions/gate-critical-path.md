@@ -5,8 +5,8 @@ tree of `d91b709` once moves 1 and 2 shipped, and on the artifact-split landed
 tree of `6016be6`. Question: how fast can the dev
 gate get without sacrificing quality, including the oracle-semantics levers
 FT91 parked as reviewer decisions — verdict reuse for the exact tree, canary
-narrowing, and freshness relaxation. This record incorporates the retired
-FT91 timeline's historical measurements, the instrumented run that located
+narrowing, and freshness relaxation. This durable record incorporates the
+retired FT91 timeline's historical measurements, the instrumented run that located
 the wall, the post-build re-measurement, and the resulting decision analysis.
 
 ## Result
