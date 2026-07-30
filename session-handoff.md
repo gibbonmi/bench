@@ -2,27 +2,35 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `0c02192`, 1 dirty path, 0 unpushed commits
-Spec: none staged.
-Gate: green at `469c6d0` — stale, work tree `3c590bb`
+Branch: `main` — HEAD `1d58ffd`, 2 dirty paths, 8 unpushed commits
+Spec: `specs/ft123-ft124-session-tax-readers/spec.md` (Status: staged)
+Gate: green at `0bd5adc` — stale, work tree `56e2972`
 
 ## State
 
-- **The roadmap has 50 open rows.** The restructure folded eight duplicate rows
-  into their owner surfaces; FT145 left after its ambient-state fix landed.
-  FT113 now carries only the unresolved post-`bench commit --spec` cache decision.
-- **Dependencies are explicit and single-sourced.** Literal means blocked;
-  recommended means cheaper or less churn when specified after the prerequisite.
-  FT107 on FT141 is the only literal edge.
-- **Capture is empty.** There are no parked ideas, open learnings, pending
-  retros, staged specs, or parse failures.
-- **The next priced work is FT123 + FT124.** It follows the completed
-  ambient-state batch and adds worktree label resolution plus structured test
-  triage.
+- **Implementation and semantic review are complete.** Five ticket commits landed
+  from `e4496cc` through `1893e16`. A fresh-context three-axis review found two
+  spec defects and two missing coverage proofs, with no standards or contestable
+  design findings.
+- **All review findings are repaired.** `34ee835` enforces the exec separator
+  boundary, refuses incomplete package streams, proves TOON render refusal, and
+  preserves colon-ending skip prose. Its full repository gate passed every phase,
+  and the review pickup artifact is cleared.
+- **Cross-harness falsification is closed.** The approved `gpt-5.6-sol` / high
+  Codex CLI pass ran read-only with approval disabled over `1c42a80..34ee835`.
+  Its sole counterexample, exact flag-like worktree labels, is repaired in
+  `1d58ffd`; that repair's full repository gate passed every phase.
+- **Final-check is ready.** All five tickets are accepted, no review pickup
+  artifact remains, and `bench coverage --check` validates all 17 rows. The
+  spec-aware landing commit is next and will flip `Status: staged` to
+  `Status: implemented`.
+- **Uncommitted state is intentional.** The staged spec, completed ticket files,
+  and this handoff await the final spec commit. `IDEAS.md` is an unrelated
+  pre-existing edit and must remain untouched and outside every feature commit.
 
 ## Next command
 
-`$bench-write-spec`
+`bench commit -m "spec-implemented: ft123-ft124-session-tax-readers" --spec ft123-ft124-session-tax-readers -- session-handoff.md specs/ft123-ft124-session-tax-readers`
 
 ## Shape
 
