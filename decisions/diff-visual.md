@@ -1,15 +1,19 @@
 # Diff comprehension visual
 
+Status: shaping
+
 ## Destination
 
 An opt-in Bench artifact that turns a finished change into an interactive visual:
 how the changes flow together, where to start, what to focus on, and confidence
 for production readiness. The agent writes a small structured report; kit
 scaffolding fills in the rest and renders it. Principle: you can outsource your
-thinking, but not your understanding. Show, don't tell.
+thinking, but not your understanding. Show, don't tell. Context nodes are agent
+claims that the CLI does not verify.
 
 ## #1: Is this a Bench kit feature or a standalone tool?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -22,6 +26,7 @@ linked repos.
 
 ## #2: Where do the connection edges come from?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -43,6 +48,7 @@ them as such.
 
 ## #3: What form does the rendered visual take?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -54,6 +60,7 @@ click-through), opened in the browser. No server, no external fetches.
 
 ## #4: What granularity is a node?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -66,6 +73,7 @@ on click/hover; an edge may name the symbol it attaches to.
 
 ## #5: When is the report authored, and by whom?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -82,6 +90,7 @@ confidence stays visible as such).
 
 ## #6: What does the scoring component consist of?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -102,6 +111,7 @@ stakes; focus: why), applying the standing rule to heat itself.
 
 ## #7: How is the edge vocabulary defined?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -114,6 +124,7 @@ styling, plus an optional one-line note per edge. The exact list is #11.
 
 ## #8: Which artifacts get committed?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -128,6 +139,7 @@ open — see Not yet specified.
 
 ## #9: Renderer layout — vendor a library or hand-roll?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -141,6 +153,7 @@ layouts are computable without one.
 
 ## #10: What does the visual actually look like?
 
+Blocked by: none
 Type: Prototype
 
 ### Question
@@ -203,6 +216,7 @@ spaghetti.
 
 ## #12: Which layout engine renders the map and chains?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -226,6 +240,10 @@ from #10's tiering. Supersedes #9.
   report from a spec-less ad-hoc run.
 - Heuristics for suggesting generation on big diffs.
 - Sharing the HTML beyond a local open (PR-host embedding).
+- Embedded-diff size policy for very large changes: FT131's 22KB was fine, but
+  a 5MB diff is not thought through.
+
+## Spec-writer discretion
 
 ## Out of scope
 
@@ -234,65 +252,31 @@ from #10's tiering. Supersedes #9.
 - A live-served app or any runtime service (chartr-style cockpit).
 - Full Greptile/CodeRabbit dimension panels — panel scores sit beside the code
   rather than driving the visual.
-
-## Handoff
-
-1. **Module boundaries.** Skeleton emitter (Go): parses a commit range into the
-   node skeleton — ids, paths, status, diffstat, hunk-header symbols — and
-   extracts per-file diffs. Report validator (Go): admits the agent's report
-   against the skeleton. Renderer (Go): report + git → one self-contained HTML.
-   Workflow step: opt-in authoring pass in `/bench-final-check`. CLI routing:
-   plumbing subcommand(s) in the Go core, routed by `bin/bench.sh`.
-2. **Contracts.** Emitter: range in, skeleton out, nonzero on unparseable range.
-   Validator: report in, exit zero only when every edge names a known id or
-   declared context node, every hotspot/focus carries its justification fields,
-   confidence carries its one-liner, and the commit stamp matches; each failure
-   names the offending field. Renderer: deterministic — same report + repo
-   yields byte-identical HTML — and the output performs zero external loads.
-   Exact field names and wire format are deliberately unspecified (fog).
-3. **Deep vs thin.** Emitter, validator, and renderer are deep modules owning
-   diff parsing, schema policy, and layout respectively. `bin/bench.sh` routing
-   and the final-check hook are thin pass-throughs with no seams of their own.
-4. **Black-box assertables.** Skeleton output for a fixture repo range; validator
-   exit codes and diagnostics per rejection class; rendered HTML contains the
-   #10 sections and omits RETRO when no retro file exists; no-external-load
-   check on emitted HTML; two identical runs are byte-identical.
-5. **Gate attachment.** Go tests at all three module seams plus a contract test
-   that renders a fixture repo end to end. The visual's *quality* is not
-   gate-observable — approving look-and-feel stays a manual verify against the
-   prototype assets.
-6. **Hostile-input owners.** Paths with spaces/globs/symlinks: emitter and
-   renderer escaping. Hostile file contents reaching HTML (script injection via
-   diff text or agent prose): renderer escaping, validator length caps. Malformed
-   or fabricated agent report: validator. Stale report vs tree: commit-stamp
-   refusal (#5). Oversized diffs: renderer embed policy — flagged below.
-7. **Uncertainty flags.** Embedded-diff size policy for very large changes
-   (FT131's 22KB was fine; a 5MB diff is not thought through). Before-chain
-   provenance (fog). Opt-in mechanism and subcommand naming (fog). These go to
-   the spec-writer, not silently defaulted.
-8. **Rejected alternatives.** Static-analysis edges; served app; dimension
-   panels; vendored layout library (#9 superseded); all five edge kinds drawn
-   (#11); floating detail panel (inline row expansion won); intro animation on
-   by default (off behind one flag, interaction fast-forwards).
-9. **Domain watch-outs.** The JSON report is provenance and is tracked; the HTML
-   is derived and stays untracked, regenerated on demand. Confidence is
-   author-stamped and usually self-graded — the report renders that stamp
-   visibly. Context nodes are agent claims the CLI does not verify.
-
-Dependency order: schema core (emitter + validator) → renderer → final-check
-integration. Slicing stays the reviewer's call.
+- A vendored layout library — #12 superseded that route because the approved
+  layouts are computable without one.
+- Drawing all five edge kinds as graph lines — `tests` and `ripple` remain group
+  rows and badges to avoid spaghetti.
+- A floating detail panel — inline row expansion won.
+- An intro animation enabled by default — it remains opt-in behind one flag and
+  interactions fast-forward it.
 
 ## Sources
 
-- https://github.com/rengwu/chartr (README, fetched 2026-07-30) — fed #3's
-  interactivity expectations (local interactive "star-map" graph). Drift-prone:
-  re-verify before citing onward.
-- greptile.com/greptile-vs-coderabbit — reviewer-supplied reference for scoring
-  panels; not fetched. #6 was grilled live against the reviewer's description.
-- greptile.com CLI "full-fidelity" marketing image (fetched 2026-07-30) —
-  reviewer-supplied; fed #10's terminal-report form (confidence box, diagram
-  section, issue rows).
-- FT131 diff, spec, and tickets at 5417f0b..a3acb3c — fed #10's sample data,
-  the coverage-badge refinement, and the retro reconstruction. Drift-prone:
-  the spec folder is retired; read it from git history.
-- All other decisions grilled in-session.
+- Path: `decisions/diff-visual-prototype.html`
+  Supports: the approved FT131 prototype behind #10's layout, reading order, and interaction decisions.
+  Drift: local throwaway prototype; compare it with the current decision map before relying on it.
+- Path: `decisions/diff-visual-ft131-report.html`
+  Supports: the shareable offline FT131 sample report, including the 31-file range and visual encodings cited by #10.
+  Drift: local derived sample; re-read if the underlying report format changes.
+- URL: `https://github.com/rengwu/chartr`
+  Supports: #3's local interactive “star-map” graph expectations, from the README fetched 2026-07-30.
+  Drift: mutable upstream repository; re-verify before citing onward.
+- URL: `https://greptile.com/greptile-vs-coderabbit`
+  Supports: the reviewer-supplied comparison of scoring panels used to grill #6; it was not fetched during shaping.
+  Drift: reviewer-supplied external reference; fetch and verify before citing onward.
+- URL: `https://www.greptile.com/`
+  Supports: the reviewer-supplied CLI “full-fidelity” marketing image that informed #10's confidence box, diagram section, and issue rows, fetched 2026-07-30.
+  Drift: mutable marketing site; re-find the cited image before citing onward.
+- URL: `https://github.com/gibbonmi/bench/compare/5417f0b...a3acb3c`
+  Supports: the historical FT131 diff, spec, and tickets that supplied #10's sample data, coverage-badge refinement, and retro reconstruction.
+  Drift: historical repository evidence; re-open the named range because its spec folder is retired from the current tree.
