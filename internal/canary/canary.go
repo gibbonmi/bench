@@ -16,10 +16,12 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"unicode"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/subprocess"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
@@ -960,10 +962,73 @@ func runFixture(fixture selected, baselineOutput string, run sweepRun, runner Ru
 	}
 	_ = gitInit(work)
 	result := runner(subjectCall(fixture, work, fx, run, narrowToFixture))
+	// An aborted test binary cannot prove a bite, even if it printed EXPECT first.
+	if result.ExitCode != 0 {
+		if owner, marker, aborted := goTestAbort(result.Output); aborted {
+			if owner == "" {
+				owner = unknownTestOwner(fixture)
+			}
+			return fmt.Sprintf("canary '%s' inner test abort in %s: %s", name, sanitize.Preview(owner), sanitize.Preview(marker))
+		}
+	}
 	if result.ExitCode == 0 || !strings.Contains(result.Output, expect) {
 		return fmt.Sprintf("canary '%s' did not bite (want red + %q; got exit %d)", name, expect, result.ExitCode)
 	}
 	return ""
+}
+
+// unknownTestOwner retains the fixture scope without assigning an unobserved test name.
+func unknownTestOwner(fixture selected) string {
+	if fixture.pkg != "" {
+		return fmt.Sprintf("unknown test in contract package %q", fixture.pkg)
+	}
+	if fixture.scope != "" {
+		return fmt.Sprintf("unknown test in conformance check %q", fixture.scope)
+	}
+	return "unknown test in the inner gate"
+}
+
+func goTestAbort(output string) (string, string, bool) {
+	owners := map[string]string{}
+	for _, rawLine := range strings.Split(output, "\n") {
+		phase, line := outerPhaseLine(rawLine)
+		if header := goTestFailureHeader(line); header != "" {
+			owners[phase] = header
+			continue
+		}
+		if strings.HasPrefix(line, "panic:") || strings.HasPrefix(line, "fatal error:") {
+			return owners[phase], line, true
+		}
+	}
+	return "", "", false
+}
+
+func outerPhaseLine(line string) (string, string) {
+	if !strings.HasPrefix(line, "[") {
+		return "", line
+	}
+	end := strings.Index(line, "] ")
+	if end < 1 {
+		return "", line
+	}
+	return line[:end+2], line[end+2:]
+}
+
+func goTestFailureHeader(line string) string {
+	line = strings.TrimSpace(line)
+	if !strings.HasPrefix(line, "--- FAIL: Test") {
+		return ""
+	}
+	name, _, found := strings.Cut(strings.TrimPrefix(line, "--- FAIL: "), " ")
+	if !found {
+		return ""
+	}
+	for _, r := range name {
+		if unicode.IsSpace(r) || !unicode.IsPrint(r) {
+			return ""
+		}
+	}
+	return name
 }
 
 // fixtures discovers every fixture under dir, the tests/canary tree: a legacy flat
