@@ -2,37 +2,36 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `ebc9523`, 8 dirty paths, 28 unpushed commits
+Branch: `main` — HEAD `4ffd607`, tree clean, 33 unpushed commits
 Spec: `specs/ft126-recurrence-tallying/spec.md` (Status: staged), `specs/ft128-agent-line-binding/spec.md` (Status: staged)
-Gate: green at `89585fa` — stale, work tree `f4a9abf`
+Gate: green at `4ffd607` (full run during the map commit; dist/bench rebuilt and resealed)
 
 ## State
 
-- **FT131 is implemented, reviewed, gate-green, and retired on `main`.** Build
-  tickets landed as `2498e0f`, `3888495`, and `5f82a97`; terminal review repair
-  landed as `231f67a`; final-check marked the spec implemented at `a3acb3c`;
-  default-branch retirement removed the staged spec and tickets at `ebc9523`.
-- **All 11 acceptance rows were implemented before retirement.** The Sol/high
-  semantic pass used three fresh axes; its eleven concrete axis findings,
-  representing ten unique defects, were repaired. The optional duplicate-test
-  judgment remains unapplied for reviewer veto.
-- **Both closing oracle runs were fully green.** Final-check and retirement each
-  passed build, gofmt, vet, unit, race, both conformance layers, contracts,
-  shellcheck, and the full mutation canary. Ship-tier `bench prep-release` did
-  not run.
-- **FT131's retro is pending capture.** `.bench/retros/ft131-binary-freshness.md`
-  records outcome, timings, delegate performance, coordinator catches, and
-  concrete CLI/skill/process improvements; `/bench-what-next` owns its drain.
-- **Unrelated reviewer work remains untouched.** Dirty `IDEAS.md` and
-  `ROADMAP.md`, deleted `decisions/recurrence-tallying.md`, untracked
-  `specs/decision-map-integrity-and-phase-ownership/`,
-  `decisions/diff-visual.md`, `decisions/diff-visual-prototype.html`, and
-  `specs/ft126-recurrence-tallying/` are outside FT131. This handoff and the
-  pending retro are the FT131-owned dirty paths.
+- **The diff-visual decision map is closed and committed at `4ffd607`.** All 12
+  tickets resolved, `## Handoff` written and placeholder-free, `bench maps`
+  shows no row. Assets committed beside it: `decisions/diff-visual-prototype.html`
+  (approved working visual, iterated live against the real FT131 change) and
+  `decisions/diff-visual-ft131-report.html` (shareable, fully offline sample).
+  `/bench-write-spec` compiles the map and moves both assets into
+  `specs/<slug>/decisions/`. Recommended slicing in the map's Handoff:
+  schema core (emitter + validator) → renderer → final-check integration.
+- **Decisions that stay closed:** report form and sections (#10), edge kinds
+  three-drawn-two-relational (#11), no layout dependency (#12, supersedes #9),
+  context nodes admitted as their own class (#2 amendment), three-valued
+  coverage badge and justified heat (#6 amendment).
+- **A parallel session migrated the decision map corpus at `2b6ee58`** and
+  committed the previously dirty reviewer files; the tree is clean.
+- **FT131 remains implemented and retired on `main`.** `.bench/retros/` holds
+  no ft131 file — a prior handoff claimed one pending; the tree wins.
+- **Drain still pending:** parked ideas and the staged FT126/FT128 specs are
+  `/bench-what-next` territory, untouched by this phase.
 
 ## Next command
 
-`$bench-what-next`
+`/bench-write-spec Compile the closed decisions/diff-visual.md into the build spec; the Handoff section carries seams, contracts, and uncertainty flags.`
+
+Run it on a fresh mid-tier session.
 
 ## Shape
 
