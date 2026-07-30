@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/subprocess"
@@ -144,18 +145,15 @@ func TestSweepAttributesTruncatedPanic(t *testing.T) {
 func TestSweepAttributesRuntimeFatal(t *testing.T) {
 	root := t.TempDir()
 	contractFixture(t, root, "runtime", "runtime-fatal")
-	output := strings.Join([]string{
-		"--- FAIL: TestConcurrentWrites (0.00s)",
-		"fatal error: concurrent map writes",
-	}, "\n")
+	output := authenticGoAbortOutput(t, "runtime-fatal")
 
 	err := Sweep(root, sweepAbortResultRunner(RunResult{ExitCode: 2, Output: output}))
 	if err == nil {
 		t.Fatal("Sweep err = nil, want the runtime fatal reported")
 	}
-	got := err.Error()
-	if !strings.Contains(got, "inner test abort") || !strings.Contains(got, "TestConcurrentWrites") || strings.Contains(got, "did not bite") {
-		t.Fatalf("Sweep err = %q, want the runtime fatal attributed without a panic marker", got)
+	want := `canary 'runtime-fatal' inner test abort in unknown test in contract package "runtime": fatal error: sync: unlock of unlocked mutex`
+	if got := err.Error(); got != want {
+		t.Fatalf("Sweep err = %q, want the bounded authentic runtime-fatal attribution %q", got, want)
 	}
 }
 
@@ -201,38 +199,71 @@ func TestSweepAbortPrecedesBite(t *testing.T) {
 }
 
 func TestSweepAttributesProcessAbort(t *testing.T) {
+	scopeFamily := mappedFamily(t)
+	scope := boundCheck(t, scopeFamily)
 	cases := []struct {
-		name   string
-		result RunResult
+		name    string
+		result  RunResult
+		setup   func(*testing.T, string)
+		wantErr string
 	}{
 		{
-			name: "spawn failure",
+			name: "contract package spawn failure",
 			result: RunResult{
 				ExitCode:    1,
 				Termination: subprocess.TerminationSpawnFailed,
 			},
+			setup: func(t *testing.T, root string) {
+				contractFixture(t, root, "runtime", "contract package spawn failure")
+			},
+			wantErr: `canary 'contract package spawn failure' process abort in contract package "runtime"`,
 		},
 		{
-			name: "signal termination",
+			name: "contract package signal termination",
 			result: RunResult{
 				ExitCode:    -1,
 				Termination: subprocess.TerminationSignaled,
 			},
+			setup: func(t *testing.T, root string) {
+				contractFixture(t, root, "runtime", "contract package signal termination")
+			},
+			wantErr: `canary 'contract package signal termination' process abort in contract package "runtime"`,
+		},
+		{
+			name: "conformance scope",
+			result: RunResult{
+				ExitCode:    1,
+				Termination: subprocess.TerminationSpawnFailed,
+			},
+			setup: func(t *testing.T, root string) {
+				fixture(t, canaryFixture(root, scopeFamily, "conformance scope"), "")
+			},
+			wantErr: `canary 'conformance scope' process abort in conformance check "` + scope + `"`,
+		},
+		{
+			name: "unscoped inner gate",
+			result: RunResult{
+				ExitCode:    1,
+				Termination: subprocess.TerminationSpawnFailed,
+			},
+			setup: func(t *testing.T, root string) {
+				fixture(t, filepath.Join(root, "tests", "canary", "unscoped inner gate"), "")
+			},
+			wantErr: `canary 'unscoped inner gate' process abort in the inner gate`,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			root := t.TempDir()
-			contractFixture(t, root, "runtime", tc.name)
+			tc.setup(t, root)
 
 			err := Sweep(root, sweepAbortResultRunner(tc.result))
 			if err == nil {
 				t.Fatal("Sweep err = nil, want the process abort reported")
 			}
-			got := err.Error()
-			if !strings.Contains(got, "process abort") || !strings.Contains(got, `contract package "runtime"`) || strings.Contains(got, "did not bite") {
-				t.Fatalf("Sweep err = %q, want a process abort in the contract package", got)
+			if got := err.Error(); got != tc.wantErr {
+				t.Fatalf("Sweep err = %q, want %q", got, tc.wantErr)
 			}
 		})
 	}
@@ -378,13 +409,29 @@ func TestSubjectHash(t *testing.T) {
 		t.Run("empty-subject", func(t *testing.T) {
 			panic("punctuated subtest panic")
 		})
+	case "runtime-fatal":
+		var mutex sync.Mutex
+		mutex.Unlock()
 	}
 }
 
 func authenticGoAbortOutput(t *testing.T, mode string) string {
 	t.Helper()
 	cmd := exec.Command(os.Args[0], "-test.run", "^TestSubjectHash$")
-	cmd.Env = append(os.Environ(), canaryAbortHelperEnv+"="+mode)
+	env := os.Environ()
+	if mode == "runtime-fatal" {
+		// The fatal probe needs only the runtime marker; suppressing stack printing keeps
+		// the captured compatibility sample bounded and independent of paths and goroutine IDs.
+		bounded := make([]string, 0, len(env)+1)
+		for _, value := range env {
+			if strings.HasPrefix(value, "GOTRACEBACK=") {
+				continue
+			}
+			bounded = append(bounded, value)
+		}
+		env = append(bounded, "GOTRACEBACK=none")
+	}
+	cmd.Env = append(env, canaryAbortHelperEnv+"="+mode)
 	output, err := cmd.CombinedOutput()
 	if err == nil {
 		t.Fatalf("panic helper exited 0; output:\n%s", output)

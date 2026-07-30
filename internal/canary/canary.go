@@ -963,16 +963,17 @@ func runFixture(fixture selected, baselineOutput string, run sweepRun, runner Ru
 	}
 	_ = gitInit(work)
 	result := runner(subjectCall(fixture, work, fx, run, narrowToFixture))
+	owner := fixtureOwnerFor(fixture)
 	// An aborted test binary cannot prove a bite, even if it printed EXPECT first.
 	if result.Termination.Aborted() {
-		return fmt.Sprintf("canary '%s' process abort in %s", name, sanitize.Preview(processAbortOwner(fixture)))
+		return fmt.Sprintf("canary '%s' process abort in %s", name, sanitize.Preview(owner.label))
 	}
 	if result.ExitCode != 0 {
-		if owner, marker, aborted := goTestAbort(result.Output); aborted {
-			if owner == "" {
-				owner = unknownTestOwner(fixture)
+		if testOwner, marker, aborted := goTestAbort(result.Output); aborted {
+			if testOwner == "" {
+				testOwner = owner.unknownTest()
 			}
-			return fmt.Sprintf("canary '%s' inner test abort in %s: %s", name, sanitize.Preview(owner), sanitize.Preview(marker))
+			return fmt.Sprintf("canary '%s' inner test abort in %s: %s", name, sanitize.Preview(testOwner), sanitize.Preview(marker))
 		}
 	}
 	if result.ExitCode == 0 || !strings.Contains(result.Output, expect) {
@@ -981,25 +982,25 @@ func runFixture(fixture selected, baselineOutput string, run sweepRun, runner Ru
 	return ""
 }
 
-// unknownTestOwner retains the fixture scope without assigning an unobserved test name.
-func unknownTestOwner(fixture selected) string {
-	if fixture.pkg != "" {
-		return fmt.Sprintf("unknown test in contract package %q", fixture.pkg)
-	}
-	if fixture.scope != "" {
-		return fmt.Sprintf("unknown test in conformance check %q", fixture.scope)
-	}
-	return "unknown test in the inner gate"
+type fixtureOwner struct {
+	label string
 }
 
-func processAbortOwner(fixture selected) string {
-	if fixture.pkg != "" {
-		return fmt.Sprintf("contract package %q", fixture.pkg)
+// fixtureOwnerFor is the single package/scope/gate precedence used by both abort classes;
+// each class adds only its diagnostic wording.
+func fixtureOwnerFor(fixture selected) fixtureOwner {
+	switch {
+	case fixture.pkg != "":
+		return fixtureOwner{label: fmt.Sprintf("contract package %q", fixture.pkg)}
+	case fixture.scope != "":
+		return fixtureOwner{label: fmt.Sprintf("conformance check %q", fixture.scope)}
+	default:
+		return fixtureOwner{label: "the inner gate"}
 	}
-	if fixture.scope != "" {
-		return fmt.Sprintf("conformance check %q", fixture.scope)
-	}
-	return "the inner gate"
+}
+
+func (owner fixtureOwner) unknownTest() string {
+	return "unknown test in " + owner.label
 }
 
 func goTestAbort(output string) (string, string, bool) {
