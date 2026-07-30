@@ -2,29 +2,27 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `72b87a1`, clean tree, 4 unpushed commits
-Spec: `specs/ft91-artifact-suite/spec.md` (Status: staged)
-Gate: green at `9e49084` — stale, work tree `0d84075`
+Branch: `main` — HEAD `0c02192`, 1 dirty path, 0 unpushed commits
+Spec: none staged.
+Gate: green at `469c6d0` — stale, work tree `3c590bb`
 
 ## State
 
-- **The `--full` run has reached final-check.** Build commits `6016be6` and
-  `94b182e` landed the split and measurement. Top-tier semantic review
-  (`ft91_semantic_review`) and the approved top-tier Codex CLI falsification
-  found concrete topology, duplication, comment, and arithmetic defects.
-- **The terminal repair pass is green at `72b87a1`.** The reviewer-requested
-  Sol repair preserved the exact 33-test behavior while single-sourcing shared
-  facts, structurally binding the four TestMain runners, rejecting extra
-  packages and inline cache policy, and correcting the measurement arithmetic.
-  Its first gate red exposed an over-broad shared-cache strip; the exact
-  GOPROXY-off seam was repaired before the green landing.
-- **Measured result remains:** focused suite 50.97 s with overlapping subject
-  processes; fresh changed-tree gate 89.91 s versus 128 s. The dormant outer
-  width cap is a separate reviewer decision; no scheduler policy changed.
+- **The roadmap has 50 open rows.** The restructure folded eight duplicate rows
+  into their owner surfaces; FT145 left after its ambient-state fix landed.
+  FT113 now carries only the unresolved post-`bench commit --spec` cache decision.
+- **Dependencies are explicit and single-sourced.** Literal means blocked;
+  recommended means cheaper or less churn when specified after the prerequisite.
+  FT107 on FT141 is the only literal edge.
+- **Capture is empty.** There are no parked ideas, open learnings, pending
+  retros, staged specs, or parse failures.
+- **The next priced work is FT123 + FT124.** It follows the completed
+  ambient-state batch and adds worktree label resolution plus structured test
+  triage.
 
 ## Next command
 
-`$bench-implement-spec --full ft91-artifact-suite`
+`$bench-write-spec`
 
 ## Shape
 
