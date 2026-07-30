@@ -1,17 +1,14 @@
 # Project the active-map model
 
-Blocked by: Validate the decision graph and readiness
+Blocked by: Migrate the tracked decision-map corpus
 
 ## What to build
 
-Every tracked active and compiled map migrates without decision loss, then
-`bench maps`, its count mode, and ambient status switch atomically to the new
-model and the legacy Handoff parser leaves `internal/maps`.
+`bench maps`, its count mode, and ambient status switch atomically to the
+migrated model, and the legacy Handoff parser leaves `internal/maps`.
 
 ## Acceptance
 
-- [ ] Every tracked active map is honestly shaping or ready, every compiled map
-  is ready, and no migrated map loses an answer, exclusion, or source fact.
 - [ ] Default output is `maps[N]{map,title,type,state,blockers}` and shows every
   unresolved decision ticket as frontier, blocked, or deferred with unresolved
   blocker titles.

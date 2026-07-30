@@ -125,6 +125,10 @@ type DecisionMap struct {
 	Status      string
 	Destination string
 	Tickets     []DecisionTicket
+	Fog         string
+	Discretion  string
+	OutOfScope  string
+	Sources     string
 }
 
 func (s decisionMapSchema) hasStatus(status string) bool {
@@ -200,7 +204,7 @@ func ParseDecisionMap(content []byte) (DecisionMap, []Diagnostic) {
 		if current.Question == "" {
 			diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("ticket #%s: missing Question", current.ID)})
 		}
-		if current.Answer == "" {
+		if !ticketFields["Answer"] {
 			diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("ticket #%s: missing Answer", current.ID)})
 		}
 		m.Tickets = append(m.Tickets, *current)
@@ -299,14 +303,26 @@ func ParseDecisionMap(content []byte) (DecisionMap, []Diagnostic) {
 				ticketFields["Answer"] = true
 				section = "Answer"
 			case strings.TrimSpace(line) != "" && section == "Question":
-				current.Question = strings.TrimSpace(line)
+				current.Question = appendSectionLine(current.Question, strings.TrimSpace(line))
 			case strings.TrimSpace(line) != "" && section == "Answer":
-				current.Answer = strings.TrimSpace(line)
+				current.Answer = appendSectionLine(current.Answer, strings.TrimSpace(line))
 			}
 			continue
 		}
-		if section == "Destination" && strings.TrimSpace(line) != "" {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		switch section {
+		case "Destination":
 			m.Destination = strings.TrimSpace(line)
+		case "Not yet specified":
+			m.Fog = appendSectionLine(m.Fog, line)
+		case "Spec-writer discretion":
+			m.Discretion = appendSectionLine(m.Discretion, line)
+		case "Out of scope":
+			m.OutOfScope = appendSectionLine(m.OutOfScope, line)
+		case "Sources":
+			m.Sources = appendSectionLine(m.Sources, line)
 		}
 	}
 	finishTicket()
@@ -330,6 +346,13 @@ func ParseDecisionMap(content []byte) (DecisionMap, []Diagnostic) {
 		}
 	}
 	return m, diagnostics
+}
+
+func appendSectionLine(section, line string) string {
+	if section == "" {
+		return line
+	}
+	return section + "\n" + line
 }
 
 // DecisionMapTemplate renders the canonical decision-map Markdown skeleton.
