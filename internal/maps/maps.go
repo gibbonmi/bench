@@ -194,7 +194,7 @@ type scanResult struct {
 // decision map, so a genuinely broken map still earns its row and its exit code. Without
 // the exemption a routine index file turns `bench maps` red for no defect.
 func isDirectoryDoc(name string) bool {
-	return strings.EqualFold(strings.TrimSuffix(name, ".md"), "README")
+	return strings.EqualFold(strings.TrimSuffix(name, filepath.Ext(name)), "README")
 }
 
 // scan classifies root/decisions and every *.md entry inside it, in sorted order.
