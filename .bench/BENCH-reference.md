@@ -100,7 +100,7 @@ hook and adapter plumbing is described in the sections below.
 
 Driven by hooks and adapters, never typed by sessions — the one enumeration
 (the always-loaded inventory in `.bench/BENCH.md` points here): `bench tree-hash`,
-`bench gate-run`, `bench gate-phases`, `bench gate-go`, `bench release-preflight`, `bench guard-git`, `bench resolve-model`,
+`bench gate-run`, `bench freshness-check`, `bench gate-phases`, `bench gate-go`, `bench release-preflight`, `bench guard-git`, `bench resolve-model`,
 `bench check-agent-line`, `bench stop-verdict`, `bench session-inspect`, `bench worktree-pool`,
 `bench worktree-lease-file`, `bench worktree-hook`, `bench resume-clean`.
 

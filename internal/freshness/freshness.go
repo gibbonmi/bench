@@ -16,6 +16,7 @@ import (
 )
 
 const sealSchema = 1
+const auxiliaryInputsManifest = "scripts/go-build.inputs"
 
 type seal struct {
 	Schema     int    `json:"schema"`
@@ -127,14 +128,18 @@ func buildInputs(root string) ([]string, error) {
 	}
 	for _, name := range []string{
 		"go.mod",
-		"scripts/go-build.sh",
-		"package.json",
-		"internal/releaseevidence/requirements.json",
 	} {
 		path := filepath.Join(root, filepath.FromSlash(name))
 		if _, err := os.Lstat(path); err != nil {
 			return nil, fmt.Errorf("required build input %q: %w", name, err)
 		}
+		paths[path] = struct{}{}
+	}
+	auxiliary, err := auxiliaryBuildInputs(root)
+	if err != nil {
+		return nil, err
+	}
+	for _, path := range auxiliary {
 		paths[path] = struct{}{}
 	}
 	if path := filepath.Join(root, "go.sum"); exists(path) {
@@ -148,6 +153,42 @@ func buildInputs(root string) ([]string, error) {
 		return filepath.ToSlash(ordered[i]) < filepath.ToSlash(ordered[j])
 	})
 	return ordered, nil
+}
+
+func auxiliaryBuildInputs(root string) ([]string, error) {
+	manifest := filepath.Join(root, filepath.FromSlash(auxiliaryInputsManifest))
+	data, err := regularContents(manifest)
+	if err != nil {
+		return nil, fmt.Errorf("read auxiliary build-input manifest %q: %w", auxiliaryInputsManifest, err)
+	}
+	paths := []string{manifest}
+	keys := map[string]struct{}{}
+	for number, raw := range strings.Split(string(data), "\n") {
+		line := strings.TrimSpace(raw)
+		if line == "" {
+			continue
+		}
+		key, name, ok := strings.Cut(line, "=")
+		if !ok || key == "" || name == "" || strings.TrimSpace(key) != key || strings.TrimSpace(name) != name {
+			return nil, fmt.Errorf("malformed auxiliary build input at %s:%d", auxiliaryInputsManifest, number+1)
+		}
+		if _, exists := keys[key]; exists {
+			return nil, fmt.Errorf("duplicate auxiliary build input key %q", key)
+		}
+		keys[key] = struct{}{}
+		path := filepath.Join(root, filepath.FromSlash(name))
+		if !isWithinRoot(root, path) || filepath.IsAbs(name) {
+			return nil, fmt.Errorf("auxiliary build input %q leaves the source root", name)
+		}
+		if _, err := os.Lstat(path); err != nil {
+			return nil, fmt.Errorf("required build input %q: %w", name, err)
+		}
+		paths = append(paths, path)
+	}
+	if len(paths) == 1 {
+		return nil, fmt.Errorf("auxiliary build-input manifest %q is empty", auxiliaryInputsManifest)
+	}
+	return paths, nil
 }
 
 func packageFiles(pkg listedPackage) []string {
@@ -176,6 +217,9 @@ func regularContents(path string) ([]byte, error) {
 }
 
 func secureContents(path string, executable bool) ([]byte, error) {
+	if err := rejectSymlinkComponents(path); err != nil {
+		return nil, err
+	}
 	info, err := os.Lstat(path)
 	if err != nil {
 		return nil, err
@@ -188,6 +232,9 @@ func secureContents(path string, executable bool) ([]byte, error) {
 	}
 	if executable && info.Mode()&0o111 == 0 {
 		return nil, fmt.Errorf("is not executable")
+	}
+	if executable && info.Size() == 0 {
+		return nil, fmt.Errorf("is empty")
 	}
 	// A path replacement after Lstat stays untrusted instead of redirecting this read.
 	fd, err := syscall.Open(path, syscall.O_RDONLY|syscall.O_CLOEXEC|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)
@@ -203,7 +250,38 @@ func secureContents(path string, executable bool) ([]byte, error) {
 	if !os.SameFile(info, opened) {
 		return nil, fmt.Errorf("changed while opening")
 	}
-	return io.ReadAll(file)
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+	if executable && len(data) == 0 {
+		return nil, fmt.Errorf("is empty")
+	}
+	return data, nil
+}
+
+func rejectSymlinkComponents(path string) error {
+	absolute, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+	volume := filepath.VolumeName(absolute)
+	current := volume + string(filepath.Separator)
+	relative := strings.TrimPrefix(absolute, current)
+	for _, component := range strings.Split(relative, string(filepath.Separator)) {
+		if component == "" {
+			continue
+		}
+		current = filepath.Join(current, component)
+		info, err := os.Lstat(current)
+		if err != nil {
+			return err
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("path component %q is a symbolic link", current)
+		}
+	}
+	return nil
 }
 
 // Verify reports whether executable has a matching content seal for root.
@@ -229,6 +307,20 @@ func Verify(root, executable string) error {
 	}
 	if stored.Executable != digestBytes(binary) {
 		return refusal(root, executable, fmt.Errorf("seal executable digest does not match binary contents"))
+	}
+	return nil
+}
+
+// Check verifies an executable from current sources, then requires its freshness subcommand.
+func Check(root, executable string) error {
+	if err := Verify(root, executable); err != nil {
+		return err
+	}
+	command := exec.Command(executable, "freshness-check", root)
+	command.Stdout = io.Discard
+	command.Stderr = io.Discard
+	if err := command.Run(); err != nil {
+		return refusal(root, executable, fmt.Errorf("freshness-check failed"))
 	}
 	return nil
 }
@@ -289,5 +381,14 @@ func isDigest(value string) bool {
 }
 
 func refusal(root, executable string, cause error) error {
-	return fmt.Errorf("bench binary %q is untrusted: %v; rebuild with bash scripts/go-build.sh %s %s", executable, cause, root, filepath.Join(root, "dist", "bench"))
+	return fmt.Errorf("bench binary %q is untrusted: %v; rebuild with %s", executable, cause, RebuildAction(root))
+}
+
+// RebuildAction returns the copy-paste command that republishes root's Bench binary.
+func RebuildAction(root string) string {
+	return fmt.Sprintf("cd %s && bash scripts/go-build.sh %s %s", shellQuote(root), shellQuote(root), shellQuote(filepath.Join(root, "dist", "bench")))
+}
+
+func shellQuote(value string) string {
+	return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'"
 }

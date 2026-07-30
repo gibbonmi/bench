@@ -9,6 +9,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/freshness"
 )
 
 // The idiom-setting table test for the module: pure logic, table-driven, no process
@@ -49,7 +51,7 @@ func TestFreshnessCheckRefusesMissingOwnExecutable(t *testing.T) {
 	if code != 1 {
 		t.Fatalf("freshnessCheck missing executable exit = %d, want 1", code)
 	}
-	want := "bash scripts/go-build.sh " + root + " " + filepath.Join(root, "dist", "bench")
+	want := freshness.RebuildAction(root)
 	if !strings.Contains(stderr.String(), want) {
 		t.Fatalf("freshnessCheck stderr = %q, want rebuild action %q", stderr.String(), want)
 	}

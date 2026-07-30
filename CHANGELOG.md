@@ -22,6 +22,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Changed gate and contract launches to refuse stale or indeterminate Bench
+  binaries before execution and report one copy-paste rebuild command.
 - Made Research tickets use concurrent read-only delegation when another
   unblocked ticket can proceed, with an inline fallback.
 - Extended roadmap maintenance with per-run fix-versus-feature classification,

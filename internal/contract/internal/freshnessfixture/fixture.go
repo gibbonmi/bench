@@ -1,4 +1,4 @@
-// Package freshnessfixture builds contract subjects with deliberately stale seals.
+// Package freshnessfixture builds contract subjects with fresh or deliberately stale seals.
 package freshnessfixture
 
 import (
@@ -14,10 +14,11 @@ func PublishedSubject(t testing.TB, output string) string {
 	t.Helper()
 	root := filepath.Join(t.TempDir(), "subject [glob]* path")
 	files := map[string]string{
-		"go.mod":              "module freshnesssubject\n\ngo 1.25\n",
-		"cmd/bench/main.go":   "package main\n\nfunc main() {}\n",
-		"scripts/go-build.sh": "#!/usr/bin/env bash\n",
-		"package.json":        "{}\n",
+		"go.mod":                  "module freshnesssubject\n\ngo 1.25\n",
+		"cmd/bench/main.go":       "package main\n\nfunc main() {}\n",
+		"scripts/go-build.sh":     "#!/usr/bin/env bash\n",
+		"scripts/go-build.inputs": "build_script=scripts/go-build.sh\npackage_version=package.json\ngo_requirements=internal/releaseevidence/requirements.json\n",
+		"package.json":            "{}\n",
 		"internal/releaseevidence/requirements.json": "{}\n",
 		"bin/bench.sh": "#!/bin/sh\nexec \"$(dirname \"$0\")/../dist/bench\" \"$@\"\n",
 		"dist/staged":  "#!/bin/sh\nprintf '%s\\n' '" + output + "'\n",

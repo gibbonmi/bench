@@ -59,6 +59,7 @@ func RequiredBuildPackAssets(root string) ([]string, error) {
 		"go.mod",
 		"go.sum",
 		"scripts/go-build.sh",
+		"scripts/go-build.inputs",
 	}
 	var goFiles []string
 	rootEntries, err := os.ReadDir(root)

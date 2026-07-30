@@ -9,6 +9,7 @@ import (
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/contract/internal/freshnessfixture"
+	"github.com/gibbonmi/bench/internal/freshness"
 )
 
 const axiFreshnessChildEnv = "BENCH_FT131_AXI_FRESHNESS_CHILD"
@@ -29,7 +30,7 @@ func TestRunBenchInDirRefusesStaleSubject(t *testing.T) {
 	if err == nil {
 		t.Fatalf("stale AXI subject satisfied its assertion:\n%s", output)
 	}
-	if !strings.Contains(string(output), "rebuild with bash scripts/go-build.sh") {
+	if !strings.Contains(string(output), "rebuild with "+freshness.RebuildAction(root)) {
 		t.Fatalf("stale AXI subject did not report freshness:\n%s", output)
 	}
 	if strings.Contains(string(output), "otherwise acceptable AXI output") {

@@ -166,8 +166,12 @@ The oracle for a kit runs in two tiers. The **dev tier** — `bench gate`, the
 shift loop, `/bench-final-check`, and the pre-push hook — answers one question:
 does the kit work from the tree? It runs the layers below (all green today).
 The **ship tier** — `bench prep-release` — carries the release-evidence checks,
-described after the layers. `.bench/gate.sh` is a thin
-exec into the `gate-phases` plumbing subcommand, which runs the layers below as
+described after the layers. `.bench/gate.sh` first runs the current-source
+freshness owner against the selected `dist/bench`; that owner validates the
+artifact seal before it invokes the selected binary's `freshness-check`, so the
+binary cannot attest for altered bytes. A refusal names one copy-paste rebuild
+action, and the gate never rebuilds the target automatically. Only a trusted
+binary is execed into the `gate-phases` plumbing subcommand, which runs the layers below as
 four concurrent phases in outer mode (`[phase]`-prefixed output, per-phase
 verdicts, run-all-and-aggregate) and sequentially, unprefixed, sweep-skipped in
 inner mode (`BENCH_CANARY_INNER=1`). A sibling knob, `BENCH_REQUIRE_CAPABILITIES=1`,

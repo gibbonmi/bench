@@ -17,21 +17,38 @@ set -euo pipefail
 
 modroot="$(cd "${1:?usage: go-build.sh <module-root> <output-path>}" && pwd -P)"
 out="${2:?usage: go-build.sh <module-root> <output-path>}"
+build_script=
+package_version=
+go_requirements=
+while IFS='=' read -r key value; do
+  case "$key" in
+    build_script) build_script="$value" ;;
+    package_version) package_version="$value" ;;
+    go_requirements) go_requirements="$value" ;;
+    "") ;;
+    *) printf 'unknown Go build input key: %s\n' "$key" >&2; exit 1 ;;
+  esac
+done < "$modroot/scripts/go-build.inputs"
+: "${build_script:?go-build.inputs missing build_script}"
+: "${package_version:?go-build.inputs missing package_version}"
+: "${go_requirements:?go-build.inputs missing go_requirements}"
+for input in "$build_script" "$package_version" "$go_requirements"; do
+  test -f "$modroot/$input" || { printf 'missing Go build input: %s\n' "$input" >&2; exit 1; }
+done
 
-# Version is package.json's; absent or unreadable → "dev" (the canary fixtures carry
-# a go.mod but no package.json, and an unstamped dev build is a legitimate outcome).
+# Version comes from the package-version input named by the build owner manifest.
 version="$(node -e '
   const fs = require("fs");
   try { process.stdout.write(String(JSON.parse(fs.readFileSync(process.argv[1], "utf8")).version || "dev")); }
   catch { process.stdout.write("dev"); }
-' "$modroot/package.json")"
+' "$modroot/$package_version")"
 
 cd "$modroot"
 go_build_flags=()
 while IFS= read -r arg; do go_build_flags+=("$arg"); done < <(node -e '
   const registry = require(process.argv[1]);
   for (const arg of registry.toolchains.find(tool => tool.name === "go").operations.build) console.log(arg);
-' "$modroot/internal/releaseevidence/requirements.json")
+' "$modroot/$go_requirements")
 for index in "${!go_build_flags[@]}"; do
   go_build_flags[$index]="${go_build_flags[$index]//<package-version>/$version}"
 done

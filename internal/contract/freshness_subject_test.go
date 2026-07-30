@@ -10,6 +10,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/contract/internal/freshnessfixture"
+	"github.com/gibbonmi/bench/internal/freshness"
 )
 
 const freshnessSubjectModeEnv = "BENCH_FT131_FRESHNESS_SUBJECT_MODE"
@@ -28,7 +29,7 @@ func TestRequireFreshBenchRefusesStaleSubject(t *testing.T) {
 	if err == nil {
 		t.Fatalf("stale subject reached the contract assertion:\n%s", output)
 	}
-	for _, want := range []string{"bench binary", "rebuild with bash scripts/go-build.sh"} {
+	for _, want := range []string{"bench binary", "rebuild with " + freshness.RebuildAction(root)} {
 		if !strings.Contains(string(output), want) {
 			t.Fatalf("stale subject diagnostic missing %q:\n%s", want, output)
 		}
@@ -109,7 +110,7 @@ func TestRequireFreshBenchRefusesUntrustedArtifacts(t *testing.T) {
 			if err == nil {
 				t.Fatalf("untrusted %s subject reached the contract assertion:\n%s", tc.name, output)
 			}
-			requireFreshnessRefusal(t, output, "untrusted subject reached the contract assertion", "old subject output")
+			requireFreshnessRefusal(t, root, output, "untrusted subject reached the contract assertion", "old subject output")
 		})
 	}
 }
@@ -146,7 +147,7 @@ func TestRequireFreshBenchUsesContentRatherThanMtime(t *testing.T) {
 				if err == nil {
 					t.Fatalf("tied stale subject reached the contract assertion:\n%s", output)
 				}
-				requireFreshnessRefusal(t, output, "tied stale subject reached the contract assertion", "old subject output")
+				requireFreshnessRefusal(t, root, output, "tied stale subject reached the contract assertion", "old subject output")
 				return
 			}
 			if err != nil {
@@ -164,9 +165,9 @@ func runFreshnessChild(t *testing.T, pattern, root, mode, name, dir string) ([]b
 	return command.CombinedOutput()
 }
 
-func requireFreshnessRefusal(t *testing.T, output []byte, forbidden ...string) {
+func requireFreshnessRefusal(t *testing.T, root string, output []byte, forbidden ...string) {
 	t.Helper()
-	if !strings.Contains(string(output), "rebuild with bash scripts/go-build.sh") {
+	if !strings.Contains(string(output), "rebuild with "+freshness.RebuildAction(root)) {
 		t.Fatalf("untrusted subject did not report the rebuild action:\n%s", output)
 	}
 	for _, marker := range forbidden {
@@ -182,6 +183,7 @@ func setSubjectMtimes(t *testing.T, root string, source, executable time.Time) {
 		"go.mod",
 		"cmd/bench/main.go",
 		"scripts/go-build.sh",
+		"scripts/go-build.inputs",
 		"package.json",
 		"internal/releaseevidence/requirements.json",
 	} {

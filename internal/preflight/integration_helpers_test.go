@@ -55,13 +55,13 @@ func projectRoot(t *testing.T) string {
 func preflightRepo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
-	for _, rel := range []string{"bin/bench.sh", ".bench/gate.sh", "internal/releaseevidence/registry.json", "internal/releaseevidence/requirements.json", "scripts/build-artifacts.sh", "scripts/build-offline-archives.sh", "scripts/assemble-offline-archive.mjs", "scripts/release-plan.mjs", "scripts/release-plan.json", "scripts/write-deterministic-archive.mjs", "scripts/compare-artifacts.sh", "scripts/native-proof.sh", "scripts/aggregate-native-proofs.sh", "scripts/build-release-evidence.mjs", "scripts/smoke-artifacts.sh", "scripts/smoke-offline.sh", "scripts/verify-release-artifact.mjs", "scripts/offline-network-sentinel.cjs", "scripts/offline-registry.mjs", "scripts/go-build.sh", ".bench/consumer-payload.json", "package.json"} {
+	for _, rel := range []string{"bin/bench.sh", ".bench/gate.sh", "internal/releaseevidence/registry.json", "internal/releaseevidence/requirements.json", "scripts/build-artifacts.sh", "scripts/build-offline-archives.sh", "scripts/assemble-offline-archive.mjs", "scripts/release-plan.mjs", "scripts/release-plan.json", "scripts/write-deterministic-archive.mjs", "scripts/compare-artifacts.sh", "scripts/native-proof.sh", "scripts/aggregate-native-proofs.sh", "scripts/build-release-evidence.mjs", "scripts/smoke-artifacts.sh", "scripts/smoke-offline.sh", "scripts/verify-release-artifact.mjs", "scripts/offline-network-sentinel.cjs", "scripts/offline-registry.mjs", "scripts/go-build.sh", "scripts/go-build.inputs", ".bench/consumer-payload.json", "package.json"} {
 		path := filepath.Join(root, filepath.FromSlash(rel))
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			t.Fatal(err)
 		}
 		body := "{}\n"
-		if rel == "internal/releaseevidence/registry.json" || rel == "internal/releaseevidence/requirements.json" || rel == "scripts/build-release-evidence.mjs" || rel == "scripts/build-offline-archives.sh" || rel == "scripts/assemble-offline-archive.mjs" || rel == "scripts/release-plan.mjs" || rel == "scripts/release-plan.json" || rel == "scripts/write-deterministic-archive.mjs" || rel == "scripts/aggregate-native-proofs.sh" {
+		if rel == "internal/releaseevidence/registry.json" || rel == "internal/releaseevidence/requirements.json" || rel == "scripts/build-release-evidence.mjs" || rel == "scripts/build-offline-archives.sh" || rel == "scripts/assemble-offline-archive.mjs" || rel == "scripts/release-plan.mjs" || rel == "scripts/release-plan.json" || rel == "scripts/write-deterministic-archive.mjs" || rel == "scripts/aggregate-native-proofs.sh" || rel == "scripts/go-build.inputs" {
 			data, err := os.ReadFile(filepath.Join(projectRoot(t), filepath.FromSlash(rel)))
 			if err != nil {
 				t.Fatal(err)

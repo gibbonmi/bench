@@ -1,14 +1,57 @@
 package freshness
 
 import (
+	"encoding/json"
+	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
 	"testing"
 	"time"
 )
+
+func TestPublishAndVerifyRefuseEmptyExecutables(t *testing.T) {
+	t.Run("empty stage", func(t *testing.T) {
+		root := writeBuildFixture(t)
+		staged := filepath.Join(root, "empty-stage")
+		if err := os.WriteFile(staged, nil, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		executable := filepath.Join(root, "dist", "bench")
+		if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := Publish(root, staged, executable); err == nil {
+			t.Fatal("Publish empty executable stage = nil, want refusal")
+		}
+	})
+
+	t.Run("sealed empty artifact", func(t *testing.T) {
+		root, executable := writePublishedFixture(t)
+		if err := os.WriteFile(executable, nil, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		sources, err := Digest(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		encoded, err := json.Marshal(seal{
+			Schema:     sealSchema,
+			Sources:    sources,
+			Executable: digestBytes(nil),
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(sealPath(executable), encoded, 0o644); err != nil {
+			t.Fatal(err)
+		}
+		assertRefusal(t, root, executable)
+	})
+}
 
 func TestVerifyMissingExecutableRefusesWithRebuild(t *testing.T) {
 	root := t.TempDir()
@@ -21,7 +64,7 @@ func TestVerifyMissingExecutableRefusesWithRebuild(t *testing.T) {
 	if !strings.Contains(err.Error(), executable) {
 		t.Fatalf("Verify missing executable error = %q, want binary path %q", err, executable)
 	}
-	want := "bash scripts/go-build.sh " + root + " " + filepath.Join(root, "dist", "bench")
+	want := RebuildAction(root)
 	if !strings.Contains(err.Error(), want) {
 		t.Fatalf("Verify missing executable error = %q, want rebuild action %q", err, want)
 	}
@@ -113,6 +156,57 @@ func TestDigestTracksBuildOwnerInputs(t *testing.T) {
 				t.Fatalf("Digest ignored %s", test.name)
 			}
 		})
+	}
+}
+
+func TestDigestTracksInputsDeclaredByTheBuildOwnerManifest(t *testing.T) {
+	root := writeBuildFixture(t)
+	unrelated := filepath.Join(root, "declared-later.txt")
+	if err := os.WriteFile(unrelated, []byte("one"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	before, err := Digest(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(unrelated, []byte("two"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	stillUnrelated, err := Digest(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if before != stillUnrelated {
+		t.Fatal("Digest changed before an auxiliary input was declared")
+	}
+	manifest := filepath.Join(root, filepath.FromSlash(auxiliaryInputsManifest))
+	file, err := os.OpenFile(manifest, os.O_APPEND|os.O_WRONLY, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := file.WriteString("future_input=declared-later.txt\n"); err != nil {
+		_ = file.Close()
+		t.Fatal(err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatal(err)
+	}
+	declared, err := Digest(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if declared == stillUnrelated {
+		t.Fatal("Digest ignored an input added to the build owner manifest")
+	}
+	if err := os.WriteFile(unrelated, []byte("three"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	changed, err := Digest(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if changed == declared {
+		t.Fatal("Digest ignored a changed declared auxiliary input")
 	}
 }
 
@@ -246,6 +340,58 @@ func TestVerifyRefusesLiveAndDanglingSymlinkArtifacts(t *testing.T) {
 	}
 }
 
+func TestSecureContentsRefusesSymlinkedAncestor(t *testing.T) {
+	for _, executable := range []bool{false, true} {
+		t.Run(map[bool]string{false: "seal", true: "executable"}[executable], func(t *testing.T) {
+			root := t.TempDir()
+			realDir := filepath.Join(root, "real")
+			if err := os.MkdirAll(realDir, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			mode := os.FileMode(0o644)
+			if executable {
+				mode = 0o755
+			}
+			if err := os.WriteFile(filepath.Join(realDir, "artifact"), []byte("untrusted"), mode); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Symlink(realDir, filepath.Join(root, "linked")); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := secureContents(filepath.Join(root, "linked", "artifact"), executable); err == nil || !strings.Contains(err.Error(), "symbolic link") {
+				t.Fatalf("secureContents through symlinked ancestor error = %v, want symbolic-link refusal", err)
+			}
+		})
+	}
+}
+
+func TestRefusalRebuildActionIsCopyPasteSafeForHostilePaths(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "root [*] with ' quote")
+	if err := os.MkdirAll(filepath.Join(root, "scripts"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	record := filepath.Join(t.TempDir(), "record")
+	script := "#!/usr/bin/env bash\nprintf '%s\\n%s\\n%s\\n' \"$PWD\" \"$1\" \"$2\" > " + quoteForShell(record) + "\n"
+	if err := os.WriteFile(filepath.Join(root, "scripts", "go-build.sh"), []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	err := refusal(root, filepath.Join(root, "dist", "bench"), fmt.Errorf("fixture"))
+	action := strings.TrimPrefix(err.Error()[strings.Index(err.Error(), "; rebuild with "):], "; rebuild with ")
+	command := exec.Command("bash", "-c", action)
+	command.Dir = t.TempDir()
+	if output, runErr := command.CombinedOutput(); runErr != nil {
+		t.Fatalf("copy-paste rebuild action failed: %v\n%s", runErr, output)
+	}
+	want := strings.Join([]string{root, root, filepath.Join(root, "dist", "bench"), ""}, "\n")
+	if got, readErr := os.ReadFile(record); readErr != nil || string(got) != want {
+		t.Fatalf("rebuild action args = %q, %v; want %q", got, readErr, want)
+	}
+}
+
+func quoteForShell(value string) string {
+	return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'"
+}
+
 func TestVerifyRefusesSpecialArtifactsBeforeReading(t *testing.T) {
 	for _, artifact := range []struct {
 		name string
@@ -340,7 +486,7 @@ func assertRefusal(t *testing.T, root, executable string) {
 	if !strings.Contains(err.Error(), executable) {
 		t.Fatalf("Verify error = %q, want binary path %q", err, executable)
 	}
-	want := "bash scripts/go-build.sh " + root + " " + filepath.Join(root, "dist", "bench")
+	want := RebuildAction(root)
 	if !strings.Contains(err.Error(), want) {
 		t.Fatalf("Verify error = %q, want rebuild action %q", err, want)
 	}
@@ -363,6 +509,7 @@ func writeBuildFixture(t *testing.T) string {
 		"cmd/bench/main.go":       "package main\n\nimport \"example.com/freshnessfixture/internal/local\"\n\nfunc main() { _ = local.Value }\n",
 		"internal/local/local.go": "package local\n\nconst Value = \"value\"\n",
 		"scripts/go-build.sh":     "#!/usr/bin/env bash\n",
+		"scripts/go-build.inputs": "build_script=scripts/go-build.sh\npackage_version=package.json\ngo_requirements=internal/releaseevidence/requirements.json\n",
 		"package.json":            "{\"version\":\"0.0.0\"}\n",
 		"internal/releaseevidence/requirements.json": "{}\n",
 	}

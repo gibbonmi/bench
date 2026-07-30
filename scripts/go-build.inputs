@@ -1,0 +1,3 @@
+build_script=scripts/go-build.sh
+package_version=package.json
+go_requirements=internal/releaseevidence/requirements.json

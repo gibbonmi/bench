@@ -12,8 +12,9 @@ root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "error: not in a g
 gate_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 kit="$(cd "$gate_dir/.." && pwd)"
 bench="$kit/dist/bench"
-if ! "$bench" freshness-check "$kit" >/dev/null 2>&1; then
-  printf 'bench binary "%s" is untrusted: freshness check failed; rebuild with bash scripts/go-build.sh %s %s\n' "$bench" "$kit" "$kit/dist/bench" >&2
+freshness_cache="${GOCACHE:-$kit/dist/.freshness-go-cache}"
+mkdir -p "$freshness_cache"
+if ! (cd "$kit" && GOCACHE="$freshness_cache" go run ./internal/freshness/check "$kit" "$bench"); then
   exit 1
 fi
 exec env BENCH_KIT="$kit" "$bench" gate-phases "$root"

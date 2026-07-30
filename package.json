@@ -43,7 +43,8 @@
     ".claude/settings.json",
     ".codex/hooks.json",
     "CHANGELOG.md",
-    "scripts/go-build.sh"
+    "scripts/go-build.sh",
+    "scripts/go-build.inputs"
   ],
   "keywords": [
     "claude-code",

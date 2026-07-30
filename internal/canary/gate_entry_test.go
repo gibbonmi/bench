@@ -13,7 +13,7 @@ func TestBenchkitGateCallsCanarySubcommandOnlyInOuterMode(t *testing.T) {
 	if !strings.Contains(gate, `exec env BENCH_KIT="$kit" "$bench" gate-phases "$root"`) {
 		t.Fatalf("benchkit gate does not exec gate-phases:\n%s", gate)
 	}
-	freshness := `"$bench" freshness-check "$kit"`
+	freshness := `go run ./internal/freshness/check "$kit" "$bench"`
 	phase := `exec env BENCH_KIT="$kit" "$bench" gate-phases "$root"`
 	if strings.Index(gate, freshness) < 0 || strings.Index(gate, freshness) > strings.Index(gate, phase) {
 		t.Fatalf("benchkit gate does not verify %q before %q:\n%s", freshness, phase, gate)

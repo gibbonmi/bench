@@ -11,14 +11,100 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/contract"
+	"github.com/gibbonmi/bench/internal/contract/internal/freshnessfixture"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
+const runtimeLauncherFreshnessChild = "BENCH_FT131_RUNTIME_LAUNCHER_CHILD"
+
 func benchPath(t testing.TB) string {
 	t.Helper()
+	contract.RequireFreshBench(t)
 	return filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh")
+}
+
+func TestRuntimeLauncherRefusesStaleBeforeFalseGreenAndFalseRedAssertions(t *testing.T) {
+	for _, assertion := range []string{"false-green", "false-red"} {
+		t.Run(assertion, func(t *testing.T) {
+			if os.Getenv(runtimeLauncherFreshnessChild) == assertion {
+				launcher := benchPath
+				command := exec.Command("bash", launcher(t), "version")
+				output, err := command.CombinedOutput()
+				if assertion == "false-green" && err == nil {
+					return
+				}
+				t.Fatalf("correct runtime assertion rejected: %v\n%s", err, output)
+			}
+
+			root := freshnessfixture.StaleSubject(t, "old runtime assertion output")
+			command := exec.Command(os.Args[0], "-test.run=^TestRuntimeLauncherRefusesStaleBeforeFalseGreenAndFalseRedAssertions$/"+assertion+"$")
+			command.Env = append(os.Environ(), runtimeLauncherFreshnessChild+"="+assertion, canary.SubjectRootEnv+"="+root)
+			output, err := command.CombinedOutput()
+			if err == nil {
+				t.Fatalf("stale runtime subject satisfied %s assertion:\n%s", assertion, output)
+			}
+			for _, want := range []string{"bench binary ", "rebuild with "} {
+				if !strings.Contains(string(output), want) {
+					t.Fatalf("stale runtime subject did not report %q:\n%s", want, output)
+				}
+			}
+			for _, forbidden := range []string{"old runtime assertion output", "correct runtime assertion rejected"} {
+				if strings.Contains(string(output), forbidden) {
+					t.Fatalf("stale runtime subject reached assertion output %q:\n%s", forbidden, output)
+				}
+			}
+		})
+	}
+}
+
+func TestRuntimeBenchPathConsumerEnumeration(t *testing.T) {
+	expected := []string{
+		"runtime_agent_entry_test.go",
+		"runtime_commit_test.go",
+		"runtime_gate_action_proof_test.go",
+		"runtime_gate_owner_helper_test.go",
+		"runtime_gate_owner_test.go",
+		"runtime_gate_partial_proof_test.go",
+		"runtime_gate_proof_helpers_test.go",
+		"runtime_gate_shift_proof_test.go",
+		"runtime_gate_stop_proof_test.go",
+		"runtime_gate_test.go",
+		"runtime_handoff_grammar_test.go",
+		"runtime_shift_adapters_test.go",
+		"runtime_spec_history_test.go",
+		"runtime_spec_test.go",
+		"runtime_stale_gate_test.go",
+		"runtime_status_test.go",
+		"runtime_testreport_test.go",
+		"runtime_worktree_test.go",
+	}
+	files, err := filepath.Glob(filepath.Join(contract.KitRoot(t), "internal", "contract", "runtime", "runtime_*_test.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	needle := "benchPath" + "(t)"
+	var consumers []string
+	count := 0
+	for _, path := range files {
+		data, readErr := os.ReadFile(path)
+		if readErr != nil {
+			t.Fatal(readErr)
+		}
+		occurrences := strings.Count(string(data), needle)
+		if occurrences > 0 {
+			consumers = append(consumers, filepath.Base(path))
+			count += occurrences
+		}
+	}
+	if got, want := strings.Join(consumers, "\n"), strings.Join(expected, "\n"); got != want {
+		t.Fatalf("benchPath consumer files:\n%s\nwant:\n%s", got, want)
+	}
+	if count != 30 {
+		t.Fatalf("benchPath occurrences = %d, want 30", count)
+	}
 }
 
 func gitDir(t testing.TB, f contract.Fixture) string {

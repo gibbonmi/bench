@@ -66,6 +66,17 @@ func TestGateReplacementRunsTheRebuiltPhaseTableOnce(t *testing.T) {
 	clone := filepath.Join(f.Root, "replacement [*] source")
 	f.Run("git", "clone", "-q", "--no-hardlinks", root, clone).RequireExit(0)
 	copyRuntimeFile(t, filepath.Join(root, ".bench", "gate.sh"), filepath.Join(clone, ".bench", "gate.sh"), 0o755)
+	for _, rel := range []string{
+		"internal/freshness/freshness.go",
+		"internal/freshness/check/main.go",
+		"scripts/go-build.sh",
+		"scripts/go-build.inputs",
+	} {
+		copyRuntimeFile(t, filepath.Join(root, rel), filepath.Join(clone, rel), 0o644)
+	}
+	if err := os.Chmod(filepath.Join(clone, "scripts", "go-build.sh"), 0o755); err != nil {
+		t.Fatal(err)
+	}
 
 	build := contract.RunAt(t, f, clone, nil, "bash", filepath.Join(clone, "scripts", "go-build.sh"), clone, filepath.Join(clone, "dist", "bench"))
 	if build.ExitCode != 0 {
@@ -117,6 +128,18 @@ func freshnessRouteFixture(t *testing.T) contract.Fixture {
 	} {
 		copyRuntimeFile(t, filepath.Join(root, rel), filepath.Join(f.Root, rel), 0o755)
 	}
+	for _, rel := range []string{
+		"internal/freshness/freshness.go",
+		"internal/freshness/check/main.go",
+		"scripts/go-build.sh",
+		"scripts/go-build.inputs",
+		"package.json",
+		"internal/releaseevidence/requirements.json",
+	} {
+		copyRuntimeFile(t, filepath.Join(root, rel), filepath.Join(f.Root, rel), 0o644)
+	}
+	f.WriteFile("go.mod", "module github.com/gibbonmi/bench\n\ngo 1.25\n")
+	f.WriteFile("cmd/bench/main.go", "package main\n\nfunc main() {}\n")
 	f.WriteExecutable("tools/codex", "#!/usr/bin/env bash\nprintf 'ft131 adapter invoked\\n' >&2\n")
 	f.CommitAll("FT131 freshness route fixture")
 	return f
@@ -124,7 +147,7 @@ func freshnessRouteFixture(t *testing.T) contract.Fixture {
 
 func requireFreshnessRouteRefusal(t *testing.T, route, output string) {
 	t.Helper()
-	if !strings.Contains(output, "bench binary ") || strings.Count(output, "rebuild with bash scripts/go-build.sh ") != 1 {
+	if !strings.Contains(output, "bench binary ") || strings.Count(output, "rebuild with ") != 1 {
 		t.Fatalf("%s did not report the stable freshness rebuild action:\n%s", route, output)
 	}
 	if strings.Contains(output, "phase ") || strings.Contains(output, "old phase") {

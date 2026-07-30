@@ -9,6 +9,7 @@ import (
 
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
+	"github.com/gibbonmi/bench/internal/freshness"
 )
 
 func TestRootConformance(t *testing.T) {
@@ -32,9 +33,9 @@ func TestGateEntryRunsGoConformanceAndBehaviorContracts(t *testing.T) {
 	if !strings.Contains(gate, needle) {
 		t.Fatalf(".bench/gate.sh missing %q", needle)
 	}
-	freshness := `"$bench" freshness-check "$kit"`
-	if strings.Index(gate, freshness) < 0 || strings.Index(gate, freshness) > strings.Index(gate, needle) {
-		t.Fatalf(".bench/gate.sh does not verify %q before %q", freshness, needle)
+	check := `go run ./internal/freshness/check "$kit" "$bench"`
+	if strings.Index(gate, check) < 0 || strings.Index(gate, check) > strings.Index(gate, needle) {
+		t.Fatalf(".bench/gate.sh does not run current-source verification %q before %q", check, needle)
 	}
 
 	for _, retired := range []string{
@@ -79,7 +80,7 @@ func TestGateEntryRefusesUnverifiedBinaryBeforeGatePhases(t *testing.T) {
 		t.Fatalf("gate entry exit = %+v, want an untrusted-binary refusal", probe)
 	}
 	output := probe.Stdout + probe.Stderr
-	rebuild := freshnessRebuildAction(t, h, kit, nested)
+	rebuild := freshness.RebuildAction(kit)
 	if !strings.Contains(output, rebuild) {
 		t.Fatalf("gate entry missing freshness rebuild action %q:\n%s", rebuild, output)
 	}
@@ -100,18 +101,14 @@ func TestGateEntryRejectsLegacyBeforeRunningOldTableAndRunsReplacementOnce(t *te
 	}
 	kit := filepath.Join(t.TempDir(), "kit [*] path")
 	gatePath := writeGateEntryFixture(t, h, kit)
-	bench := filepath.Join(kit, "dist", "bench")
-	writeFixtureFile(t, bench, fmt.Sprintf("#!/usr/bin/env bash\ncase \"$1\" in\nfreshness-check) test \"$2\" = %q || exit 97; exit 2 ;;\ngate-phases) test \"$BENCH_KIT\" = %q || exit 98; printf 'old phase\\n'; printf 'old\\n' >> \"$2/.git/gate-phases-ran\" ;;\nesac\n", kit, kit))
-	if err := os.Chmod(bench, 0o755); err != nil {
-		t.Fatalf("chmod legacy bench: %v", err)
-	}
+	publishGateFixtureBench(t, kit, fmt.Sprintf("#!/usr/bin/env bash\ncase \"$1\" in\nfreshness-check) test \"$2\" = %q || exit 97; exit 2 ;;\ngate-phases) test \"$BENCH_KIT\" = %q || exit 98; printf 'old phase\\n'; printf 'old\\n' >> \"$2/.git/gate-phases-ran\" ;;\nesac\n", kit, kit))
 
 	legacy := runAt(nested, "bash", gatePath)
 	if legacy == nil || legacy.ExitCode == 0 {
 		t.Fatalf("legacy gate entry exit = %+v, want refusal", legacy)
 	}
 	legacyOutput := legacy.Stdout + legacy.Stderr
-	if rebuild := freshnessRebuildAction(t, h, kit, nested); !strings.Contains(legacyOutput, rebuild) {
+	if rebuild := freshness.RebuildAction(kit); !strings.Contains(legacyOutput, rebuild) {
 		t.Fatalf("legacy gate entry missing freshness rebuild action %q:\n%s", rebuild, legacyOutput)
 	}
 	if strings.Contains(legacyOutput, "old phase") {
@@ -121,10 +118,7 @@ func TestGateEntryRejectsLegacyBeforeRunningOldTableAndRunsReplacementOnce(t *te
 		t.Fatalf("legacy gate entry scheduled the old table: %v", err)
 	}
 
-	writeFixtureFile(t, bench, fmt.Sprintf("#!/usr/bin/env bash\ncase \"$1\" in\nfreshness-check) test \"$2\" = %q ;;\ngate-phases) test \"$BENCH_KIT\" = %q || exit 98; printf 'replacement phase\\n'; printf 'replacement\\n' >> \"$2/.git/gate-phases-ran\" ;;\nesac\n", kit, kit))
-	if err := os.Chmod(bench, 0o755); err != nil {
-		t.Fatalf("chmod replacement bench: %v", err)
-	}
+	publishGateFixtureBench(t, kit, fmt.Sprintf("#!/usr/bin/env bash\ncase \"$1\" in\nfreshness-check) test \"$2\" = %q ;;\ngate-phases) test \"$BENCH_KIT\" = %q || exit 98; printf 'replacement phase\\n'; printf 'replacement\\n' >> \"$2/.git/gate-phases-ran\" ;;\nesac\n", kit, kit))
 	replacement := runAt(nested, "bash", gatePath)
 	if replacement == nil || replacement.ExitCode != 0 {
 		t.Fatalf("replacement gate entry exit = %+v, want green", replacement)
@@ -159,25 +153,41 @@ func TestGateEntryNormalizesIndeterminateFreshnessFailures(t *testing.T) {
 		t.Fatalf("mkdir nested gate cwd: %v", err)
 	}
 	for _, failure := range []struct {
-		name, program string
+		name   string
+		mutate func(*testing.T, string)
 	}{
-		{name: "missing executable"},
-		{name: "missing seal", program: "printf 'untrusted missing seal\\n' >&2; exit 1"},
-		{name: "unreadable seal", program: "printf 'untrusted unreadable seal\\n' >&2; exit 1"},
-		{name: "malformed seal", program: "printf 'untrusted malformed seal\\n' >&2; exit 1"},
-		{name: "partial seal", program: "printf 'untrusted partial seal\\n' >&2; exit 1"},
-		{name: "digest mismatch", program: "printf 'untrusted digest mismatch\\n' >&2; exit 1"},
-		{name: "legacy binary", program: "printf 'unknown subcommand freshness-check\\n' >&2; exit 2"},
+		{name: "missing executable", mutate: func(t *testing.T, bench string) { removeGateArtifact(t, bench) }},
+		{name: "missing seal", mutate: func(t *testing.T, bench string) { removeGateArtifact(t, bench+".seal") }},
+		{name: "unreadable seal", mutate: func(t *testing.T, bench string) {
+			seal := bench + ".seal"
+			t.Cleanup(func() { _ = os.Chmod(seal, 0o644) })
+			if err := os.Chmod(seal, 0); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{name: "malformed seal", mutate: func(t *testing.T, bench string) { writeFixtureFile(t, bench+".seal", "{}\n") }},
+		{name: "partial seal", mutate: func(t *testing.T, bench string) { writeFixtureFile(t, bench+".seal", `{"schema":`) }},
+		{name: "digest mismatch", mutate: func(t *testing.T, bench string) {
+			writeFixtureFile(t, bench, "#!/usr/bin/env bash\nexit 0\n")
+			if err := os.Chmod(bench, 0o755); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{name: "legacy binary"},
+		{name: "always-green altered executable", mutate: func(t *testing.T, bench string) {
+			writeFixtureFile(t, bench, "#!/usr/bin/env bash\nexit 0\n")
+			if err := os.Chmod(bench, 0o755); err != nil {
+				t.Fatal(err)
+			}
+		}},
 	} {
 		t.Run(failure.name, func(t *testing.T) {
 			kit := filepath.Join(t.TempDir(), "kit [*] path")
 			gatePath := writeGateEntryFixture(t, h, kit)
-			if failure.program != "" {
-				bench := filepath.Join(kit, "dist", "bench")
-				writeFixtureFile(t, bench, "#!/usr/bin/env bash\ncase \"$1\" in\nfreshness-check) "+failure.program+" ;;\ngate-phases) touch \"$2/.git/gate-phases-ran\" ;;\nesac\n")
-				if err := os.Chmod(bench, 0o755); err != nil {
-					t.Fatalf("chmod fixture bench: %v", err)
-				}
+			bench := filepath.Join(kit, "dist", "bench")
+			publishGateFixtureBench(t, kit, "#!/usr/bin/env bash\ncase \"$1\" in\nfreshness-check) exit 2 ;;\ngate-phases) touch \"$2/.git/gate-phases-ran\" ;;\nesac\n")
+			if failure.mutate != nil {
+				failure.mutate(t, bench)
 			}
 
 			probe := runAt(nested, "bash", gatePath)
@@ -185,11 +195,11 @@ func TestGateEntryNormalizesIndeterminateFreshnessFailures(t *testing.T) {
 				t.Fatalf("gate entry exit = %+v, want refusal", probe)
 			}
 			output := probe.Stdout + probe.Stderr
-			rebuild := freshnessRebuildAction(t, h, kit, nested)
+			rebuild := freshness.RebuildAction(kit)
 			if !strings.Contains(output, rebuild) || strings.Count(output, "rebuild with ") != 1 {
 				t.Fatalf("gate output = %q, want one stable rebuild action %q", output, rebuild)
 			}
-			if strings.Contains(output, "untrusted ") || strings.Contains(output, "unknown subcommand") {
+			if strings.Contains(output, "unknown subcommand") {
 				t.Fatalf("gate leaked output from an unverified binary:\n%s", output)
 			}
 			if _, err := os.Stat(filepath.Join(root, ".git", "gate-phases-ran")); !os.IsNotExist(err) {
@@ -201,28 +211,45 @@ func TestGateEntryNormalizesIndeterminateFreshnessFailures(t *testing.T) {
 
 func writeGateEntryFixture(t *testing.T, h Harness, kit string) string {
 	t.Helper()
-	gate, err := os.ReadFile(h.KitPath(".bench", "gate.sh"))
-	if err != nil {
-		t.Fatalf("read gate entry: %v", err)
+	for _, rel := range []string{
+		".bench/gate.sh",
+		"internal/freshness/freshness.go",
+		"internal/freshness/check/main.go",
+		"scripts/go-build.sh",
+		"scripts/go-build.inputs",
+		"package.json",
+		"internal/releaseevidence/requirements.json",
+	} {
+		data, err := os.ReadFile(h.KitPath(filepath.FromSlash(rel)))
+		if err != nil {
+			t.Fatalf("read gate fixture source %s: %v", rel, err)
+		}
+		writeFixtureFile(t, filepath.Join(kit, filepath.FromSlash(rel)), string(data))
 	}
+	writeFixtureFile(t, filepath.Join(kit, "go.mod"), "module github.com/gibbonmi/bench\n\ngo 1.25\n")
+	writeFixtureFile(t, filepath.Join(kit, "cmd", "bench", "main.go"), "package main\n\nfunc main() {}\n")
 	path := filepath.Join(kit, ".bench", "gate.sh")
-	writeFixtureFile(t, path, string(gate))
 	if err := os.Chmod(path, 0o755); err != nil {
 		t.Fatalf("chmod gate entry: %v", err)
 	}
 	return path
 }
 
-func freshnessRebuildAction(t *testing.T, h Harness, source, cwd string) string {
+func publishGateFixtureBench(t *testing.T, kit, program string) {
 	t.Helper()
-	probe := runAt(cwd, h.KitPath("dist", "bench"), "freshness-check", source)
-	if probe == nil || probe.ExitCode == 0 {
-		t.Fatalf("freshness-check exit = %+v, want refusal for fixture root", probe)
+	staged := filepath.Join(kit, "dist", "staged")
+	writeFixtureFile(t, staged, program)
+	if err := os.Chmod(staged, 0o755); err != nil {
+		t.Fatalf("chmod staged fixture bench: %v", err)
 	}
-	output := probe.Stdout + probe.Stderr
-	start := strings.Index(output, "rebuild with ")
-	if start < 0 {
-		t.Fatalf("freshness-check missing rebuild action:\n%s", output)
+	if err := freshness.Publish(kit, staged, filepath.Join(kit, "dist", "bench")); err != nil {
+		t.Fatalf("publish fixture bench: %v", err)
 	}
-	return strings.TrimSpace(output[start:])
+}
+
+func removeGateArtifact(t *testing.T, path string) {
+	t.Helper()
+	if err := os.Remove(path); err != nil {
+		t.Fatalf("remove gate fixture artifact: %v", err)
+	}
 }

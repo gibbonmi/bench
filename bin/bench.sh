@@ -298,6 +298,7 @@ case "${1-help}" in
   test)     route_porcelain "$@" ;;
   tree-hash) route_binary "$@" ;;
   gate-run) route_binary "$@" ;;
+  freshness-check) route_binary "$@" ;;
   gate-phases) route_binary "$@" ;;
   gate-go) route_binary "$@" ;;
   release-preflight) route_binary "$@" ;;

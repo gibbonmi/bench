@@ -16,6 +16,7 @@ import (
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/contract/internal/freshnessfixture"
+	"github.com/gibbonmi/bench/internal/freshness"
 )
 
 const runtimeFreshnessChildEnv = "BENCH_FT131_RUNTIME_FRESHNESS_CHILD"
@@ -44,7 +45,7 @@ func TestRuntimeDirectSubjectRefusesStaleBeforeAssertions(t *testing.T) {
 			if err == nil {
 				t.Fatalf("stale runtime subject satisfied a %s assertion:\n%s", tc.name, output)
 			}
-			if !strings.Contains(string(output), "rebuild with bash scripts/go-build.sh") {
+			if !strings.Contains(string(output), "rebuild with "+freshness.RebuildAction(root)) {
 				t.Fatalf("stale runtime subject did not report freshness:\n%s", output)
 			}
 			for _, forbidden := range []string{"old runtime assertion output", "correct runtime assertion rejected"} {
