@@ -370,3 +370,21 @@ func TestHandoffNextMatchesStatus(t *testing.T) {
 	contract.RequireNotContains(t, out.Stdout, "Nothing pending")
 	contract.RequireNotContains(t, out.Stdout, "`"+rows[0].action+"`")
 }
+
+func TestHandoffTrackedCaptureIsNeutral(t *testing.T) {
+	contract.SkipIfSubjectBenchMissing(t)
+	t.Parallel()
+
+	f := handoffFixtureOnMain(t)
+	f.Bench("handoff").RequireExit(0)
+	f.CommitAll("track handoff")
+
+	// The first rewrite makes the tracked handoff dirty. The next run must describe the
+	// inherited checkout, not promote its own capture write into work to commit.
+	f.Bench("handoff").RequireExit(0)
+	out := f.Bench("handoff")
+	out.RequireExit(0)
+	contract.RequireContains(t, out.Stdout, "clean tree")
+	contract.RequireContains(t, out.Stdout, "Nothing pending — the board is clean.")
+	contract.RequireNotContains(t, out.Stdout, "commit on green")
+}

@@ -52,6 +52,7 @@ var captureOnlyStalePaths = map[string]bool{
 	".bench-notes.md": true,
 	"IDEAS.md":        true,
 	"ROADMAP.md":      true,
+	HandoffFile:       true,
 }
 
 // row is one dashboard signal: a severity (the sort/lead key), and the signal/detail/
@@ -90,15 +91,25 @@ type GateInfo struct {
 	CacheBytes    int
 }
 
+// Query controls a status read without changing the board's shared signal ordering.
+type Query struct {
+	ExcludeDirtyPaths []string
+}
+
 // Signals gathers every ambient signal under root and returns them severity-sorted
 // ascending — the one severity ladder `bench status` renders. render (the text board) and
 // the dashboard gatherer both call this, so a signal added or reordered here reaches both
 // surfaces from one source.
 func Signals(root string) []Signal {
+	return SignalsWith(root, Query{})
+}
+
+// SignalsWith gathers the ambient board under root using the supplied query.
+func SignalsWith(root string, query Query) []Signal {
 	var rows []row
 
 	rows = appendGate(rows, root)
-	rows = appendGit(rows, root)
+	rows = appendGit(rows, root, query)
 	rows = appendWorktree(rows, root)
 	rows = appendIntent(rows, root)
 	rows = appendGuards(rows, root)
@@ -249,8 +260,8 @@ const StepSeparator = " / "
 
 // appendGit adds the uncommitted/unpushed signal (sev 1). dirty is the porcelain status;
 // ahead is the upstream-relative commit list, read only when an upstream is configured.
-func appendGit(rows []row, root string) []row {
-	fact, err := git.LandedState(root)
+func appendGit(rows []row, root string, query Query) []row {
+	fact, err := git.LandedState(root, query.ExcludeDirtyPaths...)
 	if err != nil {
 		return append(rows, row{1, "git", "git state unavailable", "investigate local git state"})
 	}

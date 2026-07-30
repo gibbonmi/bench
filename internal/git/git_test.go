@@ -93,7 +93,7 @@ func TestTreeHashLeavesNoStrayIndex(t *testing.T) {
 	}
 }
 
-func TestLandedStateAggregatesAndDeduplicates(t *testing.T) {
+func TestLandedStateCountsDirtyPathsOnlyInNamedCheckout(t *testing.T) {
 	root := newRepo(t)
 	runGit(t, root, "branch", "-M", "main")
 	runGit(t, root, "remote", "add", "origin", root)
@@ -118,8 +118,8 @@ func TestLandedStateAggregatesAndDeduplicates(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if state.DirtyPaths != 1 || state.UnpushedCommits != 1 || state.UniqueBranches != 2 {
-		t.Fatalf("LandedState = %#v, want dirty=1 ahead=1 unique=2", state)
+	if state.DirtyPaths != 0 || state.UnpushedCommits != 1 || state.UniqueBranches != 2 {
+		t.Fatalf("LandedState = %#v, want dirty=0 ahead=1 unique=2", state)
 	}
 }
 
@@ -145,7 +145,7 @@ func TestLandedStateCountsDefaultBranchUpstreamAhead(t *testing.T) {
 	}
 }
 
-func TestLandedStatePreservesNewlineWorktreePath(t *testing.T) {
+func TestLandedStateIgnoresDirtySiblingWithNewlinePath(t *testing.T) {
 	root := newRepo(t)
 	runGit(t, root, "branch", "-M", "main")
 	linked := filepath.Join(t.TempDir(), "linked\nworktree")
@@ -158,8 +158,26 @@ func TestLandedStatePreservesNewlineWorktreePath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LandedState with newline path: %v", err)
 	}
-	if state.DirtyPaths != 1 {
-		t.Fatalf("newline worktree dirty count = %d, want 1", state.DirtyPaths)
+	if state.DirtyPaths != 0 {
+		t.Fatalf("newline sibling worktree dirty count = %d, want 0", state.DirtyPaths)
+	}
+}
+
+func TestLandedStateIgnoresUnreadableSibling(t *testing.T) {
+	root := newRepo(t)
+	runGit(t, root, "branch", "-M", "main")
+	linked := filepath.Join(t.TempDir(), "missing-worktree")
+	runGit(t, root, "worktree", "add", "-q", "--detach", linked, "HEAD")
+	if err := os.RemoveAll(linked); err != nil {
+		t.Fatal(err)
+	}
+
+	state, err := LandedState(root)
+	if err != nil {
+		t.Fatalf("LandedState with unreadable sibling: %v", err)
+	}
+	if state.DirtyPaths != 0 {
+		t.Fatalf("unreadable sibling dirty count = %d, want 0", state.DirtyPaths)
 	}
 }
 

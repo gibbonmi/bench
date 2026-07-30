@@ -25,6 +25,7 @@ func testRuntimeStatusStaleGateDriftClassification(t *testing.T) {
 	}
 	cases := []staleGateStatusCase{
 		{name: "added ROADMAP.md is capture-only", mutate: writeRuntimeFile("ROADMAP.md", "- 2026-07-05  parked idea\n"), want: benign},
+		{name: "modified tracked session handoff is capture-only", seed: writeRuntimeFile("session-handoff.md", "# Session handoff\n\nfirst capture\n"), mutate: writeRuntimeFile("session-handoff.md", "# Session handoff\n\nrewritten capture\n"), want: benign},
 		{name: "modified ROADMAP.md is capture-only", seed: writeRuntimeFile("ROADMAP.md", "- 2026-07-04  old idea\n"), mutate: writeRuntimeFile("ROADMAP.md", "- 2026-07-05  parked idea\n"), want: benign},
 		{name: "deleted ROADMAP.md is capture-only", seed: writeRuntimeFile("ROADMAP.md", "- 2026-07-04  old idea\n"), mutate: removeRuntimePath("ROADMAP.md"), want: benign},
 		{name: "added IDEAS.md is capture-only", mutate: writeRuntimeFile("IDEAS.md", "- 2026-07-05  parked idea\n"), want: benign},

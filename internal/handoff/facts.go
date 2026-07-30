@@ -80,42 +80,18 @@ func head(root string) string {
 	return "HEAD `" + status.Short(sha) + "`"
 }
 
-// landedState renders the dirty and unpushed clauses. git.LandedState answers both from one
-// repository-wide pass and fails as a unit — a repo whose default branch does not resolve
-// has no unpushed count to report — so both clauses degrade together.
-//
-// The count excludes the handoff itself. The command rewrites that file on every run, so a
-// count including it is not a fact about the tree the reader inherited: on a tracked clean
-// tree the first run prints "clean tree" and its own write makes the second run print
-// "1 dirty path", which is the confident-wrong-fact this block exists to remove and breaks
-// the byte-identical guarantee repeated application rests on. Counting the pending write
-// instead of excluding it does not close the circle — the count is part of the content
-// whose presence makes the file dirty, so that reading can never report a clean tree even
-// when the tree genuinely is one — and the reader loses nothing, because "the handoff
-// changed" is precisely what this invocation just did.
+// landedState renders the dirty and unpushed clauses while excluding this command's capture
+// file. Rewriting the handoff is not inherited work for the next session to commit.
 func landedState(root string) (dirty, unpushed string) {
-	fact, err := git.LandedState(root)
+	fact, err := git.LandedState(root, status.HandoffFile)
 	if err != nil {
 		return unknownDirty, unknownUnpushed
 	}
-	paths := fact.DirtyPaths
-	if handoffIsDirty(root) && paths > 0 {
-		paths--
-	}
 	dirty = "clean tree"
-	if paths > 0 {
-		dirty = status.Plural(paths, "dirty path", "dirty paths")
+	if fact.DirtyPaths > 0 {
+		dirty = status.Plural(fact.DirtyPaths, "dirty path", "dirty paths")
 	}
 	return dirty, status.Plural(fact.UnpushedCommits, "unpushed commit", "unpushed commits")
-}
-
-// handoffIsDirty reports whether the handoff is among the dirty paths the repository-wide
-// pass counted. A failed query answers false, leaving the count as git reported it: an
-// unanswerable query is not evidence about any path, and overstating the tree's cleanliness
-// is the worse of the two errors.
-func handoffIsDirty(root string) bool {
-	out, err := git.Output("-C", root, "status", "--porcelain", "--", status.HandoffFile)
-	return err == nil && out != ""
 }
 
 // liveSpecs names the staged spec with its Status line, in path order. An implemented spec
@@ -207,7 +183,7 @@ func IsInvocable(action string) bool {
 // carrying signals offered none. The board is the one source of what to do next, so the
 // handoff and `bench status` cannot disagree about it.
 func nextAction(root string) (action, signal string, noneInvocable bool) {
-	signals := status.Signals(root)
+	signals := status.SignalsWith(root, status.Query{ExcludeDirtyPaths: []string{status.HandoffFile}})
 	if action, signal, ok := firstInvocable(signals); ok {
 		return action, signal, false
 	}

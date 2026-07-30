@@ -65,6 +65,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- Kept session-handoff capture writes out of stale-gate and handoff-next signals, and made
+  ambient dirty-path counts describe only the current checkout.
 - Made `bench learnings` render a drained journal as empty and reject dated headings
   without a final `[open]` state across learnings and drain status.
 

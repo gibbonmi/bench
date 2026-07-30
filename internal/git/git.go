@@ -100,8 +100,8 @@ type RepoFacts struct {
 	Changes               []PorcelainEntry
 }
 
-// LandedStateFact is the repository-wide, offline git verdict used by status.
-// Counts are de-duplicated sets, not sums of per-worktree/per-branch counters.
+// LandedStateFact is the offline git verdict used by status. DirtyPaths describes the named
+// checkout; commit and branch counts describe the repository.
 type LandedStateFact struct {
 	DirtyPaths      int
 	UnpushedCommits int
@@ -224,20 +224,23 @@ func PruneLandedBranches(root string, protectedBranches []string) (int, error) {
 	return pruned, nil
 }
 
-func LandedState(root string) (LandedStateFact, error) {
-	worktrees, err := Worktrees(root)
-	if err != nil {
-		return LandedStateFact{}, fmt.Errorf("git worktree list: %w", err)
+// LandedState derives checkout-local dirtiness and repository-wide commit and branch facts.
+// excludedDirtyPaths are omitted only from the named checkout's dirty count.
+func LandedState(root string, excludedDirtyPaths ...string) (LandedStateFact, error) {
+	excluded := make(map[string]bool, len(excludedDirtyPaths))
+	for _, path := range excludedDirtyPaths {
+		excluded[path] = true
 	}
 	dirty := map[string]bool{}
-	for _, worktree := range worktrees {
-		raw, err := Raw("-C", worktree.Path, "status", "--porcelain=v1", "-z", "--no-renames")
-		if err != nil {
-			return LandedStateFact{}, fmt.Errorf("git status %s: %w", worktree.Path, err)
+	raw, err := Raw("-C", root, "status", "--porcelain=v1", "-z", "--no-renames")
+	if err != nil {
+		return LandedStateFact{}, fmt.Errorf("git status %s: %w", root, err)
+	}
+	for _, entry := range ParsePorcelainZ(raw) {
+		if excluded[entry.Path] {
+			continue
 		}
-		for _, entry := range ParsePorcelainZ(raw) {
-			dirty[entry.Path] = true
-		}
+		dirty[entry.Path] = true
 	}
 	def, ok := ResolvedDefault(root)
 	if !ok {
