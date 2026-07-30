@@ -239,6 +239,38 @@ func TestDiscoverDecisionMapCandidatesDirectChildren(t *testing.T) {
 	}
 }
 
+func TestActiveScanSharesDirectCandidateDiscovery(t *testing.T) {
+	root := t.TempDir()
+	for _, name := range []string{"active.md", ".hidden.md", "README.md", "uppercase.MD"} {
+		path := filepath.Join(root, DecisionsDir, name)
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte("# invalid\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	candidates, err := DiscoverDecisionMapCandidates(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, count, state := ActiveRows(root)
+	if state != bounds.StateParsed || count != 1 || len(rows) != 1 || candidates[0].Path != "decisions/active.md" || rows[0][0] != "active" {
+		t.Fatalf("discovery and active scan diverged: candidates=%v rows=%v count=%d state=%s", candidates, rows, count, state)
+	}
+}
+
+func TestTicketAnswerStateIsSharedByReadinessAndProjection(t *testing.T) {
+	for _, tc := range []struct{ answer, want string }{
+		{"— (open)", "frontier"}, {"— (deferred)", "deferred"}, {"GRILL DEFERRED — wait", "deferred"}, {"", "frontier"}, {"Resolved.", "resolved"},
+	} {
+		ticket := DecisionTicket{Answer: tc.answer}
+		if got := ticketAnswerState(ticket); got != tc.want || resolved(ticket) != (tc.want == "resolved") {
+			t.Errorf("answer %q = (%q, resolved=%v), want %q", tc.answer, got, resolved(ticket), tc.want)
+		}
+	}
+}
+
 func TestMapGraphRejectsInvalidEdges(t *testing.T) {
 	const document = `# Graph
 
@@ -499,122 +531,158 @@ func hasDiagnostic(diagnostics []Diagnostic, want string) bool {
 	return false
 }
 
-// parseFile is the shared engine; these pin the marker/fence/handoff edges at the
-// pure seam the two-derivations bug class breeds.
-func TestParseFileMarkers(t *testing.T) {
-	r := parseFile([]byte("## #1: a?\nType: Grill\n### Answer\n— (open)\n"))
-	if len(r.tickets) != 1 || r.tickets[0] != (ticket{"1", "Grill", "open"}) {
-		t.Fatalf("open ticket = %+v", r.tickets)
-	}
-	if !r.preHandoffMarker || !r.notCloseReady() {
-		t.Errorf("open ticket file should be not-close-ready")
-	}
-
-	// A mid-line GRILL DEFERRED mention and a fenced placeholder are not markers.
-	r = parseFile([]byte("## #1: a?\nType: Grill\n### Answer\nDecided: mid-line GRILL DEFERRED mention.\n\n```\n— (open)\n```\n"))
-	if len(r.tickets) != 0 {
-		t.Errorf("over-match: unexpected tickets %+v", r.tickets)
-	}
-
-	// No Type line → unknown.
-	r = parseFile([]byte("## #1: a?\n### Answer\n— (open)\n"))
-	if r.tickets[0].typ != "unknown" {
-		t.Errorf("typeless ticket type = %q, want unknown", r.tickets[0].typ)
-	}
-}
-
-func TestParseFileHandoff(t *testing.T) {
-	cases := []struct {
-		name         string
-		in           string
-		wantRows     [][]any
-		wantNotReady bool
-	}{
-		{"missing handoff", "## #1: q?\nType: Grill\n### Answer\nDecided: yes.\n",
-			[][]any{{"m", "handoff", "handoff", "missing"}}, true},
-		{"filled handoff silent", "## #1: q?\nType: Grill\n### Answer\nDecided: yes.\n\n## Handoff\n1. a. n/a\n2. b. n/a\n",
-			nil, false},
-		{"placeholder in handoff", "## #1: q?\nType: Grill\n### Answer\nDecided: yes.\n\n## Handoff\n1. a.\n— (open)\n",
-			[][]any{{"m", "handoff", "handoff", "open"}}, true},
-		{"fenced handoff is missing", "## #1: q?\nType: Grill\n### Answer\nDecided: yes.\n\n```\n## Handoff\n1. a.\n```\n",
-			[][]any{{"m", "handoff", "handoff", "missing"}}, true},
-		{"open ticket no handoff row", "## #1: q?\nType: Grill\n### Answer\n— (open)\n",
-			[][]any{{"m", 1, "Grill", "open"}}, true},
-		{"non-map never nagged", "# Index\nprose, not a map.\n", nil, false},
-	}
-	for _, c := range cases {
-		r := parseFile([]byte(c.in))
-		if got := fileRows("m", r); !reflect.DeepEqual(got, c.wantRows) {
-			t.Errorf("%s: fileRows = %v, want %v", c.name, got, c.wantRows)
-		}
-		if r.notCloseReady() != c.wantNotReady {
-			t.Errorf("%s: notCloseReady = %v, want %v", c.name, r.notCloseReady(), c.wantNotReady)
-		}
-	}
-}
-
-// UnresolvedCount is DISTINCT not-close-ready files — re-homes the shell
-// "AXI maps_unresolved_count distinct-file contract" and the close-readiness count
-// tail, both of which used to source bin/bench-query.sh.
-func TestUnresolvedCount(t *testing.T) {
+func TestActiveRowsProjectUnresolvedTicketsAndFog(t *testing.T) {
 	root := t.TempDir()
-	dir := filepath.Join(root, "decisions")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	write := func(name, body string) {
-		if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0o644); err != nil {
-			t.Fatal(err)
-		}
+	document := `# Model
+
+Status: shaping
+
+## Destination
+
+Settle it.
+
+## #1: First
+
+Blocked by: none
+Type: Research
+
+### Question
+
+What?
+
+### Answer
+
+— (open)
+
+## #2: Second
+
+Blocked by: #1
+Type: Task
+
+### Question
+
+What next?
+
+### Answer
+
+— (open)
+
+## #3: Third
+
+Blocked by: #1
+Type: Prototype
+
+### Question
+
+What later?
+
+### Answer
+
+— (deferred)
+
+## Not yet specified
+
+- Honest fog.
+
+## Spec-writer discretion
+
+## Out of scope
+
+## Sources
+`
+	if err := os.WriteFile(filepath.Join(root, DecisionsDir, "model.md"), []byte(document), 0o644); err != nil {
+		t.Fatal(err)
 	}
-	// Two unresolved tickets in one file → 3 ticket rows but distinct-file count of the
-	// two files below is 2.
-	write("multi.md", "## #1: a?\nType: Grill\n### Answer\n— (open)\n\n## #2: b?\nType: Grill\n### Answer\n— (deferred)\n")
-	write("solo.md", "## #1: c?\nType: Grill\n### Answer\n— (open)\n")
-	// A dotfile the shell glob would never expand must stay invisible to rows and count.
-	write(".hidden.md", "## #1: h?\nType: Grill\n### Answer\n— (open)\n")
-	if got := len(Rows(root)); got != 3 {
-		t.Errorf("Rows count = %d, want 3", got)
+	rows, count, state := ActiveRows(root)
+	if state != bounds.StateParsed {
+		t.Fatalf("ActiveRows state = %s, want parsed", state)
 	}
-	if got, state := UnresolvedCount(root); got != 2 || state != bounds.StateParsed {
-		t.Errorf("UnresolvedCount = (%d, %s), want (2, %s)", got, state, bounds.StateParsed)
+	want := [][]any{
+		{"model", "First", "Research", "frontier", ""},
+		{"model", "Second", "Task", "blocked", "First"},
+		{"model", "Third", "Prototype", "deferred", "First"},
+	}
+	if !reflect.DeepEqual(rows, want) {
+		t.Fatalf("ActiveRows rows = %#v, want %#v", rows, want)
+	}
+	if count != 1 {
+		t.Fatalf("ActiveRows count = %d, want 1", count)
 	}
 }
 
-// The close-readiness aggregate re-homes the shell contract's count tail: of the six
-// files, hm/hx/hp/ho are not-close-ready, hf is ready, and README documents the
-// directory rather than claiming to be a map, so the tally never sees it → 4.
-func TestUnresolvedCountCloseReadiness(t *testing.T) {
+func TestActiveRowsProjectFogOnlyShapingMap(t *testing.T) {
 	root := t.TempDir()
-	dir := filepath.Join(root, "decisions")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	files := map[string]string{
-		"hm.md":     "# HM\n## #1: q?\nType: Grill\n### Answer\nDecided: yes.\n",
-		"hf.md":     "# HF\n## #1: q?\nType: Grill\n### Answer\nDecided: yes.\n\n## Handoff\n1. a. n/a\n",
-		"ho.md":     "# HO\n## #1: q?\nType: Grill\n### Answer\n— (open)\n",
-		"hx.md":     "# HX\n## #1: q?\nType: Grill\n### Answer\nDecided: yes.\n\n```\n## Handoff\n1. a.\n```\n",
-		"hp.md":     "# HP\n## #1: q?\nType: Grill\n### Answer\nDecided: yes.\n\n## Handoff\n1. a.\n— (open)\n",
-		"README.md": "# Index\nnot a map.\n",
-	}
-	for name, body := range files {
-		if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if got, _ := UnresolvedCount(root); got != 4 {
-		t.Errorf("close-readiness UnresolvedCount = %d, want 4", got)
-	}
-	// A file-scope marker without any ticket heading is a recognized shape (a marker),
-	// not unsupported-schema: no listed row, but counted via preHandoffMarker.
-	if err := os.WriteFile(filepath.Join(dir, "scope.md"), []byte("### Answer\n— (deferred)\n"), 0o644); err != nil {
+	document := `# Model
+
+Status: shaping
+
+## Destination
+
+Settle it.
+
+## #1: Settled
+
+Blocked by: none
+Type: Grill
+
+### Question
+
+What?
+
+### Answer
+
+Resolved.
+
+## Not yet specified
+
+- Honest fog.
+
+## Spec-writer discretion
+
+## Out of scope
+
+## Sources
+`
+	if err := os.WriteFile(filepath.Join(root, DecisionsDir, "model.md"), []byte(document), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if got := len(fileRows("scope", parseFile([]byte("### Answer\n— (deferred)\n")))); got != 0 {
-		t.Errorf("file-scope marker emitted %d rows, want 0", got)
+	rows, count, state := ActiveRows(root)
+	if state != bounds.StateParsed {
+		t.Fatalf("ActiveRows state = %s, want parsed", state)
 	}
-	if got, _ := UnresolvedCount(root); got != 5 {
-		t.Errorf("UnresolvedCount with file-scope marker = %d, want 5", got)
+	want := [][]any{{"model", "Not yet specified", "fog", "shaping", ""}}
+	if !reflect.DeepEqual(rows, want) {
+		t.Fatalf("ActiveRows rows = %#v, want %#v", rows, want)
+	}
+	if count != 1 {
+		t.Fatalf("ActiveRows count = %d, want 1", count)
+	}
+}
+
+func TestCommandRejectsCountAndTemplateTogether(t *testing.T) {
+	out, code := Command([]string{"--count", "--template"})
+	if code != 2 || !strings.Contains(out, "--count and --template are mutually exclusive") {
+		t.Fatalf("Command(--count --template) = (%q, %d), want usage exit 2", out, code)
+	}
+}
+
+func TestActiveRowsCountsSilentShapingMap(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, DecisionsDir), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	document := strings.Replace(DecisionMapTemplate(), "<answer>", "Resolved.", 1)
+	if err := os.WriteFile(filepath.Join(root, DecisionsDir, "silent.md"), []byte(document), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	rows, count, state := ActiveRows(root)
+	if state != bounds.StateParsed || len(rows) != 0 || count != 1 {
+		t.Fatalf("ActiveRows = (%#v, %d, %s), want no rows, count 1, parsed", rows, count, state)
 	}
 }

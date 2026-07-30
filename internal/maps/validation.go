@@ -104,8 +104,19 @@ func blockers(value string) []string {
 }
 
 func resolved(ticket DecisionTicket) bool {
+	return ticketAnswerState(ticket) == "resolved"
+}
+
+func ticketAnswerState(ticket DecisionTicket) string {
 	answer := strings.TrimSpace(ticket.Answer)
-	return answer != "" && !strings.HasPrefix(answer, "— (open") && !strings.HasPrefix(answer, "— (deferred") && !strings.Contains(answer, "GRILL DEFERRED")
+	switch {
+	case strings.HasPrefix(answer, "— (deferred"), strings.Contains(answer, "GRILL DEFERRED"):
+		return "deferred"
+	case answer == "", strings.HasPrefix(answer, "— (open"):
+		return "frontier"
+	default:
+		return "resolved"
+	}
 }
 
 func readinessDiagnostics(root string, m DecisionMap, compiled bool) []Diagnostic {

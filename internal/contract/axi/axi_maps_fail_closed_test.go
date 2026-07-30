@@ -1,114 +1,150 @@
 package axi
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/contract"
 )
 
-// TestAXIMapsUnsupportedSchema pins the maps half of story 7: a decisions file that
-// attempts neither a `## #<n>:` ticket heading nor a marker is unsupported-schema —
-// distinct from a decisions file whose bytes are invalid UTF-8, which is malformed —
-// asserted together so collapsing either onto the other or onto a generic error fails
-// one of the two rows. The no-heading fixture is written without a trailing newline,
-// the hand-edited-file class this parser owns.
-func TestAXIMapsUnsupportedSchema(t *testing.T) {
+func TestAXIMapsActiveProjectionAndCount(t *testing.T) {
 	t.Parallel()
 	contract.SkipIfSubjectBenchMissing(t)
 	f := contract.NewFixture(t)
-	f.WriteFile("decisions/noheading.md", "# Notes\nJust prose here, no ticket heading and no marker.")
-	f.WriteFile("decisions/badutf8.md", "## #1: q?\nType: Grill\n### Answer\n\xff\xfe— (open)\n")
+	f.WriteFile("decisions/model.md", activeMapDocument("shaping", "- Honest fog.", "— (open)", "— (open)", "— (deferred)"))
+	f.WriteFile("specs/compiled/decisions/ignored.md", "# Invalid compiled map\n")
 
-	out := f.Bench("maps")
+	rows := f.Bench("maps")
+	rows.RequireExit(0)
+	requireAXIFirstLine(t, rows.Stdout, "maps[3]{map,title,type,state,blockers}:")
+	requireAXILine(t, rows.Stdout, "  model,First,Research,frontier,\"\"")
+	requireAXILine(t, rows.Stdout, "  model,Second,Task,blocked,First")
+	requireAXILine(t, rows.Stdout, "  model,Third,Prototype,deferred,First")
+	if strings.Contains(rows.Stdout, "ignored") {
+		t.Fatalf("compiled map entered active rows:\n%s", rows.Stdout)
+	}
 
-	out.RequireExit(1)
-	requireAXILine(t, out.Stdout, "  noheading,error,unsupported-schema,no ticket heading or marker found")
-	requireContainsFold(t, out.Stdout, "badutf8,error,malformed")
-	requireContainsFold(t, out.Stdout, "invalid utf-8")
+	count := f.Bench("maps", "--count")
+	count.RequireExit(0)
+	if got := strings.TrimSpace(count.Stdout); got != "1" {
+		t.Fatalf("maps --count = %q, want 1", got)
+	}
+
+	status := f.Bench("status", "--all")
+	status.RequireExit(0)
+	requireContainsFold(t, status.Stdout, "1 unresolved map")
 }
 
-// TestAXIMapsUnreadableFileRow pins story 10: a decision file this process cannot read
-// gets a row naming it and its state, alongside every other readable file's rows, and
-// the command still exits 1. The prior implementation `continue`s past the read error
-// and silently drops the file from both the listing and the count.
-func TestAXIMapsUnreadableFileRow(t *testing.T) {
+func TestAXIMapsFogAndInvalidCountOnce(t *testing.T) {
 	t.Parallel()
 	contract.SkipIfSubjectBenchMissing(t)
 	f := contract.NewFixture(t)
-	f.WriteFile("decisions/good.md", "## #1: q?\nType: Grill\n### Answer\n— (open)\n")
-	f.WriteFile("decisions/locked.md", "## #1: q?\nType: Grill\n### Answer\n— (open)\n")
-	f.WriteUnreadable("decisions/locked.md", 0o644)
+	f.WriteFile("decisions/fog.md", activeMapDocument("shaping", "- Honest fog.", "Resolved.", "Resolved.", "Resolved."))
+	f.WriteFile("decisions/bad.md", "# Bad\n")
+	f.WriteFile("decisions/ready.md", activeMapDocument("ready", "", "Resolved.", "Resolved.", "Resolved."))
 
-	out := f.Bench("maps")
-
-	out.RequireExit(1)
-	requireAXILine(t, out.Stdout, "  good,1,Grill,open")
-	requireContainsFold(t, out.Stdout, "locked,error,unreadable")
-}
-
-// TestAXIMapsAbsentIsEmpty pairs with the fail-closed rows above: a repository with no
-// decisions/ directory at all still exits 0 and renders the definitive empty table —
-// absence is the one authoritative empty state, and an unconditional exit-1 stub would
-// satisfy the rows above while destroying this contract.
-func TestAXIMapsAbsentIsEmpty(t *testing.T) {
-	t.Parallel()
-	contract.SkipIfSubjectBenchMissing(t)
-	f := contract.NewFixture(t)
-
-	out := f.Bench("maps")
-
-	out.RequireExit(0)
-	requireAXILine(t, out.Stdout, "maps[0]{map,ticket,type,state}:")
-}
-
-// TestAXIMapsCountMatchesListing pins story 11: the status dashboard's decision-map
-// count and the `bench maps` listing derive from the same scan, driven against one
-// fixture with an unreadable map file. A count that fabricated zero for the failed
-// scan would disagree with a listing that shows the row.
-func TestAXIMapsCountMatchesListing(t *testing.T) {
-	t.Parallel()
-	contract.SkipIfSubjectBenchMissing(t)
-	f := contract.NewFixture(t)
-	f.WriteFile("decisions/good.md", "## #1: q?\nType: Grill\n### Answer\n— (open)\n")
-	f.WriteFile("decisions/locked.md", "## #1: q?\nType: Grill\n### Answer\n— (open)\n")
-	f.WriteUnreadable("decisions/locked.md", 0o644)
+	rows := f.Bench("maps")
+	rows.RequireExit(1)
+	requireAXILine(t, rows.Stdout, "  fog,Not yet specified,fog,shaping,\"\"")
+	requireAXILine(t, rows.Stdout, "  bad,invalid,map,invalid,\"decisions/bad.md: missing Status\"")
+	requireNoAXILineMatching(t, rows.Stdout, `^  ready,`)
 
 	count := f.Bench("maps", "--count")
 	count.RequireExit(0)
 	if got := strings.TrimSpace(count.Stdout); got != "2" {
-		t.Fatalf("maps --count = %q, want 2\nstdout:\n%s", got, count.Stdout)
+		t.Fatalf("maps --count = %q, want 2", got)
 	}
-
-	rows := f.Bench("maps")
-	rows.RequireExit(1)
-	requireAXILine(t, rows.Stdout, "  good,1,Grill,open")
-	requireContainsFold(t, rows.Stdout, "locked,error,unreadable")
-
-	status := f.Bench("status", "--all")
-	status.RequireExit(0)
-	requireContainsFold(t, status.Stdout, "decisions")
-	requireContainsFold(t, status.Stdout, "2 unresolved map")
 }
 
-// TestAXIMapsCountWholeDirectoryFailure is TestAXIMapsCountMatchesListing's whole-scan
-// half: there the directory listed and one file inside it failed, so a count was still
-// derivable. Here `decisions/` itself cannot be enumerated, nothing was confirmed absent,
-// and a bare `0` on the --count surface is a fabrication that contradicts the listing's
-// own exit-1 error line. Story 11 forbids exactly that disagreement, so both surfaces are
-// driven against the one fixture.
-func TestAXIMapsCountWholeDirectoryFailure(t *testing.T) {
+func TestAXIMapsFailClosedCandidatesAndAbsentDirectory(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+
+	t.Run("absent directory is definitive empty", func(t *testing.T) {
+		f := contract.NewFixture(t)
+		out := f.Bench("maps")
+		out.RequireExit(0)
+		requireAXIFirstLine(t, out.Stdout, "maps[0]{map,title,type,state,blockers}:")
+	})
+	t.Run("malformed and unreadable candidates remain visible", func(t *testing.T) {
+		f := contract.NewFixture(t)
+		f.WriteFile("decisions/badutf8.md", "\xff\xfe")
+		f.WriteFile("decisions/locked.md", activeMapDocument("shaping", "", "— (open)", "Resolved.", "Resolved."))
+		f.WriteUnreadable("decisions/locked.md", 0o644)
+		out := f.Bench("maps")
+		out.RequireExit(1)
+		requireContainsFold(t, out.Stdout, "badutf8,invalid,map,invalid")
+		requireContainsFold(t, out.Stdout, "locked,invalid,map,invalid")
+	})
+}
+
+func TestAXIMapsTemplateAndGrammar(t *testing.T) {
 	t.Parallel()
 	contract.SkipIfSubjectBenchMissing(t)
 	f := contract.NewFixture(t)
-	f.WriteFile("decisions/good.md", "## #1: q?\nType: Grill\n### Answer\n— (open)\n")
+	template := f.Bench("maps", "--template")
+	template.RequireExit(0)
+	requireContainsFold(t, template.Stdout, "Status: shaping")
+	for _, args := range [][]string{{"maps", "--count", "--template"}, {"maps", "--template", "--count"}} {
+		out := f.Bench(args...)
+		out.RequireExit(2)
+		requireContainsFold(t, out.Stdout, "--count and --template are mutually exclusive")
+	}
+}
+
+func TestAXIMapsQueriesAreReadOnly(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	f := contract.NewFixture(t)
+	f.WriteFile("decisions/model.md", activeMapDocument("shaping", "", "— (open)", "— (open)", "— (deferred)"))
+	f.Git("config", "user.email", "bench@local").RequireExit(0)
+	f.Git("config", "user.name", "bench").RequireExit(0)
+	f.Git("add", ".").RequireExit(0)
+	f.Git("commit", "-m", "seed").RequireExit(0)
+	f.WriteFile("scratch.txt", "untracked\n")
+	tracked, err := os.ReadFile(filepath.Join(f.Root, "decisions", "model.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	untracked, err := os.ReadFile(filepath.Join(f.Root, "scratch.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := f.Git("status", "--porcelain").Stdout
+	for _, args := range [][]string{{"maps"}, {"maps", "--count"}, {"maps", "--template"}, {"maps"}, {"maps", "--count"}, {"maps", "--template"}} {
+		f.Bench(args...).RequireExit(0)
+	}
+	after := f.Git("status", "--porcelain").Stdout
+	got, err := os.ReadFile(filepath.Join(f.Root, "decisions", "model.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	scratch, err := os.ReadFile(filepath.Join(f.Root, "scratch.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if before != after || string(tracked) != string(got) || string(untracked) != string(scratch) {
+		t.Fatalf("maps queries changed repository state: before=%q after=%q", before, after)
+	}
+}
+
+func TestAXIStatusReportsUnknownForFailedActiveScan(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	f := contract.NewFixture(t)
+	f.WriteFile("decisions/model.md", activeMapDocument("shaping", "", "— (open)", "Resolved.", "Resolved."))
 	f.WriteUnreadable("decisions", 0o755)
 
+	status := f.Bench("status", "--all")
+	status.RequireExit(0)
+	requireContainsFold(t, status.Stdout, "unknown (decisions is unreadable)")
 	count := f.Bench("maps", "--count")
 	count.RequireExit(1)
 	requireContainsFold(t, count.Stdout, "error: decisions is unreadable")
+}
 
-	rows := f.Bench("maps")
-	rows.RequireExit(1)
-	requireContainsFold(t, rows.Stdout, "error: decisions is unreadable")
+func activeMapDocument(status, fog, first, second, third string) string {
+	return "# Model\n\nStatus: " + status + "\n\n## Destination\n\nSettle it.\n\n## #1: First\n\nBlocked by: none\nType: Research\n\n### Question\n\nFirst?\n\n### Answer\n\n" + first + "\n\n## #2: Second\n\nBlocked by: #1\nType: Task\n\n### Question\n\nSecond?\n\n### Answer\n\n" + second + "\n\n## #3: Third\n\nBlocked by: #1\nType: Prototype\n\n### Question\n\nThird?\n\n### Answer\n\n" + third + "\n\n## Not yet specified\n\n" + fog + "\n\n## Spec-writer discretion\n\n## Out of scope\n\n## Sources\n"
 }

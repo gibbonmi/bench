@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/gibbonmi/bench/internal/bounds"
 )
 
 // DecisionMapCandidate identifies a directly discovered map and its ownership.
@@ -15,28 +17,44 @@ type DecisionMapCandidate struct {
 	Compiled bool
 }
 
+func isDirectoryDoc(name string) bool {
+	return strings.EqualFold(strings.TrimSuffix(name, filepath.Ext(name)), "README")
+}
+
+// discoverDirectoryCandidates is the sole direct-child candidate policy for active
+// and compiled decision-map directories. Callers choose which directories to compose.
+func discoverDirectoryCandidates(root, dir string, compiled bool) ([]DecisionMapCandidate, bounds.FileState, string) {
+	classified := bounds.ClassifyDir(dir)
+	if classified.State != bounds.StateParsed {
+		return nil, classified.State, classified.Reason
+	}
+	var candidates []DecisionMapCandidate
+	for _, entry := range classified.Entries {
+		name := entry.Name()
+		if entry.IsDir() || strings.HasPrefix(name, ".") || !strings.HasSuffix(name, ".md") || isDirectoryDoc(name) {
+			continue
+		}
+		path, err := filepath.Rel(root, filepath.Join(dir, name))
+		if err != nil {
+			return nil, bounds.StateUnreadable, err.Error()
+		}
+		candidates = append(candidates, DecisionMapCandidate{Path: filepath.ToSlash(path), Compiled: compiled})
+	}
+	return candidates, bounds.StateParsed, ""
+}
+
 // DiscoverDecisionMapCandidates finds active and compiled direct Markdown candidates.
 func DiscoverDecisionMapCandidates(root string) ([]DecisionMapCandidate, error) {
 	var candidates []DecisionMapCandidate
 	appendDirectory := func(dir string, compiled bool) error {
-		entries, err := os.ReadDir(dir)
-		if os.IsNotExist(err) {
+		discovered, state, reason := discoverDirectoryCandidates(root, dir, compiled)
+		if state == bounds.StateAbsent {
 			return nil
 		}
-		if err != nil {
-			return err
+		if state.Failed() {
+			return fmt.Errorf("read %s: %s", dir, reason)
 		}
-		for _, entry := range entries {
-			name := entry.Name()
-			if entry.IsDir() || strings.HasPrefix(name, ".") || !strings.HasSuffix(name, ".md") || isDirectoryDoc(name) {
-				continue
-			}
-			path, err := filepath.Rel(root, filepath.Join(dir, name))
-			if err != nil {
-				return err
-			}
-			candidates = append(candidates, DecisionMapCandidate{Path: filepath.ToSlash(path), Compiled: compiled})
-		}
+		candidates = append(candidates, discovered...)
 		return nil
 	}
 	if err := appendDirectory(filepath.Join(root, DecisionsDir), false); err != nil {
