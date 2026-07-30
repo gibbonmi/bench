@@ -104,8 +104,8 @@ rebuilt binary. Wall clock is evidence, not a timeout assertion.
 
 All four starts occur within 52 ms and every interval overlaps the others; a
 serialized trace would not satisfy this record. The focused envelope is 50.97
-s. Its 127.363 s of package spans is 18.363 s (17%) above the former 109 s
-single-process package, while 76.393 s of that work overlaps. The repeated
+s. Its 126.363 s of package spans is 17.363 s (16%, 15.93% rounded) above the former 109 s
+single-process package, while 75.393 s of that work overlaps. The repeated
 process overhead is therefore visible but not the remaining wall.
 
 The fresh gate is green in **89.91 s**, a 38.09 s (30%) reduction from the

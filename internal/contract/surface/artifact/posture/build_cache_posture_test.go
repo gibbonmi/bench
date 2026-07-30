@@ -6,31 +6,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/contract"
 )
-
-// TestMain puts the whole package on the dev-tier build posture; contract.ProcessEnv and
-// the fixture-driven mergeEnv both start from os.Environ(), so it reaches every subprocess
-// the package spawns. The rows asserting the hermetic default strip the token back out
-// through ambientBuildEnv. It also removes the package-owned shared set after every run.
-
-func ambientBuildEnv(extra []string, remove ...string) []string {
-	dropped := make(map[string]bool, len(remove))
-	for _, key := range remove {
-		dropped[key] = true
-	}
-	ambient := os.Environ()
-	env := make([]string, 0, len(ambient)+len(extra))
-	for _, entry := range ambient {
-		if key, _, ok := strings.Cut(entry, "="); ok && !dropped[key] {
-			env = append(env, entry)
-		}
-	}
-	return append(env, extra...)
-}
 
 func TestArtifactBuilderHonorsHermeticDefault(t *testing.T) {
 	root := contract.SubjectRoot(t)
@@ -40,13 +19,13 @@ func TestArtifactBuilderHonorsHermeticDefault(t *testing.T) {
 		token []string
 	}{
 		{name: "absent"},
-		{name: "unrecognized value", token: []string{contract.SharedBuildCacheEnv + "=yes"}},
+		{name: "unrecognized value", token: []string{fixture.InvalidSharedCacheToken()}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			source := fixture.CommittedHostileArtifactSource(t, root)
 			output := filepath.Join(t.TempDir(), "hermetic artifact output [*]")
 			build := exec.Command("bash", filepath.Join(source, "scripts", "build-artifacts.sh"), source, output)
-			build.Env = ambientBuildEnv(test.token, contract.SharedBuildCacheEnv)
+			build.Env = fixture.AmbientBuildEnvWithoutSharedCache(test.token)
 			if out, err := build.CombinedOutput(); err != nil {
 				t.Fatalf("hermetic artifact build failed: %v\n%s", err, out)
 			}
@@ -67,9 +46,9 @@ func TestBuildCachePostureUnderGoproxyOff(t *testing.T) {
 		env       []string
 		wantBuild bool
 	}{
-		{name: "hermetic default refuses offline", env: ambientBuildEnv([]string{"GOPROXY=off"}, contract.SharedBuildCacheEnv)},
-		{name: "opt-in reuses passed caches", env: ambientBuildEnv([]string{"GOPROXY=off", "GOCACHE=" + goCache, "GOMODCACHE=" + goModCache}, "GOCACHE", "GOMODCACHE"), wantBuild: true},
-		{name: "opt-in resolves caches before the HOME override", env: ambientBuildEnv([]string{"GOPROXY=off"}, "GOCACHE", "GOMODCACHE"), wantBuild: true},
+		{name: "hermetic default refuses offline", env: fixture.AmbientBuildEnvWithoutSharedCache([]string{"GOPROXY=off"})},
+		{name: "opt-in reuses passed caches", env: fixture.AmbientBuildEnv([]string{"GOPROXY=off", "GOCACHE=" + goCache, "GOMODCACHE=" + goModCache}, "GOCACHE", "GOMODCACHE"), wantBuild: true},
+		{name: "opt-in resolves caches before the HOME override", env: fixture.AmbientBuildEnv([]string{"GOPROXY=off"}, "GOCACHE", "GOMODCACHE"), wantBuild: true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			source := fixture.CommittedHostileArtifactSource(t, root)
@@ -94,7 +73,7 @@ func TestSharedCacheBuildRemovesStaleReproducibilityRecord(t *testing.T) {
 		name string
 		body string
 	}{
-		{name: "populated", body: staleReproducibilityRecord},
+		{name: "populated", body: fixture.StaleReproducibilityRecord},
 		{name: "zero byte", body: ""},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -111,5 +90,3 @@ func TestSharedCacheBuildRemovesStaleReproducibilityRecord(t *testing.T) {
 		})
 	}
 }
-
-const staleReproducibilityRecord = "{\"schema_version\":1,\"status\":\"green\",\"builds\":2}\n"

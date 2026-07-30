@@ -8,31 +8,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/contract"
 )
-
-// TestMain puts the whole package on the dev-tier build posture; contract.ProcessEnv and
-// the fixture-driven mergeEnv both start from os.Environ(), so it reaches every subprocess
-// the package spawns. The rows asserting the hermetic default strip the token back out
-// through ambientBuildEnv. It also removes the package-owned shared set after every run.
-
-func ambientBuildEnv(extra []string, remove ...string) []string {
-	dropped := make(map[string]bool, len(remove))
-	for _, key := range remove {
-		dropped[key] = true
-	}
-	ambient := os.Environ()
-	env := make([]string, 0, len(ambient)+len(extra))
-	for _, entry := range ambient {
-		if key, _, ok := strings.Cut(entry, "="); ok && !dropped[key] {
-			env = append(env, entry)
-		}
-	}
-	return append(env, extra...)
-}
 
 func TestSharedCacheBuildPromotesNoRecord(t *testing.T) {
 	contract.SkipIfSubjectFileMissing(t, "scripts/build-artifacts.sh")
@@ -65,7 +44,7 @@ func TestSharedCacheBuildRestoresRecordOnInterruptedPromotion(t *testing.T) {
 				t.Fatalf("seed generation failed: %v\n%s", err, out)
 			}
 			record := filepath.Join(filepath.Dir(output), "reproducibility.json")
-			want := []byte(staleReproducibilityRecord)
+			want := []byte(fixture.StaleReproducibilityRecord)
 			if err := os.WriteFile(record, want, 0o644); err != nil {
 				t.Fatal(err)
 			}
@@ -133,5 +112,3 @@ func removeStagedArtifactGeneration(t *testing.T, parent string) {
 		t.Fatal(err)
 	}
 }
-
-const staleReproducibilityRecord = "{\"schema_version\":1,\"status\":\"green\",\"builds\":2}\n"

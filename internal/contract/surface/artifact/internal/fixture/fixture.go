@@ -19,6 +19,33 @@ import (
 	"github.com/gibbonmi/bench/internal/contract"
 )
 
+// StaleReproducibilityRecord is the prior-generation record used by promotion tests.
+const StaleReproducibilityRecord = "{\"schema_version\":1,\"status\":\"green\",\"builds\":2}\n"
+
+// AmbientBuildEnv returns the process environment after removing named keys and appending overrides.
+func AmbientBuildEnv(extra []string, remove ...string) []string {
+	dropped := make(map[string]bool, len(remove))
+	for _, key := range remove {
+		dropped[key] = true
+	}
+	ambient := os.Environ()
+	env := make([]string, 0, len(ambient)+len(extra))
+	for _, entry := range ambient {
+		if key, _, ok := strings.Cut(entry, "="); ok && !dropped[key] {
+			env = append(env, entry)
+		}
+	}
+	return append(env, extra...)
+}
+
+// AmbientBuildEnvWithoutSharedCache removes the package-level shared-cache opt-in.
+func AmbientBuildEnvWithoutSharedCache(extra []string) []string {
+	return AmbientBuildEnv(extra, contract.SharedBuildCacheEnv)
+}
+
+// InvalidSharedCacheToken returns a non-opt-in value for the shared-cache setting.
+func InvalidSharedCacheToken() string { return contract.SharedBuildCacheEnv + "=yes" }
+
 // Run applies the dev-tier build posture once for a subject package and preserves
 // its test exit status after optional package-owned cleanup.
 func Run(m *testing.M, cleanup func() error) {

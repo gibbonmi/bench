@@ -2,7 +2,6 @@ package prepared
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,24 +10,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/contract"
 )
-
-func writeAggregateProof(t *testing.T, directory, osName, arch, runner string, mismatch bool) {
-	t.Helper()
-	digest, binary := strings.Repeat("1", 64), strings.Repeat("1", 64)
-	if mismatch {
-		binary = strings.Repeat("2", 64)
-	}
-	musl := "not_applicable"
-	if osName == "linux" {
-		musl = "green"
-	}
-	name := osName + "-" + arch
-	proof := map[string]any{"schema_version": 1, "target": name, "runner": runner, "status": "green", "rebuilt_sha256": digest, "binary_sha256": binary, "package_sha256": digest, "archive_sha256": digest, "musl_status": musl, "operations_status": "green", "strip_status": "green", "tools_status": "green"}
-	data, err := json.Marshal(proof)
-	if err != nil || os.WriteFile(filepath.Join(directory, name+".json"), append(data, '\n'), 0o644) != nil {
-		t.Fatalf("write native proof: %v", err)
-	}
-}
 
 func TestOfflineArchiveProjection(t *testing.T) {
 	root := contract.SubjectRoot(t)
@@ -48,55 +29,6 @@ func TestOfflineArchiveProjection(t *testing.T) {
 	offlineOut := filepath.Join(t.TempDir(), "offline artifacts [hostile]")
 	contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-offline-archives.sh"), npmOut, offlineOut).RequireExit(0)
 	assertOfflineArchiveSet(t, npmOut, offlineOut, wrapper.Version, matrix)
-}
-
-// The offline builder replaces its output directory wholesale — it moves the old
-// one aside and deletes it. Anything in there that the build cannot account for
-// is somebody's work, so the refusal has to come before the archives are built
-// rather than beside the swap that would destroy it.
-
-func assembleOfflineArchiveStage(t *testing.T, scriptRoot, planRoot, evidenceRoot string) string {
-	t.Helper()
-	stage := t.TempDir()
-	npmDir, archiveDir := filepath.Join(stage, "packages"), filepath.Join(stage, "archive")
-	wrapperExtract, platformExtract := filepath.Join(stage, "wrapper"), filepath.Join(stage, "platform")
-	for _, directory := range []string{npmDir, archiveDir, filepath.Join(wrapperExtract, "package"), filepath.Join(platformExtract, "package")} {
-		if err := os.MkdirAll(directory, 0o755); err != nil {
-			t.Fatal(err)
-		}
-	}
-	write := func(path string, data []byte, mode os.FileMode) {
-		t.Helper()
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(path, data, mode); err != nil {
-			t.Fatal(err)
-		}
-	}
-	write(filepath.Join(stage, "bench"), []byte("fixture binary\n"), 0o755)
-	write(filepath.Join(npmDir, "redbench-0.1.0.tgz"), []byte("wrapper\n"), 0o644)
-	write(filepath.Join(npmDir, "redbench-linux-x64-0.1.0.tgz"), []byte("platform\n"), 0o644)
-	write(filepath.Join(wrapperExtract, "package", "component-manifest.json"), []byte("{}\n"), 0o644)
-	write(filepath.Join(platformExtract, "package", "component-manifest.json"), []byte("{}\n"), 0o644)
-	var requirements struct {
-		Records []struct {
-			Path        string `json:"path"`
-			PackageMode string `json:"package_mode"`
-		} `json:"records"`
-	}
-	contract.ReadJSONFile(t, filepath.Join(planRoot, "internal", "releaseevidence", "requirements.json"), &requirements)
-	for _, record := range requirements.Records {
-		if record.PackageMode != "" {
-			data, err := os.ReadFile(filepath.Join(evidenceRoot, filepath.FromSlash(record.Path)))
-			if err != nil {
-				t.Fatal(err)
-			}
-			write(filepath.Join(wrapperExtract, "package", filepath.FromSlash(record.Path)), data, 0o644)
-		}
-	}
-	contract.NewExecFixtureAt(t, scriptRoot).Run("node", filepath.Join(scriptRoot, "scripts", "assemble-offline-archive.mjs"), planRoot, npmDir, archiveDir, "linux-x64", "0.1.0", filepath.Join(stage, "bench"), wrapperExtract, platformExtract).RequireExit(0)
-	return archiveDir
 }
 
 func assertOfflineArchiveSet(t *testing.T, npmArtifacts, output, version string, matrix []contract.ReleaseTarget) {
