@@ -2,32 +2,29 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `ea9dcaf`, clean tree, 21 unpushed commits
-Spec: `specs/ft91-gate-fastpath/spec.md` (Status: staged)
-Gate: green at `fcafeb2` — stale, work tree `e26358a`
+Branch: `main` — HEAD `72b87a1`, clean tree, 4 unpushed commits
+Spec: `specs/ft91-artifact-suite/spec.md` (Status: staged)
+Gate: green at `9e49084` — stale, work tree `0d84075`
 
 ## State
 
-- **The `--full` run is complete.** Ten build tickets, a semantic review
-  (fresh delegate, mid binding), a Codex falsification pass (top binding), and
-  one reviewer-signed repair pass all landed as gate-green commits. Measured:
-  solo canary 25.2 s (≤60 s stop rule met), forced full gate 128.0 s,
-  unchanged-tree reuse 0.57 s.
-- **Reviewer-ruled during the run:** commit reuses pre-lock via the gate home
-  (`ExecuteReusingFreshGreen`); `npm` dropped from the subject closure (node
-  stays); freshness 60 min; ADR 0002 posture 5 revised.
-- **Open reviewer items (flagged, not applied):** the load-coupled
-  `TestExecuteDeadlineRecordsDistinctTimeout` flake (attributed in
-  `.bench/learnings.md`; a fix edits a gate test); the ADR reopen trigger
-  stays commit-shaped; minor fail-closed observations from review (empty
-  `-test.list` output, live-symlink markers, `--frsh`-as-positional plumbing).
-- **Unpushed commits await the reviewer's push; ship-tier (`bench
-  prep-release`) has not run.** Retirement of `specs/ft91-gate-fastpath/`
-  waits for the retirement signal after merge; retro pending drain.
+- **The `--full` run has reached final-check.** Build commits `6016be6` and
+  `94b182e` landed the split and measurement. Top-tier semantic review
+  (`ft91_semantic_review`) and the approved top-tier Codex CLI falsification
+  found concrete topology, duplication, comment, and arithmetic defects.
+- **The terminal repair pass is green at `72b87a1`.** The reviewer-requested
+  Sol repair preserved the exact 33-test behavior while single-sourcing shared
+  facts, structurally binding the four TestMain runners, rejecting extra
+  packages and inline cache policy, and correcting the measurement arithmetic.
+  Its first gate red exposed an over-broad shared-cache strip; the exact
+  GOPROXY-off seam was repaired before the green landing.
+- **Measured result remains:** focused suite 50.97 s with overlapping subject
+  processes; fresh changed-tree gate 89.91 s versus 128 s. The dormant outer
+  width cap is a separate reviewer decision; no scheduler policy changed.
 
 ## Next command
 
-`/bench-what-next`
+`$bench-implement-spec --full ft91-artifact-suite`
 
 ## Shape
 

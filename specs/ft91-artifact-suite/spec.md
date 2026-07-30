@@ -1,6 +1,6 @@
 # ft91-artifact-suite — subject-split artifact contracts
 
-Status: staged
+Status: implemented
 
 Compiled from
 `specs/ft91-artifact-suite/decisions/gate-critical-path.md`. The source record
