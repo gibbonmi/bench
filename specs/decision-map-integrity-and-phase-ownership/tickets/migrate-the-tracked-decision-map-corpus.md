@@ -10,16 +10,16 @@ exclusions, or research facts.
 
 ## Acceptance
 
-- [ ] The migration inventory explicitly covers the six tracked active maps and
+- [x] The migration inventory explicitly covers the six tracked active maps and
   three tracked compiled maps present at ticket start; nested map assets remain
   excluded.
-- [ ] Active maps are honestly `shaping` or `ready`, and every compiled map is
+- [x] Active maps are honestly `shaping` or `ready`, and every compiled map is
   `ready`.
-- [ ] Every decision ticket has canonical blockers and type, and no answer or
+- [x] Every decision ticket has canonical blockers and type, and no answer or
   graph dependency changes meaning.
-- [ ] Handoff sections are removed only after their durable facts are retained in
+- [x] Handoff sections are removed only after their durable facts are retained in
   Destination, terminal sections, or the consuming spec.
-- [ ] Sources use the structured locator, Supports, and Drift form without losing
+- [x] Sources use the structured locator, Supports, and Drift form without losing
   a cited fact.
-- [ ] The complete tracked corpus validates through `internal/maps`, and a second
+- [x] The complete tracked corpus validates through `internal/maps`, and a second
   migration pass changes nothing.

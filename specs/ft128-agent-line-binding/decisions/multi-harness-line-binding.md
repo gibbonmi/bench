@@ -1,5 +1,7 @@
 # Multi-harness line binding
 
+Status: ready
+
 ## Destination
 
 Make the tier→model binding symmetric across harnesses so each harness reads,
@@ -18,6 +20,7 @@ mis-launching today.
 
 ## #1: Data model — one canonical family, or symmetric peers?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -34,6 +37,7 @@ because prose would still call gpt "the tier."
 
 ## #2: lines.env schema — key shape and harness set
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -48,6 +52,7 @@ validation.
 
 ## #3: How does the resolver/hook learn the current harness?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -62,6 +67,7 @@ The old shape-flags (`--alias`, `--provider-model`) are retired — they conflat
 
 ## #4: Agent-line enforcement scope — own-family-only or any bound tier?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -77,6 +83,7 @@ enforced** — realized in recommendation/report/skill (#8), not the verdict.
 
 ## #5: Docs + conformance for a 3×3 matrix
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -92,6 +99,7 @@ reviewer wants the binding human-readable in the profile.
 
 ## #6: Which harnesses does this repo bind now?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -105,6 +113,7 @@ absent opencode column is not a gate failure. Don't invent opencode ids not bein
 
 ## #7: SessionStart line report shape
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -119,6 +128,7 @@ row in the default report.
 
 ## #8: BENCH_MODEL contract for a shift
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -151,112 +161,11 @@ rule — it resolves per harness.
 
 ## Not yet specified
 
-- Exact deny-message wording and the verbose-flag name (`--all`?) for the full-matrix
-  report — spec-writer picks.
+## Spec-writer discretion
+
+- Exact deny-message wording and the verbose-flag name for the full-matrix report.
 - Whether `bench models` discovery output should also become harness-scoped.
 
+## Sources
+
 ## Out of scope
-
-- Changing which concrete models are bound to each tier (a reviewer binding
-  decision, not this restructure).
-- Adding OpenCode's live binding (deferred to adoption, #6).
-- Any change to the shift loop, gate, or worktree machinery beyond the BENCH_MODEL
-  contract (#8).
-- The agent's own auto-memory update (not a repo artifact).
-
-## Handoff
-
-1. **Module boundaries.**
-   - `internal/lines` (deep, Go core) — owns binding parse into a harness×tier
-     matrix, the Agent-line verdict, `ResolveModel*` verdicts, and `DescribeBinding`.
-     The heart of the change: new schema, `--harness`, tier-token BENCH_MODEL,
-     permissive matrix verdict, harness-primary describe.
-   - `cmd/bench/main.go` (thin) — `resolveModel`/`check-agent-line` CLI arg parsing:
-     add `--harness`, retire `--alias`/`--provider-model`, accept tier-token BENCH_MODEL.
-   - `.bench/adapters/{codex,claude,opencode}` (thin shims) — pass `--harness <self>`;
-     BENCH_MODEL is now a tier; opencode fail-closed until bound.
-   - `.bench/hooks/check-agent-line.sh` (thin shim) — pass `--harness claude`; its
-     `--describe` shows the claude column primary.
-   - `.bench/lines.env` — new `BENCH_<HARNESS>_<TIER>` schema, codex+claude cells.
-   - `projects/benchkit.md` "Lines" — matrix table replacing the gpt-canonical prose.
-   - `internal/conformance` `checkLineBinding` — matrix cross-check + per-declared-harness
-     completeness.
-   - `bench doctor` — old-schema detection + rewrite report.
-   - `craft-line` skill — harness-native recommendation rule.
-
-2. **Contracts.**
-   - `bench resolve-model --harness <h>` with `BENCH_MODEL=<tier>` → stdout the cell
-     `BENCH_<H>_<TIER>`, exit 0; unbound harness/cell → exit 1 with a stderr naming
-     the missing key; unset/unknown tier token → exit 1.
-   - `bench check-agent-line --harness <h>` (stdin: Agent envelope) → exit 0 if the
-     model matches any bound cell (permissive), exit 2 if it matches none, with a
-     deny message recommending harness `<h>`'s family. Fail-open rims unchanged.
-   - `bench check-agent-line --describe --harness <h>` → manifest with the `<h>`
-     column as the primary line; verbose flag prints the full matrix.
-   - `checkLineBinding` → diagnostics (gate red) on: missing lines.env, a declared
-     harness missing a tier, a malformed/unsafe token, prose↔env cell mismatch.
-
-3. **Deep vs thin.** `internal/lines` is the one deep module — all binding and
-   verdict logic. Adapters, the hook, and `cmd/bench` are pass-throughs with no
-   logic of their own; their seam is the core's exported funcs, not their own body.
-
-4. **Black-box assertables.**
-   - `resolve-model --harness codex`, `BENCH_MODEL=cheap` → stdout `gpt-5.6-luna`, exit 0.
-   - `resolve-model --harness claude`, `BENCH_MODEL=cheap` → stdout `sonnet`, exit 0.
-   - `resolve-model --harness opencode` (unbound) → exit 1, stderr names `BENCH_OPENCODE_*`.
-   - `check-agent-line --harness claude`, model=`opus` → exit 0; model=`gpt-5.6-sol`
-     → exit 0 (permissive); model=`bogus` → exit 2, message names the claude family.
-   - `check-agent-line --describe --harness claude` → stdout shows `top=fable mid=opus
-     cheap=sonnet` as the primary line.
-   - `checkLineBinding`: cell mismatch prose↔env → non-empty diags; claude bound but
-     `BENCH_CLAUDE_MID` unset → non-empty diags; opencode absent → no diag.
-   - `bench doctor` on old-schema lines.env → reports the `BENCH_TIER_*`→`BENCH_CODEX_*`
-     / `BENCH_ALIAS_*`→`BENCH_CLAUDE_*` rewrite.
-
-5. **Gate attachment.** `internal/lines` unit tests (`go test`) observe the verdict
-   and resolver seams — the primary gate surface. `checkLineBinding` runs in the
-   conformance phase against lines.env + the profile. The shell shims (adapters,
-   hook) carry no logic; their fail-open/closed rims have existing coverage. Two
-   seams the gate cannot see: the live Claude Code SessionStart report rendering and
-   the actual per-harness shift launch — both need manual verify.
-
-6. **Hostile-input owners** (from the profile checklist):
-   - malformed/quoted/CRLF/last-wins lines.env values → `internal/lines` ParseBinding
-     (existing coverage; extend to new keys).
-   - hand-edited file without trailing newline / absent vs empty lines.env →
-     `checkLineBinding` + ParseBinding.
-   - unknown `--harness` value → `resolveModel`/`check-agent-line` arg validation.
-   - unknown/unset BENCH_MODEL tier token → resolve verdict.
-   - retired old-schema keys present → `bench doctor` + core ignores them (hard cut).
-   - Agent envelope missing the model field → agent-line fail-open (existing).
-   - partial matrix (harness with 2 of 3 tiers) → completeness check.
-   - invocation through every surface (kit CLI, by-path CLI, hooks, adapters) reaches
-     the same routed core → the `--harness` plumbing must be uniform across all four.
-
-7. **Uncertainty flags.** None require escalation — every decision was grilled and
-   closed. Deny-message wording and the verbose-flag name are free spec-writer choices,
-   not tier-escalating uncertainty.
-
-8. **Rejected alternatives.** Presentation-only (kept Codex canonical); open-set
-   `BENCH_TIER_<TIER>_<HARNESS>` keys; shape-flags as harness proxy; own-family-only
-   enforcement; profile-defers-to-lines.env; dual-read compat shim; all-three-harnesses
-   now; full-matrix (non-primary) report; concrete-id BENCH_MODEL. Do not reopen.
-
-9. **Domain watch-outs.**
-   - Claude Code's Agent tool only accepts model *aliases* (fable/opus/sonnet), not
-     arbitrary ids — so `BENCH_CLAUDE_*` values are aliases, and a gpt id, though it
-     passes the permissive hook, is not launchable there. This is why permissive
-     enforcement is acceptable but native recommendation is the real fix.
-   - OpenCode ids are provider/model-qualified; with the projection retired,
-     `BENCH_OPENCODE_*` must hold full provider/model strings.
-   - lines.env is read by hook + adapters *and* cross-checked by the gate; editing a
-     cell in one place without the other turns the gate red — by design.
-   - `bench doctor` rewriting lines.env touches a reviewer-owned config file; prefer
-     report-and-offer over silent auto-rewrite. Confirm the posture in the spec.
-
-Dependency order: recommended as one spec, but if sliced — (A) `internal/lines`
-core: schema + `--harness` + tier-token BENCH_MODEL + permissive verdict +
-harness-primary describe, with unit tests; (B) wiring: lines.env migration,
-adapters, hook shim, `bench doctor`; (C) advisory: profile matrix table +
-`checkLineBinding` + `craft-line` rule. A depends on nothing; B and C depend on A.
-Slicing stays the reviewer's call.

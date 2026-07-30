@@ -1,5 +1,7 @@
 # Gate critical path — where the wall lives, and the levers left
 
+Status: shaping
+
 Assessed 2026-07-29 at working tree of `187bc36`, re-measured on the landed
 tree of `d91b709` once moves 1 and 2 shipped, and on the artifact-split landed
 tree of `6016be6`. Question: how fast can the dev
@@ -259,8 +261,14 @@ skip-key. Lever 2 delivers the same class of saving with a **complete** key
 sound on top of it. The `test` phase's existing use of the Go cache stays as
 is: its packages are unit-level and the posture is already accepted.
 
+
+## Destination
+
+Record the measured FT91 critical path and leave the only remaining policy choice — whether to bound outer-phase concurrency — explicitly with the reviewer.
+
 ## #1: How should the artifact suite expose its remaining independent work?
 
+Blocked by: none
 Type: Task
 
 ### Question
@@ -318,71 +326,14 @@ closure). Any finer key is a file→test map, which is diff-scoped gating,
 ruled unsound. So sound memoization is exactly lever 2, at whole-gate
 granularity, and the machinery for it already exists.
 
-## Handoff
+## Not yet specified
 
-1. **Module boundaries.** Replace the one serial artifact test package with
-   four subject packages: `posture`, `offline`, `prepared`, and
-   `distributable`. A private artifact-fixture support package owns facts used
-   by more than one subject package. `prepared` alone owns the package-scoped
-   prepared-artifact singleton and all six ruled sharers, preserving the
-   existing one-build hoist.
-2. **Contracts.** All 33 existing top-level tests remain present exactly once
-   with their assertions unchanged except for package-local fixture calls.
-   The contract phase keeps `-count=1`; no check moves tier or loses breadth.
-   The four packages run as separate Go test processes, allowing the existing
-   Go package scheduler to overlap them.
-3. **Deep vs thin.** The private fixture package is the deep unit for shared
-   source staging, package-main cache posture, and common artifact operations.
-   Subject packages own tests and subject-specific assertions. Thin package
-   entry points call the shared package-main runner rather than re-declaring
-   cache policy.
-4. **Black-box assertables.** The old root contains no tests; the four subject
-   packages contain the complete 33-test inventory exactly once; every package
-   runs under the dev shared-build-cache posture; posture tests still strip
-   that posture when hermetic behavior is their subject; the six prepared-set
-   sharers still trigger exactly one prepared build; and all five
-   behavior-owned artifact canaries bind to the package that now owns their
-   named test and still bite.
-5. **Gate attachment.** Focused coverage is `go test -count=1
-   ./internal/contract/surface/artifact/...`; the contract and canary phases
-   of the dev gate own the integrated verdict. Wall-clock is evidence rather
-   than a deterministic assertion: record the focused suite and fresh
-   changed-tree gate measurements, the serial share removed, and the remaining
-   critical path.
-6. **Hostile-input owners.** Each package-main entry owns the shared-cache
-   environment before tests start. The posture package owns stripping it from
-   commands whose subject is hermetic behavior. The prepared package owns
-   cleanup, mutation attribution, laziness, and failure persistence for its
-   process-local singleton. Existing artifact contracts keep ownership of
-   spaced paths, special files, dirty state, offline operation, and interrupted
-   promotion.
-7. **Uncertainty flags.** The four subject names, exact test-to-package
-   inventory, and private helper-package shape are the spec author's measured
-   compilation of the already-decided 3–4-subpackage split, not separate
-   reviewer rulings. They are flagged for veto in the spec. Wall-clock remains
-   host-sensitive; the ~40–60 s suite and ~60–75 s gate figures are estimates,
-   not a hard timeout.
-8. **Rejected alternatives.** `t.Parallel` changes the hazard analysis from
-   process ordering to shared-state races. Removing `-count=1`, canary
-   input-key skipping, fixture batching, and diff-scoped gating all weaken or
-   incompletely key the oracle. A persistent cross-process artifact cache is a
-   separate capability and is not required to expose package parallelism.
-9. **Domain watch-outs.** Go schedules packages concurrently but gives each
-   package its own process, `TestMain`, globals, and temp lifecycle. A singleton
-   copied into several packages silently becomes several builds. Canary
-   fixtures compile and invoke the owning package binary, so their package
-   paths must move with their tests. The split measurement shows outer-phase
-   contention; any outer width cap remains a reviewer decision, not an
-   implementation consequence of the package split.
+- Whether the reviewer wants a bounded outer concurrency cap after pricing its policy and implementation cost against the observed focused versus in-gate posture spans.
 
-## Recommended sequence
+## Spec-writer discretion
 
-Done: per-test canary bites (lever 1); tools-closure completion, gate-level
-reuse, and the 60 min freshness window (lever 2); and the artifact package
-split (lever 4). The fresh changed-tree measurement is 89.91 s, so the FT91
-≤60 s stop rule remains unmet. The next action is a reviewer decision on a
-bounded outer width cap, priced against the observed 50.917 s focused versus
-85.415 s in-gate posture span; no split work remains open.
+## Out of scope
 
-Reject: `-count=1` removal (lever 3), canary input-key skip, fixture
-batching, diff-scoped gating — all unsound or already ruled.
+- Rewriting gate sequencing, per-package verdict reuse, `-count=1` removal, canary input-key skipping, fixture batching, and diff-scoped gating; the record rejects or closes each as unsound or already decided.
+
+## Sources

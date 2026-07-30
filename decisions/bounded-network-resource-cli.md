@@ -1,5 +1,7 @@
 # Bounded network, resource, and CLI behavior (FT87)
 
+Status: shaping
+
 ## Destination
 
 One explicit policy bounds every Bench-initiated network attempt, subprocess,
@@ -241,73 +243,6 @@ Handoff uncertainty flags).
   a speed fix.
 - Reopening the npm distribution identity (`redbench`, ADR 0004).
 
-## Handoff
+## Spec-writer discretion
 
-1. **Module boundaries.** `internal/bounds` (policy constants + bounded-exec
-   helpers) — owns every Go-side bound; `bin/bench-repair-binary.mjs` — owns
-   repair bounds, pin verification, promotion, prune; a shared arg-grammar
-   helper — owns arity/`--`/help semantics for all Go subcommands;
-   `internal/worktree.Acquire` — loses fetch, gains explicit refresh;
-   `internal/models` — concurrent bounded discovery; `internal/outline` —
-   bounded default rendering; a capability-skip helper package for tests +
-   gate aggregation.
-2. **Contracts.** `BENCH_OFFLINE=1` → zero Bench-initiated network attempts,
-   each suppressed operation an explicit notice/row; bound hit → distinct
-   timeout/truncated status (exit and output state it), never silent success;
-   repair: no implicit run, pinned-manifest digest mismatch → hard red, exit
-   127 path names `bench repair`; usage errors exit 2, help exits 0; gate
-   timeout → distinct `timeout` verdict, non-zero.
-3. **Deep vs thin.** `internal/bounds` and the repair script are deep (hide
-   timeout/size/cancellation mechanics); the arg-grammar helper is deep for
-   parsing semantics; per-command `Command` funcs stay thin pass-throughs;
-   `Acquire`'s refresh becomes a thin call into bounded-exec.
-4. **Black-box assertables.** Offline contract: sentinel proves zero egress
-   under `BENCH_OFFLINE=1` (exists as smoke harness; now exercises the real
-   flag). Hung-endpoint fixtures prove deadlines fire with distinct status.
-   Oversized fixture tarball/JSON proves size caps red before exhaustion.
-   `bench outline` default on a large fixture: bounded bytes + `truncated`
-   metadata; `--full` unbounded. Trailing-garbage/`--`/help matrices assert
-   exit codes. `bench coverage <slug>` from a subdirectory equals from root.
-   Gate output contains `capability-skips` rows on a capability-poor fixture.
-   Version string and package metadata asserted in artifact contracts.
-5. **Gate attachment.** Existing contract/conformance phases host all of the
-   above (runtime contracts for CLI behavior, artifact contracts for
-   packages, conformance for single-sourcing checks). The offline egress
-   proof runs in the native/offline workflow like today's offline smokes —
-   the gate sees its recorded result, not live network absence; that seam
-   stays workflow-attached, flagged as such.
-6. **Hostile-input owners.** Leading-dash/space/glob paths → arg-grammar
-   helper + commit path grammar (#7); required tool missing (`node` absent)
-   → repair's structured failure (#3); cwd deeper than root → root-anchored
-   slug resolution (#7); interrupt mid-loop → cancellation propagation (#2);
-   special files/oversize files → outline skip metadata (#6); absent vs
-   empty → pinned repair manifest fails closed on both (#3); control bytes →
-   existing `toon.Table` refusal (unchanged).
-7. **Uncertainty flags.** (a) All numeric bound values are worker
-   recommendations — spec locks them, reviewer may adjust cheaply. (b)
-   Canonical `repository`/`homepage`/`bugs` URLs are reviewer-supplied at
-   spec time. (c) The gate-timeout ceiling interacts with FT91's wall-clock
-   work — if FT91 later shrinks the gate, the ceiling can tighten; keep the
-   constant single-sourced so that is a one-line move.
-8. **Rejected alternatives.** Per-operation env flags instead of one
-   `BENCH_OFFLINE` (sprawl; unprovable as a single record). Config-file
-   tunable bounds (config surface for constants nobody should tune).
-   Registry `dist.integrity` as the digest source (trusts the transport it
-   defends against). Adopting a CLI framework (cobra et al.) for the grammar
-   (dependency and diff far larger than the hand-rolled helper the toon
-   helpers already anchor). Silent capability skips (a skipped security test
-   indistinguishable from a passed one). Automatic repair-cache GC (deletion
-   policy hidden inside a fetch path).
-9. **Domain watch-outs.** The repair script runs where no Go binary exists —
-   it cannot share Go-side constants; treat its bounds as its own facts or
-   the one-source rule will be "fixed" into a broken import. A gate timeout
-   must never be reachable by a healthy whole-tree run — it exists to end
-   hangs, not to race FT91. `GIT_TERMINAL_PROMPT=0` without a deadline still
-   hangs on non-credential stalls; both are required.
-
-Dependency order: three slices — (1) `internal/bounds` + `BENCH_OFFLINE` +
-Go-side bounding (refresh, models, outline, guards, caps); (2) repair
-hardening + identity/metadata (wrapper/Node side, produces the FT83 evidence
-record); (3) CLI argument grammar + capability-skip evidence + deadline
-decoupling. Slice 1 first — it defines the policy the others cite; 2 and 3
-are independent of each other. Slicing stays the reviewer's call.
+## Sources

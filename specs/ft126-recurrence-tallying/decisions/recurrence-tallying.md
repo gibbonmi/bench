@@ -1,5 +1,7 @@
 # Recurrence tallying
 
+Status: ready
+
 ## Destination
 
 Give roadmap prioritization a durable count of independently observed
@@ -8,6 +10,7 @@ inventing a second roadmap parser.
 
 ## #1: Does recurrence determine priority or inform it?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -104,107 +107,27 @@ the migration commit preserve the count without fabricating provenance.
 
 ## Not yet specified
 
-n/a — the capture unit, migration, and multi-recommendation retro posture are
-settled above.
-
-## Out of scope
-
-- A command that automatically mutates or globally sorts ROADMAP.md; the reviewed
-  maintenance phase remains the prioritization owner.
-- A second occurrence-history file or event database; the current key set lives
-  on the row and Git is the historical record.
-- Multiple primary owners on one capture unit; repeat the same incident key on
-  separate units when one incident independently evidences several FTs.
-
 ## Sources
 
-- `ROADMAP.md` — FT126 owns the roadmap parser/context seam and records the first
-  FT98 recurrence.
-- `internal/roadmap/context_parse.go` — one parser owns roadmap rows and all three
-  capture-source facts in the schema-2 snapshot.
-- `internal/roadmap/context_types.go` and `internal/roadmap/context_render.go` —
-  drift-prone current snapshot fields that will carry any machine-readable tally.
-- `internal/roadmap/roadmap.go` — ideas are dated free-text lines today; the
-  roadmap command displays capture state but does not perform the drain.
-- `.agents/commands/bench-what-next.md` — prioritization and the reviewed mutation
-  remain judgment owned by the maintenance phase.
+- Path: `ROADMAP.md`
+  Supports: FT126 owns the roadmap parser and context seam and records the first FT98 recurrence.
+  Drift: Update when the roadmap ownership or recorded recurrence changes.
+- Path: `internal/roadmap/context_parse.go`
+  Supports: One parser owns roadmap rows and all three capture-source facts in the schema-2 snapshot.
+  Drift: Update when the parser's capture-source schema changes.
+- Path: `internal/roadmap/context_types.go`
+  Supports: Current snapshot fields carry any machine-readable tally.
+  Drift: Update when tally fields move or change shape.
+- Path: `internal/roadmap/context_render.go`
+  Supports: Current snapshot fields render any machine-readable tally.
+  Drift: Update when tally rendering moves or changes shape.
+- Path: `internal/roadmap/roadmap.go`
+  Supports: Ideas are dated free-text lines today and the roadmap command displays capture state without performing the drain.
+  Drift: Update when idea capture or roadmap command ownership changes.
+- Path: `.agents/commands/bench-what-next.md`
+  Supports: Prioritization and reviewed mutation remain judgment-owned by the maintenance phase.
+  Drift: Update when the maintenance phase changes ownership.
 
-## Handoff
+## Spec-writer discretion
 
-1. **Module boundaries.**
-   - `internal/roadmap` is the deep owner of occurrence-token and row-ledger
-     parsing, deduplication, owner validation, derived counts, context
-     discrepancies, and the unified projection across capture sources.
-   - `bench idea` argument handling is a thin producer of the same token grammar;
-     its existing free-text capture behavior remains intact.
-   - `internal/learnings` and `internal/retros` continue to own their document
-     shapes. They expose capture units and bodies; recurrence meaning stays in
-     `internal/roadmap` rather than being reimplemented per source.
-   - `.agents/commands/bench-what-next.md` owns the reviewed add-key/remove-source
-     and tie-breaker procedure; it does not carry another parser or count.
-2. **Contracts.**
-   - `bench idea --owner <FT> --incident <key> <text>` requires both metadata
-     flags together, validates the token grammar, appends exactly one visible
-     occurrence token, and preserves the existing exit and append contract.
-   - A row has zero or one `Occurrences:` line. Its comma-separated incident
-     keys are unique and canonical; the parser derives the count.
-   - Context exposes owner, incident, source, capture unit, and state for pending
-     occurrences, plus row count/keys and structured discrepancies. Structural
-     discrepancy means the recommended sequence is untrusted.
-   - Repeated `(owner, incident)` capture against a recorded row key is reported
-     as already recorded, not counted again.
-3. **Deep vs thin.** `internal/roadmap` hides grammar, cross-source normalization,
-   deduplication, and discrepancy policy behind the existing document/context
-   interfaces. CLI dispatch and source-specific readers pass typed text through
-   and gain no recurrence policy of their own.
-4. **Black-box assertables.**
-   - Idea capture with valid metadata appends one canonical token; either flag
-     alone, an invalid FT, or an invalid incident exits with usage/error and
-     leaves the file unchanged.
-   - Context reports two capture artifacts with the same owner/incident as one
-     pending pair with both sources, then reports it as already recorded once
-     the row contains the key.
-   - A malformed token, absent owner row, duplicate row key, or multiple tokens
-     on one capture unit appears as a structured discrepancy and prevents a
-     trusted next-action projection.
-   - Row count equals the number of unique stored keys; no heading count exists
-     to drift.
-   - Within equal severity and actionability, the reviewed sequence orders the
-     higher count first; dependencies and explicit reviewer pricing still win.
-5. **Gate attachment.** `internal/roadmap` unit tests own grammar, ledger,
-   deduplication, and context projection. Runtime contracts own `bench idea`
-   append/refusal behavior and `bench roadmap --context` AXI output. Conformance
-   owns the command prose anchors and the absence of legacy header counts after
-   migration. The gate cannot mechanically grade the maintenance phase's
-   judgment that two rows share severity/actionability; the phase anchor and
-   a fixture with equal-class rows grade the deterministic tie-break rule.
-6. **Hostile-input owners.**
-   - Spaces, glob characters, leading dashes, `--`, missing values, and
-     multi-word idea text belong to the existing CLI grammar plus the new
-     owner/incident arguments.
-   - Control bytes, non-ASCII, separators, overlong keys, duplicate keys, CRLF,
-     and a missing final newline belong to the occurrence and row parsers.
-   - Absent versus empty capture files, special files, dangling symlinks, and
-     bounded reads remain with the existing capture classifiers.
-   - A retro containing several recommendation units and a learning body with
-     token-like prose exercise capture-unit association rather than global text
-     matching.
-   - Re-run idempotency is the `(owner, incident)` deduplication contract.
-7. **Uncertainty flags.** None. The reviewer approved the recommended posture
-   for every ticket, including the syntax, tie-break rule, migration, and
-   fail-visible behavior.
-8. **Rejected alternatives.** Inferring ownership from prose; storing a mutable
-   numeric count; a second ledger; silent malformed-token drops; multiple primary
-   owners on one unit; counting every artifact independently; automatic global
-   sorting; recurrence overriding severity, dependencies, or reviewer pricing.
-9. **Domain watch-outs.**
-   - Capture files disappear during a drain, so durable incident identity must
-     land on the row before source removal.
-   - The roadmap heading is already status-rich prose; putting the count there
-     would duplicate the parser-owned key set and recreate drift.
-   - A retired FT is not a valid current owner. Its history remains in Git rather
-     than accepting new recurrence against a row that no longer exists.
-   - Context schema consumers require an explicit schema advance when fields or
-     tables change.
-
-Dependency order: n/a — one FT126 recurrence-tallying spec.
+## Out of scope

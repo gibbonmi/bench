@@ -1,5 +1,7 @@
 # Gate pipeline (FT91, pipeline arm)
 
+Status: shaping
+
 ## Destination
 
 The dev gate becomes a local pipeline of first-class phases with declared
@@ -12,6 +14,7 @@ against regroup-app), cutting dev wall-clock — today 4m36s, long pole
 
 ## #1: What does the phase manifest declare, and who owns its failure modes?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -56,6 +59,7 @@ silently grade with the wrong oracle.
 
 ## #2: How much of `internal/gate`'s existing runner survives as the pipeline runner?
 
+Blocked by: none
 Type: Research
 
 ### Question
@@ -191,6 +195,7 @@ doesn't.
 
 ## #5: How does a canary fixture's inner run scope to its named check, and what shape is the dedup?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -349,7 +354,13 @@ five-field schema held.
 
 ## #9: What happens to the gate's timing and output contract?
 
+Blocked by: none
 Type: Grill
+
+### Question
+
+Which timing and output behaviors remain stable as the gate pipeline gains
+overlapping phases?
 
 ### Answer
 Resolved at bootstrap — continuity, decided by the tier split: per-check
@@ -389,85 +400,6 @@ map; any change to the format is its own reviewer decision later.
   symmetry, probe-output spill) — shape already decided there; build work,
   not map fog.
 
-## Handoff
+## Spec-writer discretion
 
-1. **Module boundaries.** `internal/gate` owns the manifest loader/validator,
-   the DAG scheduler that replaces `splitSerialPhases`, the built-in fallback
-   table (gaining go.mod-probed gofmt/vet/test phases), and
-   straggler-naming at the gate deadline. `internal/conformance` owns the
-   residual `package-core-guard` check and the check-filter in
-   `RunConformance`. `internal/conformance/registry` owns the family→check
-   table and the filter-env constant. `internal/canary` owns scope
-   resolution (family/CHECK → env), per-check shared vacuity baselines, and
-   the widened family→phase routing. A new bench plumbing subcommand owns
-   test-phase package enumeration. The kit's `.bench/phases.json` declares
-   the kit-specific phases (worktree race test, filtered conformance suite).
-   `internal/bounds` and the shift/verdict machinery are outside — untouched.
-2. **Contracts.** Manifest: JSON at `.bench/phases.json`, six fields
-   (`name`, `argv` exec-array, `env`, `needs`, `optional`, `dir`
-   default-root inside-root); absent → built-in table, empty or malformed
-   (parse error, duplicate name, dangling/cyclic needs, empty argv,
-   escaping dir) → red naming the defect. Scoping env
-   `BENCH_CONFORMANCE_CHECK`: absent → full tier; unknown name or
-   tier-mismatch → red. Runner output: today's `phase <name>: green|red`
-   summary lines and timing formats unchanged (#9); dependents of a red
-   phase report skipped-with-cause, distinct from red; exit codes
-   0/1/3/124/130 unchanged; on deadline the runner names still-running
-   phases. `.bench/gate.sh` stays the one-line exec entry.
-3. **Deep vs thin.** Deep: the scheduler (hides DAG execution and
-   cancellation), the manifest loader (hides the validation family), the
-   canary scope resolver + baseline grouping, the test-enumeration
-   subcommand (owns exclusion policy). Thin: `gate.sh`, the manifest itself
-   (data), the phase-named family convention.
-4. **Black-box assertables.** Loader: exit code + stderr diagnostic per
-   malformed-manifest class from fixture files. Scheduler (fake runner):
-   needs-respecting order, dependents-cancelled-with-cause, independents
-   complete, straggler naming. Canary (fake `Runner`): each fixture's
-   `RunCall.Env` carries the resolved check var; baseline run count equals
-   the number of check groups present. Parity: the inventory test asserting
-   every moved step has a fixture bound to its destination phase; each new
-   fixture's recorded red. Conformance filter: scoped run executes exactly
-   the named check (timing lines observable).
-5. **Gate attachment.** The kit's own suites run inside the gate's
-   conformance/test phases, so the gate sees every seam above; the canary
-   sweep itself proves fixture routing and scoping bite. Not
-   gate-assertable: the wall-clock outcome — ship evidence is the manual
-   post-change measurement against the 4m36s / `package-core-guard` ~86 s
-   baseline.
-6. **Hostile-input owners.** Malformed-manifest family → loader.
-   Hostile `BENCH_CONFORMANCE_CHECK` values → conformance entry (unknown /
-   tier-mismatch reds). Empty or unknown CHECK file → existing
-   `fixtureTier` posture; unmapped conformance family → sweep error.
-   `dir` escaping the root → loader validation. Duplicate env keys →
-   strip-then-set everywhere (see watch-outs).
-7. **Uncertainty flags.** None blocking. The exact EXPECT strings for the
-   new phase fixtures are settled at build time within the decided rule
-   (tool diagnostic + `phase <name>: red`).
-8. **Rejected alternatives.** Manifest: weight field, per-phase timeout
-   field, tier field, YAML/TOON, generated gate.sh shim, generator-written
-   package lists, static `go test ./...`. Execution: weighted budget,
-   full fail-fast, run-everything-on-red, runner per-phase timeout default.
-   Canary: single full baseline for scoped runs, merging same-check fixture
-   runs, per-fixture PHASE file, relocating stray fixtures, deferring the
-   new-phase fixtures. Silent fallback on any malformed input.
-9. **Domain watch-outs.** The kit's own test suite runs nested inside the
-   gate's conformance phase with the phase env passed through, and Go's exec
-   env has no duplicate-key precedence — every inner env pin must
-   strip-then-set, never append. The gate's build phase materializes only
-   when both `scripts/go-build.sh` and `go.mod` exist in the graded tree — a
-   fixture targeting it must ship both. Conformance-family fixtures are
-   routed by `FixturePhase` and `phasesForMode`'s owner allowlist; a phase
-   name absent from both runs every non-canary phase, so fixture migration
-   and allowlist widening must land together.
-   `TestCoreSubprocessFailuresUseProbeFormatter` text-scans the composite's
-   label inventory and goes red when any label leaves it.
-
-Dependency order: confirmed by the reviewer 2026-07-27. Slice A (the canary
-check-scoping prerequisite, #5) shipped 2026-07-26 (spec
-`ft91-canary-check-scoping`, retired). Next is slice B, the manifest + DAG
-runner (#1, #4, #9); then slice C, the `checkGoCore` split with the fixture
-migration and parity test (#3, #6, #7) — C's spec also carries FT143's cheap
-kit-root family→check binding assertion (reviewer-bundled 2026-07-27), so the
-registry rework cannot reintroduce the late red on either entry point. The
-two interim FT91 defects (conformance env-scrub symmetry, probe-output spill)
-land ahead of both slices as a reviewer-approved direct fix-and-gate pass.
+## Sources

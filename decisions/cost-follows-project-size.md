@@ -1,5 +1,7 @@
 # Cost follows project size
 
+Status: shaping
+
 ## Destination
 
 One complaint — gate, context, and delegation cost grow with the tree while the
@@ -10,6 +12,7 @@ roadmap rows stay separate because the owners differ.
 
 ## #1: Which FT91 arms are in scope for the next build cycle?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -29,6 +32,7 @@ split instead of check fan-out.
 
 ## #2: How does conformance wall clock distribute across the fifteen checks?
 
+Blocked by: none
 Type: Research
 
 ### Question
@@ -86,6 +90,7 @@ interaction: n/a — no fan-out.
 
 ## #4: Does the FT136 slicing rule wait for the cheap-tier retest?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -102,6 +107,7 @@ edit.
 
 ## #5: Where does the FT136 rule land in the kit?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -118,6 +124,7 @@ cross-reference pointing at `craft-spec`. Kit edit under `craft-synthesis`.
 
 ## #6: Does the cheap tier hold on a genuinely seam-shaped slice?
 
+Blocked by: none
 Type: Task
 
 ### Question
@@ -134,6 +141,7 @@ guidance stay as-is until then).
 
 ## #7: How much of FT101 does this map decide now?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -153,6 +161,7 @@ trigger: a linked repo with more than one bounded context.
 
 ## #8: Is byte-reproducibility of release artifacts a dev-gate property?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -216,6 +225,7 @@ on its own.
 
 ## #10: Must the dev gate build without network egress?
 
+Blocked by: none
 Type: Grill
 
 ### Question
@@ -256,72 +266,6 @@ the hermetic proof is unchanged.
 - Gate scope as a speed lever — FT101 guardrail; never reopened for wall-clock.
 - Weakening any check to buy wall clock — green keeps meaning what it means.
 
-## Handoff
+## Spec-writer discretion
 
-FT136 and the FT91 tier split both shipped (specs retired). The handoff below is
-the next FT91 spec: re-tiering release-build hermeticity out of the dev gate.
-
-1. **Module boundaries.** `scripts/build-artifacts.sh` owns cache posture and is
-   the single source of it — hermetic by default (private `GOCACHE`,
-   `GOMODCACHE`, and the clone-and-compare second build), relaxed only when the
-   dev opt-in is present. `scripts/gen-platform-packages.sh` stays a
-   pass-through and gains nothing. The staged-release-plan narrowing that
-   `committedHostileArtifactSource` already owns in
-   `internal/contract/surface/artifact` becomes the one shared helper both
-   contract packages call. `internal/preprelease` owns the ship-tier
-   invocation and passes no opt-in — absence is what makes it hermetic.
-2. **Contracts.** `build-artifacts.sh` argv, exit codes, and every existing
-   refusal (dirty source, missing pin manifest, tarball-count mismatch) are
-   unchanged. With the opt-in unset the behavior is byte-identical to today,
-   including `reproducibility.json` at `builds: 2`. With it set, the script
-   inherits the ambient Go build and module caches and skips the second build,
-   and it writes no `reproducibility.json` at all — it must never emit a record
-   claiming evidence it did not produce. `npm_config_cache`, `TMPDIR`, and
-   `HOME` stay private in both tiers: they were not measured as cost drivers and
-   their concurrency posture is untested.
-3. **Deep vs thin.** `build-artifacts.sh` is the deep unit — both tiers enter at
-   one argv and the posture hides behind one env contract.
-   `gen-platform-packages.sh` is a thin shim with no seam of its own. The
-   staged-plan rewrite is a shared test helper, promoted rather than copied.
-4. **Black-box assertables.** Opt-in unset: `reproducibility.json` present,
-   `status: green`, `builds: 2`. Opt-in set: no `reproducibility.json`, and the
-   emitted tarball names and count still satisfy the release plan unchanged. An
-   unrecognized opt-in value builds hermetically. With a populated ambient module
-   cache, `GOPROXY=off` succeeds on the dev path and still fails on the hermetic
-   one. `prep-release`'s `artifacts` step argv carries the real root and no
-   opt-in.
-5. **Gate attachment.** The dev contract phase observes the opt-in path; the
-   hermetic path attaches at `bench prep-release` and is no longer exercised
-   per-commit. That narrowing is the decided tradeoff, identical in kind to #3's.
-   Because the release path must never silently inherit dev posture, a
-   conformance check pins that `prep-release`'s artifact step passes no opt-in —
-   fail-closed, matching the family default.
-6. **Hostile-input owners.** Dirty or untracked source state stays with
-   `build-artifacts.sh`'s existing HEAD check. A garbage opt-in value is owned by
-   the posture resolver, which treats anything but the exact token as hermetic. A
-   poisoned ambient build cache is accepted in dev by this decision and
-   impossible in ship tier by construction. Concurrent dev invocations already
-   serialize on the existing output-directory lock.
-7. **Uncertainty flags.** The opt-in token name is unchosen. One dev assertion
-   depends on the double-build — `assertPromotedReproducibility`, called only
-   from `artifact_test.go:107` inside `TestDistributableArtifactContracts` — and
-   it is the one coverage row that must move to the ship tier. The comparator's
-   own red-capable coverage in `reproducibility_test.go` drives
-   `compare-artifacts.sh` against synthetic inputs and stays per-commit, so
-   moving the double-build costs no comparator coverage.
-8. **Rejected alternatives.** Dropping only the second build while keeping the
-   private cache (halves the cost but leaves the 24x cache penalty, the larger
-   cause); keeping full four-platform breadth in the dev generator test;
-   vendoring `toon-go` (answers offline only, leaves the cost); making the
-   release build non-hermetic anywhere (the proof is the point); diff-scoped
-   gating and gate scope as a speed lever, both closed above.
-9. **Domain watch-outs.** A cold Go build cache costs 4.79 s against 0.20 s warm
-   on this module, so any change that re-cold-starts a cache inside the inner
-   suite reintroduces the 600 s package-timeout hazard the split removed. A fresh
-   `GOMODCACHE` forces a module download, which is why an air-gapped run fails
-   today. Go's build and module caches are concurrency-safe; npm's is not
-   assumed to be. Reproducibility evidence is only meaningful when both builds
-   are independent — the second build's separate clone and separate caches are
-   load-bearing, not incidental.
-
-Dependency order: n/a — single spec.
+## Sources
