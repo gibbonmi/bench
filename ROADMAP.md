@@ -41,24 +41,6 @@ repository-controlled bank evidence requirement makes this row active.
 
 Sources: `RR:C-05`; `RC:H-03`.
 
-**FT129 (MEDIUM) — a panic in the inner test binary reads as a canary that
-stopped biting.** FT122's first gate went red as `canary
-'worktree-lifecycle-safety-bypassed' did not bite`, naming an untouched and
-correct fixture. The real cause was a new runtime contract test that sliced a
-subject-reported hash without a length guard: against the fixture's stub
-subject the hash was empty, the test panicked, the whole
-`internal/contract/runtime` binary aborted, and the contract the fixture greps
-for never ran. A check that never got to bite is not a check that stopped
-biting, and reporting the two identically points every diagnosis at the wrong
-file — this one cost a full canary sweep at HEAD just to establish the red was
-ours. Teach the canary to detect a panic or non-test abort in the inner output
-and report it as its own failure class, naming the panicking test. A second
-arm to weigh rather than assume: a conformance check that no
-`internal/contract/runtime` test slices subject-reported output without a
-length guard, since the canary subject is always a stub and any such slice is
-a latent tripwire-disarming panic. Source: the 2026-07-25 learnings entry,
-verdicted in this drain.
-
 **FT171 (MEDIUM, decision required) — bound outer gate-phase concurrency
 against measured contention.** The artifact-split follow-up measured the
 `posture` package materially slower inside the fresh full gate than in its
@@ -323,7 +305,7 @@ ahead of the conflict check joins the same doctor/link visit this row owns;
 the abort-before-refresh sequencing is the capture's claim, not re-verified
 here. Source: `IDEAS.md`, drained here.
 
-**FT98 (MEDIUM, evidence supplied twice) — one preserve-then-discard primitive;
+**FT98 (MEDIUM, evidence supplied three times) — one preserve-then-discard primitive;
 three faces.** Three rows were faces of one missing primitive — a sanctioned,
 recoverable discard — and collapse to one semantics rather than three:
 recovery ref written first, exact fingerprint required to apply, refusal if
@@ -348,7 +330,10 @@ assignment rows open, one active, at the 2026-07-29 session start) are
 re-preserved at every session start and nothing else will retire them
 (`bench worktree recovery <ref>` returns `retain … unlanded` on a sampled
 ref, 2026-07-27; ref count re-taken 2026-07-29) — the residue is growing,
-not draining. Face
+not draining. The third occurrence came when a scoped roadmap commit was
+blocked by an unrelated dirty session handoff on 2026-07-30; the session used
+an isolated verification worktree, the landing workaround owned by FT169,
+because the sanctioned set-aside primitive still does not exist. Face
 two, `bench commit`'s set-aside (was FT127): the refusal reads "working-tree
 files outside the named set block the commit — name them, or set them aside",
 but no set-aside route exists in the CLI, so an agent's only real exits are
@@ -383,6 +368,16 @@ file transfer. The command owns preparing that path-scoped landing worktree and
 the safe transfer sequence; the full-run guidance names the same pattern rather
 than leaving sessions to reconstruct it. Entry: `/bench-shape-idea`. Sources:
 the gate-fastpath and FT123 + FT124 retros, drained here and in a prior run.
+
+The FT129 build supplied the delegation-entry face. A write delegate's
+assignment was behind `main`, but its Codex sandbox could not update shared Git
+metadata to perform the required fast-forward. The landing command should offer
+a delegation-ready preflight that fast-forwards the assignment from the
+coordinator side, verifies and reports `HEAD == main`, then hands the exact
+subject to the delegate. The accompanying `craft-delegate` guidance names this
+Codex constraint and routes a denied delegate-side fast-forward back to the
+coordinator instead of spending retries on permissions. Source: the FT129
+implementation retro, drained here.
 
 **FT126 (MEDIUM, evidence supplied) — the roadmap parser and context snapshot
 make the drain's evidence complete.** The row grammar is currently implicit:
@@ -428,6 +423,15 @@ claim rather than as fact. That rule is prose, needs no new mechanism, and was
 applied by hand in the 2026-07-27 drain — every diagnosis drained there was read
 out of the tree first. Source of this clause: `.bench/learnings.md`, verdicted
 here. The grammar face came from `IDEAS.md`, drained here.
+
+The same parser and snapshot seam owns recurrence tallying. An idea, learning,
+or retro should be able to cite an existing FT as its primary owner so the drain
+records a new occurrence on that row instead of manufacturing a duplicate;
+the current count stays visible while Git owns the event history. The first
+captured occurrence is FT98's 2026-07-30 scoped-commit refusal, with FT169 as
+the downstream workaround. Decide the citation grammar and malformed-reference
+posture alongside the row grammar rather than adding a second roadmap parser.
+Source: `IDEAS.md`, drained here.
 
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.** Make
 every documented CLI example executable; parse and validate real YAML
@@ -847,6 +851,16 @@ shared environment helper, the charge names which rows opt into shared caches
 and which remain hermetic, then runs the focused failing rows before the full
 gate; the artifact-suite repair over-stripped that distinction. Sources: the
 learnings journal and the `ft91-artifact-suite` retro, drained here.
+
+Model-comparison charges are another instance of the same owner. Every
+candidate receives one constant charge, base commit, file fence, effort,
+focused suite, and independent probe; setup failures are recorded separately
+from generation time. Fixed behavioral checks and the independent probe decide
+whether the cheap default clears its bar, while style differences decide which
+acceptable patch is better rather than justifying an expensive tier by
+themselves. The existing `craft-line` cheap implementation default and
+red-driven escalation ladder remain authoritative. Source: the FT129
+implementation retro, drained here.
 
 **FT165 (LOW) — fold the domain-modeling discipline into
 `/bench-shape-idea`.** Upstream candidate (mattpocock/skills,
@@ -1325,6 +1339,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT129: the cheapest unblocked reproduced fix, separating inner-test panics from canaries that stopped biting.
+1. `/bench-shape-idea` — FT126 recurrence tallying: reviewer-priced first because occurrence counts materially affect roadmap prioritization.
 2. `/bench-write-spec` — FT128: the line-enforcement fix now owns both the fork verdict and the static model-token sweep.
-3. `/bench-shape-idea` — FT171: price an outer gate-phase width cap against the measured contention without weakening green semantics.
+3. `/bench-write-spec` — FT131: make stale built binaries fail closed before contract suites or the gate credit the wrong subject.
