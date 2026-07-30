@@ -127,6 +127,8 @@ else
       GOOS="$goos" GOARCH="$goarch" bash "$source_root/scripts/go-build.sh" "$source_root" "$binary"
     fi
     chmod 0755 "$binary"
+    # Platform packages are release artifacts, not local freshness-verification subjects.
+    rm -f "$binary.seal"
   done < "$matrix_file"
 
   node "$source_root/scripts/build-release-evidence.mjs" "$source_root" "$wrapper" "$packages"

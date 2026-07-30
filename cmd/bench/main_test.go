@@ -41,6 +41,20 @@ func TestRunUnknownExits2(t *testing.T) {
 	}
 }
 
+func TestFreshnessCheckRefusesMissingOwnExecutable(t *testing.T) {
+	root := t.TempDir()
+	var stderr bytes.Buffer
+
+	code := freshnessCheck([]string{root}, filepath.Join(root, "dist", "bench"), &stderr)
+	if code != 1 {
+		t.Fatalf("freshnessCheck missing executable exit = %d, want 1", code)
+	}
+	want := "bash scripts/go-build.sh " + root + " " + filepath.Join(root, "dist", "bench")
+	if !strings.Contains(stderr.String(), want) {
+		t.Fatalf("freshnessCheck stderr = %q, want rebuild action %q", stderr.String(), want)
+	}
+}
+
 func TestResolveModelProviderModelMode(t *testing.T) {
 	root := t.TempDir()
 	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {

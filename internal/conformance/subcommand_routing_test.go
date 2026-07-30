@@ -73,6 +73,7 @@ var subcommandRouting = map[string]routingEntry{
 	"test":         routed("internal/testreport"),
 
 	"check-agent-line":    exempt(whyPlumbing),
+	"freshness-check":     exempt(whyPlumbing),
 	"gate-go":             exempt(whyPlumbing),
 	"gate-phases":         exempt(whyPlumbing),
 	"guard-git":           exempt(whyPlumbing),

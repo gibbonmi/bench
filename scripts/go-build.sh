@@ -15,7 +15,7 @@
 # get prebuilt binaries via the @redbench/<os>-<arch> platform packages.
 set -euo pipefail
 
-modroot="${1:?usage: go-build.sh <module-root> <output-path>}"
+modroot="$(cd "${1:?usage: go-build.sh <module-root> <output-path>}" && pwd -P)"
 out="${2:?usage: go-build.sh <module-root> <output-path>}"
 
 # Version is package.json's; absent or unreadable → "dev" (the canary fixtures carry
@@ -35,4 +35,12 @@ while IFS= read -r arg; do go_build_flags+=("$arg"); done < <(node -e '
 for index in "${!go_build_flags[@]}"; do
   go_build_flags[$index]="${go_build_flags[$index]//<package-version>/$version}"
 done
-go build "${go_build_flags[@]}" -o "$out" ./cmd/bench
+
+# Staging beside the target makes executable promotion an atomic rename.
+out_dir="$(dirname "$out")"
+mkdir -p "$out_dir"
+staged="$(mktemp "$out_dir/.bench.tmp.XXXXXX")"
+trap 'rm -f "$staged"' EXIT
+go build "${go_build_flags[@]}" -o "$staged" ./cmd/bench
+env -u GOOS -u GOARCH go run ./internal/freshness/cmd "$modroot" "$staged" "$out"
+trap - EXIT

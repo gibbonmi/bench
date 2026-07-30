@@ -21,6 +21,7 @@ import (
 	"github.com/gibbonmi/bench/internal/coverage"
 	"github.com/gibbonmi/bench/internal/dashboard"
 	"github.com/gibbonmi/bench/internal/diff"
+	"github.com/gibbonmi/bench/internal/freshness"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/gitguard"
@@ -288,6 +289,28 @@ func treeHash(args []string) (string, int) {
 	return git.TreeHash(root) + "\n", 0
 }
 
+func freshnessCheck(args []string, invoked string, stderr io.Writer) int {
+	if len(args) != 1 {
+		fmt.Fprintln(stderr, "usage: bench freshness-check <root>")
+		return 2
+	}
+	root, err := filepath.Abs(args[0])
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	executable, err := filepath.Abs(invoked)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	if err := freshness.Verify(root, executable); err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	return 0
+}
+
 // guardGit is the destructive-git guard subcommand: it reads the PreToolUse envelope on
 // stdin, classifies through internal/gitguard, and yields the verdict as an exit code —
 // 0 allow, 2 block (with the `BLOCKED:` message on stderr), 3 a genuine failure to run.
@@ -401,6 +424,8 @@ func run(args []string, stdout, stderr *os.File) int {
 		return gate.PinCommand(args[1:], os.Stdin, stdout, stderr)
 	case "gate-phases":
 		return gatePhasesCommand(args[1:], stdout, stderr)
+	case "freshness-check":
+		return freshnessCheck(args[1:], os.Args[0], stderr)
 	case "gate-go":
 		return gate.GateGoCommand(args[1:], stdout, stderr)
 	case "release-preflight":
