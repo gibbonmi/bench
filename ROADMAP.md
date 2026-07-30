@@ -259,7 +259,7 @@ deny message single-sources its bound-tiers listing, which leads with the
 three tier ids and trails the harness aliases; inside a Claude Code session
 the aliases are the only tokens the Agent tool can pass, so the error leads
 with ids that harness cannot use (observed 2026-07-19). The design is already
-decided: the closed `decisions/multi-harness-line-binding.md` map answers the
+decided: the closed `specs/ft128-agent-line-binding/decisions/multi-harness-line-binding.md` map answers the
 schema question — symmetric per-harness bindings with no canonical family,
 each layer reporting its own harness's tokens. One build fixes the fork
 verdict and re-leads the denial from that map in the same diff.
@@ -267,7 +267,8 @@ verdict and re-leads the denial from that map in the same diff.
 The static half belongs in that build too: a conformance check rejects any
 `.agents/commands/*.md` tier-model token against `.bench/lines.env`, so command
 prose cannot reintroduce a hardcoded binding. The check must demonstrate its
-bite for the right reason. Source: `IDEAS.md`, drained here.
+bite for the right reason. Spec: `specs/ft128-agent-line-binding/spec.md`.
+Source: `IDEAS.md`, drained here.
 
 **FT135 (MEDIUM) — a pre-push guard on a guessed branch looks armed while
 protecting nothing.** When the repository has no resolvable default branch,
@@ -967,6 +968,8 @@ reports it at all, and it shares the fix shape: the consumer detects that
 refuse, re-resolve, or simply say so is the row's open question. Sources: the
 2026-07-25 learnings entry, verdicted in a prior drain; `session-handoff.md`,
 drained here.
+
+Staged spec: [`specs/ft131-binary-freshness/spec.md`](specs/ft131-binary-freshness/spec.md).
 
 **FT133 (MEDIUM) — `bench coverage --check` verifies that red-signal citations
 resolve.** A coverage-map row naming `go test -run TestFoo` where no such test
