@@ -1,4 +1,6 @@
-package artifact
+package prepared
+
+import fixture "github.com/gibbonmi/bench/internal/contract/surface/artifact/internal/fixture"
 
 import (
 	"os"
@@ -41,7 +43,7 @@ func TestArtifactBuilderRejectsDirtyAndUntrackedSourceState(t *testing.T) {
 		{name: "dirty initialized submodule", expect: "bench artifacts: source state must be clean and tracked at HEAD", mutate: dirtyArtifactSubmodule},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			source := committedHostileArtifactSource(t, root)
+			source := fixture.CommittedHostileArtifactSource(t, root)
 			test.mutate(t, source)
 			prepared := t.TempDir()
 			if err := os.WriteFile(filepath.Join(prepared, "prepared-artifact"), []byte("prepared\n"), 0o644); err != nil {
@@ -49,8 +51,8 @@ func TestArtifactBuilderRejectsDirtyAndUntrackedSourceState(t *testing.T) {
 			}
 			ready := filepath.Join(t.TempDir(), "promotion-ready")
 			command := exec.Command("bash", filepath.Join(source, "scripts", "build-artifacts.sh"), source, filepath.Join(t.TempDir(), "artifacts"))
-			command.Env = promotionTestEnv(prepared, ready)
-			output, err := runArtifactBuildThroughPromotionSeam(t, command, ready)
+			command.Env = fixture.PromotionTestEnv(prepared, ready)
+			output, err := fixture.RunArtifactBuildThroughPromotionSeam(t, command, ready)
 			if err == nil {
 				t.Fatalf("artifact builder accepted %s source state:\n%s", test.name, output)
 			}
@@ -63,7 +65,7 @@ func TestArtifactBuilderRejectsDirtyAndUntrackedSourceState(t *testing.T) {
 
 func TestArtifactBuilderRefusesMissingBinaryPinManifest(t *testing.T) {
 	root := contract.SubjectRoot(t)
-	source := committedHostileArtifactSource(t, root)
+	source := fixture.CommittedHostileArtifactSource(t, root)
 	command := exec.Command("bash", filepath.Join(source, "scripts", "build-artifacts.sh"), source, filepath.Join(t.TempDir(), "artifacts"))
 	command.Env = append(os.Environ(), "BENCH_TEST_SKIP_PIN_MANIFEST=1", "BENCH_REPRO_BUILD=1")
 	output, err := command.CombinedOutput()

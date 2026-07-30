@@ -1,4 +1,4 @@
-package artifact
+package fixture
 
 import (
 	"bytes"
@@ -19,7 +19,23 @@ import (
 	"github.com/gibbonmi/bench/internal/contract"
 )
 
-func assertPackedSetupForwarding(t *testing.T, dir, wrapper, shim string, env map[string]string) {
+// Run applies the dev-tier build posture once for a subject package and preserves
+// its test exit status after optional package-owned cleanup.
+func Run(m *testing.M, cleanup func() error) {
+	if err := os.Setenv(contract.SharedBuildCacheEnv, "1"); err != nil {
+		panic(err)
+	}
+	code := m.Run()
+	if cleanup != nil {
+		if err := cleanup(); err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "artifact fixture cleanup: %v\n", err)
+			code = 1
+		}
+	}
+	os.Exit(code)
+}
+
+func AssertPackedSetupForwarding(t *testing.T, dir, wrapper, shim string, env map[string]string) {
 	t.Helper()
 	real := wrapper + ".real"
 	if err := os.Rename(wrapper, real); err != nil {
@@ -44,9 +60,9 @@ func assertPackedSetupForwarding(t *testing.T, dir, wrapper, shim string, env ma
 	}
 }
 
-func assertPackedEntrySurfaceIdentity(t *testing.T, repo string, env map[string]string, versionOut string) {
+func AssertPackedEntrySurfaceIdentity(t *testing.T, repo string, env map[string]string, versionOut string) {
 	t.Helper()
-	hookOut := runLifecycle(t, repo, env, "bash", filepath.Join(repo, ".bench", "hooks", "session-start.sh"))
+	hookOut := RunLifecycle(t, repo, env, "bash", filepath.Join(repo, ".bench", "hooks", "session-start.sh"))
 	if !strings.Contains(hookOut, filepath.Join(repo, ".bench", "bin", "bench.sh")) {
 		t.Fatalf("session hook did not identify linked launcher:\n%s", hookOut)
 	}
@@ -66,7 +82,7 @@ func assertPackedEntrySurfaceIdentity(t *testing.T, repo string, env map[string]
 		}
 		adapterEnv := maps.Clone(env)
 		adapterEnv["PATH"] = stubDir + string(os.PathListSeparator) + os.Getenv("PATH")
-		out := runLifecycle(t, repo, adapterEnv, "bash", filepath.Join(repo, ".bench", "adapters", provider), "identity prompt")
+		out := RunLifecycle(t, repo, adapterEnv, "bash", filepath.Join(repo, ".bench", "adapters", provider), "identity prompt")
 		if !strings.Contains(out, "provider:"+provider+":") {
 			t.Fatalf("packed %s adapter escaped linked launcher/provider: %s", provider, out)
 		}
@@ -76,20 +92,20 @@ func assertPackedEntrySurfaceIdentity(t *testing.T, repo string, env map[string]
 	}
 }
 
-func runPackedFreshClone(t *testing.T, repo, _, shim, version string) {
+func RunPackedFreshClone(t *testing.T, repo, _, shim, version string) {
 	t.Helper()
-	runLifecycle(t, repo, nil, "git", "add", "-A")
-	runLifecycle(t, repo, nil, "git", "commit", "-qm", "linked state")
+	RunLifecycle(t, repo, nil, "git", "add", "-A")
+	RunLifecycle(t, repo, nil, "git", "commit", "-qm", "linked state")
 	clone := filepath.Join(t.TempDir(), "committed fresh clone [*]")
-	runLifecycle(t, filepath.Dir(clone), nil, "git", "clone", "-q", repo, clone)
+	RunLifecycle(t, filepath.Dir(clone), nil, "git", "clone", "-q", repo, clone)
 	home := filepath.Join(t.TempDir(), "empty cache [*]")
 	bin := filepath.Join(home, "bin")
 	if err := os.MkdirAll(bin, 0o755); err != nil {
 		t.Fatal(err)
 	}
 	env := map[string]string{"HOME": home, "BENCH_HOME": home, "PATH": bin + string(os.PathListSeparator) + "/usr/bin:/bin"}
-	runLifecycle(t, clone, env, shim, "link")
-	runLifecycle(t, clone, env, shim, "init")
+	RunLifecycle(t, clone, env, shim, "link")
+	RunLifecycle(t, clone, env, shim, "init")
 	manifest, err := os.ReadFile(filepath.Join(clone, ".bench", "link-manifest.tsv"))
 	if err != nil || !bytes.Contains(manifest, []byte("#kit\t"+version+"\n")) {
 		t.Fatalf("fresh clone maintenance lost installed identity: %q, %v", manifest, err)
@@ -99,7 +115,7 @@ func runPackedFreshClone(t *testing.T, repo, _, shim, version string) {
 	}
 }
 
-func runLifecycle(t *testing.T, dir string, overrides map[string]string, name string, args ...string) string {
+func RunLifecycle(t *testing.T, dir string, overrides map[string]string, name string, args ...string) string {
 	t.Helper()
 	cmd := exec.Command(name, args...)
 	cmd.Dir, cmd.Env = dir, contract.ProcessEnv(nil, overrides)
@@ -110,13 +126,13 @@ func runLifecycle(t *testing.T, dir string, overrides map[string]string, name st
 	return string(out)
 }
 
-func assertPlannedArtifactNames(t *testing.T, root, output string) {
+func AssertPlannedArtifactNames(t *testing.T, root, output string) {
 	t.Helper()
 	var pkg struct {
 		Version string `json:"version"`
 	}
 	contract.ReadJSONFile(t, filepath.Join(root, "package.json"), &pkg)
-	planned := strings.Fields(runLifecycle(t, root, nil, "node", filepath.Join(root, "scripts", "release-plan.mjs"), root, "artifact-names", pkg.Version))
+	planned := strings.Fields(RunLifecycle(t, root, nil, "node", filepath.Join(root, "scripts", "release-plan.mjs"), root, "artifact-names", pkg.Version))
 	want := make(map[string]bool, len(planned))
 	for _, name := range planned {
 		want[name] = true
@@ -134,7 +150,7 @@ func assertPlannedArtifactNames(t *testing.T, root, output string) {
 	}
 }
 
-func assertPromotedReproducibility(t *testing.T, output string) {
+func AssertPromotedReproducibility(t *testing.T, output string) {
 	t.Helper()
 	path := filepath.Join(filepath.Dir(output), "reproducibility.json")
 	data, err := os.ReadFile(path)
@@ -154,34 +170,34 @@ func assertPromotedReproducibility(t *testing.T, output string) {
 	}
 }
 
-type artifactSourceOption int
+type ArtifactSourceOption int
 
 const (
-	includeFirstNonHostArtifactTarget artifactSourceOption = 1
-	stageHostlessArtifactPlan         artifactSourceOption = 2
+	IncludeFirstNonHostArtifactTarget ArtifactSourceOption = 1
+	StageHostlessArtifactPlan         ArtifactSourceOption = 2
 )
 
-func committedHostileArtifactSource(t *testing.T, root string, options ...artifactSourceOption) string {
+func CommittedHostileArtifactSource(t *testing.T, root string, options ...ArtifactSourceOption) string {
 	t.Helper()
-	return contract.NarrowReleasePlan(t, root, artifactSourceNarrowing(t, options...))
+	return contract.NarrowReleasePlan(t, root, ArtifactSourceNarrowing(t, options...))
 }
 
-func committedHostileArtifactSourceIn(t *testing.T, directory, root string, options ...artifactSourceOption) string {
+func CommittedHostileArtifactSourceIn(t *testing.T, directory, root string, options ...ArtifactSourceOption) string {
 	t.Helper()
-	return contract.NarrowReleasePlanIn(t, directory, root, artifactSourceNarrowing(t, options...))
+	return contract.NarrowReleasePlanIn(t, directory, root, ArtifactSourceNarrowing(t, options...))
 }
 
-func artifactSourceNarrowing(t *testing.T, options ...artifactSourceOption) func(contract.ReleasePlanTargets) []contract.ReleaseTarget {
+func ArtifactSourceNarrowing(t *testing.T, options ...ArtifactSourceOption) func(contract.ReleasePlanTargets) []contract.ReleaseTarget {
 	t.Helper()
 	return func(matrix contract.ReleasePlanTargets) []contract.ReleaseTarget {
 		selected := append(make([]contract.ReleaseTarget, 0, 2), matrix.Host...)
-		if len(options) != 0 && options[0] == stageHostlessArtifactPlan {
+		if len(options) != 0 && options[0] == StageHostlessArtifactPlan {
 			selected = selected[:0]
 		}
 		if len(selected) == 0 {
 			capability.Environment(t, fmt.Sprintf("artifact contract tests require release plan target for host %s/%s", matrix.GOOS, matrix.GOArch))
 		}
-		if len(options) != 0 && options[0] == includeFirstNonHostArtifactTarget {
+		if len(options) != 0 && options[0] == IncludeFirstNonHostArtifactTarget {
 			for _, target := range matrix.All {
 				if target.GOOS != matrix.GOOS || target.GOArch != matrix.GOArch {
 					selected = append(selected, target)
@@ -196,9 +212,9 @@ func artifactSourceNarrowing(t *testing.T, options ...artifactSourceOption) func
 	}
 }
 
-func assertSpecialFileArtifactFailure(t *testing.T, root, output string) {
+func AssertSpecialFileArtifactFailure(t *testing.T, root, output string) {
 	t.Helper()
-	broken := committedHostileArtifactSource(t, root)
+	broken := CommittedHostileArtifactSource(t, root)
 	if err := os.Remove(filepath.Join(broken, "LICENSE")); err != nil {
 		t.Fatal(err)
 	}
@@ -224,7 +240,7 @@ func assertSpecialFileArtifactFailure(t *testing.T, root, output string) {
 	}
 }
 
-func copyPreparedArtifactGeneration(t *testing.T, source string) string {
+func CopyPreparedArtifactGeneration(t *testing.T, source string) string {
 	t.Helper()
 	prepared := filepath.Join(t.TempDir(), "prepared artifact generation")
 	if err := os.Mkdir(prepared, 0o755); err != nil {
@@ -242,11 +258,11 @@ func copyPreparedArtifactGeneration(t *testing.T, source string) string {
 	return prepared
 }
 
-func promotionTestEnv(prepared, ready string) []string {
+func PromotionTestEnv(prepared, ready string) []string {
 	return append(os.Environ(), "BENCH_TEST_PREPARED_ARTIFACTS="+prepared, "BENCH_TEST_PROMOTION_READY_FILE="+ready)
 }
 
-func runArtifactBuildThroughPromotionSeam(t *testing.T, command *exec.Cmd, ready string) ([]byte, error) {
+func RunArtifactBuildThroughPromotionSeam(t *testing.T, command *exec.Cmd, ready string) ([]byte, error) {
 	t.Helper()
 	stop := make(chan struct{})
 	done := make(chan struct{})
@@ -272,10 +288,10 @@ func runArtifactBuildThroughPromotionSeam(t *testing.T, command *exec.Cmd, ready
 	return output, err
 }
 
-// awaitArtifactPromotionSeam blocks until the build has parked at the promotion seam. The
+// AwaitArtifactPromotionSeam blocks until the build has parked at the promotion seam. The
 // seam sits above every move the promotion makes, so nothing has been promoted yet when
 // this returns.
-func awaitArtifactPromotionSeam(t *testing.T, cmd *exec.Cmd, ready string) {
+func AwaitArtifactPromotionSeam(t *testing.T, cmd *exec.Cmd, ready string) {
 	t.Helper()
 	deadline := time.Now().Add(30 * time.Second)
 	for {
@@ -290,17 +306,17 @@ func awaitArtifactPromotionSeam(t *testing.T, cmd *exec.Cmd, ready string) {
 	}
 }
 
-// interruptArtifactPromotion signals a build parked at the promotion seam, so the failure
+// InterruptArtifactPromotion signals a build parked at the promotion seam, so the failure
 // lands inside the promotion block rather than during generation.
-func interruptArtifactPromotion(t *testing.T, source, prepared, output string) {
+func InterruptArtifactPromotion(t *testing.T, source, prepared, output string) {
 	t.Helper()
 	ready := filepath.Join(t.TempDir(), "promotion-ready")
 	cmd := exec.Command("bash", filepath.Join(source, "scripts", "build-artifacts.sh"), source, output)
-	cmd.Env = promotionTestEnv(prepared, ready)
+	cmd.Env = PromotionTestEnv(prepared, ready)
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
-	awaitArtifactPromotionSeam(t, cmd, ready)
+	AwaitArtifactPromotionSeam(t, cmd, ready)
 	if err := cmd.Process.Signal(syscall.SIGINT); err != nil {
 		t.Fatal(err)
 	}
@@ -309,15 +325,15 @@ func interruptArtifactPromotion(t *testing.T, source, prepared, output string) {
 	}
 }
 
-func assertInterruptedArtifactPromotion(t *testing.T, source, prepared, output string, wantFiles int) {
+func AssertInterruptedArtifactPromotion(t *testing.T, source, prepared, output string, wantFiles int) {
 	t.Helper()
-	prior := promotedArtifactDigests(t, output)
-	interruptArtifactPromotion(t, source, prepared, output)
+	prior := PromotedArtifactDigests(t, output)
+	InterruptArtifactPromotion(t, source, prepared, output)
 	files, err := os.ReadDir(output)
 	if err != nil || len(files) != wantFiles {
 		t.Fatalf("promotion interruption left partial/absent set: files=%d err=%v", len(files), err)
 	}
-	if after := promotedArtifactDigests(t, output); !maps.Equal(after, prior) {
+	if after := PromotedArtifactDigests(t, output); !maps.Equal(after, prior) {
 		t.Fatalf("promotion interruption changed prior-generation bytes: got=%v want=%v", after, prior)
 	}
 	if _, err := os.Stat(output + ".lock"); !os.IsNotExist(err) {
@@ -329,29 +345,29 @@ func assertInterruptedArtifactPromotion(t *testing.T, source, prepared, output s
 	}
 	rerunReady := filepath.Join(t.TempDir(), "rerun-ready")
 	rerun := exec.Command("bash", filepath.Join(source, "scripts", "build-artifacts.sh"), source, output)
-	rerun.Env = promotionTestEnv(prepared, rerunReady)
-	if rerunOutput, err := runArtifactBuildThroughPromotionSeam(t, rerun, rerunReady); err != nil {
+	rerun.Env = PromotionTestEnv(prepared, rerunReady)
+	if rerunOutput, err := RunArtifactBuildThroughPromotionSeam(t, rerun, rerunReady); err != nil {
 		t.Fatalf("idempotent rerun after SIGINT failed: %v\n%s", err, rerunOutput)
 	}
 	files, err = os.ReadDir(output)
 	if err != nil || len(files) != wantFiles {
 		t.Fatalf("rerun after SIGINT left incomplete output: files=%d err=%v", len(files), err)
 	}
-	if after := promotedArtifactDigests(t, output); !maps.Equal(after, prior) {
+	if after := PromotedArtifactDigests(t, output); !maps.Equal(after, prior) {
 		t.Fatalf("rerun after SIGINT changed complete output: got=%v want=%v", after, prior)
 	}
 }
 
-func promotedArtifactDigests(t *testing.T, directory string) map[string]string {
+func PromotedArtifactDigests(t *testing.T, directory string) map[string]string {
 	t.Helper()
-	digests, err := promotedArtifactDigestMap(directory)
+	digests, err := PromotedArtifactDigestMap(directory)
 	if err != nil {
 		t.Fatal(err)
 	}
 	return digests
 }
 
-func promotedArtifactDigestMap(directory string) (map[string]string, error) {
+func PromotedArtifactDigestMap(directory string) (map[string]string, error) {
 	entries, err := os.ReadDir(directory)
 	if err != nil {
 		return nil, err

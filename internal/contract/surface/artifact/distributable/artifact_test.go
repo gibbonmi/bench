@@ -1,4 +1,6 @@
-package artifact
+package distributable
+
+import fixture "github.com/gibbonmi/bench/internal/contract/surface/artifact/internal/fixture"
 
 import (
 	"bytes"
@@ -62,7 +64,7 @@ func TestDistributableArtifactContracts(t *testing.T) {
 	assertWrapperAssetPolicy(t, contract.SubjectRoot(t))
 	contract.SkipIfSubjectFileMissing(t, "scripts/build-artifacts.sh")
 	root := contract.SubjectRoot(t)
-	buildRoot := committedHostileArtifactSource(t, root, includeFirstNonHostArtifactTarget)
+	buildRoot := fixture.CommittedHostileArtifactSource(t, root, fixture.IncludeFirstNonHostArtifactTarget)
 	var plan struct {
 		Targets []contract.ReleaseTarget `json:"targets"`
 	}
@@ -116,7 +118,7 @@ func TestDistributableArtifactContracts(t *testing.T) {
 func TestArtifactBuilderRejectsSpecialReleaseEvidenceInput(t *testing.T) {
 	root := contract.SubjectRoot(t)
 	contract.SkipIfSubjectFileMissing(t, "scripts/build-artifacts.sh")
-	assertSpecialFileArtifactFailure(t, root, t.TempDir())
+	fixture.AssertSpecialFileArtifactFailure(t, root, t.TempDir())
 }
 
 func assertWrapperAssetPolicy(t *testing.T, root string) {
@@ -176,29 +178,29 @@ func assertInstalledArtifactLifecycle(t *testing.T, artifacts, version string) {
 		"npm_config_registry":        "http://127.0.0.1:9",
 		"npm_config_update_notifier": "false",
 	}
-	runLifecycle(t, app, npmEnv, "npm", "install", "--ignore-scripts", "--omit=optional", wrapperTar, nativeTar)
+	fixture.RunLifecycle(t, app, npmEnv, "npm", "install", "--ignore-scripts", "--omit=optional", wrapperTar, nativeTar)
 	// A second exact-tarball install is a no-op success, not a source-tree fallback.
-	runLifecycle(t, app, npmEnv, "npm", "install", "--ignore-scripts", "--omit=optional", wrapperTar, nativeTar)
+	fixture.RunLifecycle(t, app, npmEnv, "npm", "install", "--ignore-scripts", "--omit=optional", wrapperTar, nativeTar)
 	wrapper := filepath.Join(app, "node_modules", "redbench", "bin", "bench.sh")
 	env := map[string]string{
 		"BENCH_HOME": home,
 		"HOME":       home,
 		"PATH":       stableBin + string(os.PathListSeparator) + os.Getenv("PATH"),
 	}
-	versionOut := runLifecycle(t, tmp, env, "bash", wrapper, "version")
+	versionOut := fixture.RunLifecycle(t, tmp, env, "bash", wrapper, "version")
 	if !strings.Contains(versionOut, "bench "+version+" (") {
 		t.Fatalf("installed version output = %q", versionOut)
 	}
 
-	runLifecycle(t, repo, nil, "git", "init", "-q")
-	runLifecycle(t, repo, nil, "git", "config", "user.email", "bench@local")
-	runLifecycle(t, repo, nil, "git", "config", "user.name", "bench")
+	fixture.RunLifecycle(t, repo, nil, "git", "init", "-q")
+	fixture.RunLifecycle(t, repo, nil, "git", "config", "user.email", "bench@local")
+	fixture.RunLifecycle(t, repo, nil, "git", "config", "user.name", "bench")
 	if err := os.WriteFile(filepath.Join(repo, "AGENTS.md"), []byte("project owner text\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	runLifecycle(t, repo, nil, "git", "add", "AGENTS.md")
-	runLifecycle(t, repo, nil, "git", "commit", "-qm", "seed")
-	runLifecycle(t, repo, env, "bash", wrapper, "link")
+	fixture.RunLifecycle(t, repo, nil, "git", "add", "AGENTS.md")
+	fixture.RunLifecycle(t, repo, nil, "git", "commit", "-qm", "seed")
+	fixture.RunLifecycle(t, repo, env, "bash", wrapper, "link")
 	manifest, err := os.ReadFile(filepath.Join(repo, ".bench", "link-manifest.tsv"))
 	if err != nil || !bytes.Contains(manifest, []byte("#kit\t"+version+"\n")) {
 		t.Fatalf("packed link did not stamp kit version: %q, %v", manifest, err)
@@ -210,27 +212,27 @@ func assertInstalledArtifactLifecycle(t *testing.T, artifacts, version string) {
 	if info, err := os.Stat(filepath.Join(repo, ".bench", "bin", "bench.sh")); err != nil || info.Mode().Perm()&0o111 == 0 {
 		t.Fatalf("packed link did not install executable local launcher: %v, %v", info, err)
 	}
-	runLifecycle(t, repo, env, "bash", wrapper, "init")
-	runLifecycle(t, repo, env, "bash", wrapper, "init")
-	runLifecycle(t, repo, env, "bash", wrapper, "doctor", "--fix")
+	fixture.RunLifecycle(t, repo, env, "bash", wrapper, "init")
+	fixture.RunLifecycle(t, repo, env, "bash", wrapper, "init")
+	fixture.RunLifecycle(t, repo, env, "bash", wrapper, "doctor", "--fix")
 	shim := filepath.Join(stableBin, "bench")
 	if info, err := os.Stat(shim); err != nil || info.Mode().Perm()&0o111 == 0 {
 		t.Fatalf("packed doctor did not generate executable stable shim: %v, %v", info, err)
 	}
-	assertPackedSetupForwarding(t, tmp, wrapper, shim, env)
-	localOut := runLifecycle(t, repo, env, "bash", filepath.Join(repo, ".bench", "bin", "bench.sh"), "version")
+	fixture.AssertPackedSetupForwarding(t, tmp, wrapper, shim, env)
+	localOut := fixture.RunLifecycle(t, repo, env, "bash", filepath.Join(repo, ".bench", "bin", "bench.sh"), "version")
 	if localOut != versionOut {
 		t.Fatalf("linked operation output %q != installed output %q", localOut, versionOut)
 	}
-	assertPackedEntrySurfaceIdentity(t, repo, env, versionOut)
-	runLifecycle(t, repo, env, "bash", wrapper, "link")
-	runLifecycle(t, repo, env, "bash", wrapper, "init")
-	status := runLifecycle(t, repo, nil, "git", "status", "--short", "--ignored")
+	fixture.AssertPackedEntrySurfaceIdentity(t, repo, env, versionOut)
+	fixture.RunLifecycle(t, repo, env, "bash", wrapper, "link")
+	fixture.RunLifecycle(t, repo, env, "bash", wrapper, "init")
+	status := fixture.RunLifecycle(t, repo, nil, "git", "status", "--short", "--ignored")
 	if !strings.Contains(status, "!! .bench/dist/") {
 		t.Fatalf("packed linked repo did not retain ignored runtime state:\n%s", status)
 	}
-	runPackedFreshClone(t, repo, wrapper, shim, version)
-	runLifecycle(t, repo, env, "bash", wrapper, "unlink")
+	fixture.RunPackedFreshClone(t, repo, wrapper, shim, version)
+	fixture.RunLifecycle(t, repo, env, "bash", wrapper, "unlink")
 	agents, err = os.ReadFile(filepath.Join(repo, "AGENTS.md"))
 	if err != nil || string(agents) != "project owner text\n" {
 		t.Fatalf("packed unlink changed project owner text: %q, %v", agents, err)

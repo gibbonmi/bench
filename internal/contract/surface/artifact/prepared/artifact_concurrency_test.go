@@ -1,4 +1,6 @@
-package artifact
+package prepared
+
+import fixture "github.com/gibbonmi/bench/internal/contract/surface/artifact/internal/fixture"
 
 import (
 	"os"
@@ -15,19 +17,19 @@ func TestArtifactPromotionIsAtomicAndExclusive(t *testing.T) {
 	root := contract.SubjectRoot(t)
 	contract.SkipIfSubjectFileMissing(t, "scripts/build-artifacts.sh")
 	shared := requireSharedArtifactSet(t)
-	source := committedHostileArtifactSource(t, root)
-	prepared := copyPreparedArtifactGeneration(t, shared.outputDir)
+	source := fixture.CommittedHostileArtifactSource(t, root)
+	prepared := fixture.CopyPreparedArtifactGeneration(t, shared.outputDir)
 	expected := shared.entryCount
 	output := filepath.Join(t.TempDir(), "artifact output")
 	assertConcurrentFirstArtifactPromotion(t, source, prepared, output, expected)
-	assertInterruptedArtifactPromotion(t, source, prepared, output, expected)
+	fixture.AssertInterruptedArtifactPromotion(t, source, prepared, output, expected)
 }
 
 func assertConcurrentFirstArtifactPromotion(t *testing.T, root, prepared, output string, expected int) {
 	t.Helper()
 	ready := filepath.Join(t.TempDir(), "winner-ready")
 	winner := exec.Command("bash", filepath.Join(root, "scripts", "build-artifacts.sh"), root, output)
-	winner.Env = promotionTestEnv(prepared, ready)
+	winner.Env = fixture.PromotionTestEnv(prepared, ready)
 	if err := winner.Start(); err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +44,7 @@ func assertConcurrentFirstArtifactPromotion(t *testing.T, root, prepared, output
 		time.Sleep(20 * time.Millisecond)
 	}
 	loser := exec.Command("bash", filepath.Join(root, "scripts", "build-artifacts.sh"), root, output)
-	loser.Env = promotionTestEnv(prepared, ready)
+	loser.Env = fixture.PromotionTestEnv(prepared, ready)
 	if err := loser.Run(); err == nil {
 		t.Fatal("concurrent artifact builder did not fail closed")
 	}

@@ -1,4 +1,6 @@
-package artifact
+package prepared
+
+import fixture "github.com/gibbonmi/bench/internal/contract/surface/artifact/internal/fixture"
 
 import (
 	"errors"
@@ -69,10 +71,10 @@ func (state *sharedArtifactSetState) stage(t *testing.T) {
 		t.Fatal(err)
 	}
 	state.directory = directory
-	source := committedHostileArtifactSourceIn(t, directory, root)
+	source := fixture.CommittedHostileArtifactSourceIn(t, directory, root)
 	output := filepath.Join(directory, "promoted artifacts [*]")
 	state.build(t, root, source, output)
-	fingerprint, err := promotedArtifactDigestMap(output)
+	fingerprint, err := fixture.PromotedArtifactDigestMap(output)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -149,7 +151,7 @@ func (state *sharedArtifactSetState) cleanup() error {
 }
 
 func (set *sharedArtifactSet) verify() error {
-	fingerprint, err := promotedArtifactDigestMap(set.outputDir)
+	fingerprint, err := fixture.PromotedArtifactDigestMap(set.outputDir)
 	if err != nil || !maps.Equal(fingerprint, set.fingerprint) {
 		return errors.New("shared artifact set mutated")
 	}
@@ -180,13 +182,17 @@ func TestSharedArtifactSetFailsClosedAfterEarlierStagingFailure(t *testing.T) {
 
 func TestSharedArtifactSetBuildIsLazy(t *testing.T) {
 	log := filepath.Join(t.TempDir(), "shared artifact builds")
-	command := exec.Command(os.Args[0], "-test.run=^TestReleasePlanProjectsDerivedArchiveInventory$", "-test.v")
+	command := exec.Command(os.Args[0], "-test.run=^(TestArtifactPromotionIsAtomicAndExclusive|TestArtifactSourceStagesCommittedHostPlan|TestSharedCacheBuildPromotesNoRecord|TestSharedCacheBuildRestoresRecordOnInterruptedPromotion|TestOfflineArchiveProjection|TestPackedArtifactRunsSetupOfflineFromASpacedPrefix)$", "-test.v")
 	command.Env = contract.ProcessEnv(nil, map[string]string{"BENCH_TEST_SHARED_SET_BUILD_LOG": log})
 	if output, err := command.CombinedOutput(); err != nil {
 		t.Fatalf("fabricated-fixture-only subprocess failed: %v\n%s", err, output)
 	}
-	if _, err := os.Stat(log); !os.IsNotExist(err) {
-		t.Fatalf("fabricated-fixture-only selection built the shared artifact set: %v", err)
+	builds, err := os.ReadFile(log)
+	if err != nil {
+		t.Fatalf("read shared artifact build log: %v", err)
+	}
+	if got := strings.Count(string(builds), "build\n"); got != 1 {
+		t.Fatalf("six prepared sharers built the shared artifact set %d times, want 1", got)
 	}
 }
 

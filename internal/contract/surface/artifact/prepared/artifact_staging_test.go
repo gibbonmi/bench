@@ -1,4 +1,6 @@
-package artifact
+package prepared
+
+import fixture "github.com/gibbonmi/bench/internal/contract/surface/artifact/internal/fixture"
 
 import (
 	"os"
@@ -23,13 +25,13 @@ func TestArtifactSourceStagesCommittedHostPlan(t *testing.T) {
 		t.Fatalf("staged release plan targets = %+v, want exactly host %s/%s", plan.Targets, hostOS, hostArch)
 	}
 	out := shared.outputDir
-	assertPlannedArtifactNames(t, staged, out)
+	fixture.AssertPlannedArtifactNames(t, staged, out)
 }
 
 func TestArtifactSourceSkipsWhenHostTargetIsAbsent(t *testing.T) {
 	const child = "BENCH_TEST_HOSTLESS_ARTIFACT_PLAN"
 	if os.Getenv(child) == "1" {
-		committedHostileArtifactSource(t, contract.SubjectRoot(t), stageHostlessArtifactPlan)
+		fixture.CommittedHostileArtifactSource(t, contract.SubjectRoot(t), fixture.StageHostlessArtifactPlan)
 		t.Fatal("hostless staged plan did not skip")
 	}
 	hostOS, hostArch := contract.GoEnvPair(t, "GOOS", "GOARCH")

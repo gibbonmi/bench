@@ -1,4 +1,6 @@
-package artifact
+package prepared
+
+import fixture "github.com/gibbonmi/bench/internal/contract/surface/artifact/internal/fixture"
 
 import (
 	"os"
@@ -59,30 +61,30 @@ func TestPackedArtifactRunsSetupOfflineFromASpacedPrefix(t *testing.T) {
 		"npm_config_registry":        "http://127.0.0.1:9",
 		"npm_config_update_notifier": "false",
 	}
-	runLifecycle(t, prefix, npmEnv, "npm", "install", "--ignore-scripts", "--omit=optional", "--prefix", prefix, wrapperTar, nativeTar)
+	fixture.RunLifecycle(t, prefix, npmEnv, "npm", "install", "--ignore-scripts", "--omit=optional", "--prefix", prefix, wrapperTar, nativeTar)
 	installed := filepath.Join(prefix, "node_modules", "redbench", "bin", "bench.sh")
 	if info, err := os.Stat(installed); err != nil || info.Mode().Perm()&0o111 == 0 {
 		t.Fatalf("offline install into spaced prefix did not produce an executable wrapper: %v, %v", info, err)
 	}
 
-	runLifecycle(t, repo, nil, "git", "init", "-q")
-	runLifecycle(t, repo, nil, "git", "config", "user.email", "bench@local")
-	runLifecycle(t, repo, nil, "git", "config", "user.name", "bench")
+	fixture.RunLifecycle(t, repo, nil, "git", "init", "-q")
+	fixture.RunLifecycle(t, repo, nil, "git", "config", "user.email", "bench@local")
+	fixture.RunLifecycle(t, repo, nil, "git", "config", "user.name", "bench")
 	// A single unambiguous gate signal keeps this leg's setup run fully green (exit 0)
 	// so the assertions below stay about convergence and locality, not the separate
 	// zero-signal/ambiguity paths rows 3 and 9 already cover.
 	if err := os.WriteFile(filepath.Join(repo, "go.mod"), []byte("module target\n\ngo 1.21\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	runLifecycle(t, repo, nil, "git", "add", "go.mod")
-	runLifecycle(t, repo, nil, "git", "commit", "-qm", "seed")
+	fixture.RunLifecycle(t, repo, nil, "git", "add", "go.mod")
+	fixture.RunLifecycle(t, repo, nil, "git", "commit", "-qm", "seed")
 
 	env := map[string]string{
 		"BENCH_HOME": home,
 		"HOME":       home,
 		"PATH":       "/usr/bin:/bin",
 	}
-	setupOut := runLifecycle(t, repo, env, "bash", installed, "setup", "--yes")
+	setupOut := fixture.RunLifecycle(t, repo, env, "bash", installed, "setup", "--yes")
 	assertPackedSetupConverged(t, repo, prefix, setupOut)
 }
 

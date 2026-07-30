@@ -1,4 +1,4 @@
-package artifact
+package offline
 
 import (
 	"archive/tar"

@@ -1,4 +1,4 @@
-package artifact
+package offline
 
 import (
 	"bytes"
@@ -220,30 +220,6 @@ func TestOfflineRegistryDerivesAcceptedTargetsFromReleasePlan(t *testing.T) {
 	}
 }
 
-func TestOfflineArchiveProjection(t *testing.T) {
-	root := contract.SubjectRoot(t)
-	contract.SkipIfSubjectFileMissing(t, "scripts/build-artifacts.sh")
-	shared := requireSharedArtifactSet(t)
-	buildRoot, npmOut := shared.sourceRoot, shared.outputDir
-
-	var plan struct {
-		Targets []contract.ReleaseTarget `json:"targets"`
-	}
-	contract.ReadJSONFile(t, filepath.Join(buildRoot, "scripts", "release-plan.json"), &plan)
-	matrix := plan.Targets
-	var wrapper struct {
-		Version string `json:"version"`
-	}
-	contract.ReadJSONFile(t, filepath.Join(root, "package.json"), &wrapper)
-	offlineOut := filepath.Join(t.TempDir(), "offline artifacts [hostile]")
-	contract.NewExecFixtureAt(t, root).Run("bash", filepath.Join(buildRoot, "scripts", "build-offline-archives.sh"), npmOut, offlineOut).RequireExit(0)
-	assertOfflineArchiveSet(t, npmOut, offlineOut, wrapper.Version, matrix)
-}
-
-// The offline builder replaces its output directory wholesale — it moves the old
-// one aside and deletes it. Anything in there that the build cannot account for
-// is somebody's work, so the refusal has to come before the archives are built
-// rather than beside the swap that would destroy it.
 func TestOfflineArchiveBuildRefusesOutputItCannotAccountFor(t *testing.T) {
 	root := contract.SubjectRoot(t)
 	contract.SkipIfSubjectFileMissing(t, "scripts/build-offline-archives.sh")
