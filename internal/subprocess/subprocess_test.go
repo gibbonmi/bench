@@ -39,6 +39,63 @@ func TestCaptureSpawnFailureIsOne(t *testing.T) {
 	}
 }
 
+func TestCaptureClassifiesTermination(t *testing.T) {
+	cases := []struct {
+		name string
+		cmd  func() *exec.Cmd
+		want Termination
+	}{
+		{
+			name: "spawn failure",
+			cmd: func() *exec.Cmd {
+				return exec.Command("bench-no-such-binary")
+			},
+			want: TerminationSpawnFailed,
+		},
+		{
+			name: "signal termination",
+			cmd: func() *exec.Cmd {
+				return exec.Command("sh", "-c", "kill -TERM $$")
+			},
+			want: TerminationSignaled,
+		},
+		{
+			name: "numeric exit 1",
+			cmd: func() *exec.Cmd {
+				return exec.Command("sh", "-c", "exit 1")
+			},
+			want: TerminationCompleted,
+		},
+		{
+			name: "numeric exit 2",
+			cmd: func() *exec.Cmd {
+				return exec.Command("sh", "-c", "exit 2")
+			},
+			want: TerminationCompleted,
+		},
+	}
+
+	for _, capture := range []struct {
+		name string
+		run  func(*exec.Cmd) Result
+	}{
+		{name: "separate streams", run: Capture},
+		{name: "merged streams", run: CaptureMerged},
+	} {
+		for _, tc := range cases {
+			t.Run(capture.name+"/"+tc.name, func(t *testing.T) {
+				r := capture.run(tc.cmd())
+				if r.Termination != tc.want {
+					t.Fatalf("termination = %v, want %v", r.Termination, tc.want)
+				}
+				if r.Stdout != "" || r.Stderr != "" {
+					t.Fatalf("output = stdout %q, stderr %q, want empty", r.Stdout, r.Stderr)
+				}
+			})
+		}
+	}
+}
+
 func TestCaptureMergedInterleavesIntoStdout(t *testing.T) {
 	r := CaptureMerged(exec.Command("sh", "-c", "echo out; echo err 1>&2"))
 	if r.ExitCode != 0 {

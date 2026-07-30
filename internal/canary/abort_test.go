@@ -3,8 +3,11 @@ package canary
 import (
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
 const canaryAbortHelperEnv = "BENCH_CANARY_ABORT_HELPER"
@@ -197,6 +200,165 @@ func TestSweepAbortPrecedesBite(t *testing.T) {
 	}
 }
 
+func TestSweepAttributesProcessAbort(t *testing.T) {
+	cases := []struct {
+		name   string
+		result RunResult
+	}{
+		{
+			name: "spawn failure",
+			result: RunResult{
+				ExitCode:    1,
+				Termination: subprocess.TerminationSpawnFailed,
+			},
+		},
+		{
+			name: "signal termination",
+			result: RunResult{
+				ExitCode:    -1,
+				Termination: subprocess.TerminationSignaled,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			contractFixture(t, root, "runtime", tc.name)
+
+			err := Sweep(root, sweepAbortResultRunner(tc.result))
+			if err == nil {
+				t.Fatal("Sweep err = nil, want the process abort reported")
+			}
+			got := err.Error()
+			if !strings.Contains(got, "process abort") || !strings.Contains(got, `contract package "runtime"`) || strings.Contains(got, "did not bite") {
+				t.Fatalf("Sweep err = %q, want a process abort in the contract package", got)
+			}
+		})
+	}
+}
+
+func TestDefaultRunnerPropagatesSpawnFailure(t *testing.T) {
+	result := defaultRunner(RunCall{Kind: RunBite, Binary: "bench-no-such-binary"})
+	if result.ExitCode != 1 || result.Termination != subprocess.TerminationSpawnFailed {
+		t.Fatalf("default runner result = exit %d, termination %v, want 1/spawn failure", result.ExitCode, result.Termination)
+	}
+	if result.Output != "" {
+		t.Fatalf("default runner output = %q, want no raw spawn error", result.Output)
+	}
+}
+
+func TestSweepKeepsNumericFailuresCompleted(t *testing.T) {
+	cases := []struct {
+		name string
+		exit int
+		want string
+	}{
+		{
+			name: "numeric exit 1",
+			exit: 1,
+			want: `canary 'numeric exit 1' did not bite (want red + "target-numeric exit 1"; got exit 1)`,
+		},
+		{
+			name: "numeric exit 2",
+			exit: 2,
+			want: `canary 'numeric exit 2' did not bite (want red + "target-numeric exit 2"; got exit 2)`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			contractFixture(t, root, "runtime", tc.name)
+
+			err := Sweep(root, sweepAbortResultRunner(RunResult{ExitCode: tc.exit}))
+			if err == nil {
+				t.Fatal("Sweep err = nil, want the completed failure reported")
+			}
+			if got := err.Error(); got != tc.want {
+				t.Fatalf("Sweep err = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestSweepProcessAbortPrecedesBite(t *testing.T) {
+	root := t.TempDir()
+	contractFixture(t, root, "runtime", "partial-expect-process")
+
+	err := Sweep(root, sweepAbortResultRunner(RunResult{
+		ExitCode:    1,
+		Termination: subprocess.TerminationSpawnFailed,
+		Output:      "target-partial-expect-process\nchild failure after EXPECT\n",
+	}))
+	if err == nil {
+		t.Fatal("Sweep err = nil, want the process abort to win over partial EXPECT output")
+	}
+	got := err.Error()
+	if !strings.Contains(got, "process abort") || strings.Contains(got, "did not bite") {
+		t.Fatalf("Sweep err = %q, want the process abort to win over partial EXPECT output", got)
+	}
+}
+
+func TestSweepOrdersMixedAbortFailures(t *testing.T) {
+	root := t.TempDir()
+	for _, name := range []string{"a-panic", "b-process", "c-did-not-bite"} {
+		contractFixture(t, root, "runtime", name)
+	}
+
+	err := Sweep(root, sweepAbortResultsRunner(map[string]RunResult{
+		"a-panic": {
+			ExitCode: 2,
+			Output: strings.Join([]string{
+				"--- FAIL: TestFirstAbort (0.00s)",
+				"panic: first failure",
+			}, "\n"),
+		},
+		"b-process": {
+			ExitCode:    1,
+			Termination: subprocess.TerminationSpawnFailed,
+		},
+		"c-did-not-bite": {ExitCode: 1, Output: "ordinary failure\n"},
+	}))
+	if err == nil {
+		t.Fatal("Sweep err = nil, want all fixture failures reported")
+	}
+	want := strings.Join([]string{
+		"canary 'a-panic' inner test abort in TestFirstAbort: panic: first failure",
+		`canary 'b-process' process abort in contract package "runtime"`,
+		`canary 'c-did-not-bite' did not bite (want red + "target-c-did-not-bite"; got exit 1)`,
+	}, "\n")
+	if got := err.Error(); got != want {
+		t.Fatalf("Sweep err = %q, want fixture order %q", got, want)
+	}
+}
+
+func TestSweepBoundsProcessAbortDiagnostic(t *testing.T) {
+	root := t.TempDir()
+	contractFixture(t, root, "runtime", "bounded-process")
+	result := RunResult{
+		ExitCode:    1,
+		Termination: subprocess.TerminationSpawnFailed,
+		Output: "goroutine 123 [running]:\n" +
+			strings.Repeat("unbounded child error ", 32) + "\x1b[31m",
+	}
+	want := `canary 'bounded-process' process abort in contract package "runtime"`
+
+	for range 3 {
+		err := Sweep(root, sweepAbortResultRunner(result))
+		if err == nil {
+			t.Fatal("Sweep err = nil, want the process abort reported")
+		}
+		got := err.Error()
+		if got != want {
+			t.Fatalf("Sweep err = %q, want byte-stable %q", got, want)
+		}
+		if strings.Contains(got, "goroutine 123") || strings.Contains(got, "unbounded child error") || strings.ContainsRune(got, '\x1b') {
+			t.Fatalf("Sweep err = %q, want no raw child output", got)
+		}
+	}
+}
+
 func TestSubjectHash(t *testing.T) {
 	switch os.Getenv(canaryAbortHelperEnv) {
 	case "root":
@@ -235,6 +397,16 @@ func sweepAbortRunner(output string) Runner {
 }
 
 func sweepAbortResultRunner(result RunResult) Runner {
+	return sweepAbortRunnerWith(func(RunCall) RunResult { return result })
+}
+
+func sweepAbortResultsRunner(results map[string]RunResult) Runner {
+	return sweepAbortRunnerWith(func(call RunCall) RunResult {
+		return results[filepath.Base(call.FixtureDir)]
+	})
+}
+
+func sweepAbortRunnerWith(run func(RunCall) RunResult) Runner {
 	return func(call RunCall) RunResult {
 		if toolResult, done := stubToolchain(call); done {
 			return toolResult
@@ -242,6 +414,6 @@ func sweepAbortResultRunner(result RunResult) Runner {
 		if isBaseline(call) {
 			return RunResult{ExitCode: 1, Output: "baseline noise\n"}
 		}
-		return result
+		return run(call)
 	}
 }

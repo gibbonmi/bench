@@ -215,10 +215,11 @@ type RunCall struct {
 	Env        []string
 }
 
-// RunResult captures the verdict and combined output of one run.
+// RunResult captures the verdict, combined output, and termination of one run.
 type RunResult struct {
-	ExitCode int
-	Output   string
+	ExitCode    int
+	Termination subprocess.Termination
+	Output      string
 }
 
 // Runner runs one call of any kind.
@@ -963,6 +964,9 @@ func runFixture(fixture selected, baselineOutput string, run sweepRun, runner Ru
 	_ = gitInit(work)
 	result := runner(subjectCall(fixture, work, fx, run, narrowToFixture))
 	// An aborted test binary cannot prove a bite, even if it printed EXPECT first.
+	if result.Termination.Aborted() {
+		return fmt.Sprintf("canary '%s' process abort in %s", name, sanitize.Preview(processAbortOwner(fixture)))
+	}
 	if result.ExitCode != 0 {
 		if owner, marker, aborted := goTestAbort(result.Output); aborted {
 			if owner == "" {
@@ -986,6 +990,16 @@ func unknownTestOwner(fixture selected) string {
 		return fmt.Sprintf("unknown test in conformance check %q", fixture.scope)
 	}
 	return "unknown test in the inner gate"
+}
+
+func processAbortOwner(fixture selected) string {
+	if fixture.pkg != "" {
+		return fmt.Sprintf("contract package %q", fixture.pkg)
+	}
+	if fixture.scope != "" {
+		return fmt.Sprintf("conformance check %q", fixture.scope)
+	}
+	return "the inner gate"
 }
 
 func goTestAbort(output string) (string, string, bool) {
@@ -1386,12 +1400,7 @@ const contractPackagePrefix = "./internal/contract/"
 func defaultRunner(call RunCall) RunResult {
 	cmd := runnerCommand(call)
 	r := subprocess.CaptureMerged(cmd)
-	output := r.Stdout
-	// A spawn failure (ProcessState nil) writes nothing, so append the error.
-	if r.Err != nil && cmd.ProcessState == nil {
-		output += r.Err.Error()
-	}
-	return RunResult{ExitCode: r.ExitCode, Output: output}
+	return RunResult{ExitCode: r.ExitCode, Termination: r.Termination, Output: r.Stdout}
 }
 
 func gitInit(dir string) error {
