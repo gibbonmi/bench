@@ -139,6 +139,35 @@ func TestParseDoubleDashEndsFlags(t *testing.T) {
 	}
 }
 
+func TestParseReservedPositionalsPrecedeHelpFlagsAndTerminator(t *testing.T) {
+	g := Grammar{
+		Cmd:                                 "bench worktree exec",
+		Help:                                "usage: bench worktree exec <target> -- <command> [args...]\n",
+		MinArgs:                             2,
+		MaxArgs:                             -1,
+		ReservedPositionalsBeforeTerminator: 1,
+	}
+	for _, target := range []string{"--help", "-label", "--"} {
+		t.Run(target, func(t *testing.T) {
+			res, line, code := Parse(g, []string{target, "--", "child"})
+			if line != "" || code != 0 {
+				t.Fatalf("Parse(%q -- child) = (%+v, %q, %d), want success", target, res, line, code)
+			}
+			if got := res.Positionals; len(got) != 2 || got[0] != target || got[1] != "child" {
+				t.Errorf("positionals = %q, want [%q child]", got, target)
+			}
+			if !res.EndedFlags || res.PositionalsBeforeTerminator != 1 {
+				t.Errorf("terminator result = %+v, want one positional before terminator", res)
+			}
+		})
+	}
+
+	_, line, code := Parse(g, []string{"--help"})
+	if line != g.Help || code != 0 {
+		t.Errorf("Parse(--help) = (%q, %d), want help text and exit 0", line, code)
+	}
+}
+
 // TestParseBareDashAndSecondDoubleDash pins the two tokens a naive
 // dash-prefix check mis-parses as flags: a lone "-" is a positional (a legal
 // filename) both in ordinary flag position and after flag parsing has ended,

@@ -46,6 +46,7 @@ func TestRuntimeWorktreeContracts(t *testing.T) {
 	contract.RunParallel(t, "bench worktree path target forms and refusals contract", testRuntimeWorktreePathTargetFormsAndRefusals)
 	contract.RunParallel(t, "bench worktree path refuses stale or unowned state without mutation contract", testRuntimeWorktreePathRefusesStaleOrUnownedState)
 	contract.RunParallel(t, "bench worktree exec preserves the direct child contract", testRuntimeWorktreeExecDirectChild)
+	contract.RunParallel(t, "bench worktree exec accepts exact flag-like labels contract", testRuntimeWorktreeExecExactLabels)
 	contract.RunParallel(t, "bench worktree exec requires its target before the separator contract", testRuntimeWorktreeExecRequiresTargetBeforeSeparator)
 	contract.RunParallel(t, "bench worktree exec preserves exit and non-TTY stdin contract", testRuntimeWorktreeExecExitMatrix)
 	contract.RunParallel(t, "bench worktree exec reports start errors without mutation contract", testRuntimeWorktreeExecStartError)
@@ -195,6 +196,21 @@ func testRuntimeWorktreeExecDirectChild(t *testing.T) {
 		got := f.BenchEnv(env, args...)
 		if got.ExitCode != 2 || got.Stdout != "" || got.Stderr == "" {
 			t.Fatalf("bench %v = exit %d stdout %q stderr %q, want usage exit 2 on stderr", args, got.ExitCode, got.Stdout, got.Stderr)
+		}
+	}
+}
+
+func testRuntimeWorktreeExecExactLabels(t *testing.T) {
+	f := onMainFixture(t)
+	env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bench-home")}
+	for i, label := range []string{"--help", "-label", "--"} {
+		created := f.BenchEnv(env, "worktree", "create", "--request", fmt.Sprintf("exec-exact-%d", i), "--label", label)
+		created.RequireExit(0)
+		path := worktreeCreatePath(t, created.Stdout)
+
+		got := f.BenchEnv(env, "worktree", "exec", label, "--", "pwd")
+		if got.ExitCode != 0 || got.Stdout != path+"\n" || got.Stderr != "" {
+			t.Fatalf("bench worktree exec %q = exit %d stdout %q stderr %q, want child cwd", label, got.ExitCode, got.Stdout, got.Stderr)
 		}
 	}
 }

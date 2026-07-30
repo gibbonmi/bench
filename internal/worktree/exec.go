@@ -14,10 +14,11 @@ import (
 )
 
 var worktreeExecGrammar = usage.Grammar{
-	Cmd:     "bench worktree exec",
-	Help:    "usage: " + usage.WorktreeExec,
-	MinArgs: 2,
-	MaxArgs: -1,
+	Cmd:                                 "bench worktree exec",
+	Help:                                "usage: " + usage.WorktreeExec,
+	MinArgs:                             2,
+	MaxArgs:                             -1,
+	ReservedPositionalsBeforeTerminator: 1,
 }
 
 // ExecCommand runs a direct child argv from one active Bench-owned worktree.
