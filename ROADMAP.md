@@ -108,6 +108,14 @@ process state and delayed gates just to learn when another session finished
 landing on `main`; it is the same subject-visibility surface as the CLI
 diagnostic.
 
+The handoff storage question joins the same lifecycle decision. A single
+repository-level `session-handoff.md` can be clobbered by concurrent workstreams;
+per-spec handoffs would isolate those pins and retire with their spec, but would
+leave non-spec work needing a repository-level owner. Decide whether the
+authoritative handoff remains singular, moves into `specs/<slug>/` for spec-backed
+work, or becomes a generated projection over per-workstream state rather than
+adding a second handoff convention by accident. Source: `IDEAS.md`, drained here.
+
 The full-run half moves `--full` orchestration from phase prose into a `bench`
 subcommand only if the decision map rules that the harness-independent
 substrate should own it. That command records the staging base and terminal
@@ -306,8 +314,8 @@ ahead of the conflict check joins the same doctor/link visit this row owns;
 the abort-before-refresh sequencing is the capture's claim, not re-verified
 here. Source: `IDEAS.md`, drained here.
 
-**FT98 (MEDIUM, evidence supplied three times) — one preserve-then-discard primitive;
-three faces.** Three rows were faces of one missing primitive — a sanctioned,
+**FT98 (MEDIUM, evidence supplied four times) — one preserve-then-discard primitive;
+four faces.** Three rows were faces of one missing primitive — a sanctioned,
 recoverable discard — and collapse to one semantics rather than three:
 recovery ref written first, exact fingerprint required to apply, refusal if
 the content moved, modelled on `bench worktree clean`'s existing contract, so
@@ -349,6 +357,16 @@ scoped single-path revert through the same recoverable primitive replaces
 both the papercut and any guard exemption. Whichever face ships first defines
 the one discard semantics; the others reuse it.
 
+The FT131 close adds the ignored-cache face. Current-source verification defaults
+`GOCACHE` under `dist/`, while nested route tests strip ambient cache variables;
+an isolated full gate can therefore leave more than 40 MiB and 1,000 ignored
+entries that `bench worktree clean --discard-ignored --full` refuses even with
+the matching fingerprint. Prefer a lifecycle-owned scratch cache or cleanup at
+the fixture owner; if residue remains legitimate, let the same size-bounded,
+fingerprinted discard contract summarize and authorize the generated directory
+without falling back to manual deletion. Source: the FT131 implementation retro,
+drained here.
+
 **FT169 (MEDIUM, evidence supplied) — one sanctioned worktree landing command
 owns the stale-base dance.** The gate-fastpath build hand-ran the same sequence
 for eleven ticket landings: fast-forward the assignment worktree onto the
@@ -380,8 +398,8 @@ Codex constraint and routes a denied delegate-side fast-forward back to the
 coordinator instead of spending retries on permissions. Source: the FT129
 implementation retro, drained here.
 
-**FT126 (MEDIUM, evidence supplied) — the roadmap parser and context snapshot
-make the drain's evidence complete.** The row grammar is currently implicit:
+**FT172 (MEDIUM) — the roadmap parser and context snapshot make the drain's
+non-recurrence evidence complete.** The row grammar is currently implicit:
 `ParseDocument` treats any line opening with bold as a new row, so one bold-led
 body paragraph made the snapshot silently partial. Decide whether a row is
 exactly the `**FT<n> (…) — title.**` form with bold forbidden at body starts,
@@ -425,6 +443,9 @@ applied by hand in the 2026-07-27 drain — every diagnosis drained there was re
 out of the tree first. Source of this clause: `.bench/learnings.md`, verdicted
 here. The grammar face came from `IDEAS.md`, drained here.
 
+**FT126 (MEDIUM, evidence supplied) — recurrence tallying belongs to the
+roadmap parser and context snapshot.**
+
 The same parser and snapshot seam owns recurrence tallying. An idea, learning,
 or retro should be able to cite an existing FT as its primary owner so the drain
 records a new occurrence on that row instead of manufacturing a duplicate;
@@ -433,6 +454,8 @@ captured occurrence is FT98's 2026-07-30 scoped-commit refusal, with FT169 as
 the downstream workaround. Decide the citation grammar and malformed-reference
 posture alongside the row grammar rather than adding a second roadmap parser.
 Source: `IDEAS.md`, drained here.
+
+Spec: `specs/ft126-recurrence-tallying/spec.md`.
 
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.** Make
 every documented CLI example executable; parse and validate real YAML
@@ -614,9 +637,16 @@ Bench-owned commands keep their stronger typed plan/apply and recovery
 contracts. Eleventh (same source), phase exits state every material acceptance
 shortfall and unverified tier with actual-versus-target evidence where a
 target exists. Fold it into the existing structured exit rules: omit empty
-groups rather than emitting ceremonial `none` sections. Background:
+groups rather than emitting ceremonial `none` sections. Twelfth (drained from
+the FT131 implementation retro), review handoffs report both raw axis findings
+and de-duplicated repair targets; eleven findings across axes and ten unique
+defects are different planning facts, and reporting only one makes the repair
+charge ambiguous. Thirteenth (same source), a gate-bootstrap review explicitly
+asks what establishes trust in the verifier itself, not only whether the
+selected binary exposes a verification command; that question found FT131's
+gate self-attestation defect after ordinary surface checks passed. Background:
 `docs/reporesident-distillation.md` §3 and §6; the 2026-07-30 Claude
-usage-report assessment, drained here.
+usage-report assessment and the FT131 implementation retro, drained here.
 
 **FT58 (LOW) — hardened pool roots.** Permission failures on Bench-selected pool roots
 should propagate — the tree currently asserts best-effort tighten
@@ -781,7 +811,11 @@ three options that are not equally safe: widening the allowlist to
 allowlist deliberately refuses); teaching the gate cache to record the
 post-flip tree when `--spec` itself performs the flip (narrower — the flip is
 the tool's own write and its content is known); or accepting the face as
-cosmetic and documenting it.
+cosmetic and documenting it. The same command has a separate avoidable usage
+failure: `bench commit --spec <slug>` edits the owned spec transition itself but
+still requires another named path. Count that owned transition as satisfying
+the path requirement without widening the staged set. Source: the FT131
+implementation retro, drained here.
 
 **FT130 (LOW) — parking an idea mid-gate silently voids the run.** During
 FT122's gated commit a session answered a reviewer question and ran `bench
@@ -863,6 +897,13 @@ themselves. The existing `craft-line` cheap implementation default and
 red-driven escalation ladder remain authoritative. Source: the FT129
 implementation retro, drained here.
 
+Repair charges that update a canonical command inventory also name both
+currency owners in their focused proof: the documentation inventory and the
+wrapper/router registry. FT131's repair updated one and missed the other two
+until the atomic gate; tracing those owners in the charge would have caught the
+integration misses without replacing the gate as oracle. Source: the FT131
+implementation retro, drained here.
+
 **FT165 (LOW) — fold the domain-modeling discipline into
 `/bench-shape-idea`.** Upstream candidate (mattpocock/skills,
 domain-modeling): as grill tickets resolve decisions, challenge fuzzy or
@@ -937,39 +978,6 @@ Four rows, one failure class: a green whose warrant is missing — a stale
 binary, a dead or skipping citation, a vacuous baseline, an unchecked absence.
 Each hardens a different oracle surface, so they stay separate builds, but
 they read and prioritize as one theme.
-
-**FT131 (MEDIUM) — a stale `dist/bench` is trusted by both the contract suites
-and the gate's own phase resolution.** The AXI and runtime contract suites
-drive the built `dist/bench`, not the package under test, so their verdict
-answers for whatever binary happens to be on disk. In a fresh or salvaged
-worktree that binary predates the change:
-during FT86 two of three rows in a correct slice went red on nothing but
-staleness, and a delegate was nearly re-charged to fix code that was already
-right. The dangerous direction is the reverse one — a stale binary that happens
-to satisfy an assertion makes a broken change look green, a false done-claim the
-gate catches only later. Prefer the single-source fix: have the contract
-helper itself fail loudly when the binary under test is older than the package
-sources it exercises, which removes the instruction rather than duplicating it.
-The fallback — naming the `scripts/go-build.sh` rebuild in the guidance where
-the phase names these seams — stays on this row and is taken only if the
-in-helper staleness check proves unreliable; it was offered to the delegation
-batch that shipped 2026-07-26 and deliberately left untaken there.
-
-A second face, observed during the slice C build 2026-07-27, moves the same
-staleness from the test harness into the oracle itself: a phase-table change
-does not take effect until the *next* gate run. `.bench/gate.sh` execs
-`bench gate-phases` from a process that started before the build phase rewrote
-`dist/bench`, so the first run after a table edit silently grades with the old
-table — observed as a green run showing five phases, then ten on an immediate
-re-run with no code change. Silently grading with the previous table is a
-stronger version of the same defect than a red contract row, because nothing
-reports it at all, and it shares the fix shape: the consumer detects that
-`dist/bench` predates the sources it answers for. Whether the gate should
-refuse, re-resolve, or simply say so is the row's open question. Sources: the
-2026-07-25 learnings entry, verdicted in a prior drain; `session-handoff.md`,
-drained here.
-
-Staged spec: [`specs/ft131-binary-freshness/spec.md`](specs/ft131-binary-freshness/spec.md).
 
 **FT133 (MEDIUM) — `bench coverage --check` verifies that red-signal citations
 resolve.** A coverage-map row naming `go test -run TestFoo` where no such test
@@ -1334,14 +1342,14 @@ recommended table is sequencing advice.
 | FT100 | FT89 | Cut prose after the correctness and coherence pass establishes which guidance is still authoritative. |
 | FT102 | FT128 | Audit tier-spending guidance against the corrected per-harness binding and guard semantics. |
 | FT108 | FT164 | Define the refactor lane on the settled expand–migrate–contract and gate-cadence rules. |
-| FT126 | FT106 | Reuse the document-claim probe for semantic roadmap claims instead of designing a second checker. |
+| FT172 | FT106 | Reuse the document-claim probe for semantic roadmap claims instead of designing a second checker. |
 | FT162 | FT169 | Build full-run subject resolution on the settled landing primitive. |
 | FT166 | FT98, FT113 | Let recoverable set-aside and the completed capture-only path map define the commit command's smallest sound contract. |
-| FT168 | FT131, FT153 | Expose focused canary execution only after binary freshness and baseline meaning are settled. |
+| FT168 | FT153 | Binary freshness has shipped; expose focused canary execution after baseline meaning is settled. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT126 recurrence tallying: reviewer-priced first because occurrence counts materially affect roadmap prioritization.
+1. `/bench-implement-spec` — FT126 recurrence tallying: approved with mixed story lines, so interactive orchestration owns the build.
 2. `/bench-write-spec` — FT128: the line-enforcement fix now owns both the fork verdict and the static model-token sweep.
-3. `/bench-write-spec` — FT131: make stale built binaries fail closed before contract suites or the gate credit the wrong subject.
+3. `/bench-shape-idea` — FT135: make installed pre-push protection report its resolved branch and template currency, then restore the sanctioned repair route.

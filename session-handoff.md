@@ -2,27 +2,37 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `69a30cc`, clean tree, 17 unpushed commits
-Spec: `specs/ft129-canary-abort-attribution/spec.md` (Status: staged)
-Gate: green at `0bd5adc` — stale, work tree `13f7f12`
+Branch: `main` — HEAD `ebc9523`, 8 dirty paths, 28 unpushed commits
+Spec: `specs/ft126-recurrence-tallying/spec.md` (Status: staged), `specs/ft128-agent-line-binding/spec.md` (Status: staged)
+Gate: green at `89585fa` — stale, work tree `f4a9abf`
 
 ## State
 
-- **FT129 implementation and semantic review are complete.** Ticket 01 landed
-  green at `52d7e6b`, ticket 02 at `bb5f0ba`, and the bounded terminal repair
-  at `69a30cc`. All three ticket acceptance files are fully checked.
-- **All 15 coverage rows are classified and green or already covered.** The
-  implementation attributes Go panic/runtime-fatal output and structured
-  process aborts before bite classification, preserves completed-run semantics,
-  and keeps aggregate diagnostics bounded and fixture-ordered.
-- **Fresh semantic review closed three concrete findings.** Fixture ownership
-  is single-sourced, authentic runtime-fatal grammar comes from a Go test
-  subprocess, and contract, conformance-scope, and inner-gate process owners
-  have exact acceptance coverage. Final-check is the remaining phase.
+- **FT131 is implemented, reviewed, gate-green, and retired on `main`.** Build
+  tickets landed as `2498e0f`, `3888495`, and `5f82a97`; terminal review repair
+  landed as `231f67a`; final-check marked the spec implemented at `a3acb3c`;
+  default-branch retirement removed the staged spec and tickets at `ebc9523`.
+- **All 11 acceptance rows were implemented before retirement.** The Sol/high
+  semantic pass used three fresh axes; its eleven concrete axis findings,
+  representing ten unique defects, were repaired. The optional duplicate-test
+  judgment remains unapplied for reviewer veto.
+- **Both closing oracle runs were fully green.** Final-check and retirement each
+  passed build, gofmt, vet, unit, race, both conformance layers, contracts,
+  shellcheck, and the full mutation canary. Ship-tier `bench prep-release` did
+  not run.
+- **FT131's retro is pending capture.** `.bench/retros/ft131-binary-freshness.md`
+  records outcome, timings, delegate performance, coordinator catches, and
+  concrete CLI/skill/process improvements; `/bench-what-next` owns its drain.
+- **Unrelated reviewer work remains untouched.** Dirty `IDEAS.md` and
+  `ROADMAP.md`, deleted `decisions/recurrence-tallying.md`, untracked
+  `specs/decision-map-integrity-and-phase-ownership/`,
+  `decisions/diff-visual.md`, `decisions/diff-visual-prototype.html`, and
+  `specs/ft126-recurrence-tallying/` are outside FT131. This handoff and the
+  pending retro are the FT131-owned dirty paths.
 
 ## Next command
 
-`$bench-final-check`
+`$bench-what-next`
 
 ## Shape
 

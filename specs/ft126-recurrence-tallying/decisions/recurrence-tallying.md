@@ -207,4 +207,4 @@ settled above.
    - Context schema consumers require an explicit schema advance when fields or
      tables change.
 
-Dependency order: n/a — single spec.
+Dependency order: n/a — one FT126 recurrence-tallying spec.
