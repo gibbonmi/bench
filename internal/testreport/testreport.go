@@ -2,12 +2,19 @@
 package testreport
 
 import (
+	"context"
 	"encoding/json"
 	"io"
+	"os"
 	"os/exec"
+	"os/signal"
 	"sort"
 	"strings"
+	"syscall"
+	"time"
 
+	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -30,8 +37,12 @@ func Command(root string, args []string) (string, int) {
 		packageExpr = parsed.Positionals[0]
 	}
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
 	cmd := exec.Command("go", "test", "-json", "-count=1", packageExpr)
 	cmd.Dir = root
+	cmd.Env = capability.WithoutEnvironment(os.Environ(), capability.LogEnv)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	stream, err := cmd.StdoutPipe()
 	if err != nil {
 		return toon.Errorf("go test failed to start", err.Error()) + "\n", 1
@@ -39,8 +50,31 @@ func Command(root string, args []string) (string, int) {
 	if err := cmd.Start(); err != nil {
 		return toon.Errorf("go test failed to start", err.Error()) + "\n", 1
 	}
-	report, decodeErr := decode(stream)
+	type decoded struct {
+		report *report
+		err    error
+	}
+	decodedResult := make(chan decoded, 1)
+	go func() {
+		report, err := decode(stream)
+		decodedResult <- decoded{report: report, err: err}
+	}()
+	var result decoded
+	select {
+	case result = <-decodedResult:
+	case <-ctx.Done():
+		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
+		select {
+		case result = <-decodedResult:
+		case <-time.After(2 * time.Second):
+			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+			result = <-decodedResult
+		}
+		_ = cmd.Wait()
+		return toon.Errorf("go test interrupted", "child process group cancelled") + "\n", 1
+	}
 	waitErr := cmd.Wait()
+	report, decodeErr := result.report, result.err
 	if decodeErr != nil {
 		return toon.Errorf("go test output malformed", decodeErr.Error()) + "\n", 1
 	}
@@ -50,7 +84,8 @@ func Command(root string, args []string) (string, int) {
 	if !report.terminal {
 		return toon.Errorf("go test reported no packages", "no package terminal event") + "\n", 1
 	}
-	out, renderErr := report.render()
+	_, full := parsed.Flags["--full"]
+	out, renderErr := report.render(full)
 	if renderErr != nil {
 		return toon.RenderError(renderErr) + "\n", 1
 	}
@@ -73,6 +108,9 @@ type testResult struct {
 	test        string
 	first       string
 	failed      bool
+	skipped     bool
+	last        string
+	structured  string
 }
 
 type report struct {
@@ -105,7 +143,7 @@ func decode(stream io.Reader) (*report, error) {
 		if e.Test == "" && strings.Contains(e.Output, "[no test files]") {
 			report.statuses[e.Package] = "no-tests"
 		}
-		if e.Action == "pass" || e.Action == "fail" {
+		if e.Action == "pass" || e.Action == "fail" || e.Action == "skip" {
 			if e.Test == "" {
 				report.terminal = true
 				if e.Action == "fail" || report.statuses[e.Package] != "no-tests" {
@@ -115,6 +153,7 @@ func decode(stream io.Reader) (*report, error) {
 			if e.Test != "" {
 				test := report.test(e.Package, e.Test)
 				test.failed = e.Action == "fail"
+				test.skipped = e.Action == "skip"
 			}
 		}
 		if e.Action != "output" && e.Action != "build-output" {
@@ -122,7 +161,19 @@ func decode(stream io.Reader) (*report, error) {
 		}
 		for _, line := range strings.Split(e.Output, "\n") {
 			line = strings.TrimSpace(line)
-			if line == "" || runnerLine(line) {
+			if line == "" {
+				continue
+			}
+			structured, isStructured := capability.ParseLine(line)
+			if isStructured && e.Test != "" {
+				reason := string(structured.Kind)
+				if structured.Kind == capability.KindCapability {
+					reason += ": " + string(structured.Class)
+				}
+				report.test(e.Package, e.Test).structured = reason + ": " + structured.Reason
+				continue
+			}
+			if runnerLine(line) {
 				continue
 			}
 			if e.Test == "" {
@@ -135,6 +186,7 @@ func decode(stream io.Reader) (*report, error) {
 			if test.first == "" {
 				test.first = line
 			}
+			test.last = line
 		}
 	}
 }
@@ -160,7 +212,7 @@ func runnerLine(line string) bool {
 	return strings.HasPrefix(line, "bench-skip ") || strings.HasPrefix(line, "# ") || strings.HasPrefix(line, "=== RUN") || strings.HasPrefix(line, "=== PAUSE") || strings.HasPrefix(line, "=== CONT") || strings.HasPrefix(line, "=== NAME") || strings.HasPrefix(line, "--- FAIL:") || strings.HasPrefix(line, "--- PASS:") || strings.HasPrefix(line, "--- SKIP:") || line == "FAIL" || strings.HasPrefix(line, "FAIL ") || strings.HasPrefix(line, "FAIL\t") || strings.HasPrefix(line, "ok ") || strings.HasPrefix(line, "ok\t") || strings.HasPrefix(line, "? ") || strings.HasPrefix(line, "?\t")
 }
 
-func (r *report) render() (string, error) {
+func (r *report) render(full bool) (string, error) {
 	packages := make([]string, 0, len(r.statuses))
 	for pkg := range r.statuses {
 		packages = append(packages, pkg)
@@ -170,7 +222,7 @@ func (r *report) render() (string, error) {
 	for _, pkg := range packages {
 		packageRows = append(packageRows, []string{pkg, r.statuses[pkg]})
 	}
-	failures := r.failures()
+	failures := r.failures(full)
 	packageBlock, err := toon.Table("packages", []string{"package", "status"}, packageRows)
 	if err != nil {
 		return "", err
@@ -179,14 +231,35 @@ func (r *report) render() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	skipBlock, err := toon.Table("skips", []string{"package", "test", "reason"}, nil)
+	skipBlock, err := toon.Table("skips", []string{"package", "test", "reason"}, r.skips(full))
 	if err != nil {
 		return "", err
 	}
 	return packageBlock + failureBlock + skipBlock, nil
 }
 
-func (r *report) failures() [][]string {
+func (r *report) skips(full bool) [][]string {
+	rows := make([][]string, 0)
+	for _, test := range r.tests {
+		if !test.skipped {
+			continue
+		}
+		reason := test.structured
+		if reason == "" {
+			reason = test.last
+		}
+		if reason == "" || strings.HasSuffix(reason, ":") {
+			reason = "reason not emitted"
+		}
+		rows = append(rows, []string{test.packageName, test.test, diagnosticCell(reason, full)})
+	}
+	sort.Slice(rows, func(i, j int) bool {
+		return rows[i][0] < rows[j][0] || rows[i][0] == rows[j][0] && rows[i][1] < rows[j][1]
+	})
+	return rows
+}
+
+func (r *report) failures(full bool) [][]string {
 	rows := make([][]string, 0)
 	for _, test := range r.tests {
 		if !test.failed || r.failedDescendant(test) && test.first == "" {
@@ -196,7 +269,7 @@ func (r *report) failures() [][]string {
 		if line == "" {
 			line = "no diagnostic emitted"
 		}
-		rows = append(rows, []string{test.packageName, test.test, line})
+		rows = append(rows, []string{test.packageName, test.test, diagnosticCell(line, full)})
 	}
 	for pkg, status := range r.statuses {
 		if status == "fail" && r.packageFailure(pkg) {
@@ -204,13 +277,20 @@ func (r *report) failures() [][]string {
 			if line == "" {
 				line = "no diagnostic emitted"
 			}
-			rows = append(rows, []string{pkg, "", line})
+			rows = append(rows, []string{pkg, "", diagnosticCell(line, full)})
 		}
 	}
 	sort.Slice(rows, func(i, j int) bool {
 		return rows[i][0] < rows[j][0] || rows[i][0] == rows[j][0] && rows[i][1] < rows[j][1]
 	})
 	return rows
+}
+
+func diagnosticCell(line string, full bool) string {
+	if full {
+		return sanitize.Controls(line)
+	}
+	return sanitize.Preview(line)
 }
 
 func (r *report) packageFailure(pkg string) bool {

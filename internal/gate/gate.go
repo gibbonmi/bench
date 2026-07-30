@@ -146,8 +146,8 @@ func (r Resolution) command(root string) *exec.Cmd {
 // survive into a child. A run that collects sets its own value back on each phase.
 func gateEnv() []string {
 	var env []string
-	for _, kv := range os.Environ() {
-		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, capability.LogEnv+"=") {
+	for _, kv := range capability.WithoutEnvironment(os.Environ(), capability.LogEnv) {
+		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") {
 			continue
 		}
 		env = append(env, kv)

@@ -1,11 +1,16 @@
 package runtime
 
 import (
+	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/contract"
 )
@@ -16,11 +21,15 @@ func TestRuntimeTestReportContracts(t *testing.T) {
 	contract.SkipIfSubjectBenchMissing(t)
 	t.Parallel()
 	contract.RunParallel(t, "bench test runs fresh Go from the repository root contract", testRuntimeTestRunsFreshGoAtRoot)
+	contract.RunParallel(t, "linked repository wrapper reaches bench test contract", testRuntimeLinkedTestReport)
 	contract.RunParallel(t, "bench test grammar preserves one package argv contract", testRuntimeTestGrammar)
 	contract.RunParallel(t, "bench test keeps test-scoped no-test-looking output as pass contract", testRuntimeTestDoesNotMistakeTestLogForNoTests)
 	contract.RunParallel(t, "bench test renders sorted terminal package rows contract", testRuntimeTestRendersTerminalPackages)
 	contract.RunParallel(t, "bench test renders direct and build failure diagnostics contract", testRuntimeTestRendersFailures)
 	contract.RunParallel(t, "bench test selects only direct failure diagnostics contract", testRuntimeTestSelectsFailureDiagnostics)
+	contract.RunParallel(t, "bench test preserves generic and structured skip evidence contract", testRuntimeTestRendersSkips)
+	contract.RunParallel(t, "bench test interrupts the entire Go process group contract", testRuntimeTestInterruptsProcessGroup)
+	contract.RunParallel(t, "bench test bounds hostile diagnostic cells contract", testRuntimeTestHostileDiagnostics)
 	contract.RunParallel(t, "bench test reports malformed, empty, and unavailable Go output contract", testRuntimeTestErrorPostures)
 }
 
@@ -59,6 +68,23 @@ func testRuntimeTestRunsFreshGoAtRoot(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
+	}
+}
+
+func testRuntimeLinkedTestReport(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.Bench("link").RequireExit(0)
+	deep := filepath.Join(f.Root, "deep", "cwd")
+	contract.Mkdir(t, deep)
+	record := filepath.Join(f.Root, "go-record")
+	f.WriteExecutable("go", fakeGoScript)
+	launcher := filepath.Join(f.Root, ".bench", "bin", "bench.sh")
+	out := contract.RunAt(t, f, deep, map[string]string{"BENCH_TEST_RECORD": record, "PATH": f.Root + string(os.PathListSeparator) + os.Getenv("PATH")}, "bash", launcher, "test", "./linked package*")
+	if out.ExitCode != 0 || out.Stderr != "" || out.Stdout != "packages[1]{package,status}:\n  example/pass,pass\nfailures[0]{package,test,line}:\nskips[0]{package,test,reason}:\n" {
+		t.Fatalf("linked bench test = exit %d stdout %q stderr %q", out.ExitCode, out.Stdout, out.Stderr)
+	}
+	if got := contract.ReadFileAbs(t, record); got != wantGoRecord(f.Root, "test", "-json", "-count=1", "./linked package*") {
+		t.Fatalf("linked fake Go invocation = %q", got)
 	}
 }
 
@@ -163,6 +189,110 @@ func testRuntimeTestSelectsFailureDiagnostics(t *testing.T) {
 	if out.ExitCode != 1 || out.Stderr != "" || out.Stdout != want {
 		t.Fatalf("bench test failure selection = exit %d stdout %q stderr %q, want exit 1 and %q", out.ExitCode, out.Stdout, out.Stderr, want)
 	}
+}
+
+func testRuntimeTestRendersSkips(t *testing.T) {
+	f := contract.NewFixture(t)
+	f.WriteFile("go.mod", "module example.com/skip\n\ngo 1.25\n")
+	f.WriteFile("generic/generic_test.go", "package generic\n\nimport \"testing\"\n\nfunc TestGeneric(t *testing.T) { t.Skip(\"generic skip\") }\n")
+	f.WriteFile("structured/structured_test.go", "package structured\n\nimport (\n\t\"fmt\"\n\t\"os\"\n\t\"testing\"\n)\n\nfunc TestCapability(t *testing.T) { fmt.Println(\"bench-skip kind=capability class=symlink reason=host cannot link\"); t.Skip() }\nfunc TestNoProse(t *testing.T) { t.Skip() }\nfunc TestStructured(t *testing.T) {\n\tif path := os.Getenv(\"BENCH_SKIP_LOG\"); path != \"\" {\n\t\t_ = os.WriteFile(path, []byte(\"diverted\\n\"), 0o644)\n\t} else {\n\t\tfmt.Println(\"bench-skip kind=environment reason=host absent\")\n\t}\n\tt.Skip(\"fallback skip\")\n}\n")
+	sentinel := filepath.Join(f.Root, "skip-sentinel")
+	contract.WriteFileAbs(t, sentinel, "unchanged\n")
+	out := f.BenchEnv(map[string]string{"BENCH_SKIP_LOG": sentinel}, "test")
+	want := "packages[2]{package,status}:\n  example.com/skip/generic,pass\n  example.com/skip/structured,pass\nfailures[0]{package,test,line}:\nskips[4]{package,test,reason}:\n  example.com/skip/generic,TestGeneric,\"generic_test.go:5: generic skip\"\n  example.com/skip/structured,TestCapability,\"capability: symlink: host cannot link\"\n  example.com/skip/structured,TestNoProse,reason not emitted\n  example.com/skip/structured,TestStructured,\"environment: host absent\"\n"
+	if out.ExitCode != 0 || out.Stderr != "" || out.Stdout != want {
+		t.Fatalf("bench test skips = exit %d stdout %q stderr %q, want %q", out.ExitCode, out.Stdout, out.Stderr, want)
+	}
+	if got := contract.ReadFileAbs(t, sentinel); got != "unchanged\n" {
+		t.Fatalf("BENCH_SKIP_LOG sentinel = %q, want unchanged", got)
+	}
+}
+
+func testRuntimeTestInterruptsProcessGroup(t *testing.T) {
+	f := contract.NewFixture(t)
+	marker := filepath.Join(f.Root, "go-child.pid")
+	f.WriteExecutable("go", "#!/bin/sh\n( trap 'exit 0' INT TERM; while :; do sleep 1; done ) &\nprintf '%s\\n' \"$!\" > \"$BENCH_TEST_MARKER\"\ntrap '' INT\nwhile :; do sleep 1; done\n")
+	cmd := exec.Command("bash", benchPath(t), "test")
+	cmd.Dir = f.Root
+	cmd.Env = surfaceEnv(f, map[string]string{"BENCH_TEST_MARKER": marker, "PATH": f.Root + string(os.PathListSeparator) + os.Getenv("PATH")})
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) })
+	pidText := waitForSurfacePath(t, marker, cmd)
+	if err := cmd.Process.Signal(os.Interrupt); err != nil {
+		t.Fatal(err)
+	}
+	if err := cmd.Wait(); err == nil || cmd.ProcessState.ExitCode() != 1 {
+		t.Fatalf("interrupted bench test = %v exit %d, want exit 1", err, cmd.ProcessState.ExitCode())
+	}
+	if stdout.String() != "error: go test interrupted — child process group cancelled\n" || stderr.String() != "" {
+		t.Fatalf("interrupted bench test output = stdout %q stderr %q", stdout.String(), stderr.String())
+	}
+	pid, err := strconv.Atoi(pidText)
+	if err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if err := syscall.Kill(pid, 0); err != nil {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if err := syscall.Kill(pid, 0); err == nil {
+		t.Fatalf("interrupted bench test left fake Go descendant %d running", pid)
+	}
+}
+
+func testRuntimeTestHostileDiagnostics(t *testing.T) {
+	const x120 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+	const x121 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+	for _, tc := range []struct {
+		name, script, defaultCell, fullCell string
+	}{
+		{name: "120 code points", script: fakeDiagnosticJSON(x120), defaultCell: x120, fullCell: x120},
+		{name: "121 code points", script: fakeDiagnosticJSON(x121), defaultCell: x120 + "… (121 bytes)", fullCell: x121},
+		{name: "ESC", script: fakeDiagnosticJSON("before\\u001bafter"), defaultCell: `"before\\u001bafter"`, fullCell: `"before\\u001bafter"`},
+		{name: "BEL", script: fakeDiagnosticJSON("before\\u0007after"), defaultCell: `"before\\u0007after"`, fullCell: `"before\\u0007after"`},
+		{name: "newline selects first line", script: fakeDiagnosticJSON("first\\nsecond"), defaultCell: "first", fullCell: "first"},
+		{name: "tab", script: fakeDiagnosticJSON("before\\tafter"), defaultCell: `"before\\tafter"`, fullCell: `"before\\tafter"`},
+		{name: "backslash", script: fakeDiagnosticJSON(`before\\after`), defaultCell: `"before\\\\after"`, fullCell: `"before\\\\after"`},
+		{name: "invalid UTF-8", script: "#!/bin/sh\nprintf '%s' '{\"Action\":\"output\",\"Package\":\"example/hostile\",\"Test\":\"TestHostile\",\"Output\":\"bad'\nprintf '\\377'\nprintf '%s\\n' '\"}' '{\"Action\":\"fail\",\"Package\":\"example/hostile\",\"Test\":\"TestHostile\"}' '{\"Action\":\"fail\",\"Package\":\"example/hostile\"}'\nexit 1\n", defaultCell: "bad�", fullCell: "bad�"},
+		{name: "no trailing newline", script: fakeDiagnosticJSON("terminal"), defaultCell: "terminal", fullCell: "terminal"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := contract.NewFixture(t)
+			f.WriteExecutable("go", tc.script)
+			env := map[string]string{"PATH": f.Root + string(os.PathListSeparator) + os.Getenv("PATH")}
+			for _, mode := range []struct {
+				args []string
+				cell string
+			}{{[]string{"test"}, tc.defaultCell}, {[]string{"test", "--full"}, tc.fullCell}} {
+				out := f.BenchEnv(env, mode.args...)
+				want := "packages[1]{package,status}:\n  example/hostile,fail\nfailures[1]{package,test,line}:\n  example/hostile,TestHostile," + mode.cell + "\nskips[0]{package,test,reason}:\n"
+				if out.ExitCode != 1 || out.Stderr != "" || out.Stdout != want || hasRawControl(out.Stdout) {
+					t.Fatalf("args=%q output = exit %d stdout %q stderr %q, want %q", mode.args, out.ExitCode, out.Stdout, out.Stderr, want)
+				}
+			}
+		})
+	}
+}
+
+func fakeDiagnosticJSON(output string) string {
+	return "#!/bin/sh\nprintf '%s\\n' '{\"Action\":\"output\",\"Package\":\"example/hostile\",\"Test\":\"TestHostile\",\"Output\":\"" + output + "\"}' '{\"Action\":\"fail\",\"Package\":\"example/hostile\",\"Test\":\"TestHostile\"}' '{\"Action\":\"fail\",\"Package\":\"example/hostile\"}'\nexit 1\n"
+}
+
+func hasRawControl(value string) bool {
+	for _, r := range value {
+		if r < 0x20 && r != '\n' {
+			return true
+		}
+	}
+	return false
 }
 
 func testRuntimeTestErrorPostures(t *testing.T) {

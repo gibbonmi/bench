@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sync"
 	"testing"
 )
@@ -68,6 +69,14 @@ func TestParseLine(t *testing.T) {
 		if got, ok := ParseLine(line); ok {
 			t.Fatalf("ParseLine(%q) = %#v, true; want refused", line, got)
 		}
+	}
+}
+
+func TestWithoutEnvironment(t *testing.T) {
+	got := WithoutEnvironment([]string{"KEEP=one", LogEnv + "=/first", LogEnv + "=/second", "ALSO=two"}, LogEnv)
+	want := []string{"KEEP=one", "ALSO=two"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("WithoutEnvironment() = %#v, want %#v", got, want)
 	}
 }
 

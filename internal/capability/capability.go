@@ -89,6 +89,19 @@ const linePrefix = "bench-skip"
 // processes, so writers must go through appendSkipLog rather than opening it by hand.
 const LogEnv = "BENCH_SKIP_LOG"
 
+// WithoutEnvironment returns env without entries for name, preserving every other entry
+// byte-for-byte so a child cannot inherit a caller-owned capability side channel.
+func WithoutEnvironment(env []string, name string) []string {
+	prefix := name + "="
+	filtered := make([]string, 0, len(env))
+	for _, entry := range env {
+		if !strings.HasPrefix(entry, prefix) {
+			filtered = append(filtered, entry)
+		}
+	}
+	return filtered
+}
+
 // stdout is the stdout-fallback destination, held behind a var so this package's own
 // tests can swap it for a buffer and assert on the emitted bytes without touching the
 // process's real stdout.
