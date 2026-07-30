@@ -2,30 +2,27 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `8aea195`, 2 dirty paths, 10 unpushed commits
-Spec: none staged.
-Gate: green at `0bd5adc` — stale, work tree `9d5c055`
+Branch: `main` — HEAD `69a30cc`, clean tree, 17 unpushed commits
+Spec: `specs/ft129-canary-abort-attribution/spec.md` (Status: staged)
+Gate: green at `0bd5adc` — stale, work tree `13f7f12`
 
 ## State
 
-- **FT123 + FT124 is complete on `main`.** `bench worktree path|exec` now resolves
-  exact owned labels and portable paths, while `bench test` renders fresh package,
-  failure, and skip evidence as bounded TOON.
-- **Review and falsification are closed.** Fresh Standards/Spec/Coverage review
-  found four concrete issues, all repaired in `34ee835`. A read-only
-  `gpt-5.6-sol` / high falsification found exact flag-like labels, repaired in
-  `1d58ffd`. No contestable design finding remains.
-- **The landing and retirement gates are green.** `eb306f8` landed the implemented
-  spec, and `8aea195` retired its compiled spec/tickets on the default branch.
-  Ship-tier `bench prep-release` has not run.
-- **Capture is next.** The implementation retro is pending at
-  `.bench/retros/ft123-ft124-session-tax-readers.md`; the existing `IDEAS.md`
-  edit remains untouched. `/bench-what-next` owns both capture drain and roadmap
-  reconciliation.
+- **FT129 implementation and semantic review are complete.** Ticket 01 landed
+  green at `52d7e6b`, ticket 02 at `bb5f0ba`, and the bounded terminal repair
+  at `69a30cc`. All three ticket acceptance files are fully checked.
+- **All 15 coverage rows are classified and green or already covered.** The
+  implementation attributes Go panic/runtime-fatal output and structured
+  process aborts before bite classification, preserves completed-run semantics,
+  and keeps aggregate diagnostics bounded and fixture-ordered.
+- **Fresh semantic review closed three concrete findings.** Fixture ownership
+  is single-sourced, authentic runtime-fatal grammar comes from a Go test
+  subprocess, and contract, conformance-scope, and inner-gate process owners
+  have exact acceptance coverage. Final-check is the remaining phase.
 
 ## Next command
 
-`$bench-what-next`
+`$bench-final-check`
 
 ## Shape
 

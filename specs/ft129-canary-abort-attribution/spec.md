@@ -1,6 +1,6 @@
 # FT129 — attribute inner test aborts
 
-Status: staged
+Status: implemented
 
 ## Problem
 
