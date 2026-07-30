@@ -1,6 +1,6 @@
 # FT131 — freshness-seal the built Bench binary
 
-Status: staged
+Status: implemented
 
 ## Problem
 
