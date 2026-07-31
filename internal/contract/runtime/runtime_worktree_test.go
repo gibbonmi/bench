@@ -14,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/intent"
 )
@@ -75,10 +74,26 @@ func testRuntimeWorktreeExecInterrupt(t *testing.T) {
 	defer func() { _ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) }()
 	exited := make(chan struct{})
 	go func() { _ = cmd.Wait(); close(exited) }()
-	if miss := contract.WaitForTwoLegMarkers(pidfile, pidfile, 10*time.Second, bounds.TestDeadline(bounds.TestDeadlineFloor), os.Stat, exited, time.Now, time.Sleep); miss != "" {
-		t.Fatalf("worktree exec child did not publish its descendant pid: %s", miss)
+	deadline := time.Now().Add(10 * time.Second)
+	pidText := ""
+	for time.Now().Before(deadline) {
+		if data, err := os.ReadFile(pidfile); err == nil {
+			pidText = strings.TrimSpace(string(data))
+			if pidText != "" {
+				break
+			}
+		}
+		select {
+		case <-exited:
+			t.Fatal("worktree exec child exited before publishing its descendant pid")
+		default:
+			time.Sleep(10 * time.Millisecond)
+		}
 	}
-	pid, err := strconv.Atoi(strings.TrimSpace(contract.ReadFileAbs(t, pidfile)))
+	if pidText == "" {
+		t.Fatal("worktree exec child did not publish its descendant pid")
+	}
+	pid, err := strconv.Atoi(pidText)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,6 +103,10 @@ func testRuntimeWorktreeExecInterrupt(t *testing.T) {
 	<-exited
 	if cmd.ProcessState.ExitCode() != 130 {
 		t.Fatalf("interrupted worktree exec exit = %d, want 130", cmd.ProcessState.ExitCode())
+	}
+	deadline = time.Now().Add(2 * time.Second)
+	for syscall.Kill(pid, 0) == nil && time.Now().Before(deadline) {
+		time.Sleep(10 * time.Millisecond)
 	}
 	if err := syscall.Kill(pid, 0); err == nil {
 		t.Fatalf("interrupted worktree exec left descendant %d running", pid)
