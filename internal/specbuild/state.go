@@ -33,8 +33,9 @@ type record struct {
 const zeroObjectID = "0000000000000000000000000000000000000000"
 
 type assignment struct {
-	ID, Path, Base, Request, Ticket string
-	Rows, Fence, Assumptions        []string
+	ID, Path, Base, Request, Ticket, TicketDigest, Created   string
+	Rows, Fence, Assumptions                                 []string
+	Checkpoint, CheckpointRef, CheckpointTree, ReceiptDigest string
 }
 
 func (a assignment) public() Assignment {

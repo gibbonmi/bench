@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Assign creates or resumes one owned worktree for ticket in slug.
@@ -59,7 +60,7 @@ func (s *Service) Assign(ctx context.Context, slug, ticketArg, request string) (
 	if owned.ID == "" || owned.Path == "" {
 		return Assignment{}, Status{}, errors.New("worktree owner returned an incomplete assignment")
 	}
-	stored := assignment{ID: owned.ID, Path: owned.Path, Base: run.CandidateTip, Request: requestID, Ticket: ticket.Path, Rows: ticket.Rows, Fence: ticket.Fence, Assumptions: ticket.Assumptions}
+	stored := assignment{ID: owned.ID, Path: owned.Path, Base: run.CandidateTip, Request: requestID, Ticket: ticket.Path, TicketDigest: ticket.Digest, Created: time.Now().UTC().Format(time.RFC3339Nano), Rows: ticket.Rows, Fence: ticket.Fence, Assumptions: ticket.Assumptions}
 	run.Assignments[requestID] = stored
 	if err := s.save(run); err != nil {
 		return Assignment{}, Status{}, err
@@ -69,6 +70,7 @@ func (s *Service) Assign(ctx context.Context, slug, ticketArg, request string) (
 
 type ticket struct {
 	Path, Title              string
+	Digest                   string
 	Rows, Fence, Assumptions []string
 }
 
@@ -94,7 +96,7 @@ func resolveTicket(specPath, arg string) (ticket, error) {
 	if err != nil {
 		return ticket{}, fmt.Errorf("read spec build ticket: %w", err)
 	}
-	result := ticket{Path: path}
+	result := ticket{Path: path, Digest: digest(string(b))}
 	for _, line := range strings.Split(string(b), "\n") {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "# ") && result.Title == "" {
