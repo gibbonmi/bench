@@ -26,11 +26,14 @@ type SequenceRow struct {
 }
 type IdeaFact struct {
 	Date, Text string
+	Body       string
+	Line       int
 	TextBytes  int
 	Truncated  bool
 }
 type LearningFact struct {
 	Date, Title, State, Body string
+	Line                     int
 	BodyBytes                int
 	Truncated                bool
 }
@@ -66,21 +69,31 @@ type OccurrenceDiscrepancy struct {
 	Structural                                 bool
 }
 
+type CaptureOccurrence struct {
+	Owner, Incident, Source, CaptureUnit, State string
+}
+
+type OccurrencePair struct {
+	Owner, Incident string
+}
+
 type ContextSnapshot struct {
-	Full            bool
-	SequenceTrusted bool
-	Sources         []SourceFact
-	Roadmap         Document
-	Ideas           []IdeaFact
-	Learnings       []LearningFact
-	Retros          []RetroFact
-	Structure       [][]any
-	Specs           [][]string
-	SpecHistory     [][]string
-	Git             [][]any
-	GitChanges      [][]string
-	GateCache       [][]any
-	Failures        []ParseFailure
+	Full               bool
+	SequenceTrusted    bool
+	Sources            []SourceFact
+	Roadmap            Document
+	Ideas              []IdeaFact
+	Learnings          []LearningFact
+	Retros             []RetroFact
+	CaptureOccurrences []CaptureOccurrence
+	PendingOccurrences []OccurrencePair
+	Structure          [][]any
+	Specs              [][]string
+	SpecHistory        [][]string
+	Git                [][]any
+	GitChanges         [][]string
+	GateCache          [][]any
+	Failures           []ParseFailure
 }
 
 // dirBytes sums the sizes of the regular-file entries in a classified directory

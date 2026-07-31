@@ -26,6 +26,7 @@ var grammar = usage.Grammar{
 // heading so roadmap context and the human projections share this parser.
 type Entry struct {
 	Date, Title, State, Body string
+	Line                     int
 }
 
 // Malformed is one heading that started a `## ` entry but did not parse as a dated
@@ -71,7 +72,7 @@ func Parse(content []byte) ([]Entry, []Malformed) {
 			malformed = append(malformed, Malformed{Reason: "dated learning heading must end with [open]", Raw: line, Line: start})
 			continue
 		}
-		out = append(out, Entry{Date: date, Title: title, State: state, Body: body})
+		out = append(out, Entry{Date: date, Title: title, State: state, Body: body, Line: start})
 	}
 	return out, malformed
 }

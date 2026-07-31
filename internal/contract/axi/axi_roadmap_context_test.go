@@ -22,6 +22,7 @@ func TestAXIRoadmapContextContracts(t *testing.T) {
 	contract.RunParallel(t, "AXI roadmap context fail-closed contract failed", testRoadmapContextFailClosed)
 	contract.RunParallel(t, "AXI roadmap context read-only offline contract failed", testRoadmapContextReadOnlyOffline)
 	contract.RunParallel(t, "AXI roadmap context retrospective evidence contract failed", testRoadmapContextRetros)
+	contract.RunParallel(t, "AXI roadmap context occurrence projection contract failed", testRoadmapContextOccurrences)
 	contract.RunParallel(t, "AXI roadmap context unborn-HEAD contract failed", testRoadmapContextUnbornHead)
 }
 
@@ -124,6 +125,30 @@ func testRoadmapContextRetros(t *testing.T) {
 	full := f.Bench("roadmap", "--context", "--full")
 	full.RequireExit(0)
 	full.RequireContains(full.Stdout, "4097,false")
+}
+
+func testRoadmapContextOccurrences(t *testing.T) {
+	f := contextFixture(t)
+	f.WriteFile("ROADMAP.md", "# Roadmap\n\n## Features\n\n**FT1 — one.**\nOccurrences: recorded\n\n**FT2 — two.**\n")
+	f.WriteFile("IDEAS.md", "- 2026-07-10  duplicate [occurrence:FT1/recorded]\n- 2026-07-10  idea [occurrence:FT2/idea]\n")
+	f.WriteFile(".bench/learnings.md", "## 2026-07-10 — lesson  [open]\nProse [occurrence:FT1/ignored_] first.\nFinal [occurrence:FT2/learning]\n")
+	f.WriteFile(".bench/retros/one.md", "## Agent-experience improvements\n\nParagraph [occurrence:FT2/retro]\n\n- List [occurrence:FT2/list]\n")
+
+	out := f.Bench("roadmap", "--context")
+	out.RequireExit(0)
+	for _, row := range []string{
+		"FT1,recorded,IDEAS.md,line 1,already-recorded",
+		"FT2,idea,IDEAS.md,line 2,pending",
+		"FT2,learning,.bench/learnings.md,line 1,pending",
+		"FT2,list,.bench/retros/one.md,line 5,pending",
+		"FT2,retro,.bench/retros/one.md,line 3,pending",
+		"IDEAS.md,line 1,already-recorded,FT1,recorded,false",
+	} {
+		out.RequireContains(out.Stdout, row)
+	}
+	if strings.Contains(out.Stdout, "FT1,ignored,") {
+		t.Fatalf("non-final learning token became an occurrence:\n%s", out.Stdout)
+	}
 }
 
 func testRoadmapContextTruncation(t *testing.T) {

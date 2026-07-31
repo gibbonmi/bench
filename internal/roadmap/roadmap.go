@@ -34,6 +34,9 @@ var ideaGrammar = usage.Grammar{
 
 var occurrenceOwner = regexp.MustCompile(`^FT[1-9][0-9]*$`)
 
+// ValidOccurrenceOwner reports whether owner has the shared occurrence-owner grammar.
+func ValidOccurrenceOwner(owner string) bool { return occurrenceOwner.MatchString(owner) }
+
 // roadmapGrammar is the bare `bench roadmap` form. Every argument-bearing invocation
 // is dispatched to the --context form, which declares its own grammar, so this one
 // takes nothing at all.
@@ -77,7 +80,7 @@ func IdeaCommand(args []string) (string, int) {
 		return toon.MissingArg(ideaGrammar.Cmd, "--owner and --incident") + "\n", 2
 	}
 	if hasOwner {
-		if !occurrenceOwner.MatchString(owner) {
+		if !ValidOccurrenceOwner(owner) {
 			return toon.Usage(ideaGrammar.Cmd, "--owner "+owner) + "\n", 2
 		}
 		if !ValidOccurrenceIncident(incident) {

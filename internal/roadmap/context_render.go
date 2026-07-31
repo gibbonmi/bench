@@ -90,7 +90,11 @@ func renderContext(s ContextSnapshot) (string, error) {
 		rows = append(rows, []any{r.Path, r.State, r.Body, r.BodyBytes, r.Truncated})
 	}
 	bs = append(bs, block{"retros", []string{"path", "state", "body", "body_bytes", "truncated"}, rows})
-	bs = append(bs, block{"capture_occurrences", []string{"owner", "incident", "source", "capture_unit", "state"}, nil})
+	rows = nil
+	for _, r := range s.CaptureOccurrences {
+		rows = append(rows, []any{r.Owner, r.Incident, r.Source, r.CaptureUnit, r.State})
+	}
+	bs = append(bs, block{"capture_occurrences", []string{"owner", "incident", "source", "capture_unit", "state"}, rows})
 	rows = nil
 	for _, r := range s.Roadmap.OccurrenceDiscrepancies {
 		rows = append(rows, []any{r.Source, r.CaptureUnit, r.Kind, r.Owner, r.Incident, r.Structural})

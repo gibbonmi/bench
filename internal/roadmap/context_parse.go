@@ -190,7 +190,7 @@ func parseIdeas(content []byte, full bool) ([]IdeaFact, []ParseFailure, []string
 	var facts []IdeaFact
 	var failures []ParseFailure
 	var rawLines []string
-	for _, line := range strings.Split(string(content), "\n") {
+	for i, line := range strings.Split(string(content), "\n") {
 		if strings.TrimSpace(line) == "" {
 			continue
 		}
@@ -204,7 +204,7 @@ func parseIdeas(content []byte, full bool) ([]IdeaFact, []ParseFailure, []string
 			continue
 		}
 		text, n, tr := limited(m[2], full)
-		facts = append(facts, IdeaFact{m[1], text, n, tr})
+		facts = append(facts, IdeaFact{Date: m[1], Text: text, Body: m[2], Line: i + 1, TextBytes: n, Truncated: tr})
 	}
 	return facts, failures, rawLines
 }
@@ -274,19 +274,33 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 	}
 	var roadFails []ParseFailure
 	s.Roadmap, roadFails = ParseDocument(data[RoadmapFile], statuses, full)
-	s.SequenceTrusted = len(s.Roadmap.OccurrenceDiscrepancies) == 0
 	s.Failures = append(s.Failures, roadFails...)
 	s.Ideas, roadFails, _ = parseIdeas(data[IdeasFile], full)
 	s.Failures = append(s.Failures, roadFails...)
+	units := make([]captureUnit, 0, len(s.Ideas))
+	for _, idea := range s.Ideas {
+		units = append(units, captureUnit{Source: IdeasFile, CaptureUnit: "line " + strconv.Itoa(idea.Line), Body: idea.Body})
+	}
 	learningFacts, malformedLearnings := learnings.Parse(data[learnings.JournalPath])
 	for _, e := range learningFacts {
 		body, n, tr := limited(e.Body, full)
-		s.Learnings = append(s.Learnings, LearningFact{e.Date, e.Title, e.State, body, n, tr})
+		s.Learnings = append(s.Learnings, LearningFact{Date: e.Date, Title: e.Title, State: e.State, Body: body, Line: e.Line, BodyBytes: n, Truncated: tr})
+		units = append(units, captureUnit{Source: learnings.JournalPath, CaptureUnit: "line " + strconv.Itoa(e.Line), Body: e.Body})
 	}
 	for _, m := range malformedLearnings {
 		raw, n, tr := limited(m.Raw, full)
 		s.Failures = append(s.Failures, ParseFailure{learnings.JournalPath, m.Reason, raw, n, tr})
 	}
+	for _, retro := range retroFacts.Entries {
+		if retro.State != bounds.StateParsed {
+			continue
+		}
+		for _, recommendation := range retros.Recommendations(retro.Body) {
+			units = append(units, captureUnit{Source: retro.Path, CaptureUnit: "line " + strconv.Itoa(recommendation.Line), Body: recommendation.Body})
+		}
+	}
+	s.CaptureOccurrences, s.PendingOccurrences = projectCaptureOccurrences(&s.Roadmap, units)
+	s.SequenceTrusted = occurrenceSequenceTrusted(s.Roadmap.OccurrenceDiscrepancies)
 	structFacts, err := structure.Facts(root)
 	if err != nil {
 		return s, err
