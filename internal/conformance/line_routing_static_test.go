@@ -42,6 +42,10 @@ func checkLineBinding(root string) []string {
 	if profile != "" && !anchored {
 		diags = append(diags, "profile Lines section missing: projects/benchkit.md has no 'Lines' heading rendering the binding matrix")
 	}
+	rendered, tabled := profileLinesCells(section)
+	if anchored && !tabled {
+		diags = append(diags, "profile Lines table missing: projects/benchkit.md renders no '| tier | <harness> |' matrix table under its 'Lines' heading, so no cell's placement can be checked")
+	}
 	declared := false
 	for _, harness := range lines.Harnesses {
 		if !binding.Declared(harness) {
@@ -58,6 +62,10 @@ func checkLineBinding(root string) []string {
 				diags = append(diags, fmt.Sprintf("lines.env cell malformed: %s='%s' %s", key, value, lines.CellFault(harness, value)))
 			case anchored && !strings.Contains(section, value):
 				diags = append(diags, fmt.Sprintf("profile Lines prose stale: projects/benchkit.md does not name bound model id '%s' (%s in lines.env)", value, key))
+			case anchored && tabled && rendered[tier][harness] != value:
+				// Reached only when the token IS in the section, so this is placement and
+				// nothing else: the table binds it to some other harness or tier.
+				diags = append(diags, fmt.Sprintf("profile Lines cell misbound: projects/benchkit.md renders the %s %s cell as '%s', but %s='%s' in lines.env", harness, tier, rendered[tier][harness], key, value))
 			}
 		}
 	}
@@ -96,6 +104,75 @@ func profileLinesSection(profile string) (string, bool) {
 		body = append(body, line)
 	}
 	return strings.Join(body, "\n"), depth > 0
+}
+
+// profileLinesCells parses the profile's binding matrix table into cells[tier][harness],
+// reporting whether such a table was found. Placement has to be read rather than membership:
+// a matrix whose columns are swapped still carries every bound token somewhere in the Lines
+// section, so a substring search over the section stays green while the table tells a reader
+// the wrong binding for every cell it names. The table is found by its `tier` corner cell,
+// its header row names the harness columns, and each row's first cell names the tier — the
+// check reads the rendering the way the human it exists for does.
+func profileLinesCells(section string) (map[string]map[string]string, bool) {
+	var harnesses []string
+	cells := map[string]map[string]string{}
+	for _, line := range strings.Split(section, "\n") {
+		row, ok := markdownRow(line)
+		if !ok {
+			continue
+		}
+		if harnesses == nil {
+			// Rows before the matrix belong to some other table; only the one cornered
+			// `tier` renders the binding.
+			if strings.ToLower(row[0]) == "tier" {
+				harnesses = make([]string, 0, len(row)-1)
+				for _, name := range row[1:] {
+					harnesses = append(harnesses, strings.ToLower(name))
+				}
+			}
+			continue
+		}
+		tier := strings.ToLower(row[0])
+		if tier == "" || isRuleRow(row) {
+			continue
+		}
+		if cells[tier] == nil {
+			cells[tier] = map[string]string{}
+		}
+		for i, value := range row[1:] {
+			if i < len(harnesses) {
+				cells[tier][harnesses[i]] = value
+			}
+		}
+	}
+	return cells, harnesses != nil
+}
+
+// markdownRow splits one pipe-delimited table row into its cells, stripping the code-span
+// backticks the profile renders a model id inside so the cell compares as the bare token.
+func markdownRow(line string) ([]string, bool) {
+	trimmed := strings.TrimSpace(line)
+	if !strings.HasPrefix(trimmed, "|") {
+		return nil, false
+	}
+	trimmed = strings.TrimSuffix(strings.TrimPrefix(trimmed, "|"), "|")
+	cells := strings.Split(trimmed, "|")
+	for i, cell := range cells {
+		cell = strings.TrimSpace(cell)
+		cell = strings.TrimSuffix(strings.TrimPrefix(cell, "`"), "`")
+		cells[i] = strings.TrimSpace(cell)
+	}
+	return cells, true
+}
+
+// isRuleRow reports whether row is the `|---|---|` separator under a header rather than data.
+func isRuleRow(row []string) bool {
+	for _, cell := range row {
+		if cell == "" || strings.Trim(cell, "-:") != "" {
+			return false
+		}
+	}
+	return true
 }
 
 // TestLineBindingGradesDeclaredHarnessesOnly pins the declared-versus-known distinction in
@@ -139,6 +216,137 @@ func TestLineBindingGradesDeclaredHarnessesOnly(t *testing.T) {
 	}
 }
 
+// linesMatrixFixtureEnv binds a full codex and claude matrix in distinct, mutually
+// non-containing tokens: a substring collision would let one cell's rendering satisfy
+// another's cross-check and hide a missed mutation. The tier name inside each token is what
+// makes a swapped rendering readable in a failure message.
+const linesMatrixFixtureEnv = "BENCH_CODEX_TOP=alpha-top\nBENCH_CODEX_MID=alpha-mid\n" +
+	"BENCH_CODEX_CHEAP=alpha-cheap\nBENCH_CLAUDE_TOP=beta-top\nBENCH_CLAUDE_MID=beta-mid\n" +
+	"BENCH_CLAUDE_CHEAP=beta-cheap\n"
+
+// renderLinesProfile builds a profile whose Lines section carries the binding matrix as the
+// markdown table the real profile renders it with, taking each cell's text from cell and
+// appending trailer after the section. The table shape is load-bearing, not decoration: the
+// cross-check reads a tier per row and a harness per column, so a fixture that listed the
+// same tokens some other way would grade a rendering the profile does not have.
+func renderLinesProfile(cell func(harness, tier string) string, trailer string) string {
+	var b strings.Builder
+	b.WriteString("# benchkit\n\n## Lines (model + effort routing)\n\n| tier")
+	for _, harness := range lines.Harnesses {
+		b.WriteString(" | " + harness)
+	}
+	b.WriteString(" |\n|---")
+	for range lines.Harnesses {
+		b.WriteString("|---")
+	}
+	b.WriteString("|\n")
+	for _, tier := range lines.Tiers {
+		b.WriteString("| " + tier)
+		for _, harness := range lines.Harnesses {
+			b.WriteString(" | " + cell(harness, tier))
+		}
+		b.WriteString(" |\n")
+	}
+	b.WriteString("\n## Notes for cold sessions\n\nThe routing rubric lives in craft-line.\n")
+	b.WriteString(trailer)
+	return b.String()
+}
+
+// writeLinesRoot plants a binding and a profile in a throwaway root the check can read.
+func writeLinesRoot(t *testing.T, env, profile string) string {
+	t.Helper()
+	root := t.TempDir()
+	for _, dir := range []string{".bench", "projects"} {
+		if err := os.MkdirAll(filepath.Join(root, dir), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(root, ".bench", "lines.env"), []byte(env), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "projects", "benchkit.md"), []byte(profile), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return root
+}
+
+// TestLineBindingCatchesSwappedProfileCells is the placement half of the cross-check, and the
+// mutation the per-cell absence rows structurally cannot make: a swap moves no token out of
+// the Lines section, so every membership test still passes while the table tells a reader
+// the wrong binding. One case per unordered pair of declared cells covers both axes — two
+// harnesses at one tier and two tiers in one harness — because a check that reads only the
+// row or only the column satisfies one axis while the other rots, which is the same
+// single-sample failure the per-cell rows exist to kill.
+func TestLineBindingCatchesSwappedProfileCells(t *testing.T) {
+	binding := lines.ParseBinding([]byte(linesMatrixFixtureEnv))
+	type ref struct{ harness, tier string }
+	var declared []ref
+	for _, harness := range lines.Harnesses {
+		for _, tier := range lines.Tiers {
+			if binding.Cell(harness, tier) != "" {
+				declared = append(declared, ref{harness, tier})
+			}
+		}
+	}
+	for i, a := range declared {
+		for _, b := range declared[i+1:] {
+			a, b := a, b
+			t.Run(lines.Key(a.harness, a.tier)+" swapped with "+lines.Key(b.harness, b.tier), func(t *testing.T) {
+				profile := renderLinesProfile(func(harness, tier string) string {
+					switch (ref{harness, tier}) {
+					case a:
+						harness, tier = b.harness, b.tier
+					case b:
+						harness, tier = a.harness, a.tier
+					}
+					if value := binding.Cell(harness, tier); value != "" {
+						return "`" + value + "`"
+					}
+					return "unbound"
+				}, "")
+				diags := checkLineBinding(writeLinesRoot(t, linesMatrixFixtureEnv, profile))
+				// A stale diagnostic would mean a token left the section, which would make
+				// the swap provable by membership alone and this case prove nothing.
+				if containsDiagnostic(diags, "profile Lines prose stale") {
+					t.Fatalf("the swap moved a token out of the section, so placement was not what bit:\n%s", strings.Join(diags, "\n"))
+				}
+				named := false
+				for _, cell := range []ref{a, b} {
+					if containsDiagnostic(diags, "profile Lines cell misbound") &&
+						containsDiagnostic(diags, lines.Key(cell.harness, cell.tier)) {
+						named = true
+					}
+				}
+				if !named {
+					t.Fatalf("swapping %s with %s was accepted:\n%s",
+						lines.Key(a.harness, a.tier), lines.Key(b.harness, b.tier), strings.Join(diags, "\n"))
+				}
+			})
+		}
+	}
+}
+
+// TestLineBindingRequiresTheProfileToRenderTheMatrixAsATable pins the placement check's own
+// precondition. Without it, deleting the table and scattering the six ids through the
+// section's prose would silently retire the placement arm while every membership test
+// stayed green — the check would lose its teeth with nothing turning red.
+func TestLineBindingRequiresTheProfileToRenderTheMatrixAsATable(t *testing.T) {
+	binding := lines.ParseBinding([]byte(linesMatrixFixtureEnv))
+	var b strings.Builder
+	b.WriteString("# benchkit\n\n## Lines (model + effort routing)\n\n")
+	for _, harness := range lines.Harnesses {
+		for _, tier := range lines.Tiers {
+			if value := binding.Cell(harness, tier); value != "" {
+				b.WriteString("- " + harness + " " + tier + ": `" + value + "`\n")
+			}
+		}
+	}
+	diags := checkLineBinding(writeLinesRoot(t, linesMatrixFixtureEnv, b.String()))
+	if !containsDiagnostic(diags, "profile Lines table missing") {
+		t.Fatalf("a Lines section rendering the matrix as prose was accepted:\n%s", strings.Join(diags, "\n"))
+	}
+}
+
 // TestLineBindingCrossChecksEveryCellAgainstTheLinesSection proves the quantifier and the
 // anchor in one pass, one mutation per declared cell: a checker that samples a single cell
 // passes a one-cell test while the other five rot, and an unanchored substring search over
@@ -146,48 +354,26 @@ func TestLineBindingGradesDeclaredHarnessesOnly(t *testing.T) {
 // renders its profile from the same parse the check reads, so the cells have one author here
 // rather than a second hand-written list.
 func TestLineBindingCrossChecksEveryCellAgainstTheLinesSection(t *testing.T) {
-	// Distinct, mutually non-containing tokens: a substring collision would let one cell's
-	// rendering satisfy another's cross-check and hide a missed mutation.
-	env := "BENCH_CODEX_TOP=alpha-top\nBENCH_CODEX_MID=alpha-mid\nBENCH_CODEX_CHEAP=alpha-cheap\n" +
-		"BENCH_CLAUDE_TOP=beta-top\nBENCH_CLAUDE_MID=beta-mid\nBENCH_CLAUDE_CHEAP=beta-cheap\n"
-	binding := lines.ParseBinding([]byte(env))
-	// profile renders every declared cell inside the Lines section except omit. When
-	// elsewhere is set, omit is still named after the section, which is the only shape that
-	// separates an anchored check from a whole-file search.
+	binding := lines.ParseBinding([]byte(linesMatrixFixtureEnv))
+	// profile renders every declared cell inside the Lines section except omit, whose cell
+	// reads `unbound` the way the real profile spells an unadopted column. When elsewhere is
+	// set, omit is still named after the section, which is the only shape that separates an
+	// anchored check from a whole-file search.
 	profile := func(omit string, elsewhere bool) string {
-		var b strings.Builder
-		b.WriteString("# benchkit\n\n## Lines (model + effort routing)\n\n")
-		for _, harness := range lines.Harnesses {
-			for _, tier := range lines.Tiers {
-				value := binding.Cell(harness, tier)
-				if value == "" || value == omit {
-					continue
-				}
-				b.WriteString("- " + harness + " " + tier + ": `" + value + "`\n")
-			}
-		}
-		b.WriteString("\n## Notes for cold sessions\n\nThe routing rubric lives in craft-line.\n")
+		trailer := ""
 		if elsewhere {
-			b.WriteString("\nHistorical note: this repo once bound `" + omit + "`.\n")
+			trailer = "\nHistorical note: this repo once bound `" + omit + "`.\n"
 		}
-		return b.String()
+		return renderLinesProfile(func(harness, tier string) string {
+			if value := binding.Cell(harness, tier); value != "" && value != omit {
+				return "`" + value + "`"
+			}
+			return "unbound"
+		}, trailer)
 	}
 	write := func(t *testing.T, profile string) string {
 		t.Helper()
-		root := t.TempDir()
-		if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.MkdirAll(filepath.Join(root, "projects"), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(filepath.Join(root, ".bench", "lines.env"), []byte(env), 0o644); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(filepath.Join(root, "projects", "benchkit.md"), []byte(profile), 0o644); err != nil {
-			t.Fatal(err)
-		}
-		return root
+		return writeLinesRoot(t, linesMatrixFixtureEnv, profile)
 	}
 
 	if diags := checkLineBinding(write(t, profile("", false))); len(diags) != 0 {

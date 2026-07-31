@@ -211,6 +211,12 @@ func TestParseBindingRejectsForeignHarnessKeys(t *testing.T) {
 	}{
 		{"unknown harness", "BENCH_CODEX_TOP=a\nBENCH_CODEX_MID=b\nBENCH_CODEX_CHEAP=c\nBENCH_GEMINI_TOP=g\n", []string{"BENCH_GEMINI_TOP"}},
 		{"retired schema", retiredBinding, []string{"BENCH_TIER_TOP", "BENCH_TIER_MID", "BENCH_TIER_CHEAP", "BENCH_ALIAS_TOP", "BENCH_ALIAS_MID", "BENCH_ALIAS_CHEAP"}},
+		// A key is a cell only under the canonical spelling Key renders, so a lowercased
+		// harness segment is foreign. The two readings have to agree: Cell looks up the
+		// canonical key and nothing else, so a spelling counted as naming a known harness
+		// here would be a key neither path ever reads — ignored by the reader and unreported
+		// by the gate at once.
+		{"non-canonical harness case", "BENCH_CODEX_TOP=a\nBENCH_CODEX_MID=b\nBENCH_CODEX_CHEAP=c\nBENCH_claude_TOP=f\n", []string{"BENCH_claude_TOP"}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			b := ParseBinding([]byte(tt.content))

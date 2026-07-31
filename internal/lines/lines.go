@@ -167,10 +167,26 @@ func knownTier(name string) bool {
 }
 
 // foreignKeyRe matches any BENCH_<WORD>_<TIER> assignment, whatever the harness segment
-// says. Anything it matches whose segment is not a known harness is a foreign key — which
-// includes the retired BENCH_TIER_* / BENCH_ALIAS_* schema, so a binding carrying only
-// retired keys reads as no binding rather than as a legacy one.
-var foreignKeyRe = regexp.MustCompile(`(?m)^[ \t]*(BENCH_([A-Za-z0-9]+)_(?:TOP|MID|CHEAP))=`)
+// says. Anything it matches that is not one of the keys the cell reader looks up is a
+// foreign key — which includes the retired BENCH_TIER_* / BENCH_ALIAS_* schema, so a binding
+// carrying only retired keys reads as no binding rather than as a legacy one.
+var foreignKeyRe = regexp.MustCompile(`(?m)^[ \t]*(BENCH_[A-Za-z0-9]+_(?:TOP|MID|CHEAP))=`)
+
+// matrixKey reports whether key is one of the keys ParseBinding reads cells from. The test
+// is exact-string against Key's own output rather than a case-folded reading of the harness
+// segment: a segment matched case-insensitively would let a non-canonical spelling like
+// BENCH_claude_TOP count as naming a known harness while no cell lookup ever reads it,
+// leaving the key ignored by the reader and unreported by the foreign-key arm alike.
+func matrixKey(key string) bool {
+	for _, harness := range Harnesses {
+		for _, tier := range Tiers {
+			if Key(harness, tier) == key {
+				return true
+			}
+		}
+	}
+	return false
+}
 
 // Binding is the parsed BENCH_<HARNESS>_<TIER> matrix: one column per harness in
 // Harnesses, plus every harness-shaped key naming a harness outside that closed set.
@@ -199,8 +215,8 @@ func ParseBinding(content []byte) Binding {
 	}
 	seen := make(map[string]bool)
 	for _, match := range foreignKeyRe.FindAllStringSubmatch(string(content), -1) {
-		key, harness := match[1], strings.ToLower(match[2])
-		if KnownHarness(harness) || seen[key] {
+		key := match[1]
+		if matrixKey(key) || seen[key] {
 			continue
 		}
 		seen[key] = true
@@ -281,6 +297,20 @@ func (b Binding) UnboundKeys(harness string) []string {
 var retiredFamilies = []struct{ prefix, harness string }{
 	{"BENCH_TIER_", "codex"},
 	{"BENCH_ALIAS_", "claude"},
+}
+
+// RetiredKeyPrefixes returns the retired schema's key stems in schema order, so consumers
+// outside this package read the retired families off retiredFamilies above rather than
+// declaring their own copy. The doctor migration report walks that declaration for the
+// rewrites it offers and the guidance sweep builds its prose matcher from this list, so the
+// two cannot come to disagree about which schema is retired. Only the stems are exported:
+// the harness each family migrates to is the report's business alone.
+func RetiredKeyPrefixes() []string {
+	prefixes := make([]string, 0, len(retiredFamilies))
+	for _, family := range retiredFamilies {
+		prefixes = append(prefixes, family.prefix)
+	}
+	return prefixes
 }
 
 // RetiredKeyRewrite is one retired assignment and the matrix assignment replacing it, both

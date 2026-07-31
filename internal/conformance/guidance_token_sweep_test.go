@@ -26,17 +26,25 @@ var guidanceDirs = []string{
 	filepath.Join(".agents", "skills"),
 }
 
-// retiredBindingPrefixes are the key stems the BENCH_<HARNESS>_<TIER> matrix replaced.
-// BENCH_TIER_* bound one tier for every harness at once and BENCH_ALIAS_* bolted a second
-// family onto that column, so prose still naming either teaches a schema nothing reads and
-// re-establishes the one-canonical-family framing the matrix exists to remove.
-var retiredBindingPrefixes = []string{"TIER", "ALIAS"}
-
 // retiredKeyRe matches a retired key by its concrete tier and by the `*` glob prose writes a
 // key family with. Both spellings teach the retired schema, and the glob is how the drift
-// this check was written against was actually spelled.
-var retiredKeyRe = regexp.MustCompile(`BENCH_(?:` + strings.Join(retiredBindingPrefixes, "|") +
-	`)_(?:` + strings.Join(upperTiers(), "|") + `|\*)`)
+// this check was written against was actually spelled. The stems come from
+// lines.RetiredKeyPrefixes rather than a second list here: prose still naming a retired
+// family teaches a schema nothing reads, and which families those are is one fact that the
+// doctor's migration report already owns.
+var retiredKeyRe = regexp.MustCompile(`(?:` + strings.Join(quotedRetiredPrefixes(), "|") +
+	`)(?:` + strings.Join(upperTiers(), "|") + `|\*)`)
+
+// quotedRetiredPrefixes renders the retired stems as regexp literals, so a stem carrying a
+// metacharacter would match itself rather than silently widening the matcher.
+func quotedRetiredPrefixes() []string {
+	prefixes := lines.RetiredKeyPrefixes()
+	quoted := make([]string, 0, len(prefixes))
+	for _, prefix := range prefixes {
+		quoted = append(quoted, regexp.QuoteMeta(prefix))
+	}
+	return quoted
+}
 
 // upperTiers renders lines.Tiers in the case a binding key spells them, so the tier
 // vocabulary keeps one declaration and a tier added there reaches this sweep unedited.
@@ -142,15 +150,28 @@ func bindsToken(binding lines.Binding, token string) bool {
 }
 
 // modelLiteral reports whether span is shaped like a concrete model id: a safe token, at
-// most one `provider/` prefix, hyphen-separated segments beginning with a letter, at least
-// one later segment beginning with a digit, and either that provider prefix or three or
-// more segments. The boundary is drawn tight because the expensive failure here is the
-// opposite one: a matcher broad enough to catch every id turns ordinary guidance red, and a
-// prose oracle that cries wolf gets weakened rather than obeyed. The version segment
-// separates a model id from every hyphenated English compound, the three-segment floor keeps
-// `utf-8` and `schema-3` out, and the single-slash rule keeps a path like
-// `docs/adr/0001-tripwire.md` out. A two-segment dotted id (`gpt-5.6`) and an id written
-// outside a code span are the accepted misses.
+// most one `provider/` prefix, non-empty hyphen-separated segments starting with a letter,
+// a version digit, and either that provider prefix or three or more segments. The boundary
+// is drawn tight because the expensive failure here is the opposite one: a matcher broad
+// enough to catch every id turns ordinary guidance red, and a prose oracle that cries wolf
+// gets weakened rather than obeyed. The version digit separates a model id from every
+// hyphenated English compound, the three-segment floor keeps `utf-8` and `schema-3` out, and
+// the single-slash rule keeps a path like `docs/adr/0001-tripwire.md` out.
+//
+// Where the version digit may sit depends on the shape around it. Normally it must open a
+// later segment, because a leading numbered word is how ordinary slugs are spelled
+// (`ft128-agent-line-binding`) and reading that as a version would report them. The one
+// exception is a provider-qualified id of exactly two segments, where the digit may sit
+// inside the first: that is how the `openai/o3-mini` family is spelled, and holding the
+// exception to two segments is what keeps a qualified slug like
+// `specs/ft128-agent-line-binding` accepted — the two shapes are otherwise identical, and
+// prose writes far more slugs than ids.
+//
+// The accepted misses: a two-segment dotted id (`gpt-5.6`), a provider-qualified id of three
+// or more segments carrying its only digit in the first (`openai/o3-mini-high`), and an id
+// written outside a code span. The third is the boundary's price — a matcher wide enough to
+// close it reports the slugs above, and a prose oracle that cries wolf gets weakened rather
+// than obeyed.
 func modelLiteral(span string) bool {
 	if !modelid.SafeToken(span) {
 		return false
@@ -169,10 +190,15 @@ func modelLiteral(span string) bool {
 	if !qualified && len(segments) < 3 {
 		return false
 	}
-	for _, segment := range segments[1:] {
+	for _, segment := range segments {
 		if segment == "" {
 			return false
 		}
+	}
+	if qualified && len(segments) == 2 && containsDigit(segments[0]) {
+		return true
+	}
+	for _, segment := range segments[1:] {
 		if segment[0] >= '0' && segment[0] <= '9' {
 			return true
 		}
@@ -182,6 +208,10 @@ func modelLiteral(span string) bool {
 
 func isASCIILetter(b byte) bool {
 	return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z')
+}
+
+func containsDigit(s string) bool {
+	return strings.ContainsAny(s, "0123456789")
 }
 
 // guidanceFixtureEnv is the fixture binding every sweep case is graded against. Its tokens
@@ -194,10 +224,17 @@ const guidanceFixtureEnv = "BENCH_CODEX_TOP=alpha-9.1-sol\nBENCH_CODEX_MID=alpha
 // ordinaryGuidanceSpans are non-model literals kit prose really writes in code spans. Each
 // is a shape a broader matcher would report, so they ride the clean baseline and the
 // accepted side of the boundary is asserted rather than assumed.
+// ordinaryGuidanceSpans are non-model literals kit prose really writes in code spans. Each
+// is a shape a broader matcher would report, so they ride the clean baseline and the
+// accepted side of the boundary is asserted rather than assumed. The last two are the shapes
+// the provider-qualified first-segment rule brings closest to the line: a numbered slug
+// under a one-segment path keeps its later segments free of a version digit, and a
+// provider-shaped path whose leading word carries no digit has no version at all.
 var ordinaryGuidanceSpans = []string{
 	"schema-3", "utf-8", "sha-256", "x86-64", "bench-craft-line", "red/green",
 	"docs/adr/0001-working-tree-gate-tripwire.md", ".bench/lines.env", "v0.6.0",
 	"2026-07-31", "ft128-agent-line-binding", "BENCH_MODEL", "BENCH_CODEX_TOP",
+	"specs/ft128-agent-line-binding", "internal/conformance-sweep",
 }
 
 // writeGuidanceFixture builds the clean baseline: a binding, a command file, and a nested
@@ -273,7 +310,7 @@ func TestGuidanceSweepAcceptsBoundTokensAndOrdinaryProse(t *testing.T) {
 // clean copy and asserts its file-and-token diagnostic arrives alone. The clean baseline is
 // what makes one diagnostic proof rather than coincidence: collateral would be a second.
 func TestGuidanceSweepBitesOneUnboundModelLiteral(t *testing.T) {
-	for _, token := range []string{"beta-9.9-sol", "openai/gpt-9", "claude-opus-9-20991231"} {
+	for _, token := range []string{"beta-9.9-sol", "openai/gpt-9", "claude-opus-9-20991231", "openai/o3-mini"} {
 		t.Run(token, func(t *testing.T) {
 			root := writeGuidanceFixture(t)
 			rel := filepath.Join(".agents", "skills", "bench-craft-line", "SKILL.md")
@@ -316,11 +353,11 @@ func TestGuidanceSweepScansAFileAddedAfterTheCheck(t *testing.T) {
 // check catching one spelling lets the rest rot. Each is planted alone; no sibling may fire.
 func TestGuidanceSweepBitesEveryRetiredSchemaKey(t *testing.T) {
 	var keys []string
-	for _, prefix := range retiredBindingPrefixes {
+	for _, prefix := range lines.RetiredKeyPrefixes() {
 		for _, tier := range upperTiers() {
-			keys = append(keys, "BENCH_"+prefix+"_"+tier)
+			keys = append(keys, prefix+tier)
 		}
-		keys = append(keys, "BENCH_"+prefix+"_*")
+		keys = append(keys, prefix+"*")
 	}
 	for _, key := range keys {
 		t.Run(key, func(t *testing.T) {
