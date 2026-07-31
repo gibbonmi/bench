@@ -2,6 +2,7 @@ package specbuild
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net"
 	"os"
@@ -13,6 +14,20 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 )
+
+type countingOwner struct{ calls int }
+
+func (o *countingOwner) Create(context.Context, string, string, string, string) (OwnedWorktree, error) {
+	o.calls++
+	return OwnedWorktree{}, nil
+}
+
+type releaseOwner struct {
+	realOwner
+	calls, released int
+	err             error
+	inspect         func()
+}
 
 func TestReviewRefusesIncompleteOrHostileReceiptsWithoutMutation(t *testing.T) {
 	fixture := checkpointedReleaseFixture(t)
@@ -312,7 +327,7 @@ func TestIntegrateRoutesRetargetedCheckpointReferenceBackToDelegate(t *testing.T
 }
 
 func TestIntegrateRetriesOnlyWhileTheCheckpointContractHolds(t *testing.T) {
-	t.Run("unchanged retry succeeds", func(t *testing.T) {
+	t.Run("candidate change conflicts with prepared result", func(t *testing.T) {
 		fixture := newCheckpointFixture(t)
 		if _, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n")); err != nil {
 			t.Fatalf("Checkpoint: %v", err)
@@ -329,20 +344,13 @@ func TestIntegrateRetriesOnlyWhileTheCheckpointContractHolds(t *testing.T) {
 			moved = git(t, fixture.root, "rev-parse", "HEAD")
 			git(t, fixture.root, "update-ref", fixture.run.Candidate, moved, before)
 		}
-		if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
-			t.Fatalf("Integrate retry: %v", err)
+		if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err == nil || err.Error() != "spec build prepared integration result conflicts with replay" {
+			t.Fatalf("Integrate retry = %v", err)
 		}
 		run, found, err := fixture.service.load("build demo")
-		if err != nil || !found || moved == "" {
+		op, _ := fixture.service.operation(run, "integrate", fixture.assigned.ID)
+		if err != nil || !found || moved == "" || git(t, fixture.root, "rev-parse", run.Candidate) != moved || run.CandidateTip != before || op.Result == "" {
 			t.Fatalf("retry run = %#v, found:%v err:%v", run, found, err)
-		}
-		if parent := git(t, fixture.root, "rev-parse", run.CandidateTip+"^"); parent != moved {
-			t.Fatalf("retry parent = %s, want injected candidate %s", parent, moved)
-		}
-		for path := range map[string]bool{"earlier.go": true, "internal/specbuild/checkpoint-change.go": true} {
-			if git(t, fixture.root, "show", run.CandidateTip+":"+path) == "" {
-				t.Fatalf("retry lost %s", path)
-			}
 		}
 	})
 	t.Run("drift after candidate move refuses", func(t *testing.T) {

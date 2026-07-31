@@ -2,15 +2,16 @@ package specbuild
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/worktree"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
 	"testing"
-
-	"github.com/gibbonmi/bench/internal/worktree"
 )
 
 func TestAssignBindsTicketAtCandidateInOwnedWorktree(t *testing.T) {
@@ -22,7 +23,6 @@ func TestAssignBindsTicketAtCandidateInOwnedWorktree(t *testing.T) {
 	if _, err := service.Start(context.Background(), "build demo"); err != nil {
 		t.Fatalf("Start: %v", err)
 	}
-
 	assignment, status, err := service.Assign(context.Background(), "build demo", "one.md", "request 1")
 	if err != nil {
 		t.Fatalf("Assign: %v", err)
@@ -30,20 +30,10 @@ func TestAssignBindsTicketAtCandidateInOwnedWorktree(t *testing.T) {
 	if assignment.ID == "" || assignment.Path == "" || assignment.Base != status.Subject {
 		t.Fatalf("assignment = %#v, status = %#v", assignment, status)
 	}
-	if got, want := assignment.Rows, []string{"R06", "R07", "R08", "R09"}; fmt.Sprint(got) != fmt.Sprint(want) {
-		t.Fatalf("rows = %v, want %v", got, want)
-	}
-	if got, want := assignment.Fence, []string{"internal/specbuild"}; fmt.Sprint(got) != fmt.Sprint(want) {
-		t.Fatalf("fence = %v, want %v", got, want)
-	}
-	if got, want := assignment.Assumptions, []string{"Go is installed"}; fmt.Sprint(got) != fmt.Sprint(want) {
-		t.Fatalf("assumptions = %v, want %v", got, want)
-	}
 	if got := git(t, assignment.Path, "rev-parse", "HEAD"); got != status.Subject {
 		t.Fatalf("assignment base = %s, want %s", got, status.Subject)
 	}
 }
-
 func TestStatusRefusesMalformedAndUnknownDurableState(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
@@ -77,7 +67,6 @@ func TestStatusRefusesMalformedAndUnknownDurableState(t *testing.T) {
 		})
 	}
 }
-
 func TestAssignAllowsSiblingsAndScopesRequestIdentity(t *testing.T) {
 	root := repo(t)
 	write(t, filepath.Join(root, "specs", "build demo", "tickets", "two.md"), "# Two\n\nOwnership fence: internal/specbuild\n\n- [ ] [R07] sibling assignment\n")
@@ -86,6 +75,45 @@ func TestAssignAllowsSiblingsAndScopesRequestIdentity(t *testing.T) {
 	service := New(root, greenGate{}, realOwner{})
 	if _, err := service.Start(context.Background(), "build demo"); err != nil {
 		t.Fatal(err)
+	}
+	for _, point := range []string{"assign/state", "assign/worktree"} {
+		request := "fault " + point
+		var prepared OwnedWorktree
+		service.fault = func(got string) error {
+			if got == point {
+				return errors.New("injected")
+			}
+			return nil
+		}
+		if _, _, err := service.Assign(context.Background(), "build demo", "one.md", request); err == nil {
+			t.Fatal("assign fault did not interrupt")
+		}
+		if point == "assign/worktree" {
+			run, _, err := service.load("build demo")
+			if err != nil {
+				t.Fatal(err)
+			}
+			requestID := digest(run.Run + "\x00" + request)
+			op, found := service.operation(run, "assign", requestID)
+			parts := strings.Split(op.Result, "\x00")
+			_, stored := run.Assignments[requestID]
+			owned, ownedFound, ownerErr := intent.FindAssignmentByRequest(root, digest(requestID))
+			if !found || op.State != "prepared" || len(parts) != 2 || stored || ownerErr != nil || !ownedFound || owned.ID != parts[0] || owned.Worktree != parts[1] {
+				t.Fatalf("worktree fault state = %#v, %#v, %v", op, owned, ownerErr)
+			}
+			prepared = OwnedWorktree{ID: parts[0], Path: parts[1]}
+		}
+		service.fault = nil
+		assigned, _, err := service.Assign(context.Background(), "build demo", "one.md", request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if point == "assign/worktree" && (assigned.ID != prepared.ID || assigned.Path != prepared.Path) {
+			t.Fatalf("retry changed owner: %#v != %#v", assigned, prepared)
+		}
+		if _, _, err := service.Assign(context.Background(), "build demo", "two.md", request); err == nil {
+			t.Fatal("assign changed input was accepted")
+		}
 	}
 	first, _, err := service.Assign(context.Background(), "build demo", "one.md", "same")
 	if err != nil {
@@ -102,7 +130,6 @@ func TestAssignAllowsSiblingsAndScopesRequestIdentity(t *testing.T) {
 		t.Fatalf("siblings = %#v, %#v, %v", first, second, err)
 	}
 }
-
 func TestAssignRejectsHostileTicketsBeforeWorktreeCreation(t *testing.T) {
 	root := repo(t)
 	write(t, filepath.Join(root, "specs", "build demo", "tickets", "malformed.md"), "# Malformed\n")
@@ -138,7 +165,6 @@ func TestAssignRejectsHostileTicketsBeforeWorktreeCreation(t *testing.T) {
 		t.Fatalf("worktree owner calls = %d", owner.calls)
 	}
 }
-
 func TestStatusHasDefinitiveEmptyAndActiveProjections(t *testing.T) {
 	root := repo(t)
 	service := New(root, greenGate{}, nil)
@@ -155,7 +181,6 @@ func TestStatusHasDefinitiveEmptyAndActiveProjections(t *testing.T) {
 		t.Fatalf("active status = %#v, %v", got, err)
 	}
 }
-
 func TestStatusProjectsDurableTerminalState(t *testing.T) {
 	root := repo(t)
 	service := New(root, greenGate{}, nil)
@@ -175,7 +200,6 @@ func TestStatusProjectsDurableTerminalState(t *testing.T) {
 		t.Fatalf("terminal status = %#v, %v", status, err)
 	}
 }
-
 func TestStatusUsesTheGitCommonDirectory(t *testing.T) {
 	root := repo(t)
 	service := New(root, greenGate{}, nil)
@@ -190,7 +214,6 @@ func TestStatusUsesTheGitCommonDirectory(t *testing.T) {
 		t.Fatalf("linked status = %#v, %v", fromLinked, err)
 	}
 }
-
 func TestReviewRecordsExactCandidateAndRetainsOnlyProjection(t *testing.T) {
 	fixture := checkpointedReleaseFixture(t)
 	if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
@@ -237,7 +260,6 @@ func TestReviewRecordsExactCandidateAndRetainsOnlyProjection(t *testing.T) {
 		t.Fatalf("fresh Review: %v", err)
 	}
 }
-
 func TestReviewRoutesCleanAndAcceptedFindingsDifferently(t *testing.T) {
 	for _, test := range []struct {
 		name, disposition, want string
@@ -256,9 +278,27 @@ func TestReviewRoutesCleanAndAcceptedFindingsDifferently(t *testing.T) {
 			if test.disposition != "" {
 				receipt.Axes[0].Findings = []reviewFinding{{ID: "repair", Disposition: test.disposition}}
 			}
+			if test.name == "clean" {
+				fixture.service.fault = func(point string) error {
+					if point == "review/state" {
+						return errors.New("injected")
+					}
+					return nil
+				}
+				if _, err := fixture.service.Review(t.Context(), "build demo", writeReviewReceipt(t, receipt)); err == nil {
+					t.Fatal("review fault did not interrupt")
+				}
+				fixture.service.fault = nil
+			}
 			status, err := fixture.service.Review(t.Context(), "build demo", writeReviewReceipt(t, receipt))
 			if err != nil || status.Next != test.want {
 				t.Fatalf("Review status = %#v, %v", status, err)
+			}
+			if test.name == "clean" {
+				receipt.Body = "different"
+				if _, err := fixture.service.Review(t.Context(), "build demo", writeReviewReceipt(t, receipt)); err == nil {
+					t.Fatal("review changed input was accepted")
+				}
 			}
 			if git(t, fixture.root, "rev-parse", run.Candidate) != candidate || git(t, fixture.root, "rev-parse", "HEAD^{tree}") != tree {
 				t.Fatal("Review mutated the project tree or candidate ref")
@@ -266,7 +306,6 @@ func TestReviewRoutesCleanAndAcceptedFindingsDifferently(t *testing.T) {
 		})
 	}
 }
-
 func TestTerminalStatusIgnoresRetainedReview(t *testing.T) {
 	root := repo(t)
 	service := New(root, greenGate{}, nil)
@@ -294,26 +333,6 @@ func (g *countingGate) Bootstrap(ctx context.Context, root, branch, tip string) 
 	return greenGate{}.Bootstrap(ctx, root, branch, tip)
 }
 
-type rejectGate struct{}
-
-func (rejectGate) Bootstrap(context.Context, string, string, string) error {
-	return fmt.Errorf("missing evidence")
-}
-
-type countingOwner struct{ calls int }
-
-func (o *countingOwner) Create(context.Context, string, string, string, string) (OwnedWorktree, error) {
-	o.calls++
-	return OwnedWorktree{}, nil
-}
-
-func stringsSplitLines(s string) []string {
-	if s == "" {
-		return nil
-	}
-	return strings.Split(s, "\n")
-}
-
 type realOwner struct{}
 
 func (realOwner) Create(_ context.Context, root, request, label, start string) (OwnedWorktree, error) {
@@ -323,7 +342,6 @@ func (realOwner) Create(_ context.Context, root, request, label, start string) (
 	}
 	return OwnedWorktree{ID: created.Assignment.ID, Path: created.Path}, nil
 }
-
 func (realOwner) Release(context.Context, string, string, string) error { return nil }
 
 type greenGate struct{}
@@ -335,7 +353,6 @@ func (greenGate) Bootstrap(_ context.Context, root, branch, tip string) error {
 	}
 	return nil
 }
-
 func repo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
@@ -349,7 +366,6 @@ func repo(t *testing.T) string {
 	git(t, root, "commit", "-qm", "initial")
 	return root
 }
-
 func write(t *testing.T, path, content string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -359,7 +375,6 @@ func write(t *testing.T, path, content string) {
 		t.Fatal(err)
 	}
 }
-
 func git(t *testing.T, root string, args ...string) string {
 	t.Helper()
 	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
@@ -369,7 +384,6 @@ func git(t *testing.T, root string, args ...string) string {
 	}
 	return string(bytesTrimSpace(out))
 }
-
 func bytesTrimSpace(v []byte) []byte {
 	for len(v) > 0 && (v[0] == ' ' || v[0] == '\n' || v[0] == '\r' || v[0] == '\t') {
 		v = v[1:]

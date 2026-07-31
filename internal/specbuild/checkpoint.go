@@ -72,15 +72,28 @@ func (s *Service) Checkpoint(ctx context.Context, slug, assignmentID, evidence s
 		}
 		return Status{}, err
 	}
-	if _, err := s.preconditions(mutationCheckpoint, slug, run.Spec, &run, assignmentID, evidence); err != nil {
-		return Status{}, err
-	}
 	key, assigned, ok := assignmentFor(run, assignmentID)
 	if !ok {
 		return Status{}, errors.New("spec build assignment does not exist")
 	}
 	if assigned.Checkpoint != "" {
+		rec, raw, err := readReceipt(evidence)
+		if err != nil {
+			return Status{}, err
+		}
+		_ = rec
+		if assigned.ReceiptDigest != digest(string(raw)) {
+			return Status{}, errors.New("spec build checkpoint request conflicts with different inputs")
+		}
+		if op, found := s.operation(run, "checkpoint", assigned.ID); found && op.State == "prepared" {
+			if err := s.recordOperation(&run, "checkpoint", assigned.ID, assigned.Checkpoint, true); err != nil {
+				return Status{}, err
+			}
+		}
 		return run.status(), nil
+	}
+	if _, err := s.preconditions(mutationCheckpoint, slug, run.Spec, &run, assignmentID, evidence); err != nil {
+		return Status{}, err
 	}
 	rec, raw, err := readReceipt(evidence)
 	if err != nil {
@@ -89,15 +102,44 @@ func (s *Service) Checkpoint(ctx context.Context, slug, assignmentID, evidence s
 	if err := s.validateReceipt(run, assigned, rec, evidence); err != nil {
 		return Status{}, err
 	}
-	commit, err := benchgit.Output("-C", s.root, "commit-tree", rec.Tree, "-p", assigned.Base, "-m", "bench checkpoint run="+run.Run+" assignment="+assigned.ID)
+	request := assigned.ID
+	op, completed, err := s.beginOperation(&run, "checkpoint", request, string(raw))
 	if err != nil {
-		return Status{}, fmt.Errorf("create checkpoint commit: %w", err)
+		return Status{}, err
+	}
+	if completed {
+		return Status{}, errors.New("spec build checkpoint operation is incomplete")
+	}
+	commit := op.Result
+	if commit == "" {
+		commit, err = s.gitOutput(ctx, "commit-tree", rec.Tree, "-p", assigned.Base, "-m", "bench checkpoint run="+run.Run+" assignment="+assigned.ID)
+		if err != nil {
+			return Status{}, fmt.Errorf("create checkpoint commit: %w", err)
+		}
+		if err := s.recordOperation(&run, "checkpoint", request, commit, false); err != nil {
+			return Status{}, err
+		}
+		if err := s.faultAt("checkpoint/commit"); err != nil {
+			return run.status(), err
+		}
 	}
 	ref := "refs/bench/specbuild/checkpoint/" + digest(run.Run+"\x00"+assigned.ID)
-	if err := updateRef(s.root, ref, commit, zeroObjectID); err != nil {
-		return Status{}, fmt.Errorf("bind checkpoint commit: %w", err)
+	if !refAt(s.root, ref, commit) {
+		absent, err := refAbsent(s.root, ref)
+		if err != nil {
+			return Status{}, err
+		}
+		if !absent {
+			return Status{}, errors.New("spec build checkpoint identity already exists")
+		}
+		if err := updateRef(s.root, ref, commit, zeroObjectID); err != nil {
+			return Status{}, fmt.Errorf("bind checkpoint commit: %w", err)
+		}
+		if err := s.faultAt("checkpoint/ref"); err != nil {
+			return run.status(), err
+		}
 	}
-	patch, err := checkpointPatch(s.root, assigned.Base, commit)
+	patch, err := s.checkpointPatch(ctx, assigned.Base, commit)
 	if err != nil {
 		return Status{}, fmt.Errorf("record checkpoint patch: %w", err)
 	}
@@ -106,7 +148,21 @@ func (s *Service) Checkpoint(ctx context.Context, slug, assignmentID, evidence s
 	if err := s.save(run); err != nil {
 		return Status{}, err
 	}
+	if err := s.faultAt("checkpoint/state"); err != nil {
+		return run.status(), err
+	}
+	if err := s.recordOperation(&run, "checkpoint", request, commit, true); err != nil {
+		return Status{}, err
+	}
 	return run.status(), nil
+}
+
+func (s *Service) gitOutput(ctx context.Context, args ...string) (string, error) {
+	output, err := s.runner.Output(ctx, "git", append([]string{"-C", s.root}, args...)...)
+	if err != nil {
+		return "", errors.New(strings.TrimSpace(output))
+	}
+	return strings.TrimSpace(output), nil
 }
 
 func readReceipt(path string) (receipt, []byte, error) {

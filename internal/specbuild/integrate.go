@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -32,9 +31,6 @@ func (s *Service) Integrate(ctx context.Context, slug, assignmentID string) (Sta
 		}
 		return Status{}, err
 	}
-	if _, err := s.preconditions(mutationIntegrate, slug, run.Spec, &run, assignmentID, ""); err != nil {
-		return Status{}, err
-	}
 	key, assigned, ok := assignmentFor(run, assignmentID)
 	if !ok || (assigned.Checkpoint == "" && assigned.CheckpointRef == "") {
 		return Status{}, errors.New("spec build assignment has no verified checkpoint")
@@ -42,11 +38,29 @@ func (s *Service) Integrate(ctx context.Context, slug, assignmentID string) (Sta
 	if assigned.Checkpoint == "" || assigned.CheckpointRef == "" || !refAt(s.root, assigned.CheckpointRef, assigned.Checkpoint) {
 		return s.routeDelegate(run, key, assigned, errors.New("checkpoint attribution drifted"))
 	}
+	request := assigned.ID
+	if op, found := s.operation(run, "integrate", request); found && op.State == "prepared" && op.Result != "" && assigned.Integrated == "" && refAt(s.root, run.Candidate, op.Result) {
+		run.CandidateTip, assigned.Integrated, assigned.DelegatePending, assigned.CleanupPending, assigned.Released = op.Result, op.Result, false, true, false
+		run.Review, run.Assignments[key] = nil, assigned
+		if err := s.save(run); err != nil {
+			return Status{}, err
+		}
+		return s.releaseIntegrated(ctx, run, key, assigned)
+	}
+	if _, err := s.preconditions(mutationIntegrate, slug, run.Spec, &run, assignmentID, ""); err != nil {
+		return Status{}, err
+	}
 	if assigned.Integrated != "" {
 		if !refAt(s.root, run.Candidate, assigned.Integrated) {
 			return Status{}, errors.New("spec build integrated candidate drifted")
 		}
 		return s.releaseIntegrated(ctx, run, key, assigned)
+	}
+	op, completed, err := s.beginOperation(&run, "integrate", request, assigned.Checkpoint)
+	if err != nil {
+		return Status{}, err
+	} else if completed {
+		return Status{}, errors.New("spec build integration operation is incomplete")
 	}
 	for attempt := 0; attempt != 2; attempt++ {
 		candidate, err := refValue(s.root, run.Candidate)
@@ -59,27 +73,52 @@ func (s *Service) Integrate(ctx context.Context, slug, assignmentID string) (Sta
 		if attempt != 0 {
 			run.CandidateTip = candidate
 		}
-		patch, err := s.verifyIntegration(run, assigned)
+		patch, err := s.verifyIntegration(ctx, run, assigned)
 		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				return run.status(), err
+			}
 			return s.routeDelegate(run, key, assigned, err)
 		}
-		tree, err := replayCheckpoint(s.root, candidate, assigned.Base, assigned.Checkpoint, patch)
+		tree, err := s.replayCheckpoint(ctx, candidate, assigned.Base, assigned.Checkpoint, patch)
 		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				return run.status(), err
+			}
 			return s.routeDelegate(run, key, assigned, err)
 		}
-		commit, err := benchgit.Output("-C", s.root, "commit-tree", tree, "-p", candidate, "-m", "bench integrate run="+run.Run+" assignment="+assigned.ID+" checkpoint="+assigned.Checkpoint)
-		if err != nil {
-			return Status{}, fmt.Errorf("create integrated candidate commit: %w", err)
+		commit := op.Result
+		if commit != "" && !integratedCommitAt(s.root, commit, candidate, tree, assigned.Checkpoint) {
+			return Status{}, errors.New("spec build prepared integration result conflicts with replay")
+		}
+		if commit == "" {
+			commit, err = s.gitOutput(ctx, "commit-tree", tree, "-p", candidate, "-m", "bench integrate run="+run.Run+" assignment="+assigned.ID+" checkpoint="+assigned.Checkpoint)
+			if err != nil {
+				return Status{}, fmt.Errorf("create integrated candidate commit: %w", err)
+			}
+			if err := s.recordOperation(&run, "integrate", request, commit, false); err != nil {
+				return Status{}, err
+			}
+			op.Result = commit
+		}
+		if err := s.faultAt("integrate/commit"); err != nil {
+			return run.status(), err
 		}
 		if s.beforeCandidateCAS != nil {
 			s.beforeCandidateCAS()
 		}
 		if err := updateRef(s.root, run.Candidate, commit, candidate); err == nil {
+			if err := s.faultAt("integrate/candidate-cas"); err != nil {
+				return run.status(), err
+			}
 			run.CandidateTip, assigned.Integrated, assigned.DelegatePending, assigned.CleanupPending, assigned.Released = commit, commit, false, true, false
 			run.Review = nil
 			run.Assignments[key] = assigned
 			if err := s.save(run); err != nil {
 				return Status{}, err
+			}
+			if err := s.faultAt("integrate/state"); err != nil {
+				return run.status(), err
 			}
 			return s.releaseIntegrated(ctx, run, key, assigned)
 		} else {
@@ -97,6 +136,11 @@ func (s *Service) Integrate(ctx context.Context, slug, assignmentID string) (Sta
 
 func (s *Service) releaseIntegrated(ctx context.Context, run record, key string, assigned assignment) (Status, error) {
 	if assigned.Released {
+		if op, found := s.operation(run, "integrate", assigned.ID); found && op.State == "prepared" {
+			if err := s.recordOperation(&run, "integrate", assigned.ID, assigned.Integrated, true); err != nil {
+				return Status{}, err
+			}
+		}
 		return run.status(), nil
 	}
 	if !assigned.CleanupPending {
@@ -117,6 +161,14 @@ func (s *Service) releaseIntegrated(ctx context.Context, run record, key string,
 	run.Assignments[key] = assigned
 	if err := s.save(run); err != nil {
 		return Status{}, err
+	}
+	if err := s.faultAt("integrate/release"); err != nil {
+		return run.status(), err
+	}
+	if op, found := s.operation(run, "integrate", assigned.ID); found && op.State == "prepared" {
+		if err := s.recordOperation(&run, "integrate", assigned.ID, assigned.Integrated, true); err != nil {
+			return Status{}, err
+		}
 	}
 	return run.status(), nil
 }
@@ -139,17 +191,20 @@ func releaseOwnerFrom(owner WorktreeOwner) (ReleaseOwner, bool) {
 func (s *Service) routeDelegate(run record, key string, assigned assignment, cause error) (Status, error) {
 	assigned.DelegatePending = true
 	run.Assignments[key] = assigned
+	if op, found := s.operation(run, "integrate", assigned.ID); found && op.State == "prepared" {
+		delete(run.Operations, operationID("integrate", assigned.ID))
+	}
 	if err := s.save(run); err != nil {
 		return Status{}, err
 	}
 	return run.status(), fmt.Errorf("spec build integration refused: %w", cause)
 }
 
-func (s *Service) verifyIntegration(run record, assigned assignment) ([]byte, error) {
+func (s *Service) verifyIntegration(ctx context.Context, run record, assigned assignment) ([]byte, error) {
 	if assigned.CheckpointTree == "" || assigned.CheckpointPatch == "" {
 		return nil, errors.New("checkpoint attribution is incomplete")
 	}
-	tree, err := benchgit.Output("-C", s.root, "rev-parse", assigned.Checkpoint+"^{tree}")
+	tree, err := s.gitOutput(ctx, "rev-parse", assigned.Checkpoint+"^{tree}")
 	if err != nil || tree != assigned.CheckpointTree {
 		return nil, errors.New("checkpoint patch drifted")
 	}
@@ -167,23 +222,23 @@ func (s *Service) verifyIntegration(run record, assigned assignment) ([]byte, er
 	if current.Digest != assigned.TicketDigest {
 		return nil, errors.New("checkpoint ticket drifted")
 	}
-	paths, err := changedPaths(s.root, assigned.Base, assigned.Checkpoint)
+	paths, err := s.changedPaths(ctx, assigned.Base, assigned.Checkpoint)
 	if err != nil || !insideFence(paths, assigned.Fence) {
 		return nil, errors.New("checkpoint ownership drifted")
 	}
-	patch, err := checkpointPatch(s.root, assigned.Base, assigned.Checkpoint)
+	patch, err := s.checkpointPatch(ctx, assigned.Base, assigned.Checkpoint)
 	if err != nil || digest(string(patch)) != assigned.CheckpointPatch {
 		return nil, errors.New("checkpoint patch drifted")
 	}
 	return patch, nil
 }
 
-func replayCheckpoint(root, candidate, base, checkpoint string, patch []byte) (string, error) {
-	candidatePaths, err := changedPaths(root, base, candidate)
+func (s *Service) replayCheckpoint(ctx context.Context, candidate, base, checkpoint string, patch []byte) (string, error) {
+	candidatePaths, err := s.changedPaths(ctx, base, candidate)
 	if err != nil {
 		return "", err
 	}
-	checkpointPaths, err := changedPaths(root, base, checkpoint)
+	checkpointPaths, err := s.changedPaths(ctx, base, checkpoint)
 	if err != nil {
 		return "", err
 	}
@@ -200,18 +255,19 @@ func replayCheckpoint(root, candidate, base, checkpoint string, patch []byte) (s
 	}
 	defer os.Remove(name)
 	env := append(os.Environ(), "GIT_INDEX_FILE="+name)
-	if err := gitRun(root, env, nil, "read-tree", candidate); err != nil {
+	if _, err := s.git(ctx, env, nil, "read-tree", candidate); err != nil {
 		return "", err
 	}
-	if err := gitRun(root, env, bytes.NewReader(patch), "apply", "--cached", "--whitespace=nowarn"); err != nil {
+	if _, err := s.git(ctx, env, bytes.NewReader(patch), "apply", "--cached", "--whitespace=nowarn"); err != nil {
 		return "", fmt.Errorf("checkpoint patch conflicts with the candidate: %w", err)
 	}
-	tree, err := gitOutput(root, env, "write-tree")
+	tree, err := s.git(ctx, env, nil, "write-tree")
 	if err != nil {
 		return "", err
 	}
+	tree = strings.TrimSpace(tree)
 	if candidate == base {
-		expected, err := benchgit.Output("-C", root, "rev-parse", checkpoint+"^{tree}")
+		expected, err := s.gitOutput(ctx, "rev-parse", checkpoint+"^{tree}")
 		if err != nil || tree != expected {
 			return "", errors.New("checkpoint patch is not byte-identical")
 		}
@@ -219,13 +275,28 @@ func replayCheckpoint(root, candidate, base, checkpoint string, patch []byte) (s
 	return tree, nil
 }
 
-func checkpointPatch(root, base, checkpoint string) ([]byte, error) {
-	cmd := exec.Command("git", "-C", root, "diff", "--binary", "--full-index", "--no-ext-diff", base, checkpoint)
-	patch, err := cmd.Output()
+func (s *Service) checkpointPatch(ctx context.Context, base, checkpoint string) ([]byte, error) {
+	patch, err := s.git(ctx, nil, nil, "diff", "--binary", "--full-index", "--no-ext-diff", base, checkpoint)
 	if err != nil {
 		return nil, err
 	}
-	return patch, nil
+	return []byte(patch), nil
+}
+
+func (s *Service) changedPaths(ctx context.Context, base, tree string) ([]string, error) {
+	output, err := s.git(ctx, nil, nil, "diff-tree", "--no-commit-id", "--name-only", "-r", base, tree)
+	if err != nil {
+		return nil, err
+	}
+	if output == "" {
+		return nil, nil
+	}
+	return sortedUnique(strings.Split(strings.TrimSpace(output), "\n")), nil
+}
+
+func checkpointPatch(root, base, checkpoint string) ([]byte, error) {
+	output, err := (processRunner{}).Output(context.Background(), "git", "-C", root, "diff", "--binary", "--full-index", "--no-ext-diff", base, checkpoint)
+	return []byte(output), err
 }
 
 func overlappingPaths(left, right []string) bool {
@@ -243,21 +314,23 @@ func refValue(root, ref string) (string, error) {
 	return benchgit.Output("-C", root, "rev-parse", "--verify", ref+"^{commit}")
 }
 
-func gitRun(root string, env []string, input io.Reader, args ...string) error {
-	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
-	cmd.Env, cmd.Stdin = env, input
-	if output, err := cmd.CombinedOutput(); err != nil {
-		return errors.New(strings.TrimSpace(string(output)))
+func (s *Service) git(ctx context.Context, env []string, input io.Reader, args ...string) (string, error) {
+	output, err := s.runner.Run(ctx, Command{Program: "git", Args: append([]string{"-C", s.root}, args...), Env: env, Input: input})
+	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return "", err
+		}
+		return "", errors.New(strings.TrimSpace(output))
 	}
-	return nil
+	return output, nil
 }
 
-func gitOutput(root string, env []string, args ...string) (string, error) {
-	cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
-	cmd.Env = env
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", errors.New(strings.TrimSpace(string(output)))
+func integratedCommitAt(root, commit, parent, tree, checkpoint string) bool {
+	if commit == "" || !refAt(root, commit, commit) {
+		return false
 	}
-	return strings.TrimSpace(string(output)), nil
+	gotParent, parentErr := benchgit.Output("-C", root, "rev-parse", commit+"^")
+	gotTree, treeErr := benchgit.Output("-C", root, "rev-parse", commit+"^{tree}")
+	message, messageErr := benchgit.Output("-C", root, "show", "-s", "--format=%B", commit)
+	return parentErr == nil && treeErr == nil && messageErr == nil && gotParent == parent && gotTree == tree && strings.Contains(message, "checkpoint="+checkpoint)
 }

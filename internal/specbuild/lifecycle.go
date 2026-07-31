@@ -4,9 +4,14 @@ package specbuild
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/jsonfile"
@@ -38,11 +43,120 @@ type Service struct {
 	gate               GateOwner
 	worktrees          WorktreeOwner
 	beforeCandidateCAS func()
+	runner             Runner
+	fault              func(string) error
 }
 
 // New constructs a lifecycle service rooted at one working checkout.
 func New(root string, gate GateOwner, worktrees WorktreeOwner) *Service {
-	return &Service{root: root, gate: gate, worktrees: worktrees}
+	return NewWithRunner(root, gate, worktrees, processRunner{})
+}
+
+// Runner executes lifecycle subprocesses as one cancellable process group.
+// Promote and abandon use the same seam when their long-running work arrives.
+type Runner interface {
+	Output(context.Context, string, ...string) (string, error)
+	Run(context.Context, Command) (string, error)
+}
+
+// Command describes one lifecycle subprocess without leaking execution policy.
+type Command struct {
+	Program   string
+	Args, Env []string
+	Input     io.Reader
+}
+
+// NewWithRunner constructs a lifecycle service with its process runner seam.
+func NewWithRunner(root string, gate GateOwner, worktrees WorktreeOwner, runner Runner) *Service {
+	if runner == nil {
+		runner = processRunner{}
+	}
+	return &Service{root: root, gate: gate, worktrees: worktrees, runner: runner}
+}
+
+type processRunner struct{}
+
+func (processRunner) Output(ctx context.Context, program string, args ...string) (string, error) {
+	return (processRunner{}).Run(ctx, Command{Program: program, Args: args})
+}
+
+func (processRunner) Run(ctx context.Context, command Command) (string, error) {
+	cmd := exec.Command(command.Program, command.Args...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.Env, cmd.Stdin = command.Env, command.Input
+	output := &strings.Builder{}
+	cmd.Stdout, cmd.Stderr = output, output
+	if err := cmd.Start(); err != nil {
+		return "", err
+	}
+	done := make(chan error, 1)
+	go func() { done <- cmd.Wait() }()
+	select {
+	case err := <-done:
+		return output.String(), err
+	case <-ctx.Done():
+		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
+		select {
+		case <-done:
+		case <-time.After(250 * time.Millisecond):
+			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+			<-done
+		}
+		return output.String(), ctx.Err()
+	}
+}
+
+const operationLimit = 64
+
+type operation struct {
+	Command, Request, Input, Result, State string
+}
+
+func operationID(command, request string) string { return digest(command + "\x00" + request) }
+
+func (s *Service) beginOperation(run *record, command, request, input string) (operation, bool, error) {
+	key, inputDigest := operationID(command, request), digest(input)
+	if prior, found := run.Operations[key]; found {
+		if prior.Command != command || prior.Request != request || prior.Input != inputDigest {
+			return operation{}, false, fmt.Errorf("spec build %s request conflicts with different inputs", command)
+		}
+		return prior, prior.State == "completed", nil
+	}
+	if len(run.Operations) >= operationLimit {
+		return operation{}, false, errors.New("spec build operation journal is full")
+	}
+	op := operation{Command: command, Request: request, Input: inputDigest, State: "prepared"}
+	run.Operations[key] = op
+	if err := s.save(*run); err != nil {
+		return operation{}, false, err
+	}
+	return op, false, nil
+}
+
+func (s *Service) recordOperation(run *record, command, request, result string, completed bool) error {
+	key := operationID(command, request)
+	op, found := run.Operations[key]
+	if !found || op.State != "prepared" {
+		return errors.New("spec build operation journal is incomplete")
+	}
+	op.Result = result
+	if completed {
+		op.State = "completed"
+	}
+	run.Operations[key] = op
+	return s.save(*run)
+}
+
+func (s *Service) operation(run record, command, request string) (operation, bool) {
+	op, found := run.Operations[operationID(command, request)]
+	return op, found
+}
+
+func (s *Service) faultAt(point string) error {
+	if s.fault == nil {
+		return nil
+	}
+	return s.fault(point)
 }
 
 // Status is the compact public projection of one spec build.
@@ -106,9 +220,6 @@ func (s *Service) Review(_ context.Context, slug, evidence string) (Status, erro
 		}
 		return Status{}, err
 	}
-	if _, err := s.preconditions(mutationReview, slug, run.Spec, &run, "", evidence); err != nil {
-		return Status{}, err
-	}
 	receipt, raw, err := readReviewReceipt(evidence)
 	if err != nil || receipt.Run != run.Run || receipt.Candidate != run.CandidateTip || !refAt(s.root, run.Candidate, run.CandidateTip) {
 		return Status{}, errInvalidReviewReceipt
@@ -116,12 +227,31 @@ func (s *Service) Review(_ context.Context, slug, evidence string) (Status, erro
 	digest := digest(string(raw))
 	if run.Review != nil {
 		if run.Review.Candidate == run.CandidateTip && run.Review.Digest == digest {
+			if op, found := s.operation(run, "review", run.CandidateTip); found && op.State == "prepared" {
+				if err := s.recordOperation(&run, "review", run.CandidateTip, digest, true); err != nil {
+					return Status{}, err
+				}
+			}
 			return run.status(), nil
 		}
-		return Status{}, errors.New("spec build candidate already has review evidence")
+		return Status{}, errors.New("spec build review request conflicts with different inputs")
+	}
+	if _, err := s.preconditions(mutationReview, slug, run.Spec, &run, "", evidence); err != nil {
+		return Status{}, err
+	}
+	if _, completed, err := s.beginOperation(&run, "review", run.CandidateTip, string(raw)); err != nil {
+		return Status{}, err
+	} else if completed {
+		return Status{}, errors.New("spec build review operation is incomplete")
 	}
 	run.Review = &reviewEvidence{Candidate: receipt.Candidate, Axes: receipt.Axes, Digest: digest}
 	if err := s.save(run); err != nil {
+		return Status{}, err
+	}
+	if err := s.faultAt("review/state"); err != nil {
+		return run.status(), err
+	}
+	if err := s.recordOperation(&run, "review", run.CandidateTip, digest, true); err != nil {
 		return Status{}, err
 	}
 	return run.status(), nil

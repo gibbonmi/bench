@@ -2,19 +2,37 @@ package specbuild
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"github.com/gibbonmi/bench/internal/spec"
+	"github.com/gibbonmi/bench/internal/worktree"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/gibbonmi/bench/internal/spec"
-	"github.com/gibbonmi/bench/internal/worktree"
 )
+
+type rejectGate struct{}
+
+func (rejectGate) Bootstrap(context.Context, string, string, string) error {
+	return fmt.Errorf("missing evidence")
+}
+func stringsSplitLines(s string) []string {
+	if s == "" {
+		return nil
+	}
+	return strings.Split(s, "\n")
+}
+
+type reuseGreenGate struct{}
+
+func (reuseGreenGate) Bootstrap(_ context.Context, root, branch, tip string) error {
+	return updateRef(root, "refs/bench/green/"+branch, tip, "")
+}
 
 func TestStartCreatesRunFromExactGreenEvidence(t *testing.T) {
 	root := repo(t)
 	service := New(root, greenGate{}, nil)
-
 	status, err := service.Start(context.Background(), "build demo")
 	if err != nil {
 		t.Fatalf("Start: %v", err)
@@ -31,7 +49,6 @@ func TestStartCreatesRunFromExactGreenEvidence(t *testing.T) {
 		t.Fatalf("candidate ref = %q", refs)
 	}
 }
-
 func TestLifecycleMutatorsRefuseSharedPreconditionDriftWithoutMutation(t *testing.T) {
 	operations := []struct {
 		name, prerequisite string
@@ -123,7 +140,6 @@ func TestLifecycleMutatorsRefuseSharedPreconditionDriftWithoutMutation(t *testin
 		})
 	}
 }
-
 func TestSharedPreconditionsAllowExpectedAssignmentDirt(t *testing.T) {
 	fixture := newPreconditionFixture(t, true)
 	write(t, filepath.Join(fixture.assignment.Path, "in-progress.txt"), "expected dirt\n")
@@ -197,7 +213,6 @@ func snapshotPrecondition(t *testing.T, fixture preconditionFixture) preconditio
 	head := git(t, fixture.root, "rev-parse", "HEAD")
 	return preconditionSnapshot{state: string(state), refs: git(t, fixture.root, "for-each-ref", "--format=%(refname) %(objectname)", "refs/bench/"), head: head, tree: git(t, fixture.root, "rev-parse", "HEAD^{tree}"), status: git(t, fixture.root, "status", "--porcelain", "--untracked-files=all"), worktrees: git(t, fixture.root, "worktree", "list", "--porcelain"), calls: fixture.owner.calls}
 }
-
 func updateRun(t *testing.T, fixture *preconditionFixture, change func(*record)) {
 	t.Helper()
 	change(&fixture.run)
@@ -205,21 +220,18 @@ func updateRun(t *testing.T, fixture *preconditionFixture, change func(*record))
 		t.Fatal(err)
 	}
 }
-
 func advanceWorking(t *testing.T, root string) {
 	t.Helper()
 	write(t, filepath.Join(root, "advanced.txt"), "advance\n")
 	git(t, root, "add", ".")
 	git(t, root, "commit", "-qm", "advance")
 }
-
 func moveCandidate(t *testing.T, fixture *preconditionFixture) {
 	t.Helper()
 	tree := git(t, fixture.root, "rev-parse", fixture.run.Candidate+"^{tree}")
 	commit := git(t, fixture.root, "commit-tree", tree, "-p", fixture.run.Candidate, "-m", "candidate drift")
 	git(t, fixture.root, "update-ref", fixture.run.Candidate, commit, fixture.run.CandidateTip)
 }
-
 func rewriteWorkingHead(t *testing.T, root string) {
 	t.Helper()
 	tree := git(t, root, "rev-parse", "HEAD^{tree}")
@@ -227,7 +239,6 @@ func rewriteWorkingHead(t *testing.T, root string) {
 	branch := git(t, root, "symbolic-ref", "--short", "HEAD")
 	git(t, root, "update-ref", "refs/heads/"+branch, commit, "HEAD")
 }
-
 func TestRecompositionErrorIsStable(t *testing.T) {
 	fixture := newPreconditionFixture(t, true)
 	advanceWorking(t, fixture.root)
@@ -236,7 +247,6 @@ func TestRecompositionErrorIsStable(t *testing.T) {
 		t.Fatalf("recomposition error = %v", err)
 	}
 }
-
 func TestStartResumeAndConflictsDoNotDuplicateRun(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -267,19 +277,28 @@ func TestStartResumeAndConflictsDoNotDuplicateRun(t *testing.T) {
 			}
 		})
 	}
-	root := repo(t)
-	gate := &countingGate{}
-	service := New(root, gate, nil)
-	first, err := service.Start(context.Background(), "build demo")
-	if err != nil {
-		t.Fatal(err)
-	}
-	second, err := service.Start(context.Background(), "build demo")
-	if err != nil || second != first || gate.calls != 1 {
-		t.Fatalf("resume = %#v, %v; gate calls = %d", second, err, gate.calls)
+	for _, point := range []string{"start/bootstrap", "start/state", "start/candidate-ref"} {
+		t.Run(point, func(t *testing.T) {
+			root, gate := repo(t), &countingGate{}
+			service := New(root, gate, nil)
+			service.fault = func(got string) error {
+				if got == point {
+					return errors.New("injected")
+				}
+				return nil
+			}
+			if _, err := service.Start(context.Background(), "build demo"); err == nil {
+				t.Fatal("start fault did not interrupt")
+			}
+			service.fault = nil
+			first, err := service.Start(context.Background(), "build demo")
+			second, replayErr := service.Start(context.Background(), "build demo")
+			if err != nil || replayErr != nil || second != first || gate.calls != 1 || len(stringsSplitLines(git(t, root, "for-each-ref", "--format=%(refname)", "refs/bench/specbuild/candidate/"))) != 1 {
+				t.Fatal("start replay duplicated or changed result")
+			}
+		})
 	}
 }
-
 func TestStartWithoutEvidenceNamesOneRecoveryAndDoesNotMutate(t *testing.T) {
 	root := repo(t)
 	service := New(root, rejectGate{}, nil)
@@ -294,7 +313,6 @@ func TestStartWithoutEvidenceNamesOneRecoveryAndDoesNotMutate(t *testing.T) {
 		t.Fatalf("status after failed start = %#v, %v", status, err)
 	}
 }
-
 func TestLiteralSlugAndTicketUseOpaqueIdentities(t *testing.T) {
 	root := repo(t)
 	slug := "build [special]*"
@@ -317,7 +335,6 @@ func TestLiteralSlugAndTicketUseOpaqueIdentities(t *testing.T) {
 		t.Fatalf("neighbor spec status = %#v, %v", status, err)
 	}
 }
-
 func TestStartRefusesConflictingCandidateAndInvalidPriorState(t *testing.T) {
 	t.Run("candidate compare-and-swap", func(t *testing.T) {
 		root := repo(t)

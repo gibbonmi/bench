@@ -8,6 +8,29 @@ import (
 	"testing"
 )
 
+type countingRunner struct {
+	calls, commits int
+	child, grand   string
+	block          bool
+}
+
+func (r *countingRunner) Output(ctx context.Context, program string, args ...string) (string, error) {
+	r.calls++
+	if len(args) > 2 && args[2] == "commit-tree" {
+		r.commits++
+	}
+	return (processRunner{}).Output(ctx, program, args...)
+}
+func (r *countingRunner) Run(ctx context.Context, command Command) (string, error) {
+	for _, arg := range command.Args {
+		if r.block && arg == "apply" {
+			r.block = false
+			return (processRunner{}).Output(ctx, "sh", "-c", "sh -c 'sleep 30 & echo $! > "+r.grand+"; wait' & echo $! > "+r.child+"; wait")
+		}
+	}
+	r.calls++
+	return (processRunner{}).Run(ctx, command)
+}
 func TestCheckpointRejectsProbeProvenance(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -45,7 +68,6 @@ func TestCheckpointRejectsProbeProvenance(t *testing.T) {
 		})
 	}
 }
-
 func TestCheckpointAdmitsHonestRowOutcomes(t *testing.T) {
 	for _, outcome := range []string{"passed", "already-covered", "not-tdd-able"} {
 		t.Run(outcome, func(t *testing.T) {
@@ -60,7 +82,6 @@ func TestCheckpointAdmitsHonestRowOutcomes(t *testing.T) {
 		})
 	}
 }
-
 func TestCheckpointRefusesReceiptFieldFailuresWithoutMutation(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -87,7 +108,6 @@ func TestCheckpointRefusesReceiptFieldFailuresWithoutMutation(t *testing.T) {
 		})
 	}
 }
-
 func TestCheckpointRereadsEveryLiveFact(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -124,7 +144,6 @@ func TestCheckpointRereadsEveryLiveFact(t *testing.T) {
 		})
 	}
 }
-
 func TestCheckpointRequiresOneFinalNewlineFraming(t *testing.T) {
 	fixture := newCheckpointFixture(t)
 	before := checkpointSnapshotFor(t, fixture)
@@ -146,7 +165,6 @@ func TestCheckpointRequiresOneFinalNewlineFraming(t *testing.T) {
 		t.Fatalf("Checkpoint with final newline: %v", err)
 	}
 }
-
 func TestCheckpointCreatesOneAttributedCommitWithoutCandidateOrGateMutation(t *testing.T) {
 	fixture := newCheckpointFixture(t)
 	before := checkpointSnapshotFor(t, fixture)
@@ -177,7 +195,6 @@ func TestCheckpointCreatesOneAttributedCommitWithoutCandidateOrGateMutation(t *t
 		t.Fatalf("checkpoint replay created another ref: %q", got)
 	}
 }
-
 func TestIntegrateRequiresVerifiedCheckpointAndAdvancesOneAttributedCandidate(t *testing.T) {
 	fixture := newCheckpointFixture(t)
 	before := git(t, fixture.root, "rev-parse", fixture.run.Candidate)
@@ -217,25 +234,21 @@ func TestIntegrateRequiresVerifiedCheckpointAndAdvancesOneAttributedCandidate(t 
 		t.Fatalf("integration replay changed candidate from %s to %s", after.CandidateTip, got)
 	}
 }
-
 func TestIntegrateReleasesOnlyAfterDurableProvenance(t *testing.T) {
 	t.Run("unavailable owner stays pending", func(t *testing.T) {
 		fixture := checkpointedReleaseFixture(t)
 		fixture.service.worktrees = &countingOwner{}
-
 		status, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID)
 		if err == nil {
 			t.Fatal("Integrate accepted an unavailable release owner")
 		}
 		requirePendingRelease(t, fixture, status)
 	})
-
 	t.Run("failed release resumes without a second candidate commit", func(t *testing.T) {
 		fixture := checkpointedReleaseFixture(t)
 		owner := &releaseOwner{err: errors.New("release unavailable")}
 		fixture.service.worktrees = owner
 		owner.inspect = func() { requireReleaseProvenance(t, fixture) }
-
 		status, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID)
 		if err == nil {
 			t.Fatal("Integrate accepted a failed release")
@@ -243,7 +256,6 @@ func TestIntegrateReleasesOnlyAfterDurableProvenance(t *testing.T) {
 		requirePendingRelease(t, fixture, status)
 		candidate := status.Subject
 		commits := git(t, fixture.root, "rev-list", "--count", fixture.run.Candidate)
-
 		owner.err = nil
 		status, err = fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID)
 		if err != nil {
@@ -260,13 +272,11 @@ func TestIntegrateReleasesOnlyAfterDurableProvenance(t *testing.T) {
 		}
 		requireReleased(t, fixture)
 	})
-
 	t.Run("successful release clears pending", func(t *testing.T) {
 		fixture := checkpointedReleaseFixture(t)
 		owner := &releaseOwner{}
 		fixture.service.worktrees = owner
 		owner.inspect = func() { requireReleaseProvenance(t, fixture) }
-
 		if _, err := fixture.service.Integrate(context.Background(), "build demo", fixture.assigned.ID); err != nil {
 			t.Fatalf("Integrate: %v", err)
 		}
@@ -276,24 +286,15 @@ func TestIntegrateReleasesOnlyAfterDurableProvenance(t *testing.T) {
 		requireReleased(t, fixture)
 	})
 }
-
 func TestTypedNilReleaseOwnerStaysPending(t *testing.T) {
 	fixture := checkpointedReleaseFixture(t)
 	var owner *releaseOwner
 	fixture.service.worktrees = owner
-
 	status, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID)
 	if err == nil || err.Error() != "spec build integrate requires a release-capable worktree owner" {
 		t.Fatalf("Integrate error = %v", err)
 	}
 	requirePendingRelease(t, fixture, status)
-}
-
-type releaseOwner struct {
-	realOwner
-	calls, released int
-	err             error
-	inspect         func()
 }
 
 func (o *releaseOwner) Release(context.Context, string, string, string) error {
@@ -307,7 +308,53 @@ func (o *releaseOwner) Release(context.Context, string, string, string) error {
 	o.released++
 	return nil
 }
-
+func TestIntegrateJournalRecoversCandidateCASBeforeState(t *testing.T) {
+	for _, point := range []string{"integrate/commit", "integrate/candidate-cas", "integrate/state", "integrate/release"} {
+		t.Run(point, func(t *testing.T) {
+			fixture, runner := checkpointedReleaseFixture(t), &countingRunner{}
+			fixture.service.runner, fixture.service.fault = runner, func(got string) error {
+				if got == point {
+					return errors.New("injected")
+				}
+				return nil
+			}
+			if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err == nil {
+				t.Fatal("fault did not interrupt")
+			}
+			moved := git(t, fixture.root, "rev-parse", fixture.run.Candidate)
+			fixture.service.fault = nil
+			if point == "integrate/commit" {
+				run, _, _ := fixture.service.load("build demo")
+				op, _ := fixture.service.operation(run, "integrate", fixture.assigned.ID)
+				original := op.Result
+				op.Result = git(t, fixture.root, "commit-tree", git(t, fixture.assigned.Path, "rev-parse", "HEAD^{tree}"), "-p", fixture.run.Candidate, "-m", "swapped prepared result")
+				run.Operations[operationID("integrate", fixture.assigned.ID)] = op
+				if err := fixture.service.save(run); err != nil {
+					t.Fatal(err)
+				}
+				if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err == nil || err.Error() != "spec build prepared integration result conflicts with replay" {
+					t.Fatalf("tampered prepared result = %v", err)
+				}
+				after, _, _ := fixture.service.load("build demo")
+				if git(t, fixture.root, "rev-parse", after.Candidate) != moved || after.Operations[operationID("integrate", fixture.assigned.ID)].Result != op.Result || runner.commits != 1 {
+					t.Fatal("tampered result mutated integration")
+				}
+				op.Result = original
+				run.Operations[operationID("integrate", fixture.assigned.ID)] = op
+				if err := fixture.service.save(run); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
+				t.Fatal(err)
+			}
+			run, _, _ := fixture.service.load("build demo")
+			if git(t, fixture.root, "rev-parse", run.Candidate) != run.CandidateTip || (point != "integrate/commit" && run.CandidateTip != moved) || runner.calls == 0 || (point == "integrate/commit" && runner.commits != 1) {
+				t.Fatal("integration replayed or bypassed runner")
+			}
+		})
+	}
+}
 func checkpointedReleaseFixture(t *testing.T) checkpointFixture {
 	t.Helper()
 	fixture := newCheckpointFixture(t)
@@ -316,7 +363,6 @@ func checkpointedReleaseFixture(t *testing.T) checkpointFixture {
 	}
 	return fixture
 }
-
 func requireReleaseProvenance(t *testing.T, fixture checkpointFixture) {
 	t.Helper()
 	run, found, err := fixture.service.load("build demo")
@@ -331,7 +377,6 @@ func requireReleaseProvenance(t *testing.T, fixture checkpointFixture) {
 		t.Fatalf("candidate provenance = %#v", run)
 	}
 }
-
 func requirePendingRelease(t *testing.T, fixture checkpointFixture, status Status) {
 	t.Helper()
 	if status.Next != "release assignment "+fixture.assigned.ID {
@@ -339,7 +384,6 @@ func requirePendingRelease(t *testing.T, fixture checkpointFixture, status Statu
 	}
 	requireReleaseProvenance(t, fixture)
 }
-
 func requireReleased(t *testing.T, fixture checkpointFixture) {
 	t.Helper()
 	run, found, err := fixture.service.load("build demo")

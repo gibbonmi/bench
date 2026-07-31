@@ -40,11 +40,23 @@ func (s *Service) Assign(ctx context.Context, slug, ticketArg, request string) (
 		return Assignment{}, Status{}, err
 	}
 	requestID := digest(run.Run + "\x00" + request)
+	op, completed, err := s.beginOperation(&run, "assign", requestID, ticket.Digest)
+	if err != nil {
+		return Assignment{}, Status{}, err
+	}
 	if existing, ok := run.Assignments[requestID]; ok {
 		if existing.Ticket != ticket.Path {
 			return Assignment{}, Status{}, errors.New("spec build assignment request conflicts with another ticket")
 		}
+		if !completed {
+			if err := s.recordOperation(&run, "assign", requestID, existing.ID, true); err != nil {
+				return Assignment{}, Status{}, err
+			}
+		}
 		return existing.public(), run.status(), nil
+	}
+	if completed {
+		return Assignment{}, Status{}, errors.New("spec build assignment operation is incomplete")
 	}
 	owned, err := s.worktrees.Create(ctx, s.root, requestID, ticket.Title, run.CandidateTip)
 	if err != nil {
@@ -53,9 +65,27 @@ func (s *Service) Assign(ctx context.Context, slug, ticketArg, request string) (
 	if owned.ID == "" || owned.Path == "" {
 		return Assignment{}, Status{}, errors.New("worktree owner returned an incomplete assignment")
 	}
+	ownerResult := owned.ID + "\x00" + owned.Path
+	if op.Result != "" && op.Result != ownerResult {
+		return Assignment{}, Status{}, errors.New("spec build assignment owner result conflicts with prepared request")
+	}
+	if op.Result == "" {
+		if err := s.recordOperation(&run, "assign", requestID, ownerResult, false); err != nil {
+			return Assignment{}, Status{}, err
+		}
+	}
+	if err := s.faultAt("assign/worktree"); err != nil {
+		return Assignment{}, run.status(), err
+	}
 	stored := assignment{ID: owned.ID, Path: owned.Path, Base: run.CandidateTip, Request: requestID, OwnerRequest: digest(requestID), Ticket: ticket.Path, TicketDigest: ticket.Digest, Created: time.Now().UTC().Format(time.RFC3339Nano), Rows: ticket.Rows, Fence: ticket.Fence, Assumptions: ticket.Assumptions}
 	run.Assignments[requestID] = stored
 	if err := s.save(run); err != nil {
+		return Assignment{}, Status{}, err
+	}
+	if err := s.faultAt("assign/state"); err != nil {
+		return stored.public(), run.status(), err
+	}
+	if err := s.recordOperation(&run, "assign", requestID, stored.ID, true); err != nil {
 		return Assignment{}, Status{}, err
 	}
 	return stored.public(), run.status(), nil

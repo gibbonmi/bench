@@ -3,9 +3,12 @@ package specbuild
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -57,7 +60,6 @@ func newCheckpointFixture(t *testing.T) checkpointFixture {
 		receipt: receipt{Version: receiptVersion, Run: run.Run, Assignment: assigned.ID, Base: assigned.Base, Tree: tree, TicketDigest: stored.TicketDigest, Rows: rows, Checks: []check{{Name: "go test ./internal/specbuild", Passed: true}}, Probe: probe{Producer: "coordinator", Assignment: assigned.ID, Tree: tree, Command: "go test ./internal/specbuild", Exit: 0, OutputDigest: digest("focused pass"), Produced: time.Now().UTC().Format(time.RFC3339Nano)}, Ownership: []string{"internal/specbuild/checkpoint-change.go"}, Assumptions: assumptionDigests(stored.Assumptions)},
 	}
 }
-
 func writeCheckpointReceipt(t *testing.T, rec receipt, suffix string) string {
 	t.Helper()
 	data, err := json.Marshal(rec)
@@ -85,7 +87,6 @@ func checkpointSnapshotFor(t *testing.T, fixture checkpointFixture) checkpointSn
 	}
 	return checkpointSnapshot{state: string(state), refs: git(t, fixture.root, "for-each-ref", "--format=%(refname) %(objectname)", "refs/bench/"), candidate: git(t, fixture.root, "rev-parse", fixture.run.Candidate), tree: git(t, fixture.assigned.Path, "rev-parse", "HEAD^{tree}"), status: git(t, fixture.assigned.Path, "status", "--porcelain", "--untracked-files=all")}
 }
-
 func requireCheckpointRefusal(t *testing.T, fixture checkpointFixture, path string, before checkpointSnapshot) {
 	t.Helper()
 	if _, err := fixture.service.Checkpoint(context.Background(), "build demo", fixture.assigned.ID, path); err == nil {
@@ -96,7 +97,6 @@ func requireCheckpointRefusal(t *testing.T, fixture checkpointFixture, path stri
 		t.Fatalf("receipt refusal mutated state: before=%#v after=%#v", before, after)
 	}
 }
-
 func checkpointPathInside(t *testing.T, fixture checkpointFixture, rec receipt) string {
 	t.Helper()
 	data, err := json.Marshal(rec)
@@ -107,7 +107,6 @@ func checkpointPathInside(t *testing.T, fixture checkpointFixture, rec receipt) 
 	write(t, path, string(data)+"\n")
 	return path
 }
-
 func receiptBeforeAssignment(t *testing.T, fixture checkpointFixture) string {
 	t.Helper()
 	_, stored, ok := assignmentFor(fixture.run, fixture.assigned.ID)
@@ -120,12 +119,10 @@ func receiptBeforeAssignment(t *testing.T, fixture checkpointFixture) string {
 	}
 	return created.Add(-time.Second).Format(time.RFC3339Nano)
 }
-
 func changedTicket(t *testing.T, fixture checkpointFixture, text string) {
 	t.Helper()
 	write(t, filepath.Join(fixture.root, "specs", "build demo", "tickets", "one.md"), text)
 }
-
 func checkpointAssignment(t *testing.T, root string, service *Service, assigned Assignment, ownership []string) record {
 	t.Helper()
 	run, found, err := service.load("build demo")
@@ -151,7 +148,6 @@ func checkpointAssignment(t *testing.T, root string, service *Service, assigned 
 	}
 	return run
 }
-
 func siblingCheckpoints(t *testing.T, firstPath, firstContent, secondPath, secondContent string) (string, *Service, Assignment, Assignment, record) {
 	t.Helper()
 	root := repo(t)
@@ -185,7 +181,6 @@ func siblingCheckpoints(t *testing.T, firstPath, firstContent, secondPath, secon
 	}
 	return root, service, first, second, run
 }
-
 func TestSharedPreconditionsRefuseEveryAssignmentOwnershipIdentity(t *testing.T) {
 	for _, test := range []struct {
 		name   string
@@ -242,7 +237,6 @@ func TestSharedPreconditionsRefuseEveryAssignmentOwnershipIdentity(t *testing.T)
 		})
 	}
 }
-
 func TestSharedPreconditionsRefuseSwappedSiblingOwnershipTuples(t *testing.T) {
 	fixture := newPreconditionFixture(t, true)
 	second, _, err := fixture.service.Assign(t.Context(), "build demo", "one.md", "second sibling")
@@ -274,7 +268,6 @@ func TestSharedPreconditionsRefuseSwappedSiblingOwnershipTuples(t *testing.T) {
 		t.Fatalf("tuple-swap refusal mutated: before=%#v after=%#v", before, after)
 	}
 }
-
 func TestAssignmentsScopeIdenticalRequestsToTheirRuns(t *testing.T) {
 	root := repo(t)
 	write(t, filepath.Join(root, "specs", "second demo", "spec.md"), "# Second\n\nStatus: staged\n")
@@ -310,8 +303,95 @@ func TestAssignmentsScopeIdenticalRequestsToTheirRuns(t *testing.T) {
 	}
 }
 
-type reuseGreenGate struct{}
-
-func (reuseGreenGate) Bootstrap(_ context.Context, root, branch, tip string) error {
-	return updateRef(root, "refs/bench/green/"+branch, tip, "")
+func TestCheckpointJournalRecoversRetainedRefAndRejectsDifferentReceipt(t *testing.T) {
+	fixture := newCheckpointFixture(t)
+	runner := &countingRunner{}
+	fixture.service.runner = runner
+	receipt := writeCheckpointReceipt(t, fixture.receipt, "\n")
+	fixture.service.fault = func(point string) error {
+		if point == "checkpoint/ref" {
+			return errors.New("injected")
+		}
+		return nil
+	}
+	if _, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, receipt); err == nil {
+		t.Fatal("fault did not interrupt checkpoint")
+	}
+	run, _, _ := fixture.service.load("build demo")
+	ref := "refs/bench/specbuild/checkpoint/" + digest(run.Run+"\x00"+fixture.assigned.ID)
+	retained := git(t, fixture.root, "rev-parse", ref)
+	fixture.service.fault = nil
+	if _, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, receipt); err != nil {
+		t.Fatal(err)
+	}
+	if runner.calls == 0 {
+		t.Fatal("checkpoint did not use runner")
+	}
+	if got := git(t, fixture.root, "rev-parse", ref); got != retained {
+		t.Fatalf("checkpoint replay changed ref: %s != %s", got, retained)
+	}
+	fixture.receipt.Probe.Command = "different"
+	if _, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n")); err == nil || !strings.Contains(err.Error(), "conflicts") {
+		t.Fatalf("different receipt = %v", err)
+	}
+}
+func TestIntegrateCancellationKeepsPreparedReplayRecoverable(t *testing.T) {
+	fixture := checkpointedReleaseFixture(t)
+	pidPath, grandPath := filepath.Join(t.TempDir(), "child"), filepath.Join(t.TempDir(), "grandchild")
+	runner := &countingRunner{child: pidPath, grand: grandPath, block: true}
+	fixture.service.runner = runner
+	before, count := git(t, fixture.root, "rev-parse", fixture.run.Candidate), git(t, fixture.root, "rev-list", "--count", fixture.run.Candidate)
+	ctx, cancel := context.WithCancel(t.Context())
+	done := make(chan error, 1)
+	go func() {
+		_, err := fixture.service.Integrate(ctx, "build demo", fixture.assigned.ID)
+		done <- err
+	}()
+	for i := 0; i < 500; i++ {
+		if _, err := os.ReadFile(pidPath); err == nil {
+			if _, err := os.ReadFile(grandPath); err == nil {
+				break
+			}
+		}
+		time.Sleep(time.Millisecond)
+	}
+	if _, err := os.ReadFile(grandPath); err != nil {
+		t.Fatal("replay apply did not block")
+	}
+	cancel()
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("Integrate error = %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("Integrate did not return after cancellation")
+	}
+	for _, path := range []string{pidPath, grandPath} {
+		b, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		pid, err := strconv.Atoi(strings.TrimSpace(string(b)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := syscall.Kill(pid, 0); !errors.Is(err, syscall.ESRCH) {
+			t.Fatalf("process survived cancellation: %v", err)
+		}
+	}
+	run, _, err := fixture.service.load("build demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	op, found := fixture.service.operation(run, "integrate", fixture.assigned.ID)
+	if !found || op.State != "prepared" || op.Result != "" || git(t, fixture.root, "rev-parse", run.Candidate) != before {
+		t.Fatalf("canceled integration state = %#v", run)
+	}
+	if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
+		t.Fatalf("Integrate retry: %v", err)
+	}
+	if got := git(t, fixture.root, "rev-list", "--count", fixture.run.Candidate); got == count || runner.commits != 1 {
+		t.Fatalf("retry candidate count=%s prior=%s commits=%d", got, count, runner.commits)
+	}
 }

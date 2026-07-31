@@ -30,6 +30,7 @@ type record struct {
 	CandidateTip string                `json:"candidate_tip"`
 	Terminal     bool                  `json:"terminal,omitempty"`
 	Assignments  map[string]assignment `json:"assignments"`
+	Operations   map[string]operation  `json:"operations"`
 	Review       *reviewEvidence       `json:"review,omitempty"`
 }
 
@@ -88,6 +89,14 @@ func (r record) status() Status {
 		next = "bench spec build promote " + r.Slug
 		if r.Review.hasAcceptedFinding() {
 			next = "bench spec build assign " + r.Slug
+		}
+	}
+	if cleanup == "" && pending == "" {
+		for _, op := range r.Operations {
+			if op.State == "prepared" {
+				next = "resume " + op.Command
+				break
+			}
 		}
 	}
 	return Status{Slug: r.Slug, State: state, Subject: r.CandidateTip, Next: next}
@@ -178,7 +187,15 @@ func (s *Service) save(run record) error {
 }
 
 func (r record) valid(slug string) bool {
-	return r.Version == 1 && r.Slug == slug && r.Spec != "" && r.SpecTip != "" && r.Run == digest(r.Spec) && r.Branch != "" && r.Base != "" && r.Candidate == "refs/bench/specbuild/candidate/"+digest(r.Spec) && r.CandidateTip != "" && r.Assignments != nil
+	if r.Version != 1 || r.Slug != slug || r.Spec == "" || r.SpecTip == "" || r.Run != digest(r.Spec) || r.Branch == "" || r.Base == "" || r.Candidate != "refs/bench/specbuild/candidate/"+digest(r.Spec) || r.CandidateTip == "" || r.Assignments == nil || r.Operations == nil || len(r.Operations) > operationLimit {
+		return false
+	}
+	for key, op := range r.Operations {
+		if key != operationID(op.Command, op.Request) || op.Command == "" || op.Request == "" || op.Input == "" || (op.State != "prepared" && op.State != "completed") {
+			return false
+		}
+	}
+	return true
 }
 
 func replaceState(path string, data []byte) error {
