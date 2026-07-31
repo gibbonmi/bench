@@ -27,6 +27,7 @@ import (
 var raceTests = racetests.Tests
 
 const gateGoUsage = "usage: bench gate-go <gofmt|test|race|conformance-suite> [root]"
+const disableBuildVCS = "-buildvcs=false"
 
 // GateGoCommand is the `bench gate-go <step> [root]` plumbing command. Exit 0 is a
 // green step, 1 a red one, 2 a usage error, and 3 an omitted root that no git worktree
@@ -76,7 +77,7 @@ func GateGoArgv(kit, step, root string) []string {
 	if kit != "" {
 		argv = append(argv, "-C", kit)
 	}
-	return append(argv, "run", "./cmd/bench", "gate-go", step, root)
+	return append(argv, "run", disableBuildVCS, "./cmd/bench", "gate-go", step, root)
 }
 
 // CoreTestPackages enumerates the packages the core `go test` step runs at tier: the
@@ -84,7 +85,7 @@ func GateGoArgv(kit, step, root string) []string {
 // `go list` output alongside, so a caller that fails can attribute the failure to the
 // enumeration rather than to the test run.
 func CoreTestPackages(root string, tier registry.Tier) ([]string, string, error) {
-	listed, combined, err := stepOutput(root, "go", "list", "./...")
+	listed, combined, err := stepOutput(root, "go", "list", disableBuildVCS, "./...")
 	if err != nil {
 		return nil, combined, err
 	}

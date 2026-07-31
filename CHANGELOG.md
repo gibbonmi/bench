@@ -70,6 +70,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- Made prospective gate execution compile the exact unpublished Bench tree without
+  requiring ignored binary artifacts from another checkout.
 - Made spec-build integration release an exact live checkpoint payload after
   candidate advancement while retaining drifted assignments for safe re-entry.
 - Made freshness source discovery ignore ambient VCS metadata, matching the

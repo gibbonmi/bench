@@ -42,6 +42,9 @@ var executionLockOwners = struct {
 	paths map[string]bool
 }{paths: map[string]bool{}}
 
+const prospectiveGateEnvName = "BENCH_GATE_PROSPECTIVE"
+const prospectiveGateEnv = prospectiveGateEnvName + "=1"
+
 func recordLock(typ int16) syscall.Flock_t {
 	return syscall.Flock_t{Type: typ, Whence: int16(io.SeekStart), Start: 0, Len: 0}
 }
@@ -108,7 +111,13 @@ func ExecuteTree(ctx context.Context, root, tree string, stdout, stderr io.Write
 		return Result{ActionExit: 1}
 	}
 	defer cleanup()
-	build := func() (subject, error) { return buildSubjectFor(checkout, root) }
+	build := func() (subject, error) {
+		plan, err := buildSubjectFor(checkout, root)
+		if err == nil {
+			plan.Env = append(plan.Env, prospectiveGateEnv)
+		}
+		return plan, err
+	}
 	return executeSubjectWithEngine(ctx, checkout, root, stdout, stderr, productionGateEngine{}, nil, reuseFreshGreen, build, build)
 }
 

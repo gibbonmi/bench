@@ -12,6 +12,10 @@ root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "error: not in a g
 gate_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 kit="$(cd "$gate_dir/.." && pwd)"
 bench="$kit/dist/bench"
+if [ "${BENCH_GATE_PROSPECTIVE-}" = 1 ]; then
+  cd "$kit" || exit 1
+  exec env -u BENCH_GATE_PROSPECTIVE BENCH_KIT="$kit" go run -buildvcs=false ./cmd/bench gate-phases "$root"
+fi
 freshness_cache="${GOCACHE:-$kit/dist/.freshness-go-cache}"
 mkdir -p "$freshness_cache"
 if ! (cd "$kit" && GOCACHE="$freshness_cache" go run ./internal/freshness/check "$kit" "$bench"); then

@@ -131,7 +131,7 @@ func loadManifest(root string) (*manifest, string, string) {
 		return nil, "", "gate input manifest invalid"
 	}
 	for _, name := range m.Environment {
-		if !envNameRE.MatchString(name) || hasUnsafeText(name) {
+		if name == prospectiveGateEnvName || !envNameRE.MatchString(name) || hasUnsafeText(name) {
 			return nil, "", "gate input manifest invalid"
 		}
 	}

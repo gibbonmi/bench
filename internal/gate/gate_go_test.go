@@ -108,6 +108,22 @@ func TestGateGoTestPackageSet(t *testing.T) {
 	}
 }
 
+func TestCoreTestPackagesIgnoresMalformedAmbientVCSMetadata(t *testing.T) {
+	parent := t.TempDir()
+	writeGateGoFile(t, filepath.Join(parent, ".git"), "gitdir: missing\n")
+	root := filepath.Join(parent, "module")
+	writeGateGoFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
+	writeGateGoFile(t, filepath.Join(root, "cmd", "fixture", "main.go"), "package main\n\nfunc main() {}\n")
+
+	packages, output, err := CoreTestPackages(root, registry.Dev)
+	if err != nil {
+		t.Fatalf("CoreTestPackages with malformed ambient VCS metadata: %v\n%s", err, output)
+	}
+	if len(packages) != 1 || packages[0] != "fixture/cmd/fixture" {
+		t.Fatalf("CoreTestPackages = %v, want [fixture/cmd/fixture]", packages)
+	}
+}
+
 func TestGateGoTestReds(t *testing.T) {
 	root := t.TempDir()
 	writeGateGoFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
@@ -217,11 +233,11 @@ func TestFixtureSuiteMember(t *testing.T) {
 }
 
 func TestGateGoArgv(t *testing.T) {
-	want := []string{"go", "-C", "/kit", "run", "./cmd/bench", "gate-go", "gofmt", "/root"}
+	want := []string{"go", "-C", "/kit", "run", "-buildvcs=false", "./cmd/bench", "gate-go", "gofmt", "/root"}
 	if got := GateGoArgv("/kit", "gofmt", "/root"); !reflect.DeepEqual(got, want) {
 		t.Fatalf("GateGoArgv = %#v, want %#v", got, want)
 	}
-	want = []string{"go", "run", "./cmd/bench", "gate-go", "test", "/root"}
+	want = []string{"go", "run", "-buildvcs=false", "./cmd/bench", "gate-go", "test", "/root"}
 	if got := GateGoArgv("", "test", "/root"); !reflect.DeepEqual(got, want) {
 		t.Fatalf("GateGoArgv with no kit = %#v, want %#v", got, want)
 	}
