@@ -133,3 +133,21 @@ func TestOccurrenceLedgerMigrationCheckBitesOnFT158Count(t *testing.T) {
 		t.Fatal("FT158 count mutation passed occurrence-ledger migration check")
 	}
 }
+
+func TestOccurrenceLedgerMigrationAllowsRetiredFT126(t *testing.T) {
+	root := t.TempDir()
+	const migrated = "**FT71 — migration baseline.**\nOccurrences: baseline-01\n\n" +
+		"**FT158 — migration baseline.**\nOccurrences: baseline-01, baseline-02, baseline-03\n\n" +
+		"**FT128 — migration baseline.**\nOccurrences: baseline-01\n\n" +
+		"**FT98 — migration baseline.**\nOccurrences: baseline-01, baseline-02, baseline-03\n\n" +
+		"**FT169 — migration baseline.**\nOccurrences: baseline-01\n\n" +
+		"**FT141 — migration baseline.**\nOccurrences: baseline-01\n\n" +
+		"**FT94 — migration baseline.**\nOccurrences: baseline-01\n\n" +
+		"**FT125 — migration baseline.**\nOccurrences: baseline-01\n"
+	if err := os.WriteFile(filepath.Join(root, "ROADMAP.md"), []byte(migrated), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if containsDiagnostic(checkOccurrenceLedgerMigration(root), "ROADMAP.md occurrence-ledger migration count for FT126 is wrong") {
+		t.Fatal("retired FT126 remained required by occurrence-ledger migration")
+	}
+}

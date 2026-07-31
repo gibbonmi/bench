@@ -2,25 +2,25 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `2f78e9a`, clean tree, 8 unpushed commits
-Spec: `specs/ft126-recurrence-tallying/spec.md` (Status: staged), `specs/ft128-agent-line-binding/spec.md` (Status: staged)
-Gate: green at `32285dd` — stale, work tree `dcbbc5b`
+Branch: `main` — HEAD `df749df`, 3 dirty paths, 10 unpushed commits
+Spec: `specs/ft128-agent-line-binding/spec.md` (Status: staged)
+Gate: green at `2036d35` — current
 
 ## State
 
-- **FT126 implementation and semantic review are complete.** All 33 mapped rows
-  landed across `662650d`, `592e253`, `1a02ac4`, and `8a40ed3`.
-- **Fresh review `/root/ft126_full_review` found two concrete issues.** The exact
-  count-mutation proof and fail-closed degraded-source trust repair landed green at
-  `2f78e9a`; its pickup file was deleted in that same commit.
-- **The reviewer chose the mid binding and skipped optional falsification.** Top
-  escalation and the separate top-binding Codex CLI pass were both declined.
-- Final-check is next. The `Status: implemented` transition, default-branch
-  retirement, implementation retro, push, and ship-tier verification have not run.
+- **FT126 is closed.** Its roadmap row and pending retro are drained; the retro's
+  four actionable recommendations now live on FT169, FT133, FT101, and FT120.
+- **The recurrence migration contract follows current roadmap ownership.** Retired
+  FT126 is no longer required by the one-time baseline inventory, while the eight
+  remaining migrated rows keep their exact-count checks and mutation bite.
+- **FT128 is the next actionable item.** Its staged spec owns the fork verdict,
+  harness-native denial, and static command-token conformance sweep.
+- The dev gate is green for the approved drain and conformance repair. Push and
+  ship-tier verification have not run.
 
 ## Next command
 
-`$bench-implement-spec ft126 --full`
+`$bench-implement-spec ft128-agent-line-binding`
 
 ## Shape
 

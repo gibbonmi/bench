@@ -410,6 +410,15 @@ Codex constraint and routes a denied delegate-side fast-forward back to the
 coordinator instead of spending retries on permissions. Source: the FT129
 implementation retro, drained here.
 
+The FT126 close adds tool readiness to that same coordinator preflight. Both the
+projection and maintenance delegates reached their first gated action with an
+untrusted derived binary and paid the refusal before rebuilding, even though
+the refusal correctly named the exact local rebuild. Before an assignment
+subject is handed to a write delegate, the preflight verifies that subject's
+derived binary and reports the rebuild action; an explicit opt-in may perform
+it, while gate entry remains repair-silent and never rebuilds automatically.
+Source: the FT126 recurrence-tallying retro, drained here.
+
 **FT172 (MEDIUM) — the roadmap parser and context snapshot make the drain's
 non-recurrence evidence complete.** The row grammar is currently implicit:
 `ParseDocument` treats any line opening with bold as a new row, so one bold-led
@@ -454,22 +463,6 @@ claim rather than as fact. That rule is prose, needs no new mechanism, and was
 applied by hand in the 2026-07-27 drain — every diagnosis drained there was read
 out of the tree first. Source of this clause: `.bench/learnings.md`, verdicted
 here. The grammar face came from `IDEAS.md`, drained here.
-
-**FT126 (MEDIUM) — recurrence tallying belongs to the
-roadmap parser and context snapshot.**
-
-Occurrences: baseline-01
-
-The same parser and snapshot seam owns recurrence tallying. An idea, learning,
-or retro should be able to cite an existing FT as its primary owner so the drain
-records a new occurrence on that row instead of manufacturing a duplicate;
-the current count stays visible while Git owns the event history. The first
-captured occurrence is FT98's 2026-07-30 scoped-commit refusal, with FT169 as
-the downstream workaround. Decide the citation grammar and malformed-reference
-posture alongside the row grammar rather than adding a second roadmap parser.
-Source: `IDEAS.md`, drained here.
-
-Spec: `specs/ft126-recurrence-tallying/spec.md`.
 
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.** Make
 every documented CLI example executable; parse and validate real YAML
@@ -746,6 +739,13 @@ and scope the ambient surfaces (`bench outline`, `bench status`) to it — a
 single-profile repo resolves exactly as today, so the change is additive.
 Whole-tree `outline` and `structure` get less useful as a tree grows, which
 is the context-cost-follows-project-size failure this row exists to fix.
+
+The FT126 close supplies the ticket-level instance: four independently-green
+tickets repeatedly carried the same 49 unrelated whole-tree structure findings.
+A path-scoped structure summary for the staged ticket set keeps the aggregate
+debt visible while making the ticket verdict immediate; it rides this same
+per-context scoping surface rather than adding a second structure command.
+Source: the FT126 recurrence-tallying retro, drained here.
 
 Scoping the *gate* is the contested part and starts as a grill
 (`/bench-shape-idea`), because narrowing what the oracle runs is a reviewer
@@ -1033,6 +1033,14 @@ duplicating it. Related but distinct: `bench test` makes skips visible to a
 reader, while this row makes an invisible skip fail the coverage oracle.
 Source: `IDEAS.md`, drained here.
 
+The FT126 close repeated that exact false green: a scoped
+`TestRootConformance` invocation omitted `BENCH_CONFORMANCE_ROOT`, skipped its
+graded-root work, and still printed an `ok` summary. The mechanical check remains
+the preferred single owner; if it cannot discriminate the execution posture,
+the authoring-side rule explicitly requires a real graded root rather than
+crediting the summary. Source: the FT126 recurrence-tallying retro, drained
+here.
+
 A third face, drained 2026-07-28, is row identity rather than citation
 resolution: `bench coverage` emits only story/seam/red_signal, so a spec whose
 rows share all three — `implement-spec-full-run`'s three story-3 hook rows —
@@ -1199,7 +1207,8 @@ bounds from the shared test deadline rather than pricing a special-file
 regression against a 16-core host; FT171 owns whether reducing outer
 concurrency also lowers the contention that triggered them.
 
-**FT120 (LOW) — gate and canary test-harness defects nothing asserts.** Two
+**FT120 (LOW) — gate, canary, and contract test-harness defects nothing
+asserts.** Two
 independent holes in the harness that grades the oracle, both found during the
 FT91 canary-budget build. First, the R12 contention fixture can leak an immortal
 process: its owner gate script waits on a release file with an unbounded
@@ -1233,6 +1242,14 @@ process still writing into the test's temp dir after the test returned — a
 teardown race in the self-host contract, not a diff defect. An intermittently
 red oracle is noise in the thing that defines done; pin the child-process
 teardown before it recurs. Source: `IDEAS.md`, drained here.
+
+Fourth, the FT126 retirement gate reported one process-start-shaped
+doctor-shim failure as an undifferentiated exit 1, then the unchanged case
+passed 100 single-case and 50 full doctor-shim stress runs. Preserve process
+launch failure as a distinct contract-harness diagnostic instead of collapsing
+it into the child's exit status, so load and infrastructure reds can be
+attributed without a blind stress investigation. Source: the FT126
+recurrence-tallying retro, drained here.
 
 ## Standards debt — one batched light-path pass
 
@@ -1389,6 +1406,5 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT126 recurrence tallying: approved with mixed story lines, so interactive orchestration owns the build.
-2. `/bench-write-spec` — FT128: the line-enforcement fix now owns both the fork verdict and the static model-token sweep.
-3. `/bench-shape-idea` — FT135: make installed pre-push protection report its resolved branch and template currency, then restore the sanctioned repair route.
+1. `/bench-implement-spec` — FT128 agent-line binding: its staged spec owns the fork verdict, harness-native denial, and static model-token sweep.
+2. `/bench-shape-idea` — FT135 pre-push protection: expose resolved branch and template currency, then restore the sanctioned repair route.
