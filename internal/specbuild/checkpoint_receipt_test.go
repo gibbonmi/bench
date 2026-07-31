@@ -3,9 +3,12 @@ package specbuild
 import (
 	"context"
 	"errors"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
 type countingRunner struct {
@@ -109,6 +112,13 @@ func TestCheckpointRefusesReceiptFieldFailuresWithoutMutation(t *testing.T) {
 	}
 }
 func TestCheckpointRereadsEveryLiveFact(t *testing.T) {
+	bind := func(t *testing.T, fixture checkpointFixture, rec *receipt) {
+		tree := benchgit.TreeHash(fixture.assigned.Path)
+		if tree == "none" {
+			t.Fatal("live assignment tree is unavailable")
+		}
+		rec.Tree, rec.Probe.Tree = tree, tree
+	}
 	tests := []struct {
 		name   string
 		change func(*testing.T, checkpointFixture, *receipt)
@@ -119,17 +129,15 @@ func TestCheckpointRereadsEveryLiveFact(t *testing.T) {
 		}},
 		{"ticket digest", func(_ *testing.T, _ checkpointFixture, rec *receipt) { rec.TicketDigest = "changed-ticket" }},
 		{"outside fence", func(t *testing.T, fixture checkpointFixture, rec *receipt) {
-			write(t, filepath.Join(fixture.assigned.Path, "outside.go"), "package outside\n")
-			git(t, fixture.assigned.Path, "add", ".")
-			git(t, fixture.assigned.Path, "commit", "-qm", "outside fence")
-			rec.Tree, rec.Probe.Tree = git(t, fixture.assigned.Path, "rev-parse", "HEAD^{tree}"), git(t, fixture.assigned.Path, "rev-parse", "HEAD^{tree}")
-			rec.Ownership = []string{"outside.go", "internal/specbuild/checkpoint-change.go"}
+			if err := os.Symlink("internal/specbuild/checkpoint-change.go", filepath.Join(fixture.assigned.Path, "outside-link")); err != nil {
+				t.Fatal(err)
+			}
+			bind(t, fixture, rec)
+			rec.Ownership = []string{"outside-link", "internal/specbuild/checkpoint-change.go"}
 		}},
 		{"unexplained path", func(t *testing.T, fixture checkpointFixture, rec *receipt) {
-			write(t, filepath.Join(fixture.assigned.Path, "internal", "specbuild", "unexplained.go"), "package specbuild\n")
-			git(t, fixture.assigned.Path, "add", ".")
-			git(t, fixture.assigned.Path, "commit", "-qm", "unexplained path")
-			rec.Tree, rec.Probe.Tree = git(t, fixture.assigned.Path, "rev-parse", "HEAD^{tree}"), git(t, fixture.assigned.Path, "rev-parse", "HEAD^{tree}")
+			write(t, filepath.Join(fixture.assigned.Path, "internal", "specbuild", "unexplained\nname.go"), "package specbuild\n")
+			bind(t, fixture, rec)
 		}},
 		{"assumption drift", func(t *testing.T, fixture checkpointFixture, _ *receipt) {
 			changedTicket(t, fixture, "# One\n\nOwnership fence: internal/specbuild\nAssumptions: changed contract\n\n- [ ] [R10-R15] checkpoint receipt\n- [ ] [R54] framing\n")
@@ -165,31 +173,23 @@ func TestCheckpointRequiresOneFinalNewlineFraming(t *testing.T) {
 		t.Fatalf("Checkpoint with final newline: %v", err)
 	}
 }
-func TestCheckpointCreatesOneAttributedCommitWithoutCandidateOrGateMutation(t *testing.T) {
+func TestCheckpointCreatesCommitFromVerifiedLiveAssignmentTree(t *testing.T) {
 	fixture := newCheckpointFixture(t)
+	runner := &countingRunner{}
+	fixture.service.runner = runner
 	before := checkpointSnapshotFor(t, fixture)
 	if _, err := fixture.service.Checkpoint(context.Background(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n")); err != nil {
 		t.Fatalf("Checkpoint: %v", err)
 	}
 	after := loadRun(t, fixture.service)
 	_, stored, ok := assignmentFor(after, fixture.assigned.ID)
-	if !ok || stored.Checkpoint == "" || stored.CheckpointRef == "" || stored.ReceiptDigest == "" {
-		t.Fatalf("checkpoint attribution = %#v", stored)
+	candidate, ref := git(t, fixture.root, "rev-parse", after.Candidate), git(t, fixture.root, "for-each-ref", "--format=%(refname)", "refs/bench/specbuild/checkpoint/")
+	if !ok || stored.Checkpoint == "" || stored.CheckpointRef == "" || stored.CheckpointTree != fixture.receipt.Tree || stored.ReceiptDigest == "" || candidate != before.candidate || fixture.gate.calls != 1 || ref != stored.CheckpointRef || runner.commits != 1 {
+		t.Fatalf("checkpoint effects: attribution=%#v candidate=%s gate_calls=%d ref=%s commits=%d", stored, candidate, fixture.gate.calls, ref, runner.commits)
 	}
-	if got := git(t, fixture.root, "rev-parse", after.Candidate); got != before.candidate {
-		t.Fatalf("checkpoint moved candidate from %s to %s", before.candidate, got)
-	}
-	if fixture.gate.calls != 1 {
-		t.Fatalf("gate calls = %d, want 1 bootstrap call", fixture.gate.calls)
-	}
-	if got := git(t, fixture.root, "for-each-ref", "--format=%(refname)", "refs/bench/specbuild/checkpoint/"); got != stored.CheckpointRef {
-		t.Fatalf("checkpoint refs = %q, want one %q", got, stored.CheckpointRef)
-	}
-	if _, err := fixture.service.Checkpoint(context.Background(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n")); err != nil {
-		t.Fatalf("Checkpoint replay: %v", err)
-	}
-	if got := git(t, fixture.root, "for-each-ref", "--format=%(refname)", "refs/bench/specbuild/checkpoint/"); got != stored.CheckpointRef {
-		t.Fatalf("checkpoint replay created another ref: %q", got)
+	_, err := fixture.service.Checkpoint(context.Background(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n"))
+	if replayRef := git(t, fixture.root, "for-each-ref", "--format=%(refname)", "refs/bench/specbuild/checkpoint/"); err != nil || replayRef != stored.CheckpointRef {
+		t.Fatalf("checkpoint replay: error=%v ref=%q", err, replayRef)
 	}
 }
 func TestIntegrateRequiresVerifiedCheckpointAndAdvancesOneAttributedCandidate(t *testing.T) {

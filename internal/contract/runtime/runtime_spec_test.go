@@ -1,12 +1,38 @@
 package runtime
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/contract"
 )
+
+func TestRuntimeSpecBuildCheckpointCapturesDirtyAssignment(t *testing.T) {
+	contract.SkipIfSubjectBenchMissing(t)
+	contract.RequireFreshBench(t)
+	f := contract.NewFixture(t)
+	f.WriteFile(".bench/gate.sh", "#!/bin/sh\nexit 0\n")
+	if err := os.Chmod(filepath.Join(f.Root, ".bench", "gate.sh"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
+	f.WriteFile(".gitignore", ".bench-contract-env/\n")
+	f.WriteFile("specs/demo/spec.md", "# demo\n\nStatus: staged\n")
+	f.WriteFile("specs/demo/tickets/one.md", "# One\n\nOwnership fence: internal/demo\n\n- [ ] [R10] dirty checkpoint\n")
+	f.CommitAll("staged spec")
+	f.Git("config", "user.email", "bench@local")
+	f.Git("config", "user.name", "bench")
+	f.Bench("gate").RequireExit(0)
+	f.Bench("spec", "build", "start", "demo").RequireExit(0)
+	assignment := assignRuntimeBuild(t, f, "one.md", "dirty-checkpoint-request")
+	contract.WriteFileAbs(t, filepath.Join(assignment.Path, "internal", "demo", "change.go"), "package demo\n")
+	requireDirtyAssignmentAtBase(t, f, assignment)
+	receipt := runtimeCheckpointReceipt(t, f, assignment, []string{"internal/demo/change.go"})
+	f.Bench("spec", "build", "checkpoint", "demo", "--assignment", assignment.ID, "--evidence", receipt).RequireExit(0)
+	requireDirtyAssignmentAtBase(t, f, assignment)
+}
 
 func TestRuntimeSpecImplementedContracts(t *testing.T) {
 	contract.SkipIfSubjectBenchMissing(t)

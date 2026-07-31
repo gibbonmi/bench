@@ -275,12 +275,8 @@ func (s *Service) validateReceipt(run record, assigned assignment, rec receipt, 
 	if err != nil || !timeAfter(rec.Probe.Produced, created) {
 		return errInvalidReceipt
 	}
-	status, err := benchgit.Output("-C", assigned.Path, "status", "--porcelain", "--untracked-files=all")
-	if err != nil || status != "" {
-		return errInvalidReceipt
-	}
-	tree, err := benchgit.Output("-C", assigned.Path, "rev-parse", "HEAD^{tree}")
-	if err != nil || tree != rec.Tree {
+	tree := benchgit.TreeHash(assigned.Path)
+	if tree == "none" || tree != rec.Tree {
 		return errInvalidReceipt
 	}
 	ticketArg, err := filepath.Rel(filepath.Join(filepath.Dir(run.Spec), "tickets"), assigned.Ticket)

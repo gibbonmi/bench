@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
@@ -41,8 +42,6 @@ func newCheckpointFixture(t *testing.T) checkpointFixture {
 		t.Fatalf("Assign: %v", err)
 	}
 	write(t, filepath.Join(assigned.Path, "internal", "specbuild", "checkpoint-change.go"), "package specbuild\n")
-	git(t, assigned.Path, "add", ".")
-	git(t, assigned.Path, "commit", "-qm", "checkpoint change")
 	run := loadRun(t, service)
 	_, stored, ok := assignmentFor(run, assigned.ID)
 	if !ok {
@@ -52,7 +51,7 @@ func newCheckpointFixture(t *testing.T) checkpointFixture {
 	for i, row := range stored.Rows {
 		rows[i] = rowReceipt{Row: row, Outcome: "passed"}
 	}
-	tree := git(t, assigned.Path, "rev-parse", "HEAD^{tree}")
+	tree := benchgit.TreeHash(assigned.Path)
 	return checkpointFixture{
 		root: root, service: service, gate: gate, assigned: assigned, run: run,
 		receipt: receipt{Version: receiptVersion, Run: run.Run, Assignment: assigned.ID, Base: assigned.Base, Tree: tree, TicketDigest: stored.TicketDigest, Rows: rows, Checks: []check{{Name: "go test ./internal/specbuild", Passed: true}}, Probe: probe{Producer: "coordinator", Assignment: assigned.ID, Tree: tree, Command: "go test ./internal/specbuild", Exit: 0, OutputDigest: digest("focused pass"), Produced: time.Now().UTC().Format(time.RFC3339Nano)}, Ownership: []string{"internal/specbuild/checkpoint-change.go"}, Assumptions: assumptionDigests(stored.Assumptions)},
@@ -132,7 +131,7 @@ func checkpointAssignment(t *testing.T, root string, service *Service, assigned 
 	for i, row := range stored.Rows {
 		rows[i] = rowReceipt{Row: row, Outcome: "passed"}
 	}
-	tree := git(t, assigned.Path, "rev-parse", "HEAD^{tree}")
+	tree := benchgit.TreeHash(assigned.Path)
 	rec := receipt{Version: receiptVersion, Run: run.Run, Assignment: assigned.ID, Base: assigned.Base, Tree: tree, TicketDigest: stored.TicketDigest, Rows: rows, Checks: []check{{Name: "go test ./internal/specbuild", Passed: true}}, Probe: probe{Producer: "coordinator", Assignment: assigned.ID, Tree: tree, Command: "go test ./internal/specbuild", Exit: 0, OutputDigest: digest("focused pass"), Produced: time.Now().UTC().Format(time.RFC3339Nano)}, Ownership: ownership, Assumptions: assumptionDigests(stored.Assumptions)}
 	if _, err := service.Checkpoint(t.Context(), "build demo", assigned.ID, writeCheckpointReceipt(t, rec, "\n")); err != nil {
 		t.Fatalf("Checkpoint(%s): %v", assigned.ID, err)
@@ -162,8 +161,6 @@ func siblingCheckpoints(t *testing.T, firstPath, firstContent, secondPath, secon
 		path, content string
 	}{{first, firstPath, firstContent}, {second, secondPath, secondContent}} {
 		write(t, filepath.Join(change.assignment.Path, change.path), change.content)
-		git(t, change.assignment.Path, "add", ".")
-		git(t, change.assignment.Path, "commit", "-qm", change.path)
 		checkpointAssignment(t, root, service, change.assignment, []string{change.path})
 	}
 	return root, service, first, second, loadRun(t, service)
@@ -176,6 +173,7 @@ func loadRun(t *testing.T, service *Service) record {
 	}
 	return run
 }
+
 func TestSharedPreconditionsRefuseEveryAssignmentOwnershipIdentity(t *testing.T) {
 	for _, test := range []struct {
 		name   string

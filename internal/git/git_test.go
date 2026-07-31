@@ -69,6 +69,25 @@ func TestTreeHashDirtyTreeDiffers(t *testing.T) {
 	}
 }
 
+func TestTreeHashExcludesIgnoredContent(t *testing.T) {
+	root := newRepo(t)
+	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("ignored/\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, root, "add", ".gitignore")
+	runGit(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "ignore fixture")
+	clean := TreeHash(root)
+	if err := os.MkdirAll(filepath.Join(root, "ignored"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "ignored", "smuggled.txt"), []byte("ignored\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got := TreeHash(root); got != clean {
+		t.Fatalf("ignored content changed tree from %q to %q", clean, got)
+	}
+}
+
 // TestTreeHashNonRepoReturnsNone checks the failure posture for a non-repo dir.
 func TestTreeHashNonRepoReturnsNone(t *testing.T) {
 	dir := t.TempDir()
@@ -82,6 +101,7 @@ func TestTreeHashNonRepoReturnsNone(t *testing.T) {
 func TestTreeHashLeavesNoStrayIndex(t *testing.T) {
 	root := newRepo(t)
 	before := listDir(t, root)
+	index := runGit(t, root, "write-tree")
 	_ = TreeHash(root)
 	after := listDir(t, root)
 
@@ -90,6 +110,9 @@ func TestTreeHashLeavesNoStrayIndex(t *testing.T) {
 	}
 	if len(after) != len(before) {
 		t.Fatalf("TreeHash changed the working tree: before %v, after %v", before, after)
+	}
+	if got := runGit(t, root, "write-tree"); got != index {
+		t.Fatalf("TreeHash changed the real index from %q to %q", index, got)
 	}
 }
 

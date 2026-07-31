@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/contract"
+	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
 type runtimeBuildState struct {
@@ -304,7 +305,10 @@ func writeAssignmentChange(t *testing.T, root, name, body string) {
 func runtimeCheckpointReceipt(t *testing.T, f contract.Fixture, assignment runtimeBuildAssignment, ownership []string) string {
 	t.Helper()
 	state := readRuntimeBuildState(t, f)
-	tree := strings.TrimSpace(contract.RunAt(t, f, assignment.Path, nil, "git", "rev-parse", "HEAD^{tree}").Stdout)
+	tree := benchgit.TreeHash(assignment.Path)
+	if tree == "none" {
+		t.Fatal("live assignment tree is unavailable")
+	}
 	rows := make([]map[string]any, len(assignment.Rows))
 	for i, row := range assignment.Rows {
 		rows[i] = map[string]any{"row": row, "outcome": "passed"}
@@ -321,6 +325,17 @@ func runtimeCheckpointReceipt(t *testing.T, f contract.Fixture, assignment runti
 		"ownership": ownership, "assumptions": assumptions,
 	}
 	return writeRuntimeJSON(t, receipt)
+}
+
+func requireDirtyAssignmentAtBase(t *testing.T, f contract.Fixture, assignment runtimeBuildAssignment) {
+	t.Helper()
+	head := strings.TrimSpace(contract.RunAt(t, f, assignment.Path, nil, "git", "rev-parse", "HEAD").Stdout)
+	if head != assignment.Base {
+		t.Fatalf("assignment HEAD = %s, want base %s", head, assignment.Base)
+	}
+	if status := contract.RunAt(t, f, assignment.Path, nil, "git", "status", "--porcelain", "--untracked-files=all").Stdout; status == "" {
+		t.Fatal("assignment is clean before checkpoint")
+	}
 }
 
 func runtimeReviewReceipt(t *testing.T, f contract.Fixture) string {
