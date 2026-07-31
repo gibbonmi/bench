@@ -12,7 +12,7 @@ _lib="$(dirname "$0")/../lib/resolve-bench.sh"
 # shellcheck source=../lib/resolve-bench.sh
 . "$_lib"
 _cmd="$(bench_resolve_wrapper)" || { echo "bench adapter: bench core not found — refusing to run unguarded" >&2; exit 1; }
-model="$("$_cmd" resolve-model --alias)" || exit 1
+model="$("$_cmd" resolve-model --harness claude)" || exit 1
 if [ -n "$model" ]; then
   exec claude -p --model "$model"
 fi

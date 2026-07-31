@@ -13,7 +13,7 @@ _lib="$(dirname "$0")/../lib/resolve-bench.sh"
 # shellcheck source=../lib/resolve-bench.sh
 . "$_lib"
 _cmd="$(bench_resolve_wrapper)" || { echo "bench adapter: bench core not found — refusing to run unguarded" >&2; exit 1; }
-model="$("$_cmd" resolve-model)" || exit 1
+model="$("$_cmd" resolve-model --harness codex)" || exit 1
 if [ -n "$model" ]; then
   exec codex exec --sandbox workspace-write -m "$model"
 fi

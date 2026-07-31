@@ -9,13 +9,15 @@
 # `opencode run` documents only a positional prompt (as of 2026-07-20), so this adapter
 # reads stdin into a variable and passes it positionally with `--` to keep a dash-leading
 # prompt out of flag parsing. That final-hop argv exposure is the documented residual
-# limitation, to drop once opencode documents a stdin contract.
+# limitation, to drop once opencode documents a stdin contract. An unbound opencode column
+# refuses at the core, so an unadopted harness fails closed instead of borrowing another
+# harness's column.
 _lib="$(dirname "$0")/../lib/resolve-bench.sh"
 [ -f "$_lib" ] || { echo "bench adapter: wrapper resolver missing at $_lib — refusing to run unguarded" >&2; exit 1; }
 # shellcheck source=../lib/resolve-bench.sh
 . "$_lib"
 _cmd="$(bench_resolve_wrapper)" || { echo "bench adapter: bench core not found — refusing to run unguarded" >&2; exit 1; }
-model="$("$_cmd" resolve-model --provider-model)" || exit 1
+model="$("$_cmd" resolve-model --harness opencode)" || exit 1
 prompt="$(cat)"
 if [ -n "$model" ]; then
   exec opencode run --model "$model" -- "$prompt"

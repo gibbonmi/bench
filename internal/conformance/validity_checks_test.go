@@ -284,7 +284,7 @@ func TestRunConformanceDistinguishesAbsentAndEmptyInputs(t *testing.T) {
 	}
 	empty := RunConformance(root, NewHarness(t).KitRoot, registry.Dev, "")
 	assertStructuredPhaseDiags("empty", empty)
-	if !containsDiagnostic(empty, "lines.env tier unset: BENCH_TIER_TOP has no value") {
+	if !containsDiagnostic(empty, "lines.env cell unset: BENCH_CODEX_TOP has no value") {
 		t.Fatalf("empty lines.env diagnostic missing:\n%s", strings.Join(empty, "\n"))
 	}
 }

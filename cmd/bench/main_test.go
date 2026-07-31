@@ -57,7 +57,10 @@ func TestFreshnessCheckRefusesMissingOwnExecutable(t *testing.T) {
 	}
 }
 
-func TestResolveModelProviderModelMode(t *testing.T) {
+// TestResolveModelHarnessFlag drives the CLI's argument surface: --harness selects the
+// column, and the retired --alias / --provider-model spellings are rejected rather than
+// quietly resolving a model, so there is only one way to ask the binding a question.
+func TestResolveModelHarnessFlag(t *testing.T) {
 	root := t.TempDir()
 	if out, err := exec.Command("git", "init", "-q", root).CombinedOutput(); err != nil {
 		t.Fatalf("git init: %v: %s", err, out)
@@ -65,7 +68,8 @@ func TestResolveModelProviderModelMode(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	binding := "BENCH_TIER_TOP=gpt-5.6-sol\nBENCH_TIER_MID=gpt-5.6-terra\nBENCH_TIER_CHEAP=gpt-5.6-luna\n"
+	binding := "BENCH_CODEX_TOP=gpt-5.6-sol\nBENCH_CODEX_MID=gpt-5.6-terra\nBENCH_CODEX_CHEAP=gpt-5.6-luna\n" +
+		"BENCH_CLAUDE_TOP=fable\nBENCH_CLAUDE_MID=opus\nBENCH_CLAUDE_CHEAP=sonnet\n"
 	if err := os.WriteFile(filepath.Join(root, ".bench", "lines.env"), []byte(binding), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -77,11 +81,50 @@ func TestResolveModelProviderModelMode(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = os.Chdir(oldWD) })
-	t.Setenv("BENCH_MODEL", "gpt-5.6-luna")
+	t.Setenv("BENCH_MODEL", "cheap")
 
-	out, code := resolveModel([]string{"--provider-model"})
-	if out != "" || code != 1 {
-		t.Fatalf("resolveModel --provider-model = (%q, %d), want empty output and exit 1", out, code)
+	for _, tt := range []struct {
+		name     string
+		args     []string
+		wantOut  string
+		wantCode int
+	}{
+		{"codex column", []string{"--harness", "codex"}, "gpt-5.6-luna\n", 0},
+		{"claude column", []string{"--harness", "claude"}, "sonnet\n", 0},
+		{"unbound column", []string{"--harness", "opencode"}, "", 1},
+		{"unknown harness", []string{"--harness", "gemini"}, "", 1},
+		{"missing harness", nil, "", 2},
+		{"retired alias flag", []string{"--alias"}, "", 2},
+		{"retired provider-model flag", []string{"--provider-model"}, "", 2},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			out, code := resolveModel(tt.args)
+			if out != tt.wantOut || code != tt.wantCode {
+				t.Fatalf("resolveModel(%v) = (%q, %d), want (%q, %d)", tt.args, out, code, tt.wantOut, tt.wantCode)
+			}
+		})
+	}
+}
+
+// TestCheckAgentLineHarnessFlag pins the guard's own argument surface: it takes the same
+// --harness flag, and a retired flag is a usage error rather than a silent allow.
+func TestCheckAgentLineHarnessFlag(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		args     []string
+		wantCode int
+	}{
+		{"missing harness", nil, 2},
+		{"retired alias flag", []string{"--alias"}, 2},
+		{"unknown harness", []string{"--harness", "gemini"}, 1},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var stderr bytes.Buffer
+			code := checkAgentLine(tt.args, strings.NewReader(`{"tool_input":{"model":"opus"}}`), nil, &stderr)
+			if code != tt.wantCode {
+				t.Fatalf("checkAgentLine(%v) = %d, want %d (stderr=%q)", tt.args, code, tt.wantCode, stderr.String())
+			}
+		})
 	}
 }
 

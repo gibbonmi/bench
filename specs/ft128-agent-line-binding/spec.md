@@ -1,6 +1,6 @@
 # FT128 agent-line binding
 
-Status: staged
+Status: implemented
 
 Decision source: the compiled map
 `specs/ft128-agent-line-binding/decisions/multi-harness-line-binding.md` (the schema
