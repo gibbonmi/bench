@@ -217,3 +217,137 @@ func TestIntegrateRequiresVerifiedCheckpointAndAdvancesOneAttributedCandidate(t 
 		t.Fatalf("integration replay changed candidate from %s to %s", after.CandidateTip, got)
 	}
 }
+
+func TestIntegrateReleasesOnlyAfterDurableProvenance(t *testing.T) {
+	t.Run("unavailable owner stays pending", func(t *testing.T) {
+		fixture := checkpointedReleaseFixture(t)
+		fixture.service.worktrees = &countingOwner{}
+
+		status, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID)
+		if err == nil {
+			t.Fatal("Integrate accepted an unavailable release owner")
+		}
+		requirePendingRelease(t, fixture, status)
+	})
+
+	t.Run("failed release resumes without a second candidate commit", func(t *testing.T) {
+		fixture := checkpointedReleaseFixture(t)
+		owner := &releaseOwner{err: errors.New("release unavailable")}
+		fixture.service.worktrees = owner
+		owner.inspect = func() { requireReleaseProvenance(t, fixture) }
+
+		status, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID)
+		if err == nil {
+			t.Fatal("Integrate accepted a failed release")
+		}
+		requirePendingRelease(t, fixture, status)
+		candidate := status.Subject
+		commits := git(t, fixture.root, "rev-list", "--count", fixture.run.Candidate)
+
+		owner.err = nil
+		status, err = fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID)
+		if err != nil {
+			t.Fatalf("Integrate resume: %v", err)
+		}
+		if status.Subject != candidate {
+			t.Fatalf("resume advanced candidate from %s to %s", candidate, status.Subject)
+		}
+		if got := git(t, fixture.root, "rev-list", "--count", fixture.run.Candidate); got != commits {
+			t.Fatalf("resume candidate commits = %s, want %s", got, commits)
+		}
+		if owner.calls != 2 || owner.released != 1 {
+			t.Fatalf("release calls=%d successful=%d, want 2 and 1", owner.calls, owner.released)
+		}
+		requireReleased(t, fixture)
+	})
+
+	t.Run("successful release clears pending", func(t *testing.T) {
+		fixture := checkpointedReleaseFixture(t)
+		owner := &releaseOwner{}
+		fixture.service.worktrees = owner
+		owner.inspect = func() { requireReleaseProvenance(t, fixture) }
+
+		if _, err := fixture.service.Integrate(context.Background(), "build demo", fixture.assigned.ID); err != nil {
+			t.Fatalf("Integrate: %v", err)
+		}
+		if owner.calls != 1 || owner.released != 1 {
+			t.Fatalf("release calls=%d successful=%d, want 1 and 1", owner.calls, owner.released)
+		}
+		requireReleased(t, fixture)
+	})
+}
+
+func TestTypedNilReleaseOwnerStaysPending(t *testing.T) {
+	fixture := checkpointedReleaseFixture(t)
+	var owner *releaseOwner
+	fixture.service.worktrees = owner
+
+	status, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID)
+	if err == nil || err.Error() != "spec build integrate requires a release-capable worktree owner" {
+		t.Fatalf("Integrate error = %v", err)
+	}
+	requirePendingRelease(t, fixture, status)
+}
+
+type releaseOwner struct {
+	realOwner
+	calls, released int
+	err             error
+	inspect         func()
+}
+
+func (o *releaseOwner) Release(context.Context, string, string, string) error {
+	o.calls++
+	if o.inspect != nil {
+		o.inspect()
+	}
+	if o.err != nil {
+		return o.err
+	}
+	o.released++
+	return nil
+}
+
+func checkpointedReleaseFixture(t *testing.T) checkpointFixture {
+	t.Helper()
+	fixture := newCheckpointFixture(t)
+	if _, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n")); err != nil {
+		t.Fatalf("Checkpoint: %v", err)
+	}
+	return fixture
+}
+
+func requireReleaseProvenance(t *testing.T, fixture checkpointFixture) {
+	t.Helper()
+	run, found, err := fixture.service.load("build demo")
+	if err != nil || !found {
+		t.Fatalf("load at release: found:%v err:%v", found, err)
+	}
+	_, assigned, ok := assignmentFor(run, fixture.assigned.ID)
+	if !ok || assigned.Checkpoint == "" || assigned.CheckpointRef == "" || assigned.CheckpointTree == "" || assigned.ReceiptDigest == "" || assigned.CheckpointPatch == "" || assigned.Integrated == "" || !assigned.CleanupPending || assigned.Released {
+		t.Fatalf("release provenance = %#v", assigned)
+	}
+	if assigned.Integrated != run.CandidateTip || !refAt(fixture.root, run.Candidate, assigned.Integrated) {
+		t.Fatalf("candidate provenance = %#v", run)
+	}
+}
+
+func requirePendingRelease(t *testing.T, fixture checkpointFixture, status Status) {
+	t.Helper()
+	if status.Next != "release assignment "+fixture.assigned.ID {
+		t.Fatalf("next = %q", status.Next)
+	}
+	requireReleaseProvenance(t, fixture)
+}
+
+func requireReleased(t *testing.T, fixture checkpointFixture) {
+	t.Helper()
+	run, found, err := fixture.service.load("build demo")
+	if err != nil || !found {
+		t.Fatalf("load released: found:%v err:%v", found, err)
+	}
+	_, assigned, ok := assignmentFor(run, fixture.assigned.ID)
+	if !ok || assigned.CleanupPending || !assigned.Released {
+		t.Fatalf("release state = %#v", assigned)
+	}
+}

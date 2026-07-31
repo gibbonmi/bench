@@ -37,7 +37,7 @@ type assignment struct {
 	Rows, Fence, Assumptions                                 []string
 	Checkpoint, CheckpointRef, CheckpointTree, ReceiptDigest string
 	CheckpointPatch, Integrated                              string
-	DelegatePending                                          bool
+	DelegatePending, CleanupPending, Released                bool
 }
 
 func (a assignment) public() Assignment {
@@ -49,13 +49,19 @@ func (r record) status() Status {
 	if r.Terminal {
 		state, next = "terminal", ""
 	}
+	cleanup := ""
 	pending := ""
 	for _, assigned := range r.Assignments {
+		if assigned.CleanupPending && (cleanup == "" || assigned.ID < cleanup) {
+			cleanup = assigned.ID
+		}
 		if assigned.DelegatePending && (pending == "" || assigned.ID < pending) {
 			pending = assigned.ID
 		}
 	}
-	if pending != "" {
+	if cleanup != "" {
+		next = "release assignment " + cleanup
+	} else if pending != "" {
 		next = "delegate assignment " + pending
 	}
 	return Status{Slug: r.Slug, State: state, Subject: r.CandidateTip, Next: next}

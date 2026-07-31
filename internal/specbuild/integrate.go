@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
@@ -42,7 +43,7 @@ func (s *Service) Integrate(ctx context.Context, slug, assignmentID string) (Sta
 		if !refAt(s.root, run.Candidate, assigned.Integrated) {
 			return Status{}, errors.New("spec build integrated candidate drifted")
 		}
-		return run.status(), nil
+		return s.releaseIntegrated(ctx, run, key, assigned)
 	}
 	for attempt := 0; attempt != 2; attempt++ {
 		candidate, err := refValue(s.root, run.Candidate)
@@ -71,12 +72,12 @@ func (s *Service) Integrate(ctx context.Context, slug, assignmentID string) (Sta
 			s.beforeCandidateCAS()
 		}
 		if err := updateRef(s.root, run.Candidate, commit, candidate); err == nil {
-			run.CandidateTip, assigned.Integrated, assigned.DelegatePending = commit, commit, false
+			run.CandidateTip, assigned.Integrated, assigned.DelegatePending, assigned.CleanupPending, assigned.Released = commit, commit, false, true, false
 			run.Assignments[key] = assigned
 			if err := s.save(run); err != nil {
 				return Status{}, err
 			}
-			return run.status(), nil
+			return s.releaseIntegrated(ctx, run, key, assigned)
 		} else {
 			latest, latestErr := refValue(s.root, run.Candidate)
 			if latestErr != nil || latest == candidate {
@@ -88,6 +89,47 @@ func (s *Service) Integrate(ctx context.Context, slug, assignmentID string) (Sta
 		}
 	}
 	return Status{}, errors.New("spec build candidate integration retry exhausted")
+}
+
+func (s *Service) releaseIntegrated(ctx context.Context, run record, key string, assigned assignment) (Status, error) {
+	if assigned.Released {
+		return run.status(), nil
+	}
+	if !assigned.CleanupPending {
+		assigned.CleanupPending = true
+		run.Assignments[key] = assigned
+		if err := s.save(run); err != nil {
+			return Status{}, err
+		}
+	}
+	releaser, ok := releaseOwnerFrom(s.worktrees)
+	if !ok {
+		return run.status(), errors.New("spec build integrate requires a release-capable worktree owner")
+	}
+	if err := releaser.Release(ctx, s.root, assigned.Request, assigned.Path); err != nil {
+		return run.status(), fmt.Errorf("release integrated assignment: %w", err)
+	}
+	assigned.CleanupPending, assigned.Released = false, true
+	run.Assignments[key] = assigned
+	if err := s.save(run); err != nil {
+		return Status{}, err
+	}
+	return run.status(), nil
+}
+
+func releaseOwnerFrom(owner WorktreeOwner) (ReleaseOwner, bool) {
+	releaser, ok := owner.(ReleaseOwner)
+	if !ok {
+		return nil, false
+	}
+	value := reflect.ValueOf(releaser)
+	switch value.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
+		if value.IsNil() {
+			return nil, false
+		}
+	}
+	return releaser, true
 }
 
 func (s *Service) routeDelegate(run record, key string, assigned assignment, cause error) (Status, error) {

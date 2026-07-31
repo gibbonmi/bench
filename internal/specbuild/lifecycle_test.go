@@ -251,6 +251,8 @@ func (realOwner) Create(_ context.Context, root, request, label, start string) (
 	return OwnedWorktree{ID: created.Assignment.ID, Path: created.Path}, nil
 }
 
+func (realOwner) Release(context.Context, string, string, string) error { return nil }
+
 type greenGate struct{}
 
 func (greenGate) Bootstrap(_ context.Context, root, branch, tip string) error {

@@ -13,6 +13,11 @@ type WorktreeOwner interface {
 	Create(context.Context, string, string, string, string) (OwnedWorktree, error)
 }
 
+// ReleaseOwner releases an assignment created by the worktree ownership owner.
+type ReleaseOwner interface {
+	Release(context.Context, string, string, string) error
+}
+
 // OwnedWorktree identifies a worktree created by the existing ownership owner.
 type OwnedWorktree struct {
 	ID, Path string
