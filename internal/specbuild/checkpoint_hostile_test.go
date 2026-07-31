@@ -277,10 +277,15 @@ func TestIntegrateRefusesCheckpointAndTicketDriftWithoutMovingCandidate(t *testi
 				t.Fatalf("save drift: %v", err)
 			}
 			before := git(t, fixture.root, "rev-parse", run.Candidate)
+			beforeState := checkpointSnapshotFor(t, fixture)
 			if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err == nil {
 				t.Fatal("Integrate accepted drift")
 			}
-			requireDelegatedCandidate(t, fixture.root, fixture.service, fixture.assigned.ID, before)
+			if tc.name == "patch drift" {
+				requireDelegatedCandidate(t, fixture.root, fixture.service, fixture.assigned.ID, before)
+			} else if checkpointSnapshotFor(t, fixture) != beforeState {
+				t.Fatal("shared precondition mutated a drifted working subject")
+			}
 		})
 	}
 }

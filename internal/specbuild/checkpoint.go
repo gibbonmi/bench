@@ -72,6 +72,9 @@ func (s *Service) Checkpoint(ctx context.Context, slug, assignmentID, evidence s
 		}
 		return Status{}, err
 	}
+	if _, err := s.preconditions(mutationCheckpoint, slug, run.Spec, &run, assignmentID, evidence); err != nil {
+		return Status{}, err
+	}
 	key, assigned, ok := assignmentFor(run, assignmentID)
 	if !ok {
 		return Status{}, errors.New("spec build assignment does not exist")

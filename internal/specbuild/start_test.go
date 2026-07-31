@@ -2,11 +2,13 @@ package specbuild
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/spec"
+	"github.com/gibbonmi/bench/internal/worktree"
 )
 
 func TestStartCreatesRunFromExactGreenEvidence(t *testing.T) {
@@ -27,6 +29,211 @@ func TestStartCreatesRunFromExactGreenEvidence(t *testing.T) {
 	refs := git(t, root, "for-each-ref", "--format=%(refname) %(objectname)", "refs/bench/specbuild/candidate/")
 	if refs == "" || refs[len(refs)-40:] != git(t, root, "rev-parse", "HEAD") {
 		t.Fatalf("candidate ref = %q", refs)
+	}
+}
+
+func TestLifecycleMutatorsRefuseSharedPreconditionDriftWithoutMutation(t *testing.T) {
+	operations := []struct {
+		name, prerequisite string
+		invoke             func(*testing.T, preconditionFixture) error
+	}{
+		{"start", "gate evidence", func(t *testing.T, f preconditionFixture) error {
+			_, err := f.service.Start(t.Context(), "build demo")
+			return err
+		}},
+		{"assign", "worktree owner", func(t *testing.T, f preconditionFixture) error {
+			_, _, err := f.service.Assign(t.Context(), "build demo", "one.md", "next request")
+			return err
+		}},
+		{"checkpoint", "assignment", func(t *testing.T, f preconditionFixture) error {
+			_, err := f.service.Checkpoint(t.Context(), "build demo", "missing", "")
+			return err
+		}},
+		{"integrate", "checkpoint", func(t *testing.T, f preconditionFixture) error {
+			_, err := f.service.Integrate(t.Context(), "build demo", "missing")
+			return err
+		}},
+		{"review", "review receipt", func(t *testing.T, f preconditionFixture) error {
+			_, err := f.service.Review(t.Context(), "build demo", "")
+			return err
+		}},
+	}
+	conditions := []struct {
+		name     string
+		needsRun bool
+		apply    func(*testing.T, *preconditionFixture)
+	}{
+		{"tracked dirt", false, func(t *testing.T, f *preconditionFixture) {
+			write(t, filepath.Join(f.root, "tracked.txt"), "changed\n")
+		}},
+		{"untracked dirt", false, func(t *testing.T, f *preconditionFixture) {
+			write(t, filepath.Join(f.root, "untracked.txt"), "changed\n")
+		}},
+		{"detached checkout", false, func(t *testing.T, f *preconditionFixture) { git(t, f.root, "checkout", "--detach", "-q") }},
+		{"wrong branch", false, func(t *testing.T, f *preconditionFixture) { git(t, f.root, "checkout", "-qb", "other") }},
+		{"working advance", false, func(t *testing.T, f *preconditionFixture) { advanceWorking(t, f.root) }},
+		{"unrecognized head move", true, func(t *testing.T, f *preconditionFixture) { rewriteWorkingHead(t, f.root) }},
+		{"candidate drift", true, func(t *testing.T, f *preconditionFixture) { moveCandidate(t, f) }},
+		{"spec identity drift", true, func(t *testing.T, f *preconditionFixture) {
+			updateRun(t, f, func(run *record) { run.SpecTip = "changed" })
+		}},
+		{"ownership mismatch", true, func(t *testing.T, f *preconditionFixture) {
+			updateRun(t, f, func(run *record) {
+				assigned := run.Assignments[f.assignmentKey]
+				assigned.OwnerRequest = "changed"
+				run.Assignments[f.assignmentKey] = assigned
+			})
+		}},
+	}
+	for _, operation := range operations {
+		for _, condition := range conditions {
+			if operation.name == "start" && (condition.needsRun || condition.name == "wrong branch" || condition.name == "working advance") {
+				continue
+			}
+			t.Run(operation.name+"/"+condition.name, func(t *testing.T) {
+				fixture := newPreconditionFixture(t, operation.name != "start")
+				condition.apply(t, &fixture)
+				before := snapshotPrecondition(t, fixture)
+				if err := operation.invoke(t, fixture); err == nil {
+					t.Fatalf("%s accepted %s", operation.name, condition.name)
+				}
+				after := snapshotPrecondition(t, fixture)
+				if after != before {
+					t.Fatalf("%s/%s mutated:\n before=%#v\n after=%#v", operation.name, condition.name, before, after)
+				}
+			})
+		}
+	}
+	for _, operation := range operations {
+		t.Run(operation.name+"/missing prerequisite", func(t *testing.T) {
+			fixture := newPreconditionFixture(t, operation.name != "start")
+			if operation.name == "start" {
+				fixture.service.gate = rejectGate{}
+			}
+			if operation.name == "assign" {
+				fixture.service.worktrees = nil
+			}
+			before := snapshotPrecondition(t, fixture)
+			if err := operation.invoke(t, fixture); err == nil {
+				t.Fatalf("%s accepted missing %s", operation.name, operation.prerequisite)
+			}
+			if after := snapshotPrecondition(t, fixture); after != before {
+				t.Fatalf("%s missing %s mutated", operation.name, operation.prerequisite)
+			}
+		})
+	}
+}
+
+func TestSharedPreconditionsAllowExpectedAssignmentDirt(t *testing.T) {
+	fixture := newPreconditionFixture(t, true)
+	write(t, filepath.Join(fixture.assignment.Path, "in-progress.txt"), "expected dirt\n")
+	if _, err := fixture.service.preconditions(mutationCheckpoint, "build demo", fixture.run.Spec, &fixture.run, fixture.assignment.ID, "expected receipt"); err != nil {
+		t.Fatalf("preconditions rejected expected assignment dirt: %v", err)
+	}
+}
+
+type preconditionFixture struct {
+	root, assignmentKey string
+	service             *Service
+	owner               *preconditionOwner
+	run                 record
+	assignment          Assignment
+}
+
+func newPreconditionFixture(t *testing.T, started bool) preconditionFixture {
+	t.Helper()
+	root := repo(t)
+	owner := &preconditionOwner{}
+	service := New(root, &countingGate{}, owner)
+	fixture := preconditionFixture{root: root, service: service, owner: owner}
+	if !started {
+		return fixture
+	}
+	if _, err := service.Start(t.Context(), "build demo"); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	assignment, _, err := service.Assign(t.Context(), "build demo", "one.md", "precondition fixture")
+	if err != nil {
+		t.Fatalf("Assign: %v", err)
+	}
+	run, found, err := service.load("build demo")
+	if err != nil || !found {
+		t.Fatalf("load: found:%v err:%v", found, err)
+	}
+	key, _, ok := assignmentFor(run, assignment.ID)
+	if !ok {
+		t.Fatal("assigned fixture has no durable row")
+	}
+	fixture.run, fixture.assignment, fixture.assignmentKey = run, assignment, key
+	return fixture
+}
+
+type preconditionOwner struct{ calls int }
+
+func (o *preconditionOwner) Create(_ context.Context, root, request, label, start string) (OwnedWorktree, error) {
+	o.calls++
+	created, err := worktree.Create(root, request, label, nil, start)
+	if err != nil {
+		return OwnedWorktree{}, err
+	}
+	return OwnedWorktree{ID: created.Assignment.ID, Path: created.Path}, nil
+}
+
+type preconditionSnapshot struct {
+	state, refs, head, tree, status, worktrees string
+	calls                                      int
+}
+
+func snapshotPrecondition(t *testing.T, fixture preconditionFixture) preconditionSnapshot {
+	t.Helper()
+	statePath, err := fixture.service.statePath("build demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	state, err := os.ReadFile(statePath)
+	if err != nil && !os.IsNotExist(err) {
+		t.Fatal(err)
+	}
+	head := git(t, fixture.root, "rev-parse", "HEAD")
+	return preconditionSnapshot{state: string(state), refs: git(t, fixture.root, "for-each-ref", "--format=%(refname) %(objectname)", "refs/bench/"), head: head, tree: git(t, fixture.root, "rev-parse", "HEAD^{tree}"), status: git(t, fixture.root, "status", "--porcelain", "--untracked-files=all"), worktrees: git(t, fixture.root, "worktree", "list", "--porcelain"), calls: fixture.owner.calls}
+}
+
+func updateRun(t *testing.T, fixture *preconditionFixture, change func(*record)) {
+	t.Helper()
+	change(&fixture.run)
+	if err := fixture.service.save(fixture.run); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func advanceWorking(t *testing.T, root string) {
+	t.Helper()
+	write(t, filepath.Join(root, "advanced.txt"), "advance\n")
+	git(t, root, "add", ".")
+	git(t, root, "commit", "-qm", "advance")
+}
+
+func moveCandidate(t *testing.T, fixture *preconditionFixture) {
+	t.Helper()
+	tree := git(t, fixture.root, "rev-parse", fixture.run.Candidate+"^{tree}")
+	commit := git(t, fixture.root, "commit-tree", tree, "-p", fixture.run.Candidate, "-m", "candidate drift")
+	git(t, fixture.root, "update-ref", fixture.run.Candidate, commit, fixture.run.CandidateTip)
+}
+
+func rewriteWorkingHead(t *testing.T, root string) {
+	t.Helper()
+	tree := git(t, root, "rev-parse", "HEAD^{tree}")
+	commit := git(t, root, "commit-tree", tree, "-m", "rewritten head")
+	branch := git(t, root, "symbolic-ref", "--short", "HEAD")
+	git(t, root, "update-ref", "refs/heads/"+branch, commit, "HEAD")
+}
+
+func TestRecompositionErrorIsStable(t *testing.T) {
+	fixture := newPreconditionFixture(t, true)
+	advanceWorking(t, fixture.root)
+	_, _, err := fixture.service.Assign(t.Context(), "build demo", "one.md", "later")
+	if err == nil || !strings.Contains(err.Error(), "bench spec build promote build demo") {
+		t.Fatalf("recomposition error = %v", err)
 	}
 }
 

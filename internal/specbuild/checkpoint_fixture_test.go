@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/intent"
 )
 
 type checkpointFixture struct {
@@ -181,4 +184,134 @@ func siblingCheckpoints(t *testing.T, firstPath, firstContent, secondPath, secon
 		t.Fatalf("load sibling checkpoints: found:%v err:%v", found, err)
 	}
 	return root, service, first, second, run
+}
+
+func TestSharedPreconditionsRefuseEveryAssignmentOwnershipIdentity(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		mutate func(*testing.T, *preconditionFixture)
+	}{
+		{"request", func(t *testing.T, f *preconditionFixture) {
+			updateRun(t, f, func(run *record) {
+				assigned := run.Assignments[f.assignmentKey]
+				assigned.OwnerRequest = "changed"
+				run.Assignments[f.assignmentKey] = assigned
+			})
+		}},
+		{"id", func(t *testing.T, f *preconditionFixture) {
+			updateRun(t, f, func(run *record) {
+				assigned := run.Assignments[f.assignmentKey]
+				assigned.ID = "changed"
+				run.Assignments[f.assignmentKey] = assigned
+			})
+		}},
+		{"path", func(t *testing.T, f *preconditionFixture) {
+			updateRun(t, f, func(run *record) {
+				assigned := run.Assignments[f.assignmentKey]
+				assigned.Path = filepath.Join(t.TempDir(), "moved")
+				run.Assignments[f.assignmentKey] = assigned
+			})
+		}},
+		{"common Git dir", func(t *testing.T, f *preconditionFixture) {
+			other := repo(t)
+			updateRun(t, f, func(run *record) {
+				assigned := run.Assignments[f.assignmentKey]
+				assigned.Path = other
+				run.Assignments[f.assignmentKey] = assigned
+			})
+			owned, found, err := intent.FindAssignmentByRequest(f.root, f.run.Assignments[f.assignmentKey].OwnerRequest)
+			if err != nil || !found {
+				t.Fatalf("owned assignment: found:%v err:%v", found, err)
+			}
+			owned.Worktree = other
+			if err := intent.PutAssignment(f.root, owned); err != nil {
+				t.Fatal(err)
+			}
+		}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			fixture := newPreconditionFixture(t, true)
+			test.mutate(t, &fixture)
+			before := snapshotPrecondition(t, fixture)
+			if _, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assignment.ID, ""); err == nil {
+				t.Fatal("Checkpoint accepted ownership drift")
+			}
+			if after := snapshotPrecondition(t, fixture); after != before {
+				t.Fatalf("ownership refusal mutated: before=%#v after=%#v", before, after)
+			}
+		})
+	}
+}
+
+func TestSharedPreconditionsRefuseSwappedSiblingOwnershipTuples(t *testing.T) {
+	fixture := newPreconditionFixture(t, true)
+	second, _, err := fixture.service.Assign(t.Context(), "build demo", "one.md", "second sibling")
+	if err != nil {
+		t.Fatalf("Assign second: %v", err)
+	}
+	run, found, err := fixture.service.load("build demo")
+	if err != nil || !found {
+		t.Fatalf("load: found:%v err:%v", found, err)
+	}
+	firstKey, first, firstOK := assignmentFor(run, fixture.assignment.ID)
+	secondKey, secondStored, secondOK := assignmentFor(run, second.ID)
+	if !firstOK || !secondOK {
+		t.Fatal("sibling assignments missing")
+	}
+	first.ID, first.Path, first.OwnerRequest, secondStored.ID, secondStored.Path, secondStored.OwnerRequest = secondStored.ID, secondStored.Path, secondStored.OwnerRequest, first.ID, first.Path, first.OwnerRequest
+	run.Assignments[firstKey], run.Assignments[secondKey] = first, secondStored
+	fixture.run = run
+	if err := fixture.service.save(run); err != nil {
+		t.Fatal(err)
+	}
+	before := snapshotPrecondition(t, fixture)
+	for _, id := range []string{fixture.assignment.ID, second.ID} {
+		if _, err := fixture.service.Checkpoint(t.Context(), "build demo", id, ""); err == nil || !strings.Contains(err.Error(), "ownership") {
+			t.Fatalf("Checkpoint(%s) = %v, want ownership refusal", id, err)
+		}
+	}
+	if after := snapshotPrecondition(t, fixture); after != before {
+		t.Fatalf("tuple-swap refusal mutated: before=%#v after=%#v", before, after)
+	}
+}
+
+func TestAssignmentsScopeIdenticalRequestsToTheirRuns(t *testing.T) {
+	root := repo(t)
+	write(t, filepath.Join(root, "specs", "second demo", "spec.md"), "# Second\n\nStatus: staged\n")
+	write(t, filepath.Join(root, "specs", "second demo", "tickets", "one.md"), "# One\n\nOwnership fence: internal/specbuild\n\n- [ ] [R01] separate request scope\n")
+	git(t, root, "add", ".")
+	git(t, root, "commit", "-qm", "second spec")
+	service := New(root, reuseGreenGate{}, &preconditionOwner{})
+	for _, slug := range []string{"build demo", "second demo"} {
+		if _, err := service.Start(t.Context(), slug); err != nil {
+			t.Fatalf("Start(%s): %v", slug, err)
+		}
+	}
+	first, _, err := service.Assign(t.Context(), "build demo", "one.md", "same request")
+	if err != nil {
+		t.Fatalf("Assign first: %v", err)
+	}
+	second, _, err := service.Assign(t.Context(), "second demo", "one.md", "same request")
+	if err != nil || first.ID == second.ID {
+		t.Fatalf("Assign second = %#v, %v", second, err)
+	}
+	for _, replay := range []struct{ slug, id string }{{"build demo", first.ID}, {"second demo", second.ID}} {
+		assigned, _, err := service.Assign(t.Context(), replay.slug, "one.md", "same request")
+		if err != nil || assigned.ID != replay.id {
+			t.Fatalf("replay %s = %#v, %v", replay.slug, assigned, err)
+		}
+	}
+	firstRun, _, _ := service.load("build demo")
+	secondRun, _, _ := service.load("second demo")
+	_, firstStored, _ := assignmentFor(firstRun, first.ID)
+	_, secondStored, _ := assignmentFor(secondRun, second.ID)
+	if firstStored.OwnerRequest == secondStored.OwnerRequest {
+		t.Fatal("owner requests collided across runs")
+	}
+}
+
+type reuseGreenGate struct{}
+
+func (reuseGreenGate) Bootstrap(_ context.Context, root, branch, tip string) error {
+	return updateRef(root, "refs/bench/green/"+branch, tip, "")
 }

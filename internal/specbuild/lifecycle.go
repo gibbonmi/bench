@@ -106,6 +106,9 @@ func (s *Service) Review(_ context.Context, slug, evidence string) (Status, erro
 		}
 		return Status{}, err
 	}
+	if _, err := s.preconditions(mutationReview, slug, run.Spec, &run, "", evidence); err != nil {
+		return Status{}, err
+	}
 	receipt, raw, err := readReviewReceipt(evidence)
 	if err != nil || receipt.Run != run.Run || receipt.Candidate != run.CandidateTip || !refAt(s.root, run.Candidate, run.CandidateTip) {
 		return Status{}, errInvalidReviewReceipt

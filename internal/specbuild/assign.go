@@ -32,35 +32,28 @@ func (s *Service) Assign(ctx context.Context, slug, ticketArg, request string) (
 		}
 		return Assignment{}, Status{}, err
 	}
-	branch, tip, err := workingSubject(s.root)
-	if err != nil || branch != run.Branch || tip != run.Base || !refAt(s.root, run.Candidate, run.CandidateTip) {
-		if err == nil {
-			err = errors.New("spec build assignment conflicts with the recorded working subject")
-		}
+	if _, err := s.preconditions(mutationAssign, slug, run.Spec, &run, "", ""); err != nil {
 		return Assignment{}, Status{}, err
 	}
 	ticket, err := resolveTicket(run.Spec, ticketArg)
 	if err != nil {
 		return Assignment{}, Status{}, err
 	}
-	requestID := digest(request)
+	requestID := digest(run.Run + "\x00" + request)
 	if existing, ok := run.Assignments[requestID]; ok {
 		if existing.Ticket != ticket.Path {
 			return Assignment{}, Status{}, errors.New("spec build assignment request conflicts with another ticket")
 		}
 		return existing.public(), run.status(), nil
 	}
-	if s.worktrees == nil {
-		return Assignment{}, Status{}, errors.New("spec build assign requires a worktree owner")
-	}
-	owned, err := s.worktrees.Create(ctx, s.root, digest(run.Run+"\x00"+ticket.Path+"\x00"+request), ticket.Title, run.CandidateTip)
+	owned, err := s.worktrees.Create(ctx, s.root, requestID, ticket.Title, run.CandidateTip)
 	if err != nil {
 		return Assignment{}, Status{}, fmt.Errorf("create assignment worktree: %w", err)
 	}
 	if owned.ID == "" || owned.Path == "" {
 		return Assignment{}, Status{}, errors.New("worktree owner returned an incomplete assignment")
 	}
-	stored := assignment{ID: owned.ID, Path: owned.Path, Base: run.CandidateTip, Request: requestID, Ticket: ticket.Path, TicketDigest: ticket.Digest, Created: time.Now().UTC().Format(time.RFC3339Nano), Rows: ticket.Rows, Fence: ticket.Fence, Assumptions: ticket.Assumptions}
+	stored := assignment{ID: owned.ID, Path: owned.Path, Base: run.CandidateTip, Request: requestID, OwnerRequest: digest(requestID), Ticket: ticket.Path, TicketDigest: ticket.Digest, Created: time.Now().UTC().Format(time.RFC3339Nano), Rows: ticket.Rows, Fence: ticket.Fence, Assumptions: ticket.Assumptions}
 	run.Assignments[requestID] = stored
 	if err := s.save(run); err != nil {
 		return Assignment{}, Status{}, err

@@ -32,6 +32,9 @@ func (s *Service) Integrate(ctx context.Context, slug, assignmentID string) (Sta
 		}
 		return Status{}, err
 	}
+	if _, err := s.preconditions(mutationIntegrate, slug, run.Spec, &run, assignmentID, ""); err != nil {
+		return Status{}, err
+	}
 	key, assigned, ok := assignmentFor(run, assignmentID)
 	if !ok || (assigned.Checkpoint == "" && assigned.CheckpointRef == "") {
 		return Status{}, errors.New("spec build assignment has no verified checkpoint")
