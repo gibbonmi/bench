@@ -18,6 +18,51 @@ var roadmapStartRe = regexp.MustCompile(`^\*\*([A-Za-z]+[0-9]+)(.*)$`)
 var commandRe = regexp.MustCompile(`/bench-[A-Za-z0-9-]+`)
 var ideaRe = regexp.MustCompile(`^- ([0-9]{4}-[0-9]{2}-[0-9]{2})  (.*)$`)
 
+// ValidOccurrenceIncident is the shared grammar for the incident half of an
+// occurrence token and a roadmap ledger entry.
+func ValidOccurrenceIncident(key string) bool {
+	if len(key) < 1 || len(key) > 64 {
+		return false
+	}
+	letterOrDigit := func(b byte) bool { return b >= 'a' && b <= 'z' || b >= '0' && b <= '9' }
+	if !letterOrDigit(key[0]) || !letterOrDigit(key[len(key)-1]) {
+		return false
+	}
+	for i := 0; i < len(key); i++ {
+		if !letterOrDigit(key[i]) && key[i] != '-' {
+			return false
+		}
+	}
+	return true
+}
+
+func parseOccurrenceLedger(lines []string) (string, int, bool) {
+	var ledger string
+	for _, line := range lines {
+		line = strings.TrimSuffix(line, "\r")
+		if !strings.HasPrefix(line, "Occurrences:") {
+			continue
+		}
+		if ledger != "" || line == "Occurrences:" || !strings.HasPrefix(line, "Occurrences: ") {
+			return "", 0, false
+		}
+		ledger = strings.TrimPrefix(line, "Occurrences: ")
+	}
+	if ledger == "" {
+		return "", 0, true
+	}
+	keys := strings.Split(ledger, ", ")
+	if strings.Join(keys, ", ") != ledger {
+		return "", 0, false
+	}
+	for i, key := range keys {
+		if !ValidOccurrenceIncident(key) || (i > 0 && keys[i-1] >= key) {
+			return "", 0, false
+		}
+	}
+	return ledger, len(keys), true
+}
+
 func ParseDocument(content []byte, statuses map[string]string, full bool) (Document, []ParseFailure) {
 	lines := strings.Split(string(content), "\n")
 	doc := Document{Text: string(content)}
@@ -58,13 +103,20 @@ func ParseDocument(content []byte, statuses map[string]string, full bool) (Docum
 		bodyRaw := strings.TrimSpace(strings.Join(append([]string{inlineBody}, lines[bodyStart:i]...), "\n"))
 		body, bodyBytes, truncated := limited(bodyRaw, full)
 		r := RoadmapRow{ID: m[1], Title: title, Body: body, BodyBytes: bodyBytes, Truncated: truncated}
-		joined := strings.Join(lines[start:i], "\n")
+		rowLines := lines[start:i]
+		joined := strings.Join(rowLines, "\n")
 		if slugs := spec.LiveSpecSlugs([]byte(joined)); len(slugs) > 0 {
 			r.Spec = slugs[0]
 			r.SpecStatus = statuses[slugs[0]]
 		}
 		lower := strings.ToLower(joined)
 		r.ExternalTrigger = strings.Contains(lower, "pending ") || strings.Contains(lower, "graduate on") || strings.Contains(lower, "scheduled")
+		if keys, count, valid := parseOccurrenceLedger(rowLines); valid {
+			r.OccurrenceKeys, r.OccurrenceCount = keys, count
+		} else {
+			doc.OccurrenceDiscrepancies = append(doc.OccurrenceDiscrepancies, OccurrenceDiscrepancy{Source: RoadmapFile, CaptureUnit: r.ID, Kind: "malformed-ledger", Owner: r.ID, Structural: true})
+			failures = append(failures, ParseFailure{RoadmapFile, "malformed-ledger", "", 0, false})
+		}
 		doc.Rows = append(doc.Rows, r)
 	}
 	inSequence, inFence, sequenceStart, sequenceEnd := false, false, -1, len(lines)
@@ -222,6 +274,7 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 	}
 	var roadFails []ParseFailure
 	s.Roadmap, roadFails = ParseDocument(data[RoadmapFile], statuses, full)
+	s.SequenceTrusted = len(s.Roadmap.OccurrenceDiscrepancies) == 0
 	s.Failures = append(s.Failures, roadFails...)
 	s.Ideas, roadFails, _ = parseIdeas(data[IdeasFile], full)
 	s.Failures = append(s.Failures, roadFails...)

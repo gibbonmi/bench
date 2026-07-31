@@ -17,6 +17,8 @@ type RoadmapRow struct {
 	ExternalTrigger                   bool
 	BodyBytes                         int
 	Truncated                         bool
+	OccurrenceKeys                    string
+	OccurrenceCount                   int
 }
 type SequenceRow struct {
 	Rank          int
@@ -52,26 +54,33 @@ type GateCacheFact struct {
 
 // Document is the typed roadmap projection shared by the human renderer and context.
 type Document struct {
-	Text         string
-	Rows         []RoadmapRow
-	Sequence     []SequenceRow
-	SequenceText string
+	Text                    string
+	Rows                    []RoadmapRow
+	Sequence                []SequenceRow
+	SequenceText            string
+	OccurrenceDiscrepancies []OccurrenceDiscrepancy
+}
+
+type OccurrenceDiscrepancy struct {
+	Source, CaptureUnit, Kind, Owner, Incident string
+	Structural                                 bool
 }
 
 type ContextSnapshot struct {
-	Full        bool
-	Sources     []SourceFact
-	Roadmap     Document
-	Ideas       []IdeaFact
-	Learnings   []LearningFact
-	Retros      []RetroFact
-	Structure   [][]any
-	Specs       [][]string
-	SpecHistory [][]string
-	Git         [][]any
-	GitChanges  [][]string
-	GateCache   [][]any
-	Failures    []ParseFailure
+	Full            bool
+	SequenceTrusted bool
+	Sources         []SourceFact
+	Roadmap         Document
+	Ideas           []IdeaFact
+	Learnings       []LearningFact
+	Retros          []RetroFact
+	Structure       [][]any
+	Specs           [][]string
+	SpecHistory     [][]string
+	Git             [][]any
+	GitChanges      [][]string
+	GateCache       [][]any
+	Failures        []ParseFailure
 }
 
 // dirBytes sums the sizes of the regular-file entries in a classified directory

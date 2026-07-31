@@ -10,11 +10,11 @@ row fields, and migrates the nine legacy heading claims to their approved key se
 
 ## Acceptance
 
-- [ ] A missing ledger yields count zero, while one sorted unique ledger yields its
+- [x] A missing ledger yields count zero, while one sorted unique ledger yields its
   exact key string and derived count.
-- [ ] Empty, malformed, duplicate, unsorted, or repeated ledgers emit
+- [x] Empty, malformed, duplicate, unsorted, or repeated ledgers emit
   `malformed-ledger` and make `sequence_trusted` false.
-- [ ] The nine approved rows migrate to their enumerated counts and no heading or
+- [x] The nine approved rows migrate to their enumerated counts and no heading or
   second field stores a numeric recurrence tally.
-- [ ] Incident keys enforce the 1–64 ASCII-byte grammar, including CRLF and
+- [x] Incident keys enforce the 1–64 ASCII-byte grammar, including CRLF and
   missing-final-newline documents, without collapsing absent and empty source states.

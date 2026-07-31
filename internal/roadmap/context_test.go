@@ -55,3 +55,40 @@ func TestBuildContextCarriesRetrosAndDegradedEvidence(t *testing.T) {
 		t.Fatalf("context = %q, %v", got, err)
 	}
 }
+
+func TestParseDocumentOccurrenceLedgers(t *testing.T) {
+	content := []byte("**FT1 — one.** Body\nOccurrences: alpha-1, beta-2\n\n**FT2 — two.** Body\nOccurrences: bad, bad\n")
+	doc, failures := ParseDocument(content, nil, false)
+	if got := doc.Rows[0]; got.OccurrenceKeys != "alpha-1, beta-2" || got.OccurrenceCount != 2 {
+		t.Fatalf("valid ledger = %#v", got)
+	}
+	if len(failures) != 1 || failures[0].Reason != "malformed-ledger" {
+		t.Fatalf("failures = %#v", failures)
+	}
+}
+
+func TestOccurrenceIncidentGrammar(t *testing.T) {
+	for _, key := range []string{"a", strings.Repeat("a", 64), "a-1"} {
+		if !ValidOccurrenceIncident(key) {
+			t.Fatalf("valid incident rejected: %q", key)
+		}
+	}
+	for _, key := range []string{"", strings.Repeat("a", 65), "A", "é", "a_b", "-a", "a-", "a\tb", "a\rb", "a\nb"} {
+		if ValidOccurrenceIncident(key) {
+			t.Fatalf("invalid incident accepted: %q", key)
+		}
+	}
+}
+
+func TestOccurrenceLedgerMalformedAndLineEndings(t *testing.T) {
+	valid, failures := ParseDocument([]byte("**FT1 — one.**\r\nOccurrences: alpha-1, beta-2"), nil, false)
+	if len(failures) != 0 || valid.Rows[0].OccurrenceCount != 2 {
+		t.Fatalf("CRLF newline-less ledger = %#v, %#v", valid, failures)
+	}
+	for _, ledger := range []string{"Occurrences:", "Occurrences: alpha_1", "Occurrences: beta, alpha", "Occurrences: alpha, alpha", "Occurrences: alpha\nOccurrences: beta"} {
+		doc, got := ParseDocument([]byte("**FT1 — one.**\n"+ledger+"\n"), nil, false)
+		if len(got) != 1 || got[0].Reason != "malformed-ledger" || len(doc.OccurrenceDiscrepancies) != 1 {
+			t.Fatalf("ledger %q accepted: %#v, %#v", ledger, doc, got)
+		}
+	}
+}

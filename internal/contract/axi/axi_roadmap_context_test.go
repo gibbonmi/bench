@@ -66,12 +66,14 @@ func testRoadmapContextComplete(t *testing.T) {
 	if out.Stderr != "" {
 		t.Fatalf("stderr not empty: %s", out.Stderr)
 	}
-	out.RequireContains(out.Stdout, "2,false")
+	out.RequireContains(out.Stdout, "3,false,true")
 	headers := []string{
-		"context[1]{schema,full}:", "sources[8]{source,state,bytes}:",
-		"roadmap_rows[1]{id,title,spec,spec_status,external_trigger,body,body_bytes,truncated}:",
+		"context[1]{schema,full,sequence_trusted}:", "sources[8]{source,state,bytes}:",
+		"roadmap_rows[1]{id,title,spec,spec_status,external_trigger,body,body_bytes,truncated,occurrence_count,occurrence_keys}:",
 		"roadmap_sequence[1]{rank,text,command}:", "ideas[1]{date,text,text_bytes,truncated}:",
-		"learnings[1]{date,title,state,body,body_bytes,truncated}:", "retros[0]{path,state,body,body_bytes,truncated}:", "structure[0]{kind,path,actual,limit,state,detail}:",
+		"learnings[1]{date,title,state,body,body_bytes,truncated}:", "retros[0]{path,state,body,body_bytes,truncated}:",
+		"capture_occurrences[0]{owner,incident,source,capture_unit,state}:", "occurrence_discrepancies[0]{source,capture_unit,kind,owner,incident,structural}:",
+		"structure[0]{kind,path,actual,limit,state,detail}:",
 		"specs[1]{slug,status,roadmap_id}:", "spec_history[0]{slug,hash,date,kind,subject}:",
 		"git[1]{branch,default_branch,dirty,ahead,behind}:", "git_changes[0]{status,path}:",
 		"gate_cache[1]{present,state,pending_status,status,cached_tree,work_tree,timestamp,stale}:",

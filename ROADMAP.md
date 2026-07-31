@@ -25,8 +25,9 @@ means the repository-controlled compliance assessment.
 
 ## Features, in priority order
 
-**FT71 (HIGH on the bank track, evidence supplied) — versioned local shift
+**FT71 (HIGH on the bank track) — versioned local shift
 evidence.** Emit a redacted, append-only local event schema for shift/session
+Occurrences: baseline-01
 start and end, resolved agent and line, gate fingerprint and verdict, adapter
 result, commit or recovery reference, cleanup decision, and release-evidence
 relationship. Atomic append, rotation, and explicit retention are part of the
@@ -240,8 +241,9 @@ above — one decision, both phases — then build the kit edit under
 `craft-synthesis`. Sources: `.bench/learnings.md`, drained in a prior run and
 here; `session-handoff.md`, drained in a prior run.
 
-**FT158 (MEDIUM, evidence supplied three times) — make cross-harness
+**FT158 (MEDIUM) — make cross-harness
 falsification standing for kit-guidance diffs.** FT91's draft, FT152's build,
+Occurrences: baseline-01, baseline-02, baseline-03
 and the FT123 + FT124 build each received a Codex pass charged to refute rather
 than grade after the ordinary review surface had cleared them, and each pass
 found a real defect. The third run meets this row's graduation trigger: its
@@ -255,8 +257,9 @@ the pass is advisory and does not become a second oracle. Kit edit under the
 prior drain; the gate-fastpath and FT123 + FT124 retros, drained here and in a
 prior run.
 
-**FT128 (MEDIUM, evidence supplied) — the agent-line guard cannot see a fork's
+**FT128 (MEDIUM) — the agent-line guard cannot see a fork's
 real model.** `check-agent-line` decides from the delegation envelope's
+Occurrences: baseline-01
 `resolvedModel`/`model` field alone (`internal/lines/lines.go`), so a
 fork-type delegation — which inherits the parent's model and ignores any
 `model` override — passes the guard on a declared cheap alias while actually
@@ -321,8 +324,9 @@ ahead of the conflict check joins the same doctor/link visit this row owns;
 the abort-before-refresh sequencing is the capture's claim, not re-verified
 here. Source: `IDEAS.md`, drained here.
 
-**FT98 (MEDIUM, evidence supplied four times) — one preserve-then-discard primitive;
+**FT98 (MEDIUM) — one preserve-then-discard primitive;
 four faces.** Three rows were faces of one missing primitive — a sanctioned,
+Occurrences: 2026-07-30-scoped-roadmap-commit, baseline-01, baseline-02
 recoverable discard — and collapse to one semantics rather than three:
 recovery ref written first, exact fingerprint required to apply, refusal if
 the content moved, modelled on `bench worktree clean`'s existing contract, so
@@ -374,8 +378,9 @@ fingerprinted discard contract summarize and authorize the generated directory
 without falling back to manual deletion. Source: the FT131 implementation retro,
 drained here.
 
-**FT169 (MEDIUM, evidence supplied) — one sanctioned worktree landing command
+**FT169 (MEDIUM) — one sanctioned worktree landing command
 owns the stale-base dance.** The gate-fastpath build hand-ran the same sequence
+Occurrences: baseline-01
 for eleven ticket landings: fast-forward the assignment worktree onto the
 current default branch immediately before landing, create the gated commit,
 fast-forward the result back, then release the worktree. One stale-base miss
@@ -450,8 +455,10 @@ applied by hand in the 2026-07-27 drain — every diagnosis drained there was re
 out of the tree first. Source of this clause: `.bench/learnings.md`, verdicted
 here. The grammar face came from `IDEAS.md`, drained here.
 
-**FT126 (MEDIUM, evidence supplied) — recurrence tallying belongs to the
+**FT126 (MEDIUM) — recurrence tallying belongs to the
 roadmap parser and context snapshot.**
+
+Occurrences: baseline-01
 
 The same parser and snapshot seam owns recurrence tallying. An idea, learning,
 or retro should be able to cite an existing FT as its primary owner so the drain
@@ -1077,8 +1084,9 @@ Four rows, one failure class: a red that answers for something other than the
 diff in front of the gate — an inherited baseline, machine contention, a
 literal deadline, a harness defect.
 
-**FT141 (MEDIUM, evidence supplied) — `bench gate pin` records red verdicts,
+**FT141 (MEDIUM) — `bench gate pin` records red verdicts,
 so inherited reds stop reading as caused.** The pin records only the tree it
+Occurrences: baseline-01
 graded, not what failed there, so an agent that sees a failing check in a file
 its diff never touched assumes causation and starts fixing — and that loop
 does not self-terminate. Real case 2026-07-26: `main` red since `3c50349`,
@@ -1245,8 +1253,9 @@ correct the registry reasons, and consider grading the exemption reason itself;
 parenthetical when the fault comes from `usage.Parse` (e.g. an empty
 positional) — one flat line naming the fault reads better.
 
-**FT94 (LOW, evidence supplied) — single-sourced `bench resume` summary
+**FT94 (LOW) — single-sourced `bench resume` summary
 golden.** The resume summary line is asserted as a hardcoded exact-string
+Occurrences: baseline-01
 golden at four sites across three files (`internal/worktree/resume_test.go`,
 `internal/worktree/lifecycle_policy_test.go`, and twice in
 `internal/contract/runtime/runtime_worktree_test.go`), so a format change is a
@@ -1261,8 +1270,9 @@ the one-source-per-fact rule.
 This row is a measured, recurring reader cost from the week-of-2026-07-19
 transcript evidence and builds on surfaces that already exist.
 
-**FT125 (LOW, evidence supplied) — reader surfaces that return the slice, not
+**FT125 (LOW) — reader surfaces that return the slice, not
 the file.** Two existing readers make a session pull a whole file to use one
+Occurrences: baseline-01
 part of it. `bench spec show <slug> [--section stories|coverage|status]` — a
 section-scoped spec reader; ~1 MB of spec `Read`s in the week of 2026-07-19,
 with the `minimal-subprocess-data-exposure` spec alone read 15 times for 450 KB.

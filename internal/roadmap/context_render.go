@@ -20,7 +20,7 @@ var contextGrammar = usage.Grammar{
 	Flags: []usage.Flag{{Name: "--context"}, {Name: "--full"}},
 }
 
-// ContextCommand implements the read-only schema-2 AXI roadmap snapshot.
+// ContextCommand implements the read-only schema-3 AXI roadmap snapshot.
 func ContextCommand(args []string, gate func(string) GateCacheFact) (string, int) {
 	parsed, line, code := usage.Parse(contextGrammar, args)
 	if line != "" {
@@ -59,7 +59,7 @@ func renderContext(s ContextSnapshot) (string, error) {
 		rows   [][]any
 	}
 	var bs []block
-	bs = append(bs, block{"context", []string{"schema", "full"}, [][]any{{2, s.Full}}})
+	bs = append(bs, block{"context", []string{"schema", "full", "sequence_trusted"}, [][]any{{3, s.Full, s.SequenceTrusted}}})
 	rows := make([][]any, len(s.Sources))
 	for i, r := range s.Sources {
 		rows[i] = []any{r.Source, r.State, r.Bytes}
@@ -67,9 +67,9 @@ func renderContext(s ContextSnapshot) (string, error) {
 	bs = append(bs, block{"sources", []string{"source", "state", "bytes"}, rows})
 	rows = nil
 	for _, r := range s.Roadmap.Rows {
-		rows = append(rows, []any{r.ID, r.Title, r.Spec, r.SpecStatus, r.ExternalTrigger, r.Body, r.BodyBytes, r.Truncated})
+		rows = append(rows, []any{r.ID, r.Title, r.Spec, r.SpecStatus, r.ExternalTrigger, r.Body, r.BodyBytes, r.Truncated, r.OccurrenceCount, r.OccurrenceKeys})
 	}
-	bs = append(bs, block{"roadmap_rows", []string{"id", "title", "spec", "spec_status", "external_trigger", "body", "body_bytes", "truncated"}, rows})
+	bs = append(bs, block{"roadmap_rows", []string{"id", "title", "spec", "spec_status", "external_trigger", "body", "body_bytes", "truncated", "occurrence_count", "occurrence_keys"}, rows})
 	rows = nil
 	for _, r := range s.Roadmap.Sequence {
 		rows = append(rows, []any{r.Rank, r.Text, r.Command})
@@ -90,6 +90,12 @@ func renderContext(s ContextSnapshot) (string, error) {
 		rows = append(rows, []any{r.Path, r.State, r.Body, r.BodyBytes, r.Truncated})
 	}
 	bs = append(bs, block{"retros", []string{"path", "state", "body", "body_bytes", "truncated"}, rows})
+	bs = append(bs, block{"capture_occurrences", []string{"owner", "incident", "source", "capture_unit", "state"}, nil})
+	rows = nil
+	for _, r := range s.Roadmap.OccurrenceDiscrepancies {
+		rows = append(rows, []any{r.Source, r.CaptureUnit, r.Kind, r.Owner, r.Incident, r.Structural})
+	}
+	bs = append(bs, block{"occurrence_discrepancies", []string{"source", "capture_unit", "kind", "owner", "incident", "structural"}, rows})
 	bs = append(bs, block{"structure", []string{"kind", "path", "actual", "limit", "state", "detail"}, s.Structure})
 	rows = stringRows(s.Specs)
 	bs = append(bs, block{"specs", []string{"slug", "status", "roadmap_id"}, rows})

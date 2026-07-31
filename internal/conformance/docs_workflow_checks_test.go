@@ -7,8 +7,10 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"testing"
 
 	"github.com/gibbonmi/bench/internal/coverage"
+	"github.com/gibbonmi/bench/internal/roadmap"
 )
 
 func checkDocsCurrencyAndWorkflow(root, kitRoot string) []string {
@@ -21,9 +23,48 @@ func checkDocsCurrencyAndWorkflow(root, kitRoot string) []string {
 	diags = append(diags, checkSignalVocabulary(root)...)
 	diags = append(diags, checkCommandFirstAnchors(root)...)
 	diags = append(diags, checkWorkflowAnchors(root)...)
+	diags = append(diags, checkOccurrenceLedgerMigration(root)...)
 	diags = append(diags, checkSkillsIndexGenerateVerify(root, kitRoot)...)
 	diags = append(diags, checkCoverageMaps(root)...)
 	return diags
+}
+
+func checkOccurrenceLedgerMigration(root string) []string {
+	data, err := os.ReadFile(filepath.Join(root, "ROADMAP.md"))
+	if err != nil {
+		return []string{"ROADMAP.md unavailable for occurrence-ledger migration check"}
+	}
+	doc, failures := roadmap.ParseDocument(data, nil, true)
+	if len(failures) != 0 {
+		return []string{"ROADMAP.md occurrence-ledger migration has malformed rows"}
+	}
+	want := map[string]int{"FT71": 1, "FT158": 3, "FT128": 1, "FT98": 3, "FT169": 1, "FT126": 1, "FT141": 1, "FT94": 1, "FT125": 1}
+	got := map[string]int{}
+	for _, row := range doc.Rows {
+		if _, ok := want[row.ID]; ok {
+			got[row.ID] = row.OccurrenceCount
+		}
+	}
+	var diags []string
+	for id, count := range want {
+		if got[id] != count {
+			diags = append(diags, "ROADMAP.md occurrence-ledger migration count for "+id+" is wrong")
+		}
+	}
+	if strings.Contains(strings.ToLower(string(data)), "evidence supplied") {
+		diags = append(diags, "ROADMAP.md retains a legacy evidence-supplied heading count")
+	}
+	return diags
+}
+
+func TestOccurrenceLedgerMigrationCheckBites(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "ROADMAP.md"), []byte("**FT71 (HIGH, evidence supplied) — title.**\nOccurrences: baseline-01\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if diags := checkOccurrenceLedgerMigration(root); len(diags) == 0 {
+		t.Fatal("legacy heading mutation passed occurrence-ledger migration check")
+	}
 }
 
 func checkSpecAuthorizationContract(root string) []string {
