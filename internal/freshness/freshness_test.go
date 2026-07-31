@@ -126,6 +126,21 @@ func TestDigestTracksResolvedUntrackedBuildInput(t *testing.T) {
 	}
 }
 
+func TestDigestIgnoresMalformedAmbientVCSMetadata(t *testing.T) {
+	ancestor := t.TempDir()
+	if err := os.WriteFile(filepath.Join(ancestor, ".git"), []byte("gitdir: /does/not/exist\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	root := writeBuildFixtureAt(t, filepath.Join(ancestor, "fixture"))
+
+	if _, err := Digest(root); err != nil {
+		command := exec.Command("go", "list", "-json", "-deps", "./cmd/bench")
+		command.Dir = root
+		output, diagnosticErr := command.CombinedOutput()
+		t.Fatalf("Digest with malformed ambient VCS metadata: %v\nunprotected go list: %v\n%s", err, diagnosticErr, output)
+	}
+}
+
 func TestDigestTracksBuildOwnerInputs(t *testing.T) {
 	cases := []struct {
 		name string
@@ -503,7 +518,11 @@ func setMtimes(t *testing.T, paths []string, timestamp time.Time) {
 
 func writeBuildFixture(t *testing.T) string {
 	t.Helper()
-	root := t.TempDir()
+	return writeBuildFixtureAt(t, t.TempDir())
+}
+
+func writeBuildFixtureAt(t *testing.T, root string) string {
+	t.Helper()
 	files := map[string]string{
 		"go.mod":                  "module example.com/freshnessfixture\n\ngo 1.25\n",
 		"cmd/bench/main.go":       "package main\n\nimport \"example.com/freshnessfixture/internal/local\"\n\nfunc main() { _ = local.Value }\n",

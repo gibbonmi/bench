@@ -104,7 +104,7 @@ func buildInputs(root string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	command := exec.Command("go", "list", "-json", "-deps", "./cmd/bench")
+	command := exec.Command("go", "list", "-buildvcs=false", "-json", "-deps", "./cmd/bench")
 	command.Dir = root
 	output, err := command.Output()
 	if err != nil {
