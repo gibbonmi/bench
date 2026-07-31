@@ -6,6 +6,8 @@ left="${1:?usage: compare-artifacts.sh <first-dir> <second-dir> <record> [first-
 right="${2:?usage: compare-artifacts.sh <first-dir> <second-dir> <record> [first-root second-root [first-final-evidence second-final-evidence]]}"
 record="${3:?usage: compare-artifacts.sh <first-dir> <second-dir> <record> [first-root second-root [first-final-evidence second-final-evidence]]}"
 root="$(node -e 'const fs=require("node:fs"),path=require("node:path");process.stdout.write(path.dirname(path.dirname(fs.realpathSync(process.argv[1]))))' "${BASH_SOURCE[0]}")"
+# shellcheck source=scripts/lib/search.sh
+. "$root/scripts/lib/search.sh"
 left_root="${4:-$root}"
 right_root="${5:-$root}"
 left_final="${6:-}"
@@ -35,7 +37,7 @@ node "$root/scripts/release-plan.mjs" "$root" artifact-names "$version" > "$name
 for directory in "$left" "$right"; do
   while IFS= read -r -d '' entry; do
     name="$(basename "$entry")"
-    if ! rg -Fqx -- "$name" "$names_file"; then
+    if ! bench_search_fixed -qx -- "$name" "$names_file"; then
       printf 'reproducibility comparison found unexpected artifact: %s\n' "$name" >&2
       exit 1
     fi
@@ -76,7 +78,7 @@ if [[ -n "$left_final" ]]; then
     printf '%s\n' "$name"
   done < <(find "$left_final" -mindepth 1 -maxdepth 1 -print0) | LC_ALL=C sort > "$final_names"
   for required in release-index.json SHA256SUMS; do
-    rg -Fqx -- "$required" "$final_names" || { printf 'reproducibility comparison missing first-build final evidence: %s\n' "$required" >&2; exit 1; }
+    bench_search_fixed -qx -- "$required" "$final_names" || { printf 'reproducibility comparison missing first-build final evidence: %s\n' "$required" >&2; exit 1; }
   done
   while IFS= read -r name; do
     [[ -f "$left_final/$name" && ! -L "$left_final/$name" ]] || { printf 'reproducibility comparison contains unsafe first-build final evidence: %s\n' "$name" >&2; exit 1; }
@@ -89,7 +91,7 @@ if [[ -n "$left_final" ]]; then
   while IFS= read -r -d '' entry; do
     name="$(basename "$entry")"
     [[ -f "$entry" && ! -L "$entry" ]] || { printf 'reproducibility comparison contains unsafe second-build final evidence: %s\n' "$name" >&2; exit 1; }
-    rg -Fqx -- "$name" "$final_names" || { printf 'reproducibility comparison found unexpected final evidence: %s\n' "$name" >&2; exit 1; }
+    bench_search_fixed -qx -- "$name" "$final_names" || { printf 'reproducibility comparison found unexpected final evidence: %s\n' "$name" >&2; exit 1; }
   done < <(find "$right_final" -mindepth 1 -maxdepth 1 -print0)
 fi
 

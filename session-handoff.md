@@ -2,25 +2,44 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `df749df`, 3 dirty paths, 10 unpushed commits
-Spec: `specs/ft128-agent-line-binding/spec.md` (Status: staged)
-Gate: green at `2036d35` — current
+Branch: `main` — HEAD `2bcb4c8` at write time; this pass commits on top of it
+Spec: `specs/ft128-agent-line-binding/spec.md` (Status: staged, reviewer-approved 2026-07-31)
+Gate: green — full run, 2026-07-31
 
 ## State
 
-- **FT126 is closed.** Its roadmap row and pending retro are drained; the retro's
-  four actionable recommendations now live on FT169, FT133, FT101, and FT120.
-- **The recurrence migration contract follows current roadmap ownership.** Retired
-  FT126 is no longer required by the one-time baseline inventory, while the eight
-  remaining migrated rows keep their exact-count checks and mutation bite.
-- **FT128 is the next actionable item.** Its staged spec owns the fork verdict,
-  harness-native denial, and static command-token conformance sweep.
-- The dev gate is green for the approved drain and conformance repair. Push and
-  ship-tier verification have not run.
+- **FT128's spec was reshaped from its compiled decision map and is staged for sign-off.**
+  It is uncommitted. `bench coverage --check` passes at 37 rows.
+- **The previous session's blocker was half wrong, and that changed the spec.**
+  `tool_input.subagent_type` *is* a documented Agent input and was captured from a real
+  `fork` delegation on 2026-07-31, so the discriminator exists. What does not exist is the
+  other half: per the Claude Code hooks reference, only `SessionStart` can receive a `model`
+  field and there is no `$CLAUDE_MODEL`, so a `PreToolUse` hook cannot read the session's own
+  tier and the map's "declared versus inherited tier" comparison is unimplementable at this
+  seam. Story 4 instead denies a fork that declares any model (the harness ignores it) and
+  allows one that declares none. **That substitution is the open reviewer decision.**
+- A second map premise is false: `check-agent-line --describe` does not exist, so decision
+  #7's session-start line report describes no surface. No story re-adds it; the real FT97
+  bite is the deny message, which story 5 owns.
+- A falsification pass ran on Codex (`gpt-5.6-sol`, high, read-only) and returned
+  NEEDS-REWORK. Its findings were applied: per-cell and per-tier enumeration instead of
+  sampled rows, matrix-derived denial rows that kill a hard-coded renderer, a no-dual-read
+  row, doctor's unbound-column advice, honest TDD-able classifications, and two new rows for
+  the hook and adapter missing-core rims — which nothing tests today, contrary to what the
+  earlier draft claimed.
+- **The four tickets under `specs/ft128-agent-line-binding/tickets/` are committed but
+  stale.** They encode the old frontier in which every ticket blocks on capturing fork
+  evidence, and that premise is falsified — the discriminator exists. Re-derive them from
+  the reshaped spec before building; do not work the dependency order they record.
+- A separate defect was found and fixed in this pass: the release scripts called `rg`
+  unconditionally, which failed wherever ripgrep is not installed. `scripts/lib/search.sh`
+  now selects the tool and falls back to POSIX `grep`. Unrelated to FT128.
 
 ## Next command
 
-`$bench-implement-spec ft128-agent-line-binding`
+Sign off on the spec (or veto the story 4 substitution), then:
+
+`/bench-implement-spec specs/ft128-agent-line-binding/spec.md`
 
 ## Shape
 

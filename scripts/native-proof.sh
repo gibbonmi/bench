@@ -14,6 +14,8 @@ while [[ -L "$source_path" ]]; do
   [[ "$link_target" == /* ]] && source_path="$link_target" || source_path="$source_dir/$link_target"
 done
 root="$(cd "$(dirname "$source_path")/.." && pwd)"
+# shellcheck source=scripts/lib/search.sh
+. "$root/scripts/lib/search.sh"
 version="$(node -p 'require(process.argv[1]).version' "$root/package.json")"
 target="${os_name}-${arch_name}"
 matrix_row="$(node "$root/scripts/release-plan.mjs" "$root" target "$os_name" "$arch_name")" || {
@@ -53,7 +55,7 @@ if [[ "$goos" == linux ]]; then
   file_info="$(file "$rebuild")"
   [[ "$file_info" == *"statically linked"* ]] || { printf 'native proof: Linux binary is not static for %s: %s\n' "$target" "$file_info" >&2; exit 1; }
   if command -v readelf >/dev/null 2>&1; then
-    ! readelf -S "$rebuild" | rg -q '\.symtab' || { printf 'native proof: Linux binary is not stripped for %s\n' "$target" >&2; exit 1; }
+    ! readelf -S "$rebuild" | bench_search_fixed -q -- '.symtab' || { printf 'native proof: Linux binary is not stripped for %s\n' "$target" >&2; exit 1; }
   else
     printf 'native proof: readelf is required to prove stripped Linux output\n' >&2
     exit 1
@@ -66,7 +68,7 @@ else
   [[ "$file_info" == *"Mach-O"* ]] || { printf 'native proof: Darwin binary format is invalid for %s: %s\n' "$target" "$file_info" >&2; exit 1; }
   command -v nm >/dev/null 2>&1 || { printf 'native proof: nm is required to prove stripped Darwin output\n' >&2; exit 1; }
   nm -a "$rebuild" > "$tmp/darwin-symbols" 2>&1 || true
-  rg -q 'no symbols|no name list' "$tmp/darwin-symbols" || { printf 'native proof: Darwin binary is not stripped for %s\n' "$target" >&2; exit 1; }
+  bench_search_ere -q -- 'no symbols|no name list' "$tmp/darwin-symbols" || { printf 'native proof: Darwin binary is not stripped for %s\n' "$target" >&2; exit 1; }
   musl_status=not_applicable
 fi
 
