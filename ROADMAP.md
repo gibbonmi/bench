@@ -55,7 +55,13 @@ reporting it. Preserve every phase and unchanged green semantics. Scoped
 gating remains ruled out and is not a speed lever. Entry:
 `/bench-shape-idea`. Sources: `IDEAS.md`, drained here;
 `decisions/gate-concurrency.md`; `decisions/gate-critical-path.md`; the
-2026-07-30 Claude usage-report assessment, drained here.
+2026-07-30 Claude usage-report assessment, drained here. A first full gate on
+a 12-online-core host supplied the lower-width sample 2026-07-31: both
+`TestSetupConflictContracts` FIFO cases exhausted their 15 s subprocess
+deadlines while the outer phases overlapped, then the exact pair passed
+focused once and 3/3 repeated at about 0.43 s per run. Treat that delta as
+contention evidence for pricing the outer widths, not as authority to pick one
+from a single machine.
 
 **FT156 (MEDIUM) — the anchor mechanism is weaker than its coverage rows
 claim.** Two faces from FT152's build, one owner (the conformance anchor
@@ -119,12 +125,13 @@ adding a second handoff convention by accident. Source: `IDEAS.md`, drained here
 The full-run half moves `--full` orchestration from phase prose into a `bench`
 subcommand only if the decision map rules that the harness-independent
 substrate should own it. That command records the staging base and terminal
-implementation SHA as first-class review inputs; the artifact-suite run had to
-reconstruct that range after `bench diff --full` on the default branch reduced
-to the handoff path. The same subject record binds any performance number in
-the close to the exact commit and worktree that produced it; a number from a
-different subject is omitted, not carried forward as evidence. Entry:
-`/bench-shape-idea`.
+implementation SHA as first-class review inputs and lets `bench diff --full`
+accept that explicit base/head range; the artifact-suite and decision-map
+integrity runs both had to reconstruct the range after the default-branch
+review surface reduced to a single landing commit or the handoff path. The same
+subject record binds any performance number in the close to the exact commit
+and worktree that produced it; a number from a different subject is omitted,
+not carried forward as evidence. Entry: `/bench-shape-idea`.
 
 The close itself has one unresolved ownership decision. `bench spec retire`
 says to remove the roadmap row while `/bench-final-check` says to leave it for
@@ -516,7 +523,7 @@ discipline check: phrase-grepping project prose cannot demonstrate a reliable
 bite. Source: the learnings journal, verdicted in a prior drain.
 
 **FT107 (MEDIUM) — the standing guidance rules, batched: one
-always-loaded-prose diff.** Eleven remaining clauses edit the same
+always-loaded-prose diff.** Fourteen remaining clauses edit the same
 standing-guidance surface — `.bench/BENCH.md`, the phase prose beside it, and
 two craft skills — and collapse into one batched kit edit under the
 `craft-synthesis` discipline: one spec, one review, one gate. First (was
@@ -647,6 +654,17 @@ selected binary exposes a verification command; that question found FT131's
 gate self-attestation defect after ordinary surface checks passed. Background:
 `docs/reporesident-distillation.md` §3 and §6; the 2026-07-30 Claude
 usage-report assessment and the FT131 implementation retro, drained here.
+Fourteenth (from the decision-map integrity retro), close the review gap between
+a compiled decision map and its narrower acceptance rows. A fresh-session
+map-to-spec dogfood run happens before semantic review, and the main checkout's
+ignored development binary is rebuilt first so stale local behavior is not
+reported as shipped behavior. Review charges treat defaulted decisions as
+authoritative unless the spec explicitly overrides them; a claimed repair is
+checked against both the applicable coverage row and the defaulted-decision
+table. When diagnostic wording and its exact canary expectation cross a ticket
+fence, the review may require one explicitly justified atomic repair rather
+than leaving the oracle and its bite inconsistent. Source: the decision-map
+integrity implementation retro, drained here.
 
 **FT58 (LOW) — hardened pool roots.** Permission failures on Bench-selected pool roots
 should propagate — the tree currently asserts best-effort tighten
@@ -814,8 +832,11 @@ the tool's own write and its content is known); or accepting the face as
 cosmetic and documenting it. The same command has a separate avoidable usage
 failure: `bench commit --spec <slug>` edits the owned spec transition itself but
 still requires another named path. Count that owned transition as satisfying
-the path requirement without widening the staged set. Source: the FT131
-implementation retro, drained here.
+the path requirement without widening the staged set. Immediate retirement on
+the default branch currently follows that landing with a second full oracle run
+over another short-lived tree; settle the cache handoff and retirement sequence
+so the two owned transitions do not require redundant full runs. Sources: the
+FT131 and decision-map integrity implementation retros, drained here.
 
 **FT130 (LOW) — parking an idea mid-gate silently voids the run.** During
 FT122's gated commit a session answered a reviewer question and ran `bench
@@ -1161,6 +1182,14 @@ combined run, then passed alone and in every later gate. Poll to the existing
 bounded deadline, as the test-report SIGINT contract already does, so scheduler
 lag is not classified as a surviving process. Sources: the gate-fastpath
 journal and retro and the FT123 + FT124 retro, drained here and in a prior run.
+
+The first full gate run on a 12-online-core host adds two more literal-deadline
+instances: the AGENTS.md and CLAUDE.md FIFO setup contracts both exhausted
+their hardcoded 15 s subprocess bounds under the gate's outer-phase load, then
+passed focused once and 3/3 repeated at about 0.43 s per run. Derive those
+bounds from the shared test deadline rather than pricing a special-file
+regression against a 16-core host; FT171 owns whether reducing outer
+concurrency also lowers the contention that triggered them.
 
 **FT120 (LOW) — gate and canary test-harness defects nothing asserts.** Two
 independent holes in the harness that grades the oracle, both found during the

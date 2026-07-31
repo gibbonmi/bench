@@ -70,6 +70,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- Made freshness source discovery ignore ambient VCS metadata, matching the
+  repository's VCS-independent build and keeping gates runnable from nested
+  temporary fixture roots.
 - Kept session-handoff capture writes out of stale-gate and handoff-next signals, and made
   ambient dirty-path counts describe only the current checkout.
 - Made `bench learnings` render a drained journal as empty and reject dated headings
