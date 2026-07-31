@@ -2,6 +2,7 @@ package specbuild
 
 import (
 	"bytes"
+	"encoding/json"
 	"net"
 	"os"
 	"path/filepath"
@@ -12,6 +13,93 @@ import (
 
 	"github.com/gibbonmi/bench/internal/bounds"
 )
+
+func TestReviewRefusesIncompleteOrHostileReceiptsWithoutMutation(t *testing.T) {
+	fixture := checkpointedReleaseFixture(t)
+	if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
+		t.Fatal(err)
+	}
+	run, found, err := fixture.service.load("build demo")
+	if err != nil || !found {
+		t.Fatalf("load = found:%v err:%v", found, err)
+	}
+	valid := reviewReceipt{Version: 1, Run: run.Run, Candidate: run.CandidateTip, Axes: []reviewAxis{{Axis: "Standards"}, {Axis: "Spec"}, {Axis: "Coverage"}}}
+	statePath, err := fixture.service.statePath("build demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	before, err := os.ReadFile(statePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tests := []struct {
+		name string
+		path func(*testing.T) string
+	}{
+		{"missing axis", func(t *testing.T) string {
+			return writeReviewReceipt(t, reviewReceipt{Version: 1, Run: run.Run, Candidate: run.CandidateTip, Axes: valid.Axes[:2]})
+		}},
+		{"duplicate axis", func(t *testing.T) string {
+			receipt := valid
+			receipt.Axes[2].Axis = "Spec"
+			return writeReviewReceipt(t, receipt)
+		}},
+		{"unknown axis", func(t *testing.T) string {
+			receipt := valid
+			receipt.Axes[2].Axis = "Other"
+			return writeReviewReceipt(t, receipt)
+		}},
+		{"unresolved finding", func(t *testing.T) string {
+			receipt := valid
+			receipt.Axes[0].Findings = []reviewFinding{{ID: "f"}}
+			return writeReviewReceipt(t, receipt)
+		}},
+		{"wrong candidate", func(t *testing.T) string {
+			receipt := valid
+			receipt.Candidate = "wrong"
+			return writeReviewReceipt(t, receipt)
+		}},
+		{"wrong run", func(t *testing.T) string {
+			receipt := valid
+			receipt.Run = "wrong"
+			return writeReviewReceipt(t, receipt)
+		}},
+		{"malformed", func(t *testing.T) string {
+			path := filepath.Join(t.TempDir(), "review.json")
+			write(t, path, "{\n")
+			return path
+		}},
+		{"fifo", func(t *testing.T) string {
+			path := filepath.Join(t.TempDir(), "review.fifo")
+			if err := syscall.Mkfifo(path, 0o600); err != nil {
+				t.Fatal(err)
+			}
+			return path
+		}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if _, err := fixture.service.Review(t.Context(), "build demo", test.path(t)); err == nil {
+				t.Fatal("Review unexpectedly accepted receipt")
+			}
+			after, err := os.ReadFile(statePath)
+			if err != nil || !bytes.Equal(before, after) {
+				t.Fatalf("review refusal mutated state: %v", err)
+			}
+		})
+	}
+}
+
+func writeReviewReceipt(t *testing.T, receipt reviewReceipt) string {
+	t.Helper()
+	data, err := json.Marshal(receipt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), "review.json")
+	write(t, path, string(data)+"\n")
+	return path
+}
 
 func TestCheckpointRejectsHostileReceiptsBeforeMutationOrBlocking(t *testing.T) {
 	tests := []struct {

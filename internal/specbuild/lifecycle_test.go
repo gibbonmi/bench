@@ -191,26 +191,99 @@ func TestStatusUsesTheGitCommonDirectory(t *testing.T) {
 	}
 }
 
-func TestLiteralSlugAndTicketUseOpaqueIdentities(t *testing.T) {
+func TestReviewRecordsExactCandidateAndRetainsOnlyProjection(t *testing.T) {
+	fixture := checkpointedReleaseFixture(t)
+	if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
+		t.Fatal(err)
+	}
+	status, err := fixture.service.Status("build demo")
+	if err != nil || status.Next != "bench spec build review build demo" {
+		t.Fatalf("status before review = %#v, %v", status, err)
+	}
+	secret := "review-body-control-token"
+	receipt := reviewReceipt{Version: 1, Run: fixture.run.Run, Candidate: status.Subject, Body: secret, Axes: []reviewAxis{{Axis: "Standards", Findings: []reviewFinding{{ID: "finding-1", Disposition: "accepted"}}}, {Axis: "Spec"}, {Axis: "Coverage"}}}
+	if _, err := fixture.service.Review(t.Context(), "build demo", writeReviewReceipt(t, receipt)); err != nil {
+		t.Fatalf("Review: %v", err)
+	}
+	statePath, err := fixture.service.statePath("build demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	durable, err := os.ReadFile(statePath)
+	if err != nil || strings.Contains(string(durable), secret) {
+		t.Fatalf("durable review state retained receipt body: %v", err)
+	}
+	full, err := fixture.service.FullStatus("build demo")
+	if err != nil || full.Review == nil || full.Review.Candidate != status.Subject || len(full.Review.Axes) != 3 || len(full.Review.Axes[0].Findings) != 1 || full.Review.Axes[0].Findings[0].Disposition != "accepted" || len(full.Assignments) != 1 || full.Assignments[0].Checkpoint == "" || full.Assignments[0].Integrated == "" || full.Assignments[0].Cleanup != "released" || strings.Contains(fmt.Sprintf("%#v", full), secret) {
+		t.Fatalf("full status = %#v, %v", full, err)
+	}
+	repair, _, err := fixture.service.Assign(t.Context(), "build demo", "one.md", "review repair")
+	if err != nil {
+		t.Fatalf("Assign repair: %v", err)
+	}
+	write(t, filepath.Join(repair.Path, "internal", "specbuild", "repair.go"), "package specbuild\n")
+	git(t, repair.Path, "add", ".")
+	git(t, repair.Path, "commit", "-qm", "review repair")
+	checkpointAssignment(t, fixture.root, fixture.service, repair, []string{"internal/specbuild/repair.go"})
+	if _, err := fixture.service.Integrate(t.Context(), "build demo", repair.ID); err != nil {
+		t.Fatalf("Integrate repair: %v", err)
+	}
+	full, err = fixture.service.FullStatus("build demo")
+	if err != nil || full.Review != nil || full.Next != "bench spec build review build demo" || len(full.Assignments) != 2 {
+		t.Fatalf("full status after repair = %#v, %v", full, err)
+	}
+	receipt.Candidate, receipt.Body = full.Subject, ""
+	if _, err := fixture.service.Review(t.Context(), "build demo", writeReviewReceipt(t, receipt)); err != nil {
+		t.Fatalf("fresh Review: %v", err)
+	}
+}
+
+func TestReviewRoutesCleanAndAcceptedFindingsDifferently(t *testing.T) {
+	for _, test := range []struct {
+		name, disposition, want string
+	}{{"clean", "", "bench spec build promote build demo"}, {"accepted", "accepted", "bench spec build assign build demo"}} {
+		t.Run(test.name, func(t *testing.T) {
+			fixture := checkpointedReleaseFixture(t)
+			if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
+				t.Fatal(err)
+			}
+			run, found, err := fixture.service.load("build demo")
+			if err != nil || !found {
+				t.Fatalf("load = found:%v err:%v", found, err)
+			}
+			candidate, tree := git(t, fixture.root, "rev-parse", run.Candidate), git(t, fixture.root, "rev-parse", "HEAD^{tree}")
+			receipt := reviewReceipt{Version: 1, Run: run.Run, Candidate: run.CandidateTip, Axes: []reviewAxis{{Axis: "Standards"}, {Axis: "Spec"}, {Axis: "Coverage"}}}
+			if test.disposition != "" {
+				receipt.Axes[0].Findings = []reviewFinding{{ID: "repair", Disposition: test.disposition}}
+			}
+			status, err := fixture.service.Review(t.Context(), "build demo", writeReviewReceipt(t, receipt))
+			if err != nil || status.Next != test.want {
+				t.Fatalf("Review status = %#v, %v", status, err)
+			}
+			if git(t, fixture.root, "rev-parse", run.Candidate) != candidate || git(t, fixture.root, "rev-parse", "HEAD^{tree}") != tree {
+				t.Fatal("Review mutated the project tree or candidate ref")
+			}
+		})
+	}
+}
+
+func TestTerminalStatusIgnoresRetainedReview(t *testing.T) {
 	root := repo(t)
-	slug := "build [special]*"
-	write(t, filepath.Join(root, "specs", slug, "spec.md"), "# Special\n\nStatus: staged\n")
-	write(t, filepath.Join(root, "specs", slug, "tickets", "ticket [*].md"), "# Special ticket\n\nOwnership fence: internal/specbuild\n\n- [ ] [R52] literal input\n")
-	git(t, root, "add", ".")
-	git(t, root, "commit", "-qm", "literal spec")
-	service := New(root, greenGate{}, realOwner{})
-	if _, err := service.Start(context.Background(), slug); err != nil {
-		t.Fatalf("Start: %v", err)
+	service := New(root, greenGate{}, nil)
+	if _, err := service.Start(t.Context(), "build demo"); err != nil {
+		t.Fatal(err)
 	}
-	if _, _, err := service.Assign(context.Background(), slug, "ticket [*].md", "literal request"); err != nil {
-		t.Fatalf("Assign: %v", err)
+	run, found, err := service.load("build demo")
+	if err != nil || !found {
+		t.Fatalf("load = found:%v err:%v", found, err)
 	}
-	refs := git(t, root, "for-each-ref", "--format=%(refname)", "refs/bench/specbuild/candidate/")
-	if strings.Contains(refs, " ") || strings.Contains(refs, "[") || strings.Contains(refs, "*") {
-		t.Fatalf("candidate ref is not opaque: %q", refs)
+	run.Terminal, run.Review = true, &reviewEvidence{Candidate: run.CandidateTip, Digest: "retained", Axes: []reviewAxis{{Axis: "Standards"}, {Axis: "Spec"}, {Axis: "Coverage"}}}
+	if err := service.save(run); err != nil {
+		t.Fatal(err)
 	}
-	if status, err := service.Status("build demo"); err != nil || status.State != "empty" {
-		t.Fatalf("neighbor spec status = %#v, %v", status, err)
+	status, err := service.Status("build demo")
+	if err != nil || status != (Status{Slug: "build demo", State: "terminal", Subject: run.CandidateTip}) {
+		t.Fatalf("terminal status = %#v, %v", status, err)
 	}
 }
 

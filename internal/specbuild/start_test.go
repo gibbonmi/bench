@@ -88,6 +88,29 @@ func TestStartWithoutEvidenceNamesOneRecoveryAndDoesNotMutate(t *testing.T) {
 	}
 }
 
+func TestLiteralSlugAndTicketUseOpaqueIdentities(t *testing.T) {
+	root := repo(t)
+	slug := "build [special]*"
+	write(t, filepath.Join(root, "specs", slug, "spec.md"), "# Special\n\nStatus: staged\n")
+	write(t, filepath.Join(root, "specs", slug, "tickets", "ticket [*].md"), "# Special ticket\n\nOwnership fence: internal/specbuild\n\n- [ ] [R52] literal input\n")
+	git(t, root, "add", ".")
+	git(t, root, "commit", "-qm", "literal spec")
+	service := New(root, greenGate{}, realOwner{})
+	if _, err := service.Start(context.Background(), slug); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	if _, _, err := service.Assign(context.Background(), slug, "ticket [*].md", "literal request"); err != nil {
+		t.Fatalf("Assign: %v", err)
+	}
+	refs := git(t, root, "for-each-ref", "--format=%(refname)", "refs/bench/specbuild/candidate/")
+	if strings.Contains(refs, " ") || strings.Contains(refs, "[") || strings.Contains(refs, "*") {
+		t.Fatalf("candidate ref is not opaque: %q", refs)
+	}
+	if status, err := service.Status("build demo"); err != nil || status.State != "empty" {
+		t.Fatalf("neighbor spec status = %#v, %v", status, err)
+	}
+}
+
 func TestStartRefusesConflictingCandidateAndInvalidPriorState(t *testing.T) {
 	t.Run("candidate compare-and-swap", func(t *testing.T) {
 		root := repo(t)

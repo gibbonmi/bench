@@ -73,6 +73,7 @@ func (s *Service) Integrate(ctx context.Context, slug, assignmentID string) (Sta
 		}
 		if err := updateRef(s.root, run.Candidate, commit, candidate); err == nil {
 			run.CandidateTip, assigned.Integrated, assigned.DelegatePending, assigned.CleanupPending, assigned.Released = commit, commit, false, true, false
+			run.Review = nil
 			run.Assignments[key] = assigned
 			if err := s.save(run); err != nil {
 				return Status{}, err

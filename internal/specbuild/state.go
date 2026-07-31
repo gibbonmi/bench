@@ -28,6 +28,23 @@ type record struct {
 	CandidateTip string                `json:"candidate_tip"`
 	Terminal     bool                  `json:"terminal,omitempty"`
 	Assignments  map[string]assignment `json:"assignments"`
+	Review       *reviewEvidence       `json:"review,omitempty"`
+}
+
+type reviewEvidence struct {
+	Candidate string       `json:"candidate"`
+	Axes      []reviewAxis `json:"axes"`
+	Digest    string       `json:"digest"`
+}
+
+type reviewAxis struct {
+	Axis     string          `json:"axis"`
+	Findings []reviewFinding `json:"findings"`
+}
+
+type reviewFinding struct {
+	ID          string `json:"id"`
+	Disposition string `json:"disposition"`
 }
 
 const zeroObjectID = "0000000000000000000000000000000000000000"
@@ -45,10 +62,10 @@ func (a assignment) public() Assignment {
 }
 
 func (r record) status() Status {
-	state, next := "active", "bench spec build assign "+r.Slug
 	if r.Terminal {
-		state, next = "terminal", ""
+		return Status{Slug: r.Slug, State: "terminal", Subject: r.CandidateTip}
 	}
+	state, next := "active", "bench spec build assign "+r.Slug
 	cleanup := ""
 	pending := ""
 	for _, assigned := range r.Assignments {
@@ -63,8 +80,35 @@ func (r record) status() Status {
 		next = "release assignment " + cleanup
 	} else if pending != "" {
 		next = "delegate assignment " + pending
+	} else if r.needsReview() {
+		next = "bench spec build review " + r.Slug
+	} else if r.Review != nil {
+		next = "bench spec build promote " + r.Slug
+		if r.Review.hasAcceptedFinding() {
+			next = "bench spec build assign " + r.Slug
+		}
 	}
 	return Status{Slug: r.Slug, State: state, Subject: r.CandidateTip, Next: next}
+}
+
+func (e reviewEvidence) hasAcceptedFinding() bool {
+	for _, axis := range e.Axes {
+		for _, finding := range axis.Findings {
+			if finding.Disposition == "accepted" {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (r record) needsReview() bool {
+	for _, assigned := range r.Assignments {
+		if assigned.Integrated != "" {
+			return r.Review == nil || r.Review.Candidate != r.CandidateTip
+		}
+	}
+	return false
 }
 
 func (s *Service) resolve(slug string) (string, error) {
