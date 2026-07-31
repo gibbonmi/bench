@@ -15,6 +15,7 @@ import (
 func checkLineRouting(root string) []string {
 	var diags []string
 	diags = append(diags, checkLineBinding(root)...)
+	diags = append(diags, checkGuidanceTokens(root)...)
 	diags = append(diags, checkClaudeHookWiring(root)...)
 	diags = append(diags, checkAgentHookBehavior(root)...)
 	diags = append(diags, checkAdapterLineGuards(root)...)

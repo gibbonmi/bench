@@ -296,9 +296,10 @@ venue follows `craft-delegate`; line choice does not override its threshold. A
 headless shift declares the tier — `BENCH_MODEL=cheap` — and the adapter's own
 column supplies the id.
 
-**Escalation policy:** no standing top-tier opt-out — any bump to the top binding
-(`gpt-5.6-sol`; `fable` in Claude Code) pauses and asks the reviewer (the ladder
-is in `craft-line`). Tier moves still get declared — no silent escalation.
+**Escalation policy:** no standing top-tier opt-out — any bump to the table's top
+row pauses and asks the reviewer, whichever harness column you are running in
+(the ladder is in `craft-line`). Tier moves still get declared — no silent
+escalation.
 
 - **Skill / command / doc authoring** → **top model, high effort**. This is the
   leverage override in `craft-line`: guidance prose compounds through every
