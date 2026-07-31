@@ -2,36 +2,38 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `4ffd607`, tree clean, 33 unpushed commits
+Branch: `main` — HEAD `ef0cf50`, 1 dirty path, 43 unpushed commits
 Spec: `specs/ft126-recurrence-tallying/spec.md` (Status: staged), `specs/ft128-agent-line-binding/spec.md` (Status: staged)
-Gate: green at `4ffd607` (full run during the map commit; dist/bench rebuilt and resealed)
+Gate: green at `a640496` — stale, work tree `7a3fb15`
 
 ## State
 
-- **The diff-visual decision map is closed and committed at `4ffd607`.** All 12
-  tickets resolved, `## Handoff` written and placeholder-free, `bench maps`
-  shows no row. Assets committed beside it: `decisions/diff-visual-prototype.html`
-  (approved working visual, iterated live against the real FT131 change) and
-  `decisions/diff-visual-ft131-report.html` (shareable, fully offline sample).
-  `/bench-write-spec` compiles the map and moves both assets into
-  `specs/<slug>/decisions/`. Recommended slicing in the map's Handoff:
-  schema core (emitter + validator) → renderer → final-check integration.
-- **Decisions that stay closed:** report form and sections (#10), edge kinds
-  three-drawn-two-relational (#11), no layout dependency (#12, supersedes #9),
-  context nodes admitted as their own class (#2 amendment), three-valued
-  coverage badge and justified heat (#6 amendment).
-- **A parallel session migrated the decision map corpus at `2b6ee58`** and
-  committed the previously dirty reviewer files; the tree is clean.
-- **FT131 remains implemented and retired on `main`.** `.bench/retros/` holds
-  no ft131 file — a prior handoff claimed one pending; the tree wins.
-- **Drain still pending:** parked ideas and the staged FT126/FT128 specs are
-  `/bench-what-next` territory, untouched by this phase.
+- **Decision-map integrity and phase ownership is implemented and retired on
+  `main` at `ef0cf50`.** The current format has one schema owner, graph,
+  readiness, exact source-record and tree validation, a read-only five-column
+  AXI query and template, ambient distinct-map counting, and a gate-bound
+  49-fixture mutation family.
+- **Workflow ownership is closed:** decision maps are situational and use
+  decision tickets for reviewer choices; spec authoring accepts exactly one of
+  three reviewed sources and owns engineering seams, tests, coverage, hostile
+  inputs, and gate attachment. Implementation tickets remain independently
+  green build units.
+- **Fresh-session dogfood and mid-binding three-axis review completed.** The
+  concrete source-locator, cycle-diagnostic, and silent-shaping projection
+  findings are repaired and gated. The remaining review observation is
+  historical: two implementation commits crossed the spec's declared slice
+  fences; no current-tree defect or rewrite is pending.
+- **The last oracle was green for the retirement tree.** The ambient gate now
+  reads stale only because the required retro and this handoff were written
+  after that boundary; final-check explicitly does not re-gate capture
+  artifacts. Ship-tier `bench prep-release` has not run, and nothing was pushed.
+- **Pending capture:** `.bench/retros/decision-map-integrity-and-phase-ownership.md`.
+  FT126 and FT128 remain staged, and the remaining active shaping maps and
+  roadmap work were outside this phase.
 
 ## Next command
 
-`/bench-write-spec Compile the closed decisions/diff-visual.md into the build spec; the Handoff section carries seams, contracts, and uncertainty flags.`
-
-Run it on a fresh mid-tier session.
+`$bench-what-next`
 
 ## Shape
 
