@@ -20,9 +20,10 @@ type OwnedWorktree struct {
 
 // Service coordinates spec build transitions from one working checkout.
 type Service struct {
-	root      string
-	gate      GateOwner
-	worktrees WorktreeOwner
+	root               string
+	gate               GateOwner
+	worktrees          WorktreeOwner
+	beforeCandidateCAS func()
 }
 
 // New constructs a lifecycle service rooted at one working checkout.

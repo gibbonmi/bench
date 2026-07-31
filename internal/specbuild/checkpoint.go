@@ -94,7 +94,11 @@ func (s *Service) Checkpoint(ctx context.Context, slug, assignmentID, evidence s
 	if err := updateRef(s.root, ref, commit, zeroObjectID); err != nil {
 		return Status{}, fmt.Errorf("bind checkpoint commit: %w", err)
 	}
-	assigned.Checkpoint, assigned.CheckpointRef, assigned.CheckpointTree, assigned.ReceiptDigest = commit, ref, rec.Tree, digest(string(raw))
+	patch, err := checkpointPatch(s.root, assigned.Base, commit)
+	if err != nil {
+		return Status{}, fmt.Errorf("record checkpoint patch: %w", err)
+	}
+	assigned.Checkpoint, assigned.CheckpointRef, assigned.CheckpointTree, assigned.ReceiptDigest, assigned.CheckpointPatch = commit, ref, rec.Tree, digest(string(raw)), digest(string(patch))
 	run.Assignments[key] = assigned
 	if err := s.save(run); err != nil {
 		return Status{}, err

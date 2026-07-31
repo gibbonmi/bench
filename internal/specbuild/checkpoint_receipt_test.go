@@ -1,8 +1,10 @@
 package specbuild
 
 import (
+	"context"
 	"errors"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -142,5 +144,76 @@ func TestCheckpointRequiresOneFinalNewlineFraming(t *testing.T) {
 	}
 	if _, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n")); err != nil {
 		t.Fatalf("Checkpoint with final newline: %v", err)
+	}
+}
+
+func TestCheckpointCreatesOneAttributedCommitWithoutCandidateOrGateMutation(t *testing.T) {
+	fixture := newCheckpointFixture(t)
+	before := checkpointSnapshotFor(t, fixture)
+	if _, err := fixture.service.Checkpoint(context.Background(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n")); err != nil {
+		t.Fatalf("Checkpoint: %v", err)
+	}
+	after, found, err := fixture.service.load("build demo")
+	if err != nil || !found {
+		t.Fatalf("load checkpoint: found:%v err:%v", found, err)
+	}
+	_, stored, ok := assignmentFor(after, fixture.assigned.ID)
+	if !ok || stored.Checkpoint == "" || stored.CheckpointRef == "" || stored.ReceiptDigest == "" {
+		t.Fatalf("checkpoint attribution = %#v", stored)
+	}
+	if got := git(t, fixture.root, "rev-parse", after.Candidate); got != before.candidate {
+		t.Fatalf("checkpoint moved candidate from %s to %s", before.candidate, got)
+	}
+	if fixture.gate.calls != 1 {
+		t.Fatalf("gate calls = %d, want 1 bootstrap call", fixture.gate.calls)
+	}
+	if got := git(t, fixture.root, "for-each-ref", "--format=%(refname)", "refs/bench/specbuild/checkpoint/"); got != stored.CheckpointRef {
+		t.Fatalf("checkpoint refs = %q, want one %q", got, stored.CheckpointRef)
+	}
+	if _, err := fixture.service.Checkpoint(context.Background(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n")); err != nil {
+		t.Fatalf("Checkpoint replay: %v", err)
+	}
+	if got := git(t, fixture.root, "for-each-ref", "--format=%(refname)", "refs/bench/specbuild/checkpoint/"); got != stored.CheckpointRef {
+		t.Fatalf("checkpoint replay created another ref: %q", got)
+	}
+}
+
+func TestIntegrateRequiresVerifiedCheckpointAndAdvancesOneAttributedCandidate(t *testing.T) {
+	fixture := newCheckpointFixture(t)
+	before := git(t, fixture.root, "rev-parse", fixture.run.Candidate)
+	if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err == nil {
+		t.Fatal("Integrate accepted an unverified assignment")
+	}
+	if got := git(t, fixture.root, "rev-parse", fixture.run.Candidate); got != before {
+		t.Fatalf("unverified integration moved candidate from %s to %s", before, got)
+	}
+	if _, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n")); err != nil {
+		t.Fatalf("Checkpoint: %v", err)
+	}
+	if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
+		t.Fatalf("Integrate: %v", err)
+	}
+	after, found, err := fixture.service.load("build demo")
+	if err != nil || !found {
+		t.Fatalf("load integrated run: found:%v err:%v", found, err)
+	}
+	_, assigned, ok := assignmentFor(after, fixture.assigned.ID)
+	if !ok || assigned.Integrated != after.CandidateTip {
+		t.Fatalf("integration attribution = %#v", assigned)
+	}
+	if parent := git(t, fixture.root, "rev-parse", after.CandidateTip+"^"); parent != before {
+		t.Fatalf("candidate parent = %s, want %s", parent, before)
+	}
+	if subject := git(t, fixture.root, "show", "-s", "--format=%B", after.CandidateTip); !strings.Contains(subject, "run="+after.Run) || !strings.Contains(subject, "assignment="+fixture.assigned.ID) || !strings.Contains(subject, "checkpoint="+assigned.Checkpoint) {
+		t.Fatalf("candidate attribution = %q", subject)
+	}
+	if tree := git(t, fixture.root, "rev-parse", after.CandidateTip+"^{tree}"); tree != assigned.CheckpointTree {
+		t.Fatalf("candidate tree = %s, want checkpoint tree %s", tree, assigned.CheckpointTree)
+	}
+	if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
+		t.Fatalf("Integrate replay: %v", err)
+	}
+	if got := git(t, fixture.root, "rev-parse", after.Candidate); got != after.CandidateTip {
+		t.Fatalf("integration replay changed candidate from %s to %s", after.CandidateTip, got)
 	}
 }

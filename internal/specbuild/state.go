@@ -36,6 +36,8 @@ type assignment struct {
 	ID, Path, Base, Request, Ticket, TicketDigest, Created   string
 	Rows, Fence, Assumptions                                 []string
 	Checkpoint, CheckpointRef, CheckpointTree, ReceiptDigest string
+	CheckpointPatch, Integrated                              string
+	DelegatePending                                          bool
 }
 
 func (a assignment) public() Assignment {
@@ -46,6 +48,15 @@ func (r record) status() Status {
 	state, next := "active", "bench spec build assign "+r.Slug
 	if r.Terminal {
 		state, next = "terminal", ""
+	}
+	pending := ""
+	for _, assigned := range r.Assignments {
+		if assigned.DelegatePending && (pending == "" || assigned.ID < pending) {
+			pending = assigned.ID
+		}
+	}
+	if pending != "" {
+		next = "delegate assignment " + pending
 	}
 	return Status{Slug: r.Slug, State: state, Subject: r.CandidateTip, Next: next}
 }
