@@ -120,6 +120,95 @@ func TestIdeaNewlineNormalization(t *testing.T) {
 	}
 }
 
+func TestIdeaOwnedOccurrence(t *testing.T) {
+	root := newRepo(t)
+	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT98 — active work replaces retired FT97.**\nOccurrences: baseline-01\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(ideasPath(t, root), []byte("- 2026-07-30  hand added"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, code := IdeaCommand([]string{"--owner", "FT98", "--incident", "new-signal", "capture", "all", "the", "words"})
+	if code != 0 || out != "parked: capture all the words\n" {
+		t.Fatalf("owned idea = %q/%d", out, code)
+	}
+	got, err := os.ReadFile(ideasPath(t, root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !regexp.MustCompile(`(?m)^- 2026-07-30  hand added\n- [0-9-]{10}  capture all the words \[occurrence:FT98/new-signal\]$`).Match(got) {
+		t.Fatalf("owned entry = %q", got)
+	}
+}
+
+func TestIdeaHistoricalOwnerAbsentFromCurrentRoadmapRefuses(t *testing.T) {
+	root := newRepo(t)
+	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT98 — retired history.**\nOccurrences: baseline-01\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if out, err := exec.Command("git", "-C", root, "add", RoadmapFile).CombinedOutput(); err != nil {
+		t.Fatalf("stage history: %v: %s", err, out)
+	}
+	if out, err := exec.Command("git", "-C", root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "retire FT98").CombinedOutput(); err != nil {
+		t.Fatalf("commit history: %v: %s", err, out)
+	}
+	if err := os.WriteFile(roadmapPath(t, root), []byte("**FT99 — current.**\nOccurrences: baseline-01\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	before := []byte("- 2026-07-30  existing idea\n")
+	if err := os.WriteFile(ideasPath(t, root), before, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, code := IdeaCommand([]string{"--owner", "FT98", "--incident", "retired-signal", "refused"}); code != 1 {
+		t.Fatalf("historical owner exit = %d, want 1", code)
+	}
+	if after, err := os.ReadFile(ideasPath(t, root)); err != nil || string(after) != string(before) {
+		t.Fatalf("historical owner mutated inbox: %q, %v", after, err)
+	}
+}
+
+func TestIdeaOwnedOccurrenceRefusalsPreserveInbox(t *testing.T) {
+	tests := []struct {
+		name    string
+		roadmap string
+		args    []string
+		code    int
+	}{
+		{"missing incident", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "FT98", "idea"}, 2},
+		{"missing owner", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--incident", "signal", "idea"}, 2},
+		{"repeated owner", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "FT98", "--owner", "FT98", "--incident", "signal", "idea"}, 2},
+		{"repeated incident", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "FT98", "--incident", "signal", "--incident", "other", "idea"}, 2},
+		{"empty owner", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "", "--incident", "signal", "idea"}, 2},
+		{"empty incident", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "FT98", "--incident", "", "idea"}, 2},
+		{"flag-like owner", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "--incident", "signal", "idea"}, 2},
+		{"flag-like incident", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "FT98", "--incident", "--owner", "idea"}, 2},
+		{"malformed owner", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "FT0", "--incident", "signal", "idea"}, 2},
+		{"malformed incident", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "FT98", "--incident", "Bad", "idea"}, 2},
+		{"unknown owner", "**FT98 — active.**\nOccurrences: baseline-01\n", []string{"--owner", "FT99", "--incident", "signal", "idea"}, 1},
+		{"untrusted roadmap", "**FT98 — active.**\nOccurrences: invalid_key\n", []string{"--owner", "FT98", "--incident", "signal", "idea"}, 1},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			root := newRepo(t)
+			if err := os.WriteFile(roadmapPath(t, root), []byte(tc.roadmap), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			before := []byte("- 2026-07-30  existing idea\n")
+			if err := os.WriteFile(ideasPath(t, root), before, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			_, code := IdeaCommand(tc.args)
+			if code != tc.code {
+				t.Fatalf("exit = %d, want %d", code, tc.code)
+			}
+			after, err := os.ReadFile(ideasPath(t, root))
+			if err != nil || string(after) != string(before) {
+				t.Fatalf("inbox changed: %q, %v", after, err)
+			}
+		})
+	}
+}
+
 // TestRoadmapMissing covers the two states a reader could collapse onto one another. An
 // absent file is the maintenance-prompt posture: exit 0 with a pointer to
 // /bench-what-next, never a crash or a bare empty verdict. A zero-byte file is present,

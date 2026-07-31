@@ -23,10 +23,16 @@ import (
 // The text is variadic, so MaxArgs is unbounded; `--` is what makes idea text that
 // begins with a dash expressible.
 var ideaGrammar = usage.Grammar{
-	Cmd:     "bench idea",
-	Help:    `usage: bench idea "<text>"`,
+	Cmd:  "bench idea",
+	Help: `usage: bench idea "<text>"`,
+	Flags: []usage.Flag{
+		{Name: "--owner", HasValue: true, NoEmptyValue: true},
+		{Name: "--incident", HasValue: true, NoEmptyValue: true},
+	},
 	MaxArgs: -1,
 }
+
+var occurrenceOwner = regexp.MustCompile(`^FT[1-9][0-9]*$`)
 
 // roadmapGrammar is the bare `bench roadmap` form. Every argument-bearing invocation
 // is dispatched to the --context form, which declares its own grammar, so this one
@@ -60,9 +66,27 @@ func IdeaCommand(args []string) (string, int) {
 	if strings.TrimSpace(text) == "" {
 		return ideaGrammar.Help + "\n", 2
 	}
+	displayText := text
 	root, err := git.Root()
 	if err != nil {
 		return toon.NotInRepo() + "\n", 1
+	}
+	owner, hasOwner := parsed.Flags["--owner"]
+	incident, hasIncident := parsed.Flags["--incident"]
+	if hasOwner != hasIncident {
+		return toon.MissingArg(ideaGrammar.Cmd, "--owner and --incident") + "\n", 2
+	}
+	if hasOwner {
+		if !occurrenceOwner.MatchString(owner) {
+			return toon.Usage(ideaGrammar.Cmd, "--owner "+owner) + "\n", 2
+		}
+		if !ValidOccurrenceIncident(incident) {
+			return toon.Usage(ideaGrammar.Cmd, "--incident "+incident) + "\n", 2
+		}
+		if err := validateOccurrenceOwner(root, owner); err != nil {
+			return toon.Errorf("cannot validate occurrence owner", err.Error()) + "\n", 1
+		}
+		text += " [occurrence:" + owner + "/" + incident + "]"
 	}
 	file := filepath.Join(root, IdeasFile)
 
@@ -81,7 +105,25 @@ func IdeaCommand(args []string) (string, int) {
 	if _, err := f.WriteString(entry); err != nil {
 		return cannotWriteIdeas(err), 1
 	}
-	return "parked: " + text + "\n", 0
+	return "parked: " + displayText + "\n", 0
+}
+
+func validateOccurrenceOwner(root, owner string) error {
+	c := bounds.Classify(filepath.Join(root, RoadmapFile), bounds.ControlRecordLimit)
+	if c.State != bounds.StateParsed {
+		return fmt.Errorf("%s is not a trusted current roadmap", RoadmapFile)
+	}
+	doc, failures := ParseDocument(c.Data, nil, true)
+	if len(failures) != 0 || len(doc.OccurrenceDiscrepancies) != 0 {
+		return fmt.Errorf("%s is structurally untrusted", RoadmapFile)
+	}
+	for _, row := range doc.Rows {
+		if row.ID != owner {
+			continue
+		}
+		return nil
+	}
+	return fmt.Errorf("owner %s is absent from the current roadmap", owner)
 }
 
 func cannotWriteIdeas(err error) string {

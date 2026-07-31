@@ -207,6 +207,36 @@ func testRuntimeIdeaRoadmap(t *testing.T) {
 	f.WriteFile("IDEAS.md", "- 2026-06-01  hand added")
 	f.Bench("idea", "after handedit").RequireExit(0)
 	contract.RequireIntEqual(t, strings.Count(f.ReadFile("IDEAS.md"), "- "), 2, "idea merged onto a newline-less last line")
+	f.WriteFile("ROADMAP.md", "**FT98 — active.**\nOccurrences: baseline-01\n")
+	owned := f.Bench("idea", "--owner", "FT98", "--incident", "runtime-signal", "--", "-from", "runtime")
+	owned.RequireExit(0)
+	contract.RequireContains(t, owned.Stdout, "parked: -from runtime")
+	contract.RequireFileMatches(t, f, "IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  -from runtime \[occurrence:FT98/runtime-signal\]$`, "owned idea did not append its canonical occurrence token")
+	ownedBefore := f.ReadFile("IDEAS.md")
+	f.Bench("idea", "--owner", "FT99", "--incident", "runtime-signal", "refused").RequireExit(1)
+	if got := f.ReadFile("IDEAS.md"); got != ownedBefore {
+		t.Fatalf("unknown owned idea mutated inbox:\n%s", got)
+	}
+	f.Bench("link").RequireExit(0)
+	linked := contract.RunAt(t, f, f.Root, nil, "bash", filepath.Join(f.Root, ".bench", "bin", "bench.sh"), "idea", "--owner", "FT98", "--incident", "linked-signal", "linked")
+	linked.RequireExit(0)
+	contract.RequireContains(t, linked.Stdout, "parked: linked")
+	contract.RequireFileMatches(t, f, "IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  linked \[occurrence:FT98/linked-signal\]$`, "linked CLI did not append its canonical occurrence token")
+	hostileRoot := filepath.Join(t.TempDir(), "space * repository")
+	if err := os.MkdirAll(hostileRoot, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	hostile := contract.NewFixtureAt(t, hostileRoot, contract.IsolatedEnv(t, hostileRoot))
+	hostile.Git("init", "-q")
+	hostile.WriteFile("ROADMAP.md", "**FT98 — active.**\nOccurrences: baseline-01\n")
+	hostile.Bench("link").RequireExit(0)
+	contract.Mkdir(t, filepath.Join(hostile.Root, "nested"))
+	hostileLinked := contract.RunAt(t, hostile, filepath.Join(hostile.Root, "nested"), nil, "bash", filepath.Join(hostile.Root, ".bench", "bin", "bench.sh"), "idea", "--owner", "FT98", "--incident", "hostile-path", "capture")
+	hostileLinked.RequireExit(0)
+	contract.RequireFileMatches(t, hostile, "IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  capture \[occurrence:FT98/hostile-path\]$`, "hostile linked CLI wrote outside the repository root")
+	if hostile.Exists("nested/IDEAS.md") {
+		t.Fatal("hostile linked CLI created nested inbox")
+	}
 	// A zero-byte ROADMAP.md is present, so it takes the non-absent posture — exit 1
 	// naming the state — rather than the absent file's maintenance prompt above.
 	f.WriteFile("ROADMAP.md", "")
