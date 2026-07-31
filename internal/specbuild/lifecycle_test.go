@@ -327,7 +327,7 @@ func (realOwner) Create(_ context.Context, root, request, label, start string) (
 	}
 	return OwnedWorktree{ID: created.Assignment.ID, Path: created.Path}, nil
 }
-func (realOwner) Release(context.Context, string, string, string, string, string) error { return nil }
+func (realOwner) Release(context.Context, string, string, string, ReleaseEvidence) error { return nil }
 
 type greenGate struct{}
 

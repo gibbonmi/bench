@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gibbonmi/bench/internal/bounds"
+	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"io"
 	"os"
@@ -12,6 +13,125 @@ import (
 	"testing"
 	"time"
 )
+
+func TestReleaseProvisionalRemovesExactRetainedLiveCheckpoint(t *testing.T) {
+	fixture := newLiveProvisionalFixture(t)
+	created := fixture.created
+
+	if head := gitOutput(t, created.Path, "rev-parse", "HEAD"); head != created.Assignment.Start {
+		t.Fatalf("assignment HEAD = %s, want base %s", head, created.Assignment.Start)
+	}
+	if index := gitOutput(t, created.Path, "write-tree"); index != gitOutput(t, fixture.root, "rev-parse", created.Assignment.Start+"^{tree}") {
+		t.Fatalf("assignment index = %s, want base tree", index)
+	}
+	if err := ReleaseProvisional(fixture.root, fixture.request, created.Path, fixture.evidence); err != nil {
+		t.Fatalf("ReleaseProvisional: %v", err)
+	}
+	if _, err := os.Stat(created.Path); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("released worktree remains: %v", err)
+	}
+	if refs := gitOutput(t, fixture.root, "for-each-ref", "--format=%(refname)", "refs/bench/recovery/"); refs != "" {
+		t.Fatalf("exact retained payload created redundant recovery refs: %s", refs)
+	}
+}
+
+type liveProvisionalFixture struct {
+	root, request string
+	created       Creation
+	evidence      ProvisionalEvidence
+}
+
+func newLiveProvisionalFixture(t *testing.T) liveProvisionalFixture {
+	t.Helper()
+	root := newWorktreeRepo(t)
+	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	mustWrite(t, filepath.Join(root, ".gitignore"), []byte("ignored-release.txt\n"), 0o644)
+	gitRun(t, root, "add", ".gitignore")
+	gitRun(t, root, "commit", "-qm", "release ignore fixture")
+	request := "provisional-live"
+	created := mustCreate(t, root, request, "provisional live")
+	mustWrite(t, filepath.Join(created.Path, "provisional.txt"), []byte("checkpoint\n"), 0o644)
+	tree := benchgit.TreeHash(created.Path)
+	checkpoint := gitOutput(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit-tree", tree, "-p", created.Assignment.Start, "-m", "attributed checkpoint")
+	integrated := gitOutput(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit-tree", tree, "-p", created.Assignment.Start, "-m", "integrated candidate")
+	ref := "refs/bench/test-checkpoint/" + created.Assignment.ID
+	integratedRef := "refs/bench/test-candidate/" + created.Assignment.ID
+	gitRun(t, root, "update-ref", ref, checkpoint)
+	gitRun(t, root, "update-ref", integratedRef, integrated)
+	evidence := ProvisionalEvidence{Base: created.Assignment.Start, CheckpointRef: ref, Checkpoint: checkpoint, IntegratedRef: integratedRef, Integrated: integrated}
+	return liveProvisionalFixture{root: root, request: request, created: created, evidence: evidence}
+}
+
+func TestReleaseProvisionalRefusesLiveCheckpointDrift(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		mutate func(*testing.T, *liveProvisionalFixture)
+	}{
+		{"unexplained file", func(t *testing.T, f *liveProvisionalFixture) {
+			mustWrite(t, filepath.Join(f.created.Path, "later.txt"), []byte("later\n"), 0o644)
+		}},
+		{"staged index", func(t *testing.T, f *liveProvisionalFixture) {
+			gitRun(t, f.created.Path, "add", "provisional.txt")
+		}},
+		{"retargeted checkpoint ref", func(t *testing.T, f *liveProvisionalFixture) {
+			gitRun(t, f.root, "update-ref", f.evidence.CheckpointRef, f.evidence.Base, f.evidence.Checkpoint)
+		}},
+		{"retargeted integrated ref", func(t *testing.T, f *liveProvisionalFixture) {
+			gitRun(t, f.root, "update-ref", f.evidence.IntegratedRef, f.evidence.Base, f.evidence.Integrated)
+		}},
+		{"integrated tree", func(t *testing.T, f *liveProvisionalFixture) {
+			gitRun(t, f.root, "update-ref", f.evidence.IntegratedRef, f.evidence.Base, f.evidence.Integrated)
+			f.evidence.Integrated = f.evidence.Base
+		}},
+		{"nondeclared ignored file", func(t *testing.T, f *liveProvisionalFixture) {
+			mustWrite(t, filepath.Join(f.created.Path, "ignored-release.txt"), []byte("ignored\n"), 0o644)
+		}},
+		{"control byte path", func(t *testing.T, f *liveProvisionalFixture) {
+			mustWrite(t, filepath.Join(f.created.Path, "unsafe\npath.txt"), []byte("unsafe\n"), 0o644)
+			tree := benchgit.TreeHash(f.created.Path)
+			checkpoint := gitOutput(t, f.root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit-tree", tree, "-p", f.evidence.Base, "-m", "hostile checkpoint")
+			integrated := gitOutput(t, f.root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit-tree", tree, "-p", f.evidence.Base, "-m", "hostile integration")
+			gitRun(t, f.root, "update-ref", f.evidence.CheckpointRef, checkpoint, f.evidence.Checkpoint)
+			gitRun(t, f.root, "update-ref", f.evidence.IntegratedRef, integrated, f.evidence.Integrated)
+			f.evidence.Checkpoint, f.evidence.Integrated = checkpoint, integrated
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			fixture := newLiveProvisionalFixture(t)
+			tc.mutate(t, &fixture)
+			if err := ReleaseProvisional(fixture.root, fixture.request, fixture.created.Path, fixture.evidence); err == nil {
+				t.Fatal("drifted provisional release succeeded")
+			}
+			if _, err := os.Stat(fixture.created.Path); err != nil {
+				t.Fatalf("refused provisional release removed checkout: %v", err)
+			}
+			stored, ok, err := intent.FindAssignmentByRequest(fixture.root, requestDigest(fixture.request))
+			if err != nil || !ok || stored.State != intent.StateActive {
+				t.Fatalf("refused provisional release mutated assignment: %#v, %v, %v", stored, ok, err)
+			}
+			if refs := gitOutput(t, fixture.root, "for-each-ref", "--format=%(refname)", "refs/bench/recovery/"); refs != "" {
+				t.Fatalf("refused release created recovery refs: %s", refs)
+			}
+		})
+	}
+}
+
+func TestReleaseProvisionalDiscardsDeclaredIgnoredOutputWithoutRecovery(t *testing.T) {
+	fixture := newLiveProvisionalFixture(t)
+	mustMkdirAll(t, filepath.Join(fixture.root, ".bench"), 0o755)
+	mustWrite(t, filepath.Join(fixture.root, ".bench", "build-outputs.json"), []byte("{\"schema\":1,\"paths\":[\"ignored-release.txt\"]}\n"), 0o644)
+	mustWrite(t, filepath.Join(fixture.created.Path, "ignored-release.txt"), []byte("disposable\n"), 0o644)
+
+	if err := ReleaseProvisional(fixture.root, fixture.request, fixture.created.Path, fixture.evidence); err != nil {
+		t.Fatalf("ReleaseProvisional: %v", err)
+	}
+	if _, err := os.Stat(fixture.created.Path); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("released worktree remains: %v", err)
+	}
+	if refs := gitOutput(t, fixture.root, "for-each-ref", "--format=%(refname)", "refs/bench/recovery/"); refs != "" {
+		t.Fatalf("declared output release created redundant recovery refs: %s", refs)
+	}
+}
 
 func TestCreateStampsAssignment(t *testing.T) {
 	root := newWorktreeRepo(t)
@@ -134,7 +254,7 @@ func TestReleaseAndPlanExplicitAcceptUnstampedAssignment(t *testing.T) {
 }
 
 func TestReleaseProvisionalRequiresExactRetainedCleanCheckpoint(t *testing.T) {
-	setup := func(t *testing.T) (string, Creation, string, string, string) {
+	setup := func(t *testing.T) (string, Creation, string, ProvisionalEvidence) {
 		root := newWorktreeRepo(t)
 		t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
 		request := "provisional-" + strings.ReplaceAll(t.Name(), "/", "-")
@@ -144,42 +264,45 @@ func TestReleaseProvisionalRequiresExactRetainedCleanCheckpoint(t *testing.T) {
 		gitRun(t, created.Path, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "-m", "checkpoint")
 		tree := gitOutput(t, created.Path, "rev-parse", "HEAD^{tree}")
 		checkpoint := gitOutput(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit-tree", tree, "-p", created.Assignment.Start, "-m", "attributed checkpoint")
+		integrated := gitOutput(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit-tree", tree, "-p", created.Assignment.Start, "-m", "integrated candidate")
 		ref := "refs/bench/test-checkpoint/" + created.Assignment.ID
+		integratedRef := "refs/bench/test-candidate/" + created.Assignment.ID
 		gitRun(t, root, "update-ref", ref, checkpoint)
-		return root, created, request, ref, checkpoint
+		gitRun(t, root, "update-ref", integratedRef, integrated)
+		return root, created, request, ProvisionalEvidence{Base: created.Assignment.Start, CheckpointRef: ref, Checkpoint: checkpoint, IntegratedRef: integratedRef, Integrated: integrated}
 	}
 
 	t.Run("success and replay", func(t *testing.T) {
-		root, created, request, ref, checkpoint := setup(t)
-		if head := gitOutput(t, created.Path, "rev-parse", "HEAD"); head == checkpoint {
+		root, created, request, evidence := setup(t)
+		if head := gitOutput(t, created.Path, "rev-parse", "HEAD"); head == evidence.Checkpoint {
 			t.Fatal("positive control must use a different assignment commit with the checkpoint tree")
 		}
-		mustNoError(t, ReleaseProvisional(root, request, created.Path, ref, checkpoint))
+		mustNoError(t, ReleaseProvisional(root, request, created.Path, evidence))
 		if _, err := os.Stat(created.Path); !errors.Is(err, os.ErrNotExist) {
 			t.Fatalf("released worktree remains: %v", err)
 		}
-		mustNoError(t, ReleaseProvisional(root, request, created.Path, ref, checkpoint))
+		mustNoError(t, ReleaseProvisional(root, request, created.Path, evidence))
 	})
 
 	for _, tc := range []struct {
 		name   string
-		mutate func(*testing.T, string, Creation, string, string)
+		mutate func(*testing.T, string, Creation, ProvisionalEvidence)
 	}{
-		{"retargeted ref", func(t *testing.T, root string, _ Creation, ref, checkpoint string) {
-			gitRun(t, root, "update-ref", ref, "HEAD", checkpoint)
+		{"retargeted ref", func(t *testing.T, root string, _ Creation, evidence ProvisionalEvidence) {
+			gitRun(t, root, "update-ref", evidence.CheckpointRef, "HEAD", evidence.Checkpoint)
 		}},
-		{"dirty worktree", func(t *testing.T, _ string, created Creation, _, _ string) {
+		{"dirty worktree", func(t *testing.T, _ string, created Creation, _ ProvisionalEvidence) {
 			mustWrite(t, filepath.Join(created.Path, "dirty.txt"), []byte("dirty\n"), 0o644)
 		}},
-		{"index only", func(t *testing.T, _ string, created Creation, _, _ string) {
+		{"index only", func(t *testing.T, _ string, created Creation, _ ProvisionalEvidence) {
 			mustWrite(t, filepath.Join(created.Path, "index.txt"), []byte("index\n"), 0o644)
 			gitRun(t, created.Path, "add", "index.txt")
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root, created, request, ref, checkpoint := setup(t)
-			tc.mutate(t, root, created, ref, checkpoint)
-			if err := ReleaseProvisional(root, request, created.Path, ref, checkpoint); err == nil {
+			root, created, request, evidence := setup(t)
+			tc.mutate(t, root, created, evidence)
+			if err := ReleaseProvisional(root, request, created.Path, evidence); err == nil {
 				t.Fatal("mismatched provisional release succeeded")
 			}
 			if _, err := os.Stat(created.Path); err != nil {

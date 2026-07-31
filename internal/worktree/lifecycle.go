@@ -365,7 +365,7 @@ func executeCleanup(root string, plan CleanupPlan, checkpoint func(string) error
 			return plan, err
 		}
 	}
-	if plan.Action == ActionDiscardRemove {
+	if plan.Action == ActionDiscardRemove || plan.Action == actionReleaseRemove {
 		if err := discardIgnored(plan); err != nil {
 			return plan, err
 		}

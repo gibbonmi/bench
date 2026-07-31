@@ -70,6 +70,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Fixed
 
+- Made spec-build integration release an exact live checkpoint payload after
+  candidate advancement while retaining drifted assignments for safe re-entry.
 - Made freshness source discovery ignore ambient VCS metadata, matching the
   repository's VCS-independent build and keeping gates runnable from nested
   temporary fixture roots.

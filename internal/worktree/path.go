@@ -132,9 +132,15 @@ func ApplyAbandon(root, request, path, fingerprint string) (CleanupPlan, error) 
 	return applied, retainedReleaseError(applied, request, path)
 }
 
-// ReleaseProvisional removes one clean owned assignment whose exact checkpoint remains
-// retained by a durable lifecycle ref, without treating provisional ancestry as landed.
-func ReleaseProvisional(root, requestArg, path, checkpointRef, checkpoint string) error {
+// ProvisionalEvidence identifies the durable commits that already preserve an
+// assignment payload outside its disposable checkout.
+type ProvisionalEvidence struct {
+	Base, CheckpointRef, Checkpoint, IntegratedRef, Integrated string
+}
+
+// ReleaseProvisional removes one owned assignment whose exact payload remains
+// retained by durable checkpoint and integration commits.
+func ReleaseProvisional(root, requestArg, path string, evidence ProvisionalEvidence) error {
 	target, err := canonicalPath(path)
 	if err != nil {
 		return err
@@ -160,14 +166,7 @@ func ReleaseProvisional(root, requestArg, path, checkpointRef, checkpoint string
 		if err := validateCreationBundle(root, assignment); err != nil {
 			return fmt.Errorf("validate provisional release owner: %w", err)
 		}
-		if err := validateProvisionalCheckpoint(root, target, checkpointRef, checkpoint); err != nil {
-			return err
-		}
-		plan, planErr := PlanExplicit(root, target)
-		if planErr != nil {
-			return planErr
-		}
-		if err := validateProvisionalPlan(plan, assignment.ID); err != nil {
+		if _, err := planProvisionalRelease(root, target, assignment.ID, evidence); err != nil {
 			return err
 		}
 		assignment.State = intent.StateCleanupPending
@@ -176,17 +175,7 @@ func ReleaseProvisional(root, requestArg, path, checkpointRef, checkpoint string
 		}
 	}
 	planner := func(path string) (CleanupPlan, error) {
-		plan, planErr := PlanExplicit(root, path)
-		if planErr != nil {
-			return plan, planErr
-		}
-		if validateErr := validateProvisionalPlan(plan, assignment.ID); validateErr != nil {
-			return plan, validateErr
-		}
-		if validateErr := validateProvisionalCheckpoint(root, target, checkpointRef, checkpoint); validateErr != nil {
-			return plan, validateErr
-		}
-		return plan, nil
+		return planProvisionalRelease(root, path, assignment.ID, evidence)
 	}
 	plan, err := planner(target)
 	if err != nil {
@@ -205,24 +194,72 @@ func ReleaseProvisional(root, requestArg, path, checkpointRef, checkpoint string
 	return compactProvisionalAssignment(root, assignment.ID)
 }
 
-func validateProvisionalPlan(plan CleanupPlan, assignmentID string) error {
-	if plan.Action != ActionRemove || plan.Tracked != "clean" || !plan.owned || plan.assignment == nil || plan.assignment.ID != assignmentID {
-		return errors.New("provisional release checkout is not exact and clean; checkout retained")
+func planProvisionalRelease(root, target, assignmentID string, evidence ProvisionalEvidence) (CleanupPlan, error) {
+	plan, err := PlanExplicit(root, target)
+	if err != nil {
+		return plan, err
 	}
-	return nil
+	if !plan.owned || plan.assignment == nil || plan.assignment.ID != assignmentID || plan.Action == ActionRetain {
+		return plan, errors.New("provisional release checkout is not exact and removable; checkout retained")
+	}
+	legacy, err := validateProvisionalEvidence(root, target, evidence)
+	if err != nil {
+		return plan, err
+	}
+	if legacy {
+		if plan.Action != ActionRemove || plan.Tracked != "clean" {
+			return plan, errors.New("provisional release checkout is not exact and removable; checkout retained")
+		}
+		return plan, nil
+	}
+	if plan.Tracked != "dirty" || plan.Action != ActionRecoverRemove && plan.Action != ActionDiscardRemove {
+		return plan, errors.New("provisional release checkout is not exact and removable; checkout retained")
+	}
+	original := plan.Fingerprint
+	plan.Action = actionReleaseRemove
+	plan.Recovery = "none"
+	plan.Fingerprint = fingerprintParts(
+		[]byte("bench-provisional-release/v1"), []byte(original), []byte(evidence.Base),
+		[]byte(evidence.CheckpointRef), []byte(evidence.Checkpoint), []byte(evidence.IntegratedRef), []byte(evidence.Integrated),
+		[]byte(plan.Action),
+	)
+	return plan, nil
 }
 
-func validateProvisionalCheckpoint(root, target, checkpointRef, checkpoint string) error {
-	if checkpointRef == "" || checkpoint == "" {
-		return errors.New("provisional release checkpoint evidence is incomplete")
+func validateProvisionalEvidence(root, target string, evidence ProvisionalEvidence) (bool, error) {
+	if evidence.Base == "" || evidence.CheckpointRef == "" || evidence.Checkpoint == "" || evidence.IntegratedRef == "" || evidence.Integrated == "" {
+		return false, errors.New("provisional release evidence is incomplete")
 	}
-	retained, refErr := git.Output("-C", root, "rev-parse", "--verify", checkpointRef+"^{commit}")
-	headTree, headErr := git.Output("-C", target, "rev-parse", "HEAD^{tree}")
-	checkpointTree, treeErr := git.Output("-C", root, "rev-parse", checkpoint+"^{tree}")
-	if headErr != nil || refErr != nil || treeErr != nil || retained != checkpoint || headTree != checkpointTree {
-		return errors.New("provisional release checkpoint evidence drifted; checkout retained")
+	paths, pathErr := git.Raw("--no-optional-locks", "-C", target, "ls-files", "--cached", "--others", "--exclude-standard", "-z", "--")
+	for record := range strings.SplitSeq(string(paths), "\x00") {
+		if record != "" && !lineSafe(record) {
+			return false, errors.New("provisional release checkout contains an unsafe path; checkout retained")
+		}
 	}
-	return nil
+	retained, refErr := git.Output("-C", root, "rev-parse", "--verify", evidence.CheckpointRef+"^{commit}")
+	head, headErr := git.Output("-C", target, "rev-parse", "HEAD")
+	headTree, headTreeErr := git.Output("-C", target, "rev-parse", "HEAD^{tree}")
+	baseTree, baseTreeErr := git.Output("-C", root, "rev-parse", evidence.Base+"^{tree}")
+	indexTree, indexErr := git.Output("-C", target, "write-tree")
+	checkpointTree, checkpointTreeErr := git.Output("-C", root, "rev-parse", evidence.Checkpoint+"^{tree}")
+	checkpointParent, checkpointParentErr := git.Output("-C", root, "rev-parse", evidence.Checkpoint+"^")
+	integratedRetained, integratedRefErr := git.Output("-C", root, "rev-parse", "--verify", evidence.IntegratedRef+"^{commit}")
+	integratedTree, integratedTreeErr := git.Output("-C", root, "rev-parse", evidence.Integrated+"^{tree}")
+	liveTree := git.TreeHash(target)
+	if pathErr != nil || refErr != nil || headErr != nil || headTreeErr != nil || baseTreeErr != nil || indexErr != nil || checkpointTreeErr != nil || checkpointParentErr != nil || integratedRefErr != nil || integratedTreeErr != nil ||
+		retained != evidence.Checkpoint || checkpointParent != evidence.Base || integratedRetained != evidence.Integrated || checkpointTree != integratedTree || liveTree == "none" || liveTree != checkpointTree {
+		return false, errors.New("provisional release evidence drifted; checkout retained")
+	}
+	if head == evidence.Base {
+		if indexTree != baseTree {
+			return false, errors.New("provisional release evidence drifted; checkout retained")
+		}
+		return false, nil
+	}
+	if indexTree != headTree || headTree != checkpointTree {
+		return false, errors.New("provisional release evidence drifted; checkout retained")
+	}
+	return true, nil
 }
 
 func compactProvisionalAssignment(root, assignmentID string) error {

@@ -185,8 +185,10 @@ func (productionWorktreeOwner) Create(_ context.Context, root, request, label, s
 	return specbuild.OwnedWorktree{ID: created.Assignment.ID, Path: created.Path}, err
 }
 
-func (productionWorktreeOwner) Release(_ context.Context, root, request, path, checkpointRef, checkpoint string) error {
-	return worktree.ReleaseProvisional(root, request, path, checkpointRef, checkpoint)
+func (productionWorktreeOwner) Release(_ context.Context, root, request, path string, evidence specbuild.ReleaseEvidence) error {
+	return worktree.ReleaseProvisional(root, request, path, worktree.ProvisionalEvidence{
+		Base: evidence.Base, CheckpointRef: evidence.CheckpointRef, Checkpoint: evidence.Checkpoint, IntegratedRef: evidence.IntegratedRef, Integrated: evidence.Integrated,
+	})
 }
 
 func (productionWorktreeOwner) PlanAbandon(_ context.Context, root, request, path string) (string, error) {

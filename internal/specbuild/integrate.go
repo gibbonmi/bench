@@ -14,6 +14,11 @@ import (
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
+// ReleaseEvidence identifies the durable commits that preserve an assignment payload.
+type ReleaseEvidence struct {
+	Base, CheckpointRef, Checkpoint, IntegratedRef, Integrated string
+}
+
 const operationLimit = 64
 
 type operation struct{ Command, Request, Input, Result, State string }
@@ -198,7 +203,8 @@ func (s *Service) releaseIntegrated(ctx context.Context, run record, key string,
 	if !ok {
 		return run.status(), errors.New("spec build integrate requires a release-capable worktree owner")
 	}
-	if err := releaser.Release(ctx, s.root, assigned.Request, assigned.Path, assigned.CheckpointRef, assigned.Checkpoint); err != nil {
+	evidence := ReleaseEvidence{Base: assigned.Base, CheckpointRef: assigned.CheckpointRef, Checkpoint: assigned.Checkpoint, IntegratedRef: run.Candidate, Integrated: assigned.Integrated}
+	if err := releaser.Release(ctx, s.root, assigned.Request, assigned.Path, evidence); err != nil {
 		return run.status(), fmt.Errorf("release integrated assignment: %w", err)
 	}
 	assigned.CleanupPending, assigned.Released = false, true

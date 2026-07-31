@@ -56,10 +56,10 @@ type WorktreeOwner interface {
 	Create(context.Context, string, string, string, string) (OwnedWorktree, error)
 }
 
-// ReleaseOwner releases a tree-equivalent clean owned checkout when the exact
-// checkpoint commit remains retained by its lifecycle ref, without requiring landedness.
+// ReleaseOwner releases a tree-equivalent owned checkout when its exact payload
+// remains retained by durable lifecycle commits, without requiring landedness.
 type ReleaseOwner interface {
-	Release(ctx context.Context, root, request, path, checkpointRef, checkpoint string) error
+	Release(ctx context.Context, root, request, path string, evidence ReleaseEvidence) error
 }
 
 // AbandonOwner plans and applies exact recovery-aware owned-worktree cleanup.

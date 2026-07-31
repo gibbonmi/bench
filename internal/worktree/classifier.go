@@ -74,6 +74,7 @@ const (
 	ReasonUnexpectedLock CleanupReason = "unexpected-lock"
 	ReasonOrphaned       CleanupReason = "orphaned"
 )
+const actionReleaseRemove CleanupAction = "release-remove"
 
 var ignoredLstat = os.Lstat
 
