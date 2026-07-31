@@ -162,53 +162,16 @@ func inspectAt(root string, now time.Time) Inspection {
 		gi.Reason = "git directory unavailable"
 		return gi
 	}
-	path := filepath.Join(gitdir, benchgit.GateCacheFile)
-	info, err := os.Lstat(path)
-	if errors.Is(err, os.ErrNotExist) {
-		gi.State = Absent
+	loaded := loadVerdict(filepath.Join(gitdir, benchgit.GateCacheFile), now)
+	gi.State, gi.CacheBytes = loaded.state, loaded.bytes
+	if loaded.reason != "" {
+		gi.Reason = loaded.reason
+	}
+	if gi.State != Ready && gi.State != Pending {
 		return gi
 	}
-	if err != nil {
-		gi.State = Unavailable
-		gi.Reason = "cache metadata unavailable"
-		return gi
-	}
-	if !info.Mode().IsRegular() || info.Mode().Perm() != 0o600 {
-		gi.State = Invalid
-		gi.Reason = "invalid cache metadata"
-		return gi
-	}
-	gi.CacheBytes = int(info.Size())
-	f, err := os.Open(path)
-	if err != nil {
-		gi.State = Unavailable
-		gi.Reason = "cache unavailable"
-		return gi
-	}
-	data, readErr := io.ReadAll(io.LimitReader(f, cacheLimit+1))
-	closeErr := f.Close()
-	if readErr != nil || closeErr != nil {
-		gi.State = Unavailable
-		gi.Reason = "cache unavailable"
-		return gi
-	}
-	if len(data) == 0 || len(data) > cacheLimit {
-		gi.State = Invalid
-		gi.Reason = "invalid cache record"
-		return gi
-	}
-	if data[0] != '{' || (data[len(data)-1] != '}' && (data[len(data)-1] != '\n' || len(data) < 2 || data[len(data)-2] != '}')) {
-		gi.State = Invalid
-		gi.Reason = "invalid cache framing"
-		return gi
-	}
-	var rec verdictRecord
-	if err := strictJSON(data, &rec); err != nil || validateRecordBytes(data, rec, now) != nil {
-		gi.State = Invalid
-		gi.Reason = "invalid cache record"
-		return gi
-	}
-	gi.State, gi.Status, gi.CachedTree = rec.State, rec.Status, rec.Tree
+	rec := loaded.record
+	gi.Status, gi.CachedTree = rec.Status, rec.Tree
 	if rec.State == Pending {
 		held, err := lockHeld(gitdir)
 		if err != nil {
@@ -246,6 +209,52 @@ func inspectAt(root string, now time.Time) Inspection {
 	}
 	gi.ReusableGreen = true
 	return gi
+}
+
+type loadedVerdict struct {
+	record verdictRecord
+	state  State
+	reason string
+	bytes  int
+}
+
+func loadVerdict(path string, now time.Time) loadedVerdict {
+	info, err := os.Lstat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return loadedVerdict{state: Absent}
+	}
+	if err != nil {
+		return loadedVerdict{state: Unavailable, reason: "cache metadata unavailable"}
+	}
+	if !info.Mode().IsRegular() || info.Mode().Perm() != 0o600 {
+		return loadedVerdict{state: Invalid, reason: "invalid cache metadata"}
+	}
+	loaded := loadedVerdict{bytes: int(info.Size())}
+	f, err := os.Open(path)
+	if err != nil {
+		loaded.state, loaded.reason = Unavailable, "cache unavailable"
+		return loaded
+	}
+	data, readErr := io.ReadAll(io.LimitReader(f, cacheLimit+1))
+	closeErr := f.Close()
+	if readErr != nil || closeErr != nil {
+		loaded.state, loaded.reason = Unavailable, "cache unavailable"
+		return loaded
+	}
+	if len(data) == 0 || len(data) > cacheLimit {
+		loaded.state, loaded.reason = Invalid, "invalid cache record"
+		return loaded
+	}
+	if data[0] != '{' || (data[len(data)-1] != '}' && (data[len(data)-1] != '\n' || len(data) < 2 || data[len(data)-2] != '}')) {
+		loaded.state, loaded.reason = Invalid, "invalid cache framing"
+		return loaded
+	}
+	if err := strictJSON(data, &loaded.record); err != nil || validateRecordBytes(data, loaded.record, now) != nil {
+		loaded.state, loaded.reason = Invalid, "invalid cache record"
+		return loaded
+	}
+	loaded.state = loaded.record.State
+	return loaded
 }
 
 // The two rejections strictJSON adds on top of encoding/json are sentinels so a caller

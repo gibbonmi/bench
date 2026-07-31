@@ -17,7 +17,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -235,8 +234,10 @@ func Execute(ctx context.Context, root string, stdout, stderr io.Writer) Result 
 // have reused, which is what makes the gated commit safe to run beside one. Everything else
 // falls through to Execute and pays a real run under the lock.
 func ExecuteReusingFreshGreen(ctx context.Context, root string, stdout, stderr io.Writer) Result {
-	if reuse := Inspect(root); reuse.ReusableGreen {
-		return reusedGreenResult(stdout, reuse)
+	if plan, err := buildSubject(root); err == nil {
+		if reuse := reusableEvidence(root, plan, time.Now()); reuse.ReusableGreen {
+			return reusedGreenResult(stdout, reuse)
+		}
 	}
 	return Execute(ctx, root, stdout, stderr)
 }
@@ -266,33 +267,41 @@ func notifyGateSignals(ctx context.Context) (context.Context, func()) {
 }
 
 func executeWithEngine(ctx context.Context, root string, stdout, stderr io.Writer, engine gateEngine) Result {
-	return executeWithEngineAfterAcquire(ctx, root, stdout, stderr, engine, nil, reuseFreshGreen)
+	return executeSubjectWithEngine(ctx, root, root, stdout, stderr, engine, nil, reuseFreshGreen,
+		func() (subject, error) { return engine.BuildSubject(root) },
+		func() (subject, error) { return engine.PostRunSubject(root) })
 }
 
 func executeWithEngineAfterAcquire(ctx context.Context, root string, stdout, stderr io.Writer, engine gateEngine, arm postAcquireContextArm, mode runMode) Result {
-	plan, err := engine.BuildSubject(root)
+	return executeSubjectWithEngine(ctx, root, root, stdout, stderr, engine, arm, mode,
+		func() (subject, error) { return engine.BuildSubject(root) },
+		func() (subject, error) { return engine.PostRunSubject(root) })
+}
+
+func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot string, stdout, stderr io.Writer, engine gateEngine, arm postAcquireContextArm, mode runMode, build, postRun func() (subject, error)) Result {
+	plan, err := build()
 	if err != nil {
-		return operationalWithEngine(engine, root, 0, stderr, "gate subject unavailable")
+		return operationalWithEngine(engine, storageRoot, 0, stderr, "gate subject unavailable")
 	}
 	if plan.Resolution.Kind == None {
 		fmt.Fprintln(stderr, "no gate found: add an executable .bench/gate.sh or set BENCH_GATE")
-		return Result{GateExit: 3, ActionExit: 3, Inspection: inspectAt(root, engine.Now())}
+		return Result{GateExit: 3, ActionExit: 3, Inspection: inspectAt(storageRoot, engine.Now())}
 	}
-	gitdir, err := engine.GitDir(root)
+	gitdir, err := engine.GitDir(storageRoot)
 	if err != nil {
-		return operationalWithEngine(engine, root, 0, stderr, "git directory unavailable")
+		return operationalWithEngine(engine, storageRoot, 0, stderr, "git directory unavailable")
 	}
 	lock, err := engine.OpenLock(filepath.Join(gitdir, "bench-gate.lock"))
 	if err != nil {
-		persistInterruptedIfGreen(engine, root, gitdir, plan)
-		return operationalWithEngine(engine, root, 0, stderr, "gate lock unavailable")
+		persistInterruptedIfGreen(engine, storageRoot, gitdir, plan)
+		return operationalWithEngine(engine, storageRoot, 0, stderr, "gate lock unavailable")
 	}
 	defer lock.Close()
 	if err := engine.Acquire(lock); err != nil {
-		persistInterruptedIfGreen(engine, root, gitdir, plan)
+		persistInterruptedIfGreen(engine, storageRoot, gitdir, plan)
 		fmt.Fprintln(stderr, "gate execution already in progress")
 		writeOwnerDiagnostic(stderr, filepath.Join(gitdir, "bench-gate-owner"))
-		inspection := inspectAt(root, engine.Now())
+		inspection := inspectAt(storageRoot, engine.Now())
 		inspection.ReusableGreen = false
 		return Result{ActionExit: 1, Inspection: inspection}
 	}
@@ -305,88 +314,69 @@ func executeWithEngineAfterAcquire(ctx context.Context, root string, stdout, std
 	ownerPath := filepath.Join(gitdir, "bench-gate-owner")
 	defer func() { _ = engine.Remove(ownerPath) }()
 	if err := engine.WriteFile(ownerPath, ownerRecord(engine.Now()), 0o600); err != nil {
-		return operationalWithEngine(engine, root, 0, stderr, "gate owner persistence failed")
+		return operationalWithEngine(engine, storageRoot, 0, stderr, "gate owner persistence failed")
 	}
-	underLock, err := engine.BuildSubject(root)
+	underLock, err := build()
 	if err != nil || !sameSubject(plan, underLock) {
-		return operationalWithEngine(engine, root, 0, stderr, "gate subject changed before execution")
+		return operationalWithEngine(engine, storageRoot, 0, stderr, "gate subject changed before execution")
 	}
 	// A reusable green is answered from the record without touching it: re-recording the
 	// verdict would push RecordedAt forward on every read and make the freshness window
 	// unbounded. The check sits ahead of the pending replace so a reuse returns with nothing
 	// written — no pending record to leave behind, no verdict to restore.
 	if mode == reuseFreshGreen {
-		if reuse := inspectAt(root, engine.Now()); reuse.ReusableGreen {
+		if reuse := reusableEvidence(storageRoot, plan, engine.Now()); reuse.ReusableGreen {
 			return reusedGreenResult(stdout, reuse)
 		}
 	}
 	pending := interruptedRecord(plan, engine.Now())
 	if err := durableReplaceWithEngine(engine, gitdir, pending); err != nil {
 		_ = durableReplaceWithEngine(engine, gitdir, pending)
-		return operationalWithEngine(engine, root, 0, stderr, "gate pending persistence failed")
+		return operationalWithEngine(engine, storageRoot, 0, stderr, "gate pending persistence failed")
 	}
 	runCtx, cancelRun := bounds.ContextCause(ctx, gateTimeout, errGateTimeout)
 	defer cancelRun()
-	rc := runCaptured(runCtx, root, plan, stdout, stderr)
+	rc := runCaptured(runCtx, runtimeRoot, plan, stdout, stderr)
 	if ctx.Err() != nil {
-		return Result{GateExit: rc, ActionExit: rc, Inspection: inspectAt(root, engine.Now())}
+		return Result{GateExit: rc, ActionExit: rc, Inspection: inspectAt(storageRoot, engine.Now())}
 	}
 	if errors.Is(context.Cause(runCtx), errGateTimeout) {
 		fmt.Fprintln(stderr, "gate: timeout")
+		if err := invalidateEvidence(storageRoot, plan); err != nil {
+			return operationalWithEngine(engine, storageRoot, 124, stderr, "gate evidence invalidation failed")
+		}
 		ready := verdictRecord{Schema: 1, State: Ready, Status: "timeout", Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: engine.Now().UTC().Truncate(time.Second).Format(time.RFC3339)}
 		if err := durableReplaceWithEngine(engine, gitdir, ready); err != nil {
 			_ = durableReplaceWithEngine(engine, gitdir, pending)
-			return operationalWithEngine(engine, root, 124, stderr, "gate timeout persistence failed")
+			return operationalWithEngine(engine, storageRoot, 124, stderr, "gate timeout persistence failed")
 		}
-		return Result{GateExit: 124, ActionExit: 124, Inspection: inspectAt(root, engine.Now())}
+		return Result{GateExit: 124, ActionExit: 124, Inspection: inspectAt(storageRoot, engine.Now())}
 	}
-	after, err := engine.PostRunSubject(root)
+	after, err := postRun()
 	if err != nil || !sameSubject(plan, after) {
 		fmt.Fprintln(stderr, "gate subject changed during execution")
-		return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(root, engine.Now())}
+		return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
 	}
 	status := "red"
 	if rc == 0 {
 		status = "green"
 	}
-	ready := verdictRecord{Schema: 1, State: Ready, Status: status, Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: engine.Now().UTC().Truncate(time.Second).Format(time.RFC3339)}
+	recordedAt := engine.Now()
+	ready := verdictRecord{Schema: 1, State: Ready, Status: status, Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: recordedAt.UTC().Truncate(time.Second).Format(time.RFC3339)}
+	if status == "green" {
+		if err := retainGreen(storageRoot, plan, recordedAt); err != nil {
+			fmt.Fprintln(stderr, "gate evidence persistence failed")
+			return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
+		}
+	} else if err := invalidateEvidence(storageRoot, plan); err != nil {
+		return operationalWithEngine(engine, storageRoot, rc, stderr, "gate evidence invalidation failed")
+	}
 	if err := durableReplaceWithEngine(engine, gitdir, ready); err != nil {
 		_ = durableReplaceWithEngine(engine, gitdir, pending)
 		fmt.Fprintln(stderr, "gate final persistence failed")
-		return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(root, engine.Now())}
+		return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
 	}
-	return Result{GateExit: rc, ActionExit: rc, Inspection: inspectAt(root, engine.Now())}
-}
-
-func ownerRecord(now time.Time) []byte {
-	return []byte(strconv.Itoa(os.Getpid()) + " " + now.UTC().Truncate(time.Second).Format(time.RFC3339) + "\n")
-}
-
-func writeOwnerDiagnostic(stderr io.Writer, path string) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return
-	}
-	fields := strings.Fields(string(data))
-	if len(fields) != 2 {
-		return
-	}
-	pid, err := strconv.Atoi(fields[0])
-	if err != nil || pid <= 0 {
-		return
-	}
-	if _, err := time.Parse(time.RFC3339, fields[1]); err != nil {
-		return
-	}
-	liveness := "alive"
-	if err := syscall.Kill(pid, 0); err != nil && err != syscall.EPERM {
-		liveness = "not alive"
-	}
-	fmt.Fprintf(stderr, "gate owner: pid %d (%s)\n", pid, liveness)
-}
-
-func interruptedRecord(plan subject, now time.Time) verdictRecord {
-	return verdictRecord{Schema: 1, State: Pending, Tree: plan.Tree, Oracle: plan.Oracle, StartedAt: now.UTC().Truncate(time.Second).Format(time.RFC3339), OwnerPID: os.Getpid()}
+	return Result{GateExit: rc, ActionExit: rc, Inspection: inspectAt(storageRoot, engine.Now())}
 }
 
 func operational(root string, gateExit int, stderr io.Writer, msg string) Result {
@@ -398,50 +388,4 @@ func operationalWithEngine(engine gateEngine, root string, gateExit int, stderr 
 	inspection := inspectAt(root, engine.Now())
 	inspection.ReusableGreen = false
 	return Result{GateExit: gateExit, ActionExit: 1, Inspection: inspection}
-}
-
-func sameSubject(a, b subject) bool {
-	return a.Tree == b.Tree && a.Oracle == b.Oracle && a.Resolution == b.Resolution && a.Closed == b.Closed && a.Reason == b.Reason
-}
-
-func runCaptured(ctx context.Context, root string, s subject, stdout, stderr io.Writer) int {
-	return runResolved(ctx, root, s.Resolution, s.Env, controlSafeWriter{stdout}, controlSafeWriter{stderr}, true).Code
-}
-
-func runResolved(ctx context.Context, root string, res Resolution, env []string, stdout, stderr io.Writer, processGroup bool) processGroupResult {
-	cmd := res.command(root)
-	if cmd == nil {
-		return processGroupResult{Code: 3}
-	}
-	cmd.Dir, cmd.Stdout, cmd.Stderr = root, stdout, stderr
-	cmd.Env = append([]string(nil), env...)
-	if processGroup {
-		return runProcessGroupCommand(ctx, cmd)
-	}
-	if err := cmd.Run(); err != nil {
-		if cmd.ProcessState != nil {
-			if code := cmd.ProcessState.ExitCode(); code > 0 {
-				return processGroupResult{Code: code}
-			}
-		}
-		return processGroupResult{Code: 1, StartErr: err}
-	}
-	return processGroupResult{}
-}
-
-// controlSafeWriter preserves gate output while removing C0 bytes that can execute
-// terminal controls. Newline, carriage return, and tab remain ordinary formatting.
-type controlSafeWriter struct{ io.Writer }
-
-func (w controlSafeWriter) Write(p []byte) (int, error) {
-	safe := make([]byte, 0, len(p))
-	for _, b := range p {
-		if (b >= 0x20 && b != 0x7f) || b == '\n' || b == '\r' || b == '\t' {
-			safe = append(safe, b)
-		}
-	}
-	if _, err := w.Writer.Write(safe); err != nil {
-		return 0, err
-	}
-	return len(p), nil
 }

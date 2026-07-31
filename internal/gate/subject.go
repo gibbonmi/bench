@@ -24,23 +24,17 @@ import (
 var envNameRE = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 
 type identityCollector struct {
-	w          io.Writer
-	entries    int
-	entryLimit int
-	bytes      int64
+	w                         io.Writer
+	entries                   int
+	entryLimit                int
+	bytes                     int64
+	runtimeRoot, identityRoot string
 }
 
-// defaultManifestEntryLimit caps how many filesystem entries the identity collector
-// will hash while fingerprinting the gate's declared inputs — a resource guard so a
-// declared path holding an unbounded tree cannot make identity computation run away.
-// Its exact value is pinned by an in-package test.
+// defaultManifestEntryLimit bounds declared-input fingerprinting.
 const defaultManifestEntryLimit = 100000
 
-// manifestEntryLimit resolves the effective entry limit. BENCH_GATE_ENTRY_LIMIT may
-// only *lower* it (a test seam that lets the boundary proof run at tiny scale); a lower
-// limit opens the subject sooner, which only disables verdict reuse — it can never let a
-// stale green be reused — so the override is fail-safe and ignored when it would raise
-// the ceiling.
+// manifestEntryLimit accepts only a lower fail-safe test override.
 func manifestEntryLimit() int {
 	if v := os.Getenv("BENCH_GATE_ENTRY_LIMIT"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n >= 0 && n < defaultManifestEntryLimit {
@@ -50,12 +44,15 @@ func manifestEntryLimit() int {
 	return defaultManifestEntryLimit
 }
 
-func buildSubject(root string) (subject, error) {
-	root, err := filepath.EvalSymlinks(root)
+func buildSubject(root string) (subject, error) { return buildSubjectFor(root, root) }
+
+func buildSubjectFor(root, identityRoot string) (subject, error) {
+	root, err := canonicalSubjectRoot(root)
 	if err != nil {
 		return subject{}, err
 	}
-	if root, err = filepath.Abs(root); err != nil {
+	identityRoot, err = canonicalSubjectRoot(identityRoot)
+	if err != nil {
 		return subject{}, err
 	}
 	tree := benchgit.TreeHash(root)
@@ -70,10 +67,10 @@ func buildSubject(root string) (subject, error) {
 		s.Closed, s.Reason = false, reason
 	}
 	h := sha256.New()
-	for _, value := range []string{policyVersion, root, tree, resolutionName(res.Kind), res.Command, pathEnv, manifestIdentity} {
+	for _, value := range []string{policyVersion, identityRoot, tree, resolutionName(res.Kind), res.Command, pathEnv, manifestIdentity} {
 		frame(h, value)
 	}
-	c := &identityCollector{w: h, entryLimit: manifestEntryLimit()}
+	c := &identityCollector{w: h, entryLimit: manifestEntryLimit(), runtimeRoot: root, identityRoot: identityRoot}
 	if res.Kind != None {
 		if err := c.hashResolution(root, res, pathEnv); err != nil {
 			s.open("launcher closure unavailable")
@@ -109,14 +106,12 @@ func buildSubject(root string) (subject, error) {
 	s.Oracle = hex.EncodeToString(h.Sum(nil))
 	return s, nil
 }
-
 func (s *subject) open(reason string) {
 	if s.Closed {
 		s.Closed = false
 		s.Reason = reason
 	}
 }
-
 func loadManifest(root string) (*manifest, string, string) {
 	path := filepath.Join(root, ".bench", "gate-inputs.json")
 	f, err := os.Open(path)
@@ -167,7 +162,6 @@ func loadManifest(root string) (*manifest, string, string) {
 	sum := sha256.Sum256(canonical)
 	return &m, hex.EncodeToString(sum[:]), reason
 }
-
 func hasUnsafeText(s string) bool {
 	for _, r := range s {
 		if r < 0x20 || r == 0x7f {
@@ -176,12 +170,10 @@ func hasUnsafeText(s string) bool {
 	}
 	return !utf8.ValidString(s)
 }
-
 func frame(w io.Writer, value string) {
 	_, _ = fmt.Fprintf(w, "%d:", len(value))
 	_, _ = io.WriteString(w, value)
 }
-
 func (c *identityCollector) addEntry() error {
 	c.entries++
 	if c.entries > c.entryLimit {
@@ -189,7 +181,6 @@ func (c *identityCollector) addEntry() error {
 	}
 	return nil
 }
-
 func (c *identityCollector) copyFile(path string) error {
 	f, err := os.Open(path)
 	if err != nil {
@@ -209,7 +200,6 @@ func (c *identityCollector) copyFile(path string) error {
 	}
 	return nil
 }
-
 func (c *identityCollector) hashResolution(root string, resolution Resolution, pathEnv string) error {
 	tools := []string{}
 	switch resolution.Kind {
@@ -233,7 +223,6 @@ func (c *identityCollector) hashResolution(root string, resolution Resolution, p
 	}
 	return nil
 }
-
 func (c *identityCollector) hashRepoPath(root, rel string) error {
 	path := filepath.Join(root, filepath.FromSlash(rel))
 	if err := confinedPath(root, path); err != nil {
@@ -241,7 +230,6 @@ func (c *identityCollector) hashRepoPath(root, rel string) error {
 	}
 	return c.hashTree(path, root, 0)
 }
-
 func (c *identityCollector) hashTree(path, root string, depth int) error {
 	if depth > 64 {
 		return errors.New("declared path symlink depth limit")
@@ -282,7 +270,6 @@ func (c *identityCollector) hashTree(path, root string, depth int) error {
 		}
 	})
 }
-
 func confinedPath(root, path string) error {
 	resolved, err := filepath.EvalSymlinks(path)
 	if err != nil {
@@ -294,7 +281,6 @@ func confinedPath(root, path string) error {
 	}
 	return nil
 }
-
 func (c *identityCollector) hashExecutable(root, name, pathEnv string, confined bool, depth int) error {
 	if depth > 64 {
 		return errors.New("launcher hop limit")
@@ -322,7 +308,7 @@ func (c *identityCollector) hashExecutable(root, name, pathEnv string, confined 
 	if err := c.addEntry(); err != nil {
 		return err
 	}
-	frame(c.w, resolved)
+	frame(c.w, c.identityPath(resolved))
 	frame(c.w, info.Mode().String())
 	if err := c.copyFile(resolved); err != nil {
 		return err
@@ -353,7 +339,6 @@ func (c *identityCollector) hashExecutable(root, name, pathEnv string, confined 
 	}
 	return c.hashExecutable(root, words[0], pathEnv, false, depth+1)
 }
-
 func (c *identityCollector) hashLinkChain(path string, depth int) error {
 	seen := map[string]bool{}
 	for hop := depth; hop <= 64; hop++ {
@@ -369,7 +354,7 @@ func (c *identityCollector) hashLinkChain(path string, depth int) error {
 		if err := c.addEntry(); err != nil {
 			return err
 		}
-		frame(c.w, absolute)
+		frame(c.w, c.identityPath(absolute))
 		frame(c.w, info.Mode().String())
 		if info.Mode()&os.ModeSymlink == 0 {
 			return nil
@@ -386,6 +371,21 @@ func (c *identityCollector) hashLinkChain(path string, depth int) error {
 		}
 	}
 	return errors.New("symlink hop limit")
+}
+func (c *identityCollector) identityPath(path string) string {
+	rel, err := filepath.Rel(c.runtimeRoot, path)
+	if err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+		return filepath.Join(c.identityRoot, rel)
+	}
+	return path
+}
+
+func canonicalSubjectRoot(root string) (string, error) {
+	resolved, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Abs(resolved)
 }
 
 func resolveTool(root, name, pathEnv string) (string, error) {

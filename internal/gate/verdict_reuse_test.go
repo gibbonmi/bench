@@ -162,3 +162,154 @@ func TestNonReusableSubjectsPayARealRun(t *testing.T) {
 		})
 	}
 }
+
+func TestInspectTreeNeverRunsGate(t *testing.T) {
+	root := reusableEvidenceRepo(t, 0)
+	tree := gitOutput(t, root, "write-tree")
+	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
+		t.Fatalf("seed execution = %+v, want green", got)
+	}
+	if got := InspectTree(root, tree); !got.ReusableGreen {
+		t.Fatalf("bootstrap inspection = %+v, want retained exact green", got)
+	}
+	if got := gateRunCount(t, root); got != 1 {
+		t.Fatalf("bootstrap gate runs = %d, want 1", got)
+	}
+}
+
+func reusableEvidenceRepo(t *testing.T, exit int) string {
+	t.Helper()
+	root := reuseMarkerRepo(t, exit, `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
+	gitRun(t, root, "add", ".")
+	gitRun(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "-m", "subject")
+	return root
+}
+
+func TestExecuteTreeRunsProspectiveWrapper(t *testing.T) {
+	root := reusableEvidenceRepo(t, 0)
+	writeGateTestFile(t, root, ".bench/gate.sh", "#!/usr/bin/env bash\ngitdir=\"$(git rev-parse --git-common-dir)\"\nprintf prospective > \"$gitdir/prospective-run\"\nprintf run >> \"$gitdir/prospective-runs\"\n", 0o755)
+	gitRun(t, root, "add", ".bench/gate.sh")
+	tree := gitOutput(t, root, "write-tree")
+	gitRun(t, root, "reset", "--hard", "HEAD")
+	if got := ExecuteTree(context.Background(), root, tree, io.Discard, io.Discard); got.ActionExit != 0 {
+		t.Fatalf("prospective execution = %+v, want green", got)
+	}
+	worktreeGitDir := gitOutput(t, root, "rev-parse", "--absolute-git-dir")
+	if got, err := os.ReadFile(filepath.Join(worktreeGitDir, "prospective-run")); err != nil || string(got) != "prospective" {
+		t.Fatalf("prospective wrapper output = %q, %v; want prospective", got, err)
+	}
+	if got := InspectTree(root, tree); !got.ReusableGreen {
+		t.Fatalf("prospective evidence = %+v, want reusable green", got)
+	}
+	gitdir := gitOutput(t, root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	if got := evidenceFiles(t, gitdir); len(got) != 1 {
+		t.Fatalf("retained evidence after one prospective execution = %v, want one record", got)
+	}
+	if got := ExecuteTree(context.Background(), root, tree, io.Discard, io.Discard); got.ActionExit != 0 {
+		t.Fatalf("second prospective execution = %+v, want reuse", got)
+	}
+	if got := evidenceFiles(t, gitdir); len(got) != 1 {
+		t.Fatalf("retained evidence after repeated prospective execution = %v, want one stable record", got)
+	}
+	if got, err := os.ReadFile(filepath.Join(gitdir, "prospective-runs")); err != nil || string(got) != "run" {
+		t.Fatalf("prospective wrapper runs = %q, %v; want one run", got, err)
+	}
+}
+
+func TestValidateProjectGreenRequiresTipMarkerAndClosedSubject(t *testing.T) {
+	root := reusableEvidenceRepo(t, 0)
+	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
+		t.Fatalf("seed execution = %+v, want green", got)
+	}
+	branch := gitOutput(t, root, "branch", "--show-current")
+	gitRun(t, root, "update-ref", "refs/bench/green/"+branch, "HEAD")
+	if got := ValidateProjectGreen(root, branch); !got.ReusableGreen {
+		t.Fatalf("matching project-green = %+v, want reusable", got)
+	}
+	gitRun(t, root, "update-ref", "refs/bench/green/not-the-working-branch", "HEAD")
+	if got := ValidateProjectGreen(root, "not-the-working-branch"); got.ReusableGreen || got.Reason != "working branch changed" {
+		t.Fatalf("wrong-branch project-green = %+v, want branch refusal", got)
+	}
+	gitRun(t, root, "commit", "--allow-empty", "-q", "-m", "advance")
+	if got := ValidateProjectGreen(root, branch); got.ReusableGreen {
+		t.Fatalf("advanced tip project-green = %+v, want refusal", got)
+	}
+	gitRun(t, root, "update-ref", "refs/bench/green/"+branch, "HEAD")
+	if err := os.Remove(filepath.Join(root, ".bench", "gate-inputs.json")); err != nil {
+		t.Fatal(err)
+	}
+	if got := ValidateProjectGreen(root, branch); got.ReusableGreen {
+		t.Fatalf("open subject project-green = %+v, want refusal", got)
+	}
+}
+
+func TestEvidenceDoesNotReuseLatestProjectionOrRed(t *testing.T) {
+	root := reusableEvidenceRepo(t, 0)
+	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
+		t.Fatalf("seed execution = %+v, want green", got)
+	}
+	plan := mustSubject(t, root)
+	gitdir := gitOutput(t, root, "rev-parse", "--absolute-git-dir")
+	red := verdictRecord{Schema: 1, State: Ready, Status: "red", Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: time.Now().UTC().Truncate(time.Second).Format(time.RFC3339)}
+	if err := durableReplace(gitdir, red); err != nil {
+		t.Fatal(err)
+	}
+	if got := InspectTree(root, plan.Tree); !got.ReusableGreen {
+		t.Fatalf("retained green became dependent on latest projection: %+v", got)
+	}
+	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
+		t.Fatalf("retained green execution = %+v, want reuse", got)
+	}
+	if got := gateRunCount(t, root); got != 1 {
+		t.Fatalf("gate runs = %d, want 1 after latest projection red", got)
+	}
+}
+
+func TestRetainedEvidenceSurvivesHistoryOnlyAdvance(t *testing.T) {
+	root := reusableEvidenceRepo(t, 0)
+	tree := gitOutput(t, root, "write-tree")
+	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
+		t.Fatalf("seed execution = %+v, want green", got)
+	}
+	gitRun(t, root, "commit", "--allow-empty", "-q", "-m", "history only")
+	if got := InspectTree(root, tree); !got.ReusableGreen {
+		t.Fatalf("history-only advance invalidated retained evidence: %+v", got)
+	}
+	if got := gateRunCount(t, root); got != 1 {
+		t.Fatalf("history-only inspection gate runs = %d, want 1", got)
+	}
+}
+
+func TestForcedRedInvalidatesRetainedGreen(t *testing.T) {
+	root := gateTestRepo(t, "#!/usr/bin/env bash\necho run >> .git/runs\ntest ! -f .git/force-red\n", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
+	gitRun(t, root, "add", ".")
+	gitRun(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "-m", "subject")
+	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
+		t.Fatalf("green execution = %+v, want green", got)
+	}
+	writeGateTestFile(t, root, ".git/force-red", "\n", 0o600)
+	if got := RunCommand([]string{"--fresh", root}, io.Discard, io.Discard); got == 0 {
+		t.Fatal("forced red execution unexpectedly passed")
+	}
+	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit == 0 {
+		t.Fatalf("normal execution reused the invalidated green: %+v", got)
+	}
+	if got := gateRunCount(t, root); got != 3 {
+		t.Fatalf("gate runs = %d, want 3 after green, forced red, and normal red", got)
+	}
+}
+
+func evidenceFiles(t *testing.T, gitdir string) []string {
+	t.Helper()
+	entries, err := os.ReadDir(filepath.Join(gitdir, "bench-gate-evidence"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	files := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		if entry.Type().IsRegular() {
+			files = append(files, entry.Name())
+		}
+	}
+	return files
+}
