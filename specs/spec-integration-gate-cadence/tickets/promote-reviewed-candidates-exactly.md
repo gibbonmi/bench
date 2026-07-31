@@ -1,6 +1,6 @@
 # Promote reviewed candidates exactly
 
-Blocked by: Retain subject-addressed gate evidence, Recover and abandon runs
+Blocked by: Retain subject-addressed gate evidence, Plan and apply abandonment
 
 Ownership fence: `internal/specbuild`, `tests/canary/spec-build-lifecycle`
 Assumptions: the gate owner can authorize an unpublished exact prospective tree
