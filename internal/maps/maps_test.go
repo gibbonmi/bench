@@ -762,7 +762,8 @@ func TestActiveRowsCountsSilentShapingMap(t *testing.T) {
 		t.Fatal(err)
 	}
 	rows, count, state := ActiveRows(root)
-	if state != bounds.StateParsed || len(rows) != 0 || count != 1 {
-		t.Fatalf("ActiveRows = (%#v, %d, %s), want no rows, count 1, parsed", rows, count, state)
+	want := [][]any{{"silent", "Not yet specified", "fog", "shaping", ""}}
+	if state != bounds.StateParsed || !reflect.DeepEqual(rows, want) || count != 1 {
+		t.Fatalf("ActiveRows = (%#v, %d, %s), want (%#v, 1, parsed)", rows, count, state, want)
 	}
 }

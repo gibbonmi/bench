@@ -58,6 +58,24 @@ func TestAXIMapsFogAndInvalidCountOnce(t *testing.T) {
 	}
 }
 
+func TestAXIMapsEmptyFogShapingCountAgreesWithListing(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	f := contract.NewFixture(t)
+	f.WriteFile("decisions/silent.md", activeMapDocument("shaping", "", "Resolved.", "Resolved.", "Resolved."))
+
+	rows := f.Bench("maps")
+	rows.RequireExit(0)
+	requireAXIFirstLine(t, rows.Stdout, "maps[1]{map,title,type,state,blockers}:")
+	requireAXILine(t, rows.Stdout, "  silent,Not yet specified,fog,shaping,\"\"")
+
+	count := f.Bench("maps", "--count")
+	count.RequireExit(0)
+	if got := strings.TrimSpace(count.Stdout); got != "1" {
+		t.Fatalf("maps --count = %q, want 1", got)
+	}
+}
+
 func TestAXIMapsFailClosedCandidatesAndAbsentDirectory(t *testing.T) {
 	t.Parallel()
 	contract.SkipIfSubjectBenchMissing(t)

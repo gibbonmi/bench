@@ -95,7 +95,7 @@ func projectedRows(name string, m DecisionMap) [][]any {
 		}
 		rows = append(rows, []any{name, ticket.Title, ticket.Type, state, blockers})
 	}
-	if len(rows) == 0 && m.Status == "shaping" && strings.TrimSpace(m.Fog) != "" {
+	if len(rows) == 0 && m.Status == "shaping" {
 		rows = append(rows, []any{name, "Not yet specified", "fog", "shaping", ""})
 	}
 	return rows
