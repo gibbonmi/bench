@@ -2,6 +2,9 @@
 
 Blocked by: Checkpoint and integrate attributed patches
 
+Ownership fence: `internal/specbuild`
+Assumptions: checkpoint and integration provenance remain durable and queryable
+
 ## What to build
 
 Extend `internal/specbuild` with exact-candidate three-axis review receipts,
@@ -16,4 +19,3 @@ repairs remain ordinary assignments.
 - [ ] [R25-R28] Every external mutation is recoverable and idempotent, abandon preserves unlanded work before owned cleanup, and every mutator shares fail-closed preconditions.
 - [ ] [R33] Full status resolves retained assignment, checkpoint, cleanup, review, disposition, and digest relationships without leaking receipt bodies.
 - [ ] [R57] SIGINT during long lifecycle operations leaves recoverable state and no surviving child process.
-

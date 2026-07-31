@@ -2,6 +2,9 @@
 
 Blocked by: Promote reviewed candidates exactly
 
+Ownership fence: `internal/spec`, `cmd/bench`, `internal/contract/runtime`
+Assumptions: internal/specbuild exposes the complete lifecycle without leaking record fields
+
 ## What to build
 
 Expose the eight-command `bench spec build` family through thin `internal/spec`
@@ -16,4 +19,3 @@ the adapter; lifecycle state and Git mutation stay in `internal/specbuild`.
 - [ ] [R40] A red/repair/green runtime trace pays no ticket gate and requires a fresh composed review.
 - [ ] [R53, R55-R56] Flag values and `--` parse literally; control text cannot split output; nested cwd and both supported wrappers resolve one common-directory run.
 - [ ] [R57] Missing Git, gate, or real binary reports one actionable recovery route without unsafe mutation.
-

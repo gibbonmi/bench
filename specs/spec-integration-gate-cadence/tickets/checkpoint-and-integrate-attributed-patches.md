@@ -2,6 +2,9 @@
 
 Blocked by: Start runs and assign frontier tickets
 
+Ownership fence: `internal/specbuild`
+Assumptions: Start and Assign persist the exact candidate and assignment facts
+
 ## What to build
 
 Extend `internal/specbuild` with canonical bounded receipt validation,
@@ -16,4 +19,3 @@ delegate-supplied evidence never becomes project-green evidence.
 - [ ] [R16-R20] Integrate accepts verified checkpoints, replays unchanged disjoint siblings, refuses overlap or drift without mutation, uses compare-and-swap, and resumes release without replaying twice.
 - [ ] [R54] The final-newline receipt posture is deterministic and malformed framing has one stable refusal.
 - [ ] An independent probe varies mutation kind across omission, substitution, reordering, or duplication rather than repeating the delegate's defect class.
-

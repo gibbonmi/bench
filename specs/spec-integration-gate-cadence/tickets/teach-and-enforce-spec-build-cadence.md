@@ -2,6 +2,9 @@
 
 Blocked by: Expose spec-build porcelain
 
+Ownership fence: `.agents/commands/bench-implement-spec.md`, `.agents/skills/bench-craft-delegate/SKILL.md`, `.bench/BENCH.md`, `.bench/BENCH-reference.md`, `bin/bench.sh`, `projects/benchkit.md`, `internal/conformance`, `tests/canary/workflow-guidance-anchors`, `CHANGELOG.md`
+Assumptions: all eight porcelain commands and their runtime contracts are already green
+
 ## What to build
 
 Update the canonical implementation command, delegation skill, shared workflow

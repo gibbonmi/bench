@@ -2,6 +2,9 @@
 
 Blocked by: Retain subject-addressed gate evidence, Record review and recover runs
 
+Ownership fence: `internal/specbuild`, `tests/canary/spec-build-lifecycle`
+Assumptions: the gate owner can authorize an unpublished exact prospective tree
+
 ## What to build
 
 Complete `internal/specbuild` promotion and drift handling. Construct the
@@ -17,4 +20,3 @@ evidence, and classify red outcomes without restoring ticket gates.
 - [ ] [R39-R40] Candidate-owned reds route to attributed repair, inherited/infrastructure reds route to diagnosis or retry, and cap exhaustion leaves the run provisional.
 - [ ] [R58] Repeated prospective status construction produces the same tree object.
 - [ ] Canary mutations for receipt bypass, marker-before-branch, and a non-promote gate caller each make the gate red with their own diagnostic.
-

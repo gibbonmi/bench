@@ -2,6 +2,9 @@
 
 Blocked by: none
 
+Ownership fence: `internal/specbuild`
+Assumptions: the existing worktree owner accepts an explicit candidate start
+
 ## What to build
 
 Create the deep `internal/specbuild` module with durable, versioned state in the
@@ -18,4 +21,3 @@ independently of the concrete gate implementation.
 - [ ] [R06-R09] Assign binds a real ticket's rows, fence, assumptions, candidate base, and request identity to one owned worktree; siblings may share a base and hostile ticket forms have no side effects.
 - [ ] [R24] Status derives a definitive compact durable row, including the terminal/empty posture, without exposing private state.
 - [ ] [R52] Slugs and tickets containing spaces or glob characters resolve literally while refs use opaque identities.
-

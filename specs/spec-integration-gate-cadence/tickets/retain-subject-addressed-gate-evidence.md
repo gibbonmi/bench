@@ -2,6 +2,9 @@
 
 Blocked by: none
 
+Ownership fence: `internal/gate`
+Assumptions: the current closed-subject builder remains the one oracle-identity owner
+
 ## What to build
 
 Extend the `internal/gate` seam so callers can inspect and execute an unpublished
@@ -18,4 +21,3 @@ parallel derivation.
 - [ ] [R30] Prospective execution drives the real gate wrapper and launcher closure from the unpublished tree.
 - [ ] [R36] Tree, oracle, launcher, tools, environment, policy, and freshness drift invalidate evidence; history-only drift does not.
 - [ ] [R38] Reds are not reusable and the latest cache remains a projection rather than the retained authority.
-
