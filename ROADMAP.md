@@ -1406,5 +1406,5 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT128 agent-line binding: its staged spec owns the fork verdict, harness-native denial, and static model-token sweep.
-2. `/bench-shape-idea` — FT135 pre-push protection: expose resolved branch and template currency, then restore the sanctioned repair route.
+1. `/bench-shape-idea` — FT135 pre-push protection: expose resolved branch and template currency, then restore the sanctioned repair route.
+2. `/bench-shape-idea` — FT98 recoverable discard: settle one preserve-then-discard primitive before the landing and capture commands that depend on it.
