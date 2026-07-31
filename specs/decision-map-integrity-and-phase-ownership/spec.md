@@ -1,6 +1,6 @@
 # Decision-map integrity and phase ownership
 
-Status: staged
+Status: implemented
 
 Decision source: `specs/decision-map-integrity-and-phase-ownership/decisions/decision-map-integrity-and-phase-ownership.md`
 
