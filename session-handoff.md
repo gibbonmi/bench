@@ -2,9 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `ef0cf50`, 1 dirty path, 43 unpushed commits
+Branch: `main` — HEAD `977f772`, 1 dirty path, 44 unpushed commits
 Spec: `specs/ft126-recurrence-tallying/spec.md` (Status: staged), `specs/ft128-agent-line-binding/spec.md` (Status: staged)
-Gate: green at `a640496` — stale, work tree `7a3fb15`
+Gate: green at `977f772`; this handoff-only rewrite has not been re-gated
 
 ## State
 
@@ -18,18 +18,27 @@ Gate: green at `a640496` — stale, work tree `7a3fb15`
   three reviewed sources and owns engineering seams, tests, coverage, hostile
   inputs, and gate attachment. Implementation tickets remain independently
   green build units.
+- **The diff-visual product decisions remain closed and its two approved HTML
+  assets remain committed.** The report form and sections, three-drawn/two-
+  relational edge kinds, dependency-free layout, declared context nodes,
+  three-valued coverage badge, and justified heat are settled. The current map
+  is honestly `Status: shaping` under the new schema because embedded-diff size,
+  before-chain provenance, opt-in details, command/schema naming, and ad-hoc
+  report placement have not been reclassified from `Not yet specified`.
+  Preserve the settled product decisions when resolving that workflow state.
+  The prior engineering outline was schema core (emitter and validator), then
+  renderer, then final-check integration; current spec authoring owns the final
+  seams and contracts.
 - **Fresh-session dogfood and mid-binding three-axis review completed.** The
   concrete source-locator, cycle-diagnostic, and silent-shaping projection
   findings are repaired and gated. The remaining review observation is
   historical: two implementation commits crossed the spec's declared slice
   fences; no current-tree defect or rewrite is pending.
-- **The last oracle was green for the retirement tree.** The ambient gate now
-  reads stale only because the required retro and this handoff were written
-  after that boundary; final-check explicitly does not re-gate capture
-  artifacts. Ship-tier `bench prep-release` has not run, and nothing was pushed.
-- **Pending capture:** `.bench/retros/decision-map-integrity-and-phase-ownership.md`.
-  FT126 and FT128 remain staged, and the remaining active shaping maps and
-  roadmap work were outside this phase.
+- **The last oracle was green for `977f772`.** This handoff-only rewrite does
+  not re-gate capture. Ship-tier `bench prep-release` has not run, and nothing
+  was pushed. The decision-map retro is committed and pending drain. FT126 and
+  FT128 remain staged; the other active shaping maps and roadmap work were
+  outside these phases.
 
 ## Next command
 
