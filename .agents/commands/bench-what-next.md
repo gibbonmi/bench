@@ -13,10 +13,18 @@ entries, or `.bench/retros/` has pending implementation retros. One run
 reconciles the roadmap against the tree, drains all three capture sources,
 refreshes the recommended sequence, and hands the reviewer one diff to approve.
 
-At entry, invoke `bench roadmap --context` exactly once. Its successful schema-2
-snapshot is the complete local evidence for every step below. If the query fails,
-stop the phase and report its error; manual evidence reconstruction would create a
-different, partial input and is not a fallback.
+At entry, invoke `bench roadmap --context` exactly once. Its successful schema-3
+snapshot is the complete local evidence for every step below. Accept only
+`context.schema = 3`; every other schema stops the phase before any batch mutation.
+Do not guess recurrence facts from an older schema. If the query fails, stop the
+phase and report its error; manual evidence reconstruction would create a different,
+partial input and is not a fallback.
+
+Before beginning `## 1. Reconcile first`, read `context.sequence_trusted` from that
+snapshot. When it is false, stop before any batch mutation and report every
+`occurrence_discrepancies` row together with the complete context snapshot. The
+structural evidence remains visible for reviewer diagnosis; do not infer a ledger
+or a sequence from partial sources.
 
 ## Exit handoff
 
@@ -35,7 +43,17 @@ status, so this pass is the backstop for anything spec-retire missed; the
 empty-state recommendation is only trustworthy if the roadmap is current. No
 completion markers — history lives in git.
 
-## 2. Drain the inbox
+## 2. Drain occurrence evidence
+
+For every `pending` owner/incident pair in `capture_occurrences`, add its incident
+key to that owner's `Occurrences:` line in `ROADMAP.md` before removing any source
+unit for the pair. Show the owning-row edit in the batch before the corresponding
+source removal. Every `already-recorded` source already has that key: remove its
+source unit without adding another key. This procedure applies to ideas, retro
+recommendations, and learning entries before their source-specific drain removes
+them.
+
+## 3. Drain the inbox
 
 `IDEAS.md` is a pure inbox: every run empties to zero. Each parked line gets one
 disposition in the roadmap — a new prioritized row, a merge into the row that
@@ -43,7 +61,7 @@ already covers it, or a drop as already-triaged — and the parked-pending-evide
 tier is a valid destination for items awaiting a real trigger. No line stays
 parked in the inbox; partial drains would kill the empty-state trigger.
 
-## 3. Drain implementation retros
+## 4. Drain implementation retros
 
 The snapshot's `retros` bodies are the only retro evidence this run reads; do
 not re-read the directory into a second, potentially different snapshot. For
@@ -59,7 +77,7 @@ After every recommendation has a disposition, remove every drained
 drain is not allowed: the pending count must reach zero, and no source file is
 removed before its dispositions are present for review.
 
-## 4. Verdict the journal
+## 5. Verdict the journal
 
 Read `.bench/learnings.md` itself, not just the open-entry count — a malformed
 entry still needs a verdict. Every open entry gets a verdict in the batch diff:
@@ -75,7 +93,7 @@ raw `git add` standing in for `bench commit`) proves nothing about the accused
 path: without the real repro, dismiss the entry as unreproduced, or re-park it
 with the missing repro named as its graduation trigger.
 
-## 5. Classify every run; restructure on request
+## 6. Classify every run; restructure on request
 
 While walking the rows, classify each as a fix (a defect in existing
 behavior, with evidence), a feature (new capability or guidance), or
@@ -94,17 +112,20 @@ the board otherwise accretes near-duplicates that each pay a full pipeline
 and gate separately. A default run that spots a restructure candidate names
 it in the exit rather than applying it.
 
-## 6. Refresh the sequence
+## 7. Refresh the sequence
 
 Rewrite the `## Recommended sequence` section: two or three numbered lines, each
 naming the item and the phase command to run. This is the format contract
 `bench roadmap` extracts verbatim once all capture sources are empty — the CLI
-does no judgment, so this section is where the judgment lands. Fixes lead: at
-equal priority a reproduced defect outranks a feature, cheapest first, and a
-feature tops the sequence only on explicit reviewer pricing, named in its
-line.
+does no judgment, so this section is where the judgment lands. Rank rows by
+severity. Within an equal-severity class, choose actionable work over blocked work;
+only when rows are equally actionable, apply literal dependencies, then explicit
+reviewer pricing. Only when all four stronger inputs tie, rank by descending
+occurrence count. When occurrence count also ties, apply the existing reproduced
+defect-over-feature rule, then cheapest-first cost rule. No CLI command sorts or
+rewrites `ROADMAP.md`; this is reviewed maintenance judgment, not global sorting.
 
-## 7. Batch-propose, then commit on green
+## 8. Batch-propose, then commit on green
 
 Draft the full pass — reconciled roadmap, emptied inbox, retro dispositions and
 removals, journal verdicts including dismissals — as one uncommitted batch diff.

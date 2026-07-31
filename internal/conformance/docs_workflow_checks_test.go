@@ -23,7 +23,7 @@ func checkDocsCurrencyAndWorkflow(root, kitRoot string) []string {
 	diags = append(diags, checkSignalVocabulary(root)...)
 	diags = append(diags, checkCommandFirstAnchors(root)...)
 	diags = append(diags, checkWorkflowAnchors(root)...)
-	diags = append(diags, checkOccurrenceLedgerMigration(root)...)
+	diags = append(diags, checkOccurrenceLedgerAndMaintenance(root)...)
 	diags = append(diags, checkSkillsIndexGenerateVerify(root, kitRoot)...)
 	diags = append(diags, checkCoverageMaps(root)...)
 	return diags
