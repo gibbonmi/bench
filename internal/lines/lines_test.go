@@ -152,6 +152,24 @@ func envelope(model string) []byte {
 	return []byte(`{"tool_input":{"model":"` + model + `"}}`)
 }
 
+// agentEnvelope is the captured Agent PreToolUse shape: tool_input carries description,
+// prompt, subagent_type, and an optional model. subagentType and model are raw JSON, so a
+// case can drive a non-string subagent_type or omit either field entirely.
+func agentEnvelope(subagentType, model string) []byte {
+	fields := `"description":"d","prompt":"p"`
+	if subagentType != "" {
+		fields += `,"subagent_type":` + subagentType
+	}
+	if model != "" {
+		fields += `,"model":` + model
+	}
+	return []byte(`{"tool_name":"Agent","tool_input":{` + fields + `}}`)
+}
+
+func forkEnvelope(model string) []byte {
+	return agentEnvelope(`"fork"`, model)
+}
+
 func TestParseBinding(t *testing.T) {
 	b := ParseBinding([]byte(fullBinding))
 	for _, tt := range []struct {
@@ -388,6 +406,9 @@ func TestAgentLineVerdict(t *testing.T) {
 		{"missing-model-routed-complete-denies", []byte(`{"tool_input":{}}`), "claude", bound(fullBinding), 2, "missing or empty model field"},
 		{"whitespace-model-routed-complete-denies", envelope("   "), "claude", bound(fullBinding), 2, "missing or empty model field"},
 		// Regression rims: a missing model with no column to enforce stays fail-open.
+		// A non-fork delegation type is not the fork branch: the routed missing-model deny
+		// and the fail-open rims below own every envelope that is not exactly a fork.
+		{"missing-model-non-fork-denies", agentEnvelope(`"general-purpose"`, ""), "claude", bound(fullBinding), 2, "missing or empty model field"},
 		{"missing-model-unrouted-fails-open", []byte(`{"tool_input":{}}`), "claude", Source{Path: ".bench/lines.env"}, 0, "no resolvedModel/model field"},
 		{"missing-model-unbound-column-fails-open", []byte(`{"tool_input":{}}`), "opencode", bound(fullBinding), 0, "no resolvedModel/model field"},
 		{"absent-lines-env", envelope("opus-4-8"), "claude", Source{Path: ".bench/lines.env"}, 0, "no .bench/lines.env"},
@@ -473,6 +494,73 @@ func TestAgentLineVerdictMissingModelDenyMessage(t *testing.T) {
 	// It must not reuse the unbound wording, whose recovery advice is different.
 	if contains(stderr, "is not a bound tier") {
 		t.Errorf("missing-model deny reused the unbound wording: %q", stderr)
+	}
+}
+
+// TestAgentLineVerdictForkDelegation pins both fork verdicts, which are opposite policies
+// on the same delegation type: a declared model is a claim the harness discards, so it
+// denies, while an omitted one is the honest signal for behavior nobody can avoid, so it
+// allows. Collapsing them into a single deny-all-forks or allow-all-forks branch fails one
+// half. The warning states the inheritance without naming a model — the invoking session's
+// tier is unknowable at this hook event.
+func TestAgentLineVerdictForkDelegation(t *testing.T) {
+	exit, stderr := AgentLineVerdict(forkEnvelope(`"sonnet-5"`), "claude", bound(fullBinding))
+	if exit != 2 {
+		t.Fatalf("fork declaring a bound model = exit %d, want 2 (stderr=%q)", exit, stderr)
+	}
+	if stderr != "DENIED: delegation model 'sonnet-5' is declared on a fork, which runs on this session's model and "+
+		"ignores the declaration — the guard cannot verify a line the harness will not honor. Re-delegate the fork "+
+		"with no model field to inherit this session's line, or spawn a non-fork delegate on a bound tier token." {
+		t.Errorf("fork deny stderr = %q", stderr)
+	}
+
+	exit, stderr = AgentLineVerdict(forkEnvelope(""), "claude", bound(fullBinding))
+	if exit != 0 {
+		t.Fatalf("fork declaring no model = exit %d, want 0 (stderr=%q)", exit, stderr)
+	}
+	if stderr != "WARNING: check-agent-line: a fork delegation inherits this session's model, which no hook event "+
+		"reports — allowing delegation." {
+		t.Errorf("fork allow stderr = %q", stderr)
+	}
+}
+
+// TestAgentLineVerdictAllowsEveryBoundCell pins permissive enforcement across the whole
+// matrix through ONE harness's guard: a Claude session may legitimately name the tier a
+// Codex delegate will run on, so narrowing enforcement to the asking harness's column
+// would deny half of these.
+func TestAgentLineVerdictAllowsEveryBoundCell(t *testing.T) {
+	for _, model := range []string{
+		"gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna",
+		"fable-5", "opus-4-8", "sonnet-5",
+	} {
+		t.Run(model, func(t *testing.T) {
+			if exit, stderr := AgentLineVerdict(envelope(model), "claude", bound(fullBinding)); exit != 0 || stderr != "" {
+				t.Errorf("AgentLineVerdict(%q) = (%d, %q), want a silent allow", model, exit, stderr)
+			}
+		})
+	}
+}
+
+// TestSubagentTypeNeverImpersonatesAFork pins the exact-string discriminator. tool_input is
+// attacker-shaped text, so only the literal selects the fork branch; anything else — absent,
+// blank, the wrong JSON type, padded, recased, or merely containing the word — keeps the
+// non-fork postures. Each value is driven twice, because the two fork branches sit on
+// opposite sides of the non-fork verdicts: a bound model must still allow, and an omitted
+// one must still hit the routed deny rather than the fork warning.
+func TestSubagentTypeNeverImpersonatesAFork(t *testing.T) {
+	for _, subagentType := range []string{
+		``, `""`, `5`, `{}`, `[]`, `null`, `true`,
+		`" fork"`, `"fork "`, `"fork\n"`, `"Fork"`, `"FORK"`, `"forked"`, `"my-fork"`, `"general-purpose"`,
+	} {
+		t.Run(subagentType, func(t *testing.T) {
+			if exit, stderr := AgentLineVerdict(agentEnvelope(subagentType, `"opus-4-8"`), "claude", bound(fullBinding)); exit != 0 || stderr != "" {
+				t.Errorf("subagent_type %s with a bound model = (%d, %q), want a silent allow", subagentType, exit, stderr)
+			}
+			exit, stderr := AgentLineVerdict(agentEnvelope(subagentType, ""), "claude", bound(fullBinding))
+			if exit != 2 || !contains(stderr, "missing or empty model field") {
+				t.Errorf("subagent_type %s with no model = (%d, %q), want the routed missing-model deny", subagentType, exit, stderr)
+			}
+		})
 	}
 }
 

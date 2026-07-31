@@ -82,26 +82,55 @@ func tierValue(key string, content []byte) (string, bool) {
 // returns a non-nil error ONLY when data is not valid JSON, mirroring the Python shim
 // raising on unparseable stdin; valid JSON with no matching field returns ("", nil).
 func ModelFromEnvelope(data []byte) (model string, err error) {
+	e, err := parseDelegation(data)
+	if err != nil {
+		return "", err
+	}
+	return e.model, nil
+}
+
+// forkSubagentType is the one delegation type the harness runs on the invoking session's
+// model, discarding any declared one. It is an experimental, feature-gated value: where fork
+// mode is not deployed no envelope carries it, and if it is renamed upstream the comparison
+// simply stops matching and the guard keeps its other verdicts.
+const forkSubagentType = "fork"
+
+// delegation is the one reading of an Agent PreToolUse envelope the guard branches on: the
+// declared model and whether the delegation is a fork.
+type delegation struct {
+	model  string
+	isFork bool
+}
+
+// parseDelegation reads tool_input once. subagent_type is decoded separately from the raw
+// bytes because it is untrusted text of an unpromised type: a number, object, or null there
+// must leave the model reading intact rather than failing the whole envelope, and only a
+// JSON string exactly equal to forkSubagentType may select the fork branch.
+func parseDelegation(data []byte) (delegation, error) {
 	var e struct {
 		ToolInput struct {
-			ResolvedModel string `json:"resolvedModel"`
-			Model         string `json:"model"`
+			ResolvedModel string          `json:"resolvedModel"`
+			Model         string          `json:"model"`
+			SubagentType  json.RawMessage `json:"subagent_type"`
 		} `json:"tool_input"`
 	}
 	if err := json.Unmarshal(data, &e); err != nil {
-		return "", err
+		return delegation{}, err
 	}
+	var subagentType string
+	_ = json.Unmarshal(e.ToolInput.SubagentType, &subagentType)
+	out := delegation{isFork: subagentType == forkSubagentType}
 	// An all-whitespace field is blank for the non-empty test: a whitespace resolvedModel
 	// falls back to model, and an all-blank envelope yields "". This closes the whitespace
 	// model value at the parse boundary and folds the omitted/empty/whitespace cases into
 	// one branch of AgentLineVerdict.
-	if strings.TrimSpace(e.ToolInput.ResolvedModel) != "" {
-		return e.ToolInput.ResolvedModel, nil
+	switch {
+	case strings.TrimSpace(e.ToolInput.ResolvedModel) != "":
+		out.model = e.ToolInput.ResolvedModel
+	case strings.TrimSpace(e.ToolInput.Model) != "":
+		out.model = e.ToolInput.Model
 	}
-	if strings.TrimSpace(e.ToolInput.Model) != "" {
-		return e.ToolInput.Model, nil
-	}
-	return "", nil
+	return out, nil
 }
 
 // Harnesses is the closed set of harnesses the binding matrix covers, in the order
@@ -313,9 +342,25 @@ func AgentLineVerdict(stdin []byte, harness string, src Source) (exitCode int, s
 	if !KnownHarness(harness) {
 		return 1, unknownHarness("check-agent-line", harness)
 	}
-	model, err := ModelFromEnvelope(stdin)
+	e, err := parseDelegation(stdin)
 	if err != nil {
 		return 0, warn("stdin is not parseable as JSON")
+	}
+	model := e.model
+	if e.isFork {
+		// A fork runs on this session's model whatever it declares, so the binding is not
+		// what settles it: a declared model is a claim the harness discards and the guard
+		// cannot check, while an omitted one is the honest signal for behavior no
+		// delegation can avoid. Neither verdict can name the session's own model — only
+		// SessionStart is documented to receive one, it is not guaranteed there, and a
+		// mid-session switch is re-reported by no hook event.
+		if model != "" {
+			return 2, "DENIED: delegation model '" + model + "' is declared on a fork, which runs on this session's " +
+				"model and ignores the declaration — the guard cannot verify a line the harness will not honor. " +
+				"Re-delegate the fork with no model field to inherit this session's line, or spawn a non-fork " +
+				"delegate on a bound tier token."
+		}
+		return 0, warn("a fork delegation inherits this session's model, which no hook event reports")
 	}
 	st, b := classify(src)
 	if model == "" {
