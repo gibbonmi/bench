@@ -1,6 +1,6 @@
 # Record review and recover runs
 
-Blocked by: Checkpoint and integrate attributed patches
+Blocked by: Release integrated assignments
 
 Ownership fence: `internal/specbuild`
 Assumptions: checkpoint and integration provenance remain durable and queryable
