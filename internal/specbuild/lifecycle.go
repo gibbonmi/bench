@@ -19,9 +19,9 @@ import (
 	"github.com/gibbonmi/bench/internal/jsonfile"
 )
 
-// GateOwner validates retained exact green evidence for a working subject.
+// GateOwner validates exact green evidence and advances the expected branch marker.
 type GateOwner interface {
-	Bootstrap(context.Context, string, string, string) error
+	Bootstrap(context.Context, string, string, string, string) error
 }
 
 // GateDisposition classifies an owner-attributed prospective gate result.
@@ -134,6 +134,7 @@ func (processRunner) Run(ctx context.Context, command Command) (string, error) {
 		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
 		select {
 		case <-done:
+			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 		case <-time.After(250 * time.Millisecond):
 			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 			<-done
@@ -152,7 +153,7 @@ func (s *Service) finishStart(ctx context.Context, branch, tip string, greenRead
 			return Status{}, errors.New("spec build candidate identity already exists")
 		}
 		if !greenReady && !refAt(s.root, "refs/bench/green/"+branch, tip) {
-			if err := s.gate.Bootstrap(ctx, s.root, branch, tip); err != nil {
+			if err := s.gate.Bootstrap(ctx, s.root, branch, tip, ""); err != nil {
 				return Status{}, fmt.Errorf("no exact green evidence: run bench gate, then retry start: %w", err)
 			}
 		}

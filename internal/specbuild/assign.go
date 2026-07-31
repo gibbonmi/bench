@@ -2,6 +2,7 @@ package specbuild
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -97,9 +98,7 @@ type ticket struct {
 	Rows, Fence, Assumptions []string
 }
 
-var ticketRow = regexp.MustCompile(`^\s*-\s+\[[ xX]\]\s+\[([^]]+)\]`)
-var packageName = regexp.MustCompile(`\binternal/[A-Za-z0-9_-]+\b`)
-var rowRange = regexp.MustCompile(`^(R)([0-9]+)-R([0-9]+)$`)
+var ticketRow, packageName, rowRange = regexp.MustCompile(`^\s*-\s+\[[ xX]\]\s+\[([^]]+)\]`), regexp.MustCompile(`\binternal/[A-Za-z0-9_-]+\b`), regexp.MustCompile(`^(R)([0-9]+)-R([0-9]+)$`)
 
 func resolveTicket(specPath, arg string) (ticket, error) {
 	if arg == "" || filepath.IsAbs(arg) {
@@ -152,7 +151,6 @@ func resolveTicket(specPath, arg string) (ticket, error) {
 	}
 	return result, nil
 }
-
 func expandRows(raw string) []string {
 	match := rowRange.FindStringSubmatch(raw)
 	if len(match) != 4 {
@@ -170,7 +168,6 @@ func expandRows(raw string) []string {
 	}
 	return rows
 }
-
 func unique(values []string) []string {
 	seen := make(map[string]bool, len(values))
 	result := make([]string, 0, len(values))
@@ -182,7 +179,6 @@ func unique(values []string) []string {
 	}
 	return result
 }
-
 func listValue(value string) []string {
 	var values []string
 	for _, item := range strings.Split(value, ",") {
@@ -215,8 +211,19 @@ func (s *Service) Start(ctx context.Context, slug string) (Status, error) {
 			}
 			return s.finishStart(ctx, subject.branch, subject.tip, false, &run)
 		}
-		if _, err := s.preconditions(mutationStart, slug, resolved, &run, "", ""); err != nil {
-			return Status{}, err
+		subject, preconditionErr := s.preconditions(mutationStart, slug, resolved, &run, "", "")
+		if run.Terminal {
+			abandon, abandoned := s.operation(run, "abandon", "apply")
+			if !abandoned || abandon.State != "completed" || preconditionErr == nil {
+				return run.status(), nil
+			}
+			if !errors.Is(preconditionErr, errRecompose) {
+				return Status{}, preconditionErr
+			}
+			return s.startRun(ctx, slug, resolved, subject, retainTerminalAttempt(run), subject.branch+"\x00"+subject.tip, run.Base)
+		}
+		if preconditionErr != nil {
+			return Status{}, preconditionErr
 		}
 		return run.status(), nil
 	}
@@ -224,25 +231,26 @@ func (s *Service) Start(ctx context.Context, slug string) (Status, error) {
 	if err != nil {
 		return Status{}, err
 	}
-	run := record{Version: 1, Slug: slug, Spec: resolved, SpecTip: subject.specTip, Run: digest(resolved), Branch: subject.branch, Base: subject.tip, Candidate: "refs/bench/specbuild/candidate/" + digest(resolved), CandidateTip: subject.tip, Assignments: map[string]assignment{}, Operations: map[string]operation{}}
-	absent, err := refAbsent(s.root, run.Candidate)
-	if err != nil {
+	return s.startRun(ctx, slug, resolved, subject, nil, "", "")
+}
+func (s *Service) startRun(ctx context.Context, slug, resolved string, subject buildSubject, history []json.RawMessage, attempt, previousGreen string) (Status, error) {
+	runID, candidate := runIdentity(resolved, attempt)
+	run := record{Version: 1, Slug: slug, Spec: resolved, SpecTip: subject.specTip, Run: runID, Branch: subject.branch, Base: subject.tip, Candidate: candidate, CandidateTip: subject.tip, History: history, Assignments: map[string]assignment{}, Operations: map[string]operation{}}
+	if absent, err := refAbsent(s.root, run.Candidate); err != nil {
 		return Status{}, err
-	}
-	if !absent {
+	} else if !absent {
 		return Status{}, errors.New("spec build candidate identity already exists")
 	}
-	if err := s.gate.Bootstrap(ctx, s.root, subject.branch, subject.tip); err != nil {
+	if err := s.gate.Bootstrap(ctx, s.root, subject.branch, subject.tip, previousGreen); err != nil {
 		return Status{}, fmt.Errorf("no exact green evidence: run bench gate, then retry start: %w", err)
 	}
 	if _, _, err := s.beginOperation(&run, "start", "run", resolved+"\x00"+subject.branch+"\x00"+subject.tip); err != nil {
 		return Status{}, err
 	}
-	if err := s.faultAt("start/bootstrap"); err != nil {
-		return run.status(), err
-	}
-	if err := s.faultAt("start/state"); err != nil {
-		return run.status(), err
+	for _, point := range []string{"start/bootstrap", "start/state"} {
+		if err := s.faultAt(point); err != nil {
+			return run.status(), err
+		}
 	}
 	return s.finishStart(ctx, subject.branch, subject.tip, true, &run)
 }

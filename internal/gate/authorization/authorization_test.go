@@ -23,7 +23,7 @@ func TestAuthorizeClassifiesAndValidatesOwnerEvidence(t *testing.T) {
 	gitRun(t, root, "commit", "-q", "-m", "green base")
 	branch := gitOutput(t, root, "branch", "--show-current")
 	tip := gitOutput(t, root, "rev-parse", "HEAD")
-	if err := Bootstrap(root, branch, tip); err == nil {
+	if err := Bootstrap(root, branch, tip, ""); err == nil {
 		t.Fatal("bootstrap accepted a subject with no green evidence")
 	}
 	if out, err := exec.Command("git", "-C", root, "show-ref", "--verify", "--quiet", "refs/bench/green/"+branch).CombinedOutput(); err == nil {
@@ -32,29 +32,45 @@ func TestAuthorizeClassifiesAndValidatesOwnerEvidence(t *testing.T) {
 	if got := gate.Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
 		t.Fatalf("seed inherited green = %+v", got)
 	}
-	if err := Bootstrap(root, branch, tip); err != nil {
+	if err := Bootstrap(root, branch, tip, ""); err != nil {
 		t.Fatalf("bootstrap exact green: %v", err)
 	}
-	if err := Bootstrap(root, branch, tip); err != nil {
+	if err := Bootstrap(root, branch, tip, ""); err != nil {
 		t.Fatalf("idempotent bootstrap: %v", err)
 	}
 	if got := gate.ValidateProjectGreen(root, branch); !got.ReusableGreen {
 		t.Fatalf("bootstrapped project green = %+v", got)
 	}
 	gitRun(t, root, "checkout", "-q", "--detach")
-	if err := Bootstrap(root, branch, tip); err == nil {
+	if err := Bootstrap(root, branch, tip, ""); err == nil {
 		t.Fatal("bootstrap accepted detached HEAD")
 	}
 	gitRun(t, root, "checkout", "-q", branch)
 	previous := gitOutput(t, root, "rev-parse", "HEAD^")
 	gitRun(t, root, "update-ref", "refs/bench/green/"+branch, previous, tip)
-	if err := Bootstrap(root, branch, tip); err == nil {
+	if err := Bootstrap(root, branch, tip, ""); err == nil {
 		t.Fatal("bootstrap overwrote a conflicting marker")
 	}
 	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/"+branch); got != previous {
 		t.Fatalf("conflicting marker = %s, want %s", got, previous)
 	}
-	gitRun(t, root, "update-ref", "refs/bench/green/"+branch, tip, previous)
+	if err := Bootstrap(root, branch, tip, previous); err != nil {
+		t.Fatalf("advance expected descendant marker: %v", err)
+	}
+	if err := Bootstrap(root, branch, tip, previous); err != nil {
+		t.Fatalf("replay advanced marker: %v", err)
+	}
+	os.WriteFile(filepath.Join(root, "later"), []byte("stale\n"), 0o644)
+	gitRun(t, root, "add", "later")
+	gitRun(t, root, "commit", "-q", "-m", "stale descendant")
+	stale := gitOutput(t, root, "rev-parse", "HEAD")
+	if err := Bootstrap(root, branch, stale, tip); err == nil {
+		t.Fatal("bootstrap accepted a descendant without exact green evidence")
+	}
+	if got := gitOutput(t, root, "rev-parse", "refs/bench/green/"+branch); got != tip {
+		t.Fatalf("stale-evidence marker = %s, want %s", got, tip)
+	}
+	gitRun(t, root, "reset", "--hard", tip)
 	greenTree := gitOutput(t, root, "write-tree")
 	green := Authorize(t.Context(), root, greenTree)
 	if green.Kind != Green || !Validate(root, greenTree, green.Evidence) {

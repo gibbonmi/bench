@@ -168,7 +168,6 @@ func siblingCheckpoints(t *testing.T, firstPath, firstContent, secondPath, secon
 	}
 	return root, service, first, second, loadRun(t, service)
 }
-
 func loadRun(t *testing.T, service *Service) record {
 	t.Helper()
 	run, found, err := service.load("build demo")
@@ -293,7 +292,6 @@ func TestAssignmentsScopeIdenticalRequestsToTheirRuns(t *testing.T) {
 		t.Fatal("owner requests collided across runs")
 	}
 }
-
 func TestCheckpointJournalRecoversRetainedRefAndRejectsDifferentReceipt(t *testing.T) {
 	fixture := newCheckpointFixture(t)
 	runner := &countingRunner{}
@@ -338,17 +336,7 @@ func TestIntegrateCancellationKeepsPreparedReplayRecoverable(t *testing.T) {
 		_, err := fixture.service.Integrate(ctx, "build demo", fixture.assigned.ID)
 		done <- err
 	}()
-	for i := 0; i < 500; i++ {
-		if _, err := os.ReadFile(pidPath); err == nil {
-			if _, err := os.ReadFile(grandPath); err == nil {
-				break
-			}
-		}
-		time.Sleep(time.Millisecond)
-	}
-	if _, err := os.ReadFile(grandPath); err != nil {
-		t.Fatal("replay apply did not block")
-	}
+	pids := []int{waitPID(t, pidPath), waitPID(t, grandPath)}
 	cancel()
 	select {
 	case err := <-done:
@@ -358,18 +346,8 @@ func TestIntegrateCancellationKeepsPreparedReplayRecoverable(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("Integrate did not return after cancellation")
 	}
-	for _, path := range []string{pidPath, grandPath} {
-		b, err := os.ReadFile(path)
-		if err != nil {
-			t.Fatal(err)
-		}
-		pid, err := strconv.Atoi(strings.TrimSpace(string(b)))
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := syscall.Kill(pid, 0); !errors.Is(err, syscall.ESRCH) {
-			t.Fatalf("process survived cancellation: %v", err)
-		}
+	for _, pid := range pids {
+		waitProcessExit(t, pid)
 	}
 	run := loadRun(t, fixture.service)
 	op, found := fixture.service.operation(run, "integrate", fixture.assigned.ID)
@@ -382,6 +360,28 @@ func TestIntegrateCancellationKeepsPreparedReplayRecoverable(t *testing.T) {
 	if got := git(t, fixture.root, "rev-list", "--count", fixture.run.Candidate); got == count || runner.commits != 1 {
 		t.Fatalf("retry candidate count=%s prior=%s commits=%d", got, count, runner.commits)
 	}
+}
+func waitPID(t *testing.T, path string) int {
+	t.Helper()
+	for deadline := time.Now().Add(time.Second); time.Now().Before(deadline); {
+		b, _ := os.ReadFile(path)
+		if pid, err := strconv.Atoi(strings.TrimSpace(string(b))); err == nil && pid > 0 {
+			return pid
+		}
+		time.Sleep(time.Millisecond)
+	}
+	t.Fatalf("process did not publish a positive PID: %s", path)
+	return 0
+}
+func waitProcessExit(t *testing.T, pid int) {
+	t.Helper()
+	for deadline := time.Now().Add(2 * time.Second); time.Now().Before(deadline); {
+		if err := syscall.Kill(pid, 0); errors.Is(err, syscall.ESRCH) {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatalf("process %d still exists after cancellation", pid)
 }
 
 func injectFault(want string) func(string) error {

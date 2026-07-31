@@ -396,4 +396,4 @@ func TestPromoteRecomposesAWorkingAdvanceBeforeGate(t *testing.T) {
 	}
 }
 
-func (promotionGate) Bootstrap(context.Context, string, string, string) error { return nil }
+func (promotionGate) Bootstrap(context.Context, string, string, string, string) error { return nil }

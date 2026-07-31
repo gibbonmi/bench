@@ -34,22 +34,20 @@ type record struct {
 	PromotionEvidence    string                `json:"promotion_evidence,omitempty"`
 	PromotionDisposition GateDisposition       `json:"promotion_disposition,omitempty"`
 	Terminal             bool                  `json:"terminal,omitempty"`
+	History              []json.RawMessage     `json:"history,omitempty"`
 	Assignments          map[string]assignment `json:"assignments"`
 	Operations           map[string]operation  `json:"operations"`
 	Review               *reviewEvidence       `json:"review,omitempty"`
 }
-
 type reviewEvidence struct {
 	Candidate string       `json:"candidate"`
 	Axes      []reviewAxis `json:"axes"`
 	Digest    string       `json:"digest"`
 }
-
 type reviewAxis struct {
 	Axis     string          `json:"axis"`
 	Findings []reviewFinding `json:"findings"`
 }
-
 type reviewFinding struct {
 	ID          string `json:"id"`
 	Disposition string `json:"disposition"`
@@ -68,7 +66,6 @@ type assignment struct {
 func (a assignment) public() Assignment {
 	return Assignment{ID: a.ID, Path: a.Path, Base: a.Base, Rows: append([]string(nil), a.Rows...), Fence: append([]string(nil), a.Fence...), Assumptions: append([]string(nil), a.Assumptions...)}
 }
-
 func (r record) status() Status {
 	if r.Terminal {
 		return Status{Slug: r.Slug, State: "terminal", Subject: r.CandidateTip}
@@ -111,7 +108,6 @@ func (r record) status() Status {
 	}
 	return Status{Slug: r.Slug, State: state, Subject: r.CandidateTip, Next: next}
 }
-
 func (e reviewEvidence) hasAcceptedFinding() bool {
 	for _, axis := range e.Axes {
 		for _, finding := range axis.Findings {
@@ -122,7 +118,6 @@ func (e reviewEvidence) hasAcceptedFinding() bool {
 	}
 	return false
 }
-
 func (r record) needsReview() bool {
 	for _, assigned := range r.Assignments {
 		if assigned.Integrated != "" {
@@ -131,7 +126,6 @@ func (r record) needsReview() bool {
 	}
 	return false
 }
-
 func (s *Service) resolve(slug string) (string, error) {
 	if strings.TrimSpace(slug) == "" {
 		return "", errors.New("spec build slug is required")
@@ -145,7 +139,6 @@ func (s *Service) resolve(slug string) (string, error) {
 	}
 	return resolved, nil
 }
-
 func (s *Service) lock(slug string) (func(), error) {
 	path, err := s.statePath(slug)
 	if err != nil {
@@ -164,7 +157,6 @@ func (s *Service) lock(slug string) (func(), error) {
 	}
 	return func() { _ = syscall.Flock(int(f.Fd()), syscall.LOCK_UN); _ = f.Close() }, nil
 }
-
 func (s *Service) load(slug string) (record, bool, error) {
 	path, err := s.statePath(slug)
 	if err != nil {
@@ -183,7 +175,6 @@ func (s *Service) load(slug string) (record, bool, error) {
 	}
 	return run, true, nil
 }
-
 func (s *Service) save(run record) error {
 	path, err := s.statePath(run.Slug)
 	if err != nil {
@@ -195,9 +186,26 @@ func (s *Service) save(run record) error {
 	}
 	return replaceState(path, append(b, '\n'))
 }
-
 func (r record) valid(slug string) bool {
-	if r.Version != 1 || r.Slug != slug || r.Spec == "" || r.SpecTip == "" || r.Run != digest(r.Spec) || r.Branch == "" || r.Base == "" || r.Candidate != "refs/bench/specbuild/candidate/"+digest(r.Spec) || r.CandidateTip == "" || r.Assignments == nil || r.Operations == nil || len(r.Operations) > operationLimit {
+	if !r.validCore(slug) {
+		return false
+	}
+	seen := map[string]bool{r.Run: true}
+	for _, raw := range r.History {
+		var prior record
+		if jsonfile.DecodeDocument(raw, &prior) != nil || len(prior.History) != 0 || !prior.Terminal || !prior.validCore(slug) || prior.Spec != r.Spec || prior.Branch != r.Branch || seen[prior.Run] {
+			return false
+		}
+		seen[prior.Run] = true
+	}
+	return true
+}
+
+func (r record) validCore(slug string) bool {
+	legacyRun, legacyCandidate := runIdentity(r.Spec, "")
+	attemptRun, attemptCandidate := runIdentity(r.Spec, r.Branch+"\x00"+r.Base)
+	validIdentity := r.Run == legacyRun && r.Candidate == legacyCandidate || r.Run == attemptRun && r.Candidate == attemptCandidate
+	if r.Version != 1 || r.Slug != slug || r.Spec == "" || r.SpecTip == "" || !validIdentity || r.Branch == "" || r.Base == "" || r.CandidateTip == "" || r.Assignments == nil || r.Operations == nil || len(r.Operations) > operationLimit {
 		return false
 	}
 	for key, op := range r.Operations {

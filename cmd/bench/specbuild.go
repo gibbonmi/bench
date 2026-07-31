@@ -200,8 +200,8 @@ func (productionWorktreeOwner) ApplyAbandon(_ context.Context, root, request, pa
 
 type productionGateOwner struct{}
 
-func (productionGateOwner) Bootstrap(_ context.Context, root, branch, tip string) error {
-	return gateauth.Bootstrap(root, branch, tip)
+func (productionGateOwner) Bootstrap(_ context.Context, root, branch, tip, expected string) error {
+	return gateauth.Bootstrap(root, branch, tip, expected)
 }
 
 func (productionGateOwner) Execute(ctx context.Context, root, tree string) (specbuild.GateOutcome, error) {

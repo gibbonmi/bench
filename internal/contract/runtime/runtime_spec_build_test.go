@@ -20,7 +20,9 @@ import (
 
 type runtimeBuildState struct {
 	Run          string                            `json:"run"`
+	Candidate    string                            `json:"candidate"`
 	CandidateTip string                            `json:"candidate_tip"`
+	History      []json.RawMessage                 `json:"history"`
 	Assignments  map[string]runtimeBuildAssignment `json:"assignments"`
 }
 
@@ -40,6 +42,7 @@ func TestRuntimeSpecBuildPorcelainRoutesRealAndLinkedWrappers(t *testing.T) {
 	f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
 	f.WriteFile(".gitignore", ".bench-contract-env/\n")
 	f.WriteFile("specs/demo/spec.md", "# demo\n\nStatus: staged\n")
+	f.WriteFile("specs/demo/tickets/one.md", "# One\n\nOwnership fence: internal/demo\n\n- [ ] [R1] first attempt\n")
 	f.CommitAll("staged spec")
 	f.Bench("gate").RequireExit(0)
 
@@ -50,6 +53,10 @@ func TestRuntimeSpecBuildPorcelainRoutesRealAndLinkedWrappers(t *testing.T) {
 	if started.Stderr != "" {
 		t.Fatalf("start stderr = %q", started.Stderr)
 	}
+	firstAssignment := assignRuntimeBuild(t, f, "one.md", "first request")
+	first := readRuntimeBuildState(t, f)
+	f.Git("update-ref", "refs/bench/recovery/retained", "HEAD").RequireExit(0)
+	oldRefs := strings.Fields(f.Git("for-each-ref", "--format=%(refname) %(objectname)", "refs/bench/specbuild/", "refs/bench/recovery/").Stdout)
 	plan := f.Bench("spec", "build", "abandon", "demo")
 	plan.RequireExit(0)
 	lines := strings.Split(plan.Stdout, "\n")
@@ -58,6 +65,22 @@ func TestRuntimeSpecBuildPorcelainRoutesRealAndLinkedWrappers(t *testing.T) {
 	}
 	fingerprint := strings.Trim(strings.Split(strings.TrimSpace(lines[1]), ",")[0], `"`)
 	f.Bench("spec", "build", "abandon", "demo", "--apply", fingerprint).RequireExit(0)
+	f.WriteFile("specs/demo/tickets/two.md", "# Two\n\nOwnership fence: internal/demo\n\n- [ ] [R2] second attempt\n")
+	f.CommitAll("ticket-only descendant")
+	f.Bench("gate").RequireExit(0)
+	restarted := f.Bench("spec", "build", "start", "demo")
+	restarted.RequireExit(0)
+	contract.RequireContains(t, restarted.Stdout, "demo,active")
+	secondAssignment := assignRuntimeBuild(t, f, "two.md", "second request")
+	second := readRuntimeBuildState(t, f)
+	if first.Run == second.Run || first.Candidate == second.Candidate || firstAssignment.ID == secondAssignment.ID || len(second.History) != 1 {
+		t.Fatalf("fresh attempt collided: first=%#v second=%#v history=%d", first, second, len(second.History))
+	}
+	for i := 0; i < len(oldRefs); i += 2 {
+		if got := strings.TrimSpace(f.Git("rev-parse", oldRefs[i]).Stdout); got != oldRefs[i+1] {
+			t.Fatalf("retained ref %s = %s, want %s", oldRefs[i], got, oldRefs[i+1])
+		}
+	}
 
 	f.Bench("link").RequireExit(0)
 	deep := filepath.Join(f.Root, "nested", "cwd")
@@ -65,7 +88,7 @@ func TestRuntimeSpecBuildPorcelainRoutesRealAndLinkedWrappers(t *testing.T) {
 	linked := filepath.Join(f.Root, ".bench", "bin", "bench.sh")
 	status := contract.RunAt(t, f, deep, nil, "bash", linked, "spec", "build", "status", "demo", "--full")
 	status.RequireExit(0)
-	for _, want := range []string{"demo,terminal", "assignments[0]", "review[0]"} {
+	for _, want := range []string{"demo,active", secondAssignment.ID, "review[0]"} {
 		contract.RequireContains(t, status.Stdout, want)
 	}
 	if status.Stderr != "" {

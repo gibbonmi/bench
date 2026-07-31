@@ -31,8 +31,8 @@ type Result struct {
 	Evidence string
 }
 
-// Bootstrap imports current reusable green proof into the branch-scoped lifecycle marker.
-func Bootstrap(root, branch, tip string) error {
+// Bootstrap imports current reusable green proof with an expected prior marker.
+func Bootstrap(root, branch, tip, expected string) error {
 	if !branchAndTipAt(root, branch, tip) {
 		return errors.New("working branch or tip changed")
 	}
@@ -55,9 +55,20 @@ func Bootstrap(root, branch, tip string) error {
 		if existing == tip {
 			return nil
 		}
-		return errors.New("project-green marker conflicts with another tip")
+		if existing != expected {
+			return errors.New("project-green marker conflicts with another tip")
+		}
+	} else if expected != "" {
+		return errors.New("project-green marker does not match expected prior tip")
 	}
-	if _, err := benchgit.Raw("-C", root, "update-ref", marker, tip, "0000000000000000000000000000000000000000"); err != nil {
+	if expected != "" {
+		if !benchgit.OK("-C", root, "merge-base", "--is-ancestor", expected, tip) {
+			return errors.New("expected project-green marker is not an ancestor of the tip")
+		}
+	} else {
+		expected = "0000000000000000000000000000000000000000"
+	}
+	if _, err := benchgit.Raw("-C", root, "update-ref", marker, tip, expected); err != nil {
 		if existing, checkErr := benchgit.Output("-C", root, "rev-parse", "--verify", marker+"^{commit}"); checkErr == nil && existing == tip {
 			return nil
 		}

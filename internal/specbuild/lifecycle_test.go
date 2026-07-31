@@ -178,7 +178,7 @@ func TestStatusHasDefinitiveEmptyAndActiveProjections(t *testing.T) {
 		t.Fatalf("active status = %#v, %v", got, err)
 	}
 }
-func TestStatusProjectsDurableTerminalState(t *testing.T) {
+func TestStartProjectsPromotedTerminalStateAfterDescendantAdvance(t *testing.T) {
 	root := repo(t)
 	service := New(root, greenGate{}, nil)
 	if _, err := service.Start(context.Background(), "build demo"); err != nil {
@@ -187,7 +187,8 @@ func TestStatusProjectsDurableTerminalState(t *testing.T) {
 	run := loadRun(t, service)
 	run.Terminal = true
 	saveRun(t, service, run)
-	status, err := service.Status("build demo")
+	advanceWorking(t, root)
+	status, err := service.Start(t.Context(), "build demo")
 	if err != nil || status != (Status{Slug: "build demo", State: "terminal", Subject: run.CandidateTip}) {
 		t.Fatalf("terminal status = %#v, %v", status, err)
 	}
@@ -312,9 +313,9 @@ func TestTerminalStatusIgnoresRetainedReview(t *testing.T) {
 
 type countingGate struct{ calls int }
 
-func (g *countingGate) Bootstrap(ctx context.Context, root, branch, tip string) error {
+func (g *countingGate) Bootstrap(ctx context.Context, root, branch, tip, expected string) error {
 	g.calls++
-	return greenGate{}.Bootstrap(ctx, root, branch, tip)
+	return greenGate{}.Bootstrap(ctx, root, branch, tip, expected)
 }
 
 type realOwner struct{}
@@ -330,8 +331,8 @@ func (realOwner) Release(context.Context, string, string, string, string, string
 
 type greenGate struct{}
 
-func (greenGate) Bootstrap(_ context.Context, root, branch, tip string) error {
-	cmd := exec.Command("git", "-C", root, "update-ref", "refs/bench/green/"+branch, tip, "")
+func (greenGate) Bootstrap(_ context.Context, root, branch, tip, expected string) error {
+	cmd := exec.Command("git", "-C", root, "update-ref", "refs/bench/green/"+branch, tip, expected)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("establish green: %s", out)
 	}
@@ -377,7 +378,6 @@ func bytesTrimSpace(v []byte) []byte {
 	}
 	return v
 }
-
 func TestPromoteConflictPreservesWorkingCandidateAndState(t *testing.T) {
 	fixture := reviewedPromotionFixture(t)
 	write(t, filepath.Join(fixture.root, "internal", "specbuild", "checkpoint-change.go"), "package specbuild\n\nvar working = true\n")

@@ -14,8 +14,6 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
-// mutation names lifecycle operations that must prove their subject before writing.
-// The vocabulary intentionally includes transitions that will join this owner later.
 type mutation string
 
 const (
@@ -30,8 +28,7 @@ const (
 
 var errRecompose = errors.New("spec build requires recomposition: bench spec build promote")
 
-// preconditions is the single fail-closed owner for lifecycle mutations. It runs
-// before a command can write durable state, refs, commits, or worktrees.
+// preconditions is the single fail-closed owner before a lifecycle mutation writes state, refs, commits, or worktrees.
 func (s *Service) preconditions(op mutation, slug, specPath string, run *record, assignmentID, evidence string) (buildSubject, error) {
 	subject, err := s.subject(specPath)
 	if err != nil {
@@ -72,7 +69,6 @@ func (s *Service) preconditions(op mutation, slug, specPath string, run *record,
 	}
 	return subject, nil
 }
-
 func recognizedAdvance(root, base, tip string) bool {
 	return exec.Command("git", "-C", root, "merge-base", "--is-ancestor", base, tip).Run() == nil
 }
@@ -96,7 +92,6 @@ func (s *Service) subject(specPath string) (buildSubject, error) {
 	}
 	return buildSubject{branch: branch, tip: tip, spec: specPath, specTip: specTip}, nil
 }
-
 func workingSubject(root string) (string, string, error) {
 	branch, err := benchgit.Output("-C", root, "symbolic-ref", "--quiet", "--short", "HEAD")
 	if err != nil || branch == "" {
@@ -171,6 +166,21 @@ func (s *Service) operationEvidence(op mutation, run record, assignmentID, evide
 		return errors.New("spec build mutation has no precondition contract")
 	}
 	return nil
+}
+
+func retainTerminalAttempt(run record) []json.RawMessage {
+	history := append([]json.RawMessage(nil), run.History...)
+	run.History = nil
+	raw, _ := json.Marshal(run)
+	return append(history, raw)
+}
+
+func runIdentity(specPath, attempt string) (string, string) {
+	identity := digest(specPath)
+	if attempt != "" {
+		identity = digest(specPath + "\x00" + attempt)
+	}
+	return identity, "refs/bench/specbuild/candidate/" + identity
 }
 
 // Abandon returns the read-only inventory that an abandonment apply must match.

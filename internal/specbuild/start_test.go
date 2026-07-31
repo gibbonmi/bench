@@ -16,7 +16,7 @@ type abandonOwner struct{ plans, applies int }
 
 type rejectGate struct{}
 
-func (rejectGate) Bootstrap(context.Context, string, string, string) error {
+func (rejectGate) Bootstrap(context.Context, string, string, string, string) error {
 	return fmt.Errorf("missing evidence")
 }
 func stringsSplitLines(s string) []string {
@@ -28,8 +28,8 @@ func stringsSplitLines(s string) []string {
 
 type reuseGreenGate struct{}
 
-func (reuseGreenGate) Bootstrap(_ context.Context, root, branch, tip string) error {
-	return updateRef(root, "refs/bench/green/"+branch, tip, "")
+func (reuseGreenGate) Bootstrap(_ context.Context, root, branch, tip, expected string) error {
+	return updateRef(root, "refs/bench/green/"+branch, tip, expected)
 }
 
 func TestStartCreatesRunFromExactGreenEvidence(t *testing.T) {

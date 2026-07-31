@@ -25,7 +25,7 @@ func (r *countingRunner) Run(ctx context.Context, command Command) (string, erro
 	for _, arg := range command.Args {
 		if r.block && arg == "apply" {
 			r.block = false
-			return (processRunner{}).Output(ctx, "sh", "-c", "sh -c 'sleep 30 & echo $! > "+r.grand+"; wait' & echo $! > "+r.child+"; wait")
+			return (processRunner{}).Output(ctx, "sh", "-c", "trap 'exit 0' TERM; sh -c 'trap \"\" TERM HUP; sleep 30 & echo $! > "+r.grand+"; wait' >/dev/null 2>&1 & echo $! > "+r.child+"; wait")
 		}
 	}
 	r.calls++
