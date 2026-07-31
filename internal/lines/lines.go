@@ -262,6 +262,56 @@ func (b Binding) ForeignKeys() []string {
 	return b.foreign
 }
 
+// UnboundKeys returns the keys of harness's cells that bind no token, in Tiers order.
+func (b Binding) UnboundKeys(harness string) []string {
+	var keys []string
+	for _, tier := range Tiers {
+		if b.Cell(harness, tier) == "" {
+			keys = append(keys, Key(harness, tier))
+		}
+	}
+	return keys
+}
+
+// retiredFamilies pairs each key prefix of the retired schema with the harness column that
+// now holds what it used to bind: BENCH_TIER_* held one family's concrete ids, which is the
+// codex column, and BENCH_ALIAS_* held the tokens the dissolved alias concept projected,
+// which are the claude column. These keys bind nothing — the matrix is a hard cut with no
+// dual read — so the pairing is migration advice and never a second reading of a binding.
+var retiredFamilies = []struct{ prefix, harness string }{
+	{"BENCH_TIER_", "codex"},
+	{"BENCH_ALIAS_", "claude"},
+}
+
+// RetiredKeyRewrite is one retired assignment and the matrix assignment replacing it, both
+// carrying Value: the migration moves a token between keys and changes no model choice.
+type RetiredKeyRewrite struct {
+	Retired     string
+	Replacement string
+	Value       string
+}
+
+// RetiredKeyRewrites returns every retired schema key assigned in content, in schema order,
+// paired with the matrix key that replaces it.
+func RetiredKeyRewrites(content []byte) []RetiredKeyRewrite {
+	var out []RetiredKeyRewrite
+	for _, family := range retiredFamilies {
+		for _, tier := range Tiers {
+			retired := family.prefix + strings.ToUpper(tier)
+			value, present := tierValue(retired, content)
+			if !present {
+				continue
+			}
+			out = append(out, RetiredKeyRewrite{
+				Retired:     retired,
+				Replacement: Key(family.harness, tier),
+				Value:       value,
+			})
+		}
+	}
+	return out
+}
+
 // CellFault reports why value cannot serve as harness's bound cell, or "" when it can.
 // Every cell is an opaque safe token; opencode's namespace is provider-qualified, so that
 // requirement is a rule on opencode's own cells rather than a filter applied to whatever a
