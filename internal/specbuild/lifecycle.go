@@ -3,12 +3,14 @@ package specbuild
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -30,6 +32,12 @@ type WorktreeOwner interface {
 // ReleaseOwner releases an assignment created by the worktree ownership owner.
 type ReleaseOwner interface {
 	Release(context.Context, string, string, string) error
+}
+
+// AbandonOwner plans and applies exact recovery-aware owned-worktree cleanup.
+type AbandonOwner interface {
+	PlanAbandon(context.Context, string, string, string) (string, error)
+	ApplyAbandon(context.Context, string, string, string, string) error
 }
 
 // OwnedWorktree identifies a worktree created by the existing ownership owner.
@@ -157,6 +165,86 @@ func (s *Service) faultAt(point string) error {
 		return nil
 	}
 	return s.fault(point)
+}
+
+func sortRefs(refs []AbandonmentRef) {
+	sort.Slice(refs, func(i, j int) bool { return refs[i].Name < refs[j].Name })
+}
+
+func abandonmentFacts(plan AbandonmentPlan) string {
+	var facts strings.Builder
+	facts.WriteString("bench-specbuild-abandon/v1")
+	for _, worktree := range plan.Worktrees {
+		facts.WriteString("\x00worktree\x00" + worktree.ID + "\x00" + worktree.Path + "\x00" + worktree.Request + "\x00" + worktree.OwnerFingerprint)
+	}
+	for _, group := range []struct {
+		name string
+		refs []AbandonmentRef
+	}{{"provisional", plan.ProvisionalRefs}, {"checkpoint", plan.UnintegratedCheckpoints}, {"recovery", plan.RecoveryRefs}} {
+		for _, ref := range group.refs {
+			facts.WriteString("\x00" + group.name + "\x00" + ref.Name + "\x00" + ref.Object)
+		}
+	}
+	return facts.String()
+}
+
+type abandonmentJournal struct {
+	Original, Current AbandonmentPlan
+}
+
+func (s *Service) recordAbandonment(run *record, journal abandonmentJournal, completed bool) error {
+	encoded, err := json.Marshal(journal)
+	if err != nil {
+		return fmt.Errorf("encode abandonment journal: %w", err)
+	}
+	return s.recordOperation(run, "abandon", "apply", string(encoded), completed)
+}
+
+func (s *Service) reconcileAbandonment(ctx context.Context, run *record, journal *abandonmentJournal) error {
+	abandoner, ok := abandonOwnerFrom(s.worktrees)
+	if !ok {
+		return errors.New("spec build abandon requires a plan-capable worktree owner")
+	}
+	changed := false
+	for _, worktree := range journal.Current.Worktrees {
+		if _, err := os.Lstat(worktree.Path); !errors.Is(err, os.ErrNotExist) {
+			if err != nil {
+				return err
+			}
+			continue
+		}
+		fingerprint, err := abandoner.PlanAbandon(ctx, s.root, worktree.Request, worktree.Path)
+		if err != nil || fingerprint != worktree.OwnerFingerprint {
+			return errors.New("spec build abandonment recovery evidence drifted")
+		}
+		if err := abandoner.ApplyAbandon(ctx, s.root, worktree.Request, worktree.Path, fingerprint); err != nil {
+			return errors.New("spec build abandonment recovery evidence drifted")
+		}
+		key, assigned, ok := assignmentFor(*run, worktree.ID)
+		if !ok || assigned.Released {
+			return errors.New("spec build abandonment assignment drifted")
+		}
+		assigned.CleanupPending, assigned.Released = false, true
+		run.Assignments[key] = assigned
+		if err := s.save(*run); err != nil {
+			return err
+		}
+		changed = true
+	}
+	if !changed {
+		return nil
+	}
+	next, err := s.abandonmentPlan(ctx, *run)
+	if err != nil {
+		return err
+	}
+	journal.Current = next
+	return s.recordAbandonment(run, *journal, false)
+}
+
+func abandonOwnerFrom(owner WorktreeOwner) (AbandonOwner, bool) {
+	abandoner, ok := owner.(AbandonOwner)
+	return abandoner, ok
 }
 
 // Status is the compact public projection of one spec build.

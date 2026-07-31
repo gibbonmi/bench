@@ -1,10 +1,14 @@
 package specbuild
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os/exec"
 	"path/filepath"
+	"sort"
+	"strings"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
@@ -55,7 +59,10 @@ func (s *Service) preconditions(op mutation, slug, specPath string, run *record,
 		return buildSubject{}, errors.New("spec build candidate no longer matches durable tip")
 	}
 	if err := s.ownedAssignments(run); err != nil {
-		return buildSubject{}, err
+		abandon, found := s.operation(*run, "abandon", "apply")
+		if op != mutationAbandon || !found || abandon.State != "prepared" || abandon.Result == "" {
+			return buildSubject{}, err
+		}
 	}
 	if err := s.operationEvidence(op, *run, assignmentID, evidence); err != nil {
 		return buildSubject{}, err
@@ -142,4 +149,220 @@ func (s *Service) operationEvidence(op mutation, run record, assignmentID, evide
 		return errors.New("spec build mutation has no precondition contract")
 	}
 	return nil
+}
+
+// Abandon returns the read-only inventory that an abandonment apply must match.
+func (s *Service) Abandon(ctx context.Context, slug string) (AbandonmentPlan, error) {
+	if _, err := s.resolve(slug); err != nil {
+		return AbandonmentPlan{}, err
+	}
+	release, err := s.lock(slug)
+	if err != nil {
+		return AbandonmentPlan{}, err
+	}
+	defer release()
+	run, found, err := s.load(slug)
+	if err != nil || !found {
+		if err == nil {
+			err = errors.New("spec build run does not exist")
+		}
+		return AbandonmentPlan{}, err
+	}
+	if err := s.ownedAssignments(&run); err != nil {
+		return AbandonmentPlan{}, err
+	}
+	return s.abandonmentPlan(ctx, run)
+}
+
+// ApplyAbandon releases the exact planned owned worktrees and retains run evidence.
+func (s *Service) ApplyAbandon(ctx context.Context, slug, fingerprint string) (Status, error) {
+	if fingerprint == "" {
+		return Status{}, errors.New("spec build abandon fingerprint is required")
+	}
+	if _, err := s.resolve(slug); err != nil {
+		return Status{}, err
+	}
+	release, err := s.lock(slug)
+	if err != nil {
+		return Status{}, err
+	}
+	defer release()
+	run, found, err := s.load(slug)
+	if err != nil || !found {
+		if err == nil {
+			err = errors.New("spec build run does not exist")
+		}
+		return Status{}, err
+	}
+	op, found := s.operation(run, "abandon", "apply")
+	if found && op.State == "completed" {
+		if op.Input != digest(fingerprint) {
+			return Status{}, errors.New("spec build abandon request conflicts with different inputs")
+		}
+		return run.status(), nil
+	}
+	if _, err := s.preconditions(mutationAbandon, slug, run.Spec, &run, "", ""); err != nil {
+		return Status{}, err
+	}
+	journal := abandonmentJournal{}
+	if found {
+		if op.Input != digest(fingerprint) {
+			return Status{}, errors.New("spec build abandon request conflicts with different inputs")
+		}
+		if op.Result != "" {
+			if err := json.Unmarshal([]byte(op.Result), &journal); err != nil || journal.Original.Fingerprint != fingerprint {
+				return Status{}, errors.New("spec build abandonment journal is invalid")
+			}
+		}
+	}
+	actual, err := s.abandonmentPlan(ctx, run)
+	if err != nil {
+		return Status{}, err
+	}
+	if found && op.Result == "" || !found {
+		if actual.Fingerprint != fingerprint {
+			return Status{}, errors.New("spec build abandon plan drifted; request a fresh plan")
+		}
+		journal = abandonmentJournal{Original: actual, Current: actual}
+		if !found {
+			if _, _, err := s.beginOperation(&run, "abandon", "apply", fingerprint); err != nil {
+				return Status{}, err
+			}
+		}
+		if err := s.recordAbandonment(&run, journal, false); err != nil {
+			return Status{}, err
+		}
+	}
+	if found && op.Result != "" {
+		if err := s.reconcileAbandonment(ctx, &run, &journal); err != nil {
+			return Status{}, err
+		}
+		actual, err = s.abandonmentPlan(ctx, run)
+		if err != nil {
+			return Status{}, err
+		}
+	}
+	if actual.Fingerprint != journal.Current.Fingerprint {
+		return Status{}, errors.New("spec build abandon plan drifted; request a fresh plan")
+	}
+	plan := journal.Current
+	if len(plan.Worktrees) != 0 {
+		releaser, ok := abandonOwnerFrom(s.worktrees)
+		if !ok {
+			return Status{}, errors.New("spec build abandon requires a release-capable worktree owner")
+		}
+		for len(plan.Worktrees) != 0 {
+			worktree := plan.Worktrees[0]
+			key, assigned, ok := assignmentFor(run, worktree.ID)
+			if !ok {
+				return Status{}, errors.New("spec build abandonment assignment drifted")
+			}
+			if err := releaser.ApplyAbandon(ctx, s.root, worktree.Request, worktree.Path, worktree.OwnerFingerprint); err != nil {
+				return run.status(), fmt.Errorf("release abandoned assignment: %w", err)
+			}
+			if err := s.faultAt("abandon/owner-apply"); err != nil {
+				return run.status(), err
+			}
+			assigned.CleanupPending, assigned.Released = false, true
+			run.Assignments[key] = assigned
+			if err := s.save(run); err != nil {
+				return Status{}, err
+			}
+			next, err := s.abandonmentPlan(ctx, run)
+			if err != nil {
+				return Status{}, err
+			}
+			journal.Current = next
+			if err := s.recordAbandonment(&run, journal, false); err != nil {
+				return Status{}, err
+			}
+			plan = next
+			if err := s.faultAt("abandon/release"); err != nil {
+				return run.status(), err
+			}
+		}
+	}
+	run.Terminal = true
+	if err := s.save(run); err != nil {
+		return Status{}, err
+	}
+	if err := s.recordAbandonment(&run, journal, true); err != nil {
+		return Status{}, err
+	}
+	return run.status(), nil
+}
+
+// AbandonmentPlan identifies every Git-visible fact an abandon apply rechecks.
+type AbandonmentPlan struct {
+	Fingerprint             string
+	Worktrees               []AbandonmentWorktree
+	ProvisionalRefs         []AbandonmentRef
+	UnintegratedCheckpoints []AbandonmentRef
+	RecoveryRefs            []AbandonmentRef
+}
+
+// AbandonmentWorktree is one active assignment that the owner may release.
+type AbandonmentWorktree struct{ ID, Path, Request, OwnerFingerprint string }
+
+// AbandonmentRef is one retained Git ref and its exact object identity.
+type AbandonmentRef struct{ Name, Object string }
+
+func (s *Service) abandonmentPlan(ctx context.Context, run record) (AbandonmentPlan, error) {
+	plan := AbandonmentPlan{}
+	abandoner, ok := abandonOwnerFrom(s.worktrees)
+	if !ok && len(run.Assignments) != 0 {
+		return AbandonmentPlan{}, errors.New("spec build abandon requires a plan-capable worktree owner")
+	}
+	for _, assigned := range run.Assignments {
+		if assigned.Integrated == "" && assigned.CheckpointRef != "" {
+			ref, err := s.abandonmentRef(ctx, assigned.CheckpointRef)
+			if err != nil {
+				return AbandonmentPlan{}, err
+			}
+			plan.UnintegratedCheckpoints = append(plan.UnintegratedCheckpoints, ref)
+		}
+		if assigned.Released {
+			continue
+		}
+		fingerprint, err := abandoner.PlanAbandon(ctx, s.root, assigned.Request, assigned.Path)
+		if err != nil {
+			return AbandonmentPlan{}, fmt.Errorf("inventory assignment worktree: %w", err)
+		}
+		plan.Worktrees = append(plan.Worktrees, AbandonmentWorktree{ID: assigned.ID, Path: assigned.Path, Request: assigned.Request, OwnerFingerprint: fingerprint})
+	}
+	var err error
+	if plan.ProvisionalRefs, err = s.abandonmentRefs(ctx, "refs/bench/specbuild/"); err != nil {
+		return AbandonmentPlan{}, err
+	}
+	if plan.RecoveryRefs, err = s.abandonmentRefs(ctx, "refs/bench/recovery/"); err != nil {
+		return AbandonmentPlan{}, err
+	}
+	sort.Slice(plan.Worktrees, func(i, j int) bool { return plan.Worktrees[i].ID < plan.Worktrees[j].ID })
+	sortRefs(plan.ProvisionalRefs)
+	sortRefs(plan.UnintegratedCheckpoints)
+	sortRefs(plan.RecoveryRefs)
+	plan.Fingerprint = digest(abandonmentFacts(plan))
+	return plan, nil
+}
+
+func (s *Service) abandonmentRefs(ctx context.Context, prefix string) ([]AbandonmentRef, error) {
+	out, err := s.gitOutput(ctx, "for-each-ref", "--format=%(refname) %(objectname)", prefix)
+	if err != nil {
+		return nil, fmt.Errorf("inventory abandonment refs: %w", err)
+	}
+	refs := make([]AbandonmentRef, 0)
+	for _, line := range strings.Split(out, "\n") {
+		fields := strings.Fields(line)
+		if len(fields) == 2 {
+			refs = append(refs, AbandonmentRef{Name: fields[0], Object: fields[1]})
+		}
+	}
+	return refs, nil
+}
+func (s *Service) abandonmentRef(ctx context.Context, name string) (AbandonmentRef, error) {
+	object, err := s.gitOutput(ctx, "rev-parse", "--verify", name+"^{commit}")
+	if err != nil {
+		return AbandonmentRef{}, fmt.Errorf("inventory unintegrated checkpoint: %w", err)
+	}
+	return AbandonmentRef{Name: name, Object: object}, nil
 }

@@ -27,6 +27,7 @@ type checkpointFixture struct {
 func newCheckpointFixture(t *testing.T) checkpointFixture {
 	t.Helper()
 	root := repo(t)
+	write(t, filepath.Join(root, ".gitignore"), "dist/\n")
 	write(t, filepath.Join(root, "specs", "build demo", "tickets", "one.md"), "# One\n\nOwnership fence: internal/specbuild\nAssumptions: receipt contract\n\n- [ ] [R10-R15] checkpoint receipt\n- [ ] [R54] framing\n")
 	git(t, root, "add", ".")
 	git(t, root, "commit", "-qm", "receipt ticket")

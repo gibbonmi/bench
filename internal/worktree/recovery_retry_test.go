@@ -75,3 +75,38 @@ func TestExplicitRetryFinalizesRecoveryAfterCleanDrift(t *testing.T) {
 		})
 	}
 }
+
+func TestAbandonRetryUsesInFlightReceipt(t *testing.T) {
+	const request = "landed-abandon-retry-in-flight"
+	root, creation := newOwnedAssignment(t, "abandon-retry-in-flight")
+	mustWrite(t, filepath.Join(creation.Path, "dirty.txt"), []byte("preserve once\n"), 0o644)
+	first, err := PlanAbandon(root, request, creation.Path)
+	mustNoError(t, err)
+	stop := errors.New("stop before worktree removal")
+	old := cleanupTransactionBoundary
+	cleanupTransactionBoundary = failLifecycleStep(StepRemoval, stop)
+	_, err = ApplyAbandon(root, request, creation.Path, first)
+	cleanupTransactionBoundary = old
+	requireTest(t, errors.Is(err, stop), "first abandon apply error = %v, want %v", err, stop)
+
+	pending, err := assignmentByID(root, creation.Assignment.ID)
+	mustNoError(t, err)
+	requireTest(t, pending.State == intent.StateCleanupPending && len(pending.Recovery) == 1,
+		"interrupted assignment = %#v", pending)
+	retry, err := PlanAbandon(root, request, creation.Path)
+	requireTest(t, err == nil && retry == first, "abandon retry fingerprint = %q, %v; want %q", retry, err, first)
+	result, err := ApplyAbandon(root, request, creation.Path, retry)
+	requireTest(t, err == nil && result.Action == ActionRemoved, "abandon retry = %#v, %v", result, err)
+
+	if _, err := os.Stat(creation.Path); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("retry left checkout: %v", err)
+	}
+	recovery := pending.Recovery[0]
+	refs := strings.Fields(gitOutput(t, root, "for-each-ref", "--format=%(refname)", intent.RecoveryRefPrefix(creation.Assignment.OwnerID, creation.Assignment.ID)))
+	requireTest(t, len(refs) == 1 && refs[0] == recovery.Ref, "recovery refs = %#v, want only %s", refs, recovery.Ref)
+	repo, target, err := cleanupIdentity(root, creation.Path)
+	mustNoError(t, err)
+	receipt, found, err := intent.CleanupReceiptFor(root, repo, cleanupOperation, target, first)
+	requireTest(t, err == nil && found && receipt.State == intent.ReceiptComplete && receipt.Recovery == recovery.Ref,
+		"final cleanup receipt = %#v, found=%t error=%v", receipt, found, err)
+}

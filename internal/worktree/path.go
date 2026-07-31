@@ -60,6 +60,77 @@ func resolveWorktree(root, target string) (string, error) {
 	return selected.Worktree, nil
 }
 
+func planAbandon(root, request, path string) (CleanupPlan, error) {
+	repo, target, err := cleanupIdentity(root, path)
+	if err != nil {
+		return CleanupPlan{}, err
+	}
+	if plan, found, err := abandonReceipt(root, repo, target, requestDigest(request)); err != nil || found {
+		return plan, err
+	}
+	if _, err := os.Lstat(target); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return CleanupPlan{}, errors.New("abandon request, assignment, or path mismatch; checkout retained")
+		}
+		return CleanupPlan{}, err
+	}
+	plan, err := PlanExplicit(root, target)
+	if err != nil {
+		return CleanupPlan{}, err
+	}
+	if !plan.owned || plan.assignment == nil || plan.assignment.Request != requestDigest(request) {
+		return CleanupPlan{}, errors.New("abandon request, assignment, or path mismatch; checkout retained")
+	}
+	return plan, nil
+}
+
+func abandonReceipt(root, repo, target, request string) (CleanupPlan, bool, error) {
+	receipt, found, err := intent.CleanupReceiptForRequest(root, repo, cleanupOperation, target, request)
+	if err != nil || !found {
+		return CleanupPlan{}, found, err
+	}
+	if receipt.State != intent.ReceiptInFlight && receipt.State != intent.ReceiptComplete {
+		return CleanupPlan{}, true, errors.New("abandon request, assignment, or path mismatch; checkout retained")
+	}
+	assigned, active, err := intent.FindAssignmentByRequest(root, request)
+	if err != nil {
+		return CleanupPlan{}, true, err
+	}
+	if !active {
+		if receipt.State == intent.ReceiptComplete {
+			return planFromReceipt(receipt), true, nil
+		}
+		return CleanupPlan{}, true, errors.New("abandon request, assignment, or path mismatch; checkout retained")
+	}
+	assignmentPath, err := canonicalPath(assigned.Worktree)
+	if err != nil || assigned.ID != receipt.Assignment || assigned.OwnerID != receipt.Owner || assigned.Request != request || assignmentPath != target {
+		return CleanupPlan{}, true, errors.New("abandon request, assignment, or path mismatch; checkout retained")
+	}
+	return planFromReceipt(receipt), true, nil
+}
+
+// PlanAbandon returns the exact recovery-aware cleanup fingerprint for one owned assignment.
+func PlanAbandon(root, request, path string) (string, error) {
+	plan, err := planAbandon(root, request, path)
+	return plan.Fingerprint, err
+}
+
+// ApplyAbandon preserves Git-visible work before removing one exact owned assignment.
+func ApplyAbandon(root, request, path, fingerprint string) (CleanupPlan, error) {
+	plan, err := planAbandon(root, request, path)
+	if err != nil {
+		return plan, err
+	}
+	if plan.Fingerprint != fingerprint {
+		return plan, errStaleFingerprint
+	}
+	applied, err := ApplyExplicit(root, path, plan.Fingerprint)
+	if err != nil || applied.Action != ActionRetain {
+		return applied, err
+	}
+	return applied, retainedReleaseError(applied, request, path)
+}
+
 func selectAssignment(assignments []intent.Assignment, target string) (intent.Assignment, error) {
 	path, isPath, err := targetPath(target)
 	if err != nil {
