@@ -101,7 +101,7 @@ func testRuntimeStatusLandedState(t *testing.T) {
 // it never crowds the gate/git rows.
 func testRuntimeStatusGuardsSignal(t *testing.T) {
 	f := contract.NewFixture(t)
-	f.WriteFile(".bench/lines.env", "BENCH_TIER_TOP=t\nBENCH_TIER_MID=m\nBENCH_TIER_CHEAP=c\n")
+	f.WriteFile(".bench/lines.env", "BENCH_CODEX_TOP=t\nBENCH_CODEX_MID=m\nBENCH_CODEX_CHEAP=c\n")
 	f.WriteFile("IDEAS.md", "- 2026-07-05  parked idea\n")
 	f.CommitAll("routed base") // commit so the git signal is quiet and only the ladder rows remain
 	// An out-of-pool worktree adds the worktree signal (sev just above guards).
@@ -136,7 +136,7 @@ func testRuntimeStatusGuardsSignal(t *testing.T) {
 // double-report the same hook.
 func testRuntimeStatusGuardsPrimaryOnly(t *testing.T) {
 	f := contract.NewFixture(t)
-	f.WriteFile(".bench/lines.env", "BENCH_TIER_TOP=t\nBENCH_TIER_MID=m\nBENCH_TIER_CHEAP=c\n")
+	f.WriteFile(".bench/lines.env", "BENCH_CODEX_TOP=t\nBENCH_CODEX_MID=m\nBENCH_CODEX_CHEAP=c\n")
 	f.CommitAll("routed base")
 	linked := filepath.Join(f.Root, "linked wt")
 	f.Git("worktree", "add", "-q", "--detach", linked, "HEAD")

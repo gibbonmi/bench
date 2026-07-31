@@ -275,20 +275,26 @@ The routing rubric — the three-signal decision table and the escalation ladder
 is the `craft-line` skill. This section holds what is project-specific: the
 binding, the cached routings, and the escalation policy.
 
-**Tier → model** (Codex; advisory candidates from `bench models`; set
-2026-07-10): the reviewer-owned binding is top = Sol (`gpt-5.6-sol`) · mid =
-Terra (`gpt-5.6-terra`) · cheap = Luna (`gpt-5.6-luna`). These opaque safe
-tokens are this repo's current Codex choices, not a namespace rule; the token
-grammar and discovery posture live in `craft-line`. Machine-readable source:
-`.bench/lines.env`, read by the Agent-tool hook and the shift adapters; the
-`checkLineBinding` conformance check cross-checks this paragraph against it, so
-drift between the two turns the gate red. Claude Code delegation addresses
-models by alias only, so `lines.env` separately declares the corresponding tier
-aliases (`BENCH_ALIAS_TOP=fable`, `BENCH_ALIAS_MID=opus`,
-`BENCH_ALIAS_CHEAP=sonnet`); those aliases do not resolve to the Codex model ids.
-Code-author venue follows `craft-delegate`; line choice does not override its
-threshold. Headless shift runs target `gpt-5.6-luna` via `BENCH_MODEL` through
-the adapter (adapters take exact ids, not aliases).
+**Harness × tier binding** (advisory candidates from `bench models`; set
+2026-07-10): tier is the only shared identity, and each harness holds its own
+column — no family is canonical.
+
+| tier | codex | claude | opencode |
+|---|---|---|---|
+| top | `gpt-5.6-sol` | `fable` | unbound |
+| mid | `gpt-5.6-terra` | `opus` | unbound |
+| cheap | `gpt-5.6-luna` | `sonnet` | unbound |
+
+These opaque safe tokens are this repo's current choices, not a namespace rule;
+the token grammar and discovery posture live in `craft-line`. OpenCode is
+unadopted here, so its column stays unbound and its adapter refuses to launch
+rather than borrowing another harness's ids. Machine-readable source:
+`.bench/lines.env`, read by the Agent-tool hook and the shift adapters, each
+naming its own harness; the `checkLineBinding` conformance check cross-checks
+this table against it, so drift between the two turns the gate red. Code-author
+venue follows `craft-delegate`; line choice does not override its threshold. A
+headless shift declares the tier — `BENCH_MODEL=cheap` — and the adapter's own
+column supplies the id.
 
 **Escalation policy:** no standing top-tier opt-out — any bump to the top binding
 (`gpt-5.6-sol`; `fable` in Claude Code) pauses and asks the reviewer (the ladder

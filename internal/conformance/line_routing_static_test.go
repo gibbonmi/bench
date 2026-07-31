@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/lines"
-	"github.com/gibbonmi/bench/internal/modelid"
 	"github.com/gibbonmi/bench/internal/modelid/modelidtest"
 )
 
@@ -20,71 +18,87 @@ func checkLineRouting(root string) []string {
 	diags = append(diags, checkClaudeHookWiring(root)...)
 	diags = append(diags, checkAgentHookBehavior(root)...)
 	diags = append(diags, checkAdapterLineGuards(root)...)
+	diags = append(diags, checkLineHarnessSurfaces(root)...)
 	return diags
 }
 
+// checkLineBinding grades the reviewer-owned matrix and the profile's rendering of it from
+// the same parse the runtime reads. Only a DECLARED harness owes all three cells, so an
+// unadopted harness leaves the matrix complete instead of reddening the gate for a harness
+// nobody runs here.
 func checkLineBinding(root string) []string {
 	path := filepath.Join(root, ".bench", "lines.env")
 	if !exists(path) {
 		return []string{"lines.env missing: .bench/lines.env is the tier binding enforcement reads"}
 	}
-	content := []byte(readIfExists(path))
-	binding := lines.ParseBinding(content)
+	binding := lines.ParseBinding([]byte(readIfExists(path)))
 	var diags []string
-	tiers := []struct {
-		key   string
-		value string
-	}{
-		{"BENCH_TIER_TOP", binding.Top},
-		{"BENCH_TIER_MID", binding.Mid},
-		{"BENCH_TIER_CHEAP", binding.Cheap},
+	for _, key := range binding.ForeignKeys() {
+		diags = append(diags, fmt.Sprintf("lines.env key unknown: %s names no harness in the binding matrix (%s)", key, strings.Join(lines.Harnesses, ", ")))
 	}
-	for _, tier := range tiers {
-		if tier.value == "" {
-			diags = append(diags, fmt.Sprintf("lines.env tier unset: %s has no value in .bench/lines.env (%s='')", tier.key, tier.key))
-		} else if !modelid.SafeToken(tier.value) {
-			diags = append(diags, fmt.Sprintf("lines.env tier malformed: %s='%s' is not a safe model token", tier.key, tier.value))
-		}
-	}
-	aliases := []struct {
-		key   string
-		value string
-	}{
-		{"BENCH_ALIAS_TOP", binding.AliasTop},
-		{"BENCH_ALIAS_MID", binding.AliasMid},
-		{"BENCH_ALIAS_CHEAP", binding.AliasCheap},
-	}
-	aliasRe := regexp.MustCompile(`^[a-z0-9-]+$`)
-	for _, alias := range aliases {
-		if !regexp.MustCompile(`(?m)^[ \t]*` + regexp.QuoteMeta(alias.key) + `=`).Match(content) {
+	profile := readIfExists(filepath.Join(root, "projects", "benchkit.md"))
+	declared := false
+	for _, harness := range lines.Harnesses {
+		if !binding.Declared(harness) {
 			continue
 		}
-		if !aliasRe.MatchString(alias.value) {
-			diags = append(diags, fmt.Sprintf("lines.env alias malformed: %s='%s' is not a bare alias", alias.key, alias.value))
+		declared = true
+		for _, tier := range lines.Tiers {
+			key := lines.Key(harness, tier)
+			value := binding.Cell(harness, tier)
+			switch {
+			case value == "":
+				diags = append(diags, fmt.Sprintf("lines.env cell unset: %s has no value in .bench/lines.env (%s='')", key, key))
+			case lines.CellFault(harness, value) != "":
+				diags = append(diags, fmt.Sprintf("lines.env cell malformed: %s='%s' %s", key, value, lines.CellFault(harness, value)))
+			case profile != "" && !strings.Contains(profile, value):
+				diags = append(diags, fmt.Sprintf("profile Lines prose stale: projects/benchkit.md does not name bound model id '%s' (%s in lines.env)", value, key))
+			}
 		}
 	}
-
-	profile := readIfExists(filepath.Join(root, "projects", "benchkit.md"))
-	if profile != "" {
-		for _, tier := range tiers {
-			if tier.value == "" {
-				continue
-			}
-			if !strings.Contains(profile, tier.value) {
-				diags = append(diags, fmt.Sprintf("profile Lines prose stale: projects/benchkit.md does not name bound model id '%s' (%s in lines.env)", tier.value, tier.key))
-			}
-		}
-		for _, alias := range aliases {
-			if alias.value == "" {
-				continue
-			}
-			want := alias.key + "=" + alias.value
-			if !strings.Contains(profile, want) {
-				diags = append(diags, fmt.Sprintf("profile Lines prose stale: projects/benchkit.md does not carry alias declaration %s", want))
-			}
-		}
+	if !declared {
+		// A binding that declares no harness at all is unusable. The diagnostic names the
+		// first cell so an operator receives a key to write rather than a category.
+		key := lines.Key(lines.Harnesses[0], lines.Tiers[0])
+		diags = append(diags, fmt.Sprintf("lines.env cell unset: %s has no value in .bench/lines.env (%s='')", key, key))
 	}
 	return diags
+}
+
+// TestLineBindingGradesDeclaredHarnessesOnly pins the declared-versus-known distinction in
+// both directions: an absent opencode column is silent while codex and claude are complete,
+// and a declared column missing one cell is not.
+func TestLineBindingGradesDeclaredHarnessesOnly(t *testing.T) {
+	write := func(t *testing.T, content string) string {
+		t.Helper()
+		root := t.TempDir()
+		if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(root, ".bench", "lines.env"), []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return root
+	}
+	complete := "BENCH_CODEX_TOP=gpt-5.4\nBENCH_CODEX_MID=gpt-5.3\nBENCH_CODEX_CHEAP=gpt-5.2\n" +
+		"BENCH_CLAUDE_TOP=fable\nBENCH_CLAUDE_MID=opus\nBENCH_CLAUDE_CHEAP=sonnet\n"
+	if diags := checkLineBinding(write(t, complete)); len(diags) != 0 {
+		t.Fatalf("an unadopted opencode column reddened the gate:\n%s", strings.Join(diags, "\n"))
+	}
+	if diags := checkLineBinding(write(t, complete+"BENCH_OPENCODE_TOP=openai/gpt-5\n")); !containsDiagnostic(diags, "BENCH_OPENCODE_MID has no value") {
+		t.Fatalf("a declared-but-incomplete opencode column was accepted:\n%s", strings.Join(diags, "\n"))
+	}
+	// opencode's namespace is provider-qualified, and the rule lives on its own cells.
+	if diags := checkLineBinding(write(t, complete+"BENCH_OPENCODE_TOP=gpt-5\nBENCH_OPENCODE_MID=gpt-4\nBENCH_OPENCODE_CHEAP=gpt-3\n")); !containsDiagnostic(diags, "is not provider-qualified") {
+		t.Fatalf("a bare opencode column was accepted:\n%s", strings.Join(diags, "\n"))
+	}
+	// The retired schema names no harness in the matrix, so it is reported rather than read.
+	retired := checkLineBinding(write(t, "BENCH_TIER_TOP=gpt-5.4\nBENCH_ALIAS_TOP=fable\n"))
+	for _, want := range []string{"BENCH_TIER_TOP names no harness", "BENCH_ALIAS_TOP names no harness"} {
+		if !containsDiagnostic(retired, want) {
+			t.Fatalf("want %q, got:\n%s", want, strings.Join(retired, "\n"))
+		}
+	}
 }
 
 func TestLineBindingAcceptsOpaqueSafeModelTokens(t *testing.T) {
@@ -94,9 +108,9 @@ func TestLineBindingAcceptsOpaqueSafeModelTokens(t *testing.T) {
 			if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
 				t.Fatal(err)
 			}
-			content := "BENCH_TIER_TOP=gpt-5.4\n" +
-				"BENCH_TIER_MID=" + value + "\n" +
-				"BENCH_TIER_CHEAP=openai/gpt-5\n"
+			content := "BENCH_CODEX_TOP=gpt-5.4\n" +
+				"BENCH_CODEX_MID=" + value + "\n" +
+				"BENCH_CODEX_CHEAP=openai/gpt-5\n"
 			if err := os.WriteFile(filepath.Join(root, ".bench", "lines.env"), []byte(content), 0o644); err != nil {
 				t.Fatal(err)
 			}
@@ -114,16 +128,16 @@ func TestLineBindingRejectsUnsafeModelTokens(t *testing.T) {
 			if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
 				t.Fatal(err)
 			}
-			content := "BENCH_TIER_TOP=gpt-5.4\n" +
-				"BENCH_TIER_MID=" + token.Value + "\n" +
-				"BENCH_TIER_CHEAP=openai/gpt-5\n"
+			content := "BENCH_CODEX_TOP=gpt-5.4\n" +
+				"BENCH_CODEX_MID=" + token.Value + "\n" +
+				"BENCH_CODEX_CHEAP=openai/gpt-5\n"
 			if err := os.WriteFile(filepath.Join(root, ".bench", "lines.env"), []byte(content), 0o644); err != nil {
 				t.Fatal(err)
 			}
 			diags := checkLineBinding(root)
-			want := "BENCH_TIER_MID='" + token.Value + "'"
+			want := "BENCH_CODEX_MID='" + token.Value + "'"
 			if token.Value == "" {
-				want = "BENCH_TIER_MID=''"
+				want = "BENCH_CODEX_MID=''"
 			}
 			if !containsDiagnostic(diags, want) {
 				t.Fatalf("want diagnostic containing %q, got:\n%s", want, strings.Join(diags, "\n"))
