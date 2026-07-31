@@ -25,7 +25,7 @@ var decisionMapIntegrityFixtureCategories = map[string][]string{
 		"schema-duplicate-answer", "schema-duplicate-blocked-by", "schema-duplicate-destination", "schema-duplicate-discretion", "schema-duplicate-fog", "schema-duplicate-out-of-scope", "schema-duplicate-question", "schema-duplicate-sources", "schema-duplicate-status", "schema-duplicate-title", "schema-duplicate-type", "schema-handoff", "schema-malformed-blocked-by", "schema-missing-answer", "schema-missing-blocked-by", "schema-missing-destination", "schema-missing-discretion", "schema-missing-fog", "schema-missing-out-of-scope", "schema-missing-question", "schema-missing-sources", "schema-missing-status", "schema-missing-ticket", "schema-missing-title", "schema-missing-type", "schema-status", "schema-unsupported-type",
 	},
 	"source": {
-		"source-absolute-path", "source-empty-path", "source-escape-path", "source-invalid-url", "source-missing-drift", "source-missing-path", "source-missing-supports", "source-not-bullet", "source-unknown-kind",
+		"source-absolute-path", "source-empty-path", "source-escape-path", "source-invalid-url", "source-missing-drift", "source-missing-path", "source-missing-supports", "source-not-bullet", "source-second-locator", "source-unknown-kind",
 	},
 	"terminal-list": {
 		"terminal-discretion-prose", "terminal-fog-prose", "terminal-out-of-scope-prose",
@@ -36,7 +36,7 @@ var decisionMapIntegrityFixtureCategories = map[string][]string{
 // must red even though the fixture directories and EXPECT files remain the test corpus.
 func validateDecisionMapIntegrityFixtureInventory(fixtures map[string]canary.Fixture) error {
 	seen := make(map[string]bool)
-	expected := make([]string, 0, 48)
+	expected := make([]string, 0, 49)
 	for category, names := range decisionMapIntegrityFixtureCategories {
 		for _, name := range names {
 			if seen[name] {
@@ -46,8 +46,8 @@ func validateDecisionMapIntegrityFixtureInventory(fixtures map[string]canary.Fix
 			expected = append(expected, name)
 		}
 	}
-	if len(expected) != 48 {
-		return fmt.Errorf("decision-map fixture inventory has %d entries, want 48", len(expected))
+	if len(expected) != 49 {
+		return fmt.Errorf("decision-map fixture inventory has %d entries, want 49", len(expected))
 	}
 	sort.Strings(expected)
 	actual := make([]string, 0, len(fixtures))

@@ -1,0 +1,3 @@
+[
+  {"path":"specs/ft128-agent-line-binding/decisions/multi-harness-line-binding.md","old":"## Sources\n\n## Out of scope","new":"## Sources\n\n- URL: https://example.invalid/second\n  URL: https://example.invalid/second\n  Supports: source shape\n  Drift: source shape\n\n## Out of scope"}
+]

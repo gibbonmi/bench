@@ -412,7 +412,7 @@ Fourth?
 ## Sources
 `
 	_, diagnostics := ValidateDecisionMap(t.TempDir(), "decisions/graph.md", false, []byte(document))
-	for _, want := range []string{"duplicate ID #1", "duplicate blocker #2", "dangling blocker #9", "self-edge #2 -> #2", "cycle edge #4 -> #3", "resolved ticket #1: First depends on unresolved #2: Second"} {
+	for _, want := range []string{"duplicate ID #1", "duplicate blocker #2", "dangling blocker #9", "self-edge #2 -> #2", "cycle edge ticket #4: Fourth -> ticket #3: Third", "resolved ticket #1: First depends on unresolved #2: Second"} {
 		if !hasDiagnostic(diagnostics, want) {
 			t.Errorf("diagnostics = %v, want %q", diagnostics, want)
 		}
@@ -577,6 +577,28 @@ func TestMapSourcesCollectIndependentRecordFailures(t *testing.T) {
 	}
 	if !validSourceURL(sourceLocator("`https://example.invalid`")) || validSourceURL(sourceLocator("`https://example.invalid")) {
 		t.Fatal("source locator backtick handling drifted")
+	}
+}
+
+func TestMapSourcesRequireExactRecordShape(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "evidence.md"), []byte("evidence"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for name, test := range map[string]struct{ body, want string }{
+		"second path":       {"- Path: evidence.md\n  Path: evidence.md\n  Supports: support\n  Drift: drift\n", "unexpected field Path"},
+		"second url":        {"- URL: https://example.invalid/one\n  URL: https://example.invalid/two\n  Supports: support\n  Drift: drift\n", "unexpected field URL"},
+		"mixed locator":     {"- Path: evidence.md\n  URL: https://example.invalid/two\n  Supports: support\n  Drift: drift\n", "unexpected field URL"},
+		"unknown field":     {"- Path: evidence.md\n  Owner: team\n  Supports: support\n  Drift: drift\n", "unexpected field Owner"},
+		"duplicate support": {"- Path: evidence.md\n  Supports: support\n  Supports: repeated\n  Drift: drift\n", "duplicate field Supports"},
+		"reordered fields":  {"- Path: evidence.md\n  Drift: drift\n  Supports: support\n", "field Drift is out of order; expected Supports"},
+		"empty field":       {"- Path: evidence.md\n  Supports: \n  Drift: drift\n", "field Supports must be non-empty"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if diagnostics := sourceDiagnostics(root, test.body); !hasDiagnostic(diagnostics, test.want) {
+				t.Fatalf("diagnostics = %v, want %q", diagnostics, test.want)
+			}
+		})
 	}
 }
 

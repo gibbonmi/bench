@@ -66,7 +66,8 @@ func cycleDiagnostics(tickets map[string]DecisionTicket) []Diagnostic {
 	var visit func(string, string)
 	visit = func(id, from string) {
 		if visiting[id] {
-			diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("cycle edge #%s -> #%s", from, id)})
+			fromTicket, toTicket := tickets[from], tickets[id]
+			diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("cycle edge ticket #%s: %s -> ticket #%s: %s (#%s -> #%s)", from, fromTicket.Title, id, toTicket.Title, from, id)})
 			return
 		}
 		if visited[id] {
@@ -178,19 +179,38 @@ func sourceDiagnostics(root, body string) []Diagnostic {
 			return
 		}
 		value := sourceLocator(strings.TrimPrefix(strings.TrimPrefix(locator, "Path: "), "URL: "))
-		supports, drift := false, false
+		expected := []string{"Supports", "Drift"}
+		seen := make(map[string]bool, len(expected))
+		next := 0
 		for _, line := range lines[1:] {
-			if strings.HasPrefix(line, "Supports: ") && strings.TrimSpace(strings.TrimPrefix(line, "Supports: ")) != "" {
-				supports = true
+			name, fieldValue, hasSeparator := strings.Cut(line, ":")
+			if !hasSeparator || (name != "Supports" && name != "Drift") {
+				diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("Sources %s unexpected field %s", value, name)})
+				continue
 			}
-			if strings.HasPrefix(line, "Drift: ") && strings.TrimSpace(strings.TrimPrefix(line, "Drift: ")) != "" {
-				drift = true
+			if seen[name] {
+				diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("Sources %s duplicate field %s", value, name)})
+				continue
 			}
+			if next >= len(expected) || name != expected[next] {
+				expectedName := "no further fields"
+				if next < len(expected) {
+					expectedName = expected[next]
+				}
+				diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("Sources %s field %s is out of order; expected %s", value, name, expectedName)})
+				continue
+			}
+			if strings.TrimSpace(fieldValue) == "" {
+				diagnostics = append(diagnostics, Diagnostic{Message: fmt.Sprintf("Sources %s field %s must be non-empty", value, name)})
+				continue
+			}
+			seen[name] = true
+			next++
 		}
-		if !supports {
+		if !seen["Supports"] {
 			diagnostics = append(diagnostics, Diagnostic{Message: "Sources " + value + " missing Supports"})
 		}
-		if !drift {
+		if !seen["Drift"] {
 			diagnostics = append(diagnostics, Diagnostic{Message: "Sources " + value + " missing Drift"})
 		}
 		if isPath {
