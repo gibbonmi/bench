@@ -43,10 +43,7 @@ func newCheckpointFixture(t *testing.T) checkpointFixture {
 	write(t, filepath.Join(assigned.Path, "internal", "specbuild", "checkpoint-change.go"), "package specbuild\n")
 	git(t, assigned.Path, "add", ".")
 	git(t, assigned.Path, "commit", "-qm", "checkpoint change")
-	run, found, err := service.load("build demo")
-	if err != nil || !found {
-		t.Fatalf("load: found:%v err:%v", found, err)
-	}
+	run := loadRun(t, service)
 	_, stored, ok := assignmentFor(run, assigned.ID)
 	if !ok {
 		t.Fatal("missing assignment")
@@ -126,10 +123,7 @@ func changedTicket(t *testing.T, fixture checkpointFixture, text string) {
 }
 func checkpointAssignment(t *testing.T, root string, service *Service, assigned Assignment, ownership []string) record {
 	t.Helper()
-	run, found, err := service.load("build demo")
-	if err != nil || !found {
-		t.Fatalf("load before checkpoint: found:%v err:%v", found, err)
-	}
+	run := loadRun(t, service)
 	_, stored, ok := assignmentFor(run, assigned.ID)
 	if !ok {
 		t.Fatal("missing assignment")
@@ -143,11 +137,7 @@ func checkpointAssignment(t *testing.T, root string, service *Service, assigned 
 	if _, err := service.Checkpoint(t.Context(), "build demo", assigned.ID, writeCheckpointReceipt(t, rec, "\n")); err != nil {
 		t.Fatalf("Checkpoint(%s): %v", assigned.ID, err)
 	}
-	run, found, err = service.load("build demo")
-	if err != nil || !found {
-		t.Fatalf("load after checkpoint: found:%v err:%v", found, err)
-	}
-	return run
+	return loadRun(t, service)
 }
 func siblingCheckpoints(t *testing.T, firstPath, firstContent, secondPath, secondContent string) (string, *Service, Assignment, Assignment, record) {
 	t.Helper()
@@ -176,11 +166,16 @@ func siblingCheckpoints(t *testing.T, firstPath, firstContent, secondPath, secon
 		git(t, change.assignment.Path, "commit", "-qm", change.path)
 		checkpointAssignment(t, root, service, change.assignment, []string{change.path})
 	}
+	return root, service, first, second, loadRun(t, service)
+}
+
+func loadRun(t *testing.T, service *Service) record {
+	t.Helper()
 	run, found, err := service.load("build demo")
 	if err != nil || !found {
-		t.Fatalf("load sibling checkpoints: found:%v err:%v", found, err)
+		t.Fatalf("load run: found:%v err:%v", found, err)
 	}
-	return root, service, first, second, run
+	return run
 }
 func TestSharedPreconditionsRefuseEveryAssignmentOwnershipIdentity(t *testing.T) {
 	for _, test := range []struct {
@@ -244,10 +239,7 @@ func TestSharedPreconditionsRefuseSwappedSiblingOwnershipTuples(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Assign second: %v", err)
 	}
-	run, found, err := fixture.service.load("build demo")
-	if err != nil || !found {
-		t.Fatalf("load: found:%v err:%v", found, err)
-	}
+	run := loadRun(t, fixture.service)
 	firstKey, first, firstOK := assignmentFor(run, fixture.assignment.ID)
 	secondKey, secondStored, secondOK := assignmentFor(run, second.ID)
 	if !firstOK || !secondOK {
@@ -256,9 +248,7 @@ func TestSharedPreconditionsRefuseSwappedSiblingOwnershipTuples(t *testing.T) {
 	first.ID, first.Path, first.OwnerRequest, secondStored.ID, secondStored.Path, secondStored.OwnerRequest = secondStored.ID, secondStored.Path, secondStored.OwnerRequest, first.ID, first.Path, first.OwnerRequest
 	run.Assignments[firstKey], run.Assignments[secondKey] = first, secondStored
 	fixture.run = run
-	if err := fixture.service.save(run); err != nil {
-		t.Fatal(err)
-	}
+	saveRun(t, fixture.service, run)
 	before := snapshotPrecondition(t, fixture)
 	for _, id := range []string{fixture.assignment.ID, second.ID} {
 		if _, err := fixture.service.Checkpoint(t.Context(), "build demo", id, ""); err == nil || !strings.Contains(err.Error(), "ownership") {
@@ -295,7 +285,7 @@ func TestAssignmentsScopeIdenticalRequestsToTheirRuns(t *testing.T) {
 			t.Fatalf("replay %s = %#v, %v", replay.slug, assigned, err)
 		}
 	}
-	firstRun, _, _ := service.load("build demo")
+	firstRun := loadRun(t, service)
 	secondRun, _, _ := service.load("second demo")
 	_, firstStored, _ := assignmentFor(firstRun, first.ID)
 	_, secondStored, _ := assignmentFor(secondRun, second.ID)
@@ -318,7 +308,7 @@ func TestCheckpointJournalRecoversRetainedRefAndRejectsDifferentReceipt(t *testi
 	if _, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, receipt); err == nil {
 		t.Fatal("fault did not interrupt checkpoint")
 	}
-	run, _, _ := fixture.service.load("build demo")
+	run := loadRun(t, fixture.service)
 	ref := "refs/bench/specbuild/checkpoint/" + digest(run.Run+"\x00"+fixture.assigned.ID)
 	retained := git(t, fixture.root, "rev-parse", ref)
 	fixture.service.fault = nil
@@ -381,10 +371,7 @@ func TestIntegrateCancellationKeepsPreparedReplayRecoverable(t *testing.T) {
 			t.Fatalf("process survived cancellation: %v", err)
 		}
 	}
-	run, _, err := fixture.service.load("build demo")
-	if err != nil {
-		t.Fatal(err)
-	}
+	run := loadRun(t, fixture.service)
 	op, found := fixture.service.operation(run, "integrate", fixture.assigned.ID)
 	if !found || op.State != "prepared" || op.Result != "" || git(t, fixture.root, "rev-parse", run.Candidate) != before {
 		t.Fatalf("canceled integration state = %#v", run)
@@ -396,3 +383,18 @@ func TestIntegrateCancellationKeepsPreparedReplayRecoverable(t *testing.T) {
 		t.Fatalf("retry candidate count=%s prior=%s commits=%d", got, count, runner.commits)
 	}
 }
+
+func injectFault(want string) func(string) error {
+	return func(got string) error {
+		if got == want {
+			return errors.New("injected")
+		}
+		return nil
+	}
+}
+
+func (*abandonOwner) Create(context.Context, string, string, string, string) (OwnedWorktree, error) {
+	return OwnedWorktree{}, errors.New("unexpected create")
+}
+
+type abandonSnapshot struct{ state, refs, worktrees string }

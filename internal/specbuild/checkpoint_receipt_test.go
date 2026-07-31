@@ -171,10 +171,7 @@ func TestCheckpointCreatesOneAttributedCommitWithoutCandidateOrGateMutation(t *t
 	if _, err := fixture.service.Checkpoint(context.Background(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n")); err != nil {
 		t.Fatalf("Checkpoint: %v", err)
 	}
-	after, found, err := fixture.service.load("build demo")
-	if err != nil || !found {
-		t.Fatalf("load checkpoint: found:%v err:%v", found, err)
-	}
+	after := loadRun(t, fixture.service)
 	_, stored, ok := assignmentFor(after, fixture.assigned.ID)
 	if !ok || stored.Checkpoint == "" || stored.CheckpointRef == "" || stored.ReceiptDigest == "" {
 		t.Fatalf("checkpoint attribution = %#v", stored)
@@ -210,10 +207,7 @@ func TestIntegrateRequiresVerifiedCheckpointAndAdvancesOneAttributedCandidate(t 
 	if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
 		t.Fatalf("Integrate: %v", err)
 	}
-	after, found, err := fixture.service.load("build demo")
-	if err != nil || !found {
-		t.Fatalf("load integrated run: found:%v err:%v", found, err)
-	}
+	after := loadRun(t, fixture.service)
 	_, assigned, ok := assignmentFor(after, fixture.assigned.ID)
 	if !ok || assigned.Integrated != after.CandidateTip {
 		t.Fatalf("integration attribution = %#v", assigned)
@@ -324,31 +318,27 @@ func TestIntegrateJournalRecoversCandidateCASBeforeState(t *testing.T) {
 			moved := git(t, fixture.root, "rev-parse", fixture.run.Candidate)
 			fixture.service.fault = nil
 			if point == "integrate/commit" {
-				run, _, _ := fixture.service.load("build demo")
+				run := loadRun(t, fixture.service)
 				op, _ := fixture.service.operation(run, "integrate", fixture.assigned.ID)
 				original := op.Result
 				op.Result = git(t, fixture.root, "commit-tree", git(t, fixture.assigned.Path, "rev-parse", "HEAD^{tree}"), "-p", fixture.run.Candidate, "-m", "swapped prepared result")
 				run.Operations[operationID("integrate", fixture.assigned.ID)] = op
-				if err := fixture.service.save(run); err != nil {
-					t.Fatal(err)
-				}
+				saveRun(t, fixture.service, run)
 				if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err == nil || err.Error() != "spec build prepared integration result conflicts with replay" {
 					t.Fatalf("tampered prepared result = %v", err)
 				}
-				after, _, _ := fixture.service.load("build demo")
+				after := loadRun(t, fixture.service)
 				if git(t, fixture.root, "rev-parse", after.Candidate) != moved || after.Operations[operationID("integrate", fixture.assigned.ID)].Result != op.Result || runner.commits != 1 {
 					t.Fatal("tampered result mutated integration")
 				}
 				op.Result = original
 				run.Operations[operationID("integrate", fixture.assigned.ID)] = op
-				if err := fixture.service.save(run); err != nil {
-					t.Fatal(err)
-				}
+				saveRun(t, fixture.service, run)
 			}
 			if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
 				t.Fatal(err)
 			}
-			run, _, _ := fixture.service.load("build demo")
+			run := loadRun(t, fixture.service)
 			if git(t, fixture.root, "rev-parse", run.Candidate) != run.CandidateTip || (point != "integrate/commit" && run.CandidateTip != moved) || runner.calls == 0 || (point == "integrate/commit" && runner.commits != 1) {
 				t.Fatal("integration replayed or bypassed runner")
 			}
@@ -365,10 +355,7 @@ func checkpointedReleaseFixture(t *testing.T) checkpointFixture {
 }
 func requireReleaseProvenance(t *testing.T, fixture checkpointFixture) {
 	t.Helper()
-	run, found, err := fixture.service.load("build demo")
-	if err != nil || !found {
-		t.Fatalf("load at release: found:%v err:%v", found, err)
-	}
+	run := loadRun(t, fixture.service)
 	_, assigned, ok := assignmentFor(run, fixture.assigned.ID)
 	if !ok || assigned.Checkpoint == "" || assigned.CheckpointRef == "" || assigned.CheckpointTree == "" || assigned.ReceiptDigest == "" || assigned.CheckpointPatch == "" || assigned.Integrated == "" || !assigned.CleanupPending || assigned.Released {
 		t.Fatalf("release provenance = %#v", assigned)
@@ -386,12 +373,28 @@ func requirePendingRelease(t *testing.T, fixture checkpointFixture, status Statu
 }
 func requireReleased(t *testing.T, fixture checkpointFixture) {
 	t.Helper()
-	run, found, err := fixture.service.load("build demo")
-	if err != nil || !found {
-		t.Fatalf("load released: found:%v err:%v", found, err)
-	}
+	run := loadRun(t, fixture.service)
 	_, assigned, ok := assignmentFor(run, fixture.assigned.ID)
 	if !ok || assigned.CleanupPending || !assigned.Released {
 		t.Fatalf("release state = %#v", assigned)
 	}
+}
+
+func setAssignmentsReleased(t *testing.T, service *Service, released bool) record {
+	run := loadRun(t, service)
+	for key, assigned := range run.Assignments {
+		assigned.Released = released
+		run.Assignments[key] = assigned
+	}
+	saveRun(t, service, run)
+	return run
+}
+
+type promotionGate struct {
+	tree                       string
+	red, accept, contradictory bool
+	executions, validations    int
+	disposition                GateDisposition
+	err                        error
+	inspect                    func(string, string)
 }

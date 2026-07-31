@@ -247,29 +247,138 @@ func (s *Service) Start(ctx context.Context, slug string) (Status, error) {
 	return s.finishStart(ctx, subject.branch, subject.tip, true, &run)
 }
 
-func (s *Service) finishStart(ctx context.Context, branch, tip string, greenReady bool, run *record) (Status, error) {
-	if !refAt(s.root, run.Candidate, tip) {
-		absent, err := refAbsent(s.root, run.Candidate)
-		if err != nil {
-			return Status{}, err
+// Promote publishes the exact reviewed candidate only after its prospective tree is green.
+func (s *Service) Promote(ctx context.Context, slug string) (Status, error) {
+	if _, err := s.resolve(slug); err != nil {
+		return Status{}, err
+	}
+	release, err := s.lock(slug)
+	if err != nil {
+		return Status{}, err
+	}
+	defer release()
+	run, found, err := s.load(slug)
+	if err != nil || !found {
+		if err == nil {
+			err = errors.New("spec build run does not exist")
 		}
-		if !absent {
-			return Status{}, errors.New("spec build candidate identity already exists")
+		return Status{}, err
+	}
+	if run.Terminal {
+		return run.status(), nil
+	}
+	owner, ok := s.gate.(PromotionGateOwner)
+	if run.PromotionCommit != "" && refAt(s.root, "refs/heads/"+run.Branch, run.PromotionCommit) {
+		if !ok || owner == nil {
+			return run.status(), errors.New("spec build promotion requires a prospective gate owner")
 		}
-		if !greenReady && !refAt(s.root, "refs/bench/green/"+branch, tip) {
-			if err := s.gate.Bootstrap(ctx, s.root, branch, tip); err != nil {
-				return Status{}, fmt.Errorf("no exact green evidence: run bench gate, then retry start: %w", err)
-			}
-		}
-		if err := updateRef(s.root, run.Candidate, tip, zeroObjectID); err != nil {
-			return Status{}, fmt.Errorf("create candidate identity: %w", err)
-		}
-		if err := s.faultAt("start/candidate-ref"); err != nil {
+		if err := s.validatePromotionEvidence(run); err != nil {
 			return run.status(), err
 		}
+		valid, validationErr := owner.Validate(ctx, s.root, run.PromotionTree, run.PromotionEvidence)
+		if validationErr != nil || !valid || !promotionCommitAt(s.root, run) {
+			return run.status(), errors.New("spec build promotion recovery evidence drifted")
+		}
+		synchronize, checkoutErr := s.validatePromotionRecoveryCheckout(ctx, run)
+		if checkoutErr != nil {
+			return run.status(), checkoutErr
+		}
+		if synchronize {
+			if _, err := s.git(ctx, nil, nil, "read-tree", "--reset", "-u", run.PromotionCommit); err != nil {
+				return run.status(), err
+			}
+		}
+		if err := updateRef(s.root, "refs/bench/green/"+run.Branch, run.PromotionCommit, run.Base); err != nil && !refAt(s.root, "refs/bench/green/"+run.Branch, run.PromotionCommit) {
+			return run.status(), err
+		}
+		if err := s.finishPromotion(&run); err != nil {
+			return Status{}, err
+		}
+		return run.status(), nil
 	}
-	if err := s.recordOperation(run, "start", "run", run.Candidate, true); err != nil {
+	if run.Review == nil || run.Review.Candidate != run.CandidateTip || run.Review.hasAcceptedFinding() {
+		return Status{}, errors.New("spec build promotion requires a current clean review")
+	}
+	for _, assigned := range run.Assignments {
+		if assigned.Integrated == "" || !assigned.Released {
+			return Status{}, errors.New("spec build promotion requires every assignment integrated and released")
+		}
+	}
+	if err := s.validatePromotionEvidence(run); err != nil {
+		return run.status(), err
+	}
+	subject, preconditionErr := s.preconditions(mutationPromote, slug, run.Spec, &run, "", "")
+	if preconditionErr != nil {
+		if !errors.Is(preconditionErr, errRecompose) {
+			return Status{}, preconditionErr
+		}
+		if err := s.recomposePromotion(ctx, &run, subject); err != nil {
+			return run.status(), fmt.Errorf("spec build promotion recomposition refused: %w", err)
+		}
+		return run.status(), nil
+	}
+	if !ok || owner == nil {
+		return Status{}, errors.New("spec build promotion requires a prospective gate owner")
+	}
+	tree, err := s.prospectiveTree(ctx, run)
+	if err != nil {
+		return Status{}, fmt.Errorf("construct prospective promotion tree: %w", err)
+	}
+	if _, _, err := s.beginOperation(&run, "promote", run.CandidateTip, tree); err != nil {
+		return Status{}, err
+	}
+	outcome, err := owner.Execute(ctx, s.root, tree)
+	if err != nil {
+		return run.status(), fmt.Errorf("authorize prospective promotion: %w", err)
+	}
+	if !validGateOutcome(outcome) {
+		return run.status(), errors.New("spec build prospective gate outcome is incomplete")
+	}
+	run.PromotionTree, run.PromotionEvidence, run.PromotionDisposition = tree, outcome.Evidence, outcome.Disposition
+	if err := s.save(run); err != nil {
+		return Status{}, err
+	}
+	if !outcome.Green {
+		return run.status(), fmt.Errorf("spec build prospective gate red: %s", outcome.Disposition)
+	}
+	commit, err := s.gitOutput(ctx, "commit-tree", tree, "-p", run.Base, "-m", "bench promote run="+run.Run+" candidate="+run.CandidateTip)
+	if err != nil {
+		return Status{}, fmt.Errorf("create promotion squash: %w", err)
+	}
+	run.PromotionCommit = commit
+	if err := s.save(run); err != nil {
+		return Status{}, err
+	}
+	if err := s.faultAt("promote/commit"); err != nil {
+		return run.status(), err
+	}
+	if err := updateRef(s.root, "refs/heads/"+run.Branch, commit, run.Base); err != nil {
+		return run.status(), fmt.Errorf("advance working branch compare-and-swap: %w", err)
+	}
+	if err := s.faultAt("promote/branch"); err != nil {
+		return run.status(), err
+	}
+	if _, err := s.git(ctx, nil, nil, "read-tree", "--reset", "-u", commit); err != nil {
+		return run.status(), err
+	}
+	if err := updateRef(s.root, "refs/bench/green/"+run.Branch, commit, run.Base); err != nil {
+		return run.status(), fmt.Errorf("advance project-green marker: %w", err)
+	}
+	if err := s.faultAt("promote/green"); err != nil {
+		return run.status(), err
+	}
+	if err := s.finishPromotion(&run); err != nil {
 		return Status{}, err
 	}
 	return run.status(), nil
+}
+
+func (s *Service) finishPromotion(run *record) error {
+	op, found := s.operation(*run, "promote", run.CandidateTip)
+	if !found || op.State != "prepared" || op.Result != "" && op.Result != run.PromotionCommit {
+		return errors.New("spec build promotion journal is incomplete")
+	}
+	op.Result, op.State, run.Terminal = run.PromotionCommit, "completed", true
+	run.Operations[operationID("promote", run.CandidateTip)] = op
+	return s.save(*run)
 }

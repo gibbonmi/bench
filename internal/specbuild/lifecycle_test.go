@@ -89,10 +89,7 @@ func TestAssignAllowsSiblingsAndScopesRequestIdentity(t *testing.T) {
 			t.Fatal("assign fault did not interrupt")
 		}
 		if point == "assign/worktree" {
-			run, _, err := service.load("build demo")
-			if err != nil {
-				t.Fatal(err)
-			}
+			run := loadRun(t, service)
 			requestID := digest(run.Run + "\x00" + request)
 			op, found := service.operation(run, "assign", requestID)
 			parts := strings.Split(op.Result, "\x00")
@@ -187,14 +184,9 @@ func TestStatusProjectsDurableTerminalState(t *testing.T) {
 	if _, err := service.Start(context.Background(), "build demo"); err != nil {
 		t.Fatal(err)
 	}
-	run, found, err := service.load("build demo")
-	if err != nil || !found {
-		t.Fatalf("load: found:%v err:%v", found, err)
-	}
+	run := loadRun(t, service)
 	run.Terminal = true
-	if err := service.save(run); err != nil {
-		t.Fatal(err)
-	}
+	saveRun(t, service, run)
 	status, err := service.Status("build demo")
 	if err != nil || status != (Status{Slug: "build demo", State: "terminal", Subject: run.CandidateTip}) {
 		t.Fatalf("terminal status = %#v, %v", status, err)
@@ -269,10 +261,7 @@ func TestReviewRoutesCleanAndAcceptedFindingsDifferently(t *testing.T) {
 			if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
 				t.Fatal(err)
 			}
-			run, found, err := fixture.service.load("build demo")
-			if err != nil || !found {
-				t.Fatalf("load = found:%v err:%v", found, err)
-			}
+			run := loadRun(t, fixture.service)
 			candidate, tree := git(t, fixture.root, "rev-parse", run.Candidate), git(t, fixture.root, "rev-parse", "HEAD^{tree}")
 			receipt := reviewReceipt{Version: 1, Run: run.Run, Candidate: run.CandidateTip, Axes: []reviewAxis{{Axis: "Standards"}, {Axis: "Spec"}, {Axis: "Coverage"}}}
 			if test.disposition != "" {
@@ -312,14 +301,9 @@ func TestTerminalStatusIgnoresRetainedReview(t *testing.T) {
 	if _, err := service.Start(t.Context(), "build demo"); err != nil {
 		t.Fatal(err)
 	}
-	run, found, err := service.load("build demo")
-	if err != nil || !found {
-		t.Fatalf("load = found:%v err:%v", found, err)
-	}
+	run := loadRun(t, service)
 	run.Terminal, run.Review = true, &reviewEvidence{Candidate: run.CandidateTip, Digest: "retained", Axes: []reviewAxis{{Axis: "Standards"}, {Axis: "Spec"}, {Axis: "Coverage"}}}
-	if err := service.save(run); err != nil {
-		t.Fatal(err)
-	}
+	saveRun(t, service, run)
 	status, err := service.Status("build demo")
 	if err != nil || status != (Status{Slug: "build demo", State: "terminal", Subject: run.CandidateTip}) {
 		t.Fatalf("terminal status = %#v, %v", status, err)
@@ -392,4 +376,25 @@ func bytesTrimSpace(v []byte) []byte {
 		v = v[:len(v)-1]
 	}
 	return v
+}
+
+func TestPromoteConflictPreservesWorkingCandidateAndState(t *testing.T) {
+	fixture := reviewedPromotionFixture(t)
+	write(t, filepath.Join(fixture.root, "internal", "specbuild", "checkpoint-change.go"), "package specbuild\n\nvar working = true\n")
+	git(t, fixture.root, "add", ".")
+	git(t, fixture.root, "commit", "-qm", "conflicting working advance")
+	statePath, _ := fixture.service.statePath("build demo")
+	beforeState, _ := os.ReadFile(statePath)
+	working, candidate := git(t, fixture.root, "rev-parse", "HEAD"), git(t, fixture.root, "rev-parse", fixture.run.Candidate)
+	if _, err := fixture.service.Promote(t.Context(), "build demo"); err == nil {
+		t.Fatal("conflicting recomposition promoted")
+	}
+	afterState, _ := os.ReadFile(statePath)
+	if git(t, fixture.root, "rev-parse", "HEAD") != working || git(t, fixture.root, "rev-parse", fixture.run.Candidate) != candidate || string(afterState) != string(beforeState) {
+		t.Fatal("conflicting recomposition mutated protected state")
+	}
+}
+func (g *promotionGate) Validate(_ context.Context, _ string, tree, evidence string) (bool, error) {
+	g.validations++
+	return g.accept && tree == g.tree && evidence == "owner-proof", nil
 }

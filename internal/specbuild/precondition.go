@@ -46,11 +46,11 @@ func (s *Service) preconditions(op mutation, slug, specPath string, run *record,
 	if run.Branch != subject.branch {
 		return buildSubject{}, errors.New("spec build working checkout does not match recorded subject")
 	}
-	if run.Base != subject.tip {
+	recompose := run.Base != subject.tip
+	if recompose {
 		if !recognizedAdvance(s.root, run.Base, subject.tip) {
 			return buildSubject{}, errors.New("spec build working checkout does not match recorded subject")
 		}
-		return buildSubject{}, fmt.Errorf("%w %s", errRecompose, slug)
 	}
 	if run.Spec != subject.spec || run.SpecTip != subject.specTip {
 		return buildSubject{}, errors.New("spec build staged spec no longer matches recorded subject")
@@ -66,6 +66,9 @@ func (s *Service) preconditions(op mutation, slug, specPath string, run *record,
 	}
 	if err := s.operationEvidence(op, *run, assignmentID, evidence); err != nil {
 		return buildSubject{}, err
+	}
+	if recompose {
+		return subject, fmt.Errorf("%w %s", errRecompose, slug)
 	}
 	return subject, nil
 }
@@ -92,6 +95,25 @@ func (s *Service) subject(specPath string) (buildSubject, error) {
 		return buildSubject{}, errors.New("spec build staged spec has no committed identity")
 	}
 	return buildSubject{branch: branch, tip: tip, spec: specPath, specTip: specTip}, nil
+}
+
+func workingSubject(root string) (string, string, error) {
+	branch, err := benchgit.Output("-C", root, "symbolic-ref", "--quiet", "--short", "HEAD")
+	if err != nil || branch == "" {
+		return "", "", errors.New("spec build start requires a checked-out working branch")
+	}
+	dirty, err := benchgit.Output("-C", root, "status", "--porcelain", "--untracked-files=all")
+	if err != nil {
+		return "", "", err
+	}
+	if dirty != "" {
+		return "", "", errors.New("spec build start requires a clean working checkout")
+	}
+	tip, err := benchgit.Output("-C", root, "rev-parse", "HEAD^{commit}")
+	if err != nil {
+		return "", "", err
+	}
+	return branch, tip, nil
 }
 
 func (s *Service) ownedAssignments(run *record) error {

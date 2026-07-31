@@ -21,6 +21,75 @@ var (
 	errMalformedReceipt = errors.New("malformed spec build receipt framing")
 )
 
+func (s *Service) faultAt(point string) error {
+	if s.fault == nil {
+		return nil
+	}
+	return s.fault(point)
+}
+
+func promotionCommitAt(root string, run record) bool {
+	if run.PromotionTree == "" || run.PromotionEvidence == "" {
+		return false
+	}
+	parent, parentErr := benchgit.Output("-C", root, "rev-parse", run.PromotionCommit+"^")
+	tree, treeErr := benchgit.Output("-C", root, "rev-parse", run.PromotionCommit+"^{tree}")
+	return parentErr == nil && treeErr == nil && parent == run.Base && tree == run.PromotionTree
+}
+
+func validGateOutcome(outcome GateOutcome) bool {
+	if outcome.Evidence == "" {
+		return false
+	}
+	if outcome.Green {
+		return outcome.Disposition == ""
+	}
+	return outcome.Disposition == GateCandidate || outcome.Disposition == GateInherited || outcome.Disposition == GateInfrastructure || outcome.Disposition == GateCapExhausted
+}
+
+func (s *Service) validatePromotionEvidence(run record) error {
+	if !refAt(s.root, run.Candidate, run.CandidateTip) {
+		return errors.New("spec build retained candidate evidence drifted")
+	}
+	if run.Review == nil || run.Review.Candidate != run.CandidateTip {
+		return errors.New("spec build retained review evidence drifted")
+	}
+	for _, assigned := range run.Assignments {
+		if !assigned.Released || assigned.Checkpoint == "" || assigned.CheckpointRef == "" || assigned.CheckpointTree == "" || assigned.ReceiptDigest == "" || assigned.Integrated == "" {
+			return errors.New("spec build retained checkpoint evidence is incomplete")
+		}
+		if !refAt(s.root, assigned.CheckpointRef, assigned.Checkpoint) {
+			return errors.New("spec build retained checkpoint reference drifted")
+		}
+		if !recognizedAdvance(s.root, assigned.Integrated, run.CandidateTip) {
+			return errors.New("spec build retained integration left candidate ancestry")
+		}
+	}
+	return nil
+}
+
+func (s *Service) validatePromotionRecoveryCheckout(ctx context.Context, run record) (bool, error) {
+	if _, err := s.git(ctx, nil, nil, "diff", "--quiet", "--"); err != nil {
+		return false, errors.New("spec build promotion recovery checkout has tracked changes")
+	}
+	untracked, err := s.gitOutput(ctx, "ls-files", "--others", "--exclude-standard")
+	if err != nil || untracked != "" {
+		return false, errors.New("spec build promotion recovery checkout has untracked changes")
+	}
+	indexTree, err := s.gitOutput(ctx, "write-tree")
+	if err != nil {
+		return false, errors.New("spec build promotion recovery index is unreadable")
+	}
+	if indexTree == run.PromotionTree {
+		return false, nil
+	}
+	baseTree, err := s.gitOutput(ctx, "rev-parse", run.Base+"^{tree}")
+	if err != nil || indexTree != baseTree {
+		return false, errors.New("spec build promotion recovery index drifted")
+	}
+	return true, nil
+}
+
 type receipt struct {
 	Version      int          `json:"version"`
 	Run          string       `json:"run"`

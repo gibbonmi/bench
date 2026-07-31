@@ -1,6 +1,7 @@
 package specbuild
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -19,19 +20,23 @@ import (
 )
 
 type record struct {
-	Version      int                   `json:"version"`
-	Slug         string                `json:"slug"`
-	Spec         string                `json:"spec"`
-	SpecTip      string                `json:"spec_tip"`
-	Run          string                `json:"run"`
-	Branch       string                `json:"branch"`
-	Base         string                `json:"base"`
-	Candidate    string                `json:"candidate"`
-	CandidateTip string                `json:"candidate_tip"`
-	Terminal     bool                  `json:"terminal,omitempty"`
-	Assignments  map[string]assignment `json:"assignments"`
-	Operations   map[string]operation  `json:"operations"`
-	Review       *reviewEvidence       `json:"review,omitempty"`
+	Version              int                   `json:"version"`
+	Slug                 string                `json:"slug"`
+	Spec                 string                `json:"spec"`
+	SpecTip              string                `json:"spec_tip"`
+	Run                  string                `json:"run"`
+	Branch               string                `json:"branch"`
+	Base                 string                `json:"base"`
+	Candidate            string                `json:"candidate"`
+	CandidateTip         string                `json:"candidate_tip"`
+	PromotionTree        string                `json:"promotion_tree,omitempty"`
+	PromotionCommit      string                `json:"promotion_commit,omitempty"`
+	PromotionEvidence    string                `json:"promotion_evidence,omitempty"`
+	PromotionDisposition GateDisposition       `json:"promotion_disposition,omitempty"`
+	Terminal             bool                  `json:"terminal,omitempty"`
+	Assignments          map[string]assignment `json:"assignments"`
+	Operations           map[string]operation  `json:"operations"`
+	Review               *reviewEvidence       `json:"review,omitempty"`
 }
 
 type reviewEvidence struct {
@@ -83,6 +88,11 @@ func (r record) status() Status {
 		next = "release assignment " + cleanup
 	} else if pending != "" {
 		next = "delegate assignment " + pending
+	} else if r.PromotionDisposition != "" {
+		next = map[GateDisposition]string{GateCandidate: "delegate candidate gate repair", GateInherited: "diagnose inherited gate", GateInfrastructure: "retry promote", GateCapExhausted: "implementation cap exhausted"}[r.PromotionDisposition]
+		if next == "" {
+			next = "diagnose gate outcome"
+		}
 	} else if r.needsReview() {
 		next = "bench spec build review " + r.Slug
 	} else if r.Review != nil {
@@ -91,7 +101,7 @@ func (r record) status() Status {
 			next = "bench spec build assign " + r.Slug
 		}
 	}
-	if cleanup == "" && pending == "" {
+	if cleanup == "" && pending == "" && r.PromotionDisposition == "" {
 		for _, op := range r.Operations {
 			if op.State == "prepared" {
 				next = "resume " + op.Command
@@ -245,23 +255,53 @@ func (s *Service) statePath(slug string) (string, error) {
 	return filepath.Join(common, "bench", "specbuild", digest(slug)+".json"), nil
 }
 
-func workingSubject(root string) (string, string, error) {
-	branch, err := benchgit.Output("-C", root, "symbolic-ref", "--quiet", "--short", "HEAD")
-	if err != nil || branch == "" {
-		return "", "", errors.New("spec build start requires a checked-out working branch")
+func (s *Service) prospectiveTree(ctx context.Context, run record) (string, error) {
+	relative, err := filepath.Rel(s.root, run.Spec)
+	if err != nil || filepath.IsAbs(relative) {
+		return "", errors.New("spec build spec does not belong to working checkout")
 	}
-	dirty, err := benchgit.Output("-C", root, "status", "--porcelain", "--untracked-files=all")
+	checkout, err := os.MkdirTemp("", "bench-specbuild-promote-")
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
-	if dirty != "" {
-		return "", "", errors.New("spec build start requires a clean working checkout")
+	defer func() {
+		_, _ = s.git(context.Background(), nil, nil, "worktree", "remove", "--force", checkout)
+		_ = os.RemoveAll(checkout)
+	}()
+	if _, err := s.git(ctx, nil, nil, "worktree", "add", "--quiet", "--detach", checkout, run.CandidateTip); err != nil {
+		return "", err
 	}
-	tip, err := benchgit.Output("-C", root, "rev-parse", "HEAD^{commit}")
+	if _, err := spec.Flip(checkout, filepath.Join(checkout, relative)); err != nil {
+		return "", err
+	}
+	if _, err := s.runner.Output(ctx, "git", "-C", checkout, "add", "--", relative); err != nil {
+		return "", err
+	}
+	tree, err := s.runner.Output(ctx, "git", "-C", checkout, "write-tree")
+	return strings.TrimSpace(tree), err
+}
+
+func (s *Service) recomposePromotion(ctx context.Context, run *record, subject buildSubject) error {
+	old := run.CandidateTip
+	patch, err := s.checkpointPatch(ctx, run.Base, old)
 	if err != nil {
-		return "", "", err
+		return err
 	}
-	return branch, tip, nil
+	tree, err := s.replayCheckpoint(ctx, subject.tip, run.Base, old, patch)
+	if err != nil {
+		return err
+	}
+	commit, err := s.gitOutput(ctx, "commit-tree", tree, "-p", subject.tip, "-m", "bench recompose run="+run.Run+" candidate="+old)
+	if err != nil {
+		return err
+	}
+	if err := updateRef(s.root, run.Candidate, commit, old); err != nil {
+		return err
+	}
+	run.Base, run.CandidateTip, run.Review = subject.tip, commit, nil
+	run.PromotionTree, run.PromotionCommit, run.PromotionEvidence, run.PromotionDisposition = "", "", "", ""
+	delete(run.Operations, operationID("promote", old))
+	return s.save(*run)
 }
 
 func updateRef(root, ref, new, old string) error {

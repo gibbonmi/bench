@@ -14,6 +14,50 @@ import (
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
+const operationLimit = 64
+
+type operation struct{ Command, Request, Input, Result, State string }
+
+func operationID(command, request string) string { return digest(command + "\x00" + request) }
+
+func (s *Service) beginOperation(run *record, command, request, input string) (operation, bool, error) {
+	key, inputDigest := operationID(command, request), digest(input)
+	if prior, found := run.Operations[key]; found {
+		if prior.Command != command || prior.Request != request || prior.Input != inputDigest {
+			return operation{}, false, fmt.Errorf("spec build %s request conflicts with different inputs", command)
+		}
+		return prior, prior.State == "completed", nil
+	}
+	if len(run.Operations) >= operationLimit {
+		return operation{}, false, errors.New("spec build operation journal is full")
+	}
+	op := operation{Command: command, Request: request, Input: inputDigest, State: "prepared"}
+	run.Operations[key] = op
+	if err := s.save(*run); err != nil {
+		return operation{}, false, err
+	}
+	return op, false, nil
+}
+
+func (s *Service) recordOperation(run *record, command, request, result string, completed bool) error {
+	key := operationID(command, request)
+	op, found := run.Operations[key]
+	if !found || op.State != "prepared" {
+		return errors.New("spec build operation journal is incomplete")
+	}
+	op.Result = result
+	if completed {
+		op.State = "completed"
+	}
+	run.Operations[key] = op
+	return s.save(*run)
+}
+
+func (s *Service) operation(run record, command, request string) (operation, bool) {
+	op, found := run.Operations[operationID(command, request)]
+	return op, found
+}
+
 // Integrate replays one verified checkpoint onto the exact current candidate tip.
 func (s *Service) Integrate(ctx context.Context, slug, assignmentID string) (Status, error) {
 	if _, err := s.resolve(slug); err != nil {
@@ -41,7 +85,7 @@ func (s *Service) Integrate(ctx context.Context, slug, assignmentID string) (Sta
 	request := assigned.ID
 	if op, found := s.operation(run, "integrate", request); found && op.State == "prepared" && op.Result != "" && assigned.Integrated == "" && refAt(s.root, run.Candidate, op.Result) {
 		run.CandidateTip, assigned.Integrated, assigned.DelegatePending, assigned.CleanupPending, assigned.Released = op.Result, op.Result, false, true, false
-		run.Review, run.Assignments[key] = nil, assigned
+		run.Review, run.PromotionDisposition, run.Assignments[key] = nil, "", assigned
 		if err := s.save(run); err != nil {
 			return Status{}, err
 		}
@@ -112,7 +156,7 @@ func (s *Service) Integrate(ctx context.Context, slug, assignmentID string) (Sta
 				return run.status(), err
 			}
 			run.CandidateTip, assigned.Integrated, assigned.DelegatePending, assigned.CleanupPending, assigned.Released = commit, commit, false, true, false
-			run.Review = nil
+			run.Review, run.PromotionDisposition = nil, ""
 			run.Assignments[key] = assigned
 			if err := s.save(run); err != nil {
 				return Status{}, err

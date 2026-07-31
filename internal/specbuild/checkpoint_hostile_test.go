@@ -34,10 +34,7 @@ func TestReviewRefusesIncompleteOrHostileReceiptsWithoutMutation(t *testing.T) {
 	if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
 		t.Fatal(err)
 	}
-	run, found, err := fixture.service.load("build demo")
-	if err != nil || !found {
-		t.Fatalf("load = found:%v err:%v", found, err)
-	}
+	run := loadRun(t, fixture.service)
 	valid := reviewReceipt{Version: 1, Run: run.Run, Candidate: run.CandidateTip, Axes: []reviewAxis{{Axis: "Standards"}, {Axis: "Spec"}, {Axis: "Coverage"}}}
 	statePath, err := fixture.service.statePath("build demo")
 	if err != nil {
@@ -214,17 +211,11 @@ func TestIntegrateReplaysDisjointSiblingPatchByteForByte(t *testing.T) {
 	if _, err := service.Integrate(t.Context(), "build demo", first.ID); err != nil {
 		t.Fatalf("Integrate first: %v", err)
 	}
-	beforeReplay, found, err := service.load("build demo")
-	if err != nil || !found {
-		t.Fatalf("load before replay: found:%v err:%v", found, err)
-	}
+	beforeReplay := loadRun(t, service)
 	if _, err := service.Integrate(t.Context(), "build demo", second.ID); err != nil {
 		t.Fatalf("Integrate older sibling: %v", err)
 	}
-	afterReplay, found, err := service.load("build demo")
-	if err != nil || !found {
-		t.Fatalf("load after replay: found:%v err:%v", found, err)
-	}
+	afterReplay := loadRun(t, service)
 	replayedPatch, err := checkpointPatch(root, beforeReplay.CandidateTip, afterReplay.CandidateTip)
 	if err != nil || !bytes.Equal(replayedPatch, patch) {
 		t.Fatalf("replayed patch changed: equal:%v err:%v", bytes.Equal(replayedPatch, patch), err)
@@ -275,10 +266,7 @@ func TestIntegrateRefusesCheckpointAndTicketDriftWithoutMovingCandidate(t *testi
 			if _, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n")); err != nil {
 				t.Fatalf("Checkpoint: %v", err)
 			}
-			run, found, err := fixture.service.load("build demo")
-			if err != nil || !found {
-				t.Fatalf("load checkpoint: found:%v err:%v", found, err)
-			}
+			run := loadRun(t, fixture.service)
 			if tc.name == "patch drift" {
 				key, assigned, ok := assignmentFor(run, fixture.assigned.ID)
 				if !ok {
@@ -288,9 +276,7 @@ func TestIntegrateRefusesCheckpointAndTicketDriftWithoutMovingCandidate(t *testi
 				run.Assignments[key] = assigned
 			}
 			tc.mutate(t, fixture, &run)
-			if err := fixture.service.save(run); err != nil {
-				t.Fatalf("save drift: %v", err)
-			}
+			saveRun(t, fixture.service, run)
 			before := git(t, fixture.root, "rev-parse", run.Candidate)
 			beforeState := checkpointSnapshotFor(t, fixture)
 			if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err == nil {
@@ -310,10 +296,7 @@ func TestIntegrateRoutesRetargetedCheckpointReferenceBackToDelegate(t *testing.T
 	if _, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n")); err != nil {
 		t.Fatalf("Checkpoint: %v", err)
 	}
-	run, found, err := fixture.service.load("build demo")
-	if err != nil || !found {
-		t.Fatalf("load checkpoint: found:%v err:%v", found, err)
-	}
+	run := loadRun(t, fixture.service)
 	_, assigned, ok := assignmentFor(run, fixture.assigned.ID)
 	if !ok {
 		t.Fatal("missing assignment")
@@ -347,10 +330,10 @@ func TestIntegrateRetriesOnlyWhileTheCheckpointContractHolds(t *testing.T) {
 		if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err == nil || err.Error() != "spec build prepared integration result conflicts with replay" {
 			t.Fatalf("Integrate retry = %v", err)
 		}
-		run, found, err := fixture.service.load("build demo")
+		run := loadRun(t, fixture.service)
 		op, _ := fixture.service.operation(run, "integrate", fixture.assigned.ID)
-		if err != nil || !found || moved == "" || git(t, fixture.root, "rev-parse", run.Candidate) != moved || run.CandidateTip != before || op.Result == "" {
-			t.Fatalf("retry run = %#v, found:%v err:%v", run, found, err)
+		if moved == "" || git(t, fixture.root, "rev-parse", run.Candidate) != moved || run.CandidateTip != before || op.Result == "" {
+			t.Fatalf("retry run = %#v", run)
 		}
 	})
 	t.Run("drift after candidate move refuses", func(t *testing.T) {
@@ -383,10 +366,7 @@ func TestIntegrateRetriesOnlyWhileTheCheckpointContractHolds(t *testing.T) {
 
 func requireDelegatedCandidate(t *testing.T, root string, service *Service, assignmentID, want string) {
 	t.Helper()
-	run, found, err := service.load("build demo")
-	if err != nil || !found {
-		t.Fatalf("load refused integration: found:%v err:%v", found, err)
-	}
+	run := loadRun(t, service)
 	if got := git(t, root, "rev-parse", run.Candidate); got != want || run.CandidateTip != want {
 		t.Fatalf("candidate changed: ref=%s state=%s want=%s", got, run.CandidateTip, want)
 	}
@@ -395,3 +375,25 @@ func requireDelegatedCandidate(t *testing.T, root string, service *Service, assi
 		t.Fatalf("delegate route = %#v next=%q", assigned, run.status().Next)
 	}
 }
+
+func TestPromoteRecomposesAWorkingAdvanceBeforeGate(t *testing.T) {
+	fixture := reviewedPromotionFixture(t)
+	before, gateCalls := loadRun(t, fixture.service), fixture.gate.calls
+	advanceWorking(t, fixture.root)
+	working := git(t, fixture.root, "rev-parse", "HEAD")
+	status, err := fixture.service.Promote(t.Context(), "build demo")
+	if err != nil || status.Next != "bench spec build review build demo" || fixture.gate.calls != gateCalls {
+		t.Fatalf("recomposition = %#v, %v; gate calls=%d", status, err, fixture.gate.calls)
+	}
+	after := loadRun(t, fixture.service)
+	if after.Base != working || after.CandidateTip == before.CandidateTip || after.Review != nil || git(t, fixture.root, "rev-parse", "HEAD") != working || git(t, fixture.root, "rev-parse", after.Candidate) != after.CandidateTip {
+		t.Fatalf("recomposed run = %#v", after)
+	}
+	for _, path := range []string{"advanced.txt", "internal/specbuild/checkpoint-change.go"} {
+		if git(t, fixture.root, "show", after.CandidateTip+":"+path) == "" {
+			t.Fatalf("recomposed candidate omitted %s", path)
+		}
+	}
+}
+
+func (promotionGate) Bootstrap(context.Context, string, string, string) error { return nil }

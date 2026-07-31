@@ -12,6 +12,8 @@ import (
 	"testing"
 )
 
+type abandonOwner struct{ plans, applies int }
+
 type rejectGate struct{}
 
 func (rejectGate) Bootstrap(context.Context, string, string, string) error {
@@ -172,10 +174,7 @@ func newPreconditionFixture(t *testing.T, started bool) preconditionFixture {
 	if err != nil {
 		t.Fatalf("Assign: %v", err)
 	}
-	run, found, err := service.load("build demo")
-	if err != nil || !found {
-		t.Fatalf("load: found:%v err:%v", found, err)
-	}
+	run := loadRun(t, service)
 	key, _, ok := assignmentFor(run, assignment.ID)
 	if !ok {
 		t.Fatal("assigned fixture has no durable row")
@@ -216,9 +215,7 @@ func snapshotPrecondition(t *testing.T, fixture preconditionFixture) preconditio
 func updateRun(t *testing.T, fixture *preconditionFixture, change func(*record)) {
 	t.Helper()
 	change(&fixture.run)
-	if err := fixture.service.save(fixture.run); err != nil {
-		t.Fatal(err)
-	}
+	saveRun(t, fixture.service, fixture.run)
 }
 func advanceWorking(t *testing.T, root string) {
 	t.Helper()
@@ -379,16 +376,11 @@ func TestStartRefusesConflictingCandidateAndInvalidPriorState(t *testing.T) {
 			if _, err := service.Start(context.Background(), "build demo"); err != nil {
 				t.Fatal(err)
 			}
-			run, found, err := service.load("build demo")
-			if err != nil || !found {
-				t.Fatalf("load initial run: found:%v err:%v", found, err)
-			}
+			run := loadRun(t, service)
 			candidate := run.Candidate
 			before := git(t, root, "rev-parse", candidate)
 			tc.mutate(&run)
-			if err := service.save(run); err != nil {
-				t.Fatal(err)
-			}
+			saveRun(t, service, run)
 			if _, err := service.Start(context.Background(), "build demo"); err == nil {
 				t.Fatal("Start accepted invalid durable state")
 			}
@@ -396,5 +388,12 @@ func TestStartRefusesConflictingCandidateAndInvalidPriorState(t *testing.T) {
 				t.Fatalf("candidate changed from %s to %s", before, got)
 			}
 		})
+	}
+}
+
+func saveRun(t *testing.T, service *Service, run record) {
+	t.Helper()
+	if err := service.save(run); err != nil {
+		t.Fatal(err)
 	}
 }

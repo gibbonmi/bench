@@ -24,6 +24,33 @@ type GateOwner interface {
 	Bootstrap(context.Context, string, string, string) error
 }
 
+// GateDisposition classifies an owner-attributed prospective gate result.
+type GateDisposition string
+
+const (
+	// GateCandidate attributes the red to the provisional candidate.
+	GateCandidate GateDisposition = "candidate"
+	// GateInherited attributes the red to the inherited working base.
+	GateInherited GateDisposition = "inherited"
+	// GateInfrastructure attributes the red to the gate environment.
+	GateInfrastructure GateDisposition = "infrastructure"
+	// GateCapExhausted reports that the implementation stage must stop provisional.
+	GateCapExhausted GateDisposition = "cap-exhausted"
+)
+
+// GateOutcome carries the gate owner's decision and opaque reusable evidence.
+type GateOutcome struct {
+	Green       bool
+	Disposition GateDisposition
+	Evidence    string
+}
+
+// PromotionGateOwner authorizes an exact unpublished tree and validates its evidence.
+type PromotionGateOwner interface {
+	Execute(context.Context, string, string) (GateOutcome, error)
+	Validate(context.Context, string, string, string) (bool, error)
+}
+
 // WorktreeOwner creates a request-idempotent owned worktree at start.
 type WorktreeOwner interface {
 	Create(context.Context, string, string, string, string) (OwnedWorktree, error)
@@ -114,57 +141,31 @@ func (processRunner) Run(ctx context.Context, command Command) (string, error) {
 	}
 }
 
-const operationLimit = 64
-
-type operation struct {
-	Command, Request, Input, Result, State string
-}
-
-func operationID(command, request string) string { return digest(command + "\x00" + request) }
-
-func (s *Service) beginOperation(run *record, command, request, input string) (operation, bool, error) {
-	key, inputDigest := operationID(command, request), digest(input)
-	if prior, found := run.Operations[key]; found {
-		if prior.Command != command || prior.Request != request || prior.Input != inputDigest {
-			return operation{}, false, fmt.Errorf("spec build %s request conflicts with different inputs", command)
+func (s *Service) finishStart(ctx context.Context, branch, tip string, greenReady bool, run *record) (Status, error) {
+	if !refAt(s.root, run.Candidate, tip) {
+		absent, err := refAbsent(s.root, run.Candidate)
+		if err != nil {
+			return Status{}, err
 		}
-		return prior, prior.State == "completed", nil
+		if !absent {
+			return Status{}, errors.New("spec build candidate identity already exists")
+		}
+		if !greenReady && !refAt(s.root, "refs/bench/green/"+branch, tip) {
+			if err := s.gate.Bootstrap(ctx, s.root, branch, tip); err != nil {
+				return Status{}, fmt.Errorf("no exact green evidence: run bench gate, then retry start: %w", err)
+			}
+		}
+		if err := updateRef(s.root, run.Candidate, tip, zeroObjectID); err != nil {
+			return Status{}, fmt.Errorf("create candidate identity: %w", err)
+		}
+		if err := s.faultAt("start/candidate-ref"); err != nil {
+			return run.status(), err
+		}
 	}
-	if len(run.Operations) >= operationLimit {
-		return operation{}, false, errors.New("spec build operation journal is full")
+	if err := s.recordOperation(run, "start", "run", run.Candidate, true); err != nil {
+		return Status{}, err
 	}
-	op := operation{Command: command, Request: request, Input: inputDigest, State: "prepared"}
-	run.Operations[key] = op
-	if err := s.save(*run); err != nil {
-		return operation{}, false, err
-	}
-	return op, false, nil
-}
-
-func (s *Service) recordOperation(run *record, command, request, result string, completed bool) error {
-	key := operationID(command, request)
-	op, found := run.Operations[key]
-	if !found || op.State != "prepared" {
-		return errors.New("spec build operation journal is incomplete")
-	}
-	op.Result = result
-	if completed {
-		op.State = "completed"
-	}
-	run.Operations[key] = op
-	return s.save(*run)
-}
-
-func (s *Service) operation(run record, command, request string) (operation, bool) {
-	op, found := run.Operations[operationID(command, request)]
-	return op, found
-}
-
-func (s *Service) faultAt(point string) error {
-	if s.fault == nil {
-		return nil
-	}
-	return s.fault(point)
+	return run.status(), nil
 }
 
 func sortRefs(refs []AbandonmentRef) {
