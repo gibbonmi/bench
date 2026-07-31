@@ -2,47 +2,25 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `977f772`, 1 dirty path, 44 unpushed commits
+Branch: `main` — HEAD `2f78e9a`, clean tree, 8 unpushed commits
 Spec: `specs/ft126-recurrence-tallying/spec.md` (Status: staged), `specs/ft128-agent-line-binding/spec.md` (Status: staged)
-Gate: green at `977f772`; this handoff-only rewrite has not been re-gated
+Gate: green at `32285dd` — stale, work tree `dcbbc5b`
 
 ## State
 
-- **Decision-map integrity and phase ownership is implemented and retired on
-  `main` at `ef0cf50`.** The current format has one schema owner, graph,
-  readiness, exact source-record and tree validation, a read-only five-column
-  AXI query and template, ambient distinct-map counting, and a gate-bound
-  49-fixture mutation family.
-- **Workflow ownership is closed:** decision maps are situational and use
-  decision tickets for reviewer choices; spec authoring accepts exactly one of
-  three reviewed sources and owns engineering seams, tests, coverage, hostile
-  inputs, and gate attachment. Implementation tickets remain independently
-  green build units.
-- **The diff-visual product decisions remain closed and its two approved HTML
-  assets remain committed.** The report form and sections, three-drawn/two-
-  relational edge kinds, dependency-free layout, declared context nodes,
-  three-valued coverage badge, and justified heat are settled. The current map
-  is honestly `Status: shaping` under the new schema because embedded-diff size,
-  before-chain provenance, opt-in details, command/schema naming, and ad-hoc
-  report placement have not been reclassified from `Not yet specified`.
-  Preserve the settled product decisions when resolving that workflow state.
-  The prior engineering outline was schema core (emitter and validator), then
-  renderer, then final-check integration; current spec authoring owns the final
-  seams and contracts.
-- **Fresh-session dogfood and mid-binding three-axis review completed.** The
-  concrete source-locator, cycle-diagnostic, and silent-shaping projection
-  findings are repaired and gated. The remaining review observation is
-  historical: two implementation commits crossed the spec's declared slice
-  fences; no current-tree defect or rewrite is pending.
-- **The last oracle was green for `977f772`.** This handoff-only rewrite does
-  not re-gate capture. Ship-tier `bench prep-release` has not run, and nothing
-  was pushed. The decision-map retro is committed and pending drain. FT126 and
-  FT128 remain staged; the other active shaping maps and roadmap work were
-  outside these phases.
+- **FT126 implementation and semantic review are complete.** All 33 mapped rows
+  landed across `662650d`, `592e253`, `1a02ac4`, and `8a40ed3`.
+- **Fresh review `/root/ft126_full_review` found two concrete issues.** The exact
+  count-mutation proof and fail-closed degraded-source trust repair landed green at
+  `2f78e9a`; its pickup file was deleted in that same commit.
+- **The reviewer chose the mid binding and skipped optional falsification.** Top
+  escalation and the separate top-binding Codex CLI pass were both declined.
+- Final-check is next. The `Status: implemented` transition, default-branch
+  retirement, implementation retro, push, and ship-tier verification have not run.
 
 ## Next command
 
-`$bench-what-next`
+`$bench-implement-spec ft126 --full`
 
 ## Shape
 

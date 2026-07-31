@@ -1,6 +1,6 @@
 # FT126 recurrence tallying
 
-Status: staged
+Status: implemented
 Roadmap: FT126
 
 ## Problem
