@@ -300,7 +300,6 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 		}
 	}
 	s.CaptureOccurrences, s.PendingOccurrences = projectCaptureOccurrences(&s.Roadmap, units)
-	s.SequenceTrusted = occurrenceSequenceTrusted(s.Roadmap.OccurrenceDiscrepancies)
 	structFacts, err := structure.Facts(root)
 	if err != nil {
 		return s, err
@@ -345,6 +344,7 @@ func BuildContext(root string, full bool, gate GateCacheFact) (ContextSnapshot, 
 			}
 		}
 	}
+	s.SequenceTrusted = occurrenceSequenceTrusted(s.Roadmap.OccurrenceDiscrepancies, s.Sources)
 	return s, nil
 }
 

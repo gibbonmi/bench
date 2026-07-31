@@ -6,6 +6,10 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/learnings"
+	"github.com/gibbonmi/bench/internal/retros"
 )
 
 var occurrenceTokenRe = regexp.MustCompile(`^\[occurrence:([^/]*)/([^\]]*)\]$`)
@@ -69,9 +73,21 @@ func projectCaptureOccurrences(doc *Document, units []captureUnit) ([]CaptureOcc
 	return occurrences, pairs
 }
 
-func occurrenceSequenceTrusted(discrepancies []OccurrenceDiscrepancy) bool {
+func occurrenceSequenceTrusted(discrepancies []OccurrenceDiscrepancy, sources []SourceFact) bool {
 	for _, discrepancy := range discrepancies {
 		if discrepancy.Structural {
+			return false
+		}
+	}
+	states := make(map[string]string, len(sources))
+	for _, source := range sources {
+		states[source.Source] = source.State
+	}
+	for _, source := range []string{RoadmapFile, IdeasFile, learnings.JournalPath, retros.Directory + "/"} {
+		switch bounds.FileState(states[source]) {
+		case bounds.StateAbsent, bounds.StateEmpty, bounds.StateParsed:
+			continue
+		default:
 			return false
 		}
 	}

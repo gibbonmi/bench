@@ -109,3 +109,27 @@ func TestRecurrenceMaintenanceContractCheckBites(t *testing.T) {
 		})
 	}
 }
+
+func TestOccurrenceLedgerMigrationCheckBitesOnFT158Count(t *testing.T) {
+	root := t.TempDir()
+	data, err := os.ReadFile(filepath.Join(NewHarness(t).KitRoot, "ROADMAP.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	mutated := strings.Replace(string(data), "Occurrences: baseline-01, baseline-02, baseline-03", "Occurrences: baseline-01, baseline-02", 1)
+	if mutated == string(data) {
+		t.Fatal("FT158 migration-count mutation did not change its ledger")
+	}
+	if err := os.WriteFile(filepath.Join(root, "ROADMAP.md"), []byte(mutated), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, diag := range checkOccurrenceLedgerMigration(root) {
+		if diag == "ROADMAP.md occurrence-ledger migration count for FT158 is wrong" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("FT158 count mutation passed occurrence-ledger migration check")
+	}
+}

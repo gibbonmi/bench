@@ -19,6 +19,7 @@ func TestAXIRoadmapContextContracts(t *testing.T) {
 	contract.RunParallel(t, "AXI roadmap context truncation contract failed", testRoadmapContextTruncation)
 	contract.RunParallel(t, "AXI roadmap context usage contract failed", testRoadmapContextUsage)
 	contract.RunParallel(t, "AXI roadmap context source-state contract failed", testRoadmapContextSourceStates)
+	contract.RunParallel(t, "AXI roadmap context capture-trust contract failed", testRoadmapContextCaptureTrust)
 	contract.RunParallel(t, "AXI roadmap context fail-closed contract failed", testRoadmapContextFailClosed)
 	contract.RunParallel(t, "AXI roadmap context read-only offline contract failed", testRoadmapContextReadOnlyOffline)
 	contract.RunParallel(t, "AXI roadmap context retrospective evidence contract failed", testRoadmapContextRetros)
@@ -219,6 +220,31 @@ func testRoadmapContextSourceStates(t *testing.T) {
 	mixed.RequireExit(0)
 	mixed.RequireContains(mixed.Stdout, "ROADMAP.md,malformed")
 	mixed.RequireContains(mixed.Stdout, "malformed roadmap row")
+}
+
+func testRoadmapContextCaptureTrust(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		prepare func(contract.Fixture)
+		want    string
+	}{
+		{"ideas wrong type", func(f contract.Fixture) { f.WriteFifo("IDEAS.md") }, "IDEAS.md,wrong-type"},
+		{"learnings malformed", func(f contract.Fixture) { f.WriteFile(".bench/learnings.md", string([]byte{0xff})) }, ".bench/learnings.md,malformed"},
+		{"retros wrong type", func(f contract.Fixture) { f.WriteFifo(".bench/retros/wait.md") }, ".bench/retros/wait.md,wrong-type"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := contextFixture(t)
+			tc.prepare(f)
+			out := f.BenchDeadlined("roadmap", "--context")
+			if out.TimedOut {
+				t.Fatal("roadmap context blocked on a classified capture source")
+			}
+			out.RequireExit(0)
+			out.RequireContains(out.Stdout, "3,false,false")
+			out.RequireContains(out.Stdout, tc.want)
+			out.RequireContains(out.Stdout, "roadmap_rows[1]{")
+		})
+	}
 }
 
 func testRoadmapContextFailClosed(t *testing.T) {

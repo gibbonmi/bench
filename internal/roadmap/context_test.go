@@ -331,3 +331,65 @@ func TestBuildContextProjectsEveryRecordedSourceWithoutPendingPair(t *testing.T)
 		t.Fatalf("advisory discrepancy missing from context: %s", out)
 	}
 }
+
+func TestBuildContextRequiresUsableCaptureSourcesForOccurrenceTrust(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		prepare func(t *testing.T, root string)
+	}{
+		{
+			name: "ideas wrong type",
+			prepare: func(t *testing.T, root string) {
+				t.Helper()
+				if err := os.Mkdir(filepath.Join(root, IdeasFile), 0o755); err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+		{
+			name: "learnings malformed",
+			prepare: func(t *testing.T, root string) {
+				t.Helper()
+				path := filepath.Join(root, learnings.JournalPath)
+				if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(path, []byte{0xff}, 0o644); err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+		{
+			name: "retros wrong type",
+			prepare: func(t *testing.T, root string) {
+				t.Helper()
+				path := filepath.Join(root, ".bench", "retros")
+				if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(path, []byte("not a directory"), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := newRepo(t)
+			if err := os.WriteFile(filepath.Join(root, RoadmapFile), []byte("**FT1 — one.**\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			tc.prepare(t, root)
+
+			s, err := BuildContext(root, false, GateCacheFact{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if s.SequenceTrusted {
+				t.Fatal("degraded capture source left recurrence sequence trusted")
+			}
+			if _, err := renderContext(s); err != nil {
+				t.Fatalf("complete context did not render: %v", err)
+			}
+		})
+	}
+}
