@@ -174,7 +174,7 @@ func testReferenceAdapterFiles(t *testing.T) {
 	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "codex"), "exec codex exec --sandbox workspace-write\n", "unrouted codex adapter does not select workspace-write")
 	// opencode's CLI documents only a positional prompt, so its adapter reads stdin into a
 	// variable and passes it positionally — the documented residual final-hop exposure.
-	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "opencode"), `model="$("$_cmd" resolve-model --provider-model)"`, "opencode adapter does not request provider/model compatibility from the resolver")
+	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "opencode"), `model="$("$_cmd" resolve-model --harness opencode)"`, "opencode adapter does not resolve its own harness column")
 	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "opencode"), `opencode run --model "$model" -- "$prompt"`, "routed opencode adapter does not pass the stdin-read prompt positionally")
 	requireFileContains(t, filepath.Join(root, ".bench", "adapters", "opencode"), `opencode run -- "$prompt"`, "opencode adapter does not pass the stdin-read prompt positionally")
 }

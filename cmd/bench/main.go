@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/gibbonmi/bench/internal/adopt"
 	"github.com/gibbonmi/bench/internal/canary"
@@ -128,53 +129,60 @@ func roadmapCommand(args []string) (string, int) {
 	})
 }
 
-// linesEnv resolves the repo's .bench/lines.env — its path, whether it exists, and its
-// content — for the two binding consumers (resolve-model and check-agent-line). A cwd
-// outside a repo, or an unreadable file, reads as no binding (exists=false): the
-// verdicts then take their unrouted / fail-open branch, never denying against an
-// absent oracle.
-func linesEnv() (path string, exists bool, content []byte) {
+// linesEnv resolves the repo's .bench/lines.env for the two binding consumers
+// (resolve-model and check-agent-line). A cwd outside a repo reads as no binding, so the
+// verdicts take their unrouted branch rather than denying against an absent oracle; a
+// file that is present but fails to read is reported as unreadable rather than absent,
+// because a corrupt oracle must announce itself instead of silently disabling
+// enforcement.
+func linesEnv() lines.Source {
 	root, err := git.Root()
 	if err != nil {
-		return "", false, nil
+		return lines.Source{}
 	}
-	path = filepath.Join(root, ".bench", "lines.env")
-	data, err := os.ReadFile(path)
+	src := lines.Source{Path: filepath.Join(root, ".bench", "lines.env")}
+	data, err := os.ReadFile(src.Path)
 	if err != nil {
-		return path, false, nil
+		src.Unreadable = !os.IsNotExist(err)
+		src.Exists = src.Unreadable
+		return src
 	}
-	return path, true, data
+	src.Exists = true
+	src.Content = data
+	return src
+}
+
+// harnessFlag is the flag every binding consumer takes: the caller names its own harness
+// so the matrix resolves one column and a denial advises in tokens that harness can pass.
+var harnessFlag = usage.Flag{Name: "--harness", HasValue: true, NoEmptyValue: true}
+
+var resolveModelGrammar = usage.Grammar{
+	Cmd:   "bench resolve-model",
+	Help:  "usage: bench resolve-model --harness <" + strings.Join(lines.Harnesses, "|") + ">",
+	Flags: []usage.Flag{harnessFlag},
+}
+
+var checkAgentLineGrammar = usage.Grammar{
+	Cmd:   "bench check-agent-line",
+	Help:  "usage: bench check-agent-line --harness <" + strings.Join(lines.Harnesses, "|") + ">",
+	Flags: []usage.Flag{harnessFlag},
 }
 
 // resolveModel is the `bench resolve-model` plumbing subcommand for the shift adapters:
 // it prints the model to pass via the harness --model flag (empty for passthrough) to
 // stdout and returns an exit code. Any warning/error goes to os.Stderr directly — the
 // map signature carries only stdout, and the adapter captures stdout AS the model, so a
-// warning must never ride there. In a routed repo an unset or unbound BENCH_MODEL exits
-// 1 and the adapter refuses to launch. The optional modes validate the exact tier id,
-// then either return its corresponding BENCH_ALIAS_* value or require provider/model
-// compatibility; the verdicts live in internal/lines so they are unit-tested without a
-// repo.
+// warning must never ride there. BENCH_MODEL names a tier and --harness names the column;
+// in a routed repo an unset or unbound tier exits 1 and the adapter refuses to launch.
+// The verdict lives in internal/lines so it is unit-tested without a repo.
 func resolveModel(args []string) (string, int) {
-	resolve := lines.ResolveModelVerdict
-	if len(args) > 1 {
-		fmt.Fprintln(os.Stderr, "usage: bench resolve-model [--alias | --provider-model]")
-		return "", 2
-	}
-	if len(args) == 1 {
-		switch args[0] {
-		case "--alias":
-			resolve = lines.ResolveModelAliasVerdict
-		case "--provider-model":
-			resolve = lines.ResolveProviderModelVerdict
-		default:
-			fmt.Fprintln(os.Stderr, "usage: bench resolve-model [--alias | --provider-model]")
-			return "", 2
-		}
+	harness, line, code := parseHarness(resolveModelGrammar, args)
+	if line != "" {
+		fmt.Fprintln(os.Stderr, line)
+		return "", code
 	}
 	benchModel, set := os.LookupEnv("BENCH_MODEL")
-	path, exists, content := linesEnv()
-	model, code, stderr := resolve(benchModel, set, exists, path, content)
+	model, code, stderr := lines.ResolveModelVerdict(harness, benchModel, set, linesEnv())
 	if stderr != "" {
 		fmt.Fprintln(os.Stderr, stderr)
 	}
@@ -184,23 +192,43 @@ func resolveModel(args []string) (string, int) {
 	return model + "\n", code
 }
 
+// parseHarness applies g to args and returns the named harness. A missing --harness is a
+// misuse like any other usage error, so both binding consumers answer it the same way
+// rather than guessing a column; the returned line is non-empty exactly when the caller
+// must print it and exit with code.
+func parseHarness(g usage.Grammar, args []string) (harness, line string, code int) {
+	parsed, line, code := usage.Parse(g, args)
+	if line != "" {
+		return "", line, code
+	}
+	harness, named := parsed.Flags[harnessFlag.Name]
+	if !named {
+		return "", g.Help, 2
+	}
+	return harness, "", 0
+}
+
 // checkAgentLine is the delegation guard subcommand: it reads the Agent PreToolUse
 // envelope on stdin, reads the binding through internal/lines, and yields the verdict as
 // an exit code — 0 allow (or any degraded warn-and-allow, with its WARNING on stderr), 2
 // deny (with the DENIED message on stderr). The deferred recover maps any panic to 3, so
 // exit 2 means only an intentional deny and the shim's fail-open rim catches a crash.
-func checkAgentLine(_ []string, stdin io.Reader, _ io.Writer, stderr io.Writer) (code int) {
+func checkAgentLine(args []string, stdin io.Reader, _ io.Writer, stderr io.Writer) (code int) {
 	defer func() {
 		if r := recover(); r != nil {
 			code = 3
 		}
 	}()
+	harness, line, usageCode := parseHarness(checkAgentLineGrammar, args)
+	if line != "" {
+		fmt.Fprintln(stderr, line)
+		return usageCode
+	}
 	data, err := io.ReadAll(stdin)
 	if err != nil {
 		data = nil // unreadable stdin reads as unparseable → fail open
 	}
-	_, exists, content := linesEnv()
-	exit, msg := lines.AgentLineVerdict(data, exists, content)
+	exit, msg := lines.AgentLineVerdict(data, harness, linesEnv())
 	if msg != "" {
 		fmt.Fprintln(stderr, msg)
 	}

@@ -11,12 +11,13 @@
 #
 # Threat model: honest-mistake layer, like the git guard. It stops a well-meaning
 # agent from delegating onto an unbound model; it is not evasion-resistant. The
-# binding lives in .bench/lines.env (BENCH_TIER_TOP/MID/CHEAP); the narrative
+# binding lives in .bench/lines.env (the BENCH_<HARNESS>_<TIER> matrix); the narrative
 # lives in projects/<name>.md "Lines" and the craft-line skill.
 #
 # This is a thin shim over the Go core: it resolves the bench wrapper via the shared
 # resolver, pipes the Agent envelope to `bench check-agent-line`, and passes the
-# verdict exit code back. All binding logic (parse model, read binding, verdict, the
+# verdict exit code back. It names its own harness so the core resolves the Claude
+# column. All binding logic (parse model, read binding, verdict, the
 # DENIED message and every warn-and-allow branch) lives in internal/lines. The shim
 # owns only its fail-open rim: a broken guard must never brick
 # delegation, so a missing lib, wrapper, or core warns and ALLOWS (exit 0). Only a
@@ -52,7 +53,7 @@ cmd="$(bench_resolve_wrapper)" || { warn "bench core not found"; exit 0; }
 # exit 2 deny (with the DENIED message on stderr). The wrapper exits 127 when no
 # binary is installed for this platform.
 rc=0
-printf '%s' "$input" | "$cmd" check-agent-line || rc=$?
+printf '%s' "$input" | "$cmd" check-agent-line --harness claude || rc=$?
 case "$rc" in
   0 | 2) exit "$rc" ;;                       # allow/degraded (0) or deny (2) — the core owns it
   *) warn "bench core errored (exit $rc)"; exit 0 ;;  # 127 missing binary / 3 panic → fail open
