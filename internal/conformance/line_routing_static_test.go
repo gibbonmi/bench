@@ -37,6 +37,10 @@ func checkLineBinding(root string) []string {
 		diags = append(diags, fmt.Sprintf("lines.env key unknown: %s names no harness in the binding matrix (%s)", key, strings.Join(lines.Harnesses, ", ")))
 	}
 	profile := readIfExists(filepath.Join(root, "projects", "benchkit.md"))
+	section, anchored := profileLinesSection(profile)
+	if profile != "" && !anchored {
+		diags = append(diags, "profile Lines section missing: projects/benchkit.md has no 'Lines' heading rendering the binding matrix")
+	}
 	declared := false
 	for _, harness := range lines.Harnesses {
 		if !binding.Declared(harness) {
@@ -51,7 +55,7 @@ func checkLineBinding(root string) []string {
 				diags = append(diags, fmt.Sprintf("lines.env cell unset: %s has no value in .bench/lines.env (%s='')", key, key))
 			case lines.CellFault(harness, value) != "":
 				diags = append(diags, fmt.Sprintf("lines.env cell malformed: %s='%s' %s", key, value, lines.CellFault(harness, value)))
-			case profile != "" && !strings.Contains(profile, value):
+			case anchored && !strings.Contains(section, value):
 				diags = append(diags, fmt.Sprintf("profile Lines prose stale: projects/benchkit.md does not name bound model id '%s' (%s in lines.env)", value, key))
 			}
 		}
@@ -63,6 +67,34 @@ func checkLineBinding(root string) []string {
 		diags = append(diags, fmt.Sprintf("lines.env cell unset: %s has no value in .bench/lines.env (%s='')", key, key))
 	}
 	return diags
+}
+
+// profileLinesSection returns the body under the profile's `Lines` heading and whether that
+// heading exists. The cross-check is anchored here rather than run over the whole file
+// because an unanchored search lets any passing mention keep the check green while the table
+// that renders the binding for a human rots. The section runs to the next heading of the
+// same or shallower depth, so its own subsections stay inside it.
+func profileLinesSection(profile string) (string, bool) {
+	depth := 0
+	var body []string
+	for _, line := range strings.Split(profile, "\n") {
+		hashes := len(line) - len(strings.TrimLeft(line, "#"))
+		title := ""
+		if hashes > 0 && strings.HasPrefix(line[hashes:], " ") {
+			title = strings.TrimSpace(line[hashes:])
+		}
+		if depth == 0 {
+			if title == "Lines" || strings.HasPrefix(title, "Lines ") {
+				depth = hashes
+			}
+			continue
+		}
+		if title != "" && hashes <= depth {
+			break
+		}
+		body = append(body, line)
+	}
+	return strings.Join(body, "\n"), depth > 0
 }
 
 // TestLineBindingGradesDeclaredHarnessesOnly pins the declared-versus-known distinction in
@@ -88,6 +120,11 @@ func TestLineBindingGradesDeclaredHarnessesOnly(t *testing.T) {
 	if diags := checkLineBinding(write(t, complete+"BENCH_OPENCODE_TOP=openai/gpt-5\n")); !containsDiagnostic(diags, "BENCH_OPENCODE_MID has no value") {
 		t.Fatalf("a declared-but-incomplete opencode column was accepted:\n%s", strings.Join(diags, "\n"))
 	}
+	partialClaude := "BENCH_CODEX_TOP=gpt-5.4\nBENCH_CODEX_MID=gpt-5.3\nBENCH_CODEX_CHEAP=gpt-5.2\n" +
+		"BENCH_CLAUDE_TOP=fable\nBENCH_CLAUDE_CHEAP=sonnet\n"
+	if diags := checkLineBinding(write(t, partialClaude)); !containsDiagnostic(diags, "BENCH_CLAUDE_MID has no value") {
+		t.Fatalf("a declared-but-incomplete claude column was accepted:\n%s", strings.Join(diags, "\n"))
+	}
 	// opencode's namespace is provider-qualified, and the rule lives on its own cells.
 	if diags := checkLineBinding(write(t, complete+"BENCH_OPENCODE_TOP=gpt-5\nBENCH_OPENCODE_MID=gpt-4\nBENCH_OPENCODE_CHEAP=gpt-3\n")); !containsDiagnostic(diags, "is not provider-qualified") {
 		t.Fatalf("a bare opencode column was accepted:\n%s", strings.Join(diags, "\n"))
@@ -98,6 +135,103 @@ func TestLineBindingGradesDeclaredHarnessesOnly(t *testing.T) {
 		if !containsDiagnostic(retired, want) {
 			t.Fatalf("want %q, got:\n%s", want, strings.Join(retired, "\n"))
 		}
+	}
+}
+
+// TestLineBindingCrossChecksEveryCellAgainstTheLinesSection proves the quantifier and the
+// anchor in one pass, one mutation per declared cell: a checker that samples a single cell
+// passes a one-cell test while the other five rot, and an unanchored substring search over
+// the whole profile accepts a cell that survives only in an unrelated paragraph. The fixture
+// renders its profile from the same parse the check reads, so the cells have one author here
+// rather than a second hand-written list.
+func TestLineBindingCrossChecksEveryCellAgainstTheLinesSection(t *testing.T) {
+	// Distinct, mutually non-containing tokens: a substring collision would let one cell's
+	// rendering satisfy another's cross-check and hide a missed mutation.
+	env := "BENCH_CODEX_TOP=alpha-top\nBENCH_CODEX_MID=alpha-mid\nBENCH_CODEX_CHEAP=alpha-cheap\n" +
+		"BENCH_CLAUDE_TOP=beta-top\nBENCH_CLAUDE_MID=beta-mid\nBENCH_CLAUDE_CHEAP=beta-cheap\n"
+	binding := lines.ParseBinding([]byte(env))
+	// profile renders every declared cell inside the Lines section except omit. When
+	// elsewhere is set, omit is still named after the section, which is the only shape that
+	// separates an anchored check from a whole-file search.
+	profile := func(omit string, elsewhere bool) string {
+		var b strings.Builder
+		b.WriteString("# benchkit\n\n## Lines (model + effort routing)\n\n")
+		for _, harness := range lines.Harnesses {
+			for _, tier := range lines.Tiers {
+				value := binding.Cell(harness, tier)
+				if value == "" || value == omit {
+					continue
+				}
+				b.WriteString("- " + harness + " " + tier + ": `" + value + "`\n")
+			}
+		}
+		b.WriteString("\n## Notes for cold sessions\n\nThe routing rubric lives in craft-line.\n")
+		if elsewhere {
+			b.WriteString("\nHistorical note: this repo once bound `" + omit + "`.\n")
+		}
+		return b.String()
+	}
+	write := func(t *testing.T, profile string) string {
+		t.Helper()
+		root := t.TempDir()
+		if err := os.MkdirAll(filepath.Join(root, ".bench"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.MkdirAll(filepath.Join(root, "projects"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(root, ".bench", "lines.env"), []byte(env), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(root, "projects", "benchkit.md"), []byte(profile), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return root
+	}
+
+	if diags := checkLineBinding(write(t, profile("", false))); len(diags) != 0 {
+		t.Fatalf("a profile rendering every declared cell got diagnostics:\n%s", strings.Join(diags, "\n"))
+	}
+
+	for _, harness := range lines.Harnesses {
+		for _, tier := range lines.Tiers {
+			value := binding.Cell(harness, tier)
+			if value == "" {
+				continue
+			}
+			for _, mutation := range []struct {
+				name      string
+				elsewhere bool
+			}{
+				{"absent from the profile", false},
+				{"named only outside the Lines section", true},
+			} {
+				t.Run(lines.Key(harness, tier)+" "+mutation.name, func(t *testing.T) {
+					diags := checkLineBinding(write(t, profile(value, mutation.elsewhere)))
+					if !containsDiagnostic(diags, "profile Lines prose stale") || !containsDiagnostic(diags, "'"+value+"'") {
+						t.Fatalf("%s %s was accepted:\n%s", lines.Key(harness, tier), mutation.name, strings.Join(diags, "\n"))
+					}
+					for _, other := range lines.Harnesses {
+						for _, otherTier := range lines.Tiers {
+							sibling := binding.Cell(other, otherTier)
+							if sibling == "" || sibling == value {
+								continue
+							}
+							if containsDiagnostic(diags, "'"+sibling+"'") {
+								t.Fatalf("withholding %s also fired for %s:\n%s", value, sibling, strings.Join(diags, "\n"))
+							}
+						}
+					}
+				})
+			}
+		}
+	}
+
+	// A profile carrying no Lines heading has nothing to anchor to; the check names that
+	// rather than reporting six cells stale for one cause.
+	noSection := checkLineBinding(write(t, "# benchkit\n\n## Notes for cold sessions\n\nalpha-top beta-top\n"))
+	if !containsDiagnostic(noSection, "profile Lines section missing") {
+		t.Fatalf("a profile with no Lines heading was accepted:\n%s", strings.Join(noSection, "\n"))
 	}
 }
 
