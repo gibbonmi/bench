@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -129,6 +130,120 @@ func ApplyAbandon(root, request, path, fingerprint string) (CleanupPlan, error) 
 		return applied, err
 	}
 	return applied, retainedReleaseError(applied, request, path)
+}
+
+// ReleaseProvisional removes one clean owned assignment whose exact checkpoint remains
+// retained by a durable lifecycle ref, without treating provisional ancestry as landed.
+func ReleaseProvisional(root, requestArg, path, checkpointRef, checkpoint string) error {
+	target, err := canonicalPath(path)
+	if err != nil {
+		return err
+	}
+	repo, _, err := cleanupIdentity(root, target)
+	if err != nil {
+		return err
+	}
+	request := requestDigest(requestArg)
+	if receipt, found, readErr := intent.CleanupReceiptFor(root, repo, releaseOperation, target, request); readErr != nil {
+		return readErr
+	} else if found && receipt.State == intent.ReceiptComplete {
+		return compactProvisionalAssignment(root, receipt.Tracked)
+	}
+	assignment, ok, err := intent.FindAssignmentByRequest(root, request)
+	if err != nil || !ok || assignment.Worktree != target {
+		return errors.New("provisional release request, assignment, or path mismatch; checkout retained")
+	}
+	if assignment.State != intent.StateActive && assignment.State != intent.StateCleanupPending {
+		return errors.New("provisional release assignment state does not accept cleanup")
+	}
+	if assignment.State == intent.StateActive {
+		if err := validateCreationBundle(root, assignment); err != nil {
+			return fmt.Errorf("validate provisional release owner: %w", err)
+		}
+		if err := validateProvisionalCheckpoint(root, target, checkpointRef, checkpoint); err != nil {
+			return err
+		}
+		plan, planErr := PlanExplicit(root, target)
+		if planErr != nil {
+			return planErr
+		}
+		if err := validateProvisionalPlan(plan, assignment.ID); err != nil {
+			return err
+		}
+		assignment.State = intent.StateCleanupPending
+		if err := intent.PutAssignment(root, assignment); err != nil {
+			return err
+		}
+	}
+	planner := func(path string) (CleanupPlan, error) {
+		plan, planErr := PlanExplicit(root, path)
+		if planErr != nil {
+			return plan, planErr
+		}
+		if validateErr := validateProvisionalPlan(plan, assignment.ID); validateErr != nil {
+			return plan, validateErr
+		}
+		if validateErr := validateProvisionalCheckpoint(root, target, checkpointRef, checkpoint); validateErr != nil {
+			return plan, validateErr
+		}
+		return plan, nil
+	}
+	plan, err := planner(target)
+	if err != nil {
+		return err
+	}
+	terminal := func(plan CleanupPlan) error {
+		current, readErr := assignmentByID(root, assignment.ID)
+		if readErr != nil {
+			return readErr
+		}
+		return intent.PutCleanupReceipt(root, receiptFromRelease(repo, request, current, string(plan.Action)))
+	}
+	if _, err := applyCleanupTransaction(root, target, plan.Fingerprint, planner, nil, terminal); err != nil {
+		return err
+	}
+	return compactProvisionalAssignment(root, assignment.ID)
+}
+
+func validateProvisionalPlan(plan CleanupPlan, assignmentID string) error {
+	if plan.Action != ActionRemove || plan.Tracked != "clean" || !plan.owned || plan.assignment == nil || plan.assignment.ID != assignmentID {
+		return errors.New("provisional release checkout is not exact and clean; checkout retained")
+	}
+	return nil
+}
+
+func validateProvisionalCheckpoint(root, target, checkpointRef, checkpoint string) error {
+	if checkpointRef == "" || checkpoint == "" {
+		return errors.New("provisional release checkpoint evidence is incomplete")
+	}
+	retained, refErr := git.Output("-C", root, "rev-parse", "--verify", checkpointRef+"^{commit}")
+	headTree, headErr := git.Output("-C", target, "rev-parse", "HEAD^{tree}")
+	checkpointTree, treeErr := git.Output("-C", root, "rev-parse", checkpoint+"^{tree}")
+	if headErr != nil || refErr != nil || treeErr != nil || retained != checkpoint || headTree != checkpointTree {
+		return errors.New("provisional release checkpoint evidence drifted; checkout retained")
+	}
+	return nil
+}
+
+func compactProvisionalAssignment(root, assignmentID string) error {
+	assignments, err := intent.Assignments(root)
+	if err != nil {
+		return err
+	}
+	var assignment *intent.Assignment
+	for i := range assignments {
+		if assignments[i].ID == assignmentID {
+			assignment = &assignments[i]
+			break
+		}
+	}
+	if assignment == nil {
+		return nil
+	}
+	if assignment.State != intent.StateComplete {
+		return errors.New("provisional release did not reach terminal assignment state")
+	}
+	return intent.DeleteAssignment(root, assignment.ID)
 }
 
 func selectAssignment(assignments []intent.Assignment, target string) (intent.Assignment, error) {

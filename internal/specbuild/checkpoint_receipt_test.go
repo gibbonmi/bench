@@ -291,7 +291,7 @@ func TestTypedNilReleaseOwnerStaysPending(t *testing.T) {
 	requirePendingRelease(t, fixture, status)
 }
 
-func (o *releaseOwner) Release(context.Context, string, string, string) error {
+func (o *releaseOwner) Release(context.Context, string, string, string, string, string) error {
 	o.calls++
 	if o.inspect != nil {
 		o.inspect()

@@ -42,7 +42,6 @@ import (
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/sessioninspect"
 	"github.com/gibbonmi/bench/internal/shift"
-	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/status"
 	"github.com/gibbonmi/bench/internal/stophook"
 	"github.com/gibbonmi/bench/internal/structure"
@@ -443,9 +442,7 @@ func run(args []string, stdout, stderr *os.File) int {
 	case "commit":
 		return commit.Command(args[1:], stdout, stderr)
 	case "spec":
-		out, code := spec.Command(args[1:])
-		fmt.Fprint(stdout, out)
-		return code
+		return dispatchSpec(args[1:], stdout)
 	case "gate-run":
 		return gate.RunCommand(args[1:], stdout, stderr)
 	case "gate-pin":

@@ -1,11 +1,14 @@
 package worktree
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/intent"
 	"io"
+	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -128,4 +131,86 @@ func TestReleaseAndPlanExplicitAcceptUnstampedAssignment(t *testing.T) {
 		"PlanExplicit over an unstamped assignment = %#v, %v", plan, err)
 	code := ReleaseCommand(root, []string{"--request", "landed-unstamped-lock", creation.Path}, io.Discard, io.Discard)
 	requireTest(t, code == 0, "ReleaseCommand over an unstamped assignment exit=%d", code)
+}
+
+func TestReleaseProvisionalRequiresExactRetainedCleanCheckpoint(t *testing.T) {
+	setup := func(t *testing.T) (string, Creation, string, string, string) {
+		root := newWorktreeRepo(t)
+		t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+		request := "provisional-" + strings.ReplaceAll(t.Name(), "/", "-")
+		created := mustCreate(t, root, request, "provisional")
+		mustWrite(t, filepath.Join(created.Path, "provisional.txt"), []byte("checkpoint\n"), 0o644)
+		gitRun(t, created.Path, "add", "provisional.txt")
+		gitRun(t, created.Path, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "-m", "checkpoint")
+		tree := gitOutput(t, created.Path, "rev-parse", "HEAD^{tree}")
+		checkpoint := gitOutput(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit-tree", tree, "-p", created.Assignment.Start, "-m", "attributed checkpoint")
+		ref := "refs/bench/test-checkpoint/" + created.Assignment.ID
+		gitRun(t, root, "update-ref", ref, checkpoint)
+		return root, created, request, ref, checkpoint
+	}
+
+	t.Run("success and replay", func(t *testing.T) {
+		root, created, request, ref, checkpoint := setup(t)
+		if head := gitOutput(t, created.Path, "rev-parse", "HEAD"); head == checkpoint {
+			t.Fatal("positive control must use a different assignment commit with the checkpoint tree")
+		}
+		mustNoError(t, ReleaseProvisional(root, request, created.Path, ref, checkpoint))
+		if _, err := os.Stat(created.Path); !errors.Is(err, os.ErrNotExist) {
+			t.Fatalf("released worktree remains: %v", err)
+		}
+		mustNoError(t, ReleaseProvisional(root, request, created.Path, ref, checkpoint))
+	})
+
+	for _, tc := range []struct {
+		name   string
+		mutate func(*testing.T, string, Creation, string, string)
+	}{
+		{"retargeted ref", func(t *testing.T, root string, _ Creation, ref, checkpoint string) {
+			gitRun(t, root, "update-ref", ref, "HEAD", checkpoint)
+		}},
+		{"dirty worktree", func(t *testing.T, _ string, created Creation, _, _ string) {
+			mustWrite(t, filepath.Join(created.Path, "dirty.txt"), []byte("dirty\n"), 0o644)
+		}},
+		{"index only", func(t *testing.T, _ string, created Creation, _, _ string) {
+			mustWrite(t, filepath.Join(created.Path, "index.txt"), []byte("index\n"), 0o644)
+			gitRun(t, created.Path, "add", "index.txt")
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root, created, request, ref, checkpoint := setup(t)
+			tc.mutate(t, root, created, ref, checkpoint)
+			if err := ReleaseProvisional(root, request, created.Path, ref, checkpoint); err == nil {
+				t.Fatal("mismatched provisional release succeeded")
+			}
+			if _, err := os.Stat(created.Path); err != nil {
+				t.Fatalf("refused provisional release removed checkout: %v", err)
+			}
+			stored, ok, err := intent.FindAssignmentByRequest(root, requestDigest(request))
+			if err != nil || !ok || stored.State != intent.StateActive {
+				t.Fatalf("refused provisional release mutated assignment: %#v, %v, %v", stored, ok, err)
+			}
+		})
+	}
+}
+
+func TestCompactProvisionalAssignmentPropagatesMalformedLedger(t *testing.T) {
+	root := newWorktreeRepo(t)
+	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	created := mustCreate(t, root, "provisional-malformed-ledger", "provisional")
+	assignment := created.Assignment
+	assignment.State = intent.StateComplete
+	mustNoError(t, intent.PutAssignment(root, assignment))
+	ledger, err := intent.Address(root)
+	mustNoError(t, err)
+	original, err := os.ReadFile(ledger)
+	mustNoError(t, err)
+	mustWrite(t, ledger, []byte("{"), 0o600)
+	if err := compactProvisionalAssignment(root, assignment.ID); err == nil {
+		t.Fatal("malformed assignment ledger was treated as absent")
+	}
+	mustWrite(t, ledger, original, 0o600)
+	stored, ok, err := intent.FindAssignmentByRequest(root, assignment.Request)
+	if err != nil || !ok || stored.ID != assignment.ID || stored.State != intent.StateComplete {
+		t.Fatalf("failed compaction destroyed recoverable assignment: %#v, %v, %v", stored, ok, err)
+	}
 }

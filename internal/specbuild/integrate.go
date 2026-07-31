@@ -198,7 +198,7 @@ func (s *Service) releaseIntegrated(ctx context.Context, run record, key string,
 	if !ok {
 		return run.status(), errors.New("spec build integrate requires a release-capable worktree owner")
 	}
-	if err := releaser.Release(ctx, s.root, assigned.Request, assigned.Path); err != nil {
+	if err := releaser.Release(ctx, s.root, assigned.Request, assigned.Path, assigned.CheckpointRef, assigned.Checkpoint); err != nil {
 		return run.status(), fmt.Errorf("release integrated assignment: %w", err)
 	}
 	assigned.CleanupPending, assigned.Released = false, true

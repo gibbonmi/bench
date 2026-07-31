@@ -107,7 +107,7 @@ func workingSubject(root string) (string, string, error) {
 		return "", "", err
 	}
 	if dirty != "" {
-		return "", "", errors.New("spec build start requires a clean working checkout")
+		return "", "", fmt.Errorf("spec build start requires a clean working checkout: %s", dirty)
 	}
 	tip, err := benchgit.Output("-C", root, "rev-parse", "HEAD^{commit}")
 	if err != nil {
