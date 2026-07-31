@@ -367,6 +367,15 @@ func classify(src Source) (state, Binding) {
 	return stateBound, b
 }
 
+// enforceable reports whether the asking harness has a column the guard can hold a
+// delegation to. It is the single condition every deny in AgentLineVerdict is gated on:
+// outside it there is no bound tier, so nothing can be named as the line the delegation
+// should have carried, and the guard fails open rather than bricking a repo that never
+// opted into line enforcement.
+func enforceable(st state, b Binding, harness string) bool {
+	return st == stateBound && b.Complete(harness)
+}
+
 func warn(s string) string {
 	return "WARNING: check-agent-line: " + s + " — allowing delegation."
 }
@@ -397,14 +406,19 @@ func AgentLineVerdict(stdin []byte, harness string, src Source) (exitCode int, s
 		return 0, warn("stdin is not parseable as JSON")
 	}
 	model := e.model
+	st, b := classify(src)
 	if e.isFork {
 		// A fork runs on this session's model whatever it declares, so the binding is not
-		// what settles it: a declared model is a claim the harness discards and the guard
-		// cannot check, while an omitted one is the honest signal for behavior no
+		// what settles the declaration: it is a claim the harness discards and the guard
+		// cannot check, while an omitted model is the honest signal for behavior no
 		// delegation can avoid. Neither verdict can name the session's own model — only
 		// SessionStart is documented to receive one, it is not guaranteed there, and a
-		// mid-session switch is re-reported by no hook event.
-		if model != "" {
+		// mid-session switch is re-reported by no hook event. The deny waits for a column
+		// to enforce: with no bound tier there is nothing to escalate off, so a repo that
+		// never opted into line enforcement keeps its delegations. The warning does not
+		// wait — it is a warning either way, and withholding it would cost the operator a
+		// true statement about inheritance.
+		if model != "" && enforceable(st, b, harness) {
 			return 2, "DENIED: delegation model '" + model + "' is declared on a fork, which runs on this session's " +
 				"model and ignores the declaration — the guard cannot verify a line the harness will not honor. " +
 				"Re-delegate the fork with no model field to inherit this session's line, or spawn a non-fork " +
@@ -412,14 +426,13 @@ func AgentLineVerdict(stdin []byte, harness string, src Source) (exitCode int, s
 		}
 		return 0, warn("a fork delegation inherits this session's model, which no hook event reports")
 	}
-	st, b := classify(src)
 	if model == "" {
-		// A routed repo with a complete column for the asking harness is the one degraded
-		// branch that is also the attack path the guard exists for: an omitted or empty
-		// model inherits the invoking session's model, the silent escalation invariant #2
-		// forbids. Deny it. Every other missing-model branch keeps the fail-open rim —
-		// there is no column to enforce, and a broken guard must never brick delegation.
-		if st == stateBound && b.Complete(harness) {
+		// The one degraded branch that is also the attack path the guard exists for: an
+		// omitted or empty model inherits the invoking session's model, the silent
+		// escalation invariant #2 forbids. Deny it. Every other missing-model branch keeps
+		// the fail-open rim — there is no column to enforce, and a broken guard must never
+		// brick delegation.
+		if enforceable(st, b, harness) {
 			return 2, "DENIED: the delegation envelope has a missing or empty model field — an " +
 				"omitted model silently inherits this session's model, which invariant #2 forbids. " +
 				"Pass a bound tier token from .bench/lines.env; " + describeColumn(harness, b) +

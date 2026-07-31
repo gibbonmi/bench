@@ -524,6 +524,40 @@ func TestAgentLineVerdictForkDelegation(t *testing.T) {
 	}
 }
 
+// TestAgentLineVerdictForkDenyNeedsARoutedCompleteBinding drives both fork verdicts across
+// all three binding states. Without a complete column there is no bound tier, so a declared
+// model has nothing to escalate off, and a repo that never opted into line enforcement must
+// not have its delegations blocked — the fork deny therefore rides the same
+// routed-and-complete condition as the missing-model deny, and every other state takes the
+// fail-open rim. The inheritance warning stays unconditional: it is a warning either way,
+// and gating it would cost the operator a true statement about what a fork does.
+func TestAgentLineVerdictForkDenyNeedsARoutedCompleteBinding(t *testing.T) {
+	const inheritanceWarning = "WARNING: check-agent-line: a fork delegation inherits this session's model, " +
+		"which no hook event reports — allowing delegation."
+	for _, tt := range []struct {
+		name     string
+		src      Source
+		wantDeny bool
+	}{
+		{"unrouted", Source{Path: ".bench/lines.env"}, false},
+		{"incomplete-column", bound("BENCH_CLAUDE_TOP=fable-5\n"), false},
+		{"routed-complete", bound(fullBinding), true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			exit, stderr := AgentLineVerdict(forkEnvelope(`"sonnet-5"`), "claude", tt.src)
+			switch {
+			case tt.wantDeny && (exit != 2 || !contains(stderr, "declared on a fork")):
+				t.Errorf("fork declaring a model = (%d, %q), want the fork deny", exit, stderr)
+			case !tt.wantDeny && (exit != 0 || stderr != inheritanceWarning):
+				t.Errorf("fork declaring a model = (%d, %q), want (0, %q)", exit, stderr, inheritanceWarning)
+			}
+			if exit, stderr := AgentLineVerdict(forkEnvelope(""), "claude", tt.src); exit != 0 || stderr != inheritanceWarning {
+				t.Errorf("fork declaring no model = (%d, %q), want (0, %q)", exit, stderr, inheritanceWarning)
+			}
+		})
+	}
+}
+
 // TestAgentLineVerdictAllowsEveryBoundCell pins permissive enforcement across the whole
 // matrix through ONE harness's guard: a Claude session may legitimately name the tier a
 // Codex delegate will run on, so narrowing enforcement to the asking harness's column
