@@ -1020,27 +1020,19 @@ conditions that exposed it before spending another cycle on a stand-in. Kit
 edit under the `craft-synthesis` discipline. Source: the 2026-07-23 learnings
 entry, verdicted in this drain.
 
-**FT113 (LOW) — a `bench commit --spec` status flip makes its own green verdict
-stale.** The flip from `Status: staged` to
-`implemented` is necessarily written after the gate has passed, and
-`specs/*.md` is not on the capture-only allowlist, so every clean `--spec`
-landing leaves the gate reporting strong-stale and sends the next session to
-a re-run that finds nothing — reproduced through the accused command
-2026-07-24 (`git diff-tree -r --name-only 20f0767 0faf47f`: only `capture/IDEAS.md`
-and the flipped spec file drifted). Its fix is a reviewer decision between
-three options that are not equally safe: widening the allowlist to
-`specs/*.md` (admits arbitrary spec edits, which the fixed exact-path
-allowlist deliberately refuses); teaching the gate cache to record the
-post-flip tree when `--spec` itself performs the flip (narrower — the flip is
-the tool's own write and its content is known); or accepting the face as
-cosmetic and documenting it. The same command has a separate avoidable usage
-failure: `bench commit --spec <slug>` edits the owned spec transition itself but
-still requires another named path. Count that owned transition as satisfying
-the path requirement without widening the staged set. Immediate retirement on
-the default branch currently follows that landing with a second full oracle run
-over another short-lived tree; settle the cache handoff and retirement sequence
-so the two owned transitions do not require redundant full runs. Sources: the
-FT131 and decision-map integrity implementation retros, drained here.
+**FT113 (LOW) — `bench commit --spec` residuals: the flip counts as a path, and
+the flip has one author.** The row's original face — the `Status: staged` →
+`implemented` flip leaving the gate verdict strong-stale because `specs/*.md`
+was off the capture-only allowlist — is resolved by the shipped reduced-gate
+scope: `specs/` is on the allowlist and the content-addressed ancestor lets
+allowlist-confined post-flip drift inherit its evidence, so the follow-up run
+is reduced rather than a full oracle re-run, and the three-way allowlist
+decision the row queued is settled by that shipped shape. What remains is the
+command's usage contract: `bench commit --spec <slug>` edits the owned spec
+transition itself but still requires another named path — count that owned
+transition as satisfying the path requirement without widening the staged
+set. Sources: the FT131 and decision-map integrity implementation retros,
+drained here.
 
 The transition now has three authors, not two. `bench spec implemented <spec>`
 and `bench commit --spec <slug>` both perform the `Status: staged` →
@@ -1048,8 +1040,7 @@ and `bench commit --spec <slug>` both perform the `Status: staged` →
 the latter fail with `no Status: staged line`; `bench spec build promote` is a
 third, and the phase contract names it the sole author for a reviewed spec
 build. Name one owner per landing route and make the others refuse rather than
-race, in the same visit that settles the cache handoff. Source: the FT128
-implementation retro, drained here.
+race. Source: the FT128 implementation retro, drained here.
 
 **FT130 (MEDIUM) — a capture write mid-lifecycle voids or blocks the run.** During
 FT122's gated commit a session answered a reviewer question and ran `bench
@@ -1202,6 +1193,20 @@ owns ubiquitous language, ADRs own hard-to-reverse architectural state.
 Integrates into the existing phase rather than adding a parallel skill. Kit
 edit under the `craft-synthesis` discipline. Source: `capture/IDEAS.md`, drained
 here.
+
+**FT180 (LOW) — a spec-optional route decided at shape-idea's exit.** Between
+the one-ticket light path and the full pipeline there is no middle route:
+work too small for a spec doc but wider than one ticket either pays for a
+spec whose stories are ceremony or takes the light path it doesn't qualify
+for. Reviewer request 2026-08-01: when the shaped scope is small enough,
+`/bench-write-spec` still creates the spec folder and its tickets but omits
+the spec doc, and `/bench-shape-idea` closes by routing explicitly — direct
+to tickets or a full spec — so the route is the shaping phase's exit product
+rather than an ad-hoc call at build entry. The build's decision is the
+threshold test the routing applies and how a spec-less folder interacts
+with the `bench spec` lifecycle (which currently keys on `spec.md` status).
+Kit edit under the `craft-synthesis` discipline. Source: `capture/IDEAS.md`
+2026-08-01, drained here.
 
 **FT166 (LOW) — `bench capture commit`: porcelain for the ambient capture
 set.** Commit the capture surfaces (`capture/learnings.md`, `capture/IDEAS.md`,
@@ -1747,9 +1752,10 @@ recommended table is sequencing advice.
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
 | FT174 | FT164 | Build the parser against the identifier form the template teaches, not the title form it is replacing. |
 | FT175 | FT173 | The ledger's read surface is AXI; settle one derivation per principle before adding a consumer that needs all ten. |
+| FT180 | FT164 | The spec-less route lands entirely on tickets, so settle the ticket-charge conventions the route will scaffold first. |
 
 ## Recommended sequence
 
 1. `/bench-write-spec` — FT176 spec-build lifecycle preconditions: promote's check order deadlocks the mid-repair runs recomposition exists for, `abandon` sits behind the lock it is meant to escape, and `start` refuses its own stale green marker; a reproduced deadlock left a permanently-active run record that is the fix's acceptance fixture.
 2. `/bench-implement-spec` — FT135 pre-push protection, staged at `specs/pre-push-guard-visibility/spec.md`: expose resolved-versus-guessed branch and template currency, then restore the sanctioned repair route.
-3. `/bench-write-spec` — FT164 ticket and repair charges: three independent sources converged on one owner file, and the conventions decay out of the corpus until the skill teaches them.
+3. `/bench-implement-spec` — per-component-gate-scoping, staged at `specs/per-component-gate-scoping/spec.md`: per-component skip predicates and attested build reuse, reviewer-decided 2026-08-01; drain the staged frontier before authoring the next spec.
