@@ -79,9 +79,15 @@ func TestReleaseProvisionalRefusesLiveCheckpointDrift(t *testing.T) {
 		{"retargeted integrated ref", func(t *testing.T, f *liveProvisionalFixture) {
 			gitRun(t, f.root, "update-ref", f.evidence.IntegratedRef, f.evidence.Base, f.evidence.Integrated)
 		}},
-		{"integrated tree", func(t *testing.T, f *liveProvisionalFixture) {
-			gitRun(t, f.root, "update-ref", f.evidence.IntegratedRef, f.evidence.Base, f.evidence.Integrated)
-			f.evidence.Integrated = f.evidence.Base
+		{"deleted checkpoint ref", func(t *testing.T, f *liveProvisionalFixture) {
+			gitRun(t, f.root, "update-ref", "-d", f.evidence.CheckpointRef, f.evidence.Checkpoint)
+		}},
+		{"checkpoint not based at the assignment base", func(t *testing.T, f *liveProvisionalFixture) {
+			parent := gitOutput(t, f.root, "rev-parse", f.evidence.Base+"^")
+			tree := gitOutput(t, f.root, "rev-parse", f.evidence.Checkpoint+"^{tree}")
+			checkpoint := gitOutput(t, f.root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit-tree", tree, "-p", parent, "-m", "reparented checkpoint")
+			gitRun(t, f.root, "update-ref", f.evidence.CheckpointRef, checkpoint, f.evidence.Checkpoint)
+			f.evidence.Checkpoint = checkpoint
 		}},
 		{"nondeclared ignored file", func(t *testing.T, f *liveProvisionalFixture) {
 			mustWrite(t, filepath.Join(f.created.Path, "ignored-release.txt"), []byte("ignored\n"), 0o644)

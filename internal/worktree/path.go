@@ -244,10 +244,15 @@ func validateProvisionalEvidence(root, target string, evidence ProvisionalEviden
 	checkpointTree, checkpointTreeErr := git.Output("-C", root, "rev-parse", evidence.Checkpoint+"^{tree}")
 	checkpointParent, checkpointParentErr := git.Output("-C", root, "rev-parse", evidence.Checkpoint+"^")
 	integratedRetained, integratedRefErr := git.Output("-C", root, "rev-parse", "--verify", evidence.IntegratedRef+"^{commit}")
-	integratedTree, integratedTreeErr := git.Output("-C", root, "rev-parse", evidence.Integrated+"^{tree}")
+	_, integratedTreeErr := git.Output("-C", root, "rev-parse", evidence.Integrated+"^{tree}")
 	liveTree := git.TreeHash(target)
+	// Releasing the checkout loses nothing exactly when its live content is the checkpoint
+	// tree and the checkpoint commit is still retained at its ref. The integrated tree is
+	// deliberately not compared against the checkpoint tree: a sibling replayed onto a
+	// candidate an earlier sibling already advanced integrates a different tree by
+	// construction, and that tree says nothing about what the checkout holds.
 	if pathErr != nil || refErr != nil || headErr != nil || headTreeErr != nil || baseTreeErr != nil || indexErr != nil || checkpointTreeErr != nil || checkpointParentErr != nil || integratedRefErr != nil || integratedTreeErr != nil ||
-		retained != evidence.Checkpoint || checkpointParent != evidence.Base || integratedRetained != evidence.Integrated || checkpointTree != integratedTree || liveTree == "none" || liveTree != checkpointTree {
+		retained != evidence.Checkpoint || checkpointParent != evidence.Base || integratedRetained != evidence.Integrated || liveTree == "none" || liveTree != checkpointTree {
 		return false, errors.New("provisional release evidence drifted; checkout retained")
 	}
 	if head == evidence.Base {
