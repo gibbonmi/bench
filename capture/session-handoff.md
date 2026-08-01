@@ -2,45 +2,37 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `6f3486a`, 9 unpushed commits
-Spec: `specs/reduced-gate-phase-set/spec.md` (built and landed, Status still `staged`),
-`specs/pre-push-guard-visibility/spec.md` (Status: staged, unstarted)
+Branch: `main` — HEAD `7c2684b`, clean tree, 4 unpushed commits
+Spec: `specs/per-component-gate-scoping/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Gate: green at `ce22983` — stale, work tree `ce22983`
 
 ## State
 
-- **`reduced-gate-phase-set` is built and landed at `6f3486a`** — gate green over the
-  composed tree. All 26 acceptance-coverage rows plus five tests beyond the map. Its
-  spec still reads `Status: staged`; nothing authored the flip, because the spec-build
-  lifecycle was abandoned mid-run (below) and `promote` is what normally writes it.
-  Flipping it is a one-line reviewer call, not pickup work.
-- The retro is `capture/retros/reduced-gate-phase-set.md`. Read it before the drain — it
-  carries the design findings, three process failures, and what was deliberately left
-  behind.
-- **A spec-build run for this slug is permanently stuck `active`.** Every one of the
-  eight operations routes to `promote` for recomposition, and `promote` checks a clean
-  review and released assignments *before* the recompose branch — conditions a
-  mid-repair run cannot meet. `abandon` is blocked by the same gate. Six worktrees stay
-  registered and its provisional refs retained; no sanctioned operation retires them.
-  Parked as a PRIORITIZE idea. This is inert — it blocks only that slug's lifecycle, not
-  ordinary commits.
-- Also inert, also recorded: five recovery refs from the earlier cadence build that
-  `bench worktree recovery` refuses because it cannot prove their payloads landed. The
-  refusal is correct.
-- `capture/IDEAS.md` carries five parked items, three of them marked PRIORITIZE because
-  they fire on every build rather than once. `capture/learnings.md` carries four
-  entries, two added this session. All await `/bench-what-next`.
-- One follow-up is scoped and ready but unbuilt: `checkContractCaptureReads` and
-  `checkScopeBinding` are reachable only through `conformance-suite`'s whole-package run,
-  by test-name prefix rather than registry registration. Registering them in
-  `registry.Checks` + `conformanceChecks` makes them run in the `conformance` phase by
-  construction and inherits the existing unbound-row protection. Two files, light path.
-  The reviewer call is whether that composes the registry seam or crosses the
-  gate-contract seam.
-- Nothing has been pushed; `main` is nine commits ahead of `origin/main`.
+- **The `/bench-what-next` drain landed at `7c2684b`, reviewer-approved.** Capture is
+  empty: no parked ideas, no open learnings, no pending retros. The pass added FT180
+  (spec-optional route decided at shape-idea's exit), dropped the check-level
+  gate-scoping idea as already covered by the staged spec, and reworded FT113 —
+  its stale-verdict face is resolved by the shipped reduced-gate scope (`specs/`
+  is allowlisted, evidence is content-addressed), leaving only the
+  flip-counts-as-a-path and one-flip-author residuals.
+- The 16 ticket files under `specs/per-component-gate-scoping/tickets/` — authored
+  at spec staging but never committed — landed in the same gated commit.
+- Two specs sit staged and unimplemented: `specs/per-component-gate-scoping/spec.md`
+  and `specs/pre-push-guard-visibility/spec.md`. The refreshed
+  `## Recommended sequence` in `ROADMAP.md` orders the board: FT176 spec first,
+  then the two staged implementations.
+- **FT176 is the board's HIGH**: the spec-build lifecycle's preconditions deadlock
+  mid-repair runs. Its permanently-active run record (the stuck
+  `reduced-gate-phase-set` run, six registered worktrees, retained provisional
+  refs) is inert and is the fix's acceptance fixture — leave it in place.
+- Also inert: five recovery refs `bench worktree recovery` refuses because it
+  cannot prove their payloads landed. The refusal is correct.
+- Nothing has been pushed; `main` is ahead of `origin/main` (push is the
+  reviewer's call).
 
 ## Next command
 
-`/bench-what-next`
+`/bench-write-spec` — FT176, the top line of the refreshed recommended sequence.
 
 ## Shape
 
