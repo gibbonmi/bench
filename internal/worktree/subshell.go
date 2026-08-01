@@ -29,6 +29,17 @@ func canonicalPath(path string) (string, error) {
 func PlanExplicit(root, path string) (CleanupPlan, error) {
 	return PlanExplicitWithOptions(root, path, CleanupOptions{})
 }
+
+// explicitRetainFingerprint binds a refusal decided before the registration is known to
+// the repository facts and to the invocation options it was decided under, so an apply
+// carrying it can never be replayed against a differently-asked question.
+func explicitRetainFingerprint(common, defaultRef, defaultOID, target string, plan CleanupPlan, options CleanupOptions) string {
+	return fingerprintParts(
+		[]byte("bench-explicit-retain/v2"), []byte(common), []byte(defaultRef), []byte(defaultOID), []byte(target),
+		[]byte(plan.ReasonCode), []byte(plan.Reason),
+		[]byte(strconv.FormatBool(options.DiscardIgnored)), []byte(strconv.FormatBool(options.DiscardBranch)),
+	)
+}
 func PlanExplicitWithOptions(root, path string, options CleanupOptions) (CleanupPlan, error) {
 	root = canonicalRoot(root)
 	target, err := canonicalPath(path)
@@ -61,12 +72,12 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	}
 	if samePath(root, target) {
 		plan := retainedPlan(target, ReasonUncertain, "primary checkout is never removable")
-		plan.Fingerprint = fingerprintParts([]byte("bench-explicit-retain/v2"), []byte(common), []byte(defaultRef), []byte(defaultOID), []byte(target), []byte(plan.ReasonCode), []byte(plan.Reason), []byte(strconv.FormatBool(options.DiscardIgnored)))
+		plan.Fingerprint = explicitRetainFingerprint(common, defaultRef, defaultOID, target, plan, options)
 		return plan, nil
 	}
 	if registration == nil {
 		plan := retainedPlan(target, ReasonForeign, "target is not registered")
-		plan.Fingerprint = fingerprintParts([]byte("bench-explicit-retain/v2"), []byte(common), []byte(defaultRef), []byte(defaultOID), []byte(target), []byte(plan.ReasonCode), []byte(plan.Reason), []byte(strconv.FormatBool(options.DiscardIgnored)))
+		plan.Fingerprint = explicitRetainFingerprint(common, defaultRef, defaultOID, target, plan, options)
 		return plan, nil
 	}
 	admin, err := git.Output("-C", target, "rev-parse", "--path-format=absolute", "--git-dir")
@@ -81,7 +92,7 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 	if err != nil {
 		return CleanupPlan{}, err
 	}
-	plan := CleanupPlan{Target: target, Action: ActionRemove, Tracked: "clean", Recovery: "none", registration: *registration, discardIgnored: options.DiscardIgnored}
+	plan := CleanupPlan{Target: target, Action: ActionRemove, Tracked: "clean", Recovery: "none", registration: *registration, discardIgnored: options.DiscardIgnored, discardBranch: options.DiscardBranch}
 	markerInfo, markerStatErr := os.Lstat(filepath.Join(admin, OwnerMarkerFile))
 	if markerStatErr == nil {
 		evidence, markerErr := validateOwnerMarker(root, target)
@@ -223,6 +234,17 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 				plan.branchRef, plan.branchOID = headRef, head
 			}
 		}
+		// The derived proof above reads ancestry, then merges, then patch-equivalence, and a
+		// squash-landing defeats all three: the branch's commits were composed into one
+		// commit that shares no patch-id with any of them, so a fully-landed branch reads as
+		// unmerged. DiscardBranch is the operator supplying that missing proof by hand. It
+		// is written after the derivation rather than into it, so `landed` still records what
+		// the tool itself concluded — the automatic classifier reads only that string, and
+		// therefore cannot be reached by this override.
+		if options.DiscardBranch {
+			plan.deleteBranch = true
+			plan.branchRef, plan.branchOID = headRef, head
+		}
 	}
 	plan.landed = landed
 	if plan.Action != ActionRetain && (plan.Tracked != "clean" || registration.Detached || plan.assignment != nil && len(plan.assignment.Recovery) > 0) {
@@ -254,7 +276,8 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 		[]byte(target), []byte(admin), []byte(registration.Path), []byte(registration.BranchRef),
 		[]byte(strconv.FormatBool(registration.Detached)), []byte(strconv.FormatBool(registration.Locked)), []byte(registration.LockReason),
 		markerBytes, ledgerBytes, []byte(head), []byte(headRef), indexBytes, status, []byte(contentIdentity), leaseBytes, buildOutputEvidence,
-		[]byte(landed), []byte(nestedEvidence), ignoredCanonical, []byte(plan.Recovery), []byte(strconv.FormatBool(options.DiscardIgnored)),
+		[]byte(landed), []byte(nestedEvidence), ignoredCanonical, []byte(plan.Recovery),
+		[]byte(strconv.FormatBool(options.DiscardIgnored)), []byte(strconv.FormatBool(options.DiscardBranch)),
 		[]byte(plan.Action), []byte(plan.ReasonCode), []byte(plan.Reason), []byte(strconv.FormatBool(plan.deleteBranch)), []byte(plan.branchRef), []byte(plan.branchOID),
 	}
 	if plan.assignment != nil {

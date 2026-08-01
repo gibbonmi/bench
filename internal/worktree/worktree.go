@@ -224,6 +224,8 @@ func CleanCommand(args []string, stdout, stderr io.Writer) int {
 		switch args[i] {
 		case "--discard-ignored":
 			options.DiscardIgnored = true
+		case "--discard-branch":
+			options.DiscardBranch = true
 		case "--full":
 			options.Full = true
 		case "--apply":

@@ -1323,7 +1323,7 @@ func testRuntimeWorktreeRejectsUnknownArgs(t *testing.T) {
 	canonicalUsage := []string{
 		"bench worktree create [--refresh] --request <opaque-id> --label <work-item>",
 		"bench worktree release --request <opaque-id> <path>",
-		"bench worktree clean [--discard-ignored] [--full] <path> [--apply <fingerprint>]",
+		"bench worktree clean [--discard-ignored] [--discard-branch] [--full] <path> [--apply <fingerprint>]",
 		"bench worktree recovery <ref> [--apply <fingerprint>]",
 	}
 	help := f.Bench("--help")
@@ -1341,7 +1341,7 @@ func testRuntimeWorktreeRejectsUnknownArgs(t *testing.T) {
 	f.Git("worktree", "add", "-q", "-b", registeredBranch, target, "HEAD")
 	contract.WriteFileAbs(t, filepath.Join(target, "dirty.txt"), "must survive\n")
 	registrations := f.Git("worktree", "list", "--porcelain").Stdout
-	wantClean := "worktree_cleanup[1]{target,action,tracked,ignored,recovery,fingerprint,detail}:\n  unknown,error,unknown,unknown,none,none,\"invalid invocation; run bench worktree clean [--discard-ignored] [--full] <path> [--apply <fingerprint>]\"\n"
+	wantClean := "worktree_cleanup[1]{target,action,tracked,ignored,recovery,fingerprint,detail}:\n  unknown,error,unknown,unknown,none,none,\"invalid invocation; run bench worktree clean [--discard-ignored] [--discard-branch] [--full] <path> [--apply <fingerprint>]\"\n"
 	for _, args := range [][]string{{"worktree", "clean"}, {"worktree", "clean", "one", "two"}, {"worktree", "clean", "one", "--apply"}, {"worktree", "clean", "one", "--apply", "bad"}} {
 		out := f.Bench(args...)
 		out.RequireExit(2)

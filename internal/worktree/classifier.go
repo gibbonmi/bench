@@ -28,6 +28,13 @@ func renderCleanup(stdout io.Writer, plan CleanupPlan) error {
 	if detail == "" && plan.Action != ActionRemoved {
 		detail = "apply with exact fingerprint"
 	}
+	// An operator-asserted branch deletion is the one removal this command performs that
+	// nothing else in the row implies, so the plan half names the exact ref it will spend
+	// that assertion on. The derived case stays silent: its deletion follows from the
+	// landedness the tool proved for itself, and its row is a settled output contract.
+	if plan.discardBranch && plan.deleteBranch && plan.Action.removes() {
+		detail = "discards branch " + plan.branchRef + "; " + detail
+	}
 	ignored := plan.ignoredSummary
 	if ignored == "" {
 		ignored = plan.Ignored.Summary()
@@ -76,6 +83,12 @@ const (
 )
 const actionReleaseRemove CleanupAction = "release-remove"
 
+// removes reports whether an action still has a removal ahead of it, as opposed to
+// reporting a refusal, an invocation error, or a transaction that already completed.
+func (action CleanupAction) removes() bool {
+	return action == ActionRemove || action == ActionRecoverRemove || action == ActionDiscardRemove || action == actionReleaseRemove
+}
+
 var ignoredLstat = os.Lstat
 
 type CleanupPlan struct {
@@ -92,6 +105,7 @@ type CleanupPlan struct {
 	assignment           *intent.Assignment
 	registration         git.Worktree
 	discardIgnored       bool
+	discardBranch        bool
 	deleteBranch         bool
 	branchRef, branchOID string
 	ignoredSummary       string
