@@ -138,7 +138,13 @@ The close itself has one unresolved ownership decision. `bench spec retire`
 says to remove the roadmap row while `/bench-final-check` says to leave it for
 `/bench-what-next`; one instruction yields. The same decision gives retirement
 a planned promotion/removal manifest and an explicit commit path instead of
-generic dirty state. The handoff's `## Next command` body is then graded as
+generic dirty state. It also owns a drain precondition that does not exist
+today: `bench spec retire` deletes the spec folder outright
+(`internal/spec/spec.go:400`) with nothing checking whether that spec's retro is
+still pending in `.bench/retros/`, so retirement can destroy undrained capture.
+Drain-before-delete is already enforced for parked ideas and journal entries;
+retire is the one capture-bearing deletion exempt from it, and both live specs
+carry a pending retro right now. Source: `IDEAS.md`, drained here. The handoff's `## Next command` body is then graded as
 exactly one backticked harness-native invocation, so the authoritative next
 action cannot drift into explanatory prose. Kit edit under the
 `craft-synthesis` discipline. Sources: the craft-tickets, light-path,
@@ -256,37 +262,6 @@ the pass is advisory and does not become a second oracle. Kit edit under the
 `craft-synthesis` discipline. Sources: `.bench/learnings.md`, verdicted in a
 prior drain; the gate-fastpath and FT123 + FT124 retros, drained here and in a
 prior run.
-
-**FT128 (MEDIUM) — the agent-line guard cannot see a fork's
-real model.** `check-agent-line` decides from the delegation envelope's
-Occurrences: baseline-01
-`resolvedModel`/`model` field alone (`internal/lines/lines.go`), so a
-fork-type delegation — which inherits the parent's model and ignores any
-`model` override — passes the guard on a declared cheap alias while actually
-running the top tier. That is exactly the silent escalation invariant 2
-forbids and the guard exists to block, and it is the one delegation shape the
-guard grades backwards. Verified against the tree 2026-07-25: nothing in the
-guard reads the subagent type. The fix is to make the envelope's delegation
-type part of the verdict — deny a fork whose declared alias is not the
-session's own tier — which first needs the type's field name pinned from a
-real envelope rather than assumed. Enforcement stays exact-string with no
-provider lookup.
-
-FT97 merges in here, 2026-07-29 — same enforcement surface, one visit. The
-deny message single-sources its bound-tiers listing, which leads with the
-three tier ids and trails the harness aliases; inside a Claude Code session
-the aliases are the only tokens the Agent tool can pass, so the error leads
-with ids that harness cannot use (observed 2026-07-19). The design is already
-decided: the closed `specs/ft128-agent-line-binding/decisions/multi-harness-line-binding.md` map answers the
-schema question — symmetric per-harness bindings with no canonical family,
-each layer reporting its own harness's tokens. One build fixes the fork
-verdict and re-leads the denial from that map in the same diff.
-
-The static half belongs in that build too: a conformance check rejects any
-`.agents/commands/*.md` tier-model token against `.bench/lines.env`, so command
-prose cannot reintroduce a hardcoded binding. The check must demonstrate its
-bite for the right reason. Spec: `specs/ft128-agent-line-binding/spec.md`.
-Source: `IDEAS.md`, drained here.
 
 **FT135 (MEDIUM) — a pre-push guard on a guessed branch looks armed while
 protecting nothing.** When the repository has no resolvable default branch,
@@ -419,6 +394,19 @@ derived binary and reports the rebuild action; an explicit opt-in may perform
 it, while gate entry remains repair-silent and never rebuilds automatically.
 Source: the FT126 recurrence-tallying retro, drained here.
 
+The FT128 close supplied the base-ref face, and the `bench spec build` family
+has since covered only the spec-backed half of it. `bench worktree create`
+always roots at the default branch with no base-ref flag, and
+`bench worktree release` refuses while an assignment branch has not landed
+there, so a chain of tickets on an integration branch cannot cut a worktree at
+the chain tip and cannot retire any worktree until the reviewer merges; that
+build formed the chain by merging each previous assignment branch into the next
+worktree, which is the hand-run form of a compare-and-swap integrate. Reviewed
+spec builds now get that surface from `bench spec build assign` / `checkpoint` /
+`integrate`; light-path and non-spec chains still do not, and the landing
+command owns whether they should. Source: the FT128 implementation retro,
+drained here.
+
 **FT172 (MEDIUM) — the roadmap parser and context snapshot make the drain's
 non-recurrence evidence complete.** The row grammar is currently implicit:
 `ParseDocument` treats any line opening with bold as a new row, so one bold-led
@@ -464,6 +452,72 @@ applied by hand in the 2026-07-27 drain — every diagnosis drained there was re
 out of the tree first. Source of this clause: `.bench/learnings.md`, verdicted
 here. The grammar face came from `IDEAS.md`, drained here.
 
+**FT173 (MEDIUM) — the AXI contract has ten principles, one derivation each.**
+The kit implements its own published contract partially and unevenly, measured
+2026-07-31 against the ten principles at axi.md. Four faces, one owner surface.
+First, `craft-cli` enumerates only seven: content first, contextual disclosure,
+and the per-subcommand help fallback are absent from the skill, so the guidance
+cannot ask for what it never names. Second, contextual disclosure is emitted
+nowhere — `help[` returns zero hits across non-test `cmd/` and `internal/` — and
+it is the one principle with no partial implementation to consolidate. Third,
+truncation has four independent derivations: `sanitize.Preview` (13 non-test
+callsites across 8 packages), `internal/roadmap`'s package-private `limited()`
+(9 callsites, 1 package), `internal/worktree/subshell.go`, and
+`internal/outline/outline.go`. `sanitize.Preview` is already the shared one and
+is the consolidation target; treating `limited()` as the seed inverts the actual
+usage. Fourth, pre-computed aggregates have no shared helper and are derived per
+command — `outline_meta`, `internal/publication`'s `next_action`, and
+`internal/roadmap`'s byte and occurrence counts each roll their own.
+
+Reviewer constraint, 2026-07-31: the consolidation changes call sites only and
+makes no modification to AXI responses. The four truncation derivations and the
+aggregate helpers route through one shared call without altering emitted bytes,
+so the contract suite's pinned stdout stays green and retrofit scope never
+becomes a compatibility question. That constraint has one consequence worth
+stating rather than discovering: principle 9 has no existing implementation to
+route through, so emitting `help[]` necessarily changes bytes and cannot ship
+under it. Either principle 9 leaves this row for a separate byte-changing visit,
+or the constraint is relaxed for it specifically — reviewer's call, and the rest
+of the row is unblocked either way.
+
+Two constraints shape the build rather than the diagnosis. Principle 3 should
+not double-truncate a value already bounded at capture, and principle 8 is a
+query-surface rule, not a binary-wide one — `craft-cli` already holds that the
+contract attaches to the surface, so an operational command answering with live
+data on no arguments is a regression, not conformance. The
+truncation half alone is a one-source-per-fact sweep and could ride the standards
+debt batch; the rest is a build. Sources: `IDEAS.md`, drained here; the reviewer
+constraint above, parked and drained here.
+
+**FT175 (MEDIUM, decision required) — a claim ledger for assertions about the
+world.** The gate refuses "I believe the tests pass" and nothing refuses "I
+believe this harness supports fresh-context delegation." A draft spec proposes
+`bench cite` / `bench claim`: a CLI that acquires and stores evidence with its
+hashes, an agent-written assessment over a four-state vocabulary, a span
+verifier that confirms a quoted substring is present in the stored bytes, replay
+that marks an assessment stale when its evidence moves, and a gate phase over
+the whole thing. The draft was reviewed 2026-07-31 by cold re-derivation against
+this tree; most of its repository claims reproduced, and the parts that did not
+are recorded against the rows they touch rather than here.
+
+It enters as a decision tree, not a spec, because three questions interact and
+none is settled. The draft specifies its own gate phase two incompatible ways —
+well-formedness only in one section, consuming assessment state in another — and
+only the first is defensible under invariant 1, since the canary can prove
+`bench claim check` rejects a malformed record but cannot prove an assessment is
+honest. The CLI narrows the agent's assertion without removing it: fabrication is
+blocked, but the agent still selects which evidence to acquire and which span to
+quote, and spans are exempted for the two states most likely to hide a check
+nobody ran. And the ledger would be the kit's first durable capture store whose
+retirement rule cannot be "drain to zero" — every existing source empties, while
+a claim's value is that it persists. Settle those three before any spec. The
+span verifier is not prior art: `kunchenguid/no-mistakes` was read at its README,
+gate-model, pipeline, auto-fix, and pipeline-steps pages plus its step
+implementations, and documents no span or quotation verification — its finding
+`action` vocabulary (`no-op` / `auto-fix` / `ask-user`) is agent-assigned, so the
+transferable part is its fail-closed default, not the classification itself.
+Entry: `/bench-shape-idea`. Source: `IDEAS.md`, drained here.
+
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.** Make
 every documented CLI example executable; parse and validate real YAML
 frontmatter; derive the skills index and inventories from one implementation;
@@ -488,8 +542,18 @@ nothing saw it. A real parse closes this class; a narrower check rejecting an
 unquoted ` #` in any skill frontmatter description is the cheap version if the
 parse proves too large a step.
 
+The stale-reference half has a second demonstrated instance, found 2026-07-31
+by a cold re-derivation of the tree. `craft-review`'s frontmatter description
+still lists "a self-review before commit" among the contexts that charge from
+it, while `/bench-implement-spec` closes inline self-review outright and
+rejects a context-inheriting delegate as the same failure under another name.
+A skill description is the only part of a skill every harness loads, so a
+stale one advertises a route the phase forbids. One-line fix; it belongs with
+the frontmatter parse rather than alone.
+
 Sources: `RR:S-06`, `RR:S-07`, `RR:S-08`, `RR:S-10`, `RR:S-11`, `RR:S-12`,
-`RR:S-13`, `RR:S-14`, `RR:S-15`, `RR:S-16`, `RR:S-17`, `RR:S-18`; `RC:M-05`.
+`RR:S-13`, `RR:S-14`, `RR:S-15`, `RR:S-16`, `RR:S-17`, `RR:S-18`; `RC:M-05`;
+`IDEAS.md`, drained here.
 
 **FT106 (MEDIUM) — doc claims re-verified against the tree.** Invariant 3 tells
 every session to write for the teammate who just walked in, and nothing ever
@@ -845,6 +909,15 @@ over another short-lived tree; settle the cache handoff and retirement sequence
 so the two owned transitions do not require redundant full runs. Sources: the
 FT131 and decision-map integrity implementation retros, drained here.
 
+The transition now has three authors, not two. `bench spec implemented <spec>`
+and `bench commit --spec <slug>` both perform the `Status: staged` →
+`implemented` flip and each expects to own it, so running the former first makes
+the latter fail with `no Status: staged line`; `bench spec build promote` is a
+third, and the phase contract names it the sole author for a reviewed spec
+build. Name one owner per landing route and make the others refuse rather than
+race, in the same visit that settles the cache handoff. Source: the FT128
+implementation retro, drained here.
+
 **FT130 (LOW) — parking an idea mid-gate silently voids the run.** During
 FT122's gated commit a session answered a reviewer question and ran `bench
 idea` to park the tangent, which wrote `IDEAS.md` inside the gate's window;
@@ -882,7 +955,7 @@ per-spec granularity; retention and pruning; agent-facing AXI or
 reviewer-facing — mean the work starts as a grill. Entry:
 `/bench-shape-idea`. Source: `IDEAS.md`, drained here.
 
-**FT164 (LOW) — ticket and repair charges preserve blast radius, postures, and
+**FT164 (MEDIUM) — ticket and repair charges preserve blast radius, postures, and
 gate cadence.** Two
 rule-shaped journal entries from FT154's own build, one owner file. First,
 the wide-refactor branch: the first folder-layout ticket grouped a deep-unit
@@ -932,6 +1005,47 @@ until the atomic gate; tracing those owners in the charge would have caught the
 integration misses without replacing the gate as oracle. Source: the FT131
 implementation retro, drained here.
 
+The skill has also fallen behind its own corpus, measured 2026-07-31 across
+all 25 tickets. The twelve `spec-integration-gate-cadence` tickets carry four
+conventions the skill teaches nowhere: single-line acceptance criteria (12/12),
+an `Ownership fence:` field (12/12), an `Assumptions:` field (12/12), and
+requirement identifiers on criteria (41 of that build's 46). None appears in
+the template or the Good example, so the conventions live only in the last
+build's examples and decay the moment someone writes a ticket without reading
+them. Requirement-ID completeness has no check because nothing knows the
+convention exists; `bench coverage <spec>` is the source when one exists. Step
+2's "confirm the group is independently green" still names no method, which
+under parallel assignment is a correctness precondition rather than a drafting
+judgment — two tickets sharing an ownership fence cannot run concurrently, and
+fence-disjointness makes the check mechanical. The Bad example teaches against
+a failure the corpus does not commit; replace it with an oversized-but-credible
+ticket. Do not reformat the thirteen older tickets — retrofitting closed work
+rewrites history for no gain.
+
+Three further charge rules land in the same visit. A ticket is an executable
+contract, not an umbrella claim: every acceptance row binds to one concrete red
+mutation, its independent owner, and the exact public operation sequence that
+proves it, because a claim like "checks every fact" is satisfied by delete-only
+probes that miss swaps, stale retained identities, and second-call failures.
+Ticket claims are re-derived from the tree after earlier tickets land, never
+from the spec's account of the base — defect inventories, expected base hashes,
+and ownership assumptions age fastest, and one ticket asserted three defects the
+preceding ticket had already fixed. And a ticket that changes gate cadence names
+which command authors evidence and which phase consumes it: `gate-run --fresh`
+prints a valid phase result without publishing the project-green evidence
+promotion consumes, while `bench gate` is the canonical producing entry, and
+treating worktree, main-root, and prospective checks as interchangeable cost
+several redundant full runs. Sources: `IDEAS.md`, drained here; the FT128 and
+spec-integration-gate-cadence implementation retros, drained here.
+
+One clause from the same retros wants a different owner and is flagged rather
+than folded: lifecycle coverage must cross the process boundary. Unit-level
+success hid defects that appeared only after state was serialized and a fresh
+CLI process loaded it, so a recomposition suite that stops at the first success
+misses mutable-base identity defects and precondition deadlocks. That is an edge
+class for `craft-spec`'s inventory and the profile's hostile-input checklist,
+not a charge rule — decide the owner before building this row.
+
 **FT165 (LOW) — fold the domain-modeling discipline into
 `/bench-shape-idea`.** Upstream candidate (mattpocock/skills,
 domain-modeling): as grill tickets resolve decisions, challenge fuzzy or
@@ -967,7 +1081,8 @@ substantive change, name the ride-along, flag for veto). Sources:
 `IDEAS.md`, drained here and in a prior run; `.bench/learnings.md`,
 verdicted here.
 
-**FT168 (LOW) — a fixture-selecting canary invocation.** Proving one changed
+**FT168 (MEDIUM) — focused iteration evidence: a fixture-selecting canary, and
+the scoping question behind it.** Proving one changed
 fixture currently costs the whole canary sweep: the light-path repair pass
 needed evidence for a single race fixture, and the whole-sweep-only surface
 invited expensive duplicate runs (the repair delegate launched one unbidden).
@@ -975,6 +1090,26 @@ Add a `bench canary` path that runs one named fixture or family as iteration
 evidence only — the full sweep remains the only thing the gate credits, so
 this is a focused check, not a second oracle. Source: the light-path retro,
 drained here.
+
+Reviewer-priced up from LOW on 2026-07-31: the cost is paid by every session, not
+only by canary work. Measured that day, a documentation-only changeset — a
+roadmap drain plus a regenerated handoff — paid two full gate runs before
+landing, and the canary was not the expensive part either time. The dominant
+cost was the contract phase's artifact surfaces (140s, 84s, 75s, 50s in one
+run), none of which any documentation edit can affect. So the row owns two
+faces: the focused canary invocation above, and the wider question of whether a
+changeset confined to an exact path allowlist may reuse a green verdict across a
+subject change or run a reduced phase set.
+
+The second face is a reviewer decision, not an optimization, and the constraint
+is stated so it is not rediscovered: `bench commit` already reuses a fresh green
+for a matching subject (`gate.ExecuteReusingFreshGreen`), so the gap is
+specifically that any content change computes a new subject. The existing
+capture-only allowlist lives in `internal/status` and softens the staleness row
+only; it has never scoped an oracle run, and widening it into one puts a fixed
+path list on the gate's critical path — the same list a reviewer must then trust
+to be exhaustive. Decide whether the oracle may ever answer for less than the
+whole tree before designing the mechanism. Source: session evidence 2026-07-31.
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.** Calls
 from two resolution runs outlived their specs' retirement. The recurring one is
@@ -990,7 +1125,15 @@ per FT99's third instance) and `TestManifestDirResolvesAgainstGradedRoot` (the
 real graded-root anchoring semantic; the mapped test graded a branch production
 never reaches). One decision closes all three.
 
-Two singles ride along. `internal/gate/manifest.go`'s `dedupe` has no observable
+Three singles ride along. The orphaned-review-pickup signal
+(`internal/status/status.go:534`, severity 9) pairs `reviews/*.md` against
+`specs/<slug>/spec.md`, and neither side of that pairing holds today: `reviews/`
+does not exist in the tree, and seven of the nine `specs/` directories carry only
+a `tickets/` folder with no `spec.md` at all. A severity-9 row that cannot fire
+is either a signal pointed at a retired convention or a convention that quietly
+stopped being followed — decide which, then repoint or cut it; measured
+2026-07-31. Source: `IDEAS.md`, drained here.
+`internal/gate/manifest.go`'s `dedupe` has no observable
 effect — the scheduler's edge handling is already duplicate-tolerant and no
 diagnostic renders `Needs` — but it implements a spec veto item literally, so it
 is defensible dead code rather than a defect: keep or cut. And `bench learnings`
@@ -1002,10 +1145,10 @@ to keep or reverse. One line each closes this row.
 
 ## False greens — verdicts that credit unchecked work
 
-Four rows, one failure class: a green whose warrant is missing — a stale
-binary, a dead or skipping citation, a vacuous baseline, an unchecked absence.
-Each hardens a different oracle surface, so they stay separate builds, but
-they read and prioritize as one theme.
+Five rows, one failure class: a green whose warrant is missing — a stale
+binary, a dead or skipping citation, a vacuous baseline, an unchecked absence,
+a dependency edge nothing resolves. Each hardens a different oracle surface, so
+they stay separate builds, but they read and prioritize as one theme.
 
 **FT133 (MEDIUM) — `bench coverage --check` verifies that red-signal citations
 resolve.** A coverage-map row naming `go test -run TestFoo` where no such test
@@ -1050,6 +1193,22 @@ is unexecutable as specified. Either the emission gains a stable row identity
 behavior off the spec's own map — decide it alongside the check, same owner.
 Found by the Codex falsification pass on `3eb1c9a`. Source: `IDEAS.md`,
 drained here.
+
+**FT174 (MEDIUM) — ticket dependency edges resolve to identifiers, and something
+walks them.** Every one of the 25 tickets under `specs/*/tickets/` carries a
+`Blocked by:` field keyed by sibling *title* — ten read `none`, fifteen name
+titles, none names an identifier — and no parser reads any of them. A retitle
+silently breaks the edge, and nothing detects a cycle or a dangling blocker,
+which under parallel assignment is not a drafting nicety: the frontier is
+computed from those edges. The grammar to adopt already exists one directory
+away. `internal/maps/schema.go:138` enforces `^(none|#[1-9][0-9]*(, #[1-9][0-9]*)*)$`
+for decision maps and validates cycles and unresolved blockers over the ticket
+graph, scoped to `decisions/` and never applied to `tickets/`. Extend that owner
+rather than adding a second graph, and pair the check with `Ownership fence:`
+disjointness between concurrently-eligible tickets, which is the same read and
+the method step 2 of `craft-tickets` currently lacks. The doc half — teaching the
+identifier form in the template — rides FT164; this row is the parser and the
+validation. Measured 2026-07-31. Source: `IDEAS.md`, drained here.
 
 **FT153 (MEDIUM) — the canary's vacuity baseline is a collision screen, not a
 vacuity proof.** A behavior-owned fixture's EXPECT is compared against its
@@ -1396,15 +1555,17 @@ recommended table is sequencing advice.
 |---|---|---|
 | FT71 | FT169 | The event schema should record the settled landing and recovery lifecycle rather than version an interim one. |
 | FT100 | FT89 | Cut prose after the correctness and coherence pass establishes which guidance is still authoritative. |
-| FT102 | FT128 | Audit tier-spending guidance against the corrected per-harness binding and guard semantics. |
 | FT108 | FT164 | Define the refactor lane on the settled expand–migrate–contract and gate-cadence rules. |
 | FT172 | FT106 | Reuse the document-claim probe for semantic roadmap claims instead of designing a second checker. |
 | FT162 | FT169 | Build full-run subject resolution on the settled landing primitive. |
 | FT166 | FT98, FT113 | Let recoverable set-aside and the completed capture-only path map define the commit command's smallest sound contract. |
 | FT168 | FT153 | Binary freshness has shipped; expose focused canary execution after baseline meaning is settled. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
+| FT174 | FT164 | Build the parser against the identifier form the template teaches, not the title form it is replacing. |
+| FT175 | FT173 | The ledger's read surface is AXI; settle one derivation per principle before adding a consumer that needs all ten. |
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — FT135 pre-push protection: expose resolved branch and template currency, then restore the sanctioned repair route.
-2. `/bench-shape-idea` — FT98 recoverable discard: settle one preserve-then-discard primitive before the landing and capture commands that depend on it.
+1. `/bench-write-spec` — FT135 pre-push protection, from the ready map at `decisions/pre-push-guard-visibility.md`: expose resolved branch and template currency, then restore the sanctioned repair route.
+2. `/bench-shape-idea` — FT168 focused iteration evidence: settle whether the oracle may ever answer for less than the whole tree, then build the focused canary on that answer. Reviewer-priced up 2026-07-31 against measured session cost.
+3. `/bench-write-spec` — FT164 ticket and repair charges: three independent sources converged on one owner file this drain, and the conventions decay out of the corpus until the skill teaches them.
