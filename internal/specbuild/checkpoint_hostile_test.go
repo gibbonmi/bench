@@ -375,25 +375,3 @@ func requireDelegatedCandidate(t *testing.T, root string, service *Service, assi
 		t.Fatalf("delegate route = %#v next=%q", assigned, run.status().Next)
 	}
 }
-
-func TestPromoteRecomposesAWorkingAdvanceBeforeGate(t *testing.T) {
-	fixture := reviewedPromotionFixture(t)
-	before, gateCalls := loadRun(t, fixture.service), fixture.gate.calls
-	advanceWorking(t, fixture.root)
-	working := git(t, fixture.root, "rev-parse", "HEAD")
-	status, err := fixture.service.Promote(t.Context(), "build demo")
-	if err != nil || status.Next != "bench spec build review build demo" || fixture.gate.calls != gateCalls {
-		t.Fatalf("recomposition = %#v, %v; gate calls=%d", status, err, fixture.gate.calls)
-	}
-	after := loadRun(t, fixture.service)
-	if after.Base != working || after.CandidateTip == before.CandidateTip || after.Review != nil || git(t, fixture.root, "rev-parse", "HEAD") != working || git(t, fixture.root, "rev-parse", after.Candidate) != after.CandidateTip {
-		t.Fatalf("recomposed run = %#v", after)
-	}
-	for _, path := range []string{"advanced.txt", "internal/specbuild/checkpoint-change.go"} {
-		if git(t, fixture.root, "show", after.CandidateTip+":"+path) == "" {
-			t.Fatalf("recomposed candidate omitted %s", path)
-		}
-	}
-}
-
-func (promotionGate) Bootstrap(context.Context, string, string, string, string) error { return nil }

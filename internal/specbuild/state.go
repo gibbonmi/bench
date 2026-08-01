@@ -289,29 +289,6 @@ func (s *Service) prospectiveTree(ctx context.Context, run record) (string, erro
 	return strings.TrimSpace(tree), err
 }
 
-func (s *Service) recomposePromotion(ctx context.Context, run *record, subject buildSubject) error {
-	old := run.CandidateTip
-	patch, err := s.checkpointPatch(ctx, run.Base, old)
-	if err != nil {
-		return err
-	}
-	tree, err := s.replayCheckpoint(ctx, subject.tip, run.Base, old, patch)
-	if err != nil {
-		return err
-	}
-	commit, err := s.gitOutput(ctx, "commit-tree", tree, "-p", subject.tip, "-m", "bench recompose run="+run.Run+" candidate="+old)
-	if err != nil {
-		return err
-	}
-	if err := updateRef(s.root, run.Candidate, commit, old); err != nil {
-		return err
-	}
-	run.Base, run.CandidateTip, run.Review = subject.tip, commit, nil
-	run.PromotionTree, run.PromotionCommit, run.PromotionEvidence, run.PromotionDisposition = "", "", "", ""
-	delete(run.Operations, operationID("promote", old))
-	return s.save(*run)
-}
-
 func updateRef(root, ref, new, old string) error {
 	args := []string{"-C", root, "update-ref", ref, new}
 	if old != "" {
