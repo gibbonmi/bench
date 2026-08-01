@@ -352,6 +352,14 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench spec implemented <slug>    flip a spec's Status: staged line to implemented
   bench spec retire <slug>         delete a merged spec + its review pickup (validated)
   bench spec history <slug>        retire/delete commits for a spec, newest first (TOON)
+  bench spec build start <slug>
+  bench spec build assign <slug> --ticket <ticket> --request <id>
+  bench spec build checkpoint <slug> --assignment <id> --evidence <receipt>
+  bench spec build integrate <slug> --assignment <id>
+  bench spec build review <slug> --evidence <receipt>
+  bench spec build status <slug> [--full]
+  bench spec build promote <slug>
+  bench spec build abandon <slug> [--apply <fingerprint>]
   bench version              print the installed Bench version (os/arch)
 EOF
   ;;

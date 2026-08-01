@@ -30,6 +30,10 @@ branch-agnostic. This line is only the binding.)
   Missing-binary resolution is network-silent by default and names the explicit
   `bench repair` action; automation opts into the same repair path with exactly
   `BENCH_REPAIR=1`, while `BENCH_OFFLINE=1` and `BENCH_NO_REPAIR` suppress it.
+  Reviewed spec builds route through all eight `bench spec build` operations;
+  harnesses never synthesize their commit, ref, replay, or worktree plumbing.
+  Their final attachment to the oracle is `promote` over the exact reviewed
+  prospective composition, while every earlier ticket transition is provisional.
 - **The AXI query surface** (`bench learnings`, `bench maps`, `bench guards`,
   `bench diff`, `bench coverage`, `bench worktree list`, and the shared flat-table
   TOON emitter behind them). The agent-facing read-only
@@ -128,6 +132,10 @@ coverage map; a class skipped here returns as a regression.
   not-found, so a reader that does not stat first classifies a broken link as an
   authoritative empty state
 - unquoted multi-word arguments (`$*` vs `$1`)
+- lifecycle guidance that names every sanctioned operation but routes one step
+  through raw Git anyway; swap the route while preserving all command tokens, so
+  a token-presence check cannot pass synthesized commit, ref, replay, or worktree
+  plumbing
 - a flag's value read as a positional: a parser resolving a subcommand or
   positional as "first token not `-`-prefixed" skips flags but not their values
   or anything after `--`, so `git stash -m list` and `git stash -- list` resolve
@@ -319,6 +327,13 @@ escalation.
   gate attachment from that source and the current tree. Top + high remains a
   reviewer-approved escalation. Distinct from the doc-authoring leverage
   override above: that spends the top tier on the kit's guidance prose.
+- **Spec-build guidance cadence** → **`gpt-5.6-sol / high`**. Run `bench
+  structure` before and after the guidance cut; the inherited findings are the
+  baseline and the cut adds none. Both dogfood traces use the public porcelain:
+  three ownership-safe tickets fill three slots, and integrating one unlocks a
+  fourth assignment while another delegate remains active. The final composed
+  gate runs only through `promote`; existing shift and ordinary-commit runtime
+  contracts remain positive controls.
 - **`bench` CLI shell plumbing** → cheap model, low–medium effort at the known seam.
   Mechanical once the gate-resolution and worktree-pool shapes exist.
 - **Gate / conformance logic** → mid effort. Correctness of the oracle matters more

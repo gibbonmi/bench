@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "For an active spec build, read `bench spec build status\n   <slug> --full` and bind the review inputs to the exact candidate subject and\n   recorded run base it reports. Confirm that subject is unchanged immediately\n   before receipt submission; a changed candidate invalidates the review rather\n   than letting a delta review authorize a new composition. ",
+    "new": ""
+  }
+]

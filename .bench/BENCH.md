@@ -74,7 +74,8 @@ Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
   path-scoped `bench commit -m <msg> <path>...` (stages its named paths; use
   `--spec <slug>` only on an implementation's green commit, with semantics owned
   by `bench commit --help`), plus `bench spec implemented`, `bench spec retire`,
-  `bench spec history`.
+  `bench spec history`, and
+  `bench spec build start|assign|checkpoint|integrate|review|status|promote|abandon`.
 - Hook and adapter plumbing subcommands — driven by hooks and adapters, never
   typed by sessions — are enumerated in `.bench/BENCH-reference.md` (Plumbing
   subcommands), so the always-loaded inventory carries only what sessions run.
@@ -190,9 +191,12 @@ Use the canonical phases when the work needs them:
 2. `/bench-write-spec` from one reviewed decision source to lock stories,
    engineering seams, and gate expectations.
 3. `/bench-implement-spec` to implement at the chosen seams.
-4. `/bench-review-implementation` for semantic review against standards and spec.
-5. `/bench-final-check` to report the gate result and, on green, commit to the
-   active working branch.
+4. `/bench-review-implementation` for semantic review against standards and spec;
+   an active spec build binds the receipt to its exact candidate.
+5. A reviewed spec build runs `bench spec build promote` as its sole gate,
+   commit, and `Status: implemented` author, then `/bench-final-check` reports
+   the retained terminal evidence and captures the retro. Light-path and ordinary
+   non-lifecycle work use `/bench-final-check` to gate and commit on green.
 
 **Right-size the process; ask before deviating.** A few-line change doesn't need
 the full pipeline, and you may propose a lighter path — but you must get an
@@ -206,6 +210,15 @@ changes of a given size, follow it and stop asking.
 |---|---|
 | Decomposes to one independently-green ticket and crosses no declared seam | Light path: charge `craft-tickets`, write the one ticket, then implement it without a spec. This table is the standing approval to skip the spec phase; the ticket still rides the session's existing approval surface. |
 | Either observable is false | Normal full workflow. |
+
+Reviewed spec-backed implementation uses the provisional `bench spec build`
+lifecycle. It fills the ownership-safe frontier to available harness capacity,
+binds focused ticket evidence, reviews the exact composition, and pays the gate
+only when `promote` constructs the prospective implemented tree. Provisional
+cadence is exclusive to reviewed spec-backed builds; light-path work, `bench
+shift`, and ordinary `bench commit` remain commit-on-green. Review findings stay
+inside the lifecycle as repair tickets; a terminal final-check never repays or
+reauthors promotion.
 
 **Fix, don't park.** A small defect you discover mid-work is not backlog: the
 fix lands in the active workflow as its own commit. Parking it to `IDEAS.md`

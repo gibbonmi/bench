@@ -1,6 +1,6 @@
 # Spec integration branch and gate cadence
 
-Status: staged
+Status: implemented
 
 Decision source: compiled map at
 `specs/spec-integration-gate-cadence/decisions/spec-integration-gate-cadence.md`.

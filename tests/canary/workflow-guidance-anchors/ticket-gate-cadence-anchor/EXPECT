@@ -1,1 +1,1 @@
-.agents/commands/bench-implement-spec.md dropped the no-standalone-full-gate ticket cadence
+bench-implement-spec replaced continuous frontier refill with drain-then-refill cadence

@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-final-check.md",
+    "old": "`bench spec build promote` is the sole spec-backed gate, commit, and `Status: implemented` author.",
+    "new": "`bench spec build promote` and `/bench-final-check` jointly own the spec-backed gate, commit, and `Status: implemented` transition."
+  }
+]

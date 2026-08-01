@@ -33,15 +33,7 @@ type runtimeBuildAssignment struct {
 }
 
 func TestRuntimeSpecBuildPorcelainRoutesRealAndLinkedWrappers(t *testing.T) {
-	contract.SkipIfSubjectBenchMissing(t)
-	contract.RequireFreshBench(t)
-	f := contract.NewFixture(t, contract.WithSpacePath())
-	f.WriteFile(".bench/gate.sh", "#!/bin/sh\nexit 0\n")
-	if err := os.Chmod(filepath.Join(f.Root, ".bench", "gate.sh"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
-	f.WriteFile(".gitignore", ".bench-contract-env/\n")
+	f := setupRuntimeBuildGate(t, "#!/bin/sh\nexit 0\n", contract.WithSpacePath())
 	f.WriteFile("specs/demo/spec.md", "# demo\n\nStatus: staged\n")
 	f.WriteFile("specs/demo/tickets/one.md", "# One\n\nOwnership fence: internal/demo\n\n- [ ] [R1] first attempt\n")
 	f.CommitAll("staged spec")
@@ -104,6 +96,8 @@ func TestRuntimeSpecBuildUsageAndActionableEnvironmentErrors(t *testing.T) {
 	f.WriteFile("specs/demo/spec.md", "Status: staged\n")
 	for _, args := range [][]string{
 		{"spec", "build"}, {"spec", "build", "ninth", "demo"},
+		{"spec", "build", "commit", "demo"}, {"spec", "build", "update-ref", "demo"},
+		{"spec", "build", "worktree", "demo"}, {"spec", "build", "cherry-pick", "demo"},
 		{"spec", "build", "assign", "demo", "--ticket", "promote", "--request", "--assignment", "--", "literal"},
 		{"spec", "build", "status", "--", "demo"},
 	} {
@@ -146,22 +140,40 @@ func TestRuntimeSpecBuildUsageAndActionableEnvironmentErrors(t *testing.T) {
 	}
 }
 
-func TestRuntimeSpecBuildRedRepairGreenRetainsComposedEvidence(t *testing.T) {
-	contract.SkipIfSubjectBenchMissing(t)
-	contract.RequireFreshBench(t)
-	f := contract.NewFixture(t)
-	f.WriteFile(".bench/gate.sh", "#!/bin/sh\ngitdir=\"$(git rev-parse --path-format=absolute --git-common-dir)\"\nprintf 'run\\n' >> \"$gitdir/spec-gate-count\"\ntest ! -f internal/demo/red.go\n")
-	if err := os.Chmod(filepath.Join(f.Root, ".bench", "gate.sh"), 0o755); err != nil {
-		t.Fatal(err)
+func TestRuntimeSpecBuildDogfoodsThreeTicketFrontierAndFourthTicketRefill(t *testing.T) {
+	f := setupRuntimeBuildGate(t, "#!/bin/sh\nexit 0\n")
+	f.WriteFile("specs/demo/spec.md", "Status: staged\n")
+	for i := 1; i <= 4; i++ {
+		blocked := []string{"", "", "", "Blocked by: one.md\n\n"}[i-1]
+		f.WriteFile("specs/demo/tickets/"+[]string{"one", "two", "three", "four"}[i-1]+".md", "# Ticket\n\n"+blocked+"Ownership fence: internal/t"+strconv.Itoa(i)+"\n\n- [ ] [R4"+strconv.Itoa(i)+"] trace\n")
 	}
-	f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
-	f.WriteFile(".gitignore", ".bench-contract-env/\n")
+	f.CommitAll("staged frontier")
+	f.Bench("gate").RequireExit(0)
+	f.Bench("spec", "build", "start", "demo").RequireExit(0)
+	first, second, third := assignRuntimeBuild(t, f, "one.md", "frontier-one"), assignRuntimeBuild(t, f, "two.md", "frontier-two"), assignRuntimeBuild(t, f, "three.md", "frontier-three")
+	if first.Base != second.Base || first.Base != third.Base || first.Path == second.Path || second.Path == third.Path {
+		t.Fatalf("three-ticket frontier did not fill independent sibling slots: %+v %+v %+v", first, second, third)
+	}
+	writeAssignmentChange(t, first.Path, "internal/t1/change.go", "package t1\n")
+	f.Bench("spec", "build", "checkpoint", "demo", "--assignment", first.ID, "--evidence", runtimeCheckpointReceipt(t, f, first, []string{"internal/t1/change.go"})).RequireExit(0)
+	f.Bench("spec", "build", "integrate", "demo", "--assignment", first.ID).RequireExit(0)
+	fourth := assignRuntimeBuild(t, f, "four.md", "frontier-four")
+	for _, active := range []runtimeBuildAssignment{second, third} {
+		if _, err := os.Stat(active.Path); err != nil {
+			t.Fatalf("fourth ticket waited for active sibling %s to drain: %v", active.ID, err)
+		}
+	}
+	if fourth.Base == first.Base {
+		t.Fatalf("newly eligible fourth ticket was not assigned from integrated candidate: %+v", fourth)
+	}
+}
+
+func TestRuntimeSpecBuildRedRepairGreenRetainsComposedEvidence(t *testing.T) {
+	f := setupRuntimeBuildGate(t, "#!/bin/sh\ngitdir=\"$(git rev-parse --path-format=absolute --git-common-dir)\"\nprintf 'run\\n' >> \"$gitdir/spec-gate-count\"\ntest ! -f internal/demo/red.go\n")
 	f.WriteFile("specs/demo/spec.md", "# demo\n\nStatus: staged\n")
 	f.WriteFile("specs/demo/tickets/red.md", "# Red implementation\n\nOwnership fence: internal/demo\n\n- [ ] [R24] red implementation\n")
 	f.WriteFile("specs/demo/tickets/repair.md", "# Repair implementation\n\nOwnership fence: internal/demo\n\n- [ ] [R40] repair implementation\n")
 	f.CommitAll("staged spec")
-	f.Git("config", "user.email", "bench@local")
-	f.Git("config", "user.name", "bench")
 	f.Bench("gate").RequireExit(0)
 	gateCount := filepath.Join(gitDir(t, f), "spec-gate-count")
 	requireGateRuns(t, gateCount, 1)
@@ -212,20 +224,10 @@ func TestRuntimeSpecBuildRedRepairGreenRetainsComposedEvidence(t *testing.T) {
 }
 
 func TestRuntimeSpecBuildInterruptStopsProspectiveGateChildren(t *testing.T) {
-	contract.SkipIfSubjectBenchMissing(t)
-	contract.RequireFreshBench(t)
-	f := contract.NewFixture(t)
-	f.WriteFile(".gitignore", ".bench-contract-env/\n")
-	f.WriteFile(".bench/gate.sh", "#!/bin/sh\ngitdir=\"$(git rev-parse --path-format=absolute --git-common-dir)\"\nif test -f \"$gitdir/spec-block\"; then sleep 30 & echo $! > \"$gitdir/spec-child\"; wait; fi\n")
-	if err := os.Chmod(filepath.Join(f.Root, ".bench", "gate.sh"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
+	f := setupRuntimeBuildGate(t, "#!/bin/sh\ngitdir=\"$(git rev-parse --path-format=absolute --git-common-dir)\"\nif test -f \"$gitdir/spec-block\"; then sleep 30 & echo $! > \"$gitdir/spec-child\"; wait; fi\n")
 	f.WriteFile("specs/demo/spec.md", "Status: staged\n")
 	f.WriteFile("specs/demo/tickets/one.md", "# One\n\nOwnership fence: internal/demo\n\n- [ ] [R59] interrupt\n")
 	f.CommitAll("staged spec")
-	f.Git("config", "user.email", "bench@local")
-	f.Git("config", "user.name", "bench")
 	f.Bench("gate").RequireExit(0)
 	f.Bench("spec", "build", "start", "demo").RequireExit(0)
 	assignment := assignRuntimeBuild(t, f, "one.md", "interrupt-request")
@@ -273,19 +275,35 @@ func TestRuntimeSpecBuildInterruptStopsProspectiveGateChildren(t *testing.T) {
 	}
 }
 
+func setupRuntimeBuildGate(t *testing.T, script string, opts ...contract.FixtureOption) contract.Fixture {
+	t.Helper()
+	contract.SkipIfSubjectBenchMissing(t)
+	contract.RequireFreshBench(t)
+	f := contract.NewFixture(t, opts...)
+	f.WriteFile(".bench/gate.sh", script)
+	if err := os.Chmod(filepath.Join(f.Root, ".bench", "gate.sh"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
+	f.WriteFile(".gitignore", ".bench-contract-env/\n")
+	f.Git("config", "user.email", "bench@local")
+	f.Git("config", "user.name", "bench")
+	return f
+}
+
 func assignRuntimeBuild(t *testing.T, f contract.Fixture, ticket, request string) runtimeBuildAssignment {
 	t.Helper()
-	probe := f.Bench("spec", "build", "assign", "demo", "--ticket", ticket, "--request", request)
+	before, probe := readRuntimeBuildState(t, f), f.Bench("spec", "build", "assign", "demo", "--ticket", ticket, "--request", request)
 	probe.RequireExit(0)
 	state := readRuntimeBuildState(t, f)
-	for _, assignment := range state.Assignments {
-		if assignment.Path != "" && assignment.ID != "" {
+	for id, assignment := range state.Assignments {
+		if before.Assignments[id].ID == "" && assignment.Path != "" && assignment.ID != "" {
 			if _, err := os.Stat(assignment.Path); err == nil {
 				return assignment
 			}
 		}
 	}
-	t.Fatal("active assignment missing from durable state")
+	t.Fatalf("active assignment request %q missing from durable state: %+v", request, state.Assignments)
 	return runtimeBuildAssignment{}
 }
 
@@ -304,7 +322,6 @@ func writeAssignmentChange(t *testing.T, root, name, body string) {
 
 func runtimeCheckpointReceipt(t *testing.T, f contract.Fixture, assignment runtimeBuildAssignment, ownership []string) string {
 	t.Helper()
-	state := readRuntimeBuildState(t, f)
 	tree := benchgit.TreeHash(assignment.Path)
 	if tree == "none" {
 		t.Fatal("live assignment tree is unavailable")
@@ -319,7 +336,7 @@ func runtimeCheckpointReceipt(t *testing.T, f contract.Fixture, assignment runti
 	}
 	sort.Strings(assumptions)
 	receipt := map[string]any{
-		"version": 1, "run": state.Run, "assignment": assignment.ID, "base": assignment.Base, "tree": tree,
+		"version": 1, "run": readRuntimeBuildState(t, f).Run, "assignment": assignment.ID, "base": assignment.Base, "tree": tree,
 		"ticket_digest": assignment.TicketDigest, "rows": rows, "checks": []map[string]any{{"name": "focused runtime check", "passed": true}},
 		"probe":     map[string]any{"producer": "coordinator", "assignment": assignment.ID, "tree": tree, "command": "focused runtime check", "exit": 0, "output_digest": runtimeDigest("pass"), "produced": time.Now().UTC().Add(time.Second).Format(time.RFC3339Nano)},
 		"ownership": ownership, "assumptions": assumptions,
@@ -330,11 +347,9 @@ func runtimeCheckpointReceipt(t *testing.T, f contract.Fixture, assignment runti
 func requireDirtyAssignmentAtBase(t *testing.T, f contract.Fixture, assignment runtimeBuildAssignment) {
 	t.Helper()
 	head := strings.TrimSpace(contract.RunAt(t, f, assignment.Path, nil, "git", "rev-parse", "HEAD").Stdout)
-	if head != assignment.Base {
-		t.Fatalf("assignment HEAD = %s, want base %s", head, assignment.Base)
-	}
-	if status := contract.RunAt(t, f, assignment.Path, nil, "git", "status", "--porcelain", "--untracked-files=all").Stdout; status == "" {
-		t.Fatal("assignment is clean before checkpoint")
+	status := contract.RunAt(t, f, assignment.Path, nil, "git", "status", "--porcelain", "--untracked-files=all").Stdout
+	if head != assignment.Base || status == "" {
+		t.Fatalf("assignment state before checkpoint: head=%s base=%s status=%q", head, assignment.Base, status)
 	}
 }
 

@@ -15,9 +15,7 @@ type fixtureOwner string
 const (
 	ownerConformance fixtureOwner = "conformance"
 	ownerBehavior    fixtureOwner = "behavior"
-	// ownerPhase is a fixture grading a gate phase rather than a conformance check or a
-	// behavior contract. It names no shell source: a phase runs a Go step, so there is no
-	// retired gate fragment whose message its EXPECT could drift back into.
+	// A phase fixture names no shell source whose retired EXPECT message could drift back in.
 	ownerPhase fixtureOwner = "phase"
 )
 
@@ -125,6 +123,13 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 	"ticket-template-anchor":                conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"ticket-cross-pointers-anchor":          conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"ticket-gate-cadence-anchor":            conformanceFixture(".bench/gate-docs-contracts.sh"),
+
+	"spec-build-initial-capacity-anchor":          conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"spec-build-unused-slot-reason-anchor":        conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"spec-build-review-input-binding-anchor":      conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"spec-build-final-check-single-author-anchor": conformanceFixture(".bench/gate-docs-contracts.sh"),
+	"spec-build-review-route-anchor":              conformanceFixture(".bench/gate-docs-contracts.sh"),
+
 	"ticket-decision-map-lifecycle-anchor":  conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"implementation-retro-authoring-anchor": conformanceFixture(".bench/gate-docs-contracts.sh"),
 	"implementation-retro-drain-anchor":     conformanceFixture(".bench/gate-docs-contracts.sh"),
@@ -264,9 +269,7 @@ func TestCanaryFixtureRegistryClassifiesEveryFixture(t *testing.T) {
 		family := fx.Family
 		var wantOwner fixtureOwner
 		switch phase := canary.FixturePhase(family); {
-		// A legacy flat fixture belongs to no family at all: its EXPECT is emitted by no
-		// single conformance check and no contract package, which is what earns it the
-		// full inner gate.
+		// A legacy flat fixture has no single check or package owner, so it earns the full inner gate.
 		case family == "", phase == canary.PhaseContract:
 			wantOwner = ownerBehavior
 		// A family routing to a phase of its own name is a phase family. The router owns

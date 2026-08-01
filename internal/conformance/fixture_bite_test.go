@@ -67,85 +67,16 @@ func TestSkillsIndexAndCommandAdapterFixturesBite(t *testing.T) {
 }
 
 func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
-	fixtures := []string{
-		"stale-command-reference",
-		"stale-codex-adapter-reference",
-		"retired-command-reference",
-		"stale-cli-doc-reference",
-		"stale-skill-cli-reference",
-		"missing-cli-inventory",
-		"historical-marker-prose",
-		"benchref-missing",
-		"benchref-pointer-dropped",
-		"benchref-imported",
-		"benchref-section-duplicated",
-		"dogfood-referent-shipped",
-		"readme-command-first",
-		"signal-vocabulary-drift",
-		"structured-phase-progress-anchor",
-		"acceptance-coverage-anchor",
-		"coverage-axis-anchor",
-		"command-handoff-anchor",
-		"debug-archaeology-anchor",
-		"debug-red-commit",
-		"readme-shaping-skip",
-		"implement-spec-inline-exception",
-		"implement-spec-landing-commit",
-		"edge-inventory-anchor",
-		"fix-pass-sentinel-anchor",
-		"implement-spec-mandatory-delegation-anchor",
-		"implement-spec-status-flip-anchor",
-		"implement-spec-structure-pointer",
-		"review-persistence-anchor",
-		"shared-worktree-path-pin",
-		"delegate-parallel-route-anchor",
-		"delegate-stash-refusal-anchor",
-		"shape-idea-handoff-anchor",
-		"shape-idea-grill-continuation",
-		"what-next-anchor",
-		"what-next-spec-history-anchor",
-		"what-next-roadmap-context-anchor",
-		"spec-retire-roadmap-row",
-		"staged-command-sweep-anchor",
-		"capture-sink-anchor",
-		"craft-seams-structure-headroom",
-		"story-line-anchor-missing",
-		"write-spec-handoff-anchor",
-		"write-spec-review-tier-escalated",
-		"write-spec-review-made-conditional",
-		"benchkit-spec-ownership",
-		"changelog-ticket-vocabulary",
-		"context-ticket-vocabulary",
-		"shape-idea-decision-ticket-vocabulary",
-		"shape-idea-map-template",
-		"shape-idea-phase-ownership",
-		"shape-idea-situational-map",
-		"write-spec-artifact-authorization",
-		"write-spec-authorization-boundary",
-		"write-spec-conversation-authorization",
-		"write-spec-decision-source",
-		"write-spec-late-uncertainty",
-		"write-spec-map-sources",
-		"write-spec-phase-ownership",
-		"write-spec-ready-map-authorization",
-		"line-anchor-missing",
-		"shape-idea-verify-hook-anchor",
-		"full-run-review-delegate-anchor",
-		"full-run-handoff-persistence-anchor",
-		"full-run-escalation-menu-anchor",
-		"full-run-silent-escalation-forbid",
-		"full-run-scope-fence-relocated",
-		"ticket-breakdown-step-anchor",
-		"ticket-light-path-anchor",
-		"ticket-stage-routing-anchor",
-		"ticket-skill-contract-anchor",
-		"ticket-template-anchor",
-		"ticket-cross-pointers-anchor",
-		"ticket-gate-cadence-anchor",
-		"ticket-decision-map-lifecycle-anchor",
-		"implementation-retro-authoring-anchor",
-		"implementation-retro-drain-anchor",
+	h := NewHarness(t)
+	all, err := canary.Fixtures(filepath.Join(h.KitRoot, "tests", "canary"))
+	requireFixtureNoError(t, err)
+	var fixtures []string
+	for name, fixture := range all {
+		if fixture.Family == "docs-currency-token-diet" || fixture.Family == "workflow-guidance-anchors" {
+			fixtures = append(fixtures, name)
+		}
 	}
+	slices.Sort(fixtures)
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {
 			root := materializeConformanceFixture(t, fixture)
@@ -158,6 +89,74 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 				t.Fatalf("%s did not bite under Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diags, "\n"))
 			}
 		})
+	}
+}
+
+func TestSpecBuildCadenceAnchorsRejectDeletionSwapAndRawGitRouting(t *testing.T) {
+	h := NewHarness(t)
+	tests := []struct{ name, rel, old, replacement, diag string }{
+		{"lifecycle deletion", ".agents/commands/bench-implement-spec.md", "`start` → `assign` → `checkpoint` →\n`integrate` → `review` → `promote`; `status` inspects the run and `abandon`\nplans or applies cleanup.", "", "bench-implement-spec dropped or reordered the eight-operation spec-build lifecycle"},
+		{"initial capacity deletion", ".agents/commands/bench-implement-spec.md", "Re-derive the complete ready frontier and the harness's live capacity before\ndispatch. Assign every ownership-safe ticket up to the smaller of frontier size\nand available capacity.", "", "bench-implement-spec dropped initial frontier capacity dispatch"},
+		{"additive generic unused-slot reason", ".agents/commands/bench-implement-spec.md", "For every unused harness slot, record exactly one\nreason: dependency, overlapping ownership fence, unavailable harness capacity,\nor measured resource constraint.", "For every unused harness slot, record exactly one reason: dependency, overlapping ownership fence, unavailable harness capacity, or measured resource constraint. An unused slot may instead be `NOT\n  PARALLELIZABLE`.", "bench-implement-spec permits a generic unused-slot reason outside the closed set"},
+		{"exact candidate input deletion", ".agents/commands/bench-review-implementation.md", "For an active spec build, read `bench spec build status\n   <slug> --full` and bind the review inputs to the exact candidate subject and\n   recorded run base it reports. Confirm that subject is unchanged immediately\n   before receipt submission; a changed candidate invalidates the review rather\n   than letting a delta review authorize a new composition. ", "", "bench-review-implementation dropped exact-candidate review input binding"},
+		{"frontier swap", ".agents/commands/bench-implement-spec.md", "or measured resource constraint. Refill the ownership-safe frontier after every\nintegration or assignment release while another delegate remains active.", "or measured resource constraint. Wait for the ownership-safe frontier to drain before refill after every integration or assignment release.", "bench-implement-spec replaced continuous frontier refill with drain-then-refill cadence"},
+		{"repair deletion", ".agents/commands/bench-implement-spec.md", "Accepted findings become new ownership-fenced repair tickets and re-enter\n  `assign`, `checkpoint`, and `integrate` before a fresh composed review.", "", "bench-implement-spec routes an accepted repair outside the provisional lifecycle"},
+		{"probe kind", ".agents/skills/bench-craft-delegate/SKILL.md", "The\ncoordinator probe's mutation kind differs from the delegate author's mutation\nkind.", "The\ncoordinator probe's mutation kind matches the delegate author's mutation\nkind.", "craft-delegate allows the coordinator probe to repeat the author's mutation kind"},
+		{"ordinary commit route", ".bench/BENCH.md", "Provisional\ncadence is exclusive to reviewed spec-backed builds; light-path work, `bench\nshift`, and ordinary `bench commit` remain commit-on-green.", "Provisional cadence covers reviewed spec-backed builds, light-path work, `bench shift`, and ordinary `bench commit`.", ".bench/BENCH.md broadened provisional cadence beyond reviewed spec-backed builds"},
+		{"purpose swap", ".bench/BENCH-reference.md", "| `assign` | lease one ownership-fenced ticket worktree |", "| `assign` | validate focused evidence and bind a provisional commit |", "BENCH-reference misroutes spec build assign"},
+		{"flag positional", "bin/bench.sh", "bench spec build assign <slug> --ticket <ticket> --request <id>", "bench spec build assign <slug> <ticket> --ticket --request <id>", "bench help dropped or malformed spec build assign grammar"},
+		{"line replacement", "projects/benchkit.md", "Spec-build guidance cadence** → **`gpt-5.6-sol / high`", "Spec-build guidance cadence** → **`gpt-5.6-terra / high`", "benchkit profile replaced the approved spec-build guidance line"},
+		{"control deletion", "CHANGELOG.md", "Light-path changes, `bench shift`, and ordinary `bench commit` keep\n  commit-on-green cadence.", "", "CHANGELOG dropped the unchanged-path control for provisional spec builds"},
+		{"raw git route", ".agents/commands/bench-implement-spec.md", "Submit focused delegate evidence plus the coordinator-owned, different-kind\n  probe through `checkpoint`.", "Create the checkpoint with `git commit`; the public `checkpoint` token remains documented.", "bench-implement-spec synthesizes lifecycle Git plumbing outside the eight public operations"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := os.ReadFile(filepath.Join(h.KitRoot, filepath.FromSlash(tc.rel)))
+			if err != nil || strings.Count(string(data), tc.old) != 1 {
+				t.Fatalf("mutation anchor count for %s = %d, %v", tc.rel, strings.Count(string(data), tc.old), err)
+			}
+			root := t.TempDir()
+			path := filepath.Join(root, filepath.FromSlash(tc.rel))
+			requireFixtureNoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
+			requireFixtureNoError(t, os.WriteFile(path, []byte(strings.Replace(string(data), tc.old, tc.replacement, 1)), 0o644))
+			if diags := checkWorkflowAnchors(root); !containsDiagnostic(diags, tc.diag) {
+				t.Fatalf("mutation did not bite with %q:\n%s", tc.diag, strings.Join(diags, "\n"))
+			}
+		})
+	}
+	t.Run("additive direct working branch permission", func(t *testing.T) {
+		const rel = ".agents/commands/bench-implement-spec.md"
+		const anchor = "Accepted findings become new ownership-fenced repair tickets and re-enter\n  `assign`, `checkpoint`, and `integrate` before a fresh composed review."
+		const diag = "bench-implement-spec permits an accepted repair to bypass provisional assignment and write directly to the working branch"
+		data, err := os.ReadFile(filepath.Join(h.KitRoot, filepath.FromSlash(rel)))
+		requireFixtureNoError(t, err)
+		root := t.TempDir()
+		path := filepath.Join(root, filepath.FromSlash(rel))
+		requireFixtureNoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
+		if strings.Count(string(data), anchor) != 1 {
+			t.Fatalf("accepted-repair paragraph anchor count = %d", strings.Count(string(data), anchor))
+		}
+		for _, contradiction := range []string{
+			"For an accepted repair finding, the coordinator may instead write the repair directly to the working branch before `promote`.",
+			"For an accepted `repair` finding, the coordinator may instead write the repair directly to the\n  `working branch` before `promote`.",
+		} {
+			mutated := strings.Replace(string(data), anchor, anchor+"\n  "+contradiction, 1)
+			requireFixtureNoError(t, os.WriteFile(path, []byte(mutated), 0o644))
+			if diags := checkWorkflowAnchors(root); !containsDiagnostic(diags, diag) {
+				t.Fatalf("additive contradiction did not bite with %q:\n%s", diag, strings.Join(diags, "\n"))
+			}
+			requireFixtureNoError(t, os.WriteFile(path, data, 0o644))
+			if diags := checkWorkflowAnchors(root); containsDiagnostic(diags, diag) {
+				t.Fatalf("additive contradiction remained red after removal:\n%s", strings.Join(diags, "\n"))
+			}
+		}
+	})
+}
+
+func requireFixtureNoError(t *testing.T, err error) {
+	t.Helper()
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -242,12 +241,8 @@ func TestRunConformanceReportsAbsentCanaryFamily(t *testing.T) {
 			continue
 		}
 		familyDir := filepath.Join(kitRoot, "tests", "canary", family)
-		if err := os.MkdirAll(familyDir, 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.MkdirAll(filepath.Join(familyDir, "sentinel"), 0o755); err != nil {
-			t.Fatal(err)
-		}
+		requireFixtureNoError(t, os.MkdirAll(familyDir, 0o755))
+		requireFixtureNoError(t, os.MkdirAll(filepath.Join(familyDir, "sentinel"), 0o755))
 	}
 
 	diags := RunConformance(root, kitRoot, registry.Dev, "")
@@ -264,15 +259,11 @@ func TestRunConformanceReportsEmptyCanaryFamily(t *testing.T) {
 	kitRoot := t.TempDir()
 	for _, family := range registry.Families() {
 		familyDir := filepath.Join(kitRoot, "tests", "canary", family)
-		if err := os.MkdirAll(familyDir, 0o755); err != nil {
-			t.Fatal(err)
-		}
+		requireFixtureNoError(t, os.MkdirAll(familyDir, 0o755))
 		if family == "coverage-map-validation" {
 			continue
 		}
-		if err := os.MkdirAll(filepath.Join(familyDir, "sentinel"), 0o755); err != nil {
-			t.Fatal(err)
-		}
+		requireFixtureNoError(t, os.MkdirAll(filepath.Join(familyDir, "sentinel"), 0o755))
 	}
 
 	diags := RunConformance(root, kitRoot, registry.Dev, "")
@@ -296,17 +287,11 @@ func TestRunConformanceReportsUnboundCanaryFamily(t *testing.T) {
 	canaryDir := filepath.Join(kitRoot, "tests", "canary")
 	families := append(registry.Families(), "unbound-family", "behavior-owned")
 	for _, family := range families {
-		if err := os.MkdirAll(filepath.Join(canaryDir, family, "sentinel"), 0o755); err != nil {
-			t.Fatal(err)
-		}
+		requireFixtureNoError(t, os.MkdirAll(filepath.Join(canaryDir, family, "sentinel"), 0o755))
 	}
 	flat := filepath.Join(canaryDir, "legacy-flat")
-	if err := os.MkdirAll(filepath.Join(flat, "files"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(flat, "EXPECT"), []byte("target\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	requireFixtureNoError(t, os.MkdirAll(filepath.Join(flat, "files"), 0o755))
+	requireFixtureNoError(t, os.WriteFile(filepath.Join(flat, "EXPECT"), []byte("target\n"), 0o644))
 
 	diags := RunConformance(root, kitRoot, registry.Dev, "")
 
@@ -518,10 +503,7 @@ func TestCheckPackageFilesToleratesNpmStderrNotice(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "package.json"), []byte(`{"files":["bin/bench.sh"]}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-
-	// npm's update notifier intermittently writes "npm notice ..." to stderr;
-	// the pack JSON on stdout must survive that chatter, so the stub replays
-	// both streams.
+	// npm's update notifier writes stderr chatter; the pack JSON must survive while the stub replays both streams.
 	stub := t.TempDir()
 	script := "#!/usr/bin/env bash\n" +
 		"printf '[{\"files\":[{\"path\":\"bin/bench.sh\"}]}]\\n'\n" +

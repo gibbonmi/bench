@@ -1,0 +1,12 @@
+[
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "a clean or risk-accepted review proceeds to\n`bench spec build promote <slug>`.",
+    "new": "a clean or risk-accepted review proceeds to `/bench-final-check`."
+  },
+  {
+    "path": ".agents/commands/bench-review-implementation.md",
+    "old": "a clean\n   or risk-accepted review proceeds to `bench spec build promote <slug>`.",
+    "new": "a clean or risk-accepted review proceeds to `/bench-final-check`."
+  }
+]

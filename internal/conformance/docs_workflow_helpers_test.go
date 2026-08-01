@@ -28,97 +28,26 @@ func checkWorkflowAnchors(root string) []string {
 			diags = append(diags, fmt.Sprintf("%s missing acceptance coverage anchor: %s", rel, needle))
 		}
 	}
-
-	require(".agents/commands/bench-write-spec.md", "acceptance coverage map")
-	require(".agents/commands/bench-write-spec.md", "why it catches the failure")
-	require(".agents/commands/bench-write-spec.md", "red signal")
-	require(".agents/skills/bench-craft-spec/SKILL.md", "why it catches the failure")
-	require(".agents/skills/bench-craft-spec/SKILL.md", "re-run idempotency")
-	require(".agents/skills/bench-craft-spec/SKILL.md", "separate capability")
-	require(".agents/commands/bench-write-spec.md", "bench-craft-spec")
-	require(".agents/skills/bench-craft-tdd/SKILL.md", "bench-craft-spec")
-	require(".agents/skills/bench-craft-review/SKILL.md", "bench-craft-spec")
-	require(".agents/skills/bench-craft-spec/SKILL.md", "Slicing a build for delegates")
-	require(".agents/skills/bench-craft-delegate/SKILL.md", "Slicing a build for delegates")
-	require(".agents/skills/bench-craft-tdd/SKILL.md", "acceptance row")
-	require(".agents/skills/bench-craft-tdd/SKILL.md", "not TDD-able")
-	require(".agents/skills/bench-craft-tdd/SKILL.md", "call count")
-	require(".agents/skills/bench-craft-tdd/SKILL.md", "row schema and the red-signal definition are")
-	require(".agents/commands/bench-implement-spec.md", "coverage table")
-	require(".agents/commands/bench-implement-spec.md", "already covered")
-	require(".agents/commands/bench-implement-spec.md", "turning red-to-green")
-	require(".agents/commands/bench-implement-spec.md", "bench coverage <spec>")
-	require(".agents/commands/bench-review-implementation.md", "acceptance coverage map")
-	require(".agents/commands/bench-review-implementation.md", "mapped behavior")
-	require(".agents/commands/bench-review-implementation.md", "bench diff --full")
-	require(".agents/commands/bench-review-implementation.md", "bench diff --full --commit")
-	require(".agents/commands/bench-final-check.md", ".bench/gate.sh")
-	require(".agents/commands/bench-final-check.md", "BENCH_GATE")
-	require(".agents/commands/bench-final-check.md", "ship-tier verification has not run")
-	require(".agents/commands/bench-write-spec.md", "seam diagram")
-	require(".agents/commands/bench-write-spec.md", "tests attach here")
-	require(".agents/commands/bench-write-spec.md", "edge inventory")
-	require(".agents/commands/bench-write-spec.md", "Won't handle")
-	require(".agents/commands/bench-write-spec.md", "hostile-input checklist")
-	require(".agents/skills/bench-craft-tdd/SKILL.md", "floor, not the ceiling")
-	require(".agents/skills/bench-craft-seams/SKILL.md", "failure modes")
-	require(".agents/skills/bench-craft-seams/SKILL.md", "structure.budgets")
-	require(".agents/commands/bench-review-implementation.md", "## Coverage")
-	require(".agents/commands/bench-review-implementation.md", "Coverage axis")
-	require(".agents/commands/bench-setup-repo.md", "hostile-input checklist")
-	require("projects/benchkit.md", "hostile-input checklist")
-	require(".agents/commands/bench-setup-repo.md", "craft-gate")
-	require(".agents/commands/bench-final-check.md", "craft-gate")
-	require(".agents/commands/bench-review-implementation.md", "craft-review")
-	require(".agents/skills/bench-craft-review/SKILL.md", "an edge nobody decided")
-	require(".agents/commands/bench-review-implementation.md", "craft-delegate")
-	require(".agents/skills/bench-craft-delegate/SKILL.md", "a claim, not a result")
-	require(".agents/skills/bench-craft-delegate/SKILL.md", "bench worktree create --request")
-	require(".agents/skills/bench-craft-delegate/SKILL.md", "git stash")
-	require(".agents/skills/bench-craft-delegate/SKILL.md", "releases the worktree it cut")
-	require(".agents/commands/bench-implement-spec.md", "When the build stops short")
-	require(".agents/commands/bench-implement-spec.md", "the coordinator that cut it owns its retirement")
-	require(".bench/BENCH.md", "bench worktree release")
-	require(".bench/BENCH.md", "bench worktree clean")
-	require(".bench/BENCH.md", "bench worktree recovery")
-	require(".agents/commands/bench-write-spec.md", "Superseded by")
-	require(".agents/commands/bench-write-spec.md", "spec-retire:")
-	require(".agents/commands/bench-write-spec.md", "Status: staged")
-	require(".agents/commands/bench-write-spec.md", "new session on the mid tier")
-	require(".agents/commands/bench-write-spec.md", "mostly not")
-	require(".agents/commands/bench-write-spec.md", "runs at the mid tier")
-	require(".agents/commands/bench-write-spec.md", "Every draft gets the pass")
-	require("projects/benchkit.md", "Spec falsification pass")
-	require("projects/benchkit.md", "shared-build-cache opt-in")
-	require(".agents/commands/bench-implement-spec.md", "Status: implemented")
-	require(".agents/commands/bench-debug.md", "diff-filter=D")
-	require(".agents/commands/bench-review-implementation.md", "reviews/<spec-slug>.md")
-	require(".agents/commands/bench-review-implementation.md", "same session that writes it")
-	require(".agents/commands/bench-implement-spec.md", "reviews/<spec-slug>.md")
-	require(".agents/commands/bench-implement-spec.md", "names and deletes the file")
-	require(".agents/commands/bench-final-check.md", "not outlive the decision it captured")
-	require(".agents/commands/bench-implement-spec.md", "bench commit -m")
-	require(".agents/commands/bench-final-check.md", "bench commit -m")
-	require(".agents/commands/bench-review-implementation.md", "actionable findings")
-	require(".agents/commands/bench-review-implementation.md", "writes no artifact")
-	require(".agents/commands/bench-review-implementation.md", "same green fix commit")
-	require(".agents/commands/bench-review-implementation.md", "section per axis")
-	require(".agents/commands/bench-review-implementation.md", "finding count, its worst issue")
-	require(".agents/commands/bench-review-implementation.md", "doc citation its axis supplied")
-	require(".agents/commands/bench-what-next.md", "Reconcile first")
-	require(".agents/commands/bench-what-next.md", "through the accused command")
-	require(".agents/commands/bench-debug.md", "through the accused command")
-	require(".agents/commands/bench-what-next.md", "empties to zero")
-	require(".agents/commands/bench-what-next.md", "verdict in the batch diff")
-	require(".agents/commands/bench-what-next.md", "one uncommitted batch diff")
-	require(".agents/commands/bench-what-next.md", "commit on green")
-	require(".agents/commands/bench-what-next.md", "## Recommended sequence")
-
-	require(".agents/commands/bench-assess.md", "verify the previous assessment's backlog landed")
-	require(".agents/commands/bench-assess.md", "read-only area sweeps on the mid tier")
-	require(".agents/commands/bench-assess.md", "synthesize adversarially on the top tier")
-	require(".agents/commands/bench-assess.md", "replaces its predecessor")
-	require(".agents/commands/bench-assess.md", "/bench-what-next")
+	requireAll := func(rel string, needles ...string) {
+		for _, needle := range needles {
+			require(rel, needle)
+		}
+	}
+	requireAll(".agents/commands/bench-write-spec.md", "acceptance coverage map", "why it catches the failure", "red signal", "bench-craft-spec", "seam diagram", "tests attach here", "edge inventory", "Won't handle", "hostile-input checklist", "Superseded by", "spec-retire:", "Status: staged", "new session on the mid tier", "mostly not", "runs at the mid tier", "Every draft gets the pass")
+	requireAll(".agents/skills/bench-craft-spec/SKILL.md", "why it catches the failure", "re-run idempotency", "separate capability", "Slicing a build for delegates")
+	requireAll(".agents/skills/bench-craft-tdd/SKILL.md", "bench-craft-spec", "acceptance row", "not TDD-able", "call count", "row schema and the red-signal definition are", "floor, not the ceiling")
+	requireAll(".agents/skills/bench-craft-review/SKILL.md", "bench-craft-spec", "an edge nobody decided")
+	requireAll(".agents/skills/bench-craft-delegate/SKILL.md", "Slicing a build for delegates", "a claim, not a result", "bench worktree create --request", "git stash", "releases the worktree it cut")
+	requireAll(".agents/skills/bench-craft-seams/SKILL.md", "failure modes", "structure.budgets")
+	requireAll(".agents/commands/bench-implement-spec.md", "coverage table", "already covered", "turning red-to-green", "bench coverage <spec>", "When the build stops short", "the coordinator that cut it owns its retirement", "Status: implemented", "reviews/<spec-slug>.md", "names and deletes the file", "bench commit -m")
+	requireAll(".agents/commands/bench-review-implementation.md", "acceptance coverage map", "mapped behavior", "bench diff --full", "bench diff --full --commit", "## Coverage", "Coverage axis", "craft-review", "craft-delegate", "reviews/<spec-slug>.md", "same session that writes it", "actionable findings", "writes no artifact", "section per axis", "finding count, its worst issue", "doc citation its axis supplied")
+	requireAll(".agents/commands/bench-final-check.md", ".bench/gate.sh", "BENCH_GATE", "ship-tier verification has not run", "craft-gate", "bench commit -m", "retained exact green evidence")
+	requireAll(".agents/commands/bench-setup-repo.md", "hostile-input checklist", "craft-gate")
+	requireAll(".agents/commands/bench-debug.md", "diff-filter=D", "through the accused command")
+	requireAll(".agents/commands/bench-what-next.md", "Reconcile first", "through the accused command", "empties to zero", "verdict in the batch diff", "one uncommitted batch diff", "commit on green", "## Recommended sequence")
+	requireAll(".agents/commands/bench-assess.md", "verify the previous assessment's backlog landed", "read-only area sweeps on the mid tier", "synthesize adversarially on the top tier", "replaces its predecessor", "/bench-what-next")
+	requireAll(".bench/BENCH.md", "bench worktree release", "bench worktree clean", "bench worktree recovery", "sole gate", "terminal final-check never repays", "reauthors promotion")
+	requireAll("projects/benchkit.md", "hostile-input checklist", "Spec falsification pass", "shared-build-cache opt-in")
 
 	requireCollapsed := func(rel, needle, diag string) {
 		path := filepath.Join(root, filepath.FromSlash(rel))
@@ -130,23 +59,18 @@ func checkWorkflowAnchors(root string) []string {
 			diags = append(diags, diag)
 		}
 	}
-	// forbid is the must-not-contain half of an anchor pair: a workflow agreement
-	// with one owner stays repaired only while the contradicting sentence cannot
-	// return to a non-owner document. Comments are stripped and whitespace
-	// collapsed so a wrapped or commented-out reintroduction still fires.
+	// forbid strips comments and spacing so a wrapped or commented contradiction still fires.
 	forbid := func(rel, needle, diag string) {
 		path := filepath.Join(root, filepath.FromSlash(rel))
 		if strings.Contains(collapseSpace(stripHTMLComments(readIfExists(path))), needle) {
 			diags = append(diags, diag)
 		}
 	}
-	// scopedSection resolves the one H2 section a family of scoped anchors owns,
-	// diagnosing an absent file, a missing section, and a duplicated heading each
+	// scopedSection resolves one H2 section, diagnosing absent, missing, or duplicate owners
 	// exactly once, ahead of the per-anchor matching. It returns the section body
 	// collapsed and lowercased: whole-file requireCollapsed neither strips
 	// comments nor sees headings, so a sentence commented out or pasted into the
-	// wrong section would satisfy it, and case is folded so a sentence-initial
-	// recasing cannot slip past a needle.
+	// wrong section would satisfy it; case folding also catches sentence-initial recasing.
 	scopedSection := func(rel, section string) (string, bool) {
 		path := filepath.Join(root, filepath.FromSlash(rel))
 		if !exists(path) {
@@ -183,15 +107,9 @@ func checkWorkflowAnchors(root string) []string {
 
 	requireCollapsed(".agents/commands/bench-implement-spec.md", "apply `craft-seams`' split-or-grant rule",
 		".agents/commands/bench-implement-spec.md dropped the craft-seams split-or-grant pointer")
-	requireCollapsed(".agents/commands/bench-implement-spec.md",
-		"Every spec-backed run assigns genuine write work to at least one write subagent before the first implementation edit",
-		".agents/commands/bench-implement-spec.md dropped the mandatory spec-backed write-delegation-before-first-edit contract")
-	requireCollapsed(".agents/commands/bench-implement-spec.md",
-		"independent vertical slices fan out to separate parallel subagents within the harness's concurrency limit; dependent slices run sequentially; a spec that lands as one atomic diff is delegated whole to one worktree-isolated write subagent",
-		".agents/commands/bench-implement-spec.md dropped a delegation routing shape (independent-parallel, dependent-sequential, or atomic-whole)")
-	requireCollapsed(".agents/commands/bench-implement-spec.md",
-		"A read-only helper (research, review, planning, search) does not satisfy the write requirement.",
-		".agents/commands/bench-implement-spec.md dropped the read-only exclusion from the write requirement")
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "Every spec-backed run assigns genuine write work to at least one write subagent before the first implementation edit", ".agents/commands/bench-implement-spec.md dropped the mandatory spec-backed write-delegation-before-first-edit contract")
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "independent vertical slices fan out to separate parallel subagents within the harness's concurrency limit; dependent slices run sequentially; a spec that lands as one atomic diff is delegated whole to one worktree-isolated write subagent", ".agents/commands/bench-implement-spec.md dropped a delegation routing shape (independent-parallel, dependent-sequential, or atomic-whole)")
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "A read-only helper (research, review, planning, search) does not satisfy the write requirement.", ".agents/commands/bench-implement-spec.md dropped the read-only exclusion from the write requirement")
 
 	// One owner per workflow agreement: each repaired agreement pins the owner's
 	// full statement with a require and the reintroduced contradiction with a
@@ -199,61 +117,35 @@ func checkWorkflowAnchors(root string) []string {
 
 	// Shaping is situational; README names both authorized routes without
 	// copying the command's full entry contract.
-	forbid("README.md", "Every spec has a decision map behind it",
-		"README.md reintroduced mandatory decision maps; shaping is situational")
-	requireCollapsed("README.md", "Decision maps are situational",
-		"README.md dropped the situational decision-map vocabulary")
+	forbid("README.md", "Every spec has a decision map behind it", "README.md reintroduced mandatory decision maps; shaping is situational")
+	requireCollapsed("README.md", "Decision maps are situational", "README.md dropped the situational decision-map vocabulary")
 
 	// Delegation — craft-delegate owns the capability-aware policy in full;
 	// /bench-implement-spec points at it and states no inline threshold of its own.
-	requireCollapsed(".agents/skills/bench-craft-delegate/SKILL.md",
-		"admitted by the lighter-path threshold",
-		".agents/skills/bench-craft-delegate/SKILL.md dropped the lighter-path inline allowance from the delegation policy")
-	requireCollapsed(".agents/skills/bench-craft-delegate/SKILL.md",
-		"stops before editing and emits one executable resume handoff to a subagent-capable harness — the repository path, the working branch or worktree, the spec or change name, the destination harness, and that harness's exact invocation",
-		".agents/skills/bench-craft-delegate/SKILL.md dropped the no-write-subagent stop-and-handoff rule")
-	forbid(".agents/commands/bench-implement-spec.md", "the sole inline exception",
-		".agents/commands/bench-implement-spec.md restates an inline threshold of its own; craft-delegate owns the capability-aware delegation policy")
-	requireCollapsed(".agents/commands/bench-implement-spec.md",
-		"states no inline threshold of its own",
-		".agents/commands/bench-implement-spec.md dropped the pointer to craft-delegate's capability-aware delegation policy")
+	requireCollapsed(".agents/skills/bench-craft-delegate/SKILL.md", "admitted by the lighter-path threshold", ".agents/skills/bench-craft-delegate/SKILL.md dropped the lighter-path inline allowance from the delegation policy")
+	requireCollapsed(".agents/skills/bench-craft-delegate/SKILL.md", "stops before editing and emits one executable resume handoff to a subagent-capable harness — the repository path, the working branch or worktree, the spec or change name, the destination harness, and that harness's exact invocation", ".agents/skills/bench-craft-delegate/SKILL.md dropped the no-write-subagent stop-and-handoff rule")
+	forbid(".agents/commands/bench-implement-spec.md", "the sole inline exception", ".agents/commands/bench-implement-spec.md restates an inline threshold of its own; craft-delegate owns the capability-aware delegation policy")
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "states no inline threshold of its own", ".agents/commands/bench-implement-spec.md dropped the pointer to craft-delegate's capability-aware delegation policy")
 
-	// Landing — /bench-final-check owns the landing commit and the status
-	// transition; /bench-implement-spec ends at its last green build commit.
-	forbid(".agents/commands/bench-implement-spec.md", `bench commit -m "<msg>" --spec`,
-		".agents/commands/bench-implement-spec.md reclaims the landing --spec commit; /bench-final-check owns the landing commit and the Status: implemented transition")
-	requireCollapsed(".agents/commands/bench-implement-spec.md",
-		"ends at its last green build commit",
-		".agents/commands/bench-implement-spec.md dropped the hand-off that ends at the last green build commit")
-	requireCollapsed(".agents/commands/bench-final-check.md",
-		"owns the landing commit and the spec's `Status: implemented` transition",
-		".agents/commands/bench-final-check.md dropped the landing-commit and status-transition ownership")
-	requireCollapsed(".agents/commands/bench-final-check.md",
-		"nothing left to commit is reported green",
-		".agents/commands/bench-final-check.md dropped the honest no-op for a branch with nothing to commit")
-	requireCollapsed(".agents/commands/bench-final-check.md",
-		"still performed via `bench spec implemented <slug>`",
-		".agents/commands/bench-final-check.md dropped the bench spec implemented route for the status flip")
+	// Landing — promotion alone owns reviewed spec-backed landing; final-check
+	// only reports its retained terminal evidence, while ordinary work keeps the
+	// established gate-then-commit route.
+	forbid(".agents/commands/bench-implement-spec.md", `bench commit -m "<msg>" --spec`, ".agents/commands/bench-implement-spec.md reclaims the spec-backed landing from spec build promote")
+	requireCollapsed(".agents/commands/bench-final-check.md", "`bench spec build promote` is the sole spec-backed gate, commit, and `Status: implemented` author.", ".agents/commands/bench-final-check.md gives spec-backed landing authority to a second command")
+	requireCollapsed(".agents/commands/bench-final-check.md", "A terminal promoted run gets no second gate or landing mutation", ".agents/commands/bench-final-check.md dropped the no-second-gate terminal report rule")
+	requireCollapsed(".agents/commands/bench-final-check.md", "Light-path and ordinary non-lifecycle work retain the gate-then-commit path", ".agents/commands/bench-final-check.md dropped ordinary final-check landing behavior")
+	forbid(".agents/commands/bench-final-check.md", "Use `bench commit -m \"<msg>\" --spec", ".agents/commands/bench-final-check.md reintroduced bench commit --spec as a spec-build landing author")
+	forbid(".agents/commands/bench-final-check.md", "still performed via `bench spec implemented <slug>`", ".agents/commands/bench-final-check.md reintroduced bench spec implemented as a second status author")
 
 	// Red observation — /bench-debug commits the repro only in the project's
 	// expected-failure form; a red-tree commit has no sanctioned path.
-	forbid(".agents/commands/bench-debug.md", "commit that test before launching the shift",
-		".agents/commands/bench-debug.md reintroduces the red repro commit before the shift; the repro is committed in the project's expected-failure form so the tree stays green")
-	requireCollapsed(".agents/commands/bench-debug.md",
-		"committed in the project's expected-failure form",
-		".agents/commands/bench-debug.md dropped the expected-failure quarantine form for committing the repro")
-	requireCollapsed(".agents/commands/bench-debug.md",
-		"quarantine marker naming the bug",
-		".agents/commands/bench-debug.md dropped the quarantine marker naming the bug")
-	requireCollapsed(".agents/commands/bench-debug.md",
-		"keeps the repro out of the shift and runs it by hand",
-		".agents/commands/bench-debug.md dropped the no-expected-failure-form fallback")
-	requireCollapsed(".agents/skills/bench-craft-seams/SKILL.md", "check both the file-length budget and the directory's file-count headroom",
-		".agents/skills/bench-craft-seams/SKILL.md dropped the structure split-vs-grant headroom rule")
-	requireCollapsed(".agents/skills/bench-craft-delegate/SKILL.md", "pins every file-tool path to that root",
-		".agents/skills/bench-craft-delegate/SKILL.md dropped the shared-worktree file-tool path pin")
-	requireCollapsed(".agents/skills/bench-craft-delegate/SKILL.md", "names a commit-specific sentinel",
-		".agents/skills/bench-craft-delegate/SKILL.md dropped the fix-pass snapshot sentinel precondition")
+	forbid(".agents/commands/bench-debug.md", "commit that test before launching the shift", ".agents/commands/bench-debug.md reintroduces the red repro commit before the shift; the repro is committed in the project's expected-failure form so the tree stays green")
+	requireCollapsed(".agents/commands/bench-debug.md", "committed in the project's expected-failure form", ".agents/commands/bench-debug.md dropped the expected-failure quarantine form for committing the repro")
+	requireCollapsed(".agents/commands/bench-debug.md", "quarantine marker naming the bug", ".agents/commands/bench-debug.md dropped the quarantine marker naming the bug")
+	requireCollapsed(".agents/commands/bench-debug.md", "keeps the repro out of the shift and runs it by hand", ".agents/commands/bench-debug.md dropped the no-expected-failure-form fallback")
+	requireCollapsed(".agents/skills/bench-craft-seams/SKILL.md", "check both the file-length budget and the directory's file-count headroom", ".agents/skills/bench-craft-seams/SKILL.md dropped the structure split-vs-grant headroom rule")
+	requireCollapsed(".agents/skills/bench-craft-delegate/SKILL.md", "pins every file-tool path to that root", ".agents/skills/bench-craft-delegate/SKILL.md dropped the shared-worktree file-tool path pin")
+	requireCollapsed(".agents/skills/bench-craft-delegate/SKILL.md", "names a commit-specific sentinel", ".agents/skills/bench-craft-delegate/SKILL.md dropped the fix-pass snapshot sentinel precondition")
 	delegationPolicyAnchors := []struct {
 		caseName string
 		anchor   string
@@ -270,10 +162,8 @@ func checkWorkflowAnchors(root string) []string {
 		requireCollapsed(".agents/skills/bench-craft-delegate/SKILL.md", policyCase.anchor,
 			fmt.Sprintf(".agents/skills/bench-craft-delegate/SKILL.md dropped the %s delegation-policy case", policyCase.caseName))
 	}
-	requireCollapsed(".agents/commands/bench-write-spec.md", "stale-command-reference sweep remains fail-closed across staged specs",
-		".agents/commands/bench-write-spec.md dropped the staged-spec fail-closed command sweep posture")
-	requireCollapsed(".agents/commands/bench-what-next.md", "use `bench spec history <slug>` for the shipped-row check",
-		".agents/commands/bench-what-next.md dropped the bench spec history shipped-row check")
+	requireCollapsed(".agents/commands/bench-write-spec.md", "stale-command-reference sweep remains fail-closed across staged specs", ".agents/commands/bench-write-spec.md dropped the staged-spec fail-closed command sweep posture")
+	requireCollapsed(".agents/commands/bench-what-next.md", "use `bench spec history <slug>` for the shipped-row check", ".agents/commands/bench-what-next.md dropped the bench spec history shipped-row check")
 	whatNext := readIfExists(filepath.Join(root, ".agents", "commands", "bench-what-next.md"))
 	if whatNext != "" && (strings.Count(whatNext, "bench roadmap --context") != 1 ||
 		!strings.Contains(collapseSpace(whatNext), "If the query fails, stop the phase") ||
@@ -284,60 +174,50 @@ func checkWorkflowAnchors(root string) []string {
 	// what a consumer actually has: the guide says once that the maintenance surfaces
 	// ship in the kit repository alone and points consumers at `bench upgrade`, and the
 	// index marks the same rows the payload allowlist withholds.
-	requireCollapsed(".bench/BENCH.md", "ship only in the Bench kit repository",
-		".bench/BENCH.md does not state that the kit-maintenance surfaces ship only in the kit repository")
-	requireCollapsed(".bench/BENCH.md", "a linked repo upgrades with `bench upgrade`",
-		".bench/BENCH.md does not name bench upgrade as the consumer's route onto a newer kit")
-	requireCollapsed(".bench/BENCH-reference.md", "`.agents/skills/bench-craft-synthesis/SKILL.md` (kit-only)",
-		".bench/BENCH-reference.md skills index does not mark the kit-only craft-synthesis row")
+	requireCollapsed(".bench/BENCH.md", "ship only in the Bench kit repository", ".bench/BENCH.md does not state that the kit-maintenance surfaces ship only in the kit repository")
+	requireCollapsed(".bench/BENCH.md", "a linked repo upgrades with `bench upgrade`", ".bench/BENCH.md does not name bench upgrade as the consumer's route onto a newer kit")
+	requireCollapsed(".bench/BENCH-reference.md", "`.agents/skills/bench-craft-synthesis/SKILL.md` (kit-only)", ".bench/BENCH-reference.md skills index does not mark the kit-only craft-synthesis row")
 
-	requireCollapsed(".bench/BENCH.md", "Parked ideas land in `IDEAS.md`",
-		".bench/BENCH.md Capture section does not name IDEAS.md as the capture sink")
-	requireCollapsed(".bench/BENCH.md", "append the dated line (`- YYYY-MM-DD <text>`) to `IDEAS.md`",
-		".bench/BENCH.md Capture section lost the no-PATH fallback append to IDEAS.md")
+	requireCollapsed(".bench/BENCH.md", "Parked ideas land in `IDEAS.md`", ".bench/BENCH.md Capture section does not name IDEAS.md as the capture sink")
+	requireCollapsed(".bench/BENCH.md", "append the dated line (`- YYYY-MM-DD <text>`) to `IDEAS.md`", ".bench/BENCH.md Capture section lost the no-PATH fallback append to IDEAS.md")
 
 	// Shared-rule placement — checkSharedRuleSingleSource's marker list owns each
 	// sentence's presence and non-duplication; these anchors add only placement,
 	// pinning the rule inside the section that owns it.
 	if body, ok := scopedSection(".bench/BENCH.md", "Workflow"); ok {
-		requireInSection(body, fixDontParkMarker,
-			".bench/BENCH.md Workflow section dropped the fix-don't-park rule; a mid-work defect fix belongs in the active workflow, not the backlog")
+		requireInSection(body, fixDontParkMarker, ".bench/BENCH.md Workflow section dropped the fix-don't-park rule; a mid-work defect fix belongs in the active workflow, not the backlog")
 	}
 	if body, ok := scopedSection(".bench/BENCH.md", "How to talk to me"); ok {
-		requireInSection(body, sourceWarrantMarker,
-			".bench/BENCH.md How to talk to me section dropped the outside-source warrant rule; a claim resting on a source outside the tree names what was and was not read")
+		requireInSection(body, sourceWarrantMarker, ".bench/BENCH.md How to talk to me section dropped the outside-source warrant rule; a claim resting on a source outside the tree names what was and was not read")
 	}
-	forbid(".bench/BENCH.md", "thorough",
-		".bench/BENCH.md phrases the outside-source warrant rule as thoroughness; the rule asks for disclosure of what went unread, which the reviewer can check — thoroughness nobody can")
-	requireCollapsed(".agents/commands/bench-write-spec.md", "promote-then-delete commit removes the spec's `ROADMAP.md` row",
-		".agents/commands/bench-write-spec.md does not remove the spec's ROADMAP.md row in the promote-then-delete commit (row presence is status)")
-	requireCollapsed(".agents/commands/bench-shape-idea.md", "never pause for permission or a re-prompt",
-		".agents/commands/bench-shape-idea.md dropped the resume-mode grill continuation rule; a running grill carries into newly-unblocked tickets without pausing for a re-prompt")
-	requireCollapsed(".agents/commands/bench-review-implementation.md", "This phase makes no fixes and runs no gate: findings that need work go to `/bench-implement-spec`, which owns the fix pass, the pickup file's resolution, and the terminal repair-pass bound; a clean or risk-accepted review goes to `/bench-final-check`, which owns the oracle run.",
-		".agents/commands/bench-review-implementation.md dropped the hand-off-don't-repair rule; the fix pass belongs to implement-spec and the oracle run to final-check")
+	forbid(".bench/BENCH.md", "thorough", ".bench/BENCH.md phrases the outside-source warrant rule as thoroughness; the rule asks for disclosure of what went unread, which the reviewer can check — thoroughness nobody can")
+	requireCollapsed(".agents/commands/bench-write-spec.md", "promote-then-delete commit removes the spec's `ROADMAP.md` row", ".agents/commands/bench-write-spec.md does not remove the spec's ROADMAP.md row in the promote-then-delete commit (row presence is status)")
+	requireCollapsed(".agents/commands/bench-shape-idea.md", "never pause for permission or a re-prompt", ".agents/commands/bench-shape-idea.md dropped the resume-mode grill continuation rule; a running grill carries into newly-unblocked tickets without pausing for a re-prompt")
+	requireCollapsed(".agents/commands/bench-review-implementation.md", "For an active spec build, submit the bounded receipt with `bench spec build review <slug> --evidence <receipt>`.", ".agents/commands/bench-review-implementation.md dropped exact-candidate review receipt submission")
+	requireCollapsed(".agents/commands/bench-review-implementation.md", "Accepted findings become ownership-fenced repair tickets and return to `/bench-implement-spec`; a clean or risk-accepted review proceeds to `bench spec build promote <slug>`.", ".agents/commands/bench-review-implementation.md routes active spec-build findings or a clean review outside the lifecycle")
+	forbid(".agents/commands/bench-review-implementation.md", "a clean or risk-accepted review goes to `/bench-final-check`", ".agents/commands/bench-review-implementation.md routes an active reviewed candidate to final-check before promotion")
+	implementSpec := strings.ToLower(collapseSpace(stripHTMLComments(readIfExists(filepath.Join(root, ".agents", "commands", "bench-implement-spec.md")))))
+	implementSpec = strings.ReplaceAll(implementSpec, "`", "")
+	if strings.Contains(implementSpec, "for an accepted repair finding, the coordinator may instead write the repair directly to the working branch before promote") {
+		diags = append(diags, "bench-implement-spec permits an accepted repair to bypass provisional assignment and write directly to the working branch")
+	}
+	if strings.Contains(implementSpec, "not parallelizable") {
+		diags = append(diags, "bench-implement-spec permits a generic unused-slot reason outside the closed set")
+	}
 
 	// Ticket guidance is convention-only, so these anchors pin the load-bearing
 	// workflow clauses without inventing a parser for ticket files.
-	requireCollapsed(".agents/commands/bench-implement-spec.md", "Charge `craft-tickets` before the first implementation edit",
-		".agents/commands/bench-implement-spec.md dropped the craft-tickets breakdown charge")
-	requireCollapsed(".agents/commands/bench-implement-spec.md", "derive ticket files from the spec's stories and seams",
-		".agents/commands/bench-implement-spec.md dropped the ticket breakdown derivation from the spec's stories and seams")
-	requireCollapsed(".agents/commands/bench-implement-spec.md", "`specs/<slug>/tickets/`",
-		".agents/commands/bench-implement-spec.md dropped the ticket breakdown destination")
-	requireCollapsed(".agents/commands/bench-implement-spec.md", "under the session's existing approval surface",
-		".agents/commands/bench-implement-spec.md dropped the ticket breakdown approval surface")
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "Charge `craft-tickets` before the first implementation edit", ".agents/commands/bench-implement-spec.md dropped the craft-tickets breakdown charge")
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "derive ticket files from the spec's stories and seams", ".agents/commands/bench-implement-spec.md dropped the ticket breakdown derivation from the spec's stories and seams")
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "`specs/<slug>/tickets/`", ".agents/commands/bench-implement-spec.md dropped the ticket breakdown destination")
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "under the session's existing approval surface", ".agents/commands/bench-implement-spec.md dropped the ticket breakdown approval surface")
 
-	requireCollapsed(".bench/BENCH.md", "one independently-green ticket",
-		".bench/BENCH.md dropped the light-path independently-green-ticket observable")
-	requireCollapsed(".bench/BENCH.md", "crosses no declared seam",
-		".bench/BENCH.md dropped the light-path declared-seam observable")
+	requireCollapsed(".bench/BENCH.md", "one independently-green ticket", ".bench/BENCH.md dropped the light-path independently-green-ticket observable")
+	requireCollapsed(".bench/BENCH.md", "crosses no declared seam", ".bench/BENCH.md dropped the light-path declared-seam observable")
 
-	requireCollapsed(".agents/skills/bench-craft-line/SKILL.md", "| Orchestration | mid + medium |",
-		".agents/skills/bench-craft-line/SKILL.md dropped the orchestration mid/medium stage default")
-	requireCollapsed(".agents/skills/bench-craft-line/SKILL.md", "| Ticket implementation | cheap + low |",
-		".agents/skills/bench-craft-line/SKILL.md dropped the ticket implementation cheap/low stage default")
-	requireCollapsed(".agents/skills/bench-craft-line/SKILL.md", "| Review (axis or falsification) | mid + high |",
-		".agents/skills/bench-craft-line/SKILL.md dropped the review mid/high stage default")
+	requireCollapsed(".agents/skills/bench-craft-line/SKILL.md", "| Orchestration | mid + medium |", ".agents/skills/bench-craft-line/SKILL.md dropped the orchestration mid/medium stage default")
+	requireCollapsed(".agents/skills/bench-craft-line/SKILL.md", "| Ticket implementation | cheap + low |", ".agents/skills/bench-craft-line/SKILL.md dropped the ticket implementation cheap/low stage default")
+	requireCollapsed(".agents/skills/bench-craft-line/SKILL.md", "| Review (axis or falsification) | mid + high |", ".agents/skills/bench-craft-line/SKILL.md dropped the review mid/high stage default")
 
 	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "smallest independently-green",
 		".agents/skills/bench-craft-tickets/SKILL.md dropped the smallest-independently-green ticket contract")
@@ -357,28 +237,50 @@ func checkWorkflowAnchors(root string) []string {
 	requireCollapsed(".agents/skills/bench-craft-spec/SKILL.md", "`craft-tickets` owns the build-time **what-lands-green-next** unit",
 		".agents/skills/bench-craft-spec/SKILL.md dropped the craft-tickets build-time-unit cross-pointer")
 
-	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "do not run a standalone full gate",
-		".agents/skills/bench-craft-tickets/SKILL.md dropped the no-standalone-full-gate ticket cadence")
-	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "`bench commit` is the only per-ticket full-project-gate boundary",
-		".agents/skills/bench-craft-tickets/SKILL.md dropped the bench-commit-only ticket gate boundary")
-	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "If it goes red, repair from that output and retry",
-		".agents/skills/bench-craft-tickets/SKILL.md dropped the ticket red repair-and-retry cadence")
-	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "normal green path runs one full gate",
-		".agents/skills/bench-craft-tickets/SKILL.md dropped the ticket one-full-gate green cadence")
-	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "/bench-final-check` remains the final full gate over the composed feature",
-		".agents/skills/bench-craft-tickets/SKILL.md dropped the composed-feature final gate")
-	requireCollapsed(".agents/commands/bench-implement-spec.md", "no standalone full gate before landing",
-		".agents/commands/bench-implement-spec.md dropped the no-standalone-full-gate ticket cadence")
-	requireCollapsed(".agents/commands/bench-implement-spec.md", "`bench commit` is the only per-ticket full-project-gate boundary",
-		".agents/commands/bench-implement-spec.md dropped the bench-commit-only ticket gate boundary")
-	requireCollapsed(".agents/commands/bench-implement-spec.md", "If it goes red, repair from that output and retry",
-		".agents/commands/bench-implement-spec.md dropped the ticket red repair-and-retry cadence")
-	requireCollapsed(".agents/commands/bench-implement-spec.md", "normal green path is one full gate",
-		".agents/commands/bench-implement-spec.md dropped the ticket one-full-gate green cadence")
-	requireCollapsed(".agents/commands/bench-implement-spec.md", "/bench-final-check` still runs the final full gate over the composed feature",
-		".agents/commands/bench-implement-spec.md dropped the composed-feature final gate")
-	requireCollapsed(".agents/commands/bench-implement-spec.md", "A repair pass integrates the findings accepted for its round and stops at its repair ticket's green landing; another semantic review round opens only when that gate fails or the reviewer requests one.",
+	for _, anchor := range []struct{ rel, needle, diag string }{
+		{".agents/commands/bench-implement-spec.md", "`start` → `assign` → `checkpoint` → `integrate` → `review` → `promote`; `status` inspects the run and `abandon` plans or applies cleanup.", "bench-implement-spec dropped or reordered the eight-operation spec-build lifecycle"},
+		{".agents/commands/bench-implement-spec.md", "Re-derive the complete ready frontier and the harness's live capacity before dispatch. Assign every ownership-safe ticket up to the smaller of frontier size and available capacity.", "bench-implement-spec dropped initial frontier capacity dispatch"},
+		{".agents/commands/bench-implement-spec.md", "Refill the ownership-safe frontier after every integration or assignment release while another delegate remains active.", "bench-implement-spec replaced continuous frontier refill with drain-then-refill cadence"},
+		{".agents/commands/bench-implement-spec.md", "For every unused harness slot, record exactly one reason: dependency, overlapping ownership fence, unavailable harness capacity, or measured resource constraint.", "bench-implement-spec dropped the closed unused-slot reason set"},
+		{".agents/commands/bench-implement-spec.md", "Submit focused delegate evidence plus the coordinator-owned, different-kind probe through `checkpoint`.", "bench-implement-spec dropped focused evidence or the coordinator-owned different-kind probe"},
+		{".agents/commands/bench-implement-spec.md", "Review the exact candidate composition before `promote`.", "bench-implement-spec moved composed review after promotion"},
+		{".agents/commands/bench-implement-spec.md", "Accepted findings become new ownership-fenced repair tickets and re-enter `assign`, `checkpoint`, and `integrate` before a fresh composed review.", "bench-implement-spec routes an accepted repair outside the provisional lifecycle"},
+		{".agents/commands/bench-review-implementation.md", "For an active spec build, read `bench spec build status <slug> --full` and bind the review inputs to the exact candidate subject and recorded run base it reports. Confirm that subject is unchanged immediately before receipt submission; a changed candidate invalidates the review rather than letting a delta review authorize a new composition.", "bench-review-implementation dropped exact-candidate review input binding"},
+		{".agents/commands/bench-implement-spec.md", "After a green promotion, run `/bench-final-check` only for its terminal retained-evidence report and implementation retro.", "bench-implement-spec orphaned final-check's terminal report and implementation retro after promotion"},
+		{".agents/commands/bench-implement-spec.md", "Do not run `bench commit` for a provisional spec-build ticket", "bench-implement-spec restored a per-ticket whole-project gate to provisional spec builds"},
+		{".agents/skills/bench-craft-delegate/SKILL.md", "The coordinator probe's mutation kind differs from the delegate author's mutation kind.", "craft-delegate allows the coordinator probe to repeat the author's mutation kind"},
+		{".agents/skills/bench-craft-delegate/SKILL.md", "The lifecycle checkpoints, integrates, and releases the assignment; the coordinator does not run a generic release.", "craft-delegate dropped the spec-build checkpoint-integrate-release exception"},
+		{".agents/skills/bench-craft-delegate/SKILL.md", "A provisional checkpoint is not project-green evidence and cannot satisfy a done-claim.", "craft-delegate lets provisional evidence claim project green"},
+		{".bench/BENCH.md", "`bench spec build start|assign|checkpoint|integrate|review|status|promote|abandon`", ".bench/BENCH.md dropped an operation from the spec-build inventory"},
+		{".bench/BENCH.md", "Provisional cadence is exclusive to reviewed spec-backed builds; light-path work, `bench shift`, and ordinary `bench commit` remain commit-on-green.", ".bench/BENCH.md broadened provisional cadence beyond reviewed spec-backed builds"},
+		{".bench/BENCH-reference.md", "| `start` | create or resume the subject-bound run |", "BENCH-reference misroutes spec build start"},
+		{".bench/BENCH-reference.md", "| `assign` | lease one ownership-fenced ticket worktree |", "BENCH-reference misroutes spec build assign"},
+		{".bench/BENCH-reference.md", "| `checkpoint` | validate focused evidence and bind a provisional commit |", "BENCH-reference misroutes spec build checkpoint"},
+		{".bench/BENCH-reference.md", "| `integrate` | compare-and-swap one verified checkpoint into the candidate |", "BENCH-reference misroutes spec build integrate"},
+		{".bench/BENCH-reference.md", "| `review` | bind three-axis evidence to the exact candidate |", "BENCH-reference misroutes spec build review"},
+		{".bench/BENCH-reference.md", "| `status` | inspect durable state and retained evidence |", "BENCH-reference misroutes spec build status"},
+		{".bench/BENCH-reference.md", "| `promote` | gate and publish the exact reviewed composition |", "BENCH-reference misroutes spec build promote"},
+		{".bench/BENCH-reference.md", "| `abandon` | plan or apply recoverable cleanup |", "BENCH-reference misroutes spec build abandon"},
+		{"bin/bench.sh", "bench spec build assign <slug> --ticket <ticket> --request <id>", "bench help dropped or malformed spec build assign grammar"},
+		{"bin/bench.sh", "bench spec build start <slug>", "bench help dropped spec build start grammar"},
+		{"bin/bench.sh", "bench spec build checkpoint <slug> --assignment <id> --evidence <receipt>", "bench help dropped or malformed spec build checkpoint grammar"},
+		{"bin/bench.sh", "bench spec build integrate <slug> --assignment <id>", "bench help dropped or malformed spec build integrate grammar"},
+		{"bin/bench.sh", "bench spec build review <slug> --evidence <receipt>", "bench help dropped or malformed spec build review grammar"},
+		{"bin/bench.sh", "bench spec build status <slug> [--full]", "bench help dropped spec build status grammar"},
+		{"bin/bench.sh", "bench spec build promote <slug>", "bench help dropped spec build promote grammar"},
+		{"bin/bench.sh", "bench spec build abandon <slug> [--apply <fingerprint>]", "bench help dropped abandon plan/apply grammar"},
+		{"projects/benchkit.md", "gpt-5.6-sol / high", "benchkit profile replaced the approved spec-build guidance line"},
+		{"projects/benchkit.md", "Both dogfood traces use the public porcelain", "benchkit profile dropped the public-porcelain dogfood traces"},
+		{"projects/benchkit.md", "Run `bench structure` before and after the guidance cut", "benchkit profile dropped the spec-build structure preflight"},
+		{"CHANGELOG.md", "Light-path changes, `bench shift`, and ordinary `bench commit` keep commit-on-green cadence.", "CHANGELOG dropped the unchanged-path control for provisional spec builds"},
+	} {
+		requireCollapsed(anchor.rel, anchor.needle, anchor.diag)
+	}
+	requireCollapsed(".agents/commands/bench-implement-spec.md", "A repair pass integrates the findings accepted for its round, performs one fresh composed review, and stops at the next promotion result; another semantic review round opens only when the composition changes or the reviewer requests one.",
 		".agents/commands/bench-implement-spec.md dropped the terminal repair-pass bound")
+	for _, rawRoute := range []string{"Create the checkpoint with `git commit`", "advance the candidate with `git update-ref`", "create the assignment with `git worktree`", "replay the patch with `git cherry-pick`"} {
+		forbid(".agents/commands/bench-implement-spec.md", rawRoute, "bench-implement-spec synthesizes lifecycle Git plumbing outside the eight public operations")
+	}
 
 	requireCollapsed(".agents/commands/bench-write-spec.md", "Top-level `decisions/` holds pre-spec working maps",
 		".agents/commands/bench-write-spec.md dropped the top-level pre-spec working-map posture")
@@ -393,8 +295,8 @@ func checkWorkflowAnchors(root string) []string {
 	requireCollapsed(".agents/commands/bench-write-spec.md", "Whole-folder retirement removes the compiled maps and map-owned assets",
 		".agents/commands/bench-write-spec.md dropped the whole-folder compiled decision-map retirement")
 
-	requireCollapsed(".agents/commands/bench-final-check.md", "only after both the spec's landing gate and landing commit are green",
-		".agents/commands/bench-final-check.md dropped the after-green implementation-retro placement")
+	requireCollapsed(".agents/commands/bench-final-check.md", "only after `bench spec build status <slug> --full` reports a terminal promoted run and its retained exact green evidence",
+		".agents/commands/bench-final-check.md dropped the terminal promoted implementation-retro placement")
 	for _, section := range []string{
 		"## Outcome",
 		"## Gate-stage timings",
@@ -459,8 +361,12 @@ func checkWorkflowAnchors(root string) []string {
 			"dropped the done-claim verification pointer to invariant 1 and craft-delegate"},
 		{"When the review delegate cannot run or returns nothing, the run stops and reports at that boundary rather than proceeding to final-check with review unrun",
 			"dropped the stop-at-the-boundary rule for an unavailable or empty-handed review delegate"},
-		{"Concrete defects — bugs, spec misses, missing coverage — are fixed and re-gated without stopping; contestable design and judgment findings are flagged in the exit report for reviewer veto, not applied",
-			"dropped a finding-disposition half (fix-and-re-gate concrete, or flag-don't-apply judgment)"},
+		{"Concrete defects — bugs, spec misses, missing coverage — return through repair assignment, checkpoint, and integration without stopping; contestable design and judgment findings are flagged in the exit report for reviewer veto, not applied",
+			"dropped a finding-disposition half (provisional repair cadence, or flag-don't-apply judgment)"},
+		{"Submit the delegate's bounded receipt through `bench spec build review` only while its candidate subject still matches the exact reviewed composition",
+			"dropped exact-subject review submission from the full orchestration"},
+		{"Then run **final-check inline** only to report the retained terminal evidence and capture the retro",
+			"dropped terminal final-check reporting after promotion"},
 		{"bounded by this command's terminal repair-pass bound and routed through `craft-delegate`'s repair allowance",
 			"dropped the repair-bound pointers; this mode adds no second version of either rule"},
 		{"At every phase boundary the run writes the phase reached into `session-handoff.md`'s State section, then refreshes the pin block with `bench handoff --next <command>`",
@@ -479,9 +385,9 @@ func checkWorkflowAnchors(root string) []string {
 			"dropped the per-row coverage accounting against bench coverage's enumeration"},
 		{"When the spec carries no coverage map, the report says so and accounts for the user stories instead",
 			"dropped the no-coverage-map fallback to user-story accounting"},
-		{"Every phase claim in the exit report cites the record that proves it: the review delegate's invocation, the commit shas the phase landed, the `session-handoff.md` boundary rewrite",
+		{"Every phase claim in the exit report cites the record that proves it: the review delegate's invocation, lifecycle status and retained evidence, and the `session-handoff.md` boundary rewrite",
 			"dropped the record-citation rule for phase claims in the exit report"},
-		{"ask a second, separate question: whether to add a cross-harness falsification pass over the diff before final-check — the Codex CLI at the top binding, charged to refute the claim that the spec was implemented rather than to grade it against the three axes",
+		{"ask a second, separate question: whether to add a cross-harness falsification pass over the diff before promotion — the Codex CLI at the top binding, charged to refute the claim that the spec was implemented rather than to grade it against the three axes",
 			"dropped the falsification-pass offer with its refutation charge"},
 		{"its own question, not a fourth route in the escalation menu, and it never runs standing: absent the trigger it is not offered",
 			"dropped the falsification pass's separate-question and never-standing bounds"},
@@ -497,7 +403,7 @@ func checkWorkflowAnchors(root string) []string {
 		{"by default", "phrases `--full` as default-on; the mode is opt-in and plain invocation keeps implement-only semantics"},
 		{"infers the spec", "reintroduces a spec-inferring fallback; a missing or unknown spec argument refuses and says which"},
 		{"review the diff inline", "reintroduces the inline self-review fallback; the review runs in one fresh-context delegate"},
-		{"stops on a concrete defect", "stops the run on a concrete defect; concrete defects are fixed and re-gated in-run"},
+		{"stops on a concrete defect", "stops the run on a concrete defect; concrete defects return through the provisional repair cadence"},
 		{"applies a judgment finding", "applies a judgment finding; design and judgment findings are flagged for reviewer veto"},
 		{"obviously needed", "reintroduces escalate-if-obviously-needed; escalation always pauses and asks the reviewer"},
 		{"while the file is open", "licenses opportunistic improvement while the file is open; the scope fence records it instead"},

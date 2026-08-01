@@ -96,6 +96,22 @@ Detailed output contracts for the AXI query surfaces live in the project
 profile (`projects/<name>.md`);
 hook and adapter plumbing is described in the sections below.
 
+### Spec-build lifecycle lookup
+
+The canonical implementation phase is `.agents/commands/bench-implement-spec.md`;
+this table is the operation-to-purpose lookup, not a second workflow:
+
+| operation | routing purpose |
+|---|---|
+| `start` | create or resume the subject-bound run |
+| `assign` | lease one ownership-fenced ticket worktree |
+| `checkpoint` | validate focused evidence and bind a provisional commit |
+| `integrate` | compare-and-swap one verified checkpoint into the candidate |
+| `review` | bind three-axis evidence to the exact candidate |
+| `status` | inspect durable state and retained evidence |
+| `promote` | gate and publish the exact reviewed composition |
+| `abandon` | plan or apply recoverable cleanup |
+
 ## Plumbing subcommands
 
 Driven by hooks and adapters, never typed by sessions — the one enumeration

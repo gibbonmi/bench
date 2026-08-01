@@ -76,6 +76,23 @@ sliced the build across delegates, check each slice against `craft-spec`'s
 "Slicing a build for delegates" before sending the charge — charge time is
 when the fence is still checkable.
 
+### Provisional spec-build assignments
+
+A reviewed spec-backed build uses the public `bench spec build` lifecycle instead
+of the generic per-ticket landing below. The delegate returns focused evidence and
+its mutation probe from its owned assignment; it does not checkpoint, integrate,
+release, or claim the assignment green. The coordinator assembles the receipt
+outside that worktree and probes the exact returned tree independently. The
+coordinator probe's mutation kind differs from the delegate author's mutation
+kind. A second instance of the same omission or swap is correlated evidence, not
+an independent probe.
+
+The lifecycle checkpoints, integrates, and releases the assignment; the
+coordinator does not run a generic release. A provisional checkpoint is not
+project-green evidence and cannot satisfy a done-claim. Only the exact composed
+promotion subject can receive the gate's green verdict. The generic isolation and
+verification rules below still apply to light-path and non-spec worktrees.
+
 The charge also names the gate layer that owns each artifact class the
 delegate touches — workflows and `.bench/` content to canary, gate output
 shape to canary, skills and commands to conformance — and states the converse

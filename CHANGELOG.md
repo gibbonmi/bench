@@ -43,6 +43,10 @@ All notable user-facing changes to Bench are documented here. The format follows
   `bench commit` as its one oracle run instead of a standalone gate first.
 - Made implementation start from independently-green ticket files, with one
   fresh write-delegate charge and one atomic full-gate landing per ticket.
+- Made reviewed spec builds checkpoint and integrate ownership-safe frontier
+  tickets provisionally, review the exact composition, and gate once at promote.
+  Light-path changes, `bench shift`, and ordinary `bench commit` keep
+  commit-on-green cadence.
 - Made final check capture a spec-backed implementation retro after green
   landing, with reviewed disposition and removal through roadmap maintenance.
 - Co-located compiled decision maps and their owned assets with their specs while

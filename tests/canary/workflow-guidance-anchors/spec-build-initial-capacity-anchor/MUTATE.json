@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-implement-spec.md",
+    "old": "Re-derive the complete ready frontier and the harness's live capacity before\ndispatch. Assign every ownership-safe ticket up to the smaller of frontier size\nand available capacity.",
+    "new": ""
+  }
+]

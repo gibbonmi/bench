@@ -1,0 +1,7 @@
+[
+  {
+    "path": ".agents/commands/bench-implement-spec.md",
+    "old": "For every unused harness slot, record exactly one\nreason: dependency, overlapping ownership fence, unavailable harness capacity,\nor measured resource constraint.",
+    "new": "For every unused harness slot, record exactly one reason: dependency, overlapping ownership fence, unavailable harness capacity, or measured resource constraint. An unused slot may instead be `NOT\n  PARALLELIZABLE`."
+  }
+]
