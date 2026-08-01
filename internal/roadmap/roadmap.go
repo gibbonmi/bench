@@ -50,11 +50,11 @@ var roadmapGrammar = usage.Grammar{
 // when their reads fail, and a literal repeated there is a second derivation of a name
 // this package decides.
 const (
-	IdeasFile   = "IDEAS.md"
+	IdeasFile   = "capture/IDEAS.md"
 	RoadmapFile = "ROADMAP.md"
 )
 
-// IdeaCommand implements `bench idea <text...>`: it appends a dated line to IDEAS.md.
+// IdeaCommand implements `bench idea <text...>`: it appends a dated line to capture/IDEAS.md.
 // The args are joined with single spaces; an empty or all-whitespace text yields the
 // usage string on exit 2 without touching the file. Otherwise it resolves the repo
 // root, normalizes a missing trailing newline (so a hand-edited last line without one
@@ -92,6 +92,11 @@ func IdeaCommand(args []string) (string, int) {
 		text += " [occurrence:" + owner + "/" + incident + "]"
 	}
 	file := filepath.Join(root, IdeasFile)
+	// The inbox lives in a directory a fresh repo may not have yet, and parking an idea
+	// is often the first thing that touches it.
+	if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+		return cannotWriteIdeas(err), 1
+	}
 
 	f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
@@ -224,7 +229,7 @@ func RoadmapText(root string) (text string, present bool) {
 	return doc.Text, true
 }
 
-// ParkedIdeas returns the parked idea lines from IDEAS.md — every line beginning `- `, the
+// ParkedIdeas returns the parked idea lines from capture/IDEAS.md — every line beginning `- `, the
 // same lines DrainCounts tallies (both go through ideaLines, one source). A file that did
 // not read as a usable document yields nil, which the dashboard renders as its empty state.
 func ParkedIdeas(root string) []string {
@@ -275,7 +280,7 @@ func RecommendedSequence(roadmap string) string {
 	return doc.SequenceText
 }
 
-// learningCount classifies .bench/learnings.md and counts its parser-approved open rows.
+// learningCount classifies capture/learnings.md and counts its parser-approved open rows.
 // Absent is the quiet-journal posture; every present non-document state is retained so
 // the drain surfaces unknown evidence instead of a fabricated clean journal.
 func learningCount(root string) (int, bounds.FileState) {
@@ -293,7 +298,7 @@ func learningCount(root string) (int, bounds.FileState) {
 	return len(learnings.Rows(c.Data)), bounds.StateParsed
 }
 
-// ideaLines is the one reader of IDEAS.md-style parked lines: every line beginning `- `,
+// ideaLines is the one reader of capture/IDEAS.md-style parked lines: every line beginning `- `,
 // returned with the file's own readability state. DrainCounts tallies them and
 // ParkedIdeas returns them for the dashboard, so the count and the rendered list can
 // never disagree about either the lines or what was readable. Absent or empty is no

@@ -20,7 +20,7 @@ Close by reporting the new assessment's headline: how the prior backlog verified
 count of high/med/low findings, and the top of the ranked backlog. Route findings by
 kind — operational items (drain a learning, delete a salvage branch) go to
 `/bench-what-next`; new backlog items enter `ROADMAP.md` only through that reviewed
-drain, so park them with `bench idea` (or into `IDEAS.md`) rather than editing the
+drain, so park them with `bench idea` (or into `capture/IDEAS.md`) rather than editing the
 roadmap here. Recommend the next command in this harness's invocation form.
 
 ## 1. Verify the previous assessment landed

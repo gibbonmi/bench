@@ -182,7 +182,7 @@ The visual: a single-file terminal-styled report. Sections in order:
    border, click-through to reading order.
 5. **OBSERVABILITY** — what an operator will see in operation, each entry
    owned by a file.
-6. **RETRO** — from `.bench/retros/<slug>.md` when present, omitted when
+6. **RETRO** — from `capture/retros/<slug>.md` when present, omitted when
    absent; findings phrased "what was wrong. Now what."
 7. **READING ORDER** — numbered rows (heat chip, one-line guidance, coverage
    badge, diffstat, NEW tag); expansion opens with a boxed blue `+ view diff`

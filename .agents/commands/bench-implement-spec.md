@@ -1,5 +1,5 @@
 ---
-description: Implement a spec (or a clearly-scoped change) at the pre-agreed seams. Use after /bench-write-spec, or for a change the lighter-path threshold in .bench/BENCH.md lets you build without a spec. Declares its line and uses TDD at seams. An opt-in `--full <spec>` run carries the spec through implementation, exact-candidate review, promotion, and terminal reporting — resuming from session-handoff.md.
+description: Implement a spec (or a clearly-scoped change) at the pre-agreed seams. Use after /bench-write-spec, or for a change the lighter-path threshold in .bench/BENCH.md lets you build without a spec. Declares its line and uses TDD at seams. An opt-in `--full <spec>` run carries the spec through implementation, exact-candidate review, promotion, and terminal reporting — resuming from capture/session-handoff.md.
 ---
 
 # /bench-implement-spec — do the work at the seams
@@ -249,7 +249,7 @@ counterweights the fix-don't-park route, and whether a discovered defect is
 fixed or parked stays `.bench/BENCH.md`'s Workflow section's test.
 
 **Phase boundaries persist.** At every phase boundary the run writes the phase
-reached into `session-handoff.md`'s State section, then refreshes the pin
+reached into `capture/session-handoff.md`'s State section, then refreshes the pin
 block with `bench handoff --next <command>`. The phase reached is the one fact
 this mode adds; every other field is the existing handoff contract's. A
 re-invoked `--full` resumes from the phase the handoff names instead of
@@ -283,4 +283,4 @@ won't-handle — named row by row against `bench coverage <spec>`'s enumeration.
 When the spec carries no coverage map, the report says so and accounts for the
 user stories instead. Every phase claim in the exit report cites the record
 that proves it: the review delegate's invocation, lifecycle status and retained
-evidence, and the `session-handoff.md` boundary rewrite.
+evidence, and the `capture/session-handoff.md` boundary rewrite.

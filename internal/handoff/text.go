@@ -1,5 +1,5 @@
 // Package handoff implements the bench handoff command's core: collecting the
-// pin facts from the git tree, splitting an existing session-handoff.md into
+// pin facts from the git tree, splitting an existing capture/session-handoff.md into
 // its sections, rendering the regenerated document, and writing it back. The
 // reviewer-owned State section passes through byte-for-byte; every other
 // section is derived.
@@ -8,7 +8,7 @@ package handoff
 // ShapeSection is the body of the handoff's "## Shape" section, emitted below
 // the heading the renderer writes itself. It is the single source of the
 // handoff's Shape contract, exported so the conformance check can import it and
-// compare it against the tracked session-handoff.md, proving the artifact is
+// compare it against the tracked capture/session-handoff.md, proving the artifact is
 // derived rather than a second source. A double-quoted literal because the
 // text carries backticks.
 const ShapeSection = "Rewritten in full at every phase close, pruned rather than accreted: a fresh\n" +

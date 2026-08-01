@@ -1,5 +1,5 @@
 ---
-description: Implement a spec (or a clearly-scoped change) at the pre-agreed seams. Use after /bench-write-spec, or for a change the lighter-path threshold in .bench/BENCH.md lets you build without a spec. Declares its line, uses TDD at seams, ends on a green gate. An opt-in `--full <spec>` run carries the spec on to push-ready — implement, fresh-delegate review, final check — resuming from session-handoff.md.
+description: Implement a spec (or a clearly-scoped change) at the pre-agreed seams. Use after /bench-write-spec, or for a change the lighter-path threshold in .bench/BENCH.md lets you build without a spec. Declares its line, uses TDD at seams, ends on a green gate. An opt-in `--full <spec>` run carries the spec on to push-ready — implement, fresh-delegate review, final check — resuming from capture/session-handoff.md.
 ---
 
 # /bench-implement-spec — do the work at the seams
@@ -222,4 +222,4 @@ won't-handle — named row by row against `bench coverage <spec>`'s enumeration.
 When the spec carries no coverage map, the report says so and accounts for the
 user stories instead. Every phase claim in the exit report cites the record
 that proves it: the review delegate's invocation, the commit shas the phase
-landed, the `session-handoff.md` boundary rewrite.
+landed, the `capture/session-handoff.md` boundary rewrite.

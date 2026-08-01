@@ -16,8 +16,8 @@ func TestAXILearningsFailClosed(t *testing.T) {
 	t.Parallel()
 	contract.SkipIfSubjectBenchMissing(t)
 	f := contract.NewFixture(t)
-	f.WriteFile(".bench/learnings.md", "## 2026-01-01 — first learning  [open]\n")
-	path := filepath.Join(f.Root, ".bench", "learnings.md")
+	f.WriteFile("capture/learnings.md", "## 2026-01-01 — first learning  [open]\n")
+	path := filepath.Join(f.Root, "capture", "learnings.md")
 	t.Cleanup(func() { _ = os.Chmod(path, 0o644) })
 	if err := os.Chmod(path, 0o000); err != nil {
 		capability.Capability(t, capability.Privilege, "cannot strip permissions: "+err.Error())
@@ -63,12 +63,12 @@ func TestAXILearningsPresentNonJournalIsNotEmpty(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := contract.NewFixture(t)
-			f.WriteFile(".bench/learnings.md", tc.content)
+			f.WriteFile("capture/learnings.md", tc.content)
 
 			out := f.Bench("learnings")
 
 			out.RequireExit(1)
-			requireContainsFold(t, out.Stdout, "error: .bench/learnings.md is "+tc.state)
+			requireContainsFold(t, out.Stdout, "error: capture/learnings.md is "+tc.state)
 		})
 	}
 }
@@ -83,7 +83,7 @@ func TestAXILearningsMalformedRows(t *testing.T) {
 	t.Parallel()
 	contract.SkipIfSubjectBenchMissing(t)
 	f := contract.NewFixture(t)
-	f.WriteFile(".bench/learnings.md", "## 2026-01-01 — good entry  [open]\n## bad heading with no date")
+	f.WriteFile("capture/learnings.md", "## 2026-01-01 — good entry  [open]\n## bad heading with no date")
 
 	out := f.Bench("learnings")
 
@@ -105,7 +105,7 @@ func TestAXILearningsDatedStateRequired(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := contract.NewFixture(t)
-			f.WriteFile(".bench/learnings.md", "## 2026-01-02 — good entry  [open]\n"+tc.heading)
+			f.WriteFile("capture/learnings.md", "## 2026-01-02 — good entry  [open]\n"+tc.heading)
 
 			out := f.Bench("learnings")
 
@@ -122,15 +122,15 @@ func TestAXILearningsMalformedStateKeepsDrainVisible(t *testing.T) {
 	contract.SkipIfSubjectBenchMissing(t)
 	f := contract.NewFixture(t)
 	f.WriteFile("ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. first\n2. second\n")
-	f.WriteFile(".bench/learnings.md", "## 2026-01-01 — missing state\n")
+	f.WriteFile("capture/learnings.md", "## 2026-01-01 — missing state\n")
 
 	roadmap := f.Bench("roadmap")
 	roadmap.RequireExit(0)
-	requireContainsFold(t, roadmap.Stdout, "unknown (.bench/learnings.md is malformed)")
+	requireContainsFold(t, roadmap.Stdout, "unknown (capture/learnings.md is malformed)")
 
 	status := f.Bench("status", "--all")
 	status.RequireExit(0)
-	requireContainsFold(t, status.Stdout, "unknown (.bench/learnings.md is malformed)")
+	requireContainsFold(t, status.Stdout, "unknown (capture/learnings.md is malformed)")
 }
 
 // TestAXILearningsWrongType drives the wrong-type state through two real commands. It
@@ -147,19 +147,19 @@ func TestAXILearningsWrongType(t *testing.T) {
 	contract.SkipIfSubjectBenchMissing(t)
 	f := contract.NewFixture(t)
 	f.WriteFile("ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. first\n2. second\n")
-	if err := os.MkdirAll(filepath.Join(f.Root, ".bench", "learnings.md"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(f.Root, "capture", "learnings.md"), 0o755); err != nil {
 		t.Fatalf("park a directory at the journal path: %v", err)
 	}
 
 	out := f.Bench("learnings")
 	out.RequireExit(1)
-	requireContainsFold(t, out.Stdout, "error: .bench/learnings.md is wrong-type")
+	requireContainsFold(t, out.Stdout, "error: capture/learnings.md is wrong-type")
 
 	board := f.Bench("status", "--all")
 	board.RequireExit(0)
-	requireContainsFold(t, board.Stdout, "unknown (.bench/learnings.md is wrong-type)")
+	requireContainsFold(t, board.Stdout, "unknown (capture/learnings.md is wrong-type)")
 
 	roadmap := f.Bench("roadmap")
 	roadmap.RequireExit(0)
-	requireContainsFold(t, roadmap.Stdout, "unknown (.bench/learnings.md is wrong-type)")
+	requireContainsFold(t, roadmap.Stdout, "unknown (capture/learnings.md is wrong-type)")
 }

@@ -15,7 +15,7 @@ import (
 func TestLinkContracts(t *testing.T) {
 	t.Parallel()
 	contract.SkipIfSubjectBenchMissing(t)
-	contract.RunParallel(t, "bench init does not scaffold .bench/learnings.md (self-learning journal)", testInitScaffoldsLearnings)
+	contract.RunParallel(t, "bench init does not scaffold capture/learnings.md (self-learning journal)", testInitScaffoldsLearnings)
 	contract.RunParallel(t, "a second bench init clobbered an existing .bench/gate.sh", testInitExistingGateIdempotence)
 	contract.RunParallel(t, "bench link safe fresh/relink contract failed", testLinkSafeFreshRelink)
 	contract.RunParallel(t, "bench link dist/.gitignore contract failed", testLinkWritesDistGitignore)
@@ -43,11 +43,11 @@ func testInitScaffoldsLearnings(t *testing.T) {
 
 	f.Bench("init").RequireExit(0)
 
-	if !f.Exists(".bench/learnings.md") {
-		t.Fatal("bench init does not scaffold .bench/learnings.md")
+	if !f.Exists("capture/learnings.md") {
+		t.Fatal("bench init does not scaffold capture/learnings.md")
 	}
-	requireFixtureFileContains(t, f, ".bench/learnings.md", "/bench-what-next", "scaffolded journal header does not name /bench-what-next as the journal exit")
-	requireFixtureFileNotContains(t, f, ".bench/learnings.md", "/bench-integrate-learnings", "scaffolded journal header still names the retired learnings-integration phase")
+	requireFixtureFileContains(t, f, "capture/learnings.md", "/bench-what-next", "scaffolded journal header does not name /bench-what-next as the journal exit")
+	requireFixtureFileNotContains(t, f, "capture/learnings.md", "/bench-integrate-learnings", "scaffolded journal header still names the retired learnings-integration phase")
 }
 
 func testInitExistingGateIdempotence(t *testing.T) {

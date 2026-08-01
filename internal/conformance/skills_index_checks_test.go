@@ -268,7 +268,7 @@ func checkRoadmapPromotionAnchors(root string) []string {
 		diags = append(diags, "/bench-shape-idea does not state that pulling an item leaves its roadmap row in place (row presence is status)")
 	}
 	if strings.Contains(collapseSpace(text), "capture-and-forget") {
-		diags = append(diags, "/bench-shape-idea reintroduces capture-sink roadmap wording; IDEAS.md is the capture inbox and ROADMAP.md the working plan")
+		diags = append(diags, "/bench-shape-idea reintroduces capture-sink roadmap wording; capture/IDEAS.md is the capture inbox and ROADMAP.md the working plan")
 	}
 	return diags
 }

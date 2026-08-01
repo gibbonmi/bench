@@ -1,5 +1,5 @@
 ---
-description: Roadmap maintenance — reconcile ROADMAP.md against the tree, drain IDEAS.md and the learnings journal into it, refresh the recommended sequence, and propose the whole pass as one batch diff for reviewer approval. The single exit for parked ideas and open learnings. Maintenance, not a workflow phase.
+description: Roadmap maintenance — reconcile ROADMAP.md against the tree, drain capture/IDEAS.md and the learnings journal into it, refresh the recommended sequence, and propose the whole pass as one batch diff for reviewer approval. The single exit for parked ideas and open learnings. Maintenance, not a workflow phase.
 disable-model-invocation: true
 ---
 
@@ -8,7 +8,7 @@ disable-model-invocation: true
 ## Entry orientation
 
 This is the single roadmap-maintenance phase. `bench status` and `bench roadmap`
-point here whenever `IDEAS.md` has parked lines or `.bench/learnings.md` has open
+point here whenever `capture/IDEAS.md` has parked lines or `capture/learnings.md` has open
 entries. One run reconciles the roadmap against the tree, drains both capture
 sources, refreshes the recommended sequence, and hands the reviewer one diff to
 approve.
@@ -30,7 +30,7 @@ markers — history lives in git.
 
 ## 2. Drain the inbox
 
-`IDEAS.md` is a pure inbox: every run empties to zero. Each parked line gets one
+`capture/IDEAS.md` is a pure inbox: every run empties to zero. Each parked line gets one
 disposition in the roadmap — a new prioritized row, a merge into the row that
 already covers it, or a drop as already-triaged — and the parked-pending-evidence
 tier is a valid destination for items awaiting a real trigger. No line stays
@@ -38,7 +38,7 @@ parked in the inbox; partial drains would kill the empty-state trigger.
 
 ## 3. Verdict the journal
 
-Read `.bench/learnings.md` itself, not just the open-entry count — a malformed
+Read `capture/learnings.md` itself, not just the open-entry count — a malformed
 entry still needs a verdict. Every open entry gets a verdict in the batch diff:
 work-shaped becomes a roadmap item; rule-shaped becomes a roadmap item whose
 next action is the kit edit (built later under the `craft-synthesis` discipline,

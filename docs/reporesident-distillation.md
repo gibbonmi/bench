@@ -2,7 +2,7 @@
 
 Research note behind six `ROADMAP.md` rows: FT101 (§8), FT106 (§1 and §5), FT107 (§3),
 FT108 (§2), FT109 (§4), and FT110 (§6). It was written to let the 2026-07-23 drain
-verdict eight parked `IDEAS.md` lines without re-reading the source repo, and it now
+verdict eight parked `capture/IDEAS.md` lines without re-reading the source repo, and it now
 carries the design reasoning and rejected alternatives those rows point at rather than
 inline. Delete it when the last referencing row ships. Section 7 has no row: the
 `.bench/BENCH.md` Capture section already routes any tangent worth not losing to
@@ -159,13 +159,13 @@ journal entry plus `git log -5`, and note the crash.* Detail and history live in
 append-only journal, which is grepped, never loaded. Mid-session, only the one-line
 `Active:` field is updated, explicitly as crash insurance.
 
-**The bench gap.** `session-handoff.md` is currently a 66-line free-form narrative with
+**The bench gap.** `capture/session-handoff.md` is currently a 66-line free-form narrative with
 no template, no cap, no rewrite rule, and no conflict rule. The `AGENTS.md` phase-close
 rule says the closing message must emit a continuation prompt *or* update the handoff —
 so the file's shape is entirely up to whoever writes it, and nothing says what happens
 when it disagrees with the tree.
 
-**How I'd land it.** Put the template inside `session-handoff.md` itself (RepoResident's
+**How I'd land it.** Put the template inside `capture/session-handoff.md` itself (RepoResident's
 trick — the template can't drift from the artifact if it *is* the artifact) and add the
 rewrite-in-full plus conflict rules to the phase-close handoff paragraph in `AGENTS.md`.
 
@@ -253,8 +253,8 @@ promotes the still-true ones into `ISSUES.md` (urgent ones also get a state watc
 and drops the dead ones during rollup. `ISSUES.md` states the reason bluntly: *"if 'we
 should fix that later' isn't a line here, it will be forgotten."*
 
-**The bench gap — verify before building.** `.bench/learnings.md` is scoped to *process*
-(deviations, judgment calls, should-have-askeds, codification candidates). `IDEAS.md` is
+**The bench gap — verify before building.** `capture/learnings.md` is scoped to *process*
+(deviations, judgment calls, should-have-askeds, codification candidates). `capture/IDEAS.md` is
 the reviewer-facing idea inbox. Neither obviously owns "I noticed this unrelated path is
 racy while working on something else." `bench idea` is probably the intended home and may
 be entirely sufficient — in which case this drains as a one-line clarification in
@@ -274,7 +274,7 @@ authority, which violates our rule that the agent captures and the reviewer deci
 ## 8. Bounded context, scoped for a monorepo — merged into FT101 (2026-07-23)
 
 **Not a drain candidate.** The reviewer merged this into `ROADMAP.md` **FT101** on
-2026-07-23 and dropped its `IDEAS.md` line, so this section is background for that row.
+2026-07-23 and dropped its `capture/IDEAS.md` line, so this section is background for that row.
 FT101 widened from "multi-context domain docs for monorepos" to "per-context scope:
 domain docs and profile" — the `CONTEXT.md` half it already had, plus the profile half
 below. Read on for the reasoning, and for the gate-scoping pushback recorded at the end,

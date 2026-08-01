@@ -55,19 +55,19 @@ branch-agnostic. This line is only the binding.)
   not a clean bill, and one combined capture-drain row (parked ideas + open learnings)
   pointing at `/bench-what-next`. A stale gate softens to `capture-only drift` /
   `re-run when convenient` only when every changed path is in the fixed, exact
-  allowlist (`ROADMAP.md`, `IDEAS.md`, `.bench-notes.md`, `session-handoff.md` — no
+  allowlist (`ROADMAP.md`, `capture/IDEAS.md`, `.bench-notes.md`, `capture/session-handoff.md` — no
   directory, suffix, or markdown-class matching; expanding it is a new decision); any
   mixed or untrusted diff fails closed to the strong stale row. Its severity-1 git
   signal reports dirty paths from the named/current checkout while aggregating
   unpushed commits and unique local branches across the repository; severity-2 intent
   joins the shared common-directory ledger, compact by default and expanded by `--all`.
-- **The capture inbox and working roadmap** (`bench idea` → `IDEAS.md`;
+- **The capture inbox and working roadmap** (`bench idea` → `capture/IDEAS.md`;
   `bench roadmap` → `ROADMAP.md`). Capture-and-forget: park an out-of-scope idea,
   commit to nothing; ideas graduate only through a `/bench-what-next` drain into the
   working roadmap. The contract (gate-tested in a throwaway repo): `idea` appends one
   dated line and creates the inbox; a no-arg `idea` errors without appending;
   `roadmap` prints the working document plus drain status, or its
-  `## Recommended sequence` when nothing needs draining. `IDEAS.md` and `ROADMAP.md`
+  `## Recommended sequence` when nothing needs draining. `capture/IDEAS.md` and `ROADMAP.md`
   are per-consumer content — never in the kit's `package.json` `files[]`.
 - **The kit content surface** (`.agents/skills/*/SKILL.md`, `.agents/commands/*.md`).
   Portable harness-facing content. The contract is structural: every skill carries YAML

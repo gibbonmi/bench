@@ -178,8 +178,8 @@ func checkWorkflowAnchors(root string) []string {
 	requireCollapsed(".bench/BENCH.md", "a linked repo upgrades with `bench upgrade`", ".bench/BENCH.md does not name bench upgrade as the consumer's route onto a newer kit")
 	requireCollapsed(".bench/BENCH-reference.md", "`.agents/skills/bench-craft-synthesis/SKILL.md` (kit-only)", ".bench/BENCH-reference.md skills index does not mark the kit-only craft-synthesis row")
 
-	requireCollapsed(".bench/BENCH.md", "Parked ideas land in `IDEAS.md`", ".bench/BENCH.md Capture section does not name IDEAS.md as the capture sink")
-	requireCollapsed(".bench/BENCH.md", "append the dated line (`- YYYY-MM-DD <text>`) to `IDEAS.md`", ".bench/BENCH.md Capture section lost the no-PATH fallback append to IDEAS.md")
+	requireCollapsed(".bench/BENCH.md", "Parked ideas land in `capture/IDEAS.md`", ".bench/BENCH.md Capture section does not name capture/IDEAS.md as the capture sink")
+	requireCollapsed(".bench/BENCH.md", "append the dated line (`- YYYY-MM-DD <text>`) to `capture/IDEAS.md`", ".bench/BENCH.md Capture section lost the no-PATH fallback append to capture/IDEAS.md")
 
 	// Shared-rule placement — checkSharedRuleSingleSource's marker list owns each
 	// sentence's presence and non-duplication; these anchors add only placement,
@@ -310,18 +310,18 @@ func checkWorkflowAnchors(root string) []string {
 		requireCollapsed(".agents/commands/bench-final-check.md", section,
 			fmt.Sprintf(".agents/commands/bench-final-check.md dropped the required implementation-retro evidence section: %s", section))
 	}
-	requireCollapsed(".agents/commands/bench-final-check.md", "rewrite `.bench/retros/<spec-slug>.md` in full",
+	requireCollapsed(".agents/commands/bench-final-check.md", "rewrite `capture/retros/<spec-slug>.md` in full",
 		".agents/commands/bench-final-check.md dropped whole-file implementation-retro replacement")
 	requireCollapsed(".agents/commands/bench-final-check.md", "Do not run another gate or commit just to capture the retro",
 		".agents/commands/bench-final-check.md added an implementation-retro gate outside the normal cadence")
-	requireCollapsed(".bench/BENCH.md", "/bench-final-check` writes `.bench/retros/<spec-slug>.md`",
+	requireCollapsed(".bench/BENCH.md", "/bench-final-check` writes `capture/retros/<spec-slug>.md`",
 		".bench/BENCH.md dropped the implementation-retro capture owner")
 
 	requireCollapsed(".agents/commands/bench-what-next.md", "The snapshot's `retros` bodies are the only retro evidence this run reads",
 		".agents/commands/bench-what-next.md dropped the roadmap-context retro drain source")
 	requireCollapsed(".agents/commands/bench-what-next.md", "merge into an existing roadmap row, a new roadmap row, a learning-or-rule disposition, or an explicit dismissal",
 		".agents/commands/bench-what-next.md dropped an implementation-retro recommendation disposition")
-	requireCollapsed(".agents/commands/bench-what-next.md", "remove every drained `.bench/retros/*.md` file in the same reviewer-approved batch",
+	requireCollapsed(".agents/commands/bench-what-next.md", "remove every drained `capture/retros/*.md` file in the same reviewer-approved batch",
 		".agents/commands/bench-what-next.md dropped the delete-all implementation-retro drain rule")
 	requireCollapsed(".bench/BENCH.md", "/bench-what-next` owns their reviewed drain",
 		".bench/BENCH.md dropped the implementation-retro drain owner")
@@ -369,7 +369,7 @@ func checkWorkflowAnchors(root string) []string {
 			"dropped terminal final-check reporting after promotion"},
 		{"bounded by this command's terminal repair-pass bound and routed through `craft-delegate`'s repair allowance",
 			"dropped the repair-bound pointers; this mode adds no second version of either rule"},
-		{"At every phase boundary the run writes the phase reached into `session-handoff.md`'s State section, then refreshes the pin block with `bench handoff --next <command>`",
+		{"At every phase boundary the run writes the phase reached into `capture/session-handoff.md`'s State section, then refreshes the pin block with `bench handoff --next <command>`",
 			"dropped the phase-boundary State write and pin-block refresh"},
 		{"A re-invoked `--full` resumes from the phase the handoff names instead of re-implementing from the top; a stale handoff is arbitrated by `AGENTS.md`'s tree-wins rule",
 			"dropped the resume-don't-restart rule for a re-invoked run"},
@@ -385,7 +385,7 @@ func checkWorkflowAnchors(root string) []string {
 			"dropped the per-row coverage accounting against bench coverage's enumeration"},
 		{"When the spec carries no coverage map, the report says so and accounts for the user stories instead",
 			"dropped the no-coverage-map fallback to user-story accounting"},
-		{"Every phase claim in the exit report cites the record that proves it: the review delegate's invocation, lifecycle status and retained evidence, and the `session-handoff.md` boundary rewrite",
+		{"Every phase claim in the exit report cites the record that proves it: the review delegate's invocation, lifecycle status and retained evidence, and the `capture/session-handoff.md` boundary rewrite",
 			"dropped the record-citation rule for phase claims in the exit report"},
 		{"ask a second, separate question: whether to add a cross-harness falsification pass over the diff before promotion — the Codex CLI at the top binding, charged to refute the claim that the spec was implemented rather than to grade it against the three axes",
 			"dropped the falsification-pass offer with its refutation charge"},

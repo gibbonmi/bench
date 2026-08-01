@@ -13,7 +13,7 @@ what lives here is reference you consult on demand.
 - `AGENTS.md` contains the project-owned working agreement plus a small
   Bench-managed block.
 - `.bench/gate.sh` is the project gate.
-- `.bench/learnings.md` is the usage journal for process learnings.
+- `capture/learnings.md` is the usage journal for process learnings.
 - `.bench/bin/` is the local CLI copy `bench link` installs for hooks, so Stop and
   SessionStart do not depend on a global `bench` on PATH.
 - `.agents/commands/` contains portable Bench command phases.

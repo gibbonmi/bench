@@ -320,10 +320,10 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench upgrade [--check] [--force]  plan and apply a relink onto the installed kit version
   bench models               list advisory model-id candidates for the line binding
   bench structure            flag oversized files + crowded dirs (wire into the gate)
-  bench idea "<text>"        park an out-of-scope idea in IDEAS.md (commit to nothing)
-  bench roadmap              print the roadmap + drain status (IDEAS.md, learnings)
+  bench idea "<text>"        park an out-of-scope idea in capture/IDEAS.md (commit to nothing)
+  bench roadmap              print the roadmap + drain status (capture/IDEAS.md, learnings)
   bench status               ambient dashboard: what needs attention + the next action
-  bench handoff [--harness <name>] [--next <command>]  print the cold-start pin block and rewrite session-handoff.md
+  bench handoff [--harness <name>] [--next <command>]  print the cold-start pin block and rewrite capture/session-handoff.md
   bench commands --brief     print the direct, read-only command probe
   bench dashboard [--stdout] write a self-contained HTML snapshot of the board (--stdout emits it)
   bench canary [root]        run the gate against known-broken fixtures

@@ -319,7 +319,7 @@ func TestHandoffNextMatchesStatus(t *testing.T) {
 	// Two fixtures whose first invocable board action differs, each with a higher-severity
 	// prose row ahead of it, so neither a constant nor an unconditional `signals[0]` passes.
 	drain := handoffFixtureOnMain(t)
-	drain.WriteFile("IDEAS.md", "- 2026-07-05  parked idea\n")
+	drain.WriteFile("capture/IDEAS.md", "- 2026-07-05  parked idea\n")
 	drain.CommitAll("parked")
 	drain.WriteFile("scratch.txt", "uncommitted\n")
 

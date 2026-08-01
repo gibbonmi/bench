@@ -25,7 +25,7 @@ func TestFactsClassifiesEligibleFilesInStableOrder(t *testing.T) {
 	if got.State != bounds.StateParsed || len(got.Entries) != 3 {
 		t.Fatalf("facts = %#v, want three eligible entries", got)
 	}
-	if got.Entries[0].Path != ".bench/retros/a.md" || string(got.Entries[0].Body) != "first" || got.Entries[1].Path != ".bench/retros/b.md" || got.Entries[2].State != bounds.StateEmpty {
+	if got.Entries[0].Path != "capture/retros/a.md" || string(got.Entries[0].Body) != "first" || got.Entries[1].Path != "capture/retros/b.md" || got.Entries[2].State != bounds.StateEmpty {
 		t.Fatalf("entries = %#v", got.Entries)
 	}
 }
@@ -69,11 +69,11 @@ func TestFactsKeepsDegradedAndEmptyEvidence(t *testing.T) {
 		states[f.Path] = f.State
 	}
 	for path, want := range map[string]bounds.FileState{
-		".bench/retros/empty.md":    bounds.StateEmpty,
-		".bench/retros/bad.md":      bounds.StateMalformed,
-		".bench/retros/dangling.md": bounds.StateUnreadable,
-		".bench/retros/large.md":    bounds.StateUnreadable,
-		".bench/retros/wait.md":     bounds.StateWrongType,
+		"capture/retros/empty.md":    bounds.StateEmpty,
+		"capture/retros/bad.md":      bounds.StateMalformed,
+		"capture/retros/dangling.md": bounds.StateUnreadable,
+		"capture/retros/large.md":    bounds.StateUnreadable,
+		"capture/retros/wait.md":     bounds.StateWrongType,
 	} {
 		if got := states[path]; got != want {
 			t.Errorf("%s state = %s, want %s", path, got, want)

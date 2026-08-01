@@ -31,7 +31,7 @@ func TestContextBodyLimitBoundaries(t *testing.T) {
 
 func TestBuildContextCarriesRetrosAndDegradedEvidence(t *testing.T) {
 	root := newRepo(t)
-	dir := filepath.Join(root, ".bench", "retros")
+	dir := filepath.Join(root, "capture", "retros")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -48,13 +48,13 @@ func TestBuildContextCarriesRetrosAndDegradedEvidence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(s.Retros) != 3 || s.Retros[0].Path != ".bench/retros/a.md" || s.Retros[1].Path != ".bench/retros/b.md" || s.Retros[2].State != "unreadable" {
+	if len(s.Retros) != 3 || s.Retros[0].Path != "capture/retros/a.md" || s.Retros[1].Path != "capture/retros/b.md" || s.Retros[2].State != "unreadable" {
 		t.Fatalf("retros = %#v", s.Retros)
 	}
-	if len(s.Sources) < 2 || s.Sources[len(s.Sources)-2].Source != ".bench/retros/" {
+	if len(s.Sources) < 2 || s.Sources[len(s.Sources)-2].Source != "capture/retros/" {
 		t.Fatalf("sources = %#v", s.Sources)
 	}
-	if got, err := renderContext(s); err != nil || !strings.Contains(got, "retros[3]{path,state,body,body_bytes,truncated}:") || !strings.Contains(got, ".bench/retros/bad.md,unreadable") || !strings.Contains(got, "parse_failures[1]{") {
+	if got, err := renderContext(s); err != nil || !strings.Contains(got, "retros[3]{path,state,body,body_bytes,truncated}:") || !strings.Contains(got, "capture/retros/bad.md,unreadable") || !strings.Contains(got, "parse_failures[1]{") {
 		t.Fatalf("context = %q, %v", got, err)
 	}
 }
@@ -99,10 +99,10 @@ func TestOccurrenceLedgerMalformedAndLineEndings(t *testing.T) {
 func TestBuildContextProjectsPendingCaptureOccurrences(t *testing.T) {
 	root := newRepo(t)
 	for path, body := range map[string]string{
-		RoadmapFile:            "**FT1 — one.**\n\n**FT2 — two.**\n",
-		IdeasFile:              "- 2026-07-10  later [occurrence:FT2/idea-2]\n- 2026-07-10  first [occurrence:FT1/idea-1]\n",
-		learnings.JournalPath:  "## 2026-07-10 — lesson  [open]\nbody [occurrence:FT1/learning-1]\n",
-		".bench/retros/one.md": "## Agent-experience improvements\n\nParagraph [occurrence:FT2/retro-1]\n",
+		RoadmapFile:             "**FT1 — one.**\n\n**FT2 — two.**\n",
+		IdeasFile:               "- 2026-07-10  later [occurrence:FT2/idea-2]\n- 2026-07-10  first [occurrence:FT1/idea-1]\n",
+		learnings.JournalPath:   "## 2026-07-10 — lesson  [open]\nbody [occurrence:FT1/learning-1]\n",
+		"capture/retros/one.md": "## Agent-experience improvements\n\nParagraph [occurrence:FT2/retro-1]\n",
 	} {
 		if err := os.MkdirAll(filepath.Dir(filepath.Join(root, path)), 0o755); err != nil {
 			t.Fatal(err)
@@ -121,10 +121,10 @@ func TestBuildContextProjectsPendingCaptureOccurrences(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []string{
-		"FT1,idea-1,IDEAS.md,line 2,pending",
-		"FT1,learning-1,.bench/learnings.md,line 1,pending",
-		"FT2,idea-2,IDEAS.md,line 1,pending",
-		"FT2,retro-1,.bench/retros/one.md,line 3,pending",
+		"FT1,idea-1,capture/IDEAS.md,line 2,pending",
+		"FT1,learning-1,capture/learnings.md,line 1,pending",
+		"FT2,idea-2,capture/IDEAS.md,line 1,pending",
+		"FT2,retro-1,capture/retros/one.md,line 3,pending",
 	}
 	last := -1
 	for _, row := range want {
@@ -163,11 +163,11 @@ func TestBuildContextClassifiesOccurrenceDiscrepancies(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, row := range []string{
-		"FT1,recorded,IDEAS.md,line 1,already-recorded",
-		"IDEAS.md,line 1,already-recorded,FT1,recorded,false",
-		"IDEAS.md,line 2,malformed-token,FT1,unterminated,true",
-		"IDEAS.md,line 3,unknown-owner,FT9,new,true",
-		"IDEAS.md,line 4,multiple-tokens,FT1,two,true",
+		"FT1,recorded,capture/IDEAS.md,line 1,already-recorded",
+		"capture/IDEAS.md,line 1,already-recorded,FT1,recorded,false",
+		"capture/IDEAS.md,line 2,malformed-token,FT1,unterminated,true",
+		"capture/IDEAS.md,line 3,unknown-owner,FT9,new,true",
+		"capture/IDEAS.md,line 4,multiple-tokens,FT1,two,true",
 		"ROADMAP.md,FT2,malformed-ledger,FT2,\"\",true",
 	} {
 		if !strings.Contains(out, row) {
@@ -202,7 +202,7 @@ func TestBuildContextKeepsLearningAndRetroOccurrencesInTheirUnits(t *testing.T) 
 	for path, body := range map[string]string{
 		RoadmapFile:           "**FT1 — one.**\n\n**FT2 — two.**\n",
 		learnings.JournalPath: "## 2026-07-10 — lesson  [open]\nProse [occurrence:FT2/ignored_] does not end the entry.\nFinal [occurrence:FT1/learning-final]\n",
-		".bench/retros/one.md": strings.Join([]string{
+		"capture/retros/one.md": strings.Join([]string{
 			"Outside [occurrence:FT2/ignored]",
 			"",
 			"## Agent-experience improvements",
@@ -233,10 +233,10 @@ func TestBuildContextKeepsLearningAndRetroOccurrencesInTheirUnits(t *testing.T) 
 		t.Fatal(err)
 	}
 	for _, row := range []string{
-		"FT1,learning-final,.bench/learnings.md,line 1,pending",
-		"FT1,retro-list,.bench/retros/one.md,line 7,pending",
-		"FT1,retro-paragraph,.bench/retros/one.md,line 5,pending",
-		"FT2,retro-other-owner,.bench/retros/one.md,line 8,pending",
+		"FT1,learning-final,capture/learnings.md,line 1,pending",
+		"FT1,retro-list,capture/retros/one.md,line 7,pending",
+		"FT1,retro-paragraph,capture/retros/one.md,line 5,pending",
+		"FT2,retro-other-owner,capture/retros/one.md,line 8,pending",
 	} {
 		if !strings.Contains(out, row) {
 			t.Fatalf("missing %q in %s", row, out)
@@ -327,7 +327,7 @@ func TestBuildContextProjectsEveryRecordedSourceWithoutPendingPair(t *testing.T)
 	if !strings.Contains(out, "3,false,true") {
 		t.Fatalf("trusted context header missing: %s", out)
 	}
-	if !strings.Contains(out, "IDEAS.md,line 1,already-recorded,FT1,recorded,false") {
+	if !strings.Contains(out, "capture/IDEAS.md,line 1,already-recorded,FT1,recorded,false") {
 		t.Fatalf("advisory discrepancy missing from context: %s", out)
 	}
 }
@@ -363,7 +363,7 @@ func TestBuildContextRequiresUsableCaptureSourcesForOccurrenceTrust(t *testing.T
 			name: "retros wrong type",
 			prepare: func(t *testing.T, root string) {
 				t.Helper()
-				path := filepath.Join(root, ".bench", "retros")
+				path := filepath.Join(root, "capture", "retros")
 				if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 					t.Fatal(err)
 				}

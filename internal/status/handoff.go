@@ -12,7 +12,7 @@ import (
 // inside the file itself so the template cannot drift from the artifact it describes. It
 // is exported as the one source of the artifact's name, shared with the command that emits
 // it, so the staleness signal and the emitter can never watch different files.
-const HandoffFile = "session-handoff.md"
+const HandoffFile = "capture/session-handoff.md"
 
 // appendHandoff adds the handoff-staleness signal (sev 11): the commits that landed since
 // the handoff was last written. It turns "trust git over the handoff" from a rule the next

@@ -25,12 +25,12 @@ func testRuntimeStatusStaleGateDriftClassification(t *testing.T) {
 	}
 	cases := []staleGateStatusCase{
 		{name: "added ROADMAP.md is capture-only", mutate: writeRuntimeFile("ROADMAP.md", "- 2026-07-05  parked idea\n"), want: benign},
-		{name: "modified tracked session handoff is capture-only", seed: writeRuntimeFile("session-handoff.md", "# Session handoff\n\nfirst capture\n"), mutate: writeRuntimeFile("session-handoff.md", "# Session handoff\n\nrewritten capture\n"), want: benign},
+		{name: "modified tracked session handoff is capture-only", seed: writeRuntimeFile("capture/session-handoff.md", "# Session handoff\n\nfirst capture\n"), mutate: writeRuntimeFile("capture/session-handoff.md", "# Session handoff\n\nrewritten capture\n"), want: benign},
 		{name: "modified ROADMAP.md is capture-only", seed: writeRuntimeFile("ROADMAP.md", "- 2026-07-04  old idea\n"), mutate: writeRuntimeFile("ROADMAP.md", "- 2026-07-05  parked idea\n"), want: benign},
 		{name: "deleted ROADMAP.md is capture-only", seed: writeRuntimeFile("ROADMAP.md", "- 2026-07-04  old idea\n"), mutate: removeRuntimePath("ROADMAP.md"), want: benign},
-		{name: "added IDEAS.md is capture-only", mutate: writeRuntimeFile("IDEAS.md", "- 2026-07-05  parked idea\n"), want: benign},
-		{name: "modified IDEAS.md is capture-only", seed: writeRuntimeFile("IDEAS.md", "- 2026-07-04  old idea\n"), mutate: writeRuntimeFile("IDEAS.md", "- 2026-07-05  parked idea\n"), want: benign},
-		{name: "nested IDEAS lookalike is strong stale", mutate: writeRuntimeFile("notes/IDEAS.md", "doc drift\n"), want: strong},
+		{name: "added capture/IDEAS.md is capture-only", mutate: writeRuntimeFile("capture/IDEAS.md", "- 2026-07-05  parked idea\n"), want: benign},
+		{name: "modified capture/IDEAS.md is capture-only", seed: writeRuntimeFile("capture/IDEAS.md", "- 2026-07-04  old idea\n"), mutate: writeRuntimeFile("capture/IDEAS.md", "- 2026-07-05  parked idea\n"), want: benign},
+		{name: "nested IDEAS lookalike is strong stale", mutate: writeRuntimeFile("notes/capture/IDEAS.md", "doc drift\n"), want: strong},
 		{name: "added .bench-notes.md is capture-only", mutate: writeRuntimeFile(".bench-notes.md", "scratch\n"), want: benign},
 		{name: "modified .bench-notes.md is capture-only", seed: writeRuntimeFile(".bench-notes.md", "old\n"), mutate: writeRuntimeFile(".bench-notes.md", "new\n"), want: benign},
 		{name: "deleted .bench-notes.md is capture-only", seed: writeRuntimeFile(".bench-notes.md", "old\n"), mutate: removeRuntimePath(".bench-notes.md"), want: benign},

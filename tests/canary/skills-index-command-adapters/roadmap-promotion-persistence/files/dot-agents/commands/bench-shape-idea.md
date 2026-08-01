@@ -79,7 +79,7 @@ exclusion is a decision on the page, not a silent gap.
    escalates per the `craft-line` ladder instead of guessing on the mid tier.
 8. **Rejected alternatives.** So the spec-writer does not reopen a closed decision.
 9. **Domain watch-outs.** Hazards stated as domain facts for any reader, never
-   model-addressed coaching — operating lessons go through `.bench/learnings.md`
+   model-addressed coaching — operating lessons go through `capture/learnings.md`
    and `/bench-what-next`, never per-spec notes.
 
 Dependency order: <recommended build order when the map yields multiple slices;
@@ -94,7 +94,7 @@ sequence — a recommendation for me, not a decision you make. Slicing stays my 
 
 `ROADMAP.md` (repo root) is the working prioritization document `/bench-what-next`
 maintains: assessed open work in priority order, ending in a `## Recommended
-sequence`. (Raw capture lives in `IDEAS.md` and reaches the roadmap only through a
+sequence`. (Raw capture lives in `capture/IDEAS.md` and reaches the roadmap only through a
 `/bench-what-next` drain.) This command is where a roadmap item graduates into
 committed work.
 

@@ -10,7 +10,7 @@ import (
 )
 
 // Directory is the repository-relative retrospective capture directory.
-const Directory = ".bench/retros"
+const Directory = "capture/retros"
 
 // Fact is one eligible retrospective file and its bounded classification.
 type Fact struct {

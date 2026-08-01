@@ -33,13 +33,13 @@ func testRuntimeDashboardSpecialFiles(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("README.md", "# fixture\n")
 	f.CommitAll("init")
-	f.WriteFifo("IDEAS.md")
+	f.WriteFifo("capture/IDEAS.md")
 	f.WriteFifo("ROADMAP.md")
 
 	out := f.BenchDeadlined("dashboard", "--stdout")
 
 	if out.TimedOut {
-		t.Fatal("bench dashboard blocked on a FIFO at IDEAS.md or ROADMAP.md, so a control-record read opened the path before checking its type")
+		t.Fatal("bench dashboard blocked on a FIFO at capture/IDEAS.md or ROADMAP.md, so a control-record read opened the path before checking its type")
 	}
 	out.RequireExit(0)
 }
@@ -160,7 +160,7 @@ func testRuntimeDashboardAtomicWrite(t *testing.T) {
 // with content equal to the first run once the generation timestamp is set aside.
 func testRuntimeDashboardIdempotent(t *testing.T) {
 	f := contract.NewFixture(t)
-	f.WriteFile("IDEAS.md", "- 2026-07-01  parked idea\n")
+	f.WriteFile("capture/IDEAS.md", "- 2026-07-01  parked idea\n")
 	f.CommitAll("base")
 
 	first := f.Bench("dashboard")

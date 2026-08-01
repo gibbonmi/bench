@@ -1,6 +1,7 @@
 package handoff
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -26,7 +27,7 @@ var grammar = usage.Grammar{
 }
 
 // Command implements `bench handoff`. It prints the pin block and rewrites
-// session-handoff.md from one derivation, preserving the reviewer-owned State section and
+// capture/session-handoff.md from one derivation, preserving the reviewer-owned State section and
 // regenerating everything else. It creates freely and destroys never: a missing file is
 // scaffolded, and a file whose State section cannot be located unambiguously is left
 // exactly as it was behind a non-zero exit.
@@ -80,6 +81,14 @@ func Command(args []string) (string, int) {
 // — the one thing this command promises to pass through untouched. The rename either
 // happens or does not, which is what makes "destroys never" true rather than likely.
 func writeDocument(target, content string) error {
+	// The capture directory is part of the target's identity, not a precondition the
+	// caller can be assumed to have met: a fresh repo reaches this write before anything
+	// has created it.
+	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+		// Name the document, not just the directory: the refusal's whole job is to say
+		// which artifact could not be written.
+		return fmt.Errorf("%s: %w", target, err)
+	}
 	temp := target + ".tmp"
 	if err := os.WriteFile(temp, []byte(content), 0o644); err != nil {
 		return err

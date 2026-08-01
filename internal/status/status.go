@@ -49,10 +49,10 @@ var grammar = usage.Grammar{
 }
 
 var captureOnlyStalePaths = map[string]bool{
-	".bench-notes.md": true,
-	"IDEAS.md":        true,
-	"ROADMAP.md":      true,
-	HandoffFile:       true,
+	".bench-notes.md":  true,
+	"capture/IDEAS.md": true,
+	"ROADMAP.md":       true,
+	HandoffFile:        true,
 }
 
 // row is one dashboard signal: a severity (the sort/lead key), and the signal/detail/
@@ -440,7 +440,7 @@ func isPrimaryCheckout(root string) bool {
 	return filepath.Clean(gitDir) == filepath.Clean(common)
 }
 
-// appendDrain adds the capture-drain signal (sev 4): parked ideas in IDEAS.md plus open
+// appendDrain adds the capture-drain signal (sev 4): parked ideas in capture/IDEAS.md plus open
 // journal headings, one combined row pointing at the single maintenance phase. The
 // counts are roadmap.DrainCounts — the same counters `bench roadmap` reports. The
 // learnings component shows only at or above the floor (env BENCH_LEARNINGS_FLOOR,

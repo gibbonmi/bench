@@ -64,13 +64,17 @@ func Init(args []string, stdout, stderr io.Writer) int {
 		}
 		fmt.Fprintf(stdout, "scaffolded %s - the seed canary; copy it for each real check\n", seedCanaryPath)
 	}
-	learnings := filepath.Join(root, ".bench", "learnings.md")
-	if _, err := os.Lstat(learnings); os.IsNotExist(err) {
-		if err := os.WriteFile(learnings, []byte(scaffoldLearnings()), 0o644); err != nil {
+	journal := filepath.Join(root, filepath.FromSlash(learnings.JournalPath))
+	if _, err := os.Lstat(journal); os.IsNotExist(err) {
+		if err := os.MkdirAll(filepath.Dir(journal), 0o755); err != nil {
 			fmt.Fprintln(stderr, err)
 			return 1
 		}
-		fmt.Fprintln(stdout, "scaffolded .bench/learnings.md - the self-learning journal")
+		if err := os.WriteFile(journal, []byte(scaffoldLearnings()), 0o644); err != nil {
+			fmt.Fprintln(stderr, err)
+			return 1
+		}
+		fmt.Fprintln(stdout, "scaffolded capture/learnings.md - the self-learning journal")
 	}
 	fmt.Fprintln(stdout, "see projects/<name>.md in the Bench kit for the profile template")
 	return 0

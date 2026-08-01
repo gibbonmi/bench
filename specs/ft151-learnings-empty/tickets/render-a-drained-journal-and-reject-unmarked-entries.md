@@ -9,7 +9,7 @@ rowset, while surfacing every dated heading that is not an open entry.
 
 ## Acceptance
 
-- [x] The current post-drain `.bench/learnings.md` shape and the scaffold
+- [x] The current post-drain `capture/learnings.md` shape and the scaffold
   template both render `learnings[0]{date,title}:` at exit 0.
 - [x] Arbitrary prose, a zero-byte record, unreadable input, and wrong-type
   input remain fail-closed rather than becoming false empty states.

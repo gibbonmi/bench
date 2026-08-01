@@ -238,7 +238,7 @@ asserts an offline posture three files away
 (`TestOfflineNetworkSentinelDeniesUndeclaredEgress`). This is a correctness
 question rather than a wall-clock one, but it shares #8's lever: a shared module
 cache answers both, while vendoring the dependency answers offline without
-touching build hermeticity. Recorded here rather than parked in `IDEAS.md`
+touching build hermeticity. Recorded here rather than parked in `capture/IDEAS.md`
 because it constrains #8; drain it to its own roadmap row if it should be
 tracked separately from the cost work.
 

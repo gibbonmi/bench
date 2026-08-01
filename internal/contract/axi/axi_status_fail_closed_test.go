@@ -21,11 +21,11 @@ var statusUnknownCorruptions = []statusUnknownCorruption{
 }
 
 // statusUnknownFixture builds a repository on its (sole-branch) default with each of story
-// 17's three migrated signals unable to read its source: IDEAS.md (the drain signal's
+// 17's three migrated signals unable to read its source: capture/IDEAS.md (the drain signal's
 // capture source), ROADMAP.md (the roadmap-reconcile signal's source, which only fires on
 // the default branch — hence the commit and single local branch), and decisions/ (the
 // decision-map signal's control directory, here a regular file so the directory read is
-// wrong-type). corrupt decides how the two files fail. .bench/learnings.md and any spec
+// wrong-type). corrupt decides how the two files fail. capture/learnings.md and any spec
 // ROADMAP.md would name are left absent, so each signal's *other* input reads as the
 // ordinary quiet zero: any unknown row that shows up is attributable only to the broken
 // source, not to unrelated content.
@@ -35,8 +35,8 @@ func statusUnknownFixture(t *testing.T, c statusUnknownCorruption) contract.Fixt
 	f.WriteFile("README.md", "# fixture\n")
 	f.CommitAll("init")
 
-	f.WriteFile("IDEAS.md", "- 2026-01-01  parked\n")
-	c.corrupt(f, "IDEAS.md")
+	f.WriteFile("capture/IDEAS.md", "- 2026-01-01  parked\n")
+	c.corrupt(f, "capture/IDEAS.md")
 
 	f.WriteFile("ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. do the thing\n")
 	c.corrupt(f, "ROADMAP.md")
@@ -48,7 +48,7 @@ func statusUnknownFixture(t *testing.T, c statusUnknownCorruption) contract.Fixt
 
 // TestAXIStatusUnknownRow pins story 17: a signal whose underlying read failed renders an
 // explicit `unknown` row naming the source and its classified state, for all three migrated
-// signals (drain's IDEAS.md, roadmap-reconcile's ROADMAP.md, the decision-map count's
+// signals (drain's capture/IDEAS.md, roadmap-reconcile's ROADMAP.md, the decision-map count's
 // decisions/), and `bench status` still exits 0 — the dashboard's job is to render whatever
 // it can, not to fail closed itself. Asserting the rows are present *and* the exit is 0
 // forbids both the fabricated-zero bug (row absent) and a fail-closed over-correction
@@ -63,7 +63,7 @@ func TestAXIStatusUnknownRow(t *testing.T) {
 			out := f.Bench("status", "--all")
 
 			out.RequireExit(0)
-			requireContainsFold(t, out.Stdout, "unknown (IDEAS.md is "+c.state+")")
+			requireContainsFold(t, out.Stdout, "unknown (capture/IDEAS.md is "+c.state+")")
 			requireContainsFold(t, out.Stdout, "unknown (ROADMAP.md is "+c.state+")")
 			requireContainsFold(t, out.Stdout, "unknown (decisions is wrong-type)")
 		})
@@ -86,7 +86,7 @@ func TestAXIStatusUnknownNotSuppressed(t *testing.T) {
 			out := f.Bench("status", "--all")
 
 			out.RequireExit(0)
-			requireAXILine(t, out.Stdout, "  drain      unknown (IDEAS.md is "+c.state+"), 0 open learning(s), 0 pending retro(s) → /bench-what-next")
+			requireAXILine(t, out.Stdout, "  drain      unknown (capture/IDEAS.md is "+c.state+"), 0 open learning(s), 0 pending retro(s) → /bench-what-next")
 			requireAXILine(t, out.Stdout, "  roadmap    unknown (ROADMAP.md is "+c.state+") → /bench-what-next")
 			requireAXILine(t, out.Stdout, "  decisions  unknown (decisions is wrong-type) → investigate decisions/ (bench maps)")
 		})

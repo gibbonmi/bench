@@ -50,8 +50,8 @@ func contextFixture(t *testing.T) contract.Fixture {
 	f := contract.NewFixture(t)
 	f.Git("branch", "-M", "main")
 	f.WriteFile("ROADMAP.md", "# Roadmap\n\n## Features\n\n**FT1 — one.** Body specs/one/spec.md.\n\n## Recommended sequence\n\n1. `/bench-implement-spec` — one\n")
-	f.WriteFile("IDEAS.md", "- 2026-07-10  retain me\n")
-	f.WriteFile(".bench/learnings.md", "## 2026-07-10 — lesson  [open]\n- body\n")
+	f.WriteFile("capture/IDEAS.md", "- 2026-07-10  retain me\n")
+	f.WriteFile("capture/learnings.md", "## 2026-07-10 — lesson  [open]\n- body\n")
 	f.WriteFile(".bench/structure.budgets", "")
 	f.WriteFile(".bench/structure-accept", "")
 	f.WriteFile("specs/one/spec.md", "# One\n\nStatus: staged\nRoadmap: FT1\n")
@@ -109,20 +109,20 @@ func testRoadmapContextComplete(t *testing.T) {
 
 func testRoadmapContextRetros(t *testing.T) {
 	f := contextFixture(t)
-	f.WriteFile(".bench/retros/z.md", strings.Repeat("z", 4097))
-	f.WriteFile(".bench/retros/a.md", "first")
-	f.WriteFifo(".bench/retros/wait.md")
+	f.WriteFile("capture/retros/z.md", strings.Repeat("z", 4097))
+	f.WriteFile("capture/retros/a.md", "first")
+	f.WriteFifo("capture/retros/wait.md")
 	short := f.BenchDeadlined("roadmap", "--context")
 	if short.TimedOut {
 		t.Fatal("bench roadmap --context blocked on a retrospective FIFO")
 	}
 	short.RequireExit(0)
 	short.RequireContains(short.Stdout, "retros[3]{path,state,body,body_bytes,truncated}:")
-	short.RequireContains(short.Stdout, ".bench/retros/a.md,parsed,first,5,false")
-	short.RequireContains(short.Stdout, ".bench/retros/wait.md,wrong-type,\"\",0,false")
-	short.RequireContains(short.Stdout, ".bench/retros/z.md,parsed,")
+	short.RequireContains(short.Stdout, "capture/retros/a.md,parsed,first,5,false")
+	short.RequireContains(short.Stdout, "capture/retros/wait.md,wrong-type,\"\",0,false")
+	short.RequireContains(short.Stdout, "capture/retros/z.md,parsed,")
 	short.RequireContains(short.Stdout, "4097,true")
-	short.RequireContains(short.Stdout, ".bench/retros/wait.md,\"wrong-type:")
+	short.RequireContains(short.Stdout, "capture/retros/wait.md,\"wrong-type:")
 	full := f.Bench("roadmap", "--context", "--full")
 	full.RequireExit(0)
 	full.RequireContains(full.Stdout, "4097,false")
@@ -131,19 +131,19 @@ func testRoadmapContextRetros(t *testing.T) {
 func testRoadmapContextOccurrences(t *testing.T) {
 	f := contextFixture(t)
 	f.WriteFile("ROADMAP.md", "# Roadmap\n\n## Features\n\n**FT1 — one.**\nOccurrences: recorded\n\n**FT2 — two.**\n")
-	f.WriteFile("IDEAS.md", "- 2026-07-10  duplicate [occurrence:FT1/recorded]\n- 2026-07-10  idea [occurrence:FT2/idea]\n")
-	f.WriteFile(".bench/learnings.md", "## 2026-07-10 — lesson  [open]\nProse [occurrence:FT1/ignored_] first.\nFinal [occurrence:FT2/learning]\n")
-	f.WriteFile(".bench/retros/one.md", "## Agent-experience improvements\n\nParagraph [occurrence:FT2/retro]\n\n- List [occurrence:FT2/list]\n")
+	f.WriteFile("capture/IDEAS.md", "- 2026-07-10  duplicate [occurrence:FT1/recorded]\n- 2026-07-10  idea [occurrence:FT2/idea]\n")
+	f.WriteFile("capture/learnings.md", "## 2026-07-10 — lesson  [open]\nProse [occurrence:FT1/ignored_] first.\nFinal [occurrence:FT2/learning]\n")
+	f.WriteFile("capture/retros/one.md", "## Agent-experience improvements\n\nParagraph [occurrence:FT2/retro]\n\n- List [occurrence:FT2/list]\n")
 
 	out := f.Bench("roadmap", "--context")
 	out.RequireExit(0)
 	for _, row := range []string{
-		"FT1,recorded,IDEAS.md,line 1,already-recorded",
-		"FT2,idea,IDEAS.md,line 2,pending",
-		"FT2,learning,.bench/learnings.md,line 1,pending",
-		"FT2,list,.bench/retros/one.md,line 5,pending",
-		"FT2,retro,.bench/retros/one.md,line 3,pending",
-		"IDEAS.md,line 1,already-recorded,FT1,recorded,false",
+		"FT1,recorded,capture/IDEAS.md,line 1,already-recorded",
+		"FT2,idea,capture/IDEAS.md,line 2,pending",
+		"FT2,learning,capture/learnings.md,line 1,pending",
+		"FT2,list,capture/retros/one.md,line 5,pending",
+		"FT2,retro,capture/retros/one.md,line 3,pending",
+		"capture/IDEAS.md,line 1,already-recorded,FT1,recorded,false",
 	} {
 		out.RequireContains(out.Stdout, row)
 	}
@@ -154,7 +154,7 @@ func testRoadmapContextOccurrences(t *testing.T) {
 
 func testRoadmapContextTruncation(t *testing.T) {
 	f := contextFixture(t)
-	f.WriteFile("IDEAS.md", "- 2026-07-10  "+strings.Repeat("x", 4097)+"\n")
+	f.WriteFile("capture/IDEAS.md", "- 2026-07-10  "+strings.Repeat("x", 4097)+"\n")
 	short := f.Bench("roadmap", "--context")
 	short.RequireExit(0)
 	short.RequireContains(short.Stdout, "4097,true")
@@ -208,13 +208,13 @@ func testRoadmapContextSourceStates(t *testing.T) {
 	absent := f.Bench("roadmap", "--context")
 	absent.RequireExit(0)
 	absent.RequireContains(absent.Stdout, "ROADMAP.md,absent,0")
-	absent.RequireContains(absent.Stdout, "IDEAS.md,absent,0")
+	absent.RequireContains(absent.Stdout, "capture/IDEAS.md,absent,0")
 	f.WriteFile("ROADMAP.md", "")
-	f.WriteFile("IDEAS.md", "")
+	f.WriteFile("capture/IDEAS.md", "")
 	empty := f.Bench("roadmap", "--context")
 	empty.RequireExit(0)
 	empty.RequireContains(empty.Stdout, "ROADMAP.md,empty,0")
-	empty.RequireContains(empty.Stdout, "IDEAS.md,empty,0")
+	empty.RequireContains(empty.Stdout, "capture/IDEAS.md,empty,0")
 	f.WriteFile("ROADMAP.md", "# Roadmap\n\n**FT1 — valid.** body\n\n**broken row\n")
 	mixed := f.Bench("roadmap", "--context")
 	mixed.RequireExit(0)
@@ -228,9 +228,9 @@ func testRoadmapContextCaptureTrust(t *testing.T) {
 		prepare func(contract.Fixture)
 		want    string
 	}{
-		{"ideas wrong type", func(f contract.Fixture) { f.WriteFifo("IDEAS.md") }, "IDEAS.md,wrong-type"},
-		{"learnings malformed", func(f contract.Fixture) { f.WriteFile(".bench/learnings.md", string([]byte{0xff})) }, ".bench/learnings.md,malformed"},
-		{"retros wrong type", func(f contract.Fixture) { f.WriteFifo(".bench/retros/wait.md") }, ".bench/retros/wait.md,wrong-type"},
+		{"ideas wrong type", func(f contract.Fixture) { f.WriteFifo("capture/IDEAS.md") }, "capture/IDEAS.md,wrong-type"},
+		{"learnings malformed", func(f contract.Fixture) { f.WriteFile("capture/learnings.md", string([]byte{0xff})) }, "capture/learnings.md,malformed"},
+		{"retros wrong type", func(f contract.Fixture) { f.WriteFifo("capture/retros/wait.md") }, "capture/retros/wait.md,wrong-type"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := contextFixture(t)
@@ -320,7 +320,7 @@ func testRoadmapContextUnbornHead(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.Git("checkout", "-q", "-b", "trunk")
 	f.WriteFile("ROADMAP.md", "# Roadmap\n\n## Features\n\n**FT1 — one.** Body specs/one/spec.md.\n")
-	f.WriteFile("IDEAS.md", "- 2026-07-10  retain me\n")
+	f.WriteFile("capture/IDEAS.md", "- 2026-07-10  retain me\n")
 
 	out := f.Bench("roadmap", "--context")
 

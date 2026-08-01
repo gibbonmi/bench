@@ -3,7 +3,7 @@
 The working prioritization document: every row is open work, verified against
 the tree; a row leaves when the work ships (spec-retire) or a
 `/bench-what-next` reconcile removes it. Raw capture never lands here — it
-goes to `IDEAS.md` and enters only through a reviewed drain. A row for spec'd
+goes to `capture/IDEAS.md` and enters only through a reviewed drain. A row for spec'd
 work names its spec path (`specs/<slug>/spec.md`) — that path is what `bench status`
 cross-checks against the tree, so a row that omits it is a visible choice to
 stay outside the ambient check.
@@ -54,7 +54,7 @@ time beside every sample. Measure enough repetitions to state the variance;
 discard a sample whose subject does not match the build under test rather than
 reporting it. Preserve every phase and unchanged green semantics. Scoped
 gating remains ruled out and is not a speed lever. Entry:
-`/bench-shape-idea`. Sources: `IDEAS.md`, drained here;
+`/bench-shape-idea`. Sources: `capture/IDEAS.md`, drained here;
 `decisions/gate-concurrency.md`; `decisions/gate-critical-path.md`; the
 2026-07-30 Claude usage-report assessment, drained here. A first full gate on
 a 12-online-core host supplied the lower-width sample 2026-07-31: both
@@ -89,7 +89,7 @@ decides. A rider drained 2026-07-29: `bench anchors <path>` — query which
 conformance anchors pin a doc file before editing it — needs exactly the
 registry-or-parser seam the mechanism ruling decides, so the grill weighs it
 as a consumer of that seam rather than a separate build.
-Entry: `/bench-shape-idea`. Source: `IDEAS.md`,
+Entry: `/bench-shape-idea`. Source: `capture/IDEAS.md`,
 drained here and in prior runs; found by the Codex falsification pass on
 `3eb1c9a`.
 
@@ -120,12 +120,12 @@ reviewed spec build, so what stays open here is the light-path and non-spec
 close, where the final-check tree is still resolved by hand.
 
 The handoff storage question joins the same lifecycle decision. A single
-repository-level `session-handoff.md` can be clobbered by concurrent workstreams;
+repository-level `capture/session-handoff.md` can be clobbered by concurrent workstreams;
 per-spec handoffs would isolate those pins and retire with their spec, but would
 leave non-spec work needing a repository-level owner. Decide whether the
 authoritative handoff remains singular, moves into `specs/<slug>/` for spec-backed
 work, or becomes a generated projection over per-workstream state rather than
-adding a second handoff convention by accident. Source: `IDEAS.md`, drained here.
+adding a second handoff convention by accident. Source: `capture/IDEAS.md`, drained here.
 
 The full-run half moves `--full` orchestration from phase prose into a `bench`
 subcommand only if the decision map rules that the harness-independent
@@ -145,15 +145,15 @@ a planned promotion/removal manifest and an explicit commit path instead of
 generic dirty state. It also owns a drain precondition that does not exist
 today: `bench spec retire` deletes the spec folder outright
 (`internal/spec/spec.go:400`) with nothing checking whether that spec's retro is
-still pending in `.bench/retros/`, so retirement can destroy undrained capture.
+still pending in `capture/retros/`, so retirement can destroy undrained capture.
 Drain-before-delete is already enforced for parked ideas and journal entries;
 retire is the one capture-bearing deletion exempt from it, and both live specs
-carry a pending retro right now. Source: `IDEAS.md`, drained here. The handoff's `## Next command` body is then graded as
+carry a pending retro right now. Source: `capture/IDEAS.md`, drained here. The handoff's `## Next command` body is then graded as
 exactly one backticked harness-native invocation, so the authoritative next
 action cannot drift into explanatory prose. Kit edit under the
 `craft-synthesis` discipline. Sources: the craft-tickets, light-path,
-artifact-suite, and artifact-hoist retros, drained here; `IDEAS.md`, drained
-here and in prior runs; `.bench/learnings.md`, verdicted here.
+artifact-suite, and artifact-hoist retros, drained here; `capture/IDEAS.md`, drained
+here and in prior runs; `capture/learnings.md`, verdicted here.
 
 **FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
 The ft91-gate-tier-split semantic review found twelve; three closed before
@@ -194,7 +194,7 @@ invocations inherit `BENCH_SKIP_LOG` from the sweep, the compile call's
 environment is undecided, the bites carry no test timeout, and `TMPDIR` is left
 unstripped. Two findings left this list at the drain: the profile's stale
 nested-fixture description was corrected in the drain diff, and the
-vacuity-baseline finding became FT153. Source: `IDEAS.md`, drained here.
+vacuity-baseline finding became FT153. Source: `capture/IDEAS.md`, drained here.
 
 **FT144 (MEDIUM) — kit specs have two audiences and the discipline names
 neither.** The `ft91-canary-check-scoping` build discovered mid-flight that
@@ -248,8 +248,8 @@ persists them to `reviews/<spec-slug>.md` instead. This matters standing-wise
 because the Spec axis is charged to audit every coverage row, so it will keep
 producing this class of finding. Answer it with the named-lighter-path question
 above — one decision, both phases — then build the kit edit under
-`craft-synthesis`. Sources: `.bench/learnings.md`, drained in a prior run and
-here; `session-handoff.md`, drained in a prior run.
+`craft-synthesis`. Sources: `capture/learnings.md`, drained in a prior run and
+here; `capture/session-handoff.md`, drained in a prior run.
 
 **FT158 (MEDIUM) — make cross-harness
 falsification standing for kit-guidance diffs.** FT91's draft, FT152's build,
@@ -263,7 +263,7 @@ through every session that loads the prose, and give it the prepared spec and
 diff bundle so it does not spend the charge re-reading unrelated contracts.
 Every finding still takes an explicit accept, merge, or dismiss disposition;
 the pass is advisory and does not become a second oracle. Kit edit under the
-`craft-synthesis` discipline. Sources: `.bench/learnings.md`, verdicted in a
+`craft-synthesis` discipline. Sources: `capture/learnings.md`, verdicted in a
 prior drain; the gate-fastpath and FT123 + FT124 retros, drained here and in a
 prior run.
 
@@ -276,7 +276,7 @@ empty — but in exactly that repository the guard looks armed while defending
 a branch that may not be the default, FT86's own failure class one layer
 down. `bench doctor` (or `bench link`'s output) should report whether the
 installed guard's protected branch was resolved or guessed, so the false
-armor is visible where the reviewer looks. Source: `IDEAS.md`, drained here.
+armor is visible where the reviewer looks. Source: `capture/IDEAS.md`, drained here.
 
 A second face, drained 2026-07-29: currency, not resolution. This repo's own
 installed hook is a bench-managed copy from Jul 6 predating the static
@@ -289,7 +289,7 @@ Same owner, same fix surface: doctor (or link's output) reports template
 currency alongside resolved-versus-guessed. The local instance is repaired by
 re-running `bench link` (`installPrePush` overwrites a managed hook) — offered
 alongside this drain rather than performed silently, since it rewrites an
-enforcement hook. Source: `IDEAS.md`, drained here.
+enforcement hook. Source: `capture/IDEAS.md`, drained here.
 
 A third face, drained 2026-07-29: the sanctioned repair route refuses on this
 repo. `bench link` aborts with `conflict: .claude/commands/bench-debug.md has
@@ -301,7 +301,7 @@ hand-copy fallback was used 2026-07-29. Whether link should traverse the
 symlinked directory, skip already-converged files, or order the hook refresh
 ahead of the conflict check joins the same doctor/link visit this row owns;
 the abort-before-refresh sequencing is the capture's claim, not re-verified
-here. Source: `IDEAS.md`, drained here.
+here. Source: `capture/IDEAS.md`, drained here.
 
 Staged spec: [`specs/pre-push-guard-visibility/spec.md`](specs/pre-push-guard-visibility/spec.md);
 its decision map moved under that folder with the staging commit.
@@ -418,7 +418,7 @@ The foreign-dirty face recurred on 2026-07-31 in the shape the existing advice
 does not reach. A concurrent session writing the same checkout tripped
 `bench commit`'s whole-tree attribution refusal twice during a reviewer-approved
 drain — once on untracked `decisions/` files from an in-flight
-`/bench-shape-idea`, once on a mid-drain `bench idea` write to `IDEAS.md`. The
+`/bench-shape-idea`, once on a mid-drain `bench idea` write to `capture/IDEAS.md`. The
 refusal is correct and cheap, and it fires before the gate; what is missing is
 the sequence after it. Invariant 1 says take side-work to a worktree, but a
 drain is not side-work and its diff already lives in the main checkout, so the
@@ -426,7 +426,7 @@ landing command owns either one sanctioned sequence for landing a batch beside a
 concurrent writer, or an explicit statement that the main-checkout batch assumes
 a single writer plus the way to detect that it does not. FT168's oracle-scope
 question is a neighbour, not this: the blocker here is attribution, not gate
-scope. Source: `.bench/learnings.md`, verdicted here.
+scope. Source: `capture/learnings.md`, verdicted here.
 
 **FT172 (MEDIUM) — the roadmap parser and context snapshot make the drain's
 non-recurrence evidence complete.** The row grammar is currently implicit:
@@ -458,7 +458,7 @@ judgment — these are mechanical cross-checks of facts it already holds, which
 is why they belong in it rather than in the phase prose.
 
 That parked half now has a demonstrated cost, and a cheaper option than the
-probe it was parked behind. The 2026-07-27 drain promoted an `IDEAS.md` capture
+probe it was parked behind. The 2026-07-27 drain promoted an `capture/IDEAS.md` capture
 into a HIGH row and carried the capture's *diagnosis* forward as fact, including
 the half claiming the artifact contract tests resolve their output directory to
 the graded root. The very next phase read the tree and found it false — both
@@ -470,8 +470,8 @@ lacked. The cheap partial worth weighing against the general prober: a
 its diagnosis is either checked against the tree or written as the capture's
 claim rather than as fact. That rule is prose, needs no new mechanism, and was
 applied by hand in the 2026-07-27 drain — every diagnosis drained there was read
-out of the tree first. Source of this clause: `.bench/learnings.md`, verdicted
-here. The grammar face came from `IDEAS.md`, drained here.
+out of the tree first. Source of this clause: `capture/learnings.md`, verdicted
+here. The grammar face came from `capture/IDEAS.md`, drained here.
 
 The discrepancies clause has its second instance, 2026-08-01, and the tree shows
 the pairing is broken from both ends. The roadmap end: the FT135 row omitted the
@@ -498,7 +498,7 @@ only the legacy heading, so the counts are a second derivation of a fact
 grades over teaching every drain to hand-edit the map; if the pinned counts are
 load-bearing migration evidence rather than a duplicate, then the phase names the
 map and the snapshot surfaces the pin as a discrepancy when a graded row is about
-to move. Source: `.bench/learnings.md`, verdicted here; the map and its bite test
+to move. Source: `capture/learnings.md`, verdicted here; the map and its bite test
 were read in the tree on 2026-08-01.
 
 **FT173 (MEDIUM) — the AXI contract has ten principles, one derivation each.**
@@ -535,7 +535,7 @@ query-surface rule, not a binary-wide one — `craft-cli` already holds that the
 contract attaches to the surface, so an operational command answering with live
 data on no arguments is a regression, not conformance. The
 truncation half alone is a one-source-per-fact sweep and could ride the standards
-debt batch; the rest is a build. Sources: `IDEAS.md`, drained here; the reviewer
+debt batch; the rest is a build. Sources: `capture/IDEAS.md`, drained here; the reviewer
 constraint above, parked and drained here.
 
 **FT175 (MEDIUM, decision required) — a claim ledger for assertions about the
@@ -565,7 +565,7 @@ gate-model, pipeline, auto-fix, and pipeline-steps pages plus its step
 implementations, and documents no span or quotation verification — its finding
 `action` vocabulary (`no-op` / `auto-fix` / `ask-user`) is agent-assigned, so the
 transferable part is its fail-closed default, not the classification itself.
-Entry: `/bench-shape-idea`. Source: `IDEAS.md`, drained here.
+Entry: `/bench-shape-idea`. Source: `capture/IDEAS.md`, drained here.
 
 **FT89 (MEDIUM) — guidance coherence and current-state documentation.** Make
 every documented CLI example executable; parse and validate real YAML
@@ -602,7 +602,7 @@ the frontmatter parse rather than alone.
 
 Sources: `RR:S-06`, `RR:S-07`, `RR:S-08`, `RR:S-10`, `RR:S-11`, `RR:S-12`,
 `RR:S-13`, `RR:S-14`, `RR:S-15`, `RR:S-16`, `RR:S-17`, `RR:S-18`; `RC:M-05`;
-`IDEAS.md`, drained here.
+`capture/IDEAS.md`, drained here.
 
 **FT106 (MEDIUM) — doc claims re-verified against the tree.** Invariant 3 tells
 every session to write for the teammate who just walked in, and nothing ever
@@ -732,7 +732,7 @@ unavailable for either reason — and decide alongside it whether a spec-doc-onl
 correction (no code, no seams) is exempt outright, since routing prose edits
 through an isolated worktree costs more than it catches. Like the fourth, this
 clause reaches past always-loaded prose into a skill. Eighth (drained
-2026-07-28 from `IDEAS.md`), shell wait-loop hygiene in `AGENTS.md`'s shell
+2026-07-28 from `capture/IDEAS.md`), shell wait-loop hygiene in `AGENTS.md`'s shell
 conventions: a wait-loop whose predicate matches its own command line never
 terminates — `until ! pgrep -f "codex exec"; do sleep 20; done` matches the
 loop's own bash process, and one such loop left an orphaned background process
@@ -827,7 +827,7 @@ The review half uses the same truth obligation. When a spec enumerates call
 sites with per-site postures, `craft-review` makes that table an explicit
 Spec-axis audit: the reviewer walks every row against the diff. FT86's
 DefaultBranch table lacked that obligation, and two adopt call sites reversed
-their assigned posture until semantic review caught them. Source: `IDEAS.md`,
+their assigned posture until semantic review caught them. Source: `capture/IDEAS.md`,
 drained here.
 
 **FT100 (LOW) — prose-weight pass on the kit's guidance surface.** Apply the
@@ -942,7 +942,7 @@ stale.** The flip from `Status: staged` to
 `specs/*.md` is not on the capture-only allowlist, so every clean `--spec`
 landing leaves the gate reporting strong-stale and sends the next session to
 a re-run that finds nothing — reproduced through the accused command
-2026-07-24 (`git diff-tree -r --name-only 20f0767 0faf47f`: only `IDEAS.md`
+2026-07-24 (`git diff-tree -r --name-only 20f0767 0faf47f`: only `capture/IDEAS.md`
 and the flipped spec file drifted). Its fix is a reviewer decision between
 three options that are not equally safe: widening the allowlist to
 `specs/*.md` (admits arbitrary spec edits, which the fixed exact-path
@@ -969,7 +969,7 @@ implementation retro, drained here.
 
 **FT130 (LOW) — parking an idea mid-gate silently voids the run.** During
 FT122's gated commit a session answered a reviewer question and ran `bench
-idea` to park the tangent, which wrote `IDEAS.md` inside the gate's window;
+idea` to park the tangent, which wrote `capture/IDEAS.md` inside the gate's window;
 every phase came back green and the commit was still refused with "gate subject
 changed during execution", costing a full ~15-minute re-run. Two standing rules
 collide: `projects/benchkit.md` forbids mutating the repository while a gate
@@ -1002,7 +1002,7 @@ journal); who writes them, given the harness-independent substrate is the
 shift loop and the git hooks rather than any harness; per-slice versus
 per-spec granularity; retention and pruning; agent-facing AXI or
 reviewer-facing — mean the work starts as a grill. Entry:
-`/bench-shape-idea`. Source: `IDEAS.md`, drained here.
+`/bench-shape-idea`. Source: `capture/IDEAS.md`, drained here.
 
 **FT164 (MEDIUM) — ticket and repair charges preserve blast radius, postures, and
 gate cadence.** Two
@@ -1025,7 +1025,7 @@ ceiling — FT139's one-line test-helper change still paid a worktree, a fresh
 delegate, a focused proof, and a full gate; a one-line test-harness ticket is
 the light path's ceiling, noted beside the rule so paying that cost is a
 choice rather than a default. Kit edit under the `craft-synthesis`
-discipline. Sources: `.bench/learnings.md`, verdicted here; the light-path
+discipline. Sources: `capture/learnings.md`, verdicted here; the light-path
 retro, drained here.
 
 The charge itself carries two more load-bearing facts. When a delegate adds a
@@ -1084,7 +1084,7 @@ which command authors evidence and which phase consumes it: `gate-run --fresh`
 prints a valid phase result without publishing the project-green evidence
 promotion consumes, while `bench gate` is the canonical producing entry, and
 treating worktree, main-root, and prospective checks as interchangeable cost
-several redundant full runs. Sources: `IDEAS.md`, drained here; the FT128 and
+several redundant full runs. Sources: `capture/IDEAS.md`, drained here; the FT128 and
 spec-integration-gate-cadence implementation retros, drained here.
 
 One clause from the same retros wants a different owner and is flagged rather
@@ -1103,31 +1103,31 @@ scenarios, and keep `CONTEXT.md` plus applicable ADRs current inline. One
 source per fact holds: the decision map owns the build decision, `CONTEXT.md`
 owns ubiquitous language, ADRs own hard-to-reverse architectural state.
 Integrates into the existing phase rather than adding a parallel skill. Kit
-edit under the `craft-synthesis` discipline. Source: `IDEAS.md`, drained
+edit under the `craft-synthesis` discipline. Source: `capture/IDEAS.md`, drained
 here.
 
 **FT166 (LOW) — `bench capture commit`: porcelain for the ambient capture
-set.** Commit the capture surfaces (`.bench/learnings.md`, `IDEAS.md`,
-`session-handoff.md`, `.bench/retros/`) with a conventional message under the
+set.** Commit the capture surfaces (`capture/learnings.md`, `capture/IDEAS.md`,
+`capture/session-handoff.md`, `capture/retros/`) with a conventional message under the
 doc-only standing rule, so the plain-`git` step every session hand-assembles —
 with FT107's empty-index hazard attached — becomes one sanctioned command.
 Weigh it beside FT107's third clause, which owns the hazard prose; the
 porcelain would remove the instruction rather than duplicate it.
 
-The capture-only commit-path idea (2026-07-29) merges in — same visit, one
-route: extend `internal/status`'s `captureOnlyStalePaths` from governing only
-the gate-staleness signal to also governing the commit path, so a change
-confined to capture-only files does not pay the full gate. Single-sourced in
-the existing map, and sound only with a conformance check asserting no gate
-check reads those paths; it is a path-scoped oracle exemption sitting near
-the closed diff-scoped-gating ruling, so the exemption itself is a reviewer
-ruling, not a default. The same-day journal entry lands here too: with two
+The capture-only commit-path clause folded into FT168 on 2026-08-01, where the
+reviewer's scoping ruling now owns it; what stays here is the porcelain. The
+fold also corrected the clause's premise: it proposed an exemption conditioned
+on "no gate check reads those paths", and three of the four paths are graded
+from the real root today, so the mechanism became a reduced phase set rather
+than an exemption. This row's porcelain composes over the allowlist that spec
+establishes and should be specified after it. The same-day journal entry stays
+here: with two
 unrelated dirty changes on `main` there is no sanctioned two-commit route
 (`bench commit` refuses on out-of-set dirty paths, the guard refuses
 `git stash`), and the session bundled with disclosure at `5fd3789` — until
 this row ships, that is the convention to write down (bundle, lead with the
 substantive change, name the ride-along, flag for veto). Sources:
-`IDEAS.md`, drained here and in a prior run; `.bench/learnings.md`,
+`capture/IDEAS.md`, drained here and in a prior run; `capture/learnings.md`,
 verdicted here.
 
 **FT168 (MEDIUM) — focused iteration evidence: a fixture-selecting canary, and
@@ -1157,8 +1157,22 @@ specifically that any content change computes a new subject. The existing
 capture-only allowlist lives in `internal/status` and softens the staleness row
 only; it has never scoped an oracle run, and widening it into one puts a fixed
 path list on the gate's critical path — the same list a reviewer must then trust
-to be exhaustive. Decide whether the oracle may ever answer for less than the
-whole tree before designing the mechanism. Source: session evidence 2026-07-31.
+to be exhaustive. Source: session evidence 2026-07-31.
+
+The reviewer ruled on 2026-08-01: a changeset confined to an exact declared path
+allowlist runs a reduced phase set, with the allowlist and the phase set both
+single-sourced and gate-asserted — not a green verdict reused across a subject
+change, which would put an unproven list on the oracle's critical path. FT166's
+capture-only exemption clause folded in here under that ruling, and the ruling
+corrected its premise: the exemption it proposed was conditioned on no gate
+check reading those paths, and `ROADMAP.md`, `capture/session-handoff.md`, and
+`capture/learnings.md` are each graded from the real root today, so an exemption
+would have skipped the checks that caught the last two bad capture commits.
+
+Staged spec: [`specs/reduced-gate-phase-set/spec.md`](specs/reduced-gate-phase-set/spec.md),
+covering the second face only. The focused canary invocation above stays open and
+is explicitly out of that spec's scope. Source of this clause: reviewer-confirmed
+conversation, 2026-08-01.
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.** Calls
 from two resolution runs outlived their specs' retirement. The recurring one is
@@ -1181,7 +1195,7 @@ does not exist in the tree, and eight of the ten `specs/` directories carry only
 a `tickets/` folder with no `spec.md` at all. A severity-9 row that cannot fire
 is either a signal pointed at a retired convention or a convention that quietly
 stopped being followed — decide which, then repoint or cut it; re-measured
-2026-08-01. Source: `IDEAS.md`, drained here.
+2026-08-01. Source: `capture/IDEAS.md`, drained here.
 `internal/gate/manifest.go`'s `dedupe` has no observable
 effect — the scheduler's edge handling is already duplicate-tolerant and no
 diagnostic renders `Needs` — but it implements a spec veto item literally, so it
@@ -1223,7 +1237,7 @@ a `craft-spec` rule that a conformance red signal always carries its
 proves too broad; prefer the check, which removes the instruction rather than
 duplicating it. Related but distinct: `bench test` makes skips visible to a
 reader, while this row makes an invisible skip fail the coverage oracle.
-Source: `IDEAS.md`, drained here.
+Source: `capture/IDEAS.md`, drained here.
 
 The FT126 close repeated that exact false green: a scoped
 `TestRootConformance` invocation omitted `BENCH_CONFORMANCE_ROOT`, skipped its
@@ -1240,7 +1254,7 @@ cannot be enumerated row by row, and FT152's story-12 per-row accounting rule
 is unexecutable as specified. Either the emission gains a stable row identity
 (row number or the behavior field) or the rule names rows by story plus
 behavior off the spec's own map — decide it alongside the check, same owner.
-Found by the Codex falsification pass on `3eb1c9a`. Source: `IDEAS.md`,
+Found by the Codex falsification pass on `3eb1c9a`. Source: `capture/IDEAS.md`,
 drained here.
 
 **FT174 (MEDIUM) — ticket dependency edges resolve to identifiers, and something
@@ -1257,7 +1271,7 @@ rather than adding a second graph, and pair the check with `Ownership fence:`
 disjointness between concurrently-eligible tickets, which is the same read and
 the method step 2 of `craft-tickets` currently lacks. The doc half — teaching the
 identifier form in the template — rides FT164; this row is the parser and the
-validation. Measured 2026-07-31. Source: `IDEAS.md`, drained here.
+validation. Measured 2026-07-31. Source: `capture/IDEAS.md`, drained here.
 
 **FT153 (MEDIUM) — the canary's vacuity baseline is a collision screen, not a
 vacuity proof.** A behavior-owned fixture's EXPECT is compared against its
@@ -1278,7 +1292,7 @@ of them to a single phase, which is semantically wrong and was reverted before
 landing, but the revert cost ~6 s of gate and ~1 s of canary. A deliberate
 scoping with correct semantics may recover that legitimately. Decide it with the
 twin question rather than separately — both rule on what a baseline must run to
-mean what it claims. Entry: `/bench-shape-idea`. Sources: `IDEAS.md`, drained
+mean what it claims. Entry: `/bench-shape-idea`. Sources: `capture/IDEAS.md`, drained
 here; the `ft91-canary-compiled-bites` review S1, recoverable via `git show
 4429b05:reviews/ft91-canary-compiled-bites.md`.
 
@@ -1311,7 +1325,7 @@ inherited. Record which checks failed at which commit, so a stage starting
 from a pinned baseline subtracts inherited reds automatically. This is the
 containment half of the incident; the prevention half is the doc-only
 shortcut's gate-anchored-surface exception.
-Source: `IDEAS.md`, drained here.
+Source: `capture/IDEAS.md`, drained here.
 
 The gate-fastpath retro adds the output half of the same attribution problem:
 `bench commit`'s final refusal must retain the failing phase name, and the
@@ -1449,7 +1463,7 @@ whole-gate re-run. That cleanup message is the signature of a gate child
 process still writing into the test's temp dir after the test returned — a
 teardown race in the self-host contract, not a diff defect. An intermittently
 red oracle is noise in the thing that defines done; pin the child-process
-teardown before it recurs. Source: `IDEAS.md`, drained here.
+teardown before it recurs. Source: `capture/IDEAS.md`, drained here.
 
 Fourth, the FT126 retirement gate reported one process-start-shaped
 doctor-shim failure as an undifferentiated exit 1, then the unchanged case
@@ -1585,7 +1599,7 @@ isolated contexts with pinned model and effort; keep authoring cases separate
 from held-out evaluation; and report variance. Run the benchmark advisory-only
 during skill changes or assessment, never in the deterministic per-commit gate.
 Only stable improvement earns the smallest necessary `craft-skills`
-requirement and harness pointer. Source: `IDEAS.md`, drained here.
+requirement and harness pointer. Source: `capture/IDEAS.md`, drained here.
 
 ## Dependencies
 
@@ -1607,14 +1621,14 @@ recommended table is sequencing advice.
 | FT108 | FT164 | Define the refactor lane on the settled expand–migrate–contract and gate-cadence rules. |
 | FT172 | FT106 | Reuse the document-claim probe for semantic roadmap claims instead of designing a second checker. |
 | FT162 | FT169 | Build full-run subject resolution on the settled landing primitive. |
-| FT166 | FT98, FT113 | Let recoverable set-aside and the completed capture-only path map define the commit command's smallest sound contract. |
-| FT168 | FT153 | Binary freshness has shipped; expose focused canary execution after baseline meaning is settled. |
+| FT166 | FT168, FT98, FT113 | The porcelain composes over the declared path allowlist FT168's spec establishes; recoverable set-aside then defines the commit command's smallest sound contract. |
+| FT168 | FT153 | Applies to the focused-canary face only, which is out of the staged spec's scope: expose focused canary execution after baseline meaning is settled. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
 | FT174 | FT164 | Build the parser against the identifier form the template teaches, not the title form it is replacing. |
 | FT175 | FT173 | The ledger's read surface is AXI; settle one derivation per principle before adding a consumer that needs all ten. |
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT135 pre-push protection: the spec is staged at `specs/pre-push-guard-visibility/spec.md`, so the next action is the build, not another spec pass. It exposes resolved-versus-guessed branch and template currency, then restores the sanctioned repair route.
-2. `/bench-shape-idea` — FT168 focused iteration evidence: settle whether the oracle may ever answer for less than the whole tree, then build the focused canary on that answer. Reviewer-priced up 2026-07-31 against measured session cost.
+1. `/bench-implement-spec` — FT168 reduced gate phase set, staged at `specs/reduced-gate-phase-set/spec.md`: a changeset confined to the declared path allowlist runs only the phases that can observe it. Reviewer-priced to the top of the board 2026-08-01 against the measured ten-minute cost every capture commit pays.
+2. `/bench-implement-spec` — FT135 pre-push protection, staged at `specs/pre-push-guard-visibility/spec.md`: expose resolved-versus-guessed branch and template currency, then restore the sanctioned repair route.
 3. `/bench-write-spec` — FT164 ticket and repair charges: three independent sources converged on one owner file, and the conventions decay out of the corpus until the skill teaches them.

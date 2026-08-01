@@ -104,12 +104,12 @@ func testUnlinkSparesUserArtifacts(t *testing.T) {
 	f := contract.NewFixture(t)
 	linkOK(t, f)
 	artifacts := map[string]string{
-		"ROADMAP.md":          "# Roadmap\n",
-		"IDEAS.md":            "- idea\n",
-		"CONTEXT.md":          "# Context\n",
-		".bench/learnings.md": "- learning\n",
-		".bench/gate.sh":      "#!/usr/bin/env bash\n# drifted by hand\nexit 0\n",
-		"specs/mine.md":       "# my spec\n",
+		"ROADMAP.md":           "# Roadmap\n",
+		"capture/IDEAS.md":     "- idea\n",
+		"CONTEXT.md":           "# Context\n",
+		"capture/learnings.md": "- learning\n",
+		".bench/gate.sh":       "#!/usr/bin/env bash\n# drifted by hand\nexit 0\n",
+		"specs/mine.md":        "# my spec\n",
 	}
 	for rel, body := range artifacts {
 		f.WriteFile(rel, body)

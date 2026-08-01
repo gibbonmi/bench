@@ -23,7 +23,7 @@ guessing. NEVER assume, always verify.
   `bench setup` to converge the repo, then interviews the reviewer to refine the
   gate and the profile. Run
   `/bench-what-next` when `bench status` or `bench roadmap` shows a drain
-  pending — it reconciles `ROADMAP.md` against the tree, drains `IDEAS.md` and
+  pending — it reconciles `ROADMAP.md` against the tree, drains `capture/IDEAS.md` and
   open learnings into it, and proposes the pass as one batch diff.
   The kit-maintenance surfaces — `/bench-update-kit`, `/bench-assess`, and the
   `craft-synthesis` skill — ship only in the Bench kit repository, where they
@@ -58,7 +58,7 @@ Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
 - Adoption and setup: `bench setup` (the one-command adoption route), `bench link`, `bench init`, `bench unlink`, `bench doctor`, `bench repair` (`--prune` removes stale binary-cache entries),
   `bench upgrade` (`--check` plans without writing, `--force` accepts a downgrade).
 - Ambient context and capture: `bench status`, `bench handoff` (prints the cold-start pin
-  block and rewrites `session-handoff.md`), `bench commands --brief`, `bench dashboard`,
+  block and rewrites `capture/session-handoff.md`), `bench commands --brief`, `bench dashboard`,
   `bench idea`, `bench roadmap`, `bench learnings`, `bench maps`.
 - Oracle and diagnostics: `bench gate` (dev tier; `--fresh` forces a real run past a
   reusable green verdict), `bench gate pin`, `bench prep-release`
@@ -221,8 +221,8 @@ inside the lifecycle as repair tickets; a terminal final-check never repays or
 reauthors promotion.
 
 **Fix, don't park.** A small defect you discover mid-work is not backlog: the
-fix lands in the active workflow as its own commit. Parking it to `IDEAS.md`
-or `.bench/learnings.md` is reserved for a fix that needs a reviewer decision,
+fix lands in the active workflow as its own commit. Parking it to `capture/IDEAS.md`
+or `capture/learnings.md` is reserved for a fix that needs a reviewer decision,
 a new seam, or spec-level design — the boundary is a decision test, not a
 size guess.
 
@@ -235,14 +235,14 @@ stop.
 **Capture what you learn; never silently rewrite your own rules.** When you
 deviate from the workflow, make a process or judgment call you're unsure about,
 or catch a should-have-asked in hindsight, append one entry to
-`.bench/learnings.md`: what happened, what the right behavior was, and a
+`capture/learnings.md`: what happened, what the right behavior was, and a
 proposed rule change if any. That's the whole of your authority here — you
 capture, I decide. `/bench-what-next` verdicts every open entry in its reviewed
 batch diff — the generalizable ones become roadmap items built later under the
 synthesis discipline with my sign-off — so the kit improves from real use
 without any rule ever changing itself behind my back. A harness's auto-memory
 is not a second journal: it holds user and preference facts, while a process
-or judgment learning lands in `.bench/learnings.md`, where the reviewed drain
+or judgment learning lands in `capture/learnings.md`, where the reviewed drain
 is its only path into the kit.
 
 ## Capture
@@ -250,9 +250,9 @@ is its only path into the kit.
 Parking an idea is conversational — never a CLI chore for the reviewer. When the
 reviewer wants to set an idea aside, or you spot a tangent worth not losing, **you**
 run `bench idea "<text>"`; they never type it. Offer once when a clear tangent
-appears, then let it go — don't nag. Parked ideas land in `IDEAS.md` and graduate
+appears, then let it go — don't nag. Parked ideas land in `capture/IDEAS.md` and graduate
 into `ROADMAP.md` only through a reviewed `/bench-what-next` drain. If `bench` isn't
-on PATH, append the dated line (`- YYYY-MM-DD  <text>`) to `IDEAS.md` yourself.
+on PATH, append the dated line (`- YYYY-MM-DD  <text>`) to `capture/IDEAS.md` yourself.
 
 Spec-backed implementation retros are capture too: `/bench-final-check` writes
-`.bench/retros/<spec-slug>.md`, and `/bench-what-next` owns their reviewed drain.
+`capture/retros/<spec-slug>.md`, and `/bench-what-next` owns their reviewed drain.

@@ -23,7 +23,7 @@ guessing.
   reviewer to fill in the gate and the profile. Run `/bench-update-kit`
   periodically to pull upstream improvements into the kit. Run
   `/bench-what-next` when `bench status` or `bench roadmap` shows a drain
-  pending — it reconciles `ROADMAP.md` against the tree, drains `IDEAS.md` and
+  pending — it reconciles `ROADMAP.md` against the tree, drains `capture/IDEAS.md` and
   open learnings into it, and proposes the pass as one batch diff.
 - **The gate and the hooks** are enforcement, with authority you do not have.
   The enforcement that matters is harness-independent: the `bench shift` loop
@@ -160,7 +160,7 @@ stop.
 **Capture what you learn; never silently rewrite your own rules.** When you
 deviate from the workflow, make a process or judgment call you're unsure about,
 or catch a should-have-asked in hindsight, append one entry to
-`.bench/learnings.md`: what happened, what the right behavior was, and a
+`capture/learnings.md`: what happened, what the right behavior was, and a
 proposed rule change if any. That's the whole of your authority here — you
 capture, I decide. `/bench-what-next` verdicts every open entry in its reviewed
 batch diff — the generalizable ones become roadmap items built later under the

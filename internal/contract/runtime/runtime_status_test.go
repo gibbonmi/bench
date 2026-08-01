@@ -102,7 +102,7 @@ func testRuntimeStatusLandedState(t *testing.T) {
 func testRuntimeStatusGuardsSignal(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile(".bench/lines.env", "BENCH_CODEX_TOP=t\nBENCH_CODEX_MID=m\nBENCH_CODEX_CHEAP=c\n")
-	f.WriteFile("IDEAS.md", "- 2026-07-05  parked idea\n")
+	f.WriteFile("capture/IDEAS.md", "- 2026-07-05  parked idea\n")
 	f.CommitAll("routed base") // commit so the git signal is quiet and only the ladder rows remain
 	// An out-of-pool worktree adds the worktree signal (sev just above guards).
 	f.Git("worktree", "add", "-q", "--detach", filepath.Join(f.Root, "outside pool"), "HEAD")
@@ -180,48 +180,48 @@ func testRuntimeIdeaRoadmap(t *testing.T) {
 		p := blank.Bench(append([]string{"idea"}, args...)...)
 		p.RequireExit(2)
 		contract.RequireContains(t, p.Stdout, tc.want)
-		if blank.Exists("IDEAS.md") {
-			t.Fatalf("args %q: empty idea created IDEAS.md", args)
+		if blank.Exists("capture/IDEAS.md") {
+			t.Fatalf("args %q: empty idea created capture/IDEAS.md", args)
 		}
 	}
 	f.Bench("idea", "ship dark mode").RequireExit(0)
-	contract.RequireFileMatches(t, f, "IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  ship dark mode$`, "idea entry not dated")
+	contract.RequireFileMatches(t, f, "capture/IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  ship dark mode$`, "idea entry not dated")
 	if f.Exists("ROADMAP.md") {
-		t.Fatal("idea created ROADMAP.md; capture should write only IDEAS.md")
+		t.Fatal("idea created ROADMAP.md; capture should write only capture/IDEAS.md")
 	}
 	contract.Mkdir(t, filepath.Join(f.Root, "sub"))
 	contract.RunAt(t, f, filepath.Join(f.Root, "sub"), nil, "bash", benchPath(t), "idea", "from sub").RequireExit(0)
-	contract.RequireFileMatches(t, f, "IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  from sub$`, "idea from nested cwd did not append to root IDEAS.md")
-	if f.Exists("sub/IDEAS.md") {
-		t.Fatal("idea from nested cwd created sub/IDEAS.md")
+	contract.RequireFileMatches(t, f, "capture/IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  from sub$`, "idea from nested cwd did not append to root capture/IDEAS.md")
+	if f.Exists("sub/capture/IDEAS.md") {
+		t.Fatal("idea from nested cwd created sub/capture/IDEAS.md")
 	}
-	before := contract.LineCount(f.ReadFile("IDEAS.md"))
+	before := contract.LineCount(f.ReadFile("capture/IDEAS.md"))
 	for _, tc := range blankIdeaCases {
 		p := f.Bench(append([]string{"idea"}, tc.args...)...)
 		p.RequireExit(2)
 		contract.RequireContains(t, p.Stdout, tc.want)
 	}
-	contract.RequireIntEqual(t, contract.LineCount(f.ReadFile("IDEAS.md")), before, "empty idea appended a blank entry")
+	contract.RequireIntEqual(t, contract.LineCount(f.ReadFile("capture/IDEAS.md")), before, "empty idea appended a blank entry")
 	f.Bench("idea", "capture", "all", "the", "words").RequireExit(0)
-	contract.RequireFileMatches(t, f, "IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  capture all the words$`, "idea did not join unquoted multi-word args")
-	f.WriteFile("IDEAS.md", "- 2026-06-01  hand added")
+	contract.RequireFileMatches(t, f, "capture/IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  capture all the words$`, "idea did not join unquoted multi-word args")
+	f.WriteFile("capture/IDEAS.md", "- 2026-06-01  hand added")
 	f.Bench("idea", "after handedit").RequireExit(0)
-	contract.RequireIntEqual(t, strings.Count(f.ReadFile("IDEAS.md"), "- "), 2, "idea merged onto a newline-less last line")
+	contract.RequireIntEqual(t, strings.Count(f.ReadFile("capture/IDEAS.md"), "- "), 2, "idea merged onto a newline-less last line")
 	f.WriteFile("ROADMAP.md", "**FT98 — active.**\nOccurrences: baseline-01\n")
 	owned := f.Bench("idea", "--owner", "FT98", "--incident", "runtime-signal", "--", "-from", "runtime")
 	owned.RequireExit(0)
 	contract.RequireContains(t, owned.Stdout, "parked: -from runtime")
-	contract.RequireFileMatches(t, f, "IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  -from runtime \[occurrence:FT98/runtime-signal\]$`, "owned idea did not append its canonical occurrence token")
-	ownedBefore := f.ReadFile("IDEAS.md")
+	contract.RequireFileMatches(t, f, "capture/IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  -from runtime \[occurrence:FT98/runtime-signal\]$`, "owned idea did not append its canonical occurrence token")
+	ownedBefore := f.ReadFile("capture/IDEAS.md")
 	f.Bench("idea", "--owner", "FT99", "--incident", "runtime-signal", "refused").RequireExit(1)
-	if got := f.ReadFile("IDEAS.md"); got != ownedBefore {
+	if got := f.ReadFile("capture/IDEAS.md"); got != ownedBefore {
 		t.Fatalf("unknown owned idea mutated inbox:\n%s", got)
 	}
 	f.Bench("link").RequireExit(0)
 	linked := contract.RunAt(t, f, f.Root, nil, "bash", filepath.Join(f.Root, ".bench", "bin", "bench.sh"), "idea", "--owner", "FT98", "--incident", "linked-signal", "linked")
 	linked.RequireExit(0)
 	contract.RequireContains(t, linked.Stdout, "parked: linked")
-	contract.RequireFileMatches(t, f, "IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  linked \[occurrence:FT98/linked-signal\]$`, "linked CLI did not append its canonical occurrence token")
+	contract.RequireFileMatches(t, f, "capture/IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  linked \[occurrence:FT98/linked-signal\]$`, "linked CLI did not append its canonical occurrence token")
 	hostileRoot := filepath.Join(t.TempDir(), "space * repository")
 	if err := os.MkdirAll(hostileRoot, 0o755); err != nil {
 		t.Fatal(err)
@@ -233,8 +233,8 @@ func testRuntimeIdeaRoadmap(t *testing.T) {
 	contract.Mkdir(t, filepath.Join(hostile.Root, "nested"))
 	hostileLinked := contract.RunAt(t, hostile, filepath.Join(hostile.Root, "nested"), nil, "bash", filepath.Join(hostile.Root, ".bench", "bin", "bench.sh"), "idea", "--owner", "FT98", "--incident", "hostile-path", "capture")
 	hostileLinked.RequireExit(0)
-	contract.RequireFileMatches(t, hostile, "IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  capture \[occurrence:FT98/hostile-path\]$`, "hostile linked CLI wrote outside the repository root")
-	if hostile.Exists("nested/IDEAS.md") {
+	contract.RequireFileMatches(t, hostile, "capture/IDEAS.md", `(?m)^- [0-9]{4}-[0-9]{2}-[0-9]{2}  capture \[occurrence:FT98/hostile-path\]$`, "hostile linked CLI wrote outside the repository root")
+	if hostile.Exists("nested/capture/IDEAS.md") {
 		t.Fatal("hostile linked CLI created nested inbox")
 	}
 	// A zero-byte ROADMAP.md is present, so it takes the non-absent posture — exit 1
@@ -246,13 +246,13 @@ func testRuntimeIdeaRoadmap(t *testing.T) {
 
 	drain := contract.NewFixture(t)
 	drain.WriteFile("ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. Shape next item - /bench-shape-idea\n")
-	drain.WriteFile("IDEAS.md", "- 2026-07-05  parked idea\n")
-	drain.WriteFile(".bench/learnings.md", "## 2026-07-05 — open learning  [open]\n")
+	drain.WriteFile("capture/IDEAS.md", "- 2026-07-05  parked idea\n")
+	drain.WriteFile("capture/learnings.md", "## 2026-07-05 — open learning  [open]\n")
 	roadmap := drain.Bench("roadmap")
 	roadmap.RequireExit(0)
 	contract.RequireContains(t, roadmap.Stdout, "# Roadmap")
-	contract.RequireContains(t, roadmap.Stdout, "ideas: 1 parked in IDEAS.md")
-	contract.RequireContains(t, roadmap.Stdout, "learnings: 1 open in .bench/learnings.md")
+	contract.RequireContains(t, roadmap.Stdout, "ideas: 1 parked in capture/IDEAS.md")
+	contract.RequireContains(t, roadmap.Stdout, "learnings: 1 open in capture/learnings.md")
 	contract.RequireContains(t, roadmap.Stdout, "/bench-what-next")
 
 	next := contract.NewFixture(t)
@@ -288,9 +288,9 @@ func testRuntimeStatusClean(t *testing.T) {
 func testRuntimeStatusDrainRow(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.WriteFile("ROADMAP.md", "# Roadmap\n\n## Recommended sequence\n\n1. Shape next item - /bench-shape-idea\n")
-	f.WriteFile("IDEAS.md", "- 2026-07-05  parked idea\n")
+	f.WriteFile("capture/IDEAS.md", "- 2026-07-05  parked idea\n")
 	// Template heading + one real open heading: the shared parser counts only the real one.
-	f.WriteFile(".bench/learnings.md", "## <date> — <short title>  [open]\n## 2026-07-05 — open learning  [open]\n")
+	f.WriteFile("capture/learnings.md", "## <date> — <short title>  [open]\n## 2026-07-05 — open learning  [open]\n")
 	f.CommitAll("s")
 	out := f.Bench("status").Stdout
 	contract.RequireContains(t, out, "1 idea(s), 1 open learning(s)")
@@ -317,13 +317,13 @@ func testRuntimeStatusDrainRow(t *testing.T) {
 func testRuntimeStatusDegradedRetro(t *testing.T) {
 	contract.NoteContractFailure(t, "status degraded-retro contract failed")
 	f := contract.NewFixture(t)
-	f.WriteFifo(".bench/retros/wait.md")
+	f.WriteFifo("capture/retros/wait.md")
 	out := f.BenchDeadlined("status", "--all")
 	if out.TimedOut {
 		t.Fatal("bench status blocked on a retrospective FIFO")
 	}
 	out.RequireExit(0)
-	out.RequireContains(out.Stdout, "unknown (.bench/retros/ is wrong-type)")
+	out.RequireContains(out.Stdout, "unknown (capture/retros/ is wrong-type)")
 	out.RequireContains(out.Stdout, "/bench-what-next")
 }
 
@@ -365,7 +365,7 @@ func testRuntimeStatusUnresolvedMapsCount(t *testing.T) {
 
 func testRuntimeStatusBudget(t *testing.T) {
 	f := contract.NewFixture(t)
-	f.WriteFile(".bench/learnings.md", "## 2026-01-01 — a  [open]\n")
+	f.WriteFile("capture/learnings.md", "## 2026-01-01 — a  [open]\n")
 	f.WriteFile("big.py", strings.Repeat("x = \n", 401))
 	f.WriteFile("decisions/x.md", "### Answer\n— (deferred)\n")
 	f.CommitAll("s")
@@ -566,15 +566,15 @@ func testRuntimeStatusRoadmapReconcile(t *testing.T) {
 
 func testRuntimeStatusLearningsFloor(t *testing.T) {
 	f := contract.NewFixture(t)
-	f.WriteFile(".bench/learnings.md", "## 2026-01-01 — a  [open]\n")
+	f.WriteFile("capture/learnings.md", "## 2026-01-01 — a  [open]\n")
 	f.CommitAll("s")
 	contract.RequireNotContains(t, f.BenchEnv(map[string]string{"BENCH_LEARNINGS_FLOOR": "2"}, "status").Stdout, "/bench-what-next")
 	contract.RequireContains(t, f.BenchEnv(map[string]string{"BENCH_LEARNINGS_FLOOR": "1"}, "status").Stdout, "/bench-what-next")
-	f.WriteFile(".bench/learnings.md", "## <date> — <short title>  [open]\n")
+	f.WriteFile("capture/learnings.md", "## <date> — <short title>  [open]\n")
 	contract.RequireNotContains(t, f.BenchEnv(map[string]string{"BENCH_LEARNINGS_FLOOR": "1"}, "status").Stdout, "/bench-what-next")
 	// The floor gates only the learnings component; parked ideas always count, and a
 	// real open heading below the floor renders as zero rather than leaking through.
-	f.WriteFile(".bench/learnings.md", "## 2026-01-01 — a  [open]\n")
+	f.WriteFile("capture/learnings.md", "## 2026-01-01 — a  [open]\n")
 	f.Bench("idea", "parked past the floor").RequireExit(0)
 	out := f.BenchEnv(map[string]string{"BENCH_LEARNINGS_FLOOR": "2"}, "status").Stdout
 	contract.RequireContains(t, out, "1 idea(s), 0 open learning(s)")

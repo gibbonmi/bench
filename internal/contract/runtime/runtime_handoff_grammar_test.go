@@ -16,7 +16,7 @@ import (
 func handoffPhaseFixture(t *testing.T) contract.Fixture {
 	t.Helper()
 	f := handoffFixtureOnMain(t)
-	f.WriteFile("IDEAS.md", "- 2026-07-05  parked idea\n")
+	f.WriteFile("capture/IDEAS.md", "- 2026-07-05  parked idea\n")
 	f.CommitAll("parked")
 	return f
 }

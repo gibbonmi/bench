@@ -166,6 +166,12 @@ func initRepo(t *testing.T) string {
 	gitRun(t, root, "init")
 	gitRun(t, root, "config", "user.email", "t@example.com")
 	gitRun(t, root, "config", "user.name", "t")
+	// The capture surfaces moved under a directory the repository root no longer
+	// supplies for free, so a fixture root that omits it fails every write that used
+	// to land beside ROADMAP.md.
+	if err := os.MkdirAll(filepath.Join(root, "capture"), 0o755); err != nil {
+		t.Fatal(err)
+	}
 	return root
 }
 
@@ -206,7 +212,7 @@ func TestRenderDirtyLeadsGitOverDrainRow(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Park an idea so the drain signal fires.
-	if err := os.WriteFile(filepath.Join(root, "IDEAS.md"), []byte("- 2026-07-03  an idea\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "capture/IDEAS.md"), []byte("- 2026-07-03  an idea\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 

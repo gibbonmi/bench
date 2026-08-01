@@ -85,7 +85,7 @@ means it is not ready.
 ## Starting from the roadmap
 
 `ROADMAP.md` is the working prioritization document `/bench-what-next`
-maintains. Raw capture lives in `IDEAS.md` and reaches the roadmap only through
+maintains. Raw capture lives in `capture/IDEAS.md` and reaches the roadmap only through
 a reviewed `/bench-what-next` drain.
 
 When invoked cold, read `ROADMAP.md` and offer its top items, recommended

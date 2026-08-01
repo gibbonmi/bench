@@ -22,7 +22,7 @@ func commitFile(t *testing.T, root, name string) string {
 // commit that wrote it. The body varies so a rewrite is a real commit, not an empty one.
 func commitHandoff(t *testing.T, root, body string) string {
 	t.Helper()
-	if err := os.WriteFile(filepath.Join(root, "session-handoff.md"), []byte("# Session handoff\n\n"+body+"\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "capture/session-handoff.md"), []byte("# Session handoff\n\n"+body+"\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	gitRun(t, root, "add", "-A")
@@ -111,7 +111,7 @@ func TestAppendHandoffInFlightEditIsSilent(t *testing.T) {
 	commitFile(t, root, "base.txt")
 	commitHandoff(t, root, "first")
 	commitFile(t, root, "one.txt")
-	if err := os.WriteFile(filepath.Join(root, "session-handoff.md"), []byte("# Session handoff\n\nrewritten\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "capture/session-handoff.md"), []byte("# Session handoff\n\nrewritten\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -124,7 +124,7 @@ func TestAppendHandoffInFlightEditIsSilent(t *testing.T) {
 func TestAppendHandoffUntrackedIsSilent(t *testing.T) {
 	root := initRepo(t)
 	commitFile(t, root, "base.txt")
-	if err := os.WriteFile(filepath.Join(root, "session-handoff.md"), []byte("# Session handoff\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "capture/session-handoff.md"), []byte("# Session handoff\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 

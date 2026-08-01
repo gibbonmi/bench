@@ -27,7 +27,14 @@ func newRepo(t *testing.T) string {
 	if err != nil {
 		t.Fatalf("rev-parse: %v", err)
 	}
-	return string(out[:len(out)-1])
+	toplevel := string(out[:len(out)-1])
+	// The capture surfaces live under a directory the repository root no longer
+	// supplies for free, so a fixture root that omits it fails every write that used
+	// to land beside ROADMAP.md.
+	if err := os.MkdirAll(filepath.Join(toplevel, "capture"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return toplevel
 }
 
 func roadmapPath(t *testing.T, root string) string {
@@ -54,7 +61,7 @@ func TestIdeaCreatesDatedLine(t *testing.T) {
 	}
 	data, err := os.ReadFile(ideasPath(t, root))
 	if err != nil {
-		t.Fatalf("IDEAS.md not created: %v", err)
+		t.Fatalf("capture/IDEAS.md not created: %v", err)
 	}
 	if !datedLine.Match(data) {
 		t.Fatalf("line does not match dated two-space shape: %q", data)
@@ -86,7 +93,7 @@ func TestIdeaEmptyExitsTwo(t *testing.T) {
 			t.Fatalf("args %q: stdout got %q, want %q", args, out, tc.want)
 		}
 		if _, err := os.Stat(ideasPath(t, root)); err == nil {
-			t.Fatalf("args %q: IDEAS.md should not have been created", args)
+			t.Fatalf("args %q: capture/IDEAS.md should not have been created", args)
 		}
 	}
 }
@@ -350,12 +357,12 @@ func TestRoadmapDrainStatus(t *testing.T) {
 		{
 			name:  "ideas only",
 			ideas: "- 2026-07-05  parked\n",
-			want:  []string{"ideas: 1 parked in IDEAS.md", "learnings: 0 open in .bench/learnings.md", "/bench-what-next"},
+			want:  []string{"ideas: 1 parked in capture/IDEAS.md", "learnings: 0 open in capture/learnings.md", "/bench-what-next"},
 		},
 		{
 			name:      "learnings only",
 			learnings: "## 2026-07-05 — open learning  [open]\n",
-			want:      []string{"ideas: 0 parked in IDEAS.md", "learnings: 1 open in .bench/learnings.md", "/bench-what-next"},
+			want:      []string{"ideas: 0 parked in capture/IDEAS.md", "learnings: 1 open in capture/learnings.md", "/bench-what-next"},
 		},
 		{
 			name:      "empty sources",
@@ -376,7 +383,7 @@ func TestRoadmapDrainStatus(t *testing.T) {
 				}
 			}
 			if tc.learnings != "" {
-				path := filepath.Join(root, ".bench", "learnings.md")
+				path := filepath.Join(root, "capture", "learnings.md")
 				if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 					t.Fatal(err)
 				}
@@ -407,7 +414,7 @@ func TestRoadmapDrainStatusIncludesPendingRetros(t *testing.T) {
 	if err := os.WriteFile(roadmapPath(t, root), []byte("# Roadmap\n\n## Recommended sequence\n\n1. First - /bench-shape-idea\n2. Second - /bench-implement-spec\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	retro := filepath.Join(root, ".bench", "retros", "done.md")
+	retro := filepath.Join(root, "capture", "retros", "done.md")
 	if err := os.MkdirAll(filepath.Dir(retro), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -415,7 +422,7 @@ func TestRoadmapDrainStatusIncludesPendingRetros(t *testing.T) {
 		t.Fatal(err)
 	}
 	out, code := RoadmapCommand(nil)
-	if code != 0 || !strings.Contains(out, "retros: 1 pending in .bench/retros/") {
+	if code != 0 || !strings.Contains(out, "retros: 1 pending in capture/retros/") {
 		t.Fatalf("roadmap = %q/%d", out, code)
 	}
 }
@@ -425,7 +432,7 @@ func TestRoadmapDrainStatusNamesDegradedRetros(t *testing.T) {
 	if err := os.WriteFile(roadmapPath(t, root), []byte("# Roadmap\n\n## Recommended sequence\n\n1. First - /bench-shape-idea\n2. Second - /bench-implement-spec\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	retro := filepath.Join(root, ".bench", "retros", "wait.md")
+	retro := filepath.Join(root, "capture", "retros", "wait.md")
 	if err := os.MkdirAll(filepath.Dir(retro), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -448,7 +455,7 @@ func TestRoadmapDrainStatusNamesDegradedRetros(t *testing.T) {
 		t.Fatal("bench roadmap blocked on a retrospective FIFO")
 	}
 	out, code := got.out, got.code
-	if code != 0 || !strings.Contains(out, "retros: unknown (.bench/retros/ is wrong-type)") {
+	if code != 0 || !strings.Contains(out, "retros: unknown (capture/retros/ is wrong-type)") {
 		t.Fatalf("roadmap = %q/%d", out, code)
 	}
 }

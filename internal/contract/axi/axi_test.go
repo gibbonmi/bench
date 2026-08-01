@@ -23,7 +23,7 @@ func TestAXIQuerySurfaceContracts(t *testing.T) {
 func testAXILearningsTwoEntry(t *testing.T) {
 	contract.NoteContractFailure(t, "AXI learnings two-entry contract failed")
 	f := contract.NewFixture(t)
-	f.WriteFile(".bench/learnings.md", "## 2026-01-01 — first learning  [open]\n- body\n## 2026-02-02 — second learning  [open]\n- body\n")
+	f.WriteFile("capture/learnings.md", "## 2026-01-01 — first learning  [open]\n- body\n## 2026-02-02 — second learning  [open]\n- body\n")
 	out := f.Bench("learnings")
 	out.RequireExit(0)
 	requireAXIFirstLine(t, out.Stdout, "learnings[2]{date,title}:")
@@ -36,7 +36,7 @@ func testAXILearningsEmptyTemplate(t *testing.T) {
 	f := contract.NewFixture(t)
 	for _, body := range []string{"", "## <date> — <short title>  [open]\n", "# Learnings — usage journal\n"} {
 		if body != "" {
-			f.WriteFile(".bench/learnings.md", body)
+			f.WriteFile("capture/learnings.md", body)
 		}
 		out := f.Bench("learnings")
 		out.RequireExit(0)
@@ -47,7 +47,7 @@ func testAXILearningsEmptyTemplate(t *testing.T) {
 func testAXITOONFieldEscaping(t *testing.T) {
 	contract.NoteContractFailure(t, "AXI TOON field-escaping contract failed")
 	f := contract.NewFixture(t)
-	f.WriteFile(".bench/learnings.md", "## 2026-03-03 — a, \"b\"  [open]\n")
+	f.WriteFile("capture/learnings.md", "## 2026-03-03 — a, \"b\"  [open]\n")
 	out := f.Bench("learnings")
 	out.RequireExit(0)
 	requireAXILine(t, out.Stdout, `  2026-03-03,"a, \"b\""`)
@@ -64,7 +64,7 @@ func testAXIUsageExit2(t *testing.T) {
 
 func testAXISubdirectoryRootResolution(t *testing.T) {
 	f := contract.NewFixture(t)
-	f.WriteFile(".bench/learnings.md", "## 2026-04-04 — sub check  [open]\n")
+	f.WriteFile("capture/learnings.md", "## 2026-04-04 — sub check  [open]\n")
 	subdir := filepath.Join(f.Root, "sub", "deeper")
 	if err := os.MkdirAll(subdir, 0o755); err != nil {
 		t.Fatal(err)
@@ -76,7 +76,7 @@ func testAXISubdirectoryRootResolution(t *testing.T) {
 
 func testAXIPathWithSpaces(t *testing.T) {
 	f := contract.NewFixture(t, contract.WithSpacePath())
-	f.WriteFile(".bench/learnings.md", "## 2026-05-05 — spaced  [open]\n")
+	f.WriteFile("capture/learnings.md", "## 2026-05-05 — spaced  [open]\n")
 	f.WriteFile("decisions/s.md", activeMapDocument("shaping", "", "— (open)", "— (open)", "— (deferred)"))
 	learnings := f.Bench("learnings")
 	learnings.RequireExit(0)
@@ -88,7 +88,7 @@ func testAXIPathWithSpaces(t *testing.T) {
 
 func testAXILearningsASCIISeparatorTitle(t *testing.T) {
 	f := contract.NewFixture(t)
-	f.WriteFile(".bench/learnings.md", "## 2026-01-01 - ascii title  [open]\n")
+	f.WriteFile("capture/learnings.md", "## 2026-01-01 - ascii title  [open]\n")
 	out := f.Bench("learnings")
 	out.RequireExit(0)
 	requireAXILine(t, out.Stdout, "  2026-01-01,ascii title")

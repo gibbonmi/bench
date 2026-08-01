@@ -60,6 +60,6 @@ learnings_rows() {
 }
 learnings() {
   local root; root="$(git rev-parse --show-toplevel 2>/dev/null)" || return 1
-  learnings_open_headings "$root/.bench/learnings.md" | learnings_rows \
+  learnings_open_headings "$root/capture/learnings.md" | learnings_rows \
     | toon_table learnings date,title
 }

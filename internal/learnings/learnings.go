@@ -1,5 +1,5 @@
 // Package learnings ports `bench learnings`: the open journal headings of
-// .bench/learnings.md as a `learnings[N]{date,title}:` TOON table. The heading parser
+// capture/learnings.md as a `learnings[N]{date,title}:` TOON table. The heading parser
 // is the single source `bench learnings` and (through the Go binary) `bench status`
 // both read, so the open-count and the row listing count by one rule.
 package learnings
@@ -191,7 +191,7 @@ const JournalSchemaHeading = "# Learnings — usage journal"
 // fact with three readers — this command, the roadmap drain that counts its open
 // headings, and the status row that names it when the read fails — and a literal
 // repeated at each of them is how the three drift apart.
-const JournalPath = ".bench/learnings.md"
+const JournalPath = "capture/learnings.md"
 
 // Command implements `bench learnings`. Unknown argument → usage on stdout, exit 2;
 // outside a repo → structured error on stdout, exit 1. Absence is the only

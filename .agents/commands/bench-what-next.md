@@ -1,5 +1,5 @@
 ---
-description: Roadmap maintenance — reconcile ROADMAP.md against the tree, drain IDEAS.md, implementation retros, and the learnings journal into it, refresh the recommended sequence, and propose the whole pass as one batch diff for reviewer approval. The single exit for parked ideas, pending retros, and open learnings. Maintenance, not a workflow phase.
+description: Roadmap maintenance — reconcile ROADMAP.md against the tree, drain capture/IDEAS.md, implementation retros, and the learnings journal into it, refresh the recommended sequence, and propose the whole pass as one batch diff for reviewer approval. The single exit for parked ideas, pending retros, and open learnings. Maintenance, not a workflow phase.
 disable-model-invocation: true
 ---
 
@@ -8,8 +8,8 @@ disable-model-invocation: true
 ## Entry orientation
 
 This is the single roadmap-maintenance phase. `bench status` and `bench roadmap`
-point here whenever `IDEAS.md` has parked lines, `.bench/learnings.md` has open
-entries, or `.bench/retros/` has pending implementation retros. One run
+point here whenever `capture/IDEAS.md` has parked lines, `capture/learnings.md` has open
+entries, or `capture/retros/` has pending implementation retros. One run
 reconciles the roadmap against the tree, drains all three capture sources,
 refreshes the recommended sequence, and hands the reviewer one diff to approve.
 
@@ -55,7 +55,7 @@ them.
 
 ## 3. Drain the inbox
 
-`IDEAS.md` is a pure inbox: every run empties to zero. Each parked line gets one
+`capture/IDEAS.md` is a pure inbox: every run empties to zero. Each parked line gets one
 disposition in the roadmap — a new prioritized row, a merge into the row that
 already covers it, or a drop as already-triaged — and the parked-pending-evidence
 tier is a valid destination for items awaiting a real trigger. No line stays
@@ -73,13 +73,13 @@ through the journal verdict step below so the run does not create a fresh open
 entry behind itself.
 
 After every recommendation has a disposition, remove every drained
-`.bench/retros/*.md` file in the same reviewer-approved batch. A partial retro
+`capture/retros/*.md` file in the same reviewer-approved batch. A partial retro
 drain is not allowed: the pending count must reach zero, and no source file is
 removed before its dispositions are present for review.
 
 ## 5. Verdict the journal
 
-Read `.bench/learnings.md` itself, not just the open-entry count — a malformed
+Read `capture/learnings.md` itself, not just the open-entry count — a malformed
 entry still needs a verdict. Every open entry gets a verdict in the batch diff:
 work-shaped becomes a roadmap item; rule-shaped becomes a roadmap item whose
 next action is the kit edit (built later under the `craft-synthesis` discipline,

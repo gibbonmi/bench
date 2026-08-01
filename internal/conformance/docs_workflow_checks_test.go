@@ -146,7 +146,7 @@ func checkStaleCommandReferences(root string) []string {
 		"AGENTS.md",
 		".bench/BENCH.md",
 		".bench/BENCH-reference.md",
-		".bench/learnings.md",
+		"capture/learnings.md",
 		"CONTEXT.md",
 		"HANDOFF.md",
 		"CHANGELOG.md",
@@ -189,7 +189,7 @@ func checkStaleCommandReferences(root string) []string {
 			continue
 		}
 		switch rel {
-		case ".bench/learnings.md":
+		case "capture/learnings.md":
 			text = strings.Split(text, "<!-- entries below -->")[0]
 		case "CHANGELOG.md":
 			if idx := strings.Index(text, "\n## "); idx >= 0 {

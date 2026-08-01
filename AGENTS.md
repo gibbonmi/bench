@@ -42,11 +42,11 @@ Anything outside that shape is a reviewer decision, not a default.
 **Phase-close handoff.** When a Bench phase closes (a drain committed, a spec
 staged, a build landed, a review delivered), the closing message must either
 emit a copy-paste fresh-session continuation prompt or update
-`session-handoff.md` — pinning repository, branch, commit, spec path and
+`capture/session-handoff.md` — pinning repository, branch, commit, spec path and
 status, decisions that stay closed, and the exact harness-native next command —
 so resumption never depends on conversation history.
 
-Rewrite `session-handoff.md` in full rather than appending to it — it is pruned,
+Rewrite `capture/session-handoff.md` in full rather than appending to it — it is pruned,
 not accreted, because a fresh session pays for every line it reads cold. The file
 carries its own shape; follow what is already in it. Where the handoff and the
 tree disagree, the tree wins: `bench status` reports how many commits have landed

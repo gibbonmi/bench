@@ -12,7 +12,7 @@ The former FT121 spec-status-flip policy remains excluded.
 
 ## Acceptance
 
-- [x] The profile's exact capture-only allowlist includes `session-handoff.md`.
+- [x] The profile's exact capture-only allowlist includes `capture/session-handoff.md`.
 - [x] The profile distinguishes checkout-local dirty paths from repository-wide
       unpushed-commit and unique-branch counts.
 - [x] A named checkout and a sibling can both be dirty while `git.LandedState`

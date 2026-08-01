@@ -58,7 +58,7 @@ of silently skipping it.
 ## Capture the implementation retro
 
 After any applicable post-merge tail, a promoted spec build has one last exit
-duty: rewrite `.bench/retros/<spec-slug>.md` in full. Do this only after
+duty: rewrite `capture/retros/<spec-slug>.md` in full. Do this only after
 `bench spec build status <slug> --full` reports a terminal promoted run and its retained
 exact green evidence. A re-run replaces that slug's whole file; it never appends,
 and it leaves other pending retros untouched.

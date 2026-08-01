@@ -75,7 +75,7 @@ func TestAXIRoadmapEmptyIsNotAbsent(t *testing.T) {
 	}
 }
 
-// TestAXIRoadmapContextDegrades pins story 13: an unreadable IDEAS.md costs
+// TestAXIRoadmapContextDegrades pins story 13: an unreadable capture/IDEAS.md costs
 // `roadmap --context` only that source's state, not the whole snapshot — the
 // roadmap rows and learnings blocks from unrelated, readable sources still render,
 // and the command still exits 0.
@@ -85,18 +85,18 @@ func TestAXIRoadmapContextDegrades(t *testing.T) {
 	f := contract.NewFixture(t)
 	f.Git("branch", "-M", "main")
 	f.WriteFile("ROADMAP.md", "# Roadmap\n\n**FT1 — one.** Body.\n\n## Recommended sequence\n\n1. `/bench-implement-spec` — one\n")
-	f.WriteFile("IDEAS.md", "- 2026-07-10  retain me\n")
-	f.WriteFile(".bench/learnings.md", "## 2026-07-10 — lesson  [open]\n- body\n")
+	f.WriteFile("capture/IDEAS.md", "- 2026-07-10  retain me\n")
+	f.WriteFile("capture/learnings.md", "## 2026-07-10 — lesson  [open]\n- body\n")
 	f.WriteFile(".bench/structure.budgets", "")
 	f.WriteFile(".bench/structure-accept", "")
 	f.Git("add", "-A")
 	f.Git("-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-qm", "fixture")
-	f.WriteUnreadable("IDEAS.md", 0o644)
+	f.WriteUnreadable("capture/IDEAS.md", 0o644)
 
 	out := f.Bench("roadmap", "--context")
 
 	out.RequireExit(0)
-	out.RequireContains(out.Stdout, "IDEAS.md,unreadable")
+	out.RequireContains(out.Stdout, "capture/IDEAS.md,unreadable")
 	out.RequireContains(out.Stdout, "roadmap_rows[1]{")
 	out.RequireContains(out.Stdout, "learnings[1]{")
 }

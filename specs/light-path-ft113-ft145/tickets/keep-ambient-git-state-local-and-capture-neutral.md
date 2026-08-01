@@ -15,7 +15,7 @@ remedy to a reviewer decision.
 
 ## Acceptance
 
-- [x] A tracked `session-handoff.md` is capture-only for gate-staleness projection.
+- [x] A tracked `capture/session-handoff.md` is capture-only for gate-staleness projection.
 - [x] Rewriting a tracked handoff excludes that file from both its dirty-path count
       and its derived next action, with one status-query exclusion mechanism rather
       than handoff-only count arithmetic.

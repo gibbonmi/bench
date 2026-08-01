@@ -39,7 +39,7 @@ cold session reads this first to avoid drifting the vocabulary.
   assessed open work in priority order, ending in a `## Recommended sequence`
   that names the next actions. Printed with `bench roadmap`. A row leaves when
   the work ships or a reconcile removes it. Not "icebox", not "backlog" — roadmap.
-- **ideas inbox** — the capture-and-forget sink at `IDEAS.md` (repo root):
+- **ideas inbox** — the capture-and-forget sink at `capture/IDEAS.md` (repo root):
   out-of-scope ideas parked with `bench idea`, committing to nothing.
   Append-only, no status or lifecycle; drained to zero into the **roadmap** by
   the maintenance phase.
@@ -56,7 +56,7 @@ cold session reads this first to avoid drifting the vocabulary.
   from an **implementation ticket**, the independently-green build unit under
   `specs/<slug>/tickets/`.
 - **session handoff** — the phase-close continuation artifact at
-  `session-handoff.md`, rewritten in full by `bench handoff`. It hands the whole
+  `capture/session-handoff.md`, rewritten in full by `bench handoff`. It hands the whole
   repository to the next session and is rewritten, never appended to.
 - **pin block** — the header `bench handoff` prints to stdout and writes at the top of the
   session handoff: repository, path, branch and HEAD, tree state, staged spec, gate
