@@ -2,48 +2,45 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — 5 unpushed commits
-Spec: `specs/reduced-gate-phase-set/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Branch: `main` — HEAD `6f3486a`, 9 unpushed commits
+Spec: `specs/reduced-gate-phase-set/spec.md` (built and landed, Status still `staged`),
+`specs/pre-push-guard-visibility/spec.md` (Status: staged, unstarted)
 
 ## State
 
-- Phase reached: **`/bench-implement-spec --full` — tickets derived, build not yet
-  started.** Ten tickets under `specs/reduced-gate-phase-set/tickets/`, blocker graph
-  verified by hand. `tickets/README.md` holds the `[R01]`–`[R26]` → (story, behavior)
-  map, assigned by hand because `bench coverage` emits no stable row identity and this
-  spec has rows sharing a story and a seam string. Next action is
-  `bench spec build start reduced-gate-phase-set`, then assign the frontier.
-- Reviewer ruling landed this session: **`specs/` joins the path allowlist** alongside
-  `capture/`, `ROADMAP.md`, and `.bench-notes.md`. It is all formatted documents, and
-  the phases that grade it — conformance and conformance-suite — are the included set,
-  so a spec edit stays graded on a reduced run. The spec's enumeration and its
-  membership paragraph were edited to record it.
-- Unverified by reading, and deliberately so: whether `test`, `contract`, or `canary`
-  touch the real `specs/` rather than a fixture tree. Story 4's stripped construction
-  is the thing that answers it, and it reds loudly rather than silently if one does.
-- One spec ambiguity ruled on and flagged for veto: row R04 says "a nested or
-  sibling-prefixed path is not" a member, contradicting R02, which requires every
-  co-located capture surface to be covered — `capture/retros/<slug>.md` is nested.
-  Read as descendant containment with the path boundary respected, so a sibling
-  prefix (`capture-old/x.md`) never matches. Written into ticket 1.
-- The build's central design, because a wrong summary sends it the wrong way:
-  excludable phases run on a full gate against a materialized stripped worktree *with
-  capabilities required*. Stripping alone is not enforcement — `skipIfSubjectFileMissing`
-  turns an absent subject file into a capability skip, informational in the dev tier,
-  so a check whose file vanished would go permanently green. That was the first draft's
-  fatal error.
-- Reviewer decisions this session, both closed: ticket 7 (ancestor selection) runs at
-  `fable`/high rather than the spec's `opus`; every other ticket keeps its spec line.
-  A Codex CLI falsification pass at the top binding runs over the finished diff before
-  promotion, charged to refute rather than to grade.
-- Seam call the spec left open: the declaration lives in `internal/gate` (exported),
-  not a new package — `internal/status` already imports `internal/gate`, so there is no
-  cycle, and the coverage rows name `internal/gate` as the unit seam.
-- Two open learnings and one parked idea await the next drain; not this build's work.
+- **`reduced-gate-phase-set` is built and landed at `6f3486a`** — gate green over the
+  composed tree. All 26 acceptance-coverage rows plus five tests beyond the map. Its
+  spec still reads `Status: staged`; nothing authored the flip, because the spec-build
+  lifecycle was abandoned mid-run (below) and `promote` is what normally writes it.
+  Flipping it is a one-line reviewer call, not pickup work.
+- The retro is `capture/retros/reduced-gate-phase-set.md`. Read it before the drain — it
+  carries the design findings, three process failures, and what was deliberately left
+  behind.
+- **A spec-build run for this slug is permanently stuck `active`.** Every one of the
+  eight operations routes to `promote` for recomposition, and `promote` checks a clean
+  review and released assignments *before* the recompose branch — conditions a
+  mid-repair run cannot meet. `abandon` is blocked by the same gate. Six worktrees stay
+  registered and its provisional refs retained; no sanctioned operation retires them.
+  Parked as a PRIORITIZE idea. This is inert — it blocks only that slug's lifecycle, not
+  ordinary commits.
+- Also inert, also recorded: five recovery refs from the earlier cadence build that
+  `bench worktree recovery` refuses because it cannot prove their payloads landed. The
+  refusal is correct.
+- `capture/IDEAS.md` carries five parked items, three of them marked PRIORITIZE because
+  they fire on every build rather than once. `capture/learnings.md` carries four
+  entries, two added this session. All await `/bench-what-next`.
+- One follow-up is scoped and ready but unbuilt: `checkContractCaptureReads` and
+  `checkScopeBinding` are reachable only through `conformance-suite`'s whole-package run,
+  by test-name prefix rather than registry registration. Registering them in
+  `registry.Checks` + `conformanceChecks` makes them run in the `conformance` phase by
+  construction and inherits the existing unbound-row protection. Two files, light path.
+  The reviewer call is whether that composes the registry seam or crosses the
+  gate-contract seam.
+- Nothing has been pushed; `main` is nine commits ahead of `origin/main`.
 
 ## Next command
 
-`/bench-implement-spec --full specs/reduced-gate-phase-set/spec.md`
+`/bench-what-next`
 
 ## Shape
 

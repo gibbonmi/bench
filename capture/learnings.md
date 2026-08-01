@@ -69,3 +69,98 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
   adjacent to FT166's `bench capture commit` porcelain and to FT98's set-aside
   primitive, so it should be weighed with them rather than built alone; all three
   are faces of the same missing "name this working set" vocabulary.
+
+## 2026-08-01 — Parking capture blocks the spec-build lifecycle
+
+**What happened.** Mid-way through the `reduced-gate-phase-set` build, the reviewer
+asked me to park a recommendation. I ran `bench idea`, which appended one line to
+`capture/IDEAS.md`. The next `bench spec build checkpoint` refused:
+
+    error: spec build start requires a clean working checkout:  M capture/IDEAS.md
+
+Three verified tickets were blocked behind a one-line capture edit. Clearing it
+myself was correctly denied by the `block-dangerous-git` hook (`git checkout <path>`
+is not the agent's authority), so the build stopped for a reviewer decision. Writing
+*this* learning has the same effect: `capture/learnings.md` is a tracked file, so the
+act of recording the problem reproduces it.
+
+**Why this is a real conflict, not a papercut.** Two rules in the kit disagree:
+
+- `.bench/BENCH.md`'s Capture section makes parking deliberately frictionless —
+  *"Parking an idea is conversational — never a CLI chore for the reviewer"* — and
+  assigns the running agent the job of doing it the moment a tangent appears.
+- The spec-build lifecycle requires a clean working checkout for its mutations.
+
+So during any spec build — the workflow's own heaviest phase, and the one most likely
+to surface tangents worth parking — following the capture rule breaks the lifecycle.
+The agent must either refuse to park (violating the capture rule), pay a full ~10
+minute gate to commit one line, or stop and ask. All three are wrong answers to
+"write this down before we lose it."
+
+**What the right behavior was.** Park to a staging area that is not the graded tree,
+and land it as part of the build's own capture commit. I improvised this after the
+fact by holding the text in the session scratchpad; that works but depends on the
+agent remembering, and a session that ends first loses the idea entirely — which is
+precisely the failure `bench idea` exists to prevent.
+
+**Proposed rule / tooling change.** Either:
+
+1. **Exempt the capture surfaces from the lifecycle's clean-checkout precondition.**
+   The declared allowlist from this very spec (`capture/`, `specs/`, `ROADMAP.md`,
+   `.bench-notes.md`) already names the paths no gate phase grades behaviorally. A
+   dirty path inside it cannot invalidate a checkpoint's evidence, because the
+   checkpoint's subject is the assignment worktree, not the main checkout. This is
+   the smaller change and it composes with the feature being built here.
+
+2. Or **give `bench idea` a staging mode** that writes outside the graded tree and a
+   drain step that folds staged entries into `capture/IDEAS.md` at the next capture
+   commit.
+
+I'd take (1): the precondition exists to stop *uncommitted implementation* from
+riding into a checkpoint, and capture files are exactly the class that cannot.
+
+**Two smaller defects found alongside, both worth fixing with it.**
+
+- The refusal message hardcodes `start` regardless of which mutation raised it
+  (`internal/specbuild/precondition.go:105`). It fired on `checkpoint` and said
+  "spec build start requires...". I initially read the shared precondition as
+  start-only *because of that message*, told the reviewer parking was safe, and was
+  wrong.
+- `bench spec build checkpoint`'s receipt `rows[].outcome` enum is
+  `passed | already-covered | not-tdd-able`, and nothing advertises it. An invalid
+  value returns only `invalid spec build receipt`, with no indication which of the
+  ~15 validated fields failed. Parked separately as the receipt-assembly item.
+
+## 2026-08-01 — Ran an interactive porcelain in automation and leaked two worktrees
+
+**What happened.** Looking for `bench worktree`'s usage string, I ran the bare verb in a
+non-interactive Bash call. It hung for two minutes and was killed with SIGTERM (exit
+143). I repeated it twice more while diagnosing. Each invocation created a real
+worktree; the two that were signal-killed leaked, and I retired them afterwards with
+`bench worktree clean` (plan then apply, `count=0 bytes=0 recovery=none`, nothing lost).
+
+**Why it happened.** `bench worktree [objective...]` is not a usage-error verb — it is a
+human porcelain (`internal/worktree/worktree.go:412`, `Subshell`). It creates a worktree,
+prints `🪵 worktree: <path>  (exit to release)`, then runs `$SHELL` inside it with stdin
+inherited and blocks on `cmd.Run()` until the shell exits. With an inherited open stdin
+in automation, that wait never ends. The non-interactive surface is the subcommands:
+`list`, `path`, `exec`, `release`, `clean`, `recovery`.
+
+**What the right behavior was.** Read the usage rather than probe for it — `bench
+commands --brief`, or the help block in `bin/bench.sh` (which documents exactly the four
+worktree subcommands and not the bare form). Never invoke an unrecognized `bench` verb
+bare in a non-interactive call to discover what it does: in this CLI a bare verb can be a
+porcelain that acts, not a parser that refuses. Where a probe is genuinely needed,
+`</dev/null` bounds it — an interactive command then sees EOF and exits immediately,
+which is also what distinguished the hang from a slow command during diagnosis.
+
+**Proposed rule change.** Add to `AGENTS.md`'s shell conventions for agents in this repo:
+discover a subcommand's shape from `bench commands --brief` or `bin/bench.sh`, never by
+running the bare verb; and redirect stdin from `/dev/null` for any `bench` invocation
+whose interactivity is not already known. This is a one-line convention that would have
+prevented all three invocations.
+
+**Separable tool defect, parked as its own idea.** `Subshell` releases the worktree only
+on the line after `cmd.Run()` returns, so the release is not signal-safe: SIGTERM or
+SIGINT to the `bench` process skips it and leaks a registered worktree. The clean-exit
+path works correctly. See the staged idea for the proposed fix.
