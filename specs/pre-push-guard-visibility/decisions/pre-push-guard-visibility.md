@@ -373,6 +373,6 @@ closing it is part of the same objective rather than a doc chore.
 
 ## Sources
 
-- Path: `decisions/assets/pre-push-guard-visibility-research.md`
+- Path: `specs/pre-push-guard-visibility/decisions/assets/pre-push-guard-visibility-research.md`
   Supports: #1 through #6, and the evidence clauses in #7, #9, #11, #12, #13 — six read-only research delegations run 2026-07-31, each claim re-verified against the tree by the coordinator.
   Drift: invalidated if the pre-push template, `ClassifyPrePush`, the guards header parser, or `bench link`'s conflict ordering changes; re-verify the cited line numbers before relying on it.
