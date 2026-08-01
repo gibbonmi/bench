@@ -142,21 +142,32 @@ declaration moves to a package both `internal/status` and `internal/gate` may
 import without a cycle, and each consumer routes through it rather than keeping a
 private copy beside it.
 
-**The allowlist, enumerated.** The `capture/` directory, `ROADMAP.md`, and
-`.bench-notes.md`. The co-location migration collapsed the inbox, the journal,
-the handoff, and the retros into `capture/`, so what was six scattered entries is
-now one directory plus two files: `ROADMAP.md`, which stays at the root because it
-is a working document a reader opens directly, and `.bench-notes.md`, which is not
-repository capture at all but per-worktree shift scratch, carried here only
-because the staleness signal already carries it.
+**The allowlist, enumerated.** The `capture/` and `specs/` directories,
+`ROADMAP.md`, and `.bench-notes.md`. The co-location migration collapsed the inbox,
+the journal, the handoff, and the retros into `capture/`, so what was six scattered
+entries is now two directories plus two files: `ROADMAP.md`, which stays at the root
+because it is a working document a reader opens directly, and `.bench-notes.md`,
+which is not repository capture at all but per-worktree shift scratch, carried here
+only because the staleness signal already carries it.
+
+`specs/` joins on the reviewer's 2026-08-01 ruling, by the same argument: it is
+entirely formatted documents — specs, decision maps, tickets, retros' siblings — and
+the phases that grade them are the included ones. Conformance owns acceptance-coverage
+map validation, decision-map integrity, and the docs sweep, so a spec edit is still
+graded on a reduced run; what it stops paying for is evidence about Go behavior it
+did not touch. Nothing about the excludable set is asserted here beyond what story 4
+continuously tests: if some excludable phase does read the real `specs/` rather than a
+fixture tree, the stripped construction reds the next full gate and names it, and that
+phase moves to the included set.
 
 **Membership is location, and the design polices mis-filing itself.** The
 profile's pin excluded directory matching because a bare prefix delegates future
 membership to whoever drops a file inside — the list stops being a decision and
 becomes a pattern. Co-location answers that differently from an admission
-condition: `capture/` *is* the definition of the capture surface, so a new file
-there is capture by construction rather than by anyone's judgment. The residual
-risk is a file mis-filed into `capture/` that the gate really does grade, and the
+condition: `capture/` *is* the definition of the capture surface, and `specs/` *is*
+the definition of the spec surface, so a new file in either is that surface by
+construction rather than by anyone's judgment. The residual risk is a file mis-filed
+into a declared directory that the gate really does grade, and the
 design absorbs it in both directions — a grader in the included set keeps running
 normally, and a grader in the excludable set reds under story 4's stripped
 construction. Mis-filing is therefore a loud failure or a harmless one, never a

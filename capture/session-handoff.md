@@ -2,44 +2,48 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `ad613ef`, 63 dirty paths, 2 unpushed commits
-Spec: `specs/pre-push-guard-visibility/spec.md` (Status: staged), `specs/reduced-gate-phase-set/spec.md` (Status: staged)
-Gate: green at `4fabf09` — stale, work tree `fd59740`
+Branch: `main` — 5 unpushed commits
+Spec: `specs/reduced-gate-phase-set/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
 
 ## State
 
-- The `/bench-what-next` drain landed at `ad613ef`. All three capture sources are
-  empty and the roadmap is reconciled; nothing from that pass is outstanding.
-- Uncommitted here: the capture co-location migration, reviewer-approved as a light
-  path. `IDEAS.md`, `session-handoff.md`, `.bench/learnings.md`, and `.bench/retros/`
-  moved to `capture/`; `ROADMAP.md` stays at the root and `.bench-notes.md` stays
-  put because it is per-worktree shift scratch, not repository capture. The four
-  path constants in `internal/roadmap`, `internal/status`, `internal/learnings`, and
-  `internal/retros` are the single source, and ~278 references across 57 files were
-  swept to match.
-- Two defects the migration exposed and fixed in the same diff: `bench init`
-  constructed the journal path from parts instead of the constant, so it would have
-  kept writing to the old location; and `bench idea` and `bench handoff` both assumed
-  their target directory existed, which was free at the repository root and is not
-  under `capture/`.
-- Also uncommitted: `specs/reduced-gate-phase-set/spec.md` (Status: staged, FT168's
-  second face) awaiting reviewer sign-off, plus the FT166→FT168 roadmap fold and the
-  refreshed recommended sequence. The spec has been through a top-tier falsification
-  pass whose three fatal findings are all addressed in the current draft.
-- The spec's central design: a changeset confined to the allowlist runs a reduced
-  phase set, and excludable phases run against a stripped worktree with capabilities
-  required, so a check that would silently degrade to a capability skip reds instead.
-  That posture is the fix for the first draft's central error — absence alone does
-  not produce a red in this tree.
-- `specs/pre-push-guard-visibility/spec.md` (Status: staged) is unstarted and now
-  second in the sequence.
-- Both merged specs remain safe to retire; six `recovered` worktree assignments with
-  missing trees remain in the pool from the cadence build.
-- Nothing has been pushed; main is well ahead of `origin/main`.
+- Phase reached: **`/bench-implement-spec --full` — tickets derived, build not yet
+  started.** Ten tickets under `specs/reduced-gate-phase-set/tickets/`, blocker graph
+  verified by hand. `tickets/README.md` holds the `[R01]`–`[R26]` → (story, behavior)
+  map, assigned by hand because `bench coverage` emits no stable row identity and this
+  spec has rows sharing a story and a seam string. Next action is
+  `bench spec build start reduced-gate-phase-set`, then assign the frontier.
+- Reviewer ruling landed this session: **`specs/` joins the path allowlist** alongside
+  `capture/`, `ROADMAP.md`, and `.bench-notes.md`. It is all formatted documents, and
+  the phases that grade it — conformance and conformance-suite — are the included set,
+  so a spec edit stays graded on a reduced run. The spec's enumeration and its
+  membership paragraph were edited to record it.
+- Unverified by reading, and deliberately so: whether `test`, `contract`, or `canary`
+  touch the real `specs/` rather than a fixture tree. Story 4's stripped construction
+  is the thing that answers it, and it reds loudly rather than silently if one does.
+- One spec ambiguity ruled on and flagged for veto: row R04 says "a nested or
+  sibling-prefixed path is not" a member, contradicting R02, which requires every
+  co-located capture surface to be covered — `capture/retros/<slug>.md` is nested.
+  Read as descendant containment with the path boundary respected, so a sibling
+  prefix (`capture-old/x.md`) never matches. Written into ticket 1.
+- The build's central design, because a wrong summary sends it the wrong way:
+  excludable phases run on a full gate against a materialized stripped worktree *with
+  capabilities required*. Stripping alone is not enforcement — `skipIfSubjectFileMissing`
+  turns an absent subject file into a capability skip, informational in the dev tier,
+  so a check whose file vanished would go permanently green. That was the first draft's
+  fatal error.
+- Reviewer decisions this session, both closed: ticket 7 (ancestor selection) runs at
+  `fable`/high rather than the spec's `opus`; every other ticket keeps its spec line.
+  A Codex CLI falsification pass at the top binding runs over the finished diff before
+  promotion, charged to refute rather than to grade.
+- Seam call the spec left open: the declaration lives in `internal/gate` (exported),
+  not a new package — `internal/status` already imports `internal/gate`, so there is no
+  cycle, and the coverage rows name `internal/gate` as the unit seam.
+- Two open learnings and one parked idea await the next drain; not this build's work.
 
 ## Next command
 
-`/bench-shape-idea` — the board's leading invocable signal (`decisions`).
+`/bench-implement-spec --full specs/reduced-gate-phase-set/spec.md`
 
 ## Shape
 
