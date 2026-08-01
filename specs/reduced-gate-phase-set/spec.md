@@ -1,6 +1,6 @@
 # Reduced gate phase set for a declared path allowlist
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed current conversation, 2026-08-01. Three rulings. First, a changeset confined to an exact declared path allowlist runs a reduced phase set, with the allowlist and the phase set both single-sourced and gate-asserted, rather than reusing a whole-tree green verdict across the subject change. Second, enforcement stays by construction — the excludable phases run against a tree the allowlisted paths are absent from — accepting that every full gate materializes a stripped worktree. Third, the capture surfaces co-locate under `capture/` — landed as a separate light-path migration before this spec is built — so the allowlist the profile pins expands to that one directory; the profile names expansion a new decision, and this is that decision.
 
