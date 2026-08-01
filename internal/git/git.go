@@ -346,8 +346,18 @@ func ParsePorcelainZ(raw []byte) []PorcelainEntry {
 // one gate owner resolves and composes with its absolute Git-directory path.
 const GateCacheFile = "bench-last-gate"
 
-// LandedInDefault proves a local branch landed by ancestry or patch containment.
-// Merge-only content cannot be proven by git cherry and is deliberately kept.
+// LandedInDefault proves a local branch landed by ancestry, patch containment, or
+// reverse-applying the branch's cumulative diff to def's tree — the last is what
+// proves a squash-landing, where the branch's commits were composed into one commit
+// no other proof can see. Merge-only content cannot be proven by git cherry and is
+// deliberately kept; the merge check runs before either content proof so that
+// conservatism holds for the fourth proof too.
+//
+// A true verdict is the sole authority every cleanup path deletes a branch on, so
+// ambiguity never rounds up: whatever the reverse-apply proof cannot generate, apply
+// cleanly, or represent byte-for-byte (reverseAppliesToDefault names the forms) is
+// reported not landed. The cost of refusing is an orphaned branch; the cost of a
+// wrong true is lost work with nothing standing behind it.
 func LandedInDefault(root, branch, def string) (landed, byContent bool, err error) {
 	ancestor := exec.Command("git", "-C", root, "merge-base", "--is-ancestor", branch, def)
 	if err := ancestor.Run(); err == nil {
@@ -368,6 +378,9 @@ func LandedInDefault(root, branch, def string) (landed, byContent bool, err erro
 	}
 	for _, line := range strings.Split(out, "\n") {
 		if line != "" && !strings.HasPrefix(line, "-") {
+			if reverseAppliesToDefault(root, branch, def) {
+				return true, true, nil
+			}
 			return false, false, nil
 		}
 	}

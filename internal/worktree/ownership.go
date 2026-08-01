@@ -62,7 +62,7 @@ var creationLockAttempt = func(string) {}
 
 // CleanupOptions carries the operator's invocation choices into every plan and the apply
 // that must reproduce it. DiscardBranch is an assertion, not a force: it supplies the
-// landedness proof git.LandedInDefault cannot derive across a squash-landing, and it
+// landedness proof git.LandedInDefault refuses to derive from an ambiguous shape, and it
 // authorizes nothing else — every ownership, identity, and path-safety refusal is decided
 // without reading it.
 type CleanupOptions struct {

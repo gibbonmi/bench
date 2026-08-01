@@ -234,9 +234,9 @@ func PlanExplicitWithOptions(root, path string, options CleanupOptions) (Cleanup
 				plan.branchRef, plan.branchOID = headRef, head
 			}
 		}
-		// The derived proof above reads ancestry, then merges, then patch-equivalence, and a
-		// squash-landing defeats all three: the branch's commits were composed into one
-		// commit that shares no patch-id with any of them, so a fully-landed branch reads as
+		// The derived proof above reads ancestry, then merges, then patch-equivalence, then
+		// reverse-applicability — which proves a squash-landing but still refuses whatever it
+		// cannot represent byte- and mode-exactly, so a fully-landed branch can read as
 		// unmerged. DiscardBranch is the operator supplying that missing proof by hand. It
 		// is written after the derivation rather than into it, so `landed` still records what
 		// the tool itself concluded — the automatic classifier reads only that string, and

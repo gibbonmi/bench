@@ -33,9 +33,17 @@ func TestResumeCleanRemovesOnlyVerifiedOwnedAssignment(t *testing.T) {
 	lease, err := LeaseFile(pool)
 	mustNoError(t, err)
 	mustWrite(t, lease, []byte("123 2026-07-11T00:00:00Z\n"), 0o600)
+	// Three unclaimed orphans covering what the prune path may and may not delete: one
+	// landed by ancestry, one whose commit is distinct but whose tree is the default
+	// branch's own, and one carrying content that is nowhere else.
 	gitRun(t, root, "branch", "worktree-agent-landed")
-	unique := gitOutput(t, root, "commit-tree", "HEAD^{tree}", "-p", "HEAD", "-m", "unique scratch")
-	gitRun(t, root, "update-ref", "refs/heads/worktree-agent-unique", unique)
+	empty := gitOutput(t, root, "commit-tree", "HEAD^{tree}", "-p", "HEAD", "-m", "empty scratch")
+	gitRun(t, root, "update-ref", "refs/heads/worktree-agent-empty", empty)
+	gitRun(t, root, "switch", "-q", "-c", "worktree-agent-unique")
+	mustWrite(t, filepath.Join(root, "unique.txt"), []byte("unique\n"), 0o644)
+	gitRun(t, root, "add", "unique.txt")
+	gitRun(t, root, "commit", "-qm", "unique work")
+	gitRun(t, root, "switch", "-q", "main")
 	created := time.Unix(1, 0).UTC()
 	mustNoError(t, intent.Upsert(root, intent.Entry{Key: "auto-cleaned", Kind: intent.KindWorktree, CreatedAt: created, Worktree: clean}))
 	mustNoError(t, intent.Upsert(root, intent.Entry{Key: "unrelated", Kind: intent.KindShift, CreatedAt: created}))
@@ -46,7 +54,7 @@ func TestResumeCleanRemovesOnlyVerifiedOwnedAssignment(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := ResumeCleanCommand(nil, &stdout, &stderr)
 	requireTest(t, code == 0, "ResumeCleanCommand exit=%d\nstdout=%s\nstderr=%s", code, stdout.String(), stderr.String())
-	requireTest(t, stdout.String() == "bench resume: removed 1, recovered 0; retained foreign=2 live-lease=1 unexpected-lock=1; pruned branches 1; reconciled 0; failed 0; open assignments 0\n", "resume report = %q", stdout.String())
+	requireTest(t, stdout.String() == "bench resume: removed 1, recovered 0; retained foreign=2 live-lease=1 unexpected-lock=1; pruned branches 2; reconciled 0; failed 0; open assignments 0\n", "resume report = %q", stdout.String())
 	_, err = os.Stat(owned.Path)
 	requireTest(t, os.IsNotExist(err), "verified owned worktree remains: %v", err)
 	for _, path := range []string{clean, dirty, locked, pool} {
@@ -56,6 +64,7 @@ func TestResumeCleanRemovesOnlyVerifiedOwnedAssignment(t *testing.T) {
 	after, _ := os.ReadFile(filepath.Join(dirty, "dirty.txt"))
 	requireTest(t, bytes.Equal(before, after), "resume cleanup changed dirty bytes")
 	requireTest(t, !git.OK("-C", root, "show-ref", "--verify", "--quiet", "refs/heads/worktree-agent-landed"), "resume cleanup retained a name-only ancestry-landed orphan")
+	requireTest(t, !git.OK("-C", root, "show-ref", "--verify", "--quiet", "refs/heads/worktree-agent-empty"), "resume cleanup retained an orphan holding the default branch's own tree")
 	requireTest(t, git.OK("-C", root, "show-ref", "--verify", "--quiet", "refs/heads/worktree-agent-unique"), "resume cleanup deleted unique orphan")
 }
 
@@ -234,7 +243,7 @@ func TestPlanAutomaticUsesLandedInDefaultMatrix(t *testing.T) {
 		markPending(t, root, creation.Assignment)
 		requirePlanAction(t, root, creation.Path, ActionRetain)
 	})
-	t.Run("squash ambiguity retained", func(t *testing.T) {
+	t.Run("squash landing eligible", func(t *testing.T) {
 		root, creation := newOwnedAssignment(t, "squash")
 		commitInWorktree(t, creation.Path, "one.txt", "one\n", "one")
 		commitInWorktree(t, creation.Path, "two.txt", "two\n", "two")
@@ -242,7 +251,7 @@ func TestPlanAutomaticUsesLandedInDefaultMatrix(t *testing.T) {
 		gitRun(t, root, "cherry-pick", "--no-commit", creation.Assignment.Start+".."+short)
 		gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "squashed")
 		markPending(t, root, creation.Assignment)
-		requirePlanAction(t, root, creation.Path, ActionRetain)
+		requirePlanAction(t, root, creation.Path, ActionRemove)
 	})
 	t.Run("missing default retained", func(t *testing.T) {
 		root, creation := newOwnedAssignment(t, "missing-default")

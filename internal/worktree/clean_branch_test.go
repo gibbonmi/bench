@@ -11,16 +11,21 @@ import (
 	"github.com/gibbonmi/bench/internal/intent"
 )
 
-// squashLandedAssignment returns one owned, cleanup-pending assignment whose branch
-// commits were composed into a single commit on the default branch. Every derived proof
-// misses that shape — ancestry fails, no merge exists, and the composed commit shares no
-// patch-id with either original — so the classifier calls the branch unmerged while the
-// work is already in. It is the exact case the operator override exists for.
-func squashLandedAssignment(t *testing.T, request string) (string, Creation) {
+// unprovableLandedAssignment returns one owned, cleanup-pending assignment whose branch
+// commits were composed into a single commit on the default branch, one of them a mode
+// change on a file that survives the landing. Every byte of the branch is in the default
+// branch and still no derived proof can say so: ancestry fails, no merge exists, the
+// composed commit shares no patch-id with either original, and reverse-apply refuses a
+// mode change on a surviving entry because git apply reports a preimage mode mismatch as
+// a warning rather than a failure. It is the exact case the operator override exists for.
+func unprovableLandedAssignment(t *testing.T, request string) (string, Creation) {
 	t.Helper()
 	root, creation := newOwnedAssignment(t, request)
 	commitInWorktree(t, creation.Path, "one.txt", "one\n", "one")
-	commitInWorktree(t, creation.Path, "two.txt", "two\n", "two")
+	if err := os.Chmod(filepath.Join(creation.Path, "tracked.txt"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-q", "-a", "-m", "make tracked executable")
 	short := strings.TrimPrefix(creation.Assignment.Branch, "refs/heads/")
 	gitRun(t, root, "cherry-pick", "--no-commit", creation.Assignment.Start+".."+short)
 	gitRun(t, root, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-qm", "squashed")
@@ -46,7 +51,7 @@ func renderedPlan(t *testing.T, plan CleanupPlan) string {
 
 // [RW1]
 func TestDiscardBranchRetiresTheBranchAndLeavesNoRecoveryRef(t *testing.T) {
-	root, creation := squashLandedAssignment(t, "rw1")
+	root, creation := unprovableLandedAssignment(t, "rw1")
 	options := CleanupOptions{DiscardBranch: true}
 	plan, err := PlanExplicitWithOptions(root, creation.Path, options)
 	mustNoError(t, err)
@@ -67,7 +72,7 @@ func TestDiscardBranchRetiresTheBranchAndLeavesNoRecoveryRef(t *testing.T) {
 
 // [RW2]
 func TestDiscardBranchPlanNamesTheBranchBeforeAnyRemoval(t *testing.T) {
-	root, creation := squashLandedAssignment(t, "rw2")
+	root, creation := unprovableLandedAssignment(t, "rw2")
 	plan, err := PlanExplicitWithOptions(root, creation.Path, CleanupOptions{DiscardBranch: true})
 	mustNoError(t, err)
 	output := renderedPlan(t, plan)
@@ -83,7 +88,7 @@ func TestDiscardBranchPlanNamesTheBranchBeforeAnyRemoval(t *testing.T) {
 // guard on that boundary: it passed before the override existed and must keep passing.
 func TestDiscardBranchLeavesTheDerivedClassificationUnchanged(t *testing.T) {
 	t.Run("automatic path retains an unproven branch and authorizes no deletion", func(t *testing.T) {
-		root, creation := squashLandedAssignment(t, "rw3-automatic")
+		root, creation := unprovableLandedAssignment(t, "rw3-automatic")
 		plan, err := PlanAutomatic(root, creation.Path)
 		mustNoError(t, err)
 		requireTest(t, plan.Action == ActionRetain, "automatic action = %q, want retain", plan.Action)
@@ -92,7 +97,7 @@ func TestDiscardBranchLeavesTheDerivedClassificationUnchanged(t *testing.T) {
 		requireTest(t, plan.branchRef == "", "automatic plan named a deletable branch: %q", plan.branchRef)
 	})
 	t.Run("explicit path without the override removes only the checkout", func(t *testing.T) {
-		root, creation := squashLandedAssignment(t, "rw3-explicit")
+		root, creation := unprovableLandedAssignment(t, "rw3-explicit")
 		plan, err := PlanExplicit(root, creation.Path)
 		mustNoError(t, err)
 		requireTest(t, plan.Action == ActionRemove, "explicit action = %q, want remove", plan.Action)
@@ -111,7 +116,7 @@ func TestDiscardBranchLeavesTheDerivedClassificationUnchanged(t *testing.T) {
 func TestDiscardBranchNeverBypassesARefusal(t *testing.T) {
 	options := CleanupOptions{DiscardBranch: true}
 	t.Run("primary checkout", func(t *testing.T) {
-		root, _ := squashLandedAssignment(t, "rw4-primary")
+		root, _ := unprovableLandedAssignment(t, "rw4-primary")
 		plan, err := PlanExplicitWithOptions(root, root, options)
 		mustNoError(t, err)
 		requireTest(t, plan.Action == ActionRetain, "primary action = %q, want retain", plan.Action)
@@ -152,7 +157,7 @@ func TestDiscardBranchNeverBypassesARefusal(t *testing.T) {
 		requireTest(t, statErr == nil, "apply removed a foreign worktree: %v", statErr)
 	})
 	t.Run("assignment identity mismatch", func(t *testing.T) {
-		root, creation := squashLandedAssignment(t, "rw4-identity")
+		root, creation := unprovableLandedAssignment(t, "rw4-identity")
 		gitRun(t, creation.Path, "switch", "-q", "-c", "drifted-identity")
 		plan, err := PlanExplicitWithOptions(root, creation.Path, options)
 		mustNoError(t, err)
