@@ -322,12 +322,13 @@ func reducedInheritance(root, storageRoot string, res Resolution, now time.Time)
 	}
 	// The one ancestor lookup. A stripped identity matching the retained green means
 	// the tree and the launcher closure both changed only inside the allowlist, and
-	// inspectEvidence answers ReusableGreen only for a fresh full green of exactly
-	// that identity — an absent record (a first commit, a fresh clone, a pruned
-	// cache) and one past the freshness window both refuse, and the window is
-	// measured against the ancestor's own recorded time, which nothing on the
-	// reduced path ever re-stamps.
-	evidence := inspectEvidence(storageRoot, stripped, now)
+	// the lookup answers ReusableGreen only for a full green of exactly that
+	// identity — an absent record (a first commit, a fresh clone, a pruned cache)
+	// refuses. No freshness window applies here: the ancestor is content-addressed,
+	// so it stands until the stripped identity moves, and its recorded time — which
+	// nothing on the reduced path ever re-stamps — travels into the reduced record
+	// as attribution, not as a deadline.
+	evidence := inspectTimelessEvidence(storageRoot, stripped, now)
 	if !evidence.ReusableGreen {
 		return reducedRun{}
 	}
@@ -519,8 +520,9 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 		// A reduced green retains nothing, which is why only the full branch below
 		// writes evidence. Whole-tree evidence from a reduced run would let the
 		// release path credit phases nobody ran; stripped evidence would re-stamp the
-		// ancestor's time and let reductions chain — and the freshness window on the
-		// ancestor only works because inheritance never refreshes what it inherits.
+		// ancestor's time and dress an ever-older full green as recent — the
+		// ancestor's recorded time stays its own because inheritance never refreshes
+		// what it inherits.
 		if !reduction.ok {
 			if err := retainGreen(storageRoot, plan, recordedAt); err != nil {
 				fmt.Fprintln(stderr, "gate evidence persistence failed")

@@ -241,10 +241,13 @@ func TestReducedVerdictIsNotAnAncestor(t *testing.T) {
 	})
 }
 
-// [R19] An ancestor older than the freshness window forces a full run. The window is
-// applied to the ancestor's own recorded time: re-stamping the inherited evidence with
-// the current time on each reduced run would keep a day-old ancestor reusable forever.
-func TestStaleAncestorFallsBackToFullRun(t *testing.T) {
+// [R19] The ancestor lookup is content-addressed, not clock-bounded: an ancestor past
+// the whole-tree freshness window still serves an allowlist-confined changeset, because
+// every phase that can observe the change runs fresh and the inherited phases answer for
+// content the stripped identity proves unchanged. The ancestor's own recorded time is
+// carried verbatim into each reduced record — never re-stamped — so the record always
+// attributes the inherited evidence to the run that produced it.
+func TestOldAncestorStillServesReducedRun(t *testing.T) {
 	root := reducedRunFixture(t)
 	t0 := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
 	mustExecuteGreen(t, root, &faultEngine{now: t0})
@@ -258,13 +261,14 @@ func TestStaleAncestorFallsBackToFullRun(t *testing.T) {
 	}
 
 	writeGateTestFile(t, root, "ROADMAP.md", "second capture edit\n", 0o644)
-	stale := t0.Add(freshness + time.Minute)
-	mustExecuteGreen(t, root, &faultEngine{now: stale})
-	if rec := slotRecord(t, root, stale); rec.Reduced {
-		t.Fatalf("stale-ancestor record = %+v — inherited evidence was re-stamped, keeping the ancestor reusable past the window", rec)
+	old := t0.Add(freshness + time.Minute)
+	mustExecuteGreen(t, root, &faultEngine{now: old})
+	rec = slotRecord(t, root, old)
+	if !rec.Reduced || rec.AncestorRecordedAt != t0.Format(time.RFC3339) {
+		t.Fatalf("old-ancestor record = %+v, want a reduced verdict still carrying the ancestor's own time %s", rec, t0.Format(time.RFC3339))
 	}
-	if got := fullRunCount(t, root); got != 2 {
-		t.Fatalf("gate runs = %d, want 2 — the stale ancestor did not force a full run", got)
+	if got := fullRunCount(t, root); got != 1 {
+		t.Fatalf("gate runs = %d, want 1 — the old ancestor should keep serving reduced runs", got)
 	}
 }
 

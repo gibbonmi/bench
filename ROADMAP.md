@@ -1244,7 +1244,7 @@ Add a `bench canary` path that runs one named fixture or family as iteration
 evidence only — the full sweep remains the only thing the gate credits, so
 this is a focused check, not a second oracle. The row's other face — a
 reduced phase set for an allowlist-confined changeset — shipped 2026-08-01
-via `specs/reduced-gate-phase-set/spec.md` (`6f3486a`); this face was
+as the reduced-gate-phase-set spec (`6f3486a`, spec since retired); this face was
 explicitly out of that spec's scope and stays open, back at its pre-fold
 LOW. Source: the light-path retro, drained here.
 

@@ -147,6 +147,20 @@ func inspectProspective(root, tree string, now time.Time) EvidenceInspection {
 }
 
 func inspectEvidence(root string, plan subject, now time.Time) EvidenceInspection {
+	return inspectEvidenceWindowed(root, plan, now, true)
+}
+
+// inspectTimelessEvidence answers the reduced-ancestor lookup, which no freshness window
+// bounds: the retained green is content-addressed by the stripped identity, so it stands
+// until that identity moves, not until a clock runs out. Every phase that can observe the
+// changeset runs fresh on the reduced path; only phases the identity proves blind to the
+// change inherit, and expiring that proof by time would re-charge the full gate for an
+// allowlist-confined edit made an hour too late.
+func inspectTimelessEvidence(root string, plan subject, now time.Time) EvidenceInspection {
+	return inspectEvidenceWindowed(root, plan, now, false)
+}
+
+func inspectEvidenceWindowed(root string, plan subject, now time.Time, expires bool) EvidenceInspection {
 	inspection := EvidenceInspection{Tree: plan.Tree, Oracle: plan.Oracle, Reason: plan.Reason}
 	if !plan.Closed {
 		return inspection
@@ -173,7 +187,7 @@ func inspectEvidence(root string, plan subject, now time.Time) EvidenceInspectio
 	}
 	recorded, _ := time.Parse(time.RFC3339, loaded.record.RecordedAt)
 	inspection.RecordedAt = recorded
-	if now.Sub(recorded) >= freshness {
+	if expires && now.Sub(recorded) >= freshness {
 		inspection.Reason = "verdict expired"
 		return inspection
 	}

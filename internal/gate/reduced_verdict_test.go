@@ -93,8 +93,8 @@ func reducedTestObject(t *testing.T, rec verdictRecord) map[string]any {
 // actually ran, and the ancestor whose evidence the rest of the run inherited all have to
 // survive the write-read pair — an inherited field that silently drops leaves a record
 // claiming a full grading it never had. The ancestor's recorded time travels with it
-// unchanged, because the freshness window is applied to that time and a re-stamp would
-// keep a stale ancestor reusable forever.
+// unchanged: it attributes the inherited evidence to the run that produced it, and a
+// re-stamp would dress an ever-older full green as recent.
 func TestReducedVerdictRecordsAncestor(t *testing.T) {
 	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
 
