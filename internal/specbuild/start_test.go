@@ -368,6 +368,7 @@ func TestStartRefusesConflictingCandidateAndInvalidPriorState(t *testing.T) {
 		mutate func(*record)
 	}{
 		{"conflicting run identity", func(run *record) { run.Run = "another-run" }},
+		{"mismatched candidate identity", func(run *record) { run.Candidate += "-other" }},
 		{"incomplete assignments", func(run *record) { run.Assignments = nil }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

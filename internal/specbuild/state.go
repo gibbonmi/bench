@@ -202,9 +202,7 @@ func (r record) valid(slug string) bool {
 }
 
 func (r record) validCore(slug string) bool {
-	legacyRun, legacyCandidate := runIdentity(r.Spec, "")
-	attemptRun, attemptCandidate := runIdentity(r.Spec, r.Branch+"\x00"+r.Base)
-	validIdentity := r.Run == legacyRun && r.Candidate == legacyCandidate || r.Run == attemptRun && r.Candidate == attemptCandidate
+	validIdentity := canonicalDigest(r.Run) && r.Candidate == candidateIdentity(r.Run)
 	if r.Version != 1 || r.Slug != slug || r.Spec == "" || r.SpecTip == "" || !validIdentity || r.Branch == "" || r.Base == "" || r.CandidateTip == "" || r.Assignments == nil || r.Operations == nil || len(r.Operations) > operationLimit {
 		return false
 	}
@@ -321,6 +319,13 @@ func digest(value string) string {
 	sum := sha256.Sum256([]byte(value))
 	return hex.EncodeToString(sum[:])
 }
+
+func canonicalDigest(value string) bool {
+	_, err := hex.DecodeString(value)
+	return len(value) == sha256.Size*2 && err == nil && strings.ToLower(value) == value
+}
+
+func candidateIdentity(run string) string { return "refs/bench/specbuild/candidate/" + run }
 
 // Status returns the durable compact projection for slug.
 func (s *Service) Status(slug string) (Status, error) {

@@ -180,7 +180,7 @@ func runIdentity(specPath, attempt string) (string, string) {
 	if attempt != "" {
 		identity = digest(specPath + "\x00" + attempt)
 	}
-	return identity, "refs/bench/specbuild/candidate/" + identity
+	return identity, candidateIdentity(identity)
 }
 
 // Abandon returns the read-only inventory that an abandonment apply must match.

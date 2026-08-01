@@ -125,6 +125,64 @@ func TestPromoteRecomposesAWorkingAdvanceBeforeGate(t *testing.T) {
 	}
 }
 
+func TestRecomposedAttemptReloadsInFreshService(t *testing.T) {
+	fixture := reviewedPromotionFixture(t)
+	abandon := &abandonOwner{}
+	fixture.service.worktrees = abandon
+	plan, err := fixture.service.Abandon(t.Context(), "build demo")
+	if err != nil {
+		t.Fatalf("Abandon: %v", err)
+	}
+	if _, err := fixture.service.ApplyAbandon(t.Context(), "build demo", plan.Fingerprint); err != nil {
+		t.Fatalf("ApplyAbandon: %v", err)
+	}
+	fixture.service.worktrees = realOwner{}
+	advanceWorking(t, fixture.root)
+	if _, err := fixture.service.Start(t.Context(), "build demo"); err != nil {
+		t.Fatalf("restart: %v", err)
+	}
+	assigned, _, err := fixture.service.Assign(t.Context(), "build demo", "one.md", "attempt checkpoint")
+	if err != nil {
+		t.Fatalf("Assign: %v", err)
+	}
+	write(t, filepath.Join(assigned.Path, "internal", "specbuild", "attempt-change.go"), "package specbuild\n")
+	checkpointAssignment(t, fixture.root, fixture.service, assigned, []string{"internal/specbuild/attempt-change.go"})
+	if _, err := fixture.service.Integrate(t.Context(), "build demo", assigned.ID); err != nil {
+		t.Fatalf("Integrate: %v", err)
+	}
+	before := loadRun(t, fixture.service)
+	review := reviewReceipt{Version: 1, Run: before.Run, Candidate: before.CandidateTip, Axes: []reviewAxis{{Axis: "Standards"}, {Axis: "Spec"}, {Axis: "Coverage"}}}
+	if _, err := fixture.service.Review(t.Context(), "build demo", writeReviewReceipt(t, review)); err != nil {
+		t.Fatalf("Review: %v", err)
+	}
+	write(t, filepath.Join(fixture.root, "second-advance.txt"), "advance\n")
+	git(t, fixture.root, "add", ".")
+	git(t, fixture.root, "commit", "-qm", "second advance")
+	owner := &recompositionGate{}
+	fixture.service.gate = owner
+	recomposed, err := fixture.service.Promote(t.Context(), "build demo")
+	if err != nil || recomposed.Next != "bench spec build review build demo" {
+		t.Fatalf("Promote = %#v, %v", recomposed, err)
+	}
+
+	fresh := New(fixture.root, owner, realOwner{})
+	status, err := fresh.Status("build demo")
+	if err != nil || status.Subject != recomposed.Subject || status.Next != "bench spec build review build demo" {
+		t.Fatalf("fresh Status = %#v, %v", status, err)
+	}
+	after, found, err := fresh.load("build demo")
+	if err != nil || !found {
+		t.Fatalf("fresh load: found=%t err=%v", found, err)
+	}
+	if after.Run != before.Run || after.Candidate != before.Candidate || after.Base == before.Base || after.CandidateTip == before.CandidateTip || !refAt(fixture.root, before.Candidate, after.CandidateTip) {
+		t.Fatalf("reloaded identity before=%#v after=%#v", before, after)
+	}
+	review.Run, review.Candidate = after.Run, after.CandidateTip
+	if _, err := fresh.Review(t.Context(), "build demo", writeReviewReceipt(t, review)); err != nil {
+		t.Fatalf("fresh Review: %v", err)
+	}
+}
+
 func TestPromoteRecompositionRefusesBootstrapFailureWithoutMutation(t *testing.T) {
 	fixture := reviewedPromotionFixture(t)
 	advanceWorking(t, fixture.root)
