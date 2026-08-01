@@ -1,6 +1,7 @@
 package preprelease
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -66,12 +67,8 @@ func TestPrepReleaseRequiresDevGreen(t *testing.T) {
 			cause: "absent",
 		},
 		{
-			name: "red",
-			spoil: func(t *testing.T, r shipRepo) {
-				r.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\nexit 1\n")
-				r.CommitAll("red gate")
-				r.RunEnv(r.runEnv(nil), "bash", r.benchScript(), "gate").RequireExit(1)
-			},
+			name:  "red",
+			spoil: redTheGate,
 			cause: "recorded red",
 		},
 		{
@@ -104,6 +101,51 @@ func TestPrepReleaseRequiresDevGreen(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestPrepReleaseRefusesReducedVerdict is the story 7 acceptance. A reduced verdict is
+// recorded green and bound to this tree, so a precondition asking only whether the status
+// is green accepts a record that graded a fraction of the tree. The message carries the
+// row's second half: a maintainer who reads that no verdict exists re-runs whatever they
+// just ran, where one who reads that the verdict is narrow knows to force a full run.
+func TestPrepReleaseRefusesReducedVerdict(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	r := newShipRepo(t)
+	reduceVerdict(t, r, "green")
+
+	probe := r.prepRelease(nil)
+
+	if probe.ExitCode == 0 {
+		t.Fatalf("prep-release accepted a reduced verdict\nstderr:\n%s", probe.Stderr)
+	}
+	requireContains(t, "refusal", probe.Stderr, "reduced")
+	requireContains(t, "refusal", probe.Stderr, "bench gate --fresh")
+	if r.Exists(evidenceIndexPath) {
+		t.Fatalf("a refused run still produced %s", evidenceIndexPath)
+	}
+}
+
+// TestPrepReleaseNamesRedBeforeReduction is the boundary of the refusal above: a record
+// can be both reduced and red, and reporting the reduction there sends the maintainer to
+// force a full run that reds again for the cause the gate already recorded. The narrowness
+// only matters once the verdict is green, so the red cause outranks it.
+func TestPrepReleaseNamesRedBeforeReduction(t *testing.T) {
+	t.Parallel()
+	contract.SkipIfSubjectBenchMissing(t)
+	r := newShipRepo(t)
+	redTheGate(t, r)
+	record := reduceVerdict(t, r, "red")
+
+	probe := r.prepRelease(nil)
+
+	if probe.ExitCode == 0 {
+		t.Fatalf("prep-release accepted a red verdict\nstderr:\n%s\nverdict:\n%s", probe.Stderr, record)
+	}
+	if strings.Contains(probe.Stderr, "reduced") {
+		t.Fatalf("refusal blamed the reduction for a red verdict:\n%s\nverdict:\n%s", probe.Stderr, record)
+	}
+	requireContains(t, "refusal", probe.Stderr, "recorded red")
 }
 
 // TestPrepReleaseAllSurfaces is the story 8 acceptance: a route added to bin/bench.sh
@@ -266,6 +308,57 @@ func removeVerdict(t *testing.T, r shipRepo) {
 	if err := os.Remove(verdictPath(r)); err != nil && !os.IsNotExist(err) {
 		t.Fatalf("remove verdict cache: %v", err)
 	}
+}
+
+// redTheGate replaces the fixture's gate with a failing one and records the red verdict
+// that follows, so the tree the command reads is one the dev tier answered for and
+// refused.
+func redTheGate(t *testing.T, r shipRepo) {
+	t.Helper()
+	r.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\nexit 1\n")
+	r.CommitAll("red gate")
+	r.RunEnv(r.runEnv(nil), "bash", r.benchScript(), "gate").RequireExit(1)
+}
+
+// reduceVerdict rewrites the recorded verdict into the reduced class, promoting the run
+// the gate just wrote into the full-green ancestor the reduction inherits from. status is
+// the verdict the caller means to reduce, checked so a row asserting on a green cause
+// cannot silently be reducing a red one. The record is edited rather than rebuilt for the
+// reason ageVerdict is: everything the gate decided stays as the gate wrote it, leaving
+// the reduction as the only thing the command can be reacting to. The loader validates
+// the class strictly, so a record this helper malformed would be refused as invalid — a
+// diagnostic naming neither the reduction nor its remedy, and the assertions above would
+// still bite. The record it wrote is returned so a failing row can show what the command
+// was actually reading rather than leaving the fixture's own shape to be assumed.
+func reduceVerdict(t *testing.T, r shipRepo, status string) []byte {
+	t.Helper()
+	path := verdictPath(r)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read verdict cache: %v", err)
+	}
+	var record map[string]any
+	if err := json.Unmarshal(data, &record); err != nil {
+		t.Fatalf("decode verdict cache: %v", err)
+	}
+	if record["status"] != status {
+		t.Fatalf("verdict cache is %v, want the %s a reduction builds on:\n%s", record["status"], status, data)
+	}
+	record["reduced"] = true
+	// The phase list is the record of what this run graded, and the loader checks it for
+	// shape alone, so one named phase is the whole of what a throwaway repo can honestly
+	// claim to have run.
+	record["phases"] = []string{"gate"}
+	record["ancestor"], record["ancestor_recorded_at"] = record["tree"], record["recorded_at"]
+	reduced, err := json.Marshal(record)
+	if err != nil {
+		t.Fatalf("encode reduced verdict: %v", err)
+	}
+	written := append(reduced, '\n')
+	if err := os.WriteFile(path, written, 0o600); err != nil {
+		t.Fatalf("write reduced verdict cache: %v", err)
+	}
+	return written
 }
 
 var recordedAtRE = regexp.MustCompile(`"recorded_at":"[^"]*"`)

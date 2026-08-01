@@ -45,6 +45,7 @@ type Inspection struct {
 	Reason        string
 	CacheBytes    int
 	ReusableGreen bool
+	Reduced       bool
 }
 
 type verdictRecord struct {
@@ -56,6 +57,11 @@ type verdictRecord struct {
 	RecordedAt string `json:"recorded_at,omitempty"`
 	StartedAt  string `json:"started_at,omitempty"`
 	OwnerPID   int    `json:"owner_pid,omitempty"`
+
+	Reduced            bool     `json:"reduced,omitempty"`
+	Phases             []string `json:"phases,omitempty"`
+	Ancestor           string   `json:"ancestor,omitempty"`
+	AncestorRecordedAt string   `json:"ancestor_recorded_at,omitempty"`
 }
 
 type manifest struct {
@@ -171,7 +177,7 @@ func inspectAt(root string, now time.Time) Inspection {
 		return gi
 	}
 	rec := loaded.record
-	gi.Status, gi.CachedTree = rec.Status, rec.Tree
+	gi.Status, gi.CachedTree, gi.Reduced = rec.Status, rec.Tree, rec.Reduced
 	if rec.State == Pending {
 		held, err := lockHeld(gitdir)
 		if err != nil {
@@ -205,6 +211,16 @@ func inspectAt(root string, now time.Time) Inspection {
 	}
 	if now.Sub(tm) >= freshness {
 		gi.Reason = "verdict expired"
+		return gi
+	}
+	// A reduced verdict ran only the phases that could observe its changeset and inherited
+	// the rest, so it is evidence about its own tree but never the whole-tree green a reuse
+	// credits. Checked after drift and expiry: those retire a reduced record exactly as
+	// they retire a full one, and reporting "reduced verdict" for an expired record would
+	// dress retired evidence as current. The Reduced marker on the inspection carries the
+	// narrowness either way.
+	if rec.Reduced {
+		gi.Reason = "reduced verdict"
 		return gi
 	}
 	gi.ReusableGreen = true
@@ -315,6 +331,65 @@ func rejectDuplicateNames(dec *json.Decoder) error {
 	return err
 }
 
+// The two exact field sets a ready record may carry. They are alternatives, never a
+// spectrum: a record holding part of one and part of the other names no class the loader
+// can resolve, and resolving it by guess would credit phases that nobody ran. The
+// reduced set is derived — the full set plus the four inherited fields — so a field
+// added to the full record joins the reduced class without a second edit; restated,
+// that addition would make the reduced class silently reject every valid record.
+var (
+	fullReadyFields    = []string{"oracle", "recorded_at", "schema", "state", "status", "tree"}
+	reducedReadyFields = sortedFieldSet(fullReadyFields, "ancestor", "ancestor_recorded_at", "phases", "reduced")
+)
+
+// sortedFieldSet joins a base field set with extras in the sorted order
+// requireObjectFields compares against.
+func sortedFieldSet(base []string, extra ...string) []string {
+	fields := append(slices.Clone(base), extra...)
+	sort.Strings(fields)
+	return fields
+}
+
+// inherits reports whether the record reaches for the reduced class at all. Any single
+// reduced field commits it, so a record carrying a fragment is measured against the whole
+// reduced set and refused for what it is missing rather than read as the full shape with
+// something extra.
+func (r verdictRecord) inherits() bool {
+	return r.Reduced || r.Phases != nil || r.Ancestor != "" || r.AncestorRecordedAt != ""
+}
+
+// validateInheritance grades what a reduced record claims: which phases it ran for itself,
+// and which full-green run answers for the rest. The ancestor's identity is carried rather
+// than referenced because the cache is a single slot, so the record a reference would point
+// at is the one this write replaces.
+//
+// The ancestor's own recorded time travels with it and cannot post-date the reduced run.
+// The freshness window is applied to that inherited time, so a record re-stamping it with
+// its own would leave a stale ancestor reusable forever — the ageing the window exists to
+// stop, hidden behind a green.
+func validateInheritance(r verdictRecord, recordedAt time.Time) error {
+	if !r.Reduced || !treeHashRE.MatchString(r.Ancestor) {
+		return errors.New("invalid inheritance")
+	}
+	if tm, err := strictRecordTime(r.AncestorRecordedAt); err != nil || tm.After(recordedAt) {
+		return errors.New("invalid ancestor time")
+	}
+	// The phase list is the record of what this run graded, so it is checked for shape
+	// only: binding it to the current declaration would invalidate an older record the
+	// day the declaration moves, and the runner owns which phases may be skipped.
+	if len(r.Phases) == 0 {
+		return errors.New("invalid phases")
+	}
+	seen := make(map[string]bool, len(r.Phases))
+	for _, phase := range r.Phases {
+		if phase == "" || seen[phase] {
+			return errors.New("invalid phases")
+		}
+		seen[phase] = true
+	}
+	return nil
+}
+
 func validateRecordBytes(data []byte, r verdictRecord, now time.Time) error {
 	if r.Schema != verdictSchema || !treeHashRE.MatchString(r.Tree) || len(r.Oracle) != 64 {
 		return errors.New("invalid record")
@@ -324,14 +399,22 @@ func validateRecordBytes(data []byte, r verdictRecord, now time.Time) error {
 	}
 	switch r.State {
 	case Ready:
-		if err := requireObjectFields(data, []string{"oracle", "recorded_at", "schema", "state", "status", "tree"}); err != nil {
+		want := fullReadyFields
+		if r.inherits() {
+			want = reducedReadyFields
+		}
+		if err := requireObjectFields(data, want); err != nil {
 			return err
 		}
 		if (r.Status != "green" && r.Status != "red" && r.Status != "timeout") || r.RecordedAt == "" || r.StartedAt != "" || r.OwnerPID != 0 {
 			return errors.New("invalid ready")
 		}
-		if tm, err := strictRecordTime(r.RecordedAt); err != nil || tm.After(now) {
+		tm, err := strictRecordTime(r.RecordedAt)
+		if err != nil || tm.After(now) {
 			return errors.New("invalid ready time")
+		}
+		if r.inherits() {
+			return validateInheritance(r, tm)
 		}
 	case Pending:
 		if err := requireObjectFields(data, []string{"oracle", "owner_pid", "schema", "started_at", "state", "tree"}); err != nil {

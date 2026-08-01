@@ -54,10 +54,11 @@ branch-agnostic. This line is only the binding.)
   contract (gate-tested): show-only-on-signal, a five-row budget, a stale-green that is
   not a clean bill, and one combined capture-drain row (parked ideas + open learnings)
   pointing at `/bench-what-next`. A stale gate softens to `capture-only drift` /
-  `re-run when convenient` only when every changed path is in the fixed, exact
-  allowlist (`ROADMAP.md`, `capture/IDEAS.md`, `.bench-notes.md`, `capture/session-handoff.md` — no
-  directory, suffix, or markdown-class matching; expanding it is a new decision); any
-  mixed or untrusted diff fails closed to the strong stale row. Its severity-1 git
+  `re-run when convenient` only when the gate's reduced-scope declaration confines
+  every changed path — the same declaration the reduced gate run reads, rendered
+  once in the Gate section's reduced-scope table, so the board's advice and the
+  oracle's behavior cannot name different files; any mixed or untrusted diff fails
+  closed to the strong stale row. Its severity-1 git
   signal reports dirty paths from the named/current checkout while aggregating
   unpushed commits and unique local branches across the repository; severity-2 intent
   joins the shared common-directory ledger, compact by default and expanded by `--all`.
@@ -256,6 +257,43 @@ runs — inner gate or contract binary — is load-bearing:
    shrinks the whole canary budget. The tripwire decision is recorded in
    `docs/adr/0001-working-tree-gate-tripwire.md`.
 
+**The reduced run.** A changeset the reduced-scope declaration confines runs only
+the included phases against the real tree and records a verdict marked reduced,
+naming the full-green ancestor whose evidence covers the skipped phases; a run of
+capture-only commits inherits from that same ancestor, never from a reduced
+predecessor. The declaration is single-sourced in the gate package
+(`gate.ReducedScope()`) and rendered here; the scope-binding conformance check
+cross-checks this table against it, so drift between the two turns the gate red:
+
+| reduced scope | declared |
+|---|---|
+| directories | `capture/`, `specs/` |
+| files | `.bench-notes.md`, `ROADMAP.md` |
+| excludable phases | `gofmt`, `vet`, `test`, `race`, `contract`, `shellcheck`, `canary` |
+| included phases | `conformance`, `conformance-suite` |
+
+Membership is location: a file entry matches byte-for-byte, and a directory entry
+covers every descendant, so a file that lands under `capture/` or `specs/` tomorrow
+is declared by construction. Both directories are entirely formatted documents whose
+graders are the included phases — `specs/` joined on exactly that ground (reviewer
+decision, 2026-08-01). The build phase is in neither list: it produces the binary
+the other phases exec, so it runs in both modes. Excludability is enforced by
+construction, to the construction's exact width: every full gate on the kit's own
+root runs the excludable phases against a stripped worktree the declared paths are
+absent from (a root that is not the kit runs unsplit — the declaration is the
+kit's own, and a linked repo never made it), so an excludable phase that hard-fails
+on a missing declared file, or degrades into an environment-kind skip — the kit's
+idiom for an absent subject file — reds the next full gate and moves to the
+included set. The construction proves nothing beyond those two signatures. A phase
+that reads a declared path but stays green with the file gone is invisible to it,
+and a mis-filed file is graded only by the included phases: a `.go` file committed
+under `capture/` or `specs/` is seen by no excludable phase at all, and the
+included phases do not grade Go formatting, so a full gate can pass a tree that
+the same file outside the declaration would have redded. The declared directories
+hold formatted documents; code does not belong in them. The reduced path is
+selected by the changeset, never by a flag; `bench gate --fresh` is the escape to
+a whole-tree run.
+
 The **ship tier** — `bench prep-release`, maintainer-run once per release —
 carries what the dev tier deliberately does not run: the release-evidence probe
 (the four-platform artifact matrix build, the reproducibility rebuild, and a
@@ -264,7 +302,10 @@ real `release-preflight.sh --mode verify`), the cross-compile matrix
 `internal/releaseevidence`, `internal/publication` — excluded from the dev
 tier's inner `go test`), and the ship-tier canary fixtures. It refuses to run
 without a current dev-green verdict for the exact tree, so a dev-tier failure
-reds the ship tier too. Exit 0 is ship green, with evidence at
+reds the ship tier too — and a reduced verdict is refused the same way, with the
+refusal naming the reduction and pointing at `bench gate --fresh`, because a
+reduced verdict graded only the phases its changeset could reach, never the
+whole tree a release answers for. Exit 0 is ship green, with evidence at
 `dist/preflight/release-index.json` and `dist/artifacts`.
 
 **What dev green claims — and does not.** Dev green means the kit works from

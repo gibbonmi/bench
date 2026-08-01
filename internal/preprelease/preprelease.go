@@ -185,11 +185,19 @@ func Command(args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-// Refusal is the one diagnostic for a tree with no current dev-green verdict. The cause
-// is the gate's own classification of its cache, so the four rejected states — absent,
-// red, bound to another tree, expired — each report themselves without this package
+// Refusal is the one diagnostic for a tree prep-release cannot start from. The cause is
+// the gate's own classification of its cache, so the four rejected states — absent, red,
+// bound to another tree, expired — each report themselves without this package
 // re-deriving any of them.
+//
+// A reduced verdict gets its own sentence because the maintainer's next move differs: a
+// record is present and green, so being told none exists would send them to re-run
+// whatever they just ran and get the same narrow record back. The remedy is the escape
+// from any reusable verdict, which is the only way to reach a whole-tree green here.
 func Refusal(inspection gate.Inspection) string {
+	if inspection.Reduced && inspection.Status == "green" {
+		return "prep-release: the current verdict is reduced — it graded only the phases its changeset could reach, not the whole tree a release answers for — run `bench gate --fresh`, then re-run prep-release"
+	}
 	cause := inspection.Reason
 	if cause == "" {
 		cause = string(inspection.State)

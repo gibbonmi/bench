@@ -196,6 +196,17 @@ func goTestArgv(kit string, args ...string) []string {
 	return append(append(argv, "test", "-count=1"), args...)
 }
 
+// kitRoot names the checkout that owns the Go tests and wrapper scripts a phase table
+// runs: `$BENCH_KIT` when the wrapper routed here, else the graded root itself. Every
+// resolver of a phase table shares this rule — a second derivation could disagree with
+// it, and then a reduction or a re-resolution would swap oracles mid-flight.
+func kitRoot(root string) string {
+	if kit := os.Getenv("BENCH_KIT"); kit != "" {
+		return kit
+	}
+	return root
+}
+
 // PhasesCommand is the `bench gate-phases [root]` plumbing command. Its table comes
 // from the graded root's phase manifest, or the built-in kit table when the root
 // declares none. It intentionally does not record the verdict cache; `gate-run` owns
@@ -212,10 +223,7 @@ func PhasesCommand(args []string, stdout, stderr io.Writer) int {
 		}
 		root = r
 	}
-	kit := os.Getenv("BENCH_KIT")
-	if kit == "" {
-		kit = root
-	}
+	kit := kitRoot(root)
 	mode := outerMode
 	if os.Getenv("BENCH_CANARY_INNER") == "1" {
 		mode = innerMode
@@ -227,6 +235,11 @@ func PhasesCommand(args []string, stdout, stderr io.Writer) int {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+	if mode == outerMode {
+		// A full run grades its excludable phases against the stripped subject; the
+		// inner (canary) gate grades a fixture whose declaration this is not.
+		return runOuterPhases(ctx, root, kit, phasesForMode(phases, mode), stdout, stderr)
+	}
 	return runPhases(ctx, kit, phasesForMode(phases, mode), mode, stdout, stderr)
 }
 

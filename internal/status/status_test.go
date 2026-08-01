@@ -1,11 +1,15 @@
 package status
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/roadmap"
 )
@@ -158,6 +162,167 @@ func TestStaleGateDetailActionCurrentTreeNoneFailsClosed(t *testing.T) {
 	if action != "re-run the gate" {
 		t.Fatalf("action = %q, want re-run the gate", action)
 	}
+}
+
+// The board's capture-only softening and the gate's reduced-run declaration are one fact,
+// so the samples come from the declaration rather than from a list restated here: a path
+// the declaration carries softens, one it does not falls through to the strong stale row,
+// and a mixed diff fails closed. A private allowlist answering the question inside this
+// package fails the moment the declaration carries a path it does not.
+func TestStaleSofteningRoutesThroughDeclaration(t *testing.T) {
+	scope := gate.ReducedScope()
+	root := initRepo(t)
+	const outside = "internal/status/status.go"
+	base := map[string]string{outside: "package status\n"}
+	baseTree := treeOf(t, root, base)
+
+	var declared []string
+	declared = append(declared, scope.Files()...)
+	for _, dir := range scope.Directories() {
+		declared = append(declared, dir+"declared-descendant.md")
+	}
+	for _, path := range declared {
+		detail, action := staleGateDetailAction(root, baseTree, treeOf(t, root, withFiles(base, path)))
+		if detail != "stale (capture-only drift)" || action != "re-run when convenient" {
+			t.Errorf("drift in declared %q = (%q, %q), want the softened row", path, detail, action)
+		}
+	}
+
+	undeclared := treeOf(t, root, map[string]string{outside: "package status // drift\n"})
+	if detail, _ := staleGateDetailAction(root, baseTree, undeclared); !strings.HasPrefix(detail, "stale (gated tree") {
+		t.Errorf("drift in undeclared %q = %q, want the strong stale row", outside, detail)
+	}
+
+	mixed := treeOf(t, root, withFiles(map[string]string{outside: "package status // drift\n"}, declared...))
+	if detail, _ := staleGateDetailAction(root, baseTree, mixed); !strings.HasPrefix(detail, "stale (gated tree") {
+		t.Errorf("mixed drift = %q, want the strong stale row", detail)
+	}
+}
+
+// A reduced verdict graded only the phases that could observe its changeset, so it is a
+// narrow green rather than drift. The row names the narrowness and never reports the tree
+// against itself: the two hashes the stale row prints would be the same hash here.
+func TestReducedGreenRendersItsOwnRow(t *testing.T) {
+	root := initRepo(t)
+	tree := treeOf(t, root, map[string]string{"capture/IDEAS.md": "- an idea\n"})
+	writeReducedGateCache(t, root, tree)
+
+	gv := GateVerdict(root)
+	if !gv.Reduced || !gv.Stale || gv.CachedTree != gv.WorkTree {
+		t.Fatalf("verdict = %#v, want a reduced non-reusable green over the current tree", gv)
+	}
+	rows := appendGateInfo(nil, gv, root)
+	if len(rows) != 1 {
+		t.Fatalf("rows = %#v, want one gate row", rows)
+	}
+	if strings.Contains(rows[0].detail, "stale") {
+		t.Errorf("detail = %q, want a reduced row rather than a stale one", rows[0].detail)
+	}
+	if strings.Contains(rows[0].detail, Short(tree)) {
+		t.Errorf("detail = %q, want no tree hash: the gated and work trees are the same tree", rows[0].detail)
+	}
+}
+
+// The action a reduced row names has to widen the verdict. Re-running the gate over the
+// same capture-only changeset records another reduced verdict and the same row, so an
+// action naming it would loop forever.
+func TestReducedRowActionWidensTheVerdict(t *testing.T) {
+	root := initRepo(t)
+	writeReducedGateCache(t, root, treeOf(t, root, map[string]string{"capture/IDEAS.md": "- an idea\n"}))
+
+	rows := appendGateInfo(nil, GateVerdict(root), root)
+	if len(rows) != 1 {
+		t.Fatalf("rows = %#v, want one gate row", rows)
+	}
+	if !strings.Contains(rows[0].action, "bench gate --fresh") {
+		t.Errorf("action = %q, want the escape that widens the verdict", rows[0].action)
+	}
+}
+
+// Reducedness and staleness are independent: a reduced verdict whose tree no longer
+// matches the work tree is genuinely stale, and undeclared drift keeps the strong row.
+func TestDriftedReducedVerdictStillRendersStaleRow(t *testing.T) {
+	root := initRepo(t)
+	const outside = "internal/status/status.go"
+	gated := treeOf(t, root, map[string]string{outside: "package status\n"})
+	current := treeOf(t, root, map[string]string{outside: "package status // drift\n"})
+	writeReducedGateCache(t, root, gated)
+
+	gv := GateVerdict(root)
+	if !gv.Reduced || gv.WorkTree != current {
+		t.Fatalf("verdict = %#v, want a reduced verdict over a drifted work tree", gv)
+	}
+	rows := appendGateInfo(nil, gv, root)
+	if len(rows) != 1 {
+		t.Fatalf("rows = %#v, want one gate row", rows)
+	}
+	wantDetail := fmt.Sprintf("stale (gated tree %s, work tree %s)", Short(gated), Short(current))
+	if rows[0].detail != wantDetail || rows[0].action != "re-run the gate" {
+		t.Errorf("drifted reduced row = (%q, %q), want (%q, \"re-run the gate\")", rows[0].detail, rows[0].action, wantDetail)
+	}
+}
+
+// writeReducedGateCache installs a ready reduced green naming cachedTree, at the mode and
+// in the exact field set the gate's loader requires of the reduced class. The phase list
+// comes from the declaration rather than a list restated here.
+func writeReducedGateCache(t *testing.T, root, cachedTree string) {
+	t.Helper()
+	gitdir := gitRun(t, root, "rev-parse", "--absolute-git-dir")
+	phases, err := json.Marshal(gate.ReducedScope().IncludedPhases())
+	if err != nil {
+		t.Fatal(err)
+	}
+	recorded := time.Now().UTC().Truncate(time.Second).Add(-time.Minute).Format(time.RFC3339)
+	record := fmt.Sprintf(`{"schema":1,"state":"ready","status":"green","tree":%q,"oracle":%q,"recorded_at":%q,"reduced":true,"phases":%s,"ancestor":%q,"ancestor_recorded_at":%q}`+"\n",
+		cachedTree, strings.Repeat("0", 64), recorded, phases, strings.Repeat("a", 40), recorded)
+	path := filepath.Join(gitdir, git.GateCacheFile)
+	if err := os.WriteFile(path, []byte(record), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// withFiles copies base and adds each path with throwaway content, so a case names only
+// the paths it varies.
+func withFiles(base map[string]string, paths ...string) map[string]string {
+	out := make(map[string]string, len(base)+len(paths))
+	for path, content := range base {
+		out[path] = content
+	}
+	for _, path := range paths {
+		out[path] = "drift\n"
+	}
+	return out
+}
+
+// treeOf materializes files as the repository's whole content and returns the tree hash
+// git diff compares. The work tree is emptied first: a leftover from an earlier tree would
+// join the next one and change which paths the diff reports.
+func treeOf(t *testing.T, root string, files map[string]string) string {
+	t.Helper()
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		if e.Name() == ".git" {
+			continue
+		}
+		if err := os.RemoveAll(filepath.Join(root, e.Name())); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for path, content := range files {
+		full := filepath.Join(root, filepath.FromSlash(path))
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	gitRun(t, root, "read-tree", "--empty")
+	gitRun(t, root, "add", "-A")
+	return gitRun(t, root, "write-tree")
 }
 
 func initRepo(t *testing.T) string {

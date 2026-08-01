@@ -112,9 +112,11 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 
-	// The gate is asked unconditionally: whether a verdict already recorded for this
-	// subject can answer in place of a real run is the gate's policy, and a second
-	// opinion here could only drift from it. Commit reads the returned verdict alone.
+	// The gate is asked unconditionally: which phases answer for this subject — whether a
+	// recorded verdict stands in for a real run, and whether a changeset confined to the
+	// declared allowlist runs the reduced set — is the gate's policy, decided from the tree
+	// the block-check above has already pinned to the named paths. A second opinion here
+	// could only drift from it. Commit reads the returned verdict alone.
 	if result := gate.ExecuteReusingFreshGreen(context.Background(), root, stdout, stderr); result.ActionExit != 0 {
 		fmt.Fprintln(stderr, "error: gate is red — commit refused (see the failing phase above)")
 		return 1

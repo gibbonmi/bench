@@ -35,6 +35,11 @@ type skipTally struct {
 	byClass     map[capability.Class]int
 	capability  int
 	environment int
+	// environmentReasons keeps each environment skip's reason text, because the counts
+	// alone cannot tell a stripping-induced degradation from the ordinary environment
+	// skips every host emits. Only the stripped-subject posture reads them; the dev-tier
+	// report stays a count.
+	environmentReasons []string
 }
 
 // newSkipLog creates the run-scoped file the phases append to. The path is absolute
@@ -88,6 +93,7 @@ func readSkipTally(path string) (skipTally, error) {
 			tally.capability++
 		case capability.KindEnvironment:
 			tally.environment++
+			tally.environmentReasons = append(tally.environmentReasons, skip.Reason)
 		}
 	}
 	return tally, nil

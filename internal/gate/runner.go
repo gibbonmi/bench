@@ -141,20 +141,38 @@ func runPhasesSequential(ctx context.Context, root string, phases []Phase, stdou
 }
 
 func runPhasesConcurrent(ctx context.Context, root string, phases []Phase, skipLog string, stdout, stderr io.Writer) int {
-	var writeMu sync.Mutex
-	results, cancelled := schedule(ctx, root, phases, false, func(phase Phase) (io.Writer, io.Writer, func()) {
-		out := newPrefixWriter(&writeMu, stdout, phase.Name)
-		err := newPrefixWriter(&writeMu, stderr, phase.Name)
-		return out, err, func() { out.Close(); err.Close() }
+	results, cancelled := schedule(ctx, root, phases, false, prefixedPhaseWriters(stdout, stderr))
+	return aggregateAndReport(results, cancelled, stdout, stderr, func() bool {
+		return reportCapabilitySkips(skipLog, stdout, stderr)
 	})
-	// An interrupt is not a verdict, so a cancelled run publishes neither summaries
-	// nor a gate line — reporting one would grade phases that never got to answer.
-	// Naming the stragglers is not a verdict either: it says what the run was doing.
+}
+
+// prefixedPhaseWriters is the per-phase output plumbing every concurrent schedule
+// shares: one write mutex over both streams, and a `[name] ` prefix per phase, so
+// interleaved phases stay attributable line by line.
+func prefixedPhaseWriters(stdout, stderr io.Writer) func(Phase) (io.Writer, io.Writer, func()) {
+	var writeMu sync.Mutex
+	return func(phase Phase) (io.Writer, io.Writer, func()) {
+		out := newPrefixWriter(&writeMu, stdout, phase.Name)
+		errOut := newPrefixWriter(&writeMu, stderr, phase.Name)
+		return out, errOut, func() { out.Close(); errOut.Close() }
+	}
+}
+
+// aggregateAndReport is the one verdict tail every settled schedule reports through:
+// the per-phase summaries, any extra red-reporting checks (capability skips, the
+// stripped-subject skip posture), and the `gate: red` / `gate: green` line. This is the
+// operator's view of one command whichever schedule produced the results, so an edit to
+// the reported shape lands everywhere at once.
+//
+// An interrupt is not a verdict, so a cancelled run publishes neither summaries nor a
+// gate line — reporting one would grade phases that never got to answer. Naming the
+// stragglers is not a verdict either: it says what the run was doing.
+func aggregateAndReport(results []phaseResult, cancelled bool, stdout, stderr io.Writer, redReports ...func() bool) int {
 	if cancelled {
 		reportStragglers(results, stderr)
 		return 130
 	}
-
 	red := false
 	for _, result := range results {
 		fmt.Fprintln(stdout, phaseSummary(result))
@@ -162,8 +180,10 @@ func runPhasesConcurrent(ctx context.Context, root string, phases []Phase, skipL
 			red = true
 		}
 	}
-	if reportCapabilitySkips(skipLog, stdout, stderr) {
-		red = true
+	for _, report := range redReports {
+		if report() {
+			red = true
+		}
 	}
 	if red {
 		fmt.Fprintln(stderr, "gate: red")

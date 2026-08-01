@@ -22,6 +22,10 @@ import (
 
 var envNameRE = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 
+// strippedPolicyVersion is the stripped identity's hash domain. It extends the whole-tree
+// policy rather than standing beside it, so a policy change moves both.
+const strippedPolicyVersion = policyVersion + "/stripped-v1"
+
 type identityCollector struct {
 	w                         io.Writer
 	entries                   int
@@ -36,7 +40,19 @@ func buildSubjectFor(root, identityRoot string) (subject, error) {
 	return buildSubjectForPolicy(root, identityRoot, policyVersion)
 }
 
+// buildStrippedSubject builds the identity that governs whether an excludable phase's
+// evidence still answers for the tree: the same subject, over a tree the reduced scope's
+// declared paths are absent from. Its policy domain is separate so a stripped identity can
+// never satisfy a comparison meant for the whole-tree one, which grades strictly more.
+func buildStrippedSubject(root string) (subject, error) {
+	return buildSubjectOverTree(root, root, strippedPolicyVersion, strippedTreeHash)
+}
+
 func buildSubjectForPolicy(root, identityRoot, policy string) (subject, error) {
+	return buildSubjectOverTree(root, identityRoot, policy, benchgit.TreeHash)
+}
+
+func buildSubjectOverTree(root, identityRoot, policy string, treeHash func(string) string) (subject, error) {
 	root, err := canonicalSubjectRoot(root)
 	if err != nil {
 		return subject{}, err
@@ -45,7 +61,7 @@ func buildSubjectForPolicy(root, identityRoot, policy string) (subject, error) {
 	if err != nil {
 		return subject{}, err
 	}
-	tree := benchgit.TreeHash(root)
+	tree := treeHash(root)
 	if !treeHashRE.MatchString(tree) {
 		return subject{}, errors.New("tree unavailable")
 	}
@@ -99,6 +115,43 @@ func buildSubjectForPolicy(root, identityRoot, policy string) (subject, error) {
 	s.Oracle = hex.EncodeToString(h.Sum(nil))
 	return s, nil
 }
+
+// strippedTreeHash returns the content identity of root's tree with the reduced scope's
+// declared paths absent. It reads back the whole-tree object rather than materializing a
+// second tree, so both identities answer for the same `git add -A` snapshot, and it drops
+// entries one at a time through Scope.Member — the only membership rule there is, so a
+// strip can never reach a parent directory or a sibling that merely shares a prefix. Any
+// failure yields "none", which no identity accepts.
+func strippedTreeHash(root string) string {
+	tree := benchgit.TreeHash(root)
+	if !treeHashRE.MatchString(tree) {
+		return "none"
+	}
+	// -z keeps the paths raw: without it git quotes and escapes unusual names, and a
+	// quoted path is not the one Scope.Member is defined over.
+	listing, err := benchgit.Output("-C", root, "ls-tree", "-r", "-z", "--full-tree", tree)
+	if err != nil {
+		return "none"
+	}
+	scope := ReducedScope()
+	h := sha256.New()
+	for _, entry := range strings.Split(listing, "\x00") {
+		if entry == "" {
+			continue
+		}
+		metadata, path, separated := strings.Cut(entry, "\t")
+		if !separated {
+			return "none"
+		}
+		if scope.Member(path) {
+			continue
+		}
+		frame(h, metadata)
+		frame(h, path)
+	}
+	return hex.EncodeToString(h.Sum(nil))
+}
+
 func (s *subject) open(reason string) {
 	if s.Closed {
 		s.Closed = false

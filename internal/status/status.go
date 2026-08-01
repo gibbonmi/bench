@@ -48,13 +48,6 @@ var grammar = usage.Grammar{
 	Flags: []usage.Flag{{Name: "--all"}},
 }
 
-var captureOnlyStalePaths = map[string]bool{
-	".bench-notes.md":  true,
-	"capture/IDEAS.md": true,
-	"ROADMAP.md":       true,
-	HandoffFile:        true,
-}
-
 // row is one dashboard signal: a severity (the sort/lead key), and the signal/detail/
 // action triple the shell packed into a `sev|signal|detail|action` line.
 type row struct {
@@ -76,7 +69,9 @@ type Signal struct {
 // GateInfo is the structured gate-verdict cache read, shared by the status board and the
 // dashboard so neither re-parses `<git-dir>/bench-last-gate`. Present is false when no
 // cache file exists; Stale marks a verdict whose cached tree no longer matches the work
-// tree (or whose line is untrusted). Status/CachedTree/WorkTree/Timestamp carry the raw
+// tree (or whose line is untrusted). Reduced marks a verdict that graded only the phases
+// able to observe its changeset, which is why a reduced green is never reusable and is not
+// by itself drift. Status/CachedTree/WorkTree/Timestamp carry the raw
 // fields for a human view; the board reduces them to its severity rows.
 type GateInfo struct {
 	Present       bool
@@ -86,6 +81,7 @@ type GateInfo struct {
 	CachedTree    string
 	WorkTree      string
 	Stale         bool
+	Reduced       bool
 	Timestamp     string
 	Reason        string
 	CacheBytes    int
@@ -209,6 +205,14 @@ func appendGateInfo(rows []row, gv GateInfo, root string) []row {
 		return append(rows, row{0, "gate", "red", "fix before commit"})
 	}
 	if gv.Stale {
+		// A reduced verdict over the tree it graded is narrow, not drifted: the gate
+		// withholds reuse because the run skipped phases, and the stale row would report
+		// the tree against itself and name an action that records another reduced verdict.
+		// Reducedness and staleness are independent, so a reduced verdict whose tree has
+		// since moved falls through to the drift row below.
+		if gv.Reduced && gv.CachedTree == gv.WorkTree {
+			return append(rows, row{7, "gate", "reduced green (capture-only scope)", "bench gate --fresh for a whole-tree verdict"})
+		}
 		detail, action := staleGateDetailAction(root, gv.CachedTree, gv.WorkTree)
 		return append(rows, row{7, "gate", detail, action})
 	}
@@ -226,30 +230,23 @@ func GateVerdict(root string) GateInfo {
 	if !in.RecordedAt.IsZero() {
 		gi.Timestamp = in.RecordedAt.Format(time.RFC3339)
 	}
+	gi.Reduced = in.Reduced
 	gi.Stale = in.State == gate.Ready && in.Status == "green" && !in.ReusableGreen
 	return gi
 }
 
+// staleGateDetailAction softens a stale verdict to advisory drift only when the gate's
+// reduced-run declaration confines the whole diff — the same paths the oracle itself calls
+// unobservable, so the board's advice and the gate's behavior cannot name different files.
+// A diff git could not read, or one carrying a single undeclared path, keeps the strong row.
 func staleGateDetailAction(root, cachedTree, currentTree string) (detail, action string) {
 	detail = fmt.Sprintf("stale (gated tree %s, work tree %s)", Short(cachedTree), Short(currentTree))
 	action = "re-run the gate"
 	paths, ok := git.ChangedPathsBetweenTrees(root, cachedTree, currentTree)
-	if !ok || !captureOnlyDrift(paths) {
+	if !ok || !gate.ReducedScope().Confines(paths) {
 		return detail, action
 	}
 	return "stale (capture-only drift)", "re-run when convenient"
-}
-
-func captureOnlyDrift(paths []string) bool {
-	if len(paths) == 0 {
-		return false
-	}
-	for _, path := range paths {
-		if !captureOnlyStalePaths[path] {
-			return false
-		}
-	}
-	return true
 }
 
 // StepSeparator joins the steps of a board action that names a sequence rather than one
