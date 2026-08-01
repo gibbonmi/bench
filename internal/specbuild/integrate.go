@@ -284,17 +284,6 @@ func (s *Service) verifyIntegration(ctx context.Context, run record, assigned as
 }
 
 func (s *Service) replayCheckpoint(ctx context.Context, candidate, base, checkpoint string, patch []byte) (string, error) {
-	candidatePaths, err := s.changedPaths(ctx, base, candidate)
-	if err != nil {
-		return "", err
-	}
-	checkpointPaths, err := s.changedPaths(ctx, base, checkpoint)
-	if err != nil {
-		return "", err
-	}
-	if overlappingPaths(candidatePaths, checkpointPaths) {
-		return "", errors.New("checkpoint patch overlaps the candidate")
-	}
 	index, err := os.CreateTemp("", "bench-specbuild-index-*")
 	if err != nil {
 		return "", err
@@ -347,17 +336,6 @@ func (s *Service) changedPaths(ctx context.Context, base, tree string) ([]string
 func checkpointPatch(root, base, checkpoint string) ([]byte, error) {
 	output, err := (processRunner{}).Output(context.Background(), "git", "-C", root, "diff", "--binary", "--full-index", "--no-ext-diff", base, checkpoint)
 	return []byte(output), err
-}
-
-func overlappingPaths(left, right []string) bool {
-	for _, leftPath := range left {
-		for _, rightPath := range right {
-			if leftPath == rightPath {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 func refValue(root, ref string) (string, error) {

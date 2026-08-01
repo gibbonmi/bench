@@ -25,11 +25,12 @@ type checkpointFixture struct {
 	receipt  receipt
 }
 
-func newCheckpointFixture(t *testing.T) checkpointFixture {
+func newCheckpointFixture(t *testing.T, configure ...func(string)) checkpointFixture {
 	t.Helper()
 	root := repo(t)
 	write(t, filepath.Join(root, ".gitignore"), "dist/\n")
 	write(t, filepath.Join(root, "specs", "build demo", "tickets", "one.md"), "# One\n\nOwnership fence: internal/specbuild\nAssumptions: receipt contract\n\n- [ ] [R10-R15] checkpoint receipt\n- [ ] [R54] framing\n")
+	applyCheckpointFixtureConfiguration(root, configure)
 	git(t, root, "add", ".")
 	git(t, root, "commit", "-qm", "receipt ticket")
 	gate := &countingGate{}

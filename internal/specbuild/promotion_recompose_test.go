@@ -4,10 +4,98 @@ import (
 	"context"
 	"errors"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
+
+	benchgit "github.com/gibbonmi/bench/internal/git"
 )
+
+const samePathFixture = `package specbuild
+
+var candidateValue = "base"
+
+var spacer01 = 1
+var spacer02 = 2
+var spacer03 = 3
+var spacer04 = 4
+var spacer05 = 5
+var spacer06 = 6
+var spacer07 = 7
+var spacer08 = 8
+
+var workingValue = "base"
+`
+
+func applyCheckpointFixtureConfiguration(root string, configure []func(string)) {
+	for _, apply := range configure {
+		apply(root)
+	}
+}
+
+func TestPromoteRecomposesCompatibleSamePathChanges(t *testing.T) {
+	candidateContent := strings.Replace(samePathFixture, `candidateValue = "base"`, `candidateValue = "candidate"`, 1)
+	fixture := reviewedSamePathPromotionFixture(t, candidateContent)
+	before := loadRun(t, fixture.service)
+	owner := &recompositionGate{}
+	fixture.service.gate = owner
+	workingContent := strings.Replace(samePathFixture, `workingValue = "base"`, `workingValue = "working"`, 1)
+	write(t, filepath.Join(fixture.root, "internal", "specbuild", "same-path.go"), workingContent)
+	git(t, fixture.root, "add", ".")
+	git(t, fixture.root, "commit", "-qm", "compatible same-path advance")
+	working := git(t, fixture.root, "rev-parse", "HEAD")
+
+	status, err := fixture.service.Promote(t.Context(), "build demo")
+	if err != nil || status.Next != "bench spec build review build demo" {
+		t.Fatalf("Promote = %#v, %v", status, err)
+	}
+	after := loadRun(t, fixture.service)
+	content := git(t, fixture.root, "show", after.CandidateTip+":internal/specbuild/same-path.go")
+	if !strings.Contains(content, `candidateValue = "candidate"`) || !strings.Contains(content, `workingValue = "working"`) {
+		t.Fatalf("recomposed same-path content = %q", content)
+	}
+	if after.Base != working || after.Review != nil || owner.branch != before.Branch || owner.tip != working || owner.expected != before.Base || git(t, fixture.root, "rev-parse", "refs/bench/green/"+before.Branch) != working {
+		t.Fatalf("recomposed state = %#v, bootstrap=%#v", after, owner)
+	}
+}
+
+func TestPromoteRefusesConflictingSamePathChangesWithoutMutation(t *testing.T) {
+	candidateContent := strings.Replace(samePathFixture, `candidateValue = "base"`, `candidateValue = "candidate"`, 1)
+	fixture := reviewedSamePathPromotionFixture(t, candidateContent)
+	workingContent := strings.Replace(samePathFixture, `candidateValue = "base"`, `candidateValue = "working"`, 1)
+	write(t, filepath.Join(fixture.root, "internal", "specbuild", "same-path.go"), workingContent)
+	git(t, fixture.root, "add", ".")
+	git(t, fixture.root, "commit", "-qm", "conflicting same-path advance")
+	statePath, err := fixture.service.statePath("build demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	beforeState, err := os.ReadFile(statePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := loadRun(t, fixture.service)
+	working := git(t, fixture.root, "rev-parse", "HEAD")
+	candidate := git(t, fixture.root, "rev-parse", before.Candidate)
+	owner := &recompositionGate{}
+	fixture.service.gate = owner
+
+	_, promoteErr := fixture.service.Promote(t.Context(), "build demo")
+	if promoteErr == nil || !strings.Contains(promoteErr.Error(), "checkpoint patch conflicts with the candidate") {
+		t.Fatalf("Promote error = %v", promoteErr)
+	}
+	afterState, err := os.ReadFile(statePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(afterState) != string(beforeState) || git(t, fixture.root, "rev-parse", before.Candidate) != candidate || git(t, fixture.root, "rev-parse", "HEAD") != working || owner.calls != 0 {
+		t.Fatalf("conflict mutated protected state or reached bootstrap: calls=%d", owner.calls)
+	}
+	if got := git(t, fixture.root, "rev-parse", "refs/bench/green/"+before.Branch); got != before.Base {
+		t.Fatalf("green marker = %s after conflict, want %s", got, before.Base)
+	}
+}
 
 func TestPromoteRecomposesAWorkingAdvanceBeforeGate(t *testing.T) {
 	fixture := reviewedPromotionFixture(t)
@@ -122,4 +210,28 @@ func (g *recompositionGate) Bootstrap(ctx context.Context, root, branch, tip, ex
 		return g.err
 	}
 	return greenGate{}.Bootstrap(ctx, root, branch, tip, expected)
+}
+
+func reviewedSamePathPromotionFixture(t *testing.T, candidateContent string) checkpointFixture {
+	t.Helper()
+	fixture := newCheckpointFixture(t, func(root string) {
+		write(t, filepath.Join(root, "internal", "specbuild", "same-path.go"), samePathFixture)
+	})
+	path := filepath.Join(fixture.assigned.Path, "internal", "specbuild", "same-path.go")
+	write(t, path, candidateContent)
+	tree := benchgit.TreeHash(fixture.assigned.Path)
+	fixture.receipt.Tree, fixture.receipt.Probe.Tree = tree, tree
+	fixture.receipt.Ownership = append(fixture.receipt.Ownership, "internal/specbuild/same-path.go")
+	if _, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n")); err != nil {
+		t.Fatalf("Checkpoint: %v", err)
+	}
+	if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
+		t.Fatalf("Integrate: %v", err)
+	}
+	run := loadRun(t, fixture.service)
+	receipt := reviewReceipt{Version: 1, Run: run.Run, Candidate: run.CandidateTip, Axes: []reviewAxis{{Axis: "Standards"}, {Axis: "Spec"}, {Axis: "Coverage"}}}
+	if _, err := fixture.service.Review(t.Context(), "build demo", writeReviewReceipt(t, receipt)); err != nil {
+		t.Fatalf("Review: %v", err)
+	}
+	return fixture
 }

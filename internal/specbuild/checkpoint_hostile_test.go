@@ -227,12 +227,12 @@ func TestIntegrateReplaysDisjointSiblingPatchByteForByte(t *testing.T) {
 	}
 }
 
-func TestIntegrateRefusesOverlapAndApplyConflictWithoutMovingCandidate(t *testing.T) {
+func TestIntegrateRefusesIncompatibleReplaysWithoutMovingCandidate(t *testing.T) {
 	for _, tc := range []struct {
 		name, firstPath, secondPath string
 	}{
-		{"overlap", "internal/specbuild/shared.go", "internal/specbuild/shared.go"},
-		{"apply conflict", "internal/specbuild/collision", "internal/specbuild/collision/nested.go"},
+		{"same-path add conflict", "internal/specbuild/shared.go", "internal/specbuild/shared.go"},
+		{"file-directory conflict", "internal/specbuild/collision", "internal/specbuild/collision/nested.go"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root, service, first, second, _ := siblingCheckpoints(t, tc.firstPath, "package specbuild\n", tc.secondPath, "package specbuild\n")
