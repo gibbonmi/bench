@@ -70,7 +70,7 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
   primitive, so it should be weighed with them rather than built alone; all three
   are faces of the same missing "name this working set" vocabulary.
 
-## 2026-08-01 — Parking capture blocks the spec-build lifecycle
+## 2026-08-01 — Parking capture blocks the spec-build lifecycle  [open]
 
 **What happened.** Mid-way through the `reduced-gate-phase-set` build, the reviewer
 asked me to park a recommendation. I ran `bench idea`, which appended one line to
@@ -131,7 +131,7 @@ riding into a checkpoint, and capture files are exactly the class that cannot.
   value returns only `invalid spec build receipt`, with no indication which of the
   ~15 validated fields failed. Parked separately as the receipt-assembly item.
 
-## 2026-08-01 — Ran an interactive porcelain in automation and leaked two worktrees
+## 2026-08-01 — Ran an interactive porcelain in automation and leaked two worktrees  [open]
 
 **What happened.** Looking for `bench worktree`'s usage string, I ran the bare verb in a
 non-interactive Bash call. It hung for two minutes and was killed with SIGTERM (exit
