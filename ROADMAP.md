@@ -113,7 +113,11 @@ skill, gate, or process prose), and expected effect. Concurrent main-tree
 writers need a visible intent or lease signal — that close repeatedly polled
 process state and delayed gates just to learn when another session finished
 landing on `main`; it is the same subject-visibility surface as the CLI
-diagnostic.
+diagnostic. The spec-backed half of the first edit has since been answered by
+`spec-integration-gate-cadence`: `bench spec build promote` gates the exact
+prospective implemented tree and is the sole project-green transition for a
+reviewed spec build, so what stays open here is the light-path and non-spec
+close, where the final-check tree is still resolved by hand.
 
 The handoff storage question joins the same lifecycle decision. A single
 repository-level `session-handoff.md` can be clobbered by concurrent workstreams;
@@ -299,6 +303,9 @@ ahead of the conflict check joins the same doctor/link visit this row owns;
 the abort-before-refresh sequencing is the capture's claim, not re-verified
 here. Source: `IDEAS.md`, drained here.
 
+Staged spec: [`specs/pre-push-guard-visibility/spec.md`](specs/pre-push-guard-visibility/spec.md);
+its decision map moved under that folder with the staging commit.
+
 **FT98 (MEDIUM) — one preserve-then-discard primitive;
 four faces.** Three rows were faces of one missing primitive — a sanctioned,
 Occurrences: 2026-07-30-scoped-roadmap-commit, baseline-01, baseline-02
@@ -407,6 +414,20 @@ spec builds now get that surface from `bench spec build assign` / `checkpoint` /
 command owns whether they should. Source: the FT128 implementation retro,
 drained here.
 
+The foreign-dirty face recurred on 2026-07-31 in the shape the existing advice
+does not reach. A concurrent session writing the same checkout tripped
+`bench commit`'s whole-tree attribution refusal twice during a reviewer-approved
+drain — once on untracked `decisions/` files from an in-flight
+`/bench-shape-idea`, once on a mid-drain `bench idea` write to `IDEAS.md`. The
+refusal is correct and cheap, and it fires before the gate; what is missing is
+the sequence after it. Invariant 1 says take side-work to a worktree, but a
+drain is not side-work and its diff already lives in the main checkout, so the
+landing command owns either one sanctioned sequence for landing a batch beside a
+concurrent writer, or an explicit statement that the main-checkout batch assumes
+a single writer plus the way to detect that it does not. FT168's oracle-scope
+question is a neighbour, not this: the blocker here is attribution, not gate
+scope. Source: `.bench/learnings.md`, verdicted here.
+
 **FT172 (MEDIUM) — the roadmap parser and context snapshot make the drain's
 non-recurrence evidence complete.** The row grammar is currently implicit:
 `ParseDocument` treats any line opening with bold as a new row, so one bold-led
@@ -451,6 +472,34 @@ claim rather than as fact. That rule is prose, needs no new mechanism, and was
 applied by hand in the 2026-07-27 drain — every diagnosis drained there was read
 out of the tree first. Source of this clause: `.bench/learnings.md`, verdicted
 here. The grammar face came from `IDEAS.md`, drained here.
+
+The discrepancies clause has its second instance, 2026-08-01, and the tree shows
+the pairing is broken from both ends. The roadmap end: the FT135 row omitted the
+staged `specs/pre-push-guard-visibility/spec.md` path the preamble requires, and
+was corrected here only because the session happened to know the convention. The
+spec end: `roadmap_id` comes from a `Roadmap:` header inside the spec file
+(`internal/spec/spec.go`), and none of the three live specs carries one — the
+header was written by hand on some retired specs (`craft-tickets`,
+`ft126-recurrence-tallying`) while neither `/bench-write-spec` nor `craft-spec`
+mentions it, so the field the snapshot reports is one no authoring surface fills.
+Whether the discrepancy check reads the roadmap path, the spec header, or both
+decides whether that header is taught or dropped.
+
+A third face joins the same owner, and it is the reconcile's own hidden
+dependency. `checkOccurrenceLedgerMigration`
+(`internal/conformance/docs_workflow_checks_test.go`) carries a `want` map
+pinning occurrence counts for seven named rows (FT71, FT158, FT98, FT169, FT141,
+FT94, FT125), so the gate goes red both when the reconcile removes one of those
+rows and when a drain records a new occurrence key on one — and no phase
+instruction mentions the map, which cost a reviewer-approved drain a full gate
+run on 2026-07-31 when FT128 was reconciled out. The map's own bite test asserts
+only the legacy heading, so the counts are a second derivation of a fact
+`ROADMAP.md` already owns. Prefer making the check derive from the ledger it
+grades over teaching every drain to hand-edit the map; if the pinned counts are
+load-bearing migration evidence rather than a duplicate, then the phase names the
+map and the snapshot surfaces the pin as a discrepancy when a graded row is about
+to move. Source: `.bench/learnings.md`, verdicted here; the map and its bite test
+were read in the tree on 2026-08-01.
 
 **FT173 (MEDIUM) — the AXI contract has ten principles, one derivation each.**
 The kit implements its own published contract partially and unevenly, measured
@@ -1128,11 +1177,11 @@ never reaches). One decision closes all three.
 Three singles ride along. The orphaned-review-pickup signal
 (`internal/status/status.go:534`, severity 9) pairs `reviews/*.md` against
 `specs/<slug>/spec.md`, and neither side of that pairing holds today: `reviews/`
-does not exist in the tree, and seven of the nine `specs/` directories carry only
+does not exist in the tree, and eight of the ten `specs/` directories carry only
 a `tickets/` folder with no `spec.md` at all. A severity-9 row that cannot fire
 is either a signal pointed at a retired convention or a convention that quietly
-stopped being followed — decide which, then repoint or cut it; measured
-2026-07-31. Source: `IDEAS.md`, drained here.
+stopped being followed — decide which, then repoint or cut it; re-measured
+2026-08-01. Source: `IDEAS.md`, drained here.
 `internal/gate/manifest.go`'s `dedupe` has no observable
 effect — the scheduler's edge handling is already duplicate-tolerant and no
 diagnostic renders `Needs` — but it implements a spec veto item literally, so it
@@ -1566,6 +1615,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT135 pre-push protection, from the ready map at `decisions/pre-push-guard-visibility.md`: expose resolved branch and template currency, then restore the sanctioned repair route.
+1. `/bench-implement-spec` — FT135 pre-push protection: the spec is staged at `specs/pre-push-guard-visibility/spec.md`, so the next action is the build, not another spec pass. It exposes resolved-versus-guessed branch and template currency, then restores the sanctioned repair route.
 2. `/bench-shape-idea` — FT168 focused iteration evidence: settle whether the oracle may ever answer for less than the whole tree, then build the focused canary on that answer. Reviewer-priced up 2026-07-31 against measured session cost.
-3. `/bench-write-spec` — FT164 ticket and repair charges: three independent sources converged on one owner file this drain, and the conventions decay out of the corpus until the skill teaches them.
+3. `/bench-write-spec` — FT164 ticket and repair charges: three independent sources converged on one owner file, and the conventions decay out of the corpus until the skill teaches them.
