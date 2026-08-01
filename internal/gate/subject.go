@@ -47,6 +47,10 @@ func manifestEntryLimit() int {
 func buildSubject(root string) (subject, error) { return buildSubjectFor(root, root) }
 
 func buildSubjectFor(root, identityRoot string) (subject, error) {
+	return buildSubjectForPolicy(root, identityRoot, policyVersion)
+}
+
+func buildSubjectForPolicy(root, identityRoot, policy string) (subject, error) {
 	root, err := canonicalSubjectRoot(root)
 	if err != nil {
 		return subject{}, err
@@ -67,7 +71,7 @@ func buildSubjectFor(root, identityRoot string) (subject, error) {
 		s.Closed, s.Reason = false, reason
 	}
 	h := sha256.New()
-	for _, value := range []string{policyVersion, identityRoot, tree, resolutionName(res.Kind), res.Command, pathEnv, manifestIdentity} {
+	for _, value := range []string{policy, identityRoot, tree, resolutionName(res.Kind), res.Command, pathEnv, manifestIdentity} {
 		frame(h, value)
 	}
 	c := &identityCollector{w: h, entryLimit: manifestEntryLimit(), runtimeRoot: root, identityRoot: identityRoot}
@@ -75,6 +79,9 @@ func buildSubjectFor(root, identityRoot string) (subject, error) {
 		if err := c.hashResolution(root, res, pathEnv); err != nil {
 			s.open("launcher closure unavailable")
 		}
+	}
+	if err := hashProspectivePreparation(c, h, root, pathEnv); err != nil {
+		s.open("launcher closure unavailable")
 	}
 	if m != nil {
 		for _, name := range m.Environment {
@@ -131,7 +138,7 @@ func loadManifest(root string) (*manifest, string, string) {
 		return nil, "", "gate input manifest invalid"
 	}
 	for _, name := range m.Environment {
-		if name == prospectiveGateEnvName || !envNameRE.MatchString(name) || hasUnsafeText(name) {
+		if !envNameRE.MatchString(name) || hasUnsafeText(name) {
 			return nil, "", "gate input manifest invalid"
 		}
 	}

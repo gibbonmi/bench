@@ -171,12 +171,14 @@ current-source freshness owner against the selected `dist/bench`; that owner
 validates the artifact seal before it invokes the selected binary's
 `freshness-check`, so the binary cannot attest for altered bytes. A refusal names
 one copy-paste rebuild action, and the gate never rebuilds the target
-automatically. Prospective execution instead carries an internal-only marker into
-the exact unpublished checkout, compiles its `cmd/bench` with VCS stamping
-disabled, and removes the marker before entering the same phase table. It neither
-depends on nor populates ignored `dist` artifacts, and ambient caller state cannot
-activate that path through ordinary gate execution. Only one of those trusted
-entries reaches the `gate-phases` plumbing subcommand, which runs the layers below as
+automatically. In an exact unpublished checkout, prospective execution selects a
+tracked preparation hook that uses the canonical
+builder to publish a checkout-local binary and seal before entering the unchanged
+ordinary gate. The unpublished tree therefore needs no pre-existing artifact, and
+its disposable checkout may populate `dist` without leaving any artifact in the
+ordinary checkout. Direct gate entry never invokes preparation and always retains
+the normal missing-or-stale-artifact refusal. Only one of those trusted entries
+reaches the `gate-phases` plumbing subcommand, which runs the layers below as
 four concurrent phases in outer mode (`[phase]`-prefixed output, per-phase
 verdicts, run-all-and-aggregate) and sequentially, unprefixed, sweep-skipped in
 inner mode (`BENCH_CANARY_INNER=1`). A sibling knob, `BENCH_REQUIRE_CAPABILITIES=1`,

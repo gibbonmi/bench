@@ -42,9 +42,6 @@ var executionLockOwners = struct {
 	paths map[string]bool
 }{paths: map[string]bool{}}
 
-const prospectiveGateEnvName = "BENCH_GATE_PROSPECTIVE"
-const prospectiveGateEnv = prospectiveGateEnvName + "=1"
-
 func recordLock(typ int16) syscall.Flock_t {
 	return syscall.Flock_t{Type: typ, Whence: int16(io.SeekStart), Start: 0, Len: 0}
 }
@@ -111,13 +108,7 @@ func ExecuteTree(ctx context.Context, root, tree string, stdout, stderr io.Write
 		return Result{ActionExit: 1}
 	}
 	defer cleanup()
-	build := func() (subject, error) {
-		plan, err := buildSubjectFor(checkout, root)
-		if err == nil {
-			plan.Env = append(plan.Env, prospectiveGateEnv)
-		}
-		return plan, err
-	}
+	build := func() (subject, error) { return buildProspectiveSubjectFor(checkout, root) }
 	return executeSubjectWithEngine(ctx, checkout, root, stdout, stderr, productionGateEngine{}, nil, reuseFreshGreen, build, build)
 }
 
@@ -148,7 +139,7 @@ func inspectProspective(root, tree string, now time.Time) EvidenceInspection {
 		return EvidenceInspection{Reason: "subject unavailable"}
 	}
 	defer cleanup()
-	plan, err := buildSubjectFor(checkout, root)
+	plan, err := buildProspectiveSubjectFor(checkout, root)
 	if err != nil || plan.Tree != tree {
 		return EvidenceInspection{Reason: "subject unavailable"}
 	}

@@ -37,6 +37,7 @@ type Kind int
 const (
 	None Kind = iota
 	GateSh
+	ProspectiveGateSh
 	BenchGate
 	Pnpm
 	Npm
@@ -52,7 +53,7 @@ type Resolution struct {
 }
 
 func resolutionName(kind Kind) string {
-	return [...]string{"none", "gate-script", "bench-gate", "pnpm", "npm", "python", "cargo"}[kind]
+	return [...]string{"none", "gate-script", "prospective-gate-script", "bench-gate", "pnpm", "npm", "python", "cargo"}[kind]
 }
 
 // treeHashRE is the shape a real git tree hash must match before it is written to the
@@ -119,6 +120,8 @@ func (r Resolution) command(root string) *exec.Cmd {
 	switch r.Kind {
 	case GateSh:
 		return exec.Command(filepath.Join(root, ".bench", "gate.sh"))
+	case ProspectiveGateSh:
+		return exec.Command(filepath.Join(root, ".bench", "gate-prospective.sh"), root)
 	case BenchGate:
 		return exec.Command("bash", "-c", r.Command)
 	case Pnpm:
