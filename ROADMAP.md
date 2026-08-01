@@ -42,6 +42,46 @@ repository-controlled bank evidence requirement makes this row active.
 
 Sources: `RR:C-05`; `RC:H-03`.
 
+**FT176 (HIGH) — the spec-build lifecycle's preconditions deadlock the runs
+that need them.** Three refusals share `internal/specbuild`'s precondition
+layer, and together they made one real build unrecoverable. First, promote's
+order: `recompose := run.Base != subject.tip`
+(`internal/specbuild/precondition.go:46`) fires on any commit to the branch
+during an active run, and every operation (`assign`, `integrate`, `review`)
+then refuses with `errRecompose` pointing at `bench spec build promote` — but
+`Promote` (`internal/specbuild/assign.go:307-318`) checks a clean review and
+released assignments *before* the recompose branch, conditions a mid-repair
+run cannot meet by construction: its review has accepted findings (that is
+what a repair round is), and its assignments cannot release because
+`integrate` itself refuses on `errRecompose`. Repair tickets must be committed
+to be assignable, and committing them is what triggers the deadlock, so the
+documented repair path cannot be walked. Observed 2026-08-01: a ten-ticket
+build with a clean three-axis review deadlocked permanently after two
+necessary commits to `main` and finished as light-path work with the candidate
+applied as a patch. Fix direction: move the recompose check ahead of the
+review and released checks, or expose recomposition as its own operation; and
+revisit whether a moved tip should block `review` at all, since a review
+grades the candidate, not the branch. Second, `abandon` sits behind the same
+gate — `bench spec build abandon <slug> --apply <fingerprint>` returns `spec
+build requires recomposition` even when it plans cleanly with a valid
+fingerprint — so a deadlocked run cannot be retired either; the escape hatch
+must never require recomposition. The permanently-`active`
+reduced-gate-phase-set run record, with its registered worktrees and
+provisional refs, is this face's live residue and its acceptance fixture.
+Third, `start` is unstartable on any branch that has completed a spec build:
+`finishStart` (`internal/specbuild/lifecycle.go:156`) passes `expected=""` to
+`authorization.Bootstrap`, which refuses any existing
+`refs/bench/green/<branch>` marker at another tip, even a benign ancestor it
+could fast-forward via the path it already has (`authorization.go:64-67`);
+nothing ever moves or retires the marker, so the only unblock is a hand-run
+`git update-ref`. Pass the existing marker as `expected` when it is an
+ancestor of the tip; keep refusing divergent markers. A ride-along in the same
+layer: the shared precondition's refusal message hardcodes `start`
+(`precondition.go:105`), which misattributed a `checkpoint` refusal and led a
+session to call parking safe when it was not. Sources: `capture/IDEAS.md`
+(two entries) and the reduced-gate-phase-set retro, drained here;
+`capture/learnings.md`, verdicted here.
+
 **FT171 (MEDIUM, decision required) — bound outer gate-phase concurrency
 against measured contention.** The artifact-split follow-up measured the
 `posture` package materially slower inside the fresh full gate than in its
@@ -321,18 +361,16 @@ the default branch by diff, yet `bench worktree recovery <ref> --apply
 payload commit itself (observed 2026-07-20); recurred 2026-07-22 when
 `git cherry` missed reshaped commits and the reviewer had to hand-delete refs
 and intent entries, the exact manual surgery the lifecycle exists to prevent.
-The containment primitive now exists — `LandedInDefault` proves patch-id
-containment for landed-branch pruning — so either route recovery-payload
-landed-proof through it or add the explicit reviewer-authorized discard;
-fail-closed stays the default and the cut line is a reviewer decision. This
-face now owns the whole visible residue: FT148's orphan retirement shipped
-2026-07-27 and its ledger compaction correctly declines these rows because
-they preserve work, so 27 recovery refs across 23 preserved worktrees (24
-assignment rows open, one active, at the 2026-07-29 session start) are
-re-preserved at every session start and nothing else will retire them
-(`bench worktree recovery <ref>` returns `retain … unlanded` on a sampled
-ref, 2026-07-27; ref count re-taken 2026-07-29) — the residue is growing,
-not draining. The third occurrence came when a scoped roadmap commit was
+Both routes shipped 2026-08-01: `LandedInDefault` proves a squash-landing by
+reverse-applying the branch's cumulative diff against the default tree
+(`efb456c`), and `bench worktree clean --discard-branch` is the
+reviewer-supplied proof for what no derivation can establish (`37411a0`) —
+fail-closed stayed the default and every ambiguity still resolves to
+not-landed. What remains of this face is the drain: five recovery refs and
+eleven open assignment rows still re-preserve at the 2026-08-01 session
+start, and whether the new proof retires them is unverified — walk the
+residue through `bench resume`/`bench worktree clean` and confirm it reaches
+zero or names what legitimately remains. The third occurrence came when a scoped roadmap commit was
 blocked by an unrelated dirty session handoff on 2026-07-30; the session used
 an isolated verification worktree, the landing workaround owned by FT169,
 because the sanctioned set-aside primitive still does not exist. Face
@@ -342,7 +380,16 @@ but no set-aside route exists in the CLI, so an agent's only real exits are
 committing an unrelated file into a scoped commit or reaching for
 `block-dangerous-git`-blocked plain git; build the route on this same
 primitive rather than rewording the advice — the need is real and recurring.
-Face three, mutation-probe revert (was FT114): deliberately weakening an
+The 2026-08-01 migration landing adds this face's complement: there is also no
+sanctioned way to name "everything currently changed, deliberately" — `bench
+commit -m … .` does not expand to the changed set, and the obvious
+`git diff --name-only HEAD` silently hides a rename's deletion side until
+`--no-renames` is passed, so a reviewer-approved whole-tree change took three
+refused attempts and a hand-assembled pipeline. A `bench commit --all`
+explicit opt-in naming the full working set as the attribution target keeps
+the default path-scoped and the refusal intact; it is the same missing
+"name this working set" vocabulary as the set-aside, so build them on one
+contract. Face three, mutation-probe revert (was FT114): deliberately weakening an
 implementation to prove a check bites always needs a revert, and
 `block-dangerous-git` blocks `git checkout <path>`; copy-aside works but is a
 papercut on a first-class activity in this repo (cf. `tests/canary/`), and a
@@ -427,6 +474,25 @@ concurrent writer, or an explicit statement that the main-checkout batch assumes
 a single writer plus the way to detect that it does not. FT168's oracle-scope
 question is a neighbour, not this: the blocker here is attribution, not gate
 scope. Source: `capture/learnings.md`, verdicted here.
+
+**FT178 (MEDIUM) — `bench worktree`'s bare verb is a human porcelain that
+traps automation and leaks on signals.** Reviewer ruling 2026-08-01: humans
+should not be driving the `bench` CLI in the vast majority of cases, and
+worktrees are not an exception — the agent-facing surface is the subcommands,
+and agent worktree creation already flows through `bench spec build assign`
+and the shift loop. The bare verb instead runs `Subshell`
+(`internal/worktree/worktree.go:412`): it creates a worktree, runs `$SHELL`
+with stdin inherited, and blocks on `cmd.Run()`, so an automation call
+probing for usage hangs until signal-killed (observed: three invocations,
+two leaked worktrees, both retired with `bench worktree clean`). The release
+is not signal-safe either — it runs on the line after `cmd.Run()` returns,
+so SIGTERM or SIGINT skips it and leaks a registered worktree. Make the bare
+verb print usage like every other parser-first verb and move the subshell
+behind an explicit opt-in name if it is kept at all; if kept, the release
+needs a signal trap or a lease the resume path reclaims. The
+discovery-convention prose half lives in FT107's sixteenth clause. Sources:
+`capture/IDEAS.md` (reviewer ruling), drained here; `capture/learnings.md`,
+verdicted here.
 
 **FT172 (MEDIUM) — the roadmap parser and context snapshot make the drain's
 non-recurrence evidence complete.** The row grammar is currently implicit:
@@ -636,7 +702,7 @@ discipline check: phrase-grepping project prose cannot demonstrate a reliable
 bite. Source: the learnings journal, verdicted in a prior drain.
 
 **FT107 (MEDIUM) — the standing guidance rules, batched: one
-always-loaded-prose diff.** Fourteen remaining clauses edit the same
+always-loaded-prose diff.** Sixteen remaining clauses edit the same
 standing-guidance surface — `.bench/BENCH.md`, the phase prose beside it, and
 two craft skills — and collapse into one batched kit edit under the
 `craft-synthesis` discipline: one spec, one review, one gate. First (was
@@ -777,7 +843,25 @@ checked against both the applicable coverage row and the defaulted-decision
 table. When diagnostic wording and its exact canary expectation cross a ticket
 fence, the review may require one explicitly justified atomic repair rather
 than leaving the oracle and its bite inconsistent. Source: the decision-map
-integrity implementation retro, drained here.
+integrity implementation retro, drained here. Fifteenth (drained 2026-08-01
+from the learnings journal), repository-wide sweeps include hidden paths.
+`rg` skips dot-directories by default, so a 278-reference migration sweep
+updated the canary fixtures' literal `dot-bench/` copies and missed the
+canonical `.bench/` and `.agents/` files they shadow — the exact desync the
+conformance anchors exist to catch, caught at the cost of one red gate cycle.
+Extend `AGENTS.md`'s shell conventions: a repository-wide sweep or audit
+passes `--hidden` (excluding `.git/**`); and weigh the mechanical alternative
+— a conformance check that each `dot-*` fixture still matches the file it
+shadows — which would catch the class regardless of tooling and remove the
+instruction rather than duplicate it. Sixteenth (same drain), bench-verb
+discovery without probing. A bare `bench` verb can be a porcelain that acts,
+not a parser that refuses — the bare `bench worktree` subshell hung an
+automation call for two minutes and leaked worktrees when signal-killed.
+Extend the same conventions: discover a subcommand's shape from
+`bench commands --brief` or `bin/bench.sh`, never by running an unrecognized
+bare verb; and redirect stdin from `/dev/null` for any `bench` invocation
+whose interactivity is not already known. The defect half — the bare verb's
+default itself — is FT178's, not prose.
 
 **FT58 (LOW) — hardened pool roots.** Permission failures on Bench-selected pool roots
 should propagate — the tree currently asserts best-effort tighten
@@ -967,7 +1051,7 @@ build. Name one owner per landing route and make the others refuse rather than
 race, in the same visit that settles the cache handoff. Source: the FT128
 implementation retro, drained here.
 
-**FT130 (LOW) — parking an idea mid-gate silently voids the run.** During
+**FT130 (MEDIUM) — a capture write mid-lifecycle voids or blocks the run.** During
 FT122's gated commit a session answered a reviewer question and ran `bench
 idea` to park the tangent, which wrote `capture/IDEAS.md` inside the gate's window;
 every phase came back green and the commit was still refused with "gate subject
@@ -980,8 +1064,21 @@ which makes the prose unnecessary: `bench idea` can see the subject lock, so it
 can queue the line and write it when the run finishes, or refuse with that
 reason rather than silently voiding the verdict. Deciding between queue and
 refuse is the row's real work — which is why this row stays out of FT107's
-prose batch. Kit edit under the `craft-synthesis` discipline. Source: the
-2026-07-25 learnings entry, verdicted in this drain.
+prose batch. The second face, 2026-08-01: the spec-build lifecycle's
+clean-checkout precondition refuses on a dirty `capture/IDEAS.md`, so
+mid-build parking — which `.bench/BENCH.md`'s Capture section instructs —
+blocked three verified tickets behind a one-line capture edit, and recording
+the learning reproduced the block; the session's improvised
+scratchpad-staging workaround loses the idea if the session dies first, the
+exact failure `bench idea` exists to prevent. The reduced-gate allowlist
+(`capture/`, `specs/`, `ROADMAP.md`) already names the paths whose dirtiness
+cannot invalidate a checkpoint's evidence, because the checkpoint's subject
+is the assignment worktree, not the main checkout — exempting that allowlist
+from the precondition is the smaller fix and composes with the shipped
+reduced-phase-set mechanism; decide it together with the gate-window face so
+both surfaces share one answer. Kit edit under the `craft-synthesis`
+discipline. Sources: the 2026-07-25 learnings entry, verdicted in a prior
+drain; `capture/learnings.md` 2026-08-01, verdicted here.
 
 **FT138 (LOW) — instrument Bench so build economics are measurable.**
 Reviewer-priced 2026-07-25 as a nice-to-have in its current state, so it
@@ -1130,49 +1227,26 @@ substantive change, name the ride-along, flag for veto). Sources:
 `capture/IDEAS.md`, drained here and in a prior run; `capture/learnings.md`,
 verdicted here.
 
-**FT168 (MEDIUM) — focused iteration evidence: a fixture-selecting canary, and
-the scoping question behind it.** Proving one changed
-fixture currently costs the whole canary sweep: the light-path repair pass
+The writer half joins 2026-08-01: capture writers are asymmetric — `bench
+idea` and `bench handoff` own their files while `capture/learnings.md` and
+`capture/retros/` are written by hand from phase prose that names the path,
+the coupling that made the capture co-location cost ~278 references instead
+of 4 constants. A sanctioned journal/retro writer is this row's second face,
+distinct from the commit porcelain above. Source: `capture/IDEAS.md`, drained
+here.
+
+**FT168 (LOW) — focused iteration evidence: a fixture-selecting
+canary.** Proving one changed
+fixture costs the whole canary sweep: the light-path repair pass
 needed evidence for a single race fixture, and the whole-sweep-only surface
 invited expensive duplicate runs (the repair delegate launched one unbidden).
 Add a `bench canary` path that runs one named fixture or family as iteration
 evidence only — the full sweep remains the only thing the gate credits, so
-this is a focused check, not a second oracle. Source: the light-path retro,
-drained here.
-
-Reviewer-priced up from LOW on 2026-07-31: the cost is paid by every session, not
-only by canary work. Measured that day, a documentation-only changeset — a
-roadmap drain plus a regenerated handoff — paid two full gate runs before
-landing, and the canary was not the expensive part either time. The dominant
-cost was the contract phase's artifact surfaces (140s, 84s, 75s, 50s in one
-run), none of which any documentation edit can affect. So the row owns two
-faces: the focused canary invocation above, and the wider question of whether a
-changeset confined to an exact path allowlist may reuse a green verdict across a
-subject change or run a reduced phase set.
-
-The second face is a reviewer decision, not an optimization, and the constraint
-is stated so it is not rediscovered: `bench commit` already reuses a fresh green
-for a matching subject (`gate.ExecuteReusingFreshGreen`), so the gap is
-specifically that any content change computes a new subject. The existing
-capture-only allowlist lives in `internal/status` and softens the staleness row
-only; it has never scoped an oracle run, and widening it into one puts a fixed
-path list on the gate's critical path — the same list a reviewer must then trust
-to be exhaustive. Source: session evidence 2026-07-31.
-
-The reviewer ruled on 2026-08-01: a changeset confined to an exact declared path
-allowlist runs a reduced phase set, with the allowlist and the phase set both
-single-sourced and gate-asserted — not a green verdict reused across a subject
-change, which would put an unproven list on the oracle's critical path. FT166's
-capture-only exemption clause folded in here under that ruling, and the ruling
-corrected its premise: the exemption it proposed was conditioned on no gate
-check reading those paths, and `ROADMAP.md`, `capture/session-handoff.md`, and
-`capture/learnings.md` are each graded from the real root today, so an exemption
-would have skipped the checks that caught the last two bad capture commits.
-
-Staged spec: [`specs/reduced-gate-phase-set/spec.md`](specs/reduced-gate-phase-set/spec.md),
-covering the second face only. The focused canary invocation above stays open and
-is explicitly out of that spec's scope. Source of this clause: reviewer-confirmed
-conversation, 2026-08-01.
+this is a focused check, not a second oracle. The row's other face — a
+reduced phase set for an allowlist-confined changeset — shipped 2026-08-01
+via `specs/reduced-gate-phase-set/spec.md` (`6f3486a`); this face was
+explicitly out of that spec's scope and stays open, back at its pre-fold
+LOW. Source: the light-path retro, drained here.
 
 **FT140 (LOW) — review residuals that want a verdict, not a build.** Calls
 from two resolution runs outlived their specs' retirement. The recurring one is
@@ -1295,6 +1369,21 @@ twin question rather than separately — both rule on what a baseline must run t
 mean what it claims. Entry: `/bench-shape-idea`. Sources: `capture/IDEAS.md`, drained
 here; the `ft91-canary-compiled-bites` review S1, recoverable via `git show
 4429b05:reviews/ft91-canary-compiled-bites.md`.
+
+**FT177 (MEDIUM) — a stale `dist/bench` makes contract-test mutation probes
+silent no-ops.** Any `internal/contract/surface/*` or
+`internal/contract/runtime` test that execs the CLI grades the previous
+build: `bin/bench.sh:181` execs `$k/dist/bench`, so editing Go source and
+re-running the test answers for stale bytes. The failure is asymmetric — a
+stale probe yields PASS, never FAIL — so a probe that reds is trustworthy
+while a probe that passes may have tested nothing. Hit twice in one build:
+once as a coordinator rejecting a delegate's correct evidence, once
+reproducing that result only after adding the rebuild — three round trips in
+the reduced-gate-phase-set build. Add a staleness check at the
+contract-fixture seam that reds when `dist/bench` is older than any tracked
+Go source under the subject root — one stat sweep, converting an invisible
+false green into a red. Sources: `capture/IDEAS.md` and the
+reduced-gate-phase-set retro, drained here.
 
 **FT103 (LOW) — existence-checked absence evidence: the gate half.** A
 delegate's payload slice landed with a misspelled kit-only allowlist row
@@ -1473,9 +1562,15 @@ it into the child's exit status, so load and infrastructure reds can be
 attributed without a blind stress investigation. Source: the FT126
 recurrence-tallying retro, drained here.
 
+Fifth, two conformance checks are reachable only through `conformance-suite`'s
+whole-package run, matched by test-name prefix rather than registry
+registration, so the registry undercounts what the gate enforces and a renamed
+test silently drops a check. Register them. Source: the reduced-gate-phase-set
+retro, drained here.
+
 ## Standards debt — one batched light-path pass
 
-Two rows plus FT142's standards track are shippable together as small
+Three rows plus FT142's standards track are shippable together as small
 one-source-per-fact and cleanup sweeps under one gate; FT117's parser-routing
 half is the largest item in the batch. FT142 itself stays on the main list
 because its ship track belongs to a separate `prep-release` hardening visit.
@@ -1491,6 +1586,32 @@ correct the registry reasons, and consider grading the exemption reason itself;
 `bench commit`'s usage-error line nests a second full usage line inside its
 parenthetical when the fault comes from `usage.Parse` (e.g. an empty
 positional) — one flat line naming the fault reads better.
+
+**FT179 (MEDIUM) — comment quality: strip the reviewer-facing register,
+document the bare high-stakes surfaces, sharpen `craft-comments`.** A
+four-subsystem comment sweep (2026-08-01) graded roughly 9k comment lines:
+the why/warning register dominates and restatement noise is rare, but three
+fix passes fell out. First, register strip: ~145 `FT##` references plus
+`Audit #N — tolerate`, `[R14]`, story/row provenance, port-narration
+("as the Python shim did"), and design-advocacy essays — remove the
+identifiers and arguments, keep the behavioral sentences; the one in-file
+mutation transcript (`runtime_gate_env_sentinel_test.go:69-84`) moves to
+history entirely. This reopens FT111's 2026-07-23 edit-in-place-only ruling
+on new evidence: that ruling was priced against roughly a dozen sites, and
+the measured count is an order larger. Second, doc comments where stakes are
+highest and density lowest: `internal/releaseevidence` (bare syscall
+numbers, the `stageOwnerBytes` sentinel), `internal/preflight` (`Setpgid`,
+the undocumented `BENCH_PREFLIGHT_VULNERABILITY` override inside a security
+phase), `internal/gate`'s public API (`Result`/`Execute`/`State`/
+`Inspection`), `internal/contract` exports (`Env` nil-means-unset),
+`worktree.Pool`'s checksum as stable on-disk identity, and `bench.sh`'s
+`route_porcelain` (the porcelain-versus-plumbing dispatch axis). Third,
+`craft-comments` amendments under the `craft-synthesis` discipline: name
+identifier provenance as forbidden, add "state the constraint, don't defend
+it", extend one-source-per-fact to comment knowledge, and qualify "a sparse
+file stays sparse"; plus one ruling — where a demonstrated red's record
+lives (commit or spec, never an in-file transcript). Source:
+`capture/IDEAS.md`, drained here.
 
 **FT94 (LOW) — single-sourced `bench resume` summary
 golden.** The resume summary line is asserted as a hardcoded exact-string
@@ -1621,14 +1742,14 @@ recommended table is sequencing advice.
 | FT108 | FT164 | Define the refactor lane on the settled expand–migrate–contract and gate-cadence rules. |
 | FT172 | FT106 | Reuse the document-claim probe for semantic roadmap claims instead of designing a second checker. |
 | FT162 | FT169 | Build full-run subject resolution on the settled landing primitive. |
-| FT166 | FT168, FT98, FT113 | The porcelain composes over the declared path allowlist FT168's spec establishes; recoverable set-aside then defines the commit command's smallest sound contract. |
-| FT168 | FT153 | Applies to the focused-canary face only, which is out of the staged spec's scope: expose focused canary execution after baseline meaning is settled. |
+| FT166 | FT98, FT113 | The porcelain composes over the shipped reduced-gate path allowlist; recoverable set-aside then defines the commit command's smallest sound contract. |
+| FT168 | FT153 | Expose focused canary execution after baseline meaning is settled. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
 | FT174 | FT164 | Build the parser against the identifier form the template teaches, not the title form it is replacing. |
 | FT175 | FT173 | The ledger's read surface is AXI; settle one derivation per principle before adding a consumer that needs all ten. |
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT168 reduced gate phase set, staged at `specs/reduced-gate-phase-set/spec.md`: a changeset confined to the declared path allowlist runs only the phases that can observe it. Reviewer-priced to the top of the board 2026-08-01 against the measured ten-minute cost every capture commit pays.
+1. `/bench-write-spec` — FT176 spec-build lifecycle preconditions: promote's check order deadlocks the mid-repair runs recomposition exists for, `abandon` sits behind the lock it is meant to escape, and `start` refuses its own stale green marker; a reproduced deadlock left a permanently-active run record that is the fix's acceptance fixture.
 2. `/bench-implement-spec` — FT135 pre-push protection, staged at `specs/pre-push-guard-visibility/spec.md`: expose resolved-versus-guessed branch and template currency, then restore the sanctioned repair route.
 3. `/bench-write-spec` — FT164 ticket and repair charges: three independent sources converged on one owner file, and the conventions decay out of the corpus until the skill teaches them.
