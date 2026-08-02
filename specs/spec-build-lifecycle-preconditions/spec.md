@@ -1,6 +1,6 @@
 # spec-build-lifecycle-preconditions
 
-Status: staged
+Status: implemented
 
 Decision source: `ROADMAP.md` FT176, drained and reworded in the
 reviewer-approved `/bench-what-next` pass landed at `7c2684b` (2026-08-01),
