@@ -1812,6 +1812,51 @@ recommended table is sequencing advice.
 | FT175 | FT173 | The ledger's read surface is AXI; settle one derivation per principle before adding a consumer that needs all ten. |
 | FT180 | FT164 | The spec-less route lands entirely on tickets, so settle the ticket-charge conventions the route will scaffold first. |
 
+### FT175 delivery path
+
+The purpose-aligned implementation path is FT164 → FT173 → FT175. FT164 is a
+process precursor rather than a runtime dependency; FT173 is the one declared
+product precursor. The path adds no literal dependency edges.
+
+1. Protect the execution runway. Implement FT176 first, specify a split FT164
+   next, then finish the already-staged FT135 and per-component-gate-scoping
+   builds. Drain that frontier before authoring any spec past FT164's.
+2. Implement FT164's ticket-contract core: discover producer/consumer contracts
+   at each ownership fence; bind each ticket claim to one concrete red mutation,
+   its independent owner, and the exact operation sequence that proves it;
+   re-derive claims after earlier tickets land; assert consumers against the real
+   producer and whole enumerated family; and name which command authors evidence
+   and which phase consumes it. Move the specialized model-comparison,
+   inventory-currency, shared-cache, and other repair riders to a follow-up unless
+   the spec audit proves they belong in the core.
+3. Implement FT173 in two independently reviewed specs. The foundation spec adds
+   AXI principles 8–10 to `craft-cli`, keeps AXI scoped to query surfaces,
+   consolidates policy-aware truncation without changing emitted bytes, avoids
+   double truncation, and extracts aggregate mechanics only where two real
+   derivations exist. The contextual-disclosure spec is the narrow exception to
+   the byte-preservation constraint: it adds one `help[]` owner, migrates the AXI
+   query surfaces in green batches, and updates their pinned output contracts.
+   FT173 remains open until both land.
+4. Shape FT175's three decisions while FT173 is building, but do not write the
+   FT175 spec until FT173's interfaces are settled. The recommended rulings keep
+   the gate structural rather than interpretive; require acquired evidence for
+   every assessment, with verified spans for support/contradiction and recorded
+   query scope plus outcome for absence/insufficiency; and retain an append-only
+   history whose claims become active, superseded, or explicitly retired rather
+   than draining the ledger to zero. These remain reviewer decisions until the
+   FT175 map closes them.
+5. Build FT175 as vertical green slices: file evidence plus strict store and
+   `claim show/check`; assessments with spans and absence scopes; command evidence
+   plus replay and staleness; supersede/retire reachability; the complete AXI
+   list/detail/status surface using FT173's owners; deterministic gate and ambient
+   status integration; then one local contradiction as the dogfood proof.
+
+Fold FT99's cited-command or uncertainty obligation, FT106's verified-document
+vocabulary, and FT162's exact subject binding into the FT175 spec instead of
+building them as prerequisites. FT133 and FT141 remain parallel evidence
+hardening; FT71 stays deferred behind its existing FT169 recommendation. FT156
+and FT172 are outside this critical path.
+
 ## Recommended sequence
 
 1. `/bench-implement-spec` — FT176 spec-build lifecycle preconditions, staged at `specs/spec-build-lifecycle-preconditions/spec.md`: promote reaches recomposition before grading what recomposition discards, `abandon` stops requiring both the recomposition and the worktree it exists to escape, `start` fast-forwards a benign ancestor green marker, and a refusal names the operation it refused.
