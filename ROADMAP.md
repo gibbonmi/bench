@@ -615,7 +615,7 @@ were read in the tree on 2026-08-01.
 
 **FT173 (MEDIUM) — the AXI contract has ten principles, one derivation each.**
 The kit implements its own published contract partially and unevenly, measured
-2026-07-31 against the ten principles at axi.md. Four faces, one owner surface.
+2026-07-31 against the ten principles at axi.md. Five faces, one owner surface.
 First, `craft-cli` enumerates only seven: content first, contextual disclosure,
 and the per-subcommand help fallback are absent from the skill, so the guidance
 cannot ask for what it never names. Second, contextual disclosure is emitted
@@ -630,6 +630,32 @@ usage. Fourth, pre-computed aggregates have no shared helper and are derived per
 command — `outline_meta`, `internal/publication`'s `next_action`, and
 `internal/roadmap`'s byte and occurrence counts each roll their own.
 
+Fifth, routine Git inspection still escapes the AXI surface. The 2026-08-02
+decision-map gate-scope build needed repeated batches of `git status
+--short --branch`, `git diff --stat`, `git diff`, `git diff --check`, `git
+rev-parse`, `git log -1`, and `git show --stat` to answer two questions: what
+changed, and what exact body should be reviewed. `bench diff` already owns
+review-base resolution, the changed-file inventory, the landed-commit log, and
+the patch body, so extend that command rather than minting a parallel `bench
+git` namespace or a second derivation of those facts. Its default response
+becomes one coherent snapshot with a compact revision row, pre-computed commit,
+file, insertion, deletion, staged, unstaged, and untracked counts, the existing
+base-to-worktree `files[N]{status,path}` inventory augmented with untracked
+paths, a minimal checkout table that distinguishes index from worktree state,
+and a whitespace-check result. Reuse `internal/git.Facts` — already the NUL-safe
+checkout owner consumed by `bench roadmap --context` — for branch, divergence,
+and XY status, and reuse `internal/diff`'s range owner for base-relative facts;
+do not add another porcelain parser. `bench diff --full` returns the same
+snapshot plus the existing log and an exact patch that does not silently omit
+untracked regular files; `--commit` remains the post-landing view. Capture HEAD,
+index, and worktree identity around the reads and retry or return a structured
+drift error if they move, so one invocation cannot splice facts from concurrent
+states. The acceptance target is one `bench diff` call for orientation and at
+most one `bench diff --full` call for bodies, replacing the raw status/stat/
+name-only/revision/check sequence. Grade it with a paired-delta fixture against
+raw Git over committed, staged, unstaged, untracked, rename, deletion, binary,
+hostile-filename, clean, and mid-read-drift cases.
+
 Reviewer constraint, 2026-07-31: the consolidation changes call sites only and
 makes no modification to AXI responses. The four truncation derivations and the
 aggregate helpers route through one shared call without altering emitted bytes,
@@ -639,7 +665,9 @@ stating rather than discovering: principle 9 has no existing implementation to
 route through, so emitting `help[]` necessarily changes bytes and cannot ship
 under it. Either principle 9 leaves this row for a separate byte-changing visit,
 or the constraint is relaxed for it specifically — reviewer's call, and the rest
-of the row is unblocked either way.
+of the row is unblocked either way. The Git-inspection face is likewise
+byte-changing and therefore gets its own spec; it does not relax byte preservation
+for the foundation.
 
 Two constraints shape the build rather than the diagnosis. Principle 3 should
 not double-truncate a value already bounded at capture, and principle 8 is a
@@ -1931,14 +1959,17 @@ product precursor. The path adds no literal dependency edges.
    and which phase consumes it. Move the specialized model-comparison,
    inventory-currency, shared-cache, and other repair riders to a follow-up unless
    the spec audit proves they belong in the core.
-3. Implement FT173 in two independently reviewed specs. The foundation spec adds
+3. Implement FT173 in three independently reviewed specs. The foundation spec adds
    AXI principles 8–10 to `craft-cli`, keeps AXI scoped to query surfaces,
    consolidates policy-aware truncation without changing emitted bytes, avoids
    double truncation, and extracts aggregate mechanics only where two real
    derivations exist. The contextual-disclosure spec is the narrow exception to
    the byte-preservation constraint: it adds one `help[]` owner, migrates the AXI
-   query surfaces in green batches, and updates their pinned output contracts.
-   FT173 remains open until both land.
+   query surfaces in green batches, and updates their pinned output contracts. A
+   Git-inspection spec then extends the existing `bench diff` owner into one
+   coherent status-and-diff snapshot, including untracked paths and drift-safe
+   reads, so ordinary orientation takes one call and body review takes at most a
+   second. FT173 remains open until all three land.
 4. Shape FT175's three decisions while FT173 is building, but do not write the
    FT175 spec until FT173's interfaces are settled. The recommended rulings keep
    the gate structural rather than interpretive; require acquired evidence for
