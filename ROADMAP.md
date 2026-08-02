@@ -475,6 +475,20 @@ spec builds now get that surface from `bench spec build assign` / `checkpoint` /
 command owns whether they should. Source: the FT128 implementation retro,
 drained here.
 
+That face recurred on 2026-08-01 during per-component-gate-scoping and sharpened
+into a precise gap: the core already carries the parameter, and only the CLI
+withholds it. `worktree.Create` takes a variadic start ref, but the sole caller
+that supplies one is `bench spec build assign`; the generic
+`worktree.CreateCommand` derives a start ref only from `--refresh` and otherwise
+passes none, so creation roots at the resolved default branch (falling back to
+`HEAD` when none resolves) with no way to name a base. A spec-branch build
+therefore cannot cut delegate worktrees on its own branch, and the delegate opens
+on a base that cannot fast-forward; that session worked around it with plain
+`git worktree add`, which leaves the assignment unowned. Deciding the landing
+command should settle whether the fix is a base-ref flag on `bench worktree
+create` or whether every non-spec chain is meant to route through the spec-build
+surface. Source: `capture/IDEAS.md` 2026-08-01, drained here.
+
 The foreign-dirty face recurred on 2026-07-31 in the shape the existing advice
 does not reach. A concurrent session writing the same checkout tripped
 `bench commit`'s whole-tree attribution refusal twice during a reviewer-approved
@@ -1130,10 +1144,31 @@ choice rather than a default. Kit edit under the `craft-synthesis`
 discipline. Sources: `capture/learnings.md`, verdicted here; the light-path
 retro, drained here.
 
+A second procedure step joins the same breakdown, between drafting it and
+writing the ticket files: discover the contracts, not just the fences. For every
+value crossing a fence — a registry, a record class, a resolved set — name its
+type, its membership or domain rule, its ordering, and its absence semantics.
+Where the two sides disagree on any of the four, that is a defect caught at
+slicing time for the cost of a sentence. The invariant then lands as an
+acceptance row on the consumer ticket, asserted against the real producer rather
+than a fixture; if neither ticket can assert it alone, the slice is wrong or the
+build needs a junction ticket. Ordering follows the same rule: when the only row
+testing a junction sits more than one ticket downstream, a narrower version of it
+belongs at the junction. The per-component-gate-scoping build paid for this —
+two tickets with correct, disjoint ownership fences were each green alone and
+red composed, because one declared a component's inputs as directory prefixes
+and the other hashed declared inputs as exact `git ls-tree` keys, so a directory
+never matched and the component refused to compute an identity and always ran.
+Both delegates satisfied their acceptance rows exactly; the fixture is what let
+both halves look green, and the composed gate caught it six tickets later after
+a delegate round had been spent. Source: `capture/learnings.md`, verdicted here.
+
 The charge itself carries two more load-bearing facts. When a delegate adds a
 member to an enumerated family, the charge names every registry found by
 tracing an existing sibling across the package; FT152's canary work missed the
-classification registry and paid a repair round. When a repair changes a
+classification registry and paid a repair round. The dual binds the consuming
+side: a ticket that consumes an enumerated family asserts over the whole family,
+not the members that happen to exist in its worktree. When a repair changes a
 shared environment helper, the charge names which rows opt into shared caches
 and which remain hermetic, then runs the focused failing rows before the full
 gate; the artifact-suite repair over-stripped that distinction. Sources: the
@@ -1196,6 +1231,15 @@ CLI process loaded it, so a recomposition suite that stops at the first success
 misses mutable-base identity defects and precondition deadlocks. That is an edge
 class for `craft-spec`'s inventory and the profile's hostile-input checklist,
 not a charge rule — decide the owner before building this row.
+
+A second clause is flagged the same way. The per-component-gate-scoping spec
+restated this row's ticket conventions inline "because the skill does not teach
+these yet", and so inherited the same gap that bit the build — direct evidence
+for this row's premise that the conventions decay out of the corpus until the
+skill teaches them. The spec-side half may belong in `craft-spec`, whose seam
+vocabulary is where a cross-seam domain mismatch could be named before slicing
+starts at all; decide that owner alongside the one above. Source:
+`capture/learnings.md`, verdicted here.
 
 **FT165 (LOW) — fold the domain-modeling discipline into
 `/bench-shape-idea`.** Upstream candidate (mattpocock/skills,
@@ -1771,5 +1815,5 @@ recommended table is sequencing advice.
 ## Recommended sequence
 
 1. `/bench-implement-spec` — FT176 spec-build lifecycle preconditions, staged at `specs/spec-build-lifecycle-preconditions/spec.md`: promote reaches recomposition before grading what recomposition discards, `abandon` stops requiring both the recomposition and the worktree it exists to escape, `start` fast-forwards a benign ancestor green marker, and a refusal names the operation it refused.
-2. `/bench-implement-spec` — FT135 pre-push protection, staged at `specs/pre-push-guard-visibility/spec.md`: expose resolved-versus-guessed branch and template currency, then restore the sanctioned repair route.
-3. `/bench-implement-spec` — per-component-gate-scoping, staged at `specs/per-component-gate-scoping/spec.md`: per-component skip predicates and attested build reuse, reviewer-decided 2026-08-01; drain the staged frontier before authoring the next spec.
+2. `/bench-write-spec` — FT164 ticket and repair charges, reviewer-emphasized 2026-08-01 and grown here by the contract-discovery step, the consumer-side dual, and a second flagged `craft-spec` clause. Every later build slices its tickets through this skill, and it blocks FT108, FT174, and FT180, so it is the board's highest-leverage row; split it first, because one spec now has to swallow ten clause groups from eight sources.
+3. `/bench-implement-spec` — the rest of the staged frontier: FT135 pre-push protection at `specs/pre-push-guard-visibility/spec.md` (expose resolved-versus-guessed branch and template currency, then restore the sanctioned repair route), then per-component-gate-scoping at `specs/per-component-gate-scoping/spec.md` (per-component skip predicates and attested build reuse). Drain the frontier before authoring any spec past FT164's.
