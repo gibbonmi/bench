@@ -1,0 +1,1 @@
+- 2026-08-02  worktree resume: a Planned-phase in-flight receipt over an already-absent target returns errStaleFingerprint and wedges the abandon retry — crash window between receipt write and checkpoint(Removing); fix lives in internal/worktree/resume.go (out of FT176 fence, found by plan-absent-target delegate)

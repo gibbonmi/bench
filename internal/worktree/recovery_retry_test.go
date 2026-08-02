@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -74,6 +75,95 @@ func TestExplicitRetryFinalizesRecoveryAfterCleanDrift(t *testing.T) {
 				"final cleanup receipt = %#v, found=%t error=%v", receipt, found, err)
 		})
 	}
+}
+
+func TestPlanAbandonAcceptsRemovedDirectory(t *testing.T) {
+	const request = "landed-abandon-removed-directory"
+	root, creation := newOwnedAssignment(t, "abandon-removed-directory")
+	mustRemove(t, creation.Path)
+	repo, target, err := cleanupIdentity(root, creation.Path)
+	mustNoError(t, err)
+	_, found, err := intent.CleanupReceiptForRequest(root, repo, cleanupOperation, target, requestDigest(request))
+	requireTest(t, err == nil && !found, "removed directory already has a cleanup receipt: found=%t error=%v", found, err)
+
+	fingerprint, err := PlanAbandon(root, request, creation.Path)
+	requireTest(t, err == nil && fingerprint != "", "PlanAbandon over a removed directory = %q, %v", fingerprint, err)
+}
+
+func TestApplyAbandonCompletesForRemovedDirectory(t *testing.T) {
+	const request = "landed-abandon-removed-directory-apply"
+	root, creation := newOwnedAssignment(t, "abandon-removed-directory-apply")
+	mustRemove(t, creation.Path)
+	fingerprint, err := PlanAbandon(root, request, creation.Path)
+	mustNoError(t, err)
+
+	result, err := ApplyAbandon(root, request, creation.Path, fingerprint)
+	requireTest(t, err == nil && result.Action == ActionRemoved, "ApplyAbandon over a removed directory = %#v, %v", result, err)
+	registrations := gitOutput(t, root, "worktree", "list", "--porcelain")
+	requireTest(t, !strings.Contains(registrations, "worktree "+creation.Path),
+		"registration survived the abandon:\n%s", registrations)
+}
+
+func TestPlanAbandonRefusesForeignCheckout(t *testing.T) {
+	const request = "landed-abandon-foreign-checkout"
+	root, creation := newOwnedAssignment(t, "abandon-foreign-checkout")
+	mustRemove(t, creation.Path)
+	gitRun(t, filepath.Dir(creation.Path), "init", "-q", "-b", "main", creation.Path)
+	gitRun(t, creation.Path, "-c", "user.name=bench", "-c", "user.email=bench@local", "commit", "-q", "--allow-empty", "-m", "foreign")
+
+	fingerprint, err := PlanAbandon(root, request, creation.Path)
+	requireTest(t, err != nil && fingerprint == "", "PlanAbandon over a foreign checkout = %q, %v", fingerprint, err)
+	requireTest(t, err.Error() == "abandon request, assignment, or path mismatch; checkout retained",
+		"foreign checkout refusal = %q", err)
+	_, statErr := os.Stat(filepath.Join(creation.Path, ".git"))
+	requireTest(t, statErr == nil, "refusal disturbed the foreign checkout: %v", statErr)
+}
+
+func TestInterruptedReleaseStillResumesThroughReceipt(t *testing.T) {
+	const request = "landed-abandon-receipt-resume"
+	root, creation := newOwnedAssignment(t, "abandon-receipt-resume")
+	mustWrite(t, filepath.Join(creation.Path, "dirty.txt"), []byte("preserve once\n"), 0o644)
+	first, err := PlanAbandon(root, request, creation.Path)
+	mustNoError(t, err)
+	stop := errors.New("stop before worktree removal")
+	old := cleanupTransactionBoundary
+	cleanupTransactionBoundary = failLifecycleStep(StepRecoveryRef, stop)
+	_, err = ApplyAbandon(root, request, creation.Path, first)
+	cleanupTransactionBoundary = old
+	requireTest(t, errors.Is(err, stop), "interrupted abandon error = %v, want %v", err, stop)
+	mustRemove(t, creation.Path)
+
+	repo, target, err := cleanupIdentity(root, creation.Path)
+	mustNoError(t, err)
+	receipt, found, err := intent.CleanupReceiptForRequest(root, repo, cleanupOperation, target, requestDigest(request))
+	requireTest(t, err == nil && found && receipt.State == intent.ReceiptInFlight,
+		"interrupted cleanup receipt = %#v, found=%t error=%v", receipt, found, err)
+	plan, err := planAbandon(root, request, creation.Path)
+	requireTest(t, err == nil && plan.Fingerprint == first, "resumed abandon plan = %#v, %v; want fingerprint %q", plan, err, first)
+	requireTest(t, reflect.DeepEqual(plan, planFromReceipt(receipt)), "resumed abandon plan = %#v, want the receipt-derived %#v", plan, planFromReceipt(receipt))
+}
+
+func TestRemovedDirectoryWithHostilePathPlansAndApplies(t *testing.T) {
+	const request = "landed-abandon-removed-hostile-path"
+	root := newWorktreeRepo(t)
+	pool := t.TempDir()
+	t.Setenv("BENCH_HOME", filepath.Join(pool, "a b*c"))
+	decoy := filepath.Join(pool, "a bzc", "keep.txt")
+	mustNoError(t, os.MkdirAll(filepath.Dir(decoy), 0o700))
+	mustWrite(t, decoy, []byte("keep\n"), 0o644)
+	creation := mustCreate(t, root, request, "hostile path")
+	requireTest(t, strings.Contains(creation.Path, "a b*c"), "assignment path is not hostile: %s", creation.Path)
+	mustRemove(t, creation.Path)
+
+	fingerprint, err := PlanAbandon(root, request, creation.Path)
+	mustNoError(t, err)
+	result, err := ApplyAbandon(root, request, creation.Path, fingerprint)
+	requireTest(t, err == nil && result.Action == ActionRemoved, "hostile-path abandon = %#v, %v", result, err)
+	registrations := gitOutput(t, root, "worktree", "list", "--porcelain")
+	requireTest(t, !strings.Contains(registrations, "worktree "+creation.Path),
+		"registration survived the abandon:\n%s", registrations)
+	body, readErr := os.ReadFile(decoy)
+	requireTest(t, readErr == nil && string(body) == "keep\n", "abandon removed a glob sibling: %q, %v", body, readErr)
 }
 
 func TestAbandonRetryUsesInFlightReceipt(t *testing.T) {
