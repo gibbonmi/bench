@@ -170,7 +170,11 @@ printf '%s\n' "$@" > "$BENCH_TEST_ARGV"
 `)
 
 	cmd := exec.Command("bash", filepath.Join(kit, "bin", "bench.sh"), "gate-phases", "/tmp/repo root")
-	cmd.Env = append(os.Environ(), "BENCH_TEST_ARGV="+argvFile, "BENCH_HOME="+filepath.Join(root, "home"))
+	cmd.Env = append(os.Environ(),
+		"BENCH_TEST_ARGV="+argvFile, "BENCH_HOME="+filepath.Join(root, "home"),
+		// The wrapper exports these at dispatch; a suite run through the bench
+		// binary would otherwise route this fixture's copy at the real kit.
+		"BENCH_KIT=", "BENCH_WRAPPER=")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("bench.sh gate-phases failed: %v\n%s", err, out)

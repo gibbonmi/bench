@@ -323,6 +323,25 @@ func TestOrdinaryGoEditSkipsCanary(t *testing.T) {
 	}
 }
 
+func TestAgentMarkdownEditRunsConsumersAndSkipsToolchain(t *testing.T) {
+	fixture := seededScopingFixture(t)
+	writeGateTestFile(t, fixture.root, ".agents/skills/new-skill/SKILL.md", "# New skill\n", 0o644)
+	observation := observeGreenGate(t, fixture.root)
+
+	for _, component := range []string{canary.PhaseContract, "canary"} {
+		if !observation.ran(component) {
+			t.Fatalf("executed %v, want %s run for an agent Markdown edit", observation.executed, component)
+		}
+	}
+	for _, component := range []string{
+		canary.PhaseGofmt, canary.PhaseVet, canary.PhaseTest, canary.PhaseRace,
+	} {
+		if observation.ran(component) {
+			t.Fatalf("executed %v, want %s skipped for an agent Markdown edit", observation.executed, component)
+		}
+	}
+}
+
 // [PC19] Every error class at the decision site answers run-the-component. One fail-open path
 // anywhere here silently credits ungraded work, and the classes are exercised one per subtest
 // so a refusal that stops refusing is named rather than absorbed by a sibling.

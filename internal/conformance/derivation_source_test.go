@@ -39,6 +39,7 @@ var derivationFixtureSeed = map[string]string{
 	"scripts/go-build.sh":               "#!/usr/bin/env bash\nexit 0\n",
 	"scripts/go-build.inputs":           "build_script=scripts/go-build.sh\n",
 	"bin/bench.sh":                      "#!/usr/bin/env bash\nexit 0\n",
+	".agents/commands/seed.md":          "# Seed\n",
 	".bench/lib/seeded.sh":              "#!/usr/bin/env bash\nexit 0\n",
 	"dist/bench.seal":                   `{"schema":1,"sources":"` + strings.Repeat("a", 64) + `","executable":"` + strings.Repeat("b", 64) + `"}`,
 }
@@ -52,12 +53,13 @@ var derivationFixturePerturbation = map[string]string{
 	"cmd/bench/added.go":                 "package main\n\nfunc added() {}\n",
 	".bench/lib/added.sh":                "#!/usr/bin/env bash\nexit 0\n",
 	"internal/graded/testdata/added.txt": "added\n",
+	".agents/commands/added.md":          "# Added\n",
 	"dist/bench.seal":                    `{"schema":1,"sources":"` + strings.Repeat("c", 64) + `","executable":"` + strings.Repeat("d", 64) + `"}`,
 }
 
 // perturbationSummary names the change in a diagnostic, so a red says what the declaration
 // failed to follow rather than only that it failed.
-const perturbationSummary = "a source in the binary closure, a shell file, a testdata file, and a new seal source digest"
+const perturbationSummary = "a source in the binary closure, a shell file, a testdata file, agent Markdown, and a new seal source digest"
 
 // componentDeclaration is one registry entry read through the gate's accessors. The check
 // grades this shape rather than gate.ComponentInputs so a bite proof can mutate a

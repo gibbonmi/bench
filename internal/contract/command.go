@@ -206,6 +206,11 @@ func mergeEnv(base map[string]string, overrides Env) []string {
 		"npm_config_cache",
 		"GIT_CONFIG_NOSYSTEM",
 		"BENCH_HOME",
+		// The wrapper exports these at dispatch, so a suite run through the bench
+		// binary leaks them into every probe and a fixture's nested bench.sh then
+		// resolves the real kit instead of the planted one.
+		"BENCH_KIT",
+		"BENCH_WRAPPER",
 	} {
 		env = setEnv(env, k, "")
 	}

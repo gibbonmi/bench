@@ -157,16 +157,18 @@ one line: `none`, or sibling ticket file basenames.
 <spec>` is the ID source does not survive the tree: the coverage map has no ID
 column, and FT180's spec-less folders will have no map at all. Declaring IDs
 ticket-local keeps one owner for the convention, costs nothing now, and leaves
-FT174 free to add a completeness check over ticket files alone. **Flagged for
-reviewer veto**, since it narrows a sentence in the source row.
+FT174 free to add a completeness check over ticket files alone. **Confirmed
+2026-08-02**, with one amendment: a change that goes straight to tickets
+without a spec still carries its FT roadmap ID as provenance — only a genuine
+hotfix goes without one.
 
 **`Blocked by:` keys on file basenames, not titles and not `#N`.** Titles are
 what FT174 exists to retire (a retitle silently breaks the edge), and `#N`
 requires an ordering ticket folders do not have. Basenames are stable,
 already the assignment argument (`--ticket <file>`), and give FT174's walker a
-resolvable identifier. **Flagged for reviewer veto**, since FT174's row
-gestures at the decision-map `#N` grammar; what it directs is extending that
-validator's cycle/dangling logic, which walks basename keys just as well.
+resolvable identifier. **Confirmed 2026-08-02** — FT174's row gestures at the
+decision-map `#N` grammar, but what it directs is extending that validator's
+cycle/dangling logic, which walks basename keys just as well.
 
 **The template gains a `## Red mutations` table** — one row per acceptance ID:
 the concrete mutation, its independent owner, and the exact public operation
@@ -260,8 +262,8 @@ as a concrete entry in the profile's hostile-input checklist; it is an edge
 class, not a charge rule. (2) The spec-side half of contracts-discovery lands
 as one sentence in `craft-spec`'s "Slicing a build for delegates" pointing at
 the `craft-tickets` rule by name, mirroring the existing anchored
-cross-pointer pair, so the procedure keeps one owner. Both are **flagged for
-reviewer sign-off** as the roadmap requires.
+cross-pointer pair, so the procedure keeps one owner. Both owner placements
+are **confirmed 2026-08-02**.
 
 **Sequencing against the craft-research skill: none.** Closed 2026-08-02 in
 that session's grill and recorded in `decisions/craft-research.md`:

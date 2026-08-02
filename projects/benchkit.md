@@ -281,7 +281,12 @@ covers every descendant, so a file that lands under `capture/`, `decisions/`, or
 formatted documents whose graders are the included phases — `specs/` joined on exactly
 that ground (reviewer decision, 2026-08-01), and `decisions/` joins because conformance
 grades active maps and their owned research assets are documents (reviewer decision,
-2026-08-02). The build phase is in neither list: it produces the binary
+2026-08-02). `.agents/` is deliberately absent: its Markdown is a real input to the
+contract and canary components (lifecycle contracts link the kit's asset tree, and
+canary fixtures seed from it), so a guidance edit rides the per-component input
+declarations below — the toolchain components skip, the consumers run — rather than
+the whole-changeset reduced path, whose stripped-worktree enforcement would refuse
+the declaration (reviewer decision, 2026-08-02). The build phase is in neither list: it produces the binary
 the other phases exec, so it runs in both modes. Excludability is enforced by
 construction, to the construction's exact width: every full gate on the kit's own
 root runs the excludable phases against a stripped worktree the declared paths are
@@ -315,7 +320,7 @@ two turns the gate red:
 | vet | `module-test-closure`, `manifest` | `derived` |
 | test | `module-test-closure`, `manifest` | `derived` |
 | race | `module-test-closure`, `manifest` | `derived` |
-| contract | `module-test-closure`, `manifest`, `seal-source-digest` | `derived` |
+| contract | `module-test-closure`, `manifest`, `seal-source-digest`, `agent-markdown` | `derived` |
 | shellcheck | `shellcheck-argv` | `derived` |
 | canary | `hand-declared` | `hand-written` |
 
@@ -323,11 +328,14 @@ two turns the gate red:
 every resolution — the module-wide `go list -deps -test ./...` closure plus the
 module manifest for the toolchain and contract components (never the binary's
 narrower `./cmd/bench` closure, which excludes the packages they grade), the
-seal's source digest added for `contract` because it execs the built binary,
+seal's source digest and portable agent Markdown added for `contract` because it execs
+the built binary and grades managed-asset lifecycle behavior,
 and shellcheck's own argv enumeration for `shellcheck` — so a hand-copied path
 list can never survive as the declaration. `canary` is the registry's one
-`hand-declared` entry: `internal/canary/`, `tests/canary/`, and the wrapper
-scripts its phase execs, named directly because it has no derivable source.
+`hand-declared` entry: `internal/canary/`, `tests/canary/`, `.agents/` (its
+fixtures seed from the kit tree, so guidance edits move sweep expectations), and
+the wrapper scripts its phase execs, named directly because it has no derivable
+source.
 
 Declaration-honesty width, stated with the same candor the reduced-run
 construction prose carries above: the stripped-worktree construction proves

@@ -22,6 +22,9 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Made agent-guidance Markdown edits under `.agents/` skip the Go toolchain
+  gate components through the per-component input declarations, while the
+  contract and canary components that consume the guidance tree still run.
 - Made changes confined to active decision maps and their research assets eligible
   for the reduced gate run, alongside capture and compiled spec documents.
 - Made decision maps situational, separated shaping decision tickets from

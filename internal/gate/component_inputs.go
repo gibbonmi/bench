@@ -46,9 +46,9 @@ const (
 	// otherwise leave this declaration unmoved by a change that can red every component
 	// that carries it.
 	SourceModuleTestClosure Source = "module-test-closure+manifest"
-	// SourceModuleTestClosureWithSeal adds the published binary's seal source digest, for a
-	// component that execs the CLI and so reads the binary as well as the sources.
-	SourceModuleTestClosureWithSeal Source = "module-test-closure+manifest+seal-source-digest"
+	// SourceModuleTestClosureWithSealAndAgentMarkdown adds the published binary's seal
+	// source digest and the portable Markdown assets consumed by lifecycle contracts.
+	SourceModuleTestClosureWithSealAndAgentMarkdown Source = "module-test-closure+manifest+seal-source-digest+agent-markdown"
 	// SourceShellcheckArgv is shellcheckArgv's own file enumeration — the exact argument
 	// list the shellcheck phase lints, read rather than restated.
 	SourceShellcheckArgv Source = "shellcheck-argv"
@@ -104,7 +104,7 @@ func componentInputDeclarations() []componentInputDeclaration {
 		{canary.PhaseVet, SourceModuleTestClosure, (*inputResolver).moduleClosure},
 		{canary.PhaseTest, SourceModuleTestClosure, (*inputResolver).moduleClosure},
 		{canary.PhaseRace, SourceModuleTestClosure, (*inputResolver).moduleClosure},
-		{canary.PhaseContract, SourceModuleTestClosureWithSeal, (*inputResolver).contractInputs},
+		{canary.PhaseContract, SourceModuleTestClosureWithSealAndAgentMarkdown, (*inputResolver).contractInputs},
 		{"shellcheck", SourceShellcheckArgv, (*inputResolver).shellcheckInputs},
 		{"canary", SourceHandDeclared, (*inputResolver).canaryInputs},
 	}
@@ -231,7 +231,9 @@ func (r *inputResolver) shellcheckInputs() ([]string, []string, error) {
 // canaryInputs is the registry's one hand-declared entry: canary's inputs have no
 // derivable source, so they are named directly. internal/canary/ and tests/canary/ are
 // the sources and fixtures the phase grades; bin/bench.sh and .bench/lib/canary-run.sh
-// are the wrapper scripts its phase wiring execs.
+// are the wrapper scripts its phase wiring execs; the agent-guidance roots join them
+// because canary fixtures seed from the kit tree, so a guidance edit can move a sweep's
+// expected diagnostics.
 //
 // The published binary's digest is deliberately absent, a recorded tripwire narrowing
 // rather than an oversight: canary execs the binary but skips on an ordinary Go edit
@@ -244,6 +246,7 @@ func (r *inputResolver) canaryInputs() ([]string, []string, error) {
 		"internal/canary/",
 		"tests/canary/",
 	}
+	paths = append(paths, agentMarkdownDirectories...)
 	sort.Strings(paths)
 	return paths, nil, nil
 }
@@ -257,7 +260,48 @@ func (r *inputResolver) contractInputs() ([]string, []string, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	return paths, []string{sources}, nil
+	markdown, err := agentMarkdownPaths(r.root)
+	if err != nil {
+		return nil, nil, err
+	}
+	paths = append(paths, markdown...)
+	sort.Strings(paths)
+	return slices.Compact(paths), []string{sources}, nil
+}
+
+// agentMarkdownDirectories are the portable-guidance roots whose Markdown the lifecycle
+// contracts and the canary's kit-seeded fixtures consume. The list lives beside the
+// declarations that carry it — the input registry owns the fact, not the reduced-scope
+// declaration, which never covers these paths.
+var agentMarkdownDirectories = []string{".agents/"}
+
+// agentMarkdownPaths enumerates the .md descendants of agentMarkdownDirectories, sorted
+// and repository-relative, tolerating an absent root so a fixture kit without guidance
+// still resolves.
+func agentMarkdownPaths(root string) ([]string, error) {
+	var paths []string
+	for _, directory := range agentMarkdownDirectories {
+		base := filepath.Join(root, filepath.FromSlash(directory))
+		err := filepath.WalkDir(base, func(path string, entry fs.DirEntry, err error) error {
+			if errors.Is(err, os.ErrNotExist) {
+				return nil
+			}
+			if err != nil || entry.IsDir() || !entry.Type().IsRegular() || !strings.HasSuffix(entry.Name(), ".md") {
+				return err
+			}
+			rel, err := filepath.Rel(root, path)
+			if err != nil {
+				return err
+			}
+			paths = append(paths, filepath.ToSlash(rel))
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	sort.Strings(paths)
+	return slices.Compact(paths), nil
 }
 
 // listedTestPackage is the `go list -json` shape the module-wide closure reads. The file

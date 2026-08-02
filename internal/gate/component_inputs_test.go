@@ -22,7 +22,7 @@ import (
 func moduleClosureComponents() []string {
 	var names []string
 	for _, declaration := range componentInputDeclarations() {
-		if declaration.source == SourceModuleTestClosure || declaration.source == SourceModuleTestClosureWithSeal {
+		if declaration.source == SourceModuleTestClosure || declaration.source == SourceModuleTestClosureWithSealAndAgentMarkdown {
 			names = append(names, declaration.component)
 		}
 	}
@@ -123,13 +123,29 @@ func TestContractInputsCarryTheSealSourceDigest(t *testing.T) {
 	}
 }
 
+func TestContractInputsCoverDeclaredAgentMarkdown(t *testing.T) {
+	fixture := newKitShapedFixture(t)
+	const markdown = ".agents/skills/new-skill/SKILL.md"
+	const structured = ".agents/skills/new-skill/agents/openai.yaml"
+	writeGateTestFile(t, fixture.root, markdown, "# New skill\n", 0o644)
+	writeGateTestFile(t, fixture.root, structured, "interface:\n", 0o644)
+
+	paths := componentEntry(t, mustResolveComponentInputs(t, fixture.root), canary.PhaseContract).Paths()
+	if !slices.Contains(paths, markdown) {
+		t.Fatalf("contract inputs omit declared agent Markdown %q: %v", markdown, paths)
+	}
+	if slices.Contains(paths, structured) {
+		t.Fatalf("contract inputs include non-Markdown agent asset %q through the Markdown derivation", structured)
+	}
+}
+
 // [PS11] Every entry names the derivation it came from. The profile table and the
 // derivation-source conformance check read that name to tell a computed set from a
 // hand-written one.
 func TestComponentInputsReportANamedDerivationSource(t *testing.T) {
 	fixture := newKitShapedFixture(t)
 	named := []Source{
-		SourceBuildClosure, SourceModuleTestClosure, SourceModuleTestClosureWithSeal,
+		SourceBuildClosure, SourceModuleTestClosure, SourceModuleTestClosureWithSealAndAgentMarkdown,
 		SourceShellcheckArgv, SourceHandDeclared,
 	}
 

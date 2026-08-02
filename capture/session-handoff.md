@@ -2,9 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `5300bfa`, clean tree, 3 unpushed commits
+Branch: `main` — HEAD `6255b6a`, clean tree, 1 unpushed commit
 Spec: `specs/ft164-ticket-contracts/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `5300bfa` (reduced run; full-tree ancestor evidence inherited)
+Gate: green at `089bc36` — stale, work tree `089bc36`
 
 ## State
 
@@ -36,10 +36,7 @@ Gate: green at `5300bfa` (reduced run; full-tree ancestor evidence inherited)
 
 ## Next command
 
-`/bench-implement-spec` — the staged frontier drains before anything else:
-`specs/pre-push-guard-visibility/spec.md` (FT135) first per the roadmap's
-recommended sequence, then `specs/ft164-ticket-contracts/spec.md` in a fresh
-mid-tier session.
+`/bench-shape-idea` — the board's leading invocable signal (`decisions`).
 
 ## Shape
 
