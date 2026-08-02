@@ -16,3 +16,21 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
 - **What happened:** …
 - **Right behavior:** …
 - **Proposed rule change:** … (or "none")
+
+## 2026-08-01 — light-path ticket receipts have no terminal lifecycle  [open]
+
+- **What happened:** Five shipped light-path changes still have ticket-only
+  folders under `specs/`, but no `spec.md`. Their implementation commits landed,
+  while `bench spec history` returns no record for their slugs and `bench spec
+  retire` cannot target them. The folders therefore persist as committed receipts
+  without being classified as active specs, retained history, or retireable
+  lifecycle state.
+- **Right behavior:** A light-path close gives its ticket receipt one explicit
+  terminal disposition. If receipts remain under `specs/`, a canonical reader
+  identifies why they remain and distinguishes them from active specs; otherwise
+  the close removes them after promoting any durable content. Sessions should not
+  have to infer lifecycle state from the absence of `spec.md`.
+- **Proposed rule change:** Make the light-path final-check path either retain and
+  index ticket-only receipts through one existing spec reader, or remove their
+  folders at close. Choose one owner and one policy rather than adding a second
+  ad-hoc archive convention.
