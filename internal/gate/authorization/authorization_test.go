@@ -100,6 +100,123 @@ func TestAuthorizeClassifiesMissingGateAsInfrastructure(t *testing.T) {
 	}
 }
 
+func TestBootstrapRefusesDivergentExpectedMarker(t *testing.T) {
+	root, branch, previous, tip := greenBootstrapRepo(t)
+	marker := "refs/bench/green/" + branch
+	divergent := siblingCommit(t, root, previous)
+	gitRun(t, root, "update-ref", marker, divergent)
+
+	// The marker matches the expectation, so the update-ref compare-and-swap alone
+	// would happily fast-forward the marker off its own branch of history.
+	if err := Bootstrap(root, branch, tip, divergent); err == nil {
+		t.Fatal("bootstrap accepted an expected marker that is not an ancestor of the tip")
+	}
+	if got := gitOutput(t, root, "rev-parse", marker); got != divergent {
+		t.Fatalf("divergent marker = %s, want it left at %s", got, divergent)
+	}
+}
+
+func TestBootstrapFastForwardsAncestorMarker(t *testing.T) {
+	root, branch, previous, tip := greenBootstrapRepo(t)
+	marker := "refs/bench/green/" + branch
+	gitRun(t, root, "update-ref", marker, previous)
+
+	if err := Bootstrap(root, branch, tip, previous); err != nil {
+		t.Fatalf("bootstrap over a strict ancestor marker: %v", err)
+	}
+	if got := gitOutput(t, root, "rev-parse", marker); got != tip {
+		t.Fatalf("advanced marker = %s, want the tip %s", got, tip)
+	}
+}
+
+func TestBootstrapIsNoOpWhenMarkerEqualsTip(t *testing.T) {
+	root, branch, previous, tip := greenBootstrapRepo(t)
+	marker := "refs/bench/green/" + branch
+	gitRun(t, root, "update-ref", marker, tip)
+
+	// A marker already at the tip is the answer whatever the caller expected, so the
+	// ancestor rule never gets to reject an expectation there is nothing to write over.
+	if err := Bootstrap(root, branch, tip, siblingCommit(t, root, previous)); err != nil {
+		t.Fatalf("bootstrap with the marker already at the tip: %v", err)
+	}
+	if got := gitOutput(t, root, "rev-parse", marker); got != tip {
+		t.Fatalf("marker = %s, want the tip %s untouched", got, tip)
+	}
+}
+
+func TestBootstrapFailsClosedOnUnreadableMarker(t *testing.T) {
+	root, branch, previous, tip := greenBootstrapRepo(t)
+	marker := "refs/bench/green/" + branch
+	unreadable := siblingCommit(t, root, previous)
+	gitRun(t, root, "update-ref", marker, unreadable)
+	if err := os.Remove(filepath.Join(root, ".git", "objects", unreadable[:2], unreadable[2:])); err != nil {
+		t.Fatalf("unlink marker object: %v", err)
+	}
+
+	if err := Bootstrap(root, branch, tip, previous); err == nil {
+		t.Fatal("bootstrap read an unpeelable marker as an absent one")
+	}
+	if got := markerFile(t, root, branch); got != unreadable {
+		t.Fatalf("marker = %s, want the unreadable %s rather than a fresh one", got, unreadable)
+	}
+}
+
+func TestBootstrapExpectationIsAFullObjectID(t *testing.T) {
+	root, branch, previous, tip := greenBootstrapRepo(t)
+	marker := "refs/bench/green/" + branch
+	plant := func() { gitRun(t, root, "update-ref", marker, previous) }
+
+	plant()
+	if err := Bootstrap(root, branch, tip, previous); err != nil {
+		t.Fatalf("bootstrap with the marker's own object id: %v", err)
+	}
+	plant()
+	if err := Bootstrap(root, branch, tip, marker); err == nil {
+		t.Fatal("bootstrap resolved a ref name as the expectation")
+	}
+	plant()
+	if err := Bootstrap(root, branch, tip, previous[:7]); err == nil {
+		t.Fatal("bootstrap resolved an abbreviated object id as the expectation")
+	}
+	if got := gitOutput(t, root, "rev-parse", marker); got != previous {
+		t.Fatalf("marker = %s, want it left at %s by the refused expectations", got, previous)
+	}
+}
+
+// greenBootstrapRepo returns a repository whose tip carries reusable green evidence,
+// with previous naming the tip's parent.
+func greenBootstrapRepo(t *testing.T) (root, branch, previous, tip string) {
+	t.Helper()
+	root = authorizationRepo(t)
+	os.Remove(filepath.Join(root, "fail"))
+	gitRun(t, root, "add", "-u")
+	gitRun(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "-m", "green base")
+	branch = gitOutput(t, root, "branch", "--show-current")
+	tip = gitOutput(t, root, "rev-parse", "HEAD")
+	previous = gitOutput(t, root, "rev-parse", "HEAD^")
+	if got := gate.Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
+		t.Fatalf("seed green evidence = %+v", got)
+	}
+	return root, branch, previous, tip
+}
+
+// siblingCommit writes a commit beside parent that no branch reaches, leaving the
+// working tree and HEAD where the caller's green evidence needs them.
+func siblingCommit(t *testing.T, root, parent string) string {
+	t.Helper()
+	return gitOutput(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench",
+		"commit-tree", parent+"^{tree}", "-p", parent, "-m", "divergent")
+}
+
+func markerFile(t *testing.T, root, branch string) string {
+	t.Helper()
+	raw, err := os.ReadFile(filepath.Join(root, ".git", "refs", "bench", "green", branch))
+	if err != nil {
+		t.Fatalf("read marker ref: %v", err)
+	}
+	return string(bytesTrimSpace(raw))
+}
+
 func authorizationRepo(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
