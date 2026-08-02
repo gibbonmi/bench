@@ -21,10 +21,10 @@ independent.
 
 ## Acceptance
 
-- [ ] PC17a — a partial green over its own tree renders as a partial row naming the skipped components, not as stale and not as full green.
-- [ ] PC17b — a partial green whose tree has moved renders the drift row, not the partial row.
-- [ ] PS25 — the partial row's action is `bench gate --fresh`.
-- [ ] PS26 — the reduced row still renders unchanged for a reduced verdict.
+- [ ] [PC17a] a partial green over its own tree renders as a partial row naming the skipped components, not as stale and not as full green.
+- [ ] [PC17b] a partial green whose tree has moved renders the drift row, not the partial row.
+- [ ] [PS25] the partial row's action is `bench gate --fresh`.
+- [ ] [PS26] the reduced row still renders unchanged for a reduced verdict.
 
 ## Red mutations
 

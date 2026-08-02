@@ -2,8 +2,7 @@
 
 Blocked by: Derive the toolchain and contract input sets; Declare shellcheck's
 and canary's input sets
-Ownership fence: `projects/benchkit.md`, new
-`internal/conformance/component_scope_binding_test.go`
+Ownership fence: `internal/conformance/component_scope_binding_test.go`, `internal/gate/component_inputs.go`, `projects/benchkit.md`
 Assumptions: `checkScopeBinding` in `scope_binding_test.go` binds the existing
 reduced-scope table to `gate.ReducedScope()` and is read — not edited — by this
 ticket; that table and `ReducedScope()` both stay, as the capture-surface floor
@@ -29,11 +28,11 @@ are what re-prove the tripwire.
 
 ## Acceptance
 
-- [ ] PC6a — the profile renders one row per scoped component and the check compares each row against the declaration by exact set equality.
-- [ ] PC6b — a row mutated in the prose alone reds, and a declaration mutated alone reds, each naming the component.
-- [ ] PC6c — a component missing from the table and a table row naming no declared component are each named as their own diagnostic.
-- [ ] PS31 — the profile states the declaration-honesty residual and the canary narrowing in prose.
-- [ ] PS32 — the existing reduced-scope table and its binding still render and pass unchanged.
+- [ ] [PC6a] the profile renders one row per scoped component and the check compares each row against the declaration by exact set equality.
+- [ ] [PC6b] a row mutated in the prose alone reds, and a declaration mutated alone reds, each naming the component.
+- [ ] [PC6c] a component missing from the table and a table row naming no declared component are each named as their own diagnostic.
+- [ ] [PS31] the profile states the declaration-honesty residual and the canary narrowing in prose.
+- [ ] [PS32] the existing reduced-scope table and its binding still render and pass unchanged.
 
 ## Red mutations
 

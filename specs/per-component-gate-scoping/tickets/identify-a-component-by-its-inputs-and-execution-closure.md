@@ -1,8 +1,7 @@
 # Identify a component by its inputs and execution closure
 
 Blocked by: Derive the toolchain and contract input sets
-Ownership fence: new `internal/gate/component_identity.go`, new
-`internal/gate/component_identity_test.go`
+Ownership fence: `internal/gate/component_identity.go`, `internal/gate/component_identity_test.go`, `internal/gate/subject.go`, `internal/gate/tree_snapshot.go`, `internal/gate/tree_snapshot_test.go`
 Assumptions: `strippedTreeHash` in `subject.go` reads a `git add -A` snapshot
 through `git ls-tree` and drops declared entries; `strippedPolicyVersion`
 extends `policyVersion`. This ticket reads both and edits neither. Re-derive from
@@ -26,11 +25,11 @@ and this ticket never invents a fallback identity that would let it skip.
 
 ## Acceptance
 
-- [ ] PS15 — a component's identity moves when any file in its declared input set changes and stays fixed when a file outside it changes.
-- [ ] PS16 — two components with identical declared input sets compute different identities, because the policy domain carries the component name.
-- [ ] PS17 — a component's identity moves when its argv or declared env changes with every input file unchanged.
-- [ ] PS18 — `contract`'s identity moves when the seal's source digest moves with its file set unchanged.
-- [ ] PS19 — an unreadable snapshot, a failed derivation, and a declared path outside the repository each return an error and no identity.
+- [ ] [PS15] a component's identity moves when any file in its declared input set changes and stays fixed when a file outside it changes.
+- [ ] [PS16] two components with identical declared input sets compute different identities, because the policy domain carries the component name.
+- [ ] [PS17] a component's identity moves when its argv or declared env changes with every input file unchanged.
+- [ ] [PS18] `contract`'s identity moves when the seal's source digest moves with its file set unchanged.
+- [ ] [PS19] an unreadable snapshot, a failed derivation, and a declared path outside the repository each return an error and no identity.
 
 ## Red mutations
 

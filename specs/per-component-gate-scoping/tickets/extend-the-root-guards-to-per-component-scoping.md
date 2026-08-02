@@ -1,7 +1,7 @@
 # Extend the root guards to per-component scoping
 
 Blocked by: Skip the build phase on its attested seal
-Ownership fence: the root-guard cases in `internal/gate/reduced_run_test.go`
+Ownership fence: `internal/gate/reduced_run_test.go`
 Assumptions: `[RB1]` already pins that a root which is not the kit runs
 unreduced, and `[R20]` that an allowlist-confined change with no ancestor runs
 the full gate; both are whole-changeset guards written before the partition
@@ -21,10 +21,10 @@ keep their coverage, and each gains its per-component half.
 
 ## Acceptance
 
-- [ ] PC18a — a root that is not the kit executes every component, with no slot authored and no skip announced.
-- [ ] PC18b — a root with no Go module executes every component its table carries and scopes none.
-- [ ] PC18c — a symlinked path to the kit root still counts as the kit, and a stat failure on either path runs every component.
-- [ ] PS36 — the existing `[RB1]` and `[R20]` cases still pass unchanged.
+- [ ] [PC18a] a root that is not the kit executes every component, with no slot authored and no skip announced.
+- [ ] [PC18b] a root with no Go module executes every component its table carries and scopes none.
+- [ ] [PC18c] a symlinked path to the kit root still counts as the kit, and a stat failure on either path runs every component.
+- [ ] [PS36] the existing `[RB1]` and `[R20]` cases still pass unchanged.
 
 ## Red mutations
 

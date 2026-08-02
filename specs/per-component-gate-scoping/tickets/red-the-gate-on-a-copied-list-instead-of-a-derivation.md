@@ -2,7 +2,7 @@
 
 Blocked by: Derive the toolchain and contract input sets; Declare shellcheck's
 and canary's input sets
-Ownership fence: new `internal/conformance/derivation_source_test.go`
+Ownership fence: `internal/conformance/derivation_source_test.go`
 Assumptions: the registry in `internal/gate/component_inputs.go` records how each
 entry was sourced; `canary` is the only hand-declared entry. Re-derive both from
 the tree at pickup rather than from this line.
@@ -28,10 +28,10 @@ the fixed side.
 
 ## Acceptance
 
-- [ ] PC7a — each of `build`, `gofmt`, `vet`, `test`, `race`, `contract`, and `shellcheck` is verified to resolve through its named derivation.
-- [ ] PC7b — replacing any of those with a literal path list produces a diagnostic naming the component and its expected derivation.
-- [ ] PC7c — a second hand-declared entry beyond `canary` produces a diagnostic.
-- [ ] PS33 — a derivation that cannot resolve is reported as its own diagnostic rather than read as an empty, satisfied set.
+- [ ] [PC7a] each of `build`, `gofmt`, `vet`, `test`, `race`, `contract`, and `shellcheck` is verified to resolve through its named derivation.
+- [ ] [PC7b] replacing any of those with a literal path list produces a diagnostic naming the component and its expected derivation.
+- [ ] [PC7c] a second hand-declared entry beyond `canary` produces a diagnostic.
+- [ ] [PS33] a derivation that cannot resolve is reported as its own diagnostic rather than read as an empty, satisfied set.
 
 ## Red mutations
 

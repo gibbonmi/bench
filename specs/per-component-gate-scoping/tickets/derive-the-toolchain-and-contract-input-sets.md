@@ -1,8 +1,7 @@
 # Derive the toolchain and contract input sets
 
 Blocked by: Expose the build inputs and seal digests the gate reads
-Ownership fence: new `internal/gate/component_inputs.go`, new
-`internal/gate/component_inputs_test.go`
+Ownership fence: `internal/gate/component_inputs.go`, `internal/gate/component_inputs_test.go`
 Assumptions: `ReducedScope()` in `scope.go` stays as the capture-surface
 declaration and is not edited by this ticket; `canary.Phase*` constants name the
 phases. Re-derive from the tree at pickup.
@@ -33,11 +32,11 @@ them or the binding ticket reds.
 
 ## Acceptance
 
-- [ ] PC8a — the toolchain and contract input sets contain every file of every package in the module-wide `-test` closure, including `_test.go` files of packages outside `./cmd/bench`'s closure.
-- [ ] PC8b — the toolchain and contract input sets contain the `testdata/` contents of listed packages.
-- [ ] PS9 — `build`'s input set is exactly `freshness.BuildInputs`' return, with no restatement of that path list in this package.
-- [ ] PS10 — `contract`'s declaration carries the seal's source digest as an input alongside its file set.
-- [ ] PS11 — every registry entry reports its source as a named derivation, and a derivation failure returns an error rather than a partial set.
+- [ ] [PC8a] the toolchain and contract input sets contain every file of every package in the module-wide `-test` closure, including `_test.go` files of packages outside `./cmd/bench`'s closure.
+- [ ] [PC8b] the toolchain and contract input sets contain the `testdata/` contents of listed packages.
+- [ ] [PS9] `build`'s input set is exactly `freshness.BuildInputs`' return, with no restatement of that path list in this package.
+- [ ] [PS10] `contract`'s declaration carries the seal's source digest as an input alongside its file set.
+- [ ] [PS11] every registry entry reports its source as a named derivation, and a derivation failure returns an error rather than a partial set.
 
 ## Red mutations
 

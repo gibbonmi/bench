@@ -2,8 +2,7 @@
 
 Blocked by: Expose the build inputs and seal digests the gate reads; Record a
 component ancestor slot as its own class
-Ownership fence: new `internal/gate/build_attestation.go`, new
-`internal/gate/build_attestation_test.go`
+Ownership fence: `internal/gate/build_attestation.go`, `internal/gate/build_attestation_test.go`, `internal/freshness/freshness.go`, `internal/gate/component_slots.go`, `internal/gate/kitshaped_fixture_test.go`, `internal/gate/record_classes.go`, `internal/gate/record_classes_test.go`, `internal/gate/verdict.go`
 Assumptions: `freshness.Check` already refuses a missing binary, a missing seal,
 a source-digest mismatch, an executable-digest mismatch, and a symlinked or
 irregular sidecar; this ticket adds a check on top of it and weakens none of
@@ -38,10 +37,10 @@ the evidence-store naming are the registries it must join.
 
 ## Acceptance
 
-- [ ] PC5 — a planted binary with a recomputed, self-consistent seal fails attestation.
-- [ ] PS20 — an attestation authored by a green build matches that binary's executable digest, and verification passes.
-- [ ] PS21 — a missing attestation, an attestation naming a different executable digest, and a malformed attestation each fail verification.
-- [ ] PS22 — authoring an attestation replaces the previous one atomically and leaves every component slot's bytes unchanged.
+- [ ] [PC5] a planted binary with a recomputed, self-consistent seal fails attestation.
+- [ ] [PS20] an attestation authored by a green build matches that binary's executable digest, and verification passes.
+- [ ] [PS21] a missing attestation, an attestation naming a different executable digest, and a malformed attestation each fail verification.
+- [ ] [PS22] authoring an attestation replaces the previous one atomically and leaves every component slot's bytes unchanged.
 
 ## Red mutations
 

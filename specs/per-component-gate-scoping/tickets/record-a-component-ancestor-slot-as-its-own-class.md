@@ -1,8 +1,7 @@
 # Record a component ancestor slot as its own class
 
 Blocked by: Identify a component by its inputs and execution closure
-Ownership fence: new `internal/gate/component_slots.go`, new
-`internal/gate/component_slots_test.go`
+Ownership fence: `internal/gate/component_slots.go`, `internal/gate/component_slots_test.go`, `internal/gate/engine.go`, `internal/gate/verdict.go`
 Assumptions: the retained-evidence store is `<git-common-dir>/bench-gate-evidence`,
 written through `durableReplaceAt` and read through `loadVerdict`; `strictJSON`,
 `requireObjectFields`, and `strictRecordTime` are package-internal validators
@@ -36,11 +35,11 @@ readable by nothing or validated by nothing.
 
 ## Acceptance
 
-- [ ] PC9 — a component skipped by a run leaves its slot byte-identical, including its recorded time.
-- [ ] PC10a — a slot record carrying any verdict-class inherited field is refused and its component runs.
-- [ ] PC10b — a slot record naming a different component than the slot resolves for is refused and its component runs.
-- [ ] PC10c — a slot record failing field-set, schema, or time validation is refused and its component runs.
-- [ ] PC11 — authoring a slot for one component leaves every other component's slot bytes unchanged, and invalidating one leaves the others present.
+- [ ] [PC9] a component skipped by a run leaves its slot byte-identical, including its recorded time.
+- [ ] [PC10a] a slot record carrying any verdict-class inherited field is refused and its component runs.
+- [ ] [PC10b] a slot record naming a different component than the slot resolves for is refused and its component runs.
+- [ ] [PC10c] a slot record failing field-set, schema, or time validation is refused and its component runs.
+- [ ] [PC11] authoring a slot for one component leaves every other component's slot bytes unchanged, and invalidating one leaves the others present.
 
 ## Red mutations
 

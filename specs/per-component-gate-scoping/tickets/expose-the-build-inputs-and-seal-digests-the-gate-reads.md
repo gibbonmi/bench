@@ -23,9 +23,9 @@ resolve.
 
 ## Acceptance
 
-- [ ] PS1 — `BuildInputs` returns exactly the paths `Digest` hashes for a module, repository-relative and sorted, including `go.mod`, `go.sum`, and every auxiliary manifest entry.
-- [ ] PS2 — `SealDigests` returns a published seal's two digests, and refuses a symlinked sidecar, an irregular sidecar, and malformed seal contents.
-- [ ] PS3 — a `BuildInputs` failure to resolve the closure is returned as an error, never as an empty set.
+- [ ] [PS1] `BuildInputs` returns exactly the paths `Digest` hashes for a module, repository-relative and sorted, including `go.mod`, `go.sum`, and every auxiliary manifest entry.
+- [ ] [PS2] `SealDigests` returns a published seal's two digests, and refuses a symlinked sidecar, an irregular sidecar, and malformed seal contents.
+- [ ] [PS3] a `BuildInputs` failure to resolve the closure is returned as an error, never as an empty set.
 
 ## Red mutations
 

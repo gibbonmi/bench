@@ -2,9 +2,7 @@
 
 Blocked by: Attest the build the gate itself ran; Skip evidence-covered
 components on their own slots
-Ownership fence: the build branch of `internal/gate/component_decision.go`, the
-build-skip wiring in `internal/gate/gate.go`,
-`internal/gate/build_attestation_test.go`
+Ownership fence: `internal/gate/build_skip_test.go`, `internal/gate/component_decision.go`, `internal/gate/component_decision_test.go`, `internal/gate/gate.go`, `internal/gate/kitshaped_fixture_test.go`, `internal/gate/phases.go`, `internal/gate/absent_tool_slot_test.go`, `internal/gate/component_inputs.go`, `internal/gate/runner.go`
 Assumptions: the `Needs` edges in `BenchkitPhases` make every reader of
 `dist/bench` depend on the build phase, and a need that ends skipped is
 satisfied trivially with no writer and no race; the gate-entry untrusted-runner
@@ -29,11 +27,11 @@ untouched.
 
 ## Acceptance
 
-- [ ] PC3 — a valid attested seal skips the build and leaves `dist/bench` byte-identical, and the phases that exec it exec the sealed binary.
-- [ ] PC4 — each of absent binary, absent seal, source-digest mismatch, executable-digest mismatch, symlinked or irregular sidecar, missing attestation, and attestation/seal mismatch runs the build, one subtest per case.
-- [ ] PC5b — a planted binary with a recomputed self-consistent seal runs the build, which overwrites both and re-authors the attestation.
-- [ ] PC20 — a first run, a pruned evidence store, and `--fresh` each execute every component including the build, and author every slot and the attestation.
-- [ ] PS30 — the verdict's evidence entry for a skipped build names the seal's source digest.
+- [ ] [PC3] a valid attested seal skips the build and leaves `dist/bench` byte-identical, and the phases that exec it exec the sealed binary.
+- [ ] [PC4] each of absent binary, absent seal, source-digest mismatch, executable-digest mismatch, symlinked or irregular sidecar, missing attestation, and attestation/seal mismatch runs the build, one subtest per case.
+- [ ] [PC5b] a planted binary with a recomputed self-consistent seal runs the build, which overwrites both and re-authors the attestation.
+- [ ] [PC20] a first run, a pruned evidence store, and `--fresh` each execute every component including the build, and author every slot and the attestation.
+- [ ] [PS30] the verdict's evidence entry for a skipped build names the seal's source digest.
 
 ## Red mutations
 

@@ -1,9 +1,7 @@
 # Declare shellcheck's and canary's input sets
 
 Blocked by: Derive the toolchain and contract input sets
-Ownership fence: the `shellcheck` and `canary` entries of
-`internal/gate/component_inputs.go`, their cases in
-`internal/gate/component_inputs_test.go`
+Ownership fence: `internal/gate/component_inputs.go`, `internal/gate/component_inputs_test.go`, `internal/gate/component_identity.go`, `internal/gate/component_identity_test.go`, `internal/gate/phases.go`, `internal/gate/scope.go`, `internal/gate/kitshaped_fixture_test.go`
 Assumptions: `shellcheckArgv(root)` in `phases.go` already enumerates the exact
 file list shellcheck lints, and is read — not edited — by this ticket. Re-derive
 from the tree at pickup.
@@ -27,9 +25,9 @@ for a missing input.
 
 ## Acceptance
 
-- [ ] PS12 — `shellcheck`'s input set is derived from `shellcheckArgv`'s file list, and a script added to that argv appears in the declaration with no edit here.
-- [ ] PS13 — `canary`'s input set contains `internal/canary/`, `tests/canary/`, and the wrapper scripts its phase execs, and contains no binary digest.
-- [ ] PS14 — `canary`'s registry entry reports itself hand-declared while every other entry reports a named derivation.
+- [ ] [PS12] `shellcheck`'s input set is derived from `shellcheckArgv`'s file list, and a script added to that argv appears in the declaration with no edit here.
+- [ ] [PS13] `canary`'s input set contains `internal/canary/`, `tests/canary/`, and the wrapper scripts its phase execs, and contains no binary digest.
+- [ ] [PS14] `canary`'s registry entry reports itself hand-declared while every other entry reports a named derivation.
 
 ## Red mutations
 

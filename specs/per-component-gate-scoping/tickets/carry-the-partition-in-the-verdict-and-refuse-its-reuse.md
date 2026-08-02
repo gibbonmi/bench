@@ -1,8 +1,7 @@
 # Carry the partition in the verdict and refuse its reuse
 
 Blocked by: Record a component ancestor slot as its own class
-Ownership fence: `internal/gate/verdict.go`,
-`internal/gate/reduced_verdict_test.go`, `internal/gate/verdict_reuse_test.go`
+Ownership fence: `internal/gate/verdict.go`, `internal/gate/reduced_verdict_test.go`, `internal/gate/verdict_reuse_test.go`
 Assumptions: `verdict.go` today validates exactly two ready classes — full and
 reduced — through `fullReadyFields`/`reducedReadyFields` and `inherits()`, and
 `inspectAt` withholds `ReusableGreen` from a reduced record. Re-derive from the
@@ -29,11 +28,11 @@ records in tests; nothing yet emits one.
 
 ## Acceptance
 
-- [ ] PC2a — a partial record round-trips its executed set and one evidence entry per skipped component, and re-reads byte-equal.
-- [ ] PC2b — a partial record missing an evidence entry for a component it lists as skipped is refused.
-- [ ] PC15 — a partial green is never `ReusableGreen`, and the inspection names the partition as its reason.
-- [ ] PS23 — a record mixing partial fields with reduced or full field sets is refused rather than resolved to either class.
-- [ ] PS24 — the existing full and reduced classes still validate and still round-trip unchanged.
+- [ ] [PC2a] a partial record round-trips its executed set and one evidence entry per skipped component, and re-reads byte-equal.
+- [ ] [PC2b] a partial record missing an evidence entry for a component it lists as skipped is refused.
+- [ ] [PC15] a partial green is never `ReusableGreen`, and the inspection names the partition as its reason.
+- [ ] [PS23] a record mixing partial fields with reduced or full field sets is refused rather than resolved to either class.
+- [ ] [PS24] the existing full and reduced classes still validate and still round-trip unchanged.
 
 ## Red mutations
 

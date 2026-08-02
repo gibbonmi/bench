@@ -5,8 +5,7 @@ canary's input sets; Identify a component by its inputs and execution closure;
 Record a component ancestor slot as its own class; Carry the partition in the
 verdict and refuse its reuse; Render a partial verdict in bench status; Refuse a
 partial verdict at prep-release
-Ownership fence: new `internal/gate/component_decision.go`, the reduction call
-sites in `internal/gate/gate.go`, `internal/gate/reduced_run_test.go`
+Ownership fence: `internal/gate/component_decision.go`, `internal/gate/component_decision_test.go`, `internal/gate/gate.go`, `internal/gate/kitshaped_fixture_test.go`
 Assumptions: `reducedInheritance` is today's whole-changeset decision and this
 ticket replaces it as the reduction site; `ReducedScope()` stays and the
 stripped-worktree construction keeps consuming it; the whole-tree fresh-green
@@ -45,14 +44,14 @@ slot; `gate-phases` records no verdict and authors nothing.
 
 ## Acceptance
 
-- [ ] PC1 — a capture-only changeset executes `conformance` and `conformance-suite` and skips `gofmt`, `vet`, `test`, `race`, `contract`, `shellcheck`, and `canary` on their own evidence.
-- [ ] PC2c — every skipped component is announced on its own line naming its ancestor identity and recorded time, and the recorded verdict carries one entry per skip.
-- [ ] PC11 — forcing one component red invalidates that component's slot and leaves every other component's slot bytes unchanged.
-- [ ] PC12 — editing only a file under `tests/canary/` runs `canary` and skips the toolchain components.
-- [ ] PC13 — editing `bin/bench.sh` runs `canary`.
-- [ ] PC14 — editing an ordinary Go source skips `canary` and runs the toolchain components.
-- [ ] PC19 — each of slot unreadable, seal unreadable, derivation failure, identity failure, and domain mismatch causes its component to run, one subtest per class.
-- [ ] PS29 — `bench gate --fresh` executes every component and re-authors every slot, and the whole-tree fresh-green reuse still answers ahead of the decision.
+- [ ] [PC1] a capture-only changeset executes `conformance` and `conformance-suite` and skips `gofmt`, `vet`, `test`, `race`, `contract`, `shellcheck`, and `canary` on their own evidence.
+- [ ] [PC2c] every skipped component is announced on its own line naming its ancestor identity and recorded time, and the recorded verdict carries one entry per skip.
+- [ ] [PC11] forcing one component red invalidates that component's slot and leaves every other component's slot bytes unchanged.
+- [ ] [PC12] editing only a file under `tests/canary/` runs `canary` and skips the toolchain components.
+- [ ] [PC13] editing `bin/bench.sh` runs `canary`.
+- [ ] [PC14] editing an ordinary Go source skips `canary` and runs the toolchain components.
+- [ ] [PC19] each of slot unreadable, seal unreadable, derivation failure, identity failure, and domain mismatch causes its component to run, one subtest per class.
+- [ ] [PS29] `bench gate --fresh` executes every component and re-authors every slot, and the whole-tree fresh-green reuse still answers ahead of the decision.
 
 ## Red mutations
 

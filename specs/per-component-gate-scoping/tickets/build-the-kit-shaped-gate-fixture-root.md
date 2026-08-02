@@ -1,7 +1,7 @@
 # Build the kit-shaped gate fixture root
 
 Blocked by: none
-Ownership fence: new `internal/gate/kitshaped_fixture_test.go`
+Ownership fence: `internal/gate/kitshaped_fixture_test.go`
 Assumptions: `reducedRunFixture` (in `reduced_run_test.go`) is the existing
 synthetic root — two phases, no Go module, no build phase — and stays untouched;
 `writeGateTestFile`, `gitRun`, and `gitOutput` are the package's existing test
@@ -27,11 +27,11 @@ behavior: the fixture gates green today, under the whole-tree path.
 
 ## Acceptance
 
-- [ ] PS4 — the fixture gates green end to end and every phase in its resolved table leaves exactly one marker line.
-- [ ] PS5 — the fixture's resolved phase table carries the build phase and the canary phase by name, asserted before any test relies on either.
-- [ ] PS6 — the fixture carries a package outside `./cmd/bench`'s build closure whose `_test.go` files are inside the module-wide test closure, asserted by comparing the two `go list` closures.
-- [ ] PS7 — the fixture's `dist/bench` passes `freshness.Verify` immediately after construction.
-- [ ] PS8 — a second gate run over an unedited fixture reuses the whole-tree green and leaves no new phase markers.
+- [ ] [PS4] the fixture gates green end to end and every phase in its resolved table leaves exactly one marker line.
+- [ ] [PS5] the fixture's resolved phase table carries the build phase and the canary phase by name, asserted before any test relies on either.
+- [ ] [PS6] the fixture carries a package outside `./cmd/bench`'s build closure whose `_test.go` files are inside the module-wide test closure, asserted by comparing the two `go list` closures.
+- [ ] [PS7] the fixture's `dist/bench` passes `freshness.Verify` immediately after construction.
+- [ ] [PS8] a second gate run over an unedited fixture reuses the whole-tree green and leaves no new phase markers.
 
 ## Red mutations
 

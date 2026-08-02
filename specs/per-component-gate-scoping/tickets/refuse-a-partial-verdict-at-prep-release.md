@@ -1,8 +1,7 @@
 # Refuse a partial verdict at prep-release
 
 Blocked by: Carry the partition in the verdict and refuse its reuse
-Ownership fence: `internal/preprelease/preprelease.go`,
-`internal/contract/surface/preprelease/preprelease_test.go`
+Ownership fence: `internal/preprelease/preprelease.go`, `internal/contract/surface/preprelease/preprelease_test.go`
 Assumptions: `Refusal(inspection)` today branches on
 `inspection.Reduced && inspection.Status == "green"` and points at
 `bench gate --fresh`; the ship tier already refuses without a current dev-green
@@ -18,10 +17,10 @@ the same single escape, `bench gate --fresh`.
 
 ## Acceptance
 
-- [ ] PC16a — a partial green is refused, and the refusal names every skipped component.
-- [ ] PC16b — the refusal points at `bench gate --fresh` and at re-running prep-release.
-- [ ] PS27 — a reduced green is still refused with its existing wording.
-- [ ] PS28 — a full green still passes the refusal check.
+- [ ] [PC16a] a partial green is refused, and the refusal names every skipped component.
+- [ ] [PC16b] the refusal points at `bench gate --fresh` and at re-running prep-release.
+- [ ] [PS27] a reduced green is still refused with its existing wording.
+- [ ] [PS28] a full green still passes the refusal check.
 
 ## Red mutations
 
