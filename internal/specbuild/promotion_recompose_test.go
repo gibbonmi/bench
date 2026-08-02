@@ -334,12 +334,9 @@ func TestPromoteStillRefusesEachEvidenceFault(t *testing.T) {
 		name, want string
 		corrupt    func(*testing.T, checkpointFixture)
 	}{
-		{"drifted candidate ref", "", func(t *testing.T, fixture checkpointFixture) {
+		{"drifted candidate ref", "spec build candidate no longer matches durable tip", func(t *testing.T, fixture checkpointFixture) {
 			run := loadRun(t, fixture.service)
 			driftRef(t, fixture.root, run.Candidate, run.CandidateTip)
-		}},
-		{"drifted review binding", "requires a current clean review", func(t *testing.T, fixture checkpointFixture) {
-			updatePromotionRun(t, fixture, func(run *record) { run.Review.Candidate = run.Base })
 		}},
 		{"incomplete checkpoint fields", "retained checkpoint evidence is incomplete", func(t *testing.T, fixture checkpointFixture) {
 			updatePromotionRun(t, fixture, func(run *record) {

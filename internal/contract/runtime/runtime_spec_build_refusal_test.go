@@ -72,9 +72,8 @@ func requireOperationNamed(t *testing.T, op, want, message string) {
 
 // TestDirtyCheckoutRefusalNamesEachOperation is CT1: every precondition-gated operation
 // — not only `start` — names itself in the dirty-checkout refusal, driven through the
-// real CLI as a fresh subprocess per row (CT7). A fix that threads the operation through
-// one call site and leaves the rest borrowing `start`'s wording passes a single-operation
-// assertion; enumerating the whole family is the only version of this test that catches it.
+// real CLI as a fresh subprocess per row (CT7). Each operation's wording is independent:
+// none borrows another operation's name.
 func TestDirtyCheckoutRefusalNamesEachOperation(t *testing.T) {
 	f := setupRuntimeBuildGate(t, "#!/bin/sh\nexit 0\n")
 	cases := composeSixOperationCases(t, f)
@@ -255,8 +254,7 @@ func TestAbandonRetiresRunOnMovedTipEndToEnd(t *testing.T) {
 // asserted. Dirtying the checkout with a file name carrying the same control byte is what
 // actually exercises escaping: git's own porcelain status quoting is the first line of
 // defense, and sanitize.Controls at the CLI boundary is the second: this test pins that the
-// composition of the two never regresses to a raw byte reaching the operator, however the
-// operation-name interpolation this spec adds is wired in.
+// composition of the two never regresses to a raw byte reaching the operator.
 func TestRefusalSurvivesControlByteBranchName(t *testing.T) {
 	f := setupRuntimeBuildGate(t, "#!/bin/sh\nexit 0\n")
 	f.WriteFile("specs/demo/spec.md", "# demo\n\nStatus: staged\n")
@@ -288,12 +286,10 @@ func TestRefusalSurvivesControlByteBranchName(t *testing.T) {
 
 // TestSpecBuildRefusalsCrossProcessBoundary is CT7: every row above reaches its refusal
 // by having a fresh `bash bin/bench.sh` subprocess — with zero in-memory state of its
-// own — reload the run record from disk. This test makes that property an explicit
-// assertion rather than an implicit consequence of how the suite happens to be written:
-// a refusing subprocess that could only produce the right operation name and the right
-// run identity by having actually read the persisted record proves the record survived
-// the boundary, and a fourth, independent subprocess reading it back afterward proves the
-// refusal did not corrupt it.
+// own — reload the run record from disk. A refusing subprocess that could only produce
+// the right operation name and the right run identity by having actually read the
+// persisted record proves the record survived the boundary, and a fourth, independent
+// subprocess reading it back afterward proves the refusal did not corrupt it.
 func TestSpecBuildRefusalsCrossProcessBoundary(t *testing.T) {
 	f := setupRuntimeBuildGate(t, "#!/bin/sh\nexit 0\n")
 	f.WriteFile("specs/demo/spec.md", "# demo\n\nStatus: staged\n")

@@ -104,6 +104,36 @@ func TestApplyAbandonCompletesForRemovedDirectory(t *testing.T) {
 		"registration survived the abandon:\n%s", registrations)
 }
 
+// TestApplyAbandonRecoverRemovesDirectoryWithExistingRecovery covers planRemovedCheckout's
+// other branch: a removed directory whose assignment already carries a recovery ref plans
+// ActionRecoverRemove against that ref rather than a plain removal, and the ref is what
+// ApplyAbandon must still be holding when the assignment lands terminal.
+func TestApplyAbandonRecoverRemovesDirectoryWithExistingRecovery(t *testing.T) {
+	const request = "landed-recovery-remove-existing"
+	root, creation := newOwnedAssignment(t, "recovery-remove-existing")
+	head := gitOutput(t, creation.Path, "rev-parse", "HEAD")
+	ref := intent.RecoveryRefPrefix(creation.Assignment.OwnerID, creation.Assignment.ID) + "1"
+	gitRun(t, root, "update-ref", ref, head)
+	assignment := creation.Assignment
+	assignment.State = intent.StateCleanupPending
+	assignment.Recovery = []intent.Recovery{{Ref: ref, Root: head, Payloads: []string{head}}}
+	mustNoError(t, intent.PutAssignment(root, assignment))
+	mustRemove(t, creation.Path)
+
+	plan, err := planAbandon(root, request, creation.Path)
+	mustNoError(t, err)
+	requireTest(t, plan.Action == ActionRecoverRemove && plan.Recovery == ref,
+		"removed-directory plan with existing recovery = %#v", plan)
+
+	result, err := ApplyAbandon(root, request, creation.Path, plan.Fingerprint)
+	requireTest(t, err == nil && result.Action == ActionRemoved, "ApplyAbandon over an existing recovery ref = %#v, %v", result, err)
+	resolved := gitOutput(t, root, "rev-parse", "--verify", ref+"^{commit}")
+	requireTest(t, resolved == head, "recovery ref = %s after abandon, want %s", resolved, head)
+	registrations := gitOutput(t, root, "worktree", "list", "--porcelain")
+	requireTest(t, !strings.Contains(registrations, "worktree "+creation.Path),
+		"registration survived the abandon:\n%s", registrations)
+}
+
 func TestPlanAbandonRefusesForeignCheckout(t *testing.T) {
 	const request = "landed-abandon-foreign-checkout"
 	root, creation := newOwnedAssignment(t, "abandon-foreign-checkout")

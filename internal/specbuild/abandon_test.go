@@ -140,6 +140,43 @@ func TestAbandonRefusesForeignAssignmentCheckout(t *testing.T) {
 	}
 }
 
+// startInvocation, assignInvocation, checkpointInvocation, integrateInvocation,
+// promoteInvocation, and writeCurrentReviewReceipt drive each precondition-gated
+// mutation through the exact service call its production code path takes. The
+// absent-worktree and moved-tip regression suites below share them so every lifecycle
+// mutation's call shape has one source rather than two independently wired copies.
+func startInvocation(t *testing.T, service *Service) error {
+	_, err := service.Start(t.Context(), "build demo")
+	return err
+}
+
+func assignInvocation(t *testing.T, service *Service, request string) error {
+	_, _, err := service.Assign(t.Context(), "build demo", "one.md", request)
+	return err
+}
+
+func checkpointInvocation(t *testing.T, fixture checkpointFixture) error {
+	_, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n"))
+	return err
+}
+
+func integrateInvocation(t *testing.T, fixture checkpointFixture) error {
+	_, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID)
+	return err
+}
+
+func promoteInvocation(t *testing.T, fixture checkpointFixture) error {
+	_, err := fixture.service.Promote(t.Context(), "build demo")
+	return err
+}
+
+func writeCurrentReviewReceipt(t *testing.T, fixture checkpointFixture) string {
+	t.Helper()
+	run := loadRun(t, fixture.service)
+	receipt := reviewReceipt{Version: 1, Run: run.Run, Candidate: run.CandidateTip, Axes: []reviewAxis{{Axis: "Standards"}, {Axis: "Spec"}, {Axis: "Coverage"}}}
+	return writeReviewReceipt(t, receipt)
+}
+
 // TestNonAbandonMutationsStillRefuseAbsentWorktree pins that the liveness exemption is
 // scoped to abandon: it walks the production mutation list itself, so a mutation added
 // later without a matching invocation here fails loudly instead of silently inheriting
@@ -148,35 +185,28 @@ func TestNonAbandonMutationsStillRefuseAbsentWorktree(t *testing.T) {
 	invoke := map[mutation]func(t *testing.T) error{
 		mutationStart: func(t *testing.T) error {
 			fixture, _ := absentWorktree(t, newCheckpointFixture(t))
-			_, err := fixture.service.Start(t.Context(), "build demo")
-			return err
+			return startInvocation(t, fixture.service)
 		},
 		mutationAssign: func(t *testing.T) error {
 			fixture, _ := absentWorktree(t, newCheckpointFixture(t))
-			_, _, err := fixture.service.Assign(t.Context(), "build demo", "one.md", "absent worktree request")
-			return err
+			return assignInvocation(t, fixture.service, "absent worktree request")
 		},
 		mutationCheckpoint: func(t *testing.T) error {
 			fixture, _ := absentWorktree(t, newCheckpointFixture(t))
-			_, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n"))
-			return err
+			return checkpointInvocation(t, fixture)
 		},
 		mutationIntegrate: func(t *testing.T) error {
 			fixture, _ := absentWorktree(t, checkpointedReleaseFixture(t))
-			_, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID)
-			return err
+			return integrateInvocation(t, fixture)
 		},
 		mutationReview: func(t *testing.T) error {
 			fixture, _ := absentWorktree(t, newCheckpointFixture(t))
-			run := loadRun(t, fixture.service)
-			receipt := reviewReceipt{Version: 1, Run: run.Run, Candidate: run.CandidateTip, Axes: []reviewAxis{{Axis: "Standards"}, {Axis: "Spec"}, {Axis: "Coverage"}}}
-			_, err := fixture.service.Review(t.Context(), "build demo", writeReviewReceipt(t, receipt))
+			_, err := fixture.service.Review(t.Context(), "build demo", writeCurrentReviewReceipt(t, fixture))
 			return err
 		},
 		mutationPromote: func(t *testing.T) error {
 			fixture, _ := absentWorktree(t, newCheckpointFixture(t))
-			_, err := fixture.service.Promote(t.Context(), "build demo")
-			return err
+			return promoteInvocation(t, fixture)
 		},
 	}
 	for _, op := range lifecycleMutations {
@@ -477,35 +507,29 @@ func TestNonAbandonMutationsStillRecomposeOnMovedTip(t *testing.T) {
 		mutationStart: func(t *testing.T) error {
 			fixture := newPreconditionFixture(t, true)
 			advanceWorking(t, fixture.root)
-			_, err := fixture.service.Start(t.Context(), "build demo")
-			return err
+			return startInvocation(t, fixture.service)
 		},
 		mutationAssign: func(t *testing.T) error {
 			fixture := newPreconditionFixture(t, true)
 			advanceWorking(t, fixture.root)
-			_, _, err := fixture.service.Assign(t.Context(), "build demo", "one.md", "moved-tip request")
-			return err
+			return assignInvocation(t, fixture.service, "moved-tip request")
 		},
 		mutationCheckpoint: func(t *testing.T) error {
 			fixture := newCheckpointFixture(t)
 			advanceWorking(t, fixture.root)
-			_, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n"))
-			return err
+			return checkpointInvocation(t, fixture)
 		},
 		mutationIntegrate: func(t *testing.T) error {
 			fixture := checkpointedReleaseFixture(t)
 			advanceWorking(t, fixture.root)
-			_, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID)
-			return err
+			return integrateInvocation(t, fixture)
 		},
 		mutationReview: func(t *testing.T) error {
 			fixture := checkpointedReleaseFixture(t)
 			if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
 				t.Fatalf("Integrate: %v", err)
 			}
-			run := loadRun(t, fixture.service)
-			receipt := reviewReceipt{Version: 1, Run: run.Run, Candidate: run.CandidateTip, Axes: []reviewAxis{{Axis: "Standards"}, {Axis: "Spec"}, {Axis: "Coverage"}}}
-			evidence := writeReviewReceipt(t, receipt)
+			evidence := writeCurrentReviewReceipt(t, fixture)
 			advanceWorking(t, fixture.root)
 			_, err := fixture.service.Review(t.Context(), "build demo", evidence)
 			return err
