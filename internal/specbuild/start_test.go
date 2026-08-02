@@ -8,6 +8,7 @@ import (
 	"github.com/gibbonmi/bench/internal/worktree"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -30,6 +31,149 @@ type reuseGreenGate struct{}
 
 func (reuseGreenGate) Bootstrap(_ context.Context, root, branch, tip, expected string) error {
 	return updateRef(root, "refs/bench/green/"+branch, tip, expected)
+}
+
+// recordingGate captures every expectation the service hands the gate owner.
+// An inert gate authorizes without advancing the marker, which is how a run
+// reaches a prepared start operation with its marker still behind the tip.
+type recordingGate struct {
+	expectations []string
+	inert        bool
+}
+
+func (g *recordingGate) Bootstrap(ctx context.Context, root, branch, tip, expected string) error {
+	g.expectations = append(g.expectations, expected)
+	if g.inert {
+		return nil
+	}
+	return greenGate{}.Bootstrap(ctx, root, branch, tip, expected)
+}
+
+func greenMarkerRef(t *testing.T, root string) string {
+	t.Helper()
+	return "refs/bench/green/" + git(t, root, "symbolic-ref", "--short", "HEAD")
+}
+
+func plantGreenMarker(t *testing.T, root, commit string) string {
+	t.Helper()
+	ref := greenMarkerRef(t, root)
+	git(t, root, "update-ref", ref, commit)
+	return ref
+}
+
+// plantUnreadableGreenMarker writes the ref by hand: update-ref refuses an
+// object the store does not have.
+func plantUnreadableGreenMarker(t *testing.T, root string) (string, string) {
+	t.Helper()
+	ref, missing := greenMarkerRef(t, root), "0123456789012345678901234567890123456789"
+	write(t, filepath.Join(root, ".git", filepath.FromSlash(ref)), missing+"\n")
+	return ref, missing
+}
+
+func TestStartFastForwardsAncestorMarker(t *testing.T) {
+	root := repo(t)
+	ancestor := git(t, root, "rev-parse", "HEAD")
+	advanceWorking(t, root)
+	tip := git(t, root, "rev-parse", "HEAD")
+	marker := plantGreenMarker(t, root, ancestor)
+	if _, err := New(root, greenGate{}, nil).Start(context.Background(), "build demo"); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	if got := git(t, root, "rev-parse", marker); got != tip {
+		t.Fatalf("marker = %s, want tip %s", got, tip)
+	}
+}
+
+func TestStartSucceedsWithNoMarker(t *testing.T) {
+	root := repo(t)
+	tip, marker := git(t, root, "rev-parse", "HEAD"), greenMarkerRef(t, root)
+	if _, err := New(root, greenGate{}, nil).Start(context.Background(), "build demo"); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	if got := git(t, root, "rev-parse", marker); got != tip {
+		t.Fatalf("marker = %s, want tip %s", got, tip)
+	}
+}
+
+func TestStartIsNoOpWhenMarkerEqualsTip(t *testing.T) {
+	root := repo(t)
+	marker := plantGreenMarker(t, root, git(t, root, "rev-parse", "HEAD"))
+	before := git(t, root, "for-each-ref", "--format=%(refname) %(objectname)", "refs/bench/green/")
+	if _, err := New(root, greenGate{}, nil).Start(context.Background(), "build demo"); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	if after := git(t, root, "for-each-ref", "--format=%(refname) %(objectname)", "refs/bench/green/"); after != before {
+		t.Fatalf("marker %s moved from %q to %q", marker, before, after)
+	}
+}
+
+func TestStartFailsClosedOnUnreadableMarker(t *testing.T) {
+	root := repo(t)
+	ref, missing := plantUnreadableGreenMarker(t, root)
+	if _, err := New(root, greenGate{}, nil).Start(context.Background(), "build demo"); err == nil {
+		t.Fatal("Start accepted an unreadable green marker")
+	}
+	got, err := os.ReadFile(filepath.Join(root, ".git", filepath.FromSlash(ref)))
+	if err != nil || strings.TrimSpace(string(got)) != missing {
+		t.Fatalf("marker = %q, %v; want %s", got, err, missing)
+	}
+}
+
+func TestCompletionHelperPassesSameExpectation(t *testing.T) {
+	root := repo(t)
+	ancestor := git(t, root, "rev-parse", "HEAD")
+	advanceWorking(t, root)
+	tip := git(t, root, "rev-parse", "HEAD")
+	marker := plantGreenMarker(t, root, ancestor)
+	gate := &recordingGate{inert: true}
+	service := New(root, gate, nil)
+	service.fault = func(point string) error {
+		if point == "start/state" {
+			return errors.New("injected")
+		}
+		return nil
+	}
+	if _, err := service.Start(context.Background(), "build demo"); err == nil {
+		t.Fatal("start fault did not interrupt")
+	}
+	service.fault, gate.inert = nil, false
+	if _, err := service.Start(context.Background(), "build demo"); err != nil {
+		t.Fatalf("resume: %v", err)
+	}
+	if len(gate.expectations) != 2 || gate.expectations[0] != ancestor || gate.expectations[1] != ancestor {
+		t.Fatalf("expectations = %q, want two of %s", gate.expectations, ancestor)
+	}
+	if got := git(t, root, "rev-parse", marker); got != tip {
+		t.Fatalf("marker = %s, want tip %s", got, tip)
+	}
+}
+
+func TestExpectationIsAFullObjectID(t *testing.T) {
+	objectID := regexp.MustCompile(`^[0-9a-f]{40}$`)
+	t.Run("readable marker", func(t *testing.T) {
+		root := repo(t)
+		ancestor := git(t, root, "rev-parse", "HEAD")
+		advanceWorking(t, root)
+		plantGreenMarker(t, root, ancestor)
+		gate := &recordingGate{}
+		if _, err := New(root, gate, nil).Start(context.Background(), "build demo"); err != nil {
+			t.Fatalf("Start: %v", err)
+		}
+		if len(gate.expectations) != 1 || !objectID.MatchString(gate.expectations[0]) || gate.expectations[0] != ancestor {
+			t.Fatalf("expectations = %q, want the full object ID %s", gate.expectations, ancestor)
+		}
+	})
+	t.Run("unreadable marker", func(t *testing.T) {
+		root := repo(t)
+		plantUnreadableGreenMarker(t, root)
+		gate := &recordingGate{}
+		if _, err := New(root, gate, nil).Start(context.Background(), "build demo"); err == nil {
+			t.Fatal("Start accepted an unreadable green marker")
+		}
+		if len(gate.expectations) != 1 || gate.expectations[0] != "" {
+			t.Fatalf("expectations = %q, want one empty expectation", gate.expectations)
+		}
+	})
 }
 
 func TestStartCreatesRunFromExactGreenEvidence(t *testing.T) {

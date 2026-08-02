@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/jsonfile"
 )
 
@@ -143,6 +144,19 @@ func (processRunner) Run(ctx context.Context, command Command) (string, error) {
 	}
 }
 
+// greenMarker reads the branch's project-green marker as the expectation the
+// gate owner compares against: with the same `^{commit}` peel the owner uses,
+// so the two sides agree on the object ID, and as the empty string — never a
+// zero object ID, which the owner would carry into its ancestor check — when
+// the marker cannot be read.
+func greenMarker(root, branch string) string {
+	marker, err := benchgit.Output("-C", root, "rev-parse", "--verify", "refs/bench/green/"+branch+"^{commit}")
+	if err != nil {
+		return ""
+	}
+	return marker
+}
+
 func (s *Service) finishStart(ctx context.Context, branch, tip string, greenReady bool, run *record) (Status, error) {
 	if !refAt(s.root, run.Candidate, tip) {
 		absent, err := refAbsent(s.root, run.Candidate)
@@ -153,7 +167,7 @@ func (s *Service) finishStart(ctx context.Context, branch, tip string, greenRead
 			return Status{}, errors.New("spec build candidate identity already exists")
 		}
 		if !greenReady && !refAt(s.root, "refs/bench/green/"+branch, tip) {
-			if err := s.gate.Bootstrap(ctx, s.root, branch, tip, ""); err != nil {
+			if err := s.gate.Bootstrap(ctx, s.root, branch, tip, greenMarker(s.root, branch)); err != nil {
 				return Status{}, fmt.Errorf("no exact green evidence: run bench gate, then retry start: %w", err)
 			}
 		}

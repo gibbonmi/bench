@@ -241,6 +241,12 @@ func (s *Service) startRun(ctx context.Context, slug, resolved string, subject b
 	} else if !absent {
 		return Status{}, errors.New("spec build candidate identity already exists")
 	}
+	// A caller that already knows the prior tip — a restart after a terminal run —
+	// names it; the bootstrap path learns it from the marker a predecessor left,
+	// which is the benign ancestor the owner reads as a conflict when unnamed.
+	if previousGreen == "" {
+		previousGreen = greenMarker(s.root, subject.branch)
+	}
 	if err := s.gate.Bootstrap(ctx, s.root, subject.branch, subject.tip, previousGreen); err != nil {
 		return Status{}, fmt.Errorf("no exact green evidence: run bench gate, then retry start: %w", err)
 	}
