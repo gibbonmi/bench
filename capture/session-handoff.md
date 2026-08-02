@@ -2,22 +2,24 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `e7b8569`, clean tree, 23 unpushed commits
-Spec: `specs/per-component-gate-scoping/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged), `specs/spec-build-lifecycle-preconditions/spec.md` (Status: staged)
-Gate: green at `9c254c8` — current
+Branch: `main` — HEAD `e67800d`, 1 dirty path, 25 unpushed commits
+Spec: `specs/per-component-gate-scoping/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Gate: green at `b4e60cc` — stale, work tree `0d08dc4`
 
 ## State
 
-- **FT176 (`spec-build-lifecycle-preconditions`): phase reached =
-  `/bench-implement-spec --full` review.** All nine tickets are landed as
-  per-ticket gated commits on main (light-path; no lifecycle run — a second
-  concurrent run would recompose-churn against the pcgs run). This session's
-  five: `5fc1b55` exempt-abandon, `9166960` docs recomposition, `dfcc71d`
-  plan-absent-target, `eec8b22` identity/liveness split, `e7b8569` CLI refusal
-  enumeration. A fresh-context three-axis review delegate over those nine
-  commits is in flight; findings route as repair fix-and-gate commits, then
-  `bench spec implemented` + `/bench-final-check` close the build. All FT176
-  `.bench` assignment worktrees are retired (recovery refs kept).
+- **FT176 (`spec-build-lifecycle-preconditions`): complete.** All nine tickets
+  landed as light-path gated commits on main; fresh-context three-axis review
+  found no blocker; the four concrete findings landed as `5cb645b`; the spec is
+  `Status: implemented`. Retro at `capture/retros/spec-build-lifecycle-preconditions.md`.
+  Reviewer-call findings await the drain in `capture/IDEAS.md`: restart-after-terminal
+  green-marker refusal (C1), husk/dangling-symlink liveness classification
+  (C2/C3), the resume.go Planned-phase crash window, and the prepared-abandon
+  identity-softening exemption. One spec-map precision note: the "drifted review
+  binding" case in the story-1 five-fault row is unreachable in the promotion
+  path and its test case was deleted — the spec row should drop to four cases
+  (reviewer approval pending). All FT176 assignment worktrees retired,
+  recovery refs kept.
 - **pcgs (`per-component-gate-scoping`): `/bench-implement-spec --full`
   implement, wave 1** in the other session. Lifecycle run active; assignments
   `pcgs-t1-expose` and `pcgs-t2-fixture` with write-delegates; tickets
@@ -31,7 +33,7 @@ Gate: green at `9c254c8` — current
 
 ## Next command
 
-`/bench-implement-spec --full specs/spec-build-lifecycle-preconditions/spec.md`
+`/bench-what-next`
 
 ## Shape
 
