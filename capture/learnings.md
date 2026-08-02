@@ -74,3 +74,18 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
   `.agents/skills/bench-craft-delegate/SKILL.md`, which today says the probe must be
   independent of the delegate's tests but not that it must differ in kind. Kit edit under
   `craft-synthesis`.
+
+- 2026-08-02  Two format gaps between authored tickets and the specbuild parser: acceptance
+  rows must read `- [ ] [ID] text` (bracketed id) and `Ownership fence:` must be one line of
+  comma-separated backticked paths — the craft-tickets template and the pcgs tickets as staged
+  used `ID —` rows and wrapped prose fences, which parse to zero rows / garbage fences and
+  refuse assignment. I normalized the 17 pcgs tickets mechanically (landed 3972744). Proposed
+  rule: either teach craft-tickets the parseable shape or make resolveTicket accept the
+  template's shape; one of the two must own the format.
+- 2026-08-02  Committing to main while a spec-build run holds un-checkpointed assignments
+  wedges the run: the tip moves, every operation demands recomposition, and recomposePromotion
+  cannot replay an empty candidate ("No valid patches in input"), so checkpoint, start, and
+  abandon all refuse — abandon's own recomposition exemption is FT176's
+  exempt-abandon-from-the-recomposition-refusal. Right behavior: sequence capture/main commits
+  strictly outside run windows (before start or after integrate), and empty-candidate
+  recomposition should fast-forward the base rather than replay a patch.
