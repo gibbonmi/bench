@@ -77,7 +77,10 @@ func (s *Service) preconditions(op mutation, slug, specPath string, run *record,
 	if err := s.operationEvidence(op, *run, assignmentID, evidence); err != nil {
 		return buildSubject{}, err
 	}
-	if recompose {
+	// Abandon is the escape hatch a mid-repair run needs precisely when the tip has
+	// moved, so it alone is exempt from the refusal it would otherwise trigger here.
+	// Everything above this line — identity, ownership, evidence — still applies.
+	if recompose && op != mutationAbandon {
 		return subject, fmt.Errorf("%w %s", errRecompose, slug)
 	}
 	return subject, nil

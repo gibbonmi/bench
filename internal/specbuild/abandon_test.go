@@ -164,6 +164,160 @@ func TestApplyAbandonResumesCleanReleasedAssignment(t *testing.T) {
 		t.Fatalf("clean resume status=%#v err=%v apply calls=%d", status, err, owner.applies)
 	}
 }
+func TestApplyAbandonSucceedsOnMovedTip(t *testing.T) {
+	fixture := newCheckpointFixture(t)
+	owner := &abandonOwner{}
+	fixture.service.worktrees = owner
+	advanceWorking(t, fixture.root)
+	plan, err := fixture.service.Abandon(t.Context(), "build demo")
+	if err != nil {
+		t.Fatalf("Abandon: %v", err)
+	}
+	status, err := fixture.service.ApplyAbandon(t.Context(), "build demo", plan.Fingerprint)
+	if err != nil {
+		t.Fatalf("ApplyAbandon on moved tip: %v", err)
+	}
+	if status.State != "terminal" || owner.applies != 1 {
+		t.Fatalf("moved-tip apply status=%#v apply calls=%d", status, owner.applies)
+	}
+	if run := loadRun(t, fixture.service); !run.Terminal {
+		t.Fatalf("moved-tip terminal evidence = %#v", run)
+	}
+}
+func TestApplyAbandonRefusesDriftedFingerprintOnMovedTip(t *testing.T) {
+	fixture := newCheckpointFixture(t)
+	owner := &abandonOwner{}
+	fixture.service.worktrees = owner
+	plan, err := fixture.service.Abandon(t.Context(), "build demo")
+	if err != nil {
+		t.Fatalf("Abandon: %v", err)
+	}
+	git(t, fixture.root, "update-ref", "refs/bench/specbuild/drift", "HEAD")
+	advanceWorking(t, fixture.root)
+	if _, err := fixture.service.ApplyAbandon(t.Context(), "build demo", plan.Fingerprint); err == nil || !strings.Contains(err.Error(), "plan drifted") {
+		t.Fatalf("ApplyAbandon drifted fingerprint on moved tip = %v", err)
+	}
+	if owner.applies != 0 {
+		t.Fatalf("apply calls after drift = %d, want 0", owner.applies)
+	}
+}
+func TestApplyAbandonStillRefusesIdentityDriftOnMovedTip(t *testing.T) {
+	for _, test := range []struct {
+		name, want string
+		drift      func(t *testing.T, fixture checkpointFixture)
+	}{
+		{"branch", "working checkout does not match recorded subject", func(t *testing.T, fixture checkpointFixture) {
+			run := loadRun(t, fixture.service)
+			run.Branch = "other"
+			saveRun(t, fixture.service, run)
+		}},
+		{"spec identity", "staged spec no longer matches recorded subject", func(t *testing.T, fixture checkpointFixture) {
+			run := loadRun(t, fixture.service)
+			run.SpecTip = "changed"
+			saveRun(t, fixture.service, run)
+		}},
+		{"candidate ref", "candidate no longer matches durable tip", func(t *testing.T, fixture checkpointFixture) {
+			run := loadRun(t, fixture.service)
+			tree := git(t, fixture.root, "rev-parse", run.Candidate+"^{tree}")
+			commit := git(t, fixture.root, "commit-tree", tree, "-p", run.Candidate, "-m", "candidate drift")
+			git(t, fixture.root, "update-ref", run.Candidate, commit, run.CandidateTip)
+		}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			fixture := newCheckpointFixture(t)
+			owner := &abandonOwner{}
+			fixture.service.worktrees = owner
+			plan, err := fixture.service.Abandon(t.Context(), "build demo")
+			if err != nil {
+				t.Fatalf("Abandon: %v", err)
+			}
+			advanceWorking(t, fixture.root)
+			test.drift(t, fixture)
+			if _, err := fixture.service.ApplyAbandon(t.Context(), "build demo", plan.Fingerprint); err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("ApplyAbandon %s drift on moved tip = %v, want %q", test.name, err, test.want)
+			}
+			if owner.applies != 0 {
+				t.Fatalf("%s drift reached apply: %d", test.name, owner.applies)
+			}
+		})
+	}
+}
+func TestApplyAbandonRefusesUnrecognizedHeadMove(t *testing.T) {
+	fixture := newCheckpointFixture(t)
+	owner := &abandonOwner{}
+	fixture.service.worktrees = owner
+	plan, err := fixture.service.Abandon(t.Context(), "build demo")
+	if err != nil {
+		t.Fatalf("Abandon: %v", err)
+	}
+	rewriteWorkingHead(t, fixture.root)
+	_, err = fixture.service.ApplyAbandon(t.Context(), "build demo", plan.Fingerprint)
+	if err == nil || !strings.Contains(err.Error(), "does not match recorded subject") || strings.Contains(err.Error(), "bench spec build promote") {
+		t.Fatalf("ApplyAbandon unrecognized head move = %v, want the subject-mismatch refusal rather than recomposition", err)
+	}
+	if owner.applies != 0 {
+		t.Fatalf("unrecognized head move reached apply: %d", owner.applies)
+	}
+}
+
+// TestNonAbandonMutationsStillRecomposeOnMovedTip pins that the exemption at the
+// recomposition return site is scoped to abandon: it walks the production mutation
+// list itself, so a mutation added later without a matching invocation here fails
+// loudly instead of silently widening the exemption.
+func TestNonAbandonMutationsStillRecomposeOnMovedTip(t *testing.T) {
+	invoke := map[mutation]func(t *testing.T) error{
+		mutationStart: func(t *testing.T) error {
+			fixture := newPreconditionFixture(t, true)
+			advanceWorking(t, fixture.root)
+			_, err := fixture.service.Start(t.Context(), "build demo")
+			return err
+		},
+		mutationAssign: func(t *testing.T) error {
+			fixture := newPreconditionFixture(t, true)
+			advanceWorking(t, fixture.root)
+			_, _, err := fixture.service.Assign(t.Context(), "build demo", "one.md", "moved-tip request")
+			return err
+		},
+		mutationCheckpoint: func(t *testing.T) error {
+			fixture := newCheckpointFixture(t)
+			advanceWorking(t, fixture.root)
+			_, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n"))
+			return err
+		},
+		mutationIntegrate: func(t *testing.T) error {
+			fixture := checkpointedReleaseFixture(t)
+			advanceWorking(t, fixture.root)
+			_, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID)
+			return err
+		},
+		mutationReview: func(t *testing.T) error {
+			fixture := checkpointedReleaseFixture(t)
+			if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
+				t.Fatalf("Integrate: %v", err)
+			}
+			run := loadRun(t, fixture.service)
+			receipt := reviewReceipt{Version: 1, Run: run.Run, Candidate: run.CandidateTip, Axes: []reviewAxis{{Axis: "Standards"}, {Axis: "Spec"}, {Axis: "Coverage"}}}
+			evidence := writeReviewReceipt(t, receipt)
+			advanceWorking(t, fixture.root)
+			_, err := fixture.service.Review(t.Context(), "build demo", evidence)
+			return err
+		},
+	}
+	for _, op := range lifecycleMutations {
+		if op == mutationAbandon || op == mutationPromote {
+			continue
+		}
+		fn, ok := invoke[op]
+		if !ok {
+			t.Fatalf("no moved-tip invocation wired for mutation %q", op)
+		}
+		t.Run(string(op), func(t *testing.T) {
+			if err := fn(t); err == nil || !strings.Contains(err.Error(), "bench spec build promote") {
+				t.Fatalf("%s on moved tip = %v, want the recomposition refusal naming promote", op, err)
+			}
+		})
+	}
+}
 func TestAbandonOwnerRejectsMismatchedRequest(t *testing.T) {
 	fixture := newCheckpointFixture(t)
 	if _, err := worktree.PlanAbandon(fixture.root, "other request", fixture.assigned.Path); err == nil {
