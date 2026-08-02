@@ -2,38 +2,44 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `627be9c`, 2 dirty paths, 7 unpushed commits
-Spec: `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `9adeae0` — stale, work tree `1072ea8`
+Branch: `main` — HEAD `5300bfa`, clean tree, 3 unpushed commits
+Spec: `specs/ft164-ticket-contracts/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Gate: green at `5300bfa` (reduced run; full-tree ancestor evidence inherited)
 
 ## State
 
-- **pcgs (`per-component-gate-scoping`): promoted and retired.** The full
-  `bench spec build` lifecycle ran end to end: promotion published `f341800`
-  (candidate `2e1a61c`), the spec was marked implemented by promotion and
-  retired at `627be9c` (roadmap row removed; the field-set-slice residual
-  recorded in `projects/benchkit.md`). Five review findings stand flagged for
-  reviewer veto — S1 reduced-run reachability comment, S2 provenance comments,
-  S3 dead ReusableGreen branch in prep-release Refusal, Sp1 derivation-source
-  check does not bind an entry to its named derivation, Sp5 stale superseded
-  repair-ticket text — detailed in the review receipt retained by the run and
-  in this session's exit report.
-- The 2 dirty paths are pending capture by design: the pcgs retro
-  (`capture/retros/per-component-gate-scoping.md`) and a new learnings entry
-  (delegate scratchpad collision); the drain owns their landing.
-- **Cleanup ready when the reviewer says so:** the 21 out-of-pool
-  `../bench-pcgs*` worktrees and their `pcgs/*` + `per-component-gate-scoping`
-  branches are fully subsumed by the promotion (every ticket ported byte-exact
-  or superseded by review repairs) — `bench worktree clean` per path retires
-  them. FT176's inert fixtures (the stuck `reduced-gate-phase-set` run record,
-  five refused recovery refs) stay in place.
-- FT176 remains complete per the prior handoff; its reviewer-call findings
-  await the drain in `capture/IDEAS.md`.
+- **FT164 spec staged and signed off** at `specs/ft164-ticket-contracts/spec.md`
+  (commit `5300bfa`): the ticket-contract core split, 7 stories, 24-needle
+  anchor inventory, 30 coverage rows, falsification pass folded in. The
+  reviewer approved the spec and its four flagged calls on 2026-08-02:
+  ticket-local requirement IDs, basename-keyed `Blocked by:`, the
+  process-boundary edge class landing in `craft-spec` plus the profile
+  checklist, and the contracts-discovery spec-side half as one pointer
+  sentence in `craft-spec`'s slicing section. These decisions stay closed.
+  The repair riders (model-comparison, inventory-currency, shared-cache)
+  stay on the roadmap under FT164's row for the next drain to re-home.
+- **craft-research boundaries are closed** and recorded in
+  `decisions/craft-research.md` (committed by its own session): read-side
+  research discipline only, nothing carved from `craft-delegate`, no
+  `craft-tickets` edits, no tier statements. FT164's implementation and the
+  craft-research build are disjoint and land in either order.
+- Implementation notes the FT164 build must honor (from the spec): the one
+  `internal/specbuild` edit is an export-only parser entry point; anchors are
+  section-scoped with each needle getting a mutation-table row; completion
+  evidence is a fresh-session dogfood (cold-written ticket through
+  `bench spec build assign` in a fixture repo), since the build touches the
+  gate and forfeits `craft-synthesis`'s prose-only substitute.
+- pcgs residuals ride their existing roadmap rows (FT183 review residuals,
+  FT181); the 21 out-of-pool `../bench-pcgs*` worktrees remain cleanup-ready
+  on reviewer say-so, per the prior handoff.
 - Nothing has been pushed; push is the reviewer's call.
 
 ## Next command
 
-`/bench-what-next`
+`/bench-implement-spec` — the staged frontier drains before anything else:
+`specs/pre-push-guard-visibility/spec.md` (FT135) first per the roadmap's
+recommended sequence, then `specs/ft164-ticket-contracts/spec.md` in a fresh
+mid-tier session.
 
 ## Shape
 
