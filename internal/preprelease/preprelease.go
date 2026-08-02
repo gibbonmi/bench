@@ -209,9 +209,6 @@ func Refusal(inspection gate.Inspection) string {
 		if names := skippedComponentNames(inspection.Partition); names != "" {
 			return fmt.Sprintf("prep-release: the current verdict is partial — it skipped %s and reused earlier evidence for them instead of grading them, not the whole tree a release answers for — run `bench gate --fresh`, then re-run prep-release", names)
 		}
-		if inspection.ReusableGreen {
-			return ""
-		}
 	}
 	cause := inspection.Reason
 	if cause == "" {

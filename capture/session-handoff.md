@@ -2,38 +2,38 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `17af7e4`, 1 dirty path, 1 unpushed commit
-Spec: `specs/per-component-gate-scoping/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `25a558c` — stale, work tree `0d7abbd`
+Branch: `main` — HEAD `627be9c`, 2 dirty paths, 7 unpushed commits
+Spec: `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Gate: green at `9adeae0` — stale, work tree `1072ea8`
 
 ## State
 
-- **FT176 (`spec-build-lifecycle-preconditions`): complete.** All nine tickets
-  landed as light-path gated commits on main; fresh-context three-axis review
-  found no blocker; the four concrete findings landed as `5cb645b`; the spec is
-  `Status: implemented`. Retro at `capture/retros/spec-build-lifecycle-preconditions.md`.
-  Reviewer-call findings await the drain in `capture/IDEAS.md`: restart-after-terminal
-  green-marker refusal (C1), husk/dangling-symlink liveness classification
-  (C2/C3), the resume.go Planned-phase crash window, and the prepared-abandon
-  identity-softening exemption. One spec-map precision note: the "drifted review
-  binding" case in the story-1 five-fault row is unreachable in the promotion
-  path and its test case was deleted — the spec row should drop to four cases
-  (reviewer approval pending). All FT176 assignment worktrees retired,
-  recovery refs kept.
-- **pcgs (`per-component-gate-scoping`): `/bench-implement-spec --full`
-  implement, wave 1** in the other session. Lifecycle run active; assignments
-  `pcgs-t1-expose` and `pcgs-t2-fixture` with write-delegates; tickets
-  normalized at `3972744`. Reference implementation on local branch
-  `per-component-gate-scoping` (20 commits, base `acf02e8`); the 20 dirty
-  `../bench-pcgs*` worktrees are its leftovers — verify subsumption before
-  cleaning. Serialize gate runs and landings between the sessions.
-- Inert, leave in place: the stuck `reduced-gate-phase-set` run record and the five
-  refused recovery refs (FT176's acceptance fixtures).
+- **pcgs (`per-component-gate-scoping`): promoted and retired.** The full
+  `bench spec build` lifecycle ran end to end: promotion published `f341800`
+  (candidate `2e1a61c`), the spec was marked implemented by promotion and
+  retired at `627be9c` (roadmap row removed; the field-set-slice residual
+  recorded in `projects/benchkit.md`). Five review findings stand flagged for
+  reviewer veto — S1 reduced-run reachability comment, S2 provenance comments,
+  S3 dead ReusableGreen branch in prep-release Refusal, Sp1 derivation-source
+  check does not bind an entry to its named derivation, Sp5 stale superseded
+  repair-ticket text — detailed in the review receipt retained by the run and
+  in this session's exit report.
+- The 2 dirty paths are pending capture by design: the pcgs retro
+  (`capture/retros/per-component-gate-scoping.md`) and a new learnings entry
+  (delegate scratchpad collision); the drain owns their landing.
+- **Cleanup ready when the reviewer says so:** the 21 out-of-pool
+  `../bench-pcgs*` worktrees and their `pcgs/*` + `per-component-gate-scoping`
+  branches are fully subsumed by the promotion (every ticket ported byte-exact
+  or superseded by review repairs) — `bench worktree clean` per path retires
+  them. FT176's inert fixtures (the stuck `reduced-gate-phase-set` run record,
+  five refused recovery refs) stay in place.
+- FT176 remains complete per the prior handoff; its reviewer-call findings
+  await the drain in `capture/IDEAS.md`.
 - Nothing has been pushed; push is the reviewer's call.
 
 ## Next command
 
-`/bench-what-next` — the board's leading invocable signal (`drain`).
+`/bench-what-next`
 
 ## Shape
 

@@ -51,3 +51,11 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
 - **Proposed rule change:** none proposed — reviewer should identify what the
   pcgs session ran to clean the tree and decide whether that surface needs a
   fail-closed or set-aside posture.
+
+- 2026-08-02  Delegate backup files collided across a shared session scratchpad: a stale
+  `mine/` directory from one write-delegate was swept up by a later delegate's restore glob
+  and clobbered four out-of-fence files (caught by its return-time `git status` check and
+  repaired). Right behavior: a delegate's transient backups live inside its own worktree
+  under a unique name, and restore commands name exact files, never globs. Proposed rule:
+  craft-delegate's isolation section names worktree-local backup paths alongside the
+  existing cp-aside/git-show-restore pattern.

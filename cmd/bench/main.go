@@ -58,6 +58,9 @@ import (
 var version = "dev"
 
 func main() {
+	// The wrapper's implicit-repair grant is spent once it execs this binary; scrub it so
+	// gate phases and their fixtures never inherit an invocation-dependent privilege.
+	os.Unsetenv("BENCH_ALLOW_IMPLICIT_REPAIR")
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
 }
 

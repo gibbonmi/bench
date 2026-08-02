@@ -233,10 +233,10 @@ func (r *inputResolver) shellcheckInputs() ([]string, []string, error) {
 // the sources and fixtures the phase grades; bin/bench.sh and .bench/lib/canary-run.sh
 // are the wrapper scripts its phase wiring execs.
 //
-// The published binary's digest is deliberately absent — reviewer ruling 2026-08-01, a
-// recorded tripwire narrowing rather than an oversight: canary execs the binary but
-// skips on an ordinary Go edit anyway, so a binary digest here is never a missing input,
-// it is the scoping this feature buys.
+// The published binary's digest is deliberately absent, a recorded tripwire narrowing
+// rather than an oversight: canary execs the binary but skips on an ordinary Go edit
+// anyway, so a binary digest here is never a missing input, it is the scoping this
+// feature buys. The profile records the ruling behind the narrowing.
 func (r *inputResolver) canaryInputs() ([]string, []string, error) {
 	paths := []string{
 		".bench/lib/canary-run.sh",

@@ -61,7 +61,7 @@ const perturbationSummary = "a source in the binary closure, a shell file, a tes
 
 // componentDeclaration is one registry entry read through the gate's accessors. The check
 // grades this shape rather than gate.ComponentInputs so a bite proof can mutate a
-// declaration without editing the real registry, following checkScopeBinding's parameter.
+// declaration without editing the real registry.
 type componentDeclaration struct {
 	component string
 	source    gate.Source
@@ -273,7 +273,7 @@ func cloneDeclarations(declarations map[string]componentDeclaration) map[string]
 	return out
 }
 
-// TestDerivationSourceCheckBites is the recorded bite proof (per craft-gate). The fixed
+// TestDerivationSourceCheckBites is the recorded bite proof. The fixed
 // side is the real registry resolved against a real tree; each case substitutes one
 // entry's declaration with the shape a hand-copied list produces and requires exactly one
 // diagnostic naming that component and the derivation it was supposed to resolve through.

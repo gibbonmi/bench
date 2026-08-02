@@ -454,9 +454,10 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 	// The per-component decision is asked first and, on a root it reaches, alone: it answers
 	// the same capture-only changeset the whole-changeset reduction was built for, component
 	// by component, so consulting both would let two decisions disagree about one run. The
-	// reduction remains the answer only where those declarations do not reach — a root with
-	// no Go module — and never as a second chance after one of them refused, which would
-	// launder a fail-closed refusal into the coarser skip it was refusing to make.
+	// reduction is the fallback the decision function declines into when scoping is
+	// ineligible — reachable in production for no case the kit's own tree produces — and
+	// never a second chance after one of them refused, which would launder a fail-closed
+	// refusal into the coarser skip it was refusing to make.
 	//
 	// forceRun consults neither partition: `bench gate --fresh` is the operator's one escape
 	// to a real whole-tree run. It still resolves identities, because a forced green has to
