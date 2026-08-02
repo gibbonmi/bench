@@ -26,11 +26,24 @@ const (
 	mutationAbandon    mutation = "abandon"
 )
 
+// lifecycleMutations is the closed set of operations a precondition may act for; each is spelled as its `bench spec build` subcommand verb.
+var lifecycleMutations = []mutation{mutationStart, mutationAssign, mutationCheckpoint, mutationIntegrate, mutationReview, mutationPromote, mutationAbandon}
+
+// name renders op for a refusal, falling back to the lifecycle rather than letting an undeclared token name no operation at all.
+func (op mutation) name() string {
+	for _, declared := range lifecycleMutations {
+		if op == declared {
+			return string(declared)
+		}
+	}
+	return "lifecycle"
+}
+
 var errRecompose = errors.New("spec build requires recomposition: bench spec build promote")
 
 // preconditions is the single fail-closed owner before a lifecycle mutation writes state, refs, commits, or worktrees.
 func (s *Service) preconditions(op mutation, slug, specPath string, run *record, assignmentID, evidence string) (buildSubject, error) {
-	subject, err := s.subject(specPath)
+	subject, err := s.subject(op, specPath)
 	if err != nil {
 		return buildSubject{}, err
 	}
@@ -77,8 +90,8 @@ type buildSubject struct {
 	branch, tip, spec, specTip string
 }
 
-func (s *Service) subject(specPath string) (buildSubject, error) {
-	branch, tip, err := workingSubject(s.root)
+func (s *Service) subject(op mutation, specPath string) (buildSubject, error) {
+	branch, tip, err := workingSubject(s.root, op)
 	if err != nil {
 		return buildSubject{}, err
 	}
@@ -92,17 +105,17 @@ func (s *Service) subject(specPath string) (buildSubject, error) {
 	}
 	return buildSubject{branch: branch, tip: tip, spec: specPath, specTip: specTip}, nil
 }
-func workingSubject(root string) (string, string, error) {
+func workingSubject(root string, op mutation) (string, string, error) {
 	branch, err := benchgit.Output("-C", root, "symbolic-ref", "--quiet", "--short", "HEAD")
 	if err != nil || branch == "" {
-		return "", "", errors.New("spec build start requires a checked-out working branch")
+		return "", "", fmt.Errorf("spec build %s requires a checked-out working branch", op.name())
 	}
 	dirty, err := benchgit.Output("-C", root, "status", "--porcelain", "--untracked-files=all")
 	if err != nil {
 		return "", "", err
 	}
 	if dirty != "" {
-		return "", "", fmt.Errorf("spec build start requires a clean working checkout: %s", dirty)
+		return "", "", fmt.Errorf("spec build %s requires a clean working checkout: %s", op.name(), dirty)
 	}
 	tip, err := benchgit.Output("-C", root, "rev-parse", "HEAD^{commit}")
 	if err != nil {

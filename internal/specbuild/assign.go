@@ -205,7 +205,7 @@ func (s *Service) Start(ctx context.Context, slug string) (Status, error) {
 		return Status{}, err
 	} else if found {
 		if op, pending := s.operation(run, "start", "run"); pending && op.State == "prepared" {
-			subject, err := s.subject(resolved)
+			subject, err := s.subject(mutationStart, resolved)
 			if err != nil || subject.branch != run.Branch || subject.tip != run.Base || subject.specTip != run.SpecTip {
 				return Status{}, errors.New("spec build working checkout does not match recorded subject")
 			}
