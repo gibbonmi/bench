@@ -1,1 +1,0 @@
-- 2026-08-02  bench commit: naming a deleted directory as a path fails staging with exit 128 after a green gate (git add of a removed dir) — the spec-retire drain route produces exactly that shape; expand a named directory to its tracked deletions or accept the dir pathspec

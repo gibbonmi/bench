@@ -53,6 +53,7 @@ func TestRuntimeCommitContracts(t *testing.T) {
 	contract.RunParallel(t, "named directory leaves an outside file blocking", testCommitDirectoryLeavesOutsideFileBlocking)
 	contract.RunParallel(t, "deleted named directory commits its removals", testCommitDeletedDirectoryCommitsRemovals)
 	contract.RunParallel(t, "deleted path stages the removal", testCommitStagesDeletion)
+	contract.RunParallel(t, "staging failure relays git's own error", testCommitStagingFailureRelaysGitError)
 	contract.RunParallel(t, "staged deletion commits", testCommitStagesStagedDeletion)
 	contract.RunParallel(t, "staged rename commits whole", testCommitStagesStagedRename)
 	contract.RunParallel(t, "unknown path fails before the gate", testCommitUnknownPathFailsFast)
@@ -389,6 +390,30 @@ func testCommitDeletedDirectoryCommitsRemovals(t *testing.T) {
 	contract.RequireContains(t, names, "sub/a.txt")
 	contract.RequireContains(t, names, "sub/b.txt")
 	contract.RequireNotContains(t, f.Git("ls-files").Stdout, "sub/")
+}
+
+// testCommitStagingFailureRelaysGitError pins the staging refusal to git's own
+// diagnostic. A post-gate `git add` failure has already spent a green run, and its bare
+// exit status cannot be acted on: a held index.lock reported only as `exit status 128`
+// was misdiagnosed in the field as a removed-directory refusal, because the one line git
+// prints to name the real cause was discarded. The lock file is the deterministic way to
+// fail staging while everything before it — the block-check's reads and the gate — still
+// runs.
+func testCommitStagingFailureRelaysGitError(t *testing.T) {
+	f := commitFixture(t)
+	f.WriteFile("work.txt", "delta\n")
+	if err := os.WriteFile(filepath.Join(f.Root, ".git", "index.lock"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	before := headSha(f)
+
+	p := f.Bench("commit", "-m", "blocked staging", "work.txt")
+	p.RequireExit(1)
+	contract.RequireContains(t, p.Stderr, `staging "work.txt" failed`)
+	contract.RequireContains(t, p.Stderr, "index.lock")
+	if headSha(f) != before {
+		t.Fatal("HEAD advanced despite a staging failure")
+	}
 }
 
 func testCommitSpecFlip(t *testing.T) {

@@ -130,7 +130,12 @@ func Command(args []string, stdout, stderr io.Writer) int {
 	}
 
 	for _, p := range toStage {
-		if stageErr := exec.Command("git", "-C", root, "add", "-A", "--", ":(literal)"+p).Run(); stageErr != nil {
+		// git's own stderr streams through: a staging failure lands after the green gate
+		// has been paid, and its bare exit status is undiagnosable — a held index.lock
+		// and a genuinely bad pathspec both report 128.
+		stage := exec.Command("git", "-C", root, "add", "-A", "--", ":(literal)"+p)
+		stage.Stderr = stderr
+		if stageErr := stage.Run(); stageErr != nil {
 			fmt.Fprintf(stderr, "error: staging %q failed: %v\n", p, stageErr)
 			return 1
 		}
