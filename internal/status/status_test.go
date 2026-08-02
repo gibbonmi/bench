@@ -281,6 +281,110 @@ func writeReducedGateCache(t *testing.T, root, cachedTree string) {
 	}
 }
 
+// A partial verdict graded only the components whose inputs moved. Over its own tree that
+// is narrow, not drifted — the same distinction the reduced row draws — and the row names
+// the skipped components so a reader cannot mistake the partition for a whole-tree green.
+func TestStatusRendersAPartialVerdict(t *testing.T) {
+	root := initRepo(t)
+	tree := treeOf(t, root, map[string]string{"f.txt": "x\n"})
+	writePartialGateCache(t, root, tree, "docs", "frontend")
+
+	gv := GateVerdict(root)
+	if gv.Partition == nil || !gv.Stale || gv.CachedTree != gv.WorkTree {
+		t.Fatalf("verdict = %#v, want a partial non-reusable green over the current tree", gv)
+	}
+	rows := appendGateInfo(nil, gv, root)
+	if len(rows) != 1 {
+		t.Fatalf("rows = %#v, want one gate row", rows)
+	}
+	if strings.Contains(rows[0].detail, "stale") {
+		t.Errorf("detail = %q, want a partial row rather than a stale one", rows[0].detail)
+	}
+	if strings.Contains(rows[0].detail, "reduced") {
+		t.Errorf("detail = %q, want a partial row rather than a reduced one", rows[0].detail)
+	}
+	for _, name := range []string{"docs", "frontend"} {
+		if !strings.Contains(rows[0].detail, name) {
+			t.Errorf("detail = %q, want it to name skipped component %q", rows[0].detail, name)
+		}
+	}
+}
+
+// A partial verdict whose tree has since moved is still drift, exactly as a reduced one is:
+// narrowness and staleness stay independent.
+func TestPartialVerdictOnAMovedTreeIsDrift(t *testing.T) {
+	root := initRepo(t)
+	gated := treeOf(t, root, map[string]string{"f.txt": "x\n"})
+	current := treeOf(t, root, map[string]string{"f.txt": "x // drift\n"})
+	writePartialGateCache(t, root, gated, "docs")
+
+	gv := GateVerdict(root)
+	if gv.Partition == nil || gv.WorkTree != current || gv.CachedTree != gated {
+		t.Fatalf("verdict = %#v, want a partial verdict over a drifted work tree", gv)
+	}
+	rows := appendGateInfo(nil, gv, root)
+	if len(rows) != 1 {
+		t.Fatalf("rows = %#v, want one gate row", rows)
+	}
+	if !strings.HasPrefix(rows[0].detail, "stale (gated tree") {
+		t.Errorf("detail = %q, want the drift row rather than the partial row", rows[0].detail)
+	}
+	if strings.Contains(rows[0].detail, "docs") {
+		t.Errorf("detail = %q, want no skipped-component name once the tree has moved", rows[0].detail)
+	}
+}
+
+// The partial row's action is the operator's one lever: a fresh whole-tree run. It never
+// names the bare `bench gate`, which would repeat the same partial verdict.
+func TestPartialRowActionIsFresh(t *testing.T) {
+	root := initRepo(t)
+	writePartialGateCache(t, root, treeOf(t, root, map[string]string{"f.txt": "x\n"}), "docs")
+
+	rows := appendGateInfo(nil, GateVerdict(root), root)
+	if len(rows) != 1 {
+		t.Fatalf("rows = %#v, want one gate row", rows)
+	}
+	if !strings.Contains(rows[0].action, "bench gate --fresh") {
+		t.Errorf("action = %q, want the fresh whole-tree action", rows[0].action)
+	}
+}
+
+// writePartialGateCache installs a ready partial green naming cachedTree, skipping the
+// given components, at the mode and exact field set the gate's loader requires of the
+// partial class. Each skipped component carries ancestor-form evidence (an identity and
+// the time it was authored), the simpler of the two forms validatePartition accepts.
+func writePartialGateCache(t *testing.T, root, cachedTree string, skipped ...string) {
+	t.Helper()
+	gitdir := gitRun(t, root, "rev-parse", "--absolute-git-dir")
+	recorded := time.Now().UTC().Truncate(time.Second).Add(-time.Minute).Format(time.RFC3339)
+	authoredAt := time.Now().UTC().Truncate(time.Second).Add(-time.Hour).Format(time.RFC3339)
+	identity := strings.Repeat("b", 64)
+
+	executedJSON, err := json.Marshal([]string{"core"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	skippedJSON, err := json.Marshal(skipped)
+	if err != nil {
+		t.Fatal(err)
+	}
+	evidence := make(map[string]map[string]string, len(skipped))
+	for _, component := range skipped {
+		evidence[component] = map[string]string{"identity": identity, "authored_at": authoredAt}
+	}
+	evidenceJSON, err := json.Marshal(evidence)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	record := fmt.Sprintf(`{"schema":1,"state":"ready","status":"green","tree":%q,"oracle":%q,"recorded_at":%q,"executed":%s,"skipped":%s,"skip_evidence":%s}`+"\n",
+		cachedTree, strings.Repeat("0", 64), recorded, executedJSON, skippedJSON, evidenceJSON)
+	path := filepath.Join(gitdir, git.GateCacheFile)
+	if err := os.WriteFile(path, []byte(record), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // withFiles copies base and adds each path with throwaway content, so a case names only
 // the paths it varies.
 func withFiles(base map[string]string, paths ...string) map[string]string {

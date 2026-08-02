@@ -446,15 +446,28 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 			return reusedGreenResult(stdout, reuse)
 		}
 	}
-	// The reduced decision sits under the execution lock, after the whole-tree reuse
-	// answer — reuse costs nothing and grades everything, so it stays the first
-	// answer — and forceRun never consults it: `bench gate --fresh` is the operator's
-	// one escape to a real whole-tree run. Only the ordinary path (runtime and
-	// storage root the same tree) reduces; a prospective execution grades a tree
-	// about to become HEAD and keeps the full gate.
+	// Both narrowing decisions sit under the execution lock, after the whole-tree reuse
+	// answer — reuse costs nothing and grades everything, so it stays the first answer.
+	// Only the ordinary path (runtime and storage root the same tree) narrows; a
+	// prospective execution grades a tree about to become HEAD and keeps the full gate.
+	//
+	// The per-component decision is asked first and, on a root it reaches, alone: it answers
+	// the same capture-only changeset the whole-changeset reduction was built for, component
+	// by component, so consulting both would let two decisions disagree about one run. The
+	// reduction remains the answer only where those declarations do not reach — a root with
+	// no Go module — and never as a second chance after one of them refused, which would
+	// launder a fail-closed refusal into the coarser skip it was refusing to make.
+	//
+	// forceRun consults neither partition: `bench gate --fresh` is the operator's one escape
+	// to a real whole-tree run. It still resolves identities, because a forced green has to
+	// re-author the slot of every component it just graded.
 	ordinary := runtimeRoot == storageRoot
+	var scoping componentScoping
+	if ordinary {
+		scoping = scopeComponents(runtimeRoot, plan.Resolution, mode, engine.Now())
+	}
 	var reduction reducedRun
-	if mode == reuseFreshGreen && ordinary {
+	if mode == reuseFreshGreen && ordinary && !scoping.eligible {
 		reduction = reducedInheritance(runtimeRoot, storageRoot, plan.Resolution, engine.Now())
 	}
 	pending := interruptedRecord(plan, engine.Now())
@@ -465,16 +478,23 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 	runCtx, cancelRun := bounds.ContextCause(ctx, gateTimeout, errGateTimeout)
 	defer cancelRun()
 	var rc int
-	if reduction.ok {
+	switch {
+	case scoping.partial():
 		// The announcement is not optional: a skipped grading surface that says
 		// nothing reads as a gate that never ran (the reused-verdict line above is
-		// the same rule), and this line is the operator's only signal that the
-		// verdict about to be recorded is narrower than a full run's.
+		// the same rule). One line per component, each naming the evidence that
+		// covered that component — a single summary line would tell an operator that
+		// something was skipped without letting them check what stood in for it.
+		for _, skip := range scoping.skipped {
+			fmt.Fprintln(stdout, skip.announcement())
+		}
+		rc = runPhases(runCtx, scoping.runnerRoot, scoping.phases, outerMode, controlSafeWriter{stdout}, controlSafeWriter{stderr})
+	case reduction.ok:
 		fmt.Fprintf(stdout, "gate: reduced run: skipping %s (evidence inherited from full green %s recorded %s)\n",
 			strings.Join(reduction.skipped, ", "), reduction.ancestor,
 			reduction.ancestorAt.UTC().Format(time.RFC3339))
 		rc = runPhases(runCtx, reduction.runnerRoot, reduction.phases, outerMode, controlSafeWriter{stdout}, controlSafeWriter{stderr})
-	} else {
+	default:
 		rc = runCaptured(runCtx, runtimeRoot, plan, stdout, stderr)
 	}
 	if ctx.Err() != nil {
@@ -503,6 +523,19 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 	}
 	recordedAt := engine.Now()
 	ready := verdictRecord{Schema: 1, State: Ready, Status: status, Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: recordedAt.UTC().Truncate(time.Second).Format(time.RFC3339)}
+	if scoping.partial() {
+		// The record names what this run graded and, per component it did not, the
+		// evidence that covered it. The identity and the recorded time are carried
+		// rather than referenced: the cache is a single slot, so a reference would
+		// point at whichever record replaced this one, and a consumer refusing a
+		// release needs to name the evidence a skip rested on.
+		ready.Executed = scoping.executedPhaseNames()
+		ready.SkipEvidence = make(map[string]skipEvidence, len(scoping.skipped))
+		for _, skip := range scoping.skipped {
+			ready.Skipped = append(ready.Skipped, skip.Component)
+			ready.SkipEvidence[skip.Component] = skip.evidence()
+		}
+	}
 	if reduction.ok {
 		// The record says exactly what was graded and what was inherited. The
 		// ancestor's identity and time are carried in full because the cache is a
@@ -517,13 +550,34 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 		ready.AncestorRecordedAt = reduction.ancestorAt.UTC().Truncate(time.Second).Format(time.RFC3339)
 	}
 	if status == "green" {
-		// A reduced green retains nothing, which is why only the full branch below
-		// writes evidence. Whole-tree evidence from a reduced run would let the
-		// release path credit phases nobody ran; stripped evidence would re-stamp the
-		// ancestor's time and dress an ever-older full green as recent — the
-		// ancestor's recorded time stays its own because inheritance never refreshes
-		// what it inherits.
-		if !reduction.ok {
+		// The slots are this run's own account of what it graded, so they are written
+		// whatever shape the run had: a full run authors every component's, a partial
+		// run authors the ones it executed, and a forced run re-authors all of them.
+		// Failing to author only costs a future run its skip, but failing silently
+		// would hide that cost, so it shares the persistence-failure posture below.
+		if err := authorExecutedComponentSlots(storageRoot, scoping, recordedAt); err != nil {
+			fmt.Fprintln(stderr, "gate evidence persistence failed")
+			return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
+		}
+		// The build's evidence is the artifact rather than a slot, so it is authored here
+		// beside them: this run executed the build phase, and the attestation is the record
+		// saying the binary now on disk is the one it produced. A run that skipped the build
+		// authors nothing, leaving the seal and the attestation it inherited untouched.
+		if err := attestExecutedBuild(scoping, storageRoot, recordedAt); err != nil {
+			fmt.Fprintln(stderr, "gate evidence persistence failed")
+			return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
+		}
+		// Neither narrowed run retains anything here, which is why only the full
+		// branch below writes evidence. The verdict cache refuses to reuse a narrow
+		// record by its class, but this store has no class at the reuse call site —
+		// reusableEvidence asks only whether a green is retained for this tree and
+		// oracle — so a whole-tree record written by a run that skipped components
+		// would answer a release-path reuse for the next hour with phases nobody ran.
+		// Stripped evidence is the same door one step over: it is the ancestor a later
+		// reduced run inherits, and writing it from a narrow run would let the
+		// allowlist inherit a green that never graded the allowlist's complement, as
+		// well as re-stamping an ever-older ancestor as recent.
+		if !reduction.ok && !scoping.partial() {
 			if err := retainGreen(storageRoot, plan, recordedAt); err != nil {
 				fmt.Fprintln(stderr, "gate evidence persistence failed")
 				return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
@@ -546,6 +600,9 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 		}
 	} else {
 		if err := invalidateEvidence(storageRoot, plan); err != nil {
+			return operationalWithEngine(engine, storageRoot, rc, stderr, "gate evidence invalidation failed")
+		}
+		if err := invalidateExecutedComponentSlots(storageRoot, scoping); err != nil {
 			return operationalWithEngine(engine, storageRoot, rc, stderr, "gate evidence invalidation failed")
 		}
 		// A full red also contradicts any ancestor sharing this tree's stripped

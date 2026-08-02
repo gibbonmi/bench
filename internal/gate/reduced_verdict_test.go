@@ -1,6 +1,7 @@
 package gate
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -35,6 +36,37 @@ func reducedTestRecord(now time.Time) verdictRecord {
 		Ancestor:           reducedTestAncestor,
 		AncestorRecordedAt: now.Add(-30 * time.Minute).Format(time.RFC3339),
 	}
+}
+
+var (
+	partialTestIdentity = strings.Repeat("b", 64)
+	partialTestSeal     = strings.Repeat("c", 64)
+)
+
+// partialTestRecord carries both evidence forms at once — an ancestor slot for a scoped
+// component and a reused seal for build — so a case that drops one form is refused by the
+// same record every other case starts from.
+func partialTestRecord(now time.Time) verdictRecord {
+	return verdictRecord{
+		Schema:     verdictSchema,
+		State:      Ready,
+		Status:     "green",
+		Tree:       reducedTestTree,
+		Oracle:     reducedTestOracle,
+		RecordedAt: now.Format(time.RFC3339),
+		Executed:   []string{"conformance", "conformance-suite"},
+		Skipped:    []string{"build", "vet"},
+		SkipEvidence: map[string]skipEvidence{
+			"build": {Seal: partialTestSeal},
+			"vet":   {Identity: partialTestIdentity, AuthoredAt: now.Add(-90 * time.Minute).Format(time.RFC3339)},
+		},
+	}
+}
+
+// partialTestEvidence reaches into a marshalled record's evidence map so a case can bend one
+// entry without restating the whole record.
+func partialTestEvidence(object map[string]any, component string) map[string]any {
+	return object["skip_evidence"].(map[string]any)[component].(map[string]any)
 }
 
 func fullTestRecord(now time.Time) verdictRecord {
@@ -253,4 +285,244 @@ func TestVerdictLoaderRejectsMixedShape(t *testing.T) {
 			t.Fatalf("pending record with the reduced marker = %s/%q, want invalid", got.state, got.reason)
 		}
 	})
+}
+
+// [PC2a] A partial verdict is a third record class, and the evidence is the whole of what
+// makes it readable: a record naming which components were skipped without saying what
+// covered each one claims a grading nobody can trace. The executed set, both evidence forms,
+// and the projection consumers read all have to survive the write-read pair, and the record
+// has to re-serialize to the same bytes — reuse compares records byte for byte, so a
+// partition that round-trips into a second spelling would read as a second verdict.
+func TestPartialVerdictRoundTrips(t *testing.T) {
+	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
+	want := partialTestRecord(now)
+	data, loaded := roundTripReducedVerdict(t, want, now)
+	if loaded.state != Ready || loaded.reason != "" {
+		t.Fatalf("loaded partial verdict = %s/%q, want ready with no reason (bytes %q)", loaded.state, loaded.reason, data)
+	}
+	if !reflect.DeepEqual(loaded.record, want) {
+		t.Fatalf("partial round-trip = %+v, want %+v (bytes %q)", loaded.record, want, data)
+	}
+	again, _ := roundTripReducedVerdict(t, loaded.record, now)
+	if !bytes.Equal(again, data) {
+		t.Fatalf("re-serialized partial record = %q, want %q", again, data)
+	}
+
+	got := loaded.record.partition()
+	if got == nil {
+		t.Fatalf("partial record projected no partition (bytes %q)", data)
+	}
+	if !reflect.DeepEqual(got.Executed, want.Executed) {
+		t.Fatalf("projected executed set = %q, want %q", got.Executed, want.Executed)
+	}
+	wantSkips := []ComponentSkip{
+		{Component: "build", Seal: partialTestSeal},
+		{Component: "vet", Identity: partialTestIdentity, AuthoredAt: now.Add(-90 * time.Minute)},
+	}
+	if !reflect.DeepEqual(got.Skipped, wantSkips) {
+		t.Fatalf("projected skips = %+v, want %+v", got.Skipped, wantSkips)
+	}
+	if fullTestRecord(now).partition() != nil || reducedTestRecord(now).partition() != nil {
+		t.Fatal("a full or reduced record projected a partition, so a consumer cannot read the nil as whole-tree grading")
+	}
+}
+
+// [PC2b] The skipped set and the evidence map are cross-checked in both directions. A skip
+// with no evidence credits a component nobody graded; evidence naming a component the record
+// did not skip proves nothing the record claims. Each entry is then graded against exactly
+// one evidence form: an identity that is not a content address addresses no slot, and an
+// entry reaching for both forms describes no evidence at all.
+func TestPartialVerdictRequiresEvidencePerSkip(t *testing.T) {
+	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
+	cases := []struct {
+		name   string
+		mutate func(map[string]any)
+		want   State
+	}{
+		{name: "intact partial record", want: Ready},
+		{
+			name:   "skip with no evidence entry",
+			mutate: func(o map[string]any) { delete(o["skip_evidence"].(map[string]any), "vet") },
+			want:   Invalid,
+		},
+		{
+			name: "evidence for a component that ran",
+			mutate: func(o map[string]any) {
+				evidence := o["skip_evidence"].(map[string]any)
+				evidence["conformance"] = evidence["vet"]
+				delete(evidence, "vet")
+			},
+			want: Invalid,
+		},
+		{
+			name: "evidence beyond the skipped set",
+			mutate: func(o map[string]any) {
+				o["skip_evidence"].(map[string]any)["conformance"] = map[string]any{"seal": partialTestSeal}
+			},
+			want: Invalid,
+		},
+		{
+			name:   "empty evidence entry",
+			mutate: func(o map[string]any) { o["skip_evidence"].(map[string]any)["vet"] = map[string]any{} },
+			want:   Invalid,
+		},
+		{
+			name:   "ancestor identity that is not a content address",
+			mutate: func(o map[string]any) { partialTestEvidence(o, "vet")["identity"] = "the-vet-component" },
+			want:   Invalid,
+		},
+		{
+			name: "ancestor identity spelled in upper case",
+			mutate: func(o map[string]any) {
+				partialTestEvidence(o, "vet")["identity"] = strings.ToUpper(partialTestIdentity)
+			},
+			want: Invalid,
+		},
+		{
+			name:   "ancestor evidence without its authored time",
+			mutate: func(o map[string]any) { delete(partialTestEvidence(o, "vet"), "authored_at") },
+			want:   Invalid,
+		},
+		{
+			name: "slot authored after the run that read it",
+			mutate: func(o map[string]any) {
+				partialTestEvidence(o, "vet")["authored_at"] = now.Add(time.Minute).Format(time.RFC3339)
+			},
+			want: Invalid,
+		},
+		{
+			name:   "ancestor evidence also carrying a seal",
+			mutate: func(o map[string]any) { partialTestEvidence(o, "vet")["seal"] = partialTestSeal },
+			want:   Invalid,
+		},
+		{
+			name:   "seal evidence also carrying an identity",
+			mutate: func(o map[string]any) { partialTestEvidence(o, "build")["identity"] = partialTestIdentity },
+			want:   Invalid,
+		},
+		{
+			name:   "seal that is not a content address",
+			mutate: func(o map[string]any) { partialTestEvidence(o, "build")["seal"] = "built-recently" },
+			want:   Invalid,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			assertPartialRecordLoads(t, now, tc.mutate, tc.want)
+		})
+	}
+}
+
+// [PC2b] The partition's two halves are a coherent split of the run: every name is a real
+// component named once, a component cannot be both executed and skipped, and one partition
+// has exactly one spelling so two records over one run cannot differ byte for byte.
+func TestPartialVerdictRequiresACoherentComponentSet(t *testing.T) {
+	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
+	cases := []struct {
+		name   string
+		mutate func(map[string]any)
+	}{
+		{"empty executed set", func(o map[string]any) { o["executed"] = []any{} }},
+		{"empty skipped set", func(o map[string]any) { o["skipped"] = []any{}; o["skip_evidence"] = map[string]any{} }},
+		{"unnamed executed component", func(o map[string]any) { o["executed"] = []any{"", "conformance"} }},
+		{"duplicated executed component", func(o map[string]any) { o["executed"] = []any{"conformance", "conformance"} }},
+		{"unsorted executed set", func(o map[string]any) { o["executed"] = []any{"conformance-suite", "conformance"} }},
+		{"unsorted skipped set", func(o map[string]any) { o["skipped"] = []any{"vet", "build"} }},
+		{
+			name: "component both executed and skipped",
+			mutate: func(o map[string]any) {
+				o["executed"] = []any{"conformance", "conformance-suite", "vet"}
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			assertPartialRecordLoads(t, now, tc.mutate, Invalid)
+		})
+	}
+}
+
+// [PS23] The three ready classes are alternatives, never a spectrum. A record carrying
+// fields of two of them names no class the loader can resolve, and resolving it by guess
+// would credit one class's evidence for the other's claim — so it is refused for the shape
+// it holds rather than read as whichever class was checked first.
+func TestMixedClassRecordRefuses(t *testing.T) {
+	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
+	partial := partialTestRecord(now)
+	reduced := reducedTestRecord(now)
+	cases := []struct {
+		name   string
+		record verdictRecord
+		mutate func(map[string]any)
+	}{
+		{
+			name:   "partial shape carrying an ancestor",
+			record: partial,
+			mutate: func(o map[string]any) { o["ancestor"] = reducedTestAncestor },
+		},
+		{
+			name:   "partial shape carrying the reduced marker",
+			record: partial,
+			mutate: func(o map[string]any) { o["reduced"] = true },
+		},
+		{
+			name:   "reduced shape carrying a partition",
+			record: reduced,
+			mutate: func(o map[string]any) {
+				o["executed"] = partial.Executed
+				o["skipped"] = partial.Skipped
+				o["skip_evidence"] = reducedTestObject(t, partial)["skip_evidence"]
+			},
+		},
+		{
+			name:   "full shape carrying an executed set",
+			record: fullTestRecord(now),
+			mutate: func(o map[string]any) { o["executed"] = partial.Executed },
+		},
+		{
+			name:   "every ready field of every class at once",
+			record: reduced,
+			mutate: func(o map[string]any) {
+				for name, value := range reducedTestObject(t, partial) {
+					o[name] = value
+				}
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			object := reducedTestObject(t, tc.record)
+			tc.mutate(object)
+			body, err := json.Marshal(object)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := loadVerdict(writeReducedTestCache(t, t.TempDir(), body), now)
+			if got.state != Invalid || got.reason != "invalid cache record" {
+				t.Fatalf("loaded %q = %s/%q, want an invalid cache record (bytes %q)", tc.name, got.state, got.reason, body)
+			}
+		})
+	}
+}
+
+// assertPartialRecordLoads writes a bent partial record at the cache's required mode and
+// grades the loader's verdict on it, so a case is refused for its contents rather than for
+// the file it arrived in.
+func assertPartialRecordLoads(t *testing.T, now time.Time, mutate func(map[string]any), want State) {
+	t.Helper()
+	object := reducedTestObject(t, partialTestRecord(now))
+	if mutate != nil {
+		mutate(object)
+	}
+	body, err := json.Marshal(object)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := loadVerdict(writeReducedTestCache(t, t.TempDir(), body), now)
+	if got.state != want {
+		t.Fatalf("loaded partial record = %s/%q, want %s (bytes %q)", got.state, got.reason, want, body)
+	}
+	if want == Invalid && got.reason != "invalid cache record" {
+		t.Fatalf("rejection reason = %q, want %q", got.reason, "invalid cache record")
+	}
 }

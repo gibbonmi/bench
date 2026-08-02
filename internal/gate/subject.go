@@ -117,37 +117,23 @@ func buildSubjectOverTree(root, identityRoot, policy string, treeHash func(strin
 }
 
 // strippedTreeHash returns the content identity of root's tree with the reduced scope's
-// declared paths absent. It reads back the whole-tree object rather than materializing a
-// second tree, so both identities answer for the same `git add -A` snapshot, and it drops
-// entries one at a time through Scope.Member — the only membership rule there is, so a
-// strip can never reach a parent directory or a sibling that merely shares a prefix. Any
-// failure yields "none", which no identity accepts.
+// declared paths absent. It hashes the whole-tree snapshot in listing order, dropping
+// entries one at a time through Scope.Member — the only membership rule there is, so a strip
+// can never reach a parent directory or a sibling that merely shares a prefix. Any failure
+// to read the snapshot yields "none", which no identity accepts.
 func strippedTreeHash(root string) string {
-	tree := benchgit.TreeHash(root)
-	if !treeHashRE.MatchString(tree) {
-		return "none"
-	}
-	// -z keeps the paths raw: without it git quotes and escapes unusual names, and a
-	// quoted path is not the one Scope.Member is defined over.
-	listing, err := benchgit.Output("-C", root, "ls-tree", "-r", "-z", "--full-tree", tree)
+	snapshot, err := readTreeSnapshot(root)
 	if err != nil {
 		return "none"
 	}
 	scope := ReducedScope()
 	h := sha256.New()
-	for _, entry := range strings.Split(listing, "\x00") {
-		if entry == "" {
+	for _, entry := range snapshot.entries {
+		if scope.Member(entry.Path) {
 			continue
 		}
-		metadata, path, separated := strings.Cut(entry, "\t")
-		if !separated {
-			return "none"
-		}
-		if scope.Member(path) {
-			continue
-		}
-		frame(h, metadata)
-		frame(h, path)
+		frame(h, entry.Metadata)
+		frame(h, entry.Path)
 	}
 	return hex.EncodeToString(h.Sum(nil))
 }

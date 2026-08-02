@@ -71,7 +71,9 @@ type Signal struct {
 // cache file exists; Stale marks a verdict whose cached tree no longer matches the work
 // tree (or whose line is untrusted). Reduced marks a verdict that graded only the phases
 // able to observe its changeset, which is why a reduced green is never reusable and is not
-// by itself drift. Status/CachedTree/WorkTree/Timestamp carry the raw
+// by itself drift. Partition carries the same narrowness at component granularity:
+// non-nil for a partial verdict that graded only the components whose inputs moved, nil
+// for a full or reduced record. Status/CachedTree/WorkTree/Timestamp carry the raw
 // fields for a human view; the board reduces them to its severity rows.
 type GateInfo struct {
 	Present       bool
@@ -82,6 +84,7 @@ type GateInfo struct {
 	WorkTree      string
 	Stale         bool
 	Reduced       bool
+	Partition     *gate.Partition
 	Timestamp     string
 	Reason        string
 	CacheBytes    int
@@ -213,6 +216,15 @@ func appendGateInfo(rows []row, gv GateInfo, root string) []row {
 		if gv.Reduced && gv.CachedTree == gv.WorkTree {
 			return append(rows, row{7, "gate", "reduced green (capture-only scope)", "bench gate --fresh for a whole-tree verdict"})
 		}
+		// A partial verdict draws the same distinction at component granularity: the run
+		// graded only the components whose inputs moved, so over its own tree it is narrow,
+		// not drifted. The row names what was skipped so a reader cannot mistake the
+		// partition for a whole-tree green. A partial verdict whose tree has since moved is
+		// still drift, and falls through to the row below exactly as a reduced one does.
+		if gv.Partition != nil && gv.CachedTree == gv.WorkTree {
+			detail := fmt.Sprintf("partial green (skipped: %s)", strings.Join(skippedComponentNames(gv.Partition), ", "))
+			return append(rows, row{7, "gate", detail, "bench gate --fresh for a whole-tree verdict"})
+		}
 		detail, action := staleGateDetailAction(root, gv.CachedTree, gv.WorkTree)
 		return append(rows, row{7, "gate", detail, action})
 	}
@@ -231,6 +243,7 @@ func GateVerdict(root string) GateInfo {
 		gi.Timestamp = in.RecordedAt.Format(time.RFC3339)
 	}
 	gi.Reduced = in.Reduced
+	gi.Partition = in.Partition
 	gi.Stale = in.State == gate.Ready && in.Status == "green" && !in.ReusableGreen
 	return gi
 }
@@ -247,6 +260,17 @@ func staleGateDetailAction(root, cachedTree, currentTree string) (detail, action
 		return detail, action
 	}
 	return "stale (capture-only drift)", "re-run when convenient"
+}
+
+// skippedComponentNames extracts the component names a partial verdict skipped, in the
+// order the record carries them (already strictly ascending — the gate package's own
+// invariant), for the partial row to name.
+func skippedComponentNames(p *gate.Partition) []string {
+	names := make([]string, len(p.Skipped))
+	for i, s := range p.Skipped {
+		names[i] = s.Component
+	}
+	return names
 }
 
 // StepSeparator joins the steps of a board action that names a sequence rather than one

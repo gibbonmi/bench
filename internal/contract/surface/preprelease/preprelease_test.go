@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/contract"
+	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/preprelease"
 )
 
 // TestPrepReleaseWritesEvidence is the story 5 acceptance: ship green is exit 0 with the
@@ -146,6 +148,75 @@ func TestPrepReleaseNamesRedBeforeReduction(t *testing.T) {
 		t.Fatalf("refusal blamed the reduction for a red verdict:\n%s\nverdict:\n%s", probe.Stderr, record)
 	}
 	requireContains(t, "refusal", probe.Stderr, "recorded red")
+}
+
+// TestPrepReleaseRefusalNamesSkippedComponents is the PC16a acceptance: a release answers
+// for the whole tree, so a refusal that said only "partial" would leave the maintainer
+// guessing which components to distrust. Two skipped components are named, not one, so an
+// implementation that reports only the first cannot pass this row.
+func TestPrepReleaseRefusalNamesSkippedComponents(t *testing.T) {
+	t.Parallel()
+	refusal := preprelease.Refusal(gate.Inspection{Status: "green", Partition: twoComponentPartition()})
+
+	requireContains(t, "refusal", refusal, "conformance")
+	requireContains(t, "refusal", refusal, "docs")
+}
+
+// TestPrepReleaseRefusalPointsAtFresh is the PC16b acceptance: the partial refusal points
+// at the same single escape the reduced refusal does, `bench gate --fresh`, and at
+// re-running prep-release — a maintainer reading the refusal needs the one remedy, not
+// just the diagnosis.
+func TestPrepReleaseRefusalPointsAtFresh(t *testing.T) {
+	t.Parallel()
+	refusal := preprelease.Refusal(gate.Inspection{Status: "green", Partition: twoComponentPartition()})
+
+	requireContains(t, "refusal", refusal, "bench gate --fresh")
+	requireContains(t, "refusal", refusal, "prep-release")
+}
+
+// TestPrepReleaseAcceptsAFullGreen is the PS28 acceptance. A genuine full green — no
+// partition at all — is accepted outright. A verdict-cache record can never produce a
+// non-nil Partition with no skipped components, but the guard is pinned against that
+// shape too: an implementation that refuses on any non-nil partition rather than a
+// populated one would name a "partial" verdict with nothing to name. The second case
+// below is built without ReusableGreen set, so that shortcut can't mask the mutation.
+func TestPrepReleaseAcceptsAFullGreen(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil partition", func(t *testing.T) {
+		t.Parallel()
+		inspection := gate.Inspection{Status: "green", ReusableGreen: true}
+		if refusal := preprelease.Refusal(inspection); refusal != "" {
+			t.Fatalf("full green refused: %q", refusal)
+		}
+	})
+
+	t.Run("empty partition falls back to the recorded cause", func(t *testing.T) {
+		t.Parallel()
+		inspection := gate.Inspection{
+			Status:    "green",
+			Reason:    "verdict expired",
+			Partition: &gate.Partition{Executed: []string{"gate"}},
+		}
+		refusal := preprelease.Refusal(inspection)
+		if strings.Contains(refusal, "partial") {
+			t.Fatalf("a partition with nothing skipped was refused as partial: %q", refusal)
+		}
+		requireContains(t, "refusal", refusal, "verdict expired")
+	})
+}
+
+// twoComponentPartition is the partial-verdict shape the partition rows above grade
+// Refusal against: two skipped components, each carrying the ancestor evidence form a
+// real partition would.
+func twoComponentPartition() *gate.Partition {
+	return &gate.Partition{
+		Executed: []string{"gate"},
+		Skipped: []gate.ComponentSkip{
+			{Component: "conformance", Identity: strings.Repeat("a", 64), AuthoredAt: time.Unix(0, 0).UTC()},
+			{Component: "docs", Identity: strings.Repeat("b", 64), AuthoredAt: time.Unix(0, 0).UTC()},
+		},
+	}
 }
 
 // TestPrepReleaseAllSurfaces is the story 8 acceptance: a route added to bin/bench.sh

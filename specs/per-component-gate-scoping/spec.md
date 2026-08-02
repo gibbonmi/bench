@@ -1,6 +1,6 @@
 # per-component-gate-scoping
 
-Status: staged
+Status: implemented
 
 Decision source: the reviewer's parallel-session decision block (five decisions:
 invocation model unchanged, per-component skip predicates, build artifact reuse,

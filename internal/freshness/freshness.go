@@ -53,20 +53,63 @@ func Digest(root string) (string, error) {
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
+// BuildInputs returns the repository-relative, slash-separated, sorted paths that Digest hashes for root.
+func BuildInputs(root string) ([]string, error) {
+	root, err := filepath.Abs(root)
+	if err != nil {
+		return nil, err
+	}
+	paths, err := buildInputs(root)
+	if err != nil {
+		return nil, err
+	}
+	relative := make([]string, len(paths))
+	for i, path := range paths {
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			return nil, err
+		}
+		relative[i] = filepath.ToSlash(rel)
+	}
+	return relative, nil
+}
+
+// SealDigests returns the source and executable digests recorded in executable's published seal.
+func SealDigests(executable string) (sources, digest string, err error) {
+	data, err := secureContents(sealPath(executable), false)
+	if err != nil {
+		return "", "", fmt.Errorf("seal %q: %w", sealPath(executable), err)
+	}
+	stored, err := parseSeal(data)
+	if err != nil {
+		return "", "", fmt.Errorf("seal %q: %w", sealPath(executable), err)
+	}
+	return stored.Sources, stored.Executable, nil
+}
+
+// ExecutableDigest returns the digest a seal records for the executable at path.
+func ExecutableDigest(path string) (string, error) {
+	binary, err := secureContents(path, true)
+	if err != nil {
+		return "", err
+	}
+	return digestBytes(binary), nil
+}
+
 // Publish replaces executable with staged and writes its matching content seal.
 func Publish(root, staged, executable string) error {
 	sources, err := Digest(root)
 	if err != nil {
 		return err
 	}
-	binary, err := secureContents(staged, true)
+	binary, err := ExecutableDigest(staged)
 	if err != nil {
 		return fmt.Errorf("stage executable %q: %w", staged, err)
 	}
 	encoded, err := json.Marshal(seal{
 		Schema:     sealSchema,
 		Sources:    sources,
-		Executable: digestBytes(binary),
+		Executable: binary,
 	})
 	if err != nil {
 		return err

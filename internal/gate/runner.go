@@ -371,8 +371,8 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 	}
 	argv := phase.Argv
 	if phase.Optional {
-		resolved, present := resolveOnPath(argv[0])
-		if !present {
+		resolved, absent := phaseToolAbsent(phase)
+		if absent {
 			// Truly absent from PATH: skip. The summary states "not installed" so the
 			// defense's absence is a fact on the record, not silence.
 			result.Skipped = true
@@ -478,6 +478,23 @@ func printConformanceTiming(root string, phase Phase, stdout io.Writer) {
 	for _, line := range registry.ReadTimingLines(root) {
 		fmt.Fprintln(stdout, line)
 	}
+}
+
+// phaseToolAbsent reports that phase is optional and the tool it invokes is not on this
+// host, handing back the resolved path when it is. Absent is the one way a phase settles
+// green having graded nothing at all, so the per-component scoping withholds that
+// component's evidence on this same answer: two spellings of the condition would let the
+// runner skip a component the scoping had already credited with a slot, and the component
+// would then skip forever — its declared inputs do not move when the tool is installed.
+//
+// A required phase is never absent here. Its missing binary is that phase's own red, so the
+// run does grade the component, in the direction that costs no evidence.
+func phaseToolAbsent(phase Phase) (resolved string, absent bool) {
+	if !phase.Optional || len(phase.Argv) == 0 || phase.Argv[0] == "" {
+		return "", false
+	}
+	path, present := resolveOnPath(phase.Argv[0])
+	return path, !present
 }
 
 // resolveOnPath reports whether a file with the given command name exists on PATH,

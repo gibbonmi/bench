@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -312,4 +313,50 @@ func evidenceFiles(t *testing.T, gitdir string) []string {
 		}
 	}
 	return files
+}
+
+// [PC15] A partial verdict graded only the components whose inputs moved, so it answers for
+// its own tree and never for the whole one. The refusal is what keeps every reuse path safe
+// without a change at each of them — `bench commit` reads reusability through the
+// authorization package, which reads it here — so the record stays readable, the inspection
+// names the partition and carries it for the consumers that render and refuse against it,
+// and only ReusableGreen is withheld.
+func TestPartialVerdictIsNotReusable(t *testing.T) {
+	root := reuseMarkerRepo(t, 0, `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
+	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
+		t.Fatalf("seed execution = %+v, want green", got)
+	}
+	plan := mustSubject(t, root)
+	seeded := time.Now().UTC().Truncate(time.Second)
+	partial := partialTestRecord(seeded)
+	partial.Tree, partial.Oracle = plan.Tree, plan.Oracle
+	if err := durableReplace(filepath.Dir(cachePath(t, root)), partial); err != nil {
+		t.Fatal(err)
+	}
+
+	got := inspectAt(root, seeded)
+	if got.State != Ready || got.Status != "green" || got.ReusableGreen || got.Reason != "partial verdict" {
+		t.Fatalf("partial inspection = %+v, want a readable green that is not a reusable whole-tree green", got)
+	}
+	if got.Partition == nil {
+		t.Fatalf("partial inspection carried no partition: %+v", got)
+	}
+	skipped := make([]string, 0, len(got.Partition.Skipped))
+	for _, skip := range got.Partition.Skipped {
+		skipped = append(skipped, skip.Component)
+	}
+	if !reflect.DeepEqual(skipped, partial.Skipped) || !reflect.DeepEqual(got.Partition.Executed, partial.Executed) {
+		t.Fatalf("inspection partition = %+v, want executed %q and skipped %q", got.Partition, partial.Executed, partial.Skipped)
+	}
+
+	// The same tree and oracle under a full record is reusable, so the refusal above is the
+	// partition's and not some other property of the seeded record.
+	full := fullTestRecord(seeded)
+	full.Tree, full.Oracle = plan.Tree, plan.Oracle
+	if err := durableReplace(filepath.Dir(cachePath(t, root)), full); err != nil {
+		t.Fatal(err)
+	}
+	if got := inspectAt(root, seeded); !got.ReusableGreen || got.Partition != nil {
+		t.Fatalf("full inspection over the same tree = %+v, want a reusable green carrying no partition", got)
+	}
 }

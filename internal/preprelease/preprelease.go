@@ -190,19 +190,48 @@ func Command(args []string, stdout, stderr io.Writer) int {
 // bound to another tree, expired — each report themselves without this package
 // re-deriving any of them.
 //
-// A reduced verdict gets its own sentence because the maintainer's next move differs: a
-// record is present and green, so being told none exists would send them to re-run
-// whatever they just ran and get the same narrow record back. The remedy is the escape
-// from any reusable verdict, which is the only way to reach a whole-tree green here.
+// A reduced or partial verdict each get their own sentence because the maintainer's next
+// move differs from the four rejected states: a record is present and green, so being
+// told none exists would send them to re-run whatever they just ran and get the same
+// narrow record back. The remedy is the escape from any reusable verdict, which is the
+// only way to reach a whole-tree green here.
+//
+// A release answers for the whole tree, so a partition — components the verdict skipped
+// and reused earlier evidence for instead of grading — cannot authorize one either. The
+// component names come from the partition itself rather than being restated here: a
+// refusal naming only "partial" would leave the maintainer guessing which components to
+// distrust.
 func Refusal(inspection gate.Inspection) string {
-	if inspection.Reduced && inspection.Status == "green" {
-		return "prep-release: the current verdict is reduced — it graded only the phases its changeset could reach, not the whole tree a release answers for — run `bench gate --fresh`, then re-run prep-release"
+	if inspection.Status == "green" {
+		if inspection.Reduced {
+			return "prep-release: the current verdict is reduced — it graded only the phases its changeset could reach, not the whole tree a release answers for — run `bench gate --fresh`, then re-run prep-release"
+		}
+		if names := skippedComponentNames(inspection.Partition); names != "" {
+			return fmt.Sprintf("prep-release: the current verdict is partial — it skipped %s and reused earlier evidence for them instead of grading them, not the whole tree a release answers for — run `bench gate --fresh`, then re-run prep-release", names)
+		}
+		if inspection.ReusableGreen {
+			return ""
+		}
 	}
 	cause := inspection.Reason
 	if cause == "" {
 		cause = string(inspection.State)
 	}
 	return fmt.Sprintf("prep-release: no current dev-green verdict for this tree (%s) — run `bench gate`, then re-run prep-release", cause)
+}
+
+// skippedComponentNames renders a partition's skipped components as the comma-joined list
+// the refusal names, and "" when there is nothing to name — a nil partition (nothing
+// skipped) and an empty one (nothing skipped, however the pointer got set) refuse alike.
+func skippedComponentNames(partition *gate.Partition) string {
+	if partition == nil || len(partition.Skipped) == 0 {
+		return ""
+	}
+	names := make([]string, len(partition.Skipped))
+	for i, skip := range partition.Skipped {
+		names[i] = skip.Component
+	}
+	return strings.Join(names, ", ")
 }
 
 // PreflightAttributions names each verify phase whose promoted record is not green, with

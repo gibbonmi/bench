@@ -9,11 +9,13 @@ package gate
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -413,6 +415,167 @@ func TestManifestWithoutHandOffNeverReduces(t *testing.T) {
 	}
 	if got := fullRunCount(t, root); got != 2 {
 		t.Fatalf("gate runs = %d, want 2 — the capture-only edit did not pay the resolved gate", got)
+	}
+}
+
+// componentSlotFilesIn returns the name of every evidence-store file that decodes as a
+// component slot record — the "component" key is the one componentSlotRecord carries and
+// no verdict class does, so its presence in the raw bytes is what tells a slot apart from
+// the whole-tree and stripped verdicts the same store also holds.
+func componentSlotFilesIn(t *testing.T, gitdir string) []string {
+	t.Helper()
+	var slots []string
+	for _, name := range evidenceFiles(t, gitdir) {
+		data := mustRead(t, filepath.Join(gitdir, "bench-gate-evidence", name))
+		var fields map[string]json.RawMessage
+		if err := json.Unmarshal(data, &fields); err != nil {
+			t.Fatalf("decode evidence file %s: %v", name, err)
+		}
+		if _, isSlot := fields["component"]; isSlot {
+			slots = append(slots, name)
+		}
+	}
+	return slots
+}
+
+// [PC18a] A root that is not the kit executes every component: the whole table runs through
+// the resolved gate, no per-component slot is authored, and no skip is announced — the same
+// refusal the whole-changeset guard already makes, restated at the per-component site. Red
+// mutation: drop the kit-identity guard from scopeComponents so a foreign root scopes
+// against declarations that were never its own.
+func TestForeignRootScopesNoComponent(t *testing.T) {
+	fixture := newKitShapedFixture(t)
+	// The graded root stops being the kit: BENCH_KIT now names a different checkout, which
+	// is exactly a linked repo's shape.
+	t.Setenv("BENCH_KIT", t.TempDir())
+	var stdout bytes.Buffer
+	if got := executeWithEngine(context.Background(), fixture.root, &stdout, io.Discard, productionGateEngine{}); got.ActionExit != 0 {
+		t.Fatalf("foreign-root execution = %+v, want green", got)
+	}
+	if got := fullRunCount(t, fixture.root); got != 1 {
+		t.Fatalf("gate runs = %d, want 1 full run", got)
+	}
+	executed, want := phaseRunNames(t, fixture.root), fixture.phaseNames()
+	sort.Strings(executed)
+	sort.Strings(want)
+	if !reflect.DeepEqual(executed, want) {
+		t.Fatalf("executed phases = %v, want every table phase %v", executed, want)
+	}
+	gitdir := commonGitDirOf(t, fixture.root)
+	if slots := componentSlotFilesIn(t, gitdir); len(slots) != 0 {
+		t.Fatalf("foreign root authored component slots: %v", slots)
+	}
+	if strings.Contains(stdout.String(), "gate: skipping") {
+		t.Fatalf("foreign root announced a per-component skip:\n%s", stdout.String())
+	}
+}
+
+// [PC18b] A root with no Go module executes every component its table carries and scopes
+// none: the per-component declarations never reach it, so the whole-changeset guard this
+// root already relies on ([R14] et al.) keeps deciding for it undisturbed, and the
+// per-component evidence store stays empty throughout. Red mutation: resolve component
+// identities before checking for a Go module.
+func TestNoGoRootScopesNoComponent(t *testing.T) {
+	root := reducedRunFixture(t)
+	mustExecuteGreen(t, root, productionGateEngine{})
+	if got := fullRunCount(t, root); got != 1 {
+		t.Fatalf("gate runs after the seed = %d, want 1", got)
+	}
+	gitdir := commonGitDirOf(t, root)
+	if slots := componentSlotFilesIn(t, gitdir); len(slots) != 0 {
+		t.Fatalf("no-Go-module root authored component slots on its seed run: %v", slots)
+	}
+
+	writeGateTestFile(t, root, "ROADMAP.md", "capture-only edit\n", 0o644)
+	var stdout bytes.Buffer
+	if got := executeWithEngine(context.Background(), root, &stdout, io.Discard, productionGateEngine{}); got.ActionExit != 0 {
+		t.Fatalf("capture-only execution = %+v, want green", got)
+	}
+	rec := slotRecord(t, root, time.Now().UTC())
+	if !rec.Reduced || !reflect.DeepEqual(rec.Phases, []string{conformancePhaseName}) {
+		t.Fatalf("capture-only record = %+v, want the whole-changeset reduction still serving this root", rec)
+	}
+	if slots := componentSlotFilesIn(t, gitdir); len(slots) != 0 {
+		t.Fatalf("no-Go-module root authored component slots: %v", slots)
+	}
+	if strings.Contains(stdout.String(), "gate: skipping") {
+		t.Fatalf("no-Go-module root announced a per-component skip:\n%s", stdout.String())
+	}
+}
+
+// [PC18c] A symlinked path to the kit root still counts as the kit — a capture-only
+// changeset through the symlink narrows exactly as it would through the literal path — and a
+// stat failure on either side of the identity check runs every component. Red mutation:
+// treat a stat failure as a match.
+func TestSymlinkedKitCountsAndStatFailureRunsAll(t *testing.T) {
+	fixture := newKitShapedFixture(t)
+	// BENCH_KIT is set to the symlink from the seed run onward, never to the literal path:
+	// a phase's own argv carries the kit spelling it was resolved with, so comparing a run
+	// seeded under one spelling against a narrowed run under another would move every
+	// toolchain component's identity on the spelling alone and prove nothing about the
+	// symlink admission this case exists to check.
+	link := filepath.Join(t.TempDir(), "kit-symlink")
+	if err := os.Symlink(fixture.root, link); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("BENCH_KIT", link)
+	mustExecuteGreen(t, fixture.root, productionGateEngine{})
+	seeded := phaseRunNames(t, fixture.root)
+
+	for _, path := range captureSurfacePaths(ReducedScope()) {
+		writeGateTestFile(t, fixture.root, path, "capture-only edit\n", 0o644)
+	}
+	var stdout bytes.Buffer
+	if got := executeWithEngine(context.Background(), fixture.root, &stdout, io.Discard, productionGateEngine{}); got.ActionExit != 0 {
+		t.Fatalf("symlinked narrowed execution = %+v, want green", got)
+	}
+	if rec := slotRecord(t, fixture.root, time.Now().UTC()); rec.partition() == nil {
+		t.Fatalf("symlinked capture-only record = %+v, want a partial verdict — the symlink did not admit the kit's declarations", rec)
+	}
+	if got := fullRunCount(t, fixture.root); got != 1 {
+		t.Fatalf("resolved gate runs through the symlink = %d, want 1 — the capture-only edit narrowed instead of paying the full gate", got)
+	}
+	want, _ := unconditionalPhaseNames(fixture.phases)
+	narrowed := append([]string(nil), phaseRunNames(t, fixture.root)[len(seeded):]...)
+	sort.Strings(narrowed)
+	sort.Strings(want)
+	if !reflect.DeepEqual(narrowed, want) {
+		t.Fatalf("phases executed through the symlink = %v, want the unconditional set %v", narrowed, want)
+	}
+	afterSymlink := phaseRunNames(t, fixture.root)
+
+	// A stat failure on either path must run everything: point BENCH_KIT at a path that
+	// stats to nothing, mid-run's shape — created, then removed before the gate reads it.
+	vanished := filepath.Join(t.TempDir(), "kit-vanishes")
+	if err := os.Mkdir(vanished, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.RemoveAll(vanished); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("BENCH_KIT", vanished)
+	for _, path := range captureSurfacePaths(ReducedScope()) {
+		writeGateTestFile(t, fixture.root, path, "second capture-only edit\n", 0o644)
+	}
+	stdout.Reset()
+	if got := executeWithEngine(context.Background(), fixture.root, &stdout, io.Discard, productionGateEngine{}); got.ActionExit != 0 {
+		t.Fatalf("stat-failure execution = %+v, want green", got)
+	}
+	if rec := slotRecord(t, fixture.root, time.Now().UTC()); rec.Reduced || rec.partition() != nil {
+		t.Fatalf("stat-failure record = %+v, want a full verdict", rec)
+	}
+	if got := fullRunCount(t, fixture.root); got != 2 {
+		t.Fatalf("resolved gate runs after the stat failure = %d, want 2 — the vanished kit path did not pay the full gate", got)
+	}
+	fullTable := append([]string(nil), phaseRunNames(t, fixture.root)[len(afterSymlink):]...)
+	sort.Strings(fullTable)
+	want = append([]string(nil), fixture.phaseNames()...)
+	sort.Strings(want)
+	if !reflect.DeepEqual(fullTable, want) {
+		t.Fatalf("phases executed after the stat failure = %v, want every table phase %v", fullTable, want)
+	}
+	if strings.Contains(stdout.String(), "gate: skipping") {
+		t.Fatalf("stat-failure root announced a per-component skip:\n%s", stdout.String())
 	}
 }
 

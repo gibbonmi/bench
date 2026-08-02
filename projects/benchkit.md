@@ -297,6 +297,47 @@ hold formatted documents; code does not belong in them. The reduced path is
 selected by the changeset, never by a flag; `bench gate --fresh` is the escape to
 a whole-tree run.
 
+**Per-component input declarations.** Beneath the reduced run's capture-surface
+floor, each evidence-skipped component declares its own input set, so a
+changeset touching only one component's inputs runs that component and skips
+the rest on retained ancestor evidence rather than switching every excludable
+phase together. The declarations are single-sourced in the gate package
+(`gate.ComponentInputSources()`) and rendered here; the per-component
+conformance check cross-checks this table against them, so drift between the
+two turns the gate red:
+
+| component | declares | provenance |
+|---|---|---|
+| build | `build-closure` | `derived` |
+| gofmt | `module-test-closure`, `manifest` | `derived` |
+| vet | `module-test-closure`, `manifest` | `derived` |
+| test | `module-test-closure`, `manifest` | `derived` |
+| race | `module-test-closure`, `manifest` | `derived` |
+| contract | `module-test-closure`, `manifest`, `seal-source-digest` | `derived` |
+| shellcheck | `shellcheck-argv` | `derived` |
+| canary | `hand-declared` | `hand-written` |
+
+`derived` means the component's inputs are computed from a named derivation on
+every resolution — the module-wide `go list -deps -test ./...` closure plus the
+module manifest for the toolchain and contract components (never the binary's
+narrower `./cmd/bench` closure, which excludes the packages they grade), the
+seal's source digest added for `contract` because it execs the built binary,
+and shellcheck's own argv enumeration for `shellcheck` — so a hand-copied path
+list can never survive as the declaration. `canary` is the registry's one
+`hand-declared` entry: `internal/canary/`, `tests/canary/`, and the wrapper
+scripts its phase execs, named directly because it has no derivable source.
+
+Declaration-honesty width, stated with the same candor the reduced-run
+construction prose carries above: the stripped-worktree construction proves
+capture-surface blindness only. For these per-component declarations, honesty
+rests on mandatory derivation plus this binding, and a component that reads an
+undeclared non-capture path skips wrongly — that residual is recorded here,
+not hidden. `canary`'s row carries the reviewer's 2026-08-01 narrowing as its
+own accepted gap: the published binary's digest is excluded from its declared
+inputs, so two changes graded separately may land together with the canary
+never run against their combined tree. `bench gate --fresh` and the ship tier
+are what re-prove the tripwire in that case, not the reduced run.
+
 The **ship tier** — `bench prep-release`, maintainer-run once per release —
 carries what the dev tier deliberately does not run: the release-evidence probe
 (the four-platform artifact matrix build, the reproducibility rebuild, and a

@@ -1,6 +1,8 @@
 package freshness
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -12,6 +14,112 @@ import (
 	"testing"
 	"time"
 )
+
+func TestBuildInputsCoverEveryDigestedPath(t *testing.T) {
+	root := writeBuildFixture(t)
+	paths, err := BuildInputs(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hash := sha256.New()
+	for _, name := range paths {
+		contents, err := regularContents(filepath.Join(root, filepath.FromSlash(name)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		fmt.Fprintf(hash, "%d:%s%d:", len(name), name, len(contents))
+		if _, err := hash.Write(contents); err != nil {
+			t.Fatal(err)
+		}
+	}
+	got := hex.EncodeToString(hash.Sum(nil))
+	want, err := Digest(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != want {
+		t.Fatalf("BuildInputs paths rehashed = %q, want Digest(root) = %q", got, want)
+	}
+}
+
+func TestBuildInputsErrorOnUnresolvableClosure(t *testing.T) {
+	root := t.TempDir()
+	paths, err := BuildInputs(root)
+	if err == nil {
+		t.Fatalf("BuildInputs with no go.mod = %v, %v; want error and no paths", paths, err)
+	}
+	if paths != nil {
+		t.Fatalf("BuildInputs with no go.mod returned paths %v, want nil", paths)
+	}
+}
+
+func TestSealDigestsReturnsPublishedDigests(t *testing.T) {
+	root, executable := writePublishedFixture(t)
+	wantSources, err := Digest(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	binary, err := os.ReadFile(executable)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sources, digest, err := SealDigests(executable)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sources != wantSources {
+		t.Fatalf("SealDigests sources = %q, want %q", sources, wantSources)
+	}
+	if digest != digestBytes(binary) {
+		t.Fatalf("SealDigests executable digest = %q, want %q", digest, digestBytes(binary))
+	}
+}
+
+func TestSealDigestsRefuseAnUntrustedSidecar(t *testing.T) {
+	t.Run("symlinked sidecar", func(t *testing.T) {
+		root, executable := writePublishedFixture(t)
+		target := filepath.Join(root, "valid.seal")
+		data, err := os.ReadFile(sealPath(executable))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(target, data, 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Remove(sealPath(executable)); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Symlink(target, sealPath(executable)); err != nil {
+			t.Fatal(err)
+		}
+		if _, _, err := SealDigests(executable); err == nil {
+			t.Fatal("SealDigests through symlinked sidecar = nil, want refusal")
+		}
+	})
+
+	t.Run("irregular sidecar", func(t *testing.T) {
+		_, executable := writePublishedFixture(t)
+		if err := os.Remove(sealPath(executable)); err != nil {
+			t.Fatal(err)
+		}
+		if err := syscall.Mkfifo(sealPath(executable), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if _, _, err := SealDigests(executable); err == nil {
+			t.Fatal("SealDigests on irregular sidecar = nil, want refusal")
+		}
+	})
+
+	t.Run("malformed contents", func(t *testing.T) {
+		_, executable := writePublishedFixture(t)
+		if err := os.WriteFile(sealPath(executable), []byte(`{"schema":`), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if _, _, err := SealDigests(executable); err == nil {
+			t.Fatal("SealDigests with malformed seal contents = nil, want refusal")
+		}
+	})
+}
 
 func TestPublishAndVerifyRefuseEmptyExecutables(t *testing.T) {
 	t.Run("empty stage", func(t *testing.T) {

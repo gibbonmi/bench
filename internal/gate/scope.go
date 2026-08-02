@@ -42,21 +42,33 @@ func ReducedScope() Scope {
 	}
 }
 
-// Member reports whether a repository-relative, slash-separated path is declared: a file
-// entry matched byte-for-byte, or any descendant of a declared directory. Comparison is
-// byte-exact with no case folding and no Unicode normalization, so a homoglyph filename
-// is not a member — the direction that costs a full gate rather than an ungraded change.
+// declaresDirectory reports whether a declared entry names a directory rather than a file.
+// The trailing slash is the marker, and this is where that convention is read.
+func declaresDirectory(entry string) bool { return strings.HasSuffix(entry, "/") }
+
+// declaredEntryCovers reports whether a declared entry covers a repository-relative,
+// slash-separated path. The two entry kinds are told apart by declaresDirectory: a
+// directory entry covers every descendant, and a file entry is matched byte-for-byte, with
+// no case folding and no Unicode normalization — so a homoglyph filename is not covered,
+// the direction that costs a full gate rather than an ungraded change.
+//
+// This is the one place membership is decided. Both the reduced-run declaration and the
+// per-component input declarations name their surfaces in this shape, and a second
+// membership rule beside it would let one of them cover a file the other did not.
+func declaredEntryCovers(entry, path string) bool {
+	if declaresDirectory(entry) {
+		return strings.HasPrefix(path, entry)
+	}
+	return path == entry
+}
+
+// Member reports whether a repository-relative, slash-separated path is declared.
 func (s Scope) Member(path string) bool {
 	if !repositoryRelative(path) {
 		return false
 	}
-	for _, file := range s.files {
-		if path == file {
-			return true
-		}
-	}
-	for _, dir := range s.directories {
-		if strings.HasPrefix(path, dir) {
+	for _, entry := range slices.Concat(s.files, s.directories) {
+		if declaredEntryCovers(entry, path) {
 			return true
 		}
 	}

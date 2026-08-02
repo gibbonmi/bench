@@ -75,7 +75,7 @@ func BenchkitPhases(root, kit string) []Phase {
 	if isRegularFile(buildHelper) && isRegularFile(filepath.Join(root, "go.mod")) {
 		phases = append(phases, Phase{
 			Name: canary.PhaseBuild,
-			Argv: []string{"bash", buildHelper, root, filepath.Join(root, "dist", "bench")},
+			Argv: []string{"bash", buildHelper, root, buildArtifactPath(root)},
 		})
 		built = true
 	}
@@ -244,9 +244,17 @@ func PhasesCommand(args []string, stdout, stderr io.Writer) int {
 }
 
 func shellcheckArgv(root string) []string {
-	argv := []string{"shellcheck", "-S", "warning", "bin/bench.sh"}
+	return append([]string{"shellcheck", "-S", "warning"}, shellcheckFiles(root)...)
+}
+
+// shellcheckFiles is the exact file list the shellcheck phase lints, apart from the
+// invocation itself. shellcheckArgv builds its argv on top of this, and so does the
+// shellcheck component's input declaration — the one enumeration both read, so neither
+// can drift from where the linted paths actually start.
+func shellcheckFiles(root string) []string {
+	files := []string{"bin/bench.sh"}
 	for _, dir := range []string{".bench/hooks", ".bench/lib"} {
-		argv = append(argv, shellFilesIn(root, dir)...)
+		files = append(files, shellFilesIn(root, dir)...)
 	}
 	// Load-bearing enforcement shell that suffix-scanning misses by extension or
 	// location: the extensionless shift adapters (named explicitly, not discovered
@@ -261,10 +269,10 @@ func shellcheckArgv(root string) []string {
 		"internal/adopt/prepush.sh",
 	} {
 		if isRegularFile(filepath.Join(root, filepath.FromSlash(named))) {
-			argv = append(argv, named)
+			files = append(files, named)
 		}
 	}
-	return argv
+	return files
 }
 
 func isRegularFile(path string) bool {

@@ -287,6 +287,15 @@ func durableReplaceAt(dir, name string, rec verdictRecord) error {
 	if err != nil {
 		return err
 	}
+	return durableReplaceRecordAt(dir, name, data)
+}
+
+// durableReplaceRecordAt installs data as the store entry named name: written to a private
+// temporary beside it, synced, renamed over whatever was there, and the directory synced so
+// the rename itself survives a crash. Every record class in the store is published through
+// here, so a reader never observes a half-written or world-readable record whatever class
+// wrote it.
+func durableReplaceRecordAt(dir, name string, data []byte) error {
 	data = append(data, '\n')
 	tmp, err := os.CreateTemp(dir, ".bench-gate-evidence-")
 	if err != nil {
