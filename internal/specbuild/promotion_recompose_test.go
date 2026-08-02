@@ -251,6 +251,173 @@ func TestPromoteCompletesAfterReviewedWorkingAdvanceRecomposition(t *testing.T) 
 	}
 }
 
+func TestPromoteRecomposesMidRepairRun(t *testing.T) {
+	fixture := reviewedPromotionFixture(t)
+	run := loadRun(t, fixture.service)
+	run.Review.Axes[0].Findings = []reviewFinding{{ID: "F1", Disposition: "accepted"}}
+	saveRun(t, fixture.service, run)
+	repair, _, err := fixture.service.Assign(t.Context(), "build demo", "one.md", "repair finding F1")
+	if err != nil {
+		t.Fatalf("Assign repair: %v", err)
+	}
+	advanceWorking(t, fixture.root)
+	working := git(t, fixture.root, "rev-parse", "HEAD")
+
+	if _, err := fixture.service.Promote(t.Context(), "build demo"); err != nil {
+		t.Fatalf("mid-repair Promote: %v", err)
+	}
+	after := loadRun(t, fixture.service)
+	_, assigned, ok := assignmentFor(after, repair.ID)
+	if !ok || assigned.Released || after.Base != working || after.Review != nil {
+		t.Fatalf("mid-repair recomposition = %#v, repair assignment %#v", after, assigned)
+	}
+}
+
+func TestPromoteTwiceOnMovedTipRecomposesOnce(t *testing.T) {
+	fixture := reviewedPromotionFixture(t)
+	advanceWorking(t, fixture.root)
+	status, err := fixture.service.Promote(t.Context(), "build demo")
+	if err != nil || status.Next != "bench spec build review build demo" {
+		t.Fatalf("first Promote = %#v, %v", status, err)
+	}
+	before := promotionSnapshotFor(t, fixture)
+
+	if _, err := fixture.service.Promote(t.Context(), "build demo"); err == nil || !strings.Contains(err.Error(), "requires a current clean review") {
+		t.Fatalf("second Promote = %v, want the clean-review refusal", err)
+	}
+	if after := promotionSnapshotFor(t, fixture); after != before {
+		t.Fatalf("second Promote replayed: before=%#v after=%#v", before, after)
+	}
+	if next, err := fixture.service.Status("build demo"); err != nil || next.Next != "bench spec build review build demo" {
+		t.Fatalf("recomposed next = %#v, %v", next, err)
+	}
+}
+
+func TestUnrecognizedHeadMoveStillRefusesPromote(t *testing.T) {
+	fixture := reviewedPromotionFixture(t)
+	rewriteWorkingHead(t, fixture.root)
+	requirePromotionRefusal(t, fixture, "does not match recorded subject")
+}
+
+func TestPromoteStillRefusesUnreadyRunOnUnmovedTip(t *testing.T) {
+	for _, test := range []struct {
+		name, want string
+		unready    func(*testing.T, checkpointFixture)
+	}{
+		{"absent review", "requires a current clean review", func(t *testing.T, fixture checkpointFixture) {
+			updatePromotionRun(t, fixture, func(run *record) { run.Review = nil })
+		}},
+		{"stale candidate review", "requires a current clean review", func(t *testing.T, fixture checkpointFixture) {
+			updatePromotionRun(t, fixture, func(run *record) { run.Review.Candidate = run.Base })
+		}},
+		{"accepted finding", "requires a current clean review", func(t *testing.T, fixture checkpointFixture) {
+			updatePromotionRun(t, fixture, func(run *record) {
+				run.Review.Axes[0].Findings = []reviewFinding{{ID: "F1", Disposition: "accepted"}}
+			})
+		}},
+		{"unreleased assignment", "requires every assignment integrated and released", func(t *testing.T, fixture checkpointFixture) {
+			if _, _, err := fixture.service.Assign(t.Context(), "build demo", "one.md", "second sibling"); err != nil {
+				t.Fatalf("Assign second: %v", err)
+			}
+		}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			fixture := reviewedPromotionFixture(t)
+			test.unready(t, fixture)
+			requirePromotionRefusal(t, fixture, test.want)
+		})
+	}
+}
+
+func TestPromoteStillRefusesEachEvidenceFault(t *testing.T) {
+	for _, test := range []struct {
+		name, want string
+		corrupt    func(*testing.T, checkpointFixture)
+	}{
+		{"drifted candidate ref", "", func(t *testing.T, fixture checkpointFixture) {
+			run := loadRun(t, fixture.service)
+			driftRef(t, fixture.root, run.Candidate, run.CandidateTip)
+		}},
+		{"drifted review binding", "requires a current clean review", func(t *testing.T, fixture checkpointFixture) {
+			updatePromotionRun(t, fixture, func(run *record) { run.Review.Candidate = run.Base })
+		}},
+		{"incomplete checkpoint fields", "retained checkpoint evidence is incomplete", func(t *testing.T, fixture checkpointFixture) {
+			updatePromotionRun(t, fixture, func(run *record) {
+				for key, assigned := range run.Assignments {
+					assigned.ReceiptDigest = ""
+					run.Assignments[key] = assigned
+				}
+			})
+		}},
+		{"drifted checkpoint ref", "retained checkpoint reference drifted", func(t *testing.T, fixture checkpointFixture) {
+			run := loadRun(t, fixture.service)
+			for _, assigned := range run.Assignments {
+				driftRef(t, fixture.root, assigned.CheckpointRef, assigned.Checkpoint)
+			}
+		}},
+		{"integration outside candidate ancestry", "retained integration left candidate ancestry", func(t *testing.T, fixture checkpointFixture) {
+			unrelated := git(t, fixture.root, "commit-tree", git(t, fixture.root, "rev-parse", "HEAD^{tree}"), "-m", "unrelated root")
+			updatePromotionRun(t, fixture, func(run *record) {
+				for key, assigned := range run.Assignments {
+					assigned.Integrated = unrelated
+					run.Assignments[key] = assigned
+				}
+			})
+		}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			fixture := reviewedPromotionFixture(t)
+			test.corrupt(t, fixture)
+			requirePromotionRefusal(t, fixture, test.want)
+		})
+	}
+}
+
+type promotionSnapshot struct{ state, refs, head string }
+
+func promotionSnapshotFor(t *testing.T, fixture checkpointFixture) promotionSnapshot {
+	t.Helper()
+	path, err := fixture.service.statePath("build demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	state, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return promotionSnapshot{state: string(state), refs: git(t, fixture.root, "for-each-ref", "--format=%(refname) %(objectname)", "refs/bench/"), head: git(t, fixture.root, "rev-parse", "HEAD")}
+}
+
+func requirePromotionRefusal(t *testing.T, fixture checkpointFixture, want string) {
+	t.Helper()
+	owner := &promotionGate{accept: true}
+	fixture.service.gate = owner
+	before := promotionSnapshotFor(t, fixture)
+	_, err := fixture.service.Promote(t.Context(), "build demo")
+	if err == nil || !strings.Contains(err.Error(), want) {
+		t.Fatalf("Promote = %v, want a refusal naming %q", err, want)
+	}
+	if owner.executions != 0 {
+		t.Fatalf("refusal reached the prospective gate: %d executions", owner.executions)
+	}
+	if after := promotionSnapshotFor(t, fixture); after != before {
+		t.Fatalf("refusal mutated state: before=%#v after=%#v", before, after)
+	}
+}
+
+func updatePromotionRun(t *testing.T, fixture checkpointFixture, change func(*record)) {
+	t.Helper()
+	run := loadRun(t, fixture.service)
+	change(&run)
+	saveRun(t, fixture.service, run)
+}
+
+func driftRef(t *testing.T, root, name, current string) {
+	t.Helper()
+	commit := git(t, root, "commit-tree", git(t, root, "rev-parse", current+"^{tree}"), "-p", current, "-m", "ref drift")
+	git(t, root, "update-ref", name, commit, current)
+}
+
 func (g *promotionGate) Bootstrap(ctx context.Context, root, branch, tip, expected string) error {
 	return greenGate{}.Bootstrap(ctx, root, branch, tip, expected)
 }

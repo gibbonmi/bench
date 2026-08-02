@@ -327,18 +327,19 @@ func TestPromotePublishesOnlyAuthorizedProspectiveSquash(t *testing.T) {
 	}
 }
 
-func TestPromoteRefusesUnreleasedRunBeforeRecomposition(t *testing.T) {
+func TestPromoteRecomposesUnreleasedRunOnMovedTip(t *testing.T) {
 	fixture := reviewedPromotionFixture(t)
 	before := setAssignmentsReleased(t, fixture.service, false)
 	write(t, filepath.Join(fixture.root, "working-advance.go"), "package advance\n")
 	git(t, fixture.root, "add", ".")
 	git(t, fixture.root, "commit", "-qm", "working advance")
-	if _, err := fixture.service.Promote(t.Context(), "build demo"); err == nil {
-		t.Fatal("active run recomposed")
+	working := git(t, fixture.root, "rev-parse", "HEAD")
+	if _, err := fixture.service.Promote(t.Context(), "build demo"); err != nil {
+		t.Fatalf("unreleased run refused recomposition: %v", err)
 	}
 	after := loadRun(t, fixture.service)
-	if after.CandidateTip != before.CandidateTip || after.Base != before.Base || git(t, fixture.root, "rev-parse", after.Candidate) != before.CandidateTip {
-		t.Fatal("active run mutated before promotion eligibility")
+	if after.CandidateTip == before.CandidateTip || after.Base != working || git(t, fixture.root, "rev-parse", after.Candidate) != after.CandidateTip {
+		t.Fatalf("unreleased run recomposition = %#v", after)
 	}
 }
 

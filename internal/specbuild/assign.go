@@ -304,6 +304,20 @@ func (s *Service) Promote(ctx context.Context, slug string) (Status, error) {
 		}
 		return run.status(), nil
 	}
+	// Recomposition discards the review, the assignment releases, and the retained
+	// promotion evidence, so it is reached before they are graded: a run mid-repair
+	// satisfies none of them by construction, and promote is the operation that
+	// resolves that state.
+	subject, preconditionErr := s.preconditions(mutationPromote, slug, run.Spec, &run, "", "")
+	if preconditionErr != nil {
+		if !errors.Is(preconditionErr, errRecompose) {
+			return Status{}, preconditionErr
+		}
+		if err := s.recomposePromotion(ctx, &run, subject); err != nil {
+			return run.status(), fmt.Errorf("spec build promotion recomposition refused: %w", err)
+		}
+		return run.status(), nil
+	}
 	if run.Review == nil || run.Review.Candidate != run.CandidateTip || run.Review.hasAcceptedFinding() {
 		return Status{}, errors.New("spec build promotion requires a current clean review")
 	}
@@ -314,16 +328,6 @@ func (s *Service) Promote(ctx context.Context, slug string) (Status, error) {
 	}
 	if err := s.validatePromotionEvidence(run); err != nil {
 		return run.status(), err
-	}
-	subject, preconditionErr := s.preconditions(mutationPromote, slug, run.Spec, &run, "", "")
-	if preconditionErr != nil {
-		if !errors.Is(preconditionErr, errRecompose) {
-			return Status{}, preconditionErr
-		}
-		if err := s.recomposePromotion(ctx, &run, subject); err != nil {
-			return run.status(), fmt.Errorf("spec build promotion recomposition refused: %w", err)
-		}
-		return run.status(), nil
 	}
 	if !ok || owner == nil {
 		return Status{}, errors.New("spec build promotion requires a prospective gate owner")
