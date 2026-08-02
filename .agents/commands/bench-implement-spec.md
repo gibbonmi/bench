@@ -168,6 +168,10 @@ defined route — never a silent grind, never an abandoned worktree:
   `assign`, `checkpoint`, and `integrate` before a fresh composed review. A repair
   never writes directly to the working branch and a delta-only review cannot
   authorize the changed composition.
+- When the branch tip moves, `promote` is the operation that recomposes the run
+  onto the new tip, and recomposition discards the review.
+  The repair round is therefore
+  repair → `promote` → `review` → `assign` … `integrate` → `review` → `promote`.
 - `bench spec build promote` is the sole spec-backed whole-project-gate boundary.
   It constructs the prospective `Status: implemented` tree, runs the gate for
   that exact subject, and publishes the authorized squash only on green. A red

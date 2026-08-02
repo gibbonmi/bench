@@ -109,7 +109,7 @@ this table is the operation-to-purpose lookup, not a second workflow:
 | `integrate` | compare-and-swap one verified checkpoint into the candidate |
 | `review` | bind three-axis evidence to the exact candidate |
 | `status` | inspect durable state and retained evidence |
-| `promote` | gate and publish the exact reviewed composition |
+| `promote` | gate and publish the exact reviewed composition; a moved tip recomposes through `promote`, discarding the review |
 | `abandon` | plan or apply recoverable cleanup |
 
 ## Plumbing subcommands
