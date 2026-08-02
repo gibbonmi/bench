@@ -53,7 +53,7 @@ branch-agnostic. This line is only the binding.)
   (`<git-dir>/bench-last-gate`, written durably by gate execution) — never a cold gate run. The
   contract (gate-tested): show-only-on-signal, a five-row budget, a stale-green that is
   not a clean bill, and one combined capture-drain row (parked ideas + open learnings)
-  pointing at `/bench-what-next`. A stale gate softens to `capture-only drift` /
+  pointing at `/bench-what-next`. A stale gate softens to `reduced-scope drift` /
   `re-run when convenient` only when the gate's reduced-scope declaration confines
   every changed path — the same declaration the reduced gate run reads, rendered
   once in the Gate section's reduced-scope table, so the board's advice and the
@@ -260,7 +260,7 @@ runs — inner gate or contract binary — is load-bearing:
 **The reduced run.** A changeset the reduced-scope declaration confines runs only
 the included phases against the real tree and records a verdict marked reduced,
 naming the full-green ancestor whose evidence covers the skipped phases; a run of
-capture-only commits inherits from that same ancestor, never from a reduced
+reduced-scope commits inherits from that same ancestor, never from a reduced
 predecessor. The ancestor lookup is content-addressed with no freshness bound —
 the retained full green serves until the stripped identity moves, because the
 phases that can observe the changeset run fresh either way (reviewer decision,
@@ -270,16 +270,18 @@ cross-checks this table against it, so drift between the two turns the gate red:
 
 | reduced scope | declared |
 |---|---|
-| directories | `capture/`, `specs/` |
+| directories | `capture/`, `decisions/`, `specs/` |
 | files | `.bench-notes.md`, `ROADMAP.md` |
 | excludable phases | `gofmt`, `vet`, `test`, `race`, `contract`, `shellcheck`, `canary` |
 | included phases | `conformance`, `conformance-suite` |
 
 Membership is location: a file entry matches byte-for-byte, and a directory entry
-covers every descendant, so a file that lands under `capture/` or `specs/` tomorrow
-is declared by construction. Both directories are entirely formatted documents whose
-graders are the included phases — `specs/` joined on exactly that ground (reviewer
-decision, 2026-08-01). The build phase is in neither list: it produces the binary
+covers every descendant, so a file that lands under `capture/`, `decisions/`, or
+`specs/` tomorrow is declared by construction. All three directories are entirely
+formatted documents whose graders are the included phases — `specs/` joined on exactly
+that ground (reviewer decision, 2026-08-01), and `decisions/` joins because conformance
+grades active maps and their owned research assets are documents (reviewer decision,
+2026-08-02). The build phase is in neither list: it produces the binary
 the other phases exec, so it runs in both modes. Excludability is enforced by
 construction, to the construction's exact width: every full gate on the kit's own
 root runs the excludable phases against a stripped worktree the declared paths are
@@ -290,14 +292,14 @@ idiom for an absent subject file — reds the next full gate and moves to the
 included set. The construction proves nothing beyond those two signatures. A phase
 that reads a declared path but stays green with the file gone is invisible to it,
 and a mis-filed file is graded only by the included phases: a `.go` file committed
-under `capture/` or `specs/` is seen by no excludable phase at all, and the
+under `capture/`, `decisions/`, or `specs/` is seen by no excludable phase at all, and the
 included phases do not grade Go formatting, so a full gate can pass a tree that
 the same file outside the declaration would have redded. The declared directories
 hold formatted documents; code does not belong in them. The reduced path is
 selected by the changeset, never by a flag; `bench gate --fresh` is the escape to
 a whole-tree run.
 
-**Per-component input declarations.** Beneath the reduced run's capture-surface
+**Per-component input declarations.** Beneath the reduced run's reduced-scope
 floor, each evidence-skipped component declares its own input set, so a
 changeset touching only one component's inputs runs that component and skips
 the rest on retained ancestor evidence rather than switching every excludable

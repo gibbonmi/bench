@@ -22,6 +22,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Made changes confined to active decision maps and their research assets eligible
+  for the reduced gate run, alongside capture and compiled spec documents.
 - Made decision maps situational, separated shaping decision tickets from
   independently-green implementation tickets, and moved engineering seams,
   tests, coverage, hostile inputs, and gate attachment into spec authoring.

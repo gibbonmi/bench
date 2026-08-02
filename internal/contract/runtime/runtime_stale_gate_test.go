@@ -12,16 +12,16 @@ import (
 
 func testRuntimeStatusStaleGateDriftClassification(t *testing.T) {
 	benign := statusRowExpectation{
-		contains:    []string{"stale (capture-only drift)", "re-run when convenient"},
+		contains:    []string{"stale (reduced-scope drift)", "re-run when convenient"},
 		notContains: []string{"stale (gated tree"},
 	}
 	strong := statusRowExpectation{
 		contains:    []string{"stale (gated tree", "re-run the gate"},
-		notContains: []string{"capture-only drift"},
+		notContains: []string{"reduced-scope drift"},
 	}
 	invalid := statusRowExpectation{
 		contains:    []string{"invalid verdict", "re-run the gate"},
-		notContains: []string{"capture-only drift", "stale (gated tree"},
+		notContains: []string{"reduced-scope drift", "stale (gated tree"},
 	}
 	cases := []staleGateStatusCase{
 		{name: "added ROADMAP.md is capture-only", mutate: writeRuntimeFile("ROADMAP.md", "- 2026-07-05  parked idea\n"), want: benign},
@@ -30,6 +30,7 @@ func testRuntimeStatusStaleGateDriftClassification(t *testing.T) {
 		{name: "deleted ROADMAP.md is capture-only", seed: writeRuntimeFile("ROADMAP.md", "- 2026-07-04  old idea\n"), mutate: removeRuntimePath("ROADMAP.md"), want: benign},
 		{name: "added capture/IDEAS.md is capture-only", mutate: writeRuntimeFile("capture/IDEAS.md", "- 2026-07-05  parked idea\n"), want: benign},
 		{name: "modified capture/IDEAS.md is capture-only", seed: writeRuntimeFile("capture/IDEAS.md", "- 2026-07-04  old idea\n"), mutate: writeRuntimeFile("capture/IDEAS.md", "- 2026-07-05  parked idea\n"), want: benign},
+		{name: "added decision map is reduced-scope", mutate: writeRuntimeFile("decisions/map.md", "# Decision map\n"), want: benign},
 		{name: "nested IDEAS lookalike is strong stale", mutate: writeRuntimeFile("notes/capture/IDEAS.md", "doc drift\n"), want: strong},
 		{name: "added .bench-notes.md is capture-only", mutate: writeRuntimeFile(".bench-notes.md", "scratch\n"), want: benign},
 		{name: "modified .bench-notes.md is capture-only", seed: writeRuntimeFile(".bench-notes.md", "old\n"), mutate: writeRuntimeFile(".bench-notes.md", "new\n"), want: benign},

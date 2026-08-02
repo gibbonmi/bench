@@ -334,7 +334,7 @@ func testRuntimeStatusStaleGate(t *testing.T) {
 	out := f.Bench("status").Stdout
 	contract.RequireContains(t, out, "re-run the gate")
 	contract.RequireContains(t, out, "stale (gated tree")
-	contract.RequireNotContains(t, out, "capture-only drift")
+	contract.RequireNotContains(t, out, "reduced-scope drift")
 	contract.RequireNotContains(t, out, "clean — nothing pending")
 }
 

@@ -24,7 +24,7 @@ type Scope struct {
 // ReducedScope is the kit's declaration. A directory entry carries its trailing slash:
 // membership under it is location, not enumeration, so a surface that lands inside it
 // tomorrow is covered without an edit here. `.bench-notes.md` is per-worktree shift
-// scratch rather than repository capture, and is declared because the same paths govern
+// scratch rather than repository planning state, and is declared because the same paths govern
 // the ambient staleness signal that already carried it.
 //
 // The build phase is in neither phase list. It produces the binary the other phases
@@ -32,7 +32,7 @@ type Scope struct {
 // and calling it included would claim it grades the declared paths, which it does not.
 func ReducedScope() Scope {
 	return Scope{
-		directories: []string{"capture/", "specs/"},
+		directories: []string{"capture/", "decisions/", "specs/"},
 		files:       []string{".bench-notes.md", "ROADMAP.md"},
 		excludable: []string{
 			canary.PhaseGofmt, canary.PhaseVet, canary.PhaseTest, canary.PhaseRace,

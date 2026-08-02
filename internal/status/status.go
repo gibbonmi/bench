@@ -214,7 +214,7 @@ func appendGateInfo(rows []row, gv GateInfo, root string) []row {
 		// Reducedness and staleness are independent, so a reduced verdict whose tree has
 		// since moved falls through to the drift row below.
 		if gv.Reduced && gv.CachedTree == gv.WorkTree {
-			return append(rows, row{7, "gate", "reduced green (capture-only scope)", "bench gate --fresh for a whole-tree verdict"})
+			return append(rows, row{7, "gate", "reduced green (reduced scope)", "bench gate --fresh for a whole-tree verdict"})
 		}
 		// A partial verdict draws the same distinction at component granularity: the run
 		// graded only the components whose inputs moved, so over its own tree it is narrow,
@@ -259,7 +259,7 @@ func staleGateDetailAction(root, cachedTree, currentTree string) (detail, action
 	if !ok || !gate.ReducedScope().Confines(paths) {
 		return detail, action
 	}
-	return "stale (capture-only drift)", "re-run when convenient"
+	return "stale (reduced-scope drift)", "re-run when convenient"
 }
 
 // skippedComponentNames extracts the component names a partial verdict skipped, in the

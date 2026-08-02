@@ -10,12 +10,14 @@ import (
 
 // A surface that exists in neither the declaration nor the repository today: membership
 // must follow location, so a file nobody has enumerated is covered the day it lands.
-func TestCaptureDirectoryCoversItsSurfaces(t *testing.T) {
+func TestReducedScopeDirectoriesCoverTheirSurfaces(t *testing.T) {
 	scope := ReducedScope()
 	for _, path := range []string{
 		"capture/IDEAS.md",
 		"capture/newly-added-surface.md",
 		"capture/retros/reduced-gate-phase-set.md",
+		"decisions/newly-added-map.md",
+		"decisions/assets/research.md",
 		"specs/newly-added-spec/spec.md",
 		"specs/newly-added-spec/tickets/first.md",
 	} {
@@ -61,18 +63,21 @@ func TestConfinementRejectsUndeclaredPath(t *testing.T) {
 func TestDeclaredDirectoryMembership(t *testing.T) {
 	scope := ReducedScope()
 	member := map[string]bool{
-		"capture/learnings.md":                       true,
-		"capture/retros/reduced-gate-phase-set.md":   true,
-		"specs/reduced-gate-phase-set/spec.md":       true,
-		"specs/reduced-gate-phase-set/tickets/t.md":  true,
-		"capture-old/x.md":                           false,
-		"specs-old/x.md":                             false,
-		"captured/x.md":                              false,
-		"vendor/capture/x.md":                        false,
-		"../capture/x.md":                            false,
-		"/home/devuser/workspace/bench/capture/x.md": false,
-		"capture/../internal/gate/gate.go":           false,
-		"capture//doubled.md":                        false,
+		"capture/learnings.md":                        true,
+		"capture/retros/reduced-gate-phase-set.md":    true,
+		"decisions/craft-research.md":                 true,
+		"decisions/assets/craft-research-research.md": true,
+		"specs/reduced-gate-phase-set/spec.md":        true,
+		"specs/reduced-gate-phase-set/tickets/t.md":   true,
+		"capture-old/x.md":                            false,
+		"decisions-old/x.md":                          false,
+		"specs-old/x.md":                              false,
+		"captured/x.md":                               false,
+		"vendor/capture/x.md":                         false,
+		"../capture/x.md":                             false,
+		"/home/devuser/workspace/bench/capture/x.md":  false,
+		"capture/../internal/gate/gate.go":            false,
+		"capture//doubled.md":                         false,
 	}
 	for path, want := range member {
 		if got := scope.Member(path); got != want {

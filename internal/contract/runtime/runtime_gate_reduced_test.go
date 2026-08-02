@@ -30,7 +30,7 @@ func TestReducedRunAnnouncesSkippedPhases(t *testing.T) {
 	contract.NoteContractFailure(t, "reduced-run announcement contract failed")
 	root, f, env, bench := seededReducedGateFixture(t, "")
 
-	writeReducedFixtureFile(t, root, "ROADMAP.md", "capture-only edit\n", 0o644)
+	writeReducedFixtureFile(t, root, "decisions/probe.md", "decision-only edit\n", 0o644)
 	probe := f.RunEnvSpec(env, bench, "gate-run", root)
 	probe.RequireExit(0)
 

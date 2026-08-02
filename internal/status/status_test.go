@@ -164,7 +164,7 @@ func TestStaleGateDetailActionCurrentTreeNoneFailsClosed(t *testing.T) {
 	}
 }
 
-// The board's capture-only softening and the gate's reduced-run declaration are one fact,
+// The board's reduced-scope softening and the gate's reduced-run declaration are one fact,
 // so the samples come from the declaration rather than from a list restated here: a path
 // the declaration carries softens, one it does not falls through to the strong stale row,
 // and a mixed diff fails closed. A private allowlist answering the question inside this
@@ -183,7 +183,7 @@ func TestStaleSofteningRoutesThroughDeclaration(t *testing.T) {
 	}
 	for _, path := range declared {
 		detail, action := staleGateDetailAction(root, baseTree, treeOf(t, root, withFiles(base, path)))
-		if detail != "stale (capture-only drift)" || action != "re-run when convenient" {
+		if detail != "stale (reduced-scope drift)" || action != "re-run when convenient" {
 			t.Errorf("drift in declared %q = (%q, %q), want the softened row", path, detail, action)
 		}
 	}
