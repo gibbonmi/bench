@@ -41,5 +41,5 @@ records in tests; nothing yet emits one.
 | PC2a | serialize the skipped set as names only, dropping the evidence | `TestPartialVerdictRoundTrips` | write a partial record, load it, compare the loaded partition field by field |
 | PC2b | validate the evidence map's shape without cross-checking it against the skipped set | `TestPartialVerdictRequiresEvidencePerSkip` | write a partial record listing a skip with no evidence entry, load it, expect invalid |
 | PC15 | check only `rec.Reduced` in the reuse guard | `TestPartialVerdictIsNotReusable` | write a partial green for the current tree, call `Inspect`, assert `ReusableGreen` false and the reason names the partition |
-| PS23 | validate against the reduced field set when any partial field is present | `TestMixedClassRecordRefuses` | write a record carrying both `ancestor` and the partition field, load it, expect invalid |
+| PS23 | relax the exact-field-set comparison to a subset check | `TestMixedClassRecordRefuses` | write a record carrying both `ancestor` and the partition field, load it, expect invalid (review Sp2: the earlier swap-the-expected-set mutation cannot red this owner — a mixed set matches neither class exactly under either expectation) |
 | PS24 | replace `reducedReadyFields` with the partial set | existing reduced-verdict round-trip tests | run the existing reduced-class cases unchanged |
