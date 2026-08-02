@@ -2,37 +2,35 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `7c2684b`, clean tree, 4 unpushed commits
-Spec: `specs/per-component-gate-scoping/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `ce22983` — stale, work tree `ce22983`
+Branch: `main` — HEAD `5fbb241`, clean tree, 16 unpushed commits
+Spec: `specs/per-component-gate-scoping/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged), `specs/spec-build-lifecycle-preconditions/spec.md` (Status: staged)
+Gate: green at `7630c36` — current
 
 ## State
 
-- **The `/bench-what-next` drain landed at `7c2684b`, reviewer-approved.** Capture is
-  empty: no parked ideas, no open learnings, no pending retros. The pass added FT180
-  (spec-optional route decided at shape-idea's exit), dropped the check-level
-  gate-scoping idea as already covered by the staged spec, and reworded FT113 —
-  its stale-verdict face is resolved by the shipped reduced-gate scope (`specs/`
-  is allowlisted, evidence is content-addressed), leaving only the
-  flip-counts-as-a-path and one-flip-author residuals.
-- The 16 ticket files under `specs/per-component-gate-scoping/tickets/` — authored
-  at spec staging but never committed — landed in the same gated commit.
-- Two specs sit staged and unimplemented: `specs/per-component-gate-scoping/spec.md`
-  and `specs/pre-push-guard-visibility/spec.md`. The refreshed
-  `## Recommended sequence` in `ROADMAP.md` orders the board: FT176 spec first,
-  then the two staged implementations.
-- **FT176 is the board's HIGH**: the spec-build lifecycle's preconditions deadlock
-  mid-repair runs. Its permanently-active run record (the stuck
-  `reduced-gate-phase-set` run, six registered worktrees, retained provisional
-  refs) is inert and is the fix's acceptance fixture — leave it in place.
-- Also inert: five recovery refs `bench worktree recovery` refuses because it
-  cannot prove their payloads landed. The refusal is correct.
-- Nothing has been pushed; `main` is ahead of `origin/main` (push is the
-  reviewer's call).
+- **Phase reached: `/bench-implement-spec --full` implement, wave 1 of the
+  `per-component-gate-scoping` spec build.** The lifecycle run is active at
+  subject `5fbb241`; assignments `pcgs-t1-expose` (freshness exposure) and
+  `pcgs-t2-fixture` (kit-shaped fixture root) are with write-delegates. The
+  17 tickets were normalized at `3972744` to the lifecycle parser's shape
+  (bracketed row ids, single-line path-only ownership fences).
+- A complete reference implementation of the whole spec sits on the local branch
+  `per-component-gate-scoping` (20 commits, base `acf02e8`); delegates port
+  ticket-by-ticket from its mapped commits. The 20 dirty `../bench-pcgs*`
+  worktrees are that build's leftovers — verify subsumption before cleaning.
+- **A second concurrent session builds FT176** (`spec-build-lifecycle-preconditions`)
+  in `.bench` assignment worktrees, landing per-ticket gated commits on main. Its
+  marker ticket (`pass-the-found-green-marker-as-the-expected-prior-tip`) was landed
+  by *this* session as `5fbb241` to undeadlock `spec build start`; the other
+  session's copy in worktree `f52d997e…` is stale and should be dropped. Serialize
+  gate runs and landings between the sessions.
+- Inert, leave in place: the stuck `reduced-gate-phase-set` run record and the five
+  refused recovery refs (FT176's acceptance fixtures).
+- Nothing has been pushed; push is the reviewer's call.
 
 ## Next command
 
-`/bench-write-spec` — FT176, the top line of the refreshed recommended sequence.
+`/bench-implement-spec --full specs/per-component-gate-scoping/spec.md`
 
 ## Shape
 
