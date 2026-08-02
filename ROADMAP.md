@@ -66,6 +66,21 @@ windows (before `start` or after `integrate`). Entry: `/bench-shape-idea`.
 Sources: `capture/IDEAS.md` (the three FT176 review entries), drained here;
 `capture/learnings.md` 2026-08-02, verdicted here.
 
+**FT183 (MEDIUM, decision required) — per-component-scoping review residuals:
+the unreachable reduced fallback and the unbound derivation source.** Two faces
+from the shipped per-component-gate-scoping review, one layer (`internal/gate`'s
+component scoping). First, retire the whole-changeset reduced-run path: after
+per-component scoping, `reducedInheritance` answers only for a kit root with no
+`go.mod` — a shape production never has (review S1; the comment-truth half
+landed at `7936b70`). Removal touches `reduced_run_test`'s synthetic fixture;
+the decision is whether linked-repo futures want the path kept. Second, the
+derivation-source check passes a wrong-but-derived resolver swap: it proves an
+entry is derivation-sourced but not that it binds to its NAMED derivation
+(review Sp1, disclosed in `derivation_source_test.go`'s header); closing it
+needs a design for observing which function a registry row resolves through.
+Entry: `/bench-shape-idea`. Sources: `capture/IDEAS.md` 2026-08-02, drained
+here; the per-component-gate-scoping retro, drained here.
+
 **FT171 (MEDIUM, decision required) — bound outer gate-phase concurrency
 against measured contention.** The artifact-split follow-up measured the
 `posture` package materially slower inside the fresh full gate than in its
@@ -150,6 +165,20 @@ leave non-spec work needing a repository-level owner. Decide whether the
 authoritative handoff remains singular, moves into `specs/<slug>/` for spec-backed
 work, or becomes a generated projection over per-workstream state rather than
 adding a second handoff convention by accident. Source: `capture/IDEAS.md`, drained here.
+
+The concurrent-writer clause gained a data-loss face 2026-08-02, carried as the
+capture's claim rather than re-verified fact: while one session held finished
+uncommitted work in the primary checkout, the pcgs session's landing of
+`5d67654` left the tree fully clean — the dirty paths were gone with no stash
+and no recovery ref, and the work survived only because its content was still
+in the other session's context. The claim's graduation trigger is naming what
+that landing ran and reproducing the discard through it. Until then the
+standing posture is the pcgs retro's serialization rule: two sessions sharing
+one checkout serialize on every lifecycle mutation and every landing, side-work
+belongs in a worktree even for main-branch landings, and a landing path that
+meets another writer's dirty paths refuses or sets them aside recoverably
+(FT98's primitive), never silently discards. Sources: `capture/learnings.md`
+2026-08-02, verdicted here; the per-component-gate-scoping retro, drained here.
 
 The full-run half moves `--full` orchestration from phase prose into a `bench`
 subcommand only if the decision map rules that the harness-independent
@@ -1245,8 +1274,24 @@ by nothing until a coordinator probe left the package green without content
 addressing. The coordinator half sharpens `craft-delegate`'s existing
 independent-probe line: the coordinator's probe must differ in kind from any
 the delegate ran, because a second instance of the same mutation kind is
-correlated evidence, not independent evidence. Source: `capture/learnings.md`
-2026-08-01, verdicted here.
+correlated evidence, not independent evidence. The pcgs retro adds the site
+half: probes must differ in *site* as well as kind — three coordinator swap
+probes were vacuous on the first try (a gitignored `dist/bench` in a
+snapshot-based fixture, a wrong `-run` package, a mutation outside the check's
+charter), and a vacuous probe is indistinguishable from a passing one until a
+deliberate red is shown. The charge template also carries the omission/swap
+probe-kind vocabulary explicitly, which that build's coordinator supplied by
+hand. Sources: `capture/learnings.md` 2026-08-01, verdicted in a prior run;
+the per-component-gate-scoping retro, drained here.
+
+Delegate isolation gains a backup rule from the same close: a delegate's
+transient backups live inside its own worktree under a unique name, and
+restore commands name exact files, never globs — a stale `mine/` scratchpad
+directory left by one write-delegate was swept into a later delegate's restore
+glob and clobbered four out-of-fence files, caught only by its return-time
+`git status` check. `craft-delegate`'s isolation section names worktree-local
+backup paths beside the existing cp-aside/git-show-restore pattern. Source:
+`capture/learnings.md` 2026-08-02, verdicted here.
 
 **FT165 (LOW) — fold the domain-modeling discipline into
 `/bench-shape-idea`.** Upstream candidate (mattpocock/skills,
@@ -1291,6 +1336,19 @@ abandon retry — the crash window sits between the receipt write and
 of its ownership fence; the fix lives in `internal/worktree/resume.go`, beside
 the absent-target planning fix that landed at `dfcc71d`. Source:
 `capture/IDEAS.md` 2026-08-02, drained here.
+
+**FT184 (LOW) — `bench spec build checkpoint` receipts are hand-assembled
+against an undocumented schema.** The first full lifecycle run discovered the
+row-outcome vocabulary (`passed|already-covered|not-tdd-able`) only by reading
+`receiptRows`, and `error: invalid spec build receipt` names no failing
+condition, so each invalid-receipt refusal cost an in-package debug harness.
+Two halves, one owner: a receipt generator (a `bench spec build receipt
+<assignment>`-shaped command) that derives the row set from the ticket file —
+removing the row-set-mismatch refusals paid twice in that build — and a refusal
+that names the first failed check. Priced LOW because the schema is now known
+and receipts remain mechanically assemblable; re-price if the next lifecycle
+build pays the refusal class again. Source: the per-component-gate-scoping
+retro, drained here.
 
 **FT166 (LOW) — `bench capture commit`: porcelain for the ambient capture
 set.** Commit the capture surfaces (`capture/learnings.md`, `capture/IDEAS.md`,
@@ -1351,7 +1409,7 @@ per FT99's third instance) and `TestManifestDirResolvesAgainstGradedRoot` (the
 real graded-root anchoring semantic; the mapped test graded a branch production
 never reaches). One decision closes all three.
 
-Three singles ride along. The orphaned-review-pickup signal
+Four singles ride along. The orphaned-review-pickup signal
 (`internal/status/status.go:534`, severity 9) pairs `reviews/*.md` against
 `specs/<slug>/spec.md`, and neither side of that pairing holds today: `reviews/`
 does not exist in the tree, and eight of the ten `specs/` directories carry only
@@ -1367,7 +1425,12 @@ moved from a 5 MiB to a 2 MiB read bound: closing the divergence required
 picking one number, and the slice chose the lower because `bench status`
 already applied it to the same file — fail-closed and ambient-board-neutral,
 but a 2–5 MiB journal that used to render now exits 1, a real behavior change
-to keep or reverse. One line each closes this row.
+to keep or reverse. And whether `bench commit` staging retries briefly on a
+held `.git/index.lock`: the stderr relay landed at `6d481eb` and showed the
+field failure occurs only under a lock a concurrent session holds, and a
+post-gate staging failure costs a full green run — retry, or keep fail-fast.
+Source: `capture/learnings.md` 2026-08-02, verdicted here. One line each
+closes this row.
 
 ## False greens — verdicts that credit unchecked work
 
@@ -1857,10 +1920,9 @@ The purpose-aligned implementation path is FT164 → FT173 → FT175. FT164 is a
 process precursor rather than a runtime dependency; FT173 is the one declared
 product precursor. The path adds no literal dependency edges.
 
-1. Protect the execution runway. FT176 shipped; finish the active
-   per-component-gate-scoping build (review, then promote), specify a split
-   FT164 next, then implement the already-staged FT135. Drain that frontier
-   before authoring any spec past FT164's.
+1. Protect the execution runway. FT176 and per-component-gate-scoping both
+   shipped; specify a split FT164 next, then implement the already-staged
+   FT135. Drain that frontier before authoring any spec past FT164's.
 2. Implement FT164's ticket-contract core: discover producer/consumer contracts
    at each ownership fence; bind each ticket claim to one concrete red mutation,
    its independent owner, and the exact operation sequence that proves it;
@@ -1899,5 +1961,6 @@ and FT172 are outside this critical path.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT164 ticket and repair charges, grown again here by the self-probe charge clause from the pcgs build. Every later build slices its tickets through this skill, and it blocks FT108, FT174, and FT180, so it remains the board's highest-leverage row; split it first, because one spec now has to swallow eleven clause groups from nine sources.
+1. `/bench-write-spec` — FT164 ticket and repair charges, grown again here by the probe-site and delegate-backup-isolation clauses from the pcgs retro and journal. Every later build slices its tickets through this skill, and it blocks FT108, FT174, and FT180, so it remains the board's highest-leverage row; split it first, because one spec now has to swallow a dozen clause groups from ten sources.
 2. `/bench-implement-spec` — FT135 pre-push protection at `specs/pre-push-guard-visibility/spec.md`: expose resolved-versus-guessed branch and template currency, then restore the sanctioned repair route. Drain the staged frontier before authoring any spec past FT164's.
+3. `/bench-shape-idea` — FT181 and FT183 together: both are fresh review-residual decision sets in the spec-build and gate-scoping layers, and their standing rules (run-window commit sequencing, the unreachable reduced fallback) tax every lifecycle build until ruled.
