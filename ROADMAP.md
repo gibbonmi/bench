@@ -42,59 +42,29 @@ repository-controlled bank evidence requirement makes this row active.
 
 Sources: `RR:C-05`; `RC:H-03`.
 
-**FT176 (HIGH) — the spec-build lifecycle's preconditions deadlock the runs
-that need them.** Three refusals share `internal/specbuild`'s precondition
-layer, and together they made one real build unrecoverable. First, promote's
-order: `recompose := run.Base != subject.tip`
-(`internal/specbuild/precondition.go:46`) fires on any commit to the branch
-during an active run, and every operation (`assign`, `integrate`, `review`)
-then refuses with `errRecompose` pointing at `bench spec build promote` — but
-`Promote` (`internal/specbuild/assign.go:307-318`) checks a clean review and
-released assignments *before* the recompose branch, conditions a mid-repair
-run cannot meet by construction: its review has accepted findings (that is
-what a repair round is), and its assignments cannot release because
-`integrate` itself refuses on `errRecompose`. Repair tickets must be committed
-to be assignable, and committing them is what triggers the deadlock, so the
-documented repair path cannot be walked. Observed 2026-08-01: a ten-ticket
-build with a clean three-axis review deadlocked permanently after two
-necessary commits to `main` and finished as light-path work with the candidate
-applied as a patch. Fix direction: move the recompose check ahead of the
-review and released checks, or expose recomposition as its own operation; and
-revisit whether a moved tip should block `review` at all, since a review
-grades the candidate, not the branch. Second, `abandon` sits behind the same
-gate — `bench spec build abandon <slug> --apply <fingerprint>` returns `spec
-build requires recomposition` even when it plans cleanly with a valid
-fingerprint — so a deadlocked run cannot be retired either; the escape hatch
-must never require recomposition. The permanently-`active`
-reduced-gate-phase-set run record, with its registered worktrees and
-provisional refs, is this face's live residue and its acceptance fixture.
-Third, `start` is unstartable on any branch that has completed a spec build:
-`finishStart` (`internal/specbuild/lifecycle.go:156`) passes `expected=""` to
-`authorization.Bootstrap`, which refuses any existing
-`refs/bench/green/<branch>` marker at another tip, even a benign ancestor it
-could fast-forward via the path it already has (`authorization.go:64-67`);
-nothing ever moves or retires the marker, so the only unblock is a hand-run
-`git update-ref`. Pass the existing marker as `expected` when it is an
-ancestor of the tip; keep refusing divergent markers. A ride-along in the same
-layer: the shared precondition's refusal message hardcodes `start`
-(`precondition.go:105`), which misattributed a `checkpoint` refusal and led a
-session to call parking safe when it was not. Sources: `capture/IDEAS.md`
-(two entries) and the reduced-gate-phase-set retro, drained here;
-`capture/learnings.md`, verdicted here.
-
-Staged spec: [`specs/spec-build-lifecycle-preconditions/spec.md`](specs/spec-build-lifecycle-preconditions/spec.md).
-Staging corrected three of this row's claims against the tree. The `start`
-blocker is the fresh-start run bootstrap, not the start-completion helper named
-above; promote's recomposition is preceded by three gates, not two, the third
-being the retained-promotion-evidence validation that the recovery path also
-calls; and the refusal message hardcodes `start` at two sites, not one. Staging
-also added a fourth face this row does not name: `abandon` refuses a run whose
-assignment worktree is already gone, at both the lifecycle ownership probe and
-the worktree owner's absent-path refusal, so the escape hatch is unreachable
-for exactly that state. The reduced-gate-phase-set run record named above as
-the acceptance fixture is no longer available — its body is absent from the
-specbuild state directory and its spec is retired — so the spec's fixtures are
-hermetic by reviewer ruling 2026-08-01.
+**FT181 (MEDIUM, decision required) — spec-build precondition residuals from
+the FT176 review.** Four reviewer-call faces left open by the shipped
+spec-build-lifecycle-preconditions build, all in `internal/specbuild`'s
+precondition and ownership layer. First, restart-after-terminal passes
+`run.Base` as `previousGreen` (`assign.go:223`), so a green marker advanced by
+a sibling build still refuses restart of an abandoned run — the same
+benign-marker refusal story 4 removed, surviving on the sibling path; the fix
+direction (prefer the live marker, or keep `run.Base` as anti-tamper evidence)
+is the decision. Second, liveness classifies by `Lstat` alone: a husk
+(directory present, `.git` gone) or a dangling symlink at an assignment path
+reads as `errOwnership`, fatal even for `abandon` — whether
+present-but-not-a-checkout softens to liveness is spec-level. Third, the
+pre-existing prepared-abandon exemption softens ANY ownership error, identity
+included, once a prepared abandon operation exists — narrowing it means
+classifying "registration no longer found" as liveness, the same
+classification call. Fourth, recomposition cannot replay an empty candidate
+(`No valid patches in input`), so a run whose tip moves before any checkpoint
+wedges — checkpoint, start, and abandon all refuse — and the fix is
+fast-forwarding the base rather than replaying patches; until it ships, the
+standing rule is to sequence capture and `main` commits strictly outside run
+windows (before `start` or after `integrate`). Entry: `/bench-shape-idea`.
+Sources: `capture/IDEAS.md` (the three FT176 review entries), drained here;
+`capture/learnings.md` 2026-08-02, verdicted here.
 
 **FT171 (MEDIUM, decision required) — bound outer gate-phase concurrency
 against measured contention.** The artifact-split follow-up measured the
@@ -421,6 +391,17 @@ fingerprinted discard contract summarize and authorize the generated directory
 without falling back to manual deletion. Source: the FT131 implementation retro,
 drained here.
 
+The FT176 close adds two `bench worktree clean` paper-cuts to the same
+contract, and recurs the ignored-cache face as written. The plan output has no
+stable way to extract the fingerprint — scripting it means awk over a TOON row
+whose field position shifts on multi-row plans — so the discard contract wants
+a `--fingerprint-only` plan mode or a keyed line. And the destructive limit
+refused `clean --discard-ignored --full` outright when
+`dist/.freshness-go-cache` exceeded it, leaving a manual `rm -rf` of the cache
+as the only route; the derived-cache case deserves a carve-out or a named
+override under the same size-bounded contract. Source: the
+spec-build-lifecycle-preconditions retro, drained here.
+
 **FT169 (MEDIUM) — one sanctioned worktree landing command
 owns the stale-base dance.** The gate-fastpath build hand-ran the same sequence
 Occurrences: baseline-01
@@ -502,6 +483,14 @@ concurrent writer, or an explicit statement that the main-checkout batch assumes
 a single writer plus the way to detect that it does not. FT168's oracle-scope
 question is a neighbour, not this: the blocker here is attribution, not gate
 scope. Source: `capture/learnings.md`, verdicted here.
+
+The FT176 close adds a harness-side face to the same delegation preflight: the
+Claude WorktreeCreate hook admits one active hook-created assignment per
+session, so parallel `isolation: worktree` delegate launches fail after the
+first, and the working route is a manual `bench worktree create --request
+<uuid>` per delegate. Either the limit lifts or the manual route becomes the
+documented canonical one. Source: the spec-build-lifecycle-preconditions
+retro, drained here.
 
 **FT178 (MEDIUM) — `bench worktree`'s bare verb is a human porcelain that
 traps automation and leaks on signals.** Reviewer ruling 2026-08-01: humans
@@ -1097,7 +1086,10 @@ from the precondition is the smaller fix and composes with the shipped
 reduced-phase-set mechanism; decide it together with the gate-window face so
 both surfaces share one answer. Kit edit under the `craft-synthesis`
 discipline. Sources: the 2026-07-25 learnings entry, verdicted in a prior
-drain; `capture/learnings.md` 2026-08-01, verdicted here.
+drain; `capture/learnings.md` 2026-08-01, verdicted here. The second face
+recurred across the FT176 close: `bench idea` dirtied the capture file and
+blocked the next path-scoped commit until folded into the landing. Source: the
+spec-build-lifecycle-preconditions retro, drained here.
 
 **FT138 (LOW) — instrument Bench so build economics are measurable.**
 Reviewer-priced 2026-07-25 as a nice-to-have in its current state, so it
@@ -1241,6 +1233,21 @@ vocabulary is where a cross-seam domain mismatch could be named before slicing
 starts at all; decide that owner alongside the one above. Source:
 `capture/learnings.md`, verdicted here.
 
+The per-component-gate-scoping build adds the self-probe clause, a charge-side
+duty for the same owner: the charge names the specific mutation that breaks
+the feature's central property — not a peripheral one — and requires the
+delegate to apply it to its own finished work, report the observed result, and
+add the missing row if the package stays green. Three fixture-shaped silent
+greens in that build were caught only because the charge said to run the
+mutation rather than reason about the code, and the one property no charge
+named (a slot keeps answering after its component's identity moves) was pinned
+by nothing until a coordinator probe left the package green without content
+addressing. The coordinator half sharpens `craft-delegate`'s existing
+independent-probe line: the coordinator's probe must differ in kind from any
+the delegate ran, because a second instance of the same mutation kind is
+correlated evidence, not independent evidence. Source: `capture/learnings.md`
+2026-08-01, verdicted here.
+
 **FT165 (LOW) — fold the domain-modeling discipline into
 `/bench-shape-idea`.** Upstream candidate (mattpocock/skills,
 domain-modeling): as grill tickets resolve decisions, challenge fuzzy or
@@ -1265,6 +1272,25 @@ threshold test the routing applies and how a spec-less folder interacts
 with the `bench spec` lifecycle (which currently keys on `spec.md` status).
 Kit edit under the `craft-synthesis` discipline. Source: `capture/IDEAS.md`
 2026-08-01, drained here.
+
+The lifecycle half has a live instance: five shipped light-path changes hold
+ticket-only folders under `specs/` with no `spec.md` — `bench spec history`
+returns nothing for their slugs and `bench spec retire` cannot target them, so
+the receipts are neither active specs, retained history, nor retireable state.
+The route this row decides owns their terminal disposition: either one
+existing spec reader indexes ticket-only receipts and states why they remain,
+or the light-path close removes the folder after promoting durable content —
+one owner, one policy, no second archive convention. Source:
+`capture/learnings.md` 2026-08-01, verdicted here.
+
+**FT182 (LOW) — a Planned-phase receipt over an absent target wedges the
+abandon retry.** In `bench worktree` resume, a Planned-phase in-flight receipt
+whose target is already absent returns `errStaleFingerprint` and wedges the
+abandon retry — the crash window sits between the receipt write and
+`checkpoint(Removing)`. Found by the FT176 plan-absent-target delegate as out
+of its ownership fence; the fix lives in `internal/worktree/resume.go`, beside
+the absent-target planning fix that landed at `dfcc71d`. Source:
+`capture/IDEAS.md` 2026-08-02, drained here.
 
 **FT166 (LOW) — `bench capture commit`: porcelain for the ambient capture
 set.** Commit the capture surfaces (`capture/learnings.md`, `capture/IDEAS.md`,
@@ -1410,6 +1436,17 @@ the method step 2 of `craft-tickets` currently lacks. The doc half — teaching 
 identifier form in the template — rides FT164; this row is the parser and the
 validation. Measured 2026-07-31. Source: `capture/IDEAS.md`, drained here.
 
+The format now has two demonstrated gaps and no owner. The specbuild parser
+requires acceptance rows shaped `- [ ] [ID] text` and a one-line
+comma-separated backticked `Ownership fence:`, while the `craft-tickets`
+template and the pcgs tickets as staged used `ID —` rows and wrapped prose
+fences — those parse to zero rows and garbage fences and refuse assignment,
+and 17 tickets were normalized by hand (`3972744`) before the build could
+proceed. Either the template teaches the parseable shape or `resolveTicket`
+accepts the template's shape; one of the two owns the format, decided with
+this row's parser work. Source: `capture/learnings.md` 2026-08-02, verdicted
+here.
+
 **FT153 (MEDIUM) — the canary's vacuity baseline is a collision screen, not a
 vacuity proof.** A behavior-owned fixture's EXPECT is compared against its
 contract group's empty-tree baseline, which establishes only that the string is
@@ -1446,7 +1483,9 @@ the reduced-gate-phase-set build. Add a staleness check at the
 contract-fixture seam that reds when `dist/bench` is older than any tracked
 Go source under the subject root — one stat sweep, converting an invisible
 false green into a red. Sources: `capture/IDEAS.md` and the
-reduced-gate-phase-set retro, drained here.
+reduced-gate-phase-set retro, drained here. Recurred across the FT176 close:
+freshness forced two manual rebuilds before `bench commit` would run. Source:
+the spec-build-lifecycle-preconditions retro, drained here.
 
 **FT103 (LOW) — existence-checked absence evidence: the gate half.** A
 delegate's payload slice landed with a misspelled kit-only allowlist row
@@ -1818,9 +1857,10 @@ The purpose-aligned implementation path is FT164 → FT173 → FT175. FT164 is a
 process precursor rather than a runtime dependency; FT173 is the one declared
 product precursor. The path adds no literal dependency edges.
 
-1. Protect the execution runway. Implement FT176 first, specify a split FT164
-   next, then finish the already-staged FT135 and per-component-gate-scoping
-   builds. Drain that frontier before authoring any spec past FT164's.
+1. Protect the execution runway. FT176 shipped; finish the active
+   per-component-gate-scoping build (review, then promote), specify a split
+   FT164 next, then implement the already-staged FT135. Drain that frontier
+   before authoring any spec past FT164's.
 2. Implement FT164's ticket-contract core: discover producer/consumer contracts
    at each ownership fence; bind each ticket claim to one concrete red mutation,
    its independent owner, and the exact operation sequence that proves it;
@@ -1859,6 +1899,6 @@ and FT172 are outside this critical path.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — FT176 spec-build lifecycle preconditions, staged at `specs/spec-build-lifecycle-preconditions/spec.md`: promote reaches recomposition before grading what recomposition discards, `abandon` stops requiring both the recomposition and the worktree it exists to escape, `start` fast-forwards a benign ancestor green marker, and a refusal names the operation it refused.
-2. `/bench-write-spec` — FT164 ticket and repair charges, reviewer-emphasized 2026-08-01 and grown here by the contract-discovery step, the consumer-side dual, and a second flagged `craft-spec` clause. Every later build slices its tickets through this skill, and it blocks FT108, FT174, and FT180, so it is the board's highest-leverage row; split it first, because one spec now has to swallow ten clause groups from eight sources.
-3. `/bench-implement-spec` — the rest of the staged frontier: FT135 pre-push protection at `specs/pre-push-guard-visibility/spec.md` (expose resolved-versus-guessed branch and template currency, then restore the sanctioned repair route), then per-component-gate-scoping at `specs/per-component-gate-scoping/spec.md` (per-component skip predicates and attested build reuse). Drain the frontier before authoring any spec past FT164's.
+1. `/bench-review-implementation` — per-component-gate-scoping, the active spec build at `specs/per-component-gate-scoping/spec.md`: the run's own next operation is `bench spec build review`, and a clean review unlocks `promote`. Finish the in-flight lifecycle before starting anything else.
+2. `/bench-write-spec` — FT164 ticket and repair charges, grown again here by the self-probe charge clause from the pcgs build. Every later build slices its tickets through this skill, and it blocks FT108, FT174, and FT180, so it remains the board's highest-leverage row; split it first, because one spec now has to swallow eleven clause groups from nine sources.
+3. `/bench-implement-spec` — FT135 pre-push protection at `specs/pre-push-guard-visibility/spec.md`: expose resolved-versus-guessed branch and template currency, then restore the sanctioned repair route. Drain the staged frontier before authoring any spec past FT164's.
