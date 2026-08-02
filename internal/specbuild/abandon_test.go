@@ -6,11 +6,219 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
+
+const ownershipRefusal = "spec build assignment ownership does not match durable state"
+
+// absentWorktree deletes the fixture's unreleased assignment checkout while the run
+// record and the worktree registration still name it, and counts the owner calls the
+// resulting cleanup makes.
+func absentWorktree(t *testing.T, fixture checkpointFixture) (checkpointFixture, *abandonOwner) {
+	t.Helper()
+	owner := &abandonOwner{}
+	fixture.service.worktrees = owner
+	if err := os.RemoveAll(fixture.assigned.Path); err != nil {
+		t.Fatalf("remove assignment worktree: %v", err)
+	}
+	return fixture, owner
+}
+
+func TestAbandonPlansForRemovedWorktree(t *testing.T) {
+	fixture, _ := absentWorktree(t, newCheckpointFixture(t))
+	plan, err := fixture.service.Abandon(t.Context(), "build demo")
+	if err != nil {
+		t.Fatalf("Abandon: %v", err)
+	}
+	if len(plan.Worktrees) != 1 || plan.Worktrees[0].ID != fixture.assigned.ID || plan.Worktrees[0].Path != fixture.assigned.Path {
+		t.Fatalf("planned worktrees = %#v", plan.Worktrees)
+	}
+}
+
+func TestAbandonAppliesForRemovedWorktree(t *testing.T) {
+	fixture, owner := absentWorktree(t, newCheckpointFixture(t))
+	plan, err := fixture.service.Abandon(t.Context(), "build demo")
+	if err != nil {
+		t.Fatalf("Abandon: %v", err)
+	}
+	status, err := fixture.service.ApplyAbandon(t.Context(), "build demo", plan.Fingerprint)
+	if err != nil || status.State != "terminal" || owner.applies != 1 {
+		t.Fatalf("ApplyAbandon status=%#v err=%v apply calls=%d", status, err, owner.applies)
+	}
+	if run := loadRun(t, fixture.service); !run.Terminal {
+		t.Fatalf("removed-worktree terminal evidence = %#v", run)
+	}
+}
+
+func TestRemovedWorktreeRecoveryRefsSurvive(t *testing.T) {
+	fixture := newCheckpointFixture(t)
+	fixture.service.worktrees = &abandonOwner{}
+	run := loadRun(t, fixture.service)
+	_, stored, ok := assignmentFor(run, fixture.assigned.ID)
+	if !ok {
+		t.Fatal("missing assignment")
+	}
+	owned, found, err := intent.FindAssignmentByRequest(fixture.root, stored.OwnerRequest)
+	if err != nil || !found {
+		t.Fatalf("owned assignment: found=%v err=%v", found, err)
+	}
+	ref := intent.RecoveryRefPrefix(owned.OwnerID, owned.ID) + "payload"
+	git(t, fixture.root, "update-ref", ref, "HEAD")
+	object := git(t, fixture.root, "rev-parse", ref)
+	if err := os.RemoveAll(fixture.assigned.Path); err != nil {
+		t.Fatalf("remove assignment worktree: %v", err)
+	}
+	plan, err := fixture.service.Abandon(t.Context(), "build demo")
+	if err != nil {
+		t.Fatalf("Abandon: %v", err)
+	}
+	if want := (AbandonmentRef{Name: ref, Object: object}); len(plan.RecoveryRefs) != 1 || plan.RecoveryRefs[0] != want {
+		t.Fatalf("planned recovery refs = %#v, want %#v", plan.RecoveryRefs, want)
+	}
+	if _, err := fixture.service.ApplyAbandon(t.Context(), "build demo", plan.Fingerprint); err != nil {
+		t.Fatalf("ApplyAbandon: %v", err)
+	}
+	if got := git(t, fixture.root, "rev-parse", ref); got != object {
+		t.Fatalf("recovery ref %s = %q after abandonment, want %q", ref, got, object)
+	}
+}
+
+func TestAbandonStillRefusesForgedAssignmentIdentity(t *testing.T) {
+	for _, test := range []struct {
+		name  string
+		forge func(first, second *assignment)
+	}{
+		{"duplicate id", func(first, second *assignment) { second.ID = first.ID }},
+		{"duplicate path", func(first, second *assignment) { second.Path = first.Path }},
+		{"duplicate owner request", func(first, second *assignment) { second.OwnerRequest = first.OwnerRequest }},
+		{"owner request digest", func(first, _ *assignment) { first.OwnerRequest = digest("forged request") }},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			_, service, owner, plan := twoAssignmentAbandonFixture(t, false)
+			run := loadRun(t, service)
+			keys := make([]string, 0, len(run.Assignments))
+			for key := range run.Assignments {
+				keys = append(keys, key)
+			}
+			sort.Strings(keys)
+			if len(keys) != 2 {
+				t.Fatalf("assignment keys = %#v", keys)
+			}
+			first, second := run.Assignments[keys[0]], run.Assignments[keys[1]]
+			test.forge(&first, &second)
+			run.Assignments[keys[0]], run.Assignments[keys[1]] = first, second
+			saveRun(t, service, run)
+			if _, err := service.Abandon(t.Context(), "build demo"); err == nil || !strings.Contains(err.Error(), ownershipRefusal) {
+				t.Fatalf("Abandon on forged %s = %v, want the ownership refusal", test.name, err)
+			}
+			if _, err := service.ApplyAbandon(t.Context(), "build demo", plan.Fingerprint); err == nil || !strings.Contains(err.Error(), ownershipRefusal) {
+				t.Fatalf("ApplyAbandon on forged %s = %v, want the ownership refusal", test.name, err)
+			}
+			if owner.applies != 0 {
+				t.Fatalf("forged %s reached apply: %d", test.name, owner.applies)
+			}
+		})
+	}
+}
+
+func TestAbandonRefusesForeignAssignmentCheckout(t *testing.T) {
+	fixture, owner := absentWorktree(t, newCheckpointFixture(t))
+	stranger := repo(t)
+	if err := os.Rename(stranger, fixture.assigned.Path); err != nil {
+		t.Fatalf("plant a stranger checkout: %v", err)
+	}
+	if _, err := fixture.service.Abandon(t.Context(), "build demo"); err == nil || !strings.Contains(err.Error(), ownershipRefusal) {
+		t.Fatalf("Abandon over a foreign checkout = %v, want the ownership refusal", err)
+	}
+	if owner.plans != 0 {
+		t.Fatalf("foreign checkout reached the owner plan: %d", owner.plans)
+	}
+}
+
+// TestNonAbandonMutationsStillRefuseAbsentWorktree pins that the liveness exemption is
+// scoped to abandon: it walks the production mutation list itself, so a mutation added
+// later without a matching invocation here fails loudly instead of silently inheriting
+// the right to write into a checkout that is gone.
+func TestNonAbandonMutationsStillRefuseAbsentWorktree(t *testing.T) {
+	invoke := map[mutation]func(t *testing.T) error{
+		mutationStart: func(t *testing.T) error {
+			fixture, _ := absentWorktree(t, newCheckpointFixture(t))
+			_, err := fixture.service.Start(t.Context(), "build demo")
+			return err
+		},
+		mutationAssign: func(t *testing.T) error {
+			fixture, _ := absentWorktree(t, newCheckpointFixture(t))
+			_, _, err := fixture.service.Assign(t.Context(), "build demo", "one.md", "absent worktree request")
+			return err
+		},
+		mutationCheckpoint: func(t *testing.T) error {
+			fixture, _ := absentWorktree(t, newCheckpointFixture(t))
+			_, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n"))
+			return err
+		},
+		mutationIntegrate: func(t *testing.T) error {
+			fixture, _ := absentWorktree(t, checkpointedReleaseFixture(t))
+			_, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID)
+			return err
+		},
+		mutationReview: func(t *testing.T) error {
+			fixture, _ := absentWorktree(t, newCheckpointFixture(t))
+			run := loadRun(t, fixture.service)
+			receipt := reviewReceipt{Version: 1, Run: run.Run, Candidate: run.CandidateTip, Axes: []reviewAxis{{Axis: "Standards"}, {Axis: "Spec"}, {Axis: "Coverage"}}}
+			_, err := fixture.service.Review(t.Context(), "build demo", writeReviewReceipt(t, receipt))
+			return err
+		},
+		mutationPromote: func(t *testing.T) error {
+			fixture, _ := absentWorktree(t, newCheckpointFixture(t))
+			_, err := fixture.service.Promote(t.Context(), "build demo")
+			return err
+		},
+	}
+	for _, op := range lifecycleMutations {
+		if op == mutationAbandon {
+			continue
+		}
+		fn, ok := invoke[op]
+		if !ok {
+			t.Fatalf("no absent-worktree invocation wired for mutation %q", op)
+		}
+		t.Run(string(op), func(t *testing.T) {
+			if err := fn(t); err == nil || !strings.Contains(err.Error(), ownershipRefusal) {
+				t.Fatalf("%s with an absent assignment worktree = %v, want the ownership refusal", op, err)
+			}
+		})
+	}
+}
+
+func TestRemovedWorktreeWithHostilePathIsPlannedAndApplied(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("BENCH_HOME", filepath.Join(home, "a b*c"))
+	sibling := filepath.Join(home, "a bXc", "worktrees", "neighbour")
+	write(t, filepath.Join(sibling, "keep.txt"), "sibling payload\n")
+	fixture, owner := absentWorktree(t, newCheckpointFixture(t))
+	if !strings.Contains(fixture.assigned.Path, "a b*c") {
+		t.Fatalf("assignment path = %q, want the hostile pool component", fixture.assigned.Path)
+	}
+	plan, err := fixture.service.Abandon(t.Context(), "build demo")
+	if err != nil {
+		t.Fatalf("Abandon: %v", err)
+	}
+	if len(plan.Worktrees) != 1 || plan.Worktrees[0].Path != fixture.assigned.Path {
+		t.Fatalf("planned worktrees = %#v", plan.Worktrees)
+	}
+	status, err := fixture.service.ApplyAbandon(t.Context(), "build demo", plan.Fingerprint)
+	if err != nil || status.State != "terminal" || owner.applies != 1 {
+		t.Fatalf("ApplyAbandon status=%#v err=%v apply calls=%d", status, err, owner.applies)
+	}
+	if _, err := os.Stat(filepath.Join(sibling, "keep.txt")); err != nil {
+		t.Fatalf("glob-sibling worktree was touched: %v", err)
+	}
+}
 
 func TestAbandonPlansWithoutMutationAndRecoversDirtyAssignment(t *testing.T) {
 	fixture := newCheckpointFixture(t)

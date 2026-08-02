@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
@@ -68,7 +69,7 @@ func (s *Service) preconditions(op mutation, slug, specPath string, run *record,
 	if !refAt(s.root, run.Candidate, run.CandidateTip) {
 		return buildSubject{}, errors.New("spec build candidate no longer matches durable tip")
 	}
-	if err := s.ownedAssignments(run); err != nil {
+	if err := s.ownedAssignments(run, op); err != nil {
 		abandon, found := s.operation(*run, "abandon", "apply")
 		if op != mutationAbandon || !found || abandon.State != "prepared" || abandon.Result == "" {
 			return buildSubject{}, err
@@ -127,11 +128,22 @@ func workingSubject(root string, op mutation) (string, string, error) {
 	return branch, tip, nil
 }
 
-func (s *Service) ownedAssignments(run *record) error {
+var (
+	errOwnership = errors.New("spec build assignment ownership does not match durable state")
+	// errAbsentCheckout marks the one ownership fault abandon may proceed through.
+	errAbsentCheckout = errors.New("spec build assignment checkout is absent")
+)
+
+// ownedAssignments refuses op unless every recorded assignment still matches the
+// ownership the repository itself holds. Identity — the uniqueness of ID, path, and
+// owner-request, the digest, and the resolved assignment's agreement with the record —
+// binds every operation, because softening it would let a hand-edited record drive
+// cleanup. Liveness is the checkout on disk, and only abandon proceeds without it.
+func (s *Service) ownedAssignments(run *record, op mutation) error {
 	seenIDs, seenPaths, seenRequests := map[string]bool{}, map[string]bool{}, map[string]bool{}
 	for key, assigned := range run.Assignments {
 		if key == "" || key != assigned.Request || assigned.ID == "" || assigned.Path == "" || assigned.OwnerRequest != digest(assigned.Request) || seenIDs[assigned.ID] || seenPaths[assigned.Path] || seenRequests[assigned.OwnerRequest] {
-			return errors.New("spec build assignment ownership does not match durable state")
+			return errOwnership
 		}
 		seenIDs[assigned.ID], seenPaths[assigned.Path], seenRequests[assigned.OwnerRequest] = true, true, true
 		if assigned.Released {
@@ -139,16 +151,38 @@ func (s *Service) ownedAssignments(run *record) error {
 		}
 		owned, found, err := intent.FindAssignmentByRequest(s.root, assigned.OwnerRequest)
 		if err != nil || !found || owned.ID != assigned.ID || filepath.Clean(owned.Worktree) != filepath.Clean(assigned.Path) {
-			return errors.New("spec build assignment ownership does not match durable state")
+			return errOwnership
 		}
-		common, err := benchgit.Output("-C", assigned.Path, "rev-parse", "--path-format=absolute", "--git-common-dir")
-		if err != nil {
-			return errors.New("spec build assignment ownership does not match durable state")
+		// A checkout that is gone is the exact state abandon exists to clean up, and the
+		// recovery refs its plan enumerates hold the payload, so nothing is lost by
+		// proceeding. Every other mutation writes into that checkout and must refuse.
+		if err := s.liveCheckout(assigned.Path); err != nil {
+			if op != mutationAbandon || !errors.Is(err, errAbsentCheckout) {
+				return errOwnership
+			}
 		}
-		rootCommon, err := benchgit.Output("-C", s.root, "rev-parse", "--path-format=absolute", "--git-common-dir")
-		if err != nil || filepath.Clean(common) != filepath.Clean(rootCommon) {
-			return errors.New("spec build assignment ownership does not match durable state")
+	}
+	return nil
+}
+
+// liveCheckout reports whether path is still a checkout of this repository, separating
+// an absent path from a stranger's checkout. The repository probe cannot make that
+// distinction — it fails identically for both — so the path's own existence decides
+// first, and a present-but-foreign path is never mistaken for a removed one.
+func (s *Service) liveCheckout(path string) error {
+	if _, err := os.Lstat(path); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return errAbsentCheckout
 		}
+		return errOwnership
+	}
+	common, err := benchgit.Output("-C", path, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	if err != nil {
+		return errOwnership
+	}
+	rootCommon, err := benchgit.Output("-C", s.root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	if err != nil || filepath.Clean(common) != filepath.Clean(rootCommon) {
+		return errOwnership
 	}
 	return nil
 }
@@ -216,7 +250,7 @@ func (s *Service) Abandon(ctx context.Context, slug string) (AbandonmentPlan, er
 		}
 		return AbandonmentPlan{}, err
 	}
-	if err := s.ownedAssignments(&run); err != nil {
+	if err := s.ownedAssignments(&run, mutationAbandon); err != nil {
 		return AbandonmentPlan{}, err
 	}
 	return s.abandonmentPlan(ctx, run)
