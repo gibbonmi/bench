@@ -1932,7 +1932,10 @@ recommended table is sequencing advice.
 |---|---|---|
 | FT71 | FT169 | The event schema should record the settled landing and recovery lifecycle rather than version an interim one. |
 | FT100 | FT89 | Cut prose after the correctness and coherence pass establishes which guidance is still authoritative. |
-| FT108 | FT164 | Define the refactor lane on the settled expand–migrate–contract and gate-cadence rules. |
+| FT107 | FT158 | The cross-harness refute pass is the only demonstrated falsification for a wide always-loaded prose diff; make it standing before the batch lands. |
+| FT107 | FT156 | No fixture proves a section-scoped `.bench/BENCH.md` anchor — the exact surface the batch edits; rule the anchor mechanism first. |
+| FT108 | FT164, FT89 | Define the refactor lane on the settled expand–migrate–contract and gate-cadence rules; FT89 first single-sources the skills index the new skill must join. |
+| FT111 | FT179 | FT179 reopens FT111's edit-in-place-only ruling on an order-larger measured count; land them as one `craft-comments`/`craft-review` visit. |
 | FT172 | FT106 | Reuse the document-claim probe for semantic roadmap claims instead of designing a second checker. |
 | FT162 | FT169 | Build full-run subject resolution on the settled landing primitive. |
 | FT166 | FT98, FT113 | The porcelain composes over the shipped reduced-gate path allowlist; recoverable set-aside then defines the commit command's smallest sound contract. |
@@ -1942,56 +1945,84 @@ recommended table is sequencing advice.
 | FT175 | FT173 | The ledger's read surface is AXI; settle one derivation per principle before adding a consumer that needs all ten. |
 | FT180 | FT164 | The spec-less route lands entirely on tickets, so settle the ticket-charge conventions the route will scaffold first. |
 
-### FT175 delivery path
+### Goal tracks: guidance prose and the claim ledger
 
-The purpose-aligned implementation path is FT164 → FT173 → FT175. FT164 is a
-process precursor rather than a runtime dependency; FT173 is the one declared
-product precursor. The path adds no literal dependency edges.
+Two reviewer goals share one path: implement the guidance-prose backlog, and
+ship `bench cite` (FT175) on an AXI-compliant CLI (FT173). FT164 is the
+process precursor for both — every later build slices its tickets through
+`craft-tickets`, and its skill half is the densest prose row. The payoff
+facts shaping the order, verified in-tree 2026-08-02 with an independent
+mid-tier refutation pass: `.agents/` and `.bench/BENCH.md` sit outside the
+gate's reduced scope, so every separately-landed prose diff pays a full gate
+— rows batch on the shared full gate, not just shared files; anchor-pinned
+files couple prose diffs to conformance fixture updates (`craft-delegate` 14
+anchors, `bench-implement-spec.md` 35+, `.bench/BENCH.md` 17); and prose
+compounds per-session while the AXI foundation compounds per-CLI-change, so
+the prose batch outranks the foundation only if it lands whole and
+falsifiable — otherwise the foundation goes first while FT141 and FT158
+build.
 
-1. Protect the execution runway. FT176 and per-component-gate-scoping both
-   shipped; specify a split FT164 next, then implement the already-staged
-   FT135. Drain that frontier before authoring any spec past FT164's.
-2. Implement FT164's ticket-contract core: discover producer/consumer contracts
-   at each ownership fence; bind each ticket claim to one concrete red mutation,
-   its independent owner, and the exact operation sequence that proves it;
-   re-derive claims after earlier tickets land; assert consumers against the real
-   producer and whole enumerated family; and name which command authors evidence
-   and which phase consumes it. Move the specialized model-comparison,
-   inventory-currency, shared-cache, and other repair riders to a follow-up unless
-   the spec audit proves they belong in the core.
-3. Implement FT173 in three independently reviewed specs. The foundation spec adds
-   AXI principles 8–10 to `craft-cli`, keeps AXI scoped to query surfaces,
-   consolidates policy-aware truncation without changing emitted bytes, avoids
-   double truncation, and extracts aggregate mechanics only where two real
-   derivations exist. The contextual-disclosure spec is the narrow exception to
-   the byte-preservation constraint: it adds one `help[]` owner, migrates the AXI
-   query surfaces in green batches, and updates their pinned output contracts. A
-   Git-inspection spec then extends the existing `bench diff` owner into one
-   coherent status-and-diff snapshot, including untracked paths and drift-safe
-   reads, so ordinary orientation takes one call and body review takes at most a
-   second. FT173 remains open until all three land.
-4. Shape FT175's three decisions while FT173 is building, but do not write the
-   FT175 spec until FT173's interfaces are settled. The recommended rulings keep
-   the gate structural rather than interpretive; require acquired evidence for
-   every assessment, with verified spans for support/contradiction and recorded
-   query scope plus outcome for absence/insufficiency; and retain an append-only
-   history whose claims become active, superseded, or explicitly retired rather
-   than draining the ledger to zero. These remain reviewer decisions until the
-   FT175 map closes them.
-5. Build FT175 as vertical green slices: file evidence plus strict store and
-   `claim show/check`; assessments with spans and absence scopes; command evidence
-   plus replay and staleness; supersede/retire reachability; the complete AXI
-   list/detail/status surface using FT173's owners; deterministic gate and ambient
-   status integration; then one local contradiction as the dogfood proof.
+1. Front-load one decision session: FT164's four flagged spec calls, FT175's
+   three ledger decisions (gate scope, evidence/span requirements, retirement
+   rule — all FT173-independent), FT156's anchor-mechanism ruling, FT144's
+   one-decision-both-phases call, FT181 + FT183, and FT173's principle-9
+   byte-relaxation. Reviewer latency is the binding constraint: grills
+   serialize on the reviewer while builds parallelize on agents, and one
+   session unblocks roughly six build phases.
+2. Implement FT164 (staged spec), then FT135 (staged) — FT135 serves neither
+   goal, but draining the staged frontier before authoring any spec past
+   FT164's is the standing runway instruction; deferring it is an explicit
+   reviewer override, never a silent skip. FT141 builds in parallel where
+   capacity allows: it is Go, prose-independent, and it unblocks FT107
+   *whole* — splitting the fix-loop clause out would spend a second spec,
+   review, and full gate on the same anchor-pinned surface, so the batch
+   waits for FT141 instead.
+3. Land the prose track's falsification before its wide batch: FT158 first
+   (with FT156 unruled and FT170 unproven, the cross-harness refute pass is
+   the only demonstrated defect-finder for prose diffs), plus FT156's
+   mechanism build if its grill rules for one. Then prose batch 1: FT107
+   whole + FT89 + FT99 + FT144, with FT102, FT112, and FT165 riding on the
+   shared gate — disjoint files make them safer to batch, and FT165 early
+   improves every later grill. Then FT179 + FT111 as one visit, then FT108.
+4. Implement FT173 in three independently reviewed specs, foundation first:
+   AXI principles 8–10 into `craft-cli`, AXI kept scoped to query surfaces,
+   truncation consolidated onto `sanitize.Preview` and aggregate mechanics
+   extracted only where two real derivations exist, all without changing
+   emitted bytes — medium, guarded by the pinned contract suite. Contextual
+   disclosure (`help[]`) second: large and byte-changing (zero prior art; it
+   migrates the AXI query surfaces in green batches and rewrites their
+   pinned output contracts), shippable only under the principle-9 ruling
+   from the decision session. Git-inspection last or in parallel: it extends
+   the existing `bench diff` owner into one coherent status-and-diff
+   snapshot (untracked paths, pre-computed counts, drift-safe reads), but
+   `bench diff` is not a ledger surface — landing it before `help[]` would
+   rewrite the pinned diff contracts twice. FT173 remains open until all
+   three land.
+5. Shape FT175's decision map any time; write the FT175 spec once the owners
+   it consumes — truncation, aggregates, `help[]` — are settled, then build
+   it as vertical green slices: file evidence plus strict store and
+   `claim show/check`; assessments with spans and absence scopes; command
+   evidence plus replay and staleness; supersede/retire reachability; the
+   complete AXI list/detail/status surface using FT173's owners;
+   deterministic gate and ambient status integration; then one local
+   contradiction as the dogfood proof. Open ruling for the decision session:
+   whether "interfaces settled" means the FT173 row closed or only the
+   consumed owners — owners-consumed starts the FT175 spec one spec earlier
+   and leaves git-inspection off the critical path.
+6. FT100 grills and builds last, after FT89 establishes which guidance is
+   authoritative and past FT170's 2026-08-12 revisit.
 
-Fold FT99's cited-command or uncertainty obligation, FT106's verified-document
-vocabulary, and FT162's exact subject binding into the FT175 spec instead of
-building them as prerequisites. FT133 and FT141 remain parallel evidence
-hardening; FT71 stays deferred behind its existing FT169 recommendation. FT156
-and FT172 are outside this critical path.
+Fold FT106's verified-document vocabulary and FT162's exact subject binding
+into the FT175 spec instead of building them as prerequisites; FT99 rides
+prose batch 1, and its uncertainty obligation folds into the FT175 spec
+where claims consume it. FT133 remains parallel evidence hardening; FT71
+stays deferred behind its existing FT169 recommendation. FT172 is outside
+this critical path; FT156 joins the decision session because no fixture
+proves a section-scoped `.bench/BENCH.md` anchor — the exact surface the
+prose batch edits.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT164 ticket and repair charges, grown again here by the probe-site and delegate-backup-isolation clauses from the pcgs retro and journal. Every later build slices its tickets through this skill, and it blocks FT108, FT174, and FT180, so it remains the board's highest-leverage row; split it first, because one spec now has to swallow a dozen clause groups from ten sources.
-2. `/bench-implement-spec` — FT135 pre-push protection at `specs/pre-push-guard-visibility/spec.md`: expose resolved-versus-guessed branch and template currency, then restore the sanctioned repair route. Drain the staged frontier before authoring any spec past FT164's.
-3. `/bench-shape-idea` — FT181 and FT183 together: both are fresh review-residual decision sets in the spec-build and gate-scoping layers, and their standing rules (run-window commit sequencing, the unreachable reduced fallback) tax every lifecycle build until ruled.
+1. `/bench-shape-idea` — the front-loaded decision session: FT164's four flagged spec calls, FT175's three ledger decisions, FT156's anchor mechanism, FT144, FT181 + FT183, and FT173's principle-9 relaxation. Reviewer latency is the binding constraint, and one session unblocks roughly six build phases across both goal tracks.
+2. `/bench-implement-spec` — FT164 at `specs/ft164-ticket-contracts/spec.md`, both goal tracks' precursor; then FT135 at `specs/pre-push-guard-visibility/spec.md` to drain the staged frontier before any spec past FT164's is authored.
+3. `/bench-write-spec` — FT141 (prose-independent Go, parallel-capable) and FT158 (the standing falsification pass), the two gates on prose batch 1 per the goal-tracks path above.
