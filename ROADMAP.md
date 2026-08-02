@@ -82,6 +82,20 @@ session to call parking safe when it was not. Sources: `capture/IDEAS.md`
 (two entries) and the reduced-gate-phase-set retro, drained here;
 `capture/learnings.md`, verdicted here.
 
+Staged spec: [`specs/spec-build-lifecycle-preconditions/spec.md`](specs/spec-build-lifecycle-preconditions/spec.md).
+Staging corrected three of this row's claims against the tree. The `start`
+blocker is the fresh-start run bootstrap, not the start-completion helper named
+above; promote's recomposition is preceded by three gates, not two, the third
+being the retained-promotion-evidence validation that the recovery path also
+calls; and the refusal message hardcodes `start` at two sites, not one. Staging
+also added a fourth face this row does not name: `abandon` refuses a run whose
+assignment worktree is already gone, at both the lifecycle ownership probe and
+the worktree owner's absent-path refusal, so the escape hatch is unreachable
+for exactly that state. The reduced-gate-phase-set run record named above as
+the acceptance fixture is no longer available — its body is absent from the
+specbuild state directory and its spec is retired — so the spec's fixtures are
+hermetic by reviewer ruling 2026-08-01.
+
 **FT171 (MEDIUM, decision required) — bound outer gate-phase concurrency
 against measured contention.** The artifact-split follow-up measured the
 `posture` package materially slower inside the fresh full gate than in its
@@ -1756,6 +1770,6 @@ recommended table is sequencing advice.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT176 spec-build lifecycle preconditions: promote's check order deadlocks the mid-repair runs recomposition exists for, `abandon` sits behind the lock it is meant to escape, and `start` refuses its own stale green marker; a reproduced deadlock left a permanently-active run record that is the fix's acceptance fixture.
+1. `/bench-implement-spec` — FT176 spec-build lifecycle preconditions, staged at `specs/spec-build-lifecycle-preconditions/spec.md`: promote reaches recomposition before grading what recomposition discards, `abandon` stops requiring both the recomposition and the worktree it exists to escape, `start` fast-forwards a benign ancestor green marker, and a refusal names the operation it refused.
 2. `/bench-implement-spec` — FT135 pre-push protection, staged at `specs/pre-push-guard-visibility/spec.md`: expose resolved-versus-guessed branch and template currency, then restore the sanctioned repair route.
 3. `/bench-implement-spec` — per-component-gate-scoping, staged at `specs/per-component-gate-scoping/spec.md`: per-component skip predicates and attested build reuse, reviewer-decided 2026-08-01; drain the staged frontier before authoring the next spec.
