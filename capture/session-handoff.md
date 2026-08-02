@@ -2,9 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `e67800d`, 1 dirty path, 25 unpushed commits
+Branch: `main` — HEAD `17af7e4`, 1 dirty path, 1 unpushed commit
 Spec: `specs/per-component-gate-scoping/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `b4e60cc` — stale, work tree `0d08dc4`
+Gate: green at `25a558c` — stale, work tree `0d7abbd`
 
 ## State
 
@@ -33,7 +33,7 @@ Gate: green at `b4e60cc` — stale, work tree `0d08dc4`
 
 ## Next command
 
-`/bench-what-next`
+`/bench-what-next` — the board's leading invocable signal (`drain`).
 
 ## Shape
 
