@@ -2,9 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `6255b6a`, clean tree, 1 unpushed commit
+Branch: `main` — HEAD `43e2ccf`, clean tree, 2 unpushed commits
 Spec: `specs/ft164-ticket-contracts/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `089bc36` — stale, work tree `089bc36`
+Gate: green at `473c2a9` — current
 
 ## State
 
@@ -36,7 +36,7 @@ Gate: green at `089bc36` — stale, work tree `089bc36`
 
 ## Next command
 
-`/bench-shape-idea` — the board's leading invocable signal (`decisions`).
+`/bench-what-next` — the board's leading invocable signal (`drain`).
 
 ## Shape
 
