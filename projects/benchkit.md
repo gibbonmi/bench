@@ -336,7 +336,11 @@ not hidden. `canary`'s row carries the reviewer's 2026-08-01 narrowing as its
 own accepted gap: the published binary's digest is excluded from its declared
 inputs, so two changes graded separately may land together with the canary
 never run against their combined tree. `bench gate --fresh` and the ship tier
-are what re-prove the tripwire in that case, not the reduced run.
+are what re-prove the tripwire in that case, not the reduced run. One more
+recorded residual, accepted at the build's review: the slot and attestation
+field-set slices exist for the record-class family registry only, so a field
+added to a record struct without updating its slice is unobservable — the
+registry's disjointness check cannot see a collision a stale slice hides.
 
 The **ship tier** — `bench prep-release`, maintainer-run once per release —
 carries what the dev tier deliberately does not run: the release-evidence probe

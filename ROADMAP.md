@@ -1899,6 +1899,5 @@ and FT172 are outside this critical path.
 
 ## Recommended sequence
 
-1. `/bench-review-implementation` — per-component-gate-scoping, the active spec build at `specs/per-component-gate-scoping/spec.md`: the run's own next operation is `bench spec build review`, and a clean review unlocks `promote`. Finish the in-flight lifecycle before starting anything else.
-2. `/bench-write-spec` — FT164 ticket and repair charges, grown again here by the self-probe charge clause from the pcgs build. Every later build slices its tickets through this skill, and it blocks FT108, FT174, and FT180, so it remains the board's highest-leverage row; split it first, because one spec now has to swallow eleven clause groups from nine sources.
-3. `/bench-implement-spec` — FT135 pre-push protection at `specs/pre-push-guard-visibility/spec.md`: expose resolved-versus-guessed branch and template currency, then restore the sanctioned repair route. Drain the staged frontier before authoring any spec past FT164's.
+1. `/bench-write-spec` — FT164 ticket and repair charges, grown again here by the self-probe charge clause from the pcgs build. Every later build slices its tickets through this skill, and it blocks FT108, FT174, and FT180, so it remains the board's highest-leverage row; split it first, because one spec now has to swallow eleven clause groups from nine sources.
+2. `/bench-implement-spec` — FT135 pre-push protection at `specs/pre-push-guard-visibility/spec.md`: expose resolved-versus-guessed branch and template currency, then restore the sanctioned repair route. Drain the staged frontier before authoring any spec past FT164's.
