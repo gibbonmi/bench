@@ -42,3 +42,19 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
 - **Proposed rule change:** the phase-boundary handoff write in `--full` runs
   should happen before `bench spec build start` or after promote, never
   between; candidate for the bench-implement-spec command text.
+
+## 2026-08-03 — a ticket row's named owner was never enumerated against the tree  [open]
+
+- **What happened:** FT164's teach ticket claimed a `template heading depth`
+  needle and mutation row (TT10); the delegate demonstrated the red as a
+  self-probe but landed no artifact, and three review rounds' needle↔row
+  enumerations never caught it because they keyed on registered needles, not
+  on ticket-row owners. Found only when the fence-aware fix went looking for
+  the artifact to retire.
+- **Right behavior:** verifying a ticket's done-claim includes resolving every
+  named owner in its Red-mutations table to a real artifact in the tree — the
+  same resolve-the-identifier rule craft-delegate already states for absence
+  claims.
+- **Proposed rule change:** one sentence in craft-delegate's done-claim list
+  or craft-tickets' evidence rules: a mutations-table owner that names a test
+  or check is verified by finding it, not by the delegate's demonstration.
