@@ -2,22 +2,21 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `f036402`, clean tree, 9 unpushed commits
-Spec: `specs/ft181-precondition-residuals/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `921f8c8` — current
+Branch: `main` — HEAD `0294a0a`, clean tree, 15 unpushed commits
+Spec: none active (ft181-precondition-residuals promoted and retired)
+Gate: green at `0294a0a` — current
 
 ## State
 
-- The 2026-08-03 roadmap drain removed FT183 after `bench spec history check-level-conformance-scoping` confirmed its retirement at `7546e54`; no live spec was retired. Six ideas, the tracked-file set-aside learning, and the check-level-conformance-scoping retro are fully dispositioned; both capture inboxes and the retro queue are empty.
-- FT185 owns structured `bench gate` output as an independent spec, preserving the gate-pipeline map's closed ruling that no output redesign rides the pipeline build. FT186 owns the two `internal/gate` structural refactors.
-- FT180 now owns spec-optional `$bench-implement-spec --full`; FT174 owns the complete real-ticket dependency, ownership, Red-mutations, and acceptance-ID grammar; FT98 owns the recurring tracked-file set-aside gap.
-- The retro's terminal-record work is in FT162, its repair-slice rule is in FT164, and its public-CLI cross-harness review rule is in FT158.
-- Decisions that stay closed: all rulings in the six active decision maps, including the 2026-08-03 gate-pipeline and gate-structure amendments.
-- `specs/ft181-precondition-residuals/spec.md` is reviewer-approved (2026-08-03) and ready to build. Its closed decisions: fast-forward op set is checkpoint + start on non-terminal runs only; husk bytes preserved via a new non-deleting plan action; the prepared-abandon exemption is deleted, not narrowed; all four stories opus / medium. The spec's "Existing tests this build re-scopes" list is the only authorization to edit existing tests. Two falsification passes (opus and codex sol) ran; every finding is dispositioned in the staged spec.
+- `ft181-precondition-residuals` is done end-to-end: promoted at `e11df18` (candidate a25e2803, all 27 coverage rows dispositioned, 13 review findings resolved/endorsed), spec retired at `0294a0a`, retro written to `capture/retros/ft181-precondition-residuals.md`. The FT181 roadmap row and its run-window commit-sequencing rule retired with it.
+- Kit guidance landed from the run's process findings (`2892501`, `60cb55d`): craft-tickets requires a `Contracts:` field per ticket; craft-spec gained the composition degenerate and the existing-control edge rule; craft-line makes a spec's per-story line a per-ticket ceiling; craft-delegate charges carry the fixture-and-seam inventory and focused checks only; implement-spec scales pre-build research to spec staleness.
+- Capture holds 4 parked ideas (git FIFO-gitdir upstream hang; receipt-skeleton helper; fixture-inventory generator; injected-interface composition audit) and 4 open learnings (skipped derivation steps; finding triage; process self-audit; review-receipt disposition vocabulary) plus 1 pending retro — all awaiting the `/bench-what-next` drain.
+- Decisions that stay closed: all rulings in the six active decision maps, including the 2026-08-03 gate-pipeline and gate-structure amendments; FT181's build decisions now live in the shipped code, its retained run record (`bench spec history ft181-precondition-residuals`), and the retro.
+- 15 unpushed commits on `main`; the reviewer owns the push.
 
 ## Next command
 
-`/bench-implement-spec specs/ft181-precondition-residuals/spec.md`
+`/bench-what-next`
 
 ## Shape
 
