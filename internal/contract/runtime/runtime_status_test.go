@@ -20,6 +20,7 @@ func TestRuntimeStatusContracts(t *testing.T) {
 	contract.RunParallel(t, "bench status degraded-retro contract", testRuntimeStatusDegradedRetro)
 	contract.RunParallel(t, "bench status stale-gate contract", testRuntimeStatusStaleGate)
 	contract.RunParallel(t, "bench status stale-gate drift classification contract", testRuntimeStatusStaleGateDriftClassification)
+	contract.RunParallel(t, "bench status composed partial-green contract", testRuntimeStatusComposedPartialGreen)
 	contract.RunParallel(t, "bench status fresh-green contract", testRuntimeStatusFreshGreen)
 	contract.RunParallel(t, "bench status decisions contract", testRuntimeStatusDecisions)
 	contract.RunParallel(t, "bench status unresolved-maps count contract", testRuntimeStatusUnresolvedMapsCount)

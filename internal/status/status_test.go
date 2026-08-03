@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/roadmap"
@@ -218,9 +219,8 @@ func TestLegacyReducedCacheReadsAsInvalid(t *testing.T) {
 	}
 }
 
-// A partial verdict graded only the components whose inputs moved. Over its own tree that
-// is narrow, not drifted — the same distinction the reduced row draws — and the row names
-// the skipped components so a reader cannot mistake the partition for a whole-tree green.
+// The synthetic cache keeps exact-tip narrowness observable without establishing a
+// composed green, so the status row must describe a partial verdict rather than drift.
 func TestStatusRendersAPartialVerdict(t *testing.T) {
 	root := initRepo(t)
 	tree := treeOf(t, root, map[string]string{"f.txt": "x\n"})
@@ -244,6 +244,24 @@ func TestStatusRendersAPartialVerdict(t *testing.T) {
 		if !strings.Contains(rows[0].detail, name) {
 			t.Errorf("detail = %q, want it to name skipped component %q", rows[0].detail, name)
 		}
+	}
+}
+
+func TestStatusRendersCheckOnlyPartialVerdict(t *testing.T) {
+	root := initRepo(t)
+	tree := treeOf(t, root, map[string]string{"f.txt": "x\n"})
+	writeCheckPartialGateCache(t, root, tree, "line-routing")
+
+	gv := GateVerdict(root)
+	if gv.CheckPartition == nil || !gv.Stale || gv.CachedTree != gv.WorkTree {
+		t.Fatalf("verdict = %#v, want a check-only partial verdict over the current tree", gv)
+	}
+	rows := appendGateInfo(nil, gv, root)
+	if len(rows) != 1 || !strings.Contains(rows[0].detail, "partial green") || !strings.Contains(rows[0].detail, "line-routing") {
+		t.Fatalf("rows = %#v, want a check-only partial row", rows)
+	}
+	if strings.Contains(rows[0].detail, "stale (gated tree") {
+		t.Fatalf("rows = %#v, want a partial row rather than drift", rows)
 	}
 }
 
@@ -318,6 +336,45 @@ func writePartialGateCache(t *testing.T, root, cachedTree string, skipped ...str
 		cachedTree, strings.Repeat("0", 64), recorded, executedJSON, skippedJSON, evidenceJSON)
 	path := filepath.Join(gitdir, git.GateCacheFile)
 	if err := os.WriteFile(path, []byte(record), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// writeCheckPartialGateCache installs a loader-valid check-only partition so the status
+// adapter must carry the gate inspection's check partition through to its public row.
+func writeCheckPartialGateCache(t *testing.T, root, cachedTree, inheritedName string) {
+	t.Helper()
+	gitdir := gitRun(t, root, "rev-parse", "--absolute-git-dir")
+	recorded := time.Now().UTC().Truncate(time.Second).Add(-time.Minute).Format(time.RFC3339)
+	authoredAt := time.Now().UTC().Truncate(time.Second).Add(-time.Hour).Format(time.RFC3339)
+	var executed, inherited []string
+	for _, check := range registry.Checks {
+		if !check.RunsAt(registry.Dev) {
+			continue
+		}
+		if check.Name == inheritedName {
+			inherited = append(inherited, check.Name)
+		} else {
+			executed = append(executed, check.Name)
+		}
+	}
+	executedJSON, err := json.Marshal(executed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	inheritedJSON, err := json.Marshal(inherited)
+	if err != nil {
+		t.Fatal(err)
+	}
+	evidenceJSON, err := json.Marshal(map[string]map[string]string{
+		inheritedName: {"identity": strings.Repeat("b", 64), "authored_at": authoredAt},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	record := fmt.Sprintf(`{"schema":1,"state":"ready","status":"green","tree":%q,"oracle":%q,"recorded_at":%q,"check_executed":%s,"check_inherited":%s,"check_evidence":%s}`+"\n",
+		cachedTree, strings.Repeat("0", 64), recorded, executedJSON, inheritedJSON, evidenceJSON)
+	if err := os.WriteFile(filepath.Join(gitdir, git.GateCacheFile), []byte(record), 0o600); err != nil {
 		t.Fatal(err)
 	}
 }

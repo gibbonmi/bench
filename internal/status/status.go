@@ -68,23 +68,25 @@ type Signal struct {
 
 // GateInfo is the structured gate-verdict cache read, shared by the status board and the
 // dashboard so neither re-parses `<git-dir>/bench-last-gate`. Present is false when no
-// cache file exists; Stale marks a verdict whose cached tree no longer matches the work
-// tree (or whose line is untrusted). Partition carries narrowness at component
+// cache file exists; Stale primarily marks a ready green verdict whose cached tree
+// differs from the work tree. It also marks an exact-tip non-reusable green the gate
+// cannot compose as a whole-tree verdict. Partition carries narrowness at component
 // granularity: non-nil for a partial verdict that graded only the components whose
 // inputs moved, nil for a full record. Status/CachedTree/WorkTree/Timestamp carry the raw
 // fields for a human view; the board reduces them to its severity rows.
 type GateInfo struct {
-	Present       bool
-	State         string
-	PendingStatus string
-	Status        string
-	CachedTree    string
-	WorkTree      string
-	Stale         bool
-	Partition     *gate.Partition
-	Timestamp     string
-	Reason        string
-	CacheBytes    int
+	Present        bool
+	State          string
+	PendingStatus  string
+	Status         string
+	CachedTree     string
+	WorkTree       string
+	Stale          bool
+	Partition      *gate.Partition
+	CheckPartition *gate.CheckPartition
+	Timestamp      string
+	Reason         string
+	CacheBytes     int
 }
 
 // Query controls a status read without changing the board's shared signal ordering.
@@ -205,14 +207,10 @@ func appendGateInfo(rows []row, gv GateInfo, root string) []row {
 		return append(rows, row{0, "gate", "red", "fix before commit"})
 	}
 	if gv.Stale {
-		// A partial verdict over the tree it graded is narrow, not drifted: the run
-		// graded only the components whose inputs moved, so over its own tree the gate
-		// withholds reuse for narrowness, and the stale row would report the tree
-		// against itself. The row names what was skipped so a reader cannot mistake the
-		// partition for a whole-tree green. A partial verdict whose tree has since moved
-		// is still drift, and falls through to the row below.
-		if gv.Partition != nil && gv.CachedTree == gv.WorkTree {
-			detail := fmt.Sprintf("partial green (skipped: %s)", strings.Join(skippedComponentNames(gv.Partition), ", "))
+		// An exact-tip narrow verdict stays distinct from drift even when the gate no
+		// longer composes it as a whole-tree green. A moved tree is drift instead.
+		if gv.CachedTree == gv.WorkTree && (gv.Partition != nil || gv.CheckPartition != nil) {
+			detail := partialGreenDetail(gv.Partition, gv.CheckPartition)
 			return append(rows, row{7, "gate", detail, "bench gate --fresh for a whole-tree verdict"})
 		}
 		detail, action := staleGateDetailAction(root, gv.CachedTree, gv.WorkTree)
@@ -233,7 +231,12 @@ func GateVerdict(root string) GateInfo {
 		gi.Timestamp = in.RecordedAt.Format(time.RFC3339)
 	}
 	gi.Partition = in.Partition
-	gi.Stale = in.State == gate.Ready && in.Status == "green" && !in.ReusableGreen
+	gi.CheckPartition = in.CheckPartition
+	nonReusableGreen := in.State == gate.Ready && in.Status == "green" && !in.ReusableGreen
+	gi.Stale = nonReusableGreen
+	if nonReusableGreen && in.CachedTree == in.CurrentTree && gate.ComposedGreen(root) {
+		gi.Stale = false
+	}
 	return gi
 }
 
@@ -251,13 +254,25 @@ func staleGateDetailAction(root, cachedTree, currentTree string) (detail, action
 	return "stale (reduced-scope drift)", "re-run when convenient"
 }
 
-// skippedComponentNames extracts the component names a partial verdict skipped, in the
-// order the record carries them (already strictly ascending — the gate package's own
-// invariant), for the partial row to name.
 func skippedComponentNames(p *gate.Partition) []string {
-	names := make([]string, len(p.Skipped))
-	for i, s := range p.Skipped {
-		names[i] = s.Component
+	return componentNames(p.Skipped)
+}
+
+func partialGreenDetail(partition *gate.Partition, checks *gate.CheckPartition) string {
+	var details []string
+	if partition != nil {
+		details = append(details, "skipped: "+strings.Join(skippedComponentNames(partition), ", "))
+	}
+	if checks != nil {
+		details = append(details, "inherited checks: "+strings.Join(componentNames(checks.Inherited), ", "))
+	}
+	return "partial green (" + strings.Join(details, "; ") + ")"
+}
+
+func componentNames(components []gate.ComponentSkip) []string {
+	names := make([]string, len(components))
+	for i, component := range components {
+		names[i] = component.Component
 	}
 	return names
 }

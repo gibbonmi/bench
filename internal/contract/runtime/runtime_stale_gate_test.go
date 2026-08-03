@@ -10,6 +10,21 @@ import (
 	"time"
 )
 
+func testRuntimeStatusComposedPartialGreen(t *testing.T) {
+	fixture := seededBoundaryFixture(t)
+	fixture.captureOnlyEdit(t)
+	gateRun := fixture.gateRun(t)
+	gateRun.RequireExit(0)
+	if len(announcedSkips(t, gateRun.Stdout+gateRun.Stderr)) == 0 {
+		t.Fatal("composed fixture gate inherited no component evidence")
+	}
+
+	out := fixture.f.RunEnvSpec(fixture.env, fixture.bench, "status", "--all").Stdout
+	contract.RequireNotContains(t, out, "  gate       ")
+	contract.RequireNotContains(t, out, "partial green")
+	contract.RequireNotContains(t, out, "bench gate --fresh")
+}
+
 func testRuntimeStatusStaleGateDriftClassification(t *testing.T) {
 	benign := statusRowExpectation{
 		contains:    []string{"stale (reduced-scope drift)", "re-run when convenient"},
