@@ -56,9 +56,13 @@ Run in order; a change that fails a loop is pruned or sent back, not shipped.
    A candidate that changes a skill or command trigger needs the dogfood run in a
    fresh session, because this session loaded those surfaces before the edit.
    Proportionality: a prose-only change — no hook, gate, CLI, or adapter touched —
-   may substitute a green `bench gate` plus a read of every surface the prose
-   steers for the full shift; say which verification ran. Anything that touches
-   behavior always dogfoods.
+   may substitute a green gate verdict plus a read of every surface the prose
+   steers for the full shift; say which verification ran. Take that verdict from
+   the commit itself — `bench commit` gates the tree it lands, so a `bench gate`
+   run before it grades the same tree twice and pays the oracle twice. Reach for
+   the standalone gate only when you need a verdict *without* a commit: a batch
+   awaiting approval, or a red under diagnosis. Anything that touches behavior
+   always dogfoods.
 
 ## Propose; the reviewer merges
 
