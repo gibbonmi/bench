@@ -3,6 +3,7 @@ package specbuild
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -193,6 +194,129 @@ func TestStartRefusesLegacyReducedVerdict(t *testing.T) {
 	}
 }
 
+func abandonRun(t *testing.T, service *Service) {
+	t.Helper()
+	plan, err := service.Abandon(t.Context(), "build demo")
+	if err != nil {
+		t.Fatalf("Abandon: %v", err)
+	}
+	if _, err := service.ApplyAbandon(t.Context(), "build demo", plan.Fingerprint); err != nil {
+		t.Fatalf("ApplyAbandon: %v", err)
+	}
+}
+
+// commitAdvance lands one distinct commit: repeated identical content would leave
+// nothing to commit, and a restart fixture needs several separable tips.
+func commitAdvance(t *testing.T, root, name string) string {
+	t.Helper()
+	write(t, filepath.Join(root, name), name+"\n")
+	git(t, root, "add", ".")
+	git(t, root, "commit", "-qm", name)
+	return git(t, root, "rev-parse", "HEAD")
+}
+
+func recordGreenVerdict(t *testing.T, root string) {
+	t.Helper()
+	var stdout, stderr bytes.Buffer
+	if result := gate.Execute(t.Context(), root, &stdout, &stderr); result.ActionExit != 0 {
+		t.Fatalf("gate = %+v\nstdout:\n%s\nstderr:\n%s", result, stdout.String(), stderr.String())
+	}
+}
+
+// A sibling build promotes on the same branch, moving the branch and the green
+// marker together; more work lands after it, so the marker the restart meets is
+// neither the abandoned run's base nor the restart tip.
+func TestRestartSucceedsAfterSiblingPromotionMovedTheMarker(t *testing.T) {
+	root := specEditStartFixture(t)
+	service := New(root, authorizationGate{}, nil)
+	first, err := service.Start(t.Context(), "build demo")
+	if err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	abandonRun(t, service)
+	marker := greenMarkerRef(t, root)
+	git(t, root, "update-ref", marker, commitAdvance(t, root, "sibling.txt"))
+	tip := commitAdvance(t, root, "later.txt")
+	recordGreenVerdict(t, root)
+	status, err := service.Start(t.Context(), "build demo")
+	if err != nil || status.State != "active" || status.Subject == first.Subject {
+		t.Fatalf("restart = %#v, %v; first = %#v", status, err, first)
+	}
+	if got := git(t, root, "rev-parse", marker); got != tip {
+		t.Fatalf("marker = %s, want restart tip %s", got, tip)
+	}
+}
+
+func TestRestartBootstrapsAgainstLiveMarkerAndRetainsRecordedBase(t *testing.T) {
+	root := repo(t)
+	recorder := &recordingGate{}
+	service := New(root, recorder, nil)
+	if _, err := service.Start(t.Context(), "build demo"); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	base := loadRun(t, service).Base
+	abandonRun(t, service)
+	sibling := commitAdvance(t, root, "sibling.txt")
+	git(t, root, "update-ref", greenMarkerRef(t, root), sibling)
+	commitAdvance(t, root, "later.txt")
+	if _, err := service.Start(t.Context(), "build demo"); err != nil {
+		t.Fatalf("restart: %v", err)
+	}
+	if last := recorder.expectations[len(recorder.expectations)-1]; last != sibling {
+		t.Fatalf("restart expectation = %q, want the live marker %s (recorded base %s)", last, sibling, base)
+	}
+	history := loadRun(t, service).History
+	if len(history) != 1 {
+		t.Fatalf("retained history = %d entries, want 1", len(history))
+	}
+	var retained struct {
+		Base string `json:"base"`
+	}
+	if err := json.Unmarshal(history[0], &retained); err != nil || retained.Base != base {
+		t.Fatalf("retained base = %q, %v; want %s", retained.Base, err, base)
+	}
+}
+
+func TestRestartWithoutMarkerBootstrapsFresh(t *testing.T) {
+	root := specEditStartFixture(t)
+	service := New(root, authorizationGate{}, nil)
+	if _, err := service.Start(t.Context(), "build demo"); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	abandonRun(t, service)
+	marker := greenMarkerRef(t, root)
+	git(t, root, "update-ref", "-d", marker)
+	tip := commitAdvance(t, root, "later.txt")
+	recordGreenVerdict(t, root)
+	status, err := service.Start(t.Context(), "build demo")
+	if err != nil || status.State != "active" {
+		t.Fatalf("restart = %#v, %v", status, err)
+	}
+	if got := git(t, root, "rev-parse", marker); got != tip {
+		t.Fatalf("marker = %s, want restart tip %s", got, tip)
+	}
+}
+
+// Restart fires only while the recompose refusal surfaces, so a fast-forward that
+// reached a terminal run would turn this into a status report instead.
+func TestRestartOfEmptyRunWithAdvancedTipOpensANewAttempt(t *testing.T) {
+	root := repo(t)
+	service := New(root, greenGate{}, nil)
+	if _, err := service.Start(t.Context(), "build demo"); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	first := loadRun(t, service)
+	abandonRun(t, service)
+	advanceWorking(t, root)
+	status, err := service.Start(t.Context(), "build demo")
+	if err != nil || status.State != "active" {
+		t.Fatalf("restart = %#v, %v", status, err)
+	}
+	if after := loadRun(t, service); after.Run == first.Run || after.Candidate == first.Candidate || after.Terminal {
+		t.Fatalf("restart reused the terminal run: %#v", after)
+	}
+}
+
 func TestCompletionHelperPassesSameExpectation(t *testing.T) {
 	root := repo(t)
 	ancestor := git(t, root, "rev-parse", "HEAD")
@@ -273,28 +397,35 @@ func TestLifecycleMutatorsRefuseSharedPreconditionDriftWithoutMutation(t *testin
 	operations := []struct {
 		name, prerequisite string
 		invoke             func(*testing.T, preconditionFixture) error
+		// withoutPrerequisite drives the same operation with its own prerequisite removed,
+		// for an operation whose drift invocation has to satisfy that prerequisite to reach
+		// the shared preconditions at all.
+		withoutPrerequisite func(*testing.T, preconditionFixture) error
 	}{
-		{"start", "gate evidence", func(t *testing.T, f preconditionFixture) error {
+		{name: "start", prerequisite: "gate evidence", invoke: func(t *testing.T, f preconditionFixture) error {
 			_, err := f.service.Start(t.Context(), "build demo")
 			return err
 		}},
-		{"assign", "worktree owner", func(t *testing.T, f preconditionFixture) error {
+		{name: "assign", prerequisite: "worktree owner", invoke: func(t *testing.T, f preconditionFixture) error {
 			_, _, err := f.service.Assign(t.Context(), "build demo", "one.md", "next request")
 			return err
 		}},
-		{"checkpoint", "assignment", func(t *testing.T, f preconditionFixture) error {
+		{name: "checkpoint", prerequisite: "assignment", invoke: func(t *testing.T, f preconditionFixture) error {
+			_, err := f.service.Checkpoint(t.Context(), "build demo", f.assignment.ID, preconditionCheckpointReceipt(t, f))
+			return err
+		}, withoutPrerequisite: func(t *testing.T, f preconditionFixture) error {
 			_, err := f.service.Checkpoint(t.Context(), "build demo", "missing", "")
 			return err
 		}},
-		{"integrate", "checkpoint", func(t *testing.T, f preconditionFixture) error {
+		{name: "integrate", prerequisite: "checkpoint", invoke: func(t *testing.T, f preconditionFixture) error {
 			_, err := f.service.Integrate(t.Context(), "build demo", "missing")
 			return err
 		}},
-		{"review", "review receipt", func(t *testing.T, f preconditionFixture) error {
+		{name: "review", prerequisite: "review receipt", invoke: func(t *testing.T, f preconditionFixture) error {
 			_, err := f.service.Review(t.Context(), "build demo", "")
 			return err
 		}},
-		{"promote", "current clean review", func(t *testing.T, f preconditionFixture) error {
+		{name: "promote", prerequisite: "current clean review", invoke: func(t *testing.T, f preconditionFixture) error {
 			_, err := f.service.Promote(t.Context(), "build demo")
 			return err
 		}},
@@ -340,6 +471,15 @@ func TestLifecycleMutatorsRefuseSharedPreconditionDriftWithoutMutation(t *testin
 			t.Run(operation.name+"/"+condition.name, func(t *testing.T) {
 				fixture := newPreconditionFixture(t, operation.name != "start")
 				condition.apply(t, &fixture)
+				// Checkpoint on an advanced empty run is the one pairing the fast-forward
+				// owns: it proceeds, and moving the run onto the advanced tip is the whole
+				// point, so the shared refusal-without-mutation assertion cannot grade it.
+				if operation.name == "checkpoint" && condition.name == "working advance" {
+					if err := operation.invoke(t, fixture); err != nil {
+						t.Fatalf("checkpoint on an advanced empty run = %v, want the fast-forward to let it proceed", err)
+					}
+					return
+				}
 				before := snapshotPrecondition(t, fixture)
 				if err := operation.invoke(t, fixture); err == nil {
 					t.Fatalf("%s accepted %s", operation.name, condition.name)
@@ -360,8 +500,12 @@ func TestLifecycleMutatorsRefuseSharedPreconditionDriftWithoutMutation(t *testin
 			if operation.name == "assign" {
 				fixture.service.worktrees = nil
 			}
+			invoke := operation.invoke
+			if operation.withoutPrerequisite != nil {
+				invoke = operation.withoutPrerequisite
+			}
 			before := snapshotPrecondition(t, fixture)
-			if err := operation.invoke(t, fixture); err == nil {
+			if err := invoke(t, fixture); err == nil {
 				t.Fatalf("%s accepted missing %s", operation.name, operation.prerequisite)
 			}
 			if after := snapshotPrecondition(t, fixture); after != before {
@@ -369,6 +513,17 @@ func TestLifecycleMutatorsRefuseSharedPreconditionDriftWithoutMutation(t *testin
 			}
 		})
 	}
+}
+
+// preconditionCheckpointReceipt gives checkpoint a path that reaches the shared
+// preconditions: a real assignment carrying a real change, and the receipt matching it.
+// A synthetic assignment ID is rejected by checkpoint's own evidence check first, which
+// leaves every shared precondition below it ungraded.
+func preconditionCheckpointReceipt(t *testing.T, fixture preconditionFixture) string {
+	t.Helper()
+	write(t, filepath.Join(fixture.assignment.Path, "internal", "specbuild", "precondition-change.go"), "package specbuild\n")
+	rec := checkpointReceiptFor(t, fixture.service, fixture.assignment, []string{"internal/specbuild/precondition-change.go"})
+	return writeCheckpointReceipt(t, rec, "\n")
 }
 func TestSharedPreconditionsAllowExpectedAssignmentDirt(t *testing.T) {
 	fixture := newPreconditionFixture(t, true)
@@ -578,17 +733,21 @@ func TestRecompositionErrorIsStable(t *testing.T) {
 }
 func TestStartResumeAndConflictsDoNotDuplicateRun(t *testing.T) {
 	tests := []struct {
-		name   string
-		change func(*testing.T, string)
+		name string
+		// An empty run whose tip merely advanced is fast-forwarded onto it and reports
+		// status instead of refusing; every other changed subject still refuses. Either
+		// way the run keeps exactly one candidate identity.
+		fastForwards bool
+		change       func(*testing.T, string)
 	}{
-		{"branch", func(t *testing.T, root string) { git(t, root, "checkout", "-qb", "other") }},
-		{"tip", func(t *testing.T, root string) {
+		{"branch", false, func(t *testing.T, root string) { git(t, root, "checkout", "-qb", "other") }},
+		{"tip", true, func(t *testing.T, root string) {
 			write(t, filepath.Join(root, "later"), "x")
 			git(t, root, "add", ".")
 			git(t, root, "commit", "-qm", "later")
 		}},
-		{"dirt", func(t *testing.T, root string) { write(t, filepath.Join(root, "dirty"), "x") }},
-		{"detached", func(t *testing.T, root string) { git(t, root, "checkout", "--detach", "-q") }},
+		{"dirt", false, func(t *testing.T, root string) { write(t, filepath.Join(root, "dirty"), "x") }},
+		{"detached", false, func(t *testing.T, root string) { git(t, root, "checkout", "--detach", "-q") }},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -598,7 +757,10 @@ func TestStartResumeAndConflictsDoNotDuplicateRun(t *testing.T) {
 				t.Fatal(err)
 			}
 			tc.change(t, root)
-			if _, err := service.Start(context.Background(), "build demo"); err == nil {
+			switch _, err := service.Start(context.Background(), "build demo"); {
+			case tc.fastForwards && err != nil:
+				t.Fatalf("Start on an advanced empty run = %v, want the fast-forward to report status", err)
+			case !tc.fastForwards && err == nil:
 				t.Fatal("Start unexpectedly accepted a changed working subject")
 			}
 			if got := git(t, root, "for-each-ref", "--format=%(refname)", "refs/bench/specbuild/candidate/"); len(stringsSplitLines(got)) != 1 {

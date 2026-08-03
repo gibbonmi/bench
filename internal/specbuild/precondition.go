@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
@@ -13,6 +12,7 @@ import (
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/intent"
+	"github.com/gibbonmi/bench/internal/worktree"
 )
 
 type mutation string
@@ -92,17 +92,16 @@ func (s *Service) preconditions(op mutation, slug, specPath string, run *record,
 		return buildSubject{}, errors.New("spec build candidate no longer matches durable tip")
 	}
 	if err := s.ownedAssignments(run, op); err != nil {
-		abandon, found := s.operation(*run, "abandon", "apply")
-		if op != mutationAbandon || !found || abandon.State != "prepared" || abandon.Result == "" {
-			return buildSubject{}, err
-		}
+		return buildSubject{}, err
 	}
 	if err := s.operationEvidence(op, *run, assignmentID, evidence); err != nil {
 		return buildSubject{}, err
 	}
 	// Abandon is the escape hatch a mid-repair run needs precisely when the tip has
-	// moved, so it alone is exempt from the refusal it would otherwise trigger here.
-	// Everything above this line — identity, ownership, evidence — still applies.
+	// moved, so it alone is exempt from the refusal it would otherwise trigger here, and
+	// that is its only exemption on this path. Identity, ownership, and evidence bind
+	// abandon exactly as they bind every other mutation; the one softening abandon gets
+	// is the liveness class ownedAssignments decides, which is where it stays.
 	if recompose && op != mutationAbandon {
 		return subject, fmt.Errorf("%w %s", errRecompose, slug)
 	}
@@ -187,8 +186,13 @@ func (s *Service) requireCommittedTicket(ticket Ticket) error {
 
 var (
 	errOwnership = errors.New("spec build assignment ownership does not match durable state")
-	// errAbsentCheckout marks the one ownership fault abandon may proceed through.
-	errAbsentCheckout = errors.New("spec build assignment checkout is absent")
+	// errDecayedCheckout marks the liveness class abandon may proceed through: the
+	// assignment's ownership is dead, so there is nothing left to write into.
+	errDecayedCheckout = errors.New("spec build assignment checkout is not live")
+	// errMissingRegistration is the one liveness fault with no ledger entry behind it. It
+	// stays inside errDecayedCheckout's class, so ownership decides it exactly as before,
+	// and abandon reads it separately to skip an owner that has nothing left to reconcile.
+	errMissingRegistration = fmt.Errorf("%w: no owning registration", errDecayedCheckout)
 )
 
 // ownedAssignments refuses op unless every recorded assignment still matches the
@@ -206,15 +210,11 @@ func (s *Service) ownedAssignments(run *record, op mutation) error {
 		if assigned.Released {
 			continue
 		}
-		owned, found, err := intent.FindAssignmentByRequest(s.root, assigned.OwnerRequest)
-		if err != nil || !found || owned.ID != assigned.ID || filepath.Clean(owned.Worktree) != filepath.Clean(assigned.Path) {
-			return errOwnership
-		}
-		// A checkout that is gone is the exact state abandon exists to clean up, and the
+		// A dead assignment is the exact state abandon exists to clean up, and the
 		// recovery refs its plan enumerates hold the payload, so nothing is lost by
 		// proceeding. Every other mutation writes into that checkout and must refuse.
-		if err := s.liveCheckout(assigned.Path); err != nil {
-			if op != mutationAbandon || !errors.Is(err, errAbsentCheckout) {
+		if err := s.assignedOwnership(assigned); err != nil {
+			if op != mutationAbandon || !errors.Is(err, errDecayedCheckout) {
 				return errOwnership
 			}
 		}
@@ -222,15 +222,39 @@ func (s *Service) ownedAssignments(run *record, op mutation) error {
 	return nil
 }
 
-// liveCheckout reports whether path is still a checkout of this repository, separating
-// an absent path from a stranger's checkout. The repository probe cannot make that
-// distinction — it fails identically for both — so the path's own existence decides
-// first, and a present-but-foreign path is never mistaken for a removed one.
+// assignedOwnership classifies the one fault that binds an operation over assigned:
+// errDecayedCheckout for dead ownership, errOwnership for an identity fault. It is the
+// single source of that split, so no caller decides separately what abandon may soften.
+func (s *Service) assignedOwnership(assigned assignment) error {
+	owned, found, err := intent.FindAssignmentByRequest(s.root, assigned.OwnerRequest)
+	if err != nil {
+		return errOwnership
+	}
+	// A registration this repository no longer holds is as dead as a removed checkout:
+	// nothing owns the path, so abandon is what clears the record that still names it.
+	if !found {
+		return errMissingRegistration
+	}
+	if owned.ID != assigned.ID || filepath.Clean(owned.Worktree) != filepath.Clean(assigned.Path) {
+		return errOwnership
+	}
+	return s.liveCheckout(assigned.Path)
+}
+
+// liveCheckout classifies path by its shape rather than by a probe's failure, so an
+// unreadable live checkout is never mistaken for a dead one. The shape itself belongs to
+// internal/worktree, which decides it for every consumer; what stays here is the identity
+// policy the shape licenses. A shape that answers for no checkout is dead. An undecided
+// shape is an identity fault — the path may be a live checkout this process cannot see —
+// as is a resolvable checkout belonging to another repository. Only a directory carrying
+// git metadata reaches git at all, so a FIFO at the assignment path cannot block.
 func (s *Service) liveCheckout(path string) error {
-	if _, err := os.Lstat(path); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return errAbsentCheckout
-		}
+	shape, _ := worktree.ClassifyPathShape(path)
+	switch shape {
+	case worktree.ShapeAbsent, worktree.ShapeDanglingSymlink, worktree.ShapeNonDirectory, worktree.ShapeDecayedDirectory:
+		return errDecayedCheckout
+	case worktree.ShapeCheckoutDirectory:
+	default:
 		return errOwnership
 	}
 	common, err := benchgit.Output("-C", path, "rev-parse", "--path-format=absolute", "--git-common-dir")
@@ -421,6 +445,7 @@ func (s *Service) ApplyAbandon(ctx context.Context, slug, fingerprint string) (S
 			}
 		}
 	}
+	s.releaseUnregisteredAssignments(&run)
 	run.Terminal = true
 	if err := s.save(run); err != nil {
 		return Status{}, err
@@ -446,6 +471,29 @@ type AbandonmentWorktree struct{ ID, Path, Request, OwnerFingerprint string }
 // AbandonmentRef is one retained Git ref and its exact object identity.
 type AbandonmentRef struct{ Name, Object string }
 
+// unregisteredAssignment reports the one class abandon clears without the worktree owner.
+// The owner's plan and apply both reconcile against the intent-ledger entry for the
+// assignment; with no entry to resolve, the owner has nothing to check and would only
+// refuse. It routes through assignedOwnership so the classification keeps one source, and
+// every other fault — including a decayed checkout that is still registered — keeps going
+// to the owner exactly as before.
+func (s *Service) unregisteredAssignment(assigned assignment) bool {
+	return errors.Is(s.assignedOwnership(assigned), errMissingRegistration)
+}
+
+// releaseUnregisteredAssignments closes the rows the plan left off, since the abandon that
+// reaches a terminal run is what clears a record still claiming ownership nothing holds.
+// The residual bytes are deliberately left for the ordinary clean surface.
+func (s *Service) releaseUnregisteredAssignments(run *record) {
+	for key, assigned := range run.Assignments {
+		if assigned.Released || !s.unregisteredAssignment(assigned) {
+			continue
+		}
+		assigned.CleanupPending, assigned.Released = false, true
+		run.Assignments[key] = assigned
+	}
+}
+
 func (s *Service) abandonmentPlan(ctx context.Context, run record) (AbandonmentPlan, error) {
 	plan := AbandonmentPlan{}
 	abandoner, ok := abandonOwnerFrom(s.worktrees)
@@ -460,7 +508,7 @@ func (s *Service) abandonmentPlan(ctx context.Context, run record) (AbandonmentP
 			}
 			plan.UnintegratedCheckpoints = append(plan.UnintegratedCheckpoints, ref)
 		}
-		if assigned.Released {
+		if assigned.Released || s.unregisteredAssignment(assigned) {
 			continue
 		}
 		fingerprint, err := abandoner.PlanAbandon(ctx, s.root, assigned.Request, assigned.Path)

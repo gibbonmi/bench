@@ -83,6 +83,13 @@ const (
 )
 const actionReleaseRemove CleanupAction = "release-remove"
 
+// actionReleaseLeftover releases one assignment's registration and ledger entry while the
+// bytes at its path stay exactly where they are. It is deliberately outside removes():
+// nothing proves what those bytes are — no checkout answers for them and no recovery ref
+// holds them — so disposing of them stays with the path-addressed clean surface, whose
+// inventory is size-bounded.
+const actionReleaseLeftover CleanupAction = "release-leftover"
+
 // removes reports whether an action still has a removal ahead of it, as opposed to
 // reporting a refusal, an invocation error, or a transaction that already completed.
 func (action CleanupAction) removes() bool {
@@ -90,6 +97,77 @@ func (action CleanupAction) removes() bool {
 }
 
 var ignoredLstat = os.Lstat
+
+// PathShape names what the entry at an assignment path is.
+type PathShape string
+
+const (
+	ShapeAbsent            PathShape = "absent"
+	ShapeDanglingSymlink   PathShape = "dangling-symlink"
+	ShapeNonDirectory      PathShape = "non-directory"
+	ShapeDecayedDirectory  PathShape = "directory-without-git-metadata"
+	ShapeCheckoutDirectory PathShape = "directory-with-git-metadata"
+	// ShapeSpecialMetadata names a directory whose .git entry exists but is neither a
+	// regular file (a gitfile worktree pointer) nor a directory (an embedded repository):
+	// a FIFO, device, socket, or a symlinked .git, any of which git itself refuses to
+	// treat as ordinary metadata. No consumer may invoke git against this path — a FIFO
+	// with no writer would block the invocation forever — so this shape fails closed
+	// rather than joining ShapeCheckoutDirectory or the decayed set.
+	ShapeSpecialMetadata PathShape = "special-git-metadata"
+	ShapeUnknown         PathShape = "unknown"
+)
+
+// ClassifyPathShape is the single source for the decayed-shape policy: every consumer
+// asking whether an assignment's checkout is still live, or whether an abandon is
+// releasing residue rather than removing a checkout, decides it here, so the two can
+// never answer differently for the same bytes.
+//
+// The path is never opened — a FIFO at an assignment path has no writer and would block a
+// reader forever — so the verdict rests on lstat and stat shape alone, and only
+// ShapeCheckoutDirectory licenses a caller to run git against the path. Symlinks are
+// followed, because a resolvable one is already resolved away by the time a canonical
+// target names it, so one surviving here resolves to nothing.
+//
+// ShapeUnknown is the only shape carrying an error, the stat failure that left the shape
+// undecided. It is never absence: an unreadable live checkout stats exactly this way.
+func ClassifyPathShape(path string) (PathShape, error) {
+	if _, err := os.Lstat(path); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return ShapeAbsent, nil
+		}
+		return ShapeUnknown, err
+	}
+	entry, err := os.Stat(path)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return ShapeDanglingSymlink, nil
+		}
+		return ShapeUnknown, err
+	}
+	if !entry.IsDir() {
+		return ShapeNonDirectory, nil
+	}
+	gitEntry, err := os.Lstat(filepath.Join(path, ".git"))
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return ShapeDecayedDirectory, nil
+		}
+		return ShapeUnknown, err
+	}
+	// Only a regular file (a gitfile worktree pointer) or a directory (an ordinary or
+	// embedded repository) is metadata git itself will read; everything else — including
+	// a symlinked .git, which git refuses on principle — is classified without opening it.
+	if gitEntry.Mode().IsRegular() || gitEntry.IsDir() {
+		return ShapeCheckoutDirectory, nil
+	}
+	return ShapeSpecialMetadata, nil
+}
+
+// decayed reports whether a shape is one an abandon releases as leftover bytes: present,
+// but nothing a checkout answers for.
+func (shape PathShape) decayed() bool {
+	return shape == ShapeDanglingSymlink || shape == ShapeNonDirectory || shape == ShapeDecayedDirectory
+}
 
 type CleanupPlan struct {
 	Target               string
@@ -110,6 +188,9 @@ type CleanupPlan struct {
 	branchRef, branchOID string
 	ignoredSummary       string
 	landed               string
+	// leftover names the present bytes a release-leftover plan hands on rather than
+	// removes; it is empty for every plan that answers for a checkout.
+	leftover string
 }
 type IgnoredInventory struct {
 	Count     int

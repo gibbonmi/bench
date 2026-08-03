@@ -326,7 +326,102 @@ func lockCleanupPersistence(repo, target string) (func(), error) {
 	}
 	return lockCleanupFile(file, target)
 }
+
+// releaseLeftover completes a release-leftover plan: the registration and the ledger entry
+// go, the bytes at the leftover path stay. It never reaches the removal steps below —
+// `git worktree remove` deletes the tree it is pointed at, which is the one thing this
+// plan exists to avoid.
+func releaseLeftover(root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
+	assignment := *plan.assignment
+	if len(assignment.Recovery) > 0 {
+		if len(assignment.Recovery) != 1 {
+			return plan, errors.New("existing recovery metadata is ambiguous")
+		}
+		if err := ensureRecoveryRef(root, assignment, assignment.Recovery[0]); err != nil {
+			return plan, err
+		}
+		if err := checkpoint(intent.ReceiptPhasePreserved); err != nil {
+			return plan, err
+		}
+		if err := hit(fault, StepRecoveryRef); err != nil {
+			return plan, err
+		}
+	}
+	if err := checkpoint(intent.ReceiptPhaseRemoving); err != nil {
+		return plan, err
+	}
+	if err := releaseRegistration(root, plan.leftover); err != nil {
+		return plan, err
+	}
+	if err := checkpoint(intent.ReceiptPhaseRemoved); err != nil {
+		return plan, err
+	}
+	if err := hit(fault, StepRemoval); err != nil {
+		return plan, err
+	}
+	assignment.State = intent.StateComplete
+	if len(assignment.Recovery) > 0 {
+		assignment.State = intent.StateRecovered
+	}
+	if err := intent.PutAssignment(root, assignment); err != nil {
+		return plan, err
+	}
+	if err := checkpoint(intent.ReceiptPhaseTerminal); err != nil {
+		return plan, err
+	}
+	plan.Action, plan.Reason, plan.ReasonCode = ActionRemoved, "", ""
+	return plan, nil
+}
+
+// releaseRegistration deletes the private administration directory git keeps for exactly
+// one registered worktree, which is what stops git registering it. This is the scoped form
+// of `git worktree prune`: prune decides for every prunable registration at once, and an
+// abandon answers for one target, so a stranger's stale entry is never swept along with
+// it. Only a target with no git metadata entry reaches here, so the administration
+// directory it names is already dangling.
+func releaseRegistration(root, target string) error {
+	common, err := git.Output("-C", root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	if err != nil {
+		return fmt.Errorf("resolve common Git directory: %w", err)
+	}
+	pool := filepath.Join(filepath.Clean(common), "worktrees")
+	entries, err := os.ReadDir(pool)
+	if err != nil {
+		return fmt.Errorf("read private worktree administration pool: %w", err)
+	}
+	admin := ""
+	for _, entry := range entries {
+		candidate := filepath.Join(pool, entry.Name())
+		record := filepath.Join(candidate, "gitdir")
+		// The whole pool is swept to find one entry, so an unrelated entry's control record
+		// gets read too. Anything but a regular file is skipped rather than opened: a FIFO
+		// planted here has no writer, and reading it would block the abandon forever.
+		if info, statErr := os.Lstat(record); statErr != nil || !info.Mode().IsRegular() {
+			continue
+		}
+		gitdir, readErr := os.ReadFile(record)
+		if readErr != nil {
+			continue
+		}
+		registered, pathErr := canonicalPath(filepath.Dir(strings.TrimSpace(string(gitdir))))
+		if pathErr != nil || registered != target {
+			continue
+		}
+		if admin != "" {
+			return errors.New("target has ambiguous private administration directories")
+		}
+		admin = candidate
+	}
+	if admin == "" {
+		return errors.New("target has no private administration directory to release")
+	}
+	return os.RemoveAll(admin)
+}
+
 func executeCleanup(root string, plan CleanupPlan, checkpoint func(string) error, fault Fault) (CleanupPlan, error) {
+	if plan.Action == actionReleaseLeftover {
+		return releaseLeftover(root, plan, checkpoint, fault)
+	}
 	var recovered *intent.Assignment
 	if plan.Action == ActionRecoverRemove || (plan.Action == ActionDiscardRemove && plan.Tracked != "clean") || plan.registration.Detached {
 		assignment, err := recoveryAssignmentForPlan(root, plan)

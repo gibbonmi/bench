@@ -230,7 +230,7 @@ func (s *Service) Start(ctx context.Context, slug string) (Status, error) {
 			}
 			return s.finishStart(ctx, subject.branch, subject.tip, false, &run)
 		}
-		subject, preconditionErr := s.preconditions(mutationStart, slug, resolved, &run, "", "")
+		subject, preconditionErr := s.preconditionsAdvancingEmptyRun(mutationStart, slug, resolved, &run, "", "")
 		if run.Terminal {
 			abandon, abandoned := s.operation(run, "abandon", "apply")
 			if !abandoned || abandon.State != "completed" || preconditionErr == nil {
@@ -239,7 +239,7 @@ func (s *Service) Start(ctx context.Context, slug string) (Status, error) {
 			if !errors.Is(preconditionErr, errRecompose) {
 				return Status{}, preconditionErr
 			}
-			return s.startRun(ctx, slug, resolved, subject, retainTerminalAttempt(run), subject.branch+"\x00"+subject.tip, run.Base)
+			return s.startRun(ctx, slug, resolved, subject, retainTerminalAttempt(run), subject.branch+"\x00"+subject.tip)
 		}
 		if preconditionErr != nil {
 			return Status{}, preconditionErr
@@ -250,9 +250,9 @@ func (s *Service) Start(ctx context.Context, slug string) (Status, error) {
 	if err != nil {
 		return Status{}, err
 	}
-	return s.startRun(ctx, slug, resolved, subject, nil, "", "")
+	return s.startRun(ctx, slug, resolved, subject, nil, "")
 }
-func (s *Service) startRun(ctx context.Context, slug, resolved string, subject buildSubject, history []json.RawMessage, attempt, previousGreen string) (Status, error) {
+func (s *Service) startRun(ctx context.Context, slug, resolved string, subject buildSubject, history []json.RawMessage, attempt string) (Status, error) {
 	runID, candidate := runIdentity(resolved, attempt)
 	run := record{Version: 1, Slug: slug, Spec: resolved, SpecTip: subject.specTip, Run: runID, Branch: subject.branch, Base: subject.tip, Candidate: candidate, CandidateTip: subject.tip, History: history, Assignments: map[string]assignment{}, Operations: map[string]operation{}}
 	if absent, err := refAbsent(s.root, run.Candidate); err != nil {
@@ -260,13 +260,10 @@ func (s *Service) startRun(ctx context.Context, slug, resolved string, subject b
 	} else if !absent {
 		return Status{}, errors.New("spec build candidate identity already exists")
 	}
-	// A caller that already knows the prior tip — a restart after a terminal run —
-	// names it; the bootstrap path learns it from the marker a predecessor left,
-	// which is the benign ancestor the owner reads as a conflict when unnamed.
-	if previousGreen == "" {
-		previousGreen = greenMarker(s.root, subject.branch)
-	}
-	if err := s.gate.Bootstrap(ctx, s.root, subject.branch, subject.tip, previousGreen); err != nil {
+	// Every start — fresh, or a restart after a terminal run — compares against the live
+	// marker a predecessor left: a sibling build's promotion moves it legitimately, while
+	// any tip recorded earlier would read as a conflict.
+	if err := s.gate.Bootstrap(ctx, s.root, subject.branch, subject.tip, greenMarker(s.root, subject.branch)); err != nil {
 		return Status{}, fmt.Errorf("no exact green evidence: run bench gate --fresh, then retry start: %w", err)
 	}
 	if _, _, err := s.beginOperation(&run, "start", "run", resolved+"\x00"+subject.branch+"\x00"+subject.tip); err != nil {

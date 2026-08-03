@@ -156,10 +156,12 @@ func applyCleanupTransaction(root, path, fingerprint string, planner cleanupPlan
 		return planFromReceipt(receipt), nil
 	}
 	if found && receipt.State == intent.ReceiptInFlight {
-		if _, statErr := os.Lstat(target); errors.Is(statErr, os.ErrNotExist) {
+		resumable, resumeErr := interruptedCleanupIsPastReplanning(root, receipt, target)
+		if resumeErr != nil {
+			return planFromReceipt(receipt), resumeErr
+		}
+		if resumable {
 			return finishInterruptedExplicit(root, receipt, terminal, fault)
-		} else if statErr != nil {
-			return planFromReceipt(receipt), statErr
 		}
 	}
 	plan, err := planner(target)
@@ -230,6 +232,44 @@ func completeCleanupTransaction(root string, plan CleanupPlan, receipt intent.Cl
 	}
 	return planFromReceipt(receipt), nil
 }
+
+// interruptedCleanupIsPastReplanning reports whether an in-flight cleanup already spent
+// the thing its plan was decided from, leaving the receipt as the only thing that can
+// finish it. Re-planning such a target answers a different question and refuses the retry
+// on a stale fingerprint, wedging an abandon that has nothing left to do but land.
+//
+// A removal proves it by the tree being gone. A release-leftover never removes the bytes,
+// so presence at the target says nothing about its progress; the registration is what it
+// spends, and a target this repository no longer registers carries the same proof.
+func interruptedCleanupIsPastReplanning(root string, receipt intent.CleanupReceipt, target string) (bool, error) {
+	shape, err := ClassifyPathShape(target)
+	if err != nil {
+		return false, err
+	}
+	if shape == ShapeAbsent {
+		return true, nil
+	}
+	if CleanupAction(receipt.Action) != actionReleaseLeftover {
+		return false, nil
+	}
+	registered, err := registeredAt(root, target)
+	return !registered, err
+}
+
+// registeredAt reports whether this repository still registers a worktree at target.
+func registeredAt(root, target string) (bool, error) {
+	worktrees, err := git.Worktrees(root)
+	if err != nil {
+		return false, err
+	}
+	for _, worktree := range worktrees {
+		if samePath(worktree.Path, target) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func finishInterruptedExplicit(root string, receipt intent.CleanupReceipt, terminal cleanupTerminal, fault Fault) (CleanupPlan, error) {
 	plan := planFromReceipt(receipt)
 	switch receipt.Phase {
@@ -237,14 +277,12 @@ func finishInterruptedExplicit(root string, receipt intent.CleanupReceipt, termi
 	default:
 		return plan, errStaleFingerprint
 	}
-	worktrees, err := git.Worktrees(root)
+	registered, err := registeredAt(root, receipt.Target)
 	if err != nil {
 		return plan, err
 	}
-	for _, worktree := range worktrees {
-		if samePath(worktree.Path, receipt.Target) {
-			return plan, errStaleFingerprint
-		}
+	if registered {
+		return plan, errStaleFingerprint
 	}
 	assignments, err := intent.Assignments(root)
 	if err != nil {

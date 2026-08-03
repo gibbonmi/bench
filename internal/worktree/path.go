@@ -63,6 +63,12 @@ func resolveWorktree(root, target string) (string, error) {
 
 var errAbandonMismatch = errors.New("abandon request, assignment, or path mismatch; checkout retained")
 
+// errSpecialMetadata refuses an abandon over a special .git entry — a FIFO, device,
+// socket, or symlink — before anything invokes git against the path. The shape answers
+// for no checkout and is not leftover residue either: routing it to either would either
+// hang on an unwritten FIFO or dispose of bytes nothing has proven safe to touch.
+var errSpecialMetadata = errors.New("assignment .git entry is a special file; refusing before invoking git")
+
 func planAbandon(root, request, path string) (CleanupPlan, error) {
 	plan, _, err := planAbandonWithPlanner(root, request, path)
 	return plan, err
@@ -82,13 +88,22 @@ func planAbandonWithPlanner(root, request, path string) (CleanupPlan, cleanupPla
 	if plan, found, err := abandonReceipt(root, repo, target, digest); err != nil || found {
 		return plan, nil, err
 	}
-	if _, err := os.Lstat(target); err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return CleanupPlan{}, nil, err
-		}
+	shape, err := ClassifyPathShape(target)
+	if err != nil {
+		return CleanupPlan{}, nil, err
+	}
+	if shape == ShapeAbsent {
 		planner := func(target string) (CleanupPlan, error) { return planRemovedCheckout(root, target, digest) }
 		plan, err := planner(target)
 		return plan, planner, err
+	}
+	if shape.decayed() {
+		planner := func(target string) (CleanupPlan, error) { return planLeftoverEntry(root, target, digest) }
+		plan, err := planner(target)
+		return plan, planner, err
+	}
+	if shape == ShapeSpecialMetadata {
+		return CleanupPlan{}, nil, errSpecialMetadata
 	}
 	plan, err := PlanExplicit(root, target)
 	if err != nil {
@@ -100,20 +115,15 @@ func planAbandonWithPlanner(root, request, path string) (CleanupPlan, cleanupPla
 	return plan, nil, nil
 }
 
-// planRemovedCheckout plans the abandon of an assignment whose checkout is gone from disk
-// while this repository still registers it. Only a path Lstat reports absent reaches
-// here; a path that exists is planned from the checkout, so a stranger's repository
-// sitting at the target is never mistaken for an absent one. Absence alone still licenses
-// nothing — the registration must name the target, and its branch and Bench lock must
-// match the assignment this request owns, which is the same identity pair the explicit
-// plan asserts and the only evidence a missing directory leaves.
-//
-// The branch is never deleted here: landedness is derived from the checkout, and a
-// removed one cannot supply the proof.
-func planRemovedCheckout(root, target, request string) (CleanupPlan, error) {
+// abandonRegistration reconciles the live worktree registration at target against the
+// intent ledger for one request. It is the whole identity proof available to an abandon
+// decided without a checkout: the registration must name the target, and its branch and
+// Bench lock must match the assignment this request owns, which is the same identity pair
+// the explicit plan asserts.
+func abandonRegistration(root, target, request string) (git.Worktree, intent.Assignment, error) {
 	registrations, err := git.Worktrees(canonicalRoot(root))
 	if err != nil {
-		return CleanupPlan{}, err
+		return git.Worktree{}, intent.Assignment{}, err
 	}
 	var registration *git.Worktree
 	for i := range registrations {
@@ -122,22 +132,72 @@ func planRemovedCheckout(root, target, request string) (CleanupPlan, error) {
 			continue
 		}
 		if registration != nil {
-			return CleanupPlan{}, errAbandonMismatch
+			return git.Worktree{}, intent.Assignment{}, errAbandonMismatch
 		}
 		registration = &registrations[i]
 	}
 	assignment, found, err := intent.FindAssignmentByRequest(root, request)
 	if err != nil {
-		return CleanupPlan{}, err
+		return git.Worktree{}, intent.Assignment{}, err
 	}
 	assignmentPath, pathErr := canonicalPath(assignment.Worktree)
 	if registration == nil || !found || pathErr != nil || assignmentPath != target || !cleanupOutputSafe(target) ||
 		registration.Detached || registration.BranchRef != assignment.Branch || registration.LockReason != lockReason(assignment) {
-		return CleanupPlan{}, errAbandonMismatch
+		return git.Worktree{}, intent.Assignment{}, errAbandonMismatch
+	}
+	return *registration, assignment, nil
+}
+
+// planLeftoverEntry plans the abandon of an assignment whose path still holds bytes that
+// are not a checkout. The registration and the ledger entry are the whole of what this
+// abandon spends: the bytes are left exactly as they are, travelling in the plan as the
+// leftover, because nothing here can tell what they hold and no recovery ref stands behind
+// them. The identity proof is the removed-checkout path's, so releasing a registration
+// that belongs to different work refuses the same way.
+func planLeftoverEntry(root, target, request string) (CleanupPlan, error) {
+	registration, assignment, err := abandonRegistration(root, target, request)
+	if err != nil {
+		return CleanupPlan{}, err
+	}
+	plan := CleanupPlan{
+		Target: target, Action: actionReleaseLeftover, Tracked: "unknown", Recovery: "none",
+		registration: registration, owned: true, assignment: &assignment, leftover: target,
+	}
+	// A recorded recovery ref names work that outlived the checkout, so the release
+	// re-asserts it rather than completing the assignment out from under it.
+	if len(assignment.Recovery) > 0 {
+		plan.Recovery = assignment.Recovery[0].Ref
+	}
+	plan.Fingerprint = leftoverFingerprint(plan.leftover, registration, assignment, plan.Action, plan.Recovery)
+	return plan, nil
+}
+
+func leftoverFingerprint(leftover string, registration git.Worktree, assignment intent.Assignment, action CleanupAction, recovery string) string {
+	return fingerprintParts(
+		[]byte("bench-abandon-leftover/v1"), []byte(leftover),
+		[]byte(registration.BranchRef), []byte(registration.LockReason),
+		[]byte(assignment.Schema), []byte(assignment.OwnerID), []byte(assignment.ID), []byte(assignment.Request),
+		[]byte(assignment.Start), []byte(assignment.Branch), []byte(assignment.State),
+		[]byte(action), []byte(recovery),
+	)
+}
+
+// planRemovedCheckout plans the abandon of an assignment whose checkout is gone from disk
+// while this repository still registers it. Only a path Lstat reports absent reaches here;
+// a path holding anything at all is planned from its checkout or released as leftover, so
+// a stranger's repository sitting at the target is never mistaken for an absent one.
+// Absence alone still licenses nothing — abandonRegistration owns that proof.
+//
+// The branch is never deleted here: landedness is derived from the checkout, and a
+// removed one cannot supply the proof.
+func planRemovedCheckout(root, target, request string) (CleanupPlan, error) {
+	registration, assignment, err := abandonRegistration(root, target, request)
+	if err != nil {
+		return CleanupPlan{}, err
 	}
 	plan := CleanupPlan{
 		Target: target, Action: ActionRemove, Tracked: "clean", Recovery: "none",
-		registration: *registration, owned: true, assignment: &assignment,
+		registration: registration, owned: true, assignment: &assignment,
 	}
 	// Recovery refs already recorded name work that outlived the checkout, so the removal
 	// must re-assert them rather than complete the assignment out from under them.

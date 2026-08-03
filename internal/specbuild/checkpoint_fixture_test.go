@@ -43,19 +43,9 @@ func newCheckpointFixture(t *testing.T, configure ...func(string)) checkpointFix
 		t.Fatalf("Assign: %v", err)
 	}
 	write(t, filepath.Join(assigned.Path, "internal", "specbuild", "checkpoint-change.go"), "package specbuild\n")
-	run := loadRun(t, service)
-	_, stored, ok := assignmentFor(run, assigned.ID)
-	if !ok {
-		t.Fatal("missing assignment")
-	}
-	rows := make([]rowReceipt, len(stored.Rows))
-	for i, row := range stored.Rows {
-		rows[i] = rowReceipt{Row: row, Outcome: "passed"}
-	}
-	tree := benchgit.TreeHash(assigned.Path)
 	return checkpointFixture{
-		root: root, service: service, gate: gate, assigned: assigned, run: run,
-		receipt: receipt{Version: receiptVersion, Run: run.Run, Assignment: assigned.ID, Base: assigned.Base, Tree: tree, TicketDigest: stored.TicketDigest, Rows: rows, Checks: []check{{Name: "go test ./internal/specbuild", Passed: true}}, Probe: probe{Producer: "coordinator", Assignment: assigned.ID, Tree: tree, Command: "go test ./internal/specbuild", Exit: 0, OutputDigest: digest("focused pass"), Produced: time.Now().UTC().Format(time.RFC3339Nano)}, Ownership: []string{"internal/specbuild/checkpoint-change.go"}, Assumptions: assumptionDigests(stored.Assumptions)},
+		root: root, service: service, gate: gate, assigned: assigned, run: loadRun(t, service),
+		receipt: checkpointReceiptFor(t, service, assigned, []string{"internal/specbuild/checkpoint-change.go"}),
 	}
 }
 func writeCheckpointReceipt(t *testing.T, rec receipt, suffix string) string {
@@ -121,7 +111,11 @@ func changedTicket(t *testing.T, fixture checkpointFixture, text string) {
 	t.Helper()
 	write(t, filepath.Join(fixture.root, "specs", "build demo", "tickets", "one.md"), text)
 }
-func checkpointAssignment(t *testing.T, root string, service *Service, assigned Assignment, ownership []string) record {
+
+// checkpointReceiptFor builds the receipt assigned's current worktree state earns. A test
+// that needs the receipt without spending it shares this one source with the checkpointing
+// helper below rather than restating the receipt's shape.
+func checkpointReceiptFor(t *testing.T, service *Service, assigned Assignment, ownership []string) receipt {
 	t.Helper()
 	run := loadRun(t, service)
 	_, stored, ok := assignmentFor(run, assigned.ID)
@@ -133,7 +127,11 @@ func checkpointAssignment(t *testing.T, root string, service *Service, assigned 
 		rows[i] = rowReceipt{Row: row, Outcome: "passed"}
 	}
 	tree := benchgit.TreeHash(assigned.Path)
-	rec := receipt{Version: receiptVersion, Run: run.Run, Assignment: assigned.ID, Base: assigned.Base, Tree: tree, TicketDigest: stored.TicketDigest, Rows: rows, Checks: []check{{Name: "go test ./internal/specbuild", Passed: true}}, Probe: probe{Producer: "coordinator", Assignment: assigned.ID, Tree: tree, Command: "go test ./internal/specbuild", Exit: 0, OutputDigest: digest("focused pass"), Produced: time.Now().UTC().Format(time.RFC3339Nano)}, Ownership: ownership, Assumptions: assumptionDigests(stored.Assumptions)}
+	return receipt{Version: receiptVersion, Run: run.Run, Assignment: assigned.ID, Base: assigned.Base, Tree: tree, TicketDigest: stored.TicketDigest, Rows: rows, Checks: []check{{Name: "go test ./internal/specbuild", Passed: true}}, Probe: probe{Producer: "coordinator", Assignment: assigned.ID, Tree: tree, Command: "go test ./internal/specbuild", Exit: 0, OutputDigest: digest("focused pass"), Produced: time.Now().UTC().Format(time.RFC3339Nano)}, Ownership: ownership, Assumptions: assumptionDigests(stored.Assumptions)}
+}
+func checkpointAssignment(t *testing.T, root string, service *Service, assigned Assignment, ownership []string) record {
+	t.Helper()
+	rec := checkpointReceiptFor(t, service, assigned, ownership)
 	if _, err := service.Checkpoint(t.Context(), "build demo", assigned.ID, writeCheckpointReceipt(t, rec, "\n")); err != nil {
 		t.Fatalf("Checkpoint(%s): %v", assigned.ID, err)
 	}

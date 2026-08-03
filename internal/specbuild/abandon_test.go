@@ -4,12 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"syscall"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -498,11 +501,13 @@ func TestApplyAbandonRefusesUnrecognizedHeadMove(t *testing.T) {
 	}
 }
 
-// TestNonAbandonMutationsStillRecomposeOnMovedTip pins that the exemption at the
-// recomposition return site is scoped to abandon: it walks the production mutation
-// list itself, so a mutation added later without a matching invocation here fails
-// loudly instead of silently widening the exemption.
+// TestNonAbandonMutationsStillRecomposeOnMovedTip pins how narrowly a moved tip is
+// softened: abandon is exempt at the recomposition return site, checkpoint and start
+// fast-forward an empty run onto the moved tip, and every other mutation still refuses.
+// It walks the production mutation list itself, so a mutation added later without a
+// matching invocation here fails loudly instead of silently joining either set.
 func TestNonAbandonMutationsStillRecomposeOnMovedTip(t *testing.T) {
+	fastForwards := map[mutation]bool{mutationStart: true, mutationCheckpoint: true}
 	invoke := map[mutation]func(t *testing.T) error{
 		mutationStart: func(t *testing.T) error {
 			fixture := newPreconditionFixture(t, true)
@@ -544,7 +549,14 @@ func TestNonAbandonMutationsStillRecomposeOnMovedTip(t *testing.T) {
 			t.Fatalf("no moved-tip invocation wired for mutation %q", op)
 		}
 		t.Run(string(op), func(t *testing.T) {
-			if err := fn(t); err == nil || !strings.Contains(err.Error(), "bench spec build promote") {
+			err := fn(t)
+			if fastForwards[op] {
+				if err != nil {
+					t.Fatalf("%s on an empty moved tip = %v, want the fast-forward to let it proceed", op, err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), "bench spec build promote") {
 				t.Fatalf("%s on moved tip = %v, want the recomposition refusal naming promote", op, err)
 			}
 		})
@@ -783,5 +795,285 @@ func abandonmentSnapshot(t *testing.T, fixture checkpointFixture) abandonSnapsho
 		state:     string(state),
 		refs:      git(t, fixture.root, "for-each-ref", "--format=%(refname) %(objectname)", "refs/bench/"),
 		worktrees: git(t, fixture.root, "worktree", "list", "--porcelain"),
+	}
+}
+
+// decayedOwner answers abandon planning with a stable synthetic fingerprint instead of
+// the real planner. Planning a present-but-not-a-checkout path is internal/worktree's
+// contract; these fixtures grade what the precondition classification admits, so the
+// owner is the counter that proves the release was reached.
+type decayedOwner struct {
+	realOwner
+	plans, applies int
+}
+
+func (o *decayedOwner) PlanAbandon(_ context.Context, _, request, path string) (string, error) {
+	o.plans++
+	return digest(request + "\x00" + path), nil
+}
+func (o *decayedOwner) ApplyAbandon(_ context.Context, _, _, _, _ string) error {
+	o.applies++
+	return nil
+}
+
+// decayedFixture builds a checkpoint fixture whose assignment checkout has decayed into
+// shape, with an owner that counts the release the decay is supposed to still permit.
+func decayedFixture(t *testing.T, shape func(t *testing.T, path string)) (checkpointFixture, *decayedOwner) {
+	t.Helper()
+	fixture := newCheckpointFixture(t)
+	owner := &decayedOwner{}
+	fixture.service.worktrees = owner
+	shape(t, fixture.assigned.Path)
+	return fixture, owner
+}
+
+// huskCheckout strips the checkout's git metadata while leaving its bytes in place — the
+// decay abandon exists to clean up, and the shape that must never be force-removed.
+func huskCheckout(t *testing.T, path string) {
+	t.Helper()
+	if err := os.RemoveAll(filepath.Join(path, ".git")); err != nil {
+		t.Fatalf("strip checkout metadata: %v", err)
+	}
+	write(t, filepath.Join(path, "husk-payload.txt"), "unlanded husk bytes\n")
+}
+
+func danglingSymlinkCheckout(t *testing.T, path string) {
+	t.Helper()
+	replaceCheckout(t, path)
+	if err := os.Symlink(filepath.Join(path+"-target", "gone"), path); err != nil {
+		capability.Capability(t, capability.Symlink, fmt.Sprintf("cannot create a symlink: %v", err))
+	}
+}
+
+func fifoCheckout(t *testing.T, path string) {
+	t.Helper()
+	replaceCheckout(t, path)
+	if err := syscall.Mkfifo(path, 0o600); err != nil {
+		capability.Capability(t, capability.Fifo, fmt.Sprintf("cannot create a FIFO: %v", err))
+	}
+}
+
+func regularFileCheckout(t *testing.T, path string) {
+	t.Helper()
+	replaceCheckout(t, path)
+	write(t, path, "not a checkout\n")
+}
+
+func replaceCheckout(t *testing.T, path string) {
+	t.Helper()
+	if err := os.RemoveAll(path); err != nil {
+		t.Fatalf("clear assignment checkout: %v", err)
+	}
+}
+
+func TestAbandonAppliesForHuskCheckout(t *testing.T) {
+	fixture, owner := decayedFixture(t, huskCheckout)
+	plan, err := fixture.service.Abandon(t.Context(), "build demo")
+	if err != nil {
+		t.Fatalf("Abandon over a husk: %v", err)
+	}
+	if len(plan.Worktrees) != 1 || plan.Worktrees[0].Path != fixture.assigned.Path {
+		t.Fatalf("planned worktrees = %#v", plan.Worktrees)
+	}
+	status, err := fixture.service.ApplyAbandon(t.Context(), "build demo", plan.Fingerprint)
+	if err != nil || status.State != "terminal" || owner.applies != 1 {
+		t.Fatalf("ApplyAbandon over a husk status=%#v err=%v apply calls=%d", status, err, owner.applies)
+	}
+	run := loadRun(t, fixture.service)
+	_, released, ok := assignmentFor(run, fixture.assigned.ID)
+	if !run.Terminal || !ok || !released.Released {
+		t.Fatalf("husk abandonment evidence = %#v", run)
+	}
+}
+
+// TestDecayedCheckoutShapesAbandonAndRefuseCheckpoint walks the decayed shapes through
+// both directions of the classification at once, so a classifier that special-cases one
+// shape — or that softens the shared probe for every operation — cannot pass. The FIFO
+// case has no writer, so an implementation that opens the assignment path hangs here
+// rather than returning a verdict.
+func TestDecayedCheckoutShapesAbandonAndRefuseCheckpoint(t *testing.T) {
+	for _, test := range []struct {
+		name  string
+		shape func(t *testing.T, path string)
+	}{
+		{"husk", huskCheckout},
+		{"dangling symlink", danglingSymlinkCheckout},
+		{"fifo", fifoCheckout},
+		{"regular file", regularFileCheckout},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			fixture, owner := decayedFixture(t, test.shape)
+			plan, err := fixture.service.Abandon(t.Context(), "build demo")
+			if err != nil {
+				t.Fatalf("Abandon over a %s: %v", test.name, err)
+			}
+			status, err := fixture.service.ApplyAbandon(t.Context(), "build demo", plan.Fingerprint)
+			if err != nil || status.State != "terminal" || owner.applies != 1 {
+				t.Fatalf("ApplyAbandon over a %s status=%#v err=%v apply calls=%d", test.name, status, err, owner.applies)
+			}
+			checkpointed, _ := decayedFixture(t, test.shape)
+			if err := checkpointInvocation(t, checkpointed); err == nil || !strings.Contains(err.Error(), ownershipRefusal) {
+				t.Fatalf("Checkpoint over a %s = %v, want the ownership refusal", test.name, err)
+			}
+		})
+	}
+}
+
+// requireUnreadableMetadata strips the checkout's git metadata entry and proves the strip
+// bit, since root ignores the mode entirely and would read straight through the
+// assertion. The restore is registered before the chmod so it runs ahead of TempDir's own
+// removal, which cannot descend into an entry it cannot enter.
+func requireUnreadableMetadata(t *testing.T, path string) {
+	t.Helper()
+	metadata := filepath.Join(path, ".git")
+	t.Cleanup(func() { _ = os.Chmod(metadata, 0o700) })
+	if err := os.Chmod(metadata, 0o000); err != nil {
+		capability.Capability(t, capability.Privilege, fmt.Sprintf("cannot strip permissions: %v", err))
+	}
+	if entry, err := os.Open(metadata); err == nil {
+		entry.Close()
+		capability.Capability(t, capability.Privilege, "mode 0o000 is still readable by this user")
+	}
+}
+
+// TestAbandonRefusesUnreadableCheckoutMetadata pins the classification's fatal side: a
+// path that still carries git metadata may be a live checkout this process merely cannot
+// read, so no operation — abandon included — may release it.
+func TestAbandonRefusesUnreadableCheckoutMetadata(t *testing.T) {
+	fixture, owner := decayedFixture(t, func(t *testing.T, path string) { requireUnreadableMetadata(t, path) })
+	if _, err := fixture.service.Abandon(t.Context(), "build demo"); err == nil || !strings.Contains(err.Error(), ownershipRefusal) {
+		t.Fatalf("Abandon over unreadable metadata = %v, want the ownership refusal", err)
+	}
+	if err := checkpointInvocation(t, fixture); err == nil || !strings.Contains(err.Error(), ownershipRefusal) {
+		t.Fatalf("Checkpoint over unreadable metadata = %v, want the ownership refusal", err)
+	}
+	if owner.plans != 0 || owner.applies != 0 {
+		t.Fatalf("unreadable metadata reached the owner: plans=%d applies=%d", owner.plans, owner.applies)
+	}
+}
+
+// TestAbandonAppliesWithMissingIntentRegistration pins the reclassification that makes
+// the blanket exemption deletable: a run record naming an assignment the ledger no longer
+// holds has no ownership left to write into, and abandon is what clears it. The owner is
+// the production composition — a checkout built by worktree.Create, planned and released
+// through internal/worktree itself — because the real planner is the half that refuses a
+// registration it cannot resolve, and a stubbed one would hide that refusal.
+func TestAbandonAppliesWithMissingIntentRegistration(t *testing.T) {
+	fixture := newCheckpointFixture(t)
+	owner := &abandonOwner{}
+	fixture.service.worktrees = owner
+	run := loadRun(t, fixture.service)
+	_, stored, ok := assignmentFor(run, fixture.assigned.ID)
+	if !ok {
+		t.Fatal("missing assignment")
+	}
+	owned, found, err := intent.FindAssignmentByRequest(fixture.root, stored.OwnerRequest)
+	if err != nil || !found {
+		t.Fatalf("owned assignment: found=%v err=%v", found, err)
+	}
+	if err := intent.DeleteAssignment(fixture.root, owned.ID); err != nil {
+		t.Fatalf("delete intent registration: %v", err)
+	}
+	plan, err := fixture.service.Abandon(t.Context(), "build demo")
+	if err != nil {
+		t.Fatalf("Abandon without an intent registration: %v", err)
+	}
+	// The ledger entry is the only thing the owner reconciles against, so with it gone
+	// there is nothing left to plan or release; the residual bytes stay on disk for the
+	// ordinary clean surface to collect.
+	if len(plan.Worktrees) != 0 || owner.plans != 0 {
+		t.Fatalf("planned worktrees = %#v, owner plan calls = %d", plan.Worktrees, owner.plans)
+	}
+	status, err := fixture.service.ApplyAbandon(t.Context(), "build demo", plan.Fingerprint)
+	if err != nil || status.State != "terminal" || owner.applies != 0 {
+		t.Fatalf("ApplyAbandon without an intent registration status=%#v err=%v apply calls=%d", status, err, owner.applies)
+	}
+	final := loadRun(t, fixture.service)
+	_, released, ok := assignmentFor(final, fixture.assigned.ID)
+	if !final.Terminal || !ok || !released.Released {
+		t.Fatalf("terminal evidence without an intent registration = %#v", final)
+	}
+}
+
+// preparedAbandonFixture drives an abandon apply into its interrupted mid-release state:
+// the abandon operation is prepared with a recorded journal and exactly one assignment is
+// still unreleased. That is the exact state a blanket prepared-abandon exemption re-admits
+// an identity fault through.
+func preparedAbandonFixture(t *testing.T) (*Service, *abandonOwner, AbandonmentPlan) {
+	t.Helper()
+	_, service, owner, plan := twoAssignmentAbandonFixture(t, false)
+	service.fault = injectFault("abandon/release")
+	if _, err := service.ApplyAbandon(t.Context(), "build demo", plan.Fingerprint); err == nil {
+		t.Fatal("ApplyAbandon completed through injected interruption")
+	}
+	service.fault = nil
+	op, found := service.operation(loadRun(t, service), "abandon", "apply")
+	if !found || op.State != "prepared" || op.Result == "" || owner.applies != 1 {
+		t.Fatalf("prepared abandon operation = %#v found=%t apply calls=%d", op, found, owner.applies)
+	}
+	return service, owner, plan
+}
+
+// preparedAssignments splits the interrupted run's assignments into the one already
+// released and the one still owned, since only the owned assignment's identity is still
+// read by the ownership check.
+func preparedAssignments(t *testing.T, run record) (releasedKey, ownedKey string) {
+	t.Helper()
+	for key, assigned := range run.Assignments {
+		if assigned.Released {
+			releasedKey = key
+			continue
+		}
+		ownedKey = key
+	}
+	if releasedKey == "" || ownedKey == "" {
+		t.Fatalf("interrupted assignments = %#v", run.Assignments)
+	}
+	return releasedKey, ownedKey
+}
+
+// TestAbandonRefusesIdentityFaultsDuringPreparedApply enumerates the fatal identity
+// classes against the resumed-abandon state, because one representative forgery would let
+// an implementation reject it while still swallowing another class.
+func TestAbandonRefusesIdentityFaultsDuringPreparedApply(t *testing.T) {
+	for _, test := range []struct {
+		name  string
+		forge func(t *testing.T, released, owned *assignment)
+	}{
+		{"duplicate id", func(_ *testing.T, released, owned *assignment) { owned.ID = released.ID }},
+		{"duplicate path", func(_ *testing.T, released, owned *assignment) { owned.Path = released.Path }},
+		{"duplicate owner request", func(_ *testing.T, released, owned *assignment) { owned.OwnerRequest = released.OwnerRequest }},
+		{"owner request digest", func(_ *testing.T, _, owned *assignment) { owned.OwnerRequest = digest("forged request") }},
+		{"registration assignment id", func(_ *testing.T, _, owned *assignment) { owned.ID = "forged-assignment-id" }},
+		{"registration worktree path", func(t *testing.T, _, owned *assignment) {
+			owned.Path = filepath.Join(t.TempDir(), "elsewhere")
+		}},
+		{"foreign checkout", func(t *testing.T, _, owned *assignment) {
+			if err := os.RemoveAll(owned.Path); err != nil {
+				t.Fatalf("clear assignment checkout: %v", err)
+			}
+			if err := os.Rename(repo(t), owned.Path); err != nil {
+				t.Fatalf("plant a stranger checkout: %v", err)
+			}
+		}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			service, owner, plan := preparedAbandonFixture(t)
+			run := loadRun(t, service)
+			releasedKey, ownedKey := preparedAssignments(t, run)
+			released, owned := run.Assignments[releasedKey], run.Assignments[ownedKey]
+			test.forge(t, &released, &owned)
+			run.Assignments[releasedKey], run.Assignments[ownedKey] = released, owned
+			saveRun(t, service, run)
+			if _, err := service.Abandon(t.Context(), "build demo"); err == nil || !strings.Contains(err.Error(), ownershipRefusal) {
+				t.Fatalf("Abandon on forged %s = %v, want the ownership refusal", test.name, err)
+			}
+			if _, err := service.ApplyAbandon(t.Context(), "build demo", plan.Fingerprint); err == nil || !strings.Contains(err.Error(), ownershipRefusal) {
+				t.Fatalf("ApplyAbandon on forged %s = %v, want the ownership refusal", test.name, err)
+			}
+			if owner.applies != 1 {
+				t.Fatalf("forged %s reached a further apply: %d", test.name, owner.applies)
+			}
+		})
 	}
 }

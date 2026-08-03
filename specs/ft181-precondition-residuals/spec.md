@@ -1,6 +1,6 @@
 # FT181 precondition residuals
 
-Status: staged
+Status: implemented
 
 Decision source: compiled map at
 `specs/ft181-precondition-residuals/decisions/ft181-spec-build-preconditions.md`,

@@ -161,7 +161,7 @@ func (s *Service) Checkpoint(ctx context.Context, slug, assignmentID, evidence s
 		}
 		return run.status(), nil
 	}
-	if _, err := s.preconditions(mutationCheckpoint, slug, run.Spec, &run, assignmentID, evidence); err != nil {
+	if _, err := s.preconditionsAdvancingEmptyRun(mutationCheckpoint, slug, run.Spec, &run, assignmentID, evidence); err != nil {
 		return Status{}, err
 	}
 	rec, raw, err := readReceipt(evidence)
