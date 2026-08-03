@@ -16,13 +16,12 @@ Gate: green at `94889f6` — stale, work tree `396fbd6`
   surface (duplicate re-derivation sentence, `###` fence-heading workaround,
   ParseTicket doc comment, inventory grouping label, held probe-kind entry,
   anchor-file structure-budget overage).
-- **Reviewer's next action: run the Codex hotfix** (prompt already delivered in
-  conversation; hotfix-class, `$bench-debug`, light-path tickets): relax
-  `bench spec build start`'s exact-green precondition to accept composed
-  green (reduced/partial verdict + intact inherited evidence), fix its
-  remediation text, and make zero-checkpoint recomposition trivial instead of
-  feeding git an empty patch. Both defects are parked in `capture/IDEAS.md`.
-  Nothing now holds `internal/specbuild` or the tip — safe to run.
+- **The follow-ups are landed too:** both Codex hotfixes are on main
+  (`4afc609` composed-green accepted at lifecycle entry, `2874d94`
+  zero-checkpoint recomposition rebases instead of feeding git an empty
+  patch; tickets under `specs/light-path-composed-green-recomposition/`), and
+  the fence-aware section resolver landed at `79bcc11`, retiring the
+  craft-tickets `###` heading workaround — that veto flag is closed.
 - Two open learnings entries (gate-subject mutation; tree-freeze during active
   runs) and one pending retro drain await `/bench-what-next`.
 - FT173's row carries the reviewer's per-command AXI acceptance conditions
