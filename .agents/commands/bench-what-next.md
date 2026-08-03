@@ -31,8 +31,8 @@ or a sequence from partial sources.
 Close by reporting the reconcile verdicts (rows removed or reworded), the drained
 idea count, each retro recommendation disposition, each journal verdict, and the
 refreshed sequence — with judgment calls flagged for veto. On approval, commit
-on green; the recommended next command is the top line of the refreshed
-`## Recommended sequence`.
+on green, once, over everything the pass touched; the recommended next command
+is the top line of the refreshed `## Recommended sequence`.
 
 ## 1. Reconcile first
 
@@ -42,6 +42,13 @@ check. Shipped work is removed and stale wording is corrected. Row presence is
 status, so this pass is the backstop for anything spec-retire missed; the
 empty-state recommendation is only trustworthy if the roadmap is current. No
 completion markers — history lives in git.
+
+A spec whose work has landed but whose directory still sits under `specs/` is
+retired here rather than left for a later invocation: run
+`bench spec retire <slug>` during this pass so its deletions join the batch
+below. Promote whatever of the spec stays durable onto
+its roadmap row first, and leave that row naming no spec path — the row survives
+only as the residual work the spec did not ship.
 
 ## 2. Drain occurrence evidence
 
@@ -125,10 +132,17 @@ occurrence count. When occurrence count also ties, apply the existing reproduced
 defect-over-feature rule, then cheapest-first cost rule. No CLI command sorts or
 rewrites `ROADMAP.md`; this is reviewed maintenance judgment, not global sorting.
 
-## 8. Batch-propose, then commit on green
+## 8. Batch-propose, then commit once on green
 
-Draft the full pass — reconciled roadmap, emptied inbox, retro dispositions and
-removals, journal verdicts including dismissals — as one uncommitted batch diff.
+Draft the full pass as one uncommitted batch diff: the reconciled roadmap, the
+emptied inbox, retro dispositions and removals, journal verdicts including
+dismissals, every `bench spec retire` the reconcile earned, and the rewritten
+`capture/session-handoff.md`. Everything the pass touches lands in that one
+diff and one commit. The gate is what a commit costs, and this pass is
+bookkeeping — splitting it across a drain commit, a retire commit, and a
+handoff commit buys nothing and pays the oracle three times. Leave no part of
+the pass for a follow-up invocation to commit.
+
 The diff includes the run's concise `CHANGELOG.md` entry only when the pass
 changes notable user-facing behavior. The approved commit and Git history own
 reconcile verdicts, dismissed learnings, and promotion evidence; do not mirror
@@ -137,3 +151,15 @@ approves or adjusts it once, and there are no per-item interactive sign-offs. On
 approval, commit on green. Never commit the drain without that approval; a
 standing batch approval (the AGENTS.md rule) counts, with contestable calls
 flagged for post-hoc veto.
+
+Two constraints shape that single commit. When the pass retires a spec, the
+commit subject **ends with** `spec-retire: <slug>` — that suffix is the exact
+grammar `bench spec history` matches, so a subject that merely mentions the slug
+loses the retirement evidence a later run's shipped-row check reads. The suffix
+carries one slug, so a pass retiring two or more specs takes one extra commit
+per additional slug and says so in the exit; that is rare, and correctness of
+the history query outranks the saved gate. And the handoff is written last,
+immediately before the commit: its pin block names the pre-commit HEAD by
+construction, which is correct rather than stale — `bench status` dates the
+handoff by the commit that wrote it, and the tree wins wherever the two
+disagree.
