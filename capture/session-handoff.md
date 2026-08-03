@@ -2,33 +2,40 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `7dbb686`, clean tree, 21 unpushed commits
-Spec: `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `e11c4c7` — stale, work tree `e11c4c7`
+Branch: `main` — HEAD `843a4b7`, 6 dirty paths, 0 unpushed commits
+Spec: `specs/check-level-conformance-scoping/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Gate: green at `62e5458` — stale, work tree `7758ce4`
 
 ## State
 
-- **The `/bench-what-next` drain is committed** (`626cf92`), and
-  `ft164-ticket-contracts` is retired (`7dbb686`). All three capture sources
-  are empty: 3 ideas, 3 learnings, 1 retro drained.
-- **FT164's row is now its residual only** — the repair-and-experiment lane
-  the spec cut (model-comparison, inventory-currency, shared-cache charges),
-  plus two rules from its own build: a done-claim resolves every owner named
-  in a ticket's Red-mutations table to a real artifact, and a repair round
-  trues up any enumeration it extends. It names no spec path.
-- Rulings recorded during the drain: FT173's principle-9 byte-relaxation
-  applies to the `help[]` spec alone; FT175's spec-start gate is
-  owners-consumed, and its three ledger decisions are deferred behind the
-  foundation and `help[]`. FT130 gained the tip-move-under-active-run face;
-  FT156 gained the anchor-file budget signal (864 vs 660).
-- Two restructure candidates were named but not applied (a default run):
-  FT130 now carries three faces of one decision, and FT164's residual could
-  fold into the FT179 + FT111 visit. Both are open for a `--restructure` pass.
+- **The four-map decision session is closed and dual-reviewed** (opus +
+  codex gpt-5.6-sol): `decisions/ft156-anchor-registry.md`,
+  `decisions/ft144-post-approval-edits.md`,
+  `decisions/ft181-spec-build-preconditions.md`, and
+  `decisions/ft183-gate-scoping-residuals.md` are all `Status: ready`, with
+  review findings folded in as flagged corrections and four reviewer
+  amendments (FT181 #2 authorizes the `internal/worktree` abandon-planner
+  change; FT181 #4's mechanism text corrected to the `errRecompose`
+  refusal; FT144's rule is now intent-based with a run-boundary timing rule;
+  FT183 #3 adds refuse-unknown-rows exhaustiveness and binds the canary row).
+- **The maps and `decisions/assets/ft183-derivation-binding.md` are
+  UNCOMMITTED** — `bench commit` refuses while the other session's untracked
+  `specs/check-level-conformance-scoping/` sits outside the named set. After
+  that spec lands (or leaves the tree), commit with:
+  `bench commit -m "shape-idea: close the four-map decision session; FT183 ready after research and dual review" decisions/ft144-post-approval-edits.md decisions/ft156-anchor-registry.md decisions/ft181-spec-build-preconditions.md decisions/ft183-gate-scoping-residuals.md decisions/assets/ft183-derivation-binding.md`
+- Decisions that stay closed: all rulings in the four maps, including the
+  2026-08-02 grill answers and the 2026-08-03 amendments above; the
+  stronger-than-substring anchor mechanism stays deferred (FT156 Out of
+  scope).
+- FT156's roadmap-row anchor sizing is stale against the instrumented count
+  (299 needles, ~222 require-direction); the map carries the correction.
 - Nothing pushed; push is the reviewer's call.
 
 ## Next command
 
-`/bench-shape-idea` — the board's leading invocable signal (`decisions`).
+`/bench-write-spec` — start with `decisions/ft181-spec-build-preconditions.md`
+(all four faces ruled, discretion bounded, no research dependencies); FT183
+and FT156 follow, each from its ready map.
 
 ## Shape
 

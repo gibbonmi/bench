@@ -33,15 +33,23 @@ stands, seam moves".
 
 ### Answer
 
-Resolved 2026-08-02: rule (a). Under batch approval, a factual correction —
-a citation resolving to nothing, or a described mechanism the tree
-contradicts — may be made post-approval, each marked in-line with the
+Resolved 2026-08-02: rule (a). Amended 2026-08-03 after doc review to an
+intent-based boundary, one rule for both phases: under batch approval, a
+factual correction (a citation resolving to nothing, or a described mechanism
+the tree contradicts) and a seam move that preserves the story's intent and
+observable outcome are permitted, each marked in-line with the
 `**Post-approval correction, flagged:**` marker and flagged for veto;
-anything that changes what gets built stops for sign-off. The round-trip
-alternative (b) is rejected: it pays a full cycle on every false citation. The same logic governs the
-build-phase seam-move case: when a story's intent stands but its pinned seam
-is wrong against the tree, the build may move the seam under batch approval
-with a mandatory veto flag, while any change to the story's intent stops.
+anything that changes a story's intent or observable outcome stops for
+sign-off. The round-trip alternative (b) is rejected on its stop-all-edits
+half only — it pays a full cycle on every false citation; the review phase's
+persistence of findings to `reviews/<spec-slug>.md` is untouched by this
+ruling.
+
+Timing rule, added 2026-08-03: during an active spec-build run, a
+post-approval correction to the staged spec waits for a run boundary (before
+`start`, or after `integrate` or `abandon`) — a mid-run spec commit trips the
+lifecycle's staged-spec mismatch refusal, which has no exemption, and this
+rule is the decided disposition rather than a lifecycle change.
 
 ## Not yet specified
 

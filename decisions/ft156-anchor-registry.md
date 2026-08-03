@@ -24,26 +24,32 @@ pre-edit query. Which, and in what order?
 ### Answer
 
 Resolved 2026-08-02, as a staged program. The stronger-than-substring
-mechanism, the fourth competing move, is deferred — see Out of scope.
+mechanism, the third competing move, is deferred — see Out of scope.
 
 0. **The `.bench/BENCH.md` section-scoped red-capability fixture is pulled
    forward, before everything else** — it is independent and cheap, it lands
    beside or before the FT107/FT100 prose passes that edit that file first,
-   and FT152's stories 1 and 15 rest on the untested combination. It is
-   authored against the current mechanism and re-homes onto the registry
-   when extraction lands.
+   and FT152's stories 1 and 15 rest on the untested combination.
+   **Post-approval correction, flagged:** one section-scoped `.bench/BENCH.md`
+   red fixture already exists (`structured-phase-progress-anchor` removes a
+   How-to-talk-to-me clause and is graded by the section parser), so the
+   fixture's target narrows to the generic section-scoped anchor helpers the
+   existing fixture does not exercise. It is authored against the current
+   mechanism and re-homes onto the registry when extraction lands.
 1. **Registry extraction first among the mechanism work, carrying
    `bench anchors <path>`** — the anchor set becomes declarative data with
    one shared matcher, and the query command reads it so an editor sees
    which anchors pin a file before editing. Mechanism-neutral: a later
    stronger mechanism reuses the registry. The anchors live today as inline
-   closures in one conformance test file (~180 needles: ~73 collapsed, ~92
-   plain require, 11 forbid, 4 in-section), and the extraction collapses the
-   plain and collapsed require paths into the same shared matcher.
+   closures in one conformance test file (**Post-approval correction,
+   flagged:** the 2026-08-02 census counted call sites, not needles; an
+   instrumented run counts 299 — 91 plain require, 131 collapsed, 15 forbid,
+   51 in-section require, 11 in-section forbid), and the extraction collapses
+   the plain and collapsed require paths into the same shared matcher.
 2. **Comment-strip rides the extracted matcher** — with matching centralized,
    the require-direction matchers stripping HTML comments like `forbid`
    already does becomes a small change on the shared matcher plus a red
-   demonstration, not a ~165-anchor sweep.
+   demonstration, not a sweep of the ~222 require-direction anchors.
 3. **Honest-rows reduced** — after comment-strip lands, only the rows still
    overclaiming against paraphrase evasion are restated to the weaker claim.
 
@@ -58,9 +64,10 @@ mechanism, the fourth competing move, is deferred — see Out of scope.
   conformance import edge (the anchors sit in a `_test.go` file `cmd/bench`
   cannot import, and `internal/conformance/registry` documents that edge);
   the exact package within that constraint is spec work.
-- Whether the program lands as one spec or several; the ~165-anchor sweep
-  premise behind the roadmap's "own spec" sizing for comment-strip no longer
-  holds once the matcher is shared.
+- Whether the program lands as one spec or several; the per-anchor-sweep
+  premise behind the roadmap's "own spec" sizing for comment-strip (the row
+  says roughly 100 anchors; the instrumented count is ~222 require-direction)
+  no longer holds once the matcher is shared.
 
 ## Out of scope
 

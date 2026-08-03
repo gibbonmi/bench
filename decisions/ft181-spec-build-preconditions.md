@@ -45,6 +45,13 @@ Resolved 2026-08-02: yes. A husk (directory present, `.git` gone) or a
 dangling symlink classifies as liveness, so `abandon` can proceed. Identity
 mismatches remain fatal.
 
+Amended 2026-08-03 after doc review: the specbuild classification alone does
+not deliver the outcome — abandon routes any `Lstat`-present target through
+`internal/worktree`'s explicit planner, which rejects a non-checkout. The
+worktree-layer change is authorized: the abandon planner treats
+present-but-not-a-checkout like the already-handled removed-checkout case, so
+the map's scope includes `internal/worktree`'s abandon planning path.
+
 ## #3: The prepared-abandon exemption softens identity errors
 
 Blocked by: none
@@ -85,6 +92,13 @@ patches, unwedging checkpoint and start (abandon is already exempt). When
 this face ships, the standing run-window commit-sequencing rule retires with
 the roadmap row that carries it.
 
+Corrected 2026-08-03 after doc review: the "cannot replay an empty candidate"
+mechanism is stale — promote's recomposition already fast-forwards an empty
+run directly onto the advanced tip. The residual wedge is the blanket
+recompose refusal of checkpoint and start in the mutation precondition; the
+decision stands as extending that same fast-forward treatment to checkpoint
+and start instead of refusing them.
+
 ## Not yet specified
 
 ## Spec-writer discretion
@@ -95,6 +109,8 @@ the roadmap row that carries it.
 ## Out of scope
 
 - Any change to promotion's gate cadence or the compare-and-swap integrate
-  contract; the four faces are precondition and ownership classification only.
+  contract; the four faces are precondition and ownership classification,
+  plus the `internal/worktree` abandon-planning change #2's amendment
+  authorizes.
 
 ## Sources

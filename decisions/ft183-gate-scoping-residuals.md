@@ -1,6 +1,6 @@
 # FT183 per-component-scoping review residuals
 
-Status: shaping
+Status: ready
 
 ## Destination
 
@@ -24,9 +24,11 @@ futures?
 ### Answer
 
 Resolved 2026-08-02: remove it. The removal simplifies `internal/gate` and
-retires `reduced_run_test`'s synthetic fixture; if a linked-repo shape ever
-genuinely needs a whole-changeset reduced path, it is re-added against that
-real shape rather than carried as an unreachable branch.
+retires `reduced_run_test`'s synthetic fixture — and, with #5's full
+retirement, the reduced-verdict record tests and the mixed-class refusals
+that pair reduced against partial; if a linked-repo shape ever genuinely
+needs a whole-changeset reduced path, it is re-added against that real shape
+rather than carried as an unreachable branch.
 
 ## #2: Observe which derivation a registry row resolves through
 
@@ -43,21 +45,90 @@ resolves through, and at what cost?
 
 ### Answer
 
-— (open: produce a short cited design summary of candidate observation
-mechanisms over `internal/gate`'s registry, with the cost and blast radius of
-each; parked as research by the 2026-08-02 decision session — no ruling until
-the summary exists)
+Resolved 2026-08-03: the summary exists at
+`decisions/assets/ft183-derivation-binding.md`. Five candidates priced
+(function identity, instrumentation, perturbation grid, AST bijection,
+extensional-vs-named-source), and two resolver swaps empirically verified to
+pass the derivation-source check — including that the hand-declared `canary`
+row's resolver is exempt from all of that check's grading (each swap is
+caught, if at all, only by an unrelated behavioral expectation). The ruling
+is #3; the exemption is #4.
+
+## #3: Which binding mechanism, if any
+
+Blocked by: #2
+Type: Grill
+
+### Question
+
+Given the priced candidates in `decisions/assets/ft183-derivation-binding.md`,
+which mechanism closes the label↔function gap — or is the disclosed weaker
+claim kept and stated honestly?
+
+### Answer
+
+Resolved 2026-08-03: candidate A, function identity. An in-package
+`internal/gate` test compares each row's stored resolver
+(`reflect.ValueOf(fn).Pointer()`) against the derivation its source label
+names. The `Source → function` table is an independently-authored expectation
+whose red must be demonstrated (a recorded swap goes red), per the
+one-source-per-fact exception; the check also guards the method-expression
+assumption pointer equality depends on. No new export: the check lives beside
+`component_inputs_test.go`, which already touches `resolve`.
+
+Amended 2026-08-03 after doc review: the check is exhaustive — it fails on
+any registry row whose source label has no expectation-table entry, so a
+newly added row must declare its binding to go green rather than silently
+reopening the ungraded-row gap.
+
+## #4: The hand-declared exemption leaves canary's resolver ungraded
+
+Blocked by: #2
+Type: Grill
+
+### Question
+
+Swap B in the research asset shows the `SourceHandDeclared` branch exempts the
+`canary` row from all grading by the derivation-source check, so a resolver
+swap on it is invisible to that check (an unrelated behavioral canary
+expectation happens to catch the specific swap tried). Does the chosen
+mechanism cover the hand-declared row too, or does the exemption stand
+documented?
+
+### Answer
+
+Resolved 2026-08-03: bind the canary row too. The identity check covers
+`SourceHandDeclared` with the same pointer comparison (its named function is
+`canaryInputs`), closing the only row the derivation-source check leaves
+entirely ungraded.
+
+## #5: The orphaned Reduced verdict record class
+
+Blocked by: #1
+Type: Grill
+
+### Question
+
+`reducedInheritance` is the sole writer of `Reduced` verdicts, so #1's removal
+orphans the persisted record fields and their readers (`inherits`,
+`validateInheritance`, the status and prep-release consumers). Retire the
+record class with the path, or keep a legacy reader?
+
+### Answer
+
+Resolved 2026-08-03: retire it fully — fields, readers, and record class go
+with the path. A legacy on-disk `Reduced` verdict reads as
+no-reusable-verdict and forces a fresh gate run, the safe direction; no dead
+schema survives.
 
 ## Not yet specified
 
-- The reduced-verdict record class's disposition under #1: `reducedInheritance`
-  is the sole writer of `Reduced` verdicts, so removal orphans the persisted
-  record fields and their readers (`inherits`, `validateInheritance`, the
-  status and prep-release consumers). Whether the record class retires with
-  the path or keeps a reader for legacy on-disk records is open for the spec
-  to surface.
-
 ## Spec-writer discretion
+
+- Exact placement and naming of the identity check within `internal/gate`'s
+  test files, and the shape of the `Source → function` expectation table,
+  provided the demonstrated-red requirement, the method-expression guard, and
+  the refuse-unknown-rows exhaustiveness survive.
 
 ## Out of scope
 
@@ -65,3 +136,7 @@ the summary exists)
   that direction.
 
 ## Sources
+
+- Path: `decisions/assets/ft183-derivation-binding.md`
+  Supports: #2's summary and the factual premises of #3 and #4 — two resolver swaps verified to pass the derivation-source check and the five priced candidate mechanisms, produced 2026-08-03 by two read-only research delegates and corrected after the doc review.
+  Drift: re-verify if `internal/gate/component_inputs.go`'s registry shape or `internal/conformance/derivation_source_test.go` changes before the spec reads this map.
