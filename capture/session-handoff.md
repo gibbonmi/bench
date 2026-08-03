@@ -2,40 +2,21 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `843a4b7`, 6 dirty paths, 0 unpushed commits
-Spec: `specs/check-level-conformance-scoping/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `62e5458` — stale, work tree `7758ce4`
+Branch: `main` — HEAD `6a3ea99` before the pending spec-and-capture commit; FT183 implemented and committed
+Spec: `specs/check-level-conformance-scoping/spec.md` (Status: staged, current commit batch), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Gate: green at `6a3ea99` (both FT183 commits landed through `bench commit`'s full gate)
 
 ## State
 
-- **The four-map decision session is closed and dual-reviewed** (opus +
-  codex gpt-5.6-sol): `decisions/ft156-anchor-registry.md`,
-  `decisions/ft144-post-approval-edits.md`,
-  `decisions/ft181-spec-build-preconditions.md`, and
-  `decisions/ft183-gate-scoping-residuals.md` are all `Status: ready`, with
-  review findings folded in as flagged corrections and four reviewer
-  amendments (FT181 #2 authorizes the `internal/worktree` abandon-planner
-  change; FT181 #4's mechanism text corrected to the `errRecompose`
-  refusal; FT144's rule is now intent-based with a run-boundary timing rule;
-  FT183 #3 adds refuse-unknown-rows exhaustiveness and binds the canary row).
-- **The maps and `decisions/assets/ft183-derivation-binding.md` are
-  UNCOMMITTED** — `bench commit` refuses while the other session's untracked
-  `specs/check-level-conformance-scoping/` sits outside the named set. After
-  that spec lands (or leaves the tree), commit with:
-  `bench commit -m "shape-idea: close the four-map decision session; FT183 ready after research and dual review" decisions/ft144-post-approval-edits.md decisions/ft156-anchor-registry.md decisions/ft181-spec-build-preconditions.md decisions/ft183-gate-scoping-residuals.md decisions/assets/ft183-derivation-binding.md`
-- Decisions that stay closed: all rulings in the four maps, including the
-  2026-08-02 grill answers and the 2026-08-03 amendments above; the
-  stronger-than-substring anchor mechanism stays deferred (FT156 Out of
-  scope).
-- FT156's roadmap-row anchor sizing is stale against the instrumented count
-  (299 needles, ~222 require-direction); the map carries the correction.
-- Nothing pushed; push is the reviewer's call.
+- **FT183 is done.** Ticket 1 (`b41b4d2`) retired the whole-changeset reduced gate path: gate/verdict/status/prep-release code and tests, the runtime and prep-release contract tests rewritten to the full-run and invalid-cache-record expectations, and `projects/benchkit.md`'s reduced-run prose replaced (ReducedScope, stripped-worktree enforcement, and status softening survive; all conformance anchors kept). Ticket 2 (`6a3ea99`) added `internal/gate/component_inputs_identity_test.go`: the Source → function identity check over all registry rows including the hand-declared canary row, per-row exhaustiveness refusal, and the method-expression/pointer-identity guard; swap A, swap B, and the exhaustiveness red were each demonstrated and reverted.
+- **The check-level-conformance-scoping spec is staged and included in the current commit batch.** FT183 was its sequencing blocker and both implementation tickets have landed.
+- `capture/IDEAS.md` carries three parked ideas; `capture/learnings.md` has one open entry (set-aside dance) for the next `/bench-what-next` drain.
+- Decisions that stay closed: everything in the four maps landed at `449eb2a`, including the 2026-08-03 amendments.
+- Pushed through `6a3ea99` (reviewer, 2026-08-03).
 
 ## Next command
 
-`/bench-write-spec` — start with `decisions/ft181-spec-build-preconditions.md`
-(all four faces ruled, discretion bounded, no research dependencies); FT183
-and FT156 follow, each from its ready map.
+`$bench-implement-spec --full specs/check-level-conformance-scoping/spec.md`
 
 ## Shape
 
