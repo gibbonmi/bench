@@ -36,9 +36,9 @@ var (
 	taughtExampleAssumptions = []string{"the parser already emits a cancelled record carrying its reason; the recovery action is derived at render time and stored nowhere; claims re-derived from the tree at pickup"}
 )
 
-// The mutations heading is matched at any depth because the example nests one
-// level deeper than the rule prose that names it; the Blocked by line has to
-// carry a value, since a bare prefix demonstrates nothing to a copying reader.
+// The mutations heading is matched at any depth so a ticket that nests the
+// example under a parent heading still grades; the Blocked by line has to carry
+// a value, since a bare prefix demonstrates nothing to a copying reader.
 var (
 	ticketExampleMutationsHeading = regexp.MustCompile(`(?m)^#{2,6}\s+Red mutations\s*$`)
 	ticketExampleBlockedByLine    = regexp.MustCompile(`(?m)^Blocked by:[ \t]+\S`)
@@ -264,7 +264,7 @@ func TestExampleAgreementParsesAuthoredLiterals(t *testing.T) {
 	// The template block carries its own mutations heading, so this one is renamed
 	// inside the marked region rather than by a document-wide anchor.
 	unmutated := rewriteExampleRegion(t, doc, func(region string) string {
-		return replaceOnce(t, region, "### Red mutations", "### Notes")
+		return replaceOnce(t, region, "## Red mutations", "## Notes")
 	})
 	diags = checkExampleAgreement(ticketExampleRoot(t, unmutated))
 	if !containsDiagnostic(diags, "carries no Red mutations section") {

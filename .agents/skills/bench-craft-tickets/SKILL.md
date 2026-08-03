@@ -115,24 +115,21 @@ Blocked by: <sibling ticket file basenames, or none>
 Ownership fence: `<path prefix>`, `<path prefix>`
 Assumptions: <clause>; <clause>
 
-### What to build
+## What to build
 
 <The end-to-end behavior this ticket makes work.>
 
-### Acceptance
+## Acceptance
 
 - [ ] [AB1] <observable behavioral criterion>
 - [ ] [AB2] <observable behavioral criterion>
 
-### Red mutations
+## Red mutations
 
 | criterion | mutation | owner | operation sequence |
 |---|---|---|---|
 | <ID> | <the concrete mutation> | <the independent owner> | <the public operation sequence that proves the red> |
 ```
-
-Write those three headings with two `#` in the ticket file itself; they sit one
-level deeper above so the quoted block leaves this skill's own sections intact.
 
 Every field is one line. The parser reads the prefixed line alone, so a
 continuation wrapped onto the next line is dropped without a word.
@@ -167,16 +164,16 @@ Blocked by: parse-cancelled-job-records.md
 Ownership fence: `internal/status`, `internal/render/rows.go`
 Assumptions: the parser already emits a cancelled record carrying its reason; the recovery action is derived at render time and stored nowhere; claims re-derived from the tree at pickup
 
-### What to build
+## What to build
 
 Users see a cancelled row, its reason, and the next recovery action.
 
-### Acceptance
+## Acceptance
 
 - [ ] [RC1] status renders the cancelled row with its reason.
 - [ ] [RC2] status renders the recovery action beside a cancelled row.
 
-### Red mutations
+## Red mutations
 
 | criterion | mutation | owner | operation sequence |
 |---|---|---|---|
@@ -197,7 +194,7 @@ Bad:
 Blocked by: none
 Ownership fence: `internal/status`
 
-### What to build
+## What to build
 
 Status has three consumer classes — operator, CI, and dashboard — each with its
 own latency budget and failure tolerance, so the render path has to …
@@ -205,7 +202,7 @@ own latency budget and failure tolerance, so the render path has to …
 The renderer grew out of the log formatter, which is where the column widths
 come from. In last week's review we went back and forth on whether …
 
-### Acceptance
+## Acceptance
 
 - [ ] [S1] the cancelled row renders.
 - [ ] [S2] the reason renders.

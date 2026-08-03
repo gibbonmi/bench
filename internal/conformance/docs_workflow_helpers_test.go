@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"testing"
 )
 
 const (
@@ -684,14 +685,27 @@ func markdownH2Section(text, title string) string {
 }
 
 // markdownH2Sections returns the first "## title" section body and how many
-// times the heading occurs in text.
+// times the heading occurs in text. Only headings outside fenced code blocks
+// count: a section that quotes a ticket template carries "## " lines inside its
+// fence, and reading one as a boundary would cut the body off above every
+// anchor written below the fence. A line beginning with three backticks toggles
+// the fence, which is enough for a corpus that never nests one fence in another;
+// an unclosed fence therefore runs to end of text.
 func markdownH2Sections(text, title string) (string, int) {
 	lines := strings.Split(text, "\n")
 	heading := "## " + title
 	count := 0
 	start := -1
 	end := -1
+	fenced := false
 	for i, line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(line), "```") {
+			fenced = !fenced
+			continue
+		}
+		if fenced {
+			continue
+		}
 		if strings.TrimSpace(line) == heading {
 			count++
 			if count == 1 {
@@ -710,6 +724,63 @@ func markdownH2Sections(text, title string) (string, int) {
 		end = len(lines)
 	}
 	return strings.Join(lines[start:end], "\n"), count
+}
+
+// TestMarkdownH2SectionsSkipsFencedHeadings is the recorded proof that every
+// section-scoped anchor resolves past a quoted template: the skills that teach a
+// ticket file quote "## " headings inside a fence, and a blind prefix scan would
+// hand each scoped needle a body truncated at the quote.
+func TestMarkdownH2SectionsSkipsFencedHeadings(t *testing.T) {
+	const doc = "# Doc\n" +
+		"\n" +
+		"## Write one file per ticket\n" +
+		"\n" +
+		"```markdown\n" +
+		"## What to build\n" +
+		"\n" +
+		"## Acceptance\n" +
+		"```\n" +
+		"\n" +
+		"below the fence\n" +
+		"\n" +
+		"## Draft the breakdown\n" +
+		"\n" +
+		"a later section\n"
+
+	body, count := markdownH2Sections(doc, "Write one file per ticket")
+	if count != 1 {
+		t.Fatalf("occurrence count = %d, want 1", count)
+	}
+	if !strings.Contains(body, "below the fence") {
+		t.Fatalf("body stops above the prose after the fence:\n%s", body)
+	}
+	if strings.Contains(body, "a later section") {
+		t.Fatalf("body runs past the next real heading:\n%s", body)
+	}
+
+	// A heading quoted inside a fence is not the section it names.
+	if _, count := markdownH2Sections(doc, "Acceptance"); count != 0 {
+		t.Fatalf("fenced heading occurrence count = %d, want 0", count)
+	}
+
+	// Fence state is per section, not per document: the later section resolves
+	// on its own even though an earlier section opened and closed a fence.
+	later, count := markdownH2Sections(doc, "Draft the breakdown")
+	if count != 1 {
+		t.Fatalf("later section occurrence count = %d, want 1", count)
+	}
+	if !strings.Contains(later, "a later section") {
+		t.Fatalf("later section body = %q", later)
+	}
+
+	unclosed := "## One\n\n```\n## Two\n\nstill fenced\n"
+	body, count = markdownH2Sections(unclosed, "One")
+	if count != 1 {
+		t.Fatalf("unclosed fence occurrence count = %d, want 1", count)
+	}
+	if !strings.Contains(body, "still fenced") {
+		t.Fatalf("unclosed fence body stops before end of text:\n%s", body)
+	}
 }
 
 func stripHTMLComments(text string) string {
