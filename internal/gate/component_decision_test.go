@@ -485,13 +485,13 @@ func TestPartialGreenRetainsNoWholeTreeEvidence(t *testing.T) {
 
 func TestComposedGreenAcceptsOnlyCompleteExactTipEvidence(t *testing.T) {
 	t.Run("no verdict", func(t *testing.T) {
-		if ComposedGreen(reducedRunFixture(t)) {
+		if ComposedGreen(routedKitFixture(t)) {
 			t.Fatal("absent verdict composed to whole-tree green")
 		}
 	})
 
 	t.Run("invalid verdict", func(t *testing.T) {
-		root := reducedRunFixture(t)
+		root := routedKitFixture(t)
 		writeCache(t, cachePath(t, root), "{", 0o600)
 		if ComposedGreen(root) {
 			t.Fatal("invalid verdict composed to whole-tree green")
@@ -499,33 +499,26 @@ func TestComposedGreenAcceptsOnlyCompleteExactTipEvidence(t *testing.T) {
 	})
 
 	t.Run("full", func(t *testing.T) {
-		root := reducedRunFixture(t)
+		root := routedKitFixture(t)
 		mustExecuteGreen(t, root, productionGateEngine{})
 		if !ComposedGreen(root) {
 			t.Fatal("full green did not compose to whole-tree green")
 		}
 	})
 
-	t.Run("missing reduced ancestor", func(t *testing.T) {
-		root := reducedRunFixture(t)
+	t.Run("capture-only edit runs full", func(t *testing.T) {
+		// The whole-changeset reduced path is retired: a capture-only edit on a root
+		// component scoping cannot reach (no go.mod) pays the full run, and that full
+		// green composes.
+		root := routedKitFixture(t)
 		mustExecuteGreen(t, root, productionGateEngine{})
 		writeGateTestFile(t, root, "ROADMAP.md", "capture-only edit\n", 0o644)
 		mustExecuteGreen(t, root, productionGateEngine{})
-		if err := os.Remove(evidencePath(commonGitDirOf(t, root), mustStrippedSubject(t, root))); err != nil {
-			t.Fatal(err)
+		if got := fullRunCount(t, root); got != 2 {
+			t.Fatalf("gate runs = %d, want 2 full runs — the capture-only edit must not narrow", got)
 		}
-		if ComposedGreen(root) {
-			t.Fatal("reduced green composed after its full-green ancestor was removed")
-		}
-	})
-
-	t.Run("reduced", func(t *testing.T) {
-		root := reducedRunFixture(t)
-		mustExecuteGreen(t, root, productionGateEngine{})
-		writeGateTestFile(t, root, "ROADMAP.md", "capture-only edit\n", 0o644)
-		mustExecuteGreen(t, root, productionGateEngine{})
 		if !ComposedGreen(root) {
-			t.Fatal("reduced green with its full-green ancestor did not compose")
+			t.Fatal("full green after a capture-only edit did not compose")
 		}
 	})
 
@@ -562,7 +555,7 @@ func TestComposedGreenAcceptsOnlyCompleteExactTipEvidence(t *testing.T) {
 	})
 
 	t.Run("red", func(t *testing.T) {
-		root := reducedRunFixture(t)
+		root := routedKitFixture(t)
 		mustExecuteGreen(t, root, productionGateEngine{})
 		writeGateTestFile(t, root, ".bench/gate.sh", "#!/usr/bin/env bash\nexit 1\n", 0o755)
 		if got := executeWithEngine(context.Background(), root, io.Discard, io.Discard, productionGateEngine{}); got.ActionExit == 0 {

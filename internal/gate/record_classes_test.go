@@ -49,15 +49,15 @@ func TestStoreRecordClassesStayMutuallyUnreadable(t *testing.T) {
 	}
 }
 
-// [PC10a-family] verdictClasses has to name one class per ready field set — full, reduced,
-// and partial — or the disjointness loop above silently stops comparing sibling classes
-// against whichever one dropped out. This pins the count and the identity of the three
+// [PC10a-family] verdictClasses has to name one class per ready field set — full and
+// partial — or the disjointness loop above silently stops comparing sibling classes
+// against whichever one dropped out. This pins the count and the identity of the two
 // against the *ReadyFields variables themselves, not against a restated list of names, so
-// the only way to satisfy it is for verdictClasses to actually cover all three.
-func TestVerdictClassesCoverAllThreeReadyFieldSets(t *testing.T) {
-	want := [][]string{fullReadyFields, reducedReadyFields, partialReadyFields}
+// the only way to satisfy it is for verdictClasses to actually cover both.
+func TestVerdictClassesCoverAllReadyFieldSets(t *testing.T) {
+	want := [][]string{fullReadyFields, partialReadyFields}
 	if len(verdictClasses) != len(want) {
-		t.Fatalf("verdictClasses = %v (%d classes), want %d — one per ready field set (full, reduced, partial)", verdictClasses, len(verdictClasses), len(want))
+		t.Fatalf("verdictClasses = %v (%d classes), want %d — one per ready field set (full, partial)", verdictClasses, len(verdictClasses), len(want))
 	}
 	matched := make(map[string]bool, len(want))
 	for _, name := range verdictClasses {

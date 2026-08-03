@@ -1,11 +1,10 @@
 package runtime
 
-// The reduced run through the built binary: when a change is confined to the declared
-// allowlist and a full-green ancestor's stripped identity still answers for the tree,
-// `bench gate-run` executes only the included phases — and says so. The announcement is
-// the contract here: silent reduction reads as a gate that never ran, matching the
-// failure the existing reused-verdict announcement exists to prevent, and the operator
-// has no other signal that the verdict just recorded is narrower than a full run's.
+// The retired reduced run, observed through the built binary: the whole-changeset
+// reduced path no longer exists, so a capture-only edit on a root component scoping
+// cannot reach pays a full run — never a narrowed one it would announce. The durable
+// markers are the contract: the resolved gate must run again, and the phase table must
+// not run directly.
 
 import (
 	"fmt"
@@ -20,14 +19,14 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 )
 
-// [R24] A reduced run announces the phases it skipped and the full-green run whose
-// evidence it inherited, and the announcement travels with an actual reduction: the
-// resolved gate script must not run again, the excludable phase must not run at all,
-// and the included phase must still be graded against the real root.
-func TestReducedRunAnnouncesSkippedPhases(t *testing.T) {
+// [R24] A capture-only edit on the kit-root shape pays a second full run: the retired
+// whole-changeset reduction must not resurface as an announcement, a skipped phase, or
+// an inherited-evidence claim — the resolved gate runs again and the phase table never
+// runs directly.
+func TestKitRootCaptureEditPaysFullRun(t *testing.T) {
 	t.Parallel()
 	contract.RequireFreshBench(t)
-	contract.NoteContractFailure(t, "reduced-run announcement contract failed")
+	contract.NoteContractFailure(t, "kit-root full-run contract failed")
 	root, f, env, bench := seededReducedGateFixture(t, "")
 
 	writeReducedFixtureFile(t, root, "decisions/probe.md", "decision-only edit\n", 0o644)
@@ -35,24 +34,20 @@ func TestReducedRunAnnouncesSkippedPhases(t *testing.T) {
 	probe.RequireExit(0)
 
 	output := probe.Stdout + probe.Stderr
-	for _, want := range []string{
+	for _, retired := range []string{
 		"gate: reduced run",
 		"skipping " + canary.PhaseTest,
 		"evidence inherited from full green",
-		"phase conformance: green",
 	} {
-		if !strings.Contains(output, want) {
-			t.Fatalf("reduced run output missing %q:\nstdout:\n%s\nstderr:\n%s", want, probe.Stdout, probe.Stderr)
+		if strings.Contains(output, retired) {
+			t.Fatalf("kit-root run resurfaced the retired reduction marker %q:\nstdout:\n%s\nstderr:\n%s", retired, probe.Stdout, probe.Stderr)
 		}
 	}
-	if strings.Contains(output, "phase "+canary.PhaseTest+":") {
-		t.Fatalf("reduced run still reported the excludable phase:\n%s", output)
+	if got := reducedFixtureMarker(t, root, "phase-runs"); got != "" {
+		t.Fatalf("phase marker after the capture-only edit = %q, want none — the phase table ran instead of the resolved gate", got)
 	}
-	if got := reducedFixtureMarker(t, root, "full-runs"); got != "full\n" {
-		t.Fatalf("gate marker after the reduced run = %q, want the seed run only — the announced reduction paid the resolved gate", got)
-	}
-	if got := reducedFixtureMarker(t, root, "phase-runs"); got != "conformance\n" {
-		t.Fatalf("phase marker after the reduced run = %q, want the included phase only", got)
+	if got := reducedFixtureMarker(t, root, "full-runs"); got != "full\nfull\n" {
+		t.Fatalf("gate marker after the capture-only edit = %q, want a second full run", got)
 	}
 }
 
@@ -84,11 +79,11 @@ func TestForeignRootRunsUnreduced(t *testing.T) {
 	}
 }
 
-// seededReducedGateFixture builds the reduced-path repository — one included and one
-// excludable phase, both observable through durable markers — and seeds the full-green
-// ancestor a reduction would inherit from. kit chooses whose declaration the graded root
-// claims: empty means the fixture is its own kit (the reduction-eligible shape), while a
-// non-empty path plays a linked repo's wrapper naming a kit checkout elsewhere.
+// seededReducedGateFixture builds the retired reduced path's repository shape — one
+// included and one excludable phase, both observable through durable markers — and seeds
+// a full green. kit chooses whose declaration the graded root claims: empty means the
+// fixture is its own kit (the shape that once reduced), while a non-empty path plays a
+// linked repo's wrapper naming a kit checkout elsewhere.
 func seededReducedGateFixture(t *testing.T, kit string) (string, contract.Fixture, contract.Env, string) {
 	t.Helper()
 	scope := gate.ReducedScope()

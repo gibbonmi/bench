@@ -45,7 +45,6 @@ type Inspection struct {
 	Reason        string
 	CacheBytes    int
 	ReusableGreen bool
-	Reduced       bool
 	Partition     *Partition
 }
 
@@ -78,11 +77,6 @@ type verdictRecord struct {
 	RecordedAt string `json:"recorded_at,omitempty"`
 	StartedAt  string `json:"started_at,omitempty"`
 	OwnerPID   int    `json:"owner_pid,omitempty"`
-
-	Reduced            bool     `json:"reduced,omitempty"`
-	Phases             []string `json:"phases,omitempty"`
-	Ancestor           string   `json:"ancestor,omitempty"`
-	AncestorRecordedAt string   `json:"ancestor_recorded_at,omitempty"`
 
 	Executed     []string                `json:"executed,omitempty"`
 	Skipped      []string                `json:"skipped,omitempty"`
@@ -211,7 +205,7 @@ func inspectAt(root string, now time.Time) Inspection {
 		return gi
 	}
 	rec := loaded.record
-	gi.Status, gi.CachedTree, gi.Reduced = rec.Status, rec.Tree, rec.Reduced
+	gi.Status, gi.CachedTree = rec.Status, rec.Tree
 	gi.Partition = rec.partition()
 	if rec.State == Pending {
 		held, err := lockHeld(gitdir)
@@ -250,8 +244,7 @@ func inspectAt(root string, now time.Time) Inspection {
 	}
 	// Checked after drift and expiry: those retire a narrow record exactly as they retire a
 	// full one, and naming the narrowness of an expired record would dress retired evidence
-	// as current. The Reduced marker and the Partition on the inspection carry the narrowness
-	// either way.
+	// as current. The Partition on the inspection carries the narrowness either way.
 	if reason := narrowVerdictReason(rec); reason != "" {
 		gi.Reason = reason
 		return gi
@@ -261,15 +254,11 @@ func inspectAt(root string, now time.Time) Inspection {
 }
 
 // narrowVerdictReason names the class of a verdict that graded less than the whole tree, and
-// returns "" for one that graded all of it. A reduced verdict ran only the phases that could
-// observe its changeset; a partial one ran only the components whose inputs moved. Either is
-// evidence about its own tree and never the whole-tree green a reuse credits, so this is the
-// single place a reuse asks how wide the grading was.
+// returns "" for one that graded all of it. A partial verdict ran only the components whose
+// inputs moved. It is evidence about its own tree and never the whole-tree green a reuse
+// credits, so this is the single place a reuse asks how wide the grading was.
 func narrowVerdictReason(r verdictRecord) string {
-	switch {
-	case r.Reduced:
-		return "reduced verdict"
-	case r.partitions():
+	if r.partitions() {
 		return "partial verdict"
 	}
 	return ""
@@ -404,7 +393,7 @@ func rejectDuplicateNames(dec *json.Decoder) error {
 	return err
 }
 
-// The three exact field sets a ready record may carry. They are alternatives, never a
+// The two exact field sets a ready record may carry. They are alternatives, never a
 // spectrum: a record holding part of one and part of another names no class the loader
 // can resolve, and resolving it by guess would credit work that nobody ran. The narrow
 // sets are derived — the full set plus that class's own fields — so a field added to the
@@ -412,7 +401,6 @@ func rejectDuplicateNames(dec *json.Decoder) error {
 // narrow classes silently reject every valid record.
 var (
 	fullReadyFields    = []string{"oracle", "recorded_at", "schema", "state", "status", "tree"}
-	reducedReadyFields = sortedFieldSet(fullReadyFields, "ancestor", "ancestor_recorded_at", "phases", "reduced")
 	partialReadyFields = sortedFieldSet(fullReadyFields, "executed", "skip_evidence", "skipped")
 )
 
@@ -422,7 +410,6 @@ var (
 // this file's declarations and fails for any it does not find registered here.
 var readyFieldClasses = map[string][]string{
 	"full verdict":    fullReadyFields,
-	"reduced verdict": reducedReadyFields,
 	"partial verdict": partialReadyFields,
 }
 
@@ -443,18 +430,12 @@ func sortedFieldSet(base []string, extra ...string) []string {
 	return fields
 }
 
-// inherits reports whether the record reaches for the reduced class at all. Any single
-// reduced field commits it, so a record carrying a fragment is measured against the whole
-// reduced set and refused for what it is missing rather than read as the full shape with
-// something extra.
-func (r verdictRecord) inherits() bool {
-	return r.Reduced || r.Phases != nil || r.Ancestor != "" || r.AncestorRecordedAt != ""
-}
-
-// partitions reports whether the record reaches for the partial class at all, the same
-// commitment inherits() makes for the reduced one: any single partial field measures the
-// record against the whole partial set, so a fragment is refused for what it is missing
-// rather than read as a wider class carrying something extra.
+// partitions reports whether the record reaches for the partial class at all: any single
+// partial field measures the record against the whole partial set, so a fragment is
+// refused for what it is missing rather than read as a wider class carrying something
+// extra. A retired class's fields (the reduced verdict's reduced/phases/ancestor family)
+// are unknown fields now, so a legacy reduced record fails the exact-field-set validation
+// below and reads as non-reusable rather than as a full green.
 func (r verdictRecord) partitions() bool {
 	return r.Executed != nil || r.Skipped != nil || r.SkipEvidence != nil
 }
@@ -575,38 +556,6 @@ func rawSkipEvidence(data []byte) (map[string]json.RawMessage, error) {
 	return entries, nil
 }
 
-// validateInheritance grades what a reduced record claims: which phases it ran for itself,
-// and which full-green run answers for the rest. The ancestor's identity is carried rather
-// than referenced because the cache is a single slot, so the record a reference would point
-// at is the one this write replaces.
-//
-// The ancestor's own recorded time travels with it and cannot post-date the reduced run.
-// The freshness window is applied to that inherited time, so a record re-stamping it with
-// its own would leave a stale ancestor reusable forever — the ageing the window exists to
-// stop, hidden behind a green.
-func validateInheritance(r verdictRecord, recordedAt time.Time) error {
-	if !r.Reduced || !treeHashRE.MatchString(r.Ancestor) {
-		return errors.New("invalid inheritance")
-	}
-	if tm, err := strictRecordTime(r.AncestorRecordedAt); err != nil || tm.After(recordedAt) {
-		return errors.New("invalid ancestor time")
-	}
-	// The phase list is the record of what this run graded, so it is checked for shape
-	// only: binding it to the current declaration would invalidate an older record the
-	// day the declaration moves, and the runner owns which phases may be skipped.
-	if len(r.Phases) == 0 {
-		return errors.New("invalid phases")
-	}
-	seen := make(map[string]bool, len(r.Phases))
-	for _, phase := range r.Phases {
-		if phase == "" || seen[phase] {
-			return errors.New("invalid phases")
-		}
-		seen[phase] = true
-	}
-	return nil
-}
-
 func validateRecordBytes(data []byte, r verdictRecord, now time.Time) error {
 	if r.Schema != verdictSchema || !treeHashRE.MatchString(r.Tree) || len(r.Oracle) != 64 {
 		return errors.New("invalid record")
@@ -617,11 +566,8 @@ func validateRecordBytes(data []byte, r verdictRecord, now time.Time) error {
 	switch r.State {
 	case Ready:
 		want := fullReadyFields
-		switch {
-		case r.partitions():
+		if r.partitions() {
 			want = partialReadyFields
-		case r.inherits():
-			want = reducedReadyFields
 		}
 		if err := requireObjectFields(data, want); err != nil {
 			return err
@@ -635,9 +581,6 @@ func validateRecordBytes(data []byte, r verdictRecord, now time.Time) error {
 		}
 		if r.partitions() {
 			return validatePartition(data, r, tm)
-		}
-		if r.inherits() {
-			return validateInheritance(r, tm)
 		}
 	case Pending:
 		if err := requireObjectFields(data, []string{"oracle", "owner_pid", "schema", "started_at", "state", "tree"}); err != nil {

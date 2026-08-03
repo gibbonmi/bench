@@ -31,19 +31,7 @@ func ComposedGreen(root string) bool {
 	if loaded.record.partitions() {
 		return partialComposedGreen(root, plan, loaded.record, now)
 	}
-	if loaded.record.inherits() {
-		return reducedComposedGreen(root, plan, loaded.record, now)
-	}
 	return true
-}
-
-func reducedComposedGreen(root string, plan subject, record verdictRecord, now time.Time) bool {
-	inherited := reducedInheritance(root, root, plan.Resolution, now)
-	if !inherited.ok || record.Ancestor != inherited.ancestor || !slices.Equal(record.Phases, composedPhaseNames(inherited.phases)) {
-		return false
-	}
-	recordedAt, err := strictRecordTime(record.AncestorRecordedAt)
-	return err == nil && recordedAt.Equal(inherited.ancestorAt)
 }
 
 func partialComposedGreen(root string, plan subject, record verdictRecord, now time.Time) bool {

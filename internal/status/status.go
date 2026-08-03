@@ -69,11 +69,9 @@ type Signal struct {
 // GateInfo is the structured gate-verdict cache read, shared by the status board and the
 // dashboard so neither re-parses `<git-dir>/bench-last-gate`. Present is false when no
 // cache file exists; Stale marks a verdict whose cached tree no longer matches the work
-// tree (or whose line is untrusted). Reduced marks a verdict that graded only the phases
-// able to observe its changeset, which is why a reduced green is never reusable and is not
-// by itself drift. Partition carries the same narrowness at component granularity:
-// non-nil for a partial verdict that graded only the components whose inputs moved, nil
-// for a full or reduced record. Status/CachedTree/WorkTree/Timestamp carry the raw
+// tree (or whose line is untrusted). Partition carries narrowness at component
+// granularity: non-nil for a partial verdict that graded only the components whose
+// inputs moved, nil for a full record. Status/CachedTree/WorkTree/Timestamp carry the raw
 // fields for a human view; the board reduces them to its severity rows.
 type GateInfo struct {
 	Present       bool
@@ -83,7 +81,6 @@ type GateInfo struct {
 	CachedTree    string
 	WorkTree      string
 	Stale         bool
-	Reduced       bool
 	Partition     *gate.Partition
 	Timestamp     string
 	Reason        string
@@ -208,19 +205,12 @@ func appendGateInfo(rows []row, gv GateInfo, root string) []row {
 		return append(rows, row{0, "gate", "red", "fix before commit"})
 	}
 	if gv.Stale {
-		// A reduced verdict over the tree it graded is narrow, not drifted: the gate
-		// withholds reuse because the run skipped phases, and the stale row would report
-		// the tree against itself and name an action that records another reduced verdict.
-		// Reducedness and staleness are independent, so a reduced verdict whose tree has
-		// since moved falls through to the drift row below.
-		if gv.Reduced && gv.CachedTree == gv.WorkTree {
-			return append(rows, row{7, "gate", "reduced green (reduced scope)", "bench gate --fresh for a whole-tree verdict"})
-		}
-		// A partial verdict draws the same distinction at component granularity: the run
-		// graded only the components whose inputs moved, so over its own tree it is narrow,
-		// not drifted. The row names what was skipped so a reader cannot mistake the
-		// partition for a whole-tree green. A partial verdict whose tree has since moved is
-		// still drift, and falls through to the row below exactly as a reduced one does.
+		// A partial verdict over the tree it graded is narrow, not drifted: the run
+		// graded only the components whose inputs moved, so over its own tree the gate
+		// withholds reuse for narrowness, and the stale row would report the tree
+		// against itself. The row names what was skipped so a reader cannot mistake the
+		// partition for a whole-tree green. A partial verdict whose tree has since moved
+		// is still drift, and falls through to the row below.
 		if gv.Partition != nil && gv.CachedTree == gv.WorkTree {
 			detail := fmt.Sprintf("partial green (skipped: %s)", strings.Join(skippedComponentNames(gv.Partition), ", "))
 			return append(rows, row{7, "gate", detail, "bench gate --fresh for a whole-tree verdict"})
@@ -242,7 +232,6 @@ func GateVerdict(root string) GateInfo {
 	if !in.RecordedAt.IsZero() {
 		gi.Timestamp = in.RecordedAt.Format(time.RFC3339)
 	}
-	gi.Reduced = in.Reduced
 	gi.Partition = in.Partition
 	gi.Stale = in.State == gate.Ready && in.Status == "green" && !in.ReusableGreen
 	return gi

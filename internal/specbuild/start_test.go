@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/gate"
@@ -132,7 +133,7 @@ func (authorizationGate) Bootstrap(_ context.Context, root, branch, tip, expecte
 	return gateauth.Bootstrap(root, branch, tip, expected)
 }
 
-func reducedGreenStartFixture(t *testing.T) string {
+func specEditStartFixture(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
 	t.Setenv("BENCH_KIT", root)
@@ -156,35 +157,36 @@ func reducedGreenStartFixture(t *testing.T) string {
 	if result := gate.Execute(context.Background(), root, io.Discard, io.Discard); result.ActionExit != 0 {
 		t.Fatalf("full gate = %+v", result)
 	}
-	write(t, filepath.Join(root, "specs", "build demo", "spec.md"), "# Build demo\n\nStatus: staged\n\nReduced tip.\n")
+	write(t, filepath.Join(root, "specs", "build demo", "spec.md"), "# Build demo\n\nStatus: staged\n\nEdited tip.\n")
 	git(t, root, "add", "specs/build demo/spec.md")
-	git(t, root, "commit", "-qm", "reduced spec tip")
+	git(t, root, "commit", "-qm", "edited spec tip")
 	var stdout, stderr bytes.Buffer
 	if result := gate.Execute(context.Background(), root, &stdout, &stderr); result.ActionExit != 0 {
-		t.Fatalf("reduced gate = %+v\nstdout:\n%s\nstderr:\n%s", result, stdout.String(), stderr.String())
+		t.Fatalf("gate after spec edit = %+v\nstdout:\n%s\nstderr:\n%s", result, stdout.String(), stderr.String())
 	}
 	return root
 }
 
-func TestStartAcceptsReducedGreenExactTip(t *testing.T) {
-	root := reducedGreenStartFixture(t)
+func TestStartAcceptsExactTipGreenAfterSpecEdit(t *testing.T) {
+	root := specEditStartFixture(t)
 	status, err := New(root, authorizationGate{}, nil).Start(context.Background(), "build demo")
 	if err != nil || status.State != "active" {
 		t.Fatalf("Start = %#v, %v", status, err)
 	}
 }
 
-func TestStartRefusesBrokenReducedGreenInheritance(t *testing.T) {
-	root := reducedGreenStartFixture(t)
-	dir := filepath.Join(root, ".git", "bench-gate-evidence")
-	entries, err := os.ReadDir(dir)
-	if err != nil || len(entries) == 0 {
-		t.Fatalf("reduced ancestor evidence = %v, %v", entries, err)
-	}
-	for _, entry := range entries {
-		if err := os.Remove(filepath.Join(dir, entry.Name())); err != nil {
-			t.Fatal(err)
-		}
+// The reduced verdict class is retired: a legacy reduced record on disk is an invalid
+// cache, never a green start can compose from, so lifecycle entry refuses toward the
+// fresh-run escape.
+func TestStartRefusesLegacyReducedVerdict(t *testing.T) {
+	root := specEditStartFixture(t)
+	gitdir := strings.TrimSpace(git(t, root, "rev-parse", "--absolute-git-dir"))
+	tip := strings.TrimSpace(git(t, root, "rev-parse", "HEAD^{tree}"))
+	recorded := time.Now().UTC().Truncate(time.Second).Add(-time.Minute).Format(time.RFC3339)
+	record := fmt.Sprintf(`{"schema":1,"state":"ready","status":"green","tree":%q,"oracle":%q,"recorded_at":%q,"reduced":true,"phases":["conformance"],"ancestor":%q,"ancestor_recorded_at":%q}`+"\n",
+		tip, strings.Repeat("0", 64), recorded, strings.Repeat("a", 40), recorded)
+	if err := os.WriteFile(filepath.Join(gitdir, "bench-last-gate"), []byte(record), 0o600); err != nil {
+		t.Fatal(err)
 	}
 	if _, err := New(root, authorizationGate{}, nil).Start(context.Background(), "build demo"); err == nil || !strings.Contains(err.Error(), "bench gate --fresh") {
 		t.Fatalf("Start refusal = %v, want fresh recovery", err)

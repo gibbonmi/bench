@@ -199,85 +199,22 @@ func TestStaleSofteningRoutesThroughDeclaration(t *testing.T) {
 	}
 }
 
-// A reduced verdict graded only the phases that could observe its changeset, so it is a
-// narrow green rather than drift. The row names the narrowness and never reports the tree
-// against itself: the two hashes the stale row prints would be the same hash here.
-func TestReducedGreenRendersItsOwnRow(t *testing.T) {
+// The reduced verdict class is retired. A legacy on-disk reduced record must read as an
+// invalid cache rather than as a green of any width, so the board reports it as invalid
+// instead of rendering a narrowness row for evidence nothing can validate.
+func TestLegacyReducedCacheReadsAsInvalid(t *testing.T) {
 	root := initRepo(t)
 	tree := treeOf(t, root, map[string]string{"capture/IDEAS.md": "- an idea\n"})
-	writeReducedGateCache(t, root, tree)
-
-	gv := GateVerdict(root)
-	if !gv.Reduced || !gv.Stale || gv.CachedTree != gv.WorkTree {
-		t.Fatalf("verdict = %#v, want a reduced non-reusable green over the current tree", gv)
-	}
-	rows := appendGateInfo(nil, gv, root)
-	if len(rows) != 1 {
-		t.Fatalf("rows = %#v, want one gate row", rows)
-	}
-	if strings.Contains(rows[0].detail, "stale") {
-		t.Errorf("detail = %q, want a reduced row rather than a stale one", rows[0].detail)
-	}
-	if strings.Contains(rows[0].detail, Short(tree)) {
-		t.Errorf("detail = %q, want no tree hash: the gated and work trees are the same tree", rows[0].detail)
-	}
-}
-
-// The action a reduced row names has to widen the verdict. Re-running the gate over the
-// same capture-only changeset records another reduced verdict and the same row, so an
-// action naming it would loop forever.
-func TestReducedRowActionWidensTheVerdict(t *testing.T) {
-	root := initRepo(t)
-	writeReducedGateCache(t, root, treeOf(t, root, map[string]string{"capture/IDEAS.md": "- an idea\n"}))
-
-	rows := appendGateInfo(nil, GateVerdict(root), root)
-	if len(rows) != 1 {
-		t.Fatalf("rows = %#v, want one gate row", rows)
-	}
-	if !strings.Contains(rows[0].action, "bench gate --fresh") {
-		t.Errorf("action = %q, want the escape that widens the verdict", rows[0].action)
-	}
-}
-
-// Reducedness and staleness are independent: a reduced verdict whose tree no longer
-// matches the work tree is genuinely stale, and undeclared drift keeps the strong row.
-func TestDriftedReducedVerdictStillRendersStaleRow(t *testing.T) {
-	root := initRepo(t)
-	const outside = "internal/status/status.go"
-	gated := treeOf(t, root, map[string]string{outside: "package status\n"})
-	current := treeOf(t, root, map[string]string{outside: "package status // drift\n"})
-	writeReducedGateCache(t, root, gated)
-
-	gv := GateVerdict(root)
-	if !gv.Reduced || gv.WorkTree != current {
-		t.Fatalf("verdict = %#v, want a reduced verdict over a drifted work tree", gv)
-	}
-	rows := appendGateInfo(nil, gv, root)
-	if len(rows) != 1 {
-		t.Fatalf("rows = %#v, want one gate row", rows)
-	}
-	wantDetail := fmt.Sprintf("stale (gated tree %s, work tree %s)", Short(gated), Short(current))
-	if rows[0].detail != wantDetail || rows[0].action != "re-run the gate" {
-		t.Errorf("drifted reduced row = (%q, %q), want (%q, \"re-run the gate\")", rows[0].detail, rows[0].action, wantDetail)
-	}
-}
-
-// writeReducedGateCache installs a ready reduced green naming cachedTree, at the mode and
-// in the exact field set the gate's loader requires of the reduced class. The phase list
-// comes from the declaration rather than a list restated here.
-func writeReducedGateCache(t *testing.T, root, cachedTree string) {
-	t.Helper()
 	gitdir := gitRun(t, root, "rev-parse", "--absolute-git-dir")
-	phases, err := json.Marshal(gate.ReducedScope().IncludedPhases())
-	if err != nil {
+	recorded := time.Now().UTC().Truncate(time.Second).Add(-time.Minute).Format(time.RFC3339)
+	record := fmt.Sprintf(`{"schema":1,"state":"ready","status":"green","tree":%q,"oracle":%q,"recorded_at":%q,"reduced":true,"phases":["conformance"],"ancestor":%q,"ancestor_recorded_at":%q}`+"\n",
+		tree, strings.Repeat("0", 64), recorded, strings.Repeat("a", 40), recorded)
+	if err := os.WriteFile(filepath.Join(gitdir, git.GateCacheFile), []byte(record), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	recorded := time.Now().UTC().Truncate(time.Second).Add(-time.Minute).Format(time.RFC3339)
-	record := fmt.Sprintf(`{"schema":1,"state":"ready","status":"green","tree":%q,"oracle":%q,"recorded_at":%q,"reduced":true,"phases":%s,"ancestor":%q,"ancestor_recorded_at":%q}`+"\n",
-		cachedTree, strings.Repeat("0", 64), recorded, phases, strings.Repeat("a", 40), recorded)
-	path := filepath.Join(gitdir, git.GateCacheFile)
-	if err := os.WriteFile(path, []byte(record), 0o600); err != nil {
-		t.Fatal(err)
+	gv := GateVerdict(root)
+	if !gv.Present || gv.State != "invalid" || gv.Status == "green" {
+		t.Fatalf("verdict = %#v, want a legacy reduced record read as an invalid cache", gv)
 	}
 }
 

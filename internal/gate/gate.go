@@ -263,87 +263,6 @@ const (
 	forceRun
 )
 
-// reducedRun is a decided inheritance: the phases a reduced run executes, the
-// excludable phases it skips, and the full-green ancestor whose retained stripped
-// evidence answers for the skipped set.
-type reducedRun struct {
-	ok         bool
-	runnerRoot string
-	phases     []Phase
-	skipped    []string
-	ancestor   string
-	ancestorAt time.Time
-}
-
-// reducedInheritance decides whether this execution may run only the phases that can
-// observe its changeset and inherit a full-green ancestor's evidence for the rest.
-// Every refusal falls back to the full run — the direction that costs minutes, never
-// the one that credits ungraded work.
-//
-// The ancestor is the retained green under the *stripped* subject identity, which only
-// a full run authors (the green tail of executeSubjectWithEngine). That single
-// authorship is what serves consecutive capture commits: the stripped identity does
-// not move across allowlist-confined edits, so every such commit resolves the same
-// retained record and inherits from the same full green — the ancestor is carried
-// forward, never rewritten by a reduced run, and never read off a reduced
-// predecessor's own identity.
-func reducedInheritance(root, storageRoot string, res Resolution, now time.Time) reducedRun {
-	kit := kitRoot(root)
-	// Only a root that declared the reduced scope may be reduced, and the only such
-	// declaration is the kit's own — ReducedScope() is compiled from the kit's source,
-	// documented in its profile, and conformance-bound only in its tree. The binary
-	// also gates linked repos, whose wrapper names the kit checkout through BENCH_KIT
-	// while grading a different root; reducing there would inherit evidence against an
-	// allowlist the repository never chose (2026-08-01 ruling — the spec cut per-repo
-	// scope declarations as out of scope, so a foreign root has no way to opt in).
-	// This guard is not redundant with phaseTableGate below: a linked gate script
-	// routes through gate-phases exactly like the kit's, so routing alone would admit
-	// every linked repo. Identity, not spelling, so a symlinked kit path still counts;
-	// any stat failure refuses — the direction that pays a full run.
-	if !sameDirectory(root, kit) {
-		return reducedRun{}
-	}
-	if !phaseTableGate(root, res) {
-		return reducedRun{}
-	}
-	table, err := phaseTable(root, kit)
-	if err != nil {
-		return reducedRun{}
-	}
-	phases, skipped := ReducedScope().splitTable(table)
-	// Nothing left to run would green on a run of no phases; nothing to skip makes
-	// the full run the same work with a simpler record. Both refuse.
-	if len(phases) == 0 || len(skipped) == 0 {
-		return reducedRun{}
-	}
-	stripped, err := buildStrippedSubject(root)
-	if err != nil {
-		return reducedRun{}
-	}
-	// The one ancestor lookup. A stripped identity matching the retained green means
-	// the tree and the launcher closure both changed only inside the allowlist, and
-	// the lookup answers ReusableGreen only for a full green of exactly that
-	// identity — an absent record (a first commit, a fresh clone, a pruned cache)
-	// refuses. No freshness window applies here: the ancestor is content-addressed,
-	// so it stands until the stripped identity moves, and its recorded time — which
-	// nothing on the reduced path ever re-stamps — travels into the reduced record
-	// as attribution, not as a deadline.
-	evidence := inspectTimelessEvidence(storageRoot, stripped, now)
-	if !evidence.ReusableGreen {
-		return reducedRun{}
-	}
-	// A reduced record at the ancestor slot is evidence attributed to a run that
-	// graded nothing: production code never writes one there, so finding one means a
-	// forgery or a future edit reintroducing the chain. inspectEvidence cannot report
-	// the marker, so the record is read once more for exactly this refusal.
-	gitdir, err := commonGitDir(storageRoot)
-	if err != nil || loadVerdict(evidencePath(gitdir, stripped), now).record.Reduced {
-		return reducedRun{}
-	}
-	return reducedRun{ok: true, runnerRoot: kit, phases: phases, skipped: skipped,
-		ancestor: stripped.Tree, ancestorAt: evidence.RecordedAt}
-}
-
 // sameDirectory reports whether two paths name the same directory, by file identity
 // rather than by string equality, so a symlinked or differently-spelled path to one tree
 // still matches. Either stat failing answers no — for the reduction guard that is the
@@ -446,30 +365,20 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 			return reusedGreenResult(stdout, reuse)
 		}
 	}
-	// Both narrowing decisions sit under the execution lock, after the whole-tree reuse
+	// The narrowing decision sits under the execution lock, after the whole-tree reuse
 	// answer — reuse costs nothing and grades everything, so it stays the first answer.
 	// Only the ordinary path (runtime and storage root the same tree) narrows; a
 	// prospective execution grades a tree about to become HEAD and keeps the full gate.
+	// An ineligible scoping falls back to the full run, never to a coarser skip: a
+	// fail-closed refusal stays a full run.
 	//
-	// The per-component decision is asked first and, on a root it reaches, alone: it answers
-	// the same capture-only changeset the whole-changeset reduction was built for, component
-	// by component, so consulting both would let two decisions disagree about one run. The
-	// reduction is the fallback the decision function declines into when scoping is
-	// ineligible — reachable in production for no case the kit's own tree produces — and
-	// never a second chance after one of them refused, which would launder a fail-closed
-	// refusal into the coarser skip it was refusing to make.
-	//
-	// forceRun consults neither partition: `bench gate --fresh` is the operator's one escape
+	// forceRun consults no partition: `bench gate --fresh` is the operator's one escape
 	// to a real whole-tree run. It still resolves identities, because a forced green has to
 	// re-author the slot of every component it just graded.
 	ordinary := runtimeRoot == storageRoot
 	var scoping componentScoping
 	if ordinary {
 		scoping = scopeComponents(runtimeRoot, plan.Resolution, mode, engine.Now())
-	}
-	var reduction reducedRun
-	if mode == reuseFreshGreen && ordinary && !scoping.eligible {
-		reduction = reducedInheritance(runtimeRoot, storageRoot, plan.Resolution, engine.Now())
 	}
 	pending := interruptedRecord(plan, engine.Now())
 	if err := durableReplaceWithEngine(engine, gitdir, pending); err != nil {
@@ -490,11 +399,6 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 			fmt.Fprintln(stdout, skip.announcement())
 		}
 		rc = runPhases(runCtx, scoping.runnerRoot, scoping.phases, outerMode, controlSafeWriter{stdout}, controlSafeWriter{stderr})
-	case reduction.ok:
-		fmt.Fprintf(stdout, "gate: reduced run: skipping %s (evidence inherited from full green %s recorded %s)\n",
-			strings.Join(reduction.skipped, ", "), reduction.ancestor,
-			reduction.ancestorAt.UTC().Format(time.RFC3339))
-		rc = runPhases(runCtx, reduction.runnerRoot, reduction.phases, outerMode, controlSafeWriter{stdout}, controlSafeWriter{stderr})
 	default:
 		rc = runCaptured(runCtx, runtimeRoot, plan, stdout, stderr)
 	}
@@ -537,19 +441,6 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 			ready.SkipEvidence[skip.Component] = skip.evidence()
 		}
 	}
-	if reduction.ok {
-		// The record says exactly what was graded and what was inherited. The
-		// ancestor's identity and time are carried in full because the cache is a
-		// single slot: this write replaces the only other record, so the next capture
-		// commit validates against the carried ancestor rather than a reduced
-		// predecessor that no longer exists.
-		ready.Reduced = true
-		for _, phase := range reduction.phases {
-			ready.Phases = append(ready.Phases, phase.Name)
-		}
-		ready.Ancestor = reduction.ancestor
-		ready.AncestorRecordedAt = reduction.ancestorAt.UTC().Truncate(time.Second).Format(time.RFC3339)
-	}
 	if status == "green" {
 		// The slots are this run's own account of what it graded, so they are written
 		// whatever shape the run had: a full run authors every component's, a partial
@@ -568,17 +459,15 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 			fmt.Fprintln(stderr, "gate evidence persistence failed")
 			return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
 		}
-		// Neither narrowed run retains anything here, which is why only the full
+		// A narrowed run retains nothing here, which is why only the full
 		// branch below writes evidence. The verdict cache refuses to reuse a narrow
 		// record by its class, but this store has no class at the reuse call site —
 		// reusableEvidence asks only whether a green is retained for this tree and
 		// oracle — so a whole-tree record written by a run that skipped components
 		// would answer a release-path reuse for the next hour with phases nobody ran.
-		// Stripped evidence is the same door one step over: it is the ancestor a later
-		// reduced run inherits, and writing it from a narrow run would let the
-		// allowlist inherit a green that never graded the allowlist's complement, as
-		// well as re-stamping an ever-older ancestor as recent.
-		if !reduction.ok && !scoping.partial() {
+		// Stripped evidence is the same door one step over: writing it from a narrow
+		// run would re-stamp an ever-older ancestor as recent.
+		if !scoping.partial() {
 			if err := retainGreen(storageRoot, plan, recordedAt); err != nil {
 				fmt.Fprintln(stderr, "gate evidence persistence failed")
 				return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
@@ -608,10 +497,8 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 		}
 		// A full red also contradicts any ancestor sharing this tree's stripped
 		// identity — the `--fresh` red after a capture-only edit — so that slot goes
-		// with it. A reduced red keeps its ancestor: none of the phases it ran grade
-		// what the ancestor answers for, and retiring it would make the very next
-		// fix commit pay the full gate for a red the included phases own.
-		if !reduction.ok && ordinary {
+		// with it.
+		if ordinary {
 			if strippedPlan, err := buildStrippedSubject(runtimeRoot); err == nil {
 				if err := invalidateEvidence(storageRoot, strippedPlan); err != nil {
 					return operationalWithEngine(engine, storageRoot, rc, stderr, "gate evidence invalidation failed")

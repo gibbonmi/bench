@@ -55,7 +55,7 @@ branch-agnostic. This line is only the binding.)
   not a clean bill, and one combined capture-drain row (parked ideas + open learnings)
   pointing at `/bench-what-next`. A stale gate softens to `reduced-scope drift` /
   `re-run when convenient` only when the gate's reduced-scope declaration confines
-  every changed path — the same declaration the reduced gate run reads, rendered
+  every changed path — the same declaration the gate's stripped-worktree construction reads, rendered
   once in the Gate section's reduced-scope table, so the board's advice and the
   oracle's behavior cannot name different files; any mixed or untrusted diff fails
   closed to the strong stale row. Its severity-1 git
@@ -263,16 +263,18 @@ runs — inner gate or contract binary — is load-bearing:
    shrinks the whole canary budget. The tripwire decision is recorded in
    `docs/adr/0001-working-tree-gate-tripwire.md`.
 
-**The reduced run.** A changeset the reduced-scope declaration confines runs only
-the included phases against the real tree and records a verdict marked reduced,
-naming the full-green ancestor whose evidence covers the skipped phases; a run of
-reduced-scope commits inherits from that same ancestor, never from a reduced
-predecessor. The ancestor lookup is content-addressed with no freshness bound —
-the retained full green serves until the stripped identity moves, because the
-phases that can observe the changeset run fresh either way (reviewer decision,
-2026-08-01). For dev lifecycle entry, an exact-tip reduced or per-component
-partial green is whole-tree green when the gate package revalidates the inherited
-evidence for every skipped phase or component. This does not make a narrow verdict
+**The reduced-scope declaration.** The kit root always runs the full phase
+table — there is no whole-changeset reduced run (reviewer decision, 2026-08-03),
+and a legacy on-disk reduced verdict fails the loader's exact-field-set
+validation, refusing as an invalid cache record and forcing a fresh run. The
+declaration itself survives: it bounds the stripped-worktree construction below
+and feeds the status board's softening. For dev lifecycle entry, an exact-tip
+per-component partial green is whole-tree green when the gate package
+revalidates the inherited evidence for every skipped component (the
+per-component ancestor lookup is content-addressed with no freshness bound —
+the retained full green serves until the component's input identity moves,
+because the components whose inputs moved run fresh either way; reviewer
+decision, 2026-08-01). This does not make a narrow verdict
 reusable evidence for a later run, and it does not relax the ship tier's full-run
 precondition. The declaration is single-sourced in the gate package
 (`gate.ReducedScope()`) and rendered here; the scope-binding conformance check
@@ -295,9 +297,9 @@ grades active maps and their owned research assets are documents (reviewer decis
 contract and canary components (lifecycle contracts link the kit's asset tree, and
 canary fixtures seed from it), so a guidance edit rides the per-component input
 declarations below — the toolchain components skip, the consumers run — rather than
-the whole-changeset reduced path, whose stripped-worktree enforcement would refuse
-the declaration (reviewer decision, 2026-08-02). The build phase is in neither list: it produces the binary
-the other phases exec, so it runs in both modes. Excludability is enforced by
+joining the declaration itself, whose stripped-worktree enforcement would refuse
+it (reviewer decision, 2026-08-02). The build phase is in neither list: it produces the binary
+the other phases exec, so it always runs. Excludability is enforced by
 construction, to the construction's exact width: every full gate on the kit's own
 root runs the excludable phases against a stripped worktree the declared paths are
 absent from (a root that is not the kit runs unsplit — the declaration is the
@@ -310,11 +312,11 @@ and a mis-filed file is graded only by the included phases: a `.go` file committ
 under `capture/`, `decisions/`, or `specs/` is seen by no excludable phase at all, and the
 included phases do not grade Go formatting, so a full gate can pass a tree that
 the same file outside the declaration would have redded. The declared directories
-hold formatted documents; code does not belong in them. The reduced path is
-selected by the changeset, never by a flag; `bench gate --fresh` is the escape to
-a whole-tree run.
+hold formatted documents; code does not belong in them. Narrowing is selected by
+the changeset, never by a flag — per-component scoping is the only narrowing the
+kit root takes; `bench gate --fresh` is the escape to a whole-tree run.
 
-**Per-component input declarations.** Beneath the reduced run's reduced-scope
+**Per-component input declarations.** Beneath the reduced-scope declaration's
 floor, each evidence-skipped component declares its own input set, so a
 changeset touching only one component's inputs runs that component and skips
 the rest on retained ancestor evidence rather than switching every excludable
@@ -347,7 +349,7 @@ fixtures seed from the kit tree, so guidance edits move sweep expectations), and
 the wrapper scripts its phase execs, named directly because it has no derivable
 source.
 
-Declaration-honesty width, stated with the same candor the reduced-run
+Declaration-honesty width, stated with the same candor the stripped-worktree
 construction prose carries above: the stripped-worktree construction proves
 capture-surface blindness only. For these per-component declarations, honesty
 rests on mandatory derivation plus this binding, and a component that reads an
@@ -356,7 +358,7 @@ not hidden. `canary`'s row carries the reviewer's 2026-08-01 narrowing as its
 own accepted gap: the published binary's digest is excluded from its declared
 inputs, so two changes graded separately may land together with the canary
 never run against their combined tree. `bench gate --fresh` and the ship tier
-are what re-prove the tripwire in that case, not the reduced run. One more
+are what re-prove the tripwire in that case, not a component-scoped run. One more
 recorded residual, accepted at the build's review: the slot and attestation
 field-set slices exist for the record-class family registry only, so a field
 added to a record struct without updating its slice is unobservable — the
@@ -370,10 +372,12 @@ real `release-preflight.sh --mode verify`), the cross-compile matrix
 `internal/releaseevidence`, `internal/publication` — excluded from the dev
 tier's inner `go test`), and the ship-tier canary fixtures. It refuses to run
 without a current dev-green verdict for the exact tree, so a dev-tier failure
-reds the ship tier too — and a reduced verdict is refused the same way, with the
-refusal naming the reduction and pointing at `bench gate --fresh`, because a
-reduced verdict graded only the phases its changeset could reach, never the
-whole tree a release answers for. Exit 0 is ship green, with evidence at
+reds the ship tier too — and a partial verdict is refused the same way, with the
+refusal naming the skipped components and pointing at `bench gate --fresh`,
+because a partial verdict graded only the components whose inputs moved, never
+the whole tree a release answers for. A legacy reduced record fails the loader's
+exact-field-set validation and refuses as an invalid cache record, forcing a
+fresh run. Exit 0 is ship green, with evidence at
 `dist/preflight/release-index.json` and `dist/artifacts`.
 
 **What dev green claims — and does not.** Dev green means the kit works from

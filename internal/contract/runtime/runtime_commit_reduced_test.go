@@ -1,12 +1,9 @@
 package runtime
 
-// The reduced run reached through `bench commit`: the staged set decides, with no flag
-// for a session to reach for. A staged set entirely inside the declared allowlist commits
-// through the reduced path; one that mixes an allowlisted path with an unlisted one pays
-// the full gate, because the unlisted path is a change the excludable phases can observe
-// and an ungraded code change riding along with a doc edit is the failure this pair of
-// contracts exists to prevent. Both assert on the announced phase list rather than on
-// elapsed time, so the evidence is deterministic.
+// `bench commit` with the reduced path retired: every staged set pays the full gate —
+// confined to the old allowlist or mixing an unlisted path, the shape of the staged set
+// no longer narrows the run. Both assert on durable markers rather than on elapsed time,
+// so the evidence is deterministic.
 
 import (
 	"fmt"
@@ -20,13 +17,12 @@ import (
 	"github.com/gibbonmi/bench/internal/gate"
 )
 
-// [R22] An allowlist-confined staged set commits through the reduced path: the
-// announcement names the skipped excludable phase and its ancestor, the excludable phase
-// does not run, and the commit still lands.
-func TestCommitReducesForConfinedStagedSet(t *testing.T) {
+// [R22] The reduced path is retired: an allowlist-confined staged set pays the full gate
+// through the resolved script, announces no reduction, and the commit still lands.
+func TestCommitPaysFullGateForConfinedStagedSet(t *testing.T) {
 	t.Parallel()
 	contract.RequireFreshBench(t)
-	contract.NoteContractFailure(t, "reduced commit contract failed")
+	contract.NoteContractFailure(t, "retired-reduction commit contract failed")
 	root, f, env, bench := commitReducedFixture(t)
 
 	writeReducedFixtureFile(t, root, "ROADMAP.md", "capture-only edit\n", 0o644)
@@ -34,24 +30,14 @@ func TestCommitReducesForConfinedStagedSet(t *testing.T) {
 	probe.RequireExit(0)
 
 	output := probe.Stdout + probe.Stderr
-	for _, want := range []string{
-		"gate: reduced run",
-		"skipping " + canary.PhaseTest,
-		"evidence inherited from full green",
-		"phase conformance: green",
-	} {
-		if !strings.Contains(output, want) {
-			t.Fatalf("confined commit output missing %q:\nstdout:\n%s\nstderr:\n%s", want, probe.Stdout, probe.Stderr)
-		}
+	if strings.Contains(output, "gate: reduced run") {
+		t.Fatalf("confined commit announced a reduced run:\nstdout:\n%s\nstderr:\n%s", probe.Stdout, probe.Stderr)
 	}
-	if strings.Contains(output, "phase "+canary.PhaseTest+":") {
-		t.Fatalf("confined commit ran the excludable phase:\n%s", output)
+	if got := reducedFixtureMarker(t, root, "full-runs"); got != "full\nfull\n" {
+		t.Fatalf("gate marker after the confined commit = %q, want a second full run", got)
 	}
-	if got := reducedFixtureMarker(t, root, "phase-runs"); got != "conformance\n" {
-		t.Fatalf("phase marker after the confined commit = %q, want the included phase only", got)
-	}
-	if got := reducedFixtureMarker(t, root, "full-runs"); got != "full\n" {
-		t.Fatalf("gate marker after the confined commit = %q, want the seed run only — the reduction paid the resolved gate", got)
+	if got := reducedFixtureMarker(t, root, "phase-runs"); got != "" {
+		t.Fatalf("phase marker after the confined commit = %q, want none — the phase table ran instead of the resolved gate", got)
 	}
 	if names := committedNames(f); !strings.Contains(names, "ROADMAP.md") {
 		t.Fatalf("confined commit did not land ROADMAP.md; committed:\n%s", names)
@@ -85,7 +71,7 @@ func TestCommitMixedStagedSetRunsFullGate(t *testing.T) {
 }
 
 // commitReducedFixture builds a repository whose declared phase table has one excludable
-// and one included phase, seeds the full-green ancestor a reduction inherits from, and
+// and one included phase, seeds a full green, and
 // returns everything a `bench commit` probe needs. The repository carries a git identity
 // because `bench commit` runs `git commit` itself, with no inline identity to lend it.
 func commitReducedFixture(t *testing.T) (string, contract.Fixture, contract.Env, string) {

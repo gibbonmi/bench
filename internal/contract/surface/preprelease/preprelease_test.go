@@ -105,49 +105,46 @@ func TestPrepReleaseRequiresDevGreen(t *testing.T) {
 	}
 }
 
-// TestPrepReleaseRefusesReducedVerdict is the story 7 acceptance. A reduced verdict is
-// recorded green and bound to this tree, so a precondition asking only whether the status
-// is green accepts a record that graded a fraction of the tree. The message carries the
-// row's second half: a maintainer who reads that no verdict exists re-runs whatever they
-// just ran, where one who reads that the verdict is narrow knows to force a full run.
-func TestPrepReleaseRefusesReducedVerdict(t *testing.T) {
+// TestPrepReleaseRefusesLegacyReducedRecord is the story 7 acceptance in its retired-path
+// form: the reduced verdict class no longer exists, so a legacy on-disk reduced record —
+// whatever status it recorded — fails the loader's exact-field-set validation before its
+// status is ever read. The refusal names the invalid cache record and points at a fresh
+// `bench gate`, never the retired reduction vocabulary, and authorizes nothing.
+func TestPrepReleaseRefusesLegacyReducedRecord(t *testing.T) {
 	t.Parallel()
 	contract.SkipIfSubjectBenchMissing(t)
-	r := newShipRepo(t)
-	reduceVerdict(t, r, "green")
+	contract.RequireFreshBench(t)
 
-	probe := r.prepRelease(nil)
+	for _, test := range []struct {
+		status string
+		spoil  func(*testing.T, shipRepo)
+	}{
+		{status: "green"},
+		{status: "red", spoil: redTheGate},
+	} {
+		t.Run(test.status, func(t *testing.T) {
+			t.Parallel()
+			r := newShipRepo(t)
+			if test.spoil != nil {
+				test.spoil(t, r)
+			}
+			record := reduceVerdict(t, r, test.status)
 
-	if probe.ExitCode == 0 {
-		t.Fatalf("prep-release accepted a reduced verdict\nstderr:\n%s", probe.Stderr)
+			probe := r.prepRelease(nil)
+
+			if probe.ExitCode == 0 {
+				t.Fatalf("prep-release accepted a legacy reduced record\nstderr:\n%s\nverdict:\n%s", probe.Stderr, record)
+			}
+			requireContains(t, "refusal", probe.Stderr, "invalid cache record")
+			requireContains(t, "refusal", probe.Stderr, "bench gate")
+			if strings.Contains(probe.Stderr, "reduced") {
+				t.Fatalf("refusal spoke the retired reduction vocabulary:\n%s\nverdict:\n%s", probe.Stderr, record)
+			}
+			if r.Exists(evidenceIndexPath) {
+				t.Fatalf("a refused run still produced %s", evidenceIndexPath)
+			}
+		})
 	}
-	requireContains(t, "refusal", probe.Stderr, "reduced")
-	requireContains(t, "refusal", probe.Stderr, "bench gate --fresh")
-	if r.Exists(evidenceIndexPath) {
-		t.Fatalf("a refused run still produced %s", evidenceIndexPath)
-	}
-}
-
-// TestPrepReleaseNamesRedBeforeReduction is the boundary of the refusal above: a record
-// can be both reduced and red, and reporting the reduction there sends the maintainer to
-// force a full run that reds again for the cause the gate already recorded. The narrowness
-// only matters once the verdict is green, so the red cause outranks it.
-func TestPrepReleaseNamesRedBeforeReduction(t *testing.T) {
-	t.Parallel()
-	contract.SkipIfSubjectBenchMissing(t)
-	r := newShipRepo(t)
-	redTheGate(t, r)
-	record := reduceVerdict(t, r, "red")
-
-	probe := r.prepRelease(nil)
-
-	if probe.ExitCode == 0 {
-		t.Fatalf("prep-release accepted a red verdict\nstderr:\n%s\nverdict:\n%s", probe.Stderr, record)
-	}
-	if strings.Contains(probe.Stderr, "reduced") {
-		t.Fatalf("refusal blamed the reduction for a red verdict:\n%s\nverdict:\n%s", probe.Stderr, record)
-	}
-	requireContains(t, "refusal", probe.Stderr, "recorded red")
 }
 
 // TestPrepReleaseRefusalNamesSkippedComponents is the PC16a acceptance: a release answers
@@ -381,15 +378,14 @@ func redTheGate(t *testing.T, r shipRepo) {
 	r.RunEnv(r.runEnv(nil), "bash", r.benchScript(), "gate").RequireExit(1)
 }
 
-// reduceVerdict rewrites the recorded verdict into the reduced class, promoting the run
-// the gate just wrote into the full-green ancestor the reduction inherits from. status is
-// the verdict the caller means to reduce, checked so a row asserting on a green cause
-// cannot silently be reducing a red one. The record is edited rather than rebuilt for the
-// reason ageVerdict is: everything the gate decided stays as the gate wrote it, leaving
-// the reduction as the only thing the command can be reacting to. The loader validates
-// the class strictly, so a record this helper malformed would be refused as invalid — a
-// diagnostic naming neither the reduction nor its remedy, and the assertions above would
-// still bite. The record it wrote is returned so a failing row can show what the command
+// reduceVerdict rewrites the recorded verdict into the retired reduced class — the
+// legacy on-disk shape a pre-retirement gate wrote. status is the verdict the caller
+// means to rewrite, checked so a row asserting on a green record cannot silently be
+// building on a red one. The record is edited rather than rebuilt for the reason
+// ageVerdict is: everything the gate decided stays as the gate wrote it, leaving the
+// legacy fields as the only thing the command can be reacting to. The loader validates
+// the field set exactly, so the added fields are what make it refuse the record as
+// invalid. The record it wrote is returned so a failing row can show what the command
 // was actually reading rather than leaving the fixture's own shape to be assumed.
 func reduceVerdict(t *testing.T, r shipRepo, status string) []byte {
 	t.Helper()

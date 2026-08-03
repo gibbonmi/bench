@@ -128,12 +128,12 @@ func (f componentSlotFixture) slotBytesOf(t *testing.T, components []string) map
 // exact-field-set refusal every test below rests on would stop separating the two.
 func TestComponentSlotFieldsAreDisjointFromTheVerdictClasses(t *testing.T) {
 	if shared := componentSlotSharesVerdictFields(); len(shared) != 0 {
-		t.Fatalf("slot fields %v share %v with the verdict classes %v", componentSlotFields, shared, reducedReadyFields)
+		t.Fatalf("slot fields %v share %v with the verdict classes %v", componentSlotFields, shared, partialReadyFields)
 	}
 	// The shared names are shared in fact, not merely permitted: a name listed as shared that
 	// no class carries would silently widen what a slot may borrow from a verdict.
 	for _, name := range recordSharedFields {
-		if !contains(componentSlotFields, name) || !contains(reducedReadyFields, name) {
+		if !contains(componentSlotFields, name) || !contains(partialReadyFields, name) {
 			t.Errorf("%q is listed as shared but is not carried by both classes", name)
 		}
 	}
