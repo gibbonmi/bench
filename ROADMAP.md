@@ -1207,10 +1207,9 @@ reviewer-facing — mean the work starts as a grill. Entry:
 `/bench-shape-idea`. Source: `capture/IDEAS.md`, drained here.
 
 **FT164 (MEDIUM) — repair-lane charges, and a done-claim that resolves its named
-owners.** The ticket-contract core shipped 2026-08-03
-(`specs/ft164-ticket-contracts/spec.md`, promoted at `83c630e`); what stays open
-is the repair-and-experiment lane that spec cut, plus two rules the build itself
-produced. The lane is one `craft-delegate` visit. Model-comparison charges give
+owners.** The ticket-contract core shipped 2026-08-03, promoted at `83c630e`
+and since retired; what stays open is the repair-and-experiment lane that spec
+cut, plus two rules the build itself produced. The lane is one `craft-delegate` visit. Model-comparison charges give
 every candidate one constant charge — base commit, file fence, effort, focused
 suite, independent probe — with setup failures recorded separately from
 generation time; fixed behavioral checks and the independent probe decide whether
@@ -1235,8 +1234,8 @@ And a repair round that extends an enumeration the spec pins trues that
 enumeration up as part of the round: FT164's needle count drifted 24→27 across
 repair rounds and was corrected only in round 3, and row 7.2's moved-artifact
 clause was left vacuously satisfied by the same drift. Kit edit under the
-`craft-synthesis` discipline. Sources: the `ft164-ticket-contracts` spec's
-out-of-scope riders and its implementation retro, drained here;
+`craft-synthesis` discipline. Sources: the retired `ft164-ticket-contracts`
+spec's out-of-scope riders and its implementation retro, drained here;
 `capture/learnings.md` 2026-08-03, verdicted here.
 
 **FT165 (LOW) — fold the domain-modeling discipline into
