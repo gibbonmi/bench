@@ -247,15 +247,62 @@ reviewed boundary is two separately shippable scopes with an explicit ordering.
 
 ### Answer
 
-— (open; awaiting #4 through #9)
+Ship two ordered, independently green specs. The first introduces the exact
+prospective landing substrate: compose named paths against an expected base,
+run the authoritative whole-project gate on that exact tree, and compare-and-
+swap publish it; ordinary `bench commit` adopts this boundary. The second adds
+multi-coordinator spec builds on that proven primitive: run revisions,
+run-owned planning subjects, AXI receipt helpers, evidence-preserving
+recomposition, and checkout-independent lifecycle operations. The second scope
+literally depends on the first; neither absorbs optional parallel hardening.
+
+## #11: How does an interrupted mutation recover or abandon safely?
+
+Blocked by: #10
+Type: Grill
+
+### Question
+
+Choose the recovery authority and terminal behavior when a coordinator dies
+after preparing an operation, during an external effect, or after a branch/ref
+compare-and-swap but before run-state finalization. Define when another
+coordinator may resume, finalize, abandon, or preserve recovery payloads.
+
+### Answer
+
+— (open; awaiting #10)
+
+## #12: Which gate evidence may cross composed landing subjects?
+
+Blocked by: #10
+Type: Grill
+
+### Question
+
+Choose whether independently composed trees may share retained gate evidence,
+and distinguish exact-subject reuse, component/check inheritance, exact-green
+base authorization for recomposition, and the one project-green transition.
+
+### Answer
+
+— (open; awaiting #10)
+
+## #13: What AXI status surface exposes concurrent runs and conflicts?
+
+Blocked by: #11, #12
+Type: Grill
+
+### Question
+
+Choose the minimal default and detail views for active runs, revisions,
+prepared operations, tip drift, conflicts, recovery state, and actionable next
+commands without turning session-start context into a full run dump.
+
+### Answer
+
+— (open; awaiting #11 and #12)
 
 ## Not yet specified
-
-- Recovery and abandonment semantics if a coordinator dies during a state
-  compare-and-swap or prospective landing.
-- Whether retained gate evidence can be shared across independently composed
-  landing subjects without creating a second notion of project green.
-- The user-visible status/query surface for concurrent runs and conflicts.
 
 ## Spec-writer discretion
 
