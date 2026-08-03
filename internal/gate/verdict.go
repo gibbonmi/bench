@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
@@ -36,16 +37,17 @@ const (
 )
 
 type Inspection struct {
-	State         State
-	Status        string
-	PendingStatus string
-	CachedTree    string
-	CurrentTree   string
-	RecordedAt    time.Time
-	Reason        string
-	CacheBytes    int
-	ReusableGreen bool
-	Partition     *Partition
+	State          State
+	Status         string
+	PendingStatus  string
+	CachedTree     string
+	CurrentTree    string
+	RecordedAt     time.Time
+	Reason         string
+	CacheBytes     int
+	ReusableGreen  bool
+	Partition      *Partition
+	CheckPartition *CheckPartition
 }
 
 // ComponentSkip is one entry of a partition: a component that did not run, and the evidence
@@ -68,6 +70,12 @@ type Partition struct {
 	Skipped  []ComponentSkip
 }
 
+// CheckPartition is the conformance work a mixed run executed and inherited.
+type CheckPartition struct {
+	Executed  []string
+	Inherited []ComponentSkip
+}
+
 type verdictRecord struct {
 	Schema     int    `json:"schema"`
 	State      State  `json:"state"`
@@ -81,6 +89,10 @@ type verdictRecord struct {
 	Executed     []string                `json:"executed,omitempty"`
 	Skipped      []string                `json:"skipped,omitempty"`
 	SkipEvidence map[string]skipEvidence `json:"skip_evidence,omitempty"`
+
+	CheckExecuted  []string                `json:"check_executed,omitempty"`
+	CheckInherited []string                `json:"check_inherited,omitempty"`
+	CheckEvidence  map[string]skipEvidence `json:"check_evidence,omitempty"`
 }
 
 // skipEvidence is one component's recorded skip evidence. Every field is optional in the
@@ -207,6 +219,7 @@ func inspectAt(root string, now time.Time) Inspection {
 	rec := loaded.record
 	gi.Status, gi.CachedTree = rec.Status, rec.Tree
 	gi.Partition = rec.partition()
+	gi.CheckPartition = rec.checkPartition()
 	if rec.State == Pending {
 		held, err := lockHeld(gitdir)
 		if err != nil {
@@ -258,7 +271,7 @@ func inspectAt(root string, now time.Time) Inspection {
 // inputs moved. It is evidence about its own tree and never the whole-tree green a reuse
 // credits, so this is the single place a reuse asks how wide the grading was.
 func narrowVerdictReason(r verdictRecord) string {
-	if r.partitions() {
+	if r.partitions() || r.checkPartitions() {
 		return "partial verdict"
 	}
 	return ""
@@ -400,8 +413,10 @@ func rejectDuplicateNames(dec *json.Decoder) error {
 // full record joins them without a second edit; restated, that addition would make the
 // narrow classes silently reject every valid record.
 var (
-	fullReadyFields    = []string{"oracle", "recorded_at", "schema", "state", "status", "tree"}
-	partialReadyFields = sortedFieldSet(fullReadyFields, "executed", "skip_evidence", "skipped")
+	fullReadyFields            = []string{"oracle", "recorded_at", "schema", "state", "status", "tree"}
+	partialReadyFields         = sortedFieldSet(fullReadyFields, "executed", "skip_evidence", "skipped")
+	checkPartialReadyFields    = sortedFieldSet(fullReadyFields, "check_evidence", "check_executed", "check_inherited")
+	combinedPartialReadyFields = sortedFieldSet(partialReadyFields, "check_evidence", "check_executed", "check_inherited")
 )
 
 // readyFieldClasses is the one place every ready verdict class is enumerated, keyed by the
@@ -409,8 +424,10 @@ var (
 // that never joins this map is caught by TestVerdictReadyFieldsAreAllRegistered, which parses
 // this file's declarations and fails for any it does not find registered here.
 var readyFieldClasses = map[string][]string{
-	"full verdict":    fullReadyFields,
-	"partial verdict": partialReadyFields,
+	"full verdict":             fullReadyFields,
+	"partial verdict":          partialReadyFields,
+	"check-partial verdict":    checkPartialReadyFields,
+	"combined-partial verdict": combinedPartialReadyFields,
 }
 
 // The two exact field sets one skip-evidence entry may carry, under the same alternatives
@@ -440,6 +457,10 @@ func (r verdictRecord) partitions() bool {
 	return r.Executed != nil || r.Skipped != nil || r.SkipEvidence != nil
 }
 
+func (r verdictRecord) checkPartitions() bool {
+	return r.CheckExecuted != nil || r.CheckInherited != nil || r.CheckEvidence != nil
+}
+
 // partition projects the partial class onto the shape consumers read, and nil for every
 // other class — so "this verdict skipped something" is one nil check rather than a marker a
 // consumer could read without the evidence that explains it. It reads a record the loader
@@ -457,6 +478,21 @@ func (r verdictRecord) partition() *Partition {
 			Identity:   evidence.Identity,
 			AuthoredAt: authoredAt,
 			Seal:       evidence.Seal,
+		})
+	}
+	return partition
+}
+
+func (r verdictRecord) checkPartition() *CheckPartition {
+	if !r.checkPartitions() {
+		return nil
+	}
+	partition := &CheckPartition{Executed: slices.Clone(r.CheckExecuted), Inherited: make([]ComponentSkip, 0, len(r.CheckInherited))}
+	for _, check := range r.CheckInherited {
+		evidence := r.CheckEvidence[check]
+		authoredAt, _ := time.Parse(time.RFC3339, evidence.AuthoredAt)
+		partition.Inherited = append(partition.Inherited, ComponentSkip{
+			Component: check, Identity: evidence.Identity, AuthoredAt: authoredAt,
 		})
 	}
 	return partition
@@ -545,15 +581,72 @@ func validateSkipEvidence(entry json.RawMessage, evidence skipEvidence, recorded
 // grading an entry against an exact field set needs: the decoded struct cannot tell a field
 // that was absent from one that was present and empty.
 func rawSkipEvidence(data []byte) (map[string]json.RawMessage, error) {
+	return rawEvidence(data, "skip_evidence")
+}
+
+func rawEvidence(data []byte, field string) (map[string]json.RawMessage, error) {
 	var fields map[string]json.RawMessage
 	if err := json.Unmarshal(data, &fields); err != nil {
 		return nil, err
 	}
 	var entries map[string]json.RawMessage
-	if err := json.Unmarshal(fields["skip_evidence"], &entries); err != nil {
+	if err := json.Unmarshal(fields[field], &entries); err != nil {
 		return nil, errors.New("invalid skip evidence")
 	}
 	return entries, nil
+}
+
+func validateCheckPartition(data []byte, r verdictRecord, recordedAt time.Time) error {
+	wantExecuted := make(map[string]bool, len(r.CheckExecuted))
+	for _, name := range r.CheckExecuted {
+		wantExecuted[name] = true
+	}
+	wantInherited := make(map[string]bool, len(r.CheckInherited))
+	for _, name := range r.CheckInherited {
+		wantInherited[name] = true
+	}
+	var executed, inherited []string
+	for _, check := range registry.Checks {
+		if !check.RunsAt(registry.Dev) {
+			continue
+		}
+		if check.Meta || wantExecuted[check.Name] {
+			executed = append(executed, check.Name)
+		}
+		if !check.Meta && wantInherited[check.Name] {
+			inherited = append(inherited, check.Name)
+		}
+	}
+	if !slices.Equal(r.CheckExecuted, executed) || !slices.Equal(r.CheckInherited, inherited) || len(r.CheckInherited) == 0 {
+		return errors.New("invalid conformance check partition")
+	}
+	seen := make(map[string]bool, len(r.CheckExecuted)+len(r.CheckInherited))
+	for _, name := range r.CheckExecuted {
+		if seen[name] {
+			return errors.New("invalid conformance check partition")
+		}
+		seen[name] = true
+	}
+	for _, name := range r.CheckInherited {
+		if seen[name] {
+			return errors.New("invalid conformance check partition")
+		}
+		seen[name] = true
+	}
+	if len(seen) != len(registry.Names(registry.Dev)) {
+		return errors.New("invalid conformance check partition")
+	}
+	entries, err := rawEvidence(data, "check_evidence")
+	if err != nil || len(entries) != len(r.CheckInherited) {
+		return errors.New("invalid conformance check evidence")
+	}
+	for _, name := range r.CheckInherited {
+		entry, ok := entries[name]
+		if !ok || validateSkipEvidence(entry, r.CheckEvidence[name], recordedAt) != nil || r.CheckEvidence[name].Seal != "" {
+			return errors.New("invalid conformance check evidence")
+		}
+	}
+	return nil
 }
 
 func validateRecordBytes(data []byte, r verdictRecord, now time.Time) error {
@@ -566,8 +659,13 @@ func validateRecordBytes(data []byte, r verdictRecord, now time.Time) error {
 	switch r.State {
 	case Ready:
 		want := fullReadyFields
-		if r.partitions() {
+		switch {
+		case r.partitions() && r.checkPartitions():
+			want = combinedPartialReadyFields
+		case r.partitions():
 			want = partialReadyFields
+		case r.checkPartitions():
+			want = checkPartialReadyFields
 		}
 		if err := requireObjectFields(data, want); err != nil {
 			return err
@@ -580,7 +678,12 @@ func validateRecordBytes(data []byte, r verdictRecord, now time.Time) error {
 			return errors.New("invalid ready time")
 		}
 		if r.partitions() {
-			return validatePartition(data, r, tm)
+			if err := validatePartition(data, r, tm); err != nil {
+				return err
+			}
+		}
+		if r.checkPartitions() {
+			return validateCheckPartition(data, r, tm)
 		}
 	case Pending:
 		if err := requireObjectFields(data, []string{"oracle", "owner_pid", "schema", "started_at", "state", "tree"}); err != nil {

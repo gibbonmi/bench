@@ -5,7 +5,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"regexp"
+	"runtime"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -18,36 +21,83 @@ import (
 	"github.com/gibbonmi/bench/internal/subprocess"
 )
 
-// checkFunc is the uniform shape every registered check is bound through. Only the
-// package-core check reads the tier; the rest ignore the arguments they do not need.
-type checkFunc func(root, kitRoot string, tier registry.Tier) []string
+// checkBinding is the executable half of a registry row. The map below deliberately repeats
+// only the facts an independent mutation oracle needs: the name-to-function binding, tier,
+// and subject. Registry order, meta membership, and inputs stay single-sourced in
+// registry.Checks. Keeping these three facts independent is what makes the named CM5/CM6/CM7
+// mutations red when functions are swapped or the advertised tier or subject drifts while
+// the executable binding is unchanged.
+type checkBinding struct {
+	implementation any
+	tier           registry.Tier
+	subject        registry.Subject
+}
 
-// conformanceChecks binds each registry.Checks row to the function that runs it.
-// The registry owns the names, the tiers, and the order; this map owns only the
-// binding, and TestRegistryBindsEveryCheck asserts the two halves match in both
-// directions so tier metadata and executable checks cannot drift apart.
-var conformanceChecks = map[string]checkFunc{
-	"conformance-canary-families":   func(_, kitRoot string, _ registry.Tier) []string { return checkConformanceCanaryFamilies(kitRoot) },
-	"kit-compliance":                func(_, kitRoot string, _ registry.Tier) []string { return checkKitCompliance(kitRoot) },
-	"canary-inner-compliance":       func(root, _ string, _ registry.Tier) []string { return checkCanaryInnerCompliance(root) },
-	"load-validity-metadata":        func(root, _ string, _ registry.Tier) []string { return checkLoadValidityMetadata(root) },
-	"skills-index-command-adapters": func(root, _ string, _ registry.Tier) []string { return checkSkillsIndexAndCommandAdapters(root) },
-	"docs-currency-workflow": func(root, kitRoot string, _ registry.Tier) []string {
-		return checkDocsCurrencyAndWorkflow(root, kitRoot)
-	},
-	"line-routing":                 func(root, _ string, _ registry.Tier) []string { return checkLineRouting(root) },
-	"package-core-guard":           func(root, _ string, tier registry.Tier) []string { return checkPackageCoreAndGuards(root, tier) },
-	"release-evidence-probe":       func(root, _ string, _ registry.Tier) []string { return checkReleaseEvidenceProbe(root) },
-	"bench-sh-routes":              func(root, _ string, _ registry.Tier) []string { return checkBenchShRoutes(root) },
-	"default-branch-single-source": func(root, _ string, _ registry.Tier) []string { return checkDefaultBranchSingleSource(root) },
-	"data-handling-derivation":     func(root, _ string, _ registry.Tier) []string { return checkDataHandlingDerivation(root) },
-	"single-control-escaper":       func(root, _ string, _ registry.Tier) []string { return checkSingleControlEscaper(root) },
-	"bounds-policy":                func(root, _ string, _ registry.Tier) []string { return checkBoundsPolicy(root) },
-	"marker-wait-deadlines":        func(root, _ string, _ registry.Tier) []string { return checkMarkerWaitDeadlines(root) },
-	"subcommand-routing":           func(root, _ string, _ registry.Tier) []string { return checkSubcommandRouting(root) },
-	"skip-ownership":               func(root, _ string, _ registry.Tier) []string { return checkSkipOwnership(root) },
-	"decision-map-integrity":       func(root, _ string, _ registry.Tier) []string { return maps.ValidateDecisionMapTree(root) },
-	"example-agreement":            func(root, _ string, _ registry.Tier) []string { return checkExampleAgreement(root) },
+var conformanceChecks map[string]checkBinding
+
+func init() {
+	conformanceChecks = map[string]checkBinding{
+		"conformance-meta":                  {checkConformanceMeta, registry.Dev, registry.SubjectKitRoot},
+		"conformance-canary-families":       {checkConformanceCanaryFamilies, registry.Dev, registry.SubjectKitRoot},
+		"component-input-derivation-source": {checkRegisteredDerivationSource, registry.Dev, registry.SubjectKitRoot},
+		"scope-binding":                     {checkScopeBinding, registry.Dev, registry.SubjectKitRoot},
+		"component-scope-binding":           {checkComponentScopeBinding, registry.Dev, registry.SubjectKitRoot},
+		"kit-compliance":                    {checkKitCompliance, registry.Dev, registry.SubjectKitRoot},
+		"canary-inner-compliance":           {checkCanaryInnerCompliance, registry.Dev, registry.SubjectRoot},
+		"load-validity-metadata":            {checkLoadValidityMetadata, registry.Dev, registry.SubjectRoot},
+		"skills-index-command-adapters":     {checkSkillsIndexAndCommandAdapters, registry.Dev, registry.SubjectRoot},
+		"docs-currency-workflow":            {checkDocsCurrencyAndWorkflow, registry.Dev, registry.SubjectRootAndKitRoot},
+		"gate-entry-contract":               {checkGateEntryContract, registry.Dev, registry.SubjectRoot},
+		"offline-smoke-proof":               {checkOfflineSmokeProof, registry.Dev, registry.SubjectRoot},
+		"handoff-shape-single-source":       {checkHandoffShape, registry.Dev, registry.SubjectRoot},
+		"harness-prefix-single-source":      {checkHarnessPrefix, registry.Dev, registry.SubjectRoot},
+		"package-shipped-surface":           {checkPackageShippedSurface, registry.Dev, registry.SubjectRoot},
+		"line-routing":                      {checkLineRouting, registry.Dev, registry.SubjectRoot},
+		"package-core-guard":                {checkPackageCoreAndGuards, registry.Dev, registry.SubjectRoot},
+		"release-evidence-probe":            {checkReleaseEvidenceProbe, registry.Ship, registry.SubjectRoot},
+		"bench-sh-routes":                   {checkBenchShRoutes, registry.Dev, registry.SubjectRoot},
+		"default-branch-single-source":      {checkDefaultBranchSingleSource, registry.Dev, registry.SubjectRoot},
+		"data-handling-derivation":          {checkDataHandlingDerivation, registry.Dev, registry.SubjectRoot},
+		"single-control-escaper":            {checkSingleControlEscaper, registry.Dev, registry.SubjectRoot},
+		"bounds-policy":                     {checkBoundsPolicy, registry.Dev, registry.SubjectRoot},
+		"marker-wait-deadlines":             {checkMarkerWaitDeadlines, registry.Dev, registry.SubjectRoot},
+		"subcommand-routing":                {checkSubcommandRouting, registry.Dev, registry.SubjectRoot},
+		"skip-ownership":                    {checkSkipOwnership, registry.Dev, registry.SubjectRoot},
+		"decision-map-integrity":            {maps.ValidateDecisionMapTree, registry.Dev, registry.SubjectRoot},
+		"example-agreement":                 {checkExampleAgreement, registry.Dev, registry.SubjectRoot},
+		"component-honesty-prose":           {checkComponentHonestyProfile, registry.Dev, registry.SubjectKitRoot},
+		"contract-capture-reads":            {checkContractCaptureReads, registry.Dev, registry.SubjectKitRoot},
+	}
+}
+
+func (b checkBinding) identity() string {
+	fn := runtime.FuncForPC(reflect.ValueOf(b.implementation).Pointer())
+	if fn == nil {
+		return ""
+	}
+	name := fn.Name()
+	return name[strings.LastIndex(name, ".")+1:]
+}
+
+func (b checkBinding) runsAt(tier registry.Tier) bool {
+	return b.tier == registry.Dev || tier == registry.Ship
+}
+
+func (b checkBinding) run(root, kitRoot string, tier registry.Tier) []string {
+	subject := root
+	if b.subject == registry.SubjectKitRoot {
+		subject = kitRoot
+	}
+	switch run := b.implementation.(type) {
+	case func(string) []string:
+		return run(subject)
+	case func(string, string) []string:
+		return run(root, kitRoot)
+	case func(string, registry.Tier) []string:
+		return run(subject, tier)
+	default:
+		return []string{"conformance check carries an unsupported executable binding"}
+	}
 }
 
 // RunConformance grades root against the checks tier runs, timing each one. An empty
@@ -59,10 +109,19 @@ var conformanceChecks = map[string]checkFunc{
 // a stale binding a green verdict. All three postures live here so no entry point has
 // to restate them.
 func RunConformance(root, kitRoot string, tier registry.Tier, scope string) []string {
+	return RunConformanceSelection(root, kitRoot, tier, scope, nil, nil)
+}
+
+// RunConformanceSelection accepts the inner-canary single-check control and the outer
+// gate's exact executed/inherited ordinary-check partition as distinct authorities.
+func RunConformanceSelection(root, kitRoot string, tier registry.Tier, scope string, selected, inheritedControl *string) []string {
 	// The writer clears the root's timing file, so it is established before the scope
 	// postures return: a run that executes nothing still has to leave the file empty,
 	// or a reader attributes the previous run's lines to this one.
 	timing := registry.NewTimingWriter(root)
+	if scope != "" && (selected != nil || inheritedControl != nil) {
+		return []string{"conformance selection carries both inner and outer controls"}
+	}
 	if scope != "" {
 		check, found := registry.Find(scope)
 		if !found {
@@ -72,24 +131,73 @@ func RunConformance(root, kitRoot string, tier registry.Tier, scope string) []st
 			return []string{fmt.Sprintf("conformance scope %q names a check the %s tier does not run", scope, tier)}
 		}
 	}
+	// Ship is a lifecycle-final rehearsal, so only the canary-owned singular control may
+	// narrow it. An outer ordered set is ignored and the complete ship tier runs.
+	if tier == registry.Ship {
+		selected = nil
+		inheritedControl = nil
+	}
+	selection, executed, inherited, selectionDiags := orderedConformancePartition(tier, selected, inheritedControl)
 	var diags []string
+	diags = append(diags, selectionDiags...)
 	for _, check := range registry.Checks {
-		if !check.RunsAt(tier) {
-			continue
-		}
-		if scope != "" && check.Name != scope {
-			continue
-		}
 		run, bound := conformanceChecks[check.Name]
 		if !bound {
 			diags = append(diags, "conformance check "+check.Name+" is registered with no bound function")
 			continue
 		}
+		if !run.runsAt(tier) || scope != "" && check.Name != scope || selection != nil && !selection[check.Name] && !check.Meta {
+			continue
+		}
 		start := time.Now()
-		diags = append(diags, run(root, kitRoot, tier)...)
+		if check.Name == "conformance-meta" && selection != nil {
+			diags = append(diags, checkConformanceMetaForPartition(kitRoot, tier, executed, inherited)...)
+		} else {
+			diags = append(diags, run.run(root, kitRoot, tier)...)
+		}
 		timing.Record(check.Name, time.Since(start))
 	}
 	return diags
+}
+
+func orderedConformancePartition(tier registry.Tier, selected, inherited *string) (map[string]bool, []string, []string, []string) {
+	if selected == nil && inherited == nil {
+		return nil, registry.Names(tier), nil, nil
+	}
+	if selected == nil || inherited == nil {
+		return nil, registry.Names(tier), nil, []string{"conformance ordered partition must carry both executed and inherited sets"}
+	}
+	executedSet, _, selectedDiags := orderedConformanceSelection(tier, selected)
+	_, inheritedNames, inheritedDiags := orderedConformanceSelection(tier, inherited)
+	if len(selectedDiags) > 0 || len(inheritedDiags) > 0 {
+		return nil, registry.Names(tier), nil, append(selectedDiags, inheritedDiags...)
+	}
+	executed := make([]string, 0, len(registry.Checks))
+	for _, check := range registry.Checks {
+		if check.RunsAt(tier) && (check.Meta || executedSet[check.Name]) {
+			executed = append(executed, check.Name)
+		}
+	}
+	return executedSet, executed, inheritedNames, nil
+}
+
+func orderedConformanceSelection(tier registry.Tier, selected *string) (map[string]bool, []string, []string) {
+	if selected == nil {
+		return nil, nil, nil
+	}
+	want := map[string]bool{}
+	if *selected == "" {
+		return want, nil, nil
+	}
+	names := strings.Split(*selected, ",")
+	ordered, err := registry.CanonicalOrdinarySelection(tier, names)
+	if err != nil || !slices.Equal(ordered, names) {
+		return nil, nil, []string{fmt.Sprintf("conformance ordered selection %q is invalid for the %s tier", *selected, tier)}
+	}
+	for _, name := range ordered {
+		want[name] = true
+	}
+	return want, ordered, nil
 }
 
 // checkCanaryInnerCompliance grades the kit-compliance rules against the fixture tree
@@ -330,7 +438,9 @@ func conformanceSubprocessEnv() []string {
 		// leaking into a probe subprocess is the recursive-cascade shape.
 		if strings.HasPrefix(kv, "BENCH_CONFORMANCE_ROOT=") ||
 			strings.HasPrefix(kv, registry.ConformanceTierEnv+"=") ||
-			strings.HasPrefix(kv, registry.ConformanceCheckEnv+"=") {
+			strings.HasPrefix(kv, registry.ConformanceCheckEnv+"=") ||
+			strings.HasPrefix(kv, registry.ConformanceChecksEnv+"=") ||
+			strings.HasPrefix(kv, registry.ConformanceInheritedEnv+"=") {
 			continue
 		}
 		if strings.HasPrefix(kv, "NPM_CONFIG_CACHE=") && strings.TrimPrefix(kv, "NPM_CONFIG_CACHE=") != "" {

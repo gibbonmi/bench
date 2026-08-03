@@ -131,6 +131,17 @@ Go-toolchain phases materialize only when the graded root carries what each step
 grades. The manifest is a capability for projects whose gate is not shaped like
 the kit's, not the route the kit takes.
 
+The built-in conformance phase receives a gate-authored, registry-ordered
+ordinary-check set. Ambient singular and plural selectors are removed before
+phase construction; the singular form is restored only for an authenticated
+inner canary run. An ordinary dev gate may inherit exact per-check evidence, but
+meta checks always execute in the same aggregate process and validate the
+complete, disjoint executed/inherited partition. `gate --fresh`, prospective
+execution, and ship remain full boundaries. A mixed verdict lists every
+executed check and carries the identity and authorship time for every inherited
+check; it can compose to the exact tree's landing green but is never reusable as
+a later whole-tree green.
+
 The document is one object with a `phases` array. Per phase:
 
 - `name` (required) — the phase's addressable identity: it appears in summary

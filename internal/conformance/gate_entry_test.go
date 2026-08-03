@@ -20,22 +20,35 @@ func TestRootConformance(t *testing.T) {
 	h := NewHarness(t)
 	// The scope env is passed through verbatim: any normalising here would let a stale
 	// or misspelled value slide into a silent full run instead of the driver's red.
-	for _, diag := range RunConformance(root, h.KitRoot, registry.TierFor(os.Getenv(registry.ConformanceTierEnv)), os.Getenv(registry.ConformanceCheckEnv)) {
+	selected, selectedSet := os.LookupEnv(registry.ConformanceChecksEnv)
+	var selectedValue *string
+	if selectedSet {
+		selectedValue = &selected
+	}
+	inherited, inheritedSet := os.LookupEnv(registry.ConformanceInheritedEnv)
+	var inheritedValue *string
+	if inheritedSet {
+		inheritedValue = &inherited
+	}
+	for _, diag := range RunConformanceSelection(root, h.KitRoot, registry.TierFor(os.Getenv(registry.ConformanceTierEnv)), os.Getenv(registry.ConformanceCheckEnv), selectedValue, inheritedValue) {
 		t.Errorf("gate: %s", diag)
 	}
 }
 
-func TestGateEntryRunsGoConformanceAndBehaviorContracts(t *testing.T) {
-	h := NewHarness(t)
-	gate := h.ReadRootFile(".bench", "gate.sh")
-
+func checkGateEntryContract(root string) []string {
+	path := filepath.Join(root, ".bench", "gate.sh")
+	if !exists(path) {
+		return nil
+	}
+	gate := readIfExists(path)
+	var diags []string
 	needle := `exec env BENCH_KIT="$kit" "$bench" gate-phases "$root"`
 	if !strings.Contains(gate, needle) {
-		t.Fatalf(".bench/gate.sh missing %q", needle)
+		diags = append(diags, fmt.Sprintf(".bench/gate.sh missing %q", needle))
 	}
 	check := `go run ./internal/freshness/check "$kit" "$bench"`
 	if strings.Index(gate, check) < 0 || strings.Index(gate, check) > strings.Index(gate, needle) {
-		t.Fatalf(".bench/gate.sh does not run current-source verification %q before %q", check, needle)
+		diags = append(diags, fmt.Sprintf(".bench/gate.sh does not run current-source verification %q before %q", check, needle))
 	}
 
 	for _, retired := range []string{
@@ -57,9 +70,10 @@ func TestGateEntryRunsGoConformanceAndBehaviorContracts(t *testing.T) {
 		"gate-axi-wave2-contracts.sh",
 	} {
 		if strings.Contains(gate, retired) {
-			t.Fatalf(".bench/gate.sh still references retired conformance fragment %s", retired)
+			diags = append(diags, ".bench/gate.sh still references retired conformance fragment "+retired)
 		}
 	}
+	return diags
 }
 
 func TestGateEntryRefusesUnverifiedBinaryBeforeGatePhases(t *testing.T) {

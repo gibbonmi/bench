@@ -8,19 +8,23 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
+	"github.com/gibbonmi/bench/internal/bounds"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
 // TestSweepScopesFixtureRunsToTheirCheck grades the whole scope resolution at once:
 // a conformance family's fixture takes the family binding, a CHECK file overrides
 // it, contract and legacy flat fixtures take no scope at all, and an operator's
-// ambient export of the scope variable reaches none of them. Each fixture is also
-// enumerated so that an implementation merging same-check fixtures into one inner
-// run grades fewer mutated trees than were selected.
+// ambient export of any conformance selection control reaches none of them. Each
+// fixture is also enumerated so that an implementation merging same-check fixtures
+// into one inner run grades fewer mutated trees than were selected.
 func TestSweepScopesFixtureRunsToTheirCheck(t *testing.T) {
 	const ambient = "ambient-scope"
 	t.Setenv(registry.ConformanceCheckEnv, ambient)
+	t.Setenv(registry.ConformanceChecksEnv, ambient)
+	t.Setenv(registry.ConformanceInheritedEnv, ambient)
 	family := mappedFamily(t)
 	bound := boundCheck(t, family)
 	override := devCheckNameOtherThan(t, bound)
@@ -75,6 +79,11 @@ func TestSweepScopesFixtureRunsToTheirCheck(t *testing.T) {
 	for _, call := range calls {
 		if slices.Contains(scopeValues(call.Env), ambient) {
 			t.Errorf("call %q carried the ambient scope %s, want it stripped", call.FixtureDir, ambient)
+		}
+		for _, key := range []string{registry.ConformanceChecksEnv, registry.ConformanceInheritedEnv} {
+			if values := envValues(call.Env, key); len(values) != 0 {
+				t.Errorf("call %q carried %s=%v, want the outer selection absent", call.FixtureDir, key, values)
+			}
 		}
 	}
 }
@@ -238,6 +247,89 @@ func TestShipSweepScopesItsFixtures(t *testing.T) {
 			t.Errorf("ship call %q carried scopes %v, want exactly [%s]", call.FixtureDir, got, ship)
 		}
 	}
+}
+
+func TestGateOwnedFamilySelectionNarrowsDevButNotShip(t *testing.T) {
+	selected := mappedFamily(t)
+	other := secondMappedFamily(t)
+	root := t.TempDir()
+	fixture(t, canaryFixture(root, selected, "selected"), "")
+	fixture(t, canaryFixture(root, other, "other"), "")
+
+	t.Setenv(FamilySelectionEnv, selected)
+	if got := fixtureCallNames(sweepCalls(t, root, registry.Dev)); !slices.Equal(got, []string{"other", "selected"}) {
+		t.Fatalf("ambient family selection ran %v, want both families", got)
+	}
+	t.Setenv(FamilySelectionOwnerEnv, "gate")
+	if got := fixtureCallNames(sweepCalls(t, root, registry.Dev)); !slices.Equal(got, []string{"other", "selected"}) {
+		t.Fatalf("ambient gate-owner forgery ran %v, want both families", got)
+	}
+	reader, writer, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := writer.WriteString(selected); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(FamilySelectionAuthorityEnv, fmt.Sprint(reader.Fd()))
+	if got := fixtureCallNames(sweepCalls(t, root, registry.Dev)); !slices.Equal(got, []string{"selected"}) {
+		t.Fatalf("gate-owned family selection ran %v, want selected family", got)
+	}
+	write(t, filepath.Join(canaryFixture(root, selected, "selected"), checkFileName), "release-evidence-probe\n")
+	write(t, filepath.Join(canaryFixture(root, other, "other"), checkFileName), "release-evidence-probe\n")
+	if got := fixtureCallNames(sweepCalls(t, root, registry.Ship)); !slices.Equal(got, []string{"other", "selected"}) {
+		t.Fatalf("ship family selection ran %v, want both families", got)
+	}
+}
+
+func TestGateFamilySelectionAuthorityReadDoesNotBlockOnHeldOpenDescriptor(t *testing.T) {
+	selected := mappedFamily(t)
+	reader, writer, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		reader.Close()
+		writer.Close()
+	})
+	if _, err := writer.WriteString(selected); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(FamilySelectionEnv, selected)
+	t.Setenv(FamilySelectionOwnerEnv, "gate")
+	t.Setenv(FamilySelectionAuthorityEnv, fmt.Sprint(reader.Fd()))
+
+	done := make(chan error, 1)
+	go func() {
+		_, scoped, err := gateSelectedFamilies(registry.Dev)
+		if err == nil || scoped {
+			done <- fmt.Errorf("held-open authority resolved scoped=%t err=%v, want an invalid non-scoped selection", scoped, err)
+			return
+		}
+		done <- nil
+	}()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(bounds.TestDeadline(0)):
+		t.Fatal("held-open authority descriptor blocked canary selection")
+	}
+}
+
+func fixtureCallNames(calls []RunCall) []string {
+	var names []string
+	for _, call := range calls {
+		if call.FixtureDir != "" {
+			names = append(names, filepath.Base(call.FixtureDir))
+		}
+	}
+	slices.Sort(names)
+	return names
 }
 
 // fixture writes a minimal biting fixture: a files/ tree, an EXPECT the sweep

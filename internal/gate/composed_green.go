@@ -6,6 +6,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
@@ -28,7 +29,7 @@ func ComposedGreen(root string) bool {
 	if err != nil || now.Sub(recorded) >= freshness {
 		return false
 	}
-	if loaded.record.partitions() {
+	if loaded.record.partitions() || loaded.record.checkPartitions() {
 		return partialComposedGreen(root, plan, loaded.record, now)
 	}
 	return true
@@ -39,23 +40,52 @@ func partialComposedGreen(root string, plan subject, record verdictRecord, now t
 	if !scoping.eligible {
 		return false
 	}
-	table, err := phaseTable(root, scoping.runnerRoot)
-	if err != nil {
-		return false
-	}
-	claimed := append([]string(nil), record.Executed...)
-	claimed = append(claimed, record.Skipped...)
-	sort.Strings(claimed)
-	if !slices.Equal(claimed, composedPhaseNames(table)) {
-		return false
-	}
-	for _, component := range record.Skipped {
-		identity, ok := scoping.identities[component]
-		if !ok {
+	if record.partitions() {
+		table, err := phaseTable(root, scoping.runnerRoot)
+		if err != nil {
 			return false
 		}
-		skip, ok := componentSkip(root, scoping, component, identity, now)
-		if !ok || skip.evidence() != record.SkipEvidence[component] {
+		claimed := append([]string(nil), record.Executed...)
+		claimed = append(claimed, record.Skipped...)
+		sort.Strings(claimed)
+		if !slices.Equal(claimed, composedPhaseNames(table)) {
+			return false
+		}
+		for _, component := range record.Skipped {
+			identity, ok := scoping.identities[component]
+			if !ok {
+				return false
+			}
+			skip, ok := componentSkip(root, scoping, component, identity, now)
+			if !ok || skip.evidence() != record.SkipEvidence[component] {
+				return false
+			}
+		}
+	}
+	if record.checkPartitions() && !composedCheckPartition(root, record, scoping, now) {
+		return false
+	}
+	return true
+}
+
+func composedCheckPartition(root string, record verdictRecord, scoping componentScoping, now time.Time) bool {
+	if len(scoping.checks.Identities) == 0 {
+		return false
+	}
+	slots, valid := loadConformanceCheckSlots(root)
+	if !valid {
+		return false
+	}
+	for _, name := range record.CheckInherited {
+		check, found := registry.Find(name)
+		if !found {
+			return false
+		}
+		authoredAt, err := validateConformanceCheckSlot(slots[name], name, check.Tier, scoping.checks.Identities[name], now)
+		if err != nil {
+			return false
+		}
+		if (skipEvidence{Identity: scoping.checks.Identities[name], AuthoredAt: authoredAt.UTC().Format(time.RFC3339)}) != record.CheckEvidence[name] {
 			return false
 		}
 	}

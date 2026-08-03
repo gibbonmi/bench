@@ -13,7 +13,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
@@ -68,12 +70,16 @@ func TestGateEnvStripsWrapperRoutingInternals(t *testing.T) {
 	t.Setenv("BENCH_KIT", "/wrong/kit")
 	t.Setenv("BENCH_WRAPPER", "/wrong/wrapper")
 	t.Setenv(capability.LogEnv, "/wrong/outer-skips.log")
+	t.Setenv(canary.FamilySelectionEnv, "line-routing")
+	t.Setenv(canary.FamilySelectionOwnerEnv, "gate")
+	t.Setenv(canary.FamilySelectionAuthorityEnv, "9")
+	t.Setenv(registry.ConformanceInheritedEnv, "line-routing")
 	t.Setenv("BENCH_GATE", "echo ok")
 
 	env := gateEnv()
 	sawBenchGate := false
 	for _, kv := range env {
-		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, capability.LogEnv+"=") {
+		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") || strings.HasPrefix(kv, capability.LogEnv+"=") || strings.HasPrefix(kv, canary.FamilySelectionEnv+"=") || strings.HasPrefix(kv, canary.FamilySelectionOwnerEnv+"=") || strings.HasPrefix(kv, canary.FamilySelectionAuthorityEnv+"=") || strings.HasPrefix(kv, registry.ConformanceInheritedEnv+"=") {
 			t.Fatalf("gateEnv leaked wrapper-routing internal %q", kv)
 		}
 		if kv == "BENCH_GATE=echo ok" {

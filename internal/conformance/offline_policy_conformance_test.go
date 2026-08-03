@@ -1,6 +1,7 @@
 package conformance
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -55,8 +56,21 @@ func offlineSmokeEnumeratesSliceOneSuppressions(smoke string) bool {
 	return true
 }
 
+func checkOfflineSmokeProof(root string) []string {
+	path := filepath.Join(root, "scripts", "smoke-offline.sh")
+	if !exists(path) {
+		return nil
+	}
+	smoke := readIfExists(path)
+	if !offlineSmokeEnumeratesSliceOneSuppressions(smoke) {
+		return []string{"offline smoke does not carry the executable six-operation proof"}
+	}
+	return nil
+}
+
 func TestOfflineSmokeSliceOneProofIsExecutableNotTokenOnly(t *testing.T) {
-	smoke := NewHarness(t).ReadRootFile("scripts", "smoke-offline.sh")
+	h := NewHarness(t)
+	smoke := readIfExists(h.KitPath("scripts", "smoke-offline.sh"))
 	if !offlineSmokeEnumeratesSliceOneSuppressions(smoke) {
 		t.Fatal("real offline smoke does not carry the executable six-operation proof")
 	}
@@ -65,6 +79,9 @@ func TestOfflineSmokeSliceOneProofIsExecutableNotTokenOnly(t *testing.T) {
 		t.Fatal("enumeration token alone passed without executable suppression probes")
 	}
 	mutated := strings.Replace(smoke, "openai_http,anthropic_http", "openai_http", 1)
+	if mutated == smoke {
+		t.Fatal("offline smoke fixture has no Anthropic operation to omit")
+	}
 	if offlineSmokeEnumeratesSliceOneSuppressions(mutated) {
 		t.Fatal("omitting the Anthropic operation from the six-operation enumeration did not bite")
 	}

@@ -12,28 +12,27 @@ import (
 	kitpayload "github.com/gibbonmi/bench"
 )
 
-func TestRootPackageProjectMetadata(t *testing.T) {
-	root := NewHarness(t).Root
+func checkPackageShippedSurface(root string) []string {
+	if !exists(filepath.Join(root, "package.json")) {
+		return nil
+	}
+	var diags []string
 	var pkg struct {
-		Repository string `json:"repository"`
-		Homepage   string `json:"homepage"`
-		Bugs       string `json:"bugs"`
-		Author     string `json:"author"`
+		Repository string   `json:"repository"`
+		Homepage   string   `json:"homepage"`
+		Bugs       string   `json:"bugs"`
+		Author     string   `json:"author"`
+		Files      []string `json:"files"`
 	}
 	data, err := os.ReadFile(filepath.Join(root, "package.json"))
 	if err != nil {
-		t.Fatal(err)
-	}
-	if err := json.Unmarshal(data, &pkg); err != nil {
-		t.Fatal(err)
+		return []string{"read package.json: " + err.Error()}
+	} else if err := json.Unmarshal(data, &pkg); err != nil {
+		return []string{"parse package.json: " + err.Error()}
 	}
 	if pkg.Repository != "git+https://github.com/gibbonmi/bench.git" || pkg.Homepage != "https://github.com/gibbonmi/bench#readme" || pkg.Bugs != "https://github.com/gibbonmi/bench/issues" || pkg.Author != "gibbonmi" {
-		t.Fatalf("root project metadata = %+v", pkg)
+		diags = append(diags, fmt.Sprintf("root project metadata = repository %q, homepage %q, bugs %q, author %q", pkg.Repository, pkg.Homepage, pkg.Bugs, pkg.Author))
 	}
-}
-
-func TestRepairScriptPolicyAndManifestPathParity(t *testing.T) {
-	root := NewHarness(t).Root
 	script := readIfExists(filepath.Join(root, "bin", "bench-repair-binary.mjs"))
 	for _, fact := range []string{
 		"const FETCH_DEADLINE_MS = 60_000;",
@@ -41,7 +40,7 @@ func TestRepairScriptPolicyAndManifestPathParity(t *testing.T) {
 		"const DECOMPRESSED_LIMIT = 200 * 1024 * 1024;",
 	} {
 		if !strings.Contains(script, fact) {
-			t.Fatalf("repair policy omits %q", fact)
+			diags = append(diags, fmt.Sprintf("repair policy omits %q", fact))
 		}
 	}
 	var requirements struct {
@@ -49,48 +48,28 @@ func TestRepairScriptPolicyAndManifestPathParity(t *testing.T) {
 			Path string `json:"path"`
 		} `json:"binary_pin_manifest"`
 	}
-	data, err := os.ReadFile(filepath.Join(root, "internal", "releaseevidence", "requirements.json"))
+	data, err = os.ReadFile(filepath.Join(root, "internal", "releaseevidence", "requirements.json"))
 	if err != nil {
-		t.Fatal(err)
+		diags = append(diags, "read release-evidence requirements: "+err.Error())
+	} else if err := json.Unmarshal(data, &requirements); err != nil {
+		diags = append(diags, "parse release-evidence requirements: "+err.Error())
+	} else {
+		want := `const PIN_MANIFEST_PATH = "` + requirements.BinaryPinManifest.Path + `";`
+		if requirements.BinaryPinManifest.Path == "" || !strings.Contains(script, want) {
+			diags = append(diags, fmt.Sprintf("repair pin path does not match requirement %q", requirements.BinaryPinManifest.Path))
+		}
 	}
-	if err := json.Unmarshal(data, &requirements); err != nil {
-		t.Fatal(err)
-	}
-	want := `const PIN_MANIFEST_PATH = "` + requirements.BinaryPinManifest.Path + `";`
-	if requirements.BinaryPinManifest.Path == "" || !strings.Contains(script, want) {
-		t.Fatalf("repair pin path does not match requirement %q", requirements.BinaryPinManifest.Path)
-	}
-}
-
-func TestRepairAppearsInColdPickupInventory(t *testing.T) {
-	root := NewHarness(t).Root
 	guide := readIfExists(filepath.Join(root, ".bench", "BENCH.md"))
 	if !strings.Contains(guide, "`bench repair") {
-		t.Fatal("CLI inventory omits bench repair")
+		diags = append(diags, "CLI inventory omits bench repair")
 	}
-}
-
-// TestPackageFilesExcludeKitOnlyAllowlistRows is the FT85 story 3 red signal for
-// package.json: npm cannot read .bench/consumer-payload.json (files[] is its own
-// literal input), so this derives the exclusion pattern every kit-only allowlist row
-// requires from that same canonical file and grades files[] against it, rather than
-// letting files[] carry its own independent guess at the exclusion set.
-func TestPackageFilesExcludeKitOnlyAllowlistRows(t *testing.T) {
-	root := NewHarness(t).Root
 	var rows []kitpayload.PayloadRow
 	if err := readJSONAt(root, ".bench/consumer-payload.json", &rows); err != nil {
-		t.Fatalf("read consumer payload allowlist: %v", err)
+		return append(diags, "read consumer payload allowlist: "+err.Error())
 	}
 	kitOnly := kitpayload.PayloadKitOnlyPrefixes(rows)
 	if len(kitOnly) == 0 {
-		t.Fatal("consumer payload allowlist declares no kit-only rows; this test would pass over an empty exclusion set")
-	}
-
-	var pkg struct {
-		Files []string `json:"files"`
-	}
-	if err := readJSONAt(root, "package.json", &pkg); err != nil {
-		t.Fatalf("read package.json: %v", err)
+		diags = append(diags, "consumer payload allowlist declares no kit-only rows; the package exclusion check grades nothing")
 	}
 	files := map[string]bool{}
 	for _, f := range pkg.Files {
@@ -98,7 +77,7 @@ func TestPackageFilesExcludeKitOnlyAllowlistRows(t *testing.T) {
 	}
 
 	if !files[".agents/"] {
-		t.Fatal("package.json files[] dropped the .agents/ tree entry the allowlist's kit-only rows are meant to narrow")
+		diags = append(diags, "package.json files[] dropped the .agents/ tree entry the allowlist's kit-only rows are meant to narrow")
 	}
 	for _, row := range rows {
 		if row.Audience != kitpayload.PayloadAudienceKitOnly {
@@ -109,9 +88,10 @@ func TestPackageFilesExcludeKitOnlyAllowlistRows(t *testing.T) {
 			want += "/**"
 		}
 		if !files[want] {
-			t.Fatalf("package.json files[] is missing the derived exclusion %q for kit-only allowlist row %q", want, row.Source)
+			diags = append(diags, fmt.Sprintf("package.json files[] is missing the derived exclusion %q for kit-only allowlist row %q", want, row.Source))
 		}
 	}
+	return diags
 }
 
 // shippedFiles returns every file the npm tarball would carry, expanding package.json

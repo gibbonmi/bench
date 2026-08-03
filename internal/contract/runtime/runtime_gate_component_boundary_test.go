@@ -23,10 +23,12 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
 
+	kitpayload "github.com/gibbonmi/bench"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
@@ -54,11 +56,13 @@ exec true gate-phases "$PWD"
 `
 
 // [PC21a] Slots and an attestation authored by one CLI process are honored by a fresh one:
-// the second process skips every component some evidence covers, announces each with the
-// evidence that covered it, executes only the components no evidence can cover, and leaves
-// the store it read exactly as it found it. The last clause is not decoration — a reader that
-// re-stamped what it consumed would let evidence age forever while every announcement stayed
-// current, which is the same wrong skip a re-timestamped whole-tree verdict would buy.
+// the second process skips every component some evidence covers except canary. This synthetic
+// module has no resolvable conformance implementations, so the fail-closed check partition sets
+// CanaryFull and executes canary alongside the components no evidence can cover. It announces
+// each inherited component with the evidence that covered it and leaves every record it only
+// read exactly as it found it. The last clause is not decoration — a reader that re-stamped
+// what it consumed would let evidence age forever while every announcement stayed current,
+// which is the same wrong skip a re-timestamped whole-tree verdict would buy.
 func TestPartialEvidenceSurvivesAProcessBoundary(t *testing.T) {
 	t.Parallel()
 	contract.NoteContractFailure(t, "per-component evidence did not survive a process boundary")
@@ -72,12 +76,12 @@ func TestPartialEvidenceSurvivesAProcessBoundary(t *testing.T) {
 
 	output := probe.Stdout + probe.Stderr
 	announced := announcedSkips(t, output)
-	skippable, unconditional := boundaryComponents(fixture.phases)
+	skippable, executed := boundaryCapturePartition(fixture.phases)
 	if got := slices.Sorted(maps.Keys(announced)); !slices.Equal(got, skippable) {
-		t.Fatalf("second process announced skips for %v, want every evidence-covered component %v:\n%s", got, skippable, output)
+		t.Fatalf("second process announced skips for %v, want every evidence-covered component not selected for canary work %v:\n%s", got, skippable, output)
 	}
-	if got := fixture.markers(t, "phase-runs")[len(seeded):]; !slices.Equal(slices.Sorted(slices.Values(got)), unconditional) {
-		t.Fatalf("second process executed %v, want the components no evidence covers %v:\n%s", got, unconditional, output)
+	if got := fixture.markers(t, "phase-runs")[len(seeded):]; !slices.Equal(slices.Sorted(slices.Values(got)), executed) {
+		t.Fatalf("second process executed %v, want the unconditional components and gate-selected canary %v:\n%s", got, executed, output)
 	}
 	if got := len(fixture.markers(t, "full-runs")); got != 1 {
 		t.Fatalf("resolved gate runs = %d, want the seed run only — the narrowed run paid the whole gate", got)
@@ -99,10 +103,20 @@ func TestPartialEvidenceSurvivesAProcessBoundary(t *testing.T) {
 	}
 
 	reread := fixture.readEvidence(t)
+	canarySlot, held := authored.slots["canary"]
+	if !held {
+		t.Fatal("seed run authored no canary slot to distinguish selected execution from inherited evidence")
+	}
 	for _, name := range slices.Sorted(maps.Keys(authored.entries)) {
 		before, after := authored.entries[name], reread.entries[name]
 		if after.data == nil {
 			t.Fatalf("store entry %s is gone after the second process; it skipped on that record", name)
+		}
+		if before.path == canarySlot.path {
+			if os.SameFile(before.info, after.info) {
+				t.Fatal("canary's slot was not re-authored after gate-owned family selection executed it")
+			}
+			continue
 		}
 		if !os.SameFile(before.info, after.info) || string(before.data) != string(after.data) {
 			t.Fatalf("store entry %s was re-authored by the process that only read it:\nbefore %s\nafter  %s",
@@ -114,7 +128,8 @@ func TestPartialEvidenceSurvivesAProcessBoundary(t *testing.T) {
 // [PC21b] A forged slot and a forged attestation planted between the two runs are refused,
 // and the components they claimed to cover run. The forgeries are the two shapes the store
 // cannot rule out by construction: a record filed at one component's address that answers for
-// another, and an attestation naming a binary other than the one the seal describes.
+// another, and an attestation naming a binary other than the one the seal describes. Canary's
+// fail-closed full execution remains in the expected partition independently of both forgeries.
 func TestForgedEvidenceIsRefusedOnReload(t *testing.T) {
 	t.Parallel()
 	contract.NoteContractFailure(t, "forged per-component evidence was honored on reload")
@@ -146,14 +161,14 @@ func TestForgedEvidenceIsRefusedOnReload(t *testing.T) {
 
 	output := probe.Stdout + probe.Stderr
 	announced := announcedSkips(t, output)
-	skippable, unconditional := boundaryComponents(fixture.phases)
+	skippable, executed := boundaryCapturePartition(fixture.phases)
 	refused := []string{canary.PhaseBuild, canary.PhaseVet}
 	if got := slices.Sorted(maps.Keys(announced)); !slices.Equal(got, without(skippable, refused)) {
 		t.Fatalf("second process announced skips for %v, want the forged components %v refused:\n%s", got, refused, output)
 	}
-	want := slices.Sorted(slices.Values(slices.Concat(unconditional, refused)))
+	want := slices.Sorted(slices.Values(slices.Concat(executed, refused)))
 	if got := fixture.markers(t, "phase-runs")[len(seeded):]; !slices.Equal(slices.Sorted(slices.Values(got)), want) {
-		t.Fatalf("second process executed %v, want the unconditional components and the forged ones %v:\n%s", got, want, output)
+		t.Fatalf("second process executed %v, want the unconditional components, gate-selected canary, and the forged ones %v:\n%s", got, want, output)
 	}
 }
 
@@ -488,6 +503,15 @@ func boundaryComponents(table []gate.Phase) (skippable, unconditional []string) 
 	return slices.Sorted(slices.Values(skippable)), slices.Sorted(slices.Values(unconditional))
 }
 
+// boundaryCapturePartition projects the narrowed run after captureOnlyEdit. Canary has a
+// valid component slot, but this synthetic module has no resolvable conformance implementations,
+// so the fail-closed check partition sets CanaryFull and executes it instead of inheriting it.
+func boundaryCapturePartition(table []gate.Phase) (skipped, executed []string) {
+	covered, unconditional := boundaryComponents(table)
+	const canaryPhase = "canary"
+	return without(covered, []string{canaryPhase}), slices.Sorted(slices.Values(append(unconditional, canaryPhase)))
+}
+
 func boundaryPhaseNames(table []gate.Phase) []string {
 	names := make([]string, 0, len(table))
 	for _, phase := range table {
@@ -526,6 +550,42 @@ func writeBoundaryTree(t *testing.T, root string) {
 		`{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`, 0o644)
 	writeReducedFixtureFile(t, root, ".bench/gate.sh", boundaryGateScript, 0o755)
 	writeReducedFixtureFile(t, root, boundaryCapturePath, "roadmap\n", 0o644)
+	writeBoundaryConsumerInventory(t, root)
+}
+
+// writeBoundaryConsumerInventory gives contract-input resolution the fixture shape declared
+// by the kit's one payload inventory. Existing files keep their specialized fixture bodies;
+// only consumer assets the boundary tree does not otherwise need are synthesized here.
+func writeBoundaryConsumerInventory(t *testing.T, root string) {
+	t.Helper()
+	rows, err := kitpayload.PayloadRows()
+	if err != nil {
+		t.Fatalf("read consumer payload rows: %v", err)
+	}
+	payload, err := json.Marshal(rows)
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeReducedFixtureFile(t, root, ".bench/consumer-payload.json", string(payload), 0o644)
+	for _, row := range kitpayload.PayloadConsumerRows(rows) {
+		path := filepath.Join(root, filepath.FromSlash(row.Source))
+		if row.Tree {
+			if err := os.MkdirAll(path, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			continue
+		}
+		if info, err := os.Stat(path); err == nil && info.Mode().IsRegular() {
+			continue
+		} else if err != nil && !os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		mode, err := strconv.ParseUint(row.Mode, 8, 32)
+		if err != nil {
+			t.Fatalf("parse consumer fixture mode %q for %q: %v", row.Mode, row.Source, err)
+		}
+		writeReducedFixtureFile(t, root, row.Source, "consumer fixture asset\n", os.FileMode(mode))
+	}
 }
 
 // writeBoundaryManifest declares one marker phase per phase in declared, and writes the script

@@ -1,14 +1,17 @@
 package conformance
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
+	kitpayload "github.com/gibbonmi/bench"
 	"github.com/gibbonmi/bench/internal/gate"
 )
 
@@ -123,12 +126,64 @@ func writeDerivationFiles(root string, files map[string]string) error {
 	return nil
 }
 
+// writeDerivationFixture materializes both the derivation-specific seed and the
+// consumer inventory every contract-input resolution requires. The inventory and its
+// assets come from the kit's authoritative payload rather than a copied fixture list.
+func writeDerivationFixture(root string) error {
+	if err := writeDerivationFiles(root, derivationFixtureSeed); err != nil {
+		return err
+	}
+	rows, err := kitpayload.PayloadRows()
+	if err != nil {
+		return err
+	}
+	payload, err := json.Marshal(rows)
+	if err != nil {
+		return err
+	}
+	if err := writeDerivationFiles(root, map[string]string{
+		".bench/consumer-payload.json": string(payload),
+	}); err != nil {
+		return err
+	}
+	for _, row := range kitpayload.PayloadConsumerRows(rows) {
+		path := filepath.Join(root, filepath.FromSlash(row.Source))
+		if row.Tree {
+			if err := os.MkdirAll(path, 0o755); err != nil {
+				return err
+			}
+			continue
+		}
+		info, err := os.Stat(path)
+		if err == nil {
+			if !info.Mode().IsRegular() {
+				return fmt.Errorf("consumer fixture asset %q is not a regular file", row.Source)
+			}
+			continue
+		}
+		if !os.IsNotExist(err) {
+			return err
+		}
+		mode, err := strconv.ParseUint(row.Mode, 8, 32)
+		if err != nil {
+			return fmt.Errorf("parse consumer fixture mode %q for %q: %w", row.Mode, row.Source, err)
+		}
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			return err
+		}
+		if err := os.WriteFile(path, []byte("consumer fixture asset\n"), os.FileMode(mode)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // seedDerivationFixture writes the tree the registry is resolved against and returns its
 // root.
 func seedDerivationFixture(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
-	if err := writeDerivationFiles(root, derivationFixtureSeed); err != nil {
+	if err := writeDerivationFixture(root); err != nil {
 		t.Fatalf("seed the derivation fixture: %v", err)
 	}
 	return root
@@ -212,14 +267,18 @@ func sortedKeys[V any](m map[string]V) []string {
 	return keys
 }
 
-// TestRootConformanceDerivationSource grades the real registry: every entry with a
-// derivable source must resolve through it, and canary must be the only entry that does
-// not. It carries the entry point's name as a prefix so a `-run TestRootConformance`
-// invocation reaches it, the way TestRootConformanceScopeBinding does.
-func TestRootConformanceDerivationSource(t *testing.T) {
-	for _, diag := range checkDerivationSource(seedDerivationFixture(t), resolveDeclarations) {
-		t.Errorf("gate: %s", diag)
+// checkRegisteredDerivationSource grades the real component-input registry against a
+// disposable tree, keeping the mutation out of both the subject and the kit checkout.
+func checkRegisteredDerivationSource(_ string) []string {
+	root, err := os.MkdirTemp("", "bench-component-derivation-")
+	if err != nil {
+		return []string{"component input derivation fixture cannot be created: " + err.Error()}
 	}
+	defer os.RemoveAll(root)
+	if err := writeDerivationFixture(root); err != nil {
+		return []string{"component input derivation fixture cannot be seeded: " + err.Error()}
+	}
+	return checkDerivationSource(root, resolveDeclarations)
 }
 
 // derivableComponents names the registry entries this check holds to their derivation,

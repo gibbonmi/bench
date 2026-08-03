@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/canary"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	// The package's own freshness constant owns the bare name, so the seal package is
 	// reached through an alias.
 	benchfreshness "github.com/gibbonmi/bench/internal/freshness"
@@ -45,6 +46,7 @@ type componentScoping struct {
 	eligible   bool
 	runnerRoot string
 	identities map[string]string
+	checks     conformanceCheckPartition
 	phases     []Phase
 	skipped    []ComponentSkip
 	// buildArtifact is the binary this root's build phase publishes, set only when the
@@ -58,7 +60,9 @@ type componentScoping struct {
 // partial reports whether this run graded less than every component. The announcement, the
 // recorded partition, and the evidence a green run withholds all key off this one answer,
 // so a run is narrow in all three senses or in none.
-func (s componentScoping) partial() bool { return len(s.skipped) > 0 }
+func (s componentScoping) partial() bool {
+	return len(s.skipped) > 0 || len(s.checks.Inherited) > 0
+}
 
 // executedScopedComponents are the components this run graded for itself and whose evidence
 // is an ancestor slot — the set a green run authors slots for and a red run retires them
@@ -113,7 +117,7 @@ func (s componentScoping) executedPhaseNames() []string {
 // could skip its own enforcement would let a drifted declaration certify itself.
 func componentSkipsOnEvidence(component string) bool {
 	switch component {
-	case conformancePhaseName, canary.PhaseConformanceSuite:
+	case conformancePhaseName:
 		return false
 	}
 	return true
@@ -149,15 +153,31 @@ func scopeComponents(root string, res Resolution, mode runMode, now time.Time) c
 	if err != nil {
 		return eligible
 	}
+	checkIdentities, checkIdentityErr := ResolveConformanceCheckIdentities(root, registry.Dev)
+	canaryIdentities, canaryIdentityErr := resolveConformanceCanaryIdentities(root, registry.Dev)
+	if mode == reuseFreshGreen {
+		eligible.checks = partitionConformanceChecks(root, registry.Dev, checkIdentities, checkIdentityErr, now)
+	} else {
+		eligible.checks = executeAllConformanceChecks(registry.Dev, checkIdentities)
+		if checkIdentityErr != nil {
+			eligible.checks.Identities = nil
+		}
+	}
+	decorateConformanceCanarySelection(root, &eligible.checks, canaryIdentities, canaryIdentityErr)
 	// One resolution for the whole family, and a failure anywhere in it — a listing that
 	// would not run, a seal that could not be read, a declared input the snapshot has no
 	// entry for — takes every component with it. A partial set of identities names fewer
 	// inputs than the components read, which is exactly the shape that buys a wrong skip.
 	identities, err := ResolveComponentIdentities(root)
 	if err != nil {
+		eligible.checks = executeAllConformanceChecks(registry.Dev, checkIdentities)
+		if checkIdentityErr != nil {
+			eligible.checks.Identities = nil
+		}
+		eligible.checks.Canary = canaryIdentities
 		return eligible
 	}
-	scoping := componentScoping{eligible: true, runnerRoot: kit, identities: gradableIdentities(table, identities)}
+	scoping := componentScoping{eligible: true, runnerRoot: kit, identities: gradableIdentities(table, identities), checks: eligible.checks}
 	// The artifact is named from the resolved table rather than from the declarations: a
 	// component the registry declares but this tree materializes no phase for has nothing
 	// here to skip and nothing to attest.
@@ -169,6 +189,7 @@ func scopeComponents(root string, res Resolution, mode runMode, now time.Time) c
 	}
 	phases := make([]Phase, 0, len(table))
 	var skipped []ComponentSkip
+	var selectedCanaryFamilies []string
 	for _, phase := range table {
 		identity, scoped := identities[phase.Name]
 		if !scoped {
@@ -176,6 +197,13 @@ func scopeComponents(root string, res Resolution, mode runMode, now time.Time) c
 			continue
 		}
 		skip, skippable := componentSkip(root, scoping, phase.Name, identity, now)
+		if phase.Name == "canary" && skippable && (scoping.checks.CanaryFull || len(scoping.checks.CanaryFamilies) > 0) {
+			if !scoping.checks.CanaryFull {
+				selectedCanaryFamilies = scoping.checks.CanaryFamilies
+			}
+			phases = append(phases, phase)
+			continue
+		}
 		if !skippable {
 			phases = append(phases, phase)
 			continue
@@ -185,11 +213,13 @@ func scopeComponents(root string, res Resolution, mode runMode, now time.Time) c
 	// Nothing skipped makes a narrowed run the same work under a narrower record, and
 	// nothing left to run would green on a run of no phases. Both fall back, keeping the
 	// identities so the green tail still authors what it executed.
-	if len(skipped) == 0 || len(phases) == 0 {
+	if (len(skipped) == 0 && len(scoping.checks.Inherited) == 0) || len(phases) == 0 {
 		return scoping
 	}
 	sort.Slice(skipped, func(i, j int) bool { return skipped[i].Component < skipped[j].Component })
-	scoping.phases, scoping.skipped = phases, skipped
+	scoping.phases = withConformanceCheckSelection(phases, registry.Dev, scoping.checks.Executed, scoping.checks.verdictInherited())
+	scoping.phases = withCanaryFamilySelection(scoping.phases, selectedCanaryFamilies)
+	scoping.skipped = skipped
 	return scoping
 }
 

@@ -17,6 +17,7 @@ import (
 	"testing"
 
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/toon"
 )
 
@@ -231,6 +232,29 @@ func TestPhasesCommandRoutesCanaryToOwningPhase(t *testing.T) {
 				t.Fatalf("stdout = %q, want %q", got, want)
 			}
 		})
+	}
+}
+
+func TestInnerCanarySingularSelectionRemovesPluralSelection(t *testing.T) {
+	t.Setenv(registry.ConformanceCheckEnv, "line-routing")
+	phases := phasesForMode([]Phase{{
+		Name: conformancePhaseName,
+		Env: []string{
+			registry.ConformanceChecksEnv + "=" + strings.Join(registry.OrdinaryNames(registry.Dev), ","),
+			registry.ConformanceInheritedEnv + "=line-routing",
+		},
+	}}, innerMode)
+	phase, found := phaseNamed(phases, conformancePhaseName)
+	if !found {
+		t.Fatal("inner table dropped conformance")
+	}
+	if got := phaseEnvValue(phase.Env, registry.ConformanceCheckEnv); got != "line-routing" {
+		t.Fatalf("inner singular selection = %q, want line-routing", got)
+	}
+	for _, entry := range phase.Env {
+		if strings.HasPrefix(entry, registry.ConformanceChecksEnv+"=") || strings.HasPrefix(entry, registry.ConformanceInheritedEnv+"=") {
+			t.Fatalf("inner conformance environment retains plural selector %q", entry)
+		}
 	}
 }
 

@@ -95,13 +95,6 @@ func trackedPaths(root string) []string {
 	return strings.Split(listing, "\x00")
 }
 
-// TestHandoffShapeSingleSourced runs the Shape single-source check against the graded root.
-func TestHandoffShapeSingleSourced(t *testing.T) {
-	if diags := checkHandoffShape(NewHarness(t).Root); len(diags) != 0 {
-		t.Fatalf("handoff Shape text is not single-sourced:\n%s", strings.Join(diags, "\n"))
-	}
-}
-
 // TestHandoffShapeSingleSourcedBites is the recorded bite proof for checkHandoffShape (per
 // craft-gate). It runs against a synthetic repository rather than the kit tree and walks the
 // three states that matter: a derived artifact and no other copy, a second tracked file
@@ -253,13 +246,6 @@ func prefixTable(file *ast.File) ([]string, map[token.Pos]bool) {
 		}
 	}
 	return uniqueSorted(forms), owned
-}
-
-// TestHarnessPrefixSingleSourced runs the harness-table check against the graded root.
-func TestHarnessPrefixSingleSourced(t *testing.T) {
-	if diags := checkHarnessPrefix(NewHarness(t).Root); len(diags) != 0 {
-		t.Fatalf("harness prefix table is not the only producer of the invocation forms:\n%s", strings.Join(diags, "\n"))
-	}
 }
 
 // TestHarnessPrefixSingleSourcedBites is the recorded bite proof for checkHarnessPrefix (per

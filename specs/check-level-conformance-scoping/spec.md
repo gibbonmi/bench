@@ -1,6 +1,6 @@
 # Check-level conformance scoping
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed conversation on 2026-08-03; static source research only, with no Bench command, gate, test, build, or Go command executed during authoring
 

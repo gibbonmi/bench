@@ -22,7 +22,9 @@ import (
 	"time"
 
 	"github.com/gibbonmi/bench/internal/bounds"
+	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/toon"
 )
@@ -149,7 +151,14 @@ func (r Resolution) command(root string) *exec.Cmd {
 func gateEnv() []string {
 	var env []string
 	for _, kv := range capability.WithoutEnvironment(os.Environ(), capability.LogEnv) {
-		if strings.HasPrefix(kv, "BENCH_KIT=") || strings.HasPrefix(kv, "BENCH_WRAPPER=") {
+		if strings.HasPrefix(kv, "BENCH_KIT=") ||
+			strings.HasPrefix(kv, "BENCH_WRAPPER=") ||
+			strings.HasPrefix(kv, registry.ConformanceCheckEnv+"=") ||
+			strings.HasPrefix(kv, registry.ConformanceChecksEnv+"=") ||
+			strings.HasPrefix(kv, registry.ConformanceInheritedEnv+"=") ||
+			strings.HasPrefix(kv, canary.FamilySelectionEnv+"=") ||
+			strings.HasPrefix(kv, canary.FamilySelectionOwnerEnv+"=") ||
+			strings.HasPrefix(kv, canary.FamilySelectionAuthorityEnv+"=") {
 			continue
 		}
 		env = append(env, kv)
@@ -398,6 +407,14 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 		for _, skip := range scoping.skipped {
 			fmt.Fprintln(stdout, skip.announcement())
 		}
+		if len(scoping.checks.Inherited) > 0 {
+			for _, name := range scoping.checks.verdictExecuted() {
+				fmt.Fprintln(stdout, "conformance check "+name+": executing")
+			}
+			for _, name := range scoping.checks.verdictInherited() {
+				fmt.Fprintln(stdout, "conformance check "+name+": inherited")
+			}
+		}
 		rc = runPhases(runCtx, scoping.runnerRoot, scoping.phases, outerMode, controlSafeWriter{stdout}, controlSafeWriter{stderr})
 	default:
 		rc = runCaptured(runCtx, runtimeRoot, plan, stdout, stderr)
@@ -407,10 +424,16 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 	}
 	if errors.Is(context.Cause(runCtx), errGateTimeout) {
 		fmt.Fprintln(stderr, "gate: timeout")
+		if scoping.eligible {
+			if err := applyConformanceCheckOutcome(storageRoot, scoping.checks, checkRunRed, engine.Now()); err != nil {
+				return operationalWithEngine(engine, storageRoot, 124, stderr, "gate evidence invalidation failed")
+			}
+		}
 		if err := invalidateEvidence(storageRoot, plan); err != nil {
 			return operationalWithEngine(engine, storageRoot, 124, stderr, "gate evidence invalidation failed")
 		}
 		ready := verdictRecord{Schema: 1, State: Ready, Status: "timeout", Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: engine.Now().UTC().Truncate(time.Second).Format(time.RFC3339)}
+		recordScoping(&ready, scoping)
 		if err := durableReplaceWithEngine(engine, gitdir, ready); err != nil {
 			_ = durableReplaceWithEngine(engine, gitdir, pending)
 			return operationalWithEngine(engine, storageRoot, 124, stderr, "gate timeout persistence failed")
@@ -428,20 +451,14 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 	}
 	recordedAt := engine.Now()
 	ready := verdictRecord{Schema: 1, State: Ready, Status: status, Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: recordedAt.UTC().Truncate(time.Second).Format(time.RFC3339)}
-	if scoping.partial() {
-		// The record names what this run graded and, per component it did not, the
-		// evidence that covered it. The identity and the recorded time are carried
-		// rather than referenced: the cache is a single slot, so a reference would
-		// point at whichever record replaced this one, and a consumer refusing a
-		// release needs to name the evidence a skip rested on.
-		ready.Executed = scoping.executedPhaseNames()
-		ready.SkipEvidence = make(map[string]skipEvidence, len(scoping.skipped))
-		for _, skip := range scoping.skipped {
-			ready.Skipped = append(ready.Skipped, skip.Component)
-			ready.SkipEvidence[skip.Component] = skip.evidence()
-		}
-	}
+	recordScoping(&ready, scoping)
 	if status == "green" {
+		if scoping.eligible {
+			if err := applyConformanceCheckOutcome(storageRoot, scoping.checks, checkRunGreen, recordedAt); err != nil {
+				fmt.Fprintln(stderr, "gate evidence persistence failed")
+				return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
+			}
+		}
 		// The slots are this run's own account of what it graded, so they are written
 		// whatever shape the run had: a full run authors every component's, a partial
 		// run authors the ones it executed, and a forced run re-authors all of them.
@@ -489,6 +506,11 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 			}
 		}
 	} else {
+		if scoping.eligible {
+			if err := applyConformanceCheckOutcome(storageRoot, scoping.checks, checkRunRed, recordedAt); err != nil {
+				return operationalWithEngine(engine, storageRoot, rc, stderr, "gate evidence invalidation failed")
+			}
+		}
 		if err := invalidateEvidence(storageRoot, plan); err != nil {
 			return operationalWithEngine(engine, storageRoot, rc, stderr, "gate evidence invalidation failed")
 		}
@@ -512,6 +534,23 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 		return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
 	}
 	return Result{GateExit: rc, ActionExit: rc, Inspection: inspectAt(storageRoot, engine.Now())}
+}
+
+func recordScoping(ready *verdictRecord, scoping componentScoping) {
+	if len(scoping.skipped) > 0 {
+		// The record carries the evidence rather than pointing at the single mutable slot.
+		ready.Executed = scoping.executedPhaseNames()
+		ready.SkipEvidence = make(map[string]skipEvidence, len(scoping.skipped))
+		for _, skip := range scoping.skipped {
+			ready.Skipped = append(ready.Skipped, skip.Component)
+			ready.SkipEvidence[skip.Component] = skip.evidence()
+		}
+	}
+	if len(scoping.checks.Inherited) > 0 {
+		ready.CheckExecuted = scoping.checks.verdictExecuted()
+		ready.CheckInherited = scoping.checks.verdictInherited()
+		ready.CheckEvidence = scoping.checks.verdictEvidence()
+	}
 }
 
 func operational(root string, gateExit int, stderr io.Writer, msg string) Result {

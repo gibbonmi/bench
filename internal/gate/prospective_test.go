@@ -8,9 +8,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/canary"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
 func TestExecuteTreeBuildsExactUnpublishedBenchkitSource(t *testing.T) {
@@ -65,6 +69,74 @@ func TestExecuteTreeBuildsExactUnpublishedBenchkitSource(t *testing.T) {
 	gitRun(t, root, "update-ref", "refs/bench/green/"+branch, "HEAD")
 	if got := ValidateProjectGreen(root, branch); !got.ReusableGreen {
 		t.Fatalf("prospective green did not validate committed project-green: %+v", got)
+	}
+}
+
+func TestExecuteTreeIgnoresStoredCheckSlotsAndRunsFullConformanceInventory(t *testing.T) {
+	fixture := newKitShapedFixture(t)
+	testBinary, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	gitdir := gitOutput(t, fixture.root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	selectionPath := filepath.Join(gitdir, "prospective-conformance-selection")
+	fakeBin := filepath.Join(gitdir, "prospective-fake-bin")
+	if err := os.MkdirAll(fakeBin, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeGateTestFile(t, fakeBin, "go", fmt.Sprintf(`#!/usr/bin/env bash
+case " $* " in
+  *" ./internal/conformance "*) printf '%%s|%%s\n' "${%s-}" "${%s-}" >> %q ;;
+esac
+exit 0
+`, registry.ConformanceChecksEnv, registry.ConformanceInheritedEnv, selectionPath), 0o755)
+	writeGateTestFile(t, fakeBin, "shellcheck", "#!/usr/bin/env bash\nexit 0\n", 0o755)
+	writeGateTestFile(t, fixture.root, prospectiveGatePath, fmt.Sprintf(`#!/usr/bin/env bash
+set -euo pipefail
+root="${1:?missing prospective root}"
+export BENCH_KIT="$root"
+export BENCH_PROSPECTIVE_PHASE_HELPER=1
+export BENCH_PROSPECTIVE_PHASE_ROOT="$root"
+export PATH=%q:"$PATH"
+exec %q -test.run '^TestProspectiveFullInventoryHelper$'
+`, fakeBin, testBinary), 0o755)
+
+	mustExecuteGreen(t, fixture.root, productionGateEngine{})
+	slots, valid := loadConformanceCheckSlots(fixture.root)
+	if got, want := len(slots), len(ordinaryConformanceChecks(registry.Dev)); !valid || got != want {
+		t.Fatalf("seeded ordinary check slots = %d valid=%v, want %d valid slots", got, valid, want)
+	}
+
+	gitRun(t, fixture.root, "add", ".")
+	gitRun(t, fixture.root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "-m", "seed prospective fixture")
+	if err := os.Remove(filepath.Join(fixture.root, filepath.FromSlash(canary.PhaseManifestPath))); err != nil {
+		t.Fatal(err)
+	}
+	gitRun(t, fixture.root, "add", "-u", canary.PhaseManifestPath)
+	tree := gitOutput(t, fixture.root, "write-tree")
+	gitRun(t, fixture.root, "reset", "--hard", "HEAD")
+
+	var stdout, stderr bytes.Buffer
+	if got := ExecuteTree(context.Background(), fixture.root, tree, &stdout, &stderr); got.ActionExit != 0 {
+		t.Fatalf("prospective execution = %+v, want green; stdout=%q stderr=%q", got, stdout.String(), stderr.String())
+	}
+	data, err := os.ReadFile(selectionPath)
+	if err != nil {
+		t.Fatalf("read prospective conformance selection: %v", err)
+	}
+	lines := strings.Fields(string(data))
+	if got, want := lines, []string{strings.Join(registry.OrdinaryNames(registry.Dev), ",") + "|"}; !slices.Equal(got, want) {
+		t.Fatalf("prospective conformance selections = %v, want exactly the full dev inventory %v", got, want)
+	}
+}
+
+func TestProspectiveFullInventoryHelper(t *testing.T) {
+	if os.Getenv("BENCH_PROSPECTIVE_PHASE_HELPER") != "1" {
+		return
+	}
+	root := os.Getenv("BENCH_PROSPECTIVE_PHASE_ROOT")
+	if code := PhasesCommand([]string{root}, io.Discard, io.Discard); code != 0 {
+		t.Fatalf("prospective PhasesCommand = %d, want green", code)
 	}
 }
 

@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
 	"github.com/gibbonmi/bench/internal/contract"
 	"github.com/gibbonmi/bench/internal/toon"
@@ -359,6 +360,25 @@ func TestRunnerPhaseEnvStripsThenSets(t *testing.T) {
 	}
 	if len(got) != 1 || got[0] != key+"=from-phase" {
 		t.Fatalf("child environ carries %#v for %s, want exactly one entry with the phase's value", got, key)
+	}
+}
+
+func TestRunnerTransportsGateOwnedCanarySelection(t *testing.T) {
+	const selection = "line-routing,package-core-guard"
+	phase := Phase{
+		Name:           "canary",
+		Argv:           []string{"bash", "-c", `proof=$(cat <&"$BENCH_CANARY_FAMILIES_FD"); test "$proof" = "$BENCH_CANARY_FAMILIES" && printf '%s\n' "$proof"`},
+		Env:            []string{canary.FamilySelectionEnv + "=" + selection, canary.FamilySelectionOwnerEnv + "=gate"},
+		canaryFamilies: []string{"line-routing", "package-core-guard"},
+	}
+
+	var stdout, stderr bytes.Buffer
+	result := runPhase(context.Background(), t.TempDir(), phase, &stdout, &stderr)
+	if result.Code != 0 || result.StartErr != nil {
+		t.Fatalf("runPhase = %+v; stdout=%q stderr=%q", result, stdout.String(), stderr.String())
+	}
+	if got := strings.TrimSpace(stdout.String()); got != selection {
+		t.Fatalf("authority payload = %q, want %q", got, selection)
 	}
 }
 

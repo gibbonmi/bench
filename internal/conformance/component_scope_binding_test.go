@@ -118,21 +118,6 @@ func profileComponentCells(profile string) (map[string][]string, bool) {
 	return cells, found
 }
 
-// TestRootConformanceComponentScopeBinding grades the real kit checkout: the profile's
-// per-component table must match gate.ComponentInputSources(). It carries the entry
-// point's name as a prefix so a `-run TestRootConformance` invocation reaches it
-// alongside the registered suite, while the inner skip pattern — anchored to exactly
-// TestRootConformance — still runs it in the conformance-suite phase.
-func TestRootConformanceComponentScopeBinding(t *testing.T) {
-	kitRoot, err := findKitRoot()
-	if err != nil {
-		t.Fatalf("resolve kit root: %v", err)
-	}
-	for _, diag := range checkComponentScopeBinding(kitRoot) {
-		t.Errorf("gate: %s", diag)
-	}
-}
-
 // renderComponentProfile builds a profile whose per-component table renders declared,
 // taking its rows from the same slice shape the check compares against so the fixture
 // and the expectation have one author here rather than a second hand-written list.
@@ -267,37 +252,19 @@ func checkComponentHonestyProse(profile string) []string {
 	return diags
 }
 
-// TestRootConformanceComponentHonestyProse grades the real kit checkout: the profile must
-// state the per-component declaration-honesty residual and the canary narrowing.
-func TestRootConformanceComponentHonestyProse(t *testing.T) {
-	kitRoot, err := findKitRoot()
-	if err != nil {
-		t.Fatalf("resolve kit root: %v", err)
-	}
-	profile := readIfExists(filepath.Join(kitRoot, "projects", "benchkit.md"))
-	for _, diag := range checkComponentHonestyProse(profile) {
-		t.Errorf("gate: %s", diag)
-	}
+func checkComponentHonestyProfile(kitRoot string) []string {
+	return checkComponentHonestyProse(readIfExists(filepath.Join(kitRoot, "projects", "benchkit.md")))
 }
 
 // TestProfileStatesTheHonestyResidual is the recorded bite proof (per craft-gate): deleting
 // the residual paragraph from a profile that otherwise carries it reds the check.
 func TestProfileStatesTheHonestyResidual(t *testing.T) {
-	kitRoot, err := findKitRoot()
-	if err != nil {
-		t.Fatalf("resolve kit root: %v", err)
-	}
-	profile := readIfExists(filepath.Join(kitRoot, "projects", "benchkit.md"))
+	profile := "Declaration-honesty width: " + strings.Join(honestyResidualPhrases, ". ")
 	if diags := checkComponentHonestyProse(profile); len(diags) != 0 {
-		t.Fatalf("the real profile is missing residual prose:\n%s", strings.Join(diags, "\n"))
+		t.Fatalf("complete residual prose got diagnostics:\n%s", strings.Join(diags, "\n"))
 	}
 
-	paragraph, _, ok := strings.Cut(profile, "Declaration-honesty width")
-	if !ok {
-		t.Fatal("the real profile has no 'Declaration-honesty width' paragraph to delete for this bite")
-	}
-	stripped := paragraph + "\n\nThe **ship tier**"
-	diags := checkComponentHonestyProse(stripped)
+	diags := checkComponentHonestyProse("Declaration-honesty width")
 	if len(diags) != len(honestyResidualPhrases) {
 		t.Fatalf("deleting the residual paragraph: want a diagnostic per phrase, got:\n%s", strings.Join(diags, "\n"))
 	}

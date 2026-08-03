@@ -1,0 +1,124 @@
+package packagesurface
+
+import (
+	"encoding/json"
+	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"slices"
+	"strings"
+
+	kitpayload "github.com/gibbonmi/bench"
+)
+
+const consumerPayloadPath = ".bench/consumer-payload.json"
+
+// ContractDocumentInputs returns the consumer-managed documents lifecycle contracts read,
+// plus the inventory that selects them. The payload remains the authoritative registry: a
+// new consumer document joins this result by changing that file, not a second path list.
+func ContractDocumentInputs(root string) ([]string, error) {
+	rows, err := consumerPayloadRows(root)
+	if err != nil {
+		return nil, err
+	}
+
+	kitOnly := kitpayload.PayloadKitOnlyPrefixes(rows)
+	paths := []string{consumerPayloadPath}
+	for _, row := range kitpayload.PayloadConsumerRows(rows) {
+		if row.Tree {
+			documents, err := consumerTreeDocuments(root, row.Source, kitOnly)
+			if err != nil {
+				return nil, err
+			}
+			paths = append(paths, documents...)
+			continue
+		}
+		if err := requireConsumerAsset(root, row.Source); err != nil {
+			return nil, err
+		}
+		if strings.HasSuffix(row.Source, ".md") {
+			paths = append(paths, row.Source)
+		}
+	}
+	slices.Sort(paths)
+	return slices.Compact(paths), nil
+}
+
+func consumerPayloadRows(root string) ([]kitpayload.PayloadRow, error) {
+	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(consumerPayloadPath)))
+	if err != nil {
+		return nil, fmt.Errorf("read consumer payload inventory: %w", err)
+	}
+	var rows []kitpayload.PayloadRow
+	if err := json.Unmarshal(data, &rows); err != nil {
+		return nil, fmt.Errorf("parse consumer payload inventory: %w", err)
+	}
+	seen := make(map[string]bool, len(rows))
+	for _, row := range rows {
+		if !consumerPayloadSourceSafe(row.Source) || seen[row.Source] || row.Audience != kitpayload.PayloadAudienceConsumer && row.Audience != kitpayload.PayloadAudienceKitOnly {
+			return nil, fmt.Errorf("consumer payload inventory contains an unresolved row: %+v", row)
+		}
+		seen[row.Source] = true
+	}
+	return rows, nil
+}
+
+func consumerTreeDocuments(root, source string, kitOnly []string) ([]string, error) {
+	path := filepath.Join(root, filepath.FromSlash(source))
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, fmt.Errorf("stat consumer inventory tree %q: %w", source, err)
+	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("consumer inventory tree %q is not a directory", source)
+	}
+	var documents []string
+	err = filepath.WalkDir(path, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		rel = filepath.ToSlash(rel)
+		if kitpayload.PayloadExcluded(rel, kitOnly) {
+			if entry.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if entry.Type().IsRegular() && strings.HasSuffix(rel, ".md") {
+			documents = append(documents, rel)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("walk consumer inventory tree %q: %w", source, err)
+	}
+	return documents, nil
+}
+
+func requireConsumerAsset(root, source string) error {
+	info, err := os.Stat(filepath.Join(root, filepath.FromSlash(source)))
+	if err != nil {
+		return fmt.Errorf("stat consumer inventory asset %q: %w", source, err)
+	}
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("consumer inventory asset %q is not a regular file", source)
+	}
+	return nil
+}
+
+func consumerPayloadSourceSafe(source string) bool {
+	if source == "" || strings.HasPrefix(source, "/") || strings.ContainsRune(source, '\\') {
+		return false
+	}
+	for _, segment := range strings.Split(source, "/") {
+		if segment == "" || segment == "." || segment == ".." {
+			return false
+		}
+	}
+	return true
+}

@@ -26,6 +26,17 @@ const (
 	Ship Tier = "ship"
 )
 
+// Valid reports whether the source names one gate-owned input derivation.
+func (source InputSource) Valid() bool {
+	switch source {
+	case InputCatchAll, InputGoSource, InputGoAndDataHandling, InputGateEntry, InputOfflineSmoke,
+		InputBenchRoutes, InputDecisionDocuments, InputBenchkitProfile:
+		return true
+	default:
+		return false
+	}
+}
+
 // ConformanceTierEnv selects the tier an inner grading surface runs at: the
 // conformance entry point reads it, and so does the gate a canary sweep drives.
 // Absent, the surface grades the dev tier — the default stays un-overridable by
@@ -38,6 +49,13 @@ const ConformanceTierEnv = "BENCH_CONFORMANCE_TIER"
 // diagnostic rather than a fallback, so a stale or misspelled scope can never read as
 // green silence.
 const ConformanceCheckEnv = "BENCH_CONFORMANCE_CHECK"
+
+// ConformanceChecksEnv transports the executed half of the gate-authored ordered
+// ordinary-check partition.
+const ConformanceChecksEnv = "BENCH_CONFORMANCE_CHECKS"
+
+// ConformanceInheritedEnv transports the half covered by retained evidence.
+const ConformanceInheritedEnv = "BENCH_CONFORMANCE_INHERITED"
 
 // TierFor resolves a tier name to a Tier. Anything but the ship name is the dev
 // tier, so a surface that means ship has to say so and an unset or misspelled value
@@ -52,31 +70,77 @@ func TierFor(name string) Tier {
 // Check is one conformance check's identity. Its position in Checks fixes both the
 // execution order and the timing-line index, so the order is part of the contract.
 type Check struct {
-	Name string
-	Tier Tier
+	Name           string
+	Implementation string
+	Tier           Tier
+	Meta           bool
+	Subject        Subject
+	Inputs         InputSource
 }
+
+// InputSource names the gate-owned derivation that supplies one check's inputs.
+type InputSource string
+
+const (
+	// InputCatchAll conservatively binds a check to the complete subject tree.
+	InputCatchAll InputSource = "catch-all"
+	// InputGoSource binds checks that inspect only compiled Go source.
+	InputGoSource InputSource = "go-source"
+	// InputGoAndDataHandling binds Go enforcement and its DATA_HANDLING advertisement.
+	InputGoAndDataHandling InputSource = "go-source+data-handling"
+	// InputGateEntry binds the gate entry script inspected by its contract check.
+	InputGateEntry InputSource = "gate-entry"
+	// InputOfflineSmoke binds the executable offline proof inspected by its check.
+	InputOfflineSmoke InputSource = "offline-smoke"
+	// InputBenchRoutes binds the wrapper dispatch inspected by its routing check.
+	InputBenchRoutes InputSource = "bench-routes"
+	// InputDecisionDocuments binds active and compiled decision-map trees.
+	InputDecisionDocuments InputSource = "decision-documents"
+	// InputBenchkitProfile binds the profile honesty assertion to its rendered table.
+	InputBenchkitProfile InputSource = "benchkit-profile"
+)
+
+// Subject names the tree a conformance check grades.
+type Subject string
+
+const (
+	SubjectRoot           Subject = "root"
+	SubjectKitRoot        Subject = "kitRoot"
+	SubjectRootAndKitRoot Subject = "root+kitRoot"
+)
 
 // Checks is the conformance inventory in execution order.
 var Checks = []Check{
-	{Name: "conformance-canary-families", Tier: Dev},
-	{Name: "kit-compliance", Tier: Dev},
-	{Name: "canary-inner-compliance", Tier: Dev},
-	{Name: "load-validity-metadata", Tier: Dev},
-	{Name: "skills-index-command-adapters", Tier: Dev},
-	{Name: "docs-currency-workflow", Tier: Dev},
-	{Name: "line-routing", Tier: Dev},
-	{Name: "package-core-guard", Tier: Dev},
-	{Name: "release-evidence-probe", Tier: Ship},
-	{Name: "bench-sh-routes", Tier: Dev},
-	{Name: "default-branch-single-source", Tier: Dev},
-	{Name: "data-handling-derivation", Tier: Dev},
-	{Name: "single-control-escaper", Tier: Dev},
-	{Name: "bounds-policy", Tier: Dev},
-	{Name: "marker-wait-deadlines", Tier: Dev},
-	{Name: "subcommand-routing", Tier: Dev},
-	{Name: "skip-ownership", Tier: Dev},
-	{Name: "decision-map-integrity", Tier: Dev},
-	{Name: "example-agreement", Tier: Dev},
+	{Name: "conformance-meta", Implementation: "checkConformanceMeta", Tier: Dev, Meta: true, Subject: SubjectKitRoot},
+	{Name: "conformance-canary-families", Implementation: "checkConformanceCanaryFamilies", Tier: Dev, Meta: true, Subject: SubjectKitRoot},
+	{Name: "component-input-derivation-source", Implementation: "checkRegisteredDerivationSource", Tier: Dev, Meta: true, Subject: SubjectKitRoot},
+	{Name: "scope-binding", Implementation: "checkScopeBinding", Tier: Dev, Meta: true, Subject: SubjectKitRoot},
+	{Name: "component-scope-binding", Implementation: "checkComponentScopeBinding", Tier: Dev, Meta: true, Subject: SubjectKitRoot},
+	{Name: "kit-compliance", Implementation: "checkKitCompliance", Tier: Dev, Subject: SubjectKitRoot, Inputs: InputCatchAll},
+	{Name: "canary-inner-compliance", Implementation: "checkCanaryInnerCompliance", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
+	{Name: "load-validity-metadata", Implementation: "checkLoadValidityMetadata", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
+	{Name: "skills-index-command-adapters", Implementation: "checkSkillsIndexAndCommandAdapters", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
+	{Name: "docs-currency-workflow", Implementation: "checkDocsCurrencyAndWorkflow", Tier: Dev, Subject: SubjectRootAndKitRoot, Inputs: InputCatchAll},
+	{Name: "gate-entry-contract", Implementation: "checkGateEntryContract", Tier: Dev, Subject: SubjectRoot, Inputs: InputGateEntry},
+	{Name: "offline-smoke-proof", Implementation: "checkOfflineSmokeProof", Tier: Dev, Subject: SubjectRoot, Inputs: InputOfflineSmoke},
+	{Name: "handoff-shape-single-source", Implementation: "checkHandoffShape", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
+	{Name: "harness-prefix-single-source", Implementation: "checkHarnessPrefix", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
+	{Name: "package-shipped-surface", Implementation: "checkPackageShippedSurface", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
+	{Name: "line-routing", Implementation: "checkLineRouting", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
+	{Name: "package-core-guard", Implementation: "checkPackageCoreAndGuards", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
+	{Name: "release-evidence-probe", Implementation: "checkReleaseEvidenceProbe", Tier: Ship, Subject: SubjectRoot, Inputs: InputCatchAll},
+	{Name: "bench-sh-routes", Implementation: "checkBenchShRoutes", Tier: Dev, Subject: SubjectRoot, Inputs: InputBenchRoutes},
+	{Name: "default-branch-single-source", Implementation: "checkDefaultBranchSingleSource", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
+	{Name: "data-handling-derivation", Implementation: "checkDataHandlingDerivation", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoAndDataHandling},
+	{Name: "single-control-escaper", Implementation: "checkSingleControlEscaper", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
+	{Name: "bounds-policy", Implementation: "checkBoundsPolicy", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
+	{Name: "marker-wait-deadlines", Implementation: "checkMarkerWaitDeadlines", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
+	{Name: "subcommand-routing", Implementation: "checkSubcommandRouting", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
+	{Name: "skip-ownership", Implementation: "checkSkipOwnership", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
+	{Name: "decision-map-integrity", Implementation: "ValidateDecisionMapTree", Tier: Dev, Subject: SubjectRoot, Inputs: InputDecisionDocuments},
+	{Name: "example-agreement", Implementation: "checkExampleAgreement", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
+	{Name: "component-honesty-prose", Implementation: "checkComponentHonestyProfile", Tier: Dev, Subject: SubjectKitRoot, Inputs: InputBenchkitProfile},
+	{Name: "contract-capture-reads", Implementation: "checkContractCaptureReads", Tier: Dev, Subject: SubjectKitRoot, Inputs: InputGoSource},
 }
 
 // familyChecks binds each canary conformance family directory to the check whose
@@ -122,6 +186,18 @@ func FamilyCheck(family string) (string, bool) {
 	return check, bound
 }
 
+// CanaryFamilies lists the canary families owned by check in sorted order.
+func CanaryFamilies(check string) []string {
+	var families []string
+	for family, owner := range familyChecks {
+		if owner == check {
+			families = append(families, family)
+		}
+	}
+	sort.Strings(families)
+	return families
+}
+
 // Find returns the registry row for a check name.
 func Find(name string) (Check, bool) {
 	for _, check := range Checks {
@@ -146,6 +222,37 @@ func Names(tier Tier) []string {
 		}
 	}
 	return names
+}
+
+// OrdinaryNames lists, in execution order, the non-meta checks tier runs.
+func OrdinaryNames(tier Tier) []string {
+	var names []string
+	for _, check := range Checks {
+		if !check.Meta && check.RunsAt(tier) {
+			names = append(names, check.Name)
+		}
+	}
+	return names
+}
+
+// CanonicalOrdinarySelection validates names as a duplicate-free subset of tier's
+// ordinary checks and returns that subset in registry order.
+func CanonicalOrdinarySelection(tier Tier, names []string) ([]string, error) {
+	want := make(map[string]bool, len(names))
+	for _, name := range names {
+		check, found := Find(name)
+		if !found || check.Meta || !check.RunsAt(tier) || want[name] {
+			return nil, fmt.Errorf("invalid ordinary %s check %q", tier, name)
+		}
+		want[name] = true
+	}
+	ordered := make([]string, 0, len(names))
+	for _, check := range Checks {
+		if want[check.Name] {
+			ordered = append(ordered, check.Name)
+		}
+	}
+	return ordered, nil
 }
 
 // RootConformanceTest is the conformance suite's entry point — the test the gate's

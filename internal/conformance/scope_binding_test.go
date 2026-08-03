@@ -144,21 +144,6 @@ func equalTokenSets(a, b []string) bool {
 	return slices.Equal(a, b)
 }
 
-// TestRootConformanceScopeBinding grades the real kit checkout: the profile's
-// reduced-scope table must match gate.ReducedScope(). It carries the entry point's
-// name as a prefix so a `-run TestRootConformance` invocation reaches it alongside
-// the registered suite, while the inner skip pattern — anchored to exactly
-// TestRootConformance — still runs it in the conformance-suite phase.
-func TestRootConformanceScopeBinding(t *testing.T) {
-	kitRoot, err := findKitRoot()
-	if err != nil {
-		t.Fatalf("resolve kit root: %v", err)
-	}
-	for _, diag := range checkScopeBinding(kitRoot) {
-		t.Errorf("gate: %s", diag)
-	}
-}
-
 // renderScopeProfile builds a profile whose reduced-scope table renders sets, taking
 // its cells from the same map shape the check compares against so the fixture and the
 // expectation have one author here rather than a second hand-written list.

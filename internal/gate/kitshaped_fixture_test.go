@@ -15,6 +15,7 @@ package gate
 import (
 	"encoding/json"
 	"io/fs"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"reflect"
@@ -23,8 +24,10 @@ import (
 	"testing"
 	"time"
 
+	kitpayload "github.com/gibbonmi/bench"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/capability"
+	"github.com/gibbonmi/bench/internal/conformance/registry"
 	// The package's own freshness constant owns the bare name here, so the seal package
 	// is reached through an alias.
 	benchfreshness "github.com/gibbonmi/bench/internal/freshness"
@@ -114,6 +117,9 @@ func writeKitShapedTree(t *testing.T, root string) {
 		"package canary\n\n// Name is the surface this package's own test grades.\nfunc Name() string { return \"canary\" }\n", 0o644)
 	writeGateTestFile(t, root, "internal/canary/canary_test.go",
 		"package canary\n\nimport \"testing\"\n\nfunc TestName(t *testing.T) {\n\tif Name() != \"canary\" {\n\t\tt.Fatal(\"canary name moved\")\n\t}\n}\n", 0o644)
+	writeGateTestFile(t, root, "internal/conformance/root_test.go",
+		"package conformance\n\nimport \"testing\"\n\nfunc TestRootConformance(t *testing.T) {}\n", 0o644)
+	writeConformanceCanaryOwners(t, root)
 	writeGateTestFile(t, root, "tests/canary/fixture.txt", "canary fixture\n", 0o644)
 	// BenchkitPhases materializes the build phase only when the build helper and go.mod
 	// are both regular files, and the seal digest refuses a root whose auxiliary manifest is
@@ -133,6 +139,64 @@ func writeKitShapedTree(t *testing.T, root string) {
 	}
 	writeCaptureSurfaces(t, root)
 	writeHandDeclaredSurfaces(t, root)
+	writeConsumerInventoryFixture(t, root)
+}
+
+// writeConformanceCanaryOwners gives the fixture every implementation whose check owns a
+// canary family. The registry remains the source of that membership, so a new owner joins
+// the fixture without a copied function list and canary identity resolution stays honest.
+func writeConformanceCanaryOwners(t *testing.T, root string) {
+	t.Helper()
+	owners := map[string]bool{}
+	for _, check := range registry.Checks {
+		if check.Meta || !check.RunsAt(registry.Dev) || len(registry.CanaryFamilies(check.Name)) == 0 {
+			continue
+		}
+		owners[check.Implementation] = true
+	}
+	names := make([]string, 0, len(owners))
+	for name := range owners {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	var source strings.Builder
+	source.WriteString("package conformance\n\n")
+	for _, name := range names {
+		source.WriteString("func ")
+		source.WriteString(name)
+		source.WriteString("() {}\n")
+	}
+	writeGateTestFile(t, root, "internal/conformance/owners.go", source.String(), 0o644)
+}
+
+// writeConsumerInventoryFixture materializes the consumer inventory's fixture shape from
+// the kit's one allowlist. A consumer row that joins the payload therefore joins every
+// shared fixture without a copied path list beside it.
+func writeConsumerInventoryFixture(t *testing.T, root string) {
+	t.Helper()
+	rows, err := kitpayload.PayloadRows()
+	if err != nil {
+		t.Fatalf("read consumer payload rows: %v", err)
+	}
+	payload, err := json.Marshal(rows)
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeGateTestFile(t, root, ".bench/consumer-payload.json", string(payload), 0o644)
+	for _, row := range kitpayload.PayloadConsumerRows(rows) {
+		path := filepath.Join(root, filepath.FromSlash(row.Source))
+		if row.Tree {
+			if err := os.MkdirAll(path, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			writeGateTestFile(t, root, row.Source+"/consumer-fixture.md", "# Consumer fixture\n", 0o644)
+			continue
+		}
+		if isRegularFile(path) {
+			continue
+		}
+		writeGateTestFile(t, root, row.Source, "consumer fixture asset\n", 0o644)
+	}
 }
 
 // writeHandDeclaredSurfaces materializes whatever canary's declaration names and the tree

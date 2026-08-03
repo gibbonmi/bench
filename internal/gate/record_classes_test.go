@@ -55,7 +55,7 @@ func TestStoreRecordClassesStayMutuallyUnreadable(t *testing.T) {
 // against the *ReadyFields variables themselves, not against a restated list of names, so
 // the only way to satisfy it is for verdictClasses to actually cover both.
 func TestVerdictClassesCoverAllReadyFieldSets(t *testing.T) {
-	want := [][]string{fullReadyFields, partialReadyFields}
+	want := [][]string{fullReadyFields, partialReadyFields, checkPartialReadyFields, combinedPartialReadyFields}
 	if len(verdictClasses) != len(want) {
 		t.Fatalf("verdictClasses = %v (%d classes), want %d — one per ready field set (full, partial)", verdictClasses, len(verdictClasses), len(want))
 	}

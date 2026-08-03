@@ -19,6 +19,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
@@ -401,6 +402,13 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	cmd.Env = mergeEnv(gateEnv(), phase.Env)
+	closeAuthority, err := authorizeCanarySelection(cmd, phase)
+	if err != nil {
+		result.Code = 1
+		result.StartErr = err
+		return result
+	}
+	defer closeAuthority()
 	run := runProcessGroupCommand(ctx, cmd)
 	result.Interrupted = run.Cancelled
 	if run.StartErr != nil {
@@ -419,6 +427,30 @@ func runPhase(ctx context.Context, root string, phase Phase, stdout, stderr io.W
 	result.Code = run.Code
 	printConformanceTiming(root, phase, stdout)
 	return result
+}
+
+func authorizeCanarySelection(cmd *exec.Cmd, phase Phase) (func(), error) {
+	if len(phase.canaryFamilies) == 0 {
+		return func() {}, nil
+	}
+	reader, writer, err := os.Pipe()
+	if err != nil {
+		return func() {}, err
+	}
+	selection := strings.Join(phase.canaryFamilies, ",")
+	if _, err := io.WriteString(writer, selection); err != nil {
+		reader.Close()
+		writer.Close()
+		return func() {}, err
+	}
+	if err := writer.Close(); err != nil {
+		reader.Close()
+		return func() {}, err
+	}
+	cmd.ExtraFiles = append(cmd.ExtraFiles, reader)
+	fd := 3 + len(cmd.ExtraFiles) - 1
+	cmd.Env = mergeEnv(cmd.Env, []string{canary.FamilySelectionAuthorityEnv + "=" + fmt.Sprint(fd)})
+	return func() { reader.Close() }, nil
 }
 
 // usableDir reports why a phase's working directory cannot be entered, or nil when it

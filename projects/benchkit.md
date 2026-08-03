@@ -220,7 +220,13 @@ runs — inner gate or contract binary — is load-bearing:
    acceptance-coverage map validation, no bare `t.Skip`/`t.Skipf`/`t.SkipNow`
    outside the capability helper package, every subcommand entry point recorded in
    the routing registry, and no numeric duration literal passed to the marker-wait
-   helper's slow-leg deadline.
+   helper's slow-leg deadline. Ordinary dev gates resolve one content identity per
+   registered check and run the always-on authorization checks plus only the ordinary
+   checks whose identities lack valid retained evidence. The selected ordinary set stays
+   in registry order and shares this one process; output, timings, and the durable verdict
+   name every executed check and the exact identity and authorship time covering every
+   inherited check. `bench gate --fresh`, prospective execution, and ship ignore these
+   reusable slots and execute their complete applicable inventories.
 2. **shellcheck** — best-effort, runs only when installed (`-S warning`). Not a hard
    dependency; upgrades the shell lint automatically once present.
 3. **Managed-asset lifecycle behavior** — the gate runs link, relink, and unlink
@@ -332,7 +338,8 @@ two turns the gate red:
 | vet | `module-test-closure`, `manifest` | `derived` |
 | test | `module-test-closure`, `manifest` | `derived` |
 | race | `module-test-closure`, `manifest` | `derived` |
-| contract | `module-test-closure`, `manifest`, `seal-source-digest`, `agent-markdown` | `derived` |
+| conformance-suite | `module-test-closure`, `manifest` | `derived` |
+| contract | `module-test-closure`, `manifest`, `seal-source-digest`, `consumer-document-inventory` | `derived` |
 | shellcheck | `shellcheck-argv` | `derived` |
 | canary | `hand-declared` | `hand-written` |
 
@@ -340,14 +347,60 @@ two turns the gate red:
 every resolution — the module-wide `go list -deps -test ./...` closure plus the
 module manifest for the toolchain and contract components (never the binary's
 narrower `./cmd/bench` closure, which excludes the packages they grade), the
-seal's source digest and portable agent Markdown added for `contract` because it execs
-the built binary and grades managed-asset lifecycle behavior,
+seal's source digest and documents resolved from the consumer inventory added for
+`contract` because it execs the built binary and grades managed-asset lifecycle behavior,
 and shellcheck's own argv enumeration for `shellcheck` — so a hand-copied path
 list can never survive as the declaration. `canary` is the registry's one
 `hand-declared` entry: `internal/canary/`, `tests/canary/`, `.agents/` (its
 fixtures seed from the kit tree, so guidance edits move sweep expectations), and
 the wrapper scripts its phase execs, named directly because it has no derivable
 source.
+
+**Per-check conformance inputs.** The lower conformance registry is the single source for
+each check's name, tier, subject, executable binding, declared input source, and canary
+ownership. The gate resolves those declarations against its exact Git subject; uncertain
+checks use the complete subject as an explicit catch-all. Exact-file absence differs from
+a present empty file, and a declared symlink contributes its canonical in-repository target
+content. Broken, escaping, or unavailable targets widen execution. Every identity also
+binds the shared conformance implementation closure and the invocation schema, so drift in
+selection machinery cannot inherit an older green. A changed owning canary family moves its
+check identity; a changed bound check implementation runs that family, while shared or
+unattributable conformance implementation drift runs every conformance canary family.
+
+| conformance check | input source |
+|---|---|
+| `kit-compliance` | `catch-all` |
+| `canary-inner-compliance` | `catch-all` |
+| `load-validity-metadata` | `catch-all` |
+| `skills-index-command-adapters` | `catch-all` |
+| `docs-currency-workflow` | `catch-all` |
+| `gate-entry-contract` | `gate-entry` |
+| `offline-smoke-proof` | `offline-smoke` |
+| `handoff-shape-single-source` | `catch-all` |
+| `harness-prefix-single-source` | `go-source` |
+| `package-shipped-surface` | `catch-all` |
+| `line-routing` | `catch-all` |
+| `package-core-guard` | `catch-all` |
+| `release-evidence-probe` | `catch-all` |
+| `bench-sh-routes` | `bench-routes` |
+| `default-branch-single-source` | `go-source` |
+| `data-handling-derivation` | `go-source+data-handling` |
+| `single-control-escaper` | `go-source` |
+| `bounds-policy` | `catch-all` |
+| `marker-wait-deadlines` | `go-source` |
+| `subcommand-routing` | `go-source` |
+| `skip-ownership` | `go-source` |
+| `decision-map-integrity` | `decision-documents` |
+| `example-agreement` | `catch-all` |
+| `component-honesty-prose` | `benchkit-profile` |
+| `contract-capture-reads` | `go-source` |
+
+The ordered outer selector is authored only by gate phase construction after ambient
+singular and plural selectors are stripped. The singular selector remains the canary-owned
+inner control. Unknown, duplicate, tier-invalid, out-of-order, incomplete, or overlapping
+partitions red and widen rather than producing empty green. Meta checks never retain slots;
+a green aggregate authors only executed ordinary slots, a red retires only those it
+executed, and interruption authors none.
 
 Declaration-honesty width, stated with the same candor the stripped-worktree
 construction prose carries above: the stripped-worktree construction proves

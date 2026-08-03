@@ -486,9 +486,11 @@ func TestConformanceSubprocessEnvStripsConformanceControlVars(t *testing.T) {
 	t.Setenv("BENCH_CONFORMANCE_ROOT", "/tmp/outer-root")
 	t.Setenv(registry.ConformanceTierEnv, "ship")
 	t.Setenv(registry.ConformanceCheckEnv, "package-core-guard")
+	t.Setenv(registry.ConformanceChecksEnv, "line-routing,package-core-guard")
+	t.Setenv(registry.ConformanceInheritedEnv, "bounds-policy")
 
 	for _, kv := range conformanceSubprocessEnv() {
-		for _, name := range []string{"BENCH_CONFORMANCE_ROOT", registry.ConformanceTierEnv, registry.ConformanceCheckEnv} {
+		for _, name := range []string{"BENCH_CONFORMANCE_ROOT", registry.ConformanceTierEnv, registry.ConformanceCheckEnv, registry.ConformanceChecksEnv, registry.ConformanceInheritedEnv} {
 			if strings.HasPrefix(kv, name+"=") {
 				t.Fatalf("%s leaked into the probe subprocess env: %q", name, kv)
 			}

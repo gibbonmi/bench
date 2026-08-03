@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"unicode"
@@ -294,6 +295,13 @@ func SweepTier(root string, tier registry.Tier, runner Runner) error {
 	fixtures, err := selectTier(all, tier)
 	if err != nil {
 		return err
+	}
+	selectedFamilies, scopedFamilies, err := gateSelectedFamilies(tier)
+	if err != nil {
+		return err
+	}
+	if scopedFamilies {
+		fixtures = slices.DeleteFunc(fixtures, func(fixture selected) bool { return !selectedFamilies[fixture.family] })
 	}
 	if err := assertContractScopes(root, fixtures); err != nil {
 		return err
@@ -1322,8 +1330,66 @@ var sweepEnvKeys = []string{
 	PhaseEnv,
 	registry.ConformanceTierEnv,
 	registry.ConformanceCheckEnv,
+	registry.ConformanceChecksEnv,
+	registry.ConformanceInheritedEnv,
+	FamilySelectionEnv,
+	FamilySelectionOwnerEnv,
+	FamilySelectionAuthorityEnv,
 	"GOMAXPROCS",
 	SubjectRootEnv,
+}
+
+const (
+	// FamilySelectionEnv carries the gate-derived conformance-family subset.
+	FamilySelectionEnv = "BENCH_CANARY_FAMILIES"
+	// FamilySelectionOwnerEnv distinguishes phase-owned selection from ambient input.
+	FamilySelectionOwnerEnv = "BENCH_CANARY_FAMILIES_OWNER"
+	// FamilySelectionAuthorityEnv names the inherited descriptor proving the selection
+	// came from the gate phase runner rather than from ambient public-canary input.
+	FamilySelectionAuthorityEnv   = "BENCH_CANARY_FAMILIES_FD"
+	familySelectionAuthorityLimit = 4096
+)
+
+func gateSelectedFamilies(tier registry.Tier) (map[string]bool, bool, error) {
+	if tier == registry.Ship || os.Getenv(FamilySelectionOwnerEnv) != "gate" {
+		return nil, false, nil
+	}
+	raw := os.Getenv(FamilySelectionEnv)
+	if raw == "" {
+		return nil, false, nil
+	}
+	fd, err := strconv.Atoi(os.Getenv(FamilySelectionAuthorityEnv))
+	if err != nil || fd < 3 {
+		return nil, false, nil
+	}
+	authority := os.NewFile(uintptr(fd), "bench-canary-family-selection")
+	if authority == nil {
+		return nil, false, nil
+	}
+	proof, readErr := readCanaryAuthority(authority, familySelectionAuthorityLimit)
+	closeErr := authority.Close()
+	if readErr != nil || closeErr != nil || string(proof) != raw {
+		return nil, false, fmt.Errorf("invalid gate-owned canary family authority")
+	}
+	names := strings.Split(raw, ",")
+	known := registry.Families()
+	want := make(map[string]bool, len(names))
+	for _, name := range names {
+		if !slices.Contains(known, name) || want[name] {
+			return nil, false, fmt.Errorf("invalid gate-owned canary family selection %q", raw)
+		}
+		want[name] = true
+	}
+	ordered := make([]string, 0, len(names))
+	for _, name := range known {
+		if want[name] {
+			ordered = append(ordered, name)
+		}
+	}
+	if !slices.Equal(ordered, names) {
+		return nil, false, fmt.Errorf("invalid gate-owned canary family selection %q", raw)
+	}
+	return want, true, nil
 }
 
 // sweepEnv is the inherited environment with every sweep-controlled variable removed. It

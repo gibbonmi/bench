@@ -6,6 +6,7 @@ package gate
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -37,6 +38,100 @@ func phaseNamed(phases []Phase, name string) (Phase, bool) {
 		}
 	}
 	return Phase{}, false
+}
+
+func TestBuiltInConformancePhaseCarriesTheFullDevInventory(t *testing.T) {
+	phase, found := phaseNamed(BenchkitPhases(t.TempDir(), t.TempDir()), conformancePhaseName)
+	if !found {
+		t.Fatal("built-in phase table has no conformance phase")
+	}
+	want := strings.Join(registry.OrdinaryNames(registry.Dev), ",")
+	if got := phaseEnvValue(phase.Env, registry.ConformanceChecksEnv); got != want {
+		t.Fatalf("built-in conformance selection = %q, want full dev inventory %q", got, want)
+	}
+	if got := phaseEnvValue(phase.Env, registry.ConformanceInheritedEnv); got != "" {
+		t.Fatalf("built-in inherited conformance selection = %q, want the empty full-run set", got)
+	}
+}
+
+func ordinaryNamesExcept(tier registry.Tier, selected []string) []string {
+	want := make(map[string]bool, len(selected))
+	for _, name := range selected {
+		want[name] = true
+	}
+	var inherited []string
+	for _, name := range registry.OrdinaryNames(tier) {
+		if !want[name] {
+			inherited = append(inherited, name)
+		}
+	}
+	return inherited
+}
+
+func TestConformancePhaseDrivesOneAggregateSelectedTimingRun(t *testing.T) {
+	requireGoToolchain(t)
+	root := t.TempDir()
+	gitRun(t, root, "init", "-q")
+	kit := kitRootForTest(t)
+	phase, found := phaseNamed(BenchkitPhases(root, kit), conformancePhaseName)
+	if !found {
+		t.Fatal("built-in phase table has no conformance phase")
+	}
+	selected := []string{"gate-entry-contract", "handoff-shape-single-source"}
+	inherited := ordinaryNamesExcept(registry.Dev, selected)
+	phase = withConformanceCheckSelection([]Phase{phase}, registry.Dev, selected, inherited)[0]
+	var stdout, stderr bytes.Buffer
+	if code := runPhases(context.Background(), kit, []Phase{phase}, outerMode, &stdout, &stderr); code != 0 {
+		t.Fatalf("aggregate conformance phase = %d, want green; stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+	var got []string
+	for _, line := range registry.ReadTimingLines(root) {
+		fields := strings.Fields(line)
+		if len(fields) != 3 {
+			t.Fatalf("timing line %q has %d fields, want three", line, len(fields))
+		}
+		got = append(got, fields[1])
+	}
+	want := append(requiredMetaChecksForGateTest(), selected...)
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("aggregate phase timing checks = %v, want %v", got, want)
+	}
+	if count := strings.Count(stdout.String(), "phase conformance: green"); count != 1 {
+		t.Fatalf("aggregate phase completion count = %d, want one; stdout=%q", count, stdout.String())
+	}
+}
+
+func TestConformancePhaseRejectsGatePartitionOmissionAndOverlap(t *testing.T) {
+	requireGoToolchain(t)
+	kit := kitRootForTest(t)
+	selected := []string{"kit-compliance"}
+	inherited := ordinaryNamesExcept(registry.Dev, selected)
+	for _, test := range []struct {
+		name       string
+		inherited  []string
+		diagnostic string
+	}{
+		{"omission", inherited[1:], "omits check " + inherited[0]},
+		{"overlap", registry.OrdinaryNames(registry.Dev), "kit-compliance appears in both"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			root := t.TempDir()
+			gitRun(t, root, "init", "-q")
+			phase, found := phaseNamed(BenchkitPhases(root, kit), conformancePhaseName)
+			if !found {
+				t.Fatal("built-in phase table has no conformance phase")
+			}
+			phase = withConformanceCheckSelection([]Phase{phase}, registry.Dev, selected, inherited)[0]
+			phase.Env = replacePhaseEnv(phase.Env, registry.ConformanceInheritedEnv, strings.Join(test.inherited, ","))
+			var stdout, stderr bytes.Buffer
+			if code := runPhases(context.Background(), kit, []Phase{phase}, outerMode, &stdout, &stderr); code == 0 {
+				t.Fatalf("conformance phase accepted a partition %s; stdout=%q stderr=%q", test.name, stdout.String(), stderr.String())
+			}
+			if output := stdout.String() + stderr.String(); !strings.Contains(output, test.diagnostic) {
+				t.Fatalf("conformance phase %s output omitted %q:\n%s", test.name, test.diagnostic, output)
+			}
+		})
+	}
 }
 
 // TestPhaseTableProbedToolchainPhases grades the go.mod-probed phases: gofmt, vet, and

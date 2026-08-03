@@ -14,11 +14,11 @@ import (
 // 2026-08-03, where both pass the derivation-source conformance check. The
 // hand-declared canary row is bound here precisely because that check exempts it.
 var expectedResolvers = map[Source]func(*inputResolver) ([]string, []string, error){
-	SourceBuildClosure:                              (*inputResolver).buildClosure,
-	SourceModuleTestClosure:                         (*inputResolver).moduleClosure,
-	SourceModuleTestClosureWithSealAndAgentMarkdown: (*inputResolver).contractInputs,
-	SourceShellcheckArgv:                            (*inputResolver).shellcheckInputs,
-	SourceHandDeclared:                              (*inputResolver).canaryInputs,
+	SourceBuildClosure:      (*inputResolver).buildClosure,
+	SourceModuleTestClosure: (*inputResolver).moduleClosure,
+	SourceModuleTestClosureWithSealAndConsumerDocuments: (*inputResolver).contractInputs,
+	SourceShellcheckArgv: (*inputResolver).shellcheckInputs,
+	SourceHandDeclared:   (*inputResolver).canaryInputs,
 }
 
 // TestRegistryRowsResolveThroughTheirNamedDerivation closes the label↔function gap the

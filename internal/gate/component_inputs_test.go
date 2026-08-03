@@ -5,15 +5,19 @@ package gate
 // every assertion about the packages ./cmd/bench imports and is blind to the rest.
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"reflect"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
+	kitpayload "github.com/gibbonmi/bench"
 	"github.com/gibbonmi/bench/internal/canary"
 	benchfreshness "github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/packagesurface"
 )
 
 // moduleClosureComponents are the components declared to read the module-wide closure.
@@ -22,7 +26,7 @@ import (
 func moduleClosureComponents() []string {
 	var names []string
 	for _, declaration := range componentInputDeclarations() {
-		if declaration.source == SourceModuleTestClosure || declaration.source == SourceModuleTestClosureWithSealAndAgentMarkdown {
+		if declaration.source == SourceModuleTestClosure || declaration.source == SourceModuleTestClosureWithSealAndConsumerDocuments {
 			names = append(names, declaration.component)
 		}
 	}
@@ -123,8 +127,119 @@ func TestContractInputsCarryTheSealSourceDigest(t *testing.T) {
 	}
 }
 
+// [CI1] The lifecycle contract reads the platform guide, so its identity must move when
+// the guide changes. A copied .agents-only declaration leaves this edit wrongly skippable.
+func TestContractIdentityTracksManagedBenchGuide(t *testing.T) {
+	fixture := newKitShapedFixture(t)
+	writeContractConsumerInventory(t, fixture.root)
+	before := mustResolveComponentIdentities(t, fixture.root)
+
+	writeGateTestFile(t, fixture.root, ".bench/BENCH.md", "# revised platform guide\n", 0o644)
+
+	after := mustResolveComponentIdentities(t, fixture.root)
+	if got, was := componentIdentityOf(t, after, canary.PhaseContract), componentIdentityOf(t, before, canary.PhaseContract); got == was {
+		t.Fatalf("contract identity = %s after editing .bench/BENCH.md, want it to move", got)
+	}
+}
+
+// [CI2] The package-surface reader is the authority for contract documents. The
+// comparison catches a local .agents-only walk even when that walk happens to include
+// some of the consumer inventory today.
+func TestContractInputsMatchConsumerDocumentInventory(t *testing.T) {
+	fixture := newKitShapedFixture(t)
+	writeContractConsumerInventory(t, fixture.root)
+
+	want, err := packagesurface.ContractDocumentInputs(fixture.root)
+	if err != nil {
+		t.Fatalf("packagesurface.ContractDocumentInputs = %v", err)
+	}
+	got := componentEntry(t, mustResolveComponentInputs(t, fixture.root), canary.PhaseContract).Paths()
+	for _, path := range want {
+		if !slices.Contains(got, path) {
+			t.Fatalf("contract inputs omit managed asset %q from the consumer inventory: %v", path, got)
+		}
+	}
+}
+
+// [CI3] A resolved inventory that becomes malformed, missing, or unresolved cannot reuse
+// its contract slot. The other components may retain their evidence; each row observes the
+// affected component's transition away from valid inventory evidence.
+func TestContractRunsWhenConsumerInventoryIsMalformed(t *testing.T) {
+	for _, mutation := range []struct {
+		name  string
+		apply func(t *testing.T, root string)
+	}{
+		{"malformed", func(t *testing.T, root string) {
+			writeGateTestFile(t, root, ".bench/consumer-payload.json", "{", 0o644)
+		}},
+		{"missing", func(t *testing.T, root string) {
+			if err := os.Remove(filepath.Join(root, ".bench", "consumer-payload.json")); err != nil {
+				t.Fatal(err)
+			}
+		}},
+		{"unresolved asset", func(t *testing.T, root string) {
+			if err := os.Remove(filepath.Join(root, "README.md")); err != nil {
+				t.Fatal(err)
+			}
+		}},
+	} {
+		t.Run(mutation.name, func(t *testing.T) {
+			fixture := newKitShapedFixture(t)
+			writeContractConsumerInventory(t, fixture.root)
+			mustExecuteGreen(t, fixture.root, productionGateEngine{})
+
+			mutation.apply(t, fixture.root)
+			assertUnresolvedInventoryForcesFullRun(t, fixture.root)
+			assertUnresolvedInventoryForcesFullRun(t, fixture.root)
+		})
+	}
+}
+
+func assertUnresolvedInventoryForcesFullRun(t *testing.T, root string) {
+	t.Helper()
+	scoping := scopeComponents(root, Resolve(root, "", RealFS()), reuseFreshGreen, time.Now().UTC())
+	if !scoping.eligible {
+		t.Fatal("the kit-shaped fixture stopped reaching component scoping")
+	}
+	if scoping.partial() {
+		t.Fatalf("unresolved consumer inventory produced a partial decision with skips %v, want a full run", scoping.skipped)
+	}
+	for _, skip := range scoping.skipped {
+		if skip.Component == canary.PhaseContract {
+			t.Fatalf("unresolved consumer inventory skipped %q", canary.PhaseContract)
+		}
+	}
+}
+
+func writeContractConsumerInventory(t *testing.T, root string) {
+	t.Helper()
+	rows, err := kitpayload.PayloadRows()
+	if err != nil {
+		t.Fatalf("read consumer payload rows: %v", err)
+	}
+	payload, err := json.Marshal(rows)
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeGateTestFile(t, root, ".bench/consumer-payload.json", string(payload), 0o644)
+	for _, row := range kitpayload.PayloadConsumerRows(rows) {
+		path := filepath.Join(root, filepath.FromSlash(row.Source))
+		if row.Tree {
+			if err := os.MkdirAll(path, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			continue
+		}
+		if isRegularFile(path) {
+			continue
+		}
+		writeGateTestFile(t, root, row.Source, "consumer fixture asset\n", 0o644)
+	}
+}
+
 func TestContractInputsCoverDeclaredAgentMarkdown(t *testing.T) {
 	fixture := newKitShapedFixture(t)
+	writeContractConsumerInventory(t, fixture.root)
 	const markdown = ".agents/skills/new-skill/SKILL.md"
 	const structured = ".agents/skills/new-skill/agents/openai.yaml"
 	writeGateTestFile(t, fixture.root, markdown, "# New skill\n", 0o644)
@@ -145,7 +260,7 @@ func TestContractInputsCoverDeclaredAgentMarkdown(t *testing.T) {
 func TestComponentInputsReportANamedDerivationSource(t *testing.T) {
 	fixture := newKitShapedFixture(t)
 	named := []Source{
-		SourceBuildClosure, SourceModuleTestClosure, SourceModuleTestClosureWithSealAndAgentMarkdown,
+		SourceBuildClosure, SourceModuleTestClosure, SourceModuleTestClosureWithSealAndConsumerDocuments,
 		SourceShellcheckArgv, SourceHandDeclared,
 	}
 

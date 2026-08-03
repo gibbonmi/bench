@@ -171,19 +171,6 @@ func reducedScopePath(scope gate.Scope, path string) bool {
 	return false
 }
 
-// TestContractTestsReadCapturePathsFromSubjectOnly grades the real kit checkout:
-// no contract test may resolve a reduced-scope path from the kit checkout, only
-// from the subject root the stripped construction can reach.
-func TestContractTestsReadCapturePathsFromSubjectOnly(t *testing.T) {
-	kitRoot, err := findKitRoot()
-	if err != nil {
-		t.Fatalf("resolve kit root: %v", err)
-	}
-	for _, diag := range checkContractCaptureReads(kitRoot) {
-		t.Errorf("gate: %s", diag)
-	}
-}
-
 // TestContractCaptureReadsCheckBites is the recorded bite proof for
 // checkContractCaptureReads (per craft-gate). It runs against a synthetic tree,
 // and walks the states that matter: a planted kit-relative read of an

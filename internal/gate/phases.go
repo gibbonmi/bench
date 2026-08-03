@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"syscall"
@@ -50,12 +51,13 @@ const (
 // runner's root are different trees in a linked repo, and only the producer knows which
 // one a path was written against.
 type Phase struct {
-	Name     string
-	Argv     []string
-	Env      []string
-	Optional bool
-	Needs    []string
-	Dir      string
+	Name           string
+	Argv           []string
+	Env            []string
+	Optional       bool
+	Needs          []string
+	Dir            string
+	canaryFamilies []string
 }
 
 var benchkitPhasesForCommand = BenchkitPhases
@@ -90,9 +92,13 @@ func BenchkitPhases(root, kit string) []Phase {
 	phases = append(phases, toolchainPhases(root, kit)...)
 	return append(phases, []Phase{
 		{
-			Name:  conformancePhaseName,
-			Argv:  goTestArgv(kit, "./internal/conformance", "-run", "^TestRootConformance$"),
-			Env:   []string{"BENCH_CONFORMANCE_ROOT=" + root},
+			Name: conformancePhaseName,
+			Argv: goTestArgv(kit, "./internal/conformance", "-run", "^TestRootConformance$"),
+			Env: []string{
+				"BENCH_CONFORMANCE_ROOT=" + root,
+				registry.ConformanceChecksEnv + "=" + strings.Join(registry.OrdinaryNames(registry.Dev), ","),
+				registry.ConformanceInheritedEnv + "=",
+			},
 			Needs: needsBuild(),
 		},
 		{
@@ -414,7 +420,7 @@ func phasesForMode(phases []Phase, mode phaseMode) []Phase {
 	// second list of names would silently disagree with the table the run is made of.
 	owner := os.Getenv(canary.PhaseEnv)
 	if !carriesPhase(inner, owner) {
-		return inner
+		return restoreInnerConformanceCheck(inner)
 	}
 	filtered := make([]Phase, 0, 1)
 	for _, phase := range inner {
@@ -422,7 +428,80 @@ func phasesForMode(phases []Phase, mode phaseMode) []Phase {
 			filtered = append(filtered, phase)
 		}
 	}
-	return filtered
+	return restoreInnerConformanceCheck(filtered)
+}
+
+// restoreInnerConformanceCheck makes the canary-owned selector an explicit phase
+// override after gateEnv strips every ambient value of that control variable.
+func restoreInnerConformanceCheck(phases []Phase) []Phase {
+	check := os.Getenv(registry.ConformanceCheckEnv)
+	if check == "" {
+		return phases
+	}
+	for i := range phases {
+		if phases[i].Name != conformancePhaseName {
+			continue
+		}
+		phases[i].Env = removePhaseEnv(phases[i].Env, registry.ConformanceChecksEnv)
+		phases[i].Env = removePhaseEnv(phases[i].Env, registry.ConformanceInheritedEnv)
+		phases[i].Env = replacePhaseEnv(phases[i].Env, registry.ConformanceCheckEnv, check)
+	}
+	return phases
+}
+
+func withConformanceCheckSelection(phases []Phase, tier registry.Tier, executed, inherited []string) []Phase {
+	orderedExecuted, executedErr := registry.CanonicalOrdinarySelection(tier, executed)
+	orderedInherited, inheritedErr := registry.CanonicalOrdinarySelection(tier, inherited)
+	partition := append(slices.Clone(orderedExecuted), orderedInherited...)
+	canonicalPartition, partitionErr := registry.CanonicalOrdinarySelection(tier, partition)
+	if executedErr != nil || inheritedErr != nil || partitionErr != nil || !slices.Equal(orderedExecuted, executed) || !slices.Equal(orderedInherited, inherited) || !slices.Equal(canonicalPartition, registry.OrdinaryNames(tier)) {
+		orderedExecuted = registry.OrdinaryNames(tier)
+		orderedInherited = nil
+	}
+	out := append([]Phase(nil), phases...)
+	for i := range out {
+		if out[i].Name != conformancePhaseName {
+			continue
+		}
+		out[i].Env = replacePhaseEnv(out[i].Env, registry.ConformanceCheckEnv, "")
+		out[i].Env = replacePhaseEnv(out[i].Env, registry.ConformanceChecksEnv, strings.Join(orderedExecuted, ","))
+		out[i].Env = replacePhaseEnv(out[i].Env, registry.ConformanceInheritedEnv, strings.Join(orderedInherited, ","))
+	}
+	return out
+}
+
+func withCanaryFamilySelection(phases []Phase, families []string) []Phase {
+	if len(families) == 0 {
+		return phases
+	}
+	out := append([]Phase(nil), phases...)
+	for i := range out {
+		if out[i].Name != "canary" {
+			continue
+		}
+		out[i].Env = replacePhaseEnv(out[i].Env, canary.FamilySelectionEnv, strings.Join(families, ","))
+		out[i].Env = replacePhaseEnv(out[i].Env, canary.FamilySelectionOwnerEnv, "gate")
+		out[i].canaryFamilies = slices.Clone(families)
+	}
+	return out
+}
+
+func replacePhaseEnv(env []string, key, value string) []string {
+	out := removePhaseEnv(env, key)
+	if value != "" || key == registry.ConformanceChecksEnv || key == registry.ConformanceInheritedEnv {
+		out = append(out, key+"="+value)
+	}
+	return out
+}
+
+func removePhaseEnv(env []string, key string) []string {
+	out := make([]string, 0, len(env)+1)
+	for _, entry := range env {
+		if !strings.HasPrefix(entry, key+"=") {
+			out = append(out, entry)
+		}
+	}
+	return out
 }
 
 func carriesPhase(phases []Phase, name string) bool {

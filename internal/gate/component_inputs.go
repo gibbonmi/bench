@@ -28,6 +28,7 @@ import (
 	// The package's own freshness constant owns the bare name here, so the seal package
 	// is reached through an alias.
 	benchfreshness "github.com/gibbonmi/bench/internal/freshness"
+	"github.com/gibbonmi/bench/internal/packagesurface"
 )
 
 // Source names the derivation an entry's inputs were computed from. The profile's rendered
@@ -46,9 +47,9 @@ const (
 	// otherwise leave this declaration unmoved by a change that can red every component
 	// that carries it.
 	SourceModuleTestClosure Source = "module-test-closure+manifest"
-	// SourceModuleTestClosureWithSealAndAgentMarkdown adds the published binary's seal
-	// source digest and the portable Markdown assets consumed by lifecycle contracts.
-	SourceModuleTestClosureWithSealAndAgentMarkdown Source = "module-test-closure+manifest+seal-source-digest+agent-markdown"
+	// SourceModuleTestClosureWithSealAndConsumerDocuments adds the published binary's seal
+	// source digest and the consumer-inventory documents lifecycle contracts consume.
+	SourceModuleTestClosureWithSealAndConsumerDocuments Source = "module-test-closure+manifest+seal-source-digest+consumer-document-inventory"
 	// SourceShellcheckArgv is shellcheckArgv's own file enumeration — the exact argument
 	// list the shellcheck phase lints, read rather than restated.
 	SourceShellcheckArgv Source = "shellcheck-argv"
@@ -104,7 +105,8 @@ func componentInputDeclarations() []componentInputDeclaration {
 		{canary.PhaseVet, SourceModuleTestClosure, (*inputResolver).moduleClosure},
 		{canary.PhaseTest, SourceModuleTestClosure, (*inputResolver).moduleClosure},
 		{canary.PhaseRace, SourceModuleTestClosure, (*inputResolver).moduleClosure},
-		{canary.PhaseContract, SourceModuleTestClosureWithSealAndAgentMarkdown, (*inputResolver).contractInputs},
+		{canary.PhaseConformanceSuite, SourceModuleTestClosure, (*inputResolver).moduleClosure},
+		{canary.PhaseContract, SourceModuleTestClosureWithSealAndConsumerDocuments, (*inputResolver).contractInputs},
 		{"shellcheck", SourceShellcheckArgv, (*inputResolver).shellcheckInputs},
 		{"canary", SourceHandDeclared, (*inputResolver).canaryInputs},
 	}
@@ -260,49 +262,18 @@ func (r *inputResolver) contractInputs() ([]string, []string, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	markdown, err := agentMarkdownPaths(r.root)
+	documents, err := packagesurface.ContractDocumentInputs(r.root)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("derive consumer inventory documents: %w", err)
 	}
-	paths = append(paths, markdown...)
+	paths = append(paths, documents...)
 	sort.Strings(paths)
 	return slices.Compact(paths), []string{sources}, nil
 }
 
-// agentMarkdownDirectories are the portable-guidance roots whose Markdown the lifecycle
-// contracts and the canary's kit-seeded fixtures consume. The list lives beside the
-// declarations that carry it — the input registry owns the fact, not the reduced-scope
-// declaration, which never covers these paths.
+// agentMarkdownDirectories is canary's portable-guidance root. The list lives beside its
+// declaration rather than the reduced-scope declaration, which never covers these paths.
 var agentMarkdownDirectories = []string{".agents/"}
-
-// agentMarkdownPaths enumerates the .md descendants of agentMarkdownDirectories, sorted
-// and repository-relative, tolerating an absent root so a fixture kit without guidance
-// still resolves.
-func agentMarkdownPaths(root string) ([]string, error) {
-	var paths []string
-	for _, directory := range agentMarkdownDirectories {
-		base := filepath.Join(root, filepath.FromSlash(directory))
-		err := filepath.WalkDir(base, func(path string, entry fs.DirEntry, err error) error {
-			if errors.Is(err, os.ErrNotExist) {
-				return nil
-			}
-			if err != nil || entry.IsDir() || !entry.Type().IsRegular() || !strings.HasSuffix(entry.Name(), ".md") {
-				return err
-			}
-			rel, err := filepath.Rel(root, path)
-			if err != nil {
-				return err
-			}
-			paths = append(paths, filepath.ToSlash(rel))
-			return nil
-		})
-		if err != nil {
-			return nil, err
-		}
-	}
-	sort.Strings(paths)
-	return slices.Compact(paths), nil
-}
 
 // listedTestPackage is the `go list -json` shape the module-wide closure reads. The file
 // groups a test-augmented listing carries are a superset of the build-input groups the

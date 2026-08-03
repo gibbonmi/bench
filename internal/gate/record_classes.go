@@ -7,15 +7,16 @@ package gate
 //
 // The ready verdict classes (full, reduced, partial) are folded in from readyFieldClasses in
 // verdict.go rather than restated, so this map cannot drift from the set verdict.go actually
-// validates against. The enumeration spans the verdict, slot, and attestation classes equally,
-// so it lives here rather than inside any one of the files that defines a single class.
+// validates against. The enumeration spans verdicts, component slots, the conformance-check
+// ledger, and attestations equally, so it lives outside every individual class owner.
 var storeRecordClasses = func() map[string][]string {
-	classes := make(map[string][]string, len(readyFieldClasses)+2)
+	classes := make(map[string][]string, len(readyFieldClasses)+3)
 	for name, fields := range readyFieldClasses {
 		classes[name] = fields
 	}
 	classes["component slot"] = componentSlotFields
 	classes["build attestation"] = buildAttestationFields
+	classes["conformance check slot store"] = conformanceCheckSlotStoreFields
 	return classes
 }()
 
