@@ -201,7 +201,7 @@ func TestPromoteRecompositionRefusesBootstrapFailureWithoutMutation(t *testing.T
 	fixture.service.gate = owner
 
 	status, promoteErr := fixture.service.Promote(t.Context(), "build demo")
-	if promoteErr == nil || !strings.Contains(promoteErr.Error(), "run bench gate, then retry promote") {
+	if promoteErr == nil || !strings.Contains(promoteErr.Error(), "run bench gate --fresh, then retry promote") {
 		t.Fatalf("Promote error = %v", promoteErr)
 	}
 	if status.Next != "bench spec build promote build demo" {

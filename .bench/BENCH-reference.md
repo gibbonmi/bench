@@ -103,7 +103,7 @@ this table is the operation-to-purpose lookup, not a second workflow:
 
 | operation | routing purpose |
 |---|---|
-| `start` | create or resume the subject-bound run |
+| `start` | create or resume the subject-bound run from exact-tip whole-tree green, including a narrow verdict whose inherited evidence still covers every skip |
 | `assign` | lease one ownership-fenced ticket worktree |
 | `checkpoint` | validate focused evidence and bind a provisional commit |
 | `integrate` | compare-and-swap one verified checkpoint into the candidate |

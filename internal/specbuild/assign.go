@@ -255,7 +255,7 @@ func (s *Service) startRun(ctx context.Context, slug, resolved string, subject b
 		previousGreen = greenMarker(s.root, subject.branch)
 	}
 	if err := s.gate.Bootstrap(ctx, s.root, subject.branch, subject.tip, previousGreen); err != nil {
-		return Status{}, fmt.Errorf("no exact green evidence: run bench gate, then retry start: %w", err)
+		return Status{}, fmt.Errorf("no exact green evidence: run bench gate --fresh, then retry start: %w", err)
 	}
 	if _, _, err := s.beginOperation(&run, "start", "run", resolved+"\x00"+subject.branch+"\x00"+subject.tip); err != nil {
 		return Status{}, err

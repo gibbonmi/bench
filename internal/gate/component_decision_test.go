@@ -483,6 +483,97 @@ func TestPartialGreenRetainsNoWholeTreeEvidence(t *testing.T) {
 	}
 }
 
+func TestComposedGreenAcceptsOnlyCompleteExactTipEvidence(t *testing.T) {
+	t.Run("no verdict", func(t *testing.T) {
+		if ComposedGreen(reducedRunFixture(t)) {
+			t.Fatal("absent verdict composed to whole-tree green")
+		}
+	})
+
+	t.Run("invalid verdict", func(t *testing.T) {
+		root := reducedRunFixture(t)
+		writeCache(t, cachePath(t, root), "{", 0o600)
+		if ComposedGreen(root) {
+			t.Fatal("invalid verdict composed to whole-tree green")
+		}
+	})
+
+	t.Run("full", func(t *testing.T) {
+		root := reducedRunFixture(t)
+		mustExecuteGreen(t, root, productionGateEngine{})
+		if !ComposedGreen(root) {
+			t.Fatal("full green did not compose to whole-tree green")
+		}
+	})
+
+	t.Run("missing reduced ancestor", func(t *testing.T) {
+		root := reducedRunFixture(t)
+		mustExecuteGreen(t, root, productionGateEngine{})
+		writeGateTestFile(t, root, "ROADMAP.md", "capture-only edit\n", 0o644)
+		mustExecuteGreen(t, root, productionGateEngine{})
+		if err := os.Remove(evidencePath(commonGitDirOf(t, root), mustStrippedSubject(t, root))); err != nil {
+			t.Fatal(err)
+		}
+		if ComposedGreen(root) {
+			t.Fatal("reduced green composed after its full-green ancestor was removed")
+		}
+	})
+
+	t.Run("reduced", func(t *testing.T) {
+		root := reducedRunFixture(t)
+		mustExecuteGreen(t, root, productionGateEngine{})
+		writeGateTestFile(t, root, "ROADMAP.md", "capture-only edit\n", 0o644)
+		mustExecuteGreen(t, root, productionGateEngine{})
+		if !ComposedGreen(root) {
+			t.Fatal("reduced green with its full-green ancestor did not compose")
+		}
+	})
+
+	t.Run("partial", func(t *testing.T) {
+		fixture := seededScopingFixture(t)
+		writeGateTestFile(t, fixture.root, "ROADMAP.md", "capture-only edit\n", 0o644)
+		observeGreenGate(t, fixture.root)
+		if !ComposedGreen(fixture.root) {
+			t.Fatal("partial green with every retained component did not compose")
+		}
+	})
+
+	t.Run("missing skipped component evidence", func(t *testing.T) {
+		fixture := seededScopingFixture(t)
+		writeGateTestFile(t, fixture.root, "ROADMAP.md", "capture-only edit\n", 0o644)
+		observeGreenGate(t, fixture.root)
+		record := partialRecord(t, fixture.root)
+		var skipped string
+		for _, component := range record.Skipped {
+			if componentSkipsOnAncestorEvidence(component) {
+				skipped = component
+				break
+			}
+		}
+		if skipped == "" {
+			t.Fatal("partial fixture has no slot-backed skipped component")
+		}
+		if err := os.Remove(scopedSlotPath(t, fixture.root, skipped)); err != nil {
+			t.Fatal(err)
+		}
+		if ComposedGreen(fixture.root) {
+			t.Fatal("partial green composed after a skipped component lost its evidence")
+		}
+	})
+
+	t.Run("red", func(t *testing.T) {
+		root := reducedRunFixture(t)
+		mustExecuteGreen(t, root, productionGateEngine{})
+		writeGateTestFile(t, root, ".bench/gate.sh", "#!/usr/bin/env bash\nexit 1\n", 0o755)
+		if got := executeWithEngine(context.Background(), root, io.Discard, io.Discard, productionGateEngine{}); got.ActionExit == 0 {
+			t.Fatal("red fixture gate unexpectedly passed")
+		}
+		if ComposedGreen(root) {
+			t.Fatal("red verdict composed to whole-tree green")
+		}
+	})
+}
+
 // scopedSlotPath is where component's slot at its current identity lives.
 func scopedSlotPath(t *testing.T, root, component string) string {
 	t.Helper()

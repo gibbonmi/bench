@@ -381,7 +381,7 @@ func checkWorkflowAnchors(root string) []string {
 		{".agents/skills/bench-craft-delegate/SKILL.md", "A provisional checkpoint is not project-green evidence and cannot satisfy a done-claim.", "craft-delegate lets provisional evidence claim project green"},
 		{".bench/BENCH.md", "`bench spec build start|assign|checkpoint|integrate|review|status|promote|abandon`", ".bench/BENCH.md dropped an operation from the spec-build inventory"},
 		{".bench/BENCH.md", "Provisional cadence is exclusive to reviewed spec-backed builds; light-path work, `bench shift`, and ordinary `bench commit` remain commit-on-green.", ".bench/BENCH.md broadened provisional cadence beyond reviewed spec-backed builds"},
-		{".bench/BENCH-reference.md", "| `start` | create or resume the subject-bound run |", "BENCH-reference misroutes spec build start"},
+		{".bench/BENCH-reference.md", "| `start` | create or resume the subject-bound run from exact-tip whole-tree green, including a narrow verdict whose inherited evidence still covers every skip |", "BENCH-reference misroutes spec build start"},
 		{".bench/BENCH-reference.md", "| `assign` | lease one ownership-fenced ticket worktree |", "BENCH-reference misroutes spec build assign"},
 		{".bench/BENCH-reference.md", "| `checkpoint` | validate focused evidence and bind a provisional commit |", "BENCH-reference misroutes spec build checkpoint"},
 		{".bench/BENCH-reference.md", "| `integrate` | compare-and-swap one verified checkpoint into the candidate |", "BENCH-reference misroutes spec build integrate"},

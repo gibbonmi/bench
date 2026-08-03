@@ -22,7 +22,7 @@ func (s *Service) recomposePromotion(ctx context.Context, run *record, subject b
 	// Replay must prove conflict-free before the independently valid working tip
 	// becomes project-green, while bootstrap must precede candidate and run mutation.
 	if err := s.gate.Bootstrap(ctx, s.root, subject.branch, subject.tip, run.Base); err != nil {
-		return fmt.Errorf("no exact green evidence: run bench gate, then retry promote: %w", err)
+		return fmt.Errorf("no exact green evidence: run bench gate --fresh, then retry promote: %w", err)
 	}
 	if err := updateRef(s.root, run.Candidate, commit, old); err != nil {
 		return err

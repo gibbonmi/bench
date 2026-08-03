@@ -168,7 +168,7 @@ func (s *Service) finishStart(ctx context.Context, branch, tip string, greenRead
 		}
 		if !greenReady && !refAt(s.root, "refs/bench/green/"+branch, tip) {
 			if err := s.gate.Bootstrap(ctx, s.root, branch, tip, greenMarker(s.root, branch)); err != nil {
-				return Status{}, fmt.Errorf("no exact green evidence: run bench gate, then retry start: %w", err)
+				return Status{}, fmt.Errorf("no exact green evidence: run bench gate --fresh, then retry start: %w", err)
 			}
 		}
 		if err := updateRef(s.root, run.Candidate, tip, zeroObjectID); err != nil {

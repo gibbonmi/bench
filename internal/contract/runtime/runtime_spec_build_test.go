@@ -123,7 +123,7 @@ func TestRuntimeSpecBuildUsageAndActionableEnvironmentErrors(t *testing.T) {
 	missingGate.CommitAll("staged spec")
 	gateProbe := missingGate.Bench("spec", "build", "start", "demo")
 	gateProbe.RequireExit(1)
-	contract.RequireContains(t, gateProbe.Stdout, "run bench gate, then retry start")
+	contract.RequireContains(t, gateProbe.Stdout, "run bench gate --fresh, then retry start")
 
 	control := contract.NewFixture(t)
 	control.WriteFile("specs/control\nslug/spec.md", "Status: staged\n")

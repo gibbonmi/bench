@@ -270,7 +270,11 @@ reduced-scope commits inherits from that same ancestor, never from a reduced
 predecessor. The ancestor lookup is content-addressed with no freshness bound —
 the retained full green serves until the stripped identity moves, because the
 phases that can observe the changeset run fresh either way (reviewer decision,
-2026-08-01). The declaration is single-sourced in the gate package
+2026-08-01). For dev lifecycle entry, an exact-tip reduced or per-component
+partial green is whole-tree green when the gate package revalidates the inherited
+evidence for every skipped phase or component. This does not make a narrow verdict
+reusable evidence for a later run, and it does not relax the ship tier's full-run
+precondition. The declaration is single-sourced in the gate package
 (`gate.ReducedScope()`) and rendered here; the scope-binding conformance check
 cross-checks this table against it, so drift between the two turns the gate red:
 

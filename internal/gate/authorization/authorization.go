@@ -36,16 +36,8 @@ func Bootstrap(root, branch, tip, expected string) error {
 	if !branchAndTipAt(root, branch, tip) {
 		return errors.New("working branch or tip changed")
 	}
-	tree, err := benchgit.Output("-C", root, "rev-parse", tip+"^{tree}")
-	if err != nil {
-		return errors.New("working tree unavailable")
-	}
-	inspection := gate.InspectTree(root, tree)
-	if !inspection.ReusableGreen {
-		if inspection.Reason == "" {
-			inspection.Reason = "exact evidence unavailable"
-		}
-		return errors.New(inspection.Reason)
+	if !gate.ComposedGreen(root) {
+		return errors.New("exact whole-tree evidence unavailable")
 	}
 	if !branchAndTipAt(root, branch, tip) {
 		return errors.New("working branch or tip changed")

@@ -1,16 +1,22 @@
 package specbuild
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gibbonmi/bench/internal/spec"
-	"github.com/gibbonmi/bench/internal/worktree"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/gibbonmi/bench/internal/canary"
+	"github.com/gibbonmi/bench/internal/gate"
+	gateauth "github.com/gibbonmi/bench/internal/gate/authorization"
+	"github.com/gibbonmi/bench/internal/spec"
+	"github.com/gibbonmi/bench/internal/worktree"
 )
 
 type abandonOwner struct{ plans, applies int }
@@ -20,6 +26,7 @@ type rejectGate struct{}
 func (rejectGate) Bootstrap(context.Context, string, string, string, string) error {
 	return fmt.Errorf("missing evidence")
 }
+
 func stringsSplitLines(s string) []string {
 	if s == "" {
 		return nil
@@ -116,6 +123,71 @@ func TestStartFailsClosedOnUnreadableMarker(t *testing.T) {
 	got, err := os.ReadFile(filepath.Join(root, ".git", filepath.FromSlash(ref)))
 	if err != nil || strings.TrimSpace(string(got)) != missing {
 		t.Fatalf("marker = %q, %v; want %s", got, err, missing)
+	}
+}
+
+type authorizationGate struct{}
+
+func (authorizationGate) Bootstrap(_ context.Context, root, branch, tip, expected string) error {
+	return gateauth.Bootstrap(root, branch, tip, expected)
+}
+
+func reducedGreenStartFixture(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	t.Setenv("BENCH_KIT", root)
+	for _, args := range [][]string{{"init", "-q"}, {"config", "user.email", "test@example.invalid"}, {"config", "user.name", "Test"}} {
+		git(t, root, args...)
+	}
+	write(t, filepath.Join(root, ".bench", "gate.sh"), "#!/usr/bin/env bash\nexec true gate-phases \"$PWD\"\n")
+	if err := os.Chmod(filepath.Join(root, ".bench", "gate.sh"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	write(t, filepath.Join(root, ".bench", "gate-inputs.json"), `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`+"\n")
+	write(t, filepath.Join(root, ".bench", "phase-conformance.sh"), "exit 0\n")
+	write(t, filepath.Join(root, ".bench", "phase-test.sh"), "exit 0\n")
+	write(t, filepath.Join(root, filepath.FromSlash(canary.PhaseManifestPath)), `{"phases":[{"name":"conformance","argv":["bash",".bench/phase-conformance.sh"]},{"name":"test","argv":["bash",".bench/phase-test.sh"]}]}`+"\n")
+	write(t, filepath.Join(root, "capture", "learnings.md"), "capture\n")
+	write(t, filepath.Join(root, "graded.txt"), "graded\n")
+	write(t, filepath.Join(root, "specs", "build demo", "spec.md"), "# Build demo\n\nStatus: staged\n")
+	write(t, filepath.Join(root, "specs", "build demo", "tickets", "one.md"), "# One\n\nOwnership fence: internal/specbuild\n\n- [ ] [R01] exact start\n")
+	git(t, root, "add", ".")
+	git(t, root, "commit", "-qm", "full green subject")
+	if result := gate.Execute(context.Background(), root, io.Discard, io.Discard); result.ActionExit != 0 {
+		t.Fatalf("full gate = %+v", result)
+	}
+	write(t, filepath.Join(root, "specs", "build demo", "spec.md"), "# Build demo\n\nStatus: staged\n\nReduced tip.\n")
+	git(t, root, "add", "specs/build demo/spec.md")
+	git(t, root, "commit", "-qm", "reduced spec tip")
+	var stdout, stderr bytes.Buffer
+	if result := gate.Execute(context.Background(), root, &stdout, &stderr); result.ActionExit != 0 {
+		t.Fatalf("reduced gate = %+v\nstdout:\n%s\nstderr:\n%s", result, stdout.String(), stderr.String())
+	}
+	return root
+}
+
+func TestStartAcceptsReducedGreenExactTip(t *testing.T) {
+	root := reducedGreenStartFixture(t)
+	status, err := New(root, authorizationGate{}, nil).Start(context.Background(), "build demo")
+	if err != nil || status.State != "active" {
+		t.Fatalf("Start = %#v, %v", status, err)
+	}
+}
+
+func TestStartRefusesBrokenReducedGreenInheritance(t *testing.T) {
+	root := reducedGreenStartFixture(t)
+	dir := filepath.Join(root, ".git", "bench-gate-evidence")
+	entries, err := os.ReadDir(dir)
+	if err != nil || len(entries) == 0 {
+		t.Fatalf("reduced ancestor evidence = %v, %v", entries, err)
+	}
+	for _, entry := range entries {
+		if err := os.Remove(filepath.Join(dir, entry.Name())); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := New(root, authorizationGate{}, nil).Start(context.Background(), "build demo"); err == nil || !strings.Contains(err.Error(), "bench gate --fresh") {
+		t.Fatalf("Start refusal = %v, want fresh recovery", err)
 	}
 }
 
@@ -440,10 +512,10 @@ func TestStartResumeAndConflictsDoNotDuplicateRun(t *testing.T) {
 		})
 	}
 }
-func TestStartWithoutEvidenceNamesOneRecoveryAndDoesNotMutate(t *testing.T) {
+func TestStartWithoutEvidenceNamesFreshRecoveryAndDoesNotMutate(t *testing.T) {
 	root := repo(t)
 	service := New(root, rejectGate{}, nil)
-	if _, err := service.Start(context.Background(), "build demo"); err == nil || !strings.Contains(err.Error(), "bench gate, then retry start") {
+	if _, err := service.Start(context.Background(), "build demo"); err == nil || !strings.Contains(err.Error(), "bench gate --fresh, then retry start") {
 		t.Fatalf("Start error = %v", err)
 	}
 	if got := git(t, root, "for-each-ref", "--format=%(refname)", "refs/bench/"); got != "" {
