@@ -141,6 +141,7 @@ var Checks = []Check{
 	{Name: "example-agreement", Implementation: "checkExampleAgreement", Tier: Dev, Subject: SubjectRoot, Inputs: InputCatchAll},
 	{Name: "component-honesty-prose", Implementation: "checkComponentHonestyProfile", Tier: Dev, Subject: SubjectKitRoot, Inputs: InputBenchkitProfile},
 	{Name: "contract-capture-reads", Implementation: "checkContractCaptureReads", Tier: Dev, Subject: SubjectKitRoot, Inputs: InputGoSource},
+	{Name: "injected-port-registry", Implementation: "checkInjectedPortRegistry", Tier: Dev, Subject: SubjectRoot, Inputs: InputGoSource},
 }
 
 // familyChecks binds each canary conformance family directory to the check whose
@@ -164,6 +165,7 @@ var familyChecks = map[string]string{
 	"compliance-hardening":          "canary-inner-compliance",
 	"decision-map-integrity":        "decision-map-integrity",
 	"example-agreement":             "example-agreement",
+	"injected-ports":                "injected-port-registry",
 }
 
 // Families lists the family names this table binds, in sorted order. They are the

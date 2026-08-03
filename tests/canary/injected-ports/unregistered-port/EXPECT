@@ -1,0 +1,1 @@
+injected port has no registry row: internal/gitguard.Auditor is injected at a parameter of auditVerdict in internal/gitguard/gitguard.go

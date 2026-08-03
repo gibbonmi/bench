@@ -394,6 +394,7 @@ unattributable conformance implementation drift runs every conformance canary fa
 | `example-agreement` | `catch-all` |
 | `component-honesty-prose` | `benchkit-profile` |
 | `contract-capture-reads` | `go-source` |
+| `injected-port-registry` | `go-source` |
 
 The ordered outer selector is authored only by gate phase construction after ambient
 singular and plural selectors are stripped. The singular selector remains the canary-owned

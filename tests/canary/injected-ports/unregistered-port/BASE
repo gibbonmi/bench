@@ -1,0 +1,2 @@
+internal/gitguard/gitguard.go
+internal/gitguard/checker_junction_test.go

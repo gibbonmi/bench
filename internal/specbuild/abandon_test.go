@@ -799,9 +799,10 @@ func abandonmentSnapshot(t *testing.T, fixture checkpointFixture) abandonSnapsho
 }
 
 // decayedOwner answers abandon planning with a stable synthetic fingerprint instead of
-// the real planner. Planning a present-but-not-a-checkout path is internal/worktree's
-// contract; these fixtures grade what the precondition classification admits, so the
-// owner is the counter that proves the release was reached.
+// the real planner, so these fixtures grade only what the precondition classification
+// admits and the owner is the counter that proves the release was reached. The composed
+// contract — the same shapes carried through worktree.PlanAbandon/ApplyAbandon — is held
+// by TestAbandonAppliesForDecayedShapesThroughRealPlanner.
 type decayedOwner struct {
 	realOwner
 	plans, applies int
@@ -949,6 +950,53 @@ func TestAbandonRefusesUnreadableCheckoutMetadata(t *testing.T) {
 	}
 	if owner.plans != 0 || owner.applies != 0 {
 		t.Fatalf("unreadable metadata reached the owner: plans=%d applies=%d", owner.plans, owner.applies)
+	}
+}
+
+// realAbandonFixture stages a decayed checkout under the production planner: the owner
+// delegates to internal/worktree rather than answering with a synthetic fingerprint, so
+// the shape policy the fixture stages is the one the planner itself enforces.
+func realAbandonFixture(t *testing.T, shape func(t *testing.T, path string)) (checkpointFixture, *abandonOwner) {
+	t.Helper()
+	fixture := newCheckpointFixture(t)
+	owner := &abandonOwner{}
+	fixture.service.worktrees = owner
+	shape(t, fixture.assigned.Path)
+	return fixture, owner
+}
+
+// TestAbandonAppliesForDecayedShapesThroughRealPlanner composes the decayed shapes with
+// the real planner, so a state the synthetic fingerprint admits but internal/worktree
+// refuses cannot pass unseen. The shapes are the two the classifier decides without
+// privilege: a directory that has lost its git metadata, and a path that is no directory
+// at all.
+func TestAbandonAppliesForDecayedShapesThroughRealPlanner(t *testing.T) {
+	for _, test := range []struct {
+		name  string
+		shape func(t *testing.T, path string)
+	}{
+		{"husk", huskCheckout},
+		{"regular file", regularFileCheckout},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			fixture, owner := realAbandonFixture(t, test.shape)
+			plan, err := fixture.service.Abandon(t.Context(), "build demo")
+			if err != nil {
+				t.Fatalf("Abandon over a %s: %v", test.name, err)
+			}
+			if len(plan.Worktrees) != 1 || plan.Worktrees[0].Path != fixture.assigned.Path || owner.plans == 0 {
+				t.Fatalf("planned worktrees = %#v, owner plan calls = %d", plan.Worktrees, owner.plans)
+			}
+			status, err := fixture.service.ApplyAbandon(t.Context(), "build demo", plan.Fingerprint)
+			if err != nil || status.State != "terminal" || owner.applies != 1 {
+				t.Fatalf("ApplyAbandon over a %s status=%#v err=%v apply calls=%d", test.name, status, err, owner.applies)
+			}
+			run := loadRun(t, fixture.service)
+			_, released, ok := assignmentFor(run, fixture.assigned.ID)
+			if !run.Terminal || !ok || !released.Released {
+				t.Fatalf("%s abandonment evidence = %#v", test.name, run)
+			}
+		})
 	}
 }
 

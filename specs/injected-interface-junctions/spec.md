@@ -1,6 +1,6 @@
 # injected-interface-junctions
 
-Status: staged
+Status: implemented
 
 Decision source: `capture/audits/injected-interface-composition.md` — the
 reviewed injected-interface composition audit (2026-08-03), authored under the
@@ -43,9 +43,11 @@ the spec.
    Line: `sonnet` / low / ~3 iterations. Exact spec, known shape,
    gate-covered.
 2. **AbandonOwner decayed-family junction.** As the reviewer, I can trust the
-   decayed/husk/unreadable abandon paths because the shapes now graded by the
-   synthetic `decayedOwner` fingerprint are also driven through the real
-   planner with privilege-free fixtures.
+   decayed/husk abandon paths because the shapes now graded by the synthetic
+   `decayedOwner` fingerprint are also driven through the real planner with
+   privilege-free fixtures; the unreadable shape is refused by the Service's
+   precondition before any abandon-owner call, so no owner composition exists
+   for it to junction-test.
    Line: `opus` / medium / ~4 iterations. The test shape is known
    (re-drive existing cases through the real planner) and a composition
    divergence surfaces as an observed red handled by the Solution's
@@ -109,9 +111,11 @@ the spec.
   exemption for `NPMCLIRegistry`).
 - The check registers as a `registry.Check` row (tier `Dev`, subject and a
   valid `InputSource` — go-source), positioned per the registry's
-  order-is-contract rule; it emits **four distinct failure messages**:
+  order-is-contract rule; it emits **five distinct failure messages**:
   unregistered port, registry-named test missing, empty exemption reason,
-  zero-derived inventory for a package known to declare ports (fail closed).
+  zero-derived inventory for a package known to declare ports (fail closed),
+  and a registry row naming a port the derivation no longer reports (orphan
+  row).
   The named-test-exists verification is a **tripwire** (it catches deletion,
   not a junction test gutted back to a fake) and is labeled as such in the
   check's doc; the behavior half of the defense is the junction tests
@@ -158,7 +162,7 @@ the spec.
 | 1 | Service release path completes against real `ReleaseProvisional` when evidence is durable | specbuild Service test with a real-release owner | not classically TDD-able (production presumed working); composition-degenerate probe: relax the producer's request/assignment/path mismatch guard (`ReleaseProvisional`'s retained-checkout refusal) and the refusal row below must go red while the fake-driven tests stay green — probe observed and reverted at build time | a bare-nil release owner passes every existing test; only the real producer refuses bad evidence |
 | 1 | Service surfaces the real refusal on request/assignment mismatch | same seam, mismatch fixture | not classically TDD-able; asserts the exact refusal string (`provisional release request, assignment, or path mismatch; checkout retained`) which no fake emits — red proof via the same producer-side probe | pins that refusals propagate through the Service instead of being swallowed |
 | 2 | Decayed-directory and husk abandon paths hold with the real planner | specbuild abandon tests re-driven via `abandonOwner` (real) with dir-without-.git / non-dir fixtures | not classically TDD-able; composition-degenerate probe: soften the real planner's shape policy (admit a shape `ClassifyPathShape` refuses) — the fake-driven twin stays green, the junction test goes red — probe observed and reverted at build time | this is FT181's exact failure shape; fake-admitted states must be shown real-admitted |
-| 2 | Unreadable-metadata abandon holds with the real planner | same seam, `requireUnreadableMetadata` fixture (root-guard skip) | same producer-side probe class | the fake's synthetic fingerprint cannot diverge from the planner; the real path can |
+| 2 | Unreadable checkout metadata is refused before any abandon-owner call, so no owner composition exists for this shape | specbuild precondition classification, `requireUnreadableMetadata` fixture (root-guard skip) | already covered: `TestAbandonRefusesUnreadableCheckoutMetadata` (fake-driven, asserts zero owner calls) plus `internal/worktree`'s own planner tests pin the classifier's unreadable contract | the Service's precondition refuses before `AbandonOwner` is ever reached, so a real-planner junction test would assert an owner call that provably never happens |
 | 3 | `SweepTier` with `defaultRunner` resolves a relative gate against the fixture cwd | canary test, one gate-owned hermetic fixture, planted trivial bash gate | not classically TDD-able; degenerate probe: point the fixture at a missing gate path and assert the exit-127 diagnostic surfaces through the sweep — probe observed at build time | `resolvingRunner` re-implements this resolution; only the real runner proves bash agrees |
 | 4 | `Classify` composed with real probes blocks checkout of an unresolvable ref and permits a resolvable one | gitguard test, temp git repo, `t.Chdir`, no parallel | observed red on first write: no existing test constructs the real `Checker` — write the verdict assertion before wiring the repo state and watch it fail | the constant fakes pin one corner of the polarity matrix; the real repo pins the composition |
 | 4 | Timeout polarity composes: a hung git blocks both checkout (ref unresolvable) and forced creation (branch presumed present) | gitguard test, PATH-front stub `git` sleeping past the 2s bound, `t.Chdir`, no parallel | observed red on first write: no test composes the timeout defaults through `Classify` today | the two probes fail safe in opposite directions; only composition shows both land on "block" |
@@ -166,6 +170,7 @@ the spec.
 | 5 | Real classifier's `ShapeUnknown` produces the specbuild ownership refusal | specbuild precondition test: replace `assigned.Path` with a self-symlink (ELOOP) — the ENOTDIR construction needs the pool parent turned into a file, priced out as too heavy | observed red on first write: no test composes this today | the consumer discards the error; only the enum path guards the refusal, so it must be witnessed |
 | 6 | Check red on an injected port with no registry row | conformance check + canary fixture | planned red, recorded when observed: run the check before the registry row lands (classic TDD red), retained forever by the canary fixture | an unregistered port is the audit gap recurring; the canary keeps the proof alive |
 | 6 | Check red when a registry row names a test that does not exist (tripwire: catches deletion, not decay) | conformance check unit fixture | planned red, recorded when observed during check authorship | a deleted junction test must not leave a green advertisement |
+| 6 | Check red when a registry row names a port the derivation no longer reports (orphan row) | conformance check unit fixture, planted orphan registry row under a scoped conformance run | planned red, recorded when observed: the orphan check's own unit red was observed during round-2 repair, and a planted orphan registry row was observed red under a scoped conformance run | a row can outlive the port it names, leaving a green advertisement for an inventory entry the derivation no longer reports |
 | 6 | Exempt rows require a non-empty reason; zero-derived inventory fails closed | conformance check unit fixtures | planned reds, recorded when observed during check authorship | an empty exemption is an unregistered port with better manners; silent zero-inventory is de-enforcement |
 | 6 | `productionGateOwner` and `productionWorktreeOwner` satisfy `PromotionGateOwner`/`ReleaseOwner`/`AbandonOwner` at compile time | cmd/bench compile-time pins | not TDD-able as a test (build-time assertion); degenerate probe: remove one method locally, observe the build red, revert | the runtime type assertions downgrade silently; the pins make method loss a build failure |
 
@@ -180,13 +185,15 @@ the spec.
   Linux CI (existing FIFO fixture prior art).
 - Registry drift: port added without row (canary-covered row), test renamed
   (existence row), exemption emptied (reason row), zero-derived inventory
-  (fail-closed row).
+  (fail-closed row), row outlives its port (orphan row).
 - **Won't handle:** driving `Sweep`'s full fixture inventory with the real
   runner on every gate run — one hermetic junction fixture suffices; the
   sweep's breadth stays on the fast fake.
 - **Won't handle:** deterministic per-site pinning inside the *specbuild*
   consumer for classifier sites one and three — the classifier-level rows pin
   the sites; the consumer row pins the enum path once via ELOOP.
+- **Won't handle:** unreadable-metadata owner composition — refused pre-owner
+  by the precondition, so there is no composition to junction-test.
 
 ## Out of scope
 

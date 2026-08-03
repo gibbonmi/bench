@@ -67,6 +67,7 @@ func init() {
 		"example-agreement":                 {checkExampleAgreement, registry.Dev, registry.SubjectRoot},
 		"component-honesty-prose":           {checkComponentHonestyProfile, registry.Dev, registry.SubjectKitRoot},
 		"contract-capture-reads":            {checkContractCaptureReads, registry.Dev, registry.SubjectKitRoot},
+		"injected-port-registry":            {checkInjectedPortRegistry, registry.Dev, registry.SubjectRoot},
 	}
 }
 
