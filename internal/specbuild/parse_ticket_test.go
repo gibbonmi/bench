@@ -98,6 +98,32 @@ func TestParseTicketRefusesZeroRowsAndFencelessTickets(t *testing.T) {
 	}
 }
 
+func TestParseTicketRefusesDuplicateAcceptanceIDs(t *testing.T) {
+	for _, row := range []struct{ name, body, want string }{
+		{
+			name: "literal repeat",
+			body: "# Twice charged\n\nOwnership fence: `internal/specbuild`\n\n- [ ] [EP1] first obligation.\n- [ ] [EP1] second obligation under the same ID.\n",
+			want: "spec build ticket one.md declares duplicate acceptance ID EP1",
+		},
+		{
+			name: "range overlap",
+			body: "# Overlapping ranges\n\nOwnership fence: `internal/specbuild`\n\n- [ ] [R10-R12] the range charges three rows.\n- [ ] [R11] one of them is charged again.\n",
+			want: "spec build ticket one.md declares duplicate acceptance ID R11",
+		},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			specPath, _ := ticketFixture(t, row.body)
+			parsed, err := specbuild.ParseTicket(specPath, "one.md")
+			if err == nil {
+				t.Fatalf("ParseTicket accepted %q as %#v", row.name, parsed)
+			}
+			if err.Error() != row.want {
+				t.Errorf("error = %q, want %q", err, row.want)
+			}
+		})
+	}
+}
+
 func TestParseTicketRangeExpansionUnchanged(t *testing.T) {
 	body := "# Range expansion\n" +
 		"\n" +

@@ -147,7 +147,16 @@ func ParseTicket(specPath, arg string) (Ticket, error) {
 	if len(result.Fence) == 0 {
 		result.Fence = packageName.FindAllString(string(b), -1)
 	}
-	result.Rows = unique(result.Rows)
+	// Acceptance IDs are the per-obligation identity downstream accounting
+	// keys on, so a repeat — literal or via R-range overlap — is malformed
+	// input, not something to collapse.
+	seen := make(map[string]bool, len(result.Rows))
+	for _, row := range result.Rows {
+		if seen[row] {
+			return Ticket{}, fmt.Errorf("spec build ticket %s declares duplicate acceptance ID %s", filepath.Base(path), row)
+		}
+		seen[row] = true
+	}
 	result.Fence = unique(result.Fence)
 	result.Assumptions = unique(result.Assumptions)
 	if len(result.Fence) == 0 {
