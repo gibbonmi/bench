@@ -34,6 +34,70 @@ func applyCheckpointFixtureConfiguration(root string, configure []func(string)) 
 	}
 }
 
+func TestPromoteRecomposesEmptyRunOnWorkingAdvance(t *testing.T) {
+	root := repo(t)
+	service := New(root, &countingGate{}, realOwner{})
+	if _, err := service.Start(t.Context(), "build demo"); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	before := loadRun(t, service)
+	advanceWorking(t, root)
+	working := git(t, root, "rev-parse", "HEAD")
+	owner := &recompositionGate{}
+	service.gate = owner
+
+	status, err := service.Promote(t.Context(), "build demo")
+	if err != nil || status.Next != "bench spec build assign build demo" || owner.calls != 1 {
+		t.Fatalf("Promote = %#v, %v; bootstrap calls=%d", status, err, owner.calls)
+	}
+	after := loadRun(t, service)
+	if after.Base != working || after.CandidateTip != working || !refAt(root, after.Candidate, working) {
+		t.Fatalf("recomposed empty run = %#v, want candidate and durable tips at %s", after, working)
+	}
+	if owner.branch != before.Branch || owner.tip != working || owner.expected != before.Base {
+		t.Fatalf("bootstrap subject = branch %q tip %q expected %q", owner.branch, owner.tip, owner.expected)
+	}
+}
+
+func TestPromoteEmptyRecompositionRefusesBootstrapFailureWithoutMutation(t *testing.T) {
+	root := repo(t)
+	service := New(root, &countingGate{}, realOwner{})
+	if _, err := service.Start(t.Context(), "build demo"); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	advanceWorking(t, root)
+	statePath, err := service.statePath("build demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	beforeState, err := os.ReadFile(statePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := loadRun(t, service)
+	working := git(t, root, "rev-parse", "HEAD")
+	owner := &recompositionGate{err: errors.New("injected exact-evidence failure")}
+	service.gate = owner
+
+	status, promoteErr := service.Promote(t.Context(), "build demo")
+	if promoteErr == nil || !strings.Contains(promoteErr.Error(), "run bench gate --fresh, then retry promote") {
+		t.Fatalf("Promote error = %v", promoteErr)
+	}
+	if status.Next != "bench spec build assign build demo" {
+		t.Fatalf("Promote next = %q", status.Next)
+	}
+	afterState, err := os.ReadFile(statePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(afterState) != string(beforeState) || !refAt(root, before.Candidate, before.CandidateTip) || git(t, root, "rev-parse", "HEAD") != working {
+		t.Fatal("bootstrap refusal mutated the empty run, candidate, or working branch")
+	}
+	if got := git(t, root, "rev-parse", "refs/bench/green/"+before.Branch); got != before.Base {
+		t.Fatalf("green marker = %s after bootstrap refusal, want %s", got, before.Base)
+	}
+}
+
 func TestPromoteRecomposesCompatibleSamePathChanges(t *testing.T) {
 	candidateContent := strings.Replace(samePathFixture, `candidateValue = "base"`, `candidateValue = "candidate"`, 1)
 	fixture := reviewedSamePathPromotionFixture(t, candidateContent)
