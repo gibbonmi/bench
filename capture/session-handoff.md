@@ -2,41 +2,46 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `43e2ccf`, clean tree, 2 unpushed commits
+Branch: `main` — HEAD `2276b27`, clean tree, 5 unpushed commits
 Spec: `specs/ft164-ticket-contracts/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `473c2a9` — current
+Gate: green at `2a8f9f0` — stale, work tree `ada7d85`
 
 ## State
 
-- **FT164 spec staged and signed off** at `specs/ft164-ticket-contracts/spec.md`
-  (commit `5300bfa`): the ticket-contract core split, 7 stories, 24-needle
-  anchor inventory, 30 coverage rows, falsification pass folded in. The
-  reviewer approved the spec and its four flagged calls on 2026-08-02:
-  ticket-local requirement IDs, basename-keyed `Blocked by:`, the
-  process-boundary edge class landing in `craft-spec` plus the profile
-  checklist, and the contracts-discovery spec-side half as one pointer
-  sentence in `craft-spec`'s slicing section. These decisions stay closed.
-  The repair riders (model-comparison, inventory-currency, shared-cache)
-  stay on the roadmap under FT164's row for the next drain to re-home.
-- **craft-research boundaries are closed** and recorded in
-  `decisions/craft-research.md` (committed by its own session): read-side
-  research discipline only, nothing carved from `craft-delegate`, no
-  `craft-tickets` edits, no tier statements. FT164's implementation and the
-  craft-research build are disjoint and land in either order.
-- Implementation notes the FT164 build must honor (from the spec): the one
-  `internal/specbuild` edit is an export-only parser entry point; anchors are
-  section-scoped with each needle getting a mutation-table row; completion
-  evidence is a fresh-session dogfood (cold-written ticket through
-  `bench spec build assign` in a fixture repo), since the build touches the
-  gate and forfeits `craft-synthesis`'s prose-only substitute.
-- pcgs residuals ride their existing roadmap rows (FT183 review residuals,
-  FT181); the 21 out-of-pool `../bench-pcgs*` worktrees remain cleanup-ready
-  on reviewer say-so, per the prior handoff.
-- Nothing has been pushed; push is the reviewer's call.
+- **FT164 `--full` build: implementation phase, in flight.** Lifecycle
+  `bench spec build` run active for `ft164-ticket-contracts`, subject `2276b27`.
+  Seven executable-contract tickets committed under
+  `specs/ft164-ticket-contracts/tickets/` (opus-authored, opus-reviewed, one
+  repair round applied). Two assignments out on the frontier: request
+  `ft164-export-parser` (ticket `export-the-ticket-parser.md`) and request
+  `ft164-teach-template` (ticket
+  `teach-the-executable-contract-template-and-examples.md`); the remaining five
+  tickets are dependency-blocked (chain teach→open→add→charge→point; land
+  blocked by export+teach). `bench spec build status ft164-ticket-contracts`
+  is authoritative for assignment state.
+- **Line (reviewer override, 2026-08-02):** opus/high for all write delegates
+  and all reviews — opus followability is the build's purpose — overriding the
+  spec's fable/high on stories 1–6; fable coordinates and verifies. Research
+  fan-out (6 opus delegates) complete; key facts encoded in the tickets'
+  Assumptions lines.
+- **Coordinator decisions flagged for reviewer veto:** headings inside the
+  craft-tickets fenced template/examples demote to `###` (the anchor harness's
+  section resolver is fence-blind); the test-harness ceiling lands beside step
+  2 of `## Draft the breakdown` instead of the unscopable preamble.
+- **Reviewer-directed side work, not started here:** a Codex hotfix prompt was
+  handed to the reviewer to relax `bench spec build start`'s exact-green
+  precondition (accept reduced/partial verdicts whose inherited evidence
+  composes to whole-tree green) and fix its remediation text. It edits
+  `internal/specbuild` + `internal/gate` — must not run while the
+  `export-the-ticket-parser` assignment is open in the same package. FT173's
+  row now records the contextual-disclosure finding and the reviewer's
+  per-command acceptance conditions.
+- One open learnings entry (gate-subject mutation miss). Nothing pushed; push
+  is the reviewer's call.
 
 ## Next command
 
-`/bench-what-next` — the board's leading invocable signal (`drain`).
+`/bench-implement-spec --full specs/ft164-ticket-contracts/spec.md`
 
 ## Shape
 
