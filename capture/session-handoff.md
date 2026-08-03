@@ -2,35 +2,33 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `5b4e240`, 1 dirty path, 13 unpushed commits
+Branch: `main` — HEAD `7dbb686`, clean tree, 21 unpushed commits
 Spec: `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `94889f6` — stale, work tree `396fbd6`
+Gate: green at `e11c4c7` — stale, work tree `e11c4c7`
 
 ## State
 
-- **FT164 is implemented and terminal.** Promoted at `83c630e` (candidate
-  `cbdcf7d`, run terminal). All 30 coverage rows closed; 27 section-scoped
-  needles each with a mutation-table row; the example-agreement check is live
-  in the conformance registry with its canary family. Retro at
-  `capture/retros/ft164-ticket-contracts.md`, including the open reviewer-veto
-  surface (duplicate re-derivation sentence, `###` fence-heading workaround,
-  ParseTicket doc comment, inventory grouping label, held probe-kind entry,
-  anchor-file structure-budget overage).
-- **The follow-ups are landed too:** both Codex hotfixes are on main
-  (`4afc609` composed-green accepted at lifecycle entry, `2874d94`
-  zero-checkpoint recomposition rebases instead of feeding git an empty
-  patch; tickets under `specs/light-path-composed-green-recomposition/`), and
-  the fence-aware section resolver landed at `79bcc11`, retiring the
-  craft-tickets `###` heading workaround — that veto flag is closed.
-- Two open learnings entries (gate-subject mutation; tree-freeze during active
-  runs) and one pending retro drain await `/bench-what-next`.
-- FT173's row carries the reviewer's per-command AXI acceptance conditions
-  (recorded 2026-08-02); FT174 is unblocked by FT164's identifier decisions.
+- **The `/bench-what-next` drain is committed** (`626cf92`), and
+  `ft164-ticket-contracts` is retired (`7dbb686`). All three capture sources
+  are empty: 3 ideas, 3 learnings, 1 retro drained.
+- **FT164's row is now its residual only** — the repair-and-experiment lane
+  the spec cut (model-comparison, inventory-currency, shared-cache charges),
+  plus two rules from its own build: a done-claim resolves every owner named
+  in a ticket's Red-mutations table to a real artifact, and a repair round
+  trues up any enumeration it extends. It names no spec path.
+- Rulings recorded during the drain: FT173's principle-9 byte-relaxation
+  applies to the `help[]` spec alone; FT175's spec-start gate is
+  owners-consumed, and its three ledger decisions are deferred behind the
+  foundation and `help[]`. FT130 gained the tip-move-under-active-run face;
+  FT156 gained the anchor-file budget signal (864 vs 660).
+- Two restructure candidates were named but not applied (a default run):
+  FT130 now carries three faces of one decision, and FT164's residual could
+  fold into the FT179 + FT111 visit. Both are open for a `--restructure` pass.
 - Nothing pushed; push is the reviewer's call.
 
 ## Next command
 
-`/bench-what-next`
+`/bench-shape-idea` — the board's leading invocable signal (`decisions`).
 
 ## Shape
 
