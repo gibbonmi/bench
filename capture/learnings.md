@@ -28,3 +28,17 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
   roadmap edits until the verdict lands, or do them before starting the run.
 - **Proposed rule change:** none — the rule exists; this is an execution miss
   worth counting, and the queue-until-verdict habit is the fix.
+
+## 2026-08-03 — tip moved under an active spec-build run with zero checkpoints  [open]
+
+- **What happened:** Committed capture files (handoff) while a spec-build run
+  was active but before any checkpoint existed; the moved tip forced
+  recomposition, which is unrecoverable at zero checkpoints (empty patch), and
+  the run had to be abandoned and restarted with delegate diffs replayed.
+- **Right behavior:** Freeze the tree for the life of an active spec-build
+  run — no capture commits, no roadmap edits — until promote lands; every tip
+  move mid-run costs at least a fresh full gate for recomposition, and before
+  the first integration it costs the run.
+- **Proposed rule change:** the phase-boundary handoff write in `--full` runs
+  should happen before `bench spec build start` or after promote, never
+  between; candidate for the bench-implement-spec command text.
