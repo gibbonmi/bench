@@ -2,51 +2,36 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `2276b27`, clean tree, 5 unpushed commits
-Spec: `specs/ft164-ticket-contracts/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `2a8f9f0` — stale, work tree `ada7d85`
+Branch: `main` — HEAD `5b4e240`, 1 dirty path, 13 unpushed commits
+Spec: `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Gate: green at `94889f6` — stale, work tree `396fbd6`
 
 ## State
 
-- **FT164 `--full` build: repair round after composed review.** All eight
-  tickets (seven original + the classification repair) are integrated; the
-  reviewed candidate was `0b592ac`. The fresh-context opus three-axis review
-  and a Codex `gpt-5.6-sol` falsification pass together produced five accepted
-  concrete defects, now two repair tickets in
-  `specs/ft164-ticket-contracts/tickets/`:
-  `retire-title-blockers-and-pin-the-unpinned-halves.md` (step-3 title
-  contradiction, AB2 row unpinned, junction-creation half unpinned) and
-  `tighten-the-agreement-checks-blind-spots.md` (per-ID substring blind spot,
-  EOF normalization vacuity). Repair route: fresh gate → promote (recompose) →
-  assign both → checkpoint → integrate → fresh composed review → promote.
-  Veto flags held for the exit report: duplicate re-derivation sentence,
-  `###` fence-heading workaround, held (unmoved) probe-kind mutation entry,
-  ParseTicket doc comment naming its consumer, the anchor file already over
-  its structure budget. `bench spec build status ft164-ticket-contracts` is
-  authoritative for lifecycle state.
-- **Line (reviewer override, 2026-08-02):** opus/high for all write delegates
-  and all reviews — opus followability is the build's purpose — overriding the
-  spec's fable/high on stories 1–6; fable coordinates and verifies. Research
-  fan-out (6 opus delegates) complete; key facts encoded in the tickets'
-  Assumptions lines.
-- **Coordinator decisions flagged for reviewer veto:** headings inside the
-  craft-tickets fenced template/examples demote to `###` (the anchor harness's
-  section resolver is fence-blind); the test-harness ceiling lands beside step
-  2 of `## Draft the breakdown` instead of the unscopable preamble.
-- **Reviewer-directed side work, not started here:** a Codex hotfix prompt was
-  handed to the reviewer to relax `bench spec build start`'s exact-green
-  precondition (accept reduced/partial verdicts whose inherited evidence
-  composes to whole-tree green) and fix its remediation text. It edits
-  `internal/specbuild` + `internal/gate` — must not run while the
-  `export-the-ticket-parser` assignment is open in the same package. FT173's
-  row now records the contextual-disclosure finding and the reviewer's
-  per-command acceptance conditions.
-- One open learnings entry (gate-subject mutation miss). Nothing pushed; push
-  is the reviewer's call.
+- **FT164 is implemented and terminal.** Promoted at `83c630e` (candidate
+  `cbdcf7d`, run terminal). All 30 coverage rows closed; 27 section-scoped
+  needles each with a mutation-table row; the example-agreement check is live
+  in the conformance registry with its canary family. Retro at
+  `capture/retros/ft164-ticket-contracts.md`, including the open reviewer-veto
+  surface (duplicate re-derivation sentence, `###` fence-heading workaround,
+  ParseTicket doc comment, inventory grouping label, held probe-kind entry,
+  anchor-file structure-budget overage).
+- **Reviewer's next action: run the Codex hotfix** (prompt already delivered in
+  conversation; hotfix-class, `$bench-debug`, light-path tickets): relax
+  `bench spec build start`'s exact-green precondition to accept composed
+  green (reduced/partial verdict + intact inherited evidence), fix its
+  remediation text, and make zero-checkpoint recomposition trivial instead of
+  feeding git an empty patch. Both defects are parked in `capture/IDEAS.md`.
+  Nothing now holds `internal/specbuild` or the tip — safe to run.
+- Two open learnings entries (gate-subject mutation; tree-freeze during active
+  runs) and one pending retro drain await `/bench-what-next`.
+- FT173's row carries the reviewer's per-command AXI acceptance conditions
+  (recorded 2026-08-02); FT174 is unblocked by FT164's identifier decisions.
+- Nothing pushed; push is the reviewer's call.
 
 ## Next command
 
-`/bench-implement-spec --full specs/ft164-ticket-contracts/spec.md`
+`/bench-what-next`
 
 ## Shape
 
