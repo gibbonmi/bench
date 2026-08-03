@@ -66,21 +66,6 @@ windows (before `start` or after `integrate`). Entry: `/bench-shape-idea`.
 Sources: `capture/IDEAS.md` (the three FT176 review entries), drained here;
 `capture/learnings.md` 2026-08-02, verdicted here.
 
-**FT183 (MEDIUM, decision required) — per-component-scoping review residuals:
-the unreachable reduced fallback and the unbound derivation source.** Two faces
-from the shipped per-component-gate-scoping review, one layer (`internal/gate`'s
-component scoping). First, retire the whole-changeset reduced-run path: after
-per-component scoping, `reducedInheritance` answers only for a kit root with no
-`go.mod` — a shape production never has (review S1; the comment-truth half
-landed at `7936b70`). Removal touches `reduced_run_test`'s synthetic fixture;
-the decision is whether linked-repo futures want the path kept. Second, the
-derivation-source check passes a wrong-but-derived resolver swap: it proves an
-entry is derivation-sourced but not that it binds to its NAMED derivation
-(review Sp1, disclosed in `derivation_source_test.go`'s header); closing it
-needs a design for observing which function a registry row resolves through.
-Entry: `/bench-shape-idea`. Sources: `capture/IDEAS.md` 2026-08-02, drained
-here; the per-component-gate-scoping retro, drained here.
-
 **FT171 (MEDIUM, decision required) — bound outer gate-phase concurrency
 against measured contention.** The artifact-split follow-up measured the
 `posture` package materially slower inside the fresh full gate than in its
@@ -201,18 +186,28 @@ The close itself has one unresolved ownership decision. `bench spec retire`
 says to remove the roadmap row while `/bench-final-check` says to leave it for
 `/bench-what-next`; one instruction yields. The same decision gives retirement
 a planned promotion/removal manifest and an explicit commit path instead of
-generic dirty state. It also owns a drain precondition that does not exist
-today: `bench spec retire` deletes the spec folder outright
-(`internal/spec/spec.go:400`) with nothing checking whether that spec's retro is
-still pending in `capture/retros/`, so retirement can destroy undrained capture.
-Drain-before-delete is already enforced for parked ideas and journal entries;
-retire is the one capture-bearing deletion exempt from it, and both live specs
-carry a pending retro right now. Source: `capture/IDEAS.md`, drained here. The handoff's `## Next command` body is then graded as
+generic dirty state. It also owns a close-order precondition that does not exist
+today: `bench spec retire` deletes the live spec folder outright
+(`internal/spec/spec.go:400`) without checking whether terminal final-check and
+retro capture have run. The check-level-conformance-scoping close retired first,
+then found that terminal status still required the deleted path. Until the
+retained-run fallback exists, final-check and retro capture precede retirement.
+Source: the check-level-conformance-scoping retro and `capture/IDEAS.md`, drained
+here. The handoff's `## Next command` body is then graded as
 exactly one backticked harness-native invocation, so the authoritative next
 action cannot drift into explanatory prose. Kit edit under the
 `craft-synthesis` discipline. Sources: the craft-tickets, light-path,
 artifact-suite, and artifact-hoist retros, drained here; `capture/IDEAS.md`, drained
 here and in prior runs; `capture/learnings.md`, verdicted here.
+
+The check-level-conformance-scoping close adds the terminal-record face. A
+retired spec currently makes `bench spec build status <slug> --full` unreadable
+even though the durable run record survives, and that record omits the measured
+promotion-stage timings the required retro needs. The terminal projection reads
+the retained record after retirement and retains those timings. Until it does,
+`/bench-final-check` captures the retro before retirement rather than rerunning a
+successful promotion to manufacture evidence. Source: the
+check-level-conformance-scoping retro, drained here.
 
 **FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
 The ft91-gate-tier-split semantic review found twelve; three closed before
@@ -326,6 +321,11 @@ the pass is advisory and does not become a second oracle. Kit edit under the
 prior drain; the gate-fastpath and FT123 + FT124 retros, drained here and in a
 prior run.
 
+The check-level-conformance-scoping close confirms that this review must stay at
+the public CLI seam: the cross-harness pass caught disagreement among status,
+dashboard, and handoff consumers that package-only tests did not expose. Source:
+the check-level-conformance-scoping retro, drained here.
+
 **FT135 (MEDIUM) — a pre-push guard on a guessed branch looks armed while
 protecting nothing.** When the repository has no resolvable default branch,
 the installed pre-push hook falls back to a baked `fallbackProtectedBranch`
@@ -436,6 +436,14 @@ refused `clean --discard-ignored --full` outright when
 as the only route; the derived-cache case deserves a carve-out or a named
 override under the same size-bounded contract. Source: the
 spec-build-lifecycle-preconditions retro, drained here.
+
+The 2026-08-03 journal supplies another set-aside instance: landing FT183 while
+capture files were foreign to the scoped commit required copying them out,
+restoring their committed bytes, committing, and copying them back because both
+plain revert and path-scoped stash were guard-blocked. That workaround is
+recoverable only by session care, so it strengthens the existing CLI-owned
+set-aside face rather than earning a guard exemption. Source:
+`capture/learnings.md` 2026-08-03, verdicted here.
 
 **FT169 (MEDIUM) — one sanctioned worktree landing command
 owns the stale-base dance.** The gate-fastpath build hand-ran the same sequence
@@ -697,6 +705,15 @@ data on no arguments is a regression, not conformance. The
 truncation half alone is a one-source-per-fact sweep and could ride the standards
 debt batch; the rest is a build. Sources: `capture/IDEAS.md`, drained here; the reviewer
 constraint above, parked and drained here.
+
+**FT185 (MEDIUM) — gate results join the structured Bench output contract.**
+`bench gate` is the last major agent-facing surface that reports phase verdicts
+as ad-hoc prose while `bench test`, `bench diff`, and `bench coverage` emit TOON.
+Give the gate one structured result schema without changing exit-code authority,
+phase completeness, or the durable verdict it authors. The gate-pipeline map's
+ticket 9 closed the scope decision: no output redesign rides that pipeline build,
+so this is an independent item. Entry: `/bench-write-spec`. Source:
+`capture/IDEAS.md`, drained here.
 
 **FT175 (MEDIUM, decision required) — a claim ledger for assertions about the
 world.** The gate refuses "I believe the tests pass" and nothing refuses "I
@@ -1089,6 +1106,17 @@ does not currently name. Propose the assertion rule as a gate check
 violated. Kit edit under the `craft-synthesis` discipline. Background:
 `docs/reporesident-distillation.md` §2.
 
+**FT186 (LOW) — split the gate executor and type its verdict
+records without changing behavior.** Two structural hotspots sit behind the
+gate seam. `executeSubjectWithEngine` combines locking, subject-drift checks,
+component selection, dispatch, and four persistence branches in one roughly
+200-line function. Verdict field-set validity is separately hand-maintained in
+`readyFieldClasses` and the record-class registry. Under the mechanical
+refactor lane, split the executor by those responsibilities and make
+record shape type-enforced, preserving the existing gate and mutation tests as
+the exit test. These are refactors, not a gate rewrite. Source:
+`capture/IDEAS.md`, drained here.
+
 **FT111 (LOW) — provenance tags that outlive their specs.** Code comments
 carrying `FT<n> story <n>` tags point at specs that retire — two retired on
 2026-07-23 alone — so a tag naming a retired spec points at nothing, which is
@@ -1238,6 +1266,13 @@ clause was left vacuously satisfied by the same drift. Kit edit under the
 spec's out-of-scope riders and its implementation retro, drained here;
 `capture/learnings.md` 2026-08-03, verdicted here.
 
+The check-level-conformance-scoping close adds a slicing rule to that visit: a
+ticket spanning runtime projection, canary selection, and documentation
+conformance splits those owners before assignment. Its combined scope/report
+slice consumed most of 14 assignment attempts even though the narrower
+outer-selector, conformance-meta, and evidence-retention slices converged
+directly. Source: the check-level-conformance-scoping retro, drained here.
+
 **FT165 (LOW) — fold the domain-modeling discipline into
 `/bench-shape-idea`.** Upstream candidate (mattpocock/skills,
 domain-modeling): as grill tickets resolve decisions, challenge fuzzy or
@@ -1272,6 +1307,13 @@ existing spec reader indexes ticket-only receipts and states why they remain,
 or the light-path close removes the folder after promoting durable content —
 one owner, one policy, no second archive convention. Source:
 `capture/learnings.md` 2026-08-01, verdicted here.
+
+The route also owns the requested one-command execution surface. Once shaping
+chooses spec-optional work, `$bench-implement-spec --full` accepts its ticket
+folder and carries implementation, review, gate, and commit to push-ready state
+without inventing a placeholder spec. This is a consumer of the route and
+terminal policy above, not a second lifecycle. Source: `capture/IDEAS.md`,
+drained here.
 
 **FT182 (LOW) — a Planned-phase receipt over an absent target wedges the
 abandon retry.** In `bench worktree` resume, a Planned-phase in-flight receipt
@@ -1428,8 +1470,8 @@ behavior off the spec's own map — decide it alongside the check, same owner.
 Found by the Codex falsification pass on `3eb1c9a`. Source: `capture/IDEAS.md`,
 drained here.
 
-**FT174 (MEDIUM) — ticket dependency edges resolve to identifiers, and something
-walks them.** Every one of the 25 tickets under `specs/*/tickets/` carries a
+**FT174 (MEDIUM) — ticket files have one enforced dependency, ownership, and
+mutation grammar.** Every one of the 25 tickets under `specs/*/tickets/` carries a
 `Blocked by:` field keyed by sibling *title* — ten read `none`, fifteen name
 titles, none names an identifier — and no parser reads any of them. A retitle
 silently breaks the edge, and nothing detects a cycle or a dangling blocker,
@@ -1444,8 +1486,18 @@ the method step 2 of `craft-tickets` currently lacks. The doc half is done —
 FT164's template teaches the identifier form and the parseable field shapes, and
 the gate parses the Good example with the real parser — so this row is the parser
 and the validation only. Measured 2026-07-31; re-verified against FT164's landed
-template. Sources: `capture/IDEAS.md` and `capture/learnings.md` 2026-08-02, both
-drained in prior runs.
+template.
+
+The parser visit closes three more real-ticket gaps. Once legacy compatibility
+ends, every ticket carries an explicit `Ownership fence:`; assignment no longer
+infers mutation authority from incidental `internal/<pkg>` prose, with rejection
+timing left for the spec. `ParseTicket` reads Red-mutations rows from real tickets
+and requires one complete row per acceptance ID, while historical closed tickets
+remain exempt. Duplicate acceptance IDs are malformed input and the diagnostic
+names both the ID and ticket instead of silently deduplicating evidence used by
+coverage accounting, checkpoint receipts, and repair routing. Sources:
+`capture/IDEAS.md` 2026-08-03, drained here; `capture/IDEAS.md` and
+`capture/learnings.md` 2026-08-02, drained in prior runs.
 
 **FT153 (MEDIUM) — the canary's vacuity baseline is a collision screen, not a
 vacuity proof.** A behavior-owned fixture's EXPECT is compared against its
@@ -1836,6 +1888,7 @@ recommended table is sequencing advice.
 | FT | Depends on | Why |
 |---|---|---|
 | FT107 | FT141 | Its fix-loop shrink rule cannot distinguish convergence until inherited reds are attributed to their pinned baseline. |
+| FT186 | FT108 | The gate restructure needs the mechanical exit test before moving oracle code without behavioral stories. |
 
 ### Recommended
 
@@ -1873,7 +1926,7 @@ falsifiable — otherwise the foundation goes first while FT141 and FT158
 build.
 
 1. Front-load one decision session: FT156's anchor-mechanism ruling, FT144's
-   one-decision-both-phases call, and FT181 + FT183. Reviewer latency is the
+   one-decision-both-phases call, and FT181. Reviewer latency is the
    binding constraint: grills serialize on the reviewer while builds
    parallelize on agents. Three of the original six items closed on
    2026-08-02 — FT173's principle-9 relaxation and FT175's spec-start gate
@@ -1939,6 +1992,6 @@ prose batch edits.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — the front-loaded decision session, now four items: FT156's anchor mechanism, FT144, and FT181 + FT183. Reviewer latency is the binding constraint, and FT156's ruling gates prose batch 1 on both goal tracks.
+1. `/bench-shape-idea` — the front-loaded decision session: FT156's anchor mechanism, FT144, and FT181. Reviewer latency is the binding constraint, and FT156's ruling gates prose batch 1 on both goal tracks.
 2. `/bench-implement-spec` — FT135 at `specs/pre-push-guard-visibility/spec.md`, the only staged spec; drain the frontier before authoring a new one.
 3. `/bench-write-spec` — FT141 (prose-independent Go, parallel-capable) and FT158 (the standing falsification pass), the two gates on prose batch 1 per the goal-tracks path above.

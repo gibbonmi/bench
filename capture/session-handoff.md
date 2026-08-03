@@ -2,21 +2,21 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `6a3ea99` before the pending spec-and-capture commit; FT183 implemented and committed
-Spec: `specs/check-level-conformance-scoping/spec.md` (Status: staged, current commit batch), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `6a3ea99` (both FT183 commits landed through `bench commit`'s full gate)
+Branch: `main` — HEAD `7546e54` before the roadmap-drain commit
+Spec: `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Gate: stale green before this reduced-scope roadmap-and-capture batch
 
 ## State
 
-- **FT183 is done.** Ticket 1 (`b41b4d2`) retired the whole-changeset reduced gate path: gate/verdict/status/prep-release code and tests, the runtime and prep-release contract tests rewritten to the full-run and invalid-cache-record expectations, and `projects/benchkit.md`'s reduced-run prose replaced (ReducedScope, stripped-worktree enforcement, and status softening survive; all conformance anchors kept). Ticket 2 (`6a3ea99`) added `internal/gate/component_inputs_identity_test.go`: the Source → function identity check over all registry rows including the hand-declared canary row, per-row exhaustiveness refusal, and the method-expression/pointer-identity guard; swap A, swap B, and the exhaustiveness red were each demonstrated and reverted.
-- **The check-level-conformance-scoping spec is staged and included in the current commit batch.** FT183 was its sequencing blocker and both implementation tickets have landed.
-- `capture/IDEAS.md` carries three parked ideas; `capture/learnings.md` has one open entry (set-aside dance) for the next `/bench-what-next` drain.
-- Decisions that stay closed: everything in the four maps landed at `449eb2a`, including the 2026-08-03 amendments.
-- Pushed through `6a3ea99` (reviewer, 2026-08-03).
+- The 2026-08-03 roadmap drain removed FT183 after `bench spec history check-level-conformance-scoping` confirmed its retirement at `7546e54`; no live spec was retired. Six ideas, the tracked-file set-aside learning, and the check-level-conformance-scoping retro are fully dispositioned; both capture inboxes and the retro queue are empty.
+- FT185 owns structured `bench gate` output as an independent spec, preserving the gate-pipeline map's closed ruling that no output redesign rides the pipeline build. FT186 owns the two `internal/gate` structural refactors.
+- FT180 now owns spec-optional `$bench-implement-spec --full`; FT174 owns the complete real-ticket dependency, ownership, Red-mutations, and acceptance-ID grammar; FT98 owns the recurring tracked-file set-aside gap.
+- The retro's terminal-record work is in FT162, its repair-slice rule is in FT164, and its public-CLI cross-harness review rule is in FT158.
+- Decisions that stay closed: all rulings in the six active decision maps, including the 2026-08-03 gate-pipeline and gate-structure amendments.
 
 ## Next command
 
-`$bench-implement-spec --full specs/check-level-conformance-scoping/spec.md`
+`$bench-shape-idea`
 
 ## Shape
 
