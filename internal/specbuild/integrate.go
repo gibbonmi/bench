@@ -262,7 +262,7 @@ func (s *Service) verifyIntegration(ctx context.Context, run record, assigned as
 	if err != nil {
 		return nil, errors.New("checkpoint ownership drifted")
 	}
-	current, err := resolveTicket(run.Spec, ticketArg)
+	current, err := ParseTicket(run.Spec, ticketArg)
 	if err != nil || !sameStrings(current.Fence, assigned.Fence) {
 		return nil, errors.New("checkpoint ownership drifted")
 	}

@@ -36,7 +36,7 @@ func (s *Service) Assign(ctx context.Context, slug, ticketArg, request string) (
 	if _, err := s.preconditions(mutationAssign, slug, run.Spec, &run, "", ""); err != nil {
 		return Assignment{}, Status{}, err
 	}
-	ticket, err := resolveTicket(run.Spec, ticketArg)
+	ticket, err := ParseTicket(run.Spec, ticketArg)
 	if err != nil {
 		return Assignment{}, Status{}, err
 	}
@@ -92,7 +92,9 @@ func (s *Service) Assign(ctx context.Context, slug, ticketArg, request string) (
 	return stored.public(), run.status(), nil
 }
 
-type ticket struct {
+// Ticket is one parsed ticket file: its title, content digest, charged
+// acceptance rows, ownership fence, and assumptions.
+type Ticket struct {
 	Path, Title              string
 	Digest                   string
 	Rows, Fence, Assumptions []string
@@ -100,25 +102,30 @@ type ticket struct {
 
 var ticketRow, packageName, rowRange = regexp.MustCompile(`^\s*-\s+\[[ xX]\]\s+\[([^]]+)\]`), regexp.MustCompile(`\binternal/[A-Za-z0-9_-]+\b`), regexp.MustCompile(`^(R)([0-9]+)-R([0-9]+)$`)
 
-func resolveTicket(specPath, arg string) (ticket, error) {
+// ParseTicket resolves arg against specPath's tickets directory and parses the
+// ticket file it names. The conformance example-agreement check is the
+// cross-package consumer, grading the taught ticket example with the same parse
+// assignment runs; the grammar and every refusal below are the assign path's
+// own, so a consumer needing another shape changes its input, not this parse.
+func ParseTicket(specPath, arg string) (Ticket, error) {
 	if arg == "" || filepath.IsAbs(arg) {
-		return ticket{}, errors.New("spec build ticket must name one regular ticket file")
+		return Ticket{}, errors.New("spec build ticket must name one regular ticket file")
 	}
 	clean := filepath.Clean(arg)
 	if clean == "." || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
-		return ticket{}, errors.New("spec build ticket escapes its spec")
+		return Ticket{}, errors.New("spec build ticket escapes its spec")
 	}
 	clean = strings.TrimPrefix(clean, "tickets"+string(filepath.Separator))
 	path := filepath.Join(filepath.Dir(specPath), "tickets", clean)
 	info, err := os.Lstat(path)
 	if err != nil || !info.Mode().IsRegular() {
-		return ticket{}, errors.New("spec build ticket must name one regular ticket file")
+		return Ticket{}, errors.New("spec build ticket must name one regular ticket file")
 	}
 	b, err := os.ReadFile(path)
 	if err != nil {
-		return ticket{}, fmt.Errorf("read spec build ticket: %w", err)
+		return Ticket{}, fmt.Errorf("read spec build ticket: %w", err)
 	}
-	result := ticket{Path: path, Digest: digest(string(b))}
+	result := Ticket{Path: path, Digest: digest(string(b))}
 	for _, line := range strings.Split(string(b), "\n") {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "# ") && result.Title == "" {
@@ -135,7 +142,7 @@ func resolveTicket(specPath, arg string) (ticket, error) {
 		}
 	}
 	if len(result.Rows) == 0 {
-		return ticket{}, errors.New("spec build ticket declares no charged rows")
+		return Ticket{}, errors.New("spec build ticket declares no charged rows")
 	}
 	if len(result.Fence) == 0 {
 		result.Fence = packageName.FindAllString(string(b), -1)
@@ -144,10 +151,10 @@ func resolveTicket(specPath, arg string) (ticket, error) {
 	result.Fence = unique(result.Fence)
 	result.Assumptions = unique(result.Assumptions)
 	if len(result.Fence) == 0 {
-		return ticket{}, errors.New("spec build ticket declares no ownership fence")
+		return Ticket{}, errors.New("spec build ticket declares no ownership fence")
 	}
 	if result.Title == "" {
-		return ticket{}, errors.New("spec build ticket has no title")
+		return Ticket{}, errors.New("spec build ticket has no title")
 	}
 	return result, nil
 }

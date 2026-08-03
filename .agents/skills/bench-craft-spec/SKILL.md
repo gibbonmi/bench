@@ -42,11 +42,15 @@ Three rules keep a map honest:
 Stories are happy-path shaped; the edge walk generates the cases nobody
 declared. For each mapped behavior, walk the canonical edge classes — error
 path, empty/absent input, boundary values, malformed input, interrupted or
-partial state, re-run idempotency, hostile environment — plus the project
-profile's hostile-input checklist when one exists. Every edge lands in exactly
-one of two places: a coverage row (the story column may read "edge of N"), or
-a one-line **Won't handle** entry directly under the map. Both are veto
-surface; a silently untested edge is the failure the walk exists to prevent.
+partial state, re-run idempotency, process-boundary lifecycle, hostile
+environment — plus the project profile's hostile-input checklist when one
+exists. Process-boundary lifecycle is the class unit-level success hides:
+defects that appear only once state is serialized and a fresh process reloads
+it, and recomposition suites that stop at the first success instead of walking
+every recomposition path. Every edge lands in exactly one of two places: a
+coverage row (the story column may read "edge of N"), or a one-line
+**Won't handle** entry directly under the map. Both are veto surface; a
+silently untested edge is the failure the walk exists to prevent.
 
 Two guards on the exclusions:
 
@@ -105,6 +109,10 @@ delegate routing, never this rule.
 `craft-tickets` owns the build-time **what-lands-green-next** unit. This
 section owns only the spec-time **who-writes-where** fence; point to the ticket
 rule by name rather than restating it here.
+
+Each fence carries value contracts across it, and `craft-tickets` owns naming
+them in `Discover the contracts before writing files`; this section points at
+that step by name rather than restating what it requires.
 
 ```
 Slice per package — internal/scan, internal/report, internal/bounds — one

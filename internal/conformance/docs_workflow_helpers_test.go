@@ -229,13 +229,139 @@ func checkWorkflowAnchors(root string) []string {
 		".agents/skills/bench-craft-tickets/SKILL.md dropped the ticket template What to build heading")
 	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "## Acceptance",
 		".agents/skills/bench-craft-tickets/SKILL.md dropped the ticket template Acceptance heading")
-	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "- [ ] <Observable behavioral criterion>",
-		".agents/skills/bench-craft-tickets/SKILL.md dropped the ticket template behavioral acceptance checkbox")
 
 	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "`craft-spec` owns the spec-time **who-writes-where** fence",
 		".agents/skills/bench-craft-tickets/SKILL.md dropped the craft-spec ownership-fence cross-pointer")
 	requireCollapsed(".agents/skills/bench-craft-spec/SKILL.md", "`craft-tickets` owns the build-time **what-lands-green-next** unit",
 		".agents/skills/bench-craft-spec/SKILL.md dropped the craft-tickets build-time-unit cross-pointer")
+
+	// The taught ticket shape is what the specbuild parser accepts, so each field
+	// anchors to the template block that a cold author copies rather than to the
+	// file: an appendix restating a field would satisfy a whole-file needle while
+	// leaving the copied block unparseable. The prohibition anchors to the section
+	// owning the gate cadence for the same reason.
+	const ticketsSkill = ".agents/skills/bench-craft-tickets/SKILL.md"
+	ticketTemplateRequires := []struct{ needle, diag string }{
+		{"- [ ] [AB1] <observable behavioral criterion>", "dropped the labeled single-line acceptance row from the ticket template"},
+		{"- [ ] [AB2] <observable behavioral criterion>", "dropped the second labeled acceptance row from the ticket template"},
+		{"Ownership fence: `<path prefix>`, `<path prefix>`", "dropped the one-line backticked ownership fence from the ticket template"},
+		{"Assumptions: <clause>; <clause>", "dropped the semicolon-separated assumptions line from the ticket template"},
+		{"Blocked by: <sibling ticket file basenames, or none>", "dropped the basename-keyed blocked-by line from the ticket template"},
+		{"| criterion | mutation | owner | operation sequence | |---|---|---|---| | <ID> |", "dropped the red-mutations table from the ticket template"},
+	}
+	if body, ok := scopedSection(ticketsSkill, "Write one file per ticket"); ok {
+		for _, a := range ticketTemplateRequires {
+			requireInSection(body, a.needle, ticketsSkill+" "+a.diag)
+		}
+	}
+	// The breakdown procedure and the classification it invokes are two sections,
+	// so each rule anchors to the one a coordinator reads it from: sizing and
+	// sequencing rules belong beside the expand–migrate–contract list, while the
+	// branch, the concurrency method, the one-line ceiling, and the cadence rules
+	// belong inside the numbered method that applies them.
+	breakdownRequires := []struct{ needle, diag string }{
+		{"A wide refactor takes the expand–migrate–contract sequence instead of ordinary grouping",
+			"dropped the blast-radius classification branch from the breakdown method's first step"},
+		{"Concurrent eligibility is fence disjointness: two tickets run at once only when their ownership fences share no path.",
+			"dropped fence disjointness as the mechanical concurrent-eligibility check beside the independently-green rule"},
+		{"Name every real blocker by sibling ticket file basename.",
+			"dropped the basename-keyed blocker naming from the breakdown method's third step"},
+		{"A one-line change pays at most one shared test-harness line: below that ceiling it takes no fresh worktree, no fresh delegate, and no full gate by default.",
+			"dropped the one-line test-harness ceiling beside the independently-green rule"},
+		{"names which command authors gate evidence — `bench gate`, the canonical producing entry — and which phase consumes it",
+			"dropped the evidence-authorship rule from the ticket cadence paragraph; a cadence-changing ticket names the producing command and the consuming phase"},
+		{"The ticket carries behavioral acceptance checkboxes, not a project-gate checkbox: the green landing commit is the one source for that verdict.",
+			"dropped the gate-checkbox prohibition from the ticket cadence paragraph"},
+	}
+	if body, ok := scopedSection(ticketsSkill, "Draft the breakdown"); ok {
+		for _, a := range breakdownRequires {
+			requireInSection(body, a.needle, ticketsSkill+" "+a.diag)
+		}
+		forbidInSection(body, "by sibling ticket title",
+			ticketsSkill+" names blockers by ticket title in the breakdown method; a title dies at the next retitle, and the basename is what `--ticket` already names")
+	}
+	classifyRequires := []struct{ needle, diag string }{
+		{"each batch sized by exactly one ownership fence",
+			"dropped the one-ownership-fence sizing rule for migrate batches"},
+		{"The contract ticket's `Blocked by:` names every migration ticket basename",
+			"dropped the rule that the contract ticket's Blocked by names every migration ticket"},
+	}
+	if body, ok := scopedSection(ticketsSkill, "Classify before slicing"); ok {
+		for _, a := range classifyRequires {
+			requireInSection(body, a.needle, ticketsSkill+" "+a.diag)
+		}
+	}
+	// The contracts-discovery rules anchor to the step that runs them — between
+	// the drafted breakdown and the first ticket file — rather than to the file:
+	// the same sentences written under the template would satisfy a whole-file
+	// needle while leaving the slicing-time step a coordinator actually reads
+	// silent about what crosses each fence.
+	contractsRequires := []struct{ needle, diag string }{
+		{"names four facts: its type, its membership or domain rule, its ordering, and its absence semantics",
+			"dropped the four facts every fence-crossing value names in the contracts-discovery step"},
+		{"asserted against the real producer and the whole enumerated family",
+			"dropped the real-producer-and-enumerated-family assertion target from the consumer-ticket contract row"},
+		{"When neither side can assert an invariant alone, add a junction ticket that can.",
+			"dropped the junction-creation half of the junction rule from the contracts-discovery step"},
+		{"a junction row discovered more than one ticket downstream moves a narrower copy of the row to the junction",
+			"dropped the downstream-copy half of the junction rule from the contracts-discovery step"},
+		{"from the tree after earlier tickets land — never from the spec's account of the base",
+			"dropped the re-derive-claims-from-the-tree rule from the contracts-discovery step"},
+	}
+	if body, ok := scopedSection(ticketsSkill, "Discover the contracts before writing files"); ok {
+		for _, a := range contractsRequires {
+			requireInSection(body, a.needle, ticketsSkill+" "+a.diag)
+		}
+	}
+
+	// The charge duties reach a low-context delegate only from the section it is
+	// written in, so each needle is scoped to the section that owns the duty: the
+	// self-probe, the probe-site rule, the template's probe-kind vocabulary, and
+	// registry tracing belong to the charge a coordinator writes; backup isolation
+	// belongs to the worktree rules the delegate runs under. A whole-file needle
+	// would be satisfied by the same sentence written anywhere in the skill.
+	const delegateSkill = ".agents/skills/bench-craft-delegate/SKILL.md"
+	chargeRequires := []struct{ needle, diag string }{
+		{"require the delegate to apply it to its own finished work, report the observed result, and add the missing row when the mutation comes back silently green",
+			"dropped the delegate self-probe duty from the charge"},
+		{"differs in site from every probe the delegate ran",
+			"lets the coordinator probe repeat a site the delegate already probed"},
+		{"report the observed result and the mutation's kind (omission or swap)",
+			"dropped the omission/swap probe-kind vocabulary from the charge template"},
+		{"names every registry the family already appears in, traced from one existing sibling",
+			"dropped the registry-tracing duty from a family-extending charge"},
+	}
+	if body, ok := scopedSection(delegateSkill, "The charge"); ok {
+		for _, a := range chargeRequires {
+			requireInSection(body, a.needle, delegateSkill+" "+a.diag)
+		}
+	}
+	if body, ok := scopedSection(delegateSkill, "Isolation"); ok {
+		requireInSection(body,
+			"the copy lives inside the delegate's own worktree under a unique name, and every restore names exact files, never a glob",
+			delegateSkill+" dropped worktree-local backup isolation or admitted a glob restore")
+	}
+
+	// The spec-side halves anchor to the section a spec author reads each from:
+	// the contracts pointer to the section that draws fences, the lifecycle class
+	// to the run a walk enumerates, and the profile entry to the checklist that
+	// walk consults. A whole-file needle would accept the same sentence parked
+	// anywhere in the file, leaving the section that runs the rule silent.
+	for _, scoped := range []struct{ rel, section, needle, diag string }{
+		{".agents/skills/bench-craft-spec/SKILL.md", "Slicing a build for delegates",
+			"Each fence carries value contracts across it, and `craft-tickets` owns naming them in `Discover the contracts before writing files`; this section points at that step by name rather than restating what it requires.",
+			".agents/skills/bench-craft-spec/SKILL.md dropped the contracts-discovery pointer from the slicing section"},
+		{".agents/skills/bench-craft-spec/SKILL.md", "The edge inventory",
+			"re-run idempotency, process-boundary lifecycle, hostile environment",
+			".agents/skills/bench-craft-spec/SKILL.md dropped the process-boundary lifecycle class from the canonical edge-class run"},
+		{"projects/benchkit.md", "Hostile-input checklist (shell CLI)",
+			"state serialized by one process and reloaded by a fresh one",
+			"projects/benchkit.md dropped the process-boundary lifecycle entry from the hostile-input checklist"},
+	} {
+		if body, ok := scopedSection(scoped.rel, scoped.section); ok {
+			requireInSection(body, scoped.needle, scoped.diag)
+		}
+	}
 
 	for _, anchor := range []struct{ rel, needle, diag string }{
 		{".agents/commands/bench-implement-spec.md", "`start` → `assign` → `checkpoint` → `integrate` → `review` → `promote`; `status` inspects the run and `abandon` plans or applies cleanup.", "bench-implement-spec dropped or reordered the eight-operation spec-build lifecycle"},

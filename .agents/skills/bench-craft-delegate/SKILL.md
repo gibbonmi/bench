@@ -65,7 +65,10 @@ A convention stated as prose degrades as the tree grows: "follow the repo's
 error idiom" hands the delegate a judgment it cannot make, because the idiom
 lives in files it will not read; "mirror the error shape in
 `internal/x/foo.go`" survives translation to a low-context delegate, because
-a path resolves the same way at any context size.
+a path resolves the same way at any context size. A charge that extends an
+enumerated family names every registry the family already appears in, traced
+from one existing sibling through the tree; a registry the charge does not
+name is one the delegate will miss.
 
 A write-delegation from a spec carries its stories' coverage rows — behavior,
 seam, red signal — in the charge, every time, and requires the delegate to show
@@ -76,6 +79,12 @@ sliced the build across delegates, check each slice against `craft-spec`'s
 "Slicing a build for delegates" before sending the charge — charge time is
 when the fence is still checkable.
 
+Name the mutation that breaks the change's central property, and require the
+delegate to apply it to its own finished work, report the observed result, and
+add the missing row when the mutation comes back silently green. A delegate
+asked to reason about whether the mutation would fail returns a plausible
+paragraph; one asked to run it returns a diagnostic.
+
 ### Provisional spec-build assignments
 
 A reviewed spec-backed build uses the public `bench spec build` lifecycle instead
@@ -84,7 +93,9 @@ its mutation probe from its owned assignment; it does not checkpoint, integrate,
 release, or claim the assignment green. The coordinator assembles the receipt
 outside that worktree and probes the exact returned tree independently. The
 coordinator probe's mutation kind differs from the delegate author's mutation
-kind. A second instance of the same omission or swap is correlated evidence, not
+kind. It also differs in site from every probe the delegate ran: a second probe
+at the same site is vacuous, and a vacuous probe is indistinguishable from a
+pass. A second instance of the same omission or swap is correlated evidence, not
 an independent probe.
 
 The lifecycle checkpoints, integrates, and releases the assignment; the
@@ -116,11 +127,14 @@ then stop and report if it is absent.
 Implement story 3 of specs/retry-backoff/spec.md in this worktree. Open with the
 stale-base check: run `git merge --ff-only main`, verify HEAD equals main,
 stop and report if denied. Coverage rows: [the story's rows]. Effort: medium,
-~3 iterations. Stop at diff ready with focused tests green; return the
-red→green log per row.
+~3 iterations. Self-probe before returning: apply the central-property
+mutation — delete the backoff cap — to your finished work, then report the
+observed result and the mutation's kind (omission or swap). Stop at diff ready
+with focused tests green; return the red→green log per row.
 ```
-Good — a write-delegation whose opener rides in the charge and whose rows make
-the done-claim verifiable.
+Good — a write-delegation whose opener rides in the charge, whose rows make
+the done-claim verifiable, and whose self-probe names both the mutation and
+its kind.
 
 ```
 Review this diff on the Standards axis only. Base: run `bench diff` for the
@@ -180,7 +194,10 @@ diff can be attributed. A charge bans `git stash` — the destructive-git guard
 refuses it, and the guard's deny table owns which verbs — and names the
 per-worktree substitute instead: copy the working file aside with `cp`,
 restore the committed version with `git show HEAD:<path> > <path>`, run the
-test, then copy the working file back.
+test, then copy the working file back. The copy lives inside the delegate's own
+worktree under a unique name, and every restore names exact files, never a
+glob — a stale scratchpad swept into a later restore glob clobbers files
+outside the fence.
 
 Read-only delegations need no worktree; say "do not edit any file" in the
 charge and mean it. Review delegates return findings only. The coordinator

@@ -283,7 +283,7 @@ func (s *Service) validateReceipt(run record, assigned assignment, rec receipt, 
 	if err != nil {
 		return errInvalidReceipt
 	}
-	current, err := resolveTicket(run.Spec, ticketArg)
+	current, err := ParseTicket(run.Spec, ticketArg)
 	if err != nil || current.Digest != assigned.TicketDigest || !sameStrings(current.Rows, assigned.Rows) || !sameStrings(current.Fence, assigned.Fence) || !sameStrings(current.Assumptions, assigned.Assumptions) {
 		return errInvalidReceipt
 	}

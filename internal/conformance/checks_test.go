@@ -47,6 +47,7 @@ var conformanceChecks = map[string]checkFunc{
 	"subcommand-routing":           func(root, _ string, _ registry.Tier) []string { return checkSubcommandRouting(root) },
 	"skip-ownership":               func(root, _ string, _ registry.Tier) []string { return checkSkipOwnership(root) },
 	"decision-map-integrity":       func(root, _ string, _ registry.Tier) []string { return maps.ValidateDecisionMapTree(root) },
+	"example-agreement":            func(root, _ string, _ registry.Tier) []string { return checkExampleAgreement(root) },
 }
 
 // RunConformance grades root against the checks tier runs, timing each one. An empty

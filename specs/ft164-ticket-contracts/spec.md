@@ -1,6 +1,6 @@
 # Ticket contracts: charges preserve blast radius, contracts, and evidence authorship
 
-Status: staged
+Status: implemented
 
 Decision source: ROADMAP.md row FT164 (the 2026-08-02 `/bench-what-next` drain,
 commit `fbdcd1b`), a reviewed artifact assembling ten drained sources, read with
@@ -185,19 +185,21 @@ What anchors cannot pin is ordinal position within a section — that residual
 is review-graded and named here rather than claimed. The set, one needle per
 listed fact, section in parentheses:
 
-- craft-tickets, template block (5): the acceptance-row placeholder in the new
-  labeled form; the fence line; the assumptions line; the basename blocked-by
-  line; the red-mutations table header.
+- craft-tickets, template block (6): the acceptance-row placeholder in the new
+  labeled form; the second placeholder row; the fence line; the assumptions
+  line; the basename blocked-by line; the red-mutations table header.
 - craft-tickets, cadence paragraph (2): the existing gate-checkbox prohibition
   sentence (newly pinned — it already exists, so its red capability comes from
   the mutation table, not from anchor-first); the evidence-authorship sentence.
-- craft-tickets, breakdown procedure (4): the method's opening classification
+- craft-tickets, breakdown procedure (5): the method's opening classification
   branch; fence-sized migrations; the contract ticket's blocked-by-every-
-  migration rule; step 2's fence-disjointness method.
+  migration rule; step 2's fence-disjointness method; step 3's basename blocker
+  naming, with the ticket-title forbid riding beside it on the same section.
 - craft-tickets, definition paragraph (1): the one-line test-harness ceiling.
-- craft-tickets, contracts-discovery step (4): the four-fact sentence; the
-  consumer-row-against-real-producer-and-whole-family sentence; the junction
-  rule; the re-derivation rule.
+- craft-tickets, contracts-discovery step (5): the four-fact sentence; the
+  consumer-row-against-real-producer-and-whole-family sentence; the
+  junction-creation half of the junction rule; the downstream-copy half; the
+  re-derivation rule.
 - craft-delegate (5): the self-probe clause; the site-differs sentence; the
   omission/swap vocabulary in the charge template; the registry-tracing
   sentence; the backup-isolation sentence.
@@ -205,7 +207,10 @@ listed fact, section in parentheses:
   process-boundary class token in the edge-walk sentence.
 - profile checklist (1): the process-boundary entry's lead phrase.
 
-24 needles. Two existing anchor artifacts move in the same diff as their text:
+27 needles. Three of them — the second template placeholder row, step 3's
+basename blocker naming, and the junction-creation half — were added by the
+review round's repairs rather than by the original enumeration. Two existing
+anchor artifacts move in the same diff as their text:
 the template placeholder needle (both occurrences of the old placeholder row
 are replaced, the old needle retired, the new one section-scoped to the
 template block) and the probe-kind sentence, whose mutation-table entry
@@ -220,7 +225,7 @@ sentence exists, then proves the diagnostic fires when the sentence is
 mutated. That makes each row red-capable at unit cost rather than one canary
 fixture per needle; canary fixtures stay at their existing per-family
 granularity. No completeness assertion exists that counts needles against
-table rows — building one is priced out of scope — so "all 24 covered" is
+table rows — building one is priced out of scope — so "all 27 covered" is
 graded by review against this enumeration, and the coverage map says so.
 
 **The example-agreement check.** The Good example sits between explicit
@@ -355,7 +360,7 @@ pretending gate coverage.
 | 5 | transient backups live inside the delegate's worktree under a unique name; restores name exact files, never globs | section-scoped anchors | TDD-able: anchor-first. | A stale scratchpad swept into a later delegate's restore glob clobbered four out-of-fence files. |
 | 6 | `craft-spec`'s slicing section names value contracts at each fence by pointer to the ticket rule | section-scoped anchors | TDD-able: anchor-first, beside the untouched cross-pointer pair. | A restated procedure is the drift this repo's code standard names as a defect. |
 | 6 | the canonical edge walk carries the process-boundary lifecycle class and the profile checklist carries its concrete entry | section-scoped anchors | TDD-able for both needles: anchor-first. The entries' wording beyond the pinned phrases is not TDD-able — review grades it. | Unit-level success hid defects that appeared only after a fresh process reloaded serialized state. |
-| 7 | each of the 24 inventoried needles has a mutation-table row proving its diagnostic fires | mutation-table harness | TDD-able per needle: the table row lands before the skill text and fails on its anchor count until the sentence exists. Completeness of the set has no gate signal — no needle-counting assertion exists — and is review-graded against this spec's enumeration. | An anchor without a mutation proof can rot into an always-pass, which is the decay this spec exists to stop. |
+| 7 | each of the 27 inventoried needles has a mutation-table row proving its diagnostic fires | mutation-table harness | TDD-able per needle: the table row lands before the skill text and fails on its anchor count until the sentence exists. Completeness of the set has no gate signal — no needle-counting assertion exists — and is review-graded against this spec's enumeration. | An anchor without a mutation proof can rot into an always-pass, which is the decay this spec exists to stop. |
 | 7 | the two moved anchor artifacts keep biting after their moves | mutation-table harness | TDD-able: the placeholder swap reds the retired needle's row until it is replaced, and the kind sentence's hard-wrapped entry fails on the hoist until edited; the untouched fixtures run unchanged as the regression control. | A move that silently drops an anchor entry passes every presence check while deleting the enforcement. |
 | edge of 7 | the example-agreement check fails closed when the begin/end markers are absent, duplicated, or enclose an empty block | example-agreement check | TDD-able: fixtures for each malformation assert the named red. | A fail-open extractor grades nothing forever — or grades the template block instead of the example — while reporting green. |
 | edge of 7 | a wrapped fence or continuation assumptions line in the example reds the agreement check | example-agreement check | TDD-able: mutate the example into the wrapped form and assert the red. | Wrapping is the exact corpus failure, and the live parser truncates it silently rather than refusing. |

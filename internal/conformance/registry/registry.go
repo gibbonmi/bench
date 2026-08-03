@@ -76,6 +76,7 @@ var Checks = []Check{
 	{Name: "subcommand-routing", Tier: Dev},
 	{Name: "skip-ownership", Tier: Dev},
 	{Name: "decision-map-integrity", Tier: Dev},
+	{Name: "example-agreement", Tier: Dev},
 }
 
 // familyChecks binds each canary conformance family directory to the check whose
@@ -98,6 +99,7 @@ var familyChecks = map[string]string{
 	"coverage-map-validation":       "docs-currency-workflow",
 	"compliance-hardening":          "canary-inner-compliance",
 	"decision-map-integrity":        "decision-map-integrity",
+	"example-agreement":             "example-agreement",
 }
 
 // Families lists the family names this table binds, in sorted order. They are the

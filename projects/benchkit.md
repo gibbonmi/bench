@@ -153,6 +153,12 @@ coverage map; a class skipped here returns as a regression.
   plan/apply drift all fail closed without losing recovery state
 - interrupt (SIGINT) mid-loop: leftover scratch state, leases, worktrees
 - re-run idempotency: relink, reused worktree, second `init`, second `setup`
+- state serialized by one process and reloaded by a fresh one: the writer's
+  in-memory value and the reader's re-parse agree at unit level and diverge
+  across the boundary, so the assertion drives a second process rather than
+  reusing the first's structures. Recomposition and recovery suites that stop
+  at the first success prove one path and leave every other recomposition
+  route unwalked
 - cwd deeper than the repo root when the command assumes root
 - non-TTY stdin on a prompting command must fail closed naming its
   non-interactive flags; `/dev/null` stdin reads as a character device, so
