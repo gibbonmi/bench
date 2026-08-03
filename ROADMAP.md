@@ -127,7 +127,13 @@ both rest on that untested combination. One fixture removing a section-scoped
 decides. A rider drained 2026-07-29: `bench anchors <path>` — query which
 conformance anchors pin a doc file before editing it — needs exactly the
 registry-or-parser seam the mechanism ruling decides, so the grill weighs it
-as a consumer of that seam rather than a separate build.
+as a consumer of that seam rather than a separate build. The mechanism now has
+a measured cost signal: `internal/conformance/docs_workflow_helpers_test.go`
+holds the hand-written anchor entries and stands at 864 lines against a 660
+grant, a violation FT164's build widened and could not fix in place. A
+declarative anchor registry is the fix; raise the grant to ~850 only as a
+stopgap if structure noise blocks a pass before this row lands, never as the
+answer.
 Entry: `/bench-shape-idea`. Source: `capture/IDEAS.md`,
 drained here and in prior runs; found by the Codex falsification pass on
 `3eb1c9a`.
@@ -663,11 +669,11 @@ so the contract suite's pinned stdout stays green and retrofit scope never
 becomes a compatibility question. That constraint has one consequence worth
 stating rather than discovering: principle 9 has no existing implementation to
 route through, so emitting `help[]` necessarily changes bytes and cannot ship
-under it. Either principle 9 leaves this row for a separate byte-changing visit,
-or the constraint is relaxed for it specifically — reviewer's call, and the rest
-of the row is unblocked either way. The Git-inspection face is likewise
-byte-changing and therefore gets its own spec; it does not relax byte preservation
-for the foundation.
+under it. Reviewer ruling 2026-08-02: the byte-preservation constraint is
+relaxed for the `help[]` spec specifically, and for no other face — the
+foundation still ships without changing emitted bytes. The Git-inspection
+face is likewise byte-changing and therefore gets its own spec; it does not
+relax byte preservation for the foundation.
 
 A sixth face, observed 2026-08-02 during the FT164 build, is the canonical
 contextual-disclosure example: `bench spec build start` refused with "no exact
@@ -1162,6 +1168,23 @@ recurred across the FT176 close: `bench idea` dirtied the capture file and
 blocked the next path-scoped commit until folded into the landing. Source: the
 spec-build-lifecycle-preconditions retro, drained here.
 
+The gate-window face recurred on 2026-08-02 — a `bench idea` write landed inside
+a `bench gate --fresh` window, every phase came back green, and the verdict
+rejected itself for a changed subject — which is the second full re-run this row
+has now cost. A third face joins from FT164's build: the same write against an
+*active spec-build run* is worse than a wasted gate. A capture commit before the
+run's first checkpoint forced recomposition at zero checkpoints, unrecoverable
+at the time (`2874d94` has since made it a rebase), and the run was abandoned and
+rebuilt from snapshotted delegate diffs; even with that fix, every tip move
+mid-run buys a fresh full gate for recomposition. Two things follow. The tree is
+frozen from `bench spec build start` to `promote` — no capture commits, no
+roadmap edits — and the `--full` route's phase-boundary handoff write, which
+today lands between them, belongs before `start` or after `promote`; that
+placement is a `bench-implement-spec` command-text edit and rides whichever
+answer the queue-versus-refuse decision produces. Sources:
+`capture/learnings.md` 2026-08-02 and 2026-08-03, verdicted here; the
+`ft164-ticket-contracts` retro, drained here.
+
 **FT138 (LOW) — instrument Bench so build economics are measurable.**
 Reviewer-priced 2026-07-25 as a nice-to-have in its current state, so it
 holds LOW until an acceptance trigger that needs measurement (the cheap-tier
@@ -1183,157 +1206,38 @@ per-spec granularity; retention and pruning; agent-facing AXI or
 reviewer-facing — mean the work starts as a grill. Entry:
 `/bench-shape-idea`. Source: `capture/IDEAS.md`, drained here.
 
-**FT164 (MEDIUM) — ticket and repair charges preserve blast radius, postures, and
-gate cadence.** Two
-rule-shaped journal entries from FT154's own build, one owner file. First,
-the wide-refactor branch: the first folder-layout ticket grouped a deep-unit
-change with every consumer family, and the delegate exhausted its fresh
-context before the fixture migration closed, so the ticket could not land
-independently green — make blast-radius classification the explicit first
-branch of the breakdown procedure, ahead of vertical drafting: a wide
-refactor takes expand–migrate–contract sequencing, migration tickets sized by
-an ownership fence (package or consumer family), the contract ticket blocked
-by every migration. Second, the cadence rule: tickets carried a `project gate
-is green` checkbox, so the coordinator ran the full gate, checked the box,
-and then `bench commit` ran the same gate again — keep gate state out of the
-ticket template (the green landing commit is its one source) and define the
-cadence as focused seam checks while iterating, one full gate at the atomic
-commit, one composed gate at final check. A third clause, from the light-path
-retro: the independently-green rule holds, but name its proportionality
-ceiling — FT139's one-line test-helper change still paid a worktree, a fresh
-delegate, a focused proof, and a full gate; a one-line test-harness ticket is
-the light path's ceiling, noted beside the rule so paying that cost is a
-choice rather than a default. Kit edit under the `craft-synthesis`
-discipline. Sources: `capture/learnings.md`, verdicted here; the light-path
-retro, drained here.
+**FT164 (MEDIUM) — repair-lane charges, and a done-claim that resolves its named
+owners.** The ticket-contract core shipped 2026-08-03
+(`specs/ft164-ticket-contracts/spec.md`, promoted at `83c630e`); what stays open
+is the repair-and-experiment lane that spec cut, plus two rules the build itself
+produced. The lane is one `craft-delegate` visit. Model-comparison charges give
+every candidate one constant charge — base commit, file fence, effort, focused
+suite, independent probe — with setup failures recorded separately from
+generation time; fixed behavioral checks and the independent probe decide whether
+the cheap default clears its bar, while style differences decide which acceptable
+patch is better rather than justifying an expensive tier by themselves
+(`craft-line`'s cheap default and red-driven ladder stay authoritative). A repair
+that updates a canonical command inventory names both currency owners in its
+focused proof — the documentation inventory and the wrapper/router registry —
+because FT131's repair updated one and missed the other two until the atomic
+gate. And a repair touching a shared environment helper names which rows opt into
+shared caches and which stay hermetic, then runs the focused failing rows before
+the full gate; the artifact-suite repair over-stripped that distinction.
 
-A second procedure step joins the same breakdown, between drafting it and
-writing the ticket files: discover the contracts, not just the fences. For every
-value crossing a fence — a registry, a record class, a resolved set — name its
-type, its membership or domain rule, its ordering, and its absence semantics.
-Where the two sides disagree on any of the four, that is a defect caught at
-slicing time for the cost of a sentence. The invariant then lands as an
-acceptance row on the consumer ticket, asserted against the real producer rather
-than a fixture; if neither ticket can assert it alone, the slice is wrong or the
-build needs a junction ticket. Ordering follows the same rule: when the only row
-testing a junction sits more than one ticket downstream, a narrower version of it
-belongs at the junction. The per-component-gate-scoping build paid for this —
-two tickets with correct, disjoint ownership fences were each green alone and
-red composed, because one declared a component's inputs as directory prefixes
-and the other hashed declared inputs as exact `git ls-tree` keys, so a directory
-never matched and the component refused to compute an identity and always ran.
-Both delegates satisfied their acceptance rows exactly; the fixture is what let
-both halves look green, and the composed gate caught it six tickets later after
-a delegate round had been spent. Source: `capture/learnings.md`, verdicted here.
-
-The charge itself carries two more load-bearing facts. When a delegate adds a
-member to an enumerated family, the charge names every registry found by
-tracing an existing sibling across the package; FT152's canary work missed the
-classification registry and paid a repair round. The dual binds the consuming
-side: a ticket that consumes an enumerated family asserts over the whole family,
-not the members that happen to exist in its worktree. When a repair changes a
-shared environment helper, the charge names which rows opt into shared caches
-and which remain hermetic, then runs the focused failing rows before the full
-gate; the artifact-suite repair over-stripped that distinction. Sources: the
-learnings journal and the `ft91-artifact-suite` retro, drained here.
-
-Model-comparison charges are another instance of the same owner. Every
-candidate receives one constant charge, base commit, file fence, effort,
-focused suite, and independent probe; setup failures are recorded separately
-from generation time. Fixed behavioral checks and the independent probe decide
-whether the cheap default clears its bar, while style differences decide which
-acceptable patch is better rather than justifying an expensive tier by
-themselves. The existing `craft-line` cheap implementation default and
-red-driven escalation ladder remain authoritative. Source: the FT129
-implementation retro, drained here.
-
-Repair charges that update a canonical command inventory also name both
-currency owners in their focused proof: the documentation inventory and the
-wrapper/router registry. FT131's repair updated one and missed the other two
-until the atomic gate; tracing those owners in the charge would have caught the
-integration misses without replacing the gate as oracle. Source: the FT131
-implementation retro, drained here.
-
-The skill has also fallen behind its own corpus, measured 2026-07-31 across
-all 25 tickets. The twelve `spec-integration-gate-cadence` tickets carry four
-conventions the skill teaches nowhere: single-line acceptance criteria (12/12),
-an `Ownership fence:` field (12/12), an `Assumptions:` field (12/12), and
-requirement identifiers on criteria (41 of that build's 46). None appears in
-the template or the Good example, so the conventions live only in the last
-build's examples and decay the moment someone writes a ticket without reading
-them. Requirement-ID completeness has no check because nothing knows the
-convention exists; `bench coverage <spec>` is the source when one exists. Step
-2's "confirm the group is independently green" still names no method, which
-under parallel assignment is a correctness precondition rather than a drafting
-judgment — two tickets sharing an ownership fence cannot run concurrently, and
-fence-disjointness makes the check mechanical. The Bad example teaches against
-a failure the corpus does not commit; replace it with an oversized-but-credible
-ticket. Do not reformat the thirteen older tickets — retrofitting closed work
-rewrites history for no gain.
-
-Three further charge rules land in the same visit. A ticket is an executable
-contract, not an umbrella claim: every acceptance row binds to one concrete red
-mutation, its independent owner, and the exact public operation sequence that
-proves it, because a claim like "checks every fact" is satisfied by delete-only
-probes that miss swaps, stale retained identities, and second-call failures.
-Ticket claims are re-derived from the tree after earlier tickets land, never
-from the spec's account of the base — defect inventories, expected base hashes,
-and ownership assumptions age fastest, and one ticket asserted three defects the
-preceding ticket had already fixed. And a ticket that changes gate cadence names
-which command authors evidence and which phase consumes it: `gate-run --fresh`
-prints a valid phase result without publishing the project-green evidence
-promotion consumes, while `bench gate` is the canonical producing entry, and
-treating worktree, main-root, and prospective checks as interchangeable cost
-several redundant full runs. Sources: `capture/IDEAS.md`, drained here; the FT128 and
-spec-integration-gate-cadence implementation retros, drained here.
-
-One clause from the same retros wants a different owner and is flagged rather
-than folded: lifecycle coverage must cross the process boundary. Unit-level
-success hid defects that appeared only after state was serialized and a fresh
-CLI process loaded it, so a recomposition suite that stops at the first success
-misses mutable-base identity defects and precondition deadlocks. That is an edge
-class for `craft-spec`'s inventory and the profile's hostile-input checklist,
-not a charge rule — decide the owner before building this row.
-
-A second clause is flagged the same way. The per-component-gate-scoping spec
-restated this row's ticket conventions inline "because the skill does not teach
-these yet", and so inherited the same gap that bit the build — direct evidence
-for this row's premise that the conventions decay out of the corpus until the
-skill teaches them. The spec-side half may belong in `craft-spec`, whose seam
-vocabulary is where a cross-seam domain mismatch could be named before slicing
-starts at all; decide that owner alongside the one above. Source:
-`capture/learnings.md`, verdicted here.
-
-The per-component-gate-scoping build adds the self-probe clause, a charge-side
-duty for the same owner: the charge names the specific mutation that breaks
-the feature's central property — not a peripheral one — and requires the
-delegate to apply it to its own finished work, report the observed result, and
-add the missing row if the package stays green. Three fixture-shaped silent
-greens in that build were caught only because the charge said to run the
-mutation rather than reason about the code, and the one property no charge
-named (a slot keeps answering after its component's identity moves) was pinned
-by nothing until a coordinator probe left the package green without content
-addressing. The coordinator half sharpens `craft-delegate`'s existing
-independent-probe line: the coordinator's probe must differ in kind from any
-the delegate ran, because a second instance of the same mutation kind is
-correlated evidence, not independent evidence. The pcgs retro adds the site
-half: probes must differ in *site* as well as kind — three coordinator swap
-probes were vacuous on the first try (a gitignored `dist/bench` in a
-snapshot-based fixture, a wrong `-run` package, a mutation outside the check's
-charter), and a vacuous probe is indistinguishable from a passing one until a
-deliberate red is shown. The charge template also carries the omission/swap
-probe-kind vocabulary explicitly, which that build's coordinator supplied by
-hand. Sources: `capture/learnings.md` 2026-08-01, verdicted in a prior run;
-the per-component-gate-scoping retro, drained here.
-
-Delegate isolation gains a backup rule from the same close: a delegate's
-transient backups live inside its own worktree under a unique name, and
-restore commands name exact files, never globs — a stale `mine/` scratchpad
-directory left by one write-delegate was swept into a later delegate's restore
-glob and clobbered four out-of-fence files, caught only by its return-time
-`git status` check. `craft-delegate`'s isolation section names worktree-local
-backup paths beside the existing cp-aside/git-show-restore pattern. Source:
-`capture/learnings.md` 2026-08-02, verdicted here.
+Two rules from FT164's own build join the same visit. Verifying a ticket's
+done-claim resolves every owner named in its Red-mutations table to a real
+artifact in the tree, not to the delegate's demonstration of a red: the teach
+ticket claimed a template-heading-depth needle and mutation row that never
+landed, and three review rounds missed it because their enumerations keyed on
+registered needles rather than on ticket-row owners — the same
+resolve-the-identifier rule `craft-delegate` already states for absence claims.
+And a repair round that extends an enumeration the spec pins trues that
+enumeration up as part of the round: FT164's needle count drifted 24→27 across
+repair rounds and was corrected only in round 3, and row 7.2's moved-artifact
+clause was left vacuously satisfied by the same drift. Kit edit under the
+`craft-synthesis` discipline. Sources: the `ft164-ticket-contracts` spec's
+out-of-scope riders and its implementation retro, drained here;
+`capture/learnings.md` 2026-08-03, verdicted here.
 
 **FT165 (LOW) — fold the domain-modeling discipline into
 `/bench-shape-idea`.** Upstream candidate (mattpocock/skills,
@@ -1537,20 +1441,12 @@ for decision maps and validates cycles and unresolved blockers over the ticket
 graph, scoped to `decisions/` and never applied to `tickets/`. Extend that owner
 rather than adding a second graph, and pair the check with `Ownership fence:`
 disjointness between concurrently-eligible tickets, which is the same read and
-the method step 2 of `craft-tickets` currently lacks. The doc half — teaching the
-identifier form in the template — rides FT164; this row is the parser and the
-validation. Measured 2026-07-31. Source: `capture/IDEAS.md`, drained here.
-
-The format now has two demonstrated gaps and no owner. The specbuild parser
-requires acceptance rows shaped `- [ ] [ID] text` and a one-line
-comma-separated backticked `Ownership fence:`, while the `craft-tickets`
-template and the pcgs tickets as staged used `ID —` rows and wrapped prose
-fences — those parse to zero rows and garbage fences and refuse assignment,
-and 17 tickets were normalized by hand (`3972744`) before the build could
-proceed. Either the template teaches the parseable shape or `resolveTicket`
-accepts the template's shape; one of the two owns the format, decided with
-this row's parser work. Source: `capture/learnings.md` 2026-08-02, verdicted
-here.
+the method step 2 of `craft-tickets` currently lacks. The doc half is done —
+FT164's template teaches the identifier form and the parseable field shapes, and
+the gate parses the Good example with the real parser — so this row is the parser
+and the validation only. Measured 2026-07-31; re-verified against FT164's landed
+template. Sources: `capture/IDEAS.md` and `capture/learnings.md` 2026-08-02, both
+drained in prior runs.
 
 **FT153 (MEDIUM) — the canary's vacuity baseline is a collision screen, not a
 vacuity proof.** A behavior-owned fixture's EXPECT is compared against its
@@ -1817,8 +1713,10 @@ phase), `internal/gate`'s public API (`Result`/`Execute`/`State`/
 identifier provenance as forbidden, add "state the constraint, don't defend
 it", extend one-source-per-fact to comment knowledge, and qualify "a sparse
 file stays sparse"; plus one ruling — where a demonstrated red's record
-lives (commit or spec, never an in-file transcript). Source:
-`capture/IDEAS.md`, drained here.
+lives (commit or spec, never an in-file transcript). One site joins the second
+pass from FT164's close: `ParseTicket`'s doc comment names its consumer rather
+than its contract. Sources: `capture/IDEAS.md`, drained in a prior run; the
+`ft164-ticket-contracts` retro, drained here.
 
 **FT94 (LOW) — single-sourced `bench resume` summary
 golden.** The resume summary line is asserted as a hardcoded exact-string
@@ -1948,23 +1846,22 @@ recommended table is sequencing advice.
 | FT100 | FT89 | Cut prose after the correctness and coherence pass establishes which guidance is still authoritative. |
 | FT107 | FT158 | The cross-harness refute pass is the only demonstrated falsification for a wide always-loaded prose diff; make it standing before the batch lands. |
 | FT107 | FT156 | No fixture proves a section-scoped `.bench/BENCH.md` anchor — the exact surface the batch edits; rule the anchor mechanism first. |
-| FT108 | FT164, FT89 | Define the refactor lane on the settled expand–migrate–contract and gate-cadence rules; FT89 first single-sources the skills index the new skill must join. |
+| FT108 | FT89 | FT89 single-sources the skills index the new skill must join; the expand–migrate–contract and gate-cadence rules it builds on are already settled in `craft-tickets`. |
 | FT111 | FT179 | FT179 reopens FT111's edit-in-place-only ruling on an order-larger measured count; land them as one `craft-comments`/`craft-review` visit. |
 | FT172 | FT106 | Reuse the document-claim probe for semantic roadmap claims instead of designing a second checker. |
 | FT162 | FT169 | Build full-run subject resolution on the settled landing primitive. |
 | FT166 | FT98, FT113 | The porcelain composes over the shipped reduced-gate path allowlist; recoverable set-aside then defines the commit command's smallest sound contract. |
 | FT168 | FT153 | Expose focused canary execution after baseline meaning is settled. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
-| FT174 | FT164 | Build the parser against the identifier form the template teaches, not the title form it is replacing. |
 | FT175 | FT173 | The ledger's read surface is AXI; settle one derivation per principle before adding a consumer that needs all ten. |
-| FT180 | FT164 | The spec-less route lands entirely on tickets, so settle the ticket-charge conventions the route will scaffold first. |
 
 ### Goal tracks: guidance prose and the claim ledger
 
 Two reviewer goals share one path: implement the guidance-prose backlog, and
-ship `bench cite` (FT175) on an AXI-compliant CLI (FT173). FT164 is the
-process precursor for both — every later build slices its tickets through
-`craft-tickets`, and its skill half is the densest prose row. The payoff
+ship `bench cite` (FT175) on an AXI-compliant CLI (FT173). The process
+precursor for both is landed: FT164's ticket-contract core shipped 2026-08-03,
+so every later build slices its tickets through a `craft-tickets` the specbuild
+parser accepts. The payoff
 facts shaping the order, verified in-tree 2026-08-02 with an independent
 mid-tier refutation pass: `.agents/` and `.bench/BENCH.md` sit outside the
 gate's reduced scope, so every separately-landed prose diff pays a full gate
@@ -1976,17 +1873,18 @@ the prose batch outranks the foundation only if it lands whole and
 falsifiable — otherwise the foundation goes first while FT141 and FT158
 build.
 
-1. Front-load one decision session: FT164's four flagged spec calls, FT175's
-   three ledger decisions (gate scope, evidence/span requirements, retirement
-   rule — all FT173-independent), FT156's anchor-mechanism ruling, FT144's
-   one-decision-both-phases call, FT181 + FT183, and FT173's principle-9
-   byte-relaxation. Reviewer latency is the binding constraint: grills
-   serialize on the reviewer while builds parallelize on agents, and one
-   session unblocks roughly six build phases.
-2. Implement FT164 (staged spec), then FT135 (staged) — FT135 serves neither
-   goal, but draining the staged frontier before authoring any spec past
-   FT164's is the standing runway instruction; deferring it is an explicit
-   reviewer override, never a silent skip. FT141 builds in parallel where
+1. Front-load one decision session: FT156's anchor-mechanism ruling, FT144's
+   one-decision-both-phases call, and FT181 + FT183. Reviewer latency is the
+   binding constraint: grills serialize on the reviewer while builds
+   parallelize on agents. Three of the original six items closed on
+   2026-08-02 — FT173's principle-9 relaxation and FT175's spec-start gate
+   were ruled, and FT175's three ledger decisions moved behind the owners
+   they consume (step 5) — and FT164's four flagged spec calls closed when
+   its spec was written and implemented.
+2. Implement FT135 (staged) — it serves neither goal, but draining the staged
+   frontier before authoring any new spec is the standing runway instruction;
+   deferring it is an explicit reviewer override, never a silent skip. FT141
+   builds in parallel where
    capacity allows: it is Go, prose-independent, and it unblocks FT107
    *whole* — splitting the fix-loop clause out would spend a second spec,
    review, and full gate on the same anchor-pinned surface, so the batch
@@ -1997,7 +1895,9 @@ build.
    mechanism build if its grill rules for one. Then prose batch 1: FT107
    whole + FT89 + FT99 + FT144, with FT102, FT112, and FT165 riding on the
    shared gate — disjoint files make them safer to batch, and FT165 early
-   improves every later grill. Then FT179 + FT111 as one visit, then FT108.
+   improves every later grill. Then FT179 + FT111 as one visit, with FT164's
+   repair-lane residual riding it as a second `craft-delegate` visit, then
+   FT108.
 4. Implement FT173 in three independently reviewed specs, foundation first:
    AXI principles 8–10 into `craft-cli`, AXI kept scoped to query surfaces,
    truncation consolidated onto `sanitize.Preview` and aggregate mechanics
@@ -2005,24 +1905,27 @@ build.
    emitted bytes — medium, guarded by the pinned contract suite. Contextual
    disclosure (`help[]`) second: large and byte-changing (zero prior art; it
    migrates the AXI query surfaces in green batches and rewrites their
-   pinned output contracts), shippable only under the principle-9 ruling
-   from the decision session. Git-inspection last or in parallel: it extends
-   the existing `bench diff` owner into one coherent status-and-diff
-   snapshot (untracked paths, pre-computed counts, drift-safe reads), but
-   `bench diff` is not a ledger surface — landing it before `help[]` would
-   rewrite the pinned diff contracts twice. FT173 remains open until all
+   pinned output contracts), shippable under the 2026-08-02 principle-9
+   relaxation granted to this face alone. Git-inspection last or in
+   parallel: it extends the existing `bench diff` owner into one coherent
+   status-and-diff snapshot (untracked paths, pre-computed counts, drift-safe
+   reads), but `bench diff` is not a ledger surface — landing it before
+   `help[]` would rewrite the pinned diff contracts twice. FT173 remains open until all
    three land.
-5. Shape FT175's decision map any time; write the FT175 spec once the owners
-   it consumes — truncation, aggregates, `help[]` — are settled, then build
-   it as vertical green slices: file evidence plus strict store and
-   `claim show/check`; assessments with spans and absence scopes; command
-   evidence plus replay and staleness; supersede/retire reachability; the
+5. Shape FT175's decision map once the foundation and `help[]` land, and
+   write the FT175 spec once the owners it consumes — truncation,
+   aggregates, `help[]` — are settled, then build it as vertical green
+   slices: file evidence plus strict store and `claim show/check`;
+   assessments with spans and absence scopes; command evidence plus replay
+   and staleness; supersede/retire reachability; the
    complete AXI list/detail/status surface using FT173's owners;
    deterministic gate and ambient status integration; then one local
-   contradiction as the dogfood proof. Open ruling for the decision session:
-   whether "interfaces settled" means the FT173 row closed or only the
-   consumed owners — owners-consumed starts the FT175 spec one spec earlier
-   and leaves git-inspection off the critical path.
+   contradiction as the dogfood proof. Reviewer ruling 2026-08-02:
+   "interfaces settled" means the consumed owners, not the whole FT173 row —
+   the foundation and `help[]` settle them, so the FT175 spec starts one spec
+   earlier and git-inspection stays off the critical path. Its three ledger
+   decisions are deferred until those two implementations land, so the FT175
+   shape-idea session moves to then rather than joining the front-loaded one.
 6. FT100 grills and builds last, after FT89 establishes which guidance is
    authoritative and past FT170's 2026-08-12 revisit.
 
@@ -2037,6 +1940,6 @@ prose batch edits.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — the front-loaded decision session: FT164's four flagged spec calls, FT175's three ledger decisions, FT156's anchor mechanism, FT144, FT181 + FT183, and FT173's principle-9 relaxation. Reviewer latency is the binding constraint, and one session unblocks roughly six build phases across both goal tracks.
-2. `/bench-implement-spec` — FT164 at `specs/ft164-ticket-contracts/spec.md`, both goal tracks' precursor; then FT135 at `specs/pre-push-guard-visibility/spec.md` to drain the staged frontier before any spec past FT164's is authored.
+1. `/bench-shape-idea` — the front-loaded decision session, now four items: FT156's anchor mechanism, FT144, and FT181 + FT183. Reviewer latency is the binding constraint, and FT156's ruling gates prose batch 1 on both goal tracks.
+2. `/bench-implement-spec` — FT135 at `specs/pre-push-guard-visibility/spec.md`, the only staged spec; drain the frontier before authoring a new one.
 3. `/bench-write-spec` — FT141 (prose-independent Go, parallel-capable) and FT158 (the standing falsification pass), the two gates on prose batch 1 per the goal-tracks path above.
