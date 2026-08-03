@@ -52,6 +52,13 @@ worktree-layer change is authorized: the abandon planner treats
 present-but-not-a-checkout like the already-handled removed-checkout case, so
 the map's scope includes `internal/worktree`'s abandon planning path.
 
+Amended 2026-08-03 at spec falsification (reviewer decision): the bytes of a
+present-but-not-a-checkout path are preserved. Abandon releases the
+registration and intent entry through a new non-deleting plan action that
+names the leftover path; it never inherits the removed-checkout path's
+force-removal. Disposal of the leftover bytes routes through the existing
+size-bounded clean surface.
+
 ## #3: The prepared-abandon exemption softens identity errors
 
 Blocked by: none
@@ -99,6 +106,13 @@ recompose refusal of checkpoint and start in the mutation precondition; the
 decision stands as extending that same fast-forward treatment to checkpoint
 and start instead of refusing them.
 
+Amended 2026-08-03 at spec falsification (reviewer decision): the
+fast-forward's operation set is closed — checkpoint and start, on
+non-terminal runs only. `assign` keeps today's refusal (start first, then
+assign); promote keeps its recomposition route and Bootstrap; review keeps
+refusing without mutation; terminal runs keep the restart path, which
+depends on the recompose refusal firing.
+
 ## Not yet specified
 
 ## Spec-writer discretion
@@ -115,12 +129,12 @@ and start instead of refusing them.
 
 ## Sources
 
-- Path: `decisions/assets/ft181-restart-marker-research.md`
+- Path: `specs/ft181-precondition-residuals/decisions/assets/ft181-restart-marker-research.md`
   Supports: #1 — marker/Bootstrap mechanics, the exact refusal, and the untested restart path; a 2026-08-03 delegated read confirming the answer.
   Drift: re-verify if `internal/gate/authorization/authorization.go` or the terminal-restart branch in `internal/specbuild/assign.go` changes before the spec reads this map.
-- Path: `decisions/assets/ft181-liveness-classification-research.md`
+- Path: `specs/ft181-precondition-residuals/decisions/assets/ft181-liveness-classification-research.md`
   Supports: #2 and #3 — the classification table, why #2's worktree amendment is load-bearing, the exemption's reach, and the untested states; a 2026-08-03 delegated read confirming both answers.
   Drift: re-verify if `internal/specbuild/precondition.go` or `internal/worktree/resume.go`'s abandon planning changes before the spec reads this map.
-- Path: `decisions/assets/ft181-empty-recompose-research.md`
+- Path: `specs/ft181-precondition-residuals/decisions/assets/ft181-empty-recompose-research.md`
   Supports: #4's correction — commit evidence that promote's fast-forward shipped (`2874d94`) and that the residual wedge is checkpoint/start only.
   Drift: re-verify if `internal/specbuild/recompose.go` or the `errRecompose` refusal in `precondition.go` changes before the spec reads this map.

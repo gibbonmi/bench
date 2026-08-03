@@ -66,6 +66,10 @@ windows (before `start` or after `integrate`). Entry: `/bench-shape-idea`.
 Sources: `capture/IDEAS.md` (the three FT176 review entries), drained here;
 `capture/learnings.md` 2026-08-02, verdicted here.
 
+Staged spec: [`specs/ft181-precondition-residuals/spec.md`](specs/ft181-precondition-residuals/spec.md);
+its decision map and research assets moved under that folder with the staging
+commit.
+
 **FT171 (MEDIUM, decision required) — bound outer gate-phase concurrency
 against measured contention.** The artifact-split follow-up measured the
 `posture` package materially slower inside the fresh full gate than in its
