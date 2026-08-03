@@ -103,6 +103,12 @@ mismatch rather than six tickets past it.
 Re-derive each contract, and every claim a ticket makes about it, from the tree
 after earlier tickets land — never from the spec's account of the base.
 
+This step's output is each ticket's `Contracts:` line (next section). A
+discovery that ran leaves either named crossings or the literal claim
+`none crosses`; a ticket file with no `Contracts:` line is the visible
+signature of a skipped discovery, and a multi-fence breakdown whose every
+ticket claims `none crosses` is a claim the review grades, not a default.
+
 ## Write one file per ticket
 
 Write each ticket under `specs/<slug>/tickets/` with a verb-first title and this
@@ -113,6 +119,7 @@ shape:
 
 Blocked by: <sibling ticket file basenames, or none>
 Ownership fence: `<path prefix>`, `<path prefix>`
+Contracts: <value> crossing <fence>→<fence>, asserted by <row ID> against the real producer; or none crosses
 Assumptions: <clause>; <clause>
 
 ## What to build
@@ -148,6 +155,12 @@ continuation wrapped onto the next line is dropped without a word.
 - **`Blocked by:`** is `none`, or the file basenames of the sibling tickets that
   must land first. A basename survives a retitle and is what `--ticket` already
   names; a title does not.
+- **`Contracts:`** is the contract-discovery step's landing site: each value
+  crossing this ticket's fence, with the acceptance row that asserts it
+  against the real producer or the junction ticket that will — never a
+  fixture standing in for either. `none crosses` is a falsifiable claim, not
+  a default; writing it on every ticket of a multi-fence build asserts the
+  fences exchange nothing, which the review checks.
 - **`## Red mutations`** binds one row per acceptance ID: the concrete mutation
   that breaks that criterion, an owner independent of the code under test, and
   the public operation sequence that shows the red. Re-derive every claim in the
@@ -162,6 +175,7 @@ Good:
 
 Blocked by: parse-cancelled-job-records.md
 Ownership fence: `internal/status`, `internal/render/rows.go`
+Contracts: the cancelled record with its reason crosses `internal/parse`→`internal/render`, asserted by RC1 against the real parser's output
 Assumptions: the parser already emits a cancelled record carrying its reason; the recovery action is derived at render time and stored nowhere; claims re-derived from the tree at pickup
 
 ## What to build

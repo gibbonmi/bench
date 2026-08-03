@@ -27,7 +27,13 @@ Three rules keep a map honest:
 - **The degenerate-implementation check.** Before locking the map, name the
   cheapest wrong implementation of each story — the sequential port, the
   always-green stub — and confirm a row goes red on it; a map the degenerate
-  implementation passes has not pinned the behavior.
+  implementation passes has not pinned the behavior. When the map's seams span
+  more than one package or ownership fence, also name the **composition
+  degenerate**: the cheapest implementation that keeps every per-fence row
+  green while the end-to-end command still fails — one side softened, the
+  other still refusing — and confirm a row driven through the real producer
+  goes red on it. Per-fence rows asserted against fixtures cannot see this
+  degenerate; that is how both halves of a mismatch look green alone.
 - **Enumerate every quantifier.** When a behavior or red-signal promise
   quantifies over a set ("each check", "every parser"), enumerate the set or
   state the granularity explicitly — per item or per class. An unenumerated
@@ -51,6 +57,13 @@ every recomposition path. Every edge lands in exactly one of two places: a
 coverage row (the story column may read "edge of N"), or a one-line
 **Won't handle** entry directly under the map. Both are veto surface; a
 silently untested edge is the failure the walk exists to prevent.
+
+A class resolved by pointing at an existing control must name how that
+control exercises the **new** surface. A control that predates the change
+covers the old code by default — "resolved by the existing re-entry test"
+over a newly added action is a claim about a test that has never run the
+action, and it rots into an untested wedge. If the control cannot be shown
+to reach the new code, the class becomes a row.
 
 Two guards on the exclusions:
 
