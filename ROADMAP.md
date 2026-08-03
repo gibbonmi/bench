@@ -669,6 +669,20 @@ of the row is unblocked either way. The Git-inspection face is likewise
 byte-changing and therefore gets its own spec; it does not relax byte preservation
 for the foundation.
 
+A sixth face, observed 2026-08-02 during the FT164 build, is the canonical
+contextual-disclosure example: `bench spec build start` refused with "no exact
+green evidence: run bench gate, then retry start" on a tip whose verdict was
+reduced — where plain `bench gate` can only ever re-record another reduced
+verdict, so the stated remediation cannot succeed and the working command
+(`bench gate --fresh`) went unnamed. A refusal or result whose sensible next
+step depends on state the command already knows must emit that step in
+`help[]`. Reviewer acceptance conditions, recorded 2026-08-02: the FT173 spec
+is accepted only with a detailed per-command list covering every `bench` CLI
+command — its follow-up commands and `help[]` contextual-disclosure surface,
+command by command, no sampling — and the spec's grill must open on a deep
+dive into each command's real usage drawn from the Claude session logs plus
+the Codex usage logs the reviewer will share.
+
 Two constraints shape the build rather than the diagnosis. Principle 3 should
 not double-truncate a value already bounded at capture, and principle 8 is a
 query-surface rule, not a binary-wide one — `craft-cli` already holds that the

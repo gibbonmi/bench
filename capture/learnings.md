@@ -16,3 +16,15 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
 - **What happened:** …
 - **Right behavior:** …
 - **Proposed rule change:** … (or "none")
+
+## 2026-08-02 — mutated the tree while a gate was running  [open]
+
+- **What happened:** Ran `bench idea` (a capture write) while a background
+  `bench gate --fresh` was mid-run; the gate finished green on every phase but
+  rejected its own verdict with "gate subject changed during execution", and
+  the full run's cost was paid twice.
+- **Right behavior:** The profile's cold-session note already states it: never
+  mutate the repository while a gate is running — queue capture writes and
+  roadmap edits until the verdict lands, or do them before starting the run.
+- **Proposed rule change:** none — the rule exists; this is an execution miss
+  worth counting, and the queue-until-verdict habit is the fix.
