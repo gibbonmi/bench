@@ -81,6 +81,14 @@ rule. A failed done-claim or an uncleared red moves through the same declared
 ladder below. The leverage override still wins: kit guidance prose routes
 top + high in every stage.
 
+A spec's per-story line is a **ceiling, not a binding**: re-run the decision
+table per ticket at charge time, because a story routed mid for its uncertain
+seam often decomposes into tickets that are individually exact-spec,
+known-shape, and gate-covered — the cheap row. Charging every ticket at the
+story's tier is the quiet over-provisioning this paragraph exists to stop;
+the re-route is declared like any line, and the ladder corrects a wrong
+cheap start for one red's cost.
+
 ## Route the venue, not just the tier
 
 The same signals pick the model and effort for a spec'd build. `craft-delegate`

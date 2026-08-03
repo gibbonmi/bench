@@ -24,6 +24,15 @@ Implement the spec at the seams it names. If there's no spec, the change must fa
 under the lighter-path threshold `.bench/BENCH.md`'s "Right-size the process"
 paragraph sets; if it doesn't, stop and run `/bench-write-spec` first.
 
+Pre-build research scales to the spec's staleness and vagueness, never to its
+story count. A recently staged spec with named seams gets **one** read-only
+delegate charged narrowly: confirm the named seams still hold in the tree,
+and return the fixture-and-seam inventory (`craft-delegate` names it) for
+each fence the build will charge. Drift found there routes back to
+`/bench-write-spec` with the finding quoted — it is never compensated for
+with a wider build-time research fan-out; a spec with no seams to confirm is
+underspecified, which is the same route.
+
 ## First derive the tickets
 
 Charge `craft-tickets` before the first implementation edit. For a spec-backed

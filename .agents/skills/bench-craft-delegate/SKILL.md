@@ -58,7 +58,18 @@ everything else spawns fresh on the bound alias.
 
 Prefer compressed inputs over inherited context: give the delegate the named
 decision source plus the exact source passages and coverage rows its slice
-needs, not the orchestrator's whole read list.
+needs, not the orchestrator's whole read list. A build charge also carries
+the **fixture-and-seam inventory** for its fence — the test helpers, gate
+doubles, and prior-art fixtures by name and file — assembled once by the
+coordinator and pasted into every charge that fence receives; a delegate
+holding the inventory writes against prior art instead of re-deriving it,
+which is the single largest first-pass-quality lever a charge controls.
+
+Charged checks are focused: the delegate iterates with `-run` filters over
+its own tests, runs one full-package pass before returning, and never runs
+`-race` or any other phase the project gate already owns — the gate re-grades
+the composition anyway, so duplicating its phases in every delegate buys
+minutes and tokens for no verdict.
 
 Name exemplar files to mirror, and say so explicitly when no exemplar exists.
 A convention stated as prose degrades as the tree grows: "follow the repo's
