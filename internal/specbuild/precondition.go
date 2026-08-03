@@ -27,8 +27,30 @@ const (
 	mutationAbandon    mutation = "abandon"
 )
 
-// lifecycleMutations is the closed set of operations a precondition may act for; each is spelled as its `bench spec build` subcommand verb.
-var lifecycleMutations = []mutation{mutationStart, mutationAssign, mutationCheckpoint, mutationIntegrate, mutationReview, mutationPromote, mutationAbandon}
+type mutationPolicy struct {
+	op            mutation
+	requiresClean bool
+}
+
+// lifecycleMutationPolicies is the closed set of preconditioned operations and
+// the one source of their strict-versus-provisional checkout policy.
+var lifecycleMutationPolicies = []mutationPolicy{
+	{mutationStart, true},
+	{mutationAssign, false},
+	{mutationCheckpoint, false},
+	{mutationIntegrate, false},
+	{mutationReview, false},
+	{mutationPromote, true},
+	{mutationAbandon, true},
+}
+
+var lifecycleMutations = func() []mutation {
+	result := make([]mutation, len(lifecycleMutationPolicies))
+	for i, policy := range lifecycleMutationPolicies {
+		result[i] = policy.op
+	}
+	return result
+}()
 
 // name renders op for a refusal, falling back to the lifecycle rather than letting an undeclared token name no operation at all.
 func (op mutation) name() string {
@@ -99,11 +121,11 @@ func (s *Service) subject(op mutation, specPath string) (buildSubject, error) {
 	if err != nil {
 		return buildSubject{}, err
 	}
-	relative, err := filepath.Rel(s.root, specPath)
-	if err != nil || relative == "." || filepath.IsAbs(relative) || !sameOrBelow(s.root, specPath) {
+	relative, ok := checkoutRelativePath(s.root, specPath)
+	if !ok {
 		return buildSubject{}, errors.New("spec build spec does not belong to working checkout")
 	}
-	specTip, err := benchgit.Output("-C", s.root, "rev-parse", "HEAD:"+filepath.ToSlash(relative))
+	specTip, err := benchgit.Output("-C", s.root, "rev-parse", "HEAD:"+relative)
 	if err != nil || specTip == "" {
 		return buildSubject{}, errors.New("spec build staged spec has no committed identity")
 	}
@@ -114,18 +136,53 @@ func workingSubject(root string, op mutation) (string, string, error) {
 	if err != nil || branch == "" {
 		return "", "", fmt.Errorf("spec build %s requires a checked-out working branch", op.name())
 	}
-	dirty, err := benchgit.Output("-C", root, "status", "--porcelain", "--untracked-files=all")
-	if err != nil {
-		return "", "", err
-	}
-	if dirty != "" {
-		return "", "", fmt.Errorf("spec build %s requires a clean working checkout: %s", op.name(), dirty)
+	if requiresCleanWorkingCheckout(op) {
+		dirty, err := benchgit.Output("-C", root, "status", "--porcelain", "--untracked-files=all")
+		if err != nil {
+			return "", "", err
+		}
+		if dirty != "" {
+			return "", "", fmt.Errorf("spec build %s requires a clean working checkout: %s", op.name(), dirty)
+		}
 	}
 	tip, err := benchgit.Output("-C", root, "rev-parse", "HEAD^{commit}")
 	if err != nil {
 		return "", "", err
 	}
 	return branch, tip, nil
+}
+
+func requiresCleanWorkingCheckout(op mutation) bool {
+	for _, policy := range lifecycleMutationPolicies {
+		if policy.op == op {
+			return policy.requiresClean
+		}
+	}
+	return true
+}
+
+func checkoutRelativePath(root, path string) (string, bool) {
+	relative, err := filepath.Rel(root, path)
+	if err != nil || relative == "." || filepath.IsAbs(relative) || !sameOrBelow(root, path) {
+		return "", false
+	}
+	return filepath.ToSlash(relative), true
+}
+
+func (s *Service) requireCommittedTicket(ticket Ticket) error {
+	path, ok := checkoutRelativePath(s.root, ticket.Path)
+	if !ok {
+		return errors.New("spec build ticket does not belong to working checkout")
+	}
+	committed, err := benchgit.Raw("-C", s.root, "show", "HEAD:"+path)
+	if err != nil || digest(string(committed)) != ticket.Digest {
+		return errors.New("spec build ticket no longer matches committed subject")
+	}
+	indexed, err := benchgit.Raw("-C", s.root, "show", ":"+path)
+	if err != nil || digest(string(indexed)) != ticket.Digest {
+		return errors.New("spec build ticket no longer matches committed subject")
+	}
+	return nil
 }
 
 var (

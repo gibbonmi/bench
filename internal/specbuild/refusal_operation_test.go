@@ -26,6 +26,11 @@ func detachedCheckout(t *testing.T, fixture preconditionFixture) {
 	git(t, fixture.root, "checkout", "--detach", "-q")
 }
 
+// strictCheckoutMutations deliberately repeats the production policy: omitting a
+// strict operation or mutating it to provisional must leave this dirty-checkout
+// oracle red instead of shrinking the tested family with the implementation.
+var strictCheckoutMutations = []mutation{mutationStart, mutationPromote, mutationAbandon}
+
 // operationWordIn reads the whole rendered operation, so a word carrying a flag fails rather than passing on its first token.
 func operationWordIn(t *testing.T, message string) string {
 	t.Helper()
@@ -38,7 +43,7 @@ func operationWordIn(t *testing.T, message string) string {
 }
 
 func TestDirtyCheckoutRefusalNamesOperation(t *testing.T) {
-	for _, op := range lifecycleMutations {
+	for _, op := range strictCheckoutMutations {
 		t.Run(string(op), func(t *testing.T) {
 			fixture := newPreconditionFixture(t, false)
 			dirtyCheckout(t, fixture)
@@ -95,7 +100,7 @@ func TestOperationWordMatchesSubcommandVerb(t *testing.T) {
 	for _, op := range lifecycleMutations {
 		t.Run(string(op), func(t *testing.T) {
 			fixture := newPreconditionFixture(t, false)
-			dirtyCheckout(t, fixture)
+			detachedCheckout(t, fixture)
 			word := operationWordIn(t, workingSubjectRefusal(t, fixture, op))
 			if word != string(op) || !verbs[word] {
 				t.Fatalf("operation word %q for %q is not the subcommand verb; parsed verbs: %v", word, op, verbs)
@@ -104,7 +109,9 @@ func TestOperationWordMatchesSubcommandVerb(t *testing.T) {
 	}
 }
 
-// TestLifecycleFamilyMatchesSubcommandVerbs pins membership against a source outside the production list: the per-member loops iterate lifecycleMutations, so a dropped member would shrink the test set and the tested behavior together.
+// TestLifecycleFamilyMatchesSubcommandVerbs pins membership against the shipped
+// CLI instead of the production list every per-operation test iterates, so an
+// omitted operation cannot shrink implementation and coverage together.
 func TestLifecycleFamilyMatchesSubcommandVerbs(t *testing.T) {
 	// status inspects a run and mutates nothing, so it is the one usage verb with no precondition and the family's only deliberate exclusion.
 	const inspectionVerb = "status"

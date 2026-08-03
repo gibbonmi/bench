@@ -99,6 +99,11 @@ func (s *Service) Integrate(ctx context.Context, slug, assignmentID string) (Sta
 	if _, err := s.preconditions(mutationIntegrate, slug, run.Spec, &run, assignmentID, ""); err != nil {
 		return Status{}, err
 	}
+	if assigned.Integrated == "" {
+		if err := s.requireIntegrationTicket(run, assigned); err != nil {
+			return Status{}, err
+		}
+	}
 	if assigned.Integrated != "" {
 		if !refAt(s.root, run.Candidate, assigned.Integrated) {
 			return Status{}, errors.New("spec build integrated candidate drifted")
@@ -258,19 +263,8 @@ func (s *Service) verifyIntegration(ctx context.Context, run record, assigned as
 	if err != nil || tree != assigned.CheckpointTree {
 		return nil, errors.New("checkpoint patch drifted")
 	}
-	ticketArg, err := filepath.Rel(filepath.Join(filepath.Dir(run.Spec), "tickets"), assigned.Ticket)
-	if err != nil {
-		return nil, errors.New("checkpoint ownership drifted")
-	}
-	current, err := ParseTicket(run.Spec, ticketArg)
-	if err != nil || !sameStrings(current.Fence, assigned.Fence) {
-		return nil, errors.New("checkpoint ownership drifted")
-	}
-	if !sameStrings(current.Assumptions, assigned.Assumptions) {
-		return nil, errors.New("checkpoint assumptions changed")
-	}
-	if current.Digest != assigned.TicketDigest {
-		return nil, errors.New("checkpoint ticket drifted")
+	if err := s.requireIntegrationTicket(run, assigned); err != nil {
+		return nil, err
 	}
 	paths, err := s.changedPaths(ctx, assigned.Base, assigned.Checkpoint)
 	if err != nil || !insideFence(paths, assigned.Fence) {
@@ -281,6 +275,32 @@ func (s *Service) verifyIntegration(ctx context.Context, run record, assigned as
 		return nil, errors.New("checkpoint patch drifted")
 	}
 	return patch, nil
+}
+
+func (s *Service) requireIntegrationTicket(run record, assigned assignment) error {
+	current, err := validateIntegrationTicket(run, assigned)
+	if err != nil {
+		return err
+	}
+	return s.requireCommittedTicket(current)
+}
+
+func validateIntegrationTicket(run record, assigned assignment) (Ticket, error) {
+	ticketArg, err := filepath.Rel(filepath.Join(filepath.Dir(run.Spec), "tickets"), assigned.Ticket)
+	if err != nil {
+		return Ticket{}, errors.New("checkpoint ownership drifted")
+	}
+	current, err := ParseTicket(run.Spec, ticketArg)
+	if err != nil || !sameStrings(current.Fence, assigned.Fence) {
+		return Ticket{}, errors.New("checkpoint ownership drifted")
+	}
+	if !sameStrings(current.Assumptions, assigned.Assumptions) {
+		return Ticket{}, errors.New("checkpoint assumptions changed")
+	}
+	if current.Digest != assigned.TicketDigest {
+		return Ticket{}, errors.New("checkpoint ticket drifted")
+	}
+	return current, nil
 }
 
 func (s *Service) replayCheckpoint(ctx context.Context, candidate, base, checkpoint string, patch []byte) (string, error) {

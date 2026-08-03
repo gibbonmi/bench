@@ -294,6 +294,10 @@ func TestLifecycleMutatorsRefuseSharedPreconditionDriftWithoutMutation(t *testin
 			_, err := f.service.Review(t.Context(), "build demo", "")
 			return err
 		}},
+		{"promote", "current clean review", func(t *testing.T, f preconditionFixture) error {
+			_, err := f.service.Promote(t.Context(), "build demo")
+			return err
+		}},
 	}
 	conditions := []struct {
 		name     string
@@ -324,6 +328,12 @@ func TestLifecycleMutatorsRefuseSharedPreconditionDriftWithoutMutation(t *testin
 	}
 	for _, operation := range operations {
 		for _, condition := range conditions {
+			if (condition.name == "tracked dirt" || condition.name == "untracked dirt") && operation.name != "start" && operation.name != "promote" {
+				continue
+			}
+			if operation.name == "promote" && condition.name == "working advance" {
+				continue
+			}
 			if operation.name == "start" && (condition.needsRun || condition.name == "wrong branch" || condition.name == "working advance") {
 				continue
 			}
@@ -365,6 +375,110 @@ func TestSharedPreconditionsAllowExpectedAssignmentDirt(t *testing.T) {
 	write(t, filepath.Join(fixture.assignment.Path, "in-progress.txt"), "expected dirt\n")
 	if _, err := fixture.service.preconditions(mutationCheckpoint, "build demo", fixture.run.Spec, &fixture.run, fixture.assignment.ID, "expected receipt"); err != nil {
 		t.Fatalf("preconditions rejected expected assignment dirt: %v", err)
+	}
+}
+
+func TestProvisionalOperationsAllowUnrelatedCoordinatorDirt(t *testing.T) {
+	dirt := []struct {
+		name  string
+		apply func(*testing.T, string)
+	}{
+		{"tracked", func(t *testing.T, root string) { write(t, filepath.Join(root, "tracked.txt"), "changed\n") }},
+		{"untracked", func(t *testing.T, root string) { write(t, filepath.Join(root, "untracked.txt"), "changed\n") }},
+	}
+	operations := []struct {
+		name   string
+		invoke func(*testing.T, func(*testing.T, string)) error
+	}{
+		{"assign", func(t *testing.T, apply func(*testing.T, string)) error {
+			fixture := newPreconditionFixture(t, true)
+			apply(t, fixture.root)
+			_, _, err := fixture.service.Assign(t.Context(), "build demo", "one.md", "unrelated coordinator dirt")
+			return err
+		}},
+		{"checkpoint", func(t *testing.T, apply func(*testing.T, string)) error {
+			fixture := newCheckpointFixture(t)
+			apply(t, fixture.root)
+			_, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n"))
+			return err
+		}},
+		{"integrate", func(t *testing.T, apply func(*testing.T, string)) error {
+			fixture := checkpointedReleaseFixture(t)
+			apply(t, fixture.root)
+			_, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID)
+			return err
+		}},
+		{"review", func(t *testing.T, apply func(*testing.T, string)) error {
+			fixture := checkpointedReleaseFixture(t)
+			if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
+				return err
+			}
+			apply(t, fixture.root)
+			run := loadRun(t, fixture.service)
+			receipt := reviewReceipt{Version: 1, Run: run.Run, Candidate: run.CandidateTip, Axes: []reviewAxis{{Axis: "Standards"}, {Axis: "Spec"}, {Axis: "Coverage"}}}
+			_, err := fixture.service.Review(t.Context(), "build demo", writeReviewReceipt(t, receipt))
+			return err
+		}},
+	}
+	for _, operation := range operations {
+		for _, change := range dirt {
+			t.Run(operation.name+"/"+change.name, func(t *testing.T) {
+				if err := operation.invoke(t, change.apply); err != nil {
+					t.Fatalf("%s rejected unrelated %s coordinator dirt: %v", operation.name, change.name, err)
+				}
+			})
+		}
+	}
+}
+
+func TestAssignRefusesUncommittedTicketWithoutMutation(t *testing.T) {
+	const ticket = "# One\n\nOwnership fence: internal/specbuild\nAssumptions: changed contract\n\n- [ ] [R10-R15] checkpoint receipt\n"
+	for _, tc := range []struct {
+		name, arg string
+		apply     func(*testing.T, preconditionFixture)
+	}{
+		{"tracked", "one.md", func(t *testing.T, fixture preconditionFixture) {
+			write(t, filepath.Join(fixture.root, "specs", "build demo", "tickets", "one.md"), ticket)
+		}},
+		{"staged", "one.md", func(t *testing.T, fixture preconditionFixture) {
+			path := filepath.Join(fixture.root, "specs", "build demo", "tickets", "one.md")
+			write(t, path, ticket)
+			git(t, fixture.root, "add", filepath.ToSlash(path[len(fixture.root)+1:]))
+		}},
+		{"untracked", "untracked.md", func(t *testing.T, fixture preconditionFixture) {
+			write(t, filepath.Join(fixture.root, "specs", "build demo", "tickets", "untracked.md"), ticket)
+		}},
+		{"ignored", "ignored.md", func(t *testing.T, fixture preconditionFixture) {
+			write(t, filepath.Join(fixture.root, ".gitignore"), "ignored.md\n")
+			write(t, filepath.Join(fixture.root, "specs", "build demo", "tickets", "ignored.md"), ticket)
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			fixture := newPreconditionFixture(t, true)
+			tc.apply(t, fixture)
+			before := snapshotPrecondition(t, fixture)
+			if _, _, err := fixture.service.Assign(t.Context(), "build demo", tc.arg, "uncommitted ticket"); err == nil {
+				t.Fatal("Assign accepted an uncommitted ticket")
+			}
+			if after := snapshotPrecondition(t, fixture); after != before {
+				t.Fatalf("Assign mutated for an uncommitted ticket:\n before=%#v\n after=%#v", before, after)
+			}
+		})
+	}
+}
+
+func TestAssignAllowsDirtySiblingTicket(t *testing.T) {
+	root := repo(t)
+	write(t, filepath.Join(root, "specs", "build demo", "tickets", "two.md"), "# Two\n\nOwnership fence: internal/two\n\n- [ ] [R20] sibling assignment\n")
+	git(t, root, "add", ".")
+	git(t, root, "commit", "-qm", "second ticket")
+	service := New(root, &countingGate{}, &preconditionOwner{})
+	if _, err := service.Start(t.Context(), "build demo"); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	write(t, filepath.Join(root, "specs", "build demo", "tickets", "one.md"), "dirty sibling ticket\n")
+	if _, _, err := service.Assign(t.Context(), "build demo", "two.md", "clean selected ticket"); err != nil {
+		t.Fatalf("Assign rejected a committed ticket because its sibling was dirty: %v", err)
 	}
 }
 

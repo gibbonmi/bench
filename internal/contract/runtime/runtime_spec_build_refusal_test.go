@@ -10,22 +10,21 @@ import (
 	"github.com/gibbonmi/bench/internal/contract"
 )
 
-// sixOperationCase is one of the six precondition-gated operations an operator can
+// runtimeMutationCase is one of the six post-start mutating operations an operator can
 // reach through `bench spec build`, paired with the exact CLI args that drive it far
 // enough — past every early, operation-specific gate the service checks before the
 // shared precondition call — to reach the working-subject refusal under test.
-type sixOperationCase struct {
+type runtimeMutationCase struct {
 	op   string
 	args []string
 }
 
-// composeSixOperationCases starts one run on f and prepares every piece of live state
+// composeRuntimeMutationCases starts one run on f and prepares every piece of live state
 // each of the six mutating operations needs to clear its own early gate (a real
 // assignment for checkpoint, a checkpointed assignment for integrate, a receipt bound
-// to the current candidate for review) so that a dirty or detached working checkout —
-// applied by the caller after this returns — is the first and only thing any of them
-// can still refuse on.
-func composeSixOperationCases(t *testing.T, f contract.Fixture) []sixOperationCase {
+// to the current candidate for review) so the caller's applicable working-subject
+// condition is the first thing the command can still refuse on.
+func composeRuntimeMutationCases(t *testing.T, f contract.Fixture) []runtimeMutationCase {
 	t.Helper()
 	f.WriteFile("specs/demo/spec.md", "# demo\n\nStatus: staged\n")
 	f.WriteFile("specs/demo/tickets/one.md", "# One\n\nOwnership fence: internal/t1\n\n- [ ] [R61] checkpoint target\n")
@@ -42,7 +41,7 @@ func composeSixOperationCases(t *testing.T, f contract.Fixture) []sixOperationCa
 
 	reviewReceipt := runtimeReviewReceipt(t, f)
 
-	return []sixOperationCase{
+	return []runtimeMutationCase{
 		{"assign", []string{"spec", "build", "assign", "demo", "--ticket", "one.md", "--request", "operation-named-assign"}},
 		// checkpoint's own early gate only requires the assignment to exist, not to already
 		// carry a receipt, so an unvalidated placeholder evidence path is enough to reach the
@@ -70,15 +69,30 @@ func requireOperationNamed(t *testing.T, op, want, message string) {
 	}
 }
 
-// TestDirtyCheckoutRefusalNamesEachOperation is CT1: every precondition-gated operation
-// — not only `start` — names itself in the dirty-checkout refusal, driven through the
-// real CLI as a fresh subprocess per row (CT7). Each operation's wording is independent:
-// none borrows another operation's name.
-func TestDirtyCheckoutRefusalNamesEachOperation(t *testing.T) {
+// TestDirtyCheckoutRefusalNamesEachStrictOperation is CT1: every strict operation names
+// itself in the dirty-checkout refusal through the real CLI as a fresh subprocess.
+func TestDirtyCheckoutRefusalNamesEachStrictOperation(t *testing.T) {
+	t.Run("start", func(t *testing.T) {
+		f := setupRuntimeBuildGate(t, "#!/bin/sh\nexit 0\n")
+		f.WriteFile("specs/demo/spec.md", "# demo\n\nStatus: staged\n")
+		f.WriteFile("specs/demo/tickets/one.md", "# One\n\nOwnership fence: internal/t1\n\n- [ ] [R61] start target\n")
+		f.CommitAll("staged spec")
+		f.Bench("gate").RequireExit(0)
+		f.WriteFile("dirty.txt", "dirty\n")
+		probe := f.Bench("spec", "build", "start", "demo")
+		probe.RequireExit(1)
+		requireOperationNamed(t, "start", "spec build start requires a clean working checkout", probe.Stdout)
+		if probe.Stderr != "" {
+			t.Fatalf("start dirty-checkout stderr = %q", probe.Stderr)
+		}
+	})
 	f := setupRuntimeBuildGate(t, "#!/bin/sh\nexit 0\n")
-	cases := composeSixOperationCases(t, f)
+	cases := composeRuntimeMutationCases(t, f)
 	f.WriteFile("dirty.txt", "dirty\n")
 	for _, tc := range cases {
+		if tc.op != "promote" && tc.op != "abandon" {
+			continue
+		}
 		t.Run(tc.op, func(t *testing.T) {
 			probe := f.Bench(tc.args...)
 			probe.RequireExit(1)
@@ -90,12 +104,37 @@ func TestDirtyCheckoutRefusalNamesEachOperation(t *testing.T) {
 	}
 }
 
+func TestProvisionalOperationsTolerateCoordinatorDirt(t *testing.T) {
+	f := setupRuntimeBuildGate(t, "#!/bin/sh\nexit 0\n")
+	f.WriteFile("specs/demo/spec.md", "# demo\n\nStatus: staged\n")
+	f.WriteFile("specs/demo/tickets/one.md", "# One\n\nOwnership fence: internal/demo\n\n- [ ] [R62] provisional dirt tolerance\n")
+	f.WriteFile("coordinator-tracked.txt", "base\n")
+	f.WriteFile("coordinator-staged.txt", "base\n")
+	f.CommitAll("staged spec")
+	f.Bench("gate").RequireExit(0)
+	f.Bench("spec", "build", "start", "demo").RequireExit(0)
+	f.WriteFile("coordinator-tracked.txt", "changed\n")
+	f.WriteFile("coordinator-staged.txt", "changed\n")
+	f.Git("add", "coordinator-staged.txt").RequireExit(0)
+	f.WriteFile("coordinator-untracked.txt", "changed\n")
+
+	assignment := assignRuntimeBuild(t, f, "one.md", "coordinator-dirt-request")
+	writeAssignmentChange(t, assignment.Path, "internal/demo/change.go", "package demo\n")
+	f.Bench("spec", "build", "checkpoint", "demo", "--assignment", assignment.ID, "--evidence", runtimeCheckpointReceipt(t, f, assignment, []string{"internal/demo/change.go"})).RequireExit(0)
+	f.Bench("spec", "build", "integrate", "demo", "--assignment", assignment.ID).RequireExit(0)
+	f.Bench("spec", "build", "review", "demo", "--evidence", runtimeReviewReceipt(t, f)).RequireExit(0)
+	status := f.Git("status", "--porcelain=v1", "--untracked-files=all").Stdout
+	for _, path := range []string{"coordinator-tracked.txt", "coordinator-staged.txt", "coordinator-untracked.txt"} {
+		contract.RequireContains(t, status, path)
+	}
+}
+
 // TestNoWorkingBranchRefusalNamesEachOperation is CT2: the same six operations name
 // themselves in the no-working-branch refusal. The resolver hardcodes two messages —
 // fixing only the dirty-checkout one is the cheap half-fix this row exists to catch.
 func TestNoWorkingBranchRefusalNamesEachOperation(t *testing.T) {
 	f := setupRuntimeBuildGate(t, "#!/bin/sh\nexit 0\n")
-	cases := composeSixOperationCases(t, f)
+	cases := composeRuntimeMutationCases(t, f)
 	f.Git("checkout", "--detach", "-q")
 	for _, tc := range cases {
 		t.Run(tc.op, func(t *testing.T) {
@@ -111,10 +150,8 @@ func TestNoWorkingBranchRefusalNamesEachOperation(t *testing.T) {
 
 // TestReviewReachesPreconditionRefusal is CT3: `review` validates its receipt against
 // the run and the current candidate before it ever reaches the shared precondition
-// call, so a stub or mismatched receipt returns the receipt refusal and a dirty-checkout
-// assertion would pass without exercising the precondition layer at all. Driving the row
-// with a real three-axis receipt bound to the current candidate is what makes the
-// precondition refusal — not the receipt refusal — the one actually observed.
+// call, so a stub or mismatched receipt returns the receipt refusal. A real three-axis
+// receipt makes the no-working-branch refusal the one actually observed.
 func TestReviewReachesPreconditionRefusal(t *testing.T) {
 	f := setupRuntimeBuildGate(t, "#!/bin/sh\nexit 0\n")
 	f.WriteFile("specs/demo/spec.md", "# demo\n\nStatus: staged\n")
@@ -123,13 +160,13 @@ func TestReviewReachesPreconditionRefusal(t *testing.T) {
 	f.Bench("gate").RequireExit(0)
 	f.Bench("spec", "build", "start", "demo").RequireExit(0)
 	receipt := runtimeReviewReceipt(t, f)
-	f.WriteFile("dirty.txt", "dirty\n")
+	f.Git("checkout", "--detach", "-q")
 	probe := f.Bench("spec", "build", "review", "demo", "--evidence", receipt)
 	probe.RequireExit(1)
 	if strings.Contains(probe.Stdout, "invalid spec build review receipt") {
 		t.Fatalf("review with a valid candidate-bound receipt still hit the receipt refusal: %q", probe.Stdout)
 	}
-	requireOperationNamed(t, "review", "spec build review requires a clean working checkout", probe.Stdout)
+	requireOperationNamed(t, "review", "spec build review requires a checked-out working branch", probe.Stdout)
 }
 
 // TestStartMarkerAncestryEndToEnd is CT4: `start` fast-forwards a strict-ancestor
@@ -268,9 +305,9 @@ func TestRefusalSurvivesControlByteBranchName(t *testing.T) {
 	f.Bench("spec", "build", "start", "demo").RequireExit(0)
 	f.WriteFile("dirty"+control+"file.txt", "dirty\n")
 
-	probe := f.Bench("spec", "build", "assign", "demo", "--ticket", "one.md", "--request", "control-byte-branch-request")
+	probe := f.Bench("spec", "build", "promote", "demo")
 	probe.RequireExit(1)
-	requireOperationNamed(t, "assign", "spec build assign requires a clean working checkout", probe.Stdout)
+	requireOperationNamed(t, "promote", "spec build promote requires a clean working checkout", probe.Stdout)
 	if probe.Stderr != "" {
 		t.Fatalf("control-byte-branch refusal leaked to stderr: %q", probe.Stderr)
 	}
@@ -284,9 +321,9 @@ func TestRefusalSurvivesControlByteBranchName(t *testing.T) {
 	}
 }
 
-// TestSpecBuildRefusalsCrossProcessBoundary is CT7: every row above reaches its refusal
-// by having a fresh `bash bin/bench.sh` subprocess — with zero in-memory state of its
-// own — reload the run record from disk. A refusing subprocess that could only produce
+// TestSpecBuildRefusalsCrossProcessBoundary is CT7: a fresh `bash bin/bench.sh`
+// subprocess — with zero in-memory state of its own — reloads the run record from disk.
+// A refusing subprocess that could only produce
 // the right operation name and the right run identity by having actually read the
 // persisted record proves the record survived the boundary, and a fourth, independent
 // subprocess reading it back afterward proves the refusal did not corrupt it.
@@ -301,9 +338,9 @@ func TestSpecBuildRefusalsCrossProcessBoundary(t *testing.T) {
 	before := readRuntimeBuildState(t, f)
 
 	f.WriteFile("dirty.txt", "dirty\n")
-	refusal := f.Bench("spec", "build", "checkpoint", "demo", "--assignment", assignment.ID, "--evidence", "irrelevant") // subprocess 3
+	refusal := f.Bench("spec", "build", "promote", "demo") // subprocess 3
 	refusal.RequireExit(1)
-	requireOperationNamed(t, "checkpoint", "spec build checkpoint requires a clean working checkout", refusal.Stdout)
+	requireOperationNamed(t, "promote", "spec build promote requires a clean working checkout", refusal.Stdout)
 
 	after := readRuntimeBuildState(t, f) // read directly from disk, independent of subprocess 3's exit
 	if after.Run != before.Run || after.Candidate != before.Candidate {

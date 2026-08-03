@@ -250,6 +250,7 @@ func TestIntegrateReleasesOnlyAfterDurableProvenance(t *testing.T) {
 		requirePendingRelease(t, fixture, status)
 		candidate := status.Subject
 		commits := git(t, fixture.root, "rev-list", "--count", fixture.run.Candidate)
+		changedTicket(t, fixture, "ticket dirt after durable integration\n")
 		owner.err = nil
 		status, err = fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID)
 		if err != nil {
@@ -279,6 +280,39 @@ func TestIntegrateReleasesOnlyAfterDurableProvenance(t *testing.T) {
 		}
 		requireReleased(t, fixture)
 	})
+}
+
+func TestIntegrateRefusesTicketIndexDriftWithoutMutation(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		apply func(*testing.T, checkpointFixture, string, []byte)
+	}{
+		{"staged mismatch", func(t *testing.T, fixture checkpointFixture, path string, original []byte) {
+			write(t, path, string(original)+"\n")
+			git(t, fixture.root, "add", filepath.ToSlash(path[len(fixture.root)+1:]))
+			write(t, path, string(original))
+		}},
+		{"missing index", func(t *testing.T, fixture checkpointFixture, path string, _ []byte) {
+			git(t, fixture.root, "rm", "--cached", "-q", filepath.ToSlash(path[len(fixture.root)+1:]))
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			fixture := checkpointedReleaseFixture(t)
+			path := filepath.Join(fixture.root, "specs", "build demo", "tickets", "one.md")
+			original, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			tc.apply(t, fixture, path, original)
+			before := checkpointSnapshotFor(t, fixture)
+			if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err == nil || !strings.Contains(err.Error(), "ticket no longer matches committed subject") {
+				t.Fatalf("Integrate with %s = %v", tc.name, err)
+			}
+			if after := checkpointSnapshotFor(t, fixture); after != before {
+				t.Fatalf("Integrate with %s mutated: before=%#v after=%#v", tc.name, before, after)
+			}
+		})
+	}
 }
 func TestTypedNilReleaseOwnerStaysPending(t *testing.T) {
 	fixture := checkpointedReleaseFixture(t)
@@ -317,6 +351,9 @@ func TestIntegrateJournalRecoversCandidateCASBeforeState(t *testing.T) {
 			}
 			moved := git(t, fixture.root, "rev-parse", fixture.run.Candidate)
 			fixture.service.fault = nil
+			if point == "integrate/candidate-cas" {
+				changedTicket(t, fixture, "ticket dirt after candidate CAS\n")
+			}
 			if point == "integrate/commit" {
 				run := loadRun(t, fixture.service)
 				op, _ := fixture.service.operation(run, "integrate", fixture.assigned.ID)
@@ -341,6 +378,9 @@ func TestIntegrateJournalRecoversCandidateCASBeforeState(t *testing.T) {
 			run := loadRun(t, fixture.service)
 			if git(t, fixture.root, "rev-parse", run.Candidate) != run.CandidateTip || (point != "integrate/commit" && run.CandidateTip != moved) || runner.calls == 0 || (point == "integrate/commit" && runner.commits != 1) {
 				t.Fatal("integration replayed or bypassed runner")
+			}
+			if point == "integrate/candidate-cas" {
+				requireReleased(t, fixture)
 			}
 		})
 	}

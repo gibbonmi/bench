@@ -40,6 +40,9 @@ func (s *Service) Assign(ctx context.Context, slug, ticketArg, request string) (
 	if err != nil {
 		return Assignment{}, Status{}, err
 	}
+	if err := s.requireCommittedTicket(ticket); err != nil {
+		return Assignment{}, Status{}, err
+	}
 	requestID := digest(run.Run + "\x00" + request)
 	op, completed, err := s.beginOperation(&run, "assign", requestID, ticket.Digest)
 	if err != nil {

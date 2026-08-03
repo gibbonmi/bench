@@ -56,6 +56,7 @@ func TestRuntimeSpecBuildIntegrateResumesExactLiveRelease(t *testing.T) {
 		t.Fatalf("pending release state = %#v candidate=%s", stored, afterFailure.CandidateTip)
 	}
 	commits := strings.TrimSpace(f.Git("rev-list", "--count", afterFailure.Candidate).Stdout)
+	f.WriteFile("specs/demo/tickets/one.md", "ticket dirt after durable integration\n")
 	if err := os.Remove(drift); err != nil {
 		t.Fatal(err)
 	}
