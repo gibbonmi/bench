@@ -2,9 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `7546e54` before the roadmap-drain commit
-Spec: `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: stale green before this reduced-scope roadmap-and-capture batch
+Branch: `main` — HEAD `f036402`, clean tree, 9 unpushed commits
+Spec: `specs/ft181-precondition-residuals/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Gate: green at `921f8c8` — current
 
 ## State
 
@@ -13,10 +13,11 @@ Gate: stale green before this reduced-scope roadmap-and-capture batch
 - FT180 now owns spec-optional `$bench-implement-spec --full`; FT174 owns the complete real-ticket dependency, ownership, Red-mutations, and acceptance-ID grammar; FT98 owns the recurring tracked-file set-aside gap.
 - The retro's terminal-record work is in FT162, its repair-slice rule is in FT164, and its public-CLI cross-harness review rule is in FT158.
 - Decisions that stay closed: all rulings in the six active decision maps, including the 2026-08-03 gate-pipeline and gate-structure amendments.
+- `specs/ft181-precondition-residuals/spec.md` is reviewer-approved (2026-08-03) and ready to build. Its closed decisions: fast-forward op set is checkpoint + start on non-terminal runs only; husk bytes preserved via a new non-deleting plan action; the prepared-abandon exemption is deleted, not narrowed; all four stories opus / medium. The spec's "Existing tests this build re-scopes" list is the only authorization to edit existing tests. Two falsification passes (opus and codex sol) ran; every finding is dispositioned in the staged spec.
 
 ## Next command
 
-`$bench-shape-idea`
+`/bench-implement-spec specs/ft181-precondition-residuals/spec.md`
 
 ## Shape
 
