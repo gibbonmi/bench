@@ -114,3 +114,13 @@ and start instead of refusing them.
   authorizes.
 
 ## Sources
+
+- Path: `decisions/assets/ft181-restart-marker-research.md`
+  Supports: #1 — marker/Bootstrap mechanics, the exact refusal, and the untested restart path; a 2026-08-03 delegated read confirming the answer.
+  Drift: re-verify if `internal/gate/authorization/authorization.go` or the terminal-restart branch in `internal/specbuild/assign.go` changes before the spec reads this map.
+- Path: `decisions/assets/ft181-liveness-classification-research.md`
+  Supports: #2 and #3 — the classification table, why #2's worktree amendment is load-bearing, the exemption's reach, and the untested states; a 2026-08-03 delegated read confirming both answers.
+  Drift: re-verify if `internal/specbuild/precondition.go` or `internal/worktree/resume.go`'s abandon planning changes before the spec reads this map.
+- Path: `decisions/assets/ft181-empty-recompose-research.md`
+  Supports: #4's correction — commit evidence that promote's fast-forward shipped (`2874d94`) and that the residual wedge is checkpoint/start only.
+  Drift: re-verify if `internal/specbuild/recompose.go` or the `errRecompose` refusal in `precondition.go` changes before the spec reads this map.
