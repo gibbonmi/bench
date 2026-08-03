@@ -8,17 +8,22 @@ Gate: green at `2a8f9f0` — stale, work tree `ada7d85`
 
 ## State
 
-- **FT164 `--full` build: implementation phase, in flight.** Lifecycle
-  `bench spec build` run active for `ft164-ticket-contracts`, subject `2276b27`.
-  Seven executable-contract tickets committed under
-  `specs/ft164-ticket-contracts/tickets/` (opus-authored, opus-reviewed, one
-  repair round applied). Two assignments out on the frontier: request
-  `ft164-export-parser` (ticket `export-the-ticket-parser.md`) and request
-  `ft164-teach-template` (ticket
-  `teach-the-executable-contract-template-and-examples.md`); the remaining five
-  tickets are dependency-blocked (chain teach→open→add→charge→point; land
-  blocked by export+teach). `bench spec build status ft164-ticket-contracts`
-  is authoritative for assignment state.
+- **FT164 `--full` build: repair round after composed review.** All eight
+  tickets (seven original + the classification repair) are integrated; the
+  reviewed candidate was `0b592ac`. The fresh-context opus three-axis review
+  and a Codex `gpt-5.6-sol` falsification pass together produced five accepted
+  concrete defects, now two repair tickets in
+  `specs/ft164-ticket-contracts/tickets/`:
+  `retire-title-blockers-and-pin-the-unpinned-halves.md` (step-3 title
+  contradiction, AB2 row unpinned, junction-creation half unpinned) and
+  `tighten-the-agreement-checks-blind-spots.md` (per-ID substring blind spot,
+  EOF normalization vacuity). Repair route: fresh gate → promote (recompose) →
+  assign both → checkpoint → integrate → fresh composed review → promote.
+  Veto flags held for the exit report: duplicate re-derivation sentence,
+  `###` fence-heading workaround, held (unmoved) probe-kind mutation entry,
+  ParseTicket doc comment naming its consumer, the anchor file already over
+  its structure budget. `bench spec build status ft164-ticket-contracts` is
+  authoritative for lifecycle state.
 - **Line (reviewer override, 2026-08-02):** opus/high for all write delegates
   and all reviews — opus followability is the build's purpose — overriding the
   spec's fable/high on stories 1–6; fable coordinates and verifies. Research
