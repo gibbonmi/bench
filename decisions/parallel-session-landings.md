@@ -164,7 +164,22 @@ which externally observed claims remain caller-supplied and attributable.
 
 ### Answer
 
-— (open; awaiting #3 and #6)
+The CLI derives and seals every repository or run fact: run identity and
+revision, assignment and ownership, base and candidate, tree and patch
+identity, ticket digest, charged rows, fence, assumptions, axes, timestamps,
+and receipt digests. Callers supply only attributable external observations:
+checks performed and their results/log references, independent probes, and
+review findings and dispositions. Coordinators neither reconstruct the schema
+nor calculate its hashes.
+
+The surface is AXI-conformant. Successes and errors return minimal TOON on
+stdout with honest exit codes, definitive empty/no-op states, bounded previews
+and a `--full` escape hatch where receipt bodies are large. Every return appends
+contextual `help[]` entries containing concrete next-step helper command
+templates. Those helpers carry forward known run, revision, assignment, and
+evidence identifiers, while leaving only genuinely unknown observation values
+as placeholders. The gate covers the TOON shape, structured errors, exit codes,
+and contextual helper returns.
 
 ## #8: Should recomposition be a maintenance operation separate from publish?
 
@@ -179,7 +194,19 @@ and project-green transition. Define which evidence recompose invalidates.
 
 ### Answer
 
-— (open; awaiting #3, #5, and #6)
+Add a separate non-publishing `recompose` maintenance operation. Any
+identity-proven coordinator may use it against an explicit expected run
+revision. It may verify exact-green evidence for the new base, replay the
+candidate, compare-and-swap the candidate ref, and update recoverable run
+state. It may not gate the candidate, create or publish the landing commit,
+advance the destination branch or project-green ref, mark the spec implemented,
+or terminate the run; `promote` remains the sole owner of those effects.
+
+Recomposition always clears prior promotion evidence. Checkpoint evidence
+survives only while its exact assignment inputs remain unchanged, and review
+survives only under #5's exact patch-and-review-input rule. Missing exact-green
+base evidence or ambiguous identity refuses without mutation and returns the
+AXI `help[]` command template needed to establish or inspect the evidence.
 
 ## #9: What subject makes a newly authored ticket assignable?
 
@@ -195,7 +222,17 @@ reviewability and refusal after ticket mutation.
 
 ### Answer
 
-— (open; awaiting #1, #4, and #5)
+Newly authored tickets become assignable from an immutable run-owned planning
+Git subject without first landing on the shared destination branch. `start`
+composes the explicitly named staged spec and ticket files into a content-
+addressed run tree/ref. Assignment reads and verifies ticket bytes from that
+subject, not the coordinator's working copy, index, or destination `HEAD`.
+
+A ticket change requires an explicit compare-and-swap planning revision. The
+revision refuses once any dependent assignment, checkpoint, integration, or
+review evidence exists; a new run is then the safe replacement. The planning
+subject remains inspectable and diffable through the CLI, while run-state JSON
+stores its identity rather than duplicating ticket bytes.
 
 ## #10: Should ordinary commits and spec-build coordination ship as one scope?
 
@@ -235,6 +272,9 @@ reviewed boundary is two separately shippable scopes with an explicit ordering.
 
 ## Sources
 
+- URL: `https://axi.md/`
+  Supports: #7's TOON, structured stdout error, exit-code, truncation, contextual `help[]`, and per-subcommand help requirements, checked 2026-08-03.
+  Drift: mutable external specification; re-verify before spec authoring or AXI conformance changes.
 - Path: `decisions/assets/parallel-session-landings-research.md`
   Supports: local-code answers and citations for research tickets #1, #2, and #3.
   Drift: code-derived on 2026-08-03; re-run the cited tests and re-check owners before spec authoring if the lifecycle changes.
