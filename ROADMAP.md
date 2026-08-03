@@ -42,34 +42,6 @@ repository-controlled bank evidence requirement makes this row active.
 
 Sources: `RR:C-05`; `RC:H-03`.
 
-**FT181 (MEDIUM, decision required) — spec-build precondition residuals from
-the FT176 review.** Four reviewer-call faces left open by the shipped
-spec-build-lifecycle-preconditions build, all in `internal/specbuild`'s
-precondition and ownership layer. First, restart-after-terminal passes
-`run.Base` as `previousGreen` (`assign.go:223`), so a green marker advanced by
-a sibling build still refuses restart of an abandoned run — the same
-benign-marker refusal story 4 removed, surviving on the sibling path; the fix
-direction (prefer the live marker, or keep `run.Base` as anti-tamper evidence)
-is the decision. Second, liveness classifies by `Lstat` alone: a husk
-(directory present, `.git` gone) or a dangling symlink at an assignment path
-reads as `errOwnership`, fatal even for `abandon` — whether
-present-but-not-a-checkout softens to liveness is spec-level. Third, the
-pre-existing prepared-abandon exemption softens ANY ownership error, identity
-included, once a prepared abandon operation exists — narrowing it means
-classifying "registration no longer found" as liveness, the same
-classification call. Fourth, recomposition cannot replay an empty candidate
-(`No valid patches in input`), so a run whose tip moves before any checkpoint
-wedges — checkpoint, start, and abandon all refuse — and the fix is
-fast-forwarding the base rather than replaying patches; until it ships, the
-standing rule is to sequence capture and `main` commits strictly outside run
-windows (before `start` or after `integrate`). Entry: `/bench-shape-idea`.
-Sources: `capture/IDEAS.md` (the three FT176 review entries), drained here;
-`capture/learnings.md` 2026-08-02, verdicted here.
-
-Staged spec: [`specs/ft181-precondition-residuals/spec.md`](specs/ft181-precondition-residuals/spec.md);
-its decision map and research assets moved under that folder with the staging
-commit.
-
 **FT171 (MEDIUM, decision required) — bound outer gate-phase concurrency
 against measured contention.** The artifact-split follow-up measured the
 `posture` package materially slower inside the fresh full gate than in its
