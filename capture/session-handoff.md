@@ -2,7 +2,7 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `ebbb1b9`, 9 unpushed commits
+Branch: `main` — HEAD `99b1c72`, 11 unpushed commits
 Spec: `specs/recovery-discard/spec.md` (Status: staged) is the **active spec build**;
 `specs/exact-prospective-landing/spec.md`, `specs/ft187-communication-surface-cut/spec.md`,
 and `specs/pre-push-guard-visibility/spec.md` remain staged and untouched.
@@ -10,50 +10,52 @@ Gate: not run against the candidate — `promote` is the only gate boundary and 
 
 ## State
 
-**Phase reached: implementation complete, review pending.** A `/bench-implement-spec --full`
-run built `recovery-discard` through eight tickets. All eight are integrated and released;
-the candidate is `5e910bb1`. Every one of the spec's 17 acceptance coverage rows is green.
+**Phase reached: repair round complete, awaiting a second authoritative review.** Thirteen
+tickets have integrated — eight building the feature, five repairing it. The candidate is
+`38062e15`. All 17 acceptance coverage rows are green.
 `bench spec build status recovery-discard` is the authority; the tree wins over this file.
 
-- The reviewer directed that **sol (`gpt-5.6-sol`, the Codex top binding) performs the
-  final review**, and that its result becomes the receipt submitted through
-  `bench spec build review`. No in-lifecycle review delegate was spawned. Nothing promotes
-  until sol's pass exists. Concrete defects it finds re-enter as ownership-fenced repair
-  tickets; contestable calls are flagged for veto.
-- The reviewer approved the **top binding (`fable`)** for `align-lifecycle-surface-prose`,
-  the guidance-prose ticket. Every other ticket ran at `opus` / medium.
-- The reviewer also asked that sol's findings drive a follow-up hardening pass over ticket
-  and spec prose **and** the kit's guidance surface (`craft-tickets`, `craft-spec`,
-  `/bench-implement-spec`), including whether tickets or spec scope should be smaller.
-  That pass rides `craft-synthesis` at the top binding and is proposal-only.
-- **Two coordinator probes found unasserted safety properties** that the delegates' own
-  probes could not reach, both since repaired and re-verified: the recovery fingerprint did
-  not pin its domain-tag/effect-string authority change, and the reclamation fingerprint did
-  not commit to each ref's disposition. Every delegate mutation was control-flow; both gaps
-  were data/constant shaped.
-- **Known compromise, deliberate:** RM5's grader (`TestReclaimGrammarBoundsToOneSlug`) lives
-  in `internal/specbuild` although it drives `internal/spec`'s parser, because that was the
-  only test-capable path inside its ownership fence. It carries a comment saying so.
-- **Known gap, disclosed in the checkpoint receipt:** `align-lifecycle-surface-prose`'s AL1
-  is done and was enumerated by sweep, but no conformance anchor pins the reclaim wording —
-  reverting one document's sentence stays green. Adding an anchor needs
-  `internal/conformance/docs_workflow_helpers_test.go`, outside that ticket's fence.
-- **Deliberately unrouted:** `internal/spec/build_test.go` still names
-  `TestParseBuildExposesExactlyEightOperations` and omits `reclaim` from its operation case
-  table. Both are correct improvements a delegate had made and had to revert; the file sits
-  outside every ticket's fence and widening one would have forced a recomposition mid-flight.
-- `capture/learnings.md` holds one new open entry: the ticket `Assumptions:` field pools
-  verifiable preconditions with standing-rule restatements, and its parser splits on commas
-  only. Five further authoring findings are **not yet captured** — they are in the reviewer's
-  hands as a separate prompt.
+- **The first review found a critical defect and it is fixed.** `--discard` accepted any
+  ref that existed, so it would delete an ordinary branch. `PlanRecovery` now checks the
+  recovery namespace before existence and emits a `foreign` verdict no verb authorizes.
+  Also fixed: the recovery fingerprint now seals the plan's change summary; reclaim now
+  enumerates prior terminal runs from `record.History`; an interrupted reclaim reports the
+  refs it spent and converges on a fresh plan; the reclaim prose gained conformance
+  anchors; the parser's operation set is single-sourced again with a bidirectional check;
+  `CHANGELOG.md` records both verbs and the `--apply` behaviour change.
+- The reviewer directed that **sol (`gpt-5.6-sol`, Codex top binding) is the authoritative
+  review**, and its result becomes the receipt for `bench spec build review`. Invoke with
+  `codex exec -m gpt-5.6-sol -c model_reasoning_effort="high" -c service_tier="fast"
+  -C <repo> --dangerously-bypass-approvals-and-sandbox`, charged read-only.
+- **Two findings are queued for that review, deliberately not built** — the repair-pass
+  bound is one round then one review. First: `--discard` authorizes `RecoveryRetain`, a
+  catch-all that also covers "could not classify" (ambiguous rows, `verifyRecovery`
+  failures) — the same authority shape as the critical bug. Second: `CheckpointRef` is
+  persisted without validation against `digest(Run + assignment ID)`, so a hand-edited
+  state file could name another run's checkpoint.
+- Sol's six judgment dispositions from round one stay closed unless the reviewer reopens
+  them: it kept the lifecycle framing, the non-`recovered` refusal, the lifecycle-family
+  exclusion, and the `s.resolve` bypass; it vetoed the misplaced grammar test and the
+  unanchored prose, both of which the repair round fixed.
+- **Deferred with evidence:** `git.DeleteBranchExact(root, ref, "")` deletes
+  unconditionally — confirmed by sol in a throwaway repo, unreachable from this candidate.
+  `ParseBuild`'s empty-args branch still hand-lists the operations as a literal string, a
+  second restatement of the grammar table.
+- The reviewer asked that the review's findings drive a follow-up hardening pass over
+  ticket and spec prose **and** the kit's guidance surface, including whether tickets or
+  spec scope should be smaller. Sol's round-one verdict: this should have been **two
+  specs** (recovery discard and reclamation have disjoint package sets) and about **ten
+  tickets**. A copy-paste prompt for that session was handed to the reviewer separately.
+- `capture/learnings.md` holds one open entry (the ticket `Assumptions:` field). Five
+  further authoring findings are with the reviewer in that prompt, not yet captured.
 
 ## Next command
 
-`/bench-review-implementation` is **not** the route here. The reviewer runs sol over the
-exact candidate composition `5e910bb1`, then this session converts its result into the
-receipt for `bench spec build review recovery-discard --evidence <receipt>`, and only then
-`bench spec build promote recovery-discard` — the single gate and commit boundary. If the
-branch tip has moved, `promote` recomposes first and that discards any review.
+The reviewer runs sol over candidate `38062e15`, carrying the two queued findings above.
+Its result becomes the receipt for `bench spec build review recovery-discard --evidence
+<receipt>`, and only then `bench spec build promote recovery-discard` — the single gate and
+commit boundary. If the branch tip moves first, `promote` recomposes and that discards the
+review, so review last.
 
 ## Shape
 
