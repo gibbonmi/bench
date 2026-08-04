@@ -173,9 +173,14 @@ continuation wrapped onto the next line is dropped without a word.
   (`registry`→`derived inventory`) anchors nothing and `assign` refuses it.
 - **`## Red mutations`** binds one row per acceptance ID: the concrete mutation
   that breaks that criterion, an owner independent of the code under test, and
-  the public operation sequence that shows the red. Re-derive every claim in the
-  ticket from the tree after earlier tickets land, never from the spec's account
-  of the base.
+  the public operation sequence that shows the red. Mutate the **subject**, never
+  the assertion: weakening a shared check to always-pass is invisible to a suite
+  whose subjects already satisfy it, so the row reads green and proves nothing.
+  The red must be a **bounded failure**, because a hung run and a broken harness
+  are the same observation at the gate — bound whatever the mutation can stall
+  (the wait, the poll, the child that outlives its test) before claiming the row.
+  Re-derive every claim in the ticket from the tree after earlier tickets land,
+  never from the spec's account of the base.
 
 Good:
 
