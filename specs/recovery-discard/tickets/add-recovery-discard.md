@@ -1,9 +1,9 @@
 # Add a deliberate per-ref recovery discard
 
 Blocked by: enrich-recovery-plan.md
-Ownership fence: `internal/worktree`, `internal/usage/worktree.go`, `internal/contract/runtime/runtime_worktree_test.go`, `internal/conformance/docs_workflow_helpers_test.go`, `bin/bench.sh`
-Contracts: the plan fingerprint crosses `internal/worktree/classifier.go`→`internal/worktree/resume.go` carrying the new destructive authority, asserted by RD2 against a fingerprint produced by real `PlanRecovery`; the discard-eligible verdict crosses the classifier→`RecoveryCommand`, asserted by RD3 and RD5 over the whole enumerated action set rather than one sampled action
-Assumptions: `enrich-recovery-plan.md` has landed, so orphaned and absent are already distinct plan verdicts; `LandedInDefault` and the retire path are unchanged; the Git objects behind a discarded ref stay reachable through the reflog, so no extra audit record is written; claims re-derived from the tree at pickup
+Ownership fence: `internal/worktree`, `internal/usage/worktree.go`, `internal/contract/runtime/runtime_worktree_test.go`, `internal/conformance/docs_workflow_helpers_test.go`
+Contracts: the plan fingerprint crosses `internal/worktree/classifier.go`→`internal/worktree/resume.go` carrying the new destructive authority and is asserted by RD2 against a fingerprint produced by real `PlanRecovery`; the discard-eligible verdict crosses the classifier→`RecoveryCommand` and is asserted by RD3 and RD5 over the whole enumerated action set rather than one sampled action
+Assumptions: `enrich-recovery-plan.md` has landed so orphaned and absent are already distinct plan verdicts; `LandedInDefault` and the retire path are unchanged; the Git objects behind a discarded ref stay reachable through the reflog so no extra audit record is written; every claim is re-derived from the tree at pickup
 
 ## What to build
 

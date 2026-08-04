@@ -2,8 +2,8 @@
 
 Blocked by: add-spec-build-reclaim.md
 Ownership fence: `internal/contract/runtime/runtime_spec_build_test.go`
-Contracts: the reclaim CLI grammar and its TOON receipt cross `internal/spec/build.go` and `cmd/bench/specbuild.go`→this runtime fixture, asserted by RR1 and RR3 against the real built `bench` binary rather than a service call
-Assumptions: `add-spec-build-reclaim.md` has landed, so the verb, its grammar row, and its renderer exist; the fixture drives the real subject binary through the package's existing spec-build helpers; the promotion-reclaims-refs row already in this file stays as the forward-path positive control; claims re-derived from the tree at pickup
+Contracts: the reclaim CLI grammar and its TOON receipt cross `internal/spec/build.go` and `cmd/bench/specbuild.go`→`internal/contract/runtime/runtime_spec_build_test.go` and are asserted by RR1 and RR3 against the real built `bench` binary rather than a service call
+Assumptions: `add-spec-build-reclaim.md` has landed so the verb and its grammar row and its renderer all exist; the fixture drives the real subject binary through the package's existing spec-build helpers; the promotion-reclaims-refs row already in this file stays as the forward-path positive control; every claim is re-derived from the tree at pickup
 
 ## What to build
 

@@ -2,8 +2,8 @@
 
 Blocked by: add-recovery-discard.md
 Ownership fence: `internal/worktree`
-Contracts: the named lifecycle step reaching `ApplyRecovery` crosses `internal/worktree/ownership.go`→`internal/worktree/resume.go`, asserted by IR1 and IR2 through the package's real fault seam driving real `ApplyRecovery` calls rather than a hand-edited intent record
-Assumptions: `add-recovery-discard.md` has landed, so both verbs exist and share the delete-then-close ordering; the fault seam is the package's existing `Fault`/`LifecycleStep` mechanism, extended to reach this verb rather than replaced; claims re-derived from the tree at pickup
+Contracts: the named lifecycle step reaching `ApplyRecovery` crosses `internal/worktree/ownership.go`→`internal/worktree/resume.go` and is asserted by IR1 and IR2 through the package's real fault seam driving real `ApplyRecovery` calls rather than a hand-edited intent record
+Assumptions: `add-recovery-discard.md` has landed so both verbs exist and share the delete-then-close ordering; the fault seam is the package's existing `Fault` and `LifecycleStep` mechanism extended to reach this verb rather than replaced; every claim is re-derived from the tree at pickup
 
 ## What to build
 

@@ -2,8 +2,8 @@
 
 Blocked by: add-spec-build-reclaim.md
 Ownership fence: `.bench/BENCH.md`, `.agents/commands/bench-implement-spec.md`, `projects/benchkit.md`
-Contracts: the spec-build operation inventory crosses `internal/spec/build.go`→`.bench/BENCH.md`'s CLI Inventory and the two guidance documents that restate it, asserted by AL1 by enumerating the parser's operation set against every advertisement rather than checking one document
-Assumptions: `add-spec-build-reclaim.md` has landed, so the parser's operation set is the fact these documents advertise; the harness-run lifecycle and the maintainer-run maintenance verbs are separate claims and the prose keeps them separate rather than collapsing to a single count; the top binding applies because guidance prose compounds through every session that loads it; claims re-derived from the tree at pickup
+Contracts: the spec-build operation inventory crosses `internal/spec/build.go`→`.bench/BENCH.md`'s CLI Inventory and the two guidance documents that restate it and is asserted by AL1 by enumerating the parser's operation set against every advertisement rather than checking one document
+Assumptions: `add-spec-build-reclaim.md` has landed so the parser's operation set is the fact these documents advertise; the harness-run lifecycle and the maintainer-run maintenance verbs stay separate claims rather than collapsing to a single count; the top binding applies because guidance prose compounds through every session that loads it; every claim is re-derived from the tree at pickup
 
 ## What to build
 

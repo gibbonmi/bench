@@ -2,8 +2,8 @@
 
 Blocked by: add-recovery-discard.md
 Ownership fence: `internal/contract/runtime/runtime_worktree_test.go`
-Contracts: the recovery ref crosses `bench worktree release`'s production→`bench worktree recovery`'s plan and discard, asserted by GD1 against the real producing command rather than a hand-built ref
-Assumptions: `add-recovery-discard.md` has landed, so `--discard` exists and emits its own terminal action; the existing landedness fixtures stay as unit coverage of the comparison itself and are not replaced; the runtime fixture's real-`bench` preconditions are honoured through the package's existing helpers; claims re-derived from the tree at pickup
+Contracts: the recovery ref crosses `bench worktree release`'s production→`bench worktree recovery`'s plan and discard inside `internal/contract/runtime/runtime_worktree_test.go` and is asserted by GD1 against the real producing command rather than a hand-built ref
+Assumptions: `add-recovery-discard.md` has landed so `--discard` exists and emits its own terminal action; the existing landedness fixtures stay as unit coverage of the comparison itself and are not replaced; the runtime fixture's real-`bench` preconditions are honoured through the package's existing helpers; every claim is re-derived from the tree at pickup
 
 ## What to build
 

@@ -2,8 +2,8 @@
 
 Blocked by: extract-terminal-run-ref-enumeration.md
 Ownership fence: `internal/specbuild`, `internal/spec/build.go`, `cmd/bench/specbuild.go`, `bin/bench.sh`
-Contracts: the classified ref inventory crosses `internal/specbuild`→`cmd/bench/specbuild.go`'s renderer, asserted by RM4 against the real enumeration's output over every classification the inventory can carry; the reclaim grammar crosses `internal/spec/build.go`→`cmd/bench/specbuild.go` dispatch, asserted by RM5
-Assumptions: `extract-terminal-run-ref-enumeration.md` has landed, so the classified inventory exists and is the only source of what a run no longer needs; the plan/apply shape and fingerprint discipline copy `abandon`'s rather than inventing a grammar; one slug per invocation and no set-selecting predicate; claims re-derived from the tree at pickup
+Contracts: the classified ref inventory crosses `internal/specbuild`→`cmd/bench/specbuild.go`'s renderer and is asserted by RM4 against the real enumeration's output over every classification the inventory can carry; the reclaim grammar crosses `internal/spec/build.go`→`cmd/bench/specbuild.go` dispatch and is asserted by RM5
+Assumptions: `extract-terminal-run-ref-enumeration.md` has landed so the classified inventory exists and is the only source of what a run no longer needs; the plan and apply shape and the fingerprint discipline copy `abandon`'s rather than inventing a grammar; one slug per invocation and no set-selecting predicate; every claim is re-derived from the tree at pickup
 
 ## What to build
 
