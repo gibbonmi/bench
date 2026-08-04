@@ -46,6 +46,7 @@ func TestBinaryRepairContracts(t *testing.T) {
 	contract.RunParallel(t, "repair resource bounds contract failed", testRepairResourceBounds)
 	contract.RunParallel(t, "repair losing-racer cleanup contract failed", testRepairLosingRacerPreservesWinner)
 	contract.RunParallel(t, "repair earliest interrupt cleanup contract failed", testRepairEarliestInterrupt)
+	contract.RunParallel(t, "repair abandoned-child cleanup contract failed", testRepairAbandonedChildExits)
 }
 
 func testRepairLosingRacerPreservesWinner(t *testing.T) {
@@ -54,16 +55,8 @@ func testRepairLosingRacerPreservesWinner(t *testing.T) {
 	startReady := filepath.Join(f.Root, "loser-started")
 	ready := filepath.Join(f.Root, "loser-ready")
 	env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL, "BENCH_REPAIR": "", "BENCH_TEST_REPAIR_START_READY_FILE": startReady, "BENCH_TEST_REPAIR_READY_FILE": ready, "BENCH_TEST_REPAIR_FAIL_AFTER_READY": "1"}
-	cmd := exec.Command("bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "repair")
-	cmd.Dir, cmd.Env = f.Root, contract.ProcessEnv(f.Env, env)
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	var childOut bytes.Buffer
-	cmd.Stdout = &childOut
-	cmd.Stderr = &childOut
-	if err := cmd.Start(); err != nil {
-		t.Fatal(err)
-	}
-	waitForRepairMarkers(t, cmd, startReady, ready, &childOut)
+	cmd, childOut := startRepairChild(t, f, env)
+	waitForRepairMarkers(t, cmd, startReady, ready, childOut)
 	target := binaryRepairCachePath(t, f, "9.8.7")
 	contract.WriteFileAbs(t, target, "#!/bin/sh\necho winner\n")
 	if err := os.Chmod(target, 0o755); err != nil {
@@ -83,6 +76,30 @@ func testRepairLosingRacerPreservesWinner(t *testing.T) {
 	if len(temps) != 0 {
 		t.Fatalf("loser left temps: %v", temps)
 	}
+	// "The loser left nothing behind" covers the process tree, not just the
+	// filesystem: this child was deliberately given its own group, so a
+	// surviving member of it is residue the temp glob cannot see.
+	contract.RequireProcessGroupDrained(t, cmd.Process.Pid, 5*time.Second, "loser left a running process group")
+}
+
+// testRepairAbandonedChildExits kills only the owning shell, reproducing what a
+// `go test` timeout or an interrupted gate does to this contract's own children.
+// The repair child must then end itself: an unbounded wait on a marker whose
+// remover is already dead orphans it for the life of the machine.
+func testRepairAbandonedChildExits(t *testing.T) {
+	f, kit := binaryRepairFixtureKit(t)
+	registry := newBinaryRepairRegistry(t, kit, "9.8.7", "#!/bin/sh\necho abandoned\n")
+	startReady := filepath.Join(f.Root, "abandoned-started")
+	env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL, "BENCH_REPAIR": "", "BENCH_TEST_REPAIR_START_READY_FILE": startReady, "BENCH_TEST_REPAIR_RELEASE_DEADLINE_MS": "3000"}
+	cmd, childOut := startRepairChild(t, f, env)
+	waitForRepairMarker(t, cmd, startReady, childOut)
+	// Only the owner, never the group — the group signal is what this contract
+	// says the child must not need. Wait first: an unreaped owner is a zombie
+	// that keeps its own group alive, which would read as a leak that is not one.
+	_ = cmd.Process.Kill()
+	_ = cmd.Wait()
+	contract.RequireProcessGroupDrained(t, cmd.Process.Pid, 30*time.Second, "abandoned repair outlived its owner")
+	requirePathAbsent(t, binaryRepairCachePath(t, f, "9.8.7"), "abandoned repair installed target")
 }
 
 func testRepairEarliestInterrupt(t *testing.T) {
@@ -90,16 +107,8 @@ func testRepairEarliestInterrupt(t *testing.T) {
 	registry := newBinaryRepairRegistry(t, kit, "9.8.7", "#!/bin/sh\necho never\n", binaryRepairHangMetadata())
 	ready := filepath.Join(f.Root, "start-ready")
 	env := map[string]string{"BENCH_KIT": kit, "BENCH_NPM_REGISTRY": registry.URL, "BENCH_REPAIR": "", "BENCH_TEST_REPAIR_START_READY_FILE": ready, "BENCH_TEST_REPAIR_DEADLINE_MS": "5000"}
-	cmd := exec.Command("bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "repair")
-	cmd.Dir, cmd.Env = f.Root, contract.ProcessEnv(f.Env, env)
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	var childOut bytes.Buffer
-	cmd.Stdout = &childOut
-	cmd.Stderr = &childOut
-	if err := cmd.Start(); err != nil {
-		t.Fatal(err)
-	}
-	waitForRepairMarker(t, cmd, ready, &childOut)
+	cmd, childOut := startRepairChild(t, f, env)
+	waitForRepairMarker(t, cmd, ready, childOut)
 	if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGINT); err != nil {
 		t.Fatal(err)
 	}
@@ -109,6 +118,30 @@ func testRepairEarliestInterrupt(t *testing.T) {
 		t.Fatalf("earliest SIGINT exit = %v, want 130", err)
 	}
 	requirePathAbsent(t, binaryRepairCachePath(t, f, "9.8.7"), "earliest interrupt changed target")
+	contract.RequireProcessGroupDrained(t, cmd.Process.Pid, 5*time.Second, "interrupted repair left a running process group")
+}
+
+// startRepairChild runs bin/bench.sh repair in its own process group. The
+// cleanup signals that group rather than the direct child alone: bench.sh
+// spawns node, and a test that fails before its own teardown — or a test binary
+// killed outright — otherwise leaves that grandchild running after the run ends.
+func startRepairChild(t *testing.T, f contract.Fixture, env map[string]string) (*exec.Cmd, *bytes.Buffer) {
+	t.Helper()
+	cmd := exec.Command("bash", filepath.Join(contract.SubjectRoot(t), "bin", "bench.sh"), "repair")
+	cmd.Dir, cmd.Env = f.Root, contract.ProcessEnv(f.Env, env)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	childOut := &bytes.Buffer{}
+	cmd.Stdout, cmd.Stderr = childOut, childOut
+	// node inherits the output pipe, so without a bound Wait keeps blocking on
+	// the grandchild long after bench.sh is gone — a leaked child would arrive
+	// as a hung run instead of a failure.
+	cmd.WaitDelay = 10 * time.Second
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	pgid := cmd.Process.Pid
+	t.Cleanup(func() { _ = syscall.Kill(-pgid, syscall.SIGKILL) })
+	return cmd, childOut
 }
 
 // waitForRepairMarker polls up to 60s: host-side VHDX I/O contention on

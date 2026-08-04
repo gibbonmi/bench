@@ -10,6 +10,7 @@ import { Readable } from "node:stream";
 const FETCH_DEADLINE_MS = 60_000;
 const DOWNLOAD_LIMIT = 100 * 1024 * 1024;
 const DECOMPRESSED_LIMIT = 200 * 1024 * 1024;
+const TEST_RELEASE_DEADLINE_MS = 120_000;
 // Cross-runtime build constant, parity-pinned to releaseevidence requirements.
 const PIN_MANIFEST_PATH = "binary-pins.json";
 const FETCH_DEADLINE_LABEL = `${FETCH_DEADLINE_MS / 1000}-second`;
@@ -90,12 +91,19 @@ async function install() {
   console.error(`bench: wrote ${target}`);
 }
 
+// The release marker is deleted by a Go test that can die first — a `go test`
+// timeout, an interrupted gate — so an unbounded poll here orphans this process
+// for the life of the machine. Its own knob, not the fetch deadline's: a test
+// that shortens the fetch must not also shorten the handshake.
 async function waitForTestRelease(ready) {
   const marker = await open(ready, "w");
   await marker.close();
+  const deadline = Date.now() + testNumber("BENCH_TEST_REPAIR_RELEASE_DEADLINE_MS", TEST_RELEASE_DEADLINE_MS);
   while (true) {
-    try { await access(ready); await new Promise(resolve => setTimeout(resolve, 25)); }
+    try { await access(ready); }
     catch { return; }
+    if (Date.now() >= deadline) throw new Error(`test release marker ${ready} was not released before the release deadline`);
+    await new Promise(resolve => setTimeout(resolve, 25));
   }
 }
 

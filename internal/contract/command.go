@@ -149,6 +149,40 @@ func terminateProcessGroup(cmd *exec.Cmd) {
 	}
 }
 
+// RequireProcessGroupDrained fails t unless every process in pgid — plus any
+// stray PIDs the caller names, which catches a child that escaped the group —
+// has exited within timeout. A test that starts a child with Setpgid owns the
+// whole group it created: waiting on the direct child alone lets a grandchild
+// outlive the test binary. It kills the group before failing, so a red verdict
+// does not itself leak what it just found.
+func RequireProcessGroupDrained(t testing.TB, pgid int, timeout time.Duration, what string, strays ...int) {
+	t.Helper()
+	deadline := time.Now().Add(timeout)
+	for {
+		alive := processGroupAlive(pgid)
+		for _, pid := range strays {
+			alive = alive || processAlive(pid)
+		}
+		if !alive {
+			return
+		}
+		if time.Now().After(deadline) {
+			_ = syscall.Kill(-pgid, syscall.SIGKILL)
+			t.Fatalf("%s: process group %d survived, strays %v", what, pgid, strays)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+func processGroupAlive(pgid int) bool {
+	return syscall.Kill(-pgid, 0) == nil
+}
+
+func processAlive(pid int) bool {
+	err := syscall.Kill(pid, 0)
+	return err == nil || !errors.Is(err, syscall.ESRCH)
+}
+
 func (f Fixture) Git(args ...string) Probe {
 	f.t.Helper()
 	probe := f.Run("git", args...)

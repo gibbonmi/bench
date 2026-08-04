@@ -1,12 +1,10 @@
 package contract
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
 	"testing"
 	"time"
 )
@@ -75,22 +73,7 @@ func TestFixtureRunnerReapsSpawnedProcessGroup(t *testing.T) {
 		t.Fatalf("parse child PID %q: %v", fields[1], err)
 	}
 
-	deadline := time.Now().Add(2 * time.Second)
-	for processGroupAlive(group) || processAlive(child) {
-		if time.Now().After(deadline) {
-			t.Fatalf("runner returned with surviving process group %d or child %d", group, child)
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-}
-
-func processGroupAlive(pgid int) bool {
-	return syscall.Kill(-pgid, 0) == nil
-}
-
-func processAlive(pid int) bool {
-	err := syscall.Kill(pid, 0)
-	return err == nil || !errors.Is(err, syscall.ESRCH)
+	RequireProcessGroupDrained(t, group, 2*time.Second, "runner returned before reaping what it spawned", child)
 }
 
 func TestBenchRunsKitWrapperFromFixture(t *testing.T) {

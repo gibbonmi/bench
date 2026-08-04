@@ -2,7 +2,6 @@ package runtime
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -186,7 +185,7 @@ func proveR17Cancellation(t *testing.T) {
 		if waitErr == nil {
 			t.Fatalf("cancellation call %d exited zero: %s", call, out.String())
 		}
-		waitR17ProcessGroupExit(t, gatePGID)
+		contract.RequireProcessGroupDrained(t, gatePGID, 3*time.Second, "gate child survived cancellation")
 		contract.Remove(t, filepath.Join(gitDir(t, f), "r17-started"))
 		if got := gate.Inspect(f.Root); got.State != gate.Pending || got.PendingStatus != "interrupted-pending" || got.ReusableGreen {
 			t.Fatalf("cancellation call %d = %+v", call, got)
@@ -194,19 +193,6 @@ func proveR17Cancellation(t *testing.T) {
 	}
 	assertRuns(t, f, 2)
 	assertNoR17Temps(t, f)
-}
-
-func waitR17ProcessGroupExit(t *testing.T, pgid int) {
-	t.Helper()
-	deadline := time.Now().Add(3 * time.Second)
-	for time.Now().Before(deadline) {
-		if err := syscall.Kill(-pgid, 0); errors.Is(err, syscall.ESRCH) {
-			return
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-	_ = syscall.Kill(-pgid, syscall.SIGKILL)
-	t.Fatalf("gate child process group %d survived cancellation", pgid)
 }
 
 func waitR17File(t *testing.T, path string) {
