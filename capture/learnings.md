@@ -84,3 +84,61 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
   taught example the `example-agreement` conformance check grades, and `ParseTicket` in
   `internal/specbuild/assign.go` — kit surface, under the synthesis discipline, not
   something I should act on from inside a build.
+
+## 2026-08-04 — An authoritative review's findings survived only in conversation, and were lost  [open]
+
+- **What happened:** The `recovery-discard` build's second review ran in the Codex CLI
+  under the reviewer's top binding, returned eight findings including two criticals, and
+  was never written to the tree. The findings reached the next session only as a summary
+  the reviewer pasted by hand — finding tags, severities, a fence table, and prose for the
+  two the summarizing session happened to describe in full. When that context was cleared
+  the underlying output was gone, and the reviewer confirmed they no longer had it. Four
+  of the eight findings (C4, C5, C6, SP5) exist now as tags with no text. The repair round
+  proceeded by reproducing the two criticals independently and reading the other two
+  defects out of the tree, so every repair ticket rests on evidence gathered fresh — but
+  no one can say whether those tickets close the findings that were actually raised.
+- **Right behavior:** A review that authorizes or blocks a promotion is durable evidence,
+  and evidence that lives only in a chat transcript is not evidence the next session can
+  reach. The review's output should have landed in the tree — the phase already has the
+  shape for it, since `/bench-implement-spec` tells the build to read `reviews/<spec-slug>.md`
+  and the promoted composition deletes it, so resolved findings cannot resurface as pickup
+  work. That file was never written here. The delegated-review path writes a bounded
+  receipt for `bench spec build review`, which records that a review happened and its
+  verdict; it does not preserve the findings themselves, and those are what a repair round
+  actually consumes.
+- **Proposed rule change:** Make writing `reviews/<spec-slug>.md` a required step of
+  `/bench-review-implementation` rather than an artifact the implement phase merely reads
+  if present, and say so in both commands — including for a review delegated to another
+  harness, where the coordinator owns capturing the returned findings to that path before
+  acting on them. Reviewer decides; this touches two canonical command surfaces and the
+  spec-build lifecycle's review receipt, so it is kit surface under the synthesis
+  discipline, not something to act on from inside a build.
+
+## 2026-08-04 — Coordinator checkpoint receipts are hand-assembled, and the ticket fence is only checked at checkpoint  [open]
+
+- **What happened:** Landing four repair tickets through `bench spec build` cost far more
+  coordinator effort than the repairs themselves. Two causes, both mechanical. First, the
+  checkpoint receipt has no producer: the coordinator hand-writes JSON carrying the run and
+  assignment identities, the assignment base, a tree hash computed the way `git.TreeHash`
+  does it, the ticket digest, one row per acceptance ID, the changed-path set diffed against
+  the assignment base, and a sha256 of every assumption string — each cross-checked by
+  `validateReceipt`, so any one of them wrong is an opaque `invalid spec build receipt`.
+  Assembling two receipts took more coordinator turns than verifying the two critical
+  repairs they attested. Second, a ticket's ownership fence is validated only when a
+  receipt arrives: one ticket asked for a change whose only possible site lay outside its
+  own fence, and that contradiction surfaced after a delegate had already done the work,
+  not at slicing time. There is no way to release a single open assignment to re-fence it —
+  `abandon` is whole-run — so the correction had to be a sibling ticket and a further
+  delegate cycle.
+- **Right behavior:** The receipt is derived data. Every field is computable from the run
+  record, the assignment worktree, and the coordinator's own probe result, so the
+  coordinator should supply only what it alone knows — the row outcomes, the check list,
+  and the probe command, output, and exit — and have the tool derive the rest. And a fence
+  that cannot hold every path its own acceptance rows require is a defect the ticket parser
+  could catch when the ticket is read, long before a delegate is charged against it.
+- **Proposed rule change:** Two, both kit surface for the reviewer. Add a receipt producer
+  — `bench spec build receipt <slug> --assignment <id>` emitting the derived skeleton for
+  the coordinator to complete — so the hand-assembly and its opaque refusal disappear.
+  Separately, consider whether `assign` should refuse a ticket whose acceptance rows name a
+  path outside its declared fence, or whether that stays an authoring discipline
+  `craft-tickets` teaches; the second is cheaper but did not prevent this.
