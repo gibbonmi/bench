@@ -95,7 +95,10 @@ grant, a violation FT164's build widened and could not fix in place. A
 declarative anchor registry is the fix; raise the grant to ~850 only as a
 stopgap if structure noise blocks a pass before this row lands, never as the
 answer.
-Entry: `/bench-shape-idea`. Source: `capture/IDEAS.md`,
+Entry: `/bench-write-spec`, by reviewer direction 2026-08-03: the mechanism
+ruling is taken as the grill at spec entry rather than as a separate shaping
+session, because the two faces are one decision and the spec cannot be written
+without it. Source: `capture/IDEAS.md`,
 drained here and in prior runs; found by the Codex falsification pass on
 `3eb1c9a`.
 
@@ -511,6 +514,35 @@ first, and the working route is a manual `bench worktree create --request
 documented canonical one. Source: the spec-build-lifecycle-preconditions
 retro, drained here.
 
+**FT188 (MEDIUM) — parallel sessions land through an exact prospective tree.**
+A path-scoped `bench commit` gates the whole working-tree snapshot and only then
+stages its named paths, so any unrelated dirty or untracked file in the checkout
+refuses the landing: checkout cleanliness is a repository-wide writer lock, and
+the 2026-08-03 build recorded seven such refusals in
+`capture/parallel-session-friction.md`. The staged spec introduces one exact
+prospective landing substrate — start from an explicit expected base, overlay
+only the caller-attributed named-path content, gate that immutable tree, publish
+by compare-and-swap of the destination ref — and adopts it under ordinary
+`bench commit` without changing the argument grammar or the attribution rules.
+This closes the foreign-dirty face FT169 carries; FT169 keeps the landing
+command's authority, recovery, and preflight questions.
+
+`bench spec build promote` is the second consumer. Its clean-checkout
+precondition composes badly with its recompose-discards-review rule: unrelated
+dirt blocks promotion, and clearing it by committing moves the branch tip, which
+discards the bound review and buys a full extra review round — observed once,
+costing a sol round plus a second reviewer-run promote. Either promote reasons
+about ownership the way the substrate does, or its refusal names stashing as the
+cheap route so the reader does not reach for the expensive one.
+
+The remaining decisions stay in the map at
+`decisions/parallel-session-landings.md`: interrupted-mutation recovery and
+abandon, which gate evidence may cross composed landing subjects, and the AXI
+status surface for concurrent runs and conflicts (blocked on the first two).
+Staged spec: [`specs/exact-prospective-landing/spec.md`](specs/exact-prospective-landing/spec.md).
+Sources: `decisions/parallel-session-landings.md` #10; `capture/IDEAS.md` and
+the `injected-interface-junctions` retro, drained here.
+
 **FT178 (MEDIUM) — `bench worktree`'s bare verb is a human porcelain that
 traps automation and leaks on signals.** Reviewer ruling 2026-08-01: humans
 should not be driving the `bench` CLI in the vast majority of cases, and
@@ -557,7 +589,18 @@ discrepancy, and it went uncaught until a session happened to know the
 convention. Add a discrepancies block covering at least that case, a row naming
 a spec path with no file, and a row naming a retired spec. The CLI does no
 judgment — these are mechanical cross-checks of facts it already holds, which
-is why they belong in it rather than in the phase prose.
+is why they belong in it rather than in the phase prose. That case recurred on
+2026-08-03: two staged specs carried an empty `roadmap_id`, `occurrence_discrepancies`
+was empty, and the drain found both by hand.
+
+The same drain found a third face, in the phase prose rather than the CLI.
+`/bench-what-next` orders `bench roadmap --context` invoked exactly once and
+declares that snapshot its complete evidence, but the default truncates long
+bodies — the run's longest journal entry and both retro bodies came back cut,
+which is precisely the material steps 4 and 5 must read whole. Either the phase
+names `--context --full`, or the snapshot stops truncating the sources whose
+completeness it asserts. Source: `capture/learnings.md` 2026-08-03, verdicted
+here in the run that hit it.
 
 That parked half now has a demonstrated cost, and a cheaper option than the
 probe it was parked behind. The 2026-07-27 drain promoted an `capture/IDEAS.md` capture
@@ -688,8 +731,15 @@ as ad-hoc prose while `bench test`, `bench diff`, and `bench coverage` emit TOON
 Give the gate one structured result schema without changing exit-code authority,
 phase completeness, or the durable verdict it authors. The gate-pipeline map's
 ticket 9 closed the scope decision: no output redesign rides that pipeline build,
-so this is an independent item. Entry: `/bench-write-spec`. Source:
-`capture/IDEAS.md`, drained here.
+so this is an independent item. `bench spec build promote` is the second
+surface: it emits only its TOON status line, so the phase evidence its gate run
+produced never reaches a retained surface, while the `bench commit` on the same
+tree prints per-phase evidence inline (`phase conformance: green`, `gate:
+green`). One schema covers both. The retained-record half of the same complaint
+— promotion-stage timings the required retro needs — is FT162's, not this row's.
+Entry: `/bench-write-spec`. Sources:
+`capture/IDEAS.md`, drained here; the `injected-interface-junctions` retro,
+drained here.
 
 **FT175 (MEDIUM, decision required) — a claim ledger for assertions about the
 world.** The gate refuses "I believe the tests pass" and nothing refuses "I
@@ -830,6 +880,7 @@ slice early because the conflict is self-contained in one section and does not
 wait on FT89 settling what is authoritative elsewhere. Kit edit under the
 `craft-synthesis` discipline. Source: session conversation 2026-08-03, parked
 here by reviewer instruction rather than through a drain.
+Staged spec: [`specs/ft187-communication-surface-cut/spec.md`](specs/ft187-communication-surface-cut/spec.md).
 
 **FT107 (MEDIUM) — the standing guidance rules, batched: one
 always-loaded-prose diff.** Sixteen remaining clauses edit the same
@@ -992,6 +1043,60 @@ Extend the same conventions: discover a subcommand's shape from
 bare verb; and redirect stdin from `/dev/null` for any `bench` invocation
 whose interactivity is not already known. The defect half — the bare verb's
 default itself — is FT178's, not prose.
+
+**FT189 (MEDIUM) — an upstream `git worktree list` hang reaches every Bench
+worktree read.** `git worktree list --porcelain` hangs on a FIFO gitdir placed
+in any private admin entry — reproduced 2026-08-03 at exit 124 under
+`timeout 5`. Every `bench` command that enumerates worktrees inherits the hang
+before any Bench guard runs, so the failure is a wedged command rather than a
+refusal, and no deadline the repo owns bounds it today. The work is a mitigation
+Bench can own: a pre-scan that refuses a malformed admin entry by shape, a bound
+on the enumeration call, or both, with the upstream behavior named so the
+mitigation retires if Git fixes it. Source: `capture/IDEAS.md` 2026-08-03,
+drained here.
+
+**FT190 (MEDIUM) — every injected interface has a real-producer test or a
+written exemption.** The `injected-interface-junctions` build's P1 lived at
+exactly one such seam: a type takes an interface, the tests drive a fake, and
+nothing composes the real producer, so the junction's contract is asserted by
+the double that was written to satisfy it. `internal/specbuild` alone takes six
+(`GateOwner`, `PromotionGateOwner`, `WorktreeOwner`, `ReleaseOwner`,
+`AbandonOwner`, `Runner`). Enumerate the injected interfaces across the tree and
+give each either a test that composes its real producer or a recorded exemption
+saying why a fake is sufficient there. The candidate ending is a conformance
+check over the enumeration, which would make a new injected interface arrive
+with its junction obligation rather than without one; whether the audit ends in a
+check or in a one-time sweep is the build's decision. Source: `capture/IDEAS.md`
+2026-08-03, drained here.
+
+**FT191 (MEDIUM) — a fixture-and-seam inventory a charge can carry for free.**
+`craft-delegate` now requires a charge to carry its fixture inventory — helper
+names, gate doubles, prior-art fixtures with `file:line` — and both 2026-08-03
+retros credit that input for their first-pass delegate greens. The inventory is
+assembled by hand every time. Extend `bench outline` (or a sibling reader) to
+emit test helpers, doubles, and prior-art fixtures per package so the charge
+input costs nothing to build. Scope decision at spec time: whether this is a new
+projection or a mode of the existing outline owner. Sources: `capture/IDEAS.md`
+2026-08-03 and the `ft181-precondition-residuals` retro, drained here.
+
+**FT192 (MEDIUM) — one source per fact reaches spec and ticket prose.**
+`AGENTS.md` forbids two derivations of one fact, and the standard is written for
+code; specs and tickets restate implementation-derived facts freely. The
+`injected-interface-junctions` review's SP4 is the demonstration: a failure-message
+count lived in the spec's implementation decisions, in a ticket's `Contracts:`
+line, and in the implementation's message constants, with only the implementation
+as truth, and `bench coverage --check` reported a valid map on the exact candidate
+where the count disagreed — it grades the map's shape, not its agreement with the
+tree. A 7-line shell loop comparing the advertised count against the constants
+reproduces it in 7ms. This drain found the same shape twice more in `ROADMAP.md`
+itself (two rows restating how many `specs/` directories are ticket-only, both
+stale), and reworded them. Extend the standard to spec and ticket prose — a spec
+names the enumeration source instead of restating its count — and let
+`/bench-review-implementation`'s Standards axis grade a restated count as
+duplicated knowledge. Whether any of it becomes a gate check rather than a review
+judgment is the reviewer's call at spec time. Kit edit under the
+`craft-synthesis` discipline. Source: `capture/learnings.md` 2026-08-03,
+verdicted here.
 
 **FT58 (LOW) — hardened pool roots.** Permission failures on Bench-selected pool roots
 should propagate — the tree currently asserts best-effort tighten
@@ -1295,6 +1400,35 @@ slice consumed most of 14 assignment attempts even though the narrower
 outer-selector, conformance-meta, and evidence-retention slices converged
 directly. Source: the check-level-conformance-scoping retro, drained here.
 
+The 2026-08-03 lifecycle run adds six clauses to the same visit, all of them
+paid for once already. Repair triage: when a review returns material blocking
+findings, the coordinator shows the split — must-fix production defects versus
+judgment-priced hardening — before charging repairs, because the finding's
+disposition is the review's but build priority is the reviewer's; that run
+routed eight round-1 findings into repair delegates undifferentiated.
+Probe evidence: a probe's acceptance is proof it *executed*, not its exit status
+— a capability-skip and a cached green both read as "ok", and a mutation probe
+that skipped was read as survived twice; run probes through `bench test` or
+`go test -v -count=1`, and treat `(cached)` or near-zero runtimes as invalid.
+Delegate caveats: match each returned caveat against the charged rows'
+*mechanisms*, not just their outcomes — "unreadable metadata refuses before the
+planner is reached" contradicted a row promising real-planner composition and was
+recorded as no-divergence, leaving a vacuous junction test for the review to
+find. Registry fences: a ticket adding an entry to an extensible registry derives
+its fence from the previous entry's landing commit, which is a complete wiring
+manifest, and traces every crossing of the new entry's *name*; one such fence
+missed three registration surfaces and forced a follow-up ticket. Repair tickets:
+scope from the invariant the finding names rather than its cited lines, reread
+each repaired artifact whole for internal agreement before resubmitting, and
+express red-mutation greps against the false claim rather than the words it was
+made of — an absolute "this grep must return nothing" over a phrase that
+legitimately survives invites editing true prose until the tool goes quiet.
+Prose-only steps: the contract-discovery skip was possible because a step with no
+artifact leaves no trace of being skipped, and `Contracts:` fixed exactly that
+for one step — any remaining prose-only step in the phase commands deserves the
+same landing-site treatment, prefactor first. Sources: `capture/learnings.md`
+2026-08-03 and both 2026-08-03 retros, verdicted here.
+
 **FT165 (LOW) — fold the domain-modeling discipline into
 `/bench-shape-idea`.** Upstream candidate (mattpocock/skills,
 domain-modeling): as grill tickets resolve decisions, challenge fuzzy or
@@ -1320,7 +1454,7 @@ with the `bench spec` lifecycle (which currently keys on `spec.md` status).
 Kit edit under the `craft-synthesis` discipline. Source: `capture/IDEAS.md`
 2026-08-01, drained here.
 
-The lifecycle half has a live instance: five shipped light-path changes hold
+The lifecycle half has a live instance: shipped light-path changes hold
 ticket-only folders under `specs/` with no `spec.md` — `bench spec history`
 returns nothing for their slugs and `bench spec retire` cannot target them, so
 the receipts are neither active specs, retained history, nor retireable state.
@@ -1358,6 +1492,24 @@ that names the first failed check. Priced LOW because the schema is now known
 and receipts remain mechanically assemblable; re-price if the next lifecycle
 build pays the refusal class again. Source: the per-component-gate-scoping
 retro, drained here.
+
+The 2026-08-03 run re-priced the generator half and added two faces. The
+coordinator hand-built a `make-receipt.sh` and spent roughly 30k tokens
+reverse-engineering the checkpoint and review receipt schemas, so the generator
+emits the tree hash, digests, and row IDs pre-filled for a named assignment. It
+also enumerates the disposition vocabulary, which is the second face: a review
+receipt marking closed findings `accepted` reads to `hasAcceptedFinding` as an
+unrepaired defect, `promote` refused, and clearing the recorded review cost a
+recomposition round — `accepted` means a real defect the review accepts
+unrepaired, and closed findings need a different word. Either the generator
+enumerates the vocabulary or the schema validates the field and refuses the wrong
+word at submission. Third face, same owner: `bench spec build assign --ticket`
+refuses a repo-relative or absolute path with `spec build ticket must name one
+regular ticket file`, which reads as "the file is missing" when the file is
+present and only the *form* is wrong; it cost two failed invocations before the
+parser was read. A refusal naming the expected form would have cost none.
+Sources: `capture/IDEAS.md` 2026-08-03 and both 2026-08-03 retros, drained here;
+`capture/learnings.md` 2026-08-03, verdicted here.
 
 **FT166 (LOW) — `bench capture commit`: porcelain for the ambient capture
 set.** Commit the capture surfaces (`capture/learnings.md`, `capture/IDEAS.md`,
@@ -1421,7 +1573,7 @@ never reaches). One decision closes all three.
 Four singles ride along. The orphaned-review-pickup signal
 (`internal/status/status.go:534`, severity 9) pairs `reviews/*.md` against
 `specs/<slug>/spec.md`, and neither side of that pairing holds today: `reviews/`
-does not exist in the tree, and eight of the ten `specs/` directories carry only
+does not exist in the tree, and most `specs/` directories carry only
 a `tickets/` folder with no `spec.md` at all. A severity-9 row that cannot fire
 is either a signal pointed at a retired convention or a convention that quietly
 stopped being followed — decide which, then repoint or cut it; re-measured
@@ -1929,6 +2081,7 @@ recommended table is sequencing advice.
 | FT166 | FT98, FT113 | The porcelain composes over the shipped reduced-gate path allowlist; recoverable set-aside then defines the commit command's smallest sound contract. |
 | FT168 | FT153 | Expose focused canary execution after baseline meaning is settled. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
+| FT169 | FT188 | The foreign-dirty face is the substrate's consumer; specify the landing command once exact prospective landing has settled attribution. |
 | FT175 | FT173 | The ledger's read surface is AXI; settle one derivation per principle before adding a consumer that needs all ten. |
 
 ### Goal tracks: guidance prose and the claim ledger
@@ -1949,17 +2102,20 @@ the prose batch outranks the foundation only if it lands whole and
 falsifiable — otherwise the foundation goes first while FT141 and FT158
 build.
 
-1. Front-load one decision session: FT156's anchor-mechanism ruling, FT144's
-   one-decision-both-phases call, and FT181. Reviewer latency is the
+1. Take FT156's anchor-mechanism ruling as the grill at `/bench-write-spec`
+   entry (reviewer direction 2026-08-03) and FT144's one-decision-both-phases
+   call as the remaining shaping item. Reviewer latency is the
    binding constraint: grills serialize on the reviewer while builds
-   parallelize on agents. Three of the original six items closed on
-   2026-08-02 — FT173's principle-9 relaxation and FT175's spec-start gate
-   were ruled, and FT175's three ledger decisions moved behind the owners
-   they consume (step 5) — and FT164's four flagged spec calls closed when
-   its spec was written and implemented.
-2. Implement FT135 (staged) — it serves neither goal, but draining the staged
-   frontier before authoring any new spec is the standing runway instruction;
-   deferring it is an explicit reviewer override, never a silent skip. FT141
+   parallelize on agents. Four of the original six items have closed —
+   FT173's principle-9 relaxation and FT175's spec-start gate were ruled
+   2026-08-02, FT175's three ledger decisions moved behind the owners
+   they consume (step 5), FT164's four flagged spec calls closed when
+   its spec was written and implemented, and FT181 shipped 2026-08-03.
+2. Drain the staged frontier — FT135, FT187, and FT188 all carry staged specs
+   — before authoring any new spec; deferring one is an explicit reviewer
+   override, never a silent skip. Of the three only FT187 serves a goal
+   directly, and FT188 unblocks the parallel capacity the rest of the runway
+   assumes. FT141
    builds in parallel where
    capacity allows: it is Go, prose-independent, and it unblocks FT107
    *whole* — splitting the fix-loop clause out would spend a second spec,
@@ -2016,6 +2172,6 @@ prose batch edits.
 
 ## Recommended sequence
 
-1. `/bench-shape-idea` — the front-loaded decision session: FT156's anchor mechanism, FT144, and FT181. Reviewer latency is the binding constraint, and FT156's ruling gates prose batch 1 on both goal tracks.
-2. `/bench-implement-spec` — FT135 at `specs/pre-push-guard-visibility/spec.md`, the only staged spec; drain the frontier before authoring a new one.
+1. `/bench-write-spec` — FT156, taking the anchor-mechanism ruling as the grill at spec entry (reviewer direction 2026-08-03). The ruling gates prose batch 1 on both goal tracks and reviewer latency is the binding constraint, so it goes first even though the staged frontier is not drained.
+2. `/bench-implement-spec` — the three staged specs: FT188 (`specs/exact-prospective-landing/spec.md`) first, since it removes the writer lock the other two pay, then FT187 (`specs/ft187-communication-surface-cut/spec.md`) and FT135 (`specs/pre-push-guard-visibility/spec.md`).
 3. `/bench-write-spec` — FT141 (prose-independent Go, parallel-capable) and FT158 (the standing falsification pass), the two gates on prose batch 1 per the goal-tracks path above.
