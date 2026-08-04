@@ -59,3 +59,29 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
   while writing through disagreement without a word (a landed commit). One rule covers both: an
   active run states, at write time, which paths it has pinned, and the CLI that would violate the
   pin refuses while the operator is still holding the decision.
+
+## 2026-08-04 — The project-green marker desyncs from a run's base, wedging promotion repo-wide  [open]
+
+- **What happened:** `bench spec build promote` refuses every run on `main` with
+  `project-green marker conflicts with another tip`. `refs/bench/green/main` points at
+  `572b9046`, the tip the `authoring-hardening` run started from. When a commit landed on
+  `main` while that run was still empty, `fastForwardEmptyRun` advanced `run.Base` and — by
+  documented design — ran no gate and left the marker alone. `recomposePromotion` then calls
+  `authorization.Bootstrap` with `run.Base` as the expected prior marker, finds the older
+  value, and refuses. The marker only ever advances through that same call, so no amount of
+  `bench gate --fresh` clears it, and `checkpoint`, `assign`, and `review` all refuse once the
+  tip has moved (`abandon` is the sole exemption). The run could neither finish nor take
+  another ticket. This is not local to one run: the marker last moved under an earlier run,
+  `recovery-discard` landed through `bench commit` rather than promotion, so any spec
+  attempting promotion on `main` hits the same refusal.
+- **Right behavior:** The empty-run fast-forward and the green marker have to move together,
+  or `Bootstrap` has to accept a marker that is a recognized ancestor of both the expected base
+  and the tip rather than requiring exact equality. The current pair is a state machine with one
+  transition that silently invalidates the next one. Either fix restores promotion; the second
+  is smaller and matches how `recognizedAdvance` already reasons about a moved tip elsewhere in
+  the same file.
+- **Proposed rule change:** None for the operator — this is a code defect, not a discipline
+  problem. Worth naming that the recovery required abandoning a reviewed spec-backed build and
+  landing five completed tickets through the light path with reviewer approval, because the
+  sanctioned exit from the wedge discards the composition. A wedge whose only escape hatch is
+  destructive should be a release-blocking bug, not a papercut.
