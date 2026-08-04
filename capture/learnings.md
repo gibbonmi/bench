@@ -39,3 +39,23 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
   IdentityDriftOnMovedTip`), so a run wedged this way cannot be cleaned up either until the
   blob is restored — the cheap fix is at least a refusal at write time, where the operator is
   still holding the decision.
+
+## 2026-08-04 — A promotion squash silently reverted a commit made to `main` during the run  [open]
+
+- **What happened:** While auditing ticket quality across two builds, `git diff 950e354 fafb049`
+  showed that the `recovery-discard` promotion does not contain `950e354`'s ownership-fence
+  corrections: that commit landed directly on `main` while the run was active, and the promoted
+  composition — built from the candidate refs, based at the run's own base — reinstated the
+  pre-correction text over it. Nothing warned, and the loss surfaced only because a later
+  analysis diffed the two commits for an unrelated reason. The affected files have since been
+  deleted by spec retirement, so nothing durable is lost here, but the mechanism is live.
+- **Right behavior:** A run's composition should not be able to silently overwrite a commit that
+  landed on the branch after its base. Either promote refuses when the prospective tree would
+  revert a path changed on the branch since the run's base, or it reports those paths and makes
+  the reviewer decide. Recomposition onto a moved tip already exists as an operation, so the
+  detection has a home; what is missing is noticing the conflict at all.
+- **Proposed rule change:** Pair this with the same day's mid-run spec-edit wedge — they are two
+  faces of one gap. The run pins a subject and refuses reads that disagree with it (the spec blob),
+  while writing through disagreement without a word (a landed commit). One rule covers both: an
+  active run states, at write time, which paths it has pinned, and the CLI that would violate the
+  pin refuses while the operator is still holding the decision.
