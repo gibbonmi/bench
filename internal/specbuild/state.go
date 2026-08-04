@@ -220,9 +220,16 @@ func (r record) validCore(slug string) bool {
 	}
 	// A stored CheckpointRef is authorization to delete the ref it names, so it is
 	// identity, not payload: either the assignment has not checkpointed yet, or the
-	// ref is exactly the one this run and assignment would have written.
+	// ref is exactly the one this run and assignment would have written. A stored
+	// Branch carries the same deletion authority but cannot be re-derived — a record
+	// persists the assignment half of the branch path and not the owner half — so it
+	// is graded against the half it does persist: either the record predates the
+	// field and stores none, or the ref ends in the assignment's own ID.
 	for _, assigned := range r.Assignments {
 		if assigned.CheckpointRef != "" && assigned.CheckpointRef != checkpointIdentity(r.Run, assigned.ID) {
+			return false
+		}
+		if assigned.Branch != "" && !strings.HasSuffix(assigned.Branch, "/"+assigned.ID) {
 			return false
 		}
 	}
@@ -430,12 +437,15 @@ func (r record) terminalDisposition() provisionalDisposition {
 }
 
 // assignmentBranches locates the namespace refs one assignment's identity claims. A stored
-// branch name is a fast path that names the ref outright; without one the assignment ID is
-// matched against the namespace, and a match on more than one ref is ambiguous because a
-// record persists the assignment half of the ref path but not the owner half, so neither
-// half is claimed.
+// branch name is a fast path only while it carries the assignment's own ID as its final
+// path segment — the one identity fact a record persists about the ref, and the enumeration
+// serves history entries that never pass validCore, so the stored name is graded here
+// rather than trusted. A name that fails the grade, like no stored name at all, falls back
+// to matching the assignment ID against the namespace, and a match on more than one ref is
+// ambiguous because a record persists the assignment half of the ref path but not the owner
+// half, so neither ref is claimed.
 func assignmentBranches(assigned assignment, namespaced map[string][]string, objects map[string]string) ([]string, bool) {
-	if _, present := objects[assigned.Branch]; present {
+	if _, present := objects[assigned.Branch]; present && strings.HasSuffix(assigned.Branch, "/"+assigned.ID) {
 		return []string{assigned.Branch}, false
 	}
 	if assigned.ID == "" {

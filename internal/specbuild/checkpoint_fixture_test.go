@@ -304,6 +304,10 @@ func TestCheckpointJournalRecoversRetainedRefAndRejectsDifferentReceipt(t *testi
 		t.Fatal("fault did not interrupt checkpoint")
 	}
 	run := loadRun(t, fixture.service)
+	// The recipe is deliberately restated here rather than taken from checkpointIdentity:
+	// checkpoint refs persist across binaries, so a change to the production construction
+	// would strand refs earlier binaries wrote and make validCore refuse every existing
+	// record, and only an expectation the recipe cannot rewrite turns that change red.
 	ref := "refs/bench/specbuild/checkpoint/" + digest(run.Run+"\x00"+fixture.assigned.ID)
 	retained := git(t, fixture.root, "rev-parse", ref)
 	fixture.service.fault = nil

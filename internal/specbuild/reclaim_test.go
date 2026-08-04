@@ -14,6 +14,11 @@ import (
 // The fixtures below drive the real assign and checkpoint paths, whose owner returns no
 // branch name, so every record they produce carries the pre-Branch shape the enumeration
 // has to reach by assignment identity alone.
+//
+// The namespace is deliberately restated here rather than derived from
+// intent.AssignmentBranchRef: branches under it persist across binaries, so a change to
+// the production recipe would strand refs earlier binaries wrote, and only an expectation
+// the recipe cannot rewrite turns that change red.
 const assignmentNamespaceLiteral = "refs/heads/bench/assign/"
 
 func residueDispositions(refs []provisionalRef) map[string]provisionalDisposition {
@@ -607,6 +612,85 @@ func TestReclaimTrustBoundaryRefusesAnotherAssignmentsCheckpointRef(t *testing.T
 
 	if _, found, err := fixture.service.load("build demo"); err == nil || found {
 		t.Fatalf("load = found:%v err:%v, want a refusal of another assignment's checkpoint ref", found, err)
+	}
+}
+
+// A stored Branch carries the same deletion authority as a CheckpointRef but cannot be
+// re-derived — the owner half of the ref path is never persisted — so the loader grades it
+// against the assignment half it does persist: a live branch another owner's assignment
+// wrote sits in the right namespace and still fails the grade.
+func TestReclaimTrustBoundaryRefusesABranchThatIsNotTheAssignmentsOwn(t *testing.T) {
+	fixture := checkpointedReleaseFixture(t)
+	run, assigned, _ := residueSubject(t, fixture)
+	key, stored, ok := assignmentFor(run, assigned.ID)
+	if !ok {
+		t.Fatal("missing assignment")
+	}
+	stored.Branch = intent.AssignmentBranchRef(strings.Repeat("a", 32), strings.Repeat("b", 32))
+	run.Assignments[key] = stored
+	saveRun(t, fixture.service, run)
+
+	if _, found, err := fixture.service.load("build demo"); err == nil || found {
+		t.Fatalf("load = found:%v err:%v, want a refusal of a branch outside the assignment's own identity", found, err)
+	}
+}
+
+// The enumeration is the second line behind the loader for branches too: a history entry
+// reaches it without passing validCore, so the stored name is graded there as well rather
+// than taken as naming the ref outright. The record's own branch is still reached by
+// assignment ID, and the foreign live branch stays in the unclassified class the callers
+// leave intact.
+func TestReclaimEnumerationNeverClaimsAnAssignmentBranchTheRecordDoesNotOwn(t *testing.T) {
+	fixture := checkpointedReleaseFixture(t)
+	run, assigned, branch := residueSubject(t, fixture)
+	key, stored, ok := assignmentFor(run, assigned.ID)
+	if !ok {
+		t.Fatal("missing assignment")
+	}
+	foreign := intent.AssignmentBranchRef(strings.Repeat("a", 32), strings.Repeat("b", 32))
+	git(t, fixture.root, "update-ref", foreign, git(t, fixture.root, "rev-parse", "HEAD"))
+	object := git(t, fixture.root, "rev-parse", foreign)
+	stored.Branch = foreign
+	run.Assignments[key] = stored
+	run.Terminal = true
+
+	refs, err := fixture.service.provisionalResidue(run)
+	if err != nil {
+		t.Fatalf("provisionalResidue: %v", err)
+	}
+	want := map[string]provisionalDisposition{
+		branch:                 refReclaimable,
+		foreign:                refUnclassified,
+		assigned.CheckpointRef: refReclaimable,
+		run.Candidate:          refReclaimable,
+	}
+	if got := residueDispositions(refs); !reflect.DeepEqual(got, want) {
+		t.Fatalf("inventory = %#v, want the foreign branch unclaimed: %#v", got, want)
+	}
+	fixture.service.reclaimProvisionalRefs(run)
+	if got := git(t, fixture.root, "rev-parse", foreign); got != object {
+		t.Fatalf("%s = %s after reclamation, want the foreign assignment branch intact at %s", foreign, got, object)
+	}
+	if present := git(t, fixture.root, "for-each-ref", "--format=%(refname)", branch); present != "" {
+		t.Fatalf("%s survived a reclamation that owns it", branch)
+	}
+}
+
+// The empty Branch is the shape of every record written before the field persisted, so the
+// loader must keep admitting it durably and the enumeration must still reach the branch by
+// assignment ID alone.
+func TestReclaimAdmitsARecordWithNoStoredBranchName(t *testing.T) {
+	fixture := checkpointedReleaseFixture(t)
+	_, assigned, branch := residueSubject(t, fixture)
+	setRunTerminal(t, fixture.service, true)
+	run := loadRun(t, fixture.service)
+
+	refs, err := fixture.service.provisionalResidue(run)
+	if err != nil {
+		t.Fatalf("provisionalResidue: %v", err)
+	}
+	if classified := residueDispositions(refs); classified[branch] != refReclaimable {
+		t.Fatalf("branch %s classified %q, want %q resolved by assignment ID %s", branch, classified[branch], refReclaimable, assigned.ID)
 	}
 }
 
