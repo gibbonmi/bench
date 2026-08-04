@@ -1720,8 +1720,9 @@ row and breaches the fence at checkpoint; a `-run` selector matching zero tests,
 which `go test` reports as `ok`, so a probe that never executed reads as
 evidence; mutation tables that are entirely control-flow, leaving an authorizing
 constant or a hash preimage field unasserted; and no breadth signal at either
-level, so the two widest tickets were the two that needed repair and the spec
-bundled two capabilities sharing no seam. The fence-versus-probe agreement is
+level. The wide end carried a risk signal, but narrower tickets also required
+repairs, so narrowness proved nothing; the spec bundled two capabilities
+sharing no seam. The fence-versus-probe agreement is
 enforced — refused at `bench spec build assign`, graded over staged specs by the
 conformance sweep through the same exported function, with a canary proving the
 bite — and the other three land as authored discipline in `craft-tickets` and

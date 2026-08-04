@@ -11,7 +11,7 @@ An eight-ticket build finished with every ticket green and still cost three avoi
 - A ticket's red-mutation command can name a package its ownership fence cannot write. The delegate obeys the row, breaches the fence, and the checkpoint refusal costs a full repair round — the contradiction was visible in the ticket file the whole time, and nothing checks the two fields against each other.
 - A `-run` selector can match zero tests. `go test` still exits zero with `ok`, so a red-mutation probe can report evidence from a command that never executed a test.
 - Every mutation the tickets described was control-flow. Reverting an authorizing constant or dropping a field from a hash preimage is invisible to that entire class, so two safety properties shipped correct but unasserted until coordinator probes caught them.
-- Nothing at spec or ticket time flags breadth. The two tickets that needed repair were the two widest; the spec itself bundled two capabilities with no shared seam, so the narrower one could not ship on its own gate.
+- Nothing at spec or ticket time flags breadth. The wide end carried a risk signal, but narrower tickets also required repairs, so narrowness proved nothing; the spec itself bundled two capabilities with no shared seam, so the narrower one could not ship on its own gate.
 
 Separately, the ticket grammar's `Assumptions:` field pools two clause kinds that are not assumptions — tree-checkable preconditions redundant with `Blocked by:`, and restatements of the standing verify rule — and its machinery digests a line whose per-clause structure the comma-splitting parser never actually produces, duplicating a fact `TicketDigest` already seals.
 

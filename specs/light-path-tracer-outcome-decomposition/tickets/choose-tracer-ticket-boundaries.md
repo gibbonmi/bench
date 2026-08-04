@@ -1,18 +1,18 @@
 # Choose ticket boundaries by tracer outcome
 
-Blocked by: none
-Ownership fence: `.agents/skills/bench-craft-tickets/SKILL.md`, `specs/authoring-hardening/tickets/teach-size-split-signal.md`, `specs/authoring-hardening/tickets/correct-fence-breadth-evidence.md`, `specs/authoring-hardening/spec.md`
-Contracts: the fence-breadth guidance as ordered prose crosses `specs/authoring-hardening/spec.md`→`.agents/skills/bench-craft-tickets/SKILL.md`; TB3 asserts its more-than-two-directory domain, file-parent counting, one-line justification, and no narrowness-soundness claim, and absence means the breadth split signal is missing
+Blocked by: record-ft156-contracts-anchor-gap.md
+Ownership fence: `.agents/skills/bench-craft-tickets/SKILL.md`, `specs/authoring-hardening/tickets/teach-size-split-signal.md`, `specs/authoring-hardening/tickets/correct-fence-breadth-evidence.md`, `specs/authoring-hardening/spec.md`, `ROADMAP.md`
+Contracts: the fence-breadth guidance as ordered prose crosses `specs/authoring-hardening/spec.md`→`.agents/skills/bench-craft-tickets/SKILL.md`→the authoring-hardening advertisement in `ROADMAP.md`; TB3 asserts its more-than-two-directory domain, file-parent counting, one-line justification, and no narrowness-soundness claim across those surfaces, and absence means the breadth split signal is missing
 
 ## What to build
 
-Ticket authors inspect seams without treating them as automatic split points. A consolidated signal/response table keeps one independently-green behavior together across seams, splits independently useful behaviors, prefactors shared primitives, creates junction tickets for contracts neither side proves alone, points disjoint package groups back to `craft-spec`, and preserves expand-migrate-contract for mechanical refactors. The fence-breadth row demands justification rather than an automatic split. The same outcome corrects the staged source ticket and parent spec, then retires `specs/authoring-hardening/tickets/correct-fence-breadth-evidence.md` as fully absorbed work. Keeping this fence whole prevents the same breadth rule from carrying contradictory evidence in its guidance and staged advertisements.
+Ticket authors inspect seams without treating them as automatic split points. A consolidated signal/response table keeps one independently-green behavior together across seams, splits independently useful behaviors, prefactors shared primitives, creates junction tickets for contracts neither side proves alone, points disjoint package groups back to `craft-spec`, and preserves expand-migrate-contract for mechanical refactors. The fence-breadth row demands justification rather than an automatic split. The same outcome corrects the staged source ticket, parent spec, and authoring-hardening roadmap advertisement, then retires `specs/authoring-hardening/tickets/correct-fence-breadth-evidence.md` as fully absorbed work. Keeping this fence whole prevents the same breadth rule from carrying contradictory evidence across those surfaces. Its `ROADMAP.md` ownership is sequential behind the separate FT156 anchor-gap ticket and touches a distinct row.
 
 ## Acceptance
 
 - [ ] [TB1] `craft-tickets` preserves verbatim: "A seam is a reason to inspect a ticket boundary, not an automatic ticket boundary. Split only when both resulting tickets remain complete, independently green tracer outcomes."
 - [ ] [TB2] one table maps all seven required signals to keep, split, prefactor, junction, spec split, expand-migrate-contract, or justify-without-auto-splitting responses without re-teaching the existing ticket definition.
-- [ ] [TB3] the fence-breadth paragraph and staged authoring-hardening evidence keep the threshold, counting convention, and justification price while neither claims or implies that a narrow fence predicts a sound ticket, and the absorbed correction ticket is removed.
+- [ ] [TB3] the fence-breadth paragraph, staged authoring-hardening evidence, and authoring-hardening ROADMAP advertisement keep the threshold, counting convention, and justification price while none claims or implies that a narrow fence predicts a sound ticket, and the absorbed correction ticket is removed.
 
 ## Red mutations
 
