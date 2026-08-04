@@ -396,6 +396,9 @@ func parseRecoveryArgs(args []string) (string, recoveryVerb, string, bool) {
 		return "", "", "", false
 	}
 	fingerprint := args[2]
+	if strings.HasPrefix(fingerprint, `"`) && strings.HasSuffix(fingerprint, `"`) {
+		fingerprint = strings.TrimSuffix(strings.TrimPrefix(fingerprint, `"`), `"`)
+	}
 	decoded, err := hex.DecodeString(fingerprint)
 	if err != nil || len(decoded) != sha256.Size || fingerprint != strings.ToLower(fingerprint) {
 		return "", "", "", false

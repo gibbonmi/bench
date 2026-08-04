@@ -28,6 +28,8 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Made `bench worktree recovery` accept one TOON quote layer around an exact
+  fingerprint while retaining its lowercase 64-hex validation.
 - Made agent-guidance Markdown edits under `.agents/` skip the Go toolchain
   gate components through the per-component input declarations, while the
   contract and canary components that consume the guidance tree still run.

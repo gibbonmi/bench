@@ -397,8 +397,14 @@ func TestRecoveryVerbAuthorizesOnlyItsOwnVerdicts(t *testing.T) {
 // is ever computed, for whichever verb carries the fingerprint.
 func TestRecoveryCommandRefusesAMalformedFingerprintForEveryVerb(t *testing.T) {
 	const ref = "refs/bench/recovery/owner/assignment/1"
+	valid := strings.Repeat("a", 64)
+	for _, fingerprint := range []string{valid, `"` + valid + `"`} {
+		gotRef, verb, gotFingerprint, ok := parseRecoveryArgs([]string{ref, "--apply", fingerprint})
+		requireTest(t, ok && gotRef == ref && verb == recoveryRetire && gotFingerprint == valid,
+			"recovery fingerprint %q parsed as ref %q, verb %q, fingerprint %q, ok %t", fingerprint, gotRef, verb, gotFingerprint, ok)
+	}
 	for _, verb := range []string{"--apply", "--discard"} {
-		for _, fingerprint := range []string{"", "bad", strings.Repeat("a", 63), strings.Repeat("a", 65), strings.Repeat("A", 64), strings.Repeat("g", 64)} {
+		for _, fingerprint := range []string{"", "bad", strings.Repeat("a", 63), strings.Repeat("a", 65), strings.Repeat("A", 64), strings.Repeat("g", 64), `"` + strings.Repeat("a", 64), strings.Repeat("a", 64) + `"`, `""` + strings.Repeat("a", 64) + `""`} {
 			var stdout, stderr bytes.Buffer
 			code := RecoveryCommand([]string{ref, verb, fingerprint}, &stdout, &stderr)
 			requireTest(t, code == 2, "recovery %s %q exit = %d; want 2", verb, fingerprint, code)

@@ -1326,7 +1326,7 @@ func testRuntimeWorktreeRecoveryDiscardsReleasedPayload(t *testing.T) {
 		t.Fatalf("released payload plan action = %q, want the discard-eligible %q, distinct from the terminal %q", action, "discard", "discarded")
 	}
 
-	discarded := f.BenchEnv(env, "worktree", "recovery", ref, "--discard", recoveryReceiptField(t, plan.Stdout, "fingerprint"))
+	discarded := f.BenchEnv(env, "worktree", "recovery", ref, "--discard", `"`+recoveryReceiptField(t, plan.Stdout, "fingerprint")+`"`)
 	discarded.RequireExit(0)
 	if action := recoveryReceiptField(t, discarded.Stdout, "action"); action != "discarded" {
 		t.Fatalf("discard receipt action = %q, want the discard claim %q rather than the retire path's %q", action, "discarded", "retired")
