@@ -44,6 +44,8 @@ type buildService interface {
 	Promote(context.Context, string) (specbuild.Status, error)
 	Abandon(context.Context, string) (specbuild.AbandonmentPlan, error)
 	ApplyAbandon(context.Context, string, string) (specbuild.Status, error)
+	Reclaim(string) (specbuild.ReclamationPlan, error)
+	ApplyReclaim(string, string) (specbuild.ReclamationPlan, error)
 }
 
 func dispatchSpec(args []string, stdout io.Writer) int {
@@ -97,6 +99,17 @@ func executeBuild(ctx context.Context, service buildService, operation, slug str
 			}
 			return renderAbandonment(plan)
 		}
+	case "reclaim":
+		var plan specbuild.ReclamationPlan
+		if fingerprint, apply := flags["--apply"]; apply {
+			plan, err = service.ApplyReclaim(slug, fingerprint)
+		} else {
+			plan, err = service.Reclaim(slug)
+		}
+		if err != nil {
+			return reclamationFailure(plan, err)
+		}
+		return renderReclamation(plan)
 	}
 	if err != nil {
 		return buildError(err, "resolve the reported lifecycle precondition, then retry the same command")
@@ -176,6 +189,49 @@ func renderAbandonment(plan specbuild.AbandonmentPlan) (string, int) {
 		return buildError(err, "remove control text from abandonment evidence")
 	}
 	return out + worktrees, 0
+}
+
+// reclamationFailure keeps the receipt an interrupted apply spent. Git deletes one ref at a
+// time with no transaction across the set, so a refusal partway through has already taken the
+// refs the receipt names, and nothing can re-read them afterwards — the receipt is their only
+// account. It prints ahead of the refusal, which still carries the exit status and the
+// convergence hint, so the spent set never reads as a completed operation. A failure that took
+// no ref carries no receipt and stays a refusal alone: an empty table would report a deletion
+// set for an operation that deleted nothing.
+func reclamationFailure(receipt specbuild.ReclamationPlan, err error) (string, int) {
+	refusal, code := buildError(err, "plan again with bench spec build reclaim <slug>, then apply its exact fingerprint")
+	if len(receipt.Refs) == 0 {
+		return refusal, code
+	}
+	spent, spentCode := renderReclamation(receipt)
+	if spentCode != 0 {
+		return spent, spentCode
+	}
+	return spent + refusal, code
+}
+
+// renderReclamation reports every class the plan carries, not only the deletable one, so a
+// maintainer sees what was left behind and why alongside what the apply would take.
+func renderReclamation(plan specbuild.ReclamationPlan) (string, int) {
+	headers := []string{"slug", "fingerprint", "applied"}
+	summary := []string{plan.Slug, plan.Fingerprint, fmt.Sprint(plan.Applied)}
+	for _, class := range plan.Classes() {
+		headers = append(headers, class.Name)
+		summary = append(summary, fmt.Sprint(class.Count))
+	}
+	out, err := toon.Table("reclaim", headers, [][]string{summary})
+	if err != nil {
+		return buildError(err, "remove control text from reclamation evidence")
+	}
+	rows := make([][]string, 0, len(plan.Refs))
+	for _, ref := range plan.Refs {
+		rows = append(rows, []string{ref.Name, ref.Object, ref.Assignment, ref.Disposition})
+	}
+	refs, err := toon.Table("reclaim_refs", []string{"name", "object", "assignment", "disposition"}, rows)
+	if err != nil {
+		return buildError(err, "remove control text from reclamation evidence")
+	}
+	return out + refs, 0
 }
 
 type productionWorktreeOwner struct{}

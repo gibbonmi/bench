@@ -1,6 +1,8 @@
 package spec
 
 import (
+	"strings"
+
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
@@ -11,16 +13,37 @@ type BuildInvocation struct {
 	Flags           map[string]string
 }
 
-var buildOperations = map[string]usage.Grammar{
-	"start":      buildGrammar("start", nil),
-	"assign":     buildGrammar("assign", []usage.Flag{buildValueFlag("--ticket"), buildValueFlag("--request")}),
-	"checkpoint": buildGrammar("checkpoint", []usage.Flag{buildValueFlag("--assignment"), buildValueFlag("--evidence")}),
-	"integrate":  buildGrammar("integrate", []usage.Flag{buildValueFlag("--assignment")}),
-	"review":     buildGrammar("review", []usage.Flag{buildValueFlag("--evidence")}),
-	"status":     buildGrammar("status", []usage.Flag{{Name: "--full"}}),
-	"promote":    buildGrammar("promote", nil),
-	"abandon":    buildGrammar("abandon", []usage.Flag{buildValueFlag("--apply")}),
+// buildOperationOrder is the one declared lifecycle order for spec build operations.
+// buildOperations and the empty-argument diagnostic both derive from it, so neither can
+// list an operation the other doesn't, and the diagnostic reads in this order rather than
+// Go's randomized map order.
+var buildOperationOrder = []string{
+	"start", "assign", "checkpoint", "integrate", "review", "status", "promote", "abandon", "reclaim",
 }
+
+var buildOperations = func() map[string]usage.Grammar {
+	flags := map[string][]usage.Flag{
+		"assign":     {buildValueFlag("--ticket"), buildValueFlag("--request")},
+		"checkpoint": {buildValueFlag("--assignment"), buildValueFlag("--evidence")},
+		"integrate":  {buildValueFlag("--assignment")},
+		"review":     {buildValueFlag("--evidence")},
+		"status":     {{Name: "--full"}},
+		"abandon":    {buildValueFlag("--apply")},
+		"reclaim":    {buildValueFlag("--apply")},
+	}
+	m := make(map[string]usage.Grammar, len(buildOperationOrder))
+	for _, operation := range buildOperationOrder {
+		m[operation] = buildGrammar(operation, flags[operation])
+	}
+	return m
+}()
+
+// buildOperationsHelp is the `|`-separated operation list the empty-argument diagnostic
+// prints, derived from buildOperationOrder so it can never drift from the grammar table.
+var buildOperationsHelp = strings.Join(buildOperationOrder, "|")
+
+// applySuffix is the help tail every plan-then-apply operation shares.
+const applySuffix = " [--apply <fingerprint>]"
 
 func buildValueFlag(name string) usage.Flag {
 	return usage.Flag{Name: name, HasValue: true, NoEmptyValue: true}
@@ -30,16 +53,17 @@ func buildGrammar(operation string, flags []usage.Flag) usage.Grammar {
 	help := "usage: bench spec build " + operation + " <slug>"
 	suffixes := map[string]string{
 		"assign": " --ticket <ticket> --request <id>", "checkpoint": " --assignment <id> --evidence <receipt>",
-		"integrate": " --assignment <id>", "review": " --evidence <receipt>", "status": " [--full]", "abandon": " [--apply <fingerprint>]",
+		"integrate": " --assignment <id>", "review": " --evidence <receipt>", "status": " [--full]",
+		"abandon": applySuffix, "reclaim": applySuffix,
 	}
 	return usage.Grammar{Cmd: "bench spec build " + operation, Help: help + suffixes[operation], Flags: flags, MinArgs: 1, MaxArgs: 1}
 }
 
-// ParseBuild parses exactly the eight public operations without interpreting flag values
-// or text after `--` as lifecycle routing.
+// ParseBuild parses exactly the operations the grammar table declares, without interpreting
+// flag values or text after `--` as lifecycle routing.
 func ParseBuild(args []string) (BuildInvocation, string, int) {
 	if len(args) == 0 {
-		return BuildInvocation{}, toon.MissingArg("bench spec build", "start|assign|checkpoint|integrate|review|status|promote|abandon") + "\n", 2
+		return BuildInvocation{}, toon.MissingArg("bench spec build", buildOperationsHelp) + "\n", 2
 	}
 	operation := args[0]
 	grammar, known := buildOperations[operation]

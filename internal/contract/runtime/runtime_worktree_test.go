@@ -25,6 +25,8 @@ func TestRuntimeWorktreeContracts(t *testing.T) {
 	contract.RunParallel(t, "bench worktree release verifies and recovers contract", testRuntimeWorktreeReleaseVerifiesAndRecovers)
 	contract.RunParallel(t, "bench worktree exact foreign cleanup matrix contract", testRuntimeWorktreeExactForeignCleanup)
 	contract.RunParallel(t, "bench worktree recovery exact plan/apply contract", testRuntimeWorktreeRecoveryPlanApply)
+	contract.RunParallel(t, "bench worktree recovery discards a released payload contract", testRuntimeWorktreeRecoveryDiscardsReleasedPayload)
+	contract.RunParallel(t, "bench worktree recovery refuses refs outside its namespace contract", testRuntimeWorktreeRecoveryRefusesAForeignRef)
 	contract.RunParallel(t, "bench worktree clean pool cwd classification contract", testRuntimeWorktreeCleanFromPoolCwd)
 	contract.RunParallel(t, "bench worktree usage contract", testRuntimeWorktreeRejectsUnknownArgs)
 	contract.RunParallel(t, "bench worktree interactive release contract", testRuntimeWorktreeInteractiveRelease)
@@ -1262,27 +1264,23 @@ func testRuntimeWorktreeRecoveryPlanApply(t *testing.T) {
 
 	plan := f.BenchEnv(map[string]string{"SHELL": "/bin/true"}, "worktree", "recovery", first.Ref)
 	plan.RequireExit(0)
-	contract.RequireContains(t, plan.Stdout, "recovery_cleanup[1]{ref,root,payloads,landed,action,fingerprint,detail}:")
+	contract.RequireContains(t, plan.Stdout, recoveryReceiptHeader)
 	contract.RequireContains(t, plan.Stdout, first.Root)
 	for _, payload := range first.Payloads {
 		contract.RequireContains(t, plan.Stdout, payload)
 	}
-	fields := strings.Split(strings.TrimSpace(contract.NonEmptyLines(plan.Stdout)[1]), ",")
-	if len(fields) != 7 {
-		t.Fatalf("recovery plan fields = %#v", fields)
-	}
-	fingerprint := strings.Trim(fields[5], `"`)
+	fingerprint := recoveryFingerprint(t, plan.Stdout)
 	f.Git("update-ref", second.Ref, base)
 	stale := f.Bench("worktree", "recovery", first.Ref, "--apply", fingerprint)
 	stale.RequireExit(1)
-	contract.RequireContains(t, stale.Stdout, "recovery_cleanup[1]{ref,root,payloads,landed,action,fingerprint,detail}:")
+	contract.RequireContains(t, stale.Stdout, recoveryReceiptHeader)
 	if f.GitAllow("show-ref", "--verify", "--quiet", first.Ref).ExitCode != 0 {
 		t.Fatal("stale recovery apply deleted named ref")
 	}
 	f.Git("update-ref", second.Ref, second.Root)
 	plan = f.Bench("worktree", "recovery", first.Ref)
 	plan.RequireExit(0)
-	apply := f.Bench("worktree", "recovery", first.Ref, "--apply", strings.Trim(strings.Split(strings.TrimSpace(contract.NonEmptyLines(plan.Stdout)[1]), ",")[5], `"`))
+	apply := f.Bench("worktree", "recovery", first.Ref, "--apply", recoveryFingerprint(t, plan.Stdout))
 	apply.RequireExit(0)
 	contract.RequireContains(t, apply.Stdout, "retired")
 	if f.GitAllow("show-ref", "--verify", "--quiet", first.Ref).ExitCode == 0 {
@@ -1295,6 +1293,112 @@ func testRuntimeWorktreeRecoveryPlanApply(t *testing.T) {
 	if err != nil || len(current) != 1 || len(current[0].Recovery) != 1 || current[0].Recovery[0].Ref != second.Ref {
 		t.Fatalf("sibling recovery context = %#v, %v", current, err)
 	}
+}
+
+// The recovery ref graded here is the one a real `bench worktree release` writes, so a plan
+// or discard path that only production's ref shape can reach cannot pass as covered by the
+// hand-built refs above.
+func testRuntimeWorktreeRecoveryDiscardsReleasedPayload(t *testing.T) {
+	f := onMainFixture(t)
+	env := map[string]string{"BENCH_HOME": filepath.Join(f.Root, ".bench-home")}
+	created := f.BenchEnv(env, "worktree", "create", "--request", "discard-released", "--label", "discard released payload")
+	created.RequireExit(0)
+	path := worktreeCreatePath(t, created.Stdout)
+	contract.WriteFileAbs(t, filepath.Join(path, "unproven.txt"), "never landed\n")
+	f.BenchEnv(env, "worktree", "release", "--request", "discard-released", path).RequireExit(0)
+
+	released, err := intent.Assignments(f.Root)
+	if err != nil || len(released) != 1 || len(released[0].Recovery) != 1 {
+		t.Fatalf("released recovery assignment = %#v, %v", released, err)
+	}
+	assignment := released[0]
+	ref := assignment.Recovery[0].Ref
+	if f.GitAllow("show-ref", "--verify", "--quiet", ref).ExitCode != 0 {
+		t.Fatalf("release recorded %s without writing the ref", ref)
+	}
+
+	plan := f.BenchEnv(env, "worktree", "recovery", ref)
+	plan.RequireExit(0)
+	contract.RequireContains(t, plan.Stdout, recoveryReceiptHeader)
+	contract.RequireContains(t, plan.Stdout, ref)
+	contract.RequireContains(t, recoveryReceiptField(t, plan.Stdout, "landed"), "unlanded")
+	if action := recoveryReceiptField(t, plan.Stdout, "action"); action != "discard" {
+		t.Fatalf("released payload plan action = %q, want the discard-eligible %q, distinct from the terminal %q", action, "discard", "discarded")
+	}
+
+	discarded := f.BenchEnv(env, "worktree", "recovery", ref, "--discard", recoveryReceiptField(t, plan.Stdout, "fingerprint"))
+	discarded.RequireExit(0)
+	if action := recoveryReceiptField(t, discarded.Stdout, "action"); action != "discarded" {
+		t.Fatalf("discard receipt action = %q, want the discard claim %q rather than the retire path's %q", action, "discarded", "retired")
+	}
+	if f.GitAllow("show-ref", "--verify", "--quiet", ref).ExitCode == 0 {
+		t.Fatalf("discarded recovery ref %s still resolves", ref)
+	}
+	remaining, err := intent.Assignments(f.Root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, current := range remaining {
+		if current.ID == assignment.ID {
+			t.Fatalf("assignment row survived the discard of its last recovery ref = %#v", current)
+		}
+	}
+}
+
+// The reproduction this grades is an operator naming an ordinary branch at the command:
+// the ref resolves, so a plan that reads existence alone reports preserved work and the
+// discard deletes the branch. The command surface is where that authority is spent, so the
+// refusal is asserted here and not only over the classifier.
+func testRuntimeWorktreeRecoveryRefusesAForeignRef(t *testing.T) {
+	f := onMainFixture(t)
+	f.Git("branch", "ordinary-work")
+	for _, ref := range []string{"refs/heads/main", "refs/heads/ordinary-work"} {
+		before := strings.TrimSpace(f.Git("rev-parse", "--verify", ref).Stdout)
+		plan := f.Bench("worktree", "recovery", ref)
+		plan.RequireExit(0)
+		contract.RequireContains(t, plan.Stdout, recoveryReceiptHeader)
+		if action := recoveryReceiptField(t, plan.Stdout, "action"); action != "foreign" {
+			t.Fatalf("plan action for %s = %q, want a verdict carrying no authorization", ref, action)
+		}
+		for _, verb := range []string{"--discard", "--apply"} {
+			refused := f.Bench("worktree", "recovery", ref, verb, recoveryFingerprint(t, plan.Stdout))
+			refused.RequireExit(1)
+			contract.RequireContains(t, refused.Stdout, recoveryReceiptHeader)
+			if f.GitAllow("show-ref", "--verify", "--quiet", ref).ExitCode != 0 {
+				t.Fatalf("bench worktree recovery %s %s deleted %s", ref, verb, ref)
+			}
+			if after := strings.TrimSpace(f.Git("rev-parse", "--verify", ref).Stdout); after != before {
+				t.Fatalf("%s moved %s from %s to %s", verb, ref, before, after)
+			}
+		}
+	}
+}
+
+// recoveryReceiptColumns is the recovery receipt's column contract, stated once so a row
+// reader locates a value by name rather than by a hand-counted index.
+const recoveryReceiptColumns = "ref,root,payloads,landed,changes,action,fingerprint,detail"
+
+const recoveryReceiptHeader = "recovery_cleanup[1]{" + recoveryReceiptColumns + "}:"
+
+func recoveryFingerprint(t *testing.T, stdout string) string {
+	t.Helper()
+	return recoveryReceiptField(t, stdout, "fingerprint")
+}
+
+func recoveryReceiptField(t *testing.T, stdout, column string) string {
+	t.Helper()
+	columns := strings.Split(recoveryReceiptColumns, ",")
+	fields := strings.Split(strings.TrimSpace(contract.NonEmptyLines(stdout)[1]), ",")
+	if len(fields) != len(columns) {
+		t.Fatalf("recovery receipt fields = %#v, want %d", fields, len(columns))
+	}
+	for i, name := range columns {
+		if name == column {
+			return strings.Trim(fields[i], `"`)
+		}
+	}
+	t.Fatalf("recovery receipt columns name no %s: %s", column, recoveryReceiptColumns)
+	return ""
 }
 
 func testRuntimeWorktreeCleanFromPoolCwd(t *testing.T) {
@@ -1311,7 +1415,7 @@ func testRuntimeWorktreeCleanFromPoolCwd(t *testing.T) {
 }
 
 func testRuntimeWorktreeRejectsUnknownArgs(t *testing.T) {
-	wantRecovery := "recovery_cleanup[1]{ref,root,payloads,landed,action,fingerprint,detail}:\n  unknown,unknown,none,unknown,error,none,\"invalid invocation; run bench worktree recovery <ref> [--apply <fingerprint>]\"\n"
+	wantRecovery := recoveryReceiptHeader + "\n  unknown,unknown,none,unknown,unknown,error,none,\"invalid invocation; run bench worktree recovery <ref> [--apply <fingerprint>] [--discard <fingerprint>]\"\n"
 	noRepo := contract.NewFixture(t, contract.WithNoRepo())
 	outside := noRepo.Bench("worktree", "recovery")
 	outside.RequireExit(2)
@@ -1324,7 +1428,7 @@ func testRuntimeWorktreeRejectsUnknownArgs(t *testing.T) {
 		"bench worktree create [--refresh] --request <opaque-id> --label <work-item>",
 		"bench worktree release --request <opaque-id> <path>",
 		"bench worktree clean [--discard-ignored] [--discard-branch] [--full] <path> [--apply <fingerprint>]",
-		"bench worktree recovery <ref> [--apply <fingerprint>]",
+		"bench worktree recovery <ref> [--apply <fingerprint>] [--discard <fingerprint>]",
 	}
 	help := f.Bench("--help")
 	help.RequireExit(0)

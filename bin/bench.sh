@@ -360,6 +360,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench spec build status <slug> [--full]
   bench spec build promote <slug>
   bench spec build abandon <slug> [--apply <fingerprint>]
+  bench spec build reclaim <slug> [--apply <fingerprint>]
   bench version              print the installed Bench version (os/arch)
 EOF
   ;;

@@ -47,6 +47,9 @@ const (
 	StepRelock           LifecycleStep = "relock"
 	StepRecoveryMetadata LifecycleStep = "recovery-metadata"
 	StepRecoveryRef      LifecycleStep = "recovery-ref"
+	// StepRecoveryRowClose names the boundary a retire or a discard crosses once the
+	// recovery ref is deleted and only the assignment row is left to close.
+	StepRecoveryRowClose LifecycleStep = "recovery-row-close"
 	StepUnlock           LifecycleStep = "unlock"
 	StepRemovalAttempt   LifecycleStep = "removal-attempt"
 	StepRemoval          LifecycleStep = "removal"

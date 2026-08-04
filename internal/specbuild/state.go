@@ -15,6 +15,7 @@ import (
 	"syscall"
 
 	benchgit "github.com/gibbonmi/bench/internal/git"
+	"github.com/gibbonmi/bench/internal/intent"
 	"github.com/gibbonmi/bench/internal/jsonfile"
 	"github.com/gibbonmi/bench/internal/spec"
 )
@@ -126,9 +127,15 @@ func (r record) needsReview() bool {
 	}
 	return false
 }
-func (s *Service) resolve(slug string) (string, error) {
+func requireSlug(slug string) error {
 	if strings.TrimSpace(slug) == "" {
-		return "", errors.New("spec build slug is required")
+		return errors.New("spec build slug is required")
+	}
+	return nil
+}
+func (s *Service) resolve(slug string) (string, error) {
+	if err := requireSlug(slug); err != nil {
+		return "", err
 	}
 	_, resolved, _, ok, err := spec.Resolve(s.root, slug)
 	if err != nil {
@@ -208,6 +215,14 @@ func (r record) validCore(slug string) bool {
 	}
 	for key, op := range r.Operations {
 		if key != operationID(op.Command, op.Request) || op.Command == "" || op.Request == "" || op.Input == "" || (op.State != "prepared" && op.State != "completed") {
+			return false
+		}
+	}
+	// A stored CheckpointRef is authorization to delete the ref it names, so it is
+	// identity, not payload: either the assignment has not checkpointed yet, or the
+	// ref is exactly the one this run and assignment would have written.
+	for _, assigned := range r.Assignments {
+		if assigned.CheckpointRef != "" && assigned.CheckpointRef != checkpointIdentity(r.Run, assigned.ID) {
 			return false
 		}
 	}
@@ -298,30 +313,184 @@ func updateRef(root, ref, new, old string) error {
 	return nil
 }
 
-// reclaimProvisionalRefs drops the working refs a promoted run no longer needs: the
-// assignment branches, whose intent records release already compacted, this run's
-// checkpoint refs, and the candidate the promotion commit superseded. It runs after the
-// record is durably terminal, so it is reachable again on every re-entry and must stay
-// idempotent — an already-deleted ref is the expected steady state, not a failure. Each
-// deletion carries the OID it observed, so a ref that moved under a concurrent writer
-// fails closed and is left for that writer rather than being clobbered.
-func (s *Service) reclaimProvisionalRefs(run record) {
-	for _, assigned := range run.Assignments {
-		deleteRefIfPresent(s.root, assigned.Branch)
-		deleteRefIfPresent(s.root, assigned.CheckpointRef)
-	}
-	deleteRefIfPresent(s.root, run.Candidate)
+// provisionalDisposition is the enumeration's verdict on one ref. Only refReclaimable
+// authorizes deletion; every other verdict is a report the caller leaves intact.
+type provisionalDisposition string
+
+const (
+	refReclaimable  provisionalDisposition = "reclaimable"
+	refActive       provisionalDisposition = "active"
+	refUnclassified provisionalDisposition = "unclassified"
+	refAmbiguous    provisionalDisposition = "ambiguous"
+)
+
+// provisionalRef is one ref the enumeration inspected, carrying the object it held when
+// it was classified so a deletion can compare-and-swap against exactly that object.
+type provisionalRef struct {
+	Name, Object, Assignment string
+	Disposition              provisionalDisposition
 }
 
-func deleteRefIfPresent(root, ref string) {
-	if ref == "" {
-		return
+// provisionalResidue is the single answer to "which refs does this run no longer need",
+// shared by promotion's reclamation and the maintainer's retroactive pass so the question
+// is never derived twice. It answers for every run the slug retains — the live one and each
+// prior attempt a restart moved into history — because a restart leaves the earlier run's
+// candidate, checkpoint, and assignment refs in the tree while its record, the only thing
+// that can prove the work is dead, moves into the live record's history.
+//
+// Location and classification are separate concerns: a branch is located by matching the
+// assignment ID against the assignment namespace, because records written before the Branch
+// field persist no branch name at all, while whether the work is dead comes only from the
+// owning record's own terminal flag — never from how a ref is named, and never from the
+// fact that a record sits in history.
+func (s *Service) provisionalResidue(run record) ([]provisionalRef, error) {
+	objects, err := refObjects(s.root, assignmentNamespace())
+	if err != nil {
+		return nil, err
 	}
-	oid, err := refValue(root, ref)
+	namespaced := map[string][]string{}
+	for name := range objects {
+		id := name[strings.LastIndex(name, "/")+1:]
+		namespaced[id] = append(namespaced[id], name)
+	}
+	claimed := map[string]bool{}
+	refs := []provisionalRef{}
+	claim := func(name, object, assignmentID string, disposition provisionalDisposition) {
+		if name == "" || claimed[name] {
+			return
+		}
+		claimed[name] = true
+		refs = append(refs, provisionalRef{Name: name, Object: object, Assignment: assignmentID, Disposition: disposition})
+	}
+	for _, owning := range run.residueRecords() {
+		owned := owning.terminalDisposition()
+		for _, assigned := range owning.Assignments {
+			branches, ambiguous := assignmentBranches(assigned, namespaced, objects)
+			disposition := owned
+			if ambiguous {
+				disposition = refAmbiguous
+			}
+			for _, name := range branches {
+				claim(name, objects[name], assigned.ID, disposition)
+			}
+			// A history entry reaches the enumeration without passing validCore, so the
+			// stored CheckpointRef is re-derived rather than trusted: only the ref this
+			// run and assignment would have written can be claimed for deletion.
+			if ref := checkpointIdentity(owning.Run, assigned.ID); assigned.CheckpointRef == ref {
+				if object, present := s.refObject(ref); present {
+					claim(ref, object, assigned.ID, owned)
+				}
+			}
+		}
+		if object, present := s.refObject(owning.Candidate); present {
+			claim(owning.Candidate, object, "", owned)
+		}
+	}
+	for name, object := range objects {
+		claim(name, object, "", refUnclassified)
+	}
+	sort.Slice(refs, func(i, j int) bool { return refs[i].Name < refs[j].Name })
+	return refs, nil
+}
+
+// residueRecords is the set of records the enumeration answers for: the live record and each
+// prior attempt a restart retained. Their order decides nothing, because no two records of
+// one slug name the same ref, and each ref class is distinct for its own reason. A candidate
+// ref is refs/bench/specbuild/candidate/<run>, and the loader admits a record only under a
+// run identity no other retained record holds. A checkpoint ref is claimed only at the name
+// checkpointIdentity derives from that same run identity and an assignment ID — validCore
+// refuses a stored ref that differs, and the enumeration re-derives the name instead of
+// reading the stored string. An assignment branch carries an assignment ID
+// the worktree owner draws at random per creation, and a creation is scoped to one run and
+// request, so a restart repeating a request draws a new one rather than reusing the prior
+// attempt's.
+//
+// A history entry that will not decode is skipped rather than guessed at, which leaves its
+// refs to the unclassified class the caller retains.
+func (r record) residueRecords() []record {
+	records := make([]record, 0, len(r.History)+1)
+	records = append(records, r)
+	for _, raw := range r.History {
+		var prior record
+		if jsonfile.DecodeDocument(raw, &prior) != nil {
+			continue
+		}
+		records = append(records, prior)
+	}
+	return records
+}
+
+// terminalDisposition is the whole of the terminality judgment: a run's own refs are dead
+// exactly when its record says the run ended.
+func (r record) terminalDisposition() provisionalDisposition {
+	if r.Terminal {
+		return refReclaimable
+	}
+	return refActive
+}
+
+// assignmentBranches locates the namespace refs one assignment's identity claims. A stored
+// branch name is a fast path that names the ref outright; without one the assignment ID is
+// matched against the namespace, and a match on more than one ref is ambiguous because a
+// record persists the assignment half of the ref path but not the owner half, so neither
+// half is claimed.
+func assignmentBranches(assigned assignment, namespaced map[string][]string, objects map[string]string) ([]string, bool) {
+	if _, present := objects[assigned.Branch]; present {
+		return []string{assigned.Branch}, false
+	}
+	if assigned.ID == "" {
+		return nil, false
+	}
+	matches := append([]string(nil), namespaced[assigned.ID]...)
+	sort.Strings(matches)
+	return matches, len(matches) > 1
+}
+
+// assignmentNamespace derives the assignment branch prefix from the ref constructor that
+// owns it, since intent exports the constructor rather than the prefix and a literal here
+// would be a second source for the same path.
+func assignmentNamespace() string {
+	return strings.TrimSuffix(intent.AssignmentBranchRef("", ""), "/")
+}
+
+func refObjects(root, prefix string) (map[string]string, error) {
+	out, err := benchgit.Output("-C", root, "for-each-ref", "--format=%(refname) %(objectname)", prefix)
+	if err != nil {
+		return nil, fmt.Errorf("inventory refs under %s: %w", prefix, err)
+	}
+	objects := map[string]string{}
+	for _, line := range strings.Split(out, "\n") {
+		if fields := strings.Fields(line); len(fields) == 2 {
+			objects[fields[0]] = fields[1]
+		}
+	}
+	return objects, nil
+}
+
+func (s *Service) refObject(ref string) (string, bool) {
+	if ref == "" {
+		return "", false
+	}
+	object, err := refValue(s.root, ref)
+	return object, err == nil
+}
+
+// reclaimProvisionalRefs drops the refs the enumeration reports reclaimable and leaves
+// every other class for a maintainer to judge. It runs after the record is durably
+// terminal, so it is reachable again on every re-entry and must stay idempotent — an
+// already-deleted ref is the expected steady state, not a failure. Each deletion carries
+// the object the enumeration observed, so a ref that moved under a concurrent writer fails
+// closed and is left for that writer rather than being clobbered.
+func (s *Service) reclaimProvisionalRefs(run record) {
+	refs, err := s.provisionalResidue(run)
 	if err != nil {
 		return
 	}
-	_ = benchgit.DeleteBranchExact(root, ref, oid)
+	for _, ref := range refs {
+		if ref.Disposition == refReclaimable {
+			_ = benchgit.DeleteBranchExact(s.root, ref.Name, ref.Object)
+		}
+	}
 }
 
 func refAt(root, ref, want string) bool {
@@ -352,6 +521,14 @@ func canonicalDigest(value string) bool {
 }
 
 func candidateIdentity(run string) string { return "refs/bench/specbuild/candidate/" + run }
+
+// checkpointIdentity is the one construction of a checkpoint ref name. The writer in
+// Checkpoint, the loader's validation, and the residue enumeration all derive the ref
+// from here, so a stored CheckpointRef is graded against exactly what this run and
+// assignment would have written rather than against a second copy of the recipe.
+func checkpointIdentity(run, assignmentID string) string {
+	return "refs/bench/specbuild/checkpoint/" + digest(run+"\x00"+assignmentID)
+}
 
 // Status returns the durable compact projection for slug.
 func (s *Service) Status(slug string) (Status, error) {

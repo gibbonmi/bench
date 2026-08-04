@@ -370,6 +370,7 @@ func checkWorkflowAnchors(root string) []string {
 
 	for _, anchor := range []struct{ rel, needle, diag string }{
 		{".agents/commands/bench-implement-spec.md", "`start` → `assign` → `checkpoint` → `integrate` → `review` → `promote`; `status` inspects the run and `abandon` plans or applies cleanup.", "bench-implement-spec dropped or reordered the eight-operation spec-build lifecycle"},
+		{".agents/commands/bench-implement-spec.md", "`reclaim` sits outside that surface — a maintainer runs it", ".agents/commands/bench-implement-spec.md dropped the claim that reclaim is maintainer-run and sits outside the eight-operation lifecycle a build harness drives"},
 		{".agents/commands/bench-implement-spec.md", "Re-derive the complete ready frontier and the harness's live capacity before dispatch. Assign every ownership-safe ticket up to the smaller of frontier size and available capacity.", "bench-implement-spec dropped initial frontier capacity dispatch"},
 		{".agents/commands/bench-implement-spec.md", "Refill the ownership-safe frontier after every integration or assignment release while another delegate remains active.", "bench-implement-spec replaced continuous frontier refill with drain-then-refill cadence"},
 		{".agents/commands/bench-implement-spec.md", "For every unused harness slot, record exactly one reason: dependency, overlapping ownership fence, unavailable harness capacity, or measured resource constraint.", "bench-implement-spec dropped the closed unused-slot reason set"},
@@ -385,6 +386,10 @@ func checkWorkflowAnchors(root string) []string {
 		{".agents/skills/bench-craft-delegate/SKILL.md", "The lifecycle checkpoints, integrates, and releases the assignment; the coordinator does not run a generic release.", "craft-delegate dropped the spec-build checkpoint-integrate-release exception"},
 		{".agents/skills/bench-craft-delegate/SKILL.md", "A provisional checkpoint is not project-green evidence and cannot satisfy a done-claim.", "craft-delegate lets provisional evidence claim project green"},
 		{".bench/BENCH.md", "`bench spec build start|assign|checkpoint|integrate|review|status|promote|abandon`", ".bench/BENCH.md dropped an operation from the spec-build inventory"},
+		// Two rows, because the inventory states reclaim's status in two separable
+		// clauses: who runs it, and that it is not one of the eight operations.
+		{".bench/BENCH.md", "`bench spec build reclaim` (maintainer-run", ".bench/BENCH.md CLI Inventory dropped the claim that bench spec build reclaim is maintainer-run"},
+		{".bench/BENCH.md", "not part of the lifecycle a build harness drives", ".bench/BENCH.md CLI Inventory dropped the claim that reclaim sits outside the lifecycle a build harness drives"},
 		{".bench/BENCH.md", "Provisional cadence is exclusive to reviewed spec-backed builds; light-path work, `bench shift`, and ordinary `bench commit` remain commit-on-green.", ".bench/BENCH.md broadened provisional cadence beyond reviewed spec-backed builds"},
 		{".bench/BENCH-reference.md", "| `start` | create or resume the subject-bound run from exact-tip whole-tree green, including a narrow verdict whose inherited evidence still covers every skip |", "BENCH-reference misroutes spec build start"},
 		{".bench/BENCH-reference.md", "| `assign` | lease one ownership-fenced ticket worktree |", "BENCH-reference misroutes spec build assign"},
@@ -404,6 +409,7 @@ func checkWorkflowAnchors(root string) []string {
 		{"bin/bench.sh", "bench spec build promote <slug>", "bench help dropped spec build promote grammar"},
 		{"bin/bench.sh", "bench spec build abandon <slug> [--apply <fingerprint>]", "bench help dropped abandon plan/apply grammar"},
 		{"projects/benchkit.md", "gpt-5.6-sol / high", "benchkit profile replaced the approved spec-build guidance line"},
+		{"projects/benchkit.md", "`reclaim` is the one maintainer-run verb beside that lifecycle", "projects/benchkit.md dropped the claim that reclaim is the one maintainer-run verb beside the eight-operation lifecycle, never driven by a build harness"},
 		{"projects/benchkit.md", "Both dogfood traces use the public porcelain", "benchkit profile dropped the public-porcelain dogfood traces"},
 		{"projects/benchkit.md", "Run `bench structure` before and after the guidance cut", "benchkit profile dropped the spec-build structure preflight"},
 		{"CHANGELOG.md", "Light-path changes, `bench shift`, and ordinary `bench commit` keep commit-on-green cadence.", "CHANGELOG dropped the unchanged-path control for provisional spec builds"},

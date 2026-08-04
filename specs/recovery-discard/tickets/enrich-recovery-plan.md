@@ -29,7 +29,7 @@ every action, including `retain` and `retire`.
 
 - [ ] [EP1] planning a recovery ref that exists with no owning assignment row reports an orphaned verdict distinguishable in the receipt from both `retain` and the absent verdict.
 - [ ] [EP2] planning a ref name that resolves to no ref reports an absent verdict distinguishable in the receipt from the orphaned verdict.
-- [ ] [EP3] the pre-existing verdicts are unchanged: a recovered assignment whose payloads all pass the landedness proof still plans `retire`, and one whose payloads do not still plans `retain`.
+- [ ] [EP3] the retire verdict is unchanged: a recovered assignment whose payloads all pass the landedness proof still plans `retire`, and one whose payloads verify but are not proven landed plans the discard-eligible `discard` verdict, distinct from the unclassifiable `retain`.
 - [ ] [EP4] every plan carries a changed-path count for its payload against its recorded base, present for `retain`, `retire`, orphaned and absent plans alike.
 - [ ] [EP5] a plan whose recorded base or payload no longer resolves carries a definite unknown in the change-summary field and returns no error.
 

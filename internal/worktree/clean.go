@@ -158,13 +158,24 @@ func recoverAssignmentWithFault(root string, assignment intent.Assignment, fault
 	}
 	return assignment, nil
 }
-func recoveryEnvelopeValid(root string, recovery intent.Recovery) bool {
-	body, err := git.Output("-C", root, "show", recovery.Root+":manifest.json")
+
+// readRecoveryManifest is the one reader of a recovery envelope: it answers with a
+// manifest only when the commit carries a well-formed one of this schema, so no caller
+// has to decide for itself what a usable envelope is.
+func readRecoveryManifest(root, commitish string) (recoveryManifest, bool) {
+	body, err := git.Output("-C", root, "show", commitish+":manifest.json")
 	if err != nil {
-		return false
+		return recoveryManifest{}, false
 	}
 	var manifest recoveryManifest
 	if json.Unmarshal([]byte(body), &manifest) != nil || manifest.Schema != recoverySchema || manifest.Base == "" || len(manifest.Layers) == 0 {
+		return recoveryManifest{}, false
+	}
+	return manifest, true
+}
+func recoveryEnvelopeValid(root string, recovery intent.Recovery) bool {
+	manifest, ok := readRecoveryManifest(root, recovery.Root)
+	if !ok {
 		return false
 	}
 	payloads := map[string]bool{}
@@ -366,20 +377,36 @@ func discardIgnored(plan CleanupPlan) error {
 	return nil
 }
 func recoveryInvocationError(stdout io.Writer) int {
-	_ = renderRecovery(stdout, RecoveryPlan{Ref: "unknown", Root: "unknown", Payloads: "none", Landed: "unknown", Action: RecoveryError, Fingerprint: "none", Detail: "invalid invocation; run " + worktreeRecoveryUsage})
+	_ = renderRecovery(stdout, RecoveryPlan{Ref: "unknown", Root: "unknown", Payloads: "none", Landed: "unknown", Changes: recoveryUnknownChanges, Action: RecoveryError, Fingerprint: "none", Detail: "invalid invocation; run " + worktreeRecoveryUsage})
 	return 2
 }
-func RecoveryCommand(args []string, stdout, stderr io.Writer) int {
-	if len(args) != 1 && !(len(args) == 3 && args[1] == "--apply") {
-		return recoveryInvocationError(stdout)
+
+// parseRecoveryArgs reads the arguments of both verbs in one place, so the fingerprint's
+// format control is reached by construction rather than by a copy per verb. A bare ref
+// carries no fingerprint and therefore only plans; its verb is never consulted.
+func parseRecoveryArgs(args []string) (string, recoveryVerb, string, bool) {
+	if len(args) == 1 {
+		return args[0], recoveryRetire, "", true
 	}
-	ref, fingerprint := args[0], ""
-	if len(args) == 3 {
-		fingerprint = args[2]
-		decoded, err := hex.DecodeString(fingerprint)
-		if err != nil || len(decoded) != sha256.Size || fingerprint != strings.ToLower(fingerprint) {
-			return recoveryInvocationError(stdout)
-		}
+	if len(args) != 3 {
+		return "", "", "", false
+	}
+	verb := recoveryVerb(args[1])
+	if verb != recoveryRetire && verb != recoveryDiscard {
+		return "", "", "", false
+	}
+	fingerprint := args[2]
+	decoded, err := hex.DecodeString(fingerprint)
+	if err != nil || len(decoded) != sha256.Size || fingerprint != strings.ToLower(fingerprint) {
+		return "", "", "", false
+	}
+	return args[0], verb, fingerprint, true
+}
+
+func RecoveryCommand(args []string, stdout, stderr io.Writer) int {
+	ref, verb, fingerprint, ok := parseRecoveryArgs(args)
+	if !ok {
+		return recoveryInvocationError(stdout)
 	}
 	root, err := git.Root()
 	if err != nil {
@@ -388,9 +415,9 @@ func RecoveryCommand(args []string, stdout, stderr io.Writer) int {
 	}
 	plan, err := PlanRecovery(root, ref)
 	if err == nil && fingerprint != "" {
-		plan, err = ApplyRecovery(root, ref, fingerprint)
+		plan, err = applyRecoveryVerb(root, ref, fingerprint, verb)
 	}
-	if errors.Is(err, errStaleFingerprint) {
+	if errors.Is(err, errStaleFingerprint) || errors.Is(err, errRecoveryUnauthorized) {
 		_ = renderRecovery(stdout, plan)
 		return 1
 	}

@@ -19,6 +19,12 @@ All notable user-facing changes to Bench are documented here. The format follows
   diagnostic focused release preflight runs.
 - Added reproducible per-platform offline archives for direct, local npm, and
   internal-registry use, plus `bench commands --brief` for compact command discovery.
+- Added `bench worktree recovery <ref> --discard <fingerprint>` to retire a preserved
+  recovery payload the landedness proof does not accept, one exact ref and fingerprint
+  per invocation.
+- Added `bench spec build reclaim <slug> [--apply <fingerprint>]` for a maintainer to
+  plan, then apply, the deletion of one terminal spec-build run's leftover provisional
+  refs, deleting only what the plan can prove dead and reporting the rest.
 
 ### Changed
 
@@ -76,9 +82,15 @@ All notable user-facing changes to Bench are documented here. The format follows
   verdict and canary coverage.
 - Reduced gate time by building host-only artifact fixtures while retaining a
   two-target matrix-iteration contract.
+- Made `bench worktree recovery --apply` refuse instead of silently exiting zero when
+  a supplied fingerprint accompanies a plan that authorizes no action.
 
 ### Fixed
 
+- Made `bench worktree recovery` refuse both verbs for a ref its plan cannot classify:
+  only a verified payload the landedness proof refused plans the discard-eligible
+  `discard` verdict, and a re-run converging on an interrupted verb records `discarded`
+  rather than the proof-backed `retired`.
 - Made prospective gate execution compile the exact unpublished Bench tree without
   requiring ignored binary artifacts from another checkout.
 - Made spec-build integration release an exact live checkpoint payload after

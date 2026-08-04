@@ -16,6 +16,10 @@ import (
 
 var errStaleFingerprint = errors.New("cleanup fingerprint is stale")
 
+// errRecoveryUnauthorized marks a refusal the plan itself decided, as opposed to a failure
+// while acting, so the command can answer with the receipt the operator planned from.
+var errRecoveryUnauthorized = errors.New("recovery plan does not authorize this verb")
+
 const cleanupOperation = "worktree-clean"
 
 func cleanupIdentity(root, path string) (string, string, error) {
@@ -70,7 +74,61 @@ func assignmentByID(root, id string) (intent.Assignment, error) {
 func renderReleaseReceipt(stdout io.Writer, receipt intent.CleanupReceipt) int {
 	return renderRelease(stdout, intent.Assignment{ID: receipt.Tracked, Worktree: receipt.Target, State: intent.AssignmentState(receipt.Detail)}, receipt.Action)
 }
+
+// recoveryVerb is the flag an operator typed, carried through to the one place that acts
+// on a plan. Its value is the flag itself so the grammar and the authority stay one fact.
+type recoveryVerb string
+
+const (
+	recoveryRetire  recoveryVerb = "--apply"
+	recoveryDiscard recoveryVerb = "--discard"
+)
+
+// authorizes reports whether a plan carrying this action licenses the verb, and the
+// refusal detail when it does not. The two verbs partition the vocabulary: only the
+// landedness proof's own verdict retires, and only the verdicts that still hold work the
+// proof judged and refused — discard-eligible, and orphaned, which has no row left to
+// judge through — are the operator's to discard. Every other verdict refuses both:
+// retain means the plan could not classify the ref, and a verdict that proved nothing
+// must carry no destructive authority, however the fingerprint arrived.
+func (verb recoveryVerb) authorizes(action RecoveryAction) (bool, string) {
+	switch action {
+	case RecoveryRetire:
+		if verb == recoveryRetire {
+			return true, ""
+		}
+		return false, "a proven-landed payload retires with --apply, not --discard"
+	case RecoveryDiscard, RecoveryOrphaned:
+		if verb == recoveryDiscard {
+			return true, ""
+		}
+		return false, "only a proven-landed payload retires; drop unproven work with --discard"
+	case RecoveryForeign:
+		return false, "only a ref inside the recovery namespace is the operator's to discard"
+	case RecoveryRetain:
+		return false, "the plan could not classify this ref; neither verb is authorized"
+	default:
+		return false, "plan action holds no discardable work"
+	}
+}
+
+// terminal names the claim a completed verb records in the receipt.
+func (verb recoveryVerb) terminal() RecoveryAction {
+	if verb == recoveryRetire {
+		return RecoveryRetired
+	}
+	return RecoveryDiscarded
+}
+
+// ApplyRecovery retires a recovery ref whose payloads the landedness proof accepts.
 func ApplyRecovery(root, ref, fingerprint string) (RecoveryPlan, error) {
+	return applyRecoveryVerb(root, ref, fingerprint, recoveryRetire)
+}
+
+// applyRecoveryVerb is the one actor on a recovery plan. Both verbs spend the same
+// fingerprint over the same plan and share the ref deletion and the row compaction; only
+// which verdicts they accept and which claim they record differ.
+func applyRecoveryVerb(root, ref, fingerprint string, verb recoveryVerb) (RecoveryPlan, error) {
 	plan, err := PlanRecovery(root, ref)
 	if err != nil {
 		return plan, err
@@ -78,13 +136,76 @@ func ApplyRecovery(root, ref, fingerprint string) (RecoveryPlan, error) {
 	if plan.Fingerprint != fingerprint {
 		return plan, errStaleFingerprint
 	}
-	if plan.Action == RecoveryRetain {
+	// A ref that is already gone is what a completed discard leaves behind, so a re-run
+	// converges on success rather than refusing work nobody can still do.
+	if verb == recoveryDiscard && plan.Action == RecoveryAbsent {
 		return plan, nil
 	}
-	if out, err := exec.Command("git", "-C", root, "update-ref", "-d", ref, plan.Root).CombinedOutput(); err != nil {
-		return plan, fmt.Errorf("delete exact recovery ref: %s", strings.TrimSpace(string(out)))
+	// A recovered row naming a ref nothing resolves is what an interruption between the
+	// two halves of either verb leaves behind: the ref delete landed and the row close did
+	// not. Closing the row is all that remains, and it happens before the authorization
+	// check because the vanished ref is exactly what makes the plan unclassifiable — asking
+	// the landedness proof about it would refuse the only command that can finish the work.
+	// The claim recorded is the discard for both verbs: retired asserts the proof accepted
+	// the payload, and no proof can run over a ref that no longer resolves, so this receipt
+	// can only honestly say the work is gone without the proof's backing.
+	if plan.assignment != nil && plan.assignment.State == intent.StateRecovered && !refExists(root, plan.Ref) {
+		if err := compactRecoveredAssignment(root, *plan.assignment, ref); err != nil {
+			return plan, err
+		}
+		plan.Action, plan.Detail = RecoveryDiscarded, ""
+		return plan, nil
 	}
-	assignment := *plan.assignment
+	if authorized, detail := verb.authorizes(plan.Action); !authorized {
+		plan.Detail = detail
+		return plan, fmt.Errorf("%w: %s", errRecoveryUnauthorized, detail)
+	}
+	// Retire reaches an assignment only in the recovered state, because the plan refuses
+	// every other one before it can prove landedness. Discard holds itself to the same
+	// bar: closing a row mid-release would spend a transaction another command owns.
+	if plan.assignment != nil && plan.assignment.State != intent.StateRecovered {
+		plan.Detail = "recovery ref has no recovered assignment"
+		return plan, fmt.Errorf("%w: %s", errRecoveryUnauthorized, plan.Detail)
+	}
+	if err := deleteRecoveryRef(root, plan); err != nil {
+		return plan, err
+	}
+	if err := hit(cleanupTransactionBoundary, StepRecoveryRowClose); err != nil {
+		return plan, err
+	}
+	// An orphaned ref has no row to close, and inventing one would record an intent that
+	// no longer exists.
+	if plan.assignment != nil {
+		if err := compactRecoveredAssignment(root, *plan.assignment, ref); err != nil {
+			return plan, err
+		}
+	}
+	plan.Action, plan.Detail = verb.terminal(), ""
+	return plan, nil
+}
+
+// deleteRecoveryRef removes the ref only while it still holds the object the plan
+// classified, so a ref something else moved is refused rather than dropped blind.
+func deleteRecoveryRef(root string, plan RecoveryPlan) error {
+	expected := plan.Root
+	if plan.assignment == nil {
+		// No row records an orphan's root, so the ref itself is the only thing naming the
+		// object the plan just read.
+		resolved, err := git.Output("-C", root, "rev-parse", "--verify", plan.Ref+"^{commit}")
+		if err != nil {
+			return fmt.Errorf("resolve orphaned recovery ref: %w", err)
+		}
+		expected = resolved
+	}
+	if out, err := exec.Command("git", "-C", root, "update-ref", "-d", plan.Ref, expected).CombinedOutput(); err != nil {
+		return fmt.Errorf("delete exact recovery ref: %s", strings.TrimSpace(string(out)))
+	}
+	return nil
+}
+
+// compactRecoveredAssignment drops one retired or discarded ref from its row, closing the
+// row entirely once nothing preserved is left to point at.
+func compactRecoveredAssignment(root string, assignment intent.Assignment, ref string) error {
 	next := assignment.Recovery[:0]
 	for _, candidate := range assignment.Recovery {
 		if candidate.Ref != ref {
@@ -94,20 +215,13 @@ func ApplyRecovery(root, ref, fingerprint string) (RecoveryPlan, error) {
 	assignment.Recovery = next
 	if len(next) > 0 {
 		assignment.State = intent.StateRecovered
-		if err := intent.PutAssignment(root, assignment); err != nil {
-			return plan, err
-		}
-	} else {
-		assignment.State = intent.StateComplete
-		if err := intent.PutAssignment(root, assignment); err != nil {
-			return plan, err
-		}
-		if err := intent.DeleteAssignment(root, assignment.ID); err != nil {
-			return plan, err
-		}
+		return intent.PutAssignment(root, assignment)
 	}
-	plan.Action, plan.Detail = RecoveryRetired, ""
-	return plan, nil
+	assignment.State = intent.StateComplete
+	if err := intent.PutAssignment(root, assignment); err != nil {
+		return err
+	}
+	return intent.DeleteAssignment(root, assignment.ID)
 }
 func ApplyExplicit(root, path, fingerprint string) (CleanupPlan, error) {
 	return ApplyExplicitWithOptions(root, path, fingerprint, CleanupOptions{})

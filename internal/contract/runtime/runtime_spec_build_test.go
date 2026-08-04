@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -247,6 +248,207 @@ func TestRuntimeSpecBuildPromotionReclaimsProvisionalRefs(t *testing.T) {
 	for _, namespace := range []string{"refs/heads/bench/assign/", "refs/bench/specbuild/"} {
 		if residue := strings.TrimSpace(f.Git("for-each-ref", "--format=%(refname)", namespace).Stdout); residue != "" {
 			t.Errorf("promotion stranded provisional refs under %s:\n%s", namespace, residue)
+		}
+	}
+}
+
+// Reclamation's operator surface is the CLI, and only the CLI carries the grammar, the
+// dispatch arm, and the receipt: the service rows see none of them.
+func TestRuntimeSpecBuildReclaimPlansAndAppliesTerminalResidue(t *testing.T) {
+	f, residue := runtimeReclaimableResidue(t)
+
+	plan := f.Bench("spec", "build", "reclaim", "demo")
+	plan.RequireExit(0)
+	contract.RequireContains(t, plan.Stdout, "reclaim[1]{slug,fingerprint,applied,reclaimable,active,unclassified,ambiguous}:")
+	fingerprint, trailing := requireRuntimeReclamationReceipt(t, plan.Stdout, "false", residue)
+	if trailing != "" {
+		t.Fatalf("reclaim plan trailed %q", trailing)
+	}
+	requireRuntimeRefObjects(t, f, residue, "reclaim plan")
+
+	// A refusal that reached no deletion has no receipt to print, and an empty table there
+	// would report a deletion set for an operation that took nothing.
+	for _, refused := range [][2]string{
+		{runtimeDigest("stale plan"), "plan drifted"},
+		{"not-a-fingerprint", "fingerprint is malformed"},
+	} {
+		probe := f.Bench("spec", "build", "reclaim", "demo", "--apply", refused[0])
+		if probe.ExitCode == 0 {
+			t.Fatalf("refused fingerprint %s applied: %q", refused[0], probe.Stdout)
+		}
+		contract.RequireContains(t, probe.Stdout, refused[1])
+		contract.RequireContains(t, probe.Stdout, "plan again with bench spec build reclaim <slug>, then apply its exact fingerprint")
+		for _, table := range []string{"reclaim[", "reclaim_refs["} {
+			contract.RequireNotContains(t, probe.Stdout, table)
+		}
+		requireRuntimeRefObjects(t, f, residue, "refused apply")
+	}
+
+	applied := f.Bench("spec", "build", "reclaim", "demo", "--apply", fingerprint)
+	applied.RequireExit(0)
+	got, trailing := requireRuntimeReclamationReceipt(t, applied.Stdout, "true", residue)
+	if got != fingerprint || trailing != "" {
+		t.Fatalf("applied receipt fingerprint = %s trailing %q, want %s alone", got, trailing, fingerprint)
+	}
+	for _, ref := range residue {
+		if probe := f.GitAllow("rev-parse", "--verify", ref[0]); probe.ExitCode == 0 {
+			t.Errorf("reclaimable ref %s still resolves to %s", ref[0], strings.TrimSpace(probe.Stdout))
+		}
+	}
+
+	missingSlug := f.Bench("spec", "build", "reclaim")
+	missingSlug.RequireExit(2)
+	contract.RequireContains(t, missingSlug.Stdout, "usage: bench spec build reclaim")
+}
+
+// Git deletes refs one at a time with no transaction across the set, so an apply that meets
+// a ref it cannot take has already spent every deletion before it. The spent set exists only
+// as the receipt ApplyReclaim returns alongside its refusal: nothing re-reads it, because the
+// refs it names are gone. A surface that drops it leaves the operator holding a fingerprint
+// that can never apply again and no account of what it already took.
+func TestRuntimeSpecBuildReclaimApplyPrintsTheReceiptItSpentBeforeARefusal(t *testing.T) {
+	f, residue := runtimeReclaimableResidue(t)
+	plan := f.Bench("spec", "build", "reclaim", "demo")
+	plan.RequireExit(0)
+	fingerprint, _ := requireRuntimeReclamationReceipt(t, plan.Stdout, "false", residue)
+	order := runtimeReclamationOrder(t, plan.Stdout)
+	if len(order) < 2 {
+		t.Fatalf("reclaim plan holds %d refs; two are needed to strand a spent deletion", len(order))
+	}
+	spent, blocked := order[:len(order)-1], order[len(order)-1]
+	// An existing lock file is how git itself refuses a deletion it cannot serialize, so the
+	// apply meets a real refusal at a ref of the test's choosing rather than a simulated one.
+	lock := filepath.Join(gitDir(t, f), filepath.FromSlash(blocked[0])+".lock")
+	contract.WriteFileAbs(t, lock, "")
+
+	applied := f.Bench("spec", "build", "reclaim", "demo", "--apply", fingerprint)
+	if applied.ExitCode == 0 {
+		t.Fatalf("interrupted apply exited zero: %q", applied.Stdout)
+	}
+	receipt, refusal := requireRuntimeReclamationReceipt(t, applied.Stdout, "true", spent)
+	contract.RequireContains(t, refusal, "error: ")
+	contract.RequireContains(t, refusal, blocked[0])
+	contract.RequireContains(t, refusal, "plan again with bench spec build reclaim <slug>, then apply its exact fingerprint")
+	if receipt == fingerprint {
+		t.Fatalf("interrupted receipt carried the spent plan's fingerprint %s", fingerprint)
+	}
+	if len(receipt) != 2*sha256.Size {
+		t.Fatalf("interrupted receipt fingerprint = %q", receipt)
+	}
+
+	contract.Remove(t, lock)
+	requireRuntimeRefObjects(t, f, [][2]string{blocked}, "interrupted apply")
+	for _, ref := range spent {
+		if probe := f.GitAllow("rev-parse", "--verify", ref[0]); probe.ExitCode == 0 {
+			t.Errorf("receipt reports %s deleted but it resolves to %s", ref[0], strings.TrimSpace(probe.Stdout))
+		}
+	}
+}
+
+// runtimeReclaimableResidue carries a run to terminal and restores the provisional refs the
+// promotion reclaimed. That residue is what the reclaim surface exists for: it belongs to
+// runs that promoted before promotion reclaimed anything.
+func runtimeReclaimableResidue(t *testing.T) (contract.Fixture, [][2]string) {
+	t.Helper()
+	f := setupRuntimeBuildGate(t, "#!/bin/sh\nexit 0\n")
+	f.WriteFile("specs/demo/spec.md", "# demo\n\nStatus: staged\n")
+	f.WriteFile("specs/demo/tickets/one.md", "# One\n\nOwnership fence: internal/demo\n\n- [ ] [R62] retroactive reclamation\n")
+	f.CommitAll("staged spec")
+	f.Bench("gate").RequireExit(0)
+	f.Bench("spec", "build", "start", "demo").RequireExit(0)
+
+	assigned := assignRuntimeBuild(t, f, "one.md", "reclaim-cli-request")
+	writeAssignmentChange(t, assigned.Path, "internal/demo/change.go", "package demo\n")
+	receipt := runtimeCheckpointReceipt(t, f, assigned, []string{"internal/demo/change.go"})
+	f.Bench("spec", "build", "checkpoint", "demo", "--assignment", assigned.ID, "--evidence", receipt).RequireExit(0)
+	f.Bench("spec", "build", "integrate", "demo", "--assignment", assigned.ID).RequireExit(0)
+	f.Bench("spec", "build", "review", "demo", "--evidence", runtimeReviewReceipt(t, f)).RequireExit(0)
+	residue := runtimeProvisionalRefs(t, f)
+	if len(residue) == 0 {
+		t.Fatal("reviewed run held no provisional refs to reclaim")
+	}
+	f.Bench("spec", "build", "promote", "demo").RequireExit(0)
+	for _, ref := range residue {
+		f.Git("update-ref", ref[0], ref[1]).RequireExit(0)
+	}
+	return f, residue
+}
+
+// runtimeReclamationOrder reads the plan's refs in the order an apply will delete them, so a
+// test can name the ref whose refusal strands the deletions ahead of it.
+func runtimeReclamationOrder(t *testing.T, stdout string) [][2]string {
+	t.Helper()
+	var order [][2]string
+	for _, line := range contract.NonEmptyLines(stdout)[3:] {
+		row := runtimeToonFields(line)
+		if len(row) != 4 {
+			t.Fatalf("reclaim ref row = %q", line)
+		}
+		order = append(order, [2]string{row[0], row[1]})
+	}
+	return order
+}
+
+// runtimeProvisionalRefs pairs every provisional ref with the object it holds, in the
+// namespaces a promotion reclaims.
+func runtimeProvisionalRefs(t *testing.T, f contract.Fixture) [][2]string {
+	t.Helper()
+	var refs [][2]string
+	for _, line := range contract.NonEmptyLines(f.Git("for-each-ref", "--format=%(refname) %(objectname)", "refs/heads/bench/assign/", "refs/bench/specbuild/").Stdout) {
+		fields := strings.Fields(line)
+		if len(fields) != 2 {
+			t.Fatalf("provisional ref line = %q", line)
+		}
+		refs = append(refs, [2]string{fields[0], fields[1]})
+	}
+	return refs
+}
+
+// requireRuntimeReclamationReceipt asserts the whole receipt a maintainer reads — the summary
+// row's applied flag and per-class counts, and one row per residue ref carrying the object the
+// enumeration classified. It returns the fingerprint an apply has to quote back, and whatever
+// stdout carries past the receipt: nothing for a plan or a completed apply, the refusal for an
+// interrupted one.
+func requireRuntimeReclamationReceipt(t *testing.T, stdout, applied string, residue [][2]string) (string, string) {
+	t.Helper()
+	lines := contract.NonEmptyLines(stdout)
+	if len(lines) < len(residue)+3 {
+		t.Fatalf("reclaim receipt = %q", stdout)
+	}
+	summary := runtimeToonFields(lines[1])
+	if len(summary) != 7 || summary[0] != "demo" || len(summary[1]) != 2*sha256.Size {
+		t.Fatalf("reclaim summary identity = %q", lines[1])
+	}
+	classes := []string{applied, strconv.Itoa(len(residue)), "0", "0", "0"}
+	if !slices.Equal(summary[2:], classes) {
+		t.Fatalf("reclaim summary = %q, want applied and classes %v", lines[1], classes)
+	}
+	rows := lines[3 : len(residue)+3]
+	for _, ref := range residue {
+		if !slices.ContainsFunc(rows, func(line string) bool {
+			row := runtimeToonFields(line)
+			return len(row) == 4 && row[0] == ref[0] && row[1] == ref[1] && row[3] == "reclaimable"
+		}) {
+			t.Fatalf("reclaim receipt omits reclaimable %s at %s:\n%s", ref[0], ref[1], stdout)
+		}
+	}
+	return summary[1], strings.Join(lines[len(residue)+3:], "\n")
+}
+
+// runtimeToonFields splits one rendered TOON row into its unquoted cell values.
+func runtimeToonFields(line string) []string {
+	fields := strings.Split(strings.TrimSpace(line), ",")
+	for i, field := range fields {
+		fields[i] = strings.Trim(field, `"`)
+	}
+	return fields
+}
+
+func requireRuntimeRefObjects(t *testing.T, f contract.Fixture, refs [][2]string, stage string) {
+	t.Helper()
+	for _, ref := range refs {
+		if got := strings.TrimSpace(f.GitAllow("rev-parse", "--verify", ref[0]).Stdout); got != ref[1] {
+			t.Fatalf("%s mutated %s to %q, want %s", stage, ref[0], got, ref[1])
 		}
 	}
 }

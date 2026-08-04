@@ -75,7 +75,10 @@ Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
   `--spec <slug>` only on an implementation's green commit, with semantics owned
   by `bench commit --help`), plus `bench spec implemented`, `bench spec retire`,
   `bench spec history`, and
-  `bench spec build start|assign|checkpoint|integrate|review|status|promote|abandon`.
+  `bench spec build start|assign|checkpoint|integrate|review|status|promote|abandon`,
+  plus `bench spec build reclaim` (maintainer-run, plan/apply like `abandon`: over
+  one terminal run, deletes only the provably dead provisional refs and retains
+  the rest — not part of the lifecycle a build harness drives).
 - Hook and adapter plumbing subcommands — driven by hooks and adapters, never
   typed by sessions — are enumerated in `.bench/BENCH-reference.md` (Plumbing
   subcommands), so the always-loaded inventory carries only what sessions run.

@@ -287,7 +287,7 @@ func CleanCommand(args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 func renderRecovery(stdout io.Writer, plan RecoveryPlan) error {
-	out, err := toon.Table("recovery_cleanup", []string{"ref", "root", "payloads", "landed", "action", "fingerprint", "detail"}, [][]string{{plan.Ref, plan.Root, plan.Payloads, plan.Landed, string(plan.Action), plan.Fingerprint, plan.Detail}})
+	out, err := toon.Table("recovery_cleanup", []string{"ref", "root", "payloads", "landed", "changes", "action", "fingerprint", "detail"}, [][]string{{plan.Ref, plan.Root, plan.Payloads, plan.Landed, plan.Changes, string(plan.Action), plan.Fingerprint, plan.Detail}})
 	if err != nil {
 		return err
 	}

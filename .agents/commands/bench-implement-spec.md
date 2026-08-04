@@ -45,8 +45,10 @@ For a reviewed spec-backed build, run `bench spec build start <slug>` before the
 first assignment. The public lifecycle is `start` → `assign` → `checkpoint` →
 `integrate` → `review` → `promote`; `status` inspects the run and `abandon`
 plans or applies cleanup. These eight operations are the complete mutation
-surface: the harness supplies readiness and evidence but does not reproduce the
-lifecycle in Git commands.
+surface a build harness drives: the harness supplies readiness and evidence but
+does not reproduce the lifecycle in Git commands. `reclaim` sits outside that
+surface — a maintainer runs it, plan then `--apply`, over a run that has already
+ended, to delete the provably dead provisional refs it left behind.
 
 Re-derive the complete ready frontier and the harness's live capacity before
 dispatch. Assign every ownership-safe ticket up to the smaller of frontier size

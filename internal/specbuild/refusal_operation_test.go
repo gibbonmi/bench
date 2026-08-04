@@ -113,17 +113,24 @@ func TestOperationWordMatchesSubcommandVerb(t *testing.T) {
 // CLI instead of the production list every per-operation test iterates, so an
 // omitted operation cannot shrink implementation and coverage together.
 func TestLifecycleFamilyMatchesSubcommandVerbs(t *testing.T) {
-	// status inspects a run and mutates nothing, so it is the one usage verb with no precondition and the family's only deliberate exclusion.
-	const inspectionVerb = "status"
+	// Two verbs sit outside the preconditioned family, and each exclusion is asserted
+	// against the shipped usage block so it cannot outlive the verb it names. `status`
+	// inspects a run and mutates nothing. `reclaim` acts only on refs the run record
+	// already proves dead, and it reaches runs whose spec is retired and whose candidate
+	// promotion already deleted, so the identity checks preconditions makes would put
+	// exactly the residue it exists for out of reach; the disposition filter, not the
+	// checkout envelope, is what keeps a live run's refs safe from it.
+	unpreconditioned := []string{"status", "reclaim"}
 	parsed := specBuildSubcommandVerbs(t)
-	if !parsed[inspectionVerb] {
-		t.Fatalf("bin/bench.sh no longer documents %q; the exclusion here is stale", inspectionVerb)
-	}
 	want := map[string]bool{}
 	for verb := range parsed {
-		if verb != inspectionVerb {
-			want[verb] = true
+		want[verb] = true
+	}
+	for _, verb := range unpreconditioned {
+		if !parsed[verb] {
+			t.Fatalf("bin/bench.sh no longer documents %q; the exclusion here is stale", verb)
 		}
+		delete(want, verb)
 	}
 	got := map[string]bool{}
 	for _, op := range lifecycleMutations {

@@ -192,7 +192,7 @@ func (s *Service) Checkpoint(ctx context.Context, slug, assignmentID, evidence s
 			return run.status(), err
 		}
 	}
-	ref := "refs/bench/specbuild/checkpoint/" + digest(run.Run+"\x00"+assigned.ID)
+	ref := checkpointIdentity(run.Run, assigned.ID)
 	if !refAt(s.root, ref, commit) {
 		absent, err := refAbsent(s.root, ref)
 		if err != nil {

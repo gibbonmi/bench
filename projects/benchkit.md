@@ -30,8 +30,11 @@ branch-agnostic. This line is only the binding.)
   Missing-binary resolution is network-silent by default and names the explicit
   `bench repair` action; automation opts into the same repair path with exactly
   `BENCH_REPAIR=1`, while `BENCH_OFFLINE=1` and `BENCH_NO_REPAIR` suppress it.
-  Reviewed spec builds route through all eight `bench spec build` operations;
-  harnesses never synthesize their commit, ref, replay, or worktree plumbing.
+  Reviewed spec builds route through all eight lifecycle `bench spec build`
+  operations; harnesses never synthesize their commit, ref, replay, or worktree
+  plumbing. `reclaim` is the one maintainer-run verb beside that lifecycle —
+  plan/apply removal of a terminal run's provably dead provisional refs, never
+  driven by a build harness.
   Their final attachment to the oracle is `promote` over the exact reviewed
   prospective composition, while every earlier ticket transition is provisional.
 - **The AXI query surface** (`bench learnings`, `bench maps`, `bench guards`,
