@@ -182,7 +182,7 @@ type productionWorktreeOwner struct{}
 
 func (productionWorktreeOwner) Create(_ context.Context, root, request, label, start string) (specbuild.OwnedWorktree, error) {
 	created, err := worktree.Create(root, request, label, nil, start)
-	return specbuild.OwnedWorktree{ID: created.Assignment.ID, Path: created.Path}, err
+	return specbuild.OwnedWorktree{ID: created.Assignment.ID, Path: created.Path, Branch: created.Assignment.Branch}, err
 }
 
 func (productionWorktreeOwner) Release(_ context.Context, root, request, path string, evidence specbuild.ReleaseEvidence) error {

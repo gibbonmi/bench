@@ -84,7 +84,7 @@ func (s *Service) Assign(ctx context.Context, slug, ticketArg, request string) (
 	if err := s.faultAt("assign/worktree"); err != nil {
 		return Assignment{}, run.status(), err
 	}
-	stored := assignment{ID: owned.ID, Path: owned.Path, Base: run.CandidateTip, Request: requestID, OwnerRequest: digest(requestID), Ticket: ticket.Path, TicketDigest: ticket.Digest, Created: time.Now().UTC().Format(time.RFC3339Nano), Rows: ticket.Rows, Fence: ticket.Fence, Assumptions: ticket.Assumptions}
+	stored := assignment{ID: owned.ID, Path: owned.Path, Branch: owned.Branch, Base: run.CandidateTip, Request: requestID, OwnerRequest: digest(requestID), Ticket: ticket.Path, TicketDigest: ticket.Digest, Created: time.Now().UTC().Format(time.RFC3339Nano), Rows: ticket.Rows, Fence: ticket.Fence, Assumptions: ticket.Assumptions}
 	run.Assignments[requestID] = stored
 	if err := s.save(run); err != nil {
 		return Assignment{}, Status{}, err
@@ -327,6 +327,9 @@ func (s *Service) Promote(ctx context.Context, slug string) (Status, error) {
 		return Status{}, err
 	}
 	if run.Terminal {
+		// A promotion that died between the terminal save and its reclamation leaves the
+		// refs stranded with no later caller to notice, so re-entry finishes the job.
+		s.reclaimProvisionalRefs(run)
 		return run.status(), nil
 	}
 	owner, ok := s.gate.(PromotionGateOwner)
@@ -446,5 +449,9 @@ func (s *Service) finishPromotion(run *record) error {
 	}
 	op.Result, op.State, run.Terminal = run.PromotionCommit, "completed", true
 	run.Operations[operationID("promote", run.CandidateTip)] = op
-	return s.save(*run)
+	if err := s.save(*run); err != nil {
+		return err
+	}
+	s.reclaimProvisionalRefs(*run)
+	return nil
 }

@@ -56,11 +56,11 @@ type reviewFinding struct {
 const zeroObjectID = "0000000000000000000000000000000000000000"
 
 type assignment struct {
-	ID, Path, Base, Request, OwnerRequest, Ticket, TicketDigest, Created string
-	Rows, Fence, Assumptions                                             []string
-	Checkpoint, CheckpointRef, CheckpointTree, ReceiptDigest             string
-	CheckpointPatch, Integrated                                          string
-	DelegatePending, CleanupPending, Released                            bool
+	ID, Path, Branch, Base, Request, OwnerRequest, Ticket, TicketDigest, Created string
+	Rows, Fence, Assumptions                                                     []string
+	Checkpoint, CheckpointRef, CheckpointTree, ReceiptDigest                     string
+	CheckpointPatch, Integrated                                                  string
+	DelegatePending, CleanupPending, Released                                    bool
 }
 
 func (a assignment) public() Assignment {
@@ -296,6 +296,32 @@ func updateRef(root, ref, new, old string) error {
 		return fmt.Errorf("%s", strings.TrimSpace(string(out)))
 	}
 	return nil
+}
+
+// reclaimProvisionalRefs drops the working refs a promoted run no longer needs: the
+// assignment branches, whose intent records release already compacted, this run's
+// checkpoint refs, and the candidate the promotion commit superseded. It runs after the
+// record is durably terminal, so it is reachable again on every re-entry and must stay
+// idempotent — an already-deleted ref is the expected steady state, not a failure. Each
+// deletion carries the OID it observed, so a ref that moved under a concurrent writer
+// fails closed and is left for that writer rather than being clobbered.
+func (s *Service) reclaimProvisionalRefs(run record) {
+	for _, assigned := range run.Assignments {
+		deleteRefIfPresent(s.root, assigned.Branch)
+		deleteRefIfPresent(s.root, assigned.CheckpointRef)
+	}
+	deleteRefIfPresent(s.root, run.Candidate)
+}
+
+func deleteRefIfPresent(root, ref string) {
+	if ref == "" {
+		return
+	}
+	oid, err := refValue(root, ref)
+	if err != nil {
+		return
+	}
+	_ = benchgit.DeleteBranchExact(root, ref, oid)
 }
 
 func refAt(root, ref, want string) bool {

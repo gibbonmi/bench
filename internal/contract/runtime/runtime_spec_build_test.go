@@ -223,6 +223,34 @@ func TestRuntimeSpecBuildRedRepairGreenRetainsComposedEvidence(t *testing.T) {
 	}
 }
 
+// A promoted run's provisional refs are working state, not evidence: the reviewed
+// content reaches the branch through the promotion commit, so every assignment branch
+// and every candidate and checkpoint ref under refs/bench/specbuild/ is dead the moment
+// promotion succeeds. Nothing else enumerates them — release compacts the intent row
+// that named the branch — so a promotion that leaves them behind strands them for good.
+func TestRuntimeSpecBuildPromotionReclaimsProvisionalRefs(t *testing.T) {
+	f := setupRuntimeBuildGate(t, "#!/bin/sh\nexit 0\n")
+	f.WriteFile("specs/demo/spec.md", "# demo\n\nStatus: staged\n")
+	f.WriteFile("specs/demo/tickets/one.md", "# One\n\nOwnership fence: internal/demo\n\n- [ ] [R61] reclamation\n")
+	f.CommitAll("staged spec")
+	f.Bench("gate").RequireExit(0)
+	f.Bench("spec", "build", "start", "demo").RequireExit(0)
+
+	assigned := assignRuntimeBuild(t, f, "one.md", "reclaim-request")
+	writeAssignmentChange(t, assigned.Path, "internal/demo/change.go", "package demo\n")
+	receipt := runtimeCheckpointReceipt(t, f, assigned, []string{"internal/demo/change.go"})
+	f.Bench("spec", "build", "checkpoint", "demo", "--assignment", assigned.ID, "--evidence", receipt).RequireExit(0)
+	f.Bench("spec", "build", "integrate", "demo", "--assignment", assigned.ID).RequireExit(0)
+	f.Bench("spec", "build", "review", "demo", "--evidence", runtimeReviewReceipt(t, f)).RequireExit(0)
+	f.Bench("spec", "build", "promote", "demo").RequireExit(0)
+
+	for _, namespace := range []string{"refs/heads/bench/assign/", "refs/bench/specbuild/"} {
+		if residue := strings.TrimSpace(f.Git("for-each-ref", "--format=%(refname)", namespace).Stdout); residue != "" {
+			t.Errorf("promotion stranded provisional refs under %s:\n%s", namespace, residue)
+		}
+	}
+}
+
 func TestRuntimeSpecBuildInterruptStopsProspectiveGateChildren(t *testing.T) {
 	f := setupRuntimeBuildGate(t, "#!/bin/sh\ngitdir=\"$(git rev-parse --path-format=absolute --git-common-dir)\"\nif test -f \"$gitdir/spec-block\"; then sleep 30 & echo $! > \"$gitdir/spec-child\"; wait; fi\n")
 	f.WriteFile("specs/demo/spec.md", "Status: staged\n")

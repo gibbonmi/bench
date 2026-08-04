@@ -70,8 +70,10 @@ type AbandonOwner interface {
 }
 
 // OwnedWorktree identifies a worktree created by the existing ownership owner.
+// Branch is the exact ref the owner created for the assignment. Promotion reclaims it
+// by name, because release compacts the intent record that would otherwise locate it.
 type OwnedWorktree struct {
-	ID, Path string
+	ID, Path, Branch string
 }
 
 // Service coordinates spec build transitions from one working checkout.
