@@ -14,10 +14,11 @@ promote-then-delete retirement, and no build will charge them again.
 
 Register the check in the conformance registry with its input source, add its
 row to the profile's per-check table, and give it a canary fixture whose broken
-ticket proves the check bites with a targeted substring. If any currently staged
-spec violates the rule when this lands — `specs/recovery-discard/tickets/add-spec-build-reclaim.md`'s
-RM5 row, should that run end abandoned rather than promoted — repair the
-artifact in this same green change rather than landing a red gate.
+ticket proves the check bites with a targeted substring. The violation this
+ticket was written to expect is gone: that run promoted and its spec retired, so
+the artifact left the tree. Re-derive the staged set at pickup and repair any
+violation you find in this same green change rather than landing a red gate;
+finding none satisfies SW4 as well.
 
 Fence spans three directories: one check advertised in the registry, the canary,
 and the profile table, and a red gate between any pair is not a landable
