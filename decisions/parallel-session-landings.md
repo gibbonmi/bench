@@ -51,7 +51,7 @@ tip movement.
 Any recognized advance from the recorded base triggers one whole-run
 recomposition predicate without inspecting changed paths or fences.
 Recomposition clears the complete held review. The run already retains ticket
-digests, charged rows, ownership fences, assumptions, candidate identity, and
+digests, charged rows, ownership fences, candidate identity, and
 receipt digests, but no owner compares those identities across runs. The
 observed assignment-worktree refusal is a consequence of invocation-root and
 spec/ticket identity, not an explicit primary-checkout predicate. Evidence and
@@ -166,7 +166,7 @@ which externally observed claims remain caller-supplied and attributable.
 
 The CLI derives and seals every repository or run fact: run identity and
 revision, assignment and ownership, base and candidate, tree and patch
-identity, ticket digest, charged rows, fence, assumptions, axes, timestamps,
+identity, ticket digest, charged rows, fence, axes, timestamps,
 and receipt digests. Callers supply only attributable external observations:
 checks performed and their results/log references, independent probes, and
 review findings and dispositions. Coordinators neither reconstruct the schema

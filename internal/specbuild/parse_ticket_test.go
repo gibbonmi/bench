@@ -64,9 +64,6 @@ func TestParseTicketMatchesAssignPath(t *testing.T) {
 	if want := []string{"internal/specbuild", "internal/conformance"}; !slices.Equal(parsed.Fence, want) {
 		t.Errorf("Fence = %q, want %q", parsed.Fence, want)
 	}
-	if want := []string{"the parse is shared; the fence entries are path prefixes"}; !slices.Equal(parsed.Assumptions, want) {
-		t.Errorf("Assumptions = %q, want %q", parsed.Assumptions, want)
-	}
 }
 
 // Each refusal is asserted by its own message: the lifecycle fixtures are

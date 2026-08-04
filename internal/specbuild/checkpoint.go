@@ -101,7 +101,6 @@ type receipt struct {
 	Checks       []check      `json:"checks"`
 	Probe        probe        `json:"probe"`
 	Ownership    []string     `json:"ownership"`
-	Assumptions  []string     `json:"assumptions"`
 }
 
 type rowReceipt struct {
@@ -284,10 +283,10 @@ func (s *Service) validateReceipt(run record, assigned assignment, rec receipt, 
 		return errInvalidReceipt
 	}
 	current, err := ParseTicket(run.Spec, ticketArg)
-	if err != nil || current.Digest != assigned.TicketDigest || !sameStrings(current.Rows, assigned.Rows) || !sameStrings(current.Fence, assigned.Fence) || !sameStrings(current.Assumptions, assigned.Assumptions) {
+	if err != nil || current.Digest != assigned.TicketDigest || !sameStrings(current.Rows, assigned.Rows) || !sameStrings(current.Fence, assigned.Fence) {
 		return errInvalidReceipt
 	}
-	if !sameStrings(receiptRows(rec.Rows), assigned.Rows) || !passedChecks(rec.Checks) || !sameStrings(rec.Assumptions, assumptionDigests(assigned.Assumptions)) {
+	if !sameStrings(receiptRows(rec.Rows), assigned.Rows) || !passedChecks(rec.Checks) {
 		return errInvalidReceipt
 	}
 	changed, err := changedPaths(s.root, assigned.Base, rec.Tree)
@@ -326,13 +325,6 @@ func passedChecks(checks []check) bool {
 		}
 	}
 	return true
-}
-func assumptionDigests(values []string) []string {
-	result := make([]string, len(values))
-	for i, value := range values {
-		result[i] = digest(value)
-	}
-	return sortedUnique(result)
 }
 func timeAfter(value string, minimum time.Time) bool {
 	parsed, err := time.Parse(time.RFC3339Nano, value)

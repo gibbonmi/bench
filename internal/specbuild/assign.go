@@ -84,7 +84,7 @@ func (s *Service) Assign(ctx context.Context, slug, ticketArg, request string) (
 	if err := s.faultAt("assign/worktree"); err != nil {
 		return Assignment{}, run.status(), err
 	}
-	stored := assignment{ID: owned.ID, Path: owned.Path, Branch: owned.Branch, Base: run.CandidateTip, Request: requestID, OwnerRequest: digest(requestID), Ticket: ticket.Path, TicketDigest: ticket.Digest, Created: time.Now().UTC().Format(time.RFC3339Nano), Rows: ticket.Rows, Fence: ticket.Fence, Assumptions: ticket.Assumptions}
+	stored := assignment{ID: owned.ID, Path: owned.Path, Branch: owned.Branch, Base: run.CandidateTip, Request: requestID, OwnerRequest: digest(requestID), Ticket: ticket.Path, TicketDigest: ticket.Digest, Created: time.Now().UTC().Format(time.RFC3339Nano), Rows: ticket.Rows, Fence: ticket.Fence}
 	run.Assignments[requestID] = stored
 	if err := s.save(run); err != nil {
 		return Assignment{}, Status{}, err
@@ -99,12 +99,12 @@ func (s *Service) Assign(ctx context.Context, slug, ticketArg, request string) (
 }
 
 // Ticket is one parsed ticket file: its title, content digest, charged
-// acceptance rows, ownership fence, assumptions, and declared contracts.
+// acceptance rows, ownership fence, and declared contracts.
 type Ticket struct {
-	Path, Title              string
-	Digest                   string
-	Rows, Fence, Assumptions []string
-	Contracts                string
+	Path, Title string
+	Digest      string
+	Rows, Fence []string
+	Contracts   string
 }
 
 var ticketRow, packageName, rowRange = regexp.MustCompile(`^\s*-\s+\[[ xX]\]\s+\[([^]]+)\]`), regexp.MustCompile(`\binternal/[A-Za-z0-9_-]+\b`), regexp.MustCompile(`^(R)([0-9]+)-R([0-9]+)$`)
@@ -158,6 +158,8 @@ func ParseTicket(specPath, arg string) (Ticket, error) {
 		return Ticket{}, fmt.Errorf("read spec build ticket: %w", err)
 	}
 	result := Ticket{Path: path, Digest: digest(string(b))}
+	// A line matching no field below is skipped, not refused: tickets staged under
+	// an earlier grammar stay parsable, so a retired field strands nothing.
 	for _, line := range strings.Split(string(b), "\n") {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "# ") && result.Title == "" {
@@ -168,9 +170,6 @@ func ParseTicket(specPath, arg string) (Ticket, error) {
 		}
 		if strings.HasPrefix(line, "Ownership fence:") {
 			result.Fence = append(result.Fence, listValue(strings.TrimPrefix(line, "Ownership fence:"))...)
-		}
-		if strings.HasPrefix(line, "Assumptions:") {
-			result.Assumptions = append(result.Assumptions, listValue(strings.TrimPrefix(line, "Assumptions:"))...)
 		}
 		if strings.HasPrefix(line, "Contracts:") && result.Contracts == "" {
 			result.Contracts = strings.TrimSpace(strings.TrimPrefix(line, "Contracts:"))
@@ -193,7 +192,6 @@ func ParseTicket(specPath, arg string) (Ticket, error) {
 		seen[row] = true
 	}
 	result.Fence = unique(result.Fence)
-	result.Assumptions = unique(result.Assumptions)
 	if len(result.Fence) == 0 {
 		return Ticket{}, errors.New("spec build ticket declares no ownership fence")
 	}

@@ -127,7 +127,7 @@ func checkpointReceiptFor(t *testing.T, service *Service, assigned Assignment, o
 		rows[i] = rowReceipt{Row: row, Outcome: "passed"}
 	}
 	tree := benchgit.TreeHash(assigned.Path)
-	return receipt{Version: receiptVersion, Run: run.Run, Assignment: assigned.ID, Base: assigned.Base, Tree: tree, TicketDigest: stored.TicketDigest, Rows: rows, Checks: []check{{Name: "go test ./internal/specbuild", Passed: true}}, Probe: probe{Producer: "coordinator", Assignment: assigned.ID, Tree: tree, Command: "go test ./internal/specbuild", Exit: 0, OutputDigest: digest("focused pass"), Produced: time.Now().UTC().Format(time.RFC3339Nano)}, Ownership: ownership, Assumptions: assumptionDigests(stored.Assumptions)}
+	return receipt{Version: receiptVersion, Run: run.Run, Assignment: assigned.ID, Base: assigned.Base, Tree: tree, TicketDigest: stored.TicketDigest, Rows: rows, Checks: []check{{Name: "go test ./internal/specbuild", Passed: true}}, Probe: probe{Producer: "coordinator", Assignment: assigned.ID, Tree: tree, Command: "go test ./internal/specbuild", Exit: 0, OutputDigest: digest("focused pass"), Produced: time.Now().UTC().Format(time.RFC3339Nano)}, Ownership: ownership}
 }
 func checkpointAssignment(t *testing.T, root string, service *Service, assigned Assignment, ownership []string) record {
 	t.Helper()

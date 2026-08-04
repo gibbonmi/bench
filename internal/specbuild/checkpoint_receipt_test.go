@@ -139,7 +139,7 @@ func TestCheckpointRereadsEveryLiveFact(t *testing.T) {
 			write(t, filepath.Join(fixture.assigned.Path, "internal", "specbuild", "unexplained\nname.go"), "package specbuild\n")
 			bind(t, fixture, rec)
 		}},
-		{"assumption drift", func(t *testing.T, fixture checkpointFixture, _ *receipt) {
+		{"ticket file drift", func(t *testing.T, fixture checkpointFixture, _ *receipt) {
 			changedTicket(t, fixture, "# One\n\nOwnership fence: internal/specbuild\nAssumptions: changed contract\n\n- [ ] [R10-R15] checkpoint receipt\n- [ ] [R54] framing\n")
 		}},
 	}

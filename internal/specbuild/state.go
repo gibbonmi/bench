@@ -58,14 +58,18 @@ const zeroObjectID = "0000000000000000000000000000000000000000"
 
 type assignment struct {
 	ID, Path, Branch, Base, Request, OwnerRequest, Ticket, TicketDigest, Created string
-	Rows, Fence, Assumptions                                                     []string
-	Checkpoint, CheckpointRef, CheckpointTree, ReceiptDigest                     string
-	CheckpointPatch, Integrated                                                  string
-	DelegatePending, CleanupPending, Released                                    bool
+	Rows, Fence                                                                  []string
+	// Persisted records are decoded strictly, so a retired field must stay
+	// declared or every run recorded before its retirement becomes unreadable.
+	// Nothing reads this one.
+	LegacyAssumptions                                        []string `json:"Assumptions,omitempty"`
+	Checkpoint, CheckpointRef, CheckpointTree, ReceiptDigest string
+	CheckpointPatch, Integrated                              string
+	DelegatePending, CleanupPending, Released                bool
 }
 
 func (a assignment) public() Assignment {
-	return Assignment{ID: a.ID, Path: a.Path, Base: a.Base, Rows: append([]string(nil), a.Rows...), Fence: append([]string(nil), a.Fence...), Assumptions: append([]string(nil), a.Assumptions...)}
+	return Assignment{ID: a.ID, Path: a.Path, Base: a.Base, Rows: append([]string(nil), a.Rows...), Fence: append([]string(nil), a.Fence...)}
 }
 func (r record) status() Status {
 	if r.Terminal {

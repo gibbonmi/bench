@@ -56,6 +56,16 @@ For each candidate ticket:
    ownership fences share no path. A one-line change pays at most one shared
    test-harness line: below that ceiling it takes no fresh worktree, no fresh
    delegate, and no full gate by default.
+
+   Fence breadth is the other split signal: a fence resolving to more than
+   two distinct directories makes the ticket a split candidate, and keeping
+   it whole costs one line of justification in the breakdown. Count the
+   distinct directories the fence entries resolve to, a file entry counting
+   its parent directory, so a file-scoped fence cannot dodge the count. This
+   is a smell, not a cap — an honest tracer (a verb, its grammar row, its
+   launcher line) can legitimately cross three — but wide fences are where
+   repair rounds have clustered while narrow ones landed first time, so the
+   justification line is the price of keeping the group whole.
 3. Name every real blocker by sibling ticket file basename. A ticket with all
    blockers done is on the **frontier**.
 4. Order blockers before consumers and present the complete breakdown for the
@@ -120,7 +130,6 @@ shape:
 Blocked by: <sibling ticket file basenames, or none>
 Ownership fence: `<path prefix>`, `<path prefix>`
 Contracts: <value> crossing <fence>→<fence>, asserted by <row ID> against the real producer; or none crosses
-Assumptions: <clause>; <clause>
 
 ## What to build
 
@@ -156,8 +165,8 @@ continuation wrapped onto the next line is dropped without a word.
   advertisements is a path this ticket writes. A repair fenced to a finding's
   cited lines cannot maintain an advertisement it may not touch, so the
   contradiction surfaces a review round later instead of at slicing time.
-- **`Assumptions:`** separates its clauses with semicolons, because the parser
-  splits the line on commas and a comma-joined sentence shatters into fragments.
+- A genuinely unverifiable-at-authoring-time claim belongs in the ticket's
+  What-to-build prose; a checkable precondition belongs on `Blocked by:`.
 - **`Blocked by:`** is `none`, or the file basenames of the sibling tickets that
   must land first. A basename survives a retitle and is what `--ticket` already
   names; a title does not.
@@ -176,6 +185,12 @@ continuation wrapped onto the next line is dropped without a word.
   the public operation sequence that shows the red. Mutate the **subject**, never
   the assertion: weakening a shared check to always-pass is invisible to a suite
   whose subjects already satisfy it, so the row reads green and proves nothing.
+  A ticket touching a value that **authorizes** an action — a fingerprint, a
+  digest, a token — carries at least one row that mutates the value's *inputs*:
+  revert the authorizing constant, or drop a field from the hash preimage.
+  Control-flow mutations grade only the plumbing that carries the value; a
+  reverted constant or a dropped hashed field passes every one of them, and
+  only an input mutation grades what the value commits to.
   The red must be a **bounded failure**, because a hung run and a broken harness
   are the same observation at the gate — bound whatever the mutation can stall
   (the wait, the poll, the child that outlives its test) before claiming the row.
@@ -191,7 +206,6 @@ Good:
 Blocked by: parse-cancelled-job-records.md
 Ownership fence: `internal/status`, `internal/render/rows.go`
 Contracts: the cancelled record with its reason crosses `internal/parse`→`internal/render`, asserted by RC1 against the real parser's output
-Assumptions: the parser already emits a cancelled record carrying its reason; the recovery action is derived at render time and stored nowhere; claims re-derived from the tree at pickup
 
 ## What to build
 
@@ -212,8 +226,7 @@ Users see a cancelled row, its reason, and the next recovery action.
 <!-- ticket-example:end -->
 
 This is a verb-first, end-to-end outcome, written in the shape the parser
-accepts: distinct row IDs, every written path fenced, semicolon-separated
-assumptions, and one mutation per ID.
+accepts: distinct row IDs, every written path fenced, and one mutation per ID.
 
 Bad:
 

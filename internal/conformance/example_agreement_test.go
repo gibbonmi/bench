@@ -31,9 +31,8 @@ var ticketExampleDoc = filepath.Join(".agents", "skills", "bench-craft-tickets",
 // plausible turns these comparisons red, where a self-derived expectation would
 // follow the drift and stay green.
 var (
-	taughtExampleRows        = []string{"RC1", "RC2"}
-	taughtExampleFence       = []string{"internal/status", "internal/render/rows.go"}
-	taughtExampleAssumptions = []string{"the parser already emits a cancelled record carrying its reason; the recovery action is derived at render time and stored nowhere; claims re-derived from the tree at pickup"}
+	taughtExampleRows  = []string{"RC1", "RC2"}
+	taughtExampleFence = []string{"internal/status", "internal/render/rows.go"}
 )
 
 // The mutations heading is matched at any depth so a ticket that nests the
@@ -146,7 +145,6 @@ func gradeTicketExample(ticket specbuild.Ticket, block string) []string {
 	}
 	diags = append(diags, ticketExampleFieldDiag("acceptance row IDs", ticket.Rows, taughtExampleRows)...)
 	diags = append(diags, ticketExampleFieldDiag("ownership fence entries", ticket.Fence, taughtExampleFence)...)
-	diags = append(diags, ticketExampleFieldDiag("assumptions clauses", ticket.Assumptions, taughtExampleAssumptions)...)
 	if !ticketExampleBlockedByLine.MatchString(block) {
 		diags = append(diags, fmt.Sprintf("%sthe marked example carries no `Blocked by:` line with a value, so the taught blocker field is demonstrated by nothing", ticketExampleDiag))
 	}
@@ -335,12 +333,6 @@ func TestExampleAgreementRejectsWrappedFields(t *testing.T) {
 		t.Fatalf("wrapped fence: want the fence mismatch diagnostic, got %v", diags)
 	}
 
-	wrappedAssumptions := replaceOnce(t, doc, "; the recovery action is derived at render time", ";\nthe recovery action is derived at render time")
-	diags = checkExampleAgreement(ticketExampleRoot(t, wrappedAssumptions))
-	if !containsDiagnostic(diags, "assumptions clauses") {
-		t.Fatalf("wrapped assumptions: want the assumptions mismatch diagnostic, got %v", diags)
-	}
-
 	unlabeled := replaceOnce(t, doc, "- [ ] [RC2] status renders", "- [ ] status renders")
 	diags = checkExampleAgreement(ticketExampleRoot(t, unlabeled))
 	if !containsDiagnostic(diags, "distinct acceptance ID(s)") {
@@ -388,7 +380,6 @@ func TestExampleAgreementEOFWithoutNewline(t *testing.T) {
 	}{
 		{"rows", second.Rows, first.Rows},
 		{"fence", second.Fence, first.Fence},
-		{"assumptions", second.Assumptions, first.Assumptions},
 	} {
 		if !slices.Equal(field.parsed, field.expected) {
 			t.Fatalf("%s at end of file = %q, want %q", field.name, field.parsed, field.expected)

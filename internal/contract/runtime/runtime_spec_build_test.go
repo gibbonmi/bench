@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -30,7 +29,7 @@ type runtimeBuildState struct {
 
 type runtimeBuildAssignment struct {
 	ID, Path, Base, TicketDigest, Created string
-	Rows, Assumptions                     []string
+	Rows                                  []string
 }
 
 func TestRuntimeSpecBuildPorcelainRoutesRealAndLinkedWrappers(t *testing.T) {
@@ -560,16 +559,11 @@ func runtimeCheckpointReceipt(t *testing.T, f contract.Fixture, assignment runti
 	for i, row := range assignment.Rows {
 		rows[i] = map[string]any{"row": row, "outcome": "passed"}
 	}
-	assumptions := make([]string, len(assignment.Assumptions))
-	for i, assumption := range assignment.Assumptions {
-		assumptions[i] = runtimeDigest(assumption)
-	}
-	sort.Strings(assumptions)
 	receipt := map[string]any{
 		"version": 1, "run": readRuntimeBuildState(t, f).Run, "assignment": assignment.ID, "base": assignment.Base, "tree": tree,
 		"ticket_digest": assignment.TicketDigest, "rows": rows, "checks": []map[string]any{{"name": "focused runtime check", "passed": true}},
 		"probe":     map[string]any{"producer": "coordinator", "assignment": assignment.ID, "tree": tree, "command": "focused runtime check", "exit": 0, "output_digest": runtimeDigest("pass"), "produced": time.Now().UTC().Add(time.Second).Format(time.RFC3339Nano)},
-		"ownership": ownership, "assumptions": assumptions,
+		"ownership": ownership,
 	}
 	return writeRuntimeJSON(t, receipt)
 }

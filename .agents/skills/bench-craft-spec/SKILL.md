@@ -97,6 +97,16 @@ rather than guessed: agent time is dominated by verification, so state it as
   stories and the map so the gate enforces it. You can't ticket your way out
   of the spec's own breadth.
 
+**Check the story partition before locking scope.** When the stories partition
+into disjoint package sets connected by no shared seam or contract, surface
+that partition to the reviewer at spec time as a split signal — each partition
+is a candidate spec that could ship on its own gate. A deliberate bundle is
+still legitimate, but the bundle is chosen, never defaulted: the reviewer makes
+the call and the spec records it. The evidence shape is a spec that bundled two
+capabilities sharing only a theme — disjoint packages, two disjoint ticket
+blocker chains, a shared fixture that even split by file — so the narrower
+capability could not ship on its own gate.
+
 `craft-tickets` owns build-time wide-refactor classification and its
 expand–migrate–contract sequence. A spec names that the build is wide and
 keeps the ownership fences below explicit; it points to that rule rather than

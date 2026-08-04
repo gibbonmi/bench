@@ -250,7 +250,6 @@ func checkWorkflowAnchors(root string) []string {
 		{"- [ ] [AB1] <observable behavioral criterion>", "dropped the labeled single-line acceptance row from the ticket template"},
 		{"- [ ] [AB2] <observable behavioral criterion>", "dropped the second labeled acceptance row from the ticket template"},
 		{"Ownership fence: `<path prefix>`, `<path prefix>`", "dropped the one-line backticked ownership fence from the ticket template"},
-		{"Assumptions: <clause>; <clause>", "dropped the semicolon-separated assumptions line from the ticket template"},
 		{"Blocked by: <sibling ticket file basenames, or none>", "dropped the basename-keyed blocked-by line from the ticket template"},
 		{"| criterion | mutation | owner | operation sequence | |---|---|---|---| | <ID> |", "dropped the red-mutations table from the ticket template"},
 	}

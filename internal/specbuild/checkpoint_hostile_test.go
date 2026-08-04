@@ -257,7 +257,7 @@ func TestIntegrateRefusesCheckpointAndTicketDriftWithoutMovingCandidate(t *testi
 		{"ownership drift", func(t *testing.T, fixture checkpointFixture, _ *record) {
 			changedTicket(t, fixture, "# One\n\nOwnership fence: internal/other\nAssumptions: receipt contract\n\n- [ ] [R10-R15] checkpoint receipt\n- [ ] [R54] framing\n")
 		}},
-		{"changed assumptions", func(t *testing.T, fixture checkpointFixture, _ *record) {
+		{"ticket text drift", func(t *testing.T, fixture checkpointFixture, _ *record) {
 			changedTicket(t, fixture, "# One\n\nOwnership fence: internal/specbuild\nAssumptions: changed contract\n\n- [ ] [R10-R15] checkpoint receipt\n- [ ] [R54] framing\n")
 		}},
 	} {
@@ -355,7 +355,7 @@ func TestIntegrateRetriesOnlyWhileTheCheckpointContractHolds(t *testing.T) {
 			changedTicket(t, fixture, "# One\n\nOwnership fence: internal/specbuild\nAssumptions: changed contract\n\n- [ ] [R10-R15] checkpoint receipt\n- [ ] [R54] framing\n")
 		}
 		if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err == nil {
-			t.Fatal("Integrate retried after changed assumptions")
+			t.Fatal("Integrate retried after ticket drift")
 		}
 		if moved == "" {
 			t.Fatal("candidate move seam did not run")

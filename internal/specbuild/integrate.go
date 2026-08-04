@@ -294,9 +294,6 @@ func validateIntegrationTicket(run record, assigned assignment) (Ticket, error) 
 	if err != nil || !sameStrings(current.Fence, assigned.Fence) {
 		return Ticket{}, errors.New("checkpoint ownership drifted")
 	}
-	if !sameStrings(current.Assumptions, assigned.Assumptions) {
-		return Ticket{}, errors.New("checkpoint assumptions changed")
-	}
 	if current.Digest != assigned.TicketDigest {
 		return Ticket{}, errors.New("checkpoint ticket drifted")
 	}

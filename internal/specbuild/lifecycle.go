@@ -276,7 +276,6 @@ type Assignment struct {
 	ID, Path, Base string
 	Rows           []string
 	Fence          []string
-	Assumptions    []string
 }
 
 // FullStatus is the retained evidence projection for one spec build.
