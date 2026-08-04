@@ -85,6 +85,13 @@ the minimum and stops. Price every proposed cut in *agent* time, derived
 rather than guessed: agent time is dominated by verification, so state it as
 `<n> edits, <n> gate runs` — a vibes number can't pass as a price. Two rules:
 
+Size each story as an independently deliverable and demonstrable tracer
+outcome: one complete behavior travels through the system and can be shown on
+its own. Reject a horizontal engineering layer wearing a story name; it cannot
+deliver a complete outcome independently. Stories do not take over engineering
+partitioning: seams remain where tests attach and ownership fences fall, while
+`craft-tickets` owns the later build-time ticket slicing.
+
 - **No deferral under the threshold.** Anything under ~30 minutes of agent
   work that introduces no new architectural decision is not a candidate for
   deferral — it is part of this build; do it and state the estimate. The rule
@@ -114,39 +121,30 @@ restating the sequence.
 
 ## Slicing a build for delegates
 
-When a spec splits a build into delegate slices, the slice boundary and the
-ownership fence are the same line: each slice owns every file it must edit and
-edits every file it owns. Cut slices by ownership, not by behavior theme — a
-theme names what the work is about; a fence names who writes where, and only
-the fence is checkable at charge time. A slice that reaches outside its fence
-collides with another writer, and one that stops short returns with its own
-work unwritten; either way the coordinator pays a round trip.
-
-`craft-tickets` also owns prefactoring shared primitives before their
-consumers. This skill gives the resulting primitive ticket one ownership fence;
-it does not repeat the ordering rule.
-
-Fence alignment is tier-independent: a future cheap-tier retest changes
-delegate routing, never this rule.
+At spec time, record explicit **who-writes-where** ownership fences. Each fence
+names every path one writer may edit and is checkable at charge time. These
+fences constrain later work; they are not horizontal delegate assignments.
 
 `craft-tickets` owns the build-time **what-lands-green-next** unit. This
 section owns only the spec-time **who-writes-where** fence; point to the ticket
 rule by name rather than restating it here.
+
+`craft-tickets` derives complete tracer tickets from the locked stories. Each
+resulting ticket receives the spec's applicable ownership fence.
 
 Each fence carries value contracts across it, and `craft-tickets` owns naming
 them in `Discover the contracts before writing files`; this section points at
 that step by name rather than restating what it requires.
 
 ```
-Slice per package — internal/scan, internal/report, internal/bounds — one
-delegate each, owning every file in its package.
+Outcome: import one valid record and render it in the report.
+Ownership fence: `internal/import`, `internal/report/render.go`.
 ```
-Good — the package boundary is the ownership fence, so no two slices write
-the same file and the merges cannot conflict.
+Good — the outcome is independently demonstrable, and the exact paths make its
+writer's ownership checkable.
 
 ```
-Slice by theme — one delegate takes "fail-closed behavior" across the tree.
+Ticket: implement the parser package in `internal/parser`.
 ```
-Bad — a theme touches every package that implements it, so this slice reaches
-into `internal/bounds` — another delegate's fence — and every crossing costs a
-round trip.
+Bad — a horizontal package layer has no complete outcome, so a path-scoped
+assignment does not make it a tracer ticket.

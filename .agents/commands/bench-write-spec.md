@@ -79,6 +79,10 @@ reviewer approval under `craft-line`.
    source under the entry contract. Top-level `decisions/` holds pre-spec
    working maps; compiled maps live under `specs/<slug>/decisions/`.
 
+   Before locking stories, read `craft-tickets`, `craft-delegate`, `craft-tdd`,
+   and `craft-seams` so the outcomes reflect how implementation will be sliced,
+   charged, tested, and fenced.
+
 2. **Derive the engineering seams.** Reconcile the decision source with the
    current repo. Prefer an existing seam and use the highest seam that
    exercises real behavior; fewer seams are better. Use `craft-seams`. State
@@ -86,6 +90,12 @@ reviewer approval under `craft-line`.
    inputs, the unit behind the seam, outputs, trigger, and test-attach point.
    A seam explicitly chosen by the reviewer remains a constraint; every other
    engineering seam is this phase's responsibility.
+
+   After the seams are explicit, lock each story as an independently
+   deliverable and demonstrable tracer outcome: one complete behavior that can
+   be shown on its own. Reject a horizontal engineering layer wearing a story
+   name. Seams remain where tests attach and ownership fences fall; story lock
+   does not pre-slice implementation tickets, which `craft-tickets` owns later.
 
 3. **Price every cut.** Apply `bench-craft-spec`'s breadth floor, derived
    `<n> edits, <n> gate runs` pricing, under-threshold no-deferral rule, and
