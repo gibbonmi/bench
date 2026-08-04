@@ -94,7 +94,11 @@ holds the hand-written anchor entries and stands at 864 lines against a 660
 grant, a violation FT164's build widened and could not fix in place. A
 declarative anchor registry is the fix; raise the grant to ~850 only as a
 stopgap if structure noise blocks a pass before this row lands, never as the
-answer.
+answer. A verified false green adds one rider: deleting only the ticket
+template's `Contracts:` line passes the real graded-root
+`TestRootConformance` because no section-scoped template requirement anchors
+that line. FT156 owns the oracle gap; this rider records it without changing
+the check.
 Entry: `/bench-write-spec`, by reviewer direction 2026-08-03: the mechanism
 ruling is taken as the grill at spec entry rather than as a separate shaping
 session, because the two faces are one decision and the spec cannot be written

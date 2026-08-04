@@ -34,15 +34,23 @@ Every expand, migrate, and contract ticket must land green independently. If a
 migrate batch cannot, the expansion or prefactor is incomplete, or the batch
 is too wide; repair the preparation or split the batch before proceeding.
 
-For an ordinary build, derive tickets from the spec's stories and seams. Before
-the consuming tickets, prefactor any shared primitive that two or more tickets
-need. One primitive gets one owning ticket; consuming tickets block on it.
-
 `craft-spec` owns the spec-time **who-writes-where** fence. This skill owns the
 build-time **what-lands-green-next** unit. Apply the fence by name; do not
 restate or redraw it here.
 
 ## Draft the breakdown
+
+A seam is a reason to inspect a ticket boundary, not an automatic ticket boundary. Split only when both resulting tickets remain complete, independently green tracer outcomes.
+
+| Signal | Response |
+|---|---|
+| One behavior crosses several seams | Keep it together. |
+| Two behaviors are independently useful and independently green | Split them. |
+| Two or more tickets need the same primitive | Prefactor one owning ticket and block the consumers on it. |
+| Neither side of a contract can prove the invariant alone | Create the junction ticket described in `Discover the contracts before writing files`. |
+| Stories partition into disjoint package groups | Return to `craft-spec`'s `Check the story partition before locking scope`; that spec-time decision owns the split. |
+| A mechanical refactor cannot keep an ordinary tracer green | Use `Classify before slicing`; its expand–migrate–contract sequence owns the cut. |
+| The ownership fence crosses the breadth threshold | Apply the fence-breadth paragraph below: justify keeping it whole, without auto-splitting. |
 
 For each candidate ticket:
 
@@ -63,8 +71,8 @@ For each candidate ticket:
    distinct directories the fence entries resolve to, a file entry counting
    its parent directory, so a file-scoped fence cannot dodge the count. This
    is a smell, not a cap — an honest tracer (a verb, its grammar row, its
-   launcher line) can legitimately cross three — but wide fences are where
-   repair rounds have clustered while narrow ones landed first time, so the
+   launcher line) can legitimately cross three. Width carries some risk signal
+   at the wide end; narrowness is no evidence that a ticket is sound. The
    justification line is the price of keeping the group whole.
 3. Name every real blocker by sibling ticket file basename. A ticket with all
    blockers done is on the **frontier**.
