@@ -30,6 +30,9 @@ rejected alternatives, and bounded discretion. Bounded discretion is limited
 to reversible technical choices that do not change observable behavior, scope,
 an architectural seam, compatibility, or what the gate proves.
 
+Shaping resolves scope into deliverable outcomes. It does not inventory
+engineering seams as decomposition units.
+
 Spec authoring owns engineering seams, tests, acceptance coverage,
 hostile-input attachment, and gate attachment. A reviewer may explicitly
 choose an engineering seam while shaping; record that choice in its decision
@@ -121,6 +124,9 @@ or Task evidence work explicit instead of force-grilling it.
 Run `bench maps` and re-read every decision ticket, constraint, exclusion,
 research object, and discretion item against the current conversation and
 tree. A conversation answer not written into the map is not recorded.
+
+When shaped scope contains two independently useful behaviors, apply this rule
+before one bundled spec becomes the default.
 
 A possible scope split is a reviewer decision, not an excuse to close shaping
 early. Surface it as a decision ticket and continue until the reviewer either
