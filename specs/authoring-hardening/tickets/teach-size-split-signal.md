@@ -13,9 +13,9 @@ justification in the breakdown — a smell, not a cap, because an honest tracer
 Breadth counts the distinct directories the fence entries resolve to, a file
 entry counting its parent, so a file-scoped fence cannot dodge the count.
 
-One paragraph inside the existing step, in the skill's voice. The evidence: the
-two recovery-discard tickets that needed repair rounds were the two widest, and
-the four under the threshold landed first time.
+One paragraph inside the existing step, in the skill's voice. The evidence:
+both four-directory tickets drew repairs, and narrower tickets did too; breadth
+carries risk at the wide end, while narrowness carries no evidence of soundness.
 
 ## Acceptance
 
