@@ -25,8 +25,9 @@ is not the receipt.
 
 Render the receipt at the surface when an interrupted apply returns one, alongside the
 error and its hint, so the maintainer sees the spent set as structured output rather than
-as a sentence. With the receipt rendered, the error string no longer needs to restate the
-ref names; collapse that restatement to the one source. A failure that produced no receipt
+as a sentence. The error string then no longer needs to restate the ref names, but that
+restatement lives in `internal/specbuild/reclaim.go` and is `collapse-the-spent-set-restatement.md`'s
+to remove — this ticket may not reach it. A failure that produced no receipt
 at all — a refused fingerprint, a drifted plan, a run that does not exist — stays an error
 alone, because inventing an empty receipt would report a deletion set for an operation that
 deleted nothing.
@@ -37,7 +38,6 @@ deleted nothing.
 - [ ] [IR2] that output also carries the failure and its convergence hint, so the receipt does not read as success.
 - [ ] [IR3] the printed receipt carries the fingerprint of the spent set, not the fingerprint of the plan that was requested.
 - [ ] [IR4] a failure that produced no receipt — a malformed or drifted fingerprint — prints the error alone and no receipt table.
-- [ ] [IR5] the ref names the operator reads come from the rendered receipt rather than from a list restated inside the error text.
 - [ ] [IR6] the command's exit status stays non-zero for every interrupted or refused apply, so the receipt never reads as a completed operation.
 
 ## Red mutations
@@ -48,5 +48,4 @@ deleted nothing.
 | IR2 | render the receipt and swallow the error | the interrupted-apply runtime test | return the receipt with exit zero and no error text, run `go test ./internal/contract/runtime -run SpecBuild -count=1 -timeout 600s`, expect the failure-text assertion to fail |
 | IR3 | render the requested plan's fingerprint instead of the receipt's | the spent-set fingerprint test | substitute the plan fingerprint, run `go test ./internal/contract/runtime -run SpecBuild -count=1 -timeout 600s`, expect the fingerprint assertion to fail |
 | IR4 | render an empty receipt table for every failure | the no-receipt refusal test | render unconditionally, run `go test ./internal/contract/runtime -run SpecBuild -count=1 -timeout 600s`, expect the no-table assertion to fail |
-| IR5 | restore the ref-name list inside the error string alongside the rendered receipt | the single-source spent-set test | re-add the restatement, run `go test ./internal/contract/runtime -run SpecBuild -count=1 -timeout 600s`, expect the single-source assertion to fail |
 | IR6 | return exit zero when a receipt is present | the exit-status test | return zero with the receipt, run `go test ./internal/contract/runtime -run SpecBuild -count=1 -timeout 600s`, expect the non-zero-exit assertion to fail |

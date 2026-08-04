@@ -1,7 +1,7 @@
 # Collapse the spent-set restatement in the reclaim refusal
 
 Blocked by: none
-Ownership fence: `internal/specbuild/reclaim.go`
+Ownership fence: `internal/specbuild`
 Contracts: the spent-set account crosses `internal/specbuild/reclaim.go`→`cmd/bench/specbuild.go`, which now renders the returned receipt, and is asserted by SS1 against the real `ApplyReclaim` return rather than against the error string alone; absence semantics are that a plan-time failure returns no receipt and its refusal text is unchanged, asserted by SS3
 Assumptions: `cmd/bench` already renders the interrupted-apply receipt, so removing the restatement costs the operator no information; the refusal's drifted-ref name and its convergence hint stay, because neither is carried by the receipt; claims re-derived from the tree at pickup
 
