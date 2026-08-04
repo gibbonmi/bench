@@ -2,60 +2,51 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `99b1c72`, 11 unpushed commits
-Spec: `specs/recovery-discard/spec.md` (Status: staged) is the **active spec build**;
+Branch: `main` — HEAD `ae87452` plus this commit, unpushed
+Spec: `specs/recovery-discard/spec.md` is **implemented and landed**.
 `specs/exact-prospective-landing/spec.md`, `specs/ft187-communication-surface-cut/spec.md`,
 and `specs/pre-push-guard-visibility/spec.md` remain staged and untouched.
-Gate: not run against the candidate — `promote` is the only gate boundary and has not run.
+Gate: green on the landed tree, run by `bench commit` for both landing commits.
 
 ## State
 
-**Phase reached: repair round complete, awaiting a second authoritative review.** Thirteen
-tickets have integrated — eight building the feature, five repairing it. The candidate is
-`38062e15`. All 17 acceptance coverage rows are green.
-`bench spec build status recovery-discard` is the authority; the tree wins over this file.
+**Phase reached: landed and reviewed; release readiness is the open question.**
+`recovery-discard` shipped as two commits — `fafb049` (the composed feature, 27 files,
++2607/−117) and `ae87452` (the review's critical finding). Nothing is in flight.
 
-- **The first review found a critical defect and it is fixed.** `--discard` accepted any
-  ref that existed, so it would delete an ordinary branch. `PlanRecovery` now checks the
-  recovery namespace before existence and emits a `foreign` verdict no verb authorizes.
-  Also fixed: the recovery fingerprint now seals the plan's change summary; reclaim now
-  enumerates prior terminal runs from `record.History`; an interrupted reclaim reports the
-  refs it spent and converges on a fresh plan; the reclaim prose gained conformance
-  anchors; the parser's operation set is single-sourced again with a bidirectional check;
-  `CHANGELOG.md` records both verbs and the `--apply` behaviour change.
-- The reviewer directed that **sol (`gpt-5.6-sol`, Codex top binding) is the authoritative
-  review**, and its result becomes the receipt for `bench spec build review`. Invoke with
-  `codex exec -m gpt-5.6-sol -c model_reasoning_effort="high" -c service_tier="fast"
-  -C <repo> --dangerously-bypass-approvals-and-sandbox`, charged read-only.
-- **Two findings are queued for that review, deliberately not built** — the repair-pass
-  bound is one round then one review. First: `--discard` authorizes `RecoveryRetain`, a
-  catch-all that also covers "could not classify" (ambiguous rows, `verifyRecovery`
-  failures) — the same authority shape as the critical bug. Second: `CheckpointRef` is
-  persisted without validation against `digest(Run + assignment ID)`, so a hand-edited
-  state file could name another run's checkpoint.
-- Sol's six judgment dispositions from round one stay closed unless the reviewer reopens
-  them: it kept the lifecycle framing, the non-`recovered` refusal, the lifecycle-family
-  exclusion, and the `s.resolve` bypass; it vetoed the misplaced grammar test and the
-  unanchored prose, both of which the repair round fixed.
-- **Deferred with evidence:** `git.DeleteBranchExact(root, ref, "")` deletes
-  unconditionally — confirmed by sol in a throwaway repo, unreachable from this candidate.
-  `ParseBuild`'s empty-args branch still hand-lists the operations as a literal string, a
-  second restatement of the grammar table.
-- The reviewer asked that the review's findings drive a follow-up hardening pass over
-  ticket and spec prose **and** the kit's guidance surface, including whether tickets or
-  spec scope should be smaller. Sol's round-one verdict: this should have been **two
-  specs** (recovery discard and reclamation have disjoint package sets) and about **ten
-  tickets**. A copy-paste prompt for that session was handed to the reviewer separately.
-- `capture/learnings.md` holds one open entry (the ticket `Assumptions:` field). Five
-  further authoring findings are with the reviewer in that prompt, not yet captured.
+- **It did not land through `bench spec build promote`.** The lifecycle run was abandoned
+  mid-repair because a mis-drawn ownership fence could not be repaired in-lifecycle: a
+  ticket's acceptance row required a path outside its own fence, the fence is fixed in the
+  assignment record at `assign` time, and no public operation releases one assignment.
+  The retained candidate was landed directly through `bench commit`, which ran the full
+  project gate green. The reviewer approved that deviation explicitly.
+- **Four criticals were found and fixed across three review rounds**, all one shape — a
+  catch-all verdict or an unvalidated persisted value acquiring the authority to delete
+  what it names. In order: `--discard` accepted any existing ref; `--discard` authorized
+  the unclassifiable `retain` verdict; `validCore` accepted an arbitrary `CheckpointRef`;
+  `validCore` and `assignmentBranches` accepted an arbitrary `Branch`. Anyone extending
+  reclamation or recovery should assume a fifth instance exists until proven otherwise.
+- **Open, deliberately not fixed — reviewer's call:**
+  - The retire side of the stale-fingerprint guard has no unit coverage. Mutating
+    `applyRecoveryVerb`'s check to fire only for discard passes `go test ./internal/worktree`
+    in full; a runtime contract test does kill it, so the gate bites and the hole is
+    unit-level parity only.
+  - The orphan deletion's compare-and-swap resolves its expected OID at delete time, so a
+    row-less ref is compared against a just-read value. Closing it means carrying the
+    planned OID in the plan — a design change, not a repair.
+- `capture/learnings.md` holds three open entries: the lost review findings, the
+  hand-assembled checkpoint receipt, and the fence validated only at checkpoint. The last
+  two are what made this build expensive and both propose concrete kit changes.
+- The reviewer's standing verdict from round one — this should have been two specs and
+  about ten tickets, because recovery discard and reclamation have disjoint package sets —
+  was borne out. It ran to nineteen tickets across four packages.
 
 ## Next command
 
-The reviewer runs sol over candidate `38062e15`, carrying the two queued findings above.
-Its result becomes the receipt for `bench spec build review recovery-discard --evidence
-<receipt>`, and only then `bench spec build promote recovery-discard` — the single gate and
-commit boundary. If the branch tip moves first, `promote` recomposes and that discards the
-review, so review last.
+Assess release readiness with `bench prep-release` (maintainer-run ship tier; it refuses
+without a current dev-green verdict for the exact tree). Then push. The two open findings
+above are follow-up work, not blockers — decide them at the next `/bench-what-next`, which
+also owns the three learnings and the `capture/retros/` entry this build never wrote.
 
 ## Shape
 

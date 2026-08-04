@@ -1,6 +1,6 @@
 # Recovery discard
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed conversation 2026-08-03 — the `/bench-debug` session that diagnosed provisional-ref and preserved-orphan accumulation; the reviewer chose per-ref `--discard` with an exact fingerprint over age-based expiry and over reporting-only suppression.
 
