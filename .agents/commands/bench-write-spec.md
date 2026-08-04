@@ -91,11 +91,8 @@ reviewer approval under `craft-line`.
    A seam explicitly chosen by the reviewer remains a constraint; every other
    engineering seam is this phase's responsibility.
 
-   After the seams are explicit, lock each story as an independently
-   deliverable and demonstrable tracer outcome: one complete behavior that can
-   be shown on its own. Reject a horizontal engineering layer wearing a story
-   name. Seams remain where tests attach and ownership fences fall; story lock
-   does not pre-slice implementation tickets, which `craft-tickets` owns later.
+   After the seams are explicit, lock stories by applying `craft-spec`'s
+   canonical `Story sizing and scope cuts` rule.
 
 3. **Price every cut.** Apply `bench-craft-spec`'s breadth floor, derived
    `<n> edits, <n> gate runs` pricing, under-threshold no-deferral rule, and
