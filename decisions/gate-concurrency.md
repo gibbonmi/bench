@@ -14,6 +14,11 @@ average ~123. Mechanism: `internal/canary/canary.go` fans 144 fixtures over
 defaults to 16-wide, concurrent with the outer conformance/contract tests —
 demand ~16× cores, uncoordinated.
 
+This arm is landed and stands as built. The outer layer is owned by
+`decisions/gate-budget.md`, whose whole-run budget supersedes #1's budget model
+and #3's `budget = runtime.GOMAXPROCS(0)`: the canary arithmetic here stops
+computing from the box and draws from that pool instead.
+
 ## #1: What is the concurrency budget model?
 
 Blocked by: none
@@ -81,10 +86,9 @@ so the standard Go lever is the escape hatch (`GOMAXPROCS=8 bench gate`).
 
 ## Not yet specified
 
-- Capping the outer conformance/contract `go test` width — #2's evidence:
-  load still peaks ~2× cores in bursts, but wall is now conformance-bound, so
-  capping outer width buys nothing and could cost; dormant unless contention
-  flakes persist after the canary cap ships.
+- The outer-width question this section held is no longer fog here: the
+  contention trigger it was dormant against fired, and the question is now
+  owned by `decisions/gate-budget.md`.
 
 ## Out of scope
 

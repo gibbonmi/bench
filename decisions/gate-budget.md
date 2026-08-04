@@ -1,0 +1,691 @@
+# Gate budget (FT171)
+
+Status: shaping
+
+## Destination
+
+One machine-wide resource budget the whole gate draws from, at every nesting
+depth, so the run cannot oversubscribe the box — and less duplicated work
+inside the sweep it schedules. Two levers under one destination: bound the
+demand, and reduce it.
+
+The outer gate saturates the machine on its own: load average ~123 on 16 cores
+at the 2026-07-22 baseline with nothing else running. There is no quiet box
+during a run, so every symptom here is self-contention and no external load is
+needed to reproduce it. Reserved interactive headroom is a first-class
+requirement, not a tuning preference. Every width is a formula over the
+resolved budget, never a literal, because core counts differ per machine.
+
+Supersedes `gate-concurrency`'s decision #1 (budget model) and #3 (budget =
+`runtime.GOMAXPROCS(0)`, the whole box). That map's landed canary arm stands as
+built; what changes is that its arithmetic stops computing from the box.
+
+Measured entry state: the changed-tree gate is 89.91 s with `posture` at
+85.415 s inside the full gate against a 50.917 s focused span. Target: a full
+gate under 2 minutes, faster better.
+
+## #1: What is bounded — processes, or cores?
+
+Blocked by: none
+Type: Grill
+
+### Question
+
+Outer phases set no `GOMAXPROCS` at all, so contract, test, and conformance
+each run `go test` at full box width; `fixtureWorkers` divides
+`runtime.GOMAXPROCS(0)` by the inner width, sizing canary's pool as though
+canary were alone. Each layer independently claims the whole machine. Does the
+fix bound concurrent phases, per-phase width, or something else?
+
+### Answer
+
+Bound total live demand, denominated in cores rather than processes. Process
+count is the wrong unit: the demand is each `go test`'s internal parallelism,
+governed by `GOMAXPROCS`/`-p`, so a bound on process count leaves each process
+free to claim the box. A spawn acquires weight `w` and is launched pinned to
+width `w`. This generalizes the landed inner-width pin to every layer.
+
+## #2: How does a token cross the process boundary?
+
+Blocked by: #1
+Type: Grill
+
+### Question
+
+Canary's inner gates are separate OS processes, so an in-memory semaphore in
+the top gate does not reach them. Hierarchical env allowance, a cross-process
+broker, or an inherited descriptor?
+
+### Answer
+
+An inherited file descriptor holding tokens, jobserver-style. The pool owner
+opens a pipe filled with N tokens; every spawn inherits the fd, reads bytes to
+acquire and writes them back to release, at any nesting depth. No broker
+process and no failure mode where a coordinator dies. Work-conserving: a quiet
+layer's tokens are available to a busy one, which is what makes reserved
+headroom cost less than a static split would. This is the established answer to
+recursive-make explosion.
+
+A process holding the fd and finding zero tokens free blocks on the read until
+someone releases. That is the mechanism, not a failure: the pool is a queue.
+
+## #3: What shape does the reserved-headroom formula take?
+
+Blocked by: #1
+Type: Grill
+
+### Question
+
+Fixed core reserve, proportional reserve, or both?
+
+### Answer
+
+Proportional and floored: `budget = max(1, resolved * (1 - r))`, with `r` a
+single named constant priced by #8. Scales across a 4-core laptop and a 32-core
+box, and holds on cgroup-limited CI where a fixed count could consume the whole
+allocation. `GOMAXPROCS` remains the operator lever, applied before the
+reserve, per `gate-concurrency` #3's no-knob ruling.
+
+## #4: What decides whether a process needs a pool?
+
+Blocked by: #2
+Type: Grill
+
+### Question
+
+A gate-launched marker plus fd absence could red as a plumbing defect, but no
+general marker exists — `BENCH_CANARY_PHASE` marks canary's sweep only. And a
+hand-run of a suite that itself fans out reproduces the explosion with no
+marker in sight.
+
+### Answer
+
+Fan-out owns a pool. Any process about to spawn concurrent children inherits a
+pool or creates one; leaf processes never ask and run at their default width.
+The distinction is structural rather than contextual: no marker to set, none to
+delete, and no ambient condition to misread — which is what makes it safe with
+an agent as the implementer.
+
+Consequences: a hand-run of the canary package's own tests opens its own pool
+and its children inherit it, closing the hole a gate-launched marker would have
+left. A focused `go test ./internal/foo` never fans out, so it keeps full width
+and the agent's triage loop stays fast — one process at 1x the box, which is an
+ordinary test run, not the N-times-over the gate produces.
+
+Fan-out inventory, walked 2026-08-04: exactly two Bench-owned CPU fan-out sites
+exist — `internal/gate/runner.go`'s phase launch loop and
+`internal/canary/canary.go`'s `eachIndex`. `internal/models` fans out
+network calls, not CPU work. `internal/guards`'s scan spawns one candidate at a
+time, and the artifact fixture harness's goroutine is a readiness poller;
+neither is a fan-out. Every other concurrency site found is a single
+`cmd.Wait()` await. Parallelism inside the tests themselves — `go test -p` and
+`t.Parallel()` — is governed by #11's pinning rather than by the pool.
+
+## #5: How are tokens recovered when a process dies holding them?
+
+Blocked by: #2
+Type: Grill
+
+### Question
+
+Nothing writes a dead child's tokens back, so the pool shrinks for the rest of
+the run and enough of that ends in a gate that blocks forever — the worst
+outcome for an agent, since a hang produces no diagnostic to act on.
+
+### Answer
+
+The fan-out owner reclaims on child exit. It already waits on every child it
+spawns, so it knows the exact grant to write back whether the child exited
+cleanly, crashed, or was killed; the common case is leak-free by construction.
+A grandchild dying below a surviving parent remains possible, so an acquisition
+deadline backstops it: on expiry, proceed with a one-core grant and emit a
+diagnostic naming the shortfall. Never unbounded, never a hang.
+
+## #6: What rule picks `r` from the prototype's numbers, and what counts as a symptom?
+
+Blocked by: #3
+Type: Grill
+
+### Question
+
+Reviewer picks live from a numbers asset (the `gate-concurrency` #2
+precedent), or a mechanical rule? And measured by which observable?
+
+### Answer
+
+Mechanical: the smallest `r` with zero contention symptoms.
+
+Symptom is span inflation only — a phase's full-gate span over its focused
+span, against a threshold priced by #8. Load average was rejected as too noisy
+and lagging to discriminate between adjacent `r` values. Deadline exhaustion
+was rejected as a separate hard-fail axis: a phase inflated enough to blow a
+subprocess deadline fails the inflation threshold first, so the case is
+covered by one continuous measure rather than two constants.
+
+## #7: What is measured, on which trees and under what conditions?
+
+Blocked by: #6
+Type: Grill
+
+### Question
+
+`go-build-cache-footprint` story 3 adds `-count=1` at `coreTestStep` and
+`ConformanceSuiteArgv`, turning a mostly-cached test phase into real execution
+that overlaps the critical path. Numbers taken before it lands may not survive
+it. And the landed arm measured on a box running only the gate.
+
+### Answer
+
+Both trees: today's tree, then a throwaway branch adding `-count=1` at the two
+owners (2 lines, no spec). `r` is picked against the post-spec profile; the
+today's-tree runs also price what story 3 costs before it is approved.
+
+Conditions: a box running only the gate. External background load is out of
+scope — the gate saturates the machine unaided, so the symptom reproduces
+without it, and every existing figure in this map was taken that way and stays
+comparable. Consequence recorded honestly: the prototype cannot demonstrate the
+ten-minute case is gone. That claim rests on the ceiling holding by
+construction, not on measurement.
+
+## #8: What are `r` and the span-inflation threshold?
+
+Blocked by: #7, #20
+Type: Prototype
+
+### Question
+
+Throwaway pool implementation, then measure wall-clock and worst-phase span
+inflation across candidate `r` values on both trees, and across #11's two grant
+splits. How many repetitions state the variance honestly? Deliverable is a short
+numbers asset. Discard a sample whose subject does not match the build under
+test rather than reporting it; record the exact commit, worktree, and run time
+beside every sample. Also measure what #9's narrow baselines actually save,
+which this map declined to assert.
+
+### Answer
+
+— (open)
+
+## #9: Can behavior-owned baselines narrow soundly?
+
+Blocked by: none
+Type: Grill
+
+### Question
+
+Behavior-owned fixtures are already scoped: each carries a `TEST` file naming
+its owning contract test, `biteArgs` turns it into an anchored `-test.run`, and
+the package binary compiles once and is shared. What is not narrowed is the
+baseline. `group()` keys these fixtures as `contract:<pkg>`, one baseline per
+contract package, run `wideBaseline` — the full package binary over an empty
+tree. That is roughly 133 + 52 + 39 + 20 + 4.5 ~= 250 worker-seconds, now the
+dominant behavior-owned cost.
+
+The wideness is deliberate: a scoped baseline "prints a fraction of what the
+empty tree can produce, so an EXPECT the wide run already emits goes
+unflagged." But `gate-pipeline` #5 made the opposite call on the conformance
+axis — one shared scoped baseline per check group, sound because the guard's
+premise is "would EXPECT match with no mutation under the same run shape the
+fixture pays", making scoped-vs-scoped the consistent comparison. Does that
+argument carry to a per-`(package, test)` baseline here, or do the two axes
+differ in a way the current wideness is protecting against?
+
+### Answer
+
+It carries. Narrow the baseline to the test its group names and re-key
+`group()` from `contract:<pkg>` to `(package, test)`; without the re-key,
+fixtures naming different tests would be graded against a yardstick from a test
+they never run.
+
+The asymmetry currently runs the wrong way, which is why this is a correctness
+fix and not only a cost one. `runFixture` grades a narrowed run
+(`-test.run ^TEST$`, output from one test) against `strings.Contains` over a
+wide baseline carrying every test's empty-tree output. Any other test emitting
+a string containing this fixture's EXPECT flags it vacuous, though the
+fixture's own run could never produce that output. The wide yardstick catches
+nothing a narrow one misses: if the named test emits EXPECT unmutated, a
+baseline running that test sees it.
+
+Widening the fixture run to restore symmetry the other way was rejected — it
+undoes lever 1, the change that took the gate from 135–172 s to 128 s, and buys
+no soundness.
+
+Consistent with the documented purpose in `projects/benchkit.md`: a
+behavior-owned EXPECT is never checked for mutation-specificity, and its
+baseline is only a collision screen against infrastructure noise. Narrowing
+preserves that screen — noise emitted while the named test runs still appears —
+and drops only noise from tests the fixture run could never execute.
+
+Unscoped conformance fixtures keep today's full baseline, per `gate-pipeline`
+#5. The saving is real but unmeasured: a narrow empty-tree baseline may still
+be most of a wide one if a single test dominates the package. Measure it with
+#8 rather than asserting it here.
+
+## #10: Does the Go toolchain participate in an inherited token pool?
+
+Blocked by: #2
+Type: Research
+
+### Question
+
+If `go build`/`go test` honour a jobserver-style descriptor, tokens govern the
+toolchain's own internal parallelism directly. If they do not, our spawns hold
+the tokens and pin each child's width instead — sufficient, but a different
+mechanism to build and to test. Answer from primary Go documentation and a
+runnable probe, not from recollection.
+
+### Answer
+
+No. Probed 2026-08-04 on go1.25.0 linux/amd64: `go help build` documents `-p n`
+("the number of programs, such as build commands or test binaries, that can be
+run in parallel", default `GOMAXPROCS`) as the only parallelism lever, and
+grepping `$(go env GOROOT)/src/cmd/` for `jobserver` and for `MAKEFLAGS`
+returns zero hits.
+
+So tokens govern Bench's own spawns and each spawn is pinned to its grant; the
+`go` command neither draws from nor returns to the pipe. This is the sufficient
+branch #2 anticipated, not a blocker.
+
+The probe also found that one `go test` invocation carries two parallelism
+knobs whose product is its real demand: `-p` for concurrent package test
+binaries, `GOMAXPROCS` for threads inside each. Outer phases set neither today.
+Pinning an invocation to weight `w` therefore means constraining both, which
+#11 rules on.
+
+## #11: A spawn is granted weight `w`. How is `w` split between `-p` and `GOMAXPROCS`?
+
+Blocked by: #10
+Type: Prototype
+
+### Question
+
+One `go test` invocation's demand is the product of `-p` (concurrent package
+test binaries) and `GOMAXPROCS` (threads inside each). Pinning to `w` means
+constraining both, and the split is a real behavioral choice: package-level
+parallelism is what the artifact split exposed to remove 38.09 s, while
+in-binary threads are what a phase bounded by one heavy package needs.
+
+### Answer
+
+Priced by #8, against exactly two candidates:
+
+- `-p = w`, `GOMAXPROCS = 1` — the whole grant spent on concurrent package
+  binaries, each single-threaded, so one token means one runnable thread.
+- `-p = 1`, `GOMAXPROCS = w` — one package binary at a time with `w` threads
+  inside, matching the landed inner-width pin's shape.
+
+A balanced or square-root split is rejected: it is optimal for neither failure
+mode and no evidence justifies the arithmetic.
+
+## #12: Do the cheap phases draw from the pool?
+
+Blocked by: #4
+Type: Grill
+
+### Question
+
+`gofmt`, `vet`, and `shellcheck` are single short processes. Exempting them
+preserves today's fast fail on formatting and lint; requiring them to acquire
+keeps the ceiling exact.
+
+### Answer
+
+Every gate-launched phase acquires; the trivial ones take a single token. No
+exemption list to maintain and nothing runs outside the ceiling. Accepted cost:
+a fast-failing `gofmt` can queue behind heavy phases, so the cheapest red
+arrives later than it does today.
+
+## #13: What actually makes the expensive packages expensive?
+
+Blocked by: none
+Type: Research
+
+### Question
+
+The 2026-08-04 census ranked the cost but does not explain it, and it moved the
+map's premise: `internal/preflight` (168 s wall, 369 s CPU) and `internal/gate`
+(147 s wall) carry 40% of all serial wall and are neither contract nor canary,
+so they appear in no figure in `gate-critical-path.md`. The workload is three
+shapes — saturating, idle, serial — and a token pool addresses only the first.
+
+Probes are listed in the asset. The decisive one: `SharedBuildCacheEnv` exists
+in `internal/contract/command.go` and is honoured by `scripts/build-artifacts.sh`,
+but nothing under `.bench/`, `bin/`, or the gate sets it, so dev contract tests
+build against private disposable caches and recompile from cold on every build.
+Run `posture` with and without the opt-in and compare CPU. If CPU collapses,
+repeated cold compilation — not contention — is what the saturating class is
+paying, and the fix is cache posture rather than scheduling.
+
+### Answer
+
+The expensive rows do not describe one dev-gate workload.
+
+`posture` already opts every package run into shared build caches through its
+`TestMain`; the gate does not need to set the environment itself. A controlled
+two-build A/B still proved the mechanism matters: shared posture used 8.71
+seconds CPU and 8.18 seconds wall, while the hermetic counterfactual used 164.65
+seconds CPU and 43.31 seconds wall before failing the expected shared-posture
+assertion. Cold recompilation is expensive, but it is not an unimplemented dev
+cache fix. `posture` remains saturating because the package deliberately proves
+the hermetic default as well as shared posture.
+
+`internal/preflight` is not in the dev gate at all. The conformance registry
+excludes it from the dev package set and `bench prep-release` runs it as a
+release-only suite. Its 169.93-second green timing is ship-tier cost. Per-test
+timing attributes 66.06 seconds (38.9%) to the bootstrap test whose full verify
+stubs every phase except a real, hermetic artifact build; vulnerability is
+stubbed there and the direct vulnerability tests are negligible.
+
+So #8 prices only current dev-tier saturating subjects. Idle subjects are
+timeouts, serial and mixed subjects cannot spend a wider grant, and ship-only
+subjects cannot certify a dev reserve. Whole-gate wall remains the global
+outcome, but the zero-contention acceptance signal must come from the class the
+pool can affect. The measurements and ranked per-test table are in the census
+asset.
+
+## #14: Which workload class is allowed to certify `r`?
+
+Blocked by: #13
+Type: Grill
+
+### Question
+
+#6 currently says the smallest `r` with zero span-inflation symptoms, without
+restricting the acceptance subjects. Should #8 apply that rule only to the
+current dev-tier saturating class, while reporting whole-gate wall globally and
+reporting idle, mixed, serial, and ship-only costs without letting them certify
+the reserve?
+
+### Answer
+
+Yes. #8's zero-contention acceptance subjects are the current dev-tier
+saturating class. Whole-gate wall remains the global outcome and every class
+is still reported, but idle, mixed, serial, and ship-only work cannot certify
+the core reserve because the pool cannot improve it.
+
+## #15: Where does one gate run duplicate expensive work?
+
+Blocked by: #14
+Type: Research
+
+### Question
+
+Trace the current dev and ship workflows from their public entry points through
+every nested gate, package suite, artifact build, and canary bite. For each
+expensive child, identify whether the same job already ran elsewhere in the
+same workflow, whether the repetition is an independent mutation proof or
+accidental orchestration, and which owner should collapse accidental
+duplication. Include current `internal/gate` per-test timings: a repository this
+small should not need minute-scale test packages without a named external or
+nested workload explaining them.
+
+### Answer
+
+The public dev workflow does not launch the same whole gate twice by accident.
+`bench commit` asks the gate once and reuses an exact green verdict when one
+exists; the final-check workflow explicitly forbids a pre-commit gate; and
+release preflight's `gate` phase reaches the same reuse path. The dev phase
+table also partitions ordinary package tests: core excludes contract,
+conformance, and release-only packages; contract and conformance own their own
+surfaces. Targeted `-race` tests and canary mutations repeat selected behavior
+under a different oracle or tree deliberately.
+
+The duplication is below that public boundary, in two forms.
+
+First, one gate decision repeatedly derives the same source fact. A focused
+`TestPublicDocumentClassesProjectTheirExactCheckPartition/projects/benchkit.md`
+run took 2.90 seconds and launched 415 Git processes. The same uncommitted
+fixture tree was materialized 47 times: 118 `rev-parse`, 94 `read-tree`, 84
+`cat-file`, 47 `add`, 47 `write-tree`, 24 `ls-tree`, and one `init`. The
+production path has the same ownership defect even though a committed tree
+avoids the fixture's failed-`read-tree HEAD` fallback: `scopeComponents`
+independently asks the conformance-check, canary, and component resolvers for
+snapshots; subject and stripped-subject construction ask again; pre/post-run
+inspection rebuilds them again; repeated blob reads are not memoized. Each
+local helper says it snapshots once, but no gate-decision-wide snapshot owns
+the fact.
+
+The test then multiplies that defect. The 35.14-second public-document-class
+test has 21 rows. Each row runs the real gate engine for a mutation and a
+deletion and runs a restoring green gate after each: about 84 gate executions
+to prove one mapping table. The complete `internal/gate` package was green at
+153.40 seconds wall and 116.33 seconds CPU. Eighteen top-level tests at or
+above two seconds carried 96.12 seconds; only the 35.14-second matrix exceeded
+ten. Six cancellation/deadline cases also pay the real two-second termination
+grace. This is orchestration and test-seam cost, not slow Go computation.
+
+Second, package tests repeatedly cross a seam wider than the behavior they
+assert. `internal/conformance` was green at 85.11 seconds wall and 138.49
+seconds CPU. Its 83 documentation/workflow fixture rows each call the complete
+dev conformance table, totaling 35.13 seconds. Gate-entry tests spend another
+25 seconds creating fresh temporary Go modules and invoking the shell entry,
+including 19.95 seconds across eight freshness-failure variants. The existing
+single-check `RunConformance` interface is the correct seam for fixture rows;
+one representative entry proof can keep the shell path while the failure
+matrix lives at the freshness interface.
+
+The remaining long packages confirm the shape rather than hiding another
+whole-gate recursion. `internal/specbuild` is 145 Git-backed lifecycle tests
+spread over 43.53 seconds; `internal/worktree` is 134 such tests spread over
+29.65 seconds. `internal/contract/runtime` is 69.78 seconds wall and 197.73
+seconds CPU, led by the 58-case FT78 action proof ledger (13.68 seconds), the
+four-route freshness matrix (12.33 seconds), and real cross-process gate/spec
+tests. `internal/publication` spends 30.03 of 30.49 seconds waiting on
+`http://127.0.0.1:1` through `http.DefaultClient` with `context.Background()`;
+the dev-tier publication contract carries the same unreachable-port posture.
+That is an uncontrolled network timeout, not repository work, and remains
+owned by FT87.
+
+Ship orchestration does contain literal duplicate jobs:
+
+- A current dev-green verdict is a precondition, but `core-tests-ship` uses the
+  ship package enumeration and therefore reruns all 54 dev-core packages just
+  to add the three release-only packages. Its comment describes a release-only
+  step; its command is not one.
+- Ship conformance reruns the dev checks as a superset before adding the one
+  release-evidence probe and cross-compile assertion. This is currently an
+  explicit lifecycle-final policy, not an accidental call graph, but it is
+  inherited reproof that must be priced as such.
+- Release preflight's `vet ./...` repeats the dev gate's identical vet job.
+  Its `race ./...` executes all 70 packages under the detector after the dev
+  gate's three-test authoritative race registry; the detector is a distinct
+  oracle, but broad integration suites whose meaningful work is in ordinary
+  child binaries gain little race coverage from being rerun this way.
+- `prep-release` builds `dist/artifacts` before invoking release preflight,
+  whose registered `artifacts` phase rebuilds the same root into the same
+  output. Conformance ship also builds the same snapshot in an authenticated
+  clone. Two ship canaries build two distinct mutated trees; those are
+  independent bite proofs, not duplicate inputs, although each repays the full
+  compile-and-package pipeline.
+
+Owners follow the highest observable seam. Gate evaluation should own one
+immutable parsed tree/blob snapshot for all identity families and pre/post
+inspection. Mapping matrices should grade the resolver interface exhaustively
+and retain a small end-to-end bite set. Conformance fixture rows should pass
+their registered single-check scope. Pre-release should enumerate only the
+three release-only suites, consume one artifact build, and either inherit
+exact dev vet evidence or stop claiming it as a separately executed phase.
+Race coverage should come from one authoritative registry, extended with
+ship-only cases when needed.
+
+The ordering consequence is decisive: with `-count=1`, the 153.40-second
+focused `internal/gate` package alone exceeds the destination's two-minute
+whole-gate target. A token pool cannot make a mixed/serial package faster and
+may make it slower. Accidental demand must be collapsed before #8 prices the
+reserve; otherwise the prototype is optimizing contention around an impossible
+critical path. Full measurements and the workflow graph are in the census
+asset.
+
+## #16: Must demand reduction land before the pool is priced?
+
+Blocked by: #15
+Type: Grill
+
+### Question
+
+Should FT171 order the dev-path snapshot and over-wide-test-seam reductions
+ahead of #8, then re-run the census and price the pool against the reduced
+workload, while sending ship-only duplicate-proof policy to a separate
+follow-up? The recommendation is yes: it is the only order in which the
+two-minute target is achievable and #8 measures the workload the finished gate
+will actually schedule.
+
+### Answer
+
+Yes. Demand reduction lands before #8, as three independently green specs in
+dependency order:
+
+1. `gate-evaluation-snapshot` makes one gate evaluation own one immutable,
+   generation-scoped parsed tree/blob snapshot. Pre- and post-evaluation remain
+   separate generations, prospective trees use the same snapshot contract
+   through their own source adapter, and all current identity derivations move
+   onto it without changing oracle behavior.
+2. `gate-decision-test-seam` moves the exhaustive component/check mapping matrix
+   to the decision seam, retaining representative full-engine tests that prove
+   wiring and failure behavior without rematerializing trees for every policy
+   row.
+3. `conformance-harness-scope` gives each conformance fixture the registered
+   check it owns and moves freshness assertions to the lower seam, retaining
+   representative shell-level integration coverage.
+
+After those three land, #20 re-runs the cold workload census. Only that reduced
+workload may feed #8's pool and reserve pricing. The first ordered spec is
+`gate-evaluation-snapshot`; the other two are downstream and out of its scope.
+
+Ship-tier duplicate-proof policy is separate shaping because it changes the
+meaning and composition of publication evidence, not merely the dev gate's
+implementation. FT87 continues to own publication timeout behavior.
+
+## #17: Does one gate evaluation own one snapshot generation?
+
+Blocked by: #16
+Type: Task
+
+### Question
+
+Write and land the first ordered spec, `gate-evaluation-snapshot`. One pre-gate
+generation and one post-gate generation each parse their tree and blobs once;
+working-tree and prospective-tree inputs satisfy the same snapshot contract.
+Migrate component, check, canary, subject, and stripped-subject identity reads
+while preserving drift detection, prospective-tree semantics, fail-closed
+errors, and emitted evidence. Prove both semantic equivalence and the bounded
+process/materialization count. Moving the mapping matrix is not part of this
+spec.
+
+### Answer
+
+— (open)
+
+## #18: Does the exhaustive gate matrix run at the decision seam?
+
+Blocked by: #17
+Type: Task
+
+### Question
+
+Write and land `gate-decision-test-seam`. Exercise the exhaustive mapping table
+at the pure decision boundary, then keep representative full-engine tests that
+prove source wiring, materialization, and fail-closed behavior. Production
+oracle behavior does not change.
+
+### Answer
+
+— (open)
+
+## #19: Does each conformance fixture run only its registered check?
+
+Blocked by: #18
+Type: Task
+
+### Question
+
+Write and land `conformance-harness-scope`. Route each fixture through its
+registered check, test freshness at the lower seam that owns it, and retain
+representative shell-level integration coverage. The executable check registry
+remains the single source of policy.
+
+### Answer
+
+— (open)
+
+## #20: What workload remains after demand reduction?
+
+Blocked by: #19
+Type: Research
+
+### Question
+
+Re-run the cold package census and the focused-versus-in-gate span probes after
+#17–#19 land. Update the census asset with exact commits, subjects, repetitions,
+CPU, wall, and process/materialization counts. Report the reduced workload that
+#8 must price; do not carry the pre-refactor demand forward as an assumption.
+
+### Answer
+
+— (open)
+
+## Not yet specified
+
+## Spec-writer discretion
+
+- The token encoding in the pipe, and how the acquisition deadline in #5 is
+  expressed, provided the fail-toward-less-concurrency posture holds.
+- Where the pool owner's bookkeeping lives, provided reclaim-on-child-exit is
+  observable from one place.
+- #8's sweep order — comparing #11's two splits at one fixed `r` before sweeping
+  `r` keeps the matrix from multiplying, provided the chosen split is re-checked
+  at the selected `r`.
+
+## Out of scope
+
+- Scoped or diff-based gating of any kind: FT91 ruled it unsound here, contract
+  and canary being behavior contracts with no file-to-test map, and that ruling
+  stands. Scope is not a speed lever.
+- Weakening any check to buy wall-clock. Green keeps meaning the same thing.
+- Merging same-check fixture runs: `gate-pipeline` #5 rejected it because each
+  fixture is a distinct mutated tree and must be graded alone. #9 asks about
+  baselines only.
+- A cache quota, automatic eviction, or the Go build-cache footprint itself —
+  owned by `go-build-cache-footprint`.
+- Ship-tier duplicate-proof cleanup, which needs separate shaping because it
+  changes publication evidence rather than the dev gate's implementation.
+- Publication timeout behavior, which remains owned by FT87.
+
+## Sources
+
+- Path: `decisions/gate-critical-path.md`
+  Supports: the Destination's 89.91 s entry state and the 85.415 s vs 50.917 s `posture` span behind #6's choice of span inflation.
+  Drift: measured on the artifact-split landed tree; re-measure before #8 if the phase set changes.
+- Path: `decisions/gate-concurrency.md`
+  Supports: the landed canary arm, its ~123 load baseline, and decisions #1 and #3 this map supersedes.
+  Drift: describes shipped code; re-read if the canary arithmetic changes.
+- Path: `decisions/gate-pipeline.md`
+  Supports: #5's scoped-baseline soundness argument that #9 asks to extend.
+  Drift: none expected while that decision stands.
+- Path: `ROADMAP.md`
+  Supports: FT171's contention evidence, including the 12-core sample where both `TestSetupConflictContracts` FIFO cases exhausted 15 s deadlines under overlap and then passed 3/3 focused at ~0.43 s.
+  Drift: a working prioritization document; the row moves as the work lands.
+- Path: `decisions/assets/gate-budget-cpu-wall-census.md`
+  Supports: #13's three-shape finding, cache A/B, preflight ownership and per-test timing, and the focused spans #6's inflation measure needs; 70 packages timed alone on `25385f8`, 777.0 s serial wall against 1198.4 s CPU.
+  Drift: one repetition per package on one box; re-run before any figure is used to pick a constant.
+- Path: `internal/contract/surface/artifact/internal/fixture/fixture.go`
+  Supports: #13's current dev-posture finding that artifact contract package `TestMain` sets `BENCH_SHARED_BUILD_CACHE=1` before tests run.
+  Drift: code-derived; re-verify if artifact fixture setup changes.
+- Path: `internal/conformance/registry/packages.go`
+  Supports: #13's finding that `internal/preflight` is excluded from the dev package set and owned by the ship tier.
+  Drift: code-derived; re-verify if tier ownership changes.
+- Path: `internal/gate/check_slots_test.go`
+  Supports: #15's 21-row public-document mapping matrix and its mutation, deletion, and restoring full-gate calls.
+  Drift: code-derived; re-verify if mapping coverage moves to a narrower seam.
+- Path: `internal/gate/component_decision.go`
+  Supports: #15's repeated snapshot derivation across conformance-check, canary, and component identity families.
+  Drift: code-derived; re-verify if gate evaluation gains a shared snapshot owner.
+- Path: `internal/preprelease/preprelease.go`
+  Supports: #15's ship step order, repeated core package enumeration, first artifact build, conformance probe, preflight, and ship canary.
+  Drift: code-derived; re-verify if the ship sequence changes.
+- Path: `internal/releaseevidence/registry.json`
+  Supports: #15's release-preflight gate, full-race, vet, artifact, and smoke commands.
+  Drift: code-derived; re-verify if release evidence phase ownership changes.
+- Path: `internal/canary/canary.go`
+  Supports: #1's double-claim finding (`fixtureWorkers`) and #9's already-scoped finding (`biteArgs`, `subjectCall`, `group`), read 2026-08-04 alongside `internal/gate/runner.go`'s unbounded `inFlight` launch loop and `internal/bounds/bounds.go`'s `CanaryInnerWidth`; the full fan-out inventory behind the second fog item was not read.
+  Drift: code-derived; re-verify before spec authoring.
