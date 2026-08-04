@@ -85,3 +85,25 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
   landing five completed tickets through the light path with reviewer approval, because the
   sanctioned exit from the wedge discards the composition. A wedge whose only escape hatch is
   destructive should be a release-blocking bug, not a papercut.
+
+## 2026-08-04 — A gofmt-only fix costs a rebuild and a second full gate run  [open]
+
+- **What happened:** Landing the `authoring-hardening` composition, the gate came back red on
+  `gofmt` alone — one struct-field alignment in `internal/specbuild/state.go`, caused by a field
+  the build added. Every other phase was green. Running `gofmt -w` fixed it, but the next
+  `bench commit` refused before grading anything: `bench binary … is untrusted: seal source
+  digest does not match current build inputs`. The formatting edit changed the build inputs, so
+  the sealed `dist/bench` no longer matched, and the fix required `scripts/go-build.sh` plus a
+  second full gate run. The same sequence repeated in the primary checkout when the change was
+  applied there. So a whitespace-only correction cost two rebuilds and two whole-project gate
+  runs on top of the one that found it.
+- **Right behavior:** A formatting-only delta is exactly the class where the oracle's cost is
+  most out of proportion to the risk. Two candidate reductions, both reviewer's call. Either the
+  gate's `gofmt` phase offers to apply the formatting itself as part of the same run — it already
+  computed the diff — so the fix lands inside the run that found it, or the binary seal treats a
+  gofmt-equivalent source change as input-identical, since `gofmt` output is a pure function of
+  the input and the compiled artifact is unchanged.
+- **Proposed rule change:** None for the operator; this is tooling economics. Worth pairing with
+  the observation that a fresh worktree also has no `dist/bench` at all, so its first gate always
+  refuses once before doing any work — three separate places where the seal check spends a full
+  cycle teaching the operator something the tool already knows how to fix.
