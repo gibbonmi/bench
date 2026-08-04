@@ -1144,8 +1144,9 @@ judgment is the reviewer's call at spec time. The `recovery-discard` build adds
 the ticket-side instance: all eight of its tickets ended their `Assumptions:`
 line with a clause meaning "claims re-derived from the tree at pickup" — which
 is `craft-tickets`' standing instruction to every ticket, copied eight times
-into the artifacts that instruction governs. The field's naming question is
-FT174's; the duplication is this row's. Kit edit under the `craft-synthesis`
+into the artifacts that instruction governs. FT193 retires the field and with it
+that instance; what stays here is the rule the instance argued for, which
+outlives the field. Kit edit under the `craft-synthesis`
 discipline. Sources: `capture/learnings.md` 2026-08-03, verdicted here and in a
 prior run.
 
@@ -1706,6 +1707,37 @@ behavior off the spec's own map — decide it alongside the check, same owner.
 Found by the Codex falsification pass on `3eb1c9a`. Source: `capture/IDEAS.md`,
 drained here.
 
+**FT193 (MEDIUM) — ticket and spec authoring refuse the four defects that cost
+the `recovery-discard` build three rounds.** `specs/authoring-hardening/spec.md`,
+staged with eight tickets, from reviewer-confirmed conversation 2026-08-04. Four
+shapes passed authoring and were paid for later: a red-mutation command naming a
+package the ticket's own ownership fence cannot write, so the delegate obeys the
+row and breaches the fence at checkpoint; a `-run` selector matching zero tests,
+which `go test` reports as `ok`, so a probe that never executed reads as
+evidence; mutation tables that are entirely control-flow, leaving an authorizing
+constant or a hash preimage field unasserted; and no breadth signal at either
+level, so the two widest tickets were the two that needed repair and the spec
+bundled two capabilities sharing no seam. The fence-versus-probe agreement is
+enforced — refused at `bench spec build assign`, graded over staged specs by the
+conformance sweep through the same exported function, with a canary proving the
+bite — and the other three land as authored discipline in `craft-tickets` and
+`craft-spec`: fences spanning more than two packages are a split candidate
+needing one line of justification, an authorizing value carries at least one
+input mutation, probes report their matched-test count with zero a hard failure,
+and a story set partitioning into disjoint package sets surfaces to the reviewer
+at spec time. Separately the `Assumptions:` field leaves the grammar and the
+machinery: the reviewer confirmed retirement 2026-08-04 after a mid-tier
+consult, because the field pooled tree-checkable preconditions already asserted
+by `Blocked by:` with restatements of the standing verify rule, and its digest
+sealed a per-clause structure the parser never produced. Legacy tickets keep
+parsing with the line ignored, so no migration runs. The spec's own sequencing
+gate — that `recovery-discard` promote first, since two stories edit
+`internal/specbuild` — is satisfied, so this is implementable now. The spec
+records that by its own story-5 partition rule it would surface as a split
+candidate, and that the reviewer directed one batch anyway. Sources: the
+`recovery-discard` build's five ticket- and spec-authoring learnings, absorbed
+into the spec's stories at staging time rather than through this journal.
+
 **FT174 (MEDIUM) — ticket files have one enforced dependency, ownership, and
 mutation grammar.** Every one of the 25 tickets under `specs/*/tickets/` carries a
 `Blocked by:` field keyed by sibling *title* — ten read `none`, fifteen name
@@ -1735,25 +1767,16 @@ coverage accounting, checkpoint receipts, and repair routing. Sources:
 `capture/IDEAS.md` 2026-08-03, drained here; `capture/IDEAS.md` and
 `capture/learnings.md` 2026-08-02, drained in prior runs.
 
-Two more grammar questions join the same visit, both from the
-`recovery-discard` build. First, the `Assumptions:` field holds no assumptions.
-Across eight tickets every clause was one of two things — an inherited
-precondition checkable against the tree in one command, which `Blocked by:`
-already asserts, or a restatement of `craft-tickets`' own standing instruction —
-and a field named for unverified claims, in a kit whose operating guide says
-never to assume, invites exactly that. Only a claim the ticket takes on faith
-because it *cannot* be checked at authoring time matches the name. The reviewer
-picks the shape: rename it (`Preconditions:`) and let it hold checkable facts
-honestly, keep the name and have `craft-tickets` restrict it to
-unverifiable-at-authoring-time claims, or split it in two. Second, this row's
-open rejection-timing question has its answer priced: a ticket whose acceptance
-rows name a path outside its own `Ownership fence:` is a contradiction the
-parser can see when the ticket is read, and today it surfaces only when a
-checkpoint receipt arrives — after a delegate has already done the work. The
-correction then costs a sibling ticket and another delegate cycle, because
-`abandon` is whole-run and no verb releases one open assignment to re-fence it.
-Whether assign refuses such a ticket or `craft-tickets` teaches it as authoring
-discipline is the build's call; the second is cheaper and did not prevent this.
+Two questions this row used to carry are now FT193's, decided and staged: the
+`Assumptions:` field leaves the grammar entirely, and a ticket whose
+red-mutation probe names a package its own fence cannot write is refused at
+`assign`. What stays here is the dependency graph — `Blocked by:` parsed by
+identifier, cycles and dangling blockers detected, fence disjointness between
+concurrently-eligible tickets — which FT193 does not touch. One residual has no
+owner at all: when a fence does turn out to be wrong mid-run, `abandon` is
+whole-run and no verb releases a single open assignment to re-fence it, so the
+correction costs a sibling ticket and another delegate cycle. FT193's
+authoring-time refusal makes that rarer without making it reachable.
 Source: `capture/learnings.md` 2026-08-03 and 2026-08-04, verdicted here.
 
 **FT153 (MEDIUM) — the canary's vacuity baseline is a collision screen, not a
@@ -2160,6 +2183,7 @@ recommended table is sequencing advice.
 | FT108 | FT89 | FT89 single-sources the skills index the new skill must join; the expand–migrate–contract and gate-cadence rules it builds on are already settled in `craft-tickets`. |
 | FT111 | FT179 | FT179 reopens FT111's edit-in-place-only ruling on an order-larger measured count; land them as one `craft-comments`/`craft-review` visit. |
 | FT172 | FT106 | Reuse the document-claim probe for semantic roadmap claims instead of designing a second checker. |
+| FT174 | FT193 | FT193 removes one field from the grammar and adds the first ticket-field agreement check; specify the dependency parser against the reduced grammar and beside the check it extends. |
 | FT162 | FT169 | Build full-run subject resolution on the settled landing primitive. |
 | FT166 | FT98, FT113 | The porcelain composes over the shipped reduced-gate path allowlist; recoverable set-aside then defines the commit command's smallest sound contract. |
 | FT168 | FT153 | Expose focused canary execution after baseline meaning is settled. |
@@ -2256,5 +2280,5 @@ prose batch edits.
 ## Recommended sequence
 
 1. `/bench-write-spec` — FT156, taking the anchor-mechanism ruling as the grill at spec entry (reviewer direction 2026-08-03). The ruling gates prose batch 1 on both goal tracks and reviewer latency is the binding constraint, so it goes first even though the staged frontier is not drained.
-2. `/bench-implement-spec` — the three staged specs: FT188 (`specs/exact-prospective-landing/spec.md`) first, since it removes the writer lock the other two pay, then FT187 (`specs/ft187-communication-surface-cut/spec.md`) and FT135 (`specs/pre-push-guard-visibility/spec.md`).
+2. `/bench-implement-spec` — the four staged specs: FT188 (`specs/exact-prospective-landing/spec.md`) first, since it removes the writer lock the others pay, then FT193 (`specs/authoring-hardening/spec.md`), which hardens the ticket and spec authoring every later build runs through and whose sequencing gate is now satisfied, then FT187 (`specs/ft187-communication-surface-cut/spec.md`) and FT135 (`specs/pre-push-guard-visibility/spec.md`).
 3. `/bench-write-spec` — FT141 (prose-independent Go, parallel-capable) and FT158 (the standing falsification pass), the two gates on prose batch 1 per the goal-tracks path above. FT184 re-priced to MEDIUM in this drain and is the cheapest lifecycle relief available, so take it here if the prose track is waiting on the ruling.
