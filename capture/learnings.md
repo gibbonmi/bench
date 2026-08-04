@@ -53,3 +53,34 @@ Format per entry. Heading: `## YYYY-MM-DD — short title  [open]`
   not exist as a command, so the count is monotonic by construction.
 - **Proposed rule change:** none from me; parked to `capture/IDEAS.md` with the
   measurements, because discarding preserved work is a reviewer decision and a new seam.
+
+## 2026-08-03 — A ticket's `Assumptions:` field mostly holds verified preconditions, not assumptions  [open]
+
+- **What happened:** Writing eight tickets for `specs/recovery-discard`, every
+  `Assumptions:` line I authored turned out to hold one of two things, and neither is an
+  assumption. Most clauses were inherited preconditions that are checkable against the
+  tree ("`enrich-recovery-plan.md` has landed, so orphaned and absent are distinct plan
+  verdicts") — a delegate can verify that in one command, and the ticket's own
+  `Blocked by:` line already asserts it. The rest were restatements of a standing kit
+  rule: all eight tickets ended with a clause meaning "claims re-derived from the tree at
+  pickup", which is `craft-tickets`' instruction to every ticket, copied eight times into
+  the artifacts that instruction governs. The reviewer noticed the tension with
+  `.bench/BENCH.md`'s "NEVER assume, always verify" and asked whether it was the cause of
+  a separate parsing defect. It was not — that defect was `listValue` splitting on commas
+  — but the naming question stands on its own.
+- **Right behavior:** Unclear, and that is the finding. A field named `Assumptions` in a
+  kit whose operating guide forbids assuming invites authors to write verifiable facts
+  into a slot whose name says they were not verified. Two clause kinds are being pooled:
+  inherited preconditions (verifiable, and partly redundant with `Blocked by:`) and
+  standing-rule restatements (a one-source-per-fact violation, since the rule is
+  canonical in the skill). Only a genuine third kind — something the ticket takes on
+  faith because it *cannot* be checked at authoring time — matches the field's name.
+- **Proposed rule change:** Reviewer decides between three shapes, and I have no
+  preference strong enough to recommend one: rename the field to something like
+  `Preconditions:` and let it hold checkable facts honestly; keep the name and have
+  `craft-tickets` say explicitly that only unverifiable-at-authoring-time claims belong
+  there, with inherited preconditions left to `Blocked by:`; or split it into two fields.
+  Any of the three is a change to the ticket grammar, so it touches `craft-tickets`, the
+  taught example the `example-agreement` conformance check grades, and `ParseTicket` in
+  `internal/specbuild/assign.go` — kit surface, under the synthesis discipline, not
+  something I should act on from inside a build.
