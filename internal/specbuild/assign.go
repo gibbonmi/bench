@@ -43,6 +43,9 @@ func (s *Service) Assign(ctx context.Context, slug, ticketArg, request string) (
 	if err := s.requireCommittedTicket(ticket); err != nil {
 		return Assignment{}, Status{}, err
 	}
+	if !ticket.ContractsAnchored() {
+		return Assignment{}, Status{}, fmt.Errorf("spec build ticket %s declares a contract crossing no path in its ownership fence", filepath.Base(ticket.Path))
+	}
 	requestID := digest(run.Run + "\x00" + request)
 	op, completed, err := s.beginOperation(&run, "assign", requestID, ticket.Digest)
 	if err != nil {
@@ -96,14 +99,40 @@ func (s *Service) Assign(ctx context.Context, slug, ticketArg, request string) (
 }
 
 // Ticket is one parsed ticket file: its title, content digest, charged
-// acceptance rows, ownership fence, and assumptions.
+// acceptance rows, ownership fence, assumptions, and declared contracts.
 type Ticket struct {
 	Path, Title              string
 	Digest                   string
 	Rows, Fence, Assumptions []string
+	Contracts                string
 }
 
 var ticketRow, packageName, rowRange = regexp.MustCompile(`^\s*-\s+\[[ xX]\]\s+\[([^]]+)\]`), regexp.MustCompile(`\binternal/[A-Za-z0-9_-]+\b`), regexp.MustCompile(`^(R)([0-9]+)-R([0-9]+)$`)
+
+// contractOperand matches one backticked operand of a Contracts crossing.
+var contractOperand = regexp.MustCompile("`([^`]+)`")
+
+// ContractsAnchored reports whether the declared crossings name at least one
+// path the ticket itself writes. A crossing's far side may name a surface no
+// path holds, so one anchored operand is the whole requirement; a crossing
+// written entirely in concepts anchors nothing, and the ticket cannot maintain
+// the advertisement of what it changes. This is assignment policy, not parse
+// validity: ParseTicket stays the shared grammar its other consumers grade
+// against, and only the assign path refuses on the answer.
+func (t Ticket) ContractsAnchored() bool {
+	if t.Contracts == "" || t.Contracts == "none crosses" {
+		return true
+	}
+	for _, match := range contractOperand.FindAllStringSubmatch(t.Contracts, -1) {
+		operand := strings.TrimSpace(match[1])
+		for _, path := range t.Fence {
+			if operand != "" && (strings.HasPrefix(operand, path) || strings.HasPrefix(path, operand)) {
+				return true
+			}
+		}
+	}
+	return false
+}
 
 // ParseTicket resolves arg against specPath's tickets directory and parses the
 // ticket file it names. The conformance example-agreement check is the
@@ -142,6 +171,9 @@ func ParseTicket(specPath, arg string) (Ticket, error) {
 		}
 		if strings.HasPrefix(line, "Assumptions:") {
 			result.Assumptions = append(result.Assumptions, listValue(strings.TrimPrefix(line, "Assumptions:"))...)
+		}
+		if strings.HasPrefix(line, "Contracts:") && result.Contracts == "" {
+			result.Contracts = strings.TrimSpace(strings.TrimPrefix(line, "Contracts:"))
 		}
 	}
 	if len(result.Rows) == 0 {

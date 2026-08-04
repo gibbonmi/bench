@@ -230,6 +230,10 @@ func checkWorkflowAnchors(root string) []string {
 		".agents/skills/bench-craft-tickets/SKILL.md dropped the ticket template What to build heading")
 	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "## Acceptance",
 		".agents/skills/bench-craft-tickets/SKILL.md dropped the ticket template Acceptance heading")
+	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "Derive the fence from the `Contracts:` line",
+		".agents/skills/bench-craft-tickets/SKILL.md dropped the fence-derivation rule")
+	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "Each crossing anchors at least one backticked path inside this ticket's own fence",
+		".agents/skills/bench-craft-tickets/SKILL.md dropped the Contracts fence-anchoring requirement")
 
 	requireCollapsed(".agents/skills/bench-craft-tickets/SKILL.md", "`craft-spec` owns the spec-time **who-writes-where** fence",
 		".agents/skills/bench-craft-tickets/SKILL.md dropped the craft-spec ownership-fence cross-pointer")

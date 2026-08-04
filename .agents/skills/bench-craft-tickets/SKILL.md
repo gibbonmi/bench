@@ -149,7 +149,13 @@ continuation wrapped onto the next line is dropped without a word.
   comma-separated, each entry backticked. An entry is a path prefix: a package
   directory, or an exact file. Checkpoint enforcement is a whitelist, so a path
   left off the line is a path the ticket may not touch, and scoping prose ("the
-  shellcheck entries of…") names nothing the fence can hold.
+  shellcheck entries of…") names nothing the fence can hold. Derive the fence
+  from the `Contracts:` line below rather than from the lines that prompted the
+  ticket: a value this ticket changes is advertised wherever it is restated — a
+  spec's count, a profile row, a sibling ticket — and each of those
+  advertisements is a path this ticket writes. A repair fenced to a finding's
+  cited lines cannot maintain an advertisement it may not touch, so the
+  contradiction surfaces a review round later instead of at slicing time.
 - **`Assumptions:`** separates its clauses with semicolons, because the parser
   splits the line on commas and a comma-joined sentence shatters into fragments.
 - **`Blocked by:`** is `none`, or the file basenames of the sibling tickets that
@@ -160,7 +166,11 @@ continuation wrapped onto the next line is dropped without a word.
   against the real producer or the junction ticket that will — never a
   fixture standing in for either. `none crosses` is a falsifiable claim, not
   a default; writing it on every ticket of a multi-fence build asserts the
-  fences exchange nothing, which the review checks.
+  fences exchange nothing, which the review checks. Each crossing anchors at
+  least one backticked path inside this ticket's own fence — the side this
+  ticket writes; the other side may name a surface no path holds (`bash`, every
+  audited package). A crossing written entirely in concepts
+  (`registry`→`derived inventory`) anchors nothing and `assign` refuses it.
 - **`## Red mutations`** binds one row per acceptance ID: the concrete mutation
   that breaks that criterion, an owner independent of the code under test, and
   the public operation sequence that shows the red. Re-derive every claim in the

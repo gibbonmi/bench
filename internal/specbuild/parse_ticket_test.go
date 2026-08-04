@@ -142,3 +142,68 @@ func TestParseTicketRangeExpansionUnchanged(t *testing.T) {
 		t.Errorf("Rows = %q, want %q", parsed.Rows, want)
 	}
 }
+
+// A ticket may only maintain what its fence lets it write, so a declared
+// crossing that names no fenced path is a repair scoped to the lines that
+// prompted it rather than to the artifacts it changes. The parse stays
+// permissive — its other consumers grade the grammar — and the assign path
+// refuses on this answer.
+func TestTicketContractsAnchoredToTheOwnershipFence(t *testing.T) {
+	const charged = "\n- [ ] [CA1] the crossing names a path the ticket writes.\n"
+	for _, row := range []struct {
+		name, contracts string
+		anchored        bool
+	}{
+		{
+			name:      "concept operands on both sides",
+			contracts: "Contracts: every registry row's port name crosses registry\u2192derived inventory\n",
+		},
+		{
+			name:      "one operand inside the fence",
+			contracts: "Contracts: the gate invocation crosses `internal/specbuild`\u2192bash, asserted by CA1 against the real subprocess\n",
+			anchored:  true,
+		},
+		{
+			name:      "far side names no path at all",
+			contracts: "Contracts: the derived inventory crosses `internal/specbuild`\u2192every audited package, asserted by CA1 against the real derivation\n",
+			anchored:  true,
+		},
+		{
+			name:      "explicitly declared empty",
+			contracts: "Contracts: none crosses\n",
+			anchored:  true,
+		},
+		{
+			name:     "no Contracts line",
+			anchored: true,
+		},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			body := "# Anchor the crossing\n\nOwnership fence: `internal/specbuild`\n" + row.contracts + charged
+			specPath, _ := ticketFixture(t, body)
+			parsed, err := specbuild.ParseTicket(specPath, "one.md")
+			if err != nil {
+				t.Fatalf("ParseTicket refused a well-formed ticket: %v", err)
+			}
+			if got := parsed.ContractsAnchored(); got != row.anchored {
+				t.Errorf("ContractsAnchored() = %v, want %v", got, row.anchored)
+			}
+		})
+	}
+}
+
+func TestParseTicketReadsTheContractsLine(t *testing.T) {
+	body := "# Carry the crossing into the parsed ticket\n" +
+		"\nOwnership fence: `internal/specbuild`\n" +
+		"Contracts: the parsed operands cross `internal/specbuild`\u2192callers, asserted by CA1 against the real parser\n" +
+		"\n- [ ] [CA1] the parsed ticket carries its declared crossing.\n"
+	specPath, _ := ticketFixture(t, body)
+	parsed, err := specbuild.ParseTicket(specPath, "one.md")
+	if err != nil {
+		t.Fatalf("ParseTicket: %v", err)
+	}
+	const want = "the parsed operands cross `internal/specbuild`\u2192callers, asserted by CA1 against the real parser"
+	if parsed.Contracts != want {
+		t.Errorf("Contracts = %q, want %q", parsed.Contracts, want)
+	}
+}

@@ -395,3 +395,29 @@ func (*abandonOwner) Create(context.Context, string, string, string, string) (Ow
 }
 
 type abandonSnapshot struct{ state, refs, worktrees string }
+
+// The assign path is where an unanchored crossing costs something: a ticket
+// that cannot write the artifact advertising what it changes is refused at
+// lease time rather than discovered a review round later.
+func TestAssignRefusesAContractCrossingNoFencedPath(t *testing.T) {
+	root := repo(t)
+	write(t, filepath.Join(root, ".gitignore"), "dist/\n")
+	write(t, filepath.Join(root, "specs", "build demo", "tickets", "one.md"),
+		"# One\n\nOwnership fence: internal/specbuild\n"+
+			"Contracts: every registry row's port name crosses registry→derived inventory\n"+
+			"Assumptions: the crossing anchors nothing\n\n- [ ] [R10] unanchored crossing\n")
+	git(t, root, "add", ".")
+	git(t, root, "commit", "-qm", "unanchored ticket")
+	service := New(root, &countingGate{}, realOwner{})
+	if _, err := service.Start(context.Background(), "build demo"); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	assigned, _, err := service.Assign(context.Background(), "build demo", "one.md", "unanchored")
+	if err == nil {
+		t.Fatalf("Assign leased %#v for a crossing naming no fenced path", assigned)
+	}
+	const want = "spec build ticket one.md declares a contract crossing no path in its ownership fence"
+	if err.Error() != want {
+		t.Fatalf("error = %q, want %q", err, want)
+	}
+}
