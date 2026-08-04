@@ -2,51 +2,44 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `ae87452` plus this commit, unpushed
-Spec: `specs/recovery-discard/spec.md` is **implemented and landed**.
-`specs/exact-prospective-landing/spec.md`, `specs/ft187-communication-surface-cut/spec.md`,
-and `specs/pre-push-guard-visibility/spec.md` remain staged and untouched.
-Gate: green on the landed tree, run by `bench commit` for both landing commits.
+Branch: `main` — HEAD `f325816` plus this commit, unpushed (21 commits ahead of origin)
+Spec: `specs/exact-prospective-landing/spec.md`, `specs/ft187-communication-surface-cut/spec.md`,
+and `specs/pre-push-guard-visibility/spec.md` are staged and untouched. `recovery-discard`
+retired in this commit.
+Gate: green, run by `bench commit` for this drain.
 
 ## State
 
-**Phase reached: landed and reviewed; release readiness is the open question.**
-`recovery-discard` shipped as two commits — `fafb049` (the composed feature, 27 files,
-+2607/−117) and `ae87452` (the review's critical finding). Nothing is in flight.
+**Phase reached: roadmap drain complete; the staged spec frontier is untouched.**
+All three capture sources are empty — `capture/IDEAS.md` at zero, no open learnings, no
+pending retros — so the next `bench status` should recommend build work rather than a drain.
 
-- **It did not land through `bench spec build promote`.** The lifecycle run was abandoned
-  mid-repair because a mis-drawn ownership fence could not be repaired in-lifecycle: a
-  ticket's acceptance row required a path outside its own fence, the fence is fixed in the
-  assignment record at `assign` time, and no public operation releases one assignment.
-  The retained candidate was landed directly through `bench commit`, which ran the full
-  project gate green. The reviewer approved that deviation explicitly.
-- **Four criticals were found and fixed across three review rounds**, all one shape — a
-  catch-all verdict or an unvalidated persisted value acquiring the authority to delete
-  what it names. In order: `--discard` accepted any existing ref; `--discard` authorized
-  the unclassifiable `retain` verdict; `validCore` accepted an arbitrary `CheckpointRef`;
-  `validCore` and `assignmentBranches` accepted an arbitrary `Branch`. Anyone extending
-  reclamation or recovery should assume a fifth instance exists until proven otherwise.
-- **Open, deliberately not fixed — reviewer's call:**
-  - The retire side of the stale-fingerprint guard has no unit coverage. Mutating
-    `applyRecoveryVerb`'s check to fire only for discard passes `go test ./internal/worktree`
-    in full; a runtime contract test does kill it, so the gate bites and the hole is
-    unit-level parity only.
-  - The orphan deletion's compare-and-swap resolves its expected OID at delete time, so a
-    row-less ref is compared against a just-read value. Closing it means carrying the
-    planned OID in the plan — a design change, not a repair.
-- `capture/learnings.md` holds three open entries: the lost review findings, the
-  hand-assembled checkpoint receipt, and the fence validated only at checkpoint. The last
-  two are what made this build expensive and both propose concrete kit changes.
-- The reviewer's standing verdict from round one — this should have been two specs and
-  about ten tickets, because recovery discard and reclamation have disjoint package sets —
-  was borne out. It ran to nineteen tickets across four packages.
+- **This drain verdicted five learnings and one idea, all into existing rows.** The idea
+  and the release-preserves-unlanded learning both close against the shipped
+  `recovery-discard` route and leave FT98 owning only the residue drain. The lost-review-
+  findings learning extends FT107's sixth clause (write `reviews/<spec-slug>.md`, required,
+  delegated reviews included); the debug-session worktree learning is FT107's new
+  seventeenth clause; the `Assumptions:` field question and the assign-time fence check are
+  FT174's; the receipt-generator half re-priced **FT184 from LOW to MEDIUM**, which is the
+  one contestable call in the batch.
+- **`bench resume` still re-preserves the whole recovery backlog at session start.** The
+  route to clear it now exists (`bench worktree recovery <ref> --discard <fingerprint>`,
+  one ref per invocation, and `bench spec build reclaim <slug>`), but the drain is a
+  reviewer judgment, not automatable — it is FT98's remaining work, not this pass's. Only
+  seven refs under `refs/bench/recovery/` still exist; most preserved rows name refs that
+  are already gone.
+- **The `recovery-discard` build never wrote a retro**, because it landed through
+  `bench commit` after its lifecycle run was abandoned rather than through
+  `promote` + `/bench-final-check`. Nothing is owed; the evidence that mattered reached
+  the roadmap through the two learnings that build produced.
 
 ## Next command
 
-Assess release readiness with `bench prep-release` (maintainer-run ship tier; it refuses
-without a current dev-green verdict for the exact tree). Then push. The two open findings
-above are follow-up work, not blockers — decide them at the next `/bench-what-next`, which
-also owns the three learnings and the `capture/retros/` entry this build never wrote.
+`/bench-write-spec` for FT156, taking the anchor-mechanism ruling as the grill at spec
+entry — it gates prose batch 1 on both goal tracks and reviewer latency is the binding
+constraint. If that ruling is not ready, `/bench-implement-spec` for
+`specs/exact-prospective-landing/spec.md` (FT188) instead; it removes the writer lock the
+other two staged specs pay. Push is also outstanding: 21 unpushed commits on `main`.
 
 ## Shape
 

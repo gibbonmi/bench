@@ -364,11 +364,29 @@ reverse-applying the branch's cumulative diff against the default tree
 (`efb456c`), and `bench worktree clean --discard-branch` is the
 reviewer-supplied proof for what no derivation can establish (`37411a0`) —
 fail-closed stayed the default and every ambiguity still resolves to
-not-landed. What remains of this face is the drain: five recovery refs and
-eleven open assignment rows still re-preserve at the 2026-08-01 session
-start, and whether the new proof retires them is unverified — walk the
-residue through `bench resume`/`bench worktree clean` and confirm it reaches
-zero or names what legitimately remains. The third occurrence came when a scoped roadmap commit was
+not-landed. The unprovable half shipped 2026-08-04 (`fafb049`, from the
+`recovery-discard` spec retired here): `bench worktree recovery <ref>
+--discard <fingerprint>` retires one inspected payload per invocation without
+asserting it landed, the plan separates an orphaned ref from an absent one and
+reports how many paths the payload touches so the operator is not choosing
+blind, and `bench spec build reclaim` deletes the provisional residue of
+terminal spec-build runs. What remains of this face is the drain itself, and it
+stays reviewer-owned because discarding preserved work is a judgment no
+derivation can make: `bench resume` re-preserves the whole backlog at every
+session start, and most of those rows name recovery refs that no longer exist,
+so the pass is per-ref over what `bench worktree recovery` reports for
+`refs/bench/recovery/` and the open assignment rows. Sources:
+`capture/IDEAS.md` and `capture/learnings.md` 2026-08-03, drained and verdicted
+here — both reported release growing the preserved set with no retire route,
+which is the route that has now shipped. Two residuals of that build were left
+for this verdict and stay open. The retire side of the stale-fingerprint guard
+has no unit coverage: mutating `applyRecoveryVerb`'s check to fire only for
+discard still passes `go test ./internal/worktree`, and only a runtime contract
+test kills it, so the gate bites and the hole is unit-level parity. And the
+orphan deletion's compare-and-swap resolves its expected OID at delete time, so
+a row-less ref is checked against a value just read rather than against the one
+the plan graded; closing that means carrying the planned OID through the plan,
+which is a design change and not a repair. The third occurrence came when a scoped roadmap commit was
 blocked by an unrelated dirty session handoff on 2026-07-30; the session used
 an isolated verification worktree, the landing workaround owned by FT169,
 because the sanctioned set-aside primitive still does not exist. Face
@@ -392,8 +410,10 @@ implementation to prove a check bites always needs a revert, and
 `block-dangerous-git` blocks `git checkout <path>`; copy-aside works but is a
 papercut on a first-class activity in this repo (cf. `tests/canary/`), and a
 scoped single-path revert through the same recoverable primitive replaces
-both the papercut and any guard exemption. Whichever face ships first defines
-the one discard semantics; the others reuse it.
+both the papercut and any guard exemption. The one discard semantics is now
+defined rather than pending — plan first, exact fingerprint, one target per
+invocation, terminal outcomes that distinguish a proof from an operator's
+judgment — and the remaining faces reuse it rather than restating it.
 
 The FT131 close adds the ignored-cache face. Current-source verification defaults
 `GOCACHE` under `dist/`, while nested route tests strip ambient cache variables;
@@ -966,7 +986,20 @@ as advisory, wrote the pickup, and went straight into the repair pass, so the
 artifact lived and died untracked. Net tree state was identical and the failure
 mode was not exercised, which is exactly why the wording rather than the rule is
 the defect. Name the commit as its own ordered step ("commit the pickup, then
-repair"). Seventh (drained the same day), `/bench-implement-spec`'s "Route the
+repair"). The 2026-08-04 recurrence is the same clause failing one step
+earlier and for real: the `recovery-discard` build's second review ran in Codex
+under the top binding, returned eight findings including two criticals, and
+never wrote the file at all, so the findings reached the next session only as a
+hand-pasted summary and four of the eight (C4, C5, C6, SP5) now exist as tags
+with no text. The repair round rebuilt its evidence from the tree, so no repair
+rests on the lost text, but nobody can say the repairs close the findings that
+were raised. Make writing `reviews/<spec-slug>.md` a required step of
+`/bench-review-implementation` rather than an artifact `/bench-implement-spec`
+merely reads if present, and say so in both commands — including for a review
+delegated to another harness, where the coordinator owns capturing the returned
+findings to that path before acting on them. The spec-build review receipt is
+not that record: it attests that a review happened and its verdict, and a
+repair round consumes the findings. Seventh (drained the same day), `/bench-implement-spec`'s "Route the
 venue" is unsatisfiable under a harness that forbids delegation. It requires
 every spec-backed run to assign genuine write work to a write subagent before
 the first implementation edit, with no inline threshold; a session carrying a
@@ -1042,7 +1075,20 @@ Extend the same conventions: discover a subcommand's shape from
 `bench commands --brief` or `bin/bench.sh`, never by running an unrecognized
 bare verb; and redirect stdin from `/dev/null` for any `bench` invocation
 whose interactivity is not already known. The defect half — the bare verb's
-default itself — is FT178's, not prose.
+default itself — is FT178's, not prose. Seventeenth (drained 2026-08-04 from
+the learnings journal), a writing session opens its worktree at entry, not
+after the collision. Invariant 1 says to isolate when `git status` shows
+another writer, but that reading is a single check at session start: a
+`/bench-debug` session found the tree clean, edited five files in the main
+checkout, and was then deadlocked against a second session's drain that dirtied
+the same tree mid-run — neither changeset could commit past the other, moving
+to a worktree afterwards did not help, and the reviewer had to hand-run the
+`git restore` that `block-dangerous-git` correctly refuses. `/bench-debug`
+routes code authorship through `craft-delegate` only at Phase 5, while Phases 1
+and 2 routinely write repro harnesses with no isolation guidance at all. Either
+the entry orientation names the worktree as the debug session's workspace or
+the isolation rule moves ahead of the first write; the reviewer decides whether
+that is `/bench-debug`'s clause or a general session-entry one.
 
 **FT189 (MEDIUM) — an upstream `git worktree list` hang reaches every Bench
 worktree read.** `git worktree list --porcelain` hangs on a FIFO gitdir placed
@@ -1094,9 +1140,14 @@ stale), and reworded them. Extend the standard to spec and ticket prose — a sp
 names the enumeration source instead of restating its count — and let
 `/bench-review-implementation`'s Standards axis grade a restated count as
 duplicated knowledge. Whether any of it becomes a gate check rather than a review
-judgment is the reviewer's call at spec time. Kit edit under the
-`craft-synthesis` discipline. Source: `capture/learnings.md` 2026-08-03,
-verdicted here.
+judgment is the reviewer's call at spec time. The `recovery-discard` build adds
+the ticket-side instance: all eight of its tickets ended their `Assumptions:`
+line with a clause meaning "claims re-derived from the tree at pickup" — which
+is `craft-tickets`' standing instruction to every ticket, copied eight times
+into the artifacts that instruction governs. The field's naming question is
+FT174's; the duplication is this row's. Kit edit under the `craft-synthesis`
+discipline. Sources: `capture/learnings.md` 2026-08-03, verdicted here and in a
+prior run.
 
 **FT58 (LOW) — hardened pool roots.** Permission failures on Bench-selected pool roots
 should propagate — the tree currently asserts best-effort tighten
@@ -1480,18 +1531,28 @@ of its ownership fence; the fix lives in `internal/worktree/resume.go`, beside
 the absent-target planning fix that landed at `dfcc71d`. Source:
 `capture/IDEAS.md` 2026-08-02, drained here.
 
-**FT184 (LOW) — `bench spec build checkpoint` receipts are hand-assembled
+**FT184 (MEDIUM) — `bench spec build checkpoint` receipts are hand-assembled
 against an undocumented schema.** The first full lifecycle run discovered the
 row-outcome vocabulary (`passed|already-covered|not-tdd-able`) only by reading
 `receiptRows`, and `error: invalid spec build receipt` names no failing
 condition, so each invalid-receipt refusal cost an in-package debug harness.
+The row's own re-price trigger fired on 2026-08-04: landing four repair tickets
+through `bench spec build` cost more coordinator turns assembling two receipts
+than verifying the two critical repairs they attested. Every field the
+coordinator hand-writes is derived data — run and assignment identities, the
+assignment base, a tree hash computed the way `git.TreeHash` does it, the
+ticket digest, one row per acceptance ID, the changed-path set diffed against
+the base, and a sha256 per assumption string — each cross-checked by
+`validateReceipt`, so any one wrong is an opaque `invalid spec build receipt`.
+The coordinator should supply only what it alone knows (row outcomes, the check
+list, and the probe command, output, and exit) and the tool should derive the
+rest, which is this row's generator half stated as a contract.
 Two halves, one owner: a receipt generator (a `bench spec build receipt
 <assignment>`-shaped command) that derives the row set from the ticket file —
 removing the row-set-mismatch refusals paid twice in that build — and a refusal
-that names the first failed check. Priced LOW because the schema is now known
-and receipts remain mechanically assemblable; re-price if the next lifecycle
-build pays the refusal class again. Source: the per-component-gate-scoping
-retro, drained here.
+that names the first failed check. Sources: the per-component-gate-scoping
+retro, drained here; `capture/learnings.md` 2026-08-04, verdicted here — the
+third build to pay the class, and the one that moved the price from LOW.
 
 The 2026-08-03 run re-priced the generator half and added two faces. The
 coordinator hand-built a `make-receipt.sh` and spent roughly 30k tokens
@@ -1574,9 +1635,10 @@ Four singles ride along. The orphaned-review-pickup signal
 (`internal/status/status.go:534`, severity 9) pairs `reviews/*.md` against
 `specs/<slug>/spec.md`, and neither side of that pairing holds today: `reviews/`
 does not exist in the tree, and most `specs/` directories carry only
-a `tickets/` folder with no `spec.md` at all. A severity-9 row that cannot fire
-is either a signal pointed at a retired convention or a convention that quietly
-stopped being followed — decide which, then repoint or cut it; re-measured
+a `tickets/` folder with no `spec.md` at all. Half of that question is now
+answered: the convention is live but unenforced, and FT107's sixth clause makes
+writing the file a required review step, so what stays here is the signal —
+repoint it at the enforced shape once that lands, or cut it. Re-measured
 2026-08-01. Source: `capture/IDEAS.md`, drained here.
 `internal/gate/manifest.go`'s `dedupe` has no observable
 effect — the scheduler's edge handling is already duplicate-tolerant and no
@@ -1672,6 +1734,27 @@ names both the ID and ticket instead of silently deduplicating evidence used by
 coverage accounting, checkpoint receipts, and repair routing. Sources:
 `capture/IDEAS.md` 2026-08-03, drained here; `capture/IDEAS.md` and
 `capture/learnings.md` 2026-08-02, drained in prior runs.
+
+Two more grammar questions join the same visit, both from the
+`recovery-discard` build. First, the `Assumptions:` field holds no assumptions.
+Across eight tickets every clause was one of two things — an inherited
+precondition checkable against the tree in one command, which `Blocked by:`
+already asserts, or a restatement of `craft-tickets`' own standing instruction —
+and a field named for unverified claims, in a kit whose operating guide says
+never to assume, invites exactly that. Only a claim the ticket takes on faith
+because it *cannot* be checked at authoring time matches the name. The reviewer
+picks the shape: rename it (`Preconditions:`) and let it hold checkable facts
+honestly, keep the name and have `craft-tickets` restrict it to
+unverifiable-at-authoring-time claims, or split it in two. Second, this row's
+open rejection-timing question has its answer priced: a ticket whose acceptance
+rows name a path outside its own `Ownership fence:` is a contradiction the
+parser can see when the ticket is read, and today it surfaces only when a
+checkpoint receipt arrives — after a delegate has already done the work. The
+correction then costs a sibling ticket and another delegate cycle, because
+`abandon` is whole-run and no verb releases one open assignment to re-fence it.
+Whether assign refuses such a ticket or `craft-tickets` teaches it as authoring
+discipline is the build's call; the second is cheaper and did not prevent this.
+Source: `capture/learnings.md` 2026-08-03 and 2026-08-04, verdicted here.
 
 **FT153 (MEDIUM) — the canary's vacuity baseline is a collision screen, not a
 vacuity proof.** A behavior-owned fixture's EXPECT is compared against its
@@ -2174,4 +2257,4 @@ prose batch edits.
 
 1. `/bench-write-spec` — FT156, taking the anchor-mechanism ruling as the grill at spec entry (reviewer direction 2026-08-03). The ruling gates prose batch 1 on both goal tracks and reviewer latency is the binding constraint, so it goes first even though the staged frontier is not drained.
 2. `/bench-implement-spec` — the three staged specs: FT188 (`specs/exact-prospective-landing/spec.md`) first, since it removes the writer lock the other two pay, then FT187 (`specs/ft187-communication-surface-cut/spec.md`) and FT135 (`specs/pre-push-guard-visibility/spec.md`).
-3. `/bench-write-spec` — FT141 (prose-independent Go, parallel-capable) and FT158 (the standing falsification pass), the two gates on prose batch 1 per the goal-tracks path above.
+3. `/bench-write-spec` — FT141 (prose-independent Go, parallel-capable) and FT158 (the standing falsification pass), the two gates on prose batch 1 per the goal-tracks path above. FT184 re-priced to MEDIUM in this drain and is the cheapest lifecycle relief available, so take it here if the prose track is waiting on the ruling.
