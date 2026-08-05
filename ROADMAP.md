@@ -42,26 +42,6 @@ repository-controlled bank evidence requirement makes this row active.
 
 Sources: `RR:C-05`; `RC:H-03`.
 
-**FT194 (HIGH, reproduced defect) — an empty-run fast-forward desynchronizes
-project-green and wedges promotion repo-wide.** When an empty spec-build run
-fast-forwards its recorded base to a moved branch tip, the project-green marker
-stays at the prior base. Promotion later supplies the new run base as
-`authorization.Bootstrap`'s expected marker and refuses with `project-green
-marker conflicts with another tip`. The same transition owns no repair path:
-checkpoint, assignment, review, and promotion all refuse after the tip move,
-while a fresh gate cannot advance the marker and abandon discards the reviewed
-composition.
-
-The red signal is the sanctioned lifecycle itself: start an empty run from a
-current project-green tip, advance the destination through an ordinary gated
-commit, let the run fast-forward, then promote. The promotion must not conflict
-with its recognized ancestor marker. Fix the state transition rather than add
-an operator rule: either advance base and marker together or let bootstrap
-accept a marker recognized as an ancestor of both the run base and destination
-tip. Because this changes the promotion authorization state machine and its
-only current escape is destructive, start with `/bench-write-spec`. Source:
-`capture/learnings.md` 2026-08-04, verdicted here.
-
 **FT171 (MEDIUM, decision required) — bound outer gate-phase concurrency
 against measured contention.** The artifact-split follow-up measured the
 `posture` package materially slower inside the fresh full gate than in its
@@ -2299,6 +2279,5 @@ prose batch edits.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT194, the reproduced project-green desynchronization that blocks every spec-build promotion and leaves abandon as the only escape. Land that repair before opening another lifecycle run.
-2. `/bench-write-spec` — FT156, taking the anchor-mechanism ruling as the grill at spec entry (reviewer direction 2026-08-03). Once FT194 restores promotion, reviewer latency on this ruling is again the binding constraint for both goal tracks.
-3. `/bench-implement-spec` — drain the staged frontier: FT188 (`specs/exact-prospective-landing/spec.md`) first to remove the writer lock, FT195 (`specs/go-build-cache-footprint/spec.md`) next to reduce every later build's cache and publication cost, then FT187 (`specs/ft187-communication-surface-cut/spec.md`) and FT135 (`specs/pre-push-guard-visibility/spec.md`).
+1. `/bench-write-spec` — FT156, taking the anchor-mechanism ruling as the grill at spec entry (reviewer direction 2026-08-03). Reviewer latency on this ruling is the binding constraint for both goal tracks.
+2. `/bench-implement-spec` — drain the staged frontier: FT188 (`specs/exact-prospective-landing/spec.md`) first to remove the writer lock, FT195 (`specs/go-build-cache-footprint/spec.md`) next to reduce every later build's cache and publication cost, then FT187 (`specs/ft187-communication-surface-cut/spec.md`) and FT135 (`specs/pre-push-guard-visibility/spec.md`).
