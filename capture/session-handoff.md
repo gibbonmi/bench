@@ -2,32 +2,29 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — pre-commit HEAD `09dbc35`
-Spec: `specs/ft156-anchor-registry/spec.md` (Status: staged), plus the four earlier staged specs (`exact-prospective-landing`, `ft187-communication-surface-cut`, `go-build-cache-footprint`, `pre-push-guard-visibility`)
-Gate: green expected for a documents-only change; the spec commit is the verdict
+Branch: `main` — pre-commit HEAD `4f2a969`
+Spec: four staged specs (`exact-prospective-landing`, `go-build-cache-footprint`, `ft187-communication-surface-cut`, `pre-push-guard-visibility`)
+Gate: full run owed on the drain commit; last cached verdict is stale
 
 ## State
 
-**Phase reached: `$bench-write-spec` closed over FT156.**
-The ready map compiled to `specs/ft156-anchor-registry/decisions/ft156-anchor-registry.md`
-and the spec stages the map's whole program as one spec, reviewer-pre-approved:
-two pulled-forward red-capability closures (the generic section-scoped
-`.bench/BENCH.md` fixture; the ticket template's `Contracts:`-line anchor), the
-declarative registry extraction carrying `bench anchors <path>`, comment-strip on
-the shared matcher, and the honest-strength prose sweep. The Codex falsification
-pass (`gpt-5.6-sol` / high) ran; its accepted findings are already folded in.
+**Phase reached: `/bench-what-next` drain over the ft156-anchor-registry close.**
+The batch diff reconciles the goal tracks around FT156's shipped registry
+(promoted `8e9f92d`, retired `e20d76e`), fixes FT107's stale lighter-path
+pointer to FT144, drains three ideas (FT89 gains the CLI-inventory sync gate
+check; the trace-bullet validation is dropped as already canonical; the
+request-ID generator becomes FT196), and drains the ft156 retro (recs merged
+into FT164, FT158, FT130, FT184; two dismissed as landed at `4f2a969`).
+`capture/IDEAS.md` is empty and `capture/retros/` is gone.
 
-Decisions that stay closed: stronger-than-substring matching stays deferred
-(map, 2026-08-02); no structure-grant raise (`.bench/structure.budgets` is
-reviewer-owned); registry data lives in a non-test package below the
-conformance import edge. Story 5's `fable / high` line rides the leverage
-override and is flagged veto surface.
+Decisions that stay closed: FT156's registry/substring ruling lives in ADR 0012;
+the staged-frontier-before-new-specs ordering stands.
 
 ## Next command
 
-`/bench-implement-spec specs/ft156-anchor-registry/spec.md` — in a fresh
-mid-tier session; the coverage map carries not-gate-observable rows, so this is
-not a `bench shift` candidate.
+`/bench-implement-spec specs/exact-prospective-landing/spec.md` — FT188 first
+to remove the writer lock, then FT195, FT187, FT135 per the refreshed
+`## Recommended sequence`.
 
 ## Shape
 

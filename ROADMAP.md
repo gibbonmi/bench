@@ -275,6 +275,14 @@ the public CLI seam: the cross-harness pass caught disagreement among status,
 dashboard, and handoff consumers that package-only tests did not expose. Source:
 the check-level-conformance-scoping retro, drained here.
 
+The ft156-anchor-registry build fixes the pass's placement inside a spec-build
+lifecycle: run the falsification pass *before* final review and turn each
+finding into its own repair ticket with an independent red mutation — that run
+did exactly this and the pass found three defects the first review receipt had
+missed, while the subsequent final review came back clean. The standing rule
+should carry that ordering. Source: the `ft156-anchor-registry` retro, drained
+here.
+
 **FT135 (MEDIUM) — a pre-push guard on a guessed branch looks armed while
 protecting nothing.** When the repository has no resolvable default branch,
 the installed pre-push hook falls back to a baked `fallbackProtectedBranch`
@@ -837,6 +845,12 @@ A skill description is the only part of a skill every harness loads, so a
 stale one advertises a route the phase forbids. One-line fix; it belongs with
 the frontmatter parse rather than alone.
 
+The derive-inventories-from-one-implementation half gains a named enforcement
+target: a gate check reconciling the `.bench/BENCH.md` CLI inventory (and the
+`BENCH-reference.md` plumbing list) against `bin/bench.sh`'s case labels, so
+the inventory's "kept in sync with `bin/bench.sh`" promise is enforced rather
+than hand-maintained. Source: `capture/IDEAS.md` 2026-08-05, drained here.
+
 Sources: `RR:S-06`, `RR:S-07`, `RR:S-08`, `RR:S-10`, `RR:S-11`, `RR:S-12`,
 `RR:S-13`, `RR:S-14`, `RR:S-15`, `RR:S-16`, `RR:S-17`, `RR:S-18`; `RC:M-05`;
 `capture/IDEAS.md`, drained here.
@@ -905,7 +919,7 @@ wording only: the bold "you must get an explicit OK *before* skipping canonical
 steps" reads as absolute against the table directly beneath it that grants the
 skip standing approval, and on a fast read the bold sentence wins and the table
 goes unused — fold the exception into the sentence. Substance there defers to
-FT156's named-lighter-path ruling and FT180's spec-optional route; this clause
+FT144's named-lighter-path ruling and FT180's spec-optional route; this clause
 only reconciles the two statements as they stand. Deliberately excluded: the
 `CLI Inventory` section's hand-maintained duplication of `bin/bench.sh` (no
 conformance check enforces the declared sync) is a second instance of FT89's
@@ -1408,7 +1422,10 @@ today lands between them, belongs before `start` or after `promote`; that
 placement is a `bench-implement-spec` command-text edit and rides whichever
 answer the queue-versus-refuse decision produces. Sources:
 `capture/learnings.md` 2026-08-02 and 2026-08-03, verdicted here; the
-`ft164-ticket-contracts` retro, drained here.
+`ft164-ticket-contracts` retro, drained here. Whatever answer lands carries the
+ft156-anchor-registry close's interim mitigation as its floor: concurrent
+capture edits around a lifecycle commit are preserved by exact hash, as that
+run did by hand. Source: the `ft156-anchor-registry` retro, drained here.
 
 **FT138 (LOW) — instrument Bench so build economics are measurable.**
 Reviewer-priced 2026-07-25 as a nice-to-have in its current state, so it
@@ -1508,6 +1525,15 @@ for one step — any remaining prose-only step in the phase commands deserves th
 same landing-site treatment, prefactor first. Sources: `capture/learnings.md`
 2026-08-03 and both 2026-08-03 retros, verdicted here.
 
+The ft156-anchor-registry close adds one wording repair to the same
+`craft-delegate` visit: the stale-base check's charge text requires HEAD to
+equal moving `main`, which is wrong for a lifecycle assignment — an assignment
+builds on the run's candidate ancestry, and a delegate holding the
+HEAD-equals-main rule reads a correct lifecycle base as stale. The charge
+guidance should describe candidate ancestry for lifecycle work and reserve the
+ff-to-main check for ordinary worktree delegations. Source: the
+`ft156-anchor-registry` retro, drained here.
+
 **FT165 (LOW) — fold the domain-modeling discipline into
 `/bench-shape-idea`.** Upstream candidate (mattpocock/skills,
 domain-modeling): as grill tickets resolve decisions, challenge fuzzy or
@@ -1601,7 +1627,18 @@ Sources: `capture/IDEAS.md` 2026-08-03 and both 2026-08-03 retros, drained here;
 `capture/learnings.md` 2026-08-03, verdicted here. The gate-evaluation-snapshot
 close repeated the generator request after its coordinator manually reproduced
 the tree-hash and receipt schemas. Source: the gate-evaluation-snapshot retro,
-drained here.
+drained here. The ft156-anchor-registry close repeats the third face: `--ticket`
+should say it expects the ticket filename token, not a repository path. Source:
+that retro, drained here.
+
+**FT196 (LOW) — a Bench-owned lifecycle request-ID generator.** `bench spec
+build assign` (and its lifecycle siblings) take a caller-minted `--request <id>`
+idempotency key, and nothing in Bench mints one, so agents reach for `openssl
+rand -hex` — an external dependency for a value the CLI could supply. Give the
+lifecycle a Bench-owned ID source: either a small generator verb or minting the
+key internally when the flag is omitted, whichever the idempotency contract
+allows. Sources: `capture/IDEAS.md` 2026-08-05 and the `ft156-anchor-registry`
+retro, drained here.
 
 **FT166 (LOW) — `bench capture commit`: porcelain for the ambient capture
 set.** Commit the capture surfaces (`capture/learnings.md`, `capture/IDEAS.md`,
@@ -2202,15 +2239,15 @@ the prose batch outranks the foundation only if it lands whole and
 falsifiable — otherwise the foundation goes first while FT141 and FT158
 build.
 
-1. Take FT156's anchor-mechanism ruling as the grill at `/bench-write-spec`
-   entry (reviewer direction 2026-08-03) and FT144's one-decision-both-phases
-   call as the remaining shaping item. Reviewer latency is the
-   binding constraint: grills serialize on the reviewer while builds
-   parallelize on agents. Four of the original six items have closed —
-   FT173's principle-9 relaxation and FT175's spec-start gate were ruled
-   2026-08-02, FT175's three ledger decisions moved behind the owners
+1. Take FT144's one-decision-both-phases call as the remaining shaping item.
+   Reviewer latency is the binding constraint: grills serialize on the reviewer
+   while builds parallelize on agents. Five of the original six items have
+   closed — FT173's principle-9 relaxation and FT175's spec-start gate were
+   ruled 2026-08-02, FT175's three ledger decisions moved behind the owners
    they consume (step 5), FT164's four flagged spec calls closed when
-   its spec was written and implemented, and FT181 shipped 2026-08-03.
+   its spec was written and implemented, FT181 shipped 2026-08-03, and
+   FT156's anchor-mechanism ruling closed when its registry shipped and the
+   spec retired 2026-08-05.
 2. Drain the staged frontier — FT135, FT187, FT188, and FT195 all carry staged specs
    — before authoring any new spec; deferring one is an explicit reviewer
    override, never a silent skip. Of the four only FT187 serves a goal
@@ -2222,9 +2259,9 @@ build.
    review, and full gate on the same anchor-pinned surface, so the batch
    waits for FT141 instead.
 3. Land the prose track's falsification before its wide batch: FT158 first
-   (with FT156 unruled and FT170 unproven, the cross-harness refute pass is
-   the only demonstrated defect-finder for prose diffs), plus FT156's
-   mechanism build if its grill rules for one. Then prose batch 1: FT107
+   (with FT170 unproven, the cross-harness refute pass is
+   the only demonstrated defect-finder for prose diffs); the FT156 anchor
+   registry is already in place under it. Then prose batch 1: FT107
    whole + FT89 + FT99 + FT144, with FT102, FT112, and FT165 riding on the
    shared gate — disjoint files make them safer to batch, and FT165 early
    improves every later grill. Then FT179 + FT111 as one visit, with FT164's
@@ -2266,11 +2303,12 @@ into the FT175 spec instead of building them as prerequisites; FT99 rides
 prose batch 1, and its uncertainty obligation folds into the FT175 spec
 where claims consume it. FT133 remains parallel evidence hardening; FT71
 stays deferred behind its existing FT169 recommendation. FT172 is outside
-this critical path; FT156 joins the decision session because no fixture
-proves a section-scoped `.bench/BENCH.md` anchor — the exact surface the
-prose batch edits.
+this critical path; the FT156 anchor registry shipped, so section-scoped
+`.bench/BENCH.md` anchors — the exact surface the prose batch edits — are
+now fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-write-spec` — FT156, taking the anchor-mechanism ruling as the grill at spec entry (reviewer direction 2026-08-03). Reviewer latency on this ruling is the binding constraint for both goal tracks.
-2. `/bench-implement-spec` — drain all four staged specs: FT188 (`specs/exact-prospective-landing/spec.md`) first to remove the writer lock, FT195 (`specs/go-build-cache-footprint/spec.md`) next to reduce every later build's cache and publication cost, then FT187 (`specs/ft187-communication-surface-cut/spec.md`) and FT135 (`specs/pre-push-guard-visibility/spec.md`).
+1. `/bench-implement-spec` — drain all four staged specs: FT188 (`specs/exact-prospective-landing/spec.md`) first to remove the writer lock, FT195 (`specs/go-build-cache-footprint/spec.md`) next to reduce every later build's cache and publication cost, then FT187 (`specs/ft187-communication-surface-cut/spec.md`) and FT135 (`specs/pre-push-guard-visibility/spec.md`).
+2. `/bench-shape-idea` — FT144's one-decision-both-phases call, the goal tracks' remaining shaping item; grills serialize on the reviewer, so start it while the staged builds run.
+3. `/bench-write-spec` — FT141, Go and prose-independent, buildable in parallel and the literal blocker that unblocks FT107 whole.
