@@ -1,6 +1,6 @@
 # Authoring hardening
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed conversation 2026-08-04 — six proposals hardening `craft-tickets` and `craft-spec` from the recovery-discard build's evidence; the reviewer chose the fence/red-mutation agreement check as the enforcement-first item, sized the ticket-breadth rule as a split signal rather than a cap, confirmed retiring the ticket grammar's `Assumptions:` field (including the `decisions/parallel-session-landings.md` sealed-field-list edit) after a mid-tier consult, and directed one bundled batch with a ticket per proposal.
 
