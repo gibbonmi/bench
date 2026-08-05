@@ -1,8 +1,8 @@
 # Add the Workflow-section relocation tripwire
 
-Blocked by: classify-workflow-guidance-fixtures.md
-Ownership fence: `tests/canary/workflow-guidance-anchors/fix-dont-park-section-relocated`
-Contracts: the mutated `.bench/BENCH.md` fixture and exact expected diagnostic cross `tests/canary/workflow-guidance-anchors/fix-dont-park-section-relocated`→the real graded-root conformance runner, asserted by WF1 against its output; family classification is supplied by classify-workflow-guidance-fixtures.md
+Blocked by: none
+Ownership fence: `internal/conformance/registry_test.go`, `tests/canary/workflow-guidance-anchors/fix-dont-park-section-relocated`
+Contracts: the mutated `.bench/BENCH.md` fixture and exact expected diagnostic cross `tests/canary/workflow-guidance-anchors/fix-dont-park-section-relocated`→the real graded-root conformance runner, while the family classification crosses that fixture→`internal/conformance/registry_test.go`; WF1 asserts both against the owning bite and complete fixture registry
 
 ## What to build
 

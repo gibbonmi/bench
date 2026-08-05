@@ -1,8 +1,8 @@
 # Pin the ticket Contracts template
 
-Blocked by: classify-workflow-guidance-fixtures.md
+Blocked by: add-workflow-section-relocation-tripwire.md
 Ownership fence: `internal/conformance/docs_workflow_helpers_test.go`, `tests/canary/workflow-guidance-anchors/ticket-contracts-template-anchor`
-Contracts: the `Contracts:` template anchor tuple crosses `internal/conformance/docs_workflow_helpers_test.go`→the mutated craft-tickets fixture, asserted by CT1 against the real graded-root diagnostic; family classification is supplied by classify-workflow-guidance-fixtures.md
+Contracts: the `Contracts:` template anchor tuple crosses `internal/conformance/docs_workflow_helpers_test.go`→the mutated craft-tickets fixture, asserted by CT1 against the real graded-root diagnostic; the family classification is supplied by add-workflow-section-relocation-tripwire.md
 
 ## What to build
 
