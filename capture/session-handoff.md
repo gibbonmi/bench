@@ -2,28 +2,19 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `e176eb9`, 1 dirty path, 6 unpushed commits
+Branch: `main` — HEAD `9deb062`, clean tree, 10 unpushed commits
 Spec: `specs/exact-prospective-landing/spec.md` (Status: staged), `specs/ft187-communication-surface-cut/spec.md` (Status: staged), `specs/go-build-cache-footprint/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: red at `2392bdf` — current
+Gate: green at `254d2ef` — current
 
 ## State
 
-**Phase reached: implementation remains active; two out-of-fence prerequisites are integrated, the adapter is refreshed and focused-green, and a third fixture prerequisite stopped the full runtime package at the declared cap.**
+**Phase reached: implementation is integrated and exact-candidate review is next.**
 
-Run `869a2d33cab96f962882762a9ea56fd21c952976248e64fa917f6da6c48dbca3` has candidate `30a64752f82fcd330dfe217d833d80e33eb9d939`. Integrated repair assignments:
+Run `869a2d33cab96f962882762a9ea56fd21c952976248e64fa917f6da6c48dbca3` has exact candidate `77bc0e6b5b1be8b753dbdac49e0b19105d17e67d`; all eight assignments are checkpointed, integrated, and released. The adapter's AC1-AC9 rows are green on the repaired composition. Focused R2, the six-row prospective fixture repro, `internal/commit`, full `internal/contract/runtime`, and `internal/landing` are green. Delegate and coordinator mutations independently red and were restored.
 
-- `62676f7c03ae6c96c024211994b82e3d`: writer-aware prospective authorization and landing output, full scoped packages green.
-- `383e2781a83a5743e1d5251148bf4450`: exact green reuse before gate-lock acquisition, full `internal/gate` green in 144.947s.
+Critical fixture prerequisites were repaired through lifecycle assignments: Story 5 common-Git-dir coordination, pre-lock fault timing, prospective-safe runtime marker/diagnostic fixtures, and the R2 committed oracle base. No adjacent noncritical cleanup was taken. The candidate now requires the fresh exact-candidate Standards/Spec/Coverage review and receipt before promotion.
 
-Adapter assignment `daa1f4183dcb0dd159cca7b738d0fe7c` is active on base `30a64752f82fcd330dfe217d833d80e33eb9d939`. Refresh preserved its three in-fence dirty paths: `internal/commit/commit.go`, `internal/contract/runtime/runtime_commit_test.go`, and `CHANGELOG.md`. AC4's public prospective-checkout inspection and AC7's deterministic two-process CAS/rerun journey are focused-green; the wrong-base mutation is red and restored.
-
-The full `go test -count=1 ./internal/commit ./internal/contract/runtime` timed out only at `TestFT78Story5ProofLedger/R14/interrupted-pending-inspection`. Tight repro:
-
-`timeout 20s go test -count=1 ./internal/contract/runtime -run 'TestFT78Story5ProofLedger/R14/interrupted-pending-inspection' -v`
-
-Exit `124`, combined-output SHA-256 `d15278907b6545b4b1e2f0e60c0f371b23ba5687c35f2fbdd20965e6800d7a0e`, produced `2026-08-05T19:23:42.151084233Z`. Confirmed cause: the fixture gate script addresses `.git/story5-*` as a directory; prospective checkouts carry `.git` as a file, so its one-shot sentinel is never found and the script enters its infinite first-run loop. The repair must own `internal/contract/runtime/runtime_gate_action_proof_test.go` and resolve the common Git directory through Git, matching the existing prospective-safe fixture pattern. The adapter remains resumable afterward.
-
-Closed decisions: use `assign --refresh`, never abandon, for this recoverable run; preserve the original adapter request `7c2e9a1d4f6b4830a5c7e1d9b3f60842`; no review or promotion occurs until the adapter checkpoints and integrates; the next repair gets a top-tier line because the mid-tier adapter missed named public rows.
+Closed decisions: preserve candidate identity during review; concrete review defects return through repair assignments; contestable design findings require reviewer veto. The large-diff cross-harness falsification offer remains unanswered, so promotion must not run until the reviewer answers it. If the next recomposed attempt fails, hand the preserved blocker and receipt to Fable rather than retrying locally.
 
 ## Next command
 
