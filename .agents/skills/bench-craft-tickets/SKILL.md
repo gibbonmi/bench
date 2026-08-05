@@ -121,10 +121,30 @@ mismatch rather than six tickets past it.
 Re-derive each contract, and every claim a ticket makes about it, from the tree
 after earlier tickets land — never from the spec's account of the base.
 
-This step's output is each ticket's `Contracts:` line (next section). A
-discovery that ran leaves either named crossings or the literal claim
-`none crosses`; a ticket file with no `Contracts:` line is the visible
-signature of a skipped discovery, and a multi-fence breakdown whose every
+Before discovery is complete, enumerate every required integration surface for
+each file, registry member, command, or fixture the ticket adds, changes, or
+removes. Start from the nearest existing member of the same family and find every
+path that registers or classifies it, records it in a manifest or inventory,
+routes it, derives a count from it, or consumes it. A new fixture in a classified
+family therefore carries both its classifier and its real consumer as surfaces.
+
+An extraction or single-source ticket also enumerates consumers by the moved
+fact's exact literal values and exported symbols, not only by the abstraction
+category being extracted. A residue sweep for tables or matchers is incomplete
+until it accounts for bespoke consumers of those facts. An exported symbol left
+with zero current consumers is residue unless an acceptance row explicitly owns
+it as public API or a named dependent ticket consumes it next.
+
+This step's outputs are each ticket's `Ownership fence:`, `Blocked by:`,
+`Integration surfaces:`, and `Contracts:` lines (next section). Discovery is
+complete only when `Integration surfaces:` resolves every required surface to
+exactly one owner: a fence entry; an existing unchanged path exercised by a named
+acceptance row; a blocker basename; or a dependent basename whose `Blocked by:`
+names this ticket. Every cross-fence fact also resolves to a named contract. The
+literal `none` is a falsifiable claim that review re-derives from the tree; a
+missing line is the visible signature of skipped integration discovery.
+`Contracts:` likewise carries either named crossings or `none crosses`; a missing
+line skipped value-contract discovery, and a multi-fence breakdown whose every
 ticket claims `none crosses` is a claim the review grades, not a default.
 
 ## Write one file per ticket
@@ -137,6 +157,7 @@ shape:
 
 Blocked by: <sibling ticket file basenames, or none>
 Ownership fence: `<path prefix>`, `<path prefix>`
+Integration surfaces: <surface>→<fence path | existing path + row ID | blocker basename | dependent basename>; or none
 Contracts: <value> crossing <fence>→<fence>, asserted by <row ID> against the real producer; or none crosses
 
 ## What to build
@@ -155,8 +176,9 @@ Contracts: <value> crossing <fence>→<fence>, asserted by <row ID> against the 
 | <ID> | <the concrete mutation> | <the independent owner> | <the public operation sequence that proves the red> |
 ```
 
-Every field is one line. The parser reads the prefixed line alone, so a
-continuation wrapped onto the next line is dropped without a word.
+Every field is one line. Lifecycle-parsed fields are read from their prefixed
+line alone, so a continuation wrapped onto the next line is dropped without a
+word.
 
 - **Acceptance rows** are single-line `- [ ] [ID] <behavior>`. The ID is
   ticket-local: a short uppercase tag plus a number, unique within the ticket.
@@ -167,12 +189,18 @@ continuation wrapped onto the next line is dropped without a word.
   directory, or an exact file. Checkpoint enforcement is a whitelist, so a path
   left off the line is a path the ticket may not touch, and scoping prose ("the
   shellcheck entries of…") names nothing the fence can hold. Derive the fence
-  from the `Contracts:` line below rather than from the lines that prompted the
-  ticket: a value this ticket changes is advertised wherever it is restated — a
-  spec's count, a profile row, a sibling ticket — and each of those
+  from the `Contracts:` line below and the `Integration surfaces:` line below,
+  rather than from the lines that prompted the ticket: a value this ticket
+  changes is advertised wherever it is restated — a spec's count, a profile row,
+  a sibling ticket — and each of those
   advertisements is a path this ticket writes. A repair fenced to a finding's
   cited lines cannot maintain an advertisement it may not touch, so the
   contradiction surfaces a review round later instead of at slicing time.
+- **`Integration surfaces:`** is the review-owned integration-discovery landing
+  site; lifecycle does not parse it or infer fence completeness from it. Resolve
+  every required surface through the completion criterion above. `none` asserts
+  that the sibling-family and literal/symbol searches found no integration
+  surface; review repeats those searches rather than accepting the word as proof.
 - A genuinely unverifiable-at-authoring-time claim belongs in the ticket's
   What-to-build prose; a checkable precondition belongs on `Blocked by:`.
 - **`Blocked by:`** is `none`, or the file basenames of the sibling tickets that
@@ -213,6 +241,7 @@ Good:
 
 Blocked by: parse-cancelled-job-records.md
 Ownership fence: `internal/status`, `internal/render/rows.go`
+Integration surfaces: cancelled-record producer→parse-cancelled-job-records.md; status row→internal/status; render schema→internal/render/rows.go
 Contracts: the cancelled record with its reason crosses `internal/parse`→`internal/render`, asserted by RC1 against the real parser's output
 
 ## What to build
@@ -262,5 +291,6 @@ come from. In last week's review we went back and forth on whether …
 
 This is credible prose in the wrong artifact: a spec fragment, a taxonomy, and
 a review thread pasted into a unit that no longer fits one fresh context, with
-a row count no single green landing can carry. A ticket holds only what a fresh
-context needs to land this behavior green.
+no visible contract or integration-surface discovery and a row count no single
+green landing can carry. A ticket holds only what a fresh context needs to land
+this behavior green.

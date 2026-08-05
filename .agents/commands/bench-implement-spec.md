@@ -50,6 +50,12 @@ does not reproduce the lifecycle in Git commands. `reclaim` sits outside that
 surface — a maintainer runs it, plan then `--apply`, over a run that has already
 ended, to delete the provably dead provisional refs it left behind.
 
+Complete `craft-tickets`' contract discovery before capacity accounting.
+Lifecycle acceptance validates ticket shape, and checkpointing enforces the
+declared fence, but neither proves that the ticket's declared surfaces account
+for every required consumer; repair an incomplete ticket before deriving the
+ready frontier.
+
 Re-derive the complete ready frontier and the harness's live capacity before
 dispatch. Assign every ownership-safe ticket up to the smaller of frontier size
 and available capacity. For every unused harness slot, record exactly one

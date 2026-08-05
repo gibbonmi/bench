@@ -26,7 +26,9 @@ its count and its worst issue.
   When the diff landed as delegate slices, hunt duplication at the fence
   boundaries specifically — a shared primitive no slice owned arrives derived
   once per fence (the prefactor rule lives in `craft-tickets`; the ownership
-  fence lives in `craft-spec`).
+  fence lives in `craft-spec`). For a ticketed build, re-run `craft-tickets`'
+  integration-surface discovery over each ticket; a false `none`, an unresolved
+  surface, or dual ownership is a Standards finding.
   The smell baseline below rides this axis: classic rot counts even when no
   doc names it. Comment prose is graded against `craft-comments` — a comment
   that narrates the change, cites provenance, or argues its own correctness
