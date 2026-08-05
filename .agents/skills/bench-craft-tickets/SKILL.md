@@ -35,7 +35,9 @@ migrate batch cannot, the expansion or prefactor is incomplete, or the batch
 is too wide; repair the preparation or split the batch before proceeding.
 
 `craft-spec` owns the spec-time **who-writes-where** fence. This skill owns the
-build-time **what-lands-green-next** unit. Apply the fence by name; do not
+build-time **what-lands-green-next** unit. A repair ticket derived from a
+debug receipt takes its ownership fence from the receipt's required paths —
+never from the blocked ticket's fence, which the repair must stay out of. Apply the fence by name; do not
 restate or redraw it here.
 
 ## Draft the breakdown

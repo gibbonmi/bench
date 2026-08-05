@@ -23,7 +23,7 @@ var buildOperationOrder = []string{
 
 var buildOperations = func() map[string]usage.Grammar {
 	flags := map[string][]usage.Flag{
-		"assign":     {buildValueFlag("--ticket"), buildValueFlag("--request")},
+		"assign":     {buildValueFlag("--ticket"), buildValueFlag("--request"), buildValueFlag("--refresh")},
 		"checkpoint": {buildValueFlag("--assignment"), buildValueFlag("--evidence")},
 		"integrate":  {buildValueFlag("--assignment")},
 		"review":     {buildValueFlag("--evidence")},
@@ -52,7 +52,7 @@ func buildValueFlag(name string) usage.Flag {
 func buildGrammar(operation string, flags []usage.Flag) usage.Grammar {
 	help := "usage: bench spec build " + operation + " <slug>"
 	suffixes := map[string]string{
-		"assign": " --ticket <ticket> --request <id>", "checkpoint": " --assignment <id> --evidence <receipt>",
+		"assign": " --ticket <ticket> --request <id> [--refresh <receipt>]", "checkpoint": " --assignment <id> --evidence <receipt>",
 		"integrate": " --assignment <id>", "review": " --evidence <receipt>", "status": " [--full]",
 		"abandon": applySuffix, "reclaim": applySuffix,
 	}

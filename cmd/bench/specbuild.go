@@ -35,6 +35,7 @@ func specBuildCommand(args []string) (string, int) {
 type buildService interface {
 	Start(context.Context, string) (specbuild.Status, error)
 	Assign(context.Context, string, string, string) (specbuild.Assignment, specbuild.Status, error)
+	Refresh(context.Context, string, string, string, string) (specbuild.Assignment, specbuild.Status, error)
 	Checkpoint(context.Context, string, string, string) (specbuild.Status, error)
 	Integrate(context.Context, string, string) (specbuild.Status, error)
 	Review(context.Context, string, string) (specbuild.Status, error)
@@ -67,7 +68,11 @@ func executeBuild(ctx context.Context, service buildService, operation, slug str
 		status, err = service.Start(ctx, slug)
 	case "assign":
 		var assignment specbuild.Assignment
-		assignment, status, err = service.Assign(ctx, slug, flags["--ticket"], flags["--request"])
+		if receipt, refresh := flags["--refresh"]; refresh {
+			assignment, status, err = service.Refresh(ctx, slug, flags["--ticket"], flags["--request"], receipt)
+		} else {
+			assignment, status, err = service.Assign(ctx, slug, flags["--ticket"], flags["--request"])
+		}
 		if err == nil {
 			return renderAssignment(status, assignment)
 		}

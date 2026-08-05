@@ -153,6 +153,44 @@ contract, not a preference:
   inventories, and `dir/name` path forms. Separator slashes inside prose are not
   command invocations.
 
+## When a delegate is blocked outside its fence
+
+A write delegate whose deterministic repro fails on a defect outside its
+ticket's ownership fence stops implementation edits at that boundary. It runs
+`/bench-debug` against the real failing surface and returns a bounded debug
+receipt instead of a done-claim: the exact repro command with its red exit and
+output digest, the confirmed cause, the paths the repair must own, its
+assignment ID, recorded base, and in-fence dirty paths, and whether the ticket
+can proceed once the repair lands. It never edits outside its fence and never
+absorbs the defect into its own diff — a fix smuggled through the adapter's
+fence is a review defect even when it makes the ticket green.
+
+The coordinator drives the repair through the public lifecycle, no synthesized
+commits, refs, worktrees, or patch replay:
+
+1. Derive an ownership-fenced repair ticket from the receipt's required paths
+   (`craft-tickets`), write it under `specs/<slug>/tickets/`, and land it with
+   path-scoped `bench commit`.
+2. `bench spec build promote <slug>` recomposes the run onto the moved tip —
+   the same recomposition rule as any branch-tip move.
+3. Assign, checkpoint, and integrate the repair ticket through the ordinary
+   operations.
+4. Re-base the blocked assignment onto the repaired candidate with
+   `bench spec build assign <slug> --ticket <ticket> --request <id> --refresh
+   <receipt>` — the request the assignment was created under, with the
+   delegate's debug receipt as the refresh evidence. The lifecycle preserves
+   the assignment's attributed in-fence work byte-for-byte behind a durable
+   preservation ref, refuses a forged or missing receipt, an out-of-fence
+   payload, a replay conflict, or candidate movement, and an interrupted
+   refresh converges on re-entry.
+5. Resume the original delegate only after the refresh reports the assignment
+   based on the repaired candidate; it completes, checkpoints, and integrates
+   through the ordinary path.
+
+`abandon` stays the escape hatch for a run the repair route cannot save — a
+conflicting refresh, a dead assignment — never the normal response to an
+out-of-fence discovery.
+
 ## When the build stops short
 
 A build that exhausts its iteration cap or ends with stories unmet exits through a

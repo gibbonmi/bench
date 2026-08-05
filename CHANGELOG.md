@@ -8,6 +8,12 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Added
 
+- Added `bench spec build assign --refresh <debug-receipt>`: an out-of-fence repair
+  route that re-bases a blocked, uncheckpointed assignment onto the repaired
+  candidate, preserving its attributed in-fence work byte-for-byte behind a durable
+  preservation ref, with fail-closed refusals for forged receipts, out-of-fence
+  payloads, replay conflicts, and candidate movement, and convergent re-entry after
+  interruption.
 - Added a compiled Go core and native platform packages with installed-binary
   smoke coverage and bounded repair.
 - Added the ambient dashboard, standalone dashboard page, and AXI query surfaces

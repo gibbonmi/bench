@@ -384,6 +384,13 @@ func (s *Service) provisionalResidue(run record) ([]provisionalRef, error) {
 			for _, name := range branches {
 				claim(name, objects[name], assigned.ID, disposition)
 			}
+			// A preservation ref has no stored copy at all: refreshIdentity is its only
+			// construction, so presence at the derived name is the whole claim.
+			if ref := refreshIdentity(owning.Run, assigned.ID); assigned.ID != "" {
+				if object, present := s.refObject(ref); present {
+					claim(ref, object, assigned.ID, owned)
+				}
+			}
 			// A history entry reaches the enumeration without passing validCore, so the
 			// stored CheckpointRef is re-derived rather than trusted: only the ref this
 			// run and assignment would have written can be claimed for deletion.

@@ -355,7 +355,7 @@ bench — Pocock pipeline meets Kun Chen substrate, gated by your invariants.
   bench spec retire <slug>         delete a merged spec + its review pickup (validated)
   bench spec history <slug>        retire/delete commits for a spec, newest first (TOON)
   bench spec build start <slug>
-  bench spec build assign <slug> --ticket <ticket> --request <id>
+  bench spec build assign <slug> --ticket <ticket> --request <id> [--refresh <receipt>]
   bench spec build checkpoint <slug> --assignment <id> --evidence <receipt>
   bench spec build integrate <slug> --assignment <id>
   bench spec build review <slug> --evidence <receipt>

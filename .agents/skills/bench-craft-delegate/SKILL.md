@@ -110,7 +110,11 @@ pass. A second instance of the same omission or swap is correlated evidence, not
 an independent probe.
 
 The lifecycle checkpoints, integrates, and releases the assignment; the
-coordinator does not run a generic release. A provisional checkpoint is not
+coordinator does not run a generic release. A delegate blocked by a defect
+outside its fence stops editing and returns a debug receipt rather than a
+done-claim or an out-of-fence fix; the coordinator's repair-and-refresh route
+is `.agents/commands/bench-implement-spec.md`'s "When a delegate is blocked
+outside its fence". A provisional checkpoint is not
 project-green evidence and cannot satisfy a done-claim. Only the exact composed
 promotion subject can receive the gate's green verdict. The generic isolation and
 verification rules below still apply to light-path and non-spec worktrees.
