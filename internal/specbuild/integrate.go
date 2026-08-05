@@ -19,7 +19,7 @@ type ReleaseEvidence struct {
 	Base, CheckpointRef, Checkpoint, IntegratedRef, Integrated string
 }
 
-const operationLimit = 64
+const operationLimit = 128
 
 type operation struct{ Command, Request, Input, Result, State string }
 
