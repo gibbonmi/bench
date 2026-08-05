@@ -27,6 +27,7 @@ var routedFlatCases = []struct {
 	help    []string
 	helpFor string
 }{
+	{name: "anchors", garbage: []string{"anchors", ".bench/BENCH.md", "x"}, usage: "usage: bench anchors (unknown argument: x)", help: []string{"anchors", "-h"}, helpFor: "usage: bench anchors <path>"},
 	{name: "learnings", garbage: []string{"learnings", "x"}, usage: "usage: bench learnings (unknown argument: x)", help: []string{"learnings", "-h"}, helpFor: "usage: bench learnings"},
 	{name: "status", garbage: []string{"status", "--all", "x"}, usage: "usage: bench status (unknown argument: x)", help: []string{"status", "-h"}, helpFor: "usage: bench status [--all]"},
 	{name: "models", garbage: []string{"models", "x"}, usage: "usage: bench models (unknown argument: x)", help: []string{"models", "-h"}, helpFor: "usage: bench models"},

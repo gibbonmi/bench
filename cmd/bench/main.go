@@ -1,6 +1,6 @@
 // Command bench is the compiled core of the Bench kit — the strangler target the
 // shell CLI routes ported subcommands into. Dispatch is a `commands` map of the ported
-// AXI query subcommands (learnings, maps, guards, diff, coverage, test, worktree list),
+// AXI query subcommands (anchors, learnings, maps, guards, diff, coverage, test, worktree list),
 // each resolving repo state and returning its stdout plus an exit code, plus a direct
 // `version` case that needs the build-time GOOS/GOARCH rather than repo state. Every
 // later slice adds names to that map; the shell router (bin/bench.sh) grows names,
@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/adopt"
+	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/commit"
 	"github.com/gibbonmi/bench/internal/coverage"
@@ -69,6 +70,7 @@ func main() {
 // writes and exits. This map is the one seam that grows per slice; version stays a
 // direct case because it needs the build-time GOOS/GOARCH, not repo state.
 var commands = map[string]func([]string) (string, int){
+	"anchors":             anchorsCommand,
 	"learnings":           learnings.Command,
 	"maps":                maps.Command,
 	"guards":              guards.Command,
@@ -88,6 +90,66 @@ var commands = map[string]func([]string) (string, int){
 	"worktree-pool":       worktree.PoolCommand,
 	"worktree-lease-file": worktree.LeaseFileCommand,
 	"test":                testCommand,
+}
+
+var anchorsGrammar = usage.Grammar{
+	Cmd:     "bench anchors",
+	Help:    "usage: bench anchors <path>",
+	MinArgs: 1,
+	MaxArgs: 1,
+}
+
+func anchorsCommand(args []string) (string, int) {
+	parsed, line, code := usage.Parse(anchorsGrammar, args)
+	if line != "" {
+		return line + "\n", code
+	}
+	root, err := git.Root()
+	if err != nil {
+		return toon.NotInRepo() + "\n", 1
+	}
+	path := anchorQueryPath(root, parsed.Positionals[0])
+	var rows [][]string
+	for _, anchor := range anchors.Entries() {
+		if anchor.File == path {
+			rows = append(rows, []string{anchorKindName(anchor.Kind), anchor.Section, anchor.Needle})
+		}
+	}
+	out, err := toon.Table("anchors", []string{"kind", "section", "needle"}, rows)
+	if err != nil {
+		return toon.RenderError(err) + "\n", 1
+	}
+	return out, 0
+}
+
+func anchorQueryPath(root, arg string) string {
+	candidate := arg
+	if !filepath.IsAbs(candidate) {
+		if cwd, err := os.Getwd(); err == nil {
+			candidate = filepath.Join(cwd, candidate)
+		}
+	}
+	if _, err := os.Lstat(candidate); err == nil {
+		if relative, err := filepath.Rel(root, candidate); err == nil {
+			return filepath.ToSlash(filepath.Clean(relative))
+		}
+	}
+	return filepath.ToSlash(filepath.Clean(arg))
+}
+
+func anchorKindName(kind anchors.Kind) string {
+	switch kind {
+	case anchors.Require:
+		return "require"
+	case anchors.Forbid:
+		return "forbid"
+	case anchors.RequireInSection:
+		return "require-in-section"
+	case anchors.ForbidInSection:
+		return "forbid-in-section"
+	default:
+		return "unknown"
+	}
 }
 
 func testCommand(args []string) (string, int) {

@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gibbonmi/bench/internal/anchors"
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
@@ -230,8 +231,8 @@ func checkSharedRuleSingleSource(root string) []string {
 		"Right-size the process",
 		"never silently rewrite your own rules",
 		"NEVER assume, always verify",
-		fixDontParkMarker,
-		sourceWarrantMarker,
+		anchors.FixDontParkMarker,
+		anchors.SourceWarrantMarker,
 	} {
 		if !strings.Contains(bench, marker) {
 			diags = append(diags, fmt.Sprintf("shared rule missing from canonical .bench/BENCH.md: %q", marker))

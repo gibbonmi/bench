@@ -1,0 +1,12 @@
+[
+  {
+    "path": ".bench/BENCH.md",
+    "old": "fix lands in the active workflow as its own commit.",
+    "new": ""
+  },
+  {
+    "path": ".bench/BENCH.md",
+    "old": "## Capture\n",
+    "new": "## Capture\n\nThe fix lands in the active workflow as its own commit.\n"
+  }
+]

@@ -37,7 +37,7 @@ branch-agnostic. This line is only the binding.)
   driven by a build harness.
   Their final attachment to the oracle is `promote` over the exact reviewed
   prospective composition, while every earlier ticket transition is provisional.
-- **The AXI query surface** (`bench learnings`, `bench maps`, `bench guards`,
+- **The AXI query surface** (`bench anchors`, `bench learnings`, `bench maps`, `bench guards`,
   `bench diff`, `bench coverage`, `bench worktree list`, and the shared flat-table
   TOON emitter behind them). The agent-facing read-only
   surface, and the AXI-conformant half of the hybrid output contract: TOON stdout,
@@ -101,8 +101,9 @@ branch-agnostic. This line is only the binding.)
   imports it (and `.bench/BENCH.md`); never duplicate content there. The four invariants
   and the communication rules are canonical in `.bench/BENCH.md`; the craft skill and
   command indexes live here. The gate checks those indexes, checks command-adapter skills
-  against `.bench/BENCH.md`, and checks that the shared rules are not copied back into
-  AGENTS.md.
+  against `.bench/BENCH.md`, and checks that no shared rule's literal marker phrase
+  reappears in AGENTS.md — a substring check, so it reds a verbatim copy; a
+  paraphrased restatement is review's to catch, not the gate's.
 
 No UI. There is **no design source** for this repo.
 

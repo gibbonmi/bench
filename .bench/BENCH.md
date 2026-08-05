@@ -66,7 +66,7 @@ Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
   without a current dev-green verdict), `bench release` (maintainer-run
   publication lifecycle — submit, promote, rollback — per `docs/release-runbook.md`),
   `bench canary`, `bench structure`,
-  `bench guards`, `bench diff`, `bench coverage`, `bench outline`, `bench models`, `bench version`.
+  `bench anchors`, `bench guards`, `bench diff`, `bench coverage`, `bench outline`, `bench models`, `bench version`.
 - Focused Go triage: `bench test [--full] [package]` runs fresh Go tests and renders
   package, failure, and skip evidence as TOON.
 - Work execution: `bench worktree` (`bench worktree path <target>` resolves an active owned

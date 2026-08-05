@@ -1,6 +1,6 @@
 # ft156-anchor-registry
 
-Status: staged
+Status: implemented
 
 Decision source: `specs/ft156-anchor-registry/decisions/ft156-anchor-registry.md` — ready compiled map, staged program resolved 2026-08-02; the `ROADMAP.md` FT156 row that directed this entry (reviewer direction 2026-08-03) carries the drained `Contracts:`-line false-green rider this spec also closes. The map's `## Sources` section is empty, so there were no structured entries to re-read; every load-bearing map claim was re-verified against the current tree instead. Two figures drifted since the map: the anchor helpers file measures 873 lines (not 864) against its 660 grant, and the 299-needle census predates the ticket-template anchors added afterward — the build re-derives the count at migration time rather than trusting either figure.
 

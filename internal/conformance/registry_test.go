@@ -228,6 +228,12 @@ var canaryFixtureRegistry = map[string]fixtureRegistration{
 // canaryFixtureFamilyRegistry assigns one owner to every fixture in a family whose
 // checks share one Go implementation. Exact fixture registrations override this table.
 var canaryFixtureFamilyRegistry = map[string]fixtureRegistration{
+	"workflow-guidance-anchors": conformanceGoFixture(
+		"internal/anchors/match.go",
+		"internal/anchors/registry.go",
+		"internal/anchors/registry_data.go",
+		"internal/conformance/docs_workflow_helpers_test.go",
+	),
 	"decision-map-integrity": conformanceGoFixture(
 		"internal/maps/schema.go",
 		"internal/maps/validation.go",

@@ -18,6 +18,10 @@ func TestAXIQuerySurfaceContracts(t *testing.T) {
 	contract.RunParallel(t, "AXI subdirectory root-resolution contract", testAXISubdirectoryRootResolution)
 	contract.RunParallel(t, "AXI path-with-spaces contract", testAXIPathWithSpaces)
 	contract.RunParallel(t, "AXI learnings ascii-separator title contract", testAXILearningsASCIISeparatorTitle)
+	contract.RunParallel(t, "AXI anchors registry-row contract", testAXIAnchorsRegistryRows)
+	contract.RunParallel(t, "AXI anchors definitive-empty contract", testAXIAnchorsEmpty)
+	contract.RunParallel(t, "AXI anchors usage contract", testAXIAnchorsUsage)
+	contract.RunParallel(t, "AXI anchors subdirectory-routes contract", testAXIAnchorsSubdirectoryRoutes)
 }
 
 func testAXILearningsTwoEntry(t *testing.T) {

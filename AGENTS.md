@@ -12,8 +12,10 @@ shared rules — not `CLAUDE.md`.
 
 The platform rules are the same for this repo and every project that runs
 `bench link`. They are **canonical in `.bench/BENCH.md`**; read them there before
-you work. Don't restate them here: a second copy drifts from the source, and the
-gate fails if a shared rule reappears in this file.
+you work. Don't restate them here: a second copy drifts from the source. A shared
+rule's literal marker phrase reappearing in this file fails the gate; a paraphrased
+restatement slips past that substring check but still violates the one-source rule
+and is review's to catch, not the gate's.
 
 ## This repo
 

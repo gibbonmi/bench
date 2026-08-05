@@ -52,6 +52,7 @@ const (
 // name reaching either dispatch surface with no row here is red, which is what makes the
 // check fail closed against the next subcommand somebody adds.
 var subcommandRouting = map[string]routingEntry{
+	"anchors":   routed("cmd/bench"),
 	"commands":  routed("cmd/bench"),
 	"commit":    routed("internal/commit"),
 	"coverage":  routed("internal/coverage"),
