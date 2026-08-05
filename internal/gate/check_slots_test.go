@@ -56,7 +56,7 @@ func TestOrdinaryScopeInheritsValidCheckSlotsButFreshExecutesAll(t *testing.T) {
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 	resolution := Resolve(fixture.root, "", RealFS())
 
-	ordinary := scopeComponents(fixture.root, resolution, reuseFreshGreen, time.Now().UTC())
+	ordinary := mustScopeComponents(t, fixture.root, resolution, reuseFreshGreen, time.Now().UTC())
 	if got, want := len(ordinary.checks.Inherited), len(ordinaryConformanceChecks(registry.Dev)); got != want {
 		t.Fatalf("ordinary scope inherited %d checks, want all %d valid slots", got, want)
 	}
@@ -64,7 +64,7 @@ func TestOrdinaryScopeInheritsValidCheckSlotsButFreshExecutesAll(t *testing.T) {
 		t.Fatalf("ordinary scope executed %v, want every unchanged check inherited", ordinary.checks.Executed)
 	}
 
-	fresh := scopeComponents(fixture.root, resolution, forceRun, time.Now().UTC())
+	fresh := mustScopeComponents(t, fixture.root, resolution, forceRun, time.Now().UTC())
 	if len(fresh.checks.Inherited) != 0 {
 		t.Fatalf("fresh scope inherited %v, want none", fresh.checks.Inherited)
 	}
@@ -130,7 +130,7 @@ func TestDeclaredDocumentInputsInvalidateOwningChecks(t *testing.T) {
 			baseline := baselines[path]
 			assertInvalidated := func(change string) {
 				t.Helper()
-				scoping := scopeComponents(fixture.root, resolution, reuseFreshGreen, time.Now().UTC())
+				scoping := mustScopeComponents(t, fixture.root, resolution, reuseFreshGreen, time.Now().UTC())
 				if !scoping.eligible {
 					return
 				}
@@ -173,7 +173,7 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 	assertChange := func(name string, change func()) {
 		t.Helper()
 		change()
-		decision := scopeComponents(fixture.root, Resolve(fixture.root, "", RealFS()), reuseFreshGreen, time.Now().UTC())
+		decision := mustScopeComponents(t, fixture.root, Resolve(fixture.root, "", RealFS()), reuseFreshGreen, time.Now().UTC())
 		if !decision.eligible {
 			t.Fatalf("%s left the kit-shaped fixture ineligible for scoped gate decisions", name)
 		}
@@ -372,7 +372,7 @@ func TestConformanceImplementationSelectsOwningOrAllCanaryFamilies(t *testing.T)
 			mustExecuteGreen(t, fixture.root, productionGateEngine{})
 			test.mutate(fixture.root)
 
-			scoping := scopeComponents(fixture.root, Resolve(fixture.root, "", RealFS()), reuseFreshGreen, time.Now().UTC())
+			scoping := mustScopeComponents(t, fixture.root, Resolve(fixture.root, "", RealFS()), reuseFreshGreen, time.Now().UTC())
 			phase, found := phaseNamed(scoping.phases, "canary")
 			if !found {
 				t.Fatal("conformance implementation change inherited the canary component")

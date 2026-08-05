@@ -5,7 +5,7 @@ package gate
 // graded it skips on its own ancestor slot, and every other phase runs.
 //
 // This is the one site where a skip is decided, and that is the whole point of the file.
-// Every path out of scopeComponents that is not a validated slot at the component's exact
+// Every path out of scopeComponentsForGeneration that is not a validated slot at the component's exact
 // current identity answers run-the-component: a root that is not the kit, a gate that does
 // not route the phase table, a derivation that failed, an identity that could not be
 // computed, a slot that could not be read or that answers for something else. Fail-closed
@@ -131,7 +131,7 @@ func componentSkipsOnAncestorEvidence(component string) bool {
 	return component != canary.PhaseBuild && componentSkipsOnEvidence(component)
 }
 
-// scopeComponents decides, for root's resolved table, which components may skip on their own
+// scopeComponentsForGeneration decides, for root's resolved table, which components may skip on their own
 // evidence. The returned scoping is empty for a root that does not scope at all.
 //
 // Eligibility comes before any per-component question, and all three of its parts are about
@@ -143,7 +143,11 @@ func componentSkipsOnAncestorEvidence(component string) bool {
 // run executes that table directly: narrowing under a hand-written gate would swap the
 // repository's oracle for one it never chose. And every declaration is derived from a Go
 // module, so a root without one has nothing here to be scoped by.
-func scopeComponents(root string, res Resolution, mode runMode, now time.Time) componentScoping {
+func scopeComponentsForGeneration(root string, res Resolution, mode runMode, now time.Time, generation *treeGeneration) componentScoping {
+	return scopeComponentsForIdentityGenerations(root, res, mode, now, generation, generation, generation)
+}
+
+func scopeComponentsForIdentityGenerations(root string, res Resolution, mode runMode, now time.Time, componentGeneration, checkGeneration, canaryGeneration *treeGeneration) componentScoping {
 	kit := kitRoot(root)
 	if !sameDirectory(root, kit) || !phaseTableGate(root, res) || !isRegularFile(filepath.Join(root, "go.mod")) {
 		return componentScoping{}
@@ -153,8 +157,8 @@ func scopeComponents(root string, res Resolution, mode runMode, now time.Time) c
 	if err != nil {
 		return eligible
 	}
-	checkIdentities, checkIdentityErr := ResolveConformanceCheckIdentities(root, registry.Dev)
-	canaryIdentities, canaryIdentityErr := resolveConformanceCanaryIdentities(root, registry.Dev)
+	checkIdentities, checkIdentityErr := resolveConformanceCheckIdentities(root, registry.Dev, checkGeneration)
+	canaryIdentities, canaryIdentityErr := resolveConformanceCanaryIdentitiesFromGeneration(root, registry.Dev, canaryGeneration)
 	if mode == reuseFreshGreen {
 		eligible.checks = partitionConformanceChecks(root, registry.Dev, checkIdentities, checkIdentityErr, now)
 	} else {
@@ -168,7 +172,7 @@ func scopeComponents(root string, res Resolution, mode runMode, now time.Time) c
 	// would not run, a seal that could not be read, a declared input the snapshot has no
 	// entry for — takes every component with it. A partial set of identities names fewer
 	// inputs than the components read, which is exactly the shape that buys a wrong skip.
-	identities, err := ResolveComponentIdentities(root)
+	identities, err := resolveComponentIdentities(root, componentGeneration)
 	if err != nil {
 		eligible.checks = executeAllConformanceChecks(registry.Dev, checkIdentities)
 		if checkIdentityErr != nil {

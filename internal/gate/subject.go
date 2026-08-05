@@ -40,12 +40,12 @@ func buildSubjectFor(root, identityRoot string) (subject, error) {
 	return buildSubjectForPolicy(root, identityRoot, policyVersion)
 }
 
-// buildStrippedSubject builds the identity that governs whether an excludable phase's
-// evidence still answers for the tree: the same subject, over a tree the reduced scope's
-// declared paths are absent from. Its policy domain is separate so a stripped identity can
-// never satisfy a comparison meant for the whole-tree one, which grades strictly more.
-func buildStrippedSubject(root string) (subject, error) {
-	return buildSubjectOverTree(root, root, strippedPolicyVersion, strippedTreeHash)
+func buildStrippedSubjectForGeneration(root string, generation *treeGeneration) (subject, error) {
+	return buildSubjectForTree(root, root, strippedPolicyVersion, strippedTreeHashFromSnapshot(generation.snapshot))
+}
+
+func buildSubjectForGeneration(root, identityRoot string, generation *treeGeneration) (subject, error) {
+	return buildSubjectForTree(root, identityRoot, policyVersion, generation.tree)
 }
 
 func buildSubjectForPolicy(root, identityRoot, policy string) (subject, error) {
@@ -53,6 +53,10 @@ func buildSubjectForPolicy(root, identityRoot, policy string) (subject, error) {
 }
 
 func buildSubjectOverTree(root, identityRoot, policy string, treeHash func(string) string) (subject, error) {
+	return buildSubjectForTree(root, identityRoot, policy, treeHash(root))
+}
+
+func buildSubjectForTree(root, identityRoot, policy, tree string) (subject, error) {
 	root, err := canonicalSubjectRoot(root)
 	if err != nil {
 		return subject{}, err
@@ -61,7 +65,6 @@ func buildSubjectOverTree(root, identityRoot, policy string, treeHash func(strin
 	if err != nil {
 		return subject{}, err
 	}
-	tree := treeHash(root)
 	if !treeHashRE.MatchString(tree) {
 		return subject{}, errors.New("tree unavailable")
 	}
@@ -116,16 +119,7 @@ func buildSubjectOverTree(root, identityRoot, policy string, treeHash func(strin
 	return s, nil
 }
 
-// strippedTreeHash returns the content identity of root's tree with the reduced scope's
-// declared paths absent. It hashes the whole-tree snapshot in listing order, dropping
-// entries one at a time through Scope.Member — the only membership rule there is, so a strip
-// can never reach a parent directory or a sibling that merely shares a prefix. Any failure
-// to read the snapshot yields "none", which no identity accepts.
-func strippedTreeHash(root string) string {
-	snapshot, err := readTreeSnapshot(root)
-	if err != nil {
-		return "none"
-	}
+func strippedTreeHashFromSnapshot(snapshot treeSnapshot) string {
 	scope := ReducedScope()
 	h := sha256.New()
 	for _, entry := range snapshot.entries {

@@ -110,11 +110,12 @@ func removeFixture(t *testing.T, root, rel string) {
 
 func fixtureIdentities(t *testing.T, root string) (whole, stripped string) {
 	t.Helper()
-	full, err := buildSubject(root)
+	generation := mustTreeGeneration(t, root)
+	full, err := buildSubjectForGeneration(root, root, generation)
 	if err != nil {
 		t.Fatalf("whole-tree subject: %v", err)
 	}
-	reduced, err := buildStrippedSubject(root)
+	reduced, err := buildStrippedSubjectForGeneration(root, generation)
 	if err != nil {
 		t.Fatalf("stripped subject: %v", err)
 	}

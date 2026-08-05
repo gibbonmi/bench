@@ -197,7 +197,7 @@ func TestContractRunsWhenConsumerInventoryIsMalformed(t *testing.T) {
 
 func assertUnresolvedInventoryForcesFullRun(t *testing.T, root string) {
 	t.Helper()
-	scoping := scopeComponents(root, Resolve(root, "", RealFS()), reuseFreshGreen, time.Now().UTC())
+	scoping := mustScopeComponents(t, root, Resolve(root, "", RealFS()), reuseFreshGreen, time.Now().UTC())
 	if !scoping.eligible {
 		t.Fatal("the kit-shaped fixture stopped reaching component scoping")
 	}

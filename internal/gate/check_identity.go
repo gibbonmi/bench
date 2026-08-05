@@ -15,7 +15,6 @@ import (
 	"strings"
 
 	"github.com/gibbonmi/bench/internal/conformance/registry"
-	benchgit "github.com/gibbonmi/bench/internal/git"
 )
 
 const checkPolicyVersion = componentPolicyVersion + "/conformance-check-v1"
@@ -56,17 +55,13 @@ func frameEntries(h io.Writer, tag string, entries []treeEntry) {
 	}
 }
 
-// ResolveConformanceCheckIdentities derives every ordinary check's content address.
-func ResolveConformanceCheckIdentities(root string, tier registry.Tier) (map[string]string, error) {
-	snapshot, err := readTreeSnapshot(root)
-	if err != nil {
-		return nil, err
-	}
+func resolveConformanceCheckIdentities(root string, tier registry.Tier, generation *treeGeneration) (map[string]string, error) {
+	snapshot := generation.snapshot
 	implementation := snapshotEntriesUnder(snapshot, "internal/conformance/")
 	if len(implementation) == 0 {
 		return nil, errors.New("conformance implementation closure is empty")
 	}
-	externalImplementations, err := resolveExternalImplementationEntries(root, snapshot)
+	externalImplementations, err := resolveExternalImplementationEntries(root, generation)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +76,7 @@ func ResolveConformanceCheckIdentities(root string, tier registry.Tier) (map[str
 		if check.Meta || !check.RunsAt(tier) {
 			continue
 		}
-		inputs, err := resolveCheckInputs(root, check, snapshot)
+		inputs, err := resolveCheckInputsGeneration(root, check, generation)
 		if err != nil {
 			return nil, fmt.Errorf("identify conformance check %s: %w", check.Name, err)
 		}
@@ -105,7 +100,8 @@ func ResolveConformanceCheckIdentities(root string, tier registry.Tier) (map[str
 	return identities, nil
 }
 
-func resolveExternalImplementationEntries(root string, snapshot treeSnapshot) (map[string][]treeEntry, error) {
+func resolveExternalImplementationEntries(root string, generation *treeGeneration) (map[string][]treeEntry, error) {
+	snapshot := generation.snapshot
 	wanted := map[string]bool{}
 	for _, check := range registry.Checks {
 		wanted[check.Implementation] = true
@@ -115,7 +111,7 @@ func resolveExternalImplementationEntries(root string, snapshot treeSnapshot) (m
 		if strings.HasPrefix(entry.Path, "internal/conformance/") || !strings.HasSuffix(entry.Path, ".go") {
 			continue
 		}
-		raw, err := snapshotBlob(root, entry)
+		raw, err := generation.blob(entry)
 		if err != nil {
 			return nil, err
 		}
@@ -138,12 +134,12 @@ func resolveExternalImplementationEntries(root string, snapshot treeSnapshot) (m
 	if len(packages) == 0 {
 		return resolved, nil
 	}
-	modulePath, err := snapshotModulePath(root, snapshot)
+	modulePath, err := snapshotModulePath(generation)
 	if err != nil {
 		return nil, err
 	}
 	for function, packageDir := range packages {
-		closure, err := snapshotGoPackageClosure(root, snapshot, modulePath, packageDir)
+		closure, err := snapshotGoPackageClosure(generation, modulePath, packageDir)
 		if err != nil {
 			return nil, fmt.Errorf("resolve conformance implementation %s: %w", function, err)
 		}
@@ -152,12 +148,13 @@ func resolveExternalImplementationEntries(root string, snapshot treeSnapshot) (m
 	return resolved, nil
 }
 
-func snapshotModulePath(root string, snapshot treeSnapshot) (string, error) {
+func snapshotModulePath(generation *treeGeneration) (string, error) {
+	snapshot := generation.snapshot
 	entry, found := snapshot.entry("go.mod")
 	if !found {
 		return "", errors.New("module manifest is absent")
 	}
-	raw, err := snapshotBlob(root, entry)
+	raw, err := generation.blob(entry)
 	if err != nil {
 		return "", err
 	}
@@ -179,7 +176,8 @@ func snapshotModulePath(root string, snapshot treeSnapshot) (string, error) {
 // snapshotGoPackageClosure follows module-local imports from the package that declares an
 // external check. Package content alone is not its implementation: a helper package can
 // change the check's verdict without moving the declaring function.
-func snapshotGoPackageClosure(root string, snapshot treeSnapshot, modulePath, startDir string) ([]treeEntry, error) {
+func snapshotGoPackageClosure(generation *treeGeneration, modulePath, startDir string) ([]treeEntry, error) {
+	snapshot := generation.snapshot
 	queue := []string{startDir}
 	seen := map[string]bool{}
 	included := map[string]bool{}
@@ -202,7 +200,7 @@ func snapshotGoPackageClosure(root string, snapshot treeSnapshot, modulePath, st
 			if pathpkg.Dir(entry.Path) != dir || !strings.HasSuffix(entry.Path, ".go") {
 				continue
 			}
-			raw, err := snapshotBlob(root, entry)
+			raw, err := generation.blob(entry)
 			if err != nil {
 				return nil, err
 			}
@@ -237,11 +235,8 @@ type conformanceCanaryIdentities struct {
 	Bound  map[string]string
 }
 
-func resolveConformanceCanaryIdentities(root string, tier registry.Tier) (conformanceCanaryIdentities, error) {
-	snapshot, err := readTreeSnapshot(root)
-	if err != nil {
-		return conformanceCanaryIdentities{}, err
-	}
+func resolveConformanceCanaryIdentitiesFromGeneration(root string, tier registry.Tier, generation *treeGeneration) (conformanceCanaryIdentities, error) {
+	snapshot := generation.snapshot
 	owners := map[string]string{}
 	for _, check := range registry.Checks {
 		if !check.Meta && check.RunsAt(tier) && len(registry.CanaryFamilies(check.Name)) > 0 {
@@ -251,7 +246,7 @@ func resolveConformanceCanaryIdentities(root string, tier registry.Tier) (confor
 	bound := map[string]string{}
 	shared := sha256.New()
 	for _, entry := range snapshotEntriesUnder(snapshot, "internal/conformance/") {
-		raw, err := snapshotBlob(root, entry)
+		raw, err := generation.blob(entry)
 		if err != nil {
 			return conformanceCanaryIdentities{}, err
 		}
@@ -299,7 +294,7 @@ func resolveConformanceCanaryIdentities(root string, tier registry.Tier) (confor
 		frameEach(shared, "path", entry.Path)
 		frameEach(shared, "content", string(remaining))
 	}
-	external, err := resolveExternalImplementationEntries(root, snapshot)
+	external, err := resolveExternalImplementationEntries(root, generation)
 	if err != nil {
 		return conformanceCanaryIdentities{}, err
 	}
@@ -319,15 +314,8 @@ func resolveConformanceCanaryIdentities(root string, tier registry.Tier) (confor
 	return conformanceCanaryIdentities{Shared: hex.EncodeToString(shared.Sum(nil)), Bound: bound}, nil
 }
 
-func snapshotBlob(root string, entry treeEntry) ([]byte, error) {
-	fields := strings.Fields(entry.Metadata)
-	if len(fields) != 3 || fields[1] != "blob" {
-		return nil, fmt.Errorf("snapshot entry %s is not a blob", entry.Path)
-	}
-	return benchgit.Raw("-C", root, "cat-file", "blob", fields[2])
-}
-
-func resolveCheckInputs(root string, check registry.Check, snapshot treeSnapshot) ([]treeEntry, error) {
+func resolveCheckInputsGeneration(root string, check registry.Check, generation *treeGeneration) ([]treeEntry, error) {
+	snapshot := generation.snapshot
 	var entries []treeEntry
 	switch check.Inputs {
 	case registry.InputCatchAll:
@@ -348,7 +336,7 @@ func resolveCheckInputs(root string, check registry.Check, snapshot treeSnapshot
 	for _, directory := range directories {
 		entries = append(entries, snapshotEntriesUnder(snapshot, directory)...)
 	}
-	return resolveCheckSymlinks(root, snapshot, entries)
+	return resolveCheckSymlinks(root, generation, entries)
 }
 
 func declaredCheckInputPaths(source registry.InputSource) (files, directories []string) {
@@ -386,10 +374,10 @@ func declaredCheckEntry(snapshot treeSnapshot, name string) []treeEntry {
 	return []treeEntry{{Path: name, Metadata: "absent"}}
 }
 
-func resolveCheckSymlinks(root string, snapshot treeSnapshot, entries []treeEntry) ([]treeEntry, error) {
+func resolveCheckSymlinks(root string, generation *treeGeneration, entries []treeEntry) ([]treeEntry, error) {
 	resolved := append([]treeEntry(nil), entries...)
 	for _, entry := range entries {
-		targets, err := checkSymlinkTargets(root, snapshot, entry, map[string]bool{}, 0)
+		targets, err := checkSymlinkTargets(root, generation, entry, map[string]bool{}, 0)
 		if err != nil {
 			return nil, fmt.Errorf("declared input %q: %w", entry.Path, err)
 		}
@@ -398,7 +386,8 @@ func resolveCheckSymlinks(root string, snapshot treeSnapshot, entries []treeEntr
 	return resolved, nil
 }
 
-func checkSymlinkTargets(root string, snapshot treeSnapshot, entry treeEntry, seen map[string]bool, depth int) ([]treeEntry, error) {
+func checkSymlinkTargets(root string, generation *treeGeneration, entry treeEntry, seen map[string]bool, depth int) ([]treeEntry, error) {
+	snapshot := generation.snapshot
 	fields := strings.Fields(entry.Metadata)
 	if len(fields) != 3 || fields[0] != "120000" {
 		return nil, nil
@@ -408,7 +397,7 @@ func checkSymlinkTargets(root string, snapshot treeSnapshot, entry treeEntry, se
 	}
 	seen[entry.Path] = true
 	defer delete(seen, entry.Path)
-	raw, err := benchgit.Raw("-C", root, "cat-file", "blob", fields[2])
+	raw, err := generation.blob(entry)
 	if err != nil {
 		return nil, errors.New("symlink target unavailable")
 	}
@@ -430,7 +419,7 @@ func checkSymlinkTargets(root string, snapshot treeSnapshot, entry treeEntry, se
 	var resolved []treeEntry
 	for _, targetEntry := range targetEntries {
 		resolved = append(resolved, treeEntry{Path: entry.Path + "->" + targetEntry.Path, Metadata: targetEntry.Metadata})
-		nested, err := checkSymlinkTargets(root, snapshot, targetEntry, seen, depth+1)
+		nested, err := checkSymlinkTargets(root, generation, targetEntry, seen, depth+1)
 		if err != nil {
 			return nil, err
 		}

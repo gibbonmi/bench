@@ -220,29 +220,42 @@ func TestStrictVerdictInspection(t *testing.T) {
 }
 
 func TestExecutionLockAndDriftFailClosed(t *testing.T) {
-	root := gateTestRepo(t, "#!/usr/bin/env bash\ntouch .git/started\nwhile [ ! -f .git/release ]; do sleep .01; done\nprintf drift > drift.txt\n", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
-	done := make(chan Result, 1)
-	go func() { done <- Execute(context.Background(), root, io.Discard, io.Discard) }()
-	deadline := time.Now().Add(5 * time.Second)
-	for {
-		if _, err := os.Stat(filepath.Join(root, ".git", "started")); err == nil {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("gate did not start")
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-	if got := Inspect(root); got.State != Pending || got.PendingStatus != "locked-pending" {
-		t.Fatalf("live owner not projected: %+v", got)
-	}
-	if second := Execute(context.Background(), root, io.Discard, io.Discard); second.ActionExit != 1 {
-		t.Fatalf("concurrent execution did not fail immediately: %+v", second)
-	}
-	writeGateTestFile(t, root, ".git/release", "\n", 0o600)
-	first := <-done
-	if first.ActionExit != 1 || first.GateExit != 0 || first.Inspection.State != Pending {
-		t.Fatalf("mid-run drift did not leave pending operational failure: %+v", first)
+	for _, tc := range []struct {
+		name     string
+		mutation string
+	}{
+		{"untracked", "printf drift > drift.txt"},
+		{"tracked", "printf drift > work.txt"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := gateTestRepo(t, "#!/usr/bin/env bash\ntouch .git/started\nwhile [ ! -f .git/release ]; do sleep .01; done\n"+tc.mutation+"\n", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
+			done := make(chan Result, 1)
+			go func() { done <- Execute(context.Background(), root, io.Discard, io.Discard) }()
+			deadline := time.Now().Add(5 * time.Second)
+			for {
+				if _, err := os.Stat(filepath.Join(root, ".git", "started")); err == nil {
+					break
+				}
+				if time.Now().After(deadline) {
+					t.Fatal("gate did not start")
+				}
+				time.Sleep(10 * time.Millisecond)
+			}
+			if got := Inspect(root); got.State != Pending || got.PendingStatus != "locked-pending" {
+				t.Fatalf("live owner not projected: %+v", got)
+			}
+			if second := Execute(context.Background(), root, io.Discard, io.Discard); second.ActionExit != 1 {
+				t.Fatalf("concurrent execution did not fail immediately: %+v", second)
+			}
+			writeGateTestFile(t, root, ".git/release", "\n", 0o600)
+			first := <-done
+			if first.ActionExit != 1 || first.GateExit != 0 || first.Inspection.State != Pending || first.Inspection.ReusableGreen {
+				t.Fatalf("mid-run drift authored authority: %+v", first)
+			}
+			if got := Inspect(root); got.State != Pending || got.ReusableGreen {
+				t.Fatalf("mid-run drift left reusable or ready authority: %+v", got)
+			}
+		})
 	}
 }
 

@@ -36,7 +36,11 @@ func ComposedGreen(root string) bool {
 }
 
 func partialComposedGreen(root string, plan subject, record verdictRecord, now time.Time) bool {
-	scoping := scopeComponents(root, plan.Resolution, forceRun, now)
+	evaluation := newWorkingTreeEvaluation(root)
+	if _, err := evaluation.acceptPre(); err != nil {
+		return false
+	}
+	scoping := evaluation.scope(plan.Resolution, forceRun, now)
 	if !scoping.eligible {
 		return false
 	}

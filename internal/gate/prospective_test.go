@@ -158,6 +158,25 @@ func TestOrdinaryGreenRemainsProspectiveBootstrapEvidence(t *testing.T) {
 	}
 }
 
+func TestExecuteTreeRefusesUnavailableSuppliedTreeWithoutAuthority(t *testing.T) {
+	root := reusableEvidenceRepo(t, 0)
+	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
+		t.Fatalf("ordinary seed = %+v, want green", got)
+	}
+	beforeRuns := gateRunCount(t, root)
+	var stderr bytes.Buffer
+	result := ExecuteTree(context.Background(), root, strings.Repeat("f", 40), io.Discard, &stderr)
+	if result.ActionExit != 1 || result.Inspection.ReusableGreen {
+		t.Fatalf("unavailable prospective tree = %+v, want refusal without authority", result)
+	}
+	if got := gateRunCount(t, root); got != beforeRuns {
+		t.Fatalf("gate runs = %d, want %d after unavailable prospective tree", got, beforeRuns)
+	}
+	if !strings.Contains(stderr.String(), "prospective gate subject unavailable") {
+		t.Fatalf("stderr = %q, want unavailable subject refusal", stderr.String())
+	}
+}
+
 func TestPolicyVersionMismatchInvalidatesGreen(t *testing.T) {
 	root := reusableEvidenceRepo(t, 0)
 	old, err := buildSubjectForPolicy(root, root, "oracle-v1/freshness-v1")

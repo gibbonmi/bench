@@ -201,6 +201,10 @@ func inspectAt(root string, now time.Time) Inspection {
 	if err != nil {
 		return Inspection{State: Unavailable, Reason: "subject unavailable"}
 	}
+	return inspectSubjectAt(root, s, now)
+}
+
+func inspectSubjectAt(root string, s subject, now time.Time) Inspection {
 	gi := Inspection{CurrentTree: s.Tree, Reason: s.Reason}
 	gitdir, err := benchgit.Output("-C", root, "rev-parse", "--absolute-git-dir")
 	if err != nil {

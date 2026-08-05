@@ -108,8 +108,8 @@ func ExecuteTree(ctx context.Context, root, tree string, stdout, stderr io.Write
 		return Result{ActionExit: 1}
 	}
 	defer cleanup()
-	build := func() (subject, error) { return buildProspectiveSubjectFor(checkout, root) }
-	return executeSubjectWithEngine(ctx, checkout, root, stdout, stderr, productionGateEngine{}, nil, reuseFreshGreen, build, build)
+	evaluation := newProspectiveTreeEvaluation(checkout, root, tree)
+	return executeSubjectWithEngine(ctx, checkout, root, stdout, stderr, productionGateEngine{}, nil, reuseFreshGreen, evaluation)
 }
 
 // ValidateProjectGreen reports whether branch's tip and marker have retained exact green evidence.
@@ -316,8 +316,11 @@ func durableReplaceRecordAt(dir, name string, data []byte) error {
 	return file.Sync()
 }
 
+// reusableEvidence projects the verdict state from the plan the caller already accepted:
+// both call sites hold the current subject, so rebuilding one here would be a second
+// independent capture standing beside the generation that authorized the plan.
 func reusableEvidence(root string, plan subject, now time.Time) Inspection {
-	projection := inspectAt(root, now)
+	projection := inspectSubjectAt(root, plan, now)
 	if projection.State == Pending || projection.State == Invalid || projection.State == Unavailable {
 		return Inspection{}
 	}

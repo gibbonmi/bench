@@ -17,7 +17,7 @@ func TestCurrentConformanceCanaryIdentitiesResolve(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	identities, err := resolveConformanceCanaryIdentities(root, registry.Dev)
+	identities, err := resolveConformanceCanaryIdentitiesFromGeneration(root, registry.Dev, mustTreeGeneration(t, root))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,14 +89,13 @@ func TestDeclaredCheckSymlinkBindsCanonicalTargetAndRefusesHostileTargets(t *tes
 		t.Fatal(err)
 	}
 	check := registry.Check{Name: "gate-entry-contract", Inputs: registry.InputGateEntry}
-	beforeSnapshot := mustTreeSnapshot(t, root)
-	before, err := resolveCheckInputs(root, check, beforeSnapshot)
+	before, err := resolveCheckInputsGeneration(root, check, mustTreeGeneration(t, root))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	writeGateTestFile(t, root, "scripts/gate-source.sh", "second\n", 0o644)
-	after, err := resolveCheckInputs(root, check, mustTreeSnapshot(t, root))
+	after, err := resolveCheckInputsGeneration(root, check, mustTreeGeneration(t, root))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -118,7 +117,7 @@ func TestDeclaredCheckSymlinkBindsCanonicalTargetAndRefusesHostileTargets(t *tes
 			if err := os.Symlink(hostile.target, link); err != nil {
 				t.Fatal(err)
 			}
-			if _, err := resolveCheckInputs(root, check, mustTreeSnapshot(t, root)); err == nil {
+			if _, err := resolveCheckInputsGeneration(root, check, mustTreeGeneration(t, root)); err == nil {
 				t.Fatalf("%s declared symlink resolved without widening", hostile.name)
 			}
 		})
@@ -129,12 +128,12 @@ func TestDeclaredCheckFileDistinguishesAbsentFromPresentEmpty(t *testing.T) {
 	root := t.TempDir()
 	gitRun(t, root, "init", "-q")
 	check := registry.Check{Name: "gate-entry-contract", Inputs: registry.InputGateEntry}
-	absent, err := resolveCheckInputs(root, check, mustTreeSnapshot(t, root))
+	absent, err := resolveCheckInputsGeneration(root, check, mustTreeGeneration(t, root))
 	if err != nil {
 		t.Fatal(err)
 	}
 	writeGateTestFile(t, root, ".bench/gate.sh", "", 0o644)
-	empty, err := resolveCheckInputs(root, check, mustTreeSnapshot(t, root))
+	empty, err := resolveCheckInputsGeneration(root, check, mustTreeGeneration(t, root))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,12 +147,12 @@ func TestSharedConformanceImplementationMovesEveryOrdinaryIdentity(t *testing.T)
 	gitRun(t, root, "init", "-q")
 	writeGateTestFile(t, root, "internal/conformance/shared.go", "package conformance\n\nconst shared = 1\n", 0o644)
 	writeGateTestFile(t, root, "ROADMAP.md", "# roadmap\n", 0o644)
-	before, err := ResolveConformanceCheckIdentities(root, registry.Ship)
+	before, err := resolveConformanceCheckIdentities(root, registry.Ship, mustTreeGeneration(t, root))
 	if err != nil {
 		t.Fatal(err)
 	}
 	writeGateTestFile(t, root, "internal/conformance/shared.go", "package conformance\n\nconst shared = 2\n", 0o644)
-	after, err := ResolveConformanceCheckIdentities(root, registry.Ship)
+	after, err := resolveConformanceCheckIdentities(root, registry.Ship, mustTreeGeneration(t, root))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -190,12 +189,12 @@ func TestExternalConformanceImplementationBindsTransitiveGoDependencies(t *testi
 	writeGateTestFile(t, root, "internal/maps/maps.go", "package maps\n\nimport \"identityfixture/internal/bounds\"\n\nfunc ValidateDecisionMapTree() { _ = bounds.ControlRecordLimit }\n", 0o644)
 	writeGateTestFile(t, root, "internal/bounds/bounds.go", "package bounds\n\nconst ControlRecordLimit = 1\n", 0o644)
 
-	before, err := ResolveConformanceCheckIdentities(root, registry.Dev)
+	before, err := resolveConformanceCheckIdentities(root, registry.Dev, mustTreeGeneration(t, root))
 	if err != nil {
 		t.Fatal(err)
 	}
 	writeGateTestFile(t, root, "internal/bounds/bounds.go", "package bounds\n\nconst ControlRecordLimit = 2\n", 0o644)
-	after, err := ResolveConformanceCheckIdentities(root, registry.Dev)
+	after, err := resolveConformanceCheckIdentities(root, registry.Dev, mustTreeGeneration(t, root))
 	if err != nil {
 		t.Fatal(err)
 	}

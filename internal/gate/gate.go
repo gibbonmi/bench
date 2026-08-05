@@ -243,10 +243,13 @@ func Execute(ctx context.Context, root string, stdout, stderr io.Writer) Result 
 // ExecuteReusingFreshGreen answers for root's tree like Execute, but a verdict already
 // reusable for this subject answers before the execution lock is touched. A gate run in
 // progress elsewhere therefore neither refuses the caller nor demotes the green it would
-// have reused, which is what makes the gated commit safe to run beside one. Everything else
-// falls through to Execute and pays a real run under the lock.
+// have reused, which is what makes the gated commit safe to run beside one. The optimistic
+// subject comes from an evaluation-owned pre generation — the reuse decision authorizes
+// skipping the gate, so it answers from the same snapshot contract a real run accepts,
+// never from an independent capture. Everything else falls through to Execute and pays a
+// real run under the lock.
 func ExecuteReusingFreshGreen(ctx context.Context, root string, stdout, stderr io.Writer) Result {
-	if plan, err := buildSubject(root); err == nil {
+	if plan, err := newWorkingTreeEvaluation(root).acceptPre(); err == nil {
 		if reuse := reusableEvidence(root, plan, time.Now()); reuse.ReusableGreen {
 			return reusedGreenResult(stdout, reuse)
 		}
@@ -312,19 +315,23 @@ func notifyGateSignals(ctx context.Context) (context.Context, func()) {
 }
 
 func executeWithEngine(ctx context.Context, root string, stdout, stderr io.Writer, engine gateEngine) Result {
-	return executeSubjectWithEngine(ctx, root, root, stdout, stderr, engine, nil, reuseFreshGreen,
-		func() (subject, error) { return engine.BuildSubject(root) },
-		func() (subject, error) { return engine.PostRunSubject(root) })
+	evaluation := executionEvaluation(newEngineEvaluation(root, engine))
+	if _, production := engine.(productionGateEngine); production {
+		evaluation = newWorkingTreeEvaluation(root)
+	}
+	return executeSubjectWithEngine(ctx, root, root, stdout, stderr, engine, nil, reuseFreshGreen, evaluation)
 }
 
 func executeWithEngineAfterAcquire(ctx context.Context, root string, stdout, stderr io.Writer, engine gateEngine, arm postAcquireContextArm, mode runMode) Result {
-	return executeSubjectWithEngine(ctx, root, root, stdout, stderr, engine, arm, mode,
-		func() (subject, error) { return engine.BuildSubject(root) },
-		func() (subject, error) { return engine.PostRunSubject(root) })
+	evaluation := executionEvaluation(newEngineEvaluation(root, engine))
+	if _, production := engine.(productionGateEngine); production {
+		evaluation = newWorkingTreeEvaluation(root)
+	}
+	return executeSubjectWithEngine(ctx, root, root, stdout, stderr, engine, arm, mode, evaluation)
 }
 
-func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot string, stdout, stderr io.Writer, engine gateEngine, arm postAcquireContextArm, mode runMode, build, postRun func() (subject, error)) Result {
-	plan, err := build()
+func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot string, stdout, stderr io.Writer, engine gateEngine, arm postAcquireContextArm, mode runMode, evaluation executionEvaluation) Result {
+	plan, err := evaluation.acceptPre()
 	if err != nil {
 		return operationalWithEngine(engine, storageRoot, 0, stderr, "gate subject unavailable")
 	}
@@ -361,7 +368,7 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 	if err := engine.WriteFile(ownerPath, ownerRecord(engine.Now()), 0o600); err != nil {
 		return operationalWithEngine(engine, storageRoot, 0, stderr, "gate owner persistence failed")
 	}
-	underLock, err := build()
+	underLock, err := evaluation.validatePre()
 	if err != nil || !sameSubject(plan, underLock) {
 		return operationalWithEngine(engine, storageRoot, 0, stderr, "gate subject changed before execution")
 	}
@@ -387,7 +394,7 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 	ordinary := runtimeRoot == storageRoot
 	var scoping componentScoping
 	if ordinary {
-		scoping = scopeComponents(runtimeRoot, plan.Resolution, mode, engine.Now())
+		scoping = evaluation.scope(plan.Resolution, mode, engine.Now())
 	}
 	pending := interruptedRecord(plan, engine.Now())
 	if err := durableReplaceWithEngine(engine, gitdir, pending); err != nil {
@@ -440,10 +447,14 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 		}
 		return Result{GateExit: 124, ActionExit: 124, Inspection: inspectAt(storageRoot, engine.Now())}
 	}
-	after, err := postRun()
+	after, err := evaluation.capturePost()
 	if err != nil || !sameSubject(plan, after) {
 		fmt.Fprintln(stderr, "gate subject changed during execution")
-		return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
+		inspection := inspectAt(storageRoot, engine.Now())
+		if err == nil {
+			inspection = inspectSubjectAt(storageRoot, after, engine.Now())
+		}
+		return Result{GateExit: rc, ActionExit: 1, Inspection: inspection}
 	}
 	status := "red"
 	if rc == 0 {
@@ -495,7 +506,7 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 			// future full run, but failing silently would hide that cost, so it
 			// shares the persistence-failure posture above.
 			if ordinary {
-				strippedPlan, err := buildStrippedSubject(runtimeRoot)
+				strippedPlan, err := evaluation.postStrippedSubject()
 				if err == nil {
 					err = retainGreen(storageRoot, strippedPlan, recordedAt)
 				}
@@ -521,7 +532,7 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 		// identity — the `--fresh` red after a capture-only edit — so that slot goes
 		// with it.
 		if ordinary {
-			if strippedPlan, err := buildStrippedSubject(runtimeRoot); err == nil {
+			if strippedPlan, err := evaluation.postStrippedSubject(); err == nil {
 				if err := invalidateEvidence(storageRoot, strippedPlan); err != nil {
 					return operationalWithEngine(engine, storageRoot, rc, stderr, "gate evidence invalidation failed")
 				}
@@ -533,7 +544,7 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 		fmt.Fprintln(stderr, "gate final persistence failed")
 		return Result{GateExit: rc, ActionExit: 1, Inspection: inspectAt(storageRoot, engine.Now())}
 	}
-	return Result{GateExit: rc, ActionExit: rc, Inspection: inspectAt(storageRoot, engine.Now())}
+	return Result{GateExit: rc, ActionExit: rc, Inspection: inspectSubjectAt(storageRoot, after, engine.Now())}
 }
 
 func recordScoping(ready *verdictRecord, scoping componentScoping) {

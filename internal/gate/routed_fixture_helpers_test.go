@@ -83,7 +83,7 @@ func slotRecord(t *testing.T, root string, now time.Time) verdictRecord {
 
 func mustStrippedSubject(t *testing.T, root string) subject {
 	t.Helper()
-	s, err := buildStrippedSubject(root)
+	s, err := buildStrippedSubjectForGeneration(root, mustTreeGeneration(t, root))
 	if err != nil {
 		t.Fatal(err)
 	}

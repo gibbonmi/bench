@@ -1,6 +1,6 @@
 # Gate evaluation snapshot
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed current conversation on 2026-08-04, ordering supported by `decisions/gate-budget.md` #15–#17 and `decisions/assets/gate-budget-cpu-wall-census.md`
 

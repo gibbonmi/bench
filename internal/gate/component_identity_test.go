@@ -17,26 +17,37 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gibbonmi/bench/internal/canary"
 )
 
 func mustResolveComponentIdentities(t *testing.T, root string) map[string]string {
 	t.Helper()
-	identities, err := ResolveComponentIdentities(root)
+	identities, err := resolveComponentIdentities(root, mustTreeGeneration(t, root))
 	if err != nil {
-		t.Fatalf("ResolveComponentIdentities = %v, want the fixture's identities", err)
+		t.Fatalf("resolveComponentIdentities = %v, want the fixture's identities", err)
 	}
 	return identities
 }
 
+func mustTreeGeneration(t *testing.T, root string) *treeGeneration {
+	t.Helper()
+	generation, err := captureWorkingTree(root)
+	if err != nil {
+		t.Fatalf("captureWorkingTree = %v, want the fixture generation", err)
+	}
+	return generation
+}
+
 func mustTreeSnapshot(t *testing.T, root string) treeSnapshot {
 	t.Helper()
-	snapshot, err := readTreeSnapshot(root)
-	if err != nil {
-		t.Fatalf("readTreeSnapshot = %v, want the fixture's snapshot", err)
-	}
-	return snapshot
+	return mustTreeGeneration(t, root).snapshot
+}
+
+func mustScopeComponents(t *testing.T, root string, resolution Resolution, mode runMode, now time.Time) componentScoping {
+	t.Helper()
+	return scopeComponentsForGeneration(root, resolution, mode, now, mustTreeGeneration(t, root))
 }
 
 func componentIdentityOf(t *testing.T, identities map[string]string, name string) string {
@@ -268,10 +279,11 @@ func TestComponentIdentityFailsClosed(t *testing.T) {
 		if err := os.RemoveAll(filepath.Join(fixture.root, ".git")); err != nil {
 			t.Fatal(err)
 		}
-		identities, err := ResolveComponentIdentities(fixture.root)
-		if err == nil {
-			t.Fatalf("ResolveComponentIdentities = %v, want an error with no snapshot to read", identities)
+		generation, err := captureWorkingTree(fixture.root)
+		if err == nil || generation != nil {
+			t.Fatalf("captureWorkingTree = generation:%p err:%v, want no generation and an error", generation, err)
 		}
+		identities := map[string]string(nil)
 		if identities != nil {
 			t.Fatalf("identities = %v alongside the error, want none", identities)
 		}
@@ -281,9 +293,9 @@ func TestComponentIdentityFailsClosed(t *testing.T) {
 		fixture := newKitShapedFixture(t)
 		writeGateTestFile(t, fixture.root, "go.mod", "this is not a go.mod\n", 0o644)
 
-		identities, err := ResolveComponentIdentities(fixture.root)
+		identities, err := resolveComponentIdentities(fixture.root, mustTreeGeneration(t, fixture.root))
 		if err == nil {
-			t.Fatalf("ResolveComponentIdentities = %v, want an error on the corrupted module", identities)
+			t.Fatalf("resolveComponentIdentities = %v, want an error on the corrupted module", identities)
 		}
 		if identities != nil {
 			t.Fatalf("identities = %v alongside the error, want none", identities)

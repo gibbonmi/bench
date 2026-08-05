@@ -33,21 +33,12 @@ func componentPolicyDomain(component string) string {
 	return componentPolicyVersion + "/" + component
 }
 
-// ResolveComponentIdentities returns the identity of every scoped component this root both
-// declares inputs for and materializes a phase for, keyed by phase name. A component the
-// resolved table does not carry gets no identity: there is no execution of it to inherit.
-//
-// The snapshot is read once for the whole family. This runs inside every gate decision, and
-// a snapshot listed per component would pay for the whole tree once per component.
-func ResolveComponentIdentities(root string) (map[string]string, error) {
+func resolveComponentIdentities(root string, generation *treeGeneration) (map[string]string, error) {
 	sets, err := ResolveComponentInputs(root)
 	if err != nil {
 		return nil, err
 	}
-	snapshot, err := readTreeSnapshot(root)
-	if err != nil {
-		return nil, err
-	}
+	snapshot := generation.snapshot
 	phases := map[string]Phase{}
 	for _, phase := range BenchkitPhases(root, kitRoot(root)) {
 		phases[phase.Name] = phase
