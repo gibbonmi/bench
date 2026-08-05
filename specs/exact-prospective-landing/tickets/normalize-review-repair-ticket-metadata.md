@@ -2,8 +2,8 @@
 
 Blocked by: preserve-executable-spec-mode.md, close-adapter-blocker-metadata.md
 Ownership fence: `specs/exact-prospective-landing/tickets/preserve-executable-spec-mode.md`, `specs/exact-prospective-landing/tickets/close-adapter-blocker-metadata.md`
-Integration surfaces: executable-mode repair metadata→`specs/exact-prospective-landing/tickets/preserve-executable-spec-mode.md`; blocker-metadata repair metadata→`specs/exact-prospective-landing/tickets/close-adapter-blocker-metadata.md`; required ticket shape→existing `.agents/skills/bench-craft-tickets/SKILL.md` plus NM1-NM2
-Contracts: blocker, ownership, integration-surface, and value-crossing metadata cross the two owned repair tickets→semantic review and lifecycle parsing, asserted by NM1-NM2 against each complete ticket record
+Integration surfaces: executable-mode repair metadata→`specs/exact-prospective-landing/tickets/preserve-executable-spec-mode.md`; blocker-metadata repair metadata→`specs/exact-prospective-landing/tickets/close-adapter-blocker-metadata.md`; required ticket shape→existing `.agents/skills/bench-craft-tickets/SKILL.md` plus rows NM1 and NM2
+Contracts: executable-mode repair metadata crosses `specs/exact-prospective-landing/tickets/preserve-executable-spec-mode.md`→semantic review and lifecycle parsing, asserted by NM1 against the complete ticket record; blocker-metadata repair metadata crosses `specs/exact-prospective-landing/tickets/close-adapter-blocker-metadata.md`→semantic review and lifecycle parsing, asserted by NM2 against the complete ticket record
 
 ## What to build
 
