@@ -63,7 +63,9 @@ Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
 - Oracle and diagnostics: `bench gate` (dev tier; `--fresh` forces a real run past a
   reusable green verdict), `bench gate pin`, `bench prep-release`
   (maintainer-run ship tier: the release-evidence checks, once per release; refuses
-  without a current dev-green verdict), `bench canary`, `bench structure`,
+  without a current dev-green verdict), `bench release` (maintainer-run
+  publication lifecycle — submit, promote, rollback — per `docs/release-runbook.md`),
+  `bench canary`, `bench structure`,
   `bench guards`, `bench diff`, `bench coverage`, `bench outline`, `bench models`, `bench version`.
 - Focused Go triage: `bench test [--full] [package]` runs fresh Go tests and renders
   package, failure, and skip evidence as TOON.
