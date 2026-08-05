@@ -1,0 +1,1 @@
+- 2026-08-05  gate check: reconcile the .bench/BENCH.md CLI inventory (plus BENCH-reference plumbing list) against bin/bench.sh case labels, so the 'kept in sync' promise is enforced rather than hand-maintained

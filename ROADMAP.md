@@ -764,6 +764,20 @@ foundation still ships without changing emitted bytes. The Git-inspection
 face is likewise byte-changing and therefore gets its own spec; it does not
 relax byte preservation for the foundation.
 
+Pricing context, 2026-08-05: the ten principles are not equal in value, and the
+ordering decides what survives if a face competes for scope. TOON's saving is
+linear — ~40% of output tokens the agent was going to read anyway — while
+structured stdout errors, honest exit codes, and definitive empty states each
+prevent whole extra turns: a failure routed to stderr is invisible to the
+agent, which then guesses and re-runs; silence on zero results forces a
+re-verification call; ambiguous exit codes force prose parsing. A prevented
+turn is worth far more than a compressed row, so the turn-preventing principles
+outrank the format. The same turn-versus-token arithmetic prices conformance
+itself: a gate-checked query command carries roughly five contract behaviors
+(rows, empty state, argv grammar, deep-cwd, routing), so the verification
+exceeds the feature — which is the reason AXI stays scoped to the
+high-frequency query surfaces and is not extended to operational commands.
+
 A sixth face, observed 2026-08-02 during the FT164 build, is the canonical
 contextual-disclosure example: `bench spec build start` refused with "no exact
 green evidence: run bench gate, then retry start" on a tip whose verdict was
