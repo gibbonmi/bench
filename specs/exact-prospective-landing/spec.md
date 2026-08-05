@@ -1,6 +1,6 @@
 # Exact prospective landing
 
-Status: staged
+Status: implemented
 
 Decision source: named reviewed artifact `decisions/parallel-session-landings.md` at `fd73811` (first ordered scope in decision #10)
 
