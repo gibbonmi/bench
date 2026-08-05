@@ -20,5 +20,5 @@ payload, changing tracked bytes, or weakening non-empty replay validation.
 
 ## Red mutations
 
-- [ ] [CR1] Always invoking `git apply` makes the clean refresh fail with `No valid patches in input`.
-- [ ] [CR2] Skipping apply for non-empty patches loses the existing consumer payload or makes its lifecycle assertions fail.
+- [ ] [MCR1] Always invoking `git apply` makes the clean refresh fail with `No valid patches in input`.
+- [ ] [MCR2] Skipping apply for non-empty patches loses the existing consumer payload or makes its lifecycle assertions fail.
