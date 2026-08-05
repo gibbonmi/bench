@@ -2,23 +2,23 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `9deb062`, clean tree, 10 unpushed commits
+Branch: `main` — HEAD `9df6e5f`, clean tree, 28 unpushed commits
 Spec: `specs/exact-prospective-landing/spec.md` (Status: staged), `specs/ft187-communication-surface-cut/spec.md` (Status: staged), `specs/go-build-cache-footprint/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `254d2ef` — current
+Gate: green at `784fed4` — current
 
 ## State
 
-**Phase reached: implementation is integrated and exact-candidate review is next.**
+**Phase reached: critical lifecycle repairs are integrated; one preserved adapter release remains before exact-candidate review.**
 
-Run `869a2d33cab96f962882762a9ea56fd21c952976248e64fa917f6da6c48dbca3` has exact candidate `77bc0e6b5b1be8b753dbdac49e0b19105d17e67d`; all eight assignments are checkpointed, integrated, and released. The adapter's AC1-AC9 rows are green on the repaired composition. Focused R2, the six-row prospective fixture repro, `internal/commit`, full `internal/contract/runtime`, and `internal/landing` are green. Delegate and coordinator mutations independently red and were restored.
+Run `869a2d33cab96f962882762a9ea56fd21c952976248e64fa917f6da6c48dbca3` has candidate `7433d559a5573d1c790615818dfbe8e5d5ccc6b1`. Nineteen assignments are released. Assignment `2112f6f281eb24996967c5e2826a8879` is integrated and cleanup-pending with a clean checkout; its recorded integration `e7a1b2be62f45b8654a320e7c48be8ee86b693b6` predates the final no-op sibling commit. Recompose onto this handoff commit, build the sealed CLI from that exact candidate, and retry the same assignment integration to release it without another candidate commit.
 
-Critical fixture prerequisites were repaired through lifecycle assignments: Story 5 common-Git-dir coordination, pre-lock fault timing, prospective-safe runtime marker/diagnostic fixtures, and the R2 committed oracle base. No adjacent noncritical cleanup was taken. The candidate now requires the fresh exact-candidate Standards/Spec/Coverage review and receipt before promotion.
+Critical prerequisites now present in the candidate include the FT78 symlink fixture repair, clean refresh/checkpoint/integration, verified clean provisional release, and the bounded operation-journal extension from 64 to 128. Their focused packages, vet checks, and red mutations are green/restored; the latest whole-tree prerequisite gate is green. Fable and then Opus stalled on the clean-release write charge, so the coordinator completed and verified its two-file fence. The four rare runtime edge probes and cleanup-pending sibling-tip drift are parked as noncritical; do not add cross-harness review.
 
-Closed decisions: preserve candidate identity during review; concrete review defects return through repair assignments; contestable design findings require reviewer veto. The large-diff cross-harness falsification offer remains unanswered, so promotion must not run until the reviewer answers it. If the next recomposed attempt fails, hand the preserved blocker and receipt to Fable rather than retrying locally.
+After release, perform only Standards, Spec, and Coverage review against the exact candidate, submit the receipt, and promote. Preserve candidate identity during review; concrete accepted findings return through lifecycle repair assignments.
 
 ## Next command
 
-`$bench-implement-spec --full specs/exact-prospective-landing/spec.md`
+`bench spec build promote exact-prospective-landing`
 
 ## Shape
 
