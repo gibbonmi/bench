@@ -3,7 +3,7 @@
 Blocked by: adopt-exact-landing-in-commit.md
 Ownership fence: `internal/gate/story3_proof_helpers_test.go`
 Integration surfaces: hostile symlink proof setup→`internal/gate/story3_proof_helpers_test.go`; path-scoped `bench commit` prospective authorization→the fixture's tracked gate and manifest
-Contracts: the FT78 symlink proof commits its executable gate and manifest before creating the named landing delta, keeps the declared symlink target ignored and ambient, and records gate runs through the repository's common Git directory so the same marker survives detached prospective execution
+Contracts: committed gate and manifest bytes, the ignored declared target, and the common-Git-dir run marker cross fixture setup→the real compiled `bench commit` invocation in `internal/gate/story3_proof_helpers_test.go`, asserted by PF1-PF2 against the detached prospective checkout and repository marker
 
 ## What to build
 
