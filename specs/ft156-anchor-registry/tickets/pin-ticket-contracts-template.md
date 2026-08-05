@@ -1,8 +1,8 @@
 # Pin the ticket Contracts template
 
 Blocked by: none
-Ownership fence: `internal/conformance/docs_workflow_helpers_test.go`, `tests/canary/workflow-guidance-anchors/ticket-contracts-template-anchor`
-Contracts: the `Contracts:` template anchor tuple crosses `internal/conformance/docs_workflow_helpers_test.go`→the mutated craft-tickets fixture, asserted by CT1 against the real graded-root diagnostic
+Ownership fence: `internal/conformance/docs_workflow_helpers_test.go`, `internal/conformance/registry_test.go`, `tests/canary/workflow-guidance-anchors/ticket-contracts-template-anchor`
+Contracts: the `Contracts:` template anchor tuple crosses `internal/conformance/docs_workflow_helpers_test.go`→the mutated craft-tickets fixture, while the fixture family classification crosses `tests/canary/workflow-guidance-anchors/ticket-contracts-template-anchor`→`internal/conformance/registry_test.go`; CT1 asserts both against the real graded-root diagnostic and complete fixture registry
 
 ## What to build
 
