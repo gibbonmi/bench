@@ -20,9 +20,10 @@ import (
 	"github.com/gibbonmi/bench/internal/jsonfile"
 )
 
-// GateOwner validates exact green evidence and advances the expected branch marker.
+// GateOwner establishes exact green evidence and advances project-green markers.
 type GateOwner interface {
 	Bootstrap(context.Context, string, string, string, string) error
+	AdvanceMarker(context.Context, string, string, string, string) error
 }
 
 // GateDisposition classifies an owner-attributed prospective gate result.
@@ -46,10 +47,12 @@ type GateOutcome struct {
 	Evidence    string
 }
 
-// PromotionGateOwner authorizes an exact unpublished tree and validates its evidence.
+// PromotionGateOwner authorizes an exact unpublished tree, validates its evidence,
+// and recognizes the project-green marker before publication.
 type PromotionGateOwner interface {
 	Execute(context.Context, string, string) (GateOutcome, error)
 	Validate(context.Context, string, string, string) (bool, error)
+	CheckMarker(context.Context, string, string, string, string) error
 }
 
 // WorktreeOwner creates a request-idempotent owned worktree at start.

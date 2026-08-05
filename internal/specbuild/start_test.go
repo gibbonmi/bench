@@ -16,7 +16,6 @@ import (
 
 	"github.com/gibbonmi/bench/internal/canary"
 	"github.com/gibbonmi/bench/internal/gate"
-	gateauth "github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/spec"
 	"github.com/gibbonmi/bench/internal/worktree"
 )
@@ -26,6 +25,10 @@ type abandonOwner struct{ plans, applies int }
 type rejectGate struct{}
 
 func (rejectGate) Bootstrap(context.Context, string, string, string, string) error {
+	return fmt.Errorf("missing evidence")
+}
+
+func (rejectGate) AdvanceMarker(context.Context, string, string, string, string) error {
 	return fmt.Errorf("missing evidence")
 }
 
@@ -42,6 +45,10 @@ func (reuseGreenGate) Bootstrap(_ context.Context, root, branch, tip, expected s
 	return updateRef(root, "refs/bench/green/"+branch, tip, expected)
 }
 
+func (reuseGreenGate) AdvanceMarker(_ context.Context, root, branch, destination, expected string) error {
+	return updateRef(root, "refs/bench/green/"+branch, destination, expected)
+}
+
 // recordingGate captures every expectation the service hands the gate owner.
 // An inert gate authorizes without advancing the marker, which is how a run
 // reaches a prepared start operation with its marker still behind the tip.
@@ -56,6 +63,10 @@ func (g *recordingGate) Bootstrap(ctx context.Context, root, branch, tip, expect
 		return nil
 	}
 	return greenGate{}.Bootstrap(ctx, root, branch, tip, expected)
+}
+
+func (g *recordingGate) AdvanceMarker(ctx context.Context, root, branch, destination, expected string) error {
+	return greenGate{}.AdvanceMarker(ctx, root, branch, destination, expected)
 }
 
 func greenMarkerRef(t *testing.T, root string) string {
@@ -128,11 +139,9 @@ func TestStartFailsClosedOnUnreadableMarker(t *testing.T) {
 	}
 }
 
-type authorizationGate struct{}
+type authorizationGate = AuthorizationGate
 
-func (authorizationGate) Bootstrap(_ context.Context, root, branch, tip, expected string) error {
-	return gateauth.Bootstrap(root, branch, tip, expected)
-}
+type realPromotionGate = AuthorizationGate
 
 func specEditStartFixture(t *testing.T) string {
 	t.Helper()

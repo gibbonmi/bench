@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os/exec"
 	"strconv"
 	"time"
 
@@ -42,31 +43,102 @@ func Bootstrap(root, branch, tip, expected string) error {
 	if !branchAndTipAt(root, branch, tip) {
 		return errors.New("working branch or tip changed")
 	}
+	return AdvanceMarker(context.Background(), root, branch, tip, expected)
+}
+
+// CheckMarker recognizes a compatible project-green marker without changing it.
+func CheckMarker(_ context.Context, root, branch, destination, expected string) error {
+	return checkMarker(root, branch, destination, expected, false)
+}
+
+// AdvanceMarker recognizes a compatible project-green marker and advances it atomically.
+func AdvanceMarker(_ context.Context, root, branch, destination, expected string) error {
+	return checkMarker(root, branch, destination, expected, true)
+}
+
+func checkMarker(root, branch, destination, expected string, advance bool) error {
 	marker := "refs/bench/green/" + branch
-	if existing, err := benchgit.Output("-C", root, "rev-parse", "--verify", marker+"^{commit}"); err == nil {
-		if existing == tip {
-			return nil
+	actual, present, err := markerCommit(root, marker)
+	if err != nil {
+		return err
+	}
+	if present && actual == destination {
+		return nil
+	}
+	if !fullCommit(root, destination) {
+		return errors.New("project-green destination is not a full commit ID")
+	}
+	if expected != "" {
+		if !fullCommit(root, expected) {
+			return errors.New("project-green marker does not match expected prior tip")
 		}
-		if existing != expected {
+		ancestor, err := isAncestor(root, expected, destination)
+		if err != nil {
+			return fmt.Errorf("check expected project-green marker ancestry: %w", err)
+		}
+		if !ancestor {
+			return errors.New("expected project-green marker is not an ancestor of the tip")
+		}
+	}
+	if present {
+		if expected == "" {
 			return errors.New("project-green marker conflicts with another tip")
+		}
+		for _, ancestorOf := range []string{expected, destination} {
+			ancestor, err := isAncestor(root, actual, ancestorOf)
+			if err != nil {
+				return fmt.Errorf("check project-green marker ancestry: %w", err)
+			}
+			if !ancestor {
+				return errors.New("project-green marker conflicts with another tip")
+			}
 		}
 	} else if expected != "" {
 		return errors.New("project-green marker does not match expected prior tip")
-	}
-	if expected != "" {
-		if !benchgit.OK("-C", root, "merge-base", "--is-ancestor", expected, tip) {
-			return errors.New("expected project-green marker is not an ancestor of the tip")
-		}
 	} else {
-		expected = "0000000000000000000000000000000000000000"
+		actual = "0000000000000000000000000000000000000000"
 	}
-	if _, err := benchgit.Raw("-C", root, "update-ref", marker, tip, expected); err != nil {
-		if existing, checkErr := benchgit.Output("-C", root, "rev-parse", "--verify", marker+"^{commit}"); checkErr == nil && existing == tip {
+	if !advance {
+		return nil
+	}
+	if _, err := benchgit.Raw("-C", root, "update-ref", marker, destination, actual); err != nil {
+		if existing, checkErr := benchgit.Output("-C", root, "rev-parse", "--verify", marker+"^{commit}"); checkErr == nil && existing == destination {
 			return nil
 		}
 		return fmt.Errorf("record project-green marker: %w", err)
 	}
 	return nil
+}
+
+func markerCommit(root, marker string) (string, bool, error) {
+	if _, err := benchgit.Output("-C", root, "rev-parse", "--verify", marker); err != nil {
+		if _, symbolicErr := benchgit.Raw("-C", root, "symbolic-ref", "--quiet", marker); symbolicErr == nil {
+			return "", true, errors.New("read project-green marker: dangling symbolic ref")
+		}
+		return "", false, nil
+	}
+	actual, err := benchgit.Output("-C", root, "rev-parse", "--verify", marker+"^{commit}")
+	if err != nil {
+		return "", true, fmt.Errorf("read project-green marker: %w", err)
+	}
+	return actual, true, nil
+}
+
+func fullCommit(root, value string) bool {
+	resolved, err := benchgit.Output("-C", root, "rev-parse", "--verify", value+"^{commit}")
+	return err == nil && resolved == value
+}
+
+func isAncestor(root, ancestor, descendant string) (bool, error) {
+	_, err := benchgit.Raw("-C", root, "merge-base", "--is-ancestor", ancestor, descendant)
+	if err == nil {
+		return true, nil
+	}
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
+		return false, nil
+	}
+	return false, err
 }
 
 func branchAndTipAt(root, branch, tip string) bool {

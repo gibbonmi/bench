@@ -351,7 +351,8 @@ func (s *Service) Promote(ctx context.Context, slug string) (Status, error) {
 				return run.status(), err
 			}
 		}
-		if err := updateRef(s.root, "refs/bench/green/"+run.Branch, run.PromotionCommit, run.Base); err != nil && !refAt(s.root, "refs/bench/green/"+run.Branch, run.PromotionCommit) {
+		// Retained evidence is proven above; the owner recognizes the marker it finds.
+		if err := s.gate.AdvanceMarker(ctx, s.root, run.Branch, run.PromotionCommit, run.Base); err != nil {
 			return run.status(), err
 		}
 		if err := s.finishPromotion(&run); err != nil {
@@ -391,9 +392,6 @@ func (s *Service) Promote(ctx context.Context, slug string) (Status, error) {
 	if err != nil {
 		return Status{}, fmt.Errorf("construct prospective promotion tree: %w", err)
 	}
-	if _, _, err := s.beginOperation(&run, "promote", run.CandidateTip, tree); err != nil {
-		return Status{}, err
-	}
 	outcome, err := owner.Execute(ctx, s.root, tree)
 	if err != nil {
 		return run.status(), fmt.Errorf("authorize prospective promotion: %w", err)
@@ -401,19 +399,30 @@ func (s *Service) Promote(ctx context.Context, slug string) (Status, error) {
 	if !validGateOutcome(outcome) {
 		return run.status(), errors.New("spec build prospective gate outcome is incomplete")
 	}
-	run.PromotionTree, run.PromotionEvidence, run.PromotionDisposition = tree, outcome.Evidence, outcome.Disposition
-	if err := s.save(run); err != nil {
-		return Status{}, err
-	}
 	if !outcome.Green {
+		run.PromotionTree, run.PromotionEvidence, run.PromotionDisposition = tree, outcome.Evidence, outcome.Disposition
+		if err := s.save(run); err != nil {
+			return Status{}, err
+		}
 		return run.status(), fmt.Errorf("spec build prospective gate red: %s", outcome.Disposition)
 	}
 	commit, err := s.gitOutput(ctx, "commit-tree", tree, "-p", run.Base, "-m", "bench promote run="+run.Run+" candidate="+run.CandidateTip)
 	if err != nil {
 		return Status{}, fmt.Errorf("create promotion squash: %w", err)
 	}
-	run.PromotionCommit = commit
-	if err := s.save(run); err != nil {
+	if err := owner.CheckMarker(ctx, s.root, run.Branch, commit, run.Base); err != nil {
+		return run.status(), fmt.Errorf("check project-green marker: %w", err)
+	}
+	statePath, err := s.statePath(slug)
+	if err != nil {
+		return Status{}, err
+	}
+	state, err := os.ReadFile(statePath)
+	if err != nil {
+		return Status{}, fmt.Errorf("read spec build state: %w", err)
+	}
+	run.PromotionTree, run.PromotionEvidence, run.PromotionDisposition, run.PromotionCommit = tree, outcome.Evidence, outcome.Disposition, commit
+	if _, _, err := s.beginOperation(&run, "promote", run.CandidateTip, tree); err != nil {
 		return Status{}, err
 	}
 	if err := s.faultAt("promote/commit"); err != nil {
@@ -428,7 +437,16 @@ func (s *Service) Promote(ctx context.Context, slug string) (Status, error) {
 	if _, err := s.git(ctx, nil, nil, "read-tree", "--reset", "-u", commit); err != nil {
 		return run.status(), err
 	}
-	if err := updateRef(s.root, "refs/bench/green/"+run.Branch, commit, run.Base); err != nil {
+	if err := s.gate.AdvanceMarker(ctx, s.root, run.Branch, commit, run.Base); err != nil {
+		if rollbackErr := updateRef(s.root, "refs/heads/"+run.Branch, run.Base, commit); rollbackErr != nil {
+			return run.status(), fmt.Errorf("advance project-green marker: %w; restore working branch: %v", err, rollbackErr)
+		}
+		if _, restoreErr := s.git(ctx, nil, nil, "read-tree", "--reset", "-u", run.Base); restoreErr != nil {
+			return run.status(), fmt.Errorf("advance project-green marker: %w; restore working checkout: %v", err, restoreErr)
+		}
+		if restoreErr := replaceState(statePath, state); restoreErr != nil {
+			return run.status(), fmt.Errorf("advance project-green marker: %w; restore spec build state: %v", err, restoreErr)
+		}
 		return run.status(), fmt.Errorf("advance project-green marker: %w", err)
 	}
 	if err := s.faultAt("promote/green"); err != nil {

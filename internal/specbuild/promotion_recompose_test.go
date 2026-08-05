@@ -483,6 +483,10 @@ func (g *promotionGate) Bootstrap(ctx context.Context, root, branch, tip, expect
 	return greenGate{}.Bootstrap(ctx, root, branch, tip, expected)
 }
 
+func (g *promotionGate) AdvanceMarker(ctx context.Context, root, branch, destination, expected string) error {
+	return greenGate{}.AdvanceMarker(ctx, root, branch, destination, expected)
+}
+
 type recompositionGate struct {
 	calls                 int
 	branch, tip, expected string
@@ -496,6 +500,10 @@ func (g *recompositionGate) Bootstrap(ctx context.Context, root, branch, tip, ex
 		return g.err
 	}
 	return greenGate{}.Bootstrap(ctx, root, branch, tip, expected)
+}
+
+func (g *recompositionGate) AdvanceMarker(ctx context.Context, root, branch, destination, expected string) error {
+	return greenGate{}.AdvanceMarker(ctx, root, branch, destination, expected)
 }
 
 func reviewedSamePathPromotionFixture(t *testing.T, candidateContent string) checkpointFixture {

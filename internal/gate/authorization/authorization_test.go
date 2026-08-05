@@ -129,6 +129,74 @@ func TestBootstrapFastForwardsAncestorMarker(t *testing.T) {
 	}
 }
 
+func TestAdvanceMarkerRecognizesLaggingMarker(t *testing.T) {
+	root, branch, previous, lineage := greenBootstrapRepo(t)
+	marker := "refs/bench/green/" + branch
+	gitRun(t, root, "update-ref", marker, previous)
+	gitRun(t, root, "commit", "--allow-empty", "-qm", "destination")
+	destination := gitOutput(t, root, "rev-parse", "HEAD")
+
+	if err := AdvanceMarker(t.Context(), root, branch, destination, lineage); err != nil {
+		t.Fatalf("advance from lagging marker: %v", err)
+	}
+	if got := gitOutput(t, root, "rev-parse", marker); got != destination {
+		t.Fatalf("marker = %s, want destination %s", got, destination)
+	}
+}
+
+func TestAdvanceMarkerRefusesDivergentMarker(t *testing.T) {
+	root, branch, parent, lineage := greenBootstrapRepo(t)
+	marker := "refs/bench/green/" + branch
+	gitRun(t, root, "commit", "--allow-empty", "-qm", "destination")
+	destination := gitOutput(t, root, "rev-parse", "HEAD")
+	divergent := siblingCommit(t, root, parent)
+	gitRun(t, root, "update-ref", marker, divergent)
+
+	if err := AdvanceMarker(t.Context(), root, branch, destination, lineage); err == nil {
+		t.Fatal("advance accepted a divergent marker")
+	}
+	if got := gitOutput(t, root, "rev-parse", marker); got != divergent {
+		t.Fatalf("marker = %s, want divergent marker %s", got, divergent)
+	}
+}
+
+func TestAdvanceMarkerRefusesMarkerBetweenLineageAndDestination(t *testing.T) {
+	root, branch, _, lineage := greenBootstrapRepo(t)
+	marker := "refs/bench/green/" + branch
+	gitRun(t, root, "commit", "--allow-empty", "-qm", "between")
+	between := gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, root, "commit", "--allow-empty", "-qm", "destination")
+	destination := gitOutput(t, root, "rev-parse", "HEAD")
+	gitRun(t, root, "update-ref", marker, between)
+
+	if err := AdvanceMarker(t.Context(), root, branch, destination, lineage); err == nil {
+		t.Fatal("advance accepted a marker between lineage and destination")
+	}
+	if got := gitOutput(t, root, "rev-parse", marker); got != between {
+		t.Fatalf("marker = %s, want between marker %s", got, between)
+	}
+}
+
+func TestAdvanceMarkerRefusesUndecidableMarkerAncestry(t *testing.T) {
+	root, branch, actual, _ := greenBootstrapRepo(t)
+	marker := "refs/bench/green/" + branch
+	tree := gitOutput(t, root, "rev-parse", actual+"^{tree}")
+	intermediate := gitOutput(t, root, "commit-tree", tree, "-p", actual, "-m", "missing intermediate")
+	lineage := gitOutput(t, root, "commit-tree", tree, "-p", intermediate, "-m", "lineage")
+	destination := gitOutput(t, root, "commit-tree", tree, "-p", lineage, "-m", "destination")
+	gitRun(t, root, "update-ref", marker, actual)
+	if err := os.Remove(filepath.Join(root, ".git", "objects", intermediate[:2], intermediate[2:])); err != nil {
+		t.Fatalf("unlink intermediate object: %v", err)
+	}
+
+	if err := AdvanceMarker(t.Context(), root, branch, destination, lineage); err == nil {
+		t.Fatal("advance accepted an unreadable marker ancestry")
+	}
+	if got := markerFile(t, root, branch); got != actual {
+		t.Fatalf("marker = %s, want marker %s", got, actual)
+	}
+}
+
 func TestBootstrapIsNoOpWhenMarkerEqualsTip(t *testing.T) {
 	root, branch, previous, tip := greenBootstrapRepo(t)
 	marker := "refs/bench/green/" + branch
@@ -158,6 +226,24 @@ func TestBootstrapFailsClosedOnUnreadableMarker(t *testing.T) {
 	}
 	if got := markerFile(t, root, branch); got != unreadable {
 		t.Fatalf("marker = %s, want the unreadable %s rather than a fresh one", got, unreadable)
+	}
+}
+
+func TestBootstrapRefusesDanglingSymbolicMarker(t *testing.T) {
+	root, branch, _, tip := greenBootstrapRepo(t)
+	marker := "refs/bench/green/" + branch
+	missing := "refs/bench/missing-marker"
+	gitRun(t, root, "symbolic-ref", marker, missing)
+	before := gitOutput(t, root, "symbolic-ref", marker)
+
+	if err := Bootstrap(root, branch, tip, ""); err == nil {
+		t.Fatal("bootstrap treated a dangling symbolic marker as absent")
+	}
+	if got := gitOutput(t, root, "symbolic-ref", marker); got != before {
+		t.Fatalf("marker = %q, want dangling symbolic marker %q left untouched", got, before)
+	}
+	if out, err := exec.Command("git", "-C", root, "show-ref", "--verify", "--quiet", missing).CombinedOutput(); err == nil {
+		t.Fatalf("bootstrap created the dangling marker target: %s", out)
 	}
 }
 

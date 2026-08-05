@@ -8,7 +8,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	gateauth "github.com/gibbonmi/bench/internal/gate/authorization"
 	"github.com/gibbonmi/bench/internal/git"
 	"github.com/gibbonmi/bench/internal/sanitize"
 	"github.com/gibbonmi/bench/internal/spec"
@@ -256,28 +255,4 @@ func (productionWorktreeOwner) ApplyAbandon(_ context.Context, root, request, pa
 	return err
 }
 
-type productionGateOwner struct{}
-
-func (productionGateOwner) Bootstrap(_ context.Context, root, branch, tip, expected string) error {
-	return gateauth.Bootstrap(root, branch, tip, expected)
-}
-
-func (productionGateOwner) Execute(ctx context.Context, root, tree string) (specbuild.GateOutcome, error) {
-	result := gateauth.Authorize(ctx, root, tree)
-	outcome := specbuild.GateOutcome{Evidence: result.Evidence}
-	switch result.Kind {
-	case gateauth.Green:
-		outcome.Green = true
-	case gateauth.Candidate:
-		outcome.Disposition = specbuild.GateCandidate
-	case gateauth.Inherited:
-		outcome.Disposition = specbuild.GateInherited
-	default:
-		outcome.Disposition = specbuild.GateInfrastructure
-	}
-	return outcome, nil
-}
-
-func (productionGateOwner) Validate(_ context.Context, root, tree, evidence string) (bool, error) {
-	return gateauth.Validate(root, tree, evidence), nil
-}
+type productionGateOwner = specbuild.AuthorizationGate

@@ -318,6 +318,10 @@ func (g *countingGate) Bootstrap(ctx context.Context, root, branch, tip, expecte
 	return greenGate{}.Bootstrap(ctx, root, branch, tip, expected)
 }
 
+func (g *countingGate) AdvanceMarker(ctx context.Context, root, branch, destination, expected string) error {
+	return greenGate{}.AdvanceMarker(ctx, root, branch, destination, expected)
+}
+
 type realOwner struct{}
 
 func (realOwner) Create(_ context.Context, root, request, label, start string) (OwnedWorktree, error) {
@@ -332,7 +336,14 @@ func (realOwner) Release(context.Context, string, string, string, ReleaseEvidenc
 type greenGate struct{}
 
 func (greenGate) Bootstrap(_ context.Context, root, branch, tip, expected string) error {
-	cmd := exec.Command("git", "-C", root, "update-ref", "refs/bench/green/"+branch, tip, expected)
+	return greenGate{}.AdvanceMarker(context.Background(), root, branch, tip, expected)
+}
+
+func (greenGate) AdvanceMarker(_ context.Context, root, branch, destination, expected string) error {
+	if refAt(root, "refs/bench/green/"+branch, destination) {
+		return nil
+	}
+	cmd := exec.Command("git", "-C", root, "update-ref", "refs/bench/green/"+branch, destination, expected)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("establish green: %s", out)
 	}
@@ -397,4 +408,8 @@ func TestPromoteConflictPreservesWorkingCandidateAndState(t *testing.T) {
 func (g *promotionGate) Validate(_ context.Context, _ string, tree, evidence string) (bool, error) {
 	g.validations++
 	return g.accept && tree == g.tree && evidence == "owner-proof", nil
+}
+
+func (*promotionGate) CheckMarker(context.Context, string, string, string, string) error {
+	return nil
 }

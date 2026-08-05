@@ -1,6 +1,6 @@
 # ft194-project-green-desync
 
-Status: staged
+Status: implemented
 
 Decision source: `ROADMAP.md` FT194 (HIGH, reproduced defect), verdicted in the reviewed 2026-08-04 `/bench-what-next` drain (commit 40be04f).
 

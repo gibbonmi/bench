@@ -9,6 +9,7 @@ import "github.com/gibbonmi/bench/internal/specbuild"
 // here would downgrade promotion, release, or abandon at runtime with every test still
 // green. These pins turn that silent downgrade into a compile error at the wiring site.
 var (
+	_ specbuild.GateOwner          = productionGateOwner{}
 	_ specbuild.PromotionGateOwner = productionGateOwner{}
 	_ specbuild.ReleaseOwner       = productionWorktreeOwner{}
 	_ specbuild.AbandonOwner       = productionWorktreeOwner{}
