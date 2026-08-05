@@ -64,48 +64,6 @@ focused once and 3/3 repeated at about 0.43 s per run. Treat that delta as
 contention evidence for pricing the outer widths, not as authority to pick one
 from a single machine.
 
-**FT156 (MEDIUM) — the anchor mechanism is weaker than its coverage rows
-claim.** Two faces from FT152's build, one owner (the conformance anchor
-checks), one decision. First, `requireCollapsed` does not strip HTML comments
-while `forbid` does, so any anchored guidance sentence can be commented out and
-still satisfy its anchor — the three new point-of-use verify hooks and every
-shared-rule marker included; fixing the asymmetry touches roughly 100 existing
-anchors across the kit, so it needs its own spec. The
-`shape-idea-bypass-wrapped` fixture proves the forbid direction only. Second,
-substring forbids die to paraphrase: "Plain invocation also starts the full
-run" evades the "by default" needle, and each of the ten `--full` forbids has a
-natural evading phrasing — the spec's coverage rows claim those pairs close the
-cheap wrong implementation, but they close one spelling of it. Either the rows
-state the weaker claim honestly or anchors get a stronger mechanism than
-substring matching; that ruling also decides how much the comment fix is worth,
-so both faces take one grill. A third face, drained 2026-07-28, is a coverage
-hole in the same mechanism: no canary fixture proves a section-scoped anchor
-over `.bench/BENCH.md` — story 9's four fixtures prove section scoping only in
-`.agents/commands/`, and the shared-rule fixtures prove the marker directions
-only, so FT152's story 1 (Workflow section) and story 15 (communication rules)
-both rest on that untested combination. One fixture removing a section-scoped
-`.bench/BENCH.md` sentence covers both; it rides whatever mechanism the grill
-decides. A rider drained 2026-07-29: `bench anchors <path>` — query which
-conformance anchors pin a doc file before editing it — needs exactly the
-registry-or-parser seam the mechanism ruling decides, so the grill weighs it
-as a consumer of that seam rather than a separate build. The mechanism now has
-a measured cost signal: `internal/conformance/docs_workflow_helpers_test.go`
-holds the hand-written anchor entries and stands at 864 lines against a 660
-grant, a violation FT164's build widened and could not fix in place. A
-declarative anchor registry is the fix; raise the grant to ~850 only as a
-stopgap if structure noise blocks a pass before this row lands, never as the
-answer. A verified false green adds one rider: deleting only the ticket
-template's `Contracts:` line passes the real graded-root
-`TestRootConformance` because no section-scoped template requirement anchors
-that line. FT156 owns the oracle gap; this rider records it without changing
-the check.
-Entry: `/bench-write-spec`, by reviewer direction 2026-08-03: the mechanism
-ruling is taken as the grill at spec entry rather than as a separate shaping
-session, because the two faces are one decision and the spec cannot be written
-without it. Source: `capture/IDEAS.md`,
-drained here and in prior runs; found by the Codex falsification pass on
-`3eb1c9a`.
-
 **FT162 (MEDIUM) — full-run and phase-close state has one authoritative subject
 and handoff.** Recommendations from the craft-tickets, light-path,
 artifact-suite, and artifact-hoist retros converge on one lifecycle owner. The close's
@@ -2216,8 +2174,6 @@ recommended table is sequencing advice.
 | FT71 | FT169 | The event schema should record the settled landing and recovery lifecycle rather than version an interim one. |
 | FT100 | FT89 | Cut prose after the correctness and coherence pass establishes which guidance is still authoritative. |
 | FT107 | FT158 | The cross-harness refute pass is the only demonstrated falsification for a wide always-loaded prose diff; make it standing before the batch lands. |
-| FT107 | FT156 | No fixture proves a section-scoped `.bench/BENCH.md` anchor — the exact surface the batch edits; rule the anchor mechanism first. |
-| FT187 | FT156 | Same untested anchor surface, and its fifth clause rewords the paragraph FT156's named-lighter-path ruling may replace outright. |
 | FT108 | FT89 | FT89 single-sources the skills index the new skill must join; the expand–migrate–contract and gate-cadence rules it builds on are already settled in `craft-tickets`. |
 | FT111 | FT179 | FT179 reopens FT111's edit-in-place-only ruling on an order-larger measured count; land them as one `craft-comments`/`craft-review` visit. |
 | FT172 | FT106 | Reuse the document-claim probe for semantic roadmap claims instead of designing a second checker. |
