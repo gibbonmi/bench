@@ -2,30 +2,32 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — pre-commit HEAD `e01de49`, roadmap drain batch prepared
-Spec: `specs/exact-prospective-landing/spec.md` (Status: staged), `specs/ft187-communication-surface-cut/spec.md` (Status: staged), `specs/go-build-cache-footprint/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green for the pre-drain tree; reduced-scope roadmap and capture drift awaits the approved `bench commit`
+Branch: `main` — pre-commit HEAD `09dbc35`
+Spec: `specs/ft156-anchor-registry/spec.md` (Status: staged), plus the four earlier staged specs (`exact-prospective-landing`, `ft187-communication-surface-cut`, `go-build-cache-footprint`, `pre-push-guard-visibility`)
+Gate: green expected for a documents-only change; the spec commit is the verdict
 
 ## State
 
-**Phase reached: `$bench-what-next` closed over the FT194 retro.**
-The schema-3 roadmap snapshot was sequence-trusted with no occurrence
-discrepancies, ideas, or open learnings. FT194 was already retired and absent
-from the roadmap; its retro is drained into FT162, FT99, and FT164, and the
-stale goal-track count now names all four staged specs.
+**Phase reached: `$bench-write-spec` closed over FT156.**
+The ready map compiled to `specs/ft156-anchor-registry/decisions/ft156-anchor-registry.md`
+and the spec stages the map's whole program as one spec, reviewer-pre-approved:
+two pulled-forward red-capability closures (the generic section-scoped
+`.bench/BENCH.md` fixture; the ticket template's `Contracts:`-line anchor), the
+declarative registry extraction carrying `bench anchors <path>`, comment-strip on
+the shared matcher, and the honest-strength prose sweep. The Codex falsification
+pass (`gpt-5.6-sol` / high) ran; its accepted findings are already folded in.
 
-- FT162 owns the stale prepared-operation projection; its existing terminal
-  projection already owns retained promotion identity, evidence, and timings.
-- FT99 owns the publication-site × refusal-class Coverage review rule.
-- FT164 owns the reviewer-contestable existing-ticket repair ruling. The
-  run-specific review-receipt sequence was dismissed as already canonical.
-- No roadmap row shipped after the previous reconcile. The refreshed sequence
-  keeps FT156 first, followed by the four-spec staged frontier.
+Decisions that stay closed: stronger-than-substring matching stays deferred
+(map, 2026-08-02); no structure-grant raise (`.bench/structure.budgets` is
+reviewer-owned); registry data lives in a non-test package below the
+conformance import edge. Story 5's `fable / high` line rides the leverage
+override and is flagged veto surface.
 
 ## Next command
 
-`$bench-write-spec FT156` — take the anchor-mechanism ruling as the grill at
-spec entry, per the reviewer direction recorded in the roadmap.
+`/bench-implement-spec specs/ft156-anchor-registry/spec.md` — in a fresh
+mid-tier session; the coverage map carries not-gate-observable rows, so this is
+not a `bench shift` candidate.
 
 ## Shape
 
