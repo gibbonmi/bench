@@ -2,36 +2,30 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `78bd15e`, clean tree, 3 unpushed commits
-Spec: `specs/exact-prospective-landing/spec.md` (Status: staged), `specs/ft187-communication-surface-cut/spec.md` (Status: staged), `specs/ft194-project-green-desync/spec.md` (Status: staged), `specs/go-build-cache-footprint/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `097f56e` — current
+Branch: `main` — pre-commit HEAD `e01de49`, roadmap drain batch prepared
+Spec: `specs/exact-prospective-landing/spec.md` (Status: staged), `specs/ft187-communication-surface-cut/spec.md` (Status: staged), `specs/go-build-cache-footprint/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Gate: green for the pre-drain tree; reduced-scope roadmap and capture drift awaits the approved `bench commit`
 
 ## State
 
-**Phase reached: `/bench-write-spec` closed for FT194.**
-`specs/ft194-project-green-desync/spec.md` is reviewer-approved (2026-08-04)
-and committed as `78bd15e`. It repairs the project-green desynchronization
-that wedges spec-build promotion after an empty-run fast-forward.
+**Phase reached: `$bench-what-next` closed over the FT194 retro.**
+The schema-3 roadmap snapshot was sequence-trusted with no occurrence
+discrepancies, ideas, or open learnings. FT194 was already retired and absent
+from the roadmap; its retro is drained into FT162, FT99, and FT164, and the
+stale goal-track count now names all four staged specs.
 
-- Decisions closed with the approval: recognition over republication (a marker
-  that is an ancestor of both run base and destination is lagging, not
-  conflicting; the fast-forward stays marker-free); recognition policy
-  single-sourced in the gate-authorization owner, promotion's two publication
-  sites routed through the `GateOwner` seam; lagging-aware red-attribution
-  stays out of scope (priced in the spec's out-of-scope list).
-- The spec's falsification pass ran and its findings are folded in; the
-  coverage map validates at 11 rows.
-- Build shape recorded in the spec: two tickets — authorization acceptance
-  first (fence `internal/gate/authorization`), then publication rerouting
-  (fence `internal/specbuild`, `cmd/bench/specbuild.go`). Recognition rows
-  must drive the real authorization owner, not the marker-mimicking fakes.
-- FT156's spec remains next in the roadmap's recommended sequence once FT194's
-  build restores promotion.
+- FT162 owns the stale prepared-operation projection; its existing terminal
+  projection already owns retained promotion identity, evidence, and timings.
+- FT99 owns the publication-site × refusal-class Coverage review rule.
+- FT164 owns the reviewer-contestable existing-ticket repair ruling. The
+  run-specific review-receipt sequence was dismissed as already canonical.
+- No roadmap row shipped after the previous reconcile. The refreshed sequence
+  keeps FT156 first, followed by the four-spec staged frontier.
 
 ## Next command
 
-`/bench-implement-spec specs/ft194-project-green-desync/spec.md` — fresh
-session on the mid tier (claude: `opus`).
+`$bench-write-spec FT156` — take the anchor-mechanism ruling as the grill at
+spec entry, per the reviewer direction recorded in the roadmap.
 
 ## Shape
 

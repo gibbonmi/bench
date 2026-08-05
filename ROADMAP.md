@@ -192,6 +192,14 @@ the retained record after retirement and retains those timings. Until it does,
 successful promotion to manufacture evidence. Source: the
 check-level-conformance-scoping retro, drained here.
 
+The FT194 close adds the live prepared-state face: after review acceptance and
+again during repair assignment, `bench spec build status --full` kept `next` at
+`resume promote`. The same terminal projection derives the next action from the
+current lifecycle state rather than retaining a stale prepared operation. Its
+other CLI recommendations — retained promotion identity and evidence after
+retirement, plus promotion-stage timings — are already carried above. Source:
+the `ft194-project-green-desync` retro, drained here.
+
 **FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
 The ft91-gate-tier-split semantic review found twelve; three closed before
 merge (the ship canary tier pin, the untiered-registry assertion, the
@@ -1233,6 +1241,12 @@ DefaultBranch table lacked that obligation, and two adopt call sites reversed
 their assigned posture until semantic review caught them. Source: `capture/IDEAS.md`,
 drained here.
 
+The FT194 review adds the Coverage-axis counterpart: when behavior crosses
+multiple publication sites and refusal classes, the review enumerates their
+cross-product rather than treating one direct-path refusal and one recovery
+success as evidence for every pairing. Source: the
+`ft194-project-green-desync` retro, drained here.
+
 **FT100 (LOW) — prose-weight pass on the kit's guidance surface.** Apply the
 gate's "prove it bites" standard to prose: audit the craft-skill library and
 the communication protocol so each skill and always-loaded clause cites an
@@ -1483,6 +1497,15 @@ conformance splits those owners before assignment. Its combined scope/report
 slice consumed most of 14 assignment attempts even though the narrower
 outer-selector, conformance-meta, and evidence-retention slices converged
 directly. Source: the check-level-conformance-scoping retro, drained here.
+
+The FT194 close adds one repair-slicing ruling to that visit: when a finding
+extends an acceptance row already owned by an existing ticket, repair guidance
+decides whether to reuse that ticket rather than create a second source for the
+same row; a separate ticket still needs its own independently-green tracer
+outcome. The run-specific instruction to preserve the review receipt before
+assignment, checkpoint, integration, and fresh exact review is dismissed here
+as already canonical in the spec-build lifecycle. Source: the
+`ft194-project-green-desync` retro, drained here.
 
 The 2026-08-03 lifecycle run adds six clauses to the same visit, all of them
 paid for once already. Repair triage: when a review returns material blocking
@@ -2218,9 +2241,9 @@ build.
    2026-08-02, FT175's three ledger decisions moved behind the owners
    they consume (step 5), FT164's four flagged spec calls closed when
    its spec was written and implemented, and FT181 shipped 2026-08-03.
-2. Drain the staged frontier — FT135, FT187, and FT188 all carry staged specs
+2. Drain the staged frontier — FT135, FT187, FT188, and FT195 all carry staged specs
    — before authoring any new spec; deferring one is an explicit reviewer
-   override, never a silent skip. Of the three only FT187 serves a goal
+   override, never a silent skip. Of the four only FT187 serves a goal
    directly, and FT188 unblocks the parallel capacity the rest of the runway
    assumes. FT141
    builds in parallel where
@@ -2280,4 +2303,4 @@ prose batch edits.
 ## Recommended sequence
 
 1. `/bench-write-spec` — FT156, taking the anchor-mechanism ruling as the grill at spec entry (reviewer direction 2026-08-03). Reviewer latency on this ruling is the binding constraint for both goal tracks.
-2. `/bench-implement-spec` — drain the staged frontier: FT188 (`specs/exact-prospective-landing/spec.md`) first to remove the writer lock, FT195 (`specs/go-build-cache-footprint/spec.md`) next to reduce every later build's cache and publication cost, then FT187 (`specs/ft187-communication-surface-cut/spec.md`) and FT135 (`specs/pre-push-guard-visibility/spec.md`).
+2. `/bench-implement-spec` — drain all four staged specs: FT188 (`specs/exact-prospective-landing/spec.md`) first to remove the writer lock, FT195 (`specs/go-build-cache-footprint/spec.md`) next to reduce every later build's cache and publication cost, then FT187 (`specs/ft187-communication-surface-cut/spec.md`) and FT135 (`specs/pre-push-guard-visibility/spec.md`).
