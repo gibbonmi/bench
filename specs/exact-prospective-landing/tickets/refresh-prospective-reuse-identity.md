@@ -3,7 +3,7 @@
 Blocked by: reuse-exact-green-before-gate-lock.md, adopt-exact-landing-in-commit.md
 Ownership fence: `internal/gate/gate.go`, `internal/gate/evaluation.go`, `internal/gate/prospective_test.go`, `internal/gate/runner_test.go`
 Integration surfaces: prospective pre-lock reuse decision→`internal/gate/gate.go`; exact-tree subject generations→`internal/gate/evaluation.go`; unchanged-evidence lock avoidance→`internal/gate/prospective_test.go`; retained FT78 symlink-chain proof→`internal/gate/runner_test.go` and its existing shared proof helper
-Contracts: an unpublished exact tree crosses `internal/landing`→`internal/gate.ExecuteTree` while declared local gate inputs remain rooted in the repository; PR1 proves that current resolved-input identity governs reuse, and PR2 proves that unchanged exact evidence still answers before gate-lock acquisition
+Contracts: an unpublished exact tree crosses `internal/gate/gate.go`→`internal/gate/evaluation.go` while declared local gate inputs remain rooted in the repository; PR1 proves that current resolved-input identity governs reuse, and PR2 proves that unchanged exact evidence still answers before gate-lock acquisition
 
 ## What to build
 
