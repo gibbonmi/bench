@@ -2,32 +2,36 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `8945287`, 13 dirty paths, 1 unpushed commit
-Spec: `specs/exact-prospective-landing/spec.md` (Status: staged), `specs/ft187-communication-surface-cut/spec.md` (Status: staged), `specs/go-build-cache-footprint/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `8945287` — stale only by this capture-and-roadmap batch
+Branch: `main` — HEAD `78bd15e`, clean tree, 3 unpushed commits
+Spec: `specs/exact-prospective-landing/spec.md` (Status: staged), `specs/ft187-communication-surface-cut/spec.md` (Status: staged), `specs/ft194-project-green-desync/spec.md` (Status: staged), `specs/go-build-cache-footprint/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Gate: green at `097f56e` — current
 
 ## State
 
-**Phase reached: `/bench-what-next` batch drafted for approval.** The approved
-two-commit lifecycle repair first landed `authoring-hardening`'s stranded
-implemented flip as `8945287`; the sanctioned retirement now supplies this
-batch's spec deletions. FT193 leaves the roadmap, FT194 records the reproduced
-project-green promotion wedge, and FT195 accounts for the staged
-`go-build-cache-footprint` spec.
+**Phase reached: `/bench-write-spec` closed for FT194.**
+`specs/ft194-project-green-desync/spec.md` is reviewer-approved (2026-08-04)
+and committed as `78bd15e`. It repairs the project-green desynchronization
+that wedges spec-build promotion after an empty-run fast-forward.
 
-- Capture drains to zero: no ideas, open learnings, or pending retros remain.
-- The four journal entries fold into FT188, FT194, and FT195. The retro's receipt
-  generator recommendation folds into FT184; its assignment-path request is
-  already served, and its incomplete trailing fragment is dismissed.
-- Closed decisions stay closed: exact prospective landing remains the first
-  ordered parallel-session scope; FT156 still takes its mechanism ruling at spec
-  entry; promotion remains the sole project-green publisher for reviewed builds.
-- The pending commit subject must end with `spec-retire: authoring-hardening` so
-  `bench spec history` retains the retirement evidence.
+- Decisions closed with the approval: recognition over republication (a marker
+  that is an ancestor of both run base and destination is lagging, not
+  conflicting; the fast-forward stays marker-free); recognition policy
+  single-sourced in the gate-authorization owner, promotion's two publication
+  sites routed through the `GateOwner` seam; lagging-aware red-attribution
+  stays out of scope (priced in the spec's out-of-scope list).
+- The spec's falsification pass ran and its findings are folded in; the
+  coverage map validates at 11 rows.
+- Build shape recorded in the spec: two tickets — authorization acceptance
+  first (fence `internal/gate/authorization`), then publication rerouting
+  (fence `internal/specbuild`, `cmd/bench/specbuild.go`). Recognition rows
+  must drive the real authorization owner, not the marker-mimicking fakes.
+- FT156's spec remains next in the roadmap's recommended sequence once FT194's
+  build restores promotion.
 
 ## Next command
 
-`$bench-write-spec`
+`/bench-implement-spec specs/ft194-project-green-desync/spec.md` — fresh
+session on the mid tier (claude: `opus`).
 
 ## Shape
 
