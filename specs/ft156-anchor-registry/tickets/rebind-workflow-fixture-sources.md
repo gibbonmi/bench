@@ -2,7 +2,7 @@
 
 Blocked by: migrate-anchor-table.md
 Ownership fence: `internal/conformance/registry_test.go`
-Contracts: the `workflow-guidance-anchors` family registration crosses its fixture directory→the actual `internal/anchors` implementation and residual conformance adapter, asserted by AR2 against registry classification metadata
+Contracts: `internal/conformance/registry_test.go` binds the `workflow-guidance-anchors` fixture directory to the actual `internal/anchors` implementation and residual conformance adapter, asserted by AR2 against registry classification metadata
 
 ## What to build
 
