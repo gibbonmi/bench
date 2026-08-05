@@ -2,33 +2,32 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `c3d8e47`, 7 dirty paths, 42 unpushed commits
-Spec: `specs/authoring-hardening/spec.md` (Status: staged), `specs/exact-prospective-landing/spec.md` (Status: staged), `specs/ft187-communication-surface-cut/spec.md` (Status: staged), `specs/go-build-cache-footprint/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `1d9aef2` — stale, work tree `96b2ce4`
+Branch: `main` — HEAD `8945287`, 13 dirty paths, 1 unpushed commit
+Spec: `specs/exact-prospective-landing/spec.md` (Status: staged), `specs/ft187-communication-surface-cut/spec.md` (Status: staged), `specs/go-build-cache-footprint/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Gate: green at `8945287` — stale only by this capture-and-roadmap batch
 
 ## State
 
-**Phase reached: `/bench-final-check` closed on `gate-evaluation-snapshot` — promoted
-terminal, retired.** Candidate `60b44de` published as squash `c3d8e47` on `main`; the
-run's two accepted review findings (S1 optimistic-reuse bypass, C1 malformed listing
-metadata) were repaired as lifecycle tickets, re-reviewed clean, and promoted. Exact
-green retained at `refs/bench/green/main`.
+**Phase reached: `/bench-what-next` batch drafted for approval.** The approved
+two-commit lifecycle repair first landed `authoring-hardening`'s stranded
+implemented flip as `8945287`; the sanctioned retirement now supplies this
+batch's spec deletions. FT193 leaves the roadmap, FT194 records the reproduced
+project-green promotion wedge, and FT195 accounts for the staged
+`go-build-cache-footprint` spec.
 
-- Uncommitted: the `specs/gate-evaluation-snapshot/` deletion staged by `bench spec
-  retire` and the new `capture/retros/gate-evaluation-snapshot.md`, awaiting the
-  `spec-retire: gate-evaluation-snapshot` gated commit — the next session's first act if
-  this one stopped before landing it.
-- No roadmap row names the spec (it came from the `decisions/gate-budget.md` ordering);
-  the retirement commit carries only the deletions and the retro.
-- Pending capture: one retro (`capture/retros/gate-evaluation-snapshot.md`) and 4 open
-  learnings — the reviewed `/bench-what-next` drain owns both.
-- 42 unpushed commits on `main`; pushing is the reviewer's call.
-- Closed decisions stay closed: gate-budget/gate-concurrency work preserved; promotion
-  remains the sole whole-project gate and landing author.
+- Capture drains to zero: no ideas, open learnings, or pending retros remain.
+- The four journal entries fold into FT188, FT194, and FT195. The retro's receipt
+  generator recommendation folds into FT184; its assignment-path request is
+  already served, and its incomplete trailing fragment is dismissed.
+- Closed decisions stay closed: exact prospective landing remains the first
+  ordered parallel-session scope; FT156 still takes its mechanism ruling at spec
+  entry; promotion remains the sole project-green publisher for reviewed builds.
+- The pending commit subject must end with `spec-retire: authoring-hardening` so
+  `bench spec history` retains the retirement evidence.
 
 ## Next command
 
-`/bench-what-next`
+`$bench-write-spec`
 
 ## Shape
 
