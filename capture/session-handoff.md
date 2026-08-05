@@ -2,52 +2,32 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `0a85ea6` (hotfix merged fast-forward), clean tree, 3 unpushed commits
-Spec: `specs/exact-prospective-landing/spec.md` (Status: staged; active lifecycle run)
-Gate: green at `0a85ea6` (full fresh run in the hotfix worktree over this exact tree)
+Branch: `main` — HEAD `e176eb9`, 1 dirty path, 6 unpushed commits
+Spec: `specs/exact-prospective-landing/spec.md` (Status: staged), `specs/ft187-communication-surface-cut/spec.md` (Status: staged), `specs/go-build-cache-footprint/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Gate: red at `2392bdf` — current
 
 ## State
 
-**Phase reached: the out-of-fence-repair workflow hotfix is merged to main; the
-stranded exact-prospective-landing run is ready to resume through the new route.**
+**Phase reached: implementation remains active; two out-of-fence prerequisites are integrated, the adapter is refreshed and focused-green, and a third fixture prerequisite stopped the full runtime package at the declared cap.**
 
-The hotfix (`0a85ea6`, reviewer-merged; built in owned worktree request
-`hotfix-oof-repair-route-2026-08-05`, branch
-`bench/assign/9c5bf5813ba3aaab3a743cca5612dd5e/082e223dd6adb2e83151a524afff9b56`,
-now releasable) adds
-`bench spec build assign --refresh <debug-receipt>`: a delegate blocked outside its
-ticket fence returns a validated debug receipt; the repair rides ticket-commit →
-promote-recompose → assign/checkpoint/integrate; refresh re-bases the blocked
-assignment onto the repaired candidate preserving in-fence bytes behind
-`refs/bench/specbuild/refresh/<digest>`. Regression suites:
-`go test ./internal/specbuild -run 'TestRefresh|TestAbandonRemains'` (hostile cases)
-and `go test ./internal/contract/runtime -run TestRuntimeSpecBuildOutOfFenceRepair`
-(compiled-binary dogfood trace incl. promote). On main the route is deterministically
-red: `assign --refresh` exits 2 (unknown argument).
+Run `869a2d33cab96f962882762a9ea56fd21c952976248e64fa917f6da6c48dbca3` has candidate `30a64752f82fcd330dfe217d833d80e33eb9d939`. Integrated repair assignments:
 
-The active lifecycle run `869a2d33cab96f962882762a9ea56fd21c952976248e64fa917f6da6c48dbca3`
-is preserved untouched: candidate `33a220bf99c5edee487553a8b3617eab16cf1eb1` integrated,
-adapter assignment `daa1f4183dcb0dd159cca7b738d0fe7c` owned and uncheckpointed with its
-in-fence `internal/commit/commit.go` edit intact. Its repro
-(`go test -count=1 ./internal/contract/runtime -run 'TestRuntimeCommitContracts/fresh_green_verdict_is_reused' -v`)
-is red only inside that worktree; cause confirmed: `authorization.Authorize` discards
-gate output (`internal/gate/authorization/authorization.go:155`) and `landing.Request`
-carries no writer contract — a repair outside the adapter's fence. Do not apply any
-stale abandonment fingerprint; the abandon route is the positive control, not the plan.
+- `62676f7c03ae6c96c024211994b82e3d`: writer-aware prospective authorization and landing output, full scoped packages green.
+- `383e2781a83a5743e1d5251148bf4450`: exact green reuse before gate-lock acquisition, full `internal/gate` green in 144.947s.
 
-Closed decisions: no ninth lifecycle verb (refresh extends `assign`); the debug-receipt
-schema is owned by `internal/specbuild/refresh.go` validation; abandon remains the
-escape hatch only.
+Adapter assignment `daa1f4183dcb0dd159cca7b738d0fe7c` is active on base `30a64752f82fcd330dfe217d833d80e33eb9d939`. Refresh preserved its three in-fence dirty paths: `internal/commit/commit.go`, `internal/contract/runtime/runtime_commit_test.go`, and `CHANGELOG.md`. AC4's public prospective-checkout inspection and AC7's deterministic two-process CAS/rerun journey are focused-green; the wrong-base mutation is red and restored.
+
+The full `go test -count=1 ./internal/commit ./internal/contract/runtime` timed out only at `TestFT78Story5ProofLedger/R14/interrupted-pending-inspection`. Tight repro:
+
+`timeout 20s go test -count=1 ./internal/contract/runtime -run 'TestFT78Story5ProofLedger/R14/interrupted-pending-inspection' -v`
+
+Exit `124`, combined-output SHA-256 `d15278907b6545b4b1e2f0e60c0f371b23ba5687c35f2fbdd20965e6800d7a0e`, produced `2026-08-05T19:23:42.151084233Z`. Confirmed cause: the fixture gate script addresses `.git/story5-*` as a directory; prospective checkouts carry `.git` as a file, so its one-shot sentinel is never found and the script enters its infinite first-run loop. The repair must own `internal/contract/runtime/runtime_gate_action_proof_test.go` and resolve the common Git directory through Git, matching the existing prospective-safe fixture pattern. The adapter remains resumable afterward.
+
+Closed decisions: use `assign --refresh`, never abandon, for this recoverable run; preserve the original adapter request `7c2e9a1d4f6b4830a5c7e1d9b3f60842`; no review or promotion occurs until the adapter checkpoints and integrates; the next repair gets a top-tier line because the mid-tier adapter missed named public rows.
 
 ## Next command
 
-`/bench-implement-spec --full specs/exact-prospective-landing/spec.md`
-
-— resuming the stranded run through the new documented route: land the
-landing/authorization repair ticket, promote-recompose, assign/checkpoint/integrate it,
-then `bench spec build assign exact-prospective-landing --ticket <adapter-ticket>
---request <original-request> --refresh <debug-receipt>` before resuming the adapter
-delegate.
+`$bench-implement-spec --full specs/exact-prospective-landing/spec.md`
 
 ## Shape
 
