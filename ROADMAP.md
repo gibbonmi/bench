@@ -521,14 +521,6 @@ first, and the working route is a manual `bench worktree create --request
 documented canonical one. Source: the spec-build-lifecycle-preconditions
 retro, drained here.
 
-**FT195 (MEDIUM, staged) — compile one Bench executable and keep oracle verdicts
-out of Go's test cache.** The canonical builder currently compiles the requested
-binary and then `go run`s a second publication helper. The staged spec replaces
-that helper with publication owned by the newly built host binary, gives
-artifact callers an explicit unsealed mode, and removes reusable successful Go
-test verdicts from the two oracle-owned test invocations with `-count=1` while
-retaining compilation caching.
-
 The same economics recur after a gofmt-only correction: the source seal must
 change, so the safe path still rebuilds and re-gates. Neither proposed shortcut
 is sound — a mutating gate changes its own subject, and a seal that ignores a
