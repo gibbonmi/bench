@@ -66,9 +66,9 @@ var benchkitPhasesForCommand = BenchkitPhases
 // grade; kit is the checkout that owns the Go tests and wrapper scripts.
 //
 // The build phase owns the only write to root's dist/bench during a gate run, which is
-// why every other phase needs it. The contract and canary phases exec and copy that
-// binary, and `go build` replaces a stale output non-atomically — a concurrent rebuild
-// hands readers a stale or partially-written binary. A root with no Go build surface has
+// why every other phase needs it: the contract and canary phases exec and copy that
+// binary, so they order after the build. Publication semantics — how that binary is
+// safely replaced — are the freshness owner's. A root with no Go build surface has
 // no build phase and so no edges at all.
 func BenchkitPhases(root, kit string) []Phase {
 	var phases []Phase

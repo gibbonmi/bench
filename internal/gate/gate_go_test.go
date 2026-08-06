@@ -39,6 +39,28 @@ func writeGateGoFile(t *testing.T, path, contents string) {
 	}
 }
 
+func writeGateGoExecutable(t *testing.T, root string) string {
+	t.Helper()
+	path := filepath.Join(root, "go")
+	writeGateGoFile(t, path, `#!/bin/sh
+if [ "$1" = list ]; then
+		printf '%s\n' fixture/core
+		exit 0
+fi
+printf 'GOCACHE=<%s>\n' "${GOCACHE-unset}" >> "$GATE_GO_RECORD"
+for argument do
+		printf 'arg=<%s>\n' "$argument" >> "$GATE_GO_RECORD"
+done
+if [ -n "${GOCACHE-}" ]; then
+		printf '# test log\n' > "$GOCACHE/fake-test-log"
+fi
+`)
+	if err := os.Chmod(path, 0o755); err != nil {
+		t.Fatalf("chmod %s: %v", path, err)
+	}
+	return path
+}
+
 func runGateGo(t *testing.T, step, root string) (int, string, string) {
 	t.Helper()
 	var stdout, stderr bytes.Buffer
@@ -139,6 +161,42 @@ func TestGateGoTestReds(t *testing.T) {
 	}
 }
 
+func TestGateGoCoreTestUsesFreshVerdict(t *testing.T) {
+	root := t.TempDir()
+	writeGateGoFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
+	writeGateGoExecutable(t, root)
+	record := filepath.Join(root, "go-record")
+	cache := filepath.Join(root, "cache")
+	if err := os.Mkdir(cache, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", root+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Setenv("GATE_GO_RECORD", record)
+	t.Setenv("GOCACHE", cache)
+
+	if code, stdout, stderr := runGateGo(t, "test", root); code != 0 {
+		t.Fatalf("test rc = %d, want 0; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if got, want := readGateGoFile(t, record), "GOCACHE=<"+cache+">\narg=<test>\narg=<-count=1>\narg=<fixture/core>\n"; got != want {
+		t.Fatalf("core fake Go record = %q, want %q", got, want)
+	}
+	if !fileExists(filepath.Join(cache, "fake-test-log")) {
+		t.Fatal("core step removed the fake Go test-log sentinel")
+	}
+	if err := os.Remove(record); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Unsetenv("GOCACHE"); err != nil {
+		t.Fatal(err)
+	}
+	if code, stdout, stderr := runGateGo(t, "test", root); code != 0 {
+		t.Fatalf("test without GOCACHE rc = %d, want 0; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if got, want := readGateGoFile(t, record), "GOCACHE=<unset>\narg=<test>\narg=<-count=1>\narg=<fixture/core>\n"; got != want {
+		t.Fatalf("core fake Go record without GOCACHE = %q, want %q", got, want)
+	}
+}
+
 func TestGateGoRaceRequiresTheTestToRun(t *testing.T) {
 	absent := t.TempDir()
 	writeGateGoFile(t, filepath.Join(absent, "go.mod"), "module fixture\n\ngo 1.25\n")
@@ -186,7 +244,7 @@ func TestGateGoRaceRequiresTheTestToRun(t *testing.T) {
 
 func TestGateGoConformanceSuiteUsesRegistrySkipPattern(t *testing.T) {
 	kit := kitRootForTest(t)
-	want := []string{"go", "test", "./internal/conformance", "-skip", registry.InnerSkipPattern()}
+	want := []string{"go", "test", "-count=1", "./internal/conformance", "-skip", registry.InnerSkipPattern()}
 	if got := ConformanceSuiteArgv(kit); !reflect.DeepEqual(got, want) {
 		t.Fatalf("ConformanceSuiteArgv = %#v, want %#v", got, want)
 	}
@@ -229,6 +287,33 @@ func TestFixtureSuiteMember(t *testing.T) {
 	}
 	if fileExists(filepath.Join(pkgDir, "ran-entry-point")) {
 		t.Fatal("the filtered run executed the entry-point test, so the inner run recurses into the outer one")
+	}
+}
+
+func TestGateGoConformanceSuitePreservesCache(t *testing.T) {
+	root := t.TempDir()
+	pkgDir := filepath.Join(root, "internal", "conformance")
+	writeGateGoFile(t, filepath.Join(root, "go.mod"), "module fixture\n\ngo 1.25\n")
+	writeGateGoFile(t, filepath.Join(pkgDir, "marker_test.go"), "package conformance\n\nimport \"testing\"\n\nfunc TestRootConformance(t *testing.T) {}\n")
+	writeGateGoExecutable(t, root)
+	record := filepath.Join(root, "go-record")
+	cache := filepath.Join(root, "cache")
+	if err := os.Mkdir(cache, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", root+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Setenv("GATE_GO_RECORD", record)
+	t.Setenv("GOCACHE", cache)
+
+	if code, stdout, stderr := runGateGo(t, "conformance-suite", root); code != 0 {
+		t.Fatalf("conformance-suite rc = %d, want 0; stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	want := "GOCACHE=<" + cache + ">\narg=<test>\narg=<-count=1>\narg=<./internal/conformance>\narg=<-skip>\narg=<" + registry.InnerSkipPattern() + ">\n"
+	if got := readGateGoFile(t, record); got != want {
+		t.Fatalf("conformance fake Go record = %q, want %q", got, want)
+	}
+	if !fileExists(filepath.Join(cache, "fake-test-log")) {
+		t.Fatal("conformance step removed the fake Go test-log sentinel")
 	}
 }
 
@@ -339,4 +424,13 @@ func hasPackageSuffix(packages []string, suffix string) bool {
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
+}
+
+func readGateGoFile(t *testing.T, path string) string {
+	t.Helper()
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	return string(contents)
 }

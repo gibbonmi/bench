@@ -122,13 +122,11 @@ else
   while IFS=$'\t' read -r os arch goos goarch _runner; do
     binary="$packages/$os-$arch/bin/bench"
     if [[ "$goos" == linux ]]; then
-      CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" bash "$source_root/scripts/go-build.sh" "$source_root" "$binary"
+      CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" bash "$source_root/scripts/go-build.sh" --mode artifact "$source_root" "$binary"
     else
-      GOOS="$goos" GOARCH="$goarch" bash "$source_root/scripts/go-build.sh" "$source_root" "$binary"
+      GOOS="$goos" GOARCH="$goarch" bash "$source_root/scripts/go-build.sh" --mode artifact "$source_root" "$binary"
     fi
     chmod 0755 "$binary"
-    # Platform packages are release artifacts, not local freshness-verification subjects.
-    rm -f "$binary.seal"
   done < "$matrix_file"
 
   node "$source_root/scripts/build-release-evidence.mjs" "$source_root" "$wrapper" "$packages"

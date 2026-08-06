@@ -30,8 +30,8 @@ var attestationFixtureTime = time.Date(2026, 3, 4, 5, 6, 7, 0, time.UTC)
 func attestationFixtureNow() time.Time { return attestationFixtureTime.Add(time.Hour) }
 
 // buildFixtureBinaryTo compiles a fixture root's pkg to staged, the staging path Publish
-// consumes. Nothing publishes it — a caller that wants the binary in place goes through a
-// publisher, which is the only writer that also produces a matching seal.
+// consumes. Nothing publishes it — a caller that wants the binary in place goes through
+// buildAndPublishAt, the only route here that also leaves a matching seal.
 func buildFixtureBinaryTo(t *testing.T, root, pkg, staged string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(staged), 0o755); err != nil {
@@ -58,19 +58,29 @@ func newAttestationFixture(t *testing.T) attestationFixture {
 	return attestationFixture{root: fixture.root, executable: fixture.binaryPath()}
 }
 
-// buildAndPublish runs a build and publishes it as a green gate build would, in the one step
-// that writes the seal and the attestation together.
+// buildAndPublish runs a build and leaves the artifact attested and sealed, as a green gate
+// build's build phase does.
 func (f attestationFixture) buildAndPublish(t *testing.T, authoredAt time.Time) {
 	t.Helper()
 	f.buildAndPublishAt(t, "./cmd/bench", f.executable, authoredAt)
 }
 
+// buildAndPublishAt attests before it publishes, so the digest every assertion below reads
+// cannot have come from a seal: the seal describing those bytes does not exist until Publish
+// writes it. The digest is hashed from the staged bytes for the same reason.
 func (f attestationFixture) buildAndPublishAt(t *testing.T, pkg, executable string, authoredAt time.Time) {
 	t.Helper()
 	staged := executable + ".staged"
 	buildFixtureBinaryTo(t, f.root, pkg, staged)
-	if err := publishAttestedBuild(f.root, staged, executable, authoredAt); err != nil {
-		t.Fatalf("publishAttestedBuild(%s) = %v, want an attested published binary", executable, err)
+	digest, err := benchfreshness.ExecutableDigest(staged)
+	if err != nil {
+		t.Fatalf("benchfreshness.ExecutableDigest(%s) = %v, want the staged bytes hashed", staged, err)
+	}
+	if err := authorBuildAttestation(f.root, executable, digest, authoredAt); err != nil {
+		t.Fatalf("authorBuildAttestation(%s) = %v, want the staged bytes attested", executable, err)
+	}
+	if err := benchfreshness.Publish(f.root, staged, executable); err != nil {
+		t.Fatalf("benchfreshness.Publish(%s) = %v, want the attested binary published", executable, err)
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -15,6 +16,58 @@ import (
 
 const freshnessSubjectModeEnv = "BENCH_FT131_FRESHNESS_SUBJECT_MODE"
 const freshnessSubjectCaseEnv = "BENCH_FT131_FRESHNESS_SUBJECT_CASE"
+
+func TestGoBuildPublishesOneSealedHostSubject(t *testing.T) {
+	root := KitRoot(t)
+	output := filepath.Join(t.TempDir(), "bench subject")
+	goPath, err := exec.LookPath("go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	bin := filepath.Join(t.TempDir(), "bin")
+	trace := filepath.Join(t.TempDir(), "go-trace")
+	if err := os.MkdirAll(bin, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(bin, "go"), []byte(`#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$BENCH_GO_TRACE"
+exec "$BENCH_REAL_GO" "$@"
+`), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	build := exec.Command("bash", filepath.Join(root, "scripts", "go-build.sh"), root, output)
+	build.Env = append(os.Environ(), "PATH="+bin+string(os.PathListSeparator)+os.Getenv("PATH"), "BENCH_GO_TRACE="+trace, "BENCH_REAL_GO="+goPath, "GOOS=js", "GOARCH=wasm")
+	if out, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("build sealed local subject: %v\n%s", err, out)
+	}
+	traceData, err := os.ReadFile(trace)
+	if err != nil {
+		t.Fatal(err)
+	}
+	builds, runs := 0, 0
+	for _, line := range strings.Split(strings.TrimSpace(string(traceData)), "\n") {
+		if strings.HasPrefix(line, "build ") {
+			builds++
+		}
+		if strings.HasPrefix(line, "run ") {
+			runs++
+		}
+	}
+	if builds != 1 || runs != 0 {
+		t.Fatalf("Go trace = %q, want one build and no go run", traceData)
+	}
+	if err := freshness.Verify(root, output); err != nil {
+		t.Fatalf("verify fresh sealed output: %v", err)
+	}
+	check := exec.Command(output, "freshness-check", root)
+	if out, err := check.CombinedOutput(); err != nil {
+		t.Fatalf("fresh process freshness check: %v\n%s", err, out)
+	}
+	version := exec.Command(output, "version")
+	if out, err := version.CombinedOutput(); err != nil || !strings.Contains(string(out), runtime.GOOS+"/"+runtime.GOARCH) {
+		t.Fatalf("host version = %v, output=%q", err, out)
+	}
+}
 
 func TestRequireFreshBenchRefusesStaleSubject(t *testing.T) {
 	if os.Getenv(freshnessSubjectModeEnv) == "stale" {

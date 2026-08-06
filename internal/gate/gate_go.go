@@ -67,11 +67,9 @@ func GateGoCommand(args []string, stdout, stderr io.Writer) int {
 
 // GateGoArgv is how any caller invokes one of these steps — a phase in the table, a
 // step in the release step list. It runs through `go run` rather than dist/bench
-// because these steps declare no dependency on the build phase: the build phase owns
-// the only write to dist/bench and `go build` replaces it non-atomically, so a reader
-// that overlaps it can exec a partially written binary. The Go build cache backs
-// `go run`, so the compile is paid once. An empty kit leaves the working directory to
-// the caller.
+// because these steps declare no dependency on the build phase, and the Go build
+// cache backs `go run`, so the compile is paid once. An empty kit leaves the working
+// directory to the caller.
 func GateGoArgv(kit, step, root string) []string {
 	argv := []string{"go"}
 	if kit != "" {
@@ -110,7 +108,7 @@ func ConformanceSuiteArgv(root string) []string {
 	if !declaresTest(conformancePackageDir(root), registry.RootConformanceTest) {
 		return nil
 	}
-	return []string{"go", "test", "./" + registry.ConformancePackage, "-skip", registry.InnerSkipPattern()}
+	return []string{"go", "test", "-count=1", "./" + registry.ConformancePackage, "-skip", registry.InnerSkipPattern()}
 }
 
 // gofmtStep reds on the files `gofmt -l` names, which it cannot do on its own: the
@@ -156,7 +154,7 @@ func coreTestStep(root string, stdout, stderr io.Writer) int {
 	if len(packages) == 0 {
 		return 0
 	}
-	return runStep(root, append([]string{"go", "test"}, packages...), stdout, stderr)
+	return runStep(root, append([]string{"go", "test", "-count=1"}, packages...), stdout, stderr)
 }
 
 // raceStep reds when a target test did not execute, not only when one failed: the

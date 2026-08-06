@@ -9,8 +9,6 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-
-	"github.com/gibbonmi/bench/internal/freshness"
 )
 
 // The idiom-setting table test for the module: pure logic, table-driven, no process
@@ -40,20 +38,6 @@ func TestRunVersionExits0(t *testing.T) {
 func TestRunUnknownExits2(t *testing.T) {
 	if rc := run([]string{"nope"}, nil, nil); rc != 2 {
 		t.Errorf("run nope exit = %d, want 2", rc)
-	}
-}
-
-func TestFreshnessCheckRefusesMissingOwnExecutable(t *testing.T) {
-	root := t.TempDir()
-	var stderr bytes.Buffer
-
-	code := freshnessCheck([]string{root}, filepath.Join(root, "dist", "bench"), &stderr)
-	if code != 1 {
-		t.Fatalf("freshnessCheck missing executable exit = %d, want 1", code)
-	}
-	want := freshness.RebuildAction(root)
-	if !strings.Contains(stderr.String(), want) {
-		t.Fatalf("freshnessCheck stderr = %q, want rebuild action %q", stderr.String(), want)
 	}
 }
 

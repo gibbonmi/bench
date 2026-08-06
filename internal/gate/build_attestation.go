@@ -13,9 +13,9 @@ package gate
 // lets the build phase skip. Every refusal here means run the build, which republishes the
 // seal and re-authors the attestation together, so a disagreement cannot outlive one build.
 //
-// The attested digest comes from the bytes the build produced, taken before the seal that
-// describes them is written. A digest read back from a seal would only restate what some
-// other writer put on disk, which is the one claim this record exists to not make.
+// The attested digest is hashed from the artifact's own bytes, never read back out of the
+// seal beside it. A digest taken from a seal would only restate what some other writer put on
+// disk, which is the one claim this record exists to not make.
 
 import (
 	"crypto/sha256"
@@ -57,23 +57,6 @@ type buildAttestationInspection struct {
 	Attested   bool
 	AuthoredAt time.Time
 	Reason     string
-}
-
-// publishAttestedBuild installs the binary a gate build staged as executable and attests it.
-//
-// The attestation is authored from the staged bytes and written first, so the digest it
-// records cannot have come from any seal: the seal describing those bytes does not exist
-// until Publish writes it. Either half failing alone leaves the seal and the attestation
-// naming different binaries, which refuses and runs the build again.
-func publishAttestedBuild(root, staged, executable string, authoredAt time.Time) error {
-	digest, err := benchfreshness.ExecutableDigest(staged)
-	if err != nil {
-		return err
-	}
-	if err := authorBuildAttestation(root, executable, digest, authoredAt); err != nil {
-		return err
-	}
-	return benchfreshness.Publish(root, staged, executable)
 }
 
 // authorBuildAttestation records that a gate build produced the binary whose bytes hash to

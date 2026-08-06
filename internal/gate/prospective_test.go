@@ -23,7 +23,7 @@ func TestExecuteTreeBuildsExactUnpublishedBenchkitSource(t *testing.T) {
 	for _, rel := range []string{
 		".bench/gate-prospective.sh", "scripts/go-build.sh", "scripts/go-build.inputs",
 		"package.json", "internal/releaseevidence/requirements.json", "internal/freshness/freshness.go",
-		"internal/freshness/check/main.go", "internal/freshness/cmd/main.go",
+		"internal/freshness/check/main.go",
 	} {
 		mode := os.FileMode(0o644)
 		if strings.HasSuffix(rel, ".sh") {
@@ -354,18 +354,25 @@ func prospectiveBenchMain(sentinel string) string {
 import (
 	"fmt"
 	"os"
+	"github.com/gibbonmi/bench/internal/freshness"
 )
 
 var version string
 
 func main() {
-	if len(os.Args) != 3 {
+	if len(os.Args) < 2 {
 		os.Exit(90)
 	}
 	switch os.Args[1] {
 	case "freshness-check":
+		if len(os.Args) != 3 { os.Exit(90) }
+		return
+	case "freshness-publish":
+		if len(os.Args) != 4 { os.Exit(90) }
+		if err := freshness.Publish(os.Args[2], os.Args[0], os.Args[3]); err != nil { os.Exit(92) }
 		return
 	case "gate-phases":
+		if len(os.Args) != 3 { os.Exit(90) }
 		fmt.Println(%q)
 	default:
 		os.Exit(91)

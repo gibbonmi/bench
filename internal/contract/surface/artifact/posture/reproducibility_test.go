@@ -32,10 +32,13 @@ func TestGoBuildIgnoresCheckoutTopology(t *testing.T) {
 	}
 	outputs := []string{filepath.Join(t.TempDir(), "worktree-binary"), filepath.Join(t.TempDir(), "clone-binary")}
 	for index, source := range []string{root, clone} {
-		build := exec.Command("bash", filepath.Join(root, "scripts", "go-build.sh"), source, outputs[index])
+		build := exec.Command("bash", filepath.Join(root, "scripts", "go-build.sh"), "--mode", "artifact", source, outputs[index])
 		build.Env = append(os.Environ(), "CGO_ENABLED=0", "GOOS=darwin", "GOARCH=arm64")
 		if output, err := build.CombinedOutput(); err != nil {
 			t.Fatalf("build checkout %d: %v\n%s", index, err, output)
+		}
+		if _, err := os.Stat(outputs[index] + ".seal"); !os.IsNotExist(err) {
+			t.Fatalf("artifact build left freshness seal: %v", err)
 		}
 	}
 	first, err := os.ReadFile(outputs[0])
