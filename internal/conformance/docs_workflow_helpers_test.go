@@ -3,7 +3,9 @@ package conformance
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
+	"testing"
 
 	"github.com/gibbonmi/bench/internal/anchors"
 )
@@ -12,6 +14,15 @@ const (
 	structuredPhaseDeclaration = "- **Structured Bench phase conversation:**"
 	structuredPhaseUnavailable = ".bench/BENCH.md cannot verify the structured Bench phase contract because shared rules are missing or empty"
 )
+
+// structuredPhaseClauseOrder is the contract itself, in declaration order: .bench/BENCH.md
+// must name exactly these clauses, once each. Reading the required set out of the document
+// instead lets a self-consistent deletion or addition define its own passing contract.
+var structuredPhaseClauseOrder = []string{"progress", "exit", "omission", "cohesion"}
+
+func structuredPhaseClauseRequired(name string) bool {
+	return slices.Contains(structuredPhaseClauseOrder, name)
+}
 
 func checkWorkflowAnchors(root string) []string {
 	diags := anchors.EvaluateGroup(root, anchors.BeforeStructured)
@@ -101,19 +112,40 @@ func checkStructuredPhaseContract(sharedRules string) []string {
 		}
 	}
 	block := lines[start:end]
-	declared := structuredPhaseClauseNames(block)
-	if len(declared) == 0 {
-		return []string{".bench/BENCH.md structured Bench phase contract declares no named clauses"}
-	}
 	bodies, bodyDiags := structuredPhaseClauseBodies(block)
 	diags := append([]string(nil), bodyDiags...)
 	seen := map[string]bool{}
-	for _, name := range declared {
-		if seen[name] {
+	var declaredOrder []string
+	for _, name := range structuredPhaseClauseNames(block) {
+		switch {
+		case seen[name]:
 			diags = append(diags, fmt.Sprintf(".bench/BENCH.md structured Bench phase contract declares clause %q more than once", name))
+		case !structuredPhaseClauseRequired(name):
+			seen[name] = true
+			diags = append(diags, fmt.Sprintf(".bench/BENCH.md structured Bench phase contract declares unknown clause %q", name))
+		default:
+			seen[name] = true
+			declaredOrder = append(declaredOrder, name)
+		}
+	}
+	// declaredOrder holds the first occurrence of each required name, so order is
+	// compared only once every required name appears; a missing name skips the
+	// comparison, while duplicate and unknown diagnostics can accompany it.
+	if len(declaredOrder) == len(structuredPhaseClauseOrder) {
+		for i, name := range declaredOrder {
+			if name != structuredPhaseClauseOrder[i] {
+				diags = append(diags, fmt.Sprintf(
+					".bench/BENCH.md structured Bench phase contract declares clause %q out of contract order; expected %q at position %d",
+					name, structuredPhaseClauseOrder[i], i+1))
+				break
+			}
+		}
+	}
+	for _, name := range structuredPhaseClauseOrder {
+		if !seen[name] {
+			diags = append(diags, fmt.Sprintf(".bench/BENCH.md structured Bench phase contract does not declare the %s clause", name))
 			continue
 		}
-		seen[name] = true
 		body := strings.TrimSpace(bodies[name])
 		if body == "" || structuredPhaseClauseIsNegated(body) {
 			diags = append(diags, fmt.Sprintf(".bench/BENCH.md dropped the structured Bench phase %s clause", name))
@@ -194,3 +226,108 @@ var (
 	collapseSpace      = anchors.CollapseSpace
 	stripHTMLComments  = anchors.StripHTMLComments
 )
+
+// TestStructuredPhaseContractPinsTheFixedClauseSet enumerates the four required clause
+// names independently of the parser. A contract read out of the document stays green for
+// any self-consistent deletion, duplication, or addition, so the expectation has to name
+// the set the guide is required to carry.
+func TestStructuredPhaseContractPinsTheFixedClauseSet(t *testing.T) {
+	bodyLines := map[string]string{
+		"progress": "  - **Progress:** Use compact bold **Status:** and **Next:** labels.",
+		"exit":     "  - **Exit:** A phase exit leads with `## Result`.",
+		"omission": "  - **Omission:** Omit empty progress groups and exit sections.",
+		"cohesion": "  - **Cohesion:** Keep related sentences together.",
+		"cadence":  "  - **Cadence:** Check in once per iteration.",
+	}
+	guide := func(declared, bodied []string) string {
+		quoted := make([]string, 0, len(declared))
+		for _, name := range declared {
+			quoted = append(quoted, "`"+name+"`")
+		}
+		lines := []string{
+			"# Bench Operating Guide",
+			"",
+			"## How to talk to me",
+			"",
+			structuredPhaseDeclaration + " Apply the named clauses",
+			"  " + strings.Join(quoted, ", ") + " proportionally.",
+		}
+		for _, name := range bodied {
+			lines = append(lines, bodyLines[name])
+		}
+		return strings.Join(lines, "\n") + "\n"
+	}
+	complete := []string{"progress", "exit", "omission", "cohesion"}
+	without := func(dropped string) []string {
+		kept := make([]string, 0, len(complete)-1)
+		for _, name := range complete {
+			if name != dropped {
+				kept = append(kept, name)
+			}
+		}
+		return kept
+	}
+
+	if diags := checkStructuredPhaseContract(guide(complete, complete)); len(diags) != 0 {
+		t.Fatalf("the complete clause set failed its own contract:\n%s", strings.Join(diags, "\n"))
+	}
+
+	cases := []struct {
+		name     string
+		declared []string
+		bodied   []string
+		want     []string
+	}{
+		{"missing progress", without("progress"), without("progress"), []string{`does not declare the progress clause`}},
+		{"missing exit", without("exit"), without("exit"), []string{`does not declare the exit clause`}},
+		{"missing omission", without("omission"), without("omission"), []string{`does not declare the omission clause`}},
+		{"missing cohesion", without("cohesion"), without("cohesion"), []string{`does not declare the cohesion clause`}},
+		{
+			"no declared names",
+			nil,
+			nil,
+			[]string{
+				`does not declare the progress clause`,
+				`does not declare the exit clause`,
+				`does not declare the omission clause`,
+				`does not declare the cohesion clause`,
+			},
+		},
+		{
+			"duplicate name",
+			[]string{"progress", "exit", "exit", "omission", "cohesion"},
+			complete,
+			[]string{`declares clause "exit" more than once`},
+		},
+		{
+			"unknown name",
+			[]string{"progress", "exit", "omission", "cohesion", "cadence"},
+			[]string{"progress", "exit", "omission", "cohesion", "cadence"},
+			[]string{`declares unknown clause "cadence"`},
+		},
+		{
+			// The rename keeps the declared count at four, so a membership-only contract
+			// stays green on it; both halves of the rename have to be attributed.
+			"renamed progress to cadence",
+			[]string{"cadence", "exit", "omission", "cohesion"},
+			[]string{"cadence", "exit", "omission", "cohesion"},
+			[]string{`does not declare the progress clause`, `declares unknown clause "cadence"`},
+		},
+		{
+			"reordered declaration",
+			[]string{"exit", "progress", "omission", "cohesion"},
+			complete,
+			[]string{`declares clause "exit" out of contract order; expected "progress" at position 1`},
+		},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			diags := checkStructuredPhaseContract(guide(testCase.declared, testCase.bodied))
+			for _, want := range testCase.want {
+				if !containsDiagnostic(diags, want) {
+					t.Fatalf("clause set stayed valid; want %q in diagnostics:\n%s", want, strings.Join(diags, "\n"))
+				}
+			}
+		})
+	}
+}

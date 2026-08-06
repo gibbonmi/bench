@@ -5,6 +5,12 @@ const (
 	FixDontParkMarker = "lands in the active workflow as its own commit"
 	// SourceWarrantMarker is shared by registry placement evaluation and canonical-source validation.
 	SourceWarrantMarker = "names what you read and what you did not"
+	// ReviewerDecisionBoundaryMarker is shared by registry placement evaluation and canonical-source validation.
+	ReviewerDecisionBoundaryMarker = "Never assume the reviewer's decisions, and never assume a claim the gate could check instead"
+	// ClearBeatsDenseMarker is shared by registry placement evaluation and canonical-source validation.
+	ClearBeatsDenseMarker = "Clear beats dense"
+	// RightSizeProcessMarker is shared by registry placement evaluation and canonical-source validation.
+	RightSizeProcessMarker = "Right-size the process"
 )
 
 var registry = []Anchor{
@@ -138,6 +144,10 @@ var registry = []Anchor{
 	{Group: AfterRoadmapContext, File: ".bench/BENCH.md", Kind: Require, Section: "", Needle: "append the dated line (`- YYYY-MM-DD <text>`) to `capture/IDEAS.md`", Diagnostic: ".bench/BENCH.md Capture section lost the no-PATH fallback append to capture/IDEAS.md"},
 	{Group: AfterRoadmapContext, File: ".bench/BENCH.md", Kind: RequireInSection, Section: "Workflow", Needle: FixDontParkMarker, Diagnostic: ".bench/BENCH.md Workflow section dropped the fix-don't-park rule; a mid-work defect fix belongs in the active workflow, not the backlog"},
 	{Group: AfterRoadmapContext, File: ".bench/BENCH.md", Kind: RequireInSection, Section: "How to talk to me", Needle: SourceWarrantMarker, Diagnostic: ".bench/BENCH.md How to talk to me section dropped the outside-source warrant rule; a claim resting on a source outside the tree names what was and was not read"},
+	{Group: AfterRoadmapContext, File: ".bench/BENCH.md", Kind: RequireInSection, Section: "Roles", Needle: ReviewerDecisionBoundaryMarker, Diagnostic: ".bench/BENCH.md Roles section dropped the verify-before-assuming rule that governs what the worker may decide for the reviewer"},
+	{Group: AfterRoadmapContext, File: ".bench/BENCH.md", Kind: RequireInSection, Section: "How to talk to me", Needle: ClearBeatsDenseMarker, Diagnostic: ".bench/BENCH.md How to talk to me section dropped the clear-beats-dense rule; terse but packed prose still costs the reviewer a decode"},
+	{Group: AfterRoadmapContext, File: ".bench/BENCH.md", Kind: RequireInSection, Section: "Workflow", Needle: RightSizeProcessMarker, Diagnostic: ".bench/BENCH.md Workflow section dropped the right-size-the-process rule; a lighter path is the reviewer's call, not the worker's"},
+	{Group: AfterRoadmapContext, File: ".bench/BENCH.md", Kind: Forbid, Section: "", Needle: "NEVER assume, always verify", Diagnostic: ".bench/BENCH.md restored the retired Roles rule `NEVER assume, always verify`; only the bounded reviewer-decision and gate-check rule may remain"},
 	{Group: AfterRoadmapContext, File: ".bench/BENCH.md", Kind: Forbid, Section: "", Needle: "thorough", Diagnostic: ".bench/BENCH.md phrases the outside-source warrant rule as thoroughness; the rule asks for disclosure of what went unread, which the reviewer can check — thoroughness nobody can"},
 	{Group: AfterRoadmapContext, File: ".agents/commands/bench-write-spec.md", Kind: Require, Section: "", Needle: "promote-then-delete commit removes the spec's `ROADMAP.md` row", Diagnostic: ".agents/commands/bench-write-spec.md does not remove the spec's ROADMAP.md row in the promote-then-delete commit (row presence is status)"},
 	{Group: AfterRoadmapContext, File: ".agents/commands/bench-shape-idea.md", Kind: Require, Section: "", Needle: "never pause for permission or a re-prompt", Diagnostic: ".agents/commands/bench-shape-idea.md dropped the resume-mode grill continuation rule; a running grill carries into newly-unblocked tickets without pausing for a re-prompt"},

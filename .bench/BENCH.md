@@ -6,11 +6,10 @@ operating guide.
 
 ## Roles
 
-You are the worker; I am the reviewer, and I own the merge. Build well on my
-behalf, but never decide for me where the decision is mine to make — when
-something is genuinely my call (what ships, what the spec should be, an
-irreversible or hard-to-reverse choice), surface it and stop rather than
-guessing. NEVER assume, always verify.
+You are the worker; I am the reviewer, and I own the merge. When something is
+genuinely my call (what ships, what the spec should be, an irreversible or
+hard-to-reverse choice), surface it and stop rather than guessing.
+Never assume the reviewer's decisions, and never assume a claim the gate could check instead.
 
 ## How the pieces fit
 
@@ -103,16 +102,14 @@ Canonical `bench` subcommands, kept in sync with `bin/bench.sh`:
 
 2. **Declare the line before a long run.**
    Before any multi-cycle stage (a build, a shift, a TDD pass), state in one line:
-   the model, the effort level, and a rough iteration cap, with one clause of
-   justification. Cheap model + low effort for plumbing at a known seam; top model
-   + high effort only for the seam where the answer is genuinely uncertain. No
-   silent escalation. If a stage exhausts its cap, stop and report rather than
-   grinding. The tiers (cheap / mid / top) are abstract; the reviewer binds them
+   model, effort level, rough iteration cap, and one-clause justification;
+   `craft-line` owns the tier judgment. No silent escalation. If the cap is
+   exhausted, stop and report. The declaration binds delegates and headless runs;
+   only the reviewer can switch the main loop's model, so there it records rather
+   than controls. Tiers (cheap / mid / top) are abstract; the reviewer binds them
    to opaque safe model-id tokens in `projects/<name>.md` and `.bench/lines.env`.
-   Use `bench models` and the harness's own model list as advisory discovery, not
-   as the tier oracle. If the invocation surface reports a named model is
-   unavailable, re-check the owner binding instead of letting the harness choose
-   a replacement tier.
+   Treat `bench models` and the harness's model list as advisory; if a named model
+   is unavailable, re-check the owner binding instead of accepting a replacement.
 
 3. **Document for the teammate who just walked in.**
    Project docs and ADRs describe the current decided state, addressed to someone
@@ -155,15 +152,13 @@ code, the journal — those stay as full as their templates need).
 - A claim resting on a source outside the tree — a reference repo, a vendored
   kit, an upstream doc — names what you read and what you did not, so the
   claim's warrant travels with the claim.
-- Format for scan: tables and lists make things easy to parse — use them. Short
-  lines, bold sparingly. Routine declarations (the line, the seams, a deferred cut)
-  are one line each.
-- **Structured Bench phase conversation:** Apply the named clauses
-  `progress`, `exit`, `omission`, and `cohesion` proportionally.
-  - **Progress:** Use compact bold **Status:** and **Next:** labels whenever an
-    in-progress Bench phase update reports meaningful intermediate state and
-    continued work, even if the entire update fits in one sentence. Exempt only a
-    routine acknowledgement with no meaningful state or continued work.
+- Format for scan: one list or table for genuinely parallel facts, cohesive
+  prose for everything else; the colleague-voice rule below governs either way.
+- **Structured Bench phase conversation:** in force from either harness-native phase invocation (`/bench-*` or `$bench-*`)
+  until that phase exits, and off otherwise. Apply `progress`, `exit`, `omission`, and `cohesion`.
+  - **Progress:** Use compact bold **Status:** and **Next:** labels when an
+    update reports meaningful intermediate state and continued work; a routine
+    acknowledgement with neither stays plain.
   - **Exit:** A phase exit leads with `## Result`, uses `## Details` only when
     material support helps, and uses `## Next` for the exact remaining
     harness-native action.
@@ -171,8 +166,6 @@ code, the journal — those stay as full as their templates need).
     placeholders.
   - **Cohesion:** Keep related sentences together; use bullets or tables only for
     genuinely parallel facts.
-  These patterns do not govern CLI or TOON output, repository artifacts, or ordinary
-  conversation.
 - Keep the names, drop the ceremony. Identifiers, file paths, and roadmap IDs stay:
   they are the handle I use to find the thing. What goes is the abstract phrasing
   built around them — say what something does rather than naming its category.
@@ -204,12 +197,11 @@ Use the canonical phases when the work needs them:
    non-lifecycle work use `/bench-final-check` to gate and commit on green.
 
 **Right-size the process; ask before deviating.** A few-line change doesn't need
-the full pipeline, and you may propose a lighter path — but you must get an
-explicit OK *before* skipping canonical steps. Don't skip silently: deviating
-from the workflow is my call, not yours. A reviewer-requested fix for concrete
-review findings may use a direct fix-and-gate path; run focused regression
-checks for behavior defects, then the gate. If I give you a standing rule for
-changes of a given size, follow it and stop asking.
+the full pipeline, and you may propose a lighter path — but skipping canonical
+steps needs a standing approval (the light-path table below, a size rule I've
+given you, the fix-and-gate path for concrete review findings) or my explicit
+OK first: deviating is my call, not yours. For behavior defects, run focused
+regression checks, then the gate.
 
 | Observable | Route |
 |---|---|

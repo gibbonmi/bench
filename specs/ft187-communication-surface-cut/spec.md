@@ -1,6 +1,6 @@
 # FT187 — cut the communication surface to the rules that fire
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed current conversation, 2026-08-03 and 2026-08-06 — the reviewer reviewed six findings against `.bench/BENCH.md`, accepted the direction ("i like the changes"), directed the roadmap row and this spec, then required story 7 to compose with FT156's landed declarative anchor registry rather than predate it.
 

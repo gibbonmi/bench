@@ -56,11 +56,12 @@ All notable user-facing changes to Bench are documented here. The format follows
   a fixes-first recommended sequence, and an opt-in `--restructure` board pass
   whose merge, collapse, fold, and theme-grouping moves are proposed in the
   batch diff.
-- Sharpened the shared communication rules: the conversational register is now a
-  warm and efficient senior colleague rather than a terse one, with warmth located
-  in sentence construction and self-criticism ruled out, identifiers and paths kept
-  while the phrasing around them is cut, and density defined as clauses per sentence
-  rather than whitespace between them.
+- Cut the shared communication rules to a smaller, conflict-free surface: the
+  warm senior-colleague register still locates warmth in sentence construction
+  and rules out self-criticism; one formatting rule separates parallel facts
+  from cohesive prose; structured labels fire only during an invoked
+  harness-native `/bench-*` or `$bench-*` phase; and the decision, line, and
+  lighter-path rules state their actual scope.
 - Made semantic review hand off instead of repairing: the terminal repair-pass
   bound now lives with implementation, and final check lands through
   `bench commit` as its one oracle run instead of a standalone gate first.
