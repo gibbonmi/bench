@@ -2,34 +2,35 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `209b4d6` at handoff write; commit staging `specs/covers-traceability` lands immediately after
-Spec: `specs/covers-traceability/spec.md` (Status: staged, reviewer-approved 2026-08-05), `specs/ft187-communication-surface-cut/spec.md` (staged), `specs/go-build-cache-footprint/spec.md` (staged), `specs/pre-push-guard-visibility/spec.md` (staged)
-Gate: stale (reduced-scope drift) — the staging commit's gate run refreshes it
+Branch: `main` — HEAD `31dd98a`, clean tree, 9 unpushed commits
+Spec: `specs/ft187-communication-surface-cut/spec.md` (Status: staged), `specs/go-build-cache-footprint/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Gate: green at `2ca9812` — current
 
 ## State
 
-**Phase reached: covers-traceability spec staged and signed off; implementation starts in a fresh mid-tier session.**
+**Phase reached: covers-traceability promoted, retired, and retro'd; next is the drain.**
 
-The spec adds coverage-map row IDs, per-row `covers` annotations in tickets,
-assign refusals, and a pre-gate promote totality check computed over the
-integrated assignments' digest-verified tickets. A mid-tier falsification pass
-returned six findings; all are folded in (decoy-ticket degenerate,
-digest-mismatch refusal, example-agreement covers literal, corrected checker
-red, range rows refuse as unannotated, pre-gate ordering row).
-`bench coverage --check` is green at 15 rows. Closed decisions: 1:1 row
-mapping, spec-opt-in rollout, `covers: local` accepted at assign and graded by
-review, inline row grammar. A thin-slice slicing-gradient flip for
-`craft-tickets` is parked in `capture/IDEAS.md`, deliberately after this build
-produces rows-per-ticket data.
+The covers-traceability build is terminal: promotion squash `5ff1505`, retired
+in `spec-retire: covers-traceability`, retro at
+`capture/retros/covers-traceability.md`. Six review findings were left flagged
+(not accepted) on the run's review receipt for reviewer veto — five Standards
+judgment items and one low Coverage item (NBSP gap unanchors an annotation,
+fail-closed); reopen any by reviewer request. The craft-tickets thin-by-default
+slicing flip also landed (`1691017`), graduating its parked idea; its IDEAS.md
+line and the new gate-invoke-to-Go idea await the drain. Reviewer decision made
+in-session and closed: covers annotations are bracket-adjacent only.
 
-Separate workflow, untouched here: lifecycle run FT195
-(`go-build-cache-footprint`) has repairs integrated and a fresh exact-candidate
-review pending; its retro should name ticket-shape/checkpoint evidence as the
-next priority — which this spec now is.
+Separate workflow, untouched: lifecycle run FT195 (`go-build-cache-footprint`)
+still awaits its exact-candidate review, now against a moved main tip
+(recomposition will discard nothing — no review is bound); its assignment
+`f576124…` holds real uncommitted work in its worktree and must be
+checkpointed or abandoned before FT195 promotes.
+
+Unpushed commits await the reviewer's push decision.
 
 ## Next command
 
-`/bench-implement-spec specs/covers-traceability/spec.md`
+`/bench-what-next`
 
 ## Shape
 
