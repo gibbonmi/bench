@@ -12,9 +12,11 @@ can land committed on a green project gate by itself. It is a tracer bullet,
 demoable or verifiable on its own. A horizontal layer, tests without behavior,
 or behavior without its tests is not a ticket.
 
-Context fit is a split heuristic: when one fresh context cannot hold the unit,
-split it further. It never grades the ticket. The green landing commit is the
-grading rule.
+Thin is the default: when a boundary is in doubt, take the thinner slice, and
+keeping a group whole is what costs a justification. Context fit is a further
+split heuristic: when one fresh context cannot hold the unit, split it further.
+Neither heuristic grades the ticket. The green landing commit is the grading
+rule.
 
 ## Classify before slicing
 
@@ -42,24 +44,26 @@ restate or redraw it here.
 
 ## Draft the breakdown
 
-A seam is a reason to inspect a ticket boundary, not an automatic ticket boundary. Split only when both resulting tickets remain complete, independently green tracer outcomes.
+A seam is a reason to inspect a ticket boundary, not an automatic ticket boundary. Split wherever both resulting tickets remain complete, independently green tracer outcomes; keep a group whole only for a reason you can write down.
 
 | Signal | Response |
 |---|---|
-| One behavior crosses several seams | Keep it together. |
+| One behavior crosses several seams | Keep it together; a split there cannot land green alone. |
 | Two behaviors are independently useful and independently green | Split them. |
 | Two or more tickets need the same primitive | Prefactor one owning ticket and block the consumers on it. |
 | Neither side of a contract can prove the invariant alone | Create the junction ticket described in `Discover the contracts before writing files`. |
 | Stories partition into disjoint package groups | Return to `craft-spec`'s `Check the story partition before locking scope`; that spec-time decision owns the split. |
 | A mechanical refactor cannot keep an ordinary tracer green | Use `Classify before slicing`; its expand–migrate–contract sequence owns the cut. |
 | The ownership fence crosses the breadth threshold | Apply the fence-breadth paragraph below: justify keeping it whole, without auto-splitting. |
+| The ticket covers more than two acceptance rows | Apply the row-count paragraph below: justify keeping it whole, without auto-splitting. |
 
 For each candidate ticket:
 
 1. Classify the work first against `Classify before slicing`. A wide refactor
    takes the expand–migrate–contract sequence instead of ordinary grouping;
-   otherwise group the smallest set of related stories that produces end-to-end
-   behavior at a declared seam.
+   otherwise take the thinnest story slice that produces end-to-end behavior at
+   a declared seam, widening the group only when a thinner cut cannot land
+   green alone.
 2. Confirm the group is independently green. Split any group that needs an
    unrelated later ticket before the project gate can pass. Concurrent
    eligibility is fence disjointness: two tickets run at once only when their
@@ -76,6 +80,14 @@ For each candidate ticket:
    launcher line) can legitimately cross three. Width carries some risk signal
    at the wide end; narrowness is no evidence that a ticket is sound. The
    justification line is the price of keeping the group whole.
+
+   Acceptance-row count is the thickness metric — under a covers-opted-in
+   spec, the covered rows per ticket: more than two rows makes the ticket a
+   split candidate, and keeping the group whole costs one line of
+   justification in the breakdown. Like fence breadth, this is a smell, not a
+   cap — rows that prove one behavior from two sides ride together honestly —
+   but a thick ticket must say why thinner slices would not land green on
+   their own.
 3. Name every real blocker by sibling ticket file basename. A ticket with all
    blockers done is on the **frontier**.
 4. Order blockers before consumers and present the complete breakdown for the
