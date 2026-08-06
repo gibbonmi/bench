@@ -148,6 +148,12 @@ coverage map; a class skipped here returns as a regression.
   refuse. The assertion must supply the sought token only as a flag value or
   pathspec — a case that also spells the positional explicitly passes for the
   wrong reason
+- a grammar token quoted in surrounding prose: a documented example of an inline
+  annotation (a backticked `(covers AB1)` in a row's own text) parses as live
+  syntax unless the grammar anchors the annotation to its position
+- non-ASCII whitespace in hand-edited markdown: an NBSP where a
+  position-anchored grammar permits only space and tab silently unanchors the
+  token, so the diagnostic must stay fail-closed rather than false-positive
 - required tool missing from PATH (no global `bench`, no `readlink -f`)
 - invocation through a symlink rather than the real path
 - invocation through every shipped surface: real kit CLI, linked-repo by-path
