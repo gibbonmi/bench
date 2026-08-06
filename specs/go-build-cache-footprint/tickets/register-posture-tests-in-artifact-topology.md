@@ -3,7 +3,7 @@
 Blocked by: none
 Ownership fence: `internal/contract/surface/artifact/internal/fixture/topology_test.go`
 Integration surfaces: posture top-level test family→existing `internal/contract/surface/artifact/posture` + RT1; other subject lists→unchanged entries in the fenced registry
-Contracts: the posture test-name enumeration crosses the fixture registry→`internal/contract/surface/artifact/posture`, asserted by RT1 against the real package files
+Contracts: the posture test-name enumeration crosses `internal/contract/surface/artifact/internal/fixture/topology_test.go`→the posture subject package, asserted by RT1 against the real package files
 
 ## What to build
 
