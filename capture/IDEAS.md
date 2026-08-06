@@ -1,0 +1,1 @@
+- 2026-08-05  Flip craft-tickets slicing gradient to thin-by-default once per-ticket gate cost drops: covers rows-per-ticket becomes the thickness metric (split candidate above ~2 rows, one justification line to keep whole), replacing grouping-first defaults; set threshold from real rows-per-ticket and gate-cost data after covers-traceability lands

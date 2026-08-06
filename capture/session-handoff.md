@@ -2,19 +2,34 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `8683312`, 1 dirty path, 0 unpushed commits
-Spec: `specs/ft187-communication-surface-cut/spec.md` (Status: staged), `specs/go-build-cache-footprint/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `0807d43` — stale, work tree `00bcc1c`
+Branch: `main` — HEAD `209b4d6` at handoff write; commit staging `specs/covers-traceability` lands immediately after
+Spec: `specs/covers-traceability/spec.md` (Status: staged, reviewer-approved 2026-08-05), `specs/ft187-communication-surface-cut/spec.md` (staged), `specs/go-build-cache-footprint/spec.md` (staged), `specs/pre-push-guard-visibility/spec.md` (staged)
+Gate: stale (reduced-scope drift) — the staging commit's gate run refreshes it
 
 ## State
 
-**Phase reached: FT195 ticket derivation complete; implementation has not started.**
+**Phase reached: covers-traceability spec staged and signed off; implementation starts in a fresh mid-tier session.**
 
-The read-only seam audit at `8683312` found no spec drift. The build is three tracer tickets: sealed local publication and fresh gate verdicts form the first frontier; artifact-mode callers depend on sealed local publication. The closed spec decisions remain the two semantic builder modes, one compiled subject, sealed default publication through the freshness owner, unsealed artifact promotion without host execution, and `-count=1` only at the two executed gate-test owners.
+The spec adds coverage-map row IDs, per-row `covers` annotations in tickets,
+assign refusals, and a pre-gate promote totality check computed over the
+integrated assignments' digest-verified tickets. A mid-tier falsification pass
+returned six findings; all are folded in (decoy-ticket degenerate,
+digest-mismatch refusal, example-agreement covers literal, corrected checker
+red, range rows refuse as unannotated, pre-gate ordering row).
+`bench coverage --check` is green at 15 rows. Closed decisions: 1:1 row
+mapping, spec-opt-in rollout, `covers: local` accepted at assign and graded by
+review, inline row grammar. A thin-slice slicing-gradient flip for
+`craft-tickets` is parked in `capture/IDEAS.md`, deliberately after this build
+produces rows-per-ticket data.
+
+Separate workflow, untouched here: lifecycle run FT195
+(`go-build-cache-footprint`) has repairs integrated and a fresh exact-candidate
+review pending; its retro should name ticket-shape/checkpoint evidence as the
+next priority — which this spec now is.
 
 ## Next command
 
-`$bench-implement-spec --full FT195 specs/go-build-cache-footprint/spec.md`
+`/bench-implement-spec specs/covers-traceability/spec.md`
 
 ## Shape
 
