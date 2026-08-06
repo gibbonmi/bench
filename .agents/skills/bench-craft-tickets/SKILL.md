@@ -28,6 +28,12 @@ sites at once, so no ordinary tracer ticket can stay green. Sequence it as:
    contract ticket's `Blocked by:` names every migration ticket basename, so no
    contract runs while a migration is still open.
 
+Any temporary guard or oracle introduced by an expand ticket names in
+`Integration surfaces:` the dependent contract ticket that retires or migrates
+it and the single final owner that survives contraction. That map is the
+sequence's inventory source; dependent tickets point to it instead of carrying
+independent current and final inventories.
+
 Every expand, migrate, and contract ticket must land green independently. If a
 migrate batch cannot, the expansion or prefactor is incomplete, or the batch
 is too wide; repair the preparation or split the batch before proceeding.
@@ -141,6 +147,16 @@ missing line is the visible signature of skipped integration discovery.
 line skipped value-contract discovery, and a multi-fence breakdown whose every
 ticket claims `none crosses` is a claim the review grades, not a default.
 
+Before assignment, close the discovery audit: every mechanical fact named in
+`Contracts:`, and every applicable mechanical promise from the spec's coverage
+map or edge inventory, appears explicitly in `## Acceptance` and carries a
+machine-checkable identity through its red-mutation row or rows. A fact found
+only in `Contracts:`, `What to build`, or other surrounding prose leaves the
+audit open. If the ticket or schema cannot represent that traceability, stop
+ticketing and report the missing seam; prose or review cannot substitute for
+it. A genuinely semantic reviewer-only claim remains an explicit exception in
+the acceptance row and coverage map.
+
 ## Write one file per ticket
 
 Write each ticket under `specs/<slug>/tickets/` with a verb-first title and this
@@ -153,6 +169,7 @@ Blocked by: <sibling ticket file basenames, or none>
 Ownership fence: `<path prefix>`, `<path prefix>`
 Integration surfaces: <surface>→<fence path | existing path + row ID | blocker basename | dependent basename>; or none
 Contracts: <value> crossing <fence>→<fence>, asserted by <row ID> against the real producer; or none crosses
+Closure: <acceptance ID>/<atomic fact>, <acceptance ID>/<atomic fact>
 
 ## What to build
 
@@ -178,6 +195,8 @@ word.
   ticket-local: a short uppercase tag plus a number, unique within the ticket.
   Give every row its own explicit ID — only an `R`-prefixed ID range-expands
   (`[R1-R3]`), so any other tag written as a range stays one literal row.
+  Before keeping independently failing classes or members under one ID, apply
+  the compound-claim rule in `## Red mutations` below.
   Under a spec whose coverage map opts into row IDs (`craft-spec`'s leading
   `row` column), every row also carries `(covers <ID>)` or `(covers local)`
   after the row-ID bracket, naming exactly one map row — the mapping is 1:1.
@@ -219,9 +238,21 @@ word.
   ticket writes; the other side may name a surface no path holds (`bash`, every
   audited package). A crossing written entirely in concepts
   (`registry`→`derived inventory`) anchors nothing and `assign` refuses it.
-- **`## Red mutations`** binds one row per acceptance ID: the concrete mutation
-  that breaks that criterion, an owner independent of the code under test, and
-  the public operation sequence that shows the red. Mutate the **subject**, never
+- **`Closure:`** is the machine-checkable inventory for the mechanical facts
+  discovered above. Give every independently failing class or member a unique
+  `<acceptance ID>/<lowercase-kebab-name>` token. Every acceptance ID owns at
+  least one token, and every token appears as the criterion of a red-mutation
+  row. `bench spec build assign` refuses a modern ticket whose inventory is
+  absent or open. The checker proves the declared graph is closed; review still
+  compares the inventory to `Contracts:`, the coverage map, and the edge
+  inventory so an undeclared fact cannot hide behind a mechanically valid graph.
+- **`## Red mutations`** binds every acceptance ID to one or more rows: each
+  names a concrete mutation that breaks the criterion, an owner independent of
+  the code under test, and the public operation sequence that shows the red.
+  Split independently failing classes or members into separate acceptance IDs,
+  or repeat the same ID in the mutation table until every class or member is
+  exercised. One representative mutation cannot prove a compound or quantified
+  claim. Mutate the **subject**, never
   the assertion: weakening a shared check to always-pass is invisible to a suite
   whose subjects already satisfy it, so the row reads green and proves nothing.
   A ticket touching a value that **authorizes** an action — a fingerprint, a
@@ -246,6 +277,7 @@ Blocked by: parse-cancelled-job-records.md
 Ownership fence: `internal/status`, `internal/render/rows.go`
 Integration surfaces: cancelled-record producer→parse-cancelled-job-records.md; status row→internal/status; render schema→internal/render/rows.go
 Contracts: the cancelled record with its reason crosses `internal/parse`→`internal/render`, asserted by RC1 against the real parser's output
+Closure: RC1/reason, RC2/recovery-action
 
 ## What to build
 
@@ -263,14 +295,14 @@ contract red.
 
 | criterion | mutation | owner | operation sequence |
 |---|---|---|---|
-| RC1 | render the cancelled row with an empty reason | the cancelled-row render test | blank the field, run `go test ./internal/render`, expect the missing-reason failure |
-| RC2 | return no recovery action for a cancelled record | the recovery-action render test | return the empty action, run `go test ./internal/render`, expect the missing-action failure |
+| RC1/reason | render the cancelled row with an empty reason | the cancelled-row render test | blank the field, run `go test ./internal/render`, expect the missing-reason failure |
+| RC2/recovery-action | return no recovery action for a cancelled record | the recovery-action render test | return the empty action, run `go test ./internal/render`, expect the missing-action failure |
 ```
 <!-- ticket-example:end -->
 
 This is a verb-first, end-to-end outcome, written in the shape the parser
 accepts: distinct row IDs, a covers annotation per row, every written path
-fenced, and one mutation per ID.
+fenced, an atomic closure inventory, and mutation coverage for every fact.
 
 Bad:
 

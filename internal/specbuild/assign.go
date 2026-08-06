@@ -48,6 +48,9 @@ func (s *Service) Assign(ctx context.Context, slug, ticketArg, request string) (
 	if !ticket.ContractsAnchored() {
 		return Assignment{}, Status{}, fmt.Errorf("spec build ticket %s declares a contract crossing no path in its ownership fence", filepath.Base(ticket.Path))
 	}
+	if err := requireClosure(ticket); err != nil {
+		return Assignment{}, Status{}, err
+	}
 	if err := requireCoversMapping(run.Spec, ticket); err != nil {
 		return Assignment{}, Status{}, err
 	}
@@ -104,17 +107,22 @@ func (s *Service) Assign(ctx context.Context, slug, ticketArg, request string) (
 }
 
 // Ticket is one parsed ticket file: its title, content digest, charged
-// acceptance rows, ownership fence, declared contracts, and per-row covers
-// mapping (aligned index-for-index with Rows; empty string means unannotated).
+// acceptance rows, ownership fence, declared contracts, atomic closure facts,
+// red-mutation criteria, and per-row covers mapping (aligned index-for-index
+// with Rows; empty string means unannotated).
 type Ticket struct {
 	Path, Title string
 	Digest      string
 	Rows, Fence []string
 	Contracts   string
+	Closure     []string
+	Mutations   []string
 	Covers      []string
+	Modern      bool
 }
 
 var ticketRow, packageName, rowRange = regexp.MustCompile(`^\s*-\s+\[[ xX]\]\s+\[([^]]+)\](.*)$`), regexp.MustCompile(`\binternal/[A-Za-z0-9_-]+\b`), regexp.MustCompile(`^(R)([0-9]+)-R([0-9]+)$`)
+var closureFact = regexp.MustCompile(`^([A-Z][A-Z0-9-]*[0-9])/[a-z0-9]+(?:-[a-z0-9]+)*$`)
 
 // coversAnnotation matches a `(covers <ID>)` or `(covers local)` annotation
 // anchored at the start of the text it is given: only whitespace may precede
@@ -176,6 +184,62 @@ func (t Ticket) ContractsAnchored() bool {
 		}
 	}
 	return false
+}
+
+// requireClosure makes the modern ticket's author-declared fact inventory a
+// closed graph: every acceptance row owns at least one atomic fact, and every
+// fact has a red mutation. The checker cannot infer whether prose omitted a
+// fact; review owns that semantic comparison. It does ensure that a fact the
+// author declares cannot disappear between Contracts, Acceptance, and the
+// executable mutation plan. Tickets predating the discovery fields remain
+// assignable rather than being stranded by a grammar introduced later.
+func requireClosure(ticket Ticket) error {
+	if !ticket.Modern {
+		return nil
+	}
+	name := filepath.Base(ticket.Path)
+	if len(ticket.Closure) == 0 {
+		return fmt.Errorf("spec build assign requires ticket %s to declare an atomic Closure inventory", name)
+	}
+	rows := make(map[string]bool, len(ticket.Rows))
+	for _, row := range ticket.Rows {
+		rows[row] = true
+	}
+	facts := make(map[string]bool, len(ticket.Closure))
+	owners := make(map[string]bool, len(ticket.Rows))
+	for _, fact := range ticket.Closure {
+		match := closureFact.FindStringSubmatch(fact)
+		if match == nil {
+			return fmt.Errorf("spec build assign requires Closure fact %q of ticket %s to use <acceptance-ID>/<fact-name>", fact, name)
+		}
+		if facts[fact] {
+			return fmt.Errorf("spec build assign requires unique Closure facts in ticket %s, but %s is repeated", name, fact)
+		}
+		facts[fact] = true
+		owner := match[1]
+		if !rows[owner] {
+			return fmt.Errorf("spec build assign requires Closure fact %s of ticket %s to name an acceptance row, but %s names none", fact, name, owner)
+		}
+		owners[owner] = true
+	}
+	for _, row := range ticket.Rows {
+		if !owners[row] {
+			return fmt.Errorf("spec build assign requires every acceptance row of ticket %s to own a Closure fact, but %s owns none", name, row)
+		}
+	}
+	mutated := make(map[string]bool, len(ticket.Mutations))
+	for _, criterion := range ticket.Mutations {
+		if !facts[criterion] {
+			return fmt.Errorf("spec build assign requires every Red mutations criterion of ticket %s to name a Closure fact, but %s names none", name, criterion)
+		}
+		mutated[criterion] = true
+	}
+	for _, fact := range ticket.Closure {
+		if !mutated[fact] {
+			return fmt.Errorf("spec build assign requires every Closure fact of ticket %s to have a Red mutations row, but %s has none", name, fact)
+		}
+	}
+	return nil
 }
 
 // requireCoversMapping refuses a ticket whose charged rows do not each name a
@@ -290,12 +354,29 @@ func ParseTicket(specPath, arg string) (Ticket, error) {
 		return Ticket{}, fmt.Errorf("read spec build ticket: %w", err)
 	}
 	result := Ticket{Path: path, Digest: digest(string(b))}
+	inRedMutations := false
 	// A line matching no field below is skipped, not refused: tickets staged under
 	// an earlier grammar stay parsable, so a retired field strands nothing.
 	for _, line := range strings.Split(string(b), "\n") {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "# ") && result.Title == "" {
 			result.Title = strings.TrimSpace(strings.TrimPrefix(line, "# "))
+		}
+		if strings.HasPrefix(line, "#") {
+			inRedMutations = line == "## Red mutations"
+			if inRedMutations {
+				result.Modern = true
+			}
+			continue
+		}
+		if inRedMutations && strings.HasPrefix(line, "|") {
+			cells := strings.Split(strings.Trim(line, "|"), "|")
+			if len(cells) > 1 {
+				criterion := strings.TrimSpace(cells[0])
+				if criterion != "" && criterion != "criterion" && strings.Trim(criterion, "-: ") != "" {
+					result.Mutations = append(result.Mutations, criterion)
+				}
+			}
 		}
 		if m := ticketRow.FindStringSubmatch(line); len(m) == 3 {
 			expanded := expandRows(m[1])
@@ -316,6 +397,14 @@ func ParseTicket(specPath, arg string) (Ticket, error) {
 		}
 		if strings.HasPrefix(line, "Contracts:") && result.Contracts == "" {
 			result.Contracts = strings.TrimSpace(strings.TrimPrefix(line, "Contracts:"))
+			result.Modern = true
+		}
+		if strings.HasPrefix(line, "Integration surfaces:") {
+			result.Modern = true
+		}
+		if strings.HasPrefix(line, "Closure:") && len(result.Closure) == 0 {
+			result.Closure = append(result.Closure, listValue(strings.TrimPrefix(line, "Closure:"))...)
+			result.Modern = true
 		}
 	}
 	if len(result.Rows) == 0 {

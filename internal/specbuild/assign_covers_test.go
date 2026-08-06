@@ -117,3 +117,113 @@ func TestAssignRefusesAnOptedInMapThatFailsIDValidation(t *testing.T) {
 		t.Fatalf("error = %q, want %q", err, want)
 	}
 }
+
+func closureTicket(closure, mutations string) string {
+	return "# Close every ticket fact\n\n" +
+		"Ownership fence: `internal/specbuild`\n" +
+		"Integration surfaces: parsed closure inventory→`internal/specbuild`\n" +
+		"Contracts: none crosses\n" + closure +
+		"\n## Acceptance\n\n" +
+		"- [ ] [R10] empty and malformed input are refused.\n" +
+		"- [ ] [R11] a rerun is idempotent.\n" +
+		"\n## Red mutations\n\n" +
+		"| criterion | mutation | owner | operation sequence |\n" +
+		"|---|---|---|---|\n" + mutations
+}
+
+func closureRepo(t *testing.T, ticket string) *Service {
+	t.Helper()
+	root := repo(t)
+	write(t, filepath.Join(root, "specs", "build demo", "tickets", "one.md"), ticket)
+	git(t, root, "add", ".")
+	git(t, root, "commit", "-qm", "closure fixture")
+	service := New(root, greenGate{}, realOwner{})
+	if _, err := service.Start(context.Background(), "build demo"); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	return service
+}
+
+func TestAssignRequiresAtomicClosureForModernTickets(t *testing.T) {
+	validMutations := "| R10/empty | pass empty input | parser test | run parser test |\n" +
+		"| R10/malformed | pass malformed input | parser test | run parser test |\n" +
+		"| R11/rerun | create a second record | lifecycle test | run lifecycle test |\n"
+	for _, tc := range []struct {
+		name, closure, mutations, want string
+	}{
+		{
+			name:      "missing closure field",
+			mutations: validMutations,
+			want:      "spec build assign requires ticket one.md to declare an atomic Closure inventory",
+		},
+		{
+			name:      "malformed fact identity",
+			closure:   "Closure: R10/Empty, R10/malformed, R11/rerun\n",
+			mutations: validMutations,
+			want:      "spec build assign requires Closure fact \"R10/Empty\" of ticket one.md to use <acceptance-ID>/<fact-name>",
+		},
+		{
+			name:      "duplicate fact identity",
+			closure:   "Closure: R10/empty, R10/empty, R10/malformed, R11/rerun\n",
+			mutations: validMutations,
+			want:      "spec build assign requires unique Closure facts in ticket one.md, but R10/empty is repeated",
+		},
+		{
+			name:      "acceptance row owns no fact",
+			closure:   "Closure: R10/empty, R10/malformed\n",
+			mutations: "| R10/empty | pass empty input | parser test | run parser test |\n| R10/malformed | pass malformed input | parser test | run parser test |\n",
+			want:      "spec build assign requires every acceptance row of ticket one.md to own a Closure fact, but R11 owns none",
+		},
+		{
+			name:      "fact names no acceptance row",
+			closure:   "Closure: R10/empty, R10/malformed, R12/rerun\n",
+			mutations: "| R10/empty | pass empty input | parser test | run parser test |\n| R10/malformed | pass malformed input | parser test | run parser test |\n| R12/rerun | create a second record | lifecycle test | run lifecycle test |\n",
+			want:      "spec build assign requires Closure fact R12/rerun of ticket one.md to name an acceptance row, but R12 names none",
+		},
+		{
+			name:      "fact has no mutation",
+			closure:   "Closure: R10/empty, R10/malformed, R11/rerun\n",
+			mutations: "| R10/empty | pass empty input | parser test | run parser test |\n| R11/rerun | create a second record | lifecycle test | run lifecycle test |\n",
+			want:      "spec build assign requires every Closure fact of ticket one.md to have a Red mutations row, but R10/malformed has none",
+		},
+		{
+			name:      "mutation names no fact",
+			closure:   "Closure: R10/empty, R10/malformed, R11/rerun\n",
+			mutations: validMutations + "| R11/interrupt | stop halfway | lifecycle test | run lifecycle test |\n",
+			want:      "spec build assign requires every Red mutations criterion of ticket one.md to name a Closure fact, but R11/interrupt names none",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			service := closureRepo(t, closureTicket(tc.closure, tc.mutations))
+			assigned, _, err := service.Assign(context.Background(), "build demo", "one.md", tc.name)
+			if err == nil {
+				t.Fatalf("Assign leased %#v for an open closure graph", assigned)
+			}
+			if err.Error() != tc.want {
+				t.Fatalf("error = %q, want %q", err, tc.want)
+			}
+		})
+	}
+}
+
+func TestAssignAcceptsClosedModernTicketAndLegacyTicket(t *testing.T) {
+	modern := closureTicket(
+		"Closure: R10/empty, R10/malformed, R11/rerun\n",
+		"| R10/empty | pass empty input | parser test | run parser test |\n"+
+			"| R10/malformed | pass malformed input | parser test | run parser test |\n"+
+			"| R11/rerun | create a second record | lifecycle test | run lifecycle test |\n",
+	)
+	legacy := "# Legacy ticket\n\nOwnership fence: `internal/specbuild`\n\n- [ ] [R10] old ticket remains assignable.\n"
+	for _, tc := range []struct{ name, ticket string }{{"modern", modern}, {"legacy", legacy}} {
+		t.Run(tc.name, func(t *testing.T) {
+			service := closureRepo(t, tc.ticket)
+			assigned, _, err := service.Assign(context.Background(), "build demo", "one.md", tc.name)
+			if err != nil {
+				t.Fatalf("Assign: %v", err)
+			}
+			if assigned.ID == "" {
+				t.Fatalf("assignment = %#v", assigned)
+			}
+		})
+	}
+}

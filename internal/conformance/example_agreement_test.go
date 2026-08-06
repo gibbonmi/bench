@@ -31,9 +31,10 @@ var ticketExampleDoc = filepath.Join(".agents", "skills", "bench-craft-tickets",
 // plausible turns these comparisons red, where a self-derived expectation would
 // follow the drift and stay green.
 var (
-	taughtExampleRows   = []string{"RC1", "RC2"}
-	taughtExampleFence  = []string{"internal/status", "internal/render/rows.go"}
-	taughtExampleCovers = []string{"CJ1", "CJ2"}
+	taughtExampleRows    = []string{"RC1", "RC2"}
+	taughtExampleFence   = []string{"internal/status", "internal/render/rows.go"}
+	taughtExampleCovers  = []string{"CJ1", "CJ2"}
+	taughtExampleClosure = []string{"RC1/reason", "RC2/recovery-action"}
 )
 
 // The mutations heading is matched at any depth so a ticket that nests the
@@ -147,10 +148,12 @@ func gradeTicketExample(ticket specbuild.Ticket, block string) []string {
 	diags = append(diags, ticketExampleFieldDiag("acceptance row IDs", ticket.Rows, taughtExampleRows)...)
 	diags = append(diags, ticketExampleFieldDiag("ownership fence entries", ticket.Fence, taughtExampleFence)...)
 	diags = append(diags, ticketExampleFieldDiag("per-row covers annotations", ticket.Covers, taughtExampleCovers)...)
+	diags = append(diags, ticketExampleFieldDiag("atomic closure facts", ticket.Closure, taughtExampleClosure)...)
+	diags = append(diags, ticketExampleFieldDiag("red-mutation criteria", ticket.Mutations, taughtExampleClosure)...)
 	if !ticketExampleBlockedByLine.MatchString(block) {
 		diags = append(diags, fmt.Sprintf("%sthe marked example carries no `Blocked by:` line with a value, so the taught blocker field is demonstrated by nothing", ticketExampleDiag))
 	}
-	return append(diags, ticketExampleMutationDiags(block, ticket.Rows)...)
+	return append(diags, ticketExampleMutationDiags(block, ticket.Closure)...)
 }
 
 func ticketExampleFieldDiag(field string, parsed, taught []string) []string {
@@ -162,7 +165,7 @@ func ticketExampleFieldDiag(field string, parsed, taught []string) []string {
 
 // ticketExampleCriterionCellRe matches a mutations-table row whose criterion cell
 // — the row's first cell, immediately after the leading `|` — is the given
-// acceptance ID, mirroring the passlist token regex's first-cell anchoring.
+// atomic closure fact, mirroring the passlist token regex's first-cell anchoring.
 // Anchoring to the cell (rather than looking for the ID anywhere in the section)
 // keeps one row's prose from standing in for another row: an operation sequence
 // that names RC1 while RC1's own row is gone must not read as coverage for RC1.
@@ -170,16 +173,16 @@ func ticketExampleCriterionCellRe(id string) *regexp.Regexp {
 	return regexp.MustCompile(`(?m)^\|\s*` + regexp.QuoteMeta(id) + `\s*\|`)
 }
 
-func ticketExampleMutationDiags(block string, rows []string) []string {
+func ticketExampleMutationDiags(block string, facts []string) []string {
 	heading := ticketExampleMutationsHeading.FindStringIndex(block)
 	if heading == nil {
 		return []string{fmt.Sprintf("%sthe marked example carries no Red mutations section, so its acceptance rows bind no mutation", ticketExampleDiag)}
 	}
 	section := block[heading[1]:]
 	var diags []string
-	for _, row := range rows {
-		if !ticketExampleCriterionCellRe(row).MatchString(section) {
-			diags = append(diags, fmt.Sprintf("%sthe marked example's Red mutations section names no mutation for acceptance ID %q", ticketExampleDiag, row))
+	for _, fact := range facts {
+		if !ticketExampleCriterionCellRe(fact).MatchString(section) {
+			diags = append(diags, fmt.Sprintf("%sthe marked example's Red mutations section names no mutation for Closure fact %q", ticketExampleDiag, fact))
 		}
 	}
 	return diags
@@ -255,10 +258,16 @@ func TestExampleAgreementParsesAuthoredLiterals(t *testing.T) {
 		t.Fatalf("stripped covers annotation: want the covers mismatch diagnostic, got %v", diags)
 	}
 
-	unbound := replaceOnce(t, doc, "\n| RC2 | return no recovery action for a cancelled record", "\n")
+	unbound := replaceOnce(t, doc, "\n| RC2/recovery-action | return no recovery action for a cancelled record", "\n")
 	diags = checkExampleAgreement(ticketExampleRoot(t, unbound))
-	if !containsDiagnostic(diags, `names no mutation for acceptance ID "RC2"`) {
-		t.Fatalf("dropped mutations row: want the unbound-ID diagnostic, got %v", diags)
+	if !containsDiagnostic(diags, `names no mutation for Closure fact "RC2/recovery-action"`) {
+		t.Fatalf("dropped mutations row: want the unbound-fact diagnostic, got %v", diags)
+	}
+
+	unclosed := replaceOnce(t, doc, "Closure: RC1/reason, RC2/recovery-action\n", "")
+	diags = checkExampleAgreement(ticketExampleRoot(t, unclosed))
+	if !containsDiagnostic(diags, "atomic closure facts") {
+		t.Fatalf("dropped Closure field: want the closure mismatch diagnostic, got %v", diags)
 	}
 
 	unblocked := replaceOnce(t, doc, "Blocked by: parse-cancelled-job-records.md\n", "")
@@ -398,22 +407,21 @@ func TestExampleAgreementEOFWithoutNewline(t *testing.T) {
 	}
 }
 
-// TestExampleAgreementPerIDRowsAnchorToCriterionCell is the recorded bite proof
-// for the anchoring (per craft-gate): an acceptance ID mentioned in another row's
-// prose does not stand in for that ID's own mutations row, so deleting a row stays
-// red even when the section still contains the ID's text.
-func TestExampleAgreementPerIDRowsAnchorToCriterionCell(t *testing.T) {
+// TestExampleAgreementFactsAnchorToCriterionCell is the recorded bite proof for
+// the anchoring (per craft-gate): a fact mentioned in another row's prose does
+// not stand in for that fact's own mutations row.
+func TestExampleAgreementFactsAnchorToCriterionCell(t *testing.T) {
 	doc := taughtExampleSkill(t)
 
-	stray := replaceOnce(t, doc, "expect the missing-action failure", "expect the missing-action failure, the same sequence RC1 uses")
-	deleted := replaceOnce(t, stray, "\n| RC1 | render the cancelled row with an empty reason | the cancelled-row render test | blank the field, run `go test ./internal/render`, expect the missing-reason failure |", "")
+	stray := replaceOnce(t, doc, "expect the missing-action failure", "expect the missing-action failure, the same sequence RC1/reason uses")
+	deleted := replaceOnce(t, stray, "\n| RC1/reason | render the cancelled row with an empty reason | the cancelled-row render test | blank the field, run `go test ./internal/render`, expect the missing-reason failure |", "")
 
-	if !strings.Contains(deleted, "RC1") {
-		t.Fatalf("bite setup: the mutated document no longer mentions RC1 at all")
+	if !strings.Contains(deleted, "RC1/reason") {
+		t.Fatalf("bite setup: the mutated document no longer mentions RC1/reason at all")
 	}
 	diags := checkExampleAgreement(ticketExampleRoot(t, deleted))
-	if !containsDiagnostic(diags, `names no mutation for acceptance ID "RC1"`) {
-		t.Fatalf("deleted RC1 row with a stray RC1 mention: want the unbound-ID diagnostic, got %v", diags)
+	if !containsDiagnostic(diags, `names no mutation for Closure fact "RC1/reason"`) {
+		t.Fatalf("deleted fact row with a stray fact mention: want the unbound-fact diagnostic, got %v", diags)
 	}
 }
 
