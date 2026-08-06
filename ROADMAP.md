@@ -864,50 +864,6 @@ the top and is re-read when committed, not only when written. This stays a
 discipline check: phrase-grepping project prose cannot demonstrate a reliable
 bite. Source: the learnings journal, verdicted in a prior drain.
 
-**FT187 (MEDIUM) — cut the communication surface to the rules that fire.**
-`.bench/BENCH.md`'s "How to talk to me" runs sixty of the file's two hundred
-sixty always-loaded lines and contradicts itself in three places, so a session
-resolves the conflict toward whichever clause it read last and the voice drifts
-turn to turn. First, the formatting rules point opposite ways: "Format for scan:
-tables and lists — use them", the cohesion clause's "bullets or tables only for
-genuinely parallel facts", and "one-sentence paragraphs stacked in a row read as
-a formatting error" together leave almost no sanctioned shape for a three-fact
-update. Sharper, the progress clause demands bold **Status:**/**Next:** labels
-"even if the entire update fits in one sentence" while the closing bullet asks
-for a senior colleague's voice "not like this kit" — a one-sentence update
-wearing two bold labels is the register the closing bullet forbids. Name one
-governing rule (recommend the colleague-voice bullet), demote the labels to
-updates that carry state worth scanning, and drop the "even if" clause. Second,
-the section's own trigger is unobservable: "an in-progress Bench phase update"
-asks a session to judge whether the conversation is a phase, and the 2026-08-03
-review session that produced this row read the section and chose plain prose
-over `## Result` on exactly that ambiguity. Bind it to something visible — a
-phase is active when a `/bench-*` command was invoked this session, and not
-otherwise. Third, Roles' "NEVER assume, always verify" is the same defect class
-as FT107's first clause rather than a separate one: every session assumes
-dozens of things per turn, so an absolute violated hourly teaches that the
-file's absolutes are rhetorical, which is expensive standing beside four
-invariants whose absolutes are real. Bind it to what it means — never assume the
-reviewer's decisions, and never assume a claim the gate could check instead.
-Fourth, invariant 2's declaration is only half enforceable: a session cannot
-switch the main loop's model, only the reviewer can, so the declaration binds
-delegates and headless runs and is ceremony for the main loop. Say which half
-binds, or the ritual is performed without constraining anything. Fifth,
-wording only: the bold "you must get an explicit OK *before* skipping canonical
-steps" reads as absolute against the table directly beneath it that grants the
-skip standing approval, and on a fast read the bold sentence wins and the table
-goes unused — fold the exception into the sentence. Substance there defers to
-FT144's named-lighter-path ruling and FT180's spec-optional route; this clause
-only reconciles the two statements as they stand. Deliberately excluded: the
-`CLI Inventory` section's hand-maintained duplication of `bin/bench.sh` (no
-conformance check enforces the declared sync) is a second instance of FT89's
-inventories half and stays there. This row takes FT100's `.bench/BENCH.md`
-slice early because the conflict is self-contained in one section and does not
-wait on FT89 settling what is authoritative elsewhere. Kit edit under the
-`craft-synthesis` discipline. Source: session conversation 2026-08-03, parked
-here by reviewer instruction rather than through a drain.
-Staged spec: [`specs/ft187-communication-surface-cut/spec.md`](specs/ft187-communication-surface-cut/spec.md).
-
 **FT107 (MEDIUM) — the standing guidance rules, batched: one
 always-loaded-prose diff.** Sixteen remaining clauses edit the same
 standing-guidance surface — `.bench/BENCH.md`, the phase prose beside it, and
