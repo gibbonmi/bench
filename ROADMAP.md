@@ -167,6 +167,15 @@ three-axis-review recommendation is already canonical in the spec-build
 lifecycle, so it needs no second rule. Source: the
 `exact-prospective-landing` retro, drained here.
 
+The covers-traceability and FT195 closes add four more observable states to the
+same owner: a blocking `bench gate --fresh` mode for callers that must sequence a
+follow-up command, retained failing-phase and first-failure evidence after a red
+promotion, an active-first lifecycle-status projection, and a `promote --check`
+preflight for cleanliness and recomposition. The generic-worktree destination
+and verdict-locality recommendations belong to FT169's landing primitive rather
+than creating another subject owner. Sources: the covers-traceability and
+go-build-cache-footprint retros, drained here.
+
 **FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
 The ft91-gate-tier-split semantic review found twelve; three closed before
 merge (the ship canary tier pin, the untiered-registry assertion, the
@@ -521,15 +530,11 @@ first, and the working route is a manual `bench worktree create --request
 documented canonical one. Source: the spec-build-lifecycle-preconditions
 retro, drained here.
 
-The same economics recur after a gofmt-only correction: the source seal must
-change, so the safe path still rebuilds and re-gates. Neither proposed shortcut
-is sound — a mutating gate changes its own subject, and a seal that ignores a
-source change no longer attests to the exact build inputs. This spec instead
-reduces the cost of each required rebuild without weakening subject identity;
-fresh-assignment readiness remains FT169's preflight concern. Staged spec:
-[`specs/go-build-cache-footprint/spec.md`](specs/go-build-cache-footprint/spec.md).
-Source: reviewer-confirmed conversation and `capture/learnings.md` 2026-08-04,
-verdicted here.
+The go-build-cache-footprint work shipped and retired at `f140e94`; its cache
+reduction is no longer roadmap work. What remains from that close belongs here:
+generic-worktree landing must name the destination branch and preserve a usable
+verdict across the worktree-to-main transition. Source: the covers-traceability
+retro, drained here.
 
 **FT178 (MEDIUM) — `bench worktree`'s bare verb is a human porcelain that
 traps automation and leaks on signals.** Reviewer ruling 2026-08-01: humans
@@ -633,6 +638,19 @@ load-bearing migration evidence rather than a duplicate, then the phase names th
 map and the snapshot surfaces the pin as a discrepancy when a graded row is about
 to move. Source: `capture/learnings.md`, verdicted here; the map and its bite test
 were read in the tree on 2026-08-01.
+
+**FT198 (MEDIUM) — make `ROADMAP.md` a progressively loaded index.** The board
+has reached 62 rows and 179 KB; this drain's required full context snapshot was
+complete on disk but too large for one agent-tool response. Keep the main
+roadmap as a concise index of ID, title, priority, state, dependencies, and the
+next phase, with each row's detailed evidence and rationale stored behind one
+canonical on-demand reader. `bench roadmap --context --full` remains one
+consistent snapshot, but the ordinary query and phase can load the index first
+and request only the detailed records needed for reconcile or drain judgments.
+Decide the durable detail owner, migration and history behavior, and how the
+parser proves index-to-detail completeness without creating a second source of
+status. Entry: `/bench-shape-idea`. Source: `capture/IDEAS.md`, drained here;
+the 2026-08-06 drain's 179397-byte snapshot transport failure.
 
 **FT173 (MEDIUM) — the AXI contract has ten principles, one derivation each.**
 The kit implements its own published contract partially and unevenly, measured
@@ -1508,6 +1526,17 @@ integration mappings, and a public mutation owner; and `craft-review` includes
 post-authorization directory descendants in its concurrency inventory. Source:
 the `exact-prospective-landing` retro, drained here.
 
+The covers-traceability and FT195 closes add the charge-time proof details to
+that visit: a delegate-supplied Go `-run` alternation is listed before execution
+so a quoted literal `|` cannot produce a vacuous green; a ticket adding tests to
+a classified family explicitly carries the sibling classifier registry as an
+integration surface; and a coordinator pre-promote focused classifier run is
+required when the composition adds tests to such a family. The existing
+edge-inventory and production-reachability rules already cover the two FT195
+repair misses, so those journal entries add evidence, not another rule. Sources:
+the covers-traceability and go-build-cache-footprint retros and the 2026-08-06
+learnings journal, drained here.
+
 **FT165 (LOW) — fold the domain-modeling discipline into
 `/bench-shape-idea`.** Upstream candidate (mattpocock/skills,
 domain-modeling): as grill tickets resolve decisions, challenge fuzzy or
@@ -1614,6 +1643,17 @@ key internally when the flag is omitted, whichever the idempotency contract
 allows. Sources: `capture/IDEAS.md` 2026-08-05 and the `ft156-anchor-registry`
 retro, drained here.
 
+**FT197 (MEDIUM) — the Go core owns gate invocation and process lifetime.** The
+shell entry currently hops from `bin/bench.sh` through `.bench/gate.sh` before
+the Go-owned runner can bind the operation. Wrapper-only termination has left
+orphaned gate process groups, and worktree-to-main execution makes verdict
+locality harder to state. Move invocation, waiting, signal propagation, and
+terminal attribution into one Go-owned path while keeping `.bench/gate.sh` as
+the project-authored check body. Preserve the public gate contract and every
+phase; this changes the process owner, not the oracle. Entry:
+`/bench-write-spec`. Sources: `capture/IDEAS.md` and the covers-traceability
+retro, drained here.
+
 **FT166 (LOW) — `bench capture commit`: porcelain for the ambient capture
 set.** Commit the capture surfaces (`capture/learnings.md`, `capture/IDEAS.md`,
 `capture/session-handoff.md`, `capture/retros/`) with a conventional message under the
@@ -1645,6 +1685,11 @@ the coupling that made the capture co-location cost ~278 references instead
 of 4 constants. A sanctioned journal/retro writer is this row's second face,
 distinct from the commit porcelain above. Source: `capture/IDEAS.md`, drained
 here.
+
+The FT195 close adds validation to the writer half: journal appends use the
+parser's canonical open-entry grammar instead of allowing a malformed entry to
+remain invisible until `bench status` notices it. Source: the
+go-build-cache-footprint retro, drained here.
 
 **FT168 (LOW) — focused iteration evidence: a fixture-selecting
 canary.** Proving one changed
@@ -2221,10 +2266,10 @@ build.
    its spec was written and implemented, FT181 shipped 2026-08-03, and
    FT156's anchor-mechanism ruling closed when its registry shipped and the
    spec retired 2026-08-05.
-2. Drain the staged frontier — FT135, FT187, and FT195 all carry staged specs
-   — before authoring any new spec; deferring one is an explicit reviewer
-   override, never a silent skip. Of the three only FT187 serves a goal
-   directly. FT141
+2. Drain the staged frontier — FT135 and FT187 carry the two remaining staged
+   specs — before authoring any new spec; deferring one is an explicit reviewer
+   override, never a silent skip. Of the two only FT187 serves a goal directly.
+   FT141
    builds in parallel where
    capacity allows: it is Go, prose-independent, and it unblocks FT107
    *whole* — splitting the fix-loop clause out would spend a second spec,
@@ -2281,6 +2326,6 @@ now fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — drain the three staged specs: FT195 (`specs/go-build-cache-footprint/spec.md`) first to reduce every later build's cache and publication cost, then FT187 (`specs/ft187-communication-surface-cut/spec.md`) and FT135 (`specs/pre-push-guard-visibility/spec.md`).
-2. `/bench-shape-idea` — FT144's one-decision-both-phases call, the goal tracks' remaining shaping item; grills serialize on the reviewer, so start it while the staged builds run.
-3. `/bench-write-spec` — FT141, Go and prose-independent, buildable in parallel and the literal blocker that unblocks FT107 whole.
+1. `/bench-implement-spec` — drain the two staged specs: FT187 (`specs/ft187-communication-surface-cut/spec.md`) first, then FT135 (`specs/pre-push-guard-visibility/spec.md`).
+2. `/bench-shape-idea` — FT198, because the 179 KB roadmap snapshot now exceeds a single agent-tool response and the storage migration needs one durable-owner decision.
+3. `/bench-write-spec` — FT141, Go and prose-independent and the literal blocker that unblocks FT107 whole.

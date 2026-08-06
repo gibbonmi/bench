@@ -2,38 +2,33 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — FT195 promoted at `af02997`, then `spec-retire: go-build-cache-footprint` and a capture commit; clean tree, ~19 unpushed commits
+Branch: `main` at pre-drain `77f048d5c44687544c37341fd92be233922a91b4`; 20 commits ahead of upstream before this commit
 Spec: `specs/ft187-communication-surface-cut/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at the capture commit — current
+Gate: the roadmap drain commit authors the current verdict
 
 ## State
 
-**Phase reached: FT195 (go-build-cache-footprint) promoted, retired, and retro'd.**
+**Phase reached: roadmap capture drained and reconciled after FT195 retirement.**
 
-The lifecycle run is terminal: candidate `caaa6fb0`, promotion squash
-`af02997`, retro at `capture/retros/go-build-cache-footprint.md`. Three
-review findings were left flagged (not accepted) on the run's receipts for
-reviewer veto: overlapping malformed-selector tables in the posture package,
-hostile-output refusals exercised only through artifact mode, and a cosmetic
-prose reflow in a retired ticket. Reopen any by reviewer request.
+Both implementation retros, all three parked ideas, and all four open learnings
+have explicit roadmap dispositions. FT169 now carries only its residual landing work;
+the retired `go-build-cache-footprint` spec and FT195 sequence entry are removed.
+FT197 owns Go-managed gate invocation and process lifetime. FT198 owns the
+reviewer-requested progressively loaded roadmap design, with `ROADMAP.md` as its
+concise index.
 
-Closed reviewer decisions from the run: the Go publication child owns the
-sealed transaction (backup, atomic pair replacement, signal-safe restore);
-the topology invariant is the one-entry all-package enumeration; artifact
-promotion is recorded by staged-entry consumption, not a flag.
-
-A reviewer-initiated kit change is queued for a separate session (Codex):
-simplify craft-tickets sizing to thinnest-independently-green-slice. Its
-decision source is the two 2026-08-06 sizing entries in
-`capture/learnings.md`; the prepared prompt gates on this run being terminal,
-which it now is. Four open learnings entries and one pending retro await the
-drain.
+Closed decisions stay closed: FT195's Go publication child owns the sealed
+transaction; the topology invariant is one all-package entry; artifact promotion
+is recorded by staged-entry consumption. The craft-tickets
+thinnest-independently-green slicing rule already landed at `1691017` and is not
+queued again. Three FT195 review judgments remain available for reviewer veto in
+the retained lifecycle record.
 
 Unpushed commits await the reviewer's push decision.
 
 ## Next command
 
-`/bench-what-next`
+`$bench-implement-spec`
 
 ## Shape
 
