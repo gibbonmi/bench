@@ -267,7 +267,10 @@ func (s *Service) verifyIntegration(ctx context.Context, run record, assigned as
 		return nil, err
 	}
 	paths, err := s.changedPaths(ctx, assigned.Base, assigned.Checkpoint)
-	if err != nil || !insideFence(paths, assigned.Fence) {
+	// An empty changed-path set is the identity over the candidate — the honest
+	// closure of a ticket whose rows were already covered; the fence constrains
+	// only real changes, exactly as it does at the checkpoint seam.
+	if err != nil || (len(paths) != 0 && !insideFence(paths, assigned.Fence)) {
 		return nil, errors.New("checkpoint ownership drifted")
 	}
 	patch, err := s.checkpointPatch(ctx, assigned.Base, assigned.Checkpoint)
@@ -314,8 +317,12 @@ func (s *Service) replayCheckpoint(ctx context.Context, candidate, base, checkpo
 	if _, err := s.git(ctx, env, nil, "read-tree", candidate); err != nil {
 		return "", err
 	}
-	if _, err := s.git(ctx, env, bytes.NewReader(patch), "apply", "--cached", "--whitespace=nowarn"); err != nil {
-		return "", fmt.Errorf("checkpoint patch conflicts with the candidate: %w", err)
+	// A zero-byte patch is the identity over the candidate; git apply refuses
+	// empty input, so only a non-empty patch reaches it.
+	if len(patch) != 0 {
+		if _, err := s.git(ctx, env, bytes.NewReader(patch), "apply", "--cached", "--whitespace=nowarn"); err != nil {
+			return "", fmt.Errorf("checkpoint patch conflicts with the candidate: %w", err)
+		}
 	}
 	tree, err := s.git(ctx, env, nil, "write-tree")
 	if err != nil {

@@ -2,8 +2,8 @@
 
 Blocked by: allow-already-covered-clean-integration.md
 Ownership fence: `internal/worktree/path.go`, `internal/worktree/orphan_test.go`
-Integration surfaces: exact provisional evidence -> cleanup plan; no-op checkpoint -> clean assignment checkout; terminal release -> assignment compaction
-Contracts: `internal/worktree/path.go` releases a clean checkout at its assignment base only after the retained checkpoint, integrated candidate, index, and live tree all validate exactly; `internal/worktree/orphan_test.go` proves the no-op lifecycle shape releases without recovery while preserving every evidence-drift refusal
+Integration surfaces: exact provisional evidence, cleanup plan, and assignment compaction→`internal/worktree/path.go`; clean no-op checkpoint producer→allow-already-covered-clean-integration.md; successful release and replay proof→`internal/worktree/orphan_test.go` plus VR1; evidence-drift refusals→`internal/worktree/orphan_test.go` plus VR2
+Contracts: retained checkpoint and integrated-candidate identities cross allow-already-covered-clean-integration.md→`internal/worktree/path.go` release validation, asserted by VR1-VR2 against the real provisional release lifecycle in `internal/worktree/orphan_test.go`
 
 ## What to build
 
@@ -22,5 +22,7 @@ payload, ignored-output, unsafe-path, or evidence-drift refusal.
 
 ## Red mutations
 
-- [ ] [MVR1] Requiring every non-legacy provisional release checkout to be dirty makes the honest no-op release case red.
-- [ ] [MVR2] Accepting a clean checkout before exact evidence validation makes an existing evidence-drift case green.
+| criterion | mutation | owner | operation sequence |
+|---|---|---|---|
+| VR1 | require every non-legacy provisional release checkout to be dirty | `TestReleaseProvisionalRemovesVerifiedCleanNoOpCheckpoint` | run `go test ./internal/worktree -run '^TestReleaseProvisionalRemovesVerifiedCleanNoOpCheckpoint$' -count=1`; expect the verified clean release and replay to fail |
+| VR2 | accept a clean checkout before exact evidence validation | `TestReleaseProvisionalRefusesVerifiedCleanNoOpEvidenceDrift` and `TestReleaseProvisionalRefusesLiveCheckpointDrift` | run `go test ./internal/worktree -run '^(TestReleaseProvisionalRefusesVerifiedCleanNoOpEvidenceDrift|TestReleaseProvisionalRefusesLiveCheckpointDrift)$' -count=1`; expect an evidence-drift case to stop refusing |

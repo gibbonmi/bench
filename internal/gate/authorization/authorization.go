@@ -151,8 +151,13 @@ func branchAndTipAt(root, branch, tip string) bool {
 // to project bytes. A green inherited subject makes that red candidate-owned; without
 // that proof the red is inherited. Operational outcomes never masquerade as either.
 func Authorize(ctx context.Context, root, tree string) Result {
+	return AuthorizeWithWriters(ctx, root, tree, io.Discard, io.Discard)
+}
+
+// AuthorizeWithWriters executes the exact-tree gate and returns its attributed outcome.
+func AuthorizeWithWriters(ctx context.Context, root, tree string, stdout, stderr io.Writer) Result {
 	inheritedGreen := inheritedSubjectGreen(root)
-	execution := gate.ExecuteTree(ctx, root, tree, io.Discard, io.Discard)
+	execution := gate.ExecuteTree(ctx, root, tree, stdout, stderr)
 	inspection := gate.InspectTree(root, tree)
 	kind := Infrastructure
 	if execution.ActionExit == 0 && inspection.ReusableGreen {

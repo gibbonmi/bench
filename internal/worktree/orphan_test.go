@@ -35,6 +35,42 @@ func TestReleaseProvisionalRemovesExactRetainedLiveCheckpoint(t *testing.T) {
 	}
 }
 
+func TestReleaseProvisionalRemovesVerifiedCleanNoOpCheckpoint(t *testing.T) {
+	fixture := newCleanProvisionalFixture(t)
+
+	if err := ReleaseProvisional(fixture.root, fixture.request, fixture.created.Path, fixture.evidence); err != nil {
+		t.Fatalf("ReleaseProvisional: %v", err)
+	}
+	if _, err := os.Stat(fixture.created.Path); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("released worktree remains: %v", err)
+	}
+	if _, found, err := intent.FindAssignmentByRequest(fixture.root, requestDigest(fixture.request)); err != nil || found {
+		t.Fatalf("released assignment remains: found=%v err=%v", found, err)
+	}
+	if refs := gitOutput(t, fixture.root, "for-each-ref", "--format=%(refname)", "refs/bench/recovery/"); refs != "" {
+		t.Fatalf("clean no-op release created redundant recovery refs: %s", refs)
+	}
+	if err := ReleaseProvisional(fixture.root, fixture.request, fixture.created.Path, fixture.evidence); err != nil {
+		t.Fatalf("ReleaseProvisional replay: %v", err)
+	}
+}
+
+func TestReleaseProvisionalRefusesVerifiedCleanNoOpEvidenceDrift(t *testing.T) {
+	fixture := newCleanProvisionalFixture(t)
+	gitRun(t, fixture.root, "update-ref", fixture.evidence.CheckpointRef, fixture.evidence.Base, fixture.evidence.Checkpoint)
+
+	if err := ReleaseProvisional(fixture.root, fixture.request, fixture.created.Path, fixture.evidence); err == nil {
+		t.Fatal("drifted clean no-op provisional release succeeded")
+	}
+	if _, err := os.Stat(fixture.created.Path); err != nil {
+		t.Fatalf("refused provisional release removed checkout: %v", err)
+	}
+	stored, found, err := intent.FindAssignmentByRequest(fixture.root, requestDigest(fixture.request))
+	if err != nil || !found || stored.State != intent.StateActive {
+		t.Fatalf("refused provisional release mutated assignment: %#v, %v, %v", stored, found, err)
+	}
+}
+
 type liveProvisionalFixture struct {
 	root, request string
 	created       Creation
@@ -59,6 +95,23 @@ func newLiveProvisionalFixture(t *testing.T) liveProvisionalFixture {
 	gitRun(t, root, "update-ref", ref, checkpoint)
 	gitRun(t, root, "update-ref", integratedRef, integrated)
 	evidence := ProvisionalEvidence{Base: created.Assignment.Start, CheckpointRef: ref, Checkpoint: checkpoint, IntegratedRef: integratedRef, Integrated: integrated}
+	return liveProvisionalFixture{root: root, request: request, created: created, evidence: evidence}
+}
+
+func newCleanProvisionalFixture(t *testing.T) liveProvisionalFixture {
+	t.Helper()
+	root := newWorktreeRepo(t)
+	t.Setenv("BENCH_HOME", filepath.Join(root, ".bench-home"))
+	request := "provisional-clean-no-op"
+	created := mustCreate(t, root, request, "provisional clean no-op")
+	tree := gitOutput(t, root, "rev-parse", created.Assignment.Start+"^{tree}")
+	checkpoint := gitOutput(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit-tree", tree, "-p", created.Assignment.Start, "-m", "no-op checkpoint")
+	integrated := gitOutput(t, root, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit-tree", tree, "-p", created.Assignment.Start, "-m", "no-op integration")
+	checkpointRef := "refs/bench/test-checkpoint/" + created.Assignment.ID
+	integratedRef := "refs/bench/test-candidate/" + created.Assignment.ID
+	gitRun(t, root, "update-ref", checkpointRef, checkpoint)
+	gitRun(t, root, "update-ref", integratedRef, integrated)
+	evidence := ProvisionalEvidence{Base: created.Assignment.Start, CheckpointRef: checkpointRef, Checkpoint: checkpoint, IntegratedRef: integratedRef, Integrated: integrated}
 	return liveProvisionalFixture{root: root, request: request, created: created, evidence: evidence}
 }
 

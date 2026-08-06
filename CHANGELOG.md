@@ -34,6 +34,10 @@ All notable user-facing changes to Bench are documented here. The format follows
 
 ### Changed
 
+- Made `bench commit` compose and authorize only its named paths, so unrelated
+  concurrent working-copy and index state remains intact while the exact tree
+  that can land receives the gate verdict. A destination advance now refuses
+  publication without overwriting the winner; rerunning recomposes from its tip.
 - Made `bench worktree recovery` accept one TOON quote layer around an exact
   fingerprint while retaining its lowercase 64-hex validation.
 - Made agent-guidance Markdown edits under `.agents/` skip the Go toolchain

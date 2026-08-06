@@ -322,6 +322,19 @@ func hostileProof(id string, kind hostileKind) r21ProofCase {
 	return r21ProofCase{id: id, driver: func(t *testing.T) { runHostileProof(t, kind) }}
 }
 
+// commitSymlinkProofSubject commits the fixture gate and manifest so they survive into
+// the detached checkout bench commit grades, which materializes only tracked content;
+// an ignored gate refuses there as infrastructure before the asserted oracle refresh.
+// The gate reaches its run marker through the common Git directory because the
+// checkout's .git is a file, not a directory. The ignored symlink chain and the
+// uncommitted work.txt landing delta keep their attribution roles.
+func commitSymlinkProofSubject(t *testing.T, f contract.Fixture) {
+	t.Helper()
+	f.WriteExecutable(".bench/gate.sh", "#!/bin/sh\necho run >> \"$(git rev-parse --git-common-dir)/ft78-runs\"\ntest \"$(cat inputs/link-a)\" = green\n")
+	f.Git("add", "-f", ".bench/gate.sh", ".bench/gate-inputs.json")
+	f.Git("commit", "-q", "-m", "symlink proof subject")
+}
+
 func runHostileProof(t *testing.T, kind hostileKind) {
 	f := story3Fixture(t)
 	manifest, env := story3LocalManifest, map[string]string{}
@@ -363,6 +376,9 @@ func runHostileProof(t *testing.T, kind hostileKind) {
 		f.WriteExecutable(".bench/gate.sh", "#!/bin/sh\nprintf 'unsafe-\\033-\\007\\n'\n")
 	}
 	f.WriteFile(".bench/gate-inputs.json", manifest)
+	if kind == hostileSymlinkChain {
+		commitSymlinkProofSubject(t, f)
+	}
 	first := f.BenchEnv(env, "gate")
 	first.RequireExit(0)
 	if kind == hostileSymlinkChain {

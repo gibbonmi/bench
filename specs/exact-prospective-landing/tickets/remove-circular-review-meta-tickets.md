@@ -1,6 +1,6 @@
 # Remove circular review meta-tickets
 
-Blocked by: close-adapter-blocker-metadata.md, preserve-executable-spec-mode.md, normalize-review-repair-ticket-metadata.md, split-review-repair-mutation-rows.md
+Blocked by: close-adapter-blocker-metadata.md, preserve-executable-spec-mode.md
 Ownership fence: `specs/exact-prospective-landing/tickets/close-adapter-blocker-metadata.md`, `specs/exact-prospective-landing/tickets/preserve-executable-spec-mode.md`, `specs/exact-prospective-landing/tickets/normalize-review-repair-ticket-metadata.md`, `specs/exact-prospective-landing/tickets/split-review-repair-mutation-rows.md`
 Integration surfaces: producer adapter-consumer declarations -> `specs/exact-prospective-landing/tickets/close-adapter-blocker-metadata.md`; executable-mode regression owner -> `specs/exact-prospective-landing/tickets/preserve-executable-spec-mode.md`; verification-only repair records -> removal of `specs/exact-prospective-landing/tickets/normalize-review-repair-ticket-metadata.md` and `specs/exact-prospective-landing/tickets/split-review-repair-mutation-rows.md`
 Contracts: the four producer tickets' declared adapter-consumer basenames cross into `specs/exact-prospective-landing/tickets/close-adapter-blocker-metadata.md`, asserted by SR1 against those real producer records; the `core.filemode=false` mode-identity behavior crosses the existing landing implementation into `specs/exact-prospective-landing/tickets/preserve-executable-spec-mode.md`, asserted by SR2 against `TestLandPublishesExecutableSpecModeAndReconcilesClean`
@@ -21,5 +21,7 @@ preserve circular or invented evidence. Do not add a new harness or gate.
 
 ## Red mutations
 
-- [ ] [MSR1] Omit or corrupt one producer basename in the adopt ticket's `Blocked by:` list; read the four producer tickets' `Integration surfaces:` declarations and compare that basename set with the adopt ticket's blocker set; the sets differ.
-- [ ] [MSR2] Omit the explicit index mode correction and rely on `git add` under `core.filemode=false`; `go test ./internal/landing -run '^TestLandPublishesExecutableSpecModeAndReconcilesClean$' -count=1` reports the reconciled index mode mismatch.
+| criterion | mutation | owner | operation sequence |
+|---|---|---|---|
+| SR1 | omit or corrupt one producer basename in the adopt ticket's `Blocked by:` list | the four producer tickets' `Integration surfaces:` declarations | read the four producer declarations and compare their consumer basename set with `adopt-exact-landing-in-commit.md`; expect the sets to differ |
+| SR2 | omit the explicit index mode correction and rely on `git add` under `core.filemode=false` | `TestLandPublishesExecutableSpecModeAndReconcilesClean` | run `go test ./internal/landing -run '^TestLandPublishesExecutableSpecModeAndReconcilesClean$' -count=1`; expect the reconciled index mode mismatch |

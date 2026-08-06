@@ -1,6 +1,6 @@
 # Adopt exact landing in bench commit
 
-Blocked by: build-exact-landing-owner.md
+Blocked by: build-exact-landing-owner.md, reuse-exact-green-before-gate-lock.md, preserve-prospective-gate-output.md, resolve-story5-fixture-gitdir.md
 Ownership fence: `internal/commit`, `internal/contract/runtime/runtime_commit_test.go`, `CHANGELOG.md`
 Integration surfaces: landing request/result→build-exact-landing-owner.md; compiled subcommand dispatch→existing `cmd/bench/main.go` plus AC1; shell route→existing `bin/bench.sh` plus AC1; runtime contract registry→existing `TestRuntimeCommitContracts`; contract gate phase→existing `internal/gate/phases.go`; shipped behavior notice→`CHANGELOG.md`
 Contracts: parsed message, optional spec slug, and literal caller paths cross `internal/commit`→`internal/landing`, asserted by AC1-AC8 against the real compiled command; landing outcome crosses `internal/landing`→`internal/commit`, asserted by AC1-AC8 through stdout, stderr, ref, index, and filesystem observations

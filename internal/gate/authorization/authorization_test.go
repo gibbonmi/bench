@@ -1,6 +1,7 @@
 package authorization
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"os"
@@ -10,6 +11,68 @@ import (
 
 	"github.com/gibbonmi/bench/internal/gate"
 )
+
+func TestAuthorizeWithWritersPreservesOutcomeAndEvidence(t *testing.T) {
+	root := authorizationRepo(t)
+	redTree := gitOutput(t, root, "write-tree")
+
+	assertAuthorizationWithWriters(t, root, redTree, Inherited)
+
+	os.Remove(filepath.Join(root, "fail"))
+	gitRun(t, root, "add", "-u")
+	gitRun(t, root, "commit", "-q", "-m", "green base")
+	branch := gitOutput(t, root, "branch", "--show-current")
+	tip := gitOutput(t, root, "rev-parse", "HEAD")
+	if got := gate.Execute(t.Context(), root, io.Discard, io.Discard); got.ActionExit != 0 {
+		t.Fatalf("seed green evidence = %+v", got)
+	}
+	if err := Bootstrap(root, branch, tip, ""); err != nil {
+		t.Fatalf("bootstrap green evidence: %v", err)
+	}
+	greenTree := gitOutput(t, root, "write-tree")
+	assertAuthorizationWithWriters(t, root, greenTree, Green)
+
+	os.WriteFile(filepath.Join(root, "fail"), []byte("red\n"), 0o644)
+	gitRun(t, root, "add", "fail")
+	candidateTree := gitOutput(t, root, "write-tree")
+	gitRun(t, root, "reset", "--hard", "HEAD")
+	assertAuthorizationWithWriters(t, root, candidateTree, Candidate)
+
+	missingRoot := t.TempDir()
+	gitRun(t, missingRoot, "init", "-q")
+	os.WriteFile(filepath.Join(missingRoot, "tracked"), []byte("x\n"), 0o644)
+	gitRun(t, missingRoot, "add", ".")
+	gitRun(t, missingRoot, "-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "-m", "base")
+	assertAuthorizationWithWriters(t, missingRoot, gitOutput(t, missingRoot, "write-tree"), Infrastructure)
+}
+
+func TestAuthorizeCompatibilityEntryDiscardsOutput(t *testing.T) {
+	root := authorizationRepo(t)
+	tree := gitOutput(t, root, "write-tree")
+	if got := Authorize(t.Context(), root, tree); got.Kind != Inherited {
+		t.Fatalf("Authorize result = %+v, want inherited", got)
+	}
+}
+
+func assertAuthorizationWithWriters(t *testing.T, root, tree string, want Kind) {
+	t.Helper()
+	wantResult := Authorize(t.Context(), root, tree)
+	var stdout, stderr bytes.Buffer
+	got := AuthorizeWithWriters(t.Context(), root, tree, &stdout, &stderr)
+	if got != wantResult || got.Kind != want {
+		t.Fatalf("writer-aware result = %+v, discard result = %+v, want kind %s", got, wantResult, want)
+	}
+	wantStdout, wantStderr := "gate stdout\n", "gate stderr\n"
+	if want == Green {
+		wantStdout, wantStderr = "gate: green (fresh verdict reused for this tree)\n", ""
+	}
+	if want == Infrastructure {
+		wantStdout, wantStderr = "", "no gate found: add an executable .bench/gate.sh or set BENCH_GATE\n"
+	}
+	if stdout.String() != wantStdout || stderr.String() != wantStderr {
+		t.Fatalf("gate output stdout=%q stderr=%q", stdout.String(), stderr.String())
+	}
+}
 
 func TestAuthorizeClassifiesAndValidatesOwnerEvidence(t *testing.T) {
 	root := authorizationRepo(t)
@@ -308,7 +371,7 @@ func authorizationRepo(t *testing.T) string {
 	root := t.TempDir()
 	gitRun(t, root, "init", "-q")
 	os.MkdirAll(filepath.Join(root, ".bench"), 0o755)
-	os.WriteFile(filepath.Join(root, ".bench", "gate.sh"), []byte("#!/bin/sh\ntest ! -f fail\n"), 0o755)
+	os.WriteFile(filepath.Join(root, ".bench", "gate.sh"), []byte("#!/bin/sh\necho 'gate stdout'\necho 'gate stderr' >&2\ntest ! -f fail\n"), 0o755)
 	os.WriteFile(filepath.Join(root, ".bench", "gate-inputs.json"), []byte(`{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`), 0o644)
 	os.WriteFile(filepath.Join(root, "fail"), []byte("red\n"), 0o644)
 	gitRun(t, root, "add", ".")

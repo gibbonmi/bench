@@ -1,41 +1,22 @@
-// Package commit owns `bench commit -m <msg> [--spec <slug>] <path>...`: the thin
-// orchestrator that mechanizes "commit on green, never on red" so the invariant lives in
-// code, not in prose the agent must remember. It sequences block-check → gate → flip →
-// stage → commit: it refuses before gating if any working-tree file outside the named set
-// (plus the --spec file) is dirty, runs the project gate through internal/gate and commits
-// only on green (a gate-then-commit sequence pays one run: the gate answers from the
-// verdict it already recorded for the identical subject), flips the spec through
-// internal/spec when --spec is set, and stages
-// exactly the named paths via a `:(literal)` pathspec (a named deletion included) —
-// never a bare `git add -A` over the whole tree. A named directory covers its changed
-// children on both sides of that sequence: the pathspec sweeps them and the block-check
-// attributes them. A named path whose removal is already
-// staged (`git rm`, a rename's old half) matches no add-pathspec and is recognized as
-// already in the index rather than failed.
-// It forms no opinion of the gate's verdict and carries no branch guard: the pre-push hook
-// owns default-branch protection, so commit is branch-agnostic.
+// Package commit owns the public command grammar and adapts it to exact landing.
 package commit
 
 import (
 	"context"
 	"fmt"
 	"io"
-	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
-	"github.com/gibbonmi/bench/internal/gate"
 	"github.com/gibbonmi/bench/internal/git"
-	"github.com/gibbonmi/bench/internal/spec"
+	"github.com/gibbonmi/bench/internal/landing"
 	"github.com/gibbonmi/bench/internal/toon"
 	"github.com/gibbonmi/bench/internal/usage"
 )
 
-// Command runs the gated commit. `help`, `--help`, and `-h` print the declared help at
-// exit 0; usage errors (no paths, no -m, unknown flag) exit 2; operational failures (block, gate-red, flip failure, empty commit, git error) exit 1;
-// a green gate that commits exits 0. The gate's live output streams to stdout/stderr, so
-// a red gate reports its own first failing phase.
+// Command runs a path-attributed prospective landing. Help exits 0, grammar errors exit
+// 2, and operational refusals exit 1; the landing owner alone composes, authorizes, and
+// publishes the prospective tree.
 func Command(args []string, stdout, stderr io.Writer) int {
 	msg, specSlug, paths, help, usageErr := parseArgs(args)
 	if help != "" {
@@ -43,121 +24,47 @@ func Command(args []string, stdout, stderr io.Writer) int {
 		return 0
 	}
 	if usageErr != "" {
-		// Derived from the grammar's own help line rather than restated, so the error
-		// path can never advertise a shape the parser no longer accepts.
 		fmt.Fprintln(stderr, grammar.Help+" (--spec marks the spec implemented; "+usageErr+")")
 		return 2
 	}
-
 	root, err := git.Root()
 	if err != nil {
 		fmt.Fprintln(stderr, toon.NotInRepo())
 		return 1
 	}
 
-	// The named set the commit will land, root-relative and slash-formed to match
-	// git's porcelain output and pathspecs.
-	named := make([]string, 0, len(paths)+1)
-	for _, p := range paths {
-		rel, relErr := rootRel(root, p)
+	// Capture publication identity before reading attributed content. A detached checkout
+	// updates literal HEAD; an attached checkout updates its full branch ref.
+	destination := "HEAD"
+	if out, symbolicErr := git.Raw("-C", root, "symbolic-ref", "-q", "HEAD"); symbolicErr == nil {
+		destination = strings.TrimSpace(string(out))
+	}
+	expectedBytes, expectedErr := git.Raw("-C", root, "rev-parse", "--verify", "HEAD^{commit}")
+	if expectedErr != nil {
+		fmt.Fprintln(stderr, "error: destination has no commit base")
+		return 1
+	}
+
+	named := make([]string, 0, len(paths))
+	for _, path := range paths {
+		rel, relErr := rootRel(root, path)
 		if relErr != nil {
-			fmt.Fprintf(stderr, "error: cannot resolve path %q relative to repo root: %v\n", p, relErr)
+			fmt.Fprintf(stderr, "error: cannot resolve path %q relative to repo root: %v\n", path, relErr)
 			return 1
 		}
 		named = append(named, rel)
 	}
-
-	// Resolve the --spec file up front so it joins the allowed set (it is still clean at
-	// block-check; the flip happens only after a green gate) and so a bad slug fails fast.
-	if specSlug != "" {
-		_, resolved, tried, ok, resErr := spec.Resolve(root, specSlug)
-		if resErr != nil {
-			fmt.Fprintf(stderr, "error: --spec not readable: %s: %v\n", resolved, resErr)
-			return 1
-		}
-		if !ok {
-			fmt.Fprintf(stderr, "error: --spec not found: %s\n", strings.Join(tried, ", "))
-			return 1
-		}
-		rel, relErr := rootRel(root, resolved)
-		if relErr != nil {
-			fmt.Fprintf(stderr, "error: cannot resolve --spec %q relative to repo root: %v\n", resolved, relErr)
-			return 1
-		}
-		named = append(named, rel)
-		// Fail fast: reject a bad or already-implemented --spec here, before the block-check
-		// and the gate, so a spec the post-gate Flip would reject never burns a green gate.
-		if _, checkErr := spec.CheckStaged(root, specSlug); checkErr != nil {
-			fmt.Fprintf(stderr, "error: %v\n", checkErr)
-			return 1
-		}
-	}
-
-	// Block before gating on any dirty/untracked file outside the named set, so a green
-	// verdict describes exactly the diff that lands.
-	if offenders := unexplained(root, named); len(offenders) > 0 {
-		fmt.Fprintln(stderr, "error: working-tree files outside the named set block the commit — name them, or set them aside:")
-		for _, o := range offenders {
-			fmt.Fprintf(stderr, "  %s\n", o)
-		}
-		return 1
-	}
-
-	// Classify the named paths before the gate runs, so a naming error never burns a
-	// green run. Nothing between here and staging creates or deletes paths (the --spec
-	// flip only edits file content), so the plan stays valid.
-	toStage, planErr := stagePlan(root, named)
-	if planErr != nil {
-		fmt.Fprintf(stderr, "error: %v\n", planErr)
-		return 1
-	}
-
-	// The gate is asked unconditionally: which phases answer for this subject — whether a
-	// recorded verdict stands in for a real run, and whether a changeset confined to the
-	// declared allowlist runs the reduced set — is the gate's policy, decided from the tree
-	// the block-check above has already pinned to the named paths. A second opinion here
-	// could only drift from it. Commit reads the returned verdict alone.
-	if result := gate.ExecuteReusingFreshGreen(context.Background(), root, stdout, stderr); result.ActionExit != 0 {
-		fmt.Fprintln(stderr, "error: gate is red — commit refused (see the failing phase above)")
-		return 1
-	}
-
-	if specSlug != "" {
-		if _, flipErr := spec.Flip(root, specSlug); flipErr != nil {
-			fmt.Fprintf(stderr, "error: %v\n", flipErr)
-			return 1
-		}
-	}
-
-	for _, p := range toStage {
-		// git's own stderr streams through: a staging failure lands after the green gate
-		// has been paid, and its bare exit status is undiagnosable — a held index.lock
-		// and a genuinely bad pathspec both report 128.
-		stage := exec.Command("git", "-C", root, "add", "-A", "--", ":(literal)"+p)
-		stage.Stderr = stderr
-		if stageErr := stage.Run(); stageErr != nil {
-			fmt.Fprintf(stderr, "error: staging %q failed: %v\n", p, stageErr)
-			return 1
-		}
-	}
-
-	if nothingStaged(root) {
-		fmt.Fprintln(stderr, "error: nothing to commit — the named paths produced no staged change")
-		return 1
-	}
-
-	if commitErr := exec.Command("git", "-C", root, "commit", "-q", "-m", msg).Run(); commitErr != nil {
-		fmt.Fprintf(stderr, "error: git commit failed: %v\n", commitErr)
+	if _, err := landing.New().Land(context.Background(), landing.Request{
+		Root: root, Destination: destination, Expected: strings.TrimSpace(string(expectedBytes)),
+		Message: msg, Paths: named, Spec: specSlug, Stdout: stdout, Stderr: stderr,
+	}); err != nil {
+		fmt.Fprintf(stderr, "error: %v\n", err)
 		return 1
 	}
 	fmt.Fprintf(stdout, "committed %d path(s)\n", len(named))
 	return 0
 }
 
-// grammar is the declared argument shape usage.Parse enforces — arity, flag recognition,
-// `--`, and help all come from there rather than a local switch, which is what makes a
-// path beginning with a dash expressible. MinArgs stays 0 so the no-paths case keeps its
-// own named reason below rather than the generic missing-positional one.
 var grammar = usage.Grammar{
 	Cmd:     "bench commit",
 	Help:    "usage: bench commit -m <msg> [--spec <slug>] [--] <path>...",
@@ -165,11 +72,6 @@ var grammar = usage.Grammar{
 	MaxArgs: -1,
 }
 
-// parseArgs routes args through the one argument grammar and applies the requirements
-// arity alone cannot state: -m is mandatory and non-blank, and at least one path must be
-// named. help is
-// non-empty when the invocation asked for help, which is a success the caller prints;
-// usageErr is non-empty on any misuse.
 func parseArgs(args []string) (msg string, specSlug string, paths []string, help string, usageErr string) {
 	parsed, line, code := usage.Parse(grammar, args)
 	if line != "" {
@@ -182,8 +84,6 @@ func parseArgs(args []string) (msg string, specSlug string, paths []string, help
 	if !msgSet {
 		return "", "", nil, "", "-m <msg> is required"
 	}
-	// A blank message reaches `git commit -m ""`, which fails with git's own raw error
-	// after the gate has already run; reporting it here answers like the missing -m.
 	if strings.TrimSpace(msg) == "" {
 		return "", "", nil, "", "-m <msg> must not be empty"
 	}
@@ -193,117 +93,6 @@ func parseArgs(args []string) (msg string, specSlug string, paths []string, help
 	return msg, parsed.Flags["--spec"], parsed.Positionals, "", ""
 }
 
-// stagePlan classifies each named path into what the staging loop can act on. `git add -A
-// -- :(literal)p` is fatal (exit 128) when p matches nothing in the worktree or the index —
-// exactly the state a staged removal leaves behind (`git rm`, or a `git mv` rename's old
-// half). Such a path needs no staging: absent from worktree and index but present in HEAD
-// means its deletion is already in the index. A path absent from all three is a naming
-// error reported with a real message instead of git's raw exit status. A named directory
-// needs no case of its own: it is present in the worktree, and its one pathspec stages
-// every changed path beneath it.
-func stagePlan(root string, named []string) ([]string, error) {
-	var stage []string
-	for _, p := range named {
-		if inWorktree(root, p) || inIndex(root, p) {
-			stage = append(stage, p)
-			continue
-		}
-		if !inHead(root, p) {
-			return nil, fmt.Errorf("named path %q not found in worktree, index, or HEAD", p)
-		}
-	}
-	return stage, nil
-}
-
-func inWorktree(root, p string) bool {
-	_, err := os.Lstat(filepath.Join(root, filepath.FromSlash(p)))
-	return err == nil
-}
-
-func inIndex(root, p string) bool {
-	out, err := git.Raw("-C", root, "ls-files", "-z", "--", ":(literal)"+p)
-	return err == nil && len(out) > 0
-}
-
-func inHead(root, p string) bool {
-	return exec.Command("git", "-C", root, "cat-file", "-e", "HEAD:"+p).Run() == nil
-}
-
-// unexplained lists the working-tree paths (tracked-modified or untracked) that are not in
-// the allowed set, sorted. An empty result means the tree equals the named diff. A named
-// file explains only itself; a named directory explains what lies beneath it, matching the
-// staging pathspec, which sweeps the whole directory.
-func unexplained(root string, allowed []string) []string {
-	allow := make(map[string]bool, len(allowed))
-	var dirs []string
-	for _, p := range allowed {
-		allow[p] = true
-		if isDir(root, p) {
-			dirs = append(dirs, p)
-		}
-	}
-	// Audit #12 — tolerate (flagged for reviewer veto): an empty parse relaxes this
-	// attribution guard, but the subsequent real `git commit`/`git add` fails loudly on a
-	// broken repo, so no false-clean output escapes; hardening it into a loud error is
-	// deferred (see the spec's Out of scope).
-	// --untracked-files=all lists untracked files individually rather than collapsing a
-	// new directory to `dir/`, so a named path inside a fresh directory matches instead
-	// of reading as an unexplained offender.
-	raw, _ := git.Raw("-C", root, "status", "--porcelain", "-z", "--no-renames", "--untracked-files=all")
-	var offenders []string
-	for _, e := range git.ParsePorcelainZ(raw) {
-		if e.Path == "" || allow[e.Path] || underAny(dirs, e.Path) {
-			continue
-		}
-		offenders = append(offenders, e.Path)
-	}
-	return offenders
-}
-
-// underAny reports whether path lies beneath one of the named directories. Appending the
-// separator to the directory is what makes the comparison run on whole path segments: `sub`
-// covers `sub/x` and never reaches its prefix-sharing sibling `subdir/x`, which a bare
-// string prefix would silently pull into the commit.
-func underAny(dirs []string, path string) bool {
-	for _, d := range dirs {
-		if strings.HasPrefix(path, d+"/") {
-			return true
-		}
-	}
-	return false
-}
-
-// isDir reports whether a named path is a directory — the condition that widens its
-// attribution from itself to everything beneath it. A directory the working tree no longer
-// holds still counts while git tracks children under it: `rm -r sub` leaves nothing to
-// Lstat, and without the index answer every deletion it produced reads as an unexplained
-// offender that refuses the commit.
-func isDir(root, p string) bool {
-	if info, err := os.Lstat(filepath.Join(root, filepath.FromSlash(p))); err == nil {
-		return info.IsDir()
-	}
-	return tracksChildren(root, p)
-}
-
-// tracksChildren reports whether the index holds an entry strictly beneath p. The `p/` test
-// is the same whole-segment rule underAny applies, and it is what keeps a tracked file at p
-// — an ordinary named deletion — from widening to itself, and a prefix-sharing sibling like
-// `subdir` from ever being reached.
-func tracksChildren(root, p string) bool {
-	out, err := git.Raw("-C", root, "ls-files", "-z", "--", ":(literal)"+p)
-	if err != nil {
-		return false
-	}
-	for _, entry := range strings.Split(string(out), "\x00") {
-		if strings.HasPrefix(entry, p+"/") {
-			return true
-		}
-	}
-	return false
-}
-
-// rootRel converts a path argument (as given, cwd-relative) to its slash-formed,
-// repo-root-relative form for pathspec staging and porcelain comparison.
 func rootRel(root, arg string) (string, error) {
 	abs, err := filepath.Abs(arg)
 	if err != nil {
@@ -314,9 +103,4 @@ func rootRel(root, arg string) (string, error) {
 		return "", err
 	}
 	return filepath.ToSlash(rel), nil
-}
-
-// nothingStaged reports whether the index has no staged changes — the empty-commit guard.
-func nothingStaged(root string) bool {
-	return exec.Command("git", "-C", root, "diff", "--cached", "--quiet").Run() == nil
 }

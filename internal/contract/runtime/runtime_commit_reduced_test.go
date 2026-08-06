@@ -90,7 +90,7 @@ func commitReducedFixture(t *testing.T) (string, contract.Fixture, contract.Env,
 	// observable. The hand-off is what makes the root reducible: routing, not the
 	// manifest beside it, is the proof the reduction requires.
 	writeReducedFixtureFile(t, root, ".bench/gate.sh",
-		"#!/usr/bin/env bash\necho full >> .git/full-runs\nexec true gate-phases \"$PWD\"\n", 0o755)
+		"#!/usr/bin/env bash\n"+commonGitDirGateBody("echo full >> \"$gitdir/full-runs\"\nexec true gate-phases \"$PWD\"\n"), 0o755)
 	writeReducedFixtureFile(t, root, ".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`, 0o644)
 	writeReducedFixtureFile(t, root, ".bench/phase-conformance.sh", "echo conformance >> .git/phase-runs\n", 0o644)
 	writeReducedFixtureFile(t, root, ".bench/phase-test.sh", "echo test >> .git/phase-runs\n", 0o644)

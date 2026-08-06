@@ -1,0 +1,530 @@
+package landing
+
+import (
+	"bytes"
+	"context"
+	"io"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"reflect"
+	"strings"
+	"testing"
+
+	"github.com/gibbonmi/bench/internal/gate/authorization"
+)
+
+func TestLandStreamsProspectiveGateOutputOnce(t *testing.T) {
+	root := fixture(t)
+	write(t, root, ".bench/gate.sh", "#!/bin/sh\necho 'gate stdout'\necho 'gate stderr' >&2\ntest ! -f fail\n")
+	if err := os.Chmod(filepath.Join(root, ".bench", "gate.sh"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	write(t, root, ".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
+	git(t, root, "add", ".bench")
+	git(t, root, "commit", "-qm", "gate")
+	write(t, root, "named", "changed")
+	base := git(t, root, "rev-parse", "HEAD")
+	var stdout, stderr bytes.Buffer
+
+	if _, err := New().Land(t.Context(), Request{
+		Root: root, Destination: "refs/heads/main", Expected: base, Message: "named", Paths: []string{"named"},
+		Stdout: &stdout, Stderr: &stderr,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if stdout.String() != "gate stdout\n" || stderr.String() != "gate stderr\n" {
+		t.Fatalf("gate output stdout=%q stderr=%q", stdout.String(), stderr.String())
+	}
+}
+
+func TestLandComposesOnlyNamedPathsAndCASesExpectedBase(t *testing.T) {
+	root := fixture(t)
+	write(t, root, "named", "changed")
+	write(t, root, "foreign", "staged")
+	git(t, root, "add", "foreign")
+	base := git(t, root, "rev-parse", "HEAD")
+	o := New()
+	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
+		return authorization.Result{Kind: authorization.Green}
+	}
+	got, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "named", Paths: []string{"named", "named"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Tree != git(t, root, "rev-parse", got.Commit+"^{tree}") {
+		t.Fatal("landing commit did not use authorized tree")
+	}
+	if git(t, root, "show", got.Commit+":foreign") != "base" {
+		t.Fatal("foreign staged content entered landing")
+	}
+	if git(t, root, "show", ":foreign") != "staged" {
+		t.Fatal("foreign index content was not preserved")
+	}
+}
+
+func TestLandReconcilesAuthorizedNamedSnapshotAfterAuthorizationMutation(t *testing.T) {
+	root := raceFixture(t)
+	authorized := []byte("authorized\n")
+	write(t, root, "named", string(authorized))
+	unnamed, before := dirtyUnnamedState(t, root)
+	base := git(t, root, "rev-parse", "HEAD")
+
+	o := New()
+	var authorizedTree string
+	o.authorize = func(_ context.Context, root, tree string, _ io.Writer, _ io.Writer) authorization.Result {
+		authorizedTree = tree
+		if got := gitBytes(t, root, "show", tree+":named"); !bytes.Equal(got, authorized) {
+			t.Fatalf("authorized named bytes = %q", got)
+		}
+		write(t, root, "named", "mutated-after-authorization\n")
+		return authorization.Result{Kind: authorization.Green}
+	}
+	got, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "named", Paths: []string{"named"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Tree != authorizedTree || git(t, root, "rev-parse", got.Commit+"^{tree}") != authorizedTree {
+		t.Fatal("winning commit did not retain the authorized tree")
+	}
+	for source, content := range map[string][]byte{
+		"commit":   gitBytes(t, root, "show", got.Commit+":named"),
+		"index":    gitBytes(t, root, "show", ":named"),
+		"worktree": mustRead(t, filepath.Join(root, "named")),
+	} {
+		if !bytes.Equal(content, authorized) {
+			t.Errorf("%s named bytes = %q", source, content)
+		}
+	}
+	if status := git(t, root, "status", "--porcelain=v1", "--", "named"); status != "" {
+		t.Fatalf("named status = %q", status)
+	}
+	if after := snapshotPaths(t, root, unnamed...); !reflect.DeepEqual(after, before) {
+		t.Fatalf("unnamed state changed\nbefore: %#v\nafter:  %#v", before, after)
+	}
+}
+
+func TestLandReconcilesAuthorizedSpecSnapshotAfterAuthorizationMutation(t *testing.T) {
+	root := raceFixture(t)
+	write(t, root, "named", "authorized work\n")
+	specPath := filepath.Join(root, "specs", "x", "spec.md")
+	write(t, root, "specs/x/spec.md", "Status: staged\nauthorized body\n")
+	if err := os.Chmod(specPath, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	git(t, root, "add", "specs/x/spec.md")
+	unnamed, before := dirtyUnnamedState(t, root)
+	base := git(t, root, "rev-parse", "HEAD")
+	authorized := []byte("Status: implemented\nauthorized body\n")
+
+	o := New()
+	var authorizedTree string
+	o.authorize = func(_ context.Context, root, tree string, _ io.Writer, _ io.Writer) authorization.Result {
+		authorizedTree = tree
+		if got := gitBytes(t, root, "show", tree+":specs/x/spec.md"); !bytes.Equal(got, authorized) {
+			t.Fatalf("authorized spec bytes = %q", got)
+		}
+		if mode := gitMode(t, root, "ls-tree", tree, "--", "specs/x/spec.md"); mode != "100755" {
+			t.Fatalf("authorized spec mode = %q", mode)
+		}
+		write(t, root, "specs/x/spec.md", "Status: staged\nmutated after authorization\n")
+		if err := os.Chmod(specPath, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		return authorization.Result{Kind: authorization.Green}
+	}
+	got, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "spec", Paths: []string{"named"}, Spec: "x"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Tree != authorizedTree || git(t, root, "rev-parse", got.Commit+"^{tree}") != authorizedTree {
+		t.Fatal("winning commit did not retain the authorized tree")
+	}
+	for source, content := range map[string][]byte{
+		"commit":   gitBytes(t, root, "show", got.Commit+":specs/x/spec.md"),
+		"index":    gitBytes(t, root, "show", ":specs/x/spec.md"),
+		"worktree": mustRead(t, specPath),
+	} {
+		if !bytes.Equal(content, authorized) {
+			t.Errorf("%s spec bytes = %q", source, content)
+		}
+	}
+	if mode := gitMode(t, root, "ls-tree", got.Commit, "--", "specs/x/spec.md"); mode != "100755" {
+		t.Errorf("published spec mode = %q", mode)
+	}
+	if mode := gitMode(t, root, "ls-files", "--stage", "--", "specs/x/spec.md"); mode != "100755" {
+		t.Errorf("index spec mode = %q", mode)
+	}
+	info, statErr := os.Stat(specPath)
+	if statErr != nil {
+		t.Fatal(statErr)
+	}
+	if info.Mode().Perm() != 0o750 {
+		t.Errorf("worktree spec permissions = %v", info.Mode().Perm())
+	}
+	if status := git(t, root, "status", "--porcelain=v1", "--", "named", "specs/x/spec.md"); status != "" {
+		t.Errorf("named status = %q", status)
+	}
+	if after := snapshotPaths(t, root, unnamed...); !reflect.DeepEqual(after, before) {
+		t.Fatalf("unnamed state changed\nbefore: %#v\nafter:  %#v", before, after)
+	}
+}
+
+func TestLandReconcilesLateUntrackedDescendantUnderNamedDirectory(t *testing.T) {
+	root := raceFixture(t)
+	write(t, root, "owned/tracked", "base\n")
+	git(t, root, "add", "owned/tracked")
+	git(t, root, "commit", "-qm", "directory base")
+	write(t, root, "owned/tracked", "authorized\n")
+	unnamed, before := dirtyUnnamedState(t, root)
+	base := git(t, root, "rev-parse", "HEAD")
+
+	authorizing := make(chan string, 1)
+	green := make(chan struct{})
+	o := New()
+	o.authorize = func(_ context.Context, _ string, tree string, _ io.Writer, _ io.Writer) authorization.Result {
+		authorizing <- tree
+		<-green
+		return authorization.Result{Kind: authorization.Green}
+	}
+	results := make(chan Result, 1)
+	errors := make(chan error, 1)
+	go func() {
+		got, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "directory", Paths: []string{"owned"}})
+		results <- got
+		errors <- err
+	}()
+
+	authorizedTree := <-authorizing
+	if content := gitBytes(t, root, "show", authorizedTree+":owned/tracked"); !bytes.Equal(content, []byte("authorized\n")) {
+		t.Fatalf("authorized tracked bytes = %q", content)
+	}
+	if names := git(t, root, "ls-tree", "-r", "--name-only", authorizedTree, "--", "owned"); names != "owned/tracked" {
+		t.Fatalf("authorized directory entries = %q", names)
+	}
+	latePath := filepath.Join(root, "owned", "late")
+	write(t, root, "owned/late", "created during authorization\n")
+	close(green)
+
+	got, err := <-results, <-errors
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Tree != authorizedTree || git(t, root, "rev-parse", got.Commit+"^{tree}") != authorizedTree {
+		t.Fatal("winning commit did not retain the authorized tree")
+	}
+	if _, statErr := os.Lstat(latePath); !os.IsNotExist(statErr) {
+		t.Fatalf("late descendant remains: %v", statErr)
+	}
+	git(t, root, "diff", "--quiet", "--cached", got.Commit, "--", "owned")
+	git(t, root, "diff", "--quiet", got.Commit, "--", "owned")
+	if status := git(t, root, "status", "--porcelain=v1", "--", "owned"); status != "" {
+		t.Fatalf("named directory status = %q", status)
+	}
+	if after := snapshotPaths(t, root, unnamed...); !reflect.DeepEqual(after, before) {
+		t.Fatalf("unnamed state changed\nbefore: %#v\nafter:  %#v", before, after)
+	}
+}
+
+func TestLandPreservesWinnerOnCASLoss(t *testing.T) {
+	root := fixture(t)
+	write(t, root, "named", "changed")
+	base := git(t, root, "rev-parse", "HEAD")
+	winner := git(t, root, "commit-tree", git(t, root, "rev-parse", base+"^{tree}"), "-p", base, "-m", "winner")
+	o := New()
+	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
+		return authorization.Result{Kind: authorization.Green}
+	}
+	o.updateRef = func(root, ref, new, old string) error {
+		git(t, root, "update-ref", ref, winner, old)
+		return updateRef(root, ref, new, old)
+	}
+	_, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "loser", Paths: []string{"named"}})
+	if err == nil || !strings.Contains(err.Error(), "compare-and-swap") {
+		t.Fatalf("CAS loss = %v", err)
+	}
+	if git(t, root, "rev-parse", "HEAD") != winner {
+		t.Fatal("loser overwrote winner")
+	}
+	if string(mustRead(t, filepath.Join(root, "named"))) != "changed" {
+		t.Fatal("losing bytes were not preserved")
+	}
+}
+
+func TestLandRefusesEveryNonGreenAuthorizationWithoutMutation(t *testing.T) {
+	for _, kind := range []authorization.Kind{authorization.Candidate, authorization.Inherited, authorization.Infrastructure} {
+		t.Run(string(kind), func(t *testing.T) {
+			root := fixture(t)
+			write(t, root, "named", "changed")
+			base := git(t, root, "rev-parse", "HEAD")
+			before := git(t, root, "status", "--porcelain=v1")
+			o := New()
+			calls := 0
+			o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
+				calls++
+				return authorization.Result{Kind: kind}
+			}
+			if _, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "x", Paths: []string{"named"}}); err == nil {
+				t.Fatal("Land succeeded")
+			}
+			if calls != 1 || git(t, root, "rev-parse", "HEAD") != base || git(t, root, "status", "--porcelain=v1") != before {
+				t.Fatal("authorization refusal mutated checkout")
+			}
+		})
+	}
+}
+
+func TestLandReportsPublishedCommitWhenReconciliationFails(t *testing.T) {
+	root := fixture(t)
+	write(t, root, "named", "changed")
+	base := git(t, root, "rev-parse", "HEAD")
+	o := New()
+	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
+		return authorization.Result{Kind: authorization.Green}
+	}
+	o.reconcile = func(Request, []string, composedSnapshot) error { return os.ErrPermission }
+	got, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "x", Paths: []string{"named"}})
+	if err == nil || !strings.Contains(err.Error(), "landed-but-checkout-incomplete") {
+		t.Fatalf("err = %v", err)
+	}
+	if got.Base != base || got.Commit == "" || got.Tree == "" || git(t, root, "rev-parse", "HEAD") != got.Commit {
+		t.Fatal("published identity was not retained")
+	}
+}
+
+func TestLandPublishesExecutableSpecModeAndReconcilesClean(t *testing.T) {
+	root := fixture(t)
+	git(t, root, "config", "core.filemode", "false")
+	write(t, root, "work", "changed")
+	specPath := filepath.Join(root, "specs", "x", "spec.md")
+	write(t, root, "specs/x/spec.md", "Status: staged\nbody\n")
+	if err := os.Chmod(specPath, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	base := git(t, root, "rev-parse", "HEAD")
+	o := New()
+	var authorizedContent, authorizedMode string
+	o.authorize = func(_ context.Context, root, tree string, _ io.Writer, _ io.Writer) authorization.Result {
+		authorizedContent = git(t, root, "show", tree+":specs/x/spec.md")
+		authorizedMode = gitMode(t, root, "ls-tree", tree, "--", "specs/x/spec.md")
+		return authorization.Result{Kind: authorization.Green}
+	}
+	got, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "spec", Paths: []string{"work"}, Spec: "x"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if authorizedContent != "Status: implemented\nbody" || authorizedMode != "100755" {
+		t.Fatalf("authorized content=%q mode=%q", authorizedContent, authorizedMode)
+	}
+	if mode := gitMode(t, root, "ls-tree", got.Commit, "--", "specs/x/spec.md"); mode != "100755" {
+		t.Fatalf("published mode = %q", mode)
+	}
+	if mode := gitMode(t, root, "ls-files", "--stage", "--", "specs/x/spec.md"); mode != "100755" {
+		t.Fatalf("index mode = %q", mode)
+	}
+	info, err := os.Stat(specPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode().Perm() != 0o750 {
+		t.Fatalf("worktree mode = %v", info.Mode().Perm())
+	}
+	if status := git(t, root, "status", "--porcelain=v1"); status != "" {
+		t.Fatalf("checkout status = %q", status)
+	}
+}
+
+func TestLandSpecTransitionIsAuthorizedBeforePublicationAndPreservesModeOnLoss(t *testing.T) {
+	root := fixture(t)
+	write(t, root, "work", "changed")
+	specPath := filepath.Join(root, "specs", "x", "spec.md")
+	write(t, root, "specs/x/spec.md", "Status: staged\nbody\n")
+	if err := os.Chmod(specPath, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	base := git(t, root, "rev-parse", "HEAD")
+	seen, seenMode := "", ""
+	o := New()
+	o.authorize = func(_ context.Context, root, tree string, _ io.Writer, _ io.Writer) authorization.Result {
+		seen = git(t, root, "show", tree+":specs/x/spec.md")
+		seenMode = gitMode(t, root, "ls-tree", tree, "--", "specs/x/spec.md")
+		return authorization.Result{Kind: authorization.Green}
+	}
+	got, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "spec", Paths: []string{"work"}, Spec: "x"})
+	if err != nil || seen != "Status: implemented\nbody" || seenMode != "100644" || git(t, root, "show", got.Commit+":specs/x/spec.md") != seen {
+		t.Fatalf("transition: content=%q mode=%q err=%v", seen, seenMode, err)
+	}
+	if mode := gitMode(t, root, "ls-tree", got.Commit, "--", "specs/x/spec.md"); mode != "100644" {
+		t.Fatalf("published mode = %q", mode)
+	}
+	if mode := gitMode(t, root, "ls-files", "--stage", "--", "specs/x/spec.md"); mode != "100644" {
+		t.Fatalf("index mode = %q", mode)
+	}
+	info, err := os.Stat(specPath)
+	if err != nil || info.Mode().Perm() != 0o600 {
+		t.Fatal("spec mode changed")
+	}
+	if string(mustRead(t, specPath)) != "Status: implemented\nbody\n" {
+		t.Fatal("checkout did not reconcile")
+	}
+	if status := git(t, root, "status", "--porcelain=v1"); status != "" {
+		t.Fatalf("checkout status = %q", status)
+	}
+	root = fixture(t)
+	write(t, root, "work", "changed")
+	write(t, root, "specs/x/spec.md", "Status: staged\n")
+	base = git(t, root, "rev-parse", "HEAD")
+	winner := git(t, root, "commit-tree", git(t, root, "rev-parse", base+"^{tree}"), "-p", base, "-m", "winner")
+	o = New()
+	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
+		return authorization.Result{Kind: authorization.Green}
+	}
+	o.updateRef = func(root, ref, new, old string) error {
+		git(t, root, "update-ref", ref, winner, old)
+		return updateRef(root, ref, new, old)
+	}
+	if _, err = o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "loss", Paths: []string{"work"}, Spec: "x"}); err == nil {
+		t.Fatal("CAS loss succeeded")
+	}
+	if string(mustRead(t, filepath.Join(root, "specs/x/spec.md"))) != "Status: staged\n" {
+		t.Fatal("CAS loss flipped checkout spec")
+	}
+}
+
+func TestLandDetachedHEADHasOneExpectedParent(t *testing.T) {
+	root := fixture(t)
+	base := git(t, root, "rev-parse", "HEAD")
+	git(t, root, "checkout", "--detach", "-q")
+	write(t, root, "named", "changed")
+	o := New()
+	var authorized string
+	o.authorize = func(_ context.Context, _ string, tree string, _ io.Writer, _ io.Writer) authorization.Result {
+		authorized = tree
+		return authorization.Result{Kind: authorization.Green}
+	}
+	got, err := o.Land(context.Background(), Request{Root: root, Destination: "HEAD", Expected: base, Message: "detached", Paths: []string{"named"}})
+	if err != nil || got.Base != base || got.Tree != authorized || git(t, root, "rev-parse", "HEAD") != got.Commit || git(t, root, "rev-list", "--parents", "-n", "1", got.Commit) != got.Commit+" "+base {
+		t.Fatalf("detached result %+v %v", got, err)
+	}
+}
+
+func TestLandPreservesCompleteUnnamedState(t *testing.T) {
+	root := fixture(t)
+	write(t, root, "named", "changed")
+	write(t, root, "foreign", "staged")
+	git(t, root, "add", "foreign")
+	write(t, root, "foreign", "staged-plus-unstaged")
+	write(t, root, "other", "unstaged")
+	write(t, root, "new", "untracked")
+	write(t, root, ".gitignore", "ignored\n")
+	write(t, root, "ignored", "ignored")
+	blob := git(t, root, "show", ":foreign")
+	base := git(t, root, "rev-parse", "HEAD")
+	o := New()
+	o.authorize = func(context.Context, string, string, io.Writer, io.Writer) authorization.Result {
+		return authorization.Result{Kind: authorization.Green}
+	}
+	if _, err := o.Land(context.Background(), Request{Root: root, Destination: "refs/heads/main", Expected: base, Message: "named", Paths: []string{"named"}}); err != nil {
+		t.Fatal(err)
+	}
+	if git(t, root, "show", ":foreign") != blob || string(mustRead(t, filepath.Join(root, "foreign"))) != "staged-plus-unstaged" || string(mustRead(t, filepath.Join(root, "other"))) != "unstaged" || string(mustRead(t, filepath.Join(root, "new"))) != "untracked" || string(mustRead(t, filepath.Join(root, "ignored"))) != "ignored" {
+		t.Fatal("unnamed state changed")
+	}
+}
+
+func fixture(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	git(t, root, "init", "-q", "-b", "main")
+	git(t, root, "config", "user.email", "a@b.c")
+	git(t, root, "config", "user.name", "a")
+	write(t, root, "named", "base")
+	write(t, root, "foreign", "base")
+	git(t, root, "add", ".")
+	git(t, root, "commit", "-qm", "base")
+	return root
+}
+
+func raceFixture(t *testing.T) string {
+	t.Helper()
+	root := fixture(t)
+	write(t, root, "other", "base")
+	write(t, root, ".gitignore", "ignored\n")
+	git(t, root, "add", "other", ".gitignore")
+	git(t, root, "commit", "-qm", "race fixture")
+	return root
+}
+
+type pathSnapshot struct {
+	Status, Index []byte
+	Worktree      map[string][]byte
+}
+
+func dirtyUnnamedState(t *testing.T, root string) ([]string, pathSnapshot) {
+	t.Helper()
+	write(t, root, "foreign", "staged\n")
+	git(t, root, "add", "foreign")
+	write(t, root, "foreign", "staged-plus-unstaged\n")
+	write(t, root, "other", "unstaged\n")
+	write(t, root, "new", "untracked\n")
+	write(t, root, "ignored", "ignored\n")
+	paths := []string{"foreign", "other", "new", "ignored"}
+	return paths, snapshotPaths(t, root, paths...)
+}
+
+func snapshotPaths(t *testing.T, root string, paths ...string) pathSnapshot {
+	t.Helper()
+	statusArgs := append([]string{"status", "--porcelain=v1", "--ignored", "--"}, paths...)
+	indexArgs := append([]string{"ls-files", "--stage", "--"}, paths...)
+	snapshot := pathSnapshot{
+		Status:   gitBytes(t, root, statusArgs...),
+		Index:    gitBytes(t, root, indexArgs...),
+		Worktree: make(map[string][]byte, len(paths)),
+	}
+	for _, path := range paths {
+		snapshot.Worktree[path] = mustRead(t, filepath.Join(root, path))
+	}
+	return snapshot
+}
+
+func write(t *testing.T, root, path, value string) {
+	t.Helper()
+	p := filepath.Join(root, path)
+	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(p, []byte(value), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+func mustRead(t *testing.T, p string) []byte {
+	t.Helper()
+	b, e := os.ReadFile(p)
+	if e != nil {
+		t.Fatal(e)
+	}
+	return b
+}
+func git(t *testing.T, root string, args ...string) string {
+	t.Helper()
+	return strings.TrimSpace(string(gitBytes(t, root, args...)))
+}
+
+func gitBytes(t *testing.T, root string, args ...string) []byte {
+	t.Helper()
+	c := exec.Command("git", append([]string{"-C", root}, args...)...)
+	b, e := c.CombinedOutput()
+	if e != nil {
+		t.Fatalf("git %v: %v: %s", args, e, b)
+	}
+	return b
+}
+
+func gitMode(t *testing.T, root string, args ...string) string {
+	t.Helper()
+	fields := strings.Fields(git(t, root, args...))
+	if len(fields) == 0 {
+		t.Fatal("git mode output is empty")
+	}
+	return fields[0]
+}

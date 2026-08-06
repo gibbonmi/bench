@@ -200,35 +200,25 @@ func isDir(path string) bool {
 }
 
 // locateStaged resolves arg (base anchors the spec fallback) and requires exactly
-// one line-start `Status: staged`, returning the resolved path, the file split into lines, and
-// the index of that one line. It never writes — it is the shared core of CheckStaged
-// (validate only) and Flip (validate then rewrite), so the resolution + single-staged-line
-// rule has one source. The error names the file and the reason on not-found, not-readable, no
+// one line-start `Status: staged`, returning the resolved path and implemented bytes.
+// It never writes. The error names the file and the reason on not-found, not-readable, no
 // `Status: staged` line (missing or already implemented), or more than one.
-func locateStaged(base, arg string) (resolved string, lines [][]byte, idx int, err error) {
+func locateStaged(base, arg string) (resolved string, implemented []byte, err error) {
 	content, resolved, tried, ok, readErr := Resolve(base, arg)
 	if readErr != nil {
-		return "", nil, -1, fmt.Errorf("spec not readable: %s: %v", resolved, readErr)
+		return "", nil, fmt.Errorf("spec not readable: %s: %v", resolved, readErr)
 	}
 	if !ok {
-		return "", nil, -1, fmt.Errorf("spec not found: %s", strings.Join(tried, ", "))
+		return "", nil, fmt.Errorf("spec not found: %s", strings.Join(tried, ", "))
 	}
-	lines = bytes.Split(content, []byte("\n"))
-	matches := 0
-	idx = -1
-	for i, line := range lines {
-		if stagedRe.Match(line) {
-			matches++
-			idx = i
-		}
-	}
+	implemented, matches := deriveImplemented(content)
 	if matches == 0 {
-		return "", nil, -1, fmt.Errorf("no `Status: staged` line in %s (already implemented, or missing)", resolved)
+		return "", nil, fmt.Errorf("no `Status: staged` line in %s (already implemented, or missing)", resolved)
 	}
 	if matches > 1 {
-		return "", nil, -1, fmt.Errorf("%d `Status: staged` lines in %s (expected exactly one)", matches, resolved)
+		return "", nil, fmt.Errorf("%d `Status: staged` lines in %s (expected exactly one)", matches, resolved)
 	}
-	return resolved, lines, idx, nil
+	return resolved, implemented, nil
 }
 
 // CheckStaged resolves arg and confirms it carries exactly one line-start `Status: staged`,
@@ -237,7 +227,7 @@ func locateStaged(base, arg string) (resolved string, lines [][]byte, idx int, e
 // gate burns rather than after Flip runs on a green tree. Flip re-checks the (possibly changed)
 // file before it rewrites, so the two share locateStaged's one validation rule.
 func CheckStaged(base, arg string) (resolved string, err error) {
-	resolved, _, _, err = locateStaged(base, arg)
+	resolved, _, err = locateStaged(base, arg)
 	return resolved, err
 }
 
@@ -248,12 +238,10 @@ func CheckStaged(base, arg string) (resolved string, err error) {
 // file and the reason on not-found, not-readable, no `Status: staged` line (missing or
 // already implemented), or more than one — so a typo or a re-run is non-destructive.
 func Flip(base, arg string) (resolved string, err error) {
-	resolved, lines, idx, err := locateStaged(base, arg)
+	resolved, out, err := locateStaged(base, arg)
 	if err != nil {
 		return "", err
 	}
-	lines[idx] = bytes.Replace(lines[idx], []byte("staged"), []byte("implemented"), 1)
-	out := bytes.Join(lines, []byte("\n"))
 	mode := os.FileMode(0o644)
 	if fi, statErr := os.Stat(resolved); statErr == nil {
 		mode = fi.Mode().Perm()
@@ -262,6 +250,35 @@ func Flip(base, arg string) (resolved string, err error) {
 		return "", fmt.Errorf("write %s: %v", resolved, err)
 	}
 	return resolved, nil
+}
+
+// Implemented derives the exact bytes that Flip would write without mutating a checkout.
+// Prospective composition uses it so lifecycle bytes are authorized before publication.
+func Implemented(content []byte) ([]byte, error) {
+	implemented, matches := deriveImplemented(content)
+	if matches > 1 {
+		return nil, errors.New("spec has more than one Status: staged line")
+	}
+	if matches == 0 {
+		return nil, errors.New("spec has no Status: staged line")
+	}
+	return implemented, nil
+}
+
+func deriveImplemented(content []byte) ([]byte, int) {
+	lines := bytes.Split(content, []byte("\n"))
+	matches := 0
+	matched := 0
+	for i, line := range lines {
+		if stagedRe.Match(line) {
+			matches++
+			matched = i
+		}
+	}
+	if matches == 1 {
+		lines[matched] = bytes.Replace(lines[matched], []byte("staged"), []byte("implemented"), 1)
+	}
+	return bytes.Join(lines, []byte("\n")), matches
 }
 
 // Command implements `bench spec <subcommand> <slug>`: `implemented` flips the status line

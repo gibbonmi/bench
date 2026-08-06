@@ -290,7 +290,12 @@ func (s *Service) validateReceipt(run record, assigned assignment, rec receipt, 
 		return errInvalidReceipt
 	}
 	changed, err := changedPaths(s.root, assigned.Base, rec.Tree)
-	if err != nil || !insideFence(changed, assigned.Fence) || !sameStrings(changed, sortedUnique(rec.Ownership)) {
+	if err != nil || !sameStrings(changed, sortedUnique(rec.Ownership)) {
+		return errInvalidReceipt
+	}
+	// An exact base tree with empty ownership is the honest closure for a ticket
+	// whose rows are already covered; the fence constrains only real changes.
+	if len(changed) != 0 && !insideFence(changed, assigned.Fence) {
 		return errInvalidReceipt
 	}
 	return nil

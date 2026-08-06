@@ -38,7 +38,7 @@ func TestGateSignalArmFollowsAcquireAndPrecedesOwnerWrite(t *testing.T) {
 				t.Fatalf("seed inspection = %+v, want reusable green", seed.Inspection)
 			}
 			engine := &faultEngine{now: now, failOp: failOp}
-			got := executeWithEngineAfterAcquire(context.Background(), root, io.Discard, io.Discard, engine, arm(engine), reuseFreshGreen)
+			got := executeWithEngineAfterAcquire(context.Background(), root, io.Discard, io.Discard, engine, arm(engine), forceRun)
 			for _, operation := range engine.trace {
 				if operation == "signal-arm" || operation == "owner-write" {
 					t.Fatalf("pre-acquire %s reached %s: trace=%v", failOp, operation, engine.trace)

@@ -2,8 +2,8 @@
 
 Blocked by: allow-clean-assignment-refresh.md
 Ownership fence: `internal/specbuild/checkpoint.go`, `internal/specbuild/checkpoint_receipt_test.go`
-Integration surfaces: coordinator checkpoint receipt -> changed-path ownership validation; already-covered ticket rows -> clean provisional checkpoint
-Contracts: `internal/specbuild/checkpoint.go` accepts an exact base tree with empty ownership only when the receipt otherwise validates, while every non-empty changed path still must match receipt ownership and remain inside the ticket fence; `internal/specbuild/checkpoint_receipt_test.go` proves clean closure and preserves hostile ownership refusals
+Integration surfaces: coordinator checkpoint receipt and changed-path ownership validation→`internal/specbuild/checkpoint.go`; clean base-tree checkpoint proof→`internal/specbuild/checkpoint_receipt_test.go` plus NC1; non-empty ownership and fence refusals→`internal/specbuild/checkpoint_receipt_test.go` plus NC2
+Contracts: receipt ownership and live changed paths cross coordinator evidence→`internal/specbuild/checkpoint.go` validation, asserted by NC1-NC2 against the real checkpoint lifecycle in `internal/specbuild/checkpoint_receipt_test.go`
 
 ## What to build
 
@@ -20,5 +20,7 @@ paths must still equal receipt ownership and remain inside the assignment fence.
 
 ## Red mutations
 
-- [ ] [MNC1] Requiring `insideFence` for an empty changed-path set refuses the honest no-op checkpoint.
-- [ ] [MNC2] Treating all ownership as optional makes the existing unexplained-path or outside-fence receipt cases green.
+| criterion | mutation | owner | operation sequence |
+|---|---|---|---|
+| NC1 | require `insideFence` for an empty changed-path set | `TestCheckpointAdmitsCleanAlreadyCoveredAssignment` | run `go test ./internal/specbuild -run '^TestCheckpointAdmitsCleanAlreadyCoveredAssignment$' -count=1`; expect the honest no-op checkpoint to be refused |
+| NC2 | make ownership optional for non-empty changed paths | `TestCheckpointRereadsEveryLiveFact` | run `go test ./internal/specbuild -run '^TestCheckpointRereadsEveryLiveFact$' -count=1`; expect the unexplained-path or outside-fence receipt case to stop refusing |

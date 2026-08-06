@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -85,6 +86,28 @@ func TestCheckpointAdmitsHonestRowOutcomes(t *testing.T) {
 		})
 	}
 }
+func TestCheckpointAdmitsCleanAlreadyCoveredAssignment(t *testing.T) {
+	fixture := newCheckpointFixture(t)
+	if err := os.Remove(filepath.Join(fixture.assigned.Path, "internal", "specbuild", "checkpoint-change.go")); err != nil {
+		t.Fatal(err)
+	}
+	rec := checkpointReceiptFor(t, fixture.service, fixture.assigned, nil)
+	for i := range rec.Rows {
+		rec.Rows[i].Outcome = "already-covered"
+	}
+	if _, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, rec, "\n")); err != nil {
+		t.Fatalf("Checkpoint: %v", err)
+	}
+	run := loadRun(t, fixture.service)
+	_, stored, ok := assignmentFor(run, fixture.assigned.ID)
+	baseTree := git(t, fixture.root, "rev-parse", fixture.assigned.Base+"^{tree}")
+	if !ok || stored.Checkpoint == "" || stored.CheckpointRef == "" || stored.CheckpointTree != baseTree {
+		t.Fatalf("clean checkpoint = %#v, want base tree %s", stored, baseTree)
+	}
+	if tree := git(t, fixture.root, "rev-parse", stored.Checkpoint+"^{tree}"); tree != baseTree {
+		t.Fatalf("checkpoint commit tree = %s, want base tree %s", tree, baseTree)
+	}
+}
 func TestCheckpointRefusesReceiptFieldFailuresWithoutMutation(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -134,6 +157,12 @@ func TestCheckpointRereadsEveryLiveFact(t *testing.T) {
 			}
 			bind(t, fixture, rec)
 			rec.Ownership = []string{"outside-link", "internal/specbuild/checkpoint-change.go"}
+		}},
+		{"clean tree stale ownership", func(t *testing.T, fixture checkpointFixture, rec *receipt) {
+			if err := os.Remove(filepath.Join(fixture.assigned.Path, "internal", "specbuild", "checkpoint-change.go")); err != nil {
+				t.Fatal(err)
+			}
+			bind(t, fixture, rec)
 		}},
 		{"unexplained path", func(t *testing.T, fixture checkpointFixture, rec *receipt) {
 			write(t, filepath.Join(fixture.assigned.Path, "internal", "specbuild", "unexplained\nname.go"), "package specbuild\n")
@@ -227,6 +256,90 @@ func TestIntegrateRequiresVerifiedCheckpointAndAdvancesOneAttributedCandidate(t 
 	if got := git(t, fixture.root, "rev-parse", after.Candidate); got != after.CandidateTip {
 		t.Fatalf("integration replay changed candidate from %s to %s", after.CandidateTip, got)
 	}
+}
+func TestIntegrateAdmitsCleanAlreadyCoveredCheckpointOverCurrentCandidate(t *testing.T) {
+	fixture := newCheckpointFixture(t)
+	// A sibling assignment advances the candidate past the clean assignment's base,
+	// so the identity replay below is graded against a candidate it did not branch
+	// from rather than against its own base tree.
+	sibling, _, err := fixture.service.Assign(t.Context(), "build demo", "one.md", "sibling change")
+	if err != nil {
+		t.Fatalf("Assign sibling: %v", err)
+	}
+	write(t, filepath.Join(sibling.Path, "internal", "specbuild", "sibling-change.go"), "package specbuild\n")
+	checkpointAssignment(t, fixture.root, fixture.service, sibling, []string{"internal/specbuild/sibling-change.go"})
+	if _, err := fixture.service.Integrate(t.Context(), "build demo", sibling.ID); err != nil {
+		t.Fatalf("Integrate sibling: %v", err)
+	}
+	if err := os.Remove(filepath.Join(fixture.assigned.Path, "internal", "specbuild", "checkpoint-change.go")); err != nil {
+		t.Fatal(err)
+	}
+	rec := checkpointReceiptFor(t, fixture.service, fixture.assigned, nil)
+	for i := range rec.Rows {
+		rec.Rows[i].Outcome = "already-covered"
+	}
+	if _, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, rec, "\n")); err != nil {
+		t.Fatalf("Checkpoint: %v", err)
+	}
+	before := loadRun(t, fixture.service)
+	candidate := git(t, fixture.root, "rev-parse", before.Candidate)
+	tree := git(t, fixture.root, "rev-parse", before.Candidate+"^{tree}")
+	commits := git(t, fixture.root, "rev-list", "--count", before.Candidate)
+	if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
+		t.Fatalf("Integrate: %v", err)
+	}
+	after := loadRun(t, fixture.service)
+	_, assigned, ok := assignmentFor(after, fixture.assigned.ID)
+	if !ok || assigned.Integrated != after.CandidateTip || !refAt(fixture.root, after.Candidate, after.CandidateTip) {
+		t.Fatalf("clean integration attribution = %#v", assigned)
+	}
+	if got := git(t, fixture.root, "rev-parse", after.CandidateTip+"^{tree}"); got != tree {
+		t.Fatalf("clean integration changed candidate tree from %s to %s", tree, got)
+	}
+	if parent := git(t, fixture.root, "rev-parse", after.CandidateTip+"^"); parent != candidate {
+		t.Fatalf("candidate parent = %s, want %s", parent, candidate)
+	}
+	if got := git(t, fixture.root, "rev-list", "--count", after.Candidate); got != increment(t, commits) {
+		t.Fatalf("candidate commits = %s, want one advance past %s", got, commits)
+	}
+	if subject := git(t, fixture.root, "show", "-s", "--format=%B", after.CandidateTip); !strings.Contains(subject, "run="+after.Run) || !strings.Contains(subject, "assignment="+fixture.assigned.ID) || !strings.Contains(subject, "checkpoint="+assigned.Checkpoint) {
+		t.Fatalf("candidate attribution = %q", subject)
+	}
+	requireReleased(t, fixture)
+}
+func TestIntegrateRefusesNonEmptyCheckpointPathsOutsideTheFence(t *testing.T) {
+	fixture := checkpointedReleaseFixture(t)
+	// The fence narrows below the checkpoint's own path only after the checkpoint
+	// exists, because the checkpoint gate refuses that payload at its own seam;
+	// integration is the second reader of the same fence.
+	changedTicket(t, fixture, "# One\n\nOwnership fence: internal/specbuild/deeper\nAssumptions: receipt contract\n\n- [ ] [R10-R15] checkpoint receipt\n- [ ] [R54] framing\n")
+	git(t, fixture.root, "add", ".")
+	git(t, fixture.root, "commit", "-qm", "narrow the ticket fence")
+	run := loadRun(t, fixture.service)
+	narrowed, err := ParseTicket(run.Spec, "one.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	key, assigned, ok := assignmentFor(run, fixture.assigned.ID)
+	if !ok {
+		t.Fatal("missing assignment")
+	}
+	assigned.Fence, assigned.TicketDigest = narrowed.Fence, narrowed.Digest
+	run.Assignments[key], run.Base = assigned, git(t, fixture.root, "rev-parse", "HEAD")
+	saveRun(t, fixture.service, run)
+	before := git(t, fixture.root, "rev-parse", run.Candidate)
+	if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err == nil || !strings.Contains(err.Error(), "checkpoint ownership drifted") {
+		t.Fatalf("Integrate with an out-of-fence payload = %v", err)
+	}
+	requireDelegatedCandidate(t, fixture.root, fixture.service, fixture.assigned.ID, before)
+}
+func increment(t *testing.T, count string) string {
+	t.Helper()
+	value, err := strconv.Atoi(strings.TrimSpace(count))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return strconv.Itoa(value + 1)
 }
 func TestIntegrateReleasesOnlyAfterDurableProvenance(t *testing.T) {
 	t.Run("unavailable owner stays pending", func(t *testing.T) {

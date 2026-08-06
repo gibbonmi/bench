@@ -2,8 +2,8 @@
 
 Blocked by: allow-already-covered-clean-checkpoint.md
 Ownership fence: `internal/specbuild/integrate.go`, `internal/specbuild/checkpoint_receipt_test.go`
-Integration surfaces: clean provisional checkpoint -> candidate replay; empty changed-path set -> ticket fence validation; attributed integration commit -> assignment release
-Contracts: `internal/specbuild/integrate.go` treats an empty checkpoint payload as the identity transformation while every non-empty checkpoint path remains inside the ticket fence; `internal/specbuild/checkpoint_receipt_test.go` proves a clean already-covered checkpoint integrates, advances by one attributed commit without changing the candidate tree, and releases the assignment
+Integration surfaces: clean checkpoint replay and attributed candidate advance→`internal/specbuild/integrate.go`; clean integration and release proof→`internal/specbuild/checkpoint_receipt_test.go` plus NI1; non-empty ticket-fence refusal→`internal/specbuild/checkpoint_receipt_test.go` plus NI2
+Contracts: checkpoint patch bytes and changed paths cross checkpoint evidence→`internal/specbuild/integrate.go` replay and release, asserted by NI1-NI2 against the real integration lifecycle in `internal/specbuild/checkpoint_receipt_test.go`
 
 ## What to build
 
@@ -21,5 +21,7 @@ provenance check.
 
 ## Red mutations
 
-- [ ] [MNI1] Requiring `insideFence` for an empty changed-path set refuses the honest no-op integration.
-- [ ] [MNI2] Skipping fence validation for a non-empty changed-path set makes an existing outside-fence integration case green.
+| criterion | mutation | owner | operation sequence |
+|---|---|---|---|
+| NI1 | require `insideFence` for an empty changed-path set | `TestIntegrateAdmitsCleanAlreadyCoveredCheckpointOverCurrentCandidate` | run `go test ./internal/specbuild -run '^TestIntegrateAdmitsCleanAlreadyCoveredCheckpointOverCurrentCandidate$' -count=1`; expect the honest no-op integration to be refused |
+| NI2 | skip fence validation for a non-empty changed-path set | `TestIntegrateRefusesNonEmptyCheckpointPathsOutsideTheFence` | run `go test ./internal/specbuild -run '^TestIntegrateRefusesNonEmptyCheckpointPathsOutsideTheFence$' -count=1`; expect the outside-fence integration to stop refusing |

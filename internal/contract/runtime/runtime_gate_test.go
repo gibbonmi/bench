@@ -194,9 +194,9 @@ func testRuntimeOracleBoundVerdict(t *testing.T) {
 	f.WriteFile("work.txt", "work\n")
 	f.CommitAll("base")
 	f.WriteFile("work.txt", "changed\n")
-	f.BenchEnv(map[string]string{"BENCH_GATE": "echo run >> .git/gate-runs; exit 0"}, "gate").RequireExit(0)
+	f.BenchEnv(map[string]string{"BENCH_GATE": commonGitDirGateBody("echo run >> \"$gitdir/gate-runs\"; exit 0")}, "gate").RequireExit(0)
 	before := strings.TrimSpace(f.Git("rev-parse", "HEAD").Stdout)
-	probe := f.BenchEnv(map[string]string{"BENCH_GATE": "echo run >> .git/gate-runs; exit 23"}, "commit", "-m", "must refuse", "work.txt")
+	probe := f.BenchEnv(map[string]string{"BENCH_GATE": commonGitDirGateBody("echo run >> \"$gitdir/gate-runs\"; exit 23")}, "commit", "-m", "must refuse", "work.txt")
 	if probe.ExitCode == 0 {
 		t.Fatal("commit trusted green from a different exact gate command")
 	}

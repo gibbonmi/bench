@@ -2,8 +2,8 @@
 
 Blocked by: allow-verified-clean-provisional-release.md
 Ownership fence: `internal/specbuild/integrate.go`, `internal/specbuild/operation_journal_test.go`
-Integration surfaces: lifecycle transition -> durable operation journal; long repair run -> checkpoint, review, and promotion transitions; decoded run state -> bounded validity check
-Contracts: `internal/specbuild/integrate.go` admits the 65th distinct durable transition required by a long but valid repair run while retaining a finite 128-entry bound shared by mutation admission and state validation; `internal/specbuild/operation_journal_test.go` proves the former 64-entry boundary is live and the new upper boundary still refuses without mutation
+Integration surfaces: operation admission and shared finite bound→`internal/specbuild/integrate.go`; decoded operation-count validation→existing `internal/specbuild/state.go` plus OJ2; 65th-entry and full-journal proofs→`internal/specbuild/operation_journal_test.go` plus OJ1-OJ2
+Contracts: operation records and their finite count cross `internal/specbuild/integrate.go` admission→existing `internal/specbuild/state.go` decode validation, asserted by OJ1-OJ2 against durable save and reload in `internal/specbuild/operation_journal_test.go`
 
 ## What to build
 
@@ -21,5 +21,7 @@ full. Do not add compaction or discard prior operation evidence.
 
 ## Red mutations
 
-- [ ] [MOJ1] Restoring the 64-entry limit makes the 65th-operation acceptance test red.
-- [ ] [MOJ2] Removing or weakening the finite-bound refusal makes the full-journal test red.
+| criterion | mutation | owner | operation sequence |
+|---|---|---|---|
+| OJ1 | restore the 64-entry operation limit | `TestOperationJournalAdmitsSixtyFifthEntry` | run `go test ./internal/specbuild -run '^TestOperationJournalAdmitsSixtyFifthEntry$' -count=1`; expect the 65th operation to be refused |
+| OJ2 | remove or weaken the finite-bound refusal | `TestOperationJournalRetainsFiniteBoundAndExistingReplay` | run `go test ./internal/specbuild -run '^TestOperationJournalRetainsFiniteBoundAndExistingReplay$' -count=1`; expect the full-journal refusal or idempotent replay assertion to fail |

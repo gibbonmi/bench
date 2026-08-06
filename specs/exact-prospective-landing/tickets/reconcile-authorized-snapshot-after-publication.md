@@ -2,8 +2,8 @@
 
 Blocked by: adopt-exact-landing-in-commit.md, preserve-executable-spec-mode.md
 Ownership fence: `internal/landing/landing.go`, `internal/landing/landing_test.go`
-Integration surfaces: composed named-path snapshot -> prospective authorization; winning landing commit -> invoking index and worktree reconciliation; transitioned spec bytes and mode -> post-publication checkout
-Contracts: `internal/landing/landing.go` reconciles every named path from the exact authorized/published tree rather than re-reading live bytes after authorization, while preserving unnamed index/worktree state and the staged spec's captured filesystem permissions; `internal/landing/landing_test.go` holds authorization open, mutates named and spec paths, and proves a successful return remains clean against the published commit
+Integration surfaces: composed named-path and spec snapshots plus post-publication reconciliation→`internal/landing/landing.go`; named-path authorization-race proof→`internal/landing/landing_test.go` plus AS1; transitioned-spec authorization-race proof→`internal/landing/landing_test.go` plus AS2
+Contracts: authorized named bytes, transitioned spec bytes, Git mode, and filesystem permissions cross composition→`internal/landing/landing.go` reconciliation, asserted by AS1-AS2 against the real authorization-race proofs in `internal/landing/landing_test.go`
 
 ## What to build
 
@@ -24,5 +24,7 @@ reconciliation fails.
 
 ## Red mutations
 
-- [ ] [MAS1] Re-running `git add -A` from the live named path after publication makes the named-path authorization-race test red.
-- [ ] [MAS2] Re-reading and transforming the live spec during reconciliation makes the spec authorization-race test red.
+| criterion | mutation | owner | operation sequence |
+|---|---|---|---|
+| AS1 | re-run `git add -A` from the live named path after publication | `TestLandReconcilesAuthorizedNamedSnapshotAfterAuthorizationMutation` | run `go test ./internal/landing -run '^TestLandReconcilesAuthorizedNamedSnapshotAfterAuthorizationMutation$' -count=1`; expect the named-path authorization-race proof to fail |
+| AS2 | re-read and transform the live spec during reconciliation | `TestLandReconcilesAuthorizedSpecSnapshotAfterAuthorizationMutation` | run `go test ./internal/landing -run '^TestLandReconcilesAuthorizedSpecSnapshotAfterAuthorizationMutation$' -count=1`; expect the spec authorization-race proof to fail |

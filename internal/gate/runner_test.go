@@ -476,11 +476,10 @@ func TestR17PrivateFaultBridge(t *testing.T) {
 		t.Fatalf("unknown R17 fault %q", op)
 	}
 	root := gateTestRepo(t, "#!/usr/bin/env bash\nexit 0\n", `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`)
-	// The seed is recorded a full freshness window in the past. Faults after lock
-	// acquisition are reached only past the reuse short-circuit, which a fresh green
-	// answers without ever running them, so they are driven at the present clock where
-	// the seed has expired. The pre-acquire pair is driven at the seed's own clock,
-	// where the green is still reusable and its interrupted-pending demotion fires.
+	// The seed is recorded a full freshness window behind the fault clock so its green
+	// is non-reusable and every injected operation remains reachable. Pre-lock faults
+	// start from interrupted evidence left by an expired post-run fault, proving that
+	// repeated lock failures preserve the pending record.
 	seedNow := time.Now().UTC().Truncate(time.Second).Add(-freshness - time.Minute)
 	seed := executeWithEngine(context.Background(), root, io.Discard, io.Discard, &faultEngine{now: seedNow})
 	if seed.ActionExit != 0 || !seed.Inspection.ReusableGreen {
@@ -490,7 +489,8 @@ func TestR17PrivateFaultBridge(t *testing.T) {
 	wantAttempts := 2
 	faultNow := time.Now().UTC().Truncate(time.Second)
 	if op == "lock-open" || op == "lock-acquisition" {
-		wantAttempts, faultNow = 1, seedNow
+		wantAttempts = 1
+		_ = executeWithEngine(context.Background(), root, io.Discard, io.Discard, &faultEngine{now: faultNow, failOp: "post-run-subject-rebuild"})
 	} else if op == "post-run-subject-rebuild" {
 		wantAttempts = 1
 	}

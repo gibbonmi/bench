@@ -158,6 +158,155 @@ func TestOrdinaryGreenRemainsProspectiveBootstrapEvidence(t *testing.T) {
 	}
 }
 
+func TestExecuteTreeReusesExactGreenBeforeGateLock(t *testing.T) {
+	root := reusableEvidenceRepo(t, 0)
+	tree := gitOutput(t, root, "write-tree")
+	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {
+		t.Fatalf("ordinary execution = %+v, want green", got)
+	}
+	before := mustRead(t, cachePath(t, root))
+
+	holdGateLock(t, root)
+
+	var stdout bytes.Buffer
+	got := ExecuteTree(context.Background(), root, tree, &stdout, io.Discard)
+	if got.ActionExit != 0 || !got.Inspection.ReusableGreen {
+		t.Fatalf("held-lock prospective reuse = %+v, want reusable green", got)
+	}
+	if got, want := stdout.String(), "gate: green (fresh verdict reused for this tree)\n"; got != want {
+		t.Fatalf("reuse stdout = %q, want %q", got, want)
+	}
+	if got := gateRunCount(t, root); got != 1 {
+		t.Fatalf("gate runs = %d, want 1", got)
+	}
+	if after := mustRead(t, cachePath(t, root)); !bytes.Equal(before, after) {
+		t.Fatalf("held-lock reuse rewrote the verdict record:\nbefore %q\nafter  %q", before, after)
+	}
+}
+
+func TestNonReusableEvidenceReachesGateLock(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		arrange func(t *testing.T, root string)
+	}{
+		{"stale", func(t *testing.T, root string) {
+			plan := mustSubject(t, root)
+			replaceRetainedEvidence(t, root, plan, verdictRecord{Schema: 1, State: Ready, Status: "green", Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: time.Now().UTC().Add(-freshness - time.Minute).Format(time.RFC3339)})
+		}},
+		{"tree mismatched", func(t *testing.T, root string) {
+			plan := mustSubject(t, root)
+			replaceRetainedEvidence(t, root, plan, verdictRecord{Schema: 1, State: Ready, Status: "green", Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: time.Now().UTC().Format(time.RFC3339)})
+			writeGateTestFile(t, root, "changed.txt", "changed\n", 0o644)
+		}},
+		{"oracle mismatched", func(t *testing.T, root string) {
+			old, err := buildSubjectForPolicy(root, root, "oracle-v1/freshness-v1")
+			if err != nil {
+				t.Fatal(err)
+			}
+			replaceRetainedEvidence(t, root, old, verdictRecord{Schema: 1, State: Ready, Status: "green", Tree: old.Tree, Oracle: old.Oracle, RecordedAt: time.Now().UTC().Format(time.RFC3339)})
+		}},
+		{"unavailable", func(t *testing.T, root string) {}},
+		{"red", func(t *testing.T, root string) {
+			plan := mustSubject(t, root)
+			replaceRetainedEvidence(t, root, plan, verdictRecord{Schema: 1, State: Ready, Status: "red", Tree: plan.Tree, Oracle: plan.Oracle, RecordedAt: time.Now().UTC().Format(time.RFC3339)})
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := reusableEvidenceRepo(t, 0)
+			tc.arrange(t, root)
+			holdGateLock(t, root)
+
+			var stderr bytes.Buffer
+			got := Execute(context.Background(), root, io.Discard, &stderr)
+			if got.ActionExit != 1 || got.Inspection.ReusableGreen {
+				t.Fatalf("non-reusable execution = %+v, want lock refusal", got)
+			}
+			if !strings.Contains(stderr.String(), "gate execution already in progress") {
+				t.Fatalf("stderr = %q, want gate-lock refusal", stderr.String())
+			}
+			if got := gateRunCount(t, root); got != 0 {
+				t.Fatalf("gate runs = %d, want lock refusal before execution", got)
+			}
+		})
+	}
+}
+
+func replaceRetainedEvidence(t *testing.T, root string, plan subject, record verdictRecord) {
+	t.Helper()
+	gitdir := gitOutput(t, root, "rev-parse", "--absolute-git-dir")
+	dir := filepath.Join(gitdir, "bench-gate-evidence")
+	if err := os.Mkdir(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := durableReplaceAt(dir, evidenceName(plan), record); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func holdGateLock(t *testing.T, root string) {
+	t.Helper()
+	gitdir := gitOutput(t, root, "rev-parse", "--absolute-git-dir")
+	engine := productionGateEngine{}
+	lock, err := engine.OpenLock(filepath.Join(gitdir, "bench-gate.lock"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = engine.Unlock(lock)
+		_ = lock.Close()
+	})
+	if err := engine.Acquire(lock); err != nil {
+		t.Fatal(err)
+	}
+}
+
+type evidenceAfterPreEngine struct {
+	productionGateEngine
+	root   string
+	plan   subject
+	record []byte
+}
+
+func (e *evidenceAfterPreEngine) OpenLock(path string) (gateFile, error) {
+	if err := retainGreen(e.root, e.plan, e.Now()); err != nil {
+		return nil, err
+	}
+	gitdir, err := commonGitDir(e.root)
+	if err != nil {
+		return nil, err
+	}
+	e.record, err = os.ReadFile(evidencePath(gitdir, e.plan))
+	if err != nil {
+		return nil, err
+	}
+	return e.productionGateEngine.OpenLock(path)
+}
+
+func TestEvidenceAppearingAfterPrecheckReusesUnderLock(t *testing.T) {
+	root := reusableEvidenceRepo(t, 0)
+	plan := mustSubject(t, root)
+	engine := &evidenceAfterPreEngine{root: root, plan: plan}
+
+	var stdout bytes.Buffer
+	got := executeWithEngine(context.Background(), root, &stdout, io.Discard, engine)
+	if got.ActionExit != 0 || !got.Inspection.ReusableGreen {
+		t.Fatalf("late evidence execution = %+v, want reusable green", got)
+	}
+	if got, want := stdout.String(), "gate: green (fresh verdict reused for this tree)\n"; got != want {
+		t.Fatalf("reuse stdout = %q, want %q", got, want)
+	}
+	if got := gateRunCount(t, root); got != 0 {
+		t.Fatalf("gate runs = %d, want no execution", got)
+	}
+	gitdir, err := commonGitDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if after := mustRead(t, evidencePath(gitdir, plan)); !bytes.Equal(engine.record, after) {
+		t.Fatalf("late evidence reuse rewrote the verdict record:\nbefore %q\nafter  %q", engine.record, after)
+	}
+}
+
 func TestExecuteTreeRefusesUnavailableSuppliedTreeWithoutAuthority(t *testing.T) {
 	root := reusableEvidenceRepo(t, 0)
 	if got := Execute(context.Background(), root, io.Discard, io.Discard); got.ActionExit != 0 {

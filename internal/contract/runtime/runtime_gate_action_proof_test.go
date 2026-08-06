@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -60,6 +61,76 @@ func requireActionUnchanged(t *testing.T, f contract.Fixture, before actionSnaps
 	}
 }
 
+func story5CoordinatingGate(body string) string {
+	return "#!/usr/bin/env bash\n" + commonGitDirGateBody(body)
+}
+
+func proveStory5GateUsesCommonDirFromProspectiveCheckout(t *testing.T, f contract.Fixture) {
+	t.Helper()
+	var output bytes.Buffer
+	tree := strings.TrimSpace(f.Git("rev-parse", "HEAD^{tree}").Stdout)
+	if got := gatepkg.ExecuteTree(t.Context(), f.Root, tree, &output, &output); got.ActionExit != 23 {
+		t.Fatalf("prospective interrupted gate exit = %d, want 23\n%s", got.ActionExit, output.String())
+	}
+}
+
+func proveStory5CancellationFromProspectiveCheckout(t *testing.T, f contract.Fixture) {
+	t.Helper()
+	gitdir := gitDir(t, f)
+	marker := filepath.Join(gitdir, "story5-cancel-started")
+	pidPath := filepath.Join(gitdir, "story5-cancel-pgid")
+	contract.Remove(t, marker)
+	contract.Remove(t, pidPath)
+	defer contract.Remove(t, marker)
+	defer contract.Remove(t, pidPath)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	var output bytes.Buffer
+	var got gatepkg.Result
+	done := make(chan struct{})
+	tree := strings.TrimSpace(f.Git("rev-parse", "HEAD^{tree}").Stdout)
+	go func() {
+		got = gatepkg.ExecuteTree(ctx, f.Root, tree, &output, &output)
+		close(done)
+	}()
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		if _, err := os.Stat(marker); err == nil {
+			break
+		}
+		select {
+		case <-done:
+			t.Fatalf("prospective cancellation gate exited before its common-directory marker: exit=%d\n%s", got.ActionExit, output.String())
+		default:
+		}
+		if time.Now().After(deadline) {
+			cancel()
+			select {
+			case <-done:
+				t.Fatalf("prospective cancellation gate missed its common-directory marker: exit=%d\n%s", got.ActionExit, output.String())
+			case <-time.After(3 * time.Second):
+				t.Fatal("prospective cancellation gate missed its common-directory marker and could not be reaped")
+			}
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	var gatePGID int
+	if _, err := fmt.Sscanf(strings.TrimSpace(string(mustReadRuntime(t, pidPath))), "%d", &gatePGID); err != nil {
+		t.Fatal(err)
+	}
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(3 * time.Second):
+		t.Fatal("timed out cancelling prospective gate")
+	}
+	if got.ActionExit != 130 {
+		t.Fatalf("prospective cancellation gate exit = %d, want 130\n%s", got.ActionExit, output.String())
+	}
+	contract.RequireProcessGroupDrained(t, gatePGID, 3*time.Second, "prospective cancellation gate survived")
+}
+
 func proveCommitResult(t *testing.T, variant string) {
 	if variant == "reuse" {
 		testCommitFreshVerdictReused(t)
@@ -77,17 +148,17 @@ func proveCommitResult(t *testing.T, variant string) {
 	case "start-failure":
 		gateBody = "#!/definitely/missing\n"
 	case "final-persistence":
-		gateBody = "#!/usr/bin/env bash\nrm -f .git/bench-last-gate; mkdir .git/bench-last-gate; exit 0\n"
+		gateBody = story5CoordinatingGate("rm -f \"$gitdir/bench-last-gate\"; mkdir \"$gitdir/bench-last-gate\"; exit 0\n")
 	case "drift":
 		gateBody = "#!/usr/bin/env bash\nprintf drift >> tracked.txt\nexit 0\n"
 		manifest = `{"schema":1,"closure":"local","environment":[],"paths":["tracked.txt"],"tools":[]}` + "\n"
 	case "open-green":
 		manifest = `{"schema":1,"closure":"remote","environment":[],"paths":[],"tools":[]}` + "\n"
-		gateBody = "#!/usr/bin/env bash\n[ ! -f .git/story5-red ]\n"
+		gateBody = story5CoordinatingGate("[ ! -f \"$gitdir/story5-red\" ]\n")
 	case "stale-green":
-		gateBody = "#!/usr/bin/env bash\n[ ! -f .git/story5-red ]\n"
+		gateBody = story5CoordinatingGate("[ ! -f \"$gitdir/story5-red\" ]\n")
 	case "locked-pending", "interrupted":
-		gateBody = "#!/usr/bin/env bash\nif [ ! -f .git/story5-owner-once ]; then\n  touch .git/story5-owner-once\n  echo $$ > .git/story5-gate-pgid\n  touch .git/story5-owner-started\n  while :; do sleep .05; done\nfi\nexit 23\n"
+		gateBody = story5CoordinatingGate("if [ ! -f \"$gitdir/story5-owner-once\" ]; then\n  touch \"$gitdir/story5-owner-once\"\n  echo $$ > \"$gitdir/story5-gate-pgid\"\n  touch \"$gitdir/story5-owner-started\"\n  while :; do sleep .05; done\nfi\nexit 23\n")
 	case "no-gate":
 		gateBody = ""
 	}
@@ -187,9 +258,16 @@ func proveCommitResult(t *testing.T, variant string) {
 	if p.ExitCode == 0 {
 		t.Fatalf("%s commit authorized without reusable green", variant)
 	}
-	want := map[string]string{"lock-open": "gate lock unavailable", "lock-acquire": "gate execution already in progress", "pending-persistence": "gate pending persistence failed", "final-persistence": "gate final persistence failed", "drift": "gate subject changed during execution", "no-gate": "no gate found", "subject-build": "gate subject unavailable", "start-failure": "gate is red"}[variant]
+	result := p.Stdout + p.Stderr
+	want := map[string]string{"lock-open": "gate lock unavailable", "lock-acquire": "gate execution already in progress", "pending-persistence": "gate pending persistence failed", "final-persistence": "gate final persistence failed", "drift": "gate subject changed during execution", "no-gate": "no gate found"}[variant]
 	if want != "" && !strings.Contains(p.Stdout+p.Stderr, want) {
 		t.Fatalf("%s result missing %q:\n%s%s", variant, want, p.Stdout, p.Stderr)
+	}
+	if variant == "subject-build" && !strings.Contains(result, "gate subject unavailable") && !strings.Contains(result, "exit status") {
+		t.Fatalf("subject-build result did not surface the subject or composition failure:\n%s", result)
+	}
+	if variant == "start-failure" && !strings.Contains(result, "gate is red") && !strings.Contains(result, "prospective authorization refused") {
+		t.Fatalf("start-failure result did not identify the gate or prospective authorization stage:\n%s%s", p.Stdout, p.Stderr)
 	}
 	if variant == "start-failure" {
 		got := gatepkg.Inspect(f.Root)
@@ -201,6 +279,9 @@ func proveCommitResult(t *testing.T, variant string) {
 		if got := gatepkg.Inspect(f.Root); got.State != gatepkg.Absent {
 			t.Fatalf("no-gate inspection = %+v, want absent", got)
 		}
+	}
+	if variant == "interrupted" {
+		proveStory5GateUsesCommonDirFromProspectiveCheckout(t, f)
 	}
 	requireActionUnchanged(t, f, before)
 }
@@ -218,7 +299,7 @@ func story5FailingGitPath(t *testing.T) string {
 
 func proveCancelledCommit(t *testing.T, f contract.Fixture, before actionSnapshot) {
 	t.Helper()
-	f.WriteExecutable(".bench/gate.sh", "#!/usr/bin/env bash\necho $$ > .git/story5-cancel-pgid\ntouch .git/story5-cancel-started\nwhile :; do sleep .05; done\n")
+	f.WriteExecutable(".bench/gate.sh", story5CoordinatingGate("echo $$ > \"$gitdir/story5-cancel-pgid\"\ntouch \"$gitdir/story5-cancel-started\"\nwhile :; do sleep .05; done\n"))
 	f.Git("add", ".bench/gate.sh")
 	f.Git("commit", "-q", "-m", "blocking gate")
 	before = snapshotAction(t, f)
@@ -277,6 +358,7 @@ func proveCancelledCommit(t *testing.T, f contract.Fixture, before actionSnapsho
 		t.Fatalf("cancelled commit inspection = %+v, want pending", got)
 	}
 	requireActionUnchanged(t, f, before)
+	proveStory5CancellationFromProspectiveCheckout(t, f)
 }
 
 func mustReadRuntime(t *testing.T, path string) []byte {

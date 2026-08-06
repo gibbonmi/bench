@@ -28,6 +28,17 @@ const consumerRequest = "consumer request"
 
 func newRefreshFixture(t *testing.T) refreshFixture {
 	t.Helper()
+	fixture := newCleanRefreshFixture(t)
+	fixture.dirtyPath, fixture.dirtyContent = "internal/specbuild/consumer-partial.go", "package specbuild\n\nvar consumerPartial = true\n"
+	write(t, filepath.Join(fixture.consumer.Path, fixture.dirtyPath), fixture.dirtyContent)
+	return fixture
+}
+
+// newCleanRefreshFixture is the same scenario without the partial edit: the
+// consumer worktree sits byte-clean at its base, so the preservation patch the
+// refresh carries has zero bytes.
+func newCleanRefreshFixture(t *testing.T) refreshFixture {
+	t.Helper()
 	root := repo(t)
 	service := New(root, greenGate{}, realOwner{})
 	if _, err := service.Start(t.Context(), "build demo"); err != nil {
@@ -37,8 +48,7 @@ func newRefreshFixture(t *testing.T) refreshFixture {
 	if err != nil {
 		t.Fatalf("Assign consumer: %v", err)
 	}
-	fixture := refreshFixture{root: root, service: service, consumer: consumer, dirtyPath: "internal/specbuild/consumer-partial.go", dirtyContent: "package specbuild\n\nvar consumerPartial = true\n"}
-	write(t, filepath.Join(consumer.Path, fixture.dirtyPath), fixture.dirtyContent)
+	fixture := refreshFixture{root: root, service: service, consumer: consumer}
 	// The repair ticket lands mid-run, exactly the insertion that used to strand
 	// the consumer: the ticket commit moves the working tip, so assign refuses
 	// until promote recomposes the run onto it.
@@ -65,14 +75,17 @@ func newRefreshFixture(t *testing.T) refreshFixture {
 // mutate the result to forge each hostile variant rather than restating the shape.
 func debugReceiptFor(t *testing.T, fixture refreshFixture) debugReceipt {
 	t.Helper()
-	return debugReceipt{
+	receipt := debugReceipt{
 		Version: debugReceiptVersion, Run: loadRun(t, fixture.service).Run, Assignment: fixture.consumer.ID, Base: fixture.consumer.Base,
 		Repro:         debugRepro{Command: "go test ./internal/contract/runtime -run TestRuntimeCommitContracts", Exit: 1, OutputDigest: digest("deterministic red"), Produced: time.Now().UTC().Format(time.RFC3339Nano)},
 		Cause:         "prerequisite defect in the landing fence discards gate output",
 		RequiredFence: []string{"internal/landing"},
-		DirtyPaths:    []string{fixture.dirtyPath},
 		Resumable:     true,
 	}
+	if fixture.dirtyPath != "" {
+		receipt.DirtyPaths = []string{fixture.dirtyPath}
+	}
+	return receipt
 }
 
 func writeDebugReceipt(t *testing.T, receipt debugReceipt) string {
@@ -138,6 +151,21 @@ func TestRefreshRepairTraceThroughPublicLifecycle(t *testing.T) {
 	promoted := git(t, fixture.root, "rev-parse", "HEAD")
 	for _, path := range []string{"internal/landing/fix.go", fixture.dirtyPath, "internal/specbuild/consumer-final.go"} {
 		git(t, fixture.root, "cat-file", "-e", promoted+":"+path)
+	}
+}
+
+func TestRefreshAdvancesACleanAssignmentOntoTheRepairedCandidate(t *testing.T) {
+	fixture := newCleanRefreshFixture(t)
+	run := loadRun(t, fixture.service)
+	refreshed := refreshConsumer(t, fixture)
+	if refreshed.Base != run.CandidateTip {
+		t.Fatalf("refreshed base = %s, want repaired candidate %s", refreshed.Base, run.CandidateTip)
+	}
+	if got := git(t, fixture.consumer.Path, "rev-parse", "HEAD"); got != run.CandidateTip {
+		t.Fatalf("worktree HEAD = %s, want repaired candidate %s", got, run.CandidateTip)
+	}
+	if status := git(t, fixture.consumer.Path, "status", "--porcelain", "--untracked-files=all"); status != "" {
+		t.Fatalf("refreshed worktree is not byte-clean: %q", status)
 	}
 }
 

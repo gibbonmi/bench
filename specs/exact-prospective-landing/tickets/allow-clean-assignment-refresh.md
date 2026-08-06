@@ -2,8 +2,8 @@
 
 Blocked by: repair-ft78-symlink-prospective-fixture.md
 Ownership fence: `internal/specbuild/integrate.go`, `internal/specbuild/refresh_test.go`
-Integration surfaces: refresh preservation patch -> candidate replay; clean owned assignment -> refreshed lifecycle checkout
-Contracts: an empty preservation patch in `internal/specbuild/integrate.go` is the identity transformation over the repaired candidate, while non-empty checkpoint replay retains its existing conflict and byte-identity checks; `internal/specbuild/refresh_test.go` proves the clean assignment advances and remains clean
+Integration surfaces: zero-byte preservation patch→`internal/specbuild/integrate.go`; clean refresh lifecycle proof→`internal/specbuild/refresh_test.go` plus CR1; non-empty replay conflict and byte identity→`internal/specbuild/refresh_test.go` plus CR2
+Contracts: preservation patch bytes cross refresh planning→`internal/specbuild/integrate.go` checkpoint replay, asserted by CR1-CR2 against the real `assign --refresh` lifecycle in `internal/specbuild/refresh_test.go`
 
 ## What to build
 
@@ -20,5 +20,7 @@ payload, changing tracked bytes, or weakening non-empty replay validation.
 
 ## Red mutations
 
-- [ ] [MCR1] Always invoking `git apply` makes the clean refresh fail with `No valid patches in input`.
-- [ ] [MCR2] Skipping apply for non-empty patches loses the existing consumer payload or makes its lifecycle assertions fail.
+| criterion | mutation | owner | operation sequence |
+|---|---|---|---|
+| CR1 | always invoke `git apply` for a zero-byte preservation patch | `TestRefreshAdvancesACleanAssignmentOntoTheRepairedCandidate` | run `go test ./internal/specbuild -run '^TestRefreshAdvancesACleanAssignmentOntoTheRepairedCandidate$' -count=1`; expect `No valid patches in input` |
+| CR2 | skip `git apply` for a non-empty preservation patch | `TestRefreshRepairTraceThroughPublicLifecycle` and `TestRefreshRefusesConflictWithoutTouchingTheWorktree` | run `go test ./internal/specbuild -run '^(TestRefreshRepairTraceThroughPublicLifecycle|TestRefreshRefusesConflictWithoutTouchingTheWorktree)$' -count=1`; expect payload loss or the conflict refusal to fail |

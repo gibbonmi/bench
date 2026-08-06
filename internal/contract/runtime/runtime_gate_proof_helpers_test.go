@@ -14,6 +14,10 @@ import (
 
 const localManifest = `{"schema":1,"closure":"local","environment":[],"paths":[],"tools":[]}`
 
+func commonGitDirGateBody(body string) string {
+	return "gitdir=\"$(git rev-parse --path-format=absolute --git-common-dir)\"\n" + body
+}
+
 func manifestProof(id, contents, reason string, write int) ft78ProofCase {
 	return ft78ProofCase{id: id, driver: func(t *testing.T) {
 		f := proofFixture(t)
@@ -196,10 +200,17 @@ func ignoredInputFixture(t *testing.T) contract.Fixture {
 	f := proofFixture(t)
 	f.WriteFile("work.txt", "base\n")
 	f.WriteFile("ft78-ignored", "green\n")
-	f.WriteExecutable(".bench/gate.sh", "#!/bin/sh\necho run >> .git/ft78-runs\n[ \"$(cat ft78-ignored)\" = green ] || exit 19\n")
+	f.WriteExecutable(".bench/gate.sh", "#!/bin/sh\n"+commonGitDirGateBody("echo run >> \"$gitdir/ft78-runs\"\n[ \"$(cat ft78-ignored)\" = green ] || exit 19\n"))
 	f.WriteFile(".bench/gate-inputs.json", `{"schema":1,"closure":"local","environment":[],"paths":["ft78-ignored"],"tools":[]}`)
 	f.Git("add", "work.txt")
+	f.Git("add", "-f", "--", ".bench/gate.sh", ".bench/gate-inputs.json")
 	f.Git("-c", "user.email=bench@local", "-c", "user.name=bench", "commit", "-q", "-m", "work")
+	gateEntry := f.Git("ls-tree", "HEAD", "--", ".bench/gate.sh").Stdout
+	manifestEntry := f.Git("ls-tree", "HEAD", "--", ".bench/gate-inputs.json").Stdout
+	ignoredEntry := f.Git("ls-tree", "HEAD", "--", "ft78-ignored").Stdout
+	if !strings.HasPrefix(gateEntry, "100755 ") || !strings.HasPrefix(manifestEntry, "100644 ") || ignoredEntry != "" {
+		t.Fatalf("ignored-input expected tree = gate %q manifest %q ignored %q, want executable gate, regular manifest, and no ignored input", gateEntry, manifestEntry, ignoredEntry)
+	}
 	return f
 }
 

@@ -334,17 +334,19 @@ func planProvisionalRelease(root, target, assignmentID string, evidence Provisio
 	if !plan.owned || plan.assignment == nil || plan.assignment.ID != assignmentID || plan.Action == ActionRetain {
 		return plan, errors.New("provisional release checkout is not exact and removable; checkout retained")
 	}
-	legacy, err := validateProvisionalEvidence(root, target, evidence)
+	checkpointCommit, err := validateProvisionalEvidence(root, target, evidence)
 	if err != nil {
 		return plan, err
 	}
-	if legacy {
+	if checkpointCommit {
 		if plan.Action != ActionRemove || plan.Tracked != "clean" {
 			return plan, errors.New("provisional release checkout is not exact and removable; checkout retained")
 		}
 		return plan, nil
 	}
-	if plan.Tracked != "dirty" || plan.Action != ActionRecoverRemove && plan.Action != ActionDiscardRemove {
+	cleanNoOp := plan.Tracked == "clean" && plan.Action == ActionRemove
+	dirtyPayload := plan.Tracked == "dirty" && (plan.Action == ActionRecoverRemove || plan.Action == ActionDiscardRemove)
+	if !cleanNoOp && !dirtyPayload {
 		return plan, errors.New("provisional release checkout is not exact and removable; checkout retained")
 	}
 	original := plan.Fingerprint

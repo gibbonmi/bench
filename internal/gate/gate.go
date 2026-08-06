@@ -339,6 +339,11 @@ func executeSubjectWithEngine(ctx context.Context, runtimeRoot, storageRoot stri
 		fmt.Fprintln(stderr, "no gate found: add an executable .bench/gate.sh or set BENCH_GATE")
 		return Result{GateExit: 3, ActionExit: 3, Inspection: inspectAt(storageRoot, engine.Now())}
 	}
+	if mode == reuseFreshGreen {
+		if reuse := reusableEvidence(storageRoot, plan, engine.Now()); reuse.ReusableGreen {
+			return reusedGreenResult(stdout, reuse)
+		}
+	}
 	gitdir, err := engine.GitDir(storageRoot)
 	if err != nil {
 		return operationalWithEngine(engine, storageRoot, 0, stderr, "git directory unavailable")

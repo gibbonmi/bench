@@ -95,6 +95,18 @@ func TestFlipRewritesOnlyTheStatusLine(t *testing.T) {
 	}
 }
 
+func TestImplementedDerivesExactBytesAndRefusesMalformedStatus(t *testing.T) {
+	got, err := Implemented([]byte("x\nStatus: staged  \nlast"))
+	if err != nil || string(got) != "x\nStatus: implemented  \nlast" {
+		t.Fatalf("Implemented = %q, %v", got, err)
+	}
+	for _, content := range []string{"Status: implemented\n", "Status: staged\nStatus: staged\n", "status: staged\n"} {
+		if _, err := Implemented([]byte(content)); err == nil {
+			t.Fatalf("Implemented(%q) succeeded", content)
+		}
+	}
+}
+
 func TestFlipErrors(t *testing.T) {
 	cases := []struct {
 		name    string
