@@ -1,8 +1,8 @@
 # Remove circular review meta-tickets
 
 Blocked by: close-adapter-blocker-metadata.md, preserve-executable-spec-mode.md, normalize-review-repair-ticket-metadata.md, split-review-repair-mutation-rows.md
-Ownership fence: `specs/exact-prospective-landing/tickets/close-adapter-blocker-metadata.md`, `specs/exact-prospective-landing/tickets/preserve-executable-spec-mode.md`, `specs/exact-prospective-landing/tickets/normalize-review-repair-ticket-metadata.md`, `specs/exact-prospective-landing/tickets/split-review-repair-mutation-rows.md`
-Integration surfaces: producer adapter-consumer declarations -> `specs/exact-prospective-landing/tickets/close-adapter-blocker-metadata.md`; executable-mode regression owner -> `specs/exact-prospective-landing/tickets/preserve-executable-spec-mode.md`; verification-only repair records -> removal of `specs/exact-prospective-landing/tickets/normalize-review-repair-ticket-metadata.md` and `specs/exact-prospective-landing/tickets/split-review-repair-mutation-rows.md`
+Ownership fence: `specs/exact-prospective-landing/tickets/close-adapter-blocker-metadata.md`, `specs/exact-prospective-landing/tickets/preserve-executable-spec-mode.md`, `specs/exact-prospective-landing/tickets/normalize-review-repair-ticket-metadata.md`, `specs/exact-prospective-landing/tickets/split-review-repair-mutation-rows.md`, `specs/exact-prospective-landing/tickets/normalize-standards-review-repair-records.md`
+Integration surfaces: producer adapter-consumer declarations -> `specs/exact-prospective-landing/tickets/close-adapter-blocker-metadata.md`; executable-mode regression owner -> `specs/exact-prospective-landing/tickets/preserve-executable-spec-mode.md`; verification-only repair records -> removal of `specs/exact-prospective-landing/tickets/normalize-review-repair-ticket-metadata.md`, `specs/exact-prospective-landing/tickets/split-review-repair-mutation-rows.md`, and `specs/exact-prospective-landing/tickets/normalize-standards-review-repair-records.md`
 Contracts: the four producer tickets' declared adapter-consumer basenames cross into `specs/exact-prospective-landing/tickets/close-adapter-blocker-metadata.md`, asserted by SR1 against those real producer records; the `core.filemode=false` mode-identity behavior crosses the existing landing implementation into `specs/exact-prospective-landing/tickets/preserve-executable-spec-mode.md`, asserted by SR2 against `TestLandPublishesExecutableSpecModeAndReconcilesClean`
 
 ## What to build
@@ -10,7 +10,7 @@ Contracts: the four producer tickets' declared adapter-consumer basenames cross 
 Fold the useful factual corrections into the two substantive repair tickets. Keep
 only the blocker-set behavior in the adapter metadata ticket, and bind the
 executable-mode ticket's MR3 to its real `core.filemode=false` landing test. Delete
-the two verification-only meta-ticket files: the tree has no lifecycle or
+the three verification-only meta-ticket files: the tree has no lifecycle or
 conformance owner for their claimed review/shape probes, so retaining them would
 preserve circular or invented evidence. Do not add a new harness or gate.
 
