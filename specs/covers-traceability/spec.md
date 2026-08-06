@@ -1,6 +1,6 @@
 # Spec→ticket coverage traceability
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed conversation of 2026-08-05 (grill: mechanism, row IDs, enforcement loci, rollout, local rows, grammar)
 

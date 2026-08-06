@@ -3,6 +3,7 @@ package specbuild_test
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -186,6 +187,174 @@ func TestTicketContractsAnchoredToTheOwnershipFence(t *testing.T) {
 				t.Errorf("ContractsAnchored() = %v, want %v", got, row.anchored)
 			}
 		})
+	}
+}
+
+// [PT1] ParseTicket captures `(covers <ID>)` and `(covers local)` after a
+// row's ID bracket, exposed per row on Ticket, aligned index-for-index with
+// Rows.
+func TestParseTicketCapturesCoversAnnotations(t *testing.T) {
+	body := "# Bridge rows to their map coverage\n" +
+		"\nOwnership fence: `internal/specbuild`\n" +
+		"\n## Acceptance\n" +
+		"\n- [ ] [CV1] (covers R1) a row covering a map ID.\n" +
+		"- [ ] [CV2] (covers local) a ticket-time discovery row.\n" +
+		"- [ ] [CV3] a row with no annotation at all.\n"
+	specPath, _ := ticketFixture(t, body)
+
+	parsed, err := specbuild.ParseTicket(specPath, "one.md")
+	if err != nil {
+		t.Fatalf("ParseTicket: %v", err)
+	}
+	if want := []string{"CV1", "CV2", "CV3"}; !slices.Equal(parsed.Rows, want) {
+		t.Fatalf("Rows = %q, want %q", parsed.Rows, want)
+	}
+	if want := []string{"R1", "local", ""}; !slices.Equal(parsed.Covers, want) {
+		t.Errorf("Covers = %q, want %q", parsed.Covers, want)
+	}
+}
+
+// [PT2] A missing or malformed annotation parses as unannotated rather than
+// refusing the parse; only a well-formed annotation resolves to a value.
+//
+// [RG1] `AB` (no digits) and `A1B2` (digits before the trailing letter) both
+// fail the one exported row-ID grammar the same way, so both parse as
+// unannotated exactly like any other malformed operand.
+//
+// [RG3] A backticked or bracketed payload is not a bare operand under the
+// grammar either — the backticks and brackets are part of the captured text
+// coversValue must match whole, and it does not — so both parse as
+// unannotated.
+func TestParseTicketMalformedCoversParsesAsUnannotated(t *testing.T) {
+	for _, row := range []struct{ name, annotation string }{
+		{name: "no annotation", annotation: ""},
+		{name: "empty parens", annotation: "(covers)"},
+		{name: "lowercase ID", annotation: "(covers r1)"},
+		{name: "two tokens", annotation: "(covers R1 R2)"},
+		{name: "wrong keyword", annotation: "(cover R1)"},
+		{name: "unclosed paren", annotation: "(covers R1"},
+		{name: "letters only, no digits", annotation: "(covers AB)"},
+		{name: "digits before trailing letter", annotation: "(covers A1B2)"},
+		{name: "backticked payload", annotation: "(covers `AB1`)"},
+		{name: "bracketed payload", annotation: "(covers [AB1])"},
+	} {
+		t.Run(row.name, func(t *testing.T) {
+			body := "# Malformed covers stays unannotated\n" +
+				"\nOwnership fence: `internal/specbuild`\n" +
+				"\n- [ ] [CV1] " + row.annotation + " the row still parses.\n"
+			specPath, _ := ticketFixture(t, body)
+
+			parsed, err := specbuild.ParseTicket(specPath, "one.md")
+			if err != nil {
+				t.Fatalf("ParseTicket refused a malformed annotation: %v", err)
+			}
+			if want := []string{""}; !slices.Equal(parsed.Covers, want) {
+				t.Errorf("Covers = %q, want %q", parsed.Covers, want)
+			}
+		})
+	}
+}
+
+// [RG2] A row carrying a second `(covers ...)` chained immediately after the
+// first — only whitespace between them — is a compound malformed row, not a
+// first-wins pick: it parses as unannotated exactly like any other malformed
+// operand, so it refuses at assign under an opted-in spec the same way a
+// missing annotation would rather than silently taking R1.
+func TestParseTicketChainedCoversAnnotationsParseAsUnannotated(t *testing.T) {
+	body := "# Two annotations is a malformed row\n" +
+		"\nOwnership fence: `internal/specbuild`\n" +
+		"\n- [ ] [CV1] (covers R1) (covers R2) two annotations on one row.\n"
+	specPath, _ := ticketFixture(t, body)
+
+	parsed, err := specbuild.ParseTicket(specPath, "one.md")
+	if err != nil {
+		t.Fatalf("ParseTicket refused a compound covers row: %v", err)
+	}
+	if want := []string{""}; !slices.Equal(parsed.Covers, want) {
+		t.Errorf("Covers = %q, want %q", parsed.Covers, want)
+	}
+}
+
+// [AN1] A `(covers ...)` mention that is not bracket-adjacent is prose, not an
+// annotation: the row parses as unannotated even though the text is
+// well-formed and would parse as a valid annotation if it were anchored.
+func TestParseTicketProseCoversMentionParsesAsUnannotated(t *testing.T) {
+	body := "# A prose mention is not an annotation\n" +
+		"\nOwnership fence: `internal/specbuild`\n" +
+		"\n- [ ] [CV1] the grammar for this field is `(covers AB1)` and is documented elsewhere.\n"
+	specPath, _ := ticketFixture(t, body)
+
+	parsed, err := specbuild.ParseTicket(specPath, "one.md")
+	if err != nil {
+		t.Fatalf("ParseTicket: %v", err)
+	}
+	if want := []string{""}; !slices.Equal(parsed.Covers, want) {
+		t.Errorf("Covers = %q, want %q", parsed.Covers, want)
+	}
+}
+
+// [AN3] A bracket-adjacent annotation still annotates even when a distant,
+// prose-separated `(covers ...)` mention appears later in the same row: the
+// anchored first occurrence wins and the distant one is simply ignored, never
+// chained against.
+func TestParseTicketBracketAdjacentCoversIgnoresADistantProseMention(t *testing.T) {
+	body := "# The anchored annotation ignores a distant mention\n" +
+		"\nOwnership fence: `internal/specbuild`\n" +
+		"\n- [ ] [CV1] (covers R1) see also the unrelated example `(covers R2)` in the docs.\n"
+	specPath, _ := ticketFixture(t, body)
+
+	parsed, err := specbuild.ParseTicket(specPath, "one.md")
+	if err != nil {
+		t.Fatalf("ParseTicket: %v", err)
+	}
+	if want := []string{"R1"}; !slices.Equal(parsed.Covers, want) {
+		t.Errorf("Covers = %q, want %q", parsed.Covers, want)
+	}
+}
+
+// An R-range row carries no per-row provenance for an annotation to attach
+// to, so every row the range expands to is unannotated regardless of any
+// covers text on the range line.
+func TestParseTicketRangeRowsCarryNoCoversAnnotation(t *testing.T) {
+	body := "# Range rows stay unannotated\n" +
+		"\nOwnership fence: `internal/specbuild`\n" +
+		"\n- [ ] [R10-R12] (covers R1) a range line naming an annotation anyway.\n"
+	specPath, _ := ticketFixture(t, body)
+
+	parsed, err := specbuild.ParseTicket(specPath, "one.md")
+	if err != nil {
+		t.Fatalf("ParseTicket: %v", err)
+	}
+	if want := []string{"R10", "R11", "R12"}; !slices.Equal(parsed.Rows, want) {
+		t.Fatalf("Rows = %q, want %q", parsed.Rows, want)
+	}
+	if want := []string{"", "", ""}; !slices.Equal(parsed.Covers, want) {
+		t.Errorf("Covers = %q, want %q", parsed.Covers, want)
+	}
+}
+
+// [PT3] Digest already hashes the full file, so an edit to only the covers
+// annotation moves it: a regression control on that property.
+func TestParseTicketDigestChangesWithCoversEdit(t *testing.T) {
+	base := "# Digest moves with a covers edit\n" +
+		"\nOwnership fence: `internal/specbuild`\n" +
+		"\n- [ ] [CV1] (covers %s) a row whose annotation changes.\n"
+	specPathA, _ := ticketFixture(t, fmt.Sprintf(base, "R1"))
+	specPathB, _ := ticketFixture(t, fmt.Sprintf(base, "R2"))
+
+	parsedA, err := specbuild.ParseTicket(specPathA, "one.md")
+	if err != nil {
+		t.Fatalf("ParseTicket A: %v", err)
+	}
+	parsedB, err := specbuild.ParseTicket(specPathB, "one.md")
+	if err != nil {
+		t.Fatalf("ParseTicket B: %v", err)
+	}
+	if parsedA.Covers[0] == parsedB.Covers[0] {
+		t.Fatalf("fixture did not vary the covers annotation: both %q", parsedA.Covers[0])
+	}
+	if parsedA.Digest == parsedB.Digest {
+		t.Errorf("Digest unchanged across a covers-only edit: both %q", parsedA.Digest)
 	}
 }
 

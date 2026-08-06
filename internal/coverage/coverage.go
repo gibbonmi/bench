@@ -3,13 +3,16 @@
 // spec's state and rows as TOON; `--check` validates the map (canonical header,
 // five-cell rows, non-empty cells, story references against the exact declared
 // story set, historical opt-out) and requires a map at all unless the spec is
-// marked historical. The validation phrasings are load-bearing — downstream
-// consumers match them by substring — so this is the one validator for the
-// convention.
+// marked historical. A map may opt into per-row IDs by leading the header with a
+// `row` column; an opted-in map's IDs are grammar-checked, spec-local unique, and
+// exported to other packages via ParseSpec. The validation phrasings are
+// load-bearing — downstream consumers match them by substring — so this is the
+// one validator for the convention.
 package coverage
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -56,23 +59,64 @@ var (
 // row validation (a mapped-but-historical state).
 const historicalMarker = "<!-- coverage-map: historical -->"
 
-var fieldNames = [5]string{"story", "behavior", "seam", "red signal", "why it catches the failure"}
+var fieldNames5 = [5]string{"story", "behavior", "seam", "red signal", "why it catches the failure"}
+var fieldNames6 = [6]string{"row", "story", "behavior", "seam", "red signal", "why it catches the failure"}
+
+// RowIDPattern is the one row-ID grammar: an uppercase tag plus a number. It is
+// exported so a covers annotation in internal/specbuild composes this exact
+// pattern instead of restating it — the map's leading `row` cell and the ID a
+// covers annotation may name can never diverge, because there is only one
+// source. ParseTicket's own row IDs (the `[...]` bracket a ticket row is filed
+// under) are a separate, unconstrained `[^]]+` grammar; they do not use this
+// pattern, and a covers annotation names a coverage-map row ID, not a ticket
+// row ID.
+const RowIDPattern = `[A-Z]+[0-9]+`
+
+// rowIDRe anchors RowIDPattern to a whole cell, spec-local unique.
+var rowIDRe = regexp.MustCompile(`^` + RowIDPattern + `$`)
 
 type dataRow struct {
 	ncells int
-	all    [5]string // c[1..5], trimmed; empty beyond ncells
+	all    [6]string // c[1..6] (c[1..5] when not opted in), trimmed; empty beyond ncells
 }
 
 // parsed is the result of one scan of a spec: whether the map header was seen, the
-// historical opt-out, whether the parsed header matched the canonical one, the
-// declared story numbers, and the data rows.
+// historical opt-out, whether the parsed header matched the canonical one, whether
+// that header opted into row IDs, the declared story numbers, and the data rows.
 type parsed struct {
 	seen       bool
 	historical bool
 	gotHeader  bool
 	headerOK   bool
+	optIn      bool
 	storyNums  map[int]bool
 	dataRows   []dataRow
+}
+
+// width reports the cell count an opted-in map's rows must have (6) versus a legacy
+// map's (5); fields and storyOffset shift in lockstep with the same choice.
+func (p parsed) width() int {
+	if p.optIn {
+		return 6
+	}
+	return 5
+}
+
+// fields names the cells at width(), in order, for empty-cell and count violations.
+func (p parsed) fields() []string {
+	if p.optIn {
+		return fieldNames6[:]
+	}
+	return fieldNames5[:]
+}
+
+// storyOffset is the index of the story cell: 0 for a legacy row, 1 when a leading
+// row-ID cell has shifted every other field one place right.
+func (p parsed) storyOffset() int {
+	if p.optIn {
+		return 1
+	}
+	return 0
 }
 
 func parse(content []byte) parsed {
@@ -137,14 +181,20 @@ func (p *parsed) processMapLine(raw string) {
 	}
 	if !p.gotHeader {
 		p.gotHeader = true
-		p.headerOK = strings.ToLower(strings.Join(cells, "|")) == "story|behavior|seam|red signal|why it catches the failure"
+		switch strings.ToLower(strings.Join(cells, "|")) {
+		case "story|behavior|seam|red signal|why it catches the failure":
+			p.headerOK = true
+		case "row|story|behavior|seam|red signal|why it catches the failure":
+			p.headerOK = true
+			p.optIn = true
+		}
 		return
 	}
 	if allSep {
 		return
 	}
 	dr := dataRow{ncells: len(cells)}
-	for i := 0; i < 5 && i < len(cells); i++ {
+	for i := 0; i < 6 && i < len(cells); i++ {
 		dr.all[i] = cells[i]
 	}
 	p.dataRows = append(p.dataRows, dr)
@@ -164,15 +214,32 @@ func State(p parsed) string {
 }
 
 // Rows returns story/seam/red_signal per data row for a mapped spec; nil otherwise.
+// The row-ID cell of an opted-in map, if any, is not part of this schema.
 func Rows(p parsed) [][]string {
 	if State(p) != "mapped" {
 		return nil
 	}
+	off := p.storyOffset()
 	var rows [][]string
 	for _, r := range p.dataRows {
-		rows = append(rows, []string{r.all[0], r.all[2], r.all[3]})
+		rows = append(rows, []string{r.all[off], r.all[off+2], r.all[off+3]})
 	}
 	return rows
+}
+
+// rowIDs returns the leading row-ID cell of each data row, in map order, for an
+// opted-in mapped spec; nil for a legacy map or a spec that is not mapped. It backs
+// ParseSpec, the package's one exported entry point for callers outside the
+// package, which cannot construct a parsed value themselves.
+func rowIDs(p parsed) []string {
+	if State(p) != "mapped" || !p.optIn {
+		return nil
+	}
+	ids := make([]string, len(p.dataRows))
+	for i, r := range p.dataRows {
+		ids[i] = r.all[0]
+	}
+	return ids
 }
 
 // Check returns one violation message per problem. A historical spec (mapped or
@@ -195,19 +262,31 @@ func Check(p parsed) []string {
 	if len(p.dataRows) == 0 {
 		return []string{"coverage map has no data rows"}
 	}
+	width, fields, storyOff := p.width(), p.fields(), p.storyOffset()
+	seenIDs := make(map[string]int) // row id -> first row number that used it
 	var v []string
 	for idx, r := range p.dataRows {
 		rn := idx + 1
-		if r.ncells != 5 {
-			v = append(v, fmt.Sprintf("coverage map row %d has %d cells (want 5)", rn, r.ncells))
+		if r.ncells != width {
+			v = append(v, fmt.Sprintf("coverage map row %d has %d cells (want %d)", rn, r.ncells, width))
 			continue
 		}
-		for i := 0; i < 5; i++ {
+		for i := 0; i < width; i++ {
 			if r.all[i] == "" {
-				v = append(v, fmt.Sprintf("coverage map row %d has an empty '%s' cell", rn, fieldNames[i]))
+				v = append(v, fmt.Sprintf("coverage map row %d has an empty '%s' cell", rn, fields[i]))
 			}
 		}
-		story := parenRe.ReplaceAllString(r.all[0], "")
+		if p.optIn && r.all[0] != "" {
+			id := r.all[0]
+			if !rowIDRe.MatchString(id) {
+				v = append(v, fmt.Sprintf("coverage map row %d has a malformed row id '%s'", rn, id))
+			} else if first, dup := seenIDs[id]; dup {
+				v = append(v, fmt.Sprintf("coverage map row %d has a duplicate row id '%s' (first used at row %d)", rn, id, first))
+			} else {
+				seenIDs[id] = rn
+			}
+		}
+		story := parenRe.ReplaceAllString(r.all[storyOff], "")
 		if story == "" || edgeRe.MatchString(story) {
 			continue
 		}
@@ -290,6 +369,20 @@ func isDashes(s string) bool {
 // checkOKLine is the one construction for a --check pass line: the `ok: ` AXI
 // prefix over a message that names why the check passed, never silence.
 func checkOKLine(msg string) string { return fmt.Sprintf("ok: %s\n", msg) }
+
+// ParseSpec reads and parses the coverage map at path, the package's one exported
+// entry point for callers that cannot construct the unexported parsed type
+// themselves: assign and promote read a spec's opt-in verdict, ordered row IDs, and
+// Check violations through here rather than re-deriving map structure. ids is nil
+// when the map is not opted into row IDs (legacy or absent).
+func ParseSpec(path string) (optIn bool, ids []string, violations []string, err error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return false, nil, nil, err
+	}
+	p := parse(content)
+	return p.optIn, rowIDs(p), Check(p), nil
+}
 
 // Command implements `bench coverage [--check] <spec.md | slug>`.
 func Command(args []string) (string, int) {

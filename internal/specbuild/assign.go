@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gibbonmi/bench/internal/coverage"
 )
 
 // Assign creates or resumes one owned worktree for ticket in slug.
@@ -45,6 +47,9 @@ func (s *Service) Assign(ctx context.Context, slug, ticketArg, request string) (
 	}
 	if !ticket.ContractsAnchored() {
 		return Assignment{}, Status{}, fmt.Errorf("spec build ticket %s declares a contract crossing no path in its ownership fence", filepath.Base(ticket.Path))
+	}
+	if err := requireCoversMapping(run.Spec, ticket); err != nil {
+		return Assignment{}, Status{}, err
 	}
 	requestID := digest(run.Run + "\x00" + request)
 	op, completed, err := s.beginOperation(&run, "assign", requestID, ticket.Digest)
@@ -99,15 +104,54 @@ func (s *Service) Assign(ctx context.Context, slug, ticketArg, request string) (
 }
 
 // Ticket is one parsed ticket file: its title, content digest, charged
-// acceptance rows, ownership fence, and declared contracts.
+// acceptance rows, ownership fence, declared contracts, and per-row covers
+// mapping (aligned index-for-index with Rows; empty string means unannotated).
 type Ticket struct {
 	Path, Title string
 	Digest      string
 	Rows, Fence []string
 	Contracts   string
+	Covers      []string
 }
 
-var ticketRow, packageName, rowRange = regexp.MustCompile(`^\s*-\s+\[[ xX]\]\s+\[([^]]+)\]`), regexp.MustCompile(`\binternal/[A-Za-z0-9_-]+\b`), regexp.MustCompile(`^(R)([0-9]+)-R([0-9]+)$`)
+var ticketRow, packageName, rowRange = regexp.MustCompile(`^\s*-\s+\[[ xX]\]\s+\[([^]]+)\](.*)$`), regexp.MustCompile(`\binternal/[A-Za-z0-9_-]+\b`), regexp.MustCompile(`^(R)([0-9]+)-R([0-9]+)$`)
+
+// coversAnnotation matches a `(covers <ID>)` or `(covers local)` annotation
+// anchored at the start of the text it is given: only whitespace may precede
+// it. A mention elsewhere in a row's trailing prose is not this annotation —
+// it is text the row happens to contain. coversValue constrains the captured
+// operand to coverage's one exported row-ID grammar or the `local` keyword;
+// anything else (an empty operand, more than one token, a lowercase ID, a
+// backticked or bracketed payload) leaves the row unannotated rather than
+// refusing the parse, per the ContractsAnchored precedent: policy refuses,
+// the parser does not.
+var coversAnnotation, coversValue = regexp.MustCompile(`^\(covers\s+([^()]*)\)`), regexp.MustCompile(`^(local|` + coverage.RowIDPattern + `)$`)
+
+// parseCovers extracts the covers annotation from the text following a row's
+// ID bracket, or "" if the bracket is not immediately followed by one (only
+// whitespace between), a second one is chained immediately after the first,
+// or the operand fails the ID grammar. Chaining a second `(covers ...)` right
+// after the first is malformed the same way an unparseable operand is: it
+// parses as unannotated rather than taking the first match, so a compound row
+// cannot silently claim only its first annotation. A distant mention later in
+// the row's prose plays no part in this at all — it never anchors, so it
+// cannot chain.
+func parseCovers(rest string) string {
+	trimmed := strings.TrimLeft(rest, " \t")
+	match := coversAnnotation.FindStringSubmatch(trimmed)
+	if match == nil {
+		return ""
+	}
+	after := strings.TrimLeft(trimmed[len(match[0]):], " \t")
+	if coversAnnotation.MatchString(after) {
+		return ""
+	}
+	value := strings.TrimSpace(match[1])
+	if !coversValue.MatchString(value) {
+		return ""
+	}
+	return value
+}
 
 // contractOperand matches one backticked operand of a Contracts crossing.
 var contractOperand = regexp.MustCompile("`([^`]+)`")
@@ -132,6 +176,94 @@ func (t Ticket) ContractsAnchored() bool {
 		}
 	}
 	return false
+}
+
+// requireCoversMapping refuses a ticket whose charged rows do not each name a
+// row of an opted-in spec's coverage map. A spec whose map is legacy or absent
+// has nothing to name, and its tickets pass through untouched; an opted-in map
+// the checker rejects refuses rather than resolving against IDs it just called
+// invalid, so opting in cannot be undone by breaking the map. Like
+// ContractsAnchored this is assignment policy over a permissive parse: an
+// unannotated row is one the parser could not read a valid `(covers <ID>)` from,
+// whether the author wrote nothing, wrote something malformed, or wrote it on a
+// range line whose expanded rows carry no provenance to attach it to.
+func requireCoversMapping(specPath string, ticket Ticket) error {
+	optIn, ids, violations, err := coverage.ParseSpec(specPath)
+	if err != nil {
+		return fmt.Errorf("spec build assign requires a readable spec: %w", err)
+	}
+	if !optIn {
+		return nil
+	}
+	if len(violations) > 0 {
+		return fmt.Errorf("spec build assign requires the spec's opted-in coverage map to validate, but it reports %s", violations[0])
+	}
+	declared := make(map[string]bool, len(ids))
+	for _, id := range ids {
+		declared[id] = true
+	}
+	name := filepath.Base(ticket.Path)
+	for i, row := range ticket.Rows {
+		covers := ""
+		if i < len(ticket.Covers) {
+			covers = ticket.Covers[i]
+		}
+		switch {
+		case covers == "":
+			return fmt.Errorf("spec build assign requires a covers annotation on acceptance row %s of ticket %s under an opted-in coverage map", row, name)
+		// `local` is the marker for a ticket-time discovery or repair row, which
+		// no map row predicted; review grades whether the claim is honest.
+		case covers == "local":
+		case !declared[covers]:
+			return fmt.Errorf("spec build assign requires acceptance row %s of ticket %s to name a declared coverage map row, but %s names none", row, name, covers)
+		}
+	}
+	return nil
+}
+
+// requireCoversTotality refuses a composition that leaves a row of an opted-in
+// spec's coverage map with nothing claiming to prove it. Where assign grades one
+// ticket in isolation, totality is a property of the whole composition, so it can
+// only be answered here — and it is answered over exactly the tickets the
+// integrated assignments record, re-parsed and pinned to the digest assign
+// captured. The tickets directory is never read as a set: a file nobody assigned
+// carries no evidence, and letting one contribute would reopen at the directory
+// level the untested-behavior gap this check exists to close. `local` rows count
+// for nothing here by construction — they claim a ticket-time discovery no map row
+// predicted — while two rows covering one ID are legitimate defense in depth.
+func requireCoversTotality(run record) error {
+	optIn, ids, violations, err := coverage.ParseSpec(run.Spec)
+	if err != nil {
+		return fmt.Errorf("spec build promote requires a readable spec: %w", err)
+	}
+	if !optIn {
+		return nil
+	}
+	if len(violations) > 0 {
+		return fmt.Errorf("spec build promote requires the spec's opted-in coverage map to validate, but it reports %s", violations[0])
+	}
+	covered := make(map[string]bool, len(ids))
+	for _, assigned := range run.Assignments {
+		current, err := validateIntegrationTicket(run, assigned)
+		if err != nil {
+			return fmt.Errorf("spec build promote requires every integrated assignment's ticket unchanged since assign: %w", err)
+		}
+		for _, covers := range current.Covers {
+			if covers != "" && covers != "local" {
+				covered[covers] = true
+			}
+		}
+	}
+	var uncovered []string
+	for _, id := range ids {
+		if !covered[id] {
+			uncovered = append(uncovered, id)
+		}
+	}
+	if len(uncovered) > 0 {
+		return fmt.Errorf("spec build promote requires every coverage map row covered by an integrated assignment's ticket, but nothing covers %s", strings.Join(uncovered, ", "))
+	}
+	return nil
 }
 
 // ParseTicket resolves arg against specPath's tickets directory and parses the
@@ -165,8 +297,19 @@ func ParseTicket(specPath, arg string) (Ticket, error) {
 		if strings.HasPrefix(line, "# ") && result.Title == "" {
 			result.Title = strings.TrimSpace(strings.TrimPrefix(line, "# "))
 		}
-		if m := ticketRow.FindStringSubmatch(line); len(m) == 2 {
-			result.Rows = append(result.Rows, expandRows(m[1])...)
+		if m := ticketRow.FindStringSubmatch(line); len(m) == 3 {
+			expanded := expandRows(m[1])
+			result.Rows = append(result.Rows, expanded...)
+			// The annotation attaches to a single-ID row only: an expanded
+			// R-range carries no per-row provenance to attach it to, so every
+			// expanded row is simply unannotated.
+			if len(expanded) == 1 {
+				result.Covers = append(result.Covers, parseCovers(m[2]))
+			} else {
+				for range expanded {
+					result.Covers = append(result.Covers, "")
+				}
+			}
 		}
 		if strings.HasPrefix(line, "Ownership fence:") {
 			result.Fence = append(result.Fence, listValue(strings.TrimPrefix(line, "Ownership fence:"))...)
@@ -381,6 +524,11 @@ func (s *Service) Promote(ctx context.Context, slug string) (Status, error) {
 		if assigned.Integrated == "" || !assigned.Released {
 			return Status{}, errors.New("spec build promotion requires every assignment integrated and released")
 		}
+	}
+	// Totality runs before the prospective gate owner executes, so a composition
+	// that leaves a mapped behavior unproven costs no gate run to say no.
+	if err := requireCoversTotality(run); err != nil {
+		return run.status(), err
 	}
 	if err := s.validatePromotionEvidence(run); err != nil {
 		return run.status(), err

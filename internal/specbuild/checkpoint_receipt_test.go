@@ -498,9 +498,9 @@ func TestIntegrateJournalRecoversCandidateCASBeforeState(t *testing.T) {
 		})
 	}
 }
-func checkpointedReleaseFixture(t *testing.T) checkpointFixture {
+func checkpointedReleaseFixture(t *testing.T, configure ...func(string)) checkpointFixture {
 	t.Helper()
-	fixture := newCheckpointFixture(t)
+	fixture := newCheckpointFixture(t, configure...)
 	if _, err := fixture.service.Checkpoint(t.Context(), "build demo", fixture.assigned.ID, writeCheckpointReceipt(t, fixture.receipt, "\n")); err != nil {
 		t.Fatalf("Checkpoint: %v", err)
 	}

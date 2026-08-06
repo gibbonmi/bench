@@ -17,8 +17,13 @@ when they need the schema off the phase path.
 
 Each row ties a user story to one observable behavior at a chosen seam, with
 these fields: `story`, `behavior`, `seam`, `red signal`, and
-`why it catches the failure`. The red signal is the command or test that has
-already been run and failed because the mapped behavior is absent or wrong. If
+`why it catches the failure`. An optional leading `row` column opts the spec
+into ticket covers traceability: a 6-cell map whose header leads with `row`
+gives each row a spec-local ID — an uppercase tag plus a number, unique within
+the spec's map — that ticket acceptance rows name in their `covers`
+annotations, while a 5-cell map grades exactly as today. The red signal is
+the command or test that has already been run and failed because the mapped
+behavior is absent or wrong. If
 the behavior is already covered or cannot start red, say so in the row instead
 of pretending it is TDD coverage.
 

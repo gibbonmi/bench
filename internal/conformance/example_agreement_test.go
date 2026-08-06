@@ -31,8 +31,9 @@ var ticketExampleDoc = filepath.Join(".agents", "skills", "bench-craft-tickets",
 // plausible turns these comparisons red, where a self-derived expectation would
 // follow the drift and stay green.
 var (
-	taughtExampleRows  = []string{"RC1", "RC2"}
-	taughtExampleFence = []string{"internal/status", "internal/render/rows.go"}
+	taughtExampleRows   = []string{"RC1", "RC2"}
+	taughtExampleFence  = []string{"internal/status", "internal/render/rows.go"}
+	taughtExampleCovers = []string{"CJ1", "CJ2"}
 )
 
 // The mutations heading is matched at any depth so a ticket that nests the
@@ -145,6 +146,7 @@ func gradeTicketExample(ticket specbuild.Ticket, block string) []string {
 	}
 	diags = append(diags, ticketExampleFieldDiag("acceptance row IDs", ticket.Rows, taughtExampleRows)...)
 	diags = append(diags, ticketExampleFieldDiag("ownership fence entries", ticket.Fence, taughtExampleFence)...)
+	diags = append(diags, ticketExampleFieldDiag("per-row covers annotations", ticket.Covers, taughtExampleCovers)...)
 	if !ticketExampleBlockedByLine.MatchString(block) {
 		diags = append(diags, fmt.Sprintf("%sthe marked example carries no `Blocked by:` line with a value, so the taught blocker field is demonstrated by nothing", ticketExampleDiag))
 	}
@@ -247,6 +249,12 @@ func TestExampleAgreementParsesAuthoredLiterals(t *testing.T) {
 		t.Fatalf("dropped fence entry: want the fence mismatch diagnostic, got %v", diags)
 	}
 
+	stripped := replaceOnce(t, doc, "(covers CJ1) ", "")
+	diags = checkExampleAgreement(ticketExampleRoot(t, stripped))
+	if !containsDiagnostic(diags, "per-row covers annotations") {
+		t.Fatalf("stripped covers annotation: want the covers mismatch diagnostic, got %v", diags)
+	}
+
 	unbound := replaceOnce(t, doc, "\n| RC2 | return no recovery action for a cancelled record", "\n")
 	diags = checkExampleAgreement(ticketExampleRoot(t, unbound))
 	if !containsDiagnostic(diags, `names no mutation for acceptance ID "RC2"`) {
@@ -333,7 +341,7 @@ func TestExampleAgreementRejectsWrappedFields(t *testing.T) {
 		t.Fatalf("wrapped fence: want the fence mismatch diagnostic, got %v", diags)
 	}
 
-	unlabeled := replaceOnce(t, doc, "- [ ] [RC2] status renders", "- [ ] status renders")
+	unlabeled := replaceOnce(t, doc, "- [ ] [RC2] (covers CJ2) status renders", "- [ ] status renders")
 	diags = checkExampleAgreement(ticketExampleRoot(t, unlabeled))
 	if !containsDiagnostic(diags, "distinct acceptance ID(s)") {
 		t.Fatalf("unlabeled row: want the too-few-IDs diagnostic, got %v", diags)

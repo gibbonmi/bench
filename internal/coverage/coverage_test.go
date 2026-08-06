@@ -13,6 +13,7 @@ import (
 
 const stories = "## User stories\n1. As a, I want b, so c.\n2. As d, I want e, so f.\n3. As g, I want h, so i.\n"
 const hdr = "| story | behavior | seam | red signal | why it catches the failure |\n|---|---|---|---|---|\n"
+const hdr6 = "| row | story | behavior | seam | red signal | why it catches the failure |\n|---|---|---|---|---|---|\n"
 
 func spec(body string) parsed { return parse([]byte(body)) }
 
@@ -53,12 +54,79 @@ func TestCheck(t *testing.T) {
 		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr + "| 1 | b |  | r | w |\n", "coverage map row 1 has an empty 'seam' cell"},
 		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr + "| 9 | b | s | r | w |\n", "references story 9, which the spec does not declare (has: 1, 2, 3)"},
 		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr + "| x | b | s | r | w |\n", "has an unrecognized story reference 'x'"},
+		// A 6-cell map is opt-in; its rows carry a leading row-ID cell that Check
+		// validates in addition to the legacy fields.
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr6 + "| AB1 | 1 | b | s | r | w |\n| AB1 | 1 | b | s | r | w |\n",
+			"coverage map row 2 has a duplicate row id 'AB1' (first used at row 1)"},
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr6 + "|  | 1 | b | s | r | w |\n",
+			"coverage map row 1 has an empty 'row' cell"},
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr6 + "| ab-1 | 1 | b | s | r | w |\n",
+			"coverage map row 1 has a malformed row id 'ab-1'"},
+		{"# b\n\n" + stories + "\n### Acceptance coverage map\n" + hdr6 + "| AB1 | 1 | b | s | r | w |\n| not-an-id | 2 | b | s | r | w |\n",
+			"coverage map row 2 has a malformed row id 'not-an-id'"},
 	}
 	for _, c := range cases {
 		v := Check(spec(c.body))
 		if len(v) == 0 || !strings.Contains(strings.Join(v, "\n"), c.want) {
 			t.Errorf("Check violations %v do not contain %q", v, c.want)
 		}
+	}
+}
+
+// TestCheckOptIn covers the 6-cell canonical header on its own: a valid opt-in map
+// has no violations, and its Rows/State behave exactly as a legacy map's.
+func TestCheckOptIn(t *testing.T) {
+	p := spec("# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdr6 +
+		"| AB1 | 1 | does x | cli seam | cmd fails | catches z |\n" +
+		"| CD2 | 2 | does y | gate | already covered | catches w |\n")
+	if v := Check(p); len(v) != 0 {
+		t.Errorf("valid opt-in map violations = %v, want none", v)
+	}
+	if State(p) != "mapped" {
+		t.Fatalf("state = %q, want mapped", State(p))
+	}
+	want := [][]string{{"1", "cli seam", "cmd fails"}, {"2", "gate", "already covered"}}
+	if got := Rows(p); !reflect.DeepEqual(got, want) {
+		t.Errorf("Rows = %v, want %v", got, want)
+	}
+}
+
+// TestParseSpecOptIn drives ParseSpec, the package's exported entry point, over a
+// 6-cell map on disk: the opt-in verdict, the ordered row IDs, and no violations.
+func TestParseSpecOptIn(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "spec.md")
+	body := "# t\n\n" + stories + "\n### Acceptance coverage map\n" + hdr6 +
+		"| AB1 | 1 | does x | cli seam | cmd fails | catches z |\n" +
+		"| CD2 | 2 | does y | gate | already covered | catches w |\n"
+	mustWrite(t, path, body)
+
+	optIn, ids, violations, err := ParseSpec(path)
+	if err != nil {
+		t.Fatalf("ParseSpec: %v", err)
+	}
+	if !optIn {
+		t.Error("optIn = false, want true for a 6-cell map")
+	}
+	if want := []string{"AB1", "CD2"}; !reflect.DeepEqual(ids, want) {
+		t.Errorf("ids = %v, want %v", ids, want)
+	}
+	if len(violations) != 0 {
+		t.Errorf("violations = %v, want none", violations)
+	}
+
+	// A legacy 5-cell map reports not opted in, with nil IDs.
+	legacyPath := filepath.Join(dir, "legacy.md")
+	mustWrite(t, legacyPath, "# t\n\n"+stories+"\n### Acceptance coverage map\n"+hdr+"| 1 | b | s | r | w |\n")
+	optIn, ids, _, err = ParseSpec(legacyPath)
+	if err != nil {
+		t.Fatalf("ParseSpec: %v", err)
+	}
+	if optIn {
+		t.Error("optIn = true, want false for a 5-cell map")
+	}
+	if ids != nil {
+		t.Errorf("ids = %v, want nil for a legacy map", ids)
 	}
 }
 

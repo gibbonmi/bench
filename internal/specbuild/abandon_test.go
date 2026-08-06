@@ -741,9 +741,9 @@ func TestPromoteRecomposesUnreleasedRunOnMovedTip(t *testing.T) {
 	}
 }
 
-func reviewedPromotionFixture(t *testing.T) checkpointFixture {
+func reviewedPromotionFixture(t *testing.T, configure ...func(string)) checkpointFixture {
 	t.Helper()
-	fixture := checkpointedReleaseFixture(t)
+	fixture := checkpointedReleaseFixture(t, configure...)
 	if _, err := fixture.service.Integrate(t.Context(), "build demo", fixture.assigned.ID); err != nil {
 		t.Fatal(err)
 	}

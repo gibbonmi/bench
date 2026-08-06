@@ -198,6 +198,15 @@ word.
   ticket-local: a short uppercase tag plus a number, unique within the ticket.
   Give every row its own explicit ID — only an `R`-prefixed ID range-expands
   (`[R1-R3]`), so any other tag written as a range stays one literal row.
+  Under a spec whose coverage map opts into row IDs (`craft-spec`'s leading
+  `row` column), every row also carries `(covers <ID>)` or `(covers local)`
+  after the row-ID bracket, naming exactly one map row — the mapping is 1:1.
+  `local` marks a ticket-time discovery or repair row: assign accepts it,
+  promote's totality ignores it, and review grades whether the marker is
+  honest. The annotation attaches to single-ID rows only, so a range line's
+  expanded rows are unannotated — and under an opted-in spec a row missing its
+  annotation refuses at assign, which is what keeps omission from dodging the
+  mapping.
 - **`Ownership fence:`** enumerates every path the ticket writes,
   comma-separated, each entry backticked. An entry is a path prefix: a package
   directory, or an exact file. Checkpoint enforcement is a whitelist, so a path
@@ -264,8 +273,8 @@ Users see a cancelled row, its reason, and the next recovery action.
 
 ## Acceptance
 
-- [ ] [RC1] status renders the cancelled row with its reason.
-- [ ] [RC2] status renders the recovery action beside a cancelled row.
+- [ ] [RC1] (covers CJ1) status renders the cancelled row with its reason.
+- [ ] [RC2] (covers CJ2) status renders the recovery action beside a cancelled row.
 
 ## Red mutations
 
@@ -277,7 +286,8 @@ Users see a cancelled row, its reason, and the next recovery action.
 <!-- ticket-example:end -->
 
 This is a verb-first, end-to-end outcome, written in the shape the parser
-accepts: distinct row IDs, every written path fenced, and one mutation per ID.
+accepts: distinct row IDs, a covers annotation per row, every written path
+fenced, and one mutation per ID.
 
 Bad:
 
