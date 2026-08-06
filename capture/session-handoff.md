@@ -2,33 +2,30 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` at pre-drain `77f048d5c44687544c37341fd92be233922a91b4`; 20 commits ahead of upstream before this commit
+Branch: `main` — HEAD `4523c7f`, one tracked handoff edit, 23 unpushed commits
 Spec: `specs/ft187-communication-surface-cut/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: the roadmap drain commit authors the current verdict
+Gate: the atomic ticket-closure commit passed the full gate in its exact prospective worktree; the main-worktree marker is stale after fast-forward
 
 ## State
 
-**Phase reached: roadmap capture drained and reconciled after FT195 retirement.**
+**Phase reached: FT187 implementation composed provisionally; recomposition pending.**
 
-Both implementation retros, all three parked ideas, and all four open learnings
-have explicit roadmap dispositions. FT169 now carries only its residual landing work;
-the retired `go-build-cache-footprint` spec and FT195 sequence entry are removed.
-FT197 owns Go-managed gate invocation and process lifetime. FT198 owns the
-reviewer-requested progressively loaded roadmap design, with `ROADMAP.md` as its
-concise index.
+The spec-build lifecycle is active on subject `52401e58eb49ffd29394452e0cef2c03ffb74456`.
+All FT187 assignments and review repairs are integrated and released. Main advanced to
+`4523c7f3eba36df9950a9f656aa0d608c8ced413` for the atomic ticket-closure checker and
+FT187 ticket migration, so promotion must first recompose the provisional candidate.
+No final review evidence is retained.
 
-Closed decisions stay closed: FT195's Go publication child owns the sealed
-transaction; the topology invariant is one all-package entry; artifact promotion
-is recorded by staged-entry consumption. The craft-tickets
-thinnest-independently-green slicing rule already landed at `1691017` and is not
-queued again. Three FT195 review judgments remain available for reviewer veto in
-the retained lifecycle record.
-
-Unpushed commits await the reviewer's push decision.
+Closed decisions stay closed: uniform prose anchors compose with FT156's
+`internal/anchors` registry; the structured-phase grammar remains bespoke; the prose
+cut carries five fixed reader cases and six measured shrinking passages. The required
+cross-harness semantic review remains `opus / low` and runs after recomposition. The
+assignment-time closure checker is implemented and full-gate green; it is not deferred
+to a later ticket.
 
 ## Next command
 
-`$bench-implement-spec`
+`GOMAXPROCS=2 GOFLAGS=-p=2 bench spec build promote ft187-communication-surface-cut`
 
 ## Shape
 
