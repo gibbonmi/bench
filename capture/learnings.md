@@ -1,5 +1,5 @@
 
-## 2026-08-06 — FT195 repair rounds: two ticket-authoring lessons
+## 2026-08-06 — FT195 repair rounds: two ticket-authoring lessons [open]
 
 What happened: the publication-transaction repair ticket charged prior-pair
 restoration rows but no residue row, so the delegate's signal handler leaked
@@ -18,7 +18,7 @@ Proposed rule change: none — both are covered by existing craft-spec
 edge-inventory classes and the review axis; this is a charge-quality
 reminder, not a rule gap.
 
-## 2026-08-06 — Reviewer verdict: fence-breadth smell is too cheap
+## 2026-08-06 — Reviewer verdict: fence-breadth smell is too cheap [open]
 
 What happened: the reviewer graded the transaction ticket's 4-directory fence
 a sizing failure, not a paid-for exception — the one-line justification is
@@ -37,7 +37,7 @@ Proposed rule change: as above; land via craft-synthesis after FT195
 promotes (reviewer-initiated, sign-off effectively given; exact wording
 still theirs to approve).
 
-## 2026-08-06 — Supersedes the thin-by-requirement proposal: simplify instead
+## 2026-08-06 — Supersedes the thin-by-requirement proposal: simplify instead [open]
 
 What happened: the reviewer rejected the width-buys-obligations design as
 adding complexity to an already-large skill; decision is simplification with
@@ -56,7 +56,7 @@ uncertainty, not fence size).
 Proposed rule change: as above, reviewer-initiated; land via craft-synthesis
 after FT195 promotes.
 
-## 2026-08-06 — Promote red: unregistered tests in a classified family
+## 2026-08-06 — Promote red: unregistered tests in a classified family [open]
 
 What happened: promote's prospective gate went red on
 TestSubjectPackageTopology — the artifact fixture package's executable
