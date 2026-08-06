@@ -13,7 +13,7 @@ entries, or `capture/retros/` has pending implementation retros. One run
 reconciles the roadmap against the tree, drains all three capture sources,
 refreshes the recommended sequence, and hands the reviewer one diff to approve.
 
-At entry, invoke `bench roadmap --context` exactly once. Its successful schema-3
+At entry, invoke `bench roadmap --context --full` exactly once. Its successful schema-3
 snapshot is the complete local evidence for every step below. Accept only
 `context.schema = 3`; every other schema stops the phase before any batch mutation.
 Do not guess recurrence facts from an older schema. If the query fails, stop the
