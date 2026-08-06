@@ -10,9 +10,10 @@ Contracts: the posture test-name enumeration crosses `internal/contract/surface/
 Candidate gate repair for promote's prospective red. `TestSubjectPackageTopology`
 (`internal/contract/surface/artifact/internal/fixture/topology_test.go`) pins an
 executable registry (`artifactTests`) of each artifact surface package's
-top-level test names. The composition grew the posture package from four tests
-to eighteen — fourteen from the original build's mode and grammar tables, three
-from the stub-relocation and seal-signal repairs — without registering them, so
+top-level test names. The composition grew the posture package from four
+registered tests to eighteen — the additions coming from the original build's
+mode and grammar tables and this run's repair tickets — without registering
+them, so
 the contract phase reds with the exact got/want difference. Register the
 eighteen names the posture package now holds; every other subject's list and
 every other assertion in the contract stay untouched. This is a registry sync
