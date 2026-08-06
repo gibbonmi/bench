@@ -158,6 +158,15 @@ other CLI recommendations — retained promotion identity and evidence after
 retirement, plus promotion-stage timings — are already carried above. Source:
 the `ft194-project-green-desync` retro, drained here.
 
+The exact-prospective-landing close adds the remaining lifecycle-observability
+faces to this row: long promotions expose phase heartbeats and retained stage
+timings, a recomposition conflict names its checkpoint owner and offers a
+bounded already-covered or compatible-same-path route, and the operation
+journal exposes remaining capacity before its bound blocks a repair. Its final
+three-axis-review recommendation is already canonical in the spec-build
+lifecycle, so it needs no second rule. Source: the
+`exact-prospective-landing` retro, drained here.
+
 **FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
 The ft91-gate-tier-split semantic review found twelve; three closed before
 merge (the ship canary tier pin, the untiered-registry assertion, the
@@ -511,47 +520,6 @@ first, and the working route is a manual `bench worktree create --request
 <uuid>` per delegate. Either the limit lifts or the manual route becomes the
 documented canonical one. Source: the spec-build-lifecycle-preconditions
 retro, drained here.
-
-**FT188 (MEDIUM) — parallel sessions land through an exact prospective tree.**
-A path-scoped `bench commit` gates the whole working-tree snapshot and only then
-stages its named paths, so any unrelated dirty or untracked file in the checkout
-refuses the landing: checkout cleanliness is a repository-wide writer lock, and
-the 2026-08-03 build recorded seven such refusals in
-`capture/parallel-session-friction.md`. The staged spec introduces one exact
-prospective landing substrate — start from an explicit expected base, overlay
-only the caller-attributed named-path content, gate that immutable tree, publish
-by compare-and-swap of the destination ref — and adopts it under ordinary
-`bench commit` without changing the argument grammar or the attribution rules.
-This closes the foreign-dirty face FT169 carries; FT169 keeps the landing
-command's authority, recovery, and preflight questions.
-
-`bench spec build promote` is the second consumer. Its clean-checkout
-precondition composes badly with its recompose-discards-review rule: unrelated
-dirt blocks promotion, and clearing it by committing moves the branch tip, which
-discards the bound review and buys a full extra review round — observed once,
-costing a sol round plus a second reviewer-run promote. Either promote reasons
-about ownership the way the substrate does, or its refusal names stashing as the
-cheap route so the reader does not reach for the expensive one.
-
-The downstream lifecycle now has two reproduced pinning failures to close with
-that same ownership model. A commit may edit the staged spec of an active run
-successfully, only for checkpoint and abandon to discover the pinned-blob drift
-after assignments have finished. A commit made to the destination after a run's
-base may also disappear silently when promotion publishes the older candidate
-composition. The multi-coordinator scope must therefore expose run-pinned paths
-at write time and refuse or explicitly re-pin them, while recomposition detects
-and preserves destination changes instead of overwriting them. The staged first
-scope remains ordinary exact prospective landing; these lifecycle consumers stay
-in the ordered downstream scope. Sources: `capture/learnings.md` 2026-08-04,
-verdicted here.
-
-The remaining decisions stay in the map at
-`decisions/parallel-session-landings.md`: interrupted-mutation recovery and
-abandon, which gate evidence may cross composed landing subjects, and the AXI
-status surface for concurrent runs and conflicts (blocked on the first two).
-Staged spec: [`specs/exact-prospective-landing/spec.md`](specs/exact-prospective-landing/spec.md).
-Sources: `decisions/parallel-session-landings.md` #10; `capture/IDEAS.md` and
-the `injected-interface-junctions` retro, drained here.
 
 **FT195 (MEDIUM, staged) — compile one Bench executable and keep oracle verdicts
 out of Go's test cache.** The canonical builder currently compiles the requested
@@ -1233,6 +1201,12 @@ cross-product rather than treating one direct-path refusal and one recovery
 success as evidence for every pairing. Source: the
 `ft194-project-green-desync` retro, drained here.
 
+The exact-prospective-landing close adds immutable-snapshot coverage: the first
+review runs tracked-file, transitioned-spec, and new-untracked-descendant
+mutations together, and the first public-adapter slice exercises valid
+nested-CWD arguments alongside usage failures. Source: the
+`exact-prospective-landing` retro, drained here.
+
 **FT100 (LOW) — prose-weight pass on the kit's guidance surface.** Apply the
 gate's "prove it bites" standard to prose: audit the craft-skill library and
 the communication protocol so each skill and always-loaded clause cites an
@@ -1533,6 +1507,14 @@ HEAD-equals-main rule reads a correct lifecycle base as stale. The charge
 guidance should describe candidate ancestry for lifecycle work and reserve the
 ff-to-main check for ordinary worktree delegations. Source: the
 `ft156-anchor-registry` retro, drained here.
+
+The exact-prospective-landing close adds four guidance faces to the same visit:
+headless delegate wrappers distinguish produced edits from a stalled response;
+`craft-tickets` folds review-only normalization records into substantive tickets
+or deletes them before exact review; repair tickets name discovery, concrete
+integration mappings, and a public mutation owner; and `craft-review` includes
+post-authorization directory descendants in its concurrency inventory. Source:
+the `exact-prospective-landing` retro, drained here.
 
 **FT165 (LOW) — fold the domain-modeling discipline into
 `/bench-shape-idea`.** Upstream candidate (mattpocock/skills,
@@ -2218,7 +2200,6 @@ recommended table is sequencing advice.
 | FT166 | FT98, FT113 | The porcelain composes over the shipped reduced-gate path allowlist; recoverable set-aside then defines the commit command's smallest sound contract. |
 | FT168 | FT153 | Expose focused canary execution after baseline meaning is settled. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
-| FT169 | FT188 | The foreign-dirty face is the substrate's consumer; specify the landing command once exact prospective landing has settled attribution. |
 | FT175 | FT173 | The ledger's read surface is AXI; settle one derivation per principle before adding a consumer that needs all ten. |
 
 ### Goal tracks: guidance prose and the claim ledger
@@ -2248,11 +2229,10 @@ build.
    its spec was written and implemented, FT181 shipped 2026-08-03, and
    FT156's anchor-mechanism ruling closed when its registry shipped and the
    spec retired 2026-08-05.
-2. Drain the staged frontier — FT135, FT187, FT188, and FT195 all carry staged specs
+2. Drain the staged frontier — FT135, FT187, and FT195 all carry staged specs
    — before authoring any new spec; deferring one is an explicit reviewer
-   override, never a silent skip. Of the four only FT187 serves a goal
-   directly, and FT188 unblocks the parallel capacity the rest of the runway
-   assumes. FT141
+   override, never a silent skip. Of the three only FT187 serves a goal
+   directly. FT141
    builds in parallel where
    capacity allows: it is Go, prose-independent, and it unblocks FT107
    *whole* — splitting the fix-loop clause out would spend a second spec,
@@ -2309,6 +2289,6 @@ now fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — drain all four staged specs: FT188 (`specs/exact-prospective-landing/spec.md`) first to remove the writer lock, FT195 (`specs/go-build-cache-footprint/spec.md`) next to reduce every later build's cache and publication cost, then FT187 (`specs/ft187-communication-surface-cut/spec.md`) and FT135 (`specs/pre-push-guard-visibility/spec.md`).
+1. `/bench-implement-spec` — drain the three staged specs: FT195 (`specs/go-build-cache-footprint/spec.md`) first to reduce every later build's cache and publication cost, then FT187 (`specs/ft187-communication-surface-cut/spec.md`) and FT135 (`specs/pre-push-guard-visibility/spec.md`).
 2. `/bench-shape-idea` — FT144's one-decision-both-phases call, the goal tracks' remaining shaping item; grills serialize on the reviewer, so start it while the staged builds run.
 3. `/bench-write-spec` — FT141, Go and prose-independent, buildable in parallel and the literal blocker that unblocks FT107 whole.

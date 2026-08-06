@@ -156,17 +156,23 @@ contract, not a preference:
 ## When a delegate is blocked outside its fence
 
 A write delegate whose deterministic repro fails on a defect outside its
-ticket's ownership fence stops implementation edits at that boundary. It runs
-`/bench-debug` against the real failing surface and returns a bounded debug
-receipt instead of a done-claim: the exact repro command with its red exit and
-output digest, the confirmed cause, the paths the repair must own, its
-assignment ID, recorded base, and in-fence dirty paths, and whether the ticket
-can proceed once the repair lands. It never edits outside its fence and never
-absorbs the defect into its own diff — a fix smuggled through the adapter's
-fence is a review defect even when it makes the ticket green.
+ticket's ownership fence stops implementation edits at that boundary. It does
+not run `/bench-debug` — that phase is the reviewer's to invoke, never an
+agent's. The delegate returns a bounded blocked report instead of a done-claim:
+the exact repro command with its red exit and output digest, the failing surface
+it observed, its assignment ID, recorded base, and in-fence dirty paths. It
+never edits outside its fence and never absorbs the defect into its own diff — a
+fix smuggled through the adapter's fence is a review defect even when it makes
+the ticket green.
 
-The coordinator drives the repair through the public lifecycle, no synthesized
-commits, refs, worktrees, or patch replay:
+The coordinator relays that report and stops, recommending the reviewer run the
+debug phase in this harness's own form against the named failing surface. That
+reviewer-run pass produces the debug receipt — the blocked report's evidence plus
+the confirmed cause, the paths the repair must own, and whether the ticket can
+proceed once the repair lands. Nothing below runs until the receipt exists.
+
+With the receipt in hand, the coordinator drives the repair through the public
+lifecycle, no synthesized commits, refs, worktrees, or patch replay:
 
 1. Derive an ownership-fenced repair ticket from the receipt's required paths
    (`craft-tickets`), write it under `specs/<slug>/tickets/`, and land it with
@@ -178,7 +184,7 @@ commits, refs, worktrees, or patch replay:
 4. Re-base the blocked assignment onto the repaired candidate with
    `bench spec build assign <slug> --ticket <ticket> --request <id> --refresh
    <receipt>` — the request the assignment was created under, with the
-   delegate's debug receipt as the refresh evidence. The lifecycle preserves
+   reviewer-run debug receipt as the refresh evidence. The lifecycle preserves
    the assignment's attributed in-fence work byte-for-byte behind a durable
    preservation ref, refuses a forged or missing receipt, an out-of-fence
    payload, a replay conflict, or candidate movement, and an interrupted
@@ -287,8 +293,11 @@ standalone phases; their contracts stay theirs:
   while its candidate subject still matches the exact reviewed composition.
 - **Promote inline** through `bench spec build promote`; its exact prospective
   subject is the final composed gate boundary. Then run **final-check inline**
-  only to report the retained terminal evidence and capture the retro. Use
-  **debug inline** with `/bench-debug` when an issue needs deep analysis.
+  only to report the retained terminal evidence and capture the retro. When an
+  issue needs deep analysis, the run does not debug inline: it stops at that
+  boundary, reports the failing surface, and recommends the reviewer invoke
+  `/bench-debug` themselves in this harness's form. That phase is expensive and
+  reviewer-invoked by design — no agent charges it.
 
 **Finding disposition.** Concrete defects — bugs, spec misses, missing
 coverage — return through repair assignment, checkpoint, and integration without

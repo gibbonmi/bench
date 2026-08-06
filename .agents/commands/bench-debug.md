@@ -95,16 +95,18 @@ of hand-running the two commands above.
 
 ## How it meets the rest of Bench
 
-Inside a spec-build write delegate, this skill has a bounded exit: when the
-repro proves the defect lives outside the delegate's ticket fence, phases 5
-and 6 do not run there. The delegate stops implementation edits, keeps its
-in-fence work dirty in its owned worktree, and returns a debug receipt — repro
-command with red exit and output digest, confirmed cause, the paths the repair
-must own, assignment ID, recorded base, in-fence dirty paths, and whether the
-ticket can proceed after the repair. The coordinator's route from that receipt
-— repair ticket, recomposition, `assign --refresh` — is
-`.agents/commands/bench-implement-spec.md`'s "When a delegate is blocked
-outside its fence"; this skill only produces the receipt's evidence.
+This phase is reviewer-invoked. A spec-build write delegate never charges it:
+when its repro proves the defect lives outside its ticket fence, the delegate
+stops implementation edits, keeps its in-fence work dirty in its owned worktree,
+and returns a bounded blocked report — repro command with red exit and output
+digest, the failing surface it observed, assignment ID, recorded base, in-fence
+dirty paths. The reviewer then runs this skill against that surface, and the
+run produces the debug receipt: the report's evidence plus confirmed cause, the
+paths the repair must own, and whether the ticket can proceed after the repair.
+The coordinator's route from that receipt — repair ticket, recomposition,
+`assign --refresh` — is `.agents/commands/bench-implement-spec.md`'s "When a
+delegate is blocked outside its fence"; this skill only produces the receipt's
+evidence.
 
 The Phase 1 loop joins the project gate for the fix. If the fix launches a shift,
 add the repro as a test the gate runs alongside its existing checks, committed
