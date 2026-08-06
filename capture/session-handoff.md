@@ -2,21 +2,19 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `5d66acf`, uncommitted roadmap-drain batch
+Branch: `main` — HEAD `8683312`, 1 dirty path, 0 unpushed commits
 Spec: `specs/ft187-communication-surface-cut/spec.md` (Status: staged), `specs/go-build-cache-footprint/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `5d66acf`
+Gate: green at `0807d43` — stale, work tree `00bcc1c`
 
 ## State
 
-**Phase reached: exact-prospective-landing retro drained into an uncommitted reviewer batch.**
+**Phase reached: FT195 ticket derivation complete; implementation has not started.**
 
-The trusted schema-3 full roadmap snapshot found no ideas, open learnings, or occurrence discrepancies. FT188 was stale because its spec retired in `126c597`; the batch removes it, folds its retro's lifecycle, guidance, and immutable-snapshot coverage into FT162, FT164, and FT99, and removes the drained retro. The sequence now starts with FT195, followed by FT187 and FT135.
-
-The batch awaits reviewer approval before its one green commit. Its source is the full snapshot captured in this run; do not reread or recreate its retro evidence.
+The read-only seam audit at `8683312` found no spec drift. The build is three tracer tickets: sealed local publication and fresh gate verdicts form the first frontier; artifact-mode callers depend on sealed local publication. The closed spec decisions remain the two semantic builder modes, one compiled subject, sealed default publication through the freshness owner, unsealed artifact promotion without host execution, and `-count=1` only at the two executed gate-test owners.
 
 ## Next command
 
-`$bench-implement-spec`
+`$bench-implement-spec --full FT195 specs/go-build-cache-footprint/spec.md`
 
 ## Shape
 
