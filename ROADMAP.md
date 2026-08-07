@@ -64,12 +64,10 @@ focused once and 3/3 repeated at about 0.43 s per run. Treat that delta as
 contention evidence for pricing the outer widths, not as authority to pick one
 from a single machine.
 
-The first independently green demand-reduction slice is staged at
-[`specs/gate-decision-test-seam/spec.md`](specs/gate-decision-test-seam/spec.md).
-It moves the exhaustive public-document mapping matrix to the existing
-read-only decision seam while retaining representative full-engine composition
-proofs. Implement that staged slice before returning to the remaining FT171
-shaping decisions.
+The first demand-reduction slice (the `gate-decision-test-seam` spec) landed
+2026-08-07: the exhaustive public-document mapping matrix now runs at the
+read-only decision seam with representative full-engine composition proofs
+retained. Return to the remaining FT171 shaping decisions from here.
 
 **FT162 (MEDIUM) — full-run and phase-close state has one authoritative subject
 and handoff.** Recommendations from the craft-tickets, light-path,
@@ -2298,6 +2296,6 @@ now fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — drain the two staged specs: FT171 (`specs/gate-decision-test-seam/spec.md`) first, then FT135 (`specs/pre-push-guard-visibility/spec.md`).
+1. `/bench-implement-spec` — drain the staged spec FT135 (`specs/pre-push-guard-visibility/spec.md`).
 2. `/bench-shape-idea` — FT198, because the 179 KB roadmap snapshot now exceeds a single agent-tool response and the storage migration needs one durable-owner decision.
 3. `/bench-write-spec` — FT141, Go and prose-independent and the literal blocker that unblocks FT107 whole.
