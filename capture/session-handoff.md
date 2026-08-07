@@ -1,40 +1,32 @@
 # Session handoff
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/workspace/bench`
-Branch: `main` — HEAD `5d0f719`, clean tree, 46 unpushed commits
-Spec: `specs/conformance-harness-scope/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `0a4f958` — stale, work tree `9407e68`
+Path: `/home/devuser/workspace/bench`
+Branch: `main` — pre-commit HEAD `c8ea95ea1a9f`, 51 unpushed commits
+Spec: `specs/pre-push-guard-visibility/spec.md` (Status: staged; no active build run)
+Gate: unavailable on the pre-commit tree; this handoff lands only through the roadmap batch's green `bench commit`
 
 ## State
 
-**Phase reached: conformance-harness-scope spec staged and reviewer-approved.**
+**Phase reached: roadmap reconciled and capture drained.**
 
-`specs/conformance-harness-scope/spec.md` is the uncommitted staged spec. Its
-reviewer-confirmed 2026-08-07 source authorizes two test-only outcomes: direct
-conformance fixture bites run only the check resolved from the executable
-registry, and freshness failure classes move to `Verify`/`Check` while
-representative shell-entry composition remains. `bench coverage --check`
-validates all 13 acceptance rows. The required read-only falsification pass
-found a duplicated-registry false green and an overbroad fixture-family
-quantifier; both are repaired in the draft.
+`conformance-harness-scope` and `gate-decision-test-seam` are promoted and
+retired. Their recommendations are folded into the existing lifecycle,
+review-evidence, ticket-grammar, gate-attribution, and residual-verdict owners;
+FT199 carries the distinct lifecycle-native repair-entry gap. FT135 remains the
+sole staged spec. The ideas inbox, learnings journal, occurrence ledger, and
+retros directory are empty.
 
-Implementation has not started and no spec-build run exists. The closed fences
-permit only the named conformance fixture-bite test files and the freshness plus
-gate-entry test files. Production registry contents, selection semantics,
-freshness policy, gate routing, canary fixtures, scheduler work, and the
-post-reduction census remain out of scope. The direct-bite quantifier is the ten
-families enumerated in the spec; `injected-ports` stays canary-sweep-owned. A
-registry-source rebind mutation must prove the helper consumes
-`registry.FamilyCheck` rather than a private copy.
-
-`specs/pre-push-guard-visibility/spec.md` remains a separate staged spec and is
-not part of this lifecycle. The only uncommitted paths owned by this phase are
-the new conformance-harness-scope spec and this rewritten handoff.
+Closed decisions stay closed: the gate-decision slice preserves the read-only
+decision seam and representative full-engine composition proofs; the
+conformance-harness slice exports the registry-resolved fixture check and keeps
+representative shell-ordering journeys; pre-push guard visibility still follows
+its compiled decision map. The refreshed sequence drains FT135 before new spec
+authoring.
 
 ## Next command
 
-`/bench-what-next` — the board's leading invocable signal (`drain`).
+`$bench-implement-spec`
 
 ## Shape
 

@@ -186,6 +186,24 @@ attribution bound to the exact tree and worktree. Buffered output and a
 coordinator-observed wall time are not durable enough for performance diagnosis.
 Source: the `ft187-communication-surface-cut` retro, drained here.
 
+The handoff half now includes a fresh-context escape hatch, but only at a
+durable lifecycle boundary. After repeated rejected repairs, a false-green
+done-claim, or enough superseded evidence that the durable assignment is simpler
+than the active conversation, the close recommends a fresh session and emits a
+copy-paste continuation pinning the candidate, assignment, accepted and rejected
+evidence, dirty paths, closed decisions, preservation constraints, and exact next
+command. It never switches while a command or unrecorded mutation is in flight.
+Source: `capture/IDEAS.md` 2026-08-06, drained here.
+
+The gate-decision close adds cause-specific exact-green recovery. Pending,
+stale, and mismatched records route first through plain `bench gate`, which
+self-selects the necessary scope; `--fresh` is reserved for a reusable green
+that exists but cannot compose, and remains reviewer-approved. The same retained
+state already owns promotion timings, so the conformance-harness close's request
+for exact stage timings is another instance rather than a second surface.
+Sources: `capture/learnings.md` 2026-08-07, verdicted here; the
+gate-decision-test-seam and conformance-harness-scope retros, drained here.
+
 **FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
 The ft91-gate-tier-split semantic review found twelve; three closed before
 merge (the ship canary tier pin, the untiered-registry assertion, the
@@ -310,6 +328,12 @@ did exactly this and the pass found three defects the first review receipt had
 missed, while the subsequent final review came back clean. The standing rule
 should carry that ordering. Source: the `ft156-anchor-registry` retro, drained
 here.
+
+The conformance-harness close adds the evidence-bundle face: give a fresh
+reviewer the coordinator-owned mutation receipts at review start, and distinguish
+a permanent regression test from a temporary overlay that proves a ticket's red.
+Withholding the receipt made the same valid mutation question get rediscovered
+and resolved twice. Source: the conformance-harness-scope retro, drained here.
 
 **FT135 (MEDIUM) — a pre-push guard on a guessed branch looks armed while
 protecting nothing.** When the repository has no resolvable default branch,
@@ -839,6 +863,12 @@ target: a gate check reconciling the `.bench/BENCH.md` CLI inventory (and the
 the inventory's "kept in sync with `bin/bench.sh`" promise is enforced rather
 than hand-maintained. Source: `capture/IDEAS.md` 2026-08-05, drained here.
 
+The debugging half gains an upstream Redact candidate: shown output substitutes
+`<REDACTED>`, reproduction loops address secrets through environment variables,
+and excerpts retain only signal-carrying artifact lines. Fold it into the
+coherence pass rather than adding a parallel security skill. Source:
+`upstream(mattpocock/skills@84fdeff)`, drained from `capture/IDEAS.md` here.
+
 Sources: `RR:S-06`, `RR:S-07`, `RR:S-08`, `RR:S-10`, `RR:S-11`, `RR:S-12`,
 `RR:S-13`, `RR:S-14`, `RR:S-15`, `RR:S-16`, `RR:S-17`, `RR:S-18`; `RC:M-05`;
 `capture/IDEAS.md`, drained here.
@@ -1196,6 +1226,14 @@ always-loaded surface. Kit edit under the
 `craft-synthesis` discipline; starts as a grill (`/bench-shape-idea`) because
 the cut line on always-loaded rules is a reviewer decision.
 
+The audit evaluates guidance against both loads an agent pays — bytes loaded
+into context and cognitive branches introduced after loading — and treats
+environment knowledge as cacheable only while the environment still owns it.
+The proposed demand test (a behavior is complete only when a real session needs
+it) joins the demonstrated-delta decision rather than becoming a second
+completion rule. Source: `upstream(mattpocock/skills@84fdeff)`, drained from
+`capture/IDEAS.md` here.
+
 **FT101 (LOW) — per-context scope for monorepos: domain docs and profile.** A
 monorepo has more than one bounded context, but the kit assumes one
 `CONTEXT.md` and one `projects/<name>.md`. Both halves want one resolution.
@@ -1377,6 +1415,13 @@ ft156-anchor-registry close's interim mitigation as its floor: concurrent
 capture edits around a lifecycle commit are preserved by exact hash, as that
 run did by hand. Source: the `ft156-anchor-registry` retro, drained here.
 
+The gate-decision close supplies the review-to-promote instance: capture-only
+commit `ff3818b` moved `main` after review, forcing recomposition and a fresh
+three-axis review before promotion. That is reproduced lifecycle cost for the
+existing freeze rule, not a separate capture policy. Source: the
+gate-decision-test-seam retro and `capture/learnings.md` 2026-08-07, drained and
+verdicted here.
+
 **FT138 (LOW) — instrument Bench so build economics are measurable.**
 Reviewer-priced 2026-07-25 as a nice-to-have in its current state, so it
 holds LOW until an acceptance trigger that needs measurement (the cheap-tier
@@ -1503,6 +1548,23 @@ repair misses, so those journal entries add evidence, not another rule. Sources:
 the covers-traceability and go-build-cache-footprint retros and the 2026-08-06
 learnings journal, drained here.
 
+**FT199 (MEDIUM) — accepted review findings enter a preflighted repair
+assignment without landing control-only commits.** The conformance-harness run
+paid a whole-project gate and recomposed an unchanged defective candidate merely
+to land a repair ticket, then repeated both after `assign` found a missing fenced
+`Contracts:` anchor. Add a lifecycle-native repair entry that derives an
+ownership-fenced ticket or assignment from accepted review findings on the
+current candidate. Before any commit gate it validates ticket grammar,
+`Contracts:` anchors, fence coverage, row closure, and assignability. A review
+receipt survives recomposition only while the implementation patch and tree,
+approved-spec digest, and every reviewed input are byte-identical; code or spec
+movement invalidates it. The final post-repair review and authoritative promotion
+gate remain mandatory. A changed shared-helper contract also names and runs its
+existing consumers before checkpoint, so a delegate's focused done-claim cannot
+stand in for that evidence. Entry: `/bench-write-spec`. Sources:
+`capture/learnings.md` 2026-08-06, verdicted here; the
+conformance-harness-scope retro, drained here.
+
 **FT165 (LOW) — fold the domain-modeling discipline into
 `/bench-shape-idea`.** Upstream candidate (mattpocock/skills,
 domain-modeling): as grill tickets resolve decisions, challenge fuzzy or
@@ -1513,6 +1575,13 @@ owns ubiquitous language, ADRs own hard-to-reverse architectural state.
 Integrates into the existing phase rather than adding a parallel skill. Kit
 edit under the `craft-synthesis` discipline. Source: `capture/IDEAS.md`, drained
 here.
+
+The upstream refinement adds active modeling moves — challenge an overloaded
+term with concrete counterexamples and update the language owner as the decision
+settles. It folds into this row; the candidate's unrelated non-blocking fact
+dispatch and git-hot-spot ideas are dismissed without session evidence.
+Source: `upstream(mattpocock/skills@84fdeff)`, drained from
+`capture/IDEAS.md` here.
 
 **FT180 (LOW) — a spec-optional route decided at shape-idea's exit.** Between
 the one-ticket light path and the full pipeline there is no middle route:
@@ -1599,6 +1668,16 @@ the tree-hash and receipt schemas. Source: the gate-evaluation-snapshot retro,
 drained here. The ft156-anchor-registry close repeats the third face: `--ticket`
 should say it expects the ticket filename token, not a repository path. Source:
 that retro, drained here.
+
+Checkpoint and review evidence paths add the same diagnostic defect: a relative
+receipt path is rejected only as `invalid spec build receipt`, while retrying the
+same bytes at an absolute path succeeds. Name the absolute-path requirement and
+the failing field. The lifecycle-native generator derives checkpoint and review
+receipts from run state and retains structured command exit/output evidence, so
+coordinators verify a done-claim without reconstructing or repeating a broad
+suite. Sources: `capture/IDEAS.md` 2026-08-07 and `capture/learnings.md`
+2026-08-06, drained and verdicted here; the gate-decision-test-seam and
+conformance-harness-scope retros, drained here.
 
 **FT196 (LOW) — a Bench-owned lifecycle request-ID generator.** `bench spec
 build assign` (and its lifecycle siblings) take a caller-minted `--request <id>`
@@ -1708,6 +1787,15 @@ post-gate staging failure costs a full green run — retry, or keep fail-fast.
 Source: `capture/learnings.md` 2026-08-02, verdicted here. One line each
 closes this row.
 
+The gate-decision review adds one bounded residual bundle under receipt
+`80069545`: collapse duplicated projection strings, decide whether the helper
+name should expose storage rather than test bytes, tighten the capture counter
+to the Git tree, assert the partial-decision control, preserve the original error
+in the nil-error failure, and decide whether the mixed-partition reload control
+needs widening. These are reviewer-priced hardening calls on shipped test code,
+not defects the retired spec still owns. Source: `capture/IDEAS.md` 2026-08-07
+and the gate-decision-test-seam retro, drained here.
+
 ## False greens — verdicts that credit unchecked work
 
 Five rows, one failure class: a green whose warrant is missing — a stale
@@ -1802,6 +1890,13 @@ shipped authoring-time refusal makes that rarer without making it reachable.
 Sources: `capture/learnings.md` 2026-08-03 and 2026-08-04, verdicted here; the
 `ft187-communication-surface-cut` retro, drained here.
 
+The conformance-harness close adds one review-time ownership chain for every
+cross-fence fact: raw declaration, resolving owner, exported resolved value,
+consuming path, and reciprocal ticket edge. Assignment already enforces the
+reciprocal edge; what stays here is comparing the complete chain against
+`Contracts:`, coverage, and the edge inventory before leasing work. Source: the
+conformance-harness-scope retro, drained here.
+
 **FT153 (MEDIUM) — the canary's vacuity baseline is a collision screen, not a
 vacuity proof.** A behavior-owned fixture's EXPECT is compared against its
 contract group's empty-tree baseline, which establishes only that the string is
@@ -1889,6 +1984,13 @@ user on the `bench setup` adoption path is never told the pin records the
 automatically. This row's build already visits the pin's data; add the one
 explanatory clause at those refusal sites and the status row's action text in
 the same visit, single-sourced rather than written four times.
+
+An interrupted gate adds the destructive-diagnostic face: startup writes a
+pending record over `.git/bench-last-gate`, so the prior verdict needed to
+explain the interruption is lost. Preserve that record or bind its identity
+inside the pending record before replacement. Sources: `capture/IDEAS.md` and
+`capture/learnings.md` 2026-08-07, drained and verdicted here; the
+gate-decision-test-seam retro, drained here.
 
 **FT104 (LOW) — load-induced commit refusals: the stop rule and the pre-gate
 quiet check.** Two faces of the same defect — a red answering for machine
@@ -2150,7 +2252,13 @@ concurrent `bench upgrade` runs, raised as a coverage gap by the FT85 review
 and closed by decision rather than left open — `transactionalLink` already
 moves tree, manifest rows, and version stamp together, so the damage is
 bounded; graduate on an actual report of two upgrades interleaving badly, not
-before.
+before. Two upstream candidates join the pending-evidence tier rather than
+becoming new skills: a generated human-procedure wizard plus last-resort HITL
+loop graduates on a Bench workflow that cannot be made agent-operable, and a
+third-party questionnaire graduates when a real decision map blocks on someone
+other than the reviewer and reviewer-directed grilling misroutes the question.
+Source: `upstream(mattpocock/skills@84fdeff)`, drained from
+`capture/IDEAS.md` here.
 
 **FT24 (parked pending upstream) — Codex agent-line guard parity.** Researched
 2026-07-11: still not implementable on current Codex — delegation has no
@@ -2208,6 +2316,7 @@ recommended table is sequencing advice.
 | FT168 | FT153 | Expose focused canary execution after baseline meaning is settled. |
 | FT169 | FT98 | Reuse recoverable discard in the landing contract; label resolution is already available. |
 | FT175 | FT173 | The ledger's read surface is AXI; settle one derivation per principle before adding a consumer that needs all ten. |
+| FT199 | FT184 | Let the repair entry consume lifecycle-derived receipts rather than preserving the hand-assembled schema it exists to remove. |
 
 ### Goal tracks: guidance prose and the claim ledger
 
@@ -2236,10 +2345,11 @@ build.
    its spec was written and implemented, FT181 shipped 2026-08-03, and
    FT156's anchor-mechanism ruling closed when its registry shipped and the
    spec retired 2026-08-05.
-2. Drain the staged frontier — FT171 and FT135 carry the two staged specs —
-   before authoring any new spec; deferring one is an explicit reviewer
-   override, never a silent skip. Neither serves this goal track directly;
-   FT171 is the active gate-budget demand-reduction slice. FT141
+2. Drain the staged frontier — FT135 carries the sole staged spec — before
+   authoring any new spec; deferring it is an explicit reviewer override, never
+   a silent skip. It does not serve this goal track directly. FT171's first
+   gate-budget demand-reduction slice shipped and its remaining work returned
+   to shaping. FT141
    builds in parallel where
    capacity allows: it is Go, prose-independent, and it unblocks FT107
    *whole* — splitting the fix-loop clause out would spend a second spec,
