@@ -523,6 +523,13 @@ escalation.
   an ordinary bump and pauses and asks; never escalate silently. Charged at
   falsification questions, never an open review; its verdict is advisory and
   sign-off stays the reviewer's.
+- **Ticket-breakdown review pass** (`/bench-implement-spec`, after the ticket
+  files are written and before `bench spec build start`) → **mid model, medium
+  effort, 1 iteration**, read-only. Standing grant like the falsification pass:
+  every breakdown gets it, spawned without asking, and charge time never
+  re-derives this routing. Charged at `craft-tickets`' consolidated target list,
+  never an open review; its findings are reslices the coordinator repairs before
+  the lifecycle starts.
 - **Review-axis delegate** (`/bench-review-implementation`, one per axis) → mid
   model, medium effort, **~1 iteration each** (three axes can run in parallel).
   Read-heavy: each takes the full diff plus standards docs and runs verification

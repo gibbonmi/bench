@@ -135,8 +135,11 @@ reviewer approval under `craft-line`.
    falsification review runs at the mid tier for one iteration in a fresh
    read-only delegate. Charge it
    with falsification questions: would the cheapest wrong implementation pass,
-   does every source behavior have a red-capable row, and does every line match
-   cached routing? A same-session source, source conflict, or mostly not
+   does every source behavior have a red-capable row, does every line match
+   cached routing, does any behavior, red signal, or decision answer name an
+   outcome family instead of an exact predicate, and — where the stories
+   partition into disjoint package or fence sets — could a narrower capability
+   ship on its own gate? A same-session source, source conflict, or mostly not
    observed reds may justify a top-tier pass, but the escalation pauses for
    reviewer approval. The verdict is advisory; sign-off stays with the
    reviewer.

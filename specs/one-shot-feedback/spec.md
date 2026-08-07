@@ -1,6 +1,6 @@
 # one-shot-feedback
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed current conversation, 2026-08-07 — scope confirmed as the pre-assignment breakdown review, retro repair attribution with its drain tally, and the exact-predicate extension to the falsification charge and grill; the mechanical `assign` producer-path check was explicitly cut.
 

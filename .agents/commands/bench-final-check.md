@@ -74,6 +74,8 @@ Use these headings exactly:
 
 ## Coordinator catches
 
+## Repair attribution
+
 ## Agent-experience improvements
 
 ### Bench CLI
@@ -87,7 +89,18 @@ Record concrete evidence: what landed; elapsed time for each measured gate
 stage; how ticket-sized delegate charges performed against charges handed a
 spec slice; what the coordinator caught while accepting delegate claims; and
 specific improvements to Bench CLI, skills, and process, with the friction and
-expected effect named. This file is pending capture for `/bench-what-next`, not
+expected effect named.
+
+Under that repair-attribution heading, write one table row per ticket in the
+build: the ticket, how many repair rounds it took to land, and one cause per
+round. A ticket that landed in one pass records `none`. Causes come from this
+vocabulary and no other, one term per round: `shaping-ambiguity`, `spec-row`,
+`ticket-slicing`, `tree-drift`, `delegate-error`, `other`. This template is the
+single guidance source for that vocabulary; the anchors registry needle pinning
+those terms is its enforcement copy, not a second source. A later reader of the
+drained tables reads the terms from the tables themselves.
+
+This file is pending capture for `/bench-what-next`, not
 a second roadmap. Do not run another gate or commit just to capture the retro;
 the successful landing boundary is already the verdict, and the retro leaves
 through the next reviewer-approved capture drain.

@@ -41,6 +41,12 @@ build, derive ticket files from the spec's stories and seams, write them under
 session's existing approval surface. For the light path, apply the same
 procedure to the unspecced change and write its one ticket.
 
+With the ticket files written and nothing assigned, run the breakdown review
+`craft-tickets` owns: one fresh read-only delegate grades the ticket breakdown
+before any assignment; a harness that cannot spawn one runs the pass inline and
+flags it in the build plan. Its findings are reslices, repaired before
+`bench spec build start` rather than through a repair round after code lands.
+
 For a reviewed spec-backed build, run `bench spec build start <slug>` before the
 first assignment. The public lifecycle is `start` → `assign` → `checkpoint` →
 `integrate` → `review` → `promote`; `status` inspects the run and `abandon`

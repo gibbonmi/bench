@@ -38,6 +38,12 @@ If a *fact* can be found by exploring the codebase, look it up rather than askin
 - **The grill ends in my confirmation, not in your build.** Do not enact the
   plan until I confirm we have reached a shared understanding — the last answer
   landing is not that confirmation.
+- **Close on a predicate, not a label.** Once I answer, close each decision by
+  restating the answer as the exact predicate it fixes — never an outcome label.
+  "Better error messages" and "handles the empty case" name a family of
+  behaviors; "an empty input list exits 2 and prints the input path" names one.
+  A label-shaped close reads as agreement while leaving the choice open, and the
+  ambiguity travels downstream into the spec.
 
 ## Form
 

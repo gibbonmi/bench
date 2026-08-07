@@ -351,3 +351,33 @@ a review thread pasted into a unit that no longer fits one fresh context, with
 no visible contract or integration-surface discovery and scope no single green
 landing can carry. A ticket holds only what a fresh context needs to land
 this behavior green.
+
+## Review the breakdown before assignment
+
+The moment is ticket files written and nothing assigned; the owner is one fresh
+read-only delegate, because the author's context is exactly what hid the defect.
+The charge is the obligations this skill already states, each re-derived from the
+tree rather than from the ticket's account of it:
+
+- the `Integration surfaces:` `none` claim, re-searched — repeat the
+  sibling-family and literal/symbol searches instead of accepting the word;
+- the keep-together claim, tested by attempting the split and looking for the
+  specific project-gate red the grouping says it strands;
+- label-shaped acceptance rows and closure tokens — an outcome label in place of
+  the exact predicate, or a token whose class is compound;
+- mutation honesty: every red-mutation row mutates the subject, and a value that
+  authorizes an action carries an input mutation;
+- `covers` honesty under an opted-in spec: one map row per annotated row, and a
+  `local` marker that is really a ticket-time discovery;
+- fence versus advertisement: every path restating a value the ticket changes is
+  on the `Ownership fence:` line.
+
+One obligation belongs to this pass alone — the producer-path witness. For each
+`Contracts:` and `Integration surfaces:` entry, open the producer the entry names
+and confirm that every named producer path exists in the tree and holds the named
+value; a crossing anchored to a path that does not yet hold its value is a
+slicing defect the composed red would otherwise surface tickets later.
+
+Findings are reslices, repaired before `bench spec build start`. When the harness
+cannot spawn a delegate, `craft-delegate`'s capability-aware policy applies: the
+pass runs inline and is flagged in the build plan, never silently skipped.

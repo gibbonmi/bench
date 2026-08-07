@@ -79,6 +79,14 @@ learning-or-rule disposition adds journal material, carry it immediately
 through the journal verdict step below so the run does not create a fresh open
 entry behind itself.
 
+When the drained bodies carry repair-attribution tables, the exit also reports
+the running one-shot tally: report tickets total, one-shots, and per-cause
+counts, reading causes only from the drained tables. The cause vocabulary
+belongs to the retro template `/bench-final-check` owns, so this run neither
+restates nor extends it — a term it does not recognize is still counted as
+written. The tally is reporting only: it adds no roadmap row grammar of its own,
+and a body with no attribution table simply contributes nothing to it.
+
 After every recommendation has a disposition, remove every drained
 `capture/retros/*.md` file in the same reviewer-approved batch. A partial retro
 drain is not allowed: the pending count must reach zero, and no source file is
