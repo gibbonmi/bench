@@ -1,10 +1,10 @@
 # Session handoff
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `/home/devuser/workspace/bench`
-Branch: `main` — HEAD `70aff37` (`spec: repair FT135 doctor execution and marker docs`), unpushed
-Spec: `specs/pre-push-guard-visibility/spec.md` (Status: staged; active build run `9975d21bda3a765c3c46f289fb19f7eef269c6b2164d3f33e2b20ec0a5caac8e`)
-Gate: green at tree `54e3457aceabc85777ffa36bd47c3f7b92439ea4`; the ticket-only `bench commit` completed before this handoff.
+Path: `~/workspace/bench`
+Branch: `main` — HEAD `d127289`, clean tree, 11 unpushed commits
+Spec: `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Gate: green at `02992a8` — current
 
 ## State
 
@@ -18,7 +18,7 @@ Preserve both dirty paths exactly: `.agents/skills/bench-craft-tickets/SKILL.md`
 
 ## Next command
 
-`$bench-implement-spec FT135 --full skip the final cross-harness check`
+`/bench-final-check`
 
 ## Shape
 
