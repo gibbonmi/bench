@@ -3,7 +3,7 @@
 Blocked by: add-retro-repair-attribution.md
 Ownership fence: `.agents/commands/bench-write-spec.md`, `internal/anchors/registry_data.go`
 Integration surfaces: anchors Require rows→`internal/anchors/registry_data.go`; registry append tail→add-grill-predicate-close.md
-Contracts: none crosses — both needles and their Require rows land inside this ticket's own fence
+Contracts: none crosses
 Closure: AB1/predicate-question, AB2/partition-question
 
 ## What to build

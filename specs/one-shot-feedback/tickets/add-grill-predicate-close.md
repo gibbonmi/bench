@@ -3,7 +3,7 @@
 Blocked by: add-falsification-predicate-questions.md
 Ownership fence: `.agents/skills/bench-craft-grill/SKILL.md`, `internal/anchors/registry_data.go`
 Integration surfaces: anchors Require row→`internal/anchors/registry_data.go`; none further — the grill skill's `.claude/skills/` entry is a symlink, so this edit is the whole edit
-Contracts: none crosses — the needle and its Require row land inside this ticket's own fence
+Contracts: none crosses
 Closure: AB1/predicate-close
 
 ## What to build

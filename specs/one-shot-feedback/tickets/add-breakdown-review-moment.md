@@ -3,7 +3,7 @@
 Blocked by: none
 Ownership fence: `.agents/commands/bench-implement-spec.md`, `.agents/skills/bench-craft-tickets/SKILL.md`, `projects/benchkit.md`, `internal/anchors/registry_data.go`
 Integration surfaces: anchors Require rows→`internal/anchors/registry_data.go`; conformance grading→existing internal/conformance TestRootConformance path exercised by AB1; registry append tail→add-retro-repair-attribution.md
-Contracts: none crosses — every needle and its Require row land inside this ticket's own fence; sibling tickets append disjoint registry rows, sequenced by their `Blocked by:` chain
+Contracts: none crosses
 Closure: AB1/br1-needle, AB2/section-heading, AB2/witness-needle, AB3/routing-row
 
 ## What to build
