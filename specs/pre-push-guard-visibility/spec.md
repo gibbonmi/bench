@@ -196,12 +196,9 @@ It does not install an absent hook — that is `bench link`'s transaction, and
 doctor's row already names it.
 
 **Link convergence.** The plan loop skips an entry whose destination already
-matches the bytes and mode this plan would write before it reaches the
-symlink-parent check, because an entry that needs no write cannot conflict with
-anything. The predicate is prospective, not historical: a destination that
-matches the recorded manifest hash but not the incoming kit bytes needs a write,
-so relink and upgrade always propagate changed kit content. Conflict semantics
-are unchanged for every entry that does need a write: a new entry and a drifted
+matches the manifest hash before it reaches the symlink-parent check, because an
+entry that needs no write cannot conflict with anything. Conflict semantics are
+unchanged for every entry that does need a write: a new entry and a drifted
 entry both still abort on a symlink parent, and those are two independent
 behaviors that get two independent fixtures.
 
@@ -283,7 +280,7 @@ installed hook --> [ recover baked token ] --> substitute into embedded template
 trigger: bench link | bench upgrade on a symlinked managed directory
     |
     v
-plan entries --> [ already matches what this plan would write? ] --yes--> skipped, no write, no conflict
+plan entries --> [ already matches manifest? ] --yes--> skipped, no write, no conflict
                         |
                         no  (new entry, or drifted entry)
                         v
@@ -328,7 +325,6 @@ covered and say so.
 | 5 | a *new* entry under a symlink parent still aborts | lifecycle gate phase | TDD-able only after the skip lands, as the negative control on its predicate; it is green today and must stay green. | Sharing one fixture with the drifted case lets an implementation that skips all existing paths pass both; separate fixtures are what force the manifest-match predicate. |
 | 5 | `bench upgrade` completes on the converged symlinked fixture and refreshes the hook | lifecycle gate phase | TDD-able: assert hook bytes after upgrade on the symlinked fixture, which aborts today. | Fixing only link leaves the other adoption route blocked by the same abort. |
 | 5 | link over the converged symlinked fixture is re-run idempotent | lifecycle gate phase | TDD-able: run link twice and compare the tree and manifest. | A skip that also skips manifest bookkeeping diverges on the second run. |
-| 5 | a clean managed asset whose kit bytes changed is refreshed by link and upgrade | lifecycle gate phase | TDD-able: two kits differing in one shared file; assert destination content and manifest hash after relink and after upgrade. | A skip keyed on the old manifest hash silently turns upgrade into a content no-op for every untouched asset. |
 | 6 | `bench upgrade --check` counts the hook refresh when the installed hook differs from what upgrade would write, and does not when it matches | lifecycle gate phase | TDD-able as two fixtures at differing versions, differing only in the installed hook's bytes. | A plan-entry-derived count reports the same number for both, so the operator approves a plan that understates its writes. |
 | 6 | at equal installed and linked versions the count includes no hook refresh, because that path performs none | lifecycle gate phase | TDD-able: an equal-version fixture with a stale hook must not count it. | An unconditional hook count promises a refresh on the one path that returns before the transaction runs. |
 | 6 | `--check` performs no write | lifecycle gate phase | Already covered by the existing upgrade plan-mode contract, which runs unchanged. | It pins that adding the hook to the count did not add it to the plan-mode write set. |
