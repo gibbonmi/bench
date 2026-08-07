@@ -39,6 +39,13 @@ func newRefreshFixture(t *testing.T) refreshFixture {
 // refresh carries has zero bytes.
 func newCleanRefreshFixture(t *testing.T) refreshFixture {
 	t.Helper()
+	return newCleanRefreshFixtureWithRepair(t, "# Repair landing\n\nOwnership fence: internal/landing\n\n- [ ] [R90] repair the prerequisite defect\n")
+}
+
+// newCleanRefreshFixtureWithRepair runs the same scenario with a caller-shaped
+// repair ticket, for tests probing what the repair's own metadata declares.
+func newCleanRefreshFixtureWithRepair(t *testing.T, repairBody string) refreshFixture {
+	t.Helper()
 	root := repo(t)
 	service := New(root, greenGate{}, realOwner{})
 	if _, err := service.Start(t.Context(), "build demo"); err != nil {
@@ -52,7 +59,7 @@ func newCleanRefreshFixture(t *testing.T) refreshFixture {
 	// The repair ticket lands mid-run, exactly the insertion that used to strand
 	// the consumer: the ticket commit moves the working tip, so assign refuses
 	// until promote recomposes the run onto it.
-	write(t, filepath.Join(root, "specs", "build demo", "tickets", "repair.md"), "# Repair landing\n\nOwnership fence: internal/landing\n\n- [ ] [R90] repair the prerequisite defect\n")
+	write(t, filepath.Join(root, "specs", "build demo", "tickets", "repair.md"), repairBody)
 	git(t, root, "add", ".")
 	git(t, root, "commit", "-qm", "stage repair ticket")
 	_, _, fixture.refusedBeforeRecompose = service.Assign(t.Context(), "build demo", "repair.md", "repair request")

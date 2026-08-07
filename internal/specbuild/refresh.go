@@ -163,6 +163,9 @@ func (s *Service) Refresh(ctx context.Context, slug, ticketArg, request, evidenc
 	if err := s.requireCommittedTicket(ticket); err != nil {
 		return Assignment{}, Status{}, err
 	}
+	if err := requireReciprocalEdges(run.Spec, ticket); err != nil {
+		return Assignment{}, Status{}, err
+	}
 	var preserved, tree string
 	if resuming {
 		preserved = op.Result

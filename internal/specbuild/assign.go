@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -49,6 +50,9 @@ func (s *Service) Assign(ctx context.Context, slug, ticketArg, request string) (
 		return Assignment{}, Status{}, fmt.Errorf("spec build ticket %s declares a contract crossing no path in its ownership fence", filepath.Base(ticket.Path))
 	}
 	if err := requireClosure(ticket); err != nil {
+		return Assignment{}, Status{}, err
+	}
+	if err := requireReciprocalEdges(run.Spec, ticket); err != nil {
 		return Assignment{}, Status{}, err
 	}
 	if err := requireCoversMapping(run.Spec, ticket); err != nil {
@@ -118,6 +122,8 @@ type Ticket struct {
 	Closure     []string
 	Mutations   []string
 	Covers      []string
+	BlockedBy   []string
+	Surfaces    string
 	Modern      bool
 }
 
@@ -238,6 +244,44 @@ func requireClosure(ticket Ticket) error {
 		if !mutated[fact] {
 			return fmt.Errorf("spec build assign requires every Closure fact of ticket %s to have a Red mutations row, but %s has none", name, fact)
 		}
+	}
+	return nil
+}
+
+// requireReciprocalEdges makes the dependent-basename rule executable: a
+// sibling whose Integration surfaces name this ticket's basename as a
+// dependent promises this ticket's Blocked by: names that sibling back.
+// Assign refuses the consumer until the edge exists, and refresh asks again
+// against the current siblings, so a repair staged mid-run reaches a
+// preserved consumer as a refusal instead of a silently stale contract.
+// Direction matters: a sibling that mentions this basename while naming it on
+// its own Blocked by: is a consumer pointing at its blocker, not a producer
+// naming a dependent. A sibling that does not parse contributes no edge here;
+// its own assign reports the defect. Whether the named value is really what
+// the sibling exports stays review-owned — this check closes only the edge.
+func requireReciprocalEdges(specPath string, ticket Ticket) error {
+	basename := filepath.Base(ticket.Path)
+	blocked := make(map[string]bool, len(ticket.BlockedBy))
+	for _, name := range ticket.BlockedBy {
+		blocked[name] = true
+	}
+	entries, err := os.ReadDir(filepath.Dir(ticket.Path))
+	if err != nil {
+		return fmt.Errorf("spec build requires a readable tickets directory: %w", err)
+	}
+	for _, entry := range entries {
+		if entry.Name() == basename || !strings.HasSuffix(entry.Name(), ".md") {
+			continue
+		}
+		sibling, err := ParseTicket(specPath, entry.Name())
+		if err != nil || !strings.Contains(sibling.Surfaces, basename) {
+			continue
+		}
+		siblingName := filepath.Base(sibling.Path)
+		if blocked[siblingName] || slices.Contains(sibling.BlockedBy, basename) {
+			continue
+		}
+		return fmt.Errorf("spec build requires ticket %s to name %s on Blocked by:, because that sibling's Integration surfaces name it as a dependent", basename, siblingName)
 	}
 	return nil
 }
@@ -399,7 +443,17 @@ func ParseTicket(specPath, arg string) (Ticket, error) {
 			result.Contracts = strings.TrimSpace(strings.TrimPrefix(line, "Contracts:"))
 			result.Modern = true
 		}
+		if strings.HasPrefix(line, "Blocked by:") && len(result.BlockedBy) == 0 {
+			for _, name := range listValue(strings.TrimPrefix(line, "Blocked by:")) {
+				if name != "none" {
+					result.BlockedBy = append(result.BlockedBy, name)
+				}
+			}
+		}
 		if strings.HasPrefix(line, "Integration surfaces:") {
+			if result.Surfaces == "" {
+				result.Surfaces = strings.TrimSpace(strings.TrimPrefix(line, "Integration surfaces:"))
+			}
 			result.Modern = true
 		}
 		if strings.HasPrefix(line, "Closure:") && len(result.Closure) == 0 {

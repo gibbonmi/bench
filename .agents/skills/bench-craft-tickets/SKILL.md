@@ -219,7 +219,11 @@ word.
   cited lines cannot maintain an advertisement it may not touch, so the
   contradiction surfaces a review round later instead of at slicing time.
 - **`Integration surfaces:`** is the review-owned integration-discovery landing
-  site; lifecycle does not parse it or infer fence completeness from it. Resolve
+  site; lifecycle does not infer fence completeness from it, and reads it for
+  exactly one refusal: naming a sibling basename as a dependent obliges that
+  sibling's `Blocked by:` to name this ticket back, and assign and refresh
+  refuse the sibling until it does. Whether the named value is really what this
+  ticket exports stays review's question. Resolve
   every required surface through the completion criterion above. `none` asserts
   that the sibling-family and literal/symbol searches found no integration
   surface; review repeats those searches rather than accepting the word as proof.
