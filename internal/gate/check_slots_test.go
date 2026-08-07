@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -158,7 +159,207 @@ func TestDeclaredDocumentInputsInvalidateOwningChecks(t *testing.T) {
 
 func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 	fixture := newKitShapedFixture(t)
-	files, directories := declaredPublicDocumentClasses(t, fixture.root)
+	type decisionExpectation struct {
+		eligible                  bool
+		executedChecks            []string
+		inheritedChecks           []string
+		executedComponents        []string
+		inheritedComponents       []string
+		phases                    []string
+		selectedChecksProjection  string
+		inheritedChecksProjection string
+		fullCanary                bool
+		selectedCanaryFamilies    []string
+	}
+	seededDecision := decisionExpectation{
+		eligible: true,
+		inheritedChecks: []string{
+			"kit-compliance", "canary-inner-compliance", "load-validity-metadata", "skills-index-command-adapters",
+			"docs-currency-workflow", "gate-entry-contract", "offline-smoke-proof", "handoff-shape-single-source",
+			"harness-prefix-single-source", "package-shipped-surface", "line-routing", "package-core-guard", "bench-sh-routes",
+			"default-branch-single-source", "data-handling-derivation", "single-control-escaper", "bounds-policy",
+			"marker-wait-deadlines", "subcommand-routing", "skip-ownership", "decision-map-integrity", "example-agreement",
+			"component-honesty-prose", "contract-capture-reads", "injected-port-registry",
+		},
+		inheritedComponents: []string{"build", "canary", "conformance-suite", "contract", "gofmt", "race", "shellcheck", "test", "vet"},
+		phases:              []string{"conformance"},
+		inheritedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters," +
+			"docs-currency-workflow,gate-entry-contract,offline-smoke-proof,handoff-shape-single-source,harness-prefix-single-source," +
+			"package-shipped-surface,line-routing,package-core-guard,bench-sh-routes,default-branch-single-source," +
+			"data-handling-derivation,single-control-escaper,bounds-policy,marker-wait-deadlines,subcommand-routing," +
+			"skip-ownership,decision-map-integrity,example-agreement,component-honesty-prose,contract-capture-reads,injected-port-registry",
+	}
+	plainDocumentDecision := decisionExpectation{
+		eligible: true,
+		executedChecks: []string{
+			"kit-compliance", "canary-inner-compliance", "load-validity-metadata", "skills-index-command-adapters",
+			"docs-currency-workflow", "handoff-shape-single-source", "package-shipped-surface", "line-routing",
+			"package-core-guard", "bounds-policy", "example-agreement",
+		},
+		inheritedChecks: []string{
+			"gate-entry-contract", "offline-smoke-proof", "harness-prefix-single-source", "bench-sh-routes",
+			"default-branch-single-source", "data-handling-derivation", "single-control-escaper", "marker-wait-deadlines",
+			"subcommand-routing", "skip-ownership", "decision-map-integrity", "component-honesty-prose",
+			"contract-capture-reads", "injected-port-registry",
+		},
+		inheritedComponents:      []string{"build", "canary", "conformance-suite", "contract", "gofmt", "race", "shellcheck", "test", "vet"},
+		phases:                   []string{"conformance"},
+		selectedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters,docs-currency-workflow,handoff-shape-single-source,package-shipped-surface,line-routing,package-core-guard,bounds-policy,example-agreement",
+		inheritedChecksProjection: "gate-entry-contract,offline-smoke-proof,harness-prefix-single-source,bench-sh-routes," +
+			"default-branch-single-source,data-handling-derivation,single-control-escaper,marker-wait-deadlines," +
+			"subcommand-routing,skip-ownership,decision-map-integrity,component-honesty-prose,contract-capture-reads,injected-port-registry",
+	}
+	contractDocumentDecision := decisionExpectation{
+		eligible: true,
+		executedChecks: []string{
+			"kit-compliance", "canary-inner-compliance", "load-validity-metadata", "skills-index-command-adapters",
+			"docs-currency-workflow", "handoff-shape-single-source", "package-shipped-surface", "line-routing",
+			"package-core-guard", "bounds-policy", "example-agreement",
+		},
+		inheritedChecks: []string{
+			"gate-entry-contract", "offline-smoke-proof", "harness-prefix-single-source", "bench-sh-routes",
+			"default-branch-single-source", "data-handling-derivation", "single-control-escaper", "marker-wait-deadlines",
+			"subcommand-routing", "skip-ownership", "decision-map-integrity", "component-honesty-prose",
+			"contract-capture-reads", "injected-port-registry",
+		},
+		executedComponents:       []string{"contract"},
+		inheritedComponents:      []string{"build", "canary", "conformance-suite", "gofmt", "race", "shellcheck", "test", "vet"},
+		phases:                   []string{"conformance", "contract"},
+		selectedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters,docs-currency-workflow,handoff-shape-single-source,package-shipped-surface,line-routing,package-core-guard,bounds-policy,example-agreement",
+		inheritedChecksProjection: "gate-entry-contract,offline-smoke-proof,harness-prefix-single-source,bench-sh-routes," +
+			"default-branch-single-source,data-handling-derivation,single-control-escaper,marker-wait-deadlines," +
+			"subcommand-routing,skip-ownership,decision-map-integrity,component-honesty-prose,contract-capture-reads,injected-port-registry",
+	}
+	canaryAndContractDocumentDecision := decisionExpectation{
+		eligible: true,
+		executedChecks: []string{
+			"kit-compliance", "canary-inner-compliance", "load-validity-metadata", "skills-index-command-adapters",
+			"docs-currency-workflow", "handoff-shape-single-source", "package-shipped-surface", "line-routing",
+			"package-core-guard", "bounds-policy", "example-agreement",
+		},
+		inheritedChecks: []string{
+			"gate-entry-contract", "offline-smoke-proof", "harness-prefix-single-source", "bench-sh-routes",
+			"default-branch-single-source", "data-handling-derivation", "single-control-escaper", "marker-wait-deadlines",
+			"subcommand-routing", "skip-ownership", "decision-map-integrity", "component-honesty-prose",
+			"contract-capture-reads", "injected-port-registry",
+		},
+		executedComponents:       []string{"canary", "contract"},
+		inheritedComponents:      []string{"build", "conformance-suite", "gofmt", "race", "shellcheck", "test", "vet"},
+		phases:                   []string{"canary", "conformance", "contract"},
+		selectedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters,docs-currency-workflow,handoff-shape-single-source,package-shipped-surface,line-routing,package-core-guard,bounds-policy,example-agreement",
+		inheritedChecksProjection: "gate-entry-contract,offline-smoke-proof,harness-prefix-single-source,bench-sh-routes," +
+			"default-branch-single-source,data-handling-derivation,single-control-escaper,marker-wait-deadlines," +
+			"subcommand-routing,skip-ownership,decision-map-integrity,component-honesty-prose,contract-capture-reads,injected-port-registry",
+	}
+	dataHandlingDecision := decisionExpectation{
+		eligible: true,
+		executedChecks: []string{
+			"kit-compliance", "canary-inner-compliance", "load-validity-metadata", "skills-index-command-adapters",
+			"docs-currency-workflow", "handoff-shape-single-source", "package-shipped-surface", "line-routing",
+			"package-core-guard", "data-handling-derivation", "bounds-policy", "example-agreement",
+		},
+		inheritedChecks: []string{
+			"gate-entry-contract", "offline-smoke-proof", "harness-prefix-single-source", "bench-sh-routes",
+			"default-branch-single-source", "single-control-escaper", "marker-wait-deadlines", "subcommand-routing",
+			"skip-ownership", "decision-map-integrity", "component-honesty-prose", "contract-capture-reads", "injected-port-registry",
+		},
+		inheritedComponents:      []string{"build", "canary", "conformance-suite", "contract", "gofmt", "race", "shellcheck", "test", "vet"},
+		phases:                   []string{"conformance"},
+		selectedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters,docs-currency-workflow,handoff-shape-single-source,package-shipped-surface,line-routing,package-core-guard,data-handling-derivation,bounds-policy,example-agreement",
+		inheritedChecksProjection: "gate-entry-contract,offline-smoke-proof,harness-prefix-single-source,bench-sh-routes," +
+			"default-branch-single-source,single-control-escaper,marker-wait-deadlines,subcommand-routing,skip-ownership," +
+			"decision-map-integrity,component-honesty-prose,contract-capture-reads,injected-port-registry",
+	}
+	benchkitProfileDecision := decisionExpectation{
+		eligible: true,
+		executedChecks: []string{
+			"kit-compliance", "canary-inner-compliance", "load-validity-metadata", "skills-index-command-adapters",
+			"docs-currency-workflow", "handoff-shape-single-source", "package-shipped-surface", "line-routing",
+			"package-core-guard", "bounds-policy", "example-agreement", "component-honesty-prose",
+		},
+		inheritedChecks: []string{
+			"gate-entry-contract", "offline-smoke-proof", "harness-prefix-single-source", "bench-sh-routes",
+			"default-branch-single-source", "data-handling-derivation", "single-control-escaper", "marker-wait-deadlines",
+			"subcommand-routing", "skip-ownership", "decision-map-integrity", "contract-capture-reads", "injected-port-registry",
+		},
+		inheritedComponents:      []string{"build", "canary", "conformance-suite", "contract", "gofmt", "race", "shellcheck", "test", "vet"},
+		phases:                   []string{"conformance"},
+		selectedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters,docs-currency-workflow,handoff-shape-single-source,package-shipped-surface,line-routing,package-core-guard,bounds-policy,example-agreement,component-honesty-prose",
+		inheritedChecksProjection: "gate-entry-contract,offline-smoke-proof,harness-prefix-single-source,bench-sh-routes," +
+			"default-branch-single-source,data-handling-derivation,single-control-escaper,marker-wait-deadlines," +
+			"subcommand-routing,skip-ownership,decision-map-integrity,contract-capture-reads,injected-port-registry",
+	}
+	decisionDocumentDecision := decisionExpectation{
+		eligible: true,
+		executedChecks: []string{
+			"kit-compliance", "canary-inner-compliance", "load-validity-metadata", "skills-index-command-adapters",
+			"docs-currency-workflow", "handoff-shape-single-source", "package-shipped-surface", "line-routing",
+			"package-core-guard", "bounds-policy", "decision-map-integrity", "example-agreement",
+		},
+		inheritedChecks: []string{
+			"gate-entry-contract", "offline-smoke-proof", "harness-prefix-single-source", "bench-sh-routes",
+			"default-branch-single-source", "data-handling-derivation", "single-control-escaper", "marker-wait-deadlines",
+			"subcommand-routing", "skip-ownership", "component-honesty-prose", "contract-capture-reads", "injected-port-registry",
+		},
+		inheritedComponents:      []string{"build", "canary", "conformance-suite", "contract", "gofmt", "race", "shellcheck", "test", "vet"},
+		phases:                   []string{"conformance"},
+		selectedChecksProjection: "kit-compliance,canary-inner-compliance,load-validity-metadata,skills-index-command-adapters,docs-currency-workflow,handoff-shape-single-source,package-shipped-surface,line-routing,package-core-guard,bounds-policy,decision-map-integrity,example-agreement",
+		inheritedChecksProjection: "gate-entry-contract,offline-smoke-proof,harness-prefix-single-source,bench-sh-routes," +
+			"default-branch-single-source,data-handling-derivation,single-control-escaper,marker-wait-deadlines," +
+			"subcommand-routing,skip-ownership,component-honesty-prose,contract-capture-reads,injected-port-registry",
+	}
+	allChecksExecuteDecision := decisionExpectation{
+		eligible: true,
+		executedChecks: []string{
+			"kit-compliance", "canary-inner-compliance", "load-validity-metadata", "skills-index-command-adapters",
+			"docs-currency-workflow", "gate-entry-contract", "offline-smoke-proof", "handoff-shape-single-source",
+			"harness-prefix-single-source", "package-shipped-surface", "line-routing", "package-core-guard", "bench-sh-routes",
+			"default-branch-single-source", "data-handling-derivation", "single-control-escaper", "bounds-policy",
+			"marker-wait-deadlines", "subcommand-routing", "skip-ownership", "decision-map-integrity", "example-agreement",
+			"component-honesty-prose", "contract-capture-reads", "injected-port-registry",
+		},
+	}
+	fileCases := []struct {
+		name               string
+		mutation, deletion decisionExpectation
+	}{
+		{name: ".bench-notes.md", mutation: plainDocumentDecision, deletion: plainDocumentDecision},
+		{name: ".bench/BENCH-reference.md", mutation: contractDocumentDecision, deletion: allChecksExecuteDecision},
+		{name: ".bench/BENCH.md", mutation: contractDocumentDecision, deletion: allChecksExecuteDecision},
+		{name: ".claude/README.md", mutation: contractDocumentDecision, deletion: allChecksExecuteDecision},
+		{name: "CHANGELOG.md", mutation: contractDocumentDecision, deletion: allChecksExecuteDecision},
+		{name: "DATA_HANDLING.md", mutation: dataHandlingDecision, deletion: dataHandlingDecision},
+		{name: "README.md", mutation: contractDocumentDecision, deletion: allChecksExecuteDecision},
+		{name: "ROADMAP.md", mutation: plainDocumentDecision, deletion: plainDocumentDecision},
+		{name: "projects/benchkit.md", mutation: benchkitProfileDecision, deletion: benchkitProfileDecision},
+		{name: "projects/gl-axi.md", mutation: contractDocumentDecision, deletion: allChecksExecuteDecision},
+		{name: "projects/regroup.md", mutation: contractDocumentDecision, deletion: allChecksExecuteDecision},
+	}
+	directoryCases := []struct {
+		name              string
+		addition, removal decisionExpectation
+	}{
+		{name: ".agents/commands/", addition: canaryAndContractDocumentDecision, removal: canaryAndContractDocumentDecision},
+		{name: ".agents/skills/", addition: canaryAndContractDocumentDecision, removal: canaryAndContractDocumentDecision},
+		{name: ".bench/adapters/", addition: contractDocumentDecision, removal: contractDocumentDecision},
+		{name: ".bench/hooks/", addition: contractDocumentDecision, removal: contractDocumentDecision},
+		{name: ".bench/lib/", addition: contractDocumentDecision, removal: contractDocumentDecision},
+		{name: "capture/", addition: plainDocumentDecision, removal: plainDocumentDecision},
+		{name: "decisions/", addition: decisionDocumentDecision, removal: decisionDocumentDecision},
+		{name: "specs/", addition: decisionDocumentDecision, removal: decisionDocumentDecision},
+	}
+	files := make([]string, 0, len(fileCases))
+	for _, test := range fileCases {
+		files = append(files, test.name)
+	}
+	directories := make([]string, 0, len(directoryCases))
+	for _, test := range directoryCases {
+		directories = append(directories, test.name)
+	}
+	declaredFiles, declaredDirectories := declaredPublicDocumentClasses(t, fixture.root)
+	if !slices.Equal(files, declaredFiles) || !slices.Equal(directories, declaredDirectories) {
+		t.Fatalf("literal public document membership = files %v directories %v, want production files %v directories %v", files, directories, declaredFiles, declaredDirectories)
+	}
 	for _, name := range files {
 		path := filepath.Join(fixture.root, filepath.FromSlash(name))
 		if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
@@ -170,52 +371,83 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 	sealKitShapedBinary(t, fixture.root)
 	mustExecuteGreen(t, fixture.root, productionGateEngine{})
 
-	assertChange := func(name string, change func()) {
+	seededSlots := checkSlotTestStoreBytes(t, fixture.root)
+	seededFullRuns := fullRunCount(t, fixture.root)
+	seededPhaseRuns := phaseRunNames(t, fixture.root)
+	seededVerdict, err := os.ReadFile(cachePath(t, fixture.root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resolution := Resolve(fixture.root, "", RealFS())
+	recorder := installGateGitRecorder(t)
+	recordedCaptures := 0
+	assertChange := func(name string, want decisionExpectation, change func()) {
 		t.Helper()
 		change()
-		decision := mustScopeComponents(t, fixture.root, Resolve(fixture.root, "", RealFS()), reuseFreshGreen, time.Now().UTC())
-		if !decision.eligible {
-			t.Fatalf("%s left the kit-shaped fixture ineligible for scoped gate decisions", name)
+		generation, err := captureWorkingTree(fixture.root)
+		if err != nil {
+			t.Fatalf("captureWorkingTree = %v, want the fixture generation", err)
 		}
-		observation := observeGreenGate(t, fixture.root)
-		record := slotRecord(t, fixture.root, time.Now().UTC())
-		gotExecuted, gotInherited := record.CheckExecuted, record.CheckInherited
-		if !record.checkPartitions() {
-			gotExecuted = registry.Names(registry.Dev)
-			gotInherited = nil
+		decision := scopeComponentsForGeneration(fixture.root, resolution, reuseFreshGreen, time.Now().UTC(), generation)
+		if decision.eligible != want.eligible {
+			t.Fatalf("%s eligibility = %t, want %t", name, decision.eligible, want.eligible)
 		}
-		wantExecuted := decision.checks.verdictExecuted()
-		wantInherited := decision.checks.verdictInherited()
-		if !slices.Equal(gotExecuted, wantExecuted) || !slices.Equal(gotInherited, wantInherited) {
-			t.Fatalf("%s public check partition = executed %v inherited %v, want executed %v inherited %v", name, gotExecuted, gotInherited, wantExecuted, wantInherited)
+		if !slices.Equal(decision.checks.Executed, want.executedChecks) {
+			t.Fatalf("%s executed checks = %v, want %v", name, decision.checks.Executed, want.executedChecks)
 		}
-		if len(decision.checks.Inherited) > 0 {
-			for _, executed := range wantExecuted {
-				if !strings.Contains(observation.stdout, "conformance check "+executed+": executing") {
-					t.Errorf("%s public output omitted executed check %s:\n%s", name, executed, observation.stdout)
-				}
-			}
-			for _, inherited := range wantInherited {
-				if !strings.Contains(observation.stdout, "conformance check "+inherited+": inherited") {
-					t.Errorf("%s public output omitted inherited check %s:\n%s", name, inherited, observation.stdout)
-				}
-			}
+		if got := decision.checks.verdictInherited(); !slices.Equal(got, want.inheritedChecks) {
+			t.Fatalf("%s inherited checks = %v, want %v", name, got, want.inheritedChecks)
 		}
-	}
-	forceGreen := func(reason string) {
-		t.Helper()
-		if result := executeWithEngineAfterAcquire(context.Background(), fixture.root, io.Discard, io.Discard, productionGateEngine{}, nil, forceRun); result.ActionExit != 0 {
-			t.Fatalf("forced baseline execution %s = %+v, want green", reason, result)
+		if got := decision.executedPhaseNames(); !slices.Equal(got, want.phases) {
+			t.Fatalf("%s executed phases = %v, want %v", name, got, want.phases)
 		}
+		if got := decision.executedScopedComponents(); !slices.Equal(got, want.executedComponents) {
+			t.Fatalf("%s executed components = %v, want %v", name, got, want.executedComponents)
+		}
+		gotInheritedComponents := make([]string, 0, len(decision.skipped))
+		for _, skipped := range decision.skipped {
+			gotInheritedComponents = append(gotInheritedComponents, skipped.Component)
+		}
+		if !slices.Equal(gotInheritedComponents, want.inheritedComponents) {
+			t.Fatalf("%s inherited components = %v, want %v", name, gotInheritedComponents, want.inheritedComponents)
+		}
+		if decision.checks.CanaryFull != want.fullCanary || !slices.Equal(decision.checks.CanaryFamilies, want.selectedCanaryFamilies) {
+			t.Fatalf("%s canary check projection = full %t families %v, want full %t families %v", name, decision.checks.CanaryFull, decision.checks.CanaryFamilies, want.fullCanary, want.selectedCanaryFamilies)
+		}
+		selectedProjection, inheritedProjection := "", ""
+		if phase, found := phaseNamed(decision.phases, "conformance"); found {
+			selectedProjection = phaseEnvValue(phase.Env, registry.ConformanceChecksEnv)
+			inheritedProjection = phaseEnvValue(phase.Env, registry.ConformanceInheritedEnv)
+		}
+		if selectedProjection != want.selectedChecksProjection || inheritedProjection != want.inheritedChecksProjection {
+			t.Fatalf("%s conformance projection = selected %q inherited %q, want selected %q inherited %q", name, selectedProjection, inheritedProjection, want.selectedChecksProjection, want.inheritedChecksProjection)
+		}
+		if got := checkSlotTestStoreBytes(t, fixture.root); !reflect.DeepEqual(got, seededSlots) {
+			t.Fatalf("%s changed seeded check-slot bytes", name)
+		}
+		if got := fullRunCount(t, fixture.root); got != seededFullRuns {
+			t.Fatalf("%s ran the full engine %d times after the seed, want %d", name, got, seededFullRuns)
+		}
+		if got := phaseRunNames(t, fixture.root); !slices.Equal(got, seededPhaseRuns) {
+			t.Fatalf("%s ran phases %v after the seed, want %v", name, got, seededPhaseRuns)
+		}
+		if got, err := os.ReadFile(cachePath(t, fixture.root)); err != nil || !bytes.Equal(got, seededVerdict) {
+			t.Fatalf("%s changed the seeded verdict bytes: %v", name, err)
+		}
+		captures := countGateGitOperation(recorder.operations(t), "write-tree")
+		if captures-recordedCaptures != 1 {
+			t.Fatalf("%s captured %d generations, want one", name, captures-recordedCaptures)
+		}
+		recordedCaptures = captures
 	}
 	restore := func(name string, data []byte, mode os.FileMode) {
 		t.Helper()
 		writeGateTestFile(t, fixture.root, name, string(data), mode)
-		forceGreen("after restoring " + name)
 	}
 
-	for _, name := range files {
-		t.Run(name, func(t *testing.T) {
+	for _, test := range fileCases {
+		t.Run(test.name, func(t *testing.T) {
+			name := test.name
 			path := filepath.Join(fixture.root, filepath.FromSlash(name))
 			baseline, err := os.ReadFile(path)
 			if err != nil {
@@ -225,36 +457,38 @@ func TestPublicDocumentClassesProjectTheirExactCheckPartition(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			assertChange("mutating "+name, func() {
+			assertChange("mutating "+name, test.mutation, func() {
 				writeGateTestFile(t, fixture.root, name, string(baseline)+"matrix mutation\n", info.Mode().Perm())
 			})
 			restore(name, baseline, info.Mode().Perm())
-			assertChange("deleting "+name, func() {
+			assertChange("deleting "+name, test.deletion, func() {
 				if err := os.Remove(path); err != nil {
 					t.Fatal(err)
 				}
 			})
 			restore(name, baseline, info.Mode().Perm())
+			assertChange("restoring "+name, seededDecision, func() {})
 		})
 	}
-	for _, directory := range directories {
-		t.Run(directory, func(t *testing.T) {
+	for _, test := range directoryCases {
+		t.Run(test.name, func(t *testing.T) {
+			directory := test.name
 			removalName, removalData, removalMode := firstDocumentDescendant(t, fixture.root, directory)
 			addedName := directory + "public-partition-matrix.md"
 			addedPath := filepath.Join(fixture.root, filepath.FromSlash(addedName))
-			assertChange("adding a descendant of "+directory, func() {
+			assertChange("adding a descendant of "+directory, test.addition, func() {
 				writeGateTestFile(t, fixture.root, addedName, "matrix descendant\n", 0o644)
 			})
 			if err := os.Remove(addedPath); err != nil {
 				t.Fatal(err)
 			}
-			forceGreen("after removing the added descendant of " + directory)
-			assertChange("removing a descendant of "+directory, func() {
+			assertChange("removing a descendant of "+directory, test.removal, func() {
 				if err := os.Remove(filepath.Join(fixture.root, filepath.FromSlash(removalName))); err != nil {
 					t.Fatal(err)
 				}
 			})
 			restore(removalName, removalData, removalMode)
+			assertChange("restoring "+directory, seededDecision, func() {})
 		})
 	}
 }
@@ -862,6 +1096,28 @@ func checkSlotTestBytes(t *testing.T, root string) map[string][]byte {
 			t.Fatalf("compact %s slot: %v", name, err)
 		}
 		got[name] = compact.Bytes()
+	}
+	return got
+}
+
+func checkSlotTestStoreBytes(t *testing.T, root string) map[string][]byte {
+	t.Helper()
+	dir, err := componentSlotDir(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := make(map[string][]byte, len(entries))
+	for _, entry := range entries {
+		path := filepath.Join(dir, entry.Name())
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		got[path] = data
 	}
 	return got
 }
