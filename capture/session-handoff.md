@@ -1,31 +1,38 @@
 # Session handoff
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `/home/devuser/workspace/bench`
-Branch: `main` — pre-commit HEAD `f5fbc457c678`, 27 unpushed commits
-Specs: `specs/gate-decision-test-seam/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: stale on the pre-commit tree; this handoff lands only through the roadmap batch's green `bench commit`
+Path: `~/workspace/bench`
+Branch: `main` — HEAD `acf5c9d`, 3 dirty paths, 36 unpushed commits
+Spec: `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Gate: green at `7c61ed8` — stale, work tree `d9a0656`
 
 ## State
 
-**Phase reached: roadmap reconciled and capture drained.**
+**Phase reached: gate-decision-test-seam promoted, retired, and retro captured.**
 
-FT187 is promoted and retired. Its retro is drained into FT162's retained
-promotion timing and memory evidence and FT174's declared-closure omission
-review. FT171 now owns the staged gate-decision-test-seam slice; FT135 remains
-staged behind it. The ideas inbox, learnings journal, occurrence ledger, and
-retros directory are empty.
+The spec-build run `527a22c5` is terminal: promotion commit `3cce8aa` published
+candidate `f7f0ea8c` and the spec-retire commit `acf5c9d` removed
+`specs/gate-decision-test-seam/` and its ROADMAP row. The interrupted-gate
+incident is resolved — plain `bench gate` (never `--fresh`) recovered the
+pending record; the original `ComposedGreen` refusal cause is recorded as
+unprovable (overwritten record, no transcript copy). Review receipt
+`80069545…` holds seven risk-accepted findings as the veto surface.
 
-Closed decisions stay closed: the gate-decision slice preserves the existing
-read-only decision seam and representative full-engine composition proofs;
-pre-push guard visibility still follows its compiled decision map; FT187's
-communication surface and atomic closure contract are shipped state rather than
-work to reopen. The refreshed sequence drains both staged specs before new spec
-authoring.
+Uncommitted capture awaiting the drain: `capture/IDEAS.md` (four new parked
+ideas: refusal-advice differentiation, pending-record preservation,
+absolute-receipt-path error, check_slots_test follow-ups),
+`capture/learnings.md` (one open 2026-08-07 entry on the `--fresh` misroute),
+`capture/retros/gate-decision-test-seam.md`, and this file. FT135
+(`specs/pre-push-guard-visibility/spec.md`) is the one staged spec.
+
+Closed decisions stay closed: risk-accepted review dispositions were taken
+under the reviewer's standing batch approval and reopen only by reviewer veto;
+the decision-seam matrix's reload-coverage narrowing is the spec's own recorded
+trade.
 
 ## Next command
 
-`$bench-implement-spec`
+`/bench-what-next` — drain the ideas, the open learning, and the pending retro.
 
 ## Shape
 
