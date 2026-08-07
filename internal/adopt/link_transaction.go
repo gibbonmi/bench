@@ -1,6 +1,7 @@
 package adopt
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -32,6 +33,9 @@ func convergedFingerprint(dest, staged string) string {
 	if err != nil {
 		return ""
 	}
+	if stagedInfo.Mode()&os.ModeSymlink != 0 {
+		return convergedSymlinkFingerprint(dest, staged)
+	}
 	if destInfo.Mode()&os.ModeSymlink == 0 && destInfo.Mode().Perm() != stagedInfo.Mode().Perm() {
 		return ""
 	}
@@ -44,6 +48,54 @@ func convergedFingerprint(dest, staged string) string {
 		return ""
 	}
 	return destPrint
+}
+
+// convergedSymlinkFingerprint answers convergedFingerprint for a staged symlink, whose
+// own permission bits carry nothing to compare. An identical link at dest is not the only
+// converged shape: a repo may satisfy a whole adapter directory with one directory-level
+// symlink (.claude/commands -> ../.agents/commands), which leaves dest resolving through
+// that parent to the very file the staged link names. Both shapes are converged because
+// a reader of dest sees the same bytes either way, and refusing the second one would
+// send an untouched repo into the symlink-parent refusal on every entry.
+func convergedSymlinkFingerprint(dest, staged string) string {
+	destPrint, err := fingerprintPath(dest)
+	if err != nil {
+		return ""
+	}
+	if stagedPrint, err := fingerprintPath(staged); err == nil && stagedPrint == destPrint {
+		return destPrint
+	}
+	target, err := os.Readlink(staged)
+	if err != nil {
+		return ""
+	}
+	// stageSymlink writes the link inside the transaction's stage directory, so a relative
+	// target only names its file once promoted: resolve it against dest's own directory.
+	if !filepath.IsAbs(target) {
+		target = filepath.Join(filepath.Dir(dest), target)
+	}
+	if !sameRegularContent(dest, target) {
+		return ""
+	}
+	return destPrint
+}
+
+// sameRegularContent reports whether two paths resolve to regular files holding the same
+// bytes. Each is stat'd through its links first: a FIFO or device reached by either path
+// would block the read forever.
+func sameRegularContent(a, b string) bool {
+	for _, path := range []string{a, b} {
+		info, err := os.Stat(path)
+		if err != nil || !info.Mode().IsRegular() {
+			return false
+		}
+	}
+	first, err := os.ReadFile(a)
+	if err != nil {
+		return false
+	}
+	second, err := os.ReadFile(b)
+	return err == nil && bytes.Equal(first, second)
 }
 
 // ownedUnmodified reports whether dest still carries the exact bytes recorded for it in

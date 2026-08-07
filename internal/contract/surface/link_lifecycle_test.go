@@ -31,6 +31,86 @@ func TestLinkSymlinkLifecycleContracts(t *testing.T) {
 	testUpgradeRefreshesHookThroughManagedSymlink(t)
 	testLinkManagedSymlinkIsIdempotent(t)
 	testLinkLeavesCleanEntryInPlace(t)
+	testLinkConvergesAdapterDirectorySymlink(t)
+	testLinkRejectsDriftedAdapterDirectorySymlink(t)
+}
+
+// adapterFileRel is the .claude mirror of managedFileRel — the adapter entry whose staged
+// symlink names that canonical file.
+var adapterFileRel = strings.Replace(managedFileRel, ".agents/", ".claude/", 1)
+
+// testLinkConvergesAdapterDirectorySymlink pins the shape a repo takes when it satisfies
+// the whole adapter mirror itself: .claude/commands is one directory symlink to the
+// canonical directory, so every adapter destination resolves to exactly the file its
+// staged link names. That is converged, and a link that read it as needing a write would
+// hit the symlink-parent refusal on the first adapter entry.
+func testLinkConvergesAdapterDirectorySymlink(t *testing.T) {
+	f := adapterDirectorySymlinkFixture(t, "../.agents/commands")
+	before := fixtureStateExceptManifest(t, f)
+
+	probe := f.Bench("link")
+
+	probe.RequireExit(0)
+	if after := fixtureStateExceptManifest(t, f); after != before {
+		t.Fatalf("link wrote to a converged destination under an adapter directory symlink\nbefore:\n%s\nafter:\n%s", before, after)
+	}
+}
+
+// testLinkRejectsDriftedAdapterDirectorySymlink keeps the hard refusal intact for the
+// case content-awareness must not swallow: the adapter directory symlink points at a
+// stale mirror, so once the canonical file changes the destination no longer resolves to
+// what the staged link would name and the entry genuinely needs a write.
+func testLinkRejectsDriftedAdapterDirectorySymlink(t *testing.T) {
+	f := adapterDirectorySymlinkFixture(t, "../adapter-mirror")
+	f.WriteFile(managedFileRel, "canonical content, locally changed\n")
+	before := fixtureState(t, f)
+
+	probe := f.Bench("link")
+
+	probe.RequireExit(1)
+	probe.RequireContains(probe.Stderr, adapterFileRel+" has a symlink parent directory")
+	if after := fixtureState(t, f); after != before {
+		t.Fatalf("drifted adapter refusal still promoted part of the transaction\nbefore:\n%s\nafter:\n%s", before, after)
+	}
+}
+
+// adapterDirectorySymlinkFixture replaces a linked repo's .claude/commands directory with
+// a symlink to target. The "../adapter-mirror" target is seeded with a copy of the
+// canonical directory so a later edit to a canonical file makes exactly one adapter
+// destination drift; any other target is used as given.
+func adapterDirectorySymlinkFixture(t *testing.T, target string) contract.Fixture {
+	t.Helper()
+	f := contract.NewFixture(t)
+	linkOK(t, f)
+	if target == "../adapter-mirror" {
+		copyPaths(t, f.Root, filepath.Join(f.Root, ".agents", "commands"))
+		if err := os.Rename(filepath.Join(f.Root, "commands"), filepath.Join(f.Root, "adapter-mirror")); err != nil {
+			t.Fatal(err)
+		}
+	}
+	dir := filepath.Join(f.Root, ".claude", "commands")
+	if err := os.RemoveAll(dir); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, dir); err != nil {
+		t.Fatal(err)
+	}
+	return f
+}
+
+// fixtureStateExceptManifest elides the link manifest from fixtureState. A converged entry
+// records its destination's own fingerprint, so an adapter destination reached through a
+// directory symlink restamps its row from the link it no longer is to the bytes it now
+// resolves to — a manifest change with no destination write behind it.
+func fixtureStateExceptManifest(t *testing.T, f contract.Fixture) string {
+	t.Helper()
+	kept := []string{}
+	for _, line := range strings.Split(fixtureState(t, f), "\n") {
+		if !strings.HasPrefix(line, ".bench/link-manifest.tsv ") {
+			kept = append(kept, line)
+		}
+	}
+	return strings.Join(kept, "\n")
 }
 
 func testLinkConvergesManagedSymlink(t *testing.T) {
