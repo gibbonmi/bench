@@ -3,7 +3,7 @@
 Blocked by: none
 Ownership fence: `internal/canary/canary.go`, `internal/canary/scope_test.go`
 Integration surfaces: fixture-level `CHECK` and family fallback resolution→`internal/canary/canary.go` + CR1/CR2; exported resolved check→scope-direct-conformance-fixture-bites.md + FB1/FB2 after lifecycle refresh; real `default-branch-refabricated` fixture→existing `tests/canary/package-core-guard/default-branch-refabricated/CHECK` + CR1
-Contracts: resolved check name crosses canary fixture discovery→the refreshed conformance fixture-bite assignment, asserted by CR1/CR2 against the real canary inventory and later by FB1/FB2 against the real scoped runner
+Contracts: resolved check name crosses `internal/canary/canary.go`→the refreshed conformance fixture-bite assignment, asserted by CR1/CR2 against the real canary inventory and later by FB1/FB2 against the real scoped runner
 Closure: CR1/check-override, CR1/real-default-branch-fixture, CR2/family-fallback, CR2/shared-precedence
 
 ## What to build
