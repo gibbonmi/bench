@@ -267,7 +267,10 @@ word.
   Split independently failing classes or members into separate acceptance IDs,
   or repeat the same ID in the mutation table until every class or member is
   exercised. One representative mutation cannot prove a compound or quantified
-  claim. Mutate the **subject**, never
+  claim. An outcome label ("stale or absent", "invalid") is a compound claim in
+  disguise: name the exact predicate the code must preserve — the specific error
+  class, the specific comparison — so each closure token owns one singular red.
+  Mutate the **subject**, never
   the assertion: weakening a shared check to always-pass is invisible to a suite
   whose subjects already satisfy it, so the row reads green and proves nothing.
   A ticket touching a value that **authorizes** an action — a fingerprint, a

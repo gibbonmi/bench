@@ -2,31 +2,23 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `/home/devuser/workspace/bench`
-Branch: `main` — pre-commit HEAD `c8ea95ea1a9f`, 51 unpushed commits
-Spec: `specs/pre-push-guard-visibility/spec.md` (Status: staged; no active build run)
-Gate: unavailable on the pre-commit tree; this handoff lands only through the roadmap batch's green `bench commit`
+Branch: `main` — HEAD `70aff37` (`spec: repair FT135 doctor execution and marker docs`), unpushed
+Spec: `specs/pre-push-guard-visibility/spec.md` (Status: staged; active build run `9975d21bda3a765c3c46f289fb19f7eef269c6b2164d3f33e2b20ec0a5caac8e`)
+Gate: green at tree `54e3457aceabc85777ffa36bd47c3f7b92439ea4`; the ticket-only `bench commit` completed before this handoff.
 
 ## State
 
-**Phase reached: roadmap reconciled and capture drained.**
+**Phase reached: FT135 repair tickets committed; recomposition blocked by unrelated working-tree dirt.**
 
-`conformance-harness-scope` and `gate-decision-test-seam` are promoted and
-retired. Their recommendations are folded into the existing lifecycle,
-review-evidence, ticket-grammar, gate-attribution, and residual-verdict owners;
-FT199 carries the distinct lifecycle-native repair-entry gap. FT135 remains the
-sole staged spec. The ideas inbox, learnings journal, occurrence ledger, and
-retros directory are empty.
+Candidate `fcbe6cec459f6e4b4a3496d3b6faa6da68c123fd` has all prior assignments integrated and a fresh three-axis review receipt (`6efc8e082f5241ee79eec6301a44121281c9ee078988502fb260c486ba145f85`). It accepted P1: doctor repair overwrites an existing stale `0644` pre-push hook without restoring execute bits, and S1: the public `PrePushMarker` comment names removed `ClassifyPrePush`. It rejected the alleged unused `managedPrePushBody` fixture because `internal/contract/surface/doctor_rows_test.go` consumes it; Coverage found no miss across all 40 rows.
 
-Closed decisions stay closed: the gate-decision slice preserves the read-only
-decision seam and representative full-engine composition proofs; the
-conformance-harness slice exports the registry-resolved fixture check and keeps
-representative shell-ordering journeys; pre-push guard visibility still follows
-its compiled decision map. The refreshed sequence drains FT135 before new spec
-authoring.
+The two independently-green repair tickets are committed in `70aff37`: `restore-doctor-hook-execute-mode.md` (doctor repair plus its runtime contract) and `correct-hook-marker-comment.md` (current-only marker documentation). The attempted ticket commit's gate is green. `bench spec build promote pre-push-guard-visibility` must next recompose the candidate onto `70aff37`; it currently refuses because the checkout is dirty.
+
+Preserve both dirty paths exactly: `.agents/skills/bench-craft-tickets/SKILL.md` is foreign concurrent work, and this handoff records the pause. Do not clear, stage, or commit either as part of FT135. Do not start a new lifecycle run. The final cross-harness falsification pass remains explicitly skipped; required lifecycle reviews and promotion are not skipped.
 
 ## Next command
 
-`$bench-implement-spec`
+`$bench-implement-spec FT135 --full skip the final cross-harness check`
 
 ## Shape
 
