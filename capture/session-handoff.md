@@ -2,37 +2,39 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `acf5c9d`, 3 dirty paths, 36 unpushed commits
-Spec: `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `7c61ed8` — stale, work tree `d9a0656`
+Branch: `main` — HEAD `fd0eb8f`, 1 dirty path, 37 unpushed commits
+Spec: `specs/conformance-harness-scope/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Gate: green at `dadc792` — stale, work tree `7b7f77a`
 
 ## State
 
-**Phase reached: gate-decision-test-seam promoted, retired, and retro captured.**
+**Phase reached: conformance-harness-scope spec staged and reviewer-approved.**
 
-The spec-build run `527a22c5` is terminal: promotion commit `3cce8aa` published
-candidate `f7f0ea8c` and the spec-retire commit `acf5c9d` removed
-`specs/gate-decision-test-seam/` and its ROADMAP row. The interrupted-gate
-incident is resolved — plain `bench gate` (never `--fresh`) recovered the
-pending record; the original `ComposedGreen` refusal cause is recorded as
-unprovable (overwritten record, no transcript copy). Review receipt
-`80069545…` holds seven risk-accepted findings as the veto surface.
+`specs/conformance-harness-scope/spec.md` is the uncommitted staged spec. Its
+reviewer-confirmed 2026-08-07 source authorizes two test-only outcomes: direct
+conformance fixture bites run only the check resolved from the executable
+registry, and freshness failure classes move to `Verify`/`Check` while
+representative shell-entry composition remains. `bench coverage --check`
+validates all 13 acceptance rows. The required read-only falsification pass
+found a duplicated-registry false green and an overbroad fixture-family
+quantifier; both are repaired in the draft.
 
-Uncommitted capture awaiting the drain: `capture/IDEAS.md` (four new parked
-ideas: refusal-advice differentiation, pending-record preservation,
-absolute-receipt-path error, check_slots_test follow-ups),
-`capture/learnings.md` (one open 2026-08-07 entry on the `--fresh` misroute),
-`capture/retros/gate-decision-test-seam.md`, and this file. FT135
-(`specs/pre-push-guard-visibility/spec.md`) is the one staged spec.
+Implementation has not started and no spec-build run exists. The closed fences
+permit only the named conformance fixture-bite test files and the freshness plus
+gate-entry test files. Production registry contents, selection semantics,
+freshness policy, gate routing, canary fixtures, scheduler work, and the
+post-reduction census remain out of scope. The direct-bite quantifier is the ten
+families enumerated in the spec; `injected-ports` stays canary-sweep-owned. A
+registry-source rebind mutation must prove the helper consumes
+`registry.FamilyCheck` rather than a private copy.
 
-Closed decisions stay closed: risk-accepted review dispositions were taken
-under the reviewer's standing batch approval and reopen only by reviewer veto;
-the decision-seam matrix's reload-coverage narrowing is the spec's own recorded
-trade.
+`specs/pre-push-guard-visibility/spec.md` remains a separate staged spec and is
+not part of this lifecycle. The only uncommitted paths owned by this phase are
+the new conformance-harness-scope spec and this rewritten handoff.
 
 ## Next command
 
-`/bench-what-next` — drain the ideas, the open learning, and the pending retro.
+`$bench-implement-spec --full conformance-harness-scope`
 
 ## Shape
 
