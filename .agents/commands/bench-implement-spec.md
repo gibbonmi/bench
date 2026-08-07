@@ -177,6 +177,16 @@ reviewer-run pass produces the debug receipt — the blocked report's evidence p
 the confirmed cause, the paths the repair must own, and whether the ticket can
 proceed once the repair lands. Nothing below runs until the receipt exists.
 
+That receipt takes a repair ticket, never a small spec: it already fixes the
+cause, owned paths, and proceed-condition, so a spec would only restate it. The
+ticket adds what the receipt does not: an ownership fence, an acceptance row,
+and a red mutation for the probes to run against.
+
+The coordinator derives that ticket from the reviewer-produced receipt; the
+implementing delegate never authors its own acceptance criteria. Having the
+delegate draft them for coordinator approval adds no independent source, only
+a round trip.
+
 With the receipt in hand, the coordinator drives the repair through the public
 lifecycle, no synthesized commits, refs, worktrees, or patch replay:
 
