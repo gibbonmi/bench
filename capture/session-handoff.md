@@ -2,9 +2,9 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `fd0eb8f`, 1 dirty path, 37 unpushed commits
+Branch: `main` — HEAD `5d0f719`, clean tree, 46 unpushed commits
 Spec: `specs/conformance-harness-scope/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `dadc792` — stale, work tree `7b7f77a`
+Gate: green at `0a4f958` — stale, work tree `9407e68`
 
 ## State
 
@@ -34,7 +34,7 @@ the new conformance-harness-scope spec and this rewritten handoff.
 
 ## Next command
 
-`$bench-implement-spec --full conformance-harness-scope`
+`/bench-what-next` — the board's leading invocable signal (`drain`).
 
 ## Shape
 
