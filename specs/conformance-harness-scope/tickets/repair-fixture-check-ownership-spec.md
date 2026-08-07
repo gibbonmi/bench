@@ -3,7 +3,7 @@
 Blocked by: expose-resolved-canary-fixture-checks.md, repair-fixture-bite-dependency-metadata.md
 Ownership fence: `specs/conformance-harness-scope/spec.md`
 Integration surfaces: fixture CHECK and family fallback→existing canary resolver + CR1/CR2; resolved `Fixture.Check`→story 1 implementation/testing decisions and CH1 + RS1; registry family rebind→CH1 consumer-propagation red signal + RS1
-Contracts: raw fixture metadata crosses the real canary tree→canary's existing shared precedence resolver, asserted by CR1/CR2; resolved check name crosses canary `Fixture.Check`→the conformance helper, asserted by CH1/CH2 and documented consistently by RS1; family registry rebind crosses canary fallback→the real fixture journey, asserted by CH1 without making conformance a second policy owner
+Contracts: raw fixture metadata and resolved canary `Fixture.Check` ownership cross the implementation and repair tickets→`specs/conformance-harness-scope/spec.md`, asserted by RS1 in the governing story, decisions, seam, and CH1 row; family registry rebind crosses canary fallback→the same governing spec path, asserted by CH1 without making conformance a second policy owner
 Closure: RS1/owner-chain, RS1/coverage-row
 
 ## What to build
