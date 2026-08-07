@@ -3,7 +3,7 @@
 Blocked by: project-public-document-decisions-directly
 Ownership fence: `internal/gate/check_slots_test.go`
 Integration surfaces: decision-seam generation capture→`internal/gate/check_slots_test.go` + OP1; seeded check-slot store→`internal/gate/check_slots_test.go` + RS1
-Contracts: every exhaustive changed-state generation capture crosses the matrix recorder→OP1 assertion; raw seeded check-slot paths and bytes cross fixture seed→every changed/restored state comparison
+Contracts: every exhaustive changed-state generation capture crosses `internal/gate/check_slots_test.go`'s matrix recorder→its OP1 assertion; raw seeded check-slot paths and bytes cross the same fenced fixture seed→every changed/restored state comparison
 Closure: OP1/generation-recorder, OP1/second-capture-red, RS1/raw-slot-bytes
 
 ## What to build
