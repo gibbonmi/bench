@@ -86,6 +86,14 @@ box, and holds on cgroup-limited CI where a fixed count could consume the whole
 allocation. `GOMAXPROCS` remains the operator lever, applied before the
 reserve, per `gate-concurrency` #3's no-knob ruling.
 
+The pool owner resolves that operator width in the outer process before the
+gate constructs its closed subject environment. Children receive the derived
+grant through the inherited pool and the explicit width pin; ambient
+`GOMAXPROCS` or `GOFLAGS` do not become undeclared subject inputs. The current
+unbudgeted gate does not yet have that bridge: the memory profile observed a
+12-core canary pool despite invoking the gate with `GOMAXPROCS=2`, which is an
+implementation gap this destination closes rather than a second operator knob.
+
 ## #4: What decides whether a process needs a pool?
 
 Blocked by: #2
@@ -574,7 +582,12 @@ spec.
 
 ### Answer
 
-— (open)
+Resolved and landed. `gate-evaluation-snapshot` promoted candidate `60b44de` as
+`c3d8e47` and retired at `60842e0`. One evaluation now owns its accepted pre
+generation and a distinct post generation; working and prospective sources
+share the generation contract, all five identity families consume it, and the
+operation-count controls bound materializations, listings, and repeated blob
+reads without changing drift detection, fail-closed posture, or evidence.
 
 ## #18: Does the exhaustive gate matrix run at the decision seam?
 
@@ -586,7 +599,8 @@ Type: Task
 Write and land `gate-decision-test-seam`. Exercise the exhaustive mapping table
 at the pure decision boundary, then keep representative full-engine tests that
 prove source wiring, materialization, and fail-closed behavior. Production
-oracle behavior does not change.
+oracle behavior does not change. Owner: a fresh spec lifecycle beginning with
+`/bench-write-spec`, followed through build, review, promotion, and retirement.
 
 ### Answer
 
@@ -602,7 +616,9 @@ Type: Task
 Write and land `conformance-harness-scope`. Route each fixture through its
 registered check, test freshness at the lower seam that owns it, and retain
 representative shell-level integration coverage. The executable check registry
-remains the single source of policy.
+remains the single source of policy. Owner: a fresh spec lifecycle beginning
+with `/bench-write-spec`, after #18 retires, followed through build, review,
+promotion, and retirement.
 
 ### Answer
 
@@ -668,6 +684,9 @@ CPU, wall, and process/materialization counts. Report the reduced workload that
 - Path: `decisions/assets/gate-budget-cpu-wall-census.md`
   Supports: #13's three-shape finding, cache A/B, preflight ownership and per-test timing, and the focused spans #6's inflation measure needs; 70 packages timed alone on `25385f8`, 777.0 s serial wall against 1198.4 s CPU.
   Drift: one repetition per package on one box; re-run before any figure is used to pick a constant.
+- Path: `decisions/assets/gate-budget-memory-profile.md`
+  Supports: #1–#5's machine-wide process-boundary budget, the non-recursive primary/stripped/canary overlap, the current operator-width plumbing gap, and #20's required memory/process/I/O observables.
+  Drift: one green run on `6607236` and one 12-core host before #18–#19; mechanism evidence only, never authority to price #8.
 - Path: `internal/contract/surface/artifact/internal/fixture/fixture.go`
   Supports: #13's current dev-posture finding that artifact contract package `TestMain` sets `BENCH_SHARED_BUILD_CACHE=1` before tests run.
   Drift: code-derived; re-verify if artifact fixture setup changes.
@@ -677,9 +696,9 @@ CPU, wall, and process/materialization counts. Report the reduced workload that
 - Path: `internal/gate/check_slots_test.go`
   Supports: #15's 21-row public-document mapping matrix and its mutation, deletion, and restoring full-gate calls.
   Drift: code-derived; re-verify if mapping coverage moves to a narrower seam.
-- Path: `internal/gate/component_decision.go`
-  Supports: #15's repeated snapshot derivation across conformance-check, canary, and component identity families.
-  Drift: code-derived; re-verify if gate evaluation gains a shared snapshot owner.
+- Path: `internal/gate/evaluation.go`
+  Supports: #17's current evaluation-owned accepted pre generation, distinct post generation, and common working/prospective source contract.
+  Drift: code-derived; re-verify with the operation ceilings in `internal/gate/evaluation_test.go` if evaluation or snapshot ownership moves.
 - Path: `internal/preprelease/preprelease.go`
   Supports: #15's ship step order, repeated core package enumeration, first artifact build, conformance probe, preflight, and ship canary.
   Drift: code-derived; re-verify if the ship sequence changes.
