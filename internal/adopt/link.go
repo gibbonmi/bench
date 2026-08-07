@@ -249,19 +249,6 @@ func manifestHash(root, rel string) string {
 	return m.Hash(rel)
 }
 
-func manifestOwnedClean(root, rel string) bool {
-	old := manifestHash(root, rel)
-	if old == "" {
-		return false
-	}
-	path := filepath.Join(root, rel)
-	if _, err := os.Lstat(path); os.IsNotExist(err) {
-		return true
-	}
-	now, err := fingerprintPath(path)
-	return err == nil && now == old
-}
-
 func hasSymlinkParent(root, rel string) bool {
 	dir := filepath.Dir(rel)
 	if dir == "." {

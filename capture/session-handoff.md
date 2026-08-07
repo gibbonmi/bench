@@ -2,23 +2,21 @@
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
 Path: `~/workspace/bench`
-Branch: `main` — HEAD `b6dd0a8`, clean tree, 14 unpushed commits
-Spec: `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: green at `dca14fb` — stale, work tree `30aa496`
+Branch: `main` — HEAD `e1c24b8`, 4 dirty paths, 19 unpushed commits
+Spec: none staged.
+Gate: green at `f4fd683` — stale, work tree `ea46b76`
 
 ## State
 
-**Phase reached: FT135 recomposition repair landed; promote is the next lifecycle operation.**
+**Phase reached: pre-push-guard-visibility promoted terminal; capture drain and spec retirement are next.**
 
-Candidate `fcbe6cec459f6e4b4a3496d3b6faa6da68c123fd` has all prior assignments integrated and a fresh three-axis review receipt (`6efc8e082f5241ee79eec6301a44121281c9ee078988502fb260c486ba145f85`). It accepted P1: doctor repair overwrites an existing stale `0644` pre-push hook without restoring execute bits, and S1: the public `PrePushMarker` comment names removed `ClassifyPrePush`. It rejected the alleged unused `managedPrePushBody` fixture because `internal/contract/surface/doctor_rows_test.go` consumes it; Coverage found no miss across all 40 rows.
+Run `9975d21b` promoted on green: candidate `a57e2334`, promotion commit `e1c24b83`, retained evidence `v1:4cc9bdc6…`, `Status: implemented`. Nineteen assignments across three review rounds; every accepted finding closed, including the spec-authored clean-skip defect (predicate amended to prospective bytes-and-mode match, amendment landed in the closing commit after promotion because the run pins staged spec content). The closing commit also carries the dead `manifestOwnedClean` deletion, three learnings entries (gate-free repair bookkeeping, SpecTip pin, ticket-fence enforcement), and `capture/retros/pre-push-guard-visibility.md`.
 
-The two independently-green repair tickets are committed in `70aff37`: `restore-doctor-hook-execute-mode.md` (doctor repair plus its runtime contract) and `correct-hook-marker-comment.md` (current-only marker documentation).
-
-The recomposition marker-conflict defect from the debug receipt is fixed and landed green as HEAD `b6dd0a8`: `recomposePromotion` now bootstraps against `greenMarker(s.root, subject.branch)` instead of the run's recorded base, retains the recorded base until `finishRecomposition` completes, and carries the strong regression `TestPromoteRecompositionBootstrapsAgainstLiveMarkerAndRetainsRecordedBase` (red under the recorded-base mutation, verified). The fenced repair ticket is `specs/pre-push-guard-visibility/tickets/repair-recompose-bootstrap-marker.md`. Do not cherry-pick or absorb any dirty assignment worktree; the fix was authored fresh on main. Promotion now recomposes candidate `fcbe6cec` onto the moved tip; recomposition discards the bound review, so the round after promote is a fresh composed review, then promote again. The final cross-harness falsification pass remains explicitly skipped; required lifecycle reviews and promotion are not skipped.
+Open items for the drain: the retro plus the three learnings entries; two contestable unpinned branches recorded in the round-three review receipt (permission comparison in `convergedFingerprint`, skip-path manifest-row write) as follow-up ticket candidates; `internal/contract/surface/link_lifecycle_test.go` is over the 400-line structure budget without a grant — reviewer's grant or split. Spec retirement (`bench spec retire pre-push-guard-visibility`) was deferred from this close so the reviewer can decide what durable content to promote first. A parked light-path task exists: add the repair-ticket rationale prose to `.agents/commands/bench-implement-spec.md` (prompt already delivered to the reviewer). The cross-harness falsification pass was explicitly skipped by the reviewer; all required lifecycle reviews and promotion ran.
 
 ## Next command
 
-`bench spec build promote pre-push-guard-visibility`
+`/bench-what-next`
 
 ## Shape
 
