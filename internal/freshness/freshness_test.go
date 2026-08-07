@@ -465,23 +465,6 @@ func awaitPublicationMarker(t *testing.T, path string, cmd *exec.Cmd) {
 	}
 }
 
-func TestVerifyMissingExecutableRefusesWithRebuild(t *testing.T) {
-	root := t.TempDir()
-	executable := filepath.Join(root, "dist", "bench")
-
-	err := Verify(root, executable)
-	if err == nil {
-		t.Fatal("Verify missing executable = nil, want actionable refusal")
-	}
-	if !strings.Contains(err.Error(), executable) {
-		t.Fatalf("Verify missing executable error = %q, want binary path %q", err, executable)
-	}
-	want := RebuildAction(root)
-	if !strings.Contains(err.Error(), want) {
-		t.Fatalf("Verify missing executable error = %q, want rebuild action %q", err, want)
-	}
-}
-
 func TestVerifyRefusesSymbolicLinkBeforeReadingExecutable(t *testing.T) {
 	root := t.TempDir()
 	target := filepath.Join(root, "target")
@@ -677,10 +660,28 @@ func TestVerifyRefusesUntrustedArtifactStates(t *testing.T) {
 		mutate func(t *testing.T, executable string)
 	}{
 		{
+			name: "missing executable",
+			mutate: func(t *testing.T, executable string) {
+				t.Helper()
+				if err := os.Remove(executable); err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+		{
 			name: "missing seal",
 			mutate: func(t *testing.T, executable string) {
 				t.Helper()
 				if err := os.Remove(sealPath(executable)); err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+		{
+			name: "malformed complete seal",
+			mutate: func(t *testing.T, executable string) {
+				t.Helper()
+				if err := os.WriteFile(sealPath(executable), []byte("{}\n"), 0o644); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -699,6 +700,15 @@ func TestVerifyRefusesUntrustedArtifactStates(t *testing.T) {
 			mutate: func(t *testing.T, executable string) {
 				t.Helper()
 				if err := os.Chmod(sealPath(executable), 0); err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+		{
+			name: "executable digest mismatch",
+			mutate: func(t *testing.T, executable string) {
+				t.Helper()
+				if err := os.WriteFile(executable, []byte("altered executable"), 0o755); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -728,6 +738,59 @@ func TestVerifyRefusesUntrustedArtifactStates(t *testing.T) {
 			test.mutate(t, executable)
 			assertRefusal(t, root, executable)
 		})
+	}
+}
+
+func TestCheckRefusesFailingVerifiedExecutable(t *testing.T) {
+	if root := os.Getenv("BENCH_TEST_CHECK_FAILURE_ROOT"); root != "" {
+		if err := Check(root, os.Getenv("BENCH_TEST_CHECK_FAILURE_EXECUTABLE")); err == nil {
+			t.Fatal("Check failing verified executable = nil, want refusal")
+		}
+		return
+	}
+
+	root := writeBuildFixture(t)
+	staged := filepath.Join(root, "staged-bench")
+	sentinel := "untrusted child output"
+	program := "#!/usr/bin/env bash\nprintf '%s\\n' " + quoteForShell(sentinel) + "\nprintf '%s\\n' " + quoteForShell(sentinel) + " >&2\nexit 2\n"
+	if err := os.WriteFile(staged, []byte(program), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	executable := filepath.Join(root, "dist", "bench")
+	if err := os.MkdirAll(filepath.Dir(executable), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := Publish(root, staged, executable); err != nil {
+		t.Fatal(err)
+	}
+
+	err := Check(root, executable)
+	if err == nil {
+		t.Fatal("Check failing verified executable = nil, want refusal")
+	}
+	if !strings.Contains(err.Error(), "freshness-check failed") {
+		t.Fatalf("Check failing verified executable error = %q, want freshness-check refusal", err)
+	}
+	if strings.Contains(err.Error(), sentinel) {
+		t.Fatalf("Check leaked child output in refusal: %q", err)
+	}
+	command := exec.Command(os.Args[0], "-test.run", "^TestCheckRefusesFailingVerifiedExecutable$")
+	command.Env = append(os.Environ(),
+		"BENCH_TEST_CHECK_FAILURE_ROOT="+root,
+		"BENCH_TEST_CHECK_FAILURE_EXECUTABLE="+executable,
+	)
+	output, runErr := command.CombinedOutput()
+	if runErr != nil {
+		t.Fatalf("subprocess Check failure journey: %v\n%s", runErr, output)
+	}
+	if strings.Contains(string(output), sentinel) {
+		t.Fatalf("Check exposed child output:\n%s", output)
+	}
+	if got, want := strings.Count(err.Error(), "rebuild with "), 1; got != want {
+		t.Fatalf("Check refusal rebuild-action count = %d, want %d: %q", got, want, err)
+	}
+	if !strings.Contains(err.Error(), RebuildAction(root)) {
+		t.Fatalf("Check failing verified executable error = %q, want rebuild action %q", err, RebuildAction(root))
 	}
 }
 
@@ -932,6 +995,9 @@ func assertRefusal(t *testing.T, root, executable string) {
 	want := RebuildAction(root)
 	if !strings.Contains(err.Error(), want) {
 		t.Fatalf("Verify error = %q, want rebuild action %q", err, want)
+	}
+	if got, want := strings.Count(err.Error(), "rebuild with "), 1; got != want {
+		t.Fatalf("Verify refusal rebuild-action count = %d, want %d: %q", got, want, err)
 	}
 }
 

@@ -6,11 +6,10 @@ import (
 	"testing"
 )
 
-// Regression for the conformance-harness-scope miss: a producer ticket's
-// Integration surfaces names a sibling basename as the dependent consumer of
-// its exported value, but that consumer declares "Blocked by: none" and
-// contracts against the raw input instead. Assign must refuse the consumer
-// until the reciprocal edge exists.
+// A sibling that names a dependent consumer in Integration surfaces requires
+// the consumer's Blocked by: to name that sibling, even when the consumer
+// otherwise contracts against raw input. Assign refuses the consumer until
+// the reciprocal edge exists.
 func TestAssignRefusesConsumerMissingReciprocalDependencyEdge(t *testing.T) {
 	root := repo(t)
 	producer := "# Expose resolved checks\n\n" +
@@ -69,10 +68,56 @@ func TestAssignRefusesConsumerMissingReciprocalDependencyEdge(t *testing.T) {
 	}
 }
 
-// The mid-run variant of the same miss: a repair ticket staged after the
-// consumer's assign names the consumer's ticket as a dependent, so the
-// preserved assignment's metadata is stale by construction — refresh must
-// refuse instead of carrying the stale contract onto the repaired candidate.
+func TestAssignIgnoresNonDependentBasenameMentions(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		surfaces string
+	}{
+		{name: "near-name target", surfaces: "resolved value→stone.md + S1"},
+		{name: "incidental prose", surfaces: "one.md remains documented→`internal/other` + S1"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := repo(t)
+			one := "# One\n\n" +
+				"Blocked by: none\n" +
+				"Ownership fence: `internal/specbuild`\n" +
+				"Integration surfaces: one implementation→`internal/specbuild` + O1\n" +
+				"Contracts: none crosses\n" +
+				"Closure: O1/assign\n\n" +
+				"- [ ] [O1] (covers local) one ticket assigns\n\n" +
+				"## Red mutations\n\n" +
+				"| criterion | mutation | owner | operation sequence |\n" +
+				"|---|---|---|---|\n" +
+				"| O1/assign | reject the ticket | the assign control | assign one.md, require success |\n"
+			sibling := "# Sibling\n\n" +
+				"Blocked by: none\n" +
+				"Ownership fence: `internal/other`\n" +
+				"Integration surfaces: " + tc.surfaces + "\n" +
+				"Contracts: none crosses\n" +
+				"Closure: S1/sibling\n\n" +
+				"- [ ] [S1] (covers local) sibling ticket stays independent\n\n" +
+				"## Red mutations\n\n" +
+				"| criterion | mutation | owner | operation sequence |\n" +
+				"|---|---|---|---|\n" +
+				"| S1/sibling | reject the ticket | the assign control | assign sibling.md, require success |\n"
+			write(t, filepath.Join(root, "specs", "build demo", "tickets", "one.md"), one)
+			write(t, filepath.Join(root, "specs", "build demo", "tickets", "sibling.md"), sibling)
+			git(t, root, "add", ".")
+			git(t, root, "commit", "-qm", "stage non-dependent sibling mentions")
+			service := New(root, greenGate{}, realOwner{})
+			if _, err := service.Start(t.Context(), "build demo"); err != nil {
+				t.Fatalf("Start: %v", err)
+			}
+			if _, _, err := service.Assign(t.Context(), "build demo", "one.md", "one request"); err != nil {
+				t.Fatalf("Assign one.md: %v", err)
+			}
+		})
+	}
+}
+
+// Refresh revalidates reciprocal edges against current sibling tickets. A
+// staged repair that names a preserved consumer as dependent must refuse the
+// refresh rather than carry stale dependency metadata onto the candidate.
 func TestRefreshRefusesStaleDependencyMetadata(t *testing.T) {
 	repair := "# Repair landing\n\n" +
 		"Blocked by: none\n" +

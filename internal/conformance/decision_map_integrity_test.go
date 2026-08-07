@@ -109,7 +109,8 @@ func TestDecisionMapIntegrityCheckValidatesEveryCandidate(t *testing.T) {
 
 func TestDecisionMapIntegrityFixturesBite(t *testing.T) {
 	h := NewHarness(t)
-	fixtures, err := canary.Fixtures(filepath.Join(h.KitRoot, "tests", "canary", "decision-map-integrity"))
+	kitRoot := h.KitRoot
+	fixtures, err := canary.Fixtures(filepath.Join(kitRoot, "tests", "canary", "decision-map-integrity"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,13 +124,7 @@ func TestDecisionMapIntegrityFixturesBite(t *testing.T) {
 	sort.Strings(names)
 	for _, name := range names {
 		t.Run(name, func(t *testing.T) {
-			root := materializeConformanceFixture(t, name)
-			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, name), "EXPECT"))
-
-			diagnostics := RunConformance(root, h.KitRoot, registry.Dev, "decision-map-integrity")
-			if !containsDiagnostic(diagnostics, expect) {
-				t.Fatalf("%s did not bite under scoped Go conformance; want %q in diagnostics:\n%s", name, expect, strings.Join(diagnostics, "\n"))
-			}
+			runFixtureBite(t, kitRoot, name)
 		})
 	}
 }

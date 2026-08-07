@@ -16,6 +16,8 @@ import (
 )
 
 func TestLoadValidityMetadataFixturesBite(t *testing.T) {
+	h := NewHarness(t)
+	kitRoot := h.KitRoot
 	fixtures := []string{
 		"invalid-json",
 		"codex-hooks-broken",
@@ -30,20 +32,14 @@ func TestLoadValidityMetadataFixturesBite(t *testing.T) {
 	}
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {
-			root := materializeConformanceFixture(t, fixture)
-			h := NewHarness(t)
-			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
-
-			diags := RunConformance(root, h.KitRoot, registry.Dev, "")
-
-			if !containsDiagnostic(diags, expect) {
-				t.Fatalf("%s did not bite under Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diags, "\n"))
-			}
+			runFixtureBite(t, kitRoot, fixture)
 		})
 	}
 }
 
 func TestSkillsIndexAndCommandAdapterFixturesBite(t *testing.T) {
+	h := NewHarness(t)
+	kitRoot := h.KitRoot
 	fixtures := []string{
 		"dangling-index",
 		"missing-index-field",
@@ -53,22 +49,15 @@ func TestSkillsIndexAndCommandAdapterFixturesBite(t *testing.T) {
 	}
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {
-			root := materializeConformanceFixture(t, fixture)
-			h := NewHarness(t)
-			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
-
-			diags := RunConformance(root, h.KitRoot, registry.Dev, "")
-
-			if !containsDiagnostic(diags, expect) {
-				t.Fatalf("%s did not bite under Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diags, "\n"))
-			}
+			runFixtureBite(t, kitRoot, fixture)
 		})
 	}
 }
 
 func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 	h := NewHarness(t)
-	all, err := canary.Fixtures(filepath.Join(h.KitRoot, "tests", "canary"))
+	kitRoot := h.KitRoot
+	all, err := canary.Fixtures(filepath.Join(kitRoot, "tests", "canary"))
 	requireFixtureNoError(t, err)
 	var fixtures []string
 	for name, fixture := range all {
@@ -79,15 +68,7 @@ func TestDocsCurrencyTokenDietAndWorkflowFixturesBite(t *testing.T) {
 	slices.Sort(fixtures)
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {
-			root := materializeConformanceFixture(t, fixture)
-			h := NewHarness(t)
-			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
-
-			diags := RunConformance(root, h.KitRoot, registry.Dev, "")
-
-			if !containsDiagnostic(diags, expect) {
-				t.Fatalf("%s did not bite under Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diags, "\n"))
-			}
+			runFixtureBite(t, kitRoot, fixture)
 		})
 	}
 }
@@ -192,6 +173,8 @@ func requireFixtureNoError(t *testing.T, err error) {
 }
 
 func TestCoverageMapValidationFixtureBite(t *testing.T) {
+	h := NewHarness(t)
+	kitRoot := h.KitRoot
 	fixtures := []string{
 		"broken-coverage-map",
 		"no-map-not-historical",
@@ -199,20 +182,14 @@ func TestCoverageMapValidationFixtureBite(t *testing.T) {
 	}
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {
-			root := materializeConformanceFixture(t, fixture)
-			h := NewHarness(t)
-			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
-
-			diags := RunConformance(root, h.KitRoot, registry.Dev, "")
-
-			if !containsDiagnostic(diags, expect) {
-				t.Fatalf("%s did not bite under Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diags, "\n"))
-			}
+			runFixtureBite(t, kitRoot, fixture)
 		})
 	}
 }
 
 func TestLineRoutingFixturesBite(t *testing.T) {
+	h := NewHarness(t)
+	kitRoot := h.KitRoot
 	fixtures := []string{
 		"line-binding-prose-drift",
 		"agent-hook-unwired",
@@ -222,20 +199,14 @@ func TestLineRoutingFixturesBite(t *testing.T) {
 	}
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {
-			root := materializeConformanceFixture(t, fixture)
-			h := NewHarness(t)
-			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
-
-			diags := RunConformance(root, h.KitRoot, registry.Dev, "")
-
-			if !containsDiagnostic(diags, expect) {
-				t.Fatalf("%s did not bite under Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diags, "\n"))
-			}
+			runFixtureBite(t, kitRoot, fixture)
 		})
 	}
 }
 
 func TestPackageCoreAndGuardFixturesBite(t *testing.T) {
+	h := NewHarness(t)
+	kitRoot := h.KitRoot
 	// Only fixtures a conformance check grades belong here. A fixture whose failure a
 	// gate phase owns is proved by the canary sweep at that phase instead; running
 	// conformance over its tree compiles and tests nothing, so it would report
@@ -250,15 +221,7 @@ func TestPackageCoreAndGuardFixturesBite(t *testing.T) {
 	}
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {
-			root := materializeConformanceFixture(t, fixture)
-			h := NewHarness(t)
-			expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
-
-			diags := RunConformance(root, h.KitRoot, registry.Dev, "")
-
-			if !containsDiagnostic(diags, expect) {
-				t.Fatalf("%s did not bite under Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diags, "\n"))
-			}
+			runFixtureBite(t, kitRoot, fixture)
 		})
 	}
 }
@@ -551,6 +514,90 @@ func TestCheckPackageFilesToleratesNpmStderrNotice(t *testing.T) {
 			t.Fatalf("npm stderr notice corrupted the pack JSON parse: %s", diag)
 		}
 	}
+}
+
+func TestFixtureBiteResolutionRefusesInvalidInputs(t *testing.T) {
+	fixtureDir := t.TempDir()
+	requireFixtureNoError(t, os.WriteFile(filepath.Join(fixtureDir, "EXPECT"), []byte("fixture diagnostic\n"), 0o644))
+	fixtures := map[string]canary.Fixture{
+		"fixture": {Dir: fixtureDir, Family: "family"},
+	}
+
+	tests := []struct {
+		name     string
+		fixtures map[string]canary.Fixture
+		lookup   func(canary.Fixture) (string, bool)
+		want     string
+	}{
+		{"missing fixture", nil, func(canary.Fixture) (string, bool) { return "", false }, "not found"},
+		{"unbound family", fixtures, func(canary.Fixture) (string, bool) { return "", false }, "is unbound"},
+		{"unknown check", fixtures, func(canary.Fixture) (string, bool) { return "unknown", true }, "is not registered"},
+		{"meta check", fixtures, func(canary.Fixture) (string, bool) { return "conformance-meta", true }, "is meta"},
+		{"wrong tier", fixtures, func(canary.Fixture) (string, bool) { return "release-evidence-probe", true }, "does not run at dev"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, _, err := resolveFixtureBite("fixture", tt.fixtures, tt.lookup)
+			if err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("resolve error = %v, want %q", err, tt.want)
+			}
+		})
+	}
+
+	requireFixtureNoError(t, os.WriteFile(filepath.Join(fixtureDir, "EXPECT"), nil, 0o644))
+	_, _, err := resolveFixtureBite("fixture", fixtures, func(canary.Fixture) (string, bool) { return "", false })
+	if err == nil || !strings.Contains(err.Error(), "empty EXPECT") {
+		t.Fatalf("empty EXPECT error = %v", err)
+	}
+}
+
+func runFixtureBite(t *testing.T, kitRoot, fixture string) {
+	t.Helper()
+	fixtures, err := canary.Fixtures(filepath.Join(kitRoot, "tests", "canary"))
+	requireFixtureNoError(t, err)
+	check, expect, err := resolveFixtureBite(fixture, fixtures, func(found canary.Fixture) (string, bool) {
+		return found.Check, found.Check != ""
+	})
+	requireFixtureNoError(t, err)
+	root := materializeConformanceFixture(t, fixture)
+	diagnostics := RunConformance(root, kitRoot, registry.Dev, check)
+	if !containsDiagnostic(diagnostics, expect) {
+		t.Fatalf("%s did not bite under scoped Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diagnostics, "\n"))
+	}
+	timing := registry.ReadTimingLines(root)
+	if len(timing) != 1 || len(strings.Fields(timing[0])) < 2 || strings.Fields(timing[0])[1] != check {
+		t.Fatalf("%s timing = %v, want exactly %q", fixture, timing, check)
+	}
+}
+
+func resolveFixtureBite(fixture string, fixtures map[string]canary.Fixture, fixtureCheck func(canary.Fixture) (string, bool)) (string, string, error) {
+	found, ok := fixtures[fixture]
+	if !ok {
+		return "", "", fmt.Errorf("fixture %q not found in canary inventory", fixture)
+	}
+	expectData, err := os.ReadFile(filepath.Join(found.Dir, "EXPECT"))
+	if err != nil {
+		return "", "", fmt.Errorf("read %s EXPECT: %w", fixture, err)
+	}
+	expect := strings.TrimSpace(string(expectData))
+	if expect == "" {
+		return "", "", fmt.Errorf("fixture %q has an empty EXPECT", fixture)
+	}
+	checkName, bound := fixtureCheck(found)
+	if !bound || checkName == "" {
+		return "", "", fmt.Errorf("fixture %q family %q is unbound", fixture, found.Family)
+	}
+	check, foundCheck := registry.Find(checkName)
+	if !foundCheck {
+		return "", "", fmt.Errorf("fixture %q family %q check %q is not registered", fixture, found.Family, checkName)
+	}
+	if check.Meta {
+		return "", "", fmt.Errorf("fixture %q family %q check %q is meta", fixture, found.Family, checkName)
+	}
+	if !check.RunsAt(registry.Dev) {
+		return "", "", fmt.Errorf("fixture %q family %q check %q does not run at dev", fixture, found.Family, checkName)
+	}
+	return checkName, expect, nil
 }
 
 func materializeConformanceFixture(t *testing.T, fixture string) string {

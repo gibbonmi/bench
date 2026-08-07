@@ -14,6 +14,36 @@ import (
 	"github.com/gibbonmi/bench/internal/conformance/registry"
 )
 
+func TestFixturesExposeResolvedChecks(t *testing.T) {
+	const (
+		fixtureName = "default-branch-refabricated"
+		wantCheck   = "default-branch-single-source"
+	)
+	fixtures, err := Fixtures(filepath.Join(kitRoot(t), "tests", "canary"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, found := fixtures[fixtureName]
+	if !found {
+		t.Fatalf("fixtures did not include %q", fixtureName)
+	}
+	if got.Check != wantCheck {
+		t.Errorf("fixture %q check = %q, want %q", fixtureName, got.Check, wantCheck)
+	}
+
+	family := mappedFamily(t)
+	wantFamilyCheck := boundCheck(t, family)
+	root := t.TempDir()
+	fixture(t, canaryFixture(root, family, "family-fallback"), "")
+	fixtures, err = Fixtures(filepath.Join(root, "tests", "canary"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := fixtures["family-fallback"].Check; got != wantFamilyCheck {
+		t.Errorf("fixture without CHECK resolved check = %q, want family check %q", got, wantFamilyCheck)
+	}
+}
+
 // TestSweepScopesFixtureRunsToTheirCheck grades the whole scope resolution at once:
 // a conformance family's fixture takes the family binding, a CHECK file overrides
 // it, contract and legacy flat fixtures take no scope at all, and an operator's

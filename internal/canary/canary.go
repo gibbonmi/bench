@@ -137,13 +137,14 @@ func UnboundConformanceFamilies(kitRoot string) []string {
 }
 
 // Fixture is one discovered canary fixture as a caller outside the sweep sees it: where
-// it lives, the family that routes its inner gate, and the contract package that owns its
-// EXPECT where one does. An empty Family is a legacy flat fixture, which belongs to no
-// family and runs the full inner gate.
+// it lives, the family that routes its inner gate, the resolved check it grades, and the
+// contract package that owns its EXPECT where one does. An empty Family is a legacy flat
+// fixture, which belongs to no family and runs the full inner gate.
 type Fixture struct {
 	Dir     string
 	Family  string
 	Package string
+	Check   string
 }
 
 // Fixtures maps each fixture's base name under canaryDir — a tests/canary tree — to what
@@ -159,7 +160,16 @@ func Fixtures(canaryDir string) (map[string]Fixture, error) {
 	}
 	out := make(map[string]Fixture, len(found))
 	for _, fx := range found {
-		out[filepath.Base(fx.dir)] = Fixture{Dir: fx.dir, Family: fx.family, Package: fx.pkg}
+		_, checkName, err := fixtureCheck(fx.dir)
+		if err != nil {
+			return nil, err
+		}
+		out[filepath.Base(fx.dir)] = Fixture{
+			Dir:     fx.dir,
+			Family:  fx.family,
+			Package: fx.pkg,
+			Check:   fixtureScope(fx.family, checkName),
+		}
 	}
 	return out, nil
 }

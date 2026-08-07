@@ -274,7 +274,7 @@ func requireReciprocalEdges(specPath string, ticket Ticket) error {
 			continue
 		}
 		sibling, err := ParseTicket(specPath, entry.Name())
-		if err != nil || !strings.Contains(sibling.Surfaces, basename) {
+		if err != nil || !namesDependentBasename(sibling.Surfaces, basename) {
 			continue
 		}
 		siblingName := filepath.Base(sibling.Path)
@@ -284,6 +284,20 @@ func requireReciprocalEdges(specPath string, ticket Ticket) error {
 		return fmt.Errorf("spec build requires ticket %s to name %s on Blocked by:, because that sibling's Integration surfaces name it as a dependent", basename, siblingName)
 	}
 	return nil
+}
+
+func namesDependentBasename(surfaces, basename string) bool {
+	for _, surface := range strings.Split(surfaces, ";") {
+		_, target, hasTarget := strings.Cut(surface, "→")
+		if !hasTarget {
+			continue
+		}
+		target = strings.TrimSpace(target)
+		if target == basename || strings.HasPrefix(target, basename+" +") {
+			return true
+		}
+	}
+	return false
 }
 
 // requireCoversMapping refuses a ticket whose charged rows do not each name a

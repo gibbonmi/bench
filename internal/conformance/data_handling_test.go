@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gibbonmi/bench/internal/conformance/registry"
 	"github.com/gibbonmi/bench/internal/env"
 )
 
@@ -231,16 +230,10 @@ func TestDataHandlingDerivationBites(t *testing.T) {
 // listing, and the derivation check fires that pattern's own diagnostic under a
 // full RunConformance pass.
 func TestDataHandlingDerivationFixtureBite(t *testing.T) {
-	fixture := "undocumented-passlist-var"
-	root := materializeConformanceFixture(t, fixture)
 	h := NewHarness(t)
-	expect := readExpectation(t, filepath.Join(canaryFixturePath(t, h.KitRoot, fixture), "EXPECT"))
-
-	diags := RunConformance(root, h.KitRoot, registry.Dev, "")
-
-	if !containsDiagnostic(diags, expect) {
-		t.Fatalf("%s did not bite under Go conformance; want %q in diagnostics:\n%s", fixture, expect, strings.Join(diags, "\n"))
-	}
+	kitRoot := h.KitRoot
+	fixture := "undocumented-passlist-var"
+	runFixtureBite(t, kitRoot, fixture)
 }
 
 // TestSingleControlEscaperBites is the recorded bite proof for

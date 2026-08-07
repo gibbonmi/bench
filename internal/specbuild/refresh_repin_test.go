@@ -86,12 +86,11 @@ func debugReceiptForDocsRepair(run record, consumer Assignment) debugReceipt {
 	}
 }
 
-// TestRefreshRePinsTicketAfterDocsRepairRewrite is the regression for the
-// architecture defect: a legitimate docs-repair rewrite of the consumer's
-// ticket, naming the reciprocal Blocked by: edge and leaving the ownership
-// fence untouched, must reach the preserved assignment — refresh re-pins the
-// recorded ticket digest and rows instead of refusing forever on the stale
-// one recorded at assign.
+// TestRefreshRePinsTicketAfterDocsRepairRewrite proves that a committed
+// metadata rewrite naming the reciprocal Blocked by: edge and retaining the
+// ownership fence reaches the preserved assignment. Refresh re-pins the
+// recorded ticket digest and rows instead of retaining stale assignment
+// metadata.
 func TestRefreshRePinsTicketAfterDocsRepairRewrite(t *testing.T) {
 	root, service, consumer := newDocsRepairFixture(t)
 	rewritten := "# One\n\n" +

@@ -1,6 +1,6 @@
 # Conformance harness scope
 
-Status: staged
+Status: implemented
 
 Decision source: reviewer-confirmed current conversation on 2026-08-07.
 
@@ -24,14 +24,14 @@ test expensive without adding eight independent process-boundary claims.
 
 ## Solution
 
-Run every direct conformance fixture bite through the check bound to its discovered
-family. Resolve the fixture and family from the canary fixture inventory, resolve
-the check through the executable conformance registry, and call the existing
-singular conformance scope. Missing, unknown, meta, or wrong-tier bindings and an
-empty expectation fail loudly; no failure falls back to the full table or to an
-empty successful run. Each fixture remains a distinct mutated tree with its own
-expectation, while the timing record proves that exactly the registered check
-executed.
+Run every direct conformance fixture bite through the resolved `Fixture.Check`
+exported by the canary fixture inventory. Canary alone resolves a fixture-level
+`CHECK` over its family's fallback with its shared registry rule; conformance
+consumes that decision and calls the existing singular conformance scope. Missing,
+unknown, meta, or wrong-tier resolved checks and an empty expectation fail loudly;
+no failure falls back to the full table or to an empty successful run. Each fixture
+remains a distinct mutated tree with its own expectation, while the timing record
+proves that exactly the resolved check executed.
 
 Move the exhaustive freshness-artifact state table to the freshness package's
 `Verify` and `Check` seams. Keep representative shell-entry tests for both sides of
@@ -45,8 +45,8 @@ semantics.
 ## User stories
 
 1. As a gate maintainer, I want every direct conformance fixture bite to execute
-   only the check its fixture family registers, so that each mutation keeps its
-   diagnostic bite without regenerating unrelated conformance work.
+   only the resolved check its canary fixture exports, so that each mutation keeps
+   its diagnostic bite without regenerating unrelated conformance work.
    Line: `gpt-5.6-terra` / medium. This is test-only gate/conformance work at an
    existing scoped seam, but a false-green fixture would weaken the oracle's
    self-defense.
@@ -59,19 +59,22 @@ semantics.
 
 ## Implementation decisions
 
-**Use the existing registry and singular runner scope.** The canary fixture
-inventory is the source for a fixture's family, `registry.FamilyCheck` is the only
-source for that family's executable check, and `RunConformance`'s non-empty scope is
-the execution seam. No caller table may restate family-to-check ownership. A
-test-only resolver accepts the registry lookup as a function dependency so its
-failure postures can be exercised without making production policy mutable; every
-real fixture journey supplies `registry.FamilyCheck` directly. The helper refuses an
-undiscovered fixture, an unbound family, an unknown check, a meta check, a check
-unavailable at the dev tier, or an empty `EXPECT` before executing anything. An
-implementation-time overlay mutation rebinds one existing family to another valid
-dev check in the registry source and proves the real fixture journey follows the
-changed result. A private family-to-check table therefore fails even when it happens
-to match today's registry.
+**Use the canary resolver and singular runner scope.** Canary owns fixture policy:
+its shared rule resolves a fixture-level `CHECK` before family fallback, using
+`registry.FamilyCheck` only inside canary, then exports the decision as
+`Fixture.Check`. This includes overrides such as
+`default-branch-refabricated`, which must retain its own resolved check instead of
+inheriting its family's fallback. `RunConformance`'s non-empty scope is the execution
+seam; conformance consumes `Fixture.Check` and does not call `registry.FamilyCheck`
+to reconstruct policy. A test-only resolver accepts the exported check as a function
+dependency so its failure postures can be exercised without making production policy
+mutable; every real fixture journey supplies `Fixture.Check` directly. The helper
+refuses an undiscovered fixture, an unresolved check, an unknown check, a meta check,
+a check unavailable at the dev tier, or an empty `EXPECT` before executing anything.
+An implementation-time overlay mutation rebinds one existing family to another valid
+dev check in the registry source and proves that a real family-fallback fixture's
+exported `Fixture.Check` follows the live binding. A private family-to-check table
+therefore fails even when it happens to match today's registry.
 
 **Scope direct bite tests, not full-table controls.** The fixture-bite groups for
 load validity, skills/index adapters, documentation/workflow guidance, coverage
@@ -137,9 +140,9 @@ its refusal classes land at the lower seam strands coverage red.
 
 ## Testing decisions
 
-- The fixture execution seam is `RunConformance` with the exact non-empty scope
-  returned by `registry.FamilyCheck` for the family discovered by the canary fixture
-  inventory.
+- The fixture execution seam is `RunConformance` with the exact non-empty scope from
+  the discovered canary `Fixture.Check`; canary alone resolves fixture `CHECK` over
+  family fallback, and conformance does not reconstruct that policy.
 - The fixture tests attach above materialization: each drives a real mutated tree,
   asserts its existing `EXPECT`, and checks the timing record for exactly one
   executed registered check.
@@ -160,14 +163,12 @@ its refusal classes land at the lower seam strands coverage red.
 trigger: direct Go fixture-bite subtest
     |
     v
-fixture name --> [ canary fixture inventory ] --> family
+fixture name --> [ canary fixture inventory ] --> family + fixture CHECK
                                                    |
                                                    v
-                                      [ executable check registry ]
-                                                   |
-                                           exact check scope
-                                                   |
-mutated tree --------------------------------------v
+                         [ canary shared family-fallback rule ] --> Fixture.Check
+                                                                           |
+                                                   mutated tree ------------v
                                       [ singular RunConformance ]
                                                    |
                                       diagnostics + timing identity
@@ -206,10 +207,10 @@ cannot prove the mutated fixture still bites.
 
 | row | story | behavior | seam | red signal | why it catches the failure |
 |---|---|---|---|---|---|
-| CH1 | 1 | Every direct fixture-bite invocation in the ten enumerated conformance families resolves its family from the canary fixture inventory and its check from `registry.FamilyCheck` | fixture discovery and registry seam | Red mutation: in an overlay, rebind one existing family in the registry source to another valid ordinary dev check, run one of that family's real direct fixture journeys, and require its timing identity to follow the rebound check before restoring the source | An empty scope, hard-coded check, or private duplicate family table ignores the rebound registry result and records the old or full selection. |
-| CH2 | 1 | Each mutated fixture tree runs exactly once under its registered ordinary dev check and records no other check | singular `RunConformance` scope plus timing record | Observed in the current tree: the fixture callers pass `""`, and their timing records contain the complete dev table rather than one check | An unscoped call, empty successful run, hard-coded wrong check, or second execution changes the recorded identity/count. |
+| CH1 | 1 | Every direct fixture-bite invocation in the ten enumerated conformance families obtains its resolved check from canary `Fixture.Check`; canary alone resolves fixture `CHECK` over family fallback, including the `default-branch-refabricated` override, and conformance does not reconstruct the policy | canary fixture discovery/resolution and the conformance consumer seam | Red mutation: in an overlay, rebind one existing family in the registry source to another valid ordinary dev check, run that family's real fixture without `CHECK`, and require its exported `Fixture.Check` and timing identity to follow the rebound check; also compare `default-branch-refabricated` with its fixture-level override before restoring the source | An empty scope, direct conformance `registry.FamilyCheck` lookup, hard-coded check, or private duplicate family table ignores the exported decision or live fallback binding; a family-only resolver loses the fixture-level override. |
+| CH2 | 1 | Each mutated fixture tree runs exactly once under its resolved ordinary dev check and records no other check | singular `RunConformance` scope plus timing record | Observed in the current tree: the fixture callers pass `""`, and their timing records contain the complete dev table rather than one check | An unscoped call, empty successful run, hard-coded wrong check, or second execution changes the recorded identity/count. |
 | CH3 | 1 | Every migrated fixture retains its existing independently authored `EXPECT` diagnostic | scoped fixture-bite journey | Already covered by the existing fixture-bite subtests; run each unchanged expectation through the new scope before removing the broad call | Correct scoping to a check that no longer emits the promised diagnostic goes red instead of turning a speedup into a vacuous green. |
-| CH4 | 1 | An undiscovered fixture, unbound family, unknown check, meta check, wrong-tier check, or empty `EXPECT` refuses before any check runs | fixture helper and injected registry lookup | TDD-able: drive the test-only resolver with missing and invalid lookup results and an empty expectation; the current broad callers ignore those binding states or accept an empty substring | Fail-closed lookup and expectation validation prevent a misspelling, stale registry row, or vacuous expectation from falling back to expensive or empty green execution. |
+| CH4 | 1 | An undiscovered fixture, an unbound family whose canary resolution exports no `Fixture.Check`, an unknown check, a meta check, a wrong-tier check, or an empty `EXPECT` refuses before any check runs | fixture helper consuming the exported resolved check | TDD-able: drive the test-only resolver with a missing fixture, empty and invalid exported checks, and an empty expectation; the current broad callers ignore those states or accept an empty substring | Fail-closed resolved-check and expectation validation preserve the user-visible unbound-family refusal and prevent a missing canary decision, stale registry row, or vacuous expectation from falling back to expensive or empty green execution. |
 | CH5 | 1 | Multiple fixtures sharing one registered check remain separate mutated-tree runs, while timing state is cleared between runs | fixture loop plus timing writer | Already covered in subject count by the existing per-fixture subtests; add repeated same-check fixtures and assert one fresh timing identity for each | Batching fixtures can hide one mutation behind another, and uncleared timing can attribute a prior check to the current tree. |
 | CH6 | 1 | Full-table registry, family-integrity, ordered-selection, timing-order, and public entry controls remain unscoped | existing conformance integration tests | Already covered by `TestRootConformance`, registry/meta controls, and singular/ordered selection tests; retain them outside the migrated helper | Scoping the oracle's own completeness controls would let the registry omit checks or families while every narrowed fixture stayed green. |
 | FR1 | 2 | Missing executable; missing, unreadable, malformed complete, and malformed partial seals; and executable-digest mismatch each refuse at the lower freshness seam with one rebuild action | `freshness.Verify` | Partly covered by `TestVerifyRefusesUntrustedArtifactStates`; the current shell matrix is the only grouped owner for the remaining enumerated classes | The lower table identifies every artifact trust failure without paying shell/module setup and prevents one removed class from hiding behind a representative case. |
@@ -221,26 +222,31 @@ cannot prove the mutated fixture still bites.
 | OP2 | 1, 2 | Production registry contents, selection behavior, diagnostics, freshness policy, gate routing, timing format, and verdict semantics are unchanged | ownership fences plus package and feature gate | Already covered by existing conformance, freshness, contract, canary, and gate controls; production paths are outside both fences | A demand-reduction test refactor cannot pass by weakening the oracle or changing the behavior the tests grade. |
 
 The cheapest wrong implementations are explicit. Replacing `""` with a hard-coded
-check passes a fixture today but fails CH1 when the registry binding moves. Calling
-the right check and dropping the `EXPECT` passes timing but fails CH3. Merging every
-same-check fixture into one tree passes scope identity but fails CH5. Deleting the
+check or having conformance call `registry.FamilyCheck` passes a family-fallback
+fixture today but fails CH1 when the live registry binding moves; resolving every
+fixture only from its family also loses `default-branch-refabricated`'s `CHECK`
+override. Calling the right check and dropping the `EXPECT` passes timing but fails
+CH3. Merging every same-check fixture into one tree passes scope identity but fails
+CH5. Deleting the
 shell freshness matrix without moving all refusal classes fails FR1/FR2. Moving all
 variants lower and deleting shell integration fails FR3/FR4. Retaining only lower
 and shell tests while reordering `.bench/gate.sh` fails FR5.
 
 ### Edge inventory
 
-- **Error path** — CH4 covers discovery and binding failures; FR1 and FR2 cover
-  artifact verification and verified-command failures; FR3 and FR4 cover their
-  shell refusal projections. No failure falls back to full, empty, or phase-running
-  success.
-- **Empty or absent input** — an absent fixture or family binding and a present empty
-  `EXPECT` are CH4; missing executable and seal are FR1. The scoped helper adds the
-  empty-expectation refusal because the current reader trims to an empty substring,
-  which otherwise matches any unrelated diagnostic vacuously.
+- **Error path** — CH4 covers discovery and resolved-check failures after canary
+  resolution; FR1 and FR2 cover artifact verification and verified-command failures;
+  FR3 and FR4 cover their shell refusal projections. No failure falls back to full,
+  empty, or phase-running success.
+- **Empty or absent input** — an absent fixture, an unresolved canary
+  `Fixture.Check`, and a present empty `EXPECT` are CH4; missing executable and seal
+  are FR1. The scoped helper adds the empty-expectation refusal because the current
+  reader trims to an empty substring, which otherwise matches any unrelated
+  diagnostic vacuously.
 - **Boundary values** — zero executed checks is CH2/CH4, one is CH2, two fixtures
-  sharing one check is CH5, and the complete current direct-fixture family set is
-  CH1. Full-tier execution stays covered separately by CH6.
+  sharing one check is CH5, a fixture-level `CHECK` override and a family-fallback
+  fixture are CH1, and the complete current direct-fixture family set is CH1.
+  Full-tier execution stays covered separately by CH6.
 - **Malformed input** — malformed complete and partial seals are FR1. Fixture files,
   mutations, and expectations introduce no new parser; their existing malformed
   JSON, frontmatter, decision-map, and coverage-map fixtures retain CH3.
