@@ -166,6 +166,15 @@ func (s *Service) Refresh(ctx context.Context, slug, ticketArg, request, evidenc
 	if err := requireReciprocalEdges(run.Spec, ticket); err != nil {
 		return Assignment{}, Status{}, err
 	}
+	// Refresh is the one caller allowed to move the recorded pin: a sibling
+	// docs-repair may have rewritten the committed ticket since assign, and
+	// carrying the preserved assignment onto the advanced candidate means
+	// carrying it onto that rewrite too, not refusing forever on the stale
+	// digest checkpoint/integrate would otherwise compare against.
+	assigned, err = s.refreshTicketPin(run, assigned, ticket)
+	if err != nil {
+		return Assignment{}, Status{}, err
+	}
 	var preserved, tree string
 	if resuming {
 		preserved = op.Result
@@ -276,6 +285,36 @@ func (s *Service) validateDebugReceipt(run record, assigned assignment, receipt 
 		return errOwnership
 	}
 	return nil
+}
+
+// refreshTicketPin re-pins assigned's recorded ticket digest and rows to the
+// current committed text when it changed since assign, so a legitimate
+// sibling docs-repair reaches the preserved assignment instead of stranding
+// it behind validateIntegrationTicket's stale-digest refusal. An Ownership
+// fence change is not this kind of rewrite — it moves the assignment's write
+// envelope, which refresh does not own — so it still refuses, naming the
+// fence. Any other change re-validates against the same assign-side policy
+// (ContractsAnchored, requireClosure, requireCoversMapping) rather than a
+// second copy of it; requireReciprocalEdges has already run by the time this
+// is called, so a rewrite still missing the reciprocal edge never reaches it.
+func (s *Service) refreshTicketPin(run record, assigned assignment, ticket Ticket) (assignment, error) {
+	if ticket.Digest == assigned.TicketDigest {
+		return assigned, nil
+	}
+	if !sameStrings(ticket.Fence, assigned.Fence) {
+		return assignment{}, fmt.Errorf("spec build refresh cannot re-pin ticket %s: Ownership fence changed to %s", filepath.Base(ticket.Path), strings.Join(ticket.Fence, ", "))
+	}
+	if !ticket.ContractsAnchored() {
+		return assignment{}, fmt.Errorf("spec build ticket %s declares a contract crossing no path in its ownership fence", filepath.Base(ticket.Path))
+	}
+	if err := requireClosure(ticket); err != nil {
+		return assignment{}, err
+	}
+	if err := requireCoversMapping(run.Spec, ticket); err != nil {
+		return assignment{}, err
+	}
+	assigned.TicketDigest, assigned.Rows = ticket.Digest, ticket.Rows
+	return assigned, nil
 }
 
 // validateRefreshPayload grades the dirty payload the refresh will carry: every
