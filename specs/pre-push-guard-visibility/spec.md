@@ -1,6 +1,6 @@
 # Pre-push guard visibility
 
-Status: implemented
+Status: staged
 
 Decision source: compiled map at
 `specs/pre-push-guard-visibility/decisions/pre-push-guard-visibility.md`, with its
