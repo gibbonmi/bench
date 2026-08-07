@@ -189,6 +189,32 @@ func TestPromoteRecomposesAWorkingAdvanceBeforeGate(t *testing.T) {
 	}
 }
 
+func TestPromoteRecompositionBootstrapsAgainstLiveMarkerAndRetainsRecordedBase(t *testing.T) {
+	fixture := reviewedPromotionFixture(t)
+	before := loadRun(t, fixture.service)
+	liveMarker := commitAdvance(t, fixture.root, "sibling.txt")
+	git(t, fixture.root, "update-ref", "refs/bench/green/"+before.Branch, liveMarker)
+	working := commitAdvance(t, fixture.root, "later.txt")
+	git(t, fixture.root, "merge-base", "--is-ancestor", liveMarker, working)
+	if before.Base == liveMarker || loadRun(t, fixture.service).Base != before.Base {
+		t.Fatalf("recorded base changed before recomposition: before=%s live marker=%s", before.Base, liveMarker)
+	}
+	owner := &recompositionGate{}
+	fixture.service.gate = owner
+
+	status, err := fixture.service.Promote(t.Context(), "build demo")
+	if err != nil || status.Next != "bench spec build review build demo" || owner.calls != 1 {
+		t.Fatalf("Promote = %#v, %v; bootstrap calls=%d", status, err, owner.calls)
+	}
+	after := loadRun(t, fixture.service)
+	if owner.branch != before.Branch || owner.tip != working || owner.expected != liveMarker {
+		t.Fatalf("bootstrap subject = branch %q tip %q expected %q; want branch %q tip %q expected live marker %q", owner.branch, owner.tip, owner.expected, before.Branch, working, liveMarker)
+	}
+	if after.Base != working || after.CandidateTip == before.CandidateTip || after.Review != nil {
+		t.Fatalf("recomposed run = %#v", after)
+	}
+}
+
 func TestRecomposedAttemptReloadsInFreshService(t *testing.T) {
 	fixture := reviewedPromotionFixture(t)
 	abandon := &abandonOwner{}
