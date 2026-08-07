@@ -1,31 +1,31 @@
 # Session handoff
 
 Repository: `bench` (origin `https://github.com/gibbonmi/bench.git`)
-Path: `~/workspace/bench`
-Branch: `main` — HEAD `4523c7f`, one tracked handoff edit, 23 unpushed commits
-Spec: `specs/ft187-communication-surface-cut/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
-Gate: the atomic ticket-closure commit passed the full gate in its exact prospective worktree; the main-worktree marker is stale after fast-forward
+Path: `/home/devuser/workspace/bench`
+Branch: `main` — pre-commit HEAD `f5fbc457c678`, 27 unpushed commits
+Specs: `specs/gate-decision-test-seam/spec.md` (Status: staged), `specs/pre-push-guard-visibility/spec.md` (Status: staged)
+Gate: stale on the pre-commit tree; this handoff lands only through the roadmap batch's green `bench commit`
 
 ## State
 
-**Phase reached: FT187 implementation composed provisionally; recomposition pending.**
+**Phase reached: roadmap reconciled and capture drained.**
 
-The spec-build lifecycle is active on subject `52401e58eb49ffd29394452e0cef2c03ffb74456`.
-All FT187 assignments and review repairs are integrated and released. Main advanced to
-`4523c7f3eba36df9950a9f656aa0d608c8ced413` for the atomic ticket-closure checker and
-FT187 ticket migration, so promotion must first recompose the provisional candidate.
-No final review evidence is retained.
+FT187 is promoted and retired. Its retro is drained into FT162's retained
+promotion timing and memory evidence and FT174's declared-closure omission
+review. FT171 now owns the staged gate-decision-test-seam slice; FT135 remains
+staged behind it. The ideas inbox, learnings journal, occurrence ledger, and
+retros directory are empty.
 
-Closed decisions stay closed: uniform prose anchors compose with FT156's
-`internal/anchors` registry; the structured-phase grammar remains bespoke; the prose
-cut carries five fixed reader cases and six measured shrinking passages. The required
-cross-harness semantic review remains `opus / low` and runs after recomposition. The
-assignment-time closure checker is implemented and full-gate green; it is not deferred
-to a later ticket.
+Closed decisions stay closed: the gate-decision slice preserves the existing
+read-only decision seam and representative full-engine composition proofs;
+pre-push guard visibility still follows its compiled decision map; FT187's
+communication surface and atomic closure contract are shipped state rather than
+work to reopen. The refreshed sequence drains both staged specs before new spec
+authoring.
 
 ## Next command
 
-`GOMAXPROCS=2 GOFLAGS=-p=2 bench spec build promote ft187-communication-surface-cut`
+`$bench-implement-spec`
 
 ## Shape
 

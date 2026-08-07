@@ -64,6 +64,13 @@ focused once and 3/3 repeated at about 0.43 s per run. Treat that delta as
 contention evidence for pricing the outer widths, not as authority to pick one
 from a single machine.
 
+The first independently green demand-reduction slice is staged at
+[`specs/gate-decision-test-seam/spec.md`](specs/gate-decision-test-seam/spec.md).
+It moves the exhaustive public-document mapping matrix to the existing
+read-only decision seam while retaining representative full-engine composition
+proofs. Implement that staged slice before returning to the remaining FT171
+shaping decisions.
+
 **FT162 (MEDIUM) — full-run and phase-close state has one authoritative subject
 and handoff.** Recommendations from the craft-tickets, light-path,
 artifact-suite, and artifact-hoist retros converge on one lifecycle owner. The close's
@@ -175,6 +182,11 @@ preflight for cleanliness and recomposition. The generic-worktree destination
 and verdict-locality recommendations belong to FT169's landing primitive rather
 than creating another subject owner. Sources: the covers-traceability and
 go-build-cache-footprint retros, drained here.
+
+Promotion evidence also retains per-phase elapsed values and peak-memory
+attribution bound to the exact tree and worktree. Buffered output and a
+coordinator-observed wall time are not durable enough for performance diagnosis.
+Source: the `ft187-communication-surface-cut` retro, drained here.
 
 **FT142 (MEDIUM) — FT91 review residuals: eight open findings, two tracks.**
 The ft91-gate-tier-split semantic review found twelve; three closed before
@@ -1179,8 +1191,8 @@ the communication protocol so each skill and always-loaded clause cites an
 observed failure it prevents (from the learnings journal or session evidence),
 merge overlapping craft docs, and shrink the always-loaded `BENCH.md` rules to
 demonstrated-delta clauses. Distinct from FT89, which fixes guidance
-*correctness*; this row cuts guidance *weight*. FT187 takes the
-"How to talk to me" slice ahead of this row, so what remains here is the
+*correctness*; this row cuts guidance *weight*. The shipped communication cut
+already took the "How to talk to me" slice, so what remains here is the
 craft-skill library and the demonstrated-delta audit over the rest of the
 always-loaded surface. Kit edit under the
 `craft-synthesis` discipline; starts as a grill (`/bench-shape-idea`) because
@@ -1781,11 +1793,16 @@ The `Assumptions:` field is retired, and assignment now refuses a red-mutation
 probe that crosses no path in its ticket's ownership fence. What stays here is
 the dependency graph — `Blocked by:` parsed by identifier, cycles and dangling
 blockers detected, and fence disjointness between concurrently eligible tickets.
+The declared atomic closure graph is now assignment-enforced; the remaining
+review check compares its `Closure:` inventory against `Contracts:`, the spec
+coverage map, and the edge inventory before leasing work, because a parser
+cannot detect a fact omitted from every declaration.
 One residual has no owner at all: when a fence does turn out to be wrong mid-run,
 `abandon` is whole-run and no verb releases a single open assignment to re-fence
 it, so the correction costs a sibling ticket and another delegate cycle. The
 shipped authoring-time refusal makes that rarer without making it reachable.
-Source: `capture/learnings.md` 2026-08-03 and 2026-08-04, verdicted here.
+Sources: `capture/learnings.md` 2026-08-03 and 2026-08-04, verdicted here; the
+`ft187-communication-surface-cut` retro, drained here.
 
 **FT153 (MEDIUM) — the canary's vacuity baseline is a collision screen, not a
 vacuity proof.** A behavior-owned fixture's EXPECT is compared against its
@@ -2176,7 +2193,6 @@ recommended table is sequencing advice.
 | FT | Depends on | Why |
 |---|---|---|
 | FT107 | FT141 | Its fix-loop shrink rule cannot distinguish convergence until inherited reds are attributed to their pinned baseline. |
-| FT107 | FT187 | Both edit `.bench/BENCH.md`; FT107 is scoped as one always-loaded-prose diff, so the restructure lands first and the batch's clauses apply to the reduced surface. |
 | FT186 | FT108 | The gate restructure needs the mechanical exit test before moving oracle code without behavioral stories. |
 
 ### Recommended
@@ -2222,10 +2238,10 @@ build.
    its spec was written and implemented, FT181 shipped 2026-08-03, and
    FT156's anchor-mechanism ruling closed when its registry shipped and the
    spec retired 2026-08-05.
-2. Drain the staged frontier — FT135 and FT187 carry the two remaining staged
-   specs — before authoring any new spec; deferring one is an explicit reviewer
-   override, never a silent skip. Of the two only FT187 serves a goal directly.
-   FT141
+2. Drain the staged frontier — FT171 and FT135 carry the two staged specs —
+   before authoring any new spec; deferring one is an explicit reviewer
+   override, never a silent skip. Neither serves this goal track directly;
+   FT171 is the active gate-budget demand-reduction slice. FT141
    builds in parallel where
    capacity allows: it is Go, prose-independent, and it unblocks FT107
    *whole* — splitting the fix-loop clause out would spend a second spec,
@@ -2282,6 +2298,6 @@ now fixture-proven.
 
 ## Recommended sequence
 
-1. `/bench-implement-spec` — drain the two staged specs: FT187 (`specs/ft187-communication-surface-cut/spec.md`) first, then FT135 (`specs/pre-push-guard-visibility/spec.md`).
+1. `/bench-implement-spec` — drain the two staged specs: FT171 (`specs/gate-decision-test-seam/spec.md`) first, then FT135 (`specs/pre-push-guard-visibility/spec.md`).
 2. `/bench-shape-idea` — FT198, because the 179 KB roadmap snapshot now exceeds a single agent-tool response and the storage migration needs one durable-owner decision.
 3. `/bench-write-spec` — FT141, Go and prose-independent and the literal blocker that unblocks FT107 whole.
