@@ -104,6 +104,17 @@ each ownership fence. `craft-spec` places the fences; this step names their
 traffic, so a cross-fence mismatch is a sentence at slicing time instead of a
 composed red six tickets later.
 
+The first response to a discovered crossing is to remove it. Prefer regrouping
+so one vertical ticket owns both sides of the value; a mechanical change whose
+crossing comes from a form in flux takes the expand–migrate–contract sequence
+instead. A producer/consumer split that survives both preferences is the
+exception, and it carries its traffic explicitly: the producer's `Integration
+surfaces:` name the dependent, the consumer's `Blocked by:` names the producer,
+and assignment refuses the consumer until the edge is reciprocal. A crossing
+kept without naming why neither regrouping applies is a slicing defect, not a
+contract to document — a split ticket pair maintains its shared value in prose
+across every mid-run repair, which is exactly the surface that goes stale.
+
 Every value crossing an ownership fence names four facts: its type, its
 membership or domain rule, its ordering, and its absence semantics. A fence
 crossing with an unnamed fact is an undeclared contract.
